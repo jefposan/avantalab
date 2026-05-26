@@ -355,16 +355,48 @@ useEffect(() => {
     if (dadosResumo.length === 0) return alert("Nenhum dado encontrado para backup.");
 
     const wb = XLSX.utils.book_new();
-    const wsResumo = XLSX.utils.json_to_sheet(dadosResumo);
-    XLSX.utils.book_append_sheet(wb, wsResumo, "Resumo Financeiro");
 
-    if (dadosLancamentos.length > 0) {
-      const wsLancs = XLSX.utils.json_to_sheet(dadosLancamentos);
-      XLSX.utils.book_append_sheet(wb, wsLancs, "Lançamentos Detalhados");
-    }
+const wsResumo = XLSX.utils.json_to_sheet(dadosResumo);
+XLSX.utils.book_append_sheet(wb, wsResumo, "Resumo Financeiro");
 
-    const dataHoje = new Date().toISOString().split('T')[0]; 
-    XLSX.writeFile(wb, `backup_${dataHoje}.xlsx`);
+if (dadosLancamentos.length > 0) {
+  const wsLancs = XLSX.utils.json_to_sheet(dadosLancamentos);
+  XLSX.utils.book_append_sheet(wb, wsLancs, "Lançamentos Detalhados");
+}
+
+// Aba de configurações gerais, incluindo logo
+const dadosConfiguracoes = [
+  {
+    chave: 'logoUrl',
+    valor: logoUrl || '',
+  },
+  {
+    chave: 'logoSettings',
+    valor: JSON.stringify(logoSettings || { scale: 100, x: 0, y: 0 }),
+  },
+  {
+    chave: 'corPrimaria',
+    valor: corPrimaria || '#2563eb',
+  },
+  {
+    chave: 'darkMode',
+    valor: String(darkMode),
+  },
+  {
+    chave: 'duplicadosAtivo',
+    valor: String(duplicadosAtivo),
+  },
+  {
+    chave: 'despesasCadastradas',
+    valor: JSON.stringify(despesasCadastradas || []),
+  },
+];
+
+const wsConfig = XLSX.utils.json_to_sheet(dadosConfiguracoes);
+XLSX.utils.book_append_sheet(wb, wsConfig, "Configurações");
+
+const dataHoje = new Date().toISOString().split('T')[0]; 
+XLSX.writeFile(wb, `backup_${dataHoje}.xlsx`);
   };
 
   const analiseDespesas = useMemo(() => { 
