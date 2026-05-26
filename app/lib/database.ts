@@ -264,9 +264,7 @@ export async function salvarConfiguracoesBanco({
     .single();
 
   if (error) {
-    console.error('Erro ao salvar configurações:', error);
-    return null;
-  }
-
-  return data;
+  console.error('Erro ao salvar configurações:', error);
+  alert(`Erro ao salvar configurações: ${error.message}`);
+  return null;
 }

@@ -313,7 +313,42 @@ useEffect(() => {
     alert("Erro ao apagar lançamento no banco.");
   }
 };
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => { const file = e.target.files?.[0]; if (file) { const reader = new FileReader(); reader.onloadend = () => setLogoUrl(reader.result as string); reader.readAsDataURL(file); setModalLogo(false); } };
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const file = e.target.files?.[0];
+
+  if (!file) return;
+
+  if (!empresaId) {
+    alert("Empresa não carregada. Atualize a página e tente novamente.");
+    return;
+  }
+
+  const reader = new FileReader();
+
+  reader.onloadend = async () => {
+    const novaLogoUrl = reader.result as string;
+
+    setLogoUrl(novaLogoUrl);
+
+    const salvo = await salvarConfiguracoesBanco({
+      empresaId,
+      corPrimaria,
+      darkMode,
+      duplicadosAtivo,
+      logoUrl: novaLogoUrl,
+      logoSettings,
+    });
+
+    if (!salvo) {
+      alert("Erro ao salvar o logo no banco.");
+      return;
+    }
+
+    setModalLogo(false);
+  };
+
+  reader.readAsDataURL(file);
+};
 
   // ================= FUNÇÃO DE BACKUP EXCEL =================
   const gerarBackupExcel = () => {
