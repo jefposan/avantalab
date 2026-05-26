@@ -1,8 +1,9 @@
 'use client';
-export default function Tabela({ 
-  lancamentos, despesasCadastradas, adicionarDespesa, apagarDespesa, 
-  form, setForm, formatarMoeda, darkMode, corPrimaria 
-}) {
+
+export default function Tabela({
+  lancamentos, despesasCadastradas, adicionarDespesa, apagarDespesa,
+  form, setForm, formatarMoeda, darkMode, corPrimaria
+}: any) {
   const bgCard = darkMode ? 'bg-slate-800' : 'bg-white';
   const textStrong = darkMode ? 'text-white' : 'text-slate-800';
 
@@ -25,7 +26,7 @@ export default function Tabela({
             <td className="p-2">
               <select value={form.despesa} onChange={e => setForm({...form, despesa: e.target.value})} className="w-full p-2 border rounded">
                 <option value="">Selecione...</option>
-                {despesasCadastradas.map(d => <option key={d.nome} value={d.nome}>{d.nome}</option>)}
+                {despesasCadastradas.map((d: any) => <option key={d.nome} value={d.nome}>{d.nome}</option>)}
               </select>
             </td>
             <td className="p-2"><input type="text" value={form.descricao} onChange={e => setForm({...form, descricao: e.target.value})} className="w-full p-2 border rounded" placeholder="Descrição..." /></td>
@@ -33,7 +34,7 @@ export default function Tabela({
             <td className="p-2"><button onClick={adicionarDespesa} style={{backgroundColor: corPrimaria}} className="text-white px-4 py-2 rounded font-bold w-full">Salvar</button></td>
           </tr>
           {/* Listagem */}
-          {lancamentos.map(l => (
+          {lancamentos.map((l: any) => (
             <tr key={l.id} className="border-b">
               <td className="p-4 font-bold">{l.dia}</td>
               <td className="p-4">{l.despesa}</td>

@@ -1,5 +1,5 @@
 // app/components/Modais.tsx
-export default function Modais({ config, handlers }) {
+export default function Modais({ config, handlers }: any) {
   const { modalInstrucoes, modalDespesasBase, modalLogo, darkMode, corPrimaria } = config;
   const { setModalInstrucoes, setModalDespesasBase, setModalLogo, setLogoUrl, handleImageUpload } = handlers;
   
