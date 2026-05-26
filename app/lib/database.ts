@@ -268,3 +268,6 @@ export async function salvarConfiguracoesBanco({
   alert(`Erro ao salvar configurações: ${error.message}`);
   return null;
 }
+
+  return data;
+}
