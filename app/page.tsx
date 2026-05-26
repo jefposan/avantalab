@@ -138,6 +138,7 @@ useEffect(() => {
 
     faturamentosBanco.forEach((f: any) => {
       faturamentosFormatados[f.mes] = Number(f.valor);
+      
     });
 
     setFaturamentos(faturamentosFormatados);
@@ -146,14 +147,32 @@ useEffect(() => {
   carregarDadosFinanceiros();
 }, [anoSelecionado, mounted, empresaId]);
 
-  // 3. Salva Configurações Globais
-  useEffect(() => {
-    if (mounted) {
-      localStorage.setItem('appGestaoSettings', JSON.stringify({
-        despesasCadastradas, logoUrl, logoSettings, corPrimaria, darkMode, duplicadosAtivo
-      }));
-    }
-  }, [despesasCadastradas, logoUrl, logoSettings, corPrimaria, darkMode, duplicadosAtivo, mounted]);
+  // 3. Salva Configurações Globais no Supabase
+useEffect(() => {
+  if (!mounted || !empresaId) return;
+
+  const salvarConfiguracoes = async () => {
+    await salvarConfiguracoesBanco({
+      empresaId,
+      corPrimaria,
+      darkMode,
+      duplicadosAtivo,
+      logoUrl,
+      logoSettings,
+    });
+  };
+
+  salvarConfiguracoes();
+}, [
+  empresaId,
+  despesasCadastradas,
+  logoUrl,
+  logoSettings,
+  corPrimaria,
+  darkMode,
+  duplicadosAtivo,
+  mounted
+]);
 
   // 4. Salva Dados Financeiros do Ano Atual
   useEffect(() => {
