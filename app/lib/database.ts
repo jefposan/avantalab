@@ -169,10 +169,16 @@ export async function salvarLancamento({
 
   if (error) {
     console.error('Erro ao salvar lançamento:', error);
-    return null;
+    return {
+      erro: true,
+      mensagem: error.message,
+    };
   }
 
-  return data;
+  return {
+    erro: false,
+    data,
+  };
 }
 
 export async function apagarLancamento(id: string) {

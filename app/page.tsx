@@ -263,15 +263,15 @@ useEffect(() => {
     valor: valorNumericoRaw,
   });
 
-  if (salvo) {
-    const novoLancamento = {
-      id: salvo.id,
-      mes: salvo.mes,
-      dia: salvo.dia,
-      despesa: salvo.despesa_nome,
-      descricao: salvo.descricao || '',
-      valor: Number(salvo.valor),
-    };
+  if (!salvo.erro && salvo.data) {
+  const novoLancamento = {
+    id: salvo.data.id,
+    mes: salvo.data.mes,
+    dia: salvo.data.dia,
+    despesa: salvo.data.despesa_nome,
+    descricao: salvo.data.descricao || '',
+    valor: Number(salvo.data.valor),
+  };
 
     setLancamentos(prev => [...prev, novoLancamento]);
 
@@ -281,8 +281,8 @@ useEffect(() => {
     setFormValor('');
     setValorNumericoRaw(0);
   } else {
-    alert("Erro ao salvar lançamento no banco.");
-  }
+  alert(`Erro ao salvar lançamento: ${salvo.mensagem}`);
+}
 };
   
  const apagarDespesa = async (id: string) => {
