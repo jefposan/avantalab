@@ -4,8 +4,9 @@ export async function buscarEmpresaPrincipal() {
   const { data, error } = await supabase
     .from('empresas')
     .select('*')
-    .eq('nome', 'Empresa Principal')
-    .single();
+    .order('criado_em', { ascending: true })
+    .limit(1)
+    .maybeSingle();
 
   if (error) {
     console.error('Erro ao buscar empresa principal:', error);
