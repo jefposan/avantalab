@@ -3,17 +3,35 @@ import { supabase } from './supabase';
 export async function buscarEmpresaPrincipal() {
   const { data, error } = await supabase
     .from('empresas')
-    .select('*')
-    .order('criado_em', { ascending: true })
+    .select('id, nome')
     .limit(1)
     .maybeSingle();
 
   if (error) {
     console.error('Erro ao buscar empresa principal:', error);
+    alert(`Erro ao buscar empresa: ${error.message}`);
     return null;
   }
 
-  return data;
+  if (data) {
+    return data;
+  }
+
+  const { data: novaEmpresa, error: erroCriar } = await supabase
+    .from('empresas')
+    .insert({
+      nome: 'Empresa Principal',
+    })
+    .select('id, nome')
+    .single();
+
+  if (erroCriar) {
+    console.error('Erro ao criar empresa principal:', erroCriar);
+    alert(`Erro ao criar empresa: ${erroCriar.message}`);
+    return null;
+  }
+
+  return novaEmpresa;
 }
 
 export async function buscarConfiguracoes(empresaId: string) {
