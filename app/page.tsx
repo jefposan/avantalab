@@ -7,16 +7,31 @@ import BalancoGeral from './components/BalancoGeral';
 import Graficos from './components/Graficos';
 import PorCategoria from './components/PorCategoria';
 import Relatorio from './components/Relatorio';
+import {
+  buscarEmpresaPrincipal,
+  buscarConfiguracoes,
+  buscarDespesasCadastradas,
+  buscarLancamentos,
+  buscarFaturamentos,
+  salvarDespesaCadastrada,
+  apagarDespesaCadastrada,
+  salvarLancamento,
+  apagarLancamento,
+  salvarFaturamentoBanco,
+  salvarConfiguracoesBanco,
+} from './lib/database';
 
 export default function AppGestao() {
   // --- ESTADOS PRINCIPAIS ---
   const [mounted, setMounted] = useState(false);
+  const [empresaId, setEmpresaId] = useState<string | null>(null);
   const [abaAtiva, setAbaAtiva] = useState('Dashboard');
   const [ajustesAberto, setAjustesAberto] = useState(false);
   const [duplicadosAtivo, setDuplicadosAtivo] = useState(false);
   const [darkMode, setDarkMode] = useState(false);
   const [corPrimaria, setCorPrimaria] = useState('#2563eb');
   const [mesAtivo, setMesAtivo] = useState<string | null>(null);
+  
 
   // NOVO: Estado do Ano Selecionado
   const [anoSelecionado, setAnoSelecionado] = useState(new Date().getFullYear().toString());
@@ -58,57 +73,78 @@ export default function AppGestao() {
   // --- LOCAL STORAGE (LÓGICA SEPARADA POR ANO E CONFIGURAÇÕES) ---
   
   // 1. Carrega Configurações Globais
-  useEffect(() => {
-    setMounted(true);
-    const savedSettings = localStorage.getItem('appGestaoSettings');
-    const oldSaved = localStorage.getItem('appGestaoData'); // Migração
-    
-    if (savedSettings) {
-      const data = JSON.parse(savedSettings);
-      if (data.despesasCadastradas) setDespesasCadastradas(data.despesasCadastradas);
-      if (data.logoUrl) setLogoUrl(data.logoUrl);
-      if (data.logoSettings) setLogoSettings(data.logoSettings);
-      if (data.corPrimaria) setCorPrimaria(data.corPrimaria);
-      if (data.darkMode !== undefined) setDarkMode(data.darkMode);
-      if (data.duplicadosAtivo !== undefined) setDuplicadosAtivo(data.duplicadosAtivo);
-    } else if (oldSaved) {
-      const data = JSON.parse(oldSaved);
-      if (data.despesasCadastradas) setDespesasCadastradas(data.despesasCadastradas);
-      if (data.logoUrl) setLogoUrl(data.logoUrl);
-      if (data.logoSettings) setLogoSettings(data.logoSettings);
-      if (data.corPrimaria) setCorPrimaria(data.corPrimaria);
-      if (data.darkMode !== undefined) setDarkMode(data.darkMode);
-      if (data.duplicadosAtivo !== undefined) setDuplicadosAtivo(data.duplicadosAtivo);
+  // 1. Carrega Configurações Globais do Supabase
+useEffect(() => {
+  const carregarConfiguracoesIniciais = async () => {
+    const empresa = await buscarEmpresaPrincipal();
+
+    if (empresa) {
+      setEmpresaId(empresa.id);
+
+      const config = await buscarConfiguracoes(empresa.id);
+      const despesas = await buscarDespesasCadastradas(empresa.id);
+
+      if (config) {
+        if (config.cor_primaria) setCorPrimaria(config.cor_primaria);
+        if (config.dark_mode !== undefined) setDarkMode(config.dark_mode);
+        if (config.duplicados_ativo !== undefined) setDuplicadosAtivo(config.duplicados_ativo);
+        if (config.logo_url) setLogoUrl(config.logo_url);
+        if (config.logo_settings) setLogoSettings(config.logo_settings);
+      }
+
+      if (despesas && despesas.length > 0) {
+        setDespesasCadastradas(
+          despesas.map((d: any) => ({
+            nome: d.nome,
+            categoria: d.categoria,
+          }))
+        );
+      }
     }
-    
+
     const mesAtual = meses[new Date().getMonth()];
     setMesResumoDash(mesAtual);
     setMesFaturamento(mesAtual);
-  }, []);
+
+    setMounted(true);
+  };
+
+  carregarConfiguracoesIniciais();
+}, []);
 
   // 2. Carrega Dados Financeiros do Ano
-  useEffect(() => {
-    if (!mounted) return;
-    
-    const savedYearData = localStorage.getItem(`appGestaoData_${anoSelecionado}`);
-    const oldSaved = localStorage.getItem('appGestaoData');
-    
-    if (savedYearData) {
-      const data = JSON.parse(savedYearData);
-      setLancamentos(data.lancamentos || []);
-      setFaturamentos(data.faturamentos || {});
-    } else {
-      if (oldSaved && anoSelecionado === new Date().getFullYear().toString()) {
-        const data = JSON.parse(oldSaved);
-        setLancamentos(data.lancamentos || []);
-        setFaturamentos(data.faturamentos || {});
-        localStorage.removeItem('appGestaoData'); 
-      } else {
-        setLancamentos([]);
-        setFaturamentos({});
-      }
-    }
-  }, [anoSelecionado, mounted]);
+  // 2. Carrega Dados Financeiros do Ano pelo Supabase
+useEffect(() => {
+  if (!mounted || !empresaId) return;
+
+  const carregarDadosFinanceiros = async () => {
+    const ano = Number(anoSelecionado);
+
+    const lancamentosBanco = await buscarLancamentos(empresaId, ano);
+    const faturamentosBanco = await buscarFaturamentos(empresaId, ano);
+
+    setLancamentos(
+      lancamentosBanco.map((l: any) => ({
+        id: l.id,
+        mes: l.mes,
+        dia: l.dia,
+        despesa: l.despesa_nome,
+        descricao: l.descricao || '',
+        valor: Number(l.valor),
+      }))
+    );
+
+    const faturamentosFormatados: Record<string, number> = {};
+
+    faturamentosBanco.forEach((f: any) => {
+      faturamentosFormatados[f.mes] = Number(f.valor);
+    });
+
+    setFaturamentos(faturamentosFormatados);
+  };
+
+  carregarDadosFinanceiros();
+}, [anoSelecionado, mounted, empresaId]);
 
   // 3. Salva Configurações Globais
   useEffect(() => {
@@ -155,30 +191,109 @@ export default function AppGestao() {
   const despesasTotais = lancamentos.reduce((a, b) => a + b.valor, 0);
   const lucroTotalAnual = receitasTotais - despesasTotais;
 
-  const salvarFaturamento = () => { 
-    const valorLimpo = parseInt(inputFaturamento.replace(/\D/g, '') || '0', 10) / 100; 
-    if (valorLimpo > 0) { 
-      setFaturamentos(prev => ({ ...prev, [mesFaturamento]: valorLimpo })); 
-      setInputFaturamento(''); 
-    } 
-  };
+  const salvarFaturamento = async () => {
+  if (!empresaId) {
+    alert("Empresa não carregada. Tente atualizar a página.");
+    return;
+  }
+
+  const valorLimpo = parseInt(inputFaturamento.replace(/\D/g, '') || '0', 10) / 100;
+
+  if (valorLimpo > 0) {
+    const salvo = await salvarFaturamentoBanco({
+      empresaId,
+      ano: Number(anoSelecionado),
+      mes: mesFaturamento,
+      valor: valorLimpo,
+    });
+
+    if (salvo) {
+      setFaturamentos(prev => ({
+        ...prev,
+        [mesFaturamento]: valorLimpo,
+      }));
+
+      setInputFaturamento('');
+    } else {
+      alert("Erro ao salvar faturamento no banco.");
+    }
+  }
+};
   const handleValorChange = (e: React.ChangeEvent<HTMLInputElement>) => { let value = e.target.value.replace(/\D/g, ""); if (!value) { setFormValor(""); setValorNumericoRaw(0); return; } const numericValue = parseInt(value, 10) / 100; setValorNumericoRaw(numericValue); setFormValor(formatarMoeda(numericValue)); };
   const getMaxDias = (mes: string | null) => { if (!mes) return 31; if (['ABRIL', 'JUNHO', 'SETEMBRO', 'NOVEMBRO'].includes(mes)) return 30; if (mes === 'FEVEREIRO') return (parseInt(anoSelecionado) % 4 === 0) ? 29 : 28; return 31; };
   const adicionarDespesaBase = () => { if (!novaBaseNome || !novaBaseCat) return alert("Preencha o Nome e a Categoria!"); setDespesasCadastradas([...despesasCadastradas, { nome: novaBaseNome, categoria: novaBaseCat }]); setNovaBaseNome(''); setNovaBaseCat(''); };
   const apagarDespesaBase = (nome: string) => { setDespesasCadastradas(despesasCadastradas.filter(d => d.nome !== nome)); };
   
-  const adicionarDespesa = () => { 
-    if (!formDia || !formDespesa || valorNumericoRaw <= 0) return alert("Preencha Dia, Despesa e Valor!"); 
-    if (duplicadosAtivo) { 
-      const existeIgual = lancamentosDoMes.some(l => l.despesa === formDespesa && l.valor === valorNumericoRaw); 
-      if (existeIgual && !window.confirm("Aviso: Valor e despesa duplicados. Deseja adicionar mesmo assim?")) return; 
-    } 
-    const novoLancamento = { id: Date.now(), mes: mesAtivo as string, dia: parseInt(formDia), despesa: formDespesa, descricao: formDescricao, valor: valorNumericoRaw }; 
-    setLancamentos([...lancamentos, novoLancamento]); 
-    setFormDia(''); setFormDespesa(''); setFormDescricao(''); setFormValor(''); setValorNumericoRaw(0); 
-  };
+  const adicionarDespesa = async () => {
+  if (!empresaId) {
+    alert("Empresa não carregada. Tente atualizar a página.");
+    return;
+  }
+
+  if (!mesAtivo) {
+    alert("Selecione um mês antes de lançar a despesa.");
+    return;
+  }
+
+  if (!formDia || !formDespesa || valorNumericoRaw <= 0) {
+    alert("Preencha Dia, Despesa e Valor!");
+    return;
+  }
+
+  if (duplicadosAtivo) {
+    const existeIgual = lancamentosDoMes.some(
+      l => l.despesa === formDespesa && l.valor === valorNumericoRaw
+    );
+
+    if (
+      existeIgual &&
+      !window.confirm("Aviso: Valor e despesa duplicados. Deseja adicionar mesmo assim?")
+    ) {
+      return;
+    }
+  }
+
+  const salvo = await salvarLancamento({
+    empresaId,
+    ano: Number(anoSelecionado),
+    mes: mesAtivo,
+    dia: parseInt(formDia),
+    despesaNome: formDespesa,
+    descricao: formDescricao,
+    valor: valorNumericoRaw,
+  });
+
+  if (salvo) {
+    const novoLancamento = {
+      id: salvo.id,
+      mes: salvo.mes,
+      dia: salvo.dia,
+      despesa: salvo.despesa_nome,
+      descricao: salvo.descricao || '',
+      valor: Number(salvo.valor),
+    };
+
+    setLancamentos(prev => [...prev, novoLancamento]);
+
+    setFormDia('');
+    setFormDespesa('');
+    setFormDescricao('');
+    setFormValor('');
+    setValorNumericoRaw(0);
+  } else {
+    alert("Erro ao salvar lançamento no banco.");
+  }
+};
   
-  const apagarDespesa = (id: number) => { setLancamentos(lancamentos.filter(l => l.id !== id)); };
+ const apagarDespesa = async (id: string) => {
+  const apagou = await apagarLancamento(id);
+
+  if (apagou) {
+    setLancamentos(prev => prev.filter(l => l.id !== id));
+  } else {
+    alert("Erro ao apagar lançamento no banco.");
+  }
+};
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => { const file = e.target.files?.[0]; if (file) { const reader = new FileReader(); reader.onloadend = () => setLogoUrl(reader.result as string); reader.readAsDataURL(file); setModalLogo(false); } };
 
   // ================= FUNÇÃO DE BACKUP EXCEL =================
