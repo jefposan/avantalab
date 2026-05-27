@@ -38,8 +38,11 @@ async function loginComGoogle() {
 }
 
 export default function AppGestao() {
+
   // --- ESTADOS PRINCIPAIS ---
-  const [mounted, setMounted] = useState(false);
+  
+const [mounted, setMounted] = useState(false);
+  const [isTelaMobile, setIsTelaMobile] = useState(false);
   const [acessoLiberado, setAcessoLiberado] = useState(false);
   const [modoAuth, setModoAuth] = useState<'login' | 'cadastro'>('login');
 
@@ -111,6 +114,20 @@ const [mostrarConfirmarNovaSenha, setMostrarConfirmarNovaSenha] = useState(false
   const [valorNumericoRaw, setValorNumericoRaw] = useState(0);
 
   const meses = ['JANEIRO', 'FEVEREIRO', 'MARÇO', 'ABRIL', 'MAIO', 'JUNHO', 'JULHO', 'AGOSTO', 'SETEMBRO', 'OUTUBRO', 'NOVEMBRO', 'DEZEMBRO'];
+
+useEffect(() => {
+  const verificarTela = () => {
+    setIsTelaMobile(window.innerWidth < 1024);
+  };
+
+  verificarTela();
+
+  window.addEventListener('resize', verificarTela);
+
+  return () => {
+    window.removeEventListener('resize', verificarTela);
+  };
+}, []);
 
   // --- LOCAL STORAGE (LÓGICA SEPARADA POR ANO E CONFIGURAÇÕES) ---
   
@@ -783,6 +800,56 @@ const handleGoogleLogin = async () => {
 
   if (!mounted) return null; 
 
+if (isTelaMobile) {
+  return (
+    <main className="relative min-h-screen overflow-hidden font-sans">
+      <div
+        className="absolute inset-0 bg-cover bg-center"
+        style={{ backgroundImage: "url('/images/bg-avantalab-mobile.png')" }}
+      />
+
+      <div className="absolute inset-0 bg-white/75 backdrop-blur-sm" />
+
+      <section className="relative z-10 flex min-h-screen items-center justify-center px-6 py-10">
+        <div className="w-full max-w-sm rounded-3xl border border-slate-200 bg-white/90 p-7 text-center shadow-2xl">
+          <div className="mx-auto mb-5 flex h-20 w-20 items-center justify-center rounded-2xl bg-sky-100">
+            <svg
+              className="h-10 w-10 text-sky-800"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
+                d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
+              />
+            </svg>
+          </div>
+
+          <p className="mb-2 text-xs font-bold uppercase tracking-[0.28em] text-sky-700">
+            AvantaLab Gestão
+          </p>
+
+          <h1 className="text-2xl font-black leading-tight text-slate-900">
+            Acesso permitido somente pelo computador
+          </h1>
+
+          <p className="mt-4 text-sm leading-relaxed text-slate-600">
+            Para garantir a melhor experiência e o funcionamento completo das ferramentas,
+            acesse o sistema por um navegador em computador ou notebook.
+          </p>
+
+          <div className="mt-6 rounded-2xl border border-sky-200 bg-sky-50 px-4 py-3 text-sm font-semibold text-sky-900">
+            Em breve, uma versão mobile poderá ser disponibilizada.
+          </div>
+        </div>
+      </section>
+    </main>
+  );
+}
+
   if (!acessoLiberado) {
   return (
     <main className="relative min-h-screen overflow-hidden font-sans">
@@ -1204,7 +1271,14 @@ const handleGoogleLogin = async () => {
         <div className="w-56 h-16 flex items-center justify-center overflow-hidden relative cursor-pointer" onClick={() => {setAbaAtiva('Dashboard'); setMesAtivo(null);}} style={!logoUrl ? { border: `2px dashed ${darkMode ? '#475569' : '#cbd5e1'}`, borderRadius: '0.5rem' } : {}}>
           {logoUrl ? (
             <img src={logoUrl} alt="Logo" className="absolute" style={{ transform: `translate(${logoSettings.x}px, ${logoSettings.y}px) scale(${logoSettings.scale / 100})`, objectFit: 'contain', width: '100%', height: '100%', background: 'transparent' }} />
-          ) : <span className="text-slate-400 text-sm font-bold">LOGOMARCA</span>}
+          ) : <span className="px-3 text-center leading-snug text-slate-500">
+    <span className="block text-[11px] font-semibold">
+  Acesse os Ajustes e adicione sua
+</span>
+    <span className="mt-1 block text-base font-black tracking-wide">
+      LOGOMARCA
+    </span>
+  </span>}
         </div>
 
         {painelAjusteLogo && (
@@ -1223,7 +1297,27 @@ const handleGoogleLogin = async () => {
         )}
 
         <nav className="flex space-x-3">
-          {['Balanço Geral', 'Gráficos', 'Por Categoria', 'Relatório'].map((item) => (
+  <button
+    onClick={() => {
+      setAbaAtiva('Dashboard');
+      setMesAtivo(null);
+    }}
+    className={`font-bold py-2.5 px-6 rounded-full transition-all text-sm uppercase tracking-wide border-2 ${
+      abaAtiva === 'Dashboard' && !mesAtivo
+        ? 'text-white shadow-md transform scale-105'
+        : darkMode
+          ? 'bg-slate-800 hover:bg-slate-700 text-slate-300 border-slate-700 shadow'
+          : 'bg-white hover:bg-slate-50 text-slate-600 border-slate-200 shadow hover:shadow-md'
+    }`}
+    style={{
+      backgroundColor: abaAtiva === 'Dashboard' && !mesAtivo ? corPrimaria : '',
+      borderColor: abaAtiva === 'Dashboard' && !mesAtivo ? corPrimaria : '',
+    }}
+  >
+    Home
+  </button>
+
+  {['Balanço Geral', 'Gráficos', 'Por Categoria', 'Relatório'].map((item) => (
             <button 
               key={item} 
               onClick={() => { setAbaAtiva(item); setMesAtivo(null); }}
