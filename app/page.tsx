@@ -804,11 +804,15 @@ if (isTelaMobile) {
   return (
     <main className="relative min-h-screen overflow-hidden font-sans">
       <div
-        className="absolute inset-0 bg-cover bg-center"
-        style={{ backgroundImage: "url('/images/bg-avantalab-mobile.png')" }}
-      />
+  className="absolute inset-0 bg-no-repeat"
+  style={{
+    backgroundImage: "url('/images/bg-avantalab-mobile.png')",
+    backgroundSize: '100% 100%',
+    backgroundPosition: 'center',
+  }}
+/>
 
-      <div className="absolute inset-0 bg-white/75 backdrop-blur-sm" />
+<div className="absolute inset-0 bg-white/10" />
 
       <section className="relative z-10 flex min-h-screen items-center justify-center px-6 py-10">
         <div className="w-full max-w-sm rounded-3xl border border-slate-200 bg-white/90 p-7 text-center shadow-2xl">
