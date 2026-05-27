@@ -23,6 +23,20 @@ import {
 
 import { supabase } from './lib/supabase';
 
+async function loginComGoogle() {
+  const { error } = await supabase.auth.signInWithOAuth({
+    provider: 'google',
+    options: {
+      redirectTo: `${window.location.origin}/`,
+    },
+  });
+
+  if (error) {
+    console.error('Erro ao entrar com Google:', error);
+    alert(`Erro ao entrar com Google: ${error.message}`);
+  }
+}
+
 export default function AppGestao() {
   // --- ESTADOS PRINCIPAIS ---
   const [mounted, setMounted] = useState(false);
@@ -44,6 +58,7 @@ const [cadastroConfirmarSenha, setCadastroConfirmarSenha] = useState('');
 const [authErro, setAuthErro] = useState('');
 const [authMensagem, setAuthMensagem] = useState('');
 const [authLoading, setAuthLoading] = useState(false);
+const [googleLoading, setGoogleLoading] = useState(false);
 
 const [modoRedefinirSenha, setModoRedefinirSenha] = useState(false);
 const [novaSenha, setNovaSenha] = useState('');
@@ -747,6 +762,25 @@ const handleAtualizarSenha = async () => {
   setAcessoLiberado(false);
 };
 
+const handleGoogleLogin = async () => {
+  setAuthErro('');
+  setAuthMensagem('');
+  setGoogleLoading(true);
+
+  const { error } = await supabase.auth.signInWithOAuth({
+    provider: 'google',
+    options: {
+      redirectTo: `${window.location.origin}/`,
+    },
+  });
+
+  if (error) {
+    console.error('Erro login Google:', error);
+    setAuthErro(`Erro Google: ${error.message}`);
+    setGoogleLoading(false);
+  }
+};
+
   if (!mounted) return null; 
 
   if (!acessoLiberado) {
@@ -926,11 +960,25 @@ const handleAtualizarSenha = async () => {
 </button>
 
                 <button
-                  type="button"
-                  className="w-full rounded-xl border border-slate-300 bg-white/80 px-4 py-3 font-semibold text-slate-700 transition hover:bg-white"
-                >
-                  Continuar com Google
-                </button>
+  type="button"
+  onClick={handleGoogleLogin}
+  disabled={googleLoading}
+  className="flex w-full items-center justify-center gap-3 rounded-xl border border-slate-300 bg-white/90 px-4 py-3 font-semibold text-slate-700 shadow-sm transition hover:bg-white disabled:cursor-not-allowed disabled:opacity-70"
+>
+  {googleLoading ? (
+    <span className="h-5 w-5 animate-spin rounded-full border-2 border-slate-300 border-t-sky-700" />
+  ) : (
+    <img
+      src="/images/google-logo.svg"
+      alt="Google"
+      className="h-5 w-5"
+    />
+  )}
+
+  <span>
+    {googleLoading ? 'Conectando ao Google...' : 'Entrar ou cadastrar com Google'}
+  </span>
+</button>
 
                 <div className="pt-2 text-center text-sm text-slate-600">
                   Ainda não tem conta?{' '}
