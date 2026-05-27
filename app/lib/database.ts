@@ -35,44 +35,44 @@ export async function buscarEmpresaPrincipal() {
 }
 
 export async function buscarEmpresaDoUsuario(usuarioId: string) {
-  const { data, error } = await supabase
+  const { data: vinculo, error: erroVinculo } = await supabase
     .from('usuarios_empresas')
-    .select(`
-      empresa_id,
-      papel,
-      empresas (
-        id,
-        nome
-      )
-    `)
+    .select('empresa_id, papel')
     .eq('usuario_id', usuarioId)
     .limit(1)
     .maybeSingle();
 
-  if (error) {
-    console.error('Erro ao buscar empresa do usuário:', error);
-    alert(`Erro ao buscar empresa do usuário: ${error.message}`);
+  if (erroVinculo) {
+    console.error('Erro ao buscar vínculo do usuário com empresa:', erroVinculo);
+    alert(`Erro ao buscar vínculo do usuário: ${erroVinculo.message}`);
     return null;
   }
 
-  if (!data || !data.empresas) {
+  if (!vinculo || !vinculo.empresa_id) {
     console.warn('Usuário sem empresa vinculada.');
+    alert('Este usuário ainda não possui empresa vinculada.');
     return null;
   }
 
-  const empresa = Array.isArray(data.empresas)
-    ? data.empresas[0]
-    : data.empresas;
+  const { data: empresa, error: erroEmpresa } = await supabase
+    .from('empresas')
+    .select('id, nome')
+    .eq('id', vinculo.empresa_id)
+    .maybeSingle();
+
+  if (erroEmpresa) {
+    console.error('Erro ao buscar empresa vinculada:', erroEmpresa);
+    alert(`Erro ao buscar empresa vinculada: ${erroEmpresa.message}`);
+    return null;
+  }
 
   if (!empresa) {
     console.warn('Empresa vinculada não encontrada.');
+    alert('A empresa vinculada ao usuário não foi encontrada.');
     return null;
   }
 
-  return {
-    id: empresa.id,
-    nome: empresa.nome,
-  };
+  return empresa;
 }
 
 export async function buscarConfiguracoes(empresaId: string) {
