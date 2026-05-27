@@ -8,7 +8,7 @@ import Graficos from './components/Graficos';
 import PorCategoria from './components/PorCategoria';
 import Relatorio from './components/Relatorio';
 import {
-  buscarEmpresaPrincipal,
+  buscarEmpresaDoUsuario,
   buscarConfiguracoes,
   buscarDespesasCadastradas,
   buscarLancamentos,
@@ -21,9 +21,36 @@ import {
   salvarConfiguracoesBanco,
 } from './lib/database';
 
+import { supabase } from './lib/supabase';
+
 export default function AppGestao() {
   // --- ESTADOS PRINCIPAIS ---
   const [mounted, setMounted] = useState(false);
+  const [acessoLiberado, setAcessoLiberado] = useState(false);
+  const [modoAuth, setModoAuth] = useState<'login' | 'cadastro'>('login');
+
+  const [loginEmail, setLoginEmail] = useState('');
+const [loginSenha, setLoginSenha] = useState('');
+
+const [mostrarSenhaLogin, setMostrarSenhaLogin] = useState(false);
+const [mostrarSenhaCadastro, setMostrarSenhaCadastro] = useState(false);
+const [mostrarConfirmarSenhaCadastro, setMostrarConfirmarSenhaCadastro] = useState(false);
+
+const [cadastroNome, setCadastroNome] = useState('');
+const [cadastroEmail, setCadastroEmail] = useState('');
+const [cadastroSenha, setCadastroSenha] = useState('');
+const [cadastroConfirmarSenha, setCadastroConfirmarSenha] = useState('');
+
+const [authErro, setAuthErro] = useState('');
+const [authMensagem, setAuthMensagem] = useState('');
+const [authLoading, setAuthLoading] = useState(false);
+
+const [modoRedefinirSenha, setModoRedefinirSenha] = useState(false);
+const [novaSenha, setNovaSenha] = useState('');
+const [confirmarNovaSenha, setConfirmarNovaSenha] = useState('');
+const [mostrarNovaSenha, setMostrarNovaSenha] = useState(false);
+const [mostrarConfirmarNovaSenha, setMostrarConfirmarNovaSenha] = useState(false);
+
   const [empresaId, setEmpresaId] = useState<string | null>(null);
   const [abaAtiva, setAbaAtiva] = useState('Dashboard');
   const [ajustesAberto, setAjustesAberto] = useState(false);
@@ -74,9 +101,28 @@ export default function AppGestao() {
   
   // 1. Carrega Configurações Globais
   // 1. Carrega Configurações Globais do Supabase
+
 useEffect(() => {
   const carregarConfiguracoesIniciais = async () => {
-    const empresa = await buscarEmpresaPrincipal();
+    const { data: sessaoAtual } = await supabase.auth.getSession();
+
+    let empresa = null;
+
+    if (sessaoAtual.session) {
+      const params = new URLSearchParams(window.location.search);
+      const hash = new URLSearchParams(window.location.hash.replace('#', ''));
+
+      const tipo = params.get('type') || hash.get('type');
+
+      if (tipo === 'recovery') {
+        setModoRedefinirSenha(true);
+        setAcessoLiberado(false);
+      } else {
+        setAcessoLiberado(true);
+      }
+
+      empresa = await buscarEmpresaDoUsuario(sessaoAtual.session.user.id);
+    }
 
     if (empresa) {
       setEmpresaId(empresa.id);
@@ -468,7 +514,551 @@ XLSX.writeFile(wb, `backup_${dataHoje}.xlsx`);
   const textMuted = darkMode ? 'text-slate-400' : 'text-slate-500';
   const textStrong = darkMode ? 'text-white' : 'text-slate-800';
 
+  const handleCadastroTeste = async () => {
+  setAuthErro('');
+  setAuthMensagem('');
+  setAuthLoading(true);
+
+  const nomeLimpo = cadastroNome.trim();
+  const emailLimpo = cadastroEmail.trim().toLowerCase();
+
+  if (!nomeLimpo) {
+    setAuthErro('Informe seu nome completo.');
+    setAuthLoading(false);
+    return;
+  }
+
+  if (!emailLimpo) {
+    setAuthErro('Informe seu email.');
+    setAuthLoading(false);
+    return;
+  }
+
+  if (!emailLimpo.includes('@') || !emailLimpo.includes('.')) {
+    setAuthErro('Informe um email válido.');
+    setAuthLoading(false);
+    return;
+  }
+
+  if (!cadastroSenha) {
+    setAuthErro('Crie uma senha.');
+    setAuthLoading(false);
+    return;
+  }
+
+  if (cadastroSenha.length < 8) {
+    setAuthErro('A senha deve ter pelo menos 8 caracteres.');
+    setAuthLoading(false);
+    return;
+  }
+
+  if (!cadastroConfirmarSenha) {
+    setAuthErro('Repita a senha para confirmação.');
+    setAuthLoading(false);
+    return;
+  }
+
+  if (cadastroSenha !== cadastroConfirmarSenha) {
+    setAuthErro('As senhas não coincidem.');
+    setAuthLoading(false);
+    return;
+  }
+
+  const { error } = await supabase.auth.signUp({
+    email: emailLimpo,
+    password: cadastroSenha,
+    options: {
+      data: {
+        nome: nomeLimpo,
+      },
+    },
+  });
+
+  const handleLogin = async () => {
+  setAuthErro('');
+  setAuthMensagem('');
+  setAuthLoading(true);
+
+  const emailLimpo = loginEmail.trim().toLowerCase();
+
+  if (!emailLimpo) {
+    setAuthErro('Informe seu email.');
+    setAuthLoading(false);
+    return;
+  }
+
+  if (!loginSenha) {
+    setAuthErro('Informe sua senha.');
+    setAuthLoading(false);
+    return;
+  }
+
+  const { error } = await supabase.auth.signInWithPassword({
+    email: emailLimpo,
+    password: loginSenha,
+  });
+
+  setAuthLoading(false);
+
+  if (error) {
+  console.error('Erro recuperação de senha:', error);
+  setAuthErro(`Erro Supabase: ${error.message}`);
+  return;
+}
+
+  setAcessoLiberado(true);
+};
+
+  setAuthLoading(false);
+
+  if (error) {
+    setAuthErro(error.message);
+    return;
+  }
+
+  setAuthMensagem('Cadastro criado com sucesso. Verifique seu email para confirmar a conta.');
+
+  setCadastroNome('');
+  setCadastroEmail('');
+  setCadastroSenha('');
+  setCadastroConfirmarSenha('');
+};
+
+const handleLogin = async () => {
+  setAuthErro('');
+  setAuthMensagem('');
+  setAuthLoading(true);
+
+  const emailLimpo = loginEmail.trim().toLowerCase();
+
+  if (!emailLimpo) {
+    setAuthErro('Informe seu email.');
+    setAuthLoading(false);
+    return;
+  }
+
+  if (!loginSenha) {
+    setAuthErro('Informe sua senha.');
+    setAuthLoading(false);
+    return;
+  }
+
+  const { error } = await supabase.auth.signInWithPassword({
+    email: emailLimpo,
+    password: loginSenha,
+  });
+
+  setAuthLoading(false);
+
+  if (error) {
+  console.error('Erro login:', error);
+  setAuthErro(`Erro Supabase: ${error.message}`);
+  return;
+}
+
+  setAcessoLiberado(true);
+};
+
+const handleLogout = async () => {
+  await supabase.auth.signOut();
+
+  setAcessoLiberado(false);
+  setLoginEmail('');
+  setLoginSenha('');
+  setAuthErro('');
+  setAuthMensagem('');
+};
+
+const handleRecuperarSenha = async () => {
+  setAuthErro('');
+  setAuthMensagem('');
+
+  const emailLimpo = loginEmail.trim().toLowerCase();
+
+  if (!emailLimpo) {
+    setAuthErro('Digite seu email no campo acima para recuperar a senha.');const { error } = await supabase.auth.resetPasswordForEmail(emailLimpo, {
+  redirectTo: `${window.location.origin}/`,
+});
+    return;
+  }
+
+  setAuthLoading(true);
+
+  const { error } = await supabase.auth.resetPasswordForEmail(emailLimpo, {
+    redirectTo: `${window.location.origin}`,
+  });
+
+  setAuthLoading(false);
+
+  if (error) {
+  console.error('Erro recuperação de senha:', error);
+  setAuthErro(`Erro Supabase: ${error.message}`);
+  return;
+}
+
+  setAuthMensagem('Enviamos um email para você redefinir sua senha.');
+};
+
+const handleAtualizarSenha = async () => {
+  setAuthErro('');
+  setAuthMensagem('');
+
+  if (!novaSenha) {
+    setAuthErro('Digite a nova senha.');
+    return;
+  }
+
+  if (novaSenha.length < 8) {
+    setAuthErro('A nova senha deve ter pelo menos 8 caracteres.');
+    return;
+  }
+
+  if (!confirmarNovaSenha) {
+    setAuthErro('Confirme a nova senha.');
+    return;
+  }
+
+  if (novaSenha !== confirmarNovaSenha) {
+    setAuthErro('As senhas não coincidem.');
+    return;
+  }
+
+  setAuthLoading(true);
+
+  const { error } = await supabase.auth.updateUser({
+    password: novaSenha,
+  });
+
+  setAuthLoading(false);
+
+  if (error) {
+    setAuthErro('Não foi possível atualizar a senha. Tente solicitar um novo link.');
+    return;
+  }
+
+  setAuthMensagem('Senha atualizada com sucesso. Faça login novamente.');
+
+  await supabase.auth.signOut();
+
+  setNovaSenha('');
+  setConfirmarNovaSenha('');
+  setModoRedefinirSenha(false);
+  setModoAuth('login');
+  setAcessoLiberado(false);
+};
+
   if (!mounted) return null; 
+
+  if (!acessoLiberado) {
+  return (
+    <main className="relative min-h-screen overflow-hidden font-sans">
+      <div
+        className="absolute inset-0 bg-cover bg-center"
+        style={{ backgroundImage: "url('/images/bg-avantalab.png')" }}
+      />
+
+      <div className="absolute inset-0 bg-white/10" />
+
+      <section className="relative z-10 flex min-h-screen items-center px-8 py-10 lg:px-20">
+        <div className="w-full max-w-7xl">
+          <div className="w-full max-w-md rounded-3xl border border-white/30 bg-white/70 p-8 shadow-2xl backdrop-blur-xl">
+            <div className="mb-7">
+              <p className="mb-2 text-xs font-bold uppercase tracking-[0.35em] text-sky-700">
+                AvantaLab Gestão
+              </p>
+
+              <h1 className="text-3xl font-black text-slate-900">
+  {modoRedefinirSenha
+    ? 'Criar nova senha'
+    : modoAuth === 'login'
+      ? 'Acesse sua conta'
+      : 'Criar cadastro'}
+</h1>
+
+              <p className="mt-2 text-sm leading-relaxed text-slate-600">
+                {modoAuth === 'login'
+                  ? 'Entre para acompanhar sua gestão financeira, lançamentos, relatórios e evolução operacional.'
+                  : 'Crie seu acesso para começar a usar o sistema de gestão da AvantaLab.'}
+              </p>
+            </div>
+
+          {modoRedefinirSenha ? (
+  <div className="space-y-4">
+    <div>
+      <label className="mb-1 block text-sm font-semibold text-slate-700">
+        Nova senha
+      </label>
+
+      <div className="relative">
+        <input
+          type={mostrarNovaSenha ? 'text' : 'password'}
+          placeholder="Digite a nova senha"
+          value={novaSenha}
+          onChange={(e) => setNovaSenha(e.target.value)}
+          className="w-full rounded-xl border border-slate-300 bg-white/90 px-4 py-3 pr-14 text-slate-800 outline-none transition focus:border-sky-600 focus:ring-2 focus:ring-sky-600/20"
+        />
+
+        <button
+          type="button"
+          onClick={() => setMostrarNovaSenha(!mostrarNovaSenha)}
+          className="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-500 hover:text-sky-700"
+        >
+          {mostrarNovaSenha ? 'Ocultar' : 'Ver'}
+        </button>
+      </div>
+    </div>
+
+    <div>
+      <label className="mb-1 block text-sm font-semibold text-slate-700">
+        Confirmar nova senha
+      </label>
+
+      <div className="relative">
+        <input
+          type={mostrarConfirmarNovaSenha ? 'text' : 'password'}
+          placeholder="Repita a nova senha"
+          value={confirmarNovaSenha}
+          onChange={(e) => setConfirmarNovaSenha(e.target.value)}
+          className="w-full rounded-xl border border-slate-300 bg-white/90 px-4 py-3 pr-14 text-slate-800 outline-none transition focus:border-sky-600 focus:ring-2 focus:ring-sky-600/20"
+        />
+
+        <button
+          type="button"
+          onClick={() => setMostrarConfirmarNovaSenha(!mostrarConfirmarNovaSenha)}
+          className="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-500 hover:text-sky-700"
+        >
+          {mostrarConfirmarNovaSenha ? 'Ocultar' : 'Ver'}
+        </button>
+      </div>
+    </div>
+
+    {authErro && (
+      <div className="rounded-xl bg-red-100 px-4 py-3 text-sm font-semibold text-red-700">
+        {authErro}
+      </div>
+    )}
+
+    {authMensagem && (
+      <div className="rounded-xl bg-green-100 px-4 py-3 text-sm font-semibold text-green-700">
+        {authMensagem}
+      </div>
+    )}
+
+    <button
+      type="button"
+      onClick={handleAtualizarSenha}
+      disabled={authLoading}
+      className="w-full rounded-xl bg-slate-900 px-4 py-3 font-bold text-white shadow-lg transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
+    >
+      {authLoading ? 'Salvando...' : 'Salvar nova senha'}
+    </button>
+  </div>
+) : modoAuth === 'login' ? (
+  <div className="space-y-4">
+
+        {/* ================= INÍCIO DO FORMULÁRIO DE LOGIN ================= */}
+        
+                <div>
+                  <label className="mb-1 block text-sm font-semibold text-slate-700">
+                    Email
+                  </label>
+                  <input
+  type="email"
+  placeholder="seuemail@exemplo.com"
+  value={loginEmail}
+  onChange={(e) => setLoginEmail(e.target.value)}
+  className="w-full rounded-xl border border-slate-300 bg-white/90 px-4 py-3 text-slate-800 outline-none transition focus:border-sky-600 focus:ring-2 focus:ring-sky-600/20"
+/>
+                </div>
+
+                <div>
+                  <label className="mb-1 block text-sm font-semibold text-slate-700">
+                    Senha
+                  </label>
+                  <div className="relative">
+  <input
+    type={mostrarSenhaLogin ? 'text' : 'password'}
+    placeholder="Digite sua senha"
+    value={loginSenha}
+    onChange={(e) => setLoginSenha(e.target.value)}
+    className="w-full rounded-xl border border-slate-300 bg-white/90 px-4 py-3 pr-14 text-slate-800 outline-none transition focus:border-sky-600 focus:ring-2 focus:ring-sky-600/20"
+  />
+
+  <button
+    type="button"
+    onClick={() => setMostrarSenhaLogin(!mostrarSenhaLogin)}
+    className="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-500 hover:text-sky-700"
+  >
+    {mostrarSenhaLogin ? 'Ocultar' : 'Ver'}
+  </button>
+</div>
+                </div>
+
+                <div className="text-right">
+  <button
+    type="button"
+    onClick={handleRecuperarSenha}
+    className="text-xs font-bold text-sky-700 hover:underline"
+  >
+    Esqueci minha senha
+  </button>
+</div>
+
+{authErro && (
+  <div className="rounded-xl bg-red-100 px-4 py-3 text-sm font-semibold text-red-700">
+    {authErro}
+  </div>
+)}
+
+{authMensagem && (
+  <div className="rounded-xl bg-green-100 px-4 py-3 text-sm font-semibold text-green-700">
+    {authMensagem}
+  </div>
+)}
+
+                <button
+  type="button"
+  onClick={handleLogin}
+  disabled={authLoading}
+  className="w-full rounded-xl bg-slate-900 px-4 py-3 font-bold text-white shadow-lg transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
+>
+  {authLoading ? 'Entrando...' : 'Entrar'}
+</button>
+
+                <button
+                  type="button"
+                  className="w-full rounded-xl border border-slate-300 bg-white/80 px-4 py-3 font-semibold text-slate-700 transition hover:bg-white"
+                >
+                  Continuar com Google
+                </button>
+
+                <div className="pt-2 text-center text-sm text-slate-600">
+                  Ainda não tem conta?{' '}
+                  <button
+                    type="button"
+                    onClick={() => setModoAuth('cadastro')}
+                    className="font-bold text-sky-700 hover:underline"
+                  >
+                    Criar cadastro
+                  </button>
+                </div>
+
+                    {/* ================= FIM DO FORMULÁRIO DE LOGIN ================= */}
+
+              </div>
+            ) : (
+              <div className="space-y-4">
+                <div>
+                  <label className="mb-1 block text-sm font-semibold text-slate-700">
+                    Nome
+                  </label>
+                  <input
+  type="text"
+  placeholder="Seu nome completo"
+  value={cadastroNome}
+  onChange={(e) => setCadastroNome(e.target.value)}
+  className="w-full rounded-xl border border-slate-300 bg-white/90 px-4 py-3 text-slate-800 outline-none transition focus:border-sky-600 focus:ring-2 focus:ring-sky-600/20"
+/>
+                </div>
+
+                <div>
+                  <label className="mb-1 block text-sm font-semibold text-slate-700">
+                    Email
+                  </label>
+                  <input
+  type="email"
+  placeholder="seuemail@exemplo.com"
+  value={cadastroEmail}
+  onChange={(e) => setCadastroEmail(e.target.value)}
+  className="w-full rounded-xl border border-slate-300 bg-white/90 px-4 py-3 text-slate-800 outline-none transition focus:border-sky-600 focus:ring-2 focus:ring-sky-600/20"
+/>
+                </div>
+
+                <div>
+                  <label className="mb-1 block text-sm font-semibold text-slate-700">
+                    Senha
+                  </label>
+                  <div className="relative">
+  <input
+    type={mostrarSenhaCadastro ? 'text' : 'password'}
+    placeholder="Crie uma senha"
+    value={cadastroSenha}
+    onChange={(e) => setCadastroSenha(e.target.value)}
+    className="w-full rounded-xl border border-slate-300 bg-white/90 px-4 py-3 pr-14 text-slate-800 outline-none transition focus:border-sky-600 focus:ring-2 focus:ring-sky-600/20"
+  />
+
+  <button
+    type="button"
+    onClick={() => setMostrarSenhaCadastro(!mostrarSenhaCadastro)}
+    className="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-500 hover:text-sky-700"
+  >
+    {mostrarSenhaCadastro ? 'Ocultar' : 'Ver'}
+  </button>
+</div>
+                </div>
+
+                <div>
+                  <label className="mb-1 block text-sm font-semibold text-slate-700">
+                    Confirmar senha
+                  </label>
+                  <div className="relative">
+  <input
+    type={mostrarConfirmarSenhaCadastro ? 'text' : 'password'}
+    placeholder="Repita a senha"
+    value={cadastroConfirmarSenha}
+    onChange={(e) => setCadastroConfirmarSenha(e.target.value)}
+    className="w-full rounded-xl border border-slate-300 bg-white/90 px-4 py-3 pr-14 text-slate-800 outline-none transition focus:border-sky-600 focus:ring-2 focus:ring-sky-600/20"
+  />
+
+  <button
+    type="button"
+    onClick={() => setMostrarConfirmarSenhaCadastro(!mostrarConfirmarSenhaCadastro)}
+    className="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-500 hover:text-sky-700"
+  >
+    {mostrarConfirmarSenhaCadastro ? 'Ocultar' : 'Ver'}
+  </button>
+</div>
+                </div>
+
+{authErro && (
+  <div className="rounded-xl bg-red-100 px-4 py-3 text-sm font-semibold text-red-700">
+    {authErro}
+  </div>
+)}
+
+{authMensagem && (
+  <div className="rounded-xl bg-green-100 px-4 py-3 text-sm font-semibold text-green-700">
+    {authMensagem}
+  </div>
+)}
+
+                <button
+  type="button"
+  onClick={handleCadastroTeste}
+  disabled={authLoading}
+  className="w-full rounded-xl bg-slate-900 px-4 py-3 font-bold text-white shadow-lg transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
+>
+  {authLoading ? 'Criando conta...' : 'Criar conta'}
+</button>
+
+                <div className="pt-2 text-center text-sm text-slate-600">
+                  Já tem conta?{' '}
+                  <button
+                    type="button"
+                    onClick={() => setModoAuth('login')}
+                    className="font-bold text-sky-700 hover:underline"
+                  >
+                    Entrar
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      </section>
+    </main>
+  );
+}
 
   return (
     <div className={`min-h-screen flex flex-col font-sans transition-colors duration-300 ${bgMain}`}>
@@ -609,6 +1199,18 @@ XLSX.writeFile(wb, `backup_${dataHoje}.xlsx`);
         </nav>
 
         <div className="flex items-center space-x-6 relative">
+
+          <button
+  type="button"
+  onClick={handleLogout}
+  className={`px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wide border shadow-sm transition-colors ${
+    darkMode
+      ? 'bg-slate-800 border-slate-700 text-slate-300 hover:bg-slate-700'
+      : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
+  }`}
+>
+  Sair
+</button>
 
           {/* SELETOR DE ANO */}
           <div className="flex flex-col items-center border-l border-slate-200/20 pl-6 pr-2">

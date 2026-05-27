@@ -34,6 +34,47 @@ export async function buscarEmpresaPrincipal() {
   return novaEmpresa;
 }
 
+export async function buscarEmpresaDoUsuario(usuarioId: string) {
+  const { data, error } = await supabase
+    .from('usuarios_empresas')
+    .select(`
+      empresa_id,
+      papel,
+      empresas (
+        id,
+        nome
+      )
+    `)
+    .eq('usuario_id', usuarioId)
+    .limit(1)
+    .maybeSingle();
+
+  if (error) {
+    console.error('Erro ao buscar empresa do usuário:', error);
+    alert(`Erro ao buscar empresa do usuário: ${error.message}`);
+    return null;
+  }
+
+  if (!data || !data.empresas) {
+    console.warn('Usuário sem empresa vinculada.');
+    return null;
+  }
+
+  const empresa = Array.isArray(data.empresas)
+    ? data.empresas[0]
+    : data.empresas;
+
+  if (!empresa) {
+    console.warn('Empresa vinculada não encontrada.');
+    return null;
+  }
+
+  return {
+    id: empresa.id,
+    nome: empresa.nome,
+  };
+}
+
 export async function buscarConfiguracoes(empresaId: string) {
   const { data, error } = await supabase
     .from('configuracoes')
