@@ -19,7 +19,7 @@ import {
   salvarConfiguracoesBanco,
 } from './lib/database';
 
-
+import { supabase } from './lib/supabase';
 
 export default function AppGestao() {
 
@@ -54,6 +54,7 @@ const [mostrarNovaSenha, setMostrarNovaSenha] = useState(false);
 const [mostrarConfirmarNovaSenha, setMostrarConfirmarNovaSenha] = useState(false);
 
   const [empresaId, setEmpresaId] = useState<string | null>(null);
+  const [acessoNaoConfigurado, setAcessoNaoConfigurado] = useState(false);
   const [abaAtiva, setAbaAtiva] = useState('Dashboard');
   const [ajustesAberto, setAjustesAberto] = useState(false);
   const [duplicadosAtivo, setDuplicadosAtivo] = useState(false);
@@ -138,7 +139,16 @@ useEffect(() => {
       }
 
       empresa = await buscarEmpresaDoUsuario(sessaoAtual.session.user.id);
+
+if (!empresa) {
+  setAcessoNaoConfigurado(true);
+  setAcessoLiberado(false);
+} else {
+  setAcessoNaoConfigurado(false);
+}
+
     }
+
 
     if (empresa) {
       setEmpresaId(empresa.id);
@@ -236,15 +246,7 @@ useEffect(() => {
   mounted
 ]);
 
-  // 4. Salva Dados Financeiros do Ano Atual
-  useEffect(() => {
-    if (mounted) {
-      localStorage.setItem(`appGestaoData_${anoSelecionado}`, JSON.stringify({
-        lancamentos, faturamentos
-      }));
-    }
-  }, [lancamentos, faturamentos, anoSelecionado, mounted]);
-
+  
 // 5. Auto-fechar o Menu de Ajustes após tempo inativo
   useEffect(() => {
     // Se o menu estiver aberto, inicia o cronômetro
@@ -413,107 +415,197 @@ useEffect(() => {
 };
 
   // ================= FUNÇÃO DE BACKUP EXCEL =================
-  const gerarBackupExcel = () => {
-    const dadosResumo: any[] = [];
-    const dadosLancamentos: any[] = [];
-    const anosNoBanco: string[] = [];
+  const gerarBackupExcel = async () => {
+  if (!empresaId) {
+    alert('Empresa não carregada. Faça login novamente e tente gerar o backup.');
+    return;
+  }
 
-    for (let i = 0; i < localStorage.length; i++) {
-      const key = localStorage.key(i);
-      if (key && key.startsWith('appGestaoData_')) {
-        anosNoBanco.push(key.replace('appGestaoData_', ''));
-      }
-    }
-    anosNoBanco.sort(); 
+  const dadosResumo: any[] = [];
+  const dadosLancamentos: any[] = [];
 
-    anosNoBanco.forEach(ano => {
-      const savedData = JSON.parse(localStorage.getItem(`appGestaoData_${ano}`) || '{}');
-      const lancsAno = savedData.lancamentos || [];
-      const fatsAno = savedData.faturamentos || {};
+  const { data: lancamentosBanco, error: erroLancamentos } = await supabase
+    .from('lancamentos')
+    .select('*')
+    .eq('empresa_id', empresaId)
+    .order('ano', { ascending: true })
+    .order('mes', { ascending: true })
+    .order('dia', { ascending: true });
 
-      let totalFatAno = 0, totalDespAno = 0, totalLucroAno = 0, totalEbitdaAno = 0;
+  if (erroLancamentos) {
+    console.error('Erro ao buscar lançamentos para backup:', erroLancamentos);
+    alert(`Erro ao buscar lançamentos para backup: ${erroLancamentos.message}`);
+    return;
+  }
 
-      lancsAno.forEach((l: any) => {
-        dadosLancamentos.push({
-          Ano: ano, Mês: l.mes, Dia: l.dia, Despesa: l.despesa,
-          Descrição: l.descricao || '-', 'Valor (R$)': l.valor
-        });
+  const { data: faturamentosBanco, error: erroFaturamentos } = await supabase
+    .from('faturamentos')
+    .select('*')
+    .eq('empresa_id', empresaId)
+    .order('ano', { ascending: true });
+
+  if (erroFaturamentos) {
+    console.error('Erro ao buscar faturamentos para backup:', erroFaturamentos);
+    alert(`Erro ao buscar faturamentos para backup: ${erroFaturamentos.message}`);
+    return;
+  }
+
+  const lancamentosBackup = lancamentosBanco || [];
+  const faturamentosBackup = faturamentosBanco || [];
+
+  const anosNoBanco = Array.from(
+    new Set([
+      ...lancamentosBackup.map((l: any) => String(l.ano)),
+      ...faturamentosBackup.map((f: any) => String(f.ano)),
+    ])
+  ).sort();
+
+  if (anosNoBanco.length === 0) {
+    alert('Nenhum dado encontrado no Supabase para gerar backup.');
+    return;
+  }
+
+  anosNoBanco.forEach((ano) => {
+    const lancsAno = lancamentosBackup.filter((l: any) => String(l.ano) === ano);
+    const fatsAno = faturamentosBackup.filter((f: any) => String(f.ano) === ano);
+
+    const faturamentosPorMes: Record<string, number> = {};
+
+    fatsAno.forEach((f: any) => {
+      faturamentosPorMes[f.mes] = Number(f.valor || 0);
+    });
+
+    let totalFatAno = 0;
+    let totalDespAno = 0;
+    let totalLucroAno = 0;
+    let totalEbitdaAno = 0;
+
+    lancsAno.forEach((l: any) => {
+      dadosLancamentos.push({
+        Ano: ano,
+        Mês: l.mes,
+        Dia: l.dia,
+        Despesa: l.despesa_nome,
+        Descrição: l.descricao || '-',
+        'Valor (R$)': Number(l.valor || 0),
       });
+    });
 
-      meses.forEach(mes => {
-        const faturamento = fatsAno[mes] || 0;
-        let despesas = 0;
-        let exclusoesEbitda = 0;
+    meses.forEach((mes) => {
+      const faturamento = faturamentosPorMes[mes] || 0;
+      const lancsMes = lancsAno.filter((l: any) => l.mes === mes);
 
-        lancsAno.filter((l: any) => l.mes === mes).forEach((l: any) => {
-          despesas += l.valor;
-          const despesaCat = despesasCadastradas.find(d => d.nome === l.despesa)?.categoria || 'Outros';
-          if (['Amortização', 'Depreciação', 'Despesas Financeiras', 'Imposto sobre Lucro'].includes(despesaCat)) {
-            exclusoesEbitda += l.valor;
-          }
-        });
+      let despesas = 0;
+      let exclusoesEbitda = 0;
 
-        const lucro = faturamento - despesas;
-        const ebitda = lucro + exclusoesEbitda;
+      lancsMes.forEach((l: any) => {
+        const valor = Number(l.valor || 0);
+        despesas += valor;
 
-        if (faturamento > 0 || despesas > 0) {
-          dadosResumo.push({ Ano: ano, Mês: mes, 'Faturamento (R$)': faturamento, 'Despesas (R$)': despesas, 'Lucro (R$)': lucro, 'EBITDA (R$)': ebitda });
-          totalFatAno += faturamento; totalDespAno += despesas; totalLucroAno += lucro; totalEbitdaAno += ebitda;
+        const despesaCat =
+          despesasCadastradas.find((d) => d.nome === l.despesa_nome)?.categoria ||
+          'Outros';
+
+        if (
+          [
+            'Amortização',
+            'Depreciação',
+            'Despesas Financeiras',
+            'Imposto sobre Lucro',
+          ].includes(despesaCat)
+        ) {
+          exclusoesEbitda += valor;
         }
       });
 
-      if (totalFatAno > 0 || totalDespAno > 0) {
-        dadosResumo.push({ Ano: ano, Mês: 'TOTAL ANUAL', 'Faturamento (R$)': totalFatAno, 'Despesas (R$)': totalDespAno, 'Lucro (R$)': totalLucroAno, 'EBITDA (R$)': totalEbitdaAno });
-        dadosResumo.push({ Ano: '', Mês: '', 'Faturamento (R$)': null, 'Despesas (R$)': null, 'Lucro (R$)': null, 'EBITDA (R$)': null }); 
+      const lucro = faturamento - despesas;
+      const ebitda = lucro + exclusoesEbitda;
+
+      if (faturamento > 0 || despesas > 0) {
+        dadosResumo.push({
+          Ano: ano,
+          Mês: mes,
+          'Faturamento (R$)': faturamento,
+          'Despesas (R$)': despesas,
+          'Lucro (R$)': lucro,
+          'EBITDA (R$)': ebitda,
+        });
+
+        totalFatAno += faturamento;
+        totalDespAno += despesas;
+        totalLucroAno += lucro;
+        totalEbitdaAno += ebitda;
       }
     });
 
-    if (dadosResumo.length === 0) return alert("Nenhum dado encontrado para backup.");
+    if (totalFatAno > 0 || totalDespAno > 0) {
+      dadosResumo.push({
+        Ano: ano,
+        Mês: 'TOTAL ANUAL',
+        'Faturamento (R$)': totalFatAno,
+        'Despesas (R$)': totalDespAno,
+        'Lucro (R$)': totalLucroAno,
+        'EBITDA (R$)': totalEbitdaAno,
+      });
 
-    const wb = XLSX.utils.book_new();
+      dadosResumo.push({
+        Ano: '',
+        Mês: '',
+        'Faturamento (R$)': null,
+        'Despesas (R$)': null,
+        'Lucro (R$)': null,
+        'EBITDA (R$)': null,
+      });
+    }
+  });
 
-const wsResumo = XLSX.utils.json_to_sheet(dadosResumo);
-XLSX.utils.book_append_sheet(wb, wsResumo, "Resumo Financeiro");
+  const wb = XLSX.utils.book_new();
 
-if (dadosLancamentos.length > 0) {
-  const wsLancs = XLSX.utils.json_to_sheet(dadosLancamentos);
-  XLSX.utils.book_append_sheet(wb, wsLancs, "Lançamentos Detalhados");
-}
+  const wsResumo = XLSX.utils.json_to_sheet(dadosResumo);
+  XLSX.utils.book_append_sheet(wb, wsResumo, 'Resumo Financeiro');
 
-// Aba de configurações gerais, incluindo logo
-const dadosConfiguracoes = [
-  {
-    chave: 'logoUrl',
-    valor: logoUrl || '',
-  },
-  {
-    chave: 'logoSettings',
-    valor: JSON.stringify(logoSettings || { scale: 100, x: 0, y: 0 }),
-  },
-  {
-    chave: 'corPrimaria',
-    valor: corPrimaria || '#003E73',
-  },
-  {
-    chave: 'darkMode',
-    valor: String(darkMode),
-  },
-  {
-    chave: 'duplicadosAtivo',
-    valor: String(duplicadosAtivo),
-  },
-  {
-    chave: 'despesasCadastradas',
-    valor: JSON.stringify(despesasCadastradas || []),
-  },
-];
+  if (dadosLancamentos.length > 0) {
+    const wsLancs = XLSX.utils.json_to_sheet(dadosLancamentos);
+    XLSX.utils.book_append_sheet(wb, wsLancs, 'Lançamentos Detalhados');
+  }
 
-const wsConfig = XLSX.utils.json_to_sheet(dadosConfiguracoes);
-XLSX.utils.book_append_sheet(wb, wsConfig, "Configurações");
+  const dadosConfiguracoes = [
+    {
+      chave: 'empresaId',
+      valor: empresaId,
+    },
+    {
+      chave: 'logoUrl',
+      valor: logoUrl || '',
+    },
+    {
+      chave: 'logoSettings',
+      valor: JSON.stringify(logoSettings || { scale: 100, x: 0, y: 0 }),
+    },
+    {
+      chave: 'corPrimaria',
+      valor: corPrimaria || '#003E73',
+    },
+    {
+      chave: 'darkMode',
+      valor: String(darkMode),
+    },
+    {
+      chave: 'duplicadosAtivo',
+      valor: String(duplicadosAtivo),
+    },
+    {
+      chave: 'despesasCadastradas',
+      valor: JSON.stringify(despesasCadastradas || []),
+    },
+  ];
 
-const dataHoje = new Date().toISOString().split('T')[0]; 
-XLSX.writeFile(wb, `backup_${dataHoje}.xlsx`);
-  };
+  const wsConfig = XLSX.utils.json_to_sheet(dadosConfiguracoes);
+  XLSX.utils.book_append_sheet(wb, wsConfig, 'Configurações');
+
+  const dataHoje = new Date().toISOString().split('T')[0];
+  XLSX.writeFile(wb, `backup_avantalab_${dataHoje}.xlsx`);
+};
 
   const analiseDespesas = useMemo(() => { 
     const totais: Record<string, number> = {}; 
@@ -679,6 +771,7 @@ const handleLogout = async () => {
   await supabase.auth.signOut();
 
   setAcessoLiberado(false);
+  setAcessoNaoConfigurado(false);
   setLoginEmail('');
   setLoginSenha('');
   setAuthErro('');
@@ -782,7 +875,63 @@ const handleGoogleLogin = async () => {
   }
 };
 
-  if (!mounted) return null; 
+  if (!mounted) return null;
+
+
+if (acessoNaoConfigurado) {
+  return (
+    <main className="relative min-h-screen overflow-hidden font-sans">
+      <div
+        className="absolute inset-0 bg-cover bg-center"
+        style={{ backgroundImage: "url('/images/bg-avantalab.png')" }}
+      />
+
+      <div className="absolute inset-0 bg-white/70 backdrop-blur-sm" />
+
+      <section className="relative z-10 flex min-h-screen items-center justify-center px-6 py-10">
+        <div className="w-full max-w-md rounded-3xl border border-slate-200 bg-white/90 p-8 text-center shadow-2xl">
+          <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-2xl bg-amber-100">
+            <svg
+              className="h-8 w-8 text-amber-700"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
+                d="M12 9v4m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"
+              />
+            </svg>
+          </div>
+
+          <p className="mb-2 text-xs font-bold uppercase tracking-[0.28em] text-sky-700">
+            AvantaLab Gestão
+          </p>
+
+          <h1 className="text-2xl font-black leading-tight text-slate-900">
+            Acesso ainda não configurado
+          </h1>
+
+          <p className="mt-4 text-sm leading-relaxed text-slate-600">
+            Sua conta foi autenticada, mas ainda não encontramos um ambiente de trabalho ativo
+            para ela. Tente sair e entrar novamente. Se o problema continuar, entre em contato
+            com o suporte.
+          </p>
+
+          <button
+            type="button"
+            onClick={handleLogout}
+            className="mt-6 w-full rounded-xl bg-slate-900 px-4 py-3 font-bold text-white shadow-lg transition hover:bg-slate-800"
+          >
+            Voltar para o login
+          </button>
+        </div>
+      </section>
+    </main>
+  );
+}
 
 if (isTelaMobile) {
   return (
@@ -1034,6 +1183,10 @@ if (isTelaMobile) {
     {googleLoading ? 'Conectando ao Google...' : 'Entrar ou cadastrar com Google'}
   </span>
 </button>
+
+<p className="-mt-2 text-center text-[11px] leading-snug text-slate-500">
+  Se este for seu primeiro acesso com este email, uma nova conta será criada automaticamente.
+</p>
 
                 <div className="pt-2 text-center text-sm text-slate-600">
                   Ainda não tem conta?{' '}
