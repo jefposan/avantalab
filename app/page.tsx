@@ -60,6 +60,8 @@ const [mostrarConfirmarNovaSenha, setMostrarConfirmarNovaSenha] = useState(false
   const [duplicadosAtivo, setDuplicadosAtivo] = useState(false);
   const [darkMode, setDarkMode] = useState(false);
   const [corPrimaria, setCorPrimaria] = useState('#003E73');
+  const [corTemporaria, setCorTemporaria] = useState('#003E73');
+  const [statusConfig, setStatusConfig] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
   const [mesAtivo, setMesAtivo] = useState<string | null>(null);
   
 
@@ -99,6 +101,25 @@ const [mostrarConfirmarNovaSenha, setMostrarConfirmarNovaSenha] = useState(false
   const [valorNumericoRaw, setValorNumericoRaw] = useState(0);
 
   const meses = ['JANEIRO', 'FEVEREIRO', 'MARÇO', 'ABRIL', 'MAIO', 'JUNHO', 'JULHO', 'AGOSTO', 'SETEMBRO', 'OUTUBRO', 'NOVEMBRO', 'DEZEMBRO'];
+
+const corEhClara = (hex: string) => {
+  const cor = hex.replace('#', '');
+
+  if (cor.length !== 6) return false;
+
+  const r = parseInt(cor.substring(0, 2), 16);
+  const g = parseInt(cor.substring(2, 4), 16);
+  const b = parseInt(cor.substring(4, 6), 16);
+
+  const brilho = (r * 299 + g * 587 + b * 114) / 1000;
+
+  return brilho > 180;
+};
+
+const textoSobreCorPrimaria = corEhClara(corPrimaria) ? '#0f172a' : '#ffffff';
+const bordaSobreCorPrimaria = corEhClara(corPrimaria)
+  ? 'rgba(15, 23, 42, 0.25)'
+  : 'rgba(255, 255, 255, 0.30)';
 
 useEffect(() => {
   const verificarTela = () => {
@@ -157,7 +178,10 @@ if (!empresa) {
       const despesas = await buscarDespesasCadastradas(empresa.id);
 
       if (config) {
-        if (config.cor_primaria) setCorPrimaria(config.cor_primaria);
+        if (config.cor_primaria) {
+  setCorPrimaria(config.cor_primaria);
+  setCorTemporaria(config.cor_primaria);
+}
         if (config.dark_mode !== undefined) setDarkMode(config.dark_mode);
         if (config.duplicados_ativo !== undefined) setDuplicadosAtivo(config.duplicados_ativo);
         if (config.logo_url) setLogoUrl(config.logo_url);
@@ -223,8 +247,12 @@ useEffect(() => {
 useEffect(() => {
   if (!mounted || !empresaId) return;
 
+  let ativo = true;
+
   const salvarConfiguracoes = async () => {
-    await salvarConfiguracoesBanco({
+    setStatusConfig('saving');
+
+    const resultado = await salvarConfiguracoesBanco({
       empresaId,
       corPrimaria,
       darkMode,
@@ -232,19 +260,30 @@ useEffect(() => {
       logoUrl,
       logoSettings,
     });
+
+    if (!ativo) return;
+
+    if (resultado) {
+  setStatusConfig('saved');
+
+  
+  setTimeout(() => {
+    if (ativo) setStatusConfig('idle');
+  }, 2200);
+} else {
+  setStatusConfig('error');
+}
   };
 
-  salvarConfiguracoes();
-}, [
-  empresaId,
-  despesasCadastradas,
-  logoUrl,
-  logoSettings,
-  corPrimaria,
-  darkMode,
-  duplicadosAtivo,
-  mounted
-]);
+  const timer = setTimeout(() => {
+    salvarConfiguracoes();
+  }, 500);
+
+  return () => {
+    ativo = false;
+    clearTimeout(timer);
+  };
+}, [corPrimaria, darkMode, duplicadosAtivo, logoUrl, logoSettings, mounted, empresaId]);
 
   
 // 5. Auto-fechar o Menu de Ajustes após tempo inativo
@@ -1429,9 +1468,10 @@ if (isTelaMobile) {
           : 'bg-white hover:bg-slate-50 text-slate-600 border-slate-200 shadow hover:shadow-md'
     }`}
     style={{
-      backgroundColor: abaAtiva === 'Dashboard' && !mesAtivo ? corPrimaria : '',
-      borderColor: abaAtiva === 'Dashboard' && !mesAtivo ? corPrimaria : '',
-    }}
+  backgroundColor: abaAtiva === 'Dashboard' && !mesAtivo ? corPrimaria : '',
+  borderColor: abaAtiva === 'Dashboard' && !mesAtivo ? corPrimaria : '',
+  color: abaAtiva === 'Dashboard' && !mesAtivo ? textoSobreCorPrimaria : '',
+}}
   >
     Home
   </button>
@@ -1447,10 +1487,11 @@ if (isTelaMobile) {
                     ? 'bg-slate-800 hover:bg-slate-700 text-slate-300 border-slate-700 shadow' 
                     : 'bg-white hover:bg-slate-50 text-slate-600 border-slate-200 shadow hover:shadow-md'
               }`} 
-              style={{ 
-                backgroundColor: abaAtiva === item ? corPrimaria : '',
-                borderColor: abaAtiva === item ? corPrimaria : ''
-              }} 
+              style={{
+  backgroundColor: abaAtiva === item ? corPrimaria : '',
+  borderColor: abaAtiva === item ? corPrimaria : '',
+  color: abaAtiva === item ? textoSobreCorPrimaria : '',
+}}
               onMouseOver={e => { if(abaAtiva !== item) e.currentTarget.style.borderColor = corPrimaria }} 
               onMouseOut={e => { if(abaAtiva !== item) e.currentTarget.style.borderColor = darkMode ? '#334155' : '#e2e8f0' }}
             >
@@ -1502,10 +1543,11 @@ if (isTelaMobile) {
   onClick={() => setAjustesAberto(!ajustesAberto)}
   className="group relative flex items-center gap-2 rounded-full px-3 py-1.5 text-white shadow-md transition-all duration-300 hover:scale-[1.02] hover:shadow-lg active:scale-[0.98]"
   style={{
-    background: `linear-gradient(135deg, ${corPrimaria}, ${corPrimaria}dd)`,
-    boxShadow: `0 5px 14px ${corPrimaria}35`,
-    border: '1px solid rgba(255,255,255,0.22)',
-  }}
+  background: `linear-gradient(135deg, ${corPrimaria}, ${corPrimaria}dd)`,
+  boxShadow: `0 5px 14px ${corPrimaria}35`,
+  border: `1px solid ${bordaSobreCorPrimaria}`,
+  color: textoSobreCorPrimaria,
+}}
   title="Abrir ajustes"
 >
   <span className="absolute inset-0 rounded-full bg-white/10 opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
@@ -1560,48 +1602,71 @@ if (isTelaMobile) {
       </header>
 
       {/* ================= MENU DE AJUSTES GERAL ================= */}
-      {ajustesAberto && (
-        <div className="print-ocultar bg-slate-900 text-white p-4 shadow-inner border-t border-slate-700 transition-all z-20" style={{ borderTopColor: corPrimaria, borderTopWidth: '2px' }}>
-          
-          {/* Adicionado overflow-x-auto e removido flex-wrap para forçar 1 linha */}
-          <div className="flex justify-between items-center max-w-7xl mx-auto gap-4 overflow-x-auto custom-scroll pb-1">
-            
-            {/* GRUPO DA ESQUERDA (Botões menores: text-xs, py-1.5) */}
-            <div className="flex items-center gap-3">
-              <button onClick={() => setModalDespesasBase(true)} className="whitespace-nowrap bg-slate-800 hover:bg-slate-700 px-3 py-1.5 rounded-lg border transition-colors font-bold shadow flex items-center gap-1.5 text-xs" style={{ borderColor: corPrimaria }}>
-                <svg className="w-3.5 h-3.5" fill="none" stroke={corPrimaria} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4"></path></svg>
-                Cadastrar Despesas
-              </button>
-              
-              <button onClick={() => setModalInstrucoes(true)} className="whitespace-nowrap bg-slate-800 hover:bg-slate-700 px-3 py-1.5 rounded-lg border border-slate-700 transition-colors font-bold shadow flex items-center gap-1.5 text-xs">
-                <svg className="w-3.5 h-3.5" fill="none" stroke={corPrimaria} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                Instruções categorias
-              </button>
-            </div>
-            
-            {/* GRUPO DA DIREITA (Removido flex-wrap, botões menores) */}
-            <div className="flex items-center gap-2">
-              <button onClick={() => setModalLogo(true)} className="whitespace-nowrap bg-slate-800 hover:bg-slate-700 px-3 py-1.5 rounded shadow border border-slate-700 transition-colors text-xs">Adicionar Logo</button>
-              <button onClick={() => setPainelAjusteLogo(!painelAjusteLogo)} className="whitespace-nowrap bg-slate-800 hover:bg-slate-700 px-3 py-1.5 rounded shadow border border-slate-700 transition-colors text-xs">Ajustar Logo</button>
-              
-              <div className="whitespace-nowrap relative overflow-hidden bg-slate-800 hover:bg-slate-700 px-3 py-1.5 rounded shadow border border-slate-700 transition-colors text-xs flex items-center gap-1.5">
-                <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: corPrimaria }}></span> Cor Tema
-                <input type="color" value={corPrimaria} onChange={(e) => setCorPrimaria(e.target.value)} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" />
-              </div>
-              
-              <div className="whitespace-nowrap flex items-center space-x-2 bg-slate-800 px-3 py-1.5 rounded shadow border border-slate-700 cursor-pointer" onClick={() => setDarkMode(!darkMode)}>
-                <span className="text-xs">Modo Escuro</span>
-                <div className={`w-7 h-3.5 rounded-full relative transition-colors ${darkMode ? '' : 'bg-slate-600'}`} style={{ backgroundColor: darkMode ? corPrimaria : '' }}>
-                  <span className={`absolute left-0.5 top-0.5 w-2.5 h-2.5 bg-white rounded-full transition-transform ${darkMode ? 'translate-x-3.5' : ''}`}></span>
-                </div>
-              </div>
-              
-              <div className="whitespace-nowrap flex items-center space-x-2 bg-slate-800 px-3 py-1.5 rounded shadow border border-slate-700 cursor-pointer" onClick={() => setDuplicadosAtivo(!duplicadosAtivo)}>
-                <span className="text-xs">Duplicados</span>
-                <div className={`w-7 h-3.5 rounded-full relative transition-colors ${duplicadosAtivo ? '' : 'bg-slate-600'}`} style={{ backgroundColor: duplicadosAtivo ? corPrimaria : '' }}>
-                  <span className={`absolute left-0.5 top-0.5 w-2.5 h-2.5 bg-white rounded-full transition-transform ${duplicadosAtivo ? 'translate-x-3.5' : ''}`}></span>
-                </div>
-              </div>
+{ajustesAberto && (
+  <div
+    className="print-ocultar bg-slate-900 text-white p-4 shadow-inner border-t border-slate-700 transition-all z-20"
+    style={{ borderTopColor: corPrimaria, borderTopWidth: '2px' }}
+  >
+    {statusConfig !== 'idle' && (
+      <div
+        className={`mb-3 mx-auto max-w-7xl rounded-full px-3 py-1.5 text-center text-xs font-bold ${
+          statusConfig === 'saving'
+            ? 'bg-sky-50 text-sky-700'
+            : statusConfig === 'saved'
+              ? 'bg-emerald-50 text-emerald-700'
+              : 'bg-red-50 text-red-700'
+        }`}
+      >
+        {statusConfig === 'saving' && 'Salvando configurações...'}
+        {statusConfig === 'saved' && 'Configurações salvas'}
+        {statusConfig === 'error' && 'Erro ao salvar configurações'}
+      </div>
+    )}
+
+    {/* Adicionado overflow-x-auto e removido flex-wrap para forçar 1 linha */}
+    <div className="flex justify-between items-center max-w-7xl mx-auto gap-4 overflow-x-auto custom-scroll pb-1">
+      
+      {/* GRUPO DA ESQUERDA (Botões menores: text-xs, py-1.5) */}
+      <div className="flex items-center gap-3">
+        <button onClick={() => setModalDespesasBase(true)} className="whitespace-nowrap bg-slate-800 hover:bg-slate-700 px-3 py-1.5 rounded-lg border transition-colors font-bold shadow flex items-center gap-1.5 text-xs" style={{ borderColor: corPrimaria }}>
+          <svg className="w-3.5 h-3.5" fill="none" stroke={corPrimaria} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4"></path></svg>
+          Cadastrar Despesas
+        </button>
+        
+        <button onClick={() => setModalInstrucoes(true)} className="whitespace-nowrap bg-slate-800 hover:bg-slate-700 px-3 py-1.5 rounded-lg border border-slate-700 transition-colors font-bold shadow flex items-center gap-1.5 text-xs">
+          <svg className="w-3.5 h-3.5" fill="none" stroke={corPrimaria} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+          Instruções categorias
+        </button>
+      </div>
+      
+      {/* GRUPO DA DIREITA (Removido flex-wrap, botões menores) */}
+      <div className="flex items-center gap-2">
+        <button onClick={() => setModalLogo(true)} className="whitespace-nowrap bg-slate-800 hover:bg-slate-700 px-3 py-1.5 rounded shadow border border-slate-700 transition-colors text-xs">Adicionar Logo</button>
+        <button onClick={() => setPainelAjusteLogo(!painelAjusteLogo)} className="whitespace-nowrap bg-slate-800 hover:bg-slate-700 px-3 py-1.5 rounded shadow border border-slate-700 transition-colors text-xs">Ajustar Logo</button>
+        
+        <div className="whitespace-nowrap relative overflow-hidden bg-slate-800 hover:bg-slate-700 px-3 py-1.5 rounded shadow border border-slate-700 transition-colors text-xs flex items-center gap-1.5">
+          <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: corPrimaria }}></span> Cor Tema
+          <input
+  type="color"
+  value={corPrimaria}
+  onChange={(e) => setCorPrimaria(e.target.value)}
+  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+/>
+        </div>
+        
+        <div className="whitespace-nowrap flex items-center space-x-2 bg-slate-800 px-3 py-1.5 rounded shadow border border-slate-700 cursor-pointer" onClick={() => setDarkMode(!darkMode)}>
+          <span className="text-xs">Modo Escuro</span>
+          <div className={`w-7 h-3.5 rounded-full relative transition-colors ${darkMode ? '' : 'bg-slate-600'}`} style={{ backgroundColor: darkMode ? corPrimaria : '' }}>
+            <span className={`absolute left-0.5 top-0.5 w-2.5 h-2.5 bg-white rounded-full transition-transform ${darkMode ? 'translate-x-3.5' : ''}`}></span>
+          </div>
+        </div>
+        
+        <div className="whitespace-nowrap flex items-center space-x-2 bg-slate-800 px-3 py-1.5 rounded shadow border border-slate-700 cursor-pointer" onClick={() => setDuplicadosAtivo(!duplicadosAtivo)}>
+          <span className="text-xs">Duplicados</span>
+          <div className={`w-7 h-3.5 rounded-full relative transition-colors ${duplicadosAtivo ? '' : 'bg-slate-600'}`} style={{ backgroundColor: duplicadosAtivo ? corPrimaria : '' }}>
+            <span className={`absolute left-0.5 top-0.5 w-2.5 h-2.5 bg-white rounded-full transition-transform ${duplicadosAtivo ? 'translate-x-3.5' : ''}`}></span>
+          </div>
+        </div>
 
               {/* BOTÃO DE BACKUP EXCEL */}
               <button 
