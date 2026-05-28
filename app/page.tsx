@@ -17,6 +17,8 @@ import {
   apagarLancamento,
   salvarFaturamentoBanco,
   salvarConfiguracoesBanco,
+  salvarDespesaCadastrada,
+  apagarDespesaCadastrada,
 } from './lib/database';
 
 import { supabase } from './lib/supabase';
@@ -376,7 +378,50 @@ useEffect(() => {
 };
   const handleValorChange = (e: React.ChangeEvent<HTMLInputElement>) => { let value = e.target.value.replace(/\D/g, ""); if (!value) { setFormValor(""); setValorNumericoRaw(0); return; } const numericValue = parseInt(value, 10) / 100; setValorNumericoRaw(numericValue); setFormValor(formatarMoeda(numericValue)); };
   const getMaxDias = (mes: string | null) => { if (!mes) return 31; if (['ABRIL', 'JUNHO', 'SETEMBRO', 'NOVEMBRO'].includes(mes)) return 30; if (mes === 'FEVEREIRO') return (parseInt(anoSelecionado) % 4 === 0) ? 29 : 28; return 31; };
-  const adicionarDespesaBase = () => { if (!novaBaseNome || !novaBaseCat) return alert("Preencha o Nome e a Categoria!"); setDespesasCadastradas([...despesasCadastradas, { nome: novaBaseNome, categoria: novaBaseCat }]); setNovaBaseNome(''); setNovaBaseCat(''); };
+  const adicionarDespesaBase = async () => {
+  const nomeLimpo = novaBaseNome.trim();
+
+  if (!nomeLimpo || !novaBaseCat) {
+    alert('Preencha o Nome e a Categoria!');
+    return;
+  }
+
+  if (!empresaId) {
+    alert('Empresa não carregada. Saia e entre novamente no sistema.');
+    return;
+  }
+
+  const jaExiste = despesasCadastradas.some(
+    (d) => d.nome.trim().toLowerCase() === nomeLimpo.toLowerCase()
+  );
+
+  if (jaExiste) {
+    alert('Esta despesa já está cadastrada.');
+    return;
+  }
+
+  const despesaSalva = await salvarDespesaCadastrada(
+    empresaId,
+    nomeLimpo,
+    novaBaseCat
+  );
+
+  if (!despesaSalva) {
+    alert('Não foi possível salvar a despesa no banco. Tente novamente.');
+    return;
+  }
+
+  setDespesasCadastradas([
+    ...despesasCadastradas,
+    {
+      nome: despesaSalva.nome,
+      categoria: despesaSalva.categoria,
+    },
+  ]);
+
+  setNovaBaseNome('');
+  setNovaBaseCat('');
+};
   const apagarDespesaBase = (nome: string) => { setDespesasCadastradas(despesasCadastradas.filter(d => d.nome !== nome)); };
   
   const adicionarDespesa = async () => {
