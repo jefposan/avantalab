@@ -61,6 +61,28 @@ export default function PorCategoria({
   const textMuted = darkMode ? 'text-slate-400' : 'text-slate-500';
   const borderSoft = darkMode ? 'border-slate-700' : 'border-slate-200/60';
 
+  const corEhClara = (hex: string) => {
+    const cor = hex.replace('#', '');
+
+    if (cor.length !== 6) return false;
+
+    const r = parseInt(cor.substring(0, 2), 16);
+    const g = parseInt(cor.substring(2, 4), 16);
+    const b = parseInt(cor.substring(4, 6), 16);
+
+    const brilho = (r * 299 + g * 587 + b * 114) / 1000;
+
+    return brilho > 180;
+  };
+
+  const textoSobreCorPrimaria = corEhClara(corPrimaria) ? '#0f172a' : '#ffffff';
+
+  const estiloTemaPrimario = {
+    backgroundColor: corPrimaria,
+    borderColor: corPrimaria,
+    color: textoSobreCorPrimaria,
+  };
+
   return (
     <div className="max-w-[1400px] mx-auto w-full pt-10 pb-8 text-sm animate-fade-in space-y-8">
       
@@ -77,31 +99,42 @@ export default function PorCategoria({
       <div className="flex flex-col lg:flex-row gap-6 mb-6">
         {/* Tarjas da Esquerda (Despesas) */}
         <div className="lg:w-2/3 flex flex-col sm:flex-row gap-6">
-          <div style={{ backgroundColor: corPrimaria }} className="relative text-white font-bold py-3 px-6 rounded-xl uppercase tracking-wider shadow-md flex-1 text-center text-sm">
-  TOTAIS POR TIPO DE DESPESAS
-  
-  {/* INDICADOR: Triângulo apontando para baixo */}
-  <div 
-    className="absolute -bottom-3 left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-[12px] border-r-[12px] border-t-[12px] border-l-transparent border-r-transparent" 
-    style={{ borderTopColor: corPrimaria }}
-  ></div>
-</div>
-          <div style={{ backgroundColor: corPrimaria }} className="text-white font-bold py-3 px-8 rounded-xl uppercase tracking-wider shadow-md flex items-center justify-between gap-6 sm:w-auto">
+          <div
+            style={estiloTemaPrimario}
+            className="relative font-bold py-3 px-6 rounded-xl uppercase tracking-wider shadow-md flex-1 text-center text-sm"
+          >
+            TOTAIS POR TIPO DE DESPESAS
+
+            {/* INDICADOR: Triângulo apontando para baixo */}
+            <div
+              className="absolute -bottom-3 left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-[12px] border-r-[12px] border-t-[12px] border-l-transparent border-r-transparent"
+              style={{ borderTopColor: corPrimaria }}
+            />
+          </div>
+
+          <div
+            style={estiloTemaPrimario}
+            className="font-bold py-3 px-8 rounded-xl uppercase tracking-wider shadow-md flex items-center justify-between gap-6 sm:w-auto"
+          >
             <span className="text-sm">TOTAL ANUAL</span>
             <span className="text-lg font-black">{formatarMoeda(totalGeral)}</span>
           </div>
         </div>
+
         {/* Tarja da Direita (Categorias) */}
         <div className="lg:w-1/3">
-          <div style={{ backgroundColor: corPrimaria }} className="relative text-white font-bold py-3 px-6 rounded-xl uppercase tracking-wider shadow-md w-full text-center text-sm">
-  TOTAL POR CATEGORIA
-  
-  {/* INDICADOR: Triângulo apontando para baixo */}
-  <div 
-    className="absolute -bottom-3 left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-[12px] border-r-[12px] border-t-[12px] border-l-transparent border-r-transparent" 
-    style={{ borderTopColor: corPrimaria }}
-  ></div>
-</div>
+          <div
+            style={estiloTemaPrimario}
+            className="relative font-bold py-3 px-6 rounded-xl uppercase tracking-wider shadow-md w-full text-center text-sm"
+          >
+            TOTAL POR CATEGORIA
+
+            {/* INDICADOR: Triângulo apontando para baixo */}
+            <div
+              className="absolute -bottom-3 left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-[12px] border-r-[12px] border-t-[12px] border-l-transparent border-r-transparent"
+              style={{ borderTopColor: corPrimaria }}
+            />
+          </div>
         </div>
       </div>
 

@@ -3,7 +3,7 @@ import { useState, useMemo, useRef, useEffect } from 'react';
 import * as XLSX from 'xlsx';
 import Calculadora from './components/Calculadora';
 import Dashboard from './components/Dashboard';
-import BalancoGeral from './components/BalancoGeral';
+import BalancoGeral from './components/BalancoGeral'; 
 import Graficos from './components/Graficos';
 import PorCategoria from './components/PorCategoria';
 import Relatorio from './components/Relatorio';
@@ -120,6 +120,23 @@ const textoSobreCorPrimaria = corEhClara(corPrimaria) ? '#0f172a' : '#ffffff';
 const bordaSobreCorPrimaria = corEhClara(corPrimaria)
   ? 'rgba(15, 23, 42, 0.25)'
   : 'rgba(255, 255, 255, 0.30)';
+
+  const estiloTemaPrimario = {
+  backgroundColor: corPrimaria,
+  borderColor: corPrimaria,
+  color: textoSobreCorPrimaria,
+};
+
+const estiloTemaPrimarioGradiente = {
+  background: `linear-gradient(135deg, ${corPrimaria}, ${corPrimaria}dd)`,
+  boxShadow: `0 5px 14px ${corPrimaria}35`,
+  border: `1px solid ${bordaSobreCorPrimaria}`,
+  color: textoSobreCorPrimaria,
+};
+
+const estiloTextoTema = {
+  color: textoSobreCorPrimaria,
+};
 
 useEffect(() => {
   const verificarTela = () => {
@@ -1338,12 +1355,32 @@ if (isTelaMobile) {
       
       {/* ================= MODAIS ================= */}
       {modalInstrucoes && (
-        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
-          <div className={`${bgCard} rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto border-2 flex flex-col`} style={{ borderColor: corPrimaria }}>
-            <div className="sticky top-0 p-6 border-b border-slate-200/20 flex justify-between items-center shadow-md z-10" style={{ backgroundColor: corPrimaria }}>
-              <h2 className="text-lg font-bold text-white uppercase">Instruções sobre Categorias</h2>
-              <button onClick={() => setModalInstrucoes(false)} className="text-white hover:bg-white/20 px-3 py-1 rounded-lg font-bold">X</button>
-            </div>
+  <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
+    <div
+      className={`${bgCard} rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto border-2 flex flex-col`}
+      style={{ borderColor: corPrimaria }}
+    >
+      <div
+        className="sticky top-0 p-6 border-b border-slate-200/20 flex justify-between items-center shadow-md z-10"
+        style={estiloTemaPrimario}
+      >
+        <h2 className="text-lg font-bold uppercase">
+          Instruções sobre Categorias
+        </h2>
+
+        <button
+          onClick={() => setModalInstrucoes(false)}
+          className="px-3 py-1 rounded-lg font-bold transition-colors"
+          style={{
+            color: textoSobreCorPrimaria,
+            backgroundColor: corEhClara(corPrimaria)
+              ? 'rgba(15, 23, 42, 0.08)'
+              : 'rgba(255, 255, 255, 0.16)',
+          }}
+        >
+          X
+        </button>
+      </div>
             <div className={`p-8 space-y-6 text-sm ${textMuted} leading-relaxed overflow-y-auto`}>
               <div><strong className={textStrong}>AMORTIZAÇÃO:</strong><br/>- Gastos para dividir o custo de coisas que não são físicas...<br/>- Exemplos: softwares comprados, valor pago por patente.</div>
               <div><strong className={textStrong}>CUSTOS VARIÁVEIS:</strong><br/>- Gastos que aumentam ou diminuem conforme a quantidade produzida/vendida.<br/>- Exemplos: embalagens, matéria-prima, frete, comissões.</div>
@@ -1360,64 +1397,171 @@ if (isTelaMobile) {
       )}
 
       {modalDespesasBase && (
-        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
-          <div className={`${bgCard} rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] flex flex-col border-2 overflow-hidden`} style={{ borderColor: corPrimaria }}>
-            <div className="sticky top-0 p-6 border-b border-slate-200/20 flex justify-between items-center z-10" style={{ backgroundColor: corPrimaria }}>
-              <h2 className="text-lg font-bold text-white uppercase">Gerenciar Despesas</h2>
-              <button onClick={() => setModalDespesasBase(false)} className="text-white hover:bg-white/20 px-3 py-1 rounded-lg font-bold">X</button>
-            </div>
-            <div className="p-6 space-y-6 overflow-y-auto">
-              <div className={`p-5 rounded-xl border shadow-sm ${darkMode ? 'bg-slate-800 border-slate-700' : 'bg-slate-50 border-slate-200'}`}>
-                <h3 className={`font-bold mb-4 ${textStrong}`}>Nova Despesa</h3>
-                <div className="flex flex-wrap gap-3">
-                  <input type="text" placeholder="Nome (Ex: Aluguel)" value={novaBaseNome} onChange={e => setNovaBaseNome(e.target.value)} className={`flex-1 min-w-[200px] p-2.5 rounded-lg border focus:outline-none focus:ring-2 ${darkMode ? 'bg-slate-700 border-slate-600 text-white' : 'bg-white border-slate-300'}`} style={{ outlineColor: corPrimaria }} />
-                  <select value={novaBaseCat} onChange={e => setNovaBaseCat(e.target.value)} className={`flex-1 min-w-[200px] p-2.5 rounded-lg border focus:outline-none focus:ring-2 ${darkMode ? 'bg-slate-700 border-slate-600 text-white' : 'bg-white border-slate-300'}`} style={{ outlineColor: corPrimaria }}>
-                    <option value="">Categoria (Obrigatória)</option>
-                    <option value="Amortização">Amortização</option>
-                    <option value="Custos Variáveis">Custos Variáveis</option>
-                    <option value="Depreciação">Depreciação</option>
-                    <option value="Despesas Financeiras">Despesas Financeiras</option>
-                    <option value="Despesas Operacionais">Despesas Operacionais</option>
-                    <option value="Imposto sobre Lucro">Imposto sobre Lucro</option>
-                  </select>
-                  <button onClick={adicionarDespesaBase} style={{ backgroundColor: corPrimaria }} className="text-white px-6 py-2.5 rounded-lg font-bold hover:brightness-110 w-full sm:w-auto shadow">Salvar</button>
-                </div>
-              </div>
-              <div className="space-y-2 pr-2">
-                {despesasCadastradas.map(d => (
-                  <div key={d.nome} className={`flex justify-between items-center p-3 rounded-lg border border-slate-200/10 ${darkMode ? 'bg-slate-700' : 'bg-white shadow-sm'}`}>
-                    <div><span className={`font-bold ${textStrong}`}>{d.nome}</span> <span className={`text-xs ml-2 px-2 py-1 rounded-md bg-slate-500/20 ${textMuted}`}>{d.categoria}</span></div>
-                    <button onClick={() => apagarDespesaBase(d.nome)} className="text-red-500 hover:text-red-700 hover:bg-red-500/10 rounded-lg font-bold px-3 py-1 text-lg transition-colors">×</button>
-                  </div>
-                ))}
-              </div>
-            </div>
+  <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
+    <div
+      className={`${bgCard} rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] flex flex-col border-2 overflow-hidden`}
+      style={{ borderColor: corPrimaria }}
+    >
+      <div
+        className="sticky top-0 p-6 border-b border-slate-200/20 flex justify-between items-center z-10"
+        style={estiloTemaPrimario}
+      >
+        <h2 className="text-lg font-bold uppercase">
+          Gerenciar Despesas
+        </h2>
+
+        <button
+          onClick={() => setModalDespesasBase(false)}
+          className="px-3 py-1 rounded-lg font-bold transition-colors"
+          style={{
+            color: textoSobreCorPrimaria,
+            backgroundColor: corEhClara(corPrimaria)
+              ? 'rgba(15, 23, 42, 0.08)'
+              : 'rgba(255, 255, 255, 0.16)',
+          }}
+        >
+          X
+        </button>
+      </div>
+
+      <div className="p-6 space-y-6 overflow-y-auto">
+        <div
+          className={`p-5 rounded-xl border shadow-sm ${
+            darkMode ? 'bg-slate-800 border-slate-700' : 'bg-slate-50 border-slate-200'
+          }`}
+        >
+          <h3 className={`font-bold mb-4 ${textStrong}`}>
+            Nova Despesa
+          </h3>
+
+          <div className="flex flex-wrap gap-3">
+            <input
+              type="text"
+              placeholder="Nome (Ex: Aluguel)"
+              value={novaBaseNome}
+              onChange={e => setNovaBaseNome(e.target.value)}
+              className={`flex-1 min-w-[200px] p-2.5 rounded-lg border focus:outline-none focus:ring-2 ${
+                darkMode ? 'bg-slate-700 border-slate-600 text-white' : 'bg-white border-slate-300'
+              }`}
+              style={{ outlineColor: corPrimaria }}
+            />
+
+            <select
+              value={novaBaseCat}
+              onChange={e => setNovaBaseCat(e.target.value)}
+              className={`flex-1 min-w-[200px] p-2.5 rounded-lg border focus:outline-none focus:ring-2 ${
+                darkMode ? 'bg-slate-700 border-slate-600 text-white' : 'bg-white border-slate-300'
+              }`}
+              style={{ outlineColor: corPrimaria }}
+            >
+              <option value="">Categoria (Obrigatória)</option>
+              <option value="Amortização">Amortização</option>
+              <option value="Custos Variáveis">Custos Variáveis</option>
+              <option value="Depreciação">Depreciação</option>
+              <option value="Despesas Financeiras">Despesas Financeiras</option>
+              <option value="Despesas Operacionais">Despesas Operacionais</option>
+              <option value="Imposto sobre Lucro">Imposto sobre Lucro</option>
+            </select>
+
+            <button
+              onClick={adicionarDespesaBase}
+              style={estiloTemaPrimario}
+              className="px-6 py-2.5 rounded-lg font-bold hover:brightness-110 w-full sm:w-auto shadow"
+            >
+              Salvar
+            </button>
           </div>
         </div>
-      )}
+
+        <div className="space-y-2 pr-2">
+          {despesasCadastradas.map(d => (
+            <div
+              key={d.nome}
+              className={`flex justify-between items-center p-3 rounded-lg border border-slate-200/10 ${
+                darkMode ? 'bg-slate-700' : 'bg-white shadow-sm'
+              }`}
+            >
+              <div>
+                <span className={`font-bold ${textStrong}`}>
+                  {d.nome}
+                </span>
+
+                <span className={`text-xs ml-2 px-2 py-1 rounded-md bg-slate-500/20 ${textMuted}`}>
+                  {d.categoria}
+                </span>
+              </div>
+
+              <button
+                onClick={() => apagarDespesaBase(d.nome)}
+                className="text-red-500 hover:text-red-700 hover:bg-red-500/10 rounded-lg font-bold px-3 py-1 text-lg transition-colors"
+              >
+                ×
+              </button>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  </div>
+)}
 
       {modalLogo && (
-        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
-          <div className={`${bgCard} rounded-2xl shadow-2xl max-w-sm w-full border-2 p-6`} style={{ borderColor: corPrimaria }}>
-            <div className="flex justify-between items-center mb-6">
-              <h2 className={`text-lg font-bold ${textStrong}`}>Adicionar Logo</h2>
-              <button onClick={() => setModalLogo(false)} className={textMuted}>✕</button>
-            </div>
-            <div className="space-y-4">
-              <div>
-                <input type="file" accept="image/*" ref={fileInputRef} onChange={handleImageUpload} className="hidden" />
-                <button onClick={() => fileInputRef.current?.click()} className={`w-full py-3 rounded-lg border border-dashed hover:bg-slate-500/10 transition-colors ${textStrong} border-slate-400 font-medium`}>⬆ Upload do Computador</button>
-              </div>
-              <div className="text-center text-sm font-bold text-slate-400">OU</div>
-              <div>
-                <label className={`block text-xs font-bold mb-1 ${textMuted} uppercase`}>URL da Imagem</label>
-                <input type="text" placeholder="https://..." value={logoUrl} onChange={e => setLogoUrl(e.target.value)} className={`w-full p-2.5 rounded-lg border focus:outline-none focus:ring-1 ${darkMode ? 'bg-slate-700 border-slate-600 text-white' : 'bg-white border-slate-300'}`} style={{ outlineColor: corPrimaria }} />
-              </div>
-              <button onClick={() => setModalLogo(false)} style={{ backgroundColor: corPrimaria }} className="w-full text-white py-2.5 rounded-lg font-bold hover:brightness-110 mt-2 shadow-md">Salvar Logo</button>
-            </div>
-          </div>
+  <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
+    <div
+      className={`${bgCard} rounded-2xl shadow-2xl max-w-sm w-full border-2 p-6`}
+      style={{ borderColor: corPrimaria }}
+    >
+      <div className="flex justify-between items-center mb-6">
+        <h2 className={`text-lg font-bold ${textStrong}`}>Adicionar Logo</h2>
+        <button onClick={() => setModalLogo(false)} className={textMuted}>✕</button>
+      </div>
+
+      <div className="space-y-4">
+        <div>
+          <input
+            type="file"
+            accept="image/*"
+            ref={fileInputRef}
+            onChange={handleImageUpload}
+            className="hidden"
+          />
+          <button
+            onClick={() => fileInputRef.current?.click()}
+            className={`w-full py-3 rounded-lg border border-dashed hover:bg-slate-500/10 transition-colors ${textStrong} border-slate-400 font-medium`}
+          >
+            ⬆ Upload do Computador
+          </button>
         </div>
-      )}
+
+        <div className="text-center text-sm font-bold text-slate-400">OU</div>
+
+        <div>
+          <label className={`block text-xs font-bold mb-1 ${textMuted} uppercase`}>
+            URL da Imagem
+          </label>
+          <input
+            type="text"
+            placeholder="https://..."
+            value={logoUrl}
+            onChange={e => setLogoUrl(e.target.value)}
+            className={`w-full p-2.5 rounded-lg border focus:outline-none focus:ring-1 ${
+              darkMode ? 'bg-slate-700 border-slate-600 text-white' : 'bg-white border-slate-300'
+            }`}
+            style={{ outlineColor: corPrimaria }}
+          />
+        </div>
+
+        <button
+          onClick={() => setModalLogo(false)}
+          style={estiloTemaPrimario}
+          className="w-full py-2.5 rounded-lg font-bold hover:brightness-110 mt-2 shadow-md"
+        >
+          Salvar Logo
+        </button>
+      </div>
+    </div>
+  </div>
+)}
 
       {calcAberta && (
         <Calculadora onClose={() => setCalcAberta(false)} corPrimaria={corPrimaria} darkMode={darkMode} />
@@ -1440,19 +1584,60 @@ if (isTelaMobile) {
         </div>
 
         {painelAjusteLogo && (
-          <div className={`absolute top-24 left-8 ${bgCard} p-5 rounded-2xl shadow-2xl border-2 z-50 w-64`} style={{ borderColor: corPrimaria }}>
-            <h4 className={`font-bold text-sm mb-4 ${textStrong} border-b border-slate-200/20 pb-2`}>Ajustar Posição da Logo</h4>
-            <div className="space-y-3 text-xs">
-              <label className={`block font-semibold ${textMuted}`}>Zoom ({logoSettings.scale}%)</label>
-              <input type="range" min="10" max="300" value={logoSettings.scale} onChange={e => setLogoSettings({...logoSettings, scale: parseInt(e.target.value)})} className="w-full" style={{ accentColor: corPrimaria }} />
-              <label className={`block font-semibold ${textMuted}`}>Eixo X</label>
-              <input type="range" min="-100" max="100" value={logoSettings.x} onChange={e => setLogoSettings({...logoSettings, x: parseInt(e.target.value)})} className="w-full" style={{ accentColor: corPrimaria }} />
-              <label className={`block font-semibold ${textMuted}`}>Eixo Y</label>
-              <input type="range" min="-100" max="100" value={logoSettings.y} onChange={e => setLogoSettings({...logoSettings, y: parseInt(e.target.value)})} className="w-full" style={{ accentColor: corPrimaria }} />
-            </div>
-            <button onClick={() => setPainelAjusteLogo(false)} style={{ backgroundColor: corPrimaria }} className="w-full text-white py-2 mt-5 rounded-lg font-bold shadow hover:brightness-110">Concluir</button>
-          </div>
-        )}
+  <div
+    className={`absolute top-24 left-8 ${bgCard} p-5 rounded-2xl shadow-2xl border-2 z-50 w-64`}
+    style={{ borderColor: corPrimaria }}
+  >
+    <h4 className={`font-bold text-sm mb-4 ${textStrong} border-b border-slate-200/20 pb-2`}>
+      Ajustar Posição da Logo
+    </h4>
+
+    <div className="space-y-3 text-xs">
+      <label className={`block font-semibold ${textMuted}`}>
+        Zoom ({logoSettings.scale}%)
+      </label>
+      <input
+        type="range"
+        min="10"
+        max="300"
+        value={logoSettings.scale}
+        onChange={e => setLogoSettings({ ...logoSettings, scale: parseInt(e.target.value) })}
+        className="w-full"
+        style={{ accentColor: corPrimaria }}
+      />
+
+      <label className={`block font-semibold ${textMuted}`}>Eixo X</label>
+      <input
+        type="range"
+        min="-100"
+        max="100"
+        value={logoSettings.x}
+        onChange={e => setLogoSettings({ ...logoSettings, x: parseInt(e.target.value) })}
+        className="w-full"
+        style={{ accentColor: corPrimaria }}
+      />
+
+      <label className={`block font-semibold ${textMuted}`}>Eixo Y</label>
+      <input
+        type="range"
+        min="-100"
+        max="100"
+        value={logoSettings.y}
+        onChange={e => setLogoSettings({ ...logoSettings, y: parseInt(e.target.value) })}
+        className="w-full"
+        style={{ accentColor: corPrimaria }}
+      />
+    </div>
+
+    <button
+      onClick={() => setPainelAjusteLogo(false)}
+      style={estiloTemaPrimario}
+      className="w-full py-2 mt-5 rounded-lg font-bold shadow hover:brightness-110"
+    >
+      Concluir
+    </button>
+  </div>
+)}
 
         <nav className="flex space-x-3">
   <button
@@ -1462,16 +1647,12 @@ if (isTelaMobile) {
     }}
     className={`font-bold py-2.5 px-6 rounded-full transition-all text-sm uppercase tracking-wide border-2 ${
       abaAtiva === 'Dashboard' && !mesAtivo
-        ? 'text-white shadow-md transform scale-105'
+        ? 'shadow-md transform scale-105'
         : darkMode
           ? 'bg-slate-800 hover:bg-slate-700 text-slate-300 border-slate-700 shadow'
           : 'bg-white hover:bg-slate-50 text-slate-600 border-slate-200 shadow hover:shadow-md'
     }`}
-    style={{
-  backgroundColor: abaAtiva === 'Dashboard' && !mesAtivo ? corPrimaria : '',
-  borderColor: abaAtiva === 'Dashboard' && !mesAtivo ? corPrimaria : '',
-  color: abaAtiva === 'Dashboard' && !mesAtivo ? textoSobreCorPrimaria : '',
-}}
+    style={estiloTemaPrimarioGradiente}
   >
     Home
   </button>
@@ -1482,7 +1663,7 @@ if (isTelaMobile) {
               onClick={() => { setAbaAtiva(item); setMesAtivo(null); }}
               className={`font-bold py-2.5 px-6 rounded-full transition-all text-sm uppercase tracking-wide border-2 ${
                 abaAtiva === item 
-                  ? 'text-white shadow-md transform scale-105' 
+                  ? 'shadow-md transform scale-105' 
                   : darkMode 
                     ? 'bg-slate-800 hover:bg-slate-700 text-slate-300 border-slate-700 shadow' 
                     : 'bg-white hover:bg-slate-50 text-slate-600 border-slate-200 shadow hover:shadow-md'
@@ -1521,7 +1702,7 @@ if (isTelaMobile) {
               value={anoSelecionado}
               onChange={(e) => setAnoSelecionado(e.target.value)}
               className="bg-transparent font-black text-sm outline-none cursor-pointer text-center"
-              style={{ color: corPrimaria }}
+              style={{ color: corEhClara(corPrimaria) ? '#0f172a' : corPrimaria }}
             >
               {Array.from(
                 { length: (new Date().getFullYear() + 5) - 2024 + 1 }, 
@@ -1534,23 +1715,25 @@ if (isTelaMobile) {
 
           {!mesAtivo && (
             <button onClick={() => setCalcAberta(!calcAberta)} className={`p-2 rounded-lg transition-colors border shadow-sm ${darkMode ? 'bg-slate-800 border-slate-700 hover:bg-slate-700' : 'bg-white border-slate-200 hover:bg-slate-50'}`} title="Calculadora">
-              <svg className="w-5 h-5" style={{ color: corPrimaria }} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
+              <svg className="w-5 h-5" style={{ color: corEhClara(corPrimaria) ? '#0f172a' : corPrimaria }} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
             </button>
           )}
 
           <button
   type="button"
   onClick={() => setAjustesAberto(!ajustesAberto)}
-  className="group relative flex items-center gap-2 rounded-full px-3 py-1.5 text-white shadow-md transition-all duration-300 hover:scale-[1.02] hover:shadow-lg active:scale-[0.98]"
-  style={{
-  background: `linear-gradient(135deg, ${corPrimaria}, ${corPrimaria}dd)`,
-  boxShadow: `0 5px 14px ${corPrimaria}35`,
-  border: `1px solid ${bordaSobreCorPrimaria}`,
-  color: textoSobreCorPrimaria,
-}}
+  className="group relative flex items-center gap-2 rounded-full px-3 py-1.5 shadow-md transition-all duration-300 hover:scale-[1.02] hover:shadow-lg active:scale-[0.98]"
+  style={estiloTemaPrimarioGradiente}
   title="Abrir ajustes"
 >
-  <span className="absolute inset-0 rounded-full bg-white/10 opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+  <span
+    className="absolute inset-0 rounded-full opacity-0 transition-opacity duration-300 group-hover:opacity-100"
+    style={{
+      backgroundColor: corEhClara(corPrimaria)
+        ? 'rgba(15, 23, 42, 0.08)'
+        : 'rgba(255, 255, 255, 0.10)',
+    }}
+  />
 
   <span className="relative flex h-5 w-5 items-center justify-center">
     <svg
@@ -1576,7 +1759,14 @@ if (isTelaMobile) {
     </svg>
   </span>
 
-  <span className="relative h-4 w-px bg-white/25" />
+  <span
+    className="relative h-4 w-px"
+    style={{
+      backgroundColor: corEhClara(corPrimaria)
+        ? 'rgba(15, 23, 42, 0.30)'
+        : 'rgba(255, 255, 255, 0.25)',
+    }}
+  />
 
   <span className="relative text-xs font-bold leading-none">
     Ajustes
@@ -1628,15 +1818,46 @@ if (isTelaMobile) {
       
       {/* GRUPO DA ESQUERDA (Botões menores: text-xs, py-1.5) */}
       <div className="flex items-center gap-3">
-        <button onClick={() => setModalDespesasBase(true)} className="whitespace-nowrap bg-slate-800 hover:bg-slate-700 px-3 py-1.5 rounded-lg border transition-colors font-bold shadow flex items-center gap-1.5 text-xs" style={{ borderColor: corPrimaria }}>
-          <svg className="w-3.5 h-3.5" fill="none" stroke={corPrimaria} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4"></path></svg>
-          Cadastrar Despesas
-        </button>
+        <button
+  onClick={() => setModalDespesasBase(true)}
+  className="whitespace-nowrap bg-slate-800 hover:bg-slate-700 px-3 py-1.5 rounded-lg border transition-colors font-bold shadow flex items-center gap-1.5 text-xs"
+  style={{ borderColor: corPrimaria }}
+>
+  <svg
+    className="w-3.5 h-3.5"
+    fill="none"
+    stroke="#ffffff"
+    viewBox="0 0 24 24"
+  >
+    <path
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth="2"
+      d="M12 4v16m8-8H4"
+    />
+  </svg>
+  Cadastrar Despesas
+</button>
         
-        <button onClick={() => setModalInstrucoes(true)} className="whitespace-nowrap bg-slate-800 hover:bg-slate-700 px-3 py-1.5 rounded-lg border border-slate-700 transition-colors font-bold shadow flex items-center gap-1.5 text-xs">
-          <svg className="w-3.5 h-3.5" fill="none" stroke={corPrimaria} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-          Instruções categorias
-        </button>
+        <button
+  onClick={() => setModalInstrucoes(true)}
+  className="whitespace-nowrap bg-slate-800 hover:bg-slate-700 px-3 py-1.5 rounded-lg border border-slate-700 transition-colors font-bold shadow flex items-center gap-1.5 text-xs"
+>
+  <svg
+    className="w-3.5 h-3.5"
+    fill="none"
+    stroke="#ffffff"
+    viewBox="0 0 24 24"
+  >
+    <path
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth="2"
+      d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+    />
+  </svg>
+  Instruções categorias
+</button>
       </div>
       
       {/* GRUPO DA DIREITA (Removido flex-wrap, botões menores) */}
@@ -1656,16 +1877,46 @@ if (isTelaMobile) {
         
         <div className="whitespace-nowrap flex items-center space-x-2 bg-slate-800 px-3 py-1.5 rounded shadow border border-slate-700 cursor-pointer" onClick={() => setDarkMode(!darkMode)}>
           <span className="text-xs">Modo Escuro</span>
-          <div className={`w-7 h-3.5 rounded-full relative transition-colors ${darkMode ? '' : 'bg-slate-600'}`} style={{ backgroundColor: darkMode ? corPrimaria : '' }}>
-            <span className={`absolute left-0.5 top-0.5 w-2.5 h-2.5 bg-white rounded-full transition-transform ${darkMode ? 'translate-x-3.5' : ''}`}></span>
-          </div>
+          <div
+  className={`w-7 h-3.5 rounded-full relative transition-colors ${
+    darkMode ? '' : 'bg-slate-600'
+  }`}
+  style={{
+    backgroundColor: darkMode ? corPrimaria : '',
+    border: darkMode && corEhClara(corPrimaria) ? '1px solid rgba(15, 23, 42, 0.35)' : '',
+  }}
+>
+  <span
+    className={`absolute left-0.5 top-0.5 w-2.5 h-2.5 rounded-full transition-transform ${
+      darkMode ? 'translate-x-3.5' : ''
+    }`}
+    style={{
+      backgroundColor: darkMode && corEhClara(corPrimaria) ? '#0f172a' : '#ffffff',
+    }}
+  />
+</div>
         </div>
         
         <div className="whitespace-nowrap flex items-center space-x-2 bg-slate-800 px-3 py-1.5 rounded shadow border border-slate-700 cursor-pointer" onClick={() => setDuplicadosAtivo(!duplicadosAtivo)}>
           <span className="text-xs">Duplicados</span>
-          <div className={`w-7 h-3.5 rounded-full relative transition-colors ${duplicadosAtivo ? '' : 'bg-slate-600'}`} style={{ backgroundColor: duplicadosAtivo ? corPrimaria : '' }}>
-            <span className={`absolute left-0.5 top-0.5 w-2.5 h-2.5 bg-white rounded-full transition-transform ${duplicadosAtivo ? 'translate-x-3.5' : ''}`}></span>
-          </div>
+          <div
+  className={`w-7 h-3.5 rounded-full relative transition-colors ${
+    duplicadosAtivo ? '' : 'bg-slate-600'
+  }`}
+  style={{
+    backgroundColor: duplicadosAtivo ? corPrimaria : '',
+    border: duplicadosAtivo && corEhClara(corPrimaria) ? '1px solid rgba(15, 23, 42, 0.35)' : '',
+  }}
+>
+  <span
+    className={`absolute left-0.5 top-0.5 w-2.5 h-2.5 rounded-full transition-transform ${
+      duplicadosAtivo ? 'translate-x-3.5' : ''
+    }`}
+    style={{
+      backgroundColor: duplicadosAtivo && corEhClara(corPrimaria) ? '#0f172a' : '#ffffff',
+    }}
+  />
+</div>
         </div>
 
               {/* BOTÃO DE BACKUP EXCEL */}

@@ -49,6 +49,22 @@ export default function Dashboard({
     setInputFaturamento(formatado);
   };
 
+  const corEhClara = (hex: string) => {
+    const cor = hex.replace('#', '');
+
+    if (cor.length !== 6) return false;
+
+    const r = parseInt(cor.substring(0, 2), 16);
+    const g = parseInt(cor.substring(2, 4), 16);
+    const b = parseInt(cor.substring(4, 6), 16);
+
+    const brilho = (r * 299 + g * 587 + b * 114) / 1000;
+
+    return brilho > 180;
+  };
+
+  const textoSobreCorPrimaria = corEhClara(corPrimaria) ? '#0f172a' : '#ffffff';
+
   return (
     <main className="flex-1 flex p-8 gap-8 max-w-7xl mx-auto w-full animate-fade-in print:m-0 print:p-0">
       
@@ -77,9 +93,28 @@ export default function Dashboard({
 
       <aside className="w-96 flex flex-col space-y-6">
         <div className={`${bgCard} rounded-2xl shadow-lg border-2 overflow-hidden transition-colors`} style={{ borderColor: corPrimaria }}>
-          <div className="text-white text-center font-bold py-3 uppercase tracking-widest text-xs flex justify-between px-6 items-center" style={{ backgroundColor: corPrimaria }}>
+          <div
+            className="text-center font-bold py-3 uppercase tracking-widest text-xs flex justify-between px-6 items-center"
+            style={{
+              backgroundColor: corPrimaria,
+              color: textoSobreCorPrimaria,
+            }}
+          >
             <span>Resumo Financeiro</span>
-            <select value={mesResumoDash} onChange={e => setMesResumoDash(e.target.value)} className="bg-black/20 text-white border border-white/20 text-xs rounded p-1 outline-none font-bold cursor-pointer">
+            <select
+              value={mesResumoDash}
+              onChange={e => setMesResumoDash(e.target.value)}
+              className="text-xs rounded p-1 outline-none font-bold cursor-pointer border"
+              style={{
+                color: textoSobreCorPrimaria,
+                backgroundColor: corEhClara(corPrimaria)
+                  ? 'rgba(15, 23, 42, 0.08)'
+                  : 'rgba(0, 0, 0, 0.20)',
+                borderColor: corEhClara(corPrimaria)
+                  ? 'rgba(15, 23, 42, 0.18)'
+                  : 'rgba(255, 255, 255, 0.12)',
+              }}
+            >
               {meses.map(m => <option key={m} value={m} className="text-slate-800 bg-white">{m}</option>)}
             </select>
           </div>
@@ -105,16 +140,50 @@ export default function Dashboard({
         </div>
 
         {/* ================= QUADRANTE FATURAMENTO ================= */}
-        <div className="rounded-2xl shadow-lg p-6 text-white relative overflow-hidden" style={{ backgroundColor: corPrimaria }}>
-          <div className="absolute top-0 right-0 -mt-4 -mr-4 w-24 h-24 bg-white opacity-10 rounded-full blur-xl"></div>
-          
+        <div
+          className="rounded-2xl shadow-lg p-6 relative overflow-hidden"
+          style={{
+            backgroundColor: corPrimaria,
+            color: textoSobreCorPrimaria,
+          }}
+        >
+          <div
+            className="absolute top-0 right-0 -mt-4 -mr-4 w-24 h-24 opacity-10 rounded-full blur-xl"
+            style={{
+              backgroundColor: corEhClara(corPrimaria) ? '#0f172a' : '#ffffff',
+            }}
+          ></div>
+
           <div className="flex justify-between items-center mb-4 relative z-10">
-            <h3 className="font-bold text-white/90 text-sm uppercase tracking-wide">Faturamento</h3>
-            <select value={mesFaturamento} onChange={e => setMesFaturamento(e.target.value)} className="bg-black/20 border border-white/10 text-white text-xs rounded p-1 outline-none font-bold cursor-pointer">
-              {meses.map(m => <option key={m} value={m} className="text-slate-800 bg-white">{m}</option>)}
+            <h3
+              className="font-bold text-sm uppercase tracking-wide"
+              style={{ color: textoSobreCorPrimaria }}
+            >
+              Faturamento
+            </h3>
+
+            <select
+              value={mesFaturamento}
+              onChange={e => setMesFaturamento(e.target.value)}
+              className="text-xs rounded p-1 outline-none font-bold cursor-pointer border"
+              style={{
+                color: textoSobreCorPrimaria,
+                backgroundColor: corEhClara(corPrimaria)
+                  ? 'rgba(15, 23, 42, 0.08)'
+                  : 'rgba(0, 0, 0, 0.20)',
+                borderColor: corEhClara(corPrimaria)
+                  ? 'rgba(15, 23, 42, 0.18)'
+                  : 'rgba(255, 255, 255, 0.12)',
+              }}
+            >
+              {meses.map(m => (
+                <option key={m} value={m} className="text-slate-800 bg-white">
+                  {m}
+                </option>
+              ))}
             </select>
           </div>
-          
+
           <div className="flex gap-2 relative z-10">
             {/* Input Fundo Branco, Formatado e com "R$" Fixo */}
             <div className="relative w-full">
@@ -127,7 +196,19 @@ export default function Dashboard({
                 className="w-full pl-9 pr-4 py-2.5 rounded-lg bg-white text-slate-800 font-bold focus:outline-none shadow-inner text-right" 
               />
             </div>
-            <button onClick={salvarFaturamento} className="bg-black/20 hover:bg-black/40 px-5 rounded-lg font-bold transition-colors shadow-md text-white border border-white/10">
+            <button
+              onClick={salvarFaturamento}
+              className="px-5 rounded-lg font-bold transition-colors shadow-md border"
+              style={{
+                color: textoSobreCorPrimaria,
+                backgroundColor: corEhClara(corPrimaria)
+                  ? 'rgba(15, 23, 42, 0.08)'
+                  : 'rgba(0, 0, 0, 0.20)',
+                borderColor: corEhClara(corPrimaria)
+                  ? 'rgba(15, 23, 42, 0.18)'
+                  : 'rgba(255, 255, 255, 0.12)',
+              }}
+            >
               Salvar
             </button>
           </div>
