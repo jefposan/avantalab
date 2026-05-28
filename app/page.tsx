@@ -682,54 +682,22 @@ useEffect(() => {
     },
   });
 
-  const handleLogin = async () => {
-  setAuthErro('');
-  setAuthMensagem('');
-  setAuthLoading(true);
-
-  const emailLimpo = loginEmail.trim().toLowerCase();
-
-  if (!emailLimpo) {
-    setAuthErro('Informe seu email.');
-    setAuthLoading(false);
-    return;
-  }
-
-  if (!loginSenha) {
-    setAuthErro('Informe sua senha.');
-    setAuthLoading(false);
-    return;
-  }
-
-  const { error } = await supabase.auth.signInWithPassword({
-    email: emailLimpo,
-    password: loginSenha,
-  });
-
   setAuthLoading(false);
 
   if (error) {
-  console.error('Erro recuperação de senha:', error);
-  setAuthErro(`Erro Supabase: ${error.message}`);
-  return;
-}
-
-  setAcessoLiberado(true);
-};
-
-  setAuthLoading(false);
-
-  if (error) {
-    setAuthErro(error.message);
+    console.error('Erro cadastro:', error);
+    setAuthErro(`Erro Supabase: ${error.message}`);
     return;
   }
 
-  setAuthMensagem('Cadastro criado com sucesso. Verifique seu email para confirmar a conta.');
+  setAuthMensagem('Cadastro criado com sucesso. Agora faça login para acessar o sistema.');
 
   setCadastroNome('');
   setCadastroEmail('');
   setCadastroSenha('');
   setCadastroConfirmarSenha('');
+
+  setModoAuth('login');
 };
 
 const handleLogin = async () => {
@@ -756,15 +724,20 @@ const handleLogin = async () => {
     password: loginSenha,
   });
 
-  setAuthLoading(false);
-
   if (error) {
-  console.error('Erro login:', error);
-  setAuthErro(`Erro Supabase: ${error.message}`);
-  return;
-}
+    console.error('Erro login:', error);
+    setAuthErro(`Erro Supabase: ${error.message}`);
+    setAuthLoading(false);
+    return;
+  }
 
-  setAcessoLiberado(true);
+  setAuthMensagem('Login realizado. Carregando seus dados...');
+
+setTimeout(() => {
+  window.location.href = window.location.origin + window.location.pathname;
+}, 600);
+
+return;
 };
 
 const handleLogout = async () => {
@@ -772,8 +745,15 @@ const handleLogout = async () => {
 
   setAcessoLiberado(false);
   setAcessoNaoConfigurado(false);
+  setModoRedefinirSenha(false);
+  setModoAuth('login');
+
   setLoginEmail('');
   setLoginSenha('');
+
+  setNovaSenha('');
+  setConfirmarNovaSenha('');
+
   setAuthErro('');
   setAuthMensagem('');
 };
@@ -785,25 +765,23 @@ const handleRecuperarSenha = async () => {
   const emailLimpo = loginEmail.trim().toLowerCase();
 
   if (!emailLimpo) {
-    setAuthErro('Digite seu email no campo acima para recuperar a senha.');const { error } = await supabase.auth.resetPasswordForEmail(emailLimpo, {
-  redirectTo: `${window.location.origin}/`,
-});
+    setAuthErro('Digite seu email no campo acima para recuperar a senha.');
     return;
   }
 
   setAuthLoading(true);
 
   const { error } = await supabase.auth.resetPasswordForEmail(emailLimpo, {
-    redirectTo: `${window.location.origin}`,
+    redirectTo: `${window.location.origin}/`,
   });
 
   setAuthLoading(false);
 
   if (error) {
-  console.error('Erro recuperação de senha:', error);
-  setAuthErro(`Erro Supabase: ${error.message}`);
-  return;
-}
+    console.error('Erro recuperação de senha:', error);
+    setAuthErro(`Erro Supabase: ${error.message}`);
+    return;
+  }
 
   setAuthMensagem('Enviamos um email para você redefinir sua senha.');
 };
