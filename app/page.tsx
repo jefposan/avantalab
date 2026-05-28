@@ -1841,7 +1841,8 @@ if (isTelaMobile) {
         
         <button
   onClick={() => setModalInstrucoes(true)}
-  className="whitespace-nowrap bg-slate-800 hover:bg-slate-700 px-3 py-1.5 rounded-lg border border-slate-700 transition-colors font-bold shadow flex items-center gap-1.5 text-xs"
+  className="whitespace-nowrap bg-slate-800 hover:bg-slate-700 px-3 py-1.5 rounded-lg border transition-colors font-bold shadow flex items-center gap-1.5 text-xs"
+  style={{ borderColor: corPrimaria }}
 >
   <svg
     className="w-3.5 h-3.5"

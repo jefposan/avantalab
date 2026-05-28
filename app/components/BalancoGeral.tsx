@@ -98,32 +98,32 @@ export default function BalancoGeral({
       </div>
 
       {/* BLOCO SUPERIOR: 4 QUADRANTES DE RESUMO ANUAL COM A TARJA FINA */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 print-ocultar">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 print-ocultar">
         
         {/* Quadrante 1: Despesas */}
-        <div className={`${bgCard} rounded-xl shadow-lg border p-6 border-t-4`} style={{ borderTopColor: corPrimaria }}>
-          <h3 className={`text-xs font-bold uppercase tracking-wider ${textMuted} mb-2`}>Total Despesas</h3>
-          <p className="text-2xl font-black text-red-500">{formatarMoeda(totaisAnuais.desp)}</p>
+        <div className={`${bgCard} rounded-xl shadow-lg border p-1 border-t-4 text-center`} style={{ borderTopColor: corPrimaria }}>
+          <h3 className={`text-xs font-bold uppercase tracking-wider ${textMuted} mb-1`}>Total Despesas</h3>
+          <p className="text-xl font-black text-red-500">{formatarMoeda(totaisAnuais.desp)}</p>
         </div>
 
         {/* Quadrante 2: Faturamento */}
-        <div className={`${bgCard} rounded-xl shadow-lg border p-6 border-t-4`} style={{ borderTopColor: corPrimaria }}>
-          <h3 className={`text-xs font-bold uppercase tracking-wider ${textMuted} mb-2`}>Total Faturamento</h3>
-          <p className="text-2xl font-black text-[#00b050]">{formatarMoeda(totaisAnuais.fat)}</p>
+        <div className={`${bgCard} rounded-xl shadow-lg border p-1 border-t-4 text-center`} style={{ borderTopColor: corPrimaria }}>
+          <h3 className={`text-xs font-bold uppercase tracking-wider ${textMuted} mb-1`}>Total Faturamento</h3>
+          <p className="text-xl font-black text-[#00b050]">{formatarMoeda(totaisAnuais.fat)}</p>
         </div>
 
         {/* Quadrante 3: A + B */}
-        <div className={`${bgCard} rounded-xl shadow-lg border p-6 border-t-4`} style={{ borderTopColor: corPrimaria }}>
-          <h3 className={`text-xs font-bold uppercase tracking-wider ${textMuted} mb-2`}>A + B (Líquido)</h3>
-          <p className={`text-2xl font-black ${totaisAnuais.ab >= 0 ? 'text-blue-500' : 'text-red-500'}`}>
+        <div className={`${bgCard} rounded-xl shadow-lg border p-1 border-t-4 text-center`} style={{ borderTopColor: corPrimaria }}>
+          <h3 className={`text-xs font-bold uppercase tracking-wider ${textMuted} mb-1`}>A + B (Líquido)</h3>
+          <p className={`text-xl font-black ${totaisAnuais.ab >= 0 ? 'text-blue-500' : 'text-red-500'}`}>
             {formatarMoeda(totaisAnuais.ab)}
           </p>
         </div>
 
         {/* Quadrante 4: Total % */}
-        <div className={`${bgCard} rounded-xl shadow-lg border p-6 border-t-4`} style={{ borderTopColor: corPrimaria }}>
-          <h3 className={`text-xs font-bold uppercase tracking-wider ${textMuted} mb-2`}>Margem Total (%)</h3>
-          <p className={`text-2xl font-black ${textStrong}`}>{totaisAnuais.perc.toFixed(2)}%</p>
+        <div className={`${bgCard} rounded-xl shadow-lg border p-1 border-t-4 text-center`} style={{ borderTopColor: corPrimaria }}>
+          <h3 className={`text-xs font-bold uppercase tracking-wider ${textMuted} mb-1`}>Margem Total (%)</h3>
+          <p className={`text-xl font-black ${textStrong}`}>{totaisAnuais.perc.toFixed(2)}%</p>
         </div>
 
       </div>
