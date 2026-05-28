@@ -13,29 +13,13 @@ import {
   buscarDespesasCadastradas,
   buscarLancamentos,
   buscarFaturamentos,
-  salvarDespesaCadastrada,
-  apagarDespesaCadastrada,
   salvarLancamento,
   apagarLancamento,
   salvarFaturamentoBanco,
   salvarConfiguracoesBanco,
 } from './lib/database';
 
-import { supabase } from './lib/supabase';
 
-async function loginComGoogle() {
-  const { error } = await supabase.auth.signInWithOAuth({
-    provider: 'google',
-    options: {
-      redirectTo: `${window.location.origin}/`,
-    },
-  });
-
-  if (error) {
-    console.error('Erro ao entrar com Google:', error);
-    alert(`Erro ao entrar com Google: ${error.message}`);
-  }
-}
 
 export default function AppGestao() {
 
