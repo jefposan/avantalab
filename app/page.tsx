@@ -74,7 +74,7 @@ const [mostrarConfirmarNovaSenha, setMostrarConfirmarNovaSenha] = useState(false
   const [ajustesAberto, setAjustesAberto] = useState(false);
   const [duplicadosAtivo, setDuplicadosAtivo] = useState(false);
   const [darkMode, setDarkMode] = useState(false);
-  const [corPrimaria, setCorPrimaria] = useState('#2563eb');
+  const [corPrimaria, setCorPrimaria] = useState('#003E73');
   const [mesAtivo, setMesAtivo] = useState<string | null>(null);
   
 
@@ -508,7 +508,7 @@ const dadosConfiguracoes = [
   },
   {
     chave: 'corPrimaria',
-    valor: corPrimaria || '#2563eb',
+    valor: corPrimaria || '#003E73',
   },
   {
     chave: 'darkMode',
@@ -1382,21 +1382,65 @@ if (isTelaMobile) {
             </button>
           )}
 
-          <div className="flex items-center cursor-pointer group px-4 border-l border-slate-200/20 gap-2" onClick={() => setAjustesAberto(!ajustesAberto)}>
-            <div className="flex flex-col items-center">
-              <div className="w-full flex flex-col gap-[3px] mb-1.5">
-                <div className="h-[2px] rounded-full transition-colors" style={{ backgroundColor: ajustesAberto ? corPrimaria : '#94a3b8' }}></div>
-                <div className="h-[2px] rounded-full transition-colors" style={{ backgroundColor: ajustesAberto ? corPrimaria : '#94a3b8' }}></div>
-                <div className="h-[2px] rounded-full transition-colors" style={{ backgroundColor: ajustesAberto ? corPrimaria : '#94a3b8' }}></div>
-              </div>
-              <span className={`text-[9px] font-bold uppercase tracking-wider transition-colors ${ajustesAberto ? '' : textMuted}`} style={{ color: ajustesAberto ? corPrimaria : '' }}>
-                Ajustes
-              </span>
-            </div>
-            <svg className={`w-3.5 h-3.5 mt-2.5 transition-transform duration-300 ${ajustesAberto ? 'rotate-180' : 'rotate-0'}`} style={{ color: ajustesAberto ? corPrimaria : '#94a3b8' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path>
-            </svg>
-          </div>
+          <button
+  type="button"
+  onClick={() => setAjustesAberto(!ajustesAberto)}
+  className="group relative flex items-center gap-2 rounded-full px-3 py-1.5 text-white shadow-md transition-all duration-300 hover:scale-[1.02] hover:shadow-lg active:scale-[0.98]"
+  style={{
+    background: `linear-gradient(135deg, ${corPrimaria}, ${corPrimaria}dd)`,
+    boxShadow: `0 5px 14px ${corPrimaria}35`,
+    border: '1px solid rgba(255,255,255,0.22)',
+  }}
+  title="Abrir ajustes"
+>
+  <span className="absolute inset-0 rounded-full bg-white/10 opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+
+  <span className="relative flex h-5 w-5 items-center justify-center">
+    <svg
+      className={`h-3.5 w-3.5 transition-transform duration-500 ${
+        ajustesAberto ? 'rotate-90' : 'rotate-0'
+      }`}
+      fill="none"
+      stroke="currentColor"
+      viewBox="0 0 24 24"
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth="2.4"
+        d="M10.325 4.317a1.724 1.724 0 013.35 0 1.724 1.724 0 002.573 1.066 1.724 1.724 0 012.451 2.451 1.724 1.724 0 001.066 2.573 1.724 1.724 0 010 3.35 1.724 1.724 0 00-1.066 2.573 1.724 1.724 0 01-2.451 2.451 1.724 1.724 0 00-2.573 1.066 1.724 1.724 0 01-3.35 0 1.724 1.724 0 00-2.573-1.066 1.724 1.724 0 01-2.451-2.451 1.724 1.724 0 00-1.066-2.573 1.724 1.724 0 010-3.35 1.724 1.724 0 001.066-2.573 1.724 1.724 0 012.451-2.451 1.724 1.724 0 002.573-1.066z"
+      />
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth="2.4"
+        d="M12 15.5A3.5 3.5 0 1012 8.5a3.5 3.5 0 000 7z"
+      />
+    </svg>
+  </span>
+
+  <span className="relative h-4 w-px bg-white/25" />
+
+  <span className="relative text-xs font-bold leading-none">
+    Ajustes
+  </span>
+
+  <svg
+    className={`relative h-3 w-3 transition-transform duration-300 ${
+      ajustesAberto ? 'rotate-180' : 'rotate-0'
+    }`}
+    fill="none"
+    stroke="currentColor"
+    viewBox="0 0 24 24"
+  >
+    <path
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth="2.7"
+      d="M19 9l-7 7-7-7"
+    />
+  </svg>
+</button>
         </div>
       </header>
 
