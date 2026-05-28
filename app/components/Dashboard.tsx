@@ -188,13 +188,19 @@ export default function Dashboard({
             {/* Input Fundo Branco, Formatado e com "R$" Fixo */}
             <div className="relative w-full">
               <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-sm">R$</span>
-              <input 
-                type="text" 
-                value={inputFaturamento} 
-                onChange={handleInputFaturamento} 
-                placeholder="0,00" 
-                className="w-full pl-9 pr-4 py-2.5 rounded-lg bg-white text-slate-800 font-bold focus:outline-none shadow-inner text-right" 
-              />
+              <input
+  type="text"
+  value={inputFaturamento}
+  onChange={handleInputFaturamento}
+  onKeyDown={(e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      salvarFaturamento();
+    }
+  }}
+  placeholder="0,00"
+  className="w-full pl-9 pr-4 py-2.5 rounded-lg bg-white text-slate-800 font-bold focus:outline-none shadow-inner text-right"
+/>
             </div>
             <button
               onClick={salvarFaturamento}

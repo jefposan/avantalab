@@ -55,6 +55,7 @@ const [mostrarConfirmarNovaSenha, setMostrarConfirmarNovaSenha] = useState(false
 
   const [empresaId, setEmpresaId] = useState<string | null>(null);
   const [acessoNaoConfigurado, setAcessoNaoConfigurado] = useState(false);
+  const [emailConfirmado, setEmailConfirmado] = useState(false);
   const [abaAtiva, setAbaAtiva] = useState('Dashboard');
   const [ajustesAberto, setAjustesAberto] = useState(false);
   const [duplicadosAtivo, setDuplicadosAtivo] = useState(false);
@@ -159,6 +160,21 @@ useEffect(() => {
 
 useEffect(() => {
   const carregarConfiguracoesIniciais = async () => {
+    const paramsConfirmacao = new URLSearchParams(window.location.search);
+
+if (paramsConfirmacao.get('confirmado') === '1') {
+  await supabase.auth.signOut();
+
+  setEmailConfirmado(true);
+  setAcessoLiberado(false);
+  setModoRedefinirSenha(false);
+  setModoAuth('login');
+  setMounted(true);
+
+  window.history.replaceState({}, document.title, window.location.pathname);
+
+  return;
+}
     const { data: sessaoAtual } = await supabase.auth.getSession();
 
     let empresa = null;
@@ -729,14 +745,15 @@ useEffect(() => {
   }
 
   const { error } = await supabase.auth.signUp({
-    email: emailLimpo,
-    password: cadastroSenha,
-    options: {
-      data: {
-        nome: nomeLimpo,
-      },
+  email: emailLimpo,
+  password: cadastroSenha,
+  options: {
+    data: {
+      nome: nomeLimpo,
     },
-  });
+    emailRedirectTo: `${window.location.origin}/?confirmado=1`,
+  },
+});
 
   setAuthLoading(false);
 
@@ -746,7 +763,9 @@ useEffect(() => {
     return;
   }
 
-  setAuthMensagem('Cadastro criado com sucesso. Agora faça login para acessar o sistema.');
+  setAuthMensagem(
+  'Cadastro criado com sucesso. Enviamos um email de confirmação para liberar o acesso. Verifique sua caixa de entrada ou spam.'
+);
 
   setCadastroNome('');
   setCadastroEmail('');
@@ -781,11 +800,19 @@ const handleLogin = async () => {
   });
 
   if (error) {
-    console.error('Erro login:', error);
-    setAuthErro(`Erro Supabase: ${error.message}`);
-    setAuthLoading(false);
-    return;
+  console.error('Erro login:', error);
+
+  if (error.message === 'Email not confirmed') {
+    setAuthErro('Confirme o email recebido para liberar o acesso.');
+  } else if (error.message === 'Invalid login credentials') {
+    setAuthErro('Email ou senha incorretos. Verifique os dados e tente novamente.');
+  } else {
+    setAuthErro(`Erro ao entrar: ${error.message}`);
   }
+
+  setAuthLoading(false);
+  return;
+}
 
   setAuthMensagem('Login realizado. Carregando seus dados...');
 
@@ -911,6 +938,64 @@ const handleGoogleLogin = async () => {
 
   if (!mounted) return null;
 
+  if (emailConfirmado) {
+  return (
+    <main className="relative min-h-screen overflow-hidden font-sans">
+      <div
+        className="absolute inset-0 bg-cover bg-center"
+        style={{ backgroundImage: "url('/images/bg-avantalab.png')" }}
+      />
+
+      <div className="absolute inset-0 bg-white/70 backdrop-blur-sm" />
+
+      <section className="relative z-10 flex min-h-screen items-center justify-center px-6 py-10">
+        <div className="w-full max-w-md rounded-3xl border border-slate-200 bg-white/90 p-8 text-center shadow-2xl">
+          <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-2xl bg-emerald-100">
+            <svg
+              className="h-8 w-8 text-emerald-700"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2.5"
+                d="M5 13l4 4L19 7"
+              />
+            </svg>
+          </div>
+
+          <p className="mb-2 text-xs font-bold uppercase tracking-[0.28em] text-sky-700">
+            AvantaLab Gestão
+          </p>
+
+          <h1 className="text-2xl font-black leading-tight text-slate-900">
+            Email confirmado com sucesso
+          </h1>
+
+          <p className="mt-4 text-sm leading-relaxed text-slate-600">
+            Seu cadastro foi confirmado. Agora você já pode acessar o sistema usando seu email e senha.
+          </p>
+
+          <button
+            type="button"
+            onClick={() => {
+              setEmailConfirmado(false);
+              setModoAuth('login');
+              setAcessoLiberado(false);
+              setAuthErro('');
+              setAuthMensagem('');
+            }}
+            className="mt-6 w-full rounded-xl bg-slate-900 px-4 py-3 font-bold text-white shadow-lg transition hover:bg-slate-800"
+          >
+            Ir para o login
+          </button>
+        </div>
+      </section>
+    </main>
+  );
+}
 
 if (acessoNaoConfigurado) {
   return (
@@ -1129,75 +1214,84 @@ if (isTelaMobile) {
   <div className="space-y-4">
 
         {/* ================= INÍCIO DO FORMULÁRIO DE LOGIN ================= */}
-        
-                <div>
-                  <label className="mb-1 block text-sm font-semibold text-slate-700">
-                    Email
-                  </label>
-                  <input
-  type="email"
-  placeholder="seuemail@exemplo.com"
-  value={loginEmail}
-  onChange={(e) => setLoginEmail(e.target.value)}
-  className="w-full rounded-xl border border-slate-300 bg-white/90 px-4 py-3 text-slate-800 outline-none transition focus:border-sky-600 focus:ring-2 focus:ring-sky-600/20"
-/>
-                </div>
 
-                <div>
-                  <label className="mb-1 block text-sm font-semibold text-slate-700">
-                    Senha
-                  </label>
-                  <div className="relative">
-  <input
-    type={mostrarSenhaLogin ? 'text' : 'password'}
-    placeholder="Digite sua senha"
-    value={loginSenha}
-    onChange={(e) => setLoginSenha(e.target.value)}
-    className="w-full rounded-xl border border-slate-300 bg-white/90 px-4 py-3 pr-14 text-slate-800 outline-none transition focus:border-sky-600 focus:ring-2 focus:ring-sky-600/20"
-  />
-
-  <button
-    type="button"
-    onClick={() => setMostrarSenhaLogin(!mostrarSenhaLogin)}
-    className="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-500 hover:text-sky-700"
-  >
-    {mostrarSenhaLogin ? 'Ocultar' : 'Ver'}
-  </button>
-</div>
-                </div>
-
-                <div className="text-right">
-  <button
-    type="button"
-    onClick={handleRecuperarSenha}
-    className="text-xs font-bold text-sky-700 hover:underline"
-  >
-    Esqueci minha senha
-  </button>
-</div>
-
-{authErro && (
-  <div className="rounded-xl bg-red-100 px-4 py-3 text-sm font-semibold text-red-700">
-    {authErro}
-  </div>
-)}
-
-{authMensagem && (
-  <div className="rounded-xl bg-green-100 px-4 py-3 text-sm font-semibold text-green-700">
-    {authMensagem}
-  </div>
-)}
-
-                <button
-  type="button"
-  onClick={handleLogin}
-  disabled={authLoading}
-  className="w-full rounded-xl bg-slate-900 px-4 py-3 font-bold text-white shadow-lg transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
+<form
+  onSubmit={(e) => {
+    e.preventDefault();
+    handleLogin();
+  }}
+  className="space-y-4"
 >
-  {authLoading ? 'Entrando...' : 'Entrar'}
-</button>
+  <div>
+    <label className="mb-1 block text-sm font-semibold text-slate-700">
+      Email
+    </label>
 
-                <button
+    <input
+      type="email"
+      placeholder="seuemail@exemplo.com"
+      value={loginEmail}
+      onChange={(e) => setLoginEmail(e.target.value)}
+      className="w-full rounded-xl border border-slate-300 bg-white/90 px-4 py-3 text-slate-800 outline-none transition focus:border-sky-600 focus:ring-2 focus:ring-sky-600/20"
+    />
+  </div>
+
+  <div>
+    <label className="mb-1 block text-sm font-semibold text-slate-700">
+      Senha
+    </label>
+
+    <div className="relative">
+      <input
+        type={mostrarSenhaLogin ? 'text' : 'password'}
+        placeholder="Digite sua senha"
+        value={loginSenha}
+        onChange={(e) => setLoginSenha(e.target.value)}
+        className="w-full rounded-xl border border-slate-300 bg-white/90 px-4 py-3 pr-14 text-slate-800 outline-none transition focus:border-sky-600 focus:ring-2 focus:ring-sky-600/20"
+      />
+
+      <button
+        type="button"
+        onClick={() => setMostrarSenhaLogin(!mostrarSenhaLogin)}
+        className="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-500 hover:text-sky-700"
+      >
+        {mostrarSenhaLogin ? 'Ocultar' : 'Ver'}
+      </button>
+    </div>
+  </div>
+
+  <div className="text-right">
+    <button
+      type="button"
+      onClick={handleRecuperarSenha}
+      className="text-xs font-bold text-sky-700 hover:underline"
+    >
+      Esqueci minha senha
+    </button>
+  </div>
+
+  {authErro && (
+    <div className="rounded-xl bg-red-100 px-4 py-3 text-sm font-semibold text-red-700">
+      {authErro}
+    </div>
+  )}
+
+  {authMensagem && (
+    <div className="rounded-xl bg-green-100 px-4 py-3 text-sm font-semibold text-green-700">
+      {authMensagem}
+    </div>
+  )}
+
+  <button
+    type="submit"
+    disabled={authLoading}
+    className="w-full rounded-xl bg-slate-900 px-4 py-3 font-bold text-white shadow-lg transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
+  >
+    {authLoading ? 'Entrando...' : 'Entrar'}
+  </button>
+</form>
+
+<button
   type="button"
   onClick={handleGoogleLogin}
   disabled={googleLoading}
@@ -1222,18 +1316,18 @@ if (isTelaMobile) {
   Se este for seu primeiro acesso com este email, uma nova conta será criada automaticamente.
 </p>
 
-                <div className="pt-2 text-center text-sm text-slate-600">
-                  Ainda não tem conta?{' '}
-                  <button
-                    type="button"
-                    onClick={() => setModoAuth('cadastro')}
-                    className="font-bold text-sky-700 hover:underline"
-                  >
-                    Criar cadastro
-                  </button>
-                </div>
+<div className="pt-2 text-center text-sm text-slate-600">
+  Ainda não tem conta?{' '}
+  <button
+    type="button"
+    onClick={() => setModoAuth('cadastro')}
+    className="font-bold text-sky-700 hover:underline"
+  >
+    Criar cadastro
+  </button>
+</div>
 
-                    {/* ================= FIM DO FORMULÁRIO DE LOGIN ================= */}
+{/* ================= FIM DO FORMULÁRIO DE LOGIN ================= */}
 
               </div>
             ) : (
@@ -2000,7 +2094,22 @@ if (isTelaMobile) {
                       <input type="text" value={formDescricao} onChange={(e) => setFormDescricao(e.target.value)} placeholder="Descrição..." className={`w-full p-2.5 border rounded-lg focus:outline-none focus:ring-1 shadow-sm ${darkMode ? 'bg-slate-700 border-slate-600 text-white' : 'border-slate-300'}`} style={{ outlineColor: corPrimaria }} />
                     </td>
                     <td className="p-3">
-                      <input type="text" value={formValor} onChange={handleValorChange} placeholder="R$ 0,00" className={`w-full p-2.5 border rounded-lg focus:outline-none focus:ring-1 text-right font-bold shadow-sm ${darkMode ? 'bg-slate-700 border-slate-600 text-white' : 'border-slate-300 text-slate-800'}`} style={{ outlineColor: corPrimaria }} />
+                      <input
+  type="text"
+  value={formValor}
+  onChange={handleValorChange}
+  onKeyDown={(e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      adicionarDespesa();
+    }
+  }}
+  placeholder="R$ 0,00"
+  className={`w-full p-2.5 border rounded-lg focus:outline-none focus:ring-1 text-right font-bold shadow-sm ${
+    darkMode ? 'bg-slate-700 border-slate-600 text-white' : 'border-slate-300 text-slate-800'
+  }`}
+  style={{ outlineColor: corPrimaria }}
+/>
                     </td>
                     <td className="p-3 text-center">
                       <button onClick={adicionarDespesa} style={{ backgroundColor: corPrimaria }} className="w-full text-white font-bold py-2.5 rounded-lg shadow hover:brightness-110 transition-colors text-sm">Adicionar</button>
