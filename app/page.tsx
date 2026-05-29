@@ -66,6 +66,7 @@ const [mostrarConfirmarNovaSenha, setMostrarConfirmarNovaSenha] = useState(false
   const [corTemporaria, setCorTemporaria] = useState('#003E73');
   const [statusConfig, setStatusConfig] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
   const [mesAtivo, setMesAtivo] = useState<string | null>(null);
+  const [ajudaCategoriasAberta, setAjudaCategoriasAberta] = useState(false);
   
 
   // NOVO: Estado do Ano Selecionado
@@ -1493,6 +1494,7 @@ if (isTelaMobile) {
     <div className={`min-h-screen flex flex-col font-sans transition-colors duration-300 ${bgMain}`}>
       
       {/* ================= MODAIS ================= */}
+
       {modalInstrucoes && (
   <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
     <div
@@ -1537,6 +1539,8 @@ if (isTelaMobile) {
 
       {modalDespesasBase && (
   <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
+    
+    {/* MODAL PRINCIPAL */}
     <div
       className={`${bgCard} rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] flex flex-col border-2 overflow-hidden`}
       style={{ borderColor: corPrimaria }}
@@ -1545,12 +1549,49 @@ if (isTelaMobile) {
         className="sticky top-0 p-6 border-b border-slate-200/20 flex justify-between items-center z-10"
         style={estiloTemaPrimario}
       >
-        <h2 className="text-lg font-bold uppercase">
-          Gerenciar Despesas
-        </h2>
+        <div className="flex w-full items-center justify-between gap-4">
+  <h2 className="text-lg font-bold uppercase">
+    Gerenciar Despesas
+  </h2>
+
+  <div className="flex items-center gap-6 pr-4">
+    <button
+      type="button"
+      onClick={() => setAjudaCategoriasAberta(!ajudaCategoriasAberta)}
+      className="group flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-bold transition hover:scale-[1.02] hover:shadow-md active:scale-[0.98]"
+      style={{
+        borderColor: textoSobreCorPrimaria,
+        color: textoSobreCorPrimaria,
+        backgroundColor: ajudaCategoriasAberta
+          ? corEhClara(corPrimaria)
+            ? 'rgba(15, 23, 42, 0.14)'
+            : 'rgba(255, 255, 255, 0.22)'
+          : corEhClara(corPrimaria)
+            ? 'rgba(15, 23, 42, 0.08)'
+            : 'rgba(255, 255, 255, 0.14)',
+      }}
+      title="Entenda as categorias"
+    >
+      <span
+        className="flex h-5 w-5 items-center justify-center rounded-full text-[11px] font-black"
+        style={{
+          border: `1px solid ${textoSobreCorPrimaria}`,
+          color: textoSobreCorPrimaria,
+        }}
+      >
+        ?
+      </span>
+
+      <span>Entenda as categorias</span>
+    </button>
+  </div>
+</div>
 
         <button
-          onClick={() => setModalDespesasBase(false)}
+          onClick={() => {
+            setModalDespesasBase(false);
+            setAjudaCategoriasAberta(false);
+          }}
           className="px-3 py-1 rounded-lg font-bold transition-colors"
           style={{
             color: textoSobreCorPrimaria,
@@ -1641,6 +1682,51 @@ if (isTelaMobile) {
         </div>
       </div>
     </div>
+
+    {/* POPUP LATERAL DE AJUDA */}
+    {ajudaCategoriasAberta && (
+      <div className="ml-4 hidden lg:block w-80 max-h-[80vh] overflow-y-auto rounded-2xl border border-slate-200 bg-white p-5 text-slate-700 shadow-2xl">
+        <div className="mb-4 flex items-center justify-between">
+          <h3 className="text-sm font-black uppercase text-slate-900">
+            Entenda as categorias
+          </h3>
+
+          <button
+            type="button"
+            onClick={() => setAjudaCategoriasAberta(false)}
+            className="rounded-lg px-2 py-1 text-sm font-bold text-slate-500 hover:bg-slate-100"
+          >
+            X
+          </button>
+        </div>
+
+        <div className="space-y-3 text-xs leading-relaxed">
+          <div>
+            <strong>Amortização:</strong> pagamentos de dívidas, empréstimos ou parcelamentos.
+          </div>
+
+          <div>
+            <strong>Custos Variáveis:</strong> despesas que variam conforme vendas ou produção.
+          </div>
+
+          <div>
+            <strong>Depreciação:</strong> perda de valor de bens ao longo do tempo.
+          </div>
+
+          <div>
+            <strong>Despesas Financeiras:</strong> juros, taxas bancárias e custos financeiros.
+          </div>
+
+          <div>
+            <strong>Despesas Operacionais:</strong> gastos do funcionamento diário da empresa.
+          </div>
+
+          <div>
+            <strong>Imposto sobre Lucro:</strong> tributos calculados sobre o resultado/lucro.
+          </div>
+        </div>
+      </div>
+    )}
   </div>
 )}
 
