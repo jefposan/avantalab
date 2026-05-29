@@ -67,6 +67,11 @@ const [mostrarConfirmarNovaSenha, setMostrarConfirmarNovaSenha] = useState(false
   const [statusConfig, setStatusConfig] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
   const [mesAtivo, setMesAtivo] = useState<string | null>(null);
   const [ajudaCategoriasAberta, setAjudaCategoriasAberta] = useState(false);
+  const ALTURA_LINHA_LANCAMENTO = 44;
+  const ALTURA_PADRAO_TABELA = 440;
+  const ESPACO_PUXADOR_TABELA = 42;
+
+  const [alturaTabelaLancamentos, setAlturaTabelaLancamentos] = useState(ALTURA_PADRAO_TABELA);
   
 
   // NOVO: Estado do Ano Selecionado
@@ -981,6 +986,20 @@ const handleGoogleLogin = async () => {
     setGoogleLoading(false);
   }
 };
+
+const quantidadeLancamentosMes = lancamentosOrdenados.filter(
+  (l) => l.mes === mesAtivo
+).length;
+
+const alturaMaximaTabelaLancamentos = Math.max(
+  ALTURA_PADRAO_TABELA,
+  quantidadeLancamentosMes * ALTURA_LINHA_LANCAMENTO
+);
+
+const alturaFinalTabelaLancamentos = Math.min(
+  alturaTabelaLancamentos,
+  alturaMaximaTabelaLancamentos
+);
 
   if (!mounted) return null;
 
@@ -2199,74 +2218,218 @@ if (isTelaMobile) {
           </div>
 
           <main className="flex-1 p-8 max-w-7xl mx-auto w-full space-y-8">
-            <div className={`${bgCard} rounded-xl shadow-lg border-x border-b border-t-[4px] p-6`} style={{ borderTopColor: corPrimaria }}>
-              <table className="w-full text-left border-collapse">
-                <thead>
-                  <tr className={`${darkMode ? 'bg-slate-700/50' : 'bg-slate-100'} ${textMuted} uppercase text-xs tracking-wider border-b-2 border-slate-200/10`}>
-                    <th className="p-4 w-24 text-center">Dia</th>
-                    <th className="p-4 w-1/4">Tipo de Despesa</th>
-                    <th className="p-4 w-1/3">Descrição</th>
-                    <th className="p-4 w-40 text-right">Valor</th>
-                    <th className="p-4 w-28 text-center">Ações</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr className={`${darkMode ? 'bg-slate-800/80 border-slate-700' : 'bg-slate-50/80 border-slate-200'} border-b-2`}>
-                    <td className="p-3">
-                      <input type="number" min="1" max={getMaxDias(mesAtivo)} value={formDia} onChange={(e) => { const val = parseInt(e.target.value); if (val > getMaxDias(mesAtivo)) setFormDia(getMaxDias(mesAtivo).toString()); else setFormDia(e.target.value); }} placeholder="Dia" className={`w-full p-2.5 border rounded-lg focus:outline-none focus:ring-1 text-center font-bold shadow-sm ${darkMode ? 'bg-slate-700 border-slate-600 text-white' : 'border-slate-300 text-slate-700'}`} style={{ outlineColor: corPrimaria }} />
-                    </td>
-                    <td className="p-3">
-                      <select value={formDespesa} onChange={(e) => setFormDespesa(e.target.value)} className={`w-full p-2.5 border rounded-lg focus:outline-none focus:ring-1 font-semibold shadow-sm ${darkMode ? 'bg-slate-700 border-slate-600 text-white' : 'bg-white border-slate-300 text-slate-700'}`} style={{ outlineColor: corPrimaria }}>
-                        <option value="">Selecionar...</option>
-                        {despesasCadastradas.map((d) => <option key={d.nome} value={d.nome}>{d.nome}</option>)}
-                      </select>
-                    </td>
-                    <td className="p-3">
-                      <input type="text" value={formDescricao} onChange={(e) => setFormDescricao(e.target.value)} placeholder="Descrição..." className={`w-full p-2.5 border rounded-lg focus:outline-none focus:ring-1 shadow-sm ${darkMode ? 'bg-slate-700 border-slate-600 text-white' : 'border-slate-300'}`} style={{ outlineColor: corPrimaria }} />
-                    </td>
-                    <td className="p-3">
-                      <input
-  type="text"
-  value={formValor}
-  onChange={handleValorChange}
-  onKeyDown={(e) => {
-    if (e.key === 'Enter') {
-      e.preventDefault();
-      adicionarDespesa();
-    }
+            <div className={`${bgCard} rounded-xl shadow-lg border-x border-b border-t-[4px] p-6`}
+  style={{ borderTopColor: corPrimaria }}
+>
+  <div
+  className="relative custom-scroll"
+  style={{
+    height: `${alturaFinalTabelaLancamentos + 130 + ESPACO_PUXADOR_TABELA}px`,
+    minHeight: `${ALTURA_PADRAO_TABELA + 130 + ESPACO_PUXADOR_TABELA}px`,
+    maxHeight: `${alturaMaximaTabelaLancamentos + 130 + ESPACO_PUXADOR_TABELA}px`,
+    overflow: 'hidden',
   }}
-  placeholder="R$ 0,00"
-  className={`w-full p-2.5 border rounded-lg focus:outline-none focus:ring-1 text-right font-bold shadow-sm ${
-    darkMode ? 'bg-slate-700 border-slate-600 text-white' : 'border-slate-300 text-slate-800'
-  }`}
-  style={{ outlineColor: corPrimaria }}
-/>
-                    </td>
-                    <td className="p-3 text-center">
-                      <button onClick={adicionarDespesa} style={{ backgroundColor: corPrimaria }} className="w-full text-white font-bold py-2.5 rounded-lg shadow hover:brightness-110 transition-colors text-sm">Adicionar</button>
-                    </td>
-                  </tr>
-                  
-                  {lancamentosOrdenados.filter(l => l.mes === mesAtivo).length > 0 ? (
-                    lancamentosOrdenados.filter(l => l.mes === mesAtivo).map((lanc) => (
-                      <tr key={lanc.id} className={`border-b border-slate-200/10 transition-colors ${darkMode ? 'hover:bg-slate-700/30' : 'hover:bg-slate-50'}`}>
-                        <td className={`py-1.5 px-4 text-center font-bold text-sm ${textStrong}`}>{lanc.dia.toString().padStart(2, '0')}</td>
-                        <td className={`py-1.5 px-4 font-bold text-sm ${textStrong}`}>{lanc.despesa}</td>
-                        <td className={`py-1.5 px-4 text-xs ${textMuted}`}>{lanc.descricao || '-'}</td>
-                        <td className={`py-1.5 px-4 text-right font-black text-sm text-red-500`}>- {formatarMoeda(lanc.valor)}</td>
-                        <td className="py-1.5 px-4 text-center">
-                          <button onClick={() => apagarDespesa(lanc.id)} className="text-slate-400 hover:text-red-500 hover:bg-red-500/10 p-1.5 rounded transition-all" title="Apagar">
-                            <svg className="w-4 h-4 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
-                          </button>
-                        </td>
-                      </tr>
-                    ))
-                  ) : (
-                    <tr><td colSpan={5} className="text-center p-4 text-sm text-slate-400 italic border-t border-slate-200/10">Nenhuma despesa lançada.</td></tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
+>
+  <table className="w-full text-left border-collapse">
+    <thead>
+      <tr className={`${darkMode ? 'bg-slate-700/50' : 'bg-slate-100'} ${textMuted} uppercase text-xs tracking-wider border-b-2 border-slate-200/10`}>
+        <th className="p-4 w-24 text-center">Dia</th>
+        <th className="p-4 w-1/4">Tipo de Despesa</th>
+        <th className="p-4 w-1/3">Descrição</th>
+        <th className="p-4 w-40 text-right">Valor</th>
+        <th className="p-4 w-28 text-center">Ações</th>
+      </tr>
+    </thead>
+
+    <tbody>
+      <tr className={`${darkMode ? 'bg-slate-800/80 border-slate-700' : 'bg-slate-50/80 border-slate-200'} border-b-2`}>
+        <td className="p-3">
+          <input
+            type="number"
+            min="1"
+            max={getMaxDias(mesAtivo)}
+            value={formDia}
+            onChange={(e) => {
+              const val = parseInt(e.target.value);
+              if (val > getMaxDias(mesAtivo)) setFormDia(getMaxDias(mesAtivo).toString());
+              else setFormDia(e.target.value);
+            }}
+            placeholder="Dia"
+            className={`w-full p-2.5 border rounded-lg focus:outline-none focus:ring-1 text-center font-bold shadow-sm ${
+              darkMode ? 'bg-slate-700 border-slate-600 text-white' : 'border-slate-300 text-slate-700'
+            }`}
+            style={{ outlineColor: corPrimaria }}
+          />
+        </td>
+
+        <td className="p-3">
+          <select
+            value={formDespesa}
+            onChange={(e) => setFormDespesa(e.target.value)}
+            className={`w-full p-2.5 border rounded-lg focus:outline-none focus:ring-1 font-semibold shadow-sm ${
+              darkMode ? 'bg-slate-700 border-slate-600 text-white' : 'bg-white border-slate-300 text-slate-700'
+            }`}
+            style={{ outlineColor: corPrimaria }}
+          >
+            <option value="">Selecionar...</option>
+            {despesasCadastradas.map((d) => (
+              <option key={d.nome} value={d.nome}>
+                {d.nome}
+              </option>
+            ))}
+          </select>
+        </td>
+
+        <td className="p-3">
+          <input
+            type="text"
+            value={formDescricao}
+            onChange={(e) => setFormDescricao(e.target.value)}
+            placeholder="Descrição..."
+            className={`w-full p-2.5 border rounded-lg focus:outline-none focus:ring-1 shadow-sm ${
+              darkMode ? 'bg-slate-700 border-slate-600 text-white' : 'border-slate-300'
+            }`}
+            style={{ outlineColor: corPrimaria }}
+          />
+        </td>
+
+        <td className="p-3">
+          <input
+            type="text"
+            value={formValor}
+            onChange={handleValorChange}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                e.preventDefault();
+                adicionarDespesa();
+              }
+            }}
+            placeholder="R$ 0,00"
+            className={`w-full p-2.5 border rounded-lg focus:outline-none focus:ring-1 text-right font-bold shadow-sm ${
+              darkMode ? 'bg-slate-700 border-slate-600 text-white' : 'border-slate-300 text-slate-800'
+            }`}
+            style={{ outlineColor: corPrimaria }}
+          />
+        </td>
+
+        <td className="p-3 text-center">
+          <button
+            onClick={adicionarDespesa}
+            style={estiloTemaPrimario}
+            className="w-full font-bold py-2.5 rounded-lg shadow hover:brightness-110 transition-colors text-sm"
+          >
+            Adicionar
+          </button>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div
+    className="overflow-y-auto overflow-x-auto custom-scroll"
+    style={{
+      height: `${alturaFinalTabelaLancamentos}px`,
+      maxHeight: `${alturaMaximaTabelaLancamentos}px`,
+    }}
+  >
+    <table className="w-full text-left border-collapse">
+      <tbody>
+        {lancamentosOrdenados.filter(l => l.mes === mesAtivo).length > 0 ? (
+          lancamentosOrdenados.filter(l => l.mes === mesAtivo).map((lanc) => (
+            <tr
+              key={lanc.id}
+              className={`border-b border-slate-200/10 transition-colors ${
+                darkMode ? 'hover:bg-slate-700/30' : 'hover:bg-slate-50'
+              }`}
+            >
+              <td className={`py-1.5 px-4 w-24 text-center font-bold text-sm ${textStrong}`}>
+                {lanc.dia.toString().padStart(2, '0')}
+              </td>
+
+              <td className={`py-1.5 px-4 w-1/4 font-bold text-sm ${textStrong}`}>
+                {lanc.despesa}
+              </td>
+
+              <td className={`py-1.5 px-4 w-1/3 text-xs ${textMuted}`}>
+                {lanc.descricao || '-'}
+              </td>
+
+              <td className="py-1.5 px-4 w-40 text-right font-black text-sm text-red-500">
+                - {formatarMoeda(lanc.valor)}
+              </td>
+
+              <td className="py-1.5 px-4 w-28 text-center">
+                <button
+                  onClick={() => apagarDespesa(lanc.id)}
+                  className="text-slate-400 hover:text-red-500 hover:bg-red-500/10 p-1.5 rounded transition-all"
+                  title="Apagar"
+                >
+                  <svg className="w-4 h-4 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="2"
+                      d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                    />
+                  </svg>
+                </button>
+              </td>
+            </tr>
+          ))
+        ) : (
+          <tr>
+            <td
+              colSpan={5}
+              className="text-center p-4 text-sm text-slate-400 italic border-t border-slate-200/10"
+            >
+              Nenhuma despesa lançada.
+            </td>
+          </tr>
+        )}
+      </tbody>
+    </table>
+  </div>
+  </div>
+
+  <div
+  className="flex items-center justify-center"
+  style={{ height: `${ESPACO_PUXADOR_TABELA}px` }}
+>
+  {quantidadeLancamentosMes > 10 && (
+    <div
+      title="Arraste para aumentar ou reduzir a área de lançamentos"
+      className="flex h-5 w-28 cursor-row-resize items-center justify-center rounded-full border border-slate-400 bg-white shadow-md transition hover:bg-slate-100"
+      onPointerDown={(e) => {
+        e.preventDefault();
+
+        const inicioY = e.clientY;
+        const alturaInicial = alturaTabelaLancamentos;
+
+        const aoMover = (event: PointerEvent) => {
+          const diferenca = event.clientY - inicioY;
+
+          const novaAltura = Math.min(
+            Math.max(alturaInicial + diferenca, ALTURA_PADRAO_TABELA),
+            alturaMaximaTabelaLancamentos
+          );
+
+          setAlturaTabelaLancamentos(novaAltura);
+        };
+
+        const aoSoltar = () => {
+          window.removeEventListener('pointermove', aoMover);
+          window.removeEventListener('pointerup', aoSoltar);
+        };
+
+        window.addEventListener('pointermove', aoMover);
+        window.addEventListener('pointerup', aoSoltar);
+      }}
+    >
+      <span className="h-1 w-16 rounded-full bg-slate-500" />
+    </div>
+  )}
+</div>
+</div>
 
             <div className="grid grid-cols-2 gap-8">
               <div className={`${bgCard} rounded-xl shadow-lg border-x border-b border-t-[4px] p-6 flex flex-col items-center justify-center`} style={{ borderTopColor: corPrimaria }}>
