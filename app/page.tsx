@@ -1889,7 +1889,7 @@ if (isTelaMobile) {
       setAbaAtiva('Dashboard');
       setMesAtivo(null);
     }}
-    className={`font-bold py-2.5 px-6 rounded-full transition-all text-sm uppercase tracking-wide border-2 ${
+    className={`font-bold py-2.5 px-6 rounded-full transition-all text-sm uppercase tracking-wide border-2 cursor-pointer ${
       abaAtiva === 'Dashboard' && !mesAtivo
         ? 'shadow-md transform scale-105'
         : darkMode
@@ -1905,7 +1905,7 @@ if (isTelaMobile) {
             <button 
               key={item} 
               onClick={() => { setAbaAtiva(item); setMesAtivo(null); }}
-              className={`font-bold py-2.5 px-6 rounded-full transition-all text-sm uppercase tracking-wide border-2 ${
+              className={`font-bold py-2.5 px-6 rounded-full transition-all text-sm uppercase tracking-wide border-2 cursor-pointer ${
                 abaAtiva === item 
                   ? 'shadow-md transform scale-105' 
                   : darkMode 
@@ -1930,7 +1930,7 @@ if (isTelaMobile) {
           <button
   type="button"
   onClick={handleLogout}
-  className={`px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wide border shadow-sm transition-colors ${
+  className={`px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wide border shadow-sm transition-colors cursor-pointer ${
     darkMode
       ? 'bg-slate-800 border-slate-700 text-slate-300 hover:bg-slate-700'
       : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
@@ -1958,15 +1958,21 @@ if (isTelaMobile) {
           </div>
 
           {!mesAtivo && (
-            <button onClick={() => setCalcAberta(!calcAberta)} className={`p-2 rounded-lg transition-colors border shadow-sm ${darkMode ? 'bg-slate-800 border-slate-700 hover:bg-slate-700' : 'bg-white border-slate-200 hover:bg-slate-50'}`} title="Calculadora">
-              <svg className="w-5 h-5" style={{ color: corEhClara(corPrimaria) ? '#0f172a' : corPrimaria }} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
-            </button>
-          )}
+  <button 
+    onClick={() => setCalcAberta(!calcAberta)} 
+    className={`p-2 rounded-lg transition-colors border shadow-sm cursor-pointer ${darkMode ? 'bg-slate-800 border-slate-700 hover:bg-slate-700' : 'bg-white border-slate-200 hover:bg-slate-50'}`} 
+    title="Calculadora"
+  >
+    <svg className="w-5 h-5" style={{ color: corEhClara(corPrimaria) ? '#0f172a' : corPrimaria }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path>
+    </svg>
+  </button>
+)}
 
           <button
   type="button"
   onClick={() => setAjustesAberto(!ajustesAberto)}
-  className="group relative flex items-center gap-2 rounded-full px-3 py-1.5 shadow-md transition-all duration-300 hover:scale-[1.02] hover:shadow-lg active:scale-[0.98]"
+  className="group relative flex items-center gap-2 rounded-full px-3 py-1.5 shadow-md transition-all duration-300 hover:scale-[1.02] hover:shadow-lg active:scale-[0.98] cursor-pointer"
   style={estiloTemaPrimarioGradiente}
   title="Abrir ajustes"
 >

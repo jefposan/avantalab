@@ -81,7 +81,7 @@ export default function Dashboard({
             <button 
               key={mes} 
               onClick={() => setMesAtivo(mes)}
-              className={`${darkMode ? 'bg-slate-800 hover:bg-slate-700 border-slate-700' : 'bg-slate-50 hover:bg-white border-slate-200'} border-2 rounded-xl shadow-sm hover:shadow-md transition-all font-bold ${textMuted} text-sm flex items-center justify-center group h-14`}
+              className={`${darkMode ? 'bg-slate-800 hover:bg-slate-700 border-slate-700' : 'bg-slate-50 hover:bg-white border-slate-200'} border-2 rounded-xl shadow-sm hover:shadow-md transition-all font-bold ${textMuted} text-sm flex items-center justify-center group h-14 cursor-pointer`}
               onMouseOver={e => { e.currentTarget.style.color = corPrimaria; e.currentTarget.style.borderColor = corPrimaria; }}
               onMouseOut={e => { e.currentTarget.style.color = ''; e.currentTarget.style.borderColor = ''; }}
             >
@@ -203,20 +203,26 @@ export default function Dashboard({
 />
             </div>
             <button
-              onClick={salvarFaturamento}
-              className="px-5 rounded-lg font-bold transition-colors shadow-md border"
-              style={{
-                color: textoSobreCorPrimaria,
-                backgroundColor: corEhClara(corPrimaria)
-                  ? 'rgba(15, 23, 42, 0.08)'
-                  : 'rgba(0, 0, 0, 0.20)',
-                borderColor: corEhClara(corPrimaria)
-                  ? 'rgba(15, 23, 42, 0.18)'
-                  : 'rgba(255, 255, 255, 0.12)',
-              }}
-            >
-              Salvar
-            </button>
+  onClick={salvarFaturamento}
+  className="
+    px-5 rounded-lg font-bold border shadow-md
+    transition-all duration-200
+    hover:brightness-110 hover:shadow-lg hover:scale-[1.05]
+active:scale-95 active:shadow-inner
+    cursor-pointer select-none
+  "
+  style={{
+    color: textoSobreCorPrimaria,
+    backgroundColor: corEhClara(corPrimaria)
+      ? 'rgba(15, 23, 42, 0.08)'
+      : 'rgba(0, 0, 0, 0.20)',
+    borderColor: corEhClara(corPrimaria)
+      ? 'rgba(15, 23, 42, 0.18)'
+      : 'rgba(255, 255, 255, 0.12)',
+  }}
+>
+  Salvar
+</button>
           </div>
         </div>
         {/* ========================================================= */}
