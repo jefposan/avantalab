@@ -18,6 +18,7 @@ import {
   formatarDescricao,
   corEhClara,
   getMaxDias,
+  normalizarTexto,
 } from './lib/formatters';
 import {
   buscarEmpresaDoUsuario,
@@ -434,8 +435,8 @@ const adicionarDespesaBase = async () => {
   }
 
   const jaExiste = despesasCadastradas.some(
-    (d) => d.nome.trim().toLowerCase() === nomeLimpo.toLowerCase()
-  );
+  (d) => normalizarTexto(d.nome) === normalizarTexto(nomeLimpo)
+);
 
   if (jaExiste) {
     alert('Esta despesa já está cadastrada.');
@@ -776,8 +777,9 @@ const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
         despesas += valor;
 
         const despesaCat =
-          despesasCadastradas.find((d) => d.nome === l.despesa_nome)?.categoria ||
-          'Outros';
+  despesasCadastradas.find(
+    (d) => normalizarTexto(d.nome) === normalizarTexto(l.despesa_nome)
+  )?.categoria || 'Outros';
 
         if (
           [
@@ -880,15 +882,59 @@ const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
   XLSX.writeFile(wb, `backup_avantalab_${dataHoje}.xlsx`);
 };
 
-  const analiseDespesas = useMemo(() => { 
-    const totais: Record<string, number> = {}; 
-    lancamentosDoMes.forEach(l => { totais[l.despesa] = (totais[l.despesa] || 0) + l.valor; }); 
-    const cores = [corPrimaria, '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#14b8a6']; 
-    const dadosGrafico = Object.entries(totais).sort((a, b) => b[1] - a[1]).map(([nome, valor], index) => ({ nome, valor, percentual: totalDespesasMes > 0 ? (valor / totalDespesasMes) * 100 : 0, cor: cores[index % cores.length] })); 
-    let anguloAtual = 0; 
-    const conicParts = dadosGrafico.map(item => { const inicio = anguloAtual; anguloAtual += item.percentual; return `${item.cor} ${inicio}% ${anguloAtual}%`; }); 
-    return { dados: dadosGrafico, gradiente: `conic-gradient(${conicParts.join(', ')})` }; 
-  }, [lancamentosDoMes, totalDespesasMes, corPrimaria]);
+  const analiseDespesas = useMemo(() => {
+  const totais: Record<string, { nome: string; valor: number }> = {};
+
+  lancamentosDoMes.forEach((l) => {
+    const despesaBase = despesasCadastradas.find(
+      (d) => normalizarTexto(d.nome) === normalizarTexto(l.despesa)
+    );
+
+    const nomeFinal = despesaBase ? despesaBase.nome : l.despesa;
+    const chave = normalizarTexto(nomeFinal);
+
+    if (!totais[chave]) {
+      totais[chave] = {
+        nome: nomeFinal,
+        valor: 0,
+      };
+    }
+
+    totais[chave].valor += Number(l.valor || 0);
+  });
+
+  const cores = [
+    corPrimaria,
+    '#10b981',
+    '#f59e0b',
+    '#ef4444',
+    '#8b5cf6',
+    '#ec4899',
+    '#14b8a6',
+  ];
+
+  const dadosGrafico = Object.values(totais)
+    .sort((a, b) => b.valor - a.valor)
+    .map((item, index) => ({
+      nome: item.nome,
+      valor: item.valor,
+      percentual: totalDespesasMes > 0 ? (item.valor / totalDespesasMes) * 100 : 0,
+      cor: cores[index % cores.length],
+    }));
+
+  let anguloAtual = 0;
+
+  const conicParts = dadosGrafico.map((item) => {
+    const inicio = anguloAtual;
+    anguloAtual += item.percentual;
+    return `${item.cor} ${inicio}% ${anguloAtual}%`;
+  });
+
+  return {
+    dados: dadosGrafico,
+    gradiente: `conic-gradient(${conicParts.join(', ')})`,
+  };
+}, [lancamentosDoMes, totalDespesasMes, corPrimaria, despesasCadastradas]);
 
   const bgMain = darkMode ? 'bg-slate-900 text-slate-100' : 'bg-slate-50 text-slate-800';
   const bgCard = darkMode ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-100';
@@ -1752,43 +1798,77 @@ if (isTelaMobile) {
       setAbaAtiva('Dashboard');
       setMesAtivo(null);
     }}
-    className={`font-bold py-2.5 px-6 rounded-full transition-all text-sm uppercase tracking-wide border-2 cursor-pointer ${
-      abaAtiva === 'Dashboard' && !mesAtivo
-        ? 'shadow-md transform scale-105'
-        : darkMode
-          ? 'bg-slate-800 hover:bg-slate-700 text-slate-300 border-slate-700 shadow'
-          : 'bg-white hover:bg-slate-50 text-slate-600 border-slate-200 shadow hover:shadow-md'
-    }`}
+    className="flex items-center gap-2 font-bold py-2 px-4 rounded-full transition-all text-xs uppercase tracking-wide border-2 cursor-pointer shadow-md hover:brightness-110 active:scale-[0.98]"
     style={estiloTemaPrimarioGradiente}
   >
-    Home
+    <svg
+      className="w-4 h-4"
+      fill="none"
+      stroke="currentColor"
+      viewBox="0 0 24 24"
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth="2"
+        d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"
+      />
+    </svg>
+
+    <span>Início</span>
   </button>
 
   {['Balanço Geral', 'Gráficos', 'Por Categoria', 'Relatório'].map((item) => (
-            <button 
-              key={item} 
-              onClick={() => { setAbaAtiva(item); setMesAtivo(null); }}
-              className={`font-bold py-2.5 px-6 rounded-full transition-all text-sm uppercase tracking-wide border-2 cursor-pointer ${
-                abaAtiva === item 
-                  ? 'shadow-md transform scale-105' 
-                  : darkMode 
-                    ? 'bg-slate-800 hover:bg-slate-700 text-slate-300 border-slate-700 shadow' 
-                    : 'bg-white hover:bg-slate-50 text-slate-600 border-slate-200 shadow hover:shadow-md'
-              }`} 
-              style={{
-  backgroundColor: abaAtiva === item ? corPrimaria : '',
-  borderColor: abaAtiva === item ? corPrimaria : '',
-  color: abaAtiva === item ? textoSobreCorPrimaria : '',
-}}
-              onMouseOver={e => { if(abaAtiva !== item) e.currentTarget.style.borderColor = corPrimaria }} 
-              onMouseOut={e => { if(abaAtiva !== item) e.currentTarget.style.borderColor = darkMode ? '#334155' : '#e2e8f0' }}
-            >
-              {item}
-            </button>
-          ))}
-        </nav>
+    <button 
+      key={item} 
+      onClick={() => { setAbaAtiva(item); setMesAtivo(null); }}
+      className={`font-bold py-2.5 px-6 rounded-full transition-all text-sm uppercase tracking-wide border-2 cursor-pointer ${
+        abaAtiva === item 
+          ? 'shadow-md transform scale-105' 
+          : darkMode 
+            ? 'bg-slate-800 hover:bg-slate-700 text-slate-300 border-slate-700 shadow' 
+            : 'bg-white hover:bg-slate-50 text-slate-600 border-slate-200 shadow hover:shadow-md'
+      }`} 
+      style={{
+        backgroundColor: abaAtiva === item ? corPrimaria : '',
+        borderColor: abaAtiva === item ? corPrimaria : '',
+        color: abaAtiva === item ? textoSobreCorPrimaria : '',
+      }}
+      onMouseOver={e => { if(abaAtiva !== item) e.currentTarget.style.borderColor = corPrimaria }} 
+      onMouseOut={e => { if(abaAtiva !== item) e.currentTarget.style.borderColor = darkMode ? '#334155' : '#e2e8f0' }}
+    >
+      {item}
+    </button>
+  ))}
+</nav>
 
         <div className="flex items-center space-x-6 relative">
+
+<button 
+  type="button"
+  onClick={() => setCalcAberta(!calcAberta)} 
+  className={`p-2 rounded-lg transition-colors border shadow-sm cursor-pointer ${
+    darkMode 
+      ? 'bg-slate-800 border-slate-700 hover:bg-slate-700' 
+      : 'bg-white border-slate-200 hover:bg-slate-50'
+  }`} 
+  title="Calculadora"
+>
+  <svg
+    className="w-5 h-5"
+    style={{ color: corEhClara(corPrimaria) ? '#0f172a' : corPrimaria }}
+    fill="none"
+    stroke="currentColor"
+    viewBox="0 0 24 24"
+  >
+    <path
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth="2"
+      d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"
+    />
+  </svg>
+</button>
 
           <button
   type="button"
@@ -1819,18 +1899,6 @@ if (isTelaMobile) {
               ))}
             </select>
           </div>
-
-          {!mesAtivo && (
-  <button 
-    onClick={() => setCalcAberta(!calcAberta)} 
-    className={`p-2 rounded-lg transition-colors border shadow-sm cursor-pointer ${darkMode ? 'bg-slate-800 border-slate-700 hover:bg-slate-700' : 'bg-white border-slate-200 hover:bg-slate-50'}`} 
-    title="Calculadora"
-  >
-    <svg className="w-5 h-5" style={{ color: corEhClara(corPrimaria) ? '#0f172a' : corPrimaria }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path>
-    </svg>
-  </button>
-)}
 
           <button
   type="button"
@@ -1977,7 +2045,6 @@ if (isTelaMobile) {
       {/* GRUPO DA DIREITA (Removido flex-wrap, botões menores) */}
       <div className="flex items-center gap-2">
         <button onClick={() => setModalLogo(true)} className="whitespace-nowrap bg-slate-800 hover:bg-slate-700 px-3 py-1.5 rounded shadow border border-slate-700 transition-colors text-xs">Adicionar Logo</button>
-        <button onClick={() => setPainelAjusteLogo(!painelAjusteLogo)} className="whitespace-nowrap bg-slate-800 hover:bg-slate-700 px-3 py-1.5 rounded shadow border border-slate-700 transition-colors text-xs">Ajustar Logo</button>
         
         <div className="whitespace-nowrap relative overflow-hidden bg-slate-800 hover:bg-slate-700 px-3 py-1.5 rounded shadow border border-slate-700 transition-colors text-xs flex items-center gap-1.5">
           <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: corPrimaria }}></span> Cor Tema
@@ -2063,42 +2130,80 @@ if (isTelaMobile) {
       {/* RENDERIZAÇÃO CONDICIONAL DAS TELAS */}
       {mesAtivo ? (
         <>
-          <div className="print-ocultar shadow-md px-8 py-3 flex justify-between items-center text-white z-0" style={{ backgroundColor: corPrimaria }}>
-            <div className="flex items-center gap-4">
-              <button onClick={() => setMesAtivo(null)} className="flex items-center gap-2 hover:bg-white/20 transition-colors bg-black/10 px-4 py-2 rounded-lg border border-white/10">
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
-                <span className="font-bold uppercase text-sm">Início</span>
-              </button>
-              <button onClick={() => setCalcAberta(!calcAberta)} className="bg-black/10 hover:bg-black/20 text-white font-semibold py-2 px-4 rounded-lg shadow-sm transition-all flex items-center gap-2 border border-white/10">
-                <span className="text-sm">Calculadora</span>
-              </button>
-            </div>
+          <div
+  className="print-ocultar shadow-md px-8 py-3 text-white z-0"
+  style={{ backgroundColor: corPrimaria }}
+>
+  <div className="max-w-6xl mx-auto w-full grid grid-cols-[1fr_auto_1fr] items-center gap-6">
 
-            <div className="flex items-center gap-8 w-1/3 justify-center">
-              {meses.indexOf(mesAtivo) > 0 ? (
-                <button onClick={() => setMesAtivo(meses[meses.indexOf(mesAtivo) - 1])} className="hover:bg-black/20 p-2 rounded-full transition-colors flex items-center">
-                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M15 19l-7-7 7-7"></path></svg>
-                </button>
-              ) : <div className="w-10"></div>}
-              <h1 className="text-3xl font-black uppercase tracking-widest w-48 text-center">{mesAtivo}</h1>
-              {meses.indexOf(mesAtivo) < 11 ? (
-                <button onClick={() => setMesAtivo(meses[meses.indexOf(mesAtivo) + 1])} className="hover:bg-black/20 p-2 rounded-full transition-colors flex items-center">
-                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M9 5l7 7-7 7"></path></svg>
-                </button>
-              ) : <div className="w-10"></div>}
-            </div>
+    {/* ESQUERDA VAZIA PARA EQUILIBRAR O CENTRO */}
+    <div />
 
-            <div className="flex gap-4">
-              <div className={`${bgCard} rounded-lg shadow px-4 py-1.5 flex flex-col items-center min-w-[120px]`}>
-                <span className="text-[10px] font-bold text-slate-400 uppercase">Total Despesas</span>
-                <span className="font-black text-lg text-red-500">{formatarMoeda(totalDespesasMes)}</span>
-              </div>
-              <div className={`${bgCard} rounded-lg shadow px-4 py-1.5 flex flex-col items-center min-w-[120px]`}>
-                <span className="text-[10px] font-bold uppercase" style={{ color: corPrimaria }}>Saldo do Mês</span>
-                <span className={`font-black text-lg ${lucroOperacional >= 0 ? 'text-green-500' : 'text-red-500'}`}>{formatarMoeda(lucroOperacional)}</span>
-              </div>
-            </div>
-          </div>
+    {/* CENTRO: MÊS COM SETAS */}
+    <div className="flex items-center justify-center gap-4">
+      <button
+        type="button"
+        onClick={() => {
+          const indiceAtual = meses.indexOf(mesAtivo);
+          const mesAnterior = meses[indiceAtual - 1];
+
+          if (mesAnterior) {
+            setMesAtivo(mesAnterior);
+          }
+        }}
+        disabled={meses.indexOf(mesAtivo) === 0}
+        className="rounded-lg bg-black/10 px-3 py-2 font-bold transition hover:bg-black/20 disabled:cursor-not-allowed disabled:opacity-40"
+      >
+        ‹
+      </button>
+
+      <h2 className="min-w-[220px] text-center text-xl font-black uppercase tracking-wider">
+        {mesAtivo} / {anoSelecionado}
+      </h2>
+
+      <button
+        type="button"
+        onClick={() => {
+          const indiceAtual = meses.indexOf(mesAtivo);
+          const proximoMes = meses[indiceAtual + 1];
+
+          if (proximoMes) {
+            setMesAtivo(proximoMes);
+          }
+        }}
+        disabled={meses.indexOf(mesAtivo) === meses.length - 1}
+        className="rounded-lg bg-black/10 px-3 py-2 font-bold transition hover:bg-black/20 disabled:cursor-not-allowed disabled:opacity-40"
+      >
+        ›
+      </button>
+    </div>
+
+    {/* DIREITA: RESUMOS ALINHADOS AO LIMITE DO CONTEÚDO */}
+<div className="flex justify-end items-center gap-3">
+  <div className="rounded-lg bg-white px-4 py-2 text-right shadow-sm border border-white/20">
+    <span className="block text-[10px] font-bold uppercase text-slate-500">
+      Total Despesas
+    </span>
+    <span className="block text-sm font-black text-red-500">
+      {formatarMoeda(totalDespesasMes)}
+    </span>
+  </div>
+
+  <div className="rounded-lg bg-white px-4 py-2 text-right shadow-sm border border-white/20">
+    <span className="block text-[10px] font-bold uppercase text-slate-500">
+      Saldo do Mês
+    </span>
+    <span
+      className={`block text-sm font-black ${
+        lucroOperacional >= 0 ? 'text-emerald-600' : 'text-red-500'
+      }`}
+    >
+      {formatarMoeda(lucroOperacional)}
+    </span>
+  </div>
+</div>
+  </div>
+</div>
 
           <main className="flex-1 p-8 max-w-7xl mx-auto w-full space-y-8">
             <div

@@ -1,4 +1,5 @@
 import { useMemo } from 'react';
+import { normalizarTexto, corEhClara } from '../lib/formatters';
 
 interface PorCategoriaProps {
   meses: string[];
@@ -31,9 +32,10 @@ export default function PorCategoria({
       despMap[l.despesa] = (despMap[l.despesa] || 0) + l.valor;
       
       const despesaInfo = despesasCadastradas.find(
-  d => d.nome.trim().toLowerCase() === String(l.despesa).trim().toLowerCase()
+  (d) => normalizarTexto(d.nome) === normalizarTexto(l.despesa)
 );
-      const cat = despesaInfo ? despesaInfo.categoria : 'Outros';
+
+const cat = despesaInfo ? despesaInfo.categoria : 'Outros';
       catMap[cat] = (catMap[cat] || 0) + l.valor;
     });
 
@@ -51,10 +53,14 @@ export default function PorCategoria({
   const maxCategoria = Math.max(...Object.values(catMap), 1);
 
   const getValorMensal = (despesa: string, mes: string) => {
-    return lancamentos
-      .filter(l => l.despesa === despesa && l.mes === mes)
-      .reduce((acc, l) => acc + l.valor, 0);
-  };
+  return lancamentos
+    .filter(
+      (l) =>
+        normalizarTexto(l.despesa) === normalizarTexto(despesa) &&
+        l.mes === mes
+    )
+    .reduce((acc, l) => acc + l.valor, 0);
+};
 
   // --- CLASSES DE TEMA (Padrão Relatório) ---
   const bgCard = darkMode ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200';
@@ -62,20 +68,6 @@ export default function PorCategoria({
   const textStrong = darkMode ? 'text-white' : 'text-slate-800';
   const textMuted = darkMode ? 'text-slate-400' : 'text-slate-500';
   const borderSoft = darkMode ? 'border-slate-700' : 'border-slate-200/60';
-
-  const corEhClara = (hex: string) => {
-    const cor = hex.replace('#', '');
-
-    if (cor.length !== 6) return false;
-
-    const r = parseInt(cor.substring(0, 2), 16);
-    const g = parseInt(cor.substring(2, 4), 16);
-    const b = parseInt(cor.substring(4, 6), 16);
-
-    const brilho = (r * 299 + g * 587 + b * 114) / 1000;
-
-    return brilho > 180;
-  };
 
   const textoSobreCorPrimaria = corEhClara(corPrimaria) ? '#0f172a' : '#ffffff';
 

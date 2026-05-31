@@ -46,3 +46,11 @@ export const getMaxDias = (mes: string | null, ano: string | number) => {
 
   return 31;
 };
+export const normalizarTexto = (texto: string) => {
+  return String(texto || '')
+    .trim()
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/\s+/g, ' ');
+};
