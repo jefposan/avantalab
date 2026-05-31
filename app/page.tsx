@@ -9,6 +9,7 @@ import PorCategoria from './components/PorCategoria';
 import Relatorio from './components/Relatorio';
 import ModalTermos from './components/ModalTermos';
 import ModalPrivacidade from './components/ModalPrivacidade';
+import Tooltip from './components/Tooltip';
 import {
   buscarEmpresaDoUsuario,
   buscarConfiguracoes,
@@ -2151,28 +2152,42 @@ if (isTelaMobile) {
   />
 </div>
         </div>
-        
-        <div className="whitespace-nowrap flex items-center space-x-2 bg-slate-800 px-3 py-1.5 rounded shadow border border-slate-700 cursor-pointer" onClick={() => setDuplicadosAtivo(!duplicadosAtivo)}>
-          <span className="text-xs">Duplicados</span>
-          <div
-  className={`w-7 h-3.5 rounded-full relative transition-colors ${
-    duplicadosAtivo ? '' : 'bg-slate-600'
-  }`}
-  style={{
-    backgroundColor: duplicadosAtivo ? corPrimaria : '',
-    border: duplicadosAtivo && corEhClara(corPrimaria) ? '1px solid rgba(15, 23, 42, 0.35)' : '',
-  }}
+        <Tooltip
+  texto="Quando ativado, o sistema avisa se você tentar lançar uma despesa com o mesmo nome e valor no mesmo mês."
+  posicao="bottom"
 >
-  <span
-    className={`absolute left-0.5 top-0.5 w-2.5 h-2.5 rounded-full transition-transform ${
-      duplicadosAtivo ? 'translate-x-3.5' : ''
-    }`}
-    style={{
-      backgroundColor: duplicadosAtivo && corEhClara(corPrimaria) ? '#0f172a' : '#ffffff',
-    }}
-  />
-</div>
-        </div>
+  <div
+    className="whitespace-nowrap flex items-center space-x-2 bg-slate-800 px-3 py-1.5 rounded shadow border border-slate-700 cursor-pointer"
+    onClick={() => setDuplicadosAtivo(!duplicadosAtivo)}
+  >
+    <span className="text-xs">Duplicados</span>
+
+    <div
+      className={`w-7 h-3.5 rounded-full relative transition-colors ${
+        duplicadosAtivo ? '' : 'bg-slate-600'
+      }`}
+      style={{
+        backgroundColor: duplicadosAtivo ? corPrimaria : '',
+        border:
+          duplicadosAtivo && corEhClara(corPrimaria)
+            ? '1px solid rgba(15, 23, 42, 0.35)'
+            : '',
+      }}
+    >
+      <span
+        className={`absolute left-0.5 top-0.5 w-2.5 h-2.5 rounded-full transition-transform ${
+          duplicadosAtivo ? 'translate-x-3.5' : ''
+        }`}
+        style={{
+          backgroundColor:
+            duplicadosAtivo && corEhClara(corPrimaria)
+              ? '#0f172a'
+              : '#ffffff',
+        }}
+      />
+    </div>
+  </div>
+</Tooltip>
 
               {/* BOTÃO DE BACKUP EXCEL */}
               <button 
