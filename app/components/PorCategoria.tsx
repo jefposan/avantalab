@@ -30,7 +30,9 @@ export default function PorCategoria({
       totalGeral += l.valor;
       despMap[l.despesa] = (despMap[l.despesa] || 0) + l.valor;
       
-      const despesaInfo = despesasCadastradas.find(d => d.nome === l.despesa);
+      const despesaInfo = despesasCadastradas.find(
+  d => d.nome.trim().toLowerCase() === String(l.despesa).trim().toLowerCase()
+);
       const cat = despesaInfo ? despesaInfo.categoria : 'Outros';
       catMap[cat] = (catMap[cat] || 0) + l.valor;
     });
@@ -212,11 +214,25 @@ export default function PorCategoria({
 
       </div>
 
-      {/* BLOCO INFERIOR: MATRIZ MENSAL */}
-      <div className={`${bgCard} rounded-xl shadow-lg border overflow-hidden border-t-4`} style={{ borderTopColor: corPrimaria }}>
-        <div className="p-6 border-b border-slate-200/50 dark:border-slate-700/50 flex justify-between items-center">
-            <h3 className={`text-lg font-bold uppercase tracking-wider ${textStrong}`}>Matriz Anual de Despesas</h3>
-        </div>
+      {/* TÍTULO EXTERNO: MATRIZ ANUAL */}
+<div className="flex justify-between items-center mt-10 mb-4">
+  <div className="flex items-center">
+    <span
+      className="w-3 h-8 rounded-full mr-4 shadow-sm"
+      style={{ backgroundColor: corPrimaria }}
+    ></span>
+
+    <h2 className={`text-2xl font-black ${textStrong} uppercase tracking-wider`}>
+      Matriz Anual de Despesas
+    </h2>
+  </div>
+</div>
+
+{/* BLOCO INFERIOR: MATRIZ MENSAL */}
+<div
+  className={`${bgCard} rounded-xl shadow-lg border overflow-hidden border-t-4`}
+  style={{ borderTopColor: corPrimaria }}
+>
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse min-w-[1000px]">
             <thead>

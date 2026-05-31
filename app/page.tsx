@@ -2775,43 +2775,136 @@ if (isTelaMobile) {
 </div>
 </div>
 
-            <div className="grid grid-cols-2 gap-8">
-              <div className={`${bgCard} rounded-xl shadow-lg border-x border-b border-t-[4px] p-6 flex flex-col items-center justify-center`} style={{ borderTopColor: corPrimaria }}>
-                <h3 className={`text-lg font-bold ${textStrong} border-b border-slate-200/10 pb-3 mb-4 uppercase tracking-wider`}>Total por Tipo de Despesa</h3>
-                <div className="space-y-4 w-full">
-                  {analiseDespesas.dados.map((item) => (
-                    <div key={item.nome} className="flex justify-between items-center">
-                      <div className="flex items-center gap-3">
-                        <span className="w-4 h-4 rounded-full shadow-sm" style={{ backgroundColor: item.cor }}></span>
-                        <span className={`font-semibold truncate max-w-[150px] ${textStrong}`}>{item.nome}</span>
-                      </div>
-                      <div className="flex items-center gap-8">
-                        <span className={`text-sm font-bold w-12 text-right`} style={{ color: corPrimaria }}>{item.percentual.toFixed(1)}%</span>
-                        <span className="font-bold text-red-500 w-24 text-right">{formatarMoeda(item.valor)}</span>
-                      </div>
-                    </div>
-                  ))}
-                  {analiseDespesas.dados.length === 0 && <span className={textMuted}>Sem dados.</span>}
-                </div>
+<div className="flex justify-between items-center mt-8 mb-4 print-ocultar">
+  <div className="flex items-center">
+    <span
+      className="w-3 h-8 rounded-full mr-4 shadow-sm"
+      style={{ backgroundColor: corPrimaria }}
+    ></span>
+
+    <h2 className={`text-2xl font-black ${textStrong} uppercase tracking-wider`}>
+  TOTAIS DE {mesAtivo}
+</h2>
+  </div>
+</div>
+
+            <div className="grid grid-cols-2 gap-6">
+  <div
+    className={`${bgCard} rounded-xl shadow-lg border-x border-b border-t-[4px] p-4 flex flex-col`}
+    style={{ borderTopColor: corPrimaria }}
+  >
+    <h3
+      className={`text-base font-black ${textStrong} border-b border-slate-200/10 pb-2 mb-3 uppercase tracking-wider text-center`}
+    >
+      Total por Tipo de Despesa
+    </h3>
+
+    <div className="space-y-1.5 w-full">
+      {analiseDespesas.dados.map((item) => (
+        <div
+          key={item.nome}
+          className={`py-2 border-b border-dotted ${
+            darkMode ? 'border-slate-600/40' : 'border-slate-300/60'
+          }`}
+        >
+          <div className="flex justify-between items-center gap-3">
+            <div className="flex items-center gap-2 min-w-0">
+              <span
+                className="w-3 h-3 rounded-full shadow-sm flex-shrink-0"
+                style={{ backgroundColor: item.cor }}
+              ></span>
+
+              <span className={`text-xs font-bold uppercase truncate max-w-[180px] ${textStrong}`}>
+                {item.nome}
+              </span>
+            </div>
+
+            <div className="flex items-center gap-4 flex-shrink-0">
+              <span
+                className="text-xs font-black w-12 text-right"
+                style={{ color: corPrimaria }}
+              >
+                {item.percentual.toFixed(1)}%
+              </span>
+
+              <span className="text-xs font-black text-red-500 w-24 text-right">
+                {formatarMoeda(item.valor)}
+              </span>
+            </div>
+          </div>
+        </div>
+      ))}
+
+      {analiseDespesas.dados.length === 0 && (
+        <span className={textMuted}>Sem dados.</span>
+      )}
+    </div>
+  </div>
+
+  <div
+    className={`${bgCard} rounded-xl shadow-lg border-x border-b border-t-[4px] p-5 flex flex-col`}
+    style={{ borderTopColor: corPrimaria }}
+  >
+    <h3
+      className={`text-center text-base font-black uppercase tracking-wider ${textStrong} border-b border-slate-200/10 pb-2 mb-3`}
+    >
+      Composição de Gastos
+    </h3>
+
+    {lancamentosDoMes.length > 0 ? (
+      <div className="flex-1 flex flex-col items-center justify-center">
+        <div className="relative flex items-center justify-center">
+          <div
+            className="w-56 h-56 rounded-full shadow-inner transform transition-transform hover:scale-105"
+            style={{ background: analiseDespesas.gradiente }}
+          ></div>
+
+          <div
+            className={`absolute w-32 h-32 ${bgCard} rounded-full shadow-xl flex flex-col items-center justify-center`}
+          >
+            <span className={`text-[12px] font-bold uppercase ${textMuted}`}>
+              Total
+            </span>
+
+            <span className={`text-xs font-black ${textStrong}`}>
+              {formatarMoeda(totalDespesasMes)}
+            </span>
+          </div>
+        </div>
+
+        <div className="w-full mt-4 space-y-2">
+          {analiseDespesas.dados.slice(0, 5).map((item) => (
+            <div
+              key={item.nome}
+              className={`flex items-center justify-between gap-3 py-1.5 border-b border-dotted ${
+                darkMode ? 'border-slate-600/40' : 'border-slate-300/60'
+              }`}
+            >
+              <div className="flex items-center gap-2 min-w-0">
+                <span
+                  className="w-2.5 h-2.5 rounded-full flex-shrink-0"
+                  style={{ backgroundColor: item.cor }}
+                ></span>
+
+                <span className={`text-[11px] font-bold uppercase truncate ${textStrong}`}>
+                  {item.nome}
+                </span>
               </div>
 
-              <div className={`${bgCard} rounded-xl shadow-lg border-x border-b border-t-[4px] p-6 flex flex-col items-center justify-center`} style={{ borderTopColor: corPrimaria }}>
-                <h3 className={`text-lg font-bold ${textStrong} mb-6 uppercase tracking-wider w-full text-left`}>Composição de Gastos</h3>
-                {lancamentosDoMes.length > 0 ? (
-                  <div className="relative flex items-center justify-center">
-                    <div className="w-48 h-48 rounded-full shadow-inner transform transition-transform hover:scale-105" style={{ background: analiseDespesas.gradiente }}></div>
-                    <div className={`absolute w-24 h-24 ${bgCard} rounded-full shadow-lg flex items-center justify-center`}>
-                      <div className="text-center">
-                        <span className={`block text-[10px] font-bold ${textMuted} uppercase tracking-widest`}>Total</span>
-                        <span className={`block text-sm font-black ${textStrong}`}>{formatarMoeda(totalDespesasMes).replace('R$', '')}</span>
-                      </div>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="text-slate-400 italic text-sm py-10">Nenhum dado para exibir.</div>
-                )}
-              </div>
+              <span className="text-[11px] font-black text-red-500 flex-shrink-0">
+                {formatarMoeda(item.valor)}
+              </span>
             </div>
+          ))}
+        </div>
+      </div>
+    ) : (
+      <div className="flex-1 flex items-center justify-center">
+        <span className={textMuted}>Sem dados para exibir.</span>
+      </div>
+    )}
+  </div>
+</div>
           </main>
         </>
       ) : abaAtiva === 'Balanço Geral' ? (
