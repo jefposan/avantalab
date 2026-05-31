@@ -24,7 +24,7 @@ type ModalLogoProps = {
   painelAjusteLogo: boolean;
   setPainelAjusteLogo: React.Dispatch<React.SetStateAction<boolean>>;
 
-  fileInputRef: RefObject<HTMLInputElement>;
+  fileInputRef: RefObject<HTMLInputElement | null>;
   handleImageUpload: (e: React.ChangeEvent<HTMLInputElement>) => void;
 };
 
