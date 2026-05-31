@@ -10,6 +10,7 @@ import Relatorio from './components/Relatorio';
 import ModalTermos from './components/ModalTermos';
 import ModalPrivacidade from './components/ModalPrivacidade';
 import Tooltip from './components/Tooltip';
+import ModalInstrucoes from './components/ModalInstrucoes';
 import {
   buscarEmpresaDoUsuario,
   buscarConfiguracoes,
@@ -1683,47 +1684,16 @@ if (isTelaMobile) {
       
       {/* ================= MODAIS ================= */}
 
-      {modalInstrucoes && (
-  <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
-    <div
-      className={`${bgCard} rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto border-2 flex flex-col`}
-      style={{ borderColor: corPrimaria }}
-    >
-      <div
-        className="sticky top-0 p-6 border-b border-slate-200/20 flex justify-between items-center shadow-md z-10"
-        style={estiloTemaPrimario}
-      >
-        <h2 className="text-lg font-bold uppercase">
-          Instruções sobre Categorias
-        </h2>
-
-        <button
-          onClick={() => setModalInstrucoes(false)}
-          className="px-3 py-1 rounded-lg font-bold transition-colors"
-          style={{
-            color: textoSobreCorPrimaria,
-            backgroundColor: corEhClara(corPrimaria)
-              ? 'rgba(15, 23, 42, 0.08)'
-              : 'rgba(255, 255, 255, 0.16)',
-          }}
-        >
-          X
-        </button>
-      </div>
-            <div className={`p-8 space-y-6 text-sm ${textMuted} leading-relaxed overflow-y-auto`}>
-              <div><strong className={textStrong}>AMORTIZAÇÃO:</strong><br/>- Gastos para dividir o custo de coisas que não são físicas...<br/>- Exemplos: softwares comprados, valor pago por patente.</div>
-              <div><strong className={textStrong}>CUSTOS VARIÁVEIS:</strong><br/>- Gastos que aumentam ou diminuem conforme a quantidade produzida/vendida.<br/>- Exemplos: embalagens, matéria-prima, frete, comissões.</div>
-              <div><strong className={textStrong}>DEPRECIAÇÃO:</strong><br/>- Gastos para dividir o custo de coisas físicas que a empresa usa.<br/>- Exemplos: desgaste de máquinas, veículos.</div>
-              <div><strong className={textStrong}>DESPESAS FINANCEIRAS:</strong><br/>- Gastos relacionados a dinheiro e bancos.<br/>- Exemplos: juros, tarifas, variações de câmbio.</div>
-              <div><strong className={textStrong}>DESPESAS OPERACIONAIS:</strong><br/>- Gastos para manter a empresa funcionando.<br/>- Exemplos: aluguel, água, luz, salários, manutenção, pro labore, publicidade.</div>
-              <div><strong className={textStrong}>IMPOSTOS SOBRE LUCRO:</strong><br/>- Tributos que a empresa paga sobre o dinheiro que ela ganha.<br/>- Exemplos: imposto de renda, CSLL.</div>
-              <div className="p-4 bg-yellow-500/10 border-l-4 border-yellow-500 rounded-xl text-yellow-700 dark:text-yellow-400 mt-6">
-                <strong>Observações:</strong> Se tiver dúvida sobre onde colocar algum gasto, pergunte ao contador. Estes são exemplos gerais.
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+      <ModalInstrucoes
+  aberto={modalInstrucoes}
+  aoFechar={() => setModalInstrucoes(false)}
+  bgCard={bgCard}
+  textMuted={textMuted}
+  textStrong={textStrong}
+  corPrimaria={corPrimaria}
+  textoSobreCorPrimaria={textoSobreCorPrimaria}
+  corEhClara={corEhClara}
+/>
 
       {modalDespesasBase && (
   <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
