@@ -12,6 +12,7 @@ import ModalPrivacidade from './components/ModalPrivacidade';
 import Tooltip from './components/Tooltip';
 import ModalInstrucoes from './components/ModalInstrucoes';
 import ModalDespesasBase from './components/ModalDespesasBase';
+import ModalLogo from './components/ModalLogo';
 import {
   formatarMoeda,
   formatarDescricao,
@@ -658,6 +659,9 @@ const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
 
     setLogoUrl(novaLogoUrl);
 
+    // Mantém o modal aberto após escolher a imagem
+    setModalLogo(true);
+
     const salvo = await salvarConfiguracoesBanco({
       empresaId,
       corPrimaria,
@@ -669,13 +673,18 @@ const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
 
     if (!salvo) {
       alert("Erro ao salvar o logo no banco.");
+      setModalLogo(true);
       return;
     }
 
-    setModalLogo(false);
+    // Garante novamente que o modal continue aberto depois do salvamento
+    setModalLogo(true);
   };
 
   reader.readAsDataURL(file);
+
+  // Limpa o input para permitir escolher a mesma imagem novamente se precisar
+  e.target.value = '';
 };
 
   // ================= FUNÇÃO DE BACKUP EXCEL =================
@@ -1695,63 +1704,27 @@ if (isTelaMobile) {
   apagarDespesaBase={apagarDespesaBase}
 />
 
-      {modalLogo && (
-  <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
-    <div
-      className={`${bgCard} rounded-2xl shadow-2xl max-w-sm w-full border-2 p-6`}
-      style={{ borderColor: corPrimaria }}
-    >
-      <div className="flex justify-between items-center mb-6">
-        <h2 className={`text-lg font-bold ${textStrong}`}>Adicionar Logo</h2>
-        <button onClick={() => setModalLogo(false)} className={textMuted}>✕</button>
-      </div>
+      <ModalLogo
+  aberto={modalLogo}
+  aoFechar={() => setModalLogo(false)}
 
-      <div className="space-y-4">
-        <div>
-          <input
-            type="file"
-            accept="image/*"
-            ref={fileInputRef}
-            onChange={handleImageUpload}
-            className="hidden"
-          />
-          <button
-            onClick={() => fileInputRef.current?.click()}
-            className={`w-full py-3 rounded-lg border border-dashed hover:bg-slate-500/10 transition-colors ${textStrong} border-slate-400 font-medium`}
-          >
-            ⬆ Upload do Computador
-          </button>
-        </div>
+  bgCard={bgCard}
+  textMuted={textMuted}
+  textStrong={textStrong}
 
-        <div className="text-center text-sm font-bold text-slate-400">OU</div>
+  corPrimaria={corPrimaria}
+  estiloTemaPrimario={estiloTemaPrimario}
 
-        <div>
-          <label className={`block text-xs font-bold mb-1 ${textMuted} uppercase`}>
-            URL da Imagem
-          </label>
-          <input
-            type="text"
-            placeholder="https://..."
-            value={logoUrl}
-            onChange={e => setLogoUrl(e.target.value)}
-            className={`w-full p-2.5 rounded-lg border focus:outline-none focus:ring-1 ${
-              darkMode ? 'bg-slate-700 border-slate-600 text-white' : 'bg-white border-slate-300'
-            }`}
-            style={{ outlineColor: corPrimaria }}
-          />
-        </div>
+  logoUrl={logoUrl}
+  logoSettings={logoSettings}
+  setLogoSettings={setLogoSettings}
 
-        <button
-          onClick={() => setModalLogo(false)}
-          style={estiloTemaPrimario}
-          className="w-full py-2.5 rounded-lg font-bold hover:brightness-110 mt-2 shadow-md"
-        >
-          Salvar Logo
-        </button>
-      </div>
-    </div>
-  </div>
-)}
+  painelAjusteLogo={painelAjusteLogo}
+  setPainelAjusteLogo={setPainelAjusteLogo}
+
+  fileInputRef={fileInputRef}
+  handleImageUpload={handleImageUpload}
+/>
 
       {calcAberta && (
         <Calculadora onClose={() => setCalcAberta(false)} corPrimaria={corPrimaria} darkMode={darkMode} />
@@ -1772,62 +1745,6 @@ if (isTelaMobile) {
     </span>
   </span>}
         </div>
-
-        {painelAjusteLogo && (
-  <div
-    className={`absolute top-24 left-8 ${bgCard} p-5 rounded-2xl shadow-2xl border-2 z-50 w-64`}
-    style={{ borderColor: corPrimaria }}
-  >
-    <h4 className={`font-bold text-sm mb-4 ${textStrong} border-b border-slate-200/20 pb-2`}>
-      Ajustar Posição da Logo
-    </h4>
-
-    <div className="space-y-3 text-xs">
-      <label className={`block font-semibold ${textMuted}`}>
-        Zoom ({logoSettings.scale}%)
-      </label>
-      <input
-        type="range"
-        min="10"
-        max="300"
-        value={logoSettings.scale}
-        onChange={e => setLogoSettings({ ...logoSettings, scale: parseInt(e.target.value) })}
-        className="w-full"
-        style={{ accentColor: corPrimaria }}
-      />
-
-      <label className={`block font-semibold ${textMuted}`}>Eixo X</label>
-      <input
-        type="range"
-        min="-100"
-        max="100"
-        value={logoSettings.x}
-        onChange={e => setLogoSettings({ ...logoSettings, x: parseInt(e.target.value) })}
-        className="w-full"
-        style={{ accentColor: corPrimaria }}
-      />
-
-      <label className={`block font-semibold ${textMuted}`}>Eixo Y</label>
-      <input
-        type="range"
-        min="-100"
-        max="100"
-        value={logoSettings.y}
-        onChange={e => setLogoSettings({ ...logoSettings, y: parseInt(e.target.value) })}
-        className="w-full"
-        style={{ accentColor: corPrimaria }}
-      />
-    </div>
-
-    <button
-      onClick={() => setPainelAjusteLogo(false)}
-      style={estiloTemaPrimario}
-      className="w-full py-2 mt-5 rounded-lg font-bold shadow hover:brightness-110"
-    >
-      Concluir
-    </button>
-  </div>
-)}
 
         <nav className="flex space-x-3">
   <button
