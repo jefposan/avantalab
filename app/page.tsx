@@ -161,17 +161,22 @@ const estiloTextoTema = {
 };
 
 useEffect(() => {
-  const verificarTela = () => {
-    setIsTelaMobile(window.innerWidth < 1024);
+  const verificarDispositivoMobile = () => {
+    const larguraPequena = window.innerWidth < 1024;
+
+    const dispositivoComToque =
+      'ontouchstart' in window ||
+      navigator.maxTouchPoints > 0;
+
+    const userAgentMobile =
+      /Android|iPhone|iPad|iPod|Opera Mini|IEMobile|Mobile/i.test(
+        navigator.userAgent
+      );
+
+    setIsTelaMobile(larguraPequena && (dispositivoComToque || userAgentMobile));
   };
 
-  verificarTela();
-
-  window.addEventListener('resize', verificarTela);
-
-  return () => {
-    window.removeEventListener('resize', verificarTela);
-  };
+  verificarDispositivoMobile();
 }, []);
 
   // --- LOCAL STORAGE (LÓGICA SEPARADA POR ANO E CONFIGURAÇÕES) ---
