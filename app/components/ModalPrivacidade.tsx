@@ -79,7 +79,7 @@ export default function ModalPrivacidade({
               3. Uso das informações
             </h3>
             <p className={textMuted}>
-              As informações são utilizadas para permitir o acesso ao sistema, salvar configurações, organizar lançamentos, gerar relatórios, exibir indicadores e melhorar a experiência de uso da plataforma.
+              As informações são utilizadas para permitir o acesso ao sistema, salvar configurações, organizar lançamentos, gerar relatórios, exibir indicadores, manter a segurança da conta e melhorar a experiência de uso da plataforma.
             </p>
           </section>
 
@@ -94,16 +94,25 @@ export default function ModalPrivacidade({
 
           <section>
             <h3 className="font-black uppercase text-xs tracking-widest mb-2">
-              5. Compartilhamento de informações
+              5. Cookies e tecnologias semelhantes
             </h3>
             <p className={textMuted}>
-              O AvantaLab Gestão não vende informações dos usuários. Os dados poderão ser compartilhados apenas quando necessário para funcionamento técnico da plataforma, cumprimento de obrigações legais ou mediante solicitação/autorização do próprio usuário.
+              O AvantaLab Gestão pode utilizar cookies, armazenamento local ou tecnologias semelhantes necessários ao funcionamento da plataforma, como autenticação, segurança, manutenção da sessão, preferências de uso e configurações do sistema. Caso sejam utilizados cookies não essenciais, como ferramentas de análise, marketing ou rastreamento, o usuário será informado e poderá gerenciar suas preferências quando aplicável.
             </p>
           </section>
 
           <section>
             <h3 className="font-black uppercase text-xs tracking-widest mb-2">
-              6. Segurança
+              6. Compartilhamento de informações
+            </h3>
+            <p className={textMuted}>
+              O AvantaLab Gestão não vende informações dos usuários. Os dados poderão ser compartilhados apenas quando necessário para o funcionamento técnico da plataforma, cumprimento de obrigações legais ou mediante solicitação ou autorização do próprio usuário.
+            </p>
+          </section>
+
+          <section>
+            <h3 className="font-black uppercase text-xs tracking-widest mb-2">
+              7. Segurança
             </h3>
             <p className={textMuted}>
               São adotadas medidas técnicas e organizacionais para proteger as informações contra acessos não autorizados, perda, alteração, divulgação indevida ou uso inadequado. Ainda assim, nenhum sistema digital é totalmente imune a riscos.
@@ -112,7 +121,7 @@ export default function ModalPrivacidade({
 
           <section>
             <h3 className="font-black uppercase text-xs tracking-widest mb-2">
-              7. Responsabilidade do usuário
+              8. Responsabilidade do usuário
             </h3>
             <p className={textMuted}>
               O usuário é responsável por manter seus dados de acesso em segurança, utilizar senhas fortes, não compartilhar credenciais e conferir as informações inseridas no sistema.
@@ -121,7 +130,7 @@ export default function ModalPrivacidade({
 
           <section>
             <h3 className="font-black uppercase text-xs tracking-widest mb-2">
-              8. Direitos do usuário
+              9. Direitos do usuário
             </h3>
             <p className={textMuted}>
               O usuário poderá solicitar informações sobre seus dados, correções, atualizações ou exclusão, quando aplicável, respeitadas as obrigações legais, fiscais, contratuais e operacionais relacionadas ao uso da plataforma.
@@ -130,7 +139,7 @@ export default function ModalPrivacidade({
 
           <section>
             <h3 className="font-black uppercase text-xs tracking-widest mb-2">
-              9. Alterações nesta política
+              10. Alterações nesta política
             </h3>
             <p className={textMuted}>
               Esta Política de Privacidade poderá ser atualizada periodicamente para refletir melhorias no sistema, mudanças operacionais, requisitos legais ou novas funcionalidades.
