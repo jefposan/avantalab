@@ -13,6 +13,12 @@ import Tooltip from './components/Tooltip';
 import ModalInstrucoes from './components/ModalInstrucoes';
 import ModalDespesasBase from './components/ModalDespesasBase';
 import {
+  formatarMoeda,
+  formatarDescricao,
+  corEhClara,
+  getMaxDias,
+} from './lib/formatters';
+import {
   buscarEmpresaDoUsuario,
   buscarConfiguracoes,
   buscarDespesasCadastradas,
@@ -125,20 +131,6 @@ const [editValorNumerico, setEditValorNumerico] = useState(0);
 const [ordemLancamentos, setOrdemLancamentos] = useState<'desc' | 'asc'>('desc');
 
   const meses = ['JANEIRO', 'FEVEREIRO', 'MARÇO', 'ABRIL', 'MAIO', 'JUNHO', 'JULHO', 'AGOSTO', 'SETEMBRO', 'OUTUBRO', 'NOVEMBRO', 'DEZEMBRO'];
-
-const corEhClara = (hex: string) => {
-  const cor = hex.replace('#', '');
-
-  if (cor.length !== 6) return false;
-
-  const r = parseInt(cor.substring(0, 2), 16);
-  const g = parseInt(cor.substring(2, 4), 16);
-  const b = parseInt(cor.substring(4, 6), 16);
-
-  const brilho = (r * 299 + g * 587 + b * 114) / 1000;
-
-  return brilho > 180;
-};
 
 const textoSobreCorPrimaria = corEhClara(corPrimaria) ? '#0f172a' : '#ffffff';
 const bordaSobreCorPrimaria = corEhClara(corPrimaria)
@@ -361,15 +353,7 @@ useEffect(() => {
   }, [ajustesAberto]);
 
   // --- CÁLCULOS E FUNÇÕES ---
-  const formatarMoeda = (valor: number) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(valor);
-  const formatarDescricao = (texto: string) => {
-  const textoLimpo = texto.trim().toLowerCase();
-
-  if (!textoLimpo) return '';
-
-  return textoLimpo.charAt(0).toUpperCase() + textoLimpo.slice(1);
-};
-
+  
   const mesParaAnalise = mesAtivo || mesResumoDash;
   const lancamentosDoMes = lancamentos.filter(l => l.mes === mesParaAnalise);
   const totalDespesasMes = lancamentosDoMes.reduce((acc, lanc) => acc + lanc.valor, 0);
@@ -433,20 +417,6 @@ useEffect(() => {
 
   setValorNumericoRaw(numericValue);
   setFormValor(formatarMoeda(numericValue));
-};
-
-const getMaxDias = (mes: string | null) => {
-  if (!mes) return 31;
-
-  if (['ABRIL', 'JUNHO', 'SETEMBRO', 'NOVEMBRO'].includes(mes)) {
-    return 30;
-  }
-
-  if (mes === 'FEVEREIRO') {
-    return parseInt(anoSelecionado) % 4 === 0 ? 29 : 28;
-  }
-
-  return 31;
 };
 
 const adicionarDespesaBase = async () => {
@@ -631,7 +601,7 @@ const salvarEdicaoLancamento = async () => {
   }
 
   const diaNumerico = parseInt(editDia, 10);
-  const maxDias = getMaxDias(mesAtivo);
+  const maxDias = getMaxDias(mesAtivo, anoSelecionado);
 
   if (Number.isNaN(diaNumerico) || diaNumerico < 1 || diaNumerico > maxDias) {
     alert(`Informe um dia válido entre 1 e ${maxDias}.`);
@@ -2272,11 +2242,11 @@ if (isTelaMobile) {
           <input
             type="number"
             min="1"
-            max={getMaxDias(mesAtivo)}
+            max={getMaxDias(mesAtivo, anoSelecionado)}
             value={formDia}
             onChange={(e) => {
               const val = parseInt(e.target.value);
-              if (val > getMaxDias(mesAtivo)) setFormDia(getMaxDias(mesAtivo).toString());
+              if (val > getMaxDias(mesAtivo, anoSelecionado)) setFormDia(getMaxDias(mesAtivo, anoSelecionado).toString());
               else setFormDia(e.target.value);
             }}
             placeholder="Dia"
@@ -2386,7 +2356,7 @@ if (isTelaMobile) {
         <input
           type="number"
           min={1}
-          max={getMaxDias(mesAtivo)}
+          max={getMaxDias(mesAtivo, anoSelecionado)}
           value={editDia}
           onChange={(e) => setEditDia(e.target.value)}
           className={`w-full p-2 border rounded-lg text-center font-bold ${
