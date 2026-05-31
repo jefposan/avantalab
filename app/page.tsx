@@ -7,6 +7,8 @@ import BalancoGeral from './components/BalancoGeral';
 import Graficos from './components/Graficos';
 import PorCategoria from './components/PorCategoria';
 import Relatorio from './components/Relatorio';
+import ModalTermos from './components/ModalTermos';
+import ModalPrivacidade from './components/ModalPrivacidade';
 import {
   buscarEmpresaDoUsuario,
   buscarConfiguracoes,
@@ -88,6 +90,8 @@ const [mostrarConfirmarNovaSenha, setMostrarConfirmarNovaSenha] = useState(false
   const [modalInstrucoes, setModalInstrucoes] = useState(false);
   const [modalDespesasBase, setModalDespesasBase] = useState(false);
   const [calcAberta, setCalcAberta] = useState(false);
+  const [modalTermos, setModalTermos] = useState(false);
+  const [modalPrivacidade, setModalPrivacidade] = useState(false);
 
   // Dados Financeiros
   const [mesFaturamento, setMesFaturamento] = useState('JANEIRO');
@@ -2507,6 +2511,82 @@ if (isTelaMobile) {
           meses={meses} setMesAtivo={setMesAtivo} bgCard={bgCard} corPrimaria={corPrimaria} textStrong={textStrong} textMuted={textMuted} darkMode={darkMode} mesResumoDash={mesResumoDash} setMesResumoDash={setMesResumoDash} totalDespesasMes={totalDespesasMes} maiorGasto={maiorGasto} lucroOperacional={lucroOperacional} mesFaturamento={mesFaturamento} setMesFaturamento={setMesFaturamento} inputFaturamento={inputFaturamento} setInputFaturamento={setInputFaturamento} salvarFaturamento={salvarFaturamento} receitasTotais={receitasTotais} despesasTotais={despesasTotais} lucroTotalAnual={lucroTotalAnual} formatarMoeda={formatarMoeda}
         />
       )}
+
+      <ModalTermos
+  aberto={modalTermos}
+  onClose={() => setModalTermos(false)}
+  darkMode={darkMode}
+  corPrimaria={corPrimaria}
+  textoSobreCorPrimaria={textoSobreCorPrimaria}
+  bordaSobreCorPrimaria={bordaSobreCorPrimaria}
+  textMuted={textMuted}
+  estiloTemaPrimario={estiloTemaPrimario}
+/>
+
+<ModalPrivacidade
+  aberto={modalPrivacidade}
+  onClose={() => setModalPrivacidade(false)}
+  darkMode={darkMode}
+  corPrimaria={corPrimaria}
+  textoSobreCorPrimaria={textoSobreCorPrimaria}
+  bordaSobreCorPrimaria={bordaSobreCorPrimaria}
+  textMuted={textMuted}
+  estiloTemaPrimario={estiloTemaPrimario}
+/>
+
+<footer
+  className={`w-full border-t px-6 py-4 mt-8 ${
+    darkMode
+      ? 'border-slate-700 bg-slate-900 text-slate-400'
+      : 'border-slate-200 bg-white text-slate-500'
+  }`}
+>
+  <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-3 text-xs">
+    
+    <div className="flex items-center gap-2 font-bold">
+      <span className="text-sm tracking-wide">
+        <span style={{ color: '#003E73' }}>AVANTA</span>
+        <span style={{ color: '#00A6C8' }}>LAB</span>
+      </span>
+      <span className={darkMode ? 'text-slate-500' : 'text-slate-400'}>
+        © {new Date().getFullYear()} Todos os direitos reservados.
+      </span>
+    </div>
+
+    <div className="flex items-center gap-4 font-semibold">
+      <button
+        type="button"
+        onClick={() => setModalTermos(true)}
+        className={`transition-colors cursor-pointer ${
+          darkMode
+            ? 'hover:text-white'
+            : 'hover:text-slate-800'
+        }`}
+
+
+        
+      >
+        Termos de Uso
+      </button>
+
+      <span className={darkMode ? 'text-slate-600' : 'text-slate-300'}>|</span>
+
+      <button
+        type="button"
+        onClick={() => setModalPrivacidade(true)}
+        className={`transition-colors cursor-pointer ${
+          darkMode
+            ? 'hover:text-white'
+            : 'hover:text-slate-800'
+        }`}
+      >
+        Política de Privacidade
+      </button>
+    </div>
+
+  </div>
+</footer>
+
     </div>
   );
 }
