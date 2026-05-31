@@ -18,6 +18,7 @@ import {
   buscarFaturamentos,
   salvarLancamento,
   apagarLancamento,
+  atualizarLancamento,
   salvarFaturamentoBanco,
   salvarConfiguracoesBanco,
   salvarDespesaCadastrada,
@@ -113,6 +114,13 @@ const [mostrarConfirmarNovaSenha, setMostrarConfirmarNovaSenha] = useState(false
   const [formDescricao, setFormDescricao] = useState('');
   const [formValor, setFormValor] = useState('');
   const [valorNumericoRaw, setValorNumericoRaw] = useState(0);
+  const [lancamentoEditandoId, setLancamentoEditandoId] = useState<string | number | null>(null);
+const [editDia, setEditDia] = useState('');
+const [editDespesa, setEditDespesa] = useState('');
+const [editDescricao, setEditDescricao] = useState('');
+const [editValor, setEditValor] = useState('');
+const [editValorNumerico, setEditValorNumerico] = useState(0);
+const [ordemLancamentos, setOrdemLancamentos] = useState<'desc' | 'asc'>('desc');
 
   const meses = ['JANEIRO', 'FEVEREIRO', 'MARÇO', 'ABRIL', 'MAIO', 'JUNHO', 'JULHO', 'AGOSTO', 'SETEMBRO', 'OUTUBRO', 'NOVEMBRO', 'DEZEMBRO'];
 
@@ -347,13 +355,31 @@ useEffect(() => {
 
   // --- CÁLCULOS E FUNÇÕES ---
   const formatarMoeda = (valor: number) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(valor);
+  const formatarDescricao = (texto: string) => {
+  const textoLimpo = texto.trim().toLowerCase();
+
+  if (!textoLimpo) return '';
+
+  return textoLimpo.charAt(0).toUpperCase() + textoLimpo.slice(1);
+};
 
   const mesParaAnalise = mesAtivo || mesResumoDash;
   const lancamentosDoMes = lancamentos.filter(l => l.mes === mesParaAnalise);
   const totalDespesasMes = lancamentosDoMes.reduce((acc, lanc) => acc + lanc.valor, 0);
   const faturamentoDoMesAtual = faturamentos[mesParaAnalise] || 0;
   const lucroOperacional = faturamentoDoMesAtual - totalDespesasMes;
-  const lancamentosOrdenados = [...lancamentos].sort((a, b) => a.dia - b.dia);
+  const lancamentosOrdenados = useMemo(() => {
+  return [...lancamentos].sort((a, b) => {
+    const diaA = Number(a.dia);
+    const diaB = Number(b.dia);
+
+    if (ordemLancamentos === 'desc') {
+      return diaB - diaA;
+    }
+
+    return diaA - diaB;
+  });
+}, [lancamentos, ordemLancamentos]);
   const maiorGasto = lancamentosDoMes.length > 0 ? lancamentosDoMes.reduce((prev, curr) => (curr.valor > prev.valor ? curr : prev), { despesa: '', valor: 0 }) : { despesa: 'Nenhuma despesa', valor: 0 };
   const receitasTotais = Object.values(faturamentos).reduce((a, b) => a + b, 0);
   const despesasTotais = lancamentos.reduce((a, b) => a + b.valor, 0);
@@ -387,9 +413,36 @@ useEffect(() => {
     }
   }
 };
-  const handleValorChange = (e: React.ChangeEvent<HTMLInputElement>) => { let value = e.target.value.replace(/\D/g, ""); if (!value) { setFormValor(""); setValorNumericoRaw(0); return; } const numericValue = parseInt(value, 10) / 100; setValorNumericoRaw(numericValue); setFormValor(formatarMoeda(numericValue)); };
-  const getMaxDias = (mes: string | null) => { if (!mes) return 31; if (['ABRIL', 'JUNHO', 'SETEMBRO', 'NOVEMBRO'].includes(mes)) return 30; if (mes === 'FEVEREIRO') return (parseInt(anoSelecionado) % 4 === 0) ? 29 : 28; return 31; };
-  const adicionarDespesaBase = async () => {
+  const handleValorChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  let value = e.target.value.replace(/\D/g, "");
+
+  if (!value) {
+    setFormValor("");
+    setValorNumericoRaw(0);
+    return;
+  }
+
+  const numericValue = parseInt(value, 10) / 100;
+
+  setValorNumericoRaw(numericValue);
+  setFormValor(formatarMoeda(numericValue));
+};
+
+const getMaxDias = (mes: string | null) => {
+  if (!mes) return 31;
+
+  if (['ABRIL', 'JUNHO', 'SETEMBRO', 'NOVEMBRO'].includes(mes)) {
+    return 30;
+  }
+
+  if (mes === 'FEVEREIRO') {
+    return parseInt(anoSelecionado) % 4 === 0 ? 29 : 28;
+  }
+
+  return 31;
+};
+
+const adicionarDespesaBase = async () => {
   const nomeLimpo = novaBaseNome.trim();
 
   if (!nomeLimpo || !novaBaseCat) {
@@ -433,9 +486,24 @@ useEffect(() => {
   setNovaBaseNome('');
   setNovaBaseCat('');
 };
-  const apagarDespesaBase = (nome: string) => { setDespesasCadastradas(despesasCadastradas.filter(d => d.nome !== nome)); };
-  
-  const adicionarDespesa = async () => {
+
+const apagarDespesaBase = async (nome: string) => {
+  if (!empresaId) {
+    alert('Empresa não carregada. Atualize a página e tente novamente.');
+    return;
+  }
+
+  const apagou = await apagarDespesaCadastrada(empresaId, nome);
+
+  if (!apagou) {
+    alert('Não foi possível apagar a despesa cadastrada no banco.');
+    return;
+  }
+
+  setDespesasCadastradas((prev) => prev.filter((d) => d.nome !== nome));
+};
+
+const adicionarDespesa = async () => {
   if (!empresaId) {
     alert("Empresa não carregada. Tente atualizar a página.");
     return;
@@ -453,7 +521,7 @@ useEffect(() => {
 
   if (duplicadosAtivo) {
     const existeIgual = lancamentosDoMes.some(
-      l => l.despesa === formDespesa && l.valor === valorNumericoRaw
+      (l) => l.despesa === formDespesa && l.valor === valorNumericoRaw
     );
 
     if (
@@ -470,21 +538,21 @@ useEffect(() => {
     mes: mesAtivo,
     dia: parseInt(formDia),
     despesaNome: formDespesa,
-    descricao: formDescricao,
+    descricao: formatarDescricao(formDescricao),
     valor: valorNumericoRaw,
   });
 
   if (!salvo.erro && salvo.data) {
-  const novoLancamento = {
-    id: salvo.data.id,
-    mes: salvo.data.mes,
-    dia: salvo.data.dia,
-    despesa: salvo.data.despesa_nome,
-    descricao: salvo.data.descricao || '',
-    valor: Number(salvo.data.valor),
-  };
+    const novoLancamento = {
+      id: salvo.data.id,
+      mes: salvo.data.mes,
+      dia: salvo.data.dia,
+      despesa: salvo.data.despesa_nome,
+      descricao: salvo.data.descricao || '',
+      valor: Number(salvo.data.valor),
+    };
 
-    setLancamentos(prev => [...prev, novoLancamento]);
+    setLancamentos((prev) => [novoLancamento, ...prev]);
 
     setFormDia('');
     setFormDespesa('');
@@ -492,20 +560,111 @@ useEffect(() => {
     setFormValor('');
     setValorNumericoRaw(0);
   } else {
-  alert(`Erro ao salvar lançamento: ${salvo.mensagem}`);
-}
+    alert(`Erro ao salvar lançamento: ${salvo.mensagem}`);
+  }
 };
-  
- const apagarDespesa = async (id: string) => {
+
+const apagarDespesa = async (id: string) => {
   const apagou = await apagarLancamento(id);
 
   if (apagou) {
-    setLancamentos(prev => prev.filter(l => l.id !== id));
+    setLancamentos((prev) => prev.filter((l) => l.id !== id));
   } else {
     alert("Erro ao apagar lançamento no banco.");
   }
 };
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+
+const iniciarEdicaoLancamento = (lanc: any) => {
+  setLancamentoEditandoId(lanc.id);
+  setEditDia(String(lanc.dia));
+  setEditDespesa(lanc.despesa);
+  setEditDescricao(lanc.descricao || '');
+  setEditValor(formatarMoeda(Number(lanc.valor)));
+  setEditValorNumerico(Number(lanc.valor));
+};
+
+const cancelarEdicaoLancamento = () => {
+  setLancamentoEditandoId(null);
+  setEditDia('');
+  setEditDespesa('');
+  setEditDescricao('');
+  setEditValor('');
+  setEditValorNumerico(0);
+};
+
+const handleEditValorChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const value = e.target.value.replace(/\D/g, '');
+
+  if (!value) {
+    setEditValor('');
+    setEditValorNumerico(0);
+    return;
+  }
+
+  const numericValue = parseInt(value, 10) / 100;
+
+  setEditValorNumerico(numericValue);
+  setEditValor(formatarMoeda(numericValue));
+};
+
+const salvarEdicaoLancamento = async () => {
+  if (!empresaId) {
+    alert('Empresa não carregada. Tente atualizar a página.');
+    return;
+  }
+
+  if (!mesAtivo) {
+    alert('Selecione um mês antes de editar o lançamento.');
+    return;
+  }
+
+  if (!lancamentoEditandoId || !editDia || !editDespesa || editValorNumerico <= 0) {
+    alert('Preencha Dia, Despesa e Valor.');
+    return;
+  }
+
+  const diaNumerico = parseInt(editDia, 10);
+  const maxDias = getMaxDias(mesAtivo);
+
+  if (Number.isNaN(diaNumerico) || diaNumerico < 1 || diaNumerico > maxDias) {
+    alert(`Informe um dia válido entre 1 e ${maxDias}.`);
+    return;
+  }
+
+  const salvo = await atualizarLancamento({
+    id: lancamentoEditandoId,
+    empresaId,
+    ano: Number(anoSelecionado),
+    mes: mesAtivo,
+    dia: diaNumerico,
+    despesaNome: editDespesa,
+    descricao: formatarDescricao(editDescricao),
+    valor: editValorNumerico,
+  });
+
+  if (!salvo.erro && salvo.data) {
+    setLancamentos((prev) =>
+      prev.map((l) =>
+        l.id === lancamentoEditandoId
+          ? {
+              ...l,
+              mes: salvo.data.mes,
+              dia: salvo.data.dia,
+              despesa: salvo.data.despesa_nome,
+              descricao: salvo.data.descricao || '',
+              valor: Number(salvo.data.valor),
+            }
+          : l
+      )
+    );
+
+    cancelarEdicaoLancamento();
+  } else {
+    alert(`Erro ao atualizar lançamento: ${salvo.mensagem}`);
+  }
+};
+
+const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
   const file = e.target.files?.[0];
 
   if (!file) return;
@@ -2243,11 +2402,12 @@ if (isTelaMobile) {
           </div>
 
           <main className="flex-1 p-8 max-w-7xl mx-auto w-full space-y-8">
-            <div className={`${bgCard} rounded-xl shadow-lg border-x border-b border-t-[4px] p-6`}
+            <div
+  className={`${bgCard} rounded-xl shadow-lg border-x border-b border-t-[4px] p-6`}
   style={{ borderTopColor: corPrimaria }}
 >
-  <div
-  className="relative custom-scroll"
+   <div
+    className="relative custom-scroll"
   style={{
     height: `${alturaFinalTabelaLancamentos + 130 + ESPACO_PUXADOR_TABELA}px`,
     minHeight: `${ALTURA_PADRAO_TABELA + 130 + ESPACO_PUXADOR_TABELA}px`,
@@ -2256,15 +2416,43 @@ if (isTelaMobile) {
   }}
 >
   <table className="w-full text-left border-collapse">
-    <thead>
-      <tr className={`${darkMode ? 'bg-slate-700/50' : 'bg-slate-100'} ${textMuted} uppercase text-xs tracking-wider border-b-2 border-slate-200/10`}>
-        <th className="p-4 w-24 text-center">Dia</th>
-        <th className="p-4 w-1/4">Tipo de Despesa</th>
-        <th className="p-4 w-1/3">Descrição</th>
-        <th className="p-4 w-40 text-right">Valor</th>
-        <th className="p-4 w-28 text-center">Ações</th>
-      </tr>
-    </thead>
+    <thead className={darkMode ? 'bg-slate-700' : 'bg-slate-100'}>
+  <tr>
+    <th colSpan={5} className="p-3">
+      <div className="relative flex items-center justify-center">
+        <button
+          type="button"
+          onClick={() =>
+            setOrdemLancamentos((prev) => (prev === 'desc' ? 'asc' : 'desc'))
+          }
+          className={`absolute left-0 flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-[10px] font-bold uppercase tracking-wide border shadow-sm transition-all hover:scale-[1.03] active:scale-95 cursor-pointer ${
+            darkMode
+              ? 'bg-slate-800 border-slate-700 text-slate-300 hover:bg-slate-700'
+              : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
+          }`}
+          title={
+            ordemLancamentos === 'desc'
+              ? 'Clique para ordenar do menor dia para o maior'
+              : 'Clique para ordenar do maior dia para o menor'
+          }
+        >
+          <span>Mudar ordem</span>
+          <span className="text-xs font-black">
+            {ordemLancamentos === 'desc' ? '↓' : '↑'}
+          </span>
+        </button>
+
+        <span
+          className={`text-sm font-black uppercase tracking-widest ${
+            darkMode ? 'text-slate-300' : 'text-slate-600'
+          }`}
+        >
+          PREENCHA OS CAMPOS PARA LANÇAR UMA DESPESA
+        </span>
+      </div>
+    </th>
+  </tr>
+</thead>
 
     <tbody>
       <tr className={`${darkMode ? 'bg-slate-800/80 border-slate-700' : 'bg-slate-50/80 border-slate-200'} border-b-2`}>
@@ -2289,20 +2477,30 @@ if (isTelaMobile) {
 
         <td className="p-3">
           <select
-            value={formDespesa}
-            onChange={(e) => setFormDespesa(e.target.value)}
-            className={`w-full p-2.5 border rounded-lg focus:outline-none focus:ring-1 font-semibold shadow-sm ${
-              darkMode ? 'bg-slate-700 border-slate-600 text-white' : 'bg-white border-slate-300 text-slate-700'
-            }`}
-            style={{ outlineColor: corPrimaria }}
-          >
-            <option value="">Selecionar...</option>
-            {despesasCadastradas.map((d) => (
-              <option key={d.nome} value={d.nome}>
-                {d.nome}
-              </option>
-            ))}
-          </select>
+  value={formDespesa}
+  onChange={(e) => setFormDespesa(e.target.value)}
+  className={`w-full p-2.5 border rounded-lg focus:outline-none focus:ring-1 font-semibold shadow-sm ${
+    darkMode
+      ? 'bg-slate-700 border-slate-600'
+      : 'bg-white border-slate-300'
+  }`}
+  style={{
+    outlineColor: corPrimaria,
+    color: formDespesa
+      ? darkMode ? '#ffffff' : '#334155'
+      : darkMode ? '#cbd5e1' : '#94a3b8',
+  }}
+>
+  <option value="" className="text-slate-400">
+    Selecione a despesa
+  </option>
+
+  {despesasCadastradas.map((d) => (
+    <option key={d.nome} value={d.nome} className="text-slate-800">
+      {d.nome}
+    </option>
+  ))}
+</select>
         </td>
 
         <td className="p-3">
@@ -2310,6 +2508,7 @@ if (isTelaMobile) {
             type="text"
             value={formDescricao}
             onChange={(e) => setFormDescricao(e.target.value)}
+            onBlur={() => setFormDescricao(formatarDescricao(formDescricao))}
             placeholder="Descrição..."
             className={`w-full p-2.5 border rounded-lg focus:outline-none focus:ring-1 shadow-sm ${
               darkMode ? 'bg-slate-700 border-slate-600 text-white' : 'border-slate-300'
@@ -2339,12 +2538,12 @@ if (isTelaMobile) {
 
         <td className="p-3 text-center">
           <button
-            onClick={adicionarDespesa}
-            style={estiloTemaPrimario}
-            className="w-full font-bold py-2.5 rounded-lg shadow hover:brightness-110 transition-colors text-sm"
-          >
-            Adicionar
-          </button>
+  onClick={adicionarDespesa}
+  style={estiloTemaPrimario}
+  className="px-4 py-2.5 rounded-lg font-bold shadow-md hover:brightness-110 active:scale-95 transition-all cursor-pointer"
+>
+  Adicionar
+</button>
         </td>
       </tr>
     </tbody>
@@ -2362,44 +2561,164 @@ if (isTelaMobile) {
         {lancamentosOrdenados.filter(l => l.mes === mesAtivo).length > 0 ? (
           lancamentosOrdenados.filter(l => l.mes === mesAtivo).map((lanc) => (
             <tr
-              key={lanc.id}
-              className={`border-b border-slate-200/10 transition-colors ${
-                darkMode ? 'hover:bg-slate-700/30' : 'hover:bg-slate-50'
-              }`}
-            >
-              <td className={`py-1.5 px-4 w-24 text-center font-bold text-sm ${textStrong}`}>
-                {lanc.dia.toString().padStart(2, '0')}
-              </td>
+  key={lanc.id}
+  className={`border-b border-dotted transition-colors ${
+    darkMode
+      ? 'border-slate-600/40 hover:bg-slate-700/30'
+      : 'border-slate-300/60 hover:bg-slate-50'
+  }`}
+>
+  {lancamentoEditandoId === lanc.id ? (
+    <>
+      <td className="py-1.5 px-4 w-24 text-center">
+        <input
+          type="number"
+          min={1}
+          max={getMaxDias(mesAtivo)}
+          value={editDia}
+          onChange={(e) => setEditDia(e.target.value)}
+          className={`w-full p-2 border rounded-lg text-center font-bold ${
+            darkMode ? 'bg-slate-700 border-slate-600 text-white' : 'border-slate-300 text-slate-800'
+          }`}
+        />
+      </td>
 
-              <td className={`py-1.5 px-4 w-1/4 font-bold text-sm ${textStrong}`}>
-                {lanc.despesa}
-              </td>
+      <td className="py-1.5 px-4 w-1/4">
+        <select
+  value={editDespesa}
+  onChange={(e) => setEditDespesa(e.target.value)}
+  className={`w-full p-2 border rounded-lg font-bold ${
+    darkMode
+      ? 'bg-slate-700 border-slate-600'
+      : 'bg-white border-slate-300'
+  }`}
+  style={{
+    color: editDespesa
+      ? darkMode ? '#ffffff' : '#334155'
+      : darkMode ? '#cbd5e1' : '#94a3b8',
+  }}
+>
+  <option value="" className="text-slate-400">
+    Selecione...
+  </option>
 
-              <td className={`py-1.5 px-4 w-1/3 text-xs ${textMuted}`}>
-                {lanc.descricao || '-'}
-              </td>
+  {despesasCadastradas.map((d) => (
+    <option key={d.nome} value={d.nome} className="text-slate-800">
+      {d.nome}
+    </option>
+  ))}
+</select>
+      </td>
 
-              <td className="py-1.5 px-4 w-40 text-right font-black text-sm text-red-500">
-                - {formatarMoeda(lanc.valor)}
-              </td>
+      <td className="py-1.5 px-4 w-1/3">
+        <input
+          type="text"
+          value={editDescricao}
+          onChange={(e) => setEditDescricao(e.target.value)}
+          className={`w-full p-2 border rounded-lg ${
+            darkMode ? 'bg-slate-700 border-slate-600 text-white' : 'border-slate-300 text-slate-800'
+          }`}
+          placeholder="Descrição..."
+        />
+      </td>
 
-              <td className="py-1.5 px-4 w-28 text-center">
-                <button
-                  onClick={() => apagarDespesa(lanc.id)}
-                  className="text-slate-400 hover:text-red-500 hover:bg-red-500/10 p-1.5 rounded transition-all"
-                  title="Apagar"
-                >
-                  <svg className="w-4 h-4 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth="2"
-                      d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                    />
-                  </svg>
-                </button>
-              </td>
-            </tr>
+      <td className="py-1.5 px-4 w-40">
+        <input
+          type="text"
+          value={editValor}
+          onChange={handleEditValorChange}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') {
+              e.preventDefault();
+              salvarEdicaoLancamento();
+            }
+
+            if (e.key === 'Escape') {
+              e.preventDefault();
+              cancelarEdicaoLancamento();
+            }
+          }}
+          className={`w-full p-2 border rounded-lg text-right font-bold ${
+            darkMode ? 'bg-slate-700 border-slate-600 text-white' : 'border-slate-300 text-slate-800'
+          }`}
+          placeholder="R$ 0,00"
+        />
+      </td>
+
+      <td className="py-1.5 px-4 w-28 text-center">
+        <div className="flex items-center justify-center gap-1">
+          <button
+            onClick={salvarEdicaoLancamento}
+            className="text-green-500 hover:bg-green-500/10 p-1.5 rounded transition-all cursor-pointer"
+            title="Salvar edição"
+          >
+            ✓
+          </button>
+
+          <button
+            onClick={cancelarEdicaoLancamento}
+            className="text-slate-400 hover:text-red-500 hover:bg-red-500/10 p-1.5 rounded transition-all cursor-pointer"
+            title="Cancelar edição"
+          >
+            ×
+          </button>
+        </div>
+      </td>
+    </>
+  ) : (
+    <>
+      <td className={`py-1.5 px-4 w-24 text-center font-bold text-sm ${textStrong}`}>
+        {lanc.dia.toString().padStart(2, '0')}
+      </td>
+
+      <td className={`py-1.5 px-4 w-1/4 font-bold text-sm ${textStrong}`}>
+        {lanc.despesa}
+      </td>
+
+      <td className={`py-1.5 px-4 w-1/3 text-xs ${textMuted}`}>
+        {lanc.descricao || '-'}
+      </td>
+
+      <td className="py-1.5 px-4 w-40 text-right font-black text-sm text-red-500">
+        - {formatarMoeda(lanc.valor)}
+      </td>
+
+      <td className="py-1.5 px-4 w-28 text-center">
+        <div className="flex items-center justify-center gap-1">
+          <button
+            onClick={() => iniciarEdicaoLancamento(lanc)}
+            className="text-slate-400 hover:text-blue-500 hover:bg-blue-500/10 p-1.5 rounded transition-all cursor-pointer"
+            title="Editar"
+          >
+            <svg className="w-4 h-4 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
+                d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"
+              />
+            </svg>
+          </button>
+
+          <button
+            onClick={() => apagarDespesa(lanc.id)}
+            className="text-slate-400 hover:text-red-500 hover:bg-red-500/10 p-1.5 rounded transition-all cursor-pointer"
+            title="Apagar"
+          >
+            <svg className="w-4 h-4 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
+                d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+              />
+            </svg>
+          </button>
+        </div>
+      </td>
+    </>
+  )}
+</tr>
           ))
         ) : (
           <tr>

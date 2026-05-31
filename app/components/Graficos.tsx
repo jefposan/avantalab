@@ -124,19 +124,19 @@ export default function Graficos({ meses, lancamentos, faturamentos, corPrimaria
 
        {/* GRÁFICO 2: ROSCA - DISTRIBUIÇÃO DE DESPESAS */}
 <div 
-  className={`${bgCard} rounded-2xl shadow-lg border p-8 flex flex-col border-t-4`} 
+  className={`${bgCard} rounded-2xl shadow-lg border p-5 flex flex-col border-t-4`} 
   style={{ borderTopColor: corPrimaria }}
 >
-  <h3 className={`font-bold uppercase tracking-wider ${textStrong} border-b border-slate-200/10 pb-4 mb-8`}>
+  <h3 className={`text-center text-base font-black uppercase tracking-wider ${textStrong} border-b border-slate-200/10 pb-2 mb-3`}>
     Distribuição de Gastos
   </h3>
           
-          <div className="flex-1 flex flex-col items-center justify-center">
+  <div className="flex-1 flex flex-col items-center justify-center">
             {analiseCategorias.totalGeral > 0 ? (
               <>
                 <div className="relative flex items-center justify-center mb-8">
                   <div className="w-56 h-56 rounded-full shadow-inner transform transition-transform hover:scale-105" style={{ background: analiseCategorias.gradiente }}></div>
-                  <div className={`absolute w-32 h-32 ${bgCard} rounded-full shadow-xl flex items-center justify-center`}>
+                  <div className={`absolute w-28 h-28 ${bgCard} rounded-full shadow-xl flex items-center justify-center`}>
                     <div className="text-center">
                       <span className={`block text-[10px] font-bold ${textMuted} uppercase tracking-widest`}>Total Ano</span>
                       <span className={`block text-base font-black ${textStrong}`}>{formatarMoeda(analiseCategorias.totalGeral).replace('R$', '')}</span>

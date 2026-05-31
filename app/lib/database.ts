@@ -280,3 +280,55 @@ export async function salvarConfiguracoesBanco({
 
   return data;
 }
+export async function atualizarLancamento({
+  id,
+  empresaId,
+  ano,
+  mes,
+  dia,
+  despesaNome,
+  descricao,
+  valor,
+}: {
+  id: string | number;
+  empresaId: string;
+  ano: number;
+  mes: string;
+  dia: number;
+  despesaNome: string;
+  descricao: string;
+  valor: number;
+}) {
+  const { data, error } = await supabase
+    .from('lancamentos')
+    .update({
+      empresa_id: empresaId,
+      ano,
+      mes,
+      dia,
+      despesa_nome: despesaNome,
+      descricao,
+      valor,
+      updated_at: new Date().toISOString(),
+    })
+    .eq('id', id)
+    .eq('empresa_id', empresaId)
+    .select()
+    .single();
+
+  if (error) {
+    console.error('Erro ao atualizar lançamento:', error);
+
+    return {
+      erro: true,
+      mensagem: error.message,
+      data: null,
+    };
+  }
+
+  return {
+    erro: false,
+    mensagem: '',
+    data,
+  };
+}
