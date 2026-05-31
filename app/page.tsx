@@ -2493,9 +2493,15 @@ if (isTelaMobile) {
         />
       ) : abaAtiva === 'Relatório' ? (
         <Relatorio 
-          meses={meses} lancamentos={lancamentos} faturamentos={faturamentos} despesasCadastradas={despesasCadastradas} 
-          corPrimaria={corPrimaria} darkMode={darkMode} anoSelecionado={anoSelecionado}
-        />
+  meses={meses}
+  lancamentos={lancamentos}
+  faturamentos={faturamentos}
+  despesasCadastradas={despesasCadastradas}
+  corPrimaria={corPrimaria}
+  darkMode={darkMode}
+  anoSelecionado={anoSelecionado}
+  setAnoSelecionado={setAnoSelecionado}
+/>
       ) : (
         <Dashboard 
           meses={meses} setMesAtivo={setMesAtivo} bgCard={bgCard} corPrimaria={corPrimaria} textStrong={textStrong} textMuted={textMuted} darkMode={darkMode} mesResumoDash={mesResumoDash} setMesResumoDash={setMesResumoDash} totalDespesasMes={totalDespesasMes} maiorGasto={maiorGasto} lucroOperacional={lucroOperacional} mesFaturamento={mesFaturamento} setMesFaturamento={setMesFaturamento} inputFaturamento={inputFaturamento} setInputFaturamento={setInputFaturamento} salvarFaturamento={salvarFaturamento} receitasTotais={receitasTotais} despesasTotais={despesasTotais} lucroTotalAnual={lucroTotalAnual} formatarMoeda={formatarMoeda}
