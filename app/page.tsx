@@ -138,6 +138,7 @@ const [editDescricao, setEditDescricao] = useState('');
 const [editValor, setEditValor] = useState('');
 const [editValorNumerico, setEditValorNumerico] = useState(0);
 const [ordemLancamentos, setOrdemLancamentos] = useState<'desc' | 'asc'>('desc');
+const [buscaLancamento, setBuscaLancamento] = useState('');
 
   const meses = ['JANEIRO', 'FEVEREIRO', 'MARÇO', 'ABRIL', 'MAIO', 'JUNHO', 'JULHO', 'AGOSTO', 'SETEMBRO', 'OUTUBRO', 'NOVEMBRO', 'DEZEMBRO'];
 
@@ -380,6 +381,29 @@ useEffect(() => {
     return diaA - diaB;
   });
 }, [lancamentos, ordemLancamentos]);
+
+const lancamentosFiltradosDoMes = useMemo(() => {
+  const termo = normalizarTexto(buscaLancamento.trim());
+
+  const listaDoMes = lancamentosOrdenados.filter((l) => l.mes === mesAtivo);
+
+  if (!termo) return listaDoMes;
+
+  return listaDoMes.filter((l) => {
+    const textoBusca = normalizarTexto(
+      [
+        l.dia,
+        l.despesa,
+        l.descricao,
+        formatarMoeda(Number(l.valor)),
+        String(Number(l.valor).toFixed(2)).replace('.', ','),
+      ].join(' ')
+    );
+
+    return textoBusca.includes(termo);
+  });
+}, [buscaLancamento, lancamentosOrdenados, mesAtivo]);
+
   const maiorGasto = lancamentosDoMes.length > 0 ? lancamentosDoMes.reduce((prev, curr) => (curr.valor > prev.valor ? curr : prev), { despesa: '', valor: 0 }) : { despesa: 'Nenhuma despesa', valor: 0 };
   const receitasTotais = Object.values(faturamentos).reduce((a, b) => a + b, 0);
   const despesasTotais = lancamentos.reduce((a, b) => a + b.valor, 0);
@@ -1234,9 +1258,7 @@ const handleGoogleLogin = async () => {
   }
 };
 
-const quantidadeLancamentosMes = lancamentosOrdenados.filter(
-  (l) => l.mes === mesAtivo
-).length;
+const quantidadeLancamentosMes = lancamentosFiltradosDoMes.length;
 
 const alturaMaximaTabelaLancamentos = Math.max(
   ALTURA_PADRAO_TABELA,
@@ -2413,6 +2435,70 @@ if (isTelaMobile) {
     </tbody>
   </table>
 
+  <div className="flex items-center justify-between gap-4 px-4 py-3 border-b border-slate-200/20">
+  <div className="flex-1">
+    <div className="relative">
+  <svg
+    className={`pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 ${
+      darkMode ? 'text-slate-400' : 'text-slate-500'
+    }`}
+    fill="none"
+    stroke="currentColor"
+    viewBox="0 0 24 24"
+  >
+    <path
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth="2.3"
+      d="M21 21l-4.35-4.35M10.8 18a7.2 7.2 0 100-14.4 7.2 7.2 0 000 14.4z"
+    />
+  </svg>
+
+  <input
+    type="text"
+    value={buscaLancamento}
+    onChange={(e) => setBuscaLancamento(e.target.value)}
+    placeholder="Buscar lançamento do mês por despesa, descrição, dia ou valor..."
+    className={`w-full rounded-xl border py-2.5 pl-11 pr-4 text-sm font-semibold outline-none transition focus:ring-2 ${
+      darkMode
+        ? 'bg-slate-700 border-slate-600 text-white placeholder:text-slate-400'
+        : 'bg-white border-slate-300 text-slate-700 placeholder:text-slate-400'
+    }`}
+    style={{
+      borderColor: buscaLancamento ? corPrimaria : undefined,
+      boxShadow: buscaLancamento ? `0 0 0 2px ${corPrimaria}22` : undefined,
+    }}
+  />
+</div>
+  </div>
+
+  {buscaLancamento && (
+    <button
+      type="button"
+      onClick={() => setBuscaLancamento('')}
+      className={`px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wide border transition ${
+        darkMode
+          ? 'border-slate-600 text-slate-300 hover:bg-slate-700'
+          : 'border-slate-300 text-slate-600 hover:bg-slate-100'
+      }`}
+    >
+      Limpar
+    </button>
+  )}
+</div>
+
+{buscaLancamento.trim() && (
+  <div className={`px-4 py-2 text-xs font-bold ${
+    lancamentosFiltradosDoMes.length > 0
+      ? darkMode ? 'text-emerald-300' : 'text-emerald-700'
+      : darkMode ? 'text-red-300' : 'text-red-600'
+  }`}>
+    {lancamentosFiltradosDoMes.length > 0
+      ? `${lancamentosFiltradosDoMes.length} lançamento(s) localizado(s).`
+      : 'Nenhum lançamento localizado com esse argumento.'}
+  </div>
+)}
+
   <div
     className="overflow-y-auto overflow-x-auto custom-scroll"
     style={{
@@ -2422,14 +2508,18 @@ if (isTelaMobile) {
   >
     <table className="w-full text-left border-collapse">
       <tbody>
-        {lancamentosOrdenados.filter(l => l.mes === mesAtivo).length > 0 ? (
-          lancamentosOrdenados.filter(l => l.mes === mesAtivo).map((lanc) => (
+        {lancamentosFiltradosDoMes.length > 0 ? (
+  lancamentosFiltradosDoMes.map((lanc) => (
             <tr
   key={lanc.id}
   className={`border-b border-dotted transition-colors ${
-    darkMode
-      ? 'border-slate-600/40 hover:bg-slate-700/30'
-      : 'border-slate-300/60 hover:bg-slate-50'
+    buscaLancamento.trim()
+      ? darkMode
+        ? 'bg-sky-900/30 border-sky-700/50'
+        : 'bg-sky-50 border-sky-200'
+      : darkMode
+        ? 'border-slate-600/40 hover:bg-slate-700/30'
+        : 'border-slate-300/60 hover:bg-slate-50'
   }`}
 >
   {lancamentoEditandoId === lanc.id ? (
