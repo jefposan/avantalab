@@ -2437,7 +2437,7 @@ if (isTelaMobile) {
 
   <div className="flex items-center justify-between gap-4 px-4 py-3 border-b border-slate-200/20">
   <div className="flex-1">
-    <div className="relative">
+   <div className="relative">
   <svg
     className={`pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 ${
       darkMode ? 'text-slate-400' : 'text-slate-500'
@@ -2459,7 +2459,7 @@ if (isTelaMobile) {
     value={buscaLancamento}
     onChange={(e) => setBuscaLancamento(e.target.value)}
     placeholder="Buscar lançamento do mês por despesa, descrição, dia ou valor..."
-    className={`w-full rounded-xl border py-2.5 pl-11 pr-4 text-sm font-semibold outline-none transition focus:ring-2 ${
+    className={`w-full rounded-xl border py-2.5 pl-11 pr-11 text-sm font-semibold outline-none transition focus:ring-2 ${
       darkMode
         ? 'bg-slate-700 border-slate-600 text-white placeholder:text-slate-400'
         : 'bg-white border-slate-300 text-slate-700 placeholder:text-slate-400'
@@ -2469,22 +2469,24 @@ if (isTelaMobile) {
       boxShadow: buscaLancamento ? `0 0 0 2px ${corPrimaria}22` : undefined,
     }}
   />
-</div>
-  </div>
 
   {buscaLancamento && (
     <button
       type="button"
       onClick={() => setBuscaLancamento('')}
-      className={`px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wide border transition ${
+      className={`absolute right-3 top-1/2 flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded-full text-xs font-black transition cursor-pointer ${
         darkMode
-          ? 'border-slate-600 text-slate-300 hover:bg-slate-700'
-          : 'border-slate-300 text-slate-600 hover:bg-slate-100'
+          ? 'text-slate-300 hover:bg-slate-600 hover:text-white'
+          : 'text-slate-500 hover:bg-slate-200 hover:text-slate-800'
       }`}
+      title="Limpar busca"
     >
-      Limpar
+      ×
     </button>
   )}
+</div>
+  </div>
+
 </div>
 
 {buscaLancamento.trim() && (
