@@ -1,12 +1,40 @@
 import { supabase } from './supabase';
 
+function tratarErroSupabase(error: any) {
+  if (!error?.message) {
+    return 'Não foi possível concluir a ação.';
+  }
+
+  if (
+    error.message.includes('row-level security') ||
+    error.message.includes('violates row-level security policy') ||
+    error.code === '42501'
+  ) {
+    return 'Você não tem permissão para realizar esta ação.';
+  }
+
+  if (
+    error.message.includes('duplicate key') ||
+    error.code === '23505'
+  ) {
+    return 'Este registro já existe.';
+  }
+
+  return error.message;
+}
+
 
 
 export async function buscarEmpresaDoUsuario(usuarioId: string) {
-  const { data: vinculo, error: erroVinculo } = await supabase
-    .from('usuarios_empresas')
-    .select('empresa_id, papel')
-    .eq('usuario_id', usuarioId)
+  const { data: usuarioAtual } = await supabase.auth.getUser();
+
+  const emailUsuario = usuarioAtual.user?.email?.toLowerCase() || '';
+
+  let { data: vinculo, error: erroVinculo } = await supabase
+    .from('usuarios_empresa')
+    .select('id, empresa_id, user_id, nome, email, perfil, status')
+    .eq('user_id', usuarioId)
+    .eq('status', 'ativo')
     .limit(1)
     .maybeSingle();
 
@@ -16,11 +44,48 @@ export async function buscarEmpresaDoUsuario(usuarioId: string) {
     return null;
   }
 
-  if (!vinculo || !vinculo.empresa_id) {
-    console.warn('Usuário sem empresa vinculada.');
-    alert('Este usuário ainda não possui empresa vinculada.');
-    return null;
+  if (!vinculo && emailUsuario) {
+    const { data: convitePendente, error: erroConvite } = await supabase
+      .from('usuarios_empresa')
+      .select('id, empresa_id, user_id, nome, email, perfil, status')
+      .eq('email', emailUsuario)
+      .is('user_id', null)
+      .in('status', ['pendente', 'ativo'])
+      .limit(1)
+      .maybeSingle();
+
+    if (erroConvite) {
+      console.error('Erro ao buscar convite pendente:', erroConvite);
+      alert(`Erro ao buscar convite pendente: ${erroConvite.message}`);
+      return null;
+    }
+
+    if (convitePendente) {
+      const { data: vinculoAtualizado, error: erroAtualizarConvite } = await supabase
+        .from('usuarios_empresa')
+        .update({
+          user_id: usuarioId,
+          status: 'ativo',
+          atualizado_em: new Date().toISOString(),
+        })
+        .eq('id', convitePendente.id)
+        .select('id, empresa_id, user_id, nome, email, perfil, status')
+        .single();
+
+      if (erroAtualizarConvite) {
+        console.error('Erro ao vincular convite ao usuário:', erroAtualizarConvite);
+        alert(`Erro ao vincular convite ao usuário: ${erroAtualizarConvite.message}`);
+        return null;
+      }
+
+      vinculo = vinculoAtualizado;
+    }
   }
+
+  if (!vinculo || !vinculo.empresa_id) {
+  console.warn('Usuário sem empresa vinculada.');
+  return null;
+}
 
   const { data: empresa, error: erroEmpresa } = await supabase
     .from('empresas')
@@ -40,7 +105,11 @@ export async function buscarEmpresaDoUsuario(usuarioId: string) {
     return null;
   }
 
-  return empresa;
+  return {
+    ...empresa,
+    perfil: vinculo.perfil,
+    acessoId: vinculo.id,
+  };
 }
 
 export async function buscarConfiguracoes(empresaId: string) {
@@ -177,12 +246,12 @@ export async function salvarLancamento({
     .single();
 
   if (error) {
-    console.error('Erro ao salvar lançamento:', error);
-    return {
-      erro: true,
-      mensagem: error.message,
-    };
-  }
+  console.error('Erro ao salvar lançamento:', error);
+  return {
+    erro: true,
+    mensagem: tratarErroSupabase(error),
+  };
+}
 
   return {
     erro: false,
@@ -274,7 +343,7 @@ export async function salvarConfiguracoesBanco({
 
   if (error) {
   console.error('Erro ao salvar configurações:', error);
-  alert(`Erro ao salvar configurações: ${error.message}`);
+  alert(`Erro ao salvar configurações: ${tratarErroSupabase(error)}`);
   return null;
 }
 
@@ -320,8 +389,179 @@ export async function atualizarLancamento({
     console.error('Erro ao atualizar lançamento:', error);
 
     return {
+  erro: true,
+  mensagem: tratarErroSupabase(error),
+  data: null,
+};
+  }
+
+  return {
+    erro: false,
+    mensagem: '',
+    data,
+  };
+}
+export async function buscarMeuAcessoEmpresa(empresaId: string, usuarioId: string) {
+  const { data, error } = await supabase
+    .from('usuarios_empresa')
+    .select('id, empresa_id, user_id, nome, email, perfil, status')
+    .eq('empresa_id', empresaId)
+    .eq('user_id', usuarioId)
+    .eq('status', 'ativo')
+    .maybeSingle();
+
+  if (error) {
+    console.error('Erro ao buscar perfil do usuário:', error);
+    return null;
+  }
+
+  return data;
+}
+
+export async function buscarUsuariosEmpresa(empresaId: string) {
+  const { data, error } = await supabase.rpc('listar_usuarios_empresa_rpc', {
+    p_empresa_id: empresaId,
+  });
+
+  if (error) {
+    console.error('Erro ao buscar usuários da empresa:', error);
+    return [];
+  }
+
+  return data || [];
+}
+
+export async function criarUsuarioEmpresa({
+  empresaId,
+  nome,
+  email,
+  perfil,
+}: {
+  empresaId: string;
+  nome: string;
+  email: string;
+  perfil: 'administrador' | 'operador_completo' | 'operador_simples';
+}) {
+  const emailLimpo = email.trim().toLowerCase();
+
+  const { data, error } = await supabase.rpc('criar_usuario_empresa_rpc', {
+    p_empresa_id: empresaId,
+    p_nome: nome.trim(),
+    p_email: emailLimpo,
+    p_perfil: perfil,
+  });
+
+  if (error) {
+    console.error('Erro ao criar usuário da empresa:', error);
+
+    return {
       erro: true,
-      mensagem: error.message,
+      mensagem: tratarErroSupabase(error),
+      data: null,
+    };
+  }
+
+  return {
+    erro: false,
+    mensagem: '',
+    data,
+  };
+}
+
+export async function atualizarUsuarioEmpresa({
+  acessoId,
+  nome,
+  email,
+  perfil,
+}: {
+  acessoId: string;
+  nome: string;
+  email: string;
+  perfil: 'administrador' | 'operador_completo' | 'operador_simples';
+}) {
+  const { data, error } = await supabase.rpc('atualizar_usuario_empresa_rpc', {
+    p_acesso_id: acessoId,
+    p_nome: nome.trim(),
+    p_email: email.trim().toLowerCase(),
+    p_perfil: perfil,
+  });
+
+  if (error) {
+    console.error('Erro ao atualizar usuário da empresa:', error);
+
+    return {
+      erro: true,
+      mensagem: tratarErroSupabase(error),
+      data: null,
+    };
+  }
+
+  return {
+    erro: false,
+    mensagem: '',
+    data,
+  };
+}
+
+export async function bloquearUsuarioEmpresa(acessoId: string) {
+  const { data, error } = await supabase
+    .from('usuarios_empresa')
+    .update({
+      status: 'bloqueado',
+      atualizado_em: new Date().toISOString(),
+    })
+    .eq('id', acessoId)
+    .select()
+    .single();
+
+  if (error) {
+    console.error('Erro ao bloquear usuário:', error);
+
+    return {
+      erro: true,
+      mensagem: tratarErroSupabase(error),
+      data: null,
+    };
+  }
+
+  return {
+    erro: false,
+    mensagem: '',
+    data,
+  };
+}
+export async function excluirUsuarioEmpresa(acessoId: string) {
+  const { data, error } = await supabase.rpc('excluir_usuario_empresa_rpc', {
+    p_acesso_id: acessoId,
+  });
+
+  if (error) {
+    console.error('Erro ao excluir usuário da empresa:', error);
+
+    return {
+      erro: true,
+      mensagem: tratarErroSupabase(error),
+      data: null,
+    };
+  }
+
+  return {
+    erro: false,
+    mensagem: '',
+    data,
+  };
+}
+export async function criarEmpresaInicial(nomeEmpresa: string) {
+  const { data, error } = await supabase.rpc('criar_empresa_inicial_rpc', {
+    p_nome_empresa: nomeEmpresa,
+  });
+
+  if (error) {
+    console.error('Erro ao criar empresa inicial:', error);
+
+    return {
+      erro: true,
+      mensagem: tratarErroSupabase(error),
       data: null,
     };
   }

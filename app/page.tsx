@@ -34,6 +34,12 @@ import {
   salvarConfiguracoesBanco,
   salvarDespesaCadastrada,
   apagarDespesaCadastrada,
+  buscarUsuariosEmpresa,
+  criarUsuarioEmpresa,
+  atualizarUsuarioEmpresa,
+  bloquearUsuarioEmpresa,
+  excluirUsuarioEmpresa,
+  criarEmpresaInicial,
 } from './lib/database';
 
 import { supabase } from './lib/supabase';
@@ -79,6 +85,25 @@ const [mostrarConfirmarNovaSenha, setMostrarConfirmarNovaSenha] = useState(false
   const [empresaId, setEmpresaId] = useState<string | null>(null);
   const [acessoNaoConfigurado, setAcessoNaoConfigurado] = useState(false);
   const [emailConfirmado, setEmailConfirmado] = useState(false);
+  const [nomeEmpresaInicial, setNomeEmpresaInicial] = useState('');
+const [criandoEmpresaInicial, setCriandoEmpresaInicial] = useState(false);
+  const [perfilUsuario, setPerfilUsuario] = useState<
+  'gestor_master' | 'administrador' | 'operador_completo' | 'operador_simples' | null
+>(null);
+const [usuariosEmpresa, setUsuariosEmpresa] = useState<any[]>([]);
+const [usuariosCarregando, setUsuariosCarregando] = useState(false);
+const [usuarioNome, setUsuarioNome] = useState('');
+const [usuarioEmail, setUsuarioEmail] = useState('');
+const [usuarioPerfil, setUsuarioPerfil] = useState<
+  'administrador' | 'operador_completo' | 'operador_simples'
+>('operador_simples');
+const [usuarioEditandoId, setUsuarioEditandoId] = useState<string | null>(null);
+const [editUsuarioNome, setEditUsuarioNome] = useState('');
+const [editUsuarioEmail, setEditUsuarioEmail] = useState('');
+const [editUsuarioPerfil, setEditUsuarioPerfil] = useState<
+  'administrador' | 'operador_completo' | 'operador_simples'
+>('operador_simples');
+const [modalUsuarios, setModalUsuarios] = useState(false);
   const [abaAtiva, setAbaAtiva] = useState('Dashboard');
   const [ajustesAberto, setAjustesAberto] = useState(false);
   const [duplicadosAtivo, setDuplicadosAtivo] = useState(false);
@@ -141,6 +166,26 @@ const [ordemLancamentos, setOrdemLancamentos] = useState<'desc' | 'asc'>('desc')
 const [buscaLancamento, setBuscaLancamento] = useState('');
 
   const meses = ['JANEIRO', 'FEVEREIRO', 'MARÇO', 'ABRIL', 'MAIO', 'JUNHO', 'JULHO', 'AGOSTO', 'SETEMBRO', 'OUTUBRO', 'NOVEMBRO', 'DEZEMBRO'];
+
+const podeGerenciarUsuarios =
+  perfilUsuario === 'gestor_master' || perfilUsuario === 'administrador';
+
+const podeInserirLancamentos =
+  perfilUsuario === 'gestor_master' ||
+  perfilUsuario === 'administrador' ||
+  perfilUsuario === 'operador_completo' ||
+  perfilUsuario === 'operador_simples';
+
+const podeEditarLancamentos =
+  perfilUsuario === 'gestor_master' ||
+  perfilUsuario === 'administrador' ||
+  perfilUsuario === 'operador_completo';
+
+const podeExcluirLancamentos =
+  perfilUsuario === 'gestor_master' || perfilUsuario === 'administrador';
+
+const podeAcessarAjustes =
+  perfilUsuario === 'gestor_master' || perfilUsuario === 'administrador';
 
 const textoSobreCorPrimaria = corEhClara(corPrimaria) ? '#0f172a' : '#ffffff';
 const bordaSobreCorPrimaria = corEhClara(corPrimaria)
@@ -236,6 +281,7 @@ if (!empresa) {
 
     if (empresa) {
       setEmpresaId(empresa.id);
+      setPerfilUsuario(empresa.perfil || null);
 
       const config = await buscarConfiguracoes(empresa.id);
       const despesas = await buscarDespesasCadastradas(empresa.id);
@@ -310,6 +356,11 @@ useEffect(() => {
 useEffect(() => {
   if (!mounted || !empresaId) return;
 
+  if (!podeAcessarAjustes) {
+    setStatusConfig('idle');
+    return;
+  }
+
   let ativo = true;
 
   const salvarConfiguracoes = async () => {
@@ -361,6 +412,14 @@ useEffect(() => {
       return () => clearTimeout(tempo);
     }
   }, [ajustesAberto]);
+
+  useEffect(() => {
+  if (!modalUsuarios) return;
+  if (!empresaId) return;
+  if (!podeGerenciarUsuarios) return;
+
+  carregarUsuariosEmpresa();
+}, [modalUsuarios, empresaId, podeGerenciarUsuarios]);
 
   // --- CÁLCULOS E FUNÇÕES ---
   
@@ -452,6 +511,153 @@ const lancamentosFiltradosDoMes = useMemo(() => {
   setFormValor(formatarMoeda(numericValue));
 };
 
+const carregarUsuariosEmpresa = async () => {
+  if (!empresaId || !podeGerenciarUsuarios) return;
+
+  setUsuariosCarregando(true);
+
+  const usuarios = await buscarUsuariosEmpresa(empresaId);
+
+  setUsuariosEmpresa(usuarios);
+  setUsuariosCarregando(false);
+};
+
+const adicionarUsuarioEmpresa = async () => {
+  if (!empresaId) {
+    alert('Empresa não carregada.');
+    return;
+  }
+
+  if (!podeGerenciarUsuarios) {
+    alert('Você não tem permissão para gerenciar usuários.');
+    return;
+  }
+
+  const nomeLimpo = usuarioNome.trim();
+  const emailLimpo = usuarioEmail.trim().toLowerCase();
+
+  if (!nomeLimpo || !emailLimpo) {
+    alert('Informe nome e email do usuário.');
+    return;
+  }
+
+  if (!emailLimpo.includes('@') || !emailLimpo.includes('.')) {
+    alert('Informe um email válido.');
+    return;
+  }
+
+  const resultado = await criarUsuarioEmpresa({
+    empresaId,
+    nome: nomeLimpo,
+    email: emailLimpo,
+    perfil: usuarioPerfil,
+  });
+
+  if (resultado.erro) {
+    alert(`Erro ao criar usuário: ${resultado.mensagem}`);
+    return;
+  }
+
+  setUsuarioNome('');
+  setUsuarioEmail('');
+  setUsuarioPerfil('operador_simples');
+
+  await carregarUsuariosEmpresa();
+};
+
+const bloquearAcessoUsuario = async (acessoId: string) => {
+  if (!podeGerenciarUsuarios) {
+    alert('Você não tem permissão para bloquear usuários.');
+    return;
+  }
+
+  abrirConfirmacao({
+    titulo: 'Bloquear usuário',
+    mensagem: 'Deseja bloquear este usuário?\n\nEle não conseguirá mais acessar esta empresa.',
+    acao: async () => {
+      const resultado = await bloquearUsuarioEmpresa(acessoId);
+
+      if (resultado.erro) {
+        alert(`Erro ao bloquear usuário: ${resultado.mensagem}`);
+        return;
+      }
+
+      await carregarUsuariosEmpresa();
+    },
+  });
+};
+
+const iniciarEdicaoUsuario = (usuario: any) => {
+  if (usuario.perfil === 'gestor_master') {
+    alert('O gestor master não pode ser editado por esta tela.');
+    return;
+  }
+
+  setUsuarioEditandoId(usuario.id);
+  setEditUsuarioNome(usuario.nome || '');
+  setEditUsuarioEmail(usuario.email || '');
+  setEditUsuarioPerfil(
+    usuario.perfil as 'administrador' | 'operador_completo' | 'operador_simples'
+  );
+};
+
+const cancelarEdicaoUsuario = () => {
+  setUsuarioEditandoId(null);
+  setEditUsuarioNome('');
+  setEditUsuarioEmail('');
+  setEditUsuarioPerfil('operador_simples');
+};
+
+const salvarEdicaoUsuario = async () => {
+  if (!usuarioEditandoId) return;
+
+  const nomeLimpo = editUsuarioNome.trim();
+  const emailLimpo = editUsuarioEmail.trim().toLowerCase();
+
+  if (!nomeLimpo || !emailLimpo) {
+    alert('Informe nome e email do usuário.');
+    return;
+  }
+
+  if (!emailLimpo.includes('@') || !emailLimpo.includes('.')) {
+    alert('Informe um email válido.');
+    return;
+  }
+
+  const resultado = await atualizarUsuarioEmpresa({
+    acessoId: usuarioEditandoId,
+    nome: nomeLimpo,
+    email: emailLimpo,
+    perfil: editUsuarioPerfil,
+  });
+
+  if (resultado.erro) {
+    alert(`Erro ao atualizar usuário: ${resultado.mensagem}`);
+    return;
+  }
+
+  cancelarEdicaoUsuario();
+  await carregarUsuariosEmpresa();
+};
+
+const excluirAcessoUsuario = async (acessoId: string) => {
+  abrirConfirmacao({
+    titulo: 'Excluir usuário',
+    mensagem:
+      'Deseja excluir este usuário?\n\nEle perderá o acesso a esta empresa. Essa ação não poderá ser desfeita.',
+    acao: async () => {
+      const resultado = await excluirUsuarioEmpresa(acessoId);
+
+      if (resultado.erro) {
+        alert(`Erro ao excluir usuário: ${resultado.mensagem}`);
+        return;
+      }
+
+      await carregarUsuariosEmpresa();
+    },
+  });
+};
+
 const adicionarDespesaBase = async () => {
   const nomeLimpo = novaBaseNome.trim();
 
@@ -514,6 +720,12 @@ const apagarDespesaBase = async (nome: string) => {
 };
 
 const adicionarDespesa = async () => {
+
+  if (!podeInserirLancamentos) {
+  alert('Você não tem permissão para inserir lançamentos.');
+  return;
+}
+
   if (!empresaId) {
     alert("Empresa não carregada. Tente atualizar a página.");
     return;
@@ -629,6 +841,11 @@ async function confirmarAcao() {
 }
 
 const iniciarEdicaoLancamento = (lanc: any) => {
+
+  if (!podeEditarLancamentos) {
+  alert('Você não tem permissão para editar lançamentos.');
+  return;
+}
   setLancamentoEditandoId(lanc.id);
   setEditDia(String(lanc.dia));
   setEditDespesa(lanc.despesa);
@@ -762,6 +979,8 @@ const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
   // Limpa o input para permitir escolher a mesma imagem novamente se precisar
   e.target.value = '';
 };
+
+
 
   // ================= FUNÇÃO DE BACKUP EXCEL =================
   const gerarBackupExcel = async () => {
@@ -1145,10 +1364,40 @@ setTimeout(() => {
 return;
 };
 
+const handleCriarEmpresaInicial = async () => {
+  const nomeLimpo = nomeEmpresaInicial.trim();
+
+  if (!nomeLimpo) {
+    setAuthErro('Informe o nome da empresa para criar o ambiente.');
+    return;
+  }
+
+  setAuthErro('');
+  setAuthMensagem('');
+  setCriandoEmpresaInicial(true);
+
+  const resultado = await criarEmpresaInicial(nomeLimpo);
+
+  setCriandoEmpresaInicial(false);
+
+  if (resultado.erro || !resultado.data) {
+    setAuthErro(resultado.mensagem || 'Não foi possível criar o ambiente da empresa.');
+    return;
+  }
+
+  setAuthMensagem('Ambiente criado com sucesso. Carregando o sistema...');
+
+  setTimeout(() => {
+    window.location.href = window.location.origin + window.location.pathname;
+  }, 700);
+};
+
 const handleLogout = async () => {
   await supabase.auth.signOut();
 
   setAcessoLiberado(false);
+  setPerfilUsuario(null);
+setEmpresaId(null);
   setAcessoNaoConfigurado(false);
   setModoRedefinirSenha(false);
   setModoAuth('login');
@@ -1343,43 +1592,77 @@ if (acessoNaoConfigurado) {
 
       <section className="relative z-10 flex min-h-screen items-center justify-center px-6 py-10">
         <div className="w-full max-w-md rounded-3xl border border-slate-200 bg-white/90 p-8 text-center shadow-2xl">
-          <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-2xl bg-amber-100">
-            <svg
-              className="h-8 w-8 text-amber-700"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth="2"
-                d="M12 9v4m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"
-              />
-            </svg>
-          </div>
+          <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-2xl bg-sky-100">
+  <svg
+    className="h-8 w-8 text-sky-800"
+    fill="none"
+    stroke="currentColor"
+    viewBox="0 0 24 24"
+  >
+    <path
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth="2"
+      d="M3 21h18M5 21V7l8-4v18M19 21V11l-6-4"
+    />
+  </svg>
+</div>
 
-          <p className="mb-2 text-xs font-bold uppercase tracking-[0.28em] text-sky-700">
-            AvantaLab Gestão
-          </p>
+<p className="mb-2 text-xs font-bold uppercase tracking-[0.28em] text-sky-700">
+  AvantaLab Gestão
+</p>
 
-          <h1 className="text-2xl font-black leading-tight text-slate-900">
-            Acesso ainda não configurado
-          </h1>
+<h1 className="text-2xl font-black leading-tight text-slate-900">
+  Criar ambiente da empresa
+</h1>
 
-          <p className="mt-4 text-sm leading-relaxed text-slate-600">
-            Sua conta foi autenticada, mas ainda não encontramos um ambiente de trabalho ativo
-            para ela. Tente sair e entrar novamente. Se o problema continuar, entre em contato
-            com o suporte.
-          </p>
+<p className="mt-4 text-sm leading-relaxed text-slate-600">
+  Sua conta foi confirmada, mas ainda não existe uma empresa vinculada a este acesso.
+  Informe o nome da empresa para iniciar o ambiente de gestão.
+</p>
 
-          <button
-            type="button"
-            onClick={handleLogout}
-            className="mt-6 w-full rounded-xl bg-slate-900 px-4 py-3 font-bold text-white shadow-lg transition hover:bg-slate-800"
-          >
-            Voltar para o login
-          </button>
+<div className="mt-6 text-left">
+  <label className="mb-1 block text-sm font-semibold text-slate-700">
+    Nome da empresa
+  </label>
+
+  <input
+    type="text"
+    value={nomeEmpresaInicial}
+    onChange={(e) => setNomeEmpresaInicial(e.target.value)}
+    placeholder="Ex: Minha Empresa"
+    className="w-full rounded-xl border border-slate-300 bg-white/90 px-4 py-3 text-slate-800 outline-none transition focus:border-sky-600 focus:ring-2 focus:ring-sky-600/20"
+  />
+</div>
+
+{authErro && (
+  <div className="mt-4 rounded-xl bg-red-100 px-4 py-3 text-sm font-semibold text-red-700">
+    {authErro}
+  </div>
+)}
+
+{authMensagem && (
+  <div className="mt-4 rounded-xl bg-green-100 px-4 py-3 text-sm font-semibold text-green-700">
+    {authMensagem}
+  </div>
+)}
+
+<button
+  type="button"
+  onClick={handleCriarEmpresaInicial}
+  disabled={criandoEmpresaInicial}
+  className="mt-6 w-full rounded-xl bg-slate-900 px-4 py-3 font-bold text-white shadow-lg transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
+>
+  {criandoEmpresaInicial ? 'Criando ambiente...' : 'Criar ambiente'}
+</button>
+
+<button
+  type="button"
+  onClick={handleLogout}
+  className="mt-3 w-full rounded-xl border border-slate-300 bg-white px-4 py-3 font-bold text-slate-700 transition hover:bg-slate-50"
+>
+  Sair
+</button>
         </div>
       </section>
     </main>
@@ -1854,6 +2137,290 @@ if (isTelaMobile) {
   aoConfirmar={confirmarAcao}
 />
 
+{modalUsuarios && (
+  <div className="fixed inset-0 z-[999] flex items-center justify-center bg-black/50 px-4">
+    <div
+      className={`w-full max-w-3xl rounded-2xl border p-6 shadow-2xl ${
+        darkMode
+          ? 'bg-slate-800 border-slate-700'
+          : 'bg-white border-slate-200'
+      }`}
+    >
+      <div className="mb-5 flex items-start justify-between gap-4">
+        <div>
+          <h2 className={`text-xl font-black ${textStrong}`}>
+            Usuários e Permissões
+          </h2>
+
+          <p className={`mt-1 text-sm ${textMuted}`}>
+            Cadastre usuários para acessar esta empresa e defina o nível de permissão.
+          </p>
+        </div>
+
+        <button
+          type="button"
+          onClick={() => setModalUsuarios(false)}
+          className={`flex h-9 w-9 items-center justify-center rounded-full text-lg font-black transition cursor-pointer ${
+            darkMode
+              ? 'text-slate-300 hover:bg-slate-700 hover:text-white'
+              : 'text-slate-500 hover:bg-slate-100 hover:text-slate-800'
+          }`}
+          title="Fechar"
+        >
+          ×
+        </button>
+      </div>
+
+      <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
+        <input
+          type="text"
+          value={usuarioNome}
+          onChange={(e) => setUsuarioNome(e.target.value)}
+          placeholder="Nome do usuário"
+          className={`w-full rounded-xl border px-3 py-2.5 text-sm font-semibold outline-none transition ${
+            darkMode
+              ? 'bg-slate-900 border-slate-600 text-white placeholder:text-slate-400'
+              : 'bg-white border-slate-300 text-slate-700 placeholder:text-slate-400'
+          }`}
+        />
+
+        <input
+          type="email"
+          value={usuarioEmail}
+          onChange={(e) => setUsuarioEmail(e.target.value)}
+          placeholder="Email do usuário"
+          className={`w-full rounded-xl border px-3 py-2.5 text-sm font-semibold outline-none transition ${
+            darkMode
+              ? 'bg-slate-900 border-slate-600 text-white placeholder:text-slate-400'
+              : 'bg-white border-slate-300 text-slate-700 placeholder:text-slate-400'
+          }`}
+        />
+
+        <select
+          value={usuarioPerfil}
+          onChange={(e) =>
+            setUsuarioPerfil(
+              e.target.value as 'administrador' | 'operador_completo' | 'operador_simples'
+            )
+          }
+          className={`w-full rounded-xl border px-3 py-2.5 text-sm font-bold outline-none transition ${
+            darkMode
+              ? 'bg-slate-900 border-slate-600 text-white'
+              : 'bg-white border-slate-300 text-slate-700'
+          }`}
+        >
+          <option value="operador_simples">Operador Simples</option>
+          <option value="operador_completo">Operador Completo</option>
+          <option value="administrador">Administrador</option>
+        </select>
+      </div>
+
+      <div className="mt-4 flex justify-end">
+        <button
+          type="button"
+          onClick={adicionarUsuarioEmpresa}
+          className="rounded-xl px-5 py-2.5 text-sm font-black uppercase tracking-wide shadow-md transition hover:brightness-110 active:scale-[0.98] cursor-pointer"
+          style={estiloTemaPrimario}
+        >
+          Criar acesso
+        </button>
+      </div>
+
+      <div className="mt-6 border-t border-slate-200/20 pt-4">
+        <div className="mb-3 flex items-center justify-between">
+          <h3 className={`text-xs font-black uppercase tracking-wide ${textMuted}`}>
+            Usuários cadastrados
+          </h3>
+
+          {usuariosCarregando && (
+            <span className={`text-[11px] font-bold ${textMuted}`}>
+              Carregando...
+            </span>
+          )}
+        </div>
+
+        <div className="max-h-[320px] space-y-2 overflow-y-auto pr-1">
+          {usuariosEmpresa.length === 0 ? (
+            <div
+              className={`rounded-xl border px-3 py-3 text-xs font-semibold ${
+                darkMode
+                  ? 'border-slate-700 text-slate-400'
+                  : 'border-slate-200 text-slate-500'
+              }`}
+            >
+              Nenhum usuário cadastrado ainda.
+            </div>
+          ) : (
+            usuariosEmpresa.map((usuario) => (
+              <div
+  key={usuario.id}
+  className={`rounded-xl border px-3 py-3 ${
+    darkMode
+      ? 'border-slate-700 bg-slate-900/60'
+      : 'border-slate-200 bg-slate-50'
+  }`}
+>
+  {usuarioEditandoId === usuario.id ? (
+    <div className="space-y-3">
+      <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
+        <input
+          type="text"
+          value={editUsuarioNome}
+          onChange={(e) => setEditUsuarioNome(e.target.value)}
+          placeholder="Nome"
+          className={`w-full rounded-xl border px-3 py-2 text-sm font-semibold outline-none ${
+            darkMode
+              ? 'bg-slate-800 border-slate-600 text-white'
+              : 'bg-white border-slate-300 text-slate-700'
+          }`}
+        />
+
+        <input
+          type="email"
+          value={editUsuarioEmail}
+          onChange={(e) => setEditUsuarioEmail(e.target.value)}
+          placeholder="Email"
+          disabled={usuario.status === 'ativo'}
+          className={`w-full rounded-xl border px-3 py-2 text-sm font-semibold outline-none disabled:opacity-60 disabled:cursor-not-allowed ${
+            darkMode
+              ? 'bg-slate-800 border-slate-600 text-white'
+              : 'bg-white border-slate-300 text-slate-700'
+          }`}
+        />
+
+        <select
+          value={editUsuarioPerfil}
+          onChange={(e) =>
+            setEditUsuarioPerfil(
+              e.target.value as 'administrador' | 'operador_completo' | 'operador_simples'
+            )
+          }
+          className={`w-full rounded-xl border px-3 py-2 text-sm font-bold outline-none ${
+            darkMode
+              ? 'bg-slate-800 border-slate-600 text-white'
+              : 'bg-white border-slate-300 text-slate-700'
+          }`}
+        >
+          <option value="operador_simples">Operador Simples</option>
+          <option value="operador_completo">Operador Completo</option>
+          <option value="administrador">Administrador</option>
+        </select>
+      </div>
+
+      {usuario.status === 'ativo' && (
+        <p className={`text-[11px] font-semibold ${textMuted}`}>
+          O email de usuários ativos não é alterado aqui. Para trocar o login, crie um novo acesso.
+        </p>
+      )}
+
+      <div className="flex justify-end gap-2">
+        <button
+          type="button"
+          onClick={cancelarEdicaoUsuario}
+          className={`rounded-lg border px-3 py-1.5 text-[11px] font-black uppercase transition cursor-pointer ${
+            darkMode
+              ? 'border-slate-600 text-slate-300 hover:bg-slate-700'
+              : 'border-slate-300 text-slate-600 hover:bg-slate-100'
+          }`}
+        >
+          Cancelar
+        </button>
+
+        <button
+          type="button"
+          onClick={salvarEdicaoUsuario}
+          className="rounded-lg border border-emerald-500/40 px-3 py-1.5 text-[11px] font-black uppercase text-emerald-600 transition hover:bg-emerald-500/10 cursor-pointer"
+        >
+          Salvar
+        </button>
+      </div>
+    </div>
+  ) : (
+    <div className="flex items-start justify-between gap-3">
+      <div>
+        <p className={`text-sm font-black ${textStrong}`}>
+          {usuario.nome || 'Sem nome'}
+        </p>
+
+        <p className={`text-xs font-semibold ${textMuted}`}>
+          {usuario.email}
+        </p>
+
+        <div className="mt-2 flex flex-wrap gap-2">
+          <span
+            className={`rounded-full px-2 py-1 text-[10px] font-black uppercase ${
+              usuario.status === 'ativo'
+                ? darkMode
+                  ? 'bg-emerald-500/20 text-emerald-300'
+                  : 'bg-emerald-100 text-emerald-700'
+                : usuario.status === 'pendente'
+                  ? darkMode
+                    ? 'bg-amber-500/20 text-amber-300'
+                    : 'bg-amber-100 text-amber-700'
+                  : darkMode
+                    ? 'bg-red-500/20 text-red-300'
+                    : 'bg-red-100 text-red-700'
+            }`}
+          >
+            {usuario.status}
+          </span>
+
+          <span
+            className={`rounded-full px-2 py-1 text-[10px] font-black uppercase ${
+              darkMode
+                ? 'bg-slate-700 text-slate-300'
+                : 'bg-slate-200 text-slate-600'
+            }`}
+          >
+            {usuario.perfil === 'gestor_master'
+              ? 'Gestor Master'
+              : usuario.perfil === 'administrador'
+                ? 'Administrador'
+                : usuario.perfil === 'operador_completo'
+                  ? 'Operador Completo'
+                  : 'Operador Simples'}
+          </span>
+        </div>
+      </div>
+
+      {usuario.perfil !== 'gestor_master' && (
+        <div className="flex flex-col gap-2">
+          <button
+            type="button"
+            onClick={() => iniciarEdicaoUsuario(usuario)}
+            className={`rounded-lg border px-3 py-1.5 text-[11px] font-black uppercase transition cursor-pointer ${
+              darkMode
+                ? 'border-slate-600 text-slate-300 hover:bg-slate-700'
+                : 'border-slate-300 text-slate-600 hover:bg-slate-100'
+            }`}
+          >
+            Editar
+          </button>
+
+          <button
+            type="button"
+            onClick={() => excluirAcessoUsuario(usuario.id)}
+            className={`rounded-lg border px-3 py-1.5 text-[11px] font-black uppercase transition cursor-pointer ${
+              darkMode
+                ? 'border-red-500/40 text-red-300 hover:bg-red-500/10'
+                : 'border-red-200 text-red-600 hover:bg-red-50'
+            }`}
+          >
+            Excluir
+          </button>
+        </div>
+      )}
+    </div>
+  )}
+</div>
+            ))
+          )}
+        </div>
+      </div>
+    </div>
+  </div>
+)}
+
       {calcAberta && (
         <Calculadora onClose={() => setCalcAberta(false)} corPrimaria={corPrimaria} darkMode={darkMode} />
       )}
@@ -2101,6 +2668,8 @@ if (isTelaMobile) {
   </svg>
   Cadastrar Despesas
 </button>
+
+
         
         <button
   onClick={() => setModalInstrucoes(true)}
@@ -2125,6 +2694,7 @@ if (isTelaMobile) {
       </div>
       
       {/* GRUPO DA DIREITA (Removido flex-wrap, botões menores) */}
+      
       <div className="flex items-center gap-2">
         <button onClick={() => setModalLogo(true)} className="whitespace-nowrap bg-slate-800 hover:bg-slate-700 px-3 py-1.5 rounded shadow border border-slate-700 transition-colors text-xs">Adicionar Logo</button>
         
@@ -2195,6 +2765,30 @@ if (isTelaMobile) {
     </div>
   </div>
 </Tooltip>
+
+{podeGerenciarUsuarios && (
+  <button
+    type="button"
+    onClick={() => setModalUsuarios(true)}
+    className="whitespace-nowrap bg-slate-800 hover:bg-slate-700 px-3 py-1.5 rounded shadow border border-slate-700 transition-colors font-bold flex items-center gap-1.5 text-xs text-white cursor-pointer"
+  >
+    <svg
+      className="w-3.5 h-3.5"
+      fill="none"
+      stroke="currentColor"
+      viewBox="0 0 24 24"
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth="2"
+        d="M17 20h5v-2a4 4 0 00-4-4h-1M9 20H4v-2a4 4 0 014-4h1m8-6a4 4 0 11-8 0 4 4 0 018 0zm6 2a3 3 0 11-6 0 3 3 0 016 0z"
+      />
+    </svg>
+
+    Usuário
+  </button>
+)}
 
               {/* BOTÃO DE BACKUP EXCEL */}
               <button 
@@ -2657,13 +3251,18 @@ if (isTelaMobile) {
           </button>
 
           <button
-            onClick={() =>
+            onClick={() => {
+  if (!podeExcluirLancamentos) {
+    alert('Você não tem permissão para excluir lançamentos.');
+    return;
+  }
+
   abrirConfirmacao({
     titulo: "Excluir lançamento",
     mensagem: `Deseja excluir este lançamento?\n\n${lanc.despesa} - ${formatarMoeda(Number(lanc.valor))}\n\nEssa ação não poderá ser desfeita.`,
     acao: () => apagarDespesa(lanc.id),
-  })
-}
+  });
+}}
             className="text-slate-400 hover:text-red-500 hover:bg-red-500/10 p-1.5 rounded transition-all cursor-pointer"
             title="Apagar"
           >
