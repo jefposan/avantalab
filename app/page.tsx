@@ -13,6 +13,7 @@ import Tooltip from './components/Tooltip';
 import ModalInstrucoes from './components/ModalInstrucoes';
 import ModalDespesasBase from './components/ModalDespesasBase';
 import ModalLogo from './components/ModalLogo';
+import ModalConfirmacao from "./components/ModalConfirmacao";
 import {
   formatarMoeda,
   formatarDescricao,
@@ -57,6 +58,12 @@ const [cadastroNome, setCadastroNome] = useState('');
 const [cadastroEmail, setCadastroEmail] = useState('');
 const [cadastroSenha, setCadastroSenha] = useState('');
 const [cadastroConfirmarSenha, setCadastroConfirmarSenha] = useState('');
+
+const [modalConfirmacaoAberto, setModalConfirmacaoAberto] = useState(false);
+const [tituloConfirmacao, setTituloConfirmacao] = useState("");
+const [mensagemConfirmacao, setMensagemConfirmacao] = useState("");
+const [acaoConfirmacao, setAcaoConfirmacao] = useState<(() => Promise<void> | void) | null>(null);
+const [confirmacaoCarregando, setConfirmacaoCarregando] = useState(false);
 
 const [authErro, setAuthErro] = useState('');
 const [authMensagem, setAuthMensagem] = useState('');
@@ -552,6 +559,50 @@ const apagarDespesa = async (id: string) => {
     alert("Erro ao apagar lançamento no banco.");
   }
 };
+
+function abrirConfirmacao({
+  titulo,
+  mensagem,
+  acao,
+}: {
+  titulo: string;
+  mensagem: string;
+  acao: () => Promise<void> | void;
+}) {
+  setTituloConfirmacao(titulo);
+  setMensagemConfirmacao(mensagem);
+  setAcaoConfirmacao(() => acao);
+  setModalConfirmacaoAberto(true);
+}
+
+function fecharConfirmacao() {
+  if (confirmacaoCarregando) return;
+
+  setModalConfirmacaoAberto(false);
+  setTituloConfirmacao("");
+  setMensagemConfirmacao("");
+  setAcaoConfirmacao(null);
+}
+
+async function confirmarAcao() {
+  if (!acaoConfirmacao) return;
+
+  try {
+    setConfirmacaoCarregando(true);
+
+    await acaoConfirmacao();
+
+    setModalConfirmacaoAberto(false);
+    setTituloConfirmacao("");
+    setMensagemConfirmacao("");
+    setAcaoConfirmacao(null);
+  } catch (error) {
+    console.error("Erro ao confirmar ação:", error);
+    alert("Não foi possível concluir a ação.");
+  } finally {
+    setConfirmacaoCarregando(false);
+  }
+}
 
 const iniciarEdicaoLancamento = (lanc: any) => {
   setLancamentoEditandoId(lanc.id);
@@ -1772,6 +1823,15 @@ if (isTelaMobile) {
   handleImageUpload={handleImageUpload}
 />
 
+<ModalConfirmacao
+  aberto={modalConfirmacaoAberto}
+  titulo={tituloConfirmacao}
+  mensagem={mensagemConfirmacao}
+  carregando={confirmacaoCarregando}
+  aoCancelar={fecharConfirmacao}
+  aoConfirmar={confirmarAcao}
+/>
+
       {calcAberta && (
         <Calculadora onClose={() => setCalcAberta(false)} corPrimaria={corPrimaria} darkMode={darkMode} />
       )}
@@ -2505,7 +2565,13 @@ if (isTelaMobile) {
           </button>
 
           <button
-            onClick={() => apagarDespesa(lanc.id)}
+            onClick={() =>
+  abrirConfirmacao({
+    titulo: "Excluir lançamento",
+    mensagem: `Deseja excluir este lançamento?\n\n${lanc.despesa} - ${formatarMoeda(Number(lanc.valor))}\n\nEssa ação não poderá ser desfeita.`,
+    acao: () => apagarDespesa(lanc.id),
+  })
+}
             className="text-slate-400 hover:text-red-500 hover:bg-red-500/10 p-1.5 rounded transition-all cursor-pointer"
             title="Apagar"
           >
