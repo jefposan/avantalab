@@ -572,3 +572,16 @@ export async function criarEmpresaInicial(nomeEmpresa: string) {
     data,
   };
 }
+
+export async function buscarEmailPorLogin(login: string) {
+  const { data, error } = await supabase.rpc('buscar_email_por_login_rpc', {
+    p_login: login.trim(),
+  });
+
+  if (error) {
+    console.error('Erro ao buscar email por login:', error);
+    return null;
+  }
+
+  return data || null;
+}

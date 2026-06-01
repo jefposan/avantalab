@@ -40,6 +40,7 @@ import {
   bloquearUsuarioEmpresa,
   excluirUsuarioEmpresa,
   criarEmpresaInicial,
+  buscarEmailPorLogin,
 } from './lib/database';
 
 import { supabase } from './lib/supabase';
@@ -68,6 +69,9 @@ const [cadastroConfirmarSenha, setCadastroConfirmarSenha] = useState('');
 const [modalConfirmacaoAberto, setModalConfirmacaoAberto] = useState(false);
 const [tituloConfirmacao, setTituloConfirmacao] = useState("");
 const [mensagemConfirmacao, setMensagemConfirmacao] = useState("");
+const [modalAvisoAberto, setModalAvisoAberto] = useState(false);
+const [tituloAviso, setTituloAviso] = useState("");
+const [mensagemAviso, setMensagemAviso] = useState("");
 const [acaoConfirmacao, setAcaoConfirmacao] = useState<(() => Promise<void> | void) | null>(null);
 const [confirmacaoCarregando, setConfirmacaoCarregando] = useState(false);
 
@@ -659,6 +663,13 @@ const excluirAcessoUsuario = async (acessoId: string) => {
 };
 
 const adicionarDespesaBase = async () => {
+  if (!podeAcessarAjustes) {
+  abrirAviso(
+    'Acesso não permitido',
+    'Você não tem permissão para cadastrar ou alterar despesas base.'
+  );
+  return;
+}
   const nomeLimpo = novaBaseNome.trim();
 
   if (!nomeLimpo || !novaBaseCat) {
@@ -704,6 +715,13 @@ const adicionarDespesaBase = async () => {
 };
 
 const apagarDespesaBase = async (nome: string) => {
+  if (!podeAcessarAjustes) {
+  abrirAviso(
+    'Acesso não permitido',
+    'Você não tem permissão para excluir despesas base.'
+  );
+  return;
+}
   if (!empresaId) {
     alert('Empresa não carregada. Atualize a página e tente novamente.');
     return;
@@ -722,7 +740,10 @@ const apagarDespesaBase = async (nome: string) => {
 const adicionarDespesa = async () => {
 
   if (!podeInserirLancamentos) {
-  alert('Você não tem permissão para inserir lançamentos.');
+  abrirAviso(
+  'Acesso não permitido',
+  'Você não tem permissão para inserir lançamentos.'
+);
   return;
 }
 
@@ -796,6 +817,12 @@ const apagarDespesa = async (id: string) => {
   }
 };
 
+function abrirAviso(titulo: string, mensagem: string) {
+  setTituloAviso(titulo);
+  setMensagemAviso(mensagem);
+  setModalAvisoAberto(true);
+}
+
 function abrirConfirmacao({
   titulo,
   mensagem,
@@ -843,7 +870,10 @@ async function confirmarAcao() {
 const iniciarEdicaoLancamento = (lanc: any) => {
 
   if (!podeEditarLancamentos) {
-  alert('Você não tem permissão para editar lançamentos.');
+  abrirAviso(
+  'Acesso não permitido',
+  'Você não tem permissão para editar lançamentos.'
+);
   return;
 }
   setLancamentoEditandoId(lanc.id);
@@ -1321,24 +1351,38 @@ const handleLogin = async () => {
   setAuthMensagem('');
   setAuthLoading(true);
 
-  const emailLimpo = loginEmail.trim().toLowerCase();
+  const loginDigitado = loginEmail.trim().toLowerCase();
 
-  if (!emailLimpo) {
-    setAuthErro('Informe seu email.');
+if (!loginDigitado) {
+  setAuthErro('Informe seu email ou login.');
+  setAuthLoading(false);
+  return;
+}
+
+if (!loginSenha) {
+  setAuthErro('Informe sua senha.');
+  setAuthLoading(false);
+  return;
+}
+
+let emailParaLogin = loginDigitado;
+
+if (!loginDigitado.includes('@')) {
+  const emailEncontrado = await buscarEmailPorLogin(loginDigitado);
+
+  if (!emailEncontrado) {
+    setAuthErro('Login não encontrado.');
     setAuthLoading(false);
     return;
   }
 
-  if (!loginSenha) {
-    setAuthErro('Informe sua senha.');
-    setAuthLoading(false);
-    return;
-  }
+  emailParaLogin = emailEncontrado;
+}
 
-  const { error } = await supabase.auth.signInWithPassword({
-    email: emailLimpo,
-    password: loginSenha,
-  });
+const { error } = await supabase.auth.signInWithPassword({
+  email: emailParaLogin,
+  password: loginSenha,
+});
 
   if (error) {
   console.error('Erro login:', error);
@@ -1841,12 +1885,12 @@ if (isTelaMobile) {
 >
   <div>
     <label className="mb-1 block text-sm font-semibold text-slate-700">
-      Email
+      Email ou login
     </label>
 
     <input
-      type="email"
-      placeholder="seuemail@exemplo.com"
+      type="text"
+      placeholder="seuemail@exemplo.com ou seu login"
       value={loginEmail}
       onChange={(e) => setLoginEmail(e.target.value)}
       className="w-full rounded-xl border border-slate-300 bg-white/90 px-4 py-3 text-slate-800 outline-none transition focus:border-sky-600 focus:ring-2 focus:ring-sky-600/20"
@@ -2136,6 +2180,57 @@ if (isTelaMobile) {
   aoCancelar={fecharConfirmacao}
   aoConfirmar={confirmarAcao}
 />
+
+{modalAvisoAberto && (
+  <div className="fixed inset-0 z-[1000] flex items-center justify-center bg-black/50 px-4">
+    <div
+      className={`w-full max-w-md rounded-2xl border p-6 shadow-2xl ${
+        darkMode
+          ? 'bg-slate-800 border-slate-700'
+          : 'bg-white border-slate-200'
+      }`}
+    >
+      <div className="mb-4 flex items-center gap-3">
+        <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-amber-100 text-amber-700">
+          <svg
+            className="h-6 w-6"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth="2.4"
+              d="M12 9v4m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"
+            />
+          </svg>
+        </div>
+
+        <div>
+          <h2 className={`text-lg font-black ${textStrong}`}>
+            {tituloAviso}
+          </h2>
+
+          <p className={`mt-1 text-sm ${textMuted}`}>
+            {mensagemAviso}
+          </p>
+        </div>
+      </div>
+
+      <div className="mt-5 flex justify-end">
+        <button
+          type="button"
+          onClick={() => setModalAvisoAberto(false)}
+          className="rounded-xl px-5 py-2.5 text-sm font-black uppercase tracking-wide shadow-md transition hover:brightness-110 active:scale-[0.98] cursor-pointer"
+          style={estiloTemaPrimario}
+        >
+          Entendi
+        </button>
+      </div>
+    </div>
+  </div>
+)}
 
 {modalUsuarios && (
   <div className="fixed inset-0 z-[999] flex items-center justify-center bg-black/50 px-4">
@@ -2696,15 +2791,37 @@ if (isTelaMobile) {
       {/* GRUPO DA DIREITA (Removido flex-wrap, botões menores) */}
       
       <div className="flex items-center gap-2">
-        <button onClick={() => setModalLogo(true)} className="whitespace-nowrap bg-slate-800 hover:bg-slate-700 px-3 py-1.5 rounded shadow border border-slate-700 transition-colors text-xs">Adicionar Logo</button>
+        <button onClick={() => {
+  if (!podeAcessarAjustes) {
+    abrirAviso(
+      'Acesso não permitido',
+      'Você não tem permissão para alterar a logomarca da empresa.'
+    );
+    return;
+  }
+
+  setModalLogo(true);
+}} className="whitespace-nowrap bg-slate-800 hover:bg-slate-700 px-3 py-1.5 rounded shadow border border-slate-700 transition-colors text-xs">Adicionar Logo</button>
         
         <div className="whitespace-nowrap relative overflow-hidden bg-slate-800 hover:bg-slate-700 px-3 py-1.5 rounded shadow border border-slate-700 transition-colors text-xs flex items-center gap-1.5">
           <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: corPrimaria }}></span> Cor Tema
           <input
   type="color"
   value={corPrimaria}
-  onChange={(e) => setCorPrimaria(e.target.value)}
-  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+  onChange={(e) => {
+    if (!podeAcessarAjustes) {
+      abrirAviso(
+        'Acesso não permitido',
+        'Você não tem permissão para alterar a cor tema da empresa.'
+      );
+      return;
+    }
+
+    setCorPrimaria(e.target.value);
+  }}
+  className={`absolute inset-0 w-full h-full opacity-0 ${
+    podeAcessarAjustes ? 'cursor-pointer' : 'cursor-not-allowed'
+  }`}
 />
         </div>
         
@@ -2792,7 +2909,17 @@ if (isTelaMobile) {
 
               {/* BOTÃO DE BACKUP EXCEL */}
               <button 
-                onClick={gerarBackupExcel} 
+                onClick={() => {
+  if (!podeAcessarAjustes) {
+    abrirAviso(
+      'Acesso não permitido',
+      'Você não tem permissão para gerar backup dos dados da empresa.'
+    );
+    return;
+  }
+
+  gerarBackupExcel();
+}} 
                 className="whitespace-nowrap bg-emerald-600 hover:bg-emerald-500 px-3 py-1.5 rounded shadow border border-emerald-700 transition-colors font-bold flex items-center gap-1.5 text-xs text-white"
               >
                 <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
@@ -3253,7 +3380,10 @@ if (isTelaMobile) {
           <button
             onClick={() => {
   if (!podeExcluirLancamentos) {
-    alert('Você não tem permissão para excluir lançamentos.');
+    abrirAviso(
+  'Acesso não permitido',
+  'Você não tem permissão para excluir lançamentos.'
+);
     return;
   }
 
