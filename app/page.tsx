@@ -250,6 +250,7 @@ if (paramsConfirmacao.get('confirmado') === '1') {
 
   setEmailConfirmado(true);
   setAcessoLiberado(false);
+  setAcessoNaoConfigurado(false);
   setModoRedefinirSenha(false);
   setModoAuth('login');
   setMounted(true);
@@ -1762,12 +1763,16 @@ const alturaFinalTabelaLancamentos = Math.min(
           <button
             type="button"
             onClick={() => {
-              setEmailConfirmado(false);
-              setModoAuth('login');
-              setAcessoLiberado(false);
-              setAuthErro('');
-              setAuthMensagem('');
-            }}
+  setEmailConfirmado(false);
+  setAcessoNaoConfigurado(false);
+  setModoRedefinirSenha(false);
+  setModoAuth('login');
+  setAcessoLiberado(false);
+  setAuthErro('');
+  setAuthMensagem('');
+  setLoginEmail('');
+  setLoginSenha('');
+}}
             className="mt-6 w-full rounded-xl bg-slate-900 px-4 py-3 font-bold text-white shadow-lg transition hover:bg-slate-800"
           >
             Ir para o login
