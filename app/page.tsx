@@ -476,6 +476,33 @@ const lancamentosFiltradosDoMes = useMemo(() => {
   const despesasTotais = lancamentos.reduce((a, b) => a + b.valor, 0);
   const lucroTotalAnual = receitasTotais - despesasTotais;
 
+  const salvarFaturamentoMes = async (mes: string, valor: number) => {
+  if (!empresaId) {
+    abrirAviso('Erro', 'Empresa não carregada. Tente atualizar a página.');
+    return;
+  }
+
+  const salvo = await salvarFaturamentoBanco({
+    empresaId,
+    ano: Number(anoSelecionado),
+    mes,
+    valor,
+  });
+
+  if (!salvo) {
+    abrirAviso(
+      'Erro ao salvar faturamento',
+      'Não foi possível salvar o faturamento no banco.'
+    );
+    return;
+  }
+
+  setFaturamentos((prev) => ({
+    ...prev,
+    [mes]: valor,
+  }));
+};
+
   const salvarFaturamento = async () => {
   if (!empresaId) {
     alert("Empresa não carregada. Tente atualizar a página.");
@@ -3818,9 +3845,16 @@ if (isTelaMobile) {
         </>
       ) : abaAtiva === 'Balanço Geral' ? (
         <BalancoGeral 
-          meses={meses} lancamentos={lancamentos} faturamentos={faturamentos} setFaturamentos={setFaturamentos}
-          corPrimaria={corPrimaria} darkMode={darkMode} formatarMoeda={formatarMoeda} 
-        />
+  meses={meses}
+  lancamentos={lancamentos}
+  faturamentos={faturamentos}
+  setFaturamentos={setFaturamentos}
+  corPrimaria={corPrimaria}
+  darkMode={darkMode}
+  formatarMoeda={formatarMoeda}
+  anoSelecionado={anoSelecionado}
+  salvarFaturamentoMes={salvarFaturamentoMes}
+/>
       ) : abaAtiva === 'Gráficos' ? (
         <Graficos
           meses={meses} lancamentos={lancamentos} faturamentos={faturamentos} 

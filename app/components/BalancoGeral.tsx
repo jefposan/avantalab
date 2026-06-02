@@ -8,10 +8,20 @@ interface BalancoGeralProps {
   corPrimaria: string;
   darkMode: boolean;
   formatarMoeda: (valor: number) => string;
+  anoSelecionado: number;
+  salvarFaturamentoMes: (mes: string, valor: number) => Promise<void>;
 }
 
 export default function BalancoGeral({
-  meses, lancamentos, faturamentos, setFaturamentos, corPrimaria, darkMode, formatarMoeda
+  meses,
+  lancamentos,
+  faturamentos,
+  setFaturamentos,
+  corPrimaria,
+  darkMode,
+  formatarMoeda,
+  anoSelecionado,
+  salvarFaturamentoMes,
 }: BalancoGeralProps) {
 
   const getDespesaMes = (mes: string) => lancamentos.filter(l => l.mes === mes).reduce((acc, l) => acc + l.valor, 0);
@@ -54,6 +64,11 @@ export default function BalancoGeral({
     }
   };
 
+  const handleFaturamentoBlur = async (mes: string) => {
+  const valor = faturamentos[mes] || 0;
+  await salvarFaturamentoMes(mes, valor);
+};
+
   const formatarInputFat = (mes: string) => {
     const valor = faturamentos[mes];
     return valor ? valor.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '';
@@ -86,10 +101,21 @@ export default function BalancoGeral({
       {/* CABEÇALHO E BOTÃO PDF */}
       <div className="flex justify-between items-end mb-6 print-ocultar">
         <div>
-          <h2 className={`text-2xl font-black ${textStrong} flex items-center`}>
-            <span className="w-3 h-8 rounded-full mr-4 shadow-sm" style={{ backgroundColor: corPrimaria }}></span>
-            BALANÇO GERAL ANUAL
-          </h2>
+          <h2 className={`text-2xl font-black ${textStrong} flex items-baseline`}>
+  <span
+    className="w-3 h-8 rounded-full mr-4 shadow-sm"
+    style={{ backgroundColor: corPrimaria }}
+  ></span>
+
+  <span>BALANÇO GERAL ANUAL</span>
+
+  <span
+    className="ml-3 text-4xl font-black leading-none"
+    style={{ color: corPrimaria }}
+  >
+    {anoSelecionado}
+  </span>
+</h2>
         </div>
         <button onClick={() => window.print()} className="bg-slate-800 hover:bg-slate-700 text-white font-bold py-2.5 px-5 rounded-lg shadow-md transition-all flex items-center gap-2 border border-slate-700 text-sm uppercase tracking-wider cursor-pointer">
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
@@ -173,7 +199,14 @@ export default function BalancoGeral({
                     <div key={`fat-${mes}`} className={`flex h-9 items-center bg-[#00b050]/5 dark:bg-[#00b050]/10 ${idx !== 2 ? 'border-b border-[#00b050]/20' : ''}`}>
                       <div className="w-24 border-r border-[#00b050]/20 flex items-center justify-center font-bold px-1 text-[#00b050] bg-transparent">{mes}</div>
                       <div className="flex-1 flex items-center px-2">
-                        <input type="text" value={formatarInputFat(mes)} onChange={(e) => handleFaturamentoChange(mes, e.target.value)} className="w-full bg-transparent outline-none font-bold text-right text-[#00b050] dark:text-[#2dd4bf]" placeholder="0,00" />
+                        <input
+  type="text"
+  value={formatarInputFat(mes)}
+  onChange={(e) => handleFaturamentoChange(mes, e.target.value)}
+  onBlur={() => handleFaturamentoBlur(mes)}
+  className="w-full bg-transparent outline-none font-bold text-right text-[#00b050] dark:text-[#2dd4bf]"
+  placeholder="0,00"
+/>
                       </div>
                     </div>
                   ))}
