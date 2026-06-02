@@ -1339,6 +1339,43 @@ const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
   const textMuted = darkMode ? 'text-slate-400' : 'text-slate-500';
   const textStrong = darkMode ? 'text-white' : 'text-slate-800';
 
+  const tratarErroAuth = (mensagem: string) => {
+  const texto = mensagem.toLowerCase();
+
+  if (
+    texto.includes('email rate limit') ||
+    texto.includes('rate limit') ||
+    texto.includes('too many requests') ||
+    texto.includes('for security purposes') ||
+    texto.includes('only request this after')
+  ) {
+    return {
+      tipo: 'limite_email',
+      mensagem:
+        'Por segurança, existe um limite temporário para envio de emails de confirmação e recuperação de senha. Aguarde cerca de 1 hora e tente novamente.',
+    };
+  }
+
+  if (mensagem === 'Email not confirmed') {
+    return {
+      tipo: 'erro',
+      mensagem: 'Confirme o email recebido para liberar o acesso.',
+    };
+  }
+
+  if (mensagem === 'Invalid login credentials') {
+    return {
+      tipo: 'erro',
+      mensagem: 'Email, login ou senha incorretos. Verifique os dados e tente novamente.',
+    };
+  }
+
+  return {
+    tipo: 'erro',
+    mensagem,
+  };
+};
+
   const handleCadastroTeste = async () => {
   setAuthErro('');
   setAuthMensagem('');
@@ -1403,10 +1440,18 @@ const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
   setAuthLoading(false);
 
   if (error) {
-    console.error('Erro cadastro:', error);
-    setAuthErro(`Erro Supabase: ${error.message}`);
-    return;
+  console.error('Erro cadastro:', error);
+
+  const erroTratado = tratarErroAuth(error.message);
+
+  if (erroTratado.tipo === 'limite_email') {
+    abrirAviso('Limite temporário de emails', erroTratado.mensagem);
+  } else {
+    setAuthErro(erroTratado.mensagem);
   }
+
+  return;
+}
 
   setAuthMensagem(
   'Cadastro criado com sucesso. Enviamos um email de confirmação para liberar o acesso. Verifique sua caixa de entrada ou spam.'
@@ -1461,12 +1506,12 @@ const { error } = await supabase.auth.signInWithPassword({
   if (error) {
   console.error('Erro login:', error);
 
-  if (error.message === 'Email not confirmed') {
-    setAuthErro('Confirme o email recebido para liberar o acesso.');
-  } else if (error.message === 'Invalid login credentials') {
-    setAuthErro('Email ou senha incorretos. Verifique os dados e tente novamente.');
+  const erroTratado = tratarErroAuth(error.message);
+
+  if (erroTratado.tipo === 'limite_email') {
+    abrirAviso('Limite temporário de emails', erroTratado.mensagem);
   } else {
-    setAuthErro(`Erro ao entrar: ${error.message}`);
+    setAuthErro(erroTratado.mensagem);
   }
 
   setAuthLoading(false);
@@ -1550,10 +1595,18 @@ const handleRecuperarSenha = async () => {
   setAuthLoading(false);
 
   if (error) {
-    console.error('Erro recuperação de senha:', error);
-    setAuthErro(`Erro Supabase: ${error.message}`);
-    return;
+  console.error('Erro recuperação de senha:', error);
+
+  const erroTratado = tratarErroAuth(error.message);
+
+  if (erroTratado.tipo === 'limite_email') {
+    abrirAviso('Limite temporário de emails', erroTratado.mensagem);
+  } else {
+    setAuthErro(erroTratado.mensagem);
   }
+
+  return;
+}
 
   setAuthMensagem('Enviamos um email para você redefinir sua senha.');
 };
@@ -1844,6 +1897,49 @@ if (isTelaMobile) {
   if (!acessoLiberado) {
   return (
     <main className="relative min-h-screen overflow-hidden font-sans">
+      {modalAvisoAberto && (
+  <div className="fixed inset-0 z-[3000] flex items-center justify-center bg-black/50 px-4">
+    <div className="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-6 shadow-2xl">
+      <div className="mb-4 flex items-center gap-3">
+        <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-amber-100 text-amber-700">
+          <svg
+            className="h-6 w-6"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth="2.4"
+              d="M12 9v4m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"
+            />
+          </svg>
+        </div>
+
+        <div>
+          <h2 className="text-lg font-black text-slate-900">
+            {tituloAviso}
+          </h2>
+
+          <p className="mt-1 text-sm leading-relaxed text-slate-600">
+            {mensagemAviso}
+          </p>
+        </div>
+      </div>
+
+      <div className="mt-5 flex justify-end">
+        <button
+          type="button"
+          onClick={() => setModalAvisoAberto(false)}
+          className="rounded-xl bg-slate-900 px-5 py-2.5 text-sm font-black uppercase tracking-wide text-white shadow-md transition hover:bg-slate-800 active:scale-[0.98] cursor-pointer"
+        >
+          Entendi
+        </button>
+      </div>
+    </div>
+  </div>
+)}
       <div
         className="absolute inset-0 bg-cover bg-center"
         style={{ backgroundImage: "url('/images/bg-avantalab.png')" }}
