@@ -56,7 +56,7 @@ export default function ModalLogo({
   };
 
   return (
-    <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
+    <div className="fixed inset-0 bg-black/60 z-[2000] flex items-center justify-center p-4">
       <div
         className={`${bgCard} rounded-2xl shadow-2xl max-w-md w-full border-2 p-5`}
         style={{ borderColor: corPrimaria }}

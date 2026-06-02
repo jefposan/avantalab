@@ -68,7 +68,7 @@ export default function ModalDespesasBase({
   };
 
   return (
-    <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
+    <div className="fixed inset-0 bg-black/60 z-[2000] flex items-center justify-center p-4">
       <div
         className={`${bgCard} rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] flex flex-col border-2 overflow-hidden`}
         style={{ borderColor: corPrimaria }}
@@ -186,34 +186,36 @@ export default function ModalDespesasBase({
             </div>
           </div>
 
-          <div className="space-y-2 pr-2">
-            {despesasCadastradas.map((d) => (
-              <div
-                key={d.nome}
-                className={`flex justify-between items-center p-3 rounded-lg border border-slate-200/10 ${
-                  darkMode ? 'bg-slate-700' : 'bg-white shadow-sm'
-                }`}
-              >
-                <div>
-                  <span className={`font-bold ${textStrong}`}>
-                    {d.nome}
-                  </span>
+          <div className="space-y-1 pr-2">
+  {despesasCadastradas.map((d) => (
+    <div
+      key={d.nome}
+      className={`flex items-center justify-between gap-3 rounded-md border border-slate-200/10 px-3 py-1 ${
+        darkMode ? 'bg-slate-700' : 'bg-white shadow-sm'
+      }`}
+    >
+      <div className="flex min-w-0 flex-1 items-center gap-2">
+        <span className={`truncate text-xs font-bold leading-tight ${textStrong}`}>
+          {d.nome}
+        </span>
 
-                  <span className={`text-xs ml-2 px-2 py-1 rounded-md bg-slate-500/20 ${textMuted}`}>
-                    {d.categoria}
-                  </span>
-                </div>
+        <span
+          className={`shrink-0 rounded px-1.5 py-0.5 text-[10px] font-semibold leading-tight bg-slate-500/20 ${textMuted}`}
+        >
+          {d.categoria}
+        </span>
+      </div>
 
-                <button
-                  type="button"
-                  onClick={() => apagarDespesaBase(d.nome)}
-                  className="text-red-500 hover:text-red-700 hover:bg-red-500/10 rounded-lg font-bold px-3 py-1 text-lg transition-colors cursor-pointer"
-                >
-                  ×
-                </button>
-              </div>
-            ))}
-          </div>
+      <button
+        type="button"
+        onClick={() => apagarDespesaBase(d.nome)}
+        className="shrink-0 rounded-md px-2 py-0.5 text-sm font-black leading-none text-red-500 transition-colors hover:bg-red-500/10 hover:text-red-700 cursor-pointer"
+      >
+        ×
+      </button>
+    </div>
+  ))}
+</div>
         </div>
       </div>
 

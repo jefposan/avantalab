@@ -22,7 +22,7 @@ export default function ModalTermos({
   if (!aberto) return null;
 
   return (
-    <div className="fixed inset-0 z-[80] flex items-center justify-center bg-black/60 p-4">
+    <div className="fixed inset-0 z-[2000] flex items-center justify-center bg-black/60 p-4">
       <div
         className={`w-full max-w-3xl max-h-[85vh] rounded-2xl shadow-2xl border flex flex-col overflow-hidden ${
           darkMode

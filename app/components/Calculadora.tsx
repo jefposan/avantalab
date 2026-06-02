@@ -30,7 +30,7 @@ export default function Calculadora({ onClose, corPrimaria, darkMode }: Calculad
 
   return (
     <div 
-      className={`fixed shadow-2xl rounded-lg border flex flex-col z-50 overflow-hidden ${darkMode ? 'bg-slate-800 border-slate-600' : 'bg-white border-slate-200'}`}
+      className={`fixed shadow-2xl rounded-lg border flex flex-col z-[5000] overflow-hidden ${darkMode ? 'bg-slate-800 border-slate-600' : 'bg-white border-slate-200'}`}
       style={{ left: calcPos.x, top: calcPos.y, width: 220 }}
     >
       <div onPointerDown={startDrag} onPointerMove={doDrag} onPointerUp={stopDrag} className="p-2 cursor-grab active:cursor-grabbing flex justify-between items-center text-white select-none" style={{ backgroundColor: corPrimaria }}>

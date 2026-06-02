@@ -414,7 +414,7 @@ useEffect(() => {
     if (ajustesAberto) {
       const tempo = setTimeout(() => {
         setAjustesAberto(false);
-      }, 10000); // <-- 10000 milissegundos = 10 segundos. Altere este valor como preferir!
+      }, 30000); // <-- 10000 milissegundos = 10 segundos. Altere este valor como preferir!
 
       // Limpa o cronômetro se o utilizador fechar o menu manualmente antes do tempo
       return () => clearTimeout(tempo);
