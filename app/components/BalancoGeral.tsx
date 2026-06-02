@@ -8,7 +8,7 @@ interface BalancoGeralProps {
   corPrimaria: string;
   darkMode: boolean;
   formatarMoeda: (valor: number) => string;
-  anoSelecionado: number;
+  anoSelecionado: string;
   salvarFaturamentoMes: (mes: string, valor: number) => Promise<void>;
 }
 
