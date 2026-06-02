@@ -624,3 +624,50 @@ export async function buscarEmailPorLogin(login: string) {
 
   return data || null;
 }
+export async function redefinirSenhaUsuarioEmpresa({
+  acessoId,
+  novaSenha,
+}: {
+  acessoId: string;
+  novaSenha: string;
+}) {
+  const { data: sessao } = await supabase.auth.getSession();
+
+  const token = sessao.session?.access_token;
+
+  if (!token) {
+    return {
+      erro: true,
+      mensagem: 'Sessão não encontrada. Faça login novamente.',
+      data: null,
+    };
+  }
+
+  const resposta = await fetch('/api/redefinir-senha-usuario', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({
+      acessoId,
+      novaSenha,
+    }),
+  });
+
+  const resultado = await resposta.json();
+
+  if (!resposta.ok || resultado.erro) {
+    return {
+      erro: true,
+      mensagem: resultado.mensagem || 'Não foi possível redefinir a senha.',
+      data: null,
+    };
+  }
+
+  return {
+    erro: false,
+    mensagem: resultado.mensagem || 'Senha redefinida com sucesso.',
+    data: true,
+  };
+}

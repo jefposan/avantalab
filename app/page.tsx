@@ -40,6 +40,7 @@ import {
   bloquearUsuarioEmpresa,
   excluirUsuarioEmpresa,
   criarEmpresaInicial,
+  redefinirSenhaUsuarioEmpresa,
   buscarEmailPorLogin,
 } from './lib/database';
 
@@ -105,6 +106,8 @@ const [usuarioPerfil, setUsuarioPerfil] = useState<
 const [usuarioEditandoId, setUsuarioEditandoId] = useState<string | null>(null);
 const [editUsuarioNome, setEditUsuarioNome] = useState('');
 const [editUsuarioEmail, setEditUsuarioEmail] = useState('');
+const [editUsuarioNovaSenha, setEditUsuarioNovaSenha] = useState('');
+const [mostrarEditUsuarioNovaSenha, setMostrarEditUsuarioNovaSenha] = useState(false);
 const [editUsuarioPerfil, setEditUsuarioPerfil] = useState<
   'administrador' | 'operador_completo' | 'operador_simples'
 >('operador_simples');
@@ -614,7 +617,10 @@ const bloquearAcessoUsuario = async (acessoId: string) => {
 
 const iniciarEdicaoUsuario = (usuario: any) => {
   if (usuario.perfil === 'gestor_master') {
-    alert('O gestor master não pode ser editado por esta tela.');
+    abrirAviso(
+  'Acesso não permitido',
+  'O gestor master não pode ser editado por esta tela.'
+);
     return;
   }
 
@@ -631,6 +637,8 @@ const cancelarEdicaoUsuario = () => {
   setEditUsuarioNome('');
   setEditUsuarioEmail('');
   setEditUsuarioPerfil('operador_simples');
+  setEditUsuarioNovaSenha('');
+  setMostrarEditUsuarioNovaSenha(false);
 };
 
 const salvarEdicaoUsuario = async () => {
@@ -639,13 +647,19 @@ const salvarEdicaoUsuario = async () => {
   const nomeLimpo = editUsuarioNome.trim();
   const emailLimpo = editUsuarioEmail.trim().toLowerCase();
 
-  if (!nomeLimpo || !emailLimpo) {
-    alert('Informe nome e email do usuário.');
+  if (!nomeLimpo) {
+    abrirAviso(
+      'Campo obrigatório',
+      'Informe o nome do usuário.'
+    );
     return;
   }
 
-  if (!emailLimpo.includes('@') || !emailLimpo.includes('.')) {
-    alert('Informe um email válido.');
+  if (!emailLimpo) {
+    abrirAviso(
+      'Campo obrigatório',
+      'Não foi possível identificar o login/email deste usuário.'
+    );
     return;
   }
 
@@ -657,12 +671,51 @@ const salvarEdicaoUsuario = async () => {
   });
 
   if (resultado.erro) {
-    alert(`Erro ao atualizar usuário: ${resultado.mensagem}`);
+    abrirAviso('Erro ao atualizar usuário', resultado.mensagem);
     return;
   }
 
   cancelarEdicaoUsuario();
   await carregarUsuariosEmpresa();
+};
+
+const redefinirSenhaUsuario = async () => {
+  if (!usuarioEditandoId) return;
+
+  const senhaLimpa = editUsuarioNovaSenha.trim();
+
+  if (!senhaLimpa) {
+    abrirAviso(
+      'Senha obrigatória',
+      'Informe a nova senha do usuário.'
+    );
+    return;
+  }
+
+  if (senhaLimpa.length < 8) {
+    abrirAviso(
+      'Senha muito curta',
+      'A nova senha deve ter pelo menos 8 caracteres.'
+    );
+    return;
+  }
+
+  const resultado = await redefinirSenhaUsuarioEmpresa({
+    acessoId: usuarioEditandoId,
+    novaSenha: senhaLimpa,
+  });
+
+  if (resultado.erro) {
+    abrirAviso('Erro ao redefinir senha', resultado.mensagem);
+    return;
+  }
+
+  setEditUsuarioNovaSenha('');
+
+  abrirAviso(
+    'Senha redefinida',
+    'A senha do usuário foi atualizada com sucesso.'
+  );
 };
 
 const excluirAcessoUsuario = async (acessoId: string) => {
@@ -674,7 +727,7 @@ const excluirAcessoUsuario = async (acessoId: string) => {
       const resultado = await excluirUsuarioEmpresa(acessoId);
 
       if (resultado.erro) {
-        alert(`Erro ao excluir usuário: ${resultado.mensagem}`);
+        abrirAviso('Erro ao excluir usuário', resultado.mensagem);
         return;
       }
 
@@ -2441,6 +2494,42 @@ if (isTelaMobile) {
         </p>
       )}
 
+      <div className="grid grid-cols-1 gap-3 md:grid-cols-[1fr_auto]">
+  <div className="relative">
+    <input
+      type={mostrarEditUsuarioNovaSenha ? 'text' : 'password'}
+      value={editUsuarioNovaSenha}
+      onChange={(e) => setEditUsuarioNovaSenha(e.target.value)}
+      placeholder="Nova senha"
+      className={`w-full rounded-xl border px-3 py-2 pr-16 text-sm font-semibold outline-none ${
+        darkMode
+          ? 'bg-slate-800 border-slate-600 text-white placeholder:text-slate-400'
+          : 'bg-white border-slate-300 text-slate-700 placeholder:text-slate-400'
+      }`}
+    />
+
+    <button
+      type="button"
+      onClick={() => setMostrarEditUsuarioNovaSenha(!mostrarEditUsuarioNovaSenha)}
+      className={`absolute right-3 top-1/2 -translate-y-1/2 text-[11px] font-black transition cursor-pointer ${
+        darkMode
+          ? 'text-slate-300 hover:text-white'
+          : 'text-slate-500 hover:text-slate-800'
+      }`}
+    >
+      {mostrarEditUsuarioNovaSenha ? 'Ocultar' : 'Ver'}
+    </button>
+  </div>
+
+  <button
+    type="button"
+    onClick={redefinirSenhaUsuario}
+    className="rounded-xl border border-amber-500/40 px-4 py-2 text-xs font-black uppercase text-amber-600 transition hover:bg-amber-500/10 cursor-pointer"
+  >
+    Redefinir senha
+  </button>
+</div>
+ 
       <div className="flex justify-end gap-2">
         <button
           type="button"
