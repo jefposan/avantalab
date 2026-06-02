@@ -434,29 +434,49 @@ export async function buscarUsuariosEmpresa(empresaId: string) {
 export async function criarUsuarioEmpresa({
   empresaId,
   nome,
-  email,
+  login,
+  senha,
   perfil,
 }: {
   empresaId: string;
   nome: string;
-  email: string;
+  login: string;
+  senha: string;
   perfil: 'administrador' | 'operador_completo' | 'operador_simples';
 }) {
-  const emailLimpo = email.trim().toLowerCase();
+  const { data: sessao } = await supabase.auth.getSession();
 
-  const { data, error } = await supabase.rpc('criar_usuario_empresa_rpc', {
-    p_empresa_id: empresaId,
-    p_nome: nome.trim(),
-    p_email: emailLimpo,
-    p_perfil: perfil,
-  });
+  const token = sessao.session?.access_token;
 
-  if (error) {
-    console.error('Erro ao criar usuário da empresa:', error);
-
+  if (!token) {
     return {
       erro: true,
-      mensagem: tratarErroSupabase(error),
+      mensagem: 'Sessão não encontrada. Faça login novamente.',
+      data: null,
+    };
+  }
+
+  const resposta = await fetch('/api/criar-usuario-interno', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({
+      empresaId,
+      nome,
+      login,
+      senha,
+      perfil,
+    }),
+  });
+
+  const resultado = await resposta.json();
+
+  if (!resposta.ok || resultado.erro) {
+    return {
+      erro: true,
+      mensagem: resultado.mensagem || 'Não foi possível criar o usuário.',
       data: null,
     };
   }
@@ -464,7 +484,7 @@ export async function criarUsuarioEmpresa({
   return {
     erro: false,
     mensagem: '',
-    data,
+    data: resultado.usuario,
   };
 }
 
@@ -531,16 +551,35 @@ export async function bloquearUsuarioEmpresa(acessoId: string) {
   };
 }
 export async function excluirUsuarioEmpresa(acessoId: string) {
-  const { data, error } = await supabase.rpc('excluir_usuario_empresa_rpc', {
-    p_acesso_id: acessoId,
-  });
+  const { data: sessao } = await supabase.auth.getSession();
 
-  if (error) {
-    console.error('Erro ao excluir usuário da empresa:', error);
+  const token = sessao.session?.access_token;
 
+  if (!token) {
     return {
       erro: true,
-      mensagem: tratarErroSupabase(error),
+      mensagem: 'Sessão não encontrada. Faça login novamente.',
+      data: null,
+    };
+  }
+
+  const resposta = await fetch('/api/excluir-usuario-interno', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({
+      acessoId,
+    }),
+  });
+
+  const resultado = await resposta.json();
+
+  if (!resposta.ok || resultado.erro) {
+    return {
+      erro: true,
+      mensagem: resultado.mensagem || 'Não foi possível excluir o usuário.',
       data: null,
     };
   }
@@ -548,7 +587,7 @@ export async function excluirUsuarioEmpresa(acessoId: string) {
   return {
     erro: false,
     mensagem: '',
-    data,
+    data: true,
   };
 }
 export async function criarEmpresaInicial(nomeEmpresa: string) {

@@ -97,7 +97,8 @@ const [criandoEmpresaInicial, setCriandoEmpresaInicial] = useState(false);
 const [usuariosEmpresa, setUsuariosEmpresa] = useState<any[]>([]);
 const [usuariosCarregando, setUsuariosCarregando] = useState(false);
 const [usuarioNome, setUsuarioNome] = useState('');
-const [usuarioEmail, setUsuarioEmail] = useState('');
+const [usuarioLogin, setUsuarioLogin] = useState('');
+const [usuarioSenha, setUsuarioSenha] = useState('');
 const [usuarioPerfil, setUsuarioPerfil] = useState<
   'administrador' | 'operador_completo' | 'operador_simples'
 >('operador_simples');
@@ -528,42 +529,62 @@ const carregarUsuariosEmpresa = async () => {
 
 const adicionarUsuarioEmpresa = async () => {
   if (!empresaId) {
-    alert('Empresa não carregada.');
+    abrirAviso('Erro', 'Empresa não carregada.');
     return;
   }
 
   if (!podeGerenciarUsuarios) {
-    alert('Você não tem permissão para gerenciar usuários.');
+    abrirAviso(
+      'Acesso não permitido',
+      'Você não tem permissão para gerenciar usuários.'
+    );
     return;
   }
 
   const nomeLimpo = usuarioNome.trim();
-  const emailLimpo = usuarioEmail.trim().toLowerCase();
+  const loginLimpo = usuarioLogin.trim().toLowerCase();
+  const senhaLimpa = usuarioSenha.trim();
 
-  if (!nomeLimpo || !emailLimpo) {
-    alert('Informe nome e email do usuário.');
+  if (!nomeLimpo || !loginLimpo || !senhaLimpa) {
+    abrirAviso(
+      'Campos obrigatórios',
+      'Informe nome, login e senha do usuário.'
+    );
     return;
   }
 
-  if (!emailLimpo.includes('@') || !emailLimpo.includes('.')) {
-    alert('Informe um email válido.');
+  if (loginLimpo.includes('@')) {
+    abrirAviso(
+      'Login inválido',
+      'Para usuários internos, use um login simples, sem @. Exemplo: financeiro, caixa ou operador1.'
+    );
+    return;
+  }
+
+  if (senhaLimpa.length < 8) {
+    abrirAviso(
+      'Senha muito curta',
+      'A senha deve ter pelo menos 8 caracteres.'
+    );
     return;
   }
 
   const resultado = await criarUsuarioEmpresa({
     empresaId,
     nome: nomeLimpo,
-    email: emailLimpo,
+    login: loginLimpo,
+    senha: senhaLimpa,
     perfil: usuarioPerfil,
   });
 
   if (resultado.erro) {
-    alert(`Erro ao criar usuário: ${resultado.mensagem}`);
+    abrirAviso('Erro ao criar usuário', resultado.mensagem);
     return;
   }
 
   setUsuarioNome('');
-  setUsuarioEmail('');
+  setUsuarioLogin('');
+  setUsuarioSenha('');
   setUsuarioPerfil('operador_simples');
 
   await carregarUsuariosEmpresa();
@@ -2266,49 +2287,61 @@ if (isTelaMobile) {
         </button>
       </div>
 
-      <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
-        <input
-          type="text"
-          value={usuarioNome}
-          onChange={(e) => setUsuarioNome(e.target.value)}
-          placeholder="Nome do usuário"
-          className={`w-full rounded-xl border px-3 py-2.5 text-sm font-semibold outline-none transition ${
-            darkMode
-              ? 'bg-slate-900 border-slate-600 text-white placeholder:text-slate-400'
-              : 'bg-white border-slate-300 text-slate-700 placeholder:text-slate-400'
-          }`}
-        />
+      <div className="grid grid-cols-1 gap-3 md:grid-cols-4">
+  <input
+    type="text"
+    value={usuarioNome}
+    onChange={(e) => setUsuarioNome(e.target.value)}
+    placeholder="Nome do usuário"
+    className={`w-full rounded-xl border px-3 py-2.5 text-sm font-semibold outline-none transition ${
+      darkMode
+        ? 'bg-slate-900 border-slate-600 text-white placeholder:text-slate-400'
+        : 'bg-white border-slate-300 text-slate-700 placeholder:text-slate-400'
+    }`}
+  />
 
-        <input
-          type="email"
-          value={usuarioEmail}
-          onChange={(e) => setUsuarioEmail(e.target.value)}
-          placeholder="Email do usuário"
-          className={`w-full rounded-xl border px-3 py-2.5 text-sm font-semibold outline-none transition ${
-            darkMode
-              ? 'bg-slate-900 border-slate-600 text-white placeholder:text-slate-400'
-              : 'bg-white border-slate-300 text-slate-700 placeholder:text-slate-400'
-          }`}
-        />
+  <input
+    type="text"
+    value={usuarioLogin}
+    onChange={(e) => setUsuarioLogin(e.target.value)}
+    placeholder="Login"
+    className={`w-full rounded-xl border px-3 py-2.5 text-sm font-semibold outline-none transition ${
+      darkMode
+        ? 'bg-slate-900 border-slate-600 text-white placeholder:text-slate-400'
+        : 'bg-white border-slate-300 text-slate-700 placeholder:text-slate-400'
+    }`}
+  />
 
-        <select
-          value={usuarioPerfil}
-          onChange={(e) =>
-            setUsuarioPerfil(
-              e.target.value as 'administrador' | 'operador_completo' | 'operador_simples'
-            )
-          }
-          className={`w-full rounded-xl border px-3 py-2.5 text-sm font-bold outline-none transition ${
-            darkMode
-              ? 'bg-slate-900 border-slate-600 text-white'
-              : 'bg-white border-slate-300 text-slate-700'
-          }`}
-        >
-          <option value="operador_simples">Operador Simples</option>
-          <option value="operador_completo">Operador Completo</option>
-          <option value="administrador">Administrador</option>
-        </select>
-      </div>
+  <input
+    type="password"
+    value={usuarioSenha}
+    onChange={(e) => setUsuarioSenha(e.target.value)}
+    placeholder="Senha inicial"
+    className={`w-full rounded-xl border px-3 py-2.5 text-sm font-semibold outline-none transition ${
+      darkMode
+        ? 'bg-slate-900 border-slate-600 text-white placeholder:text-slate-400'
+        : 'bg-white border-slate-300 text-slate-700 placeholder:text-slate-400'
+    }`}
+  />
+
+  <select
+    value={usuarioPerfil}
+    onChange={(e) =>
+      setUsuarioPerfil(
+        e.target.value as 'administrador' | 'operador_completo' | 'operador_simples'
+      )
+    }
+    className={`w-full rounded-xl border px-3 py-2.5 text-sm font-bold outline-none transition ${
+      darkMode
+        ? 'bg-slate-900 border-slate-600 text-white'
+        : 'bg-white border-slate-300 text-slate-700'
+    }`}
+  >
+    <option value="operador_simples">Operador Simples</option>
+    <option value="operador_completo">Operador Completo</option>
+    <option value="administrador">Administrador</option>
+  </select>
+</div>
 
       <div className="mt-4 flex justify-end">
         <button
@@ -2438,8 +2471,8 @@ if (isTelaMobile) {
         </p>
 
         <p className={`text-xs font-semibold ${textMuted}`}>
-          {usuario.email}
-        </p>
+  Login: {usuario.login || usuario.email}
+</p>
 
         <div className="mt-2 flex flex-wrap gap-2">
           <span
