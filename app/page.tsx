@@ -2766,7 +2766,13 @@ if (isTelaMobile) {
       )}
 
       {/* ================= HEADER GLOBAL ================= */}
-      <header className={`print-ocultar ${bgCard} shadow-sm border-b px-8 py-4 flex justify-between items-center z-30 relative`} style={{ borderBottomColor: darkMode ? '' : corPrimaria, borderBottomWidth: darkMode ? '1px' : '10px' }}>
+      <header
+  className={`print-ocultar ${bgCard} sticky top-0 z-[900] shadow-sm border-b px-8 py-4 flex justify-between items-center`}
+  style={{
+    borderBottomColor: darkMode ? '' : corPrimaria,
+    borderBottomWidth: darkMode ? '1px' : '10px',
+  }}
+>
         
         <div className="w-56 h-16 flex items-center justify-center overflow-hidden relative cursor-pointer" onClick={() => {setAbaAtiva('Dashboard'); setMesAtivo(null);}} style={!logoUrl ? { border: `2px dashed ${darkMode ? '#475569' : '#cbd5e1'}`, borderRadius: '0.5rem' } : {}}>
           {logoUrl ? (
@@ -3875,6 +3881,7 @@ if (isTelaMobile) {
   darkMode={darkMode}
   anoSelecionado={anoSelecionado}
   setAnoSelecionado={setAnoSelecionado}
+  empresaId={empresaId}
 />
       ) : (
         <Dashboard 

@@ -10,6 +10,7 @@ interface RelatorioProps {
   darkMode: boolean;
   anoSelecionado: string;
   setAnoSelecionado: (ano: string) => void;
+  empresaId: string | null;
 }
 
 type MetricaEvolutiva = 'entradas' | 'saidas' | 'ab' | 'ebitda';
@@ -45,6 +46,7 @@ export default function Relatorio({
   darkMode,
   anoSelecionado,
   setAnoSelecionado,
+  empresaId,
 }: RelatorioProps) {
   const [metricaEvolutiva, setMetricaEvolutiva] = useState<MetricaEvolutiva>('entradas');
   const [lancamentosTodosAnos, setLancamentosTodosAnos] = useState<LancamentoBanco[]>([]);
@@ -55,25 +57,12 @@ export default function Relatorio({
     return despesa ? despesa.categoria : 'Outros';
   };
 
-  useEffect(() => {
-    const carregarComparativoAnual = async () => {
-      const { data: sessao } = await supabase.auth.getSession();
-      const usuarioId = sessao.session?.user?.id;
+    useEffect(() => {
+  const carregarComparativoAnual = async () => {
+    if (!empresaId) return;
 
-      if (!usuarioId) return;
-
-      const { data: vinculo, error: erroVinculo } = await supabase
-        .from('usuarios_empresas')
-        .select('empresa_id')
-        .eq('usuario_id', usuarioId)
-        .limit(1)
-        .maybeSingle();
-
-      if (erroVinculo || !vinculo?.empresa_id) return;
-
-      const empresaId = vinculo.empresa_id;
-
-      const [{ data: lancs, error: erroLancs }, { data: fats, error: erroFats }] = await Promise.all([
+    const [{ data: lancs, error: erroLancs }, { data: fats, error: erroFats }] =
+      await Promise.all([
         supabase
           .from('lancamentos')
           .select('ano, mes, despesa_nome, descricao, valor')
@@ -87,31 +76,31 @@ export default function Relatorio({
           .order('ano', { ascending: true }),
       ]);
 
-      if (!erroLancs && lancs) {
-        setLancamentosTodosAnos(
-          lancs.map((l: any) => ({
-            ano: Number(l.ano),
-            mes: l.mes,
-            despesa_nome: l.despesa_nome,
-            descricao: l.descricao || '',
-            valor: Number(l.valor || 0),
-          }))
-        );
-      }
+    if (!erroLancs && lancs) {
+      setLancamentosTodosAnos(
+        lancs.map((l: any) => ({
+          ano: Number(l.ano),
+          mes: l.mes,
+          despesa_nome: l.despesa_nome,
+          descricao: l.descricao || '',
+          valor: Number(l.valor || 0),
+        }))
+      );
+    }
 
-      if (!erroFats && fats) {
-        setFaturamentosTodosAnos(
-          fats.map((f: any) => ({
-            ano: Number(f.ano),
-            mes: f.mes,
-            valor: Number(f.valor || 0),
-          }))
-        );
-      }
-    };
+    if (!erroFats && fats) {
+      setFaturamentosTodosAnos(
+        fats.map((f: any) => ({
+          ano: Number(f.ano),
+          mes: f.mes,
+          valor: Number(f.valor || 0),
+        }))
+      );
+    }
+  };
 
-    carregarComparativoAnual();
-  }, []);
+  carregarComparativoAnual();
+}, [empresaId]);
 
   const calcularValoresMes = (mes: string) => {
     const entradas = faturamentos[mes] || 0;
@@ -217,53 +206,69 @@ export default function Relatorio({
   );
 
   const dadosComparativoAnual = useMemo<DadosComparativoAno[]>(() => {
-    const anos = Array.from(
-      new Set([
-        ...lancamentosTodosAnos.map((l) => String(l.ano)),
-        ...faturamentosTodosAnos.map((f) => String(f.ano)),
-        anoSelecionado,
-      ])
-    ).sort((a, b) => Number(a) - Number(b));
+  const anosComDados = [
+    ...lancamentosTodosAnos.map((l) => Number(l.ano)),
+    ...faturamentosTodosAnos.map((f) => Number(f.ano)),
+    new Date().getFullYear(),
+  ];
 
-    const dados = anos.map((ano) => {
-      if (ano === anoSelecionado) {
-        return {
-          ano,
-          entradas: dadosRelatorio.totais.entradas,
-          saidas: dadosRelatorio.totais.saidas,
-          ab: dadosRelatorio.totais.ab,
-          ebitda: dadosRelatorio.totais.ebitda,
-        };
+  const anoFinal = Math.max(...anosComDados);
+
+  const anos = Array.from({ length: 5 }, (_, i) =>
+    String(anoFinal - 4 + i)
+  );
+
+  return anos.map((ano) => {
+    const lancsAno = lancamentosTodosAnos.filter(
+      (l) => String(l.ano) === ano
+    );
+
+    const fatsAno = faturamentosTodosAnos.filter(
+      (f) => String(f.ano) === ano
+    );
+
+    const entradas = fatsAno.reduce(
+      (acc, f) => acc + Number(f.valor || 0),
+      0
+    );
+
+    let saidas = 0;
+    let exclusoesEbitda = 0;
+
+    lancsAno.forEach((l) => {
+      const valor = Number(l.valor || 0);
+      saidas += valor;
+
+      const cat = getCategoria(l.despesa_nome);
+
+      if (
+        [
+          'Amortização',
+          'Depreciação',
+          'Despesas Financeiras',
+          'Imposto sobre Lucro',
+        ].includes(cat)
+      ) {
+        exclusoesEbitda += valor;
       }
-
-      const lancsAno = lancamentosTodosAnos.filter((l) => String(l.ano) === ano);
-      const fatsAno = faturamentosTodosAnos.filter((f) => String(f.ano) === ano);
-
-      const entradas = fatsAno.reduce((acc, f) => acc + Number(f.valor || 0), 0);
-      let saidas = 0;
-      let exclusoesEbitda = 0;
-
-      lancsAno.forEach((l) => {
-        const valor = Number(l.valor || 0);
-        saidas += valor;
-
-        const cat = getCategoria(l.despesa_nome);
-
-        if (['Amortização', 'Depreciação', 'Despesas Financeiras', 'Imposto sobre Lucro'].includes(cat)) {
-          exclusoesEbitda += valor;
-        }
-      });
-
-      const ab = entradas - saidas;
-      const ebitda = ab + exclusoesEbitda;
-
-      return { ano, entradas, saidas, ab, ebitda };
     });
 
-    return dados
-      .filter((item) => item.entradas !== 0 || item.saidas !== 0 || item.ab !== 0 || item.ebitda !== 0)
-      .slice(-5);
-  }, [anoSelecionado, dadosRelatorio, lancamentosTodosAnos, faturamentosTodosAnos, despesasCadastradas]);
+    const ab = entradas - saidas;
+    const ebitda = ab + exclusoesEbitda;
+
+    return {
+      ano,
+      entradas,
+      saidas,
+      ab,
+      ebitda,
+    };
+  });
+}, [
+  lancamentosTodosAnos,
+  faturamentosTodosAnos,
+  despesasCadastradas,
+]);
 
   const dadosGraficoAnual = dadosComparativoAnual.map((item) => ({
     label: item.ano,
