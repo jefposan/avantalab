@@ -3158,7 +3158,7 @@ if (isTelaMobile) {
 
     {/* TEXTO DENTRO DA FAIXA INFERIOR */}
 <div
-  className="absolute bottom-0 left-0 right-0 h-5 px-8 flex items-center justify-between text-xs font-semibold z-10"
+  className="absolute bottom-0 left-0 right-0 h-5 pl-8 pr-4 flex items-center justify-between text-xs font-semibold z-10"
   style={{
     backgroundColor: corPrimaria,
     color: textoSobreCorPrimaria,
@@ -3184,7 +3184,7 @@ if (isTelaMobile) {
     </span>
   </div>
 
-  <div className="hidden xl:flex items-center justify-end gap-4 min-w-0">
+  <div className="hidden xl:flex items-center justify-end gap-4 min-w-0 mr-36">
     <div className="flex items-center gap-1.5 min-w-0">
       <span className="font-black uppercase tracking-wide opacity-80">
         Usuário:
