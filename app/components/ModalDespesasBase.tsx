@@ -130,25 +130,25 @@ export default function ModalDespesasBase({
           </button>
         </div>
 
-        <div className="p-6 space-y-6 overflow-y-auto">
+        <div className="p-4 space-y-4 overflow-y-auto">
           <div
-            className={`p-5 rounded-xl border shadow-sm ${
-              darkMode
-                ? 'bg-slate-800 border-slate-700'
-                : 'bg-slate-50 border-slate-200'
-            }`}
-          >
-            <h3 className={`font-bold mb-4 ${textStrong}`}>
-              Nova Despesa
-            </h3>
+  className={`p-3 rounded-xl border shadow-sm ${
+    darkMode
+      ? 'bg-slate-800 border-slate-700'
+      : 'bg-slate-50 border-slate-200'
+  }`}
+>
+  <h3 className={`text-sm font-bold mb-2 ${textStrong}`}>
+    Nova Despesa
+  </h3>
 
-            <div className="flex flex-wrap gap-3">
+  <div className="flex flex-wrap gap-2">
               <input
                 type="text"
                 placeholder="Nome (Ex: Aluguel)"
                 value={novaBaseNome}
                 onChange={(e) => setNovaBaseNome(e.target.value)}
-                className={`flex-1 min-w-[200px] p-2.5 rounded-lg border focus:outline-none focus:ring-2 ${
+                className={`flex-1 min-w-[200px] p-2 rounded-lg border text-sm focus:outline-none focus:ring-2 ${
                   darkMode
                     ? 'bg-slate-700 border-slate-600 text-white'
                     : 'bg-white border-slate-300'
@@ -159,7 +159,7 @@ export default function ModalDespesasBase({
               <select
                 value={novaBaseCat}
                 onChange={(e) => setNovaBaseCat(e.target.value)}
-                className={`flex-1 min-w-[200px] p-2.5 rounded-lg border focus:outline-none focus:ring-2 ${
+                className={`flex-1 min-w-[200px] p-2 rounded-lg border text-sm focus:outline-none focus:ring-2 ${
                   darkMode
                     ? 'bg-slate-700 border-slate-600 text-white'
                     : 'bg-white border-slate-300'
@@ -179,7 +179,7 @@ export default function ModalDespesasBase({
                 type="button"
                 onClick={adicionarDespesaBase}
                 style={estiloTemaPrimario}
-                className="px-6 py-2.5 rounded-lg font-bold hover:brightness-110 w-full sm:w-auto shadow cursor-pointer"
+                className="px-4 py-2 rounded-lg text-sm font-bold shadow hover:brightness-110 cursor-pointer"
               >
                 Salvar
               </button>

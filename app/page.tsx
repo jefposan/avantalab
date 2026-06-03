@@ -445,6 +445,16 @@ useEffect(() => {
   carregarUsuariosEmpresa();
 }, [modalUsuarios, empresaId, podeGerenciarUsuarios]);
 
+useEffect(() => {
+  if (!mounted || !acessoLiberado) return;
+
+  window.scrollTo({
+    top: 0,
+    left: 0,
+    behavior: 'smooth',
+  });
+}, [abaAtiva, mesAtivo]);
+
   // --- CÁLCULOS E FUNÇÕES ---
   
   const mesParaAnalise = mesAtivo || mesResumoDash;
@@ -860,31 +870,40 @@ const adicionarDespesaBase = async () => {
 
 const apagarDespesaBase = async (nome: string) => {
   if (!podeAcessarAjustes) {
-  abrirAviso(
-    'Acesso não permitido',
-    'Você não tem permissão para excluir despesas base.'
-  );
-  return;
-}
+    abrirAviso(
+      'Acesso não permitido',
+      'Você não tem permissão para excluir despesas base.'
+    );
+    return;
+  }
+
   if (!empresaId) {
-  abrirAviso(
-    'Empresa não carregada',
-    'Atualize a página e tente novamente.'
-  );
-  return;
-}
+    abrirAviso(
+      'Empresa não carregada',
+      'Atualize a página e tente novamente.'
+    );
+    return;
+  }
 
-  const apagou = await apagarDespesaCadastrada(empresaId, nome);
+  abrirConfirmacao({
+    titulo: 'Excluir despesa cadastrada',
+    mensagem:
+      `Deseja realmente excluir a despesa "${nome}"?\n\nEssa ação removerá a despesa da lista de despesas cadastradas.`,
+    textoConfirmar: 'Excluir',
+    acao: async () => {
+      const apagou = await apagarDespesaCadastrada(empresaId, nome);
 
-  if (!apagou) {
-  abrirAviso(
-    'Erro ao apagar despesa',
-    'Não foi possível apagar a despesa cadastrada no banco.'
-  );
-  return;
-}
+      if (!apagou) {
+        abrirAviso(
+          'Erro ao apagar despesa',
+          'Não foi possível apagar a despesa cadastrada no banco.'
+        );
+        return;
+      }
 
-  setDespesasCadastradas((prev) => prev.filter((d) => d.nome !== nome));
+      setDespesasCadastradas((prev) => prev.filter((d) => d.nome !== nome));
+    },
+  });
 };
 
 const adicionarDespesa = async () => {
@@ -2540,7 +2559,7 @@ if (isTelaMobile) {
 />
 
 {modalAvisoAberto && (
-  <div className="fixed inset-0 z-[1000] flex items-center justify-center bg-black/50 px-4">
+  <div className="fixed inset-0 z-[6000] flex items-center justify-center bg-black/50 px-4">
     <div
       className={`w-full max-w-md rounded-2xl border p-6 shadow-2xl ${
         darkMode
@@ -2591,7 +2610,7 @@ if (isTelaMobile) {
 )}
 
 {modalUsuarios && (
-  <div className="fixed inset-0 z-[999] flex items-center justify-center bg-black/50 px-4">
+  <div className="fixed inset-0 z-[5000] flex items-center justify-center bg-black/50 px-4">
     <div
       className={`w-full max-w-3xl rounded-2xl border p-6 shadow-2xl ${
         darkMode

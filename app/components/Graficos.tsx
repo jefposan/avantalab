@@ -144,17 +144,31 @@ export default function Graficos({ meses, lancamentos, faturamentos, corPrimaria
                   </div>
                 </div>
 
-                <div className="w-full space-y-3 max-h-48 overflow-y-auto pr-2">
-                  {analiseCategorias.dados.map((item) => (
-                    <div key={item.nome} className="flex justify-between items-center text-xs">
-                      <div className="flex items-center gap-2 truncate pr-2">
-                        <span className="w-3 h-3 rounded-full flex-shrink-0" style={{ backgroundColor: item.cor }}></span>
-                        <span className={`font-semibold ${textStrong} truncate`}>{item.nome}</span>
-                      </div>
-                      <span className="font-bold text-slate-500">{item.percentual.toFixed(1)}%</span>
-                    </div>
-                  ))}
-                </div>
+                <div className="w-full max-h-70 overflow-y-auto pr-2">
+  <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-5 gap-y-3">
+    {analiseCategorias.dados.map((item) => (
+      <div
+        key={item.nome}
+        className="flex justify-between items-center text-xs min-w-0"
+      >
+        <div className="flex items-center gap-2 truncate pr-2 min-w-0">
+          <span
+            className="w-3 h-3 rounded-full flex-shrink-0"
+            style={{ backgroundColor: item.cor }}
+          ></span>
+
+          <span className={`font-semibold ${textStrong} truncate`}>
+            {item.nome}
+          </span>
+        </div>
+
+        <span className="font-bold text-slate-500 shrink-0">
+          {item.percentual.toFixed(1)}%
+        </span>
+      </div>
+    ))}
+  </div>
+</div>
               </>
             ) : (
               <div className="text-slate-400 italic text-sm py-10">Nenhuma despesa registrada no ano.</div>
