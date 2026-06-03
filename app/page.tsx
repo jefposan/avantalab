@@ -415,7 +415,7 @@ useEffect(() => {
     if (ajustesAberto) {
       const tempo = setTimeout(() => {
         setAjustesAberto(false);
-      }, 30000); // <-- 10000 milissegundos = 10 segundos. Altere este valor como preferir!
+      }, 20000); // <-- 10000 milissegundos = 10 segundos. Altere este valor como preferir!
 
       // Limpa o cronômetro se o utilizador fechar o menu manualmente antes do tempo
       return () => clearTimeout(tempo);
@@ -2975,7 +2975,7 @@ if (isTelaMobile) {
       {/* ================= MENU DE AJUSTES GERAL ================= */}
 {ajustesAberto && (
   <div
-    className="print-ocultar bg-slate-900 text-white p-4 shadow-inner border-t border-slate-700 transition-all z-20"
+    className="print-ocultar fixed left-0 right-0 top-[92px] z-[1200] bg-slate-900 text-white p-4 shadow-xl border-t border-slate-700 transition-all"
     style={{ borderTopColor: corPrimaria, borderTopWidth: '2px' }}
   >
     {statusConfig !== 'idle' && (
