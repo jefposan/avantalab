@@ -34,22 +34,22 @@ export default function ModalConfirmacao({
 
         <div className="flex justify-end gap-3">
           <button
-            type="button"
-            onClick={aoCancelar}
-            disabled={carregando}
-            className="rounded-xl border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100 transition disabled:opacity-60"
-          >
-            {textoCancelar}
-          </button>
+  type="button"
+  onClick={aoCancelar}
+  disabled={carregando}
+  className="rounded-xl border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100 transition disabled:opacity-60 cursor-pointer disabled:cursor-not-allowed"
+>
+  {textoCancelar}
+</button>
 
           <button
-            type="button"
-            onClick={aoConfirmar}
-            disabled={carregando}
-            className="rounded-xl bg-red-600 px-4 py-2 text-sm font-bold text-white hover:bg-red-700 transition disabled:opacity-60"
-          >
-            {carregando ? "Aguarde..." : textoConfirmar}
-          </button>
+  type="button"
+  onClick={aoConfirmar}
+  disabled={carregando}
+  className="rounded-xl bg-red-600 px-4 py-2 text-sm font-bold text-white hover:bg-red-700 transition disabled:opacity-60 cursor-pointer disabled:cursor-not-allowed"
+>
+  {carregando ? "Aguarde..." : textoConfirmar}
+</button>
         </div>
       </div>
     </div>

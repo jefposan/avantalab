@@ -1724,6 +1724,17 @@ const handleCriarEmpresaInicial = async () => {
   }, 700);
 };
 
+const confirmarLogout = () => {
+  abrirConfirmacao({
+    titulo: 'Sair do sistema',
+    mensagem: 'Deseja realmente sair da sua conta?',
+    textoConfirmar: 'Sair',
+    acao: async () => {
+      await handleLogout();
+    },
+  });
+};
+
 const handleLogout = async () => {
   await supabase.auth.signOut();
 
@@ -2002,8 +2013,12 @@ if (acessoNaoConfigurado) {
 
 <button
   type="button"
-  onClick={handleLogout}
-  className="mt-3 w-full rounded-xl border border-slate-300 bg-white px-4 py-3 font-bold text-slate-700 transition hover:bg-slate-50"
+  onClick={confirmarLogout}
+  className={`px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wide border shadow-sm transition-colors cursor-pointer ${
+    darkMode
+      ? 'bg-red-950/30 border-red-800/50 text-red-300 hover:bg-red-900/50'
+      : 'bg-red-50 border-red-200 text-red-600 hover:bg-red-100'
+  }`}
 >
   Sair
 </button>
@@ -2963,8 +2978,8 @@ if (isTelaMobile) {
   {/* ÁREA DIREITA DO HEADER */}
   <div className="flex-1 flex flex-col gap-5 min-w-0">
     {/* LINHA 1: MENU */}
-    <div className="flex items-center justify-between gap-6">
-      <nav className="flex space-x-3">
+    <div className="flex items-center justify-start gap-6">
+      <nav className="flex space-x-2">
         <button
           onClick={() => {
             setAbaAtiva('Dashboard');
@@ -3023,7 +3038,7 @@ if (isTelaMobile) {
         ))}
       </nav>
 
-      <div className="flex items-center space-x-6 relative">
+      <div className="flex items-center space-x-2 relative">
         <button
           type="button"
           onClick={() => setCalcAberta(!calcAberta)}
@@ -3051,19 +3066,19 @@ if (isTelaMobile) {
         </button>
 
         <button
-          type="button"
-          onClick={handleLogout}
-          className={`px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wide border shadow-sm transition-colors cursor-pointer ${
-            darkMode
-              ? 'bg-slate-800 border-slate-700 text-slate-300 hover:bg-slate-700'
-              : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
-          }`}
-        >
-          Sair
-        </button>
+  type="button"
+  onClick={confirmarLogout}
+  className={`px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wide border shadow-sm transition-colors cursor-pointer ${
+    darkMode
+      ? 'bg-red-950/30 border-red-800/50 text-red-300 hover:bg-red-900/50'
+      : 'bg-red-50 border-red-200 text-red-600 hover:bg-red-100'
+  }`}
+>
+  Sair
+</button>
 
         {/* SELETOR DE ANO */}
-        <div className="flex flex-col items-center border-l border-slate-200/20 pl-6 pr-2">
+        <div className="flex flex-col items-center border-l border-slate-200/20 pl-3 pr-2 -ml-2">
           <span className={`text-[9px] font-bold uppercase tracking-wider mb-1 ${textMuted}`}>
             Ano
           </span>
