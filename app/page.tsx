@@ -3349,26 +3349,36 @@ if (isTelaMobile) {
 }} className="whitespace-nowrap bg-slate-800 hover:bg-slate-700 px-3 py-1.5 rounded shadow border border-slate-700 transition-colors text-xs">Adicionar Logo</button>
         
         <div className="whitespace-nowrap relative overflow-hidden bg-slate-800 hover:bg-slate-700 px-3 py-1.5 rounded shadow border border-slate-700 transition-colors text-xs flex items-center gap-1.5">
-          <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: corPrimaria }}></span> Cor Tema
-          <input
-  type="color"
-  value={corPrimaria}
-  onChange={(e) => {
-    if (!podeAcessarAjustes) {
-      abrirAviso(
-        'Acesso não permitido',
-        'Você não tem permissão para alterar a cor tema da empresa.'
-      );
-      return;
-    }
+  <span
+    className="w-2.5 h-2.5 rounded-full"
+    style={{ backgroundColor: corPrimaria }}
+  ></span>
 
-    setCorPrimaria(e.target.value);
-  }}
-  className={`absolute inset-0 w-full h-full opacity-0 ${
-    podeAcessarAjustes ? 'cursor-pointer' : 'cursor-not-allowed'
-  }`}
-/>
-        </div>
+  <span>Cor Tema</span>
+
+  {podeAcessarAjustes ? (
+    <input
+      type="color"
+      value={corPrimaria}
+      onChange={(e) => {
+        setCorPrimaria(e.target.value);
+      }}
+      className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+    />
+  ) : (
+    <button
+      type="button"
+      onClick={() => {
+        abrirAviso(
+          'Acesso não permitido',
+          'Você não tem permissão para alterar a cor tema da empresa.'
+        );
+      }}
+      className="absolute inset-0 w-full h-full cursor-not-allowed opacity-0"
+      aria-label="Sem permissão para alterar a cor tema"
+    />
+  )}
+</div>
         
         <div className="whitespace-nowrap flex items-center space-x-2 bg-slate-800 px-3 py-1.5 rounded shadow border border-slate-700 cursor-pointer" onClick={() => setDarkMode(!darkMode)}>
           <span className="text-xs">Modo Escuro</span>
