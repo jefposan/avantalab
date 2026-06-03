@@ -14,7 +14,7 @@ export default function ModalConfirmacao({
   titulo,
   mensagem,
   textoCancelar = "Cancelar",
-  textoConfirmar = "Excluir",
+  textoConfirmar = "Confirmar",
   carregando = false,
   aoCancelar,
   aoConfirmar,
@@ -22,7 +22,7 @@ export default function ModalConfirmacao({
   if (!aberto) return null;
 
   return (
-    <div className="fixed inset-0 z-[3000] flex items-center justify-center bg-black/50 px-4">
+    <div className="fixed inset-0 z-[6000] flex items-center justify-center bg-black/50 px-4">
       <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl border border-slate-200">
         <h2 className="text-xl font-bold text-slate-900 mb-3">
           {titulo}
@@ -48,7 +48,7 @@ export default function ModalConfirmacao({
             disabled={carregando}
             className="rounded-xl bg-red-600 px-4 py-2 text-sm font-bold text-white hover:bg-red-700 transition disabled:opacity-60"
           >
-            {carregando ? "Excluindo..." : textoConfirmar}
+            {carregando ? "Aguarde..." : textoConfirmar}
           </button>
         </div>
       </div>

@@ -70,6 +70,7 @@ const [cadastroConfirmarSenha, setCadastroConfirmarSenha] = useState('');
 const [modalConfirmacaoAberto, setModalConfirmacaoAberto] = useState(false);
 const [tituloConfirmacao, setTituloConfirmacao] = useState("");
 const [mensagemConfirmacao, setMensagemConfirmacao] = useState("");
+const [textoConfirmarConfirmacao, setTextoConfirmarConfirmacao] = useState("Confirmar");
 const [modalAvisoAberto, setModalAvisoAberto] = useState(false);
 const [tituloAviso, setTituloAviso] = useState("");
 const [mensagemAviso, setMensagemAviso] = useState("");
@@ -479,9 +480,12 @@ const lancamentosFiltradosDoMes = useMemo(() => {
 
   const salvarFaturamentoMes = async (mes: string, valor: number) => {
   if (!empresaId) {
-    abrirAviso('Erro', 'Empresa não carregada. Tente atualizar a página.');
-    return;
-  }
+  abrirAviso(
+    'Empresa não carregada',
+    'Tente atualizar a página e acessar novamente.'
+  );
+  return;
+}
 
   const salvo = await salvarFaturamentoBanco({
     empresaId,
@@ -506,9 +510,12 @@ const lancamentosFiltradosDoMes = useMemo(() => {
 
   const salvarFaturamento = async () => {
   if (!empresaId) {
-    alert("Empresa não carregada. Tente atualizar a página.");
-    return;
-  }
+  abrirAviso(
+    'Empresa não carregada',
+    'Tente atualizar a página e acessar novamente.'
+  );
+  return;
+}
 
   const valorLimpo = parseInt(inputFaturamento.replace(/\D/g, '') || '0', 10) / 100;
 
@@ -528,8 +535,11 @@ const lancamentosFiltradosDoMes = useMemo(() => {
 
       setInputFaturamento('');
     } else {
-      alert("Erro ao salvar faturamento no banco.");
-    }
+  abrirAviso(
+    'Erro ao salvar faturamento',
+    'Não foi possível salvar o faturamento no banco.'
+  );
+}
   }
 };
   const handleValorChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -623,9 +633,12 @@ const adicionarUsuarioEmpresa = async () => {
 
 const bloquearAcessoUsuario = async (acessoId: string) => {
   if (!podeGerenciarUsuarios) {
-    alert('Você não tem permissão para bloquear usuários.');
-    return;
-  }
+  abrirAviso(
+    'Acesso não permitido',
+    'Você não tem permissão para bloquear usuários.'
+  );
+  return;
+}
 
   abrirConfirmacao({
     titulo: 'Bloquear usuário',
@@ -634,9 +647,12 @@ const bloquearAcessoUsuario = async (acessoId: string) => {
       const resultado = await bloquearUsuarioEmpresa(acessoId);
 
       if (resultado.erro) {
-        alert(`Erro ao bloquear usuário: ${resultado.mensagem}`);
-        return;
-      }
+  abrirAviso(
+    'Erro ao bloquear usuário',
+    resultado.mensagem
+  );
+  return;
+}
 
       await carregarUsuariosEmpresa();
     },
@@ -775,23 +791,32 @@ const adicionarDespesaBase = async () => {
   const nomeLimpo = novaBaseNome.trim();
 
   if (!nomeLimpo || !novaBaseCat) {
-    alert('Preencha o Nome e a Categoria!');
-    return;
-  }
+  abrirAviso(
+    'Campos obrigatórios',
+    'Preencha o nome e a categoria da despesa.'
+  );
+  return;
+}
 
   if (!empresaId) {
-    alert('Empresa não carregada. Saia e entre novamente no sistema.');
-    return;
-  }
+  abrirAviso(
+    'Empresa não carregada',
+    'Saia e entre novamente no sistema.'
+  );
+  return;
+}
 
   const jaExiste = despesasCadastradas.some(
   (d) => normalizarTexto(d.nome) === normalizarTexto(nomeLimpo)
 );
 
   if (jaExiste) {
-    alert('Esta despesa já está cadastrada.');
-    return;
-  }
+  abrirAviso(
+    'Despesa já cadastrada',
+    'Esta despesa já existe na lista de despesas base.'
+  );
+  return;
+}
 
   const despesaSalva = await salvarDespesaCadastrada(
     empresaId,
@@ -800,9 +825,12 @@ const adicionarDespesaBase = async () => {
   );
 
   if (!despesaSalva) {
-    alert('Não foi possível salvar a despesa no banco. Tente novamente.');
-    return;
-  }
+  abrirAviso(
+    'Erro ao salvar despesa',
+    'Não foi possível salvar a despesa no banco. Tente novamente.'
+  );
+  return;
+}
 
   setDespesasCadastradas([
     ...despesasCadastradas,
@@ -825,16 +853,22 @@ const apagarDespesaBase = async (nome: string) => {
   return;
 }
   if (!empresaId) {
-    alert('Empresa não carregada. Atualize a página e tente novamente.');
-    return;
-  }
+  abrirAviso(
+    'Empresa não carregada',
+    'Atualize a página e tente novamente.'
+  );
+  return;
+}
 
   const apagou = await apagarDespesaCadastrada(empresaId, nome);
 
   if (!apagou) {
-    alert('Não foi possível apagar a despesa cadastrada no banco.');
-    return;
-  }
+  abrirAviso(
+    'Erro ao apagar despesa',
+    'Não foi possível apagar a despesa cadastrada no banco.'
+  );
+  return;
+}
 
   setDespesasCadastradas((prev) => prev.filter((d) => d.nome !== nome));
 };
@@ -850,32 +884,80 @@ const adicionarDespesa = async () => {
 }
 
   if (!empresaId) {
-    alert("Empresa não carregada. Tente atualizar a página.");
-    return;
-  }
+  abrirAviso(
+    'Empresa não carregada',
+    'Tente atualizar a página e acessar novamente.'
+  );
+  return;
+}
 
   if (!mesAtivo) {
-    alert("Selecione um mês antes de lançar a despesa.");
-    return;
-  }
+  abrirAviso(
+    'Mês não selecionado',
+    'Selecione um mês antes de lançar a despesa.'
+  );
+  return;
+}
 
   if (!formDia || !formDespesa || valorNumericoRaw <= 0) {
-    alert("Preencha Dia, Despesa e Valor!");
-    return;
-  }
+  abrirAviso(
+    'Campos obrigatórios',
+    'Preencha dia, despesa e valor antes de salvar.'
+  );
+  return;
+}
 
   if (duplicadosAtivo) {
-    const existeIgual = lancamentosDoMes.some(
-      (l) => l.despesa === formDespesa && l.valor === valorNumericoRaw
-    );
+  const existeIgual = lancamentosDoMes.some(
+    (l) => l.despesa === formDespesa && l.valor === valorNumericoRaw
+  );
 
-    if (
-      existeIgual &&
-      !window.confirm("Aviso: Valor e despesa duplicados. Deseja adicionar mesmo assim?")
-    ) {
-      return;
-    }
+  if (existeIgual) {
+    abrirConfirmacao({
+      titulo: 'Despesa duplicada',
+      mensagem:
+        'Já existe uma despesa com o mesmo nome e valor neste mês.\n\nDeseja adicionar mesmo assim?',
+      textoConfirmar: 'Adicionar mesmo assim',
+      acao: async () => {
+        const salvo = await salvarLancamento({
+          empresaId,
+          ano: Number(anoSelecionado),
+          mes: mesAtivo,
+          dia: parseInt(formDia),
+          despesaNome: formDespesa,
+          descricao: formatarDescricao(formDescricao),
+          valor: valorNumericoRaw,
+        });
+
+        if (!salvo.erro && salvo.data) {
+          const novoLancamento = {
+            id: salvo.data.id,
+            mes: salvo.data.mes,
+            dia: salvo.data.dia,
+            despesa: salvo.data.despesa_nome,
+            descricao: salvo.data.descricao || '',
+            valor: Number(salvo.data.valor),
+          };
+
+          setLancamentos((prev) => [novoLancamento, ...prev]);
+
+          setFormDia('');
+          setFormDespesa('');
+          setFormDescricao('');
+          setFormValor('');
+          setValorNumericoRaw(0);
+        } else {
+          abrirAviso(
+            'Erro ao salvar lançamento',
+            salvo.mensagem || 'Não foi possível salvar o lançamento.'
+          );
+        }
+      },
+    });
+
+    return;
   }
+}
 
   const salvo = await salvarLancamento({
     empresaId,
@@ -905,8 +987,11 @@ const adicionarDespesa = async () => {
     setFormValor('');
     setValorNumericoRaw(0);
   } else {
-    alert(`Erro ao salvar lançamento: ${salvo.mensagem}`);
-  }
+  abrirAviso(
+    'Erro ao salvar lançamento',
+    salvo.mensagem || 'Não foi possível salvar o lançamento.'
+  );
+}
 };
 
 const apagarDespesa = async (id: string) => {
@@ -915,7 +1000,10 @@ const apagarDespesa = async (id: string) => {
   if (apagou) {
     setLancamentos((prev) => prev.filter((l) => l.id !== id));
   } else {
-    alert("Erro ao apagar lançamento no banco.");
+    abrirAviso(
+      'Erro ao apagar lançamento',
+      'Não foi possível apagar o lançamento no banco.'
+    );
   }
 };
 
@@ -928,14 +1016,17 @@ function abrirAviso(titulo: string, mensagem: string) {
 function abrirConfirmacao({
   titulo,
   mensagem,
+  textoConfirmar = "Confirmar",
   acao,
 }: {
   titulo: string;
   mensagem: string;
+  textoConfirmar?: string;
   acao: () => Promise<void> | void;
 }) {
   setTituloConfirmacao(titulo);
   setMensagemConfirmacao(mensagem);
+  setTextoConfirmarConfirmacao(textoConfirmar);
   setAcaoConfirmacao(() => acao);
   setModalConfirmacaoAberto(true);
 }
@@ -962,9 +1053,12 @@ async function confirmarAcao() {
     setMensagemConfirmacao("");
     setAcaoConfirmacao(null);
   } catch (error) {
-    console.error("Erro ao confirmar ação:", error);
-    alert("Não foi possível concluir a ação.");
-  } finally {
+  console.error("Erro ao confirmar ação:", error);
+  abrirAviso(
+    'Erro ao concluir ação',
+    'Não foi possível concluir a ação. Tente novamente.'
+  );
+} finally {
     setConfirmacaoCarregando(false);
   }
 }
@@ -1012,27 +1106,39 @@ const handleEditValorChange = (e: React.ChangeEvent<HTMLInputElement>) => {
 
 const salvarEdicaoLancamento = async () => {
   if (!empresaId) {
-    alert('Empresa não carregada. Tente atualizar a página.');
-    return;
-  }
+  abrirAviso(
+    'Empresa não carregada',
+    'Tente atualizar a página e acessar novamente.'
+  );
+  return;
+}
 
   if (!mesAtivo) {
-    alert('Selecione um mês antes de editar o lançamento.');
-    return;
-  }
+  abrirAviso(
+    'Mês não selecionado',
+    'Selecione um mês antes de editar o lançamento.'
+  );
+  return;
+}
 
   if (!lancamentoEditandoId || !editDia || !editDespesa || editValorNumerico <= 0) {
-    alert('Preencha Dia, Despesa e Valor.');
-    return;
-  }
+  abrirAviso(
+    'Campos obrigatórios',
+    'Preencha dia, despesa e valor antes de salvar a edição.'
+  );
+  return;
+}
 
   const diaNumerico = parseInt(editDia, 10);
   const maxDias = getMaxDias(mesAtivo, anoSelecionado);
 
   if (Number.isNaN(diaNumerico) || diaNumerico < 1 || diaNumerico > maxDias) {
-    alert(`Informe um dia válido entre 1 e ${maxDias}.`);
-    return;
-  }
+  abrirAviso(
+    'Dia inválido',
+    `Informe um dia válido entre 1 e ${maxDias}.`
+  );
+  return;
+}
 
   const salvo = await atualizarLancamento({
     id: lancamentoEditandoId,
@@ -1063,8 +1169,11 @@ const salvarEdicaoLancamento = async () => {
 
     cancelarEdicaoLancamento();
   } else {
-    alert(`Erro ao atualizar lançamento: ${salvo.mensagem}`);
-  }
+  abrirAviso(
+    'Erro ao atualizar lançamento',
+    salvo.mensagem || 'Não foi possível atualizar o lançamento.'
+  );
+}
 };
 
 const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -1073,9 +1182,12 @@ const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
   if (!file) return;
 
   if (!empresaId) {
-    alert("Empresa não carregada. Atualize a página e tente novamente.");
-    return;
-  }
+  abrirAviso(
+    'Empresa não carregada',
+    'Atualize a página e tente novamente.'
+  );
+  return;
+}
 
   const reader = new FileReader();
 
@@ -1097,10 +1209,13 @@ const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     });
 
     if (!salvo) {
-      alert("Erro ao salvar o logo no banco.");
-      setModalLogo(true);
-      return;
-    }
+  abrirAviso(
+    'Erro ao salvar logo',
+    'Não foi possível salvar o logo no banco.'
+  );
+  setModalLogo(true);
+  return;
+}
 
     // Garante novamente que o modal continue aberto depois do salvamento
     setModalLogo(true);
@@ -1117,9 +1232,12 @@ const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
   // ================= FUNÇÃO DE BACKUP EXCEL =================
   const gerarBackupExcel = async () => {
   if (!empresaId) {
-    alert('Empresa não carregada. Faça login novamente e tente gerar o backup.');
-    return;
-  }
+  abrirAviso(
+    'Empresa não carregada',
+    'Faça login novamente e tente gerar o backup.'
+  );
+  return;
+}
 
   const dadosResumo: any[] = [];
   const dadosLancamentos: any[] = [];
@@ -1133,10 +1251,13 @@ const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     .order('dia', { ascending: true });
 
   if (erroLancamentos) {
-    console.error('Erro ao buscar lançamentos para backup:', erroLancamentos);
-    alert(`Erro ao buscar lançamentos para backup: ${erroLancamentos.message}`);
-    return;
-  }
+  console.error('Erro ao buscar lançamentos para backup:', erroLancamentos);
+  abrirAviso(
+    'Erro ao gerar backup',
+    erroLancamentos.message || 'Não foi possível buscar os lançamentos para o backup.'
+  );
+  return;
+}
 
   const { data: faturamentosBanco, error: erroFaturamentos } = await supabase
     .from('faturamentos')
@@ -1145,10 +1266,13 @@ const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     .order('ano', { ascending: true });
 
   if (erroFaturamentos) {
-    console.error('Erro ao buscar faturamentos para backup:', erroFaturamentos);
-    alert(`Erro ao buscar faturamentos para backup: ${erroFaturamentos.message}`);
-    return;
-  }
+  console.error('Erro ao buscar faturamentos para backup:', erroFaturamentos);
+  abrirAviso(
+    'Erro ao gerar backup',
+    erroFaturamentos.message || 'Não foi possível buscar os faturamentos para o backup.'
+  );
+  return;
+}
 
   const lancamentosBackup = lancamentosBanco || [];
   const faturamentosBackup = faturamentosBanco || [];
@@ -1161,9 +1285,12 @@ const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
   ).sort();
 
   if (anosNoBanco.length === 0) {
-    alert('Nenhum dado encontrado no Supabase para gerar backup.');
-    return;
-  }
+  abrirAviso(
+    'Backup sem dados',
+    'Nenhum dado foi encontrado para gerar o backup.'
+  );
+  return;
+}
 
   anosNoBanco.forEach((ano) => {
     const lancsAno = lancamentosBackup.filter((l: any) => String(l.ano) === ano);

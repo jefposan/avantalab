@@ -39,10 +39,9 @@ export async function buscarEmpresaDoUsuario(usuarioId: string) {
     .maybeSingle();
 
   if (erroVinculo) {
-    console.error('Erro ao buscar vínculo do usuário com empresa:', erroVinculo);
-    alert(`Erro ao buscar vínculo do usuário: ${erroVinculo.message}`);
-    return null;
-  }
+  console.error('Erro ao buscar vínculo do usuário com empresa:', erroVinculo);
+  return null;
+}
 
   if (!vinculo && emailUsuario) {
     const { data: convitePendente, error: erroConvite } = await supabase
@@ -55,10 +54,9 @@ export async function buscarEmpresaDoUsuario(usuarioId: string) {
       .maybeSingle();
 
     if (erroConvite) {
-      console.error('Erro ao buscar convite pendente:', erroConvite);
-      alert(`Erro ao buscar convite pendente: ${erroConvite.message}`);
-      return null;
-    }
+  console.error('Erro ao buscar convite pendente:', erroConvite);
+  return null;
+}
 
     if (convitePendente) {
       const { data: vinculoAtualizado, error: erroAtualizarConvite } = await supabase
@@ -73,10 +71,9 @@ export async function buscarEmpresaDoUsuario(usuarioId: string) {
         .single();
 
       if (erroAtualizarConvite) {
-        console.error('Erro ao vincular convite ao usuário:', erroAtualizarConvite);
-        alert(`Erro ao vincular convite ao usuário: ${erroAtualizarConvite.message}`);
-        return null;
-      }
+  console.error('Erro ao vincular convite ao usuário:', erroAtualizarConvite);
+  return null;
+}
 
       vinculo = vinculoAtualizado;
     }
@@ -94,16 +91,14 @@ export async function buscarEmpresaDoUsuario(usuarioId: string) {
     .maybeSingle();
 
   if (erroEmpresa) {
-    console.error('Erro ao buscar empresa vinculada:', erroEmpresa);
-    alert(`Erro ao buscar empresa vinculada: ${erroEmpresa.message}`);
-    return null;
-  }
+  console.error('Erro ao buscar empresa vinculada:', erroEmpresa);
+  return null;
+}
 
   if (!empresa) {
-    console.warn('Empresa vinculada não encontrada.');
-    alert('A empresa vinculada ao usuário não foi encontrada.');
-    return null;
-  }
+  console.warn('Empresa vinculada não encontrada.');
+  return null;
+}
 
   return {
     ...empresa,
@@ -343,7 +338,6 @@ export async function salvarConfiguracoesBanco({
 
   if (error) {
   console.error('Erro ao salvar configurações:', error);
-  alert(`Erro ao salvar configurações: ${tratarErroSupabase(error)}`);
   return null;
 }
 
