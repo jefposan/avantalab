@@ -89,6 +89,9 @@ const [mostrarNovaSenha, setMostrarNovaSenha] = useState(false);
 const [mostrarConfirmarNovaSenha, setMostrarConfirmarNovaSenha] = useState(false);
 
   const [empresaId, setEmpresaId] = useState<string | null>(null);
+  const [nomeEmpresaAtual, setNomeEmpresaAtual] = useState('');
+const [nomeUsuarioAtual, setNomeUsuarioAtual] = useState('');
+const [emailUsuarioAtual, setEmailUsuarioAtual] = useState('');
   const [acessoNaoConfigurado, setAcessoNaoConfigurado] = useState(false);
   const [emailConfirmado, setEmailConfirmado] = useState(false);
   const [nomeEmpresaInicial, setNomeEmpresaInicial] = useState('');
@@ -290,8 +293,19 @@ if (!empresa) {
 
 
     if (empresa) {
-      setEmpresaId(empresa.id);
-      setPerfilUsuario(empresa.perfil || null);
+  setEmpresaId(empresa.id);
+  setNomeEmpresaAtual(empresa.nome || '');
+  setPerfilUsuario(empresa.perfil || null);
+
+  const { data: usuarioLogado } = await supabase.auth.getUser();
+
+  setNomeUsuarioAtual(
+    usuarioLogado.user?.user_metadata?.nome ||
+      usuarioLogado.user?.email?.split('@')[0] ||
+      ''
+  );
+
+  setEmailUsuarioAtual(usuarioLogado.user?.email || '');
 
       const config = await buscarConfiguracoes(empresa.id);
       const despesas = await buscarDespesasCadastradas(empresa.id);
@@ -2898,38 +2912,261 @@ if (isTelaMobile) {
       )}
 
       {/* ================= HEADER GLOBAL ================= */}
-      <header
-  className={`print-ocultar ${bgCard} sticky top-0 z-[900] shadow-sm border-b px-8 py-4 flex justify-between items-center`}
+<header
+  className={`print-ocultar ${bgCard} sticky top-0 z-[900] shadow-sm border-b px-8 pt-1 pb-4 flex items-center gap-8 relative overflow-hidden`}
   style={{
-    borderBottomColor: darkMode ? '' : corPrimaria,
-    borderBottomWidth: darkMode ? '1px' : '10px',
+    borderBottomColor: darkMode ? '#334155' : 'transparent',
+    borderBottomWidth: '1px',
   }}
 >
-        
-        <div className="w-56 h-16 flex items-center justify-center overflow-hidden relative cursor-pointer" onClick={() => {setAbaAtiva('Dashboard'); setMesAtivo(null);}} style={!logoUrl ? { border: `2px dashed ${darkMode ? '#475569' : '#cbd5e1'}`, borderRadius: '0.5rem' } : {}}>
-          {logoUrl ? (
-            <img src={logoUrl} alt="Logo" className="absolute" style={{ transform: `translate(${logoSettings.x}px, ${logoSettings.y}px) scale(${logoSettings.scale / 100})`, objectFit: 'contain', width: '100%', height: '100%', background: 'transparent' }} />
-          ) : <span className="px-3 text-center leading-snug text-slate-500">
-    <span className="block text-[11px] font-semibold">
-  Acesse os Ajustes e adicione sua
-</span>
-    <span className="mt-1 block text-base font-black tracking-wide">
-      LOGOMARCA
-    </span>
-  </span>}
-        </div>
-
-        <nav className="flex space-x-3">
-  <button
+  {/* LOGO */}
+  <div
+    className="w-64 h-24 flex items-center justify-center overflow-hidden relative cursor-pointer shrink-0"
     onClick={() => {
       setAbaAtiva('Dashboard');
       setMesAtivo(null);
     }}
-    className="flex items-center gap-2 font-bold py-2 px-4 rounded-full transition-all text-xs uppercase tracking-wide border-2 cursor-pointer shadow-md hover:brightness-110 active:scale-[0.98]"
-    style={estiloTemaPrimarioGradiente}
+    style={
+      !logoUrl
+        ? {
+            border: `2px dashed ${darkMode ? '#475569' : '#cbd5e1'}`,
+            borderRadius: '0.5rem',
+          }
+        : {}
+    }
   >
+    {logoUrl ? (
+      <img
+        src={logoUrl}
+        alt="Logo"
+        className="absolute"
+        style={{
+          transform: `translate(${logoSettings.x}px, ${logoSettings.y}px) scale(${logoSettings.scale / 100})`,
+          objectFit: 'contain',
+          width: '100%',
+          height: '100%',
+          background: 'transparent',
+        }}
+      />
+    ) : (
+      <span className="px-3 text-center leading-snug text-slate-500">
+        <span className="block text-[11px] font-semibold">
+          Acesse os Ajustes e adicione sua
+        </span>
+        <span className="mt-1 block text-base font-black tracking-wide">
+          LOGOMARCA
+        </span>
+      </span>
+    )}
+  </div>
+
+  {/* ÁREA DIREITA DO HEADER */}
+  <div className="flex-1 flex flex-col gap-5 min-w-0">
+    {/* LINHA 1: MENU */}
+    <div className="flex items-center justify-between gap-6">
+      <nav className="flex space-x-3">
+        <button
+          onClick={() => {
+            setAbaAtiva('Dashboard');
+            setMesAtivo(null);
+          }}
+          className="flex items-center gap-2 font-bold py-2 px-4 rounded-full transition-all text-xs uppercase tracking-wide border-2 cursor-pointer shadow-md hover:brightness-110 active:scale-[0.98]"
+          style={estiloTemaPrimarioGradiente}
+        >
+          <svg
+            className="w-4 h-4"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth="2"
+              d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"
+            />
+          </svg>
+
+          <span>Início</span>
+        </button>
+
+        {['Balanço Geral', 'Gráficos', 'Por Categoria', 'Relatório'].map((item) => (
+          <button
+            key={item}
+            onClick={() => {
+              setAbaAtiva(item);
+              setMesAtivo(null);
+            }}
+            className={`font-bold py-2.5 px-6 rounded-full transition-all text-sm uppercase tracking-wide border-2 cursor-pointer ${
+              abaAtiva === item
+                ? 'shadow-md transform scale-105'
+                : darkMode
+                  ? 'bg-slate-800 hover:bg-slate-700 text-slate-300 border-slate-700 shadow'
+                  : 'bg-white hover:bg-slate-50 text-slate-600 border-slate-200 shadow hover:shadow-md'
+            }`}
+            style={{
+              backgroundColor: abaAtiva === item ? corPrimaria : '',
+              borderColor: abaAtiva === item ? corPrimaria : '',
+              color: abaAtiva === item ? textoSobreCorPrimaria : '',
+            }}
+            onMouseOver={(e) => {
+              if (abaAtiva !== item) e.currentTarget.style.borderColor = corPrimaria;
+            }}
+            onMouseOut={(e) => {
+              if (abaAtiva !== item) {
+                e.currentTarget.style.borderColor = darkMode ? '#334155' : '#e2e8f0';
+              }
+            }}
+          >
+            {item}
+          </button>
+        ))}
+      </nav>
+
+      <div className="flex items-center space-x-6 relative">
+        <button
+          type="button"
+          onClick={() => setCalcAberta(!calcAberta)}
+          className={`p-2 rounded-lg transition-colors border shadow-sm cursor-pointer ${
+            darkMode
+              ? 'bg-slate-800 border-slate-700 hover:bg-slate-700'
+              : 'bg-white border-slate-200 hover:bg-slate-50'
+          }`}
+          title="Calculadora"
+        >
+          <svg
+            className="w-5 h-5"
+            style={{ color: corEhClara(corPrimaria) ? '#0f172a' : corPrimaria }}
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth="2"
+              d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"
+            />
+          </svg>
+        </button>
+
+        <button
+          type="button"
+          onClick={handleLogout}
+          className={`px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wide border shadow-sm transition-colors cursor-pointer ${
+            darkMode
+              ? 'bg-slate-800 border-slate-700 text-slate-300 hover:bg-slate-700'
+              : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
+          }`}
+        >
+          Sair
+        </button>
+
+        {/* SELETOR DE ANO */}
+        <div className="flex flex-col items-center border-l border-slate-200/20 pl-6 pr-2">
+          <span className={`text-[9px] font-bold uppercase tracking-wider mb-1 ${textMuted}`}>
+            Ano
+          </span>
+          <select
+            value={anoSelecionado}
+            onChange={(e) => setAnoSelecionado(e.target.value)}
+            className="bg-transparent font-black text-sm outline-none cursor-pointer text-center"
+            style={{ color: corEhClara(corPrimaria) ? '#0f172a' : corPrimaria }}
+          >
+            {Array.from(
+              { length: new Date().getFullYear() + 5 - 2024 + 1 },
+              (_, i) => (2024 + i).toString()
+            ).map((ano) => (
+              <option key={ano} value={ano} className="text-slate-800 bg-white">
+                {ano}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <button
+          type="button"
+          onClick={() => setAjustesAberto(!ajustesAberto)}
+          className="group relative flex items-center gap-2 rounded-full px-3 py-1.5 shadow-md transition-all duration-300 hover:scale-[1.02] hover:shadow-lg active:scale-[0.98] cursor-pointer"
+          style={estiloTemaPrimarioGradiente}
+          title="Abrir ajustes"
+        >
+          <span
+            className="absolute inset-0 rounded-full opacity-0 transition-opacity duration-300 group-hover:opacity-100"
+            style={{
+              backgroundColor: corEhClara(corPrimaria)
+                ? 'rgba(15, 23, 42, 0.08)'
+                : 'rgba(255, 255, 255, 0.10)',
+            }}
+          />
+
+          <span className="relative flex h-5 w-5 items-center justify-center">
+            <svg
+              className={`h-3.5 w-3.5 transition-transform duration-500 ${
+                ajustesAberto ? 'rotate-90' : 'rotate-0'
+              }`}
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2.4"
+                d="M10.325 4.317a1.724 1.724 0 013.35 0 1.724 1.724 0 002.573 1.066 1.724 1.724 0 012.451 2.451 1.724 1.724 0 001.066 2.573 1.724 1.724 0 010 3.35 1.724 1.724 0 00-1.066 2.573 1.724 1.724 0 01-2.451 2.451 1.724 1.724 0 00-2.573 1.066 1.724 1.724 0 01-3.35 0 1.724 1.724 0 00-2.573-1.066 1.724 1.724 0 01-2.451-2.451 1.724 1.724 0 00-1.066-2.573 1.724 1.724 0 010-3.35 1.724 1.724 0 001.066-2.573 1.724 1.724 0 012.451-2.451 1.724 1.724 0 002.573-1.066z"
+              />
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2.4"
+                d="M12 15.5A3.5 3.5 0 1012 8.5a3.5 3.5 0 000 7z"
+              />
+            </svg>
+          </span>
+
+          <span
+            className="relative h-4 w-px"
+            style={{
+              backgroundColor: corEhClara(corPrimaria)
+                ? 'rgba(15, 23, 42, 0.30)'
+                : 'rgba(255, 255, 255, 0.25)',
+            }}
+          />
+
+          <span className="relative text-xs font-bold leading-none">
+            Ajustes
+          </span>
+
+          <svg
+            className={`relative h-3 w-3 transition-transform duration-300 ${
+              ajustesAberto ? 'rotate-180' : 'rotate-0'
+            }`}
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth="2.7"
+              d="M19 9l-7 7-7-7"
+            />
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    {/* TEXTO DENTRO DA FAIXA INFERIOR */}
+<div
+  className="absolute bottom-0 left-0 right-0 h-6 px-8 flex items-center justify-between text-xs font-semibold z-10"
+  style={{
+    backgroundColor: corPrimaria,
+    color: textoSobreCorPrimaria,
+  }}
+>
+  <div className="flex items-center gap-2 min-w-0 ml-[130px]">
     <svg
-      className="w-4 h-4"
+      className="h-3.5 w-3.5 shrink-0"
       fill="none"
       stroke="currentColor"
       viewBox="0 0 24 24"
@@ -2938,171 +3175,62 @@ if (isTelaMobile) {
         strokeLinecap="round"
         strokeLinejoin="round"
         strokeWidth="2"
-        d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"
+        d="M5.121 17.804A9 9 0 1118.88 17.8M15 11a3 3 0 11-6 0 3 3 0 016 0z"
       />
     </svg>
 
-    <span>Início</span>
-  </button>
+    <span className="truncate font-black">
+      Olá, {nomeEmpresaAtual || 'Empresa'}
+    </span>
+  </div>
 
-  {['Balanço Geral', 'Gráficos', 'Por Categoria', 'Relatório'].map((item) => (
-    <button 
-      key={item} 
-      onClick={() => { setAbaAtiva(item); setMesAtivo(null); }}
-      className={`font-bold py-2.5 px-6 rounded-full transition-all text-sm uppercase tracking-wide border-2 cursor-pointer ${
-        abaAtiva === item 
-          ? 'shadow-md transform scale-105' 
-          : darkMode 
-            ? 'bg-slate-800 hover:bg-slate-700 text-slate-300 border-slate-700 shadow' 
-            : 'bg-white hover:bg-slate-50 text-slate-600 border-slate-200 shadow hover:shadow-md'
-      }`} 
+  <div className="hidden xl:flex items-center justify-end gap-4 min-w-0">
+    <div className="flex items-center gap-1.5 min-w-0">
+      <span className="font-black uppercase tracking-wide opacity-80">
+        Usuário:
+      </span>
+
+      <span className="truncate max-w-[360px]">
+        {emailUsuarioAtual || 'Usuário logado'}
+      </span>
+    </div>
+
+    <span
+      className="h-4 w-px"
       style={{
-        backgroundColor: abaAtiva === item ? corPrimaria : '',
-        borderColor: abaAtiva === item ? corPrimaria : '',
-        color: abaAtiva === item ? textoSobreCorPrimaria : '',
+        backgroundColor: corEhClara(corPrimaria)
+          ? 'rgba(15, 23, 42, 0.35)'
+          : 'rgba(255, 255, 255, 0.35)',
       }}
-      onMouseOver={e => { if(abaAtiva !== item) e.currentTarget.style.borderColor = corPrimaria }} 
-      onMouseOut={e => { if(abaAtiva !== item) e.currentTarget.style.borderColor = darkMode ? '#334155' : '#e2e8f0' }}
-    >
-      {item}
-    </button>
-  ))}
-</nav>
-
-        <div className="flex items-center space-x-6 relative">
-
-<button 
-  type="button"
-  onClick={() => setCalcAberta(!calcAberta)} 
-  className={`p-2 rounded-lg transition-colors border shadow-sm cursor-pointer ${
-    darkMode 
-      ? 'bg-slate-800 border-slate-700 hover:bg-slate-700' 
-      : 'bg-white border-slate-200 hover:bg-slate-50'
-  }`} 
-  title="Calculadora"
->
-  <svg
-    className="w-5 h-5"
-    style={{ color: corEhClara(corPrimaria) ? '#0f172a' : corPrimaria }}
-    fill="none"
-    stroke="currentColor"
-    viewBox="0 0 24 24"
-  >
-    <path
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      strokeWidth="2"
-      d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"
     />
-  </svg>
-</button>
 
-          <button
-  type="button"
-  onClick={handleLogout}
-  className={`px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wide border shadow-sm transition-colors cursor-pointer ${
-    darkMode
-      ? 'bg-slate-800 border-slate-700 text-slate-300 hover:bg-slate-700'
-      : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
-  }`}
->
-  Sair
-</button>
+    <div className="flex items-center gap-1.5 shrink-0">
+      <span className="font-black uppercase tracking-wide opacity-80">
+        Perfil:
+      </span>
 
-          {/* SELETOR DE ANO */}
-          <div className="flex flex-col items-center border-l border-slate-200/20 pl-6 pr-2">
-            <span className={`text-[9px] font-bold uppercase tracking-wider mb-1 ${textMuted}`}>Ano</span>
-            <select
-              value={anoSelecionado}
-              onChange={(e) => setAnoSelecionado(e.target.value)}
-              className="bg-transparent font-black text-sm outline-none cursor-pointer text-center"
-              style={{ color: corEhClara(corPrimaria) ? '#0f172a' : corPrimaria }}
-            >
-              {Array.from(
-                { length: (new Date().getFullYear() + 5) - 2024 + 1 }, 
-                (_, i) => (2024 + i).toString()
-              ).map(ano => (
-                <option key={ano} value={ano} className="text-slate-800 bg-white">{ano}</option>
-              ))}
-            </select>
-          </div>
+      <span>
+        {perfilUsuario === 'gestor_master'
+          ? 'Gestor Master'
+          : perfilUsuario === 'administrador'
+            ? 'Administrador'
+            : perfilUsuario === 'operador_completo'
+              ? 'Operador Completo'
+              : perfilUsuario === 'operador_simples'
+                ? 'Operador Simples'
+                : 'Não definido'}
+      </span>
+    </div>
+  </div>
+</div>
 
-          <button
-  type="button"
-  onClick={() => setAjustesAberto(!ajustesAberto)}
-  className="group relative flex items-center gap-2 rounded-full px-3 py-1.5 shadow-md transition-all duration-300 hover:scale-[1.02] hover:shadow-lg active:scale-[0.98] cursor-pointer"
-  style={estiloTemaPrimarioGradiente}
-  title="Abrir ajustes"
->
-  <span
-    className="absolute inset-0 rounded-full opacity-0 transition-opacity duration-300 group-hover:opacity-100"
-    style={{
-      backgroundColor: corEhClara(corPrimaria)
-        ? 'rgba(15, 23, 42, 0.08)'
-        : 'rgba(255, 255, 255, 0.10)',
-    }}
-  />
-
-  <span className="relative flex h-5 w-5 items-center justify-center">
-    <svg
-      className={`h-3.5 w-3.5 transition-transform duration-500 ${
-        ajustesAberto ? 'rotate-90' : 'rotate-0'
-      }`}
-      fill="none"
-      stroke="currentColor"
-      viewBox="0 0 24 24"
-    >
-      <path
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeWidth="2.4"
-        d="M10.325 4.317a1.724 1.724 0 013.35 0 1.724 1.724 0 002.573 1.066 1.724 1.724 0 012.451 2.451 1.724 1.724 0 001.066 2.573 1.724 1.724 0 010 3.35 1.724 1.724 0 00-1.066 2.573 1.724 1.724 0 01-2.451 2.451 1.724 1.724 0 00-2.573 1.066 1.724 1.724 0 01-3.35 0 1.724 1.724 0 00-2.573-1.066 1.724 1.724 0 01-2.451-2.451 1.724 1.724 0 00-1.066-2.573 1.724 1.724 0 010-3.35 1.724 1.724 0 001.066-2.573 1.724 1.724 0 012.451-2.451 1.724 1.724 0 002.573-1.066z"
-      />
-      <path
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeWidth="2.4"
-        d="M12 15.5A3.5 3.5 0 1012 8.5a3.5 3.5 0 000 7z"
-      />
-    </svg>
-  </span>
-
-  <span
-    className="relative h-4 w-px"
-    style={{
-      backgroundColor: corEhClara(corPrimaria)
-        ? 'rgba(15, 23, 42, 0.30)'
-        : 'rgba(255, 255, 255, 0.25)',
-    }}
-  />
-
-  <span className="relative text-xs font-bold leading-none">
-    Ajustes
-  </span>
-
-  <svg
-    className={`relative h-3 w-3 transition-transform duration-300 ${
-      ajustesAberto ? 'rotate-180' : 'rotate-0'
-    }`}
-    fill="none"
-    stroke="currentColor"
-    viewBox="0 0 24 24"
-  >
-    <path
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      strokeWidth="2.7"
-      d="M19 9l-7 7-7-7"
-    />
-  </svg>
-</button>
-        </div>
-      </header>
+  </div>
+</header>
 
       {/* ================= MENU DE AJUSTES GERAL ================= */}
 {ajustesAberto && (
   <div
-    className="print-ocultar fixed left-0 right-0 top-[92px] z-[1200] bg-slate-900 text-white p-4 shadow-xl border-t border-slate-700 transition-all"
+    className="print-ocultar fixed left-0 right-0 top-[116px] z-[1200] bg-slate-900 text-white p-4 shadow-xl border-t border-slate-700 transition-all"
     style={{ borderTopColor: corPrimaria, borderTopWidth: '2px' }}
   >
     {statusConfig !== 'idle' && (
