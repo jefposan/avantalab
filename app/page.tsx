@@ -3158,7 +3158,7 @@ if (isTelaMobile) {
 
     {/* TEXTO DENTRO DA FAIXA INFERIOR */}
 <div
-  className="absolute bottom-0 left-0 right-0 h-6 px-8 flex items-center justify-between text-xs font-semibold z-10"
+  className="absolute bottom-0 left-0 right-0 h-5 px-8 flex items-center justify-between text-xs font-semibold z-10"
   style={{
     backgroundColor: corPrimaria,
     color: textoSobreCorPrimaria,
