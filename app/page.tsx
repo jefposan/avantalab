@@ -118,7 +118,7 @@ const [editUsuarioPerfil, setEditUsuarioPerfil] = useState<
 const [modalUsuarios, setModalUsuarios] = useState(false);
   const [abaAtiva, setAbaAtiva] = useState('Dashboard');
   const [ajustesAberto, setAjustesAberto] = useState(false);
-  const [duplicadosAtivo, setDuplicadosAtivo] = useState(false);
+  const [duplicadosAtivo, setDuplicadosAtivo] = useState(true);
   const [darkMode, setDarkMode] = useState(false);
   const [painelAvisosAberto, setPainelAvisosAberto] = useState(false);
   const [ultimoBackupEm, setUltimoBackupEm] = useState<string | null>(null);
@@ -1822,6 +1822,32 @@ const handleCriarEmpresaInicial = async () => {
     setAuthErro(resultado.mensagem || 'Não foi possível criar o ambiente da empresa.');
     return;
   }
+
+  const empresaCriada = Array.isArray(resultado.data)
+    ? resultado.data[0]
+    : resultado.data;
+
+  const empresaCriadaId = empresaCriada?.id || empresaCriada?.empresa_id;
+
+  if (empresaCriadaId) {
+    const { error: erroConfigInicial } = await supabase
+      .from('configuracoes')
+      .upsert(
+        {
+          empresa_id: empresaCriadaId,
+          duplicados_ativo: true,
+        },
+        {
+          onConflict: 'empresa_id',
+        }
+      );
+
+    if (erroConfigInicial) {
+      console.error('Erro ao salvar configuração inicial de duplicados:', erroConfigInicial);
+    }
+  }
+
+  setDuplicadosAtivo(true);
 
   setAuthMensagem('Ambiente criado com sucesso. Carregando o sistema...');
 
@@ -4439,14 +4465,27 @@ if (isTelaMobile) {
 >
   <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-3 text-xs">
     
-    <div className="flex items-center gap-2 font-bold">
+    <div className="flex flex-wrap items-center justify-center gap-2 font-bold">
       <span className="text-sm tracking-wide">
         <span style={{ color: '#003E73' }}>AVANTA</span>
         <span style={{ color: '#00A6C8' }}>LAB</span>
       </span>
+
       <span className={darkMode ? 'text-slate-500' : 'text-slate-400'}>
         © {new Date().getFullYear()} Todos os direitos reservados.
       </span>
+
+      <span className={darkMode ? 'text-slate-600' : 'text-slate-300'}>|</span>
+
+      <a
+        href="https://www.instagram.com/avanta.lab"
+        target="_blank"
+        rel="noopener noreferrer"
+        className="transition-colors cursor-pointer hover:underline"
+        style={{ color: '#00A6C8' }}
+      >
+        @avanta.lab
+      </a>
     </div>
 
     <div className="flex items-center gap-4 font-semibold">
@@ -4458,9 +4497,6 @@ if (isTelaMobile) {
             ? 'hover:text-white'
             : 'hover:text-slate-800'
         }`}
-
-
-        
       >
         Termos de Uso
       </button>
