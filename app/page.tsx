@@ -100,6 +100,7 @@ const [modalSelecionarEmpresa, setModalSelecionarEmpresa] = useState(false);
   const [emailConfirmado, setEmailConfirmado] = useState(false);
   const [nomeEmpresaInicial, setNomeEmpresaInicial] = useState('');
 const [criandoEmpresaInicial, setCriandoEmpresaInicial] = useState(false);
+const [criandoNovaEmpresaLogada, setCriandoNovaEmpresaLogada] = useState(false);
   const [perfilUsuario, setPerfilUsuario] = useState<
   'gestor_master' | 'administrador' | 'operador_completo' | 'operador_simples' | null
 >(null);
@@ -342,6 +343,9 @@ useEffect(() => {
       );
 
       if (!empresasEncontradas || empresasEncontradas.length === 0) {
+  setCriandoNovaEmpresaLogada(false);
+  setAcessoNaoConfigurado(true);
+  setAcessoLiberado(false);
   const empresaFallback = await buscarEmpresaDoUsuario(
     sessaoAtual.session.user.id
   );
@@ -1920,6 +1924,9 @@ const abrirCriacaoNovaEmpresa = () => {
   setModalSelecionarEmpresa(false);
   setAjustesAberto(false);
   setPainelAvisosAberto(false);
+
+  setCriandoNovaEmpresaLogada(true);
+
   setAcessoNaoConfigurado(true);
   setAcessoLiberado(false);
 };
@@ -2168,12 +2175,15 @@ if (acessoNaoConfigurado) {
 </p>
 
 <h1 className="text-2xl font-black leading-tight text-slate-900">
-  Criar ambiente da empresa
+  {criandoNovaEmpresaLogada
+  ? 'Criar nova empresa'
+  : 'Criar ambiente da empresa'}
 </h1>
 
 <p className="mt-4 text-sm leading-relaxed text-slate-600">
-  Sua conta foi confirmada, mas ainda não existe uma empresa vinculada a este acesso.
-  Informe o nome da empresa para iniciar o ambiente de gestão.
+  {criandoNovaEmpresaLogada
+    ? 'Informe o nome da nova empresa para criar um novo ambiente de gestão.'
+    : 'Sua conta foi confirmada, mas ainda não existe uma empresa vinculada a este acesso. Informe o nome da empresa para iniciar o ambiente de gestão.'}
 </p>
 
 <div className="mt-6 text-left">
@@ -2209,20 +2219,39 @@ if (acessoNaoConfigurado) {
     disabled={criandoEmpresaInicial}
     className="h-13 rounded-xl bg-slate-900 px-4 py-3 font-bold text-white shadow-lg transition hover:bg-slate-800 cursor-pointer disabled:cursor-not-allowed disabled:opacity-60"
   >
-    {criandoEmpresaInicial ? 'Criando ambiente...' : 'Criar ambiente'}
+    {criandoEmpresaInicial ? 'Criando ambiente...' : 'Concluir'}
   </button>
 
   <button
-    type="button"
-    onClick={confirmarLogout}
-    className={`h-13 rounded-xl border px-4 py-3 font-bold shadow-sm transition cursor-pointer ${
-      darkMode
-        ? 'bg-red-950/30 border-red-800/50 text-red-300 hover:bg-red-900/50'
-        : 'bg-red-50 border-red-200 text-red-600 hover:bg-red-100'
-    }`}
-  >
-    Sair
-  </button>
+  type="button"
+  onClick={() => {
+    if (criandoNovaEmpresaLogada) {
+      setCriandoNovaEmpresaLogada(false);
+      setAcessoNaoConfigurado(false);
+      setAuthErro('');
+      setAuthMensagem('');
+      setNomeEmpresaInicial('');
+
+      if (empresasDoUsuario.length > 1 && !empresaId) {
+        setModalSelecionarEmpresa(true);
+        setAcessoLiberado(true);
+        return;
+      }
+
+      setAcessoLiberado(true);
+      return;
+    }
+
+    handleLogout();
+  }}
+  className={`h-13 rounded-xl border px-4 py-3 font-bold shadow-sm transition cursor-pointer ${
+    darkMode
+      ? 'bg-red-950/30 border-red-800/50 text-red-300 hover:bg-red-900/50'
+      : 'bg-red-50 border-red-200 text-red-600 hover:bg-red-100'
+  }`}
+>
+  {criandoNovaEmpresaLogada ? 'Cancelar' : 'Sair'}
+</button>
 </div>
         </div>
       </section>
