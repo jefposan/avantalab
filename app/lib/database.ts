@@ -25,64 +25,64 @@ function tratarErroSupabase(error: any) {
 
 
 
-export async function buscarEmpresaDoUsuario(usuarioId: string) {
-  const { data: usuarioAtual } = await supabase.auth.getUser();
+  export async function buscarEmpresaDoUsuario(usuarioId: string) {
+    const { data: usuarioAtual } = await supabase.auth.getUser();
 
-  const emailUsuario = usuarioAtual.user?.email?.toLowerCase() || '';
+    const emailUsuario = usuarioAtual.user?.email?.toLowerCase() || '';
 
-  let { data: vinculo, error: erroVinculo } = await supabase
-    .from('usuarios_empresa')
-    .select('id, empresa_id, user_id, nome, email, perfil, status')
-    .eq('user_id', usuarioId)
-    .eq('status', 'ativo')
-    .limit(1)
-    .maybeSingle();
-
-  if (erroVinculo) {
-  console.error('Erro ao buscar vínculo do usuário com empresa:', erroVinculo);
-  return null;
-}
-
-  if (!vinculo && emailUsuario) {
-    const { data: convitePendente, error: erroConvite } = await supabase
+    let { data: vinculo, error: erroVinculo } = await supabase
       .from('usuarios_empresa')
       .select('id, empresa_id, user_id, nome, email, perfil, status')
-      .eq('email', emailUsuario)
-      .is('user_id', null)
-      .in('status', ['pendente', 'ativo'])
+      .eq('user_id', usuarioId)
+      .eq('status', 'ativo')
       .limit(1)
       .maybeSingle();
 
-    if (erroConvite) {
-  console.error('Erro ao buscar convite pendente:', erroConvite);
-  return null;
-}
-
-    if (convitePendente) {
-      const { data: vinculoAtualizado, error: erroAtualizarConvite } = await supabase
-        .from('usuarios_empresa')
-        .update({
-          user_id: usuarioId,
-          status: 'ativo',
-          atualizado_em: new Date().toISOString(),
-        })
-        .eq('id', convitePendente.id)
-        .select('id, empresa_id, user_id, nome, email, perfil, status')
-        .single();
-
-      if (erroAtualizarConvite) {
-  console.error('Erro ao vincular convite ao usuário:', erroAtualizarConvite);
-  return null;
-}
-
-      vinculo = vinculoAtualizado;
-    }
+    if (erroVinculo) {
+    console.error('Erro ao buscar vínculo do usuário com empresa:', erroVinculo);
+    return null;
   }
 
-  if (!vinculo || !vinculo.empresa_id) {
-  console.warn('Usuário sem empresa vinculada.');
-  return null;
-}
+    if (!vinculo && emailUsuario) {
+      const { data: convitePendente, error: erroConvite } = await supabase
+        .from('usuarios_empresa')
+        .select('id, empresa_id, user_id, nome, email, perfil, status')
+        .eq('email', emailUsuario)
+        .is('user_id', null)
+        .in('status', ['pendente', 'ativo'])
+        .limit(1)
+        .maybeSingle();
+
+      if (erroConvite) {
+    console.error('Erro ao buscar convite pendente:', erroConvite);
+    return null;
+  }
+
+      if (convitePendente) {
+        const { data: vinculoAtualizado, error: erroAtualizarConvite } = await supabase
+          .from('usuarios_empresa')
+          .update({
+            user_id: usuarioId,
+            status: 'ativo',
+            atualizado_em: new Date().toISOString(),
+          })
+          .eq('id', convitePendente.id)
+          .select('id, empresa_id, user_id, nome, email, perfil, status')
+          .single();
+
+        if (erroAtualizarConvite) {
+    console.error('Erro ao vincular convite ao usuário:', erroAtualizarConvite);
+    return null;
+  }
+
+        vinculo = vinculoAtualizado;
+      }
+    }
+
+    if (!vinculo || !vinculo.empresa_id) {
+    console.warn('Usuário sem empresa vinculada.');
+    return null;
+  }
 
   const { data: empresa, error: erroEmpresa } = await supabase
     .from('empresas')
@@ -105,6 +105,98 @@ export async function buscarEmpresaDoUsuario(usuarioId: string) {
     perfil: vinculo.perfil,
     acessoId: vinculo.id,
   };
+}
+
+export async function buscarEmpresasDoUsuario(usuarioId: string) {
+  const { data: usuarioAtual } = await supabase.auth.getUser();
+
+  const emailUsuario = usuarioAtual.user?.email?.toLowerCase() || '';
+
+  // 1. Primeiro, vincula todos os convites pendentes pelo email do usuário logado
+  if (emailUsuario) {
+    const { data: convitesPendentes, error: erroConvites } = await supabase
+      .from('usuarios_empresa')
+      .select('id')
+      .eq('email', emailUsuario)
+      .is('user_id', null)
+      .in('status', ['pendente', 'ativo']);
+
+    if (erroConvites) {
+      console.error('Erro ao buscar convites pendentes:', erroConvites);
+      return [];
+    }
+
+    if (convitesPendentes && convitesPendentes.length > 0) {
+      const idsConvites = convitesPendentes.map((convite) => convite.id);
+
+      const { error: erroAtualizarConvites } = await supabase
+        .from('usuarios_empresa')
+        .update({
+          user_id: usuarioId,
+          status: 'ativo',
+          atualizado_em: new Date().toISOString(),
+        })
+        .in('id', idsConvites);
+
+      if (erroAtualizarConvites) {
+        console.error('Erro ao vincular convites ao usuário:', erroAtualizarConvites);
+        return [];
+      }
+    }
+  }
+
+  // 2. Busca todos os vínculos ativos do usuário
+  const { data: vinculos, error: erroVinculos } = await supabase
+    .from('usuarios_empresa')
+    .select('id, empresa_id, user_id, nome, email, perfil, status')
+    .eq('user_id', usuarioId)
+    .eq('status', 'ativo')
+    .order('nome', { ascending: true });
+
+  if (erroVinculos) {
+    console.error('Erro ao buscar empresas do usuário:', erroVinculos);
+    return [];
+  }
+
+  if (!vinculos || vinculos.length === 0) {
+    return [];
+  }
+
+  const empresasIds = vinculos
+    .map((vinculo) => vinculo.empresa_id)
+    .filter(Boolean);
+
+  // 3. Busca os dados das empresas vinculadas
+  const { data: empresas, error: erroEmpresas } = await supabase
+    .from('empresas')
+    .select('id, nome')
+    .in('id', empresasIds);
+
+  if (erroEmpresas) {
+    console.error('Erro ao buscar dados das empresas:', erroEmpresas);
+    return [];
+  }
+
+  // 4. Une vínculo + dados da empresa
+  return vinculos
+    .map((vinculo) => {
+      const empresa = empresas?.find((item) => item.id === vinculo.empresa_id);
+
+      if (!empresa) return null;
+
+      return {
+        id: empresa.id,
+        nome: empresa.nome,
+        empresa_id: empresa.id,
+        empresa_nome: empresa.nome,
+        perfil: vinculo.perfil,
+        status: vinculo.status,
+        acessoId: vinculo.id,
+        usuario_nome: vinculo.nome,
+        usuario_email: vinculo.email,
+      };
+    })
+    .filter(Boolean);
 }
 
 export async function buscarConfiguracoes(empresaId: string) {

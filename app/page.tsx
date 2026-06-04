@@ -23,6 +23,7 @@ import {
 } from './lib/formatters';
 import {
   buscarEmpresaDoUsuario,
+  buscarEmpresasDoUsuario,
   buscarConfiguracoes,
   buscarDespesasCadastradas,
   buscarLancamentos,
@@ -92,6 +93,9 @@ const [mostrarConfirmarNovaSenha, setMostrarConfirmarNovaSenha] = useState(false
   const [nomeEmpresaAtual, setNomeEmpresaAtual] = useState('');
 const [nomeUsuarioAtual, setNomeUsuarioAtual] = useState('');
 const [emailUsuarioAtual, setEmailUsuarioAtual] = useState('');
+const [empresasDoUsuario, setEmpresasDoUsuario] = useState<any[]>([]);
+const [empresaParaSelecionar, setEmpresaParaSelecionar] = useState<any | null>(null);
+const [modalSelecionarEmpresa, setModalSelecionarEmpresa] = useState(false);
   const [acessoNaoConfigurado, setAcessoNaoConfigurado] = useState(false);
   const [emailConfirmado, setEmailConfirmado] = useState(false);
   const [nomeEmpresaInicial, setNomeEmpresaInicial] = useState('');
@@ -242,6 +246,56 @@ useEffect(() => {
   verificarDispositivoMobile();
 }, []);
 
+const carregarEmpresaSelecionada = async (empresa: any) => {
+  setEmpresaId(empresa.id);
+  setNomeEmpresaAtual(empresa.nome || empresa.empresa_nome || '');
+  setPerfilUsuario(empresa.perfil || null);
+
+  const { data: usuarioLogado } = await supabase.auth.getUser();
+
+  setNomeUsuarioAtual(
+    usuarioLogado.user?.user_metadata?.nome ||
+      usuarioLogado.user?.email?.split('@')[0] ||
+      ''
+  );
+
+  setEmailUsuarioAtual(usuarioLogado.user?.email || '');
+
+  const config = await buscarConfiguracoes(empresa.id);
+  const despesas = await buscarDespesasCadastradas(empresa.id);
+
+  if (config) {
+    if (config.cor_primaria) {
+      setCorPrimaria(config.cor_primaria);
+      setCorTemporaria(config.cor_primaria);
+    }
+
+    if (config.dark_mode !== undefined) setDarkMode(config.dark_mode);
+    if (config.duplicados_ativo !== undefined) setDuplicadosAtivo(config.duplicados_ativo);
+    if (config.logo_url) setLogoUrl(config.logo_url);
+    if (config.logo_settings) setLogoSettings(config.logo_settings);
+
+    if (config.ultimo_backup_em) {
+      setUltimoBackupEm(config.ultimo_backup_em);
+    }
+  }
+
+  if (despesas && despesas.length > 0) {
+    setDespesasCadastradas(
+      despesas.map((d: any) => ({
+        nome: d.nome,
+        categoria: d.categoria,
+      }))
+    );
+  } else {
+    setDespesasCadastradas([]);
+  }
+
+  setAcessoNaoConfigurado(false);
+  setAcessoLiberado(true);
+  setModalSelecionarEmpresa(false);
+};
+
   // --- LOCAL STORAGE (LÓGICA SEPARADA POR ANO E CONFIGURAÇÕES) ---
   
   // 1. Carrega Configurações Globais
@@ -251,20 +305,21 @@ useEffect(() => {
   const carregarConfiguracoesIniciais = async () => {
     const paramsConfirmacao = new URLSearchParams(window.location.search);
 
-if (paramsConfirmacao.get('confirmado') === '1') {
-  await supabase.auth.signOut();
+    if (paramsConfirmacao.get('confirmado') === '1') {
+      await supabase.auth.signOut();
 
-  setEmailConfirmado(true);
-  setAcessoLiberado(false);
-  setAcessoNaoConfigurado(false);
-  setModoRedefinirSenha(false);
-  setModoAuth('login');
-  setMounted(true);
+      setEmailConfirmado(true);
+      setAcessoLiberado(false);
+      setAcessoNaoConfigurado(false);
+      setModoRedefinirSenha(false);
+      setModoAuth('login');
+      setMounted(true);
 
-  window.history.replaceState({}, document.title, window.location.pathname);
+      window.history.replaceState({}, document.title, window.location.pathname);
 
-  return;
-}
+      return;
+    }
+
     const { data: sessaoAtual } = await supabase.auth.getSession();
 
     let empresa = null;
@@ -282,57 +337,47 @@ if (paramsConfirmacao.get('confirmado') === '1') {
         setAcessoLiberado(true);
       }
 
-      empresa = await buscarEmpresaDoUsuario(sessaoAtual.session.user.id);
+      const empresasEncontradas = await buscarEmpresasDoUsuario(
+        sessaoAtual.session.user.id
+      );
 
-if (!empresa) {
-  setAcessoNaoConfigurado(true);
-  setAcessoLiberado(false);
-} else {
-  setAcessoNaoConfigurado(false);
-}
-
-    }
-
-
-    if (empresa) {
-  setEmpresaId(empresa.id);
-  setNomeEmpresaAtual(empresa.nome || '');
-  setPerfilUsuario(empresa.perfil || null);
-
-  const { data: usuarioLogado } = await supabase.auth.getUser();
-
-  setNomeUsuarioAtual(
-    usuarioLogado.user?.user_metadata?.nome ||
-      usuarioLogado.user?.email?.split('@')[0] ||
-      ''
+      if (!empresasEncontradas || empresasEncontradas.length === 0) {
+  const empresaFallback = await buscarEmpresaDoUsuario(
+    sessaoAtual.session.user.id
   );
 
-  setEmailUsuarioAtual(usuarioLogado.user?.email || '');
+  if (!empresaFallback) {
+    setAcessoNaoConfigurado(true);
+    setAcessoLiberado(false);
+  } else {
+    empresa = empresaFallback;
+    setAcessoNaoConfigurado(false);
+  }
+} else if (empresasEncontradas.length === 1) {
+  empresa = empresasEncontradas[0];
+  setAcessoNaoConfigurado(false);
 
-      const config = await buscarConfiguracoes(empresa.id);
-      const despesas = await buscarDespesasCadastradas(empresa.id);
+} else {
+  setEmpresaId(null);
+  setNomeEmpresaAtual('');
+  setPerfilUsuario(null);
+  setLogoUrl('');
+  setLogoSettings({ scale: 100, x: 0, y: 0 });
+  setDespesasCadastradas([]);
+  setLancamentos([]);
+  setFaturamentos({});
 
-      if (config) {
-        if (config.cor_primaria) {
-  setCorPrimaria(config.cor_primaria);
-  setCorTemporaria(config.cor_primaria);
+  setEmpresasDoUsuario(empresasEncontradas);
+  setEmpresaParaSelecionar(empresasEncontradas[0]);
+  setModalSelecionarEmpresa(true);
+  setAcessoNaoConfigurado(false);
+  setAcessoLiberado(true);
+  setMounted(true);
+  return;
 }
-        if (config.dark_mode !== undefined) setDarkMode(config.dark_mode);
-        if (config.duplicados_ativo !== undefined) setDuplicadosAtivo(config.duplicados_ativo);
-        if (config.logo_url) setLogoUrl(config.logo_url);
-        if (config.logo_settings) setLogoSettings(config.logo_settings);
-        if (config.ultimo_backup_em) {
-  setUltimoBackupEm(config.ultimo_backup_em);
-}
-      }
 
-      if (despesas && despesas.length > 0) {
-        setDespesasCadastradas(
-          despesas.map((d: any) => ({
-            nome: d.nome,
-            categoria: d.categoria,
-          }))
-        );
+      if (empresa) {
+        await carregarEmpresaSelecionada(empresa);
       }
     }
 
@@ -1856,6 +1901,29 @@ const handleCriarEmpresaInicial = async () => {
   }, 700);
 };
 
+const abrirCriacaoNovaEmpresa = () => {
+  const podeCriarEmpresa =
+    perfilUsuario === 'gestor_master' ||
+    empresasDoUsuario.some((empresa) => empresa.perfil === 'gestor_master');
+
+  if (!podeCriarEmpresa) {
+    abrirAviso(
+      'Acesso não permitido',
+      'Somente o Gestor Master pode criar uma nova empresa.'
+    );
+    return;
+  }
+
+  setNomeEmpresaInicial('');
+  setAuthErro('');
+  setAuthMensagem('');
+  setModalSelecionarEmpresa(false);
+  setAjustesAberto(false);
+  setPainelAvisosAberto(false);
+  setAcessoNaoConfigurado(true);
+  setAcessoLiberado(false);
+};
+
 const confirmarLogout = () => {
   abrirConfirmacao({
     titulo: 'Sair do sistema',
@@ -2156,6 +2224,143 @@ if (acessoNaoConfigurado) {
     Sair
   </button>
 </div>
+        </div>
+      </section>
+    </main>
+  );
+}
+
+if (modalSelecionarEmpresa) {
+  return (
+    <main className={`min-h-screen flex items-center justify-center px-4 py-10 font-sans ${
+      darkMode ? 'bg-slate-950 text-slate-100' : 'bg-slate-100 text-slate-800'
+    }`}>
+      <section
+        className={`w-full max-w-xl rounded-3xl border shadow-2xl overflow-hidden ${
+          darkMode
+            ? 'bg-slate-900 border-slate-700'
+            : 'bg-white border-slate-200'
+        }`}
+      >
+        <div
+          className="px-6 py-5"
+          style={{
+            backgroundColor: corPrimaria,
+            color: textoSobreCorPrimaria,
+          }}
+        >
+          <h2 className="text-lg font-black uppercase tracking-wide">
+            Selecionar empresa
+          </h2>
+
+          <p className="mt-1 text-sm opacity-85">
+            Escolha qual empresa deseja acessar neste momento.
+          </p>
+        </div>
+
+        <div className="p-6 space-y-4">
+          <div className="space-y-3">
+            {empresasDoUsuario.map((empresa) => {
+              const selecionada = empresaParaSelecionar?.id === empresa.id;
+
+              return (
+                <button
+                  key={empresa.id}
+                  type="button"
+                  onClick={() => setEmpresaParaSelecionar(empresa)}
+                  className={`w-full rounded-2xl border p-4 text-left transition cursor-pointer ${
+                    selecionada
+                      ? darkMode
+                        ? 'border-sky-400 bg-sky-950/40'
+                        : 'border-sky-400 bg-sky-50'
+                      : darkMode
+                        ? 'border-slate-700 bg-slate-800 hover:bg-slate-700'
+                        : 'border-slate-200 bg-slate-50 hover:bg-slate-100'
+                  }`}
+                >
+                  <div className="flex items-start justify-between gap-4">
+                    <div>
+                      <h3 className={`font-black ${
+                        darkMode ? 'text-white' : 'text-slate-800'
+                      }`}>
+                        {empresa.nome || empresa.empresa_nome}
+                      </h3>
+
+                      <p className={`mt-1 text-xs ${
+                        darkMode ? 'text-slate-400' : 'text-slate-500'
+                      }`}>
+                        Perfil:{' '}
+                        {empresa.perfil === 'gestor_master'
+                          ? 'Gestor Master'
+                          : empresa.perfil === 'administrador'
+                            ? 'Administrador'
+                            : empresa.perfil === 'operador_completo'
+                              ? 'Operador Completo'
+                              : empresa.perfil === 'operador_simples'
+                                ? 'Operador Simples'
+                                : 'Não definido'}
+                      </p>
+                    </div>
+
+                    <span
+                      className={`mt-1 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border ${
+                        selecionada
+                          ? 'border-sky-500 bg-sky-500'
+                          : darkMode
+                            ? 'border-slate-500'
+                            : 'border-slate-300'
+                      }`}
+                    >
+                      {selecionada && (
+                        <span className="h-2 w-2 rounded-full bg-white" />
+                      )}
+                    </span>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+
+          {empresasDoUsuario.some((empresa) => empresa.perfil === 'gestor_master') && (
+            <button
+              type="button"
+              onClick={abrirCriacaoNovaEmpresa}
+              className={`w-full rounded-xl border px-4 py-3 text-sm font-bold transition cursor-pointer ${
+                darkMode
+                  ? 'border-slate-700 bg-slate-800 text-slate-200 hover:bg-slate-700'
+                  : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50'
+              }`}
+            >
+              Criar nova empresa
+            </button>
+          )}
+
+          <div className="grid grid-cols-1 sm:grid-cols-[1fr_140px] gap-3 pt-2">
+            <button
+              type="button"
+              disabled={!empresaParaSelecionar}
+              onClick={async () => {
+                if (!empresaParaSelecionar) return;
+                await carregarEmpresaSelecionada(empresaParaSelecionar);
+              }}
+              className="rounded-xl px-4 py-3 text-sm font-black shadow transition hover:brightness-110 cursor-pointer disabled:cursor-not-allowed disabled:opacity-60"
+              style={estiloTemaPrimario}
+            >
+              Confirmar acesso
+            </button>
+
+            <button
+              type="button"
+              onClick={handleLogout}
+              className={`rounded-xl border px-4 py-3 text-sm font-bold transition cursor-pointer ${
+                darkMode
+                  ? 'border-red-800/50 bg-red-950/30 text-red-300 hover:bg-red-900/50'
+                  : 'border-red-200 bg-red-50 text-red-600 hover:bg-red-100'
+              }`}
+            >
+              Sair
+            </button>
+          </div>
         </div>
       </section>
     </main>
@@ -3589,6 +3794,16 @@ if (isTelaMobile) {
   setModalLogo(true);
 }} className="whitespace-nowrap bg-slate-800 hover:bg-slate-700 px-3 py-1.5 rounded shadow border border-slate-700 transition-colors text-xs">Adicionar Logo</button>
         
+        {perfilUsuario === 'gestor_master' && (
+  <button
+    type="button"
+    onClick={abrirCriacaoNovaEmpresa}
+    className="whitespace-nowrap bg-slate-800 hover:bg-slate-700 px-3 py-1.5 rounded shadow border border-slate-700 transition-colors text-xs cursor-pointer"
+  >
+    Criar nova empresa
+  </button>
+)}
+
         <div className="whitespace-nowrap relative overflow-hidden bg-slate-800 hover:bg-slate-700 px-3 py-1.5 rounded shadow border border-slate-700 transition-colors text-xs flex items-center gap-1.5">
   <span
     className="w-2.5 h-2.5 rounded-full"
