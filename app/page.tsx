@@ -155,10 +155,10 @@ const [modalUsuarios, setModalUsuarios] = useState(false);
   const [inputFaturamento, setInputFaturamento] = useState('');
   const [mesResumoDash, setMesResumoDash] = useState('JANEIRO');
 
-  const [despesasCadastradas, setDespesasCadastradas] = useState([
-    { nome: 'Energia Elétrica', categoria: 'Despesas Operacionais' },
-    { nome: 'Tráfego Pago (Ads)', categoria: 'Custos Variáveis' },
-  ]);
+  const [despesasCadastradas, setDespesasCadastradas] = useState<
+  { nome: string; categoria: string }[]
+>([]);
+
   const [novaBaseNome, setNovaBaseNome] = useState('');
   const [novaBaseCat, setNovaBaseCat] = useState('');
 
@@ -579,6 +579,22 @@ const lancamentosFiltradosDoMes = useMemo(() => {
 
   setValorNumericoRaw(numericValue);
   setFormValor(formatarMoeda(numericValue));
+};
+
+const abrirModalUsuarios = () => {
+  setUsuarioNome('');
+  setUsuarioLogin('');
+  setUsuarioSenha('');
+  setUsuarioPerfil('operador_simples');
+
+  setUsuarioEditandoId(null);
+  setEditUsuarioNome('');
+  setEditUsuarioEmail('');
+  setEditUsuarioNovaSenha('');
+  setMostrarEditUsuarioNovaSenha(false);
+  setEditUsuarioPerfil('operador_simples');
+
+  setModalUsuarios(true);
 };
 
 const carregarUsuariosEmpresa = async () => {
@@ -2021,26 +2037,28 @@ if (acessoNaoConfigurado) {
   </div>
 )}
 
-<button
-  type="button"
-  onClick={handleCriarEmpresaInicial}
-  disabled={criandoEmpresaInicial}
-  className="mt-6 w-full rounded-xl bg-slate-900 px-4 py-3 font-bold text-white shadow-lg transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
->
-  {criandoEmpresaInicial ? 'Criando ambiente...' : 'Criar ambiente'}
-</button>
+<div className="mt-6 grid grid-cols-1 sm:grid-cols-[1fr_140px] gap-3">
+  <button
+    type="button"
+    onClick={handleCriarEmpresaInicial}
+    disabled={criandoEmpresaInicial}
+    className="h-13 rounded-xl bg-slate-900 px-4 py-3 font-bold text-white shadow-lg transition hover:bg-slate-800 cursor-pointer disabled:cursor-not-allowed disabled:opacity-60"
+  >
+    {criandoEmpresaInicial ? 'Criando ambiente...' : 'Criar ambiente'}
+  </button>
 
-<button
-  type="button"
-  onClick={confirmarLogout}
-  className={`px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wide border shadow-sm transition-colors cursor-pointer ${
-    darkMode
-      ? 'bg-red-950/30 border-red-800/50 text-red-300 hover:bg-red-900/50'
-      : 'bg-red-50 border-red-200 text-red-600 hover:bg-red-100'
-  }`}
->
-  Sair
-</button>
+  <button
+    type="button"
+    onClick={confirmarLogout}
+    className={`h-13 rounded-xl border px-4 py-3 font-bold shadow-sm transition cursor-pointer ${
+      darkMode
+        ? 'bg-red-950/30 border-red-800/50 text-red-300 hover:bg-red-900/50'
+        : 'bg-red-50 border-red-200 text-red-600 hover:bg-red-100'
+    }`}
+  >
+    Sair
+  </button>
+</div>
         </div>
       </section>
     </main>
@@ -3441,7 +3459,7 @@ if (isTelaMobile) {
 {podeGerenciarUsuarios && (
   <button
     type="button"
-    onClick={() => setModalUsuarios(true)}
+    onClick={abrirModalUsuarios}
     className="whitespace-nowrap bg-slate-800 hover:bg-slate-700 px-3 py-1.5 rounded shadow border border-slate-700 transition-colors font-bold flex items-center gap-1.5 text-xs text-white cursor-pointer"
   >
     <svg

@@ -4,7 +4,5 @@ export const formatarMoeda = (valor: number) =>
 export const calcularLucro = (fat: number, despesas: number) => fat - despesas;
 
 // Aqui guardamos as regras de negócio que não mudam
-export const despesasPadrao = [
-  { nome: 'Energia Elétrica', categoria: 'Despesas Operacionais' },
-  { nome: 'Tráfego Pago (Ads)', categoria: 'Custos Variáveis' },
-];
+
+export const despesasPadrao: { nome: string; categoria: string }[] = [];
