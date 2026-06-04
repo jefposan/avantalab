@@ -120,6 +120,8 @@ const [modalUsuarios, setModalUsuarios] = useState(false);
   const [ajustesAberto, setAjustesAberto] = useState(false);
   const [duplicadosAtivo, setDuplicadosAtivo] = useState(false);
   const [darkMode, setDarkMode] = useState(false);
+  const [painelAvisosAberto, setPainelAvisosAberto] = useState(false);
+  const [ultimoBackupEm, setUltimoBackupEm] = useState<string | null>(null);
   const [corPrimaria, setCorPrimaria] = useState('#003E73');
   const [corTemporaria, setCorTemporaria] = useState('#003E73');
   const [statusConfig, setStatusConfig] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
@@ -319,6 +321,9 @@ if (!empresa) {
         if (config.duplicados_ativo !== undefined) setDuplicadosAtivo(config.duplicados_ativo);
         if (config.logo_url) setLogoUrl(config.logo_url);
         if (config.logo_settings) setLogoSettings(config.logo_settings);
+        if (config.ultimo_backup_em) {
+  setUltimoBackupEm(config.ultimo_backup_em);
+}
       }
 
       if (despesas && despesas.length > 0) {
@@ -1481,8 +1486,74 @@ const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
   XLSX.utils.book_append_sheet(wb, wsConfig, 'Configurações');
 
   const dataHoje = new Date().toISOString().split('T')[0];
-  XLSX.writeFile(wb, `backup_avantalab_${dataHoje}.xlsx`);
+XLSX.writeFile(wb, `backup_avantalab_${dataHoje}.xlsx`);
+
+const agora = new Date().toISOString();
+
+const { error: erroSalvarBackup } = await supabase
+  .from('configuracoes')
+  .upsert(
+    {
+      empresa_id: empresaId,
+      ultimo_backup_em: agora,
+    },
+    {
+      onConflict: 'empresa_id',
+    }
+  );
+
+if (erroSalvarBackup) {
+  console.error('Erro ao salvar data do backup:', erroSalvarBackup);
+  abrirAviso(
+    'Backup gerado',
+    'O arquivo foi gerado, mas não foi possível salvar a data do último backup.'
+  );
+  return;
+}
+
+setUltimoBackupEm(agora);
 };
+
+const backupPendente = useMemo(() => {
+  const hoje = new Date();
+
+  const primeiroDiaMesAtual = new Date(
+    hoje.getFullYear(),
+    hoje.getMonth(),
+    1
+  );
+
+  if (!ultimoBackupEm) {
+    return true;
+  }
+
+  const dataUltimoBackup = new Date(ultimoBackupEm);
+
+  return dataUltimoBackup < primeiroDiaMesAtual;
+}, [ultimoBackupEm]);
+
+const alertasSistema = useMemo(() => {
+  const alertas: {
+    id: string;
+    titulo: string;
+    mensagem: string;
+    acaoTexto?: string;
+    acao?: () => void | Promise<void>;
+  }[] = [];
+
+  if (backupPendente) {
+    alertas.push({
+      id: 'backup-pendente',
+      titulo: 'Backup recomendado',
+      mensagem:
+        'Recomendamos gerar um backup local dos dados da empresa após o encerramento de cada mês.',
+      acaoTexto: 'Gerar backup agora',
+      acao: gerarBackupExcel,
+    });
+  }
+
+  return alertas;
+}, [backupPendente, gerarBackupExcel]);
 
   const analiseDespesas = useMemo(() => {
   const totais: Record<string, { nome: string; valor: number }> = {};
@@ -3138,7 +3209,10 @@ if (isTelaMobile) {
 
         <button
           type="button"
-          onClick={() => setAjustesAberto(!ajustesAberto)}
+          onClick={() => {
+  setPainelAvisosAberto(false);
+  setAjustesAberto(!ajustesAberto);
+}}
           className="group relative flex items-center gap-2 rounded-full px-3 py-1.5 shadow-md transition-all duration-300 hover:scale-[1.02] hover:shadow-lg active:scale-[0.98] cursor-pointer"
           style={estiloTemaPrimarioGradiente}
           title="Abrir ajustes"
@@ -3205,6 +3279,50 @@ if (isTelaMobile) {
             />
           </svg>
         </button>
+
+<div className="relative">
+  <button
+    type="button"
+    onClick={() => {
+  setAjustesAberto(false);
+  setPainelAvisosAberto((prev) => !prev);
+}}
+    className={`relative flex h-9 w-9 items-center justify-center rounded-full border shadow-sm transition hover:scale-[1.03] active:scale-[0.98] cursor-pointer ${
+      darkMode
+        ? 'bg-slate-800 border-slate-700 text-slate-200 hover:bg-slate-700'
+        : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50'
+    }`}
+    title="Avisos do sistema"
+  >
+    <svg
+      className="h-4.5 w-4.5"
+      fill="none"
+      stroke="currentColor"
+      viewBox="0 0 24 24"
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth="2.2"
+        d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6 6 0 10-12 0v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0a3 3 0 11-6 0m6 0H9"
+      />
+    </svg>
+
+    {alertasSistema.length > 0 && (
+      <span
+        className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full px-1 text-[10px] font-black leading-none shadow-md"
+        style={{
+          backgroundColor: '#ef4444',
+          color: '#ffffff',
+        }}
+      >
+        {alertasSistema.length}
+      </span>
+    )}
+  </button>
+
+</div>
+
       </div>
     </div>
 
@@ -3278,6 +3396,85 @@ if (isTelaMobile) {
 
   </div>
 </header>
+
+{painelAvisosAberto && (
+  <>
+    <div
+      className="fixed inset-0 z-[8400] bg-black/40"
+      onClick={() => setPainelAvisosAberto(false)}
+    />
+
+    <div
+      className={`fixed right-8 top-[135px] w-80 overflow-hidden rounded-2xl border shadow-2xl z-[8500] ${
+        darkMode
+          ? 'bg-slate-900 border-slate-700 text-slate-100'
+          : 'bg-white border-slate-200 text-slate-800'
+      }`}
+    >
+      <div
+        className="px-4 py-3 border-b"
+        style={{
+          backgroundColor: corPrimaria,
+          color: textoSobreCorPrimaria,
+          borderColor: bordaSobreCorPrimaria,
+        }}
+      >
+        <h3 className="text-sm font-black uppercase tracking-wide">
+          Avisos do sistema
+        </h3>
+
+        <p className="text-[11px] opacity-80">
+          {alertasSistema.length > 0
+            ? `${alertasSistema.length} aviso(s) pendente(s)`
+            : 'Nenhum aviso pendente'}
+        </p>
+      </div>
+
+      <div className="max-h-80 overflow-y-auto p-3">
+        {alertasSistema.length === 0 ? (
+          <div className={`rounded-xl p-4 text-sm ${textMuted}`}>
+            Tudo certo por enquanto.
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {alertasSistema.map((aviso) => (
+              <div
+                key={aviso.id}
+                className={`rounded-xl border p-3 ${
+                  darkMode
+                    ? 'border-slate-700 bg-slate-800/70'
+                    : 'border-slate-200 bg-slate-50'
+                }`}
+              >
+                <h4 className={`text-sm font-black ${textStrong}`}>
+                  {aviso.titulo}
+                </h4>
+
+                <p className={`mt-1 text-xs leading-relaxed ${textMuted}`}>
+                  {aviso.mensagem}
+                </p>
+
+                {aviso.acao && aviso.acaoTexto && (
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      setPainelAvisosAberto(false);
+                      await aviso.acao?.();
+                    }}
+                    className="mt-3 w-full rounded-lg px-3 py-2 text-xs font-bold shadow-sm transition hover:brightness-110 cursor-pointer"
+                    style={estiloTemaPrimario}
+                  >
+                    {aviso.acaoTexto}
+                  </button>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  </>
+)}
 
       {/* ================= MENU DE AJUSTES GERAL ================= */}
 {ajustesAberto && (
