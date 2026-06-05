@@ -75,6 +75,7 @@ const [textoConfirmarConfirmacao, setTextoConfirmarConfirmacao] = useState("Conf
 const [modalAvisoAberto, setModalAvisoAberto] = useState(false);
 const [tituloAviso, setTituloAviso] = useState("");
 const [mensagemAviso, setMensagemAviso] = useState("");
+const [acaoDepoisDoAviso, setAcaoDepoisDoAviso] = useState<(() => void) | null>(null);
 const [acaoConfirmacao, setAcaoConfirmacao] = useState<(() => Promise<void> | void) | null>(null);
 const [confirmacaoCarregando, setConfirmacaoCarregando] = useState(false);
 
@@ -96,7 +97,11 @@ const [emailUsuarioAtual, setEmailUsuarioAtual] = useState('');
 const [empresasDoUsuario, setEmpresasDoUsuario] = useState<any[]>([]);
 const [empresaParaSelecionar, setEmpresaParaSelecionar] = useState<any | null>(null);
 const [modalSelecionarEmpresa, setModalSelecionarEmpresa] = useState(false);
-  const [acessoNaoConfigurado, setAcessoNaoConfigurado] = useState(false);
+const [modalEmpresasAberto, setModalEmpresasAberto] = useState(false);
+const [modalExcluirEmpresa, setModalExcluirEmpresa] = useState(false);
+const [nomeConfirmacaoExclusao, setNomeConfirmacaoExclusao] = useState('');
+const [excluindoEmpresa, setExcluindoEmpresa] = useState(false);
+const [acessoNaoConfigurado, setAcessoNaoConfigurado] = useState(false);
   const [emailConfirmado, setEmailConfirmado] = useState(false);
   const [nomeEmpresaInicial, setNomeEmpresaInicial] = useState('');
 const [criandoEmpresaInicial, setCriandoEmpresaInicial] = useState(false);
@@ -205,6 +210,23 @@ const podeExcluirLancamentos =
 
 const podeAcessarAjustes =
   perfilUsuario === 'gestor_master' || perfilUsuario === 'administrador';
+
+const podeCriarNovaEmpresa =
+  perfilUsuario === 'gestor_master' ||
+  empresasDoUsuario.some((empresa) => empresa.perfil === 'gestor_master');
+
+const podeTrocarEmpresa = empresasDoUsuario.length > 1;
+
+const perfilUsuarioFormatado =
+  perfilUsuario === 'gestor_master'
+    ? 'Gestor Master'
+    : perfilUsuario === 'administrador'
+      ? 'Administrador'
+      : perfilUsuario === 'operador_completo'
+        ? 'Operador Completo'
+        : perfilUsuario === 'operador_simples'
+          ? 'Operador Simples'
+          : 'Não definido';
 
 const textoSobreCorPrimaria = corEhClara(corPrimaria) ? '#0f172a' : '#ffffff';
 const bordaSobreCorPrimaria = corEhClara(corPrimaria)
@@ -1110,10 +1132,29 @@ const apagarDespesa = async (id: string) => {
   }
 };
 
-function abrirAviso(titulo: string, mensagem: string) {
+function abrirAviso(
+  titulo: string,
+  mensagem: string,
+  acaoDepois?: () => void
+) {
   setTituloAviso(titulo);
   setMensagemAviso(mensagem);
+  setAcaoDepoisDoAviso(() => acaoDepois || null);
   setModalAvisoAberto(true);
+}
+
+function fecharAviso() {
+  setModalAvisoAberto(false);
+
+  const acao = acaoDepoisDoAviso;
+
+  setAcaoDepoisDoAviso(null);
+
+  if (acao) {
+    setTimeout(() => {
+      acao();
+    }, 150);
+  }
 }
 
 function abrirConfirmacao({
@@ -1333,7 +1374,7 @@ const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
 
 
   // ================= FUNÇÃO DE BACKUP EXCEL =================
-  const gerarBackupExcel = async () => {
+  const gerarBackupExcel = async (abrirExclusaoDepois = false) => {
   if (!empresaId) {
   abrirAviso(
     'Empresa não carregada',
@@ -1390,7 +1431,13 @@ const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
   if (anosNoBanco.length === 0) {
   abrirAviso(
     'Backup sem dados',
-    'Nenhum dado foi encontrado para gerar o backup.'
+    'Nenhum dado foi encontrado para gerar o backup.',
+    abrirExclusaoDepois
+      ? () => {
+          setNomeConfirmacaoExclusao('');
+          setModalExcluirEmpresa(true);
+        }
+      : undefined
   );
   return;
 }
@@ -1561,6 +1608,17 @@ if (erroSalvarBackup) {
 }
 
 setUltimoBackupEm(agora);
+
+if (abrirExclusaoDepois) {
+  abrirAviso(
+    'Backup gerado',
+    'O backup foi gerado com sucesso. Agora confirme a exclusão digitando exatamente o nome da empresa.',
+    () => {
+      setNomeConfirmacaoExclusao('');
+      setModalExcluirEmpresa(true);
+    }
+  );
+}
 };
 
 const backupPendente = useMemo(() => {
@@ -1931,6 +1989,147 @@ const abrirCriacaoNovaEmpresa = () => {
   setAcessoLiberado(false);
 };
 
+const abrirTrocaEmpresa = () => {
+  if (empresasDoUsuario.length <= 1) {
+    abrirAviso(
+      'Troca indisponível',
+      'Este usuário possui acesso a apenas uma empresa no momento.'
+    );
+    return;
+  }
+
+  setAjustesAberto(false);
+  setPainelAvisosAberto(false);
+  setEmpresaParaSelecionar(null);
+  setModalSelecionarEmpresa(true);
+};
+
+const confirmarExclusaoEmpresaAtual = () => {
+  if (perfilUsuario !== 'gestor_master') {
+    abrirAviso(
+      'Acesso não permitido',
+      'Somente o Gestor Master pode excluir a empresa atual.'
+    );
+    return;
+  }
+
+  if (!empresaId || !nomeEmpresaAtual) {
+    abrirAviso(
+      'Empresa não carregada',
+      'Não foi possível identificar a empresa atual.'
+    );
+    return;
+  }
+
+  abrirConfirmacao({
+  titulo: 'Backup antes da exclusão',
+  mensagem:
+    `Antes de excluir a empresa "${nomeEmpresaAtual}", o sistema vai tentar gerar um backup local dos dados.\n\nSe não houver dados para backup, você verá um aviso. Depois que fechar o aviso, a tela final de confirmação será aberta.\n\nDeseja continuar?`,
+  textoConfirmar: 'Fazer backup',
+  acao: async () => {
+    setModalConfirmacaoAberto(false);
+
+    await new Promise((resolve) => setTimeout(resolve, 150));
+
+    await gerarBackupExcel(true);
+  },
+});
+};
+
+const executarExclusaoEmpresaAtual = async () => {
+  if (!empresaId || !nomeEmpresaAtual) {
+    abrirAviso(
+      'Empresa não carregada',
+      'Não foi possível identificar a empresa atual.'
+    );
+    return;
+  }
+
+  const nomeDigitado = nomeConfirmacaoExclusao.trim();
+
+  if (nomeDigitado !== nomeEmpresaAtual) {
+    abrirAviso(
+      'Nome incorreto',
+      'Digite exatamente o nome da empresa para confirmar a exclusão.'
+    );
+    return;
+  }
+
+  setExcluindoEmpresa(true);
+
+  const { error } = await supabase.rpc('excluir_empresa_rpc', {
+    p_empresa_id: empresaId,
+    p_nome_confirmacao: nomeDigitado,
+  });
+
+  if (error) {
+    console.error('Erro ao excluir empresa:', error);
+
+    setExcluindoEmpresa(false);
+
+    abrirAviso(
+      'Erro ao excluir empresa',
+      error.message || 'Não foi possível excluir a empresa atual.'
+    );
+
+    return;
+  }
+
+  const { data: usuarioLogado } = await supabase.auth.getUser();
+
+  if (!usuarioLogado.user) {
+    setExcluindoEmpresa(false);
+    await handleLogout();
+    return;
+  }
+
+  const empresasRestantes = await buscarEmpresasDoUsuario(usuarioLogado.user.id);
+
+  setModalExcluirEmpresa(false);
+  setNomeConfirmacaoExclusao('');
+  setExcluindoEmpresa(false);
+
+  setEmpresaId(null);
+  setNomeEmpresaAtual('');
+  setPerfilUsuario(null);
+  setLogoUrl('');
+  setLogoSettings({ scale: 100, x: 0, y: 0 });
+  setDespesasCadastradas([]);
+  setLancamentos([]);
+  setFaturamentos({});
+
+  if (!empresasRestantes || empresasRestantes.length === 0) {
+    setEmpresasDoUsuario([]);
+    setCriandoNovaEmpresaLogada(false);
+    setAcessoNaoConfigurado(true);
+    setAcessoLiberado(false);
+    return;
+  }
+
+  setEmpresasDoUsuario(empresasRestantes);
+
+  if (empresasRestantes.length === 1) {
+    await carregarEmpresaSelecionada(empresasRestantes[0]);
+
+    abrirAviso(
+      'Empresa excluída',
+      'A empresa foi excluída com sucesso. O sistema carregou a empresa restante.'
+    );
+
+    return;
+  }
+
+  setEmpresaParaSelecionar(empresasRestantes[0]);
+  setModalSelecionarEmpresa(true);
+  setAcessoNaoConfigurado(false);
+  setAcessoLiberado(true);
+
+  abrirAviso(
+    'Empresa excluída',
+    'A empresa foi excluída com sucesso. Selecione outra empresa para continuar.'
+  );
+};
+
 const confirmarLogout = () => {
   abrirConfirmacao({
     titulo: 'Sair do sistema',
@@ -1940,6 +2139,17 @@ const confirmarLogout = () => {
       await handleLogout();
     },
   });
+};
+
+const sairDaSelecaoEmpresa = async () => {
+  setModalSelecionarEmpresa(false);
+  setEmpresaParaSelecionar(null);
+  setEmpresasDoUsuario([]);
+  setAcessoLiberado(false);
+  setAcessoNaoConfigurado(false);
+  setCriandoNovaEmpresaLogada(false);
+
+  await handleLogout();
 };
 
 const handleLogout = async () => {
@@ -2350,20 +2560,6 @@ if (modalSelecionarEmpresa) {
             })}
           </div>
 
-          {empresasDoUsuario.some((empresa) => empresa.perfil === 'gestor_master') && (
-            <button
-              type="button"
-              onClick={abrirCriacaoNovaEmpresa}
-              className={`w-full rounded-xl border px-4 py-3 text-sm font-bold transition cursor-pointer ${
-                darkMode
-                  ? 'border-slate-700 bg-slate-800 text-slate-200 hover:bg-slate-700'
-                  : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50'
-              }`}
-            >
-              Criar nova empresa
-            </button>
-          )}
-
           <div className="grid grid-cols-1 sm:grid-cols-[1fr_140px] gap-3 pt-2">
             <button
               type="button"
@@ -2380,14 +2576,14 @@ if (modalSelecionarEmpresa) {
 
             <button
               type="button"
-              onClick={handleLogout}
+              onClick={sairDaSelecaoEmpresa}
               className={`rounded-xl border px-4 py-3 text-sm font-bold transition cursor-pointer ${
                 darkMode
                   ? 'border-red-800/50 bg-red-950/30 text-red-300 hover:bg-red-900/50'
                   : 'border-red-200 bg-red-50 text-red-600 hover:bg-red-100'
               }`}
             >
-              Sair
+              Cancelar
             </button>
           </div>
         </div>
@@ -2487,7 +2683,7 @@ if (isTelaMobile) {
       <div className="mt-5 flex justify-end">
         <button
           type="button"
-          onClick={() => setModalAvisoAberto(false)}
+          onClick={fecharAviso}
           className="rounded-xl bg-slate-900 px-5 py-2.5 text-sm font-black uppercase tracking-wide text-white shadow-md transition hover:bg-slate-800 active:scale-[0.98] cursor-pointer"
         >
           Entendi
@@ -2907,6 +3103,196 @@ if (isTelaMobile) {
   aoConfirmar={confirmarAcao}
 />
 
+{modalExcluirEmpresa && (
+  <div className="fixed inset-0 z-[7000] flex items-center justify-center bg-black/60 px-4">
+    <div
+      className={`w-full max-w-lg rounded-2xl border p-6 shadow-2xl ${
+        darkMode
+          ? 'bg-slate-800 border-slate-700'
+          : 'bg-white border-slate-200'
+      }`}
+    >
+      <div className="mb-5">
+        <p className="text-xs font-black uppercase tracking-[0.18em] text-red-500">
+          Exclusão definitiva
+        </p>
+
+        <h2 className={`mt-2 text-2xl font-black ${
+          darkMode ? 'text-white' : 'text-slate-800'
+        }`}>
+          Confirmar exclusão da empresa
+        </h2>
+
+        <p className={`mt-3 text-sm leading-relaxed ${
+          darkMode ? 'text-slate-300' : 'text-slate-600'
+        }`}>
+          O backup já foi solicitado. Agora, para excluir definitivamente a empresa,
+          digite exatamente o nome abaixo:
+        </p>
+
+        <div className={`mt-4 rounded-xl border px-4 py-3 text-sm font-black ${
+          darkMode
+            ? 'border-slate-600 bg-slate-900 text-white'
+            : 'border-slate-200 bg-slate-50 text-slate-800'
+        }`}>
+          {nomeEmpresaAtual}
+        </div>
+      </div>
+
+      <label className={`mb-1 block text-sm font-bold ${
+        darkMode ? 'text-slate-200' : 'text-slate-700'
+      }`}>
+        Digite o nome da empresa
+      </label>
+
+      <input
+        type="text"
+        value={nomeConfirmacaoExclusao}
+        onChange={(e) => setNomeConfirmacaoExclusao(e.target.value)}
+        placeholder={nomeEmpresaAtual}
+        className={`w-full rounded-xl border px-4 py-3 text-sm font-semibold outline-none transition ${
+          darkMode
+            ? 'border-slate-600 bg-slate-900 text-white focus:border-red-500'
+            : 'border-slate-300 bg-white text-slate-800 focus:border-red-500'
+        }`}
+      />
+
+      <p className={`mt-3 text-xs leading-relaxed ${
+        darkMode ? 'text-slate-400' : 'text-slate-500'
+      }`}>
+        Esta ação é irreversível e removerá lançamentos, despesas cadastradas,
+        configurações, vínculos de usuários e a empresa atual.
+      </p>
+
+      <div className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-2">
+        <button
+          type="button"
+          onClick={() => {
+            if (excluindoEmpresa) return;
+
+            setModalExcluirEmpresa(false);
+            setNomeConfirmacaoExclusao('');
+          }}
+          disabled={excluindoEmpresa}
+          className={`rounded-xl px-4 py-3 text-sm font-black uppercase tracking-wide transition cursor-pointer ${
+  darkMode
+    ? 'bg-slate-700 text-slate-200 hover:bg-slate-600'
+    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+} disabled:cursor-not-allowed disabled:opacity-60`}
+        >
+          Cancelar
+        </button>
+
+        <button
+          type="button"
+          onClick={executarExclusaoEmpresaAtual}
+          disabled={
+            excluindoEmpresa ||
+            nomeConfirmacaoExclusao.trim() !== nomeEmpresaAtual
+          }
+          className="rounded-xl bg-red-600 px-4 py-3 text-sm font-black uppercase tracking-wide text-white transition hover:bg-red-700 cursor-pointer disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          {excluindoEmpresa ? 'Excluindo...' : 'Excluir definitivamente'}
+        </button>
+      </div>
+    </div>
+  </div>
+)}
+
+{modalEmpresasAberto && (
+  <div className="fixed inset-0 z-[5500] flex items-center justify-center bg-black/50 px-4">
+    <div
+      className={`w-full max-w-md rounded-2xl border p-6 shadow-2xl ${
+        darkMode
+          ? 'bg-slate-800 border-slate-700'
+          : 'bg-white border-slate-200'
+      }`}
+    >
+      <div className="mb-5">
+        <p className={`text-xs font-black uppercase tracking-[0.18em] ${
+          darkMode ? 'text-slate-400' : 'text-slate-400'
+        }`}>
+          Empresas
+        </p>
+
+        <h2 className={`mt-2 text-2xl font-black ${
+          darkMode ? 'text-white' : 'text-slate-800'
+        }`}>
+          Gerenciar empresa
+        </h2>
+
+        <p className={`mt-3 text-sm font-semibold ${
+          darkMode ? 'text-slate-300' : 'text-slate-600'
+        }`}>
+          Empresa atual: {nomeEmpresaAtual || 'Empresa não carregada'}
+        </p>
+
+        <p className={`mt-1 text-sm font-semibold ${
+          darkMode ? 'text-slate-400' : 'text-slate-500'
+        }`}>
+          Perfil: {perfilUsuarioFormatado}
+        </p>
+      </div>
+
+      <div className="space-y-3">
+        {podeCriarNovaEmpresa && (
+          <button
+            type="button"
+            onClick={() => {
+              setModalEmpresasAberto(false);
+              abrirCriacaoNovaEmpresa();
+            }}
+            className="w-full rounded-xl bg-emerald-600 px-4 py-3 text-sm font-black uppercase tracking-wide text-white transition hover:bg-emerald-700 cursor-pointer"
+          >
+            Criar nova empresa
+          </button>
+        )}
+
+        <button
+          type="button"
+          onClick={() => {
+            setModalEmpresasAberto(false);
+            abrirTrocaEmpresa();
+          }}
+          disabled={!podeTrocarEmpresa}
+          className={`w-full rounded-xl px-4 py-3 text-sm font-black uppercase tracking-wide transition ${
+            podeTrocarEmpresa
+              ? 'bg-blue-600 text-white hover:bg-blue-700 cursor-pointer'
+              : 'cursor-not-allowed bg-slate-200 text-slate-400'
+          }`}
+        >
+          Trocar empresa
+        </button>
+
+        {perfilUsuario === 'gestor_master' && (
+          <button
+            type="button"
+            onClick={() => {
+              setModalEmpresasAberto(false);
+              confirmarExclusaoEmpresaAtual();
+            }}
+            className="w-full rounded-xl bg-red-600 px-4 py-3 text-sm font-black uppercase tracking-wide text-white transition hover:bg-red-700 cursor-pointer"
+          >
+            Excluir empresa atual
+          </button>
+        )}
+      </div>
+
+      <button
+        type="button"
+        onClick={() => setModalEmpresasAberto(false)}
+        className={`mt-5 w-full rounded-xl px-4 py-3 text-sm font-black uppercase tracking-wide transition cursor-pointer ${
+          darkMode
+            ? 'bg-slate-700 text-slate-200 hover:bg-slate-600'
+            : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+        }`}
+      >
+        Cancelar
+      </button>
+    </div>
+  </div>
+)}
+
 {modalAvisoAberto && (
   <div className="fixed inset-0 z-[6000] flex items-center justify-center bg-black/50 px-4">
     <div
@@ -2946,13 +3332,13 @@ if (isTelaMobile) {
 
       <div className="mt-5 flex justify-end">
         <button
-          type="button"
-          onClick={() => setModalAvisoAberto(false)}
-          className="rounded-xl px-5 py-2.5 text-sm font-black uppercase tracking-wide shadow-md transition hover:brightness-110 active:scale-[0.98] cursor-pointer"
-          style={estiloTemaPrimario}
-        >
-          Entendi
-        </button>
+  type="button"
+  onClick={fecharAviso}
+  className="rounded-xl px-5 py-2.5 text-sm font-black uppercase tracking-wide shadow-md transition hover:brightness-110 active:scale-[0.98] cursor-pointer"
+  style={estiloTemaPrimario}
+>
+  Entendi
+</button>
       </div>
     </div>
   </div>
@@ -3742,22 +4128,6 @@ if (isTelaMobile) {
     className="print-ocultar fixed left-0 right-0 top-[116px] z-[1200] bg-slate-900 text-white p-4 shadow-xl border-t border-slate-700 transition-all"
     style={{ borderTopColor: corPrimaria, borderTopWidth: '2px' }}
   >
-    {statusConfig !== 'idle' && (
-      <div
-        className={`mb-3 mx-auto max-w-7xl rounded-full px-3 py-1.5 text-center text-xs font-bold ${
-          statusConfig === 'saving'
-            ? 'bg-sky-50 text-sky-700'
-            : statusConfig === 'saved'
-              ? 'bg-emerald-50 text-emerald-700'
-              : 'bg-red-50 text-red-700'
-        }`}
-      >
-        {statusConfig === 'saving' && 'Salvando configurações...'}
-        {statusConfig === 'saved' && 'Configurações salvas'}
-        {statusConfig === 'error' && 'Erro ao salvar configurações'}
-      </div>
-    )}
-
     {/* Adicionado overflow-x-auto e removido flex-wrap para forçar 1 linha */}
     <div className="flex justify-between items-center max-w-7xl mx-auto gap-4 overflow-x-auto custom-scroll pb-1">
       
@@ -3822,18 +4192,8 @@ if (isTelaMobile) {
 
   setModalLogo(true);
 }} className="whitespace-nowrap bg-slate-800 hover:bg-slate-700 px-3 py-1.5 rounded shadow border border-slate-700 transition-colors text-xs">Adicionar Logo</button>
-        
-        {perfilUsuario === 'gestor_master' && (
-  <button
-    type="button"
-    onClick={abrirCriacaoNovaEmpresa}
-    className="whitespace-nowrap bg-slate-800 hover:bg-slate-700 px-3 py-1.5 rounded shadow border border-slate-700 transition-colors text-xs cursor-pointer"
-  >
-    Criar nova empresa
-  </button>
-)}
 
-        <div className="whitespace-nowrap relative overflow-hidden bg-slate-800 hover:bg-slate-700 px-3 py-1.5 rounded shadow border border-slate-700 transition-colors text-xs flex items-center gap-1.5">
+<div className="whitespace-nowrap relative overflow-hidden bg-slate-800 hover:bg-slate-700 px-3 py-1.5 rounded shadow border border-slate-700 transition-colors text-xs flex items-center gap-1.5">
   <span
     className="w-2.5 h-2.5 rounded-full"
     style={{ backgroundColor: corPrimaria }}
@@ -3864,8 +4224,8 @@ if (isTelaMobile) {
     />
   )}
 </div>
-        
-        <div className="whitespace-nowrap flex items-center space-x-2 bg-slate-800 px-3 py-1.5 rounded shadow border border-slate-700 cursor-pointer" onClick={() => setDarkMode(!darkMode)}>
+
+<div className="whitespace-nowrap flex items-center space-x-2 bg-slate-800 px-3 py-1.5 rounded shadow border border-slate-700 cursor-pointer" onClick={() => setDarkMode(!darkMode)}>
           <span className="text-xs">Modo Escuro</span>
           <div
   className={`w-7 h-3.5 rounded-full relative transition-colors ${
@@ -3947,6 +4307,17 @@ if (isTelaMobile) {
   </button>
 )}
 
+<button
+  type="button"
+  onClick={() => {
+    setAjustesAberto(false);
+    setModalEmpresasAberto(true);
+  }}
+  className="whitespace-nowrap bg-slate-800 hover:bg-slate-700 px-3 py-1.5 rounded shadow border border-slate-700 transition-colors text-xs cursor-pointer"
+>
+  Gerenciar empresa
+</button>
+
               {/* BOTÃO DE BACKUP EXCEL */}
               <button 
                 onClick={() => {
@@ -3967,6 +4338,22 @@ if (isTelaMobile) {
               </button>
             </div>
           </div>
+
+          {statusConfig !== 'idle' && (
+            <div
+              className={`mt-2 rounded-full px-3 py-0.5 text-center text-[10px] font-bold leading-tight ${
+                statusConfig === 'saving'
+                  ? 'bg-sky-50 text-sky-700'
+                  : statusConfig === 'saved'
+                    ? 'bg-emerald-50 text-emerald-700'
+                    : 'bg-red-50 text-red-700'
+              }`}
+            >
+              {statusConfig === 'saving' && 'Salvando configurações.'}
+              {statusConfig === 'saved' && 'Configurações salvas'}
+              {statusConfig === 'error' && 'Erro ao salvar configurações'}
+            </div>
+          )}
         </div>
       )}
 
