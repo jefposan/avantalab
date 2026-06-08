@@ -583,8 +583,7 @@ export async function atualizarUsuarioEmpresa({
   acessoId: string;
   nome: string;
   email: string;
-  perfil: 'administrador' | 'operador_completo' | 'operador_simples';
-}) {
+perfil: 'gestor_master' | 'administrador' | 'operador_completo' | 'operador_simples';}) {
   const { data, error } = await supabase.rpc('atualizar_usuario_empresa_rpc', {
     p_acesso_id: acessoId,
     p_nome: nome.trim(),

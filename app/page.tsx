@@ -75,6 +75,7 @@ const [textoConfirmarConfirmacao, setTextoConfirmarConfirmacao] = useState("Conf
 const [modalAvisoAberto, setModalAvisoAberto] = useState(false);
 const [tituloAviso, setTituloAviso] = useState("");
 const [mensagemAviso, setMensagemAviso] = useState("");
+const [tipoAviso, setTipoAviso] = useState<'alerta' | 'erro' | 'sucesso'>('alerta');
 const [acaoDepoisDoAviso, setAcaoDepoisDoAviso] = useState<(() => void) | null>(null);
 const [acaoConfirmacao, setAcaoConfirmacao] = useState<(() => Promise<void> | void) | null>(null);
 const [confirmacaoCarregando, setConfirmacaoCarregando] = useState(false);
@@ -123,8 +124,8 @@ const [editUsuarioEmail, setEditUsuarioEmail] = useState('');
 const [editUsuarioNovaSenha, setEditUsuarioNovaSenha] = useState('');
 const [mostrarEditUsuarioNovaSenha, setMostrarEditUsuarioNovaSenha] = useState(false);
 const [editUsuarioPerfil, setEditUsuarioPerfil] = useState<
-  'administrador' | 'operador_completo' | 'operador_simples'
->('operador_simples');
+  'gestor_master' | 'administrador' | 'operador_completo' | 'operador_simples'
+>('operador_simples');  
 const [modalUsuarios, setModalUsuarios] = useState(false);
   const [abaAtiva, setAbaAtiva] = useState('Dashboard');
   const [ajustesAberto, setAjustesAberto] = useState(false);
@@ -327,8 +328,27 @@ const carregarEmpresaSelecionada = async (empresa: any) => {
 useEffect(() => {
   const carregarConfiguracoesIniciais = async () => {
     const paramsConfirmacao = new URLSearchParams(window.location.search);
+const hashConfirmacao = new URLSearchParams(window.location.hash.replace('#', ''));
 
-    if (paramsConfirmacao.get('confirmado') === '1') {
+const modoUrl = paramsConfirmacao.get('modo');
+const tipoUrl = paramsConfirmacao.get('type') || hashConfirmacao.get('type');
+
+if (modoUrl === 'redefinir-senha' || tipoUrl === 'recovery') {
+  setModoRedefinirSenha(true);
+  setAcessoLiberado(false);
+  setAcessoNaoConfigurado(false);
+  setModalSelecionarEmpresa(false);
+  setEmpresaId(null);
+  setNomeEmpresaAtual('');
+  setPerfilUsuario(null);
+  setAuthErro('');
+  setAuthMensagem('');
+  setMounted(true);
+
+  return;
+}
+
+if (paramsConfirmacao.get('confirmado') === '1') {
       await supabase.auth.signOut();
 
       setEmailConfirmado(true);
@@ -354,11 +374,21 @@ useEffect(() => {
       const tipo = params.get('type') || hash.get('type');
 
       if (tipo === 'recovery') {
-        setModoRedefinirSenha(true);
-        setAcessoLiberado(false);
-      } else {
-        setAcessoLiberado(true);
-      }
+  setModoRedefinirSenha(true);
+  setAcessoLiberado(false);
+  setAcessoNaoConfigurado(false);
+  setModalSelecionarEmpresa(false);
+  setEmpresaId(null);
+  setNomeEmpresaAtual('');
+  setPerfilUsuario(null);
+  setAuthErro('');
+  setAuthMensagem('');
+  setMounted(true);
+
+  return;
+}
+
+setAcessoLiberado(true);
 
       const empresasEncontradas = await buscarEmpresasDoUsuario(
         sessaoAtual.session.user.id
@@ -776,19 +806,28 @@ const bloquearAcessoUsuario = async (acessoId: string) => {
 };
 
 const iniciarEdicaoUsuario = (usuario: any) => {
-  if (usuario.perfil === 'gestor_master') {
+  const loginUsuario = (usuario.login || usuario.email || '').toLowerCase();
+  const emailAtual = (emailUsuarioAtual || '').toLowerCase();
+
+  const usuarioEhAtual =
+    loginUsuario === emailAtual ||
+    usuario.email?.toLowerCase() === emailAtual;
+
+  if (usuario.perfil === 'gestor_master' && !usuarioEhAtual) {
     abrirAviso(
-  'Acesso não permitido',
-  'O gestor master não pode ser editado por esta tela.'
-);
+      'Acesso não permitido',
+      'O gestor master só pode editar o próprio acesso.'
+    );
     return;
   }
 
   setUsuarioEditandoId(usuario.id);
   setEditUsuarioNome(usuario.nome || '');
-  setEditUsuarioEmail(usuario.email || '');
+  setEditUsuarioEmail(usuario.login || usuario.email || '');
+  setEditUsuarioNovaSenha('');
+  setMostrarEditUsuarioNovaSenha(false);
   setEditUsuarioPerfil(
-    usuario.perfil as 'administrador' | 'operador_completo' | 'operador_simples'
+    usuario.perfil as 'gestor_master' | 'administrador' | 'operador_completo' | 'operador_simples'
   );
 };
 
@@ -804,6 +843,15 @@ const cancelarEdicaoUsuario = () => {
 const salvarEdicaoUsuario = async () => {
   if (!usuarioEditandoId) return;
 
+  const usuarioOriginal = usuariosEmpresa.find(
+    (usuario) => usuario.id === usuarioEditandoId
+  );
+
+  if (!usuarioOriginal) {
+    abrirAviso('Erro', 'Usuário não encontrado para edição.');
+    return;
+  }
+
   const nomeLimpo = editUsuarioNome.trim();
   const emailLimpo = editUsuarioEmail.trim().toLowerCase();
 
@@ -818,7 +866,28 @@ const salvarEdicaoUsuario = async () => {
   if (!emailLimpo) {
     abrirAviso(
       'Campo obrigatório',
-      'Não foi possível identificar o login/email deste usuário.'
+      'Informe o login/email deste usuário.'
+    );
+    return;
+  }
+
+  const nomeOriginal = (usuarioOriginal.nome || '').trim();
+  const loginOriginal = (
+    usuarioOriginal.login ||
+    usuarioOriginal.email ||
+    ''
+  ).toLowerCase();
+  const perfilOriginal = usuarioOriginal.perfil;
+
+  const houveAlteracao =
+    nomeLimpo !== nomeOriginal ||
+    emailLimpo !== loginOriginal ||
+    editUsuarioPerfil !== perfilOriginal;
+
+  if (!houveAlteracao) {
+    abrirAviso(
+      'Nenhuma alteração',
+      'Altere algum dado do usuário antes de salvar.'
     );
     return;
   }
@@ -835,8 +904,12 @@ const salvarEdicaoUsuario = async () => {
     return;
   }
 
-  cancelarEdicaoUsuario();
   await carregarUsuariosEmpresa();
+
+  abrirAviso(
+    'Usuário atualizado',
+    'Os dados do usuário foram salvos com sucesso.'
+  );
 };
 
 const redefinirSenhaUsuario = async () => {
@@ -847,7 +920,7 @@ const redefinirSenhaUsuario = async () => {
   if (!senhaLimpa) {
     abrirAviso(
       'Senha obrigatória',
-      'Informe a nova senha do usuário.'
+      'Informe a nova senha antes de redefinir.'
     );
     return;
   }
@@ -871,10 +944,13 @@ const redefinirSenhaUsuario = async () => {
   }
 
   setEditUsuarioNovaSenha('');
+  setMostrarEditUsuarioNovaSenha(false);
 
   abrirAviso(
     'Senha redefinida',
-    'A senha do usuário foi atualizada com sucesso.'
+    'A nova senha foi salva com sucesso. Não é necessário clicar em Salvar para confirmar a senha.',
+    undefined,
+    'sucesso'
   );
 };
 
@@ -1135,10 +1211,12 @@ const apagarDespesa = async (id: string) => {
 function abrirAviso(
   titulo: string,
   mensagem: string,
-  acaoDepois?: () => void
+  acaoDepois?: () => void,
+  tipo: 'alerta' | 'erro' | 'sucesso' = 'alerta'
 ) {
   setTituloAviso(titulo);
   setMensagemAviso(mensagem);
+  setTipoAviso(tipo);
   setAcaoDepoisDoAviso(() => acaoDepois || null);
   setModalAvisoAberto(true);
 }
@@ -2186,8 +2264,8 @@ const handleRecuperarSenha = async () => {
   setAuthLoading(true);
 
   const { error } = await supabase.auth.resetPasswordForEmail(emailLimpo, {
-    redirectTo: `${window.location.origin}/`,
-  });
+  redirectTo: `${window.location.origin}/?modo=redefinir-senha`,
+});
 
   setAuthLoading(false);
 
@@ -2245,15 +2323,27 @@ const handleAtualizarSenha = async () => {
     return;
   }
 
-  setAuthMensagem('Senha atualizada com sucesso. Faça login novamente.');
-
   await supabase.auth.signOut();
 
   setNovaSenha('');
   setConfirmarNovaSenha('');
+  setMostrarNovaSenha(false);
+  setMostrarConfirmarNovaSenha(false);
+
   setModoRedefinirSenha(false);
   setModoAuth('login');
   setAcessoLiberado(false);
+  setAcessoNaoConfigurado(false);
+  setModalSelecionarEmpresa(false);
+  setEmpresaId(null);
+  setNomeEmpresaAtual('');
+  setPerfilUsuario(null);
+
+  setLoginSenha('');
+  setAuthErro('');
+  setAuthMensagem('Senha atualizada com sucesso. Faça login novamente.');
+
+  window.history.replaceState({}, document.title, window.location.pathname);
 };
 
 const handleGoogleLogin = async () => {
@@ -2287,9 +2377,26 @@ const alturaFinalTabelaLancamentos = Math.min(
   alturaMaximaTabelaLancamentos
 );
 
-  if (!mounted) return null;
+  if (!mounted) {
+  return null;
+}
 
-  if (emailConfirmado) {
+const usuarioOriginalEditando = usuariosEmpresa.find(
+  (usuario) => usuario.id === usuarioEditandoId
+);
+
+const dadosUsuarioAlterados = usuarioOriginalEditando
+  ? editUsuarioNome.trim() !== (usuarioOriginalEditando.nome || '').trim() ||
+    editUsuarioEmail.trim().toLowerCase() !==
+      (
+        usuarioOriginalEditando.login ||
+        usuarioOriginalEditando.email ||
+        ''
+      ).toLowerCase() ||
+    editUsuarioPerfil !== usuarioOriginalEditando.perfil
+  : false;
+
+if (emailConfirmado) {
   return (
     <main className="relative min-h-screen overflow-hidden font-sans">
       <div
@@ -2650,24 +2757,24 @@ if (isTelaMobile) {
   return (
     <main className="relative min-h-screen overflow-hidden font-sans">
       {modalAvisoAberto && (
-  <div className="fixed inset-0 z-[3000] flex items-center justify-center bg-black/50 px-4">
+  <div className="fixed inset-0 z-[8000] flex items-center justify-center bg-black/50 px-4">
     <div className="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-6 shadow-2xl">
       <div className="mb-4 flex items-center gap-3">
-        <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-amber-100 text-amber-700">
-          <svg
-            className="h-6 w-6"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth="2.4"
-              d="M12 9v4m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"
-            />
-          </svg>
-        </div>
+        <div
+  className={`flex h-11 w-11 items-center justify-center rounded-xl ${
+    tipoAviso === 'sucesso'
+      ? 'bg-emerald-100 text-emerald-700'
+      : tipoAviso === 'erro'
+        ? 'bg-red-100 text-red-700'
+        : 'bg-amber-100 text-amber-700'
+  }`}
+>
+  {tipoAviso === 'sucesso' ? (
+    <span className="text-2xl font-black leading-none">✓</span>
+  ) : (
+    <span className="text-2xl font-black leading-none">!</span>
+  )}
+</div>
 
         <div>
           <h2 className="text-lg font-black text-slate-900">
@@ -2716,10 +2823,12 @@ if (isTelaMobile) {
 </h1>
 
               <p className="mt-2 text-sm leading-relaxed text-slate-600">
-                {modoAuth === 'login'
-                  ? 'Entre para acompanhar sua gestão financeira, lançamentos, relatórios e evolução operacional.'
-                  : 'Crie seu acesso para começar a usar o sistema de gestão da AvantaLab.'}
-              </p>
+  {modoRedefinirSenha
+    ? 'Digite e confirme sua nova senha para recuperar o acesso ao sistema.'
+    : modoAuth === 'login'
+      ? 'Entre para acompanhar sua gestão financeira, lançamentos, relatórios e evolução operacional.'
+      : 'Crie seu acesso para começar a usar o sistema de gestão da AvantaLab.'}
+</p>
             </div>
 
           {modoRedefinirSenha ? (
@@ -3098,6 +3207,7 @@ if (isTelaMobile) {
   aberto={modalConfirmacaoAberto}
   titulo={tituloConfirmacao}
   mensagem={mensagemConfirmacao}
+  textoConfirmar={textoConfirmarConfirmacao}
   carregando={confirmacaoCarregando}
   aoCancelar={fecharConfirmacao}
   aoConfirmar={confirmarAcao}
@@ -3294,37 +3404,31 @@ if (isTelaMobile) {
 )}
 
 {modalAvisoAberto && (
-  <div className="fixed inset-0 z-[6000] flex items-center justify-center bg-black/50 px-4">
-    <div
-      className={`w-full max-w-md rounded-2xl border p-6 shadow-2xl ${
-        darkMode
-          ? 'bg-slate-800 border-slate-700'
-          : 'bg-white border-slate-200'
-      }`}
-    >
+  <div className="fixed inset-0 z-[8000] flex items-center justify-center bg-black/50 px-4">
+    <div className="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-6 shadow-2xl">
       <div className="mb-4 flex items-center gap-3">
-        <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-amber-100 text-amber-700">
-          <svg
-            className="h-6 w-6"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth="2.4"
-              d="M12 9v4m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"
-            />
-          </svg>
-        </div>
+        <div
+  className={`flex h-11 w-11 items-center justify-center rounded-xl ${
+    tipoAviso === 'sucesso'
+      ? 'bg-emerald-100 text-emerald-700'
+      : tipoAviso === 'erro'
+        ? 'bg-red-100 text-red-700'
+        : 'bg-amber-100 text-amber-700'
+  }`}
+>
+  {tipoAviso === 'sucesso' ? (
+    <span className="text-2xl font-black leading-none">✓</span>
+  ) : (
+    <span className="text-2xl font-black leading-none">!</span>
+  )}
+</div>
 
         <div>
-          <h2 className={`text-lg font-black ${textStrong}`}>
+          <h2 className="text-lg font-black text-slate-900">
             {tituloAviso}
           </h2>
 
-          <p className={`mt-1 text-sm ${textMuted}`}>
+          <p className="mt-1 text-sm leading-relaxed text-slate-600">
             {mensagemAviso}
           </p>
         </div>
@@ -3332,13 +3436,181 @@ if (isTelaMobile) {
 
       <div className="mt-5 flex justify-end">
         <button
-  type="button"
-  onClick={fecharAviso}
-  className="rounded-xl px-5 py-2.5 text-sm font-black uppercase tracking-wide shadow-md transition hover:brightness-110 active:scale-[0.98] cursor-pointer"
-  style={estiloTemaPrimario}
->
-  Entendi
-</button>
+          type="button"
+          onClick={fecharAviso}
+          className="rounded-xl bg-slate-900 px-5 py-2.5 text-sm font-black uppercase tracking-wide text-white shadow-md transition hover:bg-slate-800 active:scale-[0.98] cursor-pointer"
+        >
+          Entendi
+        </button>
+      </div>
+    </div>
+  </div>
+)}
+
+{usuarioEditandoId && (
+  <div className="fixed inset-0 z-[6000] flex items-center justify-center bg-black/60 px-4">
+    <div
+      className={`w-full max-w-xl rounded-2xl border p-6 shadow-2xl ${
+        darkMode
+          ? 'bg-slate-800 border-slate-700'
+          : 'bg-white border-slate-200'
+      }`}
+    >
+      <div className="mb-5 flex items-start justify-between gap-4">
+        <div>
+          <h2 className={`text-xl font-black ${textStrong}`}>
+            Editar usuário
+          </h2>
+
+          <p className={`mt-1 text-sm ${textMuted}`}>
+            Altere os dados do usuário ou redefina a senha diretamente.
+          </p>
+        </div>
+
+        <button
+          type="button"
+          onClick={cancelarEdicaoUsuario}
+          className={`flex h-9 w-9 items-center justify-center rounded-full text-lg font-black transition cursor-pointer ${
+            darkMode
+              ? 'text-slate-300 hover:bg-slate-700 hover:text-white'
+              : 'text-slate-500 hover:bg-slate-100 hover:text-slate-800'
+          }`}
+          title="Fechar"
+        >
+          ×
+        </button>
+      </div>
+
+      <div className="space-y-3">
+        <input
+          type="text"
+          value={editUsuarioNome}
+          onChange={(e) => setEditUsuarioNome(e.target.value)}
+          placeholder="Nome"
+          className={`w-full rounded-xl border px-3 py-2.5 text-sm font-semibold outline-none ${
+            darkMode
+              ? 'bg-slate-900 border-slate-600 text-white'
+              : 'bg-white border-slate-300 text-slate-700'
+          }`}
+        />
+
+        <input
+          type="text"
+          value={editUsuarioEmail}
+          onChange={(e) => setEditUsuarioEmail(e.target.value)}
+          placeholder="Login ou email"
+          className={`w-full rounded-xl border px-3 py-2.5 text-sm font-semibold outline-none ${
+            darkMode
+              ? 'bg-slate-900 border-slate-600 text-white'
+              : 'bg-white border-slate-300 text-slate-700'
+          }`}
+        />
+
+        <select
+          value={editUsuarioPerfil}
+          onChange={(e) =>
+            setEditUsuarioPerfil(
+              e.target.value as
+                | 'gestor_master'
+                | 'administrador'
+                | 'operador_completo'
+                | 'operador_simples'
+            )
+          }
+          disabled={usuarioOriginalEditando?.perfil === 'gestor_master'}
+          className={`w-full rounded-xl border px-3 py-2.5 text-sm font-bold outline-none disabled:cursor-not-allowed disabled:opacity-60 ${
+            darkMode
+              ? 'bg-slate-900 border-slate-600 text-white'
+              : 'bg-white border-slate-300 text-slate-700'
+          }`}
+        >
+          <option value="operador_simples">Operador Simples</option>
+          <option value="operador_completo">Operador Completo</option>
+          <option value="administrador">Administrador</option>
+          <option value="gestor_master">Gestor Master</option>
+        </select>
+
+        <div
+          className={`rounded-xl border p-3 ${
+            darkMode
+              ? 'border-slate-700 bg-slate-900/50'
+              : 'border-slate-200 bg-slate-50'
+          }`}
+        >
+          <p className={`mb-2 text-xs font-black uppercase tracking-wide ${textMuted}`}>
+            Redefinir senha
+          </p>
+
+          <div className="grid grid-cols-1 gap-3 md:grid-cols-[1fr_auto]">
+            <div className="relative">
+              <input
+                type={mostrarEditUsuarioNovaSenha ? 'text' : 'password'}
+                value={editUsuarioNovaSenha}
+                onChange={(e) => setEditUsuarioNovaSenha(e.target.value)}
+                placeholder="Nova senha"
+                className={`w-full rounded-xl border px-3 py-2.5 pr-16 text-sm font-semibold outline-none ${
+                  darkMode
+                    ? 'bg-slate-800 border-slate-600 text-white placeholder:text-slate-400'
+                    : 'bg-white border-slate-300 text-slate-700 placeholder:text-slate-400'
+                }`}
+              />
+
+              <button
+                type="button"
+                onClick={() =>
+                  setMostrarEditUsuarioNovaSenha(!mostrarEditUsuarioNovaSenha)
+                }
+                className={`absolute right-3 top-1/2 -translate-y-1/2 text-[11px] font-black transition cursor-pointer ${
+                  darkMode
+                    ? 'text-slate-300 hover:text-white'
+                    : 'text-slate-500 hover:text-slate-800'
+                }`}
+              >
+                {mostrarEditUsuarioNovaSenha ? 'Ocultar' : 'Ver'}
+              </button>
+            </div>
+
+            <button
+              type="button"
+              onClick={redefinirSenhaUsuario}
+              className="rounded-xl border border-amber-500/40 px-4 py-2 text-xs font-black uppercase text-amber-600 transition hover:bg-amber-500/10 cursor-pointer"
+            >
+              Redefinir senha
+            </button>
+          </div>
+
+          <p className={`mt-2 text-[11px] font-semibold ${textMuted}`}>
+            A senha é salva imediatamente ao clicar em Redefinir senha.
+          </p>
+        </div>
+      </div>
+
+      <div className="mt-5 flex justify-end gap-2">
+        <button
+          type="button"
+          onClick={cancelarEdicaoUsuario}
+          className={`rounded-xl border px-4 py-2 text-xs font-black uppercase transition cursor-pointer ${
+            darkMode
+              ? 'border-slate-600 text-slate-300 hover:bg-slate-700'
+              : 'border-slate-300 text-slate-600 hover:bg-slate-100'
+          }`}
+        >
+          Cancelar
+        </button>
+
+        <button
+          type="button"
+          disabled={!dadosUsuarioAlterados}
+          onClick={salvarEdicaoUsuario}
+          className={`rounded-xl px-5 py-2 text-xs font-black uppercase tracking-wide shadow-md transition ${
+            dadosUsuarioAlterados
+              ? 'cursor-pointer hover:brightness-110 active:scale-[0.98]'
+              : 'cursor-not-allowed opacity-50'
+          }`}
+          style={estiloTemaPrimario}
+        >
+          Salvar alterações
+        </button>
       </div>
     </div>
   </div>
@@ -3479,119 +3751,7 @@ if (isTelaMobile) {
       : 'border-slate-200 bg-slate-50'
   }`}
 >
-  {usuarioEditandoId === usuario.id ? (
-    <div className="space-y-3">
-      <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
-        <input
-          type="text"
-          value={editUsuarioNome}
-          onChange={(e) => setEditUsuarioNome(e.target.value)}
-          placeholder="Nome"
-          className={`w-full rounded-xl border px-3 py-2 text-sm font-semibold outline-none ${
-            darkMode
-              ? 'bg-slate-800 border-slate-600 text-white'
-              : 'bg-white border-slate-300 text-slate-700'
-          }`}
-        />
-
-        <input
-          type="email"
-          value={editUsuarioEmail}
-          onChange={(e) => setEditUsuarioEmail(e.target.value)}
-          placeholder="Email"
-          disabled={usuario.status === 'ativo'}
-          className={`w-full rounded-xl border px-3 py-2 text-sm font-semibold outline-none disabled:opacity-60 disabled:cursor-not-allowed ${
-            darkMode
-              ? 'bg-slate-800 border-slate-600 text-white'
-              : 'bg-white border-slate-300 text-slate-700'
-          }`}
-        />
-
-        <select
-          value={editUsuarioPerfil}
-          onChange={(e) =>
-            setEditUsuarioPerfil(
-              e.target.value as 'administrador' | 'operador_completo' | 'operador_simples'
-            )
-          }
-          className={`w-full rounded-xl border px-3 py-2 text-sm font-bold outline-none ${
-            darkMode
-              ? 'bg-slate-800 border-slate-600 text-white'
-              : 'bg-white border-slate-300 text-slate-700'
-          }`}
-        >
-          <option value="operador_simples">Operador Simples</option>
-          <option value="operador_completo">Operador Completo</option>
-          <option value="administrador">Administrador</option>
-        </select>
-      </div>
-
-      {usuario.status === 'ativo' && (
-        <p className={`text-[11px] font-semibold ${textMuted}`}>
-          O email de usuários ativos não é alterado aqui. Para trocar o login, crie um novo acesso.
-        </p>
-      )}
-
-      <div className="grid grid-cols-1 gap-3 md:grid-cols-[1fr_auto]">
-  <div className="relative">
-    <input
-      type={mostrarEditUsuarioNovaSenha ? 'text' : 'password'}
-      value={editUsuarioNovaSenha}
-      onChange={(e) => setEditUsuarioNovaSenha(e.target.value)}
-      placeholder="Nova senha"
-      className={`w-full rounded-xl border px-3 py-2 pr-16 text-sm font-semibold outline-none ${
-        darkMode
-          ? 'bg-slate-800 border-slate-600 text-white placeholder:text-slate-400'
-          : 'bg-white border-slate-300 text-slate-700 placeholder:text-slate-400'
-      }`}
-    />
-
-    <button
-      type="button"
-      onClick={() => setMostrarEditUsuarioNovaSenha(!mostrarEditUsuarioNovaSenha)}
-      className={`absolute right-3 top-1/2 -translate-y-1/2 text-[11px] font-black transition cursor-pointer ${
-        darkMode
-          ? 'text-slate-300 hover:text-white'
-          : 'text-slate-500 hover:text-slate-800'
-      }`}
-    >
-      {mostrarEditUsuarioNovaSenha ? 'Ocultar' : 'Ver'}
-    </button>
-  </div>
-
-  <button
-    type="button"
-    onClick={redefinirSenhaUsuario}
-    className="rounded-xl border border-amber-500/40 px-4 py-2 text-xs font-black uppercase text-amber-600 transition hover:bg-amber-500/10 cursor-pointer"
-  >
-    Redefinir senha
-  </button>
-</div>
- 
-      <div className="flex justify-end gap-2">
-        <button
-          type="button"
-          onClick={cancelarEdicaoUsuario}
-          className={`rounded-lg border px-3 py-1.5 text-[11px] font-black uppercase transition cursor-pointer ${
-            darkMode
-              ? 'border-slate-600 text-slate-300 hover:bg-slate-700'
-              : 'border-slate-300 text-slate-600 hover:bg-slate-100'
-          }`}
-        >
-          Cancelar
-        </button>
-
-        <button
-          type="button"
-          onClick={salvarEdicaoUsuario}
-          className="rounded-lg border border-emerald-500/40 px-3 py-1.5 text-[11px] font-black uppercase text-emerald-600 transition hover:bg-emerald-500/10 cursor-pointer"
-        >
-          Salvar
-        </button>
-      </div>
-    </div>
-  ) : (
-    <div className="flex items-start justify-between gap-3">
+      <div className="flex items-start justify-between gap-3">
       <div>
         <p className={`text-sm font-black ${textStrong}`}>
           {usuario.nome || 'Sem nome'}
@@ -3638,7 +3798,11 @@ if (isTelaMobile) {
         </div>
       </div>
 
-      {usuario.perfil !== 'gestor_master' && (
+      {(
+  usuario.perfil !== 'gestor_master' ||
+  (usuario.login || usuario.email || '').toLowerCase() ===
+    (emailUsuarioAtual || '').toLowerCase()
+) && (
         <div className="flex flex-col gap-2">
           <button
             type="button"
@@ -3666,7 +3830,6 @@ if (isTelaMobile) {
         </div>
       )}
     </div>
-  )}
 </div>
             ))
           )}
@@ -4329,8 +4492,16 @@ if (isTelaMobile) {
     return;
   }
 
-  gerarBackupExcel();
-}} 
+  abrirConfirmacao({
+    titulo: 'Gerar backup',
+    mensagem:
+      'O sistema vai gerar um arquivo Excel com os dados da empresa atual.\n\nDeseja continuar?',
+    textoConfirmar: 'Gerar backup',
+    acao: async () => {
+      await gerarBackupExcel();
+    },
+  });
+}}
                 className="whitespace-nowrap bg-emerald-600 hover:bg-emerald-500 px-3 py-1.5 rounded shadow border border-emerald-700 transition-colors font-bold flex items-center gap-1.5 text-xs text-white"
               >
                 <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
