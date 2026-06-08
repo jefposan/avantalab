@@ -277,13 +277,26 @@ const carregarEmpresaSelecionada = async (empresa: any) => {
 
   const { data: usuarioLogado } = await supabase.auth.getUser();
 
-  setNomeUsuarioAtual(
-    usuarioLogado.user?.user_metadata?.nome ||
-      usuarioLogado.user?.email?.split('@')[0] ||
-      ''
-  );
+  const emailLogado = usuarioLogado.user?.email || '';
 
-  setEmailUsuarioAtual(usuarioLogado.user?.email || '');
+setEmailUsuarioAtual(emailLogado);
+
+const nomeOuLoginDoVinculo =
+  empresa.usuario_nome ||
+  empresa.nome_usuario ||
+  empresa.usuarioNome ||
+  empresa.nome_acesso ||
+  empresa.login ||
+  empresa.usuario_login ||
+  empresa.login_usuario ||
+  '';
+
+setNomeUsuarioAtual(
+  nomeOuLoginDoVinculo ||
+    usuarioLogado.user?.user_metadata?.nome ||
+    emailLogado.split('@')[0] ||
+    ''
+);
 
   const config = await buscarConfiguracoes(empresa.id);
   const despesas = await buscarDespesasCadastradas(empresa.id);
@@ -4183,8 +4196,8 @@ name="novo-usuario-senha"
       </span>
 
       <span className="truncate max-w-[360px]">
-        {emailUsuarioAtual || 'Usuário logado'}
-      </span>
+  {nomeUsuarioAtual || emailUsuarioAtual || 'Usuário logado'}
+</span>
     </div>
 
     <span
