@@ -701,6 +701,13 @@ const abrirModalUsuarios = () => {
   setEditUsuarioPerfil('operador_simples');
 
   setModalUsuarios(true);
+
+  setTimeout(() => {
+    setUsuarioNome('');
+    setUsuarioLogin('');
+    setUsuarioSenha('');
+    setUsuarioPerfil('operador_simples');
+  }, 50);
 };
 
 const carregarUsuariosEmpresa = async () => {
@@ -3652,10 +3659,12 @@ if (isTelaMobile) {
 
       <div className="grid grid-cols-1 gap-3 md:grid-cols-4">
   <input
-    type="text"
-    value={usuarioNome}
-    onChange={(e) => setUsuarioNome(e.target.value)}
-    placeholder="Nome do usuário"
+  type="text"
+  value={usuarioNome}
+  onChange={(e) => setUsuarioNome(e.target.value)}
+  placeholder="Nome do usuário"
+  autoComplete="off"
+  name="novo-usuario-nome"
     className={`w-full rounded-xl border px-3 py-2.5 text-sm font-semibold outline-none transition ${
       darkMode
         ? 'bg-slate-900 border-slate-600 text-white placeholder:text-slate-400'
@@ -3668,6 +3677,8 @@ if (isTelaMobile) {
     value={usuarioLogin}
     onChange={(e) => setUsuarioLogin(e.target.value)}
     placeholder="Login"
+    autoComplete="off"
+name="novo-usuario-login"
     className={`w-full rounded-xl border px-3 py-2.5 text-sm font-semibold outline-none transition ${
       darkMode
         ? 'bg-slate-900 border-slate-600 text-white placeholder:text-slate-400'
@@ -3680,6 +3691,8 @@ if (isTelaMobile) {
     value={usuarioSenha}
     onChange={(e) => setUsuarioSenha(e.target.value)}
     placeholder="Senha inicial"
+    autoComplete="new-password"
+name="novo-usuario-senha"
     className={`w-full rounded-xl border px-3 py-2.5 text-sm font-semibold outline-none transition ${
       darkMode
         ? 'bg-slate-900 border-slate-600 text-white placeholder:text-slate-400'
