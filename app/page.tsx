@@ -3871,12 +3871,13 @@ name="novo-usuario-senha"
 
       {/* ================= HEADER GLOBAL ================= */}
 <header
-  className={`print-ocultar ${bgCard} sticky top-0 z-[900] shadow-sm border-b px-8 pt-1 pb-4 flex items-center gap-8 relative overflow-hidden`}
+  className={`print-ocultar ${bgCard} sticky top-0 z-[900] shadow-sm border-b px-8 pt-1 pb-4 relative overflow-hidden`}
   style={{
     borderBottomColor: darkMode ? '#334155' : 'transparent',
     borderBottomWidth: '1px',
   }}
 >
+    <div className="mx-auto flex w-full max-w-[1600px] items-center gap-8 pl-4">
   {/* LOGO */}
   <div
     className="w-64 h-24 flex items-center justify-center overflow-hidden relative cursor-pointer shrink-0"
@@ -4229,6 +4230,7 @@ name="novo-usuario-senha"
   </div>
 </div>
 
+  </div>
   </div>
 </header>
 
