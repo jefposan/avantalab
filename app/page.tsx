@@ -128,7 +128,8 @@ const [editUsuarioPerfil, setEditUsuarioPerfil] = useState<
 >('operador_simples');  
 const [modalUsuarios, setModalUsuarios] = useState(false);
   const [abaAtiva, setAbaAtiva] = useState('Dashboard');
-  const [ajustesAberto, setAjustesAberto] = useState(false);
+const [ajustesAberto, setAjustesAberto] = useState(false);
+const [menuResponsivoAberto, setMenuResponsivoAberto] = useState(false);
   const [duplicadosAtivo, setDuplicadosAtivo] = useState(true);
   const [darkMode, setDarkMode] = useState(false);
   const [painelAvisosAberto, setPainelAvisosAberto] = useState(false);
@@ -3870,6 +3871,102 @@ name="novo-usuario-senha"
       )}
 
       {/* ================= HEADER GLOBAL ================= */}
+
+{/* ================= MENU RESPONSIVO ================= */}
+{menuResponsivoAberto && (
+  <div className="fixed inset-0 z-[1200] bg-black/50 xl:hidden">
+    <aside
+  className={`flex h-full w-80 max-w-[85vw] flex-col overflow-y-auto border-r p-4 shadow-2xl ${
+        darkMode
+          ? 'border-slate-700 bg-slate-900 text-slate-100'
+          : 'border-slate-200 bg-white text-slate-800'
+      }`}
+    >
+      <div className="mb-3 flex items-center justify-between gap-3">
+        <div>
+          <p className={`text-xs font-black uppercase tracking-[0.25em] ${textMuted}`}>
+            AvantaLab
+          </p>
+          <h2 className={`mt-1 text-lg font-black ${textStrong}`}>
+            Menu
+          </h2>
+        </div>
+
+        <button
+          type="button"
+          onClick={() => setMenuResponsivoAberto(false)}
+          className={`flex h-10 w-10 items-center justify-center rounded-xl border text-xl font-black transition cursor-pointer ${
+            darkMode
+              ? 'border-slate-700 text-slate-100 hover:bg-slate-800'
+              : 'border-slate-200 text-slate-700 hover:bg-slate-100'
+          }`}
+          title="Fechar menu"
+        >
+          ×
+        </button>
+      </div>
+
+      <div className="space-y-1">
+        {['Dashboard', 'Balanço Geral', 'Gráficos', 'Por Categoria', 'Relatório'].map((aba) => (
+          <button
+            key={aba}
+            type="button"
+            onClick={() => {
+              setAbaAtiva(aba);
+              setMenuResponsivoAberto(false);
+              if (aba === 'Dashboard') {
+                setMesAtivo(null);
+              }
+            }}
+            className={`w-full rounded-xl px-3 py-2 text-left text-sm font-black transition cursor-pointer ${
+              abaAtiva === aba
+                ? ''
+                : darkMode
+                  ? 'hover:bg-slate-800 text-slate-300'
+                  : 'hover:bg-slate-100 text-slate-600'
+            }`}
+            style={abaAtiva === aba ? estiloTemaPrimario : undefined}
+          >
+            {aba === 'Dashboard' ? 'Início' : aba}
+          </button>
+        ))}
+      </div>
+
+      <div className={`my-3 border-t ${darkMode ? 'border-slate-700' : 'border-slate-200'}`} />
+
+      <div className="space-y-1">
+        <button
+          type="button"
+          onClick={() => {
+            setCalcAberta(true);
+            setMenuResponsivoAberto(false);
+          }}
+          className={`w-full rounded-xl px-3 py-2 text-left text-sm font-black transition cursor-pointer ${
+            darkMode
+              ? 'hover:bg-slate-800 text-slate-300'
+              : 'hover:bg-slate-100 text-slate-600'
+          }`}
+        >
+          Calculadora
+        </button>
+
+        
+
+        <button
+          type="button"
+          onClick={() => {
+            setMenuResponsivoAberto(false);
+            confirmarLogout();
+          }}
+          className="w-full rounded-xl px-3 py-2 text-left text-sm font-black text-red-600 transition hover:bg-red-50 cursor-pointer"
+        >
+          Sair
+        </button>
+      </div>
+    </aside>
+  </div>
+)}
+
 <header
   className={`print-ocultar ${bgCard} sticky top-0 z-[900] shadow-sm border-b px-8 pt-1 pb-4 relative overflow-hidden`}
   style={{
@@ -3919,11 +4016,24 @@ name="novo-usuario-senha"
     )}
   </div>
 
+  <button
+  type="button"
+  onClick={() => setMenuResponsivoAberto(true)}
+  className={`xl:hidden flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border text-2xl font-black transition cursor-pointer ${
+    darkMode
+      ? 'border-slate-700 text-slate-100 hover:bg-slate-800'
+      : 'border-slate-200 text-slate-700 hover:bg-slate-100'
+  }`}
+  title="Abrir menu"
+>
+  ☰
+</button>
+
   {/* ÁREA DIREITA DO HEADER */}
   <div className="flex-1 flex flex-col gap-5 min-w-0">
     {/* LINHA 1: MENU */}
-    <div className="flex items-center justify-start gap-6">
-      <nav className="flex space-x-2">
+<div className="relative hidden items-center justify-center gap-6 xl:flex">
+  <nav className="flex justify-center space-x-2">
         <button
           onClick={() => {
             setAbaAtiva('Dashboard');
@@ -4164,13 +4274,14 @@ name="novo-usuario-senha"
 
     {/* TEXTO DENTRO DA FAIXA INFERIOR */}
 <div
-  className="absolute bottom-0 left-0 right-0 h-5 pl-8 pr-4 flex items-center justify-between text-xs font-semibold z-10"
+  className="absolute bottom-0 left-0 right-0 h-5 text-xs font-semibold z-10"
   style={{
     backgroundColor: corPrimaria,
     color: textoSobreCorPrimaria,
   }}
 >
-  <div className="flex items-center gap-2 min-w-0 ml-[130px]">
+  <div className="mx-auto flex h-full w-full max-w-[1600px] items-center justify-between px-8">
+    <div className="flex items-center gap-2 min-w-0">
     <svg
       className="h-3.5 w-3.5 shrink-0"
       fill="none"
@@ -4190,7 +4301,7 @@ name="novo-usuario-senha"
     </span>
   </div>
 
-  <div className="hidden xl:flex items-center justify-end gap-4 min-w-0 mr-36">
+  <div className="hidden xl:flex items-center justify-end gap-4 min-w-0">
     <div className="flex items-center gap-1.5 min-w-0">
       <span className="font-black uppercase tracking-wide opacity-80">
         Usuário:
@@ -4229,7 +4340,7 @@ name="novo-usuario-senha"
     </div>
   </div>
 </div>
-
+</div>
   </div>
   </div>
 </header>
