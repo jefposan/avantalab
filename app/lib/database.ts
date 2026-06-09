@@ -32,7 +32,7 @@ function tratarErroSupabase(error: any) {
 
     let { data: vinculo, error: erroVinculo } = await supabase
       .from('usuarios_empresa')
-      .select('id, empresa_id, user_id, nome, email, perfil, status')
+      .select('id, empresa_id, user_id, nome, email, perfil, status, telefone, telefone_confirmado, telefone_confirmado_em')
       .eq('user_id', usuarioId)
       .eq('status', 'ativo')
       .limit(1)
@@ -46,7 +46,7 @@ function tratarErroSupabase(error: any) {
     if (!vinculo && emailUsuario) {
       const { data: convitePendente, error: erroConvite } = await supabase
         .from('usuarios_empresa')
-        .select('id, empresa_id, user_id, nome, email, perfil, status')
+        .select('id, empresa_id, user_id, nome, email, perfil, status, telefone, telefone_confirmado, telefone_confirmado_em')
         .eq('email', emailUsuario)
         .is('user_id', null)
         .in('status', ['pendente', 'ativo'])
@@ -67,7 +67,7 @@ function tratarErroSupabase(error: any) {
             atualizado_em: new Date().toISOString(),
           })
           .eq('id', convitePendente.id)
-          .select('id, empresa_id, user_id, nome, email, perfil, status')
+          .select('id, empresa_id, user_id, nome, email, perfil, status, telefone, telefone_confirmado, telefone_confirmado_em')
           .single();
 
         if (erroAtualizarConvite) {
@@ -101,10 +101,13 @@ function tratarErroSupabase(error: any) {
 }
 
   return {
-    ...empresa,
-    perfil: vinculo.perfil,
-    acessoId: vinculo.id,
-  };
+  ...empresa,
+  perfil: vinculo.perfil,
+  acessoId: vinculo.id,
+  telefone: vinculo.telefone,
+  telefone_confirmado: vinculo.telefone_confirmado,
+  telefone_confirmado_em: vinculo.telefone_confirmado_em,
+};
 }
 
 export async function buscarEmpresasDoUsuario(usuarioId: string) {
@@ -148,7 +151,7 @@ export async function buscarEmpresasDoUsuario(usuarioId: string) {
   // 2. Busca todos os vínculos ativos do usuário
   const { data: vinculos, error: erroVinculos } = await supabase
     .from('usuarios_empresa')
-    .select('id, empresa_id, user_id, nome, email, perfil, status')
+    .select('id, empresa_id, user_id, nome, email, perfil, status, telefone, telefone_confirmado, telefone_confirmado_em')
     .eq('user_id', usuarioId)
     .eq('status', 'ativo')
     .order('nome', { ascending: true });
@@ -185,16 +188,19 @@ export async function buscarEmpresasDoUsuario(usuarioId: string) {
       if (!empresa) return null;
 
       return {
-        id: empresa.id,
-        nome: empresa.nome,
-        empresa_id: empresa.id,
-        empresa_nome: empresa.nome,
-        perfil: vinculo.perfil,
-        status: vinculo.status,
-        acessoId: vinculo.id,
-        usuario_nome: vinculo.nome,
-        usuario_email: vinculo.email,
-      };
+  id: empresa.id,
+  nome: empresa.nome,
+  empresa_id: empresa.id,
+  empresa_nome: empresa.nome,
+  perfil: vinculo.perfil,
+  status: vinculo.status,
+  acessoId: vinculo.id,
+  usuario_nome: vinculo.nome,
+  usuario_email: vinculo.email,
+  telefone: vinculo.telefone,
+  telefone_confirmado: vinculo.telefone_confirmado,
+  telefone_confirmado_em: vinculo.telefone_confirmado_em,
+};
     })
     .filter(Boolean);
 }
@@ -490,7 +496,7 @@ export async function atualizarLancamento({
 export async function buscarMeuAcessoEmpresa(empresaId: string, usuarioId: string) {
   const { data, error } = await supabase
     .from('usuarios_empresa')
-    .select('id, empresa_id, user_id, nome, email, perfil, status')
+    .select('id, empresa_id, user_id, nome, email, perfil, status, telefone, telefone_confirmado, telefone_confirmado_em')
     .eq('empresa_id', empresaId)
     .eq('user_id', usuarioId)
     .eq('status', 'ativo')
@@ -770,5 +776,40 @@ export async function redefinirSenhaUsuarioEmpresa({
     erro: false,
     mensagem: resultado.mensagem || 'Senha redefinida com sucesso.',
     data: true,
+  };
+}
+export async function atualizarTelefoneUsuarioEmpresa({
+  acessoId,
+  telefone,
+}: {
+  acessoId: string;
+  telefone: string;
+}) {
+  const { data, error } = await supabase
+    .from('usuarios_empresa')
+    .update({
+      telefone,
+      telefone_confirmado: true,
+      telefone_confirmado_em: new Date().toISOString(),
+      atualizado_em: new Date().toISOString(),
+    })
+    .eq('id', acessoId)
+    .select()
+    .single();
+
+  if (error) {
+    console.error('Erro ao atualizar telefone do usuário:', error);
+
+    return {
+      erro: true,
+      mensagem: tratarErroSupabase(error),
+      data: null,
+    };
+  }
+
+  return {
+    erro: false,
+    mensagem: '',
+    data,
   };
 }

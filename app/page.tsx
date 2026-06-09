@@ -43,6 +43,7 @@ import {
   criarEmpresaInicial,
   redefinirSenhaUsuarioEmpresa,
   buscarEmailPorLogin,
+  atualizarTelefoneUsuarioEmpresa,
 } from './lib/database';
 
 import { supabase } from './lib/supabase';
@@ -72,6 +73,17 @@ const [cadastroConfirmarSenha, setCadastroConfirmarSenha] = useState('');
 const [codigoSmsCadastro, setCodigoSmsCadastro] = useState('');
 const [smsCadastroEnviado, setSmsCadastroEnviado] = useState(false);
 const [telefoneSmsCadastroConfirmado, setTelefoneSmsCadastroConfirmado] = useState('');
+const [segundosReenvioSms, setSegundosReenvioSms] = useState(0);
+const [reenviandoSmsCadastro, setReenviandoSmsCadastro] = useState(false);
+const [validacaoTelefoneObrigatoria, setValidacaoTelefoneObrigatoria] = useState(false);
+const [empresaAguardandoTelefone, setEmpresaAguardandoTelefone] = useState<any | null>(null);
+const [telefoneObrigatorio, setTelefoneObrigatorio] = useState('');
+const [codigoSmsTelefoneObrigatorio, setCodigoSmsTelefoneObrigatorio] = useState('');
+const [smsTelefoneObrigatorioEnviado, setSmsTelefoneObrigatorioEnviado] = useState(false);
+const [telefoneObrigatorioConfirmado, setTelefoneObrigatorioConfirmado] = useState('');
+const [segundosReenvioTelefoneObrigatorio, setSegundosReenvioTelefoneObrigatorio] = useState(0);
+const [reenviandoTelefoneObrigatorio, setReenviandoTelefoneObrigatorio] = useState(false);
+const [validandoTelefoneObrigatorio, setValidandoTelefoneObrigatorio] = useState(false);
 
 const [modalConfirmacaoAberto, setModalConfirmacaoAberto] = useState(false);
 const [tituloConfirmacao, setTituloConfirmacao] = useState("");
@@ -388,6 +400,10 @@ useEffect(() => {
 }, []);
 
 const carregarEmpresaSelecionada = async (empresa: any) => {
+
+  console.log('EMPRESA CARREGADA:', empresa);
+console.log('TELEFONE CONFIRMADO:', empresa.telefone_confirmado);
+
   setEmpresaId(empresa.id);
   setNomeEmpresaAtual(empresa.nome || empresa.empresa_nome || '');
   setPerfilUsuario(empresa.perfil || null);
@@ -415,6 +431,22 @@ setNomeUsuarioAtual(
     emailLogado.split('@')[0] ||
     ''
 );
+
+if (empresa.telefone_confirmado !== true) {
+  setEmpresaAguardandoTelefone(empresa);
+  setTelefoneObrigatorio(empresa.telefone || '');
+  setCodigoSmsTelefoneObrigatorio('');
+  setSmsTelefoneObrigatorioEnviado(false);
+  setTelefoneObrigatorioConfirmado('');
+  setSegundosReenvioTelefoneObrigatorio(0);
+  setValidacaoTelefoneObrigatoria(true);
+
+  setAcessoNaoConfigurado(false);
+  setAcessoLiberado(true);
+  setModalSelecionarEmpresa(false);
+
+  return;
+}
 
   const config = await buscarConfiguracoes(empresa.id);
   const despesas = await buscarDespesasCadastradas(empresa.id);
@@ -693,7 +725,33 @@ useEffect(() => {
 }, [abaAtiva, mesAtivo]);
 
 useEffect(() => {
-  if (!mounted || !acessoLiberado) return;
+  if (segundosReenvioSms <= 0) return;
+
+  const timer = window.setTimeout(() => {
+    setSegundosReenvioSms((segundos) => Math.max(segundos - 1, 0));
+  }, 1000);
+
+  return () => {
+    window.clearTimeout(timer);
+  };
+}, [segundosReenvioSms]);
+
+useEffect(() => {
+  if (segundosReenvioTelefoneObrigatorio <= 0) return;
+
+  const timer = window.setTimeout(() => {
+    setSegundosReenvioTelefoneObrigatorio((segundos) =>
+      Math.max(segundos - 1, 0)
+    );
+  }, 1000);
+
+  return () => {
+    window.clearTimeout(timer);
+  };
+}, [segundosReenvioTelefoneObrigatorio]);
+
+useEffect(() => {
+  if (!mounted || !acessoLiberado || validacaoTelefoneObrigatoria) return;
 
   const registrarAtividade = () => {
     localStorage.setItem(CHAVE_ULTIMA_ATIVIDADE, String(Date.now()));
@@ -763,7 +821,7 @@ useEffect(() => {
 
     window.clearInterval(intervalo);
   };
-}, [mounted, acessoLiberado]);
+}, [mounted, acessoLiberado, validacaoTelefoneObrigatoria]);
 
   // --- CÁLCULOS E FUNÇÕES ---
   
@@ -2050,18 +2108,17 @@ const alertasSistema = useMemo(() => {
   const texto = mensagem.toLowerCase();
 
   if (
-    texto.includes('email rate limit') ||
-    texto.includes('rate limit') ||
-    texto.includes('too many requests') ||
-    texto.includes('for security purposes') ||
-    texto.includes('only request this after')
-  ) {
-    return {
-      tipo: 'limite_email',
-      mensagem:
-        'Por segurança, existe um limite temporário para envio de emails de confirmação e recuperação de senha. Aguarde cerca de 1 hora e tente novamente.',
-    };
-  }
+  texto.includes('rate limit') ||
+  texto.includes('too many requests') ||
+  texto.includes('for security purposes') ||
+  texto.includes('only request this after')
+) {
+  return {
+    tipo: 'limite',
+    mensagem:
+      'Por segurança, existe um limite temporário de tentativas. Aguarde alguns minutos e tente novamente.',
+  };
+}
 
   if (mensagem === 'Email not confirmed') {
     return {
@@ -2081,6 +2138,53 @@ const alertasSistema = useMemo(() => {
     tipo: 'erro',
     mensagem,
   };
+};
+
+const reenviarCodigoSmsCadastro = async () => {
+  if (reenviandoSmsCadastro || segundosReenvioSms > 0) return;
+
+  const telefoneLimpo = cadastroTelefone.replace(/\D/g, '');
+
+  if (!telefoneLimpo) {
+    setAuthErro('Informe seu número de celular.');
+    return;
+  }
+
+  if (telefoneLimpo.length < 10 || telefoneLimpo.length > 13) {
+    setAuthErro('Informe um celular válido com DDD.');
+    return;
+  }
+
+  setAuthErro('');
+  setAuthMensagem('');
+  setReenviandoSmsCadastro(true);
+
+  const respostaSms = await fetch('/api/sms/enviar-codigo', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      telefone: telefoneLimpo,
+    }),
+  });
+
+  const resultadoSms = await respostaSms.json();
+
+  setReenviandoSmsCadastro(false);
+
+  if (!respostaSms.ok || resultadoSms.erro) {
+    setAuthErro(
+      resultadoSms.mensagem || 'Não foi possível reenviar o código por SMS.'
+    );
+    return;
+  }
+
+  setSmsCadastroEnviado(true);
+  setTelefoneSmsCadastroConfirmado(telefoneLimpo);
+  setCodigoSmsCadastro('');
+  setSegundosReenvioSms(60);
+  setAuthMensagem('Reenviamos o código por SMS. Digite o código mais recente para concluir o cadastro.');
 };
 
   const handleCadastroTeste = async () => {
@@ -2169,11 +2273,13 @@ if (telefoneLimpo.length < 10 || telefoneLimpo.length > 13) {
   }
 
   setSmsCadastroEnviado(true);
-  setTelefoneSmsCadastroConfirmado(telefoneLimpo);
-  setAuthMensagem(
-    'Enviamos um código por SMS. Digite o código recebido para concluir o cadastro.'
-  );
-  return;
+setTelefoneSmsCadastroConfirmado(telefoneLimpo);
+setCodigoSmsCadastro('');
+setSegundosReenvioSms(60);
+setAuthMensagem(
+  'Enviamos um código por SMS. Digite o código recebido para concluir o cadastro.'
+);
+return;
 }
 
 if (!codigoSmsCadastro.trim()) {
@@ -2232,11 +2338,11 @@ const { error } = await supabase.auth.signUp({
 
   const erroTratado = tratarErroAuth(error.message);
 
-  if (erroTratado.tipo === 'limite_email') {
-    abrirAviso('Limite temporário de emails', erroTratado.mensagem);
-  } else {
-    setAuthErro(erroTratado.mensagem);
-  }
+  if (erroTratado.tipo === 'limite') {
+  abrirAviso('Limite temporário', erroTratado.mensagem);
+} else {
+  setAuthErro(erroTratado.mensagem);
+}
 
   return;
 }
@@ -2253,6 +2359,8 @@ setCadastroConfirmarSenha('');
 setCodigoSmsCadastro('');
 setSmsCadastroEnviado(false);
 setTelefoneSmsCadastroConfirmado('');
+setSegundosReenvioSms(0);
+setReenviandoSmsCadastro(false);
 
 setModoAuth('login');
 };
@@ -2300,11 +2408,11 @@ const { error } = await supabase.auth.signInWithPassword({
 
   const erroTratado = tratarErroAuth(error.message);
 
-  if (erroTratado.tipo === 'limite_email') {
-    abrirAviso('Limite temporário de emails', erroTratado.mensagem);
-  } else {
-    setAuthErro(erroTratado.mensagem);
-  }
+  if (erroTratado.tipo === 'limite') {
+  abrirAviso('Limite temporário', erroTratado.mensagem);
+} else {
+  setAuthErro(erroTratado.mensagem);
+}
 
   setAuthLoading(false);
   return;
@@ -2579,6 +2687,16 @@ setAcessoUsuarioAtualId(null);
   setNovaSenha('');
   setConfirmarNovaSenha('');
 
+  setValidacaoTelefoneObrigatoria(false);
+setEmpresaAguardandoTelefone(null);
+setTelefoneObrigatorio('');
+setCodigoSmsTelefoneObrigatorio('');
+setSmsTelefoneObrigatorioEnviado(false);
+setTelefoneObrigatorioConfirmado('');
+setSegundosReenvioTelefoneObrigatorio(0);
+setReenviandoTelefoneObrigatorio(false);
+setValidandoTelefoneObrigatorio(false);
+
   setAuthErro('');
   setAuthMensagem('');
 };
@@ -2607,11 +2725,11 @@ const handleRecuperarSenha = async () => {
 
   const erroTratado = tratarErroAuth(error.message);
 
-  if (erroTratado.tipo === 'limite_email') {
-    abrirAviso('Limite temporário de emails', erroTratado.mensagem);
-  } else {
-    setAuthErro(erroTratado.mensagem);
-  }
+  if (erroTratado.tipo === 'limite') {
+  abrirAviso('Limite temporário', erroTratado.mensagem);
+} else {
+  setAuthErro(erroTratado.mensagem);
+}
 
   return;
 }
@@ -2710,6 +2828,197 @@ const alturaFinalTabelaLancamentos = Math.min(
   alturaMaximaTabelaLancamentos
 );
 
+const enviarCodigoTelefoneObrigatorio = async () => {
+  if (validandoTelefoneObrigatorio) return;
+
+  const telefoneLimpo = telefoneObrigatorio.replace(/\D/g, '');
+
+  if (!telefoneLimpo) {
+    setAuthErro('Informe seu número de celular.');
+    return;
+  }
+
+  if (telefoneLimpo.length < 10 || telefoneLimpo.length > 13) {
+    setAuthErro('Informe um celular válido com DDD.');
+    return;
+  }
+
+  setAuthErro('');
+  setAuthMensagem('');
+  setValidandoTelefoneObrigatorio(true);
+
+  const respostaSms = await fetch('/api/sms/enviar-codigo', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      telefone: telefoneLimpo,
+    }),
+  });
+
+  const resultadoSms = await respostaSms.json();
+
+  setValidandoTelefoneObrigatorio(false);
+
+  if (!respostaSms.ok || resultadoSms.erro) {
+    setAuthErro(
+      resultadoSms.mensagem || 'Não foi possível enviar o código por SMS.'
+    );
+    return;
+  }
+
+  setSmsTelefoneObrigatorioEnviado(true);
+  setTelefoneObrigatorioConfirmado(telefoneLimpo);
+  setCodigoSmsTelefoneObrigatorio('');
+  setSegundosReenvioTelefoneObrigatorio(60);
+  setAuthMensagem('Enviamos um código por SMS. Digite o código recebido para confirmar seu celular.');
+};
+
+const reenviarCodigoTelefoneObrigatorio = async () => {
+  if (reenviandoTelefoneObrigatorio || segundosReenvioTelefoneObrigatorio > 0) return;
+
+  const telefoneLimpo = telefoneObrigatorio.replace(/\D/g, '');
+
+  if (!telefoneLimpo) {
+    setAuthErro('Informe seu número de celular.');
+    return;
+  }
+
+  if (telefoneLimpo.length < 10 || telefoneLimpo.length > 13) {
+    setAuthErro('Informe um celular válido com DDD.');
+    return;
+  }
+
+  setAuthErro('');
+  setAuthMensagem('');
+  setReenviandoTelefoneObrigatorio(true);
+
+  const respostaSms = await fetch('/api/sms/enviar-codigo', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      telefone: telefoneLimpo,
+    }),
+  });
+
+  const resultadoSms = await respostaSms.json();
+
+  setReenviandoTelefoneObrigatorio(false);
+
+  if (!respostaSms.ok || resultadoSms.erro) {
+    setAuthErro(
+      resultadoSms.mensagem || 'Não foi possível reenviar o código por SMS.'
+    );
+    return;
+  }
+
+  setSmsTelefoneObrigatorioEnviado(true);
+  setTelefoneObrigatorioConfirmado(telefoneLimpo);
+  setCodigoSmsTelefoneObrigatorio('');
+  setSegundosReenvioTelefoneObrigatorio(60);
+  setAuthMensagem('Reenviamos o código por SMS. Digite o código mais recente para confirmar seu celular.');
+};
+
+const confirmarTelefoneObrigatorio = async () => {
+  if (!empresaAguardandoTelefone?.acessoId) {
+    setAuthErro('Não foi possível identificar seu acesso. Saia e entre novamente.');
+    return;
+  }
+
+  const telefoneLimpo = telefoneObrigatorio.replace(/\D/g, '');
+
+  if (!telefoneLimpo) {
+    setAuthErro('Informe seu número de celular.');
+    return;
+  }
+
+  if (telefoneLimpo.length < 10 || telefoneLimpo.length > 13) {
+    setAuthErro('Informe um celular válido com DDD.');
+    return;
+  }
+
+  if (!smsTelefoneObrigatorioEnviado) {
+    await enviarCodigoTelefoneObrigatorio();
+    return;
+  }
+
+  if (!codigoSmsTelefoneObrigatorio.trim()) {
+    setAuthErro('Digite o código recebido por SMS.');
+    return;
+  }
+
+  if (telefoneLimpo !== telefoneObrigatorioConfirmado) {
+    setAuthErro(
+      'O número de celular foi alterado. Solicite um novo código antes de confirmar.'
+    );
+    setSmsTelefoneObrigatorioEnviado(false);
+    setCodigoSmsTelefoneObrigatorio('');
+    setTelefoneObrigatorioConfirmado('');
+    return;
+  }
+
+  setAuthErro('');
+  setAuthMensagem('');
+  setValidandoTelefoneObrigatorio(true);
+
+  const respostaVerificacaoSms = await fetch('/api/sms/verificar-codigo', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      telefone: telefoneLimpo,
+      codigo: codigoSmsTelefoneObrigatorio.trim(),
+    }),
+  });
+
+const resultadoVerificacaoSms = await respostaVerificacaoSms.json();
+
+  if (!respostaVerificacaoSms.ok || resultadoVerificacaoSms.erro) {
+    setAuthErro(
+      resultadoVerificacaoSms.mensagem || 'Código inválido ou expirado.'
+    );
+    setValidandoTelefoneObrigatorio(false);
+    return;
+  }
+
+  const resultadoAtualizacao = await atualizarTelefoneUsuarioEmpresa({
+    acessoId: empresaAguardandoTelefone.acessoId,
+    telefone: telefoneLimpo,
+  });
+
+  if (resultadoAtualizacao.erro) {
+    setAuthErro(resultadoAtualizacao.mensagem);
+    setValidandoTelefoneObrigatorio(false);
+    return;
+  }
+
+  const empresaLiberada = {
+    ...empresaAguardandoTelefone,
+    telefone: telefoneLimpo,
+    telefone_confirmado: true,
+    telefone_confirmado_em: new Date().toISOString(),
+  };
+
+  setValidacaoTelefoneObrigatoria(false);
+  setEmpresaAguardandoTelefone(null);
+  setTelefoneObrigatorio('');
+  setCodigoSmsTelefoneObrigatorio('');
+  setSmsTelefoneObrigatorioEnviado(false);
+  setTelefoneObrigatorioConfirmado('');
+  setSegundosReenvioTelefoneObrigatorio(0);
+  setReenviandoTelefoneObrigatorio(false);
+  setAuthErro('');
+  setAuthMensagem('');
+
+  setValidandoTelefoneObrigatorio(false);
+
+  await carregarEmpresaSelecionada(empresaLiberada);
+};
+
   if (!mounted) {
   return null;
 }
@@ -2762,12 +3071,12 @@ if (emailConfirmado) {
           </p>
 
           <h1 className="text-2xl font-black leading-tight text-slate-900">
-            Email confirmado com sucesso
-          </h1>
+  Cadastro confirmado com sucesso
+</h1>
 
-          <p className="mt-4 text-sm leading-relaxed text-slate-600">
-            Seu cadastro foi confirmado. Agora você já pode acessar o sistema usando seu email e senha.
-          </p>
+<p className="mt-4 text-sm leading-relaxed text-slate-600">
+  Seu cadastro foi validado. Agora você já pode acessar o sistema usando seu email e senha.
+</p>
 
           <button
             type="button"
@@ -3024,6 +3333,139 @@ if (modalSelecionarEmpresa) {
               }`}
             >
               Cancelar
+            </button>
+          </div>
+        </div>
+      </section>
+    </main>
+  );
+}
+
+if (validacaoTelefoneObrigatoria) {
+  return (
+    <main className="relative min-h-screen overflow-hidden font-sans">
+      <div
+        className="absolute inset-0 bg-cover bg-center"
+        style={{ backgroundImage: "url('/images/bg-avantalab.png')" }}
+      />
+
+      <div className="absolute inset-0 bg-white/70 backdrop-blur-sm" />
+
+      <section className="relative z-10 flex min-h-screen items-center justify-center px-6 py-10">
+        <div className="w-full max-w-md rounded-3xl border border-slate-200 bg-white/90 p-8 text-center shadow-2xl">
+          <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-2xl bg-sky-100">
+            <svg
+              className="h-8 w-8 text-sky-800"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
+                d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"
+              />
+            </svg>
+          </div>
+
+          <p className="mb-2 text-xs font-bold uppercase tracking-[0.28em] text-sky-700">
+            AvantaLab Gestão
+          </p>
+
+          <h1 className="text-2xl font-black leading-tight text-slate-900">
+            Confirme seu celular
+          </h1>
+
+          <p className="mt-4 text-sm leading-relaxed text-slate-600">
+            Para sua segurança, cadastre e confirme seu celular antes de continuar usando o sistema.
+          </p>
+
+          <div className="mt-6 text-left">
+            <label className="mb-1 block text-sm font-semibold text-slate-700">
+              Celular com DDD
+            </label>
+
+            <input
+              type="tel"
+              inputMode="tel"
+              value={telefoneObrigatorio}
+              onChange={(e) => {
+                setTelefoneObrigatorio(e.target.value);
+                setSmsTelefoneObrigatorioEnviado(false);
+                setCodigoSmsTelefoneObrigatorio('');
+                setTelefoneObrigatorioConfirmado('');
+              }}
+              placeholder="Ex: 11999999999"
+              className="w-full rounded-xl border border-slate-300 bg-white/90 px-4 py-3 text-slate-800 outline-none transition focus:border-sky-600 focus:ring-2 focus:ring-sky-600/20"
+            />
+          </div>
+
+          {smsTelefoneObrigatorioEnviado && (
+            <div className="mt-4 text-left">
+              <label className="mb-1 block text-sm font-semibold text-slate-700">
+                Código recebido por SMS
+              </label>
+
+              <input
+                type="text"
+                inputMode="numeric"
+                value={codigoSmsTelefoneObrigatorio}
+                onChange={(e) => setCodigoSmsTelefoneObrigatorio(e.target.value)}
+                placeholder="Digite o código recebido"
+                className="w-full rounded-xl border border-slate-300 bg-white/90 px-4 py-3 text-slate-800 outline-none transition focus:border-sky-600 focus:ring-2 focus:ring-sky-600/20"
+              />
+
+              <button
+                type="button"
+                onClick={reenviarCodigoTelefoneObrigatorio}
+                disabled={
+                  reenviandoTelefoneObrigatorio ||
+                  segundosReenvioTelefoneObrigatorio > 0
+                }
+                className="mt-2 text-xs font-bold text-sky-700 underline disabled:cursor-not-allowed disabled:text-slate-400"
+              >
+                {segundosReenvioTelefoneObrigatorio > 0
+                  ? `Reenviar código em ${segundosReenvioTelefoneObrigatorio}s`
+                  : reenviandoTelefoneObrigatorio
+                    ? 'Reenviando código...'
+                    : 'Reenviar código'}
+              </button>
+            </div>
+          )}
+
+          {authErro && (
+            <div className="mt-4 rounded-xl bg-red-100 px-4 py-3 text-sm font-semibold text-red-700">
+              {authErro}
+            </div>
+          )}
+
+          {authMensagem && (
+            <div className="mt-4 rounded-xl bg-green-100 px-4 py-3 text-sm font-semibold text-green-700">
+              {authMensagem}
+            </div>
+          )}
+
+          <div className="mt-6 grid grid-cols-1 sm:grid-cols-[1fr_120px] gap-3">
+            <button
+              type="button"
+              onClick={confirmarTelefoneObrigatorio}
+              disabled={validandoTelefoneObrigatorio}
+              className="rounded-xl bg-slate-900 px-4 py-3 font-bold text-white shadow-lg transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {validandoTelefoneObrigatorio
+                ? 'Validando...'
+                : smsTelefoneObrigatorioEnviado
+                  ? 'Confirmar celular'
+                  : 'Enviar código'}
+            </button>
+
+            <button
+              type="button"
+              onClick={handleLogout}
+              className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 font-bold text-red-600 shadow-sm transition hover:bg-red-100"
+            >
+              Sair
             </button>
           </div>
         </div>
@@ -3352,13 +3794,13 @@ if (isTelaMobile) {
   </button>
 </div>
 
-{/* ================= FIM DO FORMULÁRIO DE LOGIN ================= */}
+{/* ================= FIM DO FORMULÁRIO DE CADASTRO ================= */}
 
               </div>
             ) : (
-              <div className="space-y-4">
+              <div className="space-y-2.5">
                 <div>
-                  <label className="mb-1 block text-sm font-semibold text-slate-700">
+                  <label className="mb-0.5 block text-xs font-semibold text-slate-700">
                     Nome
                   </label>
                   <input
@@ -3366,12 +3808,12 @@ if (isTelaMobile) {
   placeholder="Seu nome completo"
   value={cadastroNome}
   onChange={(e) => setCadastroNome(e.target.value)}
-  className="w-full rounded-xl border border-slate-300 bg-white/90 px-4 py-3 text-slate-800 outline-none transition focus:border-sky-600 focus:ring-2 focus:ring-sky-600/20"
+  className="w-full rounded-xl border border-slate-300 bg-white/90 px-4 py-2 text-slate-800 outline-none transition focus:border-sky-600 focus:ring-2 focus:ring-sky-600/20"
 />
                 </div>
 
                 <div>
-                  <label className="mb-1 block text-sm font-semibold text-slate-700">
+                  <label className="mb-0.5 block text-xs font-semibold text-slate-700">
                     Email
                   </label>
                   <input
@@ -3379,12 +3821,12 @@ if (isTelaMobile) {
   placeholder="seuemail@exemplo.com"
   value={cadastroEmail}
   onChange={(e) => setCadastroEmail(e.target.value)}
-  className="w-full rounded-xl border border-slate-300 bg-white/90 px-4 py-3 text-slate-800 outline-none transition focus:border-sky-600 focus:ring-2 focus:ring-sky-600/20"
+  className="w-full rounded-xl border border-slate-300 bg-white/90 px-4 py-2 text-slate-800 outline-none transition focus:border-sky-600 focus:ring-2 focus:ring-sky-600/20"
 />
                 </div>
 
                 <div>
-  <label className="mb-1 block text-sm font-semibold text-slate-700">
+  <label className="mb-0.5 block text-xs font-semibold text-slate-700">
     Celular
   </label>
   <input
@@ -3392,12 +3834,12 @@ if (isTelaMobile) {
     placeholder="DDD + número. Ex: 11999999999"
     value={cadastroTelefone}
     onChange={(e) => setCadastroTelefone(e.target.value)}
-    className="w-full rounded-xl border border-slate-300 bg-white/90 px-4 py-3 text-slate-800 outline-none transition focus:border-sky-600 focus:ring-2 focus:ring-sky-600/20"
+    className="w-full rounded-xl border border-slate-300 bg-white/90 px-4 py-2 text-slate-800 outline-none transition focus:border-sky-600 focus:ring-2 focus:ring-sky-600/20"
   />
 </div>
 
                 <div>
-                  <label className="mb-1 block text-sm font-semibold text-slate-700">
+                  <label className="mb-0.5 block text-xs font-semibold text-slate-700">
                     Senha
                   </label>
                   <div className="relative">
@@ -3406,7 +3848,7 @@ if (isTelaMobile) {
     placeholder="Crie uma senha"
     value={cadastroSenha}
     onChange={(e) => setCadastroSenha(e.target.value)}
-    className="w-full rounded-xl border border-slate-300 bg-white/90 px-4 py-3 pr-14 text-slate-800 outline-none transition focus:border-sky-600 focus:ring-2 focus:ring-sky-600/20"
+    className="w-full rounded-xl border border-slate-300 bg-white/90 px-4 py-2 pr-14 text-slate-800 outline-none transition focus:border-sky-600 focus:ring-2 focus:ring-sky-600/20"
   />
 
   <button
@@ -3420,7 +3862,7 @@ if (isTelaMobile) {
                 </div>
 
                 <div>
-                  <label className="mb-1 block text-sm font-semibold text-slate-700">
+                  <label className="mb-0.5 block text-xs font-semibold text-slate-700">
                     Confirmar senha
                   </label>
                   <div className="relative">
@@ -3429,7 +3871,7 @@ if (isTelaMobile) {
     placeholder="Repita a senha"
     value={cadastroConfirmarSenha}
     onChange={(e) => setCadastroConfirmarSenha(e.target.value)}
-    className="w-full rounded-xl border border-slate-300 bg-white/90 px-4 py-3 pr-14 text-slate-800 outline-none transition focus:border-sky-600 focus:ring-2 focus:ring-sky-600/20"
+    className="w-full rounded-xl border border-slate-300 bg-white/90 px-4 py-2 pr-14 text-slate-800 outline-none transition focus:border-sky-600 focus:ring-2 focus:ring-sky-600/20"
   />
 
   <button
@@ -3444,7 +3886,7 @@ if (isTelaMobile) {
 
                 {smsCadastroEnviado && (
   <div>
-    <label className="mb-1 block text-sm font-semibold text-slate-700">
+    <label className="mb-0.5 block text-xs font-semibold text-slate-700">
       Código recebido por SMS
     </label>
 
@@ -3454,12 +3896,24 @@ if (isTelaMobile) {
       placeholder="Digite o código recebido"
       value={codigoSmsCadastro}
       onChange={(e) => setCodigoSmsCadastro(e.target.value)}
-      className="w-full rounded-xl border border-slate-300 bg-white/90 px-4 py-3 text-slate-800 outline-none transition focus:border-sky-600 focus:ring-2 focus:ring-sky-600/20"
+      className="w-full rounded-xl border border-slate-300 bg-white/90 px-4 py-2 text-slate-800 outline-none transition focus:border-sky-600 focus:ring-2 focus:ring-sky-600/20"
     />
 
-    <p className="mt-1 text-xs text-slate-500">
+    <p className="mt-0.5 text-[11px] text-slate-500">
       Enviamos o código para o celular informado.
     </p>
+<button
+  type="button"
+  onClick={reenviarCodigoSmsCadastro}
+  disabled={reenviandoSmsCadastro || segundosReenvioSms > 0}
+  className="mt-1 text-[11px] font-bold text-sky-700 hover:underline disabled:cursor-not-allowed disabled:text-slate-400 disabled:hover:no-underline"
+>
+  {reenviandoSmsCadastro
+    ? 'Reenviando código...'
+    : segundosReenvioSms > 0
+      ? `Reenviar código em ${segundosReenvioSms}s`
+      : 'Reenviar código'}
+</button>
   </div>
 )}
 
@@ -3479,7 +3933,7 @@ if (isTelaMobile) {
   type="button"
   onClick={handleCadastroTeste}
   disabled={authLoading}
-  className="w-full rounded-xl bg-slate-900 px-4 py-3 font-bold text-white shadow-lg transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
+  className="w-full rounded-xl bg-slate-900 px-4 py-2 font-bold text-white shadow-lg transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
 >
   {authLoading
   ? smsCadastroEnviado
@@ -3502,8 +3956,8 @@ if (isTelaMobile) {
                 </div>
               </div>
             )}
+            </div>
           </div>
-        </div>
       </section>
     </main>
   );
