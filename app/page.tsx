@@ -65,8 +65,13 @@ const [mostrarConfirmarSenhaCadastro, setMostrarConfirmarSenhaCadastro] = useSta
 
 const [cadastroNome, setCadastroNome] = useState('');
 const [cadastroEmail, setCadastroEmail] = useState('');
+const [cadastroTelefone, setCadastroTelefone] = useState('');
 const [cadastroSenha, setCadastroSenha] = useState('');
 const [cadastroConfirmarSenha, setCadastroConfirmarSenha] = useState('');
+
+const [codigoSmsCadastro, setCodigoSmsCadastro] = useState('');
+const [smsCadastroEnviado, setSmsCadastroEnviado] = useState(false);
+const [telefoneSmsCadastroConfirmado, setTelefoneSmsCadastroConfirmado] = useState('');
 
 const [modalConfirmacaoAberto, setModalConfirmacaoAberto] = useState(false);
 const [tituloConfirmacao, setTituloConfirmacao] = useState("");
@@ -95,6 +100,7 @@ const [mostrarConfirmarNovaSenha, setMostrarConfirmarNovaSenha] = useState(false
   const [nomeEmpresaAtual, setNomeEmpresaAtual] = useState('');
 const [nomeUsuarioAtual, setNomeUsuarioAtual] = useState('');
 const [emailUsuarioAtual, setEmailUsuarioAtual] = useState('');
+const [acessoUsuarioAtualId, setAcessoUsuarioAtualId] = useState<string | null>(null);
 const [empresasDoUsuario, setEmpresasDoUsuario] = useState<any[]>([]);
 const [empresaParaSelecionar, setEmpresaParaSelecionar] = useState<any | null>(null);
 const [modalSelecionarEmpresa, setModalSelecionarEmpresa] = useState(false);
@@ -192,6 +198,8 @@ const [ordemLancamentos, setOrdemLancamentos] = useState<'desc' | 'asc'>('desc')
 const [buscaLancamento, setBuscaLancamento] = useState('');
 
   const meses = ['JANEIRO', 'FEVEREIRO', 'MARÇO', 'ABRIL', 'MAIO', 'JUNHO', 'JULHO', 'AGOSTO', 'SETEMBRO', 'OUTUBRO', 'NOVEMBRO', 'DEZEMBRO'];
+  const TEMPO_LIMITE_INATIVIDADE = 60 * 60 * 1000; // 60 minutos
+const CHAVE_ULTIMA_ATIVIDADE = 'avantalab_ultima_atividade';
 
 const podeGerenciarUsuarios =
   perfilUsuario === 'gestor_master' || perfilUsuario === 'administrador';
@@ -252,6 +260,114 @@ const estiloTextoTema = {
   color: textoSobreCorPrimaria,
 };
 
+const extrairCorPredominanteLogo = (imagemBase64: string): Promise<string | null> => {
+  return new Promise((resolve) => {
+    const imagem = new Image();
+
+    imagem.onload = () => {
+      const canvas = document.createElement('canvas');
+      const contexto = canvas.getContext('2d');
+
+      if (!contexto || !imagem.width || !imagem.height) {
+        resolve(null);
+        return;
+      }
+
+      const largura = 120;
+      const altura = Math.max(1, Math.round((imagem.height / imagem.width) * largura));
+
+      canvas.width = largura;
+      canvas.height = altura;
+
+      contexto.drawImage(imagem, 0, 0, largura, altura);
+
+      const dados = contexto.getImageData(0, 0, largura, altura).data;
+
+      const grupos: Record<
+        string,
+        {
+          quantidade: number;
+          rTotal: number;
+          gTotal: number;
+          bTotal: number;
+          pontuacao: number;
+        }
+      > = {};
+
+      for (let i = 0; i < dados.length; i += 4) {
+        const r = dados[i];
+        const g = dados[i + 1];
+        const b = dados[i + 2];
+        const a = dados[i + 3];
+
+        if (a < 180) continue;
+
+        const max = Math.max(r, g, b);
+        const min = Math.min(r, g, b);
+        const saturacao = max - min;
+        const brilho = (r + g + b) / 3;
+
+        const muitoClaro = brilho > 238;
+        const muitoEscuro = brilho < 28;
+        const poucoSaturado = saturacao < 25;
+
+        if (muitoClaro || muitoEscuro || poucoSaturado) continue;
+
+        const rAgrupado = Math.round(r / 16) * 16;
+        const gAgrupado = Math.round(g / 16) * 16;
+        const bAgrupado = Math.round(b / 16) * 16;
+
+        const chave = `${rAgrupado},${gAgrupado},${bAgrupado}`;
+
+        if (!grupos[chave]) {
+          grupos[chave] = {
+            quantidade: 0,
+            rTotal: 0,
+            gTotal: 0,
+            bTotal: 0,
+            pontuacao: 0,
+          };
+        }
+
+        grupos[chave].quantidade += 1;
+        grupos[chave].rTotal += r;
+        grupos[chave].gTotal += g;
+        grupos[chave].bTotal += b;
+
+        grupos[chave].pontuacao += saturacao * 1.6 + Math.min(brilho, 210) * 0.25;
+      }
+
+      const melhorGrupo = Object.values(grupos).sort((a, b) => {
+        const pontuacaoA = a.quantidade * 0.7 + a.pontuacao;
+        const pontuacaoB = b.quantidade * 0.7 + b.pontuacao;
+
+        return pontuacaoB - pontuacaoA;
+      })[0];
+
+      if (!melhorGrupo) {
+        resolve(null);
+        return;
+      }
+
+      const r = Math.round(melhorGrupo.rTotal / melhorGrupo.quantidade);
+      const g = Math.round(melhorGrupo.gTotal / melhorGrupo.quantidade);
+      const b = Math.round(melhorGrupo.bTotal / melhorGrupo.quantidade);
+
+      const hex = `#${[r, g, b]
+        .map((valor) =>
+          Math.max(0, Math.min(255, valor)).toString(16).padStart(2, '0')
+        )
+        .join('')}`;
+
+      resolve(hex);
+    };
+
+    imagem.onerror = () => resolve(null);
+
+    imagem.src = imagemBase64;
+  });
+};
+
 useEffect(() => {
   const verificarDispositivoMobile = () => {
     const larguraPequena = window.innerWidth < 1024;
@@ -275,6 +391,7 @@ const carregarEmpresaSelecionada = async (empresa: any) => {
   setEmpresaId(empresa.id);
   setNomeEmpresaAtual(empresa.nome || empresa.empresa_nome || '');
   setPerfilUsuario(empresa.perfil || null);
+  setAcessoUsuarioAtualId(empresa.acessoId || empresa.acesso_id || null);
 
   const { data: usuarioLogado } = await supabase.auth.getUser();
 
@@ -574,6 +691,79 @@ useEffect(() => {
     behavior: 'smooth',
   });
 }, [abaAtiva, mesAtivo]);
+
+useEffect(() => {
+  if (!mounted || !acessoLiberado) return;
+
+  const registrarAtividade = () => {
+    localStorage.setItem(CHAVE_ULTIMA_ATIVIDADE, String(Date.now()));
+  };
+
+  const encerrarPorInatividade = async () => {
+    await supabase.auth.signOut();
+
+    localStorage.removeItem(CHAVE_ULTIMA_ATIVIDADE);
+
+    setAcessoLiberado(false);
+    setPerfilUsuario(null);
+    setEmpresaId(null);
+    setAcessoNaoConfigurado(false);
+    setModoRedefinirSenha(false);
+    setModoAuth('login');
+
+    setLoginEmail('');
+    setLoginSenha('');
+    setNovaSenha('');
+    setConfirmarNovaSenha('');
+    setAuthErro('');
+    setAuthMensagem('Sessão encerrada por inatividade. Faça login novamente.');
+
+    window.location.href = window.location.origin + window.location.pathname;
+  };
+
+  const verificarInatividade = () => {
+    const ultimaAtividade = Number(
+      localStorage.getItem(CHAVE_ULTIMA_ATIVIDADE) || Date.now()
+    );
+
+    const tempoSemAtividade = Date.now() - ultimaAtividade;
+
+    if (tempoSemAtividade >= TEMPO_LIMITE_INATIVIDADE) {
+      encerrarPorInatividade();
+    }
+  };
+
+  const eventos = [
+    'mousemove',
+    'mousedown',
+    'keydown',
+    'scroll',
+    'touchstart',
+    'click',
+  ];
+
+  const ultimaAtividadeSalva = localStorage.getItem(CHAVE_ULTIMA_ATIVIDADE);
+
+  if (!ultimaAtividadeSalva) {
+    registrarAtividade();
+  } else {
+    verificarInatividade();
+  }
+
+  eventos.forEach((evento) => {
+    window.addEventListener(evento, registrarAtividade);
+  });
+
+  const intervalo = window.setInterval(verificarInatividade, 30 * 1000);
+
+  return () => {
+    eventos.forEach((evento) => {
+      window.removeEventListener(evento, registrarAtividade);
+    });
+
+    window.clearInterval(intervalo);
+  };
+}, [mounted, acessoLiberado]);
 
   // --- CÁLCULOS E FUNÇÕES ---
   
@@ -989,15 +1179,30 @@ const redefinirSenhaUsuario = async () => {
 };
 
 const excluirAcessoUsuario = async (acessoId: string) => {
+  const excluindoProprioAcesso = acessoId === acessoUsuarioAtualId;
+
   abrirConfirmacao({
-    titulo: 'Excluir usuário',
-    mensagem:
-      'Deseja excluir este usuário?\n\nEle perderá o acesso a esta empresa. Essa ação não poderá ser desfeita.',
+    titulo: excluindoProprioAcesso ? 'Excluir minha conta' : 'Excluir usuário',
+    mensagem: excluindoProprioAcesso
+      ? 'Você está prestes a excluir o seu próprio acesso a esta empresa.\n\nApós a exclusão, você será desconectado e voltará para a tela de login.\n\nDeseja continuar?'
+      : 'Deseja excluir este usuário?\n\nEle perderá o acesso a esta empresa. Essa ação não poderá ser desfeita.',
+    textoConfirmar: 'Excluir',
     acao: async () => {
       const resultado = await excluirUsuarioEmpresa(acessoId);
 
       if (resultado.erro) {
         abrirAviso('Erro ao excluir usuário', resultado.mensagem);
+        return;
+      }
+
+      if (excluindoProprioAcesso) {
+        setModalUsuarios(false);
+        setUsuarioEditandoId(null);
+        setAcessoUsuarioAtualId(null);
+
+        await handleLogout();
+
+        window.location.href = window.location.origin + window.location.pathname;
         return;
       }
 
@@ -1450,19 +1655,27 @@ const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
   reader.onloadend = async () => {
     const novaLogoUrl = reader.result as string;
 
-    setLogoUrl(novaLogoUrl);
+setLogoUrl(novaLogoUrl);
 
-    // Mantém o modal aberto após escolher a imagem
-    setModalLogo(true);
+// Mantém o modal aberto após escolher a imagem
+setModalLogo(true);
 
-    const salvo = await salvarConfiguracoesBanco({
-      empresaId,
-      corPrimaria,
-      darkMode,
-      duplicadosAtivo,
-      logoUrl: novaLogoUrl,
-      logoSettings,
-    });
+const corExtraida = await extrairCorPredominanteLogo(novaLogoUrl);
+const novaCorPrimaria = corExtraida || corPrimaria;
+
+if (corExtraida) {
+  setCorPrimaria(corExtraida);
+  setCorTemporaria(corExtraida);
+}
+
+const salvo = await salvarConfiguracoesBanco({
+  empresaId,
+  corPrimaria: novaCorPrimaria,
+  darkMode,
+  duplicadosAtivo,
+  logoUrl: novaLogoUrl,
+  logoSettings,
+});
 
     if (!salvo) {
   abrirAviso(
@@ -1853,7 +2066,7 @@ const alertasSistema = useMemo(() => {
   if (mensagem === 'Email not confirmed') {
     return {
       tipo: 'erro',
-      mensagem: 'Confirme o email recebido para liberar o acesso.',
+      mensagem: 'Não foi possível liberar este acesso. Solicite um novo cadastro ou entre em contato com o suporte.',
     };
   }
 
@@ -1876,7 +2089,8 @@ const alertasSistema = useMemo(() => {
   setAuthLoading(true);
 
   const nomeLimpo = cadastroNome.trim();
-  const emailLimpo = cadastroEmail.trim().toLowerCase();
+const emailLimpo = cadastroEmail.trim().toLowerCase();
+const telefoneLimpo = cadastroTelefone.replace(/\D/g, '');
 
   if (!nomeLimpo) {
     setAuthErro('Informe seu nome completo.');
@@ -1895,6 +2109,18 @@ const alertasSistema = useMemo(() => {
     setAuthLoading(false);
     return;
   }
+
+  if (!telefoneLimpo) {
+  setAuthErro('Informe seu número de celular.');
+  setAuthLoading(false);
+  return;
+}
+
+if (telefoneLimpo.length < 10 || telefoneLimpo.length > 13) {
+  setAuthErro('Informe um celular válido com DDD.');
+  setAuthLoading(false);
+  return;
+}
 
   if (!cadastroSenha) {
     setAuthErro('Crie uma senha.');
@@ -1920,14 +2146,82 @@ const alertasSistema = useMemo(() => {
     return;
   }
 
-  const { error } = await supabase.auth.signUp({
+  if (!smsCadastroEnviado) {
+  const respostaSms = await fetch('/api/sms/enviar-codigo', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      telefone: telefoneLimpo,
+    }),
+  });
+
+  const resultadoSms = await respostaSms.json();
+
+  setAuthLoading(false);
+
+  if (!respostaSms.ok || resultadoSms.erro) {
+    setAuthErro(
+      resultadoSms.mensagem || 'Não foi possível enviar o código por SMS.'
+    );
+    return;
+  }
+
+  setSmsCadastroEnviado(true);
+  setTelefoneSmsCadastroConfirmado(telefoneLimpo);
+  setAuthMensagem(
+    'Enviamos um código por SMS. Digite o código recebido para concluir o cadastro.'
+  );
+  return;
+}
+
+if (!codigoSmsCadastro.trim()) {
+  setAuthErro('Digite o código recebido por SMS.');
+  setAuthLoading(false);
+  return;
+}
+
+if (telefoneLimpo !== telefoneSmsCadastroConfirmado) {
+  setAuthErro(
+    'O número de celular foi alterado. Solicite um novo código antes de concluir o cadastro.'
+  );
+  setSmsCadastroEnviado(false);
+  setCodigoSmsCadastro('');
+  setTelefoneSmsCadastroConfirmado('');
+  setAuthLoading(false);
+  return;
+}
+
+const respostaVerificacaoSms = await fetch('/api/sms/verificar-codigo', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+  },
+  body: JSON.stringify({
+    telefone: telefoneLimpo,
+    codigo: codigoSmsCadastro.trim(),
+  }),
+});
+
+const resultadoVerificacaoSms = await respostaVerificacaoSms.json();
+
+if (!respostaVerificacaoSms.ok || resultadoVerificacaoSms.erro) {
+  setAuthErro(
+    resultadoVerificacaoSms.mensagem || 'Código inválido ou expirado.'
+  );
+  setAuthLoading(false);
+  return;
+}
+
+const { error } = await supabase.auth.signUp({
   email: emailLimpo,
   password: cadastroSenha,
   options: {
     data: {
       nome: nomeLimpo,
+      telefone: telefoneLimpo,
     },
-    emailRedirectTo: `${window.location.origin}/?confirmado=1`,
   },
 });
 
@@ -1948,15 +2242,19 @@ const alertasSistema = useMemo(() => {
 }
 
   setAuthMensagem(
-  'Cadastro criado com sucesso. Enviamos um email de confirmação para liberar o acesso. Verifique sua caixa de entrada ou spam.'
+  'Cadastro criado e celular confirmado com sucesso. Faça login para acessar o sistema.'
 );
 
   setCadastroNome('');
-  setCadastroEmail('');
-  setCadastroSenha('');
-  setCadastroConfirmarSenha('');
+setCadastroEmail('');
+setCadastroTelefone('');
+setCadastroSenha('');
+setCadastroConfirmarSenha('');
+setCodigoSmsCadastro('');
+setSmsCadastroEnviado(false);
+setTelefoneSmsCadastroConfirmado('');
 
-  setModoAuth('login');
+setModoAuth('login');
 };
 
 const handleLogin = async () => {
@@ -2268,8 +2566,9 @@ const handleLogout = async () => {
   await supabase.auth.signOut();
 
   setAcessoLiberado(false);
-  setPerfilUsuario(null);
+setPerfilUsuario(null);
 setEmpresaId(null);
+setAcessoUsuarioAtualId(null);
   setAcessoNaoConfigurado(false);
   setModoRedefinirSenha(false);
   setModoAuth('login');
@@ -3085,6 +3384,19 @@ if (isTelaMobile) {
                 </div>
 
                 <div>
+  <label className="mb-1 block text-sm font-semibold text-slate-700">
+    Celular
+  </label>
+  <input
+    type="tel"
+    placeholder="DDD + número. Ex: 11999999999"
+    value={cadastroTelefone}
+    onChange={(e) => setCadastroTelefone(e.target.value)}
+    className="w-full rounded-xl border border-slate-300 bg-white/90 px-4 py-3 text-slate-800 outline-none transition focus:border-sky-600 focus:ring-2 focus:ring-sky-600/20"
+  />
+</div>
+
+                <div>
                   <label className="mb-1 block text-sm font-semibold text-slate-700">
                     Senha
                   </label>
@@ -3130,6 +3442,27 @@ if (isTelaMobile) {
 </div>
                 </div>
 
+                {smsCadastroEnviado && (
+  <div>
+    <label className="mb-1 block text-sm font-semibold text-slate-700">
+      Código recebido por SMS
+    </label>
+
+    <input
+      type="text"
+      inputMode="numeric"
+      placeholder="Digite o código recebido"
+      value={codigoSmsCadastro}
+      onChange={(e) => setCodigoSmsCadastro(e.target.value)}
+      className="w-full rounded-xl border border-slate-300 bg-white/90 px-4 py-3 text-slate-800 outline-none transition focus:border-sky-600 focus:ring-2 focus:ring-sky-600/20"
+    />
+
+    <p className="mt-1 text-xs text-slate-500">
+      Enviamos o código para o celular informado.
+    </p>
+  </div>
+)}
+
 {authErro && (
   <div className="rounded-xl bg-red-100 px-4 py-3 text-sm font-semibold text-red-700">
     {authErro}
@@ -3148,7 +3481,13 @@ if (isTelaMobile) {
   disabled={authLoading}
   className="w-full rounded-xl bg-slate-900 px-4 py-3 font-bold text-white shadow-lg transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
 >
-  {authLoading ? 'Criando conta...' : 'Criar conta'}
+  {authLoading
+  ? smsCadastroEnviado
+    ? 'Validando código...'
+    : 'Enviando código...'
+  : smsCadastroEnviado
+    ? 'Concluir cadastro'
+    : 'Enviar código por SMS'}
 </button>
 
                 <div className="pt-2 text-center text-sm text-slate-600">
