@@ -560,12 +560,28 @@ export async function criarUsuarioEmpresa({
   const resultado = await resposta.json();
 
   if (!resposta.ok || resultado.erro) {
+  const mensagemErro = String(resultado.mensagem || '').toLowerCase();
+
+  if (
+    mensagemErro.includes('usuarios_empresa_login_unico_idx') ||
+    mensagemErro.includes('duplicate key') ||
+    mensagemErro.includes('unique constraint') ||
+    mensagemErro.includes('violates unique constraint') ||
+    mensagemErro.includes('23505')
+  ) {
     return {
       erro: true,
-      mensagem: resultado.mensagem || 'Não foi possível criar o usuário.',
+      mensagem: 'Login indisponível. Escolha outro login para criar este usuário.',
       data: null,
     };
   }
+
+  return {
+    erro: true,
+    mensagem: resultado.mensagem || 'Não foi possível criar o usuário.',
+    data: null,
+  };
+}
 
   return {
     erro: false,

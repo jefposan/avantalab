@@ -761,6 +761,19 @@ const adicionarUsuarioEmpresa = async () => {
     return;
   }
 
+const loginJaExiste = usuariosEmpresa.some(
+  (usuario) =>
+    (usuario.login || '').trim().toLowerCase() === loginLimpo
+);
+
+if (loginJaExiste) {
+  abrirAviso(
+    'Login indisponível',
+    'Este login já está em uso nesta empresa. Escolha outro login para criar o usuário.'
+  );
+  return;
+}
+
   if (loginLimpo.includes('@')) {
     abrirAviso(
       'Login inválido',
