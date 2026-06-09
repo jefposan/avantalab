@@ -99,29 +99,41 @@ export default function BalancoGeral({
       `}</style>
 
       {/* CABEÇALHO E BOTÃO PDF */}
-      <div className="flex justify-between items-end mb-6 print-ocultar">
-        <div>
-          <h2 className={`text-2xl font-black ${textStrong} flex items-baseline`}>
-  <span
-    className="w-3 h-8 rounded-full mr-4 shadow-sm"
-    style={{ backgroundColor: corPrimaria }}
-  ></span>
+      
+      <div className="mb-5 flex items-center justify-between gap-4 print-ocultar">
+  <div className="flex min-w-0 items-center gap-3">
+    <span
+      className="block h-6 w-2 shrink-0 rounded-full shadow-sm"
+      style={{ backgroundColor: corPrimaria }}
+    />
 
-  <span>BALANÇO GERAL ANUAL</span>
+    <h2 className={`m-0 text-xl font-black leading-none ${textStrong} uppercase tracking-wider`}>
+      BALANÇO GERAL ANUAL
+    </h2>
+  </div>
 
-  <span
-    className="ml-3 text-4xl font-black leading-none"
-    style={{ color: corPrimaria }}
+  <button
+    type="button"
+    onClick={() => window.print()}
+    className="flex shrink-0 cursor-pointer items-center gap-1.5 rounded-md border border-slate-700 bg-slate-800 px-2.5 py-1.5 text-xs font-bold uppercase tracking-wide text-white shadow-sm transition-all hover:bg-slate-700"
   >
-    {anoSelecionado}
-  </span>
-</h2>
-        </div>
-        <button onClick={() => window.print()} className="bg-slate-800 hover:bg-slate-700 text-white font-bold py-2.5 px-5 rounded-lg shadow-md transition-all flex items-center gap-2 border border-slate-700 text-sm uppercase tracking-wider cursor-pointer">
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
-          Salvar PDF
-        </button>
-      </div>
+    <svg
+      className="h-3 w-3"
+      fill="none"
+      stroke="currentColor"
+      viewBox="0 0 24 24"
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth="2"
+        d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"
+      />
+    </svg>
+
+    Salvar PDF
+  </button>
+</div>
 
       {/* BLOCO SUPERIOR: 4 QUADRANTES DE RESUMO ANUAL COM A TARJA FINA */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 print-ocultar">

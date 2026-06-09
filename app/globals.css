@@ -45,3 +45,27 @@ body {
   background-color: #ffffff !important;
   -webkit-text-fill-color: #0f172a !important;
 }
+button:not(:disabled),
+[role="button"]:not(:disabled),
+.cursor-pointer {
+  cursor: pointer !important;
+}
+
+button:disabled {
+  cursor: not-allowed !important;
+}
+.av-page h1 {
+  font-size: 1.5rem !important;
+  line-height: 1.9rem !important;
+}
+
+.av-page h2 {
+  font-size: 1.25rem !important;
+  line-height: 1.65rem !important;
+}
+
+.av-page h1,
+.av-page h2,
+.av-page h3 {
+  margin-top: 0 !important;
+}

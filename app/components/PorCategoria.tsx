@@ -80,57 +80,66 @@ const cat = despesaInfo ? despesaInfo.categoria : 'Outros';
   return (
     <div className="max-w-[1400px] mx-auto w-full pt-10 pb-8 text-sm animate-fade-in space-y-8">
       
-      {/* CABEÇALHO (Espaçamento superior ajustado e PDF removido) */}
-      <div className="mb-10">
-        <h2 className={`text-2xl font-black ${textStrong} flex items-center`}>
-          <span className="w-3 h-8 rounded-full mr-4 shadow-sm" style={{ backgroundColor: corPrimaria }}></span>
-          ANÁLISE POR CATEGORIA E DESPESA
-        </h2>
-        <p className={`mt-2 ${textMuted} font-medium`}>Detalhamento completo dos gastos anuais distribuídos por classificação.</p>
-      </div>
+      {/* CABEÇALHO */}
+<div className="mb-5 grid grid-cols-1 gap-4 lg:grid-cols-3 lg:items-center">
+  <div className="lg:col-span-2">
+    <h2 className={`flex items-center text-xl font-black ${textStrong}`}>
+      <span
+        className="mr-3 block h-6 w-2 shrink-0 rounded-full shadow-sm"
+        style={{ backgroundColor: corPrimaria }}
+      />
+
+      ANÁLISE POR CATEGORIA E DESPESA
+    </h2>
+
+    <p className={`mt-1 text-xs font-medium ${textMuted}`}>
+      Detalhamento completo dos gastos anuais distribuídos por classificação.
+    </p>
+  </div>
+
+  <div
+    className={`${bgCard} flex h-12 items-center justify-between rounded-xl border px-4 shadow-sm ${borderSoft}`}
+    style={{ borderLeft: `4px solid ${corPrimaria}` }}
+  >
+    <span className={`text-xs font-black uppercase tracking-wide ${textMuted}`}>
+      Total anual
+    </span>
+
+    <span
+      className="text-lg font-black"
+      style={{ color: corPrimaria }}
+    >
+      {formatarMoeda(totalGeral)}
+    </span>
+  </div>
+</div>
 
       {/* TARJAS (TÍTULOS EXTERNOS) */}
-      <div className="flex flex-col lg:flex-row gap-6 mb-6">
-        {/* Tarjas da Esquerda (Despesas) */}
-        <div className="lg:w-2/3 flex flex-col sm:flex-row gap-6">
-          <div
-            style={estiloTemaPrimario}
-            className="relative font-bold py-3 px-6 rounded-xl uppercase tracking-wider shadow-md flex-1 text-center text-sm"
-          >
-            TOTAIS POR TIPO DE DESPESAS
+<div className="mb-6 grid grid-cols-1 gap-6 lg:grid-cols-3">
+  <div
+    style={estiloTemaPrimario}
+    className="relative flex h-10 items-center justify-center rounded-lg px-5 text-center text-xs font-bold uppercase tracking-wide shadow-sm lg:col-span-2"
+  >
+    TOTAL POR TIPO DE DESPESA
 
-            {/* INDICADOR: Triângulo apontando para baixo */}
-            <div
-              className="absolute -bottom-3 left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-[12px] border-r-[12px] border-t-[12px] border-l-transparent border-r-transparent"
-              style={{ borderTopColor: corPrimaria }}
-            />
-          </div>
+    <div
+      className="absolute -bottom-2 left-1/2 h-0 w-0 -translate-x-1/2 border-l-[9px] border-r-[9px] border-t-[9px] border-l-transparent border-r-transparent"
+      style={{ borderTopColor: corPrimaria }}
+    />
+  </div>
 
-          <div
-            style={estiloTemaPrimario}
-            className="font-bold py-3 px-8 rounded-xl uppercase tracking-wider shadow-md flex items-center justify-between gap-6 sm:w-auto"
-          >
-            <span className="text-sm">TOTAL ANUAL</span>
-            <span className="text-lg font-black">{formatarMoeda(totalGeral)}</span>
-          </div>
-        </div>
+  <div
+    style={estiloTemaPrimario}
+    className="relative flex h-10 items-center justify-center rounded-lg px-5 text-center text-xs font-bold uppercase tracking-wide shadow-sm"
+  >
+    TOTAL POR CATEGORIA
 
-        {/* Tarja da Direita (Categorias) */}
-        <div className="lg:w-1/3">
-          <div
-            style={estiloTemaPrimario}
-            className="relative font-bold py-3 px-6 rounded-xl uppercase tracking-wider shadow-md w-full text-center text-sm"
-          >
-            TOTAL POR CATEGORIA
-
-            {/* INDICADOR: Triângulo apontando para baixo */}
-            <div
-              className="absolute -bottom-3 left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-[12px] border-r-[12px] border-t-[12px] border-l-transparent border-r-transparent"
-              style={{ borderTopColor: corPrimaria }}
-            />
-          </div>
-        </div>
-      </div>
+    <div
+      className="absolute -bottom-2 left-1/2 h-0 w-0 -translate-x-1/2 border-l-[9px] border-r-[9px] border-t-[9px] border-l-transparent border-r-transparent"
+      style={{ borderTopColor: corPrimaria }}
+    />
+  </div>
+</div>
 
       {/* BLOCO SUPERIOR: 3 COLUNAS */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

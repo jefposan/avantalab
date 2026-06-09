@@ -108,6 +108,11 @@ const [confirmarNovaSenha, setConfirmarNovaSenha] = useState('');
 const [mostrarNovaSenha, setMostrarNovaSenha] = useState(false);
 const [mostrarConfirmarNovaSenha, setMostrarConfirmarNovaSenha] = useState(false);
 
+const [codigoSmsRedefinirSenha, setCodigoSmsRedefinirSenha] = useState('');
+const [smsRedefinirSenhaEnviado, setSmsRedefinirSenhaEnviado] = useState(false);
+const [segundosReenvioRedefinirSenha, setSegundosReenvioRedefinirSenha] = useState(0);
+const [reenviandoSmsRedefinirSenha, setReenviandoSmsRedefinirSenha] = useState(false);
+
   const [empresaId, setEmpresaId] = useState<string | null>(null);
   const [nomeEmpresaAtual, setNomeEmpresaAtual] = useState('');
 const [nomeUsuarioAtual, setNomeUsuarioAtual] = useState('');
@@ -155,6 +160,7 @@ const [menuResponsivoAberto, setMenuResponsivoAberto] = useState(false);
   const [corPrimaria, setCorPrimaria] = useState('#003E73');
   const [corTemporaria, setCorTemporaria] = useState('#003E73');
   const [statusConfig, setStatusConfig] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
+  const [configuracoesCarregadas, setConfiguracoesCarregadas] = useState(false);
   const [mesAtivo, setMesAtivo] = useState<string | null>(null);
   const [ajudaCategoriasAberta, setAjudaCategoriasAberta] = useState(false);
   const ALTURA_LINHA_LANCAMENTO = 44;
@@ -400,6 +406,11 @@ useEffect(() => {
 }, []);
 
 const carregarEmpresaSelecionada = async (empresa: any) => {
+  const mesAtual = meses[new Date().getMonth()];
+setMesResumoDash(mesAtual);
+setMesFaturamento(mesAtual);
+setMesAtivo(null);
+  setConfiguracoesCarregadas(false);
 
   console.log('EMPRESA CARREGADA:', empresa);
 console.log('TELEFONE CONFIRMADO:', empresa.telefone_confirmado);
@@ -478,9 +489,10 @@ if (empresa.telefone_confirmado !== true) {
     setDespesasCadastradas([]);
   }
 
-  setAcessoNaoConfigurado(false);
-  setAcessoLiberado(true);
-  setModalSelecionarEmpresa(false);
+  setConfiguracoesCarregadas(true);
+setAcessoNaoConfigurado(false);
+setAcessoLiberado(true);
+setModalSelecionarEmpresa(false);
 };
 
   // --- LOCAL STORAGE (LÓGICA SEPARADA POR ANO E CONFIGURAÇÕES) ---
@@ -647,7 +659,7 @@ useEffect(() => {
 
   // 3. Salva Configurações Globais no Supabase
 useEffect(() => {
-  if (!mounted || !empresaId) return;
+  if (!mounted || !empresaId || !configuracoesCarregadas) return;
 
   if (!podeAcessarAjustes) {
     setStatusConfig('idle');
@@ -690,7 +702,16 @@ useEffect(() => {
     ativo = false;
     clearTimeout(timer);
   };
-}, [corPrimaria, darkMode, duplicadosAtivo, logoUrl, logoSettings, mounted, empresaId]);
+}, [
+  corPrimaria,
+  darkMode,
+  duplicadosAtivo,
+  logoUrl,
+  logoSettings,
+  mounted,
+  empresaId,
+  configuracoesCarregadas,
+]);
 
   
 // 5. Auto-fechar o Menu de Ajustes após tempo inativo
@@ -735,6 +756,20 @@ useEffect(() => {
     window.clearTimeout(timer);
   };
 }, [segundosReenvioSms]);
+
+useEffect(() => {
+  if (segundosReenvioRedefinirSenha <= 0) return;
+
+  const timer = window.setTimeout(() => {
+    setSegundosReenvioRedefinirSenha((segundos) =>
+      Math.max(segundos - 1, 0)
+    );
+  }, 1000);
+
+  return () => {
+    window.clearTimeout(timer);
+  };
+}, [segundosReenvioRedefinirSenha]);
 
 useEffect(() => {
   if (segundosReenvioTelefoneObrigatorio <= 0) return;
@@ -2104,6 +2139,12 @@ const alertasSistema = useMemo(() => {
   const textMuted = darkMode ? 'text-slate-400' : 'text-slate-500';
   const textStrong = darkMode ? 'text-white' : 'text-slate-800';
 
+  const classePaginaInterna =
+  'av-page flex-1 w-full max-w-7xl mx-auto px-8 pt-3 pb-8';
+
+const classeConteudoPagina =
+  'w-full [&>*:first-child]:!mt-0 [&>*:first-child]:!pt-0';
+
   const tratarErroAuth = (mensagem: string) => {
   const texto = mensagem.toLowerCase();
 
@@ -2705,41 +2746,107 @@ const handleRecuperarSenha = async () => {
   setAuthErro('');
   setAuthMensagem('');
 
-  const emailLimpo = loginEmail.trim().toLowerCase();
+  const loginLimpo = loginEmail.trim().toLowerCase();
 
-  if (!emailLimpo) {
-    setAuthErro('Digite seu email no campo acima para recuperar a senha.');
+  if (!loginLimpo) {
+    setAuthErro('Informe seu email ou login para recuperar a senha.');
     return;
   }
 
   setAuthLoading(true);
 
-  const { error } = await supabase.auth.resetPasswordForEmail(emailLimpo, {
-  redirectTo: `${window.location.origin}/?modo=redefinir-senha`,
-});
+  const resposta = await fetch('/api/senha/enviar-codigo', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      login: loginLimpo,
+    }),
+  });
+
+  const resultado = await resposta.json();
 
   setAuthLoading(false);
 
-  if (error) {
-  console.error('Erro recuperação de senha:', error);
+  if (!resposta.ok || resultado.erro) {
+    setAuthErro(
+      resultado.mensagem || 'Não foi possível enviar o código por SMS.'
+    );
+    return;
+  }
 
-  const erroTratado = tratarErroAuth(error.message);
+  setModoRedefinirSenha(true);
+setSmsRedefinirSenhaEnviado(true);
+setCodigoSmsRedefinirSenha('');
+setNovaSenha('');
+setConfirmarNovaSenha('');
+setSegundosReenvioRedefinirSenha(60);
+setAuthMensagem('Enviamos um código por SMS para o celular confirmado neste acesso.');
+};
 
-  if (erroTratado.tipo === 'limite') {
-  abrirAviso('Limite temporário', erroTratado.mensagem);
-} else {
-  setAuthErro(erroTratado.mensagem);
-}
+const reenviarCodigoRedefinirSenha = async () => {
+  if (reenviandoSmsRedefinirSenha || segundosReenvioRedefinirSenha > 0) return;
 
-  return;
-}
+  setAuthErro('');
+  setAuthMensagem('');
 
-  setAuthMensagem('Enviamos um email para você redefinir sua senha.');
+  const loginLimpo = loginEmail.trim().toLowerCase();
+
+  if (!loginLimpo) {
+    setAuthErro('Informe seu email ou login para recuperar a senha.');
+    return;
+  }
+
+  setReenviandoSmsRedefinirSenha(true);
+
+  const resposta = await fetch('/api/senha/enviar-codigo', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      login: loginLimpo,
+    }),
+  });
+
+  const resultado = await resposta.json();
+
+  setReenviandoSmsRedefinirSenha(false);
+
+  if (!resposta.ok || resultado.erro) {
+    setAuthErro(
+      resultado.mensagem || 'Não foi possível reenviar o código por SMS.'
+    );
+    return;
+  }
+
+  setSmsRedefinirSenhaEnviado(true);
+  setCodigoSmsRedefinirSenha('');
+  setSegundosReenvioRedefinirSenha(60);
+  setAuthMensagem('Reenviamos o código por SMS. Digite o código mais recente para redefinir sua senha.');
 };
 
 const handleAtualizarSenha = async () => {
   setAuthErro('');
   setAuthMensagem('');
+
+  const loginLimpo = loginEmail.trim().toLowerCase();
+
+  if (!loginLimpo) {
+    setAuthErro('Informe seu email ou login para recuperar a senha.');
+    return;
+  }
+
+  if (!smsRedefinirSenhaEnviado) {
+    await handleRecuperarSenha();
+    return;
+  }
+
+  if (!codigoSmsRedefinirSenha.trim()) {
+    setAuthErro('Digite o código recebido por SMS.');
+    return;
+  }
 
   if (!novaSenha) {
     setAuthErro('Digite a nova senha.');
@@ -2763,38 +2870,37 @@ const handleAtualizarSenha = async () => {
 
   setAuthLoading(true);
 
-  const { error } = await supabase.auth.updateUser({
-    password: novaSenha,
+  const resposta = await fetch('/api/senha/redefinir', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      login: loginLimpo,
+      codigo: codigoSmsRedefinirSenha.trim(),
+      novaSenha,
+    }),
   });
+
+  const resultado = await resposta.json();
 
   setAuthLoading(false);
 
-  if (error) {
-    setAuthErro('Não foi possível atualizar a senha. Tente solicitar um novo link.');
+  if (!resposta.ok || resultado.erro) {
+    setAuthErro(resultado.mensagem || 'Não foi possível redefinir a senha.');
     return;
   }
 
-  await supabase.auth.signOut();
-
+  setModoRedefinirSenha(false);
+  setSmsRedefinirSenhaEnviado(false);
+  setCodigoSmsRedefinirSenha('');
   setNovaSenha('');
   setConfirmarNovaSenha('');
-  setMostrarNovaSenha(false);
-  setMostrarConfirmarNovaSenha(false);
+  setSegundosReenvioRedefinirSenha(0);
 
-  setModoRedefinirSenha(false);
   setModoAuth('login');
-  setAcessoLiberado(false);
-  setAcessoNaoConfigurado(false);
-  setModalSelecionarEmpresa(false);
-  setEmpresaId(null);
-  setNomeEmpresaAtual('');
-  setPerfilUsuario(null);
-
   setLoginSenha('');
-  setAuthErro('');
-  setAuthMensagem('Senha atualizada com sucesso. Faça login novamente.');
-
-  window.history.replaceState({}, document.title, window.location.pathname);
+  setAuthMensagem('Senha redefinida com sucesso. Faça login com a nova senha.');
 };
 
 const handleGoogleLogin = async () => {
@@ -3609,6 +3715,40 @@ if (isTelaMobile) {
           {modoRedefinirSenha ? (
   <div className="space-y-4">
     <div>
+
+{smsRedefinirSenhaEnviado && (
+  <div>
+    <label className="mb-1 block text-sm font-semibold text-slate-700">
+      Código recebido por SMS
+    </label>
+
+    <input
+      type="text"
+      inputMode="numeric"
+      value={codigoSmsRedefinirSenha}
+      onChange={(e) => setCodigoSmsRedefinirSenha(e.target.value)}
+      placeholder="Digite o código recebido"
+      className="w-full rounded-xl border border-slate-300 bg-white/90 px-4 py-3 text-slate-800 outline-none transition focus:border-sky-600 focus:ring-2 focus:ring-sky-600/20"
+    />
+
+    <button
+      type="button"
+      onClick={reenviarCodigoRedefinirSenha}
+      disabled={
+        reenviandoSmsRedefinirSenha ||
+        segundosReenvioRedefinirSenha > 0
+      }
+      className="mt-2 text-xs font-bold text-sky-700 underline disabled:cursor-not-allowed disabled:text-slate-400"
+    >
+      {segundosReenvioRedefinirSenha > 0
+        ? `Reenviar código em ${segundosReenvioRedefinirSenha}s`
+        : reenviandoSmsRedefinirSenha
+          ? 'Reenviando código...'
+          : 'Reenviar código'}
+    </button>
+  </div>
+)}
+
       <label className="mb-1 block text-sm font-semibold text-slate-700">
         Nova senha
       </label>
@@ -3674,7 +3814,13 @@ if (isTelaMobile) {
       disabled={authLoading}
       className="w-full rounded-xl bg-slate-900 px-4 py-3 font-bold text-white shadow-lg transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
     >
-      {authLoading ? 'Salvando...' : 'Salvar nova senha'}
+      {authLoading
+  ? smsRedefinirSenhaEnviado
+    ? 'Redefinindo...'
+    : 'Enviando...'
+  : smsRedefinirSenhaEnviado
+    ? 'Redefinir senha'
+    : 'Enviar código por SMS'}
     </button>
   </div>
 ) : modoAuth === 'login' ? (
@@ -4774,7 +4920,7 @@ name="novo-usuario-senha"
 )}
 
 <header
-  className={`print-ocultar ${bgCard} sticky top-0 z-[900] shadow-sm border-b px-8 pt-1 pb-4 relative overflow-hidden`}
+  className={`print-ocultar ${bgCard} sticky top-0 z-[900] shadow-[0_4px_18px_rgba(15,23,42,0.10)] border-b px-8 pt-1 pb-4 relative overflow-hidden`}
   style={{
     borderBottomColor: darkMode ? '#334155' : 'transparent',
     borderBottomWidth: '1px',
@@ -4838,14 +4984,14 @@ name="novo-usuario-senha"
   {/* ÁREA DIREITA DO HEADER */}
   <div className="flex-1 flex flex-col gap-5 min-w-0">
     {/* LINHA 1: MENU */}
-<div className="relative hidden items-center justify-center gap-6 xl:flex">
-  <nav className="flex justify-center space-x-2">
+<div className="relative hidden items-center gap-6 xl:flex">
+  <nav className="ml-10 flex items-center gap-1.5">
         <button
           onClick={() => {
             setAbaAtiva('Dashboard');
             setMesAtivo(null);
           }}
-          className="flex items-center gap-2 font-bold py-2 px-4 rounded-full transition-all text-xs uppercase tracking-wide border-2 cursor-pointer shadow-md hover:brightness-110 active:scale-[0.98]"
+          className="flex items-center gap-1.5 font-bold py-1.5 px-3 rounded-full transition-all text-xs uppercase tracking-wide border-2 cursor-pointer shadow-md hover:brightness-110 active:scale-[0.98]"
           style={estiloTemaPrimarioGradiente}
         >
           <svg
@@ -4872,7 +5018,7 @@ name="novo-usuario-senha"
               setAbaAtiva(item);
               setMesAtivo(null);
             }}
-            className={`font-bold py-2.5 px-6 rounded-full transition-all text-sm uppercase tracking-wide border-2 cursor-pointer ${
+            className={`font-bold py-1.5 px-3 rounded-full transition-all text-xs uppercase tracking-wide border-2 cursor-pointer ${
               abaAtiva === item
                 ? 'shadow-md transform scale-105'
                 : darkMode
@@ -4898,7 +5044,7 @@ name="novo-usuario-senha"
         ))}
       </nav>
 
-      <div className="flex items-center space-x-2 relative">
+      <div className="ml-8 flex items-center space-x-2 relative">
         <button
           type="button"
           onClick={() => setCalcAberta(!calcAberta)}
@@ -5086,7 +5232,7 @@ name="novo-usuario-senha"
     color: textoSobreCorPrimaria,
   }}
 >
-  <div className="mx-auto flex h-full w-full max-w-[1600px] items-center justify-between px-8">
+  <div className="mx-auto flex h-full w-full max-w-[1280px] items-center justify-between px-8">
     <div className="flex items-center gap-2 min-w-0">
     <svg
       className="h-3.5 w-3.5 shrink-0"
@@ -5203,7 +5349,7 @@ name="novo-usuario-senha"
                 <h4 className={`text-sm font-black ${textStrong}`}>
                   {aviso.titulo}
                 </h4>
-
+                
                 <p className={`mt-1 text-xs leading-relaxed ${textMuted}`}>
                   {aviso.mensagem}
                 </p>
@@ -5551,7 +5697,7 @@ name="novo-usuario-senha"
   </div>
 </div>
 
-          <main className="flex-1 p-8 max-w-7xl mx-auto w-full space-y-8">
+          <main className={classePaginaInterna}>
             <div
   className={`${bgCard} rounded-xl shadow-lg border-x border-b border-t-[4px] p-6`}
   style={{ borderTopColor: corPrimaria }}
@@ -6003,23 +6149,23 @@ name="novo-usuario-senha"
         window.addEventListener('pointerup', aoSoltar);
       }}
     >
-      <span className="h-1 w-16 rounded-full bg-slate-500" />
+      <span className="h-1 w-16 rounded-full bg-slate-500" /> 
     </div>
   )}
 </div>
 </div>
 
 <div className="flex justify-between items-center mt-8 mb-4 print-ocultar">
-  <div className="flex items-center">
-    <span
-      className="w-3 h-8 rounded-full mr-4 shadow-sm"
-      style={{ backgroundColor: corPrimaria }}
-    ></span>
+  <div className="flex items-center gap-3">
+  <span
+    className="block h-6 w-2 shrink-0 rounded-full shadow-sm"
+    style={{ backgroundColor: corPrimaria }}
+  />
 
-    <h2 className={`text-2xl font-black ${textStrong} uppercase tracking-wider`}>
-  TOTAIS DE {mesAtivo}
-</h2>
-  </div>
+  <h2 className={`m-0 leading-none ${textStrong} uppercase tracking-wider`}>
+    TOTAIS DE {mesAtivo}
+  </h2>
+</div>
 </div>
 
             <div className="grid grid-cols-2 gap-6">
@@ -6028,10 +6174,10 @@ name="novo-usuario-senha"
     style={{ borderTopColor: corPrimaria }}
   >
     <h3
-      className={`text-base font-black ${textStrong} border-b border-slate-200/10 pb-2 mb-3 uppercase tracking-wider text-center`}
-    >
-      Total por Tipo de Despesa
-    </h3>
+  className={`text-sm font-black ${textStrong} border-b border-slate-200/10 pb-1.5 mb-2 uppercase tracking-wide text-center`}
+>
+  Total por Tipo de Despesa
+</h3>
 
     <div className="space-y-1.5 w-full">
       {analiseDespesas.dados.map((item) => (
@@ -6080,10 +6226,10 @@ name="novo-usuario-senha"
     style={{ borderTopColor: corPrimaria }}
   >
     <h3
-      className={`text-center text-base font-black uppercase tracking-wider ${textStrong} border-b border-slate-200/10 pb-2 mb-3`}
-    >
-      Composição de Gastos
-    </h3>
+  className={`text-center text-sm font-black uppercase tracking-wide ${textStrong} border-b border-slate-200/10 pb-1.5 mb-2`}
+>
+  Composição de Gastos
+</h3>
 
     {lancamentosDoMes.length > 0 ? (
       <div className="flex-1 flex flex-col items-center justify-center">
@@ -6142,44 +6288,92 @@ name="novo-usuario-senha"
           </main>
         </>
       ) : abaAtiva === 'Balanço Geral' ? (
-        <BalancoGeral 
-  meses={meses}
-  lancamentos={lancamentos}
-  faturamentos={faturamentos}
-  setFaturamentos={setFaturamentos}
-  corPrimaria={corPrimaria}
-  darkMode={darkMode}
-  formatarMoeda={formatarMoeda}
-  anoSelecionado={anoSelecionado}
-  salvarFaturamentoMes={salvarFaturamentoMes}
-/>
-      ) : abaAtiva === 'Gráficos' ? (
-        <Graficos
-          meses={meses} lancamentos={lancamentos} faturamentos={faturamentos} 
-          corPrimaria={corPrimaria} darkMode={darkMode} formatarMoeda={formatarMoeda} 
-        />
-      ) : abaAtiva === 'Por Categoria' ? (
-        <PorCategoria 
-          meses={meses} lancamentos={lancamentos} despesasCadastradas={despesasCadastradas} 
-          corPrimaria={corPrimaria} darkMode={darkMode} formatarMoeda={formatarMoeda} 
-        />
-      ) : abaAtiva === 'Relatório' ? (
-        <Relatorio 
-  meses={meses}
-  lancamentos={lancamentos}
-  faturamentos={faturamentos}
-  despesasCadastradas={despesasCadastradas}
-  corPrimaria={corPrimaria}
-  darkMode={darkMode}
-  anoSelecionado={anoSelecionado}
-  setAnoSelecionado={setAnoSelecionado}
-  empresaId={empresaId}
-/>
-      ) : (
-        <Dashboard 
-          meses={meses} setMesAtivo={setMesAtivo} bgCard={bgCard} corPrimaria={corPrimaria} textStrong={textStrong} textMuted={textMuted} darkMode={darkMode} mesResumoDash={mesResumoDash} setMesResumoDash={setMesResumoDash} totalDespesasMes={totalDespesasMes} maiorGasto={maiorGasto} lucroOperacional={lucroOperacional} mesFaturamento={mesFaturamento} setMesFaturamento={setMesFaturamento} inputFaturamento={inputFaturamento} setInputFaturamento={setInputFaturamento} salvarFaturamento={salvarFaturamento} receitasTotais={receitasTotais} despesasTotais={despesasTotais} lucroTotalAnual={lucroTotalAnual} formatarMoeda={formatarMoeda}
-        />
-      )}
+  <main className={classePaginaInterna}>
+  <div className={classeConteudoPagina}>
+    <BalancoGeral 
+      meses={meses}
+      lancamentos={lancamentos}
+      faturamentos={faturamentos}
+      setFaturamentos={setFaturamentos}
+      corPrimaria={corPrimaria}
+      darkMode={darkMode}
+      formatarMoeda={formatarMoeda}
+      anoSelecionado={anoSelecionado}
+      salvarFaturamentoMes={salvarFaturamentoMes}
+    />
+  </div>
+</main>
+) : abaAtiva === 'Gráficos' ? (
+  <main className={classePaginaInterna}>
+    <div className={classeConteudoPagina}>
+      <Graficos
+        meses={meses}
+        lancamentos={lancamentos}
+        faturamentos={faturamentos}
+        corPrimaria={corPrimaria}
+        darkMode={darkMode}
+        formatarMoeda={formatarMoeda}
+      />
+    </div>
+  </main>
+) : abaAtiva === 'Por Categoria' ? (
+  <main className={classePaginaInterna}>
+    <div className={classeConteudoPagina}>
+      <PorCategoria 
+        meses={meses}
+        lancamentos={lancamentos}
+        despesasCadastradas={despesasCadastradas}
+        corPrimaria={corPrimaria}
+        darkMode={darkMode}
+        formatarMoeda={formatarMoeda}
+      />
+    </div>
+  </main>
+) : abaAtiva === 'Relatório' ? (
+  <main className={classePaginaInterna}>
+    <div className={classeConteudoPagina}>
+      <Relatorio 
+        meses={meses}
+        lancamentos={lancamentos}
+        faturamentos={faturamentos}
+        despesasCadastradas={despesasCadastradas}
+        corPrimaria={corPrimaria}
+        darkMode={darkMode}
+        anoSelecionado={anoSelecionado}
+        setAnoSelecionado={setAnoSelecionado}
+        empresaId={empresaId}
+      />
+    </div>
+  </main>
+) : (
+  <main className={classePaginaInterna}>
+    <div className={classeConteudoPagina}>
+      <Dashboard 
+        meses={meses}
+        setMesAtivo={setMesAtivo}
+        bgCard={bgCard}
+        corPrimaria={corPrimaria}
+        textStrong={textStrong}
+        textMuted={textMuted}
+        darkMode={darkMode}
+        mesResumoDash={mesResumoDash}
+        setMesResumoDash={setMesResumoDash}
+        totalDespesasMes={totalDespesasMes}
+        maiorGasto={maiorGasto}
+        lucroOperacional={lucroOperacional}
+        mesFaturamento={mesFaturamento}
+        setMesFaturamento={setMesFaturamento}
+        inputFaturamento={inputFaturamento}
+        setInputFaturamento={setInputFaturamento}
+        salvarFaturamento={salvarFaturamento}
+        receitasTotais={receitasTotais}
+        despesasTotais={despesasTotais}
+        lucroTotalAnual={lucroTotalAnual}
+        formatarMoeda={formatarMoeda}
+      />
+    </div>
+  </main>
+)}
 
       <ModalTermos
   aberto={modalTermos}
