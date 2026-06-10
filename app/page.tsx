@@ -4727,7 +4727,7 @@ if (isTelaMobile) {
   </div>
 </div>
 
-      <div className="grid grid-cols-1 gap-3 md:grid-cols-4">
+      <div className="grid grid-cols-1 gap-3 md:grid-cols-[1.35fr_1fr_0.75fr_1.20fr_auto] md:items-center">
   <input
   type="text"
   value={usuarioNome}
@@ -4816,17 +4816,18 @@ name="novo-usuario-senha"
     Administrador
   </option>
 </select>
+<button
+  type="button"
+  onClick={adicionarUsuarioEmpresa}
+  className="h-[38px] self-center rounded-md px-3 py-1 text-[11px] font-black uppercase tracking-wide shadow-sm transition hover:brightness-110 active:scale-[0.98] cursor-pointer"
+  style={estiloTemaPrimario}
+>
+  Criar
+</button>
 </div>
 
-      <div className="mt-4 flex justify-end">
-        <button
-          type="button"
-          onClick={adicionarUsuarioEmpresa}
-          className="rounded-xl px-5 py-2.5 text-sm font-black uppercase tracking-wide shadow-md transition hover:brightness-110 active:scale-[0.98] cursor-pointer"
-          style={estiloTemaPrimario}
-        >
-          Criar acesso
-        </button>
+      <div className="mt-0 flex justify-end">
+        
       </div>
 
       <div className="mt-6 border-t border-slate-200/20 pt-4">
