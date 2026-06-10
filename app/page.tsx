@@ -739,12 +739,27 @@ useEffect(() => {
 useEffect(() => {
   if (!mounted || !acessoLiberado) return;
 
+  setBuscaLancamento('');
+  setLancamentoEditandoId(null);
+
+  setFormDia('');
+  setFormDespesa('');
+  setFormDescricao('');
+  setFormValor('');
+  setValorNumericoRaw(0);
+
+  setEditDia('');
+  setEditDespesa('');
+  setEditDescricao('');
+  setEditValor('');
+  setEditValorNumerico(0);
+
   window.scrollTo({
     top: 0,
     left: 0,
     behavior: 'smooth',
   });
-}, [abaAtiva, mesAtivo]);
+}, [abaAtiva, mesAtivo, mounted, acessoLiberado]);
 
 useEffect(() => {
   if (segundosReenvioSms <= 0) return;
@@ -943,12 +958,28 @@ const lancamentosFiltradosDoMes = useMemo(() => {
 
   const salvarFaturamentoMes = async (mes: string, valor: number) => {
   if (!empresaId) {
-  abrirAviso(
-    'Empresa não carregada',
-    'Tente atualizar a página e acessar novamente.'
-  );
-  return;
-}
+    abrirAviso(
+      'Empresa não carregada',
+      'Tente atualizar a página e acessar novamente.'
+    );
+    return;
+  }
+
+  if (!mes) {
+    abrirAviso(
+      'Mês obrigatório',
+      'Selecione o mês do faturamento antes de salvar.'
+    );
+    return;
+  }
+
+  if (valor <= 0) {
+    abrirAviso(
+      'Valor obrigatório',
+      'Informe um valor de faturamento maior que zero antes de salvar.'
+    );
+    return;
+  }
 
   const salvo = await salvarFaturamentoBanco({
     empresaId,
@@ -971,38 +1002,53 @@ const lancamentosFiltradosDoMes = useMemo(() => {
   }));
 };
 
-  const salvarFaturamento = async () => {
+const salvarFaturamento = async () => {
   if (!empresaId) {
-  abrirAviso(
-    'Empresa não carregada',
-    'Tente atualizar a página e acessar novamente.'
-  );
-  return;
-}
+    abrirAviso(
+      'Empresa não carregada',
+      'Tente atualizar a página e acessar novamente.'
+    );
+    return;
+  }
 
-  const valorLimpo = parseInt(inputFaturamento.replace(/\D/g, '') || '0', 10) / 100;
+  if (!mesFaturamento) {
+    abrirAviso(
+      'Mês obrigatório',
+      'Selecione o mês do faturamento antes de salvar.'
+    );
+    return;
+  }
 
-  if (valorLimpo > 0) {
-    const salvo = await salvarFaturamentoBanco({
-      empresaId,
-      ano: Number(anoSelecionado),
-      mes: mesFaturamento,
-      valor: valorLimpo,
-    });
+  const valorLimpo =
+    parseInt(inputFaturamento.replace(/\D/g, '') || '0', 10) / 100;
 
-    if (salvo) {
-      setFaturamentos(prev => ({
-        ...prev,
-        [mesFaturamento]: valorLimpo,
-      }));
+  if (valorLimpo <= 0) {
+    abrirAviso(
+      'Valor obrigatório',
+      'Informe um valor de faturamento maior que zero antes de salvar.'
+    );
+    return;
+  }
 
-      setInputFaturamento('');
-    } else {
-  abrirAviso(
-    'Erro ao salvar faturamento',
-    'Não foi possível salvar o faturamento no banco.'
-  );
-}
+  const salvo = await salvarFaturamentoBanco({
+    empresaId,
+    ano: Number(anoSelecionado),
+    mes: mesFaturamento,
+    valor: valorLimpo,
+  });
+
+  if (salvo) {
+    setFaturamentos((prev) => ({
+      ...prev,
+      [mesFaturamento]: valorLimpo,
+    }));
+
+    setInputFaturamento('');
+  } else {
+    abrirAviso(
+      'Erro ao salvar faturamento',
+      'Não foi possível salvar o faturamento no banco.'
+    );
   }
 };
   const handleValorChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -2183,6 +2229,66 @@ const alertasSistema = useMemo(() => {
 const classeConteudoPagina =
   'w-full [&>*:first-child]:!mt-0 [&>*:first-child]:!pt-0';
 
+  const lerRespostaApi = async (resposta: Response) => {
+  try {
+    return await resposta.json();
+  } catch {
+    return {};
+  }
+};
+
+const mensagemSmsAmigavel = (
+  mensagemTecnica?: string,
+  tipo: 'enviar' | 'reenviar' | 'verificar' | 'redefinir' = 'enviar'
+) => {
+  const texto = String(mensagemTecnica || '').toLowerCase();
+
+  if (
+    texto.includes('twilio') ||
+    texto.includes('configuração') ||
+    texto.includes('configuracao') ||
+    texto.includes('environment') ||
+    texto.includes('env') ||
+    texto.includes('token') ||
+    texto.includes('sid') ||
+    texto.includes('auth')
+  ) {
+    return 'Não foi possível enviar o SMS neste momento. Tente novamente em alguns minutos.';
+  }
+
+  if (
+    texto.includes('rate limit') ||
+    texto.includes('too many requests') ||
+    texto.includes('limite') ||
+    texto.includes('many attempts')
+  ) {
+    return 'Por segurança, existe um limite temporário de tentativas. Aguarde alguns minutos e tente novamente.';
+  }
+
+  if (
+    texto.includes('telefone') ||
+    texto.includes('phone') ||
+    texto.includes('number') ||
+    texto.includes('invalid')
+  ) {
+    return 'Informe um celular válido com DDD.';
+  }
+
+  if (tipo === 'verificar') {
+    return 'Código inválido ou expirado. Verifique o código recebido ou solicite um novo.';
+  }
+
+  if (tipo === 'redefinir') {
+    return 'Não foi possível redefinir a senha neste momento. Tente novamente em alguns minutos.';
+  }
+
+  if (tipo === 'reenviar') {
+    return 'Não foi possível reenviar o SMS neste momento. Tente novamente em alguns minutos.';
+  }
+
+  return 'Não foi possível enviar o SMS neste momento. Tente novamente em alguns minutos.';
+};
+
   const tratarErroAuth = (mensagem: string) => {
   const texto = mensagem.toLowerCase();
 
@@ -2248,14 +2354,12 @@ const reenviarCodigoSmsCadastro = async () => {
     }),
   });
 
-  const resultadoSms = await respostaSms.json();
+  const resultadoSms = await lerRespostaApi(respostaSms);
 
   setReenviandoSmsCadastro(false);
 
   if (!respostaSms.ok || resultadoSms.erro) {
-    setAuthErro(
-      resultadoSms.mensagem || 'Não foi possível reenviar o código por SMS.'
-    );
+    setAuthErro(mensagemSmsAmigavel(resultadoSms.mensagem, 'reenviar'));
     return;
   }
 
@@ -2340,7 +2444,7 @@ if (telefoneLimpo.length < 10 || telefoneLimpo.length > 13) {
     }),
   });
 
-  const resultadoSms = await respostaSms.json();
+  const resultadoSms = await lerRespostaApi(respostaSms);
 
   setAuthLoading(false);
 
@@ -2389,12 +2493,10 @@ const respostaVerificacaoSms = await fetch('/api/sms/verificar-codigo', {
   }),
 });
 
-const resultadoVerificacaoSms = await respostaVerificacaoSms.json();
+const resultadoVerificacaoSms = await lerRespostaApi(respostaVerificacaoSms);
 
 if (!respostaVerificacaoSms.ok || resultadoVerificacaoSms.erro) {
-  setAuthErro(
-    resultadoVerificacaoSms.mensagem || 'Código inválido ou expirado.'
-  );
+  setAuthErro(mensagemSmsAmigavel(resultadoVerificacaoSms.mensagem, 'verificar'));
   setAuthLoading(false);
   return;
 }
@@ -2752,6 +2854,66 @@ const sairDaSelecaoEmpresa = async () => {
 const handleLogout = async () => {
   await supabase.auth.signOut();
 
+  localStorage.removeItem(CHAVE_ULTIMA_ATIVIDADE);
+
+setAcessoLiberado(false);
+setAcessoNaoConfigurado(false);
+setValidacaoTelefoneObrigatoria(false);
+setModoRedefinirSenha(false);
+setModoAuth('login');
+
+setEmpresaId(null);
+setNomeEmpresaAtual('');
+setNomeUsuarioAtual('');
+setEmailUsuarioAtual('');
+setAcessoUsuarioAtualId(null);
+setPerfilUsuario(null);
+setEmpresasDoUsuario([]);
+setEmpresaParaSelecionar(null);
+
+setModalSelecionarEmpresa(false);
+setModalEmpresasAberto(false);
+setModalExcluirEmpresa(false);
+setModalUsuarios(false);
+setAjustesAberto(false);
+setMenuResponsivoAberto(false);
+setPainelAvisosAberto(false);
+
+setLancamentos([]);
+setFaturamentos({});
+setDespesasCadastradas([]);
+
+setLogoUrl('');
+setLogoSettings({ scale: 100, x: 0, y: 0 });
+setCorPrimaria('#003E73');
+setCorTemporaria('#003E73');
+setDarkMode(false);
+setDuplicadosAtivo(true);
+setUltimoBackupEm(null);
+setConfiguracoesCarregadas(false);
+
+setMesAtivo(null);
+setAbaAtiva('Dashboard');
+setAnoSelecionado(new Date().getFullYear().toString());
+
+setLoginEmail('');
+setLoginSenha('');
+setCadastroNome('');
+setCadastroEmail('');
+setCadastroTelefone('');
+setCadastroSenha('');
+setCadastroConfirmarSenha('');
+setCodigoSmsCadastro('');
+setSmsCadastroEnviado(false);
+
+setNovaSenha('');
+setConfirmarNovaSenha('');
+setCodigoSmsRedefinirSenha('');
+setSmsRedefinirSenhaEnviado(false);
+
+setAuthErro('');
+setAuthMensagem('');
+
   setAcessoLiberado(false);
 setPerfilUsuario(null);
 setEmpresaId(null);
@@ -2803,7 +2965,7 @@ const handleRecuperarSenha = async () => {
     }),
   });
 
-  const resultado = await resposta.json();
+  const resultado = await lerRespostaApi(resposta);
 
   setAuthLoading(false);
 
@@ -2848,7 +3010,7 @@ const reenviarCodigoRedefinirSenha = async () => {
     }),
   });
 
-  const resultado = await resposta.json();
+  const resultado = await lerRespostaApi(resposta);
 
   setReenviandoSmsRedefinirSenha(false);
 
@@ -2920,12 +3082,12 @@ const handleAtualizarSenha = async () => {
     }),
   });
 
-  const resultado = await resposta.json();
+  const resultado = await lerRespostaApi(resposta);
 
   setAuthLoading(false);
 
   if (!resposta.ok || resultado.erro) {
-    setAuthErro(resultado.mensagem || 'Não foi possível redefinir a senha.');
+    setAuthErro(mensagemSmsAmigavel(resultado.mensagem, 'redefinir'));
     return;
   }
 
@@ -3001,16 +3163,14 @@ const enviarCodigoTelefoneObrigatorio = async () => {
     }),
   });
 
-  const resultadoSms = await respostaSms.json();
+  const resultadoSms = await lerRespostaApi(respostaSms);
 
   setValidandoTelefoneObrigatorio(false);
 
   if (!respostaSms.ok || resultadoSms.erro) {
-    setAuthErro(
-      resultadoSms.mensagem || 'Não foi possível enviar o código por SMS.'
-    );
-    return;
-  }
+  setAuthErro(mensagemSmsAmigavel(resultadoSms.mensagem, 'enviar'));
+  return;
+}
 
   setSmsTelefoneObrigatorioEnviado(true);
   setTelefoneObrigatorioConfirmado(telefoneLimpo);
@@ -3048,16 +3208,14 @@ const reenviarCodigoTelefoneObrigatorio = async () => {
     }),
   });
 
-  const resultadoSms = await respostaSms.json();
+  const resultadoSms = await lerRespostaApi(respostaSms);
 
   setReenviandoTelefoneObrigatorio(false);
 
   if (!respostaSms.ok || resultadoSms.erro) {
-    setAuthErro(
-      resultadoSms.mensagem || 'Não foi possível reenviar o código por SMS.'
-    );
-    return;
-  }
+  setAuthErro(mensagemSmsAmigavel(resultadoSms.mensagem, 'reenviar'));
+  return;
+}
 
   setSmsTelefoneObrigatorioEnviado(true);
   setTelefoneObrigatorioConfirmado(telefoneLimpo);
@@ -3119,15 +3277,13 @@ const confirmarTelefoneObrigatorio = async () => {
     }),
   });
 
-const resultadoVerificacaoSms = await respostaVerificacaoSms.json();
+const resultadoVerificacaoSms = await lerRespostaApi(respostaVerificacaoSms);
 
   if (!respostaVerificacaoSms.ok || resultadoVerificacaoSms.erro) {
-    setAuthErro(
-      resultadoVerificacaoSms.mensagem || 'Código inválido ou expirado.'
-    );
-    setValidandoTelefoneObrigatorio(false);
-    return;
-  }
+  setAuthErro(mensagemSmsAmigavel(resultadoVerificacaoSms.mensagem, 'verificar'));
+  setValidandoTelefoneObrigatorio(false);
+  return;
+}
 
   const resultadoAtualizacao = await atualizarTelefoneUsuarioEmpresa({
     acessoId: empresaAguardandoTelefone.acessoId,
@@ -3522,8 +3678,12 @@ if (validacaoTelefoneObrigatoria) {
           </h1>
 
           <p className="mt-4 text-sm leading-relaxed text-slate-600">
-            Para sua segurança, cadastre e confirme seu celular antes de continuar usando o sistema.
-          </p>
+  Este acesso ainda não possui um celular confirmado. Informe um número válido para receber o código de segurança e continuar usando o sistema.
+</p>
+
+<p className="mt-3 rounded-2xl bg-sky-50 px-4 py-3 text-xs font-medium leading-relaxed text-sky-800">
+  Este celular também poderá ser usado futuramente para recuperação de senha e validações de segurança.
+</p>
 
           <div className="mt-6 text-left">
             <label className="mb-1 block text-sm font-semibold text-slate-700">
@@ -3540,9 +3700,12 @@ if (validacaoTelefoneObrigatoria) {
                 setCodigoSmsTelefoneObrigatorio('');
                 setTelefoneObrigatorioConfirmado('');
               }}
-              placeholder="Ex: 11999999999"
+              placeholder="Ex: 11 99999-9999"
               className="w-full rounded-xl border border-slate-300 bg-white/90 px-4 py-3 text-slate-800 outline-none transition focus:border-sky-600 focus:ring-2 focus:ring-sky-600/20"
             />
+            <p className="mt-2 text-xs leading-relaxed text-slate-500">
+  Digite apenas um celular com DDD. O código será enviado por SMS.
+</p>
           </div>
 
           {smsTelefoneObrigatorioEnviado && (
@@ -5176,9 +5339,13 @@ name="novo-usuario-login"
 
 {/* ================= MENU RESPONSIVO ================= */}
 {menuResponsivoAberto && (
-  <div className="fixed inset-0 z-[1200] bg-black/50 xl:hidden">
+  <div
+    className="fixed inset-0 z-[1200] bg-black/50 lg:hidden"
+    onClick={() => setMenuResponsivoAberto(false)}
+  >
     <aside
-  className={`flex h-full w-80 max-w-[85vw] flex-col overflow-y-auto border-r p-4 shadow-2xl ${
+      onClick={(e) => e.stopPropagation()}
+      className={`flex h-full w-80 max-w-[85vw] flex-col overflow-y-auto border-r p-4 shadow-2xl ${
         darkMode
           ? 'border-slate-700 bg-slate-900 text-slate-100'
           : 'border-slate-200 bg-white text-slate-800'
@@ -5283,6 +5450,7 @@ name="novo-usuario-login"
     onClick={() => {
       setAbaAtiva('Dashboard');
       setMesAtivo(null);
+      setMenuResponsivoAberto(false);
     }}
     style={
       !logoUrl
@@ -5334,12 +5502,13 @@ name="novo-usuario-login"
   {/* ÁREA DIREITA DO HEADER */}
   <div className="flex-1 flex flex-col gap-3 xl:gap-5 min-w-0">
     {/* LINHA 1: MENU */}
-<div className="relative hidden items-center gap-3 lg:flex xl:gap-6">
+<div className="relative hidden items-center gap-4 lg:flex">
   <nav className="flex items-center gap-1.5">
         <button
           onClick={() => {
             setAbaAtiva('Dashboard');
             setMesAtivo(null);
+            setMenuResponsivoAberto(false);
           }}
           className="flex items-center gap-1.5 font-bold py-1.5 px-3 rounded-full transition-all text-xs uppercase tracking-wide border-2 cursor-pointer shadow-md hover:brightness-110 active:scale-[0.98]"
           style={estiloTemaPrimarioGradiente}
@@ -5365,9 +5534,10 @@ name="novo-usuario-login"
           <button
             key={item}
             onClick={() => {
-              setAbaAtiva(item);
-              setMesAtivo(null);
-            }}
+  setMesAtivo(null);
+  setAbaAtiva('Dashboard');
+  setMenuResponsivoAberto(false);
+}}
             className={`font-bold py-1.5 px-3 rounded-full transition-all text-xs uppercase tracking-wide border-2 cursor-pointer ${
               abaAtiva === item
                 ? 'shadow-md transform scale-105'
@@ -5729,8 +5899,14 @@ name="novo-usuario-login"
 
       {/* ================= MENU DE AJUSTES GERAL ================= */}
 {ajustesAberto && (
-  <div
-    className="print-ocultar fixed left-0 right-0 top-[116px] z-[1200] bg-slate-900 text-white p-4 shadow-xl border-t border-slate-700 transition-all"
+  <>
+    <div
+      className="fixed inset-0 z-[1190] bg-transparent"
+      onClick={() => setAjustesAberto(false)}
+    />
+
+    <div
+      className="print-ocultar fixed left-0 right-0 top-[116px] z-[1200] bg-slate-900 text-white p-4 shadow-xl border-t border-slate-700 transition-all"
     style={{ borderTopColor: corPrimaria, borderTopWidth: '2px' }}
   >
     {/* Adicionado overflow-x-auto e removido flex-wrap para forçar 1 linha */}
@@ -5739,7 +5915,10 @@ name="novo-usuario-login"
       {/* GRUPO DA ESQUERDA (Botões menores: text-xs, py-1.5) */}
       <div className="flex items-center gap-3">
         <button
-  onClick={() => setModalDespesasBase(true)}
+  onClick={() => {
+  setAjustesAberto(false);
+  setModalDespesasBase(true);
+}}
   className="whitespace-nowrap bg-slate-800 hover:bg-slate-700 px-3 py-1.5 rounded-lg border transition-colors font-bold shadow flex items-center gap-1.5 text-xs"
   style={{ borderColor: corPrimaria }}
 >
@@ -5762,7 +5941,10 @@ name="novo-usuario-login"
 
         
         <button
-  onClick={() => setModalInstrucoes(true)}
+  onClick={() => {
+  setAjustesAberto(false);
+  setModalInstrucoes(true);
+}}
   className="whitespace-nowrap bg-slate-800 hover:bg-slate-700 px-3 py-1.5 rounded-lg border transition-colors font-bold shadow flex items-center gap-1.5 text-xs"
   style={{ borderColor: corPrimaria }}
 >
@@ -5795,7 +5977,8 @@ name="novo-usuario-login"
     return;
   }
 
-  setModalLogo(true);
+  setAjustesAberto(false);
+setModalLogo(true);
 }} className="whitespace-nowrap bg-slate-800 hover:bg-slate-700 px-3 py-1.5 rounded shadow border border-slate-700 transition-colors text-xs">Adicionar Logo</button>
 
 <div className="whitespace-nowrap relative overflow-hidden bg-slate-800 hover:bg-slate-700 px-3 py-1.5 rounded shadow border border-slate-700 transition-colors text-xs flex items-center gap-1.5">
@@ -5891,7 +6074,10 @@ name="novo-usuario-login"
 {podeGerenciarUsuarios && (
   <button
     type="button"
-    onClick={abrirModalUsuarios}
+    onClick={() => {
+  setAjustesAberto(false);
+  abrirModalUsuarios();
+}}
     className="whitespace-nowrap bg-slate-800 hover:bg-slate-700 px-3 py-1.5 rounded shadow border border-slate-700 transition-colors font-bold flex items-center gap-1.5 text-xs text-white cursor-pointer"
   >
     <svg
@@ -5933,7 +6119,7 @@ name="novo-usuario-login"
     );
     return;
   }
-
+setAjustesAberto(false);
   abrirConfirmacao({
     titulo: 'Gerar backup',
     mensagem:
@@ -5968,7 +6154,8 @@ name="novo-usuario-login"
             </div>
           )}
         </div>
-      )}
+      </>
+)}
 
       {/* RENDERIZAÇÃO CONDICIONAL DAS TELAS */}
       {mesAtivo ? (
