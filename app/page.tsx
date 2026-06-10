@@ -138,6 +138,7 @@ const [usuariosCarregando, setUsuariosCarregando] = useState(false);
 const [usuarioNome, setUsuarioNome] = useState('');
 const [usuarioLogin, setUsuarioLogin] = useState('');
 const [usuarioSenha, setUsuarioSenha] = useState('');
+const [mostrarUsuarioSenha, setMostrarUsuarioSenha] = useState(false);
 const [usuarioPerfil, setUsuarioPerfil] = useState<
   '' | 'administrador' | 'operador_completo' | 'operador_simples'
 >('');
@@ -1023,6 +1024,7 @@ const abrirModalUsuarios = () => {
   setUsuarioNome('');
   setUsuarioLogin('');
   setUsuarioSenha('');
+  setMostrarUsuarioSenha(false);
   setUsuarioPerfil('');
   setAjudaUsuariosAberta(false);
 
@@ -3795,16 +3797,29 @@ if (isTelaMobile) {
           placeholder="Digite a nova senha"
           value={novaSenha}
           onChange={(e) => setNovaSenha(e.target.value)}
-          className="w-full rounded-xl border border-slate-300 bg-white/90 px-4 py-3 pr-14 text-slate-800 outline-none transition focus:border-sky-600 focus:ring-2 focus:ring-sky-600/20"
+          className="w-full rounded-xl border border-slate-300 bg-white/90 px-4 py-3 pr-10 text-slate-800 outline-none transition focus:border-sky-600 focus:ring-2 focus:ring-sky-600/20"
         />
 
         <button
-          type="button"
-          onClick={() => setMostrarNovaSenha(!mostrarNovaSenha)}
-          className="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-500 hover:text-sky-700"
-        >
-          {mostrarNovaSenha ? 'Ocultar' : 'Ver'}
-        </button>
+  type="button"
+  onClick={() => setMostrarNovaSenha((mostrar) => !mostrar)}
+  className="absolute right-3 top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full text-slate-500 transition hover:bg-slate-100 hover:text-slate-800 cursor-pointer"
+  title={mostrarNovaSenha ? 'Ocultar senha' : 'Ver senha'}
+>
+  {mostrarNovaSenha ? (
+    <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z" />
+      <circle cx="12" cy="12" r="3" strokeWidth="2" />
+    </svg>
+  ) : (
+    <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 3l18 18" />
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10.58 10.58A2 2 0 0012 14a2 2 0 001.42-.58" />
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9.88 5.09A10.94 10.94 0 0112 5c5 0 9 4 10 7a12.7 12.7 0 01-3.02 4.45" />
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6.61 6.61A12.47 12.47 0 002 12c1 3 5 7 10 7a10.94 10.94 0 004.39-.91" />
+    </svg>
+  )}
+</button>
       </div>
     </div>
 
@@ -3819,16 +3834,29 @@ if (isTelaMobile) {
           placeholder="Repita a nova senha"
           value={confirmarNovaSenha}
           onChange={(e) => setConfirmarNovaSenha(e.target.value)}
-          className="w-full rounded-xl border border-slate-300 bg-white/90 px-4 py-3 pr-14 text-slate-800 outline-none transition focus:border-sky-600 focus:ring-2 focus:ring-sky-600/20"
+          className="w-full rounded-xl border border-slate-300 bg-white/90 px-4 py-3 pr-10 text-slate-800 outline-none transition focus:border-sky-600 focus:ring-2 focus:ring-sky-600/20"
         />
 
         <button
-          type="button"
-          onClick={() => setMostrarConfirmarNovaSenha(!mostrarConfirmarNovaSenha)}
-          className="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-500 hover:text-sky-700"
-        >
-          {mostrarConfirmarNovaSenha ? 'Ocultar' : 'Ver'}
-        </button>
+  type="button"
+  onClick={() => setMostrarConfirmarNovaSenha((mostrar) => !mostrar)}
+  className="absolute right-3 top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full text-slate-500 transition hover:bg-slate-100 hover:text-slate-800 cursor-pointer"
+  title={mostrarConfirmarNovaSenha ? 'Ocultar senha' : 'Ver senha'}
+>
+  {mostrarConfirmarNovaSenha ? (
+    <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z" />
+      <circle cx="12" cy="12" r="3" strokeWidth="2" />
+    </svg>
+  ) : (
+    <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 3l18 18" />
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10.58 10.58A2 2 0 0012 14a2 2 0 001.42-.58" />
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9.88 5.09A10.94 10.94 0 0112 5c5 0 9 4 10 7a12.7 12.7 0 01-3.02 4.45" />
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6.61 6.61A12.47 12.47 0 002 12c1 3 5 7 10 7a10.94 10.94 0 004.39-.91" />
+    </svg>
+  )}
+</button>
       </div>
     </div>
 
@@ -3891,22 +3919,72 @@ if (isTelaMobile) {
     </label>
 
     <div className="relative">
-      <input
-        type={mostrarSenhaLogin ? 'text' : 'password'}
-        placeholder="Digite sua senha"
-        value={loginSenha}
-        onChange={(e) => setLoginSenha(e.target.value)}
-        className="w-full rounded-xl border border-slate-300 bg-white/90 px-4 py-3 pr-14 text-slate-800 outline-none transition focus:border-sky-600 focus:ring-2 focus:ring-sky-600/20"
-      />
+  <input
+    type={mostrarSenhaLogin ? 'text' : 'password'}
+    placeholder="Digite sua senha"
+    value={loginSenha}
+    onChange={(e) => setLoginSenha(e.target.value)}
+    className="w-full rounded-xl border border-slate-300 bg-white/90 px-4 py-3 pr-10 text-slate-800 outline-none transition focus:border-sky-600 focus:ring-2 focus:ring-sky-600/20"
+  />
 
-      <button
-        type="button"
-        onClick={() => setMostrarSenhaLogin(!mostrarSenhaLogin)}
-        className="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-500 hover:text-sky-700"
+  <button
+    type="button"
+    onClick={() => setMostrarSenhaLogin((mostrar) => !mostrar)}
+    className="absolute right-3 top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full text-slate-500 transition hover:bg-slate-100 hover:text-slate-800 cursor-pointer"
+    title={mostrarSenhaLogin ? 'Ocultar senha' : 'Ver senha'}
+  >
+    {mostrarSenhaLogin ? (
+      // Olho aberto
+      <svg
+        className="h-4 w-4"
+        fill="none"
+        stroke="currentColor"
+        viewBox="0 0 24 24"
       >
-        {mostrarSenhaLogin ? 'Ocultar' : 'Ver'}
-      </button>
-    </div>
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth="2"
+          d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"
+        />
+        <circle cx="12" cy="12" r="3" strokeWidth="2" />
+      </svg>
+    ) : (
+      // Olho cortado
+      <svg
+        className="h-4 w-4"
+        fill="none"
+        stroke="currentColor"
+        viewBox="0 0 24 24"
+      >
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth="2"
+          d="M3 3l18 18"
+        />
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth="2"
+          d="M10.58 10.58A2 2 0 0012 14a2 2 0 001.42-.58"
+        />
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth="2"
+          d="M9.88 5.09A10.94 10.94 0 0112 5c5 0 9 4 10 7a12.7 12.7 0 01-3.02 4.45"
+        />
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth="2"
+          d="M6.61 6.61A12.47 12.47 0 002 12c1 3 5 7 10 7a10.94 10.94 0 004.39-.91"
+        />
+      </svg>
+    )}
+  </button>
+</div>
   </div>
 
   <div className="text-right">
@@ -4021,50 +4099,150 @@ if (isTelaMobile) {
 </div>
 
                 <div>
-                  <label className="mb-0.5 block text-xs font-semibold text-slate-700">
-                    Senha
-                  </label>
-                  <div className="relative">
-  <input
-    type={mostrarSenhaCadastro ? 'text' : 'password'}
-    placeholder="Crie uma senha"
-    value={cadastroSenha}
-    onChange={(e) => setCadastroSenha(e.target.value)}
-    className="w-full rounded-xl border border-slate-300 bg-white/90 px-4 py-2 pr-14 text-slate-800 outline-none transition focus:border-sky-600 focus:ring-2 focus:ring-sky-600/20"
-  />
+  <label className="mb-0.5 block text-xs font-semibold text-slate-700">
+    Senha
+  </label>
 
-  <button
-    type="button"
-    onClick={() => setMostrarSenhaCadastro(!mostrarSenhaCadastro)}
-    className="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-500 hover:text-sky-700"
-  >
-    {mostrarSenhaCadastro ? 'Ocultar' : 'Ver'}
-  </button>
+  <div className="relative">
+    <input
+      type={mostrarSenhaCadastro ? 'text' : 'password'}
+      placeholder="Crie uma senha"
+      value={cadastroSenha}
+      onChange={(e) => setCadastroSenha(e.target.value)}
+      className="w-full rounded-xl border border-slate-300 bg-white/90 px-4 py-2 pr-10 text-slate-800 outline-none transition focus:border-sky-600 focus:ring-2 focus:ring-sky-600/20"
+    />
+
+    <button
+      type="button"
+      onClick={() => setMostrarSenhaCadastro((mostrar) => !mostrar)}
+      className="absolute right-3 top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full text-slate-500 transition hover:bg-slate-100 hover:text-slate-800 cursor-pointer"
+      title={mostrarSenhaCadastro ? 'Ocultar senha' : 'Ver senha'}
+    >
+      {mostrarSenhaCadastro ? (
+        <svg
+          className="h-4 w-4"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth="2"
+            d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"
+          />
+          <circle cx="12" cy="12" r="3" strokeWidth="2" />
+        </svg>
+      ) : (
+        <svg
+          className="h-4 w-4"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth="2"
+            d="M3 3l18 18"
+          />
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth="2"
+            d="M10.58 10.58A2 2 0 0012 14a2 2 0 001.42-.58"
+          />
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth="2"
+            d="M9.88 5.09A10.94 10.94 0 0112 5c5 0 9 4 10 7a12.7 12.7 0 01-3.02 4.45"
+          />
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth="2"
+            d="M6.61 6.61A12.47 12.47 0 002 12c1 3 5 7 10 7a10.94 10.94 0 004.39-.91"
+          />
+        </svg>
+      )}
+    </button>
+  </div>
 </div>
-                </div>
 
                 <div>
-                  <label className="mb-0.5 block text-xs font-semibold text-slate-700">
-                    Confirmar senha
-                  </label>
-                  <div className="relative">
-  <input
-    type={mostrarConfirmarSenhaCadastro ? 'text' : 'password'}
-    placeholder="Repita a senha"
-    value={cadastroConfirmarSenha}
-    onChange={(e) => setCadastroConfirmarSenha(e.target.value)}
-    className="w-full rounded-xl border border-slate-300 bg-white/90 px-4 py-2 pr-14 text-slate-800 outline-none transition focus:border-sky-600 focus:ring-2 focus:ring-sky-600/20"
-  />
+  <label className="mb-0.5 block text-xs font-semibold text-slate-700">
+    Confirmar senha
+  </label>
 
-  <button
-    type="button"
-    onClick={() => setMostrarConfirmarSenhaCadastro(!mostrarConfirmarSenhaCadastro)}
-    className="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-500 hover:text-sky-700"
-  >
-    {mostrarConfirmarSenhaCadastro ? 'Ocultar' : 'Ver'}
-  </button>
+  <div className="relative">
+    <input
+      type={mostrarConfirmarSenhaCadastro ? 'text' : 'password'}
+      placeholder="Repita a senha"
+      value={cadastroConfirmarSenha}
+      onChange={(e) => setCadastroConfirmarSenha(e.target.value)}
+      className="w-full rounded-xl border border-slate-300 bg-white/90 px-4 py-2 pr-10 text-slate-800 outline-none transition focus:border-sky-600 focus:ring-2 focus:ring-sky-600/20"
+    />
+
+    <button
+      type="button"
+      onClick={() =>
+        setMostrarConfirmarSenhaCadastro((mostrar) => !mostrar)
+      }
+      className="absolute right-3 top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full text-slate-500 transition hover:bg-slate-100 hover:text-slate-800 cursor-pointer"
+      title={mostrarConfirmarSenhaCadastro ? 'Ocultar senha' : 'Ver senha'}
+    >
+      {mostrarConfirmarSenhaCadastro ? (
+        <svg
+          className="h-4 w-4"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth="2"
+            d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"
+          />
+          <circle cx="12" cy="12" r="3" strokeWidth="2" />
+        </svg>
+      ) : (
+        <svg
+          className="h-4 w-4"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth="2"
+            d="M3 3l18 18"
+          />
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth="2"
+            d="M10.58 10.58A2 2 0 0012 14a2 2 0 001.42-.58"
+          />
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth="2"
+            d="M9.88 5.09A10.94 10.94 0 0112 5c5 0 9 4 10 7a12.7 12.7 0 01-3.02 4.45"
+          />
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth="2"
+            d="M6.61 6.61A12.47 12.47 0 002 12c1 3 5 7 10 7a10.94 10.94 0 004.39-.91"
+          />
+        </svg>
+      )}
+    </button>
+  </div>
 </div>
-                </div>
 
                 {smsCadastroEnviado && (
   <div>
@@ -4557,7 +4735,7 @@ if (isTelaMobile) {
                 value={editUsuarioNovaSenha}
                 onChange={(e) => setEditUsuarioNovaSenha(e.target.value)}
                 placeholder="Nova senha"
-                className={`w-full rounded-xl border px-3 py-2.5 pr-16 text-sm font-semibold outline-none ${
+                className={`w-full rounded-xl border px-3 py-2.5 pr-10 text-sm font-semibold outline-none ${
                   darkMode
                     ? 'bg-slate-800 border-slate-600 text-white placeholder:text-slate-400'
                     : 'bg-white border-slate-300 text-slate-700 placeholder:text-slate-400'
@@ -4565,18 +4743,29 @@ if (isTelaMobile) {
               />
 
               <button
-                type="button"
-                onClick={() =>
-                  setMostrarEditUsuarioNovaSenha(!mostrarEditUsuarioNovaSenha)
-                }
-                className={`absolute right-3 top-1/2 -translate-y-1/2 text-[11px] font-black transition cursor-pointer ${
-                  darkMode
-                    ? 'text-slate-300 hover:text-white'
-                    : 'text-slate-500 hover:text-slate-800'
-                }`}
-              >
-                {mostrarEditUsuarioNovaSenha ? 'Ocultar' : 'Ver'}
-              </button>
+  type="button"
+  onClick={() => setMostrarEditUsuarioNovaSenha((mostrar) => !mostrar)}
+  className={`absolute right-2 top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full transition cursor-pointer ${
+    darkMode
+      ? 'text-slate-300 hover:bg-slate-700 hover:text-white'
+      : 'text-slate-500 hover:bg-slate-100 hover:text-slate-800'
+  }`}
+  title={mostrarEditUsuarioNovaSenha ? 'Ocultar senha' : 'Ver senha'}
+>
+  {mostrarEditUsuarioNovaSenha ? (
+    <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z" />
+      <circle cx="12" cy="12" r="3" strokeWidth="2" />
+    </svg>
+  ) : (
+    <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 3l18 18" />
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10.58 10.58A2 2 0 0012 14a2 2 0 001.42-.58" />
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9.88 5.09A10.94 10.94 0 0112 5c5 0 9 4 10 7a12.7 12.7 0 01-3.02 4.45" />
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6.61 6.61A12.47 12.47 0 002 12c1 3 5 7 10 7a10.94 10.94 0 004.39-.91" />
+    </svg>
+  )}
+</button>
             </div>
 
             <button
@@ -4727,7 +4916,7 @@ if (isTelaMobile) {
   </div>
 </div>
 
-      <div className="grid grid-cols-1 gap-3 md:grid-cols-[1.35fr_1fr_0.75fr_1.20fr_auto] md:items-center">
+      <div className="grid grid-cols-1 gap-3 md:grid-cols-[1.35fr_1fr_0.85fr_1.20fr_auto] md:items-center">
   <input
   type="text"
   value={usuarioNome}
@@ -4756,19 +4945,46 @@ name="novo-usuario-login"
     }`}
   />
 
+  <div className="relative">
   <input
-    type="password"
+    type={mostrarUsuarioSenha ? 'text' : 'password'}
     value={usuarioSenha}
     onChange={(e) => setUsuarioSenha(e.target.value)}
     placeholder="Senha inicial"
     autoComplete="new-password"
-name="novo-usuario-senha"
-    className={`w-full rounded-xl border px-3 py-2.5 text-sm font-semibold outline-none transition ${
+    name="novo-usuario-senha"
+    className={`w-full rounded-xl border px-3 py-2.5 pr-10 text-sm font-semibold outline-none transition ${
       darkMode
         ? 'bg-slate-900 border-slate-600 text-white placeholder:text-slate-400'
         : 'bg-white border-slate-300 text-slate-700 placeholder:text-slate-400'
     }`}
   />
+
+  <button
+    type="button"
+    onClick={() => setMostrarUsuarioSenha((mostrar) => !mostrar)}
+    className={`absolute right-2 top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full transition cursor-pointer ${
+      darkMode
+        ? 'text-slate-300 hover:bg-slate-700 hover:text-white'
+        : 'text-slate-500 hover:bg-slate-100 hover:text-slate-800'
+    }`}
+    title={mostrarUsuarioSenha ? 'Ocultar senha' : 'Ver senha'}
+  >
+    {mostrarUsuarioSenha ? (
+      <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z" />
+        <circle cx="12" cy="12" r="3" strokeWidth="2" />
+      </svg>
+    ) : (
+      <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 3l18 18" />
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10.58 10.58A2 2 0 0012 14a2 2 0 001.42-.58" />
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9.88 5.09A10.94 10.94 0 0112 5c5 0 9 4 10 7a12.7 12.7 0 01-3.02 4.45" />
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6.61 6.61A12.47 12.47 0 002 12c1 3 5 7 10 7a10.94 10.94 0 004.39-.91" />
+      </svg>
+    )}
+  </button>
+</div>
 
   <select
   value={usuarioPerfil}
