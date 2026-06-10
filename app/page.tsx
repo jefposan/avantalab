@@ -139,8 +139,8 @@ const [usuarioNome, setUsuarioNome] = useState('');
 const [usuarioLogin, setUsuarioLogin] = useState('');
 const [usuarioSenha, setUsuarioSenha] = useState('');
 const [usuarioPerfil, setUsuarioPerfil] = useState<
-  'administrador' | 'operador_completo' | 'operador_simples'
->('operador_simples');
+  '' | 'administrador' | 'operador_completo' | 'operador_simples'
+>('');
 const [usuarioEditandoId, setUsuarioEditandoId] = useState<string | null>(null);
 const [editUsuarioNome, setEditUsuarioNome] = useState('');
 const [editUsuarioEmail, setEditUsuarioEmail] = useState('');
@@ -163,6 +163,7 @@ const [menuResponsivoAberto, setMenuResponsivoAberto] = useState(false);
   const [configuracoesCarregadas, setConfiguracoesCarregadas] = useState(false);
   const [mesAtivo, setMesAtivo] = useState<string | null>(null);
   const [ajudaCategoriasAberta, setAjudaCategoriasAberta] = useState(false);
+  const [ajudaUsuariosAberta, setAjudaUsuariosAberta] = useState(false);
   const ALTURA_LINHA_LANCAMENTO = 44;
   const ALTURA_PADRAO_TABELA = 440;
   const ESPACO_PUXADOR_TABELA = 42;
@@ -468,7 +469,7 @@ if (empresa.telefone_confirmado !== true) {
       setCorTemporaria(config.cor_primaria);
     }
 
-    if (config.dark_mode !== undefined) setDarkMode(config.dark_mode);
+    setDarkMode(false);
     if (config.duplicados_ativo !== undefined) setDuplicadosAtivo(config.duplicados_ativo);
     if (config.logo_url) setLogoUrl(config.logo_url);
     if (config.logo_settings) setLogoSettings(config.logo_settings);
@@ -672,13 +673,13 @@ useEffect(() => {
     setStatusConfig('saving');
 
     const resultado = await salvarConfiguracoesBanco({
-      empresaId,
-      corPrimaria,
-      darkMode,
-      duplicadosAtivo,
-      logoUrl,
-      logoSettings,
-    });
+  empresaId,
+  corPrimaria,
+  darkMode: false,
+  duplicadosAtivo,
+  logoUrl,
+  logoSettings,
+});
 
     if (!ativo) return;
 
@@ -704,7 +705,6 @@ useEffect(() => {
   };
 }, [
   corPrimaria,
-  darkMode,
   duplicadosAtivo,
   logoUrl,
   logoSettings,
@@ -988,14 +988,15 @@ const abrirModalUsuarios = () => {
   setUsuarioNome('');
   setUsuarioLogin('');
   setUsuarioSenha('');
-  setUsuarioPerfil('operador_simples');
+  setUsuarioPerfil('');
+  setAjudaUsuariosAberta(false);
 
   setUsuarioEditandoId(null);
   setEditUsuarioNome('');
   setEditUsuarioEmail('');
   setEditUsuarioNovaSenha('');
   setMostrarEditUsuarioNovaSenha(false);
-  setEditUsuarioPerfil('operador_simples');
+  setUsuarioPerfil('');
 
   setModalUsuarios(true);
 
@@ -1003,7 +1004,7 @@ const abrirModalUsuarios = () => {
     setUsuarioNome('');
     setUsuarioLogin('');
     setUsuarioSenha('');
-    setUsuarioPerfil('operador_simples');
+    setUsuarioPerfil('');
   }, 50);
 };
 
@@ -1036,13 +1037,13 @@ const adicionarUsuarioEmpresa = async () => {
   const loginLimpo = usuarioLogin.trim().toLowerCase();
   const senhaLimpa = usuarioSenha.trim();
 
-  if (!nomeLimpo || !loginLimpo || !senhaLimpa) {
-    abrirAviso(
-      'Campos obrigatórios',
-      'Informe nome, login e senha do usuário.'
-    );
-    return;
-  }
+  if (!nomeLimpo || !loginLimpo || !senhaLimpa || !usuarioPerfil) {
+  abrirAviso(
+    'Campos obrigatórios',
+    'Informe nome, login, senha e tipo de usuário.'
+  );
+  return;
+}
 
 const loginJaExiste = usuariosEmpresa.some(
   (usuario) =>
@@ -4599,29 +4600,97 @@ if (isTelaMobile) {
       }`}
     >
       <div className="mb-5 flex items-start justify-between gap-4">
-        <div>
-          <h2 className={`text-xl font-black ${textStrong}`}>
-            Usuários e Permissões
-          </h2>
+  <div className="min-w-0 flex-1">
+    <h2 className={`text-xl font-black ${textStrong}`}>
+      Usuários e Permissões
+    </h2>
 
-          <p className={`mt-1 text-sm ${textMuted}`}>
-            Cadastre usuários para acessar esta empresa e defina o nível de permissão.
-          </p>
+    <p className={`mt-1 text-sm ${textMuted}`}>
+      Cadastre usuários para acessar esta empresa e defina o nível de permissão.
+    </p>
+  </div>
+
+  <div className="relative flex shrink-0 flex-col items-center gap-2">
+    <button
+      type="button"
+      onClick={() => {
+        setModalUsuarios(false);
+        setAjudaUsuariosAberta(false);
+      }}
+      className={`rounded-lg px-3 py-1 text-sm font-black transition cursor-pointer ${
+        darkMode
+          ? 'text-slate-300 hover:bg-slate-700 hover:text-white'
+          : 'text-slate-500 hover:bg-slate-100 hover:text-slate-800'
+      }`}
+    >
+      ✕
+    </button>
+
+    <button
+      type="button"
+      onClick={() => setAjudaUsuariosAberta((aberto) => !aberto)}
+      className={`flex h-7 w-7 items-center justify-center rounded-full border text-xs font-black transition cursor-pointer ${
+        darkMode
+          ? 'border-slate-600 bg-slate-900 text-slate-200 hover:bg-slate-700'
+          : 'border-slate-300 bg-slate-50 text-slate-600 hover:bg-slate-100'
+      }`}
+      title="Ver explicação dos tipos de usuário"
+    >
+      ?
+    </button>
+
+    {ajudaUsuariosAberta && (
+      <div
+        className={`absolute right-0 top-16 z-[7000] w-80 rounded-2xl border p-4 text-left shadow-2xl ${
+          darkMode
+            ? 'border-slate-600 bg-slate-900 text-slate-100'
+            : 'border-slate-200 bg-white text-slate-700'
+        }`}
+      >
+        <div className="mb-3 flex items-start justify-between gap-3">
+          <h3 className={`text-sm font-black uppercase ${textStrong}`}>
+            Tipos de usuário
+          </h3>
+
+          <button
+            type="button"
+            onClick={() => setAjudaUsuariosAberta(false)}
+            className={`text-xs font-black transition cursor-pointer ${
+              darkMode
+                ? 'text-slate-400 hover:text-white'
+                : 'text-slate-400 hover:text-slate-700'
+            }`}
+          >
+            ✕
+          </button>
         </div>
 
-        <button
-          type="button"
-          onClick={() => setModalUsuarios(false)}
-          className={`flex h-9 w-9 items-center justify-center rounded-full text-lg font-black transition cursor-pointer ${
-            darkMode
-              ? 'text-slate-300 hover:bg-slate-700 hover:text-white'
-              : 'text-slate-500 hover:bg-slate-100 hover:text-slate-800'
-          }`}
-          title="Fechar"
-        >
-          ×
-        </button>
+        <div className="space-y-3 text-xs leading-relaxed">
+          <div>
+            <strong className={textStrong}>Administrador:</strong>
+            <p className={textMuted}>
+              Pode gerenciar usuários, acessar ajustes, inserir, editar e excluir lançamentos.
+            </p>
+          </div>
+
+          <div>
+            <strong className={textStrong}>Operador Completo:</strong>
+            <p className={textMuted}>
+              Pode inserir e editar lançamentos, mas não pode excluir lançamentos nem gerenciar usuários.
+            </p>
+          </div>
+
+          <div>
+            <strong className={textStrong}>Operador Simples:</strong>
+            <p className={textMuted}>
+              Pode apenas inserir lançamentos. Não pode editar, excluir ou acessar áreas administrativas.
+            </p>
+          </div>
+        </div>
       </div>
+    )}
+  </div>
+</div>
 
       <div className="grid grid-cols-1 gap-3 md:grid-cols-4">
   <input
@@ -4667,22 +4736,51 @@ name="novo-usuario-senha"
   />
 
   <select
-    value={usuarioPerfil}
-    onChange={(e) =>
-      setUsuarioPerfil(
-        e.target.value as 'administrador' | 'operador_completo' | 'operador_simples'
-      )
-    }
-    className={`w-full rounded-xl border px-3 py-2.5 text-sm font-bold outline-none transition ${
-      darkMode
-        ? 'bg-slate-900 border-slate-600 text-white'
-        : 'bg-white border-slate-300 text-slate-700'
-    }`}
+  value={usuarioPerfil}
+  onChange={(e) =>
+    setUsuarioPerfil(
+      e.target.value as
+        | ''
+        | 'administrador'
+        | 'operador_completo'
+        | 'operador_simples'
+    )
+  }
+  className={`w-full rounded-xl border px-3 py-2.5 text-sm font-bold outline-none transition ${
+    darkMode
+      ? `bg-slate-900 border-slate-600 ${usuarioPerfil ? 'text-white' : 'text-slate-400'}`
+      : `bg-white border-slate-300 ${usuarioPerfil ? 'text-slate-700' : 'text-slate-400'}`
+  }`}
+>
+  <option
+    value=""
+    disabled
+    className={darkMode ? 'bg-slate-900 text-slate-400' : 'bg-white text-slate-400'}
   >
-    <option value="operador_simples">Operador Simples</option>
-    <option value="operador_completo">Operador Completo</option>
-    <option value="administrador">Administrador</option>
-  </select>
+    Tipo de usuário
+  </option>
+
+  <option
+    value="operador_simples"
+    className={darkMode ? 'bg-slate-900 text-white' : 'bg-white text-slate-700'}
+  >
+    Operador Simples
+  </option>
+
+  <option
+    value="operador_completo"
+    className={darkMode ? 'bg-slate-900 text-white' : 'bg-white text-slate-700'}
+  >
+    Operador Completo
+  </option>
+
+  <option
+    value="administrador"
+    className={darkMode ? 'bg-slate-900 text-white' : 'bg-white text-slate-700'}
+  >
+    Administrador
+  </option>
+</select>
 </div>
 
       <div className="mt-4 flex justify-end">
@@ -5711,8 +5809,16 @@ name="novo-usuario-senha"
     overflow: 'hidden',
   }}
 >
-  <table className="w-full text-left border-collapse">
-    <thead className={darkMode ? 'bg-slate-700' : 'bg-slate-100'}>
+  <table className="w-full table-fixed text-left border-collapse">
+  <colgroup>
+    <col className="w-[8%]" />
+    <col className="w-[28%]" />
+    <col className="w-[39%]" />
+    <col className="w-[14%]" />
+    <col className="w-[11%]" />
+  </colgroup>
+
+  <thead className={darkMode ? 'bg-slate-700' : 'bg-slate-100'}>
   <tr>
     <th colSpan={5} className="p-3">
       <div className="relative flex items-center justify-center">
@@ -5787,15 +5893,22 @@ name="novo-usuario-senha"
       : darkMode ? '#cbd5e1' : '#94a3b8',
   }}
 >
-  <option value="" className="text-slate-400">
-    Selecione a despesa
-  </option>
+  <option
+  value=""
+  className={darkMode ? 'bg-slate-700 text-xs text-slate-300' : 'bg-white text-xs text-slate-400'}
+>
+  Selecione a despesa
+</option>
 
-  {despesasCadastradas.map((d) => (
-    <option key={d.nome} value={d.nome} className="text-slate-800">
-      {d.nome}
-    </option>
-  ))}
+{despesasCadastradas.map((d) => (
+  <option
+    key={d.nome}
+    value={d.nome}
+    className={darkMode ? 'bg-slate-700 text-xs text-white' : 'bg-white text-xs text-slate-800'}
+  >
+    {d.nome}
+  </option>
+))}
 </select>
         </td>
 
