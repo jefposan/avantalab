@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 
 interface DashboardProps {
   meses: string[];
+  lancamentos: any[];
   setMesAtivo: (mes: string) => void;
   bgCard: string;
   corPrimaria: string;
@@ -25,7 +26,7 @@ interface DashboardProps {
 }
 
 export default function Dashboard({
-  meses, setMesAtivo, bgCard, corPrimaria, textStrong, textMuted, darkMode,
+  meses, lancamentos, setMesAtivo, bgCard, corPrimaria, textStrong, textMuted, darkMode,
   mesResumoDash, setMesResumoDash, totalDespesasMes, maiorGasto, lucroOperacional,
   mesFaturamento, setMesFaturamento, inputFaturamento, setInputFaturamento,
   salvarFaturamento, receitasTotais, despesasTotais, lucroTotalAnual, formatarMoeda
@@ -64,6 +65,57 @@ export default function Dashboard({
   };
 
   const textoSobreCorPrimaria = corEhClara(corPrimaria) ? '#0f172a' : '#ffffff';
+  const abreviarMes = (mes: string) => {
+  const abreviacoes: Record<string, string> = {
+    JANEIRO: 'JAN',
+    FEVEREIRO: 'FEV',
+    MARÇO: 'MAR',
+    ABRIL: 'ABR',
+    MAIO: 'MAI',
+    JUNHO: 'JUN',
+    JULHO: 'JUL',
+    AGOSTO: 'AGO',
+    SETEMBRO: 'SET',
+    OUTUBRO: 'OUT',
+    NOVEMBRO: 'NOV',
+    DEZEMBRO: 'DEZ',
+  };
+
+  return abreviacoes[mes] || mes;
+};
+  const indiceMesResumoDash = meses.indexOf(mesResumoDash);
+
+const mesAnteriorResumoDash =
+  indiceMesResumoDash > 0 ? meses[indiceMesResumoDash - 1] : null;
+
+const lancamentosMesAnteriorResumoDash = mesAnteriorResumoDash
+  ? lancamentos.filter((l) => l.mes === mesAnteriorResumoDash)
+  : [];
+
+const totalDespesasMesAnteriorResumoDash =
+  lancamentosMesAnteriorResumoDash.reduce(
+    (acc, lanc) => acc + Number(lanc.valor || 0),
+    0
+  );
+
+const percentualDespesasResumoDash =
+  totalDespesasMesAnteriorResumoDash > 0
+    ? (totalDespesasMes / totalDespesasMesAnteriorResumoDash) * 100
+    : 0;
+
+const percentualBarraResumoDash = Math.min(percentualDespesasResumoDash, 100);
+
+const corBarraResumoDash =
+  percentualDespesasResumoDash >= 100
+    ? '#ef4444'
+    : percentualDespesasResumoDash >= 80
+      ? '#f97316'
+      : percentualDespesasResumoDash >= 50
+        ? '#f59e0b'
+        : '#22c55e';
+
+const mostrarComparativoResumoDash =
+  !!mesAnteriorResumoDash && totalDespesasMesAnteriorResumoDash > 0;
 
   return (
     <main className="flex-1 flex p-8 gap-8 max-w-7xl mx-auto w-full animate-fade-in print:m-0 print:p-0">
@@ -85,7 +137,10 @@ export default function Dashboard({
               onMouseOver={e => { e.currentTarget.style.color = corPrimaria; e.currentTarget.style.borderColor = corPrimaria; }}
               onMouseOut={e => { e.currentTarget.style.color = ''; e.currentTarget.style.borderColor = ''; }}
             >
-              <span className="group-hover:scale-105 transition-transform">{mes}</span>
+              <span className="group-hover:scale-105 transition-transform">
+  <span className="hidden xl:inline">{mes}</span>
+  <span className="inline xl:hidden">{abreviarMes(mes)}</span>
+</span>
             </button>
           ))}
         </div>
@@ -118,12 +173,66 @@ export default function Dashboard({
               {meses.map(m => <option key={m} value={m} className="text-slate-800 bg-white">{m}</option>)}
             </select>
           </div>
-          <div className="p-6 space-y-5">
-            <div className="flex justify-between items-center pb-4 border-b border-slate-200/20">
-              <span className={`font-semibold text-sm ${textMuted}`}>Total Despesas</span>
-              <span className={`font-bold text-xl ${textStrong}`}>{formatarMoeda(totalDespesasMes)}</span>
-            </div>
-            <div className="flex justify-between items-center pb-4 border-b border-slate-200/20">
+          <div className="p-5 space-y-2.5">
+  <div className={`pb-2.5 border-b border-dotted ${
+  darkMode ? 'border-slate-500/50' : 'border-slate-300'
+}`}>
+    <div className="flex justify-between items-center">
+      <span className={`font-semibold text-sm ${textMuted}`}>Total Despesas</span>
+      <span className={`font-bold text-xl ${textStrong}`}>
+        {formatarMoeda(totalDespesasMes)}
+      </span>
+    </div>
+
+    <div className="mt-2">
+      <div className="mb-2 flex items-center justify-between gap-3">
+        <span className={`text-[10px] font-black uppercase tracking-wide ${textMuted}`}>
+          {mostrarComparativoResumoDash
+            ? `Vs. ${mesAnteriorResumoDash}`
+            : 'Vs. mês ant.'}
+        </span>
+
+        <span
+          className="text-xs font-black"
+          style={{
+            color: mostrarComparativoResumoDash
+              ? corBarraResumoDash
+              : '#94a3b8',
+          }}
+        >
+          {mostrarComparativoResumoDash
+            ? `${percentualDespesasResumoDash.toFixed(1)}%`
+            : '--'}
+        </span>
+      </div>
+
+      <div className="h-3 w-full overflow-hidden rounded-full bg-slate-200 shadow-inner">
+        <div
+          className="h-full rounded-full transition-all duration-500"
+          style={{
+            width: mostrarComparativoResumoDash
+              ? `${percentualBarraResumoDash}%`
+              : '0%',
+            backgroundColor: mostrarComparativoResumoDash
+              ? corBarraResumoDash
+              : '#94a3b8',
+          }}
+        />
+      </div>
+
+      <div className="mt-2 flex items-center justify-between text-[10px] font-semibold text-slate-400">
+        <span>Atual: {formatarMoeda(totalDespesasMes)}</span>
+        <span>
+          Ant.: {mostrarComparativoResumoDash
+            ? formatarMoeda(totalDespesasMesAnteriorResumoDash)
+            : '--'}
+        </span>
+      </div>
+    </div>
+  </div>
+            <div className={`flex justify-between items-center pb-2.5 border-b border-dotted ${
+  darkMode ? 'border-slate-500/50' : 'border-slate-300'
+}`}>
               <div className="flex flex-col">
                 <span className={`font-semibold text-sm ${textMuted}`}>Maior Gasto</span>
                 <span className="text-xs text-slate-400 mt-0.5">{maiorGasto.despesa || 'Nenhuma'}</span>

@@ -24,7 +24,7 @@ export async function POST(request: Request) {
 
     if (!accountSid || !authToken || !verifyServiceSid) {
       return NextResponse.json(
-        { erro: true, mensagem: 'Configuração do Twilio incompleta.' },
+        { erro: true, mensagem: 'Não foi possível enviar o SMS neste momento. Tente novamente em alguns minutos ou entre em contato com o suporte.' },
         { status: 500 }
       );
     }

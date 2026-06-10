@@ -861,10 +861,45 @@ useEffect(() => {
   // --- CÁLCULOS E FUNÇÕES ---
   
   const mesParaAnalise = mesAtivo || mesResumoDash;
-  const lancamentosDoMes = lancamentos.filter(l => l.mes === mesParaAnalise);
-  const totalDespesasMes = lancamentosDoMes.reduce((acc, lanc) => acc + lanc.valor, 0);
-  const faturamentoDoMesAtual = faturamentos[mesParaAnalise] || 0;
-  const lucroOperacional = faturamentoDoMesAtual - totalDespesasMes;
+const indiceMesParaAnalise = meses.indexOf(mesParaAnalise);
+
+const mesAnteriorParaAnalise =
+  indiceMesParaAnalise > 0 ? meses[indiceMesParaAnalise - 1] : null;
+
+const lancamentosDoMes = lancamentos.filter(l => l.mes === mesParaAnalise);
+
+const lancamentosDoMesAnterior = mesAnteriorParaAnalise
+  ? lancamentos.filter(l => l.mes === mesAnteriorParaAnalise)
+  : [];
+
+const totalDespesasMes = lancamentosDoMes.reduce((acc, lanc) => acc + lanc.valor, 0);
+
+const totalDespesasMesAnterior = lancamentosDoMesAnterior.reduce(
+  (acc, lanc) => acc + lanc.valor,
+  0
+);
+
+const percentualDespesasVsMesAnterior =
+  totalDespesasMesAnterior > 0
+    ? (totalDespesasMes / totalDespesasMesAnterior) * 100
+    : 0;
+
+const percentualBarraDespesas = Math.min(percentualDespesasVsMesAnterior, 100);
+
+const corBarraDespesas =
+  percentualDespesasVsMesAnterior >= 100
+    ? '#ef4444'
+    : percentualDespesasVsMesAnterior >= 80
+      ? '#f97316'
+      : percentualDespesasVsMesAnterior >= 50
+        ? '#f59e0b'
+        : '#22c55e';
+
+const mostrarBarraComparativoDespesas =
+  !!mesAnteriorParaAnalise && totalDespesasMesAnterior > 0;
+
+const faturamentoDoMesAtual = faturamentos[mesParaAnalise] || 0;
+const lucroOperacional = faturamentoDoMesAtual - totalDespesasMes;
   const lancamentosOrdenados = useMemo(() => {
   return [...lancamentos].sort((a, b) => {
     const diaA = Number(a.dia);
@@ -5024,10 +5059,10 @@ name="novo-usuario-senha"
     borderBottomWidth: '1px',
   }}
 >
-    <div className="mx-auto flex w-full max-w-[1600px] items-center gap-8 pl-4">
+    <div className="mx-auto flex w-full max-w-7xl items-center gap-4 px-6 xl:gap-6 xl:px-8">
   {/* LOGO */}
   <div
-    className="w-64 h-24 flex items-center justify-center overflow-hidden relative cursor-pointer shrink-0"
+    className="w-44 h-20 xl:w-64 xl:h-24 flex items-center justify-center overflow-hidden relative cursor-pointer shrink-0"
     onClick={() => {
       setAbaAtiva('Dashboard');
       setMesAtivo(null);
@@ -5069,7 +5104,7 @@ name="novo-usuario-senha"
   <button
   type="button"
   onClick={() => setMenuResponsivoAberto(true)}
-  className={`xl:hidden flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border text-2xl font-black transition cursor-pointer ${
+  className={`lg:hidden flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border text-2xl font-black transition cursor-pointer ${
     darkMode
       ? 'border-slate-700 text-slate-100 hover:bg-slate-800'
       : 'border-slate-200 text-slate-700 hover:bg-slate-100'
@@ -5080,10 +5115,10 @@ name="novo-usuario-senha"
 </button>
 
   {/* ÁREA DIREITA DO HEADER */}
-  <div className="flex-1 flex flex-col gap-5 min-w-0">
+  <div className="flex-1 flex flex-col gap-3 xl:gap-5 min-w-0">
     {/* LINHA 1: MENU */}
-<div className="relative hidden items-center gap-6 xl:flex">
-  <nav className="ml-10 flex items-center gap-1.5">
+<div className="relative hidden items-center gap-3 lg:flex xl:gap-6">
+  <nav className="flex items-center gap-1.5">
         <button
           onClick={() => {
             setAbaAtiva('Dashboard');
@@ -5142,7 +5177,7 @@ name="novo-usuario-senha"
         ))}
       </nav>
 
-      <div className="ml-8 flex items-center space-x-2 relative">
+      <div className="ml-auto flex items-center space-x-2 relative">
         <button
           type="button"
           onClick={() => setCalcAberta(!calcAberta)}
@@ -5204,77 +5239,78 @@ name="novo-usuario-senha"
         </div>
 
         <button
-          type="button"
-          onClick={() => {
-  setPainelAvisosAberto(false);
-  setAjustesAberto(!ajustesAberto);
-}}
-          className="group relative flex items-center gap-2 rounded-full px-3 py-1.5 shadow-md transition-all duration-300 hover:scale-[1.02] hover:shadow-lg active:scale-[0.98] cursor-pointer"
-          style={estiloTemaPrimarioGradiente}
-          title="Abrir ajustes"
-        >
-          <span
-            className="absolute inset-0 rounded-full opacity-0 transition-opacity duration-300 group-hover:opacity-100"
-            style={{
-              backgroundColor: corEhClara(corPrimaria)
-                ? 'rgba(15, 23, 42, 0.08)'
-                : 'rgba(255, 255, 255, 0.10)',
-            }}
-          />
+  type="button"
+  onClick={() => {
+    setPainelAvisosAberto(false);
+    setAjustesAberto(!ajustesAberto);
+  }}
+  className="group relative flex items-center gap-1.5 overflow-hidden rounded-full border px-2.5 py-1 text-white shadow-md transition-all duration-300 hover:shadow-lg active:scale-[0.98] cursor-pointer"
+  style={{
+    backgroundColor: ajustesAberto ? '#475569' : '#64748b',
+    borderColor: ajustesAberto ? '#475569' : '#64748b',
+    color: '#ffffff',
+  }}
+  onMouseOver={(e) => {
+    e.currentTarget.style.backgroundColor = '#475569';
+    e.currentTarget.style.borderColor = '#475569';
+  }}
+  onMouseOut={(e) => {
+    e.currentTarget.style.backgroundColor = ajustesAberto ? '#475569' : '#64748b';
+    e.currentTarget.style.borderColor = ajustesAberto ? '#475569' : '#64748b';
+  }}
+  title="Abrir ajustes"
+>
+  <span className="relative flex h-4 w-4 items-center justify-center">
+    <svg
+      className={`h-3 w-3 transition-transform duration-500 ${
+        ajustesAberto ? 'rotate-90' : 'rotate-0'
+      }`}
+      fill="none"
+      stroke="currentColor"
+      viewBox="0 0 24 24"
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth="2.4"
+        d="M10.325 4.317a1.724 1.724 0 013.35 0 1.724 1.724 0 002.573 1.066 1.724 1.724 0 012.451 2.451 1.724 1.724 0 001.066 2.573 1.724 1.724 0 010 3.35 1.724 1.724 0 00-1.066 2.573 1.724 1.724 0 01-2.451 2.451 1.724 1.724 0 00-2.573 1.066 1.724 1.724 0 01-3.35 0 1.724 1.724 0 00-2.573-1.066 1.724 1.724 0 01-2.451-2.451 1.724 1.724 0 00-1.066-2.573 1.724 1.724 0 010-3.35 1.724 1.724 0 001.066-2.573 1.724 1.724 0 012.451-2.451 1.724 1.724 0 002.573-1.066z"
+      />
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth="2.4"
+        d="M12 15.5A3.5 3.5 0 1012 8.5a3.5 3.5 0 000 7z"
+      />
+    </svg>
+  </span>
 
-          <span className="relative flex h-5 w-5 items-center justify-center">
-            <svg
-              className={`h-3.5 w-3.5 transition-transform duration-500 ${
-                ajustesAberto ? 'rotate-90' : 'rotate-0'
-              }`}
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth="2.4"
-                d="M10.325 4.317a1.724 1.724 0 013.35 0 1.724 1.724 0 002.573 1.066 1.724 1.724 0 012.451 2.451 1.724 1.724 0 001.066 2.573 1.724 1.724 0 010 3.35 1.724 1.724 0 00-1.066 2.573 1.724 1.724 0 01-2.451 2.451 1.724 1.724 0 00-2.573 1.066 1.724 1.724 0 01-3.35 0 1.724 1.724 0 00-2.573-1.066 1.724 1.724 0 01-2.451-2.451 1.724 1.724 0 00-1.066-2.573 1.724 1.724 0 010-3.35 1.724 1.724 0 001.066-2.573 1.724 1.724 0 012.451-2.451 1.724 1.724 0 002.573-1.066z"
-              />
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth="2.4"
-                d="M12 15.5A3.5 3.5 0 1012 8.5a3.5 3.5 0 000 7z"
-              />
-            </svg>
-          </span>
+  <span
+    className="relative h-3.5 w-px"
+    style={{
+      backgroundColor: 'rgba(255, 255, 255, 0.25)',
+    }}
+  />
 
-          <span
-            className="relative h-4 w-px"
-            style={{
-              backgroundColor: corEhClara(corPrimaria)
-                ? 'rgba(15, 23, 42, 0.30)'
-                : 'rgba(255, 255, 255, 0.25)',
-            }}
-          />
+  <span className="relative text-[11px] font-bold leading-none">
+    Ajustes
+  </span>
 
-          <span className="relative text-xs font-bold leading-none">
-            Ajustes
-          </span>
-
-          <svg
-            className={`relative h-3 w-3 transition-transform duration-300 ${
-              ajustesAberto ? 'rotate-180' : 'rotate-0'
-            }`}
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth="2.7"
-              d="M19 9l-7 7-7-7"
-            />
-          </svg>
-        </button>
+  <svg
+    className={`relative h-2.5 w-2.5 transition-transform duration-300 ${
+      ajustesAberto ? 'rotate-180' : 'rotate-0'
+    }`}
+    fill="none"
+    stroke="currentColor"
+    viewBox="0 0 24 24"
+  >
+    <path
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth="2.7"
+      d="M19 9l-7 7-7-7"
+    />
+  </svg>
+</button>
 
 <div className="relative">
   <button
@@ -5351,7 +5387,7 @@ name="novo-usuario-senha"
     </span>
   </div>
 
-  <div className="hidden xl:flex items-center justify-end gap-4 min-w-0">
+  <div className="hidden lg:flex items-center justify-end gap-3 min-w-0 xl:gap-4">
     <div className="flex items-center gap-1.5 min-w-0">
       <span className="font-black uppercase tracking-wide opacity-80">
         Usuário:
@@ -5725,7 +5761,6 @@ name="novo-usuario-senha"
   style={{ backgroundColor: corPrimaria }}
 >
   <div className="max-w-6xl mx-auto w-full grid grid-cols-[1fr_auto_1fr] items-center gap-6">
-
     {/* ESQUERDA VAZIA PARA EQUILIBRAR O CENTRO */}
     <div />
 
@@ -5769,8 +5804,47 @@ name="novo-usuario-senha"
     </div>
 
     {/* DIREITA: RESUMOS ALINHADOS AO LIMITE DO CONTEÚDO */}
-<div className="flex justify-end items-center gap-3">
-  <div className="rounded-lg bg-white px-4 py-2 text-right shadow-sm border border-white/20">
+    <div className="flex flex-col items-end gap-2">
+      <div className="flex items-center justify-end gap-3">
+  <div className="h-[48px] w-[180px] shrink-0 rounded-lg bg-white px-4 py-1.5 text-left shadow-sm border border-white/20">
+  <div className="mb-1 flex items-center justify-between gap-2">
+    <span className="text-[10px] font-bold uppercase text-slate-500">
+  {mostrarBarraComparativoDespesas
+    ? `Vs. ${mesAnteriorParaAnalise}`
+    : 'Vs. mês ant.'}
+</span>
+
+    <span
+      className="text-[10px] font-black"
+      style={{
+        color: mostrarBarraComparativoDespesas
+          ? corBarraDespesas
+          : '#94a3b8',
+      }}
+    >
+      {mostrarBarraComparativoDespesas
+        ? `${percentualDespesasVsMesAnterior.toFixed(1)}%`
+        : '--'}
+    </span>
+  </div>
+
+  <div className="h-2 w-full overflow-hidden rounded-full bg-slate-200 shadow-inner">
+    <div
+      className="h-full rounded-full transition-all duration-500"
+      style={{
+        width: mostrarBarraComparativoDespesas
+          ? `${percentualBarraDespesas}%`
+          : '0%',
+        backgroundColor: mostrarBarraComparativoDespesas
+          ? corBarraDespesas
+          : '#94a3b8',
+      }}
+    />
+  </div>
+</div>
+
+  {/* Total Despesas */}
+  <div className="h-[48px] w-[165px] shrink-0 rounded-lg bg-white px-4 py-2 text-right shadow-sm border border-white/20">
     <span className="block text-[10px] font-bold uppercase text-slate-500">
       Total Despesas
     </span>
@@ -5779,7 +5853,8 @@ name="novo-usuario-senha"
     </span>
   </div>
 
-  <div className="rounded-lg bg-white px-4 py-2 text-right shadow-sm border border-white/20">
+  {/* Saldo do Mês */}
+  <div className="h-[48px] w-[165px] shrink-0 rounded-lg bg-white px-4 py-2 text-right shadow-sm border border-white/20">
     <span className="block text-[10px] font-bold uppercase text-slate-500">
       Saldo do Mês
     </span>
@@ -5792,6 +5867,9 @@ name="novo-usuario-senha"
     </span>
   </div>
 </div>
+
+      
+    </div>
   </div>
 </div>
 
@@ -6463,6 +6541,7 @@ name="novo-usuario-senha"
     <div className={classeConteudoPagina}>
       <Dashboard 
         meses={meses}
+        lancamentos={lancamentos}
         setMesAtivo={setMesAtivo}
         bgCard={bgCard}
         corPrimaria={corPrimaria}
