@@ -5624,13 +5624,13 @@ name="novo-usuario-login"
         </button>
 
         {['Balanço Geral', 'Gráficos', 'Por Categoria', 'Relatório'].map((item) => (
-          <button
-            key={item}
-            onClick={() => {
-  setMesAtivo(null);
-  setAbaAtiva('Dashboard');
-  setMenuResponsivoAberto(false);
-}}
+  <button
+    key={item}
+    onClick={() => {
+      setMesAtivo(null);
+      setAbaAtiva(item);
+      setMenuResponsivoAberto(false);
+    }}
             className={`font-bold py-1.5 px-3 rounded-full transition-all text-xs uppercase tracking-wide border-2 cursor-pointer ${
               abaAtiva === item
                 ? 'shadow-md transform scale-105'
