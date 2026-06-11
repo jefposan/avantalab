@@ -64,11 +64,11 @@ export default function Graficos({ meses, lancamentos, faturamentos, corPrimaria
         <h2 className={`text-2xl font-black ${textStrong} uppercase tracking-wider`}>Análise Gráfica</h2>
       </div>
 
-      <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-8 items-start">
         
         {/* GRÁFICO 1: BARRAS - RECEITAS X DESPESAS */}
 <div 
-  className={`xl:col-span-2 ${bgCard} rounded-2xl shadow-lg border p-8 flex flex-col border-t-4`} 
+  className={`xl:col-span-2 ${bgCard} rounded-2xl shadow-lg border p-8 flex flex-col border-t-4 self-start min-h-[460px]`} 
   style={{ borderTopColor: corPrimaria }}
 >
   <div className="flex justify-between items-end mb-8">
@@ -81,7 +81,7 @@ export default function Graficos({ meses, lancamentos, faturamentos, corPrimaria
             </div>
           </div>
 
-          <div className="flex-1 flex items-end gap-2 h-72 pb-4 border-b border-slate-200/20 relative mt-4">
+          <div className="flex items-end gap-2 h-[285px] pb-4 border-b border-slate-200/20 relative mt-4">
             {/* Linhas de grade horizontais de fundo */}
             <div className="absolute inset-0 flex flex-col justify-between pointer-events-none opacity-10">
               {[...Array(5)].map((_, i) => <div key={i} className="border-b border-black w-full h-0"></div>)}
@@ -124,7 +124,7 @@ export default function Graficos({ meses, lancamentos, faturamentos, corPrimaria
 
        {/* GRÁFICO 2: ROSCA - DISTRIBUIÇÃO DE DESPESAS */}
 <div 
-  className={`${bgCard} rounded-2xl shadow-lg border p-5 flex flex-col border-t-4`} 
+  className={`${bgCard} rounded-2xl shadow-lg border p-5 flex flex-col border-t-4 self-start`} 
   style={{ borderTopColor: corPrimaria }}
 >
   <h3 className={`text-center text-base font-black uppercase tracking-wider ${textStrong} border-b border-slate-200/10 pb-2 mb-3`}>
@@ -144,7 +144,7 @@ export default function Graficos({ meses, lancamentos, faturamentos, corPrimaria
                   </div>
                 </div>
 
-                <div className="w-full max-h-70 overflow-y-auto pr-2">
+                <div className="w-full max-h-[220px] overflow-y-auto pr-2">
   <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-5 gap-y-3">
     {analiseCategorias.dados.map((item) => (
       <div
