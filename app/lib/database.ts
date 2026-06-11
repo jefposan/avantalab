@@ -813,3 +813,55 @@ export async function atualizarTelefoneUsuarioEmpresa({
     data,
   };
 }
+export async function salvarFeedback({
+  empresaId,
+  usuarioId,
+  acessoId,
+  nomeEmpresa,
+  nomeUsuario,
+  emailUsuario,
+  tipo,
+  mensagem,
+}: {
+  empresaId: string;
+  usuarioId?: string | null;
+  acessoId?: string | null;
+  nomeEmpresa?: string;
+  nomeUsuario?: string;
+  emailUsuario?: string;
+  tipo: 'sugestao' | 'duvida' | 'reclamacao' | 'avaliacao';
+  mensagem: string;
+}) {
+  const { data, error } = await supabase
+    .from('feedbacks')
+    .insert({
+      empresa_id: empresaId,
+      usuario_id: usuarioId || null,
+      acesso_id: acessoId || null,
+      nome_empresa: nomeEmpresa || null,
+      nome_usuario: nomeUsuario || null,
+      email_usuario: emailUsuario || null,
+      tipo,
+      mensagem,
+      status: 'novo',
+    })
+    .select()
+    .single();
+
+  if (error) {
+    console.error('Erro ao salvar feedback:', error);
+
+    return {
+      erro: true,
+      mensagem:
+        'Não foi possível registrar sua mensagem neste momento. Tente novamente em alguns minutos.',
+      data: null,
+    };
+  }
+
+  return {
+    erro: false,
+    mensagem: 'Feedback registrado com sucesso.',
+    data,
+  };
+}
