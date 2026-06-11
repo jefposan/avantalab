@@ -309,7 +309,22 @@ const limparSessaoSupabaseLocal = () => {
       localStorage.removeItem(chave);
     });
 
-    sessionStorage.clear();
+    const chavesSessionParaRemover: string[] = [];
+
+for (let i = 0; i < sessionStorage.length; i += 1) {
+  const chave = sessionStorage.key(i);
+
+  if (
+    chave &&
+    (chave.startsWith('sb-') || chave.toLowerCase().includes('supabase'))
+  ) {
+    chavesSessionParaRemover.push(chave);
+  }
+}
+
+chavesSessionParaRemover.forEach((chave) => {
+  sessionStorage.removeItem(chave);
+});
     localStorage.removeItem(CHAVE_ULTIMA_ATIVIDADE);
   } catch (error) {
     console.error('Erro ao limpar sessão local:', error);
