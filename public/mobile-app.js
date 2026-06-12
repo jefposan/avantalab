@@ -53,6 +53,7 @@
     erro: '',
     mensagem: '',
     carregando: false,
+    loginValor: '',
     modoSenha: false,
     modoCadastro: false,
     smsSenhaEnviado: false,
@@ -238,6 +239,27 @@
     state.mes = meses[indice];
     state.ano = String(ano);
     render();
+  }
+
+  function anoHeaderHtml() {
+    var anoAtual = Number(state.ano) || new Date().getFullYear();
+    var inicio = anoAtual - 5;
+    var fim = anoAtual + 3;
+    var opcoes = [];
+
+    for (var ano = inicio; ano <= fim; ano += 1) {
+      opcoes.push(
+        '<option value="' + ano + '"' + (String(ano) === String(state.ano) ? ' selected' : '') + '>' + ano + '</option>'
+      );
+    }
+
+    return (
+      '<select id="ano" aria-label="Selecionar ano" style="font-size:16px" class="h-9 rounded-full border ' +
+      (state.darkMode ? 'border-slate-700 bg-slate-800 text-slate-100' : 'border-slate-200 bg-slate-100 text-slate-800') +
+      ' px-2 text-center text-xs font-black outline-none">' +
+        opcoes.join('') +
+      '</select>'
+    );
   }
 
   function dadosMes(mes) {
@@ -681,8 +703,11 @@
   }
 
   async function entrar() {
+    if (state.carregando) return;
+
     var login = campo('login').trim();
     var senha = campo('senha');
+    state.loginValor = login;
 
     if (!login || !senha) {
       setErro('Informe login e senha.');
@@ -716,6 +741,9 @@
 
     if (!state.empresa) {
       state.carregando = false;
+      state.autenticado = false;
+      state.usuario = null;
+      await db.auth.signOut();
       setErro('Nenhuma empresa vinculada a este usuario.');
       return;
     }
@@ -1424,8 +1452,8 @@
 
   function telaLogin() {
     return (
-      '<section class="flex min-h-screen flex-col justify-start px-4 pb-8 pt-8" style="min-height:100dvh;background-color:#eef6fb;background-image:linear-gradient(rgba(255,255,255,.08),rgba(255,255,255,0)),url(/images/bg-avantalab-mobile-1080x1920.png);background-size:100% auto;background-repeat:no-repeat;background-position:center bottom;background-attachment:scroll;">' +
-        '<div class="mx-auto w-full max-w-md rounded-3xl border border-white/35 p-5 text-slate-900 shadow-2xl backdrop-blur-xl" style="background-color:rgba(255,255,255,.18)">' +
+      '<section class="fixed inset-0 flex flex-col overflow-hidden px-4 pb-4 pt-8" style="height:100dvh;background-color:#eef6fb;background-image:linear-gradient(rgba(255,255,255,.08),rgba(255,255,255,0)),url(/images/bg-avantalab-mobile-1080x1920.png);background-size:100% auto;background-repeat:no-repeat;background-position:center bottom;background-attachment:fixed;">' +
+        '<div class="mx-auto w-full max-w-md overflow-y-auto rounded-3xl border border-white/35 p-5 text-slate-900 shadow-2xl backdrop-blur-xl" style="background-color:rgba(255,255,255,.18);max-height:calc(100dvh - 8.5rem);overscroll-behavior:contain;">' +
           '<div class="mb-5">' +
             '<p class="mb-2 text-xs font-bold uppercase tracking-[0.32em] text-sky-700">AvantaLab Gestao</p>' +
             '<h1 class="text-3xl font-black text-slate-900">' + (state.modoCadastro ? 'Criar cadastro' : state.modoSenha ? 'Recuperar senha' : 'Acesse sua conta') + '</h1>' +
@@ -1443,7 +1471,7 @@
 
   function telaCarregandoMobile() {
     return (
-      '<section class="flex min-h-screen items-center justify-center px-4" style="min-height:100dvh;background-color:#eef6fb;background-image:url(/images/bg-avantalab-mobile-1080x1920.png);background-size:100% auto;background-repeat:no-repeat;background-position:center bottom;">' +
+      '<section class="fixed inset-0 flex items-center justify-center overflow-hidden px-4" style="height:100dvh;background-color:#eef6fb;background-image:url(/images/bg-avantalab-mobile-1080x1920.png);background-size:100% auto;background-repeat:no-repeat;background-position:center bottom;background-attachment:fixed;">' +
         '<div class="w-full max-w-xs rounded-3xl border border-white/40 bg-white/25 p-5 text-center text-slate-900 shadow-2xl backdrop-blur-xl">' +
           '<p class="text-xs font-black uppercase tracking-[0.24em] text-cyan-700">AvantaLab</p>' +
           '<h1 class="mt-2 text-xl font-black">Preparando acesso</h1>' +
@@ -1474,7 +1502,7 @@
   function telaLoginCampos() {
     return (
       '<div class="grid gap-4">' +
-        inputHtml('login', 'Email ou login', 'text', 'seuemail@exemplo.com ou seu login') +
+        inputHtml('login', 'Email ou login', 'text', 'seuemail@exemplo.com ou seu login', state.loginValor) +
         senhaInputHtml('senha', 'Senha', 'Digite sua senha', 'mostrarSenhaLogin', 'toggle-senha-login') +
         '<div class="text-right">' +
           '<button id="esqueci-senha" type="button" class="text-xs font-bold text-sky-700 underline">Esqueci minha senha</button>' +
@@ -1592,13 +1620,14 @@
     return (
       '<div class="min-h-screen ' + (state.darkMode ? 'bg-slate-950 text-slate-100' : 'bg-slate-100 text-slate-900') + ' pb-24">' +
         '<header class="sticky top-0 z-20 border-b ' + (state.darkMode ? 'border-slate-800 bg-slate-950/95' : 'border-slate-200/80 bg-white/95') + ' px-4 py-3 backdrop-blur">' +
-          '<div class="mx-auto grid max-w-md grid-cols-[40px_1fr_40px] items-center gap-2">' +
+          '<div class="mx-auto grid max-w-md grid-cols-[40px_70px_1fr_40px] items-center gap-2">' +
             '<button id="menu-toggle" type="button" class="flex h-10 w-10 items-center justify-center rounded-full ' + (state.darkMode ? 'bg-slate-800 text-slate-100' : 'bg-slate-100 text-slate-700') + '" aria-label="Abrir menu">☰</button>' +
+            anoHeaderHtml() +
             '<div class="min-w-0 text-center">' +
               '<p class="truncate text-[10px] font-black uppercase tracking-[0.16em] text-cyan-700">' + escapeHtml(nomeEmpresa(state.empresa)) + '</p>' +
-              '<div class="mt-2 flex items-center justify-center gap-5">' +
+              '<div class="mt-2 flex items-center justify-center gap-4">' +
                 '<button id="mes-anterior" type="button" class="flex h-7 w-8 items-center justify-center ' + (state.darkMode ? 'text-slate-200' : 'text-slate-700') + ' text-2xl font-black leading-none" aria-label="Mes anterior">&lsaquo;</button>' +
-                '<h1 class="truncate text-sm font-black">' + escapeHtml(state.mes.charAt(0) + state.mes.slice(1).toLowerCase()) + ' ' + escapeHtml(state.ano) + '</h1>' +
+                '<h1 class="truncate text-sm font-black">' + escapeHtml(state.mes.charAt(0) + state.mes.slice(1).toLowerCase()) + '</h1>' +
                 '<button id="mes-proximo" type="button" class="flex h-7 w-8 items-center justify-center ' + (state.darkMode ? 'text-slate-200' : 'text-slate-700') + ' text-2xl font-black leading-none" aria-label="Proximo mes">&rsaquo;</button>' +
               '</div>' +
             '</div>' +
@@ -1986,8 +2015,8 @@
     var despesaAtiva = state.tipoLancamento === 'despesa';
 
     return (
-      '<div class="fixed inset-0 z-40 flex items-end bg-slate-950/45 px-3 pb-3">' +
-        '<section class="mx-auto w-full max-w-md rounded-3xl bg-white p-4 shadow-2xl">' +
+      '<div class="fixed inset-0 z-40 flex items-center justify-center overflow-hidden bg-slate-950/45 px-3 py-4">' +
+        '<section class="mx-auto max-h-[calc(100dvh-32px)] w-full max-w-md overflow-x-hidden overflow-y-auto rounded-3xl bg-white p-4 shadow-2xl overscroll-contain">' +
           '<div class="mb-3 flex items-center justify-between">' +
             '<h2 class="text-base font-black">Novo lancamento</h2>' +
             '<button id="fechar-lancamento" type="button" class="flex h-9 w-9 items-center justify-center rounded-full bg-slate-100 text-xl text-slate-600">&times;</button>' +
@@ -2060,8 +2089,8 @@
     var detalhe = receita ? 'Receita' : 'Despesa';
 
     return (
-      '<div class="fixed inset-0 z-[55] flex items-end bg-slate-950/45 px-3 pb-3">' +
-        '<section class="mx-auto w-full max-w-md rounded-3xl bg-white p-4 shadow-2xl">' +
+      '<div class="fixed inset-0 z-[55] flex items-center justify-center overflow-hidden bg-slate-950/45 px-3 py-4">' +
+        '<section class="mx-auto max-h-[calc(100dvh-32px)] w-full max-w-md overflow-x-hidden overflow-y-auto rounded-3xl bg-white p-4 shadow-2xl overscroll-contain">' +
           '<div class="mb-3 flex items-center justify-between gap-3">' +
             '<div class="min-w-0"><p class="text-[10px] font-black uppercase tracking-wide text-slate-400">' + detalhe + '</p><h2 class="truncate text-base font-black">' + escapeHtml(titulo) + '</h2></div>' +
             '<button id="fechar-acao-lancamento" type="button" class="flex h-9 w-9 items-center justify-center rounded-full bg-slate-100 text-xl text-slate-600">&times;</button>' +
@@ -2160,11 +2189,9 @@
       privacidade: 'Privacidade',
     }[state.modalMenu] || 'Menu';
 
-    var alinhamento = state.modalMenu === 'categorias' || state.modalMenu === 'ajudaCategorias' ? 'items-start pt-3 pb-3' : 'items-end pb-3';
-
     return (
-      '<div class="fixed inset-0 z-[60] flex ' + alinhamento + ' bg-slate-950/45 px-3">' +
-        '<section class="mx-auto max-h-[88vh] w-full max-w-md overflow-x-hidden overflow-y-auto rounded-3xl ' + (state.darkMode ? 'bg-slate-900 text-slate-100' : 'bg-white text-slate-900') + ' p-4 shadow-2xl">' +
+      '<div class="fixed inset-0 z-[60] flex items-center justify-center overflow-hidden bg-slate-950/45 px-3 py-4">' +
+        '<section class="mx-auto max-h-[calc(100dvh-32px)] w-full max-w-md overflow-x-hidden overflow-y-auto rounded-3xl ' + (state.darkMode ? 'bg-slate-900 text-slate-100' : 'bg-white text-slate-900') + ' p-4 shadow-2xl overscroll-contain">' +
           '<div class="mb-3 flex items-center justify-between gap-3">' +
             '<h2 class="text-base font-black">' + escapeHtml(titulo) + '</h2>' +
             '<button id="fechar-modal-menu" type="button" class="flex h-9 w-9 items-center justify-center rounded-full ' + (state.darkMode ? 'bg-slate-800' : 'bg-slate-100') + ' text-xl">&times;</button>' +
@@ -2926,7 +2953,7 @@
           return Promise.all(
             keys
               .filter(function (key) {
-                return key.indexOf('avantalab-mobile-') === 0 && key !== 'avantalab-mobile-v22';
+                return key.indexOf('avantalab-mobile-') === 0 && key !== 'avantalab-mobile-v23';
               })
               .map(function (key) {
                 return caches.delete(key);

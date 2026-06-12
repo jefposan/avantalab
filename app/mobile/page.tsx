@@ -21,22 +21,23 @@ export default function MobilePage() {
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
 
   return (
-    <main className="min-h-screen bg-slate-950 text-white">
+    <main className="min-h-screen overflow-hidden bg-slate-950 text-white">
       <div
         id="mobile-root"
         data-supabase-url={supabaseUrl}
         data-supabase-anon-key={supabaseAnonKey}
       >
         <section
-          className="flex min-h-screen items-center justify-center px-4"
+          className="fixed inset-0 flex items-center justify-center overflow-hidden px-4"
           style={{
-            minHeight: '100dvh',
+            height: '100dvh',
             backgroundColor: '#eef6fb',
             backgroundImage:
               "url('/images/bg-avantalab-mobile-1080x1920.png')",
             backgroundSize: '100% auto',
             backgroundRepeat: 'no-repeat',
             backgroundPosition: 'center bottom',
+            backgroundAttachment: 'fixed',
           }}
         >
           <div
@@ -56,7 +57,7 @@ export default function MobilePage() {
       </div>
 
       <script src="/mobile-supabase.js" defer />
-      <script src="/mobile-app.js?v=27" defer />
+      <script src="/mobile-app.js?v=28" defer />
     </main>
   );
 }
