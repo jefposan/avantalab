@@ -181,6 +181,12 @@ const [feedbackTipo, setFeedbackTipo] = useState<'sugestao' | 'duvida' | null>(
 );
 const [feedbackMensagem, setFeedbackMensagem] = useState('');
 const [feedbackEnviando, setFeedbackEnviando] = useState(false);
+const [despesaAnaliseAtiva, setDespesaAnaliseAtiva] = useState<{
+  nome: string;
+  valor: number;
+  percentual: number;
+  cor: string;
+} | null>(null);
   const ALTURA_LINHA_LANCAMENTO = 44;
   const ALTURA_PADRAO_TABELA = 440;
   const ESPACO_PUXADOR_TABELA = 42;
@@ -6716,15 +6722,12 @@ setAjustesAberto(false);
       {mesAtivo ? (
         <>
           <div
-  className="print-ocultar shadow-md px-8 py-3 text-white z-0"
+  className="print-ocultar sticky top-[116px] z-[850] shadow-md px-6 py-2 text-white"
   style={{ backgroundColor: corPrimaria }}
 >
-  <div className="max-w-7xl mx-auto w-full grid grid-cols-[1fr_auto_1fr] items-center gap-6">
-    {/* ESQUERDA VAZIA PARA EQUILIBRAR O CENTRO */}
-    <div />
-
-    {/* CENTRO: MÊS COM SETAS */}
-    <div className="flex items-center justify-center gap-4">
+  <div className="max-w-7xl mx-auto grid w-full grid-cols-2 items-center gap-6">
+    {/* ESQUERDA: MÊS COM SETAS */}
+    <div className="flex items-center justify-center gap-2">
       <button
         type="button"
         onClick={() => {
@@ -6736,12 +6739,12 @@ setAjustesAberto(false);
           }
         }}
         disabled={meses.indexOf(mesAtivo) === 0}
-        className="rounded-lg bg-black/10 px-3 py-2 font-bold transition hover:bg-black/20 disabled:cursor-not-allowed disabled:opacity-40"
+        className="rounded-md bg-black/10 px-2.5 py-1.5 text-sm font-bold transition hover:bg-black/20 disabled:cursor-not-allowed disabled:opacity-40"
       >
         ‹
       </button>
 
-      <h2 className="min-w-[220px] text-center text-xl font-black uppercase tracking-wider">
+      <h2 className="min-w-[190px] text-center text-lg font-black uppercase tracking-wider">
         {mesAtivo} / {anoSelecionado}
       </h2>
 
@@ -6756,16 +6759,16 @@ setAjustesAberto(false);
           }
         }}
         disabled={meses.indexOf(mesAtivo) === meses.length - 1}
-        className="rounded-lg bg-black/10 px-3 py-2 font-bold transition hover:bg-black/20 disabled:cursor-not-allowed disabled:opacity-40"
+        className="rounded-md bg-black/10 px-2.5 py-1.5 text-sm font-bold transition hover:bg-black/20 disabled:cursor-not-allowed disabled:opacity-40"
       >
         ›
       </button>
     </div>
 
     {/* DIREITA: RESUMOS ALINHADOS AO LIMITE DO CONTEÚDO */}
-    <div className="flex flex-col items-end gap-2">
-      <div className="flex items-center justify-end gap-3">
-  <div className="h-[48px] w-[180px] shrink-0 rounded-lg bg-white px-4 py-1.5 text-left shadow-sm border border-white/20">
+    <div className="flex flex-col items-end gap-1.5">
+      <div className="flex items-center justify-end gap-2">
+  <div className="h-10 w-[158px] shrink-0 rounded-md bg-white px-3 py-1 text-left shadow-sm border border-white/20">
   <div className="mb-1 flex items-center justify-between gap-2">
     <span className="text-[10px] font-bold uppercase text-slate-500">
   {mostrarBarraComparativoDespesas
@@ -6787,7 +6790,7 @@ setAjustesAberto(false);
     </span>
   </div>
 
-  <div className="h-2 w-full overflow-hidden rounded-full bg-slate-200 shadow-inner">
+  <div className="h-1.5 w-full overflow-hidden rounded-full bg-slate-200 shadow-inner">
     <div
       className="h-full rounded-full transition-all duration-500"
       style={{
@@ -6803,31 +6806,31 @@ setAjustesAberto(false);
 </div>
 
   {/* Total Despesas */}
-  <div className="h-[48px] w-[150px] shrink-0 rounded-lg bg-white px-4 py-2 text-right shadow-sm border border-white/20">
+  <div className="h-10 w-[132px] shrink-0 rounded-md bg-white px-3 py-1.5 text-right shadow-sm border border-white/20">
     <span className="block text-[10px] font-bold uppercase text-slate-500">
       Total Despesas
     </span>
-    <span className="block text-sm font-black text-red-500">
+    <span className="block text-xs font-black text-red-500">
       {formatarMoeda(totalDespesasMes)}
     </span>
   </div>
 
   {/* Total Faturado */}
-  <div className="h-[48px] w-[150px] shrink-0 rounded-lg bg-white px-4 py-2 text-right shadow-sm border border-white/20">
+  <div className="h-10 w-[132px] shrink-0 rounded-md bg-white px-3 py-1.5 text-right shadow-sm border border-white/20">
     <span className="block text-[10px] font-bold uppercase text-slate-500">
       Total faturado
     </span>
-    <span className="block text-sm font-black text-emerald-600">
+    <span className="block text-xs font-black text-emerald-600">
       {formatarMoeda(faturamentoDoMesAtual)}
     </span>
   </div>
   {/* Saldo do Mês */}
-  <div className="h-[48px] w-[150px] shrink-0 rounded-lg bg-white px-4 py-2 text-right shadow-sm border border-white/20">
+  <div className="h-10 w-[132px] shrink-0 rounded-md bg-white px-3 py-1.5 text-right shadow-sm border border-white/20">
     <span className="block text-[10px] font-bold uppercase text-slate-500">
       Saldo do Mês
     </span>
     <span
-      className={`block text-sm font-black ${
+      className={`block text-xs font-black ${
         lucroOperacional >= 0 ? 'text-emerald-600' : 'text-red-500'
       }`}
     >
@@ -6935,138 +6938,179 @@ setAjustesAberto(false);
               </div>
             </div>
 
-<div className="flex justify-between items-center mt-8 mb-4 print-ocultar">
+<div className="flex justify-between items-center mt-6 mb-3 print-ocultar">
   <div className="flex items-center gap-3">
   <span
     className="block h-6 w-2 shrink-0 rounded-full shadow-sm"
     style={{ backgroundColor: corPrimaria }}
   />
 
-  <h2 className={`m-0 leading-none ${textStrong} uppercase tracking-wider`}>
-    TOTAIS DE {mesAtivo}
+  <h2 className={`m-0 text-base leading-none ${textStrong} uppercase tracking-wider`}>
+    Análise de despesas de {mesAtivo}
   </h2>
 </div>
 </div>
 
-            <div className="grid grid-cols-2 items-start gap-6">
-  <div
-    className={`${bgCard} self-start rounded-xl shadow-lg border-x border-b border-t-[4px] p-4 flex flex-col`}
-    style={{ borderTopColor: corPrimaria }}
-  >
-    <h3
-  className={`text-sm font-black ${textStrong} border-b border-slate-200/10 pb-1.5 mb-2 uppercase tracking-wide text-center`}
+<div
+  className={`${bgCard} rounded-lg shadow-md border-x border-b border-t-[3px] p-3`}
+  style={{ borderTopColor: corPrimaria }}
 >
-  Total por Tipo de Despesa
-</h3>
-
-    <div className="space-y-1.5 w-full">
-      {analiseDespesas.dados.map((item) => (
-        <div
-          key={item.nome}
-          className={`py-2 border-b border-dotted ${
-            darkMode ? 'border-slate-600/40' : 'border-slate-300/60'
-          }`}
-        >
-          <div className="flex justify-between items-center gap-3">
-            <div className="flex items-center gap-2 min-w-0">
-              <span
-                className="w-3 h-3 rounded-full shadow-sm flex-shrink-0"
-                style={{ backgroundColor: item.cor }}
-              ></span>
-
-              <span className={`text-xs font-bold uppercase truncate max-w-[180px] ${textStrong}`}>
-                {item.nome}
-              </span>
-            </div>
-
-            <div className="flex items-center gap-4 flex-shrink-0">
-              <span
-                className="text-xs font-black w-12 text-right"
-                style={{ color: corPrimaria }}
-              >
-                {item.percentual.toFixed(1)}%
-              </span>
-
-              <span className="text-xs font-black text-red-500 w-24 text-right">
-                {formatarMoeda(item.valor)}
-              </span>
-            </div>
-          </div>
-        </div>
-      ))}
-
-      {analiseDespesas.dados.length === 0 && (
-        <span className={textMuted}>Sem dados.</span>
-      )}
-    </div>
+  <div className="mb-3 flex items-center justify-between gap-4 border-b border-slate-200/10 pb-2">
+    <h3 className={`text-xs font-black uppercase tracking-wide ${textStrong}`}>
+      Total por tipo e composição de gastos
+    </h3>
   </div>
 
-  <div
-    className={`${bgCard} self-start rounded-xl shadow-lg border-x border-b border-t-[4px] p-5 flex flex-col`}
-    style={{ borderTopColor: corPrimaria }}
-  >
-    <h3
-  className={`text-center text-sm font-black uppercase tracking-wide ${textStrong} border-b border-slate-200/10 pb-1.5 mb-2`}
->
-  Composição de Gastos
-</h3>
-
-    {lancamentosDoMes.length > 0 ? (
-      <div className="flex-1 flex flex-col items-center justify-center">
-        <div className="relative flex items-center justify-center">
+  {analiseDespesas.dados.length > 0 ? (
+    <div className="grid grid-cols-1 items-center gap-4 xl:grid-cols-[minmax(0,1fr)_300px]">
+      <div className="grid grid-cols-1 gap-1.5 md:grid-cols-2">
+        {analiseDespesas.dados.map((item) => (
           <div
-            className="w-56 h-56 rounded-full shadow-inner transform transition-transform hover:scale-105"
-            style={{ background: analiseDespesas.gradiente }}
-          ></div>
-
-          <div
-            className={`absolute w-32 h-32 ${bgCard} rounded-full shadow-xl flex flex-col items-center justify-center`}
+            key={item.nome}
+            className={`min-w-0 rounded-md border px-2.5 py-2 ${
+              darkMode
+                ? 'border-slate-700 bg-slate-800/50'
+                : 'border-slate-200 bg-slate-50'
+            }`}
           >
-            <span className={`text-[12px] font-bold uppercase ${textMuted}`}>
-              Total
-            </span>
-
-            <span className={`text-xs font-black ${textStrong}`}>
-              {formatarMoeda(totalDespesasMes)}
-            </span>
-          </div>
-        </div>
-
-        <div className="w-full mt-4 space-y-1.5">
-          {analiseDespesas.dados.map((item) => (
-            <div
-              key={item.nome}
-              className={`flex items-center justify-between gap-3 py-1.5 border-b border-dotted ${
-                darkMode ? 'border-slate-600/40' : 'border-slate-300/60'
-              }`}
-            >
-              <div className="flex items-center gap-2 min-w-0">
+            <div className="flex items-center justify-between gap-3">
+              <div className="flex min-w-0 items-center gap-2">
                 <span
-                  className="w-2.5 h-2.5 rounded-full flex-shrink-0"
+                  className="h-2.5 w-2.5 shrink-0 rounded-full shadow-sm"
                   style={{ backgroundColor: item.cor }}
-                ></span>
+                />
 
-                <span className={`text-[11px] font-bold uppercase truncate ${textStrong}`}>
+                <span className={`truncate text-[11px] font-bold uppercase ${textStrong}`}>
                   {item.nome}
                 </span>
               </div>
 
-              <span className="text-[11px] font-black text-red-500 flex-shrink-0">
+              <span
+                className="shrink-0 text-[11px] font-black"
+                style={{ color: item.cor }}
+              >
+                {item.percentual.toFixed(1)}%
+              </span>
+            </div>
+
+            <div className="mt-1.5 flex items-center gap-2">
+              <div className="h-1.5 min-w-0 flex-1 overflow-hidden rounded-full bg-slate-200">
+                <div
+                  className="h-full rounded-full"
+                  style={{
+                    width: `${Math.min(item.percentual, 100)}%`,
+                    backgroundColor: item.cor,
+                  }}
+                />
+              </div>
+
+              <span className="w-[86px] shrink-0 text-right text-[11px] font-black text-red-500">
                 {formatarMoeda(item.valor)}
               </span>
             </div>
-          ))}
+          </div>
+        ))}
+      </div>
+
+      <div
+        className={`flex h-full min-h-[238px] flex-col items-center justify-center rounded-md border p-3 ${
+          darkMode
+            ? 'border-slate-700 bg-slate-800/50'
+            : 'border-slate-200 bg-slate-50'
+        }`}
+      >
+        <div className="mb-2 flex h-8 w-full items-center justify-center px-2 text-center">
+          <span
+            className={`max-w-full truncate text-xs font-black uppercase tracking-wide ${
+              despesaAnaliseAtiva ? textStrong : textMuted
+            }`}
+            style={{ color: despesaAnaliseAtiva?.cor }}
+          >
+            {despesaAnaliseAtiva ? despesaAnaliseAtiva.nome : 'Passe o mouse sobre o gráfico'}
+          </span>
         </div>
+
+        <div className="relative flex items-center justify-center">
+          <svg
+            className="h-52 w-52 -rotate-90 transition-transform hover:scale-[1.03]"
+            viewBox="0 0 120 120"
+            role="img"
+            aria-label="Composição de gastos"
+          >
+            <circle
+              cx="60"
+              cy="60"
+              r="43"
+              fill="none"
+              stroke={darkMode ? '#1e293b' : '#e2e8f0'}
+              strokeWidth="14"
+            />
+
+            {(() => {
+              const raio = 43;
+              const circunferencia = 2 * Math.PI * raio;
+              let percentualAcumulado = 0;
+
+              return analiseDespesas.dados.map((item) => {
+                const tamanhoSegmento = (item.percentual / 100) * circunferencia;
+                const deslocamento = -(percentualAcumulado / 100) * circunferencia;
+
+                percentualAcumulado += item.percentual;
+
+                return (
+                  <g key={item.nome}>
+                    <circle
+                      cx="60"
+                      cy="60"
+                      r="43"
+                      fill="none"
+                      stroke={item.cor}
+                      strokeWidth="14"
+                      strokeDasharray={`${tamanhoSegmento} ${circunferencia}`}
+                      strokeDashoffset={deslocamento}
+                      onMouseEnter={() => setDespesaAnaliseAtiva(item)}
+                      onMouseLeave={() => setDespesaAnaliseAtiva(null)}
+                      onFocus={() => setDespesaAnaliseAtiva(item)}
+                      onBlur={() => setDespesaAnaliseAtiva(null)}
+                      tabIndex={0}
+                      className="cursor-pointer transition-all hover:opacity-80 focus:opacity-80 focus:outline-none"
+                    />
+                  </g>
+                );
+              });
+            })()}
+          </svg>
+
+          <div
+            className={`absolute flex h-24 w-24 flex-col items-center justify-center rounded-full px-2 text-center shadow-md ${bgCard}`}
+            style={{
+              border: despesaAnaliseAtiva ? `2px solid ${despesaAnaliseAtiva.cor}` : undefined,
+            }}
+          >
+            <span
+              className={`text-lg font-black ${despesaAnaliseAtiva ? '' : textStrong}`}
+              style={{ color: despesaAnaliseAtiva?.cor }}
+            >
+              {despesaAnaliseAtiva ? `${despesaAnaliseAtiva.percentual.toFixed(1)}%` : '--'}
+            </span>
+
+            <span className={`mt-0.5 max-w-[82px] truncate text-[10px] font-bold ${despesaAnaliseAtiva ? 'text-red-500' : textMuted}`}>
+              {despesaAnaliseAtiva ? formatarMoeda(despesaAnaliseAtiva.valor) : 'Selecione'}
+            </span>
+          </div>
+        </div>
+
+        <span className={`mt-2 text-[10px] font-black uppercase tracking-wide ${textMuted}`}>
+          Composição de gastos
+        </span>
       </div>
-    ) : (
-      <div className="flex-1 flex items-center justify-center">
-        <span className={textMuted}>Sem dados para exibir.</span>
-      </div>
-    )}
-  </div>
+    </div>
+  ) : (
+    <div className="flex min-h-[120px] items-center justify-center">
+      <span className={textMuted}>Sem dados para exibir.</span>
+    </div>
+  )}
 </div>
-
-
 
           </main>
         </>
