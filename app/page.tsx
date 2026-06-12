@@ -107,6 +107,8 @@ const [confirmacaoCarregando, setConfirmacaoCarregando] = useState(false);
 const [authErro, setAuthErro] = useState('');
 const [authMensagem, setAuthMensagem] = useState('');
 const [authLoading, setAuthLoading] = useState(false);
+const [carregandoSistema, setCarregandoSistema] = useState(true);
+const [mensagemCarregamentoSistema, setMensagemCarregamentoSistema] = useState('Carregando sistema...');
 const [googleLoading, setGoogleLoading] = useState(false);
 
 const [modoRedefinirSenha, setModoRedefinirSenha] = useState(false);
@@ -547,6 +549,8 @@ setModalSelecionarEmpresa(false);
 useEffect(() => {
   const carregarConfiguracoesIniciais = async () => {
     setMounted(true);
+    setCarregandoSistema(true);
+    setMensagemCarregamentoSistema('Verificando acesso...');
 
     const paramsConfirmacao = new URLSearchParams(window.location.search);
 const hashConfirmacao = new URLSearchParams(window.location.hash.replace('#', ''));
@@ -565,6 +569,7 @@ if (modoUrl === 'redefinir-senha' || tipoUrl === 'recovery') {
   setAuthErro('');
   setAuthMensagem('');
   setMounted(true);
+  setCarregandoSistema(false);
 
   return;
 }
@@ -578,6 +583,7 @@ if (paramsConfirmacao.get('confirmado') === '1') {
       setModoRedefinirSenha(false);
       setModoAuth('login');
       setMounted(true);
+      setCarregandoSistema(false);
 
       window.history.replaceState({}, document.title, window.location.pathname);
 
@@ -605,12 +611,14 @@ if (paramsConfirmacao.get('confirmado') === '1') {
   setAuthErro('');
   setAuthMensagem('');
   setMounted(true);
+  setCarregandoSistema(false);
 
   return;
 }
 
 setAcessoLiberado(false);
 setAcessoNaoConfigurado(false);
+setMensagemCarregamentoSistema('Carregando empresa...');
 
       const empresasEncontradas = await buscarEmpresasDoUsuario(
         sessaoAtual.session.user.id
@@ -653,6 +661,7 @@ setAcessoNaoConfigurado(false);
   setAcessoNaoConfigurado(false);
   setAcessoLiberado(true);
   setMounted(true);
+  setCarregandoSistema(false);
   return;
 }
 
@@ -666,6 +675,7 @@ setAcessoNaoConfigurado(false);
     setMesFaturamento(mesAtual);
 
     setMounted(true);
+    setCarregandoSistema(false);
   };
 
   carregarConfiguracoesIniciais();
@@ -3160,13 +3170,58 @@ const { error } = await supabase.auth.signInWithPassword({
   return;
 }
 
-  setAuthMensagem('Login realizado. Carregando seus dados...');
+setAuthMensagem('Login realizado. Carregando seus dados...');
+setMensagemCarregamentoSistema('Carregando seus dados...');
+setCarregandoSistema(true);
 
 localStorage.setItem(CHAVE_ULTIMA_ATIVIDADE, String(Date.now()));
 
-setTimeout(() => {
-  window.location.href = window.location.origin + window.location.pathname;
-}, 600);
+try {
+  const { data: usuarioLogado } = await supabase.auth.getUser();
+  const usuarioId = usuarioLogado.user?.id;
+
+  if (!usuarioId) {
+    setAuthErro('Não foi possível confirmar sua sessão. Tente entrar novamente.');
+    return;
+  }
+
+  const empresasEncontradas = await buscarEmpresasDoUsuario(usuarioId);
+
+  if (!empresasEncontradas || empresasEncontradas.length === 0) {
+    setCriandoNovaEmpresaLogada(false);
+    setAcessoNaoConfigurado(true);
+    setAcessoLiberado(false);
+
+    const empresaFallback = await buscarEmpresaDoUsuario(usuarioId);
+
+    if (empresaFallback) {
+      await carregarEmpresaSelecionada(empresaFallback);
+    }
+  } else if (empresasEncontradas.length === 1) {
+    await carregarEmpresaSelecionada(empresasEncontradas[0]);
+  } else {
+    setEmpresaId(null);
+    setNomeEmpresaAtual('');
+    setPerfilUsuario(null);
+    setLogoUrl('');
+    setLogoSettings({ scale: 100, x: 0, y: 0 });
+    setDespesasCadastradas([]);
+    setLancamentos([]);
+    setFaturamentos({});
+    setFaturamentosEntradas([]);
+    setEmpresasDoUsuario(empresasEncontradas);
+    setEmpresaParaSelecionar(empresasEncontradas[0]);
+    setModalSelecionarEmpresa(true);
+    setAcessoNaoConfigurado(false);
+    setAcessoLiberado(true);
+  }
+} catch (error) {
+  console.error('Erro ao carregar dados após login:', error);
+  setAuthErro('Login realizado, mas não foi possível carregar seus dados. Tente novamente.');
+} finally {
+  setCarregandoSistema(false);
+  setAuthLoading(false);
+}
 
 return;
 };
@@ -3934,6 +3989,57 @@ const lancamentosMobile = [...lancamentosDoMes].sort(
   (a, b) => Number(b.dia) - Number(a.dia)
 );
 const categoriasMobile = analiseDespesas.dados.slice(0, 4);
+
+const TelaCarregandoSistema = ({ mensagem }: { mensagem: string }) => (
+  <main className="relative min-h-screen overflow-hidden font-sans">
+    <div
+      className={`absolute inset-0 ${
+        isTelaMobile ? 'bg-no-repeat' : 'bg-cover bg-center'
+      }`}
+      style={{
+        backgroundImage: isTelaMobile
+          ? "url('/images/bg-avantalab-mobile.png')"
+          : "url('/images/bg-avantalab.png')",
+        backgroundSize: isTelaMobile ? 'cover' : undefined,
+        backgroundPosition: isTelaMobile ? 'center bottom' : 'center',
+      }}
+    />
+
+    <div className="absolute inset-0 bg-white/75 backdrop-blur-sm" />
+
+    <section className="relative z-10 flex min-h-screen items-center justify-center px-6 py-10">
+      <div className="w-full max-w-sm rounded-3xl border border-slate-200 bg-white/90 p-8 text-center shadow-2xl">
+        <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-sky-50">
+          <span className="h-7 w-7 animate-spin rounded-full border-3 border-slate-200 border-t-sky-700" />
+        </div>
+
+        <p className="mt-5 text-xs font-bold uppercase tracking-[0.28em] text-sky-700">
+          AvantaLab Gestão
+        </p>
+
+        <h1 className="mt-2 text-xl font-black text-slate-900">
+          Carregando...
+        </h1>
+
+        <p className="mt-2 text-sm font-semibold text-slate-500">
+          {mensagem}
+        </p>
+      </div>
+    </section>
+  </main>
+);
+
+if (!mounted || carregandoSistema || authLoading || googleLoading) {
+  return (
+    <TelaCarregandoSistema
+      mensagem={
+        authLoading || googleLoading
+          ? 'Entrando e preparando seus dados...'
+          : mensagemCarregamentoSistema
+      }
+    />
+  );
+}
 
 if (emailConfirmado) {
   return (
