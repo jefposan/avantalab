@@ -8,8 +8,8 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-sans: Arial, Helvetica, sans-serif;
+  --font-mono: "Courier New", Courier, monospace;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -68,4 +68,28 @@ button:disabled {
 .av-page h2,
 .av-page h3 {
   margin-top: 0 !important;
+}
+
+.input-dia-compacto::-webkit-inner-spin-button,
+.input-dia-compacto::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.input-dia-compacto {
+  appearance: textfield;
+  -moz-appearance: textfield;
+}
+
+.select-despesa-compacto {
+  line-height: 0.85rem !important;
+  text-overflow: ellipsis;
+}
+
+.select-despesa-compacto option {
+  font-size: 9px;
+}
+
+.select-despesa-compacto option[value=""] {
+  font-size: 0.75rem;
 }

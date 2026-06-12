@@ -14,6 +14,8 @@ import ModalInstrucoes from './components/ModalInstrucoes';
 import ModalDespesasBase from './components/ModalDespesasBase';
 import ModalLogo from './components/ModalLogo';
 import ModalConfirmacao from "./components/ModalConfirmacao";
+import CardEntradaFaturamento from './components/CardEntradaFaturamento';
+import TabelaLancamentosDespesa from './components/TabelaLancamentosDespesa';
 import {
   formatarMoeda,
   formatarDescricao,
@@ -34,6 +36,7 @@ import {
   atualizarLancamento,
   salvarFaturamentoBanco,
   salvarFaturamentoEntrada,
+  atualizarFaturamentoEntrada,
   apagarFaturamentoEntrada,
   salvarConfiguracoesBanco,
   salvarDespesaCadastrada,
@@ -214,6 +217,11 @@ const [entradaFaturamentoOrigem, setEntradaFaturamentoOrigem] = useState('');
 const [entradaFaturamentoValor, setEntradaFaturamentoValor] = useState('');
 const [entradaFaturamentoValorNumerico, setEntradaFaturamentoValorNumerico] = useState(0);
 const [entradaFaturamentoSalvando, setEntradaFaturamentoSalvando] = useState(false);
+const [entradaFaturamentoEditandoId, setEntradaFaturamentoEditandoId] = useState<string | null>(null);
+const [editEntradaFaturamentoDia, setEditEntradaFaturamentoDia] = useState('');
+const [editEntradaFaturamentoOrigem, setEditEntradaFaturamentoOrigem] = useState('');
+const [editEntradaFaturamentoValor, setEditEntradaFaturamentoValor] = useState('');
+const [editEntradaFaturamentoValorNumerico, setEditEntradaFaturamentoValorNumerico] = useState(0);
 
   const [despesasCadastradas, setDespesasCadastradas] = useState<
   { nome: string; categoria: string }[]
@@ -235,7 +243,9 @@ const [editDescricao, setEditDescricao] = useState('');
 const [editValor, setEditValor] = useState('');
 const [editValorNumerico, setEditValorNumerico] = useState(0);
 const [ordemLancamentos, setOrdemLancamentos] = useState<'desc' | 'asc'>('desc');
+const [ordemEntradasFaturamento, setOrdemEntradasFaturamento] = useState<'desc' | 'asc'>('desc');
 const [buscaLancamento, setBuscaLancamento] = useState('');
+const [buscaEntradaFaturamento, setBuscaEntradaFaturamento] = useState('');
 
   const meses = ['JANEIRO', 'FEVEREIRO', 'MARÇO', 'ABRIL', 'MAIO', 'JUNHO', 'JULHO', 'AGOSTO', 'SETEMBRO', 'OUTUBRO', 'NOVEMBRO', 'DEZEMBRO'];
   const TEMPO_LIMITE_INATIVIDADE = 60 * 60 * 1000; // 60 minutos
@@ -776,6 +786,7 @@ useEffect(() => {
   if (!mounted || !acessoLiberado) return;
 
   setBuscaLancamento('');
+  setBuscaEntradaFaturamento('');
   setLancamentoEditandoId(null);
 
   setFormDia('');
@@ -788,6 +799,11 @@ useEffect(() => {
   setEntradaFaturamentoOrigem('');
   setEntradaFaturamentoValor('');
   setEntradaFaturamentoValorNumerico(0);
+  setEntradaFaturamentoEditandoId(null);
+  setEditEntradaFaturamentoDia('');
+  setEditEntradaFaturamentoOrigem('');
+  setEditEntradaFaturamentoValor('');
+  setEditEntradaFaturamentoValorNumerico(0);
 
   setEditDia('');
   setEditDespesa('');
@@ -992,15 +1008,43 @@ const lancamentosFiltradosDoMes = useMemo(() => {
   });
 }, [buscaLancamento, lancamentosOrdenados, mesAtivo]);
 
-const entradasFaturamentoDoMes = useMemo(() => {
+const entradasFaturamentoOrdenadasDoMes = useMemo(() => {
   if (!mesAtivo) return [];
 
   return faturamentosEntradas
     .filter((entrada) => entrada.mes === mesAtivo)
-    .sort((a, b) => Number(b.dia) - Number(a.dia));
-}, [faturamentosEntradas, mesAtivo]);
+    .sort((a, b) => {
+      const diaA = Number(a.dia);
+      const diaB = Number(b.dia);
 
-const totalEntradasFaturamentoDoMes = entradasFaturamentoDoMes.reduce(
+      if (ordemEntradasFaturamento === 'desc') {
+        return diaB - diaA;
+      }
+
+      return diaA - diaB;
+    });
+}, [faturamentosEntradas, mesAtivo, ordemEntradasFaturamento]);
+
+const entradasFaturamentoDoMes = useMemo(() => {
+  const termo = normalizarTexto(buscaEntradaFaturamento.trim());
+
+  if (!termo) return entradasFaturamentoOrdenadasDoMes;
+
+  return entradasFaturamentoOrdenadasDoMes.filter((entrada) => {
+    const textoBusca = normalizarTexto(
+      [
+        entrada.dia,
+        entrada.origem,
+        formatarMoeda(Number(entrada.valor || 0)),
+        String(Number(entrada.valor || 0).toFixed(2)).replace('.', ','),
+      ].join(' ')
+    );
+
+    return textoBusca.includes(termo);
+  });
+}, [buscaEntradaFaturamento, entradasFaturamentoOrdenadasDoMes]);
+
+const totalEntradasFaturamentoDoMes = entradasFaturamentoOrdenadasDoMes.reduce(
   (acc, entrada) => acc + Number(entrada.valor || 0),
   0
 );
@@ -1775,7 +1819,31 @@ const apagarDespesa = async (id: string) => {
   }
 };
 
+const solicitarExclusaoLancamento = (lanc: any) => {
+  if (!podeExcluirLancamentos) {
+    abrirAviso(
+      'Acesso não permitido',
+      'Você não tem permissão para excluir lançamentos.'
+    );
+    return;
+  }
+
+  abrirConfirmacao({
+    titulo: 'Excluir lançamento',
+    mensagem: `Deseja excluir este lançamento?\n\n${lanc.despesa} - ${formatarMoeda(Number(lanc.valor))}\n\nEssa ação não poderá ser desfeita.`,
+    acao: () => apagarDespesa(lanc.id),
+  });
+};
+
 const excluirEntradaFaturamento = async (entrada: any) => {
+  if (!podeExcluirLancamentos) {
+    abrirAviso(
+      'Acesso não permitido',
+      'Você não tem permissão para excluir lançamentos.'
+    );
+    return;
+  }
+
   if (!empresaId) {
     abrirAviso(
       'Empresa não carregada',
@@ -2036,6 +2104,162 @@ const handleEntradaFaturamentoValorChange = (
   setEntradaFaturamentoValorNumerico(numericValue);
   setEntradaFaturamentoValor(formatarMoeda(numericValue));
 };
+
+const iniciarEdicaoEntradaFaturamento = (entrada: any) => {
+  if (!podeEditarLancamentos) {
+    abrirAviso(
+      'Acesso não permitido',
+      'Você não tem permissão para editar lançamentos.'
+    );
+    return;
+  }
+
+  setEntradaFaturamentoEditandoId(entrada.id);
+  setEditEntradaFaturamentoDia(String(entrada.dia || ''));
+  setEditEntradaFaturamentoOrigem(entrada.origem || '');
+  setEditEntradaFaturamentoValor(formatarMoeda(Number(entrada.valor || 0)));
+  setEditEntradaFaturamentoValorNumerico(Number(entrada.valor || 0));
+};
+
+const cancelarEdicaoEntradaFaturamento = () => {
+  setEntradaFaturamentoEditandoId(null);
+  setEditEntradaFaturamentoDia('');
+  setEditEntradaFaturamentoOrigem('');
+  setEditEntradaFaturamentoValor('');
+  setEditEntradaFaturamentoValorNumerico(0);
+};
+
+const handleEditEntradaFaturamentoValorChange = (
+  e: React.ChangeEvent<HTMLInputElement>
+) => {
+  const value = e.target.value.replace(/\D/g, '');
+
+  if (!value) {
+    setEditEntradaFaturamentoValor('');
+    setEditEntradaFaturamentoValorNumerico(0);
+    return;
+  }
+
+  const numericValue = parseInt(value, 10) / 100;
+
+  setEditEntradaFaturamentoValorNumerico(numericValue);
+  setEditEntradaFaturamentoValor(formatarMoeda(numericValue));
+};
+
+const salvarEdicaoEntradaFaturamento = async () => {
+  if (!empresaId) {
+    abrirAviso(
+      'Empresa não carregada',
+      'Tente atualizar a página e acessar novamente.'
+    );
+    return;
+  }
+
+  if (!entradaFaturamentoEditandoId) return;
+
+  const entradaOriginal = faturamentosEntradas.find(
+    (entrada) => entrada.id === entradaFaturamentoEditandoId
+  );
+
+  if (!entradaOriginal) {
+    abrirAviso(
+      'Entrada não encontrada',
+      'Não foi possível localizar a entrada para edição.'
+    );
+    return;
+  }
+
+  const mesEntrada = entradaOriginal.mes || mesAtivo;
+  const diaNumerico = parseInt(editEntradaFaturamentoDia, 10);
+  const origemLimpa = editEntradaFaturamentoOrigem.trim();
+
+  if (!mesEntrada) {
+    abrirAviso(
+      'Mês não selecionado',
+      'Selecione um mês antes de editar a entrada.'
+    );
+    return;
+  }
+
+  const maxDias = getMaxDias(mesEntrada, anoSelecionado);
+
+  if (Number.isNaN(diaNumerico) || diaNumerico < 1 || diaNumerico > maxDias) {
+    abrirAviso(
+      'Dia inválido',
+      `Informe um dia válido entre 1 e ${maxDias}.`
+    );
+    return;
+  }
+
+  if (!origemLimpa || editEntradaFaturamentoValorNumerico < 0) {
+    abrirAviso(
+      'Campos obrigatórios',
+      'Preencha origem e valor antes de salvar a edição.'
+    );
+    return;
+  }
+
+  const resultado = await atualizarFaturamentoEntrada({
+    id: entradaFaturamentoEditandoId,
+    empresaId,
+    ano: Number(anoSelecionado),
+    mes: mesEntrada,
+    dia: diaNumerico,
+    origem: origemLimpa,
+    valor: editEntradaFaturamentoValorNumerico,
+  });
+
+  if (resultado.erro || !resultado.data) {
+    abrirAviso(
+      'Erro ao editar entrada',
+      resultado.mensagem || 'Não foi possível salvar a edição da entrada.'
+    );
+    return;
+  }
+
+  const valorAnterior = Number(entradaOriginal.valor || 0);
+  const totalAtual = faturamentos[mesEntrada] || 0;
+  const novoTotal = Math.max(
+    0,
+    totalAtual - valorAnterior + editEntradaFaturamentoValorNumerico
+  );
+
+  const faturamentoSalvo = await salvarFaturamentoBanco({
+    empresaId,
+    ano: Number(anoSelecionado),
+    mes: mesEntrada,
+    valor: novoTotal,
+  });
+
+  if (!faturamentoSalvo) {
+    abrirAviso(
+      'Entrada editada parcialmente',
+      'A entrada foi atualizada, mas não foi possível recalcular o total do mês. Atualize a página e confira o faturamento.'
+    );
+    return;
+  }
+
+  setFaturamentosEntradas((prev) =>
+    prev.map((entrada) =>
+      entrada.id === entradaFaturamentoEditandoId
+        ? {
+            ...entrada,
+            dia: diaNumerico,
+            origem: origemLimpa,
+            valor: editEntradaFaturamentoValorNumerico,
+          }
+        : entrada
+    )
+  );
+
+  setFaturamentos((prev) => ({
+    ...prev,
+    [mesEntrada]: novoTotal,
+  }));
+
+  cancelarEdicaoEntradaFaturamento();
+};
+
 const handleValorChange = (e: React.ChangeEvent<HTMLInputElement>) => {
   let value = e.target.value.replace(/\D/g, '');
 
@@ -6495,7 +6719,7 @@ setAjustesAberto(false);
   className="print-ocultar shadow-md px-8 py-3 text-white z-0"
   style={{ backgroundColor: corPrimaria }}
 >
-  <div className="max-w-6xl mx-auto w-full grid grid-cols-[1fr_auto_1fr] items-center gap-6">
+  <div className="max-w-7xl mx-auto w-full grid grid-cols-[1fr_auto_1fr] items-center gap-6">
     {/* ESQUERDA VAZIA PARA EQUILIBRAR O CENTRO */}
     <div />
 
@@ -6579,7 +6803,7 @@ setAjustesAberto(false);
 </div>
 
   {/* Total Despesas */}
-  <div className="h-[48px] w-[165px] shrink-0 rounded-lg bg-white px-4 py-2 text-right shadow-sm border border-white/20">
+  <div className="h-[48px] w-[150px] shrink-0 rounded-lg bg-white px-4 py-2 text-right shadow-sm border border-white/20">
     <span className="block text-[10px] font-bold uppercase text-slate-500">
       Total Despesas
     </span>
@@ -6588,8 +6812,17 @@ setAjustesAberto(false);
     </span>
   </div>
 
+  {/* Total Faturado */}
+  <div className="h-[48px] w-[150px] shrink-0 rounded-lg bg-white px-4 py-2 text-right shadow-sm border border-white/20">
+    <span className="block text-[10px] font-bold uppercase text-slate-500">
+      Total faturado
+    </span>
+    <span className="block text-sm font-black text-emerald-600">
+      {formatarMoeda(faturamentoDoMesAtual)}
+    </span>
+  </div>
   {/* Saldo do Mês */}
-  <div className="h-[48px] w-[165px] shrink-0 rounded-lg bg-white px-4 py-2 text-right shadow-sm border border-white/20">
+  <div className="h-[48px] w-[150px] shrink-0 rounded-lg bg-white px-4 py-2 text-right shadow-sm border border-white/20">
     <span className="block text-[10px] font-bold uppercase text-slate-500">
       Saldo do Mês
     </span>
@@ -6609,477 +6842,98 @@ setAjustesAberto(false);
 </div>
 
           <main className={classePaginaInterna}>
-            <div
-  className={`${bgCard} rounded-xl shadow-lg border-x border-b border-t-[4px] p-6`}
-  style={{ borderTopColor: corPrimaria }}
->
-   <div
-    className="relative custom-scroll"
-  style={{
-    height: `${alturaFinalTabelaLancamentos + 130 + ESPACO_PUXADOR_TABELA}px`,
-    minHeight: `${ALTURA_PADRAO_TABELA + 130 + ESPACO_PUXADOR_TABELA}px`,
-    maxHeight: `${alturaMaximaTabelaLancamentos + 130 + ESPACO_PUXADOR_TABELA}px`,
-    overflow: 'hidden',
-  }}
->
-  <table className="w-full table-fixed text-left border-collapse">
-  <colgroup>
-    <col className="w-[8%]" />
-    <col className="w-[28%]" />
-    <col className="w-[39%]" />
-    <col className="w-[14%]" />
-    <col className="w-[11%]" />
-  </colgroup>
+            <div className="grid grid-cols-1 gap-6 xl:grid-cols-2 xl:items-start">
+              <div className="min-w-0">
+<TabelaLancamentosDespesa
+              bgCard={bgCard}
+              corPrimaria={corPrimaria}
+              darkMode={darkMode}
+              textStrong={textStrong}
+              textMuted={textMuted}
+              mesAtivo={mesAtivo}
+              anoSelecionado={anoSelecionado}
+              ordemLancamentos={ordemLancamentos}
+              setOrdemLancamentos={setOrdemLancamentos}
+              formDia={formDia}
+              setFormDia={setFormDia}
+              formDespesa={formDespesa}
+              setFormDespesa={setFormDespesa}
+              formDescricao={formDescricao}
+              setFormDescricao={setFormDescricao}
+              formValor={formValor}
+              handleValorChange={handleValorChange}
+              adicionarDespesa={adicionarDespesa}
+              despesasCadastradas={despesasCadastradas}
+              buscaLancamento={buscaLancamento}
+              setBuscaLancamento={setBuscaLancamento}
+              lancamentosFiltradosDoMes={lancamentosFiltradosDoMes}
+              lancamentoEditandoId={lancamentoEditandoId}
+              editDia={editDia}
+              setEditDia={setEditDia}
+              editDespesa={editDespesa}
+              setEditDespesa={setEditDespesa}
+              editDescricao={editDescricao}
+              setEditDescricao={setEditDescricao}
+              editValor={editValor}
+              handleEditValorChange={handleEditValorChange}
+              salvarEdicaoLancamento={salvarEdicaoLancamento}
+              cancelarEdicaoLancamento={cancelarEdicaoLancamento}
+              iniciarEdicaoLancamento={iniciarEdicaoLancamento}
+              onSolicitarExclusaoLancamento={solicitarExclusaoLancamento}
+              alturaTabelaLancamentos={alturaTabelaLancamentos}
+              setAlturaTabelaLancamentos={setAlturaTabelaLancamentos}
+              alturaFinalTabelaLancamentos={alturaFinalTabelaLancamentos}
+              alturaMaximaTabelaLancamentos={alturaMaximaTabelaLancamentos}
+              quantidadeLancamentosMes={quantidadeLancamentosMes}
+              alturaPadraoTabela={ALTURA_PADRAO_TABELA}
+              espacoPuxadorTabela={ESPACO_PUXADOR_TABELA}
+              estiloTemaPrimario={estiloTemaPrimario}
+              getMaxDias={getMaxDias}
+              formatarMoeda={formatarMoeda}
+              formatarDescricao={formatarDescricao}
+            />
+              </div>
 
-  <thead className={darkMode ? 'bg-slate-700' : 'bg-slate-100'}>
-  <tr>
-    <th colSpan={5} className="p-3">
-      <div className="relative flex items-center justify-center">
-        <button
-          type="button"
-          onClick={() =>
-            setOrdemLancamentos((prev) => (prev === 'desc' ? 'asc' : 'desc'))
-          }
-          className={`absolute left-0 flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-[10px] font-bold uppercase tracking-wide border shadow-sm transition-all hover:scale-[1.03] active:scale-95 cursor-pointer ${
-            darkMode
-              ? 'bg-slate-800 border-slate-700 text-slate-300 hover:bg-slate-700'
-              : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
-          }`}
-          title={
-            ordemLancamentos === 'desc'
-              ? 'Clique para ordenar do menor dia para o maior'
-              : 'Clique para ordenar do maior dia para o menor'
-          }
-        >
-          <span>Mudar ordem</span>
-          <span className="text-xs font-black">
-            {ordemLancamentos === 'desc' ? '↓' : '↑'}
-          </span>
-        </button>
-
-        <span
-          className={`text-sm font-black uppercase tracking-widest ${
-            darkMode ? 'text-slate-300' : 'text-slate-600'
-          }`}
-        >
-          PREENCHA OS CAMPOS PARA LANÇAR UMA DESPESA
-        </span>
-      </div>
-    </th>
-  </tr>
-</thead>
-
-    <tbody>
-      <tr className={`${darkMode ? 'bg-slate-800/80 border-slate-700' : 'bg-slate-50/80 border-slate-200'} border-b-2`}>
-        <td className="p-3">
-          <input
-            type="number"
-            min="1"
-            max={getMaxDias(mesAtivo, anoSelecionado)}
-            value={formDia}
-            onChange={(e) => {
-              const val = parseInt(e.target.value);
-              if (val > getMaxDias(mesAtivo, anoSelecionado)) setFormDia(getMaxDias(mesAtivo, anoSelecionado).toString());
-              else setFormDia(e.target.value);
-            }}
-            placeholder="Dia"
-            className={`w-full p-2.5 border rounded-lg focus:outline-none focus:ring-1 text-center font-bold shadow-sm ${
-              darkMode ? 'bg-slate-700 border-slate-600 text-white' : 'border-slate-300 text-slate-700'
-            }`}
-            style={{ outlineColor: corPrimaria }}
-          />
-        </td>
-
-        <td className="p-3">
-          <select
-  value={formDespesa}
-  onChange={(e) => setFormDespesa(e.target.value)}
-  className={`w-full p-2.5 border rounded-lg focus:outline-none focus:ring-1 font-semibold shadow-sm ${
-    darkMode
-      ? 'bg-slate-700 border-slate-600'
-      : 'bg-white border-slate-300'
-  }`}
-  style={{
-    outlineColor: corPrimaria,
-    color: formDespesa
-      ? darkMode ? '#ffffff' : '#334155'
-      : darkMode ? '#cbd5e1' : '#94a3b8',
-  }}
->
-  <option
-  value=""
-  className={darkMode ? 'bg-slate-700 text-xs text-slate-300' : 'bg-white text-xs text-slate-400'}
->
-  Selecione a despesa
-</option>
-
-{despesasCadastradas.map((d) => (
-  <option
-    key={d.nome}
-    value={d.nome}
-    className={darkMode ? 'bg-slate-700 text-xs text-white' : 'bg-white text-xs text-slate-800'}
-  >
-    {d.nome}
-  </option>
-))}
-</select>
-        </td>
-
-        <td className="p-3">
-          <input
-            type="text"
-            value={formDescricao}
-            onChange={(e) => setFormDescricao(e.target.value)}
-            onBlur={() => setFormDescricao(formatarDescricao(formDescricao))}
-            placeholder="Descrição..."
-            className={`w-full p-2.5 border rounded-lg focus:outline-none focus:ring-1 shadow-sm ${
-              darkMode ? 'bg-slate-700 border-slate-600 text-white' : 'border-slate-300'
-            }`}
-            style={{ outlineColor: corPrimaria }}
-          />
-        </td>
-
-        <td className="p-3">
-          <input
-            type="text"
-            value={formValor}
-            onChange={handleValorChange}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') {
-                e.preventDefault();
-                adicionarDespesa();
-              }
-            }}
-            placeholder="R$ 0,00"
-            className={`w-full p-2.5 border rounded-lg focus:outline-none focus:ring-1 text-right font-bold shadow-sm ${
-              darkMode ? 'bg-slate-700 border-slate-600 text-white' : 'border-slate-300 text-slate-800'
-            }`}
-            style={{ outlineColor: corPrimaria }}
-          />
-        </td>
-
-        <td className="p-3 text-center">
-          <button
-  onClick={adicionarDespesa}
-  style={estiloTemaPrimario}
-  className="px-4 py-2.5 rounded-lg font-bold shadow-md hover:brightness-110 active:scale-95 transition-all cursor-pointer"
->
-  Adicionar
-</button>
-        </td>
-      </tr>
-    </tbody>
-  </table>
-
-  <div className="flex items-center justify-between gap-4 px-4 py-3 border-b border-slate-200/20">
-  <div className="flex-1">
-   <div className="relative">
-  <svg
-    className={`pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 ${
-      darkMode ? 'text-slate-400' : 'text-slate-500'
-    }`}
-    fill="none"
-    stroke="currentColor"
-    viewBox="0 0 24 24"
-  >
-    <path
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      strokeWidth="2.3"
-      d="M21 21l-4.35-4.35M10.8 18a7.2 7.2 0 100-14.4 7.2 7.2 0 000 14.4z"
-    />
-  </svg>
-
-  <input
-    type="text"
-    value={buscaLancamento}
-    onChange={(e) => setBuscaLancamento(e.target.value)}
-    placeholder="Buscar lançamento do mês por despesa, descrição, dia ou valor..."
-    className={`w-full rounded-xl border py-2.5 pl-11 pr-11 text-sm font-semibold outline-none transition focus:ring-2 ${
-      darkMode
-        ? 'bg-slate-700 border-slate-600 text-white placeholder:text-slate-400'
-        : 'bg-white border-slate-300 text-slate-700 placeholder:text-slate-400'
-    }`}
-    style={{
-      borderColor: buscaLancamento ? corPrimaria : undefined,
-      boxShadow: buscaLancamento ? `0 0 0 2px ${corPrimaria}22` : undefined,
-    }}
-  />
-
-  {buscaLancamento && (
-    <button
-      type="button"
-      onClick={() => setBuscaLancamento('')}
-      className={`absolute right-3 top-1/2 flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded-full text-xs font-black transition cursor-pointer ${
-        darkMode
-          ? 'text-slate-300 hover:bg-slate-600 hover:text-white'
-          : 'text-slate-500 hover:bg-slate-200 hover:text-slate-800'
-      }`}
-      title="Limpar busca"
-    >
-      ×
-    </button>
-  )}
-</div>
-  </div>
-
-</div>
-
-{buscaLancamento.trim() && (
-  <div className={`px-4 py-2 text-xs font-bold ${
-    lancamentosFiltradosDoMes.length > 0
-      ? darkMode ? 'text-emerald-300' : 'text-emerald-700'
-      : darkMode ? 'text-red-300' : 'text-red-600'
-  }`}>
-    {lancamentosFiltradosDoMes.length > 0
-      ? `${lancamentosFiltradosDoMes.length} lançamento(s) localizado(s).`
-      : 'Nenhum lançamento localizado com esse argumento.'}
-  </div>
-)}
-
-  <div
-    className="overflow-y-auto overflow-x-auto custom-scroll"
-    style={{
-      height: `${alturaFinalTabelaLancamentos}px`,
-      maxHeight: `${alturaMaximaTabelaLancamentos}px`,
-    }}
-  >
-    <table className="w-full text-left border-collapse">
-      <tbody>
-        {lancamentosFiltradosDoMes.length > 0 ? (
-  lancamentosFiltradosDoMes.map((lanc) => (
-            <tr
-  key={lanc.id}
-  className={`border-b border-dotted transition-colors ${
-    buscaLancamento.trim()
-      ? darkMode
-        ? 'bg-sky-900/30 border-sky-700/50'
-        : 'bg-sky-50 border-sky-200'
-      : darkMode
-        ? 'border-slate-600/40 hover:bg-slate-700/30'
-        : 'border-slate-300/60 hover:bg-slate-50'
-  }`}
->
-  {lancamentoEditandoId === lanc.id ? (
-    <>
-      <td className="py-1.5 px-4 w-24 text-center">
-        <input
-          type="number"
-          min={1}
-          max={getMaxDias(mesAtivo, anoSelecionado)}
-          value={editDia}
-          onChange={(e) => setEditDia(e.target.value)}
-          className={`w-full p-2 border rounded-lg text-center font-bold ${
-            darkMode ? 'bg-slate-700 border-slate-600 text-white' : 'border-slate-300 text-slate-800'
-          }`}
-        />
-      </td>
-
-      <td className="py-1.5 px-4 w-1/4">
-        <select
-  value={editDespesa}
-  onChange={(e) => setEditDespesa(e.target.value)}
-  className={`w-full p-2 border rounded-lg font-bold ${
-    darkMode
-      ? 'bg-slate-700 border-slate-600'
-      : 'bg-white border-slate-300'
-  }`}
-  style={{
-    color: editDespesa
-      ? darkMode ? '#ffffff' : '#334155'
-      : darkMode ? '#cbd5e1' : '#94a3b8',
-  }}
->
-  <option value="" className="text-slate-400">
-    Selecione...
-  </option>
-
-  {despesasCadastradas.map((d) => (
-    <option key={d.nome} value={d.nome} className="text-slate-800">
-      {d.nome}
-    </option>
-  ))}
-</select>
-      </td>
-
-      <td className="py-1.5 px-4 w-1/3">
-        <input
-          type="text"
-          value={editDescricao}
-          onChange={(e) => setEditDescricao(e.target.value)}
-          className={`w-full p-2 border rounded-lg ${
-            darkMode ? 'bg-slate-700 border-slate-600 text-white' : 'border-slate-300 text-slate-800'
-          }`}
-          placeholder="Descrição..."
-        />
-      </td>
-
-      <td className="py-1.5 px-4 w-40">
-        <input
-          type="text"
-          value={editValor}
-          onChange={handleEditValorChange}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter') {
-              e.preventDefault();
-              salvarEdicaoLancamento();
-            }
-
-            if (e.key === 'Escape') {
-              e.preventDefault();
-              cancelarEdicaoLancamento();
-            }
-          }}
-          className={`w-full p-2 border rounded-lg text-right font-bold ${
-            darkMode ? 'bg-slate-700 border-slate-600 text-white' : 'border-slate-300 text-slate-800'
-          }`}
-          placeholder="R$ 0,00"
-        />
-      </td>
-
-      <td className="py-1.5 px-4 w-28 text-center">
-        <div className="flex items-center justify-center gap-1">
-          <button
-            onClick={salvarEdicaoLancamento}
-            className="text-green-500 hover:bg-green-500/10 p-1.5 rounded transition-all cursor-pointer"
-            title="Salvar edição"
-          >
-            ✓
-          </button>
-
-          <button
-            onClick={cancelarEdicaoLancamento}
-            className="text-slate-400 hover:text-red-500 hover:bg-red-500/10 p-1.5 rounded transition-all cursor-pointer"
-            title="Cancelar edição"
-          >
-            ×
-          </button>
-        </div>
-      </td>
-    </>
-  ) : (
-    <>
-      <td className={`py-1.5 px-4 w-24 text-center font-bold text-sm ${textStrong}`}>
-        {lanc.dia.toString().padStart(2, '0')}
-      </td>
-
-      <td className={`py-1.5 px-4 w-1/4 font-bold text-sm ${textStrong}`}>
-        {lanc.despesa}
-      </td>
-
-      <td className={`py-1.5 px-4 w-1/3 text-xs ${textMuted}`}>
-        {lanc.descricao || '-'}
-      </td>
-
-      <td className="py-1.5 px-4 w-40 text-right font-black text-sm text-red-500">
-        - {formatarMoeda(lanc.valor)}
-      </td>
-
-      <td className="py-1.5 px-4 w-28 text-center">
-        <div className="flex items-center justify-center gap-1">
-          <button
-            onClick={() => iniciarEdicaoLancamento(lanc)}
-            className="text-slate-400 hover:text-blue-500 hover:bg-blue-500/10 p-1.5 rounded transition-all cursor-pointer"
-            title="Editar"
-          >
-            <svg className="w-4 h-4 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth="2"
-                d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"
-              />
-            </svg>
-          </button>
-
-          <button
-            onClick={() => {
-  if (!podeExcluirLancamentos) {
-    abrirAviso(
-  'Acesso não permitido',
-  'Você não tem permissão para excluir lançamentos.'
-);
-    return;
-  }
-
-  abrirConfirmacao({
-    titulo: "Excluir lançamento",
-    mensagem: `Deseja excluir este lançamento?\n\n${lanc.despesa} - ${formatarMoeda(Number(lanc.valor))}\n\nEssa ação não poderá ser desfeita.`,
-    acao: () => apagarDespesa(lanc.id),
-  });
-}}
-            className="text-slate-400 hover:text-red-500 hover:bg-red-500/10 p-1.5 rounded transition-all cursor-pointer"
-            title="Apagar"
-          >
-            <svg className="w-4 h-4 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth="2"
-                d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-              />
-            </svg>
-          </button>
-        </div>
-      </td>
-    </>
-  )}
-</tr>
-          ))
-        ) : (
-          <tr>
-            <td
-              colSpan={5}
-              className="text-center p-4 text-sm text-slate-400 italic border-t border-slate-200/10"
-            >
-              Nenhuma despesa lançada.
-            </td>
-          </tr>
-        )}
-      </tbody>
-    </table>
-  </div>
-  </div>
-
-  <div
-  className="flex items-center justify-center"
-  style={{ height: `${ESPACO_PUXADOR_TABELA}px` }}
->
-  {quantidadeLancamentosMes > 10 && (
-    <div
-      title="Arraste para aumentar ou reduzir a área de lançamentos"
-      className="flex h-5 w-28 cursor-row-resize items-center justify-center rounded-full border border-slate-400 bg-white shadow-md transition hover:bg-slate-100"
-      onPointerDown={(e) => {
-        e.preventDefault();
-
-        const inicioY = e.clientY;
-        const alturaInicial = alturaTabelaLancamentos;
-
-        const aoMover = (event: PointerEvent) => {
-          const diferenca = event.clientY - inicioY;
-
-          const novaAltura = Math.min(
-            Math.max(alturaInicial + diferenca, ALTURA_PADRAO_TABELA),
-            alturaMaximaTabelaLancamentos
-          );
-
-          setAlturaTabelaLancamentos(novaAltura);
-        };
-
-        const aoSoltar = () => {
-          window.removeEventListener('pointermove', aoMover);
-          window.removeEventListener('pointerup', aoSoltar);
-        };
-
-        window.addEventListener('pointermove', aoMover);
-        window.addEventListener('pointerup', aoSoltar);
-      }}
-    >
-      <span className="h-1 w-16 rounded-full bg-slate-500" /> 
-    </div>
-  )}
-</div>
-</div>
+              <div className="min-w-0">
+<CardEntradaFaturamento
+  mesAtivo={mesAtivo}
+  anoSelecionado={anoSelecionado}
+  entradaFaturamentoDia={entradaFaturamentoDia}
+  setEntradaFaturamentoDia={setEntradaFaturamentoDia}
+  entradaFaturamentoOrigem={entradaFaturamentoOrigem}
+  setEntradaFaturamentoOrigem={setEntradaFaturamentoOrigem}
+  entradaFaturamentoValor={entradaFaturamentoValor}
+  handleEntradaFaturamentoValorChange={handleEntradaFaturamentoValorChange}
+  adicionarEntradaFaturamento={adicionarEntradaFaturamento}
+  entradaFaturamentoSalvando={entradaFaturamentoSalvando}
+  totalEntradasFaturamentoDoMes={totalEntradasFaturamentoDoMes}
+  ordemEntradasFaturamento={ordemEntradasFaturamento}
+  setOrdemEntradasFaturamento={setOrdemEntradasFaturamento}
+  buscaEntradaFaturamento={buscaEntradaFaturamento}
+  setBuscaEntradaFaturamento={setBuscaEntradaFaturamento}
+  getMaxDias={getMaxDias}
+  formatarMoeda={formatarMoeda}
+  corPrimaria={corPrimaria}
+  darkMode={darkMode}
+  bgCard={bgCard}
+  textStrong={textStrong}
+  textMuted={textMuted}
+  entradas={entradasFaturamentoDoMes}
+  podeEditarEntradas={podeEditarLancamentos}
+  entradaEditandoId={entradaFaturamentoEditandoId}
+  editEntradaDia={editEntradaFaturamentoDia}
+  setEditEntradaDia={setEditEntradaFaturamentoDia}
+  editEntradaOrigem={editEntradaFaturamentoOrigem}
+  setEditEntradaOrigem={setEditEntradaFaturamentoOrigem}
+  editEntradaValor={editEntradaFaturamentoValor}
+  handleEditEntradaValorChange={handleEditEntradaFaturamentoValorChange}
+  onIniciarEdicaoEntrada={iniciarEdicaoEntradaFaturamento}
+  onSalvarEdicaoEntrada={salvarEdicaoEntradaFaturamento}
+  onCancelarEdicaoEntrada={cancelarEdicaoEntradaFaturamento}
+  onExcluirEntrada={excluirEntradaFaturamento}
+/>
+              </div>
+            </div>
 
 <div className="flex justify-between items-center mt-8 mb-4 print-ocultar">
   <div className="flex items-center gap-3">
@@ -7094,9 +6948,9 @@ setAjustesAberto(false);
 </div>
 </div>
 
-            <div className="grid grid-cols-2 gap-6">
+            <div className="grid grid-cols-2 items-start gap-6">
   <div
-    className={`${bgCard} rounded-xl shadow-lg border-x border-b border-t-[4px] p-4 flex flex-col`}
+    className={`${bgCard} self-start rounded-xl shadow-lg border-x border-b border-t-[4px] p-4 flex flex-col`}
     style={{ borderTopColor: corPrimaria }}
   >
     <h3
@@ -7148,7 +7002,7 @@ setAjustesAberto(false);
   </div>
 
   <div
-    className={`${bgCard} rounded-xl shadow-lg border-x border-b border-t-[4px] p-5 flex flex-col`}
+    className={`${bgCard} self-start rounded-xl shadow-lg border-x border-b border-t-[4px] p-5 flex flex-col`}
     style={{ borderTopColor: corPrimaria }}
   >
     <h3
@@ -7178,8 +7032,8 @@ setAjustesAberto(false);
           </div>
         </div>
 
-        <div className="w-full mt-4 space-y-2">
-          {analiseDespesas.dados.slice(0, 5).map((item) => (
+        <div className="w-full mt-4 space-y-1.5">
+          {analiseDespesas.dados.map((item) => (
             <div
               key={item.nome}
               className={`flex items-center justify-between gap-3 py-1.5 border-b border-dotted ${
@@ -7212,207 +7066,7 @@ setAjustesAberto(false);
   </div>
 </div>
 
-<div
-  className={`${bgCard} mt-6 rounded-xl shadow-lg border-x border-b border-t-[4px] p-6`}
-  style={{ borderTopColor: corPrimaria }}
->
-  <div className="mb-5 flex items-center justify-between gap-4">
-    <div>
-      <h3 className={`text-sm font-black uppercase tracking-widest ${textStrong}`}>
-        Entradas de faturamento
-      </h3>
-      <p className={`mt-1 text-xs ${textMuted}`}>
-        Lance as entradas individuais de {mesAtivo}.
-      </p>
-    </div>
 
-    <div className="text-right">
-      <p className={`text-[10px] font-bold uppercase tracking-wide ${textMuted}`}>
-        Total lançado
-      </p>
-      <p className="text-xl font-black text-emerald-500">
-        {formatarMoeda(totalEntradasFaturamentoDoMes)}
-      </p>
-    </div>
-  </div>
-
-  <div className={`mb-5 rounded-xl border p-4 ${
-    darkMode ? 'border-slate-700 bg-slate-800/60' : 'border-slate-200 bg-slate-50'
-  }`}>
-    <div className="grid grid-cols-1 gap-3 md:grid-cols-[90px_1fr_180px_150px]">
-      <input
-        type="number"
-        min="1"
-        max={mesAtivo ? getMaxDias(mesAtivo, anoSelecionado) : 31}
-        value={entradaFaturamentoDia}
-        onChange={(e) => {
-          const valor = parseInt(e.target.value, 10);
-          const maxDias = mesAtivo ? getMaxDias(mesAtivo, anoSelecionado) : 31;
-
-          if (valor > maxDias) {
-            setEntradaFaturamentoDia(String(maxDias));
-          } else {
-            setEntradaFaturamentoDia(e.target.value);
-          }
-        }}
-        placeholder="Dia"
-        className={`w-full rounded-lg border p-2.5 text-center font-bold shadow-sm outline-none ${
-          darkMode
-            ? 'border-slate-600 bg-slate-700 text-white'
-            : 'border-slate-300 bg-white text-slate-700'
-        }`}
-      />
-
-      <input
-        type="text"
-        value={entradaFaturamentoOrigem}
-        onChange={(e) => setEntradaFaturamentoOrigem(e.target.value)}
-        placeholder="Origem da entrada"
-        className={`w-full rounded-lg border p-2.5 font-semibold shadow-sm outline-none ${
-          darkMode
-            ? 'border-slate-600 bg-slate-700 text-white placeholder:text-slate-400'
-            : 'border-slate-300 bg-white text-slate-700 placeholder:text-slate-400'
-        }`}
-      />
-
-      <div className="relative">
-        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-sm">
-          R$
-        </span>
-
-        <input
-          type="text"
-          value={entradaFaturamentoValor}
-          onChange={handleEntradaFaturamentoValorChange}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter') {
-              e.preventDefault();
-              adicionarEntradaFaturamento();
-            }
-          }}
-          placeholder="0,00"
-          className={`w-full rounded-lg border py-2.5 pl-9 pr-3 text-right font-bold shadow-sm outline-none ${
-            darkMode
-              ? 'border-slate-600 bg-slate-700 text-white'
-              : 'border-slate-300 bg-white text-slate-700'
-          }`}
-        />
-      </div>
-
-      <button
-  type="button"
-  onClick={adicionarEntradaFaturamento}
-  disabled={entradaFaturamentoSalvando}
-  className="rounded-lg px-4 py-2.5 text-sm font-black uppercase tracking-wide text-white shadow-md transition hover:brightness-110 active:scale-95 disabled:cursor-not-allowed disabled:opacity-60"
-  style={{ backgroundColor: corPrimaria }}
->
-  {entradaFaturamentoSalvando ? 'Salvando...' : 'Adicionar'}
-</button>
-    </div>
-  </div>
-
-  <div className="overflow-hidden rounded-xl border border-slate-200/20">
-    <table className="w-full table-fixed text-left border-collapse">
-      <colgroup>
-  <col className="w-[12%]" />
-  <col className="w-[50%]" />
-  <col className="w-[24%]" />
-  <col className="w-[14%]" />
-</colgroup>
-
-      <thead className={darkMode ? 'bg-slate-700' : 'bg-slate-100'}>
-        <tr>
-          <th className={`p-3 text-xs font-black uppercase tracking-wider ${textMuted}`}>
-            Dia
-          </th>
-          <th className={`p-3 text-xs font-black uppercase tracking-wider ${textMuted}`}>
-            Origem
-          </th>
-          <th className={`p-3 text-right text-xs font-black uppercase tracking-wider ${textMuted}`}>
-            Valor
-          </th>
-          <th className={`p-3 text-center text-xs font-black uppercase tracking-wider ${textMuted}`}>
-  Ação
-</th>
-        </tr>
-      </thead>
-
-      <tbody>
-        {entradasFaturamentoDoMes.length > 0 ? (
-          entradasFaturamentoDoMes.map((entrada) => (
-            <tr
-              key={entrada.id}
-              className={`border-t ${
-                darkMode ? 'border-slate-700' : 'border-slate-100'
-              }`}
-            >
-              <td className={`p-3 text-sm font-bold ${textStrong}`}>
-                {entrada.dia}
-              </td>
-
-              <td className={`p-3 text-sm font-semibold ${textMuted}`}>
-                {entrada.origem}
-              </td>
-
-              <td className="p-3 text-right text-sm font-black text-emerald-500">
-                {formatarMoeda(Number(entrada.valor || 0))}
-              </td>
-              <td className="p-3 text-center">
-  <div className="flex items-center justify-center gap-1">
-    <button
-      type="button"
-      onClick={() => {
-        abrirAviso(
-          'Edição de entrada',
-          'A edição de entradas será habilitada na próxima etapa.'
-        );
-      }}
-      className="text-slate-400 hover:text-blue-500 hover:bg-blue-500/10 p-1.5 rounded transition-all cursor-pointer"
-      title="Editar"
-    >
-      <svg className="w-4 h-4 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          strokeWidth="2"
-          d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"
-        />
-      </svg>
-    </button>
-
-    <button
-      type="button"
-      onClick={() => excluirEntradaFaturamento(entrada)}
-      className="text-slate-400 hover:text-red-500 hover:bg-red-500/10 p-1.5 rounded transition-all cursor-pointer"
-      title="Apagar"
-    >
-      <svg className="w-4 h-4 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          strokeWidth="2"
-          d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-        />
-      </svg>
-    </button>
-  </div>
-</td>
-            </tr>
-          ))
-        ) : (
-          <tr>
-            <td
-  colSpan={4}
-  className="p-4 text-center text-sm italic text-slate-400"
->
-              Nenhuma entrada lançada neste mês.
-            </td>
-          </tr>
-        )}
-      </tbody>
-    </table>
-  </div>
-</div>
 
           </main>
         </>

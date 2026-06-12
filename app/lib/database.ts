@@ -468,6 +468,55 @@ export async function salvarFaturamentoEntrada({
   };
 }
 
+export async function atualizarFaturamentoEntrada({
+  id,
+  empresaId,
+  ano,
+  mes,
+  dia,
+  origem,
+  valor,
+}: {
+  id: string;
+  empresaId: string;
+  ano: number;
+  mes: string;
+  dia: number;
+  origem: string;
+  valor: number;
+}) {
+  const { data, error } = await supabase
+    .from('faturamentos_entradas')
+    .update({
+      dia,
+      origem,
+      valor,
+      updated_at: new Date().toISOString(),
+    })
+    .eq('id', id)
+    .eq('empresa_id', empresaId)
+    .eq('ano', ano)
+    .eq('mes', mes)
+    .select()
+    .single();
+
+  if (error) {
+    console.error('Erro ao atualizar entrada de faturamento:', error);
+
+    return {
+      erro: true,
+      mensagem: tratarErroSupabase(error),
+      data: null,
+    };
+  }
+
+  return {
+    erro: false,
+    mensagem: '',
+    data,
+  };
+}
+
 export async function apagarFaturamentoEntrada(id: string) {
   const { error } = await supabase
     .from('faturamentos_entradas')
