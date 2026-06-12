@@ -7083,6 +7083,7 @@ setAjustesAberto(false);
       formatarMoeda={formatarMoeda}
       anoSelecionado={anoSelecionado}
       salvarFaturamentoMes={salvarFaturamentoMes}
+      nomeEmpresa={nomeEmpresaAtual}
     />
   </div>
 </main>
@@ -7190,7 +7191,7 @@ setAjustesAberto(false);
 
 {/* ================= CHAT FLUTUANTE DE FEEDBACK ================= */}
 
-<div className="fixed bottom-6 right-6 z-[7800]">
+<div className="print-ocultar fixed bottom-6 right-6 z-[7800]">
   {chatFeedbackAberto && (
     <div
       className={`mb-4 w-[360px] overflow-hidden rounded-3xl border shadow-2xl ${

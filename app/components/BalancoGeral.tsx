@@ -10,6 +10,7 @@ interface BalancoGeralProps {
   formatarMoeda: (valor: number) => string;
   anoSelecionado: string;
   salvarFaturamentoMes: (mes: string, valor: number) => Promise<void>;
+  nomeEmpresa: string;
 }
 
 export default function BalancoGeral({
@@ -22,6 +23,7 @@ export default function BalancoGeral({
   formatarMoeda,
   anoSelecionado,
   salvarFaturamentoMes,
+  nomeEmpresa,
 }: BalancoGeralProps) {
 
   const getDespesaMes = (mes: string) => lancamentos.filter(l => l.mes === mes).reduce((acc, l) => acc + l.valor, 0);
@@ -94,12 +96,34 @@ export default function BalancoGeral({
           }
           body { display: flex !important; justify-content: center !important; align-items: center !important; }
           .print-ocultar { display: none !important; }
+          .balanco-print-frame {
+            width: 100vw !important;
+            height: 100vh !important;
+            display: flex !important;
+            flex-direction: column !important;
+            align-items: center !important;
+            justify-content: center !important;
+            gap: 10px !important;
+            padding: 0 !important;
+            margin: 0 !important;
+            page-break-inside: avoid !important;
+            break-inside: avoid !important;
+          }
           #painel-balanco {
             margin: 0 auto !important;
             transform: scale(0.86);
             transform-origin: top center;
             page-break-inside: avoid !important;
             break-inside: avoid !important;
+          }
+          .balanco-print-rodape {
+            display: block !important;
+            width: 100% !important;
+            text-align: center !important;
+            font-size: 9px !important;
+            font-weight: 700 !important;
+            letter-spacing: 0.04em !important;
+            color: #475569 !important;
           }
         }
       `}</style>
@@ -173,6 +197,7 @@ export default function BalancoGeral({
       </div>
 
       {/* MATRIZ MENSAL (ENVOLVIDA NUM QUADRANTE PADRÃO) */}
+      <div className="balanco-print-frame">
       <div className={`${bgCard} rounded-lg shadow-sm border p-4 border-t-2 overflow-hidden`} style={{ borderTopColor: corPrimaria }}>
         <div id="painel-balanco" className="overflow-x-auto pb-2">
           <div className="min-w-[960px] space-y-2 pt-1">
@@ -267,6 +292,10 @@ export default function BalancoGeral({
 
           </div>
         </div>
+      </div>
+      <div className="balanco-print-rodape hidden">
+        Balanço de {nomeEmpresa || 'Empresa'} por AvantaLab.
+      </div>
       </div>
 
     </div>
