@@ -880,7 +880,7 @@
           '</div>' +
           (state.modoCadastro ? telaCadastro() : state.modoSenha ? telaSenha() : telaLoginCampos()) +
         '</div>' +
-        cardInstalarLoginHtml() +
+        (!state.modoCadastro && !state.modoSenha ? cardInstalarLoginHtml() : '') +
         (state.modalMenu ? modalMenuHtml() : '') +
       '</section>'
     );
@@ -1645,7 +1645,7 @@
           return Promise.all(
             keys
               .filter(function (key) {
-                return key.indexOf('avantalab-mobile-') === 0 && key !== 'avantalab-mobile-v11';
+                return key.indexOf('avantalab-mobile-') === 0 && key !== 'avantalab-mobile-v12';
               })
               .map(function (key) {
                 return caches.delete(key);
