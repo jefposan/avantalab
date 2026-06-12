@@ -47,6 +47,9 @@
     lancamentos: [],
     entradas: [],
     despesas: [],
+    usuariosEmpresa: [],
+    usuariosCarregando: false,
+    usuarioEditandoId: '',
     erro: '',
     mensagem: '',
     carregando: false,
@@ -82,6 +85,12 @@
     novaCategoriaNome: '',
     novaCategoriaTipo: '',
     categoriasExpandido: false,
+    tiposDespesaExpandido: false,
+    ultimasDespesasExpandido: false,
+    ultimasReceitasExpandido: false,
+    dashboardOrdem: ordemDashboardPadrao(),
+    dragDashboardId: '',
+    evolucaoSelecionada: {},
     toast: '',
   };
 
@@ -147,6 +156,64 @@
 
   function nomeEmpresa(empresa) {
     return (empresa && (empresa.nome || empresa.empresa_nome)) || 'Empresa';
+  }
+
+  function ordemDashboardPadrao() {
+    return [
+      'saldo',
+      'ia',
+      'categorias',
+      'tipos',
+      'ultimasDespesas',
+      'ultimasReceitas',
+      'totais',
+      'evolucaoDespesas',
+      'evolucaoReceitas',
+    ];
+  }
+
+  function tituloCardDashboard(id) {
+    return {
+      saldo: 'Resumo inicial',
+      ia: 'Perguntas para IA',
+      categorias: 'Despesas por categoria',
+      tipos: 'Total por tipo de despesa',
+      ultimasDespesas: 'Ultimas despesas',
+      ultimasReceitas: 'Ultimas receitas',
+      totais: 'Totais',
+      evolucaoDespesas: 'Evolucao das despesas',
+      evolucaoReceitas: 'Evolucao das receitas',
+    }[id] || id;
+  }
+
+  function normalizarOrdemDashboard(lista) {
+    var padrao = ordemDashboardPadrao();
+    var limpa = Array.isArray(lista)
+      ? lista.filter(function (id, index) { return padrao.indexOf(id) >= 0 && lista.indexOf(id) === index; })
+      : [];
+
+    padrao.forEach(function (id) {
+      if (limpa.indexOf(id) < 0) limpa.push(id);
+    });
+
+    return limpa;
+  }
+
+  function salvarOrdemDashboard() {
+    try {
+      localStorage.setItem('avantalab_mobile_dashboard_ordem', JSON.stringify(state.dashboardOrdem));
+    } catch (error) {}
+  }
+
+  function categoriasPadrao() {
+    return [
+      'Amortizacao',
+      'Custos Variaveis',
+      'Depreciacao',
+      'Despesas Financeiras',
+      'Despesas Operacionais',
+      'Impostos Sobre Lucro',
+    ];
   }
 
   function indiceMes(mes) {
@@ -308,6 +375,172 @@
     await state.installPrompt.userChoice;
     state.installPrompt = null;
     render();
+  }
+
+  function podeGerenciarUsuarios() {
+    return state.empresa && (state.empresa.perfil === 'gestor_master' || state.empresa.perfil === 'administrador');
+  }
+
+  async function tokenSessao() {
+    var sessao = await db.auth.getSession();
+    return sessao.data && sessao.data.session ? sessao.data.session.access_token : '';
+  }
+
+  async function abrirUsuariosMobile() {
+    state.menuAberto = false;
+    state.modalMenu = 'usuario';
+    state.erro = '';
+    render();
+
+    if (podeGerenciarUsuarios()) {
+      await carregarUsuariosMobile();
+    }
+  }
+
+  async function carregarUsuariosMobile() {
+    if (!state.empresa || !podeGerenciarUsuarios()) return;
+
+    state.usuariosCarregando = true;
+    render();
+
+    var resposta = await db.rpc('listar_usuarios_empresa_rpc', {
+      p_empresa_id: state.empresa.id,
+    });
+
+    state.usuariosEmpresa = resposta.error ? [] : (resposta.data || []);
+    state.usuariosCarregando = false;
+    render();
+  }
+
+  async function criarUsuarioMobile() {
+    if (!state.empresa || !podeGerenciarUsuarios()) return;
+
+    var nome = campo('usuario-nome').trim();
+    var login = campo('usuario-login').trim().toLowerCase();
+    var senha = campo('usuario-senha').trim();
+    var perfil = campo('usuario-perfil');
+
+    if (!nome || !login || !senha || !perfil) {
+      setErro('Informe nome, login, senha e perfil.');
+      return;
+    }
+
+    if (login.indexOf('@') >= 0) {
+      setErro('Use um login simples, sem @.');
+      return;
+    }
+
+    if (senha.length < 8) {
+      setErro('A senha deve ter pelo menos 8 caracteres.');
+      return;
+    }
+
+    state.carregando = true;
+    state.erro = '';
+    render();
+
+    var token = await tokenSessao();
+    var resposta = await fetch('/api/criar-usuario-interno', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: 'Bearer ' + token,
+      },
+      body: JSON.stringify({
+        empresaId: state.empresa.id,
+        nome: nome,
+        login: login,
+        senha: senha,
+        perfil: perfil,
+      }),
+    });
+    var resultado = await lerResposta(resposta);
+
+    state.carregando = false;
+
+    if (!resposta.ok || resultado.erro) {
+      setErro(resultado.mensagem || 'Nao foi possivel criar o usuario.');
+      return;
+    }
+
+    await carregarUsuariosMobile();
+    mostrarToast('Usuario criado.');
+  }
+
+  function editarUsuarioMobile(id) {
+    state.usuarioEditandoId = id || '';
+    state.erro = '';
+    render();
+  }
+
+  async function salvarUsuarioMobile() {
+    if (!state.usuarioEditandoId || !podeGerenciarUsuarios()) return;
+
+    var nome = campo('edit-usuario-nome').trim();
+    var login = campo('edit-usuario-login').trim().toLowerCase();
+    var perfil = campo('edit-usuario-perfil');
+
+    if (!nome || !login || !perfil) {
+      setErro('Informe nome, login/email e perfil.');
+      return;
+    }
+
+    state.carregando = true;
+    state.erro = '';
+    render();
+
+    var resposta = await db.rpc('atualizar_usuario_empresa_rpc', {
+      p_acesso_id: state.usuarioEditandoId,
+      p_nome: nome,
+      p_email: login,
+      p_perfil: perfil,
+    });
+
+    state.carregando = false;
+
+    if (resposta.error) {
+      setErro(mensagemErro(resposta.error, 'Nao foi possivel atualizar o usuario.'));
+      return;
+    }
+
+    state.usuarioEditandoId = '';
+    await carregarUsuariosMobile();
+    mostrarToast('Usuario atualizado.');
+  }
+
+  async function excluirUsuarioMobile(id) {
+    if (!id || !podeGerenciarUsuarios()) return;
+    if (!window.confirm('Excluir este usuario? Ele perdera acesso a esta empresa.')) return;
+
+    state.carregando = true;
+    state.erro = '';
+    render();
+
+    var token = await tokenSessao();
+    var resposta = await fetch('/api/excluir-usuario-interno', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: 'Bearer ' + token,
+      },
+      body: JSON.stringify({ acessoId: id }),
+    });
+    var resultado = await lerResposta(resposta);
+
+    state.carregando = false;
+
+    if (!resposta.ok || resultado.erro) {
+      setErro(resultado.mensagem || 'Nao foi possivel excluir o usuario.');
+      return;
+    }
+
+    if (state.empresa && state.empresa.acessoId === id) {
+      await sair();
+      return;
+    }
+
+    await carregarUsuariosMobile();
+    mostrarToast('Usuario excluido.');
   }
 
   function alternarSenha(stateKey, inputId, buttonId) {
@@ -1433,17 +1666,27 @@
   }
 
   function homeHtml(atual, anterior) {
-    return (
-      saldoTopoHtml(atual, anterior) +
-      perguntaIaHtml() +
-      graficoCategoriaHtml(atual) +
-      visaoGeralHtml(atual) +
-      ultimasDespesasHtml(atual.lancamentos) +
-      ultimasReceitasHtml(atual.entradas) +
-      totaisHtml(atual) +
-      evolucaoHtml('despesas') +
-      evolucaoHtml('receitas')
-    );
+    var cards = {
+      saldo: saldoTopoHtml(atual, anterior),
+      ia: perguntaIaHtml(),
+      categorias: graficoCategoriaHtml(atual),
+      tipos: graficoTipoDespesaHtml(atual),
+      ultimasDespesas: ultimasDespesasHtml(atual.lancamentos),
+      ultimasReceitas: ultimasReceitasHtml(atual.entradas),
+      totais: totaisHtml(atual),
+      evolucaoDespesas: evolucaoHtml('despesas'),
+      evolucaoReceitas: evolucaoHtml('receitas'),
+    };
+
+    return normalizarOrdemDashboard(state.dashboardOrdem)
+      .map(function (id) {
+        if (!cards[id]) return '';
+        return '<div data-dashboard-card="' + escapeHtml(id) + '" class="relative pb-2">' +
+          cards[id] +
+          '<button type="button" data-dashboard-handle="' + escapeHtml(id) + '" class="absolute bottom-1 right-3 flex h-7 w-8 select-none touch-none items-center justify-center rounded-full bg-transparent text-[11px] font-black leading-none text-slate-400" aria-label="Mover card">&vellip;&vellip;</button>' +
+        '</div>';
+      })
+      .join('');
   }
 
   function saldoTopoHtml(atual, anterior) {
@@ -1490,9 +1733,43 @@
       .sort(function (a, b) { return b.valor - a.valor; });
   }
 
+  function tiposDespesaDoMes(atual) {
+    var tiposMap = {};
+    atual.lancamentos.forEach(function (lancamento) {
+      var tipo = lancamento.despesa || 'Sem tipo';
+      tiposMap[tipo] = (tiposMap[tipo] || 0) + lancamento.valor;
+    });
+
+    return Object.keys(tiposMap)
+      .map(function (tipo) { return { categoria: tipo, valor: tiposMap[tipo] }; })
+      .sort(function (a, b) { return b.valor - a.valor; });
+  }
+
   function graficoCategoriaHtml(atual) {
-    var categorias = categoriasDoMes(atual);
-    var total = atual.despesas || 0;
+    return graficoPizzaHtml({
+      titulo: 'Despesas por categoria',
+      itens: categoriasDoMes(atual),
+      total: atual.despesas || 0,
+      expandido: state.categoriasExpandido,
+      toggleId: 'toggle-categorias',
+      textoExpandir: 'Expandir categorias',
+    });
+  }
+
+  function graficoTipoDespesaHtml(atual) {
+    return graficoPizzaHtml({
+      titulo: 'Total por tipo de despesa',
+      itens: tiposDespesaDoMes(atual),
+      total: atual.despesas || 0,
+      expandido: state.tiposDespesaExpandido,
+      toggleId: 'toggle-tipos-despesa',
+      textoExpandir: 'Expandir tipos',
+    });
+  }
+
+  function graficoPizzaHtml(configuracao) {
+    var categorias = configuracao.itens || [];
+    var total = configuracao.total || 0;
     var totalFormatado = dinheiro(total);
     var classeValorCentral =
       totalFormatado.length > 15
@@ -1509,11 +1786,11 @@
       return cores[index % cores.length] + ' ' + inicio.toFixed(2) + '% ' + fim.toFixed(2) + '%';
     }).join(',');
     var fundo = total > 0 ? 'conic-gradient(' + segmentos + ')' : '#e2e8f0';
-    var categoriasVisiveis = state.categoriasExpandido ? categorias : categorias.slice(0, 3);
+    var categoriasVisiveis = configuracao.expandido ? categorias : categorias.slice(0, 3);
 
     return (
       '<section class="rounded-2xl bg-white p-4 shadow-sm">' +
-        '<div class="mb-3 flex items-center justify-between"><h2 class="text-sm font-black">Despesas por categoria</h2><span class="text-xs font-bold text-slate-400">' + dinheiro(total) + '</span></div>' +
+        '<div class="mb-3 flex items-center justify-between"><h2 class="text-sm font-black">' + escapeHtml(configuracao.titulo) + '</h2><span class="text-xs font-bold text-slate-400">' + dinheiro(total) + '</span></div>' +
         '<div class="grid grid-cols-[136px_1fr] items-center gap-3">' +
           '<div class="relative h-32 w-32 rounded-full" style="background:' + fundo + '">' +
             '<div class="absolute left-1/2 top-1/2 flex h-[86px] w-[86px] -translate-x-1/2 -translate-y-1/2 flex-col items-center justify-center rounded-full bg-white px-1 text-center shadow-inner">' +
@@ -1527,7 +1804,7 @@
                 '<strong class="shrink-0 text-slate-900">' + dinheiro(item.valor) + '</strong>' +
               '</div>';
             }).join('') : '<p class="text-xs text-slate-500">Sem despesas no mes.</p>') +
-            (categorias.length > 3 ? '<button id="toggle-categorias" type="button" class="mt-1 text-left text-xs font-black text-cyan-700">' + (state.categoriasExpandido ? 'Recolher' : 'Expandir categorias') + '</button>' : '') +
+            (categorias.length > 3 ? '<button id="' + escapeHtml(configuracao.toggleId) + '" type="button" class="mt-1 text-left text-xs font-black text-cyan-700">' + (configuracao.expandido ? 'Recolher' : escapeHtml(configuracao.textoExpandir)) + '</button>' : '') +
           '</div>' +
         '</div>' +
       '</section>'
@@ -1537,7 +1814,7 @@
   function visaoGeralHtml(atual) {
     return (
       '<section class="rounded-2xl bg-white p-4 shadow-sm">' +
-        '<h2 class="mb-2 text-sm font-black">Visao geral</h2>' +
+        '<h2 class="mb-2 text-sm font-black">Vis&atilde;o geral do m&ecirc;s</h2>' +
         '<div class="grid gap-1">' +
           linhaVisaoHtml('receitas', '+', 'Receitas', atual.receitas, 'bg-emerald-100 text-emerald-700') +
           linhaVisaoHtml('despesas', '-', 'Despesas', atual.despesas, 'bg-red-100 text-red-700') +
@@ -1558,36 +1835,40 @@
   }
 
   function ultimasDespesasHtml(lancamentos) {
-    var itens = lancamentos.slice().sort(function (a, b) { return b.dia - a.dia; }).slice(0, 5);
+    var todos = lancamentos.slice().sort(function (a, b) { return b.dia - a.dia; });
+    var itens = state.ultimasDespesasExpandido ? todos : todos.slice(0, 3);
 
     return (
-      '<section class="rounded-2xl bg-white p-4 shadow-sm">' +
-        '<div class="mb-2 flex items-center justify-between"><h2 class="text-sm font-black">Ultimas despesas</h2><button id="ver-despesas-lista" type="button" class="text-xs font-black text-cyan-700">Ver todas</button></div>' +
-        '<div class="grid gap-1">' +
+      '<section class="overflow-hidden rounded-2xl bg-white shadow-sm">' +
+        '<div class="flex items-center justify-between bg-red-50 px-4 py-3"><h2 class="text-sm font-black text-red-900">Ultimas despesas</h2><button id="ver-despesas-lista" type="button" class="text-xs font-black text-red-700">Lista</button></div>' +
+        '<div class="grid gap-1 p-4">' +
           (itens.length ? itens.map(function (item) {
             return '<button type="button" data-tipo-lancamento="despesa" data-lancamento-id="' + escapeHtml(item.id) + '" class="flex w-full items-center justify-between gap-3 border-b border-slate-100 py-2 text-left last:border-b-0">' +
               '<div class="min-w-0"><p class="truncate text-sm font-bold text-slate-800">' + escapeHtml(item.despesa) + '</p><p class="truncate text-xs text-slate-500">Dia ' + item.dia + (item.descricao ? ' - ' + escapeHtml(item.descricao) : '') + '</p></div>' +
               '<strong class="shrink-0 text-sm font-black text-red-600">' + dinheiro(item.valor) + '</strong>' +
             '</button>';
           }).join('') : '<p class="text-xs text-slate-500">Nenhuma despesa neste mes.</p>') +
+          (todos.length > 3 ? '<button id="toggle-ultimas-despesas" type="button" class="pt-2 text-left text-xs font-black text-cyan-700">' + (state.ultimasDespesasExpandido ? 'Recolher' : 'Expandir despesas') + '</button>' : '') +
         '</div>' +
       '</section>'
     );
   }
 
   function ultimasReceitasHtml(entradas) {
-    var itens = entradas.slice().sort(function (a, b) { return b.dia - a.dia; }).slice(0, 5);
+    var todos = entradas.slice().sort(function (a, b) { return b.dia - a.dia; });
+    var itens = state.ultimasReceitasExpandido ? todos : todos.slice(0, 3);
 
     return (
-      '<section class="rounded-2xl bg-white p-4 shadow-sm">' +
-        '<div class="mb-2 flex items-center justify-between"><h2 class="text-sm font-black">Ultimas receitas</h2><button id="ver-receitas-lista" type="button" class="text-xs font-black text-cyan-700">Ver todas</button></div>' +
-        '<div class="grid gap-1">' +
+      '<section class="overflow-hidden rounded-2xl bg-white shadow-sm">' +
+        '<div class="flex items-center justify-between bg-emerald-50 px-4 py-3"><h2 class="text-sm font-black text-emerald-900">Ultimas receitas</h2><button id="ver-receitas-lista" type="button" class="text-xs font-black text-emerald-700">Lista</button></div>' +
+        '<div class="grid gap-1 p-4">' +
           (itens.length ? itens.map(function (item) {
             return '<button type="button" data-tipo-lancamento="receita" data-lancamento-id="' + escapeHtml(item.id) + '" class="flex w-full items-center justify-between gap-3 border-b border-slate-100 py-2 text-left last:border-b-0">' +
               '<div class="min-w-0"><p class="truncate text-sm font-bold text-slate-800">' + escapeHtml(item.origem) + '</p><p class="truncate text-xs text-slate-500">Dia ' + item.dia + '</p></div>' +
               '<strong class="shrink-0 text-sm font-black text-emerald-600">' + dinheiro(item.valor) + '</strong>' +
             '</button>';
           }).join('') : '<p class="text-xs text-slate-500">Nenhuma receita neste mes.</p>') +
+          (todos.length > 3 ? '<button id="toggle-ultimas-receitas" type="button" class="pt-2 text-left text-xs font-black text-cyan-700">' + (state.ultimasReceitasExpandido ? 'Recolher' : 'Expandir receitas') + '</button>' : '') +
         '</div>' +
       '</section>'
     );
@@ -1595,16 +1876,20 @@
 
   function totaisHtml(atual) {
     return (
-      '<section class="grid grid-cols-3 gap-2">' +
-        totalBoxHtml('Despesas', atual.despesas, 'text-red-600') +
-        totalBoxHtml('Receitas', atual.receitas, 'text-emerald-600') +
-        totalBoxHtml('Saldo', atual.saldo, atual.saldo >= 0 ? 'text-cyan-700' : 'text-red-600') +
+      '<section class="rounded-2xl bg-white p-4 shadow-sm">' +
+        '<h2 class="mb-3 text-sm font-black">Vis&atilde;o geral do m&ecirc;s</h2>' +
+        '<div class="grid grid-cols-3 gap-2">' +
+          totalBoxHtml('Despesas', atual.despesas, 'text-red-600', 'ver-despesas-total') +
+          totalBoxHtml('Receitas', atual.receitas, 'text-emerald-600', 'ver-receitas-total') +
+          totalBoxHtml('Saldo', atual.saldo, atual.saldo >= 0 ? 'text-cyan-700' : 'text-red-600', '') +
+        '</div>' +
       '</section>'
     );
   }
 
-  function totalBoxHtml(titulo, valor, cor) {
-    return '<div class="rounded-2xl bg-white p-3 shadow-sm"><p class="text-[10px] font-black uppercase tracking-wide text-slate-400">' + titulo + '</p><strong class="mt-1 block truncate text-xs font-black ' + cor + '">' + dinheiro(valor) + '</strong></div>';
+  function totalBoxHtml(titulo, valor, cor, id) {
+    var tag = id ? 'button' : 'div';
+    return '<' + tag + (id ? ' id="' + id + '" type="button"' : '') + ' class="min-w-0 rounded-2xl bg-slate-50 p-3 text-left shadow-sm"><p class="text-[10px] font-black uppercase tracking-wide text-slate-400">' + titulo + '</p><strong class="mt-1 block truncate text-xs font-black ' + cor + '">' + dinheiro(valor) + '</strong></' + tag + '>';
   }
 
   function evolucaoHtml(tipo) {
@@ -1619,14 +1904,18 @@
     });
     var max = Math.max.apply(null, lista.map(function (item) { return item.valor; }).concat([1]));
     var cor = tipo === 'despesas' ? 'bg-red-400' : 'bg-emerald-400';
+    var valorSelecionado = state.evolucaoSelecionada[tipo];
 
     return (
       '<section class="rounded-2xl bg-white p-4 shadow-sm">' +
-        '<h2 class="mb-3 text-sm font-black">Evolucao das ' + (tipo === 'despesas' ? 'despesas' : 'receitas') + '</h2>' +
+        '<div class="mb-3 flex items-center justify-between gap-3">' +
+          '<h2 class="text-sm font-black">Evolucao das ' + (tipo === 'despesas' ? 'despesas' : 'receitas') + '</h2>' +
+          '<span class="shrink-0 text-xs font-black ' + (tipo === 'despesas' ? 'text-red-600' : 'text-emerald-600') + '">' + (valorSelecionado != null ? dinheiro(valorSelecionado) : '') + '</span>' +
+        '</div>' +
         '<div class="flex h-28 items-end gap-2">' +
           lista.map(function (item) {
             var altura = Math.max(8, Math.round((item.valor / max) * 100));
-            return '<div class="flex min-w-0 flex-1 flex-col items-center gap-1"><div class="flex h-24 w-full items-end"><div class="w-full rounded-t-md ' + cor + '" style="height:' + altura + '%"></div></div><span class="text-[9px] font-bold text-slate-400">' + item.mes.slice(0, 3) + '</span></div>';
+            return '<button type="button" data-evolucao-tipo="' + escapeHtml(tipo) + '" data-evolucao-mes="' + escapeHtml(item.mes) + '" data-evolucao-valor="' + escapeHtml(item.valor) + '" class="flex min-w-0 flex-1 flex-col items-center gap-1"><div class="flex h-24 w-full items-end"><div class="w-full rounded-t-md ' + cor + '" style="height:' + altura + '%"></div></div><span class="text-[9px] font-bold text-slate-400">' + item.mes.slice(0, 3) + '</span></button>';
           }).join('') +
         '</div>' +
       '</section>'
@@ -1831,21 +2120,22 @@
   function menuLateralHtml() {
     return (
       '<div id="menu-overlay" class="fixed inset-0 z-50 bg-slate-950/45">' +
-        '<aside class="h-full w-[82vw] max-w-[320px] ' + (state.darkMode ? 'bg-slate-900 text-slate-100' : 'bg-white text-slate-900') + ' p-4 shadow-2xl">' +
-          '<div class="mb-5 flex items-start justify-between gap-3">' +
-            '<div class="min-w-0"><p class="text-[10px] font-black uppercase tracking-[0.22em] text-cyan-700">AvantaLab</p><h2 class="mt-1 truncate text-lg font-black">' + escapeHtml(nomeEmpresa(state.empresa)) + '</h2><p class="mt-1 truncate text-xs font-semibold text-slate-500">' + escapeHtml(state.usuario && state.usuario.email ? state.usuario.email : 'Usuario logado') + '</p></div>' +
-            '<button id="fechar-menu" type="button" class="flex h-9 w-9 items-center justify-center rounded-full ' + (state.darkMode ? 'bg-slate-800' : 'bg-slate-100') + ' text-xl">&times;</button>' +
+        '<aside class="h-full w-[82vw] max-w-[320px] overflow-y-auto ' + (state.darkMode ? 'bg-slate-900 text-slate-100' : 'bg-white text-slate-900') + ' p-3 shadow-2xl">' +
+          '<div class="mb-3 flex items-start justify-between gap-3">' +
+            '<div class="min-w-0"><p class="text-[9px] font-black uppercase tracking-[0.22em] text-cyan-700">AvantaLab</p><h2 class="mt-0.5 truncate text-base font-black">' + escapeHtml(nomeEmpresa(state.empresa)) + '</h2><p class="mt-0.5 truncate text-[11px] font-semibold text-slate-500">' + escapeHtml(state.usuario && state.usuario.email ? state.usuario.email : 'Usuario logado') + '</p></div>' +
+            '<button id="fechar-menu" type="button" class="flex h-8 w-8 items-center justify-center rounded-full ' + (state.darkMode ? 'bg-slate-800' : 'bg-slate-100') + ' text-lg">&times;</button>' +
           '</div>' +
-          '<div class="grid gap-2">' +
+          '<div class="grid gap-1.5">' +
             menuBotaoHtml('menu-dashboard', 'Dashboard', 'Visao principal do mes') +
             menuBotaoHtml('menu-usuario', 'Usuario', perfilFormatado(state.empresa && state.empresa.perfil)) +
             menuBotaoHtml('menu-trocar-empresa', 'Trocar empresa', state.empresas.length > 1 ? 'Selecionar outro ambiente' : 'Somente uma empresa') +
             menuBotaoHtml('menu-gerenciar', 'Gerenciar empresa', 'Dados e acesso da empresa') +
-            menuBotaoHtml('menu-categorias', 'Categorias de despesas', 'Adicionar despesa base') +
+            menuBotaoHtml('menu-organizar-dashboard', 'Organizar dashboard', 'Definir ordem dos cards') +
+            menuBotaoHtml('menu-categorias', 'Cadastrar despesas', 'Adicionar tipo de despesa') +
             menuBotaoHtml('menu-ajuda-categorias', 'Instrucoes sobre categorias', 'Como organizar seus gastos') +
             (isStandalone() ? '' : menuBotaoHtml('menu-instalar', 'Instalar app', 'Adicionar a tela inicial')) +
-            '<button id="menu-tema" type="button" class="rounded-2xl border ' + (state.darkMode ? 'border-slate-700 bg-slate-800' : 'border-slate-200 bg-slate-50') + ' px-4 py-3 text-left"><div class="flex items-center justify-between"><span class="text-sm font-black">Modo escuro</span><span class="text-xs font-bold text-cyan-700">' + (state.darkMode ? 'Ativo' : 'Inativo') + '</span></div></button>' +
-            '<button id="sair" type="button" class="mt-2 rounded-2xl bg-red-600 px-4 py-3 text-left text-sm font-black text-white">Sair</button>' +
+            '<button id="menu-tema" type="button" class="rounded-xl border ' + (state.darkMode ? 'border-slate-700 bg-slate-800' : 'border-slate-200 bg-slate-50') + ' px-3 py-2 text-left"><div class="flex items-center justify-between"><span class="text-xs font-black">Modo escuro</span><span class="text-[10px] font-bold text-cyan-700">' + (state.darkMode ? 'Ativo' : 'Inativo') + '</span></div></button>' +
+            '<button id="sair" type="button" class="mt-1 rounded-xl bg-red-600 px-3 py-2 text-left text-xs font-black text-white">Sair</button>' +
           '</div>' +
         '</aside>' +
       '</div>'
@@ -1853,7 +2143,7 @@
   }
 
   function menuBotaoHtml(id, titulo, subtitulo) {
-    return '<button id="' + id + '" type="button" class="rounded-2xl border ' + (state.darkMode ? 'border-slate-700 bg-slate-800' : 'border-slate-200 bg-slate-50') + ' px-4 py-3 text-left"><span class="block text-sm font-black">' + escapeHtml(titulo) + '</span><span class="mt-0.5 block text-xs font-semibold text-slate-500">' + escapeHtml(subtitulo || '') + '</span></button>';
+    return '<button id="' + id + '" type="button" class="rounded-xl border ' + (state.darkMode ? 'border-slate-700 bg-slate-800' : 'border-slate-200 bg-slate-50') + ' px-3 py-2 text-left"><span class="block text-xs font-black">' + escapeHtml(titulo) + '</span><span class="mt-0.5 block truncate text-[10px] font-semibold text-slate-500">' + escapeHtml(subtitulo || '') + '</span></button>';
   }
 
   function modalMenuHtml() {
@@ -1861,7 +2151,8 @@
       usuario: 'Usuario',
       empresa: 'Trocar empresa',
       gerenciar: 'Gerenciar empresa',
-      categorias: 'Categorias',
+      organizarDashboard: 'Organizar dashboard',
+      categorias: 'Cadastrar despesas',
       ajudaCategorias: 'Instrucoes',
       'instalar-ios': 'Instalar no iPhone',
       'instalar-android': 'Instalar app',
@@ -1869,9 +2160,11 @@
       privacidade: 'Privacidade',
     }[state.modalMenu] || 'Menu';
 
+    var alinhamento = state.modalMenu === 'categorias' || state.modalMenu === 'ajudaCategorias' ? 'items-start pt-3 pb-3' : 'items-end pb-3';
+
     return (
-      '<div class="fixed inset-0 z-[60] flex items-end bg-slate-950/45 px-3 pb-3">' +
-        '<section class="mx-auto max-h-[88vh] w-full max-w-md overflow-y-auto rounded-3xl ' + (state.darkMode ? 'bg-slate-900 text-slate-100' : 'bg-white text-slate-900') + ' p-4 shadow-2xl">' +
+      '<div class="fixed inset-0 z-[60] flex ' + alinhamento + ' bg-slate-950/45 px-3">' +
+        '<section class="mx-auto max-h-[88vh] w-full max-w-md overflow-x-hidden overflow-y-auto rounded-3xl ' + (state.darkMode ? 'bg-slate-900 text-slate-100' : 'bg-white text-slate-900') + ' p-4 shadow-2xl">' +
           '<div class="mb-3 flex items-center justify-between gap-3">' +
             '<h2 class="text-base font-black">' + escapeHtml(titulo) + '</h2>' +
             '<button id="fechar-modal-menu" type="button" class="flex h-9 w-9 items-center justify-center rounded-full ' + (state.darkMode ? 'bg-slate-800' : 'bg-slate-100') + ' text-xl">&times;</button>' +
@@ -1886,6 +2179,7 @@
     if (state.modalMenu === 'usuario') return usuarioHtml();
     if (state.modalMenu === 'empresa') return trocarEmpresaHtml();
     if (state.modalMenu === 'gerenciar') return gerenciarEmpresaHtml();
+    if (state.modalMenu === 'organizarDashboard') return organizarDashboardHtml();
     if (state.modalMenu === 'categorias') return categoriasMenuHtml();
     if (state.modalMenu === 'ajudaCategorias') return ajudaCategoriasHtml();
     if (state.modalMenu === 'instalar-ios') return instalarIosHtml();
@@ -1896,10 +2190,80 @@
   }
 
   function usuarioHtml() {
+    if (!podeGerenciarUsuarios()) {
+      return (
+        '<div class="grid gap-3 text-sm">' +
+          '<div class="rounded-2xl bg-slate-50 p-4"><p class="text-[10px] font-black uppercase tracking-wide text-slate-400">Email</p><p class="mt-1 font-bold">' + escapeHtml(state.usuario && state.usuario.email ? state.usuario.email : '-') + '</p></div>' +
+          '<div class="rounded-2xl bg-slate-50 p-4"><p class="text-[10px] font-black uppercase tracking-wide text-slate-400">Perfil</p><p class="mt-1 font-bold">' + escapeHtml(perfilFormatado(state.empresa && state.empresa.perfil)) + '</p></div>' +
+          '<p class="rounded-2xl bg-cyan-50 p-4 text-xs font-semibold text-cyan-900">Somente Gestor Master e Administrador podem criar, editar ou excluir usuarios.</p>' +
+        '</div>'
+      );
+    }
+
+    var usuarioEditando = state.usuariosEmpresa.find(function (usuario) { return String(usuario.id) === String(state.usuarioEditandoId); });
+
     return (
-      '<div class="grid gap-3 text-sm">' +
-        '<div class="rounded-2xl bg-slate-50 p-4"><p class="text-[10px] font-black uppercase tracking-wide text-slate-400">Email</p><p class="mt-1 font-bold">' + escapeHtml(state.usuario && state.usuario.email ? state.usuario.email : '-') + '</p></div>' +
-        '<div class="rounded-2xl bg-slate-50 p-4"><p class="text-[10px] font-black uppercase tracking-wide text-slate-400">Perfil</p><p class="mt-1 font-bold">' + escapeHtml(perfilFormatado(state.empresa && state.empresa.perfil)) + '</p></div>' +
+      '<div class="grid w-full min-w-0 gap-3 overflow-x-hidden text-sm">' +
+        alertaHtml().replace('mt-4', '') +
+        (usuarioEditando ? editarUsuarioHtml(usuarioEditando) : criarUsuarioHtml()) +
+        '<div class="grid min-w-0 gap-1.5">' +
+          '<p class="text-[10px] font-black uppercase tracking-wide text-slate-400">Usuarios cadastrados</p>' +
+          (state.usuariosCarregando ? '<p class="rounded-xl bg-slate-50 px-3 py-2 text-xs font-semibold text-slate-500">Carregando usuarios...</p>' : '') +
+          (state.usuariosEmpresa.length ? state.usuariosEmpresa.map(function (usuario) {
+            var atual = state.empresa && state.empresa.acessoId === usuario.id;
+            var bloqueado = usuario.status === 'bloqueado';
+            var protegido = usuario.perfil === 'gestor_master' && !atual;
+            return '<div class="min-w-0 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2">' +
+              '<div class="grid min-w-0 gap-2">' +
+                '<div class="min-w-0"><p class="truncate text-xs font-black text-slate-900">' + escapeHtml(usuario.nome || usuario.login || usuario.email || 'Usuario') + '</p><p class="truncate text-[10px] font-semibold text-slate-500">' + escapeHtml(usuario.login || usuario.email || '-') + ' · ' + escapeHtml(perfilFormatado(usuario.perfil)) + (bloqueado ? ' · Bloqueado' : '') + '</p></div>' +
+                '<div class="flex min-w-0 gap-1">' +
+                  '<button type="button" data-editar-usuario="' + escapeHtml(usuario.id) + '" class="rounded-lg bg-white px-2 py-1 text-[10px] font-black text-cyan-700">Editar</button>' +
+                  (protegido ? '' : '<button type="button" data-excluir-usuario="' + escapeHtml(usuario.id) + '" class="rounded-lg bg-red-600 px-2 py-1 text-[10px] font-black text-white">Excluir</button>') +
+                '</div>' +
+              '</div>' +
+            '</div>';
+          }).join('') : '<p class="rounded-xl bg-slate-50 px-3 py-2 text-xs font-semibold text-slate-500">Nenhum usuario encontrado.</p>') +
+        '</div>' +
+      '</div>'
+    );
+  }
+
+  function opcoesPerfilHtml(valor, incluirGestor) {
+    var perfis = [
+      ['operador_simples', 'Operador Simples'],
+      ['operador_completo', 'Operador Completo'],
+      ['administrador', 'Administrador'],
+    ];
+    if (incluirGestor) perfis.push(['gestor_master', 'Gestor Master']);
+
+    return perfis.map(function (perfil) {
+      return '<option value="' + perfil[0] + '"' + (perfil[0] === valor ? ' selected' : '') + '>' + perfil[1] + '</option>';
+    }).join('');
+  }
+
+  function criarUsuarioHtml() {
+    return (
+      '<div class="grid gap-2 rounded-2xl bg-slate-50 p-3">' +
+        '<p class="text-[10px] font-black uppercase tracking-wide text-slate-400">Criar novo usuario</p>' +
+        '<input id="usuario-nome" placeholder="Nome" style="font-size:16px" class="h-10 w-full min-w-0 rounded-lg border border-slate-200 bg-white px-3 text-base font-bold outline-none" />' +
+        '<div class="grid gap-2">' +
+          '<input id="usuario-login" placeholder="Login" style="font-size:16px" class="h-10 w-full min-w-0 rounded-lg border border-slate-200 bg-white px-3 text-base font-bold outline-none" />' +
+          '<input id="usuario-senha" type="password" placeholder="Senha" style="font-size:16px" class="h-10 w-full min-w-0 rounded-lg border border-slate-200 bg-white px-3 text-base font-bold outline-none" />' +
+        '</div>' +
+        '<select id="usuario-perfil" style="font-size:16px" class="h-10 w-full min-w-0 rounded-lg border border-slate-200 bg-white px-3 text-base font-bold outline-none"><option value="">Perfil</option>' + opcoesPerfilHtml('', false) + '</select>' +
+        '<button id="criar-usuario-mobile" type="button" class="h-10 rounded-xl bg-slate-950 px-4 text-xs font-black uppercase tracking-wide text-white">' + (state.carregando ? 'Salvando...' : 'Criar usuario') + '</button>' +
+      '</div>'
+    );
+  }
+
+  function editarUsuarioHtml(usuario) {
+    return (
+      '<div class="grid gap-2 rounded-2xl bg-cyan-50 p-3">' +
+        '<div class="flex items-center justify-between gap-2"><p class="text-[10px] font-black uppercase tracking-wide text-cyan-900">Editar usuario</p><button id="cancelar-edicao-usuario" type="button" class="text-[10px] font-black text-slate-500">Cancelar</button></div>' +
+        '<input id="edit-usuario-nome" value="' + escapeHtml(usuario.nome || '') + '" placeholder="Nome" style="font-size:16px" class="h-10 w-full min-w-0 rounded-lg border border-cyan-100 bg-white px-3 text-base font-bold outline-none" />' +
+        '<input id="edit-usuario-login" value="' + escapeHtml(usuario.login || usuario.email || '') + '" placeholder="Login ou email" style="font-size:16px" class="h-10 w-full min-w-0 rounded-lg border border-cyan-100 bg-white px-3 text-base font-bold outline-none" />' +
+        '<select id="edit-usuario-perfil" style="font-size:16px" class="h-10 w-full min-w-0 rounded-lg border border-cyan-100 bg-white px-3 text-base font-bold outline-none">' + opcoesPerfilHtml(usuario.perfil || 'operador_simples', usuario.perfil === 'gestor_master') + '</select>' +
+        '<button id="salvar-usuario-mobile" type="button" class="h-10 rounded-xl bg-cyan-600 px-4 text-xs font-black uppercase tracking-wide text-white">' + (state.carregando ? 'Salvando...' : 'Salvar usuario') + '</button>' +
       '</div>'
     );
   }
@@ -1935,16 +2299,79 @@
     );
   }
 
+  function organizarDashboardHtml() {
+    var ordem = normalizarOrdemDashboard(state.dashboardOrdem);
+
+    return (
+      '<div class="grid gap-2">' +
+        '<p class="rounded-xl bg-cyan-50 px-3 py-2 text-xs font-semibold leading-relaxed text-cyan-900">Use as setas ou segure um card no dashboard para reposicionar. A ordem fica salva neste celular.</p>' +
+        ordem.map(function (id, index) {
+          return '<div class="flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2">' +
+            '<span class="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-white text-[10px] font-black text-slate-500">' + (index + 1) + '</span>' +
+            '<span class="min-w-0 flex-1 truncate text-xs font-black text-slate-800">' + escapeHtml(tituloCardDashboard(id)) + '</span>' +
+            '<button type="button" data-dashboard-move="' + escapeHtml(id) + '" data-dashboard-dir="-1" class="flex h-8 w-8 items-center justify-center rounded-lg bg-white text-sm font-black text-slate-700" aria-label="Subir">&uarr;</button>' +
+            '<button type="button" data-dashboard-move="' + escapeHtml(id) + '" data-dashboard-dir="1" class="flex h-8 w-8 items-center justify-center rounded-lg bg-white text-sm font-black text-slate-700" aria-label="Descer">&darr;</button>' +
+          '</div>';
+        }).join('') +
+        '<button id="reset-dashboard" type="button" class="mt-1 h-10 rounded-xl border border-slate-200 bg-white px-4 text-xs font-black uppercase tracking-wide text-slate-700">Restaurar ordem padr&atilde;o</button>' +
+      '</div>'
+    );
+  }
+
+  function moverCardDashboard(id, direcao) {
+    var ordem = normalizarOrdemDashboard(state.dashboardOrdem);
+    var index = ordem.indexOf(id);
+    var destino = index + direcao;
+
+    if (index < 0 || destino < 0 || destino >= ordem.length) return;
+
+    var item = ordem.splice(index, 1)[0];
+    ordem.splice(destino, 0, item);
+    state.dashboardOrdem = ordem;
+    salvarOrdemDashboard();
+    render();
+  }
+
+  function moverCardDashboardPara(idOrigem, idDestino, depois) {
+    var ordem = normalizarOrdemDashboard(state.dashboardOrdem);
+    var origem = ordem.indexOf(idOrigem);
+    var destinoOriginal = ordem.indexOf(idDestino);
+
+    if (origem < 0 || destinoOriginal < 0 || origem === destinoOriginal) {
+      state.dragDashboardId = '';
+      render();
+      return;
+    }
+
+    var item = ordem.splice(origem, 1)[0];
+    var destino = ordem.indexOf(idDestino);
+    if (destino < 0) destino = ordem.length;
+    ordem.splice(depois ? destino + 1 : destino, 0, item);
+    state.dashboardOrdem = ordem;
+    state.dragDashboardId = '';
+    salvarOrdemDashboard();
+    render();
+  }
+
   function categoriasMenuHtml() {
     return (
-      '<div class="grid gap-3">' +
-        campoClaro('categoria-nome', 'Despesa', 'placeholder="Ex: Energia"') +
-        campoClaro('categoria-tipo', 'Categoria', 'placeholder="Ex: Operacional"') +
-        alertaHtml() +
-        '<button id="salvar-categoria" type="button" class="h-11 rounded-xl bg-slate-950 px-4 text-sm font-black uppercase tracking-wide text-white">' + (state.carregando ? 'Salvando...' : 'Adicionar categoria') + '</button>' +
-        '<div class="mt-2 grid gap-2">' +
-          state.despesas.slice(0, 12).map(function (despesa) {
-            return '<div class="flex items-center justify-between gap-2 rounded-xl bg-slate-50 px-3 py-2 text-xs"><span class="truncate font-bold">' + escapeHtml(despesa.nome) + '</span><span class="shrink-0 font-semibold text-slate-500">' + escapeHtml(despesa.categoria) + '</span></div>';
+      '<div class="grid gap-2">' +
+        '<label class="grid gap-1 text-[10px] font-black uppercase tracking-wide text-slate-600">Tipo de despesa' +
+          '<input id="categoria-nome" placeholder="Ex: Energia" style="font-size:16px" class="h-10 rounded-md border border-slate-300 bg-white px-3 text-base font-bold normal-case tracking-normal text-slate-900 outline-none focus:border-cyan-500" />' +
+        '</label>' +
+        '<label class="grid gap-1 text-[10px] font-black uppercase tracking-wide text-slate-600">Categoria' +
+          '<select id="categoria-tipo" style="font-size:16px" class="h-10 rounded-md border border-slate-300 bg-white px-3 text-base font-bold normal-case tracking-normal text-slate-900 outline-none focus:border-cyan-500">' +
+            '<option value="">Selecione</option>' +
+            categoriasPadrao().map(function (categoria) {
+              return '<option value="' + escapeHtml(categoria) + '">' + escapeHtml(categoria) + '</option>';
+            }).join('') +
+          '</select>' +
+        '</label>' +
+        alertaHtml().replace('mt-4', '') +
+        '<button id="salvar-categoria" type="button" class="h-10 rounded-xl bg-slate-950 px-4 text-xs font-black uppercase tracking-wide text-white">' + (state.carregando ? 'Salvando...' : 'Cadastrar despesa') + '</button>' +
+        '<div class="mt-1 max-h-[42vh] overflow-y-auto rounded-xl border border-slate-100 p-1 grid gap-1.5">' +
+          state.despesas.map(function (despesa) {
+            return '<div class="flex items-center justify-between gap-2 rounded-lg bg-slate-50 px-3 py-1.5 text-[11px]"><span class="truncate font-bold">' + escapeHtml(despesa.nome) + '</span><span class="shrink-0 font-semibold text-slate-500">' + escapeHtml(despesa.categoria) + '</span></div>';
           }).join('') +
         '</div>' +
       '</div>'
@@ -1953,20 +2380,20 @@
 
   function ajudaCategoriasHtml() {
     var categorias = [
-      ['AMORTIZACAO', 'Gastos para dividir o custo de coisas que nao sao fisicas.', 'Softwares comprados, valor pago por patente.'],
-      ['CUSTOS VARIAVEIS', 'Gastos que aumentam ou diminuem conforme a quantidade produzida ou vendida.', 'Embalagens, materia-prima, frete, comissoes.'],
-      ['DEPRECIACAO', 'Gastos para dividir o custo de coisas fisicas que a empresa usa.', 'Desgaste de maquinas, veiculos e equipamentos.'],
-      ['DESPESAS FINANCEIRAS', 'Gastos relacionados a dinheiro, bancos, juros e operacoes financeiras.', 'Juros, tarifas bancarias, taxas e variacoes de cambio.'],
-      ['DESPESAS OPERACIONAIS', 'Gastos necessarios para manter a empresa funcionando.', 'Aluguel, agua, luz, salarios, manutencao, pro-labore e publicidade.'],
-      ['IMPOSTOS SOBRE LUCRO', 'Tributos que a empresa paga sobre o lucro apurado.', 'Imposto de renda e CSLL.'],
+      ['AMORTIZACAO', 'Custos nao fisicos.', 'Softwares, patente.'],
+      ['CUSTOS VARIAVEIS', 'Variam com venda/producao.', 'Embalagem, materia-prima, frete, comissao.'],
+      ['DEPRECIACAO', 'Uso/desgaste de bens fisicos.', 'Maquinas, veiculos, equipamentos.'],
+      ['DESPESAS FINANCEIRAS', 'Bancos, juros e operacoes.', 'Juros, tarifas, taxas, cambio.'],
+      ['DESPESAS OPERACIONAIS', 'Mantem a empresa funcionando.', 'Aluguel, agua, luz, salarios, manutencao, pro-labore, publicidade.'],
+      ['IMPOSTOS SOBRE LUCRO', 'Tributos sobre lucro.', 'IR e CSLL.'],
     ];
 
     return (
-      '<div class="space-y-3 text-sm leading-relaxed text-slate-600">' +
+      '<div class="grid gap-1.5 text-[11px] leading-snug text-slate-600">' +
         categorias.map(function (item) {
-          return '<div class="rounded-2xl bg-slate-50 p-3"><strong class="block text-xs font-black uppercase tracking-wide text-slate-900">' + item[0] + '</strong><p class="mt-1">' + item[1] + '</p><p class="mt-1 text-xs font-semibold text-slate-500">Exemplos: ' + item[2] + '</p></div>';
+          return '<div class="rounded-xl bg-slate-50 px-3 py-2"><strong class="block text-[10px] font-black uppercase tracking-wide text-slate-900">' + item[0] + '</strong><p class="mt-0.5">' + item[1] + ' <span class="font-semibold text-slate-500">Ex.: ' + item[2] + '</span></p></div>';
         }).join('') +
-        '<p class="rounded-2xl bg-cyan-50 p-3 text-xs font-semibold text-cyan-900">Observacao: se tiver duvida sobre onde classificar algum gasto, consulte o contador. Estes sao exemplos gerais para facilitar a organizacao.</p>' +
+        '<p class="rounded-xl bg-cyan-50 px-3 py-2 text-[10px] font-semibold text-cyan-900">Na duvida, consulte o contador. Estes exemplos ajudam a organizar.</p>' +
       '</div>'
     );
   }
@@ -2070,9 +2497,10 @@
       });
     }
     bind('menu-dashboard', voltarDashboard);
-    bind('menu-usuario', function () { abrirModalMenu('usuario'); });
+    bind('menu-usuario', abrirUsuariosMobile);
     bind('menu-trocar-empresa', function () { abrirModalMenu('empresa'); });
     bind('menu-gerenciar', function () { abrirModalMenu('gerenciar'); });
+    bind('menu-organizar-dashboard', function () { abrirModalMenu('organizarDashboard'); });
     bind('menu-categorias', function () { abrirModalMenu('categorias'); });
     bind('menu-ajuda-categorias', function () { abrirModalMenu('ajudaCategorias'); });
     bind('menu-instalar', instalarApp);
@@ -2082,12 +2510,36 @@
     bind('privacidade-mobile', function () { abrirModalMenu('privacidade'); });
     bind('criar-empresa-mobile', criarEmpresaMobile);
     bind('excluir-empresa-mobile', excluirEmpresaMobile);
+    bind('criar-usuario-mobile', criarUsuarioMobile);
+    bind('salvar-usuario-mobile', salvarUsuarioMobile);
+    bind('cancelar-edicao-usuario', function () {
+      state.usuarioEditandoId = '';
+      state.erro = '';
+      render();
+    });
     bind('salvar-categoria', salvarCategoriaDespesa);
     bind('salvar-despesa', salvarDespesa);
     bind('salvar-entrada', salvarEntrada);
     bind('salvar-total-receita', salvarTotalReceita);
     bind('toggle-categorias', function () {
       state.categoriasExpandido = !state.categoriasExpandido;
+      render();
+    });
+    bind('toggle-tipos-despesa', function () {
+      state.tiposDespesaExpandido = !state.tiposDespesaExpandido;
+      render();
+    });
+    bind('toggle-ultimas-despesas', function () {
+      state.ultimasDespesasExpandido = !state.ultimasDespesasExpandido;
+      render();
+    });
+    bind('toggle-ultimas-receitas', function () {
+      state.ultimasReceitasExpandido = !state.ultimasReceitasExpandido;
+      render();
+    });
+    bind('reset-dashboard', function () {
+      state.dashboardOrdem = ordemDashboardPadrao();
+      salvarOrdemDashboard();
       render();
     });
     bind('mes-anterior', function () { mudarMes(-1); });
@@ -2108,6 +2560,16 @@
       render();
     });
     bind('ver-receitas-lista', function () {
+      state.visao = 'receitas';
+      state.busca = '';
+      render();
+    });
+    bind('ver-despesas-total', function () {
+      state.visao = 'despesas';
+      state.busca = '';
+      render();
+    });
+    bind('ver-receitas-total', function () {
       state.visao = 'receitas';
       state.busca = '';
       render();
@@ -2204,6 +2666,29 @@
         abrirAcaoLancamento(botao.getAttribute('data-tipo-lancamento'), botao.getAttribute('data-lancamento-id'));
       });
     });
+    Array.prototype.forEach.call(document.querySelectorAll('[data-dashboard-move]'), function (botao) {
+      botao.addEventListener('click', function () {
+        moverCardDashboard(botao.getAttribute('data-dashboard-move'), Number(botao.getAttribute('data-dashboard-dir')));
+      });
+    });
+    Array.prototype.forEach.call(document.querySelectorAll('[data-editar-usuario]'), function (botao) {
+      botao.addEventListener('click', function () {
+        editarUsuarioMobile(botao.getAttribute('data-editar-usuario'));
+      });
+    });
+    Array.prototype.forEach.call(document.querySelectorAll('[data-excluir-usuario]'), function (botao) {
+      botao.addEventListener('click', function () {
+        excluirUsuarioMobile(botao.getAttribute('data-excluir-usuario'));
+      });
+    });
+    Array.prototype.forEach.call(document.querySelectorAll('[data-evolucao-valor]'), function (botao) {
+      botao.addEventListener('click', function () {
+        var tipo = botao.getAttribute('data-evolucao-tipo');
+        state.evolucaoSelecionada[tipo] = Number(botao.getAttribute('data-evolucao-valor') || 0);
+        render();
+      });
+    });
+    configurarDragDashboard();
   }
 
   function configurarPullToRefresh() {
@@ -2231,9 +2716,207 @@
     }, { passive: true });
   }
 
+  function configurarDragDashboard() {
+    var timer = null;
+    var cardAtivo = null;
+    var idAtivo = '';
+    var ghost = null;
+    var marcador = null;
+    var ultimoDestino = null;
+    var iniciouDrag = false;
+    var pointerId = null;
+    var zonasDestino = [];
+
+    function limparDrag() {
+      if (timer) window.clearTimeout(timer);
+      timer = null;
+
+      if (ghost && ghost.parentNode) ghost.parentNode.removeChild(ghost);
+      ghost = null;
+
+      if (marcador && marcador.parentNode) marcador.parentNode.removeChild(marcador);
+      marcador = null;
+      ultimoDestino = null;
+
+      if (cardAtivo) cardAtivo.classList.remove('scale-[0.98]', 'opacity-70', 'ring-2', 'ring-cyan-400', 'select-none');
+
+      cardAtivo = null;
+      idAtivo = '';
+      iniciouDrag = false;
+      pointerId = null;
+      zonasDestino = [];
+      state.dragDashboardId = '';
+    }
+
+    function criarGhost(card, x, y) {
+      var rect = card.getBoundingClientRect();
+      ghost = document.createElement('div');
+      ghost.className = 'pointer-events-none fixed z-[90] max-w-[340px] rounded-2xl border border-cyan-200 bg-white/95 px-4 py-3 text-sm font-black text-slate-900 shadow-2xl shadow-cyan-950/25 backdrop-blur';
+      ghost.style.width = Math.min(rect.width, window.innerWidth - 32) + 'px';
+      ghost.style.left = Math.max(12, Math.min(window.innerWidth - rect.width - 12, x - rect.width / 2)) + 'px';
+      ghost.style.top = Math.max(12, y - 28) + 'px';
+      ghost.textContent = tituloCardDashboard(idAtivo);
+      document.body.appendChild(ghost);
+    }
+
+    function garantirMarcador() {
+      if (marcador) return marcador;
+
+      marcador = document.createElement('div');
+      marcador.className = 'pointer-events-none my-2 h-5 rounded-xl border-2 border-dashed border-cyan-400 bg-cyan-50/90';
+      return marcador;
+    }
+
+    function calcularZonasDestino() {
+      var cards = Array.prototype.slice.call(document.querySelectorAll('[data-dashboard-card]'))
+        .filter(function (card) {
+          return card.getAttribute('data-dashboard-card') !== idAtivo;
+        });
+
+      zonasDestino = cards.map(function (card) {
+        var rect = card.getBoundingClientRect();
+        return {
+          id: card.getAttribute('data-dashboard-card'),
+          depois: false,
+          limite: rect.top + window.scrollY + rect.height / 2,
+          card: card,
+        };
+      });
+
+      if (cards.length) {
+        zonasDestino.push({
+          id: cards[cards.length - 1].getAttribute('data-dashboard-card'),
+          depois: true,
+          limite: Infinity,
+          card: cards[cards.length - 1],
+        });
+      }
+    }
+
+    function moverGhost(x, y) {
+      if (!ghost) return;
+      var largura = ghost.offsetWidth || 260;
+      ghost.style.left = Math.max(12, Math.min(window.innerWidth - largura - 12, x - largura / 2)) + 'px';
+      ghost.style.top = Math.max(12, Math.min(window.innerHeight - 64, y - 28)) + 'px';
+    }
+
+    function destacarDestino(x, y) {
+      if (!zonasDestino.length) {
+        if (marcador && marcador.parentNode) marcador.parentNode.removeChild(marcador);
+        ultimoDestino = null;
+        return null;
+      }
+
+      var destino = zonasDestino[zonasDestino.length - 1];
+      var yPagina = y + window.scrollY;
+
+      for (var i = 0; i < zonasDestino.length; i += 1) {
+        if (yPagina < zonasDestino[i].limite) {
+          destino = zonasDestino[i];
+          break;
+        }
+      }
+
+      var itemMarcador = garantirMarcador();
+      var cardDestino = destino.card;
+
+      if (destino.depois) {
+        if (itemMarcador.previousSibling !== cardDestino) {
+          cardDestino.parentNode.insertBefore(itemMarcador, cardDestino.nextSibling);
+        }
+      } else if (itemMarcador.nextSibling !== cardDestino) {
+        cardDestino.parentNode.insertBefore(itemMarcador, cardDestino);
+      }
+
+      ultimoDestino = {
+        id: destino.id,
+        depois: destino.depois,
+      };
+
+      return ultimoDestino;
+    }
+
+    function rolarSeNecessario(y) {
+      if (y < 84) {
+        window.scrollBy({ top: -14, behavior: 'auto' });
+      } else if (y > window.innerHeight - 92) {
+        window.scrollBy({ top: 14, behavior: 'auto' });
+      }
+    }
+
+    Array.prototype.forEach.call(document.querySelectorAll('[data-dashboard-handle]'), function (handle) {
+      handle.addEventListener('pointerdown', function (event) {
+        if (deveBloquearScroll() || state.visao !== 'home') return;
+
+        event.preventDefault();
+        pointerId = event.pointerId;
+        idAtivo = handle.getAttribute('data-dashboard-handle') || '';
+        cardAtivo = handle.closest('[data-dashboard-card]');
+        try {
+          handle.setPointerCapture(event.pointerId);
+        } catch (error) {}
+
+        timer = window.setTimeout(function () {
+          state.dragDashboardId = idAtivo;
+          iniciouDrag = true;
+          calcularZonasDestino();
+          if (cardAtivo) {
+            cardAtivo.classList.add('scale-[0.98]', 'opacity-70', 'select-none');
+            criarGhost(cardAtivo, event.clientX, event.clientY);
+          }
+        }, 520);
+      });
+
+      handle.addEventListener('pointermove', function (event) {
+        if (pointerId !== event.pointerId) return;
+        if (!iniciouDrag) return;
+
+        event.preventDefault();
+        moverGhost(event.clientX, event.clientY);
+        destacarDestino(event.clientX, event.clientY);
+        rolarSeNecessario(event.clientY);
+      });
+
+      handle.addEventListener('pointerup', function (event) {
+        if (timer) {
+          window.clearTimeout(timer);
+          timer = null;
+        }
+
+        if (!state.dragDashboardId || !iniciouDrag) {
+          limparDrag();
+          return;
+        }
+
+        var destino = destacarDestino(event.clientX, event.clientY) || ultimoDestino;
+
+        if (destino && destino.id && destino.id !== state.dragDashboardId) {
+          var origem = state.dragDashboardId;
+          var idDestino = destino.id;
+          var depois = destino.depois;
+          limparDrag();
+          moverCardDashboardPara(origem, idDestino, depois);
+        } else {
+          limparDrag();
+          render();
+        }
+      });
+
+      handle.addEventListener('lostpointercapture', function () {
+        if (!iniciouDrag) {
+          limparDrag();
+        }
+      });
+
+      handle.addEventListener('pointercancel', function () {
+        limparDrag();
+      });
+    });
+  }
   async function iniciar() {
     try {
       state.darkMode = localStorage.getItem('avantalab_mobile_dark') === '1';
+      state.dashboardOrdem = normalizarOrdemDashboard(JSON.parse(localStorage.getItem('avantalab_mobile_dashboard_ordem') || '[]'));
     } catch (error) {}
 
     if (window.caches && caches.keys) {
@@ -2243,7 +2926,7 @@
           return Promise.all(
             keys
               .filter(function (key) {
-                return key.indexOf('avantalab-mobile-') === 0 && key !== 'avantalab-mobile-v15';
+                return key.indexOf('avantalab-mobile-') === 0 && key !== 'avantalab-mobile-v22';
               })
               .map(function (key) {
                 return caches.delete(key);
@@ -2289,7 +2972,7 @@
       window.setTimeout(function () {
         var textoAtual = root.textContent || '';
 
-        if (textoAtual.indexOf('Preparando acesso mobile') >= 0) {
+        if (state.pronto && textoAtual.indexOf('Preparando acesso') >= 0) {
           render();
         }
       }, tempo);

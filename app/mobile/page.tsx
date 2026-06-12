@@ -28,36 +28,35 @@ export default function MobilePage() {
         data-supabase-anon-key={supabaseAnonKey}
       >
         <section
-          className="flex min-h-screen flex-col justify-start px-4 pb-8 pt-8"
+          className="flex min-h-screen items-center justify-center px-4"
           style={{
             minHeight: '100dvh',
             backgroundColor: '#eef6fb',
             backgroundImage:
-              "linear-gradient(rgba(255,255,255,.08),rgba(255,255,255,0)),url('/images/bg-avantalab-mobile-1080x1920.png')",
+              "url('/images/bg-avantalab-mobile-1080x1920.png')",
             backgroundSize: '100% auto',
             backgroundRepeat: 'no-repeat',
             backgroundPosition: 'center bottom',
           }}
         >
           <div
-            className="mx-auto w-full max-w-md rounded-3xl border border-white/35 p-5 text-slate-900 shadow-2xl backdrop-blur-xl"
-            style={{ backgroundColor: 'rgba(255,255,255,.18)' }}
+            className="w-full max-w-xs rounded-3xl border border-white/40 bg-white/25 p-5 text-center text-slate-900 shadow-2xl backdrop-blur-xl"
           >
-            <p className="mb-2 text-xs font-bold uppercase tracking-[0.32em] text-sky-700">
-              AvantaLab Gestao
+            <p className="text-xs font-black uppercase tracking-[0.24em] text-cyan-700">
+              AvantaLab
             </p>
-            <h1 className="text-3xl font-black text-slate-900">
-              Acesse sua conta
+            <h1 className="mt-2 text-xl font-black">
+              Preparando acesso
             </h1>
-            <p className="mt-2 text-sm leading-relaxed text-slate-600">
-              Preparando acesso mobile...
+            <p className="mt-2 text-sm font-semibold text-slate-600">
+              Carregando seus dados com seguranca.
             </p>
           </div>
         </section>
       </div>
 
       <script src="/mobile-supabase.js" defer />
-      <script src="/mobile-app.js?v=20" defer />
+      <script src="/mobile-app.js?v=27" defer />
     </main>
   );
 }
