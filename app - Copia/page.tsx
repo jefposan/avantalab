@@ -290,6 +290,74 @@ const estiloTextoTema = {
   color: textoSobreCorPrimaria,
 };
 
+const limparSessaoSupabaseLocal = () => {
+  try {
+    const chavesParaRemover: string[] = [];
+
+    for (let i = 0; i < localStorage.length; i += 1) {
+      const chave = localStorage.key(i);
+
+      if (
+        chave &&
+        (chave.startsWith('sb-') || chave.toLowerCase().includes('supabase'))
+      ) {
+        chavesParaRemover.push(chave);
+      }
+    }
+
+    chavesParaRemover.forEach((chave) => {
+      localStorage.removeItem(chave);
+    });
+
+    const chavesSessionParaRemover: string[] = [];
+
+for (let i = 0; i < sessionStorage.length; i += 1) {
+  const chave = sessionStorage.key(i);
+
+  if (
+    chave &&
+    (chave.startsWith('sb-') || chave.toLowerCase().includes('supabase'))
+  ) {
+    chavesSessionParaRemover.push(chave);
+  }
+}
+
+chavesSessionParaRemover.forEach((chave) => {
+  sessionStorage.removeItem(chave);
+});
+    localStorage.removeItem(CHAVE_ULTIMA_ATIVIDADE);
+  } catch (error) {
+    console.error('Erro ao limpar sessão local:', error);
+  }
+};
+
+const encerrarSessaoInvalida = async () => {
+  try {
+    await supabase.auth.signOut();
+  } catch (error) {
+    console.error('Erro ao encerrar sessão inválida:', error);
+  }
+
+  limparSessaoSupabaseLocal();
+
+  setAcessoLiberado(false);
+  setPerfilUsuario(null);
+  setEmpresaId(null);
+  setNomeEmpresaAtual('');
+  setNomeUsuarioAtual('');
+  setEmailUsuarioAtual('');
+  setAcessoUsuarioAtualId(null);
+  setAcessoNaoConfigurado(false);
+  setModalSelecionarEmpresa(false);
+  setValidacaoTelefoneObrigatoria(false);
+  setModoRedefinirSenha(false);
+  setModoAuth('login');
+  setLoginSenha('');
+  setAuthErro('');
+  setAuthMensagem('Sua sessão expirou. Faça login novamente.');
+  setMounted(true);
+};
+
 const extrairCorPredominanteLogo = (imagemBase64: string): Promise<string | null> => {
   return new Promise((resolve) => {
     const imagem = new Image();
@@ -550,11 +618,24 @@ if (paramsConfirmacao.get('confirmado') === '1') {
       return;
     }
 
-    const { data: sessaoAtual } = await supabase.auth.getSession();
+    const { data: sessaoAtual, error: erroSessaoAtual } =
+  await supabase.auth.getSession();
 
-    let empresa = null;
+if (erroSessaoAtual) {
+  await encerrarSessaoInvalida();
+  return;
+}
 
-    if (sessaoAtual.session) {
+let empresa = null;
+
+if (sessaoAtual.session) {
+  const { data: usuarioSessao, error: erroUsuarioSessao } =
+    await supabase.auth.getUser();
+
+  if (erroUsuarioSessao || !usuarioSessao.user) {
+    await encerrarSessaoInvalida();
+    return;
+  }
       const params = new URLSearchParams(window.location.search);
       const hash = new URLSearchParams(window.location.hash.replace('#', ''));
 
@@ -578,16 +659,16 @@ if (paramsConfirmacao.get('confirmado') === '1') {
 setAcessoLiberado(true);
 
       const empresasEncontradas = await buscarEmpresasDoUsuario(
-        sessaoAtual.session.user.id
-      );
+  usuarioSessao.user.id
+);
 
       if (!empresasEncontradas || empresasEncontradas.length === 0) {
   setCriandoNovaEmpresaLogada(false);
   setAcessoNaoConfigurado(true);
   setAcessoLiberado(false);
   const empresaFallback = await buscarEmpresaDoUsuario(
-    sessaoAtual.session.user.id
-  );
+  usuarioSessao.user.id
+);
 
   if (!empresaFallback) {
     setAcessoNaoConfigurado(true);
