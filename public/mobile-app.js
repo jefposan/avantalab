@@ -1117,6 +1117,13 @@
   function graficoCategoriaHtml(atual) {
     var categorias = categoriasDoMes(atual);
     var total = atual.despesas || 0;
+    var totalFormatado = dinheiro(total);
+    var classeValorCentral =
+      totalFormatado.length > 15
+        ? 'text-[8px]'
+        : totalFormatado.length > 12
+          ? 'text-[9px]'
+          : 'text-[10px]';
     var cores = ['#0284c7', '#ef4444', '#f59e0b', '#10b981', '#6366f1', '#64748b'];
     var cursor = 0;
     var segmentos = categorias.map(function (item, index) {
@@ -1130,10 +1137,10 @@
     return (
       '<section class="rounded-2xl bg-white p-4 shadow-sm">' +
         '<div class="mb-3 flex items-center justify-between"><h2 class="text-sm font-black">Despesas por categoria</h2><span class="text-xs font-bold text-slate-400">' + dinheiro(total) + '</span></div>' +
-        '<div class="grid grid-cols-[116px_1fr] items-center gap-4">' +
-          '<div class="relative h-28 w-28 rounded-full" style="background:' + fundo + '">' +
-            '<div class="absolute left-1/2 top-1/2 flex h-16 w-16 -translate-x-1/2 -translate-y-1/2 flex-col items-center justify-center rounded-full bg-white text-center shadow-inner">' +
-              '<span class="text-[10px] font-bold text-slate-400">Total</span><strong class="text-xs font-black text-slate-900">' + dinheiro(total) + '</strong>' +
+        '<div class="grid grid-cols-[136px_1fr] items-center gap-3">' +
+          '<div class="relative h-32 w-32 rounded-full" style="background:' + fundo + '">' +
+            '<div class="absolute left-1/2 top-1/2 flex h-[86px] w-[86px] -translate-x-1/2 -translate-y-1/2 flex-col items-center justify-center rounded-full bg-white px-1 text-center shadow-inner">' +
+              '<span class="text-[9px] font-bold leading-none text-slate-400">Total</span><strong class="mt-1 block max-w-[78px] truncate leading-none ' + classeValorCentral + ' font-black text-slate-900">' + totalFormatado + '</strong>' +
             '</div>' +
           '</div>' +
           '<div class="grid gap-2">' +
@@ -1645,7 +1652,7 @@
           return Promise.all(
             keys
               .filter(function (key) {
-                return key.indexOf('avantalab-mobile-') === 0 && key !== 'avantalab-mobile-v12';
+                return key.indexOf('avantalab-mobile-') === 0 && key !== 'avantalab-mobile-v13';
               })
               .map(function (key) {
                 return caches.delete(key);
