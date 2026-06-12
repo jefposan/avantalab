@@ -1452,8 +1452,8 @@
 
   function telaLogin() {
     return (
-      '<section class="fixed inset-0 flex flex-col overflow-hidden px-4 pb-4 pt-8" style="height:100dvh;background-color:#eef6fb;background-image:linear-gradient(rgba(255,255,255,.08),rgba(255,255,255,0)),url(/images/bg-avantalab-mobile-1080x1920.png);background-size:100% auto;background-repeat:no-repeat;background-position:center bottom;background-attachment:fixed;">' +
-        '<div class="mx-auto w-full max-w-md overflow-y-auto rounded-3xl border border-white/35 p-5 text-slate-900 shadow-2xl backdrop-blur-xl" style="background-color:rgba(255,255,255,.18);max-height:calc(100dvh - 8.5rem);overscroll-behavior:contain;">' +
+      '<section class="fixed inset-0 flex flex-col items-center justify-center overflow-hidden px-4 py-5" style="height:100dvh;background-color:#eef6fb;background-image:linear-gradient(rgba(255,255,255,.08),rgba(255,255,255,0)),url(/images/bg-avantalab-mobile-1080x1920.png);background-size:100% auto;background-repeat:no-repeat;background-position:center center;background-attachment:fixed;">' +
+        '<div class="mx-auto w-full max-w-md overflow-y-auto rounded-3xl border border-white/35 p-5 text-slate-900 shadow-2xl backdrop-blur-xl" style="background-color:rgba(255,255,255,.18);max-height:calc(100dvh - 8rem);overscroll-behavior:contain;">' +
           '<div class="mb-5">' +
             '<p class="mb-2 text-xs font-bold uppercase tracking-[0.32em] text-sky-700">AvantaLab Gestao</p>' +
             '<h1 class="text-3xl font-black text-slate-900">' + (state.modoCadastro ? 'Criar cadastro' : state.modoSenha ? 'Recuperar senha' : 'Acesse sua conta') + '</h1>' +
@@ -1471,7 +1471,7 @@
 
   function telaCarregandoMobile() {
     return (
-      '<section class="fixed inset-0 flex items-center justify-center overflow-hidden px-4" style="height:100dvh;background-color:#eef6fb;background-image:url(/images/bg-avantalab-mobile-1080x1920.png);background-size:100% auto;background-repeat:no-repeat;background-position:center bottom;background-attachment:fixed;">' +
+      '<section class="fixed inset-0 flex items-center justify-center overflow-hidden px-4" style="height:100dvh;background-color:#eef6fb;background-image:url(/images/bg-avantalab-mobile-1080x1920.png);background-size:100% auto;background-repeat:no-repeat;background-position:center center;background-attachment:fixed;">' +
         '<div class="w-full max-w-xs rounded-3xl border border-white/40 bg-white/25 p-5 text-center text-slate-900 shadow-2xl backdrop-blur-xl">' +
           '<p class="text-xs font-black uppercase tracking-[0.24em] text-cyan-700">AvantaLab</p>' +
           '<h1 class="mt-2 text-xl font-black">Preparando acesso</h1>' +
@@ -2953,7 +2953,7 @@
           return Promise.all(
             keys
               .filter(function (key) {
-                return key.indexOf('avantalab-mobile-') === 0 && key !== 'avantalab-mobile-v23';
+                return key.indexOf('avantalab-mobile-') === 0 && key !== 'avantalab-mobile-v24';
               })
               .map(function (key) {
                 return caches.delete(key);

@@ -36,7 +36,7 @@ export default function MobilePage() {
               "url('/images/bg-avantalab-mobile-1080x1920.png')",
             backgroundSize: '100% auto',
             backgroundRepeat: 'no-repeat',
-            backgroundPosition: 'center bottom',
+            backgroundPosition: 'center center',
             backgroundAttachment: 'fixed',
           }}
         >
@@ -57,7 +57,7 @@ export default function MobilePage() {
       </div>
 
       <script src="/mobile-supabase.js" defer />
-      <script src="/mobile-app.js?v=28" defer />
+      <script src="/mobile-app.js?v=29" defer />
     </main>
   );
 }
