@@ -1,3 +1,5 @@
+import { readFileSync } from 'fs';
+import { join } from 'path';
 import type { Metadata, Viewport } from 'next';
 
 export const metadata: Metadata = {
@@ -16,9 +18,19 @@ export const viewport: Viewport = {
   themeColor: '#003E73',
 };
 
+function scriptSeguro(conteudo: string) {
+  return conteudo.replace(/<\/script/gi, '<\\/script');
+}
+
 export default function MobilePage() {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
+  const supabaseScript = scriptSeguro(
+    readFileSync(join(process.cwd(), 'public', 'mobile-supabase.js'), 'utf8')
+  );
+  const mobileScript = scriptSeguro(
+    readFileSync(join(process.cwd(), 'public', 'mobile-app.js'), 'utf8')
+  );
 
   return (
     <main className="min-h-screen bg-slate-950 text-white">
@@ -59,11 +71,23 @@ export default function MobilePage() {
               supabaseUrl: ${JSON.stringify(supabaseUrl)},
               supabaseAnonKey: ${JSON.stringify(supabaseAnonKey)}
             };
+            window.AVANTALAB_MOBILE_BOOT = 'config-ok';
           `,
         }}
       />
-      <script src="/mobile-supabase.js" />
-      <script src="/mobile-app.js?v=14" />
+      <script
+        dangerouslySetInnerHTML={{
+          __html: supabaseScript,
+        }}
+      />
+      <script
+        dangerouslySetInnerHTML={{
+          __html: `
+            window.AVANTALAB_MOBILE_BOOT = window.supabase ? 'supabase-ok' : 'supabase-missing';
+            ${mobileScript}
+          `,
+        }}
+      />
     </main>
   );
 }
