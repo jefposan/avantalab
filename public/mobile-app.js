@@ -71,7 +71,9 @@
     visao: 'home',
     busca: '',
     modalLancamento: false,
+    modalAcao: null,
     tipoLancamento: 'despesa',
+    modoReceita: 'entrada',
     menuAberto: false,
     modalMenu: '',
     darkMode: false,
@@ -79,6 +81,8 @@
     isIos: /iphone|ipad|ipod/i.test(navigator.userAgent),
     novaCategoriaNome: '',
     novaCategoriaTipo: '',
+    categoriasExpandido: false,
+    toast: '',
   };
 
   function dinheiro(valor) {
@@ -96,6 +100,22 @@
         .replace(',', '.')
         .replace(/[^\d.-]/g, '') || 0
     );
+  }
+
+  function formatarMoedaDigitada(valor) {
+    var apenasNumeros = String(valor || '').replace(/\D/g, '');
+    if (!apenasNumeros) return '';
+
+    return dinheiro(Number(apenasNumeros) / 100);
+  }
+
+  function mensagemErro(error, fallback) {
+    if (!error || !error.message) return fallback || 'Nao foi possivel concluir a acao.';
+    if (error.message.indexOf('row-level security') >= 0 || error.message.indexOf('violates row-level security policy') >= 0 || error.code === '42501') {
+      return 'Voce nao tem permissao para realizar esta acao.';
+    }
+    if (error.message.indexOf('duplicate key') >= 0 || error.code === '23505') return 'Este registro ja existe.';
+    return error.message;
   }
 
   function formatarDescricao(texto) {
@@ -157,7 +177,8 @@
     var lancamentos = state.lancamentos.filter(function (item) { return item.mes === mes; });
     var entradas = state.entradas.filter(function (item) { return item.mes === mes; });
     var despesas = lancamentos.reduce(function (total, item) { return total + item.valor; }, 0);
-    var receitas = state.faturamentos[mes] || entradas.reduce(function (total, item) { return total + item.valor; }, 0);
+    var temTotalDefinido = Object.prototype.hasOwnProperty.call(state.faturamentos, mes);
+    var receitas = temTotalDefinido ? state.faturamentos[mes] : entradas.reduce(function (total, item) { return total + item.valor; }, 0);
 
     return {
       lancamentos: lancamentos,
@@ -184,6 +205,18 @@
     state.mensagem = texto || '';
     state.erro = '';
     render();
+  }
+
+  function mostrarToast(texto) {
+    state.toast = texto || '';
+    render();
+
+    window.setTimeout(function () {
+      if (state.toast === texto) {
+        state.toast = '';
+        render();
+      }
+    }, 1600);
   }
 
   function campo(id) {
@@ -243,6 +276,21 @@
 
   function isStandalone() {
     return window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
+  }
+
+  function deveBloquearScroll() {
+    return Boolean(state.modalLancamento || state.modalMenu || state.menuAberto || state.modalAcao);
+  }
+
+  function atualizarScrollBloqueado() {
+    if (deveBloquearScroll()) {
+      document.documentElement.style.overflow = 'hidden';
+      document.body.style.overflow = 'hidden';
+      return;
+    }
+
+    document.documentElement.style.overflow = '';
+    document.body.style.overflow = '';
   }
 
   async function instalarApp() {
@@ -742,6 +790,7 @@
     }
 
     state.carregando = true;
+    state.erro = '';
     render();
 
     var resposta = await db
@@ -765,8 +814,8 @@
     }
 
     state.modalLancamento = false;
-    setMensagem('Despesa lancada.');
     await carregarDados();
+    mostrarToast('Despesa lancada.');
   }
 
   async function salvarEntrada() {
@@ -783,6 +832,7 @@
     }
 
     state.carregando = true;
+    state.erro = '';
     render();
 
     var resposta = await db
@@ -827,8 +877,47 @@
     }
 
     state.modalLancamento = false;
-    setMensagem('Entrada lancada.');
     await carregarDados();
+    mostrarToast('Entrada lancada.');
+  }
+
+  async function salvarTotalReceita() {
+    if (!state.empresa) return;
+
+    var valor = normalizarValor(campo('receita-total'));
+
+    if (valor < 0) {
+      setErro('Informe um total valido.');
+      return;
+    }
+
+    state.carregando = true;
+    state.erro = '';
+    render();
+
+    var resposta = await db
+      .from('faturamentos')
+      .upsert(
+        {
+          empresa_id: state.empresa.id,
+          ano: Number(state.ano),
+          mes: state.mes,
+          valor: valor,
+        },
+        { onConflict: 'empresa_id,ano,mes' }
+      )
+      .select()
+      .single();
+
+    if (resposta.error) {
+      state.carregando = false;
+      setErro('Nao foi possivel definir o total do mes.');
+      return;
+    }
+
+    state.modalLancamento = false;
+    await carregarDados();
+    mostrarToast('Total do mes atualizado.');
   }
 
   async function salvarCategoriaDespesa() {
@@ -863,8 +952,241 @@
     }
 
     state.modalMenu = '';
-    setMensagem('Categoria adicionada.');
     await carregarDados();
+    mostrarToast('Categoria adicionada.');
+  }
+
+  async function criarEmpresaMobile() {
+    var nome = campo('nova-empresa-nome').trim();
+
+    if (!nome) {
+      setErro('Informe o nome da empresa.');
+      return;
+    }
+
+    state.carregando = true;
+    state.erro = '';
+    render();
+
+    var resposta = await db.rpc('criar_empresa_inicial_rpc', {
+      p_nome_empresa: nome,
+    });
+
+    if (resposta.error || !resposta.data) {
+      state.carregando = false;
+      setErro(mensagemErro(resposta.error, 'Nao foi possivel criar a empresa.'));
+      return;
+    }
+
+    var criada = Array.isArray(resposta.data) ? resposta.data[0] : resposta.data;
+    var criadaId = criada && (criada.id || criada.empresa_id);
+
+    if (criadaId) {
+      await db
+        .from('configuracoes')
+        .upsert({ empresa_id: criadaId, duplicados_ativo: true }, { onConflict: 'empresa_id' });
+    }
+
+    state.modalMenu = '';
+    await carregarEmpresas(state.usuario.id);
+    await carregarDados();
+    mostrarToast('Empresa criada.');
+  }
+
+  async function excluirEmpresaMobile() {
+    if (!state.empresa) return;
+
+    if (state.empresa.perfil !== 'gestor_master') {
+      setErro('Somente o Gestor Master pode excluir a empresa atual.');
+      return;
+    }
+
+    var confirmacao = campo('excluir-empresa-confirmacao').trim();
+    var nome = nomeEmpresa(state.empresa);
+
+    if (confirmacao !== nome) {
+      setErro('Digite exatamente o nome da empresa para confirmar.');
+      return;
+    }
+
+    state.carregando = true;
+    state.erro = '';
+    render();
+
+    var resposta = await db.rpc('excluir_empresa_rpc', {
+      p_empresa_id: state.empresa.id,
+      p_nome_confirmacao: confirmacao,
+    });
+
+    if (resposta.error) {
+      state.carregando = false;
+      setErro(mensagemErro(resposta.error, 'Nao foi possivel excluir a empresa.'));
+      return;
+    }
+
+    state.modalMenu = '';
+    await carregarEmpresas(state.usuario.id);
+
+    if (!state.empresa) {
+      await sair();
+      return;
+    }
+
+    await carregarDados();
+    mostrarToast('Empresa excluida.');
+  }
+
+  function abrirAcaoLancamento(tipo, id) {
+    var lista = tipo === 'receita' ? state.entradas : state.lancamentos;
+    var item = lista.find(function (registro) { return String(registro.id) === String(id); });
+    if (!item) return;
+
+    state.modalAcao = {
+      tipo: tipo,
+      modo: 'opcoes',
+      item: item,
+    };
+    render();
+  }
+
+  function fecharAcaoLancamento() {
+    state.modalAcao = null;
+    render();
+  }
+
+  async function excluirLancamentoSelecionado() {
+    if (!state.modalAcao || !state.modalAcao.item || !state.empresa) return;
+
+    var tipo = state.modalAcao.tipo;
+    var item = state.modalAcao.item;
+    state.carregando = true;
+    state.erro = '';
+    render();
+
+    if (tipo === 'receita') {
+      var apagada = await db.from('faturamentos_entradas').delete().eq('id', item.id).eq('empresa_id', state.empresa.id);
+      if (apagada.error) {
+        state.carregando = false;
+        setErro('Nao foi possivel excluir a receita.');
+        return;
+      }
+
+      var totalAtual = state.faturamentos[state.mes] || 0;
+      await db
+        .from('faturamentos')
+        .upsert(
+          {
+            empresa_id: state.empresa.id,
+            ano: Number(state.ano),
+            mes: state.mes,
+            valor: Math.max(0, totalAtual - Number(item.valor || 0)),
+          },
+          { onConflict: 'empresa_id,ano,mes' }
+        );
+    } else {
+      var removida = await db.from('lancamentos').delete().eq('id', item.id).eq('empresa_id', state.empresa.id);
+      if (removida.error) {
+        state.carregando = false;
+        setErro('Nao foi possivel excluir a despesa.');
+        return;
+      }
+    }
+
+    state.modalAcao = null;
+    await carregarDados();
+    mostrarToast(tipo === 'receita' ? 'Receita excluida.' : 'Despesa excluida.');
+  }
+
+  async function salvarEdicaoLancamentoSelecionado() {
+    if (!state.modalAcao || !state.modalAcao.item || !state.empresa) return;
+
+    var tipo = state.modalAcao.tipo;
+    var item = state.modalAcao.item;
+    var dia = Number(campo('editar-dia'));
+    var valor = normalizarValor(campo('editar-valor'));
+    var limite = maxDias(state.mes, state.ano);
+
+    if (!dia || dia < 1 || dia > limite || valor <= 0) {
+      setErro('Informe dia e valor validos.');
+      return;
+    }
+
+    state.carregando = true;
+    state.erro = '';
+    render();
+
+    if (tipo === 'receita') {
+      var origem = campo('editar-origem').trim();
+      if (!origem) {
+        state.carregando = false;
+        setErro('Informe a origem.');
+        return;
+      }
+
+      var receita = await db
+        .from('faturamentos_entradas')
+        .update({
+          dia: dia,
+          origem: formatarDescricao(origem),
+          valor: valor,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', item.id)
+        .eq('empresa_id', state.empresa.id)
+        .select()
+        .single();
+
+      if (receita.error) {
+        state.carregando = false;
+        setErro('Nao foi possivel editar a receita.');
+        return;
+      }
+
+      var totalAtual = state.faturamentos[state.mes] || 0;
+      var diferenca = valor - Number(item.valor || 0);
+      await db
+        .from('faturamentos')
+        .upsert(
+          {
+            empresa_id: state.empresa.id,
+            ano: Number(state.ano),
+            mes: state.mes,
+            valor: Math.max(0, totalAtual + diferenca),
+          },
+          { onConflict: 'empresa_id,ano,mes' }
+        );
+    } else {
+      var despesaNome = campo('editar-despesa').trim();
+      var descricao = campo('editar-descricao');
+      if (!despesaNome) {
+        state.carregando = false;
+        setErro('Informe a despesa.');
+        return;
+      }
+
+      var despesa = await db
+        .from('lancamentos')
+        .update({
+          dia: dia,
+          despesa_nome: despesaNome,
+          descricao: formatarDescricao(descricao),
+          valor: valor,
+        })
+        .eq('id', item.id)
+        .eq('empresa_id', state.empresa.id)
+        .select()
+        .single();
+
+      if (despesa.error) {
+        state.carregando = false;
+        setErro('Nao foi possivel editar a despesa.');
+        return;
+      }
+    }
+
+    state.modalAcao = null;
+    await carregarDados();
+    mostrarToast(tipo === 'receita' ? 'Receita atualizada.' : 'Despesa atualizada.');
   }
 
   function telaLogin() {
@@ -886,16 +1208,30 @@
     );
   }
 
+  function telaCarregandoMobile() {
+    return (
+      '<section class="flex min-h-screen items-center justify-center px-4" style="min-height:100dvh;background-color:#eef6fb;background-image:url(/images/bg-avantalab-mobile-1080x1920.png);background-size:100% auto;background-repeat:no-repeat;background-position:center bottom;">' +
+        '<div class="w-full max-w-xs rounded-3xl border border-white/40 bg-white/25 p-5 text-center text-slate-900 shadow-2xl backdrop-blur-xl">' +
+          '<p class="text-xs font-black uppercase tracking-[0.24em] text-cyan-700">AvantaLab</p>' +
+          '<h1 class="mt-2 text-xl font-black">Preparando acesso</h1>' +
+          '<p class="mt-2 text-sm font-semibold text-slate-600">Carregando seus dados com seguranca.</p>' +
+        '</div>' +
+      '</section>'
+    );
+  }
+
   function cardInstalarLoginHtml() {
+    if (isStandalone()) return '';
+
     return (
       '<div class="mx-auto mt-3 w-full max-w-md rounded-2xl border border-white/25 p-3 text-slate-800 shadow-lg backdrop-blur-lg" style="background-color:rgba(255,255,255,.14)">' +
         '<div class="flex items-center justify-between gap-3">' +
           '<div class="min-w-0">' +
-            '<p class="text-xs font-black uppercase tracking-wide text-sky-800">Acesso rapido</p>' +
+            '<p class="text-xs font-black uppercase tracking-wide"><span style="color:#003E73">AVANTA</span><span style="color:#00A6C8">LAB</span> app</p>' +
             '<p class="mt-0.5 text-xs font-semibold leading-snug text-slate-600">Instale o AvantaLab como app no celular.</p>' +
           '</div>' +
-          '<button id="instalar-login" type="button" class="shrink-0 rounded-xl bg-slate-900/90 px-3 py-2 text-xs font-black uppercase tracking-wide text-white shadow-md">' +
-            (isStandalone() ? 'Instalado' : 'Instalar') +
+          '<button id="instalar-login" type="button" class="shrink-0 rounded-xl px-3 py-2 text-xs font-black uppercase tracking-wide text-white shadow-md" style="background:linear-gradient(135deg,#003E73,#00A6C8)">' +
+            'Instalar' +
           '</button>' +
         '</div>' +
       '</div>'
@@ -1007,6 +1343,15 @@
     );
   }
 
+  function campoValor(id, label, value) {
+    return (
+      '<label class="grid gap-1 text-xs font-black uppercase tracking-wide text-slate-600">' +
+        escapeHtml(label) +
+        '<input id="' + id + '" inputmode="decimal" value="' + escapeHtml(value || '') + '" placeholder="R$ 0,00" style="font-size:16px" class="h-11 rounded-md border border-slate-300 bg-white px-3 text-right text-base font-black normal-case tracking-normal text-slate-900 outline-none focus:border-cyan-500" />' +
+      '</label>'
+    );
+  }
+
   function telaApp() {
     var atual = dadosMes(state.mes);
     var anterior = dadosMesAnterior();
@@ -1033,11 +1378,14 @@
           empresaHtml() +
           alertaHtml().replace('mt-4', '') +
           (state.visao === 'home' ? homeHtml(atual, anterior) : listaDetalhadaHtml(atual)) +
+          rodapeMobileHtml() +
         '</div>' +
         '<button id="abrir-lancamento" type="button" class="fixed bottom-5 right-5 z-30 flex h-14 w-14 items-center justify-center rounded-full bg-cyan-500 text-3xl font-light leading-none text-white shadow-2xl shadow-cyan-900/30">+</button>' +
         (state.modalLancamento ? modalLancamentoHtml() : '') +
+        (state.modalAcao ? modalAcaoLancamentoHtml() : '') +
         (state.menuAberto ? menuLateralHtml() : '') +
         (state.modalMenu ? modalMenuHtml() : '') +
+        toastHtml() +
       '</div>'
     );
   }
@@ -1057,6 +1405,33 @@
     return empresasHtml;
   }
 
+  function toastHtml() {
+    if (!state.toast) return '';
+
+    return (
+      '<div class="pointer-events-none fixed inset-0 z-[80] flex items-center justify-center px-6">' +
+        '<div class="rounded-2xl bg-slate-950/90 px-5 py-3 text-center text-sm font-black text-white shadow-2xl backdrop-blur">' +
+          escapeHtml(state.toast) +
+        '</div>' +
+      '</div>'
+    );
+  }
+
+  function rodapeMobileHtml() {
+    var ano = new Date().getFullYear();
+    return (
+      '<footer class="mt-2 rounded-2xl border ' + (state.darkMode ? 'border-slate-800 bg-slate-900 text-slate-400' : 'border-slate-200 bg-white text-slate-500') + ' px-4 py-4 text-center text-[11px] shadow-sm">' +
+        '<div class="font-black tracking-wide"><span style="color:#003E73">AVANTA</span><span style="color:#00A6C8">LAB</span></div>' +
+        '<p class="mt-1 font-semibold">&copy; ' + ano + ' Todos os direitos reservados.</p>' +
+        '<div class="mt-3 flex flex-wrap items-center justify-center gap-x-3 gap-y-2 font-bold">' +
+          '<a href="https://www.instagram.com/avanta.lab" target="_blank" rel="noopener noreferrer" style="color:#00A6C8">@avanta.lab</a>' +
+          '<button id="termos-mobile" type="button" class="text-slate-500">Termos de Uso</button>' +
+          '<button id="privacidade-mobile" type="button" class="text-slate-500">Privacidade</button>' +
+        '</div>' +
+      '</footer>'
+    );
+  }
+
   function homeHtml(atual, anterior) {
     return (
       saldoTopoHtml(atual, anterior) +
@@ -1064,6 +1439,7 @@
       graficoCategoriaHtml(atual) +
       visaoGeralHtml(atual) +
       ultimasDespesasHtml(atual.lancamentos) +
+      ultimasReceitasHtml(atual.entradas) +
       totaisHtml(atual) +
       evolucaoHtml('despesas') +
       evolucaoHtml('receitas')
@@ -1133,6 +1509,7 @@
       return cores[index % cores.length] + ' ' + inicio.toFixed(2) + '% ' + fim.toFixed(2) + '%';
     }).join(',');
     var fundo = total > 0 ? 'conic-gradient(' + segmentos + ')' : '#e2e8f0';
+    var categoriasVisiveis = state.categoriasExpandido ? categorias : categorias.slice(0, 3);
 
     return (
       '<section class="rounded-2xl bg-white p-4 shadow-sm">' +
@@ -1144,12 +1521,13 @@
             '</div>' +
           '</div>' +
           '<div class="grid gap-2">' +
-            (categorias.length ? categorias.slice(0, 5).map(function (item, index) {
+            (categorias.length ? categoriasVisiveis.map(function (item, index) {
               return '<div class="flex min-w-0 items-center justify-between gap-2 text-xs">' +
                 '<span class="min-w-0 truncate font-bold text-slate-600"><i class="mr-2 inline-block h-2.5 w-2.5 rounded-full" style="background:' + cores[index % cores.length] + '"></i>' + escapeHtml(item.categoria) + '</span>' +
                 '<strong class="shrink-0 text-slate-900">' + dinheiro(item.valor) + '</strong>' +
               '</div>';
             }).join('') : '<p class="text-xs text-slate-500">Sem despesas no mes.</p>') +
+            (categorias.length > 3 ? '<button id="toggle-categorias" type="button" class="mt-1 text-left text-xs font-black text-cyan-700">' + (state.categoriasExpandido ? 'Recolher' : 'Expandir categorias') + '</button>' : '') +
           '</div>' +
         '</div>' +
       '</section>'
@@ -1187,11 +1565,29 @@
         '<div class="mb-2 flex items-center justify-between"><h2 class="text-sm font-black">Ultimas despesas</h2><button id="ver-despesas-lista" type="button" class="text-xs font-black text-cyan-700">Ver todas</button></div>' +
         '<div class="grid gap-1">' +
           (itens.length ? itens.map(function (item) {
-            return '<div class="flex items-center justify-between gap-3 border-b border-slate-100 py-2 last:border-b-0">' +
+            return '<button type="button" data-tipo-lancamento="despesa" data-lancamento-id="' + escapeHtml(item.id) + '" class="flex w-full items-center justify-between gap-3 border-b border-slate-100 py-2 text-left last:border-b-0">' +
               '<div class="min-w-0"><p class="truncate text-sm font-bold text-slate-800">' + escapeHtml(item.despesa) + '</p><p class="truncate text-xs text-slate-500">Dia ' + item.dia + (item.descricao ? ' - ' + escapeHtml(item.descricao) : '') + '</p></div>' +
               '<strong class="shrink-0 text-sm font-black text-red-600">' + dinheiro(item.valor) + '</strong>' +
-            '</div>';
+            '</button>';
           }).join('') : '<p class="text-xs text-slate-500">Nenhuma despesa neste mes.</p>') +
+        '</div>' +
+      '</section>'
+    );
+  }
+
+  function ultimasReceitasHtml(entradas) {
+    var itens = entradas.slice().sort(function (a, b) { return b.dia - a.dia; }).slice(0, 5);
+
+    return (
+      '<section class="rounded-2xl bg-white p-4 shadow-sm">' +
+        '<div class="mb-2 flex items-center justify-between"><h2 class="text-sm font-black">Ultimas receitas</h2><button id="ver-receitas-lista" type="button" class="text-xs font-black text-cyan-700">Ver todas</button></div>' +
+        '<div class="grid gap-1">' +
+          (itens.length ? itens.map(function (item) {
+            return '<button type="button" data-tipo-lancamento="receita" data-lancamento-id="' + escapeHtml(item.id) + '" class="flex w-full items-center justify-between gap-3 border-b border-slate-100 py-2 text-left last:border-b-0">' +
+              '<div class="min-w-0"><p class="truncate text-sm font-bold text-slate-800">' + escapeHtml(item.origem) + '</p><p class="truncate text-xs text-slate-500">Dia ' + item.dia + '</p></div>' +
+              '<strong class="shrink-0 text-sm font-black text-emerald-600">' + dinheiro(item.valor) + '</strong>' +
+            '</button>';
+          }).join('') : '<p class="text-xs text-slate-500">Nenhuma receita neste mes.</p>') +
         '</div>' +
       '</section>'
     );
@@ -1230,7 +1626,7 @@
         '<div class="flex h-28 items-end gap-2">' +
           lista.map(function (item) {
             var altura = Math.max(8, Math.round((item.valor / max) * 100));
-            return '<div class="flex min-w-0 flex-1 flex-col items-center gap-1"><div class="w-full rounded-t-md ' + cor + '" style="height:' + altura + '%"></div><span class="text-[9px] font-bold text-slate-400">' + item.mes.slice(0, 3) + '</span></div>';
+            return '<div class="flex min-w-0 flex-1 flex-col items-center gap-1"><div class="flex h-24 w-full items-end"><div class="w-full rounded-t-md ' + cor + '" style="height:' + altura + '%"></div></div><span class="text-[9px] font-bold text-slate-400">' + item.mes.slice(0, 3) + '</span></div>';
           }).join('') +
         '</div>' +
       '</section>'
@@ -1243,6 +1639,8 @@
     var itens = tipo === 'receitas'
       ? atual.entradas.map(function (item) {
           return {
+            id: item.id,
+            tipo: 'receita',
             titulo: item.origem,
             detalhe: 'Dia ' + item.dia,
             valor: item.valor,
@@ -1251,6 +1649,8 @@
         })
       : atual.lancamentos.map(function (item) {
           return {
+            id: item.id,
+            tipo: 'despesa',
             titulo: item.despesa,
             detalhe: 'Dia ' + item.dia + (item.descricao ? ' - ' + item.descricao : ''),
             valor: item.valor,
@@ -1283,10 +1683,10 @@
         '</div>' +
         '<div class="rounded-2xl bg-white p-3 shadow-sm">' +
           (itens.length ? itens.map(function (item) {
-            return '<div class="flex items-center justify-between gap-3 border-b border-slate-100 px-1 py-3 last:border-b-0">' +
+            return '<button type="button" data-tipo-lancamento="' + escapeHtml(item.tipo) + '" data-lancamento-id="' + escapeHtml(item.id) + '" class="flex w-full items-center justify-between gap-3 border-b border-slate-100 px-1 py-3 text-left last:border-b-0">' +
               '<div class="min-w-0"><p class="truncate text-sm font-bold text-slate-800">' + escapeHtml(item.titulo) + '</p><p class="truncate text-xs text-slate-500">' + escapeHtml(item.detalhe) + '</p></div>' +
               '<strong class="shrink-0 text-sm font-black ' + cor + '">' + dinheiro(item.valor) + '</strong>' +
-            '</div>';
+            '</button>';
           }).join('') : '<p class="p-3 text-sm text-slate-500">Nenhum item encontrado.</p>') +
         '</div>' +
       '</section>'
@@ -1307,6 +1707,7 @@
             '<button id="tipo-despesa" type="button" class="h-9 rounded-lg text-sm font-black ' + (despesaAtiva ? 'bg-white text-red-600 shadow-sm' : 'text-slate-500') + '">Despesa</button>' +
             '<button id="tipo-receita" type="button" class="h-9 rounded-lg text-sm font-black ' + (!despesaAtiva ? 'bg-white text-emerald-600 shadow-sm' : 'text-slate-500') + '">Receita</button>' +
           '</div>' +
+          alertaHtml().replace('mt-4', 'mb-3') +
           (despesaAtiva ? modalDespesaCamposHtml() : modalReceitaCamposHtml()) +
         '</section>' +
       '</div>'
@@ -1328,21 +1729,101 @@
           '</label>' +
         '</div>' +
         campoClaro('despesa-descricao', 'Descricao') +
-        campoClaro('despesa-valor', 'Valor', 'inputmode="decimal"') +
+        campoValor('despesa-valor', 'Valor') +
         '<button id="salvar-despesa" type="button" class="h-11 rounded-xl bg-slate-950 px-4 text-sm font-black uppercase tracking-wide text-white">' + (state.carregando ? 'Salvando...' : 'Salvar despesa') + '</button>' +
       '</div>'
     );
   }
 
   function modalReceitaCamposHtml() {
+    var entradaAtiva = state.modoReceita !== 'total';
+    return (
+      '<div class="grid gap-3">' +
+        '<div class="grid grid-cols-2 gap-2 rounded-xl bg-slate-100 p-1">' +
+          '<button id="modo-receita-entrada" type="button" class="h-9 rounded-lg text-xs font-black ' + (entradaAtiva ? 'bg-white text-emerald-600 shadow-sm' : 'text-slate-500') + '">Adicionar entrada</button>' +
+          '<button id="modo-receita-total" type="button" class="h-9 rounded-lg text-xs font-black ' + (!entradaAtiva ? 'bg-white text-cyan-700 shadow-sm' : 'text-slate-500') + '">Definir total</button>' +
+        '</div>' +
+        (entradaAtiva
+          ? '<div class="grid gap-3">' +
+              '<div class="grid grid-cols-[82px_1fr] gap-3">' +
+                campoClaro('entrada-dia', 'Dia', 'inputmode="numeric"') +
+                campoClaro('entrada-origem', 'Origem') +
+              '</div>' +
+              campoValor('entrada-valor', 'Valor') +
+              '<button id="salvar-entrada" type="button" class="h-11 rounded-xl bg-cyan-500 px-4 text-sm font-black uppercase tracking-wide text-slate-950">' + (state.carregando ? 'Salvando...' : 'Salvar receita') + '</button>' +
+            '</div>'
+          : '<div class="grid gap-3">' +
+              '<p class="rounded-xl bg-cyan-50 px-3 py-2 text-xs font-semibold text-cyan-900">Define o faturamento total do mes selecionado, substituindo o valor atual.</p>' +
+              campoValor('receita-total', 'Total do mes', dinheiro(state.faturamentos[state.mes] || 0)) +
+              '<button id="salvar-total-receita" type="button" class="h-11 rounded-xl bg-slate-950 px-4 text-sm font-black uppercase tracking-wide text-white">' + (state.carregando ? 'Salvando...' : 'Definir total') + '</button>' +
+            '</div>') +
+      '</div>'
+    );
+  }
+
+  function modalAcaoLancamentoHtml() {
+    var acao = state.modalAcao;
+    if (!acao || !acao.item) return '';
+
+    var item = acao.item;
+    var receita = acao.tipo === 'receita';
+    var titulo = receita ? item.origem : item.despesa;
+    var detalhe = receita ? 'Receita' : 'Despesa';
+
+    return (
+      '<div class="fixed inset-0 z-[55] flex items-end bg-slate-950/45 px-3 pb-3">' +
+        '<section class="mx-auto w-full max-w-md rounded-3xl bg-white p-4 shadow-2xl">' +
+          '<div class="mb-3 flex items-center justify-between gap-3">' +
+            '<div class="min-w-0"><p class="text-[10px] font-black uppercase tracking-wide text-slate-400">' + detalhe + '</p><h2 class="truncate text-base font-black">' + escapeHtml(titulo) + '</h2></div>' +
+            '<button id="fechar-acao-lancamento" type="button" class="flex h-9 w-9 items-center justify-center rounded-full bg-slate-100 text-xl text-slate-600">&times;</button>' +
+          '</div>' +
+          alertaHtml().replace('mt-4', 'mb-3') +
+          (acao.modo === 'editar' ? modalEditarLancamentoHtml(acao) : modalOpcoesLancamentoHtml(acao)) +
+        '</section>' +
+      '</div>'
+    );
+  }
+
+  function modalOpcoesLancamentoHtml(acao) {
+    return (
+      '<div class="grid gap-2">' +
+        '<div class="rounded-2xl bg-slate-50 p-4"><p class="text-xs font-semibold text-slate-500">Dia ' + escapeHtml(acao.item.dia) + '</p><strong class="mt-1 block text-lg font-black">' + dinheiro(acao.item.valor) + '</strong></div>' +
+        '<button id="editar-lancamento" type="button" class="h-11 rounded-xl bg-slate-950 px-4 text-sm font-black uppercase tracking-wide text-white">Editar</button>' +
+        '<button id="excluir-lancamento" type="button" class="h-11 rounded-xl bg-red-600 px-4 text-sm font-black uppercase tracking-wide text-white">' + (state.carregando ? 'Excluindo...' : 'Excluir') + '</button>' +
+      '</div>'
+    );
+  }
+
+  function modalEditarLancamentoHtml(acao) {
+    var item = acao.item;
+    if (acao.tipo === 'receita') {
+      return (
+        '<div class="grid gap-3">' +
+          '<div class="grid grid-cols-[82px_1fr] gap-3">' +
+            campoClaro('editar-dia', 'Dia', 'inputmode="numeric" value="' + escapeHtml(item.dia) + '"') +
+            campoClaro('editar-origem', 'Origem', 'value="' + escapeHtml(item.origem) + '"') +
+          '</div>' +
+          campoValor('editar-valor', 'Valor', dinheiro(item.valor)) +
+          '<button id="salvar-edicao-lancamento" type="button" class="h-11 rounded-xl bg-cyan-500 px-4 text-sm font-black uppercase tracking-wide text-slate-950">' + (state.carregando ? 'Salvando...' : 'Salvar alteracoes') + '</button>' +
+        '</div>'
+      );
+    }
+
     return (
       '<div class="grid gap-3">' +
         '<div class="grid grid-cols-[82px_1fr] gap-3">' +
-          campoClaro('entrada-dia', 'Dia', 'inputmode="numeric"') +
-          campoClaro('entrada-origem', 'Origem') +
+          campoClaro('editar-dia', 'Dia', 'inputmode="numeric" value="' + escapeHtml(item.dia) + '"') +
+          '<label class="grid gap-1 text-xs font-black uppercase tracking-wide text-slate-600">Despesa' +
+            '<select id="editar-despesa" style="font-size:16px" class="h-11 rounded-md border border-slate-300 bg-white px-3 text-base font-bold normal-case tracking-normal">' +
+              state.despesas.map(function (despesa) {
+                return '<option value="' + escapeHtml(despesa.nome) + '"' + (despesa.nome === item.despesa ? ' selected' : '') + '>' + escapeHtml(despesa.nome) + '</option>';
+              }).join('') +
+            '</select>' +
+          '</label>' +
         '</div>' +
-        campoClaro('entrada-valor', 'Valor', 'inputmode="decimal"') +
-        '<button id="salvar-entrada" type="button" class="h-11 rounded-xl bg-cyan-500 px-4 text-sm font-black uppercase tracking-wide text-slate-950">' + (state.carregando ? 'Salvando...' : 'Salvar receita') + '</button>' +
+        campoClaro('editar-descricao', 'Descricao', 'value="' + escapeHtml(item.descricao || '') + '"') +
+        campoValor('editar-valor', 'Valor', dinheiro(item.valor)) +
+        '<button id="salvar-edicao-lancamento" type="button" class="h-11 rounded-xl bg-slate-950 px-4 text-sm font-black uppercase tracking-wide text-white">' + (state.carregando ? 'Salvando...' : 'Salvar alteracoes') + '</button>' +
       '</div>'
     );
   }
@@ -1362,7 +1843,7 @@
             menuBotaoHtml('menu-gerenciar', 'Gerenciar empresa', 'Dados e acesso da empresa') +
             menuBotaoHtml('menu-categorias', 'Categorias de despesas', 'Adicionar despesa base') +
             menuBotaoHtml('menu-ajuda-categorias', 'Instrucoes sobre categorias', 'Como organizar seus gastos') +
-            menuBotaoHtml('menu-instalar', 'Instalar app', isStandalone() ? 'App ja instalado' : 'Adicionar a tela inicial') +
+            (isStandalone() ? '' : menuBotaoHtml('menu-instalar', 'Instalar app', 'Adicionar a tela inicial')) +
             '<button id="menu-tema" type="button" class="rounded-2xl border ' + (state.darkMode ? 'border-slate-700 bg-slate-800' : 'border-slate-200 bg-slate-50') + ' px-4 py-3 text-left"><div class="flex items-center justify-between"><span class="text-sm font-black">Modo escuro</span><span class="text-xs font-bold text-cyan-700">' + (state.darkMode ? 'Ativo' : 'Inativo') + '</span></div></button>' +
             '<button id="sair" type="button" class="mt-2 rounded-2xl bg-red-600 px-4 py-3 text-left text-sm font-black text-white">Sair</button>' +
           '</div>' +
@@ -1384,6 +1865,8 @@
       ajudaCategorias: 'Instrucoes',
       'instalar-ios': 'Instalar no iPhone',
       'instalar-android': 'Instalar app',
+      termos: 'Termos de Uso',
+      privacidade: 'Privacidade',
     }[state.modalMenu] || 'Menu';
 
     return (
@@ -1407,6 +1890,8 @@
     if (state.modalMenu === 'ajudaCategorias') return ajudaCategoriasHtml();
     if (state.modalMenu === 'instalar-ios') return instalarIosHtml();
     if (state.modalMenu === 'instalar-android') return instalarAndroidHtml();
+    if (state.modalMenu === 'termos') return termosMobileHtml();
+    if (state.modalMenu === 'privacidade') return privacidadeMobileHtml();
     return '';
   }
 
@@ -1437,7 +1922,15 @@
     return (
       '<div class="grid gap-3 text-sm">' +
         '<div class="rounded-2xl bg-slate-50 p-4"><p class="text-[10px] font-black uppercase tracking-wide text-slate-400">Empresa atual</p><p class="mt-1 font-black">' + escapeHtml(nomeEmpresa(state.empresa)) + '</p></div>' +
-        '<p class="rounded-2xl bg-cyan-50 p-4 text-xs font-semibold leading-relaxed text-cyan-900">Nesta primeira versao mobile, o gerenciamento completo continua no desktop. Aqui voce pode conferir a empresa ativa, trocar de empresa e organizar categorias.</p>' +
+        campoClaro('nova-empresa-nome', 'Criar nova empresa', 'placeholder="Nome da empresa"') +
+        '<button id="criar-empresa-mobile" type="button" class="h-11 rounded-xl bg-cyan-500 px-4 text-sm font-black uppercase tracking-wide text-slate-950">' + (state.carregando ? 'Processando...' : 'Criar empresa') + '</button>' +
+        '<div class="rounded-2xl border border-red-100 bg-red-50 p-4">' +
+          '<p class="text-xs font-bold leading-relaxed text-red-800">Para excluir a empresa atual, digite exatamente o nome abaixo. Esta acao remove o ambiente e seus dados.</p>' +
+          '<p class="mt-2 text-sm font-black text-red-900">' + escapeHtml(nomeEmpresa(state.empresa)) + '</p>' +
+          '<input id="excluir-empresa-confirmacao" placeholder="Digite o nome da empresa" style="font-size:16px" class="mt-3 h-11 w-full rounded-md border border-red-200 bg-white px-3 text-base font-bold text-slate-900 outline-none" />' +
+          '<button id="excluir-empresa-mobile" type="button" class="mt-3 h-11 w-full rounded-xl bg-red-600 px-4 text-sm font-black uppercase tracking-wide text-white">' + (state.carregando ? 'Excluindo...' : 'Excluir empresa') + '</button>' +
+        '</div>' +
+        alertaHtml() +
       '</div>'
     );
   }
@@ -1459,7 +1952,23 @@
   }
 
   function ajudaCategoriasHtml() {
-    return '<div class="space-y-3 text-sm leading-relaxed text-slate-600"><p>Categorias agrupam despesas semelhantes para o grafico e os totais ficarem claros.</p><p>Exemplos: aluguel, energia e internet podem ficar em <strong>Estrutura</strong>. Anuncios, designer e campanhas podem ficar em <strong>Marketing</strong>.</p><p>Use nomes curtos e consistentes. Isso deixa a busca e a leitura mensal muito mais rapidas.</p></div>';
+    var categorias = [
+      ['AMORTIZACAO', 'Gastos para dividir o custo de coisas que nao sao fisicas.', 'Softwares comprados, valor pago por patente.'],
+      ['CUSTOS VARIAVEIS', 'Gastos que aumentam ou diminuem conforme a quantidade produzida ou vendida.', 'Embalagens, materia-prima, frete, comissoes.'],
+      ['DEPRECIACAO', 'Gastos para dividir o custo de coisas fisicas que a empresa usa.', 'Desgaste de maquinas, veiculos e equipamentos.'],
+      ['DESPESAS FINANCEIRAS', 'Gastos relacionados a dinheiro, bancos, juros e operacoes financeiras.', 'Juros, tarifas bancarias, taxas e variacoes de cambio.'],
+      ['DESPESAS OPERACIONAIS', 'Gastos necessarios para manter a empresa funcionando.', 'Aluguel, agua, luz, salarios, manutencao, pro-labore e publicidade.'],
+      ['IMPOSTOS SOBRE LUCRO', 'Tributos que a empresa paga sobre o lucro apurado.', 'Imposto de renda e CSLL.'],
+    ];
+
+    return (
+      '<div class="space-y-3 text-sm leading-relaxed text-slate-600">' +
+        categorias.map(function (item) {
+          return '<div class="rounded-2xl bg-slate-50 p-3"><strong class="block text-xs font-black uppercase tracking-wide text-slate-900">' + item[0] + '</strong><p class="mt-1">' + item[1] + '</p><p class="mt-1 text-xs font-semibold text-slate-500">Exemplos: ' + item[2] + '</p></div>';
+        }).join('') +
+        '<p class="rounded-2xl bg-cyan-50 p-3 text-xs font-semibold text-cyan-900">Observacao: se tiver duvida sobre onde classificar algum gasto, consulte o contador. Estes sao exemplos gerais para facilitar a organizacao.</p>' +
+      '</div>'
+    );
   }
 
   function instalarIosHtml() {
@@ -1467,12 +1976,21 @@
   }
 
   function instalarAndroidHtml() {
-    return '<div class="space-y-3 text-sm leading-relaxed text-slate-600"><p>Quando o navegador permitir, use a opcao <strong>Instalar app</strong> ou <strong>Adicionar a tela inicial</strong>.</p><p>Se nao aparecer agora, abra o menu do Chrome e escolha <strong>Adicionar a tela inicial</strong>.</p></div>';
+    return '<div class="space-y-3 text-sm leading-relaxed text-slate-600"><p>Quando o navegador permitir, use a opcao <strong>Instalar app</strong> ou <strong>Adicionar a tela inicial</strong>.</p><p>Se nao aparecer agora, abra o menu do navegador e procure por <strong>Instalar app</strong> ou <strong>Adicionar a tela inicial</strong>.</p></div>';
+  }
+
+  function termosMobileHtml() {
+    return '<div class="space-y-3 text-sm leading-relaxed text-slate-600"><p>O AvantaLab Gestao apoia a organizacao, controle e analise de informacoes financeiras e administrativas da empresa.</p><p>O usuario e responsavel pela veracidade dos dados cadastrados e pelo uso adequado das informacoes geradas pelo sistema.</p><p>As funcionalidades podem evoluir ao longo do tempo para melhorar seguranca, desempenho e experiencia de uso.</p></div>';
+  }
+
+  function privacidadeMobileHtml() {
+    return '<div class="space-y-3 text-sm leading-relaxed text-slate-600"><p>Tratamos os dados informados no sistema apenas para viabilizar o funcionamento da plataforma e seus recursos de gestao.</p><p>As informacoes de acesso, empresas, lancamentos e configuracoes sao usadas para identificar o usuario e exibir os dados corretos de cada ambiente.</p><p>Use senhas seguras e mantenha o acesso restrito a pessoas autorizadas.</p></div>';
   }
 
   function render() {
     root.setAttribute('data-avantalab-mobile-ready', '1');
-    root.innerHTML = state.autenticado ? telaApp() : telaLogin();
+    root.innerHTML = !state.pronto ? telaCarregandoMobile() : (state.autenticado ? telaApp() : telaLogin());
+    atualizarScrollBloqueado();
 
     bind('entrar', entrar);
     bind('entrar-google', entrarGoogle);
@@ -1560,9 +2078,18 @@
     bind('menu-instalar', instalarApp);
     bind('menu-tema', trocarTema);
     bind('fechar-modal-menu', fecharModalMenu);
+    bind('termos-mobile', function () { abrirModalMenu('termos'); });
+    bind('privacidade-mobile', function () { abrirModalMenu('privacidade'); });
+    bind('criar-empresa-mobile', criarEmpresaMobile);
+    bind('excluir-empresa-mobile', excluirEmpresaMobile);
     bind('salvar-categoria', salvarCategoriaDespesa);
     bind('salvar-despesa', salvarDespesa);
     bind('salvar-entrada', salvarEntrada);
+    bind('salvar-total-receita', salvarTotalReceita);
+    bind('toggle-categorias', function () {
+      state.categoriasExpandido = !state.categoriasExpandido;
+      render();
+    });
     bind('mes-anterior', function () { mudarMes(-1); });
     bind('mes-proximo', function () { mudarMes(1); });
     bind('ver-despesas', function () {
@@ -1577,6 +2104,11 @@
     });
     bind('ver-despesas-lista', function () {
       state.visao = 'despesas';
+      state.busca = '';
+      render();
+    });
+    bind('ver-receitas-lista', function () {
+      state.visao = 'receitas';
       state.busca = '';
       render();
     });
@@ -1601,6 +2133,32 @@
     bind('tipo-receita', function () {
       state.tipoLancamento = 'receita';
       render();
+    });
+    bind('modo-receita-entrada', function () {
+      state.modoReceita = 'entrada';
+      state.erro = '';
+      render();
+    });
+    bind('modo-receita-total', function () {
+      state.modoReceita = 'total';
+      state.erro = '';
+      render();
+    });
+    bind('fechar-acao-lancamento', fecharAcaoLancamento);
+    bind('editar-lancamento', function () {
+      if (!state.modalAcao) return;
+      state.modalAcao.modo = 'editar';
+      state.erro = '';
+      render();
+    });
+    bind('excluir-lancamento', excluirLancamentoSelecionado);
+    bind('salvar-edicao-lancamento', salvarEdicaoLancamentoSelecionado);
+
+    ['despesa-valor', 'entrada-valor', 'receita-total', 'editar-valor'].forEach(function (id) {
+      bindInput(id, function () {
+        var item = document.getElementById(id);
+        if (item) item.value = formatarMoedaDigitada(item.value);
+      });
     });
 
     bindChange('mes', function () {
@@ -1641,10 +2199,39 @@
         carregarDados();
       });
     });
+    Array.prototype.forEach.call(document.querySelectorAll('[data-lancamento-id]'), function (botao) {
+      botao.addEventListener('click', function () {
+        abrirAcaoLancamento(botao.getAttribute('data-tipo-lancamento'), botao.getAttribute('data-lancamento-id'));
+      });
+    });
+  }
+
+  function configurarPullToRefresh() {
+    var inicioY = 0;
+    var acompanhando = false;
+
+    window.addEventListener('touchstart', function (event) {
+      if (!isStandalone() || deveBloquearScroll() || window.scrollY > 2 || !event.touches.length) {
+        acompanhando = false;
+        return;
+      }
+
+      acompanhando = true;
+      inicioY = event.touches[0].clientY;
+    }, { passive: true });
+
+    window.addEventListener('touchend', function (event) {
+      if (!acompanhando || !isStandalone() || deveBloquearScroll()) return;
+      acompanhando = false;
+
+      var toque = event.changedTouches && event.changedTouches[0];
+      if (toque && toque.clientY - inicioY > 95 && window.scrollY <= 2) {
+        window.location.reload();
+      }
+    }, { passive: true });
   }
 
   async function iniciar() {
-    state.pronto = true;
     try {
       state.darkMode = localStorage.getItem('avantalab_mobile_dark') === '1';
     } catch (error) {}
@@ -1656,7 +2243,7 @@
           return Promise.all(
             keys
               .filter(function (key) {
-                return key.indexOf('avantalab-mobile-') === 0 && key !== 'avantalab-mobile-v14';
+                return key.indexOf('avantalab-mobile-') === 0 && key !== 'avantalab-mobile-v15';
               })
               .map(function (key) {
                 return caches.delete(key);
@@ -1676,6 +2263,8 @@
       navigator.serviceWorker.register('/mobile-sw.js').catch(function () {});
     }
 
+    configurarPullToRefresh();
+
     render();
 
     try {
@@ -1686,7 +2275,10 @@
         await carregarEmpresas(state.usuario.id);
         await carregarDados();
       }
+      state.pronto = true;
+      render();
     } catch (error) {
+      state.pronto = true;
       state.erro = 'Nao foi possivel recuperar a sessao. Entre novamente.';
       render();
     }
