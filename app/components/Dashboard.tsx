@@ -19,6 +19,15 @@ interface DashboardProps {
   inputFaturamento: string;
   setInputFaturamento: (val: string) => void;
   salvarFaturamento: () => void;
+
+  entradaFaturamentoDia: string;
+  setEntradaFaturamentoDia: (val: string) => void;
+  entradaFaturamentoOrigem: string;
+  setEntradaFaturamentoOrigem: (val: string) => void;
+  entradaFaturamentoValor: string;
+  handleEntradaFaturamentoValorChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  adicionarEntradaFaturamento: () => void;
+
   receitasTotais: number;
   despesasTotais: number;
   lucroTotalAnual: number;
@@ -29,7 +38,15 @@ export default function Dashboard({
   meses, lancamentos, setMesAtivo, bgCard, corPrimaria, textStrong, textMuted, darkMode,
   mesResumoDash, setMesResumoDash, totalDespesasMes, maiorGasto, lucroOperacional,
   mesFaturamento, setMesFaturamento, inputFaturamento, setInputFaturamento,
-  salvarFaturamento, receitasTotais, despesasTotais, lucroTotalAnual, formatarMoeda
+  salvarFaturamento,
+  entradaFaturamentoDia,
+  setEntradaFaturamentoDia,
+  entradaFaturamentoOrigem,
+  setEntradaFaturamentoOrigem,
+  entradaFaturamentoValor,
+  handleEntradaFaturamentoValorChange,
+  adicionarEntradaFaturamento,
+  receitasTotais, despesasTotais, lucroTotalAnual, formatarMoeda
 }: DashboardProps) {
   
   const [ocultarValores, setOcultarValores] = useState(true);
@@ -248,7 +265,7 @@ const mostrarComparativoResumoDash =
           </div>
         </div>
 
-        {/* ================= QUADRANTE FATURAMENTO ================= */}
+                {/* ================= QUADRANTE FATURAMENTO ================= */}
         <div
           className="rounded-2xl shadow-lg p-6 relative overflow-hidden"
           style={{
@@ -293,45 +310,139 @@ const mostrarComparativoResumoDash =
             </select>
           </div>
 
-          <div className="flex gap-2 relative z-10">
-            {/* Input Fundo Branco, Formatado e com "R$" Fixo */}
-            <div className="relative w-full">
-              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-sm">R$</span>
-              <input
-  type="text"
-  value={inputFaturamento}
-  onChange={handleInputFaturamento}
-  onKeyDown={(e) => {
-    if (e.key === 'Enter') {
-      e.preventDefault();
-      salvarFaturamento();
-    }
-  }}
-  placeholder="0,00"
-  className="w-full pl-9 pr-4 py-2.5 rounded-lg bg-white text-slate-800 font-bold focus:outline-none shadow-inner text-right"
-/>
+          <div className="relative z-10 space-y-3">
+            <div>
+              <p
+                className="mb-1 text-[10px] font-black uppercase tracking-wide opacity-80"
+                style={{ color: textoSobreCorPrimaria }}
+              >
+                Definir total do mês
+              </p>
+
+              <div className="flex gap-2">
+                <div className="relative w-full">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-sm">
+                    R$
+                  </span>
+
+                  <input
+                    type="text"
+                    value={inputFaturamento}
+                    onChange={handleInputFaturamento}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        salvarFaturamento();
+                      }
+                    }}
+                    placeholder="0,00"
+                    className="w-full pl-9 pr-4 py-2.5 rounded-lg bg-white text-slate-800 font-bold focus:outline-none shadow-inner text-right"
+                  />
+                </div>
+
+                <button
+                  onClick={salvarFaturamento}
+                  className="
+                    px-4 rounded-lg font-bold border shadow-md text-xs
+                    transition-all duration-200
+                    hover:brightness-110 hover:shadow-lg hover:scale-[1.03]
+                    active:scale-95 active:shadow-inner
+                    cursor-pointer select-none
+                  "
+                  style={{
+                    color: textoSobreCorPrimaria,
+                    backgroundColor: corEhClara(corPrimaria)
+                      ? 'rgba(15, 23, 42, 0.08)'
+                      : 'rgba(0, 0, 0, 0.20)',
+                    borderColor: corEhClara(corPrimaria)
+                      ? 'rgba(15, 23, 42, 0.18)'
+                      : 'rgba(255, 255, 255, 0.12)',
+                  }}
+                >
+                  Definir
+                </button>
+              </div>
             </div>
-            <button
-  onClick={salvarFaturamento}
-  className="
-    px-5 rounded-lg font-bold border shadow-md
-    transition-all duration-200
-    hover:brightness-110 hover:shadow-lg hover:scale-[1.05]
-active:scale-95 active:shadow-inner
-    cursor-pointer select-none
-  "
-  style={{
-    color: textoSobreCorPrimaria,
-    backgroundColor: corEhClara(corPrimaria)
-      ? 'rgba(15, 23, 42, 0.08)'
-      : 'rgba(0, 0, 0, 0.20)',
-    borderColor: corEhClara(corPrimaria)
-      ? 'rgba(15, 23, 42, 0.18)'
-      : 'rgba(255, 255, 255, 0.12)',
-  }}
->
-  Salvar
-</button>
+
+            <div
+              className="border-t pt-3"
+              style={{
+                borderColor: corEhClara(corPrimaria)
+                  ? 'rgba(15, 23, 42, 0.18)'
+                  : 'rgba(255, 255, 255, 0.16)',
+              }}
+            >
+              <p
+                className="mb-2 text-[10px] font-black uppercase tracking-wide opacity-80"
+                style={{ color: textoSobreCorPrimaria }}
+              >
+                Adicionar entrada
+              </p>
+
+              <div className="grid grid-cols-[64px_1fr] gap-2 mb-2">
+                <input
+                  type="number"
+                  min="1"
+                  max="31"
+                  value={entradaFaturamentoDia}
+                  onChange={(e) => setEntradaFaturamentoDia(e.target.value)}
+                  placeholder="Dia"
+                  className="w-full rounded-lg bg-white px-3 py-2 text-sm font-bold text-slate-800 shadow-inner outline-none"
+                />
+
+                <input
+                  type="text"
+                  value={entradaFaturamentoOrigem}
+                  onChange={(e) => setEntradaFaturamentoOrigem(e.target.value)}
+                  placeholder="Origem da entrada"
+                  className="w-full rounded-lg bg-white px-3 py-2 text-sm font-semibold text-slate-800 shadow-inner outline-none"
+                />
+              </div>
+
+              <div className="flex gap-2">
+                <div className="relative w-full">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-sm">
+                    R$
+                  </span>
+
+                  <input
+                    type="text"
+                    value={entradaFaturamentoValor}
+                    onChange={handleEntradaFaturamentoValorChange}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        adicionarEntradaFaturamento();
+                      }
+                    }}
+                    placeholder="0,00"
+                    className="w-full pl-9 pr-4 py-2 rounded-lg bg-white text-slate-800 font-bold focus:outline-none shadow-inner text-right"
+                  />
+                </div>
+
+                <button
+                  onClick={adicionarEntradaFaturamento}
+                  className="
+                    px-4 rounded-lg font-bold border shadow-md text-xs
+                    transition-all duration-200
+                    hover:brightness-110 hover:shadow-lg hover:scale-[1.03]
+                    active:scale-95 active:shadow-inner
+                    cursor-pointer select-none
+                  "
+                  style={{
+                    color: textoSobreCorPrimaria,
+                    backgroundColor: corEhClara(corPrimaria)
+                      ? 'rgba(15, 23, 42, 0.08)'
+                      : 'rgba(0, 0, 0, 0.20)',
+                    borderColor: corEhClara(corPrimaria)
+                      ? 'rgba(15, 23, 42, 0.18)'
+                      : 'rgba(255, 255, 255, 0.12)',
+                  }}
+                >
+                  Adicionar
+                </button>
+              </div>
+            </div>
           </div>
         </div>
         {/* ========================================================= */}

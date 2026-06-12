@@ -265,6 +265,25 @@ export async function buscarFaturamentos(empresaId: string, ano: number) {
 
   return data;
 }
+export async function buscarFaturamentosEntradas(
+  empresaId: string,
+  ano: number
+) {
+  const { data, error } = await supabase
+    .from('faturamentos_entradas')
+    .select('*')
+    .eq('empresa_id', empresaId)
+    .eq('ano', ano)
+    .order('dia', { ascending: true })
+    .order('created_at', { ascending: true });
+
+  if (error) {
+    console.error('Erro ao buscar entradas de faturamento:', error);
+    return [];
+  }
+
+  return data || [];
+}
 
 export async function salvarDespesaCadastrada(
   empresaId: string,
@@ -399,6 +418,75 @@ export async function salvarFaturamentoBanco({
   }
 
   return data;
+}
+
+export async function salvarFaturamentoEntrada({
+  empresaId,
+  ano,
+  mes,
+  dia,
+  origem,
+  valor,
+}: {
+  empresaId: string;
+  ano: number;
+  mes: string;
+  dia: number;
+  origem: string;
+  valor: number;
+}) {
+  const { data: usuarioLogado } = await supabase.auth.getUser();
+
+  const { data, error } = await supabase
+    .from('faturamentos_entradas')
+    .insert({
+      empresa_id: empresaId,
+      ano,
+      mes,
+      dia,
+      origem,
+      valor,
+      criado_por: usuarioLogado.user?.id || null,
+    })
+    .select()
+    .single();
+
+  if (error) {
+    console.error('Erro ao salvar entrada de faturamento:', error);
+
+    return {
+      erro: true,
+      mensagem: tratarErroSupabase(error),
+      data: null,
+    };
+  }
+
+  return {
+    erro: false,
+    mensagem: '',
+    data,
+  };
+}
+
+export async function apagarFaturamentoEntrada(id: string) {
+  const { error } = await supabase
+    .from('faturamentos_entradas')
+    .delete()
+    .eq('id', id);
+
+  if (error) {
+    console.error('Erro ao apagar entrada de faturamento:', error);
+
+    return {
+      erro: true,
+      mensagem: tratarErroSupabase(error),
+    };
+  }
+
+  return {
+    erro: false,
+    mensagem: '',
+  };
 }
 
 export async function salvarConfiguracoesBanco({

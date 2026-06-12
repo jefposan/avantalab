@@ -28,10 +28,13 @@ import {
   buscarDespesasCadastradas,
   buscarLancamentos,
   buscarFaturamentos,
+  buscarFaturamentosEntradas,
   salvarLancamento,
   apagarLancamento,
   atualizarLancamento,
   salvarFaturamentoBanco,
+  salvarFaturamentoEntrada,
+  apagarFaturamentoEntrada,
   salvarConfiguracoesBanco,
   salvarDespesaCadastrada,
   apagarDespesaCadastrada,
@@ -200,10 +203,17 @@ const [feedbackEnviando, setFeedbackEnviando] = useState(false);
   const [modalPrivacidade, setModalPrivacidade] = useState(false);
 
   // Dados Financeiros
-  const [mesFaturamento, setMesFaturamento] = useState('JANEIRO');
-  const [faturamentos, setFaturamentos] = useState<Record<string, number>>({});
-  const [inputFaturamento, setInputFaturamento] = useState('');
-  const [mesResumoDash, setMesResumoDash] = useState('JANEIRO');
+const [mesFaturamento, setMesFaturamento] = useState('JANEIRO');
+const [faturamentos, setFaturamentos] = useState<Record<string, number>>({});
+const [inputFaturamento, setInputFaturamento] = useState('');
+const [mesResumoDash, setMesResumoDash] = useState('JANEIRO');
+
+const [faturamentosEntradas, setFaturamentosEntradas] = useState<any[]>([]);
+const [entradaFaturamentoDia, setEntradaFaturamentoDia] = useState('');
+const [entradaFaturamentoOrigem, setEntradaFaturamentoOrigem] = useState('');
+const [entradaFaturamentoValor, setEntradaFaturamentoValor] = useState('');
+const [entradaFaturamentoValorNumerico, setEntradaFaturamentoValorNumerico] = useState(0);
+const [entradaFaturamentoSalvando, setEntradaFaturamentoSalvando] = useState(false);
 
   const [despesasCadastradas, setDespesasCadastradas] = useState<
   { nome: string; categoria: string }[]
@@ -611,6 +621,7 @@ setAcessoNaoConfigurado(false);
   setDespesasCadastradas([]);
   setLancamentos([]);
   setFaturamentos({});
+  setFaturamentosEntradas([]);
 
   setEmpresasDoUsuario(empresasEncontradas);
   setEmpresaParaSelecionar(empresasEncontradas[0]);
@@ -646,6 +657,10 @@ useEffect(() => {
 
     const lancamentosBanco = await buscarLancamentos(empresaId, ano);
     const faturamentosBanco = await buscarFaturamentos(empresaId, ano);
+    const faturamentosEntradasBanco = await buscarFaturamentosEntradas(
+      empresaId,
+      ano
+    );
 
     setLancamentos(
       lancamentosBanco.map((l: any) => ({
@@ -655,6 +670,15 @@ useEffect(() => {
         despesa: l.despesa_nome,
         descricao: l.descricao || '',
         valor: Number(l.valor),
+      }))
+    );
+        setFaturamentosEntradas(
+      faturamentosEntradasBanco.map((entrada: any) => ({
+        id: entrada.id,
+        mes: entrada.mes,
+        dia: entrada.dia,
+        origem: entrada.origem,
+        valor: Number(entrada.valor),
       }))
     );
 
@@ -759,6 +783,11 @@ useEffect(() => {
   setFormDescricao('');
   setFormValor('');
   setValorNumericoRaw(0);
+
+  setEntradaFaturamentoDia('');
+  setEntradaFaturamentoOrigem('');
+  setEntradaFaturamentoValor('');
+  setEntradaFaturamentoValorNumerico(0);
 
   setEditDia('');
   setEditDespesa('');
@@ -963,6 +992,19 @@ const lancamentosFiltradosDoMes = useMemo(() => {
   });
 }, [buscaLancamento, lancamentosOrdenados, mesAtivo]);
 
+const entradasFaturamentoDoMes = useMemo(() => {
+  if (!mesAtivo) return [];
+
+  return faturamentosEntradas
+    .filter((entrada) => entrada.mes === mesAtivo)
+    .sort((a, b) => Number(b.dia) - Number(a.dia));
+}, [faturamentosEntradas, mesAtivo]);
+
+const totalEntradasFaturamentoDoMes = entradasFaturamentoDoMes.reduce(
+  (acc, entrada) => acc + Number(entrada.valor || 0),
+  0
+);
+
   const maiorGasto = lancamentosDoMes.length > 0 ? lancamentosDoMes.reduce((prev, curr) => (curr.valor > prev.valor ? curr : prev), { despesa: '', valor: 0 }) : { despesa: 'Nenhuma despesa', valor: 0 };
   const receitasTotais = Object.values(faturamentos).reduce((a, b) => a + b, 0);
   const despesasTotais = lancamentos.reduce((a, b) => a + b.valor, 0);
@@ -985,13 +1027,13 @@ const lancamentosFiltradosDoMes = useMemo(() => {
     return;
   }
 
-  if (valor <= 0) {
-    abrirAviso(
-      'Valor obrigatório',
-      'Informe um valor de faturamento maior que zero antes de salvar.'
-    );
-    return;
-  }
+  if (valor < 0) {
+  abrirAviso(
+    'Valor inválido',
+    'O faturamento não pode ser negativo.'
+  );
+  return;
+}
 
   const salvo = await salvarFaturamentoBanco({
     empresaId,
@@ -1034,13 +1076,13 @@ const salvarFaturamento = async () => {
   const valorLimpo =
     parseInt(inputFaturamento.replace(/\D/g, '') || '0', 10) / 100;
 
-  if (valorLimpo <= 0) {
-    abrirAviso(
-      'Valor obrigatório',
-      'Informe um valor de faturamento maior que zero antes de salvar.'
-    );
-    return;
-  }
+  if (valorLimpo < 0) {
+  abrirAviso(
+    'Valor inválido',
+    'O faturamento não pode ser negativo.'
+  );
+  return;
+}
 
   const salvo = await salvarFaturamentoBanco({
     empresaId,
@@ -1063,21 +1105,119 @@ const salvarFaturamento = async () => {
     );
   }
 };
-  const handleValorChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-  let value = e.target.value.replace(/\D/g, "");
 
-  if (!value) {
-    setFormValor("");
-    setValorNumericoRaw(0);
+const adicionarEntradaFaturamento = async () => {
+  if (entradaFaturamentoSalvando) return;
+
+  if (!empresaId) {
+    abrirAviso(
+      'Empresa não carregada',
+      'Tente atualizar a página e acessar novamente.'
+    );
     return;
   }
 
-  const numericValue = parseInt(value, 10) / 100;
+  const mesReferenciaFaturamento = mesAtivo || mesFaturamento;
 
-  setValorNumericoRaw(numericValue);
-  setFormValor(formatarMoeda(numericValue));
+  if (!mesReferenciaFaturamento) {
+    abrirAviso(
+      'Mês obrigatório',
+      'Selecione o mês antes de adicionar a entrada.'
+    );
+    return;
+  }
+
+  if (
+    !entradaFaturamentoDia ||
+    !entradaFaturamentoOrigem.trim() ||
+    entradaFaturamentoValorNumerico <= 0
+  ) {
+    abrirAviso(
+      'Campos obrigatórios',
+      'Informe dia, origem e valor da entrada.'
+    );
+    return;
+  }
+
+  const diaNumerico = parseInt(entradaFaturamentoDia, 10);
+  const maxDias = getMaxDias(mesReferenciaFaturamento, anoSelecionado);
+
+  if (
+    Number.isNaN(diaNumerico) ||
+    diaNumerico < 1 ||
+    diaNumerico > maxDias
+  ) {
+    abrirAviso(
+      'Dia inválido',
+      `Informe um dia válido entre 1 e ${maxDias}.`
+    );
+    return;
+  }
+
+  try {
+    setEntradaFaturamentoSalvando(true);
+
+    const origemLimpa = formatarDescricao(entradaFaturamentoOrigem);
+
+    const entradaSalva = await salvarFaturamentoEntrada({
+      empresaId,
+      ano: Number(anoSelecionado),
+      mes: mesReferenciaFaturamento,
+      dia: diaNumerico,
+      origem: origemLimpa,
+      valor: entradaFaturamentoValorNumerico,
+    });
+
+    if (entradaSalva.erro || !entradaSalva.data) {
+      abrirAviso(
+        'Erro ao salvar entrada',
+        entradaSalva.mensagem || 'Não foi possível salvar a entrada.'
+      );
+      return;
+    }
+
+    const totalAtual = faturamentos[mesReferenciaFaturamento] || 0;
+    const novoTotal = totalAtual + entradaFaturamentoValorNumerico;
+
+    const faturamentoSalvo = await salvarFaturamentoBanco({
+      empresaId,
+      ano: Number(anoSelecionado),
+      mes: mesReferenciaFaturamento,
+      valor: novoTotal,
+    });
+
+    if (!faturamentoSalvo) {
+      abrirAviso(
+        'Entrada salva parcialmente',
+        'A entrada foi registrada, mas não foi possível atualizar o total do mês. Atualize a página e confira o faturamento.'
+      );
+      return;
+    }
+
+    const novaEntrada = {
+      id: entradaSalva.data.id,
+      mes: entradaSalva.data.mes,
+      dia: entradaSalva.data.dia,
+      origem: entradaSalva.data.origem,
+      valor: Number(entradaSalva.data.valor),
+    };
+
+    
+    setFaturamentosEntradas((prev) => [novaEntrada, ...prev]);
+
+    setFaturamentos((prev) => ({
+      ...prev,
+      [mesReferenciaFaturamento]: novoTotal,
+    }));
+
+    setEntradaFaturamentoDia('');
+    setEntradaFaturamentoOrigem('');
+    setEntradaFaturamentoValor('');
+    setEntradaFaturamentoValorNumerico(0);
+  } finally {
+    setEntradaFaturamentoSalvando(false);
+  }
 };
-
 const abrirModalUsuarios = () => {
   setUsuarioNome('');
   setUsuarioLogin('');
@@ -1091,7 +1231,7 @@ const abrirModalUsuarios = () => {
   setEditUsuarioEmail('');
   setEditUsuarioNovaSenha('');
   setMostrarEditUsuarioNovaSenha(false);
-  setUsuarioPerfil('');
+  setEditUsuarioPerfil('operador_simples');
 
   setModalUsuarios(true);
 
@@ -1102,7 +1242,6 @@ const abrirModalUsuarios = () => {
     setUsuarioPerfil('');
   }, 50);
 };
-
 const carregarUsuariosEmpresa = async () => {
   if (!empresaId || !podeGerenciarUsuarios) return;
 
@@ -1636,6 +1775,72 @@ const apagarDespesa = async (id: string) => {
   }
 };
 
+const excluirEntradaFaturamento = async (entrada: any) => {
+  if (!empresaId) {
+    abrirAviso(
+      'Empresa não carregada',
+      'Tente atualizar a página e acessar novamente.'
+    );
+    return;
+  }
+
+  if (!entrada?.id) {
+    abrirAviso(
+      'Entrada não encontrada',
+      'Não foi possível identificar a entrada para exclusão.'
+    );
+    return;
+  }
+
+  abrirConfirmacao({
+    titulo: 'Excluir entrada',
+    mensagem:
+      `Deseja excluir a entrada "${entrada.origem}" no valor de ${formatarMoeda(Number(entrada.valor || 0))}?\n\nO valor será descontado do faturamento total do mês.`,
+    textoConfirmar: 'Excluir',
+    acao: async () => {
+      const resultado = await apagarFaturamentoEntrada(entrada.id);
+
+      if (resultado.erro) {
+        abrirAviso(
+          'Erro ao excluir entrada',
+          resultado.mensagem || 'Não foi possível excluir a entrada.'
+        );
+        return;
+      }
+
+      const mesEntrada = entrada.mes;
+      const valorEntrada = Number(entrada.valor || 0);
+      const totalAtual = faturamentos[mesEntrada] || 0;
+      const novoTotal = Math.max(0, totalAtual - valorEntrada);
+
+      const faturamentoSalvo = await salvarFaturamentoBanco({
+        empresaId,
+        ano: Number(anoSelecionado),
+        mes: mesEntrada,
+        valor: novoTotal,
+      });
+
+      if (!faturamentoSalvo) {
+        abrirAviso(
+          'Entrada excluída parcialmente',
+          'A entrada foi removida, mas não foi possível atualizar o total do mês. Atualize a página e confira o faturamento.'
+        );
+        return;
+      }
+
+      setFaturamentosEntradas((prev) =>
+        prev.filter((item) => item.id !== entrada.id)
+      );
+
+      setFaturamentos((prev) => ({
+        ...prev,
+        [mesEntrada]: novoTotal,
+      }));
+    },
+  });
+};
+
+
 function abrirAviso(
   titulo: string,
   mensagem: string,
@@ -1815,7 +2020,36 @@ const cancelarEdicaoLancamento = () => {
   setEditValor('');
   setEditValorNumerico(0);
 };
+const handleEntradaFaturamentoValorChange = (
+  e: React.ChangeEvent<HTMLInputElement>
+) => {
+  const value = e.target.value.replace(/\D/g, '');
 
+  if (!value) {
+    setEntradaFaturamentoValor('');
+    setEntradaFaturamentoValorNumerico(0);
+    return;
+  }
+
+  const numericValue = parseInt(value, 10) / 100;
+
+  setEntradaFaturamentoValorNumerico(numericValue);
+  setEntradaFaturamentoValor(formatarMoeda(numericValue));
+};
+const handleValorChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  let value = e.target.value.replace(/\D/g, '');
+
+  if (!value) {
+    setFormValor('');
+    setValorNumericoRaw(0);
+    return;
+  }
+
+  const numericValue = parseInt(value, 10) / 100;
+
+  setValorNumericoRaw(numericValue);
+  setFormValor(formatarMoeda(numericValue));
+};
 const handleEditValorChange = (e: React.ChangeEvent<HTMLInputElement>) => {
   const value = e.target.value.replace(/\D/g, '');
 
@@ -6977,6 +7211,209 @@ setAjustesAberto(false);
     )}
   </div>
 </div>
+
+<div
+  className={`${bgCard} mt-6 rounded-xl shadow-lg border-x border-b border-t-[4px] p-6`}
+  style={{ borderTopColor: corPrimaria }}
+>
+  <div className="mb-5 flex items-center justify-between gap-4">
+    <div>
+      <h3 className={`text-sm font-black uppercase tracking-widest ${textStrong}`}>
+        Entradas de faturamento
+      </h3>
+      <p className={`mt-1 text-xs ${textMuted}`}>
+        Lance as entradas individuais de {mesAtivo}.
+      </p>
+    </div>
+
+    <div className="text-right">
+      <p className={`text-[10px] font-bold uppercase tracking-wide ${textMuted}`}>
+        Total lançado
+      </p>
+      <p className="text-xl font-black text-emerald-500">
+        {formatarMoeda(totalEntradasFaturamentoDoMes)}
+      </p>
+    </div>
+  </div>
+
+  <div className={`mb-5 rounded-xl border p-4 ${
+    darkMode ? 'border-slate-700 bg-slate-800/60' : 'border-slate-200 bg-slate-50'
+  }`}>
+    <div className="grid grid-cols-1 gap-3 md:grid-cols-[90px_1fr_180px_150px]">
+      <input
+        type="number"
+        min="1"
+        max={mesAtivo ? getMaxDias(mesAtivo, anoSelecionado) : 31}
+        value={entradaFaturamentoDia}
+        onChange={(e) => {
+          const valor = parseInt(e.target.value, 10);
+          const maxDias = mesAtivo ? getMaxDias(mesAtivo, anoSelecionado) : 31;
+
+          if (valor > maxDias) {
+            setEntradaFaturamentoDia(String(maxDias));
+          } else {
+            setEntradaFaturamentoDia(e.target.value);
+          }
+        }}
+        placeholder="Dia"
+        className={`w-full rounded-lg border p-2.5 text-center font-bold shadow-sm outline-none ${
+          darkMode
+            ? 'border-slate-600 bg-slate-700 text-white'
+            : 'border-slate-300 bg-white text-slate-700'
+        }`}
+      />
+
+      <input
+        type="text"
+        value={entradaFaturamentoOrigem}
+        onChange={(e) => setEntradaFaturamentoOrigem(e.target.value)}
+        placeholder="Origem da entrada"
+        className={`w-full rounded-lg border p-2.5 font-semibold shadow-sm outline-none ${
+          darkMode
+            ? 'border-slate-600 bg-slate-700 text-white placeholder:text-slate-400'
+            : 'border-slate-300 bg-white text-slate-700 placeholder:text-slate-400'
+        }`}
+      />
+
+      <div className="relative">
+        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-sm">
+          R$
+        </span>
+
+        <input
+          type="text"
+          value={entradaFaturamentoValor}
+          onChange={handleEntradaFaturamentoValorChange}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') {
+              e.preventDefault();
+              adicionarEntradaFaturamento();
+            }
+          }}
+          placeholder="0,00"
+          className={`w-full rounded-lg border py-2.5 pl-9 pr-3 text-right font-bold shadow-sm outline-none ${
+            darkMode
+              ? 'border-slate-600 bg-slate-700 text-white'
+              : 'border-slate-300 bg-white text-slate-700'
+          }`}
+        />
+      </div>
+
+      <button
+  type="button"
+  onClick={adicionarEntradaFaturamento}
+  disabled={entradaFaturamentoSalvando}
+  className="rounded-lg px-4 py-2.5 text-sm font-black uppercase tracking-wide text-white shadow-md transition hover:brightness-110 active:scale-95 disabled:cursor-not-allowed disabled:opacity-60"
+  style={{ backgroundColor: corPrimaria }}
+>
+  {entradaFaturamentoSalvando ? 'Salvando...' : 'Adicionar'}
+</button>
+    </div>
+  </div>
+
+  <div className="overflow-hidden rounded-xl border border-slate-200/20">
+    <table className="w-full table-fixed text-left border-collapse">
+      <colgroup>
+  <col className="w-[12%]" />
+  <col className="w-[50%]" />
+  <col className="w-[24%]" />
+  <col className="w-[14%]" />
+</colgroup>
+
+      <thead className={darkMode ? 'bg-slate-700' : 'bg-slate-100'}>
+        <tr>
+          <th className={`p-3 text-xs font-black uppercase tracking-wider ${textMuted}`}>
+            Dia
+          </th>
+          <th className={`p-3 text-xs font-black uppercase tracking-wider ${textMuted}`}>
+            Origem
+          </th>
+          <th className={`p-3 text-right text-xs font-black uppercase tracking-wider ${textMuted}`}>
+            Valor
+          </th>
+          <th className={`p-3 text-center text-xs font-black uppercase tracking-wider ${textMuted}`}>
+  Ação
+</th>
+        </tr>
+      </thead>
+
+      <tbody>
+        {entradasFaturamentoDoMes.length > 0 ? (
+          entradasFaturamentoDoMes.map((entrada) => (
+            <tr
+              key={entrada.id}
+              className={`border-t ${
+                darkMode ? 'border-slate-700' : 'border-slate-100'
+              }`}
+            >
+              <td className={`p-3 text-sm font-bold ${textStrong}`}>
+                {entrada.dia}
+              </td>
+
+              <td className={`p-3 text-sm font-semibold ${textMuted}`}>
+                {entrada.origem}
+              </td>
+
+              <td className="p-3 text-right text-sm font-black text-emerald-500">
+                {formatarMoeda(Number(entrada.valor || 0))}
+              </td>
+              <td className="p-3 text-center">
+  <div className="flex items-center justify-center gap-1">
+    <button
+      type="button"
+      onClick={() => {
+        abrirAviso(
+          'Edição de entrada',
+          'A edição de entradas será habilitada na próxima etapa.'
+        );
+      }}
+      className="text-slate-400 hover:text-blue-500 hover:bg-blue-500/10 p-1.5 rounded transition-all cursor-pointer"
+      title="Editar"
+    >
+      <svg className="w-4 h-4 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth="2"
+          d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"
+        />
+      </svg>
+    </button>
+
+    <button
+      type="button"
+      onClick={() => excluirEntradaFaturamento(entrada)}
+      className="text-slate-400 hover:text-red-500 hover:bg-red-500/10 p-1.5 rounded transition-all cursor-pointer"
+      title="Apagar"
+    >
+      <svg className="w-4 h-4 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth="2"
+          d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+        />
+      </svg>
+    </button>
+  </div>
+</td>
+            </tr>
+          ))
+        ) : (
+          <tr>
+            <td
+  colSpan={4}
+  className="p-4 text-center text-sm italic text-slate-400"
+>
+              Nenhuma entrada lançada neste mês.
+            </td>
+          </tr>
+        )}
+      </tbody>
+    </table>
+  </div>
+</div>
+
           </main>
         </>
       ) : abaAtiva === 'Balanço Geral' ? (
@@ -7059,6 +7496,13 @@ setAjustesAberto(false);
         inputFaturamento={inputFaturamento}
         setInputFaturamento={setInputFaturamento}
         salvarFaturamento={salvarFaturamento}
+        entradaFaturamentoDia={entradaFaturamentoDia}
+        setEntradaFaturamentoDia={setEntradaFaturamentoDia}
+        entradaFaturamentoOrigem={entradaFaturamentoOrigem}
+        setEntradaFaturamentoOrigem={setEntradaFaturamentoOrigem}
+        entradaFaturamentoValor={entradaFaturamentoValor}
+        handleEntradaFaturamentoValorChange={handleEntradaFaturamentoValorChange}
+        adicionarEntradaFaturamento={adicionarEntradaFaturamento}
         receitasTotais={receitasTotais}
         despesasTotais={despesasTotais}
         lucroTotalAnual={lucroTotalAnual}
