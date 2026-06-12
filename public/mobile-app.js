@@ -1464,6 +1464,7 @@
   }
 
   function render() {
+    root.setAttribute('data-avantalab-mobile-ready', '1');
     root.innerHTML = state.autenticado ? telaApp() : telaLogin();
 
     bind('entrar', entrar);
@@ -1644,7 +1645,7 @@
           return Promise.all(
             keys
               .filter(function (key) {
-                return key.indexOf('avantalab-mobile-') === 0 && key !== 'avantalab-mobile-v10';
+                return key.indexOf('avantalab-mobile-') === 0 && key !== 'avantalab-mobile-v11';
               })
               .map(function (key) {
                 return caches.delete(key);
@@ -1680,5 +1681,32 @@
     }
   }
 
-  iniciar();
+  function garantirRenderDepoisDaHidratacao() {
+    [900, 1800, 3200].forEach(function (tempo) {
+      window.setTimeout(function () {
+        var textoAtual = root.textContent || '';
+
+        if (textoAtual.indexOf('Preparando acesso mobile') >= 0) {
+          render();
+        }
+      }, tempo);
+    });
+  }
+
+  function iniciarQuandoPaginaEstiverPronta() {
+    var iniciarComAtraso = function () {
+      window.setTimeout(function () {
+        iniciar();
+        garantirRenderDepoisDaHidratacao();
+      }, 650);
+    };
+
+    if (document.readyState === 'complete') {
+      iniciarComAtraso();
+    } else {
+      window.addEventListener('load', iniciarComAtraso, { once: true });
+    }
+  }
+
+  iniciarQuandoPaginaEstiverPronta();
 })();
