@@ -575,7 +575,8 @@ if (paramsConfirmacao.get('confirmado') === '1') {
   return;
 }
 
-setAcessoLiberado(true);
+setAcessoLiberado(false);
+setAcessoNaoConfigurado(false);
 
       const empresasEncontradas = await buscarEmpresasDoUsuario(
         sessaoAtual.session.user.id
@@ -599,6 +600,7 @@ setAcessoLiberado(true);
 } else if (empresasEncontradas.length === 1) {
   empresa = empresasEncontradas[0];
   setAcessoNaoConfigurado(false);
+  setAcessoLiberado(false);
 
 } else {
   setEmpresaId(null);
@@ -2688,6 +2690,8 @@ const { error } = await supabase.auth.signInWithPassword({
 
   setAuthMensagem('Login realizado. Carregando seus dados...');
 
+localStorage.setItem(CHAVE_ULTIMA_ATIVIDADE, String(Date.now()));
+
 setTimeout(() => {
   window.location.href = window.location.origin + window.location.pathname;
 }, 600);
@@ -4053,7 +4057,7 @@ if (isTelaMobile) {
           placeholder="Digite a nova senha"
           value={novaSenha}
           onChange={(e) => setNovaSenha(e.target.value)}
-          className="w-full rounded-xl border border-slate-300 bg-white/90 px-4 py-3 pr-10 text-slate-800 outline-none transition focus:border-sky-600 focus:ring-2 focus:ring-sky-600/20"
+          className="w-full rounded-xl border border-slate-300 bg-white/90 px-4 py-3 pr-10 text-slate-800 outline-none transition focus:border-sky-600 focus:ring-2 focus:ring-sky-600/20 [&::-ms-reveal]:hidden [&::-ms-clear]:hidden"
         />
 
         <button
@@ -4090,7 +4094,7 @@ if (isTelaMobile) {
           placeholder="Repita a nova senha"
           value={confirmarNovaSenha}
           onChange={(e) => setConfirmarNovaSenha(e.target.value)}
-          className="w-full rounded-xl border border-slate-300 bg-white/90 px-4 py-3 pr-10 text-slate-800 outline-none transition focus:border-sky-600 focus:ring-2 focus:ring-sky-600/20"
+          className="w-full rounded-xl border border-slate-300 bg-white/90 px-4 py-3 pr-10 text-slate-800 outline-none transition focus:border-sky-600 focus:ring-2 focus:ring-sky-600/20 [&::-ms-reveal]:hidden [&::-ms-clear]:hidden"
         />
 
         <button
@@ -4180,7 +4184,7 @@ if (isTelaMobile) {
     placeholder="Digite sua senha"
     value={loginSenha}
     onChange={(e) => setLoginSenha(e.target.value)}
-    className="w-full rounded-xl border border-slate-300 bg-white/90 px-4 py-3 pr-10 text-slate-800 outline-none transition focus:border-sky-600 focus:ring-2 focus:ring-sky-600/20"
+    className="w-full rounded-xl border border-slate-300 bg-white/90 px-4 py-3 pr-10 text-slate-800 outline-none transition focus:border-sky-600 focus:ring-2 focus:ring-sky-600/20 [&::-ms-reveal]:hidden [&::-ms-clear]:hidden"
   />
 
   <button
