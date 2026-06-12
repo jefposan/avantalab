@@ -5,6 +5,13 @@
 
   if (!root) return;
 
+  if (!config.supabaseUrl || !config.supabaseAnonKey) {
+    config = {
+      supabaseUrl: root.getAttribute('data-supabase-url') || '',
+      supabaseAnonKey: root.getAttribute('data-supabase-anon-key') || '',
+    };
+  }
+
   if (!supabaseGlobal || !config.supabaseUrl || !config.supabaseAnonKey) {
     root.innerHTML = telaBase(
       '<h1>Mobile indisponivel</h1><p>Nao foi possivel carregar a conexao com o Supabase.</p>'
@@ -1637,7 +1644,7 @@
           return Promise.all(
             keys
               .filter(function (key) {
-                return key.indexOf('avantalab-mobile-') === 0 && key !== 'avantalab-mobile-v9';
+                return key.indexOf('avantalab-mobile-') === 0 && key !== 'avantalab-mobile-v10';
               })
               .map(function (key) {
                 return caches.delete(key);

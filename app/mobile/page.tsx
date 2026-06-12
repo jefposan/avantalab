@@ -1,5 +1,3 @@
-import { readFileSync } from 'fs';
-import { join } from 'path';
 import type { Metadata, Viewport } from 'next';
 
 export const metadata: Metadata = {
@@ -18,23 +16,17 @@ export const viewport: Viewport = {
   themeColor: '#003E73',
 };
 
-function scriptSeguro(conteudo: string) {
-  return conteudo.replace(/<\/script/gi, '<\\/script');
-}
-
 export default function MobilePage() {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
-  const supabaseScript = scriptSeguro(
-    readFileSync(join(process.cwd(), 'public', 'mobile-supabase.js'), 'utf8')
-  );
-  const mobileScript = scriptSeguro(
-    readFileSync(join(process.cwd(), 'public', 'mobile-app.js'), 'utf8')
-  );
 
   return (
     <main className="min-h-screen bg-slate-950 text-white">
-      <div id="mobile-root">
+      <div
+        id="mobile-root"
+        data-supabase-url={supabaseUrl}
+        data-supabase-anon-key={supabaseAnonKey}
+      >
         <section
           className="flex min-h-screen flex-col justify-start px-4 pb-8 pt-8"
           style={{
@@ -64,30 +56,8 @@ export default function MobilePage() {
         </section>
       </div>
 
-      <script
-        dangerouslySetInnerHTML={{
-          __html: `
-            window.AVANTALAB_MOBILE_CONFIG = {
-              supabaseUrl: ${JSON.stringify(supabaseUrl)},
-              supabaseAnonKey: ${JSON.stringify(supabaseAnonKey)}
-            };
-            window.AVANTALAB_MOBILE_BOOT = 'config-ok';
-          `,
-        }}
-      />
-      <script
-        dangerouslySetInnerHTML={{
-          __html: supabaseScript,
-        }}
-      />
-      <script
-        dangerouslySetInnerHTML={{
-          __html: `
-            window.AVANTALAB_MOBILE_BOOT = window.supabase ? 'supabase-ok' : 'supabase-missing';
-            ${mobileScript}
-          `,
-        }}
-      />
+      <script src="/mobile-supabase.js" defer />
+      <script src="/mobile-app.js?v=15" defer />
     </main>
   );
 }
