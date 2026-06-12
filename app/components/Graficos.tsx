@@ -58,7 +58,7 @@ export default function Graficos({ meses, lancamentos, faturamentos, corPrimaria
   }, [lancamentos, corPrimaria]);
 
   return (
-    <main className="flex-1 p-8 max-w-[1400px] mx-auto w-full space-y-8 animate-fade-in">
+    <main className="w-full space-y-8 animate-fade-in">
       <div className="flex items-center mb-6">
         <span className="w-3 h-8 rounded-full mr-4 shadow-sm" style={{ backgroundColor: corPrimaria }}></span>
         <h2 className={`text-2xl font-black ${textStrong} uppercase tracking-wider`}>Análise Gráfica</h2>

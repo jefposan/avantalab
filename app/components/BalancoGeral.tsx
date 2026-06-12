@@ -80,7 +80,7 @@ export default function BalancoGeral({
   const textMuted = darkMode ? 'text-slate-400' : 'text-slate-500';
 
   return (
-    <div className="p-4 max-w-[1400px] mx-auto w-full print:p-0 print:m-0 text-xs animate-fade-in space-y-8">
+    <div className="w-full print:p-0 print:m-0 text-xs animate-fade-in space-y-8">
       <style>{`
         @media print {
           @page { size: landscape; margin: 0; }

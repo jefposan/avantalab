@@ -78,7 +78,7 @@ const cat = despesaInfo ? despesaInfo.categoria : 'Outros';
   };
 
   return (
-    <div className="max-w-[1400px] mx-auto w-full pt-10 pb-8 text-sm animate-fade-in space-y-8">
+    <div className="w-full text-sm animate-fade-in space-y-8">
       
       {/* CABEÇALHO */}
 <div className="mb-5 grid grid-cols-1 gap-4 lg:grid-cols-3 lg:items-center">

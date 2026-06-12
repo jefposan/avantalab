@@ -420,7 +420,7 @@ export default function Relatorio({
   );
 
   return (
-    <main className="flex-1 p-8 max-w-[1400px] mx-auto w-full space-y-8 animate-fade-in print:p-0 print:m-0">
+    <main className="w-full space-y-8 animate-fade-in print:p-0 print:m-0">
       <style>{`
         @media print {
           @page { size: portrait; margin: 10mm; }

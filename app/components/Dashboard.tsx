@@ -135,7 +135,7 @@ const mostrarComparativoResumoDash =
   !!mesAnteriorResumoDash && totalDespesasMesAnteriorResumoDash > 0;
 
   return (
-    <main className="flex-1 flex p-8 gap-8 max-w-7xl mx-auto w-full animate-fade-in print:m-0 print:p-0">
+    <main className="flex w-full gap-8 animate-fade-in print:m-0 print:p-0">
       
       <section 
         className={`${bgCard} flex-1 p-10 rounded-2xl shadow-lg border border-t-4 transition-colors`} 
@@ -327,27 +327,15 @@ const mostrarComparativoResumoDash =
         </div>
 
                 {/* ================= QUADRANTE FATURAMENTO ================= */}
-        <div
-          className="rounded-2xl shadow-lg p-6 relative overflow-hidden"
-          style={{
-            backgroundColor: corPrimaria,
-            color: textoSobreCorPrimaria,
-          }}
-        >
+        <div className={bgCard + " rounded-2xl shadow-lg border-2 overflow-hidden transition-colors"} style={{ borderColor: corPrimaria }}>
           <div
-            className="absolute top-0 right-0 -mt-4 -mr-4 w-24 h-24 opacity-10 rounded-full blur-xl"
+            className="text-center text-sm font-bold uppercase tracking-wider flex justify-between px-6 py-3 items-center"
             style={{
-              backgroundColor: corEhClara(corPrimaria) ? '#0f172a' : '#ffffff',
+              backgroundColor: corPrimaria,
+              color: textoSobreCorPrimaria,
             }}
-          ></div>
-
-          <div className="flex justify-between items-center mb-4 relative z-10">
-            <h3
-              className="font-bold text-sm uppercase tracking-wide"
-              style={{ color: textoSobreCorPrimaria }}
-            >
-              Faturamento
-            </h3>
+          >
+            <span>Faturamento</span>
 
             <select
               value={mesFaturamento}
@@ -371,14 +359,21 @@ const mostrarComparativoResumoDash =
             </select>
           </div>
 
-          <div className="relative z-10 space-y-3">
-            <div>
-              <p
-                className="mb-1 text-[10px] font-black uppercase tracking-wide opacity-80"
-                style={{ color: textoSobreCorPrimaria }}
-              >
-                Definir total do mês
-              </p>
+          <div className="p-5 space-y-3">
+            <section
+              className={(darkMode
+                ? 'border-slate-700 bg-slate-800/60'
+                : 'border-slate-200 bg-slate-50') + ' rounded-xl border p-3'}
+            >
+              <div className="mb-2 flex items-center gap-2">
+                <span
+                  className="h-2 w-2 rounded-full"
+                  style={{ backgroundColor: corPrimaria }}
+                />
+                <p className={textMuted + " text-[10px] font-black uppercase tracking-wide"}>
+                  Definir total do mês
+                </p>
+              </div>
 
               <div className="flex gap-2">
                 <div className="relative w-full">
@@ -403,42 +398,29 @@ const mostrarComparativoResumoDash =
 
                 <button
                   onClick={salvarFaturamento}
-                  className="
-                    px-4 rounded-lg font-bold border shadow-md text-xs
-                    transition-all duration-200
-                    hover:brightness-110 hover:shadow-lg hover:scale-[1.03]
-                    active:scale-95 active:shadow-inner
-                    cursor-pointer select-none
-                  "
+                  className="px-4 rounded-lg font-bold border shadow-md text-xs transition-all duration-200 hover:brightness-110 hover:shadow-lg hover:scale-[1.03] active:scale-95 active:shadow-inner cursor-pointer select-none"
                   style={{
                     color: textoSobreCorPrimaria,
-                    backgroundColor: corEhClara(corPrimaria)
-                      ? 'rgba(15, 23, 42, 0.08)'
-                      : 'rgba(0, 0, 0, 0.20)',
-                    borderColor: corEhClara(corPrimaria)
-                      ? 'rgba(15, 23, 42, 0.18)'
-                      : 'rgba(255, 255, 255, 0.12)',
+                    backgroundColor: corPrimaria,
+                    borderColor: corPrimaria,
                   }}
                 >
                   Definir
                 </button>
               </div>
-            </div>
+            </section>
 
-            <div
-              className="border-t pt-3"
-              style={{
-                borderColor: corEhClara(corPrimaria)
-                  ? 'rgba(15, 23, 42, 0.18)'
-                  : 'rgba(255, 255, 255, 0.16)',
-              }}
+            <section
+              className={(darkMode
+                ? 'border-slate-700 bg-slate-800/60'
+                : 'border-slate-200 bg-slate-50') + ' rounded-xl border p-3'}
             >
-              <p
-                className="mb-2 text-[10px] font-black uppercase tracking-wide opacity-80"
-                style={{ color: textoSobreCorPrimaria }}
-              >
-                Adicionar entrada
-              </p>
+              <div className="mb-2 flex items-center gap-2">
+                <span className="h-2 w-2 rounded-full bg-emerald-500" />
+                <p className={textMuted + " text-[10px] font-black uppercase tracking-wide"}>
+                  Adicionar entrada
+                </p>
+              </div>
 
               <div className="grid grid-cols-[64px_1fr] gap-2 mb-2">
                 <input
@@ -483,27 +465,17 @@ const mostrarComparativoResumoDash =
 
                 <button
                   onClick={adicionarEntradaFaturamento}
-                  className="
-                    px-4 rounded-lg font-bold border shadow-md text-xs
-                    transition-all duration-200
-                    hover:brightness-110 hover:shadow-lg hover:scale-[1.03]
-                    active:scale-95 active:shadow-inner
-                    cursor-pointer select-none
-                  "
+                  className="px-4 rounded-lg font-bold border shadow-md text-xs transition-all duration-200 hover:brightness-110 hover:shadow-lg hover:scale-[1.03] active:scale-95 active:shadow-inner cursor-pointer select-none"
                   style={{
-                    color: textoSobreCorPrimaria,
-                    backgroundColor: corEhClara(corPrimaria)
-                      ? 'rgba(15, 23, 42, 0.08)'
-                      : 'rgba(0, 0, 0, 0.20)',
-                    borderColor: corEhClara(corPrimaria)
-                      ? 'rgba(15, 23, 42, 0.18)'
-                      : 'rgba(255, 255, 255, 0.12)',
+                    color: '#ffffff',
+                    backgroundColor: '#059669',
+                    borderColor: '#047857',
                   }}
                 >
                   Adicionar
                 </button>
               </div>
-            </div>
+            </section>
           </div>
         </div>
         {/* ========================================================= */}
