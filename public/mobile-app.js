@@ -1018,14 +1018,14 @@
             '<button id="menu-toggle" type="button" class="flex h-10 w-10 items-center justify-center rounded-full ' + (state.darkMode ? 'bg-slate-800 text-slate-100' : 'bg-slate-100 text-slate-700') + '" aria-label="Abrir menu">☰</button>' +
             '<div class="min-w-0 text-center">' +
               '<p class="truncate text-[10px] font-black uppercase tracking-[0.16em] text-cyan-700">' + escapeHtml(nomeEmpresa(state.empresa)) + '</p>' +
-              '<div class="mt-1 flex items-center justify-center gap-2">' +
-                '<button id="mes-anterior" type="button" class="flex h-7 w-7 items-center justify-center rounded-full ' + (state.darkMode ? 'bg-slate-800 text-slate-200' : 'bg-slate-100 text-slate-700') + ' text-lg font-black">&lsaquo;</button>' +
+              '<div class="mt-2 flex items-center justify-center gap-5">' +
+                '<button id="mes-anterior" type="button" class="flex h-7 w-8 items-center justify-center ' + (state.darkMode ? 'text-slate-200' : 'text-slate-700') + ' text-2xl font-black leading-none" aria-label="Mes anterior">&lsaquo;</button>' +
                 '<h1 class="truncate text-sm font-black">' + escapeHtml(state.mes.charAt(0) + state.mes.slice(1).toLowerCase()) + ' ' + escapeHtml(state.ano) + '</h1>' +
-                '<button id="mes-proximo" type="button" class="flex h-7 w-7 items-center justify-center rounded-full ' + (state.darkMode ? 'bg-slate-800 text-slate-200' : 'bg-slate-100 text-slate-700') + ' text-lg font-black">&rsaquo;</button>' +
+                '<button id="mes-proximo" type="button" class="flex h-7 w-8 items-center justify-center ' + (state.darkMode ? 'text-slate-200' : 'text-slate-700') + ' text-2xl font-black leading-none" aria-label="Proximo mes">&rsaquo;</button>' +
               '</div>' +
             '</div>' +
             (state.visao === 'home'
-              ? '<button id="abrir-lancamento-topo" type="button" class="flex h-10 w-10 items-center justify-center rounded-full bg-cyan-500 text-xl font-light text-white">+</button>'
+              ? '<span aria-hidden="true"></span>'
               : '<button id="voltar-dashboard-topo" type="button" class="flex h-10 w-10 items-center justify-center rounded-full bg-cyan-500 text-lg font-black text-white">⌂</button>') +
           '</div>' +
         '</header>' +
@@ -1349,7 +1349,7 @@
 
   function menuLateralHtml() {
     return (
-      '<div class="fixed inset-0 z-50 bg-slate-950/45">' +
+      '<div id="menu-overlay" class="fixed inset-0 z-50 bg-slate-950/45">' +
         '<aside class="h-full w-[82vw] max-w-[320px] ' + (state.darkMode ? 'bg-slate-900 text-slate-100' : 'bg-white text-slate-900') + ' p-4 shadow-2xl">' +
           '<div class="mb-5 flex items-start justify-between gap-3">' +
             '<div class="min-w-0"><p class="text-[10px] font-black uppercase tracking-[0.22em] text-cyan-700">AvantaLab</p><h2 class="mt-1 truncate text-lg font-black">' + escapeHtml(nomeEmpresa(state.empresa)) + '</h2><p class="mt-1 truncate text-xs font-semibold text-slate-500">' + escapeHtml(state.usuario && state.usuario.email ? state.usuario.email : 'Usuario logado') + '</p></div>' +
@@ -1543,6 +1543,14 @@
       state.menuAberto = false;
       render();
     });
+    var menuOverlay = document.getElementById('menu-overlay');
+    if (menuOverlay) {
+      menuOverlay.addEventListener('click', function (event) {
+        if (event.target !== menuOverlay) return;
+        state.menuAberto = false;
+        render();
+      });
+    }
     bind('menu-dashboard', voltarDashboard);
     bind('menu-usuario', function () { abrirModalMenu('usuario'); });
     bind('menu-trocar-empresa', function () { abrirModalMenu('empresa'); });
@@ -1578,10 +1586,6 @@
       render();
     });
     bind('abrir-lancamento', function () {
-      state.modalLancamento = true;
-      render();
-    });
-    bind('abrir-lancamento-topo', function () {
       state.modalLancamento = true;
       render();
     });
@@ -1652,7 +1656,7 @@
           return Promise.all(
             keys
               .filter(function (key) {
-                return key.indexOf('avantalab-mobile-') === 0 && key !== 'avantalab-mobile-v13';
+                return key.indexOf('avantalab-mobile-') === 0 && key !== 'avantalab-mobile-v14';
               })
               .map(function (key) {
                 return caches.delete(key);
