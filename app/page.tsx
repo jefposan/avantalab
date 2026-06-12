@@ -437,7 +437,13 @@ useEffect(() => {
         navigator.userAgent
       );
 
-    setIsTelaMobile(larguraPequena && (dispositivoComToque || userAgentMobile));
+    const ehMobile = larguraPequena && (dispositivoComToque || userAgentMobile);
+
+    setIsTelaMobile(ehMobile);
+
+    if (ehMobile && window.location.pathname !== '/mobile') {
+      window.location.replace('/mobile');
+    }
   };
 
   verificarDispositivoMobile();
@@ -540,6 +546,8 @@ setModalSelecionarEmpresa(false);
 
 useEffect(() => {
   const carregarConfiguracoesIniciais = async () => {
+    setMounted(true);
+
     const paramsConfirmacao = new URLSearchParams(window.location.search);
 const hashConfirmacao = new URLSearchParams(window.location.hash.replace('#', ''));
 
@@ -3880,10 +3888,6 @@ const resultadoVerificacaoSms = await lerRespostaApi(respostaVerificacaoSms);
   await carregarEmpresaSelecionada(empresaLiberada);
 };
 
-  if (!mounted) {
-  return null;
-}
-
 const usuarioOriginalEditando = usuariosEmpresa.find(
   (usuario) => usuario.id === usuarioEditandoId
 );
@@ -3899,12 +3903,53 @@ const dadosUsuarioAlterados = usuarioOriginalEditando
     editUsuarioPerfil !== usuarioOriginalEditando.perfil
   : false;
 
+const indiceMesMobile = meses.indexOf(mesParaAnalise);
+const mesAnteriorMobile =
+  indiceMesMobile > 0 ? meses[indiceMesMobile - 1] : null;
+const proximoMesMobile =
+  indiceMesMobile >= 0 && indiceMesMobile < meses.length - 1
+    ? meses[indiceMesMobile + 1]
+    : null;
+
+const mudarMesMobile = (mes: string) => {
+  setMesResumoDash(mes);
+  setMesAtivo(mes);
+  setMesFaturamento(mes);
+  setBuscaLancamento('');
+  setBuscaEntradaFaturamento('');
+  setLancamentoEditandoId(null);
+  setEntradaFaturamentoEditandoId(null);
+  setFormDia('');
+  setFormDespesa('');
+  setFormDescricao('');
+  setFormValor('');
+  setValorNumericoRaw(0);
+  setEntradaFaturamentoDia('');
+  setEntradaFaturamentoOrigem('');
+  setEntradaFaturamentoValor('');
+  setEntradaFaturamentoValorNumerico(0);
+};
+
+const lancamentosMobile = [...lancamentosDoMes].sort(
+  (a, b) => Number(b.dia) - Number(a.dia)
+);
+const categoriasMobile = analiseDespesas.dados.slice(0, 4);
+
 if (emailConfirmado) {
   return (
     <main className="relative min-h-screen overflow-hidden font-sans">
       <div
-        className="absolute inset-0 bg-cover bg-center"
+        className="absolute inset-0 hidden bg-cover bg-center lg:block"
         style={{ backgroundImage: "url('/images/bg-avantalab.png')" }}
+      />
+
+      <div
+        className="absolute inset-0 bg-no-repeat lg:hidden"
+        style={{
+          backgroundImage: "url('/images/bg-avantalab-mobile.png')",
+          backgroundSize: 'cover',
+          backgroundPosition: 'center bottom',
+        }}
       />
 
       <div className="absolute inset-0 bg-white/70 backdrop-blur-sm" />
@@ -3966,8 +4011,16 @@ if (acessoNaoConfigurado) {
   return (
     <main className="relative min-h-screen overflow-hidden font-sans">
       <div
-        className="absolute inset-0 bg-cover bg-center"
-        style={{ backgroundImage: "url('/images/bg-avantalab.png')" }}
+        className={`absolute inset-0 ${
+          isTelaMobile ? 'bg-no-repeat' : 'bg-cover bg-center'
+        }`}
+        style={{
+          backgroundImage: isTelaMobile
+            ? "url('/images/bg-avantalab-mobile.png')"
+            : "url('/images/bg-avantalab.png')",
+          backgroundSize: isTelaMobile ? 'cover' : undefined,
+          backgroundPosition: isTelaMobile ? 'center bottom' : 'center',
+        }}
       />
 
       <div className="absolute inset-0 bg-white/70 backdrop-blur-sm" />
@@ -4344,53 +4397,19 @@ if (validacaoTelefoneObrigatoria) {
 
 if (isTelaMobile) {
   return (
-    <main className="relative min-h-screen overflow-hidden font-sans">
-      <div
-  className="absolute inset-0 bg-no-repeat"
-  style={{
-    backgroundImage: "url('/images/bg-avantalab-mobile.png')",
-    backgroundSize: '100% 100%',
-    backgroundPosition: 'center',
-  }}
-/>
+    <main className="flex min-h-screen items-center justify-center bg-slate-950 px-6 text-white">
+      <section className="w-full max-w-sm text-center">
+        <p className="text-xs font-bold uppercase tracking-[0.28em] text-cyan-300">
+          AvantaLab Gestao
+        </p>
 
-<div className="absolute inset-0 bg-white/10" />
+        <h1 className="mt-3 text-2xl font-black">
+          Abrindo versao mobile...
+        </h1>
 
-      <section className="relative z-10 flex min-h-screen items-center justify-center px-6 py-10">
-        <div className="w-full max-w-sm rounded-3xl border border-slate-200 bg-white/90 p-7 text-center shadow-2xl">
-          <div className="mx-auto mb-5 flex h-20 w-20 items-center justify-center rounded-2xl bg-sky-100">
-            <svg
-              className="h-10 w-10 text-sky-800"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth="2"
-                d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
-              />
-            </svg>
-          </div>
-
-          <p className="mb-2 text-xs font-bold uppercase tracking-[0.28em] text-sky-700">
-            AvantaLab Gestão
-          </p>
-
-          <h1 className="text-2xl font-black leading-tight text-slate-900">
-            Acesso permitido somente pelo computador
-          </h1>
-
-          <p className="mt-4 text-sm leading-relaxed text-slate-600">
-            Para garantir a melhor experiência e o funcionamento completo das ferramentas,
-            acesse o sistema por um navegador em computador ou notebook.
-          </p>
-
-          <div className="mt-6 rounded-2xl border border-sky-200 bg-sky-50 px-4 py-3 text-sm font-semibold text-sky-900">
-            Em breve, uma versão mobile poderá ser disponibilizada.
-          </div>
-        </div>
+        <p className="mt-3 text-sm leading-relaxed text-slate-300">
+          Voce sera direcionado automaticamente.
+        </p>
       </section>
     </main>
   );
@@ -4443,16 +4462,25 @@ if (isTelaMobile) {
   </div>
 )}
       <div
-        className="absolute inset-0 bg-cover bg-center"
+        className="absolute inset-0 hidden bg-cover bg-center lg:block"
         style={{ backgroundImage: "url('/images/bg-avantalab.png')" }}
       />
 
-      <div className="absolute inset-0 bg-white/10" />
+      <div
+        className="absolute inset-0 bg-no-repeat lg:hidden"
+        style={{
+          backgroundImage: "url('/images/bg-avantalab-mobile.png')",
+          backgroundSize: 'cover',
+          backgroundPosition: 'center bottom',
+        }}
+      />
 
-      <section className="relative z-10 flex min-h-screen items-center px-8 py-10 lg:px-20">
-        <div className="w-full max-w-7xl">
-          <div className="w-full max-w-md rounded-3xl border border-white/30 bg-white/70 p-8 shadow-2xl backdrop-blur-xl">
-            <div className="mb-7">
+      <div className="pointer-events-none absolute inset-0 hidden bg-white/10 lg:block" />
+
+      <section className="relative z-10 flex min-h-screen items-start px-4 pb-6 pt-8 lg:items-center lg:px-20 lg:py-10">
+        <div className="w-full lg:max-w-7xl">
+          <div className="relative z-20 w-full rounded-3xl border border-white/20 bg-white/10 p-5 shadow-2xl lg:max-w-md lg:border-white/30 lg:bg-white/70 lg:p-8 lg:backdrop-blur-xl">
+            <div className="mb-5 lg:mb-7">
               <p className="mb-2 text-xs font-bold uppercase tracking-[0.35em] text-sky-700">
                 AvantaLab Gestão
               </p>
@@ -4619,7 +4647,7 @@ if (isTelaMobile) {
 <form
   onSubmit={(e) => {
     e.preventDefault();
-    handleLogin();
+    void handleLogin();
   }}
   className="space-y-4"
 >
