@@ -1,7 +1,6 @@
-const CACHE_NAME = 'avantalab-mobile-v8';
+const CACHE_NAME = 'avantalab-mobile-v9';
 const APP_SHELL = [
-  '/mobile',
-  '/mobile-app.js?v=13',
+  '/mobile-app.js?v=14',
   '/mobile-supabase.js',
   '/mobile-manifest.json',
   '/images/bg-avantalab-mobile-1080x1920.png',
@@ -32,7 +31,12 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('fetch', (event) => {
   const url = new URL(event.request.url);
 
-  if (url.origin !== self.location.origin || url.pathname.startsWith('/api/')) {
+  if (
+    url.origin !== self.location.origin ||
+    url.pathname.startsWith('/api/') ||
+    url.pathname === '/mobile' ||
+    event.request.mode === 'navigate'
+  ) {
     return;
   }
 

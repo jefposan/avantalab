@@ -1630,6 +1630,23 @@
       state.darkMode = localStorage.getItem('avantalab_mobile_dark') === '1';
     } catch (error) {}
 
+    if (window.caches && caches.keys) {
+      caches
+        .keys()
+        .then(function (keys) {
+          return Promise.all(
+            keys
+              .filter(function (key) {
+                return key.indexOf('avantalab-mobile-') === 0 && key !== 'avantalab-mobile-v9';
+              })
+              .map(function (key) {
+                return caches.delete(key);
+              })
+          );
+        })
+        .catch(function () {});
+    }
+
     window.addEventListener('beforeinstallprompt', function (event) {
       event.preventDefault();
       state.installPrompt = event;

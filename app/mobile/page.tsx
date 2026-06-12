@@ -23,15 +23,33 @@ export default function MobilePage() {
   return (
     <main className="min-h-screen bg-slate-950 text-white">
       <div id="mobile-root">
-        <div className="mx-auto flex min-h-screen max-w-md flex-col justify-center px-5 py-8">
-          <p className="text-xs font-bold uppercase tracking-[0.22em] text-cyan-300">
-            AvantaLab Gestao
-          </p>
-          <h1 className="mt-3 text-3xl font-black leading-tight">Carregando mobile...</h1>
-          <p className="mt-3 text-sm text-slate-300">
-            Preparando os controles do app.
-          </p>
-        </div>
+        <section
+          className="flex min-h-screen flex-col justify-start px-4 pb-8 pt-8"
+          style={{
+            minHeight: '100dvh',
+            backgroundColor: '#eef6fb',
+            backgroundImage:
+              "linear-gradient(rgba(255,255,255,.08),rgba(255,255,255,0)),url('/images/bg-avantalab-mobile-1080x1920.png')",
+            backgroundSize: '100% auto',
+            backgroundRepeat: 'no-repeat',
+            backgroundPosition: 'center bottom',
+          }}
+        >
+          <div
+            className="mx-auto w-full max-w-md rounded-3xl border border-white/35 p-5 text-slate-900 shadow-2xl backdrop-blur-xl"
+            style={{ backgroundColor: 'rgba(255,255,255,.18)' }}
+          >
+            <p className="mb-2 text-xs font-bold uppercase tracking-[0.32em] text-sky-700">
+              AvantaLab Gestao
+            </p>
+            <h1 className="text-3xl font-black text-slate-900">
+              Acesse sua conta
+            </h1>
+            <p className="mt-2 text-sm leading-relaxed text-slate-600">
+              Preparando acesso mobile...
+            </p>
+          </div>
+        </section>
       </div>
 
       <script
@@ -45,7 +63,7 @@ export default function MobilePage() {
         }}
       />
       <script src="/mobile-supabase.js" />
-      <script src="/mobile-app.js?v=13" />
+      <script src="/mobile-app.js?v=14" />
     </main>
   );
 }
