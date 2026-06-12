@@ -420,12 +420,21 @@ export default function Relatorio({
   );
 
   return (
-    <main className="w-full space-y-8 animate-fade-in print:p-0 print:m-0">
+    <main className="relatorio-print w-full space-y-8 animate-fade-in print:space-y-3 print:p-0 print:m-0">
       <style>{`
         @media print {
-          @page { size: portrait; margin: 10mm; }
+          @page { size: landscape; margin: 5mm; }
           body { -webkit-print-color-adjust: exact; print-color-adjust: exact; background: white !important; }
           .print-ocultar { display: none !important; }
+          .relatorio-print {
+            zoom: 0.76;
+            page-break-inside: avoid !important;
+            break-inside: avoid !important;
+          }
+          .relatorio-print,
+          .relatorio-print * {
+            box-shadow: none !important;
+          }
         }
         .custom-scroll::-webkit-scrollbar { height: 6px; }
         .custom-scroll::-webkit-scrollbar-track { background: transparent; }

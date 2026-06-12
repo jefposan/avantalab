@@ -114,7 +114,7 @@ export default function TabelaLancamentosDespesa({
   return (
     <div
       className={`${bgCard} h-full min-w-0 rounded-xl shadow-lg border-x border-b border-t-[4px] p-4`}
-      style={{ borderTopColor: corPrimaria }}
+      style={{ borderTopColor: '#dc2626' }}
     >
       <div
         className="relative custom-scroll"

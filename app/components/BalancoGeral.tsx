@@ -80,7 +80,7 @@ export default function BalancoGeral({
   const textMuted = darkMode ? 'text-slate-400' : 'text-slate-500';
 
   return (
-    <div className="w-full print:p-0 print:m-0 text-xs animate-fade-in space-y-8">
+    <div className="w-full print:p-0 print:m-0 text-xs animate-fade-in space-y-5">
       <style>{`
         @media print {
           @page { size: landscape; margin: 0; }
@@ -94,7 +94,13 @@ export default function BalancoGeral({
           }
           body { display: flex !important; justify-content: center !important; align-items: center !important; }
           .print-ocultar { display: none !important; }
-          #painel-balanco { margin: 0 auto !important; transform: scale(0.95); transform-origin: center center; }
+          #painel-balanco {
+            margin: 0 auto !important;
+            transform: scale(0.86);
+            transform-origin: top center;
+            page-break-inside: avoid !important;
+            break-inside: avoid !important;
+          }
         }
       `}</style>
 
@@ -136,53 +142,53 @@ export default function BalancoGeral({
 </div>
 
       {/* BLOCO SUPERIOR: 4 QUADRANTES DE RESUMO ANUAL COM A TARJA FINA */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 print-ocultar">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 print-ocultar">
         
         {/* Quadrante 1: Despesas */}
-        <div className={`${bgCard} rounded-xl shadow-lg border p-1 border-t-4 text-center`} style={{ borderTopColor: corPrimaria }}>
-          <h3 className={`text-xs font-bold uppercase tracking-wider ${textMuted} mb-1`}>Total Despesas</h3>
-          <p className="text-xl font-black text-red-500">{formatarMoeda(totaisAnuais.desp)}</p>
+        <div className={`${bgCard} rounded-lg shadow-sm border px-3 py-2 border-t-2 text-center`} style={{ borderTopColor: corPrimaria }}>
+          <h3 className={`text-[10px] font-semibold uppercase tracking-wide ${textMuted} mb-0.5`}>Total Despesas</h3>
+          <p className="text-base font-bold text-red-500">{formatarMoeda(totaisAnuais.desp)}</p>
         </div>
 
         {/* Quadrante 2: Faturamento */}
-        <div className={`${bgCard} rounded-xl shadow-lg border p-1 border-t-4 text-center`} style={{ borderTopColor: corPrimaria }}>
-          <h3 className={`text-xs font-bold uppercase tracking-wider ${textMuted} mb-1`}>Total Faturamento</h3>
-          <p className="text-xl font-black text-[#00b050]">{formatarMoeda(totaisAnuais.fat)}</p>
+        <div className={`${bgCard} rounded-lg shadow-sm border px-3 py-2 border-t-2 text-center`} style={{ borderTopColor: corPrimaria }}>
+          <h3 className={`text-[10px] font-semibold uppercase tracking-wide ${textMuted} mb-0.5`}>Total Faturamento</h3>
+          <p className="text-base font-bold text-[#00b050]">{formatarMoeda(totaisAnuais.fat)}</p>
         </div>
 
         {/* Quadrante 3: A + B */}
-        <div className={`${bgCard} rounded-xl shadow-lg border p-1 border-t-4 text-center`} style={{ borderTopColor: corPrimaria }}>
-          <h3 className={`text-xs font-bold uppercase tracking-wider ${textMuted} mb-1`}>A + B (Líquido)</h3>
-          <p className={`text-xl font-black ${totaisAnuais.ab >= 0 ? 'text-blue-500' : 'text-red-500'}`}>
+        <div className={`${bgCard} rounded-lg shadow-sm border px-3 py-2 border-t-2 text-center`} style={{ borderTopColor: corPrimaria }}>
+          <h3 className={`text-[10px] font-semibold uppercase tracking-wide ${textMuted} mb-0.5`}>A + B (Líquido)</h3>
+          <p className={`text-base font-bold ${totaisAnuais.ab >= 0 ? 'text-blue-500' : 'text-red-500'}`}>
             {formatarMoeda(totaisAnuais.ab)}
           </p>
         </div>
 
         {/* Quadrante 4: Total % */}
-        <div className={`${bgCard} rounded-xl shadow-lg border p-1 border-t-4 text-center`} style={{ borderTopColor: corPrimaria }}>
-          <h3 className={`text-xs font-bold uppercase tracking-wider ${textMuted} mb-1`}>Margem Total (%)</h3>
-          <p className={`text-xl font-black ${textStrong}`}>{totaisAnuais.perc.toFixed(2)}%</p>
+        <div className={`${bgCard} rounded-lg shadow-sm border px-3 py-2 border-t-2 text-center`} style={{ borderTopColor: corPrimaria }}>
+          <h3 className={`text-[10px] font-semibold uppercase tracking-wide ${textMuted} mb-0.5`}>Margem Total (%)</h3>
+          <p className={`text-base font-bold ${textStrong}`}>{totaisAnuais.perc.toFixed(2)}%</p>
         </div>
 
       </div>
 
       {/* MATRIZ MENSAL (ENVOLVIDA NUM QUADRANTE PADRÃO) */}
-      <div className={`${bgCard} rounded-xl shadow-lg border p-6 border-t-4 overflow-hidden`} style={{ borderTopColor: corPrimaria }}>
-        <div id="painel-balanco" className="overflow-x-auto pb-4">
-          <div className="min-w-[1000px] space-y-4 pt-2">
+      <div className={`${bgCard} rounded-lg shadow-sm border p-4 border-t-2 overflow-hidden`} style={{ borderTopColor: corPrimaria }}>
+        <div id="painel-balanco" className="overflow-x-auto pb-2">
+          <div className="min-w-[960px] space-y-2 pt-1">
             
             {/* CABEÇALHO DAS COLUNAS (LARGURA TOTAL E CENTRALIZADO) */}
-            <div className="grid grid-cols-[1fr_1fr_1fr_1fr_100px] gap-3 items-end mb-4 font-black text-sm">
-              <div className="bg-red-600 text-white py-2 w-full rounded-md shadow-sm flex items-center justify-center text-xs tracking-wider">
+            <div className="grid grid-cols-[1fr_1fr_1fr_1fr_86px] gap-2 items-end mb-2 font-bold text-xs">
+              <div className="bg-red-600 text-white py-1.5 w-full rounded-md shadow-sm flex items-center justify-center text-[10px] tracking-wide">
                 DESPESAS
               </div>
-              <div className="bg-[#00b050] text-white py-2 w-full rounded-md shadow-sm flex items-center justify-center text-xs tracking-wider">
+              <div className="bg-[#00b050] text-white py-1.5 w-full rounded-md shadow-sm flex items-center justify-center text-[10px] tracking-wide">
                 FATURAMENTO
               </div>
-              <div className="bg-[#66b3ff] text-white py-2 w-full rounded-md shadow-sm flex items-center justify-center text-xs tracking-wider">
+              <div className="bg-[#66b3ff] text-white py-1.5 w-full rounded-md shadow-sm flex items-center justify-center text-[10px] tracking-wide">
                 A + B
               </div>
-              <div className="bg-white dark:bg-slate-800 border-2 border-slate-300 dark:border-slate-600 text-slate-800 dark:text-white py-1.5 w-full rounded-md shadow-sm flex items-center justify-center text-xs tracking-wider">
+              <div className="bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 text-slate-800 dark:text-white py-1.5 w-full rounded-md shadow-sm flex items-center justify-center text-[10px] tracking-wide">
                 TOTAL EM %
               </div>
               <div className="bg-[#7030a0] text-white py-1.5 px-1 text-[10px] leading-tight flex items-center justify-center text-center rounded-md shadow-sm relative h-full">
@@ -193,30 +199,30 @@ export default function BalancoGeral({
 
             {/* TABELAS DOS TRIMESTRES */}
             {trimestres.map((trimestre) => (
-              <div key={trimestre.id} className="grid grid-cols-[1fr_1fr_1fr_1fr_100px] gap-3 items-stretch mb-4">
+              <div key={trimestre.id} className="grid grid-cols-[1fr_1fr_1fr_1fr_86px] gap-2 items-stretch mb-2">
                 
-                <div className={`flex flex-col border-2 rounded-xl overflow-hidden shadow-sm ${darkMode ? 'border-slate-700 bg-slate-800' : 'border-slate-200 bg-white'}`} style={{ borderColor: corPrimaria }}>
+                <div className={`flex flex-col border rounded-lg overflow-hidden shadow-sm ${darkMode ? 'border-slate-700 bg-slate-800' : 'border-slate-200 bg-white'}`} style={{ borderColor: corPrimaria }}>
                   {trimestre.meses.map((mes, idx) => (
-                    <div key={`desp-${mes}`} className={`flex h-9 items-center bg-transparent ${idx !== 2 ? 'border-b border-slate-200/50 dark:border-slate-700' : ''}`}>
-                      <div className="w-24 border-r border-slate-200/50 dark:border-slate-700 flex items-center justify-center font-bold px-1 text-slate-500 dark:text-slate-400 bg-transparent">{mes}</div>
-                      <div className={`flex-1 flex items-center justify-end px-3 font-bold ${textStrong}`}>
+                    <div key={`desp-${mes}`} className={`flex h-7 items-center bg-transparent ${idx !== 2 ? 'border-b border-slate-200/50 dark:border-slate-700' : ''}`}>
+                      <div className="w-20 border-r border-slate-200/50 dark:border-slate-700 flex items-center justify-center font-semibold px-1 text-[10px] text-slate-500 dark:text-slate-400 bg-transparent">{mes}</div>
+                      <div className={`flex-1 flex items-center justify-end px-2 font-semibold ${textStrong}`}>
                         {getDespesaMes(mes).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                       </div>
                     </div>
                   ))}
                 </div>
 
-                <div className={`flex flex-col border-2 rounded-xl overflow-hidden shadow-sm`} style={{ borderColor: '#00b050' }}>
+                <div className={`flex flex-col border rounded-lg overflow-hidden shadow-sm`} style={{ borderColor: '#00b050' }}>
                   {trimestre.meses.map((mes, idx) => (
-                    <div key={`fat-${mes}`} className={`flex h-9 items-center bg-[#00b050]/5 dark:bg-[#00b050]/10 ${idx !== 2 ? 'border-b border-[#00b050]/20' : ''}`}>
-                      <div className="w-24 border-r border-[#00b050]/20 flex items-center justify-center font-bold px-1 text-[#00b050] bg-transparent">{mes}</div>
+                    <div key={`fat-${mes}`} className={`flex h-7 items-center bg-[#00b050]/5 dark:bg-[#00b050]/10 ${idx !== 2 ? 'border-b border-[#00b050]/20' : ''}`}>
+                      <div className="w-20 border-r border-[#00b050]/20 flex items-center justify-center font-semibold px-1 text-[10px] text-[#00b050] bg-transparent">{mes}</div>
                       <div className="flex-1 flex items-center px-2">
                         <input
   type="text"
   value={formatarInputFat(mes)}
   onChange={(e) => handleFaturamentoChange(mes, e.target.value)}
   onBlur={() => handleFaturamentoBlur(mes)}
-  className="w-full bg-transparent outline-none font-bold text-right text-[#00b050] dark:text-[#2dd4bf]"
+  className="w-full bg-transparent outline-none font-semibold text-right text-[#00b050] dark:text-[#2dd4bf]"
   placeholder="0,00"
 />
                       </div>
@@ -224,13 +230,13 @@ export default function BalancoGeral({
                   ))}
                 </div>
 
-                <div className={`flex flex-col border-2 rounded-xl overflow-hidden shadow-sm ${darkMode ? 'border-slate-700 bg-slate-800' : 'border-slate-200 bg-white'}`} style={{ borderColor: corPrimaria }}>
+                <div className={`flex flex-col border rounded-lg overflow-hidden shadow-sm ${darkMode ? 'border-slate-700 bg-slate-800' : 'border-slate-200 bg-white'}`} style={{ borderColor: corPrimaria }}>
                   {trimestre.meses.map((mes, idx) => {
                     const ab = getAB(mes);
                     return (
-                      <div key={`ab-${mes}`} className={`flex h-9 items-center bg-transparent ${idx !== 2 ? 'border-b border-slate-200/50 dark:border-slate-700' : ''}`}>
-                        <div className="w-24 border-r border-slate-200/50 dark:border-slate-700 flex items-center justify-center font-bold px-1 text-slate-500 bg-transparent">{mes}</div>
-                        <div className={`flex-1 flex items-center justify-end px-3 font-bold ${ab < 0 ? 'text-red-500' : textStrong}`}>
+                      <div key={`ab-${mes}`} className={`flex h-7 items-center bg-transparent ${idx !== 2 ? 'border-b border-slate-200/50 dark:border-slate-700' : ''}`}>
+                        <div className="w-20 border-r border-slate-200/50 dark:border-slate-700 flex items-center justify-center font-semibold px-1 text-[10px] text-slate-500 bg-transparent">{mes}</div>
+                        <div className={`flex-1 flex items-center justify-end px-2 font-semibold ${ab < 0 ? 'text-red-500' : textStrong}`}>
                           {ab < 0 ? `(${Math.abs(ab).toLocaleString('pt-BR', { minimumFractionDigits: 2 })})` : ab.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                         </div>
                       </div>
@@ -238,13 +244,13 @@ export default function BalancoGeral({
                   })}
                 </div>
 
-                <div className={`flex flex-col border-2 rounded-xl overflow-hidden shadow-sm ${darkMode ? 'border-slate-700 bg-slate-800' : 'border-slate-200 bg-white'}`} style={{ borderColor: corPrimaria }}>
+                <div className={`flex flex-col border rounded-lg overflow-hidden shadow-sm ${darkMode ? 'border-slate-700 bg-slate-800' : 'border-slate-200 bg-white'}`} style={{ borderColor: corPrimaria }}>
                   {trimestre.meses.map((mes, idx) => {
                     const perc = getLucroPerc(mes);
                     return (
-                      <div key={`perc-${mes}`} className={`flex h-9 items-center bg-transparent ${idx !== 2 ? 'border-b border-slate-200/50 dark:border-slate-700' : ''}`}>
-                        <div className="w-24 border-r border-slate-200/50 dark:border-slate-700 flex items-center justify-center font-bold px-1 text-slate-500 bg-transparent">{mes}</div>
-                        <div className={`flex-1 flex items-center justify-end px-3 font-bold ${perc < 0 ? 'text-red-500' : textStrong}`}>
+                      <div key={`perc-${mes}`} className={`flex h-7 items-center bg-transparent ${idx !== 2 ? 'border-b border-slate-200/50 dark:border-slate-700' : ''}`}>
+                        <div className="w-20 border-r border-slate-200/50 dark:border-slate-700 flex items-center justify-center font-semibold px-1 text-[10px] text-slate-500 bg-transparent">{mes}</div>
+                        <div className={`flex-1 flex items-center justify-end px-2 font-semibold ${perc < 0 ? 'text-red-500' : textStrong}`}>
                           {perc.toFixed(2)}%
                         </div>
                       </div>
@@ -252,7 +258,7 @@ export default function BalancoGeral({
                   })}
                 </div>
 
-                <div className={`border-2 rounded-xl flex items-center justify-center font-black text-sm shadow-sm ${darkMode ? 'bg-slate-800 text-white' : 'bg-slate-50 text-slate-800'}`} style={{ borderColor: corPrimaria }}>
+                <div className={`border rounded-lg flex items-center justify-center font-bold text-xs shadow-sm ${darkMode ? 'bg-slate-800 text-white' : 'bg-slate-50 text-slate-800'}`} style={{ borderColor: corPrimaria }}>
                   {getMediaTrimestre(trimestre.meses).toFixed(2)}%
                 </div>
                 

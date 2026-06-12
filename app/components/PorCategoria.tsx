@@ -52,7 +52,7 @@ const cat = despesaInfo ? despesaInfo.categoria : 'Outros';
   const maxDespesa = Math.max(...Object.values(despMap), 1);
   const maxCategoria = Math.max(...Object.values(catMap), 1);
 
-  const getValorMensal = (despesa: string, mes: string) => {
+const getValorMensal = (despesa: string, mes: string) => {
   return lancamentos
     .filter(
       (l) =>
@@ -61,6 +61,21 @@ const cat = despesaInfo ? despesaInfo.categoria : 'Outros';
     )
     .reduce((acc, l) => acc + l.valor, 0);
 };
+
+  const getTotalDespesa = (despesa: string) =>
+    meses.reduce((acc, mes) => acc + getValorMensal(despesa, mes), 0);
+
+  const totaisPorMes = useMemo(
+    () =>
+      meses.reduce<Record<string, number>>((acc, mes) => {
+        acc[mes] = lancamentos
+          .filter((l) => l.mes === mes)
+          .reduce((total, l) => total + Number(l.valor || 0), 0);
+
+        return acc;
+      }, {}),
+    [meses, lancamentos]
+  );
 
   // --- CLASSES DE TEMA (Padrão Relatório) ---
   const bgCard = darkMode ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200';
@@ -235,34 +250,61 @@ const cat = despesaInfo ? despesaInfo.categoria : 'Outros';
   style={{ borderTopColor: corPrimaria }}
 >
         <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse min-w-[1000px]">
+          <table className="w-full text-left border-collapse min-w-[1120px]">
             <thead>
               <tr className={`${bgHead} ${textMuted} uppercase text-xs tracking-wider border-b-2 ${borderSoft}`}>
-                <th className="p-4 w-48 font-bold border-r border-slate-200/30 dark:border-slate-700/30">Tipo de Despesa</th>
+                <th className="p-3 w-52 font-bold border-r border-slate-200/30 dark:border-slate-700/30">Tipo de Despesa</th>
                 {meses.map(mes => (
-                  <th key={mes} className="p-3 text-center font-bold">
+                  <th key={mes} className="p-2 text-center font-bold">
                     {mes.substring(0, 3)}
                   </th>
                 ))}
+                <th className="p-3 text-right font-black border-l border-slate-200/30 dark:border-slate-700/30">
+                  Total
+                </th>
               </tr>
             </thead>
             <tbody>
-              {despesasNomes.map((despesa, idx) => (
-                <tr key={despesa} className={`border-b ${borderSoft} transition-colors ${darkMode ? 'hover:bg-slate-700/40' : 'hover:bg-blue-50/50'} ${idx % 2 === 0 ? '' : (darkMode ? 'bg-slate-800/50' : 'bg-slate-50/50')}`}>
-                  <td className={`p-3 px-4 font-bold uppercase text-xs truncate max-w-[150px] ${textStrong} border-r border-slate-200/30 dark:border-slate-700/30`}>
-                    {despesa}
-                  </td>
-                  {meses.map(mes => {
-                    const valorMensal = getValorMensal(despesa, mes);
-                    return (
-                      <td key={`${despesa}-${mes}`} className={`p-3 text-right text-xs ${valorMensal > 0 ? 'font-bold text-red-500' : textMuted}`}>
-                        {valorMensal > 0 ? formatarMoeda(valorMensal).replace('R$', '').trim() : '-'}
-                      </td>
-                    );
-                  })}
-                </tr>
-              ))}
+              {despesasNomes.map((despesa, idx) => {
+                const totalDespesa = getTotalDespesa(despesa);
+
+                return (
+                  <tr key={despesa} className={`border-b ${borderSoft} transition-colors ${darkMode ? 'hover:bg-slate-700/40' : 'hover:bg-blue-50/50'} ${idx % 2 === 0 ? '' : (darkMode ? 'bg-slate-800/50' : 'bg-slate-50/50')}`}>
+                    <td className={`p-2.5 px-4 font-bold uppercase text-[11px] truncate max-w-[170px] ${textStrong} border-r border-slate-200/30 dark:border-slate-700/30`}>
+                      {despesa}
+                    </td>
+                    {meses.map(mes => {
+                      const valorMensal = getValorMensal(despesa, mes);
+                      return (
+                        <td key={`${despesa}-${mes}`} className={`p-2.5 text-right text-[11px] ${valorMensal > 0 ? 'font-semibold text-red-500' : textMuted}`}>
+                          {valorMensal > 0 ? formatarMoeda(valorMensal).replace('R$', '').trim() : '-'}
+                        </td>
+                      );
+                    })}
+                    <td className={`p-2.5 text-right text-[11px] font-black border-l border-slate-200/30 dark:border-slate-700/30 ${totalDespesa > 0 ? 'text-red-500' : textMuted}`}>
+                      {totalDespesa > 0 ? formatarMoeda(totalDespesa) : 'R$ 0,00'}
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
+            <tfoot>
+              <tr className={`${darkMode ? 'bg-slate-700/70 text-white' : 'bg-slate-100 text-slate-800'} border-t-2 ${borderSoft}`}>
+                <td className="p-3 px-4 text-xs font-black uppercase border-r border-slate-200/30 dark:border-slate-700/30">
+                  Total mensal
+                </td>
+                {meses.map((mes) => (
+                  <td key={`total-${mes}`} className="p-3 text-right text-[11px] font-black text-red-500">
+                    {totaisPorMes[mes] > 0
+                      ? formatarMoeda(totaisPorMes[mes]).replace('R$', '').trim()
+                      : '-'}
+                  </td>
+                ))}
+                <td className="p-3 text-right text-xs font-black text-red-500 border-l border-slate-200/30 dark:border-slate-700/30">
+                  {formatarMoeda(totalGeral)}
+                </td>
+              </tr>
+            </tfoot>
           </table>
         </div>
       </div>

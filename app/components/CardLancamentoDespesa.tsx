@@ -33,7 +33,6 @@ type CardLancamentoDespesaProps = {
 export default function CardLancamentoDespesa({
   corPrimaria,
   darkMode,
-  textStrong,
   mesAtivo,
   anoSelecionado,
   ordemLancamentos,
@@ -60,16 +59,16 @@ export default function CardLancamentoDespesa({
 
   return (
     <>
-      <div className="relative mb-3 flex h-8 items-center justify-center border-b border-slate-200/10 pb-2">
+      <div className="relative mb-3 flex h-8 items-center justify-center rounded-md bg-red-600 px-3 text-white shadow-sm">
         <button
           type="button"
           onClick={() =>
             setOrdemLancamentos((prev) => (prev === 'desc' ? 'asc' : 'desc'))
           }
-          className={`absolute left-0 flex h-7 items-center gap-1.5 rounded-md px-2.5 text-[10px] font-bold uppercase tracking-wide border shadow-sm transition-all hover:scale-[1.03] active:scale-95 cursor-pointer ${
+          className={`absolute left-2 flex h-6 items-center gap-1.5 rounded-md px-2.5 text-[10px] font-bold uppercase tracking-wide border shadow-sm transition-all hover:scale-[1.03] active:scale-95 cursor-pointer ${
             darkMode
-              ? 'bg-slate-800 border-slate-700 text-slate-300 hover:bg-slate-700'
-              : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
+              ? 'bg-red-950/40 border-white/15 text-white hover:bg-red-950/60'
+              : 'bg-white/15 border-white/25 text-white hover:bg-white/25'
           }`}
           title={
             ordemLancamentos === 'desc'
@@ -83,7 +82,7 @@ export default function CardLancamentoDespesa({
           </span>
         </button>
 
-        <h3 className={`text-sm font-black uppercase tracking-widest ${textStrong}`}>
+        <h3 className="text-sm font-black uppercase tracking-widest text-white">
           Lançamento de despesas
         </h3>
       </div>

@@ -6309,7 +6309,7 @@ name="novo-usuario-login"
     color: textoSobreCorPrimaria,
   }}
 >
-  <div className="mx-auto flex h-full w-full max-w-[1280px] items-center justify-between px-8">
+  <div className="mx-auto flex h-full w-full max-w-[1280px] items-center px-8">
     <div className="flex items-center gap-2 min-w-0">
     <svg
       className="h-3.5 w-3.5 shrink-0"
@@ -6328,45 +6328,6 @@ name="novo-usuario-login"
     <span className="truncate font-black">
       Olá, {nomeEmpresaAtual || 'Empresa'}
     </span>
-  </div>
-
-  <div className="hidden lg:flex items-center justify-end gap-3 min-w-0 xl:gap-4">
-    <div className="flex items-center gap-1.5 min-w-0">
-      <span className="font-black uppercase tracking-wide opacity-80">
-        Usuário:
-      </span>
-
-      <span className="truncate max-w-[360px]">
-  {nomeUsuarioAtual || emailUsuarioAtual || 'Usuário logado'}
-</span>
-    </div>
-
-    <span
-      className="h-4 w-px"
-      style={{
-        backgroundColor: corEhClara(corPrimaria)
-          ? 'rgba(15, 23, 42, 0.35)'
-          : 'rgba(255, 255, 255, 0.35)',
-      }}
-    />
-
-    <div className="flex items-center gap-1.5 shrink-0">
-      <span className="font-black uppercase tracking-wide opacity-80">
-        Perfil:
-      </span>
-
-      <span>
-        {perfilUsuario === 'gestor_master'
-          ? 'Gestor Master'
-          : perfilUsuario === 'administrador'
-            ? 'Administrador'
-            : perfilUsuario === 'operador_completo'
-              ? 'Operador Completo'
-              : perfilUsuario === 'operador_simples'
-                ? 'Operador Simples'
-                : 'Não definido'}
-      </span>
-    </div>
   </div>
 </div>
 </div>
@@ -7433,7 +7394,7 @@ setAjustesAberto(false);
 </div>
 
 <footer
-  className={`w-full border-t px-6 py-4 mt-8 ${
+  className={`print-ocultar w-full border-t px-6 py-4 mt-8 ${
     darkMode
       ? 'border-slate-700 bg-slate-900 text-slate-400'
       : 'border-slate-200 bg-white text-slate-500'

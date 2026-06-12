@@ -366,56 +366,6 @@ const mostrarComparativoResumoDash =
                 : 'border-slate-200 bg-slate-50') + ' rounded-xl border p-3'}
             >
               <div className="mb-2 flex items-center gap-2">
-                <span
-                  className="h-2 w-2 rounded-full"
-                  style={{ backgroundColor: corPrimaria }}
-                />
-                <p className={textMuted + " text-[10px] font-black uppercase tracking-wide"}>
-                  Definir total do mês
-                </p>
-              </div>
-
-              <div className="flex gap-2">
-                <div className="relative w-full">
-                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-sm">
-                    R$
-                  </span>
-
-                  <input
-                    type="text"
-                    value={inputFaturamento}
-                    onChange={handleInputFaturamento}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') {
-                        e.preventDefault();
-                        salvarFaturamento();
-                      }
-                    }}
-                    placeholder="0,00"
-                    className="w-full pl-9 pr-4 py-2.5 rounded-lg bg-white text-slate-800 font-bold focus:outline-none shadow-inner text-right"
-                  />
-                </div>
-
-                <button
-                  onClick={salvarFaturamento}
-                  className="px-4 rounded-lg font-bold border shadow-md text-xs transition-all duration-200 hover:brightness-110 hover:shadow-lg hover:scale-[1.03] active:scale-95 active:shadow-inner cursor-pointer select-none"
-                  style={{
-                    color: textoSobreCorPrimaria,
-                    backgroundColor: corPrimaria,
-                    borderColor: corPrimaria,
-                  }}
-                >
-                  Definir
-                </button>
-              </div>
-            </section>
-
-            <section
-              className={(darkMode
-                ? 'border-slate-700 bg-slate-800/60'
-                : 'border-slate-200 bg-slate-50') + ' rounded-xl border p-3'}
-            >
-              <div className="mb-2 flex items-center gap-2">
                 <span className="h-2 w-2 rounded-full bg-emerald-500" />
                 <p className={textMuted + " text-[10px] font-black uppercase tracking-wide"}>
                   Adicionar entrada
@@ -473,6 +423,56 @@ const mostrarComparativoResumoDash =
                   }}
                 >
                   Adicionar
+                </button>
+              </div>
+            </section>
+
+            <section
+              className={(darkMode
+                ? 'border-slate-700 bg-slate-800/60'
+                : 'border-slate-200 bg-slate-50') + ' rounded-xl border p-3'}
+            >
+              <div className="mb-2 flex items-center gap-2">
+                <span
+                  className="h-2 w-2 rounded-full"
+                  style={{ backgroundColor: corPrimaria }}
+                />
+                <p className={textMuted + " text-[10px] font-black uppercase tracking-wide"}>
+                  Definir total do mês
+                </p>
+              </div>
+
+              <div className="flex gap-2">
+                <div className="relative w-full">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-sm">
+                    R$
+                  </span>
+
+                  <input
+                    type="text"
+                    value={inputFaturamento}
+                    onChange={handleInputFaturamento}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        salvarFaturamento();
+                      }
+                    }}
+                    placeholder="0,00"
+                    className="w-full pl-9 pr-4 py-2.5 rounded-lg bg-white text-slate-800 font-bold focus:outline-none shadow-inner text-right"
+                  />
+                </div>
+
+                <button
+                  onClick={salvarFaturamento}
+                  className="px-4 rounded-lg font-bold border shadow-md text-xs transition-all duration-200 hover:brightness-110 hover:shadow-lg hover:scale-[1.03] active:scale-95 active:shadow-inner cursor-pointer select-none"
+                  style={{
+                    color: textoSobreCorPrimaria,
+                    backgroundColor: corPrimaria,
+                    borderColor: corPrimaria,
+                  }}
+                >
+                  Definir
                 </button>
               </div>
             </section>
