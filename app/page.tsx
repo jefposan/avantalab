@@ -6901,7 +6901,7 @@ setAjustesAberto(false);
     style={{ backgroundColor: corPrimaria }}
   />
 
-  <h2 className={`m-0 text-base leading-none ${textStrong} uppercase tracking-wider`}>
+  <h2 className={`m-0 text-xl font-black leading-none ${textStrong} uppercase tracking-wider`}>
     Análise de despesas de {mesAtivo}
   </h2>
 </div>

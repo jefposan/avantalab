@@ -65,10 +65,10 @@ export default function CardLancamentoDespesa({
           onClick={() =>
             setOrdemLancamentos((prev) => (prev === 'desc' ? 'asc' : 'desc'))
           }
-          className={`absolute left-2 flex h-6 items-center gap-1.5 rounded-md px-2.5 text-[10px] font-bold uppercase tracking-wide border shadow-sm transition-all hover:scale-[1.03] active:scale-95 cursor-pointer ${
+          className={`absolute left-2 flex h-6 items-center gap-1.5 rounded-md px-2.5 text-[10px] font-bold uppercase tracking-wide border shadow-sm ring-1 transition-all hover:scale-[1.03] active:scale-95 cursor-pointer ${
             darkMode
-              ? 'bg-red-950/40 border-white/15 text-white hover:bg-red-950/60'
-              : 'bg-white/15 border-white/25 text-white hover:bg-white/25'
+              ? 'bg-white/12 border-white/25 text-white ring-white/15 hover:bg-white/20 hover:border-white/35'
+              : 'bg-white/88 border-white/80 text-red-700 ring-red-950/10 hover:bg-white'
           }`}
           title={
             ordemLancamentos === 'desc'
