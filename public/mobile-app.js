@@ -52,6 +52,7 @@
     usuariosEmpresa: [],
     usuariosCarregando: false,
     usuarioEditandoId: '',
+    categoriaEditandoId: '',
     erro: '',
     mensagem: '',
     carregando: false,
@@ -363,6 +364,7 @@
   }
 
   function fecharModalMenu() {
+    if (state.modalMenu === 'categorias') state.categoriaEditandoId = '';
     state.modalMenu = '';
     render();
   }
@@ -713,6 +715,7 @@
 
     state.despesas = (resultados[3].data || []).map(function (item) {
       return {
+        id: item.id,
         nome: item.nome,
         categoria: item.categoria || 'Sem categoria',
       };
@@ -1215,6 +1218,7 @@
 
     var nome = campo('categoria-nome').trim();
     var tipo = campo('categoria-tipo').trim();
+    var editandoId = state.categoriaEditandoId;
 
     if (!nome || !tipo) {
       setErro('Informe o nome da despesa e a categoria.');
@@ -1225,26 +1229,77 @@
     state.erro = '';
     render();
 
-    var resposta = await db
-      .from('despesas_cadastradas')
-      .insert({
-        empresa_id: state.empresa.id,
-        nome: formatarDescricao(nome),
-        categoria: formatarDescricao(tipo),
-      })
-      .select()
-      .single();
+    var dados = {
+      nome: formatarDescricao(nome),
+      categoria: formatarDescricao(tipo),
+    };
+
+    var resposta = editandoId
+      ? await db
+        .from('despesas_cadastradas')
+        .update(dados)
+        .eq('id', editandoId)
+        .eq('empresa_id', state.empresa.id)
+        .select()
+        .single()
+      : await db
+        .from('despesas_cadastradas')
+        .insert({
+          empresa_id: state.empresa.id,
+          nome: dados.nome,
+          categoria: dados.categoria,
+        })
+        .select()
+        .single();
 
     if (resposta.error) {
       state.carregando = false;
-      setErro('Nao foi possivel adicionar a categoria.');
+      setErro(editandoId ? 'Nao foi possivel editar a despesa.' : 'Nao foi possivel adicionar a despesa.');
       return;
     }
 
     state.modalMenu = 'categorias';
+    state.categoriaEditandoId = '';
     state.erro = '';
     await carregarDados();
-    mostrarToast('Categoria adicionada.');
+    mostrarToast(editandoId ? 'Despesa atualizada.' : 'Despesa cadastrada.');
+  }
+
+  function editarCategoriaDespesa(id) {
+    state.categoriaEditandoId = id || '';
+    state.erro = '';
+    render();
+  }
+
+  async function excluirCategoriaDespesa() {
+    if (!state.empresa || !state.categoriaEditandoId) return;
+
+    var despesa = state.despesas.find(function (item) { return String(item.id) === String(state.categoriaEditandoId); });
+    var nome = despesa ? despesa.nome : 'esta despesa';
+
+    if (!window.confirm('Excluir "' + nome + '" da lista de despesas cadastradas?')) return;
+
+    state.carregando = true;
+    state.erro = '';
+    render();
+
+    var resposta = await db
+      .from('despesas_cadastradas')
+      .delete()
+      .eq('id', state.categoriaEditandoId)
+      .eq('empresa_id', state.empresa.id);
+
+    if (resposta.error) {
+      state.carregando = false;
+      setErro('Nao foi possivel excluir a despesa.');
+      return;
+    }
+
+    state.modalMenu = 'categorias';
+    state.categoriaEditandoId = '';
+    state.erro = '';
+    await carregarDados();
+    mostrarToast('Despesa excluida.');
   }
 
   async function criarEmpresaMobile() {
@@ -2431,24 +2486,35 @@
   }
 
   function categoriasMenuHtml() {
+    var editando = state.despesas.find(function (despesa) { return String(despesa.id) === String(state.categoriaEditandoId); });
+    var categoriaAtual = editando ? editando.categoria : '';
+
     return (
       '<div class="grid gap-2">' +
+        (editando ? '<p class="rounded-xl bg-cyan-50 px-3 py-2 text-xs font-black text-cyan-900">Editando despesa cadastrada</p>' : '') +
         '<label class="grid gap-1 text-[10px] font-black uppercase tracking-wide text-slate-600">Tipo de despesa' +
-          '<input id="categoria-nome" placeholder="Ex: Energia" style="font-size:16px" class="h-10 rounded-md border border-slate-300 bg-white px-3 text-base font-bold normal-case tracking-normal text-slate-900 outline-none focus:border-cyan-500" />' +
+          '<input id="categoria-nome" value="' + escapeHtml(editando ? editando.nome : '') + '" placeholder="Ex: Energia" style="font-size:16px" class="h-10 rounded-md border border-slate-300 bg-white px-3 text-base font-bold normal-case tracking-normal text-slate-900 outline-none focus:border-cyan-500" />' +
         '</label>' +
         '<label class="grid gap-1 text-[10px] font-black uppercase tracking-wide text-slate-600">Categoria' +
           '<select id="categoria-tipo" style="font-size:16px" class="h-10 rounded-md border border-slate-300 bg-white px-3 text-base font-bold normal-case tracking-normal text-slate-900 outline-none focus:border-cyan-500">' +
             '<option value="">Selecione</option>' +
             categoriasPadrao().map(function (categoria) {
-              return '<option value="' + escapeHtml(categoria) + '">' + escapeHtml(categoria) + '</option>';
+              return '<option value="' + escapeHtml(categoria) + '"' + (categoria === categoriaAtual ? ' selected' : '') + '>' + escapeHtml(categoria) + '</option>';
             }).join('') +
           '</select>' +
         '</label>' +
         alertaHtml().replace('mt-4', '') +
-        '<button id="salvar-categoria" type="button" class="h-10 rounded-xl bg-slate-950 px-4 text-xs font-black uppercase tracking-wide text-white">' + (state.carregando ? 'Salvando...' : 'Cadastrar despesa') + '</button>' +
+        '<button id="salvar-categoria" type="button" class="h-10 rounded-xl bg-slate-950 px-4 text-xs font-black uppercase tracking-wide text-white">' + (state.carregando ? 'Salvando...' : (editando ? 'Salvar alteracoes' : 'Cadastrar despesa')) + '</button>' +
+        (editando
+          ? '<div class="grid grid-cols-2 gap-2">' +
+              '<button id="cancelar-categoria" type="button" class="h-10 rounded-xl border border-slate-200 bg-white px-4 text-xs font-black uppercase tracking-wide text-slate-600">Cancelar</button>' +
+              '<button id="excluir-categoria" type="button" class="h-10 rounded-xl border border-rose-100 bg-white px-4 text-xs font-black uppercase tracking-wide text-rose-600">Excluir</button>' +
+            '</div>'
+          : '') +
         '<div class="mt-1 max-h-[42vh] overflow-y-auto rounded-xl border border-slate-100 p-1 grid gap-1.5">' +
           state.despesas.map(function (despesa) {
-            return '<div class="flex items-center justify-between gap-2 rounded-lg bg-slate-50 px-3 py-1.5 text-[11px]"><span class="truncate font-bold">' + escapeHtml(despesa.nome) + '</span><span class="shrink-0 font-semibold text-slate-500">' + escapeHtml(despesa.categoria) + '</span></div>';
+            var ativo = editando && String(editando.id) === String(despesa.id);
+            return '<button type="button" data-editar-categoria="' + escapeHtml(despesa.id || '') + '" class="flex items-center justify-between gap-2 rounded-lg px-3 py-1.5 text-left text-[11px] ' + (ativo ? 'bg-cyan-50 text-cyan-900' : 'bg-slate-50 text-slate-800') + '"><span class="truncate font-bold">' + escapeHtml(despesa.nome) + '</span><span class="shrink-0 font-semibold text-slate-500">' + escapeHtml(despesa.categoria) + '</span></button>';
           }).join('') +
         '</div>' +
       '</div>'
@@ -2596,6 +2662,12 @@
       render();
     });
     bind('salvar-categoria', salvarCategoriaDespesa);
+    bind('cancelar-categoria', function () {
+      state.categoriaEditandoId = '';
+      state.erro = '';
+      render();
+    });
+    bind('excluir-categoria', excluirCategoriaDespesa);
     bind('salvar-despesa', salvarDespesa);
     bind('salvar-entrada', salvarEntrada);
     bind('salvar-total-receita', salvarTotalReceita);
@@ -2780,6 +2852,11 @@
     Array.prototype.forEach.call(document.querySelectorAll('[data-excluir-usuario]'), function (botao) {
       botao.addEventListener('click', function () {
         excluirUsuarioMobile(botao.getAttribute('data-excluir-usuario'));
+      });
+    });
+    Array.prototype.forEach.call(document.querySelectorAll('[data-editar-categoria]'), function (botao) {
+      botao.addEventListener('click', function () {
+        editarCategoriaDespesa(botao.getAttribute('data-editar-categoria'));
       });
     });
     Array.prototype.forEach.call(document.querySelectorAll('[data-evolucao-valor]'), function (botao) {
@@ -3027,7 +3104,7 @@
           return Promise.all(
             keys
               .filter(function (key) {
-                return key.indexOf('avantalab-mobile-') === 0 && key !== 'avantalab-mobile-v30';
+                return key.indexOf('avantalab-mobile-') === 0 && key !== 'avantalab-mobile-v31';
               })
               .map(function (key) {
                 return caches.delete(key);
