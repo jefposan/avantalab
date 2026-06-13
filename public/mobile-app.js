@@ -1241,7 +1241,8 @@
       return;
     }
 
-    state.modalMenu = '';
+    state.modalMenu = 'categorias';
+    state.erro = '';
     await carregarDados();
     mostrarToast('Categoria adicionada.');
   }
@@ -3026,7 +3027,7 @@
           return Promise.all(
             keys
               .filter(function (key) {
-                return key.indexOf('avantalab-mobile-') === 0 && key !== 'avantalab-mobile-v29';
+                return key.indexOf('avantalab-mobile-') === 0 && key !== 'avantalab-mobile-v30';
               })
               .map(function (key) {
                 return caches.delete(key);
