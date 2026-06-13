@@ -1634,7 +1634,7 @@
     return (
       '<label class="grid gap-1 text-xs font-black uppercase tracking-wide text-slate-600">' +
         escapeHtml(label) +
-        '<input id="' + id + '" ' + (extra || '') + ' style="font-size:16px" class="h-11 rounded-md border border-slate-300 bg-white px-3 text-base font-bold normal-case tracking-normal text-slate-900 outline-none focus:border-cyan-500" />' +
+        '<input id="' + id + '" ' + (extra || '') + ' style="font-size:16px" class="h-11 w-full min-w-0 rounded-md border border-slate-300 bg-white px-3 text-base font-bold normal-case tracking-normal text-slate-900 outline-none focus:border-cyan-500" />' +
       '</label>'
     );
   }
@@ -1745,7 +1745,7 @@
     return normalizarOrdemDashboard(state.dashboardOrdem)
       .map(function (id) {
         if (!cards[id]) return '';
-        return '<div data-dashboard-card="' + escapeHtml(id) + '" class="relative pb-2">' +
+        return '<div data-dashboard-card="' + escapeHtml(id) + '" class="relative ' + (id === 'totais' ? 'pb-8' : 'pb-2') + '">' +
           cards[id] +
           '<button type="button" data-dashboard-handle="' + escapeHtml(id) + '" class="absolute bottom-1 right-3 flex h-7 w-8 select-none touch-none items-center justify-center rounded-full bg-transparent text-[11px] font-black leading-none text-slate-400" aria-label="Mover card">&vellip;&vellip;</button>' +
         '</div>';
@@ -1940,7 +1940,7 @@
 
   function totaisHtml(atual) {
     return (
-      '<section class="rounded-2xl bg-white p-4 shadow-sm">' +
+      '<section class="rounded-2xl bg-white p-4 pb-12 shadow-sm">' +
         '<h2 class="mb-3 text-sm font-black">Vis&atilde;o geral do m&ecirc;s</h2>' +
         '<div class="grid grid-cols-3 gap-2">' +
           totalBoxHtml('Despesas', atual.despesas, 'text-red-600', 'ver-despesas-total') +
@@ -2070,10 +2070,10 @@
   function modalDespesaCamposHtml() {
     return (
       '<div class="grid gap-3">' +
-        '<div class="grid grid-cols-[72px_minmax(0,1fr)] gap-6">' +
-          campoClaro('despesa-dia', 'Dia', 'inputmode="numeric"') +
-          '<label class="grid gap-1 text-xs font-black uppercase tracking-wide text-slate-600">Despesa' +
-            '<select id="despesa-nome" style="font-size:16px" class="h-11 rounded-md border border-slate-300 bg-white px-3 text-base font-bold normal-case tracking-normal">' +
+        '<div class="flex items-end gap-6">' +
+          '<div class="w-20 shrink-0">' + campoClaro('despesa-dia', 'Dia', 'inputmode="numeric"') + '</div>' +
+          '<label class="grid min-w-0 flex-1 gap-1 text-xs font-black uppercase tracking-wide text-slate-600">Despesa' +
+            '<select id="despesa-nome" style="font-size:16px" class="h-11 w-full rounded-md border border-slate-300 bg-white px-3 text-base font-bold normal-case tracking-normal">' +
               '<option value="">Selecione</option>' +
               state.despesas.map(function (despesa) {
                 return '<option value="' + escapeHtml(despesa.nome) + '">' + escapeHtml(despesa.nome) + '</option>';
@@ -2098,9 +2098,9 @@
         '</div>' +
         (entradaAtiva
           ? '<div class="grid gap-3">' +
-              '<div class="grid grid-cols-[72px_minmax(0,1fr)] gap-6">' +
-                campoClaro('entrada-dia', 'Dia', 'inputmode="numeric"') +
-                campoClaro('entrada-origem', 'Origem') +
+              '<div class="flex items-end gap-6">' +
+                '<div class="w-20 shrink-0">' + campoClaro('entrada-dia', 'Dia', 'inputmode="numeric"') + '</div>' +
+                '<div class="min-w-0 flex-1">' + campoClaro('entrada-origem', 'Origem') + '</div>' +
               '</div>' +
               campoValor('entrada-valor', 'Valor') +
               '<button id="salvar-entrada" type="button" class="h-11 rounded-xl bg-cyan-500 px-4 text-sm font-black uppercase tracking-wide text-slate-950">' + (state.carregando ? 'Salvando...' : 'Salvar receita') + '</button>' +
@@ -3026,7 +3026,7 @@
           return Promise.all(
             keys
               .filter(function (key) {
-                return key.indexOf('avantalab-mobile-') === 0 && key !== 'avantalab-mobile-v27';
+                return key.indexOf('avantalab-mobile-') === 0 && key !== 'avantalab-mobile-v28';
               })
               .map(function (key) {
                 return caches.delete(key);
