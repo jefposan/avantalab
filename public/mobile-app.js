@@ -13,8 +13,10 @@
   }
 
   if (!supabaseGlobal || !config.supabaseUrl || !config.supabaseAnonKey) {
-    root.innerHTML = telaBase(
-      '<h1>Mobile indisponivel</h1><p>Nao foi possivel carregar a conexao com o Supabase.</p>'
+    root.setAttribute('data-avantalab-mobile-ready', '1');
+    root.innerHTML = telaAvisoMobile(
+      'Conexao necessaria',
+      'Para acessar seus dados com seguranca, conecte-se a internet e tente novamente.'
     );
     return;
   }
@@ -122,11 +124,15 @@
 
   function mensagemErro(error, fallback) {
     if (!error || !error.message) return fallback || 'Nao foi possivel concluir a acao.';
-    if (error.message.indexOf('row-level security') >= 0 || error.message.indexOf('violates row-level security policy') >= 0 || error.code === '42501') {
+    var texto = String(error.message || '').toLowerCase();
+    if (texto.indexOf('failed to fetch') >= 0 || texto.indexOf('network') >= 0 || texto.indexOf('timeout') >= 0) {
+      return 'Verifique sua conexao com a internet e tente novamente.';
+    }
+    if (texto.indexOf('row-level security') >= 0 || texto.indexOf('violates row-level security policy') >= 0 || error.code === '42501') {
       return 'Voce nao tem permissao para realizar esta acao.';
     }
-    if (error.message.indexOf('duplicate key') >= 0 || error.code === '23505') return 'Este registro ja existe.';
-    return error.message;
+    if (texto.indexOf('duplicate key') >= 0 || error.code === '23505') return 'Este registro ja existe.';
+    return fallback || 'Nao foi possivel concluir a acao. Tente novamente em instantes.';
   }
 
   function formatarDescricao(texto) {
@@ -154,6 +160,19 @@
 
   function telaBase(conteudo) {
     return '<div class="mx-auto max-w-md px-4 py-5">' + conteudo + '</div>';
+  }
+
+  function telaAvisoMobile(titulo, texto) {
+    return (
+      '<section class="fixed inset-0 flex items-center justify-center overflow-hidden px-4" style="height:100dvh;background-color:#eef6fb;background-image:url(/images/bg-avantalab-mobile-1080x1920.png);background-size:100% auto;background-repeat:no-repeat;background-position:center center;background-attachment:fixed;">' +
+        '<div class="w-full max-w-xs rounded-3xl border border-white/40 bg-white/25 p-5 text-center text-slate-900 shadow-2xl backdrop-blur-xl">' +
+          '<p class="text-xs font-black uppercase tracking-[0.24em] text-cyan-700">AvantaLab</p>' +
+          '<h1 class="mt-2 text-xl font-black">' + escapeHtml(titulo) + '</h1>' +
+          '<p class="mt-2 text-sm font-semibold leading-relaxed text-slate-600">' + escapeHtml(texto) + '</p>' +
+          '<button type="button" onclick="window.location.reload()" class="mt-4 h-11 w-full rounded-xl bg-slate-950 px-4 text-xs font-black uppercase tracking-wide text-white">Tentar novamente</button>' +
+        '</div>' +
+      '</section>'
+    );
   }
 
   function nomeEmpresa(empresa) {
@@ -767,7 +786,7 @@
 
     if (resposta.error) {
       state.carregando = false;
-      setErro('Erro Google: ' + resposta.error.message);
+      setErro(mensagemErro(resposta.error, 'Nao foi possivel conectar com o Google agora. Tente novamente em instantes.'));
     }
   }
 
@@ -971,7 +990,7 @@
     state.carregando = false;
 
     if (cadastro.error) {
-      setErro(cadastro.error.message || 'Nao foi possivel criar o cadastro.');
+      setErro(mensagemErro(cadastro.error, 'Nao foi possivel criar o cadastro. Verifique os dados e tente novamente.'));
       return;
     }
 
@@ -3007,7 +3026,7 @@
           return Promise.all(
             keys
               .filter(function (key) {
-                return key.indexOf('avantalab-mobile-') === 0 && key !== 'avantalab-mobile-v26';
+                return key.indexOf('avantalab-mobile-') === 0 && key !== 'avantalab-mobile-v27';
               })
               .map(function (key) {
                 return caches.delete(key);
