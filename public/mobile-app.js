@@ -53,6 +53,7 @@
     erro: '',
     mensagem: '',
     carregando: false,
+    empresaAcao: '',
     loginValor: '',
     modoSenha: false,
     modoCadastro: false,
@@ -1235,6 +1236,7 @@
     }
 
     state.carregando = true;
+    state.empresaAcao = 'criar';
     state.erro = '';
     render();
 
@@ -1244,6 +1246,7 @@
 
     if (resposta.error || !resposta.data) {
       state.carregando = false;
+      state.empresaAcao = '';
       setErro(mensagemErro(resposta.error, 'Nao foi possivel criar a empresa.'));
       return;
     }
@@ -1258,6 +1261,7 @@
     }
 
     state.modalMenu = '';
+    state.empresaAcao = '';
     await carregarEmpresas(state.usuario.id);
     await carregarDados();
     mostrarToast('Empresa criada.');
@@ -1280,6 +1284,7 @@
     }
 
     state.carregando = true;
+    state.empresaAcao = 'excluir';
     state.erro = '';
     render();
 
@@ -1290,11 +1295,13 @@
 
     if (resposta.error) {
       state.carregando = false;
+      state.empresaAcao = '';
       setErro(mensagemErro(resposta.error, 'Nao foi possivel excluir a empresa.'));
       return;
     }
 
     state.modalMenu = '';
+    state.empresaAcao = '';
     await carregarEmpresas(state.usuario.id);
 
     if (!state.empresa) {
@@ -1851,7 +1858,7 @@
 
   function visaoGeralHtml(atual) {
     return (
-      '<section class="rounded-2xl bg-white p-4 shadow-sm">' +
+      '<section class="rounded-2xl bg-white p-4 pb-12 shadow-sm">' +
         '<h2 class="mb-2 text-sm font-black">Vis&atilde;o geral do m&ecirc;s</h2>' +
         '<div class="grid gap-1">' +
           linhaVisaoHtml('receitas', '+', 'Receitas', atual.receitas, 'bg-emerald-100 text-emerald-700') +
@@ -2044,7 +2051,7 @@
   function modalDespesaCamposHtml() {
     return (
       '<div class="grid gap-3">' +
-        '<div class="grid grid-cols-[86px_minmax(0,1fr)] gap-4">' +
+        '<div class="grid grid-cols-[72px_minmax(0,1fr)] gap-6">' +
           campoClaro('despesa-dia', 'Dia', 'inputmode="numeric"') +
           '<label class="grid gap-1 text-xs font-black uppercase tracking-wide text-slate-600">Despesa' +
             '<select id="despesa-nome" style="font-size:16px" class="h-11 rounded-md border border-slate-300 bg-white px-3 text-base font-bold normal-case tracking-normal">' +
@@ -2072,7 +2079,7 @@
         '</div>' +
         (entradaAtiva
           ? '<div class="grid gap-3">' +
-              '<div class="grid grid-cols-[86px_minmax(0,1fr)] gap-4">' +
+              '<div class="grid grid-cols-[72px_minmax(0,1fr)] gap-6">' +
                 campoClaro('entrada-dia', 'Dia', 'inputmode="numeric"') +
                 campoClaro('entrada-origem', 'Origem') +
               '</div>' +
@@ -2126,7 +2133,7 @@
     if (acao.tipo === 'receita') {
       return (
         '<div class="grid gap-3">' +
-          '<div class="grid grid-cols-[86px_minmax(0,1fr)] gap-4">' +
+          '<div class="grid grid-cols-[72px_minmax(0,1fr)] gap-6">' +
             campoClaro('editar-dia', 'Dia', 'inputmode="numeric" value="' + escapeHtml(item.dia) + '"') +
             campoClaro('editar-origem', 'Origem', 'value="' + escapeHtml(item.origem) + '"') +
           '</div>' +
@@ -2138,7 +2145,7 @@
 
     return (
       '<div class="grid gap-3">' +
-        '<div class="grid grid-cols-[86px_minmax(0,1fr)] gap-4">' +
+        '<div class="grid grid-cols-[72px_minmax(0,1fr)] gap-6">' +
           campoClaro('editar-dia', 'Dia', 'inputmode="numeric" value="' + escapeHtml(item.dia) + '"') +
           '<label class="grid gap-1 text-xs font-black uppercase tracking-wide text-slate-600">Despesa' +
             '<select id="editar-despesa" style="font-size:16px" class="h-11 rounded-md border border-slate-300 bg-white px-3 text-base font-bold normal-case tracking-normal">' +
@@ -2332,7 +2339,7 @@
         '<div class="grid gap-2 rounded-2xl border border-emerald-100 bg-emerald-50/70 p-3">' +
           '<p class="text-[10px] font-black uppercase tracking-wide text-emerald-800">Criar nova empresa</p>' +
           '<input id="nova-empresa-nome" placeholder="Nome da empresa" style="font-size:16px" class="h-11 rounded-md border border-emerald-100 bg-white px-3 text-base font-bold text-slate-900 outline-none focus:border-emerald-500" />' +
-          '<button id="criar-empresa-mobile" type="button" class="h-11 rounded-xl bg-emerald-600 px-4 text-sm font-black uppercase tracking-wide text-white">' + (state.carregando ? 'Processando...' : 'Criar nova empresa') + '</button>' +
+          '<button id="criar-empresa-mobile" type="button" class="h-11 rounded-xl bg-emerald-600 px-4 text-sm font-black uppercase tracking-wide text-white">' + (state.empresaAcao === 'criar' ? 'Criando...' : 'Criar nova empresa') + '</button>' +
         '</div>' +
         '<button id="trocar-empresa-gerenciar" type="button" class="h-11 rounded-xl px-4 text-sm font-black uppercase tracking-wide ' + (podeTrocar ? 'bg-cyan-600 text-white' : 'bg-slate-100 text-slate-400') + '"' + (podeTrocar ? '' : ' disabled') + '>Trocar empresa</button>' +
         (gestorMaster
@@ -2341,7 +2348,7 @@
               '<p class="mt-2 text-xs font-bold leading-relaxed text-rose-800">Esta acao remove a empresa atual e seus dados. Para confirmar, digite exatamente o nome abaixo.</p>' +
               '<p class="mt-2 text-sm font-black text-rose-900">' + escapeHtml(nomeEmpresa(state.empresa)) + '</p>' +
               '<input id="excluir-empresa-confirmacao" placeholder="Digite o nome da empresa" style="font-size:16px" class="mt-3 h-11 w-full rounded-md border border-rose-100 bg-white px-3 text-base font-bold text-slate-900 outline-none focus:border-rose-400" />' +
-              '<button id="excluir-empresa-mobile" type="button" class="mt-3 h-11 w-full rounded-xl border border-rose-200 bg-white px-4 text-sm font-black uppercase tracking-wide text-rose-700">' + (state.carregando ? 'Excluindo...' : 'Excluir definitivamente') + '</button>' +
+              '<button id="excluir-empresa-mobile" type="button" class="mt-3 h-11 w-full rounded-xl border border-rose-200 bg-white px-4 text-sm font-black uppercase tracking-wide text-rose-700">' + (state.empresaAcao === 'excluir' ? 'Excluindo...' : 'Excluir definitivamente') + '</button>' +
             '</div>'
           : '<p class="rounded-2xl bg-slate-50 p-3 text-xs font-semibold text-slate-500">Somente o Gestor Master pode excluir a empresa atual.</p>') +
         alertaHtml().replace('mt-4', '') +
@@ -3000,7 +3007,7 @@
           return Promise.all(
             keys
               .filter(function (key) {
-                return key.indexOf('avantalab-mobile-') === 0 && key !== 'avantalab-mobile-v25';
+                return key.indexOf('avantalab-mobile-') === 0 && key !== 'avantalab-mobile-v26';
               })
               .map(function (key) {
                 return caches.delete(key);
