@@ -1075,6 +1075,9 @@
     }
 
     state.modalLancamento = false;
+    state.tipoLancamento = 'despesa';
+    state.modoReceita = 'entrada';
+    state.erro = '';
     await carregarDados();
     mostrarToast('Despesa lancada.');
   }
@@ -1138,6 +1141,9 @@
     }
 
     state.modalLancamento = false;
+    state.tipoLancamento = 'despesa';
+    state.modoReceita = 'entrada';
+    state.erro = '';
     await carregarDados();
     mostrarToast('Entrada lancada.');
   }
@@ -1177,6 +1183,9 @@
     }
 
     state.modalLancamento = false;
+    state.tipoLancamento = 'despesa';
+    state.modoReceita = 'entrada';
+    state.erro = '';
     await carregarDados();
     mostrarToast('Total do mes atualizado.');
   }
@@ -1818,7 +1827,7 @@
     var categoriasVisiveis = configuracao.expandido ? categorias : categorias.slice(0, 3);
 
     return (
-      '<section class="rounded-2xl bg-white p-4 shadow-sm">' +
+      '<section class="rounded-2xl bg-white p-4 pb-8 shadow-sm">' +
         '<div class="mb-3 flex items-center justify-between"><h2 class="text-sm font-black">' + escapeHtml(configuracao.titulo) + '</h2><span class="text-xs font-bold text-slate-400">' + dinheiro(total) + '</span></div>' +
         '<div class="grid grid-cols-[136px_1fr] items-center gap-3">' +
           '<div class="relative h-32 w-32 rounded-full" style="background:' + fundo + '">' +
@@ -2015,9 +2024,9 @@
     var despesaAtiva = state.tipoLancamento === 'despesa';
 
     return (
-      '<div class="fixed inset-0 z-40 flex items-center justify-center overflow-hidden bg-slate-950/45 px-3 py-4">' +
+      '<div id="modal-lancamento-overlay" class="fixed inset-0 z-40 flex items-center justify-center overflow-hidden bg-slate-950/60 px-3 py-4">' +
         '<section class="mx-auto max-h-[calc(100dvh-32px)] w-full max-w-md overflow-x-hidden overflow-y-auto rounded-3xl bg-white p-4 shadow-2xl overscroll-contain">' +
-          '<div class="mb-3 flex items-center justify-between">' +
+          '<div class="-mx-4 -mt-4 mb-4 flex items-center justify-between rounded-t-3xl border-b border-cyan-100 bg-cyan-50/90 px-4 py-3">' +
             '<h2 class="text-base font-black">Novo lancamento</h2>' +
             '<button id="fechar-lancamento" type="button" class="flex h-9 w-9 items-center justify-center rounded-full bg-slate-100 text-xl text-slate-600">&times;</button>' +
           '</div>' +
@@ -2035,7 +2044,7 @@
   function modalDespesaCamposHtml() {
     return (
       '<div class="grid gap-3">' +
-        '<div class="grid grid-cols-[82px_1fr] gap-3">' +
+        '<div class="grid grid-cols-[86px_minmax(0,1fr)] gap-4">' +
           campoClaro('despesa-dia', 'Dia', 'inputmode="numeric"') +
           '<label class="grid gap-1 text-xs font-black uppercase tracking-wide text-slate-600">Despesa' +
             '<select id="despesa-nome" style="font-size:16px" class="h-11 rounded-md border border-slate-300 bg-white px-3 text-base font-bold normal-case tracking-normal">' +
@@ -2063,7 +2072,7 @@
         '</div>' +
         (entradaAtiva
           ? '<div class="grid gap-3">' +
-              '<div class="grid grid-cols-[82px_1fr] gap-3">' +
+              '<div class="grid grid-cols-[86px_minmax(0,1fr)] gap-4">' +
                 campoClaro('entrada-dia', 'Dia', 'inputmode="numeric"') +
                 campoClaro('entrada-origem', 'Origem') +
               '</div>' +
@@ -2072,7 +2081,7 @@
             '</div>'
           : '<div class="grid gap-3">' +
               '<p class="rounded-xl bg-cyan-50 px-3 py-2 text-xs font-semibold text-cyan-900">Define o faturamento total do mes selecionado, substituindo o valor atual.</p>' +
-              campoValor('receita-total', 'Total do mes', dinheiro(state.faturamentos[state.mes] || 0)) +
+              campoValor('receita-total', 'Total do mes') +
               '<button id="salvar-total-receita" type="button" class="h-11 rounded-xl bg-slate-950 px-4 text-sm font-black uppercase tracking-wide text-white">' + (state.carregando ? 'Salvando...' : 'Definir total') + '</button>' +
             '</div>') +
       '</div>'
@@ -2089,9 +2098,9 @@
     var detalhe = receita ? 'Receita' : 'Despesa';
 
     return (
-      '<div class="fixed inset-0 z-[55] flex items-center justify-center overflow-hidden bg-slate-950/45 px-3 py-4">' +
+      '<div id="modal-acao-overlay" class="fixed inset-0 z-[55] flex items-center justify-center overflow-hidden bg-slate-950/60 px-3 py-4">' +
         '<section class="mx-auto max-h-[calc(100dvh-32px)] w-full max-w-md overflow-x-hidden overflow-y-auto rounded-3xl bg-white p-4 shadow-2xl overscroll-contain">' +
-          '<div class="mb-3 flex items-center justify-between gap-3">' +
+          '<div class="-mx-4 -mt-4 mb-4 flex items-center justify-between gap-3 rounded-t-3xl border-b border-cyan-100 bg-cyan-50/90 px-4 py-3">' +
             '<div class="min-w-0"><p class="text-[10px] font-black uppercase tracking-wide text-slate-400">' + detalhe + '</p><h2 class="truncate text-base font-black">' + escapeHtml(titulo) + '</h2></div>' +
             '<button id="fechar-acao-lancamento" type="button" class="flex h-9 w-9 items-center justify-center rounded-full bg-slate-100 text-xl text-slate-600">&times;</button>' +
           '</div>' +
@@ -2117,7 +2126,7 @@
     if (acao.tipo === 'receita') {
       return (
         '<div class="grid gap-3">' +
-          '<div class="grid grid-cols-[82px_1fr] gap-3">' +
+          '<div class="grid grid-cols-[86px_minmax(0,1fr)] gap-4">' +
             campoClaro('editar-dia', 'Dia', 'inputmode="numeric" value="' + escapeHtml(item.dia) + '"') +
             campoClaro('editar-origem', 'Origem', 'value="' + escapeHtml(item.origem) + '"') +
           '</div>' +
@@ -2129,7 +2138,7 @@
 
     return (
       '<div class="grid gap-3">' +
-        '<div class="grid grid-cols-[82px_1fr] gap-3">' +
+        '<div class="grid grid-cols-[86px_minmax(0,1fr)] gap-4">' +
           campoClaro('editar-dia', 'Dia', 'inputmode="numeric" value="' + escapeHtml(item.dia) + '"') +
           '<label class="grid gap-1 text-xs font-black uppercase tracking-wide text-slate-600">Despesa' +
             '<select id="editar-despesa" style="font-size:16px" class="h-11 rounded-md border border-slate-300 bg-white px-3 text-base font-bold normal-case tracking-normal">' +
@@ -2190,9 +2199,9 @@
     }[state.modalMenu] || 'Menu';
 
     return (
-      '<div class="fixed inset-0 z-[60] flex items-center justify-center overflow-hidden bg-slate-950/45 px-3 py-4">' +
+      '<div id="modal-menu-overlay" class="fixed inset-0 z-[60] flex items-center justify-center overflow-hidden bg-slate-950/60 px-3 py-4">' +
         '<section class="mx-auto max-h-[calc(100dvh-32px)] w-full max-w-md overflow-x-hidden overflow-y-auto rounded-3xl ' + (state.darkMode ? 'bg-slate-900 text-slate-100' : 'bg-white text-slate-900') + ' p-4 shadow-2xl overscroll-contain">' +
-          '<div class="mb-3 flex items-center justify-between gap-3">' +
+          '<div class="-mx-4 -mt-4 mb-4 flex items-center justify-between gap-3 rounded-t-3xl border-b ' + (state.darkMode ? 'border-slate-700 bg-slate-800' : 'border-cyan-100 bg-cyan-50/90') + ' px-4 py-3">' +
             '<h2 class="text-base font-black">' + escapeHtml(titulo) + '</h2>' +
             '<button id="fechar-modal-menu" type="button" class="flex h-9 w-9 items-center justify-center rounded-full ' + (state.darkMode ? 'bg-slate-800' : 'bg-slate-100') + ' text-xl">&times;</button>' +
           '</div>' +
@@ -2245,7 +2254,7 @@
                 '<div class="min-w-0"><p class="truncate text-xs font-black text-slate-900">' + escapeHtml(usuario.nome || usuario.login || usuario.email || 'Usuario') + '</p><p class="truncate text-[10px] font-semibold text-slate-500">' + escapeHtml(usuario.login || usuario.email || '-') + ' · ' + escapeHtml(perfilFormatado(usuario.perfil)) + (bloqueado ? ' · Bloqueado' : '') + '</p></div>' +
                 '<div class="flex min-w-0 gap-1">' +
                   '<button type="button" data-editar-usuario="' + escapeHtml(usuario.id) + '" class="rounded-lg bg-white px-2 py-1 text-[10px] font-black text-cyan-700">Editar</button>' +
-                  (protegido ? '' : '<button type="button" data-excluir-usuario="' + escapeHtml(usuario.id) + '" class="rounded-lg bg-red-600 px-2 py-1 text-[10px] font-black text-white">Excluir</button>') +
+                  (protegido ? '' : '<button type="button" data-excluir-usuario="' + escapeHtml(usuario.id) + '" class="rounded-lg border border-rose-100 bg-white px-2 py-1 text-[10px] font-black text-rose-600">Excluir</button>') +
                 '</div>' +
               '</div>' +
             '</div>';
@@ -2310,18 +2319,32 @@
   }
 
   function gerenciarEmpresaHtml() {
+    var gestorMaster = state.empresa && state.empresa.perfil === 'gestor_master';
+    var podeTrocar = state.empresas.length > 1;
+
     return (
       '<div class="grid gap-3 text-sm">' +
-        '<div class="rounded-2xl bg-slate-50 p-4"><p class="text-[10px] font-black uppercase tracking-wide text-slate-400">Empresa atual</p><p class="mt-1 font-black">' + escapeHtml(nomeEmpresa(state.empresa)) + '</p></div>' +
-        campoClaro('nova-empresa-nome', 'Criar nova empresa', 'placeholder="Nome da empresa"') +
-        '<button id="criar-empresa-mobile" type="button" class="h-11 rounded-xl bg-cyan-500 px-4 text-sm font-black uppercase tracking-wide text-slate-950">' + (state.carregando ? 'Processando...' : 'Criar empresa') + '</button>' +
-        '<div class="rounded-2xl border border-red-100 bg-red-50 p-4">' +
-          '<p class="text-xs font-bold leading-relaxed text-red-800">Para excluir a empresa atual, digite exatamente o nome abaixo. Esta acao remove o ambiente e seus dados.</p>' +
-          '<p class="mt-2 text-sm font-black text-red-900">' + escapeHtml(nomeEmpresa(state.empresa)) + '</p>' +
-          '<input id="excluir-empresa-confirmacao" placeholder="Digite o nome da empresa" style="font-size:16px" class="mt-3 h-11 w-full rounded-md border border-red-200 bg-white px-3 text-base font-bold text-slate-900 outline-none" />' +
-          '<button id="excluir-empresa-mobile" type="button" class="mt-3 h-11 w-full rounded-xl bg-red-600 px-4 text-sm font-black uppercase tracking-wide text-white">' + (state.carregando ? 'Excluindo...' : 'Excluir empresa') + '</button>' +
+        '<div class="rounded-2xl bg-slate-50 p-4">' +
+          '<p class="text-[10px] font-black uppercase tracking-wide text-slate-400">Empresa atual</p>' +
+          '<p class="mt-1 font-black">' + escapeHtml(nomeEmpresa(state.empresa)) + '</p>' +
+          '<p class="mt-1 text-xs font-semibold text-slate-500">Perfil: ' + escapeHtml(perfilFormatado(state.empresa && state.empresa.perfil)) + '</p>' +
         '</div>' +
-        alertaHtml() +
+        '<div class="grid gap-2 rounded-2xl border border-emerald-100 bg-emerald-50/70 p-3">' +
+          '<p class="text-[10px] font-black uppercase tracking-wide text-emerald-800">Criar nova empresa</p>' +
+          '<input id="nova-empresa-nome" placeholder="Nome da empresa" style="font-size:16px" class="h-11 rounded-md border border-emerald-100 bg-white px-3 text-base font-bold text-slate-900 outline-none focus:border-emerald-500" />' +
+          '<button id="criar-empresa-mobile" type="button" class="h-11 rounded-xl bg-emerald-600 px-4 text-sm font-black uppercase tracking-wide text-white">' + (state.carregando ? 'Processando...' : 'Criar nova empresa') + '</button>' +
+        '</div>' +
+        '<button id="trocar-empresa-gerenciar" type="button" class="h-11 rounded-xl px-4 text-sm font-black uppercase tracking-wide ' + (podeTrocar ? 'bg-cyan-600 text-white' : 'bg-slate-100 text-slate-400') + '"' + (podeTrocar ? '' : ' disabled') + '>Trocar empresa</button>' +
+        (gestorMaster
+          ? '<div class="rounded-2xl border border-rose-100 bg-rose-50/70 p-4">' +
+              '<p class="text-[10px] font-black uppercase tracking-wide text-rose-700">Excluir empresa atual</p>' +
+              '<p class="mt-2 text-xs font-bold leading-relaxed text-rose-800">Esta acao remove a empresa atual e seus dados. Para confirmar, digite exatamente o nome abaixo.</p>' +
+              '<p class="mt-2 text-sm font-black text-rose-900">' + escapeHtml(nomeEmpresa(state.empresa)) + '</p>' +
+              '<input id="excluir-empresa-confirmacao" placeholder="Digite o nome da empresa" style="font-size:16px" class="mt-3 h-11 w-full rounded-md border border-rose-100 bg-white px-3 text-base font-bold text-slate-900 outline-none focus:border-rose-400" />' +
+              '<button id="excluir-empresa-mobile" type="button" class="mt-3 h-11 w-full rounded-xl border border-rose-200 bg-white px-4 text-sm font-black uppercase tracking-wide text-rose-700">' + (state.carregando ? 'Excluindo...' : 'Excluir definitivamente') + '</button>' +
+            '</div>'
+          : '<p class="rounded-2xl bg-slate-50 p-3 text-xs font-semibold text-slate-500">Somente o Gestor Master pode excluir a empresa atual.</p>') +
+        alertaHtml().replace('mt-4', '') +
       '</div>'
     );
   }
@@ -2533,6 +2556,7 @@
     bind('menu-instalar', instalarApp);
     bind('menu-tema', trocarTema);
     bind('fechar-modal-menu', fecharModalMenu);
+    bind('trocar-empresa-gerenciar', function () { abrirModalMenu('empresa'); });
     bind('termos-mobile', function () { abrirModalMenu('termos'); });
     bind('privacidade-mobile', function () { abrirModalMenu('privacidade'); });
     bind('criar-empresa-mobile', criarEmpresaMobile);
@@ -2615,6 +2639,15 @@
       state.modalLancamento = false;
       render();
     });
+    var modalLancamentoOverlay = document.getElementById('modal-lancamento-overlay');
+    if (modalLancamentoOverlay) {
+      modalLancamentoOverlay.addEventListener('click', function (event) {
+        if (event.target !== modalLancamentoOverlay) return;
+        state.modalLancamento = false;
+        state.erro = '';
+        render();
+      });
+    }
     bind('tipo-despesa', function () {
       state.tipoLancamento = 'despesa';
       render();
@@ -2634,6 +2667,20 @@
       render();
     });
     bind('fechar-acao-lancamento', fecharAcaoLancamento);
+    var modalAcaoOverlay = document.getElementById('modal-acao-overlay');
+    if (modalAcaoOverlay) {
+      modalAcaoOverlay.addEventListener('click', function (event) {
+        if (event.target !== modalAcaoOverlay) return;
+        fecharAcaoLancamento();
+      });
+    }
+    var modalMenuOverlay = document.getElementById('modal-menu-overlay');
+    if (modalMenuOverlay) {
+      modalMenuOverlay.addEventListener('click', function (event) {
+        if (event.target !== modalMenuOverlay) return;
+        fecharModalMenu();
+      });
+    }
     bind('editar-lancamento', function () {
       if (!state.modalAcao) return;
       state.modalAcao.modo = 'editar';
@@ -2953,7 +3000,7 @@
           return Promise.all(
             keys
               .filter(function (key) {
-                return key.indexOf('avantalab-mobile-') === 0 && key !== 'avantalab-mobile-v24';
+                return key.indexOf('avantalab-mobile-') === 0 && key !== 'avantalab-mobile-v25';
               })
               .map(function (key) {
                 return caches.delete(key);
