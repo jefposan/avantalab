@@ -1745,7 +1745,7 @@
     return normalizarOrdemDashboard(state.dashboardOrdem)
       .map(function (id) {
         if (!cards[id]) return '';
-        return '<div data-dashboard-card="' + escapeHtml(id) + '" class="relative ' + (id === 'totais' ? 'pb-8' : 'pb-2') + '">' +
+        return '<div data-dashboard-card="' + escapeHtml(id) + '" class="relative pb-2">' +
           cards[id] +
           '<button type="button" data-dashboard-handle="' + escapeHtml(id) + '" class="absolute bottom-1 right-3 flex h-7 w-8 select-none touch-none items-center justify-center rounded-full bg-transparent text-[11px] font-black leading-none text-slate-400" aria-label="Mover card">&vellip;&vellip;</button>' +
         '</div>';
@@ -3026,7 +3026,7 @@
           return Promise.all(
             keys
               .filter(function (key) {
-                return key.indexOf('avantalab-mobile-') === 0 && key !== 'avantalab-mobile-v28';
+                return key.indexOf('avantalab-mobile-') === 0 && key !== 'avantalab-mobile-v29';
               })
               .map(function (key) {
                 return caches.delete(key);
