@@ -3160,6 +3160,11 @@
     var pointerId = null;
     var zonasDestino = [];
     var estilosOrigem = null;
+    var pointerCardOffsetX = 0;
+    var pointerCardOffsetY = 0;
+    var ghostPointerOffsetX = 0;
+    var ghostPointerOffsetY = 0;
+    var ghostEscala = 0.94;
 
     function limparDrag() {
       if (timer) window.clearTimeout(timer);
@@ -3197,21 +3202,43 @@
       pointerId = null;
       zonasDestino = [];
       estilosOrigem = null;
+      pointerCardOffsetX = 0;
+      pointerCardOffsetY = 0;
+      ghostPointerOffsetX = 0;
+      ghostPointerOffsetY = 0;
       state.dragDashboardId = '';
+    }
+
+    function posicionarGhost(x, y) {
+      if (!ghost) return;
+
+      var largura = ghost.offsetWidth || 260;
+      var altura = ghost.offsetHeight || 120;
+      var ajusteEscalaX = (largura * (1 - ghostEscala)) / 2;
+      var ajusteEscalaY = (altura * (1 - ghostEscala)) / 2;
+      var left = x - (ghostPointerOffsetX * ghostEscala) - ajusteEscalaX;
+      var top = y - (ghostPointerOffsetY * ghostEscala) - ajusteEscalaY;
+
+      ghost.style.left = Math.max(12, Math.min(window.innerWidth - largura - 12, left)) + 'px';
+      ghost.style.top = Math.max(12, Math.min(window.innerHeight - altura - 12, top)) + 'px';
     }
 
     function criarGhost(card, x, y) {
       var rect = card.getBoundingClientRect();
       var larguraGhost = Math.min(rect.width * 0.82, window.innerWidth - 56);
+      var alturaGhost = Math.min(Math.max(rect.height * 0.86, 90), 198);
       ghost = document.createElement('div');
       ghost.className = 'pointer-events-none fixed z-[90] overflow-hidden rounded-2xl border border-cyan-200 bg-white text-slate-900 shadow-2xl shadow-cyan-950/25 backdrop-blur';
       ghost.style.width = larguraGhost + 'px';
-      ghost.style.maxHeight = Math.min(Math.max(rect.height * 0.86, 90), 198) + 'px';
-      ghost.style.left = Math.max(12, Math.min(window.innerWidth - larguraGhost - 12, x - larguraGhost / 2)) + 'px';
-      ghost.style.top = Math.max(12, y - 34) + 'px';
-      ghost.style.transform = 'rotate(-0.5deg) scale(0.94)';
+      ghost.style.height = alturaGhost + 'px';
+      ghost.style.maxHeight = alturaGhost + 'px';
+      ghost.style.left = '12px';
+      ghost.style.top = '12px';
+      ghost.style.transform = 'rotate(-0.5deg) scale(' + ghostEscala + ')';
       ghost.style.transformOrigin = 'center center';
       ghost.style.transition = 'box-shadow .16s ease, transform .16s ease';
+      ghostPointerOffsetX = Math.max(0, Math.min(larguraGhost, pointerCardOffsetX * (larguraGhost / Math.max(rect.width, 1))));
+      ghostPointerOffsetY = Math.max(0, Math.min(alturaGhost, pointerCardOffsetY * (alturaGhost / Math.max(rect.height, 1))));
 
       var preview = card.cloneNode(true);
       preview.removeAttribute('data-dashboard-card');
@@ -3228,6 +3255,7 @@
       });
       ghost.appendChild(preview);
       document.body.appendChild(ghost);
+      posicionarGhost(x, y);
     }
 
     function garantirMarcador() {
@@ -3267,10 +3295,7 @@
     }
 
     function moverGhost(x, y) {
-      if (!ghost) return;
-      var largura = ghost.offsetWidth || 260;
-      ghost.style.left = Math.max(12, Math.min(window.innerWidth - largura - 12, x - largura / 2)) + 'px';
-      ghost.style.top = Math.max(12, Math.min(window.innerHeight - 72, y - 34)) + 'px';
+      posicionarGhost(x, y);
     }
 
     function destacarDestino(x, y) {
@@ -3340,6 +3365,11 @@
         pointerId = event.pointerId;
         idAtivo = handle.getAttribute('data-dashboard-handle') || '';
         cardAtivo = handle.closest('[data-dashboard-card]');
+        if (cardAtivo) {
+          var rectInicial = cardAtivo.getBoundingClientRect();
+          pointerCardOffsetX = event.clientX - rectInicial.left;
+          pointerCardOffsetY = event.clientY - rectInicial.top;
+        }
         try {
           handle.setPointerCapture(event.pointerId);
         } catch (error) {}
@@ -3429,7 +3459,7 @@
           return Promise.all(
             keys
               .filter(function (key) {
-                return key.indexOf('avantalab-mobile-') === 0 && key !== 'avantalab-mobile-v38';
+                return key.indexOf('avantalab-mobile-') === 0 && key !== 'avantalab-mobile-v39';
               })
               .map(function (key) {
                 return caches.delete(key);
