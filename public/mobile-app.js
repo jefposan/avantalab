@@ -53,6 +53,7 @@
     usuariosCarregando: false,
     usuarioEditandoId: '',
     categoriaEditandoId: '',
+    categoriaAcoesId: '',
     erro: '',
     mensagem: '',
     carregando: false,
@@ -364,7 +365,10 @@
   }
 
   function fecharModalMenu() {
-    if (state.modalMenu === 'categorias') state.categoriaEditandoId = '';
+    if (state.modalMenu === 'categorias') {
+      state.categoriaEditandoId = '';
+      state.categoriaAcoesId = '';
+    }
     state.modalMenu = '';
     render();
   }
@@ -1218,7 +1222,58 @@
 
     var nome = campo('categoria-nome').trim();
     var tipo = campo('categoria-tipo').trim();
-    var editandoId = state.categoriaEditandoId;
+    if (!nome || !tipo) {
+      setErro('Informe o nome da despesa e a categoria.');
+      return;
+    }
+
+    state.carregando = true;
+    state.categoriaEditandoId = '';
+    state.categoriaAcoesId = '';
+    state.erro = '';
+    render();
+
+    var resposta = await db
+      .from('despesas_cadastradas')
+      .insert({
+        empresa_id: state.empresa.id,
+        nome: formatarDescricao(nome),
+        categoria: formatarDescricao(tipo),
+      })
+      .select()
+      .single();
+
+    if (resposta.error) {
+      state.carregando = false;
+      setErro('Nao foi possivel adicionar a despesa.');
+      return;
+    }
+
+    state.modalMenu = 'categorias';
+    state.erro = '';
+    await carregarDados();
+    mostrarToast('Despesa cadastrada.');
+  }
+
+  function abrirCategoriaAcoes(id) {
+    state.categoriaAcoesId = state.categoriaAcoesId === id ? '' : (id || '');
+    state.categoriaEditandoId = '';
+    state.erro = '';
+    render();
+  }
+
+  function editarCategoriaDespesa(id) {
+    state.categoriaEditandoId = id || '';
+    state.categoriaAcoesId = '';
+    state.erro = '';
+    render();
+  }
+
+  async function salvarEdicaoCategoriaDespesa(id) {
+    if (!state.empresa || !id) return;
+
+    var nome = campo('edit-categoria-nome-' + id).trim();
+    var tipo = campo('edit-categoria-tipo-' + id).trim();
 
     if (!nome || !tipo) {
       setErro('Informe o nome da despesa e a categoria.');
@@ -1229,52 +1284,36 @@
     state.erro = '';
     render();
 
-    var dados = {
-      nome: formatarDescricao(nome),
-      categoria: formatarDescricao(tipo),
-    };
-
-    var resposta = editandoId
-      ? await db
-        .from('despesas_cadastradas')
-        .update(dados)
-        .eq('id', editandoId)
-        .eq('empresa_id', state.empresa.id)
-        .select()
-        .single()
-      : await db
-        .from('despesas_cadastradas')
-        .insert({
-          empresa_id: state.empresa.id,
-          nome: dados.nome,
-          categoria: dados.categoria,
-        })
-        .select()
-        .single();
+    var resposta = await db
+      .from('despesas_cadastradas')
+      .update({
+        nome: formatarDescricao(nome),
+        categoria: formatarDescricao(tipo),
+      })
+      .eq('id', id)
+      .eq('empresa_id', state.empresa.id)
+      .select()
+      .single();
 
     if (resposta.error) {
       state.carregando = false;
-      setErro(editandoId ? 'Nao foi possivel editar a despesa.' : 'Nao foi possivel adicionar a despesa.');
+      setErro('Nao foi possivel editar a despesa.');
       return;
     }
 
     state.modalMenu = 'categorias';
     state.categoriaEditandoId = '';
+    state.categoriaAcoesId = '';
     state.erro = '';
     await carregarDados();
-    mostrarToast(editandoId ? 'Despesa atualizada.' : 'Despesa cadastrada.');
+    mostrarToast('Despesa atualizada.');
   }
 
-  function editarCategoriaDespesa(id) {
-    state.categoriaEditandoId = id || '';
-    state.erro = '';
-    render();
-  }
+  async function excluirCategoriaDespesa(id) {
+    var despesaId = id || state.categoriaEditandoId || state.categoriaAcoesId;
+    if (!state.empresa || !despesaId) return;
 
-  async function excluirCategoriaDespesa() {
-    if (!state.empresa || !state.categoriaEditandoId) return;
-
-    var despesa = state.despesas.find(function (item) { return String(item.id) === String(state.categoriaEditandoId); });
+    var despesa = state.despesas.find(function (item) { return String(item.id) === String(despesaId); });
     var nome = despesa ? despesa.nome : 'esta despesa';
 
     if (!window.confirm('Excluir "' + nome + '" da lista de despesas cadastradas?')) return;
@@ -1286,7 +1325,7 @@
     var resposta = await db
       .from('despesas_cadastradas')
       .delete()
-      .eq('id', state.categoriaEditandoId)
+      .eq('id', despesaId)
       .eq('empresa_id', state.empresa.id);
 
     if (resposta.error) {
@@ -1297,6 +1336,7 @@
 
     state.modalMenu = 'categorias';
     state.categoriaEditandoId = '';
+    state.categoriaAcoesId = '';
     state.erro = '';
     await carregarDados();
     mostrarToast('Despesa excluida.');
@@ -2486,37 +2526,64 @@
   }
 
   function categoriasMenuHtml() {
-    var editando = state.despesas.find(function (despesa) { return String(despesa.id) === String(state.categoriaEditandoId); });
-    var categoriaAtual = editando ? editando.categoria : '';
-
     return (
       '<div class="grid gap-2">' +
-        (editando ? '<p class="rounded-xl bg-cyan-50 px-3 py-2 text-xs font-black text-cyan-900">Editando despesa cadastrada</p>' : '') +
         '<label class="grid gap-1 text-[10px] font-black uppercase tracking-wide text-slate-600">Tipo de despesa' +
-          '<input id="categoria-nome" value="' + escapeHtml(editando ? editando.nome : '') + '" placeholder="Ex: Energia" style="font-size:16px" class="h-10 rounded-md border border-slate-300 bg-white px-3 text-base font-bold normal-case tracking-normal text-slate-900 outline-none focus:border-cyan-500" />' +
+          '<input id="categoria-nome" placeholder="Ex: Energia" style="font-size:16px" class="h-10 rounded-md border border-slate-300 bg-white px-3 text-base font-bold normal-case tracking-normal text-slate-900 outline-none focus:border-cyan-500" />' +
         '</label>' +
         '<label class="grid gap-1 text-[10px] font-black uppercase tracking-wide text-slate-600">Categoria' +
           '<select id="categoria-tipo" style="font-size:16px" class="h-10 rounded-md border border-slate-300 bg-white px-3 text-base font-bold normal-case tracking-normal text-slate-900 outline-none focus:border-cyan-500">' +
             '<option value="">Selecione</option>' +
             categoriasPadrao().map(function (categoria) {
-              return '<option value="' + escapeHtml(categoria) + '"' + (categoria === categoriaAtual ? ' selected' : '') + '>' + escapeHtml(categoria) + '</option>';
+              return '<option value="' + escapeHtml(categoria) + '">' + escapeHtml(categoria) + '</option>';
             }).join('') +
           '</select>' +
         '</label>' +
         alertaHtml().replace('mt-4', '') +
-        '<button id="salvar-categoria" type="button" class="h-10 rounded-xl bg-slate-950 px-4 text-xs font-black uppercase tracking-wide text-white">' + (state.carregando ? 'Salvando...' : (editando ? 'Salvar alteracoes' : 'Cadastrar despesa')) + '</button>' +
-        (editando
-          ? '<div class="grid grid-cols-2 gap-2">' +
-              '<button id="cancelar-categoria" type="button" class="h-10 rounded-xl border border-slate-200 bg-white px-4 text-xs font-black uppercase tracking-wide text-slate-600">Cancelar</button>' +
-              '<button id="excluir-categoria" type="button" class="h-10 rounded-xl border border-rose-100 bg-white px-4 text-xs font-black uppercase tracking-wide text-rose-600">Excluir</button>' +
-            '</div>'
-          : '') +
+        '<button id="salvar-categoria" type="button" class="h-10 rounded-xl bg-slate-950 px-4 text-xs font-black uppercase tracking-wide text-white">' + (state.carregando ? 'Salvando...' : 'Cadastrar despesa') + '</button>' +
         '<div class="mt-1 max-h-[42vh] overflow-y-auto rounded-xl border border-slate-100 p-1 grid gap-1.5">' +
           state.despesas.map(function (despesa) {
-            var ativo = editando && String(editando.id) === String(despesa.id);
-            return '<button type="button" data-editar-categoria="' + escapeHtml(despesa.id || '') + '" class="flex items-center justify-between gap-2 rounded-lg px-3 py-1.5 text-left text-[11px] ' + (ativo ? 'bg-cyan-50 text-cyan-900' : 'bg-slate-50 text-slate-800') + '"><span class="truncate font-bold">' + escapeHtml(despesa.nome) + '</span><span class="shrink-0 font-semibold text-slate-500">' + escapeHtml(despesa.categoria) + '</span></button>';
+            return categoriaLinhaHtml(despesa);
           }).join('') +
         '</div>' +
+      '</div>'
+    );
+  }
+
+  function categoriaLinhaHtml(despesa) {
+    var id = String(despesa.id || '');
+    var acoesAberta = state.categoriaAcoesId === id;
+    var editando = state.categoriaEditandoId === id;
+
+    if (editando) {
+      return (
+        '<div class="grid gap-2 rounded-xl bg-cyan-50 p-2 text-[11px]">' +
+          '<input id="edit-categoria-nome-' + escapeHtml(id) + '" value="' + escapeHtml(despesa.nome) + '" style="font-size:16px" class="h-10 rounded-lg border border-cyan-100 bg-white px-3 text-base font-bold text-slate-900 outline-none" />' +
+          '<select id="edit-categoria-tipo-' + escapeHtml(id) + '" style="font-size:16px" class="h-10 rounded-lg border border-cyan-100 bg-white px-3 text-base font-bold text-slate-900 outline-none">' +
+            categoriasPadrao().map(function (categoria) {
+              return '<option value="' + escapeHtml(categoria) + '"' + (categoria === despesa.categoria ? ' selected' : '') + '>' + escapeHtml(categoria) + '</option>';
+            }).join('') +
+          '</select>' +
+          '<div class="grid grid-cols-3 gap-1.5">' +
+            '<button type="button" data-categoria-cancelar="' + escapeHtml(id) + '" class="h-9 rounded-lg border border-slate-200 bg-white text-[10px] font-black uppercase text-slate-600">Cancelar</button>' +
+            '<button type="button" data-categoria-excluir="' + escapeHtml(id) + '" class="h-9 rounded-lg border border-rose-100 bg-white text-[10px] font-black uppercase text-rose-600">Excluir</button>' +
+            '<button type="button" data-categoria-salvar="' + escapeHtml(id) + '" class="h-9 rounded-lg bg-slate-950 text-[10px] font-black uppercase text-white">' + (state.carregando ? 'Salvando' : 'Salvar') + '</button>' +
+          '</div>' +
+        '</div>'
+      );
+    }
+
+    return (
+      '<div class="relative overflow-hidden rounded-lg bg-slate-50">' +
+        '<div class="absolute inset-y-0 right-0 flex w-[148px] items-center justify-end gap-1 pr-1">' +
+          '<button type="button" data-categoria-editar="' + escapeHtml(id) + '" class="h-8 rounded-md bg-cyan-600 px-2 text-[10px] font-black uppercase text-white">Editar</button>' +
+          '<button type="button" data-categoria-excluir="' + escapeHtml(id) + '" class="h-8 rounded-md border border-rose-100 bg-white px-2 text-[10px] font-black uppercase text-rose-600">Excluir</button>' +
+          '<button type="button" data-categoria-cancelar="' + escapeHtml(id) + '" class="h-8 rounded-md bg-white px-2 text-[10px] font-black uppercase text-slate-500">Cancelar</button>' +
+        '</div>' +
+        '<button type="button" data-categoria-opcoes="' + escapeHtml(id) + '" class="relative z-10 flex w-full items-center justify-between gap-2 rounded-lg bg-slate-50 px-3 py-2 text-left text-[11px] text-slate-800 transition-transform duration-200 ease-out" style="transform:' + (acoesAberta ? 'translateX(-148px)' : 'translateX(0)') + '">' +
+          '<span class="truncate font-bold">' + escapeHtml(despesa.nome) + '</span>' +
+          '<span class="shrink-0 font-semibold text-slate-500">' + escapeHtml(despesa.categoria) + '</span>' +
+        '</button>' +
       '</div>'
     );
   }
@@ -2662,12 +2729,6 @@
       render();
     });
     bind('salvar-categoria', salvarCategoriaDespesa);
-    bind('cancelar-categoria', function () {
-      state.categoriaEditandoId = '';
-      state.erro = '';
-      render();
-    });
-    bind('excluir-categoria', excluirCategoriaDespesa);
     bind('salvar-despesa', salvarDespesa);
     bind('salvar-entrada', salvarEntrada);
     bind('salvar-total-receita', salvarTotalReceita);
@@ -2854,9 +2915,32 @@
         excluirUsuarioMobile(botao.getAttribute('data-excluir-usuario'));
       });
     });
-    Array.prototype.forEach.call(document.querySelectorAll('[data-editar-categoria]'), function (botao) {
+    Array.prototype.forEach.call(document.querySelectorAll('[data-categoria-opcoes]'), function (botao) {
       botao.addEventListener('click', function () {
-        editarCategoriaDespesa(botao.getAttribute('data-editar-categoria'));
+        abrirCategoriaAcoes(botao.getAttribute('data-categoria-opcoes'));
+      });
+    });
+    Array.prototype.forEach.call(document.querySelectorAll('[data-categoria-editar]'), function (botao) {
+      botao.addEventListener('click', function () {
+        editarCategoriaDespesa(botao.getAttribute('data-categoria-editar'));
+      });
+    });
+    Array.prototype.forEach.call(document.querySelectorAll('[data-categoria-salvar]'), function (botao) {
+      botao.addEventListener('click', function () {
+        salvarEdicaoCategoriaDespesa(botao.getAttribute('data-categoria-salvar'));
+      });
+    });
+    Array.prototype.forEach.call(document.querySelectorAll('[data-categoria-excluir]'), function (botao) {
+      botao.addEventListener('click', function () {
+        excluirCategoriaDespesa(botao.getAttribute('data-categoria-excluir'));
+      });
+    });
+    Array.prototype.forEach.call(document.querySelectorAll('[data-categoria-cancelar]'), function (botao) {
+      botao.addEventListener('click', function () {
+        state.categoriaEditandoId = '';
+        state.categoriaAcoesId = '';
+        state.erro = '';
+        render();
       });
     });
     Array.prototype.forEach.call(document.querySelectorAll('[data-evolucao-valor]'), function (botao) {
@@ -3104,7 +3188,7 @@
           return Promise.all(
             keys
               .filter(function (key) {
-                return key.indexOf('avantalab-mobile-') === 0 && key !== 'avantalab-mobile-v31';
+                return key.indexOf('avantalab-mobile-') === 0 && key !== 'avantalab-mobile-v32';
               })
               .map(function (key) {
                 return caches.delete(key);
