@@ -100,6 +100,7 @@
     ultimasDespesasBusca: '',
     ultimasReceitasBusca: '',
     dashboardOrdem: ordemDashboardPadrao(),
+    dashboardOcultos: [],
     dragDashboardId: '',
     evolucaoSelecionada: {},
     toast: '',
@@ -234,10 +235,65 @@
     return limpa;
   }
 
+  function normalizarOcultosDashboard(lista) {
+    var padrao = ordemDashboardPadrao();
+    return Array.isArray(lista)
+      ? lista.filter(function (id, index) { return padrao.indexOf(id) >= 0 && lista.indexOf(id) === index; })
+      : [];
+  }
+
+  function cardsDashboardVisiveis() {
+    var ocultos = normalizarOcultosDashboard(state.dashboardOcultos);
+    return normalizarOrdemDashboard(state.dashboardOrdem).filter(function (id) {
+      return ocultos.indexOf(id) < 0;
+    });
+  }
+
   function salvarOrdemDashboard() {
     try {
       localStorage.setItem('avantalab_mobile_dashboard_ordem', JSON.stringify(state.dashboardOrdem));
     } catch (error) {}
+  }
+
+  function salvarResumoDashboard() {
+    try {
+      localStorage.setItem('avantalab_mobile_dashboard_ordem', JSON.stringify(state.dashboardOrdem));
+      localStorage.setItem('avantalab_mobile_dashboard_ocultos', JSON.stringify(state.dashboardOcultos));
+    } catch (error) {}
+  }
+
+  function snapshotResumoDashboard() {
+    return {
+      criadoEm: new Date().toISOString(),
+      ordem: normalizarOrdemDashboard(state.dashboardOrdem),
+      ocultos: normalizarOcultosDashboard(state.dashboardOcultos),
+    };
+  }
+
+  function criarPontoRestauracaoResumo() {
+    try {
+      localStorage.setItem('avantalab_mobile_dashboard_restore', JSON.stringify(snapshotResumoDashboard()));
+      mostrarToast('Ponto de restauracao criado.');
+    } catch (error) {
+      mostrarToast('Nao foi possivel criar o ponto.');
+    }
+  }
+
+  function restaurarPontoRestauracaoResumo() {
+    try {
+      var ponto = JSON.parse(localStorage.getItem('avantalab_mobile_dashboard_restore') || 'null');
+      if (!ponto) {
+        mostrarToast('Nenhum ponto encontrado.');
+        return;
+      }
+      state.dashboardOrdem = normalizarOrdemDashboard(ponto.ordem);
+      state.dashboardOcultos = normalizarOcultosDashboard(ponto.ocultos);
+      salvarResumoDashboard();
+      render();
+      mostrarToast('Resumo restaurado.');
+    } catch (error) {
+      mostrarToast('Nao foi possivel restaurar.');
+    }
   }
 
   function categoriasPadrao() {
@@ -1886,7 +1942,17 @@
       evolucaoReceitas: evolucaoHtml('receitas'),
     };
 
-    return normalizarOrdemDashboard(state.dashboardOrdem)
+    var visiveis = cardsDashboardVisiveis();
+    if (!visiveis.length) {
+      return (
+        '<section class="rounded-2xl border border-cyan-100 bg-white p-4 text-center shadow-sm">' +
+          '<p class="text-sm font-black text-slate-900">Nenhum card visivel</p>' +
+          '<p class="mt-1 text-xs font-semibold leading-relaxed text-slate-500">Abra o menu e use Configurar resumo para reexibir os cards.</p>' +
+        '</section>'
+      );
+    }
+
+    return visiveis
       .map(function (id) {
         if (!cards[id]) return '';
         return '<div data-dashboard-card="' + escapeHtml(id) + '" class="relative pb-2 transition-[transform,opacity,filter] duration-200 ease-out">' +
@@ -2345,30 +2411,38 @@
 
   function menuLateralHtml() {
     return (
-      '<div id="menu-overlay" class="fixed inset-0 z-50 bg-slate-950/45">' +
-        '<aside class="h-full w-[82vw] max-w-[320px] overflow-y-auto ' + (state.darkMode ? 'bg-slate-900 text-slate-100' : 'bg-white text-slate-900') + ' p-3 shadow-2xl">' +
-          '<div class="mb-3 flex items-start justify-between gap-3">' +
-            '<div class="min-w-0"><p class="text-[9px] font-black uppercase tracking-[0.22em] text-cyan-700">AvantaLab</p><h2 class="mt-0.5 truncate text-base font-black">' + escapeHtml(nomeEmpresa(state.empresa)) + '</h2><p class="mt-0.5 truncate text-[11px] font-semibold text-slate-500">' + escapeHtml(state.usuario && state.usuario.email ? state.usuario.email : 'Usuario logado') + '</p></div>' +
-            '<button id="fechar-menu" type="button" class="flex h-8 w-8 items-center justify-center rounded-full ' + (state.darkMode ? 'bg-slate-800' : 'bg-slate-100') + ' text-lg">&times;</button>' +
+      '<div id="menu-overlay" class="fixed inset-0 z-50 bg-slate-950/55 backdrop-blur-sm">' +
+        '<aside class="h-full w-[84vw] max-w-[328px] overflow-y-auto ' + (state.darkMode ? 'bg-slate-950 text-slate-100' : 'bg-slate-50 text-slate-900') + ' p-3 shadow-2xl">' +
+          '<div class="mb-3 overflow-hidden rounded-2xl border border-white/15 p-3 text-white shadow-lg shadow-sky-950/15" style="background:linear-gradient(135deg,#003E73 0%,#075985 54%,#00A6C8 100%);">' +
+            '<div class="flex items-start justify-between gap-3">' +
+              '<div class="min-w-0"><p class="text-[9px] font-black uppercase tracking-[0.24em] text-cyan-100">AvantaLab</p><h2 class="mt-1 truncate text-base font-black">' + escapeHtml(nomeEmpresa(state.empresa)) + '</h2><p class="mt-0.5 truncate text-[11px] font-semibold text-cyan-50/85">' + escapeHtml(state.usuario && state.usuario.email ? state.usuario.email : 'Usuario logado') + '</p></div>' +
+              '<button id="fechar-menu" type="button" class="flex h-8 w-8 items-center justify-center rounded-full border border-white/15 bg-white/15 text-lg font-black text-white">&times;</button>' +
+            '</div>' +
           '</div>' +
-          '<div class="grid gap-1.5">' +
-            menuBotaoHtml('menu-dashboard', 'Dashboard', 'Visao principal do mes') +
-            menuBotaoHtml('menu-usuario', 'Usuario', perfilFormatado(state.empresa && state.empresa.perfil)) +
-            menuBotaoHtml('menu-gerenciar', 'Gerenciar empresa', 'Dados e acesso da empresa') +
-            menuBotaoHtml('menu-organizar-dashboard', 'Organizar dashboard', 'Definir ordem dos cards') +
-            menuBotaoHtml('menu-categorias', 'Cadastrar despesas', 'Adicionar tipo de despesa') +
-            menuBotaoHtml('menu-ajuda-categorias', 'Instrucoes sobre categorias', 'Como organizar seus gastos') +
-            (isStandalone() ? '' : menuBotaoHtml('menu-instalar', 'Instalar app', 'Adicionar a tela inicial')) +
-            '<button id="menu-tema" type="button" class="rounded-xl border ' + (state.darkMode ? 'border-slate-700 bg-slate-800' : 'border-slate-200 bg-slate-50') + ' px-3 py-2 text-left"><div class="flex items-center justify-between"><span class="text-xs font-black">Modo escuro</span><span class="text-[10px] font-bold text-cyan-700">' + (state.darkMode ? 'Ativo' : 'Inativo') + '</span></div></button>' +
-            '<button id="sair" type="button" class="mt-1 rounded-xl bg-red-600 px-3 py-2 text-left text-xs font-black text-white">Sair</button>' +
+          '<div class="grid gap-2">' +
+            menuBotaoHtml('menu-dashboard', 'Dashboard', 'Visao principal do mes', '&#8962;') +
+            menuBotaoHtml('menu-configurar-resumo', 'Configurar resumo', 'Exibir, ocultar e restaurar cards', '&#9776;') +
+            menuBotaoHtml('menu-organizar-dashboard', 'Organizar dashboard', 'Definir ordem dos cards', '&#8597;') +
+            menuBotaoHtml('menu-usuario', 'Usuario', perfilFormatado(state.empresa && state.empresa.perfil), 'U') +
+            menuBotaoHtml('menu-gerenciar', 'Gerenciar empresa', 'Dados e acesso da empresa', 'E') +
+            menuBotaoHtml('menu-categorias', 'Cadastrar despesas', 'Adicionar tipo de despesa', '+') +
+            menuBotaoHtml('menu-ajuda-categorias', 'Instrucoes sobre categorias', 'Como organizar seus gastos', '?') +
+            (isStandalone() ? '' : menuBotaoHtml('menu-instalar', 'Instalar app', 'Adicionar a tela inicial', '&#8681;')) +
+            '<button id="menu-tema" type="button" class="rounded-2xl border ' + (state.darkMode ? 'border-slate-800 bg-slate-900' : 'border-slate-200 bg-white') + ' p-3 text-left shadow-sm"><div class="flex items-center gap-3"><span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-cyan-50 text-xs font-black text-cyan-700">' + (state.darkMode ? 'ON' : 'OFF') + '</span><span class="min-w-0 flex-1"><span class="block text-xs font-black">Modo escuro</span><span class="mt-0.5 block truncate text-[10px] font-semibold text-slate-500">' + (state.darkMode ? 'Ativo' : 'Inativo') + '</span></span></div></button>' +
+            '<button id="sair" type="button" class="mt-1 rounded-2xl border border-rose-100 bg-white p-3 text-left text-xs font-black text-rose-700 shadow-sm">Sair</button>' +
           '</div>' +
         '</aside>' +
       '</div>'
     );
   }
 
-  function menuBotaoHtml(id, titulo, subtitulo) {
-    return '<button id="' + id + '" type="button" class="rounded-xl border ' + (state.darkMode ? 'border-slate-700 bg-slate-800' : 'border-slate-200 bg-slate-50') + ' px-3 py-2 text-left"><span class="block text-xs font-black">' + escapeHtml(titulo) + '</span><span class="mt-0.5 block truncate text-[10px] font-semibold text-slate-500">' + escapeHtml(subtitulo || '') + '</span></button>';
+  function menuBotaoHtml(id, titulo, subtitulo, icone) {
+    return '<button id="' + id + '" type="button" class="rounded-2xl border ' + (state.darkMode ? 'border-slate-800 bg-slate-900' : 'border-slate-200 bg-white') + ' p-3 text-left shadow-sm active:scale-[0.99]">' +
+      '<div class="flex items-center gap-3">' +
+        '<span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-cyan-50 text-sm font-black text-cyan-700">' + (icone || '&bull;') + '</span>' +
+        '<span class="min-w-0 flex-1"><span class="block text-xs font-black">' + escapeHtml(titulo) + '</span><span class="mt-0.5 block truncate text-[10px] font-semibold text-slate-500">' + escapeHtml(subtitulo || '') + '</span></span>' +
+      '</div>' +
+    '</button>';
   }
 
   function modalMenuHtml() {
@@ -2376,6 +2450,7 @@
       usuario: 'Usuario',
       empresa: 'Trocar empresa',
       gerenciar: 'Gerenciar empresa',
+      configurarResumo: 'Configurar resumo',
       organizarDashboard: 'Organizar dashboard',
       categorias: 'Cadastrar despesas',
       ajudaCategorias: 'Instrucoes',
@@ -2402,6 +2477,7 @@
     if (state.modalMenu === 'usuario') return usuarioHtml();
     if (state.modalMenu === 'empresa') return trocarEmpresaHtml();
     if (state.modalMenu === 'gerenciar') return gerenciarEmpresaHtml();
+    if (state.modalMenu === 'configurarResumo') return configurarResumoHtml();
     if (state.modalMenu === 'organizarDashboard') return organizarDashboardHtml();
     if (state.modalMenu === 'categorias') return categoriasMenuHtml();
     if (state.modalMenu === 'ajudaCategorias') return ajudaCategoriasHtml();
@@ -2555,6 +2631,53 @@
     );
   }
 
+  function configurarResumoHtml() {
+    var ordem = normalizarOrdemDashboard(state.dashboardOrdem);
+    var ocultos = normalizarOcultosDashboard(state.dashboardOcultos);
+
+    return (
+      '<div class="grid gap-3">' +
+        '<p class="rounded-2xl bg-cyan-50 px-3 py-2 text-xs font-semibold leading-relaxed text-cyan-900">Escolha quais cards aparecem no dashboard. A ordem continua sendo definida no modo Organizar dashboard.</p>' +
+        '<div class="grid gap-2">' +
+          ordem.map(function (id) {
+            var visivel = ocultos.indexOf(id) < 0;
+            return '<div class="flex items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 p-3">' +
+              '<span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ' + (visivel ? 'bg-cyan-100 text-cyan-700' : 'bg-slate-200 text-slate-500') + ' text-xs font-black">' + (visivel ? 'ON' : 'OFF') + '</span>' +
+              '<div class="min-w-0 flex-1"><p class="truncate text-xs font-black text-slate-900">' + escapeHtml(tituloCardDashboard(id)) + '</p><p class="mt-0.5 text-[10px] font-semibold text-slate-500">' + (visivel ? 'Exibido no resumo' : 'Oculto do resumo') + '</p></div>' +
+              '<button type="button" data-dashboard-toggle="' + escapeHtml(id) + '" class="rounded-xl border ' + (visivel ? 'border-slate-200 bg-white text-slate-600' : 'border-cyan-200 bg-white text-cyan-700') + ' px-3 py-2 text-[10px] font-black">' + (visivel ? 'Ocultar' : 'Exibir') + '</button>' +
+            '</div>';
+          }).join('') +
+        '</div>' +
+        '<div class="grid grid-cols-2 gap-2">' +
+          '<button id="restore-point-dashboard" type="button" class="h-11 rounded-xl border border-cyan-100 bg-cyan-50 px-3 text-xs font-black text-cyan-800">Criar ponto</button>' +
+          '<button id="apply-restore-dashboard" type="button" class="h-11 rounded-xl border border-cyan-100 bg-white px-3 text-xs font-black text-cyan-800">Restaurar ponto</button>' +
+        '</div>' +
+        '<button id="reset-resumo-dashboard" type="button" class="h-11 rounded-xl bg-slate-950 px-4 text-xs font-black uppercase tracking-wide text-white">Restaurar padr&atilde;o inicial</button>' +
+      '</div>'
+    );
+  }
+
+  function alternarCardResumo(id) {
+    var ocultos = normalizarOcultosDashboard(state.dashboardOcultos);
+    var index = ocultos.indexOf(id);
+    if (index >= 0) {
+      ocultos.splice(index, 1);
+    } else {
+      ocultos.push(id);
+    }
+    state.dashboardOcultos = ocultos;
+    salvarResumoDashboard();
+    render();
+  }
+
+  function restaurarResumoPadrao() {
+    state.dashboardOrdem = ordemDashboardPadrao();
+    state.dashboardOcultos = [];
+    salvarResumoDashboard();
+    render();
+    mostrarToast('Resumo padrao restaurado.');
+  }
+
   function moverCardDashboard(id, direcao) {
     var ordem = normalizarOrdemDashboard(state.dashboardOrdem);
     var index = ordem.indexOf(id);
@@ -2565,7 +2688,7 @@
     var item = ordem.splice(index, 1)[0];
     ordem.splice(destino, 0, item);
     state.dashboardOrdem = ordem;
-    salvarOrdemDashboard();
+    salvarResumoDashboard();
     render();
   }
 
@@ -2586,7 +2709,7 @@
     ordem.splice(depois ? destino + 1 : destino, 0, item);
     state.dashboardOrdem = ordem;
     state.dragDashboardId = '';
-    salvarOrdemDashboard();
+    salvarResumoDashboard();
     render();
   }
 
@@ -2816,6 +2939,7 @@
       });
     }
     bind('menu-dashboard', voltarDashboard);
+    bind('menu-configurar-resumo', function () { abrirModalMenu('configurarResumo'); });
     bind('menu-usuario', abrirUsuariosMobile);
     bind('menu-gerenciar', function () { abrirModalMenu('gerenciar'); });
     bind('menu-organizar-dashboard', function () { abrirModalMenu('organizarDashboard'); });
@@ -2868,9 +2992,13 @@
     });
     bind('reset-dashboard', function () {
       state.dashboardOrdem = ordemDashboardPadrao();
-      salvarOrdemDashboard();
+      state.dashboardOcultos = [];
+      salvarResumoDashboard();
       render();
     });
+    bind('reset-resumo-dashboard', restaurarResumoPadrao);
+    bind('restore-point-dashboard', criarPontoRestauracaoResumo);
+    bind('apply-restore-dashboard', restaurarPontoRestauracaoResumo);
     bind('mes-anterior', function () { mudarMes(-1); });
     bind('mes-proximo', function () { mudarMes(1); });
     bind('ver-despesas', function () {
@@ -3047,6 +3175,11 @@
     Array.prototype.forEach.call(document.querySelectorAll('[data-dashboard-move]'), function (botao) {
       botao.addEventListener('click', function () {
         moverCardDashboard(botao.getAttribute('data-dashboard-move'), Number(botao.getAttribute('data-dashboard-dir')));
+      });
+    });
+    Array.prototype.forEach.call(document.querySelectorAll('[data-dashboard-toggle]'), function (botao) {
+      botao.addEventListener('click', function () {
+        alternarCardResumo(botao.getAttribute('data-dashboard-toggle'));
       });
     });
     Array.prototype.forEach.call(document.querySelectorAll('[data-editar-usuario]'), function (botao) {
@@ -3254,19 +3387,17 @@
     function criarGhost(card, x, y) {
       var rect = card.getBoundingClientRect();
       var larguraGhost = Math.min(rect.width * 0.82, window.innerWidth - 56);
-      var alturaGhost = Math.min(Math.max(rect.height * 0.86, 90), 198);
+      var alturaMaximaGhost = Math.min(Math.max(rect.height * 0.86, 90), 198);
       ghost = document.createElement('div');
-      ghost.className = 'pointer-events-none fixed z-[90] overflow-hidden rounded-2xl border border-cyan-200 bg-white text-slate-900 shadow-2xl shadow-cyan-950/25 backdrop-blur';
+      ghost.className = 'pointer-events-none fixed z-[90] overflow-hidden rounded-2xl bg-transparent text-slate-900 shadow-2xl shadow-cyan-950/25';
       ghost.style.width = larguraGhost + 'px';
-      ghost.style.height = alturaGhost + 'px';
-      ghost.style.maxHeight = alturaGhost + 'px';
+      ghost.style.maxHeight = alturaMaximaGhost + 'px';
       ghost.style.left = '12px';
       ghost.style.top = '12px';
       ghost.style.transform = 'rotate(-0.5deg) scale(' + ghostEscala + ')';
       ghost.style.transformOrigin = 'center center';
       ghost.style.transition = 'box-shadow .16s ease, transform .16s ease';
       ghostPointerOffsetX = Math.max(0, Math.min(larguraGhost, pointerCardOffsetX * (larguraGhost / Math.max(rect.width, 1))));
-      ghostPointerOffsetY = Math.max(0, Math.min(alturaGhost, pointerCardOffsetY * (alturaGhost / Math.max(rect.height, 1))));
 
       var preview = card.cloneNode(true);
       preview.removeAttribute('data-dashboard-card');
@@ -3283,6 +3414,8 @@
       });
       ghost.appendChild(preview);
       document.body.appendChild(ghost);
+      var alturaGhost = ghost.offsetHeight || alturaMaximaGhost;
+      ghostPointerOffsetY = Math.max(0, Math.min(alturaGhost, pointerCardOffsetY * (alturaGhost / Math.max(rect.height, 1))));
       posicionarGhost(x, y);
     }
 
@@ -3478,6 +3611,7 @@
     try {
       state.darkMode = localStorage.getItem('avantalab_mobile_dark') === '1';
       state.dashboardOrdem = normalizarOrdemDashboard(JSON.parse(localStorage.getItem('avantalab_mobile_dashboard_ordem') || '[]'));
+      state.dashboardOcultos = normalizarOcultosDashboard(JSON.parse(localStorage.getItem('avantalab_mobile_dashboard_ocultos') || '[]'));
     } catch (error) {}
 
     if (window.caches && caches.keys) {
@@ -3487,7 +3621,7 @@
           return Promise.all(
             keys
               .filter(function (key) {
-                return key.indexOf('avantalab-mobile-') === 0 && key !== 'avantalab-mobile-v44';
+                return key.indexOf('avantalab-mobile-') === 0 && key !== 'avantalab-mobile-v45';
               })
               .map(function (key) {
                 return caches.delete(key);
