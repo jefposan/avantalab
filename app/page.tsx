@@ -61,8 +61,9 @@ export default function AppGestao() {
   
 const [mounted, setMounted] = useState(false);
   const [isTelaMobile, setIsTelaMobile] = useState(false);
-  const [acessoLiberado, setAcessoLiberado] = useState(false);
+const [acessoLiberado, setAcessoLiberado] = useState(false);
   const [modoAuth, setModoAuth] = useState<'login' | 'cadastro'>('login');
+  const [mostrarLandingPreLogin, setMostrarLandingPreLogin] = useState(true);
 
   const [loginEmail, setLoginEmail] = useState('');
 const [loginSenha, setLoginSenha] = useState('');
@@ -560,6 +561,7 @@ const tipoUrl = paramsConfirmacao.get('type') || hashConfirmacao.get('type');
 
 if (modoUrl === 'redefinir-senha' || tipoUrl === 'recovery') {
   setModoRedefinirSenha(true);
+  setMostrarLandingPreLogin(false);
   setAcessoLiberado(false);
   setAcessoNaoConfigurado(false);
   setModalSelecionarEmpresa(false);
@@ -582,6 +584,7 @@ if (paramsConfirmacao.get('confirmado') === '1') {
       setAcessoNaoConfigurado(false);
       setModoRedefinirSenha(false);
       setModoAuth('login');
+      setMostrarLandingPreLogin(false);
       setMounted(true);
       setCarregandoSistema(false);
 
@@ -602,6 +605,7 @@ if (paramsConfirmacao.get('confirmado') === '1') {
 
       if (tipo === 'recovery') {
   setModoRedefinirSenha(true);
+  setMostrarLandingPreLogin(false);
   setAcessoLiberado(false);
   setAcessoNaoConfigurado(false);
   setModalSelecionarEmpresa(false);
@@ -3479,6 +3483,7 @@ setAcessoNaoConfigurado(false);
 setValidacaoTelefoneObrigatoria(false);
 setModoRedefinirSenha(false);
 setModoAuth('login');
+setMostrarLandingPreLogin(true);
 
 setEmpresaId(null);
 setNomeEmpresaAtual('');
@@ -4041,6 +4046,13 @@ if (!mounted || carregandoSistema || authLoading || googleLoading) {
   );
 }
 
+const mostrarLandingPreLoginAtiva =
+  mostrarLandingPreLogin &&
+  !modoRedefinirSenha &&
+  modoAuth === 'login' &&
+  !authErro &&
+  !authMensagem;
+
 if (emailConfirmado) {
   return (
     <main className="relative min-h-screen overflow-hidden font-sans">
@@ -4585,7 +4597,61 @@ if (isTelaMobile) {
 
       <section className="relative z-10 flex min-h-screen items-start px-4 pb-6 pt-8 lg:items-center lg:px-20 lg:py-10">
         <div className="w-full lg:max-w-7xl">
-          <div className="relative z-20 w-full rounded-3xl border border-white/20 bg-white/10 p-5 shadow-2xl lg:max-w-md lg:border-white/30 lg:bg-white/70 lg:p-8 lg:backdrop-blur-xl">
+          <div className={`relative z-20 w-full rounded-3xl border border-white/20 bg-white/10 p-5 shadow-2xl lg:border-white/30 lg:bg-white/70 lg:p-8 lg:backdrop-blur-xl ${
+            mostrarLandingPreLoginAtiva ? 'lg:max-w-2xl' : 'lg:max-w-md'
+          }`}>
+            {mostrarLandingPreLoginAtiva ? (
+              <div className="grid gap-6">
+                <div>
+                  <p className="mb-2 text-xs font-bold uppercase tracking-[0.35em] text-sky-700">
+                    AvantaLab Gestão
+                  </p>
+
+                  <h1 className="max-w-xl text-4xl font-black leading-tight text-slate-900 lg:text-5xl">
+                    Descubra quanto realmente sobra no seu negócio.
+                  </h1>
+
+                  <p className="mt-4 max-w-lg text-base font-semibold leading-relaxed text-slate-600">
+                    Controle entradas e despesas de forma simples, compare resultados mês a mês e entenda quais gastos mais impactam seu lucro.
+                  </p>
+                </div>
+
+                <div className="grid gap-2 rounded-2xl border border-white/35 bg-white/35 p-4 text-sm font-bold leading-snug text-slate-700 shadow-sm backdrop-blur">
+                  <p>✓ Entenda seus gastos.</p>
+                  <p>✓ Compare seus resultados mês a mês.</p>
+                  <p>✓ Descubra quais despesas mais impactam seu lucro.</p>
+                  <p>✓ Use no computador ou celular.</p>
+                </div>
+
+                <div className="grid gap-3 sm:grid-cols-[1fr_160px]">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setMostrarLandingPreLogin(false);
+                      setModoAuth('cadastro');
+                    }}
+                    className="h-12 rounded-xl px-5 text-sm font-black uppercase tracking-wide text-white shadow-lg transition hover:brightness-110 active:scale-[0.98] cursor-pointer"
+                    style={{
+                      background: 'linear-gradient(135deg,#003E73,#00A6C8)',
+                    }}
+                  >
+                    Criar conta grátis
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setMostrarLandingPreLogin(false);
+                      setModoAuth('login');
+                    }}
+                    className="h-12 rounded-xl border border-slate-300 bg-white/85 px-5 text-sm font-black uppercase tracking-wide text-slate-700 shadow-sm transition hover:bg-white active:scale-[0.98] cursor-pointer"
+                  >
+                    Entrar
+                  </button>
+                </div>
+              </div>
+            ) : (
+            <>
             <div className="mb-5 lg:mb-7">
               <p className="mb-2 text-xs font-bold uppercase tracking-[0.35em] text-sky-700">
                 AvantaLab Gestão
@@ -5173,6 +5239,8 @@ if (isTelaMobile) {
                   </button>
                 </div>
               </div>
+            )}
+            </>
             )}
             </div>
           </div>
