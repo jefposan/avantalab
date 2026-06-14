@@ -4608,7 +4608,7 @@ if (isTelaMobile) {
                   </p>
 
                   <h1 className="max-w-xl text-4xl font-black leading-tight text-slate-900 lg:text-5xl">
-                    Descubra quanto realmente sobra no seu negócio.
+                    Descubra quanto realmente sobra no seu negócio ou nas suas despesas pessoais.
                   </h1>
 
                   <p className="mt-4 max-w-lg text-base font-semibold leading-relaxed text-slate-600">
