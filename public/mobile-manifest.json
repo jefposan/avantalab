@@ -1,7 +1,7 @@
 {
-  "name": "AvantaLab Gestao",
+  "name": "AvantaLab Gestão",
   "short_name": "AvantaLab",
-  "description": "Gestao financeira mobile AvantaLab",
+  "description": "Gestão financeira mobile AvantaLab",
   "start_url": "/mobile",
   "scope": "/",
   "display": "standalone",

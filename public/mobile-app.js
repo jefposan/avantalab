@@ -3628,7 +3628,7 @@
           return Promise.all(
             keys
               .filter(function (key) {
-                return key.indexOf('avantalab-mobile-') === 0 && key !== 'avantalab-mobile-v46';
+                return key.indexOf('avantalab-mobile-') === 0 && key !== 'avantalab-mobile-v47';
               })
               .map(function (key) {
                 return caches.delete(key);

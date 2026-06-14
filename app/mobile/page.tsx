@@ -1,8 +1,30 @@
 import type { Metadata, Viewport } from 'next';
 
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL
+  ? process.env.NEXT_PUBLIC_SITE_URL
+  : process.env.VERCEL_URL
+    ? `https://${process.env.VERCEL_URL}`
+    : 'http://localhost:3000';
+
 export const metadata: Metadata = {
-  title: 'AvantaLab Gestao Mobile',
+  metadataBase: new URL(siteUrl),
+  title: 'AvantaLab Gestão Mobile',
+  description:
+    'Controle entradas, despesas e saldo do seu negócio ou das suas finanças pessoais pelo celular.',
   manifest: '/mobile-manifest.json',
+  openGraph: {
+    title: 'AvantaLab Gestão',
+    description:
+      'Descubra quanto realmente sobra no seu negócio ou nas suas despesas pessoais.',
+    type: 'website',
+    siteName: 'AvantaLab Gestão',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'AvantaLab Gestão',
+    description:
+      'Controle entradas, despesas e saldo de forma simples pelo celular.',
+  },
   appleWebApp: {
     capable: true,
     statusBarStyle: 'default',
