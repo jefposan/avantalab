@@ -289,8 +289,8 @@
 
     return (
       '<select id="ano" aria-label="Selecionar ano" style="font-size:16px" class="h-9 rounded-full border ' +
-      (state.darkMode ? 'border-slate-700 bg-slate-800 text-slate-100' : 'border-slate-200 bg-slate-100 text-slate-800') +
-      ' px-2 text-center text-xs font-black outline-none">' +
+      (state.darkMode ? 'border-white/15 bg-white/10 text-white' : 'border-white/25 bg-white/20 text-white') +
+      ' w-[72px] justify-self-start px-2 text-center text-xs font-black shadow-sm outline-none backdrop-blur">' +
         opcoes.join('') +
       '</select>'
     );
@@ -1793,24 +1793,29 @@
 
     return (
       '<div class="min-h-screen ' + (state.darkMode ? 'bg-slate-950 text-slate-100' : 'bg-slate-100 text-slate-900') + ' pb-24">' +
-        '<header class="sticky top-0 z-20 border-b ' + (state.darkMode ? 'border-slate-800 bg-slate-950/95' : 'border-slate-200/80 bg-white/95') + ' px-4 py-3 backdrop-blur">' +
-          '<div class="mx-auto grid max-w-md grid-cols-[40px_70px_1fr_40px] items-center gap-2">' +
-            '<button id="menu-toggle" type="button" class="flex h-10 w-10 items-center justify-center rounded-full ' + (state.darkMode ? 'bg-slate-800 text-slate-100' : 'bg-slate-100 text-slate-700') + '" aria-label="Abrir menu">☰</button>' +
-            anoHeaderHtml() +
-            '<div class="min-w-0 text-center">' +
-              '<p class="truncate text-[10px] font-black uppercase tracking-[0.16em] text-cyan-700">' + escapeHtml(nomeEmpresa(state.empresa)) + '</p>' +
-              '<div class="mt-2 flex items-center justify-center gap-4">' +
-                '<button id="mes-anterior" type="button" class="flex h-7 w-8 items-center justify-center ' + (state.darkMode ? 'text-slate-200' : 'text-slate-700') + ' text-2xl font-black leading-none" aria-label="Mes anterior">&lsaquo;</button>' +
-                '<h1 class="truncate text-sm font-black">' + escapeHtml(state.mes.charAt(0) + state.mes.slice(1).toLowerCase()) + '</h1>' +
-                '<button id="mes-proximo" type="button" class="flex h-7 w-8 items-center justify-center ' + (state.darkMode ? 'text-slate-200' : 'text-slate-700') + ' text-2xl font-black leading-none" aria-label="Proximo mes">&rsaquo;</button>' +
+        '<header class="fixed inset-x-0 top-0 z-40 border-b border-white/15 px-4 pb-3 text-white shadow-xl shadow-sky-950/20 backdrop-blur" style="padding-top:calc(env(safe-area-inset-top) + 10px);background:linear-gradient(135deg,#003E73 0%,#075985 54%,#00A6C8 100%);">' +
+          '<div class="mx-auto max-w-md">' +
+            '<div class="grid grid-cols-[40px_minmax(0,1fr)_40px] items-center gap-3">' +
+              '<button id="menu-toggle" type="button" class="flex h-10 w-10 items-center justify-center rounded-full border border-white/15 bg-white/15 text-xl font-black text-white shadow-sm backdrop-blur" aria-label="Abrir menu">&#9776;</button>' +
+              '<div class="min-w-0 text-center">' +
+                '<p class="text-[9px] font-black uppercase tracking-[0.26em] text-cyan-100">AvantaLab</p>' +
+                '<h1 class="mt-0.5 truncate text-sm font-black text-white">' + escapeHtml(nomeEmpresa(state.empresa)) + '</h1>' +
+              '</div>' +
+              (state.visao === 'home'
+                ? '<span class="h-10 w-10" aria-hidden="true"></span>'
+                : '<button id="voltar-dashboard-topo" type="button" class="flex h-10 w-10 items-center justify-center rounded-full border border-white/15 bg-white/15 text-lg font-black text-white shadow-sm backdrop-blur" aria-label="Voltar ao dashboard">&#8962;</button>') +
+            '</div>' +
+            '<div class="mt-3 grid grid-cols-[72px_minmax(0,1fr)] items-center gap-3">' +
+              anoHeaderHtml() +
+              '<div class="flex h-11 items-center justify-between rounded-2xl border border-white/15 bg-white/15 px-2 shadow-sm backdrop-blur">' +
+                '<button id="mes-anterior" type="button" class="flex h-9 w-10 items-center justify-center text-3xl font-black leading-none text-white" aria-label="Mes anterior">&lsaquo;</button>' +
+                '<h2 class="min-w-0 truncate px-2 text-center text-base font-black tracking-wide text-white">' + escapeHtml(state.mes.charAt(0) + state.mes.slice(1).toLowerCase()) + '</h2>' +
+                '<button id="mes-proximo" type="button" class="flex h-9 w-10 items-center justify-center text-3xl font-black leading-none text-white" aria-label="Proximo mes">&rsaquo;</button>' +
               '</div>' +
             '</div>' +
-            (state.visao === 'home'
-              ? '<span aria-hidden="true"></span>'
-              : '<button id="voltar-dashboard-topo" type="button" class="flex h-10 w-10 items-center justify-center rounded-full bg-cyan-500 text-lg font-black text-white">⌂</button>') +
           '</div>' +
         '</header>' +
-        '<div class="mx-auto grid max-w-md gap-3 px-4 pt-3">' +
+        '<div class="mx-auto grid max-w-md gap-3 px-4" style="padding-top:calc(env(safe-area-inset-top) + 132px);">' +
           empresaHtml() +
           alertaHtml().replace('mt-4', '') +
           (state.visao === 'home' ? homeHtml(atual, anterior) : listaDetalhadaHtml(atual)) +
@@ -1856,13 +1861,13 @@
   function rodapeMobileHtml() {
     var ano = new Date().getFullYear();
     return (
-      '<footer class="mt-2 rounded-2xl border ' + (state.darkMode ? 'border-slate-800 bg-slate-900 text-slate-400' : 'border-slate-200 bg-white text-slate-500') + ' px-4 py-4 text-center text-[11px] shadow-sm">' +
-        '<div class="font-black tracking-wide"><span style="color:#003E73">AVANTA</span><span style="color:#00A6C8">LAB</span></div>' +
-        '<p class="mt-1 font-semibold">&copy; ' + ano + ' Todos os direitos reservados.</p>' +
-        '<div class="mt-3 flex flex-wrap items-center justify-center gap-x-3 gap-y-2 font-bold">' +
-          '<a href="https://www.instagram.com/avanta.lab" target="_blank" rel="noopener noreferrer" style="color:#00A6C8">@avanta.lab</a>' +
-          '<button id="termos-mobile" type="button" class="text-slate-500">Termos de Uso</button>' +
-          '<button id="privacidade-mobile" type="button" class="text-slate-500">Privacidade</button>' +
+      '<footer class="mt-2 overflow-hidden rounded-2xl border border-white/15 px-4 py-4 text-center text-[11px] text-white shadow-lg shadow-sky-950/15" style="background:linear-gradient(135deg,#003E73 0%,#075985 54%,#00A6C8 100%);">' +
+        '<div class="text-xs font-black tracking-[0.22em] text-white">AVANTALAB</div>' +
+        '<p class="mt-1 font-semibold text-cyan-50/90">&copy; ' + ano + ' Todos os direitos reservados.</p>' +
+        '<div class="mt-3 flex flex-wrap items-center justify-center gap-2 font-bold">' +
+          '<a href="https://www.instagram.com/avanta.lab" target="_blank" rel="noopener noreferrer" class="rounded-full border border-white/15 bg-white/15 px-3 py-1.5 text-cyan-50 shadow-sm backdrop-blur">@avanta.lab</a>' +
+          '<button id="termos-mobile" type="button" class="rounded-full border border-white/15 bg-white/15 px-3 py-1.5 text-cyan-50 shadow-sm backdrop-blur">Termos de Uso</button>' +
+          '<button id="privacidade-mobile" type="button" class="rounded-full border border-white/15 bg-white/15 px-3 py-1.5 text-cyan-50 shadow-sm backdrop-blur">Privacidade</button>' +
         '</div>' +
       '</footer>'
     );
@@ -3459,7 +3464,7 @@
           return Promise.all(
             keys
               .filter(function (key) {
-                return key.indexOf('avantalab-mobile-') === 0 && key !== 'avantalab-mobile-v39';
+                return key.indexOf('avantalab-mobile-') === 0 && key !== 'avantalab-mobile-v42';
               })
               .map(function (key) {
                 return caches.delete(key);
