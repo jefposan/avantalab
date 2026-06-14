@@ -2575,12 +2575,12 @@
 
     return (
       '<div class="relative overflow-hidden rounded-lg bg-slate-50">' +
-        '<div class="absolute inset-y-0 right-0 flex w-[148px] items-center justify-end gap-1 pr-1">' +
-          '<button type="button" data-categoria-editar="' + escapeHtml(id) + '" class="h-8 rounded-md bg-cyan-600 px-2 text-[10px] font-black uppercase text-white">Editar</button>' +
-          '<button type="button" data-categoria-excluir="' + escapeHtml(id) + '" class="h-8 rounded-md border border-rose-100 bg-white px-2 text-[10px] font-black uppercase text-rose-600">Excluir</button>' +
-          '<button type="button" data-categoria-cancelar="' + escapeHtml(id) + '" class="h-8 rounded-md bg-white px-2 text-[10px] font-black uppercase text-slate-500">Cancelar</button>' +
+        '<div class="absolute inset-y-0 right-0 grid w-[192px] grid-cols-3 items-center gap-1 pr-1">' +
+          '<button type="button" data-categoria-editar="' + escapeHtml(id) + '" class="h-8 rounded-md bg-cyan-600 px-1 text-[9px] font-black uppercase text-white">Editar</button>' +
+          '<button type="button" data-categoria-excluir="' + escapeHtml(id) + '" class="h-8 rounded-md border border-rose-100 bg-white px-1 text-[9px] font-black uppercase text-rose-600">Excluir</button>' +
+          '<button type="button" data-categoria-cancelar="' + escapeHtml(id) + '" class="h-8 rounded-md bg-white px-1 text-[9px] font-black uppercase text-slate-500">Cancelar</button>' +
         '</div>' +
-        '<button type="button" data-categoria-opcoes="' + escapeHtml(id) + '" class="relative z-10 flex w-full items-center justify-between gap-2 rounded-lg bg-slate-50 px-3 py-2 text-left text-[11px] text-slate-800 transition-transform duration-200 ease-out" style="transform:' + (acoesAberta ? 'translateX(-148px)' : 'translateX(0)') + '">' +
+        '<button type="button" data-categoria-opcoes="' + escapeHtml(id) + '" class="relative z-10 flex w-full items-center justify-between gap-2 rounded-lg bg-slate-50 px-3 py-2 text-left text-[11px] text-slate-800 transition-transform duration-200 ease-out" style="transform:' + (acoesAberta ? 'translateX(-192px)' : 'translateX(0)') + '">' +
           '<span class="truncate font-bold">' + escapeHtml(despesa.nome) + '</span>' +
           '<span class="shrink-0 font-semibold text-slate-500">' + escapeHtml(despesa.categoria) + '</span>' +
         '</button>' +
@@ -3188,7 +3188,7 @@
           return Promise.all(
             keys
               .filter(function (key) {
-                return key.indexOf('avantalab-mobile-') === 0 && key !== 'avantalab-mobile-v32';
+                return key.indexOf('avantalab-mobile-') === 0 && key !== 'avantalab-mobile-v33';
               })
               .map(function (key) {
                 return caches.delete(key);
