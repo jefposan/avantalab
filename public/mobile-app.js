@@ -104,6 +104,7 @@
     dragDashboardId: '',
     evolucaoSelecionada: {},
     toast: '',
+    duplicadosAtivo: true,
   };
 
   function dinheiro(valor) {
@@ -260,40 +261,6 @@
       localStorage.setItem('avantalab_mobile_dashboard_ordem', JSON.stringify(state.dashboardOrdem));
       localStorage.setItem('avantalab_mobile_dashboard_ocultos', JSON.stringify(state.dashboardOcultos));
     } catch (error) {}
-  }
-
-  function snapshotResumoDashboard() {
-    return {
-      criadoEm: new Date().toISOString(),
-      ordem: normalizarOrdemDashboard(state.dashboardOrdem),
-      ocultos: normalizarOcultosDashboard(state.dashboardOcultos),
-    };
-  }
-
-  function criarPontoRestauracaoResumo() {
-    try {
-      localStorage.setItem('avantalab_mobile_dashboard_restore', JSON.stringify(snapshotResumoDashboard()));
-      mostrarToast('Ponto de restauracao criado.');
-    } catch (error) {
-      mostrarToast('Nao foi possivel criar o ponto.');
-    }
-  }
-
-  function restaurarPontoRestauracaoResumo() {
-    try {
-      var ponto = JSON.parse(localStorage.getItem('avantalab_mobile_dashboard_restore') || 'null');
-      if (!ponto) {
-        mostrarToast('Nenhum ponto encontrado.');
-        return;
-      }
-      state.dashboardOrdem = normalizarOrdemDashboard(ponto.ordem);
-      state.dashboardOcultos = normalizarOcultosDashboard(ponto.ocultos);
-      salvarResumoDashboard();
-      render();
-      mostrarToast('Resumo restaurado.');
-    } catch (error) {
-      mostrarToast('Nao foi possivel restaurar.');
-    }
   }
 
   function categoriasPadrao() {
@@ -757,6 +724,7 @@
       db.from('faturamentos').select('*').eq('empresa_id', empresaId).eq('ano', ano),
       db.from('faturamentos_entradas').select('*').eq('empresa_id', empresaId).eq('ano', ano).order('dia', { ascending: true }),
       db.from('despesas_cadastradas').select('*').eq('empresa_id', empresaId).order('nome', { ascending: true }),
+      db.from('configuracoes').select('duplicados_ativo').eq('empresa_id', empresaId).maybeSingle(),
     ]);
 
     state.lancamentos = (resultados[0].data || []).map(function (item) {
@@ -792,6 +760,12 @@
         categoria: item.categoria || 'Sem categoria',
       };
     });
+
+    if (resultados[4].data && resultados[4].data.duplicados_ativo !== undefined) {
+      state.duplicadosAtivo = resultados[4].data.duplicados_ativo !== false;
+    } else {
+      state.duplicadosAtivo = true;
+    }
 
     state.carregando = false;
     render();
@@ -1150,6 +1124,17 @@
       return;
     }
 
+    if (state.duplicadosAtivo) {
+      var existeIgual = state.lancamentos.some(function (item) {
+        return item.mes === state.mes && item.despesa === nome && Number(item.valor) === Number(valor);
+      });
+
+      if (existeIgual) {
+        var confirmar = window.confirm('Ja existe uma despesa com o mesmo nome e valor neste mes.\n\nDeseja adicionar mesmo assim?');
+        if (!confirmar) return;
+      }
+    }
+
     state.carregando = true;
     state.erro = '';
     render();
@@ -1180,6 +1165,31 @@
     state.erro = '';
     await carregarDados();
     mostrarToast('Despesa lancada.');
+  }
+
+  async function alternarDuplicados() {
+    if (!state.empresa || state.carregando) return;
+
+    var proximo = !state.duplicadosAtivo;
+    var anterior = state.duplicadosAtivo;
+    state.duplicadosAtivo = proximo;
+    state.carregando = true;
+    render();
+
+    var resposta = await db
+      .from('configuracoes')
+      .upsert({ empresa_id: state.empresa.id, duplicados_ativo: proximo }, { onConflict: 'empresa_id' });
+
+    state.carregando = false;
+
+    if (resposta.error) {
+      state.duplicadosAtivo = anterior;
+      setErro('Nao foi possivel salvar a configuracao de duplicados.');
+      return;
+    }
+
+    render();
+    mostrarToast(proximo ? 'Aviso de duplicados ativado.' : 'Aviso de duplicados desativado.');
   }
 
   async function salvarEntrada() {
@@ -2421,13 +2431,14 @@
           '</div>' +
           '<div class="grid gap-2">' +
             menuBotaoHtml('menu-dashboard', 'Dashboard', 'Visao principal do mes', '&#8962;') +
-            menuBotaoHtml('menu-configurar-resumo', 'Configurar resumo', 'Exibir, ocultar e restaurar cards', '&#9776;') +
+            menuBotaoHtml('menu-configurar-resumo', 'Configurar resumo', 'Exibir e ocultar cards', '&#9776;') +
             menuBotaoHtml('menu-organizar-dashboard', 'Organizar dashboard', 'Definir ordem dos cards', '&#8597;') +
             menuBotaoHtml('menu-usuario', 'Usuario', perfilFormatado(state.empresa && state.empresa.perfil), 'U') +
             menuBotaoHtml('menu-gerenciar', 'Gerenciar empresa', 'Dados e acesso da empresa', 'E') +
             menuBotaoHtml('menu-categorias', 'Cadastrar despesas', 'Adicionar tipo de despesa', '+') +
             menuBotaoHtml('menu-ajuda-categorias', 'Instrucoes sobre categorias', 'Como organizar seus gastos', '?') +
             (isStandalone() ? '' : menuBotaoHtml('menu-instalar', 'Instalar app', 'Adicionar a tela inicial', '&#8681;')) +
+            '<button id="menu-duplicados" type="button" class="rounded-2xl border ' + (state.darkMode ? 'border-slate-800 bg-slate-900' : 'border-slate-200 bg-white') + ' p-3 text-left shadow-sm"><div class="flex items-center gap-3"><span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-cyan-50 text-xs font-black text-cyan-700">D</span><span class="min-w-0 flex-1"><span class="block text-xs font-black">Duplicados</span><span class="mt-0.5 block truncate text-[10px] font-semibold text-slate-500">' + (state.duplicadosAtivo ? 'Avisar despesas repetidas' : 'Nao avisar repeticoes') + '</span></span><span class="relative h-6 w-11 shrink-0 rounded-full p-0.5 ' + (state.duplicadosAtivo ? 'bg-emerald-500' : 'bg-rose-500') + '"><span class="block h-5 w-5 rounded-full bg-white shadow-sm transition-transform ' + (state.duplicadosAtivo ? 'translate-x-5' : 'translate-x-0') + '"></span></span></div></button>' +
             '<button id="menu-tema" type="button" class="rounded-2xl border ' + (state.darkMode ? 'border-slate-800 bg-slate-900' : 'border-slate-200 bg-white') + ' p-3 text-left shadow-sm"><div class="flex items-center gap-3"><span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-cyan-50 text-xs font-black text-cyan-700">' + (state.darkMode ? 'ON' : 'OFF') + '</span><span class="min-w-0 flex-1"><span class="block text-xs font-black">Modo escuro</span><span class="mt-0.5 block truncate text-[10px] font-semibold text-slate-500">' + (state.darkMode ? 'Ativo' : 'Inativo') + '</span></span></div></button>' +
             '<button id="sair" type="button" class="mt-1 rounded-2xl border border-rose-100 bg-white p-3 text-left text-xs font-black text-rose-700 shadow-sm">Sair</button>' +
           '</div>' +
@@ -2462,12 +2473,12 @@
 
     return (
       '<div id="modal-menu-overlay" class="fixed inset-0 z-[60] flex items-center justify-center overflow-hidden bg-slate-950/60 px-3 py-4">' +
-        '<section class="mx-auto max-h-[calc(100dvh-32px)] w-full max-w-md overflow-x-hidden overflow-y-auto rounded-3xl ' + (state.darkMode ? 'bg-slate-900 text-slate-100' : 'bg-white text-slate-900') + ' p-4 shadow-2xl overscroll-contain">' +
-          '<div class="-mx-4 -mt-4 mb-4 flex items-center justify-between gap-3 rounded-t-3xl border-b ' + (state.darkMode ? 'border-slate-700 bg-slate-800' : 'border-cyan-100 bg-cyan-50/90') + ' px-4 py-3">' +
+        '<section class="mx-auto flex max-h-[calc(100dvh-32px)] w-full max-w-md flex-col overflow-hidden rounded-3xl ' + (state.darkMode ? 'bg-slate-900 text-slate-100' : 'bg-white text-slate-900') + ' shadow-2xl">' +
+          '<div class="shrink-0 flex items-center justify-between gap-3 border-b ' + (state.darkMode ? 'border-slate-700 bg-slate-800' : 'border-cyan-100 bg-cyan-50/90') + ' px-4 py-3">' +
             '<h2 class="text-base font-black">' + escapeHtml(titulo) + '</h2>' +
             '<button id="fechar-modal-menu" type="button" class="flex h-9 w-9 items-center justify-center rounded-full ' + (state.darkMode ? 'bg-slate-800' : 'bg-slate-100') + ' text-xl">&times;</button>' +
           '</div>' +
-          conteudoModalMenuHtml() +
+          '<div class="min-h-0 flex-1 overflow-y-auto p-4 overscroll-contain">' + conteudoModalMenuHtml() + '</div>' +
         '</section>' +
       '</div>'
     );
@@ -2636,23 +2647,20 @@
     var ocultos = normalizarOcultosDashboard(state.dashboardOcultos);
 
     return (
-      '<div class="grid gap-3">' +
-        '<p class="rounded-2xl bg-cyan-50 px-3 py-2 text-xs font-semibold leading-relaxed text-cyan-900">Escolha quais cards aparecem no dashboard. A ordem continua sendo definida no modo Organizar dashboard.</p>' +
-        '<div class="grid gap-2">' +
+      '<div class="grid gap-2">' +
+        '<p class="rounded-xl bg-cyan-50 px-3 py-2 text-[11px] font-semibold leading-relaxed text-cyan-900">Escolha quais cards aparecem no dashboard. A ordem continua no modo Organizar dashboard.</p>' +
+        '<div class="grid gap-1.5">' +
           ordem.map(function (id) {
             var visivel = ocultos.indexOf(id) < 0;
-            return '<div class="flex items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 p-3">' +
-              '<span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ' + (visivel ? 'bg-cyan-100 text-cyan-700' : 'bg-slate-200 text-slate-500') + ' text-xs font-black">' + (visivel ? 'ON' : 'OFF') + '</span>' +
-              '<div class="min-w-0 flex-1"><p class="truncate text-xs font-black text-slate-900">' + escapeHtml(tituloCardDashboard(id)) + '</p><p class="mt-0.5 text-[10px] font-semibold text-slate-500">' + (visivel ? 'Exibido no resumo' : 'Oculto do resumo') + '</p></div>' +
-              '<button type="button" data-dashboard-toggle="' + escapeHtml(id) + '" class="rounded-xl border ' + (visivel ? 'border-slate-200 bg-white text-slate-600' : 'border-cyan-200 bg-white text-cyan-700') + ' px-3 py-2 text-[10px] font-black">' + (visivel ? 'Ocultar' : 'Exibir') + '</button>' +
-            '</div>';
+            return '<button type="button" data-dashboard-toggle="' + escapeHtml(id) + '" class="flex items-center gap-3 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-left">' +
+              '<div class="min-w-0 flex-1"><p class="truncate text-xs font-black text-slate-900">' + escapeHtml(tituloCardDashboard(id)) + '</p><p class="mt-0.5 text-[10px] font-semibold ' + (visivel ? 'text-emerald-600' : 'text-rose-600') + '">' + (visivel ? 'Ativado' : 'Desativado') + '</p></div>' +
+              '<span class="relative h-6 w-11 shrink-0 rounded-full p-0.5 transition-colors ' + (visivel ? 'bg-emerald-500' : 'bg-rose-500') + '">' +
+                '<span class="block h-5 w-5 rounded-full bg-white shadow-sm transition-transform ' + (visivel ? 'translate-x-5' : 'translate-x-0') + '"></span>' +
+              '</span>' +
+            '</button>';
           }).join('') +
         '</div>' +
-        '<div class="grid grid-cols-2 gap-2">' +
-          '<button id="restore-point-dashboard" type="button" class="h-11 rounded-xl border border-cyan-100 bg-cyan-50 px-3 text-xs font-black text-cyan-800">Criar ponto</button>' +
-          '<button id="apply-restore-dashboard" type="button" class="h-11 rounded-xl border border-cyan-100 bg-white px-3 text-xs font-black text-cyan-800">Restaurar ponto</button>' +
-        '</div>' +
-        '<button id="reset-resumo-dashboard" type="button" class="h-11 rounded-xl bg-slate-950 px-4 text-xs font-black uppercase tracking-wide text-white">Restaurar padr&atilde;o inicial</button>' +
+        '<button id="reset-resumo-dashboard" type="button" class="mt-1 h-10 rounded-xl bg-slate-950 px-4 text-xs font-black uppercase tracking-wide text-white">Restaurar padr&atilde;o inicial</button>' +
       '</div>'
     );
   }
@@ -2946,6 +2954,7 @@
     bind('menu-categorias', function () { abrirModalMenu('categorias'); });
     bind('menu-ajuda-categorias', function () { abrirModalMenu('ajudaCategorias'); });
     bind('menu-instalar', instalarApp);
+    bind('menu-duplicados', alternarDuplicados);
     bind('menu-tema', trocarTema);
     bind('fechar-modal-menu', fecharModalMenu);
     bind('trocar-empresa-gerenciar', function () { abrirModalMenu('empresa'); });
@@ -2997,8 +3006,6 @@
       render();
     });
     bind('reset-resumo-dashboard', restaurarResumoPadrao);
-    bind('restore-point-dashboard', criarPontoRestauracaoResumo);
-    bind('apply-restore-dashboard', restaurarPontoRestauracaoResumo);
     bind('mes-anterior', function () { mudarMes(-1); });
     bind('mes-proximo', function () { mudarMes(1); });
     bind('ver-despesas', function () {
@@ -3621,7 +3628,7 @@
           return Promise.all(
             keys
               .filter(function (key) {
-                return key.indexOf('avantalab-mobile-') === 0 && key !== 'avantalab-mobile-v45';
+                return key.indexOf('avantalab-mobile-') === 0 && key !== 'avantalab-mobile-v46';
               })
               .map(function (key) {
                 return caches.delete(key);
