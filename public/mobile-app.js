@@ -3202,14 +3202,15 @@
 
     function criarGhost(card, x, y) {
       var rect = card.getBoundingClientRect();
-      var larguraGhost = Math.min(rect.width, window.innerWidth - 32);
+      var larguraGhost = Math.min(rect.width * 0.82, window.innerWidth - 56);
       ghost = document.createElement('div');
       ghost.className = 'pointer-events-none fixed z-[90] overflow-hidden rounded-2xl border border-cyan-200 bg-white text-slate-900 shadow-2xl shadow-cyan-950/25 backdrop-blur';
       ghost.style.width = larguraGhost + 'px';
-      ghost.style.maxHeight = Math.min(Math.max(rect.height, 96), 240) + 'px';
+      ghost.style.maxHeight = Math.min(Math.max(rect.height * 0.86, 90), 198) + 'px';
       ghost.style.left = Math.max(12, Math.min(window.innerWidth - larguraGhost - 12, x - larguraGhost / 2)) + 'px';
       ghost.style.top = Math.max(12, y - 34) + 'px';
-      ghost.style.transform = 'rotate(-0.5deg)';
+      ghost.style.transform = 'rotate(-0.5deg) scale(0.94)';
+      ghost.style.transformOrigin = 'center center';
       ghost.style.transition = 'box-shadow .16s ease, transform .16s ease';
 
       var preview = card.cloneNode(true);
@@ -3428,7 +3429,7 @@
           return Promise.all(
             keys
               .filter(function (key) {
-                return key.indexOf('avantalab-mobile-') === 0 && key !== 'avantalab-mobile-v37';
+                return key.indexOf('avantalab-mobile-') === 0 && key !== 'avantalab-mobile-v38';
               })
               .map(function (key) {
                 return caches.delete(key);
