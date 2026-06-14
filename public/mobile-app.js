@@ -1626,7 +1626,7 @@
       '<div class="grid gap-5">' +
         '<div>' +
           '<p class="mb-2 text-xs font-bold uppercase tracking-[0.32em] text-sky-700">AvantaLab Gestao</p>' +
-          '<h1 class="text-3xl font-black leading-tight text-slate-900">Descubra quanto realmente sobra no seu negocio.</h1>' +
+          '<h1 class="text-3xl font-black leading-tight text-slate-900">Descubra quanto realmente sobra no seu neg&oacute;cio ou nas suas despesas pessoais.</h1>' +
           '<p class="mt-3 text-sm font-semibold leading-relaxed text-slate-600">Controle entradas e despesas de forma simples.</p>' +
         '</div>' +
         '<div class="grid gap-2 rounded-2xl bg-white/22 p-3 text-sm font-bold leading-snug text-slate-700">' +
@@ -2682,11 +2682,34 @@
   }
 
   function termosMobileHtml() {
-    return '<div class="space-y-3 text-sm leading-relaxed text-slate-600"><p>O AvantaLab Gestao apoia a organizacao, controle e analise de informacoes financeiras e administrativas da empresa.</p><p>O usuario e responsavel pela veracidade dos dados cadastrados e pelo uso adequado das informacoes geradas pelo sistema.</p><p>As funcionalidades podem evoluir ao longo do tempo para melhorar seguranca, desempenho e experiencia de uso.</p></div>';
+    return (
+      '<div class="space-y-4 text-sm leading-relaxed text-slate-600">' +
+        '<section><h3 class="mb-2 text-xs font-black uppercase tracking-widest text-slate-800">1. Aceita&ccedil;&atilde;o dos termos</h3><p>Ao acessar e utilizar o AvantaLab Gest&atilde;o, o usu&aacute;rio declara estar ciente e de acordo com estes Termos de Uso. Caso n&atilde;o concorde com qualquer condi&ccedil;&atilde;o aqui apresentada, recomenda-se n&atilde;o utilizar o sistema.</p></section>' +
+        '<section><h3 class="mb-2 text-xs font-black uppercase tracking-widest text-slate-800">2. Finalidade do sistema</h3><p>O AvantaLab Gest&atilde;o &eacute; uma ferramenta destinada ao apoio na organiza&ccedil;&atilde;o, controle e an&aacute;lise de informa&ccedil;&otilde;es financeiras e administrativas, incluindo lan&ccedil;amentos, faturamentos, despesas, relat&oacute;rios e indicadores gerenciais.</p></section>' +
+        '<section><h3 class="mb-2 text-xs font-black uppercase tracking-widest text-slate-800">3. Responsabilidade pelas informa&ccedil;&otilde;es</h3><p>O usu&aacute;rio &eacute; respons&aacute;vel pela veracidade, atualiza&ccedil;&atilde;o e confer&ecirc;ncia dos dados inseridos no sistema. As informa&ccedil;&otilde;es apresentadas nos relat&oacute;rios dependem diretamente dos dados cadastrados pelo pr&oacute;prio usu&aacute;rio.</p></section>' +
+        '<section><h3 class="mb-2 text-xs font-black uppercase tracking-widest text-slate-800">4. Uso adequado</h3><p>O usu&aacute;rio compromete-se a utilizar o sistema de forma l&iacute;cita, &eacute;tica e adequada, n&atilde;o realizando a&ccedil;&otilde;es que possam comprometer a seguran&ccedil;a, estabilidade, funcionamento ou integridade da plataforma.</p></section>' +
+        '<section><h3 class="mb-2 text-xs font-black uppercase tracking-widest text-slate-800">5. Disponibilidade do sistema</h3><p>Embora sejam adotados esfor&ccedil;os para manter o sistema dispon&iacute;vel e funcional, podem ocorrer interrup&ccedil;&otilde;es tempor&aacute;rias por manuten&ccedil;&atilde;o, atualiza&ccedil;&otilde;es, falhas t&eacute;cnicas, instabilidades de servi&ccedil;os externos ou outros fatores operacionais.</p></section>' +
+        '<section><h3 class="mb-2 text-xs font-black uppercase tracking-widest text-slate-800">6. Limita&ccedil;&atilde;o de responsabilidade</h3><p>O AvantaLab Gest&atilde;o &eacute; uma ferramenta de apoio gerencial. As decis&otilde;es tomadas com base nas informa&ccedil;&otilde;es exibidas no sistema s&atilde;o de responsabilidade exclusiva do usu&aacute;rio.</p></section>' +
+        '<section><h3 class="mb-2 text-xs font-black uppercase tracking-widest text-slate-800">7. Altera&ccedil;&otilde;es nos termos</h3><p>Estes Termos de Uso poder&atilde;o ser atualizados periodicamente para refletir melhorias, mudan&ccedil;as operacionais, legais ou funcionais do sistema.</p></section>' +
+      '</div>'
+    );
   }
 
   function privacidadeMobileHtml() {
-    return '<div class="space-y-3 text-sm leading-relaxed text-slate-600"><p>Tratamos os dados informados no sistema apenas para viabilizar o funcionamento da plataforma e seus recursos de gestao.</p><p>As informacoes de acesso, empresas, lancamentos e configuracoes sao usadas para identificar o usuario e exibir os dados corretos de cada ambiente.</p><p>Use senhas seguras e mantenha o acesso restrito a pessoas autorizadas.</p></div>';
+    return (
+      '<div class="space-y-4 text-sm leading-relaxed text-slate-600">' +
+        '<section><h3 class="mb-2 text-xs font-black uppercase tracking-widest text-slate-800">1. Objetivo desta pol&iacute;tica</h3><p>Esta Pol&iacute;tica de Privacidade tem como objetivo explicar, de forma clara e transparente, como o AvantaLab Gest&atilde;o pode coletar, utilizar, armazenar e proteger informa&ccedil;&otilde;es fornecidas pelos usu&aacute;rios durante o uso do sistema.</p></section>' +
+        '<section><h3 class="mb-2 text-xs font-black uppercase tracking-widest text-slate-800">2. Informa&ccedil;&otilde;es coletadas</h3><p>O sistema pode coletar informa&ccedil;&otilde;es necess&aacute;rias para cadastro, autentica&ccedil;&atilde;o e funcionamento da plataforma, como nome, email, empresa vinculada, prefer&ecirc;ncias de configura&ccedil;&atilde;o, al&eacute;m dos dados financeiros e administrativos inseridos voluntariamente pelo usu&aacute;rio.</p></section>' +
+        '<section><h3 class="mb-2 text-xs font-black uppercase tracking-widest text-slate-800">3. Uso das informa&ccedil;&otilde;es</h3><p>As informa&ccedil;&otilde;es s&atilde;o utilizadas para permitir o acesso ao sistema, salvar configura&ccedil;&otilde;es, organizar lan&ccedil;amentos, gerar relat&oacute;rios, exibir indicadores, manter a seguran&ccedil;a da conta e melhorar a experi&ecirc;ncia de uso da plataforma.</p></section>' +
+        '<section><h3 class="mb-2 text-xs font-black uppercase tracking-widest text-slate-800">4. Armazenamento dos dados</h3><p>Os dados do sistema s&atilde;o armazenados em ambiente digital seguro, utilizando servi&ccedil;os de banco de dados e autentica&ccedil;&atilde;o. O acesso &agrave;s informa&ccedil;&otilde;es &eacute; controlado conforme o v&iacute;nculo do usu&aacute;rio com sua respectiva empresa.</p></section>' +
+        '<section><h3 class="mb-2 text-xs font-black uppercase tracking-widest text-slate-800">5. Cookies e tecnologias semelhantes</h3><p>O AvantaLab Gest&atilde;o pode utilizar cookies, armazenamento local ou tecnologias semelhantes necess&aacute;rios ao funcionamento da plataforma, como autentica&ccedil;&atilde;o, seguran&ccedil;a, manuten&ccedil;&atilde;o da sess&atilde;o, prefer&ecirc;ncias de uso e configura&ccedil;&otilde;es do sistema. Caso sejam utilizados cookies n&atilde;o essenciais, como ferramentas de an&aacute;lise, marketing ou rastreamento, o usu&aacute;rio ser&aacute; informado e poder&aacute; gerenciar suas prefer&ecirc;ncias quando aplic&aacute;vel.</p></section>' +
+        '<section><h3 class="mb-2 text-xs font-black uppercase tracking-widest text-slate-800">6. Compartilhamento de informa&ccedil;&otilde;es</h3><p>O AvantaLab Gest&atilde;o n&atilde;o vende informa&ccedil;&otilde;es dos usu&aacute;rios. Os dados poder&atilde;o ser compartilhados apenas quando necess&aacute;rio para o funcionamento t&eacute;cnico da plataforma, cumprimento de obriga&ccedil;&otilde;es legais ou mediante solicita&ccedil;&atilde;o ou autoriza&ccedil;&atilde;o do pr&oacute;prio usu&aacute;rio.</p></section>' +
+        '<section><h3 class="mb-2 text-xs font-black uppercase tracking-widest text-slate-800">7. Seguran&ccedil;a</h3><p>S&atilde;o adotadas medidas t&eacute;cnicas e organizacionais para proteger as informa&ccedil;&otilde;es contra acessos n&atilde;o autorizados, perda, altera&ccedil;&atilde;o, divulga&ccedil;&atilde;o indevida ou uso inadequado. Ainda assim, nenhum sistema digital &eacute; totalmente imune a riscos.</p></section>' +
+        '<section><h3 class="mb-2 text-xs font-black uppercase tracking-widest text-slate-800">8. Responsabilidade do usu&aacute;rio</h3><p>O usu&aacute;rio &eacute; respons&aacute;vel por manter seus dados de acesso em seguran&ccedil;a, utilizar senhas fortes, n&atilde;o compartilhar credenciais e conferir as informa&ccedil;&otilde;es inseridas no sistema.</p></section>' +
+        '<section><h3 class="mb-2 text-xs font-black uppercase tracking-widest text-slate-800">9. Direitos do usu&aacute;rio</h3><p>O usu&aacute;rio poder&aacute; solicitar informa&ccedil;&otilde;es sobre seus dados, corre&ccedil;&otilde;es, atualiza&ccedil;&otilde;es ou exclus&atilde;o, quando aplic&aacute;vel, respeitadas as obriga&ccedil;&otilde;es legais, fiscais, contratuais e operacionais relacionadas ao uso da plataforma.</p></section>' +
+        '<section><h3 class="mb-2 text-xs font-black uppercase tracking-widest text-slate-800">10. Altera&ccedil;&otilde;es nesta pol&iacute;tica</h3><p>Esta Pol&iacute;tica de Privacidade poder&aacute; ser atualizada periodicamente para refletir melhorias no sistema, mudan&ccedil;as operacionais, requisitos legais ou novas funcionalidades.</p></section>' +
+      '</div>'
+    );
   }
 
   function render() {
@@ -3464,7 +3487,7 @@
           return Promise.all(
             keys
               .filter(function (key) {
-                return key.indexOf('avantalab-mobile-') === 0 && key !== 'avantalab-mobile-v42';
+                return key.indexOf('avantalab-mobile-') === 0 && key !== 'avantalab-mobile-v44';
               })
               .map(function (key) {
                 return caches.delete(key);
