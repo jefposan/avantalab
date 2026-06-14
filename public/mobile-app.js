@@ -1884,7 +1884,7 @@
     return normalizarOrdemDashboard(state.dashboardOrdem)
       .map(function (id) {
         if (!cards[id]) return '';
-        return '<div data-dashboard-card="' + escapeHtml(id) + '" class="relative pb-2">' +
+        return '<div data-dashboard-card="' + escapeHtml(id) + '" class="relative pb-2 transition-[transform,opacity,filter] duration-200 ease-out">' +
           cards[id] +
           '<button type="button" data-dashboard-handle="' + escapeHtml(id) + '" class="absolute bottom-1 right-3 flex h-7 w-8 select-none touch-none items-center justify-center rounded-full bg-transparent text-[11px] font-black leading-none text-slate-400" aria-label="Mover card">&vellip;&vellip;</button>' +
         '</div>';
@@ -2536,7 +2536,7 @@
 
     return (
       '<div class="grid gap-2">' +
-        '<p class="rounded-xl bg-cyan-50 px-3 py-2 text-xs font-semibold leading-relaxed text-cyan-900">Use as setas ou segure um card no dashboard para reposicionar. A ordem fica salva neste celular.</p>' +
+        '<p class="rounded-xl bg-cyan-50 px-3 py-2 text-xs font-semibold leading-relaxed text-cyan-900">Use as setas ou segure o puxador do card no dashboard para reposicionar. A ordem fica salva neste celular.</p>' +
         ordem.map(function (id, index) {
           return '<div class="flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2">' +
             '<span class="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-white text-[10px] font-black text-slate-500">' + (index + 1) + '</span>' +
@@ -3159,6 +3159,7 @@
     var iniciouDrag = false;
     var pointerId = null;
     var zonasDestino = [];
+    var estilosOrigem = null;
 
     function limparDrag() {
       if (timer) window.clearTimeout(timer);
@@ -3171,24 +3172,60 @@
       marcador = null;
       ultimoDestino = null;
 
-      if (cardAtivo) cardAtivo.classList.remove('scale-[0.98]', 'opacity-70', 'ring-2', 'ring-cyan-400', 'select-none');
+      if (cardAtivo) {
+        cardAtivo.classList.remove('select-none');
+        if (estilosOrigem) {
+          cardAtivo.style.opacity = estilosOrigem.opacity;
+          cardAtivo.style.transform = estilosOrigem.transform;
+          cardAtivo.style.filter = estilosOrigem.filter;
+          cardAtivo.style.minHeight = estilosOrigem.minHeight;
+          cardAtivo.style.outline = estilosOrigem.outline;
+          cardAtivo.style.background = estilosOrigem.background;
+        } else {
+          cardAtivo.style.opacity = '';
+          cardAtivo.style.transform = '';
+          cardAtivo.style.filter = '';
+          cardAtivo.style.minHeight = '';
+          cardAtivo.style.outline = '';
+          cardAtivo.style.background = '';
+        }
+      }
 
       cardAtivo = null;
       idAtivo = '';
       iniciouDrag = false;
       pointerId = null;
       zonasDestino = [];
+      estilosOrigem = null;
       state.dragDashboardId = '';
     }
 
     function criarGhost(card, x, y) {
       var rect = card.getBoundingClientRect();
+      var larguraGhost = Math.min(rect.width, window.innerWidth - 32);
       ghost = document.createElement('div');
-      ghost.className = 'pointer-events-none fixed z-[90] max-w-[340px] rounded-2xl border border-cyan-200 bg-white/95 px-4 py-3 text-sm font-black text-slate-900 shadow-2xl shadow-cyan-950/25 backdrop-blur';
-      ghost.style.width = Math.min(rect.width, window.innerWidth - 32) + 'px';
-      ghost.style.left = Math.max(12, Math.min(window.innerWidth - rect.width - 12, x - rect.width / 2)) + 'px';
-      ghost.style.top = Math.max(12, y - 28) + 'px';
-      ghost.textContent = tituloCardDashboard(idAtivo);
+      ghost.className = 'pointer-events-none fixed z-[90] overflow-hidden rounded-2xl border border-cyan-200 bg-white text-slate-900 shadow-2xl shadow-cyan-950/25 backdrop-blur';
+      ghost.style.width = larguraGhost + 'px';
+      ghost.style.maxHeight = Math.min(Math.max(rect.height, 96), 240) + 'px';
+      ghost.style.left = Math.max(12, Math.min(window.innerWidth - larguraGhost - 12, x - larguraGhost / 2)) + 'px';
+      ghost.style.top = Math.max(12, y - 34) + 'px';
+      ghost.style.transform = 'rotate(-0.5deg)';
+      ghost.style.transition = 'box-shadow .16s ease, transform .16s ease';
+
+      var preview = card.cloneNode(true);
+      preview.removeAttribute('data-dashboard-card');
+      preview.style.paddingBottom = '0';
+      preview.style.transform = 'none';
+      preview.style.opacity = '1';
+      preview.style.filter = 'none';
+      preview.style.minHeight = '';
+      Array.prototype.forEach.call(preview.querySelectorAll('[id]'), function (item) {
+        item.removeAttribute('id');
+      });
+      Array.prototype.forEach.call(preview.querySelectorAll('[data-dashboard-handle]'), function (item) {
+        item.parentNode.removeChild(item);
+      });
+      ghost.appendChild(preview);
       document.body.appendChild(ghost);
     }
 
@@ -3196,7 +3233,9 @@
       if (marcador) return marcador;
 
       marcador = document.createElement('div');
-      marcador.className = 'pointer-events-none my-2 h-5 rounded-xl border-2 border-dashed border-cyan-400 bg-cyan-50/90';
+      marcador.className = 'pointer-events-none my-2 overflow-hidden rounded-2xl border border-dashed border-cyan-300 bg-white/75 shadow-inner shadow-cyan-100 transition-all duration-150 ease-out';
+      marcador.style.height = '74px';
+      marcador.innerHTML = '<div class="flex h-full items-center justify-center rounded-2xl bg-cyan-50/70 text-[10px] font-black uppercase tracking-[0.18em] text-cyan-700">Soltar aqui</div>';
       return marcador;
     }
 
@@ -3230,7 +3269,7 @@
       if (!ghost) return;
       var largura = ghost.offsetWidth || 260;
       ghost.style.left = Math.max(12, Math.min(window.innerWidth - largura - 12, x - largura / 2)) + 'px';
-      ghost.style.top = Math.max(12, Math.min(window.innerHeight - 64, y - 28)) + 'px';
+      ghost.style.top = Math.max(12, Math.min(window.innerHeight - 72, y - 34)) + 'px';
     }
 
     function destacarDestino(x, y) {
@@ -3241,12 +3280,26 @@
       }
 
       var destino = zonasDestino[zonasDestino.length - 1];
+      var indiceDestino = zonasDestino.length - 1;
       var yPagina = y + window.scrollY;
 
       for (var i = 0; i < zonasDestino.length; i += 1) {
         if (yPagina < zonasDestino[i].limite) {
           destino = zonasDestino[i];
+          indiceDestino = i;
           break;
+        }
+      }
+
+      if (ultimoDestino && ultimoDestino.indice !== undefined && Math.abs(indiceDestino - ultimoDestino.indice) === 1) {
+        var limiteTroca = zonasDestino[Math.min(indiceDestino, ultimoDestino.indice)].limite;
+        var margem = 20;
+        if (ultimoDestino.indice < indiceDestino && yPagina < limiteTroca + margem) {
+          destino = zonasDestino[ultimoDestino.indice];
+          indiceDestino = ultimoDestino.indice;
+        } else if (ultimoDestino.indice > indiceDestino && yPagina > limiteTroca - margem) {
+          destino = zonasDestino[ultimoDestino.indice];
+          indiceDestino = ultimoDestino.indice;
         }
       }
 
@@ -3264,6 +3317,7 @@
       ultimoDestino = {
         id: destino.id,
         depois: destino.depois,
+        indice: indiceDestino,
       };
 
       return ultimoDestino;
@@ -3294,7 +3348,22 @@
           iniciouDrag = true;
           calcularZonasDestino();
           if (cardAtivo) {
-            cardAtivo.classList.add('scale-[0.98]', 'opacity-70', 'select-none');
+            var rect = cardAtivo.getBoundingClientRect();
+            estilosOrigem = {
+              opacity: cardAtivo.style.opacity,
+              transform: cardAtivo.style.transform,
+              filter: cardAtivo.style.filter,
+              minHeight: cardAtivo.style.minHeight,
+              outline: cardAtivo.style.outline,
+              background: cardAtivo.style.background,
+            };
+            cardAtivo.classList.add('select-none');
+            cardAtivo.style.minHeight = rect.height + 'px';
+            cardAtivo.style.opacity = '0.32';
+            cardAtivo.style.transform = 'scale(0.985)';
+            cardAtivo.style.filter = 'saturate(0.85)';
+            cardAtivo.style.outline = '1px dashed rgba(8, 145, 178, .32)';
+            cardAtivo.style.background = 'rgba(236, 254, 255, .55)';
             criarGhost(cardAtivo, event.clientX, event.clientY);
           }
         }, 520);
@@ -3359,7 +3428,7 @@
           return Promise.all(
             keys
               .filter(function (key) {
-                return key.indexOf('avantalab-mobile-') === 0 && key !== 'avantalab-mobile-v36';
+                return key.indexOf('avantalab-mobile-') === 0 && key !== 'avantalab-mobile-v37';
               })
               .map(function (key) {
                 return caches.delete(key);
