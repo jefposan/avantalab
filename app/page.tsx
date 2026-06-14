@@ -4607,7 +4607,7 @@ if (isTelaMobile) {
                     AvantaLab Gestão
                   </p>
 
-                  <h1 className="max-w-xl text-4xl font-black leading-tight text-slate-900 lg:text-5xl">
+                  <h1 className="max-w-xl text-3xl font-black leading-tight text-slate-900 lg:text-4xl">
                     Descubra quanto realmente sobra no seu negócio ou nas suas despesas pessoais.
                   </h1>
 
