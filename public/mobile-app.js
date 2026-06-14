@@ -2964,7 +2964,8 @@
 
       indicador = document.createElement('div');
       indicador.id = 'pull-refresh-indicator';
-      indicador.className = 'pointer-events-none fixed left-1/2 top-3 z-[95] flex -translate-x-1/2 -translate-y-16 items-center gap-2 rounded-full border border-white/70 bg-white/95 px-4 py-2 text-xs font-black uppercase tracking-wide text-slate-700 opacity-0 shadow-xl shadow-slate-900/15 backdrop-blur transition-[opacity,transform] duration-150';
+      indicador.className = 'pointer-events-none';
+      indicador.style.cssText = 'position:fixed;left:50%;top:calc(env(safe-area-inset-top,0px) + 12px);z-index:9999;display:flex;align-items:center;gap:8px;border:1px solid rgba(255,255,255,.75);border-radius:9999px;background:rgba(255,255,255,.96);padding:8px 14px;color:#334155;font-size:11px;font-weight:900;text-transform:uppercase;letter-spacing:.04em;box-shadow:0 14px 30px rgba(15,23,42,.16);backdrop-filter:blur(10px);opacity:0;transform:translate(-50%,-64px);transition:opacity .15s ease,transform .15s ease;';
       indicador.innerHTML = '<span data-pull-icon class="block text-lg leading-none transition-transform duration-150">&#8635;</span><span data-pull-text>Puxe para recarregar</span>';
       document.body.appendChild(indicador);
       return indicador;
@@ -2991,7 +2992,7 @@
     }
 
     window.addEventListener('touchstart', function (event) {
-      if (!isStandalone() || deveBloquearScroll() || window.scrollY > 2 || !event.touches.length) {
+      if (deveBloquearScroll() || window.scrollY > 2 || !event.touches.length) {
         acompanhando = false;
         esconderIndicador();
         return;
@@ -3002,7 +3003,7 @@
     }, { passive: true });
 
     window.addEventListener('touchmove', function (event) {
-      if (!acompanhando || !isStandalone() || deveBloquearScroll() || !event.touches.length) return;
+      if (!acompanhando || deveBloquearScroll() || !event.touches.length) return;
 
       var distancia = event.touches[0].clientY - inicioY;
       if (distancia <= 0 || window.scrollY > 2) {
@@ -3014,7 +3015,7 @@
     }, { passive: true });
 
     window.addEventListener('touchend', function (event) {
-      if (!acompanhando || !isStandalone() || deveBloquearScroll()) return;
+      if (!acompanhando || deveBloquearScroll()) return;
       acompanhando = false;
 
       var toque = event.changedTouches && event.changedTouches[0];
@@ -3242,7 +3243,7 @@
           return Promise.all(
             keys
               .filter(function (key) {
-                return key.indexOf('avantalab-mobile-') === 0 && key !== 'avantalab-mobile-v34';
+                return key.indexOf('avantalab-mobile-') === 0 && key !== 'avantalab-mobile-v35';
               })
               .map(function (key) {
                 return caches.delete(key);
