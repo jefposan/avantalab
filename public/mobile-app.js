@@ -2956,10 +2956,44 @@
   function configurarPullToRefresh() {
     var inicioY = 0;
     var acompanhando = false;
+    var indicador = null;
+    var limite = 95;
+
+    function indicadorPullToRefresh() {
+      if (indicador) return indicador;
+
+      indicador = document.createElement('div');
+      indicador.id = 'pull-refresh-indicator';
+      indicador.className = 'pointer-events-none fixed left-1/2 top-3 z-[95] flex -translate-x-1/2 -translate-y-16 items-center gap-2 rounded-full border border-white/70 bg-white/95 px-4 py-2 text-xs font-black uppercase tracking-wide text-slate-700 opacity-0 shadow-xl shadow-slate-900/15 backdrop-blur transition-[opacity,transform] duration-150';
+      indicador.innerHTML = '<span data-pull-icon class="block text-lg leading-none transition-transform duration-150">&#8635;</span><span data-pull-text>Puxe para recarregar</span>';
+      document.body.appendChild(indicador);
+      return indicador;
+    }
+
+    function atualizarIndicador(distancia, soltou) {
+      var item = indicadorPullToRefresh();
+      var progresso = Math.max(0, Math.min(distancia / limite, 1));
+      var visivel = distancia > 8;
+      var texto = item.querySelector('[data-pull-text]');
+      var icone = item.querySelector('[data-pull-icon]');
+      var deslocamento = -64 + Math.round(64 * progresso);
+
+      item.style.opacity = visivel ? String(Math.max(0.25, progresso)) : '0';
+      item.style.transform = 'translate(-50%, ' + deslocamento + 'px)';
+      if (texto) texto.textContent = soltou ? 'Recarregando...' : (distancia >= limite ? 'Recarregar' : 'Puxe para recarregar');
+      if (icone) icone.style.transform = 'rotate(' + Math.round(220 * progresso) + 'deg)';
+    }
+
+    function esconderIndicador() {
+      if (!indicador) return;
+      indicador.style.opacity = '0';
+      indicador.style.transform = 'translate(-50%, -64px)';
+    }
 
     window.addEventListener('touchstart', function (event) {
       if (!isStandalone() || deveBloquearScroll() || window.scrollY > 2 || !event.touches.length) {
         acompanhando = false;
+        esconderIndicador();
         return;
       }
 
@@ -2967,14 +3001,34 @@
       inicioY = event.touches[0].clientY;
     }, { passive: true });
 
+    window.addEventListener('touchmove', function (event) {
+      if (!acompanhando || !isStandalone() || deveBloquearScroll() || !event.touches.length) return;
+
+      var distancia = event.touches[0].clientY - inicioY;
+      if (distancia <= 0 || window.scrollY > 2) {
+        esconderIndicador();
+        return;
+      }
+
+      atualizarIndicador(distancia, false);
+    }, { passive: true });
+
     window.addEventListener('touchend', function (event) {
       if (!acompanhando || !isStandalone() || deveBloquearScroll()) return;
       acompanhando = false;
 
       var toque = event.changedTouches && event.changedTouches[0];
-      if (toque && toque.clientY - inicioY > 95 && window.scrollY <= 2) {
+      if (toque && toque.clientY - inicioY > limite && window.scrollY <= 2) {
+        atualizarIndicador(limite, true);
         window.location.reload();
+      } else {
+        esconderIndicador();
       }
+    }, { passive: true });
+
+    window.addEventListener('touchcancel', function () {
+      acompanhando = false;
+      esconderIndicador();
     }, { passive: true });
   }
 
@@ -3188,7 +3242,7 @@
           return Promise.all(
             keys
               .filter(function (key) {
-                return key.indexOf('avantalab-mobile-') === 0 && key !== 'avantalab-mobile-v33';
+                return key.indexOf('avantalab-mobile-') === 0 && key !== 'avantalab-mobile-v34';
               })
               .map(function (key) {
                 return caches.delete(key);
