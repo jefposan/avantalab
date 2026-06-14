@@ -59,6 +59,7 @@
     carregando: false,
     empresaAcao: '',
     loginValor: '',
+    telaAcesso: 'boasVindas',
     modoSenha: false,
     modoCadastro: false,
     smsSenhaEnviado: false,
@@ -94,6 +95,10 @@
     tiposDespesaExpandido: false,
     ultimasDespesasExpandido: false,
     ultimasReceitasExpandido: false,
+    ultimasDespesasBuscaAberta: false,
+    ultimasReceitasBuscaAberta: false,
+    ultimasDespesasBusca: '',
+    ultimasReceitasBusca: '',
     dashboardOrdem: ordemDashboardPadrao(),
     dragDashboardId: '',
     evolucaoSelecionada: {},
@@ -140,6 +145,13 @@
   function formatarDescricao(texto) {
     var limpo = String(texto || '').trim().toLowerCase();
     return limpo ? limpo.charAt(0).toUpperCase() + limpo.slice(1) : '';
+  }
+
+  function textoBusca(valor) {
+    return String(valor || '')
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '');
   }
 
   function maxDias(mes, ano) {
@@ -770,6 +782,7 @@
       state.carregando = false;
       state.autenticado = false;
       state.usuario = null;
+      state.telaAcesso = 'login';
       await db.auth.signOut();
       setErro('Nenhuma empresa vinculada a este usuario.');
       return;
@@ -1001,6 +1014,7 @@
       return;
     }
 
+    state.telaAcesso = 'login';
     state.modoCadastro = false;
     state.smsCadastroEnviado = false;
     state.telefoneCadastroConfirmado = '';
@@ -1060,6 +1074,9 @@
     state.lancamentos = [];
     state.entradas = [];
     state.faturamentos = {};
+    state.telaAcesso = 'boasVindas';
+    state.modoCadastro = false;
+    state.modoSenha = false;
     render();
   }
 
@@ -1582,21 +1599,47 @@
   }
 
   function telaLogin() {
+    var boasVindas = state.telaAcesso === 'boasVindas' && !state.modoCadastro && !state.modoSenha;
+
     return (
       '<section class="fixed inset-0 flex flex-col items-center justify-center overflow-hidden px-4 py-5" style="height:100dvh;background-color:#eef6fb;background-image:linear-gradient(rgba(255,255,255,.08),rgba(255,255,255,0)),url(/images/bg-avantalab-mobile-1080x1920.png);background-size:100% auto;background-repeat:no-repeat;background-position:center center;background-attachment:fixed;">' +
         '<div class="mx-auto w-full max-w-md overflow-y-auto rounded-3xl border border-white/35 p-5 text-slate-900 shadow-2xl backdrop-blur-xl" style="background-color:rgba(255,255,255,.18);max-height:calc(100dvh - 8rem);overscroll-behavior:contain;">' +
-          '<div class="mb-5">' +
-            '<p class="mb-2 text-xs font-bold uppercase tracking-[0.32em] text-sky-700">AvantaLab Gestao</p>' +
-            '<h1 class="text-3xl font-black text-slate-900">' + (state.modoCadastro ? 'Criar cadastro' : state.modoSenha ? 'Recuperar senha' : 'Acesse sua conta') + '</h1>' +
-            '<p class="mt-2 text-sm leading-relaxed text-slate-600">' +
-              (state.modoCadastro ? 'Preencha seus dados e confirme o celular por SMS.' : state.modoSenha ? 'Digite seu login, receba o codigo por SMS e defina uma nova senha.' : 'Entre para acompanhar sua gestao financeira, lancamentos e resultados.') +
-            '</p>' +
-          '</div>' +
-          (state.modoCadastro ? telaCadastro() : state.modoSenha ? telaSenha() : telaLoginCampos()) +
+          (boasVindas
+            ? telaBoasVindas()
+            : '<div class="mb-5">' +
+                '<p class="mb-2 text-xs font-bold uppercase tracking-[0.32em] text-sky-700">AvantaLab Gestao</p>' +
+                '<h1 class="text-3xl font-black text-slate-900">' + (state.modoCadastro ? 'Criar cadastro' : state.modoSenha ? 'Recuperar senha' : 'Acesse sua conta') + '</h1>' +
+                '<p class="mt-2 text-sm leading-relaxed text-slate-600">' +
+                  (state.modoCadastro ? 'Preencha seus dados e confirme o celular por SMS.' : state.modoSenha ? 'Digite seu login, receba o codigo por SMS e defina uma nova senha.' : 'Entre para acompanhar sua gestao financeira, lancamentos e resultados.') +
+                '</p>' +
+              '</div>' +
+              (state.modoCadastro ? telaCadastro() : state.modoSenha ? telaSenha() : telaLoginCampos())) +
         '</div>' +
-        (!state.modoCadastro && !state.modoSenha ? cardInstalarLoginHtml() : '') +
+        (!boasVindas && !state.modoCadastro && !state.modoSenha ? cardInstalarLoginHtml() : '') +
         (state.modalMenu ? modalMenuHtml() : '') +
       '</section>'
+    );
+  }
+
+  function telaBoasVindas() {
+    return (
+      '<div class="grid gap-5">' +
+        '<div>' +
+          '<p class="mb-2 text-xs font-bold uppercase tracking-[0.32em] text-sky-700">AvantaLab Gestao</p>' +
+          '<h1 class="text-3xl font-black leading-tight text-slate-900">Descubra quanto realmente sobra no seu negocio.</h1>' +
+          '<p class="mt-3 text-sm font-semibold leading-relaxed text-slate-600">Controle entradas e despesas de forma simples.</p>' +
+        '</div>' +
+        '<div class="grid gap-2 rounded-2xl bg-white/22 p-3 text-sm font-bold leading-snug text-slate-700">' +
+          '<p>&#10003; Entenda seus gastos.</p>' +
+          '<p>&#10003; Compare seus resultados mes a mes.</p>' +
+          '<p>&#10003; Descubra quais despesas mais impactam seu lucro.</p>' +
+          '<p>&#10003; Use no computador ou celular.</p>' +
+        '</div>' +
+        '<button id="boas-vindas-cadastro" type="button" class="h-12 rounded-xl px-4 text-sm font-black uppercase tracking-wide text-white shadow-lg" style="background:linear-gradient(135deg,#003E73,#00A6C8)">' +
+          'Criar conta gratis' +
+        '</button>' +
+        '<div class="text-center text-sm text-slate-600">Ja tem conta? <button id="boas-vindas-login" type="button" class="font-bold text-sky-700 underline">Entrar</button></div>' +
+      '</div>'
     );
   }
 
@@ -1996,19 +2039,28 @@
 
   function ultimasDespesasHtml(lancamentos) {
     var todos = lancamentos.slice().sort(function (a, b) { return b.dia - a.dia; });
-    var itens = state.ultimasDespesasExpandido ? todos : todos.slice(0, 3);
+    var busca = textoBusca(state.ultimasDespesasBusca);
+    var lista = busca
+      ? todos.filter(function (item) {
+          var valor = dinheiro(item.valor);
+          var texto = textoBusca([item.descricao, item.despesa, valor, item.valor].join(' '));
+          return texto.indexOf(busca) >= 0;
+        })
+      : todos;
+    var itens = busca ? lista : (state.ultimasDespesasExpandido ? lista : lista.slice(0, 3));
 
     return (
       '<section class="overflow-hidden rounded-2xl bg-white shadow-sm">' +
-        '<div class="flex items-center justify-between bg-red-50 px-4 py-3"><h2 class="text-sm font-black text-red-900">Ultimas despesas</h2><button id="ver-despesas-lista" type="button" class="text-xs font-black text-red-700">Lista</button></div>' +
+        '<div class="flex items-center justify-between gap-3 bg-red-50 px-4 py-3"><h2 class="text-sm font-black text-red-900">Ultimas despesas</h2><div class="flex items-center gap-2"><button id="ver-despesas-lista" type="button" class="text-xs font-black text-red-700">Lista</button><button id="buscar-ultimas-despesas" type="button" class="flex h-8 w-8 items-center justify-center rounded-full bg-white/80 text-sm font-black text-red-700 shadow-sm" aria-label="Buscar despesas">&#128269;</button></div></div>' +
+        (state.ultimasDespesasBuscaAberta ? '<div class="px-4 pt-3"><input id="busca-ultimas-despesas" type="search" value="' + escapeHtml(state.ultimasDespesasBusca) + '" placeholder="Buscar descricao ou valor" style="font-size:16px" class="h-10 w-full rounded-xl border border-red-100 bg-red-50/60 px-3 text-sm font-semibold text-slate-800 outline-none focus:border-red-300" /></div>' : '') +
         '<div class="grid gap-1 p-4">' +
           (itens.length ? itens.map(function (item) {
             return '<button type="button" data-tipo-lancamento="despesa" data-lancamento-id="' + escapeHtml(item.id) + '" class="flex w-full items-center justify-between gap-3 border-b border-slate-100 py-2 text-left last:border-b-0">' +
               '<div class="min-w-0"><p class="truncate text-sm font-bold text-slate-800">' + escapeHtml(item.despesa) + '</p><p class="truncate text-xs text-slate-500">Dia ' + item.dia + (item.descricao ? ' - ' + escapeHtml(item.descricao) : '') + '</p></div>' +
               '<strong class="shrink-0 text-sm font-black text-red-600">' + dinheiro(item.valor) + '</strong>' +
             '</button>';
-          }).join('') : '<p class="text-xs text-slate-500">Nenhuma despesa neste mes.</p>') +
-          (todos.length > 3 ? '<button id="toggle-ultimas-despesas" type="button" class="pt-2 text-left text-xs font-black text-cyan-700">' + (state.ultimasDespesasExpandido ? 'Recolher' : 'Expandir despesas') + '</button>' : '') +
+          }).join('') : '<p class="text-xs text-slate-500">' + (busca ? 'Nenhuma despesa encontrada.' : 'Nenhuma despesa neste mes.') + '</p>') +
+          (!busca && lista.length > 3 ? '<button id="toggle-ultimas-despesas" type="button" class="pt-2 text-left text-xs font-black text-cyan-700">' + (state.ultimasDespesasExpandido ? 'Recolher' : 'Expandir despesas') + '</button>' : '') +
         '</div>' +
       '</section>'
     );
@@ -2016,19 +2068,28 @@
 
   function ultimasReceitasHtml(entradas) {
     var todos = entradas.slice().sort(function (a, b) { return b.dia - a.dia; });
-    var itens = state.ultimasReceitasExpandido ? todos : todos.slice(0, 3);
+    var busca = textoBusca(state.ultimasReceitasBusca);
+    var lista = busca
+      ? todos.filter(function (item) {
+          var valor = dinheiro(item.valor);
+          var texto = textoBusca([item.origem, item.descricao, valor, item.valor].join(' '));
+          return texto.indexOf(busca) >= 0;
+        })
+      : todos;
+    var itens = busca ? lista : (state.ultimasReceitasExpandido ? lista : lista.slice(0, 3));
 
     return (
       '<section class="overflow-hidden rounded-2xl bg-white shadow-sm">' +
-        '<div class="flex items-center justify-between bg-emerald-50 px-4 py-3"><h2 class="text-sm font-black text-emerald-900">Ultimas receitas</h2><button id="ver-receitas-lista" type="button" class="text-xs font-black text-emerald-700">Lista</button></div>' +
+        '<div class="flex items-center justify-between gap-3 bg-emerald-50 px-4 py-3"><h2 class="text-sm font-black text-emerald-900">Ultimas receitas</h2><div class="flex items-center gap-2"><button id="ver-receitas-lista" type="button" class="text-xs font-black text-emerald-700">Lista</button><button id="buscar-ultimas-receitas" type="button" class="flex h-8 w-8 items-center justify-center rounded-full bg-white/80 text-sm font-black text-emerald-700 shadow-sm" aria-label="Buscar receitas">&#128269;</button></div></div>' +
+        (state.ultimasReceitasBuscaAberta ? '<div class="px-4 pt-3"><input id="busca-ultimas-receitas" type="search" value="' + escapeHtml(state.ultimasReceitasBusca) + '" placeholder="Buscar descricao ou valor" style="font-size:16px" class="h-10 w-full rounded-xl border border-emerald-100 bg-emerald-50/60 px-3 text-sm font-semibold text-slate-800 outline-none focus:border-emerald-300" /></div>' : '') +
         '<div class="grid gap-1 p-4">' +
           (itens.length ? itens.map(function (item) {
             return '<button type="button" data-tipo-lancamento="receita" data-lancamento-id="' + escapeHtml(item.id) + '" class="flex w-full items-center justify-between gap-3 border-b border-slate-100 py-2 text-left last:border-b-0">' +
               '<div class="min-w-0"><p class="truncate text-sm font-bold text-slate-800">' + escapeHtml(item.origem) + '</p><p class="truncate text-xs text-slate-500">Dia ' + item.dia + '</p></div>' +
               '<strong class="shrink-0 text-sm font-black text-emerald-600">' + dinheiro(item.valor) + '</strong>' +
             '</button>';
-          }).join('') : '<p class="text-xs text-slate-500">Nenhuma receita neste mes.</p>') +
-          (todos.length > 3 ? '<button id="toggle-ultimas-receitas" type="button" class="pt-2 text-left text-xs font-black text-cyan-700">' + (state.ultimasReceitasExpandido ? 'Recolher' : 'Expandir receitas') + '</button>' : '') +
+          }).join('') : '<p class="text-xs text-slate-500">' + (busca ? 'Nenhuma receita encontrada.' : 'Nenhuma receita neste mes.') + '</p>') +
+          (!busca && lista.length > 3 ? '<button id="toggle-ultimas-receitas" type="button" class="pt-2 text-left text-xs font-black text-cyan-700">' + (state.ultimasReceitasExpandido ? 'Recolher' : 'Expandir receitas') + '</button>' : '') +
         '</div>' +
       '</section>'
     );
@@ -2288,7 +2349,6 @@
           '<div class="grid gap-1.5">' +
             menuBotaoHtml('menu-dashboard', 'Dashboard', 'Visao principal do mes') +
             menuBotaoHtml('menu-usuario', 'Usuario', perfilFormatado(state.empresa && state.empresa.perfil)) +
-            menuBotaoHtml('menu-trocar-empresa', 'Trocar empresa', state.empresas.length > 1 ? 'Selecionar outro ambiente' : 'Somente uma empresa') +
             menuBotaoHtml('menu-gerenciar', 'Gerenciar empresa', 'Dados e acesso da empresa') +
             menuBotaoHtml('menu-organizar-dashboard', 'Organizar dashboard', 'Definir ordem dos cards') +
             menuBotaoHtml('menu-categorias', 'Cadastrar despesas', 'Adicionar tipo de despesa') +
@@ -2632,7 +2692,25 @@
     bind('entrar', entrar);
     bind('entrar-google', entrarGoogle);
     bind('instalar-login', instalarApp);
+    bind('boas-vindas-login', function () {
+      state.telaAcesso = 'login';
+      state.modoSenha = false;
+      state.modoCadastro = false;
+      state.erro = '';
+      state.mensagem = '';
+      render();
+    });
+    bind('boas-vindas-cadastro', function () {
+      state.telaAcesso = 'login';
+      state.modoCadastro = true;
+      state.modoSenha = false;
+      state.smsCadastroEnviado = false;
+      state.erro = '';
+      state.mensagem = '';
+      render();
+    });
     bind('esqueci-senha', function () {
+      state.telaAcesso = 'login';
       state.loginRecuperacao = campo('login').trim();
       state.modoSenha = true;
       state.modoCadastro = false;
@@ -2642,6 +2720,7 @@
       render();
     });
     bind('abrir-cadastro', function () {
+      state.telaAcesso = 'login';
       state.modoCadastro = true;
       state.modoSenha = false;
       state.smsCadastroEnviado = false;
@@ -2650,6 +2729,7 @@
       render();
     });
     bind('voltar-login-cadastro', function () {
+      state.telaAcesso = 'login';
       state.modoCadastro = false;
       state.smsCadastroEnviado = false;
       state.erro = '';
@@ -2680,6 +2760,7 @@
       alternarSenha('mostrarConfirmarSenhaCadastro', 'cadastro-confirmar-senha', 'toggle-confirmar-cadastro');
     });
     bind('voltar-login', function () {
+      state.telaAcesso = 'login';
       state.modoSenha = false;
       state.modoCadastro = false;
       state.smsSenhaEnviado = false;
@@ -2708,7 +2789,6 @@
     }
     bind('menu-dashboard', voltarDashboard);
     bind('menu-usuario', abrirUsuariosMobile);
-    bind('menu-trocar-empresa', function () { abrirModalMenu('empresa'); });
     bind('menu-gerenciar', function () { abrirModalMenu('gerenciar'); });
     bind('menu-organizar-dashboard', function () { abrirModalMenu('organizarDashboard'); });
     bind('menu-categorias', function () { abrirModalMenu('categorias'); });
@@ -2746,6 +2826,16 @@
     });
     bind('toggle-ultimas-receitas', function () {
       state.ultimasReceitasExpandido = !state.ultimasReceitasExpandido;
+      render();
+    });
+    bind('buscar-ultimas-despesas', function () {
+      state.ultimasDespesasBuscaAberta = !state.ultimasDespesasBuscaAberta;
+      if (!state.ultimasDespesasBuscaAberta) state.ultimasDespesasBusca = '';
+      render();
+    });
+    bind('buscar-ultimas-receitas', function () {
+      state.ultimasReceitasBuscaAberta = !state.ultimasReceitasBuscaAberta;
+      if (!state.ultimasReceitasBuscaAberta) state.ultimasReceitasBusca = '';
       render();
     });
     bind('reset-dashboard', function () {
@@ -2879,6 +2969,32 @@
         state.busca = busca.value;
         render();
         var foco = document.getElementById('busca-lista');
+        if (foco) {
+          foco.focus();
+          foco.setSelectionRange(foco.value.length, foco.value.length);
+        }
+      });
+    }
+
+    var buscaUltimasDespesas = document.getElementById('busca-ultimas-despesas');
+    if (buscaUltimasDespesas) {
+      buscaUltimasDespesas.addEventListener('input', function () {
+        state.ultimasDespesasBusca = buscaUltimasDespesas.value;
+        render();
+        var foco = document.getElementById('busca-ultimas-despesas');
+        if (foco) {
+          foco.focus();
+          foco.setSelectionRange(foco.value.length, foco.value.length);
+        }
+      });
+    }
+
+    var buscaUltimasReceitas = document.getElementById('busca-ultimas-receitas');
+    if (buscaUltimasReceitas) {
+      buscaUltimasReceitas.addEventListener('input', function () {
+        state.ultimasReceitasBusca = buscaUltimasReceitas.value;
+        render();
+        var foco = document.getElementById('busca-ultimas-receitas');
         if (foco) {
           foco.focus();
           foco.setSelectionRange(foco.value.length, foco.value.length);
@@ -3243,7 +3359,7 @@
           return Promise.all(
             keys
               .filter(function (key) {
-                return key.indexOf('avantalab-mobile-') === 0 && key !== 'avantalab-mobile-v35';
+                return key.indexOf('avantalab-mobile-') === 0 && key !== 'avantalab-mobile-v36';
               })
               .map(function (key) {
                 return caches.delete(key);
