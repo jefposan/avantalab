@@ -6,7 +6,7 @@ const siteUrl = process.env.NEXT_PUBLIC_SITE_URL
     ? `https://${process.env.VERCEL_URL}`
     : 'https://avantalab.com.br';
 const mobileUrl = 'https://avantalab.com.br/mobile';
-const shareImage = 'https://avantalab.com.br/images/avantalab-share-mobile-square.jpg';
+const shareImage = 'https://avantalab.com.br/images/avantalab-share-whatsapp.png';
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
@@ -28,7 +28,7 @@ export const metadata: Metadata = {
         width: 1200,
         height: 1200,
         alt: 'AvantaLab Gestão',
-        type: 'image/jpeg',
+        type: 'image/png',
       },
     ],
   },
