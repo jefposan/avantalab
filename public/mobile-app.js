@@ -52,7 +52,7 @@
     usuariosEmpresa: [],
     usuariosCarregando: false,
     usuarioEditandoId: '',
-    usuarioModo: 'criar',
+    usuarioModo: '',
     usuarioExistenteTermo: '',
     usuarioExistenteResultado: null,
     usuarioExistentePerfil: 'operador_simples',
@@ -486,7 +486,7 @@
   async function abrirUsuariosMobile() {
     state.menuAberto = false;
     state.modalMenu = 'usuario';
-    state.usuarioModo = 'criar';
+    state.usuarioModo = '';
     state.usuarioExistenteTermo = '';
     state.usuarioExistenteResultado = null;
     state.usuarioExistentePerfil = 'operador_simples';
@@ -517,6 +517,17 @@
 
   function abrirCriarUsuarioMobile() {
     state.usuarioModo = 'criar';
+    state.usuarioExistenteTermo = '';
+    state.usuarioExistenteResultado = null;
+    state.usuarioExistentePerfil = 'operador_simples';
+    state.pesquisandoUsuarioExistente = false;
+    state.vinculandoUsuarioExistente = false;
+    state.erro = '';
+    render();
+  }
+
+  function ocultarFormularioUsuarioMobile() {
+    state.usuarioModo = '';
     state.usuarioExistenteTermo = '';
     state.usuarioExistenteResultado = null;
     state.usuarioExistentePerfil = 'operador_simples';
@@ -630,7 +641,7 @@
       return;
     }
 
-    state.usuarioModo = 'criar';
+    state.usuarioModo = '';
     state.usuarioExistenteTermo = '';
     state.usuarioExistenteResultado = null;
     state.usuarioExistentePerfil = 'operador_simples';
@@ -2656,7 +2667,11 @@
     var usuarioEditando = state.usuariosEmpresa.find(function (usuario) { return String(usuario.id) === String(state.usuarioEditandoId); });
     var formularioUsuario = usuarioEditando
       ? editarUsuarioHtml(usuarioEditando)
-      : (state.usuarioModo === 'existente' ? usuarioExistenteHtml() : criarUsuarioHtml());
+      : (state.usuarioModo === 'criar'
+        ? criarUsuarioHtml()
+        : state.usuarioModo === 'existente'
+          ? usuarioExistenteHtml()
+          : '');
 
     return (
       '<div class="grid w-full min-w-0 gap-3 overflow-x-hidden text-sm">' +
@@ -3151,7 +3166,7 @@
     bind('abrir-usuario-existente-mobile', abrirAdicionarUsuarioExistenteMobile);
     bind('pesquisar-usuario-existente-mobile', buscarUsuarioExistenteMobile);
     bind('confirmar-vinculo-usuario-existente-mobile', confirmarVinculoUsuarioExistenteMobile);
-    bind('cancelar-usuario-existente-mobile', abrirCriarUsuarioMobile);
+    bind('cancelar-usuario-existente-mobile', ocultarFormularioUsuarioMobile);
     bind('limpar-usuario-existente-mobile', function () {
       state.usuarioExistenteResultado = null;
       state.usuarioExistentePerfil = 'operador_simples';

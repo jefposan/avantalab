@@ -155,8 +155,8 @@ const [usuarioPerfil, setUsuarioPerfil] = useState<
   '' | 'administrador' | 'operador_completo' | 'operador_simples'
 >('');
 const [modoFormularioUsuario, setModoFormularioUsuario] = useState<
-  'criar' | 'existente'
->('criar');
+  '' | 'criar' | 'existente'
+>('');
 const [usuarioExistenteTermo, setUsuarioExistenteTermo] = useState('');
 const [usuarioEncontrado, setUsuarioEncontrado] = useState<any | null>(null);
 const [perfilUsuarioExistente, setPerfilUsuarioExistente] = useState<
@@ -1310,7 +1310,7 @@ const abrirModalUsuarios = () => {
   setUsuarioSenha('');
   setMostrarUsuarioSenha(false);
   setUsuarioPerfil('');
-  setModoFormularioUsuario('criar');
+  setModoFormularioUsuario('');
   setUsuarioExistenteTermo('');
   setUsuarioEncontrado(null);
   setPerfilUsuarioExistente('');
@@ -1332,7 +1332,7 @@ const abrirModalUsuarios = () => {
     setUsuarioLogin('');
     setUsuarioSenha('');
     setUsuarioPerfil('');
-    setModoFormularioUsuario('criar');
+    setModoFormularioUsuario('');
     setUsuarioExistenteTermo('');
     setUsuarioEncontrado(null);
     setPerfilUsuarioExistente('');
@@ -1361,6 +1361,15 @@ const abrirCriarNovoUsuario = () => {
 const abrirAdicionarUsuarioExistente = () => {
   setModoFormularioUsuario('existente');
   setUsuarioEditandoId(null);
+  setUsuarioExistenteTermo('');
+  setUsuarioEncontrado(null);
+  setPerfilUsuarioExistente('');
+  setPesquisandoUsuarioExistente(false);
+  setVinculandoUsuarioExistente(false);
+};
+
+const ocultarFormularioUsuario = () => {
+  setModoFormularioUsuario('');
   setUsuarioExistenteTermo('');
   setUsuarioEncontrado(null);
   setPerfilUsuarioExistente('');
@@ -6160,7 +6169,7 @@ name="novo-usuario-login"
   Criar
 </button>
 </div>
-      ) : (
+      ) : modoFormularioUsuario === 'existente' ? (
         <div
           className={`rounded-2xl border p-4 ${
             darkMode
@@ -6209,7 +6218,7 @@ name="novo-usuario-login"
 
             <button
               type="button"
-              onClick={abrirCriarNovoUsuario}
+              onClick={ocultarFormularioUsuario}
               className={`h-[38px] rounded-md border px-4 py-1 text-[11px] font-black uppercase tracking-wide transition cursor-pointer ${
                 darkMode
                   ? 'border-slate-600 text-slate-300 hover:bg-slate-700'
@@ -6321,7 +6330,7 @@ name="novo-usuario-login"
             </div>
           )}
         </div>
-      )}
+      ) : null}
 
       <div className="mt-0 flex justify-end">
         
