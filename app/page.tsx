@@ -4704,8 +4704,14 @@ if (isTelaMobile) {
   return (
     <main className="relative min-h-screen overflow-hidden font-sans">
       {modalAvisoAberto && (
-  <div className="fixed inset-0 z-[8000] flex items-center justify-center bg-black/50 px-4">
-    <div className="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-6 shadow-2xl">
+  <div
+    className="fixed inset-0 z-[8000] flex items-center justify-center bg-black/60 px-4"
+    onClick={fecharAviso}
+  >
+    <div
+      className="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-6 shadow-2xl"
+      onClick={(e) => e.stopPropagation()}
+    >
       <div className="mb-4 flex items-center gap-3">
         <div
   className={`flex h-11 w-11 items-center justify-center rounded-xl ${
@@ -5494,13 +5500,22 @@ if (isTelaMobile) {
 />
 
 {modalExcluirEmpresa && (
-  <div className="fixed inset-0 z-[7000] flex items-center justify-center bg-black/60 px-4">
+  <div
+    className="fixed inset-0 z-[7000] flex items-center justify-center bg-black/60 px-4"
+    onClick={() => {
+      if (excluindoEmpresa) return;
+
+      setModalExcluirEmpresa(false);
+      setNomeConfirmacaoExclusao('');
+    }}
+  >
     <div
       className={`w-full max-w-lg rounded-2xl border p-6 shadow-2xl ${
         darkMode
           ? 'bg-slate-800 border-slate-700'
           : 'bg-white border-slate-200'
       }`}
+      onClick={(e) => e.stopPropagation()}
     >
       <div className="mb-5">
         <p className="text-xs font-black uppercase tracking-[0.18em] text-red-500">
@@ -5590,13 +5605,17 @@ if (isTelaMobile) {
 )}
 
 {modalEmpresasAberto && (
-  <div className="fixed inset-0 z-[5500] flex items-center justify-center bg-black/50 px-4">
+  <div
+    className="fixed inset-0 z-[5500] flex items-center justify-center bg-black/60 px-4"
+    onClick={() => setModalEmpresasAberto(false)}
+  >
     <div
       className={`w-full max-w-md rounded-2xl border p-6 shadow-2xl ${
         darkMode
           ? 'bg-slate-800 border-slate-700'
           : 'bg-white border-slate-200'
       }`}
+      onClick={(e) => e.stopPropagation()}
     >
       <div className="mb-5">
         <p className={`text-xs font-black uppercase tracking-[0.18em] ${
@@ -5684,8 +5703,14 @@ if (isTelaMobile) {
 )}
 
 {modalAvisoAberto && (
-  <div className="fixed inset-0 z-[8000] flex items-center justify-center bg-black/50 px-4">
-    <div className="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-6 shadow-2xl">
+  <div
+    className="fixed inset-0 z-[8000] flex items-center justify-center bg-black/60 px-4"
+    onClick={fecharAviso}
+  >
+    <div
+      className="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-6 shadow-2xl"
+      onClick={(e) => e.stopPropagation()}
+    >
       <div className="mb-4 flex items-center gap-3">
         <div
   className={`flex h-11 w-11 items-center justify-center rounded-xl ${
@@ -5728,13 +5753,17 @@ if (isTelaMobile) {
 )}
 
 {usuarioEditandoId && (
-  <div className="fixed inset-0 z-[6000] flex items-center justify-center bg-black/60 px-4">
+  <div
+    className="fixed inset-0 z-[6000] flex items-center justify-center bg-black/60 px-4"
+    onClick={cancelarEdicaoUsuario}
+  >
     <div
       className={`w-full max-w-xl rounded-2xl border p-6 shadow-2xl ${
         darkMode
           ? 'bg-slate-800 border-slate-700'
           : 'bg-white border-slate-200'
       }`}
+      onClick={(e) => e.stopPropagation()}
     >
       <div className="mb-5 flex items-start justify-between gap-4">
         <div>
@@ -5908,15 +5937,28 @@ if (isTelaMobile) {
 )}
 
 {modalUsuarios && (
-  <div className="fixed inset-0 z-[5000] flex items-center justify-center bg-black/50 px-4">
+  <div
+    className="fixed inset-0 z-[5000] flex items-center justify-center bg-black/60 px-4 py-6"
+    onClick={() => {
+      setModalUsuarios(false);
+      setAjudaUsuariosAberta(false);
+    }}
+  >
     <div
-      className={`w-full max-w-3xl rounded-2xl border p-6 shadow-2xl ${
+      className={`max-h-[90vh] w-full max-w-3xl overflow-y-auto rounded-2xl border p-6 shadow-2xl ${
         darkMode
           ? 'bg-slate-800 border-slate-700'
           : 'bg-white border-slate-200'
       }`}
+      onClick={(e) => e.stopPropagation()}
     >
-      <div className="mb-5 flex items-start justify-between gap-4">
+      <div
+        className={`sticky top-0 z-20 -mx-6 -mt-6 mb-5 flex items-start justify-between gap-4 border-b px-6 py-4 backdrop-blur ${
+          darkMode
+            ? 'border-slate-700 bg-slate-800/95'
+            : 'border-slate-200 bg-white/95'
+        }`}
+      >
   <div className="min-w-0 flex-1">
     <h2 className={`text-xl font-black ${textStrong}`}>
       Usuários e Permissões

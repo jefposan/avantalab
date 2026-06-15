@@ -22,13 +22,17 @@ export default function ModalPrivacidade({
   if (!aberto) return null;
 
   return (
-    <div className="fixed inset-0 z-[2000] flex items-center justify-center bg-black/60 p-4">
+    <div
+      className="fixed inset-0 z-[2000] flex items-center justify-center bg-black/60 p-4"
+      onClick={onClose}
+    >
       <div
         className={`w-full max-w-3xl max-h-[85vh] rounded-2xl shadow-2xl border flex flex-col overflow-hidden ${
           darkMode
             ? 'bg-slate-900 border-slate-700 text-slate-100'
             : 'bg-white border-slate-200 text-slate-800'
         }`}
+        onClick={(e) => e.stopPropagation()}
       >
         <div
           className="px-6 py-4 flex items-center justify-between border-b"

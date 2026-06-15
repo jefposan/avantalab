@@ -11,8 +11,14 @@ export default function Modais({ config, handlers }: any) {
     <>
       {/* Modal Instruções */}
       {modalInstrucoes && (
-        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
-          <div className={`${bgCard} rounded-xl shadow-2xl max-w-2xl w-full max-h-[90vh] border flex flex-col`}>
+        <div
+          className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4"
+          onClick={() => setModalInstrucoes(false)}
+        >
+          <div
+            className={`${bgCard} rounded-xl shadow-2xl max-w-2xl w-full max-h-[90vh] border flex flex-col`}
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="sticky top-0 p-6 border-b border-slate-200/20 flex justify-between items-center z-10" style={{ backgroundColor: corPrimaria }}>
               <h2 className="text-xl font-bold text-white uppercase">Instruções sobre Categorias</h2>
               <button onClick={() => setModalInstrucoes(false)} className="text-white hover:bg-white/20 px-3 py-1 rounded-lg font-bold">X</button>

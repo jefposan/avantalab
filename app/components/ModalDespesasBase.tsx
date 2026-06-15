@@ -68,10 +68,14 @@ export default function ModalDespesasBase({
   };
 
   return (
-    <div className="fixed inset-0 bg-black/60 z-[2000] flex items-center justify-center p-4">
+    <div
+      className="fixed inset-0 bg-black/60 z-[2000] flex items-center justify-center p-4"
+      onClick={fecharTudo}
+    >
       <div
         className={`${bgCard} rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] flex flex-col border-2 overflow-hidden`}
         style={{ borderColor: corPrimaria }}
+        onClick={(e) => e.stopPropagation()}
       >
         <div
           className="sticky top-0 p-6 border-b border-slate-200/20 flex justify-between items-center z-10"
@@ -220,7 +224,10 @@ export default function ModalDespesasBase({
       </div>
 
       {ajudaCategoriasAberta && (
-        <div className="ml-4 hidden lg:block w-80 max-h-[80vh] overflow-y-auto rounded-2xl border border-slate-200 bg-white p-5 text-slate-700 shadow-2xl">
+        <div
+          className="ml-4 hidden lg:block w-80 max-h-[80vh] overflow-y-auto rounded-2xl border border-slate-200 bg-white p-5 text-slate-700 shadow-2xl"
+          onClick={(e) => e.stopPropagation()}
+        >
           <div className="mb-4 flex items-center justify-between">
             <h3 className="text-sm font-black uppercase text-slate-900">
               Entenda as categorias

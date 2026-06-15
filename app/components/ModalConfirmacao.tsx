@@ -22,8 +22,16 @@ export default function ModalConfirmacao({
   if (!aberto) return null;
 
   return (
-    <div className="fixed inset-0 z-[6000] flex items-center justify-center bg-black/50 px-4">
-      <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl border border-slate-200">
+    <div
+      className="fixed inset-0 z-[6000] flex items-center justify-center bg-black/60 px-4"
+      onClick={() => {
+        if (!carregando) aoCancelar();
+      }}
+    >
+      <div
+        className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl border border-slate-200"
+        onClick={(e) => e.stopPropagation()}
+      >
         <h2 className="text-xl font-bold text-slate-900 mb-3">
           {titulo}
         </h2>
