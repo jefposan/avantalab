@@ -5,6 +5,7 @@ const siteUrl = process.env.NEXT_PUBLIC_SITE_URL
   : process.env.VERCEL_URL
     ? `https://${process.env.VERCEL_URL}`
     : 'https://avantalab.com.br';
+const shareImage = '/images/avantalab-share-mobile.jpg';
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
@@ -18,12 +19,22 @@ export const metadata: Metadata = {
       'Descubra quanto realmente sobra no seu negócio ou nas suas despesas pessoais.',
     type: 'website',
     siteName: 'AvantaLab Gestão',
+    images: [
+      {
+        url: shareImage,
+        width: 1200,
+        height: 630,
+        alt: 'AvantaLab Gestão',
+        type: 'image/jpeg',
+      },
+    ],
   },
   twitter: {
     card: 'summary_large_image',
     title: 'AvantaLab Gestão',
     description:
       'Controle entradas, despesas e saldo de forma simples pelo celular.',
+    images: [shareImage],
   },
   appleWebApp: {
     capable: true,
