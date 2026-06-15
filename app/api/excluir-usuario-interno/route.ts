@@ -95,6 +95,31 @@ export async function POST(request: Request) {
       usuarioAlvo.email?.endsWith('@usuarios.avantalab.local') ||
       usuarioAlvo.email?.includes('@usuarios.avantalab.local');
 
+    let podeExcluirAuthInterno = Boolean(ehUsuarioInterno && usuarioAlvo.user_id);
+
+    if (podeExcluirAuthInterno && usuarioAlvo.user_id) {
+      const { data: outrosVinculos, error: erroOutrosVinculos } =
+        await supabaseAdmin
+          .from('usuarios_empresa')
+          .select('id')
+          .eq('user_id', usuarioAlvo.user_id)
+          .neq('id', acessoId)
+          .limit(1);
+
+      if (erroOutrosVinculos) {
+        console.error(
+          'Erro ao verificar outros vinculos do usuario:',
+          erroOutrosVinculos
+        );
+        return respostaErro(
+          'Nao foi possivel verificar os acessos deste usuario.',
+          500
+        );
+      }
+
+      podeExcluirAuthInterno = (outrosVinculos || []).length === 0;
+    }
+
     const { error: erroExcluirVinculo } = await supabaseAdmin
       .from('usuarios_empresa')
       .delete()
@@ -105,7 +130,7 @@ export async function POST(request: Request) {
       return respostaErro('Não foi possível excluir o usuário da empresa.', 500);
     }
 
-    if (ehUsuarioInterno && usuarioAlvo.user_id) {
+    if (podeExcluirAuthInterno && usuarioAlvo.user_id) {
       const { error: erroExcluirAuth } = await supabaseAdmin.auth.admin.deleteUser(
         usuarioAlvo.user_id
       );
