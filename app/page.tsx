@@ -3025,6 +3025,19 @@ const mensagemSmsAmigavel = (
   };
 }
 
+  if (
+    texto.includes('already registered') ||
+    texto.includes('already been registered') ||
+    texto.includes('user already registered') ||
+    texto.includes('email address has already')
+  ) {
+    return {
+      tipo: 'erro',
+      mensagem:
+        'Este e-mail já possui cadastro. Faça login ou use a recuperação de senha.',
+    };
+  }
+
   if (mensagem === 'Email not confirmed') {
     return {
       tipo: 'erro',

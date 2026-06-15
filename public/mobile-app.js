@@ -146,6 +146,14 @@
     if (texto.indexOf('row-level security') >= 0 || texto.indexOf('violates row-level security policy') >= 0 || error.code === '42501') {
       return 'Voce nao tem permissao para realizar esta acao.';
     }
+    if (
+      texto.indexOf('already registered') >= 0 ||
+      texto.indexOf('already been registered') >= 0 ||
+      texto.indexOf('user already registered') >= 0 ||
+      texto.indexOf('email address has already') >= 0
+    ) {
+      return 'Este email ja possui cadastro. Faca login ou use a recuperacao de senha.';
+    }
     if (texto.indexOf('duplicate key') >= 0 || error.code === '23505') return 'Este registro ja existe.';
     return fallback || 'Nao foi possivel concluir a acao. Tente novamente em instantes.';
   }
