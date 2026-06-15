@@ -56,22 +56,47 @@ export default function MobilePage() {
 
   return (
     <main className="min-h-screen overflow-hidden bg-slate-950 text-white">
+      <style
+        dangerouslySetInnerHTML={{
+          __html: `
+            .avantalab-mobile-bg {
+              background-color: #eef6fb;
+              background-image: var(--avantalab-mobile-bg-overlay, none), url('/images/bg-avantalab-mobile-1080x1920.png');
+              background-position: center bottom;
+              background-repeat: no-repeat;
+              background-size: 100% auto;
+              background-attachment: fixed;
+            }
+
+            @media (min-aspect-ratio: 9/16) {
+              .avantalab-mobile-bg {
+                background-size: auto 100%;
+              }
+            }
+
+            @media (max-aspect-ratio: 9/18) {
+              .avantalab-mobile-bg {
+                background-size: auto 100%;
+              }
+            }
+
+            @supports (-webkit-touch-callout: none) {
+              .avantalab-mobile-bg {
+                background-attachment: scroll;
+              }
+            }
+          `,
+        }}
+      />
       <div
         id="mobile-root"
         data-supabase-url={supabaseUrl}
         data-supabase-anon-key={supabaseAnonKey}
       >
         <section
-          className="fixed inset-0 flex items-center justify-center overflow-hidden px-4"
+          className="avantalab-mobile-bg fixed inset-0 flex items-center justify-center overflow-hidden px-4"
           style={{
             height: '100dvh',
-            backgroundColor: '#eef6fb',
-            backgroundImage:
-              "url('/images/bg-avantalab-mobile-1080x1920.png')",
-            backgroundSize: '100% auto',
-            backgroundRepeat: 'no-repeat',
-            backgroundPosition: 'center center',
-            backgroundAttachment: 'fixed',
           }}
         >
           <div
@@ -91,7 +116,7 @@ export default function MobilePage() {
       </div>
 
       <script src="/mobile-supabase.js" defer />
-      <script src="/mobile-app.js?v=54" defer />
+      <script src="/mobile-app.js?v=55" defer />
     </main>
   );
 }

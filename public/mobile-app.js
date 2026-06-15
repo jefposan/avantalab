@@ -194,7 +194,7 @@
 
   function telaAvisoMobile(titulo, texto) {
     return (
-      '<section class="fixed inset-0 flex items-center justify-center overflow-hidden px-4" style="height:100dvh;background-color:#eef6fb;background-image:url(/images/bg-avantalab-mobile-1080x1920.png);background-size:100% auto;background-repeat:no-repeat;background-position:center center;background-attachment:fixed;">' +
+      '<section class="avantalab-mobile-bg fixed inset-0 flex items-center justify-center overflow-hidden px-4" style="height:100dvh;">' +
         '<div class="w-full max-w-xs rounded-3xl border border-white/40 bg-white/25 p-5 text-center text-slate-900 shadow-2xl backdrop-blur-xl">' +
           '<p class="text-xs font-black uppercase tracking-[0.24em] text-cyan-700">AvantaLab</p>' +
           '<h1 class="mt-2 text-xl font-black">' + escapeHtml(titulo) + '</h1>' +
@@ -1822,7 +1822,7 @@
     var boasVindas = state.telaAcesso === 'boasVindas' && !state.modoCadastro && !state.modoSenha;
 
     return (
-      '<section class="fixed inset-0 flex flex-col items-center justify-center overflow-hidden px-4 py-5" style="height:100dvh;background-color:#eef6fb;background-image:linear-gradient(rgba(255,255,255,.08),rgba(255,255,255,0)),url(/images/bg-avantalab-mobile-1080x1920.png);background-size:100% auto;background-repeat:no-repeat;background-position:center center;background-attachment:fixed;">' +
+      '<section class="avantalab-mobile-bg fixed inset-0 flex flex-col items-center justify-center overflow-hidden px-4 py-5" style="height:100dvh;--avantalab-mobile-bg-overlay:linear-gradient(rgba(255,255,255,.08),rgba(255,255,255,0));">' +
         '<div class="mx-auto w-full max-w-md overflow-y-auto rounded-3xl border border-white/35 p-5 text-slate-900 shadow-2xl backdrop-blur-xl" style="background-color:rgba(255,255,255,.18);max-height:calc(100dvh - 8rem);overscroll-behavior:contain;">' +
           (boasVindas
             ? telaBoasVindas()
@@ -1865,7 +1865,7 @@
 
   function telaCarregandoMobile() {
     return (
-      '<section class="fixed inset-0 flex items-center justify-center overflow-hidden px-4" style="height:100dvh;background-color:#eef6fb;background-image:url(/images/bg-avantalab-mobile-1080x1920.png);background-size:100% auto;background-repeat:no-repeat;background-position:center center;background-attachment:fixed;">' +
+      '<section class="avantalab-mobile-bg fixed inset-0 flex items-center justify-center overflow-hidden px-4" style="height:100dvh;">' +
         '<div class="w-full max-w-xs rounded-3xl border border-white/40 bg-white/25 p-5 text-center text-slate-900 shadow-2xl backdrop-blur-xl">' +
           '<p class="text-xs font-black uppercase tracking-[0.24em] text-cyan-700">AvantaLab</p>' +
           '<h1 class="mt-2 text-xl font-black">Preparando acesso</h1>' +
