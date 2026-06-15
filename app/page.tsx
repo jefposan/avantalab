@@ -43,6 +43,8 @@ import {
   apagarDespesaCadastrada,
   buscarUsuariosEmpresa,
   criarUsuarioEmpresa,
+  buscarUsuarioExistenteEmpresa,
+  vincularUsuarioExistenteEmpresa,
   atualizarUsuarioEmpresa,
   bloquearUsuarioEmpresa,
   excluirUsuarioEmpresa,
@@ -152,6 +154,18 @@ const [mostrarUsuarioSenha, setMostrarUsuarioSenha] = useState(false);
 const [usuarioPerfil, setUsuarioPerfil] = useState<
   '' | 'administrador' | 'operador_completo' | 'operador_simples'
 >('');
+const [modoFormularioUsuario, setModoFormularioUsuario] = useState<
+  'criar' | 'existente'
+>('criar');
+const [usuarioExistenteTermo, setUsuarioExistenteTermo] = useState('');
+const [usuarioEncontrado, setUsuarioEncontrado] = useState<any | null>(null);
+const [perfilUsuarioExistente, setPerfilUsuarioExistente] = useState<
+  '' | 'gestor_master' | 'administrador' | 'operador_completo' | 'operador_simples'
+>('');
+const [pesquisandoUsuarioExistente, setPesquisandoUsuarioExistente] =
+  useState(false);
+const [vinculandoUsuarioExistente, setVinculandoUsuarioExistente] =
+  useState(false);
 const [usuarioEditandoId, setUsuarioEditandoId] = useState<string | null>(null);
 const [editUsuarioNome, setEditUsuarioNome] = useState('');
 const [editUsuarioEmail, setEditUsuarioEmail] = useState('');
@@ -1296,6 +1310,12 @@ const abrirModalUsuarios = () => {
   setUsuarioSenha('');
   setMostrarUsuarioSenha(false);
   setUsuarioPerfil('');
+  setModoFormularioUsuario('criar');
+  setUsuarioExistenteTermo('');
+  setUsuarioEncontrado(null);
+  setPerfilUsuarioExistente('');
+  setPesquisandoUsuarioExistente(false);
+  setVinculandoUsuarioExistente(false);
   setAjudaUsuariosAberta(false);
 
   setUsuarioEditandoId(null);
@@ -1312,6 +1332,10 @@ const abrirModalUsuarios = () => {
     setUsuarioLogin('');
     setUsuarioSenha('');
     setUsuarioPerfil('');
+    setModoFormularioUsuario('criar');
+    setUsuarioExistenteTermo('');
+    setUsuarioEncontrado(null);
+    setPerfilUsuarioExistente('');
   }, 50);
 };
 const carregarUsuariosEmpresa = async () => {
@@ -1323,6 +1347,127 @@ const carregarUsuariosEmpresa = async () => {
 
   setUsuariosEmpresa(usuarios);
   setUsuariosCarregando(false);
+};
+
+const abrirCriarNovoUsuario = () => {
+  setModoFormularioUsuario('criar');
+  setUsuarioExistenteTermo('');
+  setUsuarioEncontrado(null);
+  setPerfilUsuarioExistente('');
+  setPesquisandoUsuarioExistente(false);
+  setVinculandoUsuarioExistente(false);
+};
+
+const abrirAdicionarUsuarioExistente = () => {
+  setModoFormularioUsuario('existente');
+  setUsuarioEditandoId(null);
+  setUsuarioExistenteTermo('');
+  setUsuarioEncontrado(null);
+  setPerfilUsuarioExistente('');
+  setPesquisandoUsuarioExistente(false);
+  setVinculandoUsuarioExistente(false);
+};
+
+const buscaUsuarioExistente = async () => {
+  if (!empresaId) {
+    abrirAviso('Erro', 'Empresa não carregada.');
+    return;
+  }
+
+  if (!podeGerenciarUsuarios) {
+    abrirAviso(
+      'Acesso não permitido',
+      'Você não tem permissão para gerenciar usuários.'
+    );
+    return;
+  }
+
+  const termoLimpo = usuarioExistenteTermo.trim().toLowerCase();
+
+  if (!termoLimpo) {
+    abrirAviso(
+      'Campo obrigatório',
+      'Informe o e-mail ou login do usuário já cadastrado.'
+    );
+    return;
+  }
+
+  setPesquisandoUsuarioExistente(true);
+  setUsuarioEncontrado(null);
+  setPerfilUsuarioExistente('');
+
+  const resultado = await buscarUsuarioExistenteEmpresa({
+    empresaId,
+    termo: termoLimpo,
+  });
+
+  setPesquisandoUsuarioExistente(false);
+
+  if (resultado.erro) {
+    abrirAviso('Erro ao pesquisar usuário', resultado.mensagem);
+    return;
+  }
+
+  if (!resultado.encontrado) {
+    abrirAviso(
+      'Usuário não encontrado',
+      'Nenhum usuário encontrado com este e-mail ou login.'
+    );
+    return;
+  }
+
+  if (resultado.jaVinculado) {
+    abrirAviso(
+      'Usuário já vinculado',
+      'Este usuário já está vinculado a esta empresa.'
+    );
+    return;
+  }
+
+  setUsuarioEncontrado(resultado.usuario);
+  setPerfilUsuarioExistente('operador_simples');
+};
+
+const confirmarVinculoUsuarioExistente = async () => {
+  if (!empresaId || !usuarioEncontrado?.id) return;
+
+  if (!perfilUsuarioExistente) {
+    abrirAviso(
+      'Perfil obrigatório',
+      'Selecione o perfil de acesso para este usuário.'
+    );
+    return;
+  }
+
+  setVinculandoUsuarioExistente(true);
+
+  const resultado = await vincularUsuarioExistenteEmpresa({
+    empresaId,
+    userId: usuarioEncontrado.id,
+    perfil: perfilUsuarioExistente,
+  });
+
+  setVinculandoUsuarioExistente(false);
+
+  if (resultado.erro) {
+    abrirAviso('Erro ao vincular usuário', resultado.mensagem);
+    return;
+  }
+
+  setModalUsuarios(false);
+  setUsuarioExistenteTermo('');
+  setUsuarioEncontrado(null);
+  setPerfilUsuarioExistente('');
+  setModoFormularioUsuario('criar');
+
+  await carregarUsuariosEmpresa();
+
+  abrirAviso(
+    'Usuário vinculado',
+    'Usuário vinculado com sucesso.',
+    undefined,
+    'sucesso'
+  );
 };
 
 const adicionarUsuarioEmpresa = async () => {
@@ -5842,6 +5987,41 @@ if (isTelaMobile) {
   </div>
 </div>
 
+      <div className="mb-4 grid grid-cols-1 gap-2 sm:grid-cols-2">
+        <button
+          type="button"
+          onClick={abrirCriarNovoUsuario}
+          className={`rounded-xl border px-4 py-3 text-sm font-black transition cursor-pointer ${
+            modoFormularioUsuario === 'criar'
+              ? darkMode
+                ? 'border-cyan-500 bg-cyan-500/15 text-cyan-200'
+                : 'border-cyan-500 bg-cyan-50 text-cyan-800'
+              : darkMode
+                ? 'border-slate-700 text-slate-300 hover:bg-slate-700'
+                : 'border-slate-200 text-slate-600 hover:bg-slate-50'
+          }`}
+        >
+          Criar novo usuário
+        </button>
+
+        <button
+          type="button"
+          onClick={abrirAdicionarUsuarioExistente}
+          className={`rounded-xl border px-4 py-3 text-sm font-black transition cursor-pointer ${
+            modoFormularioUsuario === 'existente'
+              ? darkMode
+                ? 'border-cyan-500 bg-cyan-500/15 text-cyan-200'
+                : 'border-cyan-500 bg-cyan-50 text-cyan-800'
+              : darkMode
+                ? 'border-slate-700 text-slate-300 hover:bg-slate-700'
+                : 'border-slate-200 text-slate-600 hover:bg-slate-50'
+          }`}
+        >
+          Adicionar usuário existente
+        </button>
+      </div>
+
+      {modoFormularioUsuario === 'criar' ? (
       <div className="grid grid-cols-1 gap-3 md:grid-cols-[1.35fr_1fr_0.85fr_1.20fr_auto] md:items-center">
   <input
   type="text"
@@ -5967,6 +6147,168 @@ name="novo-usuario-login"
   Criar
 </button>
 </div>
+      ) : (
+        <div
+          className={`rounded-2xl border p-4 ${
+            darkMode
+              ? 'border-slate-700 bg-slate-900/50'
+              : 'border-slate-200 bg-slate-50'
+          }`}
+        >
+          <div className="mb-3">
+            <h3 className={`text-base font-black ${textStrong}`}>
+              Adicionar usuário existente
+            </h3>
+
+            <p className={`mt-1 text-sm ${textMuted}`}>
+              Informe o e-mail ou login do usuário já cadastrado para vinculá-lo à empresa atual.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 gap-3 md:grid-cols-[1fr_auto_auto] md:items-center">
+            <input
+              type="text"
+              value={usuarioExistenteTermo}
+              onChange={(e) => {
+                setUsuarioExistenteTermo(e.target.value);
+                setUsuarioEncontrado(null);
+                setPerfilUsuarioExistente('');
+              }}
+              placeholder="E-mail ou login do usuário"
+              autoComplete="off"
+              name="usuario-existente-termo"
+              className={`w-full rounded-xl border px-3 py-2.5 text-sm font-semibold outline-none transition ${
+                darkMode
+                  ? 'bg-slate-900 border-slate-600 text-white placeholder:text-slate-400'
+                  : 'bg-white border-slate-300 text-slate-700 placeholder:text-slate-400'
+              }`}
+            />
+
+            <button
+              type="button"
+              onClick={buscaUsuarioExistente}
+              disabled={pesquisandoUsuarioExistente}
+              className="h-[38px] rounded-md px-4 py-1 text-[11px] font-black uppercase tracking-wide shadow-sm transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-60 active:scale-[0.98] cursor-pointer"
+              style={estiloTemaPrimario}
+            >
+              {pesquisandoUsuarioExistente ? 'Pesquisando...' : 'Pesquisar usuário'}
+            </button>
+
+            <button
+              type="button"
+              onClick={abrirCriarNovoUsuario}
+              className={`h-[38px] rounded-md border px-4 py-1 text-[11px] font-black uppercase tracking-wide transition cursor-pointer ${
+                darkMode
+                  ? 'border-slate-600 text-slate-300 hover:bg-slate-700'
+                  : 'border-slate-300 text-slate-600 hover:bg-white'
+              }`}
+            >
+              Cancelar
+            </button>
+          </div>
+
+          {usuarioEncontrado && (
+            <div
+              className={`mt-4 rounded-2xl border p-4 ${
+                darkMode
+                  ? 'border-cyan-500/30 bg-cyan-500/10'
+                  : 'border-cyan-100 bg-white'
+              }`}
+            >
+              <p className={`text-xs font-black uppercase tracking-wide ${textMuted}`}>
+                Usuário encontrado
+              </p>
+
+              <div className="mt-3 grid gap-2 text-sm">
+                <p className={textMuted}>
+                  <strong className={textStrong}>E-mail:</strong>{' '}
+                  {usuarioEncontrado.email || '-'}
+                </p>
+
+                <p className={textMuted}>
+                  <strong className={textStrong}>Login:</strong>{' '}
+                  {usuarioEncontrado.login || '-'}
+                </p>
+
+                <p className={textMuted}>
+                  <strong className={textStrong}>Status:</strong>{' '}
+                  ainda não vinculado a esta empresa
+                </p>
+              </div>
+
+              <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-[1fr_auto_auto] md:items-center">
+                <select
+                  value={perfilUsuarioExistente}
+                  onChange={(e) =>
+                    setPerfilUsuarioExistente(
+                      e.target.value as
+                        | ''
+                        | 'gestor_master'
+                        | 'administrador'
+                        | 'operador_completo'
+                        | 'operador_simples'
+                    )
+                  }
+                  className={`w-full rounded-xl border px-3 py-2.5 text-sm font-bold outline-none transition ${
+                    darkMode
+                      ? `bg-slate-900 border-slate-600 ${perfilUsuarioExistente ? 'text-white' : 'text-slate-400'}`
+                      : `bg-white border-slate-300 ${perfilUsuarioExistente ? 'text-slate-700' : 'text-slate-400'}`
+                  }`}
+                >
+                  <option
+                    value=""
+                    disabled
+                    className={darkMode ? 'bg-slate-900 text-slate-400' : 'bg-white text-slate-400'}
+                  >
+                    Selecione o perfil de acesso
+                  </option>
+
+                  <option value="gestor_master" className={darkMode ? 'bg-slate-900 text-white' : 'bg-white text-slate-700'}>
+                    Gestor Master
+                  </option>
+
+                  <option value="administrador" className={darkMode ? 'bg-slate-900 text-white' : 'bg-white text-slate-700'}>
+                    Administrador
+                  </option>
+
+                  <option value="operador_completo" className={darkMode ? 'bg-slate-900 text-white' : 'bg-white text-slate-700'}>
+                    Operador Completo
+                  </option>
+
+                  <option value="operador_simples" className={darkMode ? 'bg-slate-900 text-white' : 'bg-white text-slate-700'}>
+                    Operador Simples
+                  </option>
+                </select>
+
+                <button
+                  type="button"
+                  onClick={confirmarVinculoUsuarioExistente}
+                  disabled={vinculandoUsuarioExistente}
+                  className="h-[38px] rounded-md px-4 py-1 text-[11px] font-black uppercase tracking-wide shadow-sm transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-60 active:scale-[0.98] cursor-pointer"
+                  style={estiloTemaPrimario}
+                >
+                  {vinculandoUsuarioExistente ? 'Vinculando...' : 'Confirmar vínculo'}
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setUsuarioEncontrado(null);
+                    setPerfilUsuarioExistente('');
+                  }}
+                  className={`h-[38px] rounded-md border px-4 py-1 text-[11px] font-black uppercase tracking-wide transition cursor-pointer ${
+                    darkMode
+                      ? 'border-slate-600 text-slate-300 hover:bg-slate-700'
+                      : 'border-slate-300 text-slate-600 hover:bg-slate-50'
+                  }`}
+                >
+                  Cancelar
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
 
       <div className="mt-0 flex justify-end">
         

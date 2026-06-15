@@ -733,6 +733,113 @@ export async function criarUsuarioEmpresa({
   };
 }
 
+export async function buscarUsuarioExistenteEmpresa({
+  empresaId,
+  termo,
+}: {
+  empresaId: string;
+  termo: string;
+}) {
+  const { data: sessao } = await supabase.auth.getSession();
+
+  const token = sessao.session?.access_token;
+
+  if (!token) {
+    return {
+      erro: true,
+      mensagem: 'SessÃ£o nÃ£o encontrada. FaÃ§a login novamente.',
+      encontrado: false,
+      jaVinculado: false,
+      usuario: null,
+    };
+  }
+
+  const resposta = await fetch('/api/vincular-usuario-existente', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({
+      acao: 'buscar',
+      empresaId,
+      termo,
+    }),
+  });
+
+  const resultado = await resposta.json();
+
+  if (!resposta.ok || resultado.erro) {
+    return {
+      erro: true,
+      mensagem: resultado.mensagem || 'NÃ£o foi possÃ­vel pesquisar o usuÃ¡rio.',
+      encontrado: false,
+      jaVinculado: false,
+      usuario: null,
+    };
+  }
+
+  return {
+    erro: false,
+    mensagem: resultado.mensagem || '',
+    encontrado: Boolean(resultado.encontrado),
+    jaVinculado: Boolean(resultado.jaVinculado),
+    usuario: resultado.usuario || null,
+  };
+}
+
+export async function vincularUsuarioExistenteEmpresa({
+  empresaId,
+  userId,
+  perfil,
+}: {
+  empresaId: string;
+  userId: string;
+  perfil: 'gestor_master' | 'administrador' | 'operador_completo' | 'operador_simples';
+}) {
+  const { data: sessao } = await supabase.auth.getSession();
+
+  const token = sessao.session?.access_token;
+
+  if (!token) {
+    return {
+      erro: true,
+      mensagem: 'SessÃ£o nÃ£o encontrada. FaÃ§a login novamente.',
+      data: null,
+    };
+  }
+
+  const resposta = await fetch('/api/vincular-usuario-existente', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({
+      acao: 'vincular',
+      empresaId,
+      userId,
+      perfil,
+    }),
+  });
+
+  const resultado = await resposta.json();
+
+  if (!resposta.ok || resultado.erro) {
+    return {
+      erro: true,
+      mensagem: resultado.mensagem || 'NÃ£o foi possÃ­vel vincular o usuÃ¡rio.',
+      data: null,
+    };
+  }
+
+  return {
+    erro: false,
+    mensagem: resultado.mensagem || 'UsuÃ¡rio vinculado com sucesso.',
+    data: resultado.usuario,
+  };
+}
+
 export async function atualizarUsuarioEmpresa({
   acessoId,
   nome,

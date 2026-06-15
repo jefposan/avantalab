@@ -52,6 +52,12 @@
     usuariosEmpresa: [],
     usuariosCarregando: false,
     usuarioEditandoId: '',
+    usuarioModo: 'criar',
+    usuarioExistenteTermo: '',
+    usuarioExistenteResultado: null,
+    usuarioExistentePerfil: 'operador_simples',
+    pesquisandoUsuarioExistente: false,
+    vinculandoUsuarioExistente: false,
     categoriaEditandoId: '',
     categoriaAcoesId: '',
     erro: '',
@@ -472,6 +478,12 @@
   async function abrirUsuariosMobile() {
     state.menuAberto = false;
     state.modalMenu = 'usuario';
+    state.usuarioModo = 'criar';
+    state.usuarioExistenteTermo = '';
+    state.usuarioExistenteResultado = null;
+    state.usuarioExistentePerfil = 'operador_simples';
+    state.pesquisandoUsuarioExistente = false;
+    state.vinculandoUsuarioExistente = false;
     state.erro = '';
     render();
 
@@ -493,6 +505,129 @@
     state.usuariosEmpresa = resposta.error ? [] : (resposta.data || []);
     state.usuariosCarregando = false;
     render();
+  }
+
+  function abrirCriarUsuarioMobile() {
+    state.usuarioModo = 'criar';
+    state.usuarioExistenteTermo = '';
+    state.usuarioExistenteResultado = null;
+    state.usuarioExistentePerfil = 'operador_simples';
+    state.pesquisandoUsuarioExistente = false;
+    state.vinculandoUsuarioExistente = false;
+    state.erro = '';
+    render();
+  }
+
+  function abrirAdicionarUsuarioExistenteMobile() {
+    state.usuarioModo = 'existente';
+    state.usuarioEditandoId = '';
+    state.usuarioExistenteTermo = '';
+    state.usuarioExistenteResultado = null;
+    state.usuarioExistentePerfil = 'operador_simples';
+    state.pesquisandoUsuarioExistente = false;
+    state.vinculandoUsuarioExistente = false;
+    state.erro = '';
+    render();
+  }
+
+  async function buscarUsuarioExistenteMobile() {
+    if (!state.empresa || !podeGerenciarUsuarios()) return;
+
+    var termo = campo('usuario-existente-termo').trim().toLowerCase();
+
+    if (!termo) {
+      setErro('Informe o email ou login do usuario ja cadastrado.');
+      return;
+    }
+
+    state.usuarioExistenteTermo = termo;
+    state.usuarioExistenteResultado = null;
+    state.usuarioExistentePerfil = 'operador_simples';
+    state.pesquisandoUsuarioExistente = true;
+    state.erro = '';
+    render();
+
+    var token = await tokenSessao();
+    var resposta = await fetch('/api/vincular-usuario-existente', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: 'Bearer ' + token,
+      },
+      body: JSON.stringify({
+        acao: 'buscar',
+        empresaId: state.empresa.id,
+        termo: termo,
+      }),
+    });
+    var resultado = await lerResposta(resposta);
+
+    state.pesquisandoUsuarioExistente = false;
+
+    if (!resposta.ok || resultado.erro) {
+      setErro(resultado.mensagem || 'Nao foi possivel pesquisar o usuario.');
+      return;
+    }
+
+    if (!resultado.encontrado) {
+      setErro('Nenhum usuario encontrado com este email ou login.');
+      return;
+    }
+
+    if (resultado.jaVinculado) {
+      setErro('Este usuario ja esta vinculado a esta empresa.');
+      return;
+    }
+
+    state.usuarioExistenteResultado = resultado.usuario || null;
+    state.usuarioExistentePerfil = 'operador_simples';
+    render();
+  }
+
+  async function confirmarVinculoUsuarioExistenteMobile() {
+    if (!state.empresa || !state.usuarioExistenteResultado || !podeGerenciarUsuarios()) return;
+
+    var perfil = campo('usuario-existente-perfil') || state.usuarioExistentePerfil;
+
+    if (!perfil) {
+      setErro('Selecione o perfil de acesso.');
+      return;
+    }
+
+    state.usuarioExistentePerfil = perfil;
+    state.vinculandoUsuarioExistente = true;
+    state.erro = '';
+    render();
+
+    var token = await tokenSessao();
+    var resposta = await fetch('/api/vincular-usuario-existente', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: 'Bearer ' + token,
+      },
+      body: JSON.stringify({
+        acao: 'vincular',
+        empresaId: state.empresa.id,
+        userId: state.usuarioExistenteResultado.id,
+        perfil: perfil,
+      }),
+    });
+    var resultado = await lerResposta(resposta);
+
+    state.vinculandoUsuarioExistente = false;
+
+    if (!resposta.ok || resultado.erro) {
+      setErro(resultado.mensagem || 'Nao foi possivel vincular o usuario.');
+      return;
+    }
+
+    state.usuarioModo = 'criar';
+    state.usuarioExistenteTermo = '';
+    state.usuarioExistenteResultado = null;
+    state.usuarioExistentePerfil = 'operador_simples';
+    await carregarUsuariosMobile();
+    mostrarToast('Usuario vinculado com sucesso.');
   }
 
   async function criarUsuarioMobile() {
@@ -2511,11 +2646,15 @@
     }
 
     var usuarioEditando = state.usuariosEmpresa.find(function (usuario) { return String(usuario.id) === String(state.usuarioEditandoId); });
+    var formularioUsuario = usuarioEditando
+      ? editarUsuarioHtml(usuarioEditando)
+      : (state.usuarioModo === 'existente' ? usuarioExistenteHtml() : criarUsuarioHtml());
 
     return (
       '<div class="grid w-full min-w-0 gap-3 overflow-x-hidden text-sm">' +
         alertaHtml().replace('mt-4', '') +
-        (usuarioEditando ? editarUsuarioHtml(usuarioEditando) : criarUsuarioHtml()) +
+        (usuarioEditando ? '' : botoesFluxoUsuarioHtml()) +
+        formularioUsuario +
         '<div class="grid min-w-0 gap-1.5">' +
           '<p class="text-[10px] font-black uppercase tracking-wide text-slate-400">Usuarios cadastrados</p>' +
           (state.usuariosCarregando ? '<p class="rounded-xl bg-slate-50 px-3 py-2 text-xs font-semibold text-slate-500">Carregando usuarios...</p>' : '') +
@@ -2551,6 +2690,15 @@
     }).join('');
   }
 
+  function botoesFluxoUsuarioHtml() {
+    return (
+      '<div class="grid gap-2">' +
+        '<button id="abrir-criar-usuario-mobile" type="button" class="h-11 rounded-xl border px-4 text-xs font-black uppercase tracking-wide ' + (state.usuarioModo === 'criar' ? 'border-cyan-500 bg-cyan-50 text-cyan-800' : 'border-slate-200 bg-white text-slate-600') + '">Criar novo usuario</button>' +
+        '<button id="abrir-usuario-existente-mobile" type="button" class="h-11 rounded-xl border px-4 text-xs font-black uppercase tracking-wide ' + (state.usuarioModo === 'existente' ? 'border-cyan-500 bg-cyan-50 text-cyan-800' : 'border-slate-200 bg-white text-slate-600') + '">Adicionar usuario existente</button>' +
+      '</div>'
+    );
+  }
+
   function criarUsuarioHtml() {
     return (
       '<div class="grid gap-2 rounded-2xl bg-slate-50 p-3">' +
@@ -2562,6 +2710,35 @@
         '</div>' +
         '<select id="usuario-perfil" style="font-size:16px" class="h-10 w-full min-w-0 rounded-lg border border-slate-200 bg-white px-3 text-base font-bold outline-none"><option value="">Perfil</option>' + opcoesPerfilHtml('', false) + '</select>' +
         '<button id="criar-usuario-mobile" type="button" class="h-10 rounded-xl bg-slate-950 px-4 text-xs font-black uppercase tracking-wide text-white">' + (state.carregando ? 'Salvando...' : 'Criar usuario') + '</button>' +
+      '</div>'
+    );
+  }
+
+  function usuarioExistenteHtml() {
+    var usuario = state.usuarioExistenteResultado;
+
+    return (
+      '<div class="grid gap-2 rounded-2xl bg-slate-50 p-3">' +
+        '<div>' +
+          '<p class="text-[10px] font-black uppercase tracking-wide text-slate-400">Adicionar usuario existente</p>' +
+          '<p class="mt-1 text-xs font-semibold leading-relaxed text-slate-500">Informe o email ou login do usuario ja cadastrado.</p>' +
+        '</div>' +
+        '<input id="usuario-existente-termo" value="' + escapeHtml(state.usuarioExistenteTermo || '') + '" placeholder="Email ou login" style="font-size:16px" class="h-10 w-full min-w-0 rounded-lg border border-slate-200 bg-white px-3 text-base font-bold outline-none" />' +
+        '<button id="pesquisar-usuario-existente-mobile" type="button" class="h-10 rounded-xl bg-slate-950 px-4 text-xs font-black uppercase tracking-wide text-white">' + (state.pesquisandoUsuarioExistente ? 'Pesquisando...' : 'Pesquisar usuario') + '</button>' +
+        '<button id="cancelar-usuario-existente-mobile" type="button" class="h-10 rounded-xl border border-slate-200 bg-white px-4 text-xs font-black uppercase tracking-wide text-slate-600">Cancelar</button>' +
+        (usuario
+          ? '<div class="mt-2 grid gap-2 rounded-2xl border border-cyan-100 bg-white p-3">' +
+              '<p class="text-[10px] font-black uppercase tracking-wide text-cyan-800">Usuario encontrado</p>' +
+              '<div class="grid gap-1 text-xs font-semibold text-slate-600">' +
+                '<p><span class="font-black text-slate-900">Email:</span><br>' + escapeHtml(usuario.email || '-') + '</p>' +
+                '<p><span class="font-black text-slate-900">Login:</span><br>' + escapeHtml(usuario.login || '-') + '</p>' +
+              '</div>' +
+              '<label class="text-[10px] font-black uppercase tracking-wide text-slate-400">Perfil de acesso</label>' +
+              '<select id="usuario-existente-perfil" style="font-size:16px" class="h-10 w-full min-w-0 rounded-lg border border-slate-200 bg-white px-3 text-base font-bold outline-none">' + opcoesPerfilHtml(state.usuarioExistentePerfil || 'operador_simples', true) + '</select>' +
+              '<button id="confirmar-vinculo-usuario-existente-mobile" type="button" class="h-10 rounded-xl bg-cyan-600 px-4 text-xs font-black uppercase tracking-wide text-white">' + (state.vinculandoUsuarioExistente ? 'Vinculando...' : 'Confirmar vinculo') + '</button>' +
+              '<button id="limpar-usuario-existente-mobile" type="button" class="h-10 rounded-xl border border-slate-200 bg-white px-4 text-xs font-black uppercase tracking-wide text-slate-600">Cancelar</button>' +
+            '</div>'
+          : '') +
       '</div>'
     );
   }
@@ -2962,6 +3139,17 @@
     bind('privacidade-mobile', function () { abrirModalMenu('privacidade'); });
     bind('criar-empresa-mobile', criarEmpresaMobile);
     bind('excluir-empresa-mobile', excluirEmpresaMobile);
+    bind('abrir-criar-usuario-mobile', abrirCriarUsuarioMobile);
+    bind('abrir-usuario-existente-mobile', abrirAdicionarUsuarioExistenteMobile);
+    bind('pesquisar-usuario-existente-mobile', buscarUsuarioExistenteMobile);
+    bind('confirmar-vinculo-usuario-existente-mobile', confirmarVinculoUsuarioExistenteMobile);
+    bind('cancelar-usuario-existente-mobile', abrirCriarUsuarioMobile);
+    bind('limpar-usuario-existente-mobile', function () {
+      state.usuarioExistenteResultado = null;
+      state.usuarioExistentePerfil = 'operador_simples';
+      state.erro = '';
+      render();
+    });
     bind('criar-usuario-mobile', criarUsuarioMobile);
     bind('salvar-usuario-mobile', salvarUsuarioMobile);
     bind('cancelar-edicao-usuario', function () {
