@@ -243,39 +243,17 @@ export async function POST(request: Request) {
         return respostaErro('Usuario nao encontrado.');
       }
 
-      const login = normalizarTexto(usuarioFonte.login || usuarioFonte.email);
-      const email = normalizarTexto(usuarioFonte.email || login);
-
-      if (login) {
-        const { data: loginExistente, error: erroLoginExistente } =
-          await supabaseAdmin
-            .from('usuarios_empresa')
-            .select('id')
-            .eq('empresa_id', empresaId)
-            .eq('login', login)
-            .limit(1)
-            .maybeSingle();
-
-        if (erroLoginExistente) {
-          console.error('Erro ao verificar login existente:', erroLoginExistente);
-          return respostaErro('Nao foi possivel verificar o login informado.', 500);
-        }
-
-        if (loginExistente) {
-          return respostaErro(
-            'Este login ja esta em uso nesta empresa. O usuario nao pode ser vinculado com login duplicado.'
-          );
-        }
-      }
+      const loginOriginal = normalizarTexto(usuarioFonte.login);
+      const email = normalizarTexto(usuarioFonte.email || loginOriginal);
 
       const { data: vinculoCriado, error: erroVinculo } = await supabaseAdmin
         .from('usuarios_empresa')
         .insert({
           empresa_id: empresaId,
           user_id: userId,
-          nome: usuarioFonte.nome || login || email || 'Usuario',
+          nome: usuarioFonte.nome || loginOriginal || email || 'Usuario',
           email,
-          login,
+          login: null,
           perfil,
           status: 'ativo',
         })
@@ -284,6 +262,22 @@ export async function POST(request: Request) {
 
       if (erroVinculo) {
         console.error('Erro ao vincular usuario existente:', erroVinculo);
+
+        const mensagemErro = String(
+          erroVinculo.message || erroVinculo.code || ''
+        ).toLowerCase();
+
+        if (
+          erroVinculo.code === '23505' ||
+          mensagemErro.includes('usuarios_empresa_login_unico_idx') ||
+          mensagemErro.includes('duplicate key') ||
+          mensagemErro.includes('unique constraint')
+        ) {
+          return respostaErro(
+            'Este usuario ja possui um login cadastrado no sistema. O vinculo nao deve duplicar o login. Atualize a pagina e tente novamente.'
+          );
+        }
+
         return respostaErro(
           erroVinculo.message ||
             'Nao foi possivel vincular o usuario a empresa.',

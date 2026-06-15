@@ -111,9 +111,9 @@ export async function POST(request: Request) {
 
     const { data: loginExistente, error: erroLoginExistente } = await supabaseAdmin
       .from('usuarios_empresa')
-      .select('id')
-      .eq('empresa_id', empresaId)
+      .select('id, empresa_id')
       .eq('login', login)
+      .limit(1)
       .maybeSingle();
 
     if (erroLoginExistente) {
@@ -122,7 +122,9 @@ export async function POST(request: Request) {
     }
 
     if (loginExistente) {
-      return respostaErro('Este login já está em uso nesta empresa.');
+      return respostaErro(
+        'Este login já está em uso no sistema. Escolha outro login para criar o usuário.'
+      );
     }
 
     const emailInterno = `${login}+${empresaId}@usuarios.avantalab.local`;
@@ -180,6 +182,21 @@ export async function POST(request: Request) {
       console.error('Erro ao criar vínculo do usuário:', erroVinculo);
 
       await supabaseAdmin.auth.admin.deleteUser(usuarioCriado.user.id);
+
+      const mensagemErro = String(
+        erroVinculo.message || erroVinculo.code || ''
+      ).toLowerCase();
+
+      if (
+        erroVinculo.code === '23505' ||
+        mensagemErro.includes('usuarios_empresa_login_unico_idx') ||
+        mensagemErro.includes('duplicate key') ||
+        mensagemErro.includes('unique constraint')
+      ) {
+        return respostaErro(
+          'Este login já está em uso no sistema. Escolha outro login para criar o usuário.'
+        );
+      }
 
       return respostaErro(
         erroVinculo.message || 'Não foi possível vincular o usuário à empresa.',

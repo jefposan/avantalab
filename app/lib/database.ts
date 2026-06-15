@@ -714,7 +714,7 @@ export async function criarUsuarioEmpresa({
   ) {
     return {
       erro: true,
-      mensagem: 'Login indisponível. Escolha outro login para criar este usuário.',
+      mensagem: 'Login indisponível. Este login já está em uso no sistema. Escolha outro login.',
       data: null,
     };
   }
