@@ -63,6 +63,7 @@
     erro: '',
     mensagem: '',
     carregando: false,
+    loginAcao: '',
     empresaAcao: '',
     loginValor: '',
     telaAcesso: 'boasVindas',
@@ -1040,6 +1041,7 @@
     }
 
     state.carregando = true;
+    state.loginAcao = 'senha';
     state.erro = '';
     render();
 
@@ -1048,6 +1050,7 @@
       email = await buscarEmailPorLogin(login);
       if (!email) {
         state.carregando = false;
+        state.loginAcao = '';
         setErro('Login nao encontrado.');
         return;
       }
@@ -1056,6 +1059,7 @@
     var resposta = await db.auth.signInWithPassword({ email: email, password: senha });
     if (resposta.error || !resposta.data.user) {
       state.carregando = false;
+      state.loginAcao = '';
       setErro('Nao foi possivel entrar. Confira seus dados.');
       return;
     }
@@ -1066,6 +1070,7 @@
 
     if (!state.empresa) {
       state.carregando = false;
+      state.loginAcao = '';
       state.autenticado = false;
       state.usuario = null;
       state.telaAcesso = 'login';
@@ -1078,9 +1083,12 @@
   }
 
   async function entrarGoogle() {
+    if (state.carregando) return;
+
     state.erro = '';
     state.mensagem = '';
     state.carregando = true;
+    state.loginAcao = 'google';
     render();
 
     var resposta = await db.auth.signInWithOAuth({
@@ -1092,6 +1100,7 @@
 
     if (resposta.error) {
       state.carregando = false;
+      state.loginAcao = '';
       setErro(mensagemErro(resposta.error, 'Nao foi possivel conectar com o Google agora. Tente novamente em instantes.'));
     }
   }
@@ -1361,6 +1370,7 @@
     state.entradas = [];
     state.faturamentos = {};
     state.telaAcesso = 'boasVindas';
+    state.loginAcao = '';
     state.modoCadastro = false;
     state.modoSenha = false;
     render();
@@ -2005,11 +2015,11 @@
         '</div>' +
         alertaHtml() +
         '<button id="entrar" type="button" class="h-12 rounded-xl bg-slate-900 px-4 text-sm font-black uppercase tracking-wide text-white shadow-lg">' +
-          (state.carregando ? 'Entrando...' : 'Entrar') +
+          (state.loginAcao === 'senha' ? 'Entrando...' : 'Entrar') +
         '</button>' +
         '<button id="entrar-google" type="button" class="flex h-12 items-center justify-center gap-3 rounded-xl border border-slate-300 bg-white/90 px-4 text-sm font-bold text-slate-700 shadow-sm">' +
           '<img src="/images/google-logo.svg" alt="Google" class="h-5 w-5" />' +
-          '<span>' + (state.carregando ? 'Conectando...' : 'Entrar ou cadastrar com Google') + '</span>' +
+          '<span>' + (state.loginAcao === 'google' ? 'Conectando...' : 'Entrar ou cadastrar com Google') + '</span>' +
         '</button>' +
         '<div class="pt-2 text-center text-sm text-slate-600">Ainda nao tem conta? <button id="abrir-cadastro" type="button" class="font-bold text-sky-700 underline">Criar cadastro</button></div>' +
       '</div>'
