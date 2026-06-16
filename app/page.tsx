@@ -240,6 +240,8 @@ const [entradaFaturamentoOrigem, setEntradaFaturamentoOrigem] = useState('');
 const [entradaFaturamentoValor, setEntradaFaturamentoValor] = useState('');
 const [entradaFaturamentoValorNumerico, setEntradaFaturamentoValorNumerico] = useState(0);
 const [entradaFaturamentoSalvando, setEntradaFaturamentoSalvando] = useState(false);
+const [modalReceitaDashboardAberto, setModalReceitaDashboardAberto] = useState(false);
+const [mesReceitaDashboard, setMesReceitaDashboard] = useState('JANEIRO');
 const [entradaFaturamentoEditandoId, setEntradaFaturamentoEditandoId] = useState<string | null>(null);
 const [editEntradaFaturamentoDia, setEditEntradaFaturamentoDia] = useState('');
 const [editEntradaFaturamentoOrigem, setEditEntradaFaturamentoOrigem] = useState('');
@@ -1095,6 +1097,16 @@ const totalEntradasFaturamentoDoMes = entradasFaturamentoOrdenadasDoMes.reduce(
   const receitasTotais = Object.values(faturamentos).reduce((a, b) => a + b, 0);
   const despesasTotais = lancamentos.reduce((a, b) => a + b.valor, 0);
   const lucroTotalAnual = receitasTotais - despesasTotais;
+  const formatarValorCampo = (valor: number) =>
+    valor.toLocaleString('pt-BR', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    });
+
+  const getTotalEntradasPorMes = (mes: string) =>
+    faturamentosEntradas
+      .filter((entrada) => entrada.mes === mes)
+      .reduce((acc, entrada) => acc + Number(entrada.valor || 0), 0);
 
   const salvarFaturamentoMes = async (mes: string, valor: number) => {
   if (!empresaId) {
@@ -1142,7 +1154,7 @@ const totalEntradasFaturamentoDoMes = entradasFaturamentoOrdenadasDoMes.reduce(
   }));
 };
 
-const salvarFaturamento = async () => {
+const salvarFaturamento = async (confirmarSomaComEntradas = false) => {
   if (!empresaId) {
     abrirAviso(
       'Empresa não carregada',
@@ -1170,17 +1182,35 @@ const salvarFaturamento = async () => {
   return;
 }
 
+  const totalEntradasMes = getTotalEntradasPorMes(mesFaturamento);
+  const valorFinal = totalEntradasMes > 0
+    ? totalEntradasMes + valorLimpo
+    : valorLimpo;
+
+  if (totalEntradasMes > 0 && !confirmarSomaComEntradas) {
+    abrirConfirmacao({
+      titulo: 'Confirmar total da receita',
+      mensagem:
+        `Este mes ja possui ${formatarMoeda(totalEntradasMes)} em receitas lancadas.\n\nO valor informado (${formatarMoeda(valorLimpo)}) sera somado as receitas existentes.\n\nTotal final de ${mesFaturamento}: ${formatarMoeda(valorFinal)}.`,
+      textoConfirmar: 'Confirmar total',
+      acao: async () => {
+        await salvarFaturamento(true);
+      },
+    });
+    return;
+  }
+
   const salvo = await salvarFaturamentoBanco({
     empresaId,
     ano: Number(anoSelecionado),
     mes: mesFaturamento,
-    valor: valorLimpo,
+    valor: valorFinal,
   });
 
   if (salvo) {
     setFaturamentos((prev) => ({
       ...prev,
-      [mesFaturamento]: valorLimpo,
+      [mesFaturamento]: valorFinal,
     }));
 
     setInputFaturamento('');
@@ -1192,7 +1222,7 @@ const salvarFaturamento = async () => {
   }
 };
 
-const adicionarEntradaFaturamento = async () => {
+const adicionarEntradaFaturamento = async (mesInformado?: string) => {
   if (entradaFaturamentoSalvando) return;
 
   if (!empresaId) {
@@ -1203,7 +1233,7 @@ const adicionarEntradaFaturamento = async () => {
     return;
   }
 
-  const mesReferenciaFaturamento = mesAtivo || mesFaturamento;
+  const mesReferenciaFaturamento = mesInformado || mesAtivo || mesFaturamento;
 
   if (!mesReferenciaFaturamento) {
     abrirAviso(
@@ -1303,6 +1333,34 @@ const adicionarEntradaFaturamento = async () => {
   } finally {
     setEntradaFaturamentoSalvando(false);
   }
+};
+
+const solicitarEntradaFaturamentoDashboard = () => {
+  if (!entradaFaturamentoDia || !entradaFaturamentoOrigem.trim() || entradaFaturamentoValorNumerico <= 0) {
+    abrirAviso(
+      'Campos obrigatorios',
+      'Informe dia, origem e valor da receita antes de continuar.'
+    );
+    return;
+  }
+
+  setMesReceitaDashboard(mesFaturamento || mesAtivo || meses[new Date().getMonth()]);
+  setModalReceitaDashboardAberto(true);
+};
+
+const confirmarEntradaFaturamentoDashboard = async () => {
+  const mesSelecionado = mesReceitaDashboard || mesFaturamento || mesAtivo;
+
+  if (!mesSelecionado) {
+    abrirAviso(
+      'Mes obrigatorio',
+      'Selecione o mes da receita antes de confirmar.'
+    );
+    return;
+  }
+
+  setModalReceitaDashboardAberto(false);
+  await adicionarEntradaFaturamento(mesSelecionado);
 };
 const abrirModalUsuarios = () => {
   setUsuarioNome('');
@@ -2258,7 +2316,7 @@ const iniciarEdicaoLancamento = (lanc: any) => {
   setEditDia(String(lanc.dia));
   setEditDespesa(lanc.despesa);
   setEditDescricao(lanc.descricao || '');
-  setEditValor(formatarMoeda(Number(lanc.valor)));
+  setEditValor(formatarValorCampo(Number(lanc.valor)));
   setEditValorNumerico(Number(lanc.valor));
 };
 
@@ -2284,7 +2342,7 @@ const handleEntradaFaturamentoValorChange = (
   const numericValue = parseInt(value, 10) / 100;
 
   setEntradaFaturamentoValorNumerico(numericValue);
-  setEntradaFaturamentoValor(formatarMoeda(numericValue));
+  setEntradaFaturamentoValor(formatarValorCampo(numericValue));
 };
 
 const iniciarEdicaoEntradaFaturamento = (entrada: any) => {
@@ -2299,7 +2357,7 @@ const iniciarEdicaoEntradaFaturamento = (entrada: any) => {
   setEntradaFaturamentoEditandoId(entrada.id);
   setEditEntradaFaturamentoDia(String(entrada.dia || ''));
   setEditEntradaFaturamentoOrigem(entrada.origem || '');
-  setEditEntradaFaturamentoValor(formatarMoeda(Number(entrada.valor || 0)));
+  setEditEntradaFaturamentoValor(formatarValorCampo(Number(entrada.valor || 0)));
   setEditEntradaFaturamentoValorNumerico(Number(entrada.valor || 0));
 };
 
@@ -2325,7 +2383,7 @@ const handleEditEntradaFaturamentoValorChange = (
   const numericValue = parseInt(value, 10) / 100;
 
   setEditEntradaFaturamentoValorNumerico(numericValue);
-  setEditEntradaFaturamentoValor(formatarMoeda(numericValue));
+  setEditEntradaFaturamentoValor(formatarValorCampo(numericValue));
 };
 
 const salvarEdicaoEntradaFaturamento = async () => {
@@ -2454,7 +2512,7 @@ const handleValorChange = (e: React.ChangeEvent<HTMLInputElement>) => {
   const numericValue = parseInt(value, 10) / 100;
 
   setValorNumericoRaw(numericValue);
-  setFormValor(formatarMoeda(numericValue));
+  setFormValor(formatarValorCampo(numericValue));
 };
 const handleEditValorChange = (e: React.ChangeEvent<HTMLInputElement>) => {
   const value = e.target.value.replace(/\D/g, '');
@@ -2468,7 +2526,7 @@ const handleEditValorChange = (e: React.ChangeEvent<HTMLInputElement>) => {
   const numericValue = parseInt(value, 10) / 100;
 
   setEditValorNumerico(numericValue);
-  setEditValor(formatarMoeda(numericValue));
+  setEditValor(formatarValorCampo(numericValue));
 };
 
 const salvarEdicaoLancamento = async () => {
@@ -3477,8 +3535,24 @@ const abrirCriacaoNovaEmpresa = () => {
   setAcessoLiberado(false);
 };
 
-const abrirTrocaEmpresa = () => {
-  if (empresasDoUsuario.length <= 1) {
+const abrirTrocaEmpresa = async () => {
+  const { data: usuarioLogado } = await supabase.auth.getUser();
+  const usuarioId = usuarioLogado.user?.id;
+
+  if (!usuarioId) {
+    abrirAviso(
+      'Sessao nao encontrada',
+      'Entre novamente para carregar suas empresas vinculadas.'
+    );
+    return;
+  }
+
+  const empresasAtualizadas = (await buscarEmpresasDoUsuario(usuarioId)).filter(
+    (empresa): empresa is NonNullable<typeof empresa> => Boolean(empresa)
+  );
+  setEmpresasDoUsuario(empresasAtualizadas);
+
+  if (empresasAtualizadas.length <= 1) {
     abrirAviso(
       'Troca indisponível',
       'Este usuário possui acesso a apenas uma empresa no momento.'
@@ -3488,7 +3562,11 @@ const abrirTrocaEmpresa = () => {
 
   setAjustesAberto(false);
   setPainelAvisosAberto(false);
-  setEmpresaParaSelecionar(null);
+  setEmpresaParaSelecionar(
+    empresasAtualizadas.find((empresa) => empresa.id !== empresaId) ||
+      empresasAtualizadas[0] ||
+      null
+  );
   setModalSelecionarEmpresa(true);
 };
 
@@ -4329,9 +4407,9 @@ if (acessoNaoConfigurado) {
 
       <div className="absolute inset-0 bg-white/70 backdrop-blur-sm" />
 
-      <section className="relative z-10 flex min-h-screen items-center justify-center px-6 py-10">
-        <div className="w-full max-w-md rounded-3xl border border-slate-200 bg-white/90 p-8 text-center shadow-2xl">
-          <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-2xl bg-sky-100">
+      <section className="relative z-10 flex min-h-screen items-center justify-center px-4 py-6">
+        <div className="w-full max-w-sm rounded-2xl border border-slate-200 bg-white/90 p-5 text-center shadow-2xl">
+          <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-sky-100">
   <svg
     className="h-8 w-8 text-sky-800"
     fill="none"
@@ -4573,7 +4651,7 @@ if (validacaoTelefoneObrigatoria) {
         <div className="w-full max-w-md rounded-3xl border border-slate-200 bg-white/90 p-8 text-center shadow-2xl">
           <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-2xl bg-sky-100">
             <svg
-              className="h-8 w-8 text-sky-800"
+              className="h-6 w-6 text-sky-800"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -4591,19 +4669,19 @@ if (validacaoTelefoneObrigatoria) {
             AvantaLab Gestão
           </p>
 
-          <h1 className="text-2xl font-black leading-tight text-slate-900">
+          <h1 className="text-xl font-black leading-tight text-slate-900">
             Confirme seu celular
           </h1>
 
-          <p className="mt-4 text-sm leading-relaxed text-slate-600">
+          <p className="mt-2 text-sm leading-snug text-slate-600">
   Este acesso ainda não possui um celular confirmado. Informe um número válido para receber o código de segurança e continuar usando o sistema.
 </p>
 
-<p className="mt-3 rounded-2xl bg-sky-50 px-4 py-3 text-xs font-medium leading-relaxed text-sky-800">
+<p className="mt-2 rounded-xl bg-sky-50 px-3 py-2 text-xs font-medium leading-snug text-sky-800">
   Este celular também poderá ser usado futuramente para recuperação de senha e validações de segurança.
 </p>
 
-          <div className="mt-6 text-left">
+          <div className="mt-4 text-left">
             <label className="mb-1 block text-sm font-semibold text-slate-700">
               Celular com DDD
             </label>
@@ -4619,7 +4697,7 @@ if (validacaoTelefoneObrigatoria) {
                 setTelefoneObrigatorioConfirmado('');
               }}
               placeholder="Ex: 11 99999-9999"
-              className="w-full rounded-xl border border-slate-300 bg-white/90 px-4 py-3 text-slate-800 outline-none transition focus:border-sky-600 focus:ring-2 focus:ring-sky-600/20"
+              className="w-full rounded-xl border border-slate-300 bg-white/90 px-4 py-2.5 text-slate-800 outline-none transition focus:border-sky-600 focus:ring-2 focus:ring-sky-600/20"
             />
             <p className="mt-2 text-xs leading-relaxed text-slate-500">
   Digite apenas um celular com DDD. O código será enviado por SMS.
@@ -4627,7 +4705,7 @@ if (validacaoTelefoneObrigatoria) {
           </div>
 
           {smsTelefoneObrigatorioEnviado && (
-            <div className="mt-4 text-left">
+            <div className="mt-3 text-left">
               <label className="mb-1 block text-sm font-semibold text-slate-700">
                 Código recebido por SMS
               </label>
@@ -4638,7 +4716,7 @@ if (validacaoTelefoneObrigatoria) {
                 value={codigoSmsTelefoneObrigatorio}
                 onChange={(e) => setCodigoSmsTelefoneObrigatorio(e.target.value)}
                 placeholder="Digite o código recebido"
-                className="w-full rounded-xl border border-slate-300 bg-white/90 px-4 py-3 text-slate-800 outline-none transition focus:border-sky-600 focus:ring-2 focus:ring-sky-600/20"
+                className="w-full rounded-xl border border-slate-300 bg-white/90 px-4 py-2.5 text-slate-800 outline-none transition focus:border-sky-600 focus:ring-2 focus:ring-sky-600/20"
               />
 
               <button
@@ -4671,7 +4749,7 @@ if (validacaoTelefoneObrigatoria) {
             </div>
           )}
 
-          <div className="mt-6 grid grid-cols-1 sm:grid-cols-[1fr_120px] gap-3">
+          <div className="mt-4 grid grid-cols-1 sm:grid-cols-[1fr_110px] gap-2">
             <button
               type="button"
               onClick={confirmarTelefoneObrigatorio}
@@ -5518,6 +5596,94 @@ if (isTelaMobile) {
   aoConfirmar={confirmarAcao}
 />
 
+{modalReceitaDashboardAberto && (
+  <div
+    className="fixed inset-0 z-[6200] flex items-center justify-center bg-black/60 px-4"
+    onClick={() => setModalReceitaDashboardAberto(false)}
+  >
+    <div
+      className={`w-full max-w-md rounded-2xl border p-5 shadow-2xl ${
+        darkMode
+          ? 'bg-slate-800 border-slate-700'
+          : 'bg-white border-slate-200'
+      }`}
+      onClick={(e) => e.stopPropagation()}
+    >
+      <div
+        className="mb-4 rounded-xl px-4 py-3"
+        style={estiloTemaPrimario}
+      >
+        <p className="text-xs font-black uppercase tracking-[0.18em]">
+          Confirmar receita
+        </p>
+
+        <h2 className="mt-1 text-xl font-black">
+          Lançar receita
+        </h2>
+      </div>
+
+      <div className={`space-y-3 text-sm ${textMuted}`}>
+        <p>
+          Confirme em qual mês esta receita será adicionada.
+        </p>
+
+        <select
+          value={mesReceitaDashboard}
+          onChange={(e) => setMesReceitaDashboard(e.target.value)}
+          className={`w-full rounded-xl border px-3 py-2.5 text-sm font-bold outline-none ${
+            darkMode
+              ? 'border-slate-600 bg-slate-900 text-white'
+              : 'border-slate-300 bg-white text-slate-700'
+          }`}
+        >
+          {meses.map((mes) => (
+            <option key={mes} value={mes}>
+              {mes}
+            </option>
+          ))}
+        </select>
+
+        <div
+          className={`rounded-xl border px-3 py-3 ${
+            darkMode
+              ? 'border-slate-700 bg-slate-900/60'
+              : 'border-slate-200 bg-slate-50'
+          }`}
+        >
+          <p className={`text-xs font-black uppercase tracking-wide ${textMuted}`}>
+            Valor
+          </p>
+          <p className={`mt-1 text-lg font-black ${textStrong}`}>
+            {formatarMoeda(entradaFaturamentoValorNumerico)}
+          </p>
+        </div>
+      </div>
+
+      <div className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-2">
+        <button
+          type="button"
+          onClick={() => setModalReceitaDashboardAberto(false)}
+          className={`rounded-xl border px-4 py-3 text-xs font-black uppercase transition cursor-pointer ${
+            darkMode
+              ? 'border-slate-600 text-slate-300 hover:bg-slate-700'
+              : 'border-slate-300 text-slate-600 hover:bg-slate-100'
+          }`}
+        >
+          Cancelar
+        </button>
+
+        <button
+          type="button"
+          onClick={confirmarEntradaFaturamentoDashboard}
+          className="rounded-xl bg-emerald-600 px-4 py-3 text-xs font-black uppercase text-white shadow-md transition hover:bg-emerald-700 cursor-pointer"
+        >
+          Confirmar
+        </button>
+      </div>
+    </div>
+  </div>
+)}
+
 {modalExcluirEmpresa && (
   <div
     className="fixed inset-0 z-[7000] flex items-center justify-center bg-black/60 px-4"
@@ -6070,18 +6236,18 @@ if (isTelaMobile) {
   </div>
 </div>
 
-      <div className="mb-4 grid grid-cols-1 gap-2 sm:grid-cols-2">
+      <div className="mb-5 mt-7 grid grid-cols-1 gap-3 sm:grid-cols-2">
         <button
           type="button"
           onClick={abrirCriarNovoUsuario}
-          className={`rounded-xl border px-4 py-3 text-sm font-black transition cursor-pointer ${
+          className={`rounded-xl border px-4 py-3 text-sm font-black uppercase tracking-wide shadow-sm transition hover:-translate-y-0.5 hover:shadow-md active:translate-y-0 cursor-pointer ${
             modoFormularioUsuario === 'criar'
               ? darkMode
                 ? 'border-cyan-500 bg-cyan-500/15 text-cyan-200'
                 : 'border-cyan-500 bg-cyan-50 text-cyan-800'
               : darkMode
-                ? 'border-slate-700 text-slate-300 hover:bg-slate-700'
-                : 'border-slate-200 text-slate-600 hover:bg-slate-50'
+                ? 'border-slate-600 bg-slate-900/70 text-slate-200 hover:border-cyan-500/50 hover:bg-cyan-500/10'
+                : 'border-sky-100 bg-sky-50/80 text-sky-800 hover:border-sky-200 hover:bg-sky-100'
           }`}
         >
           Criar novo usuário
@@ -6090,14 +6256,14 @@ if (isTelaMobile) {
         <button
           type="button"
           onClick={abrirAdicionarUsuarioExistente}
-          className={`rounded-xl border px-4 py-3 text-sm font-black transition cursor-pointer ${
+          className={`rounded-xl border px-4 py-3 text-sm font-black uppercase tracking-wide shadow-sm transition hover:-translate-y-0.5 hover:shadow-md active:translate-y-0 cursor-pointer ${
             modoFormularioUsuario === 'existente'
               ? darkMode
                 ? 'border-cyan-500 bg-cyan-500/15 text-cyan-200'
                 : 'border-cyan-500 bg-cyan-50 text-cyan-800'
               : darkMode
-                ? 'border-slate-700 text-slate-300 hover:bg-slate-700'
-                : 'border-slate-200 text-slate-600 hover:bg-slate-50'
+                ? 'border-slate-600 bg-slate-900/70 text-slate-200 hover:border-emerald-500/50 hover:bg-emerald-500/10'
+                : 'border-emerald-100 bg-emerald-50/80 text-emerald-800 hover:border-emerald-200 hover:bg-emerald-100'
           }`}
         >
           Adicionar usuário existente
@@ -6438,7 +6604,7 @@ name="novo-usuario-login"
         </p>
 
         <p className={`text-xs font-semibold ${textMuted}`}>
-  Login: {usuario.login || usuario.email}
+  Login: {usuario.login || (String(usuario.email || '').includes('@usuarios.avantalab.local') ? String(usuario.email || '').split('+')[0] : usuario.email)}
 </p>
 
         <div className="mt-2 flex flex-wrap gap-2">
@@ -7746,18 +7912,19 @@ setAjustesAberto(false);
         totalDespesasMes={totalDespesasMes}
         maiorGasto={maiorGasto}
         lucroOperacional={lucroOperacional}
-        mesFaturamento={mesFaturamento}
-        setMesFaturamento={setMesFaturamento}
-        inputFaturamento={inputFaturamento}
-        setInputFaturamento={setInputFaturamento}
-        salvarFaturamento={salvarFaturamento}
+  mesFaturamento={mesFaturamento}
+  setMesFaturamento={setMesFaturamento}
+  inputFaturamento={inputFaturamento}
+  setInputFaturamento={setInputFaturamento}
+  placeholderFaturamento={formatarValorCampo(faturamentos[mesFaturamento] || 0)}
+  salvarFaturamento={salvarFaturamento}
         entradaFaturamentoDia={entradaFaturamentoDia}
         setEntradaFaturamentoDia={setEntradaFaturamentoDia}
         entradaFaturamentoOrigem={entradaFaturamentoOrigem}
         setEntradaFaturamentoOrigem={setEntradaFaturamentoOrigem}
-        entradaFaturamentoValor={entradaFaturamentoValor}
-        handleEntradaFaturamentoValorChange={handleEntradaFaturamentoValorChange}
-        adicionarEntradaFaturamento={adicionarEntradaFaturamento}
+  entradaFaturamentoValor={entradaFaturamentoValor}
+  handleEntradaFaturamentoValorChange={handleEntradaFaturamentoValorChange}
+  solicitarEntradaFaturamentoDashboard={solicitarEntradaFaturamentoDashboard}
         receitasTotais={receitasTotais}
         despesasTotais={despesasTotais}
         lucroTotalAnual={lucroTotalAnual}

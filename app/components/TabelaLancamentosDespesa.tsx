@@ -244,7 +244,7 @@ export default function TabelaLancamentosDespesa({
                             max={getMaxDias(mesAtivo, anoSelecionado)}
                             value={editDia}
                             onChange={(e) => setEditDia(e.target.value)}
-                            className={`input-dia-compacto w-full p-2 border rounded-lg text-center font-bold ${
+                            className={`input-dia-compacto h-8 w-full rounded-md border px-2 text-center text-xs font-bold outline-none ${
                               darkMode ? 'bg-slate-700 border-slate-600 text-white' : 'border-slate-300 text-slate-800'
                             }`}
                           />
@@ -254,7 +254,7 @@ export default function TabelaLancamentosDespesa({
                           <select
                             value={editDespesa}
                             onChange={(e) => setEditDespesa(e.target.value)}
-                            className={`w-full p-2 border rounded-lg font-bold ${
+                            className={`h-8 w-full rounded-md border px-2 text-xs font-bold outline-none ${
                               darkMode
                                 ? 'bg-slate-700 border-slate-600'
                                 : 'bg-white border-slate-300'
@@ -282,7 +282,7 @@ export default function TabelaLancamentosDespesa({
                             type="text"
                             value={editDescricao}
                             onChange={(e) => setEditDescricao(e.target.value)}
-                            className={`w-full p-2 border rounded-lg ${
+                            className={`h-8 w-full rounded-md border px-2 text-[11px] outline-none ${
                               darkMode ? 'bg-slate-700 border-slate-600 text-white' : 'border-slate-300 text-slate-800'
                             }`}
                             placeholder="Descrição..."
@@ -305,10 +305,10 @@ export default function TabelaLancamentosDespesa({
                                 cancelarEdicaoLancamento();
                               }
                             }}
-                            className={`w-full p-2 border rounded-lg text-right font-bold ${
+                            className={`h-8 w-full rounded-md border px-2 text-right text-xs font-bold outline-none ${
                               darkMode ? 'bg-slate-700 border-slate-600 text-white' : 'border-slate-300 text-slate-800'
                             }`}
-                            placeholder="R$ 0,00"
+                            placeholder="0,00"
                           />
                         </td>
 

@@ -32,7 +32,7 @@ function tratarErroSupabase(error: any) {
 
     let { data: vinculo, error: erroVinculo } = await supabase
       .from('usuarios_empresa')
-      .select('id, empresa_id, user_id, nome, email, perfil, status, telefone, telefone_confirmado, telefone_confirmado_em')
+      .select('id, empresa_id, user_id, nome, email, login, perfil, status, telefone, telefone_confirmado, telefone_confirmado_em')
       .eq('user_id', usuarioId)
       .eq('status', 'ativo')
       .limit(1)
@@ -46,7 +46,7 @@ function tratarErroSupabase(error: any) {
     if (!vinculo && emailUsuario) {
       const { data: convitePendente, error: erroConvite } = await supabase
         .from('usuarios_empresa')
-        .select('id, empresa_id, user_id, nome, email, perfil, status, telefone, telefone_confirmado, telefone_confirmado_em')
+        .select('id, empresa_id, user_id, nome, email, login, perfil, status, telefone, telefone_confirmado, telefone_confirmado_em')
         .eq('email', emailUsuario)
         .is('user_id', null)
         .in('status', ['pendente', 'ativo'])
@@ -67,7 +67,7 @@ function tratarErroSupabase(error: any) {
             atualizado_em: new Date().toISOString(),
           })
           .eq('id', convitePendente.id)
-          .select('id, empresa_id, user_id, nome, email, perfil, status, telefone, telefone_confirmado, telefone_confirmado_em')
+          .select('id, empresa_id, user_id, nome, email, login, perfil, status, telefone, telefone_confirmado, telefone_confirmado_em')
           .single();
 
         if (erroAtualizarConvite) {
@@ -189,7 +189,7 @@ export async function buscarEmpresasDoUsuario(usuarioId: string) {
   // 2. Busca todos os vínculos ativos do usuário
   const { data: vinculos, error: erroVinculos } = await supabase
     .from('usuarios_empresa')
-    .select('id, empresa_id, user_id, nome, email, perfil, status, telefone, telefone_confirmado, telefone_confirmado_em')
+    .select('id, empresa_id, user_id, nome, email, login, perfil, status, telefone, telefone_confirmado, telefone_confirmado_em')
     .eq('user_id', usuarioId)
     .eq('status', 'ativo')
     .order('nome', { ascending: true });
@@ -266,6 +266,7 @@ export async function buscarEmpresasDoUsuario(usuarioId: string) {
   acessoId: vinculo.id,
   usuario_nome: vinculo.nome,
   usuario_email: vinculo.email,
+  usuario_login: vinculo.login,
   telefone: vinculo.telefone,
   telefone_confirmado: vinculo.telefone_confirmado,
   telefone_confirmado_em: vinculo.telefone_confirmado_em,
@@ -702,7 +703,7 @@ export async function atualizarLancamento({
 export async function buscarMeuAcessoEmpresa(empresaId: string, usuarioId: string) {
   const { data, error } = await supabase
     .from('usuarios_empresa')
-    .select('id, empresa_id, user_id, nome, email, perfil, status, telefone, telefone_confirmado, telefone_confirmado_em')
+    .select('id, empresa_id, user_id, nome, email, login, perfil, status, telefone, telefone_confirmado, telefone_confirmado_em')
     .eq('empresa_id', empresaId)
     .eq('user_id', usuarioId)
     .eq('status', 'ativo')

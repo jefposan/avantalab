@@ -18,6 +18,7 @@ interface DashboardProps {
   setMesFaturamento: (mes: string) => void;
   inputFaturamento: string;
   setInputFaturamento: (val: string) => void;
+  placeholderFaturamento: string;
   salvarFaturamento: () => void;
 
   entradaFaturamentoDia: string;
@@ -26,7 +27,7 @@ interface DashboardProps {
   setEntradaFaturamentoOrigem: (val: string) => void;
   entradaFaturamentoValor: string;
   handleEntradaFaturamentoValorChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
-  adicionarEntradaFaturamento: () => void;
+  solicitarEntradaFaturamentoDashboard: () => void;
 
   receitasTotais: number;
   despesasTotais: number;
@@ -37,7 +38,7 @@ interface DashboardProps {
 export default function Dashboard({
   meses, lancamentos, setMesAtivo, bgCard, corPrimaria, textStrong, textMuted, darkMode,
   mesResumoDash, setMesResumoDash, totalDespesasMes, maiorGasto, lucroOperacional,
-  mesFaturamento, setMesFaturamento, inputFaturamento, setInputFaturamento,
+  mesFaturamento, setMesFaturamento, inputFaturamento, setInputFaturamento, placeholderFaturamento,
   salvarFaturamento,
   entradaFaturamentoDia,
   setEntradaFaturamentoDia,
@@ -45,7 +46,7 @@ export default function Dashboard({
   setEntradaFaturamentoOrigem,
   entradaFaturamentoValor,
   handleEntradaFaturamentoValorChange,
-  adicionarEntradaFaturamento,
+  solicitarEntradaFaturamentoDashboard,
   receitasTotais, despesasTotais, lucroTotalAnual, formatarMoeda
 }: DashboardProps) {
   
@@ -335,7 +336,7 @@ const mostrarComparativoResumoDash =
               color: textoSobreCorPrimaria,
             }}
           >
-            <span>Faturamento</span>
+            <span>Receita</span>
 
             <select
               value={mesFaturamento}
@@ -368,7 +369,7 @@ const mostrarComparativoResumoDash =
               <div className="mb-2 flex items-center gap-2">
                 <span className="h-2 w-2 rounded-full bg-emerald-500" />
                 <p className={textMuted + " text-[10px] font-black uppercase tracking-wide"}>
-                  Adicionar entrada
+                  Lançar receita
                 </p>
               </div>
 
@@ -394,10 +395,6 @@ const mostrarComparativoResumoDash =
 
               <div className="flex gap-2">
                 <div className="relative w-full">
-                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-sm">
-                    R$
-                  </span>
-
                   <input
                     type="text"
                     value={entradaFaturamentoValor}
@@ -405,16 +402,16 @@ const mostrarComparativoResumoDash =
                     onKeyDown={(e) => {
                       if (e.key === 'Enter') {
                         e.preventDefault();
-                        adicionarEntradaFaturamento();
+                        solicitarEntradaFaturamentoDashboard();
                       }
                     }}
                     placeholder="0,00"
-                    className="w-full pl-9 pr-4 py-2 rounded-lg bg-white text-slate-800 font-bold focus:outline-none shadow-inner text-right"
+                    className="w-full px-4 py-2 rounded-lg bg-white text-slate-800 font-bold focus:outline-none shadow-inner text-right"
                   />
                 </div>
 
                 <button
-                  onClick={adicionarEntradaFaturamento}
+                  onClick={solicitarEntradaFaturamentoDashboard}
                   className="px-4 rounded-lg font-bold border shadow-md text-xs transition-all duration-200 hover:brightness-110 hover:shadow-lg hover:scale-[1.03] active:scale-95 active:shadow-inner cursor-pointer select-none"
                   style={{
                     color: '#ffffff',
@@ -422,7 +419,7 @@ const mostrarComparativoResumoDash =
                     borderColor: '#047857',
                   }}
                 >
-                  Adicionar
+                  Lançar
                 </button>
               </div>
             </section>
@@ -444,10 +441,6 @@ const mostrarComparativoResumoDash =
 
               <div className="flex gap-2">
                 <div className="relative w-full">
-                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-sm">
-                    R$
-                  </span>
-
                   <input
                     type="text"
                     value={inputFaturamento}
@@ -458,8 +451,8 @@ const mostrarComparativoResumoDash =
                         salvarFaturamento();
                       }
                     }}
-                    placeholder="0,00"
-                    className="w-full pl-9 pr-4 py-2.5 rounded-lg bg-white text-slate-800 font-bold focus:outline-none shadow-inner text-right"
+                    placeholder={placeholderFaturamento || '0,00'}
+                    className="w-full px-4 py-2.5 rounded-lg bg-white text-slate-800 font-bold focus:outline-none shadow-inner text-right"
                   />
                 </div>
 

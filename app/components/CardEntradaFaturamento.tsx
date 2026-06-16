@@ -93,10 +93,10 @@ export default function CardEntradaFaturamento({
           onClick={() =>
             setOrdemEntradasFaturamento((prev) => (prev === 'desc' ? 'asc' : 'desc'))
           }
-          className={`absolute left-2 flex h-6 items-center gap-1.5 rounded-md px-2.5 text-[10px] font-bold uppercase tracking-wide border shadow-sm ring-1 transition-all hover:scale-[1.03] active:scale-95 cursor-pointer ${
+          className={`absolute left-2 flex h-6 items-center gap-1.5 rounded-full px-2.5 text-[10px] font-black uppercase tracking-wide border shadow-sm ring-1 transition-all hover:scale-[1.03] active:scale-95 cursor-pointer ${
             darkMode
-              ? 'bg-white/12 border-white/25 text-white ring-white/15 hover:bg-white/20 hover:border-white/35'
-              : 'bg-white/88 border-white/80 text-emerald-700 ring-emerald-950/10 hover:bg-white'
+              ? 'bg-slate-950/25 border-white/30 text-white ring-white/15 hover:bg-slate-950/40 hover:border-white/45'
+              : 'bg-white/95 border-emerald-100 text-emerald-700 ring-emerald-950/10 hover:bg-emerald-50 hover:border-emerald-200'
           }`}
           title={
             ordemEntradasFaturamento === 'desc'
@@ -104,14 +104,14 @@ export default function CardEntradaFaturamento({
               : 'Clique para ordenar do maior dia para o menor'
           }
         >
-          <span>Mudar ordem</span>
+          <span>Ordenar</span>
           <span className="text-xs font-black">
             {ordemEntradasFaturamento === 'desc' ? '↓' : '↑'}
           </span>
         </button>
 
         <h3 className="text-sm font-black uppercase tracking-widest text-white">
-          Lançamento de faturamento
+          Lançamento de receita
         </h3>
       </div>
 
@@ -151,10 +151,6 @@ export default function CardEntradaFaturamento({
           />
 
           <div className="relative">
-            <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400">
-              R$
-            </span>
-
             <input
               type="text"
               value={entradaFaturamentoValor}
@@ -166,7 +162,7 @@ export default function CardEntradaFaturamento({
                 }
               }}
               placeholder="0,00"
-              className={`${inputBase} pl-8 text-right font-bold`}
+              className={`${inputBase} text-right font-bold`}
               style={{ outlineColor: corPrimaria }}
             />
           </div>
@@ -205,7 +201,7 @@ export default function CardEntradaFaturamento({
             type="text"
             value={buscaEntradaFaturamento}
             onChange={(e) => setBuscaEntradaFaturamento(e.target.value)}
-            placeholder="Buscar faturamento por origem, dia ou valor..."
+            placeholder="Buscar receita por origem, dia ou valor..."
             className={`h-9 w-full rounded-lg border py-2 pl-9 pr-9 text-xs font-semibold outline-none transition focus:ring-2 ${
               darkMode
                 ? 'bg-slate-700 border-slate-600 text-white placeholder:text-slate-400'

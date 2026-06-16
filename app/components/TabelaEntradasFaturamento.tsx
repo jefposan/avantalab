@@ -53,7 +53,7 @@ export default function TabelaEntradasFaturamento({
   if (entradas.length === 0) {
     return (
       <div className="rounded-xl border border-dashed border-slate-300/50 p-4 text-center text-sm text-slate-400 italic">
-        Nenhuma entrada de faturamento adicionada.
+        Nenhuma entrada de receita adicionada.
       </div>
     );
   }
@@ -75,7 +75,7 @@ export default function TabelaEntradasFaturamento({
                       min="1"
                       value={editEntradaDia}
                       onChange={(e) => setEditEntradaDia(e.target.value)}
-                      className="input-dia-compacto w-full rounded-lg border border-slate-300 px-2 py-1.5 text-center text-sm font-bold text-slate-800 outline-none"
+                      className="input-dia-compacto h-8 w-full rounded-md border border-slate-300 px-2 text-center text-xs font-bold text-slate-800 outline-none"
                     />
                   </td>
 
@@ -84,7 +84,7 @@ export default function TabelaEntradasFaturamento({
                       type="text"
                       value={editEntradaOrigem}
                       onChange={(e) => setEditEntradaOrigem(e.target.value)}
-                      className="w-full rounded-lg border border-slate-300 px-2 py-1.5 text-sm font-semibold text-slate-800 outline-none"
+                      className="h-8 w-full rounded-md border border-slate-300 px-2 text-xs font-semibold text-slate-800 outline-none"
                     />
                   </td>
 
@@ -104,7 +104,7 @@ export default function TabelaEntradasFaturamento({
                           onCancelarEdicaoEntrada();
                         }
                       }}
-                      className="w-full rounded-lg border border-slate-300 px-2 py-1.5 text-right text-sm font-bold text-slate-800 outline-none"
+                      className="h-8 w-full rounded-md border border-slate-300 px-2 text-right text-xs font-bold text-slate-800 outline-none"
                     />
                   </td>
 

@@ -65,10 +65,10 @@ export default function CardLancamentoDespesa({
           onClick={() =>
             setOrdemLancamentos((prev) => (prev === 'desc' ? 'asc' : 'desc'))
           }
-          className={`absolute left-2 flex h-6 items-center gap-1.5 rounded-md px-2.5 text-[10px] font-bold uppercase tracking-wide border shadow-sm ring-1 transition-all hover:scale-[1.03] active:scale-95 cursor-pointer ${
+          className={`absolute left-2 flex h-6 items-center gap-1.5 rounded-full px-2.5 text-[10px] font-black uppercase tracking-wide border shadow-sm ring-1 transition-all hover:scale-[1.03] active:scale-95 cursor-pointer ${
             darkMode
-              ? 'bg-white/12 border-white/25 text-white ring-white/15 hover:bg-white/20 hover:border-white/35'
-              : 'bg-white/88 border-white/80 text-red-700 ring-red-950/10 hover:bg-white'
+              ? 'bg-slate-950/25 border-white/30 text-white ring-white/15 hover:bg-slate-950/40 hover:border-white/45'
+              : 'bg-white/95 border-red-100 text-red-700 ring-red-950/10 hover:bg-red-50 hover:border-red-200'
           }`}
           title={
             ordemLancamentos === 'desc'
@@ -76,7 +76,7 @@ export default function CardLancamentoDespesa({
               : 'Clique para ordenar do maior dia para o menor'
           }
         >
-          <span>Mudar ordem</span>
+          <span>Ordenar</span>
           <span className="text-xs font-black">
             {ordemLancamentos === 'desc' ? '↓' : '↑'}
           </span>
@@ -160,7 +160,7 @@ export default function CardLancamentoDespesa({
                 adicionarDespesa();
               }
             }}
-            placeholder="R$ 0,00"
+            placeholder="0,00"
             className={`${inputBase} text-right font-bold`}
             style={{ outlineColor: corPrimaria }}
           />
