@@ -111,6 +111,10 @@
     evolucaoSelecionada: {},
     toast: '',
     duplicadosAtivo: true,
+    feedbackEtapa: 'inicio',
+    feedbackTipo: '',
+    feedbackMensagem: '',
+    feedbackEnviando: false,
   };
 
   function dinheiro(valor) {
@@ -418,7 +422,105 @@
       state.categoriaEditandoId = '';
       state.categoriaAcoesId = '';
     }
+    if (state.modalMenu === 'feedback') {
+      limparFeedbackMobile();
+    }
     state.modalMenu = '';
+    render();
+  }
+
+  function abrirFeedbackMobile() {
+    state.menuAberto = false;
+    state.modalMenu = 'feedback';
+    state.feedbackEtapa = 'inicio';
+    state.feedbackTipo = '';
+    state.feedbackMensagem = '';
+    state.feedbackEnviando = false;
+    state.erro = '';
+    state.mensagem = '';
+    render();
+  }
+
+  function limparFeedbackMobile() {
+    state.feedbackEtapa = 'inicio';
+    state.feedbackTipo = '';
+    state.feedbackMensagem = '';
+    state.feedbackEnviando = false;
+    state.erro = '';
+    state.mensagem = '';
+  }
+
+  function abrirFormularioFeedbackMobile(tipo) {
+    state.feedbackTipo = tipo;
+    state.feedbackMensagem = '';
+    state.feedbackEtapa = 'formulario';
+    state.erro = '';
+    state.mensagem = '';
+    render();
+  }
+
+  function voltarFeedbackMobile() {
+    state.feedbackTipo = '';
+    state.feedbackMensagem = '';
+    state.feedbackEtapa = 'inicio';
+    state.erro = '';
+    state.mensagem = '';
+    render();
+  }
+
+  async function enviarFeedbackMobile() {
+    if (state.feedbackEnviando) return;
+
+    var mensagemLimpa = campo('feedback-mensagem').trim();
+
+    if (!state.feedbackTipo) {
+      setErro('Escolha Sugestoes ou Duvidas antes de enviar.');
+      return;
+    }
+
+    if (!mensagemLimpa) {
+      setErro('Escreva sua mensagem antes de enviar.');
+      return;
+    }
+
+    if (!state.empresa) {
+      setErro('Nao foi possivel identificar a empresa para registrar sua mensagem.');
+      return;
+    }
+
+    state.feedbackMensagem = mensagemLimpa;
+    state.feedbackEnviando = true;
+    state.erro = '';
+    render();
+
+    var resposta = await db
+      .from('feedbacks')
+      .insert({
+        empresa_id: state.empresa.id,
+        usuario_id: state.usuario && state.usuario.id ? state.usuario.id : null,
+        acesso_id: state.empresa.acessoId || null,
+        nome_empresa: nomeEmpresa(state.empresa),
+        nome_usuario:
+          (state.usuario && state.usuario.user_metadata && state.usuario.user_metadata.nome) ||
+          (state.usuario && state.usuario.email) ||
+          null,
+        email_usuario: state.usuario && state.usuario.email ? state.usuario.email : null,
+        tipo: state.feedbackTipo,
+        mensagem: mensagemLimpa,
+        status: 'novo',
+      })
+      .select()
+      .single();
+
+    state.feedbackEnviando = false;
+
+    if (resposta.error) {
+      setErro(mensagemErro(resposta.error, 'Nao foi possivel registrar sua mensagem neste momento. Tente novamente em alguns minutos.'));
+      return;
+    }
+
+    state.feedbackMensagem = '';
+    state.feedbackEtapa = 'confirmacao';
     render();
   }
 
@@ -2594,6 +2696,7 @@
             (isStandalone() ? '' : menuBotaoHtml('menu-instalar', 'Instalar app', 'Adicionar a tela inicial', '&#8681;')) +
             '<button id="menu-duplicados" type="button" class="rounded-2xl border ' + (state.darkMode ? 'border-slate-800 bg-slate-900' : 'border-slate-200 bg-white') + ' p-3 text-left shadow-sm"><div class="flex items-center gap-3"><span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-cyan-50 text-xs font-black text-cyan-700">D</span><span class="min-w-0 flex-1"><span class="block text-xs font-black">Duplicados</span><span class="mt-0.5 block truncate text-[10px] font-semibold text-slate-500">' + (state.duplicadosAtivo ? 'Avisar despesas repetidas' : 'Nao avisar repeticoes') + '</span></span><span class="relative h-6 w-11 shrink-0 rounded-full p-0.5 ' + (state.duplicadosAtivo ? 'bg-emerald-500' : 'bg-rose-500') + '"><span class="block h-5 w-5 rounded-full bg-white shadow-sm transition-transform ' + (state.duplicadosAtivo ? 'translate-x-5' : 'translate-x-0') + '"></span></span></div></button>' +
             '<button id="menu-tema" type="button" class="rounded-2xl border ' + (state.darkMode ? 'border-slate-800 bg-slate-900' : 'border-slate-200 bg-white') + ' p-3 text-left shadow-sm"><div class="flex items-center gap-3"><span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-cyan-50 text-xs font-black text-cyan-700">' + (state.darkMode ? 'ON' : 'OFF') + '</span><span class="min-w-0 flex-1"><span class="block text-xs font-black">Modo escuro</span><span class="mt-0.5 block truncate text-[10px] font-semibold text-slate-500">' + (state.darkMode ? 'Ativo' : 'Inativo') + '</span></span></div></button>' +
+            '<button id="menu-feedback" type="button" class="rounded-2xl border border-cyan-200 bg-cyan-50 p-3 text-left shadow-sm active:scale-[0.99]"><div class="flex items-center gap-3"><span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-sm font-black text-white" style="background:linear-gradient(135deg,#003E73,#00A6C8)">!</span><span class="min-w-0 flex-1"><span class="block text-xs font-black text-slate-900">Duvidas e Sugestoes</span><span class="mt-0.5 block truncate text-[10px] font-semibold text-cyan-800">Ajude a melhorar o AvantaLab</span></span></div></button>' +
             '<button id="sair" type="button" class="mt-1 rounded-2xl border border-rose-100 bg-white p-3 text-left text-xs font-black text-rose-700 shadow-sm">Sair</button>' +
           '</div>' +
         '</aside>' +
@@ -2623,6 +2726,7 @@
       'instalar-android': 'Instalar app',
       termos: 'Termos de Uso',
       privacidade: 'Privacidade',
+      feedback: 'Duvidas e Sugestoes',
     }[state.modalMenu] || 'Menu';
 
     return (
@@ -2650,7 +2754,63 @@
     if (state.modalMenu === 'instalar-android') return instalarAndroidHtml();
     if (state.modalMenu === 'termos') return termosMobileHtml();
     if (state.modalMenu === 'privacidade') return privacidadeMobileHtml();
+    if (state.modalMenu === 'feedback') return feedbackMobileHtml();
     return '';
+  }
+
+  function feedbackMobileHtml() {
+    if (state.feedbackEtapa === 'formulario') {
+      var sugestao = state.feedbackTipo === 'sugestao';
+      return (
+        '<div class="grid gap-4 text-sm">' +
+          alertaHtml().replace('mt-4', '') +
+          '<button id="feedback-voltar" type="button" class="w-fit text-xs font-black uppercase tracking-wide text-cyan-700">Voltar</button>' +
+          '<div>' +
+            '<h3 class="text-lg font-black">' + (sugestao ? 'Enviar sugestao' : 'Enviar duvida') + '</h3>' +
+            '<p class="mt-2 text-xs font-semibold leading-relaxed text-slate-500">' +
+              (sugestao
+                ? 'Sua opiniao e muito importante para melhorarmos o AvantaLab. Escreva sua sugestao, avaliacao ou ponto de melhoria.'
+                : 'Descreva sua duvida sobre o uso do AvantaLab. Esse canal ajuda a melhorar o sistema e orientar os proximos ajustes.') +
+            '</p>' +
+          '</div>' +
+          '<textarea id="feedback-mensagem" rows="6" placeholder="' + (sugestao ? 'Escreva sua sugestao...' : 'Escreva sua duvida...') + '" style="font-size:16px" class="w-full resize-none rounded-2xl border border-slate-200 bg-white px-4 py-3 text-base font-semibold text-slate-800 outline-none focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/15">' + escapeHtml(state.feedbackMensagem || '') + '</textarea>' +
+          '<button id="feedback-enviar" type="button" class="h-12 rounded-2xl px-4 text-xs font-black uppercase tracking-wide text-white shadow-lg disabled:opacity-60" style="background:linear-gradient(135deg,#003E73,#00A6C8)"' + (state.feedbackEnviando ? ' disabled' : '') + '>' + (state.feedbackEnviando ? 'Enviando...' : 'Enviar mensagem') + '</button>' +
+        '</div>'
+      );
+    }
+
+    if (state.feedbackEtapa === 'confirmacao') {
+      return (
+        '<div class="grid gap-4 text-center text-sm">' +
+          '<div class="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-emerald-100 text-2xl font-black text-emerald-700">&#10003;</div>' +
+          '<div>' +
+            '<h3 class="text-lg font-black">Mensagem registrada</h3>' +
+            '<p class="mt-2 text-sm font-semibold leading-relaxed text-slate-500">Obrigado! Sua mensagem foi registrada com sucesso.</p>' +
+          '</div>' +
+          '<button id="feedback-outra" type="button" class="h-12 rounded-2xl bg-slate-950 px-4 text-xs font-black uppercase tracking-wide text-white shadow-lg">Enviar outra mensagem</button>' +
+        '</div>'
+      );
+    }
+
+    return (
+      '<div class="grid gap-4 text-sm">' +
+        '<p class="text-sm font-semibold leading-relaxed text-slate-600">Ola, agradecemos sua interacao com a AvantaLab. Selecione uma das opcoes abaixo:</p>' +
+        '<div class="grid gap-3">' +
+          '<button id="feedback-sugestao" type="button" class="rounded-2xl border border-cyan-100 bg-cyan-50 px-4 py-3 text-left shadow-sm active:scale-[0.99]">' +
+            '<div class="flex items-center gap-3">' +
+              '<span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-cyan-100 text-lg font-black text-cyan-800">&#10022;</span>' +
+              '<span><span class="block text-sm font-black text-slate-900">Sugestoes</span><span class="mt-0.5 block text-xs font-semibold text-slate-500">Envie ideias, avaliacoes ou pontos de melhoria.</span></span>' +
+            '</div>' +
+          '</button>' +
+          '<button id="feedback-duvida" type="button" class="rounded-2xl border border-emerald-100 bg-emerald-50 px-4 py-3 text-left shadow-sm active:scale-[0.99]">' +
+            '<div class="flex items-center gap-3">' +
+              '<span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-emerald-100 text-lg font-black text-emerald-800">?</span>' +
+              '<span><span class="block text-sm font-black text-slate-900">Duvidas</span><span class="mt-0.5 block text-xs font-semibold text-slate-500">Envie uma duvida sobre o uso do sistema.</span></span>' +
+            '</div>' +
+          '</button>' +
+        '</div>' +
+      '</div>'
+    );
   }
 
   function usuarioHtml() {
@@ -3156,6 +3316,7 @@
     bind('menu-instalar', instalarApp);
     bind('menu-duplicados', alternarDuplicados);
     bind('menu-tema', trocarTema);
+    bind('menu-feedback', abrirFeedbackMobile);
     bind('fechar-modal-menu', fecharModalMenu);
     bind('trocar-empresa-gerenciar', function () { abrirModalMenu('empresa'); });
     bind('termos-mobile', function () { abrirModalMenu('termos'); });
@@ -3175,6 +3336,11 @@
     });
     bind('criar-usuario-mobile', criarUsuarioMobile);
     bind('salvar-usuario-mobile', salvarUsuarioMobile);
+    bind('feedback-sugestao', function () { abrirFormularioFeedbackMobile('sugestao'); });
+    bind('feedback-duvida', function () { abrirFormularioFeedbackMobile('duvida'); });
+    bind('feedback-voltar', voltarFeedbackMobile);
+    bind('feedback-enviar', enviarFeedbackMobile);
+    bind('feedback-outra', voltarFeedbackMobile);
     bind('cancelar-edicao-usuario', function () {
       state.usuarioEditandoId = '';
       state.erro = '';
@@ -3373,6 +3539,13 @@
           foco.focus();
           foco.setSelectionRange(foco.value.length, foco.value.length);
         }
+      });
+    }
+
+    var feedbackMensagem = document.getElementById('feedback-mensagem');
+    if (feedbackMensagem) {
+      feedbackMensagem.addEventListener('input', function () {
+        state.feedbackMensagem = feedbackMensagem.value;
       });
     }
 
