@@ -78,6 +78,12 @@
     mostrarConfirmarSenhaCadastro: false,
     loginRecuperacao: '',
     telefoneCadastroConfirmado: '',
+    validacaoTelefoneObrigatoria: false,
+    telefoneObrigatorio: '',
+    telefoneObrigatorioConfirmado: '',
+    codigoTelefoneObrigatorio: '',
+    smsTelefoneObrigatorioEnviado: false,
+    validandoTelefoneObrigatorio: false,
     cadastro: {
       nome: '',
       email: '',
@@ -1038,6 +1044,29 @@
       return;
     }
 
+    var acessoComTelefone = vinculos.data.find(function (vinculo) {
+      return vinculo.telefone_confirmado === true && vinculo.telefone;
+    });
+
+    if (acessoComTelefone) {
+      await db
+        .from('usuarios_empresa')
+        .update({
+          telefone: acessoComTelefone.telefone,
+          telefone_confirmado: true,
+          telefone_confirmado_em: new Date().toISOString(),
+          atualizado_em: new Date().toISOString(),
+        })
+        .eq('user_id', usuarioId);
+
+      vinculos.data = vinculos.data.map(function (vinculo) {
+        return Object.assign({}, vinculo, {
+          telefone: acessoComTelefone.telefone,
+          telefone_confirmado: true,
+        });
+      });
+    }
+
     var ids = vinculos.data.map(function (vinculo) { return vinculo.empresa_id; }).filter(Boolean);
     var empresas = await db.from('empresas').select('id, nome').in('id', ids);
 
@@ -1057,6 +1086,8 @@
           empresa_nome: empresa.nome,
           perfil: vinculo.perfil,
           acessoId: vinculo.id,
+          telefone: vinculo.telefone || '',
+          telefone_confirmado: vinculo.telefone_confirmado === true,
         };
       })
       .filter(Boolean);
@@ -1066,6 +1097,17 @@
 
   async function carregarDados() {
     if (!state.empresa) return;
+
+    if (state.empresa.telefone_confirmado !== true) {
+      state.validacaoTelefoneObrigatoria = true;
+      state.telefoneObrigatorio = state.empresa.telefone || '';
+      state.telefoneObrigatorioConfirmado = '';
+      state.codigoTelefoneObrigatorio = '';
+      state.smsTelefoneObrigatorioEnviado = false;
+      state.carregando = false;
+      render();
+      return;
+    }
 
     state.carregando = true;
     render();
@@ -1422,6 +1464,133 @@
       confirmarSenha: '',
     };
     setMensagem('Cadastro criado e celular confirmado. Faca login para acessar.');
+  }
+
+  async function enviarCodigoTelefoneObrigatorioMobile() {
+    if (state.validandoTelefoneObrigatorio) return;
+
+    var telefone = campo('telefone-obrigatorio').replace(/\D/g, '');
+
+    if (!telefone || telefone.length < 10 || telefone.length > 13) {
+      setErro('Informe um celular valido com DDD.');
+      return;
+    }
+
+    state.telefoneObrigatorio = telefone;
+    state.validandoTelefoneObrigatorio = true;
+    state.erro = '';
+    render();
+
+    var resposta = await fetch('/api/sms/enviar-codigo', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        telefone: telefone,
+      }),
+    });
+
+    var resultado = await lerResposta(resposta);
+
+    state.validandoTelefoneObrigatorio = false;
+
+    if (!resposta.ok || resultado.erro) {
+      setErro(resultado.mensagem || 'Nao foi possivel enviar o codigo por SMS.');
+      return;
+    }
+
+    state.smsTelefoneObrigatorioEnviado = true;
+    state.telefoneObrigatorioConfirmado = telefone;
+    state.codigoTelefoneObrigatorio = '';
+    setMensagem('Enviamos um codigo por SMS. Digite o codigo recebido para confirmar seu celular.');
+  }
+
+  async function confirmarTelefoneObrigatorioMobile() {
+    if (!state.usuario || !state.empresa) return;
+
+    var telefone = campo('telefone-obrigatorio').replace(/\D/g, '');
+    var codigo = campo('codigo-telefone-obrigatorio').trim();
+
+    if (!telefone || telefone.length < 10 || telefone.length > 13) {
+      setErro('Informe um celular valido com DDD.');
+      return;
+    }
+
+    if (!state.smsTelefoneObrigatorioEnviado) {
+      await enviarCodigoTelefoneObrigatorioMobile();
+      return;
+    }
+
+    if (!codigo) {
+      setErro('Digite o codigo recebido por SMS.');
+      return;
+    }
+
+    if (telefone !== state.telefoneObrigatorioConfirmado) {
+      state.smsTelefoneObrigatorioEnviado = false;
+      state.telefoneObrigatorioConfirmado = '';
+      setErro('O celular foi alterado. Solicite um novo codigo antes de confirmar.');
+      return;
+    }
+
+    state.validandoTelefoneObrigatorio = true;
+    state.erro = '';
+    render();
+
+    var verificacao = await fetch('/api/sms/verificar-codigo', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        telefone: telefone,
+        codigo: codigo,
+      }),
+    });
+
+    var resultadoVerificacao = await lerResposta(verificacao);
+
+    if (!verificacao.ok || resultadoVerificacao.erro) {
+      state.validandoTelefoneObrigatorio = false;
+      setErro(resultadoVerificacao.mensagem || 'Codigo invalido ou expirado.');
+      return;
+    }
+
+    var agora = new Date().toISOString();
+    var atualizacao = await db
+      .from('usuarios_empresa')
+      .update({
+        telefone: telefone,
+        telefone_confirmado: true,
+        telefone_confirmado_em: agora,
+        atualizado_em: agora,
+      })
+      .eq('user_id', state.usuario.id);
+
+    if (atualizacao.error) {
+      state.validandoTelefoneObrigatorio = false;
+      setErro(mensagemErro(atualizacao.error, 'Nao foi possivel salvar o celular confirmado.'));
+      return;
+    }
+
+    state.empresas = state.empresas.map(function (empresa) {
+      return Object.assign({}, empresa, {
+        telefone: telefone,
+        telefone_confirmado: true,
+      });
+    });
+    state.empresa = Object.assign({}, state.empresa, {
+      telefone: telefone,
+      telefone_confirmado: true,
+    });
+    state.validacaoTelefoneObrigatoria = false;
+    state.telefoneObrigatorio = '';
+    state.telefoneObrigatorioConfirmado = '';
+    state.codigoTelefoneObrigatorio = '';
+    state.smsTelefoneObrigatorioEnviado = false;
+    state.validandoTelefoneObrigatorio = false;
+    await carregarDados();
   }
 
   function validarCadastroBase() {
@@ -2174,6 +2343,37 @@
           : '') +
         '<button id="voltar-login" type="button" class="text-sm font-bold text-slate-600 underline">Voltar para login</button>' +
       '</div>'
+    );
+  }
+
+  function telaTelefoneObrigatorioMobile() {
+    return (
+      '<section class="avantalab-mobile-bg fixed inset-0 flex flex-col items-center justify-center overflow-hidden px-4 py-5" style="height:100dvh;--avantalab-mobile-bg-overlay:linear-gradient(rgba(255,255,255,.08),rgba(255,255,255,0));">' +
+        '<div class="mx-auto w-full max-w-md overflow-y-auto rounded-3xl border border-white/35 p-5 text-slate-900 shadow-2xl backdrop-blur-xl" style="background-color:rgba(255,255,255,.18);max-height:calc(100dvh - 2.5rem);overscroll-behavior:contain;">' +
+          '<div class="mb-5">' +
+            '<p class="mb-2 text-xs font-bold uppercase tracking-[0.32em] text-sky-700">AvantaLab Gestao</p>' +
+            '<h1 class="text-3xl font-black text-slate-900">Confirme seu celular</h1>' +
+            '<p class="mt-2 text-sm leading-relaxed text-slate-600">Para manter seu acesso seguro, confirme um celular com DDD por SMS.</p>' +
+          '</div>' +
+          '<div class="grid gap-4">' +
+            inputHtml('telefone-obrigatorio', 'Celular', 'tel', 'DDD + numero. Ex: 11999999999', state.telefoneObrigatorio) +
+            (state.smsTelefoneObrigatorioEnviado
+              ? inputHtml('codigo-telefone-obrigatorio', 'Codigo recebido por SMS', 'text', 'Digite o codigo recebido', state.codigoTelefoneObrigatorio) +
+                '<p class="-mt-1 text-[11px] font-semibold text-slate-500">Enviamos o codigo para o celular informado.</p>'
+              : '') +
+            alertaHtml() +
+            '<button id="confirmar-telefone-obrigatorio" type="button" class="h-12 rounded-xl bg-slate-900 px-4 text-sm font-black uppercase tracking-wide text-white shadow-lg">' +
+              (state.validandoTelefoneObrigatorio
+                ? (state.smsTelefoneObrigatorioEnviado ? 'Validando...' : 'Enviando...')
+                : (state.smsTelefoneObrigatorioEnviado ? 'Confirmar celular' : 'Enviar codigo por SMS')) +
+            '</button>' +
+            (state.smsTelefoneObrigatorioEnviado
+              ? '<button id="reenviar-telefone-obrigatorio" type="button" class="text-xs font-bold text-sky-700 underline">Reenviar codigo</button>'
+              : '') +
+            '<button id="sair-telefone-obrigatorio" type="button" class="text-sm font-bold text-slate-600 underline">Sair</button>' +
+          '</div>' +
+        '</div>' +
+      '</section>'
     );
   }
 
@@ -3256,15 +3456,15 @@
     }
 
     return (
-      '<div class="relative overflow-hidden rounded-lg bg-slate-50 ' + (acoesAberta ? 'ring-2 ring-cyan-400/60 shadow-sm shadow-cyan-100' : '') + '">' +
-        '<div class="absolute inset-y-0 right-0 grid w-[192px] grid-cols-3 items-center gap-1 pr-1">' +
-          '<button type="button" data-categoria-editar="' + escapeHtml(id) + '" class="h-6 rounded bg-cyan-600 px-1 text-[8px] font-black uppercase leading-none text-white">Editar</button>' +
-          '<button type="button" data-categoria-excluir="' + escapeHtml(id) + '" class="h-6 rounded border border-rose-100 bg-white px-1 text-[8px] font-black uppercase leading-none text-rose-600">Excluir</button>' +
-          '<button type="button" data-categoria-cancelar="' + escapeHtml(id) + '" class="h-6 rounded bg-white px-1 text-[8px] font-black uppercase leading-none text-slate-500">Cancelar</button>' +
+      '<div class="relative h-10 overflow-hidden rounded-lg bg-slate-50 ' + (acoesAberta ? 'ring-2 ring-cyan-400/60 shadow-sm shadow-cyan-100' : '') + '">' +
+        '<div class="absolute inset-y-0 right-0 grid w-[192px] grid-cols-3 items-center gap-1 pr-1" style="height:40px;">' +
+          '<button type="button" data-categoria-editar="' + escapeHtml(id) + '" class="rounded bg-cyan-600 px-1 font-black uppercase text-white" style="box-sizing:border-box;display:flex;height:22px;align-items:center;justify-content:center;font-size:7.5px;line-height:1;">Editar</button>' +
+          '<button type="button" data-categoria-excluir="' + escapeHtml(id) + '" class="rounded border border-rose-100 bg-white px-1 font-black uppercase text-rose-600" style="box-sizing:border-box;display:flex;height:22px;align-items:center;justify-content:center;font-size:7.5px;line-height:1;">Excluir</button>' +
+          '<button type="button" data-categoria-cancelar="' + escapeHtml(id) + '" class="rounded border border-slate-200 bg-white px-1 font-black uppercase text-slate-500" style="box-sizing:border-box;display:flex;height:22px;align-items:center;justify-content:center;font-size:7.5px;line-height:1;">Cancelar</button>' +
         '</div>' +
-        '<button type="button" data-categoria-opcoes="' + escapeHtml(id) + '" class="relative z-10 flex w-full items-center justify-between gap-2 rounded-lg bg-slate-50 px-3 py-2 text-left text-[11px] text-slate-800 transition-transform duration-200 ease-out" style="transform:' + (acoesAberta ? 'translateX(-192px)' : 'translateX(0)') + '">' +
-          '<span class="truncate font-bold">' + escapeHtml(despesa.nome) + '</span>' +
-          '<span class="max-w-[150px] shrink-0 truncate font-semibold text-slate-500">' + escapeHtml(acoesAberta ? despesa.nome : despesa.categoria) + '</span>' +
+        '<button type="button" data-categoria-opcoes="' + escapeHtml(id) + '" class="relative z-10 flex h-10 w-full items-center justify-between gap-2 rounded-lg bg-slate-50 px-3 text-left text-[11px] text-slate-800 transition-transform duration-200 ease-out" style="transform:' + (acoesAberta ? 'translateX(-192px)' : 'translateX(0)') + '">' +
+          '<span class="flex h-full min-w-0 items-center truncate font-bold">' + escapeHtml(despesa.nome) + '</span>' +
+          '<span class="flex h-full max-w-[150px] shrink-0 items-center truncate font-semibold text-slate-500">' + escapeHtml(acoesAberta ? despesa.nome : despesa.categoria) + '</span>' +
         '</button>' +
       '</div>'
     );
@@ -3331,8 +3531,16 @@
 
   function render() {
     root.setAttribute('data-avantalab-mobile-ready', '1');
-    root.innerHTML = !state.pronto ? telaCarregandoMobile() : (state.autenticado ? telaApp() : telaLogin());
+    root.innerHTML = !state.pronto
+      ? telaCarregandoMobile()
+      : (state.autenticado
+        ? (state.validacaoTelefoneObrigatoria ? telaTelefoneObrigatorioMobile() : telaApp())
+        : telaLogin());
     atualizarScrollBloqueado();
+
+    bind('confirmar-telefone-obrigatorio', confirmarTelefoneObrigatorioMobile);
+    bind('reenviar-telefone-obrigatorio', enviarCodigoTelefoneObrigatorioMobile);
+    bind('sair-telefone-obrigatorio', sair);
 
     bind('entrar', entrar);
     bind('entrar-google', entrarGoogle);
@@ -4151,7 +4359,7 @@
           return Promise.all(
             keys
               .filter(function (key) {
-                return key.indexOf('avantalab-mobile-') === 0 && key !== 'avantalab-mobile-v60';
+                return key.indexOf('avantalab-mobile-') === 0 && key !== 'avantalab-mobile-v62';
               })
               .map(function (key) {
                 return caches.delete(key);

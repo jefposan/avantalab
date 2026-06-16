@@ -56,12 +56,18 @@ export default function MobilePage() {
 
   return (
     <main className="min-h-screen overflow-hidden bg-slate-950 text-white">
+      <link
+        rel="preload"
+        href="/images/bg-avantalab-mobile-1080x1920.webp"
+        as="image"
+        type="image/webp"
+      />
       <style
         dangerouslySetInnerHTML={{
           __html: `
             .avantalab-mobile-bg {
               background-color: #eef6fb;
-              background-image: var(--avantalab-mobile-bg-overlay, none), url('/images/bg-avantalab-mobile-1080x1920.png');
+              background-image: var(--avantalab-mobile-bg-overlay, none), image-set(url('/images/bg-avantalab-mobile-1080x1920.webp') type('image/webp'), url('/images/bg-avantalab-mobile-1080x1920.png') type('image/png'));
               background-position: center bottom;
               background-repeat: no-repeat;
               background-size: 100% auto;
@@ -116,7 +122,7 @@ export default function MobilePage() {
       </div>
 
       <script src="/mobile-supabase.js" defer />
-      <script src="/mobile-app.js?v=64" defer />
+      <script src="/mobile-app.js?v=66" defer />
     </main>
   );
 }

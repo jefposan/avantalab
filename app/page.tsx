@@ -4099,6 +4099,25 @@ const resultadoVerificacaoSms = await lerRespostaApi(respostaVerificacaoSms);
     telefone_confirmado_em: new Date().toISOString(),
   };
 
+  setEmpresasDoUsuario((empresasAtuais) =>
+    empresasAtuais.map((empresa) => ({
+      ...empresa,
+      telefone: telefoneLimpo,
+      telefone_confirmado: true,
+      telefone_confirmado_em: empresaLiberada.telefone_confirmado_em,
+    }))
+  );
+  setEmpresaParaSelecionar((empresaAtual: any | null) =>
+    empresaAtual
+      ? {
+          ...empresaAtual,
+          telefone: telefoneLimpo,
+          telefone_confirmado: true,
+          telefone_confirmado_em: empresaLiberada.telefone_confirmado_em,
+        }
+      : empresaAtual
+  );
+
   setValidacaoTelefoneObrigatoria(false);
   setEmpresaAguardandoTelefone(null);
   setTelefoneObrigatorio('');
@@ -4170,8 +4189,8 @@ const TelaCarregandoSistema = ({ mensagem }: { mensagem: string }) => (
       }`}
       style={{
         backgroundImage: isTelaMobile
-          ? "url('/images/bg-avantalab-mobile.png')"
-          : "url('/images/bg-avantalab.png')",
+          ? "image-set(url('/images/bg-avantalab-mobile.webp') type('image/webp'), url('/images/bg-avantalab-mobile.png') type('image/png'))"
+          : "image-set(url('/images/bg-avantalab.webp') type('image/webp'), url('/images/bg-avantalab.png') type('image/png'))",
         backgroundSize: isTelaMobile ? 'cover' : undefined,
         backgroundPosition: isTelaMobile ? 'center bottom' : 'center',
       }}
@@ -4225,13 +4244,13 @@ if (emailConfirmado) {
     <main className="relative min-h-screen overflow-hidden font-sans">
       <div
         className="absolute inset-0 hidden bg-cover bg-center lg:block"
-        style={{ backgroundImage: "url('/images/bg-avantalab.png')" }}
+        style={{ backgroundImage: "image-set(url('/images/bg-avantalab.webp') type('image/webp'), url('/images/bg-avantalab.png') type('image/png'))" }}
       />
 
       <div
         className="absolute inset-0 bg-no-repeat lg:hidden"
         style={{
-          backgroundImage: "url('/images/bg-avantalab-mobile.png')",
+          backgroundImage: "image-set(url('/images/bg-avantalab-mobile.webp') type('image/webp'), url('/images/bg-avantalab-mobile.png') type('image/png'))",
           backgroundSize: 'cover',
           backgroundPosition: 'center bottom',
         }}
@@ -4301,8 +4320,8 @@ if (acessoNaoConfigurado) {
         }`}
         style={{
           backgroundImage: isTelaMobile
-            ? "url('/images/bg-avantalab-mobile.png')"
-            : "url('/images/bg-avantalab.png')",
+            ? "image-set(url('/images/bg-avantalab-mobile.webp') type('image/webp'), url('/images/bg-avantalab-mobile.png') type('image/png'))"
+            : "image-set(url('/images/bg-avantalab.webp') type('image/webp'), url('/images/bg-avantalab.png') type('image/png'))",
           backgroundSize: isTelaMobile ? 'cover' : undefined,
           backgroundPosition: isTelaMobile ? 'center bottom' : 'center',
         }}
@@ -4545,7 +4564,7 @@ if (validacaoTelefoneObrigatoria) {
     <main className="relative min-h-screen overflow-hidden font-sans">
       <div
         className="absolute inset-0 bg-cover bg-center"
-        style={{ backgroundImage: "url('/images/bg-avantalab.png')" }}
+        style={{ backgroundImage: "image-set(url('/images/bg-avantalab.webp') type('image/webp'), url('/images/bg-avantalab.png') type('image/png'))" }}
       />
 
       <div className="absolute inset-0 bg-white/70 backdrop-blur-sm" />
@@ -4754,13 +4773,13 @@ if (isTelaMobile) {
 )}
       <div
         className="absolute inset-0 hidden bg-cover bg-center lg:block"
-        style={{ backgroundImage: "url('/images/bg-avantalab.png')" }}
+        style={{ backgroundImage: "image-set(url('/images/bg-avantalab.webp') type('image/webp'), url('/images/bg-avantalab.png') type('image/png'))" }}
       />
 
       <div
         className="absolute inset-0 bg-no-repeat lg:hidden"
         style={{
-          backgroundImage: "url('/images/bg-avantalab-mobile.png')",
+          backgroundImage: "image-set(url('/images/bg-avantalab-mobile.webp') type('image/webp'), url('/images/bg-avantalab-mobile.png') type('image/png'))",
           backgroundSize: 'cover',
           backgroundPosition: 'center bottom',
         }}

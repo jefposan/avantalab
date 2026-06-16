@@ -84,6 +84,44 @@ function tratarErroSupabase(error: any) {
     return null;
   }
 
+  if (vinculo.user_id) {
+    const acessoComTelefone = vinculo.telefone_confirmado === true && vinculo.telefone
+      ? vinculo
+      : (await supabase
+          .from('usuarios_empresa')
+          .select('telefone, telefone_confirmado_em')
+          .eq('user_id', vinculo.user_id)
+          .eq('telefone_confirmado', true)
+          .not('telefone', 'is', null)
+          .limit(1)
+          .maybeSingle()).data;
+
+    if (acessoComTelefone?.telefone) {
+      const agora = new Date().toISOString();
+
+      const { error: erroSincronizarTelefone } = await supabase
+        .from('usuarios_empresa')
+        .update({
+          telefone: acessoComTelefone.telefone,
+          telefone_confirmado: true,
+          telefone_confirmado_em: acessoComTelefone.telefone_confirmado_em || agora,
+          atualizado_em: agora,
+        })
+        .eq('user_id', vinculo.user_id);
+
+      if (erroSincronizarTelefone) {
+        console.error('Erro ao sincronizar telefone confirmado do usuario:', erroSincronizarTelefone);
+      } else {
+        vinculo = {
+          ...vinculo,
+          telefone: acessoComTelefone.telefone,
+          telefone_confirmado: true,
+          telefone_confirmado_em: acessoComTelefone.telefone_confirmado_em || agora,
+        };
+      }
+    }
+  }
+
   const { data: empresa, error: erroEmpresa } = await supabase
     .from('empresas')
     .select('id, nome')
@@ -165,7 +203,38 @@ export async function buscarEmpresasDoUsuario(usuarioId: string) {
     return [];
   }
 
-  const empresasIds = vinculos
+  const acessoComTelefone = vinculos.find(
+    (vinculo) => vinculo.telefone_confirmado === true && vinculo.telefone
+  );
+
+  const vinculosSincronizados = acessoComTelefone
+    ? vinculos.map((vinculo) => ({
+        ...vinculo,
+        telefone: acessoComTelefone.telefone,
+        telefone_confirmado: true,
+        telefone_confirmado_em:
+          acessoComTelefone.telefone_confirmado_em || vinculo.telefone_confirmado_em,
+      }))
+    : vinculos;
+
+  if (acessoComTelefone?.telefone) {
+    const agora = new Date().toISOString();
+    const { error: erroSincronizarTelefone } = await supabase
+      .from('usuarios_empresa')
+      .update({
+        telefone: acessoComTelefone.telefone,
+        telefone_confirmado: true,
+        telefone_confirmado_em: acessoComTelefone.telefone_confirmado_em || agora,
+        atualizado_em: agora,
+      })
+      .eq('user_id', usuarioId);
+
+    if (erroSincronizarTelefone) {
+      console.error('Erro ao sincronizar telefone confirmado do usuario:', erroSincronizarTelefone);
+    }
+  }
+
+  const empresasIds = vinculosSincronizados
     .map((vinculo) => vinculo.empresa_id)
     .filter(Boolean);
 
@@ -181,7 +250,7 @@ export async function buscarEmpresasDoUsuario(usuarioId: string) {
   }
 
   // 4. Une vínculo + dados da empresa
-  return vinculos
+  return vinculosSincronizados
     .map((vinculo) => {
       const empresa = empresas?.find((item) => item.id === vinculo.empresa_id);
 
@@ -1063,17 +1132,36 @@ export async function atualizarTelefoneUsuarioEmpresa({
   acessoId: string;
   telefone: string;
 }) {
-  const { data, error } = await supabase
+  const { data: acesso, error: erroAcesso } = await supabase
     .from('usuarios_empresa')
-    .update({
-      telefone,
-      telefone_confirmado: true,
-      telefone_confirmado_em: new Date().toISOString(),
-      atualizado_em: new Date().toISOString(),
-    })
+    .select('id, user_id')
     .eq('id', acessoId)
-    .select()
-    .single();
+    .maybeSingle();
+
+  if (erroAcesso || !acesso) {
+    console.error('Erro ao buscar acesso para atualizar telefone:', erroAcesso);
+
+    return {
+      erro: true,
+      mensagem: erroAcesso ? tratarErroSupabase(erroAcesso) : 'Acesso nao encontrado.',
+      data: null,
+    };
+  }
+
+  const atualizacao = {
+    telefone,
+    telefone_confirmado: true,
+    telefone_confirmado_em: new Date().toISOString(),
+    atualizado_em: new Date().toISOString(),
+  };
+
+  const consulta = supabase
+    .from('usuarios_empresa')
+    .update(atualizacao);
+
+  const { data, error } = acesso.user_id
+    ? await consulta.eq('user_id', acesso.user_id).select()
+    : await consulta.eq('id', acessoId).select();
 
   if (error) {
     console.error('Erro ao atualizar telefone do usuário:', error);
