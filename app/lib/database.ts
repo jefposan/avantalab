@@ -849,20 +849,54 @@ export async function atualizarUsuarioEmpresa({
   acessoId: string;
   nome: string;
   email: string;
-perfil: 'gestor_master' | 'administrador' | 'operador_completo' | 'operador_simples';}) {
-  const { data, error } = await supabase.rpc('atualizar_usuario_empresa_rpc', {
-    p_acesso_id: acessoId,
-    p_nome: nome.trim(),
-    p_email: email.trim().toLowerCase(),
-    p_perfil: perfil,
+  perfil: 'gestor_master' | 'administrador' | 'operador_completo' | 'operador_simples';
+}) {
+  const { data: sessao } = await supabase.auth.getSession();
+
+  const token = sessao.session?.access_token;
+
+  if (!token) {
+    return {
+      erro: true,
+      mensagem: 'Sessao nao encontrada. Faca login novamente.',
+      data: null,
+    };
+  }
+
+  const resposta = await fetch('/api/atualizar-usuario-empresa', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({
+      acessoId,
+      nome: nome.trim(),
+      email: email.trim().toLowerCase(),
+      perfil,
+    }),
   });
 
-  if (error) {
-    console.error('Erro ao atualizar usuário da empresa:', error);
+  const resultado = await resposta.json();
+
+  if (!resposta.ok || resultado.erro) {
+    const mensagemErro = String(resultado.mensagem || '').toLowerCase();
+
+    if (
+      mensagemErro.includes('duplicate key') ||
+      mensagemErro.includes('unique constraint') ||
+      mensagemErro.includes('23505')
+    ) {
+      return {
+        erro: true,
+        mensagem: 'Login/email indisponivel. Escolha outro.',
+        data: null,
+      };
+    }
 
     return {
       erro: true,
-      mensagem: tratarErroSupabase(error),
+      mensagem: resultado.mensagem || 'Nao foi possivel atualizar o usuario.',
       data: null,
     };
   }
@@ -870,7 +904,7 @@ perfil: 'gestor_master' | 'administrador' | 'operador_completo' | 'operador_simp
   return {
     erro: false,
     mensagem: '',
-    data,
+    data: resultado.usuario,
   };
 }
 

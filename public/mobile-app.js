@@ -908,17 +908,32 @@
     state.erro = '';
     render();
 
-    var resposta = await db.rpc('atualizar_usuario_empresa_rpc', {
-      p_acesso_id: state.usuarioEditandoId,
-      p_nome: nome,
-      p_email: login,
-      p_perfil: perfil,
+    var tok = await tokenSessao();
+    if (!tok) {
+      state.carregando = false;
+      setErro('Sessao expirada. Faca login novamente.');
+      return;
+    }
+
+    var respostaHttp = await fetch('/api/atualizar-usuario-empresa', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: 'Bearer ' + tok,
+      },
+      body: JSON.stringify({
+        acessoId: state.usuarioEditandoId,
+        nome: nome,
+        email: login,
+        perfil: perfil,
+      }),
     });
+    var resposta = await lerResposta(respostaHttp);
 
     state.carregando = false;
 
-    if (resposta.error) {
-      setErro(mensagemErro(resposta.error, 'Nao foi possivel atualizar o usuario.'));
+    if (!respostaHttp.ok || resposta.erro) {
+      setErro(resposta.mensagem || 'Nao foi possivel atualizar o usuario.');
       return;
     }
 
@@ -3033,7 +3048,7 @@
         '<div class="flex items-center justify-between gap-2"><p class="text-[10px] font-black uppercase tracking-wide text-cyan-900">Editar usuario</p><button id="cancelar-edicao-usuario" type="button" class="text-[10px] font-black text-slate-500">Cancelar</button></div>' +
         '<input id="edit-usuario-nome" value="' + escapeHtml(usuario.nome || '') + '" placeholder="Nome" style="font-size:16px" class="h-10 w-full min-w-0 rounded-lg border border-cyan-100 bg-white px-3 text-base font-bold outline-none" />' +
         '<input id="edit-usuario-login" value="' + escapeHtml(usuario.login || usuario.email || '') + '" placeholder="Login ou email" style="font-size:16px" class="h-10 w-full min-w-0 rounded-lg border border-cyan-100 bg-white px-3 text-base font-bold outline-none" />' +
-        '<select id="edit-usuario-perfil" style="font-size:16px" class="h-10 w-full min-w-0 rounded-lg border border-cyan-100 bg-white px-3 text-base font-bold outline-none">' + opcoesPerfilHtml(usuario.perfil || 'operador_simples', usuario.perfil === 'gestor_master') + '</select>' +
+        '<select id="edit-usuario-perfil" style="font-size:16px" class="h-10 w-full min-w-0 rounded-lg border border-cyan-100 bg-white px-3 text-base font-bold outline-none">' + opcoesPerfilHtml(usuario.perfil || 'operador_simples', usuario.perfil === 'gestor_master' || (state.empresa && state.empresa.perfil === 'gestor_master')) + '</select>' +
         '<button id="salvar-usuario-mobile" type="button" class="h-10 rounded-xl bg-cyan-600 px-4 text-xs font-black uppercase tracking-wide text-white">' + (state.carregando ? 'Salvando...' : 'Salvar usuario') + '</button>' +
       '</div>'
     );
@@ -4116,7 +4131,7 @@
           return Promise.all(
             keys
               .filter(function (key) {
-                return key.indexOf('avantalab-mobile-') === 0 && key !== 'avantalab-mobile-v54';
+                return key.indexOf('avantalab-mobile-') === 0 && key !== 'avantalab-mobile-v55';
               })
               .map(function (key) {
                 return caches.delete(key);

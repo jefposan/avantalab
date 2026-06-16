@@ -1591,7 +1591,7 @@ const iniciarEdicaoUsuario = (usuario: any) => {
     loginUsuario === emailAtual ||
     usuario.email?.toLowerCase() === emailAtual;
 
-  if (usuario.perfil === 'gestor_master' && !usuarioEhAtual) {
+  if (usuario.perfil === 'gestor_master' && !usuarioEhAtual && perfilUsuario !== 'gestor_master') {
     abrirAviso(
       'Acesso não permitido',
       'O gestor master só pode editar o próprio acesso.'
@@ -5826,7 +5826,7 @@ if (isTelaMobile) {
                 | 'operador_simples'
             )
           }
-          disabled={usuarioOriginalEditando?.perfil === 'gestor_master'}
+          disabled={usuarioOriginalEditando?.perfil === 'gestor_master' && perfilUsuario !== 'gestor_master'}
           className={`w-full rounded-xl border px-3 py-2.5 text-sm font-bold outline-none disabled:cursor-not-allowed disabled:opacity-60 ${
             darkMode
               ? 'bg-slate-900 border-slate-600 text-white'
@@ -6460,6 +6460,7 @@ name="novo-usuario-login"
       </div>
 
       {(
+  perfilUsuario === 'gestor_master' ||
   usuario.perfil !== 'gestor_master' ||
   (usuario.login || usuario.email || '').toLowerCase() ===
     (emailUsuarioAtual || '').toLowerCase()
