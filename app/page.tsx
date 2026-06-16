@@ -5682,7 +5682,7 @@ if (isTelaMobile) {
             }}
             className="w-full rounded-xl bg-red-600 px-4 py-3 text-sm font-black uppercase tracking-wide text-white transition hover:bg-red-700 cursor-pointer"
           >
-            Excluir empresa atual
+            Excluir empresa
           </button>
         )}
       </div>

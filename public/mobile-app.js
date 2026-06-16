@@ -117,6 +117,7 @@
     feedbackMensagem: '',
     feedbackEnviando: false,
     manterConectado: false,
+    empresaExclusaoAberta: false,
   };
 
   var CHAVE_MANTER_CONECTADO_ATE = 'avantalab_mobile_manter_conectado_ate';
@@ -494,6 +495,7 @@
   function abrirModalMenu(nome) {
     state.menuAberto = false;
     state.modalMenu = nome;
+    if (nome === 'gerenciar') state.empresaExclusaoAberta = false;
     render();
   }
 
@@ -505,6 +507,7 @@
     if (state.modalMenu === 'feedback') {
       limparFeedbackMobile();
     }
+    state.empresaExclusaoAberta = false;
     state.modalMenu = '';
     render();
   }
@@ -1825,6 +1828,7 @@
 
     state.modalMenu = '';
     state.empresaAcao = '';
+    state.empresaExclusaoAberta = false;
     await carregarEmpresas(state.usuario.id);
     await carregarDados();
     mostrarToast('Empresa criada.');
@@ -1865,6 +1869,7 @@
 
     state.modalMenu = '';
     state.empresaAcao = '';
+    state.empresaExclusaoAberta = false;
     await carregarEmpresas(state.usuario.id);
 
     if (!state.empresa) {
@@ -3086,13 +3091,18 @@
         '</div>' +
         '<button id="trocar-empresa-gerenciar" type="button" class="h-11 rounded-xl px-4 text-sm font-black uppercase tracking-wide ' + (podeTrocar ? 'bg-cyan-600 text-white' : 'bg-slate-100 text-slate-400') + '"' + (podeTrocar ? '' : ' disabled') + '>Trocar empresa</button>' +
         (gestorMaster
-          ? '<div class="rounded-2xl border border-rose-100 bg-rose-50/70 p-4">' +
-              '<p class="text-[10px] font-black uppercase tracking-wide text-rose-700">Excluir empresa atual</p>' +
-              '<p class="mt-2 text-xs font-bold leading-relaxed text-rose-800">Esta acao remove a empresa atual e seus dados. Para confirmar, digite exatamente o nome abaixo.</p>' +
-              '<p class="mt-2 text-sm font-black text-rose-900">' + escapeHtml(nomeEmpresa(state.empresa)) + '</p>' +
-              '<input id="excluir-empresa-confirmacao" placeholder="Digite o nome da empresa" style="font-size:16px" class="mt-3 h-11 w-full rounded-md border border-rose-100 bg-white px-3 text-base font-bold text-slate-900 outline-none focus:border-rose-400" />' +
-              '<button id="excluir-empresa-mobile" type="button" class="mt-3 h-11 w-full rounded-xl border border-rose-200 bg-white px-4 text-sm font-black uppercase tracking-wide text-rose-700">' + (state.empresaAcao === 'excluir' ? 'Excluindo...' : 'Excluir definitivamente') + '</button>' +
-            '</div>'
+          ? (!state.empresaExclusaoAberta
+              ? '<button id="abrir-exclusao-empresa-mobile" type="button" class="h-11 rounded-xl border border-rose-200 bg-white px-4 text-sm font-black uppercase tracking-wide text-rose-700">Excluir empresa</button>'
+              : '<div class="rounded-2xl border border-rose-100 bg-rose-50/70 p-4">' +
+                  '<p class="text-[10px] font-black uppercase tracking-wide text-rose-700">Excluir empresa atual</p>' +
+                  '<p class="mt-2 text-xs font-bold leading-relaxed text-rose-800">Esta acao remove a empresa atual e seus dados. Para confirmar, digite exatamente o nome abaixo.</p>' +
+                  '<p class="mt-2 text-sm font-black text-rose-900">' + escapeHtml(nomeEmpresa(state.empresa)) + '</p>' +
+                  '<input id="excluir-empresa-confirmacao" placeholder="Digite o nome da empresa" style="font-size:16px" class="mt-3 h-11 w-full rounded-md border border-rose-100 bg-white px-3 text-base font-bold text-slate-900 outline-none focus:border-rose-400" />' +
+                  '<div class="mt-3 grid gap-2">' +
+                    '<button id="excluir-empresa-mobile" type="button" class="h-11 w-full rounded-xl border border-rose-200 bg-white px-4 text-sm font-black uppercase tracking-wide text-rose-700">' + (state.empresaAcao === 'excluir' ? 'Excluindo...' : 'Excluir definitivamente') + '</button>' +
+                    '<button id="cancelar-exclusao-empresa-mobile" type="button" class="h-10 w-full rounded-xl bg-slate-100 px-4 text-xs font-black uppercase tracking-wide text-slate-600">Cancelar exclusao</button>' +
+                  '</div>' +
+                '</div>')
           : '<p class="rounded-2xl bg-slate-50 p-3 text-xs font-semibold text-slate-500">Somente o Gestor Master pode excluir a empresa atual.</p>') +
         alertaHtml().replace('mt-4', '') +
       '</div>'
@@ -3441,6 +3451,16 @@
     bind('termos-mobile', function () { abrirModalMenu('termos'); });
     bind('privacidade-mobile', function () { abrirModalMenu('privacidade'); });
     bind('criar-empresa-mobile', criarEmpresaMobile);
+    bind('abrir-exclusao-empresa-mobile', function () {
+      state.empresaExclusaoAberta = true;
+      state.erro = '';
+      render();
+    });
+    bind('cancelar-exclusao-empresa-mobile', function () {
+      state.empresaExclusaoAberta = false;
+      state.erro = '';
+      render();
+    });
     bind('excluir-empresa-mobile', excluirEmpresaMobile);
     bind('abrir-criar-usuario-mobile', abrirCriarUsuarioMobile);
     bind('abrir-usuario-existente-mobile', abrirAdicionarUsuarioExistenteMobile);
@@ -4131,7 +4151,7 @@
           return Promise.all(
             keys
               .filter(function (key) {
-                return key.indexOf('avantalab-mobile-') === 0 && key !== 'avantalab-mobile-v55';
+                return key.indexOf('avantalab-mobile-') === 0 && key !== 'avantalab-mobile-v56';
               })
               .map(function (key) {
                 return caches.delete(key);
