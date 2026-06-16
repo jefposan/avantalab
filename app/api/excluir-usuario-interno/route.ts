@@ -69,10 +69,6 @@ export async function POST(request: Request) {
       return respostaErro('Usuário não encontrado.');
     }
 
-    if (usuarioAlvo.perfil === 'gestor_master') {
-      return respostaErro('O gestor master não pode ser excluído.', 403);
-    }
-
     const { data: permissao, error: erroPermissao } = await supabaseAdmin
       .from('usuarios_empresa')
       .select('id, perfil, status')
@@ -89,6 +85,16 @@ export async function POST(request: Request) {
 
     if (!permissao) {
       return respostaErro('Você não tem permissão para excluir usuários.', 403);
+    }
+
+    if (
+      usuarioAlvo.perfil === 'gestor_master' &&
+      permissao.perfil !== 'gestor_master'
+    ) {
+      return respostaErro(
+        'Somente o gestor master pode excluir outro gestor master.',
+        403
+      );
     }
 
     const ehUsuarioInterno =

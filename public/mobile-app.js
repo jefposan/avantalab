@@ -2965,7 +2965,7 @@
           (state.usuariosEmpresa.length ? state.usuariosEmpresa.map(function (usuario) {
             var atual = state.empresa && state.empresa.acessoId === usuario.id;
             var bloqueado = usuario.status === 'bloqueado';
-            var protegido = usuario.perfil === 'gestor_master' && !atual;
+            var protegido = usuario.perfil === 'gestor_master' && !atual && !(state.empresa && state.empresa.perfil === 'gestor_master');
             return '<div class="min-w-0 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2">' +
               '<div class="grid min-w-0 gap-2">' +
                 '<div class="min-w-0"><p class="truncate text-xs font-black text-slate-900">' + escapeHtml(usuario.nome || usuario.login || usuario.email || 'Usuario') + '</p><p class="truncate text-[10px] font-semibold text-slate-500">' + escapeHtml(usuario.login || usuario.email || '-') + ' · ' + escapeHtml(perfilFormatado(usuario.perfil)) + (bloqueado ? ' · Bloqueado' : '') + '</p></div>' +
@@ -4151,7 +4151,7 @@
           return Promise.all(
             keys
               .filter(function (key) {
-                return key.indexOf('avantalab-mobile-') === 0 && key !== 'avantalab-mobile-v56';
+                return key.indexOf('avantalab-mobile-') === 0 && key !== 'avantalab-mobile-v57';
               })
               .map(function (key) {
                 return caches.delete(key);
