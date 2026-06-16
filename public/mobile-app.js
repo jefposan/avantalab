@@ -116,7 +116,14 @@
     feedbackTipo: '',
     feedbackMensagem: '',
     feedbackEnviando: false,
+    manterConectado: false,
   };
+
+  var CHAVE_MANTER_CONECTADO_ATE = 'avantalab_mobile_manter_conectado_ate';
+  var CHAVE_SESSAO_TEMPORARIA = 'avantalab_mobile_sessao_temporaria';
+  var CHAVE_OAUTH_TEMPORARIO_ATE = 'avantalab_mobile_oauth_temporario_ate';
+  var TRINTA_DIAS_MS = 30 * 24 * 60 * 60 * 1000;
+  var DEZ_MINUTOS_MS = 10 * 60 * 1000;
 
   function dinheiro(valor) {
     return new Intl.NumberFormat('pt-BR', {
@@ -173,6 +180,78 @@
       .toLowerCase()
       .normalize('NFD')
       .replace(/[\u0300-\u036f]/g, '');
+  }
+
+  function limparPreferenciaSessaoMobile() {
+    try {
+      localStorage.removeItem(CHAVE_MANTER_CONECTADO_ATE);
+      localStorage.removeItem(CHAVE_SESSAO_TEMPORARIA);
+      localStorage.removeItem(CHAVE_OAUTH_TEMPORARIO_ATE);
+      sessionStorage.removeItem(CHAVE_SESSAO_TEMPORARIA);
+    } catch (error) {}
+  }
+
+  function registrarPreferenciaSessaoMobile(manterConectado, aguardandoOAuth) {
+    try {
+      if (manterConectado) {
+        localStorage.setItem(CHAVE_MANTER_CONECTADO_ATE, String(Date.now() + TRINTA_DIAS_MS));
+        localStorage.removeItem(CHAVE_SESSAO_TEMPORARIA);
+        localStorage.removeItem(CHAVE_OAUTH_TEMPORARIO_ATE);
+        sessionStorage.removeItem(CHAVE_SESSAO_TEMPORARIA);
+        return;
+      }
+
+      localStorage.removeItem(CHAVE_MANTER_CONECTADO_ATE);
+      localStorage.setItem(CHAVE_SESSAO_TEMPORARIA, '1');
+      sessionStorage.setItem(CHAVE_SESSAO_TEMPORARIA, '1');
+
+      if (aguardandoOAuth) {
+        localStorage.setItem(CHAVE_OAUTH_TEMPORARIO_ATE, String(Date.now() + DEZ_MINUTOS_MS));
+      } else {
+        localStorage.removeItem(CHAVE_OAUTH_TEMPORARIO_ATE);
+      }
+    } catch (error) {}
+  }
+
+  function sessaoPersistenteValidaMobile() {
+    try {
+      var validade = Number(localStorage.getItem(CHAVE_MANTER_CONECTADO_ATE) || 0);
+      if (!validade) return false;
+      if (validade > Date.now()) return true;
+      limparPreferenciaSessaoMobile();
+      return false;
+    } catch (error) {
+      return false;
+    }
+  }
+
+  function permitirRetornoOAuthTemporarioMobile() {
+    try {
+      var validade = Number(localStorage.getItem(CHAVE_OAUTH_TEMPORARIO_ATE) || 0);
+      if (!validade || validade <= Date.now()) return false;
+      sessionStorage.setItem(CHAVE_SESSAO_TEMPORARIA, '1');
+      localStorage.removeItem(CHAVE_OAUTH_TEMPORARIO_ATE);
+      return true;
+    } catch (error) {
+      return false;
+    }
+  }
+
+  function deveEncerrarSessaoSalvaMobile() {
+    try {
+      if (sessaoPersistenteValidaMobile()) return false;
+
+      if (localStorage.getItem(CHAVE_SESSAO_TEMPORARIA) === '1') {
+        if (sessionStorage.getItem(CHAVE_SESSAO_TEMPORARIA) === '1') return false;
+        if (permitirRetornoOAuthTemporarioMobile()) return false;
+        limparPreferenciaSessaoMobile();
+        return true;
+      }
+
+      return true;
+    } catch (error) {
+      return true;
+    }
   }
 
   function maxDias(mes, ano) {
@@ -1064,6 +1143,7 @@
       return;
     }
 
+    registrarPreferenciaSessaoMobile(state.manterConectado, false);
     state.usuario = resposta.data.user;
     state.autenticado = true;
     await carregarEmpresas(resposta.data.user.id);
@@ -1075,6 +1155,7 @@
       state.usuario = null;
       state.telaAcesso = 'login';
       await db.auth.signOut();
+      limparPreferenciaSessaoMobile();
       setErro('Nenhuma empresa vinculada a este usuario.');
       return;
     }
@@ -1089,6 +1170,7 @@
     state.mensagem = '';
     state.carregando = true;
     state.loginAcao = 'google';
+    registrarPreferenciaSessaoMobile(state.manterConectado, true);
     render();
 
     var resposta = await db.auth.signInWithOAuth({
@@ -1101,6 +1183,7 @@
     if (resposta.error) {
       state.carregando = false;
       state.loginAcao = '';
+      limparPreferenciaSessaoMobile();
       setErro(mensagemErro(resposta.error, 'Nao foi possivel conectar com o Google agora. Tente novamente em instantes.'));
     }
   }
@@ -1362,6 +1445,7 @@
 
   async function sair() {
     await db.auth.signOut();
+    limparPreferenciaSessaoMobile();
     state.autenticado = false;
     state.usuario = null;
     state.empresas = [];
@@ -2010,6 +2094,13 @@
       '<div class="grid gap-4">' +
         inputHtml('login', 'Email ou login', 'text', 'seuemail@exemplo.com ou seu login', state.loginValor) +
         senhaInputHtml('senha', 'Senha', 'Digite sua senha', 'mostrarSenhaLogin', 'toggle-senha-login') +
+        '<label class="flex items-start gap-3 rounded-2xl border border-white/35 bg-white/35 px-3 py-3 text-left shadow-sm">' +
+          '<input id="manter-conectado" type="checkbox" class="mt-0.5 h-5 w-5 shrink-0 accent-cyan-700"' + (state.manterConectado ? ' checked' : '') + ' />' +
+          '<span class="min-w-0">' +
+            '<span class="block text-sm font-black text-slate-800">Manter conectado</span>' +
+            '<span class="mt-0.5 block text-xs font-semibold leading-snug text-slate-600">Nao pedir login neste celular por 30 dias.</span>' +
+          '</span>' +
+        '</label>' +
         '<div class="text-right">' +
           '<button id="esqueci-senha" type="button" class="text-xs font-bold text-sky-700 underline">Esqueci minha senha</button>' +
         '</div>' +
@@ -3220,6 +3311,9 @@
 
     bind('entrar', entrar);
     bind('entrar-google', entrarGoogle);
+    bindChange('manter-conectado', function () {
+      state.manterConectado = Boolean(this.checked);
+    });
     bind('instalar-login', instalarApp);
     bind('boas-vindas-login', function () {
       state.telaAcesso = 'login';
@@ -4022,7 +4116,7 @@
           return Promise.all(
             keys
               .filter(function (key) {
-                return key.indexOf('avantalab-mobile-') === 0 && key !== 'avantalab-mobile-v47';
+                return key.indexOf('avantalab-mobile-') === 0 && key !== 'avantalab-mobile-v54';
               })
               .map(function (key) {
                 return caches.delete(key);
@@ -4047,6 +4141,10 @@
     render();
 
     try {
+      if (deveEncerrarSessaoSalvaMobile()) {
+        await db.auth.signOut();
+      }
+
       var sessao = await db.auth.getSession();
       if (sessao.data.session && sessao.data.session.user) {
         state.usuario = sessao.data.session.user;
