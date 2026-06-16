@@ -42,6 +42,7 @@ import {
   salvarDespesaCadastrada,
   apagarDespesaCadastrada,
   buscarUsuariosEmpresa,
+  buscarMeuAcessoEmpresa,
   criarUsuarioEmpresa,
   buscarUsuarioExistenteEmpresa,
   vincularUsuarioExistenteEmpresa,
@@ -134,6 +135,11 @@ const [empresasDoUsuario, setEmpresasDoUsuario] = useState<any[]>([]);
 const [empresaParaSelecionar, setEmpresaParaSelecionar] = useState<any | null>(null);
 const [modalSelecionarEmpresa, setModalSelecionarEmpresa] = useState(false);
 const [modalEmpresasAberto, setModalEmpresasAberto] = useState(false);
+const [modalEditarEmpresaAberto, setModalEditarEmpresaAberto] = useState(false);
+const [editEmpresaNome, setEditEmpresaNome] = useState('');
+const [editEmpresaLogin, setEditEmpresaLogin] = useState('');
+const [editEmpresaSenha, setEditEmpresaSenha] = useState('');
+const [editEmpresaSalvando, setEditEmpresaSalvando] = useState(false);
 const [modalExcluirEmpresa, setModalExcluirEmpresa] = useState(false);
 const [nomeConfirmacaoExclusao, setNomeConfirmacaoExclusao] = useState('');
 const [excluindoEmpresa, setExcluindoEmpresa] = useState(false);
@@ -242,6 +248,7 @@ const [entradaFaturamentoValorNumerico, setEntradaFaturamentoValorNumerico] = us
 const [entradaFaturamentoSalvando, setEntradaFaturamentoSalvando] = useState(false);
 const [modalReceitaDashboardAberto, setModalReceitaDashboardAberto] = useState(false);
 const [mesReceitaDashboard, setMesReceitaDashboard] = useState('JANEIRO');
+const [tipoReceitaDashboard, setTipoReceitaDashboard] = useState<'entrada' | 'total'>('entrada');
 const [entradaFaturamentoEditandoId, setEntradaFaturamentoEditandoId] = useState<string | null>(null);
 const [editEntradaFaturamentoDia, setEditEntradaFaturamentoDia] = useState('');
 const [editEntradaFaturamentoOrigem, setEditEntradaFaturamentoOrigem] = useState('');
@@ -1154,7 +1161,10 @@ const totalEntradasFaturamentoDoMes = entradasFaturamentoOrdenadasDoMes.reduce(
   }));
 };
 
-const salvarFaturamento = async (confirmarSomaComEntradas = false) => {
+const salvarFaturamento = async (
+  confirmarSomaComEntradas = false,
+  mesInformado?: string
+) => {
   if (!empresaId) {
     abrirAviso(
       'Empresa não carregada',
@@ -1163,7 +1173,9 @@ const salvarFaturamento = async (confirmarSomaComEntradas = false) => {
     return;
   }
 
-  if (!mesFaturamento) {
+  const mesSelecionado = mesInformado || mesFaturamento;
+
+  if (!mesSelecionado) {
     abrirAviso(
       'Mês obrigatório',
       'Selecione o mês do faturamento antes de salvar.'
@@ -1182,7 +1194,7 @@ const salvarFaturamento = async (confirmarSomaComEntradas = false) => {
   return;
 }
 
-  const totalEntradasMes = getTotalEntradasPorMes(mesFaturamento);
+  const totalEntradasMes = getTotalEntradasPorMes(mesSelecionado);
   const valorFinal = totalEntradasMes > 0
     ? totalEntradasMes + valorLimpo
     : valorLimpo;
@@ -1191,10 +1203,10 @@ const salvarFaturamento = async (confirmarSomaComEntradas = false) => {
     abrirConfirmacao({
       titulo: 'Confirmar total da receita',
       mensagem:
-        `Este mes ja possui ${formatarMoeda(totalEntradasMes)} em receitas lancadas.\n\nO valor informado (${formatarMoeda(valorLimpo)}) sera somado as receitas existentes.\n\nTotal final de ${mesFaturamento}: ${formatarMoeda(valorFinal)}.`,
+        `Este mes ja possui ${formatarMoeda(totalEntradasMes)} em receitas lancadas.\n\nO valor informado (${formatarMoeda(valorLimpo)}) sera somado as receitas existentes.\n\nTotal final de ${mesSelecionado}: ${formatarMoeda(valorFinal)}.`,
       textoConfirmar: 'Confirmar total',
       acao: async () => {
-        await salvarFaturamento(true);
+        await salvarFaturamento(true, mesSelecionado);
       },
     });
     return;
@@ -1203,14 +1215,14 @@ const salvarFaturamento = async (confirmarSomaComEntradas = false) => {
   const salvo = await salvarFaturamentoBanco({
     empresaId,
     ano: Number(anoSelecionado),
-    mes: mesFaturamento,
+    mes: mesSelecionado,
     valor: valorFinal,
   });
 
   if (salvo) {
     setFaturamentos((prev) => ({
       ...prev,
-      [mesFaturamento]: valorFinal,
+      [mesSelecionado]: valorFinal,
     }));
 
     setInputFaturamento('');
@@ -1335,6 +1347,23 @@ const adicionarEntradaFaturamento = async (mesInformado?: string) => {
   }
 };
 
+const limparCamposReceitaDashboard = (tipo = tipoReceitaDashboard) => {
+  if (tipo === 'entrada') {
+    setEntradaFaturamentoDia('');
+    setEntradaFaturamentoOrigem('');
+    setEntradaFaturamentoValor('');
+    setEntradaFaturamentoValorNumerico(0);
+    return;
+  }
+
+  setInputFaturamento('');
+};
+
+const fecharModalReceitaDashboard = () => {
+  setModalReceitaDashboardAberto(false);
+  limparCamposReceitaDashboard();
+};
+
 const solicitarEntradaFaturamentoDashboard = () => {
   if (!entradaFaturamentoDia || !entradaFaturamentoOrigem.trim() || entradaFaturamentoValorNumerico <= 0) {
     abrirAviso(
@@ -1344,7 +1373,25 @@ const solicitarEntradaFaturamentoDashboard = () => {
     return;
   }
 
-  setMesReceitaDashboard(mesFaturamento || mesAtivo || meses[new Date().getMonth()]);
+  setTipoReceitaDashboard('entrada');
+  setMesReceitaDashboard(mesAtivo || mesFaturamento || meses[new Date().getMonth()]);
+  setModalReceitaDashboardAberto(true);
+};
+
+const solicitarFaturamentoDashboard = () => {
+  const valorLimpo =
+    parseInt(inputFaturamento.replace(/\D/g, '') || '0', 10) / 100;
+
+  if (valorLimpo <= 0) {
+    abrirAviso(
+      'Valor obrigatorio',
+      'Informe o valor da receita antes de continuar.'
+    );
+    return;
+  }
+
+  setTipoReceitaDashboard('total');
+  setMesReceitaDashboard(mesAtivo || mesFaturamento || meses[new Date().getMonth()]);
   setModalReceitaDashboardAberto(true);
 };
 
@@ -1360,7 +1407,14 @@ const confirmarEntradaFaturamentoDashboard = async () => {
   }
 
   setModalReceitaDashboardAberto(false);
-  await adicionarEntradaFaturamento(mesSelecionado);
+  if (tipoReceitaDashboard === 'entrada') {
+    await adicionarEntradaFaturamento(mesSelecionado);
+    limparCamposReceitaDashboard('entrada');
+    return;
+  }
+
+  await salvarFaturamento(true, mesSelecionado);
+  limparCamposReceitaDashboard('total');
 };
 const abrirModalUsuarios = () => {
   setUsuarioNome('');
@@ -3570,6 +3624,165 @@ const abrirTrocaEmpresa = async () => {
   setModalSelecionarEmpresa(true);
 };
 
+const abrirEdicaoEmpresaAtual = async () => {
+  if (!empresaId) {
+    abrirAviso(
+      'Empresa não carregada',
+      'Não foi possível identificar a empresa atual.'
+    );
+    return;
+  }
+
+  if (!podeAcessarAjustes) {
+    abrirAviso(
+      'Acesso não permitido',
+      'Somente Gestor Master e Administrador podem editar estes dados.'
+    );
+    return;
+  }
+
+  setEditEmpresaNome(nomeEmpresaAtual || '');
+  setEditEmpresaLogin(emailUsuarioAtual || '');
+  setEditEmpresaSenha('');
+
+  const { data: usuarioLogado } = await supabase.auth.getUser();
+  const usuarioId = usuarioLogado.user?.id;
+
+  if (usuarioId) {
+    const acessoAtual = await buscarMeuAcessoEmpresa(empresaId, usuarioId);
+    if (acessoAtual) {
+      setEditEmpresaLogin(acessoAtual.login || acessoAtual.email || emailUsuarioAtual || '');
+    }
+  }
+
+  setModalEmpresasAberto(false);
+  setModalEditarEmpresaAberto(true);
+};
+
+const fecharEdicaoEmpresaAtual = () => {
+  if (editEmpresaSalvando) return;
+
+  setModalEditarEmpresaAberto(false);
+  setEditEmpresaNome('');
+  setEditEmpresaLogin('');
+  setEditEmpresaSenha('');
+};
+
+const salvarEdicaoEmpresaAtual = async () => {
+  if (!empresaId || !acessoUsuarioAtualId) {
+    abrirAviso(
+      'Dados incompletos',
+      'Não foi possível identificar a empresa ou o acesso atual.'
+    );
+    return;
+  }
+
+  if (!podeAcessarAjustes) {
+    abrirAviso(
+      'Acesso não permitido',
+      'Somente Gestor Master e Administrador podem editar estes dados.'
+    );
+    return;
+  }
+
+  const nomeLimpo = editEmpresaNome.trim();
+  const loginLimpo = editEmpresaLogin.trim().toLowerCase();
+  const senhaLimpa = editEmpresaSenha.trim();
+
+  if (!nomeLimpo) {
+    abrirAviso('Nome obrigatório', 'Informe o nome da empresa.');
+    return;
+  }
+
+  if (!loginLimpo) {
+    abrirAviso('Login obrigatório', 'Informe o login ou email do acesso atual.');
+    return;
+  }
+
+  if (senhaLimpa && senhaLimpa.length < 8) {
+    abrirAviso('Senha inválida', 'A nova senha deve ter pelo menos 8 caracteres.');
+    return;
+  }
+
+  try {
+    setEditEmpresaSalvando(true);
+
+    const { error: erroEmpresa } = await supabase
+      .from('empresas')
+      .update({ nome: nomeLimpo })
+      .eq('id', empresaId);
+
+    if (erroEmpresa) {
+      console.error('Erro ao atualizar empresa:', erroEmpresa);
+      abrirAviso(
+        'Erro ao salvar empresa',
+        erroEmpresa.message || 'Não foi possível atualizar o nome da empresa.',
+        undefined,
+        'erro'
+      );
+      return;
+    }
+
+    const resultadoUsuario = await atualizarUsuarioEmpresa({
+      acessoId: acessoUsuarioAtualId,
+      nome: nomeUsuarioAtual || nomeLimpo,
+      email: loginLimpo,
+      perfil: perfilUsuario || 'operador_simples',
+    });
+
+    if (resultadoUsuario.erro) {
+      abrirAviso(
+        'Erro ao salvar acesso',
+        resultadoUsuario.mensagem || 'Não foi possível atualizar login/email.',
+        undefined,
+        'erro'
+      );
+      return;
+    }
+
+    if (senhaLimpa) {
+      const resultadoSenha = await redefinirSenhaUsuarioEmpresa({
+        acessoId: acessoUsuarioAtualId,
+        novaSenha: senhaLimpa,
+      });
+
+      if (resultadoSenha.erro) {
+        abrirAviso(
+          'Dados salvos parcialmente',
+          resultadoSenha.mensagem || 'Empresa e login foram salvos, mas a senha não foi alterada.',
+          undefined,
+          'alerta'
+        );
+        setNomeEmpresaAtual(nomeLimpo);
+        setEmpresasDoUsuario((empresas) =>
+          empresas.map((empresa) =>
+            empresa.id === empresaId
+              ? { ...empresa, nome: nomeLimpo, empresa_nome: nomeLimpo }
+              : empresa
+          )
+        );
+        setEditEmpresaSenha('');
+        return;
+      }
+    }
+
+    setNomeEmpresaAtual(nomeLimpo);
+    setEmailUsuarioAtual(loginLimpo.includes('@') ? loginLimpo : emailUsuarioAtual);
+    setEmpresasDoUsuario((empresas) =>
+      empresas.map((empresa) =>
+        empresa.id === empresaId
+          ? { ...empresa, nome: nomeLimpo, empresa_nome: nomeLimpo, usuario_login: loginLimpo }
+          : empresa
+      )
+    );
+
+    fecharEdicaoEmpresaAtual();
+    abrirAviso('Dados atualizados', 'Empresa e acesso foram atualizados com sucesso.', undefined, 'sucesso');
+  } finally {
+    setEditEmpresaSalvando(false);
+  }
+};
+
 const confirmarExclusaoEmpresaAtual = () => {
   if (perfilUsuario !== 'gestor_master') {
     abrirAviso(
@@ -5599,7 +5812,7 @@ if (isTelaMobile) {
 {modalReceitaDashboardAberto && (
   <div
     className="fixed inset-0 z-[6200] flex items-center justify-center bg-black/60 px-4"
-    onClick={() => setModalReceitaDashboardAberto(false)}
+    onClick={fecharModalReceitaDashboard}
   >
     <div
       className={`w-full max-w-md rounded-2xl border p-5 shadow-2xl ${
@@ -5614,11 +5827,11 @@ if (isTelaMobile) {
         style={estiloTemaPrimario}
       >
         <p className="text-xs font-black uppercase tracking-[0.18em]">
-          Confirmar receita
+          Confirmar lançamento
         </p>
 
         <h2 className="mt-1 text-xl font-black">
-          Lançar receita
+          LANÇAR RECEITA
         </h2>
       </div>
 
@@ -5651,18 +5864,27 @@ if (isTelaMobile) {
           }`}
         >
           <p className={`text-xs font-black uppercase tracking-wide ${textMuted}`}>
-            Valor
+            {tipoReceitaDashboard === 'entrada' ? 'Valor da receita' : 'Total informado'}
           </p>
           <p className={`mt-1 text-lg font-black ${textStrong}`}>
-            {formatarMoeda(entradaFaturamentoValorNumerico)}
+            {formatarMoeda(
+              tipoReceitaDashboard === 'entrada'
+                ? entradaFaturamentoValorNumerico
+                : parseInt(inputFaturamento.replace(/\D/g, '') || '0', 10) / 100
+            )}
           </p>
+          {tipoReceitaDashboard === 'total' && getTotalEntradasPorMes(mesReceitaDashboard) > 0 && (
+            <p className={`mt-2 text-xs font-semibold leading-relaxed ${textMuted}`}>
+              Este mês já possui {formatarMoeda(getTotalEntradasPorMes(mesReceitaDashboard))} em receitas lançadas. O valor informado será somado a elas.
+            </p>
+          )}
         </div>
       </div>
 
       <div className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-2">
         <button
           type="button"
-          onClick={() => setModalReceitaDashboardAberto(false)}
+          onClick={fecharModalReceitaDashboard}
           className={`rounded-xl border px-4 py-3 text-xs font-black uppercase transition cursor-pointer ${
             darkMode
               ? 'border-slate-600 text-slate-300 hover:bg-slate-700'
@@ -5789,6 +6011,115 @@ if (isTelaMobile) {
   </div>
 )}
 
+{modalEditarEmpresaAberto && (
+  <div
+    className="fixed inset-0 z-[5600] flex items-center justify-center bg-black/60 px-4"
+    onClick={fecharEdicaoEmpresaAtual}
+  >
+    <div
+      className={`w-full max-w-lg rounded-2xl border p-6 shadow-2xl ${
+        darkMode
+          ? 'bg-slate-800 border-slate-700'
+          : 'bg-white border-slate-200'
+      }`}
+      onClick={(e) => e.stopPropagation()}
+    >
+      <div
+        className="mb-5 rounded-xl px-4 py-3"
+        style={estiloTemaPrimario}
+      >
+        <p className="text-xs font-black uppercase tracking-[0.18em]">
+          Gerenciar empresa
+        </p>
+        <h2 className="mt-1 text-xl font-black">
+          Editar dados
+        </h2>
+      </div>
+
+      <div className="space-y-3">
+        <div>
+          <label className={`mb-1 block text-xs font-black uppercase tracking-wide ${textMuted}`}>
+            Nome da empresa
+          </label>
+          <input
+            type="text"
+            value={editEmpresaNome}
+            onChange={(e) => setEditEmpresaNome(e.target.value)}
+            className={`w-full rounded-xl border px-4 py-3 text-sm font-semibold outline-none ${
+              darkMode
+                ? 'border-slate-600 bg-slate-900 text-white'
+                : 'border-slate-300 bg-white text-slate-800'
+            }`}
+          />
+        </div>
+
+        <div>
+          <label className={`mb-1 block text-xs font-black uppercase tracking-wide ${textMuted}`}>
+            Login ou email do acesso atual
+          </label>
+          <input
+            type="text"
+            value={editEmpresaLogin}
+            onChange={(e) => setEditEmpresaLogin(e.target.value)}
+            className={`w-full rounded-xl border px-4 py-3 text-sm font-semibold outline-none ${
+              darkMode
+                ? 'border-slate-600 bg-slate-900 text-white'
+                : 'border-slate-300 bg-white text-slate-800'
+            }`}
+          />
+        </div>
+
+        <div>
+          <label className={`mb-1 block text-xs font-black uppercase tracking-wide ${textMuted}`}>
+            Nova senha
+          </label>
+          <input
+            type="password"
+            value={editEmpresaSenha}
+            onChange={(e) => setEditEmpresaSenha(e.target.value)}
+            placeholder="Deixe em branco para manter a senha atual"
+            className={`w-full rounded-xl border px-4 py-3 text-sm font-semibold outline-none ${
+              darkMode
+                ? 'border-slate-600 bg-slate-900 text-white placeholder:text-slate-500'
+                : 'border-slate-300 bg-white text-slate-800 placeholder:text-slate-400'
+            }`}
+          />
+          {perfilUsuario === 'gestor_master' && (
+            <p className={`mt-2 text-xs font-semibold leading-relaxed ${textMuted}`}>
+              Para Gestor Master, a senha deve ser alterada pela recuperação de senha.
+            </p>
+          )}
+        </div>
+      </div>
+
+      <div className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-2">
+        <button
+          type="button"
+          onClick={fecharEdicaoEmpresaAtual}
+          disabled={editEmpresaSalvando}
+          className={`rounded-xl border px-4 py-3 text-xs font-black uppercase transition cursor-pointer disabled:cursor-not-allowed disabled:opacity-60 ${
+            darkMode
+              ? 'border-slate-600 text-slate-300 hover:bg-slate-700'
+              : 'border-slate-300 text-slate-600 hover:bg-slate-100'
+          }`}
+        >
+          Cancelar
+        </button>
+
+        <button
+          type="button"
+          onClick={salvarEdicaoEmpresaAtual}
+          disabled={editEmpresaSalvando}
+          className="rounded-xl px-4 py-3 text-xs font-black uppercase text-white shadow-md transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-60"
+          style={estiloTemaPrimario}
+        >
+          {editEmpresaSalvando ? 'Salvando...' : 'Salvar alterações'}
+        </button>
+      </div>
+    </div>
+  </div>
+)}
+
 {modalEmpresasAberto && (
   <div
     className="fixed inset-0 z-[5500] flex items-center justify-center bg-black/60 px-4"
@@ -5829,6 +6160,16 @@ if (isTelaMobile) {
       </div>
 
       <div className="space-y-3">
+        {podeAcessarAjustes && (
+          <button
+            type="button"
+            onClick={abrirEdicaoEmpresaAtual}
+            className="w-full rounded-xl bg-slate-900 px-4 py-3 text-sm font-black uppercase tracking-wide text-white transition hover:bg-slate-800 cursor-pointer"
+          >
+            Editar dados
+          </button>
+        )}
+
         {podeCriarNovaEmpresa && (
           <button
             type="button"
@@ -7447,7 +7788,7 @@ setAjustesAberto(false);
   className="print-ocultar sticky top-[116px] z-[850] shadow-md px-6 py-2 text-white"
   style={{ backgroundColor: corPrimaria }}
 >
-  <div className="max-w-7xl mx-auto grid w-full grid-cols-2 items-center gap-6">
+  <div className="max-w-7xl mx-auto grid w-full grid-cols-[minmax(260px,0.8fr)_minmax(0,1.2fr)] items-center gap-4">
     {/* ESQUERDA: MÊS COM SETAS */}
     <div className="flex items-center justify-center gap-2">
       <button
@@ -7488,18 +7829,18 @@ setAjustesAberto(false);
     </div>
 
     {/* DIREITA: RESUMOS ALINHADOS AO LIMITE DO CONTEÚDO */}
-    <div className="flex flex-col items-end gap-1.5">
-      <div className="flex items-center justify-end gap-2">
-  <div className="h-10 w-[158px] shrink-0 rounded-md bg-white px-3 py-1 text-left shadow-sm border border-white/20">
+    <div className="flex min-w-0 max-w-full flex-1 flex-col items-end gap-1.5 overflow-hidden">
+      <div className="grid w-full max-w-[520px] grid-cols-2 items-stretch justify-end gap-1.5 min-[1180px]:grid-cols-4">
+  <div className="h-10 min-w-0 rounded-md bg-white px-2 py-1 text-left shadow-sm border border-white/20">
   <div className="mb-1 flex items-center justify-between gap-2">
-    <span className="text-[10px] font-bold uppercase text-slate-500">
+    <span className="min-w-0 truncate text-[9px] font-bold uppercase text-slate-500">
   {mostrarBarraComparativoDespesas
     ? `Vs. ${mesAnteriorParaAnalise}`
     : 'Vs. mês ant.'}
 </span>
 
     <span
-      className="text-[10px] font-black"
+      className="shrink-0 text-[9px] font-black"
       style={{
         color: mostrarBarraComparativoDespesas
           ? corBarraDespesas
@@ -7528,31 +7869,31 @@ setAjustesAberto(false);
 </div>
 
   {/* Total Despesas */}
-  <div className="h-10 w-[132px] shrink-0 rounded-md bg-white px-3 py-1.5 text-right shadow-sm border border-white/20">
-    <span className="block text-[10px] font-bold uppercase text-slate-500">
+  <div className="h-10 min-w-0 rounded-md bg-white px-2 py-1.5 text-right shadow-sm border border-white/20">
+    <span className="block truncate text-[9px] font-bold uppercase text-slate-500">
       Total Despesas
     </span>
-    <span className="block text-xs font-black text-red-500">
+    <span className="block truncate text-[10px] font-black text-red-500">
       {formatarMoeda(totalDespesasMes)}
     </span>
   </div>
 
   {/* Total Faturado */}
-  <div className="h-10 w-[132px] shrink-0 rounded-md bg-white px-3 py-1.5 text-right shadow-sm border border-white/20">
-    <span className="block text-[10px] font-bold uppercase text-slate-500">
+  <div className="h-10 min-w-0 rounded-md bg-white px-2 py-1.5 text-right shadow-sm border border-white/20">
+    <span className="block truncate text-[9px] font-bold uppercase text-slate-500">
       Total faturado
     </span>
-    <span className="block text-xs font-black text-emerald-600">
+    <span className="block truncate text-[10px] font-black text-emerald-600">
       {formatarMoeda(faturamentoDoMesAtual)}
     </span>
   </div>
   {/* Saldo do Mês */}
-  <div className="h-10 w-[132px] shrink-0 rounded-md bg-white px-3 py-1.5 text-right shadow-sm border border-white/20">
-    <span className="block text-[10px] font-bold uppercase text-slate-500">
+  <div className="h-10 min-w-0 rounded-md bg-white px-2 py-1.5 text-right shadow-sm border border-white/20">
+    <span className="block truncate text-[9px] font-bold uppercase text-slate-500">
       Saldo do Mês
     </span>
     <span
-      className={`block text-xs font-black ${
+      className={`block truncate text-[10px] font-black ${
         lucroOperacional >= 0 ? 'text-emerald-600' : 'text-red-500'
       }`}
     >
@@ -7912,12 +8253,10 @@ setAjustesAberto(false);
         totalDespesasMes={totalDespesasMes}
         maiorGasto={maiorGasto}
         lucroOperacional={lucroOperacional}
-  mesFaturamento={mesFaturamento}
-  setMesFaturamento={setMesFaturamento}
   inputFaturamento={inputFaturamento}
   setInputFaturamento={setInputFaturamento}
   placeholderFaturamento={formatarValorCampo(faturamentos[mesFaturamento] || 0)}
-  salvarFaturamento={salvarFaturamento}
+  solicitarFaturamentoDashboard={solicitarFaturamentoDashboard}
         entradaFaturamentoDia={entradaFaturamentoDia}
         setEntradaFaturamentoDia={setEntradaFaturamentoDia}
         entradaFaturamentoOrigem={entradaFaturamentoOrigem}

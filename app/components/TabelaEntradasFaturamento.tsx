@@ -69,7 +69,7 @@ export default function TabelaEntradasFaturamento({
             >
               {entradaEditandoId === entrada.id ? (
                 <>
-                  <td className="py-2 px-4 w-24 text-center">
+                  <td className="py-1.5 px-1.5 w-16 text-center">
                     <input
                       type="number"
                       min="1"
@@ -79,7 +79,7 @@ export default function TabelaEntradasFaturamento({
                     />
                   </td>
 
-                  <td className="py-2 px-4">
+                  <td className="py-1.5 px-1.5">
                     <input
                       type="text"
                       value={editEntradaOrigem}
@@ -88,7 +88,7 @@ export default function TabelaEntradasFaturamento({
                     />
                   </td>
 
-                  <td className="py-2 px-4 w-40">
+                  <td className="py-1.5 px-1.5 w-32">
                     <input
                       type="text"
                       value={editEntradaValor}
@@ -108,7 +108,7 @@ export default function TabelaEntradasFaturamento({
                     />
                   </td>
 
-                  <td className="py-2 px-4 w-24 text-center">
+                  <td className="py-1.5 px-1.5 w-20 text-center">
                     <div className="flex items-center justify-center gap-1">
                       <button
                         type="button"

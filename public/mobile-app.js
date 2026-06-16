@@ -124,6 +124,10 @@
     feedbackEnviando: false,
     manterConectado: false,
     empresaExclusaoAberta: false,
+    empresaEdicaoAberta: false,
+    editEmpresaNome: '',
+    editEmpresaLogin: '',
+    editEmpresaSenha: '',
   };
 
   var CHAVE_MANTER_CONECTADO_ATE = 'avantalab_mobile_manter_conectado_ate';
@@ -1033,7 +1037,7 @@
 
     var vinculos = await db
       .from('usuarios_empresa')
-      .select('id, empresa_id, nome, email, perfil, status, telefone, telefone_confirmado')
+      .select('id, empresa_id, nome, email, login, perfil, status, telefone, telefone_confirmado')
       .eq('user_id', usuarioId)
       .eq('status', 'ativo')
       .order('nome', { ascending: true });
@@ -1084,6 +1088,9 @@
           id: empresa.id,
           nome: empresa.nome,
           empresa_nome: empresa.nome,
+          usuario_nome: vinculo.nome || '',
+          email: vinculo.email || '',
+          login: vinculo.login || '',
           perfil: vinculo.perfil,
           acessoId: vinculo.id,
           telefone: vinculo.telefone || '',
@@ -2003,6 +2010,133 @@
     mostrarToast('Empresa criada.');
   }
 
+  function abrirEdicaoEmpresaMobile() {
+    if (!state.empresa || !podeGerenciarUsuarios()) return;
+
+    state.empresaEdicaoAberta = true;
+    state.empresaExclusaoAberta = false;
+    state.editEmpresaNome = nomeEmpresa(state.empresa);
+    state.editEmpresaLogin = state.empresa.login || state.empresa.email || '';
+    state.editEmpresaSenha = '';
+    state.erro = '';
+    render();
+  }
+
+  function cancelarEdicaoEmpresaMobile() {
+    if (state.carregando) return;
+
+    state.empresaEdicaoAberta = false;
+    state.editEmpresaNome = '';
+    state.editEmpresaLogin = '';
+    state.editEmpresaSenha = '';
+    state.erro = '';
+    render();
+  }
+
+  async function salvarEdicaoEmpresaMobile() {
+    if (!state.empresa || !podeGerenciarUsuarios()) return;
+
+    var nome = campo('editar-empresa-nome').trim();
+    var login = campo('editar-empresa-login').trim().toLowerCase();
+    var senha = campo('editar-empresa-senha').trim();
+
+    if (!nome) {
+      setErro('Informe o nome da empresa.');
+      return;
+    }
+
+    if (!login) {
+      setErro('Informe o login ou email do acesso atual.');
+      return;
+    }
+
+    if (senha && senha.length < 8) {
+      setErro('A nova senha deve ter pelo menos 8 caracteres.');
+      return;
+    }
+
+    state.carregando = true;
+    state.empresaAcao = 'editar';
+    state.erro = '';
+    render();
+
+    var tok = await tokenSessao();
+    if (!tok) {
+      state.carregando = false;
+      state.empresaAcao = '';
+      setErro('Sessao expirada. Faca login novamente.');
+      return;
+    }
+
+    var atualizacaoEmpresa = await db
+      .from('empresas')
+      .update({ nome: nome })
+      .eq('id', state.empresa.id);
+
+    if (atualizacaoEmpresa.error) {
+      state.carregando = false;
+      state.empresaAcao = '';
+      setErro(mensagemErro(atualizacaoEmpresa.error, 'Nao foi possivel atualizar a empresa.'));
+      return;
+    }
+
+    var respostaUsuarioHttp = await fetch('/api/atualizar-usuario-empresa', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: 'Bearer ' + tok,
+      },
+      body: JSON.stringify({
+        acessoId: state.empresa.acessoId,
+        nome: state.empresa.usuario_nome || nome,
+        email: login,
+        perfil: state.empresa.perfil || 'operador_simples',
+      }),
+    });
+    var respostaUsuario = await lerResposta(respostaUsuarioHttp);
+
+    if (!respostaUsuarioHttp.ok || respostaUsuario.erro) {
+      state.carregando = false;
+      state.empresaAcao = '';
+      setErro(respostaUsuario.mensagem || 'Nao foi possivel atualizar o acesso.');
+      return;
+    }
+
+    if (senha) {
+      var respostaSenhaHttp = await fetch('/api/redefinir-senha-usuario', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: 'Bearer ' + tok,
+        },
+        body: JSON.stringify({
+          acessoId: state.empresa.acessoId,
+          novaSenha: senha,
+        }),
+      });
+      var respostaSenha = await lerResposta(respostaSenhaHttp);
+
+      if (!respostaSenhaHttp.ok || respostaSenha.erro) {
+        state.carregando = false;
+        state.empresaAcao = '';
+        setErro(respostaSenha.mensagem || 'Empresa e login foram salvos, mas a senha nao foi alterada.');
+        await carregarEmpresas(state.usuario.id);
+        render();
+        return;
+      }
+    }
+
+    state.carregando = false;
+    state.empresaAcao = '';
+    state.empresaEdicaoAberta = false;
+    state.editEmpresaNome = '';
+    state.editEmpresaLogin = '';
+    state.editEmpresaSenha = '';
+    await carregarEmpresas(state.usuario.id);
+    await carregarDados();
+    mostrarToast('Dados atualizados.');
+  }
+
   async function excluirEmpresaMobile() {
     if (!state.empresa) return;
 
@@ -2801,7 +2935,7 @@
     );
   }
 
-  function listaDetalhadaHtml(atual) {
+  function itensListaDetalhadaHtml(atual) {
     var tipo = state.visao;
     var termo = String(state.busca || '').toLowerCase();
     var itens = tipo === 'receitas'
@@ -2832,6 +2966,16 @@
       })
       .sort(function (a, b) { return b.dia - a.dia; });
 
+    return itens.length ? itens.map(function (item) {
+      return '<button type="button" data-tipo-lancamento="' + escapeHtml(item.tipo) + '" data-lancamento-id="' + escapeHtml(item.id) + '" class="flex w-full items-center justify-between gap-3 border-b border-slate-100 px-1 py-3 text-left last:border-b-0">' +
+        '<div class="min-w-0"><p class="truncate text-sm font-bold text-slate-800">' + escapeHtml(item.titulo) + '</p><p class="truncate text-xs text-slate-500">' + escapeHtml(item.detalhe) + '</p></div>' +
+        '<strong class="shrink-0 text-sm font-black ' + (tipo === 'receitas' ? 'text-emerald-600' : 'text-red-600') + '">' + dinheiro(item.valor) + '</strong>' +
+      '</button>';
+    }).join('') : '<p class="p-3 text-sm text-slate-500">Nenhum item encontrado.</p>';
+  }
+
+  function listaDetalhadaHtml(atual) {
+    var tipo = state.visao;
     var total = tipo === 'receitas' ? atual.receitas : atual.despesas;
     var cor = tipo === 'receitas' ? 'text-emerald-600' : 'text-red-600';
     var titulo = tipo === 'receitas' ? 'Receitas' : 'Despesas';
@@ -2847,16 +2991,11 @@
           '<label class="flex h-10 items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3">' +
             '<span class="text-slate-400">&#128269;</span>' +
             '<input id="busca-lista" value="' + escapeHtml(state.busca) + '" placeholder="Procurar" style="font-size:16px" class="min-w-0 flex-1 bg-transparent text-base font-semibold text-slate-700 outline-none" />' +
-            (state.busca ? '<button id="limpar-busca-lista" type="button" class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-slate-100 text-sm font-black text-slate-500 shadow-sm" aria-label="Limpar busca">&times;</button>' : '') +
+            '<button id="limpar-busca-lista" type="button" class="' + (state.busca ? '' : 'hidden ') + 'flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-slate-100 text-sm font-black text-slate-500 shadow-sm" aria-label="Limpar busca">&times;</button>' +
           '</label>' +
         '</div>' +
-        '<div class="rounded-2xl bg-white p-3 shadow-sm">' +
-          (itens.length ? itens.map(function (item) {
-            return '<button type="button" data-tipo-lancamento="' + escapeHtml(item.tipo) + '" data-lancamento-id="' + escapeHtml(item.id) + '" class="flex w-full items-center justify-between gap-3 border-b border-slate-100 px-1 py-3 text-left last:border-b-0">' +
-              '<div class="min-w-0"><p class="truncate text-sm font-bold text-slate-800">' + escapeHtml(item.titulo) + '</p><p class="truncate text-xs text-slate-500">' + escapeHtml(item.detalhe) + '</p></div>' +
-              '<strong class="shrink-0 text-sm font-black ' + cor + '">' + dinheiro(item.valor) + '</strong>' +
-            '</button>';
-          }).join('') : '<p class="p-3 text-sm text-slate-500">Nenhum item encontrado.</p>') +
+        '<div id="lista-detalhada-itens" class="rounded-2xl bg-white p-3 shadow-sm">' +
+          itensListaDetalhadaHtml(atual) +
         '</div>' +
       '</section>'
     );
@@ -3276,6 +3415,7 @@
 
   function gerenciarEmpresaHtml() {
     var gestorMaster = state.empresa && state.empresa.perfil === 'gestor_master';
+    var podeEditar = podeGerenciarUsuarios();
     var podeTrocar = state.empresas.length > 1;
 
     return (
@@ -3285,6 +3425,21 @@
           '<p class="mt-1 font-black">' + escapeHtml(nomeEmpresa(state.empresa)) + '</p>' +
           '<p class="mt-1 text-xs font-semibold text-slate-500">Perfil: ' + escapeHtml(perfilFormatado(state.empresa && state.empresa.perfil)) + '</p>' +
         '</div>' +
+        (podeEditar
+          ? (!state.empresaEdicaoAberta
+              ? '<button id="abrir-edicao-empresa-mobile" type="button" class="h-11 rounded-xl bg-slate-900 px-4 text-sm font-black uppercase tracking-wide text-white shadow-md">Editar dados</button>'
+              : '<div class="grid gap-2 rounded-2xl border border-cyan-100 bg-cyan-50/70 p-3">' +
+                  '<p class="text-[10px] font-black uppercase tracking-wide text-cyan-800">Editar empresa atual</p>' +
+                  '<input id="editar-empresa-nome" value="' + escapeHtml(state.editEmpresaNome) + '" placeholder="Nome da empresa" style="font-size:16px" class="h-11 rounded-md border border-cyan-100 bg-white px-3 text-base font-bold text-slate-900 outline-none focus:border-cyan-500" />' +
+                  '<input id="editar-empresa-login" value="' + escapeHtml(state.editEmpresaLogin) + '" placeholder="Login ou email" style="font-size:16px" class="h-11 rounded-md border border-cyan-100 bg-white px-3 text-base font-bold text-slate-900 outline-none focus:border-cyan-500" />' +
+                  '<input id="editar-empresa-senha" type="password" placeholder="Nova senha (opcional)" style="font-size:16px" class="h-11 rounded-md border border-cyan-100 bg-white px-3 text-base font-bold text-slate-900 outline-none focus:border-cyan-500" />' +
+                  (gestorMaster ? '<p class="text-xs font-semibold leading-relaxed text-cyan-900">Para Gestor Master, a senha pode precisar ser alterada pela recuperacao de senha.</p>' : '') +
+                  '<div class="grid grid-cols-2 gap-2">' +
+                    '<button id="cancelar-edicao-empresa-mobile" type="button" class="h-10 rounded-xl bg-white px-3 text-xs font-black uppercase tracking-wide text-slate-600">Cancelar</button>' +
+                    '<button id="salvar-edicao-empresa-mobile" type="button" class="h-10 rounded-xl bg-cyan-700 px-3 text-xs font-black uppercase tracking-wide text-white">' + (state.empresaAcao === 'editar' ? 'Salvando...' : 'Salvar') + '</button>' +
+                  '</div>' +
+                '</div>')
+          : '<p class="rounded-2xl bg-slate-50 p-3 text-xs font-semibold text-slate-500">Somente Gestor Master e Administrador podem editar os dados da empresa.</p>') +
         '<div class="grid gap-2 rounded-2xl border border-emerald-100 bg-emerald-50/70 p-3">' +
           '<p class="text-[10px] font-black uppercase tracking-wide text-emerald-800">Criar nova empresa</p>' +
           '<input id="nova-empresa-nome" placeholder="Nome da empresa" style="font-size:16px" class="h-11 rounded-md border border-emerald-100 bg-white px-3 text-base font-bold text-slate-900 outline-none focus:border-emerald-500" />' +
@@ -3530,6 +3685,27 @@
     );
   }
 
+  function vincularAcoesLancamentosLista() {
+    Array.prototype.forEach.call(document.querySelectorAll('[data-lancamento-id]'), function (botao) {
+      botao.addEventListener('click', function () {
+        abrirAcaoLancamento(botao.getAttribute('data-tipo-lancamento'), botao.getAttribute('data-lancamento-id'));
+      });
+    });
+  }
+
+  function atualizarBuscaListaMobile() {
+    var lista = document.getElementById('lista-detalhada-itens');
+    if (lista) {
+      lista.innerHTML = itensListaDetalhadaHtml(dadosMes(state.mes));
+      vincularAcoesLancamentosLista();
+    }
+
+    var limpar = document.getElementById('limpar-busca-lista');
+    if (limpar) {
+      limpar.classList.toggle('hidden', !state.busca);
+    }
+  }
+
   function render() {
     root.setAttribute('data-avantalab-mobile-ready', '1');
     root.innerHTML = !state.pronto
@@ -3659,6 +3835,9 @@
     bind('trocar-empresa-gerenciar', function () { abrirModalMenu('empresa'); });
     bind('termos-mobile', function () { abrirModalMenu('termos'); });
     bind('privacidade-mobile', function () { abrirModalMenu('privacidade'); });
+    bind('abrir-edicao-empresa-mobile', abrirEdicaoEmpresaMobile);
+    bind('cancelar-edicao-empresa-mobile', cancelarEdicaoEmpresaMobile);
+    bind('salvar-edicao-empresa-mobile', salvarEdicaoEmpresaMobile);
     bind('criar-empresa-mobile', criarEmpresaMobile);
     bind('abrir-exclusao-empresa-mobile', function () {
       state.empresaExclusaoAberta = true;
@@ -3855,18 +4034,18 @@
     if (busca) {
       busca.addEventListener('input', function () {
         state.busca = busca.value;
-        render();
-        var foco = document.getElementById('busca-lista');
-        if (foco) {
-          foco.focus();
-          foco.setSelectionRange(foco.value.length, foco.value.length);
-        }
+        atualizarBuscaListaMobile();
       });
     }
 
     bind('limpar-busca-lista', function () {
       state.busca = '';
-      render();
+      var buscaAtual = document.getElementById('busca-lista');
+      if (buscaAtual) {
+        buscaAtual.value = '';
+        buscaAtual.focus();
+      }
+      atualizarBuscaListaMobile();
     });
 
     var buscaUltimasDespesas = document.getElementById('busca-ultimas-despesas');

@@ -14,12 +14,10 @@ interface DashboardProps {
   totalDespesasMes: number;
   maiorGasto: { despesa: string; valor: number };
   lucroOperacional: number;
-  mesFaturamento: string;
-  setMesFaturamento: (mes: string) => void;
   inputFaturamento: string;
   setInputFaturamento: (val: string) => void;
   placeholderFaturamento: string;
-  salvarFaturamento: () => void;
+  solicitarFaturamentoDashboard: () => void;
 
   entradaFaturamentoDia: string;
   setEntradaFaturamentoDia: (val: string) => void;
@@ -38,8 +36,8 @@ interface DashboardProps {
 export default function Dashboard({
   meses, lancamentos, setMesAtivo, bgCard, corPrimaria, textStrong, textMuted, darkMode,
   mesResumoDash, setMesResumoDash, totalDespesasMes, maiorGasto, lucroOperacional,
-  mesFaturamento, setMesFaturamento, inputFaturamento, setInputFaturamento, placeholderFaturamento,
-  salvarFaturamento,
+  inputFaturamento, setInputFaturamento, placeholderFaturamento,
+  solicitarFaturamentoDashboard,
   entradaFaturamentoDia,
   setEntradaFaturamentoDia,
   entradaFaturamentoOrigem,
@@ -336,28 +334,7 @@ const mostrarComparativoResumoDash =
               color: textoSobreCorPrimaria,
             }}
           >
-            <span>Receita</span>
-
-            <select
-              value={mesFaturamento}
-              onChange={e => setMesFaturamento(e.target.value)}
-              className="text-xs rounded p-1 outline-none font-bold cursor-pointer border"
-              style={{
-                color: textoSobreCorPrimaria,
-                backgroundColor: corEhClara(corPrimaria)
-                  ? 'rgba(15, 23, 42, 0.08)'
-                  : 'rgba(0, 0, 0, 0.20)',
-                borderColor: corEhClara(corPrimaria)
-                  ? 'rgba(15, 23, 42, 0.18)'
-                  : 'rgba(255, 255, 255, 0.12)',
-              }}
-            >
-              {meses.map(m => (
-                <option key={m} value={m} className="text-slate-800 bg-white">
-                  {m}
-                </option>
-              ))}
-            </select>
+            <span>LANÇAR RECEITA</span>
           </div>
 
           <div className="p-5 space-y-3">
@@ -448,7 +425,7 @@ const mostrarComparativoResumoDash =
                     onKeyDown={(e) => {
                       if (e.key === 'Enter') {
                         e.preventDefault();
-                        salvarFaturamento();
+                        solicitarFaturamentoDashboard();
                       }
                     }}
                     placeholder={placeholderFaturamento || '0,00'}
@@ -457,7 +434,7 @@ const mostrarComparativoResumoDash =
                 </div>
 
                 <button
-                  onClick={salvarFaturamento}
+                  onClick={solicitarFaturamentoDashboard}
                   className="px-4 rounded-lg font-bold border shadow-md text-xs transition-all duration-200 hover:brightness-110 hover:shadow-lg hover:scale-[1.03] active:scale-95 active:shadow-inner cursor-pointer select-none"
                   style={{
                     color: textoSobreCorPrimaria,
