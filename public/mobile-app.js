@@ -3264,7 +3264,7 @@
         '</div>' +
         '<button type="button" data-categoria-opcoes="' + escapeHtml(id) + '" class="relative z-10 flex w-full items-center justify-between gap-2 rounded-lg bg-slate-50 px-3 py-2 text-left text-[11px] text-slate-800 transition-transform duration-200 ease-out" style="transform:' + (acoesAberta ? 'translateX(-192px)' : 'translateX(0)') + '">' +
           '<span class="truncate font-bold">' + escapeHtml(despesa.nome) + '</span>' +
-          '<span class="shrink-0 font-semibold text-slate-500">' + escapeHtml(despesa.categoria) + '</span>' +
+          '<span class="max-w-[150px] shrink-0 truncate font-semibold text-slate-500">' + escapeHtml(acoesAberta ? despesa.nome : despesa.categoria) + '</span>' +
         '</button>' +
       '</div>'
     );
@@ -4151,7 +4151,7 @@
           return Promise.all(
             keys
               .filter(function (key) {
-                return key.indexOf('avantalab-mobile-') === 0 && key !== 'avantalab-mobile-v57';
+                return key.indexOf('avantalab-mobile-') === 0 && key !== 'avantalab-mobile-v58';
               })
               .map(function (key) {
                 return caches.delete(key);
