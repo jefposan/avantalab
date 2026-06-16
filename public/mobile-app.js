@@ -2847,6 +2847,7 @@
           '<label class="flex h-10 items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3">' +
             '<span class="text-slate-400">&#128269;</span>' +
             '<input id="busca-lista" value="' + escapeHtml(state.busca) + '" placeholder="Procurar" style="font-size:16px" class="min-w-0 flex-1 bg-transparent text-base font-semibold text-slate-700 outline-none" />' +
+            (state.busca ? '<button id="limpar-busca-lista" type="button" class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-slate-100 text-sm font-black text-slate-500 shadow-sm" aria-label="Limpar busca">&times;</button>' : '') +
           '</label>' +
         '</div>' +
         '<div class="rounded-2xl bg-white p-3 shadow-sm">' +
@@ -3862,6 +3863,11 @@
         }
       });
     }
+
+    bind('limpar-busca-lista', function () {
+      state.busca = '';
+      render();
+    });
 
     var buscaUltimasDespesas = document.getElementById('busca-ultimas-despesas');
     if (buscaUltimasDespesas) {

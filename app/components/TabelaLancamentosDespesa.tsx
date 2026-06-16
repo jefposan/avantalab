@@ -167,18 +167,21 @@ export default function TabelaLancamentosDespesa({
               </svg>
 
               <input
-                type="text"
+                type="search"
+                inputMode="search"
+                enterKeyHint="search"
+                autoComplete="off"
                 value={buscaLancamento}
                 onChange={(e) => setBuscaLancamento(e.target.value)}
                 placeholder="Buscar lançamento do mês por despesa, descrição, dia ou valor..."
-                className={`h-9 w-full rounded-lg border py-2 pl-9 pr-9 text-xs font-semibold outline-none transition focus:ring-2 ${
+                className={`h-9 w-full rounded-lg border py-2 pl-9 pr-9 text-xs font-semibold outline-none transition focus:ring-1 focus:ring-inset ${
                   darkMode
                     ? 'bg-slate-700 border-slate-600 text-white placeholder:text-slate-400'
                     : 'bg-white border-slate-300 text-slate-700 placeholder:text-slate-400'
                 }`}
                 style={{
                   borderColor: buscaLancamento ? corPrimaria : undefined,
-                  boxShadow: buscaLancamento ? `0 0 0 2px ${corPrimaria}22` : undefined,
+                  boxShadow: buscaLancamento ? `inset 0 0 0 1px ${corPrimaria}33` : undefined,
                 }}
               />
 
@@ -186,10 +189,10 @@ export default function TabelaLancamentosDespesa({
                 <button
                   type="button"
                   onClick={() => setBuscaLancamento('')}
-                  className={`absolute right-2.5 top-1/2 flex h-5 w-5 -translate-y-1/2 items-center justify-center rounded-full text-xs font-black transition cursor-pointer ${
+                  className={`absolute right-2 top-1/2 flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded-full text-sm font-black shadow-sm transition cursor-pointer ${
                     darkMode
-                      ? 'text-slate-300 hover:bg-slate-600 hover:text-white'
-                      : 'text-slate-500 hover:bg-slate-200 hover:text-slate-800'
+                      ? 'bg-slate-600 text-white hover:bg-slate-500'
+                      : 'bg-slate-200 text-slate-600 hover:bg-slate-300 hover:text-slate-900'
                   }`}
                   title="Limpar busca"
                 >
@@ -237,7 +240,7 @@ export default function TabelaLancamentosDespesa({
                   >
                     {lancamentoEditandoId === lanc.id ? (
                       <>
-                        <td className="py-1.5 px-4 w-24 text-center">
+                        <td className="py-1.5 px-1.5 w-16 text-center">
                           <input
                             type="number"
                             min={1}
@@ -250,7 +253,7 @@ export default function TabelaLancamentosDespesa({
                           />
                         </td>
 
-                        <td className="py-1.5 px-4 w-1/4">
+                        <td className="py-1.5 px-1.5 w-[30%]">
                           <select
                             value={editDespesa}
                             onChange={(e) => setEditDespesa(e.target.value)}
@@ -277,7 +280,7 @@ export default function TabelaLancamentosDespesa({
                           </select>
                         </td>
 
-                        <td className="py-1.5 px-4 w-1/3">
+                        <td className="py-1.5 px-1.5">
                           <input
                             type="text"
                             value={editDescricao}
@@ -289,7 +292,7 @@ export default function TabelaLancamentosDespesa({
                           />
                         </td>
 
-                        <td className="py-1.5 px-4 w-40">
+                        <td className="py-1.5 px-1.5 w-32">
                           <input
                             type="text"
                             value={editValor}
@@ -312,7 +315,7 @@ export default function TabelaLancamentosDespesa({
                           />
                         </td>
 
-                        <td className="py-1.5 px-4 w-28 text-center">
+                        <td className="py-1.5 px-1.5 w-20 text-center">
                           <div className="flex items-center justify-center gap-1">
                             <button
                               onClick={salvarEdicaoLancamento}
