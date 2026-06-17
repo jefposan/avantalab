@@ -352,13 +352,13 @@
 
   function ordemDashboardPadrao() {
     return [
-      'saldo',
       'ia',
-      'categorias',
-      'tipos',
+      'saldo',
+      'totais',
       'ultimasDespesas',
       'ultimasReceitas',
-      'totais',
+      'categorias',
+      'tipos',
       'evolucaoDespesas',
       'evolucaoReceitas',
     ];
@@ -4851,7 +4851,7 @@
           return Promise.all(
             keys
               .filter(function (key) {
-                return key.indexOf('avantalab-mobile-') === 0 && key !== 'avantalab-mobile-v78';
+                return key.indexOf('avantalab-mobile-') === 0 && key !== 'avantalab-mobile-v80';
               })
               .map(function (key) {
                 return caches.delete(key);
@@ -4868,7 +4868,7 @@
     });
 
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/mobile-sw.js?v=78').then(function (registro) {
+      navigator.serviceWorker.register('/mobile-sw.js?v=80').then(function (registro) {
         if (registro && registro.update) registro.update();
       }).catch(function () {});
     }
