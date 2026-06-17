@@ -2831,28 +2831,23 @@
 
   function ultimasDespesasHtml(lancamentos) {
     var todos = lancamentos.slice().sort(function (a, b) { return b.dia - a.dia; });
-    var busca = textoBusca(state.ultimasDespesasBusca);
-    var lista = busca
-      ? todos.filter(function (item) {
-          var valor = dinheiro(item.valor);
-          var texto = textoBusca([item.descricao, item.despesa, valor, item.valor].join(' '));
-          return texto.indexOf(busca) >= 0;
-        })
-      : todos;
-    var itens = busca ? lista : (state.ultimasDespesasExpandido ? lista : lista.slice(0, 3));
+    var pesquisando = state.ultimasDespesasBuscaAberta;
+    var itens = pesquisando ? todos : (state.ultimasDespesasExpandido ? todos : todos.slice(0, 3));
 
     return (
       '<section class="overflow-hidden rounded-2xl bg-white shadow-sm">' +
         '<div class="flex items-center justify-between gap-3 bg-red-50 px-4 py-3"><h2 class="text-sm font-black text-red-900">Ultimas despesas</h2><div class="flex items-center gap-2"><button id="ver-despesas-lista" type="button" class="text-xs font-black text-red-700">Lista</button><button id="buscar-ultimas-despesas" type="button" class="flex h-8 w-8 items-center justify-center rounded-full bg-white/80 text-sm font-black text-red-700 shadow-sm" aria-label="Buscar despesas">&#128269;</button></div></div>' +
-        (state.ultimasDespesasBuscaAberta ? '<div class="px-4 pt-3"><input id="busca-ultimas-despesas" type="search" value="' + escapeHtml(state.ultimasDespesasBusca) + '" placeholder="Buscar descricao ou valor" style="font-size:16px" class="h-10 w-full rounded-xl border border-red-100 bg-red-50/60 px-3 text-sm font-semibold text-slate-800 outline-none focus:border-red-300" /></div>' : '') +
-        '<div class="grid gap-1 p-4">' +
+        (state.ultimasDespesasBuscaAberta ? '<div class="px-4 pt-3"><div class="flex h-10 items-center gap-2 rounded-xl border border-red-100 bg-red-50/60 px-3"><input id="busca-ultimas-despesas" type="search" autocomplete="off" enterkeyhint="search" value="' + escapeHtml(state.ultimasDespesasBusca) + '" placeholder="Buscar descricao ou valor" style="font-size:16px" class="min-w-0 flex-1 bg-transparent text-base font-semibold text-slate-800 outline-none" /><button id="limpar-ultimas-despesas" type="button" class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-white text-sm font-black text-red-600 shadow-sm" aria-label="Limpar busca">&times;</button></div></div>' : '') +
+        '<div class="grid gap-1 p-4" id="ultimas-despesas-lista">' +
           (itens.length ? itens.map(function (item) {
-            return '<button type="button" data-tipo-lancamento="despesa" data-lancamento-id="' + escapeHtml(item.id) + '" class="flex w-full items-center justify-between gap-3 border-b border-slate-100 py-2 text-left last:border-b-0">' +
+            var valor = dinheiro(item.valor);
+            var buscaItem = textoBusca([item.descricao, item.despesa, valor, item.valor].join(' '));
+            return '<button type="button" data-tipo-lancamento="despesa" data-lancamento-id="' + escapeHtml(item.id) + '" data-busca-ultimas-despesas="' + escapeHtml(buscaItem) + '" class="flex w-full items-center justify-between gap-3 border-b border-slate-100 py-2 text-left last:border-b-0">' +
               '<div class="min-w-0"><p class="truncate text-sm font-bold text-slate-800">' + escapeHtml(item.despesa) + '</p><p class="truncate text-xs text-slate-500">Dia ' + item.dia + (item.descricao ? ' - ' + escapeHtml(item.descricao) : '') + '</p></div>' +
-              '<strong class="shrink-0 text-sm font-black text-red-600">' + dinheiro(item.valor) + '</strong>' +
+              '<strong class="shrink-0 text-sm font-black text-red-600">' + valor + '</strong>' +
             '</button>';
-          }).join('') : '<p class="text-xs text-slate-500">' + (busca ? 'Nenhuma despesa encontrada.' : 'Nenhuma despesa neste mes.') + '</p>') +
-          (!busca && lista.length > 3 ? '<button id="toggle-ultimas-despesas" type="button" class="pt-2 text-left text-xs font-black text-cyan-700">' + (state.ultimasDespesasExpandido ? 'Recolher' : 'Expandir despesas') + '</button>' : '') +
+          }).join('') + '<p id="ultimas-despesas-vazia" style="display:none" class="text-xs text-slate-500">Nenhuma despesa encontrada.</p>' : '<p class="text-xs text-slate-500">Nenhuma despesa neste mes.</p>') +
+          (!pesquisando && todos.length > 3 ? '<button id="toggle-ultimas-despesas" type="button" class="pt-2 text-left text-xs font-black text-cyan-700">' + (state.ultimasDespesasExpandido ? 'Recolher' : 'Expandir despesas') + '</button>' : '') +
         '</div>' +
       '</section>'
     );
@@ -2860,28 +2855,23 @@
 
   function ultimasReceitasHtml(entradas) {
     var todos = entradas.slice().sort(function (a, b) { return b.dia - a.dia; });
-    var busca = textoBusca(state.ultimasReceitasBusca);
-    var lista = busca
-      ? todos.filter(function (item) {
-          var valor = dinheiro(item.valor);
-          var texto = textoBusca([item.origem, item.descricao, valor, item.valor].join(' '));
-          return texto.indexOf(busca) >= 0;
-        })
-      : todos;
-    var itens = busca ? lista : (state.ultimasReceitasExpandido ? lista : lista.slice(0, 3));
+    var pesquisando = state.ultimasReceitasBuscaAberta;
+    var itens = pesquisando ? todos : (state.ultimasReceitasExpandido ? todos : todos.slice(0, 3));
 
     return (
       '<section class="overflow-hidden rounded-2xl bg-white shadow-sm">' +
         '<div class="flex items-center justify-between gap-3 bg-emerald-50 px-4 py-3"><h2 class="text-sm font-black text-emerald-900">Ultimas receitas</h2><div class="flex items-center gap-2"><button id="ver-receitas-lista" type="button" class="text-xs font-black text-emerald-700">Lista</button><button id="buscar-ultimas-receitas" type="button" class="flex h-8 w-8 items-center justify-center rounded-full bg-white/80 text-sm font-black text-emerald-700 shadow-sm" aria-label="Buscar receitas">&#128269;</button></div></div>' +
-        (state.ultimasReceitasBuscaAberta ? '<div class="px-4 pt-3"><input id="busca-ultimas-receitas" type="search" value="' + escapeHtml(state.ultimasReceitasBusca) + '" placeholder="Buscar descricao ou valor" style="font-size:16px" class="h-10 w-full rounded-xl border border-emerald-100 bg-emerald-50/60 px-3 text-sm font-semibold text-slate-800 outline-none focus:border-emerald-300" /></div>' : '') +
-        '<div class="grid gap-1 p-4">' +
+        (state.ultimasReceitasBuscaAberta ? '<div class="px-4 pt-3"><div class="flex h-10 items-center gap-2 rounded-xl border border-emerald-100 bg-emerald-50/60 px-3"><input id="busca-ultimas-receitas" type="search" autocomplete="off" enterkeyhint="search" value="' + escapeHtml(state.ultimasReceitasBusca) + '" placeholder="Buscar descricao ou valor" style="font-size:16px" class="min-w-0 flex-1 bg-transparent text-base font-semibold text-slate-800 outline-none" /><button id="limpar-ultimas-receitas" type="button" class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-white text-sm font-black text-emerald-600 shadow-sm" aria-label="Limpar busca">&times;</button></div></div>' : '') +
+        '<div class="grid gap-1 p-4" id="ultimas-receitas-lista">' +
           (itens.length ? itens.map(function (item) {
-            return '<button type="button" data-tipo-lancamento="receita" data-lancamento-id="' + escapeHtml(item.id) + '" class="flex w-full items-center justify-between gap-3 border-b border-slate-100 py-2 text-left last:border-b-0">' +
+            var valor = dinheiro(item.valor);
+            var buscaItem = textoBusca([item.origem, item.descricao, valor, item.valor].join(' '));
+            return '<button type="button" data-tipo-lancamento="receita" data-lancamento-id="' + escapeHtml(item.id) + '" data-busca-ultimas-receitas="' + escapeHtml(buscaItem) + '" class="flex w-full items-center justify-between gap-3 border-b border-slate-100 py-2 text-left last:border-b-0">' +
               '<div class="min-w-0"><p class="truncate text-sm font-bold text-slate-800">' + escapeHtml(item.origem) + '</p><p class="truncate text-xs text-slate-500">Dia ' + item.dia + '</p></div>' +
-              '<strong class="shrink-0 text-sm font-black text-emerald-600">' + dinheiro(item.valor) + '</strong>' +
+              '<strong class="shrink-0 text-sm font-black text-emerald-600">' + valor + '</strong>' +
             '</button>';
-          }).join('') : '<p class="text-xs text-slate-500">' + (busca ? 'Nenhuma receita encontrada.' : 'Nenhuma receita neste mes.') + '</p>') +
-          (!busca && lista.length > 3 ? '<button id="toggle-ultimas-receitas" type="button" class="pt-2 text-left text-xs font-black text-cyan-700">' + (state.ultimasReceitasExpandido ? 'Recolher' : 'Expandir receitas') + '</button>' : '') +
+          }).join('') + '<p id="ultimas-receitas-vazia" style="display:none" class="text-xs text-slate-500">Nenhuma receita encontrada.</p>' : '<p class="text-xs text-slate-500">Nenhuma receita neste mes.</p>') +
+          (!pesquisando && todos.length > 3 ? '<button id="toggle-ultimas-receitas" type="button" class="pt-2 text-left text-xs font-black text-cyan-700">' + (state.ultimasReceitasExpandido ? 'Recolher' : 'Expandir receitas') + '</button>' : '') +
         '</div>' +
       '</section>'
     );
@@ -3711,6 +3701,26 @@
     }
   }
 
+  function atualizarBuscaUltimasMobile(tipo) {
+    var chave = tipo === 'receitas' ? 'ultimasReceitasBusca' : 'ultimasDespesasBusca';
+    var seletor = tipo === 'receitas' ? '[data-busca-ultimas-receitas]' : '[data-busca-ultimas-despesas]';
+    var vazioId = tipo === 'receitas' ? 'ultimas-receitas-vazia' : 'ultimas-despesas-vazia';
+    var termo = textoBusca(state[chave]);
+    var visiveis = 0;
+
+    Array.prototype.forEach.call(document.querySelectorAll(seletor), function (item) {
+      var texto = item.getAttribute(tipo === 'receitas' ? 'data-busca-ultimas-receitas' : 'data-busca-ultimas-despesas') || '';
+      var corresponde = !termo || texto.indexOf(termo) >= 0;
+      item.style.display = corresponde ? '' : 'none';
+      if (corresponde) visiveis += 1;
+    });
+
+    var vazio = document.getElementById(vazioId);
+    if (vazio) {
+      vazio.style.display = visiveis > 0 ? 'none' : 'block';
+    }
+  }
+
   function render() {
     root.setAttribute('data-avantalab-mobile-ready', '1');
     root.innerHTML = !state.pronto
@@ -4073,27 +4083,37 @@
     if (buscaUltimasDespesas) {
       buscaUltimasDespesas.addEventListener('input', function () {
         state.ultimasDespesasBusca = buscaUltimasDespesas.value;
-        render();
-        var foco = document.getElementById('busca-ultimas-despesas');
-        if (foco) {
-          foco.focus();
-          foco.setSelectionRange(foco.value.length, foco.value.length);
-        }
+        atualizarBuscaUltimasMobile('despesas');
       });
+      atualizarBuscaUltimasMobile('despesas');
     }
+    bind('limpar-ultimas-despesas', function () {
+      state.ultimasDespesasBusca = '';
+      var campoBusca = document.getElementById('busca-ultimas-despesas');
+      if (campoBusca) {
+        campoBusca.value = '';
+        campoBusca.focus();
+      }
+      atualizarBuscaUltimasMobile('despesas');
+    });
 
     var buscaUltimasReceitas = document.getElementById('busca-ultimas-receitas');
     if (buscaUltimasReceitas) {
       buscaUltimasReceitas.addEventListener('input', function () {
         state.ultimasReceitasBusca = buscaUltimasReceitas.value;
-        render();
-        var foco = document.getElementById('busca-ultimas-receitas');
-        if (foco) {
-          foco.focus();
-          foco.setSelectionRange(foco.value.length, foco.value.length);
-        }
+        atualizarBuscaUltimasMobile('receitas');
       });
+      atualizarBuscaUltimasMobile('receitas');
     }
+    bind('limpar-ultimas-receitas', function () {
+      state.ultimasReceitasBusca = '';
+      var campoBusca = document.getElementById('busca-ultimas-receitas');
+      if (campoBusca) {
+        campoBusca.value = '';
+        campoBusca.focus();
+      }
+      atualizarBuscaUltimasMobile('receitas');
+    });
 
     var feedbackMensagem = document.getElementById('feedback-mensagem');
     if (feedbackMensagem) {
@@ -4565,7 +4585,7 @@
           return Promise.all(
             keys
               .filter(function (key) {
-                return key.indexOf('avantalab-mobile-') === 0 && key !== 'avantalab-mobile-v71';
+                return key.indexOf('avantalab-mobile-') === 0 && key !== 'avantalab-mobile-v72';
               })
               .map(function (key) {
                 return caches.delete(key);
@@ -4582,7 +4602,7 @@
     });
 
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/mobile-sw.js?v=71').then(function (registro) {
+      navigator.serviceWorker.register('/mobile-sw.js?v=72').then(function (registro) {
         if (registro && registro.update) registro.update();
       }).catch(function () {});
     }
