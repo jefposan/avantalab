@@ -531,6 +531,10 @@ if (empresa.telefone_confirmado !== true) {
   return;
 }
 
+  // Resetar logo antes de carregar a nova empresa (evita contaminação entre empresas)
+  setLogoUrl('');
+  setLogoSettings({ scale: 100, x: 0, y: 0 });
+
   const config = await buscarConfiguracoes(empresa.id);
   const despesas = await buscarDespesasCadastradas(empresa.id);
 
@@ -542,7 +546,7 @@ if (empresa.telefone_confirmado !== true) {
 
     setDarkMode(false);
     if (config.duplicados_ativo !== undefined) setDuplicadosAtivo(config.duplicados_ativo);
-    if (config.logo_url) setLogoUrl(config.logo_url);
+    setLogoUrl(config.logo_url ?? '');
     if (config.logo_settings) setLogoSettings(config.logo_settings);
 
     if (config.ultimo_backup_em) {
