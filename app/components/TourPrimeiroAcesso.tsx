@@ -22,7 +22,7 @@ const PASSOS: Passo[] = [
     localizacao: '',
     titulo: 'Bem-vindo ao AvantaLab Gestão!',
     descricao:
-      'Este passo a passo vai te guiar pelos principais recursos do sistema. Você pode pular a qualquer momento e acessar novamente pelo menu Ajustes → Ver passo a passo.',
+      'Este passo a passo vai te guiar pelos principais recursos do sistema. Você pode pular a qualquer momento e acessar novamente pelo menu Ajustes → Tutorial.',
   },
   {
     icone: '⚙️',
@@ -33,28 +33,28 @@ const PASSOS: Passo[] = [
   },
   {
     icone: '🎨',
-    localizacao: 'Ajustes → Adicionar Logo / Cor tema',
+    localizacao: 'Ajustes → Logo / Cor',
     titulo: 'Logo e cor da empresa',
     descricao:
       'Personalize a identidade visual da empresa. Adicione a logomarca (PNG, JPG ou SVG) e escolha a cor principal que será aplicada em todos os elementos visuais do sistema.',
   },
   {
     icone: '📋',
-    localizacao: 'Ajustes → Despesas base',
+    localizacao: 'Ajustes → Instruções categorias',
     titulo: 'Despesas base e categorias',
     descricao:
       'Cadastre as despesas fixas e recorrentes da empresa. Use "Instruções de categorias" para entender como classificar cada tipo de gasto e garantir relatórios precisos.',
   },
   {
     icone: '👥',
-    localizacao: 'Ajustes → Usuário',
+    localizacao: 'Ajustes → Usuários',
     titulo: 'Usuários e permissões',
     descricao:
       'Adicione colaboradores com diferentes níveis de acesso: Gestor Master, Administrador, Operador Completo e Operador Simples. Cada perfil tem permissões específicas para manter a segurança dos dados.',
   },
   {
     icone: '🏢',
-    localizacao: 'Ajustes → Gerenciar empresa',
+    localizacao: 'Ajustes → Empresa',
     titulo: 'Empresas',
     descricao:
       'Gerencie os dados da empresa atual, crie novas empresas e alterne entre elas. Com múltiplos acessos, o seletor de empresa aparece na tela de login automaticamente.',
@@ -64,7 +64,7 @@ const PASSOS: Passo[] = [
     localizacao: 'Ajustes → Backup',
     titulo: 'Backup dos dados',
     descricao:
-      'Gere um arquivo Excel com todos os dados da empresa a qualquer momento. Recomendamos fazer backup regularmente. O sistema registra a data do último backup realizado.',
+      'Gere um arquivo Excel com todos os dados da empresa a qualquer momento. O sininho no topo da tela envia uma notificação mensal lembrando você de realizar o backup — não ignore esse aviso!',
   },
   {
     icone: '🧮',
@@ -85,7 +85,7 @@ const PASSOS: Passo[] = [
     localizacao: 'Menu Início → mês selecionado → tabela de despesas',
     titulo: 'Lançamento de despesas',
     descricao:
-      'Dentro da visão mensal, registre cada despesa por categoria. O sistema detecta lançamentos duplicados, permite parcelamentos e exibe o total por categoria para fácil acompanhamento.',
+      'Dentro da visão mensal, registre cada despesa por categoria. O sistema detecta lançamentos duplicados e exibe o total por categoria para fácil acompanhamento.',
   },
   {
     icone: '📈',
@@ -102,11 +102,18 @@ const PASSOS: Passo[] = [
       'O botão flutuante no canto inferior direito abre o canal de comunicação com a AvantaLab. Envie sugestões, tire dúvidas ou reporte problemas diretamente pelo sistema.',
   },
   {
+    icone: '✅',
+    localizacao: 'Ajustes → Instruções categorias',
+    titulo: 'Por onde começar?',
+    descricao:
+      'O primeiro passo é cadastrar as despesas base da empresa. Acesse o menu Ajustes e clique em "Despesas base". Lá você define todas as categorias e gastos recorrentes que serão usados nos lançamentos mensais. Com isso feito, o sistema estará pronto para uso completo.',
+  },
+  {
     icone: '🚀',
     localizacao: '',
     titulo: 'Tudo pronto!',
     descricao:
-      'Você conheceu os principais recursos do AvantaLab Gestão. Explore à vontade! Este passo a passo estará sempre disponível em Ajustes → Ver passo a passo.',
+      'Você conheceu os principais recursos do AvantaLab Gestão. Explore à vontade! Este tutorial estará sempre disponível em Ajustes → Tutorial.',
   },
 ];
 
