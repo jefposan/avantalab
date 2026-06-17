@@ -1270,6 +1270,11 @@
   async function entrarGoogle() {
     if (state.carregando) return;
 
+    var checkboxManterConectado = document.getElementById('manter-conectado');
+    if (checkboxManterConectado) {
+      state.manterConectado = Boolean(checkboxManterConectado.checked);
+    }
+
     state.erro = '';
     state.mensagem = '';
     state.carregando = true;
@@ -4846,7 +4851,7 @@
           return Promise.all(
             keys
               .filter(function (key) {
-                return key.indexOf('avantalab-mobile-') === 0 && key !== 'avantalab-mobile-v77';
+                return key.indexOf('avantalab-mobile-') === 0 && key !== 'avantalab-mobile-v78';
               })
               .map(function (key) {
                 return caches.delete(key);
@@ -4863,7 +4868,7 @@
     });
 
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/mobile-sw.js?v=73').then(function (registro) {
+      navigator.serviceWorker.register('/mobile-sw.js?v=78').then(function (registro) {
         if (registro && registro.update) registro.update();
       }).catch(function () {});
     }
