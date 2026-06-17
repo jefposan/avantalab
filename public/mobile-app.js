@@ -2937,7 +2937,6 @@
 
   function itensListaDetalhadaHtml(atual) {
     var tipo = state.visao;
-    var termo = String(state.busca || '').toLowerCase();
     var itens = tipo === 'receitas'
       ? atual.entradas.map(function (item) {
           return {
@@ -2960,18 +2959,15 @@
           };
         });
 
-    itens = itens
-      .filter(function (item) {
-        return !termo || (item.titulo + ' ' + item.detalhe + ' ' + item.valor).toLowerCase().indexOf(termo) >= 0;
-      })
-      .sort(function (a, b) { return b.dia - a.dia; });
+    itens = itens.sort(function (a, b) { return b.dia - a.dia; });
 
     return itens.length ? itens.map(function (item) {
-      return '<button type="button" data-tipo-lancamento="' + escapeHtml(item.tipo) + '" data-lancamento-id="' + escapeHtml(item.id) + '" class="flex w-full items-center justify-between gap-3 border-b border-slate-100 px-1 py-3 text-left last:border-b-0">' +
+      var buscaItem = String(item.titulo + ' ' + item.detalhe + ' ' + item.valor).toLowerCase();
+      return '<button type="button" data-tipo-lancamento="' + escapeHtml(item.tipo) + '" data-lancamento-id="' + escapeHtml(item.id) + '" data-busca-lancamento="' + escapeHtml(buscaItem) + '" class="flex w-full items-center justify-between gap-3 border-b border-slate-100 px-1 py-3 text-left last:border-b-0">' +
         '<div class="min-w-0"><p class="truncate text-sm font-bold text-slate-800">' + escapeHtml(item.titulo) + '</p><p class="truncate text-xs text-slate-500">' + escapeHtml(item.detalhe) + '</p></div>' +
         '<strong class="shrink-0 text-sm font-black ' + (tipo === 'receitas' ? 'text-emerald-600' : 'text-red-600') + '">' + dinheiro(item.valor) + '</strong>' +
       '</button>';
-    }).join('') : '<p class="p-3 text-sm text-slate-500">Nenhum item encontrado.</p>';
+    }).join('') + '<p id="lista-detalhada-vazia" style="display:none" class="p-3 text-sm text-slate-500">Nenhum item encontrado.</p>' : '<p class="p-3 text-sm text-slate-500">Nenhum item encontrado.</p>';
   }
 
   function listaDetalhadaHtml(atual) {
@@ -2991,7 +2987,7 @@
           '<label class="flex h-10 items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3">' +
             '<span class="text-slate-400">&#128269;</span>' +
             '<input id="busca-lista" value="' + escapeHtml(state.busca) + '" placeholder="Procurar" style="font-size:16px" class="min-w-0 flex-1 bg-transparent text-base font-semibold text-slate-700 outline-none" />' +
-            '<button id="limpar-busca-lista" type="button" class="' + (state.busca ? '' : 'hidden ') + 'flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-slate-100 text-sm font-black text-slate-500 shadow-sm" aria-label="Limpar busca">&times;</button>' +
+            '<button id="limpar-busca-lista" type="button" style="display:' + (state.busca ? 'flex' : 'none') + '" class="h-8 w-8 shrink-0 items-center justify-center rounded-full bg-slate-100 text-sm font-black text-slate-500 shadow-sm" aria-label="Limpar busca">&times;</button>' +
           '</label>' +
         '</div>' +
         '<div id="lista-detalhada-itens" class="rounded-2xl bg-white p-3 shadow-sm">' +
@@ -3694,15 +3690,24 @@
   }
 
   function atualizarBuscaListaMobile() {
-    var lista = document.getElementById('lista-detalhada-itens');
-    if (lista) {
-      lista.innerHTML = itensListaDetalhadaHtml(dadosMes(state.mes));
-      vincularAcoesLancamentosLista();
-    }
+    var termo = String(state.busca || '').toLowerCase();
+    var visiveis = 0;
+
+    Array.prototype.forEach.call(document.querySelectorAll('[data-busca-lancamento]'), function (item) {
+      var texto = item.getAttribute('data-busca-lancamento') || '';
+      var corresponde = !termo || texto.indexOf(termo) >= 0;
+      item.style.display = corresponde ? '' : 'none';
+      if (corresponde) visiveis += 1;
+    });
 
     var limpar = document.getElementById('limpar-busca-lista');
     if (limpar) {
-      limpar.classList.toggle('hidden', !state.busca);
+      limpar.style.display = state.busca ? 'flex' : 'none';
+    }
+
+    var vazio = document.getElementById('lista-detalhada-vazia');
+    if (vazio) {
+      vazio.style.display = visiveis > 0 ? 'none' : 'block';
     }
   }
 

@@ -249,6 +249,7 @@ const [entradaFaturamentoSalvando, setEntradaFaturamentoSalvando] = useState(fal
 const [modalReceitaDashboardAberto, setModalReceitaDashboardAberto] = useState(false);
 const [mesReceitaDashboard, setMesReceitaDashboard] = useState('JANEIRO');
 const [tipoReceitaDashboard, setTipoReceitaDashboard] = useState<'entrada' | 'total'>('entrada');
+const [valorReceitaDashboardConfirmacao, setValorReceitaDashboardConfirmacao] = useState(0);
 const [entradaFaturamentoEditandoId, setEntradaFaturamentoEditandoId] = useState<string | null>(null);
 const [editEntradaFaturamentoDia, setEditEntradaFaturamentoDia] = useState('');
 const [editEntradaFaturamentoOrigem, setEditEntradaFaturamentoOrigem] = useState('');
@@ -850,6 +851,8 @@ useEffect(() => {
   setEntradaFaturamentoOrigem('');
   setEntradaFaturamentoValor('');
   setEntradaFaturamentoValorNumerico(0);
+  setInputFaturamento('');
+  setValorReceitaDashboardConfirmacao(0);
   setEntradaFaturamentoEditandoId(null);
   setEditEntradaFaturamentoDia('');
   setEditEntradaFaturamentoOrigem('');
@@ -1163,7 +1166,8 @@ const totalEntradasFaturamentoDoMes = entradasFaturamentoOrdenadasDoMes.reduce(
 
 const salvarFaturamento = async (
   confirmarSomaComEntradas = false,
-  mesInformado?: string
+  mesInformado?: string,
+  valorInformado?: number
 ) => {
   if (!empresaId) {
     abrirAviso(
@@ -1184,7 +1188,9 @@ const salvarFaturamento = async (
   }
 
   const valorLimpo =
-    parseInt(inputFaturamento.replace(/\D/g, '') || '0', 10) / 100;
+    typeof valorInformado === 'number'
+      ? valorInformado
+      : parseInt(inputFaturamento.replace(/\D/g, '') || '0', 10) / 100;
 
   if (valorLimpo < 0) {
   abrirAviso(
@@ -1206,7 +1212,7 @@ const salvarFaturamento = async (
         `Este mes ja possui ${formatarMoeda(totalEntradasMes)} em receitas lancadas.\n\nO valor informado (${formatarMoeda(valorLimpo)}) sera somado as receitas existentes.\n\nTotal final de ${mesSelecionado}: ${formatarMoeda(valorFinal)}.`,
       textoConfirmar: 'Confirmar total',
       acao: async () => {
-        await salvarFaturamento(true, mesSelecionado);
+        await salvarFaturamento(true, mesSelecionado, valorLimpo);
       },
     });
     return;
@@ -1353,10 +1359,12 @@ const limparCamposReceitaDashboard = (tipo = tipoReceitaDashboard) => {
     setEntradaFaturamentoOrigem('');
     setEntradaFaturamentoValor('');
     setEntradaFaturamentoValorNumerico(0);
+    setValorReceitaDashboardConfirmacao(0);
     return;
   }
 
   setInputFaturamento('');
+  setValorReceitaDashboardConfirmacao(0);
 };
 
 const fecharModalReceitaDashboard = () => {
@@ -1391,6 +1399,8 @@ const solicitarFaturamentoDashboard = () => {
   }
 
   setTipoReceitaDashboard('total');
+  setValorReceitaDashboardConfirmacao(valorLimpo);
+  setInputFaturamento('');
   setMesReceitaDashboard(mesAtivo || mesFaturamento || meses[new Date().getMonth()]);
   setModalReceitaDashboardAberto(true);
 };
@@ -1413,7 +1423,7 @@ const confirmarEntradaFaturamentoDashboard = async () => {
     return;
   }
 
-  await salvarFaturamento(true, mesSelecionado);
+  await salvarFaturamento(true, mesSelecionado, valorReceitaDashboardConfirmacao);
   limparCamposReceitaDashboard('total');
 };
 const abrirModalUsuarios = () => {
@@ -5870,7 +5880,7 @@ if (isTelaMobile) {
             {formatarMoeda(
               tipoReceitaDashboard === 'entrada'
                 ? entradaFaturamentoValorNumerico
-                : parseInt(inputFaturamento.replace(/\D/g, '') || '0', 10) / 100
+                : valorReceitaDashboardConfirmacao
             )}
           </p>
           {tipoReceitaDashboard === 'total' && getTotalEntradasPorMes(mesReceitaDashboard) > 0 && (
