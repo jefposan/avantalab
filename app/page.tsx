@@ -5608,86 +5608,58 @@ if (isTelaMobile) {
 
               </div>
             ) : (
-              <div className="max-h-[55vh] overflow-y-auto pr-1 -mr-1">
-              <div className="space-y-1.5">
-                <div>
-                  <label className="mb-0.5 block text-xs font-semibold text-slate-700">
-                    Nome
-                  </label>
-                  <input
+              <div className="space-y-2">
+                <input
   type="text"
-  placeholder="Seu nome completo"
+  placeholder="Nome completo"
   value={cadastroNome}
   onChange={(e) => setCadastroNome(e.target.value)}
-  className="w-full rounded-xl border border-slate-300 bg-white/90 px-3 py-1.5 text-slate-800 outline-none transition focus:border-sky-600 focus:ring-2 focus:ring-sky-600/20"
+  className="w-full rounded-xl border border-slate-300 bg-white/90 px-3 py-2 text-sm text-slate-800 outline-none transition focus:border-sky-600 focus:ring-2 focus:ring-sky-600/20"
 />
+
+                <div className="grid grid-cols-2 gap-1.5 rounded-xl border border-slate-200 bg-slate-50 p-1">
+                  {(['empresa', 'pessoal'] as TipoPerfil[]).map((tipo) => {
+                    const ativo = tipoPerfilInicialNormalizado === tipo;
+                    return (
+                      <button
+                        key={tipo}
+                        type="button"
+                        onClick={() => setTipoPerfilInicial(tipo)}
+                        className={`rounded-lg px-3 py-1.5 text-xs font-black uppercase tracking-wide transition ${
+                          ativo
+                            ? 'bg-slate-900 text-white shadow'
+                            : 'text-slate-500 hover:bg-white hover:text-slate-800'
+                        }`}
+                      >
+                        {rotuloTipoPerfil(tipo)}
+                      </button>
+                    );
+                  })}
                 </div>
 
-                <div>
-                  <label className="mb-0.5 block text-xs font-semibold text-slate-700">
-                    Tipo do primeiro perfil
-                  </label>
-
-                  <div className="grid grid-cols-2 gap-1.5 rounded-xl border border-slate-200 bg-slate-50 p-1">
-                    {(['empresa', 'pessoal'] as TipoPerfil[]).map((tipo) => {
-                      const ativo = tipoPerfilInicialNormalizado === tipo;
-
-                      return (
-                        <button
-                          key={tipo}
-                          type="button"
-                          onClick={() => setTipoPerfilInicial(tipo)}
-                          className={`rounded-lg px-3 py-2 text-xs font-black uppercase tracking-wide transition ${
-                            ativo
-                              ? 'bg-slate-900 text-white shadow'
-                              : 'text-slate-500 hover:bg-white hover:text-slate-800'
-                          }`}
-                        >
-                          {rotuloTipoPerfil(tipo)}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-
-                <div>
-                  <label className="mb-0.5 block text-xs font-semibold text-slate-700">
-                    Email
-                  </label>
-                  <input
+                <input
   type="email"
-  placeholder="seuemail@exemplo.com"
+  placeholder="Email"
   value={cadastroEmail}
   onChange={(e) => setCadastroEmail(e.target.value)}
-  className="w-full rounded-xl border border-slate-300 bg-white/90 px-3 py-1.5 text-slate-800 outline-none transition focus:border-sky-600 focus:ring-2 focus:ring-sky-600/20"
+  className="w-full rounded-xl border border-slate-300 bg-white/90 px-3 py-2 text-sm text-slate-800 outline-none transition focus:border-sky-600 focus:ring-2 focus:ring-sky-600/20"
 />
-                </div>
 
-                <div>
-  <label className="mb-0.5 block text-xs font-semibold text-slate-700">
-    Celular
-  </label>
-  <input
-    type="tel"
-    placeholder="DDD + número. Ex: 11999999999"
-    value={cadastroTelefone}
-    onChange={(e) => setCadastroTelefone(e.target.value)}
-    className="w-full rounded-xl border border-slate-300 bg-white/90 px-3 py-1.5 text-slate-800 outline-none transition focus:border-sky-600 focus:ring-2 focus:ring-sky-600/20"
-  />
-</div>
+                <input
+  type="tel"
+  placeholder="Celular (DDD + número)"
+  value={cadastroTelefone}
+  onChange={(e) => setCadastroTelefone(e.target.value)}
+  className="w-full rounded-xl border border-slate-300 bg-white/90 px-3 py-2 text-sm text-slate-800 outline-none transition focus:border-sky-600 focus:ring-2 focus:ring-sky-600/20"
+/>
 
-                <div>
-  <label className="mb-0.5 block text-xs font-semibold text-slate-700">
-    Senha
-  </label>
-
-  <div className="relative">
+                <div className="relative">
     <input
       type={mostrarSenhaCadastro ? 'text' : 'password'}
       placeholder="Crie uma senha"
       value={cadastroSenha}
       onChange={(e) => setCadastroSenha(e.target.value)}
-      className="w-full rounded-xl border border-slate-300 bg-white/90 px-3 py-1.5 pr-10 text-slate-800 outline-none transition focus:border-sky-600 focus:ring-2 focus:ring-sky-600/20"
+      className="w-full rounded-xl border border-slate-300 bg-white/90 px-3 py-2 pr-10 text-sm text-slate-800 outline-none transition focus:border-sky-600 focus:ring-2 focus:ring-sky-600/20"
     />
 
     <button
@@ -5746,20 +5718,14 @@ if (isTelaMobile) {
       )}
     </button>
   </div>
-</div>
 
-                <div>
-  <label className="mb-0.5 block text-xs font-semibold text-slate-700">
-    Confirmar senha
-  </label>
-
-  <div className="relative">
+                <div className="relative">
     <input
       type={mostrarConfirmarSenhaCadastro ? 'text' : 'password'}
-      placeholder="Repita a senha"
+      placeholder="Confirmar senha"
       value={cadastroConfirmarSenha}
       onChange={(e) => setCadastroConfirmarSenha(e.target.value)}
-      className="w-full rounded-xl border border-slate-300 bg-white/90 px-3 py-1.5 pr-10 text-slate-800 outline-none transition focus:border-sky-600 focus:ring-2 focus:ring-sky-600/20"
+      className="w-full rounded-xl border border-slate-300 bg-white/90 px-3 py-2 pr-10 text-sm text-slate-800 outline-none transition focus:border-sky-600 focus:ring-2 focus:ring-sky-600/20"
     />
 
     <button
@@ -5820,21 +5786,16 @@ if (isTelaMobile) {
       )}
     </button>
   </div>
-</div>
 
                 {smsCadastroEnviado && (
   <div>
-    <label className="mb-0.5 block text-xs font-semibold text-slate-700">
-      Código recebido por SMS
-    </label>
-
     <input
       type="text"
       inputMode="numeric"
-      placeholder="Digite o código recebido"
+      placeholder="Código recebido por SMS"
       value={codigoSmsCadastro}
       onChange={(e) => setCodigoSmsCadastro(e.target.value)}
-      className="w-full rounded-xl border border-slate-300 bg-white/90 px-3 py-1.5 text-slate-800 outline-none transition focus:border-sky-600 focus:ring-2 focus:ring-sky-600/20"
+      className="w-full rounded-xl border border-slate-300 bg-white/90 px-3 py-2 text-sm text-slate-800 outline-none transition focus:border-sky-600 focus:ring-2 focus:ring-sky-600/20"
     />
 
     <p className="mt-0.5 text-[11px] text-slate-500">
@@ -5892,7 +5853,6 @@ if (isTelaMobile) {
                     Entrar
                   </button>
                 </div>
-              </div>
               </div>
             )}
             </>
