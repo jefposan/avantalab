@@ -1097,7 +1097,8 @@
           telefone_confirmado: vinculo.telefone_confirmado === true,
         };
       })
-      .filter(Boolean);
+      .filter(Boolean)
+      .sort(function(a, b) { return a.nome.localeCompare(b.nome, 'pt-BR', { sensitivity: 'base' }); });
 
     state.empresa = state.empresas[0] || null;
   }

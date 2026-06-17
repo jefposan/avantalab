@@ -272,7 +272,8 @@ export async function buscarEmpresasDoUsuario(usuarioId: string) {
   telefone_confirmado_em: vinculo.telefone_confirmado_em,
 };
     })
-    .filter(Boolean);
+    .filter(Boolean)
+    .sort((a: any, b: any) => a.nome.localeCompare(b.nome, 'pt-BR', { sensitivity: 'base' }));
 }
 
 export async function buscarConfiguracoes(empresaId: string) {
