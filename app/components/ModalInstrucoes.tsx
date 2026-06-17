@@ -10,6 +10,7 @@ type ModalInstrucoesProps = {
   textoSobreCorPrimaria: string;
   corEhClara: (hex: string) => boolean;
   categoriasPerfil: CategoriaPerfil[];
+  tipoPerfil?: string;
 };
 
 export default function ModalInstrucoes({
@@ -22,6 +23,7 @@ export default function ModalInstrucoes({
   textoSobreCorPrimaria,
   corEhClara,
   categoriasPerfil,
+  tipoPerfil,
 }: ModalInstrucoesProps) {
   if (!aberto) return null;
 
@@ -75,10 +77,12 @@ export default function ModalInstrucoes({
             </div>
           ))}
 
-          <div className="px-3 py-2 bg-yellow-500/10 border-l-4 border-yellow-500 rounded-lg text-[11px] leading-snug text-yellow-700 dark:text-yellow-400 mt-3">
-            <strong>Observações:</strong> Se tiver dúvida sobre onde classificar algum gasto,
-            consulte o contador. Estes são exemplos gerais para facilitar a organização.
-          </div>
+          {tipoPerfil !== 'pessoal' && (
+            <div className="px-3 py-2 bg-yellow-500/10 border-l-4 border-yellow-500 rounded-lg text-[11px] leading-snug text-yellow-700 dark:text-yellow-400 mt-3">
+              <strong>Observações:</strong> Se tiver dúvida sobre onde classificar algum gasto,
+              consulte o contador. Estes são exemplos gerais para facilitar a organização.
+            </div>
+          )}
         </div>
       </div>
     </div>

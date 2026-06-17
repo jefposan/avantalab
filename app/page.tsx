@@ -5221,9 +5221,9 @@ if (isTelaMobile) {
 
       <div className="pointer-events-none absolute inset-0 hidden bg-white/10 lg:block" />
 
-      <section className="relative z-10 flex min-h-screen items-start px-4 pb-6 pt-8 lg:items-center lg:px-20 lg:py-10">
+      <section className={`relative z-10 flex min-h-screen items-start px-4 pb-6 pt-6 lg:px-20 ${modoAuth === 'cadastro' && !mostrarLandingPreLoginAtiva ? 'lg:items-start lg:py-4' : 'lg:items-center lg:py-10'}`}>
         <div className="w-full lg:max-w-7xl">
-          <div className={`relative z-20 w-full rounded-3xl border border-white/20 bg-white/10 p-5 shadow-2xl lg:border-white/30 lg:bg-white/70 lg:p-8 lg:backdrop-blur-xl ${
+          <div className={`relative z-20 w-full rounded-3xl border border-white/20 bg-white/10 p-4 shadow-2xl lg:border-white/30 lg:bg-white/70 lg:p-5 lg:backdrop-blur-xl ${
             mostrarLandingPreLoginAtiva ? 'lg:max-w-2xl' : 'lg:max-w-md'
           }`}>
             {mostrarLandingPreLoginAtiva ? (
@@ -5278,12 +5278,12 @@ if (isTelaMobile) {
               </div>
             ) : (
             <>
-            <div className="mb-5 lg:mb-7">
-              <p className="mb-2 text-xs font-bold uppercase tracking-[0.35em] text-sky-700">
+            <div className={modoAuth === 'cadastro' && !modoRedefinirSenha ? 'mb-2' : 'mb-4 lg:mb-6'}>
+              <p className="mb-1 text-xs font-bold uppercase tracking-[0.35em] text-sky-700">
                 AvantaLab Gestão
               </p>
 
-              <h1 className="text-3xl font-black text-slate-900">
+              <h1 className={`font-black text-slate-900 ${modoAuth === 'cadastro' && !modoRedefinirSenha ? 'text-xl' : 'text-3xl'}`}>
   {modoRedefinirSenha
     ? 'Criar nova senha'
     : modoAuth === 'login'
@@ -5291,13 +5291,13 @@ if (isTelaMobile) {
       : 'Criar cadastro'}
 </h1>
 
-              <p className="mt-2 text-sm leading-relaxed text-slate-600">
+              {(modoAuth !== 'cadastro' || modoRedefinirSenha) && (
+                <p className="mt-2 text-sm leading-relaxed text-slate-600">
   {modoRedefinirSenha
     ? 'Digite e confirme sua nova senha para recuperar o acesso ao sistema.'
-    : modoAuth === 'login'
-      ? 'Entre para acompanhar sua gestão financeira, lançamentos, relatórios e evolução operacional.'
-      : 'Crie seu acesso para começar a usar o sistema de gestão da AvantaLab.'}
+    : 'Entre para acompanhar sua gestão financeira, lançamentos, relatórios e evolução operacional.'}
 </p>
+              )}
             </div>
 
           {modoRedefinirSenha ? (
@@ -5608,7 +5608,7 @@ if (isTelaMobile) {
 
               </div>
             ) : (
-              <div className="space-y-2.5">
+              <div className="space-y-1.5">
                 <div>
                   <label className="mb-0.5 block text-xs font-semibold text-slate-700">
                     Nome
@@ -5618,7 +5618,7 @@ if (isTelaMobile) {
   placeholder="Seu nome completo"
   value={cadastroNome}
   onChange={(e) => setCadastroNome(e.target.value)}
-  className="w-full rounded-xl border border-slate-300 bg-white/90 px-4 py-2 text-slate-800 outline-none transition focus:border-sky-600 focus:ring-2 focus:ring-sky-600/20"
+  className="w-full rounded-xl border border-slate-300 bg-white/90 px-3 py-1.5 text-slate-800 outline-none transition focus:border-sky-600 focus:ring-2 focus:ring-sky-600/20"
 />
                 </div>
 
@@ -5627,7 +5627,7 @@ if (isTelaMobile) {
                     Tipo do primeiro perfil
                   </label>
 
-                  <div className="grid grid-cols-2 gap-2 rounded-xl border border-slate-200 bg-slate-50 p-1">
+                  <div className="grid grid-cols-2 gap-1.5 rounded-xl border border-slate-200 bg-slate-50 p-1">
                     {(['empresa', 'pessoal'] as TipoPerfil[]).map((tipo) => {
                       const ativo = tipoPerfilInicialNormalizado === tipo;
 
@@ -5658,7 +5658,7 @@ if (isTelaMobile) {
   placeholder="seuemail@exemplo.com"
   value={cadastroEmail}
   onChange={(e) => setCadastroEmail(e.target.value)}
-  className="w-full rounded-xl border border-slate-300 bg-white/90 px-4 py-2 text-slate-800 outline-none transition focus:border-sky-600 focus:ring-2 focus:ring-sky-600/20"
+  className="w-full rounded-xl border border-slate-300 bg-white/90 px-3 py-1.5 text-slate-800 outline-none transition focus:border-sky-600 focus:ring-2 focus:ring-sky-600/20"
 />
                 </div>
 
@@ -5671,7 +5671,7 @@ if (isTelaMobile) {
     placeholder="DDD + número. Ex: 11999999999"
     value={cadastroTelefone}
     onChange={(e) => setCadastroTelefone(e.target.value)}
-    className="w-full rounded-xl border border-slate-300 bg-white/90 px-4 py-2 text-slate-800 outline-none transition focus:border-sky-600 focus:ring-2 focus:ring-sky-600/20"
+    className="w-full rounded-xl border border-slate-300 bg-white/90 px-3 py-1.5 text-slate-800 outline-none transition focus:border-sky-600 focus:ring-2 focus:ring-sky-600/20"
   />
 </div>
 
@@ -5686,7 +5686,7 @@ if (isTelaMobile) {
       placeholder="Crie uma senha"
       value={cadastroSenha}
       onChange={(e) => setCadastroSenha(e.target.value)}
-      className="w-full rounded-xl border border-slate-300 bg-white/90 px-4 py-2 pr-10 text-slate-800 outline-none transition focus:border-sky-600 focus:ring-2 focus:ring-sky-600/20"
+      className="w-full rounded-xl border border-slate-300 bg-white/90 px-3 py-1.5 pr-10 text-slate-800 outline-none transition focus:border-sky-600 focus:ring-2 focus:ring-sky-600/20"
     />
 
     <button
@@ -5758,7 +5758,7 @@ if (isTelaMobile) {
       placeholder="Repita a senha"
       value={cadastroConfirmarSenha}
       onChange={(e) => setCadastroConfirmarSenha(e.target.value)}
-      className="w-full rounded-xl border border-slate-300 bg-white/90 px-4 py-2 pr-10 text-slate-800 outline-none transition focus:border-sky-600 focus:ring-2 focus:ring-sky-600/20"
+      className="w-full rounded-xl border border-slate-300 bg-white/90 px-3 py-1.5 pr-10 text-slate-800 outline-none transition focus:border-sky-600 focus:ring-2 focus:ring-sky-600/20"
     />
 
     <button
@@ -5833,7 +5833,7 @@ if (isTelaMobile) {
       placeholder="Digite o código recebido"
       value={codigoSmsCadastro}
       onChange={(e) => setCodigoSmsCadastro(e.target.value)}
-      className="w-full rounded-xl border border-slate-300 bg-white/90 px-4 py-2 text-slate-800 outline-none transition focus:border-sky-600 focus:ring-2 focus:ring-sky-600/20"
+      className="w-full rounded-xl border border-slate-300 bg-white/90 px-3 py-1.5 text-slate-800 outline-none transition focus:border-sky-600 focus:ring-2 focus:ring-sky-600/20"
     />
 
     <p className="mt-0.5 text-[11px] text-slate-500">
@@ -5881,7 +5881,7 @@ if (isTelaMobile) {
     : 'Enviar código por SMS'}
 </button>
 
-                <div className="pt-2 text-center text-sm text-slate-600">
+                <div className="text-center text-sm text-slate-600">
                   Já tem conta?{' '}
                   <button
                     type="button"
@@ -5917,6 +5917,7 @@ if (isTelaMobile) {
   textoSobreCorPrimaria={textoSobreCorPrimaria}
   corEhClara={corEhClara}
   categoriasPerfil={categoriasPerfilAtual}
+  tipoPerfil={tipoPerfilAtualNormalizado}
 />
 
       <ModalDespesasBase
@@ -6005,7 +6006,7 @@ if (isTelaMobile) {
         </p>
 
         <h2 className="mt-1 text-xl font-black">
-          LANÇAR RECEITA
+          ADICIONAR RECEITA
         </h2>
       </div>
 

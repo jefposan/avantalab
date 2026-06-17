@@ -1538,7 +1538,14 @@
 
     if (criadaId) {
       await db.from('configuracoes').upsert({ empresa_id: criadaId, duplicados_ativo: true }, { onConflict: 'empresa_id' });
-      await db.from('empresas').update({ tipo_perfil: tipo }).eq('id', criadaId);
+      var tokInicial = await tokenSessao();
+      if (tokInicial) {
+        await fetch('/api/atualizar-empresa', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + tokInicial },
+          body: JSON.stringify({ empresaId: criadaId, nome: nome, tipoPerfil: tipo }),
+        });
+      }
     }
 
     state.modoCriarPerfil = false;
@@ -2094,10 +2101,14 @@
       await db
         .from('configuracoes')
         .upsert({ empresa_id: criadaId, duplicados_ativo: true }, { onConflict: 'empresa_id' });
-      await db
-        .from('empresas')
-        .update({ tipo_perfil: tipoPerfil })
-        .eq('id', criadaId);
+      var tokCriar = await tokenSessao();
+      if (tokCriar) {
+        await fetch('/api/atualizar-empresa', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + tokCriar },
+          body: JSON.stringify({ empresaId: criadaId, nome: nome, tipoPerfil: tipoPerfil }),
+        });
+      }
     }
 
     state.modalMenu = '';
@@ -2181,15 +2192,17 @@
       return;
     }
 
-    var atualizacaoEmpresa = await db
-      .from('empresas')
-      .update({ nome: nome, tipo_perfil: tipoPerfil })
-      .eq('id', state.empresa.id);
+    var respostaEmpresaHttp = await fetch('/api/atualizar-empresa', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + tok },
+      body: JSON.stringify({ empresaId: state.empresa.id, nome: nome, tipoPerfil: tipoPerfil }),
+    });
+    var respostaEmpresa = await lerResposta(respostaEmpresaHttp);
 
-    if (atualizacaoEmpresa.error) {
+    if (!respostaEmpresaHttp.ok || respostaEmpresa.erro) {
       state.carregando = false;
       state.empresaAcao = '';
-      setErro(mensagemErro(atualizacaoEmpresa.error, 'Nao foi possivel atualizar o perfil financeiro.'));
+      setErro(respostaEmpresa.mensagem || 'Nao foi possivel atualizar o perfil financeiro.');
       return;
     }
 
@@ -4748,7 +4761,7 @@
           return Promise.all(
             keys
               .filter(function (key) {
-                return key.indexOf('avantalab-mobile-') === 0 && key !== 'avantalab-mobile-v74';
+                return key.indexOf('avantalab-mobile-') === 0 && key !== 'avantalab-mobile-v75';
               })
               .map(function (key) {
                 return caches.delete(key);
@@ -4794,6 +4807,7 @@
       render();
     }
   }
+
 
   function garantirRenderDepoisDaHidratacao() {
     [900, 1800, 3200].forEach(function (tempo) {
