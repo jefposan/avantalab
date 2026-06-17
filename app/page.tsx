@@ -5221,9 +5221,9 @@ if (isTelaMobile) {
 
       <div className="pointer-events-none absolute inset-0 hidden bg-white/10 lg:block" />
 
-      <section className={`relative z-10 flex min-h-screen items-start px-4 pb-6 pt-6 lg:px-20 ${modoAuth === 'cadastro' && !mostrarLandingPreLoginAtiva ? 'lg:items-start lg:py-4' : 'lg:items-center lg:py-10'}`}>
+      <section className="relative z-10 flex min-h-screen items-start px-4 pb-6 pt-8 lg:items-center lg:px-20 lg:py-10">
         <div className="w-full lg:max-w-7xl">
-          <div className={`relative z-20 w-full rounded-3xl border border-white/20 bg-white/10 p-4 shadow-2xl lg:border-white/30 lg:bg-white/70 lg:p-5 lg:backdrop-blur-xl ${
+          <div className={`relative z-20 w-full rounded-3xl border border-white/20 bg-white/10 p-5 shadow-2xl lg:border-white/30 lg:bg-white/70 lg:p-8 lg:backdrop-blur-xl ${
             mostrarLandingPreLoginAtiva ? 'lg:max-w-2xl' : 'lg:max-w-md'
           }`}>
             {mostrarLandingPreLoginAtiva ? (
@@ -5278,12 +5278,12 @@ if (isTelaMobile) {
               </div>
             ) : (
             <>
-            <div className={modoAuth === 'cadastro' && !modoRedefinirSenha ? 'mb-2' : 'mb-4 lg:mb-6'}>
-              <p className="mb-1 text-xs font-bold uppercase tracking-[0.35em] text-sky-700">
+            <div className="mb-5 lg:mb-7">
+              <p className="mb-2 text-xs font-bold uppercase tracking-[0.35em] text-sky-700">
                 AvantaLab Gestão
               </p>
 
-              <h1 className={`font-black text-slate-900 ${modoAuth === 'cadastro' && !modoRedefinirSenha ? 'text-xl' : 'text-3xl'}`}>
+              <h1 className="text-3xl font-black text-slate-900">
   {modoRedefinirSenha
     ? 'Criar nova senha'
     : modoAuth === 'login'
@@ -5291,13 +5291,13 @@ if (isTelaMobile) {
       : 'Criar cadastro'}
 </h1>
 
-              {(modoAuth !== 'cadastro' || modoRedefinirSenha) && (
-                <p className="mt-2 text-sm leading-relaxed text-slate-600">
+              <p className="mt-2 text-sm leading-relaxed text-slate-600">
   {modoRedefinirSenha
     ? 'Digite e confirme sua nova senha para recuperar o acesso ao sistema.'
-    : 'Entre para acompanhar sua gestão financeira, lançamentos, relatórios e evolução operacional.'}
+    : modoAuth === 'login'
+      ? 'Entre para acompanhar sua gestão financeira, lançamentos, relatórios e evolução operacional.'
+      : 'Preencha seus dados para criar acesso ao sistema.'}
 </p>
-              )}
             </div>
 
           {modoRedefinirSenha ? (
@@ -5608,6 +5608,7 @@ if (isTelaMobile) {
 
               </div>
             ) : (
+              <div className="max-h-[55vh] overflow-y-auto pr-1 -mr-1">
               <div className="space-y-1.5">
                 <div>
                   <label className="mb-0.5 block text-xs font-semibold text-slate-700">
@@ -5891,6 +5892,7 @@ if (isTelaMobile) {
                     Entrar
                   </button>
                 </div>
+              </div>
               </div>
             )}
             </>
