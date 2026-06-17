@@ -1,3 +1,5 @@
+import type { CategoriaPerfil } from '../lib/perfis';
+
 type ModalInstrucoesProps = {
   aberto: boolean;
   aoFechar: () => void;
@@ -7,6 +9,7 @@ type ModalInstrucoesProps = {
   corPrimaria: string;
   textoSobreCorPrimaria: string;
   corEhClara: (hex: string) => boolean;
+  categoriasPerfil: CategoriaPerfil[];
 };
 
 export default function ModalInstrucoes({
@@ -18,6 +21,7 @@ export default function ModalInstrucoes({
   corPrimaria,
   textoSobreCorPrimaria,
   corEhClara,
+  categoriasPerfil,
 }: ModalInstrucoesProps) {
   if (!aberto) return null;
 
@@ -61,53 +65,15 @@ export default function ModalInstrucoes({
         </div>
 
         <div className={`p-5 space-y-3 text-xs ${textMuted} leading-snug overflow-y-auto`}>
-          <div>
-            <strong className={textStrong}>AMORTIZAÇÃO:</strong>
-            <br />
-            - Gastos para dividir o custo de coisas que não são físicas.
-            <br />
-            - Exemplos: softwares comprados, valor pago por patente.
-          </div>
-
-          <div>
-            <strong className={textStrong}>CUSTOS VARIÁVEIS:</strong>
-            <br />
-            - Gastos que aumentam ou diminuem conforme a quantidade produzida ou vendida.
-            <br />
-            - Exemplos: embalagens, matéria-prima, frete, comissões.
-          </div>
-
-          <div>
-            <strong className={textStrong}>DEPRECIAÇÃO:</strong>
-            <br />
-            - Gastos para dividir o custo de coisas físicas que a empresa usa.
-            <br />
-            - Exemplos: desgaste de máquinas, veículos e equipamentos.
-          </div>
-
-          <div>
-            <strong className={textStrong}>DESPESAS FINANCEIRAS:</strong>
-            <br />
-            - Gastos relacionados a dinheiro, bancos, juros e operações financeiras.
-            <br />
-            - Exemplos: juros, tarifas bancárias, taxas e variações de câmbio.
-          </div>
-
-          <div>
-            <strong className={textStrong}>DESPESAS OPERACIONAIS:</strong>
-            <br />
-            - Gastos necessários para manter a empresa funcionando.
-            <br />
-            - Exemplos: aluguel, água, luz, salários, manutenção, pró-labore e publicidade.
-          </div>
-
-          <div>
-            <strong className={textStrong}>IMPOSTOS SOBRE LUCRO:</strong>
-            <br />
-            - Tributos que a empresa paga sobre o lucro apurado.
-            <br />
-            - Exemplos: imposto de renda e CSLL.
-          </div>
+          {categoriasPerfil.map((categoria) => (
+            <div key={categoria.nome}>
+              <strong className={textStrong}>{categoria.nome.toUpperCase()}:</strong>
+              <br />
+              - {categoria.descricao}
+              <br />
+              - Exemplos: {categoria.exemplos}
+            </div>
+          ))}
 
           <div className="px-3 py-2 bg-yellow-500/10 border-l-4 border-yellow-500 rounded-lg text-[11px] leading-snug text-yellow-700 dark:text-yellow-400 mt-3">
             <strong>Observações:</strong> Se tiver dúvida sobre onde classificar algum gasto,

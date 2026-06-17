@@ -294,7 +294,7 @@ export default function BalancoGeral({
         </div>
       </div>
       <div className="balanco-print-rodape hidden">
-        Balanço de {nomeEmpresa || 'Empresa'} por AvantaLab.
+        Balanço de {nomeEmpresa || 'Perfil financeiro'} por AvantaLab.
       </div>
       </div>
 

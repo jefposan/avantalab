@@ -1,17 +1,19 @@
 import { useMemo } from 'react';
 import { normalizarTexto, corEhClara } from '../lib/formatters';
+import { nomesCategoriasDoPerfil, type TipoPerfil } from '../lib/perfis';
 
 interface PorCategoriaProps {
   meses: string[];
   lancamentos: any[];
   despesasCadastradas: { nome: string; categoria: string }[];
+  tipoPerfil: TipoPerfil;
   corPrimaria: string;
   darkMode: boolean;
   formatarMoeda: (valor: number) => string;
 }
 
 export default function PorCategoria({
-  meses, lancamentos, despesasCadastradas, corPrimaria, darkMode, formatarMoeda
+  meses, lancamentos, despesasCadastradas, tipoPerfil, corPrimaria, darkMode, formatarMoeda
 }: PorCategoriaProps) {
 
   // --- CÁLCULOS TOTAIS ---
@@ -20,7 +22,7 @@ export default function PorCategoria({
     const despMap: Record<string, number> = {};
     const catMap: Record<string, number> = {};
 
-    const baseCategorias = ["Amortização", "Custos Variáveis", "Depreciação", "Despesas Financeiras", "Despesas Operacionais", "Imposto sobre Lucro"];
+    const baseCategorias = nomesCategoriasDoPerfil(tipoPerfil);
     baseCategorias.forEach(c => catMap[c] = 0);
 
     despesasCadastradas.forEach(d => {
@@ -40,7 +42,7 @@ const cat = despesaInfo ? despesaInfo.categoria : 'Outros';
     });
 
     return { totalGeral, despMap, catMap };
-  }, [lancamentos, despesasCadastradas]);
+  }, [lancamentos, despesasCadastradas, tipoPerfil]);
 
   const despesasNomes = Object.keys(despMap).sort((a, b) => a.localeCompare(b));
   const metade = Math.ceil(despesasNomes.length / 2);

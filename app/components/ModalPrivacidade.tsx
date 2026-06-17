@@ -74,7 +74,7 @@ export default function ModalPrivacidade({
               2. Informações coletadas
             </h3>
             <p className={textMuted}>
-              O sistema pode coletar informações necessárias para cadastro, autenticação e funcionamento da plataforma, como nome, email, empresa vinculada, preferências de configuração, além dos dados financeiros e administrativos inseridos voluntariamente pelo usuário.
+              O sistema pode coletar informações necessárias para cadastro, autenticação e funcionamento da plataforma, como nome, email, perfil financeiro vinculado, preferências de configuração, além dos dados financeiros e administrativos inseridos voluntariamente pelo usuário.
             </p>
           </section>
 

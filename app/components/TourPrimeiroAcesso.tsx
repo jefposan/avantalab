@@ -29,21 +29,21 @@ const PASSOS: Passo[] = [
     localizacao: 'Barra superior → botão Ajustes',
     titulo: 'Menu Ajustes',
     descricao:
-      'Clique em "Ajustes" na barra superior para acessar todas as configurações do sistema: logo, cor, usuários, empresas, backup e muito mais. O menu se expande logo abaixo da barra.',
+      'Clique em "Ajustes" na barra superior para acessar todas as configurações do sistema: logo, cor, usuários, perfis financeiros, backup e muito mais. O menu se expande logo abaixo da barra.',
   },
   {
     icone: '🎨',
     localizacao: 'Ajustes → Logo / Cor',
-    titulo: 'Logo e cor da empresa',
+    titulo: 'Logo e cor do perfil',
     descricao:
-      'Personalize a identidade visual da empresa. Adicione a logomarca (PNG, JPG ou SVG) e escolha a cor principal que será aplicada em todos os elementos visuais do sistema.',
+      'Personalize a identidade visual do perfil financeiro. Adicione a logomarca (PNG, JPG ou SVG) e escolha a cor principal que será aplicada em todos os elementos visuais do sistema.',
   },
   {
     icone: '📋',
     localizacao: 'Ajustes → Instruções categorias',
     titulo: 'Despesas base e categorias',
     descricao:
-      'Cadastre as despesas fixas e recorrentes da empresa. Use "Instruções de categorias" para entender como classificar cada tipo de gasto e garantir relatórios precisos.',
+      'Cadastre as despesas fixas e recorrentes do perfil. Use "Instruções de categorias" para entender como classificar cada tipo de gasto e garantir relatórios precisos.',
   },
   {
     icone: '👥',
@@ -54,17 +54,17 @@ const PASSOS: Passo[] = [
   },
   {
     icone: '🏢',
-    localizacao: 'Ajustes → Empresa',
-    titulo: 'Empresas',
+    localizacao: 'Ajustes → Perfil',
+    titulo: 'Perfis financeiros',
     descricao:
-      'Gerencie os dados da empresa atual, crie novas empresas e alterne entre elas. Com múltiplos acessos, o seletor de empresa aparece na tela de login automaticamente.',
+      'Gerencie os dados do perfil atual, crie novos perfis financeiros e alterne entre eles quando seu acesso estiver vinculado a mais de um perfil.',
   },
   {
     icone: '💾',
     localizacao: 'Ajustes → Backup',
     titulo: 'Backup dos dados',
     descricao:
-      'Gere um arquivo Excel com todos os dados da empresa a qualquer momento. O sininho no topo da tela envia uma notificação mensal lembrando você de realizar o backup — não ignore esse aviso!',
+      'Gere um arquivo Excel com todos os dados do perfil financeiro a qualquer momento. O sininho no topo da tela envia uma notificação mensal lembrando você de realizar o backup — não ignore esse aviso!',
   },
   {
     icone: '🧮',
@@ -106,7 +106,7 @@ const PASSOS: Passo[] = [
     localizacao: 'Ajustes → Instruções categorias',
     titulo: 'Por onde começar?',
     descricao:
-      'O primeiro passo é cadastrar as despesas base da empresa. Acesse o menu Ajustes e clique em "Despesas base". Lá você define todas as categorias e gastos recorrentes que serão usados nos lançamentos mensais. Com isso feito, o sistema estará pronto para uso completo.',
+      'O primeiro passo é cadastrar as despesas base do perfil financeiro. Acesse o menu Ajustes e clique em "Despesas base". Lá você define todas as categorias e gastos recorrentes que serão usados nos lançamentos mensais. Com isso feito, o sistema estará pronto para uso completo.',
   },
   {
     icone: '🚀',

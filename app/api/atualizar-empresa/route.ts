@@ -36,9 +36,10 @@ export async function POST(request: Request) {
     const corpo = await request.json();
     const empresaId = String(corpo.empresaId || '').trim();
     const nome = String(corpo.nome || '').trim();
+    const tipoPerfil = corpo.tipoPerfil === 'pessoal' ? 'pessoal' : 'empresa';
 
-    if (!empresaId) return respostaErro('ID da empresa nao informado.');
-    if (!nome) return respostaErro('Nome da empresa nao pode ser vazio.');
+    if (!empresaId) return respostaErro('ID do perfil financeiro nao informado.');
+    if (!nome) return respostaErro('Nome do perfil financeiro nao pode ser vazio.');
 
     const supabaseAdmin = createClient(supabaseUrl, supabaseServiceRoleKey);
 
@@ -58,13 +59,13 @@ export async function POST(request: Request) {
     }
 
     if (!permissao) {
-      return respostaErro('Voce nao tem permissao para editar esta empresa.', 403);
+      return respostaErro('Voce nao tem permissao para editar este perfil financeiro.', 403);
     }
 
-    // Atualiza nome da empresa com service role (bypassa RLS)
+    // Atualiza o perfil financeiro com service role (bypassa RLS).
     const { data: empresaAtualizada, error: erroAtualizar } = await supabaseAdmin
       .from('empresas')
-      .update({ nome })
+      .update({ nome, tipo_perfil: tipoPerfil })
       .eq('id', empresaId)
       .select()
       .single();
@@ -72,7 +73,7 @@ export async function POST(request: Request) {
     if (erroAtualizar) {
       console.error('Erro ao atualizar empresa:', erroAtualizar);
       return respostaErro(
-        erroAtualizar.message || 'Nao foi possivel atualizar a empresa.',
+        erroAtualizar.message || 'Nao foi possivel atualizar o perfil financeiro.',
         500
       );
     }
@@ -80,6 +81,6 @@ export async function POST(request: Request) {
     return NextResponse.json({ erro: false, empresa: empresaAtualizada });
   } catch (error) {
     console.error('Erro inesperado ao atualizar empresa:', error);
-    return respostaErro('Erro inesperado ao atualizar empresa.', 500);
+    return respostaErro('Erro inesperado ao atualizar perfil financeiro.', 500);
   }
 }

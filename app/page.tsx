@@ -25,6 +25,15 @@ import {
   normalizarTexto,
 } from './lib/formatters';
 import {
+  CATEGORIAS_EXCLUSAO_EBITDA,
+  categoriasDoPerfil,
+  normalizarTipoPerfil,
+  placeholderNomePerfil,
+  rotuloNomePerfil,
+  rotuloTipoPerfil,
+  type TipoPerfil,
+} from './lib/perfis';
+import {
   buscarEmpresaDoUsuario,
   buscarEmpresasDoUsuario,
   buscarConfiguracoes,
@@ -130,6 +139,7 @@ const [reenviandoSmsRedefinirSenha, setReenviandoSmsRedefinirSenha] = useState(f
 
   const [empresaId, setEmpresaId] = useState<string | null>(null);
   const [nomeEmpresaAtual, setNomeEmpresaAtual] = useState('');
+const [tipoPerfilAtual, setTipoPerfilAtual] = useState<TipoPerfil>('empresa');
 const [nomeUsuarioAtual, setNomeUsuarioAtual] = useState('');
 const [emailUsuarioAtual, setEmailUsuarioAtual] = useState('');
 const [acessoUsuarioAtualId, setAcessoUsuarioAtualId] = useState<string | null>(null);
@@ -139,6 +149,7 @@ const [modalSelecionarEmpresa, setModalSelecionarEmpresa] = useState(false);
 const [modalEmpresasAberto, setModalEmpresasAberto] = useState(false);
 const [modalEditarEmpresaAberto, setModalEditarEmpresaAberto] = useState(false);
 const [editEmpresaNome, setEditEmpresaNome] = useState('');
+const [editTipoPerfil, setEditTipoPerfil] = useState<TipoPerfil>('empresa');
 const [editEmpresaLogin, setEditEmpresaLogin] = useState('');
 const [editEmpresaSenha, setEditEmpresaSenha] = useState('');
 const [editEmpresaSalvando, setEditEmpresaSalvando] = useState(false);
@@ -148,6 +159,7 @@ const [excluindoEmpresa, setExcluindoEmpresa] = useState(false);
 const [acessoNaoConfigurado, setAcessoNaoConfigurado] = useState(false);
   const [emailConfirmado, setEmailConfirmado] = useState(false);
   const [nomeEmpresaInicial, setNomeEmpresaInicial] = useState('');
+const [tipoPerfilInicial, setTipoPerfilInicial] = useState<TipoPerfil>('empresa');
 const [criandoEmpresaInicial, setCriandoEmpresaInicial] = useState(false);
 const [criandoNovaEmpresaLogada, setCriandoNovaEmpresaLogada] = useState(false);
   const [perfilUsuario, setPerfilUsuario] = useState<
@@ -324,6 +336,15 @@ const perfilUsuarioFormatado =
           ? 'Operador Simples'
           : 'Não definido';
 
+const tipoPerfilAtualNormalizado = normalizarTipoPerfil(tipoPerfilAtual);
+const tipoPerfilInicialNormalizado = normalizarTipoPerfil(tipoPerfilInicial);
+const editTipoPerfilNormalizado = normalizarTipoPerfil(editTipoPerfil);
+const categoriasPerfilAtual = categoriasDoPerfil(tipoPerfilAtualNormalizado);
+const rotuloTipoPerfilAtual = rotuloTipoPerfil(tipoPerfilAtualNormalizado);
+const labelNomePerfilInicial = rotuloNomePerfil(tipoPerfilInicialNormalizado);
+const placeholderPerfilInicial = placeholderNomePerfil(tipoPerfilInicialNormalizado);
+const labelNomePerfilEdicao = rotuloNomePerfil(editTipoPerfilNormalizado);
+
 const textoSobreCorPrimaria = corEhClara(corPrimaria) ? '#0f172a' : '#ffffff';
 const bordaSobreCorPrimaria = corEhClara(corPrimaria)
   ? 'rgba(15, 23, 42, 0.25)'
@@ -491,6 +512,7 @@ console.log('TELEFONE CONFIRMADO:', empresa.telefone_confirmado);
 
   setEmpresaId(empresa.id);
   setNomeEmpresaAtual(empresa.nome || empresa.empresa_nome || '');
+  setTipoPerfilAtual(normalizarTipoPerfil(empresa.tipo_perfil));
   setPerfilUsuario(empresa.perfil || null);
   setAcessoUsuarioAtualId(empresa.acessoId || empresa.acesso_id || null);
 
@@ -598,6 +620,7 @@ if (modoUrl === 'redefinir-senha' || tipoUrl === 'recovery') {
   setModalSelecionarEmpresa(false);
   setEmpresaId(null);
   setNomeEmpresaAtual('');
+  setTipoPerfilAtual('empresa');
   setPerfilUsuario(null);
   setAuthErro('');
   setAuthMensagem('');
@@ -642,6 +665,7 @@ if (paramsConfirmacao.get('confirmado') === '1') {
   setModalSelecionarEmpresa(false);
   setEmpresaId(null);
   setNomeEmpresaAtual('');
+  setTipoPerfilAtual('empresa');
   setPerfilUsuario(null);
   setAuthErro('');
   setAuthMensagem('');
@@ -682,6 +706,7 @@ setMensagemCarregamentoSistema('Carregando empresa...');
 } else {
   setEmpresaId(null);
   setNomeEmpresaAtual('');
+  setTipoPerfilAtual('empresa');
   setPerfilUsuario(null);
   setLogoUrl('');
   setLogoSettings({ scale: 100, x: 0, y: 0 });
@@ -2901,14 +2926,7 @@ const salvo = await salvarConfiguracoesBanco({
     (d) => normalizarTexto(d.nome) === normalizarTexto(l.despesa_nome)
   )?.categoria || 'Outros';
 
-        if (
-          [
-            'Amortização',
-            'Depreciação',
-            'Despesas Financeiras',
-            'Imposto sobre Lucro',
-          ].includes(despesaCat)
-        ) {
+        if (CATEGORIAS_EXCLUSAO_EBITDA.includes(despesaCat)) {
           exclusoesEbitda += valor;
         }
       });
@@ -3559,6 +3577,7 @@ try {
   } else {
     setEmpresaId(null);
     setNomeEmpresaAtual('');
+    setTipoPerfilAtual('empresa');
     setPerfilUsuario(null);
     setLogoUrl('');
     setLogoSettings({ scale: 100, x: 0, y: 0 });
@@ -3585,9 +3604,10 @@ return;
 
 const handleCriarEmpresaInicial = async () => {
   const nomeLimpo = nomeEmpresaInicial.trim();
+  const tipoPerfil = normalizarTipoPerfil(tipoPerfilInicial);
 
   if (!nomeLimpo) {
-    setAuthErro('Informe o nome da empresa para criar o ambiente.');
+    setAuthErro('Informe o nome do perfil financeiro para criar o ambiente.');
     return;
   }
 
@@ -3611,6 +3631,16 @@ const handleCriarEmpresaInicial = async () => {
   const empresaCriadaId = empresaCriada?.id || empresaCriada?.empresa_id;
 
   if (empresaCriadaId) {
+    const resultadoTipoPerfil = await atualizarEmpresa({
+      empresaId: empresaCriadaId,
+      nome: nomeLimpo,
+      tipoPerfil,
+    });
+
+    if (resultadoTipoPerfil.erro) {
+      console.error('Erro ao salvar tipo do perfil financeiro:', resultadoTipoPerfil.mensagem);
+    }
+
     const { error: erroConfigInicial } = await supabase
       .from('configuracoes')
       .upsert(
@@ -3630,7 +3660,8 @@ const handleCriarEmpresaInicial = async () => {
 
   setDuplicadosAtivo(true);
 
-  setAuthMensagem('Ambiente criado com sucesso. Carregando o sistema...');
+  setTipoPerfilAtual(tipoPerfil);
+  setAuthMensagem('Perfil financeiro criado com sucesso. Carregando o sistema...');
 
   setTimeout(() => {
     window.location.href = window.location.origin + window.location.pathname;
@@ -3651,6 +3682,7 @@ const abrirCriacaoNovaEmpresa = () => {
   }
 
   setNomeEmpresaInicial('');
+  setTipoPerfilInicial('empresa');
   setAuthErro('');
   setAuthMensagem('');
   setModalSelecionarEmpresa(false);
@@ -3716,6 +3748,7 @@ const abrirEdicaoEmpresaAtual = async () => {
   }
 
   setEditEmpresaNome(nomeEmpresaAtual || '');
+  setEditTipoPerfil(tipoPerfilAtualNormalizado);
   setEditEmpresaLogin(emailUsuarioAtual || '');
   setEditEmpresaSenha('');
 
@@ -3738,6 +3771,7 @@ const fecharEdicaoEmpresaAtual = () => {
 
   setModalEditarEmpresaAberto(false);
   setEditEmpresaNome('');
+  setEditTipoPerfil('empresa');
   setEditEmpresaLogin('');
   setEditEmpresaSenha('');
 };
@@ -3762,6 +3796,7 @@ const salvarEdicaoEmpresaAtual = async () => {
   const nomeLimpo = editEmpresaNome.trim();
   const loginLimpo = editEmpresaLogin.trim().toLowerCase();
   const senhaLimpa = editEmpresaSenha.trim();
+  const tipoPerfilLimpo = normalizarTipoPerfil(editTipoPerfil);
 
   if (!nomeLimpo) {
     abrirAviso('Nome obrigatório', 'Informe o nome da empresa.');
@@ -3781,7 +3816,11 @@ const salvarEdicaoEmpresaAtual = async () => {
   try {
     setEditEmpresaSalvando(true);
 
-    const resultadoEmpresa = await atualizarEmpresa({ empresaId, nome: nomeLimpo });
+    const resultadoEmpresa = await atualizarEmpresa({
+      empresaId,
+      nome: nomeLimpo,
+      tipoPerfil: tipoPerfilLimpo,
+    });
 
     if (resultadoEmpresa.erro) {
       abrirAviso(
@@ -3824,10 +3863,11 @@ const salvarEdicaoEmpresaAtual = async () => {
           'alerta'
         );
         setNomeEmpresaAtual(nomeLimpo);
+        setTipoPerfilAtual(tipoPerfilLimpo);
         setEmpresasDoUsuario((empresas) =>
           empresas.map((empresa) =>
             empresa.id === empresaId
-              ? { ...empresa, nome: nomeLimpo, empresa_nome: nomeLimpo }
+              ? { ...empresa, nome: nomeLimpo, empresa_nome: nomeLimpo, tipo_perfil: tipoPerfilLimpo }
               : empresa
           )
         );
@@ -3837,11 +3877,18 @@ const salvarEdicaoEmpresaAtual = async () => {
     }
 
     setNomeEmpresaAtual(nomeLimpo);
+    setTipoPerfilAtual(tipoPerfilLimpo);
     setEmailUsuarioAtual(loginLimpo.includes('@') ? loginLimpo : emailUsuarioAtual);
     setEmpresasDoUsuario((empresas) =>
       empresas.map((empresa) =>
         empresa.id === empresaId
-          ? { ...empresa, nome: nomeLimpo, empresa_nome: nomeLimpo, usuario_login: loginLimpo }
+          ? {
+              ...empresa,
+              nome: nomeLimpo,
+              empresa_nome: nomeLimpo,
+              tipo_perfil: tipoPerfilLimpo,
+              usuario_login: loginLimpo,
+            }
           : empresa
       )
     );
@@ -3939,6 +3986,7 @@ const executarExclusaoEmpresaAtual = async () => {
   setExcluindoEmpresa(false);
 
   setEmpresaId(null);
+  setTipoPerfilAtual('empresa');
   setNomeEmpresaAtual('');
   setPerfilUsuario(null);
   setLogoUrl('');
@@ -4714,26 +4762,51 @@ if (acessoNaoConfigurado) {
 
 <h1 className="text-2xl font-black leading-tight text-slate-900">
   {criandoNovaEmpresaLogada
-  ? 'Criar nova empresa'
-  : 'Criar ambiente da empresa'}
+  ? 'Criar novo perfil'
+  : 'Criar perfil financeiro'}
 </h1>
 
 <p className="mt-4 text-sm leading-relaxed text-slate-600">
   {criandoNovaEmpresaLogada
-    ? 'Informe o nome da nova empresa para criar um novo ambiente de gestão.'
-    : 'Sua conta foi confirmada, mas ainda não existe uma empresa vinculada a este acesso. Informe o nome da empresa para iniciar o ambiente de gestão.'}
+    ? 'Informe o tipo e o nome do novo perfil financeiro.'
+    : 'Sua conta foi confirmada, mas ainda não existe um perfil financeiro vinculado a este acesso. Crie o primeiro perfil para iniciar a gestão.'}
 </p>
 
 <div className="mt-6 text-left">
   <label className="mb-1 block text-sm font-semibold text-slate-700">
-    Nome da empresa
+    Tipo do perfil
+  </label>
+
+  <div className="mb-4 grid grid-cols-2 gap-2 rounded-xl border border-slate-200 bg-slate-50 p-1">
+    {(['empresa', 'pessoal'] as TipoPerfil[]).map((tipo) => {
+      const ativo = tipoPerfilInicialNormalizado === tipo;
+
+      return (
+        <button
+          key={tipo}
+          type="button"
+          onClick={() => setTipoPerfilInicial(tipo)}
+          className={`rounded-lg px-3 py-2 text-sm font-black uppercase tracking-wide transition ${
+            ativo
+              ? 'bg-slate-900 text-white shadow'
+              : 'text-slate-500 hover:bg-white hover:text-slate-800'
+          }`}
+        >
+          {rotuloTipoPerfil(tipo)}
+        </button>
+      );
+    })}
+  </div>
+
+  <label className="mb-1 block text-sm font-semibold text-slate-700">
+    {labelNomePerfilInicial}
   </label>
 
   <input
     type="text"
     value={nomeEmpresaInicial}
     onChange={(e) => setNomeEmpresaInicial(e.target.value)}
-    placeholder="Ex: Minha Empresa"
+    placeholder={placeholderPerfilInicial}
     className="w-full rounded-xl border border-slate-300 bg-white/90 px-4 py-3 text-slate-800 outline-none transition focus:border-sky-600 focus:ring-2 focus:ring-sky-600/20"
   />
 </div>
@@ -4817,11 +4890,11 @@ if (modalSelecionarEmpresa) {
           }}
         >
           <h2 className="text-lg font-black uppercase tracking-wide">
-            Selecionar empresa
+            Selecionar perfil
           </h2>
 
           <p className="mt-1 text-sm opacity-85">
-            Escolha qual empresa deseja acessar neste momento.
+            Escolha qual perfil financeiro deseja acessar neste momento.
           </p>
         </div>
 
@@ -4856,7 +4929,7 @@ if (modalSelecionarEmpresa) {
                       <p className={`mt-1 text-xs ${
                         darkMode ? 'text-slate-400' : 'text-slate-500'
                       }`}>
-                        Perfil:{' '}
+                        {rotuloTipoPerfil(empresa.tipo_perfil)} · Acesso:{' '}
                         {empresa.perfil === 'gestor_master'
                           ? 'Gestor Master'
                           : empresa.perfil === 'administrador'
@@ -5551,6 +5624,33 @@ if (isTelaMobile) {
 
                 <div>
                   <label className="mb-0.5 block text-xs font-semibold text-slate-700">
+                    Tipo do primeiro perfil
+                  </label>
+
+                  <div className="grid grid-cols-2 gap-2 rounded-xl border border-slate-200 bg-slate-50 p-1">
+                    {(['empresa', 'pessoal'] as TipoPerfil[]).map((tipo) => {
+                      const ativo = tipoPerfilInicialNormalizado === tipo;
+
+                      return (
+                        <button
+                          key={tipo}
+                          type="button"
+                          onClick={() => setTipoPerfilInicial(tipo)}
+                          className={`rounded-lg px-3 py-2 text-xs font-black uppercase tracking-wide transition ${
+                            ativo
+                              ? 'bg-slate-900 text-white shadow'
+                              : 'text-slate-500 hover:bg-white hover:text-slate-800'
+                          }`}
+                        >
+                          {rotuloTipoPerfil(tipo)}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                <div>
+                  <label className="mb-0.5 block text-xs font-semibold text-slate-700">
                     Email
                   </label>
                   <input
@@ -5816,6 +5916,7 @@ if (isTelaMobile) {
   corPrimaria={corPrimaria}
   textoSobreCorPrimaria={textoSobreCorPrimaria}
   corEhClara={corEhClara}
+  categoriasPerfil={categoriasPerfilAtual}
 />
 
       <ModalDespesasBase
@@ -5842,6 +5943,7 @@ if (isTelaMobile) {
   setNovaBaseCat={setNovaBaseCat}
 
   despesasCadastradas={despesasCadastradas}
+  categoriasPerfil={categoriasPerfilAtual}
 
   adicionarDespesaBase={adicionarDespesaBase}
   apagarDespesaBase={apagarDespesaBase}
@@ -6101,7 +6203,7 @@ if (isTelaMobile) {
         style={estiloTemaPrimario}
       >
         <p className="text-xs font-black uppercase tracking-[0.18em]">
-          Gerenciar empresa
+          Gerenciar perfil financeiro
         </p>
         <h2 className="mt-1 text-xl font-black">
           Editar dados
@@ -6111,7 +6213,7 @@ if (isTelaMobile) {
       <div className="space-y-3">
         <div>
           <label className={`mb-1 block text-xs font-black uppercase tracking-wide ${textMuted}`}>
-            Nome da empresa
+            {labelNomePerfilEdicao}
           </label>
           <input
             type="text"
@@ -6123,6 +6225,42 @@ if (isTelaMobile) {
                 : 'border-slate-300 bg-white text-slate-800'
             }`}
           />
+        </div>
+
+        <div>
+          <label className={`mb-1 block text-xs font-black uppercase tracking-wide ${textMuted}`}>
+            Tipo do perfil financeiro
+          </label>
+
+          <div className={`grid grid-cols-2 gap-2 rounded-xl border p-1 ${
+            darkMode ? 'border-slate-700 bg-slate-900' : 'border-slate-200 bg-slate-50'
+          }`}>
+            {(['empresa', 'pessoal'] as TipoPerfil[]).map((tipo) => {
+              const ativo = editTipoPerfilNormalizado === tipo;
+
+              return (
+                <button
+                  key={tipo}
+                  type="button"
+                  onClick={() => setEditTipoPerfil(tipo)}
+                  className={`rounded-lg px-3 py-2 text-xs font-black uppercase tracking-wide transition ${
+                    ativo
+                      ? 'text-white shadow-md'
+                      : darkMode
+                        ? 'text-slate-300 hover:bg-slate-800'
+                        : 'text-slate-500 hover:bg-white hover:text-slate-800'
+                  }`}
+                  style={ativo ? estiloTemaPrimario : undefined}
+                >
+                  {rotuloTipoPerfil(tipo)}
+                </button>
+              );
+            })}
+          </div>
+
+          <p className={`mt-2 text-xs font-semibold leading-relaxed ${textMuted}`}>
+            Alterar o tipo muda os textos e as categorias sugeridas, sem apagar lançamentos antigos.
+          </p>
         </div>
 
         <div>
@@ -6209,25 +6347,31 @@ if (isTelaMobile) {
         <p className={`text-xs font-black uppercase tracking-[0.18em] ${
           darkMode ? 'text-slate-400' : 'text-slate-400'
         }`}>
-          Empresas
+          Perfis financeiros
         </p>
 
         <h2 className={`mt-2 text-2xl font-black ${
           darkMode ? 'text-white' : 'text-slate-800'
         }`}>
-          Gerenciar empresa
+          Gerenciar perfil financeiro
         </h2>
 
         <p className={`mt-3 text-sm font-semibold ${
           darkMode ? 'text-slate-300' : 'text-slate-600'
         }`}>
-          Empresa atual: {nomeEmpresaAtual || 'Empresa não carregada'}
+          Perfil atual: {nomeEmpresaAtual || 'Perfil não carregado'}
         </p>
 
         <p className={`mt-1 text-sm font-semibold ${
           darkMode ? 'text-slate-400' : 'text-slate-500'
         }`}>
-          Perfil: {perfilUsuarioFormatado}
+          Acesso: {perfilUsuarioFormatado}
+        </p>
+
+        <p className={`mt-1 text-sm font-semibold ${
+          darkMode ? 'text-slate-400' : 'text-slate-500'
+        }`}>
+          Tipo: {rotuloTipoPerfilAtual}
         </p>
       </div>
 
@@ -6251,7 +6395,7 @@ if (isTelaMobile) {
             }}
             className="w-full rounded-xl bg-emerald-600 px-4 py-3 text-sm font-black uppercase tracking-wide text-white transition hover:bg-emerald-700 cursor-pointer"
           >
-            Criar nova empresa
+            Criar novo perfil
           </button>
         )}
 
@@ -6268,7 +6412,7 @@ if (isTelaMobile) {
               : 'cursor-not-allowed bg-slate-200 text-slate-400'
           }`}
         >
-          Trocar empresa
+          Trocar perfil
         </button>
 
         {perfilUsuario === 'gestor_master' && (
@@ -6280,7 +6424,7 @@ if (isTelaMobile) {
             }}
             className="w-full rounded-xl bg-red-600 px-4 py-3 text-sm font-black uppercase tracking-wide text-white transition hover:bg-red-700 cursor-pointer"
           >
-            Excluir empresa
+            Excluir perfil
           </button>
         )}
       </div>
@@ -7808,7 +7952,7 @@ setModalLogo(true);
   }}
   className="whitespace-nowrap bg-slate-800 hover:bg-slate-700 px-3 py-1.5 rounded shadow border border-slate-700 transition-colors text-xs cursor-pointer"
 >
-  Empresa
+  Perfil
 </button>
 
               {/* BOTÃO DE BACKUP EXCEL */}
@@ -8304,6 +8448,7 @@ setAjustesAberto(false);
         meses={meses}
         lancamentos={lancamentos}
         despesasCadastradas={despesasCadastradas}
+        tipoPerfil={tipoPerfilAtualNormalizado}
         corPrimaria={corPrimaria}
         darkMode={darkMode}
         formatarMoeda={formatarMoeda}

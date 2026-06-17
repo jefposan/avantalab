@@ -1,3 +1,5 @@
+import type { CategoriaPerfil } from '../lib/perfis';
+
 type DespesaCadastrada = {
   nome: string;
   categoria: string;
@@ -27,6 +29,7 @@ type ModalDespesasBaseProps = {
   setNovaBaseCat: (valor: string) => void;
 
   despesasCadastradas: DespesaCadastrada[];
+  categoriasPerfil: CategoriaPerfil[];
 
   adicionarDespesaBase: () => void;
   apagarDespesaBase: (nome: string) => void;
@@ -56,6 +59,7 @@ export default function ModalDespesasBase({
   setNovaBaseCat,
 
   despesasCadastradas,
+  categoriasPerfil,
 
   adicionarDespesaBase,
   apagarDespesaBase,
@@ -171,12 +175,11 @@ export default function ModalDespesasBase({
                 style={{ outlineColor: corPrimaria }}
               >
                 <option value="">Categoria (Obrigatória)</option>
-                <option value="Amortização">Amortização</option>
-                <option value="Custos Variáveis">Custos Variáveis</option>
-                <option value="Depreciação">Depreciação</option>
-                <option value="Despesas Financeiras">Despesas Financeiras</option>
-                <option value="Despesas Operacionais">Despesas Operacionais</option>
-                <option value="Imposto sobre Lucro">Imposto sobre Lucro</option>
+                {categoriasPerfil.map((categoria) => (
+                  <option key={categoria.nome} value={categoria.nome}>
+                    {categoria.nome}
+                  </option>
+                ))}
               </select>
 
               <button
@@ -243,29 +246,13 @@ export default function ModalDespesasBase({
           </div>
 
           <div className="space-y-3 text-xs leading-relaxed">
-            <div>
-              <strong>Amortização:</strong> pagamentos de dívidas, empréstimos ou parcelamentos.
-            </div>
-
-            <div>
-              <strong>Custos Variáveis:</strong> despesas que variam conforme vendas ou produção.
-            </div>
-
-            <div>
-              <strong>Depreciação:</strong> perda de valor de bens ao longo do tempo.
-            </div>
-
-            <div>
-              <strong>Despesas Financeiras:</strong> juros, taxas bancárias e custos financeiros.
-            </div>
-
-            <div>
-              <strong>Despesas Operacionais:</strong> gastos do funcionamento diário da empresa.
-            </div>
-
-            <div>
-              <strong>Imposto sobre Lucro:</strong> tributos calculados sobre o resultado/lucro.
-            </div>
+            {categoriasPerfil.map((categoria) => (
+              <div key={categoria.nome}>
+                <strong>{categoria.nome}:</strong> {categoria.descricao}
+                <br />
+                <span className="text-slate-500">{categoria.exemplos}</span>
+              </div>
+            ))}
           </div>
         </div>
       )}

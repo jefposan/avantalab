@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { supabase } from '../lib/supabase';
+import { CATEGORIAS_EXCLUSAO_EBITDA } from '../lib/perfis';
 
 interface RelatorioProps {
   meses: string[];
@@ -114,7 +115,7 @@ export default function Relatorio({
 
         const cat = getCategoria(l.despesa);
 
-        if (['Amortização', 'Depreciação', 'Despesas Financeiras', 'Imposto sobre Lucro'].includes(cat)) {
+        if (CATEGORIAS_EXCLUSAO_EBITDA.includes(cat)) {
           exclusoesEbitda += Number(l.valor || 0);
         }
       });
@@ -241,14 +242,7 @@ export default function Relatorio({
 
       const cat = getCategoria(l.despesa_nome);
 
-      if (
-        [
-          'Amortização',
-          'Depreciação',
-          'Despesas Financeiras',
-          'Imposto sobre Lucro',
-        ].includes(cat)
-      ) {
+      if (CATEGORIAS_EXCLUSAO_EBITDA.includes(cat)) {
         exclusoesEbitda += valor;
       }
     });

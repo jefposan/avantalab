@@ -1,4 +1,5 @@
 import { supabase } from './supabase';
+import { normalizarTipoPerfil, type TipoPerfil } from './perfis';
 
 function tratarErroSupabase(error: any) {
   if (!error?.message) {
@@ -124,7 +125,7 @@ function tratarErroSupabase(error: any) {
 
   const { data: empresa, error: erroEmpresa } = await supabase
     .from('empresas')
-    .select('id, nome')
+    .select('id, nome, tipo_perfil')
     .eq('id', vinculo.empresa_id)
     .maybeSingle();
 
@@ -140,6 +141,7 @@ function tratarErroSupabase(error: any) {
 
   return {
   ...empresa,
+  tipo_perfil: normalizarTipoPerfil(empresa.tipo_perfil),
   perfil: vinculo.perfil,
   acessoId: vinculo.id,
   telefone: vinculo.telefone,
@@ -241,7 +243,7 @@ export async function buscarEmpresasDoUsuario(usuarioId: string) {
   // 3. Busca os dados das empresas vinculadas
   const { data: empresas, error: erroEmpresas } = await supabase
     .from('empresas')
-    .select('id, nome')
+    .select('id, nome, tipo_perfil')
     .in('id', empresasIds);
 
   if (erroEmpresas) {
@@ -259,6 +261,7 @@ export async function buscarEmpresasDoUsuario(usuarioId: string) {
       return {
   id: empresa.id,
   nome: empresa.nome,
+  tipo_perfil: normalizarTipoPerfil(empresa.tipo_perfil),
   empresa_id: empresa.id,
   empresa_nome: empresa.nome,
   perfil: vinculo.perfil,
@@ -914,9 +917,11 @@ export async function vincularUsuarioExistenteEmpresa({
 export async function atualizarEmpresa({
   empresaId,
   nome,
+  tipoPerfil,
 }: {
   empresaId: string;
   nome: string;
+  tipoPerfil?: TipoPerfil;
 }) {
   const { data: sessao } = await supabase.auth.getSession();
   const token = sessao.session?.access_token;
@@ -935,7 +940,11 @@ export async function atualizarEmpresa({
       'Content-Type': 'application/json',
       Authorization: `Bearer ${token}`,
     },
-    body: JSON.stringify({ empresaId, nome: nome.trim() }),
+    body: JSON.stringify({
+      empresaId,
+      nome: nome.trim(),
+      tipoPerfil: tipoPerfil ? normalizarTipoPerfil(tipoPerfil) : undefined,
+    }),
   });
 
   const resultado = await resposta.json();
