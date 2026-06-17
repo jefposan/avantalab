@@ -130,6 +130,10 @@
     editEmpresaSenha: '',
     editEmpresaTipoPerfil: 'empresa',
     novaEmpresaTipoPerfil: 'empresa',
+    cadastroTipoPerfil: 'empresa',
+    modoCriarPerfil: false,
+    criarPerfilNome: '',
+    criarPerfilTipo: 'empresa',
   };
 
   var CHAVE_MANTER_CONECTADO_ATE = 'avantalab_mobile_manter_conectado_ate';
@@ -414,14 +418,7 @@
   }
 
   function categoriasPadrao() {
-    return [
-      'Amortizacao',
-      'Custos Variaveis',
-      'Depreciacao',
-      'Despesas Financeiras',
-      'Despesas Operacionais',
-      'Impostos Sobre Lucro',
-    ];
+    return categoriasDoPerfil(state.empresa && state.empresa.tipo_perfil).map(function (c) { return c.nome; });
   }
 
   function indiceMes(mes) {
@@ -1261,12 +1258,8 @@
     if (!state.empresa) {
       state.carregando = false;
       state.loginAcao = '';
-      state.autenticado = false;
-      state.usuario = null;
-      state.telaAcesso = 'login';
-      await db.auth.signOut();
-      limparPreferenciaSessaoMobile();
-      setErro('Nenhum perfil financeiro vinculado a este usuario.');
+      state.modoCriarPerfil = true;
+      render();
       return;
     }
 
@@ -1406,6 +1399,7 @@
       senha: campo('cadastro-senha'),
       confirmarSenha: campo('cadastro-confirmar-senha'),
     };
+    // preserva o tipo selecionado (já está em state.cadastroTipoPerfil via botão)
   }
 
   async function enviarCodigoCadastro() {
@@ -1506,6 +1500,8 @@
     state.modoCadastro = false;
     state.smsCadastroEnviado = false;
     state.telefoneCadastroConfirmado = '';
+    // criarPerfilTipo guarda a escolha para usar na criação do primeiro perfil
+    state.criarPerfilTipo = normalizarTipoPerfil(state.cadastroTipoPerfil);
     state.cadastro = {
       nome: '',
       email: '',
@@ -1514,6 +1510,60 @@
       confirmarSenha: '',
     };
     setMensagem('Cadastro criado e celular confirmado. Faca login para acessar.');
+  }
+
+  async function criarPerfilInicial() {
+    var nome = campo('criar-perfil-inicial-nome').trim();
+    var tipo = normalizarTipoPerfil(state.criarPerfilTipo);
+
+    if (!nome) {
+      setErro(rotuloNomePerfil(tipo) + ' e obrigatorio.');
+      return;
+    }
+
+    state.carregando = true;
+    state.erro = '';
+    render();
+
+    var resposta = await db.rpc('criar_empresa_inicial_rpc', { p_nome_empresa: nome });
+
+    if (resposta.error || !resposta.data) {
+      state.carregando = false;
+      setErro(mensagemErro(resposta.error, 'Nao foi possivel criar o perfil financeiro.'));
+      return;
+    }
+
+    var criada = Array.isArray(resposta.data) ? resposta.data[0] : resposta.data;
+    var criadaId = criada && (criada.id || criada.empresa_id);
+
+    if (criadaId) {
+      await db.from('configuracoes').upsert({ empresa_id: criadaId, duplicados_ativo: true }, { onConflict: 'empresa_id' });
+      await db.from('empresas').update({ tipo_perfil: tipo }).eq('id', criadaId);
+    }
+
+    state.modoCriarPerfil = false;
+    state.criarPerfilNome = '';
+    await carregarEmpresas(state.usuario.id);
+    await carregarDados();
+  }
+
+  function telaCriarPerfilInicial() {
+    var tipo = normalizarTipoPerfil(state.criarPerfilTipo);
+    return (
+      '<div class="grid gap-3">' +
+        '<p class="text-sm font-semibold text-slate-600">Bem-vindo! Crie seu primeiro perfil financeiro para comecar.</p>' +
+        '<div>' +
+          '<p class="mb-1 text-[10px] font-black uppercase tracking-wide text-slate-600">Tipo do perfil</p>' +
+          seletorTipoPerfilHtml('criar-perfil', tipo) +
+        '</div>' +
+        inputHtml('criar-perfil-inicial-nome', rotuloNomePerfil(tipo), 'text', placeholderNomePerfil(tipo), state.criarPerfilNome) +
+        alertaHtml() +
+        '<button id="criar-perfil-inicial-submit" type="button" class="h-12 rounded-xl bg-slate-900 px-4 text-sm font-black uppercase tracking-wide text-white shadow-lg">' +
+          (state.carregando ? 'Criando...' : 'Criar perfil') +
+        '</button>' +
+        '<button id="sair-criar-perfil" type="button" class="text-xs font-bold text-slate-500 underline">Cancelar e sair</button>' +
+      '</div>'
+    );
   }
 
   async function enviarCodigoTelefoneObrigatorioMobile() {
@@ -2401,6 +2451,21 @@
     mostrarToast(tipo === 'receita' ? 'Receita atualizada.' : 'Despesa atualizada.');
   }
 
+  function telaLoginWrapper(conteudo, titulo, subtitulo) {
+    return (
+      '<section class="avantalab-mobile-bg fixed inset-0 flex flex-col items-center justify-center overflow-hidden px-4 py-5" style="height:100dvh;--avantalab-mobile-bg-overlay:linear-gradient(rgba(255,255,255,.08),rgba(255,255,255,0));">' +
+        '<div class="mx-auto w-full max-w-md overflow-y-auto rounded-3xl border border-white/35 p-5 text-slate-900 shadow-2xl backdrop-blur-xl" style="background-color:rgba(255,255,255,.18);max-height:calc(100dvh - 8rem);overscroll-behavior:contain;">' +
+          '<div class="mb-5">' +
+            '<p class="mb-2 text-xs font-bold uppercase tracking-[0.32em] text-sky-700">AvantaLab Gestao</p>' +
+            '<h1 class="text-3xl font-black text-slate-900">' + escapeHtml(titulo) + '</h1>' +
+            '<p class="mt-2 text-sm leading-relaxed text-slate-600">' + escapeHtml(subtitulo) + '</p>' +
+          '</div>' +
+          conteudo +
+        '</div>' +
+      '</section>'
+    );
+  }
+
   function telaLogin() {
     var boasVindas = state.telaAcesso === 'boasVindas' && !state.modoCadastro && !state.modoSenha;
 
@@ -2505,9 +2570,14 @@
   }
 
   function telaCadastro() {
+    var tipoCadastro = normalizarTipoPerfil(state.cadastroTipoPerfil);
     return (
       '<div class="grid gap-3">' +
         inputHtml('cadastro-nome', 'Nome', 'text', 'Seu nome completo', state.cadastro.nome) +
+        '<div>' +
+          '<p class="mb-1 text-[10px] font-black uppercase tracking-wide text-slate-600">Tipo do primeiro perfil</p>' +
+          seletorTipoPerfilHtml('cadastro-tipo', tipoCadastro) +
+        '</div>' +
         inputHtml('cadastro-email', 'Email', 'email', 'seuemail@exemplo.com', state.cadastro.email) +
         inputHtml('cadastro-telefone', 'Celular', 'tel', 'DDD + numero. Ex: 11999999999', state.cadastro.telefone) +
         senhaInputHtml('cadastro-senha', 'Senha', 'Crie uma senha', 'mostrarSenhaCadastro', 'toggle-senha-cadastro', state.cadastro.senha) +
@@ -3809,8 +3879,8 @@
     root.innerHTML = !state.pronto
       ? telaCarregandoMobile()
       : (state.autenticado
-        ? (state.validacaoTelefoneObrigatoria ? telaTelefoneObrigatorioMobile() : telaApp())
-        : telaLogin());
+        ? (state.validacaoTelefoneObrigatoria ? telaTelefoneObrigatorioMobile() : (state.modoCriarPerfil ? telaLoginWrapper(telaCriarPerfilInicial(), 'Criar perfil financeiro', 'Informe os dados do seu primeiro perfil.') : telaApp()))
+        : (state.modoCriarPerfil ? telaLoginWrapper(telaCriarPerfilInicial(), 'Criar perfil financeiro', 'Informe os dados do seu primeiro perfil.') : telaLogin()));
     atualizarScrollBloqueado();
 
     bind('confirmar-telefone-obrigatorio', confirmarTelefoneObrigatorioMobile);
@@ -3875,6 +3945,12 @@
       }
     });
     bind('reenviar-cadastro', enviarCodigoCadastro);
+    bind('cadastro-tipo-empresa', function () { state.cadastroTipoPerfil = 'empresa'; render(); });
+    bind('cadastro-tipo-pessoal', function () { state.cadastroTipoPerfil = 'pessoal'; render(); });
+    bind('criar-perfil-inicial-submit', criarPerfilInicial);
+    bind('sair-criar-perfil', function () { state.modoCriarPerfil = false; sair(); });
+    bind('criar-perfil-empresa', function () { state.criarPerfilTipo = 'empresa'; render(); });
+    bind('criar-perfil-pessoal', function () { state.criarPerfilTipo = 'pessoal'; render(); });
     bind('toggle-senha-login', function () {
       alternarSenha('mostrarSenhaLogin', 'senha', 'toggle-senha-login');
     });
@@ -4672,7 +4748,7 @@
           return Promise.all(
             keys
               .filter(function (key) {
-                return key.indexOf('avantalab-mobile-') === 0 && key !== 'avantalab-mobile-v73';
+                return key.indexOf('avantalab-mobile-') === 0 && key !== 'avantalab-mobile-v74';
               })
               .map(function (key) {
                 return caches.delete(key);
