@@ -7795,10 +7795,10 @@ setAjustesAberto(false);
       {mesAtivo ? (
         <>
           <div
-  className="print-ocultar sticky top-[116px] z-[850] shadow-md px-8 py-2 text-white"
+  className="print-ocultar sticky top-[116px] z-[850] shadow-md py-2 text-white"
   style={{ backgroundColor: corPrimaria }}
 >
-  <div className="max-w-7xl mx-auto grid w-full grid-cols-[minmax(260px,0.8fr)_minmax(0,1.2fr)] items-center gap-4">
+  <div className="max-w-7xl mx-auto grid w-full grid-cols-[minmax(260px,0.8fr)_minmax(0,1.2fr)] items-center gap-4 px-8">
     {/* ESQUERDA: MÊS COM SETAS */}
     <div className="flex items-center justify-center gap-2">
       <button
