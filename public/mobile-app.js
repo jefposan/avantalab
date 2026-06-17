@@ -2984,11 +2984,11 @@
             '<div class="min-w-0 flex-1"><p class="text-[10px] font-black uppercase tracking-wide text-slate-400">Total do mes</p><h2 class="truncate text-lg font-black">' + titulo + '</h2></div>' +
             '<strong class="shrink-0 text-sm font-black ' + cor + '">' + dinheiro(total) + '</strong>' +
           '</div>' +
-          '<label class="flex h-10 items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3">' +
+          '<div class="flex h-10 items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3">' +
             '<span class="text-slate-400">&#128269;</span>' +
-            '<input id="busca-lista" value="' + escapeHtml(state.busca) + '" placeholder="Procurar" style="font-size:16px" class="min-w-0 flex-1 bg-transparent text-base font-semibold text-slate-700 outline-none" />' +
-            '<button id="limpar-busca-lista" type="button" style="display:' + (state.busca ? 'flex' : 'none') + '" class="h-8 w-8 shrink-0 items-center justify-center rounded-full bg-slate-100 text-sm font-black text-slate-500 shadow-sm" aria-label="Limpar busca">&times;</button>' +
-          '</label>' +
+            '<input id="busca-lista" type="search" autocomplete="off" enterkeyhint="search" value="' + escapeHtml(state.busca) + '" placeholder="Procurar" style="font-size:16px" class="min-w-0 flex-1 bg-transparent text-base font-semibold text-slate-700 outline-none" />' +
+            '<button id="limpar-busca-lista" type="button" class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-slate-100 text-sm font-black text-slate-500 shadow-sm" aria-label="Limpar busca">&times;</button>' +
+          '</div>' +
         '</div>' +
         '<div id="lista-detalhada-itens" class="rounded-2xl bg-white p-3 shadow-sm">' +
           itensListaDetalhadaHtml(atual) +
@@ -4039,6 +4039,22 @@
     if (busca) {
       busca.addEventListener('input', function () {
         state.busca = busca.value;
+      });
+      busca.addEventListener('search', function () {
+        state.busca = busca.value;
+        atualizarBuscaListaMobile();
+      });
+      busca.addEventListener('change', function () {
+        state.busca = busca.value;
+        atualizarBuscaListaMobile();
+      });
+      busca.addEventListener('blur', function () {
+        state.busca = busca.value;
+        atualizarBuscaListaMobile();
+      });
+      busca.addEventListener('keydown', function (event) {
+        if (event.key !== 'Enter') return;
+        state.busca = busca.value;
         atualizarBuscaListaMobile();
       });
     }
@@ -4549,7 +4565,7 @@
           return Promise.all(
             keys
               .filter(function (key) {
-                return key.indexOf('avantalab-mobile-') === 0 && key !== 'avantalab-mobile-v70';
+                return key.indexOf('avantalab-mobile-') === 0 && key !== 'avantalab-mobile-v71';
               })
               .map(function (key) {
                 return caches.delete(key);
@@ -4566,7 +4582,7 @@
     });
 
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/mobile-sw.js?v=70').then(function (registro) {
+      navigator.serviceWorker.register('/mobile-sw.js?v=71').then(function (registro) {
         if (registro && registro.update) registro.update();
       }).catch(function () {});
     }
