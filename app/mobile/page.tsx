@@ -91,6 +91,62 @@ export default function MobilePage() {
                 background-attachment: scroll;
               }
             }
+
+            .mobile-dark .bg-white,
+            .mobile-dark .bg-white\\/90,
+            .mobile-dark .bg-slate-50,
+            .mobile-dark .bg-slate-100 {
+              background-color: #0f172a !important;
+            }
+
+            .mobile-dark .bg-cyan-50,
+            .mobile-dark .bg-cyan-50\\/70,
+            .mobile-dark .bg-cyan-50\\/90,
+            .mobile-dark .bg-red-50,
+            .mobile-dark .bg-red-50\\/60,
+            .mobile-dark .bg-emerald-50,
+            .mobile-dark .bg-emerald-50\\/60,
+            .mobile-dark .bg-rose-50 {
+              background-color: rgba(15, 23, 42, 0.92) !important;
+            }
+
+            .mobile-dark .border-slate-100,
+            .mobile-dark .border-slate-200,
+            .mobile-dark .border-slate-300,
+            .mobile-dark .border-cyan-100,
+            .mobile-dark .border-cyan-200,
+            .mobile-dark .border-emerald-100,
+            .mobile-dark .border-emerald-200,
+            .mobile-dark .border-red-100,
+            .mobile-dark .border-rose-100,
+            .mobile-dark .border-rose-200 {
+              border-color: rgba(148, 163, 184, 0.28) !important;
+            }
+
+            .mobile-dark .text-slate-900,
+            .mobile-dark .text-slate-800,
+            .mobile-dark .text-slate-700 {
+              color: #f8fafc !important;
+            }
+
+            .mobile-dark .text-slate-600,
+            .mobile-dark .text-slate-500,
+            .mobile-dark .text-slate-400 {
+              color: #cbd5e1 !important;
+            }
+
+            .mobile-dark input,
+            .mobile-dark select,
+            .mobile-dark textarea {
+              background-color: #0f172a !important;
+              border-color: rgba(148, 163, 184, 0.32) !important;
+              color: #f8fafc !important;
+            }
+
+            .mobile-dark input::placeholder,
+            .mobile-dark textarea::placeholder {
+              color: #94a3b8 !important;
+            }
           `,
         }}
       />
@@ -122,7 +178,7 @@ export default function MobilePage() {
       </div>
 
       <script src="/mobile-supabase.js" defer />
-      <script src="/mobile-app.js?v=76" defer />
+      <script src="/mobile-app.js?v=77" defer />
     </main>
   );
 }

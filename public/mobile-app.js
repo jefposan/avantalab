@@ -2755,7 +2755,7 @@
     var anterior = dadosMesAnterior();
 
     return (
-      '<div class="min-h-screen ' + (state.darkMode ? 'bg-slate-950 text-slate-100' : 'bg-slate-100 text-slate-900') + ' pb-24">' +
+      '<div class="min-h-screen mobile-app-shell ' + (state.darkMode ? 'mobile-dark bg-slate-950 text-slate-100' : 'mobile-light bg-slate-100 text-slate-900') + ' pb-24">' +
         '<header class="fixed inset-x-0 top-0 z-40 border-b border-white/15 px-4 pb-3 text-white shadow-xl shadow-sky-950/20 backdrop-blur" style="padding-top:calc(env(safe-area-inset-top) + 10px);background:linear-gradient(135deg,#003E73 0%,#075985 54%,#00A6C8 100%);">' +
           '<div class="mx-auto max-w-md">' +
             '<div class="grid grid-cols-[40px_minmax(0,1fr)_40px] items-center gap-3">' +
@@ -4846,7 +4846,7 @@
           return Promise.all(
             keys
               .filter(function (key) {
-                return key.indexOf('avantalab-mobile-') === 0 && key !== 'avantalab-mobile-v76';
+                return key.indexOf('avantalab-mobile-') === 0 && key !== 'avantalab-mobile-v77';
               })
               .map(function (key) {
                 return caches.delete(key);
