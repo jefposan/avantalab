@@ -911,6 +911,46 @@ export async function vincularUsuarioExistenteEmpresa({
   };
 }
 
+export async function atualizarEmpresa({
+  empresaId,
+  nome,
+}: {
+  empresaId: string;
+  nome: string;
+}) {
+  const { data: sessao } = await supabase.auth.getSession();
+  const token = sessao.session?.access_token;
+
+  if (!token) {
+    return {
+      erro: true,
+      mensagem: 'Sessao nao encontrada. Faca login novamente.',
+      data: null,
+    };
+  }
+
+  const resposta = await fetch('/api/atualizar-empresa', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({ empresaId, nome: nome.trim() }),
+  });
+
+  const resultado = await resposta.json();
+
+  if (!resposta.ok || resultado.erro) {
+    return {
+      erro: true,
+      mensagem: resultado.mensagem || 'Nao foi possivel atualizar a empresa.',
+      data: null,
+    };
+  }
+
+  return { erro: false, mensagem: '', data: resultado.empresa };
+}
+
 export async function atualizarUsuarioEmpresa({
   acessoId,
   nome,

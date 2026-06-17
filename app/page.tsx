@@ -46,6 +46,7 @@ import {
   criarUsuarioEmpresa,
   buscarUsuarioExistenteEmpresa,
   vincularUsuarioExistenteEmpresa,
+  atualizarEmpresa,
   atualizarUsuarioEmpresa,
   bloquearUsuarioEmpresa,
   excluirUsuarioEmpresa,
@@ -2665,6 +2666,25 @@ const salvarEdicaoLancamento = async () => {
 }
 };
 
+const limparLogo = async () => {
+  const defaultSettings = { scale: 100, x: 0, y: 0 };
+  setLogoUrl('');
+  setLogoSettings(defaultSettings);
+  const salvo = await salvarConfiguracoesBanco({
+    empresaId: empresaId!,
+    corPrimaria,
+    darkMode,
+    duplicadosAtivo,
+    logoUrl: '',
+    logoSettings: defaultSettings,
+  });
+  if (!salvo) {
+    abrirAviso('Erro ao remover logo', 'Não foi possível salvar a remoção do logo.', undefined, 'erro');
+    return;
+  }
+  setModalLogo(false);
+};
+
 const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
   const file = e.target.files?.[0];
 
@@ -3717,16 +3737,12 @@ const salvarEdicaoEmpresaAtual = async () => {
   try {
     setEditEmpresaSalvando(true);
 
-    const { error: erroEmpresa } = await supabase
-      .from('empresas')
-      .update({ nome: nomeLimpo })
-      .eq('id', empresaId);
+    const resultadoEmpresa = await atualizarEmpresa({ empresaId, nome: nomeLimpo });
 
-    if (erroEmpresa) {
-      console.error('Erro ao atualizar empresa:', erroEmpresa);
+    if (resultadoEmpresa.erro) {
       abrirAviso(
         'Erro ao salvar empresa',
-        erroEmpresa.message || 'Não foi possível atualizar o nome da empresa.',
+        resultadoEmpresa.mensagem || 'Não foi possível atualizar o nome da empresa.',
         undefined,
         'erro'
       );
@@ -5790,6 +5806,7 @@ if (isTelaMobile) {
       <ModalLogo
   aberto={modalLogo}
   aoFechar={() => setModalLogo(false)}
+  aoLimpar={limparLogo}
 
   bgCard={bgCard}
   textMuted={textMuted}

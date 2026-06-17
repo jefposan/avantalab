@@ -9,6 +9,7 @@ type LogoSettings = {
 type ModalLogoProps = {
   aberto: boolean;
   aoFechar: () => void;
+  aoLimpar: () => void;
 
   bgCard: string;
   textMuted: string;
@@ -31,6 +32,7 @@ type ModalLogoProps = {
 export default function ModalLogo({
   aberto,
   aoFechar,
+  aoLimpar,
 
   bgCard,
   textMuted,
@@ -205,14 +207,26 @@ export default function ModalLogo({
             />
           </div>
 
-          <button
-  type="button"
-  onClick={aoFechar}
-  style={estiloTemaPrimario}
-  className="w-full py-3 rounded-xl font-bold shadow hover:brightness-110 cursor-pointer"
->
-  Concluir
-</button>
+          <div className="grid grid-cols-2 gap-2">
+            <button
+              type="button"
+              onClick={aoLimpar}
+              className={`py-3 rounded-xl font-bold border cursor-pointer hover:brightness-95 transition-all ${
+                'border-slate-300 text-slate-600 bg-slate-100 hover:bg-slate-200'
+              }`}
+            >
+              Deixar em branco
+            </button>
+
+            <button
+              type="button"
+              onClick={aoFechar}
+              style={estiloTemaPrimario}
+              className="py-3 rounded-xl font-bold shadow hover:brightness-110 cursor-pointer"
+            >
+              Concluir
+            </button>
+          </div>
         </div>
       </div>
     </div>
