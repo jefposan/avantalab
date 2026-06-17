@@ -1007,8 +1007,8 @@ const finalizarTour = () => {
 };
 
 const pularTour = () => {
+  localStorage.setItem('avantalab_tour_concluido', 'true');
   setTourAberto(false);
-  // Não marca como concluído: aparecerá novamente no próximo acesso
 };
 
   // --- CÁLCULOS E FUNÇÕES ---
