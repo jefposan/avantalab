@@ -16,6 +16,7 @@ import ModalLogo from './components/ModalLogo';
 import ModalConfirmacao from "./components/ModalConfirmacao";
 import CardEntradaFaturamento from './components/CardEntradaFaturamento';
 import TabelaLancamentosDespesa from './components/TabelaLancamentosDespesa';
+import TourPrimeiroAcesso from './components/TourPrimeiroAcesso';
 import {
   formatarMoeda,
   formatarDescricao,
@@ -197,6 +198,7 @@ const [menuResponsivoAberto, setMenuResponsivoAberto] = useState(false);
   const [ajudaCategoriasAberta, setAjudaCategoriasAberta] = useState(false);
   const [ajudaUsuariosAberta, setAjudaUsuariosAberta] = useState(false);
   const [chatFeedbackAberto, setChatFeedbackAberto] = useState(false);
+const [tourAberto, setTourAberto] = useState(false);
 const [chatFeedbackEtapa, setChatFeedbackEtapa] = useState<
   'inicio' | 'formulario' | 'confirmacao'
 >('inicio');
@@ -989,6 +991,25 @@ useEffect(() => {
     window.clearInterval(intervalo);
   };
 }, [mounted, acessoLiberado, validacaoTelefoneObrigatoria]);
+
+// Tour primeiro acesso: exibe automaticamente quando ainda não foi concluído
+useEffect(() => {
+  if (!mounted || !acessoLiberado || validacaoTelefoneObrigatoria) return;
+  const jaConcluido = localStorage.getItem('avantalab_tour_concluido');
+  if (!jaConcluido) {
+    setTourAberto(true);
+  }
+}, [mounted, acessoLiberado, validacaoTelefoneObrigatoria]);
+
+const finalizarTour = () => {
+  localStorage.setItem('avantalab_tour_concluido', 'true');
+  setTourAberto(false);
+};
+
+const pularTour = () => {
+  setTourAberto(false);
+  // Não marca como concluído: aparecerá novamente no próximo acesso
+};
 
   // --- CÁLCULOS E FUNÇÕES ---
   
@@ -7816,6 +7837,18 @@ setAjustesAberto(false);
                 <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
                 Backup
               </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setAjustesAberto(false);
+                  setTourAberto(true);
+                }}
+                className="whitespace-nowrap bg-slate-700 hover:bg-slate-600 px-3 py-1.5 rounded shadow border border-slate-600 transition-colors font-bold flex items-center gap-1.5 text-xs text-white cursor-pointer"
+              >
+                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                Ver passo a passo
+              </button>
             </div>
           </div>
 
@@ -8350,6 +8383,15 @@ setAjustesAberto(false);
   bordaSobreCorPrimaria={bordaSobreCorPrimaria}
   textMuted={textMuted}
   estiloTemaPrimario={estiloTemaPrimario}
+/>
+
+{/* ================= TOUR PRIMEIRO ACESSO ================= */}
+<TourPrimeiroAcesso
+  aberto={tourAberto}
+  aoFinalizar={finalizarTour}
+  aoPular={pularTour}
+  corPrimaria={corPrimaria}
+  darkMode={darkMode}
 />
 
 {/* ================= CHAT FLUTUANTE DE FEEDBACK ================= */}
