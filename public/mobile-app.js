@@ -4741,10 +4741,22 @@
     }
 
     function rolarSeNecessario(y) {
-      if (y < 84) {
-        window.scrollBy({ top: -14, behavior: 'auto' });
-      } else if (y > window.innerHeight - 92) {
-        window.scrollBy({ top: 14, behavior: 'auto' });
+      var limiteSuperior = 176;
+      var limiteInferior = 120;
+      var velocidadeMaxima = 24;
+
+      if (y < limiteSuperior && window.scrollY > 0) {
+        var intensidadeSubida = Math.max(0, limiteSuperior - y) / limiteSuperior;
+        var velocidadeSubida = Math.max(8, Math.round(velocidadeMaxima * intensidadeSubida));
+        window.scrollBy({ top: -velocidadeSubida, behavior: 'auto' });
+        return;
+      }
+
+      if (y > window.innerHeight - limiteInferior) {
+        var distanciaInferior = Math.max(0, y - (window.innerHeight - limiteInferior));
+        var intensidadeDescida = distanciaInferior / limiteInferior;
+        var velocidadeDescida = Math.max(8, Math.round(velocidadeMaxima * intensidadeDescida));
+        window.scrollBy({ top: velocidadeDescida, behavior: 'auto' });
       }
     }
 
@@ -4851,7 +4863,7 @@
           return Promise.all(
             keys
               .filter(function (key) {
-                return key.indexOf('avantalab-mobile-') === 0 && key !== 'avantalab-mobile-v80';
+                return key.indexOf('avantalab-mobile-') === 0 && key !== 'avantalab-mobile-v81';
               })
               .map(function (key) {
                 return caches.delete(key);
@@ -4868,7 +4880,7 @@
     });
 
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/mobile-sw.js?v=80').then(function (registro) {
+      navigator.serviceWorker.register('/mobile-sw.js?v=81').then(function (registro) {
         if (registro && registro.update) registro.update();
       }).catch(function () {});
     }
