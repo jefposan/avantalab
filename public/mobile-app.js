@@ -128,6 +128,8 @@
     editEmpresaNome: '',
     editEmpresaLogin: '',
     editEmpresaSenha: '',
+    editEmpresaTipoPerfil: 'empresa',
+    novaEmpresaTipoPerfil: 'empresa',
   };
 
   var CHAVE_MANTER_CONECTADO_ATE = 'avantalab_mobile_manter_conectado_ate';
@@ -135,6 +137,45 @@
   var CHAVE_OAUTH_TEMPORARIO_ATE = 'avantalab_mobile_oauth_temporario_ate';
   var TRINTA_DIAS_MS = 30 * 24 * 60 * 60 * 1000;
   var DEZ_MINUTOS_MS = 10 * 60 * 1000;
+
+  // --- Helpers de tipo de perfil ---
+  var CATEGORIAS_EMPRESA_MOBILE = [
+    { nome: 'Amortizacao', descricao: 'Custos nao fisicos.', exemplos: 'Softwares, patente.' },
+    { nome: 'Custos Variaveis', descricao: 'Variam com venda/producao.', exemplos: 'Embalagem, materia-prima, frete, comissao.' },
+    { nome: 'Depreciacao', descricao: 'Uso/desgaste de bens fisicos.', exemplos: 'Maquinas, veiculos, equipamentos.' },
+    { nome: 'Despesas Financeiras', descricao: 'Bancos, juros e operacoes.', exemplos: 'Juros, tarifas, taxas, cambio.' },
+    { nome: 'Despesas Operacionais', descricao: 'Mantem o negocio funcionando.', exemplos: 'Aluguel, agua, luz, salarios, manutencao, pro-labore, publicidade.' },
+    { nome: 'Impostos sobre Lucro', descricao: 'Tributos sobre lucro.', exemplos: 'IR e CSLL.' },
+  ];
+
+  var CATEGORIAS_PESSOAL_MOBILE = [
+    { nome: 'Moradia', descricao: 'Gastos com sua casa ou local onde mora.', exemplos: 'Aluguel, condominio, financiamento, manutencao.' },
+    { nome: 'Custos de Vida', descricao: 'Despesas essenciais do dia a dia.', exemplos: 'Mercado, agua, luz, internet, transporte, saude, educacao.' },
+    { nome: 'Lazer e Consumo', descricao: 'Gastos nao essenciais e experiencias.', exemplos: 'Restaurantes, viagens, compras, assinaturas, presentes.' },
+    { nome: 'Financeiro e Impostos', descricao: 'Custos financeiros e obrigacoes.', exemplos: 'Tarifas bancarias, juros, cartao, seguros, impostos, multas.' },
+    { nome: 'Investimentos', descricao: 'Valores para patrimonio ou reservas.', exemplos: 'Aplicacoes, reserva de emergencia, previdencia, aportes.' },
+  ];
+
+  function normalizarTipoPerfil(valor) {
+    return valor === 'pessoal' ? 'pessoal' : 'empresa';
+  }
+
+  function categoriasDoPerfil(tipoPerfil) {
+    return normalizarTipoPerfil(tipoPerfil) === 'pessoal' ? CATEGORIAS_PESSOAL_MOBILE : CATEGORIAS_EMPRESA_MOBILE;
+  }
+
+  function rotuloTipoPerfil(tipoPerfil) {
+    return normalizarTipoPerfil(tipoPerfil) === 'pessoal' ? 'Pessoal' : 'Empresa';
+  }
+
+  function rotuloNomePerfil(tipoPerfil) {
+    return normalizarTipoPerfil(tipoPerfil) === 'pessoal' ? 'Nome do perfil' : 'Nome da empresa';
+  }
+
+  function placeholderNomePerfil(tipoPerfil) {
+    return normalizarTipoPerfil(tipoPerfil) === 'pessoal' ? 'Ex: Minha vida financeira' : 'Ex: Minha Empresa';
+  }
+  // --- Fim helpers de tipo de perfil ---
 
   function dinheiro(valor) {
     return new Intl.NumberFormat('pt-BR', {
@@ -301,7 +342,7 @@
   }
 
   function nomeEmpresa(empresa) {
-    return (empresa && (empresa.nome || empresa.empresa_nome)) || 'Empresa';
+    return (empresa && (empresa.nome || empresa.empresa_nome)) || 'Perfil';
   }
 
   function ordemDashboardPadrao() {
@@ -1072,7 +1113,7 @@
     }
 
     var ids = vinculos.data.map(function (vinculo) { return vinculo.empresa_id; }).filter(Boolean);
-    var empresas = await db.from('empresas').select('id, nome').in('id', ids);
+    var empresas = await db.from('empresas').select('id, nome, tipo_perfil').in('id', ids);
 
     if (empresas.error || !empresas.data) {
       state.empresas = [];
@@ -1088,6 +1129,7 @@
           id: empresa.id,
           nome: empresa.nome,
           empresa_nome: empresa.nome,
+          tipo_perfil: normalizarTipoPerfil(empresa.tipo_perfil),
           usuario_nome: vinculo.nome || '',
           email: vinculo.email || '',
           login: vinculo.login || '',
@@ -1224,7 +1266,7 @@
       state.telaAcesso = 'login';
       await db.auth.signOut();
       limparPreferenciaSessaoMobile();
-      setErro('Nenhuma empresa vinculada a este usuario.');
+      setErro('Nenhum perfil financeiro vinculado a este usuario.');
       return;
     }
 
@@ -1972,9 +2014,10 @@
 
   async function criarEmpresaMobile() {
     var nome = campo('nova-empresa-nome').trim();
+    var tipoPerfil = normalizarTipoPerfil(state.novaEmpresaTipoPerfil);
 
     if (!nome) {
-      setErro('Informe o nome da empresa.');
+      setErro('Informe o nome do perfil financeiro.');
       return;
     }
 
@@ -1990,7 +2033,7 @@
     if (resposta.error || !resposta.data) {
       state.carregando = false;
       state.empresaAcao = '';
-      setErro(mensagemErro(resposta.error, 'Nao foi possivel criar a empresa.'));
+      setErro(mensagemErro(resposta.error, 'Nao foi possivel criar o perfil financeiro.'));
       return;
     }
 
@@ -2001,14 +2044,19 @@
       await db
         .from('configuracoes')
         .upsert({ empresa_id: criadaId, duplicados_ativo: true }, { onConflict: 'empresa_id' });
+      await db
+        .from('empresas')
+        .update({ tipo_perfil: tipoPerfil })
+        .eq('id', criadaId);
     }
 
     state.modalMenu = '';
     state.empresaAcao = '';
     state.empresaExclusaoAberta = false;
+    state.novaEmpresaTipoPerfil = 'empresa';
     await carregarEmpresas(state.usuario.id);
     await carregarDados();
-    mostrarToast('Empresa criada.');
+    mostrarToast('Perfil criado.');
   }
 
   function abrirEdicaoEmpresaMobile() {
@@ -2017,9 +2065,20 @@
     state.empresaEdicaoAberta = true;
     state.empresaExclusaoAberta = false;
     state.editEmpresaNome = nomeEmpresa(state.empresa);
+    state.editEmpresaTipoPerfil = normalizarTipoPerfil(state.empresa.tipo_perfil);
     state.editEmpresaLogin = state.empresa.login || state.empresa.email || '';
     state.editEmpresaSenha = '';
     state.erro = '';
+    render();
+  }
+
+  function selecionarTipoPerfilEdicao(tipo) {
+    state.editEmpresaTipoPerfil = normalizarTipoPerfil(tipo);
+    render();
+  }
+
+  function selecionarTipoPerfilNovo(tipo) {
+    state.novaEmpresaTipoPerfil = normalizarTipoPerfil(tipo);
     render();
   }
 
@@ -2030,6 +2089,7 @@
     state.editEmpresaNome = '';
     state.editEmpresaLogin = '';
     state.editEmpresaSenha = '';
+    state.editEmpresaTipoPerfil = 'empresa';
     state.erro = '';
     render();
   }
@@ -2041,8 +2101,10 @@
     var login = campo('editar-empresa-login').trim().toLowerCase();
     var senha = campo('editar-empresa-senha').trim();
 
+    var tipoPerfil = normalizarTipoPerfil(state.editEmpresaTipoPerfil);
+
     if (!nome) {
-      setErro('Informe o nome da empresa.');
+      setErro('Informe o nome do perfil financeiro.');
       return;
     }
 
@@ -2071,13 +2133,13 @@
 
     var atualizacaoEmpresa = await db
       .from('empresas')
-      .update({ nome: nome })
+      .update({ nome: nome, tipo_perfil: tipoPerfil })
       .eq('id', state.empresa.id);
 
     if (atualizacaoEmpresa.error) {
       state.carregando = false;
       state.empresaAcao = '';
-      setErro(mensagemErro(atualizacaoEmpresa.error, 'Nao foi possivel atualizar a empresa.'));
+      setErro(mensagemErro(atualizacaoEmpresa.error, 'Nao foi possivel atualizar o perfil financeiro.'));
       return;
     }
 
@@ -2120,7 +2182,7 @@
       if (!respostaSenhaHttp.ok || respostaSenha.erro) {
         state.carregando = false;
         state.empresaAcao = '';
-        setErro(respostaSenha.mensagem || 'Empresa e login foram salvos, mas a senha nao foi alterada.');
+        setErro(respostaSenha.mensagem || 'Perfil e login foram salvos, mas a senha nao foi alterada.');
         await carregarEmpresas(state.usuario.id);
         render();
         return;
@@ -2133,6 +2195,7 @@
     state.editEmpresaNome = '';
     state.editEmpresaLogin = '';
     state.editEmpresaSenha = '';
+    state.editEmpresaTipoPerfil = 'empresa';
     await carregarEmpresas(state.usuario.id);
     await carregarDados();
     mostrarToast('Dados atualizados.');
@@ -2142,7 +2205,7 @@
     if (!state.empresa) return;
 
     if (state.empresa.perfil !== 'gestor_master') {
-      setErro('Somente o Gestor Master pode excluir a empresa atual.');
+      setErro('Somente o Gestor Master pode excluir o perfil atual.');
       return;
     }
 
@@ -2150,7 +2213,7 @@
     var nome = nomeEmpresa(state.empresa);
 
     if (confirmacao !== nome) {
-      setErro('Digite exatamente o nome da empresa para confirmar.');
+      setErro('Digite exatamente o nome do perfil para confirmar.');
       return;
     }
 
@@ -2167,7 +2230,7 @@
     if (resposta.error) {
       state.carregando = false;
       state.empresaAcao = '';
-      setErro(mensagemErro(resposta.error, 'Nao foi possivel excluir a empresa.'));
+      setErro(mensagemErro(resposta.error, 'Nao foi possivel excluir o perfil financeiro.'));
       return;
     }
 
@@ -2182,7 +2245,7 @@
     }
 
     await carregarDados();
-    mostrarToast('Empresa excluida.');
+    mostrarToast('Perfil excluido.');
   }
 
   function abrirAcaoLancamento(tipo, id) {
@@ -2613,7 +2676,7 @@
     var empresasHtml = '';
     if (state.empresas.length > 1) {
       empresasHtml =
-        '<label class="grid gap-1 text-[10px] font-black uppercase tracking-wide text-slate-500">Empresa' +
+        '<label class="grid gap-1 text-[10px] font-black uppercase tracking-wide text-slate-500">Perfil' +
         '<select id="empresa" style="font-size:16px" class="h-10 rounded-lg border border-slate-200 bg-white px-3 text-base font-bold normal-case tracking-normal text-slate-900 shadow-sm">' +
         state.empresas.map(function (empresa) {
           return '<option value="' + escapeHtml(empresa.id) + '"' + (state.empresa && empresa.id === state.empresa.id ? ' selected' : '') + '>' + escapeHtml(nomeEmpresa(empresa)) + '</option>';
@@ -3138,7 +3201,7 @@
             menuBotaoHtml('menu-configurar-resumo', 'Configurar resumo', 'Exibir e ocultar cards', '&#9776;') +
             menuBotaoHtml('menu-organizar-dashboard', 'Organizar dashboard', 'Definir ordem dos cards', '&#8597;') +
             menuBotaoHtml('menu-usuario', 'Usuario', perfilFormatado(state.empresa && state.empresa.perfil), 'U') +
-            menuBotaoHtml('menu-gerenciar', 'Gerenciar empresa', 'Dados e acesso da empresa', 'E') +
+            menuBotaoHtml('menu-gerenciar', 'Gerenciar perfil', 'Dados e acesso do perfil', 'E') +
             menuBotaoHtml('menu-categorias', 'Cadastrar despesas', 'Adicionar tipo de despesa', '+') +
             menuBotaoHtml('menu-ajuda-categorias', 'Instrucoes sobre categorias', 'Como organizar seus gastos', '?') +
             (isStandalone() ? '' : menuBotaoHtml('menu-instalar', 'Instalar app', 'Adicionar a tela inicial', '&#8681;')) +
@@ -3164,8 +3227,8 @@
   function modalMenuHtml() {
     var titulo = {
       usuario: 'Usuario',
-      empresa: 'Trocar empresa',
-      gerenciar: 'Gerenciar empresa',
+      empresa: 'Trocar perfil',
+      gerenciar: 'Gerenciar perfil',
       configurarResumo: 'Configurar resumo',
       organizarDashboard: 'Organizar dashboard',
       categorias: 'Cadastrar despesas',
@@ -3388,13 +3451,28 @@
 
   function trocarEmpresaHtml() {
     if (state.empresas.length <= 1) {
-      return '<p class="rounded-2xl bg-slate-50 p-4 text-sm font-semibold text-slate-600">Seu usuario esta vinculado a apenas uma empresa.</p>';
+      return '<p class="rounded-2xl bg-slate-50 p-4 text-sm font-semibold text-slate-600">Seu usuario esta vinculado a apenas um perfil financeiro.</p>';
     }
 
     return (
       '<div class="grid gap-2">' +
         state.empresas.map(function (empresa) {
-          return '<button type="button" data-empresa-id="' + escapeHtml(empresa.id) + '" class="empresa-opcao rounded-2xl border border-slate-200 px-4 py-3 text-left ' + (state.empresa && empresa.id === state.empresa.id ? 'bg-cyan-50 text-cyan-800' : 'bg-white text-slate-800') + '"><span class="block text-sm font-black">' + escapeHtml(nomeEmpresa(empresa)) + '</span><span class="text-xs font-semibold text-slate-500">' + escapeHtml(perfilFormatado(empresa.perfil)) + '</span></button>';
+          var tipo = rotuloTipoPerfil(empresa.tipo_perfil);
+          return '<button type="button" data-empresa-id="' + escapeHtml(empresa.id) + '" class="empresa-opcao rounded-2xl border border-slate-200 px-4 py-3 text-left ' + (state.empresa && empresa.id === state.empresa.id ? 'bg-cyan-50 text-cyan-800' : 'bg-white text-slate-800') + '"><span class="block text-sm font-black">' + escapeHtml(nomeEmpresa(empresa)) + '</span><span class="text-xs font-semibold text-slate-500">' + escapeHtml(tipo) + ' &middot; ' + escapeHtml(perfilFormatado(empresa.perfil)) + '</span></button>';
+        }).join('') +
+      '</div>'
+    );
+  }
+
+  function seletorTipoPerfilHtml(idPrefix, valorAtual) {
+    var tipos = ['empresa', 'pessoal'];
+    return (
+      '<div class="grid grid-cols-2 gap-2">' +
+        tipos.map(function (tipo) {
+          var ativo = normalizarTipoPerfil(valorAtual) === tipo;
+          return '<button type="button" id="' + idPrefix + '-' + tipo + '" class="h-10 rounded-xl border text-xs font-black uppercase tracking-wide ' +
+            (ativo ? 'border-cyan-500 bg-cyan-600 text-white' : 'border-slate-200 bg-white text-slate-600') + '">' +
+            rotuloTipoPerfil(tipo) + '</button>';
         }).join('') +
       '</div>'
     );
@@ -3404,20 +3482,25 @@
     var gestorMaster = state.empresa && state.empresa.perfil === 'gestor_master';
     var podeEditar = podeGerenciarUsuarios();
     var podeTrocar = state.empresas.length > 1;
+    var tipoAtual = normalizarTipoPerfil(state.empresa && state.empresa.tipo_perfil);
+    var tipoEdicao = normalizarTipoPerfil(state.editEmpresaTipoPerfil);
+    var tipoNovo = normalizarTipoPerfil(state.novaEmpresaTipoPerfil);
 
     return (
       '<div class="grid gap-3 text-sm">' +
         '<div class="rounded-2xl bg-slate-50 p-4">' +
-          '<p class="text-[10px] font-black uppercase tracking-wide text-slate-400">Empresa atual</p>' +
+          '<p class="text-[10px] font-black uppercase tracking-wide text-slate-400">Perfil atual</p>' +
           '<p class="mt-1 font-black">' + escapeHtml(nomeEmpresa(state.empresa)) + '</p>' +
-          '<p class="mt-1 text-xs font-semibold text-slate-500">Perfil: ' + escapeHtml(perfilFormatado(state.empresa && state.empresa.perfil)) + '</p>' +
+          '<p class="mt-1 text-xs font-semibold text-slate-500">Tipo: ' + escapeHtml(rotuloTipoPerfil(tipoAtual)) + ' &middot; Acesso: ' + escapeHtml(perfilFormatado(state.empresa && state.empresa.perfil)) + '</p>' +
         '</div>' +
         (podeEditar
           ? (!state.empresaEdicaoAberta
               ? '<button id="abrir-edicao-empresa-mobile" type="button" class="h-11 rounded-xl bg-slate-900 px-4 text-sm font-black uppercase tracking-wide text-white shadow-md">Editar dados</button>'
               : '<div class="grid gap-2 rounded-2xl border border-cyan-100 bg-cyan-50/70 p-3">' +
-                  '<p class="text-[10px] font-black uppercase tracking-wide text-cyan-800">Editar empresa atual</p>' +
-                  '<input id="editar-empresa-nome" value="' + escapeHtml(state.editEmpresaNome) + '" placeholder="Nome da empresa" style="font-size:16px" class="h-11 rounded-md border border-cyan-100 bg-white px-3 text-base font-bold text-slate-900 outline-none focus:border-cyan-500" />' +
+                  '<p class="text-[10px] font-black uppercase tracking-wide text-cyan-800">Editar perfil atual</p>' +
+                  '<p class="text-[10px] font-black uppercase tracking-wide text-slate-500">Tipo do perfil</p>' +
+                  seletorTipoPerfilHtml('edit-tipo', tipoEdicao) +
+                  '<input id="editar-empresa-nome" value="' + escapeHtml(state.editEmpresaNome) + '" placeholder="' + escapeHtml(rotuloNomePerfil(tipoEdicao)) + '" style="font-size:16px" class="h-11 rounded-md border border-cyan-100 bg-white px-3 text-base font-bold text-slate-900 outline-none focus:border-cyan-500" />' +
                   '<input id="editar-empresa-login" value="' + escapeHtml(state.editEmpresaLogin) + '" placeholder="Login ou email" style="font-size:16px" class="h-11 rounded-md border border-cyan-100 bg-white px-3 text-base font-bold text-slate-900 outline-none focus:border-cyan-500" />' +
                   '<input id="editar-empresa-senha" type="password" placeholder="Nova senha (opcional)" style="font-size:16px" class="h-11 rounded-md border border-cyan-100 bg-white px-3 text-base font-bold text-slate-900 outline-none focus:border-cyan-500" />' +
                   (gestorMaster ? '<p class="text-xs font-semibold leading-relaxed text-cyan-900">Para Gestor Master, a senha pode precisar ser alterada pela recuperacao de senha.</p>' : '') +
@@ -3426,27 +3509,29 @@
                     '<button id="salvar-edicao-empresa-mobile" type="button" class="h-10 rounded-xl bg-cyan-700 px-3 text-xs font-black uppercase tracking-wide text-white">' + (state.empresaAcao === 'editar' ? 'Salvando...' : 'Salvar') + '</button>' +
                   '</div>' +
                 '</div>')
-          : '<p class="rounded-2xl bg-slate-50 p-3 text-xs font-semibold text-slate-500">Somente Gestor Master e Administrador podem editar os dados da empresa.</p>') +
+          : '<p class="rounded-2xl bg-slate-50 p-3 text-xs font-semibold text-slate-500">Somente Gestor Master e Administrador podem editar os dados do perfil financeiro.</p>') +
         '<div class="grid gap-2 rounded-2xl border border-emerald-100 bg-emerald-50/70 p-3">' +
-          '<p class="text-[10px] font-black uppercase tracking-wide text-emerald-800">Criar nova empresa</p>' +
-          '<input id="nova-empresa-nome" placeholder="Nome da empresa" style="font-size:16px" class="h-11 rounded-md border border-emerald-100 bg-white px-3 text-base font-bold text-slate-900 outline-none focus:border-emerald-500" />' +
-          '<button id="criar-empresa-mobile" type="button" class="h-11 rounded-xl bg-emerald-600 px-4 text-sm font-black uppercase tracking-wide text-white">' + (state.empresaAcao === 'criar' ? 'Criando...' : 'Criar nova empresa') + '</button>' +
+          '<p class="text-[10px] font-black uppercase tracking-wide text-emerald-800">Criar novo perfil</p>' +
+          '<p class="text-[10px] font-black uppercase tracking-wide text-slate-500">Tipo do perfil</p>' +
+          seletorTipoPerfilHtml('novo-tipo', tipoNovo) +
+          '<input id="nova-empresa-nome" placeholder="' + escapeHtml(rotuloNomePerfil(tipoNovo)) + '" style="font-size:16px" class="h-11 rounded-md border border-emerald-100 bg-white px-3 text-base font-bold text-slate-900 outline-none focus:border-emerald-500" />' +
+          '<button id="criar-empresa-mobile" type="button" class="h-11 rounded-xl bg-emerald-600 px-4 text-sm font-black uppercase tracking-wide text-white">' + (state.empresaAcao === 'criar' ? 'Criando...' : 'Criar novo perfil') + '</button>' +
         '</div>' +
-        '<button id="trocar-empresa-gerenciar" type="button" class="h-11 rounded-xl px-4 text-sm font-black uppercase tracking-wide ' + (podeTrocar ? 'bg-cyan-600 text-white' : 'bg-slate-100 text-slate-400') + '"' + (podeTrocar ? '' : ' disabled') + '>Trocar empresa</button>' +
+        '<button id="trocar-empresa-gerenciar" type="button" class="h-11 rounded-xl px-4 text-sm font-black uppercase tracking-wide ' + (podeTrocar ? 'bg-cyan-600 text-white' : 'bg-slate-100 text-slate-400') + '"' + (podeTrocar ? '' : ' disabled') + '>Trocar perfil</button>' +
         (gestorMaster
           ? (!state.empresaExclusaoAberta
-              ? '<button id="abrir-exclusao-empresa-mobile" type="button" class="h-11 rounded-xl border border-rose-200 bg-white px-4 text-sm font-black uppercase tracking-wide text-rose-700">Excluir empresa</button>'
+              ? '<button id="abrir-exclusao-empresa-mobile" type="button" class="h-11 rounded-xl border border-rose-200 bg-white px-4 text-sm font-black uppercase tracking-wide text-rose-700">Excluir perfil</button>'
               : '<div class="rounded-2xl border border-rose-100 bg-rose-50/70 p-4">' +
-                  '<p class="text-[10px] font-black uppercase tracking-wide text-rose-700">Excluir empresa atual</p>' +
-                  '<p class="mt-2 text-xs font-bold leading-relaxed text-rose-800">Esta acao remove a empresa atual e seus dados. Para confirmar, digite exatamente o nome abaixo.</p>' +
+                  '<p class="text-[10px] font-black uppercase tracking-wide text-rose-700">Excluir perfil atual</p>' +
+                  '<p class="mt-2 text-xs font-bold leading-relaxed text-rose-800">Esta acao remove o perfil atual e seus dados. Para confirmar, digite exatamente o nome abaixo.</p>' +
                   '<p class="mt-2 text-sm font-black text-rose-900">' + escapeHtml(nomeEmpresa(state.empresa)) + '</p>' +
-                  '<input id="excluir-empresa-confirmacao" placeholder="Digite o nome da empresa" style="font-size:16px" class="mt-3 h-11 w-full rounded-md border border-rose-100 bg-white px-3 text-base font-bold text-slate-900 outline-none focus:border-rose-400" />' +
+                  '<input id="excluir-empresa-confirmacao" placeholder="Digite o nome do perfil" style="font-size:16px" class="mt-3 h-11 w-full rounded-md border border-rose-100 bg-white px-3 text-base font-bold text-slate-900 outline-none focus:border-rose-400" />' +
                   '<div class="mt-3 grid gap-2">' +
                     '<button id="excluir-empresa-mobile" type="button" class="h-11 w-full rounded-xl border border-rose-200 bg-white px-4 text-sm font-black uppercase tracking-wide text-rose-700">' + (state.empresaAcao === 'excluir' ? 'Excluindo...' : 'Excluir definitivamente') + '</button>' +
                     '<button id="cancelar-exclusao-empresa-mobile" type="button" class="h-10 w-full rounded-xl bg-slate-100 px-4 text-xs font-black uppercase tracking-wide text-slate-600">Cancelar exclusao</button>' +
                   '</div>' +
                 '</div>')
-          : '<p class="rounded-2xl bg-slate-50 p-3 text-xs font-semibold text-slate-500">Somente o Gestor Master pode excluir a empresa atual.</p>') +
+          : '<p class="rounded-2xl bg-slate-50 p-3 text-xs font-semibold text-slate-500">Somente o Gestor Master pode excluir o perfil atual.</p>') +
         alertaHtml().replace('mt-4', '') +
       '</div>'
     );
@@ -3614,21 +3699,18 @@
   }
 
   function ajudaCategoriasHtml() {
-    var categorias = [
-      ['AMORTIZACAO', 'Custos nao fisicos.', 'Softwares, patente.'],
-      ['CUSTOS VARIAVEIS', 'Variam com venda/producao.', 'Embalagem, materia-prima, frete, comissao.'],
-      ['DEPRECIACAO', 'Uso/desgaste de bens fisicos.', 'Maquinas, veiculos, equipamentos.'],
-      ['DESPESAS FINANCEIRAS', 'Bancos, juros e operacoes.', 'Juros, tarifas, taxas, cambio.'],
-      ['DESPESAS OPERACIONAIS', 'Mantem a empresa funcionando.', 'Aluguel, agua, luz, salarios, manutencao, pro-labore, publicidade.'],
-      ['IMPOSTOS SOBRE LUCRO', 'Tributos sobre lucro.', 'IR e CSLL.'],
-    ];
+    var tipoPerfil = normalizarTipoPerfil(state.empresa && state.empresa.tipo_perfil);
+    var categorias = categoriasDoPerfil(tipoPerfil);
+    var rodape = tipoPerfil === 'pessoal'
+      ? 'Estes exemplos ajudam a organizar suas financas pessoais.'
+      : 'Na duvida, consulte o contador. Estes exemplos ajudam a organizar.';
 
     return (
       '<div class="grid gap-1.5 text-[11px] leading-snug text-slate-600">' +
         categorias.map(function (item) {
-          return '<div class="rounded-xl bg-slate-50 px-3 py-2"><strong class="block text-[10px] font-black uppercase tracking-wide text-slate-900">' + item[0] + '</strong><p class="mt-0.5">' + item[1] + ' <span class="font-semibold text-slate-500">Ex.: ' + item[2] + '</span></p></div>';
+          return '<div class="rounded-xl bg-slate-50 px-3 py-2"><strong class="block text-[10px] font-black uppercase tracking-wide text-slate-900">' + escapeHtml(item.nome.toUpperCase()) + '</strong><p class="mt-0.5">' + escapeHtml(item.descricao) + ' <span class="font-semibold text-slate-500">Ex.: ' + escapeHtml(item.exemplos) + '</span></p></div>';
         }).join('') +
-        '<p class="rounded-xl bg-cyan-50 px-3 py-2 text-[10px] font-semibold text-cyan-900">Na duvida, consulte o contador. Estes exemplos ajudam a organizar.</p>' +
+        '<p class="rounded-xl bg-cyan-50 px-3 py-2 text-[10px] font-semibold text-cyan-900">' + rodape + '</p>' +
       '</div>'
     );
   }
@@ -3659,9 +3741,9 @@
     return (
       '<div class="space-y-4 text-sm leading-relaxed text-slate-600">' +
         '<section><h3 class="mb-2 text-xs font-black uppercase tracking-widest text-slate-800">1. Objetivo desta pol&iacute;tica</h3><p>Esta Pol&iacute;tica de Privacidade tem como objetivo explicar, de forma clara e transparente, como o AvantaLab Gest&atilde;o pode coletar, utilizar, armazenar e proteger informa&ccedil;&otilde;es fornecidas pelos usu&aacute;rios durante o uso do sistema.</p></section>' +
-        '<section><h3 class="mb-2 text-xs font-black uppercase tracking-widest text-slate-800">2. Informa&ccedil;&otilde;es coletadas</h3><p>O sistema pode coletar informa&ccedil;&otilde;es necess&aacute;rias para cadastro, autentica&ccedil;&atilde;o e funcionamento da plataforma, como nome, email, empresa vinculada, prefer&ecirc;ncias de configura&ccedil;&atilde;o, al&eacute;m dos dados financeiros e administrativos inseridos voluntariamente pelo usu&aacute;rio.</p></section>' +
+        '<section><h3 class="mb-2 text-xs font-black uppercase tracking-widest text-slate-800">2. Informa&ccedil;&otilde;es coletadas</h3><p>O sistema pode coletar informa&ccedil;&otilde;es necess&aacute;rias para cadastro, autentica&ccedil;&atilde;o e funcionamento da plataforma, como nome, email, perfil financeiro vinculado, prefer&ecirc;ncias de configura&ccedil;&atilde;o, al&eacute;m dos dados financeiros e administrativos inseridos voluntariamente pelo usu&aacute;rio.</p></section>' +
         '<section><h3 class="mb-2 text-xs font-black uppercase tracking-widest text-slate-800">3. Uso das informa&ccedil;&otilde;es</h3><p>As informa&ccedil;&otilde;es s&atilde;o utilizadas para permitir o acesso ao sistema, salvar configura&ccedil;&otilde;es, organizar lan&ccedil;amentos, gerar relat&oacute;rios, exibir indicadores, manter a seguran&ccedil;a da conta e melhorar a experi&ecirc;ncia de uso da plataforma.</p></section>' +
-        '<section><h3 class="mb-2 text-xs font-black uppercase tracking-widest text-slate-800">4. Armazenamento dos dados</h3><p>Os dados do sistema s&atilde;o armazenados em ambiente digital seguro, utilizando servi&ccedil;os de banco de dados e autentica&ccedil;&atilde;o. O acesso &agrave;s informa&ccedil;&otilde;es &eacute; controlado conforme o v&iacute;nculo do usu&aacute;rio com sua respectiva empresa.</p></section>' +
+        '<section><h3 class="mb-2 text-xs font-black uppercase tracking-widest text-slate-800">4. Armazenamento dos dados</h3><p>Os dados do sistema s&atilde;o armazenados em ambiente digital seguro, utilizando servi&ccedil;os de banco de dados e autentica&ccedil;&atilde;o. O acesso &agrave;s informa&ccedil;&otilde;es &eacute; controlado conforme o v&iacute;nculo do usu&aacute;rio com sua respectivo perfil financeiro.</p></section>' +
         '<section><h3 class="mb-2 text-xs font-black uppercase tracking-widest text-slate-800">5. Cookies e tecnologias semelhantes</h3><p>O AvantaLab Gest&atilde;o pode utilizar cookies, armazenamento local ou tecnologias semelhantes necess&aacute;rios ao funcionamento da plataforma, como autentica&ccedil;&atilde;o, seguran&ccedil;a, manuten&ccedil;&atilde;o da sess&atilde;o, prefer&ecirc;ncias de uso e configura&ccedil;&otilde;es do sistema. Caso sejam utilizados cookies n&atilde;o essenciais, como ferramentas de an&aacute;lise, marketing ou rastreamento, o usu&aacute;rio ser&aacute; informado e poder&aacute; gerenciar suas prefer&ecirc;ncias quando aplic&aacute;vel.</p></section>' +
         '<section><h3 class="mb-2 text-xs font-black uppercase tracking-widest text-slate-800">6. Compartilhamento de informa&ccedil;&otilde;es</h3><p>O AvantaLab Gest&atilde;o n&atilde;o vende informa&ccedil;&otilde;es dos usu&aacute;rios. Os dados poder&atilde;o ser compartilhados apenas quando necess&aacute;rio para o funcionamento t&eacute;cnico da plataforma, cumprimento de obriga&ccedil;&otilde;es legais ou mediante solicita&ccedil;&atilde;o ou autoriza&ccedil;&atilde;o do pr&oacute;prio usu&aacute;rio.</p></section>' +
         '<section><h3 class="mb-2 text-xs font-black uppercase tracking-widest text-slate-800">7. Seguran&ccedil;a</h3><p>S&atilde;o adotadas medidas t&eacute;cnicas e organizacionais para proteger as informa&ccedil;&otilde;es contra acessos n&atilde;o autorizados, perda, altera&ccedil;&atilde;o, divulga&ccedil;&atilde;o indevida ou uso inadequado. Ainda assim, nenhum sistema digital &eacute; totalmente imune a riscos.</p></section>' +
@@ -3855,6 +3937,10 @@
     bind('cancelar-edicao-empresa-mobile', cancelarEdicaoEmpresaMobile);
     bind('salvar-edicao-empresa-mobile', salvarEdicaoEmpresaMobile);
     bind('criar-empresa-mobile', criarEmpresaMobile);
+    bind('edit-tipo-empresa', function () { selecionarTipoPerfilEdicao('empresa'); });
+    bind('edit-tipo-pessoal', function () { selecionarTipoPerfilEdicao('pessoal'); });
+    bind('novo-tipo-empresa', function () { selecionarTipoPerfilNovo('empresa'); });
+    bind('novo-tipo-pessoal', function () { selecionarTipoPerfilNovo('pessoal'); });
     bind('abrir-exclusao-empresa-mobile', function () {
       state.empresaExclusaoAberta = true;
       state.erro = '';
@@ -4586,7 +4672,7 @@
           return Promise.all(
             keys
               .filter(function (key) {
-                return key.indexOf('avantalab-mobile-') === 0 && key !== 'avantalab-mobile-v72';
+                return key.indexOf('avantalab-mobile-') === 0 && key !== 'avantalab-mobile-v73';
               })
               .map(function (key) {
                 return caches.delete(key);
@@ -4603,7 +4689,7 @@
     });
 
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/mobile-sw.js?v=72').then(function (registro) {
+      navigator.serviceWorker.register('/mobile-sw.js?v=73').then(function (registro) {
         if (registro && registro.update) registro.update();
       }).catch(function () {});
     }
