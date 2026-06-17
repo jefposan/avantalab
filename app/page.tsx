@@ -68,35 +68,186 @@ import {
 } from './lib/database';
 
 import { supabase } from './lib/supabase';
+import { gerarBackupExcel } from './lib/exportacao';
+import { useUI } from './hooks/useUI';
+import { useAuth } from './hooks/useAuth';
+import { useEmpresas } from './hooks/useEmpresas';
+import ChatFlutuante from './components/ChatFlutuante';
+import AppHeader from './components/AppHeader';
+import AuthCard from './components/AuthCard';
 
 export default function AppGestao() {
+
+  // ---------------------------------------------------------------------------
+  // Hooks — estados e funções extraídos
+  // ---------------------------------------------------------------------------
+
+
+  const ui = useUI();
+  const {
+    abrirAviso, fecharAviso,
+    modalAvisoAberto, setModalAvisoAberto,
+    tituloAviso, mensagemAviso, tipoAviso, acaoDepoisDoAviso,
+    abrirConfirmacao, fecharConfirmacao, confirmarAcao,
+    modalConfirmacaoAberto, setModalConfirmacaoAberto,
+    tituloConfirmacao, mensagemConfirmacao, textoConfirmarConfirmacao,
+    acaoConfirmacao, confirmacaoCarregando,
+    chatFeedbackAberto, setChatFeedbackAberto,
+    chatFeedbackEtapa, setChatFeedbackEtapa,
+    feedbackTipo, setFeedbackTipo,
+    feedbackMensagem, setFeedbackMensagem,
+    feedbackEnviando, setFeedbackEnviando,
+    abrirFormularioFeedback, voltarInicioChatFeedback, fecharChatFeedback,
+    painelAvisosAberto, setPainelAvisosAberto,
+    tourAberto, setTourAberto,
+    finalizarTour, pularTour,
+  } = ui;
+
+  const empresas = useEmpresas({
+    abrirAviso,
+    abrirConfirmacao,
+    handleLogout: () => handleLogout(),
+  });
+  const {
+    empresaId, setEmpresaId,
+    nomeEmpresaAtual, setNomeEmpresaAtual,
+    tipoPerfilAtual, setTipoPerfilAtual,
+    nomeUsuarioAtual, setNomeUsuarioAtual,
+    emailUsuarioAtual, setEmailUsuarioAtual,
+    acessoUsuarioAtualId, setAcessoUsuarioAtualId,
+    perfilUsuario, setPerfilUsuario,
+    empresasDoUsuario, setEmpresasDoUsuario,
+    empresaParaSelecionar, setEmpresaParaSelecionar,
+    acessoLiberado, setAcessoLiberado,
+    acessoNaoConfigurado, setAcessoNaoConfigurado,
+    podeGerenciarUsuarios,
+    modalSelecionarEmpresa, setModalSelecionarEmpresa,
+    modalEmpresasAberto, setModalEmpresasAberto,
+    modalEditarEmpresaAberto, setModalEditarEmpresaAberto,
+    editEmpresaNome, setEditEmpresaNome,
+    editTipoPerfil, setEditTipoPerfil,
+    editEmpresaLogin, setEditEmpresaLogin,
+    editEmpresaSenha, setEditEmpresaSenha,
+    editEmpresaSalvando, setEditEmpresaSalvando,
+    modalExcluirEmpresa, setModalExcluirEmpresa,
+    nomeConfirmacaoExclusao, setNomeConfirmacaoExclusao,
+    excluindoEmpresa, setExcluindoEmpresa,
+    usuariosEmpresa, setUsuariosEmpresa,
+    usuariosCarregando, setUsuariosCarregando,
+    usuarioNome, setUsuarioNome,
+    usuarioLogin, setUsuarioLogin,
+    usuarioSenha, setUsuarioSenha,
+    mostrarUsuarioSenha, setMostrarUsuarioSenha,
+    usuarioPerfil, setUsuarioPerfil,
+    modoFormularioUsuario, setModoFormularioUsuario,
+    usuarioExistenteTermo, setUsuarioExistenteTermo,
+    usuarioEncontrado, setUsuarioEncontrado,
+    perfilUsuarioExistente, setPerfilUsuarioExistente,
+    pesquisandoUsuarioExistente, setPesquisandoUsuarioExistente,
+    vinculandoUsuarioExistente, setVinculandoUsuarioExistente,
+    usuarioEditandoId, setUsuarioEditandoId,
+    editUsuarioNome, setEditUsuarioNome,
+    editUsuarioEmail, setEditUsuarioEmail,
+    editUsuarioNovaSenha, setEditUsuarioNovaSenha,
+    mostrarEditUsuarioNovaSenha, setMostrarEditUsuarioNovaSenha,
+    editUsuarioPerfil, setEditUsuarioPerfil,
+    modalUsuarios, setModalUsuarios,
+    ajudaUsuariosAberta, setAjudaUsuariosAberta,
+    carregarUsuariosEmpresa,
+    abrirModalUsuarios,
+    abrirCriarNovoUsuario,
+    abrirAdicionarUsuarioExistente,
+    ocultarFormularioUsuario,
+    buscaUsuarioExistente,
+    confirmarVinculoUsuarioExistente,
+    adicionarUsuarioEmpresa,
+    iniciarEdicaoUsuario,
+    cancelarEdicaoUsuario,
+    salvarEdicaoUsuario,
+    redefinirSenhaUsuario,
+    bloquearAcessoUsuario,
+    excluirAcessoUsuario,
+    abrirEdicaoEmpresaAtual,
+    fecharEdicaoEmpresaAtual,
+    salvarEdicaoEmpresaAtual,
+  } = empresas;
+
+  const [duplicadosAtivo, setDuplicadosAtivo] = useState(true);
+
+  const auth = useAuth({
+    abrirAviso,
+    carregarEmpresaSelecionada: (e: any) => carregarEmpresaSelecionada(e),
+    onMultiplasEmpresas: (es: any[]) => onMultiplasEmpresas(es),
+    onSemEmpresa: () => onSemEmpresa(),
+    setTipoPerfilAtual: empresas.setTipoPerfilAtual,
+    setDuplicadosAtivo,
+  });
+  const {
+    modoAuth, setModoAuth,
+    mostrarLandingPreLogin, setMostrarLandingPreLogin,
+    loginEmail, setLoginEmail,
+    loginSenha, setLoginSenha,
+    mostrarSenhaLogin, setMostrarSenhaLogin,
+    mostrarSenhaCadastro, setMostrarSenhaCadastro,
+    mostrarConfirmarSenhaCadastro, setMostrarConfirmarSenhaCadastro,
+    cadastroNome, setCadastroNome,
+    cadastroEmail, setCadastroEmail,
+    cadastroTelefone, setCadastroTelefone,
+    cadastroSenha, setCadastroSenha,
+    cadastroConfirmarSenha, setCadastroConfirmarSenha,
+    codigoSmsCadastro, setCodigoSmsCadastro,
+    smsCadastroEnviado, setSmsCadastroEnviado,
+    telefoneSmsCadastroConfirmado, setTelefoneSmsCadastroConfirmado,
+    segundosReenvioSms, setSegundosReenvioSms,
+    reenviandoSmsCadastro, setReenviandoSmsCadastro,
+    authErro, setAuthErro,
+    authMensagem, setAuthMensagem,
+    authLoading, setAuthLoading,
+    carregandoSistema, setCarregandoSistema,
+    mensagemCarregamentoSistema, setMensagemCarregamentoSistema,
+    googleLoading, setGoogleLoading,
+    modoRedefinirSenha, setModoRedefinirSenha,
+    novaSenha, setNovaSenha,
+    confirmarNovaSenha, setConfirmarNovaSenha,
+    mostrarNovaSenha, setMostrarNovaSenha,
+    mostrarConfirmarNovaSenha, setMostrarConfirmarNovaSenha,
+    codigoSmsRedefinirSenha, setCodigoSmsRedefinirSenha,
+    smsRedefinirSenhaEnviado, setSmsRedefinirSenhaEnviado,
+    segundosReenvioRedefinirSenha, setSegundosReenvioRedefinirSenha,
+    reenviandoSmsRedefinirSenha, setReenviandoSmsRedefinirSenha,
+    emailConfirmado, setEmailConfirmado,
+    nomeEmpresaInicial, setNomeEmpresaInicial,
+    tipoPerfilInicial, setTipoPerfilInicial,
+    criandoEmpresaInicial, setCriandoEmpresaInicial,
+    criandoNovaEmpresaLogada, setCriandoNovaEmpresaLogada,
+    handleLogin,
+    handleCadastroTeste,
+    reenviarCodigoSmsCadastro,
+    handleCriarEmpresaInicial,
+    handleRecuperarSenha,
+    reenviarCodigoRedefinirSenha,
+    handleAtualizarSenha,
+    handleGoogleLogin,
+  } = auth;
+
+  // Callbacks de orquestração passados para useAuth
+  const onMultiplasEmpresas = (empresasList: any[]) => {
+    empresas.setEmpresasDoUsuario(empresasList);
+    empresas.setEmpresaParaSelecionar(empresasList[0] || null);
+    empresas.setModalSelecionarEmpresa(true);
+  };
+
+  const onSemEmpresa = () => {
+    auth.setEmailConfirmado(true);
+  };
+
 
   // --- ESTADOS PRINCIPAIS ---
   
 const [mounted, setMounted] = useState(false);
-  const [isTelaMobile, setIsTelaMobile] = useState(false);
-const [acessoLiberado, setAcessoLiberado] = useState(false);
-  const [modoAuth, setModoAuth] = useState<'login' | 'cadastro'>('login');
-  const [mostrarLandingPreLogin, setMostrarLandingPreLogin] = useState(true);
-
-  const [loginEmail, setLoginEmail] = useState('');
-const [loginSenha, setLoginSenha] = useState('');
-
-const [mostrarSenhaLogin, setMostrarSenhaLogin] = useState(false);
-const [mostrarSenhaCadastro, setMostrarSenhaCadastro] = useState(false);
-const [mostrarConfirmarSenhaCadastro, setMostrarConfirmarSenhaCadastro] = useState(false);
-
-const [cadastroNome, setCadastroNome] = useState('');
-const [cadastroEmail, setCadastroEmail] = useState('');
-const [cadastroTelefone, setCadastroTelefone] = useState('');
-const [cadastroSenha, setCadastroSenha] = useState('');
-const [cadastroConfirmarSenha, setCadastroConfirmarSenha] = useState('');
-
-const [codigoSmsCadastro, setCodigoSmsCadastro] = useState('');
-const [smsCadastroEnviado, setSmsCadastroEnviado] = useState(false);
-const [telefoneSmsCadastroConfirmado, setTelefoneSmsCadastroConfirmado] = useState('');
-const [segundosReenvioSms, setSegundosReenvioSms] = useState(0);
-const [reenviandoSmsCadastro, setReenviandoSmsCadastro] = useState(false);
+const [isTelaMobile, setIsTelaMobile] = useState(false);
+const [darkMode, setDarkMode] = useState(false);
+const [ajudaCategoriasAberta, setAjudaCategoriasAberta] = useState(false);
 const [validacaoTelefoneObrigatoria, setValidacaoTelefoneObrigatoria] = useState(false);
 const [empresaAguardandoTelefone, setEmpresaAguardandoTelefone] = useState<any | null>(null);
 const [telefoneObrigatorio, setTelefoneObrigatorio] = useState('');
@@ -106,119 +257,16 @@ const [telefoneObrigatorioConfirmado, setTelefoneObrigatorioConfirmado] = useSta
 const [segundosReenvioTelefoneObrigatorio, setSegundosReenvioTelefoneObrigatorio] = useState(0);
 const [reenviandoTelefoneObrigatorio, setReenviandoTelefoneObrigatorio] = useState(false);
 const [validandoTelefoneObrigatorio, setValidandoTelefoneObrigatorio] = useState(false);
-
-const [modalConfirmacaoAberto, setModalConfirmacaoAberto] = useState(false);
-const [tituloConfirmacao, setTituloConfirmacao] = useState("");
-const [mensagemConfirmacao, setMensagemConfirmacao] = useState("");
-const [textoConfirmarConfirmacao, setTextoConfirmarConfirmacao] = useState("Confirmar");
-const [modalAvisoAberto, setModalAvisoAberto] = useState(false);
-const [tituloAviso, setTituloAviso] = useState("");
-const [mensagemAviso, setMensagemAviso] = useState("");
-const [tipoAviso, setTipoAviso] = useState<'alerta' | 'erro' | 'sucesso'>('alerta');
-const [acaoDepoisDoAviso, setAcaoDepoisDoAviso] = useState<(() => void) | null>(null);
-const [acaoConfirmacao, setAcaoConfirmacao] = useState<(() => Promise<void> | void) | null>(null);
-const [confirmacaoCarregando, setConfirmacaoCarregando] = useState(false);
-
-const [authErro, setAuthErro] = useState('');
-const [authMensagem, setAuthMensagem] = useState('');
-const [authLoading, setAuthLoading] = useState(false);
-const [carregandoSistema, setCarregandoSistema] = useState(true);
-const [mensagemCarregamentoSistema, setMensagemCarregamentoSistema] = useState('Carregando sistema...');
-const [googleLoading, setGoogleLoading] = useState(false);
-
-const [modoRedefinirSenha, setModoRedefinirSenha] = useState(false);
-const [novaSenha, setNovaSenha] = useState('');
-const [confirmarNovaSenha, setConfirmarNovaSenha] = useState('');
-const [mostrarNovaSenha, setMostrarNovaSenha] = useState(false);
-const [mostrarConfirmarNovaSenha, setMostrarConfirmarNovaSenha] = useState(false);
-
-const [codigoSmsRedefinirSenha, setCodigoSmsRedefinirSenha] = useState('');
-const [smsRedefinirSenhaEnviado, setSmsRedefinirSenhaEnviado] = useState(false);
-const [segundosReenvioRedefinirSenha, setSegundosReenvioRedefinirSenha] = useState(0);
-const [reenviandoSmsRedefinirSenha, setReenviandoSmsRedefinirSenha] = useState(false);
-
-  const [empresaId, setEmpresaId] = useState<string | null>(null);
-  const [nomeEmpresaAtual, setNomeEmpresaAtual] = useState('');
-const [tipoPerfilAtual, setTipoPerfilAtual] = useState<TipoPerfil>('empresa');
-const [nomeUsuarioAtual, setNomeUsuarioAtual] = useState('');
-const [emailUsuarioAtual, setEmailUsuarioAtual] = useState('');
-const [acessoUsuarioAtualId, setAcessoUsuarioAtualId] = useState<string | null>(null);
-const [empresasDoUsuario, setEmpresasDoUsuario] = useState<any[]>([]);
-const [empresaParaSelecionar, setEmpresaParaSelecionar] = useState<any | null>(null);
-const [modalSelecionarEmpresa, setModalSelecionarEmpresa] = useState(false);
-const [modalEmpresasAberto, setModalEmpresasAberto] = useState(false);
-const [modalEditarEmpresaAberto, setModalEditarEmpresaAberto] = useState(false);
-const [editEmpresaNome, setEditEmpresaNome] = useState('');
-const [editTipoPerfil, setEditTipoPerfil] = useState<TipoPerfil>('empresa');
-const [editEmpresaLogin, setEditEmpresaLogin] = useState('');
-const [editEmpresaSenha, setEditEmpresaSenha] = useState('');
-const [editEmpresaSalvando, setEditEmpresaSalvando] = useState(false);
-const [modalExcluirEmpresa, setModalExcluirEmpresa] = useState(false);
-const [nomeConfirmacaoExclusao, setNomeConfirmacaoExclusao] = useState('');
-const [excluindoEmpresa, setExcluindoEmpresa] = useState(false);
-const [acessoNaoConfigurado, setAcessoNaoConfigurado] = useState(false);
-  const [emailConfirmado, setEmailConfirmado] = useState(false);
-  const [nomeEmpresaInicial, setNomeEmpresaInicial] = useState('');
-const [tipoPerfilInicial, setTipoPerfilInicial] = useState<TipoPerfil>('empresa');
-const [criandoEmpresaInicial, setCriandoEmpresaInicial] = useState(false);
-const [criandoNovaEmpresaLogada, setCriandoNovaEmpresaLogada] = useState(false);
-  const [perfilUsuario, setPerfilUsuario] = useState<
-  'gestor_master' | 'administrador' | 'operador_completo' | 'operador_simples' | null
->(null);
-const [usuariosEmpresa, setUsuariosEmpresa] = useState<any[]>([]);
-const [usuariosCarregando, setUsuariosCarregando] = useState(false);
-const [usuarioNome, setUsuarioNome] = useState('');
-const [usuarioLogin, setUsuarioLogin] = useState('');
-const [usuarioSenha, setUsuarioSenha] = useState('');
-const [mostrarUsuarioSenha, setMostrarUsuarioSenha] = useState(false);
-const [usuarioPerfil, setUsuarioPerfil] = useState<
-  '' | 'administrador' | 'operador_completo' | 'operador_simples'
->('');
-const [modoFormularioUsuario, setModoFormularioUsuario] = useState<
-  '' | 'criar' | 'existente'
->('');
-const [usuarioExistenteTermo, setUsuarioExistenteTermo] = useState('');
-const [usuarioEncontrado, setUsuarioEncontrado] = useState<any | null>(null);
-const [perfilUsuarioExistente, setPerfilUsuarioExistente] = useState<
-  '' | 'gestor_master' | 'administrador' | 'operador_completo' | 'operador_simples'
->('');
-const [pesquisandoUsuarioExistente, setPesquisandoUsuarioExistente] =
-  useState(false);
-const [vinculandoUsuarioExistente, setVinculandoUsuarioExistente] =
-  useState(false);
-const [usuarioEditandoId, setUsuarioEditandoId] = useState<string | null>(null);
-const [editUsuarioNome, setEditUsuarioNome] = useState('');
-const [editUsuarioEmail, setEditUsuarioEmail] = useState('');
-const [editUsuarioNovaSenha, setEditUsuarioNovaSenha] = useState('');
-const [mostrarEditUsuarioNovaSenha, setMostrarEditUsuarioNovaSenha] = useState(false);
-const [editUsuarioPerfil, setEditUsuarioPerfil] = useState<
-  'gestor_master' | 'administrador' | 'operador_completo' | 'operador_simples'
->('operador_simples');  
-const [modalUsuarios, setModalUsuarios] = useState(false);
   const [abaAtiva, setAbaAtiva] = useState('Dashboard');
 const [ajustesAberto, setAjustesAberto] = useState(false);
 const [menuResponsivoAberto, setMenuResponsivoAberto] = useState(false);
-  const [duplicadosAtivo, setDuplicadosAtivo] = useState(true);
-  const [darkMode, setDarkMode] = useState(false);
-  const [painelAvisosAberto, setPainelAvisosAberto] = useState(false);
+const [subAcaoGerenciar, setSubAcaoGerenciar] = useState<null | 'editar' | 'criar'>(null);
   const [ultimoBackupEm, setUltimoBackupEm] = useState<string | null>(null);
   const [corPrimaria, setCorPrimaria] = useState('#003E73');
   const [corTemporaria, setCorTemporaria] = useState('#003E73');
   const [statusConfig, setStatusConfig] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
   const [configuracoesCarregadas, setConfiguracoesCarregadas] = useState(false);
   const [mesAtivo, setMesAtivo] = useState<string | null>(null);
-  const [ajudaCategoriasAberta, setAjudaCategoriasAberta] = useState(false);
-  const [ajudaUsuariosAberta, setAjudaUsuariosAberta] = useState(false);
-  const [chatFeedbackAberto, setChatFeedbackAberto] = useState(false);
-const [tourAberto, setTourAberto] = useState(false);
-const [chatFeedbackEtapa, setChatFeedbackEtapa] = useState<
-  'inicio' | 'formulario' | 'confirmacao'
->('inicio');
-const [feedbackTipo, setFeedbackTipo] = useState<'sugestao' | 'duvida' | null>(
-  null
-);
-const [feedbackMensagem, setFeedbackMensagem] = useState('');
-const [feedbackEnviando, setFeedbackEnviando] = useState(false);
 const [despesaAnaliseAtiva, setDespesaAnaliseAtiva] = useState<{
   nome: string;
   valor: number;
@@ -298,9 +346,6 @@ const [buscaEntradaFaturamento, setBuscaEntradaFaturamento] = useState('');
   const meses = ['JANEIRO', 'FEVEREIRO', 'MARÇO', 'ABRIL', 'MAIO', 'JUNHO', 'JULHO', 'AGOSTO', 'SETEMBRO', 'OUTUBRO', 'NOVEMBRO', 'DEZEMBRO'];
   const TEMPO_LIMITE_INATIVIDADE = 60 * 60 * 1000; // 60 minutos
 const CHAVE_ULTIMA_ATIVIDADE = 'avantalab_ultima_atividade';
-
-const podeGerenciarUsuarios =
-  perfilUsuario === 'gestor_master' || perfilUsuario === 'administrador';
 
 const podeInserirLancamentos =
   perfilUsuario === 'gestor_master' ||
@@ -1026,16 +1071,6 @@ useEffect(() => {
   }
 }, [mounted, acessoLiberado, validacaoTelefoneObrigatoria]);
 
-const finalizarTour = () => {
-  localStorage.setItem('avantalab_tour_concluido', 'true');
-  setTourAberto(false);
-};
-
-const pularTour = () => {
-  localStorage.setItem('avantalab_tour_concluido', 'true');
-  setTourAberto(false);
-};
-
   // --- CÁLCULOS E FUNÇÕES ---
   
   const mesParaAnalise = mesAtivo || mesResumoDash;
@@ -1477,466 +1512,6 @@ const confirmarEntradaFaturamentoDashboard = async () => {
   await salvarFaturamento(true, mesSelecionado, valorReceitaDashboardConfirmacao);
   limparCamposReceitaDashboard('total');
 };
-const abrirModalUsuarios = () => {
-  setUsuarioNome('');
-  setUsuarioLogin('');
-  setUsuarioSenha('');
-  setMostrarUsuarioSenha(false);
-  setUsuarioPerfil('');
-  setModoFormularioUsuario('');
-  setUsuarioExistenteTermo('');
-  setUsuarioEncontrado(null);
-  setPerfilUsuarioExistente('');
-  setPesquisandoUsuarioExistente(false);
-  setVinculandoUsuarioExistente(false);
-  setAjudaUsuariosAberta(false);
-
-  setUsuarioEditandoId(null);
-  setEditUsuarioNome('');
-  setEditUsuarioEmail('');
-  setEditUsuarioNovaSenha('');
-  setMostrarEditUsuarioNovaSenha(false);
-  setEditUsuarioPerfil('operador_simples');
-
-  setModalUsuarios(true);
-
-  setTimeout(() => {
-    setUsuarioNome('');
-    setUsuarioLogin('');
-    setUsuarioSenha('');
-    setUsuarioPerfil('');
-    setModoFormularioUsuario('');
-    setUsuarioExistenteTermo('');
-    setUsuarioEncontrado(null);
-    setPerfilUsuarioExistente('');
-  }, 50);
-};
-const carregarUsuariosEmpresa = async () => {
-  if (!empresaId || !podeGerenciarUsuarios) return;
-
-  setUsuariosCarregando(true);
-
-  const usuarios = await buscarUsuariosEmpresa(empresaId);
-
-  setUsuariosEmpresa(usuarios);
-  setUsuariosCarregando(false);
-};
-
-const abrirCriarNovoUsuario = () => {
-  setModoFormularioUsuario('criar');
-  setUsuarioExistenteTermo('');
-  setUsuarioEncontrado(null);
-  setPerfilUsuarioExistente('');
-  setPesquisandoUsuarioExistente(false);
-  setVinculandoUsuarioExistente(false);
-};
-
-const abrirAdicionarUsuarioExistente = () => {
-  setModoFormularioUsuario('existente');
-  setUsuarioEditandoId(null);
-  setUsuarioExistenteTermo('');
-  setUsuarioEncontrado(null);
-  setPerfilUsuarioExistente('');
-  setPesquisandoUsuarioExistente(false);
-  setVinculandoUsuarioExistente(false);
-};
-
-const ocultarFormularioUsuario = () => {
-  setModoFormularioUsuario('');
-  setUsuarioExistenteTermo('');
-  setUsuarioEncontrado(null);
-  setPerfilUsuarioExistente('');
-  setPesquisandoUsuarioExistente(false);
-  setVinculandoUsuarioExistente(false);
-};
-
-const buscaUsuarioExistente = async () => {
-  if (!empresaId) {
-    abrirAviso('Erro', 'Empresa não carregada.');
-    return;
-  }
-
-  if (!podeGerenciarUsuarios) {
-    abrirAviso(
-      'Acesso não permitido',
-      'Você não tem permissão para gerenciar usuários.'
-    );
-    return;
-  }
-
-  const termoLimpo = usuarioExistenteTermo.trim().toLowerCase();
-
-  if (!termoLimpo) {
-    abrirAviso(
-      'Campo obrigatório',
-      'Informe o e-mail ou login do usuário já cadastrado.'
-    );
-    return;
-  }
-
-  setPesquisandoUsuarioExistente(true);
-  setUsuarioEncontrado(null);
-  setPerfilUsuarioExistente('');
-
-  const resultado = await buscarUsuarioExistenteEmpresa({
-    empresaId,
-    termo: termoLimpo,
-  });
-
-  setPesquisandoUsuarioExistente(false);
-
-  if (resultado.erro) {
-    abrirAviso('Erro ao pesquisar usuário', resultado.mensagem);
-    return;
-  }
-
-  if (!resultado.encontrado) {
-    abrirAviso(
-      'Usuário não encontrado',
-      'Nenhum usuário encontrado com este e-mail ou login.'
-    );
-    return;
-  }
-
-  if (resultado.jaVinculado) {
-    abrirAviso(
-      'Usuário já vinculado',
-      'Este usuário já está vinculado a esta empresa.'
-    );
-    return;
-  }
-
-  setUsuarioEncontrado(resultado.usuario);
-  setPerfilUsuarioExistente('operador_simples');
-};
-
-const confirmarVinculoUsuarioExistente = async () => {
-  if (!empresaId || !usuarioEncontrado?.id) return;
-
-  if (!perfilUsuarioExistente) {
-    abrirAviso(
-      'Perfil obrigatório',
-      'Selecione o perfil de acesso para este usuário.'
-    );
-    return;
-  }
-
-  setVinculandoUsuarioExistente(true);
-
-  const resultado = await vincularUsuarioExistenteEmpresa({
-    empresaId,
-    userId: usuarioEncontrado.id,
-    perfil: perfilUsuarioExistente,
-  });
-
-  setVinculandoUsuarioExistente(false);
-
-  if (resultado.erro) {
-    abrirAviso('Erro ao vincular usuário', resultado.mensagem);
-    return;
-  }
-
-  setModalUsuarios(false);
-  setUsuarioExistenteTermo('');
-  setUsuarioEncontrado(null);
-  setPerfilUsuarioExistente('');
-  setModoFormularioUsuario('criar');
-
-  await carregarUsuariosEmpresa();
-
-  abrirAviso(
-    'Usuário vinculado',
-    'Usuário vinculado com sucesso.',
-    undefined,
-    'sucesso'
-  );
-};
-
-const adicionarUsuarioEmpresa = async () => {
-  if (!empresaId) {
-    abrirAviso('Erro', 'Empresa não carregada.');
-    return;
-  }
-
-  if (!podeGerenciarUsuarios) {
-    abrirAviso(
-      'Acesso não permitido',
-      'Você não tem permissão para gerenciar usuários.'
-    );
-    return;
-  }
-
-  const nomeLimpo = usuarioNome.trim();
-  const loginLimpo = usuarioLogin.trim().toLowerCase();
-  const senhaLimpa = usuarioSenha.trim();
-
-  if (!nomeLimpo || !loginLimpo || !senhaLimpa || !usuarioPerfil) {
-  abrirAviso(
-    'Campos obrigatórios',
-    'Informe nome, login, senha e tipo de usuário.'
-  );
-  return;
-}
-
-const loginJaExiste = usuariosEmpresa.some(
-  (usuario) =>
-    (usuario.login || '').trim().toLowerCase() === loginLimpo
-);
-
-if (loginJaExiste) {
-  abrirAviso(
-    'Login indisponível',
-    'Este login já está em uso nesta empresa. Escolha outro login para criar o usuário.'
-  );
-  return;
-}
-
-  if (loginLimpo.includes('@')) {
-    abrirAviso(
-      'Login inválido',
-      'Para usuários internos, use um login simples, sem @. Exemplo: financeiro, caixa ou operador1.'
-    );
-    return;
-  }
-
-  if (senhaLimpa.length < 8) {
-    abrirAviso(
-      'Senha muito curta',
-      'A senha deve ter pelo menos 8 caracteres.'
-    );
-    return;
-  }
-
-  const resultado = await criarUsuarioEmpresa({
-    empresaId,
-    nome: nomeLimpo,
-    login: loginLimpo,
-    senha: senhaLimpa,
-    perfil: usuarioPerfil,
-  });
-
-  if (resultado.erro) {
-    abrirAviso('Erro ao criar usuário', resultado.mensagem);
-    return;
-  }
-
-  setUsuarioNome('');
-  setUsuarioLogin('');
-  setUsuarioSenha('');
-  setUsuarioPerfil('operador_simples');
-
-  await carregarUsuariosEmpresa();
-};
-
-const bloquearAcessoUsuario = async (acessoId: string) => {
-  if (!podeGerenciarUsuarios) {
-  abrirAviso(
-    'Acesso não permitido',
-    'Você não tem permissão para bloquear usuários.'
-  );
-  return;
-}
-
-  abrirConfirmacao({
-    titulo: 'Bloquear usuário',
-    mensagem: 'Deseja bloquear este usuário?\n\nEle não conseguirá mais acessar esta empresa.',
-    acao: async () => {
-      const resultado = await bloquearUsuarioEmpresa(acessoId);
-
-      if (resultado.erro) {
-  abrirAviso(
-    'Erro ao bloquear usuário',
-    resultado.mensagem
-  );
-  return;
-}
-
-      await carregarUsuariosEmpresa();
-    },
-  });
-};
-
-const iniciarEdicaoUsuario = (usuario: any) => {
-  const loginUsuario = (usuario.login || usuario.email || '').toLowerCase();
-  const emailAtual = (emailUsuarioAtual || '').toLowerCase();
-
-  const usuarioEhAtual =
-    loginUsuario === emailAtual ||
-    usuario.email?.toLowerCase() === emailAtual;
-
-  if (usuario.perfil === 'gestor_master' && !usuarioEhAtual && perfilUsuario !== 'gestor_master') {
-    abrirAviso(
-      'Acesso não permitido',
-      'O gestor master só pode editar o próprio acesso.'
-    );
-    return;
-  }
-
-  setUsuarioEditandoId(usuario.id);
-  setEditUsuarioNome(usuario.nome || '');
-  setEditUsuarioEmail(usuario.login || usuario.email || '');
-  setEditUsuarioNovaSenha('');
-  setMostrarEditUsuarioNovaSenha(false);
-  setEditUsuarioPerfil(
-    usuario.perfil as 'gestor_master' | 'administrador' | 'operador_completo' | 'operador_simples'
-  );
-};
-
-const cancelarEdicaoUsuario = () => {
-  setUsuarioEditandoId(null);
-  setEditUsuarioNome('');
-  setEditUsuarioEmail('');
-  setEditUsuarioPerfil('operador_simples');
-  setEditUsuarioNovaSenha('');
-  setMostrarEditUsuarioNovaSenha(false);
-};
-
-const salvarEdicaoUsuario = async () => {
-  if (!usuarioEditandoId) return;
-
-  const usuarioOriginal = usuariosEmpresa.find(
-    (usuario) => usuario.id === usuarioEditandoId
-  );
-
-  if (!usuarioOriginal) {
-    abrirAviso('Erro', 'Usuário não encontrado para edição.');
-    return;
-  }
-
-  const nomeLimpo = editUsuarioNome.trim();
-  const emailLimpo = editUsuarioEmail.trim().toLowerCase();
-
-  if (!nomeLimpo) {
-    abrirAviso(
-      'Campo obrigatório',
-      'Informe o nome do usuário.'
-    );
-    return;
-  }
-
-  if (!emailLimpo) {
-    abrirAviso(
-      'Campo obrigatório',
-      'Informe o login/email deste usuário.'
-    );
-    return;
-  }
-
-  const nomeOriginal = (usuarioOriginal.nome || '').trim();
-  const loginOriginal = (
-    usuarioOriginal.login ||
-    usuarioOriginal.email ||
-    ''
-  ).toLowerCase();
-  const perfilOriginal = usuarioOriginal.perfil;
-
-  const houveAlteracao =
-    nomeLimpo !== nomeOriginal ||
-    emailLimpo !== loginOriginal ||
-    editUsuarioPerfil !== perfilOriginal;
-
-  if (!houveAlteracao) {
-    abrirAviso(
-      'Nenhuma alteração',
-      'Altere algum dado do usuário antes de salvar.'
-    );
-    return;
-  }
-
-  const resultado = await atualizarUsuarioEmpresa({
-    acessoId: usuarioEditandoId,
-    nome: nomeLimpo,
-    email: emailLimpo,
-    perfil: editUsuarioPerfil,
-  });
-
-  if (resultado.erro) {
-    abrirAviso('Erro ao atualizar usuário', resultado.mensagem);
-    return;
-  }
-
-  await carregarUsuariosEmpresa();
-
-  abrirAviso(
-    'Usuário atualizado',
-    'Os dados do usuário foram salvos com sucesso.'
-  );
-};
-
-const redefinirSenhaUsuario = async () => {
-  if (!usuarioEditandoId) return;
-
-  const senhaLimpa = editUsuarioNovaSenha.trim();
-
-  if (!senhaLimpa) {
-    abrirAviso(
-      'Senha obrigatória',
-      'Informe a nova senha antes de redefinir.'
-    );
-    return;
-  }
-
-  if (senhaLimpa.length < 8) {
-    abrirAviso(
-      'Senha muito curta',
-      'A nova senha deve ter pelo menos 8 caracteres.'
-    );
-    return;
-  }
-
-  const resultado = await redefinirSenhaUsuarioEmpresa({
-    acessoId: usuarioEditandoId,
-    novaSenha: senhaLimpa,
-  });
-
-  if (resultado.erro) {
-    abrirAviso('Erro ao redefinir senha', resultado.mensagem);
-    return;
-  }
-
-  setEditUsuarioNovaSenha('');
-  setMostrarEditUsuarioNovaSenha(false);
-
-  abrirAviso(
-    'Senha redefinida',
-    'A nova senha foi salva com sucesso. Não é necessário clicar em Salvar para confirmar a senha.',
-    undefined,
-    'sucesso'
-  );
-};
-
-const excluirAcessoUsuario = async (acessoId: string) => {
-  const excluindoProprioAcesso = acessoId === acessoUsuarioAtualId;
-
-  abrirConfirmacao({
-    titulo: excluindoProprioAcesso ? 'Excluir minha conta' : 'Excluir usuário',
-    mensagem: excluindoProprioAcesso
-      ? 'Você está prestes a excluir o seu próprio acesso a esta empresa.\n\nApós a exclusão, você será desconectado e voltará para a tela de login.\n\nDeseja continuar?'
-      : 'Deseja excluir este usuário?\n\nEle perderá o acesso a esta empresa. Essa ação não poderá ser desfeita.',
-    textoConfirmar: 'Excluir',
-    acao: async () => {
-      const resultado = await excluirUsuarioEmpresa(acessoId);
-
-      if (resultado.erro) {
-        abrirAviso('Erro ao excluir usuário', resultado.mensagem);
-        return;
-      }
-
-      if (excluindoProprioAcesso) {
-        setModalUsuarios(false);
-        setUsuarioEditandoId(null);
-        setAcessoUsuarioAtualId(null);
-
-        await handleLogout();
-
-        window.location.href = window.location.origin + window.location.pathname;
-        return;
-      }
-
-      await carregarUsuariosEmpresa();
-    },
-  });
-};
 
 const adicionarDespesaBase = async () => {
   if (!podeAcessarAjustes) {
@@ -2263,54 +1838,6 @@ const excluirEntradaFaturamento = async (entrada: any) => {
   });
 };
 
-
-function abrirAviso(
-  titulo: string,
-  mensagem: string,
-  acaoDepois?: () => void,
-  tipo: 'alerta' | 'erro' | 'sucesso' = 'alerta'
-) {
-  setTituloAviso(titulo);
-  setMensagemAviso(mensagem);
-  setTipoAviso(tipo);
-  setAcaoDepoisDoAviso(() => acaoDepois || null);
-  setModalAvisoAberto(true);
-}
-
-function fecharAviso() {
-  setModalAvisoAberto(false);
-
-  const acao = acaoDepoisDoAviso;
-
-  setAcaoDepoisDoAviso(null);
-
-  if (acao) {
-    setTimeout(() => {
-      acao();
-    }, 150);
-  }
-}
-
-function abrirFormularioFeedback(tipo: 'sugestao' | 'duvida') {
-  setFeedbackTipo(tipo);
-  setFeedbackMensagem('');
-  setChatFeedbackEtapa('formulario');
-}
-
-function voltarInicioChatFeedback() {
-  setFeedbackTipo(null);
-  setFeedbackMensagem('');
-  setChatFeedbackEtapa('inicio');
-}
-
-function fecharChatFeedback() {
-  setChatFeedbackAberto(false);
-  setFeedbackTipo(null);
-  setFeedbackMensagem('');
-  setFeedbackEnviando(false);
-  setChatFeedbackEtapa('inicio');
-}
-
 async function enviarFeedbackVisual() {
   const mensagemLimpa = feedbackMensagem.trim();
 
@@ -2366,56 +1893,6 @@ async function enviarFeedbackVisual() {
 }
 setFeedbackMensagem('');
 setChatFeedbackEtapa('confirmacao');
-}
-
-function abrirConfirmacao({
-  titulo,
-  mensagem,
-  textoConfirmar = "Confirmar",
-  acao,
-}: {
-  titulo: string;
-  mensagem: string;
-  textoConfirmar?: string;
-  acao: () => Promise<void> | void;
-}) {
-  setTituloConfirmacao(titulo);
-  setMensagemConfirmacao(mensagem);
-  setTextoConfirmarConfirmacao(textoConfirmar);
-  setAcaoConfirmacao(() => acao);
-  setModalConfirmacaoAberto(true);
-}
-
-function fecharConfirmacao() {
-  if (confirmacaoCarregando) return;
-
-  setModalConfirmacaoAberto(false);
-  setTituloConfirmacao("");
-  setMensagemConfirmacao("");
-  setAcaoConfirmacao(null);
-}
-
-async function confirmarAcao() {
-  if (!acaoConfirmacao) return;
-
-  try {
-    setConfirmacaoCarregando(true);
-
-    await acaoConfirmacao();
-
-    setModalConfirmacaoAberto(false);
-    setTituloConfirmacao("");
-    setMensagemConfirmacao("");
-    setAcaoConfirmacao(null);
-  } catch (error) {
-  console.error("Erro ao confirmar ação:", error);
-  abrirAviso(
-    'Erro ao concluir ação',
-    'Não foi possível concluir a ação. Tente novamente.'
-  );
-} finally {
-    setConfirmacaoCarregando(false);
-  }
 }
 
 const iniciarEdicaoLancamento = (lanc: any) => {
@@ -2815,246 +2292,20 @@ const salvo = await salvarConfiguracoesBanco({
 
 
 
-  // ================= FUNÇÃO DE BACKUP EXCEL =================
-  const gerarBackupExcel = async (abrirExclusaoDepois = false) => {
-  if (!empresaId) {
-  abrirAviso(
-    'Empresa não carregada',
-    'Faça login novamente e tente gerar o backup.'
-  );
-  return;
-}
 
-  const dadosResumo: any[] = [];
-  const dadosLancamentos: any[] = [];
-
-  const { data: lancamentosBanco, error: erroLancamentos } = await supabase
-    .from('lancamentos')
-    .select('*')
-    .eq('empresa_id', empresaId)
-    .order('ano', { ascending: true })
-    .order('mes', { ascending: true })
-    .order('dia', { ascending: true });
-
-  if (erroLancamentos) {
-  console.error('Erro ao buscar lançamentos para backup:', erroLancamentos);
-  abrirAviso(
-    'Erro ao gerar backup',
-    erroLancamentos.message || 'Não foi possível buscar os lançamentos para o backup.'
-  );
-  return;
-}
-
-  const { data: faturamentosBanco, error: erroFaturamentos } = await supabase
-    .from('faturamentos')
-    .select('*')
-    .eq('empresa_id', empresaId)
-    .order('ano', { ascending: true });
-
-  if (erroFaturamentos) {
-  console.error('Erro ao buscar faturamentos para backup:', erroFaturamentos);
-  abrirAviso(
-    'Erro ao gerar backup',
-    erroFaturamentos.message || 'Não foi possível buscar os faturamentos para o backup.'
-  );
-  return;
-}
-
-  const lancamentosBackup = lancamentosBanco || [];
-  const faturamentosBackup = faturamentosBanco || [];
-
-  const anosNoBanco = Array.from(
-    new Set([
-      ...lancamentosBackup.map((l: any) => String(l.ano)),
-      ...faturamentosBackup.map((f: any) => String(f.ano)),
-    ])
-  ).sort();
-
-  if (anosNoBanco.length === 0) {
-  abrirAviso(
-    'Backup sem dados',
-    'Nenhum dado foi encontrado para gerar o backup.',
-    abrirExclusaoDepois
-      ? () => {
-          setNomeConfirmacaoExclusao('');
-          setModalExcluirEmpresa(true);
-        }
-      : undefined
-  );
-  return;
-}
-
-  anosNoBanco.forEach((ano) => {
-    const lancsAno = lancamentosBackup.filter((l: any) => String(l.ano) === ano);
-    const fatsAno = faturamentosBackup.filter((f: any) => String(f.ano) === ano);
-
-    const faturamentosPorMes: Record<string, number> = {};
-
-    fatsAno.forEach((f: any) => {
-      faturamentosPorMes[f.mes] = Number(f.valor || 0);
-    });
-
-    let totalFatAno = 0;
-    let totalDespAno = 0;
-    let totalLucroAno = 0;
-    let totalEbitdaAno = 0;
-
-    lancsAno.forEach((l: any) => {
-      dadosLancamentos.push({
-        Ano: ano,
-        Mês: l.mes,
-        Dia: l.dia,
-        Despesa: l.despesa_nome,
-        Descrição: l.descricao || '-',
-        'Valor (R$)': Number(l.valor || 0),
-      });
-    });
-
-    meses.forEach((mes) => {
-      const faturamento = faturamentosPorMes[mes] || 0;
-      const lancsMes = lancsAno.filter((l: any) => l.mes === mes);
-
-      let despesas = 0;
-      let exclusoesEbitda = 0;
-
-      lancsMes.forEach((l: any) => {
-        const valor = Number(l.valor || 0);
-        despesas += valor;
-
-        const despesaCat =
-  despesasCadastradas.find(
-    (d) => normalizarTexto(d.nome) === normalizarTexto(l.despesa_nome)
-  )?.categoria || 'Outros';
-
-        if (CATEGORIAS_EXCLUSAO_EBITDA.includes(despesaCat)) {
-          exclusoesEbitda += valor;
-        }
-      });
-
-      const lucro = faturamento - despesas;
-      const ebitda = lucro + exclusoesEbitda;
-
-      if (faturamento > 0 || despesas > 0) {
-        dadosResumo.push({
-          Ano: ano,
-          Mês: mes,
-          'Faturamento (R$)': faturamento,
-          'Despesas (R$)': despesas,
-          'Lucro (R$)': lucro,
-          'EBITDA (R$)': ebitda,
-        });
-
-        totalFatAno += faturamento;
-        totalDespAno += despesas;
-        totalLucroAno += lucro;
-        totalEbitdaAno += ebitda;
-      }
-    });
-
-    if (totalFatAno > 0 || totalDespAno > 0) {
-      dadosResumo.push({
-        Ano: ano,
-        Mês: 'TOTAL ANUAL',
-        'Faturamento (R$)': totalFatAno,
-        'Despesas (R$)': totalDespAno,
-        'Lucro (R$)': totalLucroAno,
-        'EBITDA (R$)': totalEbitdaAno,
-      });
-
-      dadosResumo.push({
-        Ano: '',
-        Mês: '',
-        'Faturamento (R$)': null,
-        'Despesas (R$)': null,
-        'Lucro (R$)': null,
-        'EBITDA (R$)': null,
-      });
-    }
-  });
-
-  const wb = XLSX.utils.book_new();
-
-  const wsResumo = XLSX.utils.json_to_sheet(dadosResumo);
-  XLSX.utils.book_append_sheet(wb, wsResumo, 'Resumo Financeiro');
-
-  if (dadosLancamentos.length > 0) {
-    const wsLancs = XLSX.utils.json_to_sheet(dadosLancamentos);
-    XLSX.utils.book_append_sheet(wb, wsLancs, 'Lançamentos Detalhados');
-  }
-
-  const dadosConfiguracoes = [
-    {
-      chave: 'empresaId',
-      valor: empresaId,
-    },
-    {
-      chave: 'logoUrl',
-      valor: logoUrl || '',
-    },
-    {
-      chave: 'logoSettings',
-      valor: JSON.stringify(logoSettings || { scale: 100, x: 0, y: 0 }),
-    },
-    {
-      chave: 'corPrimaria',
-      valor: corPrimaria || '#003E73',
-    },
-    {
-      chave: 'darkMode',
-      valor: String(darkMode),
-    },
-    {
-      chave: 'duplicadosAtivo',
-      valor: String(duplicadosAtivo),
-    },
-    {
-      chave: 'despesasCadastradas',
-      valor: JSON.stringify(despesasCadastradas || []),
-    },
-  ];
-
-  const wsConfig = XLSX.utils.json_to_sheet(dadosConfiguracoes);
-  XLSX.utils.book_append_sheet(wb, wsConfig, 'Configurações');
-
-  const dataHoje = new Date().toISOString().split('T')[0];
-XLSX.writeFile(wb, `backup_avantalab_${dataHoje}.xlsx`);
-
-const agora = new Date().toISOString();
-
-const { error: erroSalvarBackup } = await supabase
-  .from('configuracoes')
-  .upsert(
-    {
-      empresa_id: empresaId,
-      ultimo_backup_em: agora,
-    },
-    {
-      onConflict: 'empresa_id',
-    }
-  );
-
-if (erroSalvarBackup) {
-  console.error('Erro ao salvar data do backup:', erroSalvarBackup);
-  abrirAviso(
-    'Backup gerado',
-    'O arquivo foi gerado, mas não foi possível salvar a data do último backup.'
-  );
-  return;
-}
-
-setUltimoBackupEm(agora);
-
-if (abrirExclusaoDepois) {
-  abrirAviso(
-    'Backup gerado',
-    'O backup foi gerado com sucesso. Agora confirme a exclusão digitando exatamente o nome da empresa.',
-    () => {
-      setNomeConfirmacaoExclusao('');
-      setModalExcluirEmpresa(true);
-    }
-  );
-}
-};
+const backupParams = () => ({
+  empresaId: empresaId!,
+  despesasCadastradas,
+  logoUrl,
+  logoSettings,
+  corPrimaria,
+  darkMode,
+  duplicadosAtivo,
+  abrirAviso,
+  setUltimoBackupEm,
+  setNomeConfirmacaoExclusao,
+  setModalExcluirEmpresa,
+});
 
 const backupPendente = useMemo(() => {
   const hoje = new Date();
@@ -3090,12 +2341,12 @@ const alertasSistema = useMemo(() => {
       mensagem:
         'Recomendamos gerar um backup local dos dados da empresa após o encerramento de cada mês.',
       acaoTexto: 'Gerar backup agora',
-      acao: gerarBackupExcel,
+      acao: () => gerarBackupExcel(backupParams()),
     });
   }
 
   return alertas;
-}, [backupPendente, gerarBackupExcel]);
+}, [backupPendente]);
 
   const analiseDespesas = useMemo(() => {
   const totais: Record<string, { nome: string; valor: number }> = {};
@@ -3162,511 +2413,6 @@ const alertasSistema = useMemo(() => {
 const classeConteudoPagina =
   'w-full [&>*:first-child]:!mt-0 [&>*:first-child]:!pt-0';
 
-  const lerRespostaApi = async (resposta: Response) => {
-  try {
-    return await resposta.json();
-  } catch {
-    return {};
-  }
-};
-
-const mensagemSmsAmigavel = (
-  mensagemTecnica?: string,
-  tipo: 'enviar' | 'reenviar' | 'verificar' | 'redefinir' = 'enviar'
-) => {
-  const texto = String(mensagemTecnica || '').toLowerCase();
-
-  if (
-    texto.includes('twilio') ||
-    texto.includes('configuração') ||
-    texto.includes('configuracao') ||
-    texto.includes('environment') ||
-    texto.includes('env') ||
-    texto.includes('token') ||
-    texto.includes('sid') ||
-    texto.includes('auth')
-  ) {
-    return 'Não foi possível enviar o SMS neste momento. Tente novamente em alguns minutos.';
-  }
-
-  if (
-    texto.includes('rate limit') ||
-    texto.includes('too many requests') ||
-    texto.includes('limite') ||
-    texto.includes('many attempts')
-  ) {
-    return 'Por segurança, existe um limite temporário de tentativas. Aguarde alguns minutos e tente novamente.';
-  }
-
-  if (
-    texto.includes('telefone') ||
-    texto.includes('phone') ||
-    texto.includes('number') ||
-    texto.includes('invalid')
-  ) {
-    return 'Informe um celular válido com DDD.';
-  }
-
-  if (tipo === 'verificar') {
-    return 'Código inválido ou expirado. Verifique o código recebido ou solicite um novo.';
-  }
-
-  if (tipo === 'redefinir') {
-    return 'Não foi possível redefinir a senha neste momento. Tente novamente em alguns minutos.';
-  }
-
-  if (tipo === 'reenviar') {
-    return 'Não foi possível reenviar o SMS neste momento. Tente novamente em alguns minutos.';
-  }
-
-  return 'Não foi possível enviar o SMS neste momento. Tente novamente em alguns minutos.';
-};
-
-  const tratarErroAuth = (mensagem: string) => {
-  const texto = mensagem.toLowerCase();
-
-  if (
-  texto.includes('rate limit') ||
-  texto.includes('too many requests') ||
-  texto.includes('for security purposes') ||
-  texto.includes('only request this after')
-) {
-  return {
-    tipo: 'limite',
-    mensagem:
-      'Por segurança, existe um limite temporário de tentativas. Aguarde alguns minutos e tente novamente.',
-  };
-}
-
-  if (
-    texto.includes('already registered') ||
-    texto.includes('already been registered') ||
-    texto.includes('user already registered') ||
-    texto.includes('email address has already')
-  ) {
-    return {
-      tipo: 'erro',
-      mensagem:
-        'Este e-mail já possui cadastro. Faça login ou use a recuperação de senha.',
-    };
-  }
-
-  if (mensagem === 'Email not confirmed') {
-    return {
-      tipo: 'erro',
-      mensagem: 'Não foi possível liberar este acesso. Solicite um novo cadastro ou entre em contato com o suporte.',
-    };
-  }
-
-  if (mensagem === 'Invalid login credentials') {
-    return {
-      tipo: 'erro',
-      mensagem: 'Email, login ou senha incorretos. Verifique os dados e tente novamente.',
-    };
-  }
-
-  return {
-    tipo: 'erro',
-    mensagem,
-  };
-};
-
-const reenviarCodigoSmsCadastro = async () => {
-  if (reenviandoSmsCadastro || segundosReenvioSms > 0) return;
-
-  const telefoneLimpo = cadastroTelefone.replace(/\D/g, '');
-
-  if (!telefoneLimpo) {
-    setAuthErro('Informe seu número de celular.');
-    return;
-  }
-
-  if (telefoneLimpo.length < 10 || telefoneLimpo.length > 13) {
-    setAuthErro('Informe um celular válido com DDD.');
-    return;
-  }
-
-  setAuthErro('');
-  setAuthMensagem('');
-  setReenviandoSmsCadastro(true);
-
-  const respostaSms = await fetch('/api/sms/enviar-codigo', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      telefone: telefoneLimpo,
-    }),
-  });
-
-  const resultadoSms = await lerRespostaApi(respostaSms);
-
-  setReenviandoSmsCadastro(false);
-
-  if (!respostaSms.ok || resultadoSms.erro) {
-    setAuthErro(mensagemSmsAmigavel(resultadoSms.mensagem, 'reenviar'));
-    return;
-  }
-
-  setSmsCadastroEnviado(true);
-  setTelefoneSmsCadastroConfirmado(telefoneLimpo);
-  setCodigoSmsCadastro('');
-  setSegundosReenvioSms(60);
-  setAuthMensagem('Reenviamos o código por SMS. Digite o código mais recente para concluir o cadastro.');
-};
-
-  const handleCadastroTeste = async () => {
-  setAuthErro('');
-  setAuthMensagem('');
-  setAuthLoading(true);
-
-  const nomeLimpo = cadastroNome.trim();
-const emailLimpo = cadastroEmail.trim().toLowerCase();
-const telefoneLimpo = cadastroTelefone.replace(/\D/g, '');
-
-  if (!nomeLimpo) {
-    setAuthErro('Informe seu nome completo.');
-    setAuthLoading(false);
-    return;
-  }
-
-  if (!emailLimpo) {
-    setAuthErro('Informe seu email.');
-    setAuthLoading(false);
-    return;
-  }
-
-  if (!emailLimpo.includes('@') || !emailLimpo.includes('.')) {
-    setAuthErro('Informe um email válido.');
-    setAuthLoading(false);
-    return;
-  }
-
-  if (!telefoneLimpo) {
-  setAuthErro('Informe seu número de celular.');
-  setAuthLoading(false);
-  return;
-}
-
-if (telefoneLimpo.length < 10 || telefoneLimpo.length > 13) {
-  setAuthErro('Informe um celular válido com DDD.');
-  setAuthLoading(false);
-  return;
-}
-
-  if (!cadastroSenha) {
-    setAuthErro('Crie uma senha.');
-    setAuthLoading(false);
-    return;
-  }
-
-  if (cadastroSenha.length < 8) {
-    setAuthErro('A senha deve ter pelo menos 8 caracteres.');
-    setAuthLoading(false);
-    return;
-  }
-
-  if (!cadastroConfirmarSenha) {
-    setAuthErro('Repita a senha para confirmação.');
-    setAuthLoading(false);
-    return;
-  }
-
-  if (cadastroSenha !== cadastroConfirmarSenha) {
-    setAuthErro('As senhas não coincidem.');
-    setAuthLoading(false);
-    return;
-  }
-
-  if (!smsCadastroEnviado) {
-  const respostaSms = await fetch('/api/sms/enviar-codigo', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      telefone: telefoneLimpo,
-    }),
-  });
-
-  const resultadoSms = await lerRespostaApi(respostaSms);
-
-  setAuthLoading(false);
-
-  if (!respostaSms.ok || resultadoSms.erro) {
-    setAuthErro(
-      resultadoSms.mensagem || 'Não foi possível enviar o código por SMS.'
-    );
-    return;
-  }
-
-  setSmsCadastroEnviado(true);
-setTelefoneSmsCadastroConfirmado(telefoneLimpo);
-setCodigoSmsCadastro('');
-setSegundosReenvioSms(60);
-setAuthMensagem(
-  'Enviamos um código por SMS. Digite o código recebido para concluir o cadastro.'
-);
-return;
-}
-
-if (!codigoSmsCadastro.trim()) {
-  setAuthErro('Digite o código recebido por SMS.');
-  setAuthLoading(false);
-  return;
-}
-
-if (telefoneLimpo !== telefoneSmsCadastroConfirmado) {
-  setAuthErro(
-    'O número de celular foi alterado. Solicite um novo código antes de concluir o cadastro.'
-  );
-  setSmsCadastroEnviado(false);
-  setCodigoSmsCadastro('');
-  setTelefoneSmsCadastroConfirmado('');
-  setAuthLoading(false);
-  return;
-}
-
-const respostaVerificacaoSms = await fetch('/api/sms/verificar-codigo', {
-  method: 'POST',
-  headers: {
-    'Content-Type': 'application/json',
-  },
-  body: JSON.stringify({
-    telefone: telefoneLimpo,
-    codigo: codigoSmsCadastro.trim(),
-  }),
-});
-
-const resultadoVerificacaoSms = await lerRespostaApi(respostaVerificacaoSms);
-
-if (!respostaVerificacaoSms.ok || resultadoVerificacaoSms.erro) {
-  setAuthErro(mensagemSmsAmigavel(resultadoVerificacaoSms.mensagem, 'verificar'));
-  setAuthLoading(false);
-  return;
-}
-
-const { error } = await supabase.auth.signUp({
-  email: emailLimpo,
-  password: cadastroSenha,
-  options: {
-    data: {
-      nome: nomeLimpo,
-      telefone: telefoneLimpo,
-    },
-  },
-});
-
-  setAuthLoading(false);
-
-  if (error) {
-  console.error('Erro cadastro:', error);
-
-  const erroTratado = tratarErroAuth(error.message);
-
-  if (erroTratado.tipo === 'limite') {
-  abrirAviso('Limite temporário', erroTratado.mensagem);
-} else {
-  setAuthErro(erroTratado.mensagem);
-}
-
-  return;
-}
-
-  setAuthMensagem(
-  'Cadastro criado e celular confirmado com sucesso. Faça login para acessar o sistema.'
-);
-
-  setCadastroNome('');
-setCadastroEmail('');
-setCadastroTelefone('');
-setCadastroSenha('');
-setCadastroConfirmarSenha('');
-setCodigoSmsCadastro('');
-setSmsCadastroEnviado(false);
-setTelefoneSmsCadastroConfirmado('');
-setSegundosReenvioSms(0);
-setReenviandoSmsCadastro(false);
-
-setModoAuth('login');
-};
-
-const handleLogin = async () => {
-  setAuthErro('');
-  setAuthMensagem('');
-  setAuthLoading(true);
-
-  const loginDigitado = loginEmail.trim().toLowerCase();
-
-if (!loginDigitado) {
-  setAuthErro('Informe seu email ou login.');
-  setAuthLoading(false);
-  return;
-}
-
-if (!loginSenha) {
-  setAuthErro('Informe sua senha.');
-  setAuthLoading(false);
-  return;
-}
-
-let emailParaLogin = loginDigitado;
-
-if (!loginDigitado.includes('@')) {
-  const emailEncontrado = await buscarEmailPorLogin(loginDigitado);
-
-  if (!emailEncontrado) {
-    setAuthErro('Login não encontrado.');
-    setAuthLoading(false);
-    return;
-  }
-
-  emailParaLogin = emailEncontrado;
-}
-
-const { error } = await supabase.auth.signInWithPassword({
-  email: emailParaLogin,
-  password: loginSenha,
-});
-
-  if (error) {
-  console.error('Erro login:', error);
-
-  const erroTratado = tratarErroAuth(error.message);
-
-  if (erroTratado.tipo === 'limite') {
-  abrirAviso('Limite temporário', erroTratado.mensagem);
-} else {
-  setAuthErro(erroTratado.mensagem);
-}
-
-  setAuthLoading(false);
-  return;
-}
-
-setAuthMensagem('Login realizado. Carregando seus dados...');
-setMensagemCarregamentoSistema('Carregando seus dados...');
-setCarregandoSistema(true);
-
-localStorage.setItem(CHAVE_ULTIMA_ATIVIDADE, String(Date.now()));
-
-try {
-  const { data: usuarioLogado } = await supabase.auth.getUser();
-  const usuarioId = usuarioLogado.user?.id;
-
-  if (!usuarioId) {
-    setAuthErro('Não foi possível confirmar sua sessão. Tente entrar novamente.');
-    return;
-  }
-
-  const empresasEncontradas = await buscarEmpresasDoUsuario(usuarioId);
-
-  if (!empresasEncontradas || empresasEncontradas.length === 0) {
-    setCriandoNovaEmpresaLogada(false);
-    setAcessoNaoConfigurado(true);
-    setAcessoLiberado(false);
-
-    const empresaFallback = await buscarEmpresaDoUsuario(usuarioId);
-
-    if (empresaFallback) {
-      await carregarEmpresaSelecionada(empresaFallback);
-    }
-  } else if (empresasEncontradas.length === 1) {
-    await carregarEmpresaSelecionada(empresasEncontradas[0]);
-  } else {
-    setEmpresaId(null);
-    setNomeEmpresaAtual('');
-    setTipoPerfilAtual('empresa');
-    setPerfilUsuario(null);
-    setLogoUrl('');
-    setLogoSettings({ scale: 100, x: 0, y: 0 });
-    setDespesasCadastradas([]);
-    setLancamentos([]);
-    setFaturamentos({});
-    setFaturamentosEntradas([]);
-    setEmpresasDoUsuario(empresasEncontradas);
-    setEmpresaParaSelecionar(empresasEncontradas[0]);
-    setModalSelecionarEmpresa(true);
-    setAcessoNaoConfigurado(false);
-    setAcessoLiberado(true);
-  }
-} catch (error) {
-  console.error('Erro ao carregar dados após login:', error);
-  setAuthErro('Login realizado, mas não foi possível carregar seus dados. Tente novamente.');
-} finally {
-  setCarregandoSistema(false);
-  setAuthLoading(false);
-}
-
-return;
-};
-
-const handleCriarEmpresaInicial = async () => {
-  const nomeLimpo = nomeEmpresaInicial.trim();
-  const tipoPerfil = normalizarTipoPerfil(tipoPerfilInicial);
-
-  if (!nomeLimpo) {
-    setAuthErro('Informe o nome do perfil financeiro para criar o ambiente.');
-    return;
-  }
-
-  setAuthErro('');
-  setAuthMensagem('');
-  setCriandoEmpresaInicial(true);
-
-  const resultado = await criarEmpresaInicial(nomeLimpo);
-
-  setCriandoEmpresaInicial(false);
-
-  if (resultado.erro || !resultado.data) {
-    setAuthErro(resultado.mensagem || 'Não foi possível criar o ambiente da empresa.');
-    return;
-  }
-
-  const empresaCriada = Array.isArray(resultado.data)
-    ? resultado.data[0]
-    : resultado.data;
-
-  const empresaCriadaId = empresaCriada?.id || empresaCriada?.empresa_id;
-
-  if (empresaCriadaId) {
-    const resultadoTipoPerfil = await atualizarEmpresa({
-      empresaId: empresaCriadaId,
-      nome: nomeLimpo,
-      tipoPerfil,
-    });
-
-    if (resultadoTipoPerfil.erro) {
-      console.error('Erro ao salvar tipo do perfil financeiro:', resultadoTipoPerfil.mensagem);
-    }
-
-    const { error: erroConfigInicial } = await supabase
-      .from('configuracoes')
-      .upsert(
-        {
-          empresa_id: empresaCriadaId,
-          duplicados_ativo: true,
-        },
-        {
-          onConflict: 'empresa_id',
-        }
-      );
-
-    if (erroConfigInicial) {
-      console.error('Erro ao salvar configuração inicial de duplicados:', erroConfigInicial);
-    }
-  }
-
-  setDuplicadosAtivo(true);
-
-  setTipoPerfilAtual(tipoPerfil);
-  setAuthMensagem('Perfil financeiro criado com sucesso. Carregando o sistema...');
-
-  setTimeout(() => {
-    window.location.href = window.location.origin + window.location.pathname;
-  }, 700);
-};
 
 const abrirCriacaoNovaEmpresa = () => {
   const podeCriarEmpresa =
@@ -3730,176 +2476,6 @@ const abrirTrocaEmpresa = async () => {
   setModalSelecionarEmpresa(true);
 };
 
-const abrirEdicaoEmpresaAtual = async () => {
-  if (!empresaId) {
-    abrirAviso(
-      'Empresa não carregada',
-      'Não foi possível identificar a empresa atual.'
-    );
-    return;
-  }
-
-  if (!podeAcessarAjustes) {
-    abrirAviso(
-      'Acesso não permitido',
-      'Somente Gestor Master e Administrador podem editar estes dados.'
-    );
-    return;
-  }
-
-  setEditEmpresaNome(nomeEmpresaAtual || '');
-  setEditTipoPerfil(tipoPerfilAtualNormalizado);
-  setEditEmpresaLogin(emailUsuarioAtual || '');
-  setEditEmpresaSenha('');
-
-  const { data: usuarioLogado } = await supabase.auth.getUser();
-  const usuarioId = usuarioLogado.user?.id;
-
-  if (usuarioId) {
-    const acessoAtual = await buscarMeuAcessoEmpresa(empresaId, usuarioId);
-    if (acessoAtual) {
-      setEditEmpresaLogin(acessoAtual.login || acessoAtual.email || emailUsuarioAtual || '');
-    }
-  }
-
-  setModalEmpresasAberto(false);
-  setModalEditarEmpresaAberto(true);
-};
-
-const fecharEdicaoEmpresaAtual = () => {
-  if (editEmpresaSalvando) return;
-
-  setModalEditarEmpresaAberto(false);
-  setEditEmpresaNome('');
-  setEditTipoPerfil('empresa');
-  setEditEmpresaLogin('');
-  setEditEmpresaSenha('');
-};
-
-const salvarEdicaoEmpresaAtual = async () => {
-  if (!empresaId || !acessoUsuarioAtualId) {
-    abrirAviso(
-      'Dados incompletos',
-      'Não foi possível identificar a empresa ou o acesso atual.'
-    );
-    return;
-  }
-
-  if (!podeAcessarAjustes) {
-    abrirAviso(
-      'Acesso não permitido',
-      'Somente Gestor Master e Administrador podem editar estes dados.'
-    );
-    return;
-  }
-
-  const nomeLimpo = editEmpresaNome.trim();
-  const loginLimpo = editEmpresaLogin.trim().toLowerCase();
-  const senhaLimpa = editEmpresaSenha.trim();
-  const tipoPerfilLimpo = normalizarTipoPerfil(editTipoPerfil);
-
-  if (!nomeLimpo) {
-    abrirAviso('Nome obrigatório', 'Informe o nome da empresa.');
-    return;
-  }
-
-  if (!loginLimpo) {
-    abrirAviso('Login obrigatório', 'Informe o login ou email do acesso atual.');
-    return;
-  }
-
-  if (senhaLimpa && senhaLimpa.length < 8) {
-    abrirAviso('Senha inválida', 'A nova senha deve ter pelo menos 8 caracteres.');
-    return;
-  }
-
-  try {
-    setEditEmpresaSalvando(true);
-
-    const resultadoEmpresa = await atualizarEmpresa({
-      empresaId,
-      nome: nomeLimpo,
-      tipoPerfil: tipoPerfilLimpo,
-    });
-
-    if (resultadoEmpresa.erro) {
-      abrirAviso(
-        'Erro ao salvar empresa',
-        resultadoEmpresa.mensagem || 'Não foi possível atualizar o nome da empresa.',
-        undefined,
-        'erro'
-      );
-      return;
-    }
-
-    const resultadoUsuario = await atualizarUsuarioEmpresa({
-      acessoId: acessoUsuarioAtualId,
-      nome: nomeUsuarioAtual || nomeLimpo,
-      email: loginLimpo,
-      perfil: perfilUsuario || 'operador_simples',
-    });
-
-    if (resultadoUsuario.erro) {
-      abrirAviso(
-        'Erro ao salvar acesso',
-        resultadoUsuario.mensagem || 'Não foi possível atualizar login/email.',
-        undefined,
-        'erro'
-      );
-      return;
-    }
-
-    if (senhaLimpa) {
-      const resultadoSenha = await redefinirSenhaUsuarioEmpresa({
-        acessoId: acessoUsuarioAtualId,
-        novaSenha: senhaLimpa,
-      });
-
-      if (resultadoSenha.erro) {
-        abrirAviso(
-          'Dados salvos parcialmente',
-          resultadoSenha.mensagem || 'Empresa e login foram salvos, mas a senha não foi alterada.',
-          undefined,
-          'alerta'
-        );
-        setNomeEmpresaAtual(nomeLimpo);
-        setTipoPerfilAtual(tipoPerfilLimpo);
-        setEmpresasDoUsuario((empresas) =>
-          empresas.map((empresa) =>
-            empresa.id === empresaId
-              ? { ...empresa, nome: nomeLimpo, empresa_nome: nomeLimpo, tipo_perfil: tipoPerfilLimpo }
-              : empresa
-          )
-        );
-        setEditEmpresaSenha('');
-        return;
-      }
-    }
-
-    setNomeEmpresaAtual(nomeLimpo);
-    setTipoPerfilAtual(tipoPerfilLimpo);
-    setEmailUsuarioAtual(loginLimpo.includes('@') ? loginLimpo : emailUsuarioAtual);
-    setEmpresasDoUsuario((empresas) =>
-      empresas.map((empresa) =>
-        empresa.id === empresaId
-          ? {
-              ...empresa,
-              nome: nomeLimpo,
-              empresa_nome: nomeLimpo,
-              tipo_perfil: tipoPerfilLimpo,
-              usuario_login: loginLimpo,
-            }
-          : empresa
-      )
-    );
-
-    fecharEdicaoEmpresaAtual();
-    abrirAviso('Dados atualizados', 'Empresa e acesso foram atualizados com sucesso.', undefined, 'sucesso');
-  } finally {
-    setEditEmpresaSalvando(false);
-  }
-};
-
 const confirmarExclusaoEmpresaAtual = () => {
   if (perfilUsuario !== 'gestor_master') {
     abrirAviso(
@@ -3927,7 +2503,7 @@ const confirmarExclusaoEmpresaAtual = () => {
 
     await new Promise((resolve) => setTimeout(resolve, 150));
 
-    await gerarBackupExcel(true);
+    await gerarBackupExcel({ ...backupParams(), abrirExclusaoDepois: true });
   },
 });
 };
@@ -4147,186 +2723,6 @@ setValidandoTelefoneObrigatorio(false);
   setAuthMensagem('');
 };
 
-const handleRecuperarSenha = async () => {
-  setAuthErro('');
-  setAuthMensagem('');
-
-  const loginLimpo = loginEmail.trim().toLowerCase();
-
-  if (!loginLimpo) {
-    setAuthErro('Informe seu email ou login para recuperar a senha.');
-    return;
-  }
-
-  setAuthLoading(true);
-
-  const resposta = await fetch('/api/senha/enviar-codigo', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      login: loginLimpo,
-    }),
-  });
-
-  const resultado = await lerRespostaApi(resposta);
-
-  setAuthLoading(false);
-
-  if (!resposta.ok || resultado.erro) {
-    setAuthErro(
-      resultado.mensagem || 'Não foi possível enviar o código por SMS.'
-    );
-    return;
-  }
-
-  setModoRedefinirSenha(true);
-setSmsRedefinirSenhaEnviado(true);
-setCodigoSmsRedefinirSenha('');
-setNovaSenha('');
-setConfirmarNovaSenha('');
-setSegundosReenvioRedefinirSenha(60);
-setAuthMensagem('Enviamos um código por SMS para o celular confirmado neste acesso.');
-};
-
-const reenviarCodigoRedefinirSenha = async () => {
-  if (reenviandoSmsRedefinirSenha || segundosReenvioRedefinirSenha > 0) return;
-
-  setAuthErro('');
-  setAuthMensagem('');
-
-  const loginLimpo = loginEmail.trim().toLowerCase();
-
-  if (!loginLimpo) {
-    setAuthErro('Informe seu email ou login para recuperar a senha.');
-    return;
-  }
-
-  setReenviandoSmsRedefinirSenha(true);
-
-  const resposta = await fetch('/api/senha/enviar-codigo', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      login: loginLimpo,
-    }),
-  });
-
-  const resultado = await lerRespostaApi(resposta);
-
-  setReenviandoSmsRedefinirSenha(false);
-
-  if (!resposta.ok || resultado.erro) {
-    setAuthErro(
-      resultado.mensagem || 'Não foi possível reenviar o código por SMS.'
-    );
-    return;
-  }
-
-  setSmsRedefinirSenhaEnviado(true);
-  setCodigoSmsRedefinirSenha('');
-  setSegundosReenvioRedefinirSenha(60);
-  setAuthMensagem('Reenviamos o código por SMS. Digite o código mais recente para redefinir sua senha.');
-};
-
-const handleAtualizarSenha = async () => {
-  setAuthErro('');
-  setAuthMensagem('');
-
-  const loginLimpo = loginEmail.trim().toLowerCase();
-
-  if (!loginLimpo) {
-    setAuthErro('Informe seu email ou login para recuperar a senha.');
-    return;
-  }
-
-  if (!smsRedefinirSenhaEnviado) {
-    await handleRecuperarSenha();
-    return;
-  }
-
-  if (!codigoSmsRedefinirSenha.trim()) {
-    setAuthErro('Digite o código recebido por SMS.');
-    return;
-  }
-
-  if (!novaSenha) {
-    setAuthErro('Digite a nova senha.');
-    return;
-  }
-
-  if (novaSenha.length < 8) {
-    setAuthErro('A nova senha deve ter pelo menos 8 caracteres.');
-    return;
-  }
-
-  if (!confirmarNovaSenha) {
-    setAuthErro('Confirme a nova senha.');
-    return;
-  }
-
-  if (novaSenha !== confirmarNovaSenha) {
-    setAuthErro('As senhas não coincidem.');
-    return;
-  }
-
-  setAuthLoading(true);
-
-  const resposta = await fetch('/api/senha/redefinir', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      login: loginLimpo,
-      codigo: codigoSmsRedefinirSenha.trim(),
-      novaSenha,
-    }),
-  });
-
-  const resultado = await lerRespostaApi(resposta);
-
-  setAuthLoading(false);
-
-  if (!resposta.ok || resultado.erro) {
-    setAuthErro(mensagemSmsAmigavel(resultado.mensagem, 'redefinir'));
-    return;
-  }
-
-  setModoRedefinirSenha(false);
-  setSmsRedefinirSenhaEnviado(false);
-  setCodigoSmsRedefinirSenha('');
-  setNovaSenha('');
-  setConfirmarNovaSenha('');
-  setSegundosReenvioRedefinirSenha(0);
-
-  setModoAuth('login');
-  setLoginSenha('');
-  setAuthMensagem('Senha redefinida com sucesso. Faça login com a nova senha.');
-};
-
-const handleGoogleLogin = async () => {
-  setAuthErro('');
-  setAuthMensagem('');
-  setGoogleLoading(true);
-
-  const { error } = await supabase.auth.signInWithOAuth({
-    provider: 'google',
-    options: {
-      redirectTo: `${window.location.origin}/`,
-    },
-  });
-
-  if (error) {
-    console.error('Erro login Google:', error);
-    setAuthErro(`Erro Google: ${error.message}`);
-    setGoogleLoading(false);
-  }
-};
-
 const quantidadeLancamentosMes = lancamentosFiltradosDoMes.length;
 
 const alturaMaximaTabelaLancamentos = Math.max(
@@ -4338,6 +2734,43 @@ const alturaFinalTabelaLancamentos = Math.min(
   alturaTabelaLancamentos,
   alturaMaximaTabelaLancamentos
 );
+
+
+// Helpers usados em enviarCodigoTelefoneObrigatorio e reenvio
+const lerRespostaApi = async (resposta: Response) => {
+  try {
+    return await resposta.json();
+  } catch {
+    return {};
+  }
+};
+
+const mensagemSmsAmigavel = (
+  mensagemTecnica?: string,
+  tipo: 'enviar' | 'reenviar' | 'verificar' | 'redefinir' = 'enviar'
+) => {
+  const texto = String(mensagemTecnica || '').toLowerCase();
+  if (
+    texto.includes('twilio') || texto.includes('configuração') ||
+    texto.includes('configuracao') || texto.includes('environment') ||
+    texto.includes('env') || texto.includes('token') ||
+    texto.includes('sid') || texto.includes('auth')
+  ) {
+    return 'Não foi possível enviar o SMS neste momento. Tente novamente em alguns minutos.';
+  }
+  if (texto.includes('rate limit') || texto.includes('too many requests') ||
+      texto.includes('limite') || texto.includes('many attempts')) {
+    return 'Por segurança, existe um limite temporário de tentativas. Aguarde alguns minutos e tente novamente.';
+  }
+  if (texto.includes('telefone') || texto.includes('phone') ||
+      texto.includes('number') || texto.includes('invalid')) {
+    return 'Informe um celular válido com DDD.';
+  }
+  if (tipo === 'verificar') return 'Código inválido ou expirado. Verifique o código recebido ou solicite um novo.';
+  if (tipo === 'redefinir') return 'Não foi possível redefinir a senha neste momento. Tente novamente em alguns minutos.';
+  if (tipo === 'reenviar') return 'Não foi possível reenviar o SMS neste momento. Tente novamente em alguns minutos.';
+  return 'Não foi possível enviar o SMS neste momento. Tente novamente em alguns minutos.';
+};
 
 const enviarCodigoTelefoneObrigatorio = async () => {
   if (validandoTelefoneObrigatorio) return;
@@ -5154,715 +3587,73 @@ if (isTelaMobile) {
 }
 
   if (!acessoLiberado) {
-  return (
-    <main className="relative min-h-screen overflow-hidden font-sans">
-      {modalAvisoAberto && (
-  <div
-    className="fixed inset-0 z-[8000] flex items-center justify-center bg-black/60 px-4"
-    onClick={fecharAviso}
-  >
-    <div
-      className="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-6 shadow-2xl"
-      onClick={(e) => e.stopPropagation()}
-    >
-      <div className="mb-4 flex items-center gap-3">
-        <div
-  className={`flex h-11 w-11 items-center justify-center rounded-xl ${
-    tipoAviso === 'sucesso'
-      ? 'bg-emerald-100 text-emerald-700'
-      : tipoAviso === 'erro'
-        ? 'bg-red-100 text-red-700'
-        : 'bg-amber-100 text-amber-700'
-  }`}
->
-  {tipoAviso === 'sucesso' ? (
-    <span className="text-2xl font-black leading-none">✓</span>
-  ) : (
-    <span className="text-2xl font-black leading-none">!</span>
-  )}
-</div>
-
-        <div>
-          <h2 className="text-lg font-black text-slate-900">
-            {tituloAviso}
-          </h2>
-
-          <p className="mt-1 text-sm leading-relaxed text-slate-600">
-            {mensagemAviso}
-          </p>
-        </div>
-      </div>
-
-      <div className="mt-5 flex justify-end">
-        <button
-          type="button"
-          onClick={fecharAviso}
-          className="rounded-xl bg-slate-900 px-5 py-2.5 text-sm font-black uppercase tracking-wide text-white shadow-md transition hover:bg-slate-800 active:scale-[0.98] cursor-pointer"
-        >
-          Entendi
-        </button>
-      </div>
-    </div>
-  </div>
-)}
-      <div
-        className="absolute inset-0 hidden bg-cover bg-center lg:block"
-        style={{ backgroundImage: "image-set(url('/images/bg-avantalab.webp') type('image/webp'), url('/images/bg-avantalab.png') type('image/png'))" }}
+    return (
+      <AuthCard
+        modalAvisoAberto={modalAvisoAberto}
+        tituloAviso={tituloAviso}
+        mensagemAviso={mensagemAviso}
+        tipoAviso={tipoAviso}
+        fecharAviso={fecharAviso}
+        modoAuth={modoAuth}
+        setModoAuth={setModoAuth}
+        mostrarLandingPreLogin={mostrarLandingPreLogin}
+        setMostrarLandingPreLogin={setMostrarLandingPreLogin}
+        loginEmail={loginEmail}
+        setLoginEmail={setLoginEmail}
+        loginSenha={loginSenha}
+        setLoginSenha={setLoginSenha}
+        mostrarSenhaLogin={mostrarSenhaLogin}
+        setMostrarSenhaLogin={setMostrarSenhaLogin}
+        mostrarSenhaCadastro={mostrarSenhaCadastro}
+        setMostrarSenhaCadastro={setMostrarSenhaCadastro}
+        mostrarConfirmarSenhaCadastro={mostrarConfirmarSenhaCadastro}
+        setMostrarConfirmarSenhaCadastro={setMostrarConfirmarSenhaCadastro}
+        cadastroNome={cadastroNome}
+        setCadastroNome={setCadastroNome}
+        cadastroEmail={cadastroEmail}
+        setCadastroEmail={setCadastroEmail}
+        cadastroTelefone={cadastroTelefone}
+        setCadastroTelefone={setCadastroTelefone}
+        cadastroSenha={cadastroSenha}
+        setCadastroSenha={setCadastroSenha}
+        cadastroConfirmarSenha={cadastroConfirmarSenha}
+        setCadastroConfirmarSenha={setCadastroConfirmarSenha}
+        codigoSmsCadastro={codigoSmsCadastro}
+        setCodigoSmsCadastro={setCodigoSmsCadastro}
+        smsCadastroEnviado={smsCadastroEnviado}
+        segundosReenvioSms={segundosReenvioSms}
+        reenviandoSmsCadastro={reenviandoSmsCadastro}
+        authErro={authErro}
+        authMensagem={authMensagem}
+        authLoading={authLoading}
+        googleLoading={googleLoading}
+        modoRedefinirSenha={modoRedefinirSenha}
+        novaSenha={novaSenha}
+        setNovaSenha={setNovaSenha}
+        confirmarNovaSenha={confirmarNovaSenha}
+        setConfirmarNovaSenha={setConfirmarNovaSenha}
+        mostrarNovaSenha={mostrarNovaSenha}
+        setMostrarNovaSenha={setMostrarNovaSenha}
+        mostrarConfirmarNovaSenha={mostrarConfirmarNovaSenha}
+        setMostrarConfirmarNovaSenha={setMostrarConfirmarNovaSenha}
+        codigoSmsRedefinirSenha={codigoSmsRedefinirSenha}
+        setCodigoSmsRedefinirSenha={setCodigoSmsRedefinirSenha}
+        smsRedefinirSenhaEnviado={smsRedefinirSenhaEnviado}
+        segundosReenvioRedefinirSenha={segundosReenvioRedefinirSenha}
+        reenviandoSmsRedefinirSenha={reenviandoSmsRedefinirSenha}
+        tipoPerfilInicial={tipoPerfilInicial}
+        setTipoPerfilInicial={setTipoPerfilInicial}
+        handleLogin={handleLogin}
+        handleCadastroTeste={handleCadastroTeste}
+        handleGoogleLogin={handleGoogleLogin}
+        handleRecuperarSenha={handleRecuperarSenha}
+        handleAtualizarSenha={handleAtualizarSenha}
+        reenviarCodigoSmsCadastro={reenviarCodigoSmsCadastro}
+        reenviarCodigoRedefinirSenha={reenviarCodigoRedefinirSenha}
       />
+    );
+  }
 
-      <div
-        className="absolute inset-0 bg-no-repeat lg:hidden"
-        style={{
-          backgroundImage: "image-set(url('/images/bg-avantalab-mobile.webp') type('image/webp'), url('/images/bg-avantalab-mobile.png') type('image/png'))",
-          backgroundSize: 'cover',
-          backgroundPosition: 'center bottom',
-        }}
-      />
-
-      <div className="pointer-events-none absolute inset-0 hidden bg-white/10 lg:block" />
-
-      <section className="relative z-10 flex min-h-screen items-start px-4 pb-6 pt-8 lg:items-center lg:px-20 lg:py-10">
-        <div className="w-full lg:max-w-7xl">
-          <div className={`relative z-20 w-full rounded-3xl border border-white/20 bg-white/10 p-5 shadow-2xl lg:border-white/30 lg:bg-white/70 lg:p-8 lg:backdrop-blur-xl ${
-            mostrarLandingPreLoginAtiva ? 'lg:max-w-2xl' : 'lg:max-w-md'
-          }`}>
-            {mostrarLandingPreLoginAtiva ? (
-              <div className="grid gap-6">
-                <div>
-                  <p className="mb-2 text-xs font-bold uppercase tracking-[0.35em] text-sky-700">
-                    AvantaLab Gestão
-                  </p>
-
-                  <h1 className="max-w-xl text-3xl font-black leading-tight text-slate-900 lg:text-4xl">
-                    Descubra quanto realmente sobra no seu negócio ou nas suas despesas pessoais.
-                  </h1>
-
-                  <p className="mt-4 max-w-lg text-base font-semibold leading-relaxed text-slate-600">
-                    Controle entradas e despesas de forma simples, compare resultados mês a mês e entenda quais gastos mais impactam seu lucro.
-                  </p>
-                </div>
-
-                <div className="grid gap-2 rounded-2xl border border-white/35 bg-white/35 p-4 text-sm font-bold leading-snug text-slate-700 shadow-sm backdrop-blur">
-                  <p>✓ Entenda seus gastos.</p>
-                  <p>✓ Compare seus resultados mês a mês.</p>
-                  <p>✓ Descubra quais despesas mais impactam seu lucro.</p>
-                  <p>✓ Use no computador ou celular.</p>
-                </div>
-
-                <div className="grid gap-3 sm:grid-cols-[1fr_160px]">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setMostrarLandingPreLogin(false);
-                      setModoAuth('cadastro');
-                    }}
-                    className="h-12 rounded-xl px-5 text-sm font-black uppercase tracking-wide text-white shadow-lg transition hover:brightness-110 active:scale-[0.98] cursor-pointer"
-                    style={{
-                      background: 'linear-gradient(135deg,#003E73,#00A6C8)',
-                    }}
-                  >
-                    Criar conta grátis
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setMostrarLandingPreLogin(false);
-                      setModoAuth('login');
-                    }}
-                    className="h-12 rounded-xl border border-slate-300 bg-white/85 px-5 text-sm font-black uppercase tracking-wide text-slate-700 shadow-sm transition hover:bg-white active:scale-[0.98] cursor-pointer"
-                  >
-                    Entrar
-                  </button>
-                </div>
-              </div>
-            ) : (
-            <>
-            <div className="mb-5 lg:mb-7">
-              <p className="mb-2 text-xs font-bold uppercase tracking-[0.35em] text-sky-700">
-                AvantaLab Gestão
-              </p>
-
-              <h1 className="text-3xl font-black text-slate-900">
-  {modoRedefinirSenha
-    ? 'Criar nova senha'
-    : modoAuth === 'login'
-      ? 'Acesse sua conta'
-      : 'Criar cadastro'}
-</h1>
-
-              <p className="mt-2 text-sm leading-relaxed text-slate-600">
-  {modoRedefinirSenha
-    ? 'Digite e confirme sua nova senha para recuperar o acesso ao sistema.'
-    : modoAuth === 'login'
-      ? 'Entre para acompanhar sua gestão financeira, lançamentos, relatórios e evolução operacional.'
-      : 'Preencha seus dados para criar acesso ao sistema.'}
-</p>
-            </div>
-
-          {modoRedefinirSenha ? (
-  <div className="space-y-4">
-    <div>
-
-{smsRedefinirSenhaEnviado && (
-  <div>
-    <label className="mb-1 block text-sm font-semibold text-slate-700">
-      Código recebido por SMS
-    </label>
-
-    <input
-      type="text"
-      inputMode="numeric"
-      value={codigoSmsRedefinirSenha}
-      onChange={(e) => setCodigoSmsRedefinirSenha(e.target.value)}
-      placeholder="Digite o código recebido"
-      className="w-full rounded-xl border border-slate-300 bg-white/90 px-4 py-3 text-slate-800 outline-none transition focus:border-sky-600 focus:ring-2 focus:ring-sky-600/20"
-    />
-
-    <button
-      type="button"
-      onClick={reenviarCodigoRedefinirSenha}
-      disabled={
-        reenviandoSmsRedefinirSenha ||
-        segundosReenvioRedefinirSenha > 0
-      }
-      className="mt-2 text-xs font-bold text-sky-700 underline disabled:cursor-not-allowed disabled:text-slate-400"
-    >
-      {segundosReenvioRedefinirSenha > 0
-        ? `Reenviar código em ${segundosReenvioRedefinirSenha}s`
-        : reenviandoSmsRedefinirSenha
-          ? 'Reenviando código...'
-          : 'Reenviar código'}
-    </button>
-  </div>
-)}
-
-      <label className="mb-1 block text-sm font-semibold text-slate-700">
-        Nova senha
-      </label>
-
-      <div className="relative">
-        <input
-          type={mostrarNovaSenha ? 'text' : 'password'}
-          placeholder="Digite a nova senha"
-          value={novaSenha}
-          onChange={(e) => setNovaSenha(e.target.value)}
-          className="w-full rounded-xl border border-slate-300 bg-white/90 px-4 py-3 pr-10 text-slate-800 outline-none transition focus:border-sky-600 focus:ring-2 focus:ring-sky-600/20 [&::-ms-reveal]:hidden [&::-ms-clear]:hidden"
-        />
-
-        <button
-  type="button"
-  onClick={() => setMostrarNovaSenha((mostrar) => !mostrar)}
-  className="absolute right-3 top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full text-slate-500 transition hover:bg-slate-100 hover:text-slate-800 cursor-pointer"
-  title={mostrarNovaSenha ? 'Ocultar senha' : 'Ver senha'}
->
-  {mostrarNovaSenha ? (
-    <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z" />
-      <circle cx="12" cy="12" r="3" strokeWidth="2" />
-    </svg>
-  ) : (
-    <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 3l18 18" />
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10.58 10.58A2 2 0 0012 14a2 2 0 001.42-.58" />
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9.88 5.09A10.94 10.94 0 0112 5c5 0 9 4 10 7a12.7 12.7 0 01-3.02 4.45" />
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6.61 6.61A12.47 12.47 0 002 12c1 3 5 7 10 7a10.94 10.94 0 004.39-.91" />
-    </svg>
-  )}
-</button>
-      </div>
-    </div>
-
-    <div>
-      <label className="mb-1 block text-sm font-semibold text-slate-700">
-        Confirmar nova senha
-      </label>
-
-      <div className="relative">
-        <input
-          type={mostrarConfirmarNovaSenha ? 'text' : 'password'}
-          placeholder="Repita a nova senha"
-          value={confirmarNovaSenha}
-          onChange={(e) => setConfirmarNovaSenha(e.target.value)}
-          className="w-full rounded-xl border border-slate-300 bg-white/90 px-4 py-3 pr-10 text-slate-800 outline-none transition focus:border-sky-600 focus:ring-2 focus:ring-sky-600/20 [&::-ms-reveal]:hidden [&::-ms-clear]:hidden"
-        />
-
-        <button
-  type="button"
-  onClick={() => setMostrarConfirmarNovaSenha((mostrar) => !mostrar)}
-  className="absolute right-3 top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full text-slate-500 transition hover:bg-slate-100 hover:text-slate-800 cursor-pointer"
-  title={mostrarConfirmarNovaSenha ? 'Ocultar senha' : 'Ver senha'}
->
-  {mostrarConfirmarNovaSenha ? (
-    <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z" />
-      <circle cx="12" cy="12" r="3" strokeWidth="2" />
-    </svg>
-  ) : (
-    <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 3l18 18" />
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10.58 10.58A2 2 0 0012 14a2 2 0 001.42-.58" />
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9.88 5.09A10.94 10.94 0 0112 5c5 0 9 4 10 7a12.7 12.7 0 01-3.02 4.45" />
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6.61 6.61A12.47 12.47 0 002 12c1 3 5 7 10 7a10.94 10.94 0 004.39-.91" />
-    </svg>
-  )}
-</button>
-      </div>
-    </div>
-
-    {authErro && (
-      <div className="rounded-xl bg-red-100 px-4 py-3 text-sm font-semibold text-red-700">
-        {authErro}
-      </div>
-    )}
-
-    {authMensagem && (
-      <div className="rounded-xl bg-green-100 px-4 py-3 text-sm font-semibold text-green-700">
-        {authMensagem}
-      </div>
-    )}
-
-    <button
-      type="button"
-      onClick={handleAtualizarSenha}
-      disabled={authLoading}
-      className="w-full rounded-xl bg-slate-900 px-4 py-3 font-bold text-white shadow-lg transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
-    >
-      {authLoading
-  ? smsRedefinirSenhaEnviado
-    ? 'Redefinindo...'
-    : 'Enviando...'
-  : smsRedefinirSenhaEnviado
-    ? 'Redefinir senha'
-    : 'Enviar código por SMS'}
-    </button>
-  </div>
-) : modoAuth === 'login' ? (
-  <div className="space-y-4">
-
-        {/* ================= INÍCIO DO FORMULÁRIO DE LOGIN ================= */}
-
-<form
-  onSubmit={(e) => {
-    e.preventDefault();
-    void handleLogin();
-  }}
-  className="space-y-4"
->
-  <div>
-    <label className="mb-1 block text-sm font-semibold text-slate-700">
-      Email ou login
-    </label>
-
-    <input
-      type="text"
-      placeholder="seuemail@exemplo.com ou seu login"
-      value={loginEmail}
-      onChange={(e) => setLoginEmail(e.target.value)}
-      className="w-full rounded-xl border border-slate-300 bg-white/90 px-4 py-3 text-slate-800 outline-none transition focus:border-sky-600 focus:ring-2 focus:ring-sky-600/20"
-    />
-  </div>
-
-  <div>
-    <label className="mb-1 block text-sm font-semibold text-slate-700">
-      Senha
-    </label>
-
-    <div className="relative">
-  <input
-    type={mostrarSenhaLogin ? 'text' : 'password'}
-    placeholder="Digite sua senha"
-    value={loginSenha}
-    onChange={(e) => setLoginSenha(e.target.value)}
-    className="w-full rounded-xl border border-slate-300 bg-white/90 px-4 py-3 pr-10 text-slate-800 outline-none transition focus:border-sky-600 focus:ring-2 focus:ring-sky-600/20 [&::-ms-reveal]:hidden [&::-ms-clear]:hidden"
-  />
-
-  <button
-    type="button"
-    onClick={() => setMostrarSenhaLogin((mostrar) => !mostrar)}
-    className="absolute right-3 top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full text-slate-500 transition hover:bg-slate-100 hover:text-slate-800 cursor-pointer"
-    title={mostrarSenhaLogin ? 'Ocultar senha' : 'Ver senha'}
-  >
-    {mostrarSenhaLogin ? (
-      // Olho aberto
-      <svg
-        className="h-4 w-4"
-        fill="none"
-        stroke="currentColor"
-        viewBox="0 0 24 24"
-      >
-        <path
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          strokeWidth="2"
-          d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"
-        />
-        <circle cx="12" cy="12" r="3" strokeWidth="2" />
-      </svg>
-    ) : (
-      // Olho cortado
-      <svg
-        className="h-4 w-4"
-        fill="none"
-        stroke="currentColor"
-        viewBox="0 0 24 24"
-      >
-        <path
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          strokeWidth="2"
-          d="M3 3l18 18"
-        />
-        <path
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          strokeWidth="2"
-          d="M10.58 10.58A2 2 0 0012 14a2 2 0 001.42-.58"
-        />
-        <path
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          strokeWidth="2"
-          d="M9.88 5.09A10.94 10.94 0 0112 5c5 0 9 4 10 7a12.7 12.7 0 01-3.02 4.45"
-        />
-        <path
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          strokeWidth="2"
-          d="M6.61 6.61A12.47 12.47 0 002 12c1 3 5 7 10 7a10.94 10.94 0 004.39-.91"
-        />
-      </svg>
-    )}
-  </button>
-</div>
-  </div>
-
-  <div className="text-right">
-    <button
-      type="button"
-      onClick={handleRecuperarSenha}
-      className="text-xs font-bold text-sky-700 hover:underline"
-    >
-      Esqueci minha senha
-    </button>
-  </div>
-
-  {authErro && (
-    <div className="rounded-xl bg-red-100 px-4 py-3 text-sm font-semibold text-red-700">
-      {authErro}
-    </div>
-  )}
-
-  {authMensagem && (
-    <div className="rounded-xl bg-green-100 px-4 py-3 text-sm font-semibold text-green-700">
-      {authMensagem}
-    </div>
-  )}
-
-  <button
-    type="submit"
-    disabled={authLoading}
-    className="w-full rounded-xl bg-slate-900 px-4 py-3 font-bold text-white shadow-lg transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
-  >
-    {authLoading ? 'Entrando...' : 'Entrar'}
-  </button>
-</form>
-
-<button
-  type="button"
-  onClick={handleGoogleLogin}
-  disabled={googleLoading}
-  className="flex w-full items-center justify-center gap-3 rounded-xl border border-slate-300 bg-white/90 px-4 py-3 font-semibold text-slate-700 shadow-sm transition hover:bg-white disabled:cursor-not-allowed disabled:opacity-70"
->
-  {googleLoading ? (
-    <span className="h-5 w-5 animate-spin rounded-full border-2 border-slate-300 border-t-sky-700" />
-  ) : (
-    <img
-      src="/images/google-logo.svg"
-      alt="Google"
-      className="h-5 w-5"
-    />
-  )}
-
-  <span>
-    {googleLoading ? 'Conectando ao Google...' : 'Entrar ou cadastrar com Google'}
-  </span>
-</button>
-
-<p className="-mt-2 text-center text-[11px] leading-snug text-slate-500">
-  Se este for seu primeiro acesso com este email, uma nova conta será criada automaticamente.
-</p>
-
-<div className="pt-2 text-center text-sm text-slate-600">
-  Ainda não tem conta?{' '}
-  <button
-    type="button"
-    onClick={() => setModoAuth('cadastro')}
-    className="font-bold text-sky-700 hover:underline"
-  >
-    Criar cadastro
-  </button>
-</div>
-
-{/* ================= FIM DO FORMULÁRIO DE CADASTRO ================= */}
-
-              </div>
-            ) : (
-              <div className="space-y-2">
-                <input
-  type="text"
-  placeholder="Nome completo"
-  value={cadastroNome}
-  onChange={(e) => setCadastroNome(e.target.value)}
-  className="w-full rounded-xl border border-slate-300 bg-white/90 px-3 py-2 text-sm text-slate-800 outline-none transition focus:border-sky-600 focus:ring-2 focus:ring-sky-600/20"
-/>
-
-                <div className="grid grid-cols-2 gap-1.5 rounded-xl border border-slate-200 bg-slate-50 p-1">
-                  {(['empresa', 'pessoal'] as TipoPerfil[]).map((tipo) => {
-                    const ativo = tipoPerfilInicialNormalizado === tipo;
-                    return (
-                      <button
-                        key={tipo}
-                        type="button"
-                        onClick={() => setTipoPerfilInicial(tipo)}
-                        className={`rounded-lg px-3 py-1.5 text-xs font-black uppercase tracking-wide transition ${
-                          ativo
-                            ? 'bg-slate-900 text-white shadow'
-                            : 'text-slate-500 hover:bg-white hover:text-slate-800'
-                        }`}
-                      >
-                        {rotuloTipoPerfil(tipo)}
-                      </button>
-                    );
-                  })}
-                </div>
-
-                <input
-  type="email"
-  placeholder="Email"
-  value={cadastroEmail}
-  onChange={(e) => setCadastroEmail(e.target.value)}
-  className="w-full rounded-xl border border-slate-300 bg-white/90 px-3 py-2 text-sm text-slate-800 outline-none transition focus:border-sky-600 focus:ring-2 focus:ring-sky-600/20"
-/>
-
-                <input
-  type="tel"
-  placeholder="Celular (DDD + número)"
-  value={cadastroTelefone}
-  onChange={(e) => setCadastroTelefone(e.target.value)}
-  className="w-full rounded-xl border border-slate-300 bg-white/90 px-3 py-2 text-sm text-slate-800 outline-none transition focus:border-sky-600 focus:ring-2 focus:ring-sky-600/20"
-/>
-
-                <div className="relative">
-    <input
-      type={mostrarSenhaCadastro ? 'text' : 'password'}
-      placeholder="Crie uma senha"
-      value={cadastroSenha}
-      onChange={(e) => setCadastroSenha(e.target.value)}
-      className="w-full rounded-xl border border-slate-300 bg-white/90 px-3 py-2 pr-10 text-sm text-slate-800 outline-none transition focus:border-sky-600 focus:ring-2 focus:ring-sky-600/20"
-    />
-
-    <button
-      type="button"
-      onClick={() => setMostrarSenhaCadastro((mostrar) => !mostrar)}
-      className="absolute right-3 top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full text-slate-500 transition hover:bg-slate-100 hover:text-slate-800 cursor-pointer"
-      title={mostrarSenhaCadastro ? 'Ocultar senha' : 'Ver senha'}
-    >
-      {mostrarSenhaCadastro ? (
-        <svg
-          className="h-4 w-4"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth="2"
-            d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"
-          />
-          <circle cx="12" cy="12" r="3" strokeWidth="2" />
-        </svg>
-      ) : (
-        <svg
-          className="h-4 w-4"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth="2"
-            d="M3 3l18 18"
-          />
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth="2"
-            d="M10.58 10.58A2 2 0 0012 14a2 2 0 001.42-.58"
-          />
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth="2"
-            d="M9.88 5.09A10.94 10.94 0 0112 5c5 0 9 4 10 7a12.7 12.7 0 01-3.02 4.45"
-          />
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth="2"
-            d="M6.61 6.61A12.47 12.47 0 002 12c1 3 5 7 10 7a10.94 10.94 0 004.39-.91"
-          />
-        </svg>
-      )}
-    </button>
-  </div>
-
-                <div className="relative">
-    <input
-      type={mostrarConfirmarSenhaCadastro ? 'text' : 'password'}
-      placeholder="Confirmar senha"
-      value={cadastroConfirmarSenha}
-      onChange={(e) => setCadastroConfirmarSenha(e.target.value)}
-      className="w-full rounded-xl border border-slate-300 bg-white/90 px-3 py-2 pr-10 text-sm text-slate-800 outline-none transition focus:border-sky-600 focus:ring-2 focus:ring-sky-600/20"
-    />
-
-    <button
-      type="button"
-      onClick={() =>
-        setMostrarConfirmarSenhaCadastro((mostrar) => !mostrar)
-      }
-      className="absolute right-3 top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full text-slate-500 transition hover:bg-slate-100 hover:text-slate-800 cursor-pointer"
-      title={mostrarConfirmarSenhaCadastro ? 'Ocultar senha' : 'Ver senha'}
-    >
-      {mostrarConfirmarSenhaCadastro ? (
-        <svg
-          className="h-4 w-4"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth="2"
-            d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"
-          />
-          <circle cx="12" cy="12" r="3" strokeWidth="2" />
-        </svg>
-      ) : (
-        <svg
-          className="h-4 w-4"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth="2"
-            d="M3 3l18 18"
-          />
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth="2"
-            d="M10.58 10.58A2 2 0 0012 14a2 2 0 001.42-.58"
-          />
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth="2"
-            d="M9.88 5.09A10.94 10.94 0 0112 5c5 0 9 4 10 7a12.7 12.7 0 01-3.02 4.45"
-          />
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth="2"
-            d="M6.61 6.61A12.47 12.47 0 002 12c1 3 5 7 10 7a10.94 10.94 0 004.39-.91"
-          />
-        </svg>
-      )}
-    </button>
-  </div>
-
-                {smsCadastroEnviado && (
-  <div>
-    <input
-      type="text"
-      inputMode="numeric"
-      placeholder="Código recebido por SMS"
-      value={codigoSmsCadastro}
-      onChange={(e) => setCodigoSmsCadastro(e.target.value)}
-      className="w-full rounded-xl border border-slate-300 bg-white/90 px-3 py-2 text-sm text-slate-800 outline-none transition focus:border-sky-600 focus:ring-2 focus:ring-sky-600/20"
-    />
-
-    <p className="mt-0.5 text-[11px] text-slate-500">
-      Enviamos o código para o celular informado.
-    </p>
-<button
-  type="button"
-  onClick={reenviarCodigoSmsCadastro}
-  disabled={reenviandoSmsCadastro || segundosReenvioSms > 0}
-  className="mt-1 text-[11px] font-bold text-sky-700 hover:underline disabled:cursor-not-allowed disabled:text-slate-400 disabled:hover:no-underline"
->
-  {reenviandoSmsCadastro
-    ? 'Reenviando código...'
-    : segundosReenvioSms > 0
-      ? `Reenviar código em ${segundosReenvioSms}s`
-      : 'Reenviar código'}
-</button>
-  </div>
-)}
-
-{authErro && (
-  <div className="rounded-xl bg-red-100 px-4 py-3 text-sm font-semibold text-red-700">
-    {authErro}
-  </div>
-)}
-
-{authMensagem && (
-  <div className="rounded-xl bg-green-100 px-4 py-3 text-sm font-semibold text-green-700">
-    {authMensagem}
-  </div>
-)}
-
-                <button
-  type="button"
-  onClick={handleCadastroTeste}
-  disabled={authLoading}
-  className="w-full rounded-xl bg-slate-900 px-4 py-2 font-bold text-white shadow-lg transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
->
-  {authLoading
-  ? smsCadastroEnviado
-    ? 'Validando código...'
-    : 'Enviando código...'
-  : smsCadastroEnviado
-    ? 'Concluir cadastro'
-    : 'Enviar código por SMS'}
-</button>
-
-                <div className="text-center text-sm text-slate-600">
-                  Já tem conta?{' '}
-                  <button
-                    type="button"
-                    onClick={() => setModoAuth('login')}
-                    className="font-bold text-sky-700 hover:underline"
-                  >
-                    Entrar
-                  </button>
-                </div>
-              </div>
-            )}
-            </>
-            )}
-            </div>
-          </div>
-      </section>
-    </main>
-  );
-}
 
   return (
     <div className={`min-h-screen flex flex-col font-sans transition-colors duration-300 ${bgMain}`}>
@@ -6296,113 +4087,302 @@ if (isTelaMobile) {
 {modalEmpresasAberto && (
   <div
     className="fixed inset-0 z-[5500] flex items-center justify-center bg-black/60 px-4"
-    onClick={() => setModalEmpresasAberto(false)}
+    onClick={() => { if (!editEmpresaSalvando && !criandoEmpresaInicial) { setSubAcaoGerenciar(null); setModalEmpresasAberto(false); } }}
   >
     <div
-      className={`w-full max-w-md rounded-2xl border p-6 shadow-2xl ${
-        darkMode
-          ? 'bg-slate-800 border-slate-700'
-          : 'bg-white border-slate-200'
+      className={`w-full max-w-md rounded-2xl border shadow-2xl overflow-hidden ${
+        darkMode ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200'
       }`}
       onClick={(e) => e.stopPropagation()}
     >
-      <div className="mb-5">
-        <p className={`text-xs font-black uppercase tracking-[0.18em] ${
-          darkMode ? 'text-slate-400' : 'text-slate-400'
-        }`}>
+      {/* Cabeçalho */}
+      <div className="px-6 pt-6 pb-4">
+        <p className="text-xs font-black uppercase tracking-[0.18em] text-slate-400">
           Perfis financeiros
         </p>
-
-        <h2 className={`mt-2 text-2xl font-black ${
-          darkMode ? 'text-white' : 'text-slate-800'
-        }`}>
-          Gerenciar perfil financeiro
+        <h2 className={`mt-1 text-xl font-black ${darkMode ? 'text-white' : 'text-slate-800'}`}>
+          {subAcaoGerenciar === 'editar'
+            ? 'Editar dados do perfil'
+            : subAcaoGerenciar === 'criar'
+              ? 'Criar novo perfil'
+              : 'Gerenciar perfil financeiro'}
         </h2>
-
-        <p className={`mt-3 text-sm font-semibold ${
-          darkMode ? 'text-slate-300' : 'text-slate-600'
-        }`}>
-          Perfil atual: {nomeEmpresaAtual || 'Perfil não carregado'}
-        </p>
-
-        <p className={`mt-1 text-sm font-semibold ${
-          darkMode ? 'text-slate-400' : 'text-slate-500'
-        }`}>
-          Acesso: {perfilUsuarioFormatado}
-        </p>
-
-        <p className={`mt-1 text-sm font-semibold ${
-          darkMode ? 'text-slate-400' : 'text-slate-500'
-        }`}>
-          Tipo: {rotuloTipoPerfilAtual}
-        </p>
-      </div>
-
-      <div className="space-y-3">
-        {podeAcessarAjustes && (
-          <button
-            type="button"
-            onClick={abrirEdicaoEmpresaAtual}
-            className="w-full rounded-xl bg-slate-900 px-4 py-3 text-sm font-black uppercase tracking-wide text-white transition hover:bg-slate-800 cursor-pointer"
-          >
-            Editar dados
-          </button>
-        )}
-
-        {podeCriarNovaEmpresa && (
-          <button
-            type="button"
-            onClick={() => {
-              setModalEmpresasAberto(false);
-              abrirCriacaoNovaEmpresa();
-            }}
-            className="w-full rounded-xl bg-emerald-600 px-4 py-3 text-sm font-black uppercase tracking-wide text-white transition hover:bg-emerald-700 cursor-pointer"
-          >
-            Criar novo perfil
-          </button>
-        )}
-
-        <button
-          type="button"
-          onClick={() => {
-            setModalEmpresasAberto(false);
-            abrirTrocaEmpresa();
-          }}
-          disabled={!podeTrocarEmpresa}
-          className={`w-full rounded-xl px-4 py-3 text-sm font-black uppercase tracking-wide transition ${
-            podeTrocarEmpresa
-              ? 'bg-blue-600 text-white hover:bg-blue-700 cursor-pointer'
-              : 'cursor-not-allowed bg-slate-200 text-slate-400'
-          }`}
-        >
-          Trocar perfil
-        </button>
-
-        {perfilUsuario === 'gestor_master' && (
-          <button
-            type="button"
-            onClick={() => {
-              setModalEmpresasAberto(false);
-              confirmarExclusaoEmpresaAtual();
-            }}
-            className="w-full rounded-xl bg-red-600 px-4 py-3 text-sm font-black uppercase tracking-wide text-white transition hover:bg-red-700 cursor-pointer"
-          >
-            Excluir perfil
-          </button>
+        {!subAcaoGerenciar && (
+          <div className={`mt-3 space-y-0.5 text-sm font-semibold ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>
+            <p><span className={darkMode ? 'text-slate-300' : 'text-slate-700'}>Perfil atual:</span> {nomeEmpresaAtual || 'Não carregado'}</p>
+            <p><span className={darkMode ? 'text-slate-300' : 'text-slate-700'}>Acesso:</span> {perfilUsuarioFormatado}</p>
+            <p><span className={darkMode ? 'text-slate-300' : 'text-slate-700'}>Tipo:</span> {rotuloTipoPerfilAtual}</p>
+          </div>
         )}
       </div>
 
-      <button
-        type="button"
-        onClick={() => setModalEmpresasAberto(false)}
-        className={`mt-5 w-full rounded-xl px-4 py-3 text-sm font-black uppercase tracking-wide transition cursor-pointer ${
-          darkMode
-            ? 'bg-slate-700 text-slate-200 hover:bg-slate-600'
-            : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-        }`}
-      >
-        Cancelar
-      </button>
+      <div className={`border-t px-6 pb-6 pt-4 ${darkMode ? 'border-slate-700' : 'border-slate-100'}`}>
+
+        {/* ── VISTA: menu de ações ── */}
+        {!subAcaoGerenciar && (
+          <div className="space-y-2">
+            {podeAcessarAjustes && (
+              <button
+                type="button"
+                onClick={async () => {
+                  await abrirEdicaoEmpresaAtual(podeAcessarAjustes, tipoPerfilAtualNormalizado, true);
+                  setSubAcaoGerenciar('editar');
+                }}
+                className={`w-full rounded-xl border px-4 py-3 text-sm font-black text-left transition cursor-pointer ${
+                  darkMode
+                    ? 'border-slate-600 bg-slate-700 text-white hover:bg-slate-600'
+                    : 'border-slate-200 bg-slate-50 text-slate-800 hover:bg-slate-100'
+                }`}
+              >
+                ✏️  Editar dados
+              </button>
+            )}
+
+            {podeCriarNovaEmpresa && (
+              <button
+                type="button"
+                onClick={() => {
+                  setNomeEmpresaInicial('');
+                  setTipoPerfilInicial('empresa');
+                  setAuthErro('');
+                  setSubAcaoGerenciar('criar');
+                }}
+                className={`w-full rounded-xl border px-4 py-3 text-sm font-black text-left transition cursor-pointer ${
+                  darkMode
+                    ? 'border-emerald-700 bg-emerald-900/30 text-emerald-300 hover:bg-emerald-900/50'
+                    : 'border-emerald-200 bg-emerald-50 text-emerald-800 hover:bg-emerald-100'
+                }`}
+              >
+                ＋  Criar novo perfil
+              </button>
+            )}
+
+            <button
+              type="button"
+              onClick={() => { setModalEmpresasAberto(false); abrirTrocaEmpresa(); }}
+              disabled={!podeTrocarEmpresa}
+              className={`w-full rounded-xl border px-4 py-3 text-sm font-black text-left transition ${
+                podeTrocarEmpresa
+                  ? `cursor-pointer ${darkMode ? 'border-blue-700 bg-blue-900/30 text-blue-300 hover:bg-blue-900/50' : 'border-blue-200 bg-blue-50 text-blue-800 hover:bg-blue-100'}`
+                  : 'cursor-not-allowed border-slate-200 bg-slate-100 text-slate-400'
+              }`}
+            >
+              ⇄  Trocar perfil
+            </button>
+
+            {perfilUsuario === 'gestor_master' && (
+              <button
+                type="button"
+                onClick={() => { setModalEmpresasAberto(false); confirmarExclusaoEmpresaAtual(); }}
+                className={`w-full rounded-xl border px-4 py-3 text-sm font-black text-left transition cursor-pointer ${
+                  darkMode
+                    ? 'border-red-800 bg-red-900/30 text-red-300 hover:bg-red-900/50'
+                    : 'border-red-200 bg-red-50 text-red-700 hover:bg-red-100'
+                }`}
+              >
+                ✕  Excluir perfil
+              </button>
+            )}
+
+            <button
+              type="button"
+              onClick={() => { setSubAcaoGerenciar(null); setModalEmpresasAberto(false); }}
+              className={`mt-1 w-full rounded-xl px-4 py-2.5 text-xs font-black uppercase tracking-wide transition cursor-pointer ${
+                darkMode ? 'text-slate-400 hover:text-slate-200' : 'text-slate-400 hover:text-slate-600'
+              }`}
+            >
+              Fechar
+            </button>
+          </div>
+        )}
+
+        {/* ── VISTA: editar dados inline ── */}
+        {subAcaoGerenciar === 'editar' && (
+          <div className="space-y-4">
+            <div>
+              <label className={`mb-1 block text-xs font-black uppercase tracking-wide ${textMuted}`}>
+                {labelNomePerfilEdicao}
+              </label>
+              <input
+                type="text"
+                value={editEmpresaNome}
+                onChange={(e) => setEditEmpresaNome(e.target.value)}
+                className={`w-full rounded-xl border px-4 py-3 text-sm font-semibold outline-none transition focus:ring-2 ${
+                  darkMode
+                    ? 'border-slate-600 bg-slate-900 text-white focus:border-sky-500 focus:ring-sky-500/20'
+                    : 'border-slate-300 bg-white text-slate-800 focus:border-sky-600 focus:ring-sky-600/20'
+                }`}
+              />
+            </div>
+
+            <div>
+              <label className={`mb-1 block text-xs font-black uppercase tracking-wide ${textMuted}`}>
+                Tipo do perfil financeiro
+              </label>
+              <div className={`grid grid-cols-2 gap-2 rounded-xl border p-1 ${
+                darkMode ? 'border-slate-700 bg-slate-900' : 'border-slate-200 bg-slate-50'
+              }`}>
+                {(['empresa', 'pessoal'] as TipoPerfil[]).map((tipo) => {
+                  const ativo = editTipoPerfilNormalizado === tipo;
+                  return (
+                    <button key={tipo} type="button" onClick={() => setEditTipoPerfil(tipo)}
+                      className={`rounded-lg px-3 py-2 text-xs font-black uppercase tracking-wide transition ${
+                        ativo ? 'text-white shadow-md' : darkMode ? 'text-slate-300 hover:bg-slate-800' : 'text-slate-500 hover:bg-white hover:text-slate-800'
+                      }`}
+                      style={ativo ? estiloTemaPrimario : undefined}
+                    >
+                      {rotuloTipoPerfil(tipo)}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            <div>
+              <label className={`mb-1 block text-xs font-black uppercase tracking-wide ${textMuted}`}>
+                Login ou email
+              </label>
+              <input
+                type="text"
+                value={editEmpresaLogin}
+                onChange={(e) => setEditEmpresaLogin(e.target.value)}
+                className={`w-full rounded-xl border px-4 py-3 text-sm font-semibold outline-none transition focus:ring-2 ${
+                  darkMode
+                    ? 'border-slate-600 bg-slate-900 text-white focus:border-sky-500 focus:ring-sky-500/20'
+                    : 'border-slate-300 bg-white text-slate-800 focus:border-sky-600 focus:ring-sky-600/20'
+                }`}
+              />
+            </div>
+
+            <div>
+              <label className={`mb-1 block text-xs font-black uppercase tracking-wide ${textMuted}`}>
+                Nova senha
+              </label>
+              <input
+                type="password"
+                value={editEmpresaSenha}
+                onChange={(e) => setEditEmpresaSenha(e.target.value)}
+                placeholder="Deixe em branco para manter"
+                className={`w-full rounded-xl border px-4 py-3 text-sm font-semibold outline-none transition focus:ring-2 ${
+                  darkMode
+                    ? 'border-slate-600 bg-slate-900 text-white placeholder:text-slate-500 focus:border-sky-500 focus:ring-sky-500/20'
+                    : 'border-slate-300 bg-white text-slate-800 placeholder:text-slate-400 focus:border-sky-600 focus:ring-sky-600/20'
+                }`}
+              />
+              {perfilUsuario === 'gestor_master' && (
+                <p className={`mt-1.5 text-xs font-semibold ${textMuted}`}>
+                  Para Gestor Master, a senha deve ser alterada pela recuperação de senha.
+                </p>
+              )}
+            </div>
+
+            <div className="grid grid-cols-2 gap-3 pt-1">
+              <button
+                type="button"
+                onClick={() => { fecharEdicaoEmpresaAtual(); setSubAcaoGerenciar(null); }}
+                disabled={editEmpresaSalvando}
+                className={`rounded-xl border px-4 py-3 text-xs font-black uppercase transition cursor-pointer disabled:cursor-not-allowed disabled:opacity-60 ${
+                  darkMode ? 'border-slate-600 text-slate-300 hover:bg-slate-700' : 'border-slate-300 text-slate-600 hover:bg-slate-100'
+                }`}
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                onClick={async () => {
+                  const ok = await salvarEdicaoEmpresaAtual();
+                  if (ok) { setSubAcaoGerenciar(null); setModalEmpresasAberto(false); }
+                }}
+                disabled={editEmpresaSalvando}
+                className="rounded-xl px-4 py-3 text-xs font-black uppercase text-white shadow-md transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-60 cursor-pointer"
+                style={estiloTemaPrimario}
+              >
+                {editEmpresaSalvando ? 'Salvando...' : 'Salvar'}
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* ── VISTA: criar novo perfil inline ── */}
+        {subAcaoGerenciar === 'criar' && (
+          <div className="space-y-4">
+            <div>
+              <label className={`mb-1 block text-xs font-black uppercase tracking-wide ${textMuted}`}>
+                Tipo do perfil
+              </label>
+              <div className={`grid grid-cols-2 gap-2 rounded-xl border p-1 ${
+                darkMode ? 'border-slate-700 bg-slate-900' : 'border-slate-200 bg-slate-50'
+              }`}>
+                {(['empresa', 'pessoal'] as TipoPerfil[]).map((tipo) => {
+                  const ativo = tipoPerfilInicialNormalizado === tipo;
+                  return (
+                    <button key={tipo} type="button" onClick={() => setTipoPerfilInicial(tipo)}
+                      className={`rounded-lg px-3 py-2 text-xs font-black uppercase tracking-wide transition ${
+                        ativo ? 'text-white shadow' : darkMode ? 'text-slate-300 hover:bg-slate-800' : 'text-slate-500 hover:bg-white hover:text-slate-800'
+                      }`}
+                      style={ativo ? estiloTemaPrimario : undefined}
+                    >
+                      {rotuloTipoPerfil(tipo)}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            <div>
+              <label className={`mb-1 block text-xs font-black uppercase tracking-wide ${textMuted}`}>
+                {labelNomePerfilInicial}
+              </label>
+              <input
+                type="text"
+                value={nomeEmpresaInicial}
+                onChange={(e) => setNomeEmpresaInicial(e.target.value)}
+                placeholder={placeholderPerfilInicial}
+                autoFocus
+                className={`w-full rounded-xl border px-4 py-3 text-sm font-semibold outline-none transition focus:ring-2 ${
+                  darkMode
+                    ? 'border-slate-600 bg-slate-900 text-white placeholder:text-slate-500 focus:border-sky-500 focus:ring-sky-500/20'
+                    : 'border-slate-300 bg-white text-slate-800 placeholder:text-slate-400 focus:border-sky-600 focus:ring-sky-600/20'
+                }`}
+              />
+            </div>
+
+            {authErro && (
+              <div className="rounded-xl bg-red-100 px-4 py-3 text-sm font-semibold text-red-700">
+                {authErro}
+              </div>
+            )}
+            {authMensagem && (
+              <div className="rounded-xl bg-emerald-100 px-4 py-3 text-sm font-semibold text-emerald-700">
+                {authMensagem}
+              </div>
+            )}
+
+            <div className="grid grid-cols-2 gap-3 pt-1">
+              <button
+                type="button"
+                onClick={() => { setAuthErro(''); setSubAcaoGerenciar(null); }}
+                disabled={criandoEmpresaInicial}
+                className={`rounded-xl border px-4 py-3 text-xs font-black uppercase transition cursor-pointer disabled:cursor-not-allowed disabled:opacity-60 ${
+                  darkMode ? 'border-slate-600 text-slate-300 hover:bg-slate-700' : 'border-slate-300 text-slate-600 hover:bg-slate-100'
+                }`}
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                onClick={handleCriarEmpresaInicial}
+                disabled={criandoEmpresaInicial}
+                className="rounded-xl px-4 py-3 text-xs font-black uppercase text-white shadow-md transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-60 cursor-pointer"
+                style={estiloTemaPrimario}
+              >
+                {criandoEmpresaInicial ? 'Criando...' : 'Criar perfil'}
+              </button>
+            </div>
+          </div>
+        )}
+
+      </div>
     </div>
   </div>
 )}
@@ -7212,501 +5192,38 @@ name="novo-usuario-login"
 
       {/* ================= HEADER GLOBAL ================= */}
 
-{/* ================= MENU RESPONSIVO ================= */}
-{menuResponsivoAberto && (
-  <div
-    className="fixed inset-0 z-[1200] bg-black/50 lg:hidden"
-    onClick={() => setMenuResponsivoAberto(false)}
-  >
-    <aside
-      onClick={(e) => e.stopPropagation()}
-      className={`flex h-full w-80 max-w-[85vw] flex-col overflow-y-auto border-r p-4 shadow-2xl ${
-        darkMode
-          ? 'border-slate-700 bg-slate-900 text-slate-100'
-          : 'border-slate-200 bg-white text-slate-800'
-      }`}
-    >
-      <div className="mb-3 flex items-center justify-between gap-3">
-        <div>
-          <p className={`text-xs font-black uppercase tracking-[0.25em] ${textMuted}`}>
-            AvantaLab
-          </p>
-          <h2 className={`mt-1 text-lg font-black ${textStrong}`}>
-            Menu
-          </h2>
-        </div>
-
-        <button
-          type="button"
-          onClick={() => setMenuResponsivoAberto(false)}
-          className={`flex h-10 w-10 items-center justify-center rounded-xl border text-xl font-black transition cursor-pointer ${
-            darkMode
-              ? 'border-slate-700 text-slate-100 hover:bg-slate-800'
-              : 'border-slate-200 text-slate-700 hover:bg-slate-100'
-          }`}
-          title="Fechar menu"
-        >
-          ×
-        </button>
-      </div>
-
-      <div className="space-y-1">
-        {['Dashboard', 'Balanço Geral', 'Gráficos', 'Por Categoria', 'Relatório'].map((aba) => (
-          <button
-            key={aba}
-            type="button"
-            onClick={() => {
-              setAbaAtiva(aba);
-              setMenuResponsivoAberto(false);
-              if (aba === 'Dashboard') {
-                setMesAtivo(null);
-              }
-            }}
-            className={`w-full rounded-xl px-3 py-2 text-left text-sm font-black transition cursor-pointer ${
-              abaAtiva === aba
-                ? ''
-                : darkMode
-                  ? 'hover:bg-slate-800 text-slate-300'
-                  : 'hover:bg-slate-100 text-slate-600'
-            }`}
-            style={abaAtiva === aba ? estiloTemaPrimario : undefined}
-          >
-            {aba === 'Dashboard' ? 'Início' : aba}
-          </button>
-        ))}
-      </div>
-
-      <div className={`my-3 border-t ${darkMode ? 'border-slate-700' : 'border-slate-200'}`} />
-
-      <div className="space-y-1">
-        <button
-          type="button"
-          onClick={() => {
-            setCalcAberta(true);
-            setMenuResponsivoAberto(false);
-          }}
-          className={`w-full rounded-xl px-3 py-2 text-left text-sm font-black transition cursor-pointer ${
-            darkMode
-              ? 'hover:bg-slate-800 text-slate-300'
-              : 'hover:bg-slate-100 text-slate-600'
-          }`}
-        >
-          Calculadora
-        </button>
-
-        
-
-        <button
-          type="button"
-          onClick={() => {
-            setMenuResponsivoAberto(false);
-            confirmarLogout();
-          }}
-          className="w-full rounded-xl px-3 py-2 text-left text-sm font-black text-red-600 transition hover:bg-red-50 cursor-pointer"
-        >
-          Sair
-        </button>
-      </div>
-    </aside>
-  </div>
-)}
-
-<header
-  className={`print-ocultar ${bgCard} sticky top-0 z-[900] shadow-[0_4px_18px_rgba(15,23,42,0.10)] border-b px-8 pt-1 pb-4 relative overflow-hidden`}
-  style={{
-    borderBottomColor: darkMode ? '#334155' : 'transparent',
-    borderBottomWidth: '1px',
-  }}
->
-    <div className="mx-auto flex w-full max-w-7xl items-center gap-4 px-6 xl:gap-6 xl:px-8">
-  {/* LOGO */}
-  <div
-    className="w-44 h-[72px] xl:w-64 xl:h-[88px] flex items-center justify-center relative cursor-pointer shrink-0 mb-2"
-    onClick={() => {
-      setAbaAtiva('Dashboard');
-      setMesAtivo(null);
-      setMenuResponsivoAberto(false);
-    }}
-  >
-    {logoUrl && logoUrl !== '__blank__' ? (
-      /* Imagem: overflow-hidden no wrapper interno, não no container */
-      <div className="absolute inset-0 overflow-hidden rounded-lg">
-        <img
-          src={logoUrl}
-          alt="Logo"
-          className="absolute"
-          style={{
-            transform: `translate(${logoSettings.x}px, ${logoSettings.y}px) scale(${logoSettings.scale / 100})`,
-            objectFit: 'contain',
-            width: '100%',
-            height: '100%',
-            background: 'transparent',
-          }}
-        />
-      </div>
-    ) : logoUrl !== '__blank__' ? (
-      /* Placeholder: borda num elemento absolute com inset 2px
-         para garantir que a borda nunca toque o limite de clipping do header */
-      <>
-        <div
-          className="absolute pointer-events-none rounded-lg"
-          style={{
-            inset: '2px',
-            border: `2px dashed ${darkMode ? '#475569' : '#cbd5e1'}`,
-          }}
-        />
-        <span className="relative px-3 text-center leading-snug text-slate-500">
-          <span className="block text-[11px] font-semibold">
-            Acesse os Ajustes e adicione sua
-          </span>
-          <span className="mt-1 block text-base font-black tracking-wide">
-            LOGOMARCA
-          </span>
-        </span>
-      </>
-    ) : null}
-  </div>
-
-  <button
-  type="button"
-  onClick={() => setMenuResponsivoAberto(true)}
-  className={`lg:hidden flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border text-2xl font-black transition cursor-pointer ${
-    darkMode
-      ? 'border-slate-700 text-slate-100 hover:bg-slate-800'
-      : 'border-slate-200 text-slate-700 hover:bg-slate-100'
-  }`}
-  title="Abrir menu"
->
-  ☰
-</button>
-
-  {/* ÁREA DIREITA DO HEADER */}
-  <div className="flex-1 flex flex-col gap-3 xl:gap-5 min-w-0">
-    {/* LINHA 1: MENU */}
-<div className="relative hidden items-center gap-3 lg:flex">
-  <nav
-    className={`relative grid min-w-0 grid-cols-5 overflow-hidden rounded-xl border p-1 shadow-sm ${
-      darkMode
-        ? 'border-slate-700 bg-slate-900/70'
-        : 'border-slate-200 bg-slate-50'
-    }`}
-  >
-    {(() => {
-      const itensMenuPrincipal = [
-        { aba: 'Dashboard', label: 'Início' },
-        { aba: 'Balanço Geral', label: 'Balanço' },
-        { aba: 'Gráficos', label: 'Gráficos' },
-        { aba: 'Por Categoria', label: 'Categorias' },
-        { aba: 'Relatório', label: 'Relatório' },
-      ];
-
-      const indiceAtivo = Math.max(
-        0,
-        itensMenuPrincipal.findIndex((item) => item.aba === abaAtiva)
-      );
-
-      return (
-        <>
-          <span
-            className="absolute bottom-1 left-1 top-1 rounded-lg shadow-sm transition-transform duration-300 ease-out"
-            style={{
-              width: 'calc((100% - 0.5rem) / 5)',
-              transform: `translateX(${indiceAtivo * 100}%)`,
-              backgroundColor: corPrimaria,
-            }}
-          />
-
-          {itensMenuPrincipal.map((item) => {
-            const ativo = abaAtiva === item.aba;
-
-            return (
-              <button
-                key={item.aba}
-                type="button"
-                onClick={() => {
-                  setAjustesAberto(false);
-                  setPainelAvisosAberto(false);
-                  setMesAtivo(null);
-                  setAbaAtiva(item.aba);
-                  setMenuResponsivoAberto(false);
-                }}
-                className={`relative z-10 whitespace-nowrap rounded-lg px-3 py-2 text-xs font-black uppercase tracking-wide transition-colors active:scale-[0.98] cursor-pointer ${
-                  ativo
-                    ? ''
-                    : darkMode
-                      ? 'text-slate-300 hover:text-white'
-                      : 'text-slate-600 hover:text-slate-900'
-                }`}
-                style={
-                  ativo
-                    ? {
-                        color: textoSobreCorPrimaria,
-                      }
-                    : undefined
-                }
-              >
-                {item.label}
-              </button>
-            );
-          })}
-        </>
-      );
-    })()}
-  </nav>
-
-  <div className="ml-auto flex items-center gap-2">
-    <div
-      className={`flex h-9 items-center gap-2 rounded-lg border px-2.5 shadow-sm ${
-        darkMode
-          ? 'border-slate-700 bg-slate-800 text-slate-100'
-          : 'border-slate-200 bg-white text-slate-700'
-      }`}
-    >
-      <span className={`text-[9px] font-black uppercase tracking-wide ${textMuted}`}>
-        Ano
-      </span>
-
-      <select
-        value={anoSelecionado}
-        onChange={(e) => setAnoSelecionado(e.target.value)}
-        className="bg-transparent text-sm font-black outline-none cursor-pointer"
-        style={{ color: corEhClara(corPrimaria) ? '#0f172a' : corPrimaria }}
-      >
-        {Array.from(
-          { length: new Date().getFullYear() + 5 - 2024 + 1 },
-          (_, i) => (2024 + i).toString()
-        ).map((ano) => (
-          <option key={ano} value={ano} className="bg-white text-slate-800">
-            {ano}
-          </option>
-        ))}
-      </select>
-    </div>
-
-    <button
-      type="button"
-      onClick={() => setCalcAberta(!calcAberta)}
-      className={`flex h-9 w-9 items-center justify-center rounded-lg border shadow-sm transition hover:scale-[1.03] active:scale-[0.98] cursor-pointer ${
-        darkMode
-          ? 'border-slate-700 bg-slate-800 text-slate-200 hover:bg-slate-700'
-          : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50'
-      }`}
-      title="Calculadora"
-    >
-      <svg className="h-4.5 w-4.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          strokeWidth="2"
-          d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"
-        />
-      </svg>
-    </button>
-
-    <button
-      type="button"
-      onClick={() => {
-        setAjustesAberto(false);
-        setPainelAvisosAberto((prev) => !prev);
-      }}
-      className={`relative flex h-9 w-9 items-center justify-center rounded-lg border shadow-sm transition hover:scale-[1.03] active:scale-[0.98] cursor-pointer ${
-        darkMode
-          ? 'border-slate-700 bg-slate-800 text-slate-200 hover:bg-slate-700'
-          : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50'
-      }`}
-      title="Avisos do sistema"
-    >
-      <svg className="h-4.5 w-4.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          strokeWidth="2.2"
-          d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6 6 0 10-12 0v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0a3 3 0 11-6 0m6 0H9"
-        />
-      </svg>
-
-      {alertasSistema.length > 0 && (
-        <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-black leading-none text-white shadow-md">
-          {alertasSistema.length}
-        </span>
-      )}
-    </button>
-
-    <button
-      type="button"
-      onClick={() => {
-        setPainelAvisosAberto(false);
-        setAjustesAberto(!ajustesAberto);
-      }}
-      className={`flex h-9 items-center gap-2 rounded-lg border px-3 text-xs font-black uppercase tracking-wide shadow-sm transition hover:scale-[1.02] active:scale-[0.98] cursor-pointer ${
-        ajustesAberto
-          ? 'text-white'
-          : darkMode
-            ? 'border-slate-700 bg-slate-800 text-slate-200 hover:bg-slate-700'
-            : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50'
-      }`}
-      style={
-        ajustesAberto
-          ? {
-              backgroundColor: '#475569',
-              borderColor: '#475569',
-            }
-          : undefined
-      }
-      title="Abrir ajustes"
-    >
-      <svg
-        className={`h-4 w-4 transition-transform duration-300 ${
-          ajustesAberto ? 'rotate-90' : 'rotate-0'
-        }`}
-        fill="none"
-        stroke="currentColor"
-        viewBox="0 0 24 24"
-      >
-        <path
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          strokeWidth="2.3"
-          d="M10.325 4.317a1.724 1.724 0 013.35 0 1.724 1.724 0 002.573 1.066 1.724 1.724 0 012.451 2.451 1.724 1.724 0 001.066 2.573 1.724 1.724 0 010 3.35 1.724 1.724 0 00-1.066 2.573 1.724 1.724 0 01-2.451 2.451 1.724 1.724 0 00-2.573 1.066 1.724 1.724 0 01-3.35 0 1.724 1.724 0 00-2.573-1.066 1.724 1.724 0 01-2.451-2.451 1.724 1.724 0 00-1.066-2.573 1.724 1.724 0 010-3.35 1.724 1.724 0 001.066-2.573 1.724 1.724 0 012.451-2.451 1.724 1.724 0 002.573-1.066z"
-        />
-        <path
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          strokeWidth="2.3"
-          d="M12 15.5A3.5 3.5 0 1012 8.5a3.5 3.5 0 000 7z"
-        />
-      </svg>
-      Ajustes
-    </button>
-
-    <button
-      type="button"
-      onClick={confirmarLogout}
-      className={`h-9 rounded-lg border px-3 text-xs font-black uppercase tracking-wide shadow-sm transition active:scale-[0.98] cursor-pointer ${
-        darkMode
-          ? 'border-red-800/50 bg-red-950/30 text-red-300 hover:bg-red-900/50'
-          : 'border-red-200 bg-red-50 text-red-600 hover:bg-red-100'
-      }`}
-    >
-      Sair
-    </button>
-  </div>
-</div>
-
-    {/* TEXTO DENTRO DA FAIXA INFERIOR */}
-<div
-  className="absolute bottom-0 left-0 right-0 h-5 text-xs font-semibold z-10"
-  style={{
-    backgroundColor: corPrimaria,
-    color: textoSobreCorPrimaria,
-  }}
->
-  <div className="mx-auto flex h-full w-full max-w-[1280px] items-center px-8">
-    <div className="flex items-center gap-2 min-w-0">
-    <svg
-      className="h-3.5 w-3.5 shrink-0"
-      fill="none"
-      stroke="currentColor"
-      viewBox="0 0 24 24"
-    >
-      <path
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeWidth="2"
-        d="M5.121 17.804A9 9 0 1118.88 17.8M15 11a3 3 0 11-6 0 3 3 0 016 0z"
+      <AppHeader
+        darkMode={darkMode}
+        textMuted={textMuted}
+        textStrong={textStrong}
+        bgCard={bgCard}
+        corPrimaria={corPrimaria}
+        textoSobreCorPrimaria={textoSobreCorPrimaria}
+        bordaSobreCorPrimaria={bordaSobreCorPrimaria}
+        corEhClara={corEhClara}
+        estiloTemaPrimario={estiloTemaPrimario}
+        abaAtiva={abaAtiva}
+        setAbaAtiva={setAbaAtiva}
+        ajustesAberto={ajustesAberto}
+        setAjustesAberto={setAjustesAberto}
+        menuResponsivoAberto={menuResponsivoAberto}
+        setMenuResponsivoAberto={setMenuResponsivoAberto}
+        painelAvisosAberto={painelAvisosAberto}
+        setPainelAvisosAberto={setPainelAvisosAberto}
+        anoSelecionado={anoSelecionado}
+        setAnoSelecionado={setAnoSelecionado}
+        setMesAtivo={setMesAtivo}
+        nomeEmpresaAtual={nomeEmpresaAtual}
+        alertasSistema={alertasSistema}
+        calcAberta={calcAberta}
+        setCalcAberta={setCalcAberta}
+        confirmarLogout={confirmarLogout}
+        logoUrl={logoUrl}
+        logoSettings={logoSettings}
+        setModalEmpresasAberto={setModalEmpresasAberto}
       />
-    </svg>
 
-    <span className="truncate font-black">
-      Olá, {nomeEmpresaAtual || 'Empresa'}
-    </span>
-  </div>
-</div>
-</div>
-  </div>
-  </div>
-</header>
-
-{painelAvisosAberto && (
-  <>
-    <div
-      className="fixed inset-0 z-[8400] bg-black/40"
-      onClick={() => setPainelAvisosAberto(false)}
-    />
-
-    <div
-      className={`fixed right-8 top-[135px] w-80 overflow-hidden rounded-2xl border shadow-2xl z-[8500] ${
-        darkMode
-          ? 'bg-slate-900 border-slate-700 text-slate-100'
-          : 'bg-white border-slate-200 text-slate-800'
-      }`}
-    >
-      <div
-        className="px-4 py-3 border-b"
-        style={{
-          backgroundColor: corPrimaria,
-          color: textoSobreCorPrimaria,
-          borderColor: bordaSobreCorPrimaria,
-        }}
-      >
-        <h3 className="text-sm font-black uppercase tracking-wide">
-          Avisos do sistema
-        </h3>
-
-        <p className="text-[11px] opacity-80">
-          {alertasSistema.length > 0
-            ? `${alertasSistema.length} aviso(s) pendente(s)`
-            : 'Nenhum aviso pendente'}
-        </p>
-      </div>
-
-      <div className="max-h-80 overflow-y-auto p-3">
-        {alertasSistema.length === 0 ? (
-          <div className={`rounded-xl p-4 text-sm ${textMuted}`}>
-            Tudo certo por enquanto.
-          </div>
-        ) : (
-          <div className="space-y-3">
-            {alertasSistema.map((aviso) => (
-              <div
-                key={aviso.id}
-                className={`rounded-xl border p-3 ${
-                  darkMode
-                    ? 'border-slate-700 bg-slate-800/70'
-                    : 'border-slate-200 bg-slate-50'
-                }`}
-              >
-                <h4 className={`text-sm font-black ${textStrong}`}>
-                  {aviso.titulo}
-                </h4>
-                
-                <p className={`mt-1 text-xs leading-relaxed ${textMuted}`}>
-                  {aviso.mensagem}
-                </p>
-
-                {aviso.acao && aviso.acaoTexto && (
-                  <button
-                    type="button"
-                    onClick={async () => {
-                      setPainelAvisosAberto(false);
-                      await aviso.acao?.();
-                    }}
-                    className="mt-3 w-full rounded-lg px-3 py-2 text-xs font-bold shadow-sm transition hover:brightness-110 cursor-pointer"
-                    style={estiloTemaPrimario}
-                  >
-                    {aviso.acaoTexto}
-                  </button>
-                )}
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-    </div>
-  </>
-)}
-
-      {/* ================= MENU DE AJUSTES GERAL ================= */}
+            {/* ================= MENU DE AJUSTES GERAL ================= */}
 {ajustesAberto && (
   <>
     <div
@@ -7935,7 +5452,7 @@ setAjustesAberto(false);
       'O sistema vai gerar um arquivo Excel com os dados da empresa atual.\n\nDeseja continuar?',
     textoConfirmar: 'Gerar backup',
     acao: async () => {
-      await gerarBackupExcel();
+      await gerarBackupExcel(backupParams());
     },
   });
 }}
@@ -8502,210 +6019,21 @@ setAjustesAberto(false);
   darkMode={darkMode}
 />
 
-{/* ================= CHAT FLUTUANTE DE FEEDBACK ================= */}
-
-<div className="print-ocultar fixed bottom-6 right-6 z-[7800]">
-  {chatFeedbackAberto && (
-    <div
-      className={`mb-4 w-[360px] overflow-hidden rounded-3xl border shadow-2xl ${
-        darkMode
-          ? 'border-slate-700 bg-slate-900 text-slate-100'
-          : 'border-slate-200 bg-white text-slate-800'
-      }`}
-    >
-      <div
-        className="flex items-start justify-between gap-3 px-5 py-4"
-        style={{
-          background: 'linear-gradient(135deg, #020617, #003E73)',
-          color: '#ffffff',
-        }}
-      >
-        <div>
-          <p className="text-[11px] font-black uppercase tracking-[0.24em] text-sky-200">
-            AvantaLab
-          </p>
-
-          <h3 className="mt-1 text-base font-black leading-tight">
-            Como podemos ajudar?
-          </h3>
-        </div>
-
-        <button
-          type="button"
-          onClick={fecharChatFeedback}
-          className="flex h-8 w-8 items-center justify-center rounded-full bg-white/10 text-lg font-black text-white transition hover:bg-white/20 cursor-pointer"
-          aria-label="Fechar chat"
-        >
-          ×
-        </button>
-      </div>
-
-      <div className="p-5">
-        {chatFeedbackEtapa === 'inicio' && (
-          <div>
-            <p className={`text-sm leading-relaxed ${textMuted}`}>
-              Olá, agradecemos sua interação com a AvantaLab.
-              <br />
-              Selecione uma das opções abaixo:
-            </p>
-
-            <div className="mt-5 grid gap-3">
-              <button
-                type="button"
-                onClick={() => abrirFormularioFeedback('sugestao')}
-                className={`rounded-2xl border px-4 py-3 text-left transition hover:-translate-y-0.5 hover:shadow-md cursor-pointer ${
-                  darkMode
-                    ? 'border-slate-700 bg-slate-800 hover:bg-slate-700'
-                    : 'border-slate-200 bg-slate-50 hover:bg-sky-50'
-                }`}
-              >
-                <div className="flex items-center gap-3">
-                  <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-sky-100 text-sky-800">
-                    ✦
-                  </span>
-
-                  <div>
-                    <p className="text-sm font-black">Sugestões</p>
-                    <p className={`mt-0.5 text-xs ${textMuted}`}>
-                      Envie ideias, avaliações ou pontos de melhoria.
-                    </p>
-                  </div>
-                </div>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => abrirFormularioFeedback('duvida')}
-                className={`rounded-2xl border px-4 py-3 text-left transition hover:-translate-y-0.5 hover:shadow-md cursor-pointer ${
-                  darkMode
-                    ? 'border-slate-700 bg-slate-800 hover:bg-slate-700'
-                    : 'border-slate-200 bg-slate-50 hover:bg-sky-50'
-                }`}
-              >
-                <div className="flex items-center gap-3">
-                  <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-emerald-100 text-emerald-800">
-                    ?
-                  </span>
-
-                  <div>
-                    <p className="text-sm font-black">Dúvidas</p>
-                    <p className={`mt-0.5 text-xs ${textMuted}`}>
-                      Envie uma dúvida sobre o uso do sistema.
-                    </p>
-                  </div>
-                </div>
-              </button>
-            </div>
-          </div>
-        )}
-
-        {chatFeedbackEtapa === 'formulario' && (
-          <div>
-            <button
-              type="button"
-              onClick={voltarInicioChatFeedback}
-              className={`mb-4 text-xs font-black uppercase tracking-wide transition hover:underline cursor-pointer ${
-                darkMode ? 'text-sky-300' : 'text-sky-700'
-              }`}
-            >
-              ← Voltar
-            </button>
-
-            <h4 className="text-lg font-black">
-              {feedbackTipo === 'sugestao' ? 'Enviar sugestão' : 'Enviar dúvida'}
-            </h4>
-
-            <p className={`mt-2 text-sm leading-relaxed ${textMuted}`}>
-              {feedbackTipo === 'sugestao'
-                ? 'Sua opinião é muito importante para melhorarmos o AvantaLab. Escreva abaixo sua sugestão, avaliação ou ponto de melhoria.'
-                : 'Descreva sua dúvida sobre o uso do AvantaLab. Em breve, este atendimento poderá ser respondido por uma IA treinada para ajudar no sistema.'}
-            </p>
-
-            <textarea
-              value={feedbackMensagem}
-              onChange={(e) => setFeedbackMensagem(e.target.value)}
-              placeholder={
-                feedbackTipo === 'sugestao'
-                  ? 'Escreva sua sugestão...'
-                  : 'Escreva sua dúvida...'
-              }
-              rows={5}
-              className={`mt-4 w-full resize-none rounded-2xl border px-4 py-3 text-sm outline-none transition focus:ring-2 ${
-                darkMode
-                  ? 'border-slate-700 bg-slate-800 text-slate-100 placeholder:text-slate-500 focus:border-sky-500 focus:ring-sky-500/20'
-                  : 'border-slate-300 bg-white text-slate-800 placeholder:text-slate-400 focus:border-sky-600 focus:ring-sky-600/20'
-              }`}
-            />
-
-            <button
-              type="button"
-              onClick={enviarFeedbackVisual}
-              disabled={feedbackEnviando}
-              className="mt-4 w-full rounded-2xl px-4 py-3 text-sm font-black uppercase tracking-wide text-white shadow-lg transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-60 cursor-pointer"
-              style={{
-                background: 'linear-gradient(135deg, #003E73, #00A6C8)',
-              }}
-            >
-              {feedbackEnviando ? 'Enviando...' : 'Enviar mensagem'}
-            </button>
-          </div>
-        )}
-
-        {chatFeedbackEtapa === 'confirmacao' && (
-          <div className="text-center">
-            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-emerald-100 text-2xl font-black text-emerald-700">
-              ✓
-            </div>
-
-            <h4 className="mt-4 text-lg font-black">
-              Mensagem registrada
-            </h4>
-
-            <p className={`mt-2 text-sm leading-relaxed ${textMuted}`}>
-              Obrigado! Sua mensagem foi registrada com sucesso.
-            </p>
-
-            <button
-              type="button"
-              onClick={voltarInicioChatFeedback}
-              className="mt-5 w-full rounded-2xl bg-slate-900 px-4 py-3 text-sm font-black uppercase tracking-wide text-white shadow-lg transition hover:bg-slate-800 cursor-pointer"
-            >
-              Enviar outra mensagem
-            </button>
-          </div>
-        )}
-      </div>
-    </div>
-  )}
-
-  <button
-    type="button"
-    onClick={() => setChatFeedbackAberto((aberto) => !aberto)}
-    className="flex h-16 w-16 items-center justify-center rounded-full text-white shadow-2xl transition hover:-translate-y-1 hover:shadow-sky-900/30 active:scale-95 cursor-pointer"
-    style={{
-      background: 'linear-gradient(135deg, #020617, #003E73)',
-    }}
-    aria-label="Abrir chat AvantaLab"
-  >
-    {chatFeedbackAberto ? (
-      <span className="text-3xl font-black leading-none">×</span>
-    ) : (
-      <svg
-        className="h-8 w-8"
-        fill="none"
-        stroke="currentColor"
-        viewBox="0 0 24 24"
-      >
-        <path
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          strokeWidth="2.2"
-          d="M8 10h8M8 14h5m7-2a8 8 0 11-3.2-6.4L21 5l-1.2 4.2A7.96 7.96 0 0120 12z"
-        />
-      </svg>
-    )}
-  </button>
-</div>
+<ChatFlutuante
+  darkMode={darkMode}
+  textMuted={textMuted}
+  chatFeedbackAberto={chatFeedbackAberto}
+  setChatFeedbackAberto={setChatFeedbackAberto}
+  chatFeedbackEtapa={chatFeedbackEtapa}
+  feedbackTipo={feedbackTipo}
+  feedbackMensagem={feedbackMensagem}
+  setFeedbackMensagem={setFeedbackMensagem}
+  feedbackEnviando={feedbackEnviando}
+  fecharChatFeedback={fecharChatFeedback}
+  abrirFormularioFeedback={abrirFormularioFeedback}
+  voltarInicioChatFeedback={voltarInicioChatFeedback}
+  enviarFeedbackVisual={enviarFeedbackVisual}
+/>
 
 <footer
   className={`print-ocultar w-full border-t px-6 py-4 mt-8 ${

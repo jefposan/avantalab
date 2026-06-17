@@ -125,6 +125,7 @@
     manterConectado: false,
     empresaExclusaoAberta: false,
     empresaEdicaoAberta: false,
+    empresaCriarAberta: false,
     editEmpresaNome: '',
     editEmpresaLogin: '',
     editEmpresaSenha: '',
@@ -2087,33 +2088,54 @@
       p_nome_empresa: nome,
     });
 
-    if (resposta.error || !resposta.data) {
+    if (resposta.error) {
       state.carregando = false;
       state.empresaAcao = '';
-      setErro(mensagemErro(resposta.error, 'Nao foi possivel criar o perfil financeiro.'));
+      setErro(mensagemErro(resposta.error, 'Não foi possível criar o perfil financeiro.'));
       return;
     }
 
-    var criada = Array.isArray(resposta.data) ? resposta.data[0] : resposta.data;
+    var dadosBrutos = resposta.data;
+    var semDados = !dadosBrutos || (Array.isArray(dadosBrutos) && dadosBrutos.length === 0);
+    if (semDados) {
+      state.carregando = false;
+      state.empresaAcao = '';
+      setErro('O servidor criou o perfil mas não retornou os dados. Recarregue a página e verifique se o perfil foi criado antes de tentar novamente.');
+      return;
+    }
+
+    var criada = Array.isArray(dadosBrutos) ? dadosBrutos[0] : dadosBrutos;
     var criadaId = criada && (criada.id || criada.empresa_id);
 
-    if (criadaId) {
-      await db
-        .from('configuracoes')
-        .upsert({ empresa_id: criadaId, duplicados_ativo: true }, { onConflict: 'empresa_id' });
-      var tokCriar = await tokenSessao();
-      if (tokCriar) {
-        await fetch('/api/atualizar-empresa', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + tokCriar },
-          body: JSON.stringify({ empresaId: criadaId, nome: nome, tipoPerfil: tipoPerfil }),
-        });
+    if (!criadaId) {
+      state.carregando = false;
+      state.empresaAcao = '';
+      setErro('Perfil criado, mas o identificador não foi reconhecido. Recarregue a página para verificar.');
+      return;
+    }
+
+    await db
+      .from('configuracoes')
+      .upsert({ empresa_id: criadaId, duplicados_ativo: true }, { onConflict: 'empresa_id' });
+
+    var tokCriar = await tokenSessao();
+    if (tokCriar) {
+      var respostaTipo = await fetch('/api/atualizar-empresa', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + tokCriar },
+        body: JSON.stringify({ empresaId: criadaId, nome: nome, tipoPerfil: tipoPerfil }),
+      });
+      if (!respostaTipo.ok) {
+        console.warn('criarEmpresaMobile: tipo_perfil não aplicado (API retornou ' + respostaTipo.status + ')');
       }
+    } else {
+      console.warn('criarEmpresaMobile: sem token — tipo_perfil não aplicado');
     }
 
     state.modalMenu = '';
     state.empresaAcao = '';
     state.empresaExclusaoAberta = false;
+    state.empresaCriarAberta = false;
     state.novaEmpresaTipoPerfil = 'empresa';
     await carregarEmpresas(state.usuario.id);
     await carregarDados();
@@ -2151,6 +2173,23 @@
     state.editEmpresaLogin = '';
     state.editEmpresaSenha = '';
     state.editEmpresaTipoPerfil = 'empresa';
+    state.erro = '';
+    render();
+  }
+
+  function abrirCriarEmpresaMobile() {
+    state.empresaCriarAberta = true;
+    state.empresaEdicaoAberta = false;
+    state.empresaExclusaoAberta = false;
+    state.novaEmpresaTipoPerfil = 'empresa';
+    state.erro = '';
+    render();
+  }
+
+  function cancelarCriarEmpresaMobile() {
+    if (state.carregando) return;
+    state.empresaCriarAberta = false;
+    state.novaEmpresaTipoPerfil = 'empresa';
     state.erro = '';
     render();
   }
@@ -3280,14 +3319,14 @@
             '</div>' +
           '</div>' +
           '<div class="grid gap-2">' +
-            menuBotaoHtml('menu-dashboard', 'Dashboard', 'Visao principal do mes', '&#8962;') +
+            menuBotaoHtml('menu-dashboard', 'Dashboard', 'Visão principal do mês', '&#8962;') +
             menuBotaoHtml('menu-configurar-resumo', 'Configurar resumo', 'Exibir e ocultar cards', '&#9776;') +
-            menuBotaoHtml('menu-organizar-dashboard', 'Organizar dashboard', 'Definir ordem dos cards', '&#8597;') +
-            menuBotaoHtml('menu-usuario', 'Usuario', perfilFormatado(state.empresa && state.empresa.perfil), 'U') +
-            menuBotaoHtml('menu-gerenciar', 'Gerenciar perfil', 'Dados e acesso do perfil', 'E') +
-            menuBotaoHtml('menu-categorias', 'Cadastrar despesas', 'Adicionar tipo de despesa', '+') +
-            menuBotaoHtml('menu-ajuda-categorias', 'Instrucoes sobre categorias', 'Como organizar seus gastos', '?') +
-            (isStandalone() ? '' : menuBotaoHtml('menu-instalar', 'Instalar app', 'Adicionar a tela inicial', '&#8681;')) +
+            menuBotaoHtml('menu-organizar-dashboard', 'Organizar dashboard', 'Definir a ordem dos cards', '&#8597;') +
+            menuBotaoHtml('menu-usuario', 'Usuários', perfilFormatado(state.empresa && state.empresa.perfil), 'U') +
+            menuBotaoHtml('menu-gerenciar', 'Gerenciar perfil', 'Editar, criar ou excluir perfil', 'P') +
+            menuBotaoHtml('menu-categorias', 'Cadastrar despesas', 'Adicionar tipos de despesa', '+') +
+            menuBotaoHtml('menu-ajuda-categorias', 'Instruções de categorias', 'Como organizar seus gastos', '?') +
+            (isStandalone() ? '' : menuBotaoHtml('menu-instalar', 'Instalar app', 'Adicionar à tela inicial', '&#8681;')) +
             '<button id="menu-duplicados" type="button" class="rounded-2xl border ' + (state.darkMode ? 'border-slate-800 bg-slate-900' : 'border-slate-200 bg-white') + ' p-3 text-left shadow-sm"><div class="flex items-center gap-3"><span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-cyan-50 text-xs font-black text-cyan-700">D</span><span class="min-w-0 flex-1"><span class="block text-xs font-black">Duplicados</span><span class="mt-0.5 block truncate text-[10px] font-semibold text-slate-500">' + (state.duplicadosAtivo ? 'Avisar despesas repetidas' : 'Nao avisar repeticoes') + '</span></span><span class="relative h-6 w-11 shrink-0 rounded-full p-0.5 ' + (state.duplicadosAtivo ? 'bg-emerald-500' : 'bg-rose-500') + '"><span class="block h-5 w-5 rounded-full bg-white shadow-sm transition-transform ' + (state.duplicadosAtivo ? 'translate-x-5' : 'translate-x-0') + '"></span></span></div></button>' +
             '<button id="menu-tema" type="button" class="rounded-2xl border ' + (state.darkMode ? 'border-slate-800 bg-slate-900' : 'border-slate-200 bg-white') + ' p-3 text-left shadow-sm"><div class="flex items-center gap-3"><span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-cyan-50 text-xs font-black text-cyan-700">' + (state.darkMode ? 'ON' : 'OFF') + '</span><span class="min-w-0 flex-1"><span class="block text-xs font-black">Modo escuro</span><span class="mt-0.5 block truncate text-[10px] font-semibold text-slate-500">' + (state.darkMode ? 'Ativo' : 'Inativo') + '</span></span></div></button>' +
             '<button id="menu-feedback" type="button" class="rounded-2xl border border-cyan-200 bg-cyan-50 p-3 text-left shadow-sm active:scale-[0.99]"><div class="flex items-center gap-3"><span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-sm font-black text-white" style="background:linear-gradient(135deg,#003E73,#00A6C8)">!</span><span class="min-w-0 flex-1"><span class="block text-xs font-black text-slate-900">Duvidas e Sugestoes</span><span class="mt-0.5 block truncate text-[10px] font-semibold text-cyan-800">Ajude a melhorar o AvantaLab</span></span></div></button>' +
@@ -3320,7 +3359,7 @@
       'instalar-android': 'Instalar app',
       termos: 'Termos de Uso',
       privacidade: 'Privacidade',
-      feedback: 'Duvidas e Sugestoes',
+      feedback: 'Dúvidas e Sugestões',
     }[state.modalMenu] || 'Menu';
 
     return (
@@ -3568,56 +3607,100 @@
     var tipoAtual = normalizarTipoPerfil(state.empresa && state.empresa.tipo_perfil);
     var tipoEdicao = normalizarTipoPerfil(state.editEmpresaTipoPerfil);
     var tipoNovo = normalizarTipoPerfil(state.novaEmpresaTipoPerfil);
+    var algumAberto = state.empresaEdicaoAberta || state.empresaCriarAberta || state.empresaExclusaoAberta;
 
-    return (
-      '<div class="grid gap-3 text-sm">' +
-        '<div class="rounded-2xl bg-slate-50 p-4">' +
-          '<p class="text-[10px] font-black uppercase tracking-wide text-slate-400">Perfil atual</p>' +
-          '<p class="mt-1 font-black">' + escapeHtml(nomeEmpresa(state.empresa)) + '</p>' +
-          '<p class="mt-1 text-xs font-semibold text-slate-500">Tipo: ' + escapeHtml(rotuloTipoPerfil(tipoAtual)) + ' &middot; Acesso: ' + escapeHtml(perfilFormatado(state.empresa && state.empresa.perfil)) + '</p>' +
-        '</div>' +
-        (podeEditar
-          ? (!state.empresaEdicaoAberta
-              ? '<button id="abrir-edicao-empresa-mobile" type="button" class="h-11 rounded-xl bg-slate-900 px-4 text-sm font-black uppercase tracking-wide text-white shadow-md">Editar dados</button>'
-              : '<div class="grid gap-2 rounded-2xl border border-cyan-100 bg-cyan-50/70 p-3">' +
-                  '<p class="text-[10px] font-black uppercase tracking-wide text-cyan-800">Editar perfil atual</p>' +
-                  '<p class="text-[10px] font-black uppercase tracking-wide text-slate-500">Tipo do perfil</p>' +
-                  seletorTipoPerfilHtml('edit-tipo', tipoEdicao) +
-                  '<input id="editar-empresa-nome" value="' + escapeHtml(state.editEmpresaNome) + '" placeholder="' + escapeHtml(rotuloNomePerfil(tipoEdicao)) + '" style="font-size:16px" class="h-11 rounded-md border border-cyan-100 bg-white px-3 text-base font-bold text-slate-900 outline-none focus:border-cyan-500" />' +
-                  '<input id="editar-empresa-login" value="' + escapeHtml(state.editEmpresaLogin) + '" placeholder="Login ou email" style="font-size:16px" class="h-11 rounded-md border border-cyan-100 bg-white px-3 text-base font-bold text-slate-900 outline-none focus:border-cyan-500" />' +
-                  '<input id="editar-empresa-senha" type="password" placeholder="Nova senha (opcional)" style="font-size:16px" class="h-11 rounded-md border border-cyan-100 bg-white px-3 text-base font-bold text-slate-900 outline-none focus:border-cyan-500" />' +
-                  (gestorMaster ? '<p class="text-xs font-semibold leading-relaxed text-cyan-900">Para Gestor Master, a senha pode precisar ser alterada pela recuperacao de senha.</p>' : '') +
-                  '<div class="grid grid-cols-2 gap-2">' +
-                    '<button id="cancelar-edicao-empresa-mobile" type="button" class="h-10 rounded-xl bg-white px-3 text-xs font-black uppercase tracking-wide text-slate-600">Cancelar</button>' +
-                    '<button id="salvar-edicao-empresa-mobile" type="button" class="h-10 rounded-xl bg-cyan-700 px-3 text-xs font-black uppercase tracking-wide text-white">' + (state.empresaAcao === 'editar' ? 'Salvando...' : 'Salvar') + '</button>' +
-                  '</div>' +
-                '</div>')
-          : '<p class="rounded-2xl bg-slate-50 p-3 text-xs font-semibold text-slate-500">Somente Gestor Master e Administrador podem editar os dados do perfil financeiro.</p>') +
-        '<div class="grid gap-2 rounded-2xl border border-emerald-100 bg-emerald-50/70 p-3">' +
-          '<p class="text-[10px] font-black uppercase tracking-wide text-emerald-800">Criar novo perfil</p>' +
-          '<p class="text-[10px] font-black uppercase tracking-wide text-slate-500">Tipo do perfil</p>' +
-          seletorTipoPerfilHtml('novo-tipo', tipoNovo) +
-          '<input id="nova-empresa-nome" placeholder="' + escapeHtml(rotuloNomePerfil(tipoNovo)) + '" style="font-size:16px" class="h-11 rounded-md border border-emerald-100 bg-white px-3 text-base font-bold text-slate-900 outline-none focus:border-emerald-500" />' +
-          '<button id="criar-empresa-mobile" type="button" class="h-11 rounded-xl bg-emerald-600 px-4 text-sm font-black uppercase tracking-wide text-white">' + (state.empresaAcao === 'criar' ? 'Criando...' : 'Criar novo perfil') + '</button>' +
-        '</div>' +
-        '<button id="trocar-empresa-gerenciar" type="button" class="h-11 rounded-xl px-4 text-sm font-black uppercase tracking-wide ' + (podeTrocar ? 'bg-cyan-600 text-white' : 'bg-slate-100 text-slate-400') + '"' + (podeTrocar ? '' : ' disabled') + '>Trocar perfil</button>' +
-        (gestorMaster
-          ? (!state.empresaExclusaoAberta
-              ? '<button id="abrir-exclusao-empresa-mobile" type="button" class="h-11 rounded-xl border border-rose-200 bg-white px-4 text-sm font-black uppercase tracking-wide text-rose-700">Excluir perfil</button>'
-              : '<div class="rounded-2xl border border-rose-100 bg-rose-50/70 p-4">' +
-                  '<p class="text-[10px] font-black uppercase tracking-wide text-rose-700">Excluir perfil atual</p>' +
-                  '<p class="mt-2 text-xs font-bold leading-relaxed text-rose-800">Esta acao remove o perfil atual e seus dados. Para confirmar, digite exatamente o nome abaixo.</p>' +
-                  '<p class="mt-2 text-sm font-black text-rose-900">' + escapeHtml(nomeEmpresa(state.empresa)) + '</p>' +
-                  '<input id="excluir-empresa-confirmacao" placeholder="Digite o nome do perfil" style="font-size:16px" class="mt-3 h-11 w-full rounded-md border border-rose-100 bg-white px-3 text-base font-bold text-slate-900 outline-none focus:border-rose-400" />' +
-                  '<div class="mt-3 grid gap-2">' +
-                    '<button id="excluir-empresa-mobile" type="button" class="h-11 w-full rounded-xl border border-rose-200 bg-white px-4 text-sm font-black uppercase tracking-wide text-rose-700">' + (state.empresaAcao === 'excluir' ? 'Excluindo...' : 'Excluir definitivamente') + '</button>' +
-                    '<button id="cancelar-exclusao-empresa-mobile" type="button" class="h-10 w-full rounded-xl bg-slate-100 px-4 text-xs font-black uppercase tracking-wide text-slate-600">Cancelar exclusao</button>' +
-                  '</div>' +
-                '</div>')
-          : '<p class="rounded-2xl bg-slate-50 p-3 text-xs font-semibold text-slate-500">Somente o Gestor Master pode excluir o perfil atual.</p>') +
-        alertaHtml().replace('mt-4', '') +
+    var cabecalho = (
+      '<div class="rounded-2xl bg-slate-50 p-4">' +
+        '<p class="text-[10px] font-black uppercase tracking-wide text-slate-400">Perfil atual</p>' +
+        '<p class="mt-1 font-black">' + escapeHtml(nomeEmpresa(state.empresa)) + '</p>' +
+        '<p class="mt-1 text-xs font-semibold text-slate-500">Tipo: ' + escapeHtml(rotuloTipoPerfil(tipoAtual)) + ' &middot; Acesso: ' + escapeHtml(perfilFormatado(state.empresa && state.empresa.perfil)) + '</p>' +
       '</div>'
     );
+
+    // ── Vista: lista de ações (estado neutro) ──────────────────────────────
+    if (!algumAberto) {
+      return (
+        '<div class="grid gap-3 text-sm">' +
+          cabecalho +
+          '<div class="grid gap-2">' +
+            (podeEditar
+              ? '<button id="abrir-edicao-empresa-mobile" type="button" class="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-left text-sm font-black text-slate-800 transition active:scale-[0.99]">✏️  Editar dados</button>'
+              : '') +
+            '<button id="abrir-criar-empresa-mobile" type="button" class="w-full rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-left text-sm font-black text-emerald-800 transition active:scale-[0.99]">＋  Criar novo perfil</button>' +
+            '<button id="trocar-empresa-gerenciar" type="button" class="w-full rounded-xl border px-4 py-3 text-left text-sm font-black transition ' + (podeTrocar ? 'border-cyan-200 bg-cyan-50 text-cyan-800 active:scale-[0.99]' : 'border-slate-100 bg-slate-50 text-slate-400 cursor-not-allowed') + '"' + (podeTrocar ? '' : ' disabled') + '>⇄  Trocar perfil</button>' +
+            (gestorMaster
+              ? '<button id="abrir-exclusao-empresa-mobile" type="button" class="w-full rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-left text-sm font-black text-rose-700 transition active:scale-[0.99]">✕  Excluir perfil</button>'
+              : '') +
+          '</div>' +
+          alertaHtml().replace('mt-4', '') +
+        '</div>'
+      );
+    }
+
+    // ── Vista: editar dados ────────────────────────────────────────────────
+    if (state.empresaEdicaoAberta) {
+      return (
+        '<div class="grid gap-3 text-sm">' +
+          cabecalho +
+          '<div class="grid gap-2 rounded-2xl border border-cyan-100 bg-cyan-50/70 p-3">' +
+            '<p class="text-[10px] font-black uppercase tracking-wide text-cyan-800">Editar perfil atual</p>' +
+            '<p class="text-[10px] font-black uppercase tracking-wide text-slate-500">Tipo do perfil</p>' +
+            seletorTipoPerfilHtml('edit-tipo', tipoEdicao) +
+            '<input id="editar-empresa-nome" value="' + escapeHtml(state.editEmpresaNome) + '" placeholder="' + escapeHtml(rotuloNomePerfil(tipoEdicao)) + '" style="font-size:16px" class="h-11 rounded-md border border-cyan-100 bg-white px-3 text-base font-bold text-slate-900 outline-none focus:border-cyan-500" />' +
+            '<input id="editar-empresa-login" value="' + escapeHtml(state.editEmpresaLogin) + '" placeholder="Login ou email" style="font-size:16px" class="h-11 rounded-md border border-cyan-100 bg-white px-3 text-base font-bold text-slate-900 outline-none focus:border-cyan-500" />' +
+            '<input id="editar-empresa-senha" type="password" placeholder="Nova senha (opcional)" style="font-size:16px" class="h-11 rounded-md border border-cyan-100 bg-white px-3 text-base font-bold text-slate-900 outline-none focus:border-cyan-500" />' +
+            (gestorMaster ? '<p class="text-xs font-semibold leading-relaxed text-cyan-900">Para Gestor Master, a senha deve ser alterada pela recuperação de senha.</p>' : '') +
+            '<div class="grid grid-cols-2 gap-2">' +
+              '<button id="cancelar-edicao-empresa-mobile" type="button" class="h-10 rounded-xl bg-white border border-slate-200 px-3 text-xs font-black uppercase tracking-wide text-slate-600">Cancelar</button>' +
+              '<button id="salvar-edicao-empresa-mobile" type="button" class="h-10 rounded-xl bg-cyan-700 px-3 text-xs font-black uppercase tracking-wide text-white">' + (state.empresaAcao === 'editar' ? 'Salvando...' : 'Salvar') + '</button>' +
+            '</div>' +
+          '</div>' +
+          alertaHtml().replace('mt-4', '') +
+        '</div>'
+      );
+    }
+
+    // ── Vista: criar novo perfil ───────────────────────────────────────────
+    if (state.empresaCriarAberta) {
+      return (
+        '<div class="grid gap-3 text-sm">' +
+          cabecalho +
+          '<div class="grid gap-2 rounded-2xl border border-emerald-100 bg-emerald-50/70 p-3">' +
+            '<p class="text-[10px] font-black uppercase tracking-wide text-emerald-800">Criar novo perfil</p>' +
+            '<p class="text-[10px] font-black uppercase tracking-wide text-slate-500">Tipo do perfil</p>' +
+            seletorTipoPerfilHtml('novo-tipo', tipoNovo) +
+            '<input id="nova-empresa-nome" placeholder="' + escapeHtml(rotuloNomePerfil(tipoNovo)) + '" style="font-size:16px" class="h-11 rounded-md border border-emerald-100 bg-white px-3 text-base font-bold text-slate-900 outline-none focus:border-emerald-500" />' +
+            '<div class="grid grid-cols-2 gap-2">' +
+              '<button id="cancelar-criar-empresa-mobile" type="button" class="h-10 rounded-xl bg-white border border-slate-200 px-3 text-xs font-black uppercase tracking-wide text-slate-600">Cancelar</button>' +
+              '<button id="criar-empresa-mobile" type="button" class="h-10 rounded-xl bg-emerald-600 px-3 text-xs font-black uppercase tracking-wide text-white">' + (state.empresaAcao === 'criar' ? 'Criando...' : 'Criar perfil') + '</button>' +
+            '</div>' +
+          '</div>' +
+          alertaHtml().replace('mt-4', '') +
+        '</div>'
+      );
+    }
+
+    // ── Vista: excluir perfil ──────────────────────────────────────────────
+    if (state.empresaExclusaoAberta) {
+      return (
+        '<div class="grid gap-3 text-sm">' +
+          cabecalho +
+          '<div class="rounded-2xl border border-rose-100 bg-rose-50/70 p-4">' +
+            '<p class="text-[10px] font-black uppercase tracking-wide text-rose-700">Excluir perfil atual</p>' +
+            '<p class="mt-2 text-xs font-bold leading-relaxed text-rose-800">Esta ação remove o perfil e todos os seus dados. Para confirmar, digite exatamente o nome abaixo.</p>' +
+            '<p class="mt-2 text-sm font-black text-rose-900">' + escapeHtml(nomeEmpresa(state.empresa)) + '</p>' +
+            '<input id="excluir-empresa-confirmacao" placeholder="Digite o nome do perfil" style="font-size:16px" class="mt-3 h-11 w-full rounded-md border border-rose-100 bg-white px-3 text-base font-bold text-slate-900 outline-none focus:border-rose-400" />' +
+            '<div class="mt-3 grid gap-2">' +
+              '<button id="excluir-empresa-mobile" type="button" class="h-11 w-full rounded-xl bg-rose-600 px-4 text-xs font-black uppercase tracking-wide text-white">' + (state.empresaAcao === 'excluir' ? 'Excluindo...' : 'Excluir definitivamente') + '</button>' +
+              '<button id="cancelar-exclusao-empresa-mobile" type="button" class="h-10 w-full rounded-xl bg-white border border-slate-200 px-4 text-xs font-black uppercase tracking-wide text-slate-600">Cancelar</button>' +
+            '</div>' +
+          '</div>' +
+          alertaHtml().replace('mt-4', '') +
+        '</div>'
+      );
+    }
+
+    return '<div class="text-sm text-slate-500 p-4">Carregando...</div>';
   }
 
   function organizarDashboardHtml() {
@@ -4023,6 +4106,8 @@
     bind('termos-mobile', function () { abrirModalMenu('termos'); });
     bind('privacidade-mobile', function () { abrirModalMenu('privacidade'); });
     bind('abrir-edicao-empresa-mobile', abrirEdicaoEmpresaMobile);
+    bind('abrir-criar-empresa-mobile', abrirCriarEmpresaMobile);
+    bind('cancelar-criar-empresa-mobile', cancelarCriarEmpresaMobile);
     bind('cancelar-edicao-empresa-mobile', cancelarEdicaoEmpresaMobile);
     bind('salvar-edicao-empresa-mobile', salvarEdicaoEmpresaMobile);
     bind('criar-empresa-mobile', criarEmpresaMobile);
@@ -4761,7 +4846,7 @@
           return Promise.all(
             keys
               .filter(function (key) {
-                return key.indexOf('avantalab-mobile-') === 0 && key !== 'avantalab-mobile-v75';
+                return key.indexOf('avantalab-mobile-') === 0 && key !== 'avantalab-mobile-v76';
               })
               .map(function (key) {
                 return caches.delete(key);
