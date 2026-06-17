@@ -10,6 +10,7 @@ type ModalLogoProps = {
   aberto: boolean;
   aoFechar: () => void;
   aoLimpar: () => void;
+  aoOcultar: () => void;
 
   bgCard: string;
   textMuted: string;
@@ -33,6 +34,7 @@ export default function ModalLogo({
   aberto,
   aoFechar,
   aoLimpar,
+  aoOcultar,
 
   bgCard,
   textMuted,
@@ -103,7 +105,7 @@ export default function ModalLogo({
               style={estiloTemaPrimario}
               className="w-full py-3 rounded-xl font-bold shadow hover:brightness-110 cursor-pointer"
             >
-              Escolher imagem do computador
+              Adicionar logo
             </button>
           </div>
 
@@ -207,13 +209,19 @@ export default function ModalLogo({
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-2">
+          <div className="grid grid-cols-3 gap-2">
             <button
               type="button"
               onClick={aoLimpar}
-              className={`py-3 rounded-xl font-bold border cursor-pointer hover:brightness-95 transition-all ${
-                'border-slate-300 text-slate-600 bg-slate-100 hover:bg-slate-200'
-              }`}
+              className="py-2.5 rounded-xl font-bold border cursor-pointer transition-all border-slate-300 text-slate-600 bg-slate-100 hover:bg-slate-200 text-xs"
+            >
+              Limpar logo
+            </button>
+
+            <button
+              type="button"
+              onClick={aoOcultar}
+              className="py-2.5 rounded-xl font-bold border cursor-pointer transition-all border-slate-300 text-slate-600 bg-slate-100 hover:bg-slate-200 text-xs"
             >
               Deixar em branco
             </button>
@@ -222,7 +230,7 @@ export default function ModalLogo({
               type="button"
               onClick={aoFechar}
               style={estiloTemaPrimario}
-              className="py-3 rounded-xl font-bold shadow hover:brightness-110 cursor-pointer"
+              className="py-2.5 rounded-xl font-bold shadow hover:brightness-110 cursor-pointer text-xs"
             >
               Concluir
             </button>

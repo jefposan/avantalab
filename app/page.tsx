@@ -2685,6 +2685,25 @@ const limparLogo = async () => {
   setModalLogo(false);
 };
 
+const ocultarLogo = async () => {
+  const defaultSettings = { scale: 100, x: 0, y: 0 };
+  setLogoUrl('__blank__');
+  setLogoSettings(defaultSettings);
+  const salvo = await salvarConfiguracoesBanco({
+    empresaId: empresaId!,
+    corPrimaria,
+    darkMode,
+    duplicadosAtivo,
+    logoUrl: '__blank__',
+    logoSettings: defaultSettings,
+  });
+  if (!salvo) {
+    abrirAviso('Erro ao ocultar logo', 'Não foi possível salvar a configuração.', undefined, 'erro');
+    return;
+  }
+  setModalLogo(false);
+};
+
 const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
   const file = e.target.files?.[0];
 
@@ -5807,6 +5826,7 @@ if (isTelaMobile) {
   aberto={modalLogo}
   aoFechar={() => setModalLogo(false)}
   aoLimpar={limparLogo}
+  aoOcultar={ocultarLogo}
 
   bgCard={bgCard}
   textMuted={textMuted}
@@ -7169,35 +7189,39 @@ name="novo-usuario-login"
     <div className="mx-auto flex w-full max-w-7xl items-center gap-4 px-6 xl:gap-6 xl:px-8">
   {/* LOGO */}
   <div
-    className="w-44 h-20 xl:w-64 xl:h-24 flex items-center justify-center overflow-hidden relative cursor-pointer shrink-0"
+    className="w-44 h-20 xl:w-64 xl:h-24 flex items-center justify-center relative cursor-pointer shrink-0"
     onClick={() => {
       setAbaAtiva('Dashboard');
       setMesAtivo(null);
       setMenuResponsivoAberto(false);
     }}
     style={
-      !logoUrl
-        ? {
-            border: `2px dashed ${darkMode ? '#475569' : '#cbd5e1'}`,
-            borderRadius: '0.5rem',
-          }
+      !logoUrl || logoUrl === '__blank__'
+        ? logoUrl === '__blank__'
+          ? {}
+          : {
+              border: `2px dashed ${darkMode ? '#475569' : '#cbd5e1'}`,
+              borderRadius: '0.5rem',
+            }
         : {}
     }
   >
-    {logoUrl ? (
-      <img
-        src={logoUrl}
-        alt="Logo"
-        className="absolute"
-        style={{
-          transform: `translate(${logoSettings.x}px, ${logoSettings.y}px) scale(${logoSettings.scale / 100})`,
-          objectFit: 'contain',
-          width: '100%',
-          height: '100%',
-          background: 'transparent',
-        }}
-      />
-    ) : (
+    {logoUrl && logoUrl !== '__blank__' ? (
+      <div className="absolute inset-0 overflow-hidden rounded-lg">
+        <img
+          src={logoUrl}
+          alt="Logo"
+          className="absolute"
+          style={{
+            transform: `translate(${logoSettings.x}px, ${logoSettings.y}px) scale(${logoSettings.scale / 100})`,
+            objectFit: 'contain',
+            width: '100%',
+            height: '100%',
+            background: 'transparent',
+          }}
+        />
+      </div>
+    ) : logoUrl !== '__blank__' ? (
       <span className="px-3 text-center leading-snug text-slate-500">
         <span className="block text-[11px] font-semibold">
           Acesse os Ajustes e adicione sua
@@ -7206,7 +7230,7 @@ name="novo-usuario-login"
           LOGOMARCA
         </span>
       </span>
-    )}
+    ) : null}
   </div>
 
   <button
