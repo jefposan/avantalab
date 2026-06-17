@@ -7195,18 +7195,9 @@ name="novo-usuario-login"
       setMesAtivo(null);
       setMenuResponsivoAberto(false);
     }}
-    style={
-      !logoUrl || logoUrl === '__blank__'
-        ? logoUrl === '__blank__'
-          ? {}
-          : {
-              border: `2px dashed ${darkMode ? '#475569' : '#cbd5e1'}`,
-              borderRadius: '0.5rem',
-            }
-        : {}
-    }
   >
     {logoUrl && logoUrl !== '__blank__' ? (
+      /* Imagem: overflow-hidden no wrapper interno, não no container */
       <div className="absolute inset-0 overflow-hidden rounded-lg">
         <img
           src={logoUrl}
@@ -7222,14 +7213,25 @@ name="novo-usuario-login"
         />
       </div>
     ) : logoUrl !== '__blank__' ? (
-      <span className="px-3 text-center leading-snug text-slate-500">
-        <span className="block text-[11px] font-semibold">
-          Acesse os Ajustes e adicione sua
+      /* Placeholder: borda num elemento absolute com inset 2px
+         para garantir que a borda nunca toque o limite de clipping do header */
+      <>
+        <div
+          className="absolute pointer-events-none rounded-lg"
+          style={{
+            inset: '2px',
+            border: `2px dashed ${darkMode ? '#475569' : '#cbd5e1'}`,
+          }}
+        />
+        <span className="relative px-3 text-center leading-snug text-slate-500">
+          <span className="block text-[11px] font-semibold">
+            Acesse os Ajustes e adicione sua
+          </span>
+          <span className="mt-1 block text-base font-black tracking-wide">
+            LOGOMARCA
+          </span>
         </span>
-        <span className="mt-1 block text-base font-black tracking-wide">
-          LOGOMARCA
-        </span>
-      </span>
+      </>
     ) : null}
   </div>
 
