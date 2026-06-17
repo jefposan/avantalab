@@ -4549,7 +4549,7 @@
           return Promise.all(
             keys
               .filter(function (key) {
-                return key.indexOf('avantalab-mobile-') === 0 && key !== 'avantalab-mobile-v62';
+                return key.indexOf('avantalab-mobile-') === 0 && key !== 'avantalab-mobile-v70';
               })
               .map(function (key) {
                 return caches.delete(key);
@@ -4566,7 +4566,9 @@
     });
 
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/mobile-sw.js').catch(function () {});
+      navigator.serviceWorker.register('/mobile-sw.js?v=70').then(function (registro) {
+        if (registro && registro.update) registro.update();
+      }).catch(function () {});
     }
 
     configurarPullToRefresh();

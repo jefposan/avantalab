@@ -8265,7 +8265,7 @@ setAjustesAberto(false);
         lucroOperacional={lucroOperacional}
   inputFaturamento={inputFaturamento}
   setInputFaturamento={setInputFaturamento}
-  placeholderFaturamento={formatarValorCampo(faturamentos[mesFaturamento] || 0)}
+  placeholderFaturamento="0,00"
   solicitarFaturamentoDashboard={solicitarFaturamentoDashboard}
         entradaFaturamentoDia={entradaFaturamentoDia}
         setEntradaFaturamentoDia={setEntradaFaturamentoDia}
