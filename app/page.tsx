@@ -7189,7 +7189,7 @@ name="novo-usuario-login"
     <div className="mx-auto flex w-full max-w-7xl items-center gap-4 px-6 xl:gap-6 xl:px-8">
   {/* LOGO */}
   <div
-    className="w-44 h-20 xl:w-64 xl:h-24 flex items-center justify-center relative cursor-pointer shrink-0 z-[20]"
+    className="w-44 h-[72px] xl:w-64 xl:h-[88px] flex items-center justify-center relative cursor-pointer shrink-0 mb-2"
     onClick={() => {
       setAbaAtiva('Dashboard');
       setMesAtivo(null);
