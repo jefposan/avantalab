@@ -3353,28 +3353,57 @@
 
   function modalLancamentoHtml() {
     var despesaAtiva = state.tipoLancamento === 'despesa';
+    var novaAberta = state.novaDespesaAberta;
 
     return (
       '<div id="modal-lancamento-overlay" class="fixed inset-0 z-40 flex items-center justify-center overflow-hidden bg-slate-950/60 px-3 py-4">' +
         '<section class="mx-auto max-h-[calc(100dvh-32px)] w-full max-w-md overflow-x-hidden overflow-y-auto rounded-3xl bg-white p-4 shadow-2xl overscroll-contain">' +
-          '<div class="-mx-4 -mt-4 mb-4 flex items-center justify-between rounded-t-3xl border-b border-cyan-100 bg-cyan-50/90 px-4 py-3">' +
-            '<h2 class="text-base font-black">Novo lancamento</h2>' +
-            '<button id="fechar-lancamento" type="button" class="flex h-9 w-9 items-center justify-center rounded-full bg-slate-100 text-xl text-slate-600">&times;</button>' +
-          '</div>' +
-          '<div class="mb-3 grid grid-cols-2 gap-2 rounded-xl bg-slate-100 p-1">' +
-            '<button id="tipo-despesa" type="button" class="h-9 rounded-lg text-sm font-black transition ' + (despesaAtiva ? 'bg-red-600 text-white shadow-sm' : 'text-slate-500') + '">Despesa</button>' +
-            '<button id="tipo-receita" type="button" class="h-9 rounded-lg text-sm font-black transition ' + (!despesaAtiva ? 'bg-emerald-600 text-white shadow-sm' : 'text-slate-500') + '">Receita</button>' +
-          '</div>' +
-          alertaHtml().replace('mt-4', 'mb-3') +
-          (despesaAtiva ? modalDespesaCamposHtml() : modalReceitaCamposHtml()) +
+          (novaAberta
+            ? '<div class="-mx-4 -mt-4 mb-5 flex items-center gap-3 rounded-t-3xl border-b border-sky-100 bg-sky-50 px-4 py-3">' +
+                '<button id="fechar-nova-despesa" type="button" class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-sky-100 text-lg font-black text-slate-700">&larr;</button>' +
+                '<div class="min-w-0 flex-1">' +
+                  '<p class="text-[10px] font-black uppercase tracking-wide text-sky-500">Novo lan&ccedil;amento &rsaquo; Despesa</p>' +
+                  '<h2 class="text-sm font-black text-sky-900">Cadastrar tipo de despesa</h2>' +
+                '</div>' +
+              '</div>' +
+              novaDespesaFormHtml()
+            : '<div class="-mx-4 -mt-4 mb-4 flex items-center justify-between rounded-t-3xl border-b border-cyan-100 bg-cyan-50/90 px-4 py-3">' +
+                '<h2 class="text-base font-black">Novo lancamento</h2>' +
+                '<button id="fechar-lancamento" type="button" class="flex h-9 w-9 items-center justify-center rounded-full bg-slate-100 text-xl text-slate-600">&times;</button>' +
+              '</div>' +
+              '<div class="mb-3 grid grid-cols-2 gap-2 rounded-xl bg-slate-100 p-1">' +
+                '<button id="tipo-despesa" type="button" class="h-9 rounded-lg text-sm font-black transition ' + (despesaAtiva ? 'bg-red-600 text-white shadow-sm' : 'text-slate-500') + '">Despesa</button>' +
+                '<button id="tipo-receita" type="button" class="h-9 rounded-lg text-sm font-black transition ' + (!despesaAtiva ? 'bg-emerald-600 text-white shadow-sm' : 'text-slate-500') + '">Receita</button>' +
+              '</div>' +
+              alertaHtml().replace('mt-4', 'mb-3') +
+              (despesaAtiva ? modalDespesaCamposHtml() : modalReceitaCamposHtml())
+          ) +
         '</section>' +
       '</div>'
     );
   }
 
-  function modalDespesaCamposHtml() {
+  function novaDespesaFormHtml() {
     var categorias = categoriasDoPerfil(state.empresa && state.empresa.tipo_perfil);
-    var novaAberta = state.novaDespesaAberta;
+    return (
+      '<div class="grid gap-4">' +
+        '<label class="grid gap-1.5 text-xs font-black uppercase tracking-wide text-slate-600">Nome da despesa' +
+          '<input id="nova-despesa-nome" type="text" value="' + escapeHtml(state.novaDespesaNome) + '" placeholder="Ex: Plano de saude" style="font-size:16px" autocomplete="off" class="h-11 w-full rounded-lg border border-slate-300 bg-white px-3 text-base font-bold normal-case tracking-normal outline-none focus:border-sky-400 focus:ring-1 focus:ring-sky-200" />' +
+        '</label>' +
+        '<label class="grid gap-1.5 text-xs font-black uppercase tracking-wide text-slate-600">Categoria' +
+          '<select id="nova-despesa-categoria" style="font-size:16px" class="h-11 w-full rounded-lg border border-slate-300 bg-white px-3 text-base font-bold normal-case tracking-normal">' +
+            categorias.map(function (cat) {
+              return '<option value="' + escapeHtml(cat.nome) + '"' + (cat.nome === state.novaDespesaCategoria ? ' selected' : '') + '>' + escapeHtml(cat.nome) + '</option>';
+            }).join('') +
+          '</select>' +
+        '</label>' +
+        alertaHtml().replace('mt-4', 'mt-0') +
+        '<button id="salvar-nova-despesa" type="button" class="h-12 rounded-xl bg-slate-950 px-4 text-sm font-black uppercase tracking-wide text-white shadow-md">' + (state.carregando ? 'Salvando...' : 'Salvar tipo de despesa') + '</button>' +
+      '</div>'
+    );
+  }
+
+  function modalDespesaCamposHtml() {
     return (
       '<div class="grid gap-3">' +
         '<div class="flex items-end gap-6">' +
@@ -3388,25 +3417,7 @@
             '</select>' +
           '</label>' +
         '</div>' +
-        (!novaAberta
-          ? '<button id="abrir-nova-despesa" type="button" class="flex w-full items-center gap-2 rounded-xl border border-dashed border-slate-300 px-3 py-2.5 text-xs font-black text-slate-500 transition hover:border-slate-400 hover:text-slate-700">+ Cadastrar despesa</button>'
-          : '<div class="rounded-xl border border-sky-200 bg-sky-50 p-3 grid gap-2">' +
-              '<p class="text-xs font-black uppercase tracking-wide text-sky-700">Novo tipo de despesa</p>' +
-              '<label class="grid gap-1 text-xs font-black uppercase tracking-wide text-slate-600">Nome' +
-                '<input id="nova-despesa-nome" type="text" value="' + escapeHtml(state.novaDespesaNome) + '" placeholder="Ex: Plano de saude" style="font-size:16px" autocomplete="off" class="h-11 w-full rounded-md border border-sky-200 bg-white px-3 text-base font-bold normal-case tracking-normal outline-none" />' +
-              '</label>' +
-              '<label class="grid gap-1 text-xs font-black uppercase tracking-wide text-slate-600">Categoria' +
-                '<select id="nova-despesa-categoria" style="font-size:16px" class="h-11 w-full rounded-md border border-sky-200 bg-white px-3 text-base font-bold normal-case tracking-normal">' +
-                  categorias.map(function (cat) {
-                    return '<option value="' + escapeHtml(cat.nome) + '"' + (cat.nome === state.novaDespesaCategoria ? ' selected' : '') + '>' + escapeHtml(cat.nome) + '</option>';
-                  }).join('') +
-                '</select>' +
-              '</label>' +
-              '<div class="grid grid-cols-[1fr_auto] gap-2">' +
-                '<button id="salvar-nova-despesa" type="button" class="h-10 rounded-lg bg-slate-950 px-4 text-sm font-black uppercase tracking-wide text-white">' + (state.carregando ? 'Salvando...' : 'Salvar tipo') + '</button>' +
-                '<button id="fechar-nova-despesa" type="button" class="h-10 rounded-lg border border-slate-200 bg-white px-4 text-sm font-black text-slate-500">Fechar</button>' +
-              '</div>' +
-            '</div>') +
+        '<button id="abrir-nova-despesa" type="button" class="flex w-full items-center gap-2 rounded-xl border border-dashed border-slate-300 px-3 py-2.5 text-xs font-black text-slate-500 transition hover:border-slate-400 hover:text-slate-700">+ Cadastrar despesa</button>' +
         campoClaro('despesa-descricao', 'Descricao') +
         campoValor('despesa-valor', 'Valor') +
         '<button id="salvar-despesa" type="button" class="h-11 rounded-xl bg-slate-950 px-4 text-sm font-black uppercase tracking-wide text-white">' + (state.carregando ? 'Salvando...' : 'Salvar despesa') + '</button>' +
