@@ -307,6 +307,7 @@ const [despesaAnaliseAtiva, setDespesaAnaliseAtiva] = useState<{
   const [novaRecorrDescricao, setNovaRecorrDescricao] = useState('');
   const [novaRecorrDia, setNovaRecorrDia] = useState('');
   const [novaRecorrValor, setNovaRecorrValor] = useState('');
+  const [novaRecorrValorNumerico, setNovaRecorrValorNumerico] = useState(0);
   const [novaRecorrLancarAgora, setNovaRecorrLancarAgora] = useState(false);
   const [recorrEditandoId, setRecorrEditandoId] = useState<string | null>(null);
   const [editRecorrNome, setEditRecorrNome] = useState('');
@@ -1518,11 +1519,23 @@ const solicitarFaturamentoDashboard = () => {
     setModalDespesasFixas(true);
   };
 
+  const handleNovaRecorrValorChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value.replace(/\D/g, '');
+    if (!value) {
+      setNovaRecorrValor('');
+      setNovaRecorrValorNumerico(0);
+      return;
+    }
+    const numericValue = parseInt(value, 10) / 100;
+    setNovaRecorrValorNumerico(numericValue);
+    setNovaRecorrValor(formatarValorCampo(numericValue));
+  };
+
   const salvarNovaRecorrencia = async () => {
     if (!empresaId || !novaRecorrNome.trim()) return;
     setRecorrSalvando(true);
     const dia = Math.max(1, Math.min(31, Number(novaRecorrDia) || 1));
-    const valorNum = parseFloat(novaRecorrValor.replace(/\./g, '').replace(',', '.')) || 0;
+    const valorNum = novaRecorrValorNumerico;
     const resultado = await inserirRecorrencia({
       empresaId,
       nome: novaRecorrNome.trim(),
@@ -1559,6 +1572,7 @@ const solicitarFaturamentoDashboard = () => {
       setNovaRecorrDescricao('');
       setNovaRecorrDia('');
       setNovaRecorrValor('');
+      setNovaRecorrValorNumerico(0);
       setNovaRecorrLancarAgora(false);
     }
     setRecorrSalvando(false);
@@ -6266,12 +6280,9 @@ setAjustesAberto(false);
               </span>
             </label>
             {novaRecorrLancarAgora && (
-              <input type="text" value={novaRecorrValor}
-                onChange={(e) => {
-                  const raw = e.target.value.replace(/[^\d,]/g, '');
-                  setNovaRecorrValor(raw);
-                }}
-                placeholder="Valor (R$ 0,00)"
+              <input type="text" inputMode="numeric" value={novaRecorrValor}
+                onChange={handleNovaRecorrValorChange}
+                placeholder="0,00"
                 className={`h-9 w-full rounded-md border px-2.5 text-right text-xs font-bold outline-none transition focus:ring-1 ${darkMode ? 'border-slate-600 bg-slate-700 text-white' : 'border-slate-300 bg-white text-slate-700'}`}
               />
             )}
