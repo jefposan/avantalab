@@ -1994,8 +1994,10 @@
   async function salvarNovaDespesaInline() {
     if (!state.empresa) return;
 
-    var nome = (document.getElementById('nova-despesa-nome') ? document.getElementById('nova-despesa-nome').value : state.novaDespesaNome).trim();
-    var categoria = (document.getElementById('nova-despesa-categoria') ? document.getElementById('nova-despesa-categoria').value : state.novaDespesaCategoria).trim();
+    var nomeEl = document.getElementById('nova-despesa-nome');
+    var catEl = document.getElementById('nova-despesa-categoria');
+    var nome = (nomeEl ? nomeEl.value : state.novaDespesaNome).trim();
+    var categoria = (catEl ? catEl.value : state.novaDespesaCategoria).trim();
 
     if (!nome) {
       setAlerta('Informe o nome do tipo de despesa.');
@@ -2031,21 +2033,20 @@
       return;
     }
 
+    var novoNome = resposta.data && resposta.data.nome ? resposta.data.nome : formatarDescricao(nome);
     state.novaDespesaAberta = false;
     state.novaDespesaNome = '';
     state.novaDespesaCategoria = '';
     state.erro = '';
     await carregarDados();
-    var novoNome = resposta.data && resposta.data.nome ? resposta.data.nome : formatarDescricao(nome);
-    var selectDespesa = document.getElementById('despesa-nome');
-    if (selectDespesa) {
-      for (var i = 0; i < selectDespesa.options.length; i++) {
-        if (selectDespesa.options[i].value === novoNome) {
-          selectDespesa.selectedIndex = i;
-          break;
+    setTimeout(function () {
+      var sel = document.getElementById('despesa-nome');
+      if (sel) {
+        for (var i = 0; i < sel.options.length; i++) {
+          if (sel.options[i].value === novoNome) { sel.selectedIndex = i; break; }
         }
       }
-    }
+    }, 50);
     mostrarToast('Tipo cadastrado e selecionado.');
   }
 
@@ -4881,4 +4882,166 @@
           handle.setPointerCapture(event.pointerId);
         } catch (error) {}
 
-        timer = window.setTimeou
+        timer = window.setTimeout(function () {
+          state.dragDashboardId = idAtivo;
+          iniciouDrag = true;
+          calcularZonasDestino();
+          if (cardAtivo) {
+            var rect = cardAtivo.getBoundingClientRect();
+            estilosOrigem = {
+              opacity: cardAtivo.style.opacity,
+              transform: cardAtivo.style.transform,
+              filter: cardAtivo.style.filter,
+              minHeight: cardAtivo.style.minHeight,
+              outline: cardAtivo.style.outline,
+              background: cardAtivo.style.background,
+            };
+            cardAtivo.classList.add('select-none');
+            cardAtivo.style.minHeight = rect.height + 'px';
+            cardAtivo.style.opacity = '0.32';
+            cardAtivo.style.transform = 'scale(0.985)';
+            cardAtivo.style.filter = 'saturate(0.85)';
+            cardAtivo.style.outline = '1px dashed rgba(8, 145, 178, .32)';
+            cardAtivo.style.background = 'rgba(236, 254, 255, .55)';
+            criarGhost(cardAtivo, event.clientX, event.clientY);
+          }
+        }, 520);
+      });
+
+      handle.addEventListener('pointermove', function (event) {
+        if (pointerId !== event.pointerId) return;
+        if (!iniciouDrag) return;
+
+        event.preventDefault();
+        moverGhost(event.clientX, event.clientY);
+        destacarDestino(event.clientX, event.clientY);
+        rolarSeNecessario(event.clientY);
+      });
+
+      handle.addEventListener('pointerup', function (event) {
+        if (timer) {
+          window.clearTimeout(timer);
+          timer = null;
+        }
+
+        if (!state.dragDashboardId || !iniciouDrag) {
+          limparDrag();
+          return;
+        }
+
+        var destino = destacarDestino(event.clientX, event.clientY) || ultimoDestino;
+
+        if (destino && destino.id && destino.id !== state.dragDashboardId) {
+          var origem = state.dragDashboardId;
+          var idDestino = destino.id;
+          var depois = destino.depois;
+          limparDrag();
+          moverCardDashboardPara(origem, idDestino, depois);
+        } else {
+          limparDrag();
+          render();
+        }
+      });
+
+      handle.addEventListener('lostpointercapture', function () {
+        if (!iniciouDrag) {
+          limparDrag();
+        }
+      });
+
+      handle.addEventListener('pointercancel', function () {
+        limparDrag();
+      });
+    });
+  }
+  async function iniciar() {
+    try {
+      state.darkMode = localStorage.getItem('avantalab_mobile_dark') === '1';
+      state.dashboardOrdem = normalizarOrdemDashboard(JSON.parse(localStorage.getItem('avantalab_mobile_dashboard_ordem') || '[]'));
+      state.dashboardOcultos = normalizarOcultosDashboard(JSON.parse(localStorage.getItem('avantalab_mobile_dashboard_ocultos') || '[]'));
+    } catch (error) {}
+
+    if (window.caches && caches.keys) {
+      caches
+        .keys()
+        .then(function (keys) {
+          return Promise.all(
+            keys
+              .filter(function (key) {
+                return key.indexOf('avantalab-mobile-') === 0 && key !== 'avantalab-mobile-v81';
+              })
+              .map(function (key) {
+                return caches.delete(key);
+              })
+          );
+        })
+        .catch(function () {});
+    }
+
+    window.addEventListener('beforeinstallprompt', function (event) {
+      event.preventDefault();
+      state.installPrompt = event;
+      render();
+    });
+
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/mobile-sw.js?v=81').then(function (registro) {
+        if (registro && registro.update) registro.update();
+      }).catch(function () {});
+    }
+
+    configurarPullToRefresh();
+
+    render();
+
+    try {
+      if (deveEncerrarSessaoSalvaMobile()) {
+        await db.auth.signOut();
+      }
+
+      var sessao = await db.auth.getSession();
+      if (sessao.data.session && sessao.data.session.user) {
+        state.usuario = sessao.data.session.user;
+        state.autenticado = true;
+        await carregarEmpresas(state.usuario.id);
+        await carregarDados();
+      }
+      state.pronto = true;
+      render();
+    } catch (error) {
+      state.pronto = true;
+      state.erro = 'Nao foi possivel recuperar a sessao. Entre novamente.';
+      render();
+    }
+  }
+
+
+  function garantirRenderDepoisDaHidratacao() {
+    [900, 1800, 3200].forEach(function (tempo) {
+      window.setTimeout(function () {
+        var textoAtual = root.textContent || '';
+
+        if (state.pronto && textoAtual.indexOf('Preparando acesso') >= 0) {
+          render();
+        }
+      }, tempo);
+    });
+  }
+
+  function iniciarQuandoPaginaEstiverPronta() {
+    var iniciarComAtraso = function () {
+      window.setTimeout(function () {
+        iniciar();
+        garantirRenderDepoisDaHidratacao();
+      }, 650);
+    };
+
+    if (document.readyState === 'complete') {
+      iniciarComAtraso();
+    } else {
+      window.addEventListener('load', iniciarComAtraso, { once: true });
+    }
+  }
+
+  iniciarQuandoPaginaEstiverPronta();
+})();
