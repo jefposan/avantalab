@@ -1357,3 +1357,54 @@ export async function excluirFaturamentoBanco({
 
   return { erro: false, mensagem: '' };
 }
+
+// ─── Recorrências (Despesas fixas) ───────────────────────────────────────────
+
+export type Recorrencia = {
+  id: string;
+  empresa_id: string;
+  nome: string;
+  categoria: string;
+  dia: number;
+  ativo: boolean;
+  criado_em: string;
+};
+
+export async function buscarRecorrencias(empresaId: string): Promise<Recorrencia[]> {
+  const { data, error } = await supabase
+    .from('recorrencias')
+    .select('*')
+    .eq('empresa_id', empresaId)
+    .order('nome', { ascending: true });
+  if (error) { console.error('Erro ao buscar recorrências:', error); return []; }
+  return (data as Recorrencia[]) || [];
+}
+
+export async function inserirRecorrencia({
+  empresaId, nome, categoria, dia,
+}: {
+  empresaId: string; nome: string; categoria: string; dia: number;
+}): Promise<{ erro: boolean; data?: Recorrencia }> {
+  const { data, error } = await supabase
+    .from('recorrencias')
+    .insert({ empresa_id: empresaId, nome, categoria, dia })
+    .select()
+    .single();
+  if (error) { console.error('Erro ao inserir recorrência:', error); return { erro: true }; }
+  return { erro: false, data: data as Recorrencia };
+}
+
+export async function atualizarRecorrencia(
+  id: string,
+  campos: Partial<Pick<Recorrencia, 'nome' | 'categoria' | 'dia' | 'ativo'>>,
+): Promise<boolean> {
+  const { error } = await supabase.from('recorrencias').update(campos).eq('id', id);
+  if (error) { console.error('Erro ao atualizar recorrência:', error); return false; }
+  return true;
+}
+
+export async function deletarRecorrencia(id: string): Promise<boolean> {
+  const { error } = await supabase.from('recorrencias').delete().eq('id', id);
+  if (error) { console.error('Erro ao excluir recorrência:', error); return false; }
+  return true;
+}

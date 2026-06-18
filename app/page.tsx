@@ -66,6 +66,11 @@ import {
   buscarEmailPorLogin,
   atualizarTelefoneUsuarioEmpresa,
   salvarFeedback,
+  buscarRecorrencias,
+  inserirRecorrencia,
+  atualizarRecorrencia,
+  deletarRecorrencia,
+  type Recorrencia,
 } from './lib/database';
 
 import { supabase } from './lib/supabase';
@@ -294,6 +299,16 @@ const [despesaAnaliseAtiva, setDespesaAnaliseAtiva] = useState<{
   // Modais e Calc
   const [modalInstrucoes, setModalInstrucoes] = useState(false);
   const [modalDespesasBase, setModalDespesasBase] = useState(false);
+  const [modalDespesasFixas, setModalDespesasFixas] = useState(false);
+  const [recorrencias, setRecorrencias] = useState<Recorrencia[]>([]);
+  const [recorrSalvando, setRecorrSalvando] = useState(false);
+  const [novaRecorrNome, setNovaRecorrNome] = useState('');
+  const [novaRecorrCategoria, setNovaRecorrCategoria] = useState('');
+  const [novaRecorrDia, setNovaRecorrDia] = useState('1');
+  const [recorrEditandoId, setRecorrEditandoId] = useState<string | null>(null);
+  const [editRecorrNome, setEditRecorrNome] = useState('');
+  const [editRecorrCategoria, setEditRecorrCategoria] = useState('');
+  const [editRecorrDia, setEditRecorrDia] = useState('1');
   const [calcAberta, setCalcAberta] = useState(false);
   const [modalTermos, setModalTermos] = useState(false);
   const [modalPrivacidade, setModalPrivacidade] = useState(false);
@@ -1491,6 +1506,75 @@ const solicitarFaturamentoDashboard = () => {
   setMesReceitaDashboard(mesAtivo || mesFaturamento || meses[new Date().getMonth()]);
   setModalReceitaDashboardAberto(true);
 };
+
+  const abrirModalDespesasFixas = async () => {
+    if (!empresaId) return;
+    const lista = await buscarRecorrencias(empresaId);
+    setRecorrencias(lista);
+    setModalDespesasFixas(true);
+  };
+
+  const salvarNovaRecorrencia = async () => {
+    if (!empresaId || !novaRecorrNome.trim()) return;
+    setRecorrSalvando(true);
+    const dia = Math.max(1, Math.min(31, Number(novaRecorrDia) || 1));
+    const resultado = await inserirRecorrencia({
+      empresaId,
+      nome: novaRecorrNome.trim(),
+      categoria: novaRecorrCategoria.trim(),
+      dia,
+    });
+    if (!resultado.erro && resultado.data) {
+      setRecorrencias((prev) => [...prev, resultado.data!].sort((a, b) => a.nome.localeCompare(b.nome)));
+      setNovaRecorrNome('');
+      setNovaRecorrCategoria('');
+      setNovaRecorrDia('1');
+    }
+    setRecorrSalvando(false);
+  };
+
+  const toggleRecorrenciaAtivo = async (id: string, ativo: boolean) => {
+    const ok = await atualizarRecorrencia(id, { ativo: !ativo });
+    if (ok) setRecorrencias((prev) => prev.map((r) => r.id === id ? { ...r, ativo: !ativo } : r));
+  };
+
+  const iniciarEdicaoRecorrencia = (r: Recorrencia) => {
+    setRecorrEditandoId(r.id);
+    setEditRecorrNome(r.nome);
+    setEditRecorrCategoria(r.categoria);
+    setEditRecorrDia(String(r.dia));
+  };
+
+  const salvarEdicaoRecorrencia = async () => {
+    if (!recorrEditandoId) return;
+    const dia = Math.max(1, Math.min(31, Number(editRecorrDia) || 1));
+    const ok = await atualizarRecorrencia(recorrEditandoId, {
+      nome: editRecorrNome.trim(),
+      categoria: editRecorrCategoria.trim(),
+      dia,
+    });
+    if (ok) {
+      setRecorrencias((prev) =>
+        prev.map((r) => r.id === recorrEditandoId
+          ? { ...r, nome: editRecorrNome.trim(), categoria: editRecorrCategoria.trim(), dia }
+          : r
+        ).sort((a, b) => a.nome.localeCompare(b.nome))
+      );
+      setRecorrEditandoId(null);
+    }
+  };
+
+  const excluirRecorrenciaHandler = async (id: string, nome: string) => {
+    abrirConfirmacao({
+      titulo: 'Excluir despesa fixa',
+      mensagem: `"${nome}" será removida das despesas fixas. Os lançamentos já realizados não serão afetados.`,
+      textoConfirmar: 'Excluir',
+      acao: async () => {
+        const ok = await deletarRecorrencia(id);
+        if (ok) setRecorrencias((prev) => prev.filter((r) => r.id !== id));
+      },
+    });
+  };
 
 const excluirTotalMes = async () => {
   if (!empresaId) return;
@@ -5587,7 +5671,7 @@ setAjustesAberto(false);
 
       <button
         type="button"
-        onClick={() => {/* TODO: abrir modal Gerenciar despesas fixas */}}
+        onClick={abrirModalDespesasFixas}
         className="flex items-center gap-1.5 rounded-md bg-black/15 px-2.5 py-1.5 text-xs font-black uppercase tracking-wide text-white transition hover:bg-black/25 whitespace-nowrap cursor-pointer"
         title="Gerenciar despesas fixas"
       >
@@ -6090,6 +6174,127 @@ setAjustesAberto(false);
   voltarInicioChatFeedback={voltarInicioChatFeedback}
   enviarFeedbackVisual={enviarFeedbackVisual}
 />
+
+{/* ── MODAL DESPESAS FIXAS ─────────────────────────────────────────── */}
+{modalDespesasFixas && (
+  <div
+    className="fixed inset-0 z-[900] flex items-center justify-center bg-slate-950/60 px-4 py-6"
+    onClick={(e) => { if (e.target === e.currentTarget) setModalDespesasFixas(false); }}
+  >
+    <div className={`relative flex w-full max-w-lg flex-col rounded-2xl shadow-2xl overflow-hidden max-h-[90vh] ${darkMode ? 'bg-slate-800' : 'bg-white'}`}>
+      <div className="flex shrink-0 items-center justify-between px-5 py-4" style={{ backgroundColor: corPrimaria }}>
+        <div>
+          <p className="text-[10px] font-black uppercase tracking-widest text-white/70">Lançamento de despesas</p>
+          <h2 className="text-base font-black text-white">Gerenciar despesas fixas</h2>
+        </div>
+        <button type="button" onClick={() => setModalDespesasFixas(false)}
+          className="flex h-8 w-8 items-center justify-center rounded-full bg-white/20 text-white hover:bg-white/30 transition cursor-pointer">×</button>
+      </div>
+
+      <div className="flex-1 overflow-y-auto p-5 space-y-5">
+        <div className={`rounded-xl border p-4 ${darkMode ? 'border-slate-700 bg-slate-900/60' : 'border-slate-200 bg-slate-50'}`}>
+          <p className={`mb-3 text-xs font-black uppercase tracking-wide ${darkMode ? 'text-slate-300' : 'text-slate-600'}`}>Nova despesa fixa</p>
+          <div className="grid gap-2">
+            <div className="grid grid-cols-[1fr_80px] gap-2">
+              <select
+                value={novaRecorrNome}
+                onChange={(e) => {
+                  const nome = e.target.value;
+                  setNovaRecorrNome(nome);
+                  const base = despesasCadastradas.find((d) => d.nome === nome);
+                  if (base) setNovaRecorrCategoria(base.categoria);
+                }}
+                className={`h-9 w-full rounded-md border px-2.5 text-xs font-semibold outline-none transition focus:ring-1 ${darkMode ? 'border-slate-600 bg-slate-700 text-white' : 'border-slate-300 bg-white text-slate-700'}`}
+              >
+                <option value="">Selecione a despesa</option>
+                {despesasCadastradas.map((d) => (
+                  <option key={d.nome} value={d.nome}>{d.nome}</option>
+                ))}
+              </select>
+              <input type="number" min="1" max="31" value={novaRecorrDia}
+                onChange={(e) => setNovaRecorrDia(e.target.value)} placeholder="Dia"
+                className={`h-9 w-full rounded-md border px-2.5 text-center text-xs font-bold outline-none transition focus:ring-1 ${darkMode ? 'border-slate-600 bg-slate-700 text-white' : 'border-slate-300 bg-white text-slate-700'}`}
+              />
+            </div>
+            <input type="text" value={novaRecorrCategoria}
+              onChange={(e) => setNovaRecorrCategoria(e.target.value)} placeholder="Categoria"
+              className={`h-9 w-full rounded-md border px-2.5 text-xs font-semibold outline-none transition focus:ring-1 ${darkMode ? 'border-slate-600 bg-slate-700 text-white' : 'border-slate-300 bg-white text-slate-700'}`}
+            />
+            <button type="button" onClick={salvarNovaRecorrencia}
+              disabled={recorrSalvando || !novaRecorrNome.trim()}
+              className="h-9 rounded-md text-xs font-black uppercase text-white shadow-sm transition hover:brightness-110 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+              style={{ backgroundColor: corPrimaria }}>
+              {recorrSalvando ? 'Salvando...' : '+ Adicionar'}
+            </button>
+          </div>
+        </div>
+
+        <div>
+          <p className={`mb-2 text-xs font-black uppercase tracking-wide ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>
+            {recorrencias.length === 0 ? 'Nenhuma despesa fixa cadastrada' : `${recorrencias.length} despesa(s) fixa(s)`}
+          </p>
+          <div className="space-y-2">
+            {recorrencias.map((r) => (
+              <div key={r.id} className={`rounded-xl border p-3 transition ${
+                r.ativo
+                  ? darkMode ? 'border-slate-600 bg-slate-700/60' : 'border-slate-200 bg-white'
+                  : darkMode ? 'border-slate-700 bg-slate-800/40 opacity-60' : 'border-slate-200 bg-slate-50 opacity-60'
+              }`}>
+                {recorrEditandoId === r.id ? (
+                  <div className="grid gap-2">
+                    <div className="grid grid-cols-[1fr_80px] gap-2">
+                      <input type="text" value={editRecorrNome} onChange={(e) => setEditRecorrNome(e.target.value)}
+                        className={`h-8 rounded-md border px-2 text-xs font-bold outline-none ${darkMode ? 'border-slate-500 bg-slate-600 text-white' : 'border-slate-300 bg-white text-slate-700'}`} />
+                      <input type="number" min="1" max="31" value={editRecorrDia} onChange={(e) => setEditRecorrDia(e.target.value)}
+                        className={`h-8 rounded-md border px-2 text-center text-xs font-bold outline-none ${darkMode ? 'border-slate-500 bg-slate-600 text-white' : 'border-slate-300 bg-white text-slate-700'}`} />
+                    </div>
+                    <input type="text" value={editRecorrCategoria} onChange={(e) => setEditRecorrCategoria(e.target.value)}
+                      className={`h-8 rounded-md border px-2 text-xs font-semibold outline-none ${darkMode ? 'border-slate-500 bg-slate-600 text-white' : 'border-slate-300 bg-white text-slate-700'}`} />
+                    <div className="flex gap-2">
+                      <button type="button" onClick={salvarEdicaoRecorrencia}
+                        className="h-7 flex-1 rounded-md bg-emerald-600 text-[10px] font-black uppercase text-white hover:bg-emerald-700 transition cursor-pointer">Salvar</button>
+                      <button type="button" onClick={() => setRecorrEditandoId(null)}
+                        className={`h-7 flex-1 rounded-md border text-[10px] font-black uppercase transition cursor-pointer ${darkMode ? 'border-slate-500 text-slate-300 hover:bg-slate-600' : 'border-slate-300 text-slate-600 hover:bg-slate-100'}`}>Cancelar</button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-3">
+                    <div className="min-w-0 flex-1">
+                      <p className={`truncate text-sm font-black ${darkMode ? 'text-white' : 'text-slate-800'}`}>{r.nome}</p>
+                      <p className={`text-[10px] font-semibold ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>
+                        {r.categoria} · todo dia {r.dia}
+                      </p>
+                    </div>
+                    <div className="flex shrink-0 items-center gap-1.5">
+                      <button type="button" onClick={() => toggleRecorrenciaAtivo(r.id, r.ativo)}
+                        className={`rounded-md px-2 py-1 text-[10px] font-black uppercase transition cursor-pointer ${
+                          r.ativo ? 'bg-emerald-100 text-emerald-700 hover:bg-emerald-200' : 'bg-slate-200 text-slate-500 hover:bg-slate-300'
+                        }`} title={r.ativo ? 'Pausar' : 'Ativar'}>
+                        {r.ativo ? 'Ativa' : 'Pausada'}
+                      </button>
+                      <button type="button" onClick={() => iniciarEdicaoRecorrencia(r)}
+                        className={`h-7 w-7 rounded-md text-sm transition cursor-pointer ${darkMode ? 'bg-slate-600 text-slate-300 hover:bg-slate-500' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}
+                        title="Editar">✎</button>
+                      <button type="button" onClick={() => excluirRecorrenciaHandler(r.id, r.nome)}
+                        className="h-7 w-7 rounded-md bg-red-50 text-sm text-red-500 hover:bg-red-100 transition cursor-pointer"
+                        title="Excluir">×</button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      <div className={`shrink-0 border-t px-5 py-3 ${darkMode ? 'border-slate-700 bg-slate-800' : 'border-slate-100 bg-slate-50'}`}>
+        <p className={`text-[10px] font-semibold leading-relaxed ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>
+          Despesas fixas são lançadas automaticamente no início de cada mês com o valor do mês anterior.
+        </p>
+      </div>
+    </div>
+  </div>
+)}
 
 <footer
   className={`print-ocultar w-full border-t px-6 py-4 mt-8 ${
