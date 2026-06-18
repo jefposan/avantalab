@@ -334,7 +334,7 @@ const mostrarComparativoResumoDash =
               color: textoSobreCorPrimaria,
             }}
           >
-            <span>LANÇAR RECEITA</span>
+            <span>REGISTRAR ENTRADAS</span>
           </div>
 
           <div className="p-5 space-y-3">

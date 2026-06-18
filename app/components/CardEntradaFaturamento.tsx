@@ -198,7 +198,7 @@ export default function CardEntradaFaturamento({
           </svg>
 
           <input
-            type="search"
+            type="text"
             inputMode="search"
             enterKeyHint="search"
             autoComplete="off"

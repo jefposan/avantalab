@@ -167,7 +167,7 @@ export default function TabelaLancamentosDespesa({
               </svg>
 
               <input
-                type="search"
+                type="text"
                 inputMode="search"
                 enterKeyHint="search"
                 autoComplete="off"

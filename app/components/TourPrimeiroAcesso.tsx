@@ -33,17 +33,17 @@ const PASSOS: Passo[] = [
   },
   {
     icone: '🎨',
-    localizacao: 'Ajustes → Logo / Cor',
+    localizacao: 'Ajustes → Logo / Cor Tema',
     titulo: 'Logo e cor do perfil',
     descricao:
       'Personalize a identidade visual do perfil financeiro. Adicione a logomarca (PNG, JPG ou SVG) e escolha a cor principal que será aplicada em todos os elementos visuais do sistema.',
   },
   {
     icone: '📋',
-    localizacao: 'Ajustes → Instruções categorias',
+    localizacao: 'Ajustes → Cadastrar Despesas / Instruções categorias',
     titulo: 'Despesas base e categorias',
     descricao:
-      'Cadastre as despesas fixas e recorrentes do perfil. Use "Instruções de categorias" para entender como classificar cada tipo de gasto e garantir relatórios precisos.',
+      'Cadastre as despesas fixas e recorrentes do perfil. Use "Instruções categorias" para entender como classificar cada tipo de gasto e garantir relatórios precisos.',
   },
   {
     icone: '👥',
@@ -76,9 +76,9 @@ const PASSOS: Passo[] = [
   {
     icone: '💰',
     localizacao: 'Menu Início → clique em um mês',
-    titulo: 'Faturamento mensal',
+    titulo: 'Entradas mensais',
     descricao:
-      'No Dashboard, clique em qualquer mês para abrir a visão de lançamentos. Na parte superior, registre o faturamento bruto e as entradas do período. Esses valores alimentam o balanço automaticamente.',
+      'No Dashboard, clique em qualquer mês para abrir a visão de lançamentos. Na parte superior, registre entradas e defina o total do mês. Esses valores alimentam o balanço automaticamente.',
   },
   {
     icone: '📊',
@@ -89,7 +89,7 @@ const PASSOS: Passo[] = [
   },
   {
     icone: '📈',
-    localizacao: 'Menu → Balanço / Gráficos / Categorias / Relatório',
+    localizacao: 'Menu → Balanço Geral / Gráficos / Por Categoria / Relatório',
     titulo: 'Dashboard, gráficos e relatórios',
     descricao:
       'Todos os dados lançados alimentam automaticamente as análises. Acesse Balanço Geral, Gráficos de evolução, visão Por Categoria e Relatório completo pelos itens do menu superior.',
@@ -103,10 +103,10 @@ const PASSOS: Passo[] = [
   },
   {
     icone: '✅',
-    localizacao: 'Ajustes → Instruções categorias',
+    localizacao: 'Ajustes → Cadastrar Despesas',
     titulo: 'Por onde começar?',
     descricao:
-      'O primeiro passo é cadastrar as despesas base do perfil financeiro. Acesse o menu Ajustes e clique em "Despesas base". Lá você define todas as categorias e gastos recorrentes que serão usados nos lançamentos mensais. Com isso feito, o sistema estará pronto para uso completo.',
+      'O primeiro passo é cadastrar as despesas base do perfil financeiro. Acesse o menu Ajustes e clique em "Cadastrar Despesas". Lá você define todas as categorias e gastos recorrentes que serão usados nos lançamentos mensais. Com isso feito, o sistema estará pronto para uso completo.',
   },
   {
     icone: '🚀',

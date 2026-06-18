@@ -271,7 +271,7 @@ const getValorMensal = (despesa: string, mes: string) => {
                 const totalDespesa = getTotalDespesa(despesa);
 
                 return (
-                  <tr key={despesa} className={`border-b ${borderSoft} transition-colors ${darkMode ? 'hover:bg-slate-700/40' : 'hover:bg-blue-50/50'} ${idx % 2 === 0 ? '' : (darkMode ? 'bg-slate-800/50' : 'bg-slate-50/50')}`}>
+                  <tr key={despesa} className={`border-b ${borderSoft} transition-all duration-150 ${darkMode ? 'hover:bg-slate-700/90 hover:shadow-[inset_4px_0_0_#38bdf8]' : 'hover:bg-cyan-100/80 hover:shadow-[inset_4px_0_0_#0891b2]'} ${idx % 2 === 0 ? '' : (darkMode ? 'bg-slate-800/50' : 'bg-slate-50/50')}`}>
                     <td className={`p-2.5 px-4 font-bold uppercase text-[11px] truncate max-w-[170px] ${textStrong} border-r border-slate-200/30 dark:border-slate-700/30`}>
                       {despesa}
                     </td>
