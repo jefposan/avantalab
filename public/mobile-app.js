@@ -1521,6 +1521,48 @@
     setMensagem('Cadastro criado e celular confirmado. Faca login para acessar.');
   }
 
+  var DESPESAS_PADRAO_PESSOAL_MOBILE = [
+    { nome: 'Aluguel',            categoria: 'Moradia' },
+    { nome: 'Parcela casa',       categoria: 'Moradia' },
+    { nome: 'Condominio',         categoria: 'Moradia' },
+    { nome: 'Agua',               categoria: 'Moradia' },
+    { nome: 'Energia',            categoria: 'Moradia' },
+    { nome: 'Gas',                categoria: 'Moradia' },
+    { nome: 'Internet',           categoria: 'Moradia' },
+    { nome: 'Itens para casa',    categoria: 'Moradia' },
+    { nome: 'Manutencao casa',    categoria: 'Moradia' },
+    { nome: 'Mercado',            categoria: 'Custos de Vida' },
+    { nome: 'Saude',              categoria: 'Custos de Vida' },
+    { nome: 'Farmacia',           categoria: 'Custos de Vida' },
+    { nome: 'Educacao',           categoria: 'Custos de Vida' },
+    { nome: 'Celular',            categoria: 'Custos de Vida' },
+    { nome: 'Combustivel',        categoria: 'Custos de Vida' },
+    { nome: 'Transporte',         categoria: 'Custos de Vida' },
+    { nome: 'Gastos com veiculo', categoria: 'Custos de Vida' },
+    { nome: 'Parcela veiculo',    categoria: 'Custos de Vida' },
+    { nome: 'Alimentacao',        categoria: 'Lazer e Consumo' },
+    { nome: 'Passeios',           categoria: 'Lazer e Consumo' },
+    { nome: 'Assinaturas',        categoria: 'Lazer e Consumo' },
+    { nome: 'Vestuario',          categoria: 'Lazer e Consumo' },
+    { nome: 'Viagem',             categoria: 'Lazer e Consumo' },
+    { nome: 'Taxas bancarias',    categoria: 'Financeiro e Impostos' },
+    { nome: 'Cartao de credito',  categoria: 'Financeiro e Impostos' },
+    { nome: 'Seguro',             categoria: 'Financeiro e Impostos' },
+    { nome: 'IPVA',               categoria: 'Financeiro e Impostos' },
+    { nome: 'IPTU',               categoria: 'Financeiro e Impostos' },
+    { nome: 'Investimento',       categoria: 'Investimentos' },
+  ];
+
+  async function inserirDespesasPadraoMobile(empresaId) {
+    var rows = DESPESAS_PADRAO_PESSOAL_MOBILE.map(function (d) {
+      return { empresa_id: empresaId, nome: d.nome, categoria: d.categoria };
+    });
+    var resp = await db.from('despesas_cadastradas').insert(rows);
+    if (resp.error) {
+      console.error('Erro ao inserir despesas padrao pessoal:', resp.error);
+    }
+  }
+
   async function criarPerfilInicial() {
     var nome = campo('criar-perfil-inicial-nome').trim();
     var tipo = normalizarTipoPerfil(state.criarPerfilTipo);
@@ -1555,6 +1597,10 @@
           body: JSON.stringify({ empresaId: criadaId, nome: nome, tipoPerfil: tipo }),
         });
       }
+    }
+
+    if (tipo === 'pessoal' && criadaId) {
+      await inserirDespesasPadraoMobile(criadaId);
     }
 
     state.modoCriarPerfil = false;
@@ -2197,6 +2243,10 @@
       }
     } else {
       console.warn('criarEmpresaMobile: sem token — tipo_perfil não aplicado');
+    }
+
+    if (tipoPerfil === 'pessoal') {
+      await inserirDespesasPadraoMobile(criadaId);
     }
 
     state.modalMenu = '';

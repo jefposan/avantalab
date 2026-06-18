@@ -1110,6 +1110,15 @@ export async function criarEmpresaInicial(nomeEmpresa: string) {
     };
   }
 
+  if (!data) {
+    console.error('Empresa inicial criada sem retorno de dados — possível problema de sessão ou permissão RLS.');
+    return {
+      erro: true,
+      mensagem: 'O servidor não retornou os dados do perfil criado. Verifique sua conexão, faça login novamente e tente de novo.',
+      data: null,
+    };
+  }
+
   return {
     erro: false,
     mensagem: '',
@@ -1281,4 +1290,48 @@ export async function salvarFeedback({
     mensagem: 'Feedback registrado com sucesso.',
     data,
   };
+}
+
+const DESPESAS_PADRAO_PESSOAL = [
+  { nome: 'Aluguel',             categoria: 'Moradia' },
+  { nome: 'Parcela casa',        categoria: 'Moradia' },
+  { nome: 'Condomínio',          categoria: 'Moradia' },
+  { nome: 'Água',                categoria: 'Moradia' },
+  { nome: 'Energia',             categoria: 'Moradia' },
+  { nome: 'Gás',                 categoria: 'Moradia' },
+  { nome: 'Internet',            categoria: 'Moradia' },
+  { nome: 'Itens para casa',     categoria: 'Moradia' },
+  { nome: 'Manutenção casa',     categoria: 'Moradia' },
+  { nome: 'Mercado',             categoria: 'Custos de Vida' },
+  { nome: 'Saúde',               categoria: 'Custos de Vida' },
+  { nome: 'Farmácia',            categoria: 'Custos de Vida' },
+  { nome: 'Educação',            categoria: 'Custos de Vida' },
+  { nome: 'Celular',             categoria: 'Custos de Vida' },
+  { nome: 'Combustível',         categoria: 'Custos de Vida' },
+  { nome: 'Transporte',          categoria: 'Custos de Vida' },
+  { nome: 'Gastos com veículo',  categoria: 'Custos de Vida' },
+  { nome: 'Parcela veículo',     categoria: 'Custos de Vida' },
+  { nome: 'Alimentação',         categoria: 'Lazer e Consumo' },
+  { nome: 'Passeios',            categoria: 'Lazer e Consumo' },
+  { nome: 'Assinaturas',         categoria: 'Lazer e Consumo' },
+  { nome: 'Vestuário',           categoria: 'Lazer e Consumo' },
+  { nome: 'Viagem',              categoria: 'Lazer e Consumo' },
+  { nome: 'Taxas bancárias',     categoria: 'Financeiro e Impostos' },
+  { nome: 'Cartão de crédito',   categoria: 'Financeiro e Impostos' },
+  { nome: 'Seguro',              categoria: 'Financeiro e Impostos' },
+  { nome: 'IPVA',                categoria: 'Financeiro e Impostos' },
+  { nome: 'IPTU',                categoria: 'Financeiro e Impostos' },
+  { nome: 'Investimento',        categoria: 'Investimentos' },
+];
+
+export async function inserirDespesasPadraoPersonal(empresaId: string): Promise<void> {
+  const rows = DESPESAS_PADRAO_PESSOAL.map((d) => ({
+    empresa_id: empresaId,
+    nome: d.nome,
+    categoria: d.categoria,
+  }));
+  const { error } = await supabase.from('despesas_cadastradas').insert(rows);
+  if (error) {
+    console.error('Erro ao inserir despesas padrão pessoal:', error);
+  }
 }

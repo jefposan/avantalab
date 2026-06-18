@@ -8,6 +8,7 @@ import {
   buscarEmailPorLogin,
   criarEmpresaInicial,
   atualizarEmpresa,
+  inserirDespesasPadraoPersonal,
 } from '../lib/database';
 import { normalizarTipoPerfil, type TipoPerfil } from '../lib/perfis';
 import type { AbrirAvisoFn } from './useUI';
@@ -678,6 +679,10 @@ export function useAuth(deps: UseAuthDeps) {
           'Erro ao salvar tipo do perfil financeiro:',
           resultadoTipoPerfil.mensagem
         );
+      }
+
+      if (tipoPerfil === 'pessoal') {
+        await inserirDespesasPadraoPersonal(empresaCriadaId);
       }
 
       const { error: erroConfigInicial } = await supabase
