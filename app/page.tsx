@@ -305,7 +305,9 @@ const [despesaAnaliseAtiva, setDespesaAnaliseAtiva] = useState<{
   const [novaRecorrNome, setNovaRecorrNome] = useState('');
   const [novaRecorrCategoria, setNovaRecorrCategoria] = useState('');
   const [novaRecorrDescricao, setNovaRecorrDescricao] = useState('');
-  const [novaRecorrDia, setNovaRecorrDia] = useState('1');
+  const [novaRecorrDia, setNovaRecorrDia] = useState('');
+  const [novaRecorrValor, setNovaRecorrValor] = useState('');
+  const [novaRecorrLancarAgora, setNovaRecorrLancarAgora] = useState(false);
   const [recorrEditandoId, setRecorrEditandoId] = useState<string | null>(null);
   const [editRecorrNome, setEditRecorrNome] = useState('');
   const [editRecorrCategoria, setEditRecorrCategoria] = useState('');
@@ -1520,6 +1522,7 @@ const solicitarFaturamentoDashboard = () => {
     if (!empresaId || !novaRecorrNome.trim()) return;
     setRecorrSalvando(true);
     const dia = Math.max(1, Math.min(31, Number(novaRecorrDia) || 1));
+    const valorNum = parseFloat(novaRecorrValor.replace(/\./g, '').replace(',', '.')) || 0;
     const resultado = await inserirRecorrencia({
       empresaId,
       nome: novaRecorrNome.trim(),
@@ -1529,10 +1532,34 @@ const solicitarFaturamentoDashboard = () => {
     });
     if (!resultado.erro && resultado.data) {
       setRecorrencias((prev) => [...prev, resultado.data!].sort((a, b) => a.nome.localeCompare(b.nome)));
+      // Lançar no mês atual se solicitado
+      if (novaRecorrLancarAgora && mesAtivo && valorNum > 0) {
+        const salvo = await salvarLancamento({
+          empresaId,
+          ano: Number(anoSelecionado),
+          mes: mesAtivo,
+          dia,
+          despesaNome: novaRecorrNome.trim(),
+          descricao: novaRecorrDescricao.trim(),
+          valor: valorNum,
+        });
+        if (!salvo.erro && salvo.data) {
+          setLancamentos((prev) => [{
+            id: salvo.data!.id,
+            mes: salvo.data!.mes,
+            dia: salvo.data!.dia,
+            despesa: salvo.data!.despesa_nome,
+            descricao: salvo.data!.descricao || '',
+            valor: Number(salvo.data!.valor),
+          }, ...prev]);
+        }
+      }
       setNovaRecorrNome('');
       setNovaRecorrCategoria('');
       setNovaRecorrDescricao('');
-      setNovaRecorrDia('1');
+      setNovaRecorrDia('');
+      setNovaRecorrValor('');
+      setNovaRecorrLancarAgora(false);
     }
     setRecorrSalvando(false);
   };
@@ -6200,7 +6227,7 @@ setAjustesAberto(false);
         <div className={`rounded-xl border p-4 ${darkMode ? 'border-slate-700 bg-slate-900/60' : 'border-slate-200 bg-slate-50'}`}>
           <p className={`mb-3 text-xs font-black uppercase tracking-wide ${darkMode ? 'text-slate-300' : 'text-slate-600'}`}>Nova despesa fixa</p>
           <div className="grid gap-2">
-            <div className="grid grid-cols-[1fr_80px] gap-2">
+            <div className="grid grid-cols-[1fr_64px] gap-2">
               <select
                 value={novaRecorrNome}
                 onChange={(e) => {
@@ -6225,6 +6252,29 @@ setAjustesAberto(false);
               onChange={(e) => setNovaRecorrDescricao(e.target.value)} placeholder="Descrição (opcional)"
               className={`h-9 w-full rounded-md border px-2.5 text-xs font-semibold outline-none transition focus:ring-1 ${darkMode ? 'border-slate-600 bg-slate-700 text-white' : 'border-slate-300 bg-white text-slate-700'}`}
             />
+            {/* Lançar no mês atual */}
+            <label className={`flex cursor-pointer items-center gap-2 rounded-lg border px-3 py-2 transition ${
+              novaRecorrLancarAgora
+                ? darkMode ? 'border-blue-500/50 bg-blue-950/30' : 'border-blue-200 bg-blue-50'
+                : darkMode ? 'border-slate-600' : 'border-slate-200'
+            }`}>
+              <input type="checkbox" checked={novaRecorrLancarAgora}
+                onChange={(e) => setNovaRecorrLancarAgora(e.target.checked)}
+                className="h-4 w-4 accent-blue-600" />
+              <span className={`text-xs font-black ${darkMode ? 'text-slate-300' : 'text-slate-600'}`}>
+                Incluir também em {mesAtivo || 'este mês'}
+              </span>
+            </label>
+            {novaRecorrLancarAgora && (
+              <input type="text" value={novaRecorrValor}
+                onChange={(e) => {
+                  const raw = e.target.value.replace(/[^\d,]/g, '');
+                  setNovaRecorrValor(raw);
+                }}
+                placeholder="Valor (R$ 0,00)"
+                className={`h-9 w-full rounded-md border px-2.5 text-right text-xs font-bold outline-none transition focus:ring-1 ${darkMode ? 'border-slate-600 bg-slate-700 text-white' : 'border-slate-300 bg-white text-slate-700'}`}
+              />
+            )}
             <button type="button" onClick={salvarNovaRecorrencia}
               disabled={recorrSalvando || !novaRecorrNome.trim()}
               className="h-9 rounded-md text-xs font-black uppercase text-white shadow-sm transition hover:brightness-110 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
