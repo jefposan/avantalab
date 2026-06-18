@@ -304,10 +304,12 @@ const [despesaAnaliseAtiva, setDespesaAnaliseAtiva] = useState<{
   const [recorrSalvando, setRecorrSalvando] = useState(false);
   const [novaRecorrNome, setNovaRecorrNome] = useState('');
   const [novaRecorrCategoria, setNovaRecorrCategoria] = useState('');
+  const [novaRecorrDescricao, setNovaRecorrDescricao] = useState('');
   const [novaRecorrDia, setNovaRecorrDia] = useState('1');
   const [recorrEditandoId, setRecorrEditandoId] = useState<string | null>(null);
   const [editRecorrNome, setEditRecorrNome] = useState('');
   const [editRecorrCategoria, setEditRecorrCategoria] = useState('');
+  const [editRecorrDescricao, setEditRecorrDescricao] = useState('');
   const [editRecorrDia, setEditRecorrDia] = useState('1');
   const [calcAberta, setCalcAberta] = useState(false);
   const [modalTermos, setModalTermos] = useState(false);
@@ -1522,12 +1524,14 @@ const solicitarFaturamentoDashboard = () => {
       empresaId,
       nome: novaRecorrNome.trim(),
       categoria: novaRecorrCategoria.trim(),
+      descricao: novaRecorrDescricao.trim(),
       dia,
     });
     if (!resultado.erro && resultado.data) {
       setRecorrencias((prev) => [...prev, resultado.data!].sort((a, b) => a.nome.localeCompare(b.nome)));
       setNovaRecorrNome('');
       setNovaRecorrCategoria('');
+      setNovaRecorrDescricao('');
       setNovaRecorrDia('1');
     }
     setRecorrSalvando(false);
@@ -1542,6 +1546,7 @@ const solicitarFaturamentoDashboard = () => {
     setRecorrEditandoId(r.id);
     setEditRecorrNome(r.nome);
     setEditRecorrCategoria(r.categoria);
+    setEditRecorrDescricao(r.descricao || '');
     setEditRecorrDia(String(r.dia));
   };
 
@@ -1551,12 +1556,13 @@ const solicitarFaturamentoDashboard = () => {
     const ok = await atualizarRecorrencia(recorrEditandoId, {
       nome: editRecorrNome.trim(),
       categoria: editRecorrCategoria.trim(),
+      descricao: editRecorrDescricao.trim(),
       dia,
     });
     if (ok) {
       setRecorrencias((prev) =>
         prev.map((r) => r.id === recorrEditandoId
-          ? { ...r, nome: editRecorrNome.trim(), categoria: editRecorrCategoria.trim(), dia }
+          ? { ...r, nome: editRecorrNome.trim(), categoria: editRecorrCategoria.trim(), descricao: editRecorrDescricao.trim(), dia }
           : r
         ).sort((a, b) => a.nome.localeCompare(b.nome))
       );
@@ -6184,7 +6190,6 @@ setAjustesAberto(false);
     <div className={`relative flex w-full max-w-lg flex-col rounded-2xl shadow-2xl overflow-hidden max-h-[90vh] ${darkMode ? 'bg-slate-800' : 'bg-white'}`}>
       <div className="flex shrink-0 items-center justify-between px-5 py-4" style={{ backgroundColor: corPrimaria }}>
         <div>
-          <p className="text-[10px] font-black uppercase tracking-widest text-white/70">Lançamento de despesas</p>
           <h2 className="text-base font-black text-white">Gerenciar despesas fixas</h2>
         </div>
         <button type="button" onClick={() => setModalDespesasFixas(false)}
@@ -6216,8 +6221,8 @@ setAjustesAberto(false);
                 className={`h-9 w-full rounded-md border px-2.5 text-center text-xs font-bold outline-none transition focus:ring-1 ${darkMode ? 'border-slate-600 bg-slate-700 text-white' : 'border-slate-300 bg-white text-slate-700'}`}
               />
             </div>
-            <input type="text" value={novaRecorrCategoria}
-              onChange={(e) => setNovaRecorrCategoria(e.target.value)} placeholder="Categoria"
+            <input type="text" value={novaRecorrDescricao}
+              onChange={(e) => setNovaRecorrDescricao(e.target.value)} placeholder="Descrição (opcional)"
               className={`h-9 w-full rounded-md border px-2.5 text-xs font-semibold outline-none transition focus:ring-1 ${darkMode ? 'border-slate-600 bg-slate-700 text-white' : 'border-slate-300 bg-white text-slate-700'}`}
             />
             <button type="button" onClick={salvarNovaRecorrencia}
@@ -6248,7 +6253,8 @@ setAjustesAberto(false);
                       <input type="number" min="1" max="31" value={editRecorrDia} onChange={(e) => setEditRecorrDia(e.target.value)}
                         className={`h-8 rounded-md border px-2 text-center text-xs font-bold outline-none ${darkMode ? 'border-slate-500 bg-slate-600 text-white' : 'border-slate-300 bg-white text-slate-700'}`} />
                     </div>
-                    <input type="text" value={editRecorrCategoria} onChange={(e) => setEditRecorrCategoria(e.target.value)}
+                    <input type="text" value={editRecorrDescricao} onChange={(e) => setEditRecorrDescricao(e.target.value)}
+                      placeholder="Descrição (opcional)"
                       className={`h-8 rounded-md border px-2 text-xs font-semibold outline-none ${darkMode ? 'border-slate-500 bg-slate-600 text-white' : 'border-slate-300 bg-white text-slate-700'}`} />
                     <div className="flex gap-2">
                       <button type="button" onClick={salvarEdicaoRecorrencia}
@@ -6262,7 +6268,7 @@ setAjustesAberto(false);
                     <div className="min-w-0 flex-1">
                       <p className={`truncate text-sm font-black ${darkMode ? 'text-white' : 'text-slate-800'}`}>{r.nome}</p>
                       <p className={`text-[10px] font-semibold ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>
-                        {r.categoria} · todo dia {r.dia}
+                        {r.descricao || r.categoria} · todo dia {r.dia}
                       </p>
                     </div>
                     <div className="flex shrink-0 items-center gap-1.5">

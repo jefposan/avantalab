@@ -1365,6 +1365,7 @@ export type Recorrencia = {
   empresa_id: string;
   nome: string;
   categoria: string;
+  descricao: string;
   dia: number;
   ativo: boolean;
   criado_em: string;
@@ -1381,13 +1382,13 @@ export async function buscarRecorrencias(empresaId: string): Promise<Recorrencia
 }
 
 export async function inserirRecorrencia({
-  empresaId, nome, categoria, dia,
+  empresaId, nome, categoria, descricao, dia,
 }: {
-  empresaId: string; nome: string; categoria: string; dia: number;
+  empresaId: string; nome: string; categoria: string; descricao?: string; dia: number;
 }): Promise<{ erro: boolean; data?: Recorrencia }> {
   const { data, error } = await supabase
     .from('recorrencias')
-    .insert({ empresa_id: empresaId, nome, categoria, dia })
+    .insert({ empresa_id: empresaId, nome, categoria, descricao: descricao ?? '', dia })
     .select()
     .single();
   if (error) { console.error('Erro ao inserir recorrência:', error); return { erro: true }; }
@@ -1396,7 +1397,7 @@ export async function inserirRecorrencia({
 
 export async function atualizarRecorrencia(
   id: string,
-  campos: Partial<Pick<Recorrencia, 'nome' | 'categoria' | 'dia' | 'ativo'>>,
+  campos: Partial<Pick<Recorrencia, 'nome' | 'categoria' | 'descricao' | 'dia' | 'ativo'>>,
 ): Promise<boolean> {
   const { error } = await supabase.from('recorrencias').update(campos).eq('id', id);
   if (error) { console.error('Erro ao atualizar recorrência:', error); return false; }
