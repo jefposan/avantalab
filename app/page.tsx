@@ -45,6 +45,7 @@ import {
   apagarLancamento,
   atualizarLancamento,
   salvarFaturamentoBanco,
+  excluirFaturamentoBanco,
   salvarFaturamentoEntrada,
   atualizarFaturamentoEntrada,
   apagarFaturamentoEntrada,
@@ -1489,6 +1490,48 @@ const solicitarFaturamentoDashboard = () => {
   setInputFaturamento('');
   setMesReceitaDashboard(mesAtivo || mesFaturamento || meses[new Date().getMonth()]);
   setModalReceitaDashboardAberto(true);
+};
+
+const excluirTotalMes = async () => {
+  if (!empresaId) return;
+
+  const mes = mesAtivo || mesFaturamento;
+  if (!mes) {
+    abrirAviso('Mês não identificado', 'Selecione o mês antes de excluir o total.');
+    return;
+  }
+
+  const totalEntradas = getTotalEntradasPorMes(mes);
+
+  abrirConfirmacao({
+    titulo: 'Excluir total do mês',
+    mensagem: totalEntradas > 0
+      ? `O total definido manualmente será removido. As receitas lançadas (${formatarMoeda(totalEntradas)}) serão mantidas.`
+      : `Não há receitas lançadas neste mês. O total do mês será zerado.`,
+    textoConfirmar: 'Excluir total',
+    acao: async () => {
+      if (totalEntradas > 0) {
+        await salvarFaturamentoBanco({
+          empresaId,
+          ano: Number(anoSelecionado),
+          mes,
+          valor: totalEntradas,
+        });
+        setFaturamentos((prev) => ({ ...prev, [mes]: totalEntradas }));
+      } else {
+        await excluirFaturamentoBanco({
+          empresaId,
+          ano: Number(anoSelecionado),
+          mes,
+        });
+        setFaturamentos((prev) => {
+          const next = { ...prev };
+          delete next[mes];
+          return next;
+        });
+      }
+    },
+  });
 };
 
 const confirmarEntradaFaturamentoDashboard = async () => {
@@ -5971,6 +6014,8 @@ setAjustesAberto(false);
   setInputFaturamento={setInputFaturamento}
   placeholderFaturamento="0,00"
   solicitarFaturamentoDashboard={solicitarFaturamentoDashboard}
+  excluirTotalMes={excluirTotalMes}
+  faturamentoDoMes={faturamentoDoMesAtual}
         entradaFaturamentoDia={entradaFaturamentoDia}
         setEntradaFaturamentoDia={setEntradaFaturamentoDia}
         entradaFaturamentoOrigem={entradaFaturamentoOrigem}

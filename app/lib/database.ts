@@ -1335,3 +1335,25 @@ export async function inserirDespesasPadraoPersonal(empresaId: string): Promise<
     console.error('Erro ao inserir despesas padrão pessoal:', error);
   }
 }
+
+export async function excluirFaturamentoBanco({
+  empresaId,
+  ano,
+  mes,
+}: {
+  empresaId: string;
+  ano: number;
+  mes: string;
+}) {
+  const { error } = await supabase
+    .from('faturamentos')
+    .delete()
+    .match({ empresa_id: empresaId, ano, mes });
+
+  if (error) {
+    console.error('Erro ao excluir faturamento:', error);
+    return { erro: true, mensagem: 'Não foi possível excluir o total do mês.' };
+  }
+
+  return { erro: false, mensagem: '' };
+}

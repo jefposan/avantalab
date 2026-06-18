@@ -18,6 +18,8 @@ interface DashboardProps {
   setInputFaturamento: (val: string) => void;
   placeholderFaturamento: string;
   solicitarFaturamentoDashboard: () => void;
+  excluirTotalMes: () => void;
+  faturamentoDoMes: number;
 
   entradaFaturamentoDia: string;
   setEntradaFaturamentoDia: (val: string) => void;
@@ -38,6 +40,8 @@ export default function Dashboard({
   mesResumoDash, setMesResumoDash, totalDespesasMes, maiorGasto, lucroOperacional,
   inputFaturamento, setInputFaturamento, placeholderFaturamento,
   solicitarFaturamentoDashboard,
+  excluirTotalMes,
+  faturamentoDoMes,
   entradaFaturamentoDia,
   setEntradaFaturamentoDia,
   entradaFaturamentoOrigem,
@@ -445,6 +449,17 @@ const mostrarComparativoResumoDash =
                   Definir
                 </button>
               </div>
+              {faturamentoDoMes > 0 && (
+                <button
+                  type="button"
+                  onClick={excluirTotalMes}
+                  className={"mt-2 w-full rounded-lg border px-3 py-1.5 text-xs font-black transition cursor-pointer " + (darkMode
+                    ? "border-red-800/50 bg-red-950/30 text-red-400 hover:bg-red-900/40"
+                    : "border-red-200 bg-red-50 text-red-600 hover:bg-red-100")}
+                >
+                  Excluir total do mês
+                </button>
+              )}
             </section>
           </div>
         </div>
