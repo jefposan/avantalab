@@ -349,8 +349,8 @@ export default function TabelaLancamentosDespesa({
                           {lanc.descricao || '-'}
                         </td>
 
-                        <td className="py-1.5 px-4 w-40 text-right text-xs font-black text-red-500">
-                          - {formatarMoeda(lanc.valor)}
+                        <td className="py-1.5 px-4 w-40 text-right text-xs font-black text-red-500 whitespace-nowrap">
+                          -{formatarMoeda(lanc.valor)}
                         </td>
 
                         <td className="py-1.5 px-4 w-28 text-center">
@@ -443,6 +443,4 @@ export default function TabelaLancamentosDespesa({
           </div>
         )}
       </div>
-    </div>
-  );
-}
+ 
