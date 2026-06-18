@@ -138,6 +138,21 @@
     modoCriarPerfil: false,
     criarPerfilNome: '',
     criarPerfilTipo: 'empresa',
+    recorrencias: [],
+    recorrSalvando: false,
+    novaRecorrNome: '',
+    novaRecorrDia: '',
+    novaRecorrDescricao: '',
+    novaRecorrValor: '',
+    novaRecorrValorNumerico: 0,
+    novaRecorrLancarAgora: false,
+    recorrEditandoId: null,
+    editRecorrNome: '',
+    editRecorrDia: '',
+    editRecorrDescricao: '',
+    editRecorrValor: '',
+    editRecorrValorNumerico: 0,
+    editRecorrLancarAgora: false,
   };
 
   var CHAVE_MANTER_CONECTADO_ATE = 'avantalab_mobile_manter_conectado_ate';
@@ -3538,6 +3553,7 @@
             menuBotaoHtml('menu-usuario', 'Usuários', perfilFormatado(state.empresa && state.empresa.perfil), 'U') +
             menuBotaoHtml('menu-gerenciar', 'Gerenciar perfil', 'Editar, criar ou excluir perfil', 'P') +
             menuBotaoHtml('menu-categorias', 'Cadastrar despesas', 'Adicionar tipos de despesa', '+') +
+            menuBotaoHtml('menu-despesas-fixas', 'Despesas fixas', 'Lançamentos automáticos mensais', '&#10227;') +
             menuBotaoHtml('menu-ajuda-categorias', 'Instruções de categorias', 'Como organizar seus gastos', '?') +
             (isStandalone() ? '' : menuBotaoHtml('menu-instalar', 'Instalar app', 'Adicionar à tela inicial', '&#8681;')) +
             '<button id="menu-duplicados" type="button" class="rounded-2xl border ' + (state.darkMode ? 'border-slate-800 bg-slate-900' : 'border-slate-200 bg-white') + ' p-3 text-left shadow-sm"><div class="flex items-center gap-3"><span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-cyan-50 text-xs font-black text-cyan-700">D</span><span class="min-w-0 flex-1"><span class="block text-xs font-black">Duplicados</span><span class="mt-0.5 block truncate text-[10px] font-semibold text-slate-500">' + (state.duplicadosAtivo ? 'Avisar despesas repetidas' : 'Nao avisar repeticoes') + '</span></span><span class="relative h-6 w-11 shrink-0 rounded-full p-0.5 ' + (state.duplicadosAtivo ? 'bg-emerald-500' : 'bg-rose-500') + '"><span class="block h-5 w-5 rounded-full bg-white shadow-sm transition-transform ' + (state.duplicadosAtivo ? 'translate-x-5' : 'translate-x-0') + '"></span></span></div></button>' +
@@ -3573,6 +3589,7 @@
       termos: 'Termos de Uso',
       privacidade: 'Privacidade',
       feedback: 'Dúvidas e Sugestões',
+      despesasFixas: 'Gerenciar despesas fixas',
     }[state.modalMenu] || 'Menu';
 
     return (
@@ -3601,6 +3618,7 @@
     if (state.modalMenu === 'termos') return termosMobileHtml();
     if (state.modalMenu === 'privacidade') return privacidadeMobileHtml();
     if (state.modalMenu === 'feedback') return feedbackMobileHtml();
+    if (state.modalMenu === 'despesasFixas') return despesasFixasMenuHtml();
     return '';
   }
 
@@ -4014,6 +4032,247 @@
     render();
   }
 
+  // ── Despesas Fixas Mobile ──────────────────────────────────────────────
+
+  function formatarValorRecorrMobile(str) {
+    var digits = str.replace(/\D/g, '');
+    if (!digits) return '';
+    var cents = parseInt(digits, 10);
+    var val = cents / 100;
+    return val.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  }
+
+  async function abrirModalMenuDespesasFixas() {
+    abrirModalMenu('despesasFixas');
+    await carregarRecorrencias();
+  }
+
+  async function carregarRecorrencias() {
+    if (!state.empresa) return;
+    var empresaId = state.empresa.id || state.empresa.empresa_id;
+    var resp = await db.from('recorrencias').select('*').eq('empresa_id', empresaId).order('dia', { ascending: true });
+    if (!resp.error && resp.data) {
+      state.recorrencias = resp.data;
+      render();
+    }
+  }
+
+  async function salvarNovaRecorrenciaMobile() {
+    var nome = (document.getElementById('nova-recorr-nome') || {}).value || '';
+    var dia = parseInt((document.getElementById('nova-recorr-dia') || {}).value || '0', 10);
+    var descricao = (document.getElementById('nova-recorr-descricao') || {}).value || '';
+    if (!nome || !dia || dia < 1 || dia > 31) {
+      state.erro = 'Preencha a despesa e o dia (1-31).';
+      render();
+      return;
+    }
+    var empresaId = state.empresa.id || state.empresa.empresa_id;
+    // find categoria from despesas list
+    var despesaObj = (state.despesas || []).find(function(d) { return d.nome === nome; });
+    var categoria = despesaObj ? (despesaObj.categoria || '') : '';
+    state.recorrSalvando = true;
+    state.erro = '';
+    render();
+    var resp = await db.from('recorrencias').insert({
+      empresa_id: empresaId,
+      nome: nome,
+      categoria: categoria,
+      descricao: descricao,
+      dia: dia,
+      ativo: true,
+    }).select().single();
+    if (resp.error) {
+      state.erro = 'Erro ao salvar: ' + resp.error.message;
+      state.recorrSalvando = false;
+      render();
+      return;
+    }
+    // if lancar agora checked and valor > 0, insert lancamento
+    var lancarAgora = document.getElementById('nova-recorr-lancar-agora') && document.getElementById('nova-recorr-lancar-agora').checked;
+    var valorNum = state.novaRecorrValorNumerico;
+    if (lancarAgora && valorNum > 0) {
+      var hoje = new Date();
+      var anoAtual = String(hoje.getFullYear());
+      var mesAtual = meses[hoje.getMonth()];
+      await db.from('lancamentos').insert({
+        empresa_id: empresaId,
+        nome: nome,
+        categoria: categoria,
+        descricao: descricao,
+        valor: valorNum,
+        dia: dia,
+        mes: mesAtual,
+        ano: anoAtual,
+        tipo: 'saida',
+      });
+    }
+    state.recorrencias = [resp.data].concat(state.recorrencias || []);
+    state.recorrSalvando = false;
+    state.novaRecorrNome = '';
+    state.novaRecorrDia = '';
+    state.novaRecorrDescricao = '';
+    state.novaRecorrValor = '';
+    state.novaRecorrValorNumerico = 0;
+    state.novaRecorrLancarAgora = false;
+    state.mensagem = 'Despesa fixa adicionada!';
+    render();
+    setTimeout(function() { state.mensagem = ''; render(); }, 2000);
+  }
+
+  async function toggleRecorrenciaAtivoMobile(id, ativoAtual) {
+    var novoAtivo = !ativoAtual;
+    var resp = await db.from('recorrencias').update({ ativo: novoAtivo }).eq('id', id);
+    if (!resp.error) {
+      state.recorrencias = state.recorrencias.map(function(r) {
+        return r.id === id ? Object.assign({}, r, { ativo: novoAtivo }) : r;
+      });
+      render();
+    }
+  }
+
+  async function salvarEdicaoRecorrenciaMobile(id) {
+    var nome = (document.getElementById('edit-recorr-nome-' + id) || {}).value || '';
+    var dia = parseInt((document.getElementById('edit-recorr-dia-' + id) || {}).value || '0', 10);
+    var descricao = (document.getElementById('edit-recorr-desc-' + id) || {}).value || '';
+    if (!nome || !dia || dia < 1 || dia > 31) {
+      state.erro = 'Preencha a despesa e o dia.';
+      render();
+      return;
+    }
+    var despesaObj = (state.despesas || []).find(function(d) { return d.nome === nome; });
+    var categoria = despesaObj ? (despesaObj.categoria || '') : '';
+    var resp = await db.from('recorrencias').update({ nome: nome, categoria: categoria, descricao: descricao, dia: dia }).eq('id', id).select().single();
+    if (resp.error) {
+      state.erro = 'Erro: ' + resp.error.message;
+      render();
+      return;
+    }
+    // lancar agora
+    var lancarAgora = document.getElementById('edit-recorr-lancar-' + id) && document.getElementById('edit-recorr-lancar-' + id).checked;
+    var valorNum = state.editRecorrValorNumerico;
+    if (lancarAgora && valorNum > 0) {
+      var hoje = new Date();
+      var empresaId = state.empresa.id || state.empresa.empresa_id;
+      await db.from('lancamentos').insert({
+        empresa_id: empresaId,
+        nome: nome,
+        categoria: categoria,
+        descricao: descricao,
+        valor: valorNum,
+        dia: dia,
+        mes: meses[hoje.getMonth()],
+        ano: String(hoje.getFullYear()),
+        tipo: 'saida',
+      });
+    }
+    state.recorrencias = state.recorrencias.map(function(r) {
+      return r.id === id ? resp.data : r;
+    });
+    state.recorrEditandoId = null;
+    state.editRecorrValorNumerico = 0;
+    state.mensagem = 'Salvo!';
+    render();
+    setTimeout(function() { state.mensagem = ''; render(); }, 1500);
+  }
+
+  async function excluirRecorrenciaMobile(id, nome) {
+    if (!window.confirm('Excluir a despesa fixa "' + nome + '"?')) return;
+    var resp = await db.from('recorrencias').delete().eq('id', id);
+    if (!resp.error) {
+      state.recorrencias = state.recorrencias.filter(function(r) { return r.id !== id; });
+      if (state.recorrEditandoId === id) state.recorrEditandoId = null;
+      render();
+    }
+  }
+
+  function despesasFixasMenuHtml() {
+    var mesesNomes = { Jan: 'Janeiro', Fev: 'Fevereiro', Mar: 'Março', Abr: 'Abril', Mai: 'Maio', Jun: 'Junho', Jul: 'Julho', Ago: 'Agosto', Set: 'Setembro', Out: 'Outubro', Nov: 'Novembro', Dez: 'Dezembro' };
+    var mesLabel = mesesNomes[state.mes] || state.mes;
+
+    var despesaOptions = '<option value="">Selecione a despesa</option>' +
+      (state.despesas || []).map(function(d) {
+        return '<option value="' + escapeHtml(d.nome) + '">' + escapeHtml(d.nome) + '</option>';
+      }).join('');
+
+    var msgHtml = state.mensagem ? '<p class="rounded-lg bg-emerald-50 px-3 py-2 text-[11px] font-black text-emerald-700">' + escapeHtml(state.mensagem) + '</p>' : '';
+    var erroHtml = state.erro ? '<p class="rounded-lg bg-rose-50 px-3 py-2 text-[11px] font-black text-rose-700">' + escapeHtml(state.erro) + '</p>' : '';
+
+    var listaHtml = (state.recorrencias || []).map(function(r) {
+      var id = String(r.id);
+      var editando = state.recorrEditandoId === id;
+      var despOpts = (state.despesas || []).map(function(d) {
+        return '<option value="' + escapeHtml(d.nome) + '"' + (d.nome === r.nome ? ' selected' : '') + '>' + escapeHtml(d.nome) + '</option>';
+      }).join('');
+
+      if (editando) {
+        return '<div class="rounded-xl border border-cyan-200 bg-cyan-50 p-3 grid gap-2">' +
+          '<div class="grid grid-cols-[64px_1fr] gap-2">' +
+            '<input id="edit-recorr-dia-' + id + '" type="number" min="1" max="31" value="' + escapeHtml(String(r.dia)) + '" style="font-size:16px" class="h-10 rounded-md border border-cyan-200 bg-white px-2 text-center text-base font-bold text-slate-900 outline-none" placeholder="Dia" />' +
+            '<select id="edit-recorr-nome-' + id + '" style="font-size:16px" class="h-10 rounded-md border border-cyan-200 bg-white px-2 text-base font-bold text-slate-900 outline-none">' +
+              '<option value="">Selecione</option>' + despOpts +
+            '</select>' +
+          '</div>' +
+          '<input id="edit-recorr-desc-' + id + '" value="' + escapeHtml(r.descricao || '') + '" placeholder="Descrição (opcional)" style="font-size:16px" class="h-10 rounded-md border border-cyan-200 bg-white px-3 text-base font-bold text-slate-900 outline-none" />' +
+          '<div class="flex items-center gap-2">' +
+            '<label class="flex flex-1 items-center gap-2 rounded-lg border border-cyan-200 bg-white px-3 h-10 min-w-0">' +
+              '<input id="edit-recorr-lancar-' + id + '" type="checkbox" class="h-4 w-4 shrink-0" />' +
+              '<span class="text-[10px] font-black text-slate-600 truncate">Incluir em ' + mesLabel + '</span>' +
+            '</label>' +
+            '<input id="edit-recorr-valor-' + id + '" type="text" inputmode="numeric" placeholder="0,00" value="' + escapeHtml(state.editRecorrValor || '') + '" class="h-10 w-24 shrink-0 rounded-md border border-cyan-200 bg-white px-2 text-right text-base font-bold text-slate-900 outline-none" />' +
+          '</div>' +
+          '<div class="grid grid-cols-2 gap-1.5">' +
+            '<button type="button" data-recorr-cancelar-edicao="' + id + '" class="h-9 rounded-lg border border-slate-200 bg-white text-[10px] font-black uppercase text-slate-600">Cancelar</button>' +
+            '<button type="button" data-recorr-salvar-edicao="' + id + '" class="h-9 rounded-lg bg-slate-950 text-[10px] font-black uppercase text-white">Salvar</button>' +
+          '</div>' +
+        '</div>';
+      }
+
+      var nomeExib = r.descricao || r.nome;
+      var ativoClass = r.ativo ? 'bg-emerald-500' : 'bg-slate-300';
+      var ativoTranslate = r.ativo ? 'translate-x-4' : 'translate-x-0';
+
+      return '<div class="flex items-center gap-2 rounded-xl border border-slate-100 bg-white px-3 py-2">' +
+        '<div class="flex-1 min-w-0">' +
+          '<p class="text-xs font-black text-slate-900 truncate">' + escapeHtml(nomeExib) + '</p>' +
+          '<p class="text-[10px] font-semibold text-slate-500">Dia ' + escapeHtml(String(r.dia)) + (r.descricao && r.nome !== r.descricao ? ' · ' + escapeHtml(r.nome) : '') + '</p>' +
+        '</div>' +
+        '<button type="button" data-recorr-toggle="' + id + '" data-recorr-ativo="' + (r.ativo ? '1' : '0') + '" class="relative h-6 w-10 shrink-0 rounded-full p-0.5 ' + ativoClass + '">' +
+          '<span class="block h-5 w-5 rounded-full bg-white shadow-sm transition-transform ' + ativoTranslate + '"></span>' +
+        '</button>' +
+        '<button type="button" data-recorr-editar="' + id + '" class="shrink-0 rounded-lg bg-cyan-600 px-2 py-1 text-[10px] font-black uppercase text-white">Editar</button>' +
+        '<button type="button" data-recorr-excluir="' + id + '" data-recorr-excluir-nome="' + escapeHtml(r.nome) + '" class="shrink-0 rounded-lg border border-rose-100 bg-white px-2 py-1 text-[10px] font-black uppercase text-rose-600">&#215;</button>' +
+      '</div>';
+    }).join('');
+
+    return (
+      '<div class="grid gap-3">' +
+        msgHtml +
+        erroHtml +
+        '<div class="rounded-xl border border-slate-200 bg-slate-50 p-3 grid gap-2">' +
+          '<p class="text-[10px] font-black uppercase tracking-wide text-slate-500">Nova despesa fixa</p>' +
+          '<div class="grid grid-cols-[64px_1fr] gap-2">' +
+            '<input id="nova-recorr-dia" type="number" min="1" max="31" placeholder="Dia" value="' + escapeHtml(state.novaRecorrDia) + '" style="font-size:16px" class="h-11 rounded-md border border-slate-300 bg-white px-2 text-center text-base font-bold text-slate-900 outline-none focus:border-cyan-500" />' +
+            '<select id="nova-recorr-nome" style="font-size:16px" class="h-11 rounded-md border border-slate-300 bg-white px-3 text-base font-bold text-slate-900 outline-none focus:border-cyan-500">' +
+              despesaOptions +
+            '</select>' +
+          '</div>' +
+          '<input id="nova-recorr-descricao" placeholder="Descrição (opcional)" value="' + escapeHtml(state.novaRecorrDescricao) + '" style="font-size:16px" class="h-11 rounded-md border border-slate-300 bg-white px-3 text-base font-bold text-slate-900 outline-none focus:border-cyan-500" />' +
+          '<div class="flex items-center gap-2">' +
+            '<label class="flex flex-1 items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 h-11 min-w-0">' +
+              '<input id="nova-recorr-lancar-agora" type="checkbox"' + (state.novaRecorrLancarAgora ? ' checked' : '') + ' class="h-4 w-4 shrink-0" />' +
+              '<span class="text-[10px] font-black text-slate-600 truncate">Incluir em ' + mesLabel + '</span>' +
+            '</label>' +
+            '<input id="nova-recorr-valor" type="text" inputmode="numeric" placeholder="0,00" value="' + escapeHtml(state.novaRecorrValor) + '" class="h-11 w-24 shrink-0 rounded-md border border-slate-300 bg-white px-2 text-right text-base font-bold text-slate-900 outline-none focus:border-cyan-500" />' +
+          '</div>' +
+          '<button id="salvar-nova-recorrencia" type="button" class="h-11 rounded-xl bg-slate-950 px-4 text-xs font-black uppercase text-white">' + (state.recorrSalvando ? 'Salvando...' : '+ Adicionar') + '</button>' +
+        '</div>' +
+        (state.recorrencias && state.recorrencias.length > 0
+          ? '<div class="grid gap-1.5">' + listaHtml + '</div>'
+          : '<p class="text-center text-[11px] font-semibold text-slate-400 py-2">Nenhuma despesa fixa cadastrada</p>') +
+      '</div>'
+    );
+  }
+
   function categoriasMenuHtml() {
     return (
       '<div class="grid gap-2">' +
@@ -4309,12 +4568,73 @@
     bind('menu-gerenciar', function () { abrirModalMenu('gerenciar'); });
     bind('menu-organizar-dashboard', function () { abrirModalMenu('organizarDashboard'); });
     bind('menu-categorias', function () { abrirModalMenu('categorias'); });
+    bind('menu-despesas-fixas', function () { abrirModalMenuDespesasFixas(); });
     bind('menu-ajuda-categorias', function () { abrirModalMenu('ajudaCategorias'); });
     bind('menu-instalar', instalarApp);
     bind('menu-duplicados', alternarDuplicados);
     bind('menu-tema', trocarTema);
     bind('menu-feedback', abrirFeedbackMobile);
     bind('fechar-modal-menu', fecharModalMenu);
+
+    // Despesas fixas mobile
+    bind('salvar-nova-recorrencia', salvarNovaRecorrenciaMobile);
+
+    var novaRecorrValorEl = document.getElementById('nova-recorr-valor');
+    if (novaRecorrValorEl) {
+      novaRecorrValorEl.addEventListener('input', function(e) {
+        var v = formatarValorRecorrMobile(e.target.value);
+        state.novaRecorrValor = v;
+        state.novaRecorrValorNumerico = v ? parseFloat(v.replace(/\./g,'').replace(',','.')) : 0;
+        e.target.value = v;
+        var len = v.length; e.target.setSelectionRange(len, len);
+      });
+      novaRecorrValorEl.addEventListener('focus', function(e) {
+        var len = e.target.value.length; e.target.setSelectionRange(len, len);
+      });
+    }
+
+    // list item delegates for recorrencias
+    var recorrContainer = document.querySelector('[data-recorr-container]');
+    // toggle, editar, excluir, cancelar-edicao, salvar-edicao via event delegation on modal content
+    var modalContent = document.querySelector('#modal-menu-overlay .overflow-y-auto');
+    if (modalContent && state.modalMenu === 'despesasFixas') {
+      modalContent.addEventListener('click', function handler(e) {
+        var btn = e.target.closest('[data-recorr-toggle],[data-recorr-editar],[data-recorr-excluir],[data-recorr-cancelar-edicao],[data-recorr-salvar-edicao]');
+        if (!btn) return;
+        if (btn.dataset.recorrToggle) {
+          toggleRecorrenciaAtivoMobile(btn.dataset.recorrToggle, btn.dataset.recorrAtivo === '1');
+        } else if (btn.dataset.recorrEditar) {
+          var r = (state.recorrencias || []).find(function(x) { return String(x.id) === btn.dataset.recorrEditar; });
+          state.recorrEditandoId = btn.dataset.recorrEditar;
+          state.editRecorrValor = '';
+          state.editRecorrValorNumerico = 0;
+          state.erro = '';
+          render();
+          // re-bind valor input for edit form
+          var editValorEl = document.getElementById('edit-recorr-valor-' + btn.dataset.recorrEditar);
+          if (editValorEl) {
+            editValorEl.addEventListener('input', function(ev) {
+              var v = formatarValorRecorrMobile(ev.target.value);
+              state.editRecorrValor = v;
+              state.editRecorrValorNumerico = v ? parseFloat(v.replace(/\./g,'').replace(',','.')) : 0;
+              ev.target.value = v;
+              var l = v.length; ev.target.setSelectionRange(l, l);
+            });
+            editValorEl.addEventListener('focus', function(ev) {
+              var l = ev.target.value.length; ev.target.setSelectionRange(l, l);
+            });
+          }
+        } else if (btn.dataset.recorrExcluir) {
+          excluirRecorrenciaMobile(btn.dataset.recorrExcluir, btn.dataset.recorrExcluirNome || '');
+        } else if (btn.dataset.recorrCancelarEdicao) {
+          state.recorrEditandoId = null;
+          state.erro = '';
+          render();
+        } else if (btn.dataset.recorrSalvarEdicao) {
+          salvarEdicaoRecorrenciaMobile(btn.dataset.recorrSalvarEdicao);
+        }
+      }, { once: true });
+    }
     bind('trocar-empresa-gerenciar', function () { abrirModalMenu('empresa'); });
     bind('termos-mobile', function () { abrirModalMenu('termos'); });
     bind('privacidade-mobile', function () { abrirModalMenu('privacidade'); });
