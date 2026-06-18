@@ -1999,6 +1999,67 @@
     mostrarToast('Total do mes atualizado.');
   }
 
+  async function excluirTotalMesMobile() {
+    if (!state.empresa || !state.mes) return;
+
+    var totalEntradas = state.entradas
+      .filter(function (e) { return e.mes === state.mes; })
+      .reduce(function (acc, e) { return acc + e.valor; }, 0);
+
+    var mensagem = totalEntradas > 0
+      ? 'O total definido manualmente sera removido. As receitas lancadas (' + formatarMoeda(totalEntradas) + ') serao mantidas.'
+      : 'Nao ha receitas lancadas neste mes. O total do mes sera zerado.';
+
+    if (!window.confirm(mensagem)) return;
+
+    state.carregando = true;
+    state.erro = '';
+    render();
+
+    if (totalEntradas > 0) {
+      var resp = await db
+        .from('faturamentos')
+        .upsert(
+          {
+            empresa_id: state.empresa.id,
+            ano: Number(state.ano),
+            mes: state.mes,
+            valor: totalEntradas,
+          },
+          { onConflict: 'empresa_id,ano,mes' }
+        )
+        .select()
+        .single();
+
+      if (resp.error) {
+        state.carregando = false;
+        setErro('Nao foi possivel excluir o total definido.');
+        return;
+      }
+
+      state.faturamentos[state.mes] = totalEntradas;
+    } else {
+      var del = await db
+        .from('faturamentos')
+        .delete()
+        .eq('empresa_id', state.empresa.id)
+        .eq('ano', Number(state.ano))
+        .eq('mes', state.mes);
+
+      if (del.error) {
+        state.carregando = false;
+        setErro('Nao foi possivel excluir o total do mes.');
+        return;
+      }
+
+      delete state.faturamentos[state.mes];
+    }
+
+    state.carregando = false;
+    mostrarToast('Total do mes excluido.');
+    render();
+  }
+
   async function salvarCategoriaDespesa() {
     if (!state.empresa) return;
 
@@ -3374,6 +3435,9 @@
               '<p class="rounded-xl bg-cyan-50 px-3 py-2 text-xs font-semibold text-cyan-900">Define o faturamento total do mes selecionado, substituindo o valor atual.</p>' +
               campoValor('receita-total', 'Total do mes') +
               '<button id="salvar-total-receita" type="button" class="h-11 rounded-xl bg-slate-950 px-4 text-sm font-black uppercase tracking-wide text-white">' + (state.carregando ? 'Salvando...' : 'Definir total') + '</button>' +
+              (Object.prototype.hasOwnProperty.call(state.faturamentos, state.mes)
+                ? '<button id="excluir-total-receita" type="button" class="h-10 rounded-xl border border-red-200 bg-red-50 px-4 text-xs font-black uppercase tracking-wide text-red-600">' + (state.carregando ? 'Excluindo...' : 'Excluir total do mes') + '</button>'
+                : '') +
             '</div>') +
       '</div>'
     );
@@ -4291,6 +4355,7 @@
     bind('salvar-despesa', salvarDespesa);
     bind('salvar-entrada', salvarEntrada);
     bind('salvar-total-receita', salvarTotalReceita);
+    bind('excluir-total-receita', excluirTotalMesMobile);
     bind('toggle-categorias', function () {
       state.categoriasExpandido = !state.categoriasExpandido;
       render();
