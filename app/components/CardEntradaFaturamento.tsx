@@ -169,7 +169,7 @@ export default function CardEntradaFaturamento({
 
           <button
             type="button"
-            onClick={adicionarEntradaFaturamento}
+            onClick={() => adicionarEntradaFaturamento()}
             disabled={entradaFaturamentoSalvando}
             className="h-9 rounded-md px-1 text-[11px] font-black uppercase text-white shadow-md transition hover:brightness-110 active:scale-95 disabled:cursor-not-allowed disabled:opacity-60"
             style={{ backgroundColor: corPrimaria }}
