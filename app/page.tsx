@@ -5545,42 +5545,54 @@ setAjustesAberto(false);
   style={{ backgroundColor: corPrimaria }}
 >
   <div className="max-w-7xl mx-auto grid w-full grid-cols-[minmax(260px,0.8fr)_minmax(0,1.2fr)] items-center gap-4 px-8">
-    {/* ESQUERDA: MÊS COM SETAS */}
-    <div className="flex items-center justify-center gap-2">
+    {/* ESQUERDA: MÊS COM SETAS + DESPESAS FIXAS */}
+    <div className="flex items-center justify-between gap-3">
+      <div className="flex items-center gap-2">
+        <button
+          type="button"
+          onClick={() => {
+            const indiceAtual = meses.indexOf(mesAtivo);
+            const mesAnterior = meses[indiceAtual - 1];
+
+            if (mesAnterior) {
+              setMesAtivo(mesAnterior);
+            }
+          }}
+          disabled={meses.indexOf(mesAtivo) === 0}
+          className="rounded-md bg-black/10 px-2.5 py-1.5 text-sm font-bold transition hover:bg-black/20 disabled:cursor-not-allowed disabled:opacity-40"
+        >
+          ‹
+        </button>
+
+        <h2 className="min-w-[190px] text-center text-lg font-black uppercase tracking-wider">
+          {mesAtivo} / {anoSelecionado}
+        </h2>
+
+        <button
+          type="button"
+          onClick={() => {
+            const indiceAtual = meses.indexOf(mesAtivo);
+            const proximoMes = meses[indiceAtual + 1];
+
+            if (proximoMes) {
+              setMesAtivo(proximoMes);
+            }
+          }}
+          disabled={meses.indexOf(mesAtivo) === meses.length - 1}
+          className="rounded-md bg-black/10 px-2.5 py-1.5 text-sm font-bold transition hover:bg-black/20 disabled:cursor-not-allowed disabled:opacity-40"
+        >
+          ›
+        </button>
+      </div>
+
       <button
         type="button"
-        onClick={() => {
-          const indiceAtual = meses.indexOf(mesAtivo);
-          const mesAnterior = meses[indiceAtual - 1];
-
-          if (mesAnterior) {
-            setMesAtivo(mesAnterior);
-          }
-        }}
-        disabled={meses.indexOf(mesAtivo) === 0}
-        className="rounded-md bg-black/10 px-2.5 py-1.5 text-sm font-bold transition hover:bg-black/20 disabled:cursor-not-allowed disabled:opacity-40"
+        onClick={() => {/* TODO: abrir modal Gerenciar despesas fixas */}}
+        className="flex items-center gap-1.5 rounded-md bg-black/15 px-2.5 py-1.5 text-xs font-black uppercase tracking-wide text-white transition hover:bg-black/25 whitespace-nowrap cursor-pointer"
+        title="Gerenciar despesas fixas"
       >
-        ‹
-      </button>
-
-      <h2 className="min-w-[190px] text-center text-lg font-black uppercase tracking-wider">
-        {mesAtivo} / {anoSelecionado}
-      </h2>
-
-      <button
-        type="button"
-        onClick={() => {
-          const indiceAtual = meses.indexOf(mesAtivo);
-          const proximoMes = meses[indiceAtual + 1];
-
-          if (proximoMes) {
-            setMesAtivo(proximoMes);
-          }
-        }}
-        disabled={meses.indexOf(mesAtivo) === meses.length - 1}
-        className="rounded-md bg-black/10 px-2.5 py-1.5 text-sm font-bold transition hover:bg-black/20 disabled:cursor-not-allowed disabled:opacity-40"
-      >
-        ›
+        <span>⚙</span>
+        <span>Despesas fixas</span>
       </button>
     </div>
 
