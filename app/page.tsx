@@ -3309,30 +3309,30 @@ if (modalSelecionarEmpresa) {
       darkMode ? 'bg-slate-950 text-slate-100' : 'bg-slate-100 text-slate-800'
     }`}>
       <section
-        className={`w-full max-w-xl rounded-3xl border shadow-2xl overflow-hidden ${
+        className={`w-full max-w-sm rounded-2xl border shadow-2xl overflow-hidden ${
           darkMode
             ? 'bg-slate-900 border-slate-700'
             : 'bg-white border-slate-200'
         }`}
       >
         <div
-          className="px-6 py-5"
+          className="px-5 py-3.5"
           style={{
             backgroundColor: corPrimaria,
             color: textoSobreCorPrimaria,
           }}
         >
-          <h2 className="text-lg font-black uppercase tracking-wide">
+          <h2 className="text-sm font-black uppercase tracking-wide">
             Selecionar perfil
           </h2>
 
-          <p className="mt-1 text-sm opacity-85">
-            Escolha qual perfil financeiro deseja acessar neste momento.
+          <p className="mt-0.5 text-xs opacity-85">
+            Escolha qual perfil financeiro deseja acessar.
           </p>
         </div>
 
-        <div className="p-6 space-y-4">
-          <div className="space-y-3">
+        <div className="p-4 space-y-3">
+          <div className="space-y-2">
             {empresasDoUsuario.map((empresa) => {
               const selecionada = empresaParaSelecionar?.id === empresa.id;
 
@@ -3341,7 +3341,7 @@ if (modalSelecionarEmpresa) {
                   key={empresa.id}
                   type="button"
                   onClick={() => setEmpresaParaSelecionar(empresa)}
-                  className={`w-full rounded-2xl border p-4 text-left transition cursor-pointer ${
+                  className={`w-full rounded-xl border px-3 py-2.5 text-left transition cursor-pointer ${
                     selecionada
                       ? darkMode
                         ? 'border-sky-400 bg-sky-950/40'
@@ -3351,19 +3351,18 @@ if (modalSelecionarEmpresa) {
                         : 'border-slate-200 bg-slate-50 hover:bg-slate-100'
                   }`}
                 >
-                  <div className="flex items-start justify-between gap-4">
+                  <div className="flex items-center justify-between gap-3">
                     <div>
-                      <h3 className={`font-black ${
+                      <h3 className={`text-sm font-black ${
                         darkMode ? 'text-white' : 'text-slate-800'
                       }`}>
                         {empresa.nome || empresa.empresa_nome}
                       </h3>
 
-                      <p className={`mt-1 text-xs ${
+                      <p className={`text-xs ${
                         darkMode ? 'text-slate-400' : 'text-slate-500'
                       }`}>
-                        {rotuloTipoPerfil(empresa.tipo_perfil)} · Acesso:{' '}
-                        {empresa.perfil === 'gestor_master'
+                        {rotuloTipoPerfil(empresa.tipo_perfil)} · {empresa.perfil === 'gestor_master'
                           ? 'Gestor Master'
                           : empresa.perfil === 'administrador'
                             ? 'Administrador'
@@ -3376,7 +3375,7 @@ if (modalSelecionarEmpresa) {
                     </div>
 
                     <span
-                      className={`mt-1 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border ${
+                      className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-full border ${
                         selecionada
                           ? 'border-sky-500 bg-sky-500'
                           : darkMode
@@ -3385,7 +3384,7 @@ if (modalSelecionarEmpresa) {
                       }`}
                     >
                       {selecionada && (
-                        <span className="h-2 w-2 rounded-full bg-white" />
+                        <span className="h-1.5 w-1.5 rounded-full bg-white" />
                       )}
                     </span>
                   </div>
@@ -3394,7 +3393,7 @@ if (modalSelecionarEmpresa) {
             })}
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-[1fr_140px] gap-3 pt-2">
+          <div className="grid grid-cols-[1fr_100px] gap-2">
             <button
               type="button"
               disabled={!empresaParaSelecionar}
@@ -3402,7 +3401,7 @@ if (modalSelecionarEmpresa) {
                 if (!empresaParaSelecionar) return;
                 await carregarEmpresaSelecionada(empresaParaSelecionar);
               }}
-              className="rounded-xl px-4 py-3 text-sm font-black shadow transition hover:brightness-110 cursor-pointer disabled:cursor-not-allowed disabled:opacity-60"
+              className="rounded-lg px-4 py-2 text-xs font-black shadow transition hover:brightness-110 cursor-pointer disabled:cursor-not-allowed disabled:opacity-60"
               style={estiloTemaPrimario}
             >
               Confirmar acesso
@@ -3411,7 +3410,7 @@ if (modalSelecionarEmpresa) {
             <button
               type="button"
               onClick={sairDaSelecaoEmpresa}
-              className={`rounded-xl border px-4 py-3 text-sm font-bold transition cursor-pointer ${
+              className={`rounded-lg border px-4 py-2 text-xs font-bold transition cursor-pointer ${
                 darkMode
                   ? 'border-red-800/50 bg-red-950/30 text-red-300 hover:bg-red-900/50'
                   : 'border-red-200 bg-red-50 text-red-600 hover:bg-red-100'
