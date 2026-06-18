@@ -6318,6 +6318,7 @@ setAjustesAberto(false);
               </label>
               <input type="text" inputMode="numeric" value={novaRecorrValor}
                 onChange={handleNovaRecorrValorChange}
+                onFocus={(e) => { const l = e.target.value.length; e.target.setSelectionRange(l, l); }}
                 placeholder="0,00"
                 className={`h-9 w-full rounded-md border px-2.5 text-right text-xs font-bold outline-none transition focus:ring-1 ${darkMode ? 'border-slate-600 bg-slate-700 text-white' : 'border-slate-300 bg-white text-slate-700'}`}
               />
@@ -6369,6 +6370,7 @@ setAjustesAberto(false);
                       </label>
                       <input type="text" inputMode="numeric" value={editRecorrValor}
                         onChange={handleEditRecorrValorChange}
+                        onFocus={(e) => { const l = e.target.value.length; e.target.setSelectionRange(l, l); }}
                         placeholder="0,00"
                         className={`h-8 w-full rounded-md border px-2 text-right text-xs font-bold outline-none ${darkMode ? 'border-slate-500 bg-slate-600 text-white' : 'border-slate-300 bg-white text-slate-700'}`}
                       />
