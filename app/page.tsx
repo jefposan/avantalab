@@ -313,7 +313,10 @@ const [despesaAnaliseAtiva, setDespesaAnaliseAtiva] = useState<{
   const [editRecorrNome, setEditRecorrNome] = useState('');
   const [editRecorrCategoria, setEditRecorrCategoria] = useState('');
   const [editRecorrDescricao, setEditRecorrDescricao] = useState('');
-  const [editRecorrDia, setEditRecorrDia] = useState('1');
+  const [editRecorrDia, setEditRecorrDia] = useState('');
+  const [editRecorrValor, setEditRecorrValor] = useState('');
+  const [editRecorrValorNumerico, setEditRecorrValorNumerico] = useState(0);
+  const [editRecorrLancarAgora, setEditRecorrLancarAgora] = useState(false);
   const [calcAberta, setCalcAberta] = useState(false);
   const [modalTermos, setModalTermos] = useState(false);
   const [modalPrivacidade, setModalPrivacidade] = useState(false);
@@ -1519,6 +1522,14 @@ const solicitarFaturamentoDashboard = () => {
     setModalDespesasFixas(true);
   };
 
+  const handleEditRecorrValorChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value.replace(/\D/g, '');
+    if (!value) { setEditRecorrValor(''); setEditRecorrValorNumerico(0); return; }
+    const numericValue = parseInt(value, 10) / 100;
+    setEditRecorrValorNumerico(numericValue);
+    setEditRecorrValor(formatarValorCampo(numericValue));
+  };
+
   const handleNovaRecorrValorChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value.replace(/\D/g, '');
     if (!value) {
@@ -1589,6 +1600,9 @@ const solicitarFaturamentoDashboard = () => {
     setEditRecorrCategoria(r.categoria);
     setEditRecorrDescricao(r.descricao || '');
     setEditRecorrDia(String(r.dia));
+    setEditRecorrValor('');
+    setEditRecorrValorNumerico(0);
+    setEditRecorrLancarAgora(false);
   };
 
   const salvarEdicaoRecorrencia = async () => {
@@ -1607,6 +1621,28 @@ const solicitarFaturamentoDashboard = () => {
           : r
         ).sort((a, b) => a.nome.localeCompare(b.nome))
       );
+      if (editRecorrLancarAgora && mesAtivo && editRecorrValorNumerico > 0) {
+        const dia = Math.max(1, Math.min(31, Number(editRecorrDia) || 1));
+        const salvo = await salvarLancamento({
+          empresaId: empresaId!,
+          ano: Number(anoSelecionado),
+          mes: mesAtivo,
+          dia,
+          despesaNome: editRecorrNome.trim(),
+          descricao: editRecorrDescricao.trim(),
+          valor: editRecorrValorNumerico,
+        });
+        if (!salvo.erro && salvo.data) {
+          setLancamentos((prev) => [{
+            id: salvo.data!.id,
+            mes: salvo.data!.mes,
+            dia: salvo.data!.dia,
+            despesa: salvo.data!.despesa_nome,
+            descricao: salvo.data!.descricao || '',
+            valor: Number(salvo.data!.valor),
+          }, ...prev]);
+        }
+      }
       setRecorrEditandoId(null);
     }
   };
@@ -6241,7 +6277,11 @@ setAjustesAberto(false);
         <div className={`rounded-xl border p-4 ${darkMode ? 'border-slate-700 bg-slate-900/60' : 'border-slate-200 bg-slate-50'}`}>
           <p className={`mb-3 text-xs font-black uppercase tracking-wide ${darkMode ? 'text-slate-300' : 'text-slate-600'}`}>Nova despesa fixa</p>
           <div className="grid gap-2">
-            <div className="grid grid-cols-[1fr_64px] gap-2">
+            <div className="grid grid-cols-[64px_1fr] gap-2">
+              <input type="number" min="1" max="31" value={novaRecorrDia}
+                onChange={(e) => setNovaRecorrDia(e.target.value)} placeholder="Dia"
+                className={`h-9 w-full rounded-md border px-2.5 text-center text-xs font-bold outline-none transition focus:ring-1 ${darkMode ? 'border-slate-600 bg-slate-700 text-white' : 'border-slate-300 bg-white text-slate-700'}`}
+              />
               <select
                 value={novaRecorrNome}
                 onChange={(e) => {
@@ -6257,35 +6297,31 @@ setAjustesAberto(false);
                   <option key={d.nome} value={d.nome}>{d.nome}</option>
                 ))}
               </select>
-              <input type="number" min="1" max="31" value={novaRecorrDia}
-                onChange={(e) => setNovaRecorrDia(e.target.value)} placeholder="Dia"
-                className={`h-9 w-full rounded-md border px-2.5 text-center text-xs font-bold outline-none transition focus:ring-1 ${darkMode ? 'border-slate-600 bg-slate-700 text-white' : 'border-slate-300 bg-white text-slate-700'}`}
-              />
             </div>
             <input type="text" value={novaRecorrDescricao}
               onChange={(e) => setNovaRecorrDescricao(e.target.value)} placeholder="Descrição (opcional)"
               className={`h-9 w-full rounded-md border px-2.5 text-xs font-semibold outline-none transition focus:ring-1 ${darkMode ? 'border-slate-600 bg-slate-700 text-white' : 'border-slate-300 bg-white text-slate-700'}`}
             />
-            {/* Lançar no mês atual */}
-            <label className={`flex cursor-pointer items-center gap-2 rounded-lg border px-3 py-2 transition ${
-              novaRecorrLancarAgora
-                ? darkMode ? 'border-blue-500/50 bg-blue-950/30' : 'border-blue-200 bg-blue-50'
-                : darkMode ? 'border-slate-600' : 'border-slate-200'
-            }`}>
-              <input type="checkbox" checked={novaRecorrLancarAgora}
-                onChange={(e) => setNovaRecorrLancarAgora(e.target.checked)}
-                className="h-4 w-4 accent-blue-600" />
-              <span className={`text-xs font-black ${darkMode ? 'text-slate-300' : 'text-slate-600'}`}>
-                Incluir também em {mesAtivo || 'este mês'}
-              </span>
-            </label>
-            {novaRecorrLancarAgora && (
+            {/* Incluir no mês + Valor na mesma linha */}
+            <div className="grid grid-cols-[1fr_100px] gap-2 items-center">
+              <label className={`flex cursor-pointer items-center gap-2 rounded-lg border px-3 py-2 h-9 transition ${
+                novaRecorrLancarAgora
+                  ? darkMode ? 'border-blue-500/50 bg-blue-950/30' : 'border-blue-200 bg-blue-50'
+                  : darkMode ? 'border-slate-600' : 'border-slate-200'
+              }`}>
+                <input type="checkbox" checked={novaRecorrLancarAgora}
+                  onChange={(e) => setNovaRecorrLancarAgora(e.target.checked)}
+                  className="h-4 w-4 accent-blue-600" />
+                <span className={`text-xs font-black ${darkMode ? 'text-slate-300' : 'text-slate-600'}`}>
+                  Incluir em {mesAtivo || 'este mês'}
+                </span>
+              </label>
               <input type="text" inputMode="numeric" value={novaRecorrValor}
                 onChange={handleNovaRecorrValorChange}
                 placeholder="0,00"
                 className={`h-9 w-full rounded-md border px-2.5 text-right text-xs font-bold outline-none transition focus:ring-1 ${darkMode ? 'border-slate-600 bg-slate-700 text-white' : 'border-slate-300 bg-white text-slate-700'}`}
               />
-            )}
+            </div>
             <button type="button" onClick={salvarNovaRecorrencia}
               disabled={recorrSalvando || !novaRecorrNome.trim()}
               className="h-9 rounded-md text-xs font-black uppercase text-white shadow-sm transition hover:brightness-110 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
@@ -6308,15 +6344,35 @@ setAjustesAberto(false);
               }`}>
                 {recorrEditandoId === r.id ? (
                   <div className="grid gap-2">
-                    <div className="grid grid-cols-[1fr_80px] gap-2">
+                    <div className="grid grid-cols-[64px_1fr] gap-2">
+                      <input type="number" min="1" max="31" value={editRecorrDia} onChange={(e) => setEditRecorrDia(e.target.value)}
+                        placeholder="Dia"
+                        className={`h-8 rounded-md border px-2 text-center text-xs font-bold outline-none ${darkMode ? 'border-slate-500 bg-slate-600 text-white' : 'border-slate-300 bg-white text-slate-700'}`} />
                       <input type="text" value={editRecorrNome} onChange={(e) => setEditRecorrNome(e.target.value)}
                         className={`h-8 rounded-md border px-2 text-xs font-bold outline-none ${darkMode ? 'border-slate-500 bg-slate-600 text-white' : 'border-slate-300 bg-white text-slate-700'}`} />
-                      <input type="number" min="1" max="31" value={editRecorrDia} onChange={(e) => setEditRecorrDia(e.target.value)}
-                        className={`h-8 rounded-md border px-2 text-center text-xs font-bold outline-none ${darkMode ? 'border-slate-500 bg-slate-600 text-white' : 'border-slate-300 bg-white text-slate-700'}`} />
                     </div>
                     <input type="text" value={editRecorrDescricao} onChange={(e) => setEditRecorrDescricao(e.target.value)}
                       placeholder="Descrição (opcional)"
                       className={`h-8 rounded-md border px-2 text-xs font-semibold outline-none ${darkMode ? 'border-slate-500 bg-slate-600 text-white' : 'border-slate-300 bg-white text-slate-700'}`} />
+                    <div className="grid grid-cols-[1fr_100px] gap-2 items-center">
+                      <label className={`flex cursor-pointer items-center gap-2 rounded-md border px-2 py-1.5 h-8 transition ${
+                        editRecorrLancarAgora
+                          ? darkMode ? 'border-blue-500/50 bg-blue-950/30' : 'border-blue-200 bg-blue-50'
+                          : darkMode ? 'border-slate-600' : 'border-slate-200'
+                      }`}>
+                        <input type="checkbox" checked={editRecorrLancarAgora}
+                          onChange={(e) => setEditRecorrLancarAgora(e.target.checked)}
+                          className="h-3.5 w-3.5 accent-blue-600" />
+                        <span className={`text-[10px] font-black ${darkMode ? 'text-slate-300' : 'text-slate-600'}`}>
+                          Incluir em {mesAtivo || 'este mês'}
+                        </span>
+                      </label>
+                      <input type="text" inputMode="numeric" value={editRecorrValor}
+                        onChange={handleEditRecorrValorChange}
+                        placeholder="0,00"
+                        className={`h-8 w-full rounded-md border px-2 text-right text-xs font-bold outline-none ${darkMode ? 'border-slate-500 bg-slate-600 text-white' : 'border-slate-300 bg-white text-slate-700'}`}
+                      />
+                    </div>
                     <div className="flex gap-2">
                       <button type="button" onClick={salvarEdicaoRecorrencia}
                         className="h-7 flex-1 rounded-md bg-emerald-600 text-[10px] font-black uppercase text-white hover:bg-emerald-700 transition cursor-pointer">Salvar</button>
