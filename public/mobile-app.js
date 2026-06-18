@@ -104,6 +104,9 @@
     isIos: /iphone|ipad|ipod/i.test(navigator.userAgent),
     novaCategoriaNome: '',
     novaCategoriaTipo: '',
+    novaDespesaAberta: false,
+    novaDespesaNome: '',
+    novaDespesaCategoria: '',
     categoriasExpandido: false,
     tiposDespesaExpandido: false,
     ultimasDespesasExpandido: false,
@@ -1988,6 +1991,64 @@
     mostrarToast('Despesa cadastrada.');
   }
 
+  async function salvarNovaDespesaInline() {
+    if (!state.empresa) return;
+
+    var nome = (document.getElementById('nova-despesa-nome') ? document.getElementById('nova-despesa-nome').value : state.novaDespesaNome).trim();
+    var categoria = (document.getElementById('nova-despesa-categoria') ? document.getElementById('nova-despesa-categoria').value : state.novaDespesaCategoria).trim();
+
+    if (!nome) {
+      setAlerta('Informe o nome do tipo de despesa.');
+      return;
+    }
+    if (!categoria) {
+      setAlerta('Selecione uma categoria.');
+      return;
+    }
+    var jaExiste = state.despesas.some(function (d) { return d.nome.toLowerCase() === nome.toLowerCase(); });
+    if (jaExiste) {
+      setAlerta('Ja existe um tipo com esse nome.');
+      return;
+    }
+
+    state.carregando = true;
+    state.erro = '';
+    render();
+
+    var resposta = await db
+      .from('despesas_cadastradas')
+      .insert({
+        empresa_id: state.empresa.id,
+        nome: formatarDescricao(nome),
+        categoria: formatarDescricao(categoria),
+      })
+      .select()
+      .single();
+
+    if (resposta.error) {
+      state.carregando = false;
+      setAlerta('Nao foi possivel cadastrar o tipo de despesa.');
+      return;
+    }
+
+    state.novaDespesaAberta = false;
+    state.novaDespesaNome = '';
+    state.novaDespesaCategoria = '';
+    state.erro = '';
+    await carregarDados();
+    var novoNome = resposta.data && resposta.data.nome ? resposta.data.nome : formatarDescricao(nome);
+    var selectDespesa = document.getElementById('despesa-nome');
+    if (selectDespesa) {
+      for (var i = 0; i < selectDespesa.options.length; i++) {
+        if (selectDespesa.options[i].value === novoNome) {
+          selectDespesa.selectedIndex = i;
+          break;
+        }
+      }
+    }
+    mostrarToast('Tipo cadastrado e selecionado.');
+  }
+
   function abrirCategoriaAcoes(id) {
     state.categoriaAcoesId = state.categoriaAcoesId === id ? '' : (id || '');
     state.categoriaEditandoId = '';
@@ -3189,8 +3250,8 @@
             '<button id="fechar-lancamento" type="button" class="flex h-9 w-9 items-center justify-center rounded-full bg-slate-100 text-xl text-slate-600">&times;</button>' +
           '</div>' +
           '<div class="mb-3 grid grid-cols-2 gap-2 rounded-xl bg-slate-100 p-1">' +
-            '<button id="tipo-despesa" type="button" class="h-9 rounded-lg text-sm font-black ' + (despesaAtiva ? 'bg-white text-red-600 shadow-sm' : 'text-slate-500') + '">Despesa</button>' +
-            '<button id="tipo-receita" type="button" class="h-9 rounded-lg text-sm font-black ' + (!despesaAtiva ? 'bg-white text-emerald-600 shadow-sm' : 'text-slate-500') + '">Receita</button>' +
+            '<button id="tipo-despesa" type="button" class="h-9 rounded-lg text-sm font-black transition ' + (despesaAtiva ? 'bg-red-600 text-white shadow-sm' : 'text-slate-500') + '">Despesa</button>' +
+            '<button id="tipo-receita" type="button" class="h-9 rounded-lg text-sm font-black transition ' + (!despesaAtiva ? 'bg-emerald-600 text-white shadow-sm' : 'text-slate-500') + '">Receita</button>' +
           '</div>' +
           alertaHtml().replace('mt-4', 'mb-3') +
           (despesaAtiva ? modalDespesaCamposHtml() : modalReceitaCamposHtml()) +
@@ -3200,6 +3261,8 @@
   }
 
   function modalDespesaCamposHtml() {
+    var categorias = categoriasDoPerfil(state.empresa && state.empresa.tipo_perfil);
+    var novaAberta = state.novaDespesaAberta;
     return (
       '<div class="grid gap-3">' +
         '<div class="flex items-end gap-6">' +
@@ -3213,6 +3276,25 @@
             '</select>' +
           '</label>' +
         '</div>' +
+        (!novaAberta
+          ? '<button id="abrir-nova-despesa" type="button" class="flex w-full items-center gap-2 rounded-xl border border-dashed border-slate-300 px-3 py-2.5 text-xs font-black text-slate-500 transition hover:border-slate-400 hover:text-slate-700">+ Cadastrar despesa</button>'
+          : '<div class="rounded-xl border border-sky-200 bg-sky-50 p-3 grid gap-2">' +
+              '<p class="text-xs font-black uppercase tracking-wide text-sky-700">Novo tipo de despesa</p>' +
+              '<label class="grid gap-1 text-xs font-black uppercase tracking-wide text-slate-600">Nome' +
+                '<input id="nova-despesa-nome" type="text" value="' + escapeHtml(state.novaDespesaNome) + '" placeholder="Ex: Plano de saude" style="font-size:16px" autocomplete="off" class="h-11 w-full rounded-md border border-sky-200 bg-white px-3 text-base font-bold normal-case tracking-normal outline-none" />' +
+              '</label>' +
+              '<label class="grid gap-1 text-xs font-black uppercase tracking-wide text-slate-600">Categoria' +
+                '<select id="nova-despesa-categoria" style="font-size:16px" class="h-11 w-full rounded-md border border-sky-200 bg-white px-3 text-base font-bold normal-case tracking-normal">' +
+                  categorias.map(function (cat) {
+                    return '<option value="' + escapeHtml(cat.nome) + '"' + (cat.nome === state.novaDespesaCategoria ? ' selected' : '') + '>' + escapeHtml(cat.nome) + '</option>';
+                  }).join('') +
+                '</select>' +
+              '</label>' +
+              '<div class="grid grid-cols-[1fr_auto] gap-2">' +
+                '<button id="salvar-nova-despesa" type="button" class="h-10 rounded-lg bg-slate-950 px-4 text-sm font-black uppercase tracking-wide text-white">' + (state.carregando ? 'Salvando...' : 'Salvar tipo') + '</button>' +
+                '<button id="fechar-nova-despesa" type="button" class="h-10 rounded-lg border border-slate-200 bg-white px-4 text-sm font-black text-slate-500">Fechar</button>' +
+              '</div>' +
+            '</div>') +
         campoClaro('despesa-descricao', 'Descricao') +
         campoValor('despesa-valor', 'Valor') +
         '<button id="salvar-despesa" type="button" class="h-11 rounded-xl bg-slate-950 px-4 text-sm font-black uppercase tracking-wide text-white">' + (state.carregando ? 'Salvando...' : 'Salvar despesa') + '</button>' +
@@ -4235,6 +4317,9 @@
     bind('voltar-dashboard-topo', voltarDashboard);
     bind('fechar-lancamento', function () {
       state.modalLancamento = false;
+      state.novaDespesaAberta = false;
+      state.novaDespesaNome = '';
+      state.novaDespesaCategoria = '';
       render();
     });
     var modalLancamentoOverlay = document.getElementById('modal-lancamento-overlay');
@@ -4252,8 +4337,27 @@
     });
     bind('tipo-receita', function () {
       state.tipoLancamento = 'receita';
+      state.novaDespesaAberta = false;
+      state.novaDespesaNome = '';
+      state.novaDespesaCategoria = '';
       render();
     });
+    bind('abrir-nova-despesa', function () {
+      var categorias = categoriasDoPerfil(state.empresa && state.empresa.tipo_perfil);
+      state.novaDespesaAberta = true;
+      state.novaDespesaNome = '';
+      state.novaDespesaCategoria = categorias.length ? categorias[0].nome : '';
+      state.erro = '';
+      render();
+    });
+    bind('fechar-nova-despesa', function () {
+      state.novaDespesaAberta = false;
+      state.novaDespesaNome = '';
+      state.novaDespesaCategoria = '';
+      state.erro = '';
+      render();
+    });
+    bind('salvar-nova-despesa', salvarNovaDespesaInline);
     bind('modo-receita-entrada', function () {
       state.modoReceita = 'entrada';
       state.erro = '';
@@ -4777,166 +4881,4 @@
           handle.setPointerCapture(event.pointerId);
         } catch (error) {}
 
-        timer = window.setTimeout(function () {
-          state.dragDashboardId = idAtivo;
-          iniciouDrag = true;
-          calcularZonasDestino();
-          if (cardAtivo) {
-            var rect = cardAtivo.getBoundingClientRect();
-            estilosOrigem = {
-              opacity: cardAtivo.style.opacity,
-              transform: cardAtivo.style.transform,
-              filter: cardAtivo.style.filter,
-              minHeight: cardAtivo.style.minHeight,
-              outline: cardAtivo.style.outline,
-              background: cardAtivo.style.background,
-            };
-            cardAtivo.classList.add('select-none');
-            cardAtivo.style.minHeight = rect.height + 'px';
-            cardAtivo.style.opacity = '0.32';
-            cardAtivo.style.transform = 'scale(0.985)';
-            cardAtivo.style.filter = 'saturate(0.85)';
-            cardAtivo.style.outline = '1px dashed rgba(8, 145, 178, .32)';
-            cardAtivo.style.background = 'rgba(236, 254, 255, .55)';
-            criarGhost(cardAtivo, event.clientX, event.clientY);
-          }
-        }, 520);
-      });
-
-      handle.addEventListener('pointermove', function (event) {
-        if (pointerId !== event.pointerId) return;
-        if (!iniciouDrag) return;
-
-        event.preventDefault();
-        moverGhost(event.clientX, event.clientY);
-        destacarDestino(event.clientX, event.clientY);
-        rolarSeNecessario(event.clientY);
-      });
-
-      handle.addEventListener('pointerup', function (event) {
-        if (timer) {
-          window.clearTimeout(timer);
-          timer = null;
-        }
-
-        if (!state.dragDashboardId || !iniciouDrag) {
-          limparDrag();
-          return;
-        }
-
-        var destino = destacarDestino(event.clientX, event.clientY) || ultimoDestino;
-
-        if (destino && destino.id && destino.id !== state.dragDashboardId) {
-          var origem = state.dragDashboardId;
-          var idDestino = destino.id;
-          var depois = destino.depois;
-          limparDrag();
-          moverCardDashboardPara(origem, idDestino, depois);
-        } else {
-          limparDrag();
-          render();
-        }
-      });
-
-      handle.addEventListener('lostpointercapture', function () {
-        if (!iniciouDrag) {
-          limparDrag();
-        }
-      });
-
-      handle.addEventListener('pointercancel', function () {
-        limparDrag();
-      });
-    });
-  }
-  async function iniciar() {
-    try {
-      state.darkMode = localStorage.getItem('avantalab_mobile_dark') === '1';
-      state.dashboardOrdem = normalizarOrdemDashboard(JSON.parse(localStorage.getItem('avantalab_mobile_dashboard_ordem') || '[]'));
-      state.dashboardOcultos = normalizarOcultosDashboard(JSON.parse(localStorage.getItem('avantalab_mobile_dashboard_ocultos') || '[]'));
-    } catch (error) {}
-
-    if (window.caches && caches.keys) {
-      caches
-        .keys()
-        .then(function (keys) {
-          return Promise.all(
-            keys
-              .filter(function (key) {
-                return key.indexOf('avantalab-mobile-') === 0 && key !== 'avantalab-mobile-v81';
-              })
-              .map(function (key) {
-                return caches.delete(key);
-              })
-          );
-        })
-        .catch(function () {});
-    }
-
-    window.addEventListener('beforeinstallprompt', function (event) {
-      event.preventDefault();
-      state.installPrompt = event;
-      render();
-    });
-
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/mobile-sw.js?v=81').then(function (registro) {
-        if (registro && registro.update) registro.update();
-      }).catch(function () {});
-    }
-
-    configurarPullToRefresh();
-
-    render();
-
-    try {
-      if (deveEncerrarSessaoSalvaMobile()) {
-        await db.auth.signOut();
-      }
-
-      var sessao = await db.auth.getSession();
-      if (sessao.data.session && sessao.data.session.user) {
-        state.usuario = sessao.data.session.user;
-        state.autenticado = true;
-        await carregarEmpresas(state.usuario.id);
-        await carregarDados();
-      }
-      state.pronto = true;
-      render();
-    } catch (error) {
-      state.pronto = true;
-      state.erro = 'Nao foi possivel recuperar a sessao. Entre novamente.';
-      render();
-    }
-  }
-
-
-  function garantirRenderDepoisDaHidratacao() {
-    [900, 1800, 3200].forEach(function (tempo) {
-      window.setTimeout(function () {
-        var textoAtual = root.textContent || '';
-
-        if (state.pronto && textoAtual.indexOf('Preparando acesso') >= 0) {
-          render();
-        }
-      }, tempo);
-    });
-  }
-
-  function iniciarQuandoPaginaEstiverPronta() {
-    var iniciarComAtraso = function () {
-      window.setTimeout(function () {
-        iniciar();
-        garantirRenderDepoisDaHidratacao();
-      }, 650);
-    };
-
-    if (document.readyState === 'complete') {
-      iniciarComAtraso();
-    } else {
-      window.addEventListener('load', iniciarComAtraso, { once: true });
-    }
-  }
-
-  iniciarQuandoPaginaEstiverPronta();
-})();
+        timer = window.setTimeou
