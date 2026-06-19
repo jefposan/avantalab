@@ -140,7 +140,7 @@ export default function TabelaEntradasFaturamento({
                     {entrada.origem || '-'}
                   </td>
 
-                  <td className="py-2 px-4 w-40 text-right text-xs font-black text-emerald-600">
+                  <td className="py-2 px-4 w-40 text-right text-xs font-black" style={{ color: '#2EAD68' }}>
                     {formatarMoedaLocal(entrada.valor)}
                   </td>
 

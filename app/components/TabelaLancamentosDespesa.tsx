@@ -71,7 +71,6 @@ type TabelaLancamentosDespesaProps = {
 };
 
 export default function TabelaLancamentosDespesa({
-  bgCard,
   corPrimaria,
   darkMode,
   textStrong,
@@ -127,8 +126,12 @@ export default function TabelaLancamentosDespesa({
 }: TabelaLancamentosDespesaProps) {
   return (
     <div
-      className={`${bgCard} h-full min-w-0 rounded-xl shadow-lg border-x border-b border-t-[4px] p-4`}
-      style={{ borderTopColor: '#dc2626' }}
+      className="h-full min-w-0 rounded-[18px] border border-t-[4px] bg-white p-4 text-slate-900"
+      style={{
+        borderColor: '#E2E8F0',
+        borderTopColor: '#0A1F44',
+        boxShadow: '0 10px 25px rgba(10, 31, 68, 0.08)',
+      }}
     >
       <div
         className="relative custom-scroll"
@@ -226,11 +229,7 @@ export default function TabelaLancamentosDespesa({
         </div>
 
         {buscaLancamento.trim() && (
-          <div className={`px-1.5 pt-2 text-xs font-bold ${
-            lancamentosFiltradosDoMes.length > 0
-              ? darkMode ? 'text-emerald-300' : 'text-emerald-700'
-              : darkMode ? 'text-red-300' : 'text-red-600'
-          }`}>
+          <div className="px-1.5 pt-2 text-xs font-bold text-slate-500">
             {lancamentosFiltradosDoMes.length > 0
               ? `${lancamentosFiltradosDoMes.length} lançamento(s) localizado(s).`
               : 'Nenhum lançamento localizado com esse argumento.'}
@@ -252,12 +251,8 @@ export default function TabelaLancamentosDespesa({
                     key={lanc.id}
                     className={`border-b border-dotted transition-colors ${
                       buscaLancamento.trim()
-                        ? darkMode
-                          ? 'bg-sky-900/30 border-sky-700/50'
-                          : 'bg-sky-50 border-sky-200'
-                        : darkMode
-                          ? 'border-slate-600/40 hover:bg-slate-700/30'
-                          : 'border-slate-300/60 hover:bg-slate-50'
+                        ? 'bg-sky-50 border-sky-200'
+                        : 'border-slate-300/60 hover:bg-slate-50'
                     }`}
                   >
                     {lancamentoEditandoId === lanc.id ? (
@@ -359,19 +354,19 @@ export default function TabelaLancamentosDespesa({
                       </>
                     ) : (
                       <>
-                        <td className={`py-1.5 px-4 w-24 text-center text-xs font-bold ${textStrong}`}>
+                        <td className="py-1.5 px-4 w-24 text-center text-xs font-bold text-slate-800">
                           {lanc.dia.toString().padStart(2, '0')}
                         </td>
 
-                        <td className={`py-1.5 px-4 w-1/4 text-xs font-bold ${textStrong}`}>
+                        <td className="py-1.5 px-4 w-1/4 text-xs font-bold text-slate-800">
                           {lanc.despesa}
                         </td>
 
-                        <td className={`py-1.5 px-4 w-1/3 text-[11px] ${textMuted}`}>
+                        <td className="py-1.5 px-4 w-1/3 text-[11px] text-slate-500">
                           {lanc.descricao || '-'}
                         </td>
 
-                        <td className="py-1.5 px-4 w-40 text-right text-xs font-black text-red-500 whitespace-nowrap">
+                        <td className="py-1.5 px-4 w-40 text-right text-xs font-black whitespace-nowrap" style={{ color: '#E5484D' }}>
                           -{formatarMoeda(lanc.valor)}
                         </td>
 

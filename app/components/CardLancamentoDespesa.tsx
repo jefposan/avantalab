@@ -54,7 +54,6 @@ export default function CardLancamentoDespesa({
   handleValorChange,
   adicionarDespesa,
   despesasCadastradas,
-  estiloTemaPrimario,
   getMaxDias,
   formatarDescricao,
   expandido,
@@ -73,17 +72,13 @@ export default function CardLancamentoDespesa({
 
   return (
     <>
-      <div className="relative mb-3 flex h-8 items-center justify-center rounded-md bg-red-600 px-3 text-white shadow-sm">
+      <div className="relative mb-3 flex h-8 items-center justify-center rounded-md bg-white px-3 shadow-sm">
         <button
           type="button"
           onClick={() =>
             setOrdemLancamentos((prev) => (prev === 'desc' ? 'asc' : 'desc'))
           }
-          className={`absolute left-2 flex h-6 items-center gap-1.5 rounded-full px-2.5 text-[10px] font-black uppercase tracking-wide border shadow-sm ring-1 transition-all hover:scale-[1.03] active:scale-95 cursor-pointer ${
-            darkMode
-              ? 'bg-slate-950/25 border-white/30 text-white ring-white/15 hover:bg-slate-950/40 hover:border-white/45'
-              : 'bg-white/95 border-red-100 text-red-700 ring-red-950/10 hover:bg-red-50 hover:border-red-200'
-          }`}
+          className="absolute left-2 flex h-6 items-center gap-1.5 rounded-full border border-slate-200 bg-white px-2.5 text-[10px] font-black uppercase tracking-wide text-[#0A1F44] shadow-sm ring-1 ring-slate-200/70 transition-all hover:scale-[1.03] hover:border-slate-300 hover:bg-slate-50 active:scale-95 cursor-pointer"
           title={
             ordemLancamentos === 'desc'
               ? 'Clique para ordenar do menor dia para o maior'
@@ -91,12 +86,12 @@ export default function CardLancamentoDespesa({
           }
         >
           <span>Ordenar</span>
-          <span className="text-xs font-black">
+          <span className="text-xs font-black" style={{ color: '#E5484D' }}>
             {ordemLancamentos === 'desc' ? '\u2193' : '\u2191'}
           </span>
         </button>
 
-        <h3 className="text-sm font-black uppercase tracking-widest text-white">
+        <h3 className="text-sm font-black uppercase tracking-widest" style={{ color: '#0A1F44' }}>
           {/* L\u00e2ncamento de despesas */}
           Lançamento de despesas
         </h3>
@@ -188,7 +183,7 @@ export default function CardLancamentoDespesa({
             type="button"
             onClick={adicionarDespesa}
             disabled={salvandoDespesa}
-            style={estiloTemaPrimario}
+            style={{ backgroundColor: '#0A1F44', color: '#ffffff' }}
             className="h-9 rounded-md px-1 text-[11px] font-black uppercase shadow-md transition hover:brightness-110 active:scale-95 cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
           >
             {salvandoDespesa ? '...' : 'OK'}
@@ -211,11 +206,16 @@ export default function CardLancamentoDespesa({
               }}
               className={`flex h-7 items-center gap-1.5 rounded-full border px-3 text-[11px] font-black uppercase tracking-wide transition-all cursor-pointer ${
                 formParcelar
-                  ? 'border-red-500 bg-red-600 text-white shadow-sm'
+                  ? 'border-transparent text-white shadow-sm'
                   : darkMode
                     ? 'border-slate-600 bg-slate-700 text-slate-300 hover:border-slate-500'
                     : 'border-slate-300 bg-white text-slate-500 hover:border-slate-400 hover:text-slate-700'
               }`}
+              style={
+                formParcelar
+                  ? { backgroundColor: '#0A1F44', borderColor: '#0A1F44' }
+                  : undefined
+              }
             >
               <span>{formParcelar ? '✓' : '÷'}</span>
               <span>Parcelar</span>

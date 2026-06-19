@@ -62,7 +62,6 @@ export default function CardEntradaFaturamento({
   getMaxDias,
   corPrimaria,
   darkMode,
-  bgCard,
   entradas,
   podeEditarEntradas,
   entradaEditandoId,
@@ -86,20 +85,20 @@ export default function CardEntradaFaturamento({
 
   return (
     <div
-      className={`${bgCard} h-full min-w-0 rounded-xl shadow-lg border-x border-b border-t-[4px] p-4`}
-      style={{ borderTopColor: '#059669' }}
+      className="h-full min-w-0 rounded-[18px] border border-t-[4px] bg-white p-4 text-slate-900"
+      style={{
+        borderColor: '#E2E8F0',
+        borderTopColor: '#1F8A9E',
+        boxShadow: '0 10px 25px rgba(10, 31, 68, 0.08)',
+      }}
     >
-      <div className="relative mb-3 flex h-8 items-center justify-center rounded-md bg-emerald-600 px-3 text-white shadow-sm">
+      <div className="relative mb-3 flex h-8 items-center justify-center rounded-md bg-white px-3 shadow-sm">
         <button
           type="button"
           onClick={() =>
             setOrdemEntradasFaturamento((prev) => (prev === 'desc' ? 'asc' : 'desc'))
           }
-          className={`absolute left-2 flex h-6 items-center gap-1.5 rounded-full px-2.5 text-[10px] font-black uppercase tracking-wide border shadow-sm ring-1 transition-all hover:scale-[1.03] active:scale-95 cursor-pointer ${
-            darkMode
-              ? 'bg-slate-950/25 border-white/30 text-white ring-white/15 hover:bg-slate-950/40 hover:border-white/45'
-              : 'bg-white/95 border-emerald-100 text-emerald-700 ring-emerald-950/10 hover:bg-emerald-50 hover:border-emerald-200'
-          }`}
+          className="absolute left-2 flex h-6 items-center gap-1.5 rounded-full border border-slate-200 bg-white px-2.5 text-[10px] font-black uppercase tracking-wide text-[#1F8A9E] shadow-sm ring-1 ring-slate-200/70 transition-all hover:scale-[1.03] hover:border-slate-300 hover:bg-slate-50 active:scale-95 cursor-pointer"
           title={
             ordemEntradasFaturamento === 'desc'
               ? 'Clique para ordenar do menor dia para o maior'
@@ -107,12 +106,12 @@ export default function CardEntradaFaturamento({
           }
         >
           <span>Ordenar</span>
-          <span className="text-xs font-black">
+          <span className="text-xs font-black" style={{ color: '#2EAD68' }}>
             {ordemEntradasFaturamento === 'desc' ? '↓' : '↑'}
           </span>
         </button>
 
-        <h3 className="text-sm font-black uppercase tracking-widest text-white">
+        <h3 className="text-sm font-black uppercase tracking-widest" style={{ color: '#1F8A9E' }}>
           Lançamento de receita
         </h3>
       </div>
@@ -177,7 +176,7 @@ export default function CardEntradaFaturamento({
             onClick={() => adicionarEntradaFaturamento()}
             disabled={entradaFaturamentoSalvando}
             className="h-9 rounded-md px-1 text-[11px] font-black uppercase text-white shadow-md transition hover:brightness-110 active:scale-95 disabled:cursor-not-allowed disabled:opacity-60"
-            style={{ backgroundColor: corPrimaria }}
+            style={{ backgroundColor: '#1F8A9E' }}
           >
             {entradaFaturamentoSalvando ? '...' : 'OK'}
           </button>
@@ -239,11 +238,7 @@ export default function CardEntradaFaturamento({
         </div>
 
         {buscaEntradaFaturamento.trim() && (
-          <div className={`px-1.5 pt-2 text-xs font-bold ${
-            entradas.length > 0
-              ? darkMode ? 'text-emerald-300' : 'text-emerald-700'
-              : darkMode ? 'text-red-300' : 'text-red-600'
-          }`}>
+          <div className="px-1.5 pt-2 text-xs font-bold text-slate-500">
             {entradas.length > 0
               ? `${entradas.length} entrada(s) localizada(s).`
               : 'Nenhuma entrada localizada com esse argumento.'}
