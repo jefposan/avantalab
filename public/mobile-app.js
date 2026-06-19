@@ -3766,6 +3766,15 @@
     return (h < 10 ? '0' + h : h) + ':' + (m < 10 ? '0' + m : m);
   }
 
+  function _avaPinViewport() {
+    var ov = document.getElementById('chat-ia-overlay');
+    var vv = window.visualViewport;
+    if (!ov || !vv) return;
+    ov.style.height = vv.height + 'px';
+    ov.style.top = vv.offsetTop + 'px';
+    ov.style.bottom = 'auto';
+  }
+
   function chatIAModalHtml() {
     var dark = state.darkMode;
     var temTexto = state.chatIAInput.trim().length > 0;
@@ -5947,7 +5956,7 @@
           '<button id="chat-ia-mais" type="button" aria-label="Mais" style="width:30px;height:30px;border-radius:50%;border:none;background:transparent;display:flex;align-items:center;justify-content:center;flex-shrink:0;cursor:pointer;">' +
             '<svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="' + C.plus + '" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 5v14M5 12h14"/></svg>' +
           '</button>' +
-          '<textarea id="chat-ia-input" rows="1" placeholder="Como posso ajudar voce hoje?" ' + (enviando ? 'disabled' : '') + ' style="flex:1;resize:none;border:none;outline:none;background:transparent;font-size:15px;font-family:inherit;color:' + C.text + ';line-height:1.45;max-height:110px;overflow-y:auto;padding:7px 2px;margin:0;width:100%;">' + escapeHtml(state.chatIAInput) + '</textarea>' +
+          '<textarea id="chat-ia-input" rows="1" placeholder="Como posso ajudar voce hoje?" ' + (enviando ? 'disabled' : '') + ' style="flex:1;resize:none;border:none;outline:none;background:transparent;font-size:16px;font-family:inherit;color:' + C.text + ';line-height:1.45;max-height:110px;overflow-y:auto;padding:7px 2px;margin:0;width:100%;">' + escapeHtml(state.chatIAInput) + '</textarea>' +
           micBtn +
         '</div>' +
         sendBtn +
@@ -6852,6 +6861,14 @@
       if (ov && ov.parentNode !== document.body) {
         document.body.appendChild(ov);
       }
+      if (ov && window.visualViewport) {
+        if (!window._avaVVbound) {
+          window._avaVVbound = true;
+          window.visualViewport.addEventListener('resize', _avaPinViewport);
+          window.visualViewport.addEventListener('scroll', _avaPinViewport);
+        }
+        _avaPinViewport();
+      }
     })();
 
     bind('confirmar-telefone-obrigatorio', confirmarTelefoneObrigatorioMobile);
@@ -7117,6 +7134,8 @@
     var chatInput = document.getElementById('chat-ia-input');
     if (chatInput) {
       chatInput.addEventListener('keydown', function(e) { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); enviarMensagemIA(); } });
+      chatInput.addEventListener('focus', function() { setTimeout(_avaPinViewport, 120); setTimeout(_avaPinViewport, 350); });
+      chatInput.addEventListener('blur', function() { setTimeout(_avaPinViewport, 120); });
       chatInput.addEventListener('input', function() {
         state.chatIAInput = this.value;
         // Atualizar botão enviar dinamicamente sem re-render completo
