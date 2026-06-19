@@ -356,6 +356,9 @@ const [editEntradaFaturamentoValorNumerico, setEditEntradaFaturamentoValorNumeri
   const [formDescricao, setFormDescricao] = useState('');
   const [formValor, setFormValor] = useState('');
   const [valorNumericoRaw, setValorNumericoRaw] = useState(0);
+  const [blocoAtivo, setBlocoAtivo] = useState<'despesa' | 'receita' | null>(null);
+  const [formParcelar, setFormParcelar] = useState(false);
+  const [formParcelas, setFormParcelas] = useState(2);
   const [lancamentoEditandoId, setLancamentoEditandoId] = useState<string | number | null>(null);
 const [editDia, setEditDia] = useState('');
 const [editDespesa, setEditDespesa] = useState('');
@@ -1898,6 +1901,8 @@ const adicionarDespesa = async () => {
           setFormDescricao('');
           setFormValor('');
           setValorNumericoRaw(0);
+          setFormParcelar(false);
+          setFormParcelas(2);
         } else {
           abrirAviso(
             'Erro ao salvar lançamento',
@@ -1911,39 +1916,65 @@ const adicionarDespesa = async () => {
   }
 }
 
-  const salvo = await salvarLancamento({
-    empresaId,
-    ano: Number(anoSelecionado),
-    mes: mesAtivo,
-    dia: parseInt(formDia),
-    despesaNome: formDespesa,
-    descricao: formatarDescricao(formDescricao),
-    valor: valorNumericoRaw,
-  });
+  // Parcelamento: calcular meses e anos de cada parcela
+  const totalParcelas = formParcelar && formParcelas >= 2 ? formParcelas : 1;
+  const mesIndex = meses.indexOf(mesAtivo);
+  const novosLancamentos: any[] = [];
 
-  if (!salvo.erro && salvo.data) {
-    const novoLancamento = {
-      id: salvo.data.id,
-      mes: salvo.data.mes,
-      dia: salvo.data.dia,
-      despesa: salvo.data.despesa_nome,
-      descricao: salvo.data.descricao || '',
-      valor: Number(salvo.data.valor),
-    };
+  for (let p = 0; p < totalParcelas; p++) {
+    const idxMes = (mesIndex + p) % 12;
+    const anosExtra = Math.floor((mesIndex + p) / 12);
+    const mesParc = meses[idxMes];
+    const anoParc = Number(anoSelecionado) + anosExtra;
+    const descParc = totalParcelas > 1
+      ? (formatarDescricao(formDescricao) ? `${formatarDescricao(formDescricao)} (${p + 1}/${totalParcelas})` : `(${p + 1}/${totalParcelas})`)
+      : formatarDescricao(formDescricao);
 
-    setLancamentos((prev) => [novoLancamento, ...prev]);
+    const salvo = await salvarLancamento({
+      empresaId,
+      ano: anoParc,
+      mes: mesParc,
+      dia: parseInt(formDia),
+      despesaNome: formDespesa,
+      descricao: descParc,
+      valor: valorNumericoRaw,
+    });
+
+    if (!salvo.erro && salvo.data) {
+      novosLancamentos.push({
+        id: salvo.data.id,
+        mes: salvo.data.mes,
+        dia: salvo.data.dia,
+        despesa: salvo.data.despesa_nome,
+        descricao: salvo.data.descricao || '',
+        valor: Number(salvo.data.valor),
+      });
+    } else {
+      abrirAviso(
+        'Erro ao salvar lançamento',
+        salvo.mensagem || 'Não foi possível salvar o lançamento.'
+      );
+      break;
+    }
+  }
+
+  if (novosLancamentos.length > 0) {
+    // Só adiciona ao state os do mês/ano atual visível
+    const doMesVisivel = novosLancamentos.filter(
+      (l) => l.mes === mesAtivo
+    );
+    if (doMesVisivel.length > 0) {
+      setLancamentos((prev) => [...doMesVisivel, ...prev]);
+    }
 
     setFormDia('');
     setFormDespesa('');
     setFormDescricao('');
     setFormValor('');
     setValorNumericoRaw(0);
-  } else {
-  abrirAviso(
-    'Erro ao salvar lançamento',
-    salvo.mensagem || 'Não foi possível salvar o lançamento.'
-  );
-}
+    setFormParcelar(false);
+    setFormParcelas(2);
+  }
 };
 
 const apagarDespesa = async (id: string) => {
@@ -5843,8 +5874,8 @@ setAjustesAberto(false);
 </div>
 
           <main className={classePaginaInterna}>
-            <div className="grid grid-cols-1 gap-6 xl:grid-cols-2 xl:items-start">
-              <div className="min-w-0">
+            <div className="flex flex-col gap-6 xl:flex-row xl:items-start">
+              <div className="min-w-0 transition-[width] duration-300 ease-in-out" style={{ width: typeof window !== 'undefined' && window.innerWidth >= 1280 ? (blocoAtivo === 'despesa' ? '62%' : blocoAtivo === 'receita' ? '38%' : '50%') : '100%' }}>
 <TabelaLancamentosDespesa
               bgCard={bgCard}
               corPrimaria={corPrimaria}
@@ -5892,10 +5923,16 @@ setAjustesAberto(false);
               getMaxDias={getMaxDias}
               formatarMoeda={formatarMoeda}
               formatarDescricao={formatarDescricao}
+              expandidoDespesa={blocoAtivo === 'despesa'}
+              onFocoDespesa={() => setBlocoAtivo('despesa')}
+              formParcelar={formParcelar}
+              setFormParcelar={setFormParcelar}
+              formParcelas={formParcelas}
+              setFormParcelas={setFormParcelas}
             />
               </div>
 
-              <div className="min-w-0">
+              <div className="min-w-0 transition-[width] duration-300 ease-in-out" style={{ width: typeof window !== 'undefined' && window.innerWidth >= 1280 ? (blocoAtivo === 'receita' ? '62%' : blocoAtivo === 'despesa' ? '38%' : '50%') : '100%' }}>
 <CardEntradaFaturamento
   mesAtivo={mesAtivo}
   anoSelecionado={anoSelecionado}
@@ -5932,6 +5969,7 @@ setAjustesAberto(false);
   onSalvarEdicaoEntrada={salvarEdicaoEntradaFaturamento}
   onCancelarEdicaoEntrada={cancelarEdicaoEntradaFaturamento}
   onExcluirEntrada={excluirEntradaFaturamento}
+  onFocoReceita={() => setBlocoAtivo('receita')}
 />
               </div>
             </div>

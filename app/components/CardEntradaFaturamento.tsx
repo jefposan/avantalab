@@ -41,6 +41,7 @@ type CardEntradaFaturamentoProps = {
   onSalvarEdicaoEntrada: () => void | Promise<void>;
   onCancelarEdicaoEntrada: () => void;
   onExcluirEntrada: (entrada: EntradaFaturamento) => void | Promise<void>;
+  onFocoReceita: () => void;
 };
 
 export default function CardEntradaFaturamento({
@@ -75,6 +76,7 @@ export default function CardEntradaFaturamento({
   onSalvarEdicaoEntrada,
   onCancelarEdicaoEntrada,
   onExcluirEntrada,
+  onFocoReceita,
 }: CardEntradaFaturamentoProps) {
   const inputBase = `h-9 w-full rounded-md border px-2.5 text-xs font-semibold shadow-sm outline-none transition focus:ring-1 ${
     darkMode
@@ -126,6 +128,7 @@ export default function CardEntradaFaturamento({
             min="1"
             max={mesAtivo ? getMaxDias(mesAtivo, anoSelecionado) : 31}
             value={entradaFaturamentoDia}
+            onFocus={onFocoReceita}
             onChange={(e) => {
               const valor = parseInt(e.target.value, 10);
               const maxDias = mesAtivo ? getMaxDias(mesAtivo, anoSelecionado) : 31;
@@ -144,6 +147,7 @@ export default function CardEntradaFaturamento({
           <input
             type="text"
             value={entradaFaturamentoOrigem}
+            onFocus={onFocoReceita}
             onChange={(e) => setEntradaFaturamentoOrigem(e.target.value)}
             placeholder="Origem"
             className={inputBase}
@@ -154,6 +158,7 @@ export default function CardEntradaFaturamento({
             <input
               type="text"
               value={entradaFaturamentoValor}
+              onFocus={onFocoReceita}
               onChange={handleEntradaFaturamentoValorChange}
               onKeyDown={(e) => {
                 if (e.key === 'Enter') {

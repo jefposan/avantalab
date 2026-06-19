@@ -61,6 +61,12 @@ type TabelaLancamentosDespesaProps = {
   getMaxDias: (mes: string | null, ano: string | number) => number;
   formatarMoeda: (valor: number) => string;
   formatarDescricao: (texto: string) => string;
+  expandidoDespesa: boolean;
+  onFocoDespesa: () => void;
+  formParcelar: boolean;
+  setFormParcelar: (v: boolean) => void;
+  formParcelas: number;
+  setFormParcelas: (v: number) => void;
 };
 
 export default function TabelaLancamentosDespesa({
@@ -110,6 +116,12 @@ export default function TabelaLancamentosDespesa({
   getMaxDias,
   formatarMoeda,
   formatarDescricao,
+  expandidoDespesa,
+  onFocoDespesa,
+  formParcelar,
+  setFormParcelar,
+  formParcelas,
+  setFormParcelas,
 }: TabelaLancamentosDespesaProps) {
   return (
     <div
@@ -146,6 +158,12 @@ export default function TabelaLancamentosDespesa({
           estiloTemaPrimario={estiloTemaPrimario}
           getMaxDias={getMaxDias}
           formatarDescricao={formatarDescricao}
+          expandido={expandidoDespesa}
+          onFoco={onFocoDespesa}
+          formParcelar={formParcelar}
+          setFormParcelar={setFormParcelar}
+          formParcelas={formParcelas}
+          setFormParcelas={setFormParcelas}
         />
         <div className="mb-3">
           <div className="flex-1">

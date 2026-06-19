@@ -28,6 +28,12 @@ type CardLancamentoDespesaProps = {
   estiloTemaPrimario: CSSProperties;
   getMaxDias: (mes: string | null, ano: string | number) => number;
   formatarDescricao: (texto: string) => string;
+  expandido: boolean;
+  onFoco: () => void;
+  formParcelar: boolean;
+  setFormParcelar: (v: boolean) => void;
+  formParcelas: number;
+  setFormParcelas: (v: number) => void;
 };
 
 export default function CardLancamentoDespesa({
@@ -50,6 +56,12 @@ export default function CardLancamentoDespesa({
   estiloTemaPrimario,
   getMaxDias,
   formatarDescricao,
+  expandido,
+  onFoco,
+  formParcelar,
+  setFormParcelar,
+  formParcelas,
+  setFormParcelas,
 }: CardLancamentoDespesaProps) {
   const inputBase = `h-9 w-full rounded-md border px-2.5 text-xs font-semibold shadow-sm outline-none transition focus:ring-1 ${
     darkMode
@@ -78,11 +90,12 @@ export default function CardLancamentoDespesa({
         >
           <span>Ordenar</span>
           <span className="text-xs font-black">
-            {ordemLancamentos === 'desc' ? '↓' : '↑'}
+            {ordemLancamentos === 'desc' ? '\u2193' : '\u2191'}
           </span>
         </button>
 
         <h3 className="text-sm font-black uppercase tracking-widest text-white">
+          {/* L\u00e2ncamento de despesas */}
           Lançamento de despesas
         </h3>
       </div>
@@ -106,6 +119,7 @@ export default function CardLancamentoDespesa({
                 setFormDia(e.target.value);
               }
             }}
+            onFocus={onFoco}
             placeholder="Dia"
             className={`${inputBase} input-dia-compacto h-9 px-1.5 py-0 text-center font-bold leading-none`}
             style={{ outlineColor: corPrimaria }}
@@ -114,6 +128,7 @@ export default function CardLancamentoDespesa({
           <select
             value={formDespesa}
             onChange={(e) => setFormDespesa(e.target.value)}
+            onFocus={onFoco}
             className={`${inputBase} select-despesa-compacto truncate pr-1 ${formDespesa ? 'text-[9px]' : 'text-xs'}`}
             style={{
               outlineColor: corPrimaria,
@@ -144,6 +159,7 @@ export default function CardLancamentoDespesa({
             type="text"
             value={formDescricao}
             onChange={(e) => setFormDescricao(e.target.value)}
+            onFocus={onFoco}
             onBlur={() => setFormDescricao(formatarDescricao(formDescricao))}
             placeholder="Descrição"
             className={inputBase}
@@ -154,6 +170,7 @@ export default function CardLancamentoDespesa({
             type="text"
             value={formValor}
             onChange={handleValorChange}
+            onFocus={onFoco}
             onKeyDown={(e) => {
               if (e.key === 'Enter') {
                 e.preventDefault();
@@ -173,6 +190,58 @@ export default function CardLancamentoDespesa({
           >
             OK
           </button>
+        </div>
+
+        {/* Linha de parcelamento */}
+        <div
+          className="overflow-hidden transition-all duration-300"
+          style={{ maxHeight: expandido ? '48px' : '0px', opacity: expandido ? 1 : 0 }}
+        >
+          <div className="mt-1.5 flex items-center gap-2">
+            <label className="flex cursor-pointer items-center gap-1.5 select-none">
+              <input
+                type="checkbox"
+                checked={formParcelar}
+                onChange={(e) => {
+                  setFormParcelar(e.target.checked);
+                  if (e.target.checked && formParcelas < 2) setFormParcelas(2);
+                }}
+                className="h-3.5 w-3.5 cursor-pointer accent-red-600"
+              />
+              <span className={`text-[11px] font-black uppercase tracking-wide ${darkMode ? 'text-slate-300' : 'text-slate-600'}`}>
+                Parcelar em
+              </span>
+            </label>
+
+            {formParcelar && (
+              <div className="flex items-center gap-1">
+                <button
+                  type="button"
+                  onClick={() => setFormParcelas(Math.max(2, formParcelas - 1))}
+                  className={`flex h-7 w-7 items-center justify-center rounded-md border text-sm font-black transition hover:brightness-110 active:scale-95 cursor-pointer ${
+                    darkMode ? 'border-slate-600 bg-slate-700 text-white' : 'border-slate-300 bg-white text-slate-700'
+                  }`}
+                >
+                  −
+                </button>
+                <span className={`w-6 text-center text-sm font-black ${darkMode ? 'text-white' : 'text-slate-900'}`}>
+                  {formParcelas}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setFormParcelas(formParcelas + 1)}
+                  className={`flex h-7 w-7 items-center justify-center rounded-md border text-sm font-black transition hover:brightness-110 active:scale-95 cursor-pointer ${
+                    darkMode ? 'border-slate-600 bg-slate-700 text-white' : 'border-slate-300 bg-white text-slate-700'
+                  }`}
+                >
+                  +
+                </button>
+                <span className={`text-[11px] font-semibold ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>
+                  vezes
+                </span>
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </>
