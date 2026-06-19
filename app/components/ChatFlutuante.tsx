@@ -183,19 +183,6 @@ export default function ChatFlutuante({
                   </div>
                 </button>
 
-                <button
-                  type="button"
-                  onClick={() => abrirFormularioFeedback('duvida')}
-                  className={'rounded-2xl border px-4 py-3 text-left transition hover:-translate-y-0.5 hover:shadow-md cursor-pointer ' + cardCls}
-                >
-                  <div className="flex items-center gap-3">
-                    <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-violet-100 text-violet-800 text-lg font-black">?</span>
-                    <div>
-                      <p className="text-sm font-black">Dúvidas</p>
-                      <p className={'mt-0.5 text-xs ' + textMuted}>Envie uma dúvida sobre o uso do sistema.</p>
-                    </div>
-                  </div>
-                </button>
               </div>
             </div>
           )}
