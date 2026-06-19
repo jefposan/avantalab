@@ -700,9 +700,20 @@
 
   function configurarCamadaFundoChatIA(ativo) {
     var cor = state.darkMode ? '#0b1220' : '#f4f8fc';
-    root.setAttribute('aria-hidden', ativo ? 'true' : 'false');
     document.documentElement.style.background = ativo ? cor : '';
     document.body.style.background = ativo ? cor : '';
+  }
+
+  function avaLogoPrincipalSvg(width, height, id) {
+    return '<svg width="' + width + '" height="' + height + '" viewBox="0 0 112 36" fill="none" aria-hidden="true" focusable="false" style="display:block;flex-shrink:0;">' +
+      '<defs><linearGradient id="' + id + '" x1="0" y1="0" x2="112" y2="36" gradientUnits="userSpaceOnUse"><stop stop-color="#0ea5e9"/><stop offset="0.55" stop-color="#2563eb"/><stop offset="1" stop-color="#7c3aed"/></linearGradient></defs>' +
+      '<path d="M84 5h12c6 0 10 4 10 9.5S102 24 96 24h-5l-7 6v-6c-5.5-.4-9-4-9-9.5C75 9 78.8 5 84 5z" fill="rgba(14,165,233,.12)" stroke="url(#' + id + ')" stroke-width="2" stroke-linejoin="round"/>' +
+      '<path d="M15 27C18 18 21.5 8 26 8s8 10 11 19" stroke="url(#' + id + ')" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>' +
+      '<circle cx="26" cy="18" r="2.8" fill="url(#' + id + ')"/>' +
+      '<path d="M19.8 21.5h12.4" stroke="url(#' + id + ')" stroke-width="3" stroke-linecap="round"/>' +
+      '<path d="M42 15l7 12 7-12M61 15l7 12 7-12" stroke="#0f2742" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>' +
+      '<circle cx="86" cy="14" r="1.8" fill="url(#' + id + ')"/><circle cx="93" cy="14" r="1.8" fill="url(#' + id + ')"/><circle cx="100" cy="14" r="1.8" fill="url(#' + id + ')"/>' +
+    '</svg>';
   }
 
   function pararGravacaoIA() {
@@ -3348,7 +3359,7 @@
   function perguntaIaHtml() {
     return (
       '<button id="chat-ia-card" type="button" class="flex w-full items-center gap-2 rounded-2xl bg-white px-3 py-2.5 text-left shadow-sm active:scale-[0.99]">' +
-        '<span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-cyan-50 text-sm font-black text-cyan-700">IA</span>' +
+        '<span class="flex h-9 w-[86px] shrink-0 items-center justify-center rounded-xl bg-cyan-50">' + avaLogoPrincipalSvg(78, 25, 'avaLogoCardA') + '</span>' +
         '<div class="min-w-0 flex-1"><p class="truncate text-xs font-black text-slate-900">Pergunte para a Ava</p><p class="mt-0.5 truncate text-[10px] font-semibold text-slate-500">Analise suas financas e tire duvidas.</p></div>' +
         '<span class="text-lg text-cyan-600">&#8250;</span>' +
       '</button>'
@@ -3880,10 +3891,10 @@
     ov.style.width = '100vw';
     ov.style.height = '100dvh';
     ov.style.transform = 'none';
+    ov.style.setProperty('--ava-keyboard-offset', '0px');
     if (vv) {
-      ov.style.bottom = 'auto';
-      ov.style.height = Math.round(vv.height) + 'px';
-      ov.style.transform = 'translateY(' + Math.max(0, Math.round(vv.offsetTop || 0)) + 'px)';
+      var teclado = Math.max(0, Math.round(window.innerHeight - vv.height - (vv.offsetTop || 0)));
+      ov.style.setProperty('--ava-keyboard-offset', teclado + 'px');
     }
   }
 
@@ -5522,7 +5533,7 @@
   function perguntaIaHtml() {
     return (
       '<button id="chat-ia-card" type="button" class="flex w-full items-center gap-2 rounded-2xl bg-white px-3 py-2.5 text-left shadow-sm active:scale-[0.99]">' +
-        '<span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-cyan-50 text-sm font-black text-cyan-700">IA</span>' +
+        '<span class="flex h-9 w-[86px] shrink-0 items-center justify-center rounded-xl bg-cyan-50">' + avaLogoPrincipalSvg(78, 25, 'avaLogoCardB') + '</span>' +
         '<div class="min-w-0 flex-1"><p class="truncate text-xs font-black text-slate-900">Pergunte para a Ava</p><p class="mt-0.5 truncate text-[10px] font-semibold text-slate-500">Analise suas financas e tire duvidas.</p></div>' +
         '<span class="text-lg text-cyan-600">&#8250;</span>' +
       '</button>'
@@ -6114,18 +6125,17 @@
     }
 
     var header =
-      '<div style="flex-shrink:0;display:flex;align-items:center;gap:10px;' +
+      '<div style="position:fixed;top:0;left:0;right:0;z-index:2;display:flex;align-items:center;gap:10px;' +
         'padding-top:calc(env(safe-area-inset-top,0px) + 12px);padding-left:8px;padding-right:14px;padding-bottom:12px;' +
         'background:' + C.bar + ';border-bottom:1px solid ' + C.border + ';">' +
         '<button id="chat-ia-fechar" type="button" aria-label="Voltar" style="background:transparent;border:none;width:36px;height:36px;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;">' +
           '<svg width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="' + C.text + '" stroke-width="2.2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>' +
         '</button>' +
-        sparkSvg(22, 'avaSparkH') +
-        '<span style="font-size:17px;font-weight:800;color:' + C.accent + ';letter-spacing:-0.01em;">Ava</span>' +
+        avaLogoPrincipalSvg(94, 30, 'avaLogoHeader') +
       '</div>';
 
     var body =
-      '<div id="chat-ia-msgs" style="flex:1;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;padding:6px 14px 16px;">' +
+      '<div id="chat-ia-msgs" style="position:absolute;left:0;right:0;top:calc(env(safe-area-inset-top,0px) + 61px);bottom:calc(var(--ava-keyboard-offset,0px) + 66px);overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;padding:6px 14px 16px;">' +
         welcome + convoHtml +
       '</div>';
 
@@ -6134,25 +6144,27 @@
       : gravando
       ? '<svg width="16" height="16" fill="#fff" viewBox="0 0 24 24"><rect x="7" y="7" width="10" height="10" rx="2"/></svg>'
       : '<svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="' + C.muted + '" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path stroke-linecap="round" stroke-linejoin="round" d="M19 10v2a7 7 0 0 1-14 0v-2M12 19v4M8 23h8"/></svg>';
-    var micStyle = 'width:42px;height:42px;border-radius:50%;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .2s;' +
-      (gravando ? 'background:#ef4444;animation:avaPulse 1.3s infinite;' : 'background:' + C.pill + ';');
+    var micStyle = 'width:36px;height:36px;border-radius:50%;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .2s;' +
+      (gravando ? 'background:#ef4444;animation:avaPulse 1.3s infinite;' : 'background:transparent;');
     var micBtn = '<button id="chat-ia-mic" type="button" ' + (transcrevendoAudio || enviando ? 'disabled' : '') + ' style="' + micStyle + (transcrevendoAudio || enviando ? 'opacity:.65;cursor:not-allowed;' : '') + '" aria-label="' + (gravando ? 'Parar gravacao' : 'Gravar audio para a Ava') + '">' + micInner + '</button>';
 
     var sendActive = temTexto && !enviando;
-    var sendStyle = 'width:42px;height:42px;border-radius:50%;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .2s;' +
-      (sendActive ? 'background:linear-gradient(135deg,#0ea5e9,#0369a1);box-shadow:0 4px 12px rgba(2,132,199,0.4);' : 'background:' + C.pill + ';');
+    var sendStyle = 'width:36px;height:36px;border-radius:50%;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .2s;' +
+      (sendActive ? 'background:linear-gradient(135deg,#0ea5e9,#0369a1);box-shadow:0 3px 10px rgba(2,132,199,0.32);' : 'background:transparent;');
     var sendBtn = '<button id="chat-ia-enviar" type="button" ' + (sendActive ? '' : 'disabled') + ' style="' + sendStyle + '">' +
         '<svg width="19" height="19" viewBox="0 0 24 24"><path fill="' + (sendActive ? '#fff' : C.sendArrowOff) + '" d="M12 4l-7.5 7.5 1.4 1.4L11 8.8V20h2V8.8l5.1 5.1 1.4-1.4z"/></svg>' +
       '</button>';
 
+    var fieldBg = dark ? '#111b2d' : '#ffffff';
+    var fieldBorder = dark ? '#27364f' : '#d8e4ef';
     var inputBar =
-      '<div style="flex-shrink:0;display:flex;align-items:flex-end;gap:8px;padding:8px 10px;' +
+      '<div style="position:fixed;left:0;right:0;bottom:var(--ava-keyboard-offset,0px);z-index:2;padding:8px 10px;' +
         'padding-bottom:calc(env(safe-area-inset-bottom,0px) + 7px);background:linear-gradient(to top,' + C.bg + ' 0%,' + C.bg + ' 78%,rgba(244,248,252,0) 100%);">' +
-        '<div style="flex:1;display:flex;align-items:flex-end;background:' + C.pill + ';border:none;border-radius:22px;padding:10px 14px;min-height:42px;box-shadow:' + (dark ? 'none' : '0 4px 14px rgba(15,35,61,0.08)') + ';">' +
-          '<div id="chat-ia-input" role="textbox" aria-multiline="true" contenteditable="' + (enviando ? 'false' : 'true') + '" data-placeholder="Como posso ajudar voce hoje?" style="flex:1;min-height:22px;max-height:96px;overflow-y:auto;outline:none;background:transparent;font-size:16px;font-family:inherit;color:' + C.text + ';line-height:1.4;padding:0;margin:0;width:100%;white-space:pre-wrap;word-break:break-word;">' + escapeHtml(state.chatIAInput) + '</div>' +
+        '<div style="width:100%;display:flex;align-items:flex-end;gap:4px;background:' + fieldBg + ';border:1px solid ' + fieldBorder + ';border-radius:24px;padding:6px 6px 6px 14px;min-height:48px;box-shadow:' + (dark ? 'none' : '0 8px 20px rgba(15,35,61,0.08)') + ';">' +
+          '<div id="chat-ia-input" role="textbox" aria-multiline="true" contenteditable="' + (enviando ? 'false' : 'true') + '" data-placeholder="Como posso ajudar voce hoje?" style="flex:1;min-height:22px;max-height:96px;overflow-y:auto;outline:none;background:transparent;font-size:16px;font-family:inherit;color:' + C.text + ';line-height:1.4;padding:7px 2px;margin:0;width:100%;white-space:pre-wrap;word-break:break-word;">' + escapeHtml(state.chatIAInput) + '</div>' +
+          micBtn +
+          sendBtn +
         '</div>' +
-        micBtn +
-        sendBtn +
       '</div>';
 
     var animacao = state.chatIAAnimacao === 'entrar'
@@ -6162,7 +6174,7 @@
         : '';
 
     return (
-      '<div id="chat-ia-overlay" style="position:fixed;top:0;left:0;right:0;bottom:0;width:100vw;height:100dvh;z-index:5000;display:flex;flex-direction:column;background:' + C.bg + ';overflow:hidden;isolation:isolate;overscroll-behavior:contain;' + animacao + '">' +
+      '<div id="chat-ia-overlay" style="position:fixed;top:0;left:0;right:0;bottom:0;width:100vw;height:100dvh;z-index:5000;display:block;background:' + C.bg + ';overflow:hidden;isolation:isolate;overscroll-behavior:contain;--ava-keyboard-offset:0px;' + animacao + '">' +
         header + body + inputBar +
       '</div>'
     );
@@ -7049,13 +7061,12 @@
     root.setAttribute('data-avantalab-mobile-ready', '1');
     if (!state.chatIAAberto) configurarCamadaFundoChatIA(false);
     removerChatIAOverlay();
-    root.innerHTML = state.chatIAAberto
-      ? chatIAModalHtml()
-      : !state.pronto
+    var telaAtual = !state.pronto
       ? telaCarregandoMobile()
       : (state.autenticado
         ? (state.validacaoTelefoneObrigatoria ? telaTelefoneObrigatorioMobile() : (state.modoCriarPerfil ? telaLoginWrapper(telaCriarPerfilInicial(), 'Criar perfil financeiro', 'Informe os dados do seu primeiro perfil.') : telaApp()))
         : (state.modoCriarPerfil ? telaLoginWrapper(telaCriarPerfilInicial(), 'Criar perfil financeiro', 'Informe os dados do seu primeiro perfil.') : telaLogin()));
+    root.innerHTML = telaAtual + (state.chatIAAberto ? chatIAModalHtml() : '');
     atualizarScrollBloqueado();
 
     if (state.chatIAAberto) {
@@ -7333,8 +7344,8 @@
           var tem = state.chatIAInput.trim().length > 0;
           envBtn.disabled = !tem;
           var _dk = !!state.darkMode;
-          envBtn.style.background = tem ? 'linear-gradient(135deg,#0ea5e9,#0369a1)' : (_dk ? '#243349' : '#e2e8f0');
-          envBtn.style.boxShadow = tem ? '0 4px 12px rgba(2,132,199,0.4)' : 'none';
+          envBtn.style.background = tem ? 'linear-gradient(135deg,#0ea5e9,#0369a1)' : 'transparent';
+          envBtn.style.boxShadow = tem ? '0 3px 10px rgba(2,132,199,0.32)' : 'none';
           var svg = envBtn.querySelector('svg');
           if (svg) svg.querySelector('path').setAttribute('fill', tem ? '#fff' : (_dk ? '#5b6b82' : '#94a3b8'));
         }
