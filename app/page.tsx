@@ -245,7 +245,7 @@ export default function AppGestao() {
   };
 
   const onSemEmpresa = () => {
-    auth.setEmailConfirmado(true);
+    setAcessoNaoConfigurado(true);
   };
 
 
