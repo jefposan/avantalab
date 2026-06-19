@@ -2604,13 +2604,9 @@
         var pendentes = parcelasGrupo.filter(function(l) { return l.id !== item.id; });
         if (pendentes.length > 0) {
           var resp = window.confirm(
-            'Este lancamento faz parte de um parcelamento em ' + totalN + 'x.
-' +
-            'Ha ' + pendentes.length + ' parcela(s) pendente(s).
-
-' +
-            'OK = Excluir TODAS as ' + parcelasGrupo.length + ' parcelas
-' +
+            'Este lancamento faz parte de um parcelamento em ' + totalN + 'x.\n' +
+            'Ha ' + pendentes.length + ' parcela(s) pendente(s).\n\n' +
+            'OK = Excluir TODAS as ' + parcelasGrupo.length + ' parcelas\n' +
             'Cancelar = Excluir somente esta'
           );
           state.carregando = true;
