@@ -6081,7 +6081,7 @@
     }
 
     var header =
-      '<div style="flex-shrink:0;display:flex;align-items:center;gap:10px;' +
+      '<div style="position:sticky;top:0;z-index:3;flex-shrink:0;display:flex;align-items:center;gap:10px;' +
         'padding-top:calc(env(safe-area-inset-top,0px) + 12px);padding-left:8px;padding-right:14px;padding-bottom:12px;' +
         'background:' + C.bar + ';border-bottom:1px solid ' + C.border + ';">' +
         '<button id="chat-ia-fechar" type="button" aria-label="Voltar" style="background:transparent;border:none;width:36px;height:36px;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;">' +
@@ -8114,7 +8114,7 @@
           return Promise.all(
             keys
               .filter(function (key) {
-                return key.indexOf('avantalab-mobile-') === 0 && key !== 'avantalab-mobile-v98';
+                return key.indexOf('avantalab-mobile-') === 0 && key !== 'avantalab-mobile-v99';
               })
               .map(function (key) {
                 return caches.delete(key);
@@ -8131,7 +8131,7 @@
     });
 
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/mobile-sw.js?v=98').then(function (registro) {
+      navigator.serviceWorker.register('/mobile-sw.js?v=99').then(function (registro) {
         if (registro && registro.update) registro.update();
       }).catch(function () {});
     }
