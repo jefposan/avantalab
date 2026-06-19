@@ -161,6 +161,7 @@
     chatIAMensagens: [{ role: 'assistant', content: 'Ola! Sou a Ava, sua assistente financeira. Posso analisar seus resultados, dar dicas ou tirar duvidas sobre o sistema. Como posso ajudar?' }],
     chatIADigitando: false,
     chatIAInput: '',
+    chatIAGravando: false,
   };
 
   var CHAVE_MANTER_CONECTADO_ATE = 'avantalab_mobile_manter_conectado_ate';
@@ -1858,6 +1859,37 @@
     if (cats) linhas.push('Despesas por tipo:\n' + cats);
     if (anterior.despesas > 0) linhas.push('Despesas mes anterior: R$ ' + (anterior.despesas || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 }));
     return linhas.join('\n');
+  }
+
+  function gravarVoz() {
+    var SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      alert('Reconhecimento de voz nao disponivel neste navegador.');
+      return;
+    }
+    if (state.chatIAGravando) {
+      if (window._chatRec) { try { window._chatRec.stop(); } catch(e) {} }
+      state.chatIAGravando = false;
+      render();
+      return;
+    }
+    var rec = new SpeechRecognition();
+    window._chatRec = rec;
+    rec.lang = 'pt-BR';
+    rec.continuous = false;
+    rec.interimResults = false;
+    rec.onstart = function() { state.chatIAGravando = true; render(); };
+    rec.onend = function() { state.chatIAGravando = false; render(); };
+    rec.onerror = function() { state.chatIAGravando = false; render(); };
+    rec.onresult = function(e) {
+      var texto = e.results[0][0].transcript;
+      state.chatIAInput = texto;
+      var inp = document.getElementById('chat-ia-input');
+      if (inp) { inp.value = texto; }
+      state.chatIAGravando = false;
+      render();
+    };
+    try { rec.start(); } catch(e) { state.chatIAGravando = false; }
   }
 
   async function enviarMensagemIA() {
@@ -3760,47 +3792,124 @@
   }
 
   function chatIAModalHtml() {
+    var temTexto = state.chatIAInput.trim().length > 0;
+    var gravando = state.chatIAGravando;
+
     var msgs = state.chatIAMensagens.map(function(m) {
       var isUser = m.role === 'user';
+      var wrapStyle = 'display:flex;margin-bottom:14px;' + (isUser ? 'justify-content:flex-end;' : 'justify-content:flex-start;');
       var bubbleStyle = isUser
-        ? 'background:linear-gradient(135deg,#0284c7,#0369a1);color:#fff;border-radius:18px 18px 4px 18px;margin-left:auto;'
-        : 'background:#f1f5f9;color:#1e293b;border-radius:18px 18px 18px 4px;margin-right:auto;';
+        ? 'background:linear-gradient(135deg,#0284c7,#0369a1);color:#fff;border-radius:20px 20px 4px 20px;'
+        : 'background:#fff;color:#1e293b;border-radius:20px 20px 20px 4px;box-shadow:0 1px 6px rgba(0,0,0,0.08);';
       var content = m.content
         ? escapeHtml(m.content)
-        : '<span style="display:inline-flex;gap:4px;padding:2px 0;align-items:center"><span style="width:7px;height:7px;border-radius:50%;background:#94a3b8;display:inline-block;animation:bounce 1.2s infinite 0ms"></span><span style="width:7px;height:7px;border-radius:50%;background:#94a3b8;display:inline-block;animation:bounce 1.2s infinite 200ms"></span><span style="width:7px;height:7px;border-radius:50%;background:#94a3b8;display:inline-block;animation:bounce 1.2s infinite 400ms"></span></span>';
-      return '<div style="display:flex;margin-bottom:12px">' +
-        '<div style="max-width:82%;padding:11px 15px;font-size:14px;line-height:1.55;white-space:pre-wrap;box-shadow:0 1px 4px rgba(0,0,0,0.08);' + bubbleStyle + '">' + content + '</div>' +
+        : '<span style="display:inline-flex;gap:5px;align-items:center;height:20px">' +
+            '<span style="width:8px;height:8px;border-radius:50%;background:#94a3b8;display:inline-block;animation:bounce 1.2s infinite 0ms"></span>' +
+            '<span style="width:8px;height:8px;border-radius:50%;background:#94a3b8;display:inline-block;animation:bounce 1.2s infinite 200ms"></span>' +
+            '<span style="width:8px;height:8px;border-radius:50%;background:#94a3b8;display:inline-block;animation:bounce 1.2s infinite 400ms"></span>' +
+          '</span>';
+      return '<div style="' + wrapStyle + '">' +
+        '<div style="max-width:80%;padding:12px 16px;font-size:14px;line-height:1.6;white-space:pre-wrap;' + bubbleStyle + '">' + content + '</div>' +
         '</div>';
     }).join('');
 
+    var micBtnStyle = 'width:42px;height:42px;border-radius:50%;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all 0.2s;';
+    var micBtn = gravando
+      ? '<button id="chat-ia-mic" type="button" style="' + micBtnStyle + 'background:#ef4444;box-shadow:0 0 0 6px rgba(239,68,68,0.2);" aria-label="Parar gravacao">' +
+          '<svg width="18" height="18" fill="#fff" viewBox="0 0 24 24"><rect x="6" y="6" width="12" height="12" rx="2"/></svg>' +
+        '</button>'
+      : '<button id="chat-ia-mic" type="button" style="' + micBtnStyle + 'background:#e2e8f0;" aria-label="Gravar voz">' +
+          '<svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="#475569" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 1a3 3 0 00-3 3v8a3 3 0 006 0V4a3 3 0 00-3-3z"/><path stroke-linecap="round" stroke-linejoin="round" d="M19 10v2a7 7 0 01-14 0v-2M12 19v4M8 23h8"/></svg>' +
+        '</button>';
+
+    var sendBtnStyle = 'width:42px;height:42px;border-radius:50%;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all 0.2s;';
+    var sendBtn = temTexto
+      ? '<button id="chat-ia-enviar" type="button" style="' + sendBtnStyle + 'background:linear-gradient(135deg,#0284c7,#0369a1);box-shadow:0 3px 10px rgba(2,132,199,0.4);" ' + (state.chatIADigitando ? 'disabled' : '') + '>' +
+          '<svg width="20" height="20" fill="#fff" viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z" transform="rotate(90,12,12)"/></svg>' +
+        '</button>'
+      : '<button id="chat-ia-enviar" type="button" style="' + sendBtnStyle + 'background:#e2e8f0;" disabled>' +
+          '<svg width="20" height="20" fill="#94a3b8" viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z" transform="rotate(90,12,12)"/></svg>' +
+        '</button>';
+
     return (
-      '<div id="chat-ia-overlay" style="position:fixed;inset:0;z-index:5000;display:flex;flex-direction:column;background:#f8fafc;height:100dvh;overflow:hidden;">' +
+      '<div id="chat-ia-overlay" style="' +
+        'position:fixed;top:0;left:0;right:0;bottom:0;' +
+        'z-index:5000;display:flex;flex-direction:column;' +
+        'background:#eff6ff;overflow:hidden;' +
+      '">' +
+
         // Header
-        '<div style="background:linear-gradient(135deg,#003E73 0%,#075985 54%,#00A6C8 100%);padding:calc(env(safe-area-inset-top)+12px) 16px 14px;display:flex;align-items:center;gap:12px;flex-shrink:0;box-shadow:0 2px 12px rgba(0,0,0,0.18);">' +
-          '<button id="chat-ia-fechar" type="button" style="background:rgba(255,255,255,0.15);border:none;color:#fff;width:36px;height:36px;border-radius:50%;font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;">' +
-            '<svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>' +
+        '<div style="' +
+          'background:linear-gradient(135deg,#003E73 0%,#075985 55%,#0284c7 100%);' +
+          'padding-top:calc(env(safe-area-inset-top,0px) + 14px);' +
+          'padding-right:16px;padding-bottom:14px;padding-left:12px;' +
+          'display:flex;align-items:center;gap:10px;flex-shrink:0;' +
+          'box-shadow:0 2px 16px rgba(0,0,0,0.2);' +
+        '">' +
+          '<button id="chat-ia-fechar" type="button" style="' +
+            'background:rgba(255,255,255,0.12);border:none;color:#fff;' +
+            'width:38px;height:38px;border-radius:50%;' +
+            'display:flex;align-items:center;justify-content:center;flex-shrink:0;cursor:pointer;' +
+          '">' +
+            '<svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="#fff" stroke-width="2.5">' +
+              '<path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/>' +
+            '</svg>' +
           '</button>' +
-          '<div style="width:40px;height:40px;border-radius:50%;background:rgba(255,255,255,0.2);display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:900;color:#fff;flex-shrink:0;border:2px solid rgba(255,255,255,0.3);">L</div>' +
-          '<div style="min-width:0;">' +
+          '<div style="' +
+            'width:42px;height:42px;border-radius:50%;' +
+            'background:rgba(255,255,255,0.18);' +
+            'display:flex;align-items:center;justify-content:center;' +
+            'font-size:17px;font-weight:900;color:#fff;flex-shrink:0;' +
+            'border:2px solid rgba(255,255,255,0.3);' +
+          '">A</div>' +
+          '<div style="min-width:0;flex:1;">' +
             '<p style="font-size:15px;font-weight:900;color:#fff;margin:0;letter-spacing:-0.01em;">Ava</p>' +
-            '<p style="font-size:10px;color:#bae6fd;margin:0;font-weight:600;">Assistente financeira AvantaLab</p>' +
+            '<div style="display:flex;align-items:center;gap:5px;margin-top:1px;">' +
+              '<span style="width:7px;height:7px;border-radius:50%;background:#4ade80;display:inline-block;"></span>' +
+              '<p style="font-size:11px;color:#bae6fd;margin:0;font-weight:600;">Assistente financeira AvantaLab</p>' +
+            '</div>' +
           '</div>' +
-          '<div style="margin-left:auto;width:8px;height:8px;border-radius:50%;background:#4ade80;flex-shrink:0;" title="Online"></div>' +
         '</div>' +
-        // Mensagens
-        '<div id="chat-ia-msgs" style="flex:1;min-height:0;overflow-y:auto;padding:20px 16px 8px;-webkit-overflow-scrolling:touch;">' + msgs + '</div>' +
-        // Input
-        '<div style="padding:10px 12px;padding-bottom:calc(env(safe-area-inset-bottom)+10px);background:#fff;border-top:1px solid #e2e8f0;display:flex;gap:10px;align-items:flex-end;flex-shrink:0;">' +
-          '<textarea id="chat-ia-input" placeholder="Mensagem..." rows="1" style="flex:1;resize:none;border:1.5px solid #e2e8f0;border-radius:22px;padding:10px 16px;font-size:15px;font-family:inherit;outline:none;max-height:100px;overflow-y:auto;background:#f8fafc;color:#1e293b;line-height:1.4;" ' + (state.chatIADigitando ? 'disabled' : '') + '>' + escapeHtml(state.chatIAInput) + '</textarea>' +
-          '<button id="chat-ia-enviar" type="button" style="width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,#0284c7,#0369a1);color:#fff;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;box-shadow:0 2px 8px rgba(2,132,199,0.4);" ' + (state.chatIADigitando ? 'disabled' : '') + '>' +
-            '<svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z" transform="rotate(90,12,12)"/></svg>' +
-          '</button>' +
+
+        // Área de mensagens
+        '<div id="chat-ia-msgs" style="' +
+          'flex:1;min-height:0;overflow-y:auto;' +
+          'padding:20px 14px 12px;' +
+          '-webkit-overflow-scrolling:touch;' +
+          'overscroll-behavior:contain;' +
+        '">' + msgs + '</div>' +
+
+        // Barra de input
+        '<div style="' +
+          'padding:10px 12px;' +
+          'padding-bottom:calc(env(safe-area-inset-bottom,0px) + 10px);' +
+          'background:#fff;' +
+          'border-top:1px solid #e2e8f0;' +
+          'display:flex;align-items:flex-end;gap:8px;flex-shrink:0;' +
+        '">' +
+          '<div style="' +
+            'flex:1;display:flex;align-items:flex-end;' +
+            'background:#f1f5f9;border-radius:24px;' +
+            'padding:8px 14px;' +
+            'border:1.5px solid #e2e8f0;' +
+            'min-height:44px;' +
+          '">' +
+            '<textarea id="chat-ia-input" placeholder="Mensagem para a Ava..." rows="1" style="' +
+              'flex:1;resize:none;border:none;outline:none;background:transparent;' +
+              'font-size:15px;font-family:inherit;color:#1e293b;' +
+              'line-height:1.5;max-height:100px;overflow-y:auto;' +
+              'padding:0;margin:0;width:100%;' +
+            '"' + (state.chatIADigitando ? ' disabled' : '') + '>' + escapeHtml(state.chatIAInput) + '</textarea>' +
+          '</div>' +
+          micBtn +
+          sendBtn +
         '</div>' +
+
       '</div>'
     );
   }
 
-  function menuBotaoHtml(id, titulo, subtitulo, icone) {
+    function menuBotaoHtml(id, titulo, subtitulo, icone) {
     return '<button id="' + id + '" type="button" class="rounded-2xl border ' + (state.darkMode ? 'border-slate-800 bg-slate-900' : 'border-slate-200 bg-white') + ' p-3 text-left shadow-sm active:scale-[0.99]">' +
       '<div class="flex items-center gap-3">' +
         '<span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-cyan-50 text-sm font-black text-cyan-700">' + (icone || '&bull;') + '</span>' +
@@ -4929,11 +5038,27 @@
     });
     bind('chat-ia-fechar', function() { state.chatIAAberto = false; render(); });
     bind('chat-ia-overlay', function(e) { if (e.target && e.target.id === 'chat-ia-overlay') { state.chatIAAberto = false; render(); } });
+    bind('chat-ia-mic', function() { gravarVoz(); });
     bind('chat-ia-enviar', function() { enviarMensagemIA(); });
     var chatInput = document.getElementById('chat-ia-input');
     if (chatInput) {
       chatInput.addEventListener('keydown', function(e) { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); enviarMensagemIA(); } });
-      chatInput.addEventListener('input', function() { state.chatIAInput = this.value; });
+      chatInput.addEventListener('input', function() {
+        state.chatIAInput = this.value;
+        // Atualizar botão enviar dinamicamente sem re-render completo
+        var envBtn = document.getElementById('chat-ia-enviar');
+        if (envBtn) {
+          var tem = this.value.trim().length > 0;
+          envBtn.disabled = !tem;
+          envBtn.style.background = tem ? 'linear-gradient(135deg,#0284c7,#0369a1)' : '#e2e8f0';
+          envBtn.style.boxShadow = tem ? '0 3px 10px rgba(2,132,199,0.4)' : 'none';
+          var svg = envBtn.querySelector('svg');
+          if (svg) svg.querySelector('path').setAttribute('fill', tem ? '#fff' : '#94a3b8');
+        }
+        // Auto-resize textarea
+        this.style.height = 'auto';
+        this.style.height = Math.min(this.scrollHeight, 100) + 'px';
+      });
     }
     bind('salvar-despesa', salvarDespesa);
     var diaInputEl = document.getElementById('despesa-dia');
