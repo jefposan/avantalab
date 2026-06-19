@@ -43,6 +43,14 @@ function AvaLogo({ className = 'h-8 w-24' }: { className?: string }) {
   );
 }
 
+function mensagemErroAva(error: unknown) {
+  if (error instanceof Error && error.message.trim()) {
+    return error.message;
+  }
+
+  return 'Desculpe, ocorreu um erro. Tente novamente.';
+}
+
 export default function ChatFlutuante({
   darkMode,
   textMuted,
@@ -58,7 +66,6 @@ export default function ChatFlutuante({
   abrirFormularioFeedback,
   voltarInicioChatFeedback,
   enviarFeedbackVisual,
-  supabaseUrl,
   contexto,
 }: ChatFlutuanteProps) {
   const [iaMensagens, setIaMensagens] = useState<Mensagem[]>([
@@ -85,7 +92,7 @@ export default function ChatFlutuante({
     setIaInput('');
     setIaDigitando(true);
     try {
-      const res = await fetch(`${supabaseUrl}/functions/v1/chat-ia`, {
+      const res = await fetch('/api/ava/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -93,16 +100,39 @@ export default function ChatFlutuante({
           contexto,
         }),
       });
-      if (!res.ok || !res.body) throw new Error('Erro');
+
+      if (!res.ok) {
+        const erro = await res.json().catch(() => null);
+        const mensagem = erro?.mensagem || erro?.message || 'A Ava nao conseguiu responder agora.';
+        throw new Error(mensagem);
+      }
+
+      if (!res.body) throw new Error('A Ava nao retornou resposta agora.');
+
+      const contentType = res.headers.get('content-type') || '';
+      if (contentType.includes('application/json')) {
+        const data = await res.json();
+        const conteudo = data?.resposta || data?.reply || data?.message || data?.mensagem;
+        if (!conteudo) throw new Error('A Ava nao conseguiu gerar a resposta agora.');
+        setIaMensagens(prev => [...prev, { role: 'assistant', content: String(conteudo) }]);
+        return;
+      }
+
       const reader = res.body.getReader();
       const decoder = new TextDecoder();
       let resposta = '';
+      let buffer = '';
+
       setIaMensagens(prev => [...prev, { role: 'assistant', content: '' }]);
+
       while (true) {
         const { done, value } = await reader.read();
         if (done) break;
-        const chunk = decoder.decode(value, { stream: true });
-        for (const linha of chunk.split('\n').filter(l => l.startsWith('data: '))) {
+        buffer += decoder.decode(value, { stream: true });
+        const linhas = buffer.split('\n');
+        buffer = linhas.pop() || '';
+
+        for (const linha of linhas.filter(l => l.startsWith('data: '))) {
           const dado = linha.replace('data: ', '').trim();
           if (dado === '[DONE]') continue;
           try {
@@ -118,8 +148,21 @@ export default function ChatFlutuante({
           } catch { /* ignorar */ }
         }
       }
-    } catch {
-      setIaMensagens(prev => [...prev, { role: 'assistant', content: 'Desculpe, ocorreu um erro. Tente novamente.' }]);
+
+      if (!resposta.trim()) throw new Error('A Ava nao conseguiu gerar a resposta agora.');
+    } catch (error) {
+      const conteudo = mensagemErroAva(error);
+      setIaMensagens(prev => {
+        const copia = [...prev];
+        const ultima = copia[copia.length - 1];
+
+        if (ultima?.role === 'assistant' && !ultima.content) {
+          copia[copia.length - 1] = { role: 'assistant', content: conteudo };
+          return copia;
+        }
+
+        return [...prev, { role: 'assistant', content: conteudo }];
+      });
     } finally {
       setIaDigitando(false);
     }
@@ -141,8 +184,7 @@ export default function ChatFlutuante({
         <div className={'mb-4 w-[360px] overflow-hidden rounded-3xl border shadow-2xl ' + bg}>
           {/* Header */}
           <div
-            className="flex items-start justify-between gap-3 px-5 py-4"
-            style={{ background: 'linear-gradient(135deg, #020617, #003E73)', color: '#ffffff' }}
+            className="flex items-start justify-between gap-3 border-b border-slate-200 bg-white px-5 py-4 text-slate-900"
           >
             <div className="flex items-center gap-3">
               {chatFeedbackEtapa === 'ia' && (
@@ -151,7 +193,7 @@ export default function ChatFlutuante({
                 </span>
               )}
               <div>
-                <p className="text-[11px] font-black uppercase tracking-[0.24em] text-sky-200">AvantaLab</p>
+                <p className="text-[11px] font-black uppercase tracking-[0.24em]" style={{ color: '#0A1F44' }}>AvantaLab</p>
                 <h3 className="mt-1 text-base font-black leading-tight">
                   {chatFeedbackEtapa === 'ia' ? 'Ava — Assistente IA' : 'Como podemos ajudar?'}
                 </h3>
@@ -160,7 +202,7 @@ export default function ChatFlutuante({
             <button
               type="button"
               onClick={fecharChatFeedback}
-              className="flex h-8 w-8 items-center justify-center rounded-full bg-white/10 text-lg font-black text-white transition hover:bg-white/20 cursor-pointer"
+              className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-100 text-lg font-black text-slate-600 transition hover:bg-slate-200 hover:text-slate-900 cursor-pointer"
               aria-label="Fechar chat"
             >×</button>
           </div>
