@@ -3376,10 +3376,10 @@
 
   function perguntaIaHtml() {
     return (
-      '<button id="chat-ia-card" type="button" class="flex w-full items-center gap-2 rounded-2xl bg-white px-3 py-2.5 text-left shadow-sm active:scale-[0.99]">' +
-        '<span class="flex h-10 w-[98px] shrink-0 items-center justify-center rounded-xl bg-cyan-50">' + avaLogoPrincipalHtml(90, 44) + '</span>' +
-        '<div class="min-w-0 flex-1"><p class="truncate text-xs font-black text-slate-900">Pergunte para a Ava</p><p class="mt-0.5 truncate text-[10px] font-semibold text-slate-500">Analise suas financas e tire duvidas.</p></div>' +
-        '<span class="text-lg text-cyan-600">&#8250;</span>' +
+      '<button id="chat-ia-card" type="button" class="flex w-full items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-2 text-left shadow-sm active:scale-[0.99]">' +
+        '<span class="flex h-9 w-[88px] shrink-0 items-center justify-center">' + avaLogoPrincipalHtml(82, 40) + '</span>' +
+        '<span class="min-w-0 flex-1 truncate text-sm font-semibold text-slate-400">Pergunte para a Ava...</span>' +
+        '<span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-cyan-600 text-base font-black text-white">&#8593;</span>' +
       '</button>'
     );
   }
@@ -3856,7 +3856,6 @@
             '</div>' +
           '</div>' +
           '<div class="grid gap-2">' +
-            menuBotaoHtml('menu-dashboard', 'Dashboard', 'Visão principal do mês', '&#8962;') +
             menuBotaoHtml('menu-configurar-resumo', 'Configurar resumo', 'Exibir e ocultar cards', '&#9776;') +
             menuBotaoHtml('menu-organizar-dashboard', 'Organizar dashboard', 'Definir a ordem dos cards', '&#8597;') +
             menuBotaoHtml('menu-usuario', 'Usuários', perfilFormatado(state.empresa && state.empresa.perfil), 'U') +
@@ -5564,10 +5563,10 @@
 
   function perguntaIaHtml() {
     return (
-      '<button id="chat-ia-card" type="button" class="flex w-full items-center gap-2 rounded-2xl bg-white px-3 py-2.5 text-left shadow-sm active:scale-[0.99]">' +
-        '<span class="flex h-10 w-[98px] shrink-0 items-center justify-center rounded-xl bg-cyan-50">' + avaLogoPrincipalHtml(90, 44) + '</span>' +
-        '<div class="min-w-0 flex-1"><p class="truncate text-xs font-black text-slate-900">Pergunte para a Ava</p><p class="mt-0.5 truncate text-[10px] font-semibold text-slate-500">Analise suas financas e tire duvidas.</p></div>' +
-        '<span class="text-lg text-cyan-600">&#8250;</span>' +
+      '<button id="chat-ia-card" type="button" class="flex w-full items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-2 text-left shadow-sm active:scale-[0.99]">' +
+        '<span class="flex h-9 w-[88px] shrink-0 items-center justify-center">' + avaLogoPrincipalHtml(82, 40) + '</span>' +
+        '<span class="min-w-0 flex-1 truncate text-sm font-semibold text-slate-400">Pergunte para a Ava...</span>' +
+        '<span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-cyan-600 text-base font-black text-white">&#8593;</span>' +
       '</button>'
     );
   }
@@ -6044,7 +6043,6 @@
             '</div>' +
           '</div>' +
           '<div class="grid gap-2">' +
-            menuBotaoHtml('menu-dashboard', 'Dashboard', 'Visão principal do mês', '&#8962;') +
             menuBotaoHtml('menu-configurar-resumo', 'Configurar resumo', 'Exibir e ocultar cards', '&#9776;') +
             menuBotaoHtml('menu-organizar-dashboard', 'Organizar dashboard', 'Definir a ordem dos cards', '&#8597;') +
             menuBotaoHtml('menu-usuario', 'Usuários', perfilFormatado(state.empresa && state.empresa.perfil), 'U') +
@@ -6100,7 +6098,7 @@
     }
 
     var primeiro = primeiroNomeUsuarioAva();
-    var saud = 'Ola' + (primeiro ? ', ' + escapeHtml(primeiro) : '') + '! &#128075;';
+    var saud = 'Ol&aacute;' + (primeiro ? ',' + escapeHtml(primeiro) : '') + '.';
 
     var sugs = [
       { ic:'chart',  cor:'#f59e0b', bg:'rgba(245,158,11,0.16)', t:'Quanto gastei este mes?' },
@@ -6120,8 +6118,7 @@
     }).join('');
 
     var welcome =
-      '<div style="text-align:center;padding:20px 6px 4px;">' +
-        '<div style="width:56px;height:56px;margin:0 auto 12px;border-radius:50%;background:' + C.sparkBg + ';display:flex;align-items:center;justify-content:center;">' + sparkSvg(30, 'avaSparkW') + '</div>' +
+      '<div style="text-align:center;padding:18px 6px 4px;">' +
         '<p style="margin:0;font-size:18px;font-weight:800;color:' + C.text + ';letter-spacing:-0.01em;">' + saud + '</p>' +
         '<p style="margin:7px auto 0;max-width:282px;font-size:12.5px;line-height:1.5;color:' + C.muted + ';">Pergunte sobre periodos, categorias, contas ou tipos de transacao.</p>' +
       '</div>' +
@@ -6157,7 +6154,7 @@
     }
 
     var header =
-      '<div style="position:fixed;top:0;left:0;right:0;z-index:4;display:flex;align-items:center;gap:10px;' +
+      '<div style="position:absolute;top:0;left:0;right:0;z-index:4;display:flex;align-items:center;gap:10px;' +
         'padding-top:calc(env(safe-area-inset-top,0px) + 12px);padding-left:8px;padding-right:14px;padding-bottom:12px;' +
         'background:' + C.bar + ';border-bottom:1px solid ' + C.border + ';">' +
         '<button id="chat-ia-fechar" type="button" aria-label="Voltar" style="background:transparent;border:none;width:36px;height:36px;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;">' +
@@ -6167,7 +6164,7 @@
       '</div>';
 
     var body =
-      '<div id="chat-ia-msgs" style="position:absolute;left:0;right:0;z-index:2;top:calc(env(safe-area-inset-top,0px) + 61px);bottom:calc(var(--ava-keyboard-offset,0px) + 64px);overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;padding:6px 14px 16px;">' +
+      '<div id="chat-ia-msgs" style="position:absolute;left:0;right:0;z-index:2;top:calc(env(safe-area-inset-top,0px) + 76px);bottom:calc(var(--ava-keyboard-offset,0px) + 58px);overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;padding:6px 14px 16px;">' +
         welcome + convoHtml +
       '</div>';
 
@@ -6190,10 +6187,10 @@
     var fieldBg = dark ? '#111b2d' : '#ffffff';
     var fieldBorder = dark ? '#27364f' : '#d8e4ef';
     var keyboardShield =
-      '<div aria-hidden="true" style="position:fixed;left:0;right:0;bottom:0;z-index:1;height:calc(var(--ava-keyboard-offset,0px) + 86px);background:' + C.bg + ';pointer-events:none;"></div>';
+      '<div aria-hidden="true" style="position:absolute;left:0;right:0;bottom:0;z-index:1;height:calc(var(--ava-keyboard-offset,0px) + 82px);background:' + C.bg + ';pointer-events:none;"></div>';
     var inputBar =
-      '<div style="position:fixed;left:0;right:0;bottom:var(--ava-keyboard-offset,0px);z-index:3;padding:6px 10px;' +
-        'padding-bottom:calc(env(safe-area-inset-bottom,0px) + 2px);background:' + C.bg + ';">' +
+      '<div style="position:absolute;left:0;right:0;bottom:var(--ava-keyboard-offset,0px);z-index:3;padding:5px 10px;' +
+        'padding-bottom:calc(env(safe-area-inset-bottom,0px) + 1px);background:' + C.bg + ';">' +
         '<div style="width:100%;display:flex;align-items:flex-end;gap:4px;background:' + fieldBg + ';border:1px solid ' + fieldBorder + ';border-radius:24px;padding:5px 6px 5px 14px;min-height:46px;box-shadow:' + (dark ? 'none' : '0 8px 20px rgba(15,35,61,0.08)') + ';">' +
           '<div id="chat-ia-input" role="textbox" aria-multiline="true" inputmode="text" enterkeyhint="send" autocapitalize="sentences" autocomplete="off" autocorrect="on" spellcheck="true" contenteditable="' + (enviando ? 'false' : 'plaintext-only') + '" data-placeholder="Como posso ajudar voce hoje?" style="flex:1;min-height:22px;max-height:96px;overflow-y:auto;outline:none;background:transparent;font-size:16px;font-family:inherit;color:' + C.text + ';line-height:1.4;padding:7px 2px;margin:0;width:100%;white-space:pre-wrap;word-break:break-word;-webkit-user-select:text;user-select:text;">' + escapeHtml(state.chatIAInput) + '</div>' +
           micBtn +
@@ -7227,7 +7224,6 @@
         render();
       });
     }
-    bind('menu-dashboard', voltarDashboard);
     bind('menu-configurar-resumo', function () { abrirModalMenu('configurarResumo'); });
     bind('menu-usuario', abrirUsuariosMobile);
     bind('menu-gerenciar', function () { abrirModalMenu('gerenciar'); });
