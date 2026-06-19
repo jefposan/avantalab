@@ -4781,6 +4781,13 @@
     bind('salvar-despesa', salvarDespesa);
     var diaInputEl = document.getElementById('despesa-dia');
     if (diaInputEl) {
+      diaInputEl.addEventListener('input', function() {
+        var val = Number(this.value);
+        var limite = maxDias(state.mes, state.ano);
+        if (this.value === '' || (!isNaN(val) && val >= 1 && val <= limite)) {
+          if (state.erro) { state.erro = ''; render(); }
+        }
+      });
       diaInputEl.addEventListener('blur', function() {
         var val = Number(this.value);
         var limite = maxDias(state.mes, state.ano);
