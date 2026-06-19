@@ -32,22 +32,14 @@ function DotsBounce() {
   );
 }
 
-function AvaLogo({ className = 'h-6 w-6' }: { className?: string }) {
+function AvaLogo({ className = 'h-8 w-24' }: { className?: string }) {
   return (
-    <svg className={className} viewBox="0 0 24 24" fill="none" aria-hidden="true">
-      <defs>
-        <linearGradient id="avaLogoGradient" x1="0" y1="0" x2="24" y2="24" gradientUnits="userSpaceOnUse">
-          <stop stopColor="#38bdf8" />
-          <stop offset="0.5" stopColor="#3b82f6" />
-          <stop offset="1" stopColor="#8b5cf6" />
-        </linearGradient>
-      </defs>
-      <circle cx="12" cy="12" r="10" fill="rgba(56,189,248,0.14)" />
-      <path d="M6.4 17.4C7.8 12.4 9.8 7.2 12 7.2s4.2 5.2 5.6 10.2" stroke="url(#avaLogoGradient)" strokeWidth="2.1" strokeLinecap="round" strokeLinejoin="round" />
-      <path d="M8.5 14.2c1.4-1.25 2.55-1.85 3.5-1.85s2.1.6 3.5 1.85" stroke="url(#avaLogoGradient)" strokeWidth="1.8" strokeLinecap="round" />
-      <path d="M7.5 18.6c2.65 1.45 6.35 1.45 9 0" stroke="url(#avaLogoGradient)" strokeWidth="1.55" strokeLinecap="round" opacity="0.72" />
-      <circle cx="18.25" cy="17.2" r="1.7" fill="url(#avaLogoGradient)" />
-    </svg>
+    <img
+      src="/images/ava-logo-principal.png"
+      alt="Ava"
+      className={'object-contain ' + className}
+      draggable={false}
+    />
   );
 }
 
@@ -154,8 +146,8 @@ export default function ChatFlutuante({
           >
             <div className="flex items-center gap-3">
               {chatFeedbackEtapa === 'ia' && (
-                <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-white/10">
-                  <AvaLogo className="h-8 w-8" />
+                <span className="flex h-10 w-28 items-center justify-center">
+                  <AvaLogo className="h-11 w-28" />
                 </span>
               )}
               <div>
@@ -184,17 +176,20 @@ export default function ChatFlutuante({
                 <button
                   type="button"
                   onClick={() => setChatFeedbackEtapa('ia')}
-                  className={'rounded-2xl border px-4 py-3 text-left transition hover:-translate-y-0.5 hover:shadow-md cursor-pointer ' + cardCls}
+                  className={(darkMode
+                    ? 'border-slate-700 bg-slate-900 hover:bg-slate-800'
+                    : 'border-slate-200 bg-white hover:border-sky-200 hover:bg-sky-50') +
+                    ' flex w-full items-center gap-3 rounded-full border px-4 py-2.5 text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-md active:scale-[0.99] cursor-pointer'}
                 >
-                  <div className="flex items-center gap-3">
-                    <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-sky-100">
-                      <AvaLogo className="h-7 w-7" />
-                    </span>
-                    <div>
-                      <p className="text-sm font-black">Perguntar à Ava</p>
-                      <p className={'mt-0.5 text-xs ' + textMuted}>Análises financeiras e dúvidas sobre o sistema.</p>
-                    </div>
-                  </div>
+                  <span className="flex h-10 w-24 shrink-0 items-center justify-center">
+                    <AvaLogo className="h-11 w-24" />
+                  </span>
+                  <span className="min-w-0 flex-1 truncate text-sm font-semibold text-slate-400">
+                    Pergunte para Ava...
+                  </span>
+                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-sky-600 text-base font-black text-white shadow-sm">
+                    &#8593;
+                  </span>
                 </button>
 
                 <button
