@@ -158,7 +158,7 @@
     lancandoDespesa: false,
     _diaInvalido: false,
     chatIAAberto: false,
-    chatIAMensagens: [{ role: 'assistant', content: 'Ola! Sou a Ava, sua assistente financeira. Posso analisar seus resultados, dar dicas ou tirar duvidas sobre o sistema. Como posso ajudar?' }],
+    chatIAMensagens: [{ role: 'assistant', content: 'Ola! Sou a Leval, sua assistente financeira. Posso analisar seus resultados, dar dicas ou tirar duvidas sobre o sistema. Como posso ajudar?' }],
     chatIADigitando: false,
     chatIAInput: '',
   };
@@ -3763,29 +3763,38 @@
     var msgs = state.chatIAMensagens.map(function(m) {
       var isUser = m.role === 'user';
       var bubbleStyle = isUser
-        ? 'background:#0284c7;color:#fff;border-radius:16px 16px 4px 16px;margin-left:auto;'
-        : 'background:#f1f5f9;color:#1e293b;border-radius:16px 16px 16px 4px;margin-right:auto;';
+        ? 'background:linear-gradient(135deg,#0284c7,#0369a1);color:#fff;border-radius:18px 18px 4px 18px;margin-left:auto;'
+        : 'background:#f1f5f9;color:#1e293b;border-radius:18px 18px 18px 4px;margin-right:auto;';
       var content = m.content
         ? escapeHtml(m.content)
-        : '<span style="display:flex;gap:4px;padding:4px 0"><span style="width:6px;height:6px;border-radius:50%;background:#94a3b8;animation:bounce 1s infinite 0ms"></span><span style="width:6px;height:6px;border-radius:50%;background:#94a3b8;animation:bounce 1s infinite 150ms"></span><span style="width:6px;height:6px;border-radius:50%;background:#94a3b8;animation:bounce 1s infinite 300ms"></span></span>';
-      return '<div style="display:flex;margin-bottom:10px"><div style="max-width:85%;padding:10px 14px;font-size:13px;line-height:1.5;white-space:pre-wrap;' + bubbleStyle + '">' + content + '</div></div>';
+        : '<span style="display:inline-flex;gap:4px;padding:2px 0;align-items:center"><span style="width:7px;height:7px;border-radius:50%;background:#94a3b8;display:inline-block;animation:bounce 1.2s infinite 0ms"></span><span style="width:7px;height:7px;border-radius:50%;background:#94a3b8;display:inline-block;animation:bounce 1.2s infinite 200ms"></span><span style="width:7px;height:7px;border-radius:50%;background:#94a3b8;display:inline-block;animation:bounce 1.2s infinite 400ms"></span></span>';
+      return '<div style="display:flex;margin-bottom:12px">' +
+        '<div style="max-width:82%;padding:11px 15px;font-size:14px;line-height:1.55;white-space:pre-wrap;box-shadow:0 1px 4px rgba(0,0,0,0.08);' + bubbleStyle + '">' + content + '</div>' +
+        '</div>';
     }).join('');
 
     return (
-      '<div id="chat-ia-overlay" style="position:fixed;inset:0;z-index:5000;background:rgba(0,0,0,0.5);display:flex;flex-direction:column;justify-content:flex-end;">' +
-        '<div style="background:#fff;border-radius:20px 20px 0 0;display:flex;flex-direction:column;height:75vh;max-height:600px;">' +
-          '<div style="background:#0284c7;border-radius:20px 20px 0 0;padding:14px 16px;display:flex;align-items:center;gap:12px;">' +
-            '<div style="width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,0.2);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:900;color:#fff;">A</div>' +
-            '<div><p style="font-size:14px;font-weight:900;color:#fff;margin:0;">Ava</p><p style="font-size:10px;color:#bae6fd;margin:0;">Assistente financeira AvantaLab</p></div>' +
-            '<button id="chat-ia-fechar" type="button" style="margin-left:auto;background:rgba(255,255,255,0.15);border:none;color:#fff;width:32px;height:32px;border-radius:50%;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;">&times;</button>' +
+      '<div id="chat-ia-overlay" style="position:fixed;inset:0;z-index:5000;display:flex;flex-direction:column;background:#f8fafc;">' +
+        // Header
+        '<div style="background:linear-gradient(135deg,#003E73 0%,#075985 54%,#00A6C8 100%);padding:calc(env(safe-area-inset-top)+12px) 16px 14px;display:flex;align-items:center;gap:12px;flex-shrink:0;box-shadow:0 2px 12px rgba(0,0,0,0.18);">' +
+          '<button id="chat-ia-fechar" type="button" style="background:rgba(255,255,255,0.15);border:none;color:#fff;width:36px;height:36px;border-radius:50%;font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;">' +
+            '<svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>' +
+          '</button>' +
+          '<div style="width:40px;height:40px;border-radius:50%;background:rgba(255,255,255,0.2);display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:900;color:#fff;flex-shrink:0;border:2px solid rgba(255,255,255,0.3);">L</div>' +
+          '<div style="min-width:0;">' +
+            '<p style="font-size:15px;font-weight:900;color:#fff;margin:0;letter-spacing:-0.01em;">Leval</p>' +
+            '<p style="font-size:10px;color:#bae6fd;margin:0;font-weight:600;">Assistente financeira AvantaLab</p>' +
           '</div>' +
-          '<div id="chat-ia-msgs" style="flex:1;overflow-y:auto;padding:16px;">' + msgs + '</div>' +
-          '<div style="padding:12px;border-top:1px solid #e2e8f0;display:flex;gap:8px;align-items:flex-end;">' +
-            '<textarea id="chat-ia-input" placeholder="Digite sua pergunta..." rows="1" style="flex:1;resize:none;border:1px solid #cbd5e1;border-radius:12px;padding:10px 12px;font-size:14px;font-family:inherit;outline:none;max-height:96px;overflow-y:auto;" ' + (state.chatIADigitando ? 'disabled' : '') + '>' + escapeHtml(state.chatIAInput) + '</textarea>' +
-            '<button id="chat-ia-enviar" type="button" style="width:40px;height:40px;border-radius:12px;background:#0284c7;color:#fff;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;" ' + (state.chatIADigitando ? 'disabled' : '') + '>' +
-              '<svg width="18" height="18" fill="currentColor" viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z" transform="rotate(90,12,12)"/></svg>' +
-            '</button>' +
-          '</div>' +
+          '<div style="margin-left:auto;width:8px;height:8px;border-radius:50%;background:#4ade80;flex-shrink:0;" title="Online"></div>' +
+        '</div>' +
+        // Mensagens
+        '<div id="chat-ia-msgs" style="flex:1;overflow-y:auto;padding:20px 16px 8px;">' + msgs + '</div>' +
+        // Input
+        '<div style="padding:10px 12px;padding-bottom:calc(env(safe-area-inset-bottom)+10px);background:#fff;border-top:1px solid #e2e8f0;display:flex;gap:10px;align-items:flex-end;flex-shrink:0;">' +
+          '<textarea id="chat-ia-input" placeholder="Mensagem..." rows="1" style="flex:1;resize:none;border:1.5px solid #e2e8f0;border-radius:22px;padding:10px 16px;font-size:15px;font-family:inherit;outline:none;max-height:100px;overflow-y:auto;background:#f8fafc;color:#1e293b;line-height:1.4;" ' + (state.chatIADigitando ? 'disabled' : '') + '>' + escapeHtml(state.chatIAInput) + '</textarea>' +
+          '<button id="chat-ia-enviar" type="button" style="width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,#0284c7,#0369a1);color:#fff;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;box-shadow:0 2px 8px rgba(2,132,199,0.4);" ' + (state.chatIADigitando ? 'disabled' : '') + '>' +
+            '<svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z" transform="rotate(90,12,12)"/></svg>' +
+          '</button>' +
         '</div>' +
       '</div>'
     );
