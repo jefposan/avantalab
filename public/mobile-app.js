@@ -3466,7 +3466,7 @@
                 '<button id="tipo-despesa" type="button" class="h-9 rounded-lg text-sm font-black transition ' + (despesaAtiva ? 'bg-red-600 text-white shadow-sm' : 'text-slate-500') + '">Despesa</button>' +
                 '<button id="tipo-receita" type="button" class="h-9 rounded-lg text-sm font-black transition ' + (!despesaAtiva ? 'bg-emerald-600 text-white shadow-sm' : 'text-slate-500') + '">Receita</button>' +
               '</div>' +
-              alertaHtml().replace('mt-4', 'mb-3') +
+              '<p id="lancamento-alerta-dia" class="rounded-lg bg-rose-50 px-3 py-2 text-[11px] font-black text-rose-700 mb-3"' + (state.erro ? '' : ' style="display:none"') + '>' + escapeHtml(state.erro) + '</p>' +
               (despesaAtiva ? modalDespesaCamposHtml() : modalReceitaCamposHtml())
           ) +
         '</section>' +
@@ -4781,23 +4781,25 @@
     bind('salvar-despesa', salvarDespesa);
     var diaInputEl = document.getElementById('despesa-dia');
     if (diaInputEl) {
-      diaInputEl.addEventListener('input', function() {
-        var val = Number(this.value);
-        var limite = maxDias(state.mes, state.ano);
-        if (this.value === '' || (!isNaN(val) && val >= 1 && val <= limite)) {
-          if (state.erro) { state.erro = ''; render(); }
-        }
-      });
       diaInputEl.addEventListener('blur', function() {
         var val = Number(this.value);
         var limite = maxDias(state.mes, state.ano);
         if (this.value !== '' && (isNaN(val) || val < 1 || val > limite)) {
-          var _nomeV = campo('despesa-nome'), _descV = campo('despesa-descricao'), _valorV = campo('despesa-valor');
-          setErro('Data invalida. Informe um dia entre 1 e ' + limite + '.');
-          var _n = document.getElementById('despesa-nome'); if (_n) _n.value = _nomeV;
-          var _desc = document.getElementById('despesa-descricao'); if (_desc) _desc.value = _descV;
-          var _v = document.getElementById('despesa-valor'); if (_v) _v.value = _valorV;
-          var _d = document.getElementById('despesa-dia'); if (_d) { _d.value = ''; _d.focus(); }
+          var msg = 'Data invalida. Informe um dia entre 1 e ' + limite + '.';
+          state.erro = msg;
+          var alertaEl = document.getElementById('lancamento-alerta-dia');
+          if (alertaEl) { alertaEl.textContent = msg; alertaEl.style.display = 'block'; }
+          this.value = '';
+          this.focus();
+        }
+      });
+      diaInputEl.addEventListener('input', function() {
+        var val = Number(this.value);
+        var limite = maxDias(state.mes, state.ano);
+        if (this.value === '' || (!isNaN(val) && val >= 1 && val <= limite)) {
+          state.erro = '';
+          var alertaEl = document.getElementById('lancamento-alerta-dia');
+          if (alertaEl) alertaEl.style.display = 'none';
         }
       });
     }
