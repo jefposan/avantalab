@@ -162,6 +162,7 @@
     chatIADigitando: false,
     chatIAInput: '',
     chatIAGravando: false,
+    chatIAAudioEnviando: false,
   };
 
   var CHAVE_MANTER_CONECTADO_ATE = 'avantalab_mobile_manter_conectado_ate';
@@ -691,6 +692,72 @@
     render();
   }
 
+  function removerChatIAOverlay() {
+    var overlay = document.getElementById('chat-ia-overlay');
+    if (overlay && overlay.parentNode) overlay.parentNode.removeChild(overlay);
+  }
+
+  function pararGravacaoIA() {
+    if (window._chatMediaRecorder && window._chatMediaRecorder.state !== 'inactive') {
+      try { window._chatMediaRecorder.stop(); } catch (error) {}
+    }
+    if (window._chatAudioStream) {
+      try {
+        window._chatAudioStream.getTracks().forEach(function (track) { track.stop(); });
+      } catch (error) {}
+      window._chatAudioStream = null;
+    }
+    window._chatMediaRecorder = null;
+    window._chatAudioChunks = [];
+    state.chatIAGravando = false;
+  }
+
+  function abrirChatIA() {
+    state.chatIAAberto = true;
+    state.erro = '';
+    render();
+    setTimeout(function() {
+      var msgsEl = document.getElementById('chat-ia-msgs');
+      if (msgsEl) msgsEl.scrollTop = msgsEl.scrollHeight;
+      var inp = document.getElementById('chat-ia-input');
+      if (inp) inp.focus();
+      _avaPinViewport();
+    }, 50);
+  }
+
+  function fecharChatIA() {
+    window._chatAudioCancelado = state.chatIAGravando;
+    pararGravacaoIA();
+    state.chatIAAberto = false;
+    state.chatIAAudioEnviando = false;
+    removerChatIAOverlay();
+    render();
+  }
+
+  function primeiroNomeUsuarioAva() {
+    var candidatos = [
+      state.empresa && state.empresa.usuario_nome,
+      state.usuario && state.usuario.user_metadata && state.usuario.user_metadata.nome,
+      state.usuario && state.usuario.user_metadata && state.usuario.user_metadata.name,
+      state.usuario && state.usuario.user_metadata && state.usuario.user_metadata.full_name,
+    ];
+
+    for (var i = 0; i < candidatos.length; i += 1) {
+      var nome = String(candidatos[i] || '').trim();
+      if (!nome || nome.indexOf('@') >= 0) continue;
+      nome = nome
+        .replace(/\s+/g, ' ')
+        .split(' ')
+        .filter(function (parte) {
+          return parte && !/[0-9]/.test(parte) && parte.length > 1;
+        })
+        .join(' ');
+      if (nome) return nome.split(' ')[0];
+    }
+
+    return '';
+  }
+
   function trocarTema() {
     state.darkMode = !state.darkMode;
     try {
@@ -704,7 +771,7 @@
   }
 
   function deveBloquearScroll() {
-    return Boolean(state.modalLancamento || state.modalMenu || state.menuAberto || state.modalAcao);
+    return Boolean(state.modalLancamento || state.modalMenu || state.menuAberto || state.modalAcao || state.chatIAAberto);
   }
 
   function atualizarScrollBloqueado() {
@@ -3769,7 +3836,13 @@
   function _avaPinViewport() {
     var ov = document.getElementById('chat-ia-overlay');
     var vv = window.visualViewport;
-    if (!ov || !vv) return;
+    if (!ov) return;
+    if (!vv) {
+      ov.style.top = '0px';
+      ov.style.bottom = '0px';
+      ov.style.height = '100dvh';
+      return;
+    }
     ov.style.height = vv.height + 'px';
     ov.style.top = vv.offsetTop + 'px';
     ov.style.bottom = 'auto';
@@ -3900,35 +3973,113 @@
     );
   }
 
-  function gravarVoz() {
-    var SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (!SpeechRecognition) {
-      alert('Reconhecimento de voz nao disponivel neste navegador.');
-      return;
-    }
+  async function gravarVoz() {
+    if (state.chatIAAudioEnviando || state.chatIADigitando) return;
+
     if (state.chatIAGravando) {
-      if (window._chatRec) { try { window._chatRec.stop(); } catch(e) {} }
-      state.chatIAGravando = false;
-      render();
+      if (window._chatMediaRecorder && window._chatMediaRecorder.state !== 'inactive') {
+        try { window._chatMediaRecorder.stop(); } catch (error) {}
+      }
       return;
     }
-    var rec = new SpeechRecognition();
-    window._chatRec = rec;
-    rec.lang = 'pt-BR';
-    rec.continuous = false;
-    rec.interimResults = false;
-    rec.onstart = function() { state.chatIAGravando = true; render(); };
-    rec.onend = function() { state.chatIAGravando = false; render(); };
-    rec.onerror = function() { state.chatIAGravando = false; render(); };
-    rec.onresult = function(e) {
-      var texto = e.results[0][0].transcript;
-      state.chatIAInput = texto;
-      var inp = document.getElementById('chat-ia-input');
-      if (inp) { inp.value = texto; }
-      state.chatIAGravando = false;
+
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia || typeof MediaRecorder === 'undefined') {
+      alert('Gravacao de audio nao disponivel neste navegador.');
+      return;
+    }
+
+    try {
+      var stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      var tipos = ['audio/webm;codecs=opus', 'audio/mp4', 'audio/webm'];
+      var tipoAudio = '';
+      for (var i = 0; i < tipos.length; i += 1) {
+        if (MediaRecorder.isTypeSupported && MediaRecorder.isTypeSupported(tipos[i])) {
+          tipoAudio = tipos[i];
+          break;
+        }
+      }
+
+      var opcoes = tipoAudio ? { mimeType: tipoAudio } : undefined;
+      var recorder = new MediaRecorder(stream, opcoes);
+      window._chatAudioStream = stream;
+      window._chatMediaRecorder = recorder;
+      window._chatAudioChunks = [];
+
+      recorder.ondataavailable = function (event) {
+        if (event.data && event.data.size > 0) window._chatAudioChunks.push(event.data);
+      };
+
+      recorder.onerror = function () {
+        state.chatIAGravando = false;
+        state.chatIAAudioEnviando = false;
+        pararGravacaoIA();
+        render();
+      };
+
+      recorder.onstop = async function () {
+        if (window._chatAudioCancelado) {
+          window._chatAudioCancelado = false;
+          pararGravacaoIA();
+          render();
+          return;
+        }
+
+        var chunks = window._chatAudioChunks || [];
+        var mimeType = recorder.mimeType || tipoAudio || 'audio/webm';
+        pararGravacaoIA();
+
+        if (!chunks.length) {
+          render();
+          return;
+        }
+
+        state.chatIAAudioEnviando = true;
+        render();
+
+        try {
+          var blob = new Blob(chunks, { type: mimeType });
+          var formData = new FormData();
+          var extensao = mimeType.indexOf('mp4') >= 0 ? 'mp4' : 'webm';
+          formData.append('audio', blob, 'ava-audio.' + extensao);
+
+          var resposta = await fetch('/api/ava/transcrever-audio', {
+            method: 'POST',
+            body: formData,
+          });
+          var resultado = await resposta.json().catch(function () { return {}; });
+
+          if (!resposta.ok || resultado.erro || !resultado.texto) {
+            alert(resultado.mensagem || 'Nao foi possivel transcrever o audio.');
+            state.chatIAAudioEnviando = false;
+            render();
+            return;
+          }
+
+          state.chatIAInput = String(resultado.texto || '').trim();
+          state.chatIAAudioEnviando = false;
+          render();
+          setTimeout(function () {
+            var inp = document.getElementById('chat-ia-input');
+            if (inp) inp.value = state.chatIAInput;
+            enviarMensagemIA();
+          }, 50);
+        } catch (error) {
+          state.chatIAAudioEnviando = false;
+          alert('Nao foi possivel enviar o audio para a Ava.');
+          render();
+        }
+      };
+
+      state.chatIAGravando = true;
       render();
-    };
-    try { rec.start(); } catch(e) { state.chatIAGravando = false; }
+      recorder.start();
+    } catch (error) {
+      state.chatIAGravando = false;
+      state.chatIAAudioEnviando = false;
+      pararGravacaoIA();
+      alert('Autorize o uso do microfone para enviar audio para a Ava.');
+      render();
+    }
   }
 
   async function enviarMensagemIA() {
@@ -5835,6 +5986,7 @@
     var temTexto = state.chatIAInput.trim().length > 0;
     var gravando = state.chatIAGravando;
     var enviando = state.chatIADigitando;
+    var transcrevendoAudio = state.chatIAAudioEnviando;
 
     var C = dark
       ? { bg:'#0b1220', bar:'#0b1220', border:'#1c2940', text:'#e8eef6', muted:'#8896ab',
@@ -5861,8 +6013,7 @@
       return '<svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="' + cor + '" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 7.5h18V18a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7.5zM3 7.5 5 4h14l2 3.5M16 13.5h2"/></svg>';
     }
 
-    var nomeRaw = (state.usuario && state.usuario.user_metadata && state.usuario.user_metadata.nome) || (state.usuario && state.usuario.email) || '';
-    var primeiro = nomeRaw ? escapeHtml(String(nomeRaw).split('@')[0].split(' ')[0]) : '';
+    var primeiro = primeiroNomeUsuarioAva();
     var saud = 'Ola' + (primeiro ? ', ' + primeiro : '') + '! \U0001F44B';
 
     var sugs = [
@@ -5935,12 +6086,14 @@
         welcome + convoHtml +
       '</div>';
 
-    var micInner = gravando
+    var micInner = transcrevendoAudio
+      ? '<span style="width:16px;height:16px;border:2px solid ' + C.muted + ';border-top-color:transparent;border-radius:50%;display:block;animation:avaSpin .8s linear infinite;"></span>'
+      : gravando
       ? '<svg width="16" height="16" fill="#fff" viewBox="0 0 24 24"><rect x="7" y="7" width="10" height="10" rx="2"/></svg>'
       : '<svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="' + C.muted + '" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path stroke-linecap="round" stroke-linejoin="round" d="M19 10v2a7 7 0 0 1-14 0v-2M12 19v4M8 23h8"/></svg>';
     var micStyle = 'width:34px;height:34px;border-radius:50%;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .2s;' +
       (gravando ? 'background:#ef4444;animation:avaPulse 1.3s infinite;' : 'background:transparent;');
-    var micBtn = '<button id="chat-ia-mic" type="button" style="' + micStyle + '" aria-label="Voz">' + micInner + '</button>';
+    var micBtn = '<button id="chat-ia-mic" type="button" ' + (transcrevendoAudio || enviando ? 'disabled' : '') + ' style="' + micStyle + (transcrevendoAudio || enviando ? 'opacity:.65;cursor:not-allowed;' : '') + '" aria-label="' + (gravando ? 'Parar gravacao' : 'Gravar audio para a Ava') + '">' + micInner + '</button>';
 
     var sendActive = temTexto && !enviando;
     var sendStyle = 'width:40px;height:40px;border-radius:50%;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .2s;' +
@@ -5952,10 +6105,7 @@
     var inputBar =
       '<div style="flex-shrink:0;display:flex;align-items:flex-end;gap:8px;padding:9px 12px;' +
         'padding-bottom:calc(env(safe-area-inset-bottom,0px) + 9px);background:' + C.bar + ';border-top:1px solid ' + C.border + ';">' +
-        '<div style="flex:1;display:flex;align-items:flex-end;gap:4px;background:' + C.pill + ';border:1px solid ' + C.pillBorder + ';border-radius:23px;padding:5px 6px 5px 6px;min-height:44px;">' +
-          '<button id="chat-ia-mais" type="button" aria-label="Mais" style="width:30px;height:30px;border-radius:50%;border:none;background:transparent;display:flex;align-items:center;justify-content:center;flex-shrink:0;cursor:pointer;">' +
-            '<svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="' + C.plus + '" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 5v14M5 12h14"/></svg>' +
-          '</button>' +
+        '<div style="flex:1;display:flex;align-items:flex-end;gap:4px;background:' + C.pill + ';border:1px solid ' + C.pillBorder + ';border-radius:23px;padding:5px 6px 5px 14px;min-height:44px;">' +
           '<textarea id="chat-ia-input" rows="1" placeholder="Como posso ajudar voce hoje?" ' + (enviando ? 'disabled' : '') + ' style="flex:1;resize:none;border:none;outline:none;background:transparent;font-size:16px;font-family:inherit;color:' + C.text + ';line-height:1.45;max-height:110px;overflow-y:auto;padding:7px 2px;margin:0;width:100%;">' + escapeHtml(state.chatIAInput) + '</textarea>' +
           micBtn +
         '</div>' +
@@ -5963,7 +6113,7 @@
       '</div>';
 
     return (
-      '<div id="chat-ia-overlay" style="position:fixed;top:0;left:0;right:0;bottom:0;z-index:5000;display:flex;flex-direction:column;background:' + C.bg + ';overflow:hidden;">' +
+      '<div id="chat-ia-overlay" style="position:fixed;top:0;left:0;right:0;bottom:0;width:100vw;height:100dvh;z-index:5000;display:flex;flex-direction:column;background:' + C.bg + ';overflow:hidden;isolation:isolate;overscroll-behavior:contain;">' +
         header + body + inputBar +
       '</div>'
     );
@@ -6848,6 +6998,7 @@
 
   function render() {
     root.setAttribute('data-avantalab-mobile-ready', '1');
+    removerChatIAOverlay();
     root.innerHTML = !state.pronto
       ? telaCarregandoMobile()
       : (state.autenticado
@@ -6858,6 +7009,10 @@
     // Move chat-ia-overlay to document.body to escape overflow:hidden on <main>
     (function() {
       var ov = document.getElementById('chat-ia-overlay');
+      if (!state.chatIAAberto) {
+        removerChatIAOverlay();
+        return;
+      }
       if (ov && ov.parentNode !== document.body) {
         document.body.appendChild(ov);
       }
@@ -7103,18 +7258,9 @@
       render();
     });
     bind('salvar-categoria', salvarCategoriaDespesa);
-    bind('chat-ia-btn', function() {
-      state.chatIAAberto = true;
-      render();
-      setTimeout(function() {
-        var msgsEl = document.getElementById('chat-ia-msgs');
-        if (msgsEl) msgsEl.scrollTop = msgsEl.scrollHeight;
-        var inp = document.getElementById('chat-ia-input');
-        if (inp) inp.focus();
-      }, 50);
-    });
-    bind('chat-ia-fechar', function() { state.chatIAAberto = false; render(); });
-    bind('chat-ia-overlay', function(e) { if (e.target && e.target.id === 'chat-ia-overlay') { state.chatIAAberto = false; render(); } });
+    bind('chat-ia-btn', abrirChatIA);
+    bind('chat-ia-fechar', fecharChatIA);
+    bind('chat-ia-overlay', function(e) { if (e.target && e.target.id === 'chat-ia-overlay') fecharChatIA(); });
     bind('chat-ia-mic', function() { gravarVoz(); });
     bind('chat-ia-enviar', function() { enviarMensagemIA(); });
     var _avaSug = ['Quanto gastei este mes?', 'Crie um relatorio de gastos por categorias', 'Quero registrar uma nova despesa', 'Qual e o meu saldo atual?'];
@@ -7130,7 +7276,6 @@
         });
       })(_si);
     }
-    bind('chat-ia-mais', function() { var inp = document.getElementById('chat-ia-input'); if (inp) inp.focus(); });
     var chatInput = document.getElementById('chat-ia-input');
     if (chatInput) {
       chatInput.addEventListener('keydown', function(e) { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); enviarMensagemIA(); } });
@@ -7956,7 +8101,7 @@
           return Promise.all(
             keys
               .filter(function (key) {
-                return key.indexOf('avantalab-mobile-') === 0 && key !== 'avantalab-mobile-v81';
+                return key.indexOf('avantalab-mobile-') === 0 && key !== 'avantalab-mobile-v96';
               })
               .map(function (key) {
                 return caches.delete(key);
