@@ -158,7 +158,7 @@
     lancandoDespesa: false,
     _diaInvalido: false,
     chatIAAberto: false,
-    chatIAMensagens: [{ role: 'assistant', content: 'Ola! Sou a Leval, sua assistente financeira. Posso analisar seus resultados, dar dicas ou tirar duvidas sobre o sistema. Como posso ajudar?' }],
+    chatIAMensagens: [{ role: 'assistant', content: 'Ola! Sou a Ava, sua assistente financeira. Posso analisar seus resultados, dar dicas ou tirar duvidas sobre o sistema. Como posso ajudar?' }],
     chatIADigitando: false,
     chatIAInput: '',
   };
@@ -3782,7 +3782,7 @@
           '</button>' +
           '<div style="width:40px;height:40px;border-radius:50%;background:rgba(255,255,255,0.2);display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:900;color:#fff;flex-shrink:0;border:2px solid rgba(255,255,255,0.3);">L</div>' +
           '<div style="min-width:0;">' +
-            '<p style="font-size:15px;font-weight:900;color:#fff;margin:0;letter-spacing:-0.01em;">Leval</p>' +
+            '<p style="font-size:15px;font-weight:900;color:#fff;margin:0;letter-spacing:-0.01em;">Ava</p>' +
             '<p style="font-size:10px;color:#bae6fd;margin:0;font-weight:600;">Assistente financeira AvantaLab</p>' +
           '</div>' +
           '<div style="margin-left:auto;width:8px;height:8px;border-radius:50%;background:#4ade80;flex-shrink:0;" title="Online"></div>' +

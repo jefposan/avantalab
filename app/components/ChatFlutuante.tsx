@@ -51,7 +51,7 @@ export default function ChatFlutuante({
   contexto,
 }: ChatFlutuanteProps) {
   const [iaMensagens, setIaMensagens] = useState<Mensagem[]>([
-    { role: 'assistant', content: 'Olá! Sou a Leval, sua assistente financeira. Posso analisar seus resultados, dar dicas ou tirar dúvidas sobre o sistema. Como posso ajudar?' },
+    { role: 'assistant', content: 'Olá! Sou a Ava, sua assistente financeira. Posso analisar seus resultados, dar dicas ou tirar dúvidas sobre o sistema. Como posso ajudar?' },
   ]);
   const [iaInput, setIaInput] = useState('');
   const [iaDigitando, setIaDigitando] = useState(false);
@@ -136,7 +136,7 @@ export default function ChatFlutuante({
             <div>
               <p className="text-[11px] font-black uppercase tracking-[0.24em] text-sky-200">AvantaLab</p>
               <h3 className="mt-1 text-base font-black leading-tight">
-                {chatFeedbackEtapa === 'ia' ? 'Leval — Assistente IA' : 'Como podemos ajudar?'}
+                {chatFeedbackEtapa === 'ia' ? 'Ava — Assistente IA' : 'Como podemos ajudar?'}
               </h3>
             </div>
             <button
@@ -163,7 +163,7 @@ export default function ChatFlutuante({
                   <div className="flex items-center gap-3">
                     <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-sky-100 text-sky-700 text-lg font-black">✦</span>
                     <div>
-                      <p className="text-sm font-black">Perguntar à Leval</p>
+                      <p className="text-sm font-black">Perguntar à Ava</p>
                       <p className={'mt-0.5 text-xs ' + textMuted}>Análises financeiras e dúvidas sobre o sistema.</p>
                     </div>
                   </div>
