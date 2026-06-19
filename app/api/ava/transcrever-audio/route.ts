@@ -67,10 +67,26 @@ async function transcreverComSupabase(audio: File) {
 
   if (!supabaseUrl || !supabaseAnonKey) return null;
 
+  const respostaDireta = await chamarTranscricaoSupabase(
+    `${supabaseUrl}/functions/v1/transcrever-audio`,
+    audio,
+    supabaseAnonKey
+  );
+
+  if (respostaDireta) return respostaDireta;
+
+  return chamarTranscricaoSupabase(
+    `${supabaseUrl}/functions/v1/chat-ia?acao=transcrever-audio`,
+    audio,
+    supabaseAnonKey
+  );
+}
+
+async function chamarTranscricaoSupabase(url: string, audio: File, supabaseAnonKey: string) {
   const formData = new FormData();
   formData.append('audio', audio, audio.name || 'ava-audio.webm');
 
-  const resposta = await fetch(`${supabaseUrl}/functions/v1/transcrever-audio`, {
+  const resposta = await fetch(url, {
     method: 'POST',
     headers: {
       Authorization: `Bearer ${supabaseAnonKey}`,

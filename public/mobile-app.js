@@ -697,6 +697,14 @@
     if (overlay && overlay.parentNode) overlay.parentNode.removeChild(overlay);
   }
 
+  function configurarCamadaFundoChatIA(ativo) {
+    var cor = state.darkMode ? '#0b1220' : '#f4f8fc';
+    root.style.visibility = ativo ? 'hidden' : '';
+    root.setAttribute('aria-hidden', ativo ? 'true' : 'false');
+    document.documentElement.style.background = ativo ? cor : '';
+    document.body.style.background = ativo ? cor : '';
+  }
+
   function pararGravacaoIA() {
     if (window._chatMediaRecorder && window._chatMediaRecorder.state !== 'inactive') {
       try { window._chatMediaRecorder.stop(); } catch (error) {}
@@ -7000,6 +7008,7 @@
 
   function render() {
     root.setAttribute('data-avantalab-mobile-ready', '1');
+    if (!state.chatIAAberto) configurarCamadaFundoChatIA(false);
     removerChatIAOverlay();
     root.innerHTML = !state.pronto
       ? telaCarregandoMobile()
@@ -7012,12 +7021,14 @@
     (function() {
       var ov = document.getElementById('chat-ia-overlay');
       if (!state.chatIAAberto) {
+        configurarCamadaFundoChatIA(false);
         removerChatIAOverlay();
         return;
       }
       if (ov && ov.parentNode !== document.body) {
         document.body.appendChild(ov);
       }
+      if (ov) configurarCamadaFundoChatIA(true);
       if (ov && window.visualViewport) {
         if (!window._avaVVbound) {
           window._avaVVbound = true;
@@ -8103,7 +8114,7 @@
           return Promise.all(
             keys
               .filter(function (key) {
-                return key.indexOf('avantalab-mobile-') === 0 && key !== 'avantalab-mobile-v97';
+                return key.indexOf('avantalab-mobile-') === 0 && key !== 'avantalab-mobile-v98';
               })
               .map(function (key) {
                 return caches.delete(key);
@@ -8120,7 +8131,7 @@
     });
 
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/mobile-sw.js?v=97').then(function (registro) {
+      navigator.serviceWorker.register('/mobile-sw.js?v=98').then(function (registro) {
         if (registro && registro.update) registro.update();
       }).catch(function () {});
     }
