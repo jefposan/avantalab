@@ -7903,7 +7903,7 @@
     });
 
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/mobile-sw.js?v=81').then(function (registro) {
+      navigator.serviceWorker.register('/mobile-sw.js?v=91').then(function (registro) {
         if (registro && registro.update) registro.update();
       }).catch(function () {});
     }
