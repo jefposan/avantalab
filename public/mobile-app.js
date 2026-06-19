@@ -1861,37 +1861,6 @@
     return linhas.join('\n');
   }
 
-  function gravarVoz() {
-    var SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (!SpeechRecognition) {
-      alert('Reconhecimento de voz nao disponivel neste navegador.');
-      return;
-    }
-    if (state.chatIAGravando) {
-      if (window._chatRec) { try { window._chatRec.stop(); } catch(e) {} }
-      state.chatIAGravando = false;
-      render();
-      return;
-    }
-    var rec = new SpeechRecognition();
-    window._chatRec = rec;
-    rec.lang = 'pt-BR';
-    rec.continuous = false;
-    rec.interimResults = false;
-    rec.onstart = function() { state.chatIAGravando = true; render(); };
-    rec.onend = function() { state.chatIAGravando = false; render(); };
-    rec.onerror = function() { state.chatIAGravando = false; render(); };
-    rec.onresult = function(e) {
-      var texto = e.results[0][0].transcript;
-      state.chatIAInput = texto;
-      var inp = document.getElementById('chat-ia-input');
-      if (inp) { inp.value = texto; }
-      state.chatIAGravando = false;
-      render();
-    };
-    try { rec.start(); } catch(e) { state.chatIAGravando = false; }
-  }
-
   async function enviarMensagemIA() {
     var inputEl = document.getElementById('chat-ia-input');
     var texto = (inputEl ? inputEl.value : state.chatIAInput).trim();
