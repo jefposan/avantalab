@@ -699,47 +699,9 @@
 
   function configurarCamadaFundoChatIA(ativo) {
     var cor = state.darkMode ? '#0b1220' : '#f4f8fc';
-    root.style.visibility = ativo ? 'hidden' : '';
     root.setAttribute('aria-hidden', ativo ? 'true' : 'false');
     document.documentElement.style.background = ativo ? cor : '';
     document.body.style.background = ativo ? cor : '';
-
-    if (ativo && !window._avaBodyLock) {
-      var scrollY = window.scrollY || document.documentElement.scrollTop || 0;
-      window._avaBodyLock = {
-        scrollY: scrollY,
-        htmlOverflow: document.documentElement.style.overflow,
-        bodyOverflow: document.body.style.overflow,
-        bodyPosition: document.body.style.position,
-        bodyTop: document.body.style.top,
-        bodyLeft: document.body.style.left,
-        bodyRight: document.body.style.right,
-        bodyWidth: document.body.style.width,
-        bodyTouchAction: document.body.style.touchAction,
-      };
-      document.documentElement.style.overflow = 'hidden';
-      document.body.style.overflow = 'hidden';
-      document.body.style.position = 'fixed';
-      document.body.style.top = '-' + scrollY + 'px';
-      document.body.style.left = '0';
-      document.body.style.right = '0';
-      document.body.style.width = '100%';
-      document.body.style.touchAction = 'none';
-    }
-
-    if (!ativo && window._avaBodyLock) {
-      var lock = window._avaBodyLock;
-      window._avaBodyLock = null;
-      document.documentElement.style.overflow = lock.htmlOverflow || '';
-      document.body.style.overflow = lock.bodyOverflow || '';
-      document.body.style.position = lock.bodyPosition || '';
-      document.body.style.top = lock.bodyTop || '';
-      document.body.style.left = lock.bodyLeft || '';
-      document.body.style.right = lock.bodyRight || '';
-      document.body.style.width = lock.bodyWidth || '';
-      document.body.style.touchAction = lock.bodyTouchAction || '';
-      window.scrollTo(0, lock.scrollY || 0);
-    }
   }
 
   function pararGravacaoIA() {
@@ -764,8 +726,6 @@
     setTimeout(function() {
       var msgsEl = document.getElementById('chat-ia-msgs');
       if (msgsEl) msgsEl.scrollTop = msgsEl.scrollHeight;
-      var inp = document.getElementById('chat-ia-input');
-      if (inp) inp.focus();
       _avaPinViewport();
     }, 50);
   }
@@ -3894,14 +3854,12 @@
     ov.style.bottom = '0px';
     ov.style.width = '100vw';
     ov.style.height = '100dvh';
-    var teclado = 0;
-    var topoVisual = 0;
+    ov.style.transform = 'none';
     if (vv) {
-      teclado = Math.max(0, Math.round(window.innerHeight - vv.height - vv.offsetTop));
-      topoVisual = Math.max(0, Math.round(vv.offsetTop || 0));
+      ov.style.bottom = 'auto';
+      ov.style.height = Math.round(vv.height) + 'px';
+      ov.style.transform = 'translateY(' + Math.max(0, Math.round(vv.offsetTop || 0)) + 'px)';
     }
-    ov.style.setProperty('--ava-keyboard-offset', teclado + 'px');
-    ov.style.setProperty('--ava-visual-top', topoVisual + 'px');
   }
 
   function chatIAModalHtml() {
@@ -6135,7 +6093,7 @@
     }
 
     var header =
-      '<div style="position:fixed;top:var(--ava-visual-top,0px);left:0;right:0;z-index:5;display:flex;align-items:center;gap:10px;' +
+      '<div style="flex-shrink:0;display:flex;align-items:center;gap:10px;' +
         'padding-top:calc(env(safe-area-inset-top,0px) + 12px);padding-left:8px;padding-right:14px;padding-bottom:12px;' +
         'background:' + C.bar + ';border-bottom:1px solid ' + C.border + ';">' +
         '<button id="chat-ia-fechar" type="button" aria-label="Voltar" style="background:transparent;border:none;width:36px;height:36px;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;">' +
@@ -6146,7 +6104,7 @@
       '</div>';
 
     var body =
-      '<div id="chat-ia-msgs" style="position:absolute;left:0;right:0;top:calc(var(--ava-visual-top,0px) + env(safe-area-inset-top,0px) + 61px);bottom:calc(var(--ava-keyboard-offset,0px) + env(safe-area-inset-bottom,0px) + 72px);overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;padding:6px 14px 16px;">' +
+      '<div id="chat-ia-msgs" style="flex:1;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;padding:6px 14px 16px;">' +
         welcome + convoHtml +
       '</div>';
 
@@ -6167,8 +6125,8 @@
       '</button>';
 
     var inputBar =
-      '<div style="position:fixed;left:0;right:0;bottom:var(--ava-keyboard-offset,0px);z-index:5;display:flex;align-items:flex-end;gap:8px;padding:9px 12px;' +
-        'padding-bottom:calc(env(safe-area-inset-bottom,0px) + 9px);background:' + C.bar + ';border-top:1px solid ' + C.border + ';transition:bottom .12s ease;">' +
+      '<div style="flex-shrink:0;display:flex;align-items:flex-end;gap:8px;padding:9px 12px;' +
+        'padding-bottom:calc(env(safe-area-inset-bottom,0px) + 9px);background:' + C.bar + ';border-top:1px solid ' + C.border + ';">' +
         '<div style="flex:1;display:flex;align-items:flex-end;gap:4px;background:' + C.pill + ';border:1px solid ' + C.pillBorder + ';border-radius:23px;padding:5px 6px 5px 14px;min-height:44px;">' +
           '<textarea id="chat-ia-input" rows="1" placeholder="Como posso ajudar voce hoje?" ' + (enviando ? 'disabled' : '') + ' style="flex:1;resize:none;border:none;outline:none;background:transparent;font-size:16px;font-family:inherit;color:' + C.text + ';line-height:1.45;max-height:110px;overflow-y:auto;padding:7px 2px;margin:0;width:100%;">' + escapeHtml(state.chatIAInput) + '</textarea>' +
           micBtn +
@@ -6177,7 +6135,7 @@
       '</div>';
 
     return (
-      '<div id="chat-ia-overlay" style="--ava-keyboard-offset:0px;--ava-visual-top:0px;position:fixed;top:0;left:0;right:0;bottom:0;width:100vw;height:100dvh;z-index:5000;display:block;background:' + C.bg + ';overflow:hidden;isolation:isolate;overscroll-behavior:contain;">' +
+      '<div id="chat-ia-overlay" style="position:fixed;top:0;left:0;right:0;bottom:0;width:100vw;height:100dvh;z-index:5000;display:flex;flex-direction:column;background:' + C.bg + ';overflow:hidden;isolation:isolate;overscroll-behavior:contain;">' +
         header + body + inputBar +
       '</div>'
     );
@@ -7064,24 +7022,17 @@
     root.setAttribute('data-avantalab-mobile-ready', '1');
     if (!state.chatIAAberto) configurarCamadaFundoChatIA(false);
     removerChatIAOverlay();
-    root.innerHTML = !state.pronto
+    root.innerHTML = state.chatIAAberto
+      ? chatIAModalHtml()
+      : !state.pronto
       ? telaCarregandoMobile()
       : (state.autenticado
         ? (state.validacaoTelefoneObrigatoria ? telaTelefoneObrigatorioMobile() : (state.modoCriarPerfil ? telaLoginWrapper(telaCriarPerfilInicial(), 'Criar perfil financeiro', 'Informe os dados do seu primeiro perfil.') : telaApp()))
         : (state.modoCriarPerfil ? telaLoginWrapper(telaCriarPerfilInicial(), 'Criar perfil financeiro', 'Informe os dados do seu primeiro perfil.') : telaLogin()));
     atualizarScrollBloqueado();
 
-    // Move chat-ia-overlay to document.body to escape overflow:hidden on <main>
-    (function() {
+    if (state.chatIAAberto) {
       var ov = document.getElementById('chat-ia-overlay');
-      if (!state.chatIAAberto) {
-        configurarCamadaFundoChatIA(false);
-        removerChatIAOverlay();
-        return;
-      }
-      if (ov && ov.parentNode !== document.body) {
-        document.body.appendChild(ov);
-      }
       if (ov) configurarCamadaFundoChatIA(true);
       if (ov && window.visualViewport) {
         if (!window._avaVVbound) {
@@ -7091,7 +7042,7 @@
         }
         _avaPinViewport();
       }
-    })();
+    }
 
     bind('confirmar-telefone-obrigatorio', confirmarTelefoneObrigatorioMobile);
     bind('reenviar-telefone-obrigatorio', enviarCodigoTelefoneObrigatorioMobile);
@@ -7327,7 +7278,6 @@
     bind('salvar-categoria', salvarCategoriaDespesa);
     bind('chat-ia-btn', abrirChatIA);
     bind('chat-ia-fechar', fecharChatIA);
-    bind('chat-ia-overlay', function(e) { if (e.target && e.target.id === 'chat-ia-overlay') fecharChatIA(); });
     bind('chat-ia-mic', function() { gravarVoz(); });
     bind('chat-ia-enviar', function() { enviarMensagemIA(); });
     var _avaSug = ['Quanto gastei este mes?', 'Crie um relatorio de gastos por categorias', 'Quero registrar uma nova despesa', 'Qual e o meu saldo atual?'];
@@ -8168,7 +8118,7 @@
           return Promise.all(
             keys
               .filter(function (key) {
-                return key.indexOf('avantalab-mobile-') === 0 && key !== 'avantalab-mobile-v102';
+                return key.indexOf('avantalab-mobile-') === 0 && key !== 'avantalab-mobile-v103';
               })
               .map(function (key) {
                 return caches.delete(key);
@@ -8185,7 +8135,7 @@
     });
 
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/mobile-sw.js?v=102').then(function (registro) {
+      navigator.serviceWorker.register('/mobile-sw.js?v=103').then(function (registro) {
         if (registro && registro.update) registro.update();
       }).catch(function () {});
     }
