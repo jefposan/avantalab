@@ -703,6 +703,43 @@
     root.setAttribute('aria-hidden', ativo ? 'true' : 'false');
     document.documentElement.style.background = ativo ? cor : '';
     document.body.style.background = ativo ? cor : '';
+
+    if (ativo && !window._avaBodyLock) {
+      var scrollY = window.scrollY || document.documentElement.scrollTop || 0;
+      window._avaBodyLock = {
+        scrollY: scrollY,
+        htmlOverflow: document.documentElement.style.overflow,
+        bodyOverflow: document.body.style.overflow,
+        bodyPosition: document.body.style.position,
+        bodyTop: document.body.style.top,
+        bodyLeft: document.body.style.left,
+        bodyRight: document.body.style.right,
+        bodyWidth: document.body.style.width,
+        bodyTouchAction: document.body.style.touchAction,
+      };
+      document.documentElement.style.overflow = 'hidden';
+      document.body.style.overflow = 'hidden';
+      document.body.style.position = 'fixed';
+      document.body.style.top = '-' + scrollY + 'px';
+      document.body.style.left = '0';
+      document.body.style.right = '0';
+      document.body.style.width = '100%';
+      document.body.style.touchAction = 'none';
+    }
+
+    if (!ativo && window._avaBodyLock) {
+      var lock = window._avaBodyLock;
+      window._avaBodyLock = null;
+      document.documentElement.style.overflow = lock.htmlOverflow || '';
+      document.body.style.overflow = lock.bodyOverflow || '';
+      document.body.style.position = lock.bodyPosition || '';
+      document.body.style.top = lock.bodyTop || '';
+      document.body.style.left = lock.bodyLeft || '';
+      document.body.style.right = lock.bodyRight || '';
+      document.body.style.width = lock.bodyWidth || '';
+      document.body.style.touchAction = lock.bodyTouchAction || '';
+      window.scrollTo(0, lock.scrollY || 0);
+    }
   }
 
   function pararGravacaoIA() {
@@ -3858,8 +3895,13 @@
     ov.style.width = '100vw';
     ov.style.height = '100dvh';
     var teclado = 0;
-    if (vv) teclado = Math.max(0, Math.round(window.innerHeight - vv.height - vv.offsetTop));
+    var topoVisual = 0;
+    if (vv) {
+      teclado = Math.max(0, Math.round(window.innerHeight - vv.height - vv.offsetTop));
+      topoVisual = Math.max(0, Math.round(vv.offsetTop || 0));
+    }
     ov.style.setProperty('--ava-keyboard-offset', teclado + 'px');
+    ov.style.setProperty('--ava-visual-top', topoVisual + 'px');
   }
 
   function chatIAModalHtml() {
@@ -6093,7 +6135,7 @@
     }
 
     var header =
-      '<div style="position:fixed;top:0;left:0;right:0;z-index:5;display:flex;align-items:center;gap:10px;' +
+      '<div style="position:fixed;top:var(--ava-visual-top,0px);left:0;right:0;z-index:5;display:flex;align-items:center;gap:10px;' +
         'padding-top:calc(env(safe-area-inset-top,0px) + 12px);padding-left:8px;padding-right:14px;padding-bottom:12px;' +
         'background:' + C.bar + ';border-bottom:1px solid ' + C.border + ';">' +
         '<button id="chat-ia-fechar" type="button" aria-label="Voltar" style="background:transparent;border:none;width:36px;height:36px;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;">' +
@@ -6104,7 +6146,7 @@
       '</div>';
 
     var body =
-      '<div id="chat-ia-msgs" style="position:absolute;left:0;right:0;top:calc(env(safe-area-inset-top,0px) + 61px);bottom:calc(var(--ava-keyboard-offset,0px) + env(safe-area-inset-bottom,0px) + 72px);overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;padding:6px 14px 16px;">' +
+      '<div id="chat-ia-msgs" style="position:absolute;left:0;right:0;top:calc(var(--ava-visual-top,0px) + env(safe-area-inset-top,0px) + 61px);bottom:calc(var(--ava-keyboard-offset,0px) + env(safe-area-inset-bottom,0px) + 72px);overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;padding:6px 14px 16px;">' +
         welcome + convoHtml +
       '</div>';
 
@@ -6135,7 +6177,7 @@
       '</div>';
 
     return (
-      '<div id="chat-ia-overlay" style="--ava-keyboard-offset:0px;position:fixed;top:0;left:0;right:0;bottom:0;width:100vw;height:100dvh;z-index:5000;display:block;background:' + C.bg + ';overflow:hidden;isolation:isolate;overscroll-behavior:contain;">' +
+      '<div id="chat-ia-overlay" style="--ava-keyboard-offset:0px;--ava-visual-top:0px;position:fixed;top:0;left:0;right:0;bottom:0;width:100vw;height:100dvh;z-index:5000;display:block;background:' + C.bg + ';overflow:hidden;isolation:isolate;overscroll-behavior:contain;">' +
         header + body + inputBar +
       '</div>'
     );
@@ -8126,7 +8168,7 @@
           return Promise.all(
             keys
               .filter(function (key) {
-                return key.indexOf('avantalab-mobile-') === 0 && key !== 'avantalab-mobile-v101';
+                return key.indexOf('avantalab-mobile-') === 0 && key !== 'avantalab-mobile-v102';
               })
               .map(function (key) {
                 return caches.delete(key);
@@ -8143,7 +8185,7 @@
     });
 
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/mobile-sw.js?v=101').then(function (registro) {
+      navigator.serviceWorker.register('/mobile-sw.js?v=102').then(function (registro) {
         if (registro && registro.update) registro.update();
       }).catch(function () {});
     }
