@@ -156,6 +156,7 @@
     formParcelar: false,
     formParcelas: 2,
     lancandoDespesa: false,
+    _diaInvalido: false,
   };
 
   var CHAVE_MANTER_CONECTADO_ATE = 'avantalab_mobile_manter_conectado_ate';
@@ -4790,6 +4791,7 @@
           var alertaEl = document.getElementById('lancamento-alerta-dia');
           if (alertaEl) { alertaEl.textContent = msg; alertaEl.style.display = 'block'; }
           this.value = '';
+          state._diaInvalido = true;
           var _self = this; setTimeout(function() { _self.focus(); }, 0);
         }
       });
@@ -4798,11 +4800,25 @@
         var limite = maxDias(state.mes, state.ano);
         if (this.value === '' || (!isNaN(val) && val >= 1 && val <= limite)) {
           state.erro = '';
+          state._diaInvalido = false;
           var alertaEl = document.getElementById('lancamento-alerta-dia');
           if (alertaEl) alertaEl.style.display = 'none';
         }
       });
     }
+    // Interceptar outros campos quando dia tem erro
+    ['despesa-nome', 'despesa-descricao', 'despesa-valor'].forEach(function(fid) {
+      var fel = document.getElementById(fid);
+      if (!fel) return;
+      function _guardarDia(e) {
+        if (!state._diaInvalido) return;
+        e.preventDefault();
+        var dEl = document.getElementById('despesa-dia');
+        if (dEl) dEl.focus();
+      }
+      fel.addEventListener('mousedown', _guardarDia);
+      fel.addEventListener('touchstart', _guardarDia, { passive: false });
+    });
     bind('toggle-parcelar-despesa', function() {
       var diaVal = campo('despesa-dia'); var nomeVal = campo('despesa-nome');
       var descVal = campo('despesa-descricao'); var valorVal = campo('despesa-valor');
