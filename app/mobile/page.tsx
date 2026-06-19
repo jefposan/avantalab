@@ -66,6 +66,11 @@ export default function MobilePage() {
       <style
         dangerouslySetInnerHTML={{
           __html: `
+            @keyframes avaBounce { 0%,80%,100% { transform: translateY(0); opacity: .5; } 40% { transform: translateY(-5px); opacity: 1; } }
+            @keyframes avaPulse { 0% { box-shadow: 0 0 0 0 rgba(239,68,68,0.45); } 70% { box-shadow: 0 0 0 9px rgba(239,68,68,0); } 100% { box-shadow: 0 0 0 0 rgba(239,68,68,0); } }
+            @keyframes avaFadeUp { from { opacity: 0; transform: translateY(7px); } to { opacity: 1; transform: translateY(0); } }
+            #chat-ia-input::placeholder { color: #94a3b8; opacity: 1; }
+            #chat-ia-msgs { scroll-behavior: smooth; }
             .avantalab-mobile-bg {
               background-color: #eef6fb;
               background-image: var(--avantalab-mobile-bg-overlay, none), image-set(url('/images/bg-avantalab-mobile-1080x1920.webp') type('image/webp'), url('/images/bg-avantalab-mobile-1080x1920.png') type('image/png'));
@@ -179,7 +184,7 @@ export default function MobilePage() {
       </div>
 
       <script src="/mobile-supabase.js" defer />
-      <script src="/mobile-app.js?v=93" defer />
+      <script src="/mobile-app.js?v=94" defer />
     </main>
   );
 }

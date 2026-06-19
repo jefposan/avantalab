@@ -1866,10 +1866,10 @@
     var texto = (inputEl ? inputEl.value : state.chatIAInput).trim();
     if (!texto || state.chatIADigitando) return;
 
-    state.chatIAMensagens.push({ role: 'user', content: texto });
+    state.chatIAMensagens.push({ role: 'user', content: texto, hora: _avaHora() });
     state.chatIAInput = '';
     state.chatIADigitando = true;
-    state.chatIAMensagens.push({ role: 'assistant', content: '' });
+    state.chatIAMensagens.push({ role: 'assistant', content: '', hora: _avaHora() });
     render();
     setTimeout(function() {
       var msgsEl = document.getElementById('chat-ia-msgs');
@@ -3758,6 +3758,12 @@
         '</aside>' +
       '</div>'
     );
+  }
+
+  function _avaHora() {
+    var d = new Date();
+    var h = d.getHours(), m = d.getMinutes();
+    return (h < 10 ? '0' + h : h) + ':' + (m < 10 ? '0' + m : m);
   }
 
   function chatIAModalHtml() {
@@ -3921,10 +3927,10 @@
     var texto = (inputEl ? inputEl.value : state.chatIAInput).trim();
     if (!texto || state.chatIADigitando) return;
 
-    state.chatIAMensagens.push({ role: 'user', content: texto });
+    state.chatIAMensagens.push({ role: 'user', content: texto, hora: _avaHora() });
     state.chatIAInput = '';
     state.chatIADigitando = true;
-    state.chatIAMensagens.push({ role: 'assistant', content: '' });
+    state.chatIAMensagens.push({ role: 'assistant', content: '', hora: _avaHora() });
     render();
     setTimeout(function() {
       var msgsEl = document.getElementById('chat-ia-msgs');
@@ -5816,122 +5822,144 @@
   }
 
   function chatIAModalHtml() {
+    var dark = !!state.darkMode;
     var temTexto = state.chatIAInput.trim().length > 0;
     var gravando = state.chatIAGravando;
+    var enviando = state.chatIADigitando;
 
-    var msgs = state.chatIAMensagens.map(function(m) {
-      var isUser = m.role === 'user';
-      var wrapStyle = 'display:flex;margin-bottom:14px;' + (isUser ? 'justify-content:flex-end;' : 'justify-content:flex-start;');
-      var bubbleStyle = isUser
-        ? 'background:linear-gradient(135deg,#0284c7,#0369a1);color:#fff;border-radius:20px 20px 4px 20px;'
-        : 'background:#fff;color:#1e293b;border-radius:20px 20px 20px 4px;box-shadow:0 1px 6px rgba(0,0,0,0.08);';
-      var content = m.content
-        ? escapeHtml(m.content)
-        : '<span style="display:inline-flex;gap:5px;align-items:center;height:20px">' +
-            '<span style="width:8px;height:8px;border-radius:50%;background:#94a3b8;display:inline-block;animation:bounce 1.2s infinite 0ms"></span>' +
-            '<span style="width:8px;height:8px;border-radius:50%;background:#94a3b8;display:inline-block;animation:bounce 1.2s infinite 200ms"></span>' +
-            '<span style="width:8px;height:8px;border-radius:50%;background:#94a3b8;display:inline-block;animation:bounce 1.2s infinite 400ms"></span>' +
-          '</span>';
-      return '<div style="' + wrapStyle + '">' +
-        '<div style="max-width:80%;padding:12px 16px;font-size:14px;line-height:1.6;white-space:pre-wrap;' + bubbleStyle + '">' + content + '</div>' +
-        '</div>';
+    var C = dark
+      ? { bg:'#0b1220', bar:'#0b1220', border:'#1c2940', text:'#e8eef6', muted:'#8896ab',
+          card:'#141e30', cardBorder:'#243349', userBg:'#26334a', userTx:'#eaf1fb',
+          aiBg:'#141e30', aiTx:'#e8eef6', aiBorder:'#243349', pill:'#141e30', pillBorder:'#2a3a52',
+          sep:'#243349', plus:'#8896ab', sendOff:'#243349', sendArrowOff:'#5b6b82', accent:'#7cc4ff', sparkBg:'rgba(59,130,246,0.14)' }
+      : { bg:'#f4f8fc', bar:'#ffffff', border:'#e7eef6', text:'#10243d', muted:'#647892',
+          card:'#ffffff', cardBorder:'#e7eef6', userBg:'linear-gradient(135deg,#0ea5e9,#0369a1)', userTx:'#ffffff',
+          aiBg:'#ffffff', aiTx:'#10243d', aiBorder:'#e7eef6', pill:'#f1f5f9', pillBorder:'#e2e8f0',
+          sep:'#e2e8f0', plus:'#94a3b8', sendOff:'#e2e8f0', sendArrowOff:'#94a3b8', accent:'#0284c7', sparkBg:'rgba(2,132,199,0.10)' };
+
+    function sparkSvg(sz, id) {
+      return '<svg width="' + sz + '" height="' + sz + '" viewBox="0 0 24 24" fill="none" style="flex-shrink:0;">' +
+        '<defs><linearGradient id="' + id + '" x1="0" y1="0" x2="24" y2="24" gradientUnits="userSpaceOnUse">' +
+          '<stop stop-color="#38bdf8"/><stop offset="0.5" stop-color="#3b82f6"/><stop offset="1" stop-color="#8b5cf6"/>' +
+        '</linearGradient></defs>' +
+        '<path d="M12 2l1.7 5.4a4 4 0 0 0 2.9 2.9L22 12l-5.4 1.7a4 4 0 0 0-2.9 2.9L12 22l-1.7-5.4a4 4 0 0 0-2.9-2.9L2 12l5.4-1.7a4 4 0 0 0 2.9-2.9L12 2z" fill="url(#' + id + ')"/>' +
+      '</svg>';
+    }
+    function sugIcon(k, cor) {
+      if (k === 'chart') return '<svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="' + cor + '" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 3v18h18M7 14l3-3 3 3 5-6"/></svg>';
+      if (k === 'doc')   return '<svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="' + cor + '" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 13h6M9 17h6M9 9h2M7 3h7l5 5v11a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z"/></svg>';
+      if (k === 'plus')  return '<svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="' + cor + '" stroke-width="2.2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 5v14M5 12h14"/></svg>';
+      return '<svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="' + cor + '" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 7.5h18V18a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7.5zM3 7.5 5 4h14l2 3.5M16 13.5h2"/></svg>';
+    }
+
+    var nomeRaw = (state.usuario && state.usuario.user_metadata && state.usuario.user_metadata.nome) || (state.usuario && state.usuario.email) || '';
+    var primeiro = nomeRaw ? escapeHtml(String(nomeRaw).split('@')[0].split(' ')[0]) : '';
+    var saud = 'Ola' + (primeiro ? ', ' + primeiro : '') + '! \U0001F44B';
+
+    var sugs = [
+      { ic:'chart',  cor:'#f59e0b', bg:'rgba(245,158,11,0.16)', t:'Quanto gastei este mes?' },
+      { ic:'doc',    cor:'#22c55e', bg:'rgba(34,197,94,0.16)',  t:'Relatorio por categorias' },
+      { ic:'plus',   cor:'#ef4444', bg:'rgba(239,68,68,0.16)',  t:'Registrar nova despesa' },
+      { ic:'wallet', cor:'#3b82f6', bg:'rgba(59,130,246,0.16)', t:'Qual o meu saldo atual?' }
+    ];
+    var cards = sugs.map(function(srg, i) {
+      return '<button id="chat-ia-sug-' + i + '" type="button" style="' +
+          'display:flex;align-items:center;gap:9px;text-align:left;cursor:pointer;width:100%;' +
+          'background:' + C.card + ';border:1px solid ' + C.cardBorder + ';border-radius:15px;padding:11px;' +
+          (dark ? '' : 'box-shadow:0 1px 3px rgba(15,35,61,0.05);') + '">' +
+          '<span style="width:30px;height:30px;border-radius:50%;background:' + srg.bg + ';display:flex;align-items:center;justify-content:center;flex-shrink:0;">' + sugIcon(srg.ic, srg.cor) + '</span>' +
+          '<span style="flex:1;min-width:0;font-size:12px;font-weight:600;line-height:1.25;color:' + C.text + ';">' + escapeHtml(srg.t) + '</span>' +
+          '<svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="' + C.muted + '" stroke-width="2" style="flex-shrink:0;"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>' +
+        '</button>';
     }).join('');
 
-    var micBtnStyle = 'width:34px;height:34px;border-radius:50%;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all 0.2s;';
-    var micBtn = gravando
-      ? '<button id="chat-ia-mic" type="button" style="' + micBtnStyle + 'background:#ef4444;box-shadow:0 0 0 3px rgba(239,68,68,0.25);" aria-label="Parar gravacao">' +
-          '<svg width="18" height="18" fill="#fff" viewBox="0 0 24 24"><rect x="6" y="6" width="12" height="12" rx="2"/></svg>' +
-        '</button>'
-      : '<button id="chat-ia-mic" type="button" style="' + micBtnStyle + 'background:#e2e8f0;" aria-label="Gravar voz">' +
-          '<svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="#475569" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 1a3 3 0 00-3 3v8a3 3 0 006 0V4a3 3 0 00-3-3z"/><path stroke-linecap="round" stroke-linejoin="round" d="M19 10v2a7 7 0 01-14 0v-2M12 19v4M8 23h8"/></svg>' +
-        '</button>';
+    var welcome =
+      '<div style="text-align:center;padding:20px 6px 4px;">' +
+        '<div style="width:56px;height:56px;margin:0 auto 12px;border-radius:50%;background:' + C.sparkBg + ';display:flex;align-items:center;justify-content:center;">' + sparkSvg(30, 'avaSparkW') + '</div>' +
+        '<p style="margin:0;font-size:18px;font-weight:800;color:' + C.text + ';letter-spacing:-0.01em;">' + saud + '</p>' +
+        '<p style="margin:7px auto 0;max-width:282px;font-size:12.5px;line-height:1.5;color:' + C.muted + ';">Pergunte sobre periodos, categorias, contas ou tipos de transacao.</p>' +
+      '</div>' +
+      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:9px;padding:14px 2px 4px;">' + cards + '</div>';
 
-    var sendBtnStyle = 'width:42px;height:42px;border-radius:50%;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all 0.2s;';
-    var sendBtn = temTexto
-      ? '<button id="chat-ia-enviar" type="button" style="' + sendBtnStyle + 'background:linear-gradient(135deg,#0284c7,#0369a1);box-shadow:0 3px 10px rgba(2,132,199,0.4);" ' + (state.chatIADigitando ? 'disabled' : '') + '>' +
-          '<svg width="20" height="20" fill="#fff" viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z" transform="rotate(90,12,12)"/></svg>' +
-        '</button>'
-      : '<button id="chat-ia-enviar" type="button" style="' + sendBtnStyle + 'background:#e2e8f0;" disabled>' +
-          '<svg width="20" height="20" fill="#94a3b8" viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z" transform="rotate(90,12,12)"/></svg>' +
-        '</button>';
+    var firstUser = -1;
+    for (var fu = 0; fu < state.chatIAMensagens.length; fu++) { if (state.chatIAMensagens[fu].role === 'user') { firstUser = fu; break; } }
+    var convoHtml = '';
+    if (firstUser >= 0) {
+      convoHtml += '<div style="display:flex;align-items:center;gap:10px;margin:20px 4px 14px;">' +
+          '<span style="flex:1;height:1px;background:' + C.sep + ';"></span>' +
+          '<span style="font-size:10.5px;font-weight:600;color:' + C.muted + ';">Hoje</span>' +
+          '<span style="flex:1;height:1px;background:' + C.sep + ';"></span>' +
+        '</div>';
+      convoHtml += state.chatIAMensagens.slice(firstUser).map(function(m) {
+        var isUser = m.role === 'user';
+        var digitando = !isUser && !m.content;
+        var inner = digitando
+          ? '<span style="display:inline-flex;gap:5px;align-items:center;height:18px">' +
+              '<span style="width:7px;height:7px;border-radius:50%;background:' + C.muted + ';display:inline-block;animation:avaBounce 1.2s infinite 0ms"></span>' +
+              '<span style="width:7px;height:7px;border-radius:50%;background:' + C.muted + ';display:inline-block;animation:avaBounce 1.2s infinite 200ms"></span>' +
+              '<span style="width:7px;height:7px;border-radius:50%;background:' + C.muted + ';display:inline-block;animation:avaBounce 1.2s infinite 400ms"></span>' +
+            '</span>'
+          : escapeHtml(m.content);
+        var bub = isUser
+          ? 'background:' + C.userBg + ';color:' + C.userTx + ';border-radius:18px 18px 5px 18px;'
+          : 'background:' + C.aiBg + ';color:' + C.aiTx + ';border:1px solid ' + C.aiBorder + ';border-radius:18px 18px 18px 5px;' + (dark ? '' : 'box-shadow:0 1px 4px rgba(15,35,61,0.06);');
+        var hora = (m.hora && !digitando) ? '<span style="display:block;margin-top:4px;font-size:9.5px;' + (isUser ? 'text-align:right;color:rgba(255,255,255,0.75);' : 'color:' + C.muted + ';') + '">' + escapeHtml(m.hora) + '</span>' : '';
+        return '<div style="display:flex;margin-bottom:12px;animation:avaFadeUp 0.25s ease;' + (isUser ? 'justify-content:flex-end;' : 'justify-content:flex-start;') + '">' +
+            '<div style="max-width:82%;padding:10px 14px;font-size:14px;line-height:1.55;white-space:pre-wrap;word-break:break-word;' + bub + '">' + inner + hora + '</div>' +
+          '</div>';
+      }).join('');
+    }
+
+    var header =
+      '<div style="flex-shrink:0;display:flex;align-items:center;gap:10px;' +
+        'padding-top:calc(env(safe-area-inset-top,0px) + 12px);padding-left:8px;padding-right:14px;padding-bottom:12px;' +
+        'background:' + C.bar + ';border-bottom:1px solid ' + C.border + ';">' +
+        '<button id="chat-ia-fechar" type="button" aria-label="Voltar" style="background:transparent;border:none;width:36px;height:36px;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;">' +
+          '<svg width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="' + C.text + '" stroke-width="2.2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>' +
+        '</button>' +
+        sparkSvg(22, 'avaSparkH') +
+        '<span style="font-size:17px;font-weight:800;color:' + C.accent + ';letter-spacing:-0.01em;">Ava</span>' +
+      '</div>';
+
+    var body =
+      '<div id="chat-ia-msgs" style="flex:1;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;padding:6px 14px 16px;">' +
+        welcome + convoHtml +
+      '</div>';
+
+    var micInner = gravando
+      ? '<svg width="16" height="16" fill="#fff" viewBox="0 0 24 24"><rect x="7" y="7" width="10" height="10" rx="2"/></svg>'
+      : '<svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="' + C.muted + '" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path stroke-linecap="round" stroke-linejoin="round" d="M19 10v2a7 7 0 0 1-14 0v-2M12 19v4M8 23h8"/></svg>';
+    var micStyle = 'width:34px;height:34px;border-radius:50%;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .2s;' +
+      (gravando ? 'background:#ef4444;animation:avaPulse 1.3s infinite;' : 'background:transparent;');
+    var micBtn = '<button id="chat-ia-mic" type="button" style="' + micStyle + '" aria-label="Voz">' + micInner + '</button>';
+
+    var sendActive = temTexto && !enviando;
+    var sendStyle = 'width:40px;height:40px;border-radius:50%;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .2s;' +
+      (sendActive ? 'background:linear-gradient(135deg,#0ea5e9,#0369a1);box-shadow:0 4px 12px rgba(2,132,199,0.4);' : 'background:' + C.sendOff + ';');
+    var sendBtn = '<button id="chat-ia-enviar" type="button" ' + (sendActive ? '' : 'disabled') + ' style="' + sendStyle + '">' +
+        '<svg width="19" height="19" viewBox="0 0 24 24"><path fill="' + (sendActive ? '#fff' : C.sendArrowOff) + '" d="M12 4l-7.5 7.5 1.4 1.4L11 8.8V20h2V8.8l5.1 5.1 1.4-1.4z"/></svg>' +
+      '</button>';
+
+    var inputBar =
+      '<div style="flex-shrink:0;display:flex;align-items:flex-end;gap:8px;padding:9px 12px;' +
+        'padding-bottom:calc(env(safe-area-inset-bottom,0px) + 9px);background:' + C.bar + ';border-top:1px solid ' + C.border + ';">' +
+        '<div style="flex:1;display:flex;align-items:flex-end;gap:4px;background:' + C.pill + ';border:1px solid ' + C.pillBorder + ';border-radius:23px;padding:5px 6px 5px 6px;min-height:44px;">' +
+          '<button id="chat-ia-mais" type="button" aria-label="Mais" style="width:30px;height:30px;border-radius:50%;border:none;background:transparent;display:flex;align-items:center;justify-content:center;flex-shrink:0;cursor:pointer;">' +
+            '<svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="' + C.plus + '" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 5v14M5 12h14"/></svg>' +
+          '</button>' +
+          '<textarea id="chat-ia-input" rows="1" placeholder="Como posso ajudar voce hoje?" ' + (enviando ? 'disabled' : '') + ' style="flex:1;resize:none;border:none;outline:none;background:transparent;font-size:15px;font-family:inherit;color:' + C.text + ';line-height:1.45;max-height:110px;overflow-y:auto;padding:7px 2px;margin:0;width:100%;">' + escapeHtml(state.chatIAInput) + '</textarea>' +
+          micBtn +
+        '</div>' +
+        sendBtn +
+      '</div>';
 
     return (
-      '<div id="chat-ia-overlay" style="' +
-        'position:fixed;top:0;left:0;right:0;bottom:0;' +
-        'z-index:5000;display:flex;flex-direction:column;' +
-        'background:#eff6ff;overflow:hidden;' +
-      '">' +
-
-        // Header
-        '<div style="' +
-          'background:linear-gradient(135deg,#003E73 0%,#075985 55%,#0284c7 100%);' +
-          'padding-top:calc(env(safe-area-inset-top,0px) + 14px);' +
-          'padding-right:16px;padding-bottom:14px;padding-left:12px;' +
-          'display:flex;align-items:center;gap:10px;flex-shrink:0;' +
-          'box-shadow:0 2px 16px rgba(0,0,0,0.2);' +
-        '">' +
-          '<button id="chat-ia-fechar" type="button" style="' +
-            'background:rgba(255,255,255,0.12);border:none;color:#fff;' +
-            'width:38px;height:38px;border-radius:50%;' +
-            'display:flex;align-items:center;justify-content:center;flex-shrink:0;cursor:pointer;' +
-          '">' +
-            '<svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="#fff" stroke-width="2.5">' +
-              '<path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/>' +
-            '</svg>' +
-          '</button>' +
-          '<div style="' +
-            'width:42px;height:42px;border-radius:50%;' +
-            'background:rgba(255,255,255,0.18);' +
-            'display:flex;align-items:center;justify-content:center;' +
-            'font-size:17px;font-weight:900;color:#fff;flex-shrink:0;' +
-            'border:2px solid rgba(255,255,255,0.3);' +
-          '">A</div>' +
-          '<div style="min-width:0;flex:1;">' +
-            '<p style="font-size:15px;font-weight:900;color:#fff;margin:0;letter-spacing:-0.01em;">Ava</p>' +
-            '<div style="display:flex;align-items:center;gap:5px;margin-top:1px;">' +
-              '<span style="width:7px;height:7px;border-radius:50%;background:#4ade80;display:inline-block;"></span>' +
-              '<p style="font-size:11px;color:#bae6fd;margin:0;font-weight:600;">Assistente financeira AvantaLab</p>' +
-            '</div>' +
-          '</div>' +
-        '</div>' +
-
-        // Área de mensagens
-        '<div id="chat-ia-msgs" style="' +
-          'flex:1;min-height:0;overflow-y:auto;' +
-          'padding:20px 14px 12px;' +
-          '-webkit-overflow-scrolling:touch;' +
-          'overscroll-behavior:contain;' +
-        '">' + msgs + '</div>' +
-
-        // Barra de input
-        '<div style="' +
-          'padding:10px 12px;' +
-          'padding-bottom:calc(env(safe-area-inset-bottom,0px) + 10px);' +
-          'background:#fff;' +
-          'border-top:1px solid #e2e8f0;' +
-          'display:flex;align-items:flex-end;gap:8px;flex-shrink:0;' +
-        '">' +
-          '<div style="' +
-            'flex:1;display:flex;align-items:flex-end;gap:6px;' +
-            'background:#f1f5f9;border-radius:24px;' +
-            'padding:5px 6px 5px 14px;' +
-            'border:1.5px solid #e2e8f0;' +
-            'min-height:44px;' +
-          '">' +
-            '<textarea id="chat-ia-input" placeholder="Mensagem para a Ava..." rows="1" style="' +
-              'flex:1;resize:none;border:none;outline:none;background:transparent;' +
-              'font-size:15px;font-family:inherit;color:#1e293b;' +
-              'line-height:1.5;max-height:100px;overflow-y:auto;' +
-              'padding:0;margin:0;width:100%;' +
-            '"' + (state.chatIADigitando ? ' disabled' : '') + '>' + escapeHtml(state.chatIAInput) + '</textarea>' +
-            micBtn +
-          '</div>' +
-          sendBtn +
-        '</div>' +
-
+      '<div id="chat-ia-overlay" style="position:fixed;top:0;left:0;right:0;bottom:0;z-index:5000;display:flex;flex-direction:column;background:' + C.bg + ';overflow:hidden;">' +
+        header + body + inputBar +
       '</div>'
     );
   }
+
 
     function menuBotaoHtml(id, titulo, subtitulo, icone) {
     return '<button id="' + id + '" type="button" class="rounded-2xl border ' + (state.darkMode ? 'border-slate-800 bg-slate-900' : 'border-slate-200 bg-white') + ' p-3 text-left shadow-sm active:scale-[0.99]">' +
@@ -7072,6 +7100,20 @@
     bind('chat-ia-overlay', function(e) { if (e.target && e.target.id === 'chat-ia-overlay') { state.chatIAAberto = false; render(); } });
     bind('chat-ia-mic', function() { gravarVoz(); });
     bind('chat-ia-enviar', function() { enviarMensagemIA(); });
+    var _avaSug = ['Quanto gastei este mes?', 'Crie um relatorio de gastos por categorias', 'Quero registrar uma nova despesa', 'Qual e o meu saldo atual?'];
+    for (var _si = 0; _si < _avaSug.length; _si++) {
+      (function(idx) {
+        bind('chat-ia-sug-' + idx, function() {
+          if (state.chatIADigitando) return;
+          var t = _avaSug[idx];
+          state.chatIAInput = t;
+          var inp = document.getElementById('chat-ia-input');
+          if (inp) inp.value = t;
+          enviarMensagemIA();
+        });
+      })(_si);
+    }
+    bind('chat-ia-mais', function() { var inp = document.getElementById('chat-ia-input'); if (inp) inp.focus(); });
     var chatInput = document.getElementById('chat-ia-input');
     if (chatInput) {
       chatInput.addEventListener('keydown', function(e) { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); enviarMensagemIA(); } });
@@ -7082,14 +7124,15 @@
         if (envBtn) {
           var tem = this.value.trim().length > 0;
           envBtn.disabled = !tem;
-          envBtn.style.background = tem ? 'linear-gradient(135deg,#0284c7,#0369a1)' : '#e2e8f0';
-          envBtn.style.boxShadow = tem ? '0 3px 10px rgba(2,132,199,0.4)' : 'none';
+          var _dk = !!state.darkMode;
+          envBtn.style.background = tem ? 'linear-gradient(135deg,#0ea5e9,#0369a1)' : (_dk ? '#243349' : '#e2e8f0');
+          envBtn.style.boxShadow = tem ? '0 4px 12px rgba(2,132,199,0.4)' : 'none';
           var svg = envBtn.querySelector('svg');
-          if (svg) svg.querySelector('path').setAttribute('fill', tem ? '#fff' : '#94a3b8');
+          if (svg) svg.querySelector('path').setAttribute('fill', tem ? '#fff' : (_dk ? '#5b6b82' : '#94a3b8'));
         }
         // Auto-resize textarea
         this.style.height = 'auto';
-        this.style.height = Math.min(this.scrollHeight, 100) + 'px';
+        this.style.height = Math.min(this.scrollHeight, 110) + 'px';
       });
     }
     bind('salvar-despesa', salvarDespesa);
