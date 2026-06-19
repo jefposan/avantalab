@@ -5837,9 +5837,9 @@
         '</div>';
     }).join('');
 
-    var micBtnStyle = 'width:42px;height:42px;border-radius:50%;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all 0.2s;';
+    var micBtnStyle = 'width:34px;height:34px;border-radius:50%;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all 0.2s;';
     var micBtn = gravando
-      ? '<button id="chat-ia-mic" type="button" style="' + micBtnStyle + 'background:#ef4444;box-shadow:0 0 0 6px rgba(239,68,68,0.2);" aria-label="Parar gravacao">' +
+      ? '<button id="chat-ia-mic" type="button" style="' + micBtnStyle + 'background:#ef4444;box-shadow:0 0 0 3px rgba(239,68,68,0.25);" aria-label="Parar gravacao">' +
           '<svg width="18" height="18" fill="#fff" viewBox="0 0 24 24"><rect x="6" y="6" width="12" height="12" rx="2"/></svg>' +
         '</button>'
       : '<button id="chat-ia-mic" type="button" style="' + micBtnStyle + 'background:#e2e8f0;" aria-label="Gravar voz">' +
@@ -5912,9 +5912,9 @@
           'display:flex;align-items:flex-end;gap:8px;flex-shrink:0;' +
         '">' +
           '<div style="' +
-            'flex:1;display:flex;align-items:flex-end;' +
+            'flex:1;display:flex;align-items:flex-end;gap:6px;' +
             'background:#f1f5f9;border-radius:24px;' +
-            'padding:8px 14px;' +
+            'padding:5px 6px 5px 14px;' +
             'border:1.5px solid #e2e8f0;' +
             'min-height:44px;' +
           '">' +
@@ -5924,8 +5924,8 @@
               'line-height:1.5;max-height:100px;overflow-y:auto;' +
               'padding:0;margin:0;width:100%;' +
             '"' + (state.chatIADigitando ? ' disabled' : '') + '>' + escapeHtml(state.chatIAInput) + '</textarea>' +
+            micBtn +
           '</div>' +
-          micBtn +
           sendBtn +
         '</div>' +
 

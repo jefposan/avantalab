@@ -47,6 +47,7 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
+  viewportFit: 'cover',
   themeColor: '#003E73',
 };
 
@@ -178,7 +179,4 @@ export default function MobilePage() {
       </div>
 
       <script src="/mobile-supabase.js" defer />
-      <script src="/mobile-app.js?v=91" defer />
-    </main>
-  );
-}
+      <script src="/mobile-app.js?v=93" defe
