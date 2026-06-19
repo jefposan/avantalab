@@ -1963,13 +1963,8 @@ const adicionarDespesa = async () => {
   }
 
   if (novosLancamentos.length > 0) {
-    // Só adiciona ao state os do mês/ano atual visível
-    const doMesVisivel = novosLancamentos.filter(
-      (l) => l.mes === mesAtivo
-    );
-    if (doMesVisivel.length > 0) {
-      setLancamentos((prev) => [...doMesVisivel, ...prev]);
-    }
+    // Adiciona todas as parcelas ao state (lancamentos é por ano, não só o mês visível)
+    setLancamentos((prev) => [...novosLancamentos, ...prev]);
 
     setFormDia('');
     setFormDespesa('');
