@@ -4790,7 +4790,7 @@
           var alertaEl = document.getElementById('lancamento-alerta-dia');
           if (alertaEl) { alertaEl.textContent = msg; alertaEl.style.display = 'block'; }
           this.value = '';
-          this.focus();
+          var _self = this; setTimeout(function() { _self.focus(); }, 0);
         }
       });
       diaInputEl.addEventListener('input', function() {
