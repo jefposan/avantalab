@@ -92,13 +92,13 @@ export default function CardEntradaFaturamento({
         boxShadow: '0 10px 25px rgba(10, 31, 68, 0.08)',
       }}
     >
-      <div className="relative mb-3 flex h-8 items-center justify-center rounded-md bg-white px-3 shadow-sm">
+      <div className="mb-3 grid h-8 grid-cols-[minmax(68px,78px)_minmax(0,1fr)_minmax(68px,78px)] items-center gap-2 rounded-md bg-white px-2 shadow-sm [container-type:inline-size]">
         <button
           type="button"
           onClick={() =>
             setOrdemEntradasFaturamento((prev) => (prev === 'desc' ? 'asc' : 'desc'))
           }
-          className="absolute left-2 flex h-6 items-center gap-1.5 rounded-full border border-slate-200 bg-white px-2.5 text-[10px] font-black uppercase tracking-wide text-[#1F8A9E] shadow-sm ring-1 ring-slate-200/70 transition-all hover:scale-[1.03] hover:border-slate-300 hover:bg-slate-50 active:scale-95 cursor-pointer"
+          className="flex h-6 w-full items-center justify-center gap-1 rounded-full border border-slate-200 bg-white px-1.5 text-[10px] font-black uppercase text-[#1F8A9E] shadow-sm ring-1 ring-slate-200/70 transition-all hover:scale-[1.03] hover:border-slate-300 hover:bg-slate-50 active:scale-95 cursor-pointer"
           title={
             ordemEntradasFaturamento === 'desc'
               ? 'Clique para ordenar do menor dia para o maior'
@@ -111,9 +111,13 @@ export default function CardEntradaFaturamento({
           </span>
         </button>
 
-        <h3 className="text-sm font-black uppercase tracking-widest" style={{ color: '#1F8A9E' }}>
+        <h3
+          className="min-w-0 truncate text-center font-black uppercase leading-none"
+          style={{ color: '#1F8A9E', fontSize: 'clamp(0.5rem, 3.8cqw, 0.875rem)' }}
+        >
           Lançamento de receita
         </h3>
+        <div aria-hidden="true" className="h-6 w-full" />
       </div>
 
       <div
