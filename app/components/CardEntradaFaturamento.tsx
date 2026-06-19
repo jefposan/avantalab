@@ -209,6 +209,7 @@ export default function CardEntradaFaturamento({
             autoComplete="off"
             value={buscaEntradaFaturamento}
             onChange={(e) => setBuscaEntradaFaturamento(e.target.value)}
+            onFocus={onFocoReceita}
             placeholder="Buscar receita por origem, dia ou valor..."
             className={`h-9 w-full rounded-lg border py-2 pl-9 pr-9 text-xs font-semibold outline-none transition focus:ring-1 focus:ring-inset ${
               darkMode

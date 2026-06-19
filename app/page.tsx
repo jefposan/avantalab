@@ -98,6 +98,7 @@ export default function AppGestao() {
     modalConfirmacaoAberto, setModalConfirmacaoAberto,
     tituloConfirmacao, mensagemConfirmacao, textoConfirmarConfirmacao,
     acaoConfirmacao, confirmacaoCarregando,
+    textoCancelarConfirmacao, acaoCancelarConfirmacao,
     chatFeedbackAberto, setChatFeedbackAberto,
     chatFeedbackEtapa, setChatFeedbackEtapa,
     feedbackTipo, setFeedbackTipo,
@@ -357,6 +358,7 @@ const [editEntradaFaturamentoValorNumerico, setEditEntradaFaturamentoValorNumeri
   const [formValor, setFormValor] = useState('');
   const [valorNumericoRaw, setValorNumericoRaw] = useState(0);
   const [blocoAtivo, setBlocoAtivo] = useState<'despesa' | 'receita' | null>(null);
+  const [salvandoDespesa, setSalvandoDespesa] = useState(false);
   const [formParcelar, setFormParcelar] = useState(false);
   const [formParcelas, setFormParcelas] = useState(2);
   const [lancamentoEditandoId, setLancamentoEditandoId] = useState<string | number | null>(null);
@@ -1833,96 +1835,62 @@ const apagarDespesaBase = async (nome: string) => {
 };
 
 const adicionarDespesa = async () => {
+  if (salvandoDespesa) return;
+  setSalvandoDespesa(true);
 
-  if (!podeInserirLancamentos) {
-  abrirAviso(
-  'Acesso não permitido',
-  'Você não tem permissão para inserir lançamentos.'
-);
-  return;
-}
+  try {
+    if (!podeInserirLancamentos) {
+      abrirAviso('Acesso não permitido', 'Você não tem permissão para inserir lançamentos.');
+      return;
+    }
 
-  if (!empresaId) {
-  abrirAviso(
-    'Empresa não carregada',
-    'Tente atualizar a página e acessar novamente.'
-  );
-  return;
-}
+    if (!empresaId) {
+      abrirAviso('Empresa não carregada', 'Tente atualizar a página e acessar novamente.');
+      return;
+    }
 
-  if (!mesAtivo) {
-  abrirAviso(
-    'Mês não selecionado',
-    'Selecione um mês antes de lançar a despesa.'
-  );
-  return;
-}
+    if (!mesAtivo) {
+      abrirAviso('Mês não selecionado', 'Selecione um mês antes de lançar a despesa.');
+      return;
+    }
 
-  if (!formDia || !formDespesa || valorNumericoRaw <= 0) {
-  abrirAviso(
-    'Campos obrigatórios',
-    'Preencha dia, despesa e valor antes de salvar.'
-  );
-  return;
-}
+    if (!formDia || !formDespesa || valorNumericoRaw <= 0) {
+      abrirAviso('Campos obrigatórios', 'Preencha dia, despesa e valor antes de salvar.');
+      return;
+    }
 
-  if (duplicadosAtivo) {
-  const existeIgual = lancamentosDoMes.some(
-    (l) => l.despesa === formDespesa && l.valor === valorNumericoRaw
-  );
+    if (duplicadosAtivo) {
+      const existeIgual = lancamentosDoMes.some(
+        (l) => l.despesa === formDespesa && l.valor === valorNumericoRaw
+      );
 
-  if (existeIgual) {
-    abrirConfirmacao({
-      titulo: 'Despesa duplicada',
-      mensagem:
-        'Já existe uma despesa com o mesmo nome e valor neste mês.\n\nDeseja adicionar mesmo assim?',
-      textoConfirmar: 'Adicionar mesmo assim',
-      acao: async () => {
-        const salvo = await salvarLancamento({
-          empresaId,
-          ano: Number(anoSelecionado),
-          mes: mesAtivo,
-          dia: parseInt(formDia),
-          despesaNome: formDespesa,
-          descricao: formatarDescricao(formDescricao),
-          valor: valorNumericoRaw,
+      if (existeIgual) {
+        abrirConfirmacao({
+          titulo: 'Despesa duplicada',
+          mensagem:
+            'Já existe uma despesa com o mesmo nome e valor neste mês.\n\nDeseja adicionar mesmo assim?',
+          textoConfirmar: 'Adicionar mesmo assim',
+          acao: async () => {
+            try {
+              await executarParcelamento();
+            } finally {
+              setSalvandoDespesa(false);
+            }
+          },
         });
+        return; // aguarda confirmação do usuário; finally liberará o flag após ação
+      }
+    }
 
-        if (!salvo.erro && salvo.data) {
-          const novoLancamento = {
-            id: salvo.data.id,
-            mes: salvo.data.mes,
-            dia: salvo.data.dia,
-            despesa: salvo.data.despesa_nome,
-            descricao: salvo.data.descricao || '',
-            valor: Number(salvo.data.valor),
-          };
-
-          setLancamentos((prev) => [novoLancamento, ...prev]);
-
-          setFormDia('');
-          setFormDespesa('');
-          setFormDescricao('');
-          setFormValor('');
-          setValorNumericoRaw(0);
-          setFormParcelar(false);
-          setFormParcelas(2);
-        } else {
-          abrirAviso(
-            'Erro ao salvar lançamento',
-            salvo.mensagem || 'Não foi possível salvar o lançamento.'
-          );
-        }
-      },
-    });
-
-    return;
+    await executarParcelamento();
+  } finally {
+    setSalvandoDespesa(false);
   }
-}
+};
 
-  // Parcelamento: calcular meses e anos de cada parcela
+const executarParcelamento = async () => {
   const totalParcelas = formParcelar && formParcelas >= 2 ? formParcelas : 1;
-  const mesIndex = meses.indexOf(mesAtivo);
+  const mesIndex = meses.indexOf(mesAtivo ?? '');
   const novosLancamentos: any[] = [];
 
   for (let p = 0; p < totalParcelas; p++) {
@@ -1935,9 +1903,9 @@ const adicionarDespesa = async () => {
       : formatarDescricao(formDescricao);
 
     const salvo = await salvarLancamento({
-      empresaId,
+      empresaId: empresaId as string,
       ano: anoParc,
-      mes: mesParc,
+      mes: mesParc as string,
       dia: parseInt(formDia),
       despesaNome: formDespesa,
       descricao: descParc,
@@ -1963,9 +1931,7 @@ const adicionarDespesa = async () => {
   }
 
   if (novosLancamentos.length > 0) {
-    // Adiciona todas as parcelas ao state (lancamentos é por ano, não só o mês visível)
     setLancamentos((prev) => [...novosLancamentos, ...prev]);
-
     setFormDia('');
     setFormDespesa('');
     setFormDescricao('');
@@ -1996,6 +1962,40 @@ const solicitarExclusaoLancamento = (lanc: any) => {
       'Você não tem permissão para excluir lançamentos.'
     );
     return;
+  }
+
+  // Detectar se faz parte de um grupo de parcelas (descrição termina em "(X/N)")
+  const descricao = lanc.descricao || '';
+  const matchParcela = descricao.match(/\((\d+)\/(\d+)\)$/);
+  if (matchParcela) {
+    const total = parseInt(matchParcela[2], 10);
+    // Encontrar todas as parcelas do mesmo grupo (mesma despesa, padrão X/total)
+    const parcelasGrupo = lancamentos.filter((l: any) => {
+      if (l.despesa !== lanc.despesa) return false;
+      const m = (l.descricao || '').match(/\((\d+)\/(\d+)\)$/);
+      return m && parseInt(m[2], 10) === total;
+    });
+    const pendentes = parcelasGrupo.filter((l: any) => l.id !== lanc.id);
+    if (pendentes.length > 0) {
+      abrirConfirmacao({
+        titulo: 'Excluir parcela',
+        mensagem: `Este lançamento faz parte de um parcelamento em ${total}x.
+
+Há ${pendentes.length} parcela(s) pendente(s).
+
+Deseja excluir TODAS as parcelas ou apenas esta?`,
+        textoConfirmar: `Excluir todas (${parcelasGrupo.length})`,
+        textoCancelar: 'Só esta',
+        acao: async () => {
+          for (const p of parcelasGrupo) {
+            await apagarLancamento(p.id);
+          }
+          setLancamentos((prev) => prev.filter((l: any) => !parcelasGrupo.some((p: any) => p.id === l.id)));
+        },
+        acaoCancelar: () => apagarDespesa(lanc.id),
+      });
+      return;
+    }
   }
 
   abrirConfirmacao({
@@ -3972,7 +3972,8 @@ if (isTelaMobile) {
   mensagem={mensagemConfirmacao}
   textoConfirmar={textoConfirmarConfirmacao}
   carregando={confirmacaoCarregando}
-  aoCancelar={fecharConfirmacao}
+  textoCancelar={textoCancelarConfirmacao}
+  aoCancelar={() => { fecharConfirmacao(); if (acaoCancelarConfirmacao) acaoCancelarConfirmacao(); }}
   aoConfirmar={confirmarAcao}
 />
 
@@ -5928,6 +5929,7 @@ setAjustesAberto(false);
               setFormParcelar={setFormParcelar}
               formParcelas={formParcelas}
               setFormParcelas={setFormParcelas}
+              salvandoDespesa={salvandoDespesa}
             />
               </div>
 

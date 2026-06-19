@@ -16,7 +16,9 @@ export type AbrirConfirmacaoFn = (params: {
   titulo: string;
   mensagem: string;
   textoConfirmar?: string;
+  textoCancelar?: string;
   acao: () => Promise<void> | void;
+  acaoCancelar?: () => Promise<void> | void;
 }) => void;
 
 // ---------------------------------------------------------------------------
@@ -40,6 +42,10 @@ export function useUI() {
     (() => Promise<void> | void) | null
   >(null);
   const [confirmacaoCarregando, setConfirmacaoCarregando] = useState(false);
+  const [textoCancelarConfirmacao, setTextoCancelarConfirmacao] = useState('Cancelar');
+  const [acaoCancelarConfirmacao, setAcaoCancelarConfirmacao] = useState<
+    (() => Promise<void> | void) | null
+  >(null);
 
   // --- Chat Feedback ---
   const [chatFeedbackAberto, setChatFeedbackAberto] = useState(false);
@@ -90,12 +96,16 @@ export function useUI() {
     titulo,
     mensagem,
     textoConfirmar = 'Confirmar',
+    textoCancelar = 'Cancelar',
     acao,
+    acaoCancelar,
   }) => {
     setTituloConfirmacao(titulo);
     setMensagemConfirmacao(mensagem);
     setTextoConfirmarConfirmacao(textoConfirmar);
+    setTextoCancelarConfirmacao(textoCancelar);
     setAcaoConfirmacao(() => acao);
+    setAcaoCancelarConfirmacao(acaoCancelar ? () => acaoCancelar : null);
     setModalConfirmacaoAberto(true);
   };
 
@@ -105,6 +115,8 @@ export function useUI() {
     setTituloConfirmacao('');
     setMensagemConfirmacao('');
     setAcaoConfirmacao(null);
+    setTextoCancelarConfirmacao('Cancelar');
+    setAcaoCancelarConfirmacao(null);
   };
 
   const confirmarAcao = async () => {
@@ -188,6 +200,8 @@ export function useUI() {
     textoConfirmarConfirmacao,
     acaoConfirmacao,
     confirmacaoCarregando,
+    textoCancelarConfirmacao,
+    acaoCancelarConfirmacao,
     abrirConfirmacao,
     fecharConfirmacao,
     confirmarAcao,

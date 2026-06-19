@@ -34,6 +34,7 @@ type CardLancamentoDespesaProps = {
   setFormParcelar: (v: boolean) => void;
   formParcelas: number;
   setFormParcelas: (v: number) => void;
+  salvandoDespesa?: boolean;
 };
 
 export default function CardLancamentoDespesa({
@@ -62,6 +63,7 @@ export default function CardLancamentoDespesa({
   setFormParcelar,
   formParcelas,
   setFormParcelas,
+  salvandoDespesa = false,
 }: CardLancamentoDespesaProps) {
   const inputBase = `h-9 w-full rounded-md border px-2.5 text-xs font-semibold shadow-sm outline-none transition focus:ring-1 ${
     darkMode
@@ -185,10 +187,11 @@ export default function CardLancamentoDespesa({
           <button
             type="button"
             onClick={adicionarDespesa}
+            disabled={salvandoDespesa}
             style={estiloTemaPrimario}
-            className="h-9 rounded-md px-1 text-[11px] font-black uppercase shadow-md transition hover:brightness-110 active:scale-95 cursor-pointer"
+            className="h-9 rounded-md px-1 text-[11px] font-black uppercase shadow-md transition hover:brightness-110 active:scale-95 cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
           >
-            OK
+            {salvandoDespesa ? '...' : 'OK'}
           </button>
         </div>
 

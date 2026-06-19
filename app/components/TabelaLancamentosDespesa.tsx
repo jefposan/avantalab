@@ -67,6 +67,7 @@ type TabelaLancamentosDespesaProps = {
   setFormParcelar: (v: boolean) => void;
   formParcelas: number;
   setFormParcelas: (v: number) => void;
+  salvandoDespesa?: boolean;
 };
 
 export default function TabelaLancamentosDespesa({
@@ -122,6 +123,7 @@ export default function TabelaLancamentosDespesa({
   setFormParcelar,
   formParcelas,
   setFormParcelas,
+  salvandoDespesa = false,
 }: TabelaLancamentosDespesaProps) {
   return (
     <div
@@ -164,6 +166,7 @@ export default function TabelaLancamentosDespesa({
           setFormParcelar={setFormParcelar}
           formParcelas={formParcelas}
           setFormParcelas={setFormParcelas}
+          salvandoDespesa={salvandoDespesa}
         />
         <div className="mb-3">
           <div className="flex-1">
@@ -191,6 +194,7 @@ export default function TabelaLancamentosDespesa({
                 autoComplete="off"
                 value={buscaLancamento}
                 onChange={(e) => setBuscaLancamento(e.target.value)}
+                onFocus={onFocoDespesa}
                 placeholder="Buscar lançamento do mês por despesa, descrição, dia ou valor..."
                 className={`h-9 w-full rounded-lg border py-2 pl-9 pr-9 text-xs font-semibold outline-none transition focus:ring-1 focus:ring-inset ${
                   darkMode
