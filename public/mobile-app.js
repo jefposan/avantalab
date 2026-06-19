@@ -1954,7 +1954,7 @@
     }, 50);
 
     try {
-      var res = await fetch(config.supabaseUrl + '/functions/v1/chat-ia', {
+      var res = await fetch('/api/ava/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -1963,7 +1963,10 @@
         }),
       });
 
-      if (!res.ok || !res.body) throw new Error('Erro na resposta');
+      if (!res.ok || !res.body) {
+        var erroJson = await res.json().catch(function () { return {}; });
+        throw new Error(erroJson.mensagem || 'A Ava nao conseguiu responder agora.');
+      }
 
       var reader = res.body.getReader();
       var decoder = new TextDecoder();
@@ -1993,7 +1996,8 @@
         }
       }
     } catch (e) {
-      state.chatIAMensagens[state.chatIAMensagens.length - 1].content = 'Desculpe, ocorreu um erro. Tente novamente em instantes.';
+      console.error('Erro ao responder com a Ava:', e);
+      state.chatIAMensagens[state.chatIAMensagens.length - 1].content = 'Desculpe, ocorreu um erro ao gerar a resposta. Tente novamente em instantes.';
     }
 
     state.chatIADigitando = false;
@@ -4108,7 +4112,7 @@
     }, 50);
 
     try {
-      var res = await fetch(config.supabaseUrl + '/functions/v1/chat-ia', {
+      var res = await fetch('/api/ava/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -4117,7 +4121,10 @@
         }),
       });
 
-      if (!res.ok || !res.body) throw new Error('Erro na resposta');
+      if (!res.ok || !res.body) {
+        var erroJson = await res.json().catch(function () { return {}; });
+        throw new Error(erroJson.mensagem || 'A Ava nao conseguiu responder agora.');
+      }
 
       var reader = res.body.getReader();
       var decoder = new TextDecoder();
@@ -4147,7 +4154,8 @@
         }
       }
     } catch (e) {
-      state.chatIAMensagens[state.chatIAMensagens.length - 1].content = 'Desculpe, ocorreu um erro. Tente novamente em instantes.';
+      console.error('Erro ao responder com a Ava:', e);
+      state.chatIAMensagens[state.chatIAMensagens.length - 1].content = 'Desculpe, ocorreu um erro ao gerar a resposta. Tente novamente em instantes.';
     }
 
     state.chatIADigitando = false;
@@ -6013,7 +6021,11 @@
         '<defs><linearGradient id="' + id + '" x1="0" y1="0" x2="24" y2="24" gradientUnits="userSpaceOnUse">' +
           '<stop stop-color="#38bdf8"/><stop offset="0.5" stop-color="#3b82f6"/><stop offset="1" stop-color="#8b5cf6"/>' +
         '</linearGradient></defs>' +
-        '<path d="M12 2l1.7 5.4a4 4 0 0 0 2.9 2.9L22 12l-5.4 1.7a4 4 0 0 0-2.9 2.9L12 22l-1.7-5.4a4 4 0 0 0-2.9-2.9L2 12l5.4-1.7a4 4 0 0 0 2.9-2.9L12 2z" fill="url(#' + id + ')"/>' +
+        '<circle cx="12" cy="12" r="10" fill="rgba(56,189,248,0.12)"/>' +
+        '<path d="M6.4 17.4C7.8 12.4 9.8 7.2 12 7.2s4.2 5.2 5.6 10.2" stroke="url(#' + id + ')" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"/>' +
+        '<path d="M8.5 14.2c1.4-1.25 2.55-1.85 3.5-1.85s2.1.6 3.5 1.85" stroke="url(#' + id + ')" stroke-width="1.8" stroke-linecap="round"/>' +
+        '<path d="M7.5 18.6c2.65 1.45 6.35 1.45 9 0" stroke="url(#' + id + ')" stroke-width="1.55" stroke-linecap="round" opacity="0.72"/>' +
+        '<circle cx="18.25" cy="17.2" r="1.7" fill="url(#' + id + ')"/>' +
       '</svg>';
     }
     function sugIcon(k, cor) {
@@ -6081,7 +6093,7 @@
     }
 
     var header =
-      '<div style="position:sticky;top:0;z-index:3;flex-shrink:0;display:flex;align-items:center;gap:10px;' +
+      '<div style="position:fixed;top:0;left:0;right:0;z-index:5;display:flex;align-items:center;gap:10px;' +
         'padding-top:calc(env(safe-area-inset-top,0px) + 12px);padding-left:8px;padding-right:14px;padding-bottom:12px;' +
         'background:' + C.bar + ';border-bottom:1px solid ' + C.border + ';">' +
         '<button id="chat-ia-fechar" type="button" aria-label="Voltar" style="background:transparent;border:none;width:36px;height:36px;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;">' +
@@ -6092,7 +6104,7 @@
       '</div>';
 
     var body =
-      '<div id="chat-ia-msgs" style="flex:1;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;padding:6px 14px 16px;">' +
+      '<div id="chat-ia-msgs" style="position:absolute;left:0;right:0;top:calc(env(safe-area-inset-top,0px) + 61px);bottom:calc(var(--ava-keyboard-offset,0px) + env(safe-area-inset-bottom,0px) + 72px);overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;padding:6px 14px 16px;">' +
         welcome + convoHtml +
       '</div>';
 
@@ -6113,8 +6125,8 @@
       '</button>';
 
     var inputBar =
-      '<div style="flex-shrink:0;display:flex;align-items:flex-end;gap:8px;padding:9px 12px;' +
-        'padding-bottom:calc(env(safe-area-inset-bottom,0px) + 9px);background:' + C.bar + ';border-top:1px solid ' + C.border + ';transform:translateY(calc(var(--ava-keyboard-offset,0px) * -1));transition:transform .12s ease;">' +
+      '<div style="position:fixed;left:0;right:0;bottom:var(--ava-keyboard-offset,0px);z-index:5;display:flex;align-items:flex-end;gap:8px;padding:9px 12px;' +
+        'padding-bottom:calc(env(safe-area-inset-bottom,0px) + 9px);background:' + C.bar + ';border-top:1px solid ' + C.border + ';transition:bottom .12s ease;">' +
         '<div style="flex:1;display:flex;align-items:flex-end;gap:4px;background:' + C.pill + ';border:1px solid ' + C.pillBorder + ';border-radius:23px;padding:5px 6px 5px 14px;min-height:44px;">' +
           '<textarea id="chat-ia-input" rows="1" placeholder="Como posso ajudar voce hoje?" ' + (enviando ? 'disabled' : '') + ' style="flex:1;resize:none;border:none;outline:none;background:transparent;font-size:16px;font-family:inherit;color:' + C.text + ';line-height:1.45;max-height:110px;overflow-y:auto;padding:7px 2px;margin:0;width:100%;">' + escapeHtml(state.chatIAInput) + '</textarea>' +
           micBtn +
@@ -6123,7 +6135,7 @@
       '</div>';
 
     return (
-      '<div id="chat-ia-overlay" style="--ava-keyboard-offset:0px;position:fixed;top:0;left:0;right:0;bottom:0;width:100vw;height:100dvh;z-index:5000;display:flex;flex-direction:column;background:' + C.bg + ';overflow:hidden;isolation:isolate;overscroll-behavior:contain;">' +
+      '<div id="chat-ia-overlay" style="--ava-keyboard-offset:0px;position:fixed;top:0;left:0;right:0;bottom:0;width:100vw;height:100dvh;z-index:5000;display:block;background:' + C.bg + ';overflow:hidden;isolation:isolate;overscroll-behavior:contain;">' +
         header + body + inputBar +
       '</div>'
     );
@@ -8114,7 +8126,7 @@
           return Promise.all(
             keys
               .filter(function (key) {
-                return key.indexOf('avantalab-mobile-') === 0 && key !== 'avantalab-mobile-v99';
+                return key.indexOf('avantalab-mobile-') === 0 && key !== 'avantalab-mobile-v101';
               })
               .map(function (key) {
                 return caches.delete(key);
@@ -8131,7 +8143,7 @@
     });
 
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/mobile-sw.js?v=99').then(function (registro) {
+      navigator.serviceWorker.register('/mobile-sw.js?v=101').then(function (registro) {
         if (registro && registro.update) registro.update();
       }).catch(function () {});
     }
