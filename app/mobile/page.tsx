@@ -189,7 +189,7 @@ export default function MobilePage() {
       </div>
 
       <script src="/mobile-supabase.js" defer />
-      <script src="/mobile-app.js?v=105" defer />
+      <script src="/mobile-app.js?v=106" defer />
     </main>
   );
 }

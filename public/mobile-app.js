@@ -704,16 +704,8 @@
     document.body.style.background = ativo ? cor : '';
   }
 
-  function avaLogoPrincipalSvg(width, height, id) {
-    return '<svg width="' + width + '" height="' + height + '" viewBox="0 0 112 36" fill="none" aria-hidden="true" focusable="false" style="display:block;flex-shrink:0;">' +
-      '<defs><linearGradient id="' + id + '" x1="0" y1="0" x2="112" y2="36" gradientUnits="userSpaceOnUse"><stop stop-color="#0ea5e9"/><stop offset="0.55" stop-color="#2563eb"/><stop offset="1" stop-color="#7c3aed"/></linearGradient></defs>' +
-      '<path d="M84 5h12c6 0 10 4 10 9.5S102 24 96 24h-5l-7 6v-6c-5.5-.4-9-4-9-9.5C75 9 78.8 5 84 5z" fill="rgba(14,165,233,.12)" stroke="url(#' + id + ')" stroke-width="2" stroke-linejoin="round"/>' +
-      '<path d="M15 27C18 18 21.5 8 26 8s8 10 11 19" stroke="url(#' + id + ')" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>' +
-      '<circle cx="26" cy="18" r="2.8" fill="url(#' + id + ')"/>' +
-      '<path d="M19.8 21.5h12.4" stroke="url(#' + id + ')" stroke-width="3" stroke-linecap="round"/>' +
-      '<path d="M42 15l7 12 7-12M61 15l7 12 7-12" stroke="#0f2742" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>' +
-      '<circle cx="86" cy="14" r="1.8" fill="url(#' + id + ')"/><circle cx="93" cy="14" r="1.8" fill="url(#' + id + ')"/><circle cx="100" cy="14" r="1.8" fill="url(#' + id + ')"/>' +
-    '</svg>';
+  function avaLogoPrincipalHtml(width, height) {
+    return '<img src="/images/ava-logo-principal.png" alt="Ava" style="display:block;width:' + width + 'px;height:' + height + 'px;object-fit:contain;flex-shrink:0;">';
   }
 
   function pararGravacaoIA() {
@@ -732,6 +724,7 @@
   }
 
   function abrirChatIA() {
+    window._avaBaseViewportHeight = Math.max(window.innerHeight || 0, document.documentElement.clientHeight || 0, window.visualViewport ? window.visualViewport.height : 0);
     state.chatIAAberto = true;
     state.chatIAAnimacao = 'entrar';
     state.erro = '';
@@ -756,6 +749,7 @@
     setTimeout(function () {
       state.chatIAAberto = false;
       state.chatIAAnimacao = '';
+      window._avaBaseViewportHeight = 0;
       removerChatIAOverlay();
       render();
     }, 220);
@@ -803,13 +797,37 @@
     return Boolean(state.modalLancamento || state.modalMenu || state.menuAberto || state.modalAcao || state.chatIAAberto);
   }
 
+  function liberarScrollChatIA() {
+    if (!window._avaBodyLocked) return;
+    var scrollY = window._avaScrollY || 0;
+    window._avaBodyLocked = false;
+    window._avaScrollY = 0;
+    document.body.style.position = '';
+    document.body.style.top = '';
+    document.body.style.left = '';
+    document.body.style.right = '';
+    document.body.style.width = '';
+    window.scrollTo(0, scrollY);
+  }
+
   function atualizarScrollBloqueado() {
     if (deveBloquearScroll()) {
+      if (!state.chatIAAberto) liberarScrollChatIA();
       document.documentElement.style.overflow = 'hidden';
       document.body.style.overflow = 'hidden';
+      if (state.chatIAAberto && !window._avaBodyLocked) {
+        window._avaBodyLocked = true;
+        window._avaScrollY = window.scrollY || document.documentElement.scrollTop || 0;
+        document.body.style.position = 'fixed';
+        document.body.style.top = '-' + window._avaScrollY + 'px';
+        document.body.style.left = '0';
+        document.body.style.right = '0';
+        document.body.style.width = '100%';
+      }
       return;
     }
 
+    liberarScrollChatIA();
     document.documentElement.style.overflow = '';
     document.body.style.overflow = '';
   }
@@ -3359,7 +3377,7 @@
   function perguntaIaHtml() {
     return (
       '<button id="chat-ia-card" type="button" class="flex w-full items-center gap-2 rounded-2xl bg-white px-3 py-2.5 text-left shadow-sm active:scale-[0.99]">' +
-        '<span class="flex h-9 w-[86px] shrink-0 items-center justify-center rounded-xl bg-cyan-50">' + avaLogoPrincipalSvg(78, 25, 'avaLogoCardA') + '</span>' +
+        '<span class="flex h-10 w-[98px] shrink-0 items-center justify-center rounded-xl bg-cyan-50">' + avaLogoPrincipalHtml(90, 44) + '</span>' +
         '<div class="min-w-0 flex-1"><p class="truncate text-xs font-black text-slate-900">Pergunte para a Ava</p><p class="mt-0.5 truncate text-[10px] font-semibold text-slate-500">Analise suas financas e tire duvidas.</p></div>' +
         '<span class="text-lg text-cyan-600">&#8250;</span>' +
       '</button>'
@@ -3889,13 +3907,27 @@
     ov.style.right = '0px';
     ov.style.bottom = '0px';
     ov.style.width = '100vw';
-    ov.style.height = '100dvh';
+    ov.style.height = '100vh';
+    ov.style.minHeight = '100vh';
     ov.style.transform = 'none';
     ov.style.setProperty('--ava-keyboard-offset', '0px');
     if (vv) {
-      var teclado = Math.max(0, Math.round(window.innerHeight - vv.height - (vv.offsetTop || 0)));
+      if (!window._avaBaseViewportHeight) {
+        window._avaBaseViewportHeight = Math.max(window.innerHeight || 0, document.documentElement.clientHeight || 0, vv.height || 0);
+      }
+      var base = Math.max(window._avaBaseViewportHeight || 0, window.innerHeight || 0, document.documentElement.clientHeight || 0);
+      var teclado = Math.max(0, Math.round(base - vv.height - (vv.offsetTop || 0)));
       ov.style.setProperty('--ava-keyboard-offset', teclado + 'px');
     }
+  }
+
+  function _avaManterTelaFixa() {
+    var ov = document.getElementById('chat-ia-overlay');
+    if (ov) ov.scrollTop = 0;
+    if (state.chatIAAberto && window._avaBodyLocked) {
+      window.scrollTo(0, window._avaScrollY || 0);
+    }
+    _avaPinViewport();
   }
 
   function chatIAModalHtml() {
@@ -5533,7 +5565,7 @@
   function perguntaIaHtml() {
     return (
       '<button id="chat-ia-card" type="button" class="flex w-full items-center gap-2 rounded-2xl bg-white px-3 py-2.5 text-left shadow-sm active:scale-[0.99]">' +
-        '<span class="flex h-9 w-[86px] shrink-0 items-center justify-center rounded-xl bg-cyan-50">' + avaLogoPrincipalSvg(78, 25, 'avaLogoCardB') + '</span>' +
+        '<span class="flex h-10 w-[98px] shrink-0 items-center justify-center rounded-xl bg-cyan-50">' + avaLogoPrincipalHtml(90, 44) + '</span>' +
         '<div class="min-w-0 flex-1"><p class="truncate text-xs font-black text-slate-900">Pergunte para a Ava</p><p class="mt-0.5 truncate text-[10px] font-semibold text-slate-500">Analise suas financas e tire duvidas.</p></div>' +
         '<span class="text-lg text-cyan-600">&#8250;</span>' +
       '</button>'
@@ -6125,17 +6157,17 @@
     }
 
     var header =
-      '<div style="position:fixed;top:0;left:0;right:0;z-index:2;display:flex;align-items:center;gap:10px;' +
+      '<div style="position:fixed;top:0;left:0;right:0;z-index:4;display:flex;align-items:center;gap:10px;' +
         'padding-top:calc(env(safe-area-inset-top,0px) + 12px);padding-left:8px;padding-right:14px;padding-bottom:12px;' +
         'background:' + C.bar + ';border-bottom:1px solid ' + C.border + ';">' +
         '<button id="chat-ia-fechar" type="button" aria-label="Voltar" style="background:transparent;border:none;width:36px;height:36px;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;">' +
           '<svg width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="' + C.text + '" stroke-width="2.2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>' +
         '</button>' +
-        avaLogoPrincipalSvg(94, 30, 'avaLogoHeader') +
+        avaLogoPrincipalHtml(96, 52) +
       '</div>';
 
     var body =
-      '<div id="chat-ia-msgs" style="position:absolute;left:0;right:0;top:calc(env(safe-area-inset-top,0px) + 61px);bottom:calc(var(--ava-keyboard-offset,0px) + 66px);overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;padding:6px 14px 16px;">' +
+      '<div id="chat-ia-msgs" style="position:absolute;left:0;right:0;z-index:2;top:calc(env(safe-area-inset-top,0px) + 61px);bottom:calc(var(--ava-keyboard-offset,0px) + 64px);overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;padding:6px 14px 16px;">' +
         welcome + convoHtml +
       '</div>';
 
@@ -6157,11 +6189,13 @@
 
     var fieldBg = dark ? '#111b2d' : '#ffffff';
     var fieldBorder = dark ? '#27364f' : '#d8e4ef';
+    var keyboardShield =
+      '<div aria-hidden="true" style="position:fixed;left:0;right:0;bottom:0;z-index:1;height:calc(var(--ava-keyboard-offset,0px) + 86px);background:' + C.bg + ';pointer-events:none;"></div>';
     var inputBar =
-      '<div style="position:fixed;left:0;right:0;bottom:var(--ava-keyboard-offset,0px);z-index:2;padding:8px 10px;' +
-        'padding-bottom:calc(env(safe-area-inset-bottom,0px) + 7px);background:linear-gradient(to top,' + C.bg + ' 0%,' + C.bg + ' 78%,rgba(244,248,252,0) 100%);">' +
-        '<div style="width:100%;display:flex;align-items:flex-end;gap:4px;background:' + fieldBg + ';border:1px solid ' + fieldBorder + ';border-radius:24px;padding:6px 6px 6px 14px;min-height:48px;box-shadow:' + (dark ? 'none' : '0 8px 20px rgba(15,35,61,0.08)') + ';">' +
-          '<div id="chat-ia-input" role="textbox" aria-multiline="true" contenteditable="' + (enviando ? 'false' : 'true') + '" data-placeholder="Como posso ajudar voce hoje?" style="flex:1;min-height:22px;max-height:96px;overflow-y:auto;outline:none;background:transparent;font-size:16px;font-family:inherit;color:' + C.text + ';line-height:1.4;padding:7px 2px;margin:0;width:100%;white-space:pre-wrap;word-break:break-word;">' + escapeHtml(state.chatIAInput) + '</div>' +
+      '<div style="position:fixed;left:0;right:0;bottom:var(--ava-keyboard-offset,0px);z-index:3;padding:6px 10px;' +
+        'padding-bottom:calc(env(safe-area-inset-bottom,0px) + 2px);background:' + C.bg + ';">' +
+        '<div style="width:100%;display:flex;align-items:flex-end;gap:4px;background:' + fieldBg + ';border:1px solid ' + fieldBorder + ';border-radius:24px;padding:5px 6px 5px 14px;min-height:46px;box-shadow:' + (dark ? 'none' : '0 8px 20px rgba(15,35,61,0.08)') + ';">' +
+          '<div id="chat-ia-input" role="textbox" aria-multiline="true" inputmode="text" enterkeyhint="send" autocapitalize="sentences" autocomplete="off" autocorrect="on" spellcheck="true" contenteditable="' + (enviando ? 'false' : 'plaintext-only') + '" data-placeholder="Como posso ajudar voce hoje?" style="flex:1;min-height:22px;max-height:96px;overflow-y:auto;outline:none;background:transparent;font-size:16px;font-family:inherit;color:' + C.text + ';line-height:1.4;padding:7px 2px;margin:0;width:100%;white-space:pre-wrap;word-break:break-word;-webkit-user-select:text;user-select:text;">' + escapeHtml(state.chatIAInput) + '</div>' +
           micBtn +
           sendBtn +
         '</div>' +
@@ -6174,8 +6208,8 @@
         : '';
 
     return (
-      '<div id="chat-ia-overlay" style="position:fixed;top:0;left:0;right:0;bottom:0;width:100vw;height:100dvh;z-index:5000;display:block;background:' + C.bg + ';overflow:hidden;isolation:isolate;overscroll-behavior:contain;--ava-keyboard-offset:0px;' + animacao + '">' +
-        header + body + inputBar +
+      '<div id="chat-ia-overlay" style="position:fixed;top:0;left:0;right:0;bottom:0;width:100vw;height:100vh;min-height:100vh;z-index:5000;display:block;background:' + C.bg + ';overflow:hidden;isolation:isolate;overscroll-behavior:contain;--ava-keyboard-offset:0px;' + animacao + '">' +
+        keyboardShield + header + body + inputBar +
       '</div>'
     );
   }
@@ -7319,6 +7353,13 @@
     bind('chat-ia-fechar', fecharChatIA);
     bind('chat-ia-mic', function() { gravarVoz(); });
     bind('chat-ia-enviar', function() { enviarMensagemIA(); });
+    var chatOverlay = document.getElementById('chat-ia-overlay');
+    if (chatOverlay) {
+      chatOverlay.addEventListener('touchmove', function(e) {
+        if (e.target && e.target.closest && e.target.closest('#chat-ia-msgs')) return;
+        e.preventDefault();
+      }, { passive: false });
+    }
     var _avaSug = ['Quanto gastei este mes?', 'Crie um relatorio de gastos por categorias', 'Quero registrar uma nova despesa', 'Qual e o meu saldo atual?'];
     for (var _si = 0; _si < _avaSug.length; _si++) {
       (function(idx) {
@@ -7334,8 +7375,8 @@
     var chatInput = document.getElementById('chat-ia-input');
     if (chatInput) {
       chatInput.addEventListener('keydown', function(e) { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); enviarMensagemIA(); } });
-      chatInput.addEventListener('focus', function() { setTimeout(_avaPinViewport, 120); setTimeout(_avaPinViewport, 350); });
-      chatInput.addEventListener('blur', function() { setTimeout(_avaPinViewport, 120); });
+      chatInput.addEventListener('focus', function() { _avaManterTelaFixa(); setTimeout(_avaManterTelaFixa, 120); setTimeout(_avaManterTelaFixa, 350); });
+      chatInput.addEventListener('blur', function() { setTimeout(_avaManterTelaFixa, 120); });
       chatInput.addEventListener('input', function() {
         state.chatIAInput = typeof this.value === 'string' ? this.value : (this.textContent || '');
         // Atualizar botão enviar dinamicamente sem re-render completo
