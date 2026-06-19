@@ -3485,7 +3485,7 @@
     return (
       '<div class="grid gap-3">' +
         '<div class="flex items-end gap-6">' +
-          '<div class="w-20 shrink-0">' + campoClaro('despesa-dia', 'Dia', 'inputmode="numeric"') + '</div>' +
+          '<div class="w-20 shrink-0">' + campoClaro('despesa-dia', 'Dia', 'type="number" min="1" max="' + maxDias(state.mes, state.ano) + '" inputmode="numeric" style="font-size:16px;text-align:center"') + '</div>' +
           '<label class="grid min-w-0 flex-1 gap-1 text-xs font-black uppercase tracking-wide text-slate-600">Despesa' +
             '<select id="despesa-nome" style="font-size:16px" class="h-11 w-full rounded-md border border-slate-300 bg-white px-3 text-base font-bold normal-case tracking-normal">' +
               '<option value="">Selecione</option>' +
@@ -4767,17 +4767,36 @@
     bind('salvar-categoria', salvarCategoriaDespesa);
     bind('salvar-despesa', salvarDespesa);
     bind('toggle-parcelar-despesa', function() {
-      var proximo = !state.formParcelar;
-      state.formParcelar = proximo;
-      if (proximo && state.formParcelas < 2) state.formParcelas = 2;
+      var diaVal = campo('despesa-dia'); var nomeVal = campo('despesa-nome');
+      var descVal = campo('despesa-descricao'); var valorVal = campo('despesa-valor');
+      state.formParcelar = !state.formParcelar;
+      if (state.formParcelar && state.formParcelas < 2) state.formParcelas = 2;
       render();
+      var d = document.getElementById('despesa-dia'); if (d) d.value = diaVal;
+      var n = document.getElementById('despesa-nome'); if (n) n.value = nomeVal;
+      var desc = document.getElementById('despesa-descricao'); if (desc) desc.value = descVal;
+      var v = document.getElementById('despesa-valor'); if (v) v.value = valorVal;
     });
     bind('parcelar-menos', function() {
-      if (state.formParcelas > 2) { state.formParcelas--; render(); }
+      if (state.formParcelas <= 2) return;
+      var diaVal = campo('despesa-dia'); var nomeVal = campo('despesa-nome');
+      var descVal = campo('despesa-descricao'); var valorVal = campo('despesa-valor');
+      state.formParcelas--;
+      render();
+      var d = document.getElementById('despesa-dia'); if (d) d.value = diaVal;
+      var n = document.getElementById('despesa-nome'); if (n) n.value = nomeVal;
+      var desc = document.getElementById('despesa-descricao'); if (desc) desc.value = descVal;
+      var v = document.getElementById('despesa-valor'); if (v) v.value = valorVal;
     });
     bind('parcelar-mais', function() {
+      var diaVal = campo('despesa-dia'); var nomeVal = campo('despesa-nome');
+      var descVal = campo('despesa-descricao'); var valorVal = campo('despesa-valor');
       state.formParcelas++;
       render();
+      var d = document.getElementById('despesa-dia'); if (d) d.value = diaVal;
+      var n = document.getElementById('despesa-nome'); if (n) n.value = nomeVal;
+      var desc = document.getElementById('despesa-descricao'); if (desc) desc.value = descVal;
+      var v = document.getElementById('despesa-valor'); if (v) v.value = valorVal;
     });
     bind('salvar-entrada', salvarEntrada);
     bind('salvar-total-receita', salvarTotalReceita);
