@@ -3792,6 +3792,2061 @@
   }
 
   function chatIAModalHtml() {
+    var dark = state.darkMode;
+    var temTexto = state.chatIAInput.trim().length > 0;
+    var gravando = state.chatIAGravando;
+
+    var msgs = state.chatIAMensagens.map(function(m) {
+      var isUser = m.role === 'user';
+      var wrapStyle = 'display:flex;margin-bottom:16px;' + (isUser ? 'justify-content:flex-end;' : 'justify-content:flex-start;align-items:flex-start;gap:8px;');
+      var bubbleStyle = isUser
+        ? 'background:linear-gradient(135deg,#0284c7,#0369a1);color:#fff;border-radius:20px 20px 4px 20px;'
+        : (dark ? 'background:#1e293b;color:#f1f5f9;' : 'background:#fff;color:#1e293b;') + 'border-radius:20px 20px 20px 4px;box-shadow:0 1px 6px rgba(0,0,0,0.08);';
+      var avatar = !isUser
+        ? '<div style="width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,#003E73,#0284c7);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:900;color:#fff;flex-shrink:0;">A</div>'
+        : '';
+      var content = m.content
+        ? escapeHtml(m.content)
+        : '<span style="display:inline-flex;gap:5px;align-items:center;height:22px">' +
+            '<span style="width:8px;height:8px;border-radius:50%;background:#94a3b8;display:inline-block;animation:bounce 1.2s infinite 0ms"></span>' +
+            '<span style="width:8px;height:8px;border-radius:50%;background:#94a3b8;display:inline-block;animation:bounce 1.2s infinite 200ms"></span>' +
+            '<span style="width:8px;height:8px;border-radius:50%;background:#94a3b8;display:inline-block;animation:bounce 1.2s infinite 400ms"></span>' +
+          '</span>';
+      return '<div style="' + wrapStyle + '">' +
+        avatar +
+        '<div style="max-width:78%;padding:12px 15px;font-size:14px;line-height:1.6;white-space:pre-wrap;' + bubbleStyle + '">' + content + '</div>' +
+        '</div>';
+    }).join('');
+
+    // Mic icon - red pulse when recording
+    var micIcon = gravando
+      ? '<button id="chat-ia-mic" type="button" style="width:32px;height:32px;border-radius:50%;border:none;background:#ef4444;box-shadow:0 0 0 5px rgba(239,68,68,0.25);display:flex;align-items:center;justify-content:center;flex-shrink:0;cursor:pointer;">' +
+          '<svg width="15" height="15" fill="#fff" viewBox="0 0 24 24"><rect x="6" y="6" width="12" height="12" rx="2"/></svg>' +
+        '</button>'
+      : '<button id="chat-ia-mic" type="button" style="width:32px;height:32px;border-radius:50%;border:none;background:transparent;display:flex;align-items:center;justify-content:center;flex-shrink:0;cursor:pointer;">' +
+          '<svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="' + (dark ? '#94a3b8' : '#64748b') + '" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M12 1a3 3 0 00-3 3v8a3 3 0 006 0V4a3 3 0 00-3-3z"/><path stroke-linecap="round" stroke-linejoin="round" d="M19 10v2a7 7 0 01-14 0v-2M12 19v4M8 23h8"/></svg>' +
+        '</button>';
+
+    // Send button - circular arrow up
+    var sendColor = temTexto ? 'linear-gradient(135deg,#0284c7,#0369a1)' : (dark ? '#334155' : '#cbd5e1');
+    var sendBtn = '<button id="chat-ia-enviar" type="button" ' + ((!temTexto || state.chatIADigitando) ? 'disabled' : '') + ' style="' +
+      'width:44px;height:44px;border-radius:50%;border:none;flex-shrink:0;cursor:pointer;' +
+      'background:' + sendColor + ';' +
+      'display:flex;align-items:center;justify-content:center;' +
+      'transition:background 0.2s,box-shadow 0.2s;' +
+      (temTexto ? 'box-shadow:0 3px 12px rgba(2,132,199,0.4);' : '') +
+    '">' +
+      '<svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="#fff" stroke-width="2.5">' +
+        '<path stroke-linecap="round" stroke-linejoin="round" d="M12 19V5M5 12l7-7 7 7"/>' +
+      '</svg>' +
+    '</button>';
+
+    var pillBg = dark ? '#1e293b' : '#f1f5f9';
+    var pillBorder = dark ? '1.5px solid #334155' : '1.5px solid #e2e8f0';
+    var inputColor = dark ? '#f1f5f9' : '#1e293b';
+    var placeholderStyle = dark ? 'placeholder:text-slate-500' : '';
+    var overlayBg = dark ? '#0f172a' : '#eff6ff';
+    var inputBarBg = dark ? '#0f172a' : '#fff';
+    var inputBarBorder = dark ? '1px solid #1e293b' : '1px solid #e2e8f0';
+
+    return (
+      '<div id="chat-ia-overlay" style="' +
+        'position:fixed;top:0;left:0;width:100%;height:100dvh;' +
+        'z-index:5000;display:flex;flex-direction:column;' +
+        'background:' + overlayBg + ';overflow:hidden;' +
+      '">' +
+
+        // ── Header ──
+        '<div style="' +
+          'background:linear-gradient(135deg,#003E73 0%,#075985 55%,#0284c7 100%);' +
+          'padding-top:calc(env(safe-area-inset-top,0px) + 12px);' +
+          'padding-right:16px;padding-bottom:13px;padding-left:10px;' +
+          'display:flex;align-items:center;gap:10px;flex-shrink:0;' +
+          'box-shadow:0 2px 20px rgba(0,62,115,0.35);' +
+        '">' +
+          '<button id="chat-ia-fechar" type="button" style="' +
+            'background:rgba(255,255,255,0.1);border:none;color:#fff;' +
+            'width:38px;height:38px;border-radius:50%;flex-shrink:0;cursor:pointer;' +
+            'display:flex;align-items:center;justify-content:center;' +
+          '">' +
+            '<svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="#fff" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>' +
+          '</button>' +
+          '<div style="width:40px;height:40px;border-radius:50%;background:rgba(255,255,255,0.15);border:2px solid rgba(255,255,255,0.3);display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:900;color:#fff;flex-shrink:0;">A</div>' +
+          '<div style="flex:1;min-width:0;">' +
+            '<p style="font-size:15px;font-weight:900;color:#fff;margin:0;">Ava</p>' +
+            '<div style="display:flex;align-items:center;gap:5px;margin-top:2px;">' +
+              '<span style="width:7px;height:7px;border-radius:50%;background:#4ade80;flex-shrink:0;"></span>' +
+              '<p style="font-size:11px;color:#bae6fd;margin:0;font-weight:600;">Assistente financeira AvantaLab</p>' +
+            '</div>' +
+          '</div>' +
+        '</div>' +
+
+        // ── Mensagens ──
+        '<div id="chat-ia-msgs" style="' +
+          'flex:1;min-height:0;overflow-y:auto;' +
+          'padding:20px 14px 10px;' +
+          '-webkit-overflow-scrolling:touch;overscroll-behavior:contain;' +
+        '">' + msgs + '</div>' +
+
+        // ── Barra de input ──
+        '<div style="' +
+          'flex-shrink:0;background:' + inputBarBg + ';border-top:' + inputBarBorder + ';' +
+          'padding:10px 12px;' +
+          'padding-bottom:calc(env(safe-area-inset-bottom,0px) + 10px);' +
+          'display:flex;align-items:flex-end;gap:8px;' +
+        '">' +
+          // Pill input
+          '<div style="' +
+            'flex:1;display:flex;align-items:flex-end;gap:4px;' +
+            'background:' + pillBg + ';border:' + pillBorder + ';' +
+            'border-radius:26px;padding:8px 6px 8px 14px;min-height:46px;' +
+          '">' +
+            '<textarea id="chat-ia-input" rows="1" placeholder="Mensagem para a Ava..." ' + (state.chatIADigitando ? 'disabled' : '') + ' style="' +
+              'flex:1;resize:none;border:none;outline:none;background:transparent;' +
+              'font-size:15px;font-family:inherit;color:' + inputColor + ';' +
+              'line-height:1.5;max-height:100px;overflow-y:auto;padding:2px 0;' +
+            '">' + escapeHtml(state.chatIAInput) + '</textarea>' +
+            micIcon +
+          '</div>' +
+          // Send button
+          sendBtn +
+        '</div>' +
+
+      '</div>'
+    );
+  }
+
+  function gravarVoz() {
+    var SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      alert('Reconhecimento de voz nao disponivel neste navegador.');
+      return;
+    }
+    if (state.chatIAGravando) {
+      if (window._chatRec) { try { window._chatRec.stop(); } catch(e) {} }
+      state.chatIAGravando = false;
+      render();
+      return;
+    }
+    var rec = new SpeechRecognition();
+    window._chatRec = rec;
+    rec.lang = 'pt-BR';
+    rec.continuous = false;
+    rec.interimResults = false;
+    rec.onstart = function() { state.chatIAGravando = true; render(); };
+    rec.onend = function() { state.chatIAGravando = false; render(); };
+    rec.onerror = function() { state.chatIAGravando = false; render(); };
+    rec.onresult = function(e) {
+      var texto = e.results[0][0].transcript;
+      state.chatIAInput = texto;
+      var inp = document.getElementById('chat-ia-input');
+      if (inp) { inp.value = texto; }
+      state.chatIAGravando = false;
+      render();
+    };
+    try { rec.start(); } catch(e) { state.chatIAGravando = false; }
+  }
+
+  async function enviarMensagemIA() {
+    var inputEl = document.getElementById('chat-ia-input');
+    var texto = (inputEl ? inputEl.value : state.chatIAInput).trim();
+    if (!texto || state.chatIADigitando) return;
+
+    state.chatIAMensagens.push({ role: 'user', content: texto });
+    state.chatIAInput = '';
+    state.chatIADigitando = true;
+    state.chatIAMensagens.push({ role: 'assistant', content: '' });
+    render();
+    setTimeout(function() {
+      var msgsEl = document.getElementById('chat-ia-msgs');
+      if (msgsEl) msgsEl.scrollTop = msgsEl.scrollHeight;
+    }, 50);
+
+    try {
+      var res = await fetch(config.supabaseUrl + '/functions/v1/chat-ia', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          messages: state.chatIAMensagens.slice(0, -1).map(function(m) { return { role: m.role, content: m.content }; }),
+          contexto: montarContextoIA(),
+        }),
+      });
+
+      if (!res.ok || !res.body) throw new Error('Erro na resposta');
+
+      var reader = res.body.getReader();
+      var decoder = new TextDecoder();
+      var resposta = '';
+
+      while (true) {
+        var read = await reader.read();
+        if (read.done) break;
+        var chunk = decoder.decode(read.value, { stream: true });
+        var linhas = chunk.split('\n').filter(function(l) { return l.startsWith('data: '); });
+        for (var i = 0; i < linhas.length; i++) {
+          var dado = linhas[i].replace('data: ', '').trim();
+          if (dado === '[DONE]') continue;
+          try {
+            var json = JSON.parse(dado);
+            var delta = (json.choices && json.choices[0] && json.choices[0].delta && json.choices[0].delta.content) || '';
+            if (delta) {
+              resposta += delta;
+              state.chatIAMensagens[state.chatIAMensagens.length - 1].content = resposta;
+              var msgsEl2 = document.getElementById('chat-ia-msgs');
+              if (msgsEl2) {
+                var lastBubble = msgsEl2.lastElementChild && msgsEl2.lastElementChild.querySelector('div');
+                if (lastBubble) { lastBubble.textContent = resposta; msgsEl2.scrollTop = msgsEl2.scrollHeight; }
+              }
+            }
+          } catch (e) { /* ignorar */ }
+        }
+      }
+    } catch (e) {
+      state.chatIAMensagens[state.chatIAMensagens.length - 1].content = 'Desculpe, ocorreu um erro. Tente novamente em instantes.';
+    }
+
+    state.chatIADigitando = false;
+    render();
+    setTimeout(function() { var msgsEl3 = document.getElementById('chat-ia-msgs'); if (msgsEl3) msgsEl3.scrollTop = msgsEl3.scrollHeight; }, 50);
+  }
+
+  async function salvarDespesa() {
+    if (!state.empresa || state.lancandoDespesa) return;
+
+    var dia = Number(campo('despesa-dia'));
+    var nome = campo('despesa-nome');
+    var descricao = campo('despesa-descricao');
+    var valor = normalizarValor(campo('despesa-valor'));
+    var limite = maxDias(state.mes, state.ano);
+
+    if (!dia || dia < 1 || dia > limite || !nome || valor <= 0) {
+      // Preservar campos preenchidos ao mostrar erro de validação
+      var _diaV = campo('despesa-dia'), _nomeV = campo('despesa-nome'),
+          _descV = campo('despesa-descricao'), _valorV = campo('despesa-valor');
+      var _msgErro = (!dia || dia < 1 || dia > limite)
+        ? 'Data invalida. Informe um dia entre 1 e ' + limite + '.'
+        : (!nome ? 'Selecione o tipo de despesa.' : 'Informe um valor valido.');
+      setErro(_msgErro);
+      var _d = document.getElementById('despesa-dia'); if (_d) _d.value = _diaV;
+      var _n = document.getElementById('despesa-nome'); if (_n) _n.value = _nomeV;
+      var _desc = document.getElementById('despesa-descricao'); if (_desc) _desc.value = _descV;
+      var _v = document.getElementById('despesa-valor'); if (_v) _v.value = _valorV;
+      // Focar no campo com problema
+      var _focusId = (!dia || dia < 1 || dia > limite) ? 'despesa-dia' : (!nome ? 'despesa-nome' : 'despesa-valor');
+      var _focusEl = document.getElementById(_focusId); if (_focusEl) _focusEl.focus();
+      return;
+    }
+
+    if (state.duplicadosAtivo) {
+      var existeIgual = state.lancamentos.some(function (item) {
+        return item.mes === state.mes && item.despesa === nome && Number(item.valor) === Number(valor);
+      });
+
+      if (existeIgual) {
+        var confirmar = window.confirm('Ja existe uma despesa com o mesmo nome e valor neste mes.\n\nDeseja adicionar mesmo assim?');
+        if (!confirmar) return;
+      }
+    }
+
+    state.lancandoDespesa = true;
+    state.carregando = true;
+    state.erro = '';
+    render();
+
+    var totalParcelas = (state.formParcelar && state.formParcelas >= 2) ? state.formParcelas : 1;
+    var mesIndex = indiceMes(state.mes);
+    var ok = true;
+
+    for (var p = 0; p < totalParcelas; p++) {
+      var idxMes = (mesIndex + p) % 12;
+      var anosExtra = Math.floor((mesIndex + p) / 12);
+      var mesParc = meses[idxMes];
+      var anoParc = Number(state.ano) + anosExtra;
+      var descBase = formatarDescricao(descricao);
+      var descParc = totalParcelas > 1
+        ? (descBase ? descBase + ' (' + (p + 1) + '/' + totalParcelas + ')' : '(' + (p + 1) + '/' + totalParcelas + ')')
+        : descBase;
+
+      var resposta = await db
+        .from('lancamentos')
+        .insert({
+          empresa_id: state.empresa.id,
+          ano: anoParc,
+          mes: mesParc,
+          dia: dia,
+          despesa_nome: nome,
+          descricao: descParc,
+          valor: valor,
+        })
+        .select()
+        .single();
+
+      if (resposta.error) {
+        ok = false;
+        state.lancandoDespesa = false;
+        state.carregando = false;
+        setErro('Nao foi possivel salvar a despesa.');
+        return;
+      }
+    }
+
+    state.lancandoDespesa = false;
+    state.formParcelar = false;
+    state.formParcelas = 2;
+    state.modalLancamento = false;
+    state.tipoLancamento = 'despesa';
+    state.modoReceita = 'entrada';
+    state.erro = '';
+    await carregarDados();
+    mostrarToast(totalParcelas > 1 ? 'Despesa parcelada em ' + totalParcelas + 'x.' : 'Despesa lancada.');
+  }
+
+  async function alternarDuplicados() {
+    if (!state.empresa || state.carregando) return;
+
+    var proximo = !state.duplicadosAtivo;
+    var anterior = state.duplicadosAtivo;
+    state.duplicadosAtivo = proximo;
+    state.carregando = true;
+    render();
+
+    var resposta = await db
+      .from('configuracoes')
+      .upsert({ empresa_id: state.empresa.id, duplicados_ativo: proximo }, { onConflict: 'empresa_id' });
+
+    state.carregando = false;
+
+    if (resposta.error) {
+      state.duplicadosAtivo = anterior;
+      setErro('Nao foi possivel salvar a configuracao de duplicados.');
+      return;
+    }
+
+    render();
+    mostrarToast(proximo ? 'Aviso de duplicados ativado.' : 'Aviso de duplicados desativado.');
+  }
+
+  async function salvarEntrada() {
+    if (!state.empresa) return;
+
+    var dia = Number(campo('entrada-dia'));
+    var origem = campo('entrada-origem');
+    var valor = normalizarValor(campo('entrada-valor'));
+    var limite = maxDias(state.mes, state.ano);
+
+    if (!dia || dia < 1 || dia > limite || !origem.trim() || valor <= 0) {
+      setErro('Informe dia, origem e valor validos.');
+      return;
+    }
+
+    state.carregando = true;
+    state.erro = '';
+    render();
+
+    var resposta = await db
+      .from('faturamentos_entradas')
+      .insert({
+        empresa_id: state.empresa.id,
+        ano: Number(state.ano),
+        mes: state.mes,
+        dia: dia,
+        origem: formatarDescricao(origem),
+        valor: valor,
+        criado_por: state.usuario ? state.usuario.id : null,
+      })
+      .select()
+      .single();
+
+    if (resposta.error) {
+      state.carregando = false;
+      setErro('Nao foi possivel salvar a entrada.');
+      return;
+    }
+
+    var totalAtual = state.faturamentos[state.mes] || 0;
+    var total = await db
+      .from('faturamentos')
+      .upsert(
+        {
+          empresa_id: state.empresa.id,
+          ano: Number(state.ano),
+          mes: state.mes,
+          valor: totalAtual + valor,
+        },
+        { onConflict: 'empresa_id,ano,mes' }
+      )
+      .select()
+      .single();
+
+    if (total.error) {
+      state.carregando = false;
+      setErro('Entrada salva, mas o total do mes nao foi atualizado.');
+      return;
+    }
+
+    state.modalLancamento = false;
+    state.tipoLancamento = 'despesa';
+    state.modoReceita = 'entrada';
+    state.erro = '';
+    await carregarDados();
+    mostrarToast('Entrada lancada.');
+  }
+
+  async function salvarTotalReceita() {
+    if (!state.empresa) return;
+
+    var valor = normalizarValor(campo('receita-total'));
+
+    if (valor < 0) {
+      setErro('Informe um total valido.');
+      return;
+    }
+
+    state.carregando = true;
+    state.erro = '';
+    render();
+
+    var resposta = await db
+      .from('faturamentos')
+      .upsert(
+        {
+          empresa_id: state.empresa.id,
+          ano: Number(state.ano),
+          mes: state.mes,
+          valor: valor,
+        },
+        { onConflict: 'empresa_id,ano,mes' }
+      )
+      .select()
+      .single();
+
+    if (resposta.error) {
+      state.carregando = false;
+      setErro('Nao foi possivel definir o total do mes.');
+      return;
+    }
+
+    state.modalLancamento = false;
+    state.tipoLancamento = 'despesa';
+    state.modoReceita = 'entrada';
+    state.erro = '';
+    await carregarDados();
+    mostrarToast('Total do mes atualizado.');
+  }
+
+  async function excluirTotalMesMobile() {
+    if (!state.empresa || !state.mes) return;
+
+    var totalEntradas = state.entradas
+      .filter(function (e) { return e.mes === state.mes; })
+      .reduce(function (acc, e) { return acc + e.valor; }, 0);
+
+    var mensagem = totalEntradas > 0
+      ? 'O total definido manualmente sera removido. As receitas lancadas (' + formatarMoeda(totalEntradas) + ') serao mantidas.'
+      : 'Nao ha receitas lancadas neste mes. O total do mes sera zerado.';
+
+    if (!window.confirm(mensagem)) return;
+
+    state.carregando = true;
+    state.erro = '';
+    render();
+
+    if (totalEntradas > 0) {
+      var resp = await db
+        .from('faturamentos')
+        .upsert(
+          {
+            empresa_id: state.empresa.id,
+            ano: Number(state.ano),
+            mes: state.mes,
+            valor: totalEntradas,
+          },
+          { onConflict: 'empresa_id,ano,mes' }
+        )
+        .select()
+        .single();
+
+      if (resp.error) {
+        state.carregando = false;
+        setErro('Nao foi possivel excluir o total definido.');
+        return;
+      }
+
+      state.faturamentos[state.mes] = totalEntradas;
+    } else {
+      var del = await db
+        .from('faturamentos')
+        .delete()
+        .eq('empresa_id', state.empresa.id)
+        .eq('ano', Number(state.ano))
+        .eq('mes', state.mes);
+
+      if (del.error) {
+        state.carregando = false;
+        setErro('Nao foi possivel excluir o total do mes.');
+        return;
+      }
+
+      delete state.faturamentos[state.mes];
+    }
+
+    state.carregando = false;
+    mostrarToast('Total do mes excluido.');
+    render();
+  }
+
+  async function salvarCategoriaDespesa() {
+    if (!state.empresa) return;
+
+    var nome = campo('categoria-nome').trim();
+    var tipo = campo('categoria-tipo').trim();
+    if (!nome || !tipo) {
+      setErro('Informe o nome da despesa e a categoria.');
+      return;
+    }
+
+    state.carregando = true;
+    state.categoriaEditandoId = '';
+    state.categoriaAcoesId = '';
+    state.erro = '';
+    render();
+
+    var resposta = await db
+      .from('despesas_cadastradas')
+      .insert({
+        empresa_id: state.empresa.id,
+        nome: formatarDescricao(nome),
+        categoria: formatarDescricao(tipo),
+      })
+      .select()
+      .single();
+
+    if (resposta.error) {
+      state.carregando = false;
+      setErro('Nao foi possivel adicionar a despesa.');
+      return;
+    }
+
+    state.modalMenu = 'categorias';
+    state.erro = '';
+    await carregarDados();
+    mostrarToast('Despesa cadastrada.');
+  }
+
+  async function salvarNovaDespesaInline() {
+    if (!state.empresa) return;
+
+    var nomeEl = document.getElementById('nova-despesa-nome');
+    var catEl = document.getElementById('nova-despesa-categoria');
+    var nome = (nomeEl ? nomeEl.value : state.novaDespesaNome).trim();
+    var categoria = (catEl ? catEl.value : state.novaDespesaCategoria).trim();
+
+    if (!nome) {
+      setAlerta('Informe o nome do tipo de despesa.');
+      return;
+    }
+    if (!categoria) {
+      setAlerta('Selecione uma categoria.');
+      return;
+    }
+    var jaExiste = state.despesas.some(function (d) { return d.nome.toLowerCase() === nome.toLowerCase(); });
+    if (jaExiste) {
+      setAlerta('Ja existe um tipo com esse nome.');
+      return;
+    }
+
+    state.carregando = true;
+    state.erro = '';
+    render();
+
+    var resposta = await db
+      .from('despesas_cadastradas')
+      .insert({
+        empresa_id: state.empresa.id,
+        nome: formatarDescricao(nome),
+        categoria: formatarDescricao(categoria),
+      })
+      .select()
+      .single();
+
+    if (resposta.error) {
+      state.carregando = false;
+      setAlerta('Nao foi possivel cadastrar o tipo de despesa.');
+      return;
+    }
+
+    var novoNome = resposta.data && resposta.data.nome ? resposta.data.nome : formatarDescricao(nome);
+    state.novaDespesaAberta = false;
+    state.novaDespesaNome = '';
+    state.novaDespesaCategoria = '';
+    state.erro = '';
+    await carregarDados();
+    setTimeout(function () {
+      var sel = document.getElementById('despesa-nome');
+      if (sel) {
+        for (var i = 0; i < sel.options.length; i++) {
+          if (sel.options[i].value === novoNome) { sel.selectedIndex = i; break; }
+        }
+      }
+    }, 50);
+    mostrarToast('Tipo cadastrado e selecionado.');
+  }
+
+  function abrirCategoriaAcoes(id) {
+    state.categoriaAcoesId = state.categoriaAcoesId === id ? '' : (id || '');
+    state.categoriaEditandoId = '';
+    state.erro = '';
+    render();
+  }
+
+  function editarCategoriaDespesa(id) {
+    state.categoriaEditandoId = id || '';
+    state.categoriaAcoesId = '';
+    state.erro = '';
+    render();
+  }
+
+  async function salvarEdicaoCategoriaDespesa(id) {
+    if (!state.empresa || !id) return;
+
+    var nome = campo('edit-categoria-nome-' + id).trim();
+    var tipo = campo('edit-categoria-tipo-' + id).trim();
+
+    if (!nome || !tipo) {
+      setErro('Informe o nome da despesa e a categoria.');
+      return;
+    }
+
+    state.carregando = true;
+    state.erro = '';
+    render();
+
+    var resposta = await db
+      .from('despesas_cadastradas')
+      .update({
+        nome: formatarDescricao(nome),
+        categoria: formatarDescricao(tipo),
+      })
+      .eq('id', id)
+      .eq('empresa_id', state.empresa.id)
+      .select()
+      .single();
+
+    if (resposta.error) {
+      state.carregando = false;
+      setErro('Nao foi possivel editar a despesa.');
+      return;
+    }
+
+    state.modalMenu = 'categorias';
+    state.categoriaEditandoId = '';
+    state.categoriaAcoesId = '';
+    state.erro = '';
+    await carregarDados();
+    mostrarToast('Despesa atualizada.');
+  }
+
+  async function excluirCategoriaDespesa(id) {
+    var despesaId = id || state.categoriaEditandoId || state.categoriaAcoesId;
+    if (!state.empresa || !despesaId) return;
+
+    var despesa = state.despesas.find(function (item) { return String(item.id) === String(despesaId); });
+    var nome = despesa ? despesa.nome : 'esta despesa';
+
+    if (!window.confirm('Excluir "' + nome + '" da lista de despesas cadastradas?')) return;
+
+    state.carregando = true;
+    state.erro = '';
+    render();
+
+    var resposta = await db
+      .from('despesas_cadastradas')
+      .delete()
+      .eq('id', despesaId)
+      .eq('empresa_id', state.empresa.id);
+
+    if (resposta.error) {
+      state.carregando = false;
+      setErro('Nao foi possivel excluir a despesa.');
+      return;
+    }
+
+    state.modalMenu = 'categorias';
+    state.categoriaEditandoId = '';
+    state.categoriaAcoesId = '';
+    state.erro = '';
+    await carregarDados();
+    mostrarToast('Despesa excluida.');
+  }
+
+  async function criarEmpresaMobile() {
+    var nome = campo('nova-empresa-nome').trim();
+    var tipoPerfil = normalizarTipoPerfil(state.novaEmpresaTipoPerfil);
+
+    if (!nome) {
+      setErro('Informe o nome do perfil financeiro.');
+      return;
+    }
+
+    state.carregando = true;
+    state.empresaAcao = 'criar';
+    state.erro = '';
+    render();
+
+    var resposta = await db.rpc('criar_empresa_inicial_rpc', {
+      p_nome_empresa: nome,
+    });
+
+    if (resposta.error) {
+      state.carregando = false;
+      state.empresaAcao = '';
+      setErro(mensagemErro(resposta.error, 'Não foi possível criar o perfil financeiro.'));
+      return;
+    }
+
+    var dadosBrutos = resposta.data;
+    var semDados = !dadosBrutos || (Array.isArray(dadosBrutos) && dadosBrutos.length === 0);
+    if (semDados) {
+      state.carregando = false;
+      state.empresaAcao = '';
+      setErro('O servidor criou o perfil mas não retornou os dados. Recarregue a página e verifique se o perfil foi criado antes de tentar novamente.');
+      return;
+    }
+
+    var criada = Array.isArray(dadosBrutos) ? dadosBrutos[0] : dadosBrutos;
+    var criadaId = criada && (criada.id || criada.empresa_id);
+
+    if (!criadaId) {
+      state.carregando = false;
+      state.empresaAcao = '';
+      setErro('Perfil criado, mas o identificador não foi reconhecido. Recarregue a página para verificar.');
+      return;
+    }
+
+    await db
+      .from('configuracoes')
+      .upsert({ empresa_id: criadaId, duplicados_ativo: true }, { onConflict: 'empresa_id' });
+
+    var tokCriar = await tokenSessao();
+    if (tokCriar) {
+      var respostaTipo = await fetch('/api/atualizar-empresa', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + tokCriar },
+        body: JSON.stringify({ empresaId: criadaId, nome: nome, tipoPerfil: tipoPerfil }),
+      });
+      if (!respostaTipo.ok) {
+        console.warn('criarEmpresaMobile: tipo_perfil não aplicado (API retornou ' + respostaTipo.status + ')');
+      }
+    } else {
+      console.warn('criarEmpresaMobile: sem token — tipo_perfil não aplicado');
+    }
+
+    if (tipoPerfil === 'pessoal') {
+      await inserirDespesasPadraoMobile(criadaId);
+    }
+
+    state.modalMenu = '';
+    state.empresaAcao = '';
+    state.empresaExclusaoAberta = false;
+    state.empresaCriarAberta = false;
+    state.novaEmpresaTipoPerfil = 'empresa';
+    await carregarEmpresas(state.usuario.id);
+    await carregarDados();
+    mostrarToast('Perfil criado.');
+  }
+
+  function abrirEdicaoEmpresaMobile() {
+    if (!state.empresa || !podeGerenciarUsuarios()) return;
+
+    state.empresaEdicaoAberta = true;
+    state.empresaExclusaoAberta = false;
+    state.editEmpresaNome = nomeEmpresa(state.empresa);
+    state.editEmpresaTipoPerfil = normalizarTipoPerfil(state.empresa.tipo_perfil);
+    state.editEmpresaLogin = state.empresa.login || state.empresa.email || '';
+    state.editEmpresaSenha = '';
+    state.erro = '';
+    render();
+  }
+
+  function selecionarTipoPerfilEdicao(tipo) {
+    state.editEmpresaTipoPerfil = normalizarTipoPerfil(tipo);
+    render();
+  }
+
+  function selecionarTipoPerfilNovo(tipo) {
+    state.novaEmpresaTipoPerfil = normalizarTipoPerfil(tipo);
+    render();
+  }
+
+  function cancelarEdicaoEmpresaMobile() {
+    if (state.carregando) return;
+
+    state.empresaEdicaoAberta = false;
+    state.editEmpresaNome = '';
+    state.editEmpresaLogin = '';
+    state.editEmpresaSenha = '';
+    state.editEmpresaTipoPerfil = 'empresa';
+    state.erro = '';
+    render();
+  }
+
+  function abrirCriarEmpresaMobile() {
+    state.empresaCriarAberta = true;
+    state.empresaEdicaoAberta = false;
+    state.empresaExclusaoAberta = false;
+    state.novaEmpresaTipoPerfil = 'empresa';
+    state.erro = '';
+    render();
+  }
+
+  function cancelarCriarEmpresaMobile() {
+    if (state.carregando) return;
+    state.empresaCriarAberta = false;
+    state.novaEmpresaTipoPerfil = 'empresa';
+    state.erro = '';
+    render();
+  }
+
+  async function salvarEdicaoEmpresaMobile() {
+    if (!state.empresa || !podeGerenciarUsuarios()) return;
+
+    var nome = campo('editar-empresa-nome').trim();
+    var login = campo('editar-empresa-login').trim().toLowerCase();
+    var senha = campo('editar-empresa-senha').trim();
+
+    var tipoPerfil = normalizarTipoPerfil(state.editEmpresaTipoPerfil);
+
+    if (!nome) {
+      setErro('Informe o nome do perfil financeiro.');
+      return;
+    }
+
+    if (!login) {
+      setErro('Informe o login ou email do acesso atual.');
+      return;
+    }
+
+    if (senha && senha.length < 8) {
+      setErro('A nova senha deve ter pelo menos 8 caracteres.');
+      return;
+    }
+
+    state.carregando = true;
+    state.empresaAcao = 'editar';
+    state.erro = '';
+    render();
+
+    var tok = await tokenSessao();
+    if (!tok) {
+      state.carregando = false;
+      state.empresaAcao = '';
+      setErro('Sessao expirada. Faca login novamente.');
+      return;
+    }
+
+    var respostaEmpresaHttp = await fetch('/api/atualizar-empresa', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + tok },
+      body: JSON.stringify({ empresaId: state.empresa.id, nome: nome, tipoPerfil: tipoPerfil }),
+    });
+    var respostaEmpresa = await lerResposta(respostaEmpresaHttp);
+
+    if (!respostaEmpresaHttp.ok || respostaEmpresa.erro) {
+      state.carregando = false;
+      state.empresaAcao = '';
+      setErro(respostaEmpresa.mensagem || 'Nao foi possivel atualizar o perfil financeiro.');
+      return;
+    }
+
+    var respostaUsuarioHttp = await fetch('/api/atualizar-usuario-empresa', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: 'Bearer ' + tok,
+      },
+      body: JSON.stringify({
+        acessoId: state.empresa.acessoId,
+        nome: state.empresa.usuario_nome || nome,
+        email: login,
+        perfil: state.empresa.perfil || 'operador_simples',
+      }),
+    });
+    var respostaUsuario = await lerResposta(respostaUsuarioHttp);
+
+    if (!respostaUsuarioHttp.ok || respostaUsuario.erro) {
+      state.carregando = false;
+      state.empresaAcao = '';
+      setErro(respostaUsuario.mensagem || 'Nao foi possivel atualizar o acesso.');
+      return;
+    }
+
+    if (senha) {
+      var respostaSenhaHttp = await fetch('/api/redefinir-senha-usuario', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: 'Bearer ' + tok,
+        },
+        body: JSON.stringify({
+          acessoId: state.empresa.acessoId,
+          novaSenha: senha,
+        }),
+      });
+      var respostaSenha = await lerResposta(respostaSenhaHttp);
+
+      if (!respostaSenhaHttp.ok || respostaSenha.erro) {
+        state.carregando = false;
+        state.empresaAcao = '';
+        setErro(respostaSenha.mensagem || 'Perfil e login foram salvos, mas a senha nao foi alterada.');
+        await carregarEmpresas(state.usuario.id);
+        render();
+        return;
+      }
+    }
+
+    state.carregando = false;
+    state.empresaAcao = '';
+    state.empresaEdicaoAberta = false;
+    state.editEmpresaNome = '';
+    state.editEmpresaLogin = '';
+    state.editEmpresaSenha = '';
+    state.editEmpresaTipoPerfil = 'empresa';
+    await carregarEmpresas(state.usuario.id);
+    await carregarDados();
+    mostrarToast('Dados atualizados.');
+  }
+
+  async function excluirEmpresaMobile() {
+    if (!state.empresa) return;
+
+    if (state.empresa.perfil !== 'gestor_master') {
+      setErro('Somente o Gestor Master pode excluir o perfil atual.');
+      return;
+    }
+
+    var confirmacao = campo('excluir-empresa-confirmacao').trim();
+    var nome = nomeEmpresa(state.empresa);
+
+    if (confirmacao !== nome) {
+      setErro('Digite exatamente o nome do perfil para confirmar.');
+      return;
+    }
+
+    state.carregando = true;
+    state.empresaAcao = 'excluir';
+    state.erro = '';
+    render();
+
+    var resposta = await db.rpc('excluir_empresa_rpc', {
+      p_empresa_id: state.empresa.id,
+      p_nome_confirmacao: confirmacao,
+    });
+
+    if (resposta.error) {
+      state.carregando = false;
+      state.empresaAcao = '';
+      setErro(mensagemErro(resposta.error, 'Nao foi possivel excluir o perfil financeiro.'));
+      return;
+    }
+
+    state.modalMenu = '';
+    state.empresaAcao = '';
+    state.empresaExclusaoAberta = false;
+    await carregarEmpresas(state.usuario.id);
+
+    if (!state.empresa) {
+      await sair();
+      return;
+    }
+
+    await carregarDados();
+    mostrarToast('Perfil excluido.');
+  }
+
+  function abrirAcaoLancamento(tipo, id) {
+    var lista = tipo === 'receita' ? state.entradas : state.lancamentos;
+    var item = lista.find(function (registro) { return String(registro.id) === String(id); });
+    if (!item) return;
+
+    state.modalAcao = {
+      tipo: tipo,
+      modo: 'opcoes',
+      item: item,
+    };
+    render();
+  }
+
+  function fecharAcaoLancamento() {
+    state.modalAcao = null;
+    render();
+  }
+
+  async function excluirLancamentoSelecionado() {
+    if (!state.modalAcao || !state.modalAcao.item || !state.empresa) return;
+
+    var tipo = state.modalAcao.tipo;
+    var item = state.modalAcao.item;
+
+    // Detectar parcelas pendentes (padrao X/N na descricao)
+    if (tipo !== 'receita') {
+      var matchParcela = (item.descricao || '').match(/\((\d+)\/(\d+)\)$/);
+      if (matchParcela) {
+        var totalN = parseInt(matchParcela[2], 10);
+        var parcelasGrupo = state.lancamentos.filter(function(l) {
+          if (l.despesa !== item.despesa) return false;
+          var m = (l.descricao || '').match(/\((\d+)\/(\d+)\)$/);
+          return m && parseInt(m[2], 10) === totalN;
+        });
+        var pendentes = parcelasGrupo.filter(function(l) { return l.id !== item.id; });
+        if (pendentes.length > 0) {
+          var resp = window.confirm(
+            'Este lancamento faz parte de um parcelamento em ' + totalN + 'x.\n' +
+            'Ha ' + pendentes.length + ' parcela(s) pendente(s).\n\n' +
+            'OK = Excluir TODAS as ' + parcelasGrupo.length + ' parcelas\n' +
+            'Cancelar = Excluir somente esta'
+          );
+          state.carregando = true;
+          state.erro = '';
+          render();
+          if (resp) {
+            // Excluir todas
+            for (var i = 0; i < parcelasGrupo.length; i++) {
+              await db.from('lancamentos').delete().eq('id', parcelasGrupo[i].id).eq('empresa_id', state.empresa.id);
+            }
+          } else {
+            // Excluir somente esta
+            await db.from('lancamentos').delete().eq('id', item.id).eq('empresa_id', state.empresa.id);
+          }
+          state.modalAcao = null;
+          await carregarDados();
+          mostrarToast(resp ? 'Parcelas excluidas.' : 'Despesa excluida.');
+          return;
+        }
+      }
+    }
+
+    state.carregando = true;
+    state.erro = '';
+    render();
+
+    if (tipo === 'receita') {
+      var apagada = await db.from('faturamentos_entradas').delete().eq('id', item.id).eq('empresa_id', state.empresa.id);
+      if (apagada.error) {
+        state.carregando = false;
+        setErro('Nao foi possivel excluir a receita.');
+        return;
+      }
+
+      var totalAtual = state.faturamentos[state.mes] || 0;
+      await db
+        .from('faturamentos')
+        .upsert(
+          {
+            empresa_id: state.empresa.id,
+            ano: Number(state.ano),
+            mes: state.mes,
+            valor: Math.max(0, totalAtual - Number(item.valor || 0)),
+          },
+          { onConflict: 'empresa_id,ano,mes' }
+        );
+    } else {
+      var removida = await db.from('lancamentos').delete().eq('id', item.id).eq('empresa_id', state.empresa.id);
+      if (removida.error) {
+        state.carregando = false;
+        setErro('Nao foi possivel excluir a despesa.');
+        return;
+      }
+    }
+
+    state.modalAcao = null;
+    await carregarDados();
+    mostrarToast(tipo === 'receita' ? 'Receita excluida.' : 'Despesa excluida.');
+  }
+
+  async function salvarEdicaoLancamentoSelecionado() {
+    if (!state.modalAcao || !state.modalAcao.item || !state.empresa) return;
+
+    var tipo = state.modalAcao.tipo;
+    var item = state.modalAcao.item;
+    var dia = Number(campo('editar-dia'));
+    var valor = normalizarValor(campo('editar-valor'));
+    var limite = maxDias(state.mes, state.ano);
+
+    if (!dia || dia < 1 || dia > limite || valor <= 0) {
+      setErro('Informe dia e valor validos.');
+      return;
+    }
+
+    state.carregando = true;
+    state.erro = '';
+    render();
+
+    if (tipo === 'receita') {
+      var origem = campo('editar-origem').trim();
+      if (!origem) {
+        state.carregando = false;
+        setErro('Informe a origem.');
+        return;
+      }
+
+      var receita = await db
+        .from('faturamentos_entradas')
+        .update({
+          dia: dia,
+          origem: formatarDescricao(origem),
+          valor: valor,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', item.id)
+        .eq('empresa_id', state.empresa.id)
+        .select()
+        .single();
+
+      if (receita.error) {
+        state.carregando = false;
+        setErro('Nao foi possivel editar a receita.');
+        return;
+      }
+
+      var totalAtual = state.faturamentos[state.mes] || 0;
+      var diferenca = valor - Number(item.valor || 0);
+      await db
+        .from('faturamentos')
+        .upsert(
+          {
+            empresa_id: state.empresa.id,
+            ano: Number(state.ano),
+            mes: state.mes,
+            valor: Math.max(0, totalAtual + diferenca),
+          },
+          { onConflict: 'empresa_id,ano,mes' }
+        );
+    } else {
+      var despesaNome = campo('editar-despesa').trim();
+      var descricao = campo('editar-descricao');
+      if (!despesaNome) {
+        state.carregando = false;
+        setErro('Informe a despesa.');
+        return;
+      }
+
+      var despesa = await db
+        .from('lancamentos')
+        .update({
+          dia: dia,
+          despesa_nome: despesaNome,
+          descricao: formatarDescricao(descricao),
+          valor: valor,
+        })
+        .eq('id', item.id)
+        .eq('empresa_id', state.empresa.id)
+        .select()
+        .single();
+
+      if (despesa.error) {
+        state.carregando = false;
+        setErro('Nao foi possivel editar a despesa.');
+        return;
+      }
+    }
+
+    state.modalAcao = null;
+    await carregarDados();
+    mostrarToast(tipo === 'receita' ? 'Receita atualizada.' : 'Despesa atualizada.');
+  }
+
+  function telaLoginWrapper(conteudo, titulo, subtitulo) {
+    return (
+      '<section class="avantalab-mobile-bg fixed inset-0 flex flex-col items-center justify-center overflow-hidden px-4 py-5" style="height:100dvh;--avantalab-mobile-bg-overlay:linear-gradient(rgba(255,255,255,.08),rgba(255,255,255,0));">' +
+        '<div class="mx-auto w-full max-w-md overflow-y-auto rounded-3xl border border-white/35 p-5 text-slate-900 shadow-2xl backdrop-blur-xl" style="background-color:rgba(255,255,255,.18);max-height:calc(100dvh - 8rem);overscroll-behavior:contain;">' +
+          '<div class="mb-5">' +
+            '<p class="mb-2 text-xs font-bold uppercase tracking-[0.32em] text-sky-700">AvantaLab Gestao</p>' +
+            '<h1 class="text-3xl font-black text-slate-900">' + escapeHtml(titulo) + '</h1>' +
+            '<p class="mt-2 text-sm leading-relaxed text-slate-600">' + escapeHtml(subtitulo) + '</p>' +
+          '</div>' +
+          conteudo +
+        '</div>' +
+      '</section>'
+    );
+  }
+
+  function telaLogin() {
+    var boasVindas = state.telaAcesso === 'boasVindas' && !state.modoCadastro && !state.modoSenha;
+
+    return (
+      '<section class="avantalab-mobile-bg fixed inset-0 flex flex-col items-center justify-center overflow-hidden px-4 py-5" style="height:100dvh;--avantalab-mobile-bg-overlay:linear-gradient(rgba(255,255,255,.08),rgba(255,255,255,0));">' +
+        '<div class="mx-auto w-full max-w-md overflow-y-auto rounded-3xl border border-white/35 p-5 text-slate-900 shadow-2xl backdrop-blur-xl" style="background-color:rgba(255,255,255,.18);max-height:calc(100dvh - 8rem);overscroll-behavior:contain;">' +
+          (boasVindas
+            ? telaBoasVindas()
+            : '<div class="mb-5">' +
+                '<p class="mb-2 text-xs font-bold uppercase tracking-[0.32em] text-sky-700">AvantaLab Gestao</p>' +
+                '<h1 class="text-3xl font-black text-slate-900">' + (state.modoCadastro ? 'Criar cadastro' : state.modoSenha ? 'Recuperar senha' : 'Acesse sua conta') + '</h1>' +
+                '<p class="mt-2 text-sm leading-relaxed text-slate-600">' +
+                  (state.modoCadastro ? 'Preencha seus dados e confirme o celular por SMS.' : state.modoSenha ? 'Digite seu login, receba o codigo por SMS e defina uma nova senha.' : 'Entre para acompanhar sua gestao financeira, lancamentos e resultados.') +
+                '</p>' +
+              '</div>' +
+              (state.modoCadastro ? telaCadastro() : state.modoSenha ? telaSenha() : telaLoginCampos())) +
+        '</div>' +
+        (!boasVindas && !state.modoCadastro && !state.modoSenha ? cardInstalarLoginHtml() : '') +
+        (state.modalMenu ? modalMenuHtml() : '') +
+      '</section>'
+    );
+  }
+
+  function telaBoasVindas() {
+    return (
+      '<div class="grid gap-5">' +
+        '<div>' +
+          '<p class="mb-2 text-xs font-bold uppercase tracking-[0.32em] text-sky-700">AvantaLab Gestao</p>' +
+          '<h1 class="text-3xl font-black leading-tight text-slate-900">Descubra quanto realmente sobra no seu neg&oacute;cio ou nas suas despesas pessoais.</h1>' +
+          '<p class="mt-3 text-sm font-semibold leading-relaxed text-slate-600">Controle entradas e despesas de forma simples.</p>' +
+        '</div>' +
+        '<div class="grid gap-2 rounded-2xl bg-white/22 p-3 text-sm font-bold leading-snug text-slate-700">' +
+          '<p>&#10003; Entenda seus gastos.</p>' +
+          '<p>&#10003; Compare seus resultados mes a mes.</p>' +
+          '<p>&#10003; Descubra quais despesas mais impactam seu lucro.</p>' +
+          '<p>&#10003; Use no computador ou celular.</p>' +
+        '</div>' +
+        '<button id="boas-vindas-cadastro" type="button" class="h-12 rounded-xl px-4 text-sm font-black uppercase tracking-wide text-white shadow-lg" style="background:linear-gradient(135deg,#003E73,#00A6C8)">' +
+          'Criar conta gratis' +
+        '</button>' +
+        '<div class="text-center text-sm text-slate-600">Ja tem conta? <button id="boas-vindas-login" type="button" class="font-bold text-sky-700 underline">Entrar</button></div>' +
+      '</div>'
+    );
+  }
+
+  function telaCarregandoMobile() {
+    return (
+      '<section class="avantalab-mobile-bg fixed inset-0 flex items-center justify-center overflow-hidden px-4" style="height:100dvh;">' +
+        '<div class="w-full max-w-xs rounded-3xl border border-white/40 bg-white/25 p-5 text-center text-slate-900 shadow-2xl backdrop-blur-xl">' +
+          '<p class="text-xs font-black uppercase tracking-[0.24em] text-cyan-700">AvantaLab</p>' +
+          '<h1 class="mt-2 text-xl font-black">Preparando acesso</h1>' +
+          '<p class="mt-2 text-sm font-semibold text-slate-600">Carregando seus dados com seguranca.</p>' +
+        '</div>' +
+      '</section>'
+    );
+  }
+
+  function cardInstalarLoginHtml() {
+    if (isStandalone()) return '';
+
+    return (
+      '<div class="mx-auto mt-3 w-full max-w-md rounded-2xl border border-white/25 p-3 text-slate-800 shadow-lg backdrop-blur-lg" style="background-color:rgba(255,255,255,.14)">' +
+        '<div class="flex items-center justify-between gap-3">' +
+          '<div class="min-w-0">' +
+            '<p class="text-xs font-black uppercase tracking-wide"><span style="color:#003E73">AVANTA</span><span style="color:#00A6C8">LAB</span> app</p>' +
+            '<p class="mt-0.5 text-xs font-semibold leading-snug text-slate-600">Instale o AvantaLab como app no celular.</p>' +
+          '</div>' +
+          '<button id="instalar-login" type="button" class="shrink-0 rounded-xl px-3 py-2 text-xs font-black uppercase tracking-wide text-white shadow-md" style="background:linear-gradient(135deg,#003E73,#00A6C8)">' +
+            'Instalar' +
+          '</button>' +
+        '</div>' +
+      '</div>'
+    );
+  }
+
+  function telaLoginCampos() {
+    return (
+      '<div class="grid gap-4">' +
+        inputHtml('login', 'Email ou login', 'text', 'seuemail@exemplo.com ou seu login', state.loginValor) +
+        senhaInputHtml('senha', 'Senha', 'Digite sua senha', 'mostrarSenhaLogin', 'toggle-senha-login') +
+        '<label class="flex items-start gap-3 rounded-2xl border border-white/35 bg-white/35 px-3 py-3 text-left shadow-sm">' +
+          '<input id="manter-conectado" type="checkbox" class="mt-0.5 h-5 w-5 shrink-0 accent-cyan-700"' + (state.manterConectado ? ' checked' : '') + ' />' +
+          '<span class="min-w-0">' +
+            '<span class="block text-sm font-black text-slate-800">Manter conectado</span>' +
+            '<span class="mt-0.5 block text-xs font-semibold leading-snug text-slate-600">Nao pedir login neste celular por 30 dias.</span>' +
+          '</span>' +
+        '</label>' +
+        '<div class="text-right">' +
+          '<button id="esqueci-senha" type="button" class="text-xs font-bold text-sky-700 underline">Esqueci minha senha</button>' +
+        '</div>' +
+        alertaHtml() +
+        '<button id="entrar" type="button" class="h-12 rounded-xl bg-slate-900 px-4 text-sm font-black uppercase tracking-wide text-white shadow-lg">' +
+          (state.loginAcao === 'senha' ? 'Entrando...' : 'Entrar') +
+        '</button>' +
+        '<button id="entrar-google" type="button" class="flex h-12 items-center justify-center gap-3 rounded-xl border border-slate-300 bg-white/90 px-4 text-sm font-bold text-slate-700 shadow-sm">' +
+          '<img src="/images/google-logo.svg" alt="Google" class="h-5 w-5" />' +
+          '<span>' + (state.loginAcao === 'google' ? 'Conectando...' : 'Entrar ou cadastrar com Google') + '</span>' +
+        '</button>' +
+        '<div class="pt-2 text-center text-sm text-slate-600">Ainda nao tem conta? <button id="abrir-cadastro" type="button" class="font-bold text-sky-700 underline">Criar cadastro</button></div>' +
+      '</div>'
+    );
+  }
+
+  function telaCadastro() {
+    var tipoCadastro = normalizarTipoPerfil(state.cadastroTipoPerfil);
+    return (
+      '<div class="grid gap-3">' +
+        inputHtml('cadastro-nome', 'Nome', 'text', 'Seu nome completo', state.cadastro.nome) +
+        '<div>' +
+          '<p class="mb-1 text-[10px] font-black uppercase tracking-wide text-slate-600">Tipo do primeiro perfil</p>' +
+          seletorTipoPerfilHtml('cadastro-tipo', tipoCadastro) +
+        '</div>' +
+        inputHtml('cadastro-email', 'Email', 'email', 'seuemail@exemplo.com', state.cadastro.email) +
+        inputHtml('cadastro-telefone', 'Celular', 'tel', 'DDD + numero. Ex: 11999999999', state.cadastro.telefone) +
+        senhaInputHtml('cadastro-senha', 'Senha', 'Crie uma senha', 'mostrarSenhaCadastro', 'toggle-senha-cadastro', state.cadastro.senha) +
+        senhaInputHtml('cadastro-confirmar-senha', 'Confirmar senha', 'Repita a senha', 'mostrarConfirmarSenhaCadastro', 'toggle-confirmar-cadastro', state.cadastro.confirmarSenha) +
+        (state.smsCadastroEnviado ? inputHtml('cadastro-codigo', 'Codigo recebido por SMS', 'text', 'Digite o codigo recebido') + '<p class="-mt-1 text-[11px] font-semibold text-slate-500">Enviamos o codigo para o celular informado.</p>' : '') +
+        alertaHtml() +
+        '<button id="cadastro-submit" type="button" class="h-12 rounded-xl bg-slate-900 px-4 text-sm font-black uppercase tracking-wide text-white shadow-lg">' +
+          (state.carregando ? (state.smsCadastroEnviado ? 'Validando...' : 'Enviando...') : (state.smsCadastroEnviado ? 'Concluir cadastro' : 'Enviar codigo por SMS')) +
+        '</button>' +
+        (state.smsCadastroEnviado ? '<button id="reenviar-cadastro" type="button" class="text-xs font-bold text-sky-700 underline">Reenviar codigo</button>' : '') +
+        '<div class="pt-1 text-center text-sm text-slate-600">Ja tem conta? <button id="voltar-login-cadastro" type="button" class="font-bold text-sky-700 underline">Entrar</button></div>' +
+      '</div>'
+    );
+  }
+
+  function telaSenha() {
+    return (
+      '<div class="grid gap-4">' +
+        inputHtml('login-senha', 'Email ou login', 'text', 'Informe seu email ou login', state.loginRecuperacao) +
+        (state.smsSenhaEnviado
+          ? inputHtml('codigo-senha', 'Codigo recebido por SMS', 'text', 'Digite o codigo recebido') +
+            senhaInputHtml('nova-senha', 'Nova senha', 'Digite a nova senha', 'mostrarNovaSenha', 'toggle-nova-senha') +
+            senhaInputHtml('confirmar-senha', 'Confirmar nova senha', 'Repita a nova senha', 'mostrarConfirmarSenha', 'toggle-confirmar-senha')
+          : '') +
+        alertaHtml() +
+        '<button id="redefinir-senha" type="button" class="h-12 rounded-xl bg-slate-900 px-4 text-sm font-black uppercase tracking-wide text-white shadow-lg">' +
+          (state.carregando ? (state.smsSenhaEnviado ? 'Redefinindo...' : 'Enviando...') : (state.smsSenhaEnviado ? 'Redefinir senha' : 'Enviar codigo por SMS')) +
+        '</button>' +
+        (state.smsSenhaEnviado
+          ? '<button id="reenviar-senha" type="button" class="text-xs font-bold text-sky-700 underline">Reenviar codigo</button>'
+          : '') +
+        '<button id="voltar-login" type="button" class="text-sm font-bold text-slate-600 underline">Voltar para login</button>' +
+      '</div>'
+    );
+  }
+
+  function telaTelefoneObrigatorioMobile() {
+    return (
+      '<section class="avantalab-mobile-bg fixed inset-0 flex flex-col items-center justify-center overflow-hidden px-4 py-5" style="height:100dvh;--avantalab-mobile-bg-overlay:linear-gradient(rgba(255,255,255,.08),rgba(255,255,255,0));">' +
+        '<div class="mx-auto w-full max-w-md overflow-y-auto rounded-3xl border border-white/35 p-5 text-slate-900 shadow-2xl backdrop-blur-xl" style="background-color:rgba(255,255,255,.18);max-height:calc(100dvh - 2.5rem);overscroll-behavior:contain;">' +
+          '<div class="mb-5">' +
+            '<p class="mb-2 text-xs font-bold uppercase tracking-[0.32em] text-sky-700">AvantaLab Gestao</p>' +
+            '<h1 class="text-3xl font-black text-slate-900">Confirme seu celular</h1>' +
+            '<p class="mt-2 text-sm leading-relaxed text-slate-600">Para manter seu acesso seguro, confirme um celular com DDD por SMS.</p>' +
+          '</div>' +
+          '<div class="grid gap-4">' +
+            inputHtml('telefone-obrigatorio', 'Celular', 'tel', 'DDD + numero. Ex: 11999999999', state.telefoneObrigatorio) +
+            (state.smsTelefoneObrigatorioEnviado
+              ? inputHtml('codigo-telefone-obrigatorio', 'Codigo recebido por SMS', 'text', 'Digite o codigo recebido', state.codigoTelefoneObrigatorio) +
+                '<p class="-mt-1 text-[11px] font-semibold text-slate-500">Enviamos o codigo para o celular informado.</p>'
+              : '') +
+            alertaHtml() +
+            '<button id="confirmar-telefone-obrigatorio" type="button" class="h-12 rounded-xl bg-slate-900 px-4 text-sm font-black uppercase tracking-wide text-white shadow-lg">' +
+              (state.validandoTelefoneObrigatorio
+                ? (state.smsTelefoneObrigatorioEnviado ? 'Validando...' : 'Enviando...')
+                : (state.smsTelefoneObrigatorioEnviado ? 'Confirmar celular' : 'Enviar codigo por SMS')) +
+            '</button>' +
+            (state.smsTelefoneObrigatorioEnviado
+              ? '<button id="reenviar-telefone-obrigatorio" type="button" class="text-xs font-bold text-sky-700 underline">Reenviar codigo</button>'
+              : '') +
+            '<button id="sair-telefone-obrigatorio" type="button" class="text-sm font-bold text-slate-600 underline">Sair</button>' +
+          '</div>' +
+        '</div>' +
+      '</section>'
+    );
+  }
+
+  function alertaHtml() {
+    if (state.erro) {
+      return '<p class="mt-4 rounded-xl bg-red-100 px-4 py-3 text-sm font-semibold text-red-700">' + escapeHtml(state.erro) + '</p>';
+    }
+    if (state.mensagem) {
+      return '<p class="mt-4 rounded-xl bg-green-100 px-4 py-3 text-sm font-semibold text-green-700">' + escapeHtml(state.mensagem) + '</p>';
+    }
+    return '';
+  }
+
+  function inputHtml(id, label, type, placeholder, value) {
+    return (
+      '<label class="grid gap-2 text-sm font-semibold text-slate-700">' +
+        escapeHtml(label) +
+        '<input id="' + id + '" type="' + type + '" placeholder="' + escapeHtml(placeholder || '') + '" value="' + escapeHtml(value || '') + '" style="font-size:16px;background-color:rgba(255,255,255,.62)" class="h-12 rounded-xl border border-white/60 px-4 text-base text-slate-800 outline-none transition focus:border-sky-600 focus:ring-2 focus:ring-sky-600/20" />' +
+      '</label>'
+    );
+  }
+
+  function senhaInputHtml(id, label, placeholder, stateKey, toggleId, value) {
+    var visivel = !!state[stateKey];
+
+    return (
+      '<label class="grid gap-2 text-sm font-semibold text-slate-700">' +
+        escapeHtml(label) +
+        '<span class="relative block">' +
+          '<input id="' + id + '" type="' + (visivel ? 'text' : 'password') + '" placeholder="' + escapeHtml(placeholder || '') + '" value="' + escapeHtml(value || '') + '" style="font-size:16px;background-color:rgba(255,255,255,.62)" class="h-12 w-full rounded-xl border border-white/60 px-4 pr-12 text-base text-slate-800 outline-none transition focus:border-sky-600 focus:ring-2 focus:ring-sky-600/20" />' +
+          '<button id="' + toggleId + '" type="button" class="absolute right-2 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full bg-white/35 text-sm font-black text-slate-600 backdrop-blur-sm" aria-label="' + (visivel ? 'Ocultar senha' : 'Exibir senha') + '">' +
+            (visivel ? '◉' : '◎') +
+          '</button>' +
+        '</span>' +
+      '</label>'
+    );
+  }
+
+  function campoClaro(id, label, extra) {
+    return (
+      '<label class="grid gap-1 text-xs font-black uppercase tracking-wide text-slate-600">' +
+        escapeHtml(label) +
+        '<input id="' + id + '" ' + (extra || '') + ' style="font-size:16px" class="h-11 w-full min-w-0 rounded-md border border-slate-300 bg-white px-3 text-base font-bold normal-case tracking-normal text-slate-900 outline-none focus:border-cyan-500" />' +
+      '</label>'
+    );
+  }
+
+  function campoValor(id, label, value) {
+    return (
+      '<label class="grid gap-1 text-xs font-black uppercase tracking-wide text-slate-600">' +
+        escapeHtml(label) +
+        '<input id="' + id + '" inputmode="decimal" value="' + escapeHtml(value || '') + '" placeholder="R$ 0,00" style="font-size:16px" class="h-11 rounded-md border border-slate-300 bg-white px-3 text-right text-base font-black normal-case tracking-normal text-slate-900 outline-none focus:border-cyan-500" />' +
+      '</label>'
+    );
+  }
+
+  function telaApp() {
+    var atual = dadosMes(state.mes);
+    var anterior = dadosMesAnterior();
+
+    return (
+      '<div class="min-h-screen mobile-app-shell ' + (state.darkMode ? 'mobile-dark bg-slate-950 text-slate-100' : 'mobile-light bg-slate-100 text-slate-900') + ' pb-24">' +
+        '<header class="fixed inset-x-0 top-0 z-40 border-b border-white/15 px-4 pb-3 text-white shadow-xl shadow-sky-950/20 backdrop-blur" style="padding-top:calc(env(safe-area-inset-top) + 10px);background:linear-gradient(135deg,#003E73 0%,#075985 54%,#00A6C8 100%);">' +
+          '<div class="mx-auto max-w-md">' +
+            '<div class="grid grid-cols-[40px_minmax(0,1fr)_40px] items-center gap-3">' +
+              '<button id="menu-toggle" type="button" class="flex h-10 w-10 items-center justify-center rounded-full border border-white/15 bg-white/15 text-xl font-black text-white shadow-sm backdrop-blur" aria-label="Abrir menu">&#9776;</button>' +
+              '<div class="min-w-0 text-center">' +
+                '<p class="text-[9px] font-black uppercase tracking-[0.26em] text-cyan-100">AvantaLab</p>' +
+                '<h1 class="mt-0.5 truncate text-sm font-black text-white">' + escapeHtml(nomeEmpresa(state.empresa)) + '</h1>' +
+              '</div>' +
+              (state.visao === 'home'
+                ? '<span class="h-10 w-10" aria-hidden="true"></span>'
+                : '<button id="voltar-dashboard-topo" type="button" class="flex h-10 w-10 items-center justify-center rounded-full border border-white/15 bg-white/15 text-lg font-black text-white shadow-sm backdrop-blur" aria-label="Voltar ao dashboard">&#8962;</button>') +
+            '</div>' +
+            '<div class="mt-3 grid grid-cols-[72px_minmax(0,1fr)] items-center gap-3">' +
+              anoHeaderHtml() +
+              '<div class="flex h-11 items-center justify-between rounded-2xl border border-white/15 bg-white/15 px-2 shadow-sm backdrop-blur">' +
+                '<button id="mes-anterior" type="button" class="flex h-9 w-10 items-center justify-center text-3xl font-black leading-none text-white" aria-label="Mes anterior">&lsaquo;</button>' +
+                '<h2 class="min-w-0 truncate px-2 text-center text-base font-black tracking-wide text-white">' + escapeHtml(state.mes.charAt(0) + state.mes.slice(1).toLowerCase()) + '</h2>' +
+                '<button id="mes-proximo" type="button" class="flex h-9 w-10 items-center justify-center text-3xl font-black leading-none text-white" aria-label="Proximo mes">&rsaquo;</button>' +
+              '</div>' +
+            '</div>' +
+          '</div>' +
+        '</header>' +
+        '<div class="mx-auto grid max-w-md gap-3 px-4" style="padding-top:calc(env(safe-area-inset-top) + 132px);">' +
+          empresaHtml() +
+          alertaHtml().replace('mt-4', '') +
+          (state.visao === 'home' ? homeHtml(atual, anterior) : listaDetalhadaHtml(atual)) +
+          rodapeMobileHtml() +
+        '</div>' +
+        '<button id="abrir-lancamento" type="button" class="fixed bottom-5 right-5 z-30 flex h-14 w-14 items-center justify-center rounded-full bg-cyan-500 text-3xl font-light leading-none text-white shadow-2xl shadow-cyan-900/30">+</button>' +
+        (state.modalLancamento ? modalLancamentoHtml() : '') +
+        (state.modalAcao ? modalAcaoLancamentoHtml() : '') +
+        (state.menuAberto ? menuLateralHtml() : '') +
+        (state.modalMenu ? modalMenuHtml() : '') +
+        toastHtml() +
+        '<button id="chat-ia-btn" type="button" style="position:fixed;bottom:80px;right:16px;z-index:4999;width:52px;height:52px;border-radius:50%;background:#0284c7;color:#fff;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 20px rgba(0,0,0,0.25);border:none;cursor:pointer;" aria-label="Assistente IA"><svg width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"/></svg></button>' +
+        (state.chatIAAberto ? chatIAModalHtml() : '') +
+      '</div>'
+    );
+  }
+
+  function empresaHtml() {
+    var empresasHtml = '';
+    if (state.empresas.length > 1) {
+      empresasHtml =
+        '<label class="grid gap-1 text-[10px] font-black uppercase tracking-wide text-slate-500">Perfil' +
+        '<select id="empresa" style="font-size:16px" class="h-10 rounded-lg border border-slate-200 bg-white px-3 text-base font-bold normal-case tracking-normal text-slate-900 shadow-sm">' +
+        state.empresas.map(function (empresa) {
+          return '<option value="' + escapeHtml(empresa.id) + '"' + (state.empresa && empresa.id === state.empresa.id ? ' selected' : '') + '>' + escapeHtml(nomeEmpresa(empresa)) + '</option>';
+        }).join('') +
+        '</select></label>';
+    }
+
+    return empresasHtml;
+  }
+
+  function toastHtml() {
+    if (!state.toast) return '';
+
+    return (
+      '<div class="pointer-events-none fixed inset-0 z-[80] flex items-center justify-center px-6">' +
+        '<div class="rounded-2xl bg-slate-950/90 px-5 py-3 text-center text-sm font-black text-white shadow-2xl backdrop-blur">' +
+          escapeHtml(state.toast) +
+        '</div>' +
+      '</div>'
+    );
+  }
+
+  function rodapeMobileHtml() {
+    var ano = new Date().getFullYear();
+    return (
+      '<footer class="mt-2 overflow-hidden rounded-2xl border border-white/15 px-4 py-4 text-center text-[11px] text-white shadow-lg shadow-sky-950/15" style="background:linear-gradient(135deg,#003E73 0%,#075985 54%,#00A6C8 100%);">' +
+        '<div class="text-xs font-black tracking-[0.22em] text-white">AVANTALAB</div>' +
+        '<p class="mt-1 font-semibold text-cyan-50/90">&copy; ' + ano + ' Todos os direitos reservados.</p>' +
+        '<div class="mt-3 flex flex-wrap items-center justify-center gap-2 font-bold">' +
+          '<a href="https://www.instagram.com/avanta.lab" target="_blank" rel="noopener noreferrer" class="rounded-full border border-white/15 bg-white/15 px-3 py-1.5 text-cyan-50 shadow-sm backdrop-blur">@avanta.lab</a>' +
+          '<button id="termos-mobile" type="button" class="rounded-full border border-white/15 bg-white/15 px-3 py-1.5 text-cyan-50 shadow-sm backdrop-blur">Termos de Uso</button>' +
+          '<button id="privacidade-mobile" type="button" class="rounded-full border border-white/15 bg-white/15 px-3 py-1.5 text-cyan-50 shadow-sm backdrop-blur">Privacidade</button>' +
+        '</div>' +
+      '</footer>'
+    );
+  }
+
+  function homeHtml(atual, anterior) {
+    var cards = {
+      saldo: saldoTopoHtml(atual, anterior),
+      ia: perguntaIaHtml(),
+      categorias: graficoCategoriaHtml(atual),
+      tipos: graficoTipoDespesaHtml(atual),
+      ultimasDespesas: ultimasDespesasHtml(atual.lancamentos),
+      ultimasReceitas: ultimasReceitasHtml(atual.entradas),
+      totais: totaisHtml(atual),
+      evolucaoDespesas: evolucaoHtml('despesas'),
+      evolucaoReceitas: evolucaoHtml('receitas'),
+    };
+
+    var visiveis = cardsDashboardVisiveis();
+    if (!visiveis.length) {
+      return (
+        '<section class="rounded-2xl border border-cyan-100 bg-white p-4 text-center shadow-sm">' +
+          '<p class="text-sm font-black text-slate-900">Nenhum card visivel</p>' +
+          '<p class="mt-1 text-xs font-semibold leading-relaxed text-slate-500">Abra o menu e use Configurar resumo para reexibir os cards.</p>' +
+        '</section>'
+      );
+    }
+
+    return visiveis
+      .map(function (id) {
+        if (!cards[id]) return '';
+        return '<div data-dashboard-card="' + escapeHtml(id) + '" class="relative pb-2 transition-[transform,opacity,filter] duration-200 ease-out">' +
+          cards[id] +
+          '<button type="button" data-dashboard-handle="' + escapeHtml(id) + '" class="absolute bottom-1 right-3 flex h-7 w-8 select-none touch-none items-center justify-center rounded-full bg-transparent text-[11px] font-black leading-none text-slate-400" aria-label="Mover card">&vellip;&vellip;</button>' +
+        '</div>';
+      })
+      .join('');
+  }
+
+  function saldoTopoHtml(atual, anterior) {
+    return (
+      '<section class="rounded-2xl bg-slate-950 p-4 text-white shadow-lg">' +
+        '<div class="grid grid-cols-3 gap-2 text-center">' +
+          miniSaldoHtml('Inicial', anterior.saldo, 'text-slate-200') +
+          miniSaldoHtml('Final', atual.saldo, atual.saldo >= 0 ? 'text-emerald-300' : 'text-red-300') +
+          miniSaldoHtml('Previsto', atual.saldo, atual.saldo >= 0 ? 'text-cyan-300' : 'text-red-300') +
+        '</div>' +
+      '</section>'
+    );
+  }
+
+  function miniSaldoHtml(rotulo, valor, cor) {
+    return (
+      '<div class="min-w-0">' +
+        '<p class="text-[10px] font-bold uppercase tracking-wide text-slate-400">' + rotulo + '</p>' +
+        '<strong class="mt-1 block truncate text-sm font-black ' + cor + '">' + dinheiro(valor) + '</strong>' +
+      '</div>'
+    );
+  }
+
+  function perguntaIaHtml() {
+    return (
+      '<section class="flex items-center gap-2 rounded-2xl bg-white px-3 py-2.5 shadow-sm">' +
+        '<span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-cyan-50 text-sm font-black text-cyan-700">IA</span>' +
+        '<div class="min-w-0 flex-1 text-xs font-semibold text-slate-500">Pergunte sobre suas financas em breve</div>' +
+        '<span class="text-lg text-slate-400">&#128269;</span>' +
+      '</section>'
+    );
+  }
+
+  function categoriasDoMes(atual) {
+    var categoriasMap = {};
+    atual.lancamentos.forEach(function (lancamento) {
+      var despesa = state.despesas.find(function (item) { return item.nome === lancamento.despesa; });
+      var categoria = despesa ? despesa.categoria : 'Sem categoria';
+      categoriasMap[categoria] = (categoriasMap[categoria] || 0) + lancamento.valor;
+    });
+
+    return Object.keys(categoriasMap)
+      .map(function (categoria) { return { categoria: categoria, valor: categoriasMap[categoria] }; })
+      .sort(function (a, b) { return b.valor - a.valor; });
+  }
+
+  function tiposDespesaDoMes(atual) {
+    var tiposMap = {};
+    atual.lancamentos.forEach(function (lancamento) {
+      var tipo = lancamento.despesa || 'Sem tipo';
+      tiposMap[tipo] = (tiposMap[tipo] || 0) + lancamento.valor;
+    });
+
+    return Object.keys(tiposMap)
+      .map(function (tipo) { return { categoria: tipo, valor: tiposMap[tipo] }; })
+      .sort(function (a, b) { return b.valor - a.valor; });
+  }
+
+  function graficoCategoriaHtml(atual) {
+    return graficoPizzaHtml({
+      titulo: 'Despesas por categoria',
+      itens: categoriasDoMes(atual),
+      total: atual.despesas || 0,
+      expandido: state.categoriasExpandido,
+      toggleId: 'toggle-categorias',
+      textoExpandir: 'Expandir categorias',
+    });
+  }
+
+  function graficoTipoDespesaHtml(atual) {
+    return graficoPizzaHtml({
+      titulo: 'Total por tipo de despesa',
+      itens: tiposDespesaDoMes(atual),
+      total: atual.despesas || 0,
+      expandido: state.tiposDespesaExpandido,
+      toggleId: 'toggle-tipos-despesa',
+      textoExpandir: 'Expandir tipos',
+    });
+  }
+
+  function graficoPizzaHtml(configuracao) {
+    var categorias = configuracao.itens || [];
+    var total = configuracao.total || 0;
+    var totalFormatado = dinheiro(total);
+    var classeValorCentral =
+      totalFormatado.length > 15
+        ? 'text-[8px]'
+        : totalFormatado.length > 12
+          ? 'text-[9px]'
+          : 'text-[10px]';
+    var cores = ['#0284c7', '#ef4444', '#f59e0b', '#10b981', '#6366f1', '#64748b'];
+    var cursor = 0;
+    var segmentos = categorias.map(function (item, index) {
+      var inicio = cursor;
+      var fim = total > 0 ? cursor + (item.valor / total) * 100 : cursor;
+      cursor = fim;
+      return cores[index % cores.length] + ' ' + inicio.toFixed(2) + '% ' + fim.toFixed(2) + '%';
+    }).join(',');
+    var fundo = total > 0 ? 'conic-gradient(' + segmentos + ')' : '#e2e8f0';
+    var categoriasVisiveis = configuracao.expandido ? categorias : categorias.slice(0, 3);
+
+    return (
+      '<section class="rounded-2xl bg-white p-4 pb-8 shadow-sm">' +
+        '<div class="mb-3 flex items-center justify-between"><h2 class="text-sm font-black">' + escapeHtml(configuracao.titulo) + '</h2><span class="text-xs font-bold text-slate-400">' + dinheiro(total) + '</span></div>' +
+        '<div class="grid grid-cols-[136px_1fr] items-center gap-3">' +
+          '<div class="relative h-32 w-32 rounded-full" style="background:' + fundo + '">' +
+            '<div class="absolute left-1/2 top-1/2 flex h-[86px] w-[86px] -translate-x-1/2 -translate-y-1/2 flex-col items-center justify-center rounded-full bg-white px-1 text-center shadow-inner">' +
+              '<span class="text-[9px] font-bold leading-none text-slate-400">Total</span><strong class="mt-1 block max-w-[78px] truncate leading-none ' + classeValorCentral + ' font-black text-slate-900">' + totalFormatado + '</strong>' +
+            '</div>' +
+          '</div>' +
+          '<div class="grid gap-2">' +
+            (categorias.length ? categoriasVisiveis.map(function (item, index) {
+              return '<div class="flex min-w-0 items-center justify-between gap-2 text-xs">' +
+                '<span class="min-w-0 truncate font-bold text-slate-600"><i class="mr-2 inline-block h-2.5 w-2.5 rounded-full" style="background:' + cores[index % cores.length] + '"></i>' + escapeHtml(item.categoria) + '</span>' +
+                '<strong class="shrink-0 text-slate-900">' + dinheiro(item.valor) + '</strong>' +
+              '</div>';
+            }).join('') : '<p class="text-xs text-slate-500">Sem despesas no mes.</p>') +
+            (categorias.length > 3 ? '<button id="' + escapeHtml(configuracao.toggleId) + '" type="button" class="mt-1 text-left text-xs font-black text-cyan-700">' + (configuracao.expandido ? 'Recolher' : escapeHtml(configuracao.textoExpandir)) + '</button>' : '') +
+          '</div>' +
+        '</div>' +
+      '</section>'
+    );
+  }
+
+  function visaoGeralHtml(atual) {
+    return (
+      '<section class="rounded-2xl bg-white p-4 pb-12 shadow-sm">' +
+        '<h2 class="mb-2 text-sm font-black">Vis&atilde;o geral do m&ecirc;s</h2>' +
+        '<div class="grid gap-1">' +
+          linhaVisaoHtml('receitas', '+', 'Receitas', atual.receitas, 'bg-emerald-100 text-emerald-700') +
+          linhaVisaoHtml('despesas', '-', 'Despesas', atual.despesas, 'bg-red-100 text-red-700') +
+          linhaVisaoHtml('saldo', '=', 'Saldo', atual.saldo, 'bg-cyan-100 text-cyan-700') +
+        '</div>' +
+      '</section>'
+    );
+  }
+
+  function linhaVisaoHtml(id, icone, titulo, valor, classe) {
+    var clicavel = id === 'receitas' || id === 'despesas';
+    return (
+      '<button type="button" ' + (clicavel ? 'id="ver-' + id + '"' : '') + ' class="flex w-full items-center justify-between gap-3 rounded-xl px-2 py-2 text-left transition active:bg-slate-50">' +
+        '<span class="flex min-w-0 items-center gap-3"><span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-lg font-black ' + classe + '">' + icone + '</span><span class="truncate text-sm font-bold text-slate-700">' + titulo + '</span></span>' +
+        '<strong class="shrink-0 text-sm font-black text-slate-900">' + dinheiro(valor) + '</strong>' +
+      '</button>'
+    );
+  }
+
+  function ultimasDespesasHtml(lancamentos) {
+    var todos = lancamentos.slice().sort(function (a, b) { return b.dia - a.dia; });
+    var pesquisando = state.ultimasDespesasBuscaAberta;
+    var itens = pesquisando ? todos : (state.ultimasDespesasExpandido ? todos : todos.slice(0, 3));
+
+    return (
+      '<section class="overflow-hidden rounded-2xl bg-white shadow-sm">' +
+        '<div class="flex items-center justify-between gap-3 bg-red-50 px-4 py-3"><h2 class="text-sm font-black text-red-900">Ultimas despesas</h2><div class="flex items-center gap-2"><button id="ver-despesas-lista" type="button" class="text-xs font-black text-red-700">Lista</button><button id="buscar-ultimas-despesas" type="button" class="flex h-8 w-8 items-center justify-center rounded-full bg-white/80 text-sm font-black text-red-700 shadow-sm" aria-label="Buscar despesas">&#128269;</button></div></div>' +
+        (state.ultimasDespesasBuscaAberta ? '<div class="px-4 pt-3"><div class="flex h-10 items-center gap-2 rounded-xl border border-red-100 bg-red-50/60 px-3"><input id="busca-ultimas-despesas" type="search" autocomplete="off" enterkeyhint="search" value="' + escapeHtml(state.ultimasDespesasBusca) + '" placeholder="Buscar descricao ou valor" style="font-size:16px" class="min-w-0 flex-1 bg-transparent text-base font-semibold text-slate-800 outline-none" /><button id="limpar-ultimas-despesas" type="button" class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-white text-sm font-black text-red-600 shadow-sm" aria-label="Limpar busca">&times;</button></div></div>' : '') +
+        '<div class="grid gap-1 p-4" id="ultimas-despesas-lista">' +
+          (itens.length ? itens.map(function (item) {
+            var valor = dinheiro(item.valor);
+            var buscaItem = textoBusca([item.descricao, item.despesa, valor, item.valor].join(' '));
+            return '<button type="button" data-tipo-lancamento="despesa" data-lancamento-id="' + escapeHtml(item.id) + '" data-busca-ultimas-despesas="' + escapeHtml(buscaItem) + '" class="flex w-full items-center justify-between gap-3 border-b border-slate-100 py-2 text-left last:border-b-0">' +
+              '<div class="min-w-0"><p class="truncate text-sm font-bold text-slate-800">' + escapeHtml(item.despesa) + '</p><p class="truncate text-xs text-slate-500">Dia ' + item.dia + (item.descricao ? ' - ' + escapeHtml(item.descricao) : '') + '</p></div>' +
+              '<strong class="shrink-0 text-sm font-black text-red-600">' + valor + '</strong>' +
+            '</button>';
+          }).join('') + '<p id="ultimas-despesas-vazia" style="display:none" class="text-xs text-slate-500">Nenhuma despesa encontrada.</p>' : '<p class="text-xs text-slate-500">Nenhuma despesa neste mes.</p>') +
+          (!pesquisando && todos.length > 3 ? '<button id="toggle-ultimas-despesas" type="button" class="pt-2 text-left text-xs font-black text-cyan-700">' + (state.ultimasDespesasExpandido ? 'Recolher' : 'Expandir despesas') + '</button>' : '') +
+        '</div>' +
+      '</section>'
+    );
+  }
+
+  function ultimasReceitasHtml(entradas) {
+    var todos = entradas.slice().sort(function (a, b) { return b.dia - a.dia; });
+    var pesquisando = state.ultimasReceitasBuscaAberta;
+    var itens = pesquisando ? todos : (state.ultimasReceitasExpandido ? todos : todos.slice(0, 3));
+
+    return (
+      '<section class="overflow-hidden rounded-2xl bg-white shadow-sm">' +
+        '<div class="flex items-center justify-between gap-3 bg-emerald-50 px-4 py-3"><h2 class="text-sm font-black text-emerald-900">Ultimas receitas</h2><div class="flex items-center gap-2"><button id="ver-receitas-lista" type="button" class="text-xs font-black text-emerald-700">Lista</button><button id="buscar-ultimas-receitas" type="button" class="flex h-8 w-8 items-center justify-center rounded-full bg-white/80 text-sm font-black text-emerald-700 shadow-sm" aria-label="Buscar receitas">&#128269;</button></div></div>' +
+        (state.ultimasReceitasBuscaAberta ? '<div class="px-4 pt-3"><div class="flex h-10 items-center gap-2 rounded-xl border border-emerald-100 bg-emerald-50/60 px-3"><input id="busca-ultimas-receitas" type="search" autocomplete="off" enterkeyhint="search" value="' + escapeHtml(state.ultimasReceitasBusca) + '" placeholder="Buscar descricao ou valor" style="font-size:16px" class="min-w-0 flex-1 bg-transparent text-base font-semibold text-slate-800 outline-none" /><button id="limpar-ultimas-receitas" type="button" class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-white text-sm font-black text-emerald-600 shadow-sm" aria-label="Limpar busca">&times;</button></div></div>' : '') +
+        '<div class="grid gap-1 p-4" id="ultimas-receitas-lista">' +
+          (itens.length ? itens.map(function (item) {
+            var valor = dinheiro(item.valor);
+            var buscaItem = textoBusca([item.origem, item.descricao, valor, item.valor].join(' '));
+            return '<button type="button" data-tipo-lancamento="receita" data-lancamento-id="' + escapeHtml(item.id) + '" data-busca-ultimas-receitas="' + escapeHtml(buscaItem) + '" class="flex w-full items-center justify-between gap-3 border-b border-slate-100 py-2 text-left last:border-b-0">' +
+              '<div class="min-w-0"><p class="truncate text-sm font-bold text-slate-800">' + escapeHtml(item.origem) + '</p><p class="truncate text-xs text-slate-500">Dia ' + item.dia + '</p></div>' +
+              '<strong class="shrink-0 text-sm font-black text-emerald-600">' + valor + '</strong>' +
+            '</button>';
+          }).join('') + '<p id="ultimas-receitas-vazia" style="display:none" class="text-xs text-slate-500">Nenhuma receita encontrada.</p>' : '<p class="text-xs text-slate-500">Nenhuma receita neste mes.</p>') +
+          (!pesquisando && todos.length > 3 ? '<button id="toggle-ultimas-receitas" type="button" class="pt-2 text-left text-xs font-black text-cyan-700">' + (state.ultimasReceitasExpandido ? 'Recolher' : 'Expandir receitas') + '</button>' : '') +
+        '</div>' +
+      '</section>'
+    );
+  }
+
+  function totaisHtml(atual) {
+    return (
+      '<section class="rounded-2xl bg-white p-4 pb-12 shadow-sm">' +
+        '<h2 class="mb-3 text-sm font-black">Vis&atilde;o geral do m&ecirc;s</h2>' +
+        '<div class="grid grid-cols-3 gap-2">' +
+          totalBoxHtml('Despesas', atual.despesas, 'text-red-600', 'ver-despesas-total') +
+          totalBoxHtml('Receitas', atual.receitas, 'text-emerald-600', 'ver-receitas-total') +
+          totalBoxHtml('Saldo', atual.saldo, atual.saldo >= 0 ? 'text-cyan-700' : 'text-red-600', '') +
+        '</div>' +
+      '</section>'
+    );
+  }
+
+  function totalBoxHtml(titulo, valor, cor, id) {
+    var tag = id ? 'button' : 'div';
+    return '<' + tag + (id ? ' id="' + id + '" type="button"' : '') + ' class="min-w-0 rounded-2xl bg-slate-50 p-3 text-left shadow-sm"><p class="text-[10px] font-black uppercase tracking-wide text-slate-400">' + titulo + '</p><strong class="mt-1 block truncate text-xs font-black ' + cor + '">' + dinheiro(valor) + '</strong></' + tag + '>';
+  }
+
+  function evolucaoHtml(tipo) {
+    var indiceAtual = indiceMes(state.mes);
+    var inicio = Math.max(0, indiceAtual - 5);
+    var lista = meses.slice(inicio, indiceAtual + 1).map(function (mes) {
+      var dados = dadosMes(mes);
+      return {
+        mes: mes,
+        valor: tipo === 'despesas' ? dados.despesas : dados.receitas,
+      };
+    });
+    var max = Math.max.apply(null, lista.map(function (item) { return item.valor; }).concat([1]));
+    var cor = tipo === 'despesas' ? 'bg-red-400' : 'bg-emerald-400';
+    var valorSelecionado = state.evolucaoSelecionada[tipo];
+
+    return (
+      '<section class="rounded-2xl bg-white p-4 shadow-sm">' +
+        '<div class="mb-3 flex items-center justify-between gap-3">' +
+          '<h2 class="text-sm font-black">Evolucao das ' + (tipo === 'despesas' ? 'despesas' : 'receitas') + '</h2>' +
+          '<span class="shrink-0 text-xs font-black ' + (tipo === 'despesas' ? 'text-red-600' : 'text-emerald-600') + '">' + (valorSelecionado != null ? dinheiro(valorSelecionado) : '') + '</span>' +
+        '</div>' +
+        '<div class="flex h-28 items-end gap-2">' +
+          lista.map(function (item) {
+            var altura = Math.max(8, Math.round((item.valor / max) * 100));
+            return '<button type="button" data-evolucao-tipo="' + escapeHtml(tipo) + '" data-evolucao-mes="' + escapeHtml(item.mes) + '" data-evolucao-valor="' + escapeHtml(item.valor) + '" class="flex min-w-0 flex-1 flex-col items-center gap-1"><div class="flex h-24 w-full items-end"><div class="w-full rounded-t-md ' + cor + '" style="height:' + altura + '%"></div></div><span class="text-[9px] font-bold text-slate-400">' + item.mes.slice(0, 3) + '</span></button>';
+          }).join('') +
+        '</div>' +
+      '</section>'
+    );
+  }
+
+  function itensListaDetalhadaHtml(atual) {
+    var tipo = state.visao;
+    var itens = tipo === 'receitas'
+      ? atual.entradas.map(function (item) {
+          return {
+            id: item.id,
+            tipo: 'receita',
+            titulo: item.origem,
+            detalhe: 'Dia ' + item.dia,
+            valor: item.valor,
+            dia: item.dia,
+          };
+        })
+      : atual.lancamentos.map(function (item) {
+          return {
+            id: item.id,
+            tipo: 'despesa',
+            titulo: item.despesa,
+            detalhe: 'Dia ' + item.dia + (item.descricao ? ' - ' + item.descricao : ''),
+            valor: item.valor,
+            dia: item.dia,
+          };
+        });
+
+    itens = itens.sort(function (a, b) { return b.dia - a.dia; });
+
+    return itens.length ? itens.map(function (item) {
+      var buscaItem = String(item.titulo + ' ' + item.detalhe + ' ' + item.valor).toLowerCase();
+      return '<button type="button" data-tipo-lancamento="' + escapeHtml(item.tipo) + '" data-lancamento-id="' + escapeHtml(item.id) + '" data-busca-lancamento="' + escapeHtml(buscaItem) + '" class="flex w-full items-center justify-between gap-3 border-b border-slate-100 px-1 py-3 text-left last:border-b-0">' +
+        '<div class="min-w-0"><p class="truncate text-sm font-bold text-slate-800">' + escapeHtml(item.titulo) + '</p><p class="truncate text-xs text-slate-500">' + escapeHtml(item.detalhe) + '</p></div>' +
+        '<strong class="shrink-0 text-sm font-black ' + (tipo === 'receitas' ? 'text-emerald-600' : 'text-red-600') + '">' + dinheiro(item.valor) + '</strong>' +
+      '</button>';
+    }).join('') + '<p id="lista-detalhada-vazia" style="display:none" class="p-3 text-sm text-slate-500">Nenhum item encontrado.</p>' : '<p class="p-3 text-sm text-slate-500">Nenhum item encontrado.</p>';
+  }
+
+  function listaDetalhadaHtml(atual) {
+    var tipo = state.visao;
+    var total = tipo === 'receitas' ? atual.receitas : atual.despesas;
+    var cor = tipo === 'receitas' ? 'text-emerald-600' : 'text-red-600';
+    var titulo = tipo === 'receitas' ? 'Receitas' : 'Despesas';
+
+    return (
+      '<section class="grid gap-3">' +
+        '<div class="rounded-2xl bg-white p-4 shadow-sm">' +
+          '<div class="mb-3 flex items-center gap-3">' +
+            '<button id="voltar-home" type="button" class="flex h-9 w-9 items-center justify-center rounded-full bg-slate-100 text-lg font-black text-slate-700">&lsaquo;</button>' +
+            '<div class="min-w-0 flex-1"><p class="text-[10px] font-black uppercase tracking-wide text-slate-400">Total do mes</p><h2 class="truncate text-lg font-black">' + titulo + '</h2></div>' +
+            '<strong class="shrink-0 text-sm font-black ' + cor + '">' + dinheiro(total) + '</strong>' +
+          '</div>' +
+          '<div class="flex h-10 items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3">' +
+            '<span class="text-slate-400">&#128269;</span>' +
+            '<input id="busca-lista" type="search" autocomplete="off" enterkeyhint="search" value="' + escapeHtml(state.busca) + '" placeholder="Procurar" style="font-size:16px" class="min-w-0 flex-1 bg-transparent text-base font-semibold text-slate-700 outline-none" />' +
+            '<button id="limpar-busca-lista" type="button" class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-slate-100 text-sm font-black text-slate-500 shadow-sm" aria-label="Limpar busca">&times;</button>' +
+          '</div>' +
+        '</div>' +
+        '<div id="lista-detalhada-itens" class="rounded-2xl bg-white p-3 shadow-sm">' +
+          itensListaDetalhadaHtml(atual) +
+        '</div>' +
+      '</section>'
+    );
+  }
+
+  function modalLancamentoHtml() {
+    var despesaAtiva = state.tipoLancamento === 'despesa';
+    var novaAberta = state.novaDespesaAberta;
+
+    return (
+      '<div id="modal-lancamento-overlay" class="fixed inset-0 z-40 flex items-center justify-center overflow-hidden bg-slate-950/60 px-3 py-4">' +
+        '<section class="mx-auto max-h-[calc(100dvh-32px)] w-full max-w-md overflow-x-hidden overflow-y-auto rounded-3xl bg-white p-4 shadow-2xl overscroll-contain">' +
+          (novaAberta
+            ? '<div class="-mx-4 -mt-4 mb-5 flex items-center gap-3 rounded-t-3xl border-b border-sky-100 bg-sky-50 px-4 py-3">' +
+                '<button id="fechar-nova-despesa" type="button" class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-sky-100 text-lg font-black text-slate-700">&larr;</button>' +
+                '<div class="min-w-0 flex-1">' +
+                  '<p class="text-[10px] font-black uppercase tracking-wide text-sky-500">Novo lan&ccedil;amento &rsaquo; Despesa</p>' +
+                  '<h2 class="text-sm font-black text-sky-900">Cadastrar tipo de despesa</h2>' +
+                '</div>' +
+              '</div>' +
+              novaDespesaFormHtml()
+            : '<div class="-mx-4 -mt-4 mb-4 flex items-center justify-between rounded-t-3xl border-b border-cyan-100 bg-cyan-50/90 px-4 py-3">' +
+                '<h2 class="text-base font-black">Novo lancamento</h2>' +
+                '<button id="fechar-lancamento" type="button" class="flex h-9 w-9 items-center justify-center rounded-full bg-slate-100 text-xl text-slate-600">&times;</button>' +
+              '</div>' +
+              '<div class="mb-3 grid grid-cols-2 gap-2 rounded-xl bg-slate-100 p-1">' +
+                '<button id="tipo-despesa" type="button" class="h-9 rounded-lg text-sm font-black transition ' + (despesaAtiva ? 'bg-red-600 text-white shadow-sm' : 'text-slate-500') + '">Despesa</button>' +
+                '<button id="tipo-receita" type="button" class="h-9 rounded-lg text-sm font-black transition ' + (!despesaAtiva ? 'bg-emerald-600 text-white shadow-sm' : 'text-slate-500') + '">Receita</button>' +
+              '</div>' +
+              '<p id="lancamento-alerta-dia" class="rounded-lg bg-rose-50 px-3 py-2 text-[11px] font-black text-rose-700 mb-3"' + (state.erro ? '' : ' style="display:none"') + '>' + escapeHtml(state.erro) + '</p>' +
+              (despesaAtiva ? modalDespesaCamposHtml() : modalReceitaCamposHtml())
+          ) +
+        '</section>' +
+      '</div>'
+    );
+  }
+
+  function novaDespesaFormHtml() {
+    var categorias = categoriasDoPerfil(state.empresa && state.empresa.tipo_perfil);
+    return (
+      '<div class="grid gap-4">' +
+        '<label class="grid gap-1.5 text-xs font-black uppercase tracking-wide text-slate-600">Nome da despesa' +
+          '<input id="nova-despesa-nome" type="text" value="' + escapeHtml(state.novaDespesaNome) + '" placeholder="Ex: Plano de saude" style="font-size:16px" autocomplete="off" class="h-11 w-full rounded-lg border border-slate-300 bg-white px-3 text-base font-bold normal-case tracking-normal outline-none focus:border-sky-400 focus:ring-1 focus:ring-sky-200" />' +
+        '</label>' +
+        '<label class="grid gap-1.5 text-xs font-black uppercase tracking-wide text-slate-600">Categoria' +
+          '<select id="nova-despesa-categoria" style="font-size:16px" class="h-11 w-full rounded-lg border border-slate-300 bg-white px-3 text-base font-bold normal-case tracking-normal">' +
+            categorias.map(function (cat) {
+              return '<option value="' + escapeHtml(cat.nome) + '"' + (cat.nome === state.novaDespesaCategoria ? ' selected' : '') + '>' + escapeHtml(cat.nome) + '</option>';
+            }).join('') +
+          '</select>' +
+        '</label>' +
+        alertaHtml().replace('mt-4', 'mt-0') +
+        '<button id="salvar-nova-despesa" type="button" class="h-12 rounded-xl bg-slate-950 px-4 text-sm font-black uppercase tracking-wide text-white shadow-md">' + (state.carregando ? 'Salvando...' : 'Salvar tipo de despesa') + '</button>' +
+      '</div>'
+    );
+  }
+
+  function modalDespesaCamposHtml() {
+    return (
+      '<div class="grid gap-3">' +
+        '<div class="flex items-end gap-6">' +
+          '<div class="w-20 shrink-0">' + campoClaro('despesa-dia', 'Dia', 'type="number" min="1" max="' + maxDias(state.mes, state.ano) + '" inputmode="numeric" style="font-size:16px;text-align:center"') + '</div>' +
+          '<label class="grid min-w-0 flex-1 gap-1 text-xs font-black uppercase tracking-wide text-slate-600">Despesa' +
+            '<select id="despesa-nome" style="font-size:16px" class="h-11 w-full rounded-md border border-slate-300 bg-white px-3 text-base font-bold normal-case tracking-normal">' +
+              '<option value="">Selecione</option>' +
+              state.despesas.map(function (despesa) {
+                return '<option value="' + escapeHtml(despesa.nome) + '">' + escapeHtml(despesa.nome) + '</option>';
+              }).join('') +
+            '</select>' +
+          '</label>' +
+        '</div>' +
+        '<button id="abrir-nova-despesa" type="button" class="flex w-full items-center gap-2 rounded-xl border border-dashed border-slate-300 px-3 py-2.5 text-xs font-black text-slate-500 transition hover:border-slate-400 hover:text-slate-700">+ Cadastrar despesa</button>' +
+        campoClaro('despesa-descricao', 'Descricao') +
+        campoValor('despesa-valor', 'Valor') +
+        // Linha parcelamento
+        '<div class="flex items-center gap-2 flex-wrap">' +
+          '<button id="toggle-parcelar-despesa" type="button" class="flex h-8 items-center gap-1.5 rounded-full border px-3 text-[11px] font-black uppercase tracking-wide transition-all ' +
+            (state.formParcelar
+              ? 'border-red-500 bg-red-600 text-white shadow-sm'
+              : 'border-slate-300 bg-white text-slate-500') + '">' +
+            '<span>' + (state.formParcelar ? '&#10003;' : '&divide;') + '</span>' +
+            '<span>Parcelar</span>' +
+          '</button>' +
+          (state.formParcelar ? (
+            '<div class="flex items-center gap-1">' +
+              '<button id="parcelar-menos" type="button" class="flex h-8 w-8 items-center justify-center rounded-md border border-slate-300 bg-white text-sm font-black text-slate-700">&minus;</button>' +
+              '<span class="w-7 text-center text-sm font-black text-slate-900">' + state.formParcelas + '</span>' +
+              '<button id="parcelar-mais" type="button" class="flex h-8 w-8 items-center justify-center rounded-md border border-slate-300 bg-white text-sm font-black text-slate-700">+</button>' +
+              '<span class="text-[10px] font-semibold text-slate-500">x</span>' +
+            '</div>' +
+            '<span class="text-[10px] font-semibold italic text-slate-400">nos meses seguintes</span>'
+          ) : '') +
+        '</div>' +
+        '<button id="salvar-despesa" type="button" ' + (state.lancandoDespesa ? 'disabled ' : '') + 'class="h-11 rounded-xl bg-slate-950 px-4 text-sm font-black uppercase tracking-wide text-white disabled:opacity-60">' + (state.lancandoDespesa ? 'Salvando...' : 'Salvar despesa') + '</button>' +
+      '</div>'
+    );
+  }
+
+  function modalReceitaCamposHtml() {
+    var entradaAtiva = state.modoReceita !== 'total';
+    return (
+      '<div class="grid gap-3">' +
+        '<div class="grid grid-cols-2 gap-2 rounded-xl bg-slate-100 p-1">' +
+          '<button id="modo-receita-entrada" type="button" class="h-9 rounded-lg text-xs font-black ' + (entradaAtiva ? 'bg-white text-emerald-600 shadow-sm' : 'text-slate-500') + '">Adicionar entrada</button>' +
+          '<button id="modo-receita-total" type="button" class="h-9 rounded-lg text-xs font-black ' + (!entradaAtiva ? 'bg-white text-cyan-700 shadow-sm' : 'text-slate-500') + '">Definir total</button>' +
+        '</div>' +
+        (entradaAtiva
+          ? '<div class="grid gap-3">' +
+              '<div class="flex items-end gap-6">' +
+                '<div class="w-20 shrink-0">' + campoClaro('entrada-dia', 'Dia', 'inputmode="numeric"') + '</div>' +
+                '<div class="min-w-0 flex-1">' + campoClaro('entrada-origem', 'Origem') + '</div>' +
+              '</div>' +
+              campoValor('entrada-valor', 'Valor') +
+              '<button id="salvar-entrada" type="button" class="h-11 rounded-xl bg-cyan-500 px-4 text-sm font-black uppercase tracking-wide text-slate-950">' + (state.carregando ? 'Salvando...' : 'Salvar receita') + '</button>' +
+            '</div>'
+          : '<div class="grid gap-3">' +
+              '<p class="rounded-xl bg-cyan-50 px-3 py-2 text-xs font-semibold text-cyan-900">Define o faturamento total do mes selecionado, substituindo o valor atual.</p>' +
+              campoValor('receita-total', 'Total do mes') +
+              '<button id="salvar-total-receita" type="button" class="h-11 rounded-xl bg-slate-950 px-4 text-sm font-black uppercase tracking-wide text-white">' + (state.carregando ? 'Salvando...' : 'Definir total') + '</button>' +
+              (Object.prototype.hasOwnProperty.call(state.faturamentos, state.mes)
+                ? '<button id="excluir-total-receita" type="button" class="h-10 rounded-xl border border-red-200 bg-red-50 px-4 text-xs font-black uppercase tracking-wide text-red-600">' + (state.carregando ? 'Excluindo...' : 'Excluir total do mes') + '</button>'
+                : '') +
+            '</div>') +
+      '</div>'
+    );
+  }
+
+  function modalAcaoLancamentoHtml() {
+    var acao = state.modalAcao;
+    if (!acao || !acao.item) return '';
+
+    var item = acao.item;
+    var receita = acao.tipo === 'receita';
+    var titulo = receita ? item.origem : item.despesa;
+    var detalhe = receita ? 'Receita' : 'Despesa';
+
+    return (
+      '<div id="modal-acao-overlay" class="fixed inset-0 z-[55] flex items-center justify-center overflow-hidden bg-slate-950/60 px-3 py-4">' +
+        '<section class="mx-auto max-h-[calc(100dvh-32px)] w-full max-w-md overflow-x-hidden overflow-y-auto rounded-3xl bg-white p-4 shadow-2xl overscroll-contain">' +
+          '<div class="-mx-4 -mt-4 mb-4 flex items-center justify-between gap-3 rounded-t-3xl border-b border-cyan-100 bg-cyan-50/90 px-4 py-3">' +
+            '<div class="min-w-0"><p class="text-[10px] font-black uppercase tracking-wide text-slate-400">' + detalhe + '</p><h2 class="truncate text-base font-black">' + escapeHtml(titulo) + '</h2></div>' +
+            '<button id="fechar-acao-lancamento" type="button" class="flex h-9 w-9 items-center justify-center rounded-full bg-slate-100 text-xl text-slate-600">&times;</button>' +
+          '</div>' +
+          alertaHtml().replace('mt-4', 'mb-3') +
+          (acao.modo === 'editar' ? modalEditarLancamentoHtml(acao) : modalOpcoesLancamentoHtml(acao)) +
+        '</section>' +
+      '</div>'
+    );
+  }
+
+  function modalOpcoesLancamentoHtml(acao) {
+    return (
+      '<div class="grid gap-2">' +
+        '<div class="rounded-2xl bg-slate-50 p-4"><p class="text-xs font-semibold text-slate-500">Dia ' + escapeHtml(acao.item.dia) + '</p><strong class="mt-1 block text-lg font-black">' + dinheiro(acao.item.valor) + '</strong></div>' +
+        '<button id="editar-lancamento" type="button" class="h-11 rounded-xl bg-slate-950 px-4 text-sm font-black uppercase tracking-wide text-white">Editar</button>' +
+        '<button id="excluir-lancamento" type="button" class="h-11 rounded-xl bg-red-600 px-4 text-sm font-black uppercase tracking-wide text-white">' + (state.carregando ? 'Excluindo...' : 'Excluir') + '</button>' +
+      '</div>'
+    );
+  }
+
+  function modalEditarLancamentoHtml(acao) {
+    var item = acao.item;
+    if (acao.tipo === 'receita') {
+      return (
+        '<div class="grid gap-3">' +
+          '<div class="grid grid-cols-[72px_minmax(0,1fr)] gap-6">' +
+            campoClaro('editar-dia', 'Dia', 'inputmode="numeric" value="' + escapeHtml(item.dia) + '"') +
+            campoClaro('editar-origem', 'Origem', 'value="' + escapeHtml(item.origem) + '"') +
+          '</div>' +
+          campoValor('editar-valor', 'Valor', dinheiro(item.valor)) +
+          '<button id="salvar-edicao-lancamento" type="button" class="h-11 rounded-xl bg-cyan-500 px-4 text-sm font-black uppercase tracking-wide text-slate-950">' + (state.carregando ? 'Salvando...' : 'Salvar alteracoes') + '</button>' +
+        '</div>'
+      );
+    }
+
+    return (
+      '<div class="grid gap-3">' +
+        '<div class="grid grid-cols-[72px_minmax(0,1fr)] gap-6">' +
+          campoClaro('editar-dia', 'Dia', 'inputmode="numeric" value="' + escapeHtml(item.dia) + '"') +
+          '<label class="grid gap-1 text-xs font-black uppercase tracking-wide text-slate-600">Despesa' +
+            '<select id="editar-despesa" style="font-size:16px" class="h-11 rounded-md border border-slate-300 bg-white px-3 text-base font-bold normal-case tracking-normal">' +
+              state.despesas.map(function (despesa) {
+                return '<option value="' + escapeHtml(despesa.nome) + '"' + (despesa.nome === item.despesa ? ' selected' : '') + '>' + escapeHtml(despesa.nome) + '</option>';
+              }).join('') +
+            '</select>' +
+          '</label>' +
+        '</div>' +
+        campoClaro('editar-descricao', 'Descricao', 'value="' + escapeHtml(item.descricao || '') + '"') +
+        campoValor('editar-valor', 'Valor', dinheiro(item.valor)) +
+        '<button id="salvar-edicao-lancamento" type="button" class="h-11 rounded-xl bg-slate-950 px-4 text-sm font-black uppercase tracking-wide text-white">' + (state.carregando ? 'Salvando...' : 'Salvar alteracoes') + '</button>' +
+      '</div>'
+    );
+  }
+
+  function menuLateralHtml() {
+    return (
+      '<div id="menu-overlay" class="fixed inset-0 z-50 bg-slate-950/55 backdrop-blur-sm">' +
+        '<aside class="h-full w-[84vw] max-w-[328px] overflow-y-auto ' + (state.darkMode ? 'bg-slate-950 text-slate-100' : 'bg-slate-50 text-slate-900') + ' p-3 shadow-2xl">' +
+          '<div class="mb-3 overflow-hidden rounded-2xl border border-white/15 p-3 text-white shadow-lg shadow-sky-950/15" style="background:linear-gradient(135deg,#003E73 0%,#075985 54%,#00A6C8 100%);">' +
+            '<div class="flex items-start justify-between gap-3">' +
+              '<div class="min-w-0"><p class="text-[9px] font-black uppercase tracking-[0.24em] text-cyan-100">AvantaLab</p><h2 class="mt-1 truncate text-base font-black">' + escapeHtml(nomeEmpresa(state.empresa)) + '</h2><p class="mt-0.5 truncate text-[11px] font-semibold text-cyan-50/85">' + escapeHtml(state.usuario && state.usuario.email ? state.usuario.email : 'Usuario logado') + '</p></div>' +
+              '<button id="fechar-menu" type="button" class="flex h-8 w-8 items-center justify-center rounded-full border border-white/15 bg-white/15 text-lg font-black text-white">&times;</button>' +
+            '</div>' +
+          '</div>' +
+          '<div class="grid gap-2">' +
+            menuBotaoHtml('menu-dashboard', 'Dashboard', 'Visão principal do mês', '&#8962;') +
+            menuBotaoHtml('menu-configurar-resumo', 'Configurar resumo', 'Exibir e ocultar cards', '&#9776;') +
+            menuBotaoHtml('menu-organizar-dashboard', 'Organizar dashboard', 'Definir a ordem dos cards', '&#8597;') +
+            menuBotaoHtml('menu-usuario', 'Usuários', perfilFormatado(state.empresa && state.empresa.perfil), 'U') +
+            menuBotaoHtml('menu-gerenciar', 'Gerenciar perfil', 'Editar, criar ou excluir perfil', 'P') +
+            menuBotaoHtml('menu-categorias', 'Cadastrar despesas', 'Adicionar tipos de despesa', '+') +
+            menuBotaoHtml('menu-despesas-fixas', 'Despesas fixas', 'Lançamentos automáticos mensais', '&#10227;') +
+            menuBotaoHtml('menu-ajuda-categorias', 'Instruções de categorias', 'Como organizar seus gastos', '?') +
+            (isStandalone() ? '' : menuBotaoHtml('menu-instalar', 'Instalar app', 'Adicionar à tela inicial', '&#8681;')) +
+            '<button id="menu-duplicados" type="button" class="rounded-2xl border ' + (state.darkMode ? 'border-slate-800 bg-slate-900' : 'border-slate-200 bg-white') + ' p-3 text-left shadow-sm"><div class="flex items-center gap-3"><span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-cyan-50 text-xs font-black text-cyan-700">D</span><span class="min-w-0 flex-1"><span class="block text-xs font-black">Duplicados</span><span class="mt-0.5 block truncate text-[10px] font-semibold text-slate-500">' + (state.duplicadosAtivo ? 'Avisar despesas repetidas' : 'Nao avisar repeticoes') + '</span></span><span class="relative h-6 w-11 shrink-0 rounded-full p-0.5 ' + (state.duplicadosAtivo ? 'bg-emerald-500' : 'bg-rose-500') + '"><span class="block h-5 w-5 rounded-full bg-white shadow-sm transition-transform ' + (state.duplicadosAtivo ? 'translate-x-5' : 'translate-x-0') + '"></span></span></div></button>' +
+            '<button id="menu-tema" type="button" class="rounded-2xl border ' + (state.darkMode ? 'border-slate-800 bg-slate-900' : 'border-slate-200 bg-white') + ' p-3 text-left shadow-sm"><div class="flex items-center gap-3"><span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-cyan-50 text-xs font-black text-cyan-700">' + (state.darkMode ? 'ON' : 'OFF') + '</span><span class="min-w-0 flex-1"><span class="block text-xs font-black">Modo escuro</span><span class="mt-0.5 block truncate text-[10px] font-semibold text-slate-500">' + (state.darkMode ? 'Ativo' : 'Inativo') + '</span></span></div></button>' +
+            '<button id="menu-feedback" type="button" class="rounded-2xl border border-cyan-200 bg-cyan-50 p-3 text-left shadow-sm active:scale-[0.99]"><div class="flex items-center gap-3"><span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-sm font-black text-white" style="background:linear-gradient(135deg,#003E73,#00A6C8)">!</span><span class="min-w-0 flex-1"><span class="block text-xs font-black text-slate-900">Duvidas e Sugestoes</span><span class="mt-0.5 block truncate text-[10px] font-semibold text-cyan-800">Ajude a melhorar o AvantaLab</span></span></div></button>' +
+            '<button id="sair" type="button" class="mt-1 rounded-2xl border border-rose-100 bg-white p-3 text-left text-xs font-black text-rose-700 shadow-sm">Sair</button>' +
+          '</div>' +
+        '</aside>' +
+      '</div>'
+    );
+  }
+
+  function chatIAModalHtml() {
     var temTexto = state.chatIAInput.trim().length > 0;
     var gravando = state.chatIAGravando;
 
