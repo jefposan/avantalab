@@ -3774,7 +3774,7 @@
     }).join('');
 
     return (
-      '<div id="chat-ia-overlay" style="position:fixed;inset:0;z-index:5000;display:flex;flex-direction:column;background:#f8fafc;">' +
+      '<div id="chat-ia-overlay" style="position:fixed;inset:0;z-index:5000;display:flex;flex-direction:column;background:#f8fafc;height:100dvh;overflow:hidden;">' +
         // Header
         '<div style="background:linear-gradient(135deg,#003E73 0%,#075985 54%,#00A6C8 100%);padding:calc(env(safe-area-inset-top)+12px) 16px 14px;display:flex;align-items:center;gap:12px;flex-shrink:0;box-shadow:0 2px 12px rgba(0,0,0,0.18);">' +
           '<button id="chat-ia-fechar" type="button" style="background:rgba(255,255,255,0.15);border:none;color:#fff;width:36px;height:36px;border-radius:50%;font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;">' +
@@ -3788,7 +3788,7 @@
           '<div style="margin-left:auto;width:8px;height:8px;border-radius:50%;background:#4ade80;flex-shrink:0;" title="Online"></div>' +
         '</div>' +
         // Mensagens
-        '<div id="chat-ia-msgs" style="flex:1;overflow-y:auto;padding:20px 16px 8px;">' + msgs + '</div>' +
+        '<div id="chat-ia-msgs" style="flex:1;min-height:0;overflow-y:auto;padding:20px 16px 8px;-webkit-overflow-scrolling:touch;">' + msgs + '</div>' +
         // Input
         '<div style="padding:10px 12px;padding-bottom:calc(env(safe-area-inset-bottom)+10px);background:#fff;border-top:1px solid #e2e8f0;display:flex;gap:10px;align-items:flex-end;flex-shrink:0;">' +
           '<textarea id="chat-ia-input" placeholder="Mensagem..." rows="1" style="flex:1;resize:none;border:1.5px solid #e2e8f0;border-radius:22px;padding:10px 16px;font-size:15px;font-family:inherit;outline:none;max-height:100px;overflow-y:auto;background:#f8fafc;color:#1e293b;line-height:1.4;" ' + (state.chatIADigitando ? 'disabled' : '') + '>' + escapeHtml(state.chatIAInput) + '</textarea>' +
