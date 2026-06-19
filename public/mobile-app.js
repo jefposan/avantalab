@@ -153,6 +153,9 @@
     editRecorrValor: '',
     editRecorrValorNumerico: 0,
     editRecorrLancarAgora: false,
+    formParcelar: false,
+    formParcelas: 2,
+    lancandoDespesa: false,
   };
 
   var CHAVE_MANTER_CONECTADO_ATE = 'avantalab_mobile_manter_conectado_ate';
@@ -1825,7 +1828,7 @@
   }
 
   async function salvarDespesa() {
-    if (!state.empresa) return;
+    if (!state.empresa || state.lancandoDespesa) return;
 
     var dia = Number(campo('despesa-dia'));
     var nome = campo('despesa-nome');
@@ -1849,36 +1852,57 @@
       }
     }
 
+    state.lancandoDespesa = true;
     state.carregando = true;
     state.erro = '';
     render();
 
-    var resposta = await db
-      .from('lancamentos')
-      .insert({
-        empresa_id: state.empresa.id,
-        ano: Number(state.ano),
-        mes: state.mes,
-        dia: dia,
-        despesa_nome: nome,
-        descricao: formatarDescricao(descricao),
-        valor: valor,
-      })
-      .select()
-      .single();
+    var totalParcelas = (state.formParcelar && state.formParcelas >= 2) ? state.formParcelas : 1;
+    var mesIndex = indiceMes(state.mes);
+    var ok = true;
 
-    if (resposta.error) {
-      state.carregando = false;
-      setErro('Nao foi possivel salvar a despesa.');
-      return;
+    for (var p = 0; p < totalParcelas; p++) {
+      var idxMes = (mesIndex + p) % 12;
+      var anosExtra = Math.floor((mesIndex + p) / 12);
+      var mesParc = meses[idxMes];
+      var anoParc = Number(state.ano) + anosExtra;
+      var descBase = formatarDescricao(descricao);
+      var descParc = totalParcelas > 1
+        ? (descBase ? descBase + ' (' + (p + 1) + '/' + totalParcelas + ')' : '(' + (p + 1) + '/' + totalParcelas + ')')
+        : descBase;
+
+      var resposta = await db
+        .from('lancamentos')
+        .insert({
+          empresa_id: state.empresa.id,
+          ano: anoParc,
+          mes: mesParc,
+          dia: dia,
+          despesa_nome: nome,
+          descricao: descParc,
+          valor: valor,
+        })
+        .select()
+        .single();
+
+      if (resposta.error) {
+        ok = false;
+        state.lancandoDespesa = false;
+        state.carregando = false;
+        setErro('Nao foi possivel salvar a despesa.');
+        return;
+      }
     }
 
+    state.lancandoDespesa = false;
+    state.formParcelar = false;
+    state.formParcelas = 2;
     state.modalLancamento = false;
     state.tipoLancamento = 'despesa';
     state.modoReceita = 'entrada';
     state.erro = '';
     await carregarDados();
-    mostrarToast('Despesa lancada.');
+    mostrarToast(totalParcelas > 1 ? 'Despesa parcelada em ' + totalParcelas + 'x.' : 'Despesa lancada.');
   }
 
   async function alternarDuplicados() {
@@ -2566,6 +2590,49 @@
 
     var tipo = state.modalAcao.tipo;
     var item = state.modalAcao.item;
+
+    // Detectar parcelas pendentes (padrao X/N na descricao)
+    if (tipo !== 'receita') {
+      var matchParcela = (item.descricao || '').match(/\((\d+)\/(\d+)\)$/);
+      if (matchParcela) {
+        var totalN = parseInt(matchParcela[2], 10);
+        var parcelasGrupo = state.lancamentos.filter(function(l) {
+          if (l.despesa !== item.despesa) return false;
+          var m = (l.descricao || '').match(/\((\d+)\/(\d+)\)$/);
+          return m && parseInt(m[2], 10) === totalN;
+        });
+        var pendentes = parcelasGrupo.filter(function(l) { return l.id !== item.id; });
+        if (pendentes.length > 0) {
+          var resp = window.confirm(
+            'Este lancamento faz parte de um parcelamento em ' + totalN + 'x.
+' +
+            'Ha ' + pendentes.length + ' parcela(s) pendente(s).
+
+' +
+            'OK = Excluir TODAS as ' + parcelasGrupo.length + ' parcelas
+' +
+            'Cancelar = Excluir somente esta'
+          );
+          state.carregando = true;
+          state.erro = '';
+          render();
+          if (resp) {
+            // Excluir todas
+            for (var i = 0; i < parcelasGrupo.length; i++) {
+              await db.from('lancamentos').delete().eq('id', parcelasGrupo[i].id).eq('empresa_id', state.empresa.id);
+            }
+          } else {
+            // Excluir somente esta
+            await db.from('lancamentos').delete().eq('id', item.id).eq('empresa_id', state.empresa.id);
+          }
+          state.modalAcao = null;
+          await carregarDados();
+          mostrarToast(resp ? 'Parcelas excluidas.' : 'Despesa excluida.');
+          return;
+        }
+      }
+    }
+
     state.carregando = true;
     state.erro = '';
     render();
@@ -3435,7 +3502,26 @@
         '<button id="abrir-nova-despesa" type="button" class="flex w-full items-center gap-2 rounded-xl border border-dashed border-slate-300 px-3 py-2.5 text-xs font-black text-slate-500 transition hover:border-slate-400 hover:text-slate-700">+ Cadastrar despesa</button>' +
         campoClaro('despesa-descricao', 'Descricao') +
         campoValor('despesa-valor', 'Valor') +
-        '<button id="salvar-despesa" type="button" class="h-11 rounded-xl bg-slate-950 px-4 text-sm font-black uppercase tracking-wide text-white">' + (state.carregando ? 'Salvando...' : 'Salvar despesa') + '</button>' +
+        // Linha parcelamento
+        '<div class="flex items-center gap-2 flex-wrap">' +
+          '<button id="toggle-parcelar-despesa" type="button" class="flex h-8 items-center gap-1.5 rounded-full border px-3 text-[11px] font-black uppercase tracking-wide transition-all ' +
+            (state.formParcelar
+              ? 'border-red-500 bg-red-600 text-white shadow-sm'
+              : 'border-slate-300 bg-white text-slate-500') + '">' +
+            '<span>' + (state.formParcelar ? '&#10003;' : '&divide;') + '</span>' +
+            '<span>Parcelar</span>' +
+          '</button>' +
+          (state.formParcelar ? (
+            '<div class="flex items-center gap-1">' +
+              '<button id="parcelar-menos" type="button" class="flex h-8 w-8 items-center justify-center rounded-md border border-slate-300 bg-white text-sm font-black text-slate-700">&minus;</button>' +
+              '<span class="w-7 text-center text-sm font-black text-slate-900">' + state.formParcelas + '</span>' +
+              '<button id="parcelar-mais" type="button" class="flex h-8 w-8 items-center justify-center rounded-md border border-slate-300 bg-white text-sm font-black text-slate-700">+</button>' +
+              '<span class="text-[10px] font-semibold text-slate-500">x</span>' +
+            '</div>' +
+            '<span class="text-[10px] font-semibold italic text-slate-400">nos meses seguintes</span>'
+          ) : '') +
+        '</div>' +
+        '<button id="salvar-despesa" type="button" ' + (state.lancandoDespesa ? 'disabled ' : '') + 'class="h-11 rounded-xl bg-slate-950 px-4 text-sm font-black uppercase tracking-wide text-white disabled:opacity-60">' + (state.lancandoDespesa ? 'Salvando...' : 'Salvar despesa') + '</button>' +
       '</div>'
     );
   }
@@ -4684,6 +4770,19 @@
     });
     bind('salvar-categoria', salvarCategoriaDespesa);
     bind('salvar-despesa', salvarDespesa);
+    bind('toggle-parcelar-despesa', function() {
+      var proximo = !state.formParcelar;
+      state.formParcelar = proximo;
+      if (proximo && state.formParcelas < 2) state.formParcelas = 2;
+      render();
+    });
+    bind('parcelar-menos', function() {
+      if (state.formParcelas > 2) { state.formParcelas--; render(); }
+    });
+    bind('parcelar-mais', function() {
+      state.formParcelas++;
+      render();
+    });
     bind('salvar-entrada', salvarEntrada);
     bind('salvar-total-receita', salvarTotalReceita);
     bind('excluir-total-receita', excluirTotalMesMobile);
