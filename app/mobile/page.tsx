@@ -55,7 +55,7 @@ export default function MobilePage() {
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
 
   return (
-    <main className="min-h-screen overflow-hidden bg-slate-950 text-white">
+    <main className="min-h-screen bg-slate-950 text-white" style={{overflow:'visible'}}>
       <link
         rel="preload"
         href="/images/bg-avantalab-mobile-1080x1920.webp"

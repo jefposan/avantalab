@@ -6818,6 +6818,14 @@
         : (state.modoCriarPerfil ? telaLoginWrapper(telaCriarPerfilInicial(), 'Criar perfil financeiro', 'Informe os dados do seu primeiro perfil.') : telaLogin()));
     atualizarScrollBloqueado();
 
+    // Move chat-ia-overlay to document.body to escape overflow:hidden on <main>
+    (function() {
+      var ov = document.getElementById('chat-ia-overlay');
+      if (ov && ov.parentNode !== document.body) {
+        document.body.appendChild(ov);
+      }
+    })();
+
     bind('confirmar-telefone-obrigatorio', confirmarTelefoneObrigatorioMobile);
     bind('reenviar-telefone-obrigatorio', enviarCodigoTelefoneObrigatorioMobile);
     bind('sair-telefone-obrigatorio', sair);
