@@ -157,6 +157,10 @@
     formParcelas: 2,
     lancandoDespesa: false,
     _diaInvalido: false,
+    chatIAAberto: false,
+    chatIAMensagens: [{ role: 'assistant', content: 'Ola! Sou a Ava, sua assistente financeira. Posso analisar seus resultados, dar dicas ou tirar duvidas sobre o sistema. Como posso ajudar?' }],
+    chatIADigitando: false,
+    chatIAInput: '',
   };
 
   var CHAVE_MANTER_CONECTADO_ATE = 'avantalab_mobile_manter_conectado_ate';
@@ -1828,6 +1832,97 @@
     render();
   }
 
+  function montarContextoIA() {
+    var atual = dadosMes(state.mes);
+    var anterior = dadosMes(meses[(indiceMes(state.mes) - 1 + 12) % 12]);
+    var totalDespesas = atual.despesas || 0;
+    var totalReceita = atual.receita || 0;
+    var resultado = totalReceita - totalDespesas;
+    var porTipo = {};
+    (atual.lancamentos || []).forEach(function(l) {
+      porTipo[l.despesa] = (porTipo[l.despesa] || 0) + Number(l.valor);
+    });
+    var cats = Object.keys(porTipo)
+      .sort(function(a, b) { return porTipo[b] - porTipo[a]; })
+      .slice(0, 8)
+      .map(function(k) { return '  - ' + k + ': R$ ' + porTipo[k].toLocaleString('pt-BR', { minimumFractionDigits: 2 }); })
+      .join('\n');
+    var linhas = [
+      'Empresa: ' + (state.empresa ? state.empresa.nome : ''),
+      'Periodo: ' + state.mes + ' / ' + state.ano,
+      'Receita total: R$ ' + totalReceita.toLocaleString('pt-BR', { minimumFractionDigits: 2 }),
+      'Total de despesas: R$ ' + totalDespesas.toLocaleString('pt-BR', { minimumFractionDigits: 2 }),
+      'Resultado: R$ ' + resultado.toLocaleString('pt-BR', { minimumFractionDigits: 2 }),
+      'Lancamentos no mes: ' + (atual.lancamentos || []).length,
+    ];
+    if (cats) linhas.push('Despesas por tipo:\n' + cats);
+    if (anterior.despesas > 0) linhas.push('Despesas mes anterior: R$ ' + (anterior.despesas || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 }));
+    return linhas.join('\n');
+  }
+
+  async function enviarMensagemIA() {
+    var inputEl = document.getElementById('chat-ia-input');
+    var texto = (inputEl ? inputEl.value : state.chatIAInput).trim();
+    if (!texto || state.chatIADigitando) return;
+
+    state.chatIAMensagens.push({ role: 'user', content: texto });
+    state.chatIAInput = '';
+    state.chatIADigitando = true;
+    state.chatIAMensagens.push({ role: 'assistant', content: '' });
+    render();
+    setTimeout(function() {
+      var msgsEl = document.getElementById('chat-ia-msgs');
+      if (msgsEl) msgsEl.scrollTop = msgsEl.scrollHeight;
+    }, 50);
+
+    try {
+      var res = await fetch(config.supabaseUrl + '/functions/v1/chat-ia', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          messages: state.chatIAMensagens.slice(0, -1).map(function(m) { return { role: m.role, content: m.content }; }),
+          contexto: montarContextoIA(),
+        }),
+      });
+
+      if (!res.ok || !res.body) throw new Error('Erro na resposta');
+
+      var reader = res.body.getReader();
+      var decoder = new TextDecoder();
+      var resposta = '';
+
+      while (true) {
+        var read = await reader.read();
+        if (read.done) break;
+        var chunk = decoder.decode(read.value, { stream: true });
+        var linhas = chunk.split('\n').filter(function(l) { return l.startsWith('data: '); });
+        for (var i = 0; i < linhas.length; i++) {
+          var dado = linhas[i].replace('data: ', '').trim();
+          if (dado === '[DONE]') continue;
+          try {
+            var json = JSON.parse(dado);
+            var delta = (json.choices && json.choices[0] && json.choices[0].delta && json.choices[0].delta.content) || '';
+            if (delta) {
+              resposta += delta;
+              state.chatIAMensagens[state.chatIAMensagens.length - 1].content = resposta;
+              var msgsEl2 = document.getElementById('chat-ia-msgs');
+              if (msgsEl2) {
+                var lastBubble = msgsEl2.lastElementChild && msgsEl2.lastElementChild.querySelector('div');
+                if (lastBubble) { lastBubble.textContent = resposta; msgsEl2.scrollTop = msgsEl2.scrollHeight; }
+              }
+            }
+          } catch (e) { /* ignorar */ }
+        }
+      }
+    } catch (e) {
+      state.chatIAMensagens[state.chatIAMensagens.length - 1].content = 'Desculpe, ocorreu um erro. Tente novamente em instantes.';
+    }
+
+    state.chatIADigitando = false;
+    render();
+    setTimeout(function() { var msgsEl3 = document.getElementById('chat-ia-msgs'); if (msgsEl3) msgsEl3.scrollTop = msgsEl3.scrollHeight; }, 50);
+  }
+
   async function salvarDespesa() {
     if (!state.empresa || state.lancandoDespesa) return;
 
@@ -3060,6 +3155,8 @@
         (state.menuAberto ? menuLateralHtml() : '') +
         (state.modalMenu ? modalMenuHtml() : '') +
         toastHtml() +
+        '<button id="chat-ia-btn" type="button" style="position:fixed;bottom:80px;right:16px;z-index:4999;width:52px;height:52px;border-radius:50%;background:#0284c7;color:#fff;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 20px rgba(0,0,0,0.25);border:none;cursor:pointer;" aria-label="Assistente IA"><svg width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"/></svg></button>' +
+        (state.chatIAAberto ? chatIAModalHtml() : '') +
       '</div>'
     );
   }
@@ -3658,6 +3755,38 @@
             '<button id="sair" type="button" class="mt-1 rounded-2xl border border-rose-100 bg-white p-3 text-left text-xs font-black text-rose-700 shadow-sm">Sair</button>' +
           '</div>' +
         '</aside>' +
+      '</div>'
+    );
+  }
+
+  function chatIAModalHtml() {
+    var msgs = state.chatIAMensagens.map(function(m) {
+      var isUser = m.role === 'user';
+      var bubbleStyle = isUser
+        ? 'background:#0284c7;color:#fff;border-radius:16px 16px 4px 16px;margin-left:auto;'
+        : 'background:#f1f5f9;color:#1e293b;border-radius:16px 16px 16px 4px;margin-right:auto;';
+      var content = m.content
+        ? escapeHtml(m.content)
+        : '<span style="display:flex;gap:4px;padding:4px 0"><span style="width:6px;height:6px;border-radius:50%;background:#94a3b8;animation:bounce 1s infinite 0ms"></span><span style="width:6px;height:6px;border-radius:50%;background:#94a3b8;animation:bounce 1s infinite 150ms"></span><span style="width:6px;height:6px;border-radius:50%;background:#94a3b8;animation:bounce 1s infinite 300ms"></span></span>';
+      return '<div style="display:flex;margin-bottom:10px"><div style="max-width:85%;padding:10px 14px;font-size:13px;line-height:1.5;white-space:pre-wrap;' + bubbleStyle + '">' + content + '</div></div>';
+    }).join('');
+
+    return (
+      '<div id="chat-ia-overlay" style="position:fixed;inset:0;z-index:5000;background:rgba(0,0,0,0.5);display:flex;flex-direction:column;justify-content:flex-end;">' +
+        '<div style="background:#fff;border-radius:20px 20px 0 0;display:flex;flex-direction:column;height:75vh;max-height:600px;">' +
+          '<div style="background:#0284c7;border-radius:20px 20px 0 0;padding:14px 16px;display:flex;align-items:center;gap:12px;">' +
+            '<div style="width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,0.2);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:900;color:#fff;">A</div>' +
+            '<div><p style="font-size:14px;font-weight:900;color:#fff;margin:0;">Ava</p><p style="font-size:10px;color:#bae6fd;margin:0;">Assistente financeira AvantaLab</p></div>' +
+            '<button id="chat-ia-fechar" type="button" style="margin-left:auto;background:rgba(255,255,255,0.15);border:none;color:#fff;width:32px;height:32px;border-radius:50%;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;">&times;</button>' +
+          '</div>' +
+          '<div id="chat-ia-msgs" style="flex:1;overflow-y:auto;padding:16px;">' + msgs + '</div>' +
+          '<div style="padding:12px;border-top:1px solid #e2e8f0;display:flex;gap:8px;align-items:flex-end;">' +
+            '<textarea id="chat-ia-input" placeholder="Digite sua pergunta..." rows="1" style="flex:1;resize:none;border:1px solid #cbd5e1;border-radius:12px;padding:10px 12px;font-size:14px;font-family:inherit;outline:none;max-height:96px;overflow-y:auto;" ' + (state.chatIADigitando ? 'disabled' : '') + '>' + escapeHtml(state.chatIAInput) + '</textarea>' +
+            '<button id="chat-ia-enviar" type="button" style="width:40px;height:40px;border-radius:12px;background:#0284c7;color:#fff;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;" ' + (state.chatIADigitando ? 'disabled' : '') + '>' +
+              '<svg width="18" height="18" fill="currentColor" viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z" transform="rotate(90,12,12)"/></svg>' +
+            '</button>' +
+          '</div>' +
+        '</div>' +
       '</div>'
     );
   }
@@ -4779,6 +4908,24 @@
       render();
     });
     bind('salvar-categoria', salvarCategoriaDespesa);
+    bind('chat-ia-btn', function() {
+      state.chatIAAberto = true;
+      render();
+      setTimeout(function() {
+        var msgsEl = document.getElementById('chat-ia-msgs');
+        if (msgsEl) msgsEl.scrollTop = msgsEl.scrollHeight;
+        var inp = document.getElementById('chat-ia-input');
+        if (inp) inp.focus();
+      }, 50);
+    });
+    bind('chat-ia-fechar', function() { state.chatIAAberto = false; render(); });
+    bind('chat-ia-overlay', function(e) { if (e.target && e.target.id === 'chat-ia-overlay') { state.chatIAAberto = false; render(); } });
+    bind('chat-ia-enviar', function() { enviarMensagemIA(); });
+    var chatInput = document.getElementById('chat-ia-input');
+    if (chatInput) {
+      chatInput.addEventListener('keydown', function(e) { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); enviarMensagemIA(); } });
+      chatInput.addEventListener('input', function() { state.chatIAInput = this.value; });
+    }
     bind('salvar-despesa', salvarDespesa);
     var diaInputEl = document.getElementById('despesa-dia');
     if (diaInputEl) {
