@@ -6287,6 +6287,7 @@ setAjustesAberto(false);
   chatFeedbackAberto={chatFeedbackAberto}
   setChatFeedbackAberto={setChatFeedbackAberto}
   chatFeedbackEtapa={chatFeedbackEtapa}
+  setChatFeedbackEtapa={setChatFeedbackEtapa}
   feedbackTipo={feedbackTipo}
   feedbackMensagem={feedbackMensagem}
   setFeedbackMensagem={setFeedbackMensagem}
@@ -6295,6 +6296,28 @@ setAjustesAberto(false);
   abrirFormularioFeedback={abrirFormularioFeedback}
   voltarInicioChatFeedback={voltarInicioChatFeedback}
   enviarFeedbackVisual={enviarFeedbackVisual}
+  supabaseUrl={process.env.NEXT_PUBLIC_SUPABASE_URL ?? ''}
+  contexto={(() => {
+    const porCategoria = lancamentosDoMes.reduce<Record<string, number>>((acc, l) => {
+      acc[l.despesa] = (acc[l.despesa] || 0) + l.valor;
+      return acc;
+    }, {});
+    const cats = Object.entries(porCategoria)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 8)
+      .map(([nome, val]) => `  - ${nome}: R$ ${val.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`)
+      .join('\n');
+    return [
+      `Empresa: ${nomeEmpresaAtual}`,
+      `Período: ${mesParaAnalise} / ${anoSelecionado}`,
+      `Receita total: R$ ${faturamentoDoMesAtual.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`,
+      `Total de despesas: R$ ${totalDespesasMes.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`,
+      `Resultado (lucro/prejuízo): R$ ${lucroOperacional.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`,
+      `Lançamentos no mês: ${lancamentosDoMes.length}`,
+      cats ? `Despesas por tipo:\n${cats}` : '',
+      totalDespesasMesAnterior > 0 ? `Despesas mês anterior: R$ ${totalDespesasMesAnterior.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` : '',
+    ].filter(Boolean).join('\n');
+  })()}
 />
 
 {/* ── MODAL DESPESAS FIXAS ─────────────────────────────────────────── */}
@@ -6522,6 +6545,7 @@ setAjustesAberto(false);
 
   </div>
 </footer>
+
 
     </div>
   );

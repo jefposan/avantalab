@@ -50,7 +50,7 @@ export function useUI() {
   // --- Chat Feedback ---
   const [chatFeedbackAberto, setChatFeedbackAberto] = useState(false);
   const [chatFeedbackEtapa, setChatFeedbackEtapa] = useState<
-    'inicio' | 'formulario' | 'confirmacao'
+    'inicio' | 'formulario' | 'confirmacao' | 'ia'
   >('inicio');
   const [feedbackTipo, setFeedbackTipo] = useState<'sugestao' | 'duvida' | null>(null);
   const [feedbackMensagem, setFeedbackMensagem] = useState('');
