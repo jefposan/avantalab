@@ -195,51 +195,61 @@ export default function CardLancamentoDespesa({
         {/* Linha de parcelamento */}
         <div
           className="overflow-hidden transition-all duration-300"
-          style={{ maxHeight: expandido ? '48px' : '0px', opacity: expandido ? 1 : 0 }}
+          style={{ maxHeight: expandido ? '56px' : '0px', opacity: expandido ? 1 : 0 }}
         >
-          <div className="mt-1.5 flex items-center gap-2">
-            <label className="flex cursor-pointer items-center gap-1.5 select-none">
-              <input
-                type="checkbox"
-                checked={formParcelar}
-                onChange={(e) => {
-                  setFormParcelar(e.target.checked);
-                  if (e.target.checked && formParcelas < 2) setFormParcelas(2);
-                }}
-                className="h-3.5 w-3.5 cursor-pointer accent-red-600"
-              />
-              <span className={`text-[11px] font-black uppercase tracking-wide ${darkMode ? 'text-slate-300' : 'text-slate-600'}`}>
-                Parcelar em
-              </span>
-            </label>
+          <div className="mt-2 flex items-center gap-2 flex-wrap">
+            {/* Toggle pill */}
+            <button
+              type="button"
+              onClick={() => {
+                const next = !formParcelar;
+                setFormParcelar(next);
+                if (next && formParcelas < 2) setFormParcelas(2);
+              }}
+              className={`flex h-7 items-center gap-1.5 rounded-full border px-3 text-[11px] font-black uppercase tracking-wide transition-all cursor-pointer ${
+                formParcelar
+                  ? 'border-red-500 bg-red-600 text-white shadow-sm'
+                  : darkMode
+                    ? 'border-slate-600 bg-slate-700 text-slate-300 hover:border-slate-500'
+                    : 'border-slate-300 bg-white text-slate-500 hover:border-slate-400 hover:text-slate-700'
+              }`}
+            >
+              <span>{formParcelar ? '✓' : '÷'}</span>
+              <span>Parcelar</span>
+            </button>
 
             {formParcelar && (
-              <div className="flex items-center gap-1">
-                <button
-                  type="button"
-                  onClick={() => setFormParcelas(Math.max(2, formParcelas - 1))}
-                  className={`flex h-7 w-7 items-center justify-center rounded-md border text-sm font-black transition hover:brightness-110 active:scale-95 cursor-pointer ${
-                    darkMode ? 'border-slate-600 bg-slate-700 text-white' : 'border-slate-300 bg-white text-slate-700'
-                  }`}
-                >
-                  −
-                </button>
-                <span className={`w-6 text-center text-sm font-black ${darkMode ? 'text-white' : 'text-slate-900'}`}>
-                  {formParcelas}
+              <>
+                <div className="flex items-center gap-1">
+                  <button
+                    type="button"
+                    onClick={() => setFormParcelas(Math.max(2, formParcelas - 1))}
+                    className={`flex h-7 w-7 items-center justify-center rounded-md border text-sm font-black transition hover:brightness-110 active:scale-95 cursor-pointer ${
+                      darkMode ? 'border-slate-600 bg-slate-700 text-white' : 'border-slate-300 bg-white text-slate-700'
+                    }`}
+                  >
+                    −
+                  </button>
+                  <span className={`w-6 text-center text-sm font-black ${darkMode ? 'text-white' : 'text-slate-900'}`}>
+                    {formParcelas}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setFormParcelas(formParcelas + 1)}
+                    className={`flex h-7 w-7 items-center justify-center rounded-md border text-sm font-black transition hover:brightness-110 active:scale-95 cursor-pointer ${
+                      darkMode ? 'border-slate-600 bg-slate-700 text-white' : 'border-slate-300 bg-white text-slate-700'
+                    }`}
+                  >
+                    +
+                  </button>
+                  <span className={`text-[11px] font-semibold ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>
+                    x
+                  </span>
+                </div>
+                <span className={`text-[10px] font-semibold italic ${darkMode ? 'text-slate-400' : 'text-slate-400'}`}>
+                  lançadas automaticamente nos meses seguintes
                 </span>
-                <button
-                  type="button"
-                  onClick={() => setFormParcelas(formParcelas + 1)}
-                  className={`flex h-7 w-7 items-center justify-center rounded-md border text-sm font-black transition hover:brightness-110 active:scale-95 cursor-pointer ${
-                    darkMode ? 'border-slate-600 bg-slate-700 text-white' : 'border-slate-300 bg-white text-slate-700'
-                  }`}
-                >
-                  +
-                </button>
-                <span className={`text-[11px] font-semibold ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>
-                  vezes
-                </span>
-              </div>
+              </>
             )}
           </div>
         </div>

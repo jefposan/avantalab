@@ -1003,6 +1003,10 @@ useEffect(() => {
 }, [segundosReenvioRedefinirSenha]);
 
 useEffect(() => {
+  setBlocoAtivo(null);
+}, [mesAtivo, empresaId, abaAtiva]);
+
+useEffect(() => {
   if (segundosReenvioTelefoneObrigatorio <= 0) return;
 
   const timer = window.setTimeout(() => {
@@ -5875,7 +5879,7 @@ setAjustesAberto(false);
 
           <main className={classePaginaInterna}>
             <div className="flex flex-col gap-6 xl:flex-row xl:items-start">
-              <div className="min-w-0 transition-[width] duration-300 ease-in-out" style={{ width: typeof window !== 'undefined' && window.innerWidth >= 1280 ? (blocoAtivo === 'despesa' ? '62%' : blocoAtivo === 'receita' ? '38%' : '50%') : '100%' }}>
+              <div className="min-w-0 transition-[width,opacity] duration-300 ease-in-out" style={{ width: typeof window !== 'undefined' && window.innerWidth >= 1280 ? (blocoAtivo === 'despesa' ? '62%' : blocoAtivo === 'receita' ? '38%' : '50%') : '100%', opacity: blocoAtivo === 'receita' ? 0.45 : 1 }}>
 <TabelaLancamentosDespesa
               bgCard={bgCard}
               corPrimaria={corPrimaria}
@@ -5932,7 +5936,7 @@ setAjustesAberto(false);
             />
               </div>
 
-              <div className="min-w-0 transition-[width] duration-300 ease-in-out" style={{ width: typeof window !== 'undefined' && window.innerWidth >= 1280 ? (blocoAtivo === 'receita' ? '62%' : blocoAtivo === 'despesa' ? '38%' : '50%') : '100%' }}>
+              <div className="min-w-0 transition-[width,opacity] duration-300 ease-in-out" style={{ width: typeof window !== 'undefined' && window.innerWidth >= 1280 ? (blocoAtivo === 'receita' ? '62%' : blocoAtivo === 'despesa' ? '38%' : '50%') : '100%', opacity: blocoAtivo === 'despesa' ? 0.45 : 1 }}>
 <CardEntradaFaturamento
   mesAtivo={mesAtivo}
   anoSelecionado={anoSelecionado}
