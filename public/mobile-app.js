@@ -3498,7 +3498,7 @@
     return (
       '<div class="grid gap-3">' +
         '<div class="flex items-end gap-6">' +
-          '<div class="w-20 shrink-0">' + campoClaro('despesa-dia', 'Dia', 'type="number" min="1" max="' + maxDias(state.mes, state.ano) + '" inputmode="numeric" style="font-size:16px;text-align:center"') + '<span id="despesa-dia-erro" class="mt-0.5 block text-[10px] font-bold text-red-500" style="display:none"></span>' + '</div>' +
+          '<div class="w-20 shrink-0">' + campoClaro('despesa-dia', 'Dia', 'type="number" min="1" max="' + maxDias(state.mes, state.ano) + '" inputmode="numeric" style="font-size:16px;text-align:center"') + '</div>' +
           '<label class="grid min-w-0 flex-1 gap-1 text-xs font-black uppercase tracking-wide text-slate-600">Despesa' +
             '<select id="despesa-nome" style="font-size:16px" class="h-11 w-full rounded-md border border-slate-300 bg-white px-3 text-base font-bold normal-case tracking-normal">' +
               '<option value="">Selecione</option>' +
@@ -4784,13 +4784,13 @@
       diaInputEl.addEventListener('blur', function() {
         var val = Number(this.value);
         var limite = maxDias(state.mes, state.ano);
-        var errEl = document.getElementById('despesa-dia-erro');
         if (this.value !== '' && (isNaN(val) || val < 1 || val > limite)) {
-          if (errEl) { errEl.textContent = 'Data invalida (1 a ' + limite + ')'; errEl.style.display = 'block'; }
-          this.value = '';
-          this.focus();
-        } else {
-          if (errEl) errEl.style.display = 'none';
+          var _nomeV = campo('despesa-nome'), _descV = campo('despesa-descricao'), _valorV = campo('despesa-valor');
+          setErro('Data invalida. Informe um dia entre 1 e ' + limite + '.');
+          var _n = document.getElementById('despesa-nome'); if (_n) _n.value = _nomeV;
+          var _desc = document.getElementById('despesa-descricao'); if (_desc) _desc.value = _descV;
+          var _v = document.getElementById('despesa-valor'); if (_v) _v.value = _valorV;
+          var _d = document.getElementById('despesa-dia'); if (_d) { _d.value = ''; _d.focus(); }
         }
       });
     }
