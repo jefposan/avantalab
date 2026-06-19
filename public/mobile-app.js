@@ -3347,7 +3347,7 @@
         if (!cards[id]) return '';
         return '<div data-dashboard-card="' + escapeHtml(id) + '" class="relative pb-2 transition-[transform,opacity,filter] duration-200 ease-out">' +
           cards[id] +
-          '<button type="button" data-dashboard-handle="' + escapeHtml(id) + '" class="absolute bottom-1 right-3 flex h-7 w-8 select-none touch-none items-center justify-center rounded-full bg-transparent text-[11px] font-black leading-none text-slate-400" aria-label="Mover card">&vellip;&vellip;</button>' +
+          (id === 'ia' ? '' : '<button type="button" data-dashboard-handle="' + escapeHtml(id) + '" class="absolute bottom-1 right-3 flex h-7 w-8 select-none touch-none items-center justify-center rounded-full bg-transparent text-[11px] font-black leading-none text-slate-400" aria-label="Mover card">&vellip;&vellip;</button>') +
         '</div>';
       })
       .join('');
@@ -3901,22 +3901,20 @@
     var ov = document.getElementById('chat-ia-overlay');
     var vv = window.visualViewport;
     if (!ov) return;
-    ov.style.top = '0px';
     ov.style.left = '0px';
     ov.style.right = '0px';
-    ov.style.bottom = '0px';
     ov.style.width = '100vw';
-    ov.style.height = '100vh';
-    ov.style.minHeight = '100vh';
+    ov.style.bottom = 'auto';
     ov.style.transform = 'none';
     ov.style.setProperty('--ava-keyboard-offset', '0px');
     if (vv) {
-      if (!window._avaBaseViewportHeight) {
-        window._avaBaseViewportHeight = Math.max(window.innerHeight || 0, document.documentElement.clientHeight || 0, vv.height || 0);
-      }
-      var base = Math.max(window._avaBaseViewportHeight || 0, window.innerHeight || 0, document.documentElement.clientHeight || 0);
-      var teclado = Math.max(0, Math.round(base - vv.height - (vv.offsetTop || 0)));
-      ov.style.setProperty('--ava-keyboard-offset', teclado + 'px');
+      ov.style.top = Math.max(0, Math.round(vv.offsetTop || 0)) + 'px';
+      ov.style.height = Math.max(320, Math.round(vv.height || window.innerHeight || 0)) + 'px';
+      ov.style.minHeight = ov.style.height;
+    } else {
+      ov.style.top = '0px';
+      ov.style.height = '100dvh';
+      ov.style.minHeight = '100dvh';
     }
   }
 
@@ -5534,7 +5532,7 @@
         if (!cards[id]) return '';
         return '<div data-dashboard-card="' + escapeHtml(id) + '" class="relative pb-2 transition-[transform,opacity,filter] duration-200 ease-out">' +
           cards[id] +
-          '<button type="button" data-dashboard-handle="' + escapeHtml(id) + '" class="absolute bottom-1 right-3 flex h-7 w-8 select-none touch-none items-center justify-center rounded-full bg-transparent text-[11px] font-black leading-none text-slate-400" aria-label="Mover card">&vellip;&vellip;</button>' +
+          (id === 'ia' ? '' : '<button type="button" data-dashboard-handle="' + escapeHtml(id) + '" class="absolute bottom-1 right-3 flex h-7 w-8 select-none touch-none items-center justify-center rounded-full bg-transparent text-[11px] font-black leading-none text-slate-400" aria-label="Mover card">&vellip;&vellip;</button>') +
         '</div>';
       })
       .join('');
@@ -6098,7 +6096,7 @@
     }
 
     var primeiro = primeiroNomeUsuarioAva();
-    var saud = 'Ol&aacute;' + (primeiro ? ',' + escapeHtml(primeiro) : '') + '.';
+    var saud = 'Ol&aacute;' + (primeiro ? ', ' + escapeHtml(primeiro) : '') + '.';
 
     var sugs = [
       { ic:'chart',  cor:'#f59e0b', bg:'rgba(245,158,11,0.16)', t:'Quanto gastei este mes?' },
@@ -6164,7 +6162,7 @@
       '</div>';
 
     var body =
-      '<div id="chat-ia-msgs" style="position:absolute;left:0;right:0;z-index:2;top:calc(env(safe-area-inset-top,0px) + 76px);bottom:calc(var(--ava-keyboard-offset,0px) + 58px);overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;padding:6px 14px 16px;">' +
+      '<div id="chat-ia-msgs" style="position:absolute;left:0;right:0;z-index:2;top:calc(env(safe-area-inset-top,0px) + 76px);bottom:64px;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;padding:6px 14px 16px;">' +
         welcome + convoHtml +
       '</div>';
 
@@ -6187,10 +6185,10 @@
     var fieldBg = dark ? '#111b2d' : '#ffffff';
     var fieldBorder = dark ? '#27364f' : '#d8e4ef';
     var keyboardShield =
-      '<div aria-hidden="true" style="position:absolute;left:0;right:0;bottom:0;z-index:1;height:calc(var(--ava-keyboard-offset,0px) + 82px);background:' + C.bg + ';pointer-events:none;"></div>';
+      '<div aria-hidden="true" style="position:absolute;left:0;right:0;bottom:0;z-index:1;height:86px;background:' + C.bg + ';pointer-events:none;"></div>';
     var inputBar =
-      '<div style="position:absolute;left:0;right:0;bottom:var(--ava-keyboard-offset,0px);z-index:3;padding:5px 10px;' +
-        'padding-bottom:calc(env(safe-area-inset-bottom,0px) + 1px);background:' + C.bg + ';">' +
+      '<div style="position:absolute;left:0;right:0;bottom:0;z-index:3;padding:5px 10px;' +
+        'padding-bottom:calc(env(safe-area-inset-bottom,0px) + 8px);background:' + C.bg + ';">' +
         '<div style="width:100%;display:flex;align-items:flex-end;gap:4px;background:' + fieldBg + ';border:1px solid ' + fieldBorder + ';border-radius:24px;padding:5px 6px 5px 14px;min-height:46px;box-shadow:' + (dark ? 'none' : '0 8px 20px rgba(15,35,61,0.08)') + ';">' +
           '<div id="chat-ia-input" role="textbox" aria-multiline="true" inputmode="text" enterkeyhint="send" autocapitalize="sentences" autocomplete="off" autocorrect="on" spellcheck="true" contenteditable="' + (enviando ? 'false' : 'plaintext-only') + '" data-placeholder="Como posso ajudar voce hoje?" style="flex:1;min-height:22px;max-height:96px;overflow-y:auto;outline:none;background:transparent;font-size:16px;font-family:inherit;color:' + C.text + ';line-height:1.4;padding:7px 2px;margin:0;width:100%;white-space:pre-wrap;word-break:break-word;-webkit-user-select:text;user-select:text;">' + escapeHtml(state.chatIAInput) + '</div>' +
           micBtn +
@@ -6205,7 +6203,7 @@
         : '';
 
     return (
-      '<div id="chat-ia-overlay" style="position:fixed;top:0;left:0;right:0;bottom:0;width:100vw;height:100vh;min-height:100vh;z-index:5000;display:block;background:' + C.bg + ';overflow:hidden;isolation:isolate;overscroll-behavior:contain;--ava-keyboard-offset:0px;' + animacao + '">' +
+      '<div id="chat-ia-overlay" style="position:fixed;top:0;left:0;right:0;bottom:auto;width:100vw;height:100dvh;min-height:100dvh;z-index:5000;display:block;background:' + C.bg + ';overflow:hidden;isolation:isolate;overscroll-behavior:contain;--ava-keyboard-offset:0px;' + animacao + '">' +
         keyboardShield + header + body + inputBar +
       '</div>'
     );
