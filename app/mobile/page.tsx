@@ -48,7 +48,7 @@ export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
   viewportFit: 'cover',
-  interactiveWidget: 'resizes-content',
+  interactiveWidget: 'overlays-content',
   themeColor: '#003E73',
 };
 
@@ -186,7 +186,7 @@ export default function MobilePage() {
       </div>
 
       <script src="/mobile-supabase.js" defer />
-      <script src="/mobile-app.js?v=96" defer />
+      <script src="/mobile-app.js?v=97" defer />
     </main>
   );
 }

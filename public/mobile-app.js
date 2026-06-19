@@ -746,10 +746,12 @@
       var nome = String(candidatos[i] || '').trim();
       if (!nome || nome.indexOf('@') >= 0) continue;
       nome = nome
+        .replace(/U[0-9A-F]{4,8}/gi, ' ')
+        .replace(/[0-9_!?.@#$%&*()[\]{}+=/\\|:;,"<>]/g, ' ')
         .replace(/\s+/g, ' ')
         .split(' ')
         .filter(function (parte) {
-          return parte && !/[0-9]/.test(parte) && parte.length > 1;
+          return parte && parte.length > 1;
         })
         .join(' ');
       if (nome) return nome.split(' ')[0];
@@ -3837,15 +3839,15 @@
     var ov = document.getElementById('chat-ia-overlay');
     var vv = window.visualViewport;
     if (!ov) return;
-    if (!vv) {
-      ov.style.top = '0px';
-      ov.style.bottom = '0px';
-      ov.style.height = '100dvh';
-      return;
-    }
-    ov.style.height = vv.height + 'px';
-    ov.style.top = vv.offsetTop + 'px';
-    ov.style.bottom = 'auto';
+    ov.style.top = '0px';
+    ov.style.left = '0px';
+    ov.style.right = '0px';
+    ov.style.bottom = '0px';
+    ov.style.width = '100vw';
+    ov.style.height = '100dvh';
+    var teclado = 0;
+    if (vv) teclado = Math.max(0, Math.round(window.innerHeight - vv.height - vv.offsetTop));
+    ov.style.setProperty('--ava-keyboard-offset', teclado + 'px');
   }
 
   function chatIAModalHtml() {
@@ -6014,7 +6016,7 @@
     }
 
     var primeiro = primeiroNomeUsuarioAva();
-    var saud = 'Ola' + (primeiro ? ', ' + primeiro : '') + '! \U0001F44B';
+    var saud = 'Ola' + (primeiro ? ', ' + escapeHtml(primeiro) : '') + '! &#128075;';
 
     var sugs = [
       { ic:'chart',  cor:'#f59e0b', bg:'rgba(245,158,11,0.16)', t:'Quanto gastei este mes?' },
@@ -6104,7 +6106,7 @@
 
     var inputBar =
       '<div style="flex-shrink:0;display:flex;align-items:flex-end;gap:8px;padding:9px 12px;' +
-        'padding-bottom:calc(env(safe-area-inset-bottom,0px) + 9px);background:' + C.bar + ';border-top:1px solid ' + C.border + ';">' +
+        'padding-bottom:calc(env(safe-area-inset-bottom,0px) + 9px);background:' + C.bar + ';border-top:1px solid ' + C.border + ';transform:translateY(calc(var(--ava-keyboard-offset,0px) * -1));transition:transform .12s ease;">' +
         '<div style="flex:1;display:flex;align-items:flex-end;gap:4px;background:' + C.pill + ';border:1px solid ' + C.pillBorder + ';border-radius:23px;padding:5px 6px 5px 14px;min-height:44px;">' +
           '<textarea id="chat-ia-input" rows="1" placeholder="Como posso ajudar voce hoje?" ' + (enviando ? 'disabled' : '') + ' style="flex:1;resize:none;border:none;outline:none;background:transparent;font-size:16px;font-family:inherit;color:' + C.text + ';line-height:1.45;max-height:110px;overflow-y:auto;padding:7px 2px;margin:0;width:100%;">' + escapeHtml(state.chatIAInput) + '</textarea>' +
           micBtn +
@@ -6113,7 +6115,7 @@
       '</div>';
 
     return (
-      '<div id="chat-ia-overlay" style="position:fixed;top:0;left:0;right:0;bottom:0;width:100vw;height:100dvh;z-index:5000;display:flex;flex-direction:column;background:' + C.bg + ';overflow:hidden;isolation:isolate;overscroll-behavior:contain;">' +
+      '<div id="chat-ia-overlay" style="--ava-keyboard-offset:0px;position:fixed;top:0;left:0;right:0;bottom:0;width:100vw;height:100dvh;z-index:5000;display:flex;flex-direction:column;background:' + C.bg + ';overflow:hidden;isolation:isolate;overscroll-behavior:contain;">' +
         header + body + inputBar +
       '</div>'
     );
@@ -8101,7 +8103,7 @@
           return Promise.all(
             keys
               .filter(function (key) {
-                return key.indexOf('avantalab-mobile-') === 0 && key !== 'avantalab-mobile-v96';
+                return key.indexOf('avantalab-mobile-') === 0 && key !== 'avantalab-mobile-v97';
               })
               .map(function (key) {
                 return caches.delete(key);
@@ -8118,7 +8120,7 @@
     });
 
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/mobile-sw.js?v=91').then(function (registro) {
+      navigator.serviceWorker.register('/mobile-sw.js?v=97').then(function (registro) {
         if (registro && registro.update) registro.update();
       }).catch(function () {});
     }
