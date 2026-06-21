@@ -418,6 +418,8 @@ export async function importarBackupExcelAdicionar({
   arquivo: File;
   empresaId: string;
 }): Promise<ResultadoImportacaoBackup> {
+  const { data: usuarioLogado } = await supabase.auth.getUser();
+  const usuarioId = usuarioLogado.user?.id || null;
   const wb = await lerWorkbookArquivo(arquivo);
   const despesasBase = sheetRows(wb, 'Despesas Base');
   const lancamentos = sheetRows(wb, 'Lancamentos Despesas');
@@ -452,6 +454,11 @@ export async function importarBackupExcelAdicionar({
     supabase.from('recorrencias').select('nome,categoria,descricao,dia').eq('empresa_id', empresaId),
   ]);
 
+  if (despesasExistentesRes.error) throw new Error(`Erro ao consultar despesas base: ${despesasExistentesRes.error.message}`);
+  if (lancamentosExistentesRes.error) throw new Error(`Erro ao consultar lançamentos: ${lancamentosExistentesRes.error.message}`);
+  if (entradasExistentesRes.error) throw new Error(`Erro ao consultar entradas/receitas: ${entradasExistentesRes.error.message}`);
+  if (totaisExistentesRes.error) throw new Error(`Erro ao consultar totais mensais: ${totaisExistentesRes.error.message}`);
+
   const chaveDespesa = (nome: string) => normalizarTexto(nome);
   const chavesDespesas = new Set((despesasExistentesRes.data || []).map((d: any) => chaveDespesa(d.nome)));
 
@@ -472,7 +479,7 @@ export async function importarBackupExcelAdicionar({
 
   if (novasDespesas.length > 0) {
     const { error } = await supabase.from('despesas_cadastradas').insert(novasDespesas);
-    if (error) throw error;
+    if (error) throw new Error(`Erro ao inserir despesas base: ${error.message}`);
     resultado.despesasBaseInseridas = novasDespesas.length;
   }
 
@@ -509,7 +516,7 @@ export async function importarBackupExcelAdicionar({
 
   if (novosLancamentos.length > 0) {
     const { error } = await supabase.from('lancamentos').insert(novosLancamentos);
-    if (error) throw error;
+    if (error) throw new Error(`Erro ao inserir lançamentos: ${error.message}`);
     resultado.lancamentosInseridos = novosLancamentos.length;
   }
 
@@ -530,6 +537,7 @@ export async function importarBackupExcelAdicionar({
       dia: Math.trunc(valorNumero(row, ['Dia'])),
       origem: valorTexto(row, ['Origem'], ''),
       valor: valorNumero(row, ['Valor', 'Valor (R$)']),
+      criado_por: usuarioId,
     }))
     .filter((row) => {
       const valido = row.ano > 0 && MESES.includes(row.mes) && row.dia > 0 && row.origem && row.valor > 0;
@@ -544,7 +552,7 @@ export async function importarBackupExcelAdicionar({
 
   if (novasEntradas.length > 0) {
     const { error } = await supabase.from('faturamentos_entradas').insert(novasEntradas);
-    if (error) throw error;
+    if (error) throw new Error(`Erro ao inserir entradas/receitas: ${error.message}`);
     resultado.receitasEntradasInseridas = novasEntradas.length;
   }
 
@@ -571,7 +579,7 @@ export async function importarBackupExcelAdicionar({
 
   if (novosTotais.length > 0) {
     const { error } = await supabase.from('faturamentos').insert(novosTotais);
-    if (error) throw error;
+    if (error) throw new Error(`Erro ao inserir totais mensais: ${error.message}`);
     resultado.receitasTotaisInseridas = novosTotais.length;
   }
 
@@ -580,6 +588,7 @@ export async function importarBackupExcelAdicionar({
     normalizarTexto(row.categoria),
     Math.trunc(Number(row.dia || 0)),
   ].join('|');
+  const recorrenciasDisponiveis = !recorrenciasExistentesRes.error;
   const chavesRecorrencias = new Set((recorrenciasExistentesRes.data || []).map((r: any) => chaveRecorrencia(r)));
 
   const novasRecorrencias = recorrencias
@@ -603,9 +612,13 @@ export async function importarBackupExcelAdicionar({
     });
 
   if (novasRecorrencias.length > 0) {
-    const { error } = await supabase.from('recorrencias').insert(novasRecorrencias);
-    if (error) throw error;
-    resultado.recorrenciasInseridas = novasRecorrencias.length;
+    if (!recorrenciasDisponiveis) {
+      resultado.recorrenciasIgnoradas += novasRecorrencias.length;
+    } else {
+      const { error } = await supabase.from('recorrencias').insert(novasRecorrencias);
+      if (error) throw new Error(`Erro ao inserir despesas fixas: ${error.message}`);
+      resultado.recorrenciasInseridas = novasRecorrencias.length;
+    }
   }
 
   return resultado;

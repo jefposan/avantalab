@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.1.2 - 2026-06-21
+
+- Corrigida importação de entradas no backup restaurado e mensagens de erro da restauração.
+
 ## 1.1.1 - 2026-06-21
 
 - Corrigida seleção de arquivo na restauração de backup.

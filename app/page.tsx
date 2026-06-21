@@ -2796,38 +2796,48 @@ const selecionarArquivoBackup = async (e: React.ChangeEvent<HTMLInputElement>) =
       mensagem: resumo,
       textoConfirmar: 'Importar dados',
       acao: async () => {
-        await gerarBackupExcel({
-          ...backupParams(),
-          nomeArquivoPrefixo: 'ponto_restauracao_avantalab',
-        });
+        try {
+          await gerarBackupExcel({
+            ...backupParams(),
+            nomeArquivoPrefixo: 'ponto_restauracao_avantalab',
+          });
 
-        const resultado = await importarBackupExcelAdicionar({
-          arquivo,
-          empresaId,
-        });
+          const resultado = await importarBackupExcelAdicionar({
+            arquivo,
+            empresaId,
+          });
 
-        await recarregarDadosFinanceirosAtual();
+          await recarregarDadosFinanceirosAtual();
 
-        abrirAviso(
-          'Importação concluída',
-          [
-            `Despesas base adicionadas: ${resultado.despesasBaseInseridas}`,
-            `Lançamentos adicionados: ${resultado.lancamentosInseridos}`,
-            `Entradas/receitas adicionadas: ${resultado.receitasEntradasInseridas}`,
-            `Totais mensais adicionados: ${resultado.receitasTotaisInseridas}`,
-            `Despesas fixas adicionadas: ${resultado.recorrenciasInseridas}`,
-            '',
-            `Registros ignorados por já existirem ou por dados incompletos: ${
-              resultado.despesasBaseIgnoradas +
-              resultado.lancamentosIgnorados +
-              resultado.receitasEntradasIgnoradas +
-              resultado.receitasTotaisIgnoradas +
-              resultado.recorrenciasIgnoradas
-            }`,
-          ].join('\n'),
-          undefined,
-          'sucesso'
-        );
+          abrirAviso(
+            'Importação concluída',
+            [
+              `Despesas base adicionadas: ${resultado.despesasBaseInseridas}`,
+              `Lançamentos adicionados: ${resultado.lancamentosInseridos}`,
+              `Entradas/receitas adicionadas: ${resultado.receitasEntradasInseridas}`,
+              `Totais mensais adicionados: ${resultado.receitasTotaisInseridas}`,
+              `Despesas fixas adicionadas: ${resultado.recorrenciasInseridas}`,
+              '',
+              `Registros ignorados por já existirem ou por dados incompletos: ${
+                resultado.despesasBaseIgnoradas +
+                resultado.lancamentosIgnorados +
+                resultado.receitasEntradasIgnoradas +
+                resultado.receitasTotaisIgnoradas +
+                resultado.recorrenciasIgnoradas
+              }`,
+            ].join('\n'),
+            undefined,
+            'sucesso'
+          );
+        } catch (error: any) {
+          console.error('Erro ao executar importação de backup:', error);
+          abrirAviso(
+            'Erro ao importar backup',
+            error?.message || 'Não foi possível importar o arquivo selecionado.',
+            undefined,
+            'erro'
+          );
+        }
       },
     });
   } catch (error: any) {
