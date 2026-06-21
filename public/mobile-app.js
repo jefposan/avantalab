@@ -120,6 +120,7 @@
     tipoLancamento: 'despesa',
     modoReceita: 'entrada',
     menuAberto: false,
+     menuConfigAberto: false,
     modalMenu: '',
     darkMode: false,
     installPrompt: null,
@@ -553,6 +554,7 @@
     state.agendaFormAberto = false;
     state.visao = 'agenda';
     state.menuAberto = false;
+    state.menuConfigAberto = false;
     state.busca = '';
     render();
   }
@@ -4404,9 +4406,49 @@
   }
 
   function menuLateralHtml() {
+    var dk = state.darkMode;
+    var bordaBase = dk ? 'border-slate-800 bg-slate-900' : 'border-slate-200 bg-white';
+    var configAberto = !!state.menuConfigAberto;
+
+    var configSubItens = configAberto ? (
+      '<div class="mt-1 grid gap-1 overflow-hidden rounded-2xl border ' + (dk ? 'border-slate-700 bg-slate-800/60' : 'border-cyan-100 bg-cyan-50/40') + ' p-1.5">' +
+        '<button id="menu-duplicados" type="button" class="rounded-xl border ' + bordaBase + ' px-3 py-2.5 text-left">' +
+          '<div class="flex items-center gap-2.5">' +
+            '<span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-cyan-50 text-[10px] font-black text-cyan-700">D</span>' +
+            '<span class="min-w-0 flex-1"><span class="block text-[11px] font-black">Duplicados</span><span class="mt-0.5 block truncate text-[9px] font-semibold text-slate-500">' + (state.duplicadosAtivo ? 'Avisar despesas repetidas' : 'Nao avisar repeticoes') + '</span></span>' +
+            '<span class="relative h-5 w-9 shrink-0 rounded-full p-0.5 ' + (state.duplicadosAtivo ? 'bg-emerald-500' : 'bg-rose-400') + '"><span class="block h-4 w-4 rounded-full bg-white shadow-sm transition-transform ' + (state.duplicadosAtivo ? 'translate-x-4' : 'translate-x-0') + '"></span></span>' +
+          '</div>' +
+        '</button>' +
+        '<button id="menu-gerenciar" type="button" class="rounded-xl border ' + bordaBase + ' px-3 py-2.5 text-left active:scale-[0.99]">' +
+          '<div class="flex items-center gap-2.5">' +
+            '<span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-cyan-50 text-[10px] font-black text-cyan-700">P</span>' +
+            '<span class="min-w-0 flex-1"><span class="block text-[11px] font-black">Gerenciar perfil</span><span class="mt-0.5 block truncate text-[9px] font-semibold text-slate-500">Editar, criar ou excluir perfil</span></span>' +
+          '</div>' +
+        '</button>' +
+        '<button id="menu-tema" type="button" class="rounded-xl border ' + bordaBase + ' px-3 py-2.5 text-left">' +
+          '<div class="flex items-center gap-2.5">' +
+            '<span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-cyan-50 text-[10px] font-black text-cyan-700">' + (dk ? 'ON' : 'OFF') + '</span>' +
+            '<span class="min-w-0 flex-1"><span class="block text-[11px] font-black">Modo escuro</span><span class="mt-0.5 block truncate text-[9px] font-semibold text-slate-500">' + (dk ? 'Ativo' : 'Inativo') + '</span></span>' +
+          '</div>' +
+        '</button>' +
+        '<button id="menu-organizar-dashboard" type="button" class="rounded-xl border ' + bordaBase + ' px-3 py-2.5 text-left active:scale-[0.99]">' +
+          '<div class="flex items-center gap-2.5">' +
+            '<span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-cyan-50 text-sm font-black text-cyan-700">&#8597;</span>' +
+            '<span class="min-w-0 flex-1"><span class="block text-[11px] font-black">Organizar Dashboard</span><span class="mt-0.5 block truncate text-[9px] font-semibold text-slate-500">Definir a ordem dos cards</span></span>' +
+          '</div>' +
+        '</button>' +
+        '<button id="menu-usuario" type="button" class="rounded-xl border ' + bordaBase + ' px-3 py-2.5 text-left active:scale-[0.99]">' +
+          '<div class="flex items-center gap-2.5">' +
+            '<span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-cyan-50 text-[10px] font-black text-cyan-700">U</span>' +
+            '<span class="min-w-0 flex-1"><span class="block text-[11px] font-black">Usuarios</span><span class="mt-0.5 block truncate text-[9px] font-semibold text-slate-500">' + escapeHtml(perfilFormatado(state.empresa && state.empresa.perfil)) + '</span></span>' +
+          '</div>' +
+        '</button>' +
+      '</div>'
+    ) : '';
+
     return (
       '<div id="menu-overlay" class="fixed inset-0 z-50 bg-slate-950/55 backdrop-blur-sm">' +
-        '<aside class="h-full w-[84vw] max-w-[328px] overflow-y-auto ' + (state.darkMode ? 'bg-slate-950 text-slate-100' : 'bg-slate-50 text-slate-900') + ' p-3 shadow-2xl">' +
+        '<aside class="h-full w-[84vw] max-w-[328px] overflow-y-auto ' + (dk ? 'bg-slate-950 text-slate-100' : 'bg-slate-50 text-slate-900') + ' p-3 shadow-2xl">' +
           '<div class="mb-3 overflow-hidden rounded-2xl border border-white/15 p-3 text-white shadow-lg shadow-sky-950/15" style="background:linear-gradient(135deg,#003E73 0%,#075985 54%,#00A6C8 100%);">' +
             '<div class="flex items-start justify-between gap-3">' +
               '<div class="min-w-0"><p class="text-[9px] font-black uppercase tracking-[0.24em] text-cyan-100">AvantaLab</p><h2 class="mt-1 truncate text-base font-black">' + escapeHtml(nomeEmpresa(state.empresa)) + '</h2><p class="mt-0.5 truncate text-[11px] font-semibold text-cyan-50/85">' + escapeHtml(state.usuario && state.usuario.email ? state.usuario.email : 'Usuario logado') + '</p></div>' +
@@ -4414,17 +4456,19 @@
             '</div>' +
           '</div>' +
           '<div class="grid gap-2">' +
-            menuBotaoHtml('menu-configurar-resumo', 'Configurar resumo', 'Exibir e ocultar cards', '&#9776;') +
-            menuBotaoHtml('menu-organizar-dashboard', 'Organizar dashboard', 'Definir a ordem dos cards', '&#8597;') +
             menuBotaoHtml('menu-agenda', 'Agenda', 'Lembretes e avisos', '&#128197;') +
-            menuBotaoHtml('menu-usuario', 'Usuários', perfilFormatado(state.empresa && state.empresa.perfil), 'U') +
-            menuBotaoHtml('menu-gerenciar', 'Gerenciar perfil', 'Editar, criar ou excluir perfil', 'P') +
+            menuBotaoHtml('menu-configurar-resumo', 'Organizar resumo', 'Exibir e ocultar cards', '&#9776;') +
             menuBotaoHtml('menu-categorias', 'Cadastrar despesas', 'Adicionar tipos de despesa', '+') +
-            menuBotaoHtml('menu-despesas-fixas', 'Despesas fixas', 'Lançamentos automáticos mensais', '&#10227;') +
-            menuBotaoHtml('menu-ajuda-categorias', 'Instruções de categorias', 'Como organizar seus gastos', '?') +
-            (isStandalone() ? '' : menuBotaoHtml('menu-instalar', 'Instalar app', 'Adicionar à tela inicial', '&#8681;')) +
-            '<button id="menu-duplicados" type="button" class="rounded-2xl border ' + (state.darkMode ? 'border-slate-800 bg-slate-900' : 'border-slate-200 bg-white') + ' p-3 text-left shadow-sm"><div class="flex items-center gap-3"><span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-cyan-50 text-xs font-black text-cyan-700">D</span><span class="min-w-0 flex-1"><span class="block text-xs font-black">Duplicados</span><span class="mt-0.5 block truncate text-[10px] font-semibold text-slate-500">' + (state.duplicadosAtivo ? 'Avisar despesas repetidas' : 'Nao avisar repeticoes') + '</span></span><span class="relative h-6 w-11 shrink-0 rounded-full p-0.5 ' + (state.duplicadosAtivo ? 'bg-emerald-500' : 'bg-rose-500') + '"><span class="block h-5 w-5 rounded-full bg-white shadow-sm transition-transform ' + (state.duplicadosAtivo ? 'translate-x-5' : 'translate-x-0') + '"></span></span></div></button>' +
-            '<button id="menu-tema" type="button" class="rounded-2xl border ' + (state.darkMode ? 'border-slate-800 bg-slate-900' : 'border-slate-200 bg-white') + ' p-3 text-left shadow-sm"><div class="flex items-center gap-3"><span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-cyan-50 text-xs font-black text-cyan-700">' + (state.darkMode ? 'ON' : 'OFF') + '</span><span class="min-w-0 flex-1"><span class="block text-xs font-black">Modo escuro</span><span class="mt-0.5 block truncate text-[10px] font-semibold text-slate-500">' + (state.darkMode ? 'Ativo' : 'Inativo') + '</span></span></div></button>' +
+            menuBotaoHtml('menu-despesas-fixas', 'Despesas fixas', 'Lancamentos automaticos mensais', '&#10227;') +
+            menuBotaoHtml('menu-ajuda-categorias', 'Instrucoes sobre categorias', 'Como organizar seus gastos', '?') +
+            '<button id="menu-config-toggle" type="button" class="rounded-2xl border ' + (configAberto ? (dk ? 'border-cyan-700 bg-cyan-900/40' : 'border-cyan-200 bg-cyan-50') : bordaBase) + ' p-3 text-left shadow-sm active:scale-[0.99]">' +
+              '<div class="flex items-center gap-3">' +
+                '<span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-sm font-black ' + (configAberto ? 'bg-cyan-600 text-white' : 'bg-cyan-50 text-cyan-700') + '">&#9881;</span>' +
+                '<span class="min-w-0 flex-1"><span class="block text-xs font-black">Configuracoes</span><span class="mt-0.5 block truncate text-[10px] font-semibold text-slate-500">Perfil, tema e preferencias</span></span>' +
+                '<span class="text-[10px] font-black text-slate-400">' + (configAberto ? '&#9650;' : '&#9660;') + '</span>' +
+              '</div>' +
+            '</button>' +
+            configSubItens +
             '<button id="menu-feedback" type="button" class="rounded-2xl border border-cyan-200 bg-cyan-50 p-3 text-left shadow-sm active:scale-[0.99]"><div class="flex items-center gap-3"><span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-sm font-black text-white" style="background:linear-gradient(135deg,#003E73,#00A6C8)">!</span><span class="min-w-0 flex-1"><span class="block text-xs font-black text-slate-900">Duvidas e Sugestoes</span><span class="mt-0.5 block truncate text-[10px] font-semibold text-cyan-800">Ajude a melhorar o AvantaLab</span></span></div></button>' +
             '<button id="sair" type="button" class="mt-1 rounded-2xl border border-rose-100 bg-white p-3 text-left text-xs font-black text-rose-700 shadow-sm">Sair</button>' +
           '</div>' +
@@ -5607,6 +5651,7 @@
     bind('menu-instalar', instalarApp);
     bind('menu-duplicados', alternarDuplicados);
     bind('menu-tema', trocarTema);
+    bind('menu-config-toggle', function () { state.menuConfigAberto = !state.menuConfigAberto; render(); });
     bind('menu-feedback', abrirFeedbackMobile);
     bind('fechar-modal-menu', fecharModalMenu);
 
@@ -6633,7 +6678,7 @@
           return Promise.all(
             keys
               .filter(function (key) {
-                return key.indexOf('avantalab-mobile-') === 0 && key !== 'avantalab-mobile-v117';
+                return key.indexOf('avantalab-mobile-') === 0 && key !== 'avantalab-mobile-v118';
               })
               .map(function (key) {
                 return caches.delete(key);
@@ -6650,7 +6695,7 @@
     });
 
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/mobile-sw.js?v=117').then(function (registro) {
+      navigator.serviceWorker.register('/mobile-sw.js?v=118').then(function (registro) {
         if (registro && registro.update) registro.update();
       }).catch(function () {});
     }
