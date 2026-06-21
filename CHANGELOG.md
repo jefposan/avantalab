@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.2.1 - 2026-06-21
+
+- Ajustada a escolha do modo de restauracao do backup para opcoes compactas com selecao por radio.
+
 ## 1.2.0 - 2026-06-21
 
 - Restauracao de backup com escolha entre atualizar dados e importar copia limpa substituindo os dados financeiros pelo backup.

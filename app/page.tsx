@@ -4734,7 +4734,13 @@ if (isTelaMobile) {
           </div>
         )}
 
-        <div className="mt-5 grid gap-3">
+        <div
+          className={`mt-5 rounded-xl border p-3 ${
+            darkMode
+              ? 'border-slate-700 bg-slate-900/45'
+              : 'border-slate-200 bg-white'
+          }`}
+        >
           {([
             {
               modo: 'atualizar' as ModoImportacaoBackup,
@@ -4751,31 +4757,42 @@ if (isTelaMobile) {
             const perigo = opcao.modo === 'substituir';
 
             return (
-              <button
+              <label
                 key={opcao.modo}
-                type="button"
-                onClick={() => setModoRestauracaoBackup(opcao.modo)}
-                disabled={importandoBackup}
-                className={`rounded-xl border p-4 text-left transition cursor-pointer disabled:cursor-not-allowed disabled:opacity-70 ${
+                className={`flex cursor-pointer items-start gap-3 rounded-lg px-3 py-2.5 transition ${
                   ativo
-                    ? 'border-transparent text-white shadow-md'
+                    ? darkMode
+                      ? 'bg-slate-800 text-white'
+                      : 'bg-slate-50 text-slate-900'
                     : perigo
                       ? darkMode
-                        ? 'border-red-500/30 bg-red-950/20 text-red-100 hover:bg-red-950/35'
-                        : 'border-red-100 bg-red-50 text-red-900 hover:bg-red-100'
+                        ? 'text-red-100 hover:bg-red-950/20'
+                        : 'text-red-800 hover:bg-red-50'
                       : darkMode
-                        ? 'border-slate-700 bg-slate-900/50 text-slate-300 hover:bg-slate-900'
-                        : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50'
+                        ? 'text-slate-300 hover:bg-slate-800/70'
+                        : 'text-slate-700 hover:bg-slate-50'
                 }`}
-                style={ativo ? estiloTemaPrimario : undefined}
               >
-                <span className="block text-sm font-black uppercase tracking-wide">
-                  {opcao.titulo}
+                <input
+                  type="radio"
+                  name="modo-restauracao-backup"
+                  checked={ativo}
+                  onChange={() => setModoRestauracaoBackup(opcao.modo)}
+                  disabled={importandoBackup}
+                  className="mt-0.5 h-4 w-4 shrink-0 cursor-pointer disabled:cursor-not-allowed"
+                  style={{ accentColor: perigo ? '#b91c1c' : corPrimaria }}
+                />
+                <span className="min-w-0">
+                  <span className="block text-xs font-black uppercase tracking-wide">
+                    {opcao.titulo}
+                  </span>
+                  <span className={`mt-0.5 block text-xs font-semibold leading-relaxed ${
+                    ativo ? textMuted : 'opacity-75'
+                  }`}>
+                    {opcao.texto}
+                  </span>
                 </span>
-                <span className="mt-1 block text-xs font-semibold leading-relaxed opacity-90">
-                  {opcao.texto}
-                </span>
-              </button>
+              </label>
             );
           })}
         </div>
