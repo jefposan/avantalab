@@ -4808,8 +4808,8 @@ if (isTelaMobile) {
             <p className={`text-sm font-bold ${darkMode ? 'text-red-100' : 'text-red-800'}`}>
               Este modo apaga os dados financeiros atuais antes de importar o backup. Um ponto de restauracao sera baixado antes da operacao.
             </p>
-            <label className={`mt-3 block text-xs font-black uppercase tracking-wide ${textMuted}`}>
-              Digite SUBSTITUIR para confirmar
+            <label className={`mt-3 block text-xs font-semibold normal-case tracking-normal ${textMuted}`}>
+              digite <strong className="font-black uppercase">SUBSTITUIR</strong> para confirmar
             </label>
             <input
               value={confirmacaoSubstituirBackup}

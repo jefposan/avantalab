@@ -42,6 +42,7 @@
   }
 
   var db = supabaseGlobal.createClient(config.supabaseUrl, config.supabaseAnonKey);
+  var CHAVE_ULTIMO_PERFIL_MOBILE = 'avantalab_mobile_ultimo_perfil_id';
   var meses = [
     'JANEIRO',
     'FEVEREIRO',
@@ -398,7 +399,7 @@
     return '<div class="mx-auto max-w-md px-4 py-5">' + conteudo + '</div>';
   }
 
-  var APP_VERSION = '1.2.1';
+  var APP_VERSION = '1.2.2';
   var APP_VERSION_LABEL = 'AvantaLab Gest&atilde;o v' + APP_VERSION;
 
   function telaAvisoMobile(titulo, texto) {
@@ -533,6 +534,37 @@
     state.agendaFormAberto = false;
     state.busca = '';
     carregarDados();
+  }
+
+  function salvarUltimoPerfilMobile(empresaId) {
+    if (!empresaId) return;
+    try {
+      localStorage.setItem(CHAVE_ULTIMO_PERFIL_MOBILE, String(empresaId));
+    } catch (error) {}
+  }
+
+  function lerUltimoPerfilMobile() {
+    try {
+      return localStorage.getItem(CHAVE_ULTIMO_PERFIL_MOBILE) || '';
+    } catch (error) {
+      return '';
+    }
+  }
+
+  function selecionarEmpresaMobile(empresaId, salvarEscolha) {
+    var empresaSelecionada = state.empresas.find(function (empresa) {
+      return empresa.id === empresaId;
+    });
+
+    if (!empresaSelecionada) return false;
+
+    state.empresa = empresaSelecionada;
+
+    if (salvarEscolha !== false) {
+      salvarUltimoPerfilMobile(empresaSelecionada.id);
+    }
+
+    return true;
   }
 
   function nomeMesCompleto(mes) {
@@ -1504,7 +1536,15 @@
       .filter(Boolean)
       .sort(function(a, b) { return a.nome.localeCompare(b.nome, 'pt-BR', { sensitivity: 'base' }); });
 
-    state.empresa = state.empresas[0] || null;
+    var ultimoPerfilId = lerUltimoPerfilMobile();
+    state.empresa =
+      state.empresas.find(function (empresa) { return empresa.id === ultimoPerfilId; }) ||
+      state.empresas[0] ||
+      null;
+
+    if (state.empresa) {
+      salvarUltimoPerfilMobile(state.empresa.id);
+    }
   }
 
   async function carregarDados() {
@@ -2967,6 +3007,7 @@
     state.empresaExclusaoAberta = false;
     state.empresaCriarAberta = false;
     state.novaEmpresaTipoPerfil = 'empresa';
+    salvarUltimoPerfilMobile(criadaId);
     await carregarEmpresas(state.usuario.id);
     await carregarDados();
     mostrarToast('Perfil criado.');
@@ -6093,7 +6134,7 @@
 
     bindChange('empresa', function () {
       var id = campo('empresa');
-      state.empresa = state.empresas.find(function (empresa) { return empresa.id === id; }) || state.empresa;
+      selecionarEmpresaMobile(id, true);
       carregarDados();
     });
 
@@ -6177,7 +6218,7 @@
     Array.prototype.forEach.call(document.querySelectorAll('.empresa-opcao'), function (botao) {
       botao.addEventListener('click', function () {
         var id = botao.getAttribute('data-empresa-id');
-        state.empresa = state.empresas.find(function (empresa) { return empresa.id === id; }) || state.empresa;
+        selecionarEmpresaMobile(id, true);
         state.modalMenu = '';
         state.visao = 'home';
         carregarDados();
@@ -6698,7 +6739,7 @@
     });
 
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/mobile-sw.js?v=127').then(function (registro) {
+      navigator.serviceWorker.register('/mobile-sw.js?v=128').then(function (registro) {
         if (registro && registro.update) registro.update();
       }).catch(function () {});
     }

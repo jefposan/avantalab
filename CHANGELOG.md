@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.2.2 - 2026-06-21
+
+- Ajustado aviso de confirmacao da importacao limpa do backup.
+- Mobile passa a abrir no ultimo perfil financeiro selecionado pelo usuario.
+
 ## 1.2.1 - 2026-06-21
 
 - Ajustada a escolha do modo de restauracao do backup para opcoes compactas com selecao por radio.
