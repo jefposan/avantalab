@@ -194,6 +194,8 @@
     agendaDescricao: '',
     agendaRepetir: false,
     agendaRepeticao: 'mensal',
+    agendaLancamentoAtivo: false,
+    agendaLancamentoDia: null,
   };
 
   var CHAVE_MANTER_CONECTADO_ATE = 'avantalab_mobile_manter_conectado_ate';
@@ -600,11 +602,82 @@
     render();
   }
 
+  function abrirLancamentoFuturoAgenda() {
+    if (!state.agendaDiaSelecionado) return;
+
+    state.agendaFormAberto = false;
+    state.agendaLancamentoAtivo = true;
+    state.agendaLancamentoDia = Number(state.agendaDiaSelecionado);
+    state.tipoLancamento = 'despesa';
+    state.modoReceita = 'entrada';
+    state.modalLancamento = true;
+    state.erro = '';
+    render();
+  }
+
   function cancelarFormularioAgendaMobile() {
     state.agendaFormAberto = false;
     state.agendaTitulo = '';
     state.agendaDescricao = '';
     render();
+  }
+
+  function limparLancamentoAgendaMobile() {
+    state.agendaLancamentoAtivo = false;
+    state.agendaLancamentoDia = null;
+  }
+
+  function aplicarDiaLancamentoAgendaMobile() {
+    if (!state.agendaLancamentoAtivo || !state.agendaLancamentoDia) return;
+
+    var despesaDia = document.getElementById('despesa-dia');
+    var entradaDia = document.getElementById('entrada-dia');
+    if (despesaDia && !despesaDia.value) despesaDia.value = String(state.agendaLancamentoDia);
+    if (entradaDia && !entradaDia.value) entradaDia.value = String(state.agendaLancamentoDia);
+  }
+
+  function ocorrenciasAgendaLancamento(diaBase) {
+    var repetir = !!document.getElementById('agenda-repetir') && document.getElementById('agenda-repetir').checked;
+    var repeticao = campo('agenda-repeticao') || state.agendaRepeticao || 'mensal';
+    var ano = Number(state.ano) || new Date().getFullYear();
+    var mesIndex = indiceMes(state.mes);
+    var inicio = new Date(ano, mesIndex, Number(diaBase) || 1);
+    var ocorrencias = [];
+    var quantidade = repetir
+      ? ({ diaria: 31, semanal: 12, quinzenal: 12, mensal: 12, anual: 5 }[repeticao] || 1)
+      : 1;
+
+    for (var i = 0; i < quantidade; i += 1) {
+      var data = new Date(inicio.getTime());
+
+      if (repetir) {
+        if (repeticao === 'diaria') data.setDate(inicio.getDate() + i);
+        else if (repeticao === 'semanal') data.setDate(inicio.getDate() + (i * 7));
+        else if (repeticao === 'quinzenal') data.setDate(inicio.getDate() + (i * 14));
+        else if (repeticao === 'mensal') {
+          var mesDestino = inicio.getMonth() + i;
+          var anoMensal = inicio.getFullYear() + Math.floor(mesDestino / 12);
+          var indiceMensal = ((mesDestino % 12) + 12) % 12;
+          var ultimoDiaMensal = new Date(anoMensal, indiceMensal + 1, 0).getDate();
+          data = new Date(anoMensal, indiceMensal, Math.min(inicio.getDate(), ultimoDiaMensal));
+        } else if (repeticao === 'anual') {
+          var anoAnual = inicio.getFullYear() + i;
+          var ultimoDiaAnual = new Date(anoAnual, inicio.getMonth() + 1, 0).getDate();
+          data = new Date(anoAnual, inicio.getMonth(), Math.min(inicio.getDate(), ultimoDiaAnual));
+        }
+      }
+
+      ocorrencias.push({
+        ano: data.getFullYear(),
+        mes: meses[data.getMonth()],
+        dia: data.getDate(),
+        indice: i,
+        total: quantidade,
+        repeticao: repetir ? repeticao : '',
+      });
+    }
+
+    return ocorrencias;
   }
 
   function salvarItemAgendaMobile() {
@@ -2279,6 +2352,52 @@
     state.erro = '';
     render();
 
+    if (state.agendaLancamentoAtivo) {
+      var ocorrenciasAgenda = ocorrenciasAgendaLancamento(dia);
+      var descAgendaBase = formatarDescricao(descricao);
+
+      for (var ag = 0; ag < ocorrenciasAgenda.length; ag += 1) {
+        var ocorrencia = ocorrenciasAgenda[ag];
+        var descAgenda = ocorrenciasAgenda.length > 1
+          ? (descAgendaBase ? descAgendaBase + ' (' + (ag + 1) + '/' + ocorrenciasAgenda.length + ')' : '(' + (ag + 1) + '/' + ocorrenciasAgenda.length + ')')
+          : descAgendaBase;
+
+        var respostaAgenda = await db
+          .from('lancamentos')
+          .insert({
+            empresa_id: state.empresa.id,
+            ano: ocorrencia.ano,
+            mes: ocorrencia.mes,
+            dia: ocorrencia.dia,
+            despesa_nome: nome,
+            descricao: descAgenda,
+            valor: valor,
+          })
+          .select()
+          .single();
+
+        if (respostaAgenda.error) {
+          state.lancandoDespesa = false;
+          state.carregando = false;
+          setErro('Nao foi possivel salvar a despesa futura.');
+          return;
+        }
+      }
+
+      state.lancandoDespesa = false;
+      state.carregando = false;
+      state.formParcelar = false;
+      state.formParcelas = 2;
+      state.modalLancamento = false;
+      state.tipoLancamento = 'despesa';
+      state.modoReceita = 'entrada';
+      state.erro = '';
+      limparLancamentoAgendaMobile();
+      await carregarDados();
+      mostrarToast(ocorrenciasAgenda.length > 1 ? 'Despesas futuras lancadas.' : 'Despesa futura lancada.');
+      return;
+    }
+
     var totalParcelas = (state.formParcelar && state.formParcelas >= 2) ? state.formParcelas : 1;
     var mesIndex = indiceMes(state.mes);
     var ok = true;
@@ -2323,6 +2442,7 @@
     state.tipoLancamento = 'despesa';
     state.modoReceita = 'entrada';
     state.erro = '';
+    limparLancamentoAgendaMobile();
     await carregarDados();
     mostrarToast(totalParcelas > 1 ? 'Despesa parcelada em ' + totalParcelas + 'x.' : 'Despesa lancada.');
   }
@@ -2369,6 +2489,77 @@
     state.erro = '';
     render();
 
+    if (state.agendaLancamentoAtivo) {
+      var ocorrenciasReceita = ocorrenciasAgendaLancamento(dia);
+      var totaisPorMes = {};
+
+      for (var ar = 0; ar < ocorrenciasReceita.length; ar += 1) {
+        var ocorrenciaReceita = ocorrenciasReceita[ar];
+        var origemReceita = ocorrenciasReceita.length > 1
+          ? formatarDescricao(origem) + ' (' + (ar + 1) + '/' + ocorrenciasReceita.length + ')'
+          : formatarDescricao(origem);
+
+        var respostaReceita = await db
+          .from('faturamentos_entradas')
+          .insert({
+            empresa_id: state.empresa.id,
+            ano: ocorrenciaReceita.ano,
+            mes: ocorrenciaReceita.mes,
+            dia: ocorrenciaReceita.dia,
+            origem: origemReceita,
+            valor: valor,
+            criado_por: state.usuario ? state.usuario.id : null,
+          })
+          .select()
+          .single();
+
+        if (respostaReceita.error) {
+          state.carregando = false;
+          setErro('Nao foi possivel salvar a receita futura.');
+          return;
+        }
+
+        var chaveMes = ocorrenciaReceita.ano + '|' + ocorrenciaReceita.mes;
+        totaisPorMes[chaveMes] = (totaisPorMes[chaveMes] || 0) + valor;
+      }
+
+      var chaves = Object.keys(totaisPorMes);
+      for (var tr = 0; tr < chaves.length; tr += 1) {
+        var partes = chaves[tr].split('|');
+        var anoTotal = Number(partes[0]);
+        var mesTotal = partes[1];
+        var totalAtualAgenda = state.faturamentos[mesTotal] || 0;
+        var totalAgenda = await db
+          .from('faturamentos')
+          .upsert(
+            {
+              empresa_id: state.empresa.id,
+              ano: anoTotal,
+              mes: mesTotal,
+              valor: totalAtualAgenda + totaisPorMes[chaves[tr]],
+            },
+            { onConflict: 'empresa_id,ano,mes' }
+          )
+          .select()
+          .single();
+
+        if (totalAgenda.error) {
+          state.carregando = false;
+          setErro('Receita futura salva, mas o total do mes nao foi atualizado.');
+          return;
+        }
+      }
+
+      state.modalLancamento = false;
+      state.tipoLancamento = 'despesa';
+      state.modoReceita = 'entrada';
+      state.erro = '';
+      limparLancamentoAgendaMobile();
+      await carregarDados();
+      mostrarToast(ocorrenciasReceita.length > 1 ? 'Receitas futuras lancadas.' : 'Receita futura lancada.');
+      return;
+    }
+
     var resposta = await db
       .from('faturamentos_entradas')
       .insert({
@@ -2414,6 +2605,7 @@
     state.tipoLancamento = 'despesa';
     state.modoReceita = 'entrada';
     state.erro = '';
+    limparLancamentoAgendaMobile();
     await carregarDados();
     mostrarToast('Entrada lancada.');
   }
@@ -2456,6 +2648,7 @@
     state.tipoLancamento = 'despesa';
     state.modoReceita = 'entrada';
     state.erro = '';
+    limparLancamentoAgendaMobile();
     await carregarDados();
     mostrarToast('Total do mes atualizado.');
   }
@@ -3367,6 +3560,52 @@
     state.erro = '';
     render();
 
+    if (state.agendaLancamentoAtivo) {
+      var ocorrenciasAgenda = ocorrenciasAgendaLancamento(dia);
+      var descAgendaBase = formatarDescricao(descricao);
+
+      for (var ag = 0; ag < ocorrenciasAgenda.length; ag += 1) {
+        var ocorrencia = ocorrenciasAgenda[ag];
+        var descAgenda = ocorrenciasAgenda.length > 1
+          ? (descAgendaBase ? descAgendaBase + ' (' + (ag + 1) + '/' + ocorrenciasAgenda.length + ')' : '(' + (ag + 1) + '/' + ocorrenciasAgenda.length + ')')
+          : descAgendaBase;
+
+        var respostaAgenda = await db
+          .from('lancamentos')
+          .insert({
+            empresa_id: state.empresa.id,
+            ano: ocorrencia.ano,
+            mes: ocorrencia.mes,
+            dia: ocorrencia.dia,
+            despesa_nome: nome,
+            descricao: descAgenda,
+            valor: valor,
+          })
+          .select()
+          .single();
+
+        if (respostaAgenda.error) {
+          state.lancandoDespesa = false;
+          state.carregando = false;
+          setErro('Nao foi possivel salvar a despesa futura.');
+          return;
+        }
+      }
+
+      state.lancandoDespesa = false;
+      state.carregando = false;
+      state.formParcelar = false;
+      state.formParcelas = 2;
+      state.modalLancamento = false;
+      state.tipoLancamento = 'despesa';
+      state.modoReceita = 'entrada';
+      state.erro = '';
+      limparLancamentoAgendaMobile();
+      await carregarDados();
+      mostrarToast(ocorrenciasAgenda.length > 1 ? 'Despesas futuras lancadas.' : 'Despesa futura lancada.');
+      return;
+    }
+
     var totalParcelas = (state.formParcelar && state.formParcelas >= 2) ? state.formParcelas : 1;
     var mesIndex = indiceMes(state.mes);
     var ok = true;
@@ -3411,6 +3650,7 @@
     state.tipoLancamento = 'despesa';
     state.modoReceita = 'entrada';
     state.erro = '';
+    limparLancamentoAgendaMobile();
     await carregarDados();
     mostrarToast(totalParcelas > 1 ? 'Despesa parcelada em ' + totalParcelas + 'x.' : 'Despesa lancada.');
   }
@@ -3457,6 +3697,77 @@
     state.erro = '';
     render();
 
+    if (state.agendaLancamentoAtivo) {
+      var ocorrenciasReceita = ocorrenciasAgendaLancamento(dia);
+      var totaisPorMes = {};
+
+      for (var ar = 0; ar < ocorrenciasReceita.length; ar += 1) {
+        var ocorrenciaReceita = ocorrenciasReceita[ar];
+        var origemReceita = ocorrenciasReceita.length > 1
+          ? formatarDescricao(origem) + ' (' + (ar + 1) + '/' + ocorrenciasReceita.length + ')'
+          : formatarDescricao(origem);
+
+        var respostaReceita = await db
+          .from('faturamentos_entradas')
+          .insert({
+            empresa_id: state.empresa.id,
+            ano: ocorrenciaReceita.ano,
+            mes: ocorrenciaReceita.mes,
+            dia: ocorrenciaReceita.dia,
+            origem: origemReceita,
+            valor: valor,
+            criado_por: state.usuario ? state.usuario.id : null,
+          })
+          .select()
+          .single();
+
+        if (respostaReceita.error) {
+          state.carregando = false;
+          setErro('Nao foi possivel salvar a receita futura.');
+          return;
+        }
+
+        var chaveMes = ocorrenciaReceita.ano + '|' + ocorrenciaReceita.mes;
+        totaisPorMes[chaveMes] = (totaisPorMes[chaveMes] || 0) + valor;
+      }
+
+      var chaves = Object.keys(totaisPorMes);
+      for (var tr = 0; tr < chaves.length; tr += 1) {
+        var partes = chaves[tr].split('|');
+        var anoTotal = Number(partes[0]);
+        var mesTotal = partes[1];
+        var totalAtualAgenda = state.faturamentos[mesTotal] || 0;
+        var totalAgenda = await db
+          .from('faturamentos')
+          .upsert(
+            {
+              empresa_id: state.empresa.id,
+              ano: anoTotal,
+              mes: mesTotal,
+              valor: totalAtualAgenda + totaisPorMes[chaves[tr]],
+            },
+            { onConflict: 'empresa_id,ano,mes' }
+          )
+          .select()
+          .single();
+
+        if (totalAgenda.error) {
+          state.carregando = false;
+          setErro('Receita futura salva, mas o total do mes nao foi atualizado.');
+          return;
+        }
+      }
+
+      state.modalLancamento = false;
+      state.tipoLancamento = 'despesa';
+      state.modoReceita = 'entrada';
+      state.erro = '';
+      limparLancamentoAgendaMobile();
+      await carregarDados();
+      mostrarToast(ocorrenciasReceita.length > 1 ? 'Receitas futuras lancadas.' : 'Receita futura lancada.');
+      return;
+    }
+
     var resposta = await db
       .from('faturamentos_entradas')
       .insert({
@@ -3502,6 +3813,7 @@
     state.tipoLancamento = 'despesa';
     state.modoReceita = 'entrada';
     state.erro = '';
+    limparLancamentoAgendaMobile();
     await carregarDados();
     mostrarToast('Entrada lancada.');
   }
@@ -3544,6 +3856,7 @@
     state.tipoLancamento = 'despesa';
     state.modoReceita = 'entrada';
     state.erro = '';
+    limparLancamentoAgendaMobile();
     await carregarDados();
     mostrarToast('Total do mes atualizado.');
   }
@@ -4546,7 +4859,7 @@
             '</div>' +
           '</div>' +
         '</header>' +
-        '<div class="mx-auto grid max-w-md gap-3 px-4" style="padding-top:calc(env(safe-area-inset-top) + 132px);">' +
+        '<div class="mx-auto grid max-w-md gap-3 px-4" style="padding-top:calc(env(safe-area-inset-top) + ' + (state.visao === 'agenda' ? '148px' : '132px') + ');">' +
           (state.visao === 'agenda' ? '' : empresaHtml()) +
           alertaHtml().replace('mt-4', '') +
           (state.visao === 'home' ? homeHtml(atual, anterior) : (state.visao === 'agenda' ? agendaMobileHtml(atual) : listaDetalhadaHtml(atual))) +
@@ -4832,7 +5145,7 @@
     }
 
     return (
-      '<section id="agenda-mobile-screen" class="relative -mx-1 flex overflow-hidden rounded-[28px] border border-slate-200 bg-slate-50 p-3 shadow-sm" style="height:calc(100dvh - 154px - env(safe-area-inset-top));touch-action:pan-x;">' +
+      '<section id="agenda-mobile-screen" class="relative -mx-1 flex overflow-hidden rounded-[28px] border border-slate-200 bg-slate-50 p-3 shadow-sm" style="height:calc(100dvh - 170px - env(safe-area-inset-top));touch-action:pan-x;">' +
         '<div class="flex min-h-0 w-full flex-col">' +
           '<div class="shrink-0 px-1 pb-2">' +
             '<h2 class="text-center text-lg font-black tracking-[0.22em] text-slate-950">AGENDA</h2>' +
@@ -5135,17 +5448,41 @@
               '</div>' +
               novaDespesaFormHtml()
             : '<div class="-mx-4 -mt-4 mb-4 flex items-center justify-between rounded-t-3xl border-b border-cyan-100 bg-cyan-50/90 px-4 py-3">' +
-                '<h2 class="text-base font-black">Novo lancamento</h2>' +
+                '<h2 class="text-base font-black">' + (state.agendaLancamentoAtivo ? 'Novo lancamento futuro' : 'Novo lancamento') + '</h2>' +
                 '<button id="fechar-lancamento" type="button" class="flex h-9 w-9 items-center justify-center rounded-full bg-slate-100 text-xl text-slate-600">&times;</button>' +
               '</div>' +
               '<div class="mb-3 grid grid-cols-2 gap-2 rounded-xl bg-slate-100 p-1">' +
                 '<button id="tipo-despesa" type="button" class="h-9 rounded-lg text-sm font-black transition ' + (despesaAtiva ? 'bg-red-600 text-white shadow-sm' : 'text-slate-500') + '">Despesa</button>' +
                 '<button id="tipo-receita" type="button" class="h-9 rounded-lg text-sm font-black transition ' + (!despesaAtiva ? 'bg-emerald-600 text-white shadow-sm' : 'text-slate-500') + '">Receita</button>' +
               '</div>' +
+              (state.agendaLancamentoAtivo ? agendaLancamentoRepeticaoHtml() : '') +
               '<p id="lancamento-alerta-dia" class="rounded-lg bg-rose-50 px-3 py-2 text-[11px] font-black text-rose-700 mb-3"' + (state.erro ? '' : ' style="display:none"') + '>' + escapeHtml(state.erro) + '</p>' +
               (despesaAtiva ? modalDespesaCamposHtml() : modalReceitaCamposHtml())
           ) +
         '</section>' +
+      '</div>'
+    );
+  }
+
+  function agendaLancamentoRepeticaoHtml() {
+    var opcoes = [
+      ['diaria', 'Diaria'],
+      ['semanal', 'Semanal'],
+      ['quinzenal', 'Quinzenal'],
+      ['mensal', 'Mensal'],
+      ['anual', 'Anual'],
+    ].map(function (opcao) {
+      return '<option value="' + opcao[0] + '"' + (state.agendaRepeticao === opcao[0] ? ' selected' : '') + '>' + opcao[1] + '</option>';
+    }).join('');
+
+    return (
+      '<div class="mb-3 grid gap-2 rounded-2xl border border-cyan-100 bg-cyan-50/70 p-3">' +
+        '<label class="flex items-center gap-3 text-sm font-black text-slate-800">' +
+          '<input id="agenda-repetir" type="checkbox" class="h-5 w-5 rounded border-slate-300" ' + (state.agendaRepetir ? 'checked' : '') + ' />' +
+          '<span>Repetir lancamento</span>' +
+        '</label>' +
+        '<select id="agenda-repeticao" style="font-size:16px" class="h-10 rounded-xl border border-slate-200 bg-white px-3 text-sm font-black text-slate-800 outline-none">' + opcoes + '</select>' +
+        '<p class="text-[10px] font-semibold leading-relaxed text-cyan-900">A repeticao cria ocorrencias futuras limitadas para evitar lancamentos infinitos.</p>' +
       '</div>'
     );
   }
@@ -6628,6 +6965,16 @@
     bind('cancelar-agenda-item', cancelarFormularioAgendaMobile);
     bind('cancelar-agenda-item-topo', cancelarFormularioAgendaMobile);
     bind('salvar-agenda-item', salvarItemAgendaMobile);
+    bindChange('agenda-tipo', function () {
+      state.agendaTipoItem = this.value || 'lembrete';
+      if (state.agendaTipoItem === 'lancamento') abrirLancamentoFuturoAgenda();
+    });
+    bindChange('agenda-repetir', function () {
+      state.agendaRepetir = Boolean(this.checked);
+    });
+    bindChange('agenda-repeticao', function () {
+      state.agendaRepeticao = this.value || 'mensal';
+    });
     bind('fechar-agenda-dia', function () {
       state.agendaDiaSelecionado = null;
       state.agendaFormAberto = false;
@@ -6845,6 +7192,7 @@
       render();
     });
     bind('abrir-lancamento', function () {
+      limparLancamentoAgendaMobile();
       state.modalLancamento = true;
       render();
     });
@@ -6854,6 +7202,7 @@
       state.novaDespesaAberta = false;
       state.novaDespesaNome = '';
       state.novaDespesaCategoria = '';
+      limparLancamentoAgendaMobile();
       render();
     });
     var modalLancamentoOverlay = document.getElementById('modal-lancamento-overlay');
@@ -6861,6 +7210,7 @@
       modalLancamentoOverlay.addEventListener('click', function (event) {
         if (event.target !== modalLancamentoOverlay) return;
         state.modalLancamento = false;
+        limparLancamentoAgendaMobile();
         state.erro = '';
         render();
       });
@@ -6925,6 +7275,7 @@
     });
     bind('excluir-lancamento', excluirLancamentoSelecionado);
     bind('salvar-edicao-lancamento', salvarEdicaoLancamentoSelecionado);
+    aplicarDiaLancamentoAgendaMobile();
 
     ['despesa-valor', 'entrada-valor', 'receita-total', 'editar-valor'].forEach(function (id) {
       bindInput(id, function () {
@@ -7533,7 +7884,7 @@
           return Promise.all(
             keys
               .filter(function (key) {
-                return key.indexOf('avantalab-mobile-') === 0 && key !== 'avantalab-mobile-v113';
+                return key.indexOf('avantalab-mobile-') === 0 && key !== 'avantalab-mobile-v114';
               })
               .map(function (key) {
                 return caches.delete(key);
@@ -7550,7 +7901,7 @@
     });
 
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/mobile-sw.js?v=113').then(function (registro) {
+      navigator.serviceWorker.register('/mobile-sw.js?v=114').then(function (registro) {
         if (registro && registro.update) registro.update();
       }).catch(function () {});
     }
