@@ -248,7 +248,7 @@ export function useAuth(deps: UseAuthDeps) {
       emailParaLogin = emailEncontrado;
     }
 
-    const { error } = await supabase.auth.signInWithPassword({
+    const { data: dadosLogin, error } = await supabase.auth.signInWithPassword({
       email: emailParaLogin,
       password: loginSenha,
     });
@@ -272,8 +272,13 @@ export function useAuth(deps: UseAuthDeps) {
     localStorage.setItem(CHAVE_ULTIMA_ATIVIDADE, String(Date.now()));
 
     try {
-      const { data: usuarioLogado } = await supabase.auth.getUser();
-      const usuarioId = usuarioLogado.user?.id;
+      let usuarioId: string | undefined = dadosLogin.user?.id ?? dadosLogin.session?.user?.id;
+
+      if (!usuarioId) {
+        await new Promise((resolve) => window.setTimeout(resolve, 150));
+        const { data: usuarioLogado } = await supabase.auth.getUser();
+        usuarioId = usuarioLogado.user?.id;
+      }
 
       if (!usuarioId) {
         setAuthErro('Não foi possível confirmar sua sessão. Tente entrar novamente.');
