@@ -4764,18 +4764,20 @@
 
     return (
       '<div class="grid gap-4 text-sm">' +
-        '<p class="text-sm font-semibold leading-relaxed text-slate-600">Ola, agradecemos sua interacao com a AvantaLab. Selecione uma das opcoes abaixo:</p>' +
+        '<p class="text-sm font-semibold leading-relaxed text-slate-600">Ola, agradecemos sua interacao com a AvantaLab. Como podemos ajudar?</p>' +
         '<div class="grid gap-3">' +
+          '<button id="feedback-abrir-ava" type="button" class="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-left shadow-sm active:scale-[0.99]">' +
+            avaLogoPrincipalHtml(38, 38) +
+            '<span class="min-w-0 flex-1">' +
+              '<span class="block text-sm font-black text-slate-900">Pergunte para a Ava</span>' +
+              '<span class="mt-0.5 block text-xs font-semibold text-slate-500">Tire duvidas com nossa assistente de IA.</span>' +
+            '</span>' +
+            '<span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-base text-white" style="background:linear-gradient(135deg,#003E73,#00A6C8)">&#8679;</span>' +
+          '</button>' +
           '<button id="feedback-sugestao" type="button" class="rounded-2xl border border-cyan-100 bg-cyan-50 px-4 py-3 text-left shadow-sm active:scale-[0.99]">' +
             '<div class="flex items-center gap-3">' +
               '<span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-cyan-100 text-lg font-black text-cyan-800">&#10022;</span>' +
               '<span><span class="block text-sm font-black text-slate-900">Sugestoes</span><span class="mt-0.5 block text-xs font-semibold text-slate-500">Envie ideias, avaliacoes ou pontos de melhoria.</span></span>' +
-            '</div>' +
-          '</button>' +
-          '<button id="feedback-duvida" type="button" class="rounded-2xl border border-emerald-100 bg-emerald-50 px-4 py-3 text-left shadow-sm active:scale-[0.99]">' +
-            '<div class="flex items-center gap-3">' +
-              '<span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-emerald-100 text-lg font-black text-emerald-800">?</span>' +
-              '<span><span class="block text-sm font-black text-slate-900">Duvidas</span><span class="mt-0.5 block text-xs font-semibold text-slate-500">Envie uma duvida sobre o uso do sistema.</span></span>' +
             '</div>' +
           '</button>' +
         '</div>' +
@@ -5797,6 +5799,7 @@
     bind('salvar-usuario-mobile', salvarUsuarioMobile);
     bind('feedback-sugestao', function () { abrirFormularioFeedbackMobile('sugestao'); });
     bind('feedback-duvida', function () { abrirFormularioFeedbackMobile('duvida'); });
+    bind('feedback-abrir-ava', function () { state.modalMenu = ''; abrirChatIA(); });
     bind('feedback-voltar', voltarFeedbackMobile);
     bind('feedback-enviar', enviarFeedbackMobile);
     bind('feedback-outra', voltarFeedbackMobile);
@@ -6759,43 +6762,4 @@
         state.autenticado = true;
         await carregarEmpresas(state.usuario.id);
         await carregarDados();
-      }
-      state.pronto = true;
-      render();
-    } catch (error) {
-      state.pronto = true;
-      state.erro = 'Nao foi possivel recuperar a sessao. Entre novamente.';
-      render();
-    }
-  }
-
-
-  function garantirRenderDepoisDaHidratacao() {
-    [900, 1800, 3200].forEach(function (tempo) {
-      window.setTimeout(function () {
-        var textoAtual = root.textContent || '';
-
-        if (state.pronto && textoAtual.indexOf('Preparando acesso') >= 0) {
-          render();
-        }
-      }, tempo);
-    });
-  }
-
-  function iniciarQuandoPaginaEstiverPronta() {
-    var iniciarComAtraso = function () {
-      window.setTimeout(function () {
-        iniciar();
-        garantirRenderDepoisDaHidratacao();
-      }, 650);
-    };
-
-    if (document.readyState === 'complete') {
-      iniciarComAtraso();
-    } else {
-      window.addEventListener('load', iniciarComAtraso, { once: true });
-    }
-  }
-
-  iniciarQuandoPaginaEstiverPronta();
-})();
+ 
