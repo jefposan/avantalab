@@ -186,6 +186,7 @@
     chatIAGravando: false,
     chatIAAudioEnviando: false,
     chatIAAnimacao: '',
+    agendaDiaSelecionado: new Date().getDate(),
   };
 
   var CHAVE_MANTER_CONECTADO_ATE = 'avantalab_mobile_manter_conectado_ate';
@@ -408,6 +409,7 @@
   function ordemDashboardPadrao() {
     return [
       'ia',
+      'agenda',
       'saldo',
       'totais',
       'ultimasDespesas',
@@ -423,6 +425,7 @@
     return {
       saldo: 'Resumo inicial',
       ia: 'Perguntas para IA',
+      agenda: 'Agenda',
       categorias: 'Despesas por categoria',
       tipos: 'Total por tipo de despesa',
       ultimasDespesas: 'Ultimas despesas',
@@ -498,6 +501,39 @@
 
     state.mes = meses[indice];
     state.ano = String(ano);
+    state.agendaDiaSelecionado = Math.min(Number(state.agendaDiaSelecionado) || 1, maxDias(state.mes, state.ano));
+    render();
+  }
+
+  function nomeMesCompleto(mes) {
+    return [
+      'Janeiro',
+      'Fevereiro',
+      'Mar\u00e7o',
+      'Abril',
+      'Maio',
+      'Junho',
+      'Julho',
+      'Agosto',
+      'Setembro',
+      'Outubro',
+      'Novembro',
+      'Dezembro',
+    ][indiceMes(mes)] || mes;
+  }
+
+  function abrirAgendaMobile() {
+    var hoje = new Date();
+    var mesAtual = meses[hoje.getMonth()];
+    var anoAtual = String(hoje.getFullYear());
+    if (state.mes === mesAtual && String(state.ano) === anoAtual) {
+      state.agendaDiaSelecionado = hoje.getDate();
+    } else {
+      state.agendaDiaSelecionado = Math.min(Number(state.agendaDiaSelecionado) || 1, maxDias(state.mes, state.ano));
+    }
+    state.visao = 'agenda';
+    state.menuAberto = false;
+    state.busca = '';
     render();
   }
 
@@ -4401,12 +4437,12 @@
           '</div>' +
         '</header>' +
         '<div class="mx-auto grid max-w-md gap-3 px-4" style="padding-top:calc(env(safe-area-inset-top) + 132px);">' +
-          empresaHtml() +
+          (state.visao === 'agenda' ? '' : empresaHtml()) +
           alertaHtml().replace('mt-4', '') +
-          (state.visao === 'home' ? homeHtml(atual, anterior) : listaDetalhadaHtml(atual)) +
-          rodapeMobileHtml() +
+          (state.visao === 'home' ? homeHtml(atual, anterior) : (state.visao === 'agenda' ? agendaMobileHtml(atual) : listaDetalhadaHtml(atual))) +
+          (state.visao === 'agenda' ? '' : rodapeMobileHtml()) +
         '</div>' +
-        '<button id="abrir-lancamento" type="button" class="fixed bottom-5 right-5 z-30 flex h-14 w-14 items-center justify-center rounded-full bg-cyan-500 text-3xl font-light leading-none text-white shadow-2xl shadow-cyan-900/30">+</button>' +
+        (state.visao === 'agenda' ? '' : '<button id="abrir-lancamento" type="button" class="fixed bottom-5 right-5 z-30 flex h-14 w-14 items-center justify-center rounded-full bg-cyan-500 text-3xl font-light leading-none text-white shadow-2xl shadow-cyan-900/30">+</button>') +
         (state.modalLancamento ? modalLancamentoHtml() : '') +
         (state.modalAcao ? modalAcaoLancamentoHtml() : '') +
         (state.menuAberto ? menuLateralHtml() : '') +
@@ -4465,6 +4501,7 @@
     var cards = {
       saldo: saldoTopoHtml(atual, anterior),
       ia: perguntaIaHtml(),
+      agenda: agendaResumoHtml(),
       categorias: graficoCategoriaHtml(atual),
       tipos: graficoTipoDespesaHtml(atual),
       ultimasDespesas: ultimasDespesasHtml(atual.lancamentos),
@@ -4523,6 +4560,95 @@
         '<span class="min-w-0 flex-1 truncate text-sm font-semibold text-slate-400">Pergunte para a Ava...</span>' +
         '<span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-cyan-600 text-base font-black text-white">&#8593;</span>' +
       '</button>'
+    );
+  }
+
+  function agendaResumoHtml() {
+    var hoje = new Date();
+    var ehMesAtual = state.mes === meses[hoje.getMonth()] && String(state.ano) === String(hoje.getFullYear());
+    var dia = ehMesAtual ? hoje.getDate() : Number(state.agendaDiaSelecionado) || 1;
+    return (
+      '<button id="abrir-agenda-card" type="button" class="w-full overflow-hidden rounded-2xl border border-slate-200 bg-white p-4 text-left shadow-sm active:scale-[0.99]">' +
+        '<div class="flex items-center gap-3">' +
+          '<span class="flex h-12 w-12 shrink-0 flex-col items-center justify-center rounded-2xl text-white shadow-md shadow-sky-950/15" style="background:linear-gradient(135deg,#0A1F44,#1F8A9E);">' +
+            '<span class="text-[9px] font-black uppercase leading-none text-cyan-100">' + escapeHtml(nomeMesCompleto(state.mes).slice(0, 3)) + '</span>' +
+            '<span class="mt-0.5 text-lg font-black leading-none">' + String(dia).padStart(2, '0') + '</span>' +
+          '</span>' +
+          '<span class="min-w-0 flex-1">' +
+            '<span class="block text-sm font-black text-slate-900">Agenda</span>' +
+            '<span class="mt-0.5 block truncate text-xs font-semibold text-slate-500">Lembretes e avisos do mes</span>' +
+          '</span>' +
+          '<span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-cyan-50 text-lg font-black text-cyan-700">&#8250;</span>' +
+        '</div>' +
+      '</button>'
+    );
+  }
+
+  function agendaMobileHtml() {
+    var ano = Number(state.ano) || new Date().getFullYear();
+    var mesIndice = indiceMes(state.mes);
+    var totalDias = maxDias(state.mes, state.ano);
+    var primeiroDiaSemana = new Date(ano, mesIndice, 1).getDay();
+    var hoje = new Date();
+    var diaSelecionado = Math.min(Math.max(Number(state.agendaDiaSelecionado) || 1, 1), totalDias);
+    var ehMesAtual = mesIndice === hoje.getMonth() && ano === hoje.getFullYear();
+    var semana = ['D', 'S', 'T', 'Q', 'Q', 'S', 'S'];
+    var celulas = [];
+
+    semana.forEach(function (dia) {
+      celulas.push('<div class="text-center text-[10px] font-black uppercase tracking-wide text-slate-400">' + dia + '</div>');
+    });
+
+    for (var vazio = 0; vazio < primeiroDiaSemana; vazio += 1) {
+      celulas.push('<div class="min-h-[74px] rounded-2xl border border-transparent"></div>');
+    }
+
+    for (var dia = 1; dia <= totalDias; dia += 1) {
+      var selecionado = dia === diaSelecionado;
+      var hojeClasse = ehMesAtual && dia === hoje.getDate();
+      var estilo = selecionado
+        ? 'border-cyan-500 bg-cyan-50 shadow-md shadow-cyan-900/10'
+        : 'border-slate-200 bg-white shadow-sm';
+      var textoNumero = selecionado ? 'text-cyan-900' : 'text-slate-900';
+      var dataDia = new Date(ano, mesIndice, dia);
+      var rotuloSemana = dataDia.toLocaleDateString('pt-BR', { weekday: 'short' }).replace('.', '');
+
+      celulas.push(
+        '<button type="button" data-agenda-dia="' + dia + '" class="min-h-[74px] rounded-2xl border p-2 text-left transition active:scale-[0.98] ' + estilo + '">' +
+          '<span class="block text-[10px] font-black uppercase tracking-wide ' + (selecionado ? 'text-cyan-700' : 'text-slate-400') + '">' + escapeHtml(rotuloSemana) + '</span>' +
+          '<span class="mt-1 block text-2xl font-black leading-none ' + textoNumero + '">' + String(dia).padStart(2, '0') + '</span>' +
+          (hojeClasse ? '<span class="mt-2 inline-flex rounded-full bg-slate-950 px-2 py-0.5 text-[9px] font-black uppercase text-white">Hoje</span>' : '') +
+        '</button>'
+      );
+    }
+
+    return (
+      '<section id="agenda-mobile-screen" class="-mx-1 rounded-[28px] border border-slate-200 bg-slate-50 p-3 shadow-sm" style="min-height:calc(100dvh - 154px - env(safe-area-inset-top));">' +
+        '<div class="rounded-[24px] border border-slate-200 bg-white p-4 shadow-sm">' +
+          '<div class="flex items-start justify-between gap-3">' +
+            '<div class="min-w-0">' +
+              '<p class="text-[10px] font-black uppercase tracking-[0.22em] text-cyan-700">Agenda</p>' +
+              '<h2 class="mt-1 text-2xl font-black text-slate-950">' + escapeHtml(nomeMesCompleto(state.mes)) + ' ' + escapeHtml(state.ano) + '</h2>' +
+            '</div>' +
+            '<button id="agenda-avisos" type="button" class="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white text-xl text-slate-700 shadow-sm" aria-label="Avisos">&#128276;</button>' +
+          '</div>' +
+          '<p class="mt-3 text-xs font-semibold leading-relaxed text-slate-500">Arraste para os lados para trocar de mes. Toque em um dia para ver os lembretes.</p>' +
+        '</div>' +
+        '<div class="mt-3 grid grid-cols-7 gap-2">' + celulas.join('') + '</div>' +
+        '<div class="mt-3 rounded-[24px] border border-slate-200 bg-white p-4 shadow-sm">' +
+          '<div class="flex items-center justify-between gap-3">' +
+            '<div>' +
+              '<p class="text-[10px] font-black uppercase tracking-[0.18em] text-slate-400">Dia selecionado</p>' +
+              '<h3 class="mt-1 text-lg font-black text-slate-950">' + String(diaSelecionado).padStart(2, '0') + ' de ' + escapeHtml(nomeMesCompleto(state.mes)) + '</h3>' +
+            '</div>' +
+            '<span class="rounded-full bg-cyan-50 px-3 py-1 text-[10px] font-black uppercase text-cyan-700">0 avisos</span>' +
+          '</div>' +
+          '<div class="mt-4 rounded-2xl border border-dashed border-slate-200 bg-slate-50 px-4 py-5 text-center">' +
+            '<p class="text-sm font-black text-slate-700">Nenhum lembrete cadastrado.</p>' +
+            '<p class="mt-1 text-xs font-semibold leading-relaxed text-slate-500">Na proxima etapa adicionaremos lembretes diarios, semanais, quinzenais, mensais e anuais.</p>' +
+          '</div>' +
+        '</div>' +
+      '</section>'
     );
   }
 
@@ -5000,6 +5126,7 @@
           '<div class="grid gap-2">' +
             menuBotaoHtml('menu-configurar-resumo', 'Configurar resumo', 'Exibir e ocultar cards', '&#9776;') +
             menuBotaoHtml('menu-organizar-dashboard', 'Organizar dashboard', 'Definir a ordem dos cards', '&#8597;') +
+            menuBotaoHtml('menu-agenda', 'Agenda', 'Lembretes e avisos', '&#128197;') +
             menuBotaoHtml('menu-usuario', 'Usuários', perfilFormatado(state.empresa && state.empresa.perfil), 'U') +
             menuBotaoHtml('menu-gerenciar', 'Gerenciar perfil', 'Editar, criar ou excluir perfil', 'P') +
             menuBotaoHtml('menu-categorias', 'Cadastrar despesas', 'Adicionar tipos de despesa', '+') +
@@ -6183,6 +6310,7 @@
     bind('menu-usuario', abrirUsuariosMobile);
     bind('menu-gerenciar', function () { abrirModalMenu('gerenciar'); });
     bind('menu-organizar-dashboard', function () { abrirModalMenu('organizarDashboard'); });
+    bind('menu-agenda', abrirAgendaMobile);
     bind('menu-categorias', function () { abrirModalMenu('categorias'); });
     bind('menu-despesas-fixas', function () { abrirModalMenuDespesasFixas(); });
     bind('menu-ajuda-categorias', function () { abrirModalMenu('ajudaCategorias'); });
@@ -6293,6 +6421,16 @@
     bind('feedback-voltar', voltarFeedbackMobile);
     bind('feedback-enviar', enviarFeedbackMobile);
     bind('feedback-outra', voltarFeedbackMobile);
+    bind('abrir-agenda-card', abrirAgendaMobile);
+    bind('agenda-avisos', function () {
+      mostrarToast('Avisos da agenda entram na proxima etapa.');
+    });
+    Array.prototype.forEach.call(document.querySelectorAll('[data-agenda-dia]'), function (botao) {
+      botao.addEventListener('click', function () {
+        state.agendaDiaSelecionado = Number(botao.getAttribute('data-agenda-dia')) || 1;
+        render();
+      });
+    });
     bind('cancelar-edicao-usuario', function () {
       state.usuarioEditandoId = '';
       state.erro = '';
@@ -6742,6 +6880,36 @@
       });
     });
     configurarDragDashboard();
+    configurarGestosAgenda();
+  }
+
+  function configurarGestosAgenda() {
+    var tela = document.getElementById('agenda-mobile-screen');
+    if (!tela) return;
+
+    var inicioX = 0;
+    var inicioY = 0;
+    var ativo = false;
+
+    tela.addEventListener('touchstart', function (event) {
+      if (!event.touches || !event.touches.length) return;
+      inicioX = event.touches[0].clientX;
+      inicioY = event.touches[0].clientY;
+      ativo = true;
+    }, { passive: true });
+
+    tela.addEventListener('touchend', function (event) {
+      if (!ativo || !event.changedTouches || !event.changedTouches.length) return;
+      ativo = false;
+
+      var fimX = event.changedTouches[0].clientX;
+      var fimY = event.changedTouches[0].clientY;
+      var deltaX = fimX - inicioX;
+      var deltaY = fimY - inicioY;
+
+      if (Math.abs(deltaX) < 64 || Math.abs(deltaX) < Math.abs(deltaY) * 1.35) return;
+      mudarMes(deltaX < 0 ? 1 : -1);
+    }, { passive: true });
   }
 
   function configurarPullToRefresh() {
@@ -7147,7 +7315,7 @@
           return Promise.all(
             keys
               .filter(function (key) {
-                return key.indexOf('avantalab-mobile-') === 0 && key !== 'avantalab-mobile-v110';
+                return key.indexOf('avantalab-mobile-') === 0 && key !== 'avantalab-mobile-v111';
               })
               .map(function (key) {
                 return caches.delete(key);
@@ -7164,7 +7332,7 @@
     });
 
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/mobile-sw.js?v=110').then(function (registro) {
+      navigator.serviceWorker.register('/mobile-sw.js?v=111').then(function (registro) {
         if (registro && registro.update) registro.update();
       }).catch(function () {});
     }
