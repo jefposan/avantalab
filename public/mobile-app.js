@@ -5,6 +5,26 @@
 
   if (!root) return;
 
+  function deveRedirecionarMobileParaWeb() {
+    var standalone =
+      window.matchMedia('(display-mode: standalone)').matches ||
+      window.navigator.standalone;
+
+    if (standalone) return false;
+
+    var larguraDesktop = window.innerWidth >= 1024;
+    var userAgentMobile = /Android|iPhone|iPad|iPod|Opera Mini|IEMobile|Mobile/i.test(
+      navigator.userAgent
+    );
+
+    return larguraDesktop && !userAgentMobile;
+  }
+
+  if (window.location.pathname === '/mobile' && deveRedirecionarMobileParaWeb()) {
+    window.location.replace('/');
+    return;
+  }
+
   if (!config.supabaseUrl || !config.supabaseAnonKey) {
     config = {
       supabaseUrl: root.getAttribute('data-supabase-url') || '',
@@ -7127,7 +7147,7 @@
           return Promise.all(
             keys
               .filter(function (key) {
-                return key.indexOf('avantalab-mobile-') === 0 && key !== 'avantalab-mobile-v104';
+                return key.indexOf('avantalab-mobile-') === 0 && key !== 'avantalab-mobile-v110';
               })
               .map(function (key) {
                 return caches.delete(key);
@@ -7144,7 +7164,7 @@
     });
 
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/mobile-sw.js?v=104').then(function (registro) {
+      navigator.serviceWorker.register('/mobile-sw.js?v=110').then(function (registro) {
         if (registro && registro.update) registro.update();
       }).catch(function () {});
     }
