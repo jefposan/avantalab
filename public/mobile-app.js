@@ -398,6 +398,9 @@
     return '<div class="mx-auto max-w-md px-4 py-5">' + conteudo + '</div>';
   }
 
+  var APP_VERSION = '1.0.0';
+  var APP_VERSION_LABEL = 'AvantaLab Gest&atilde;o v' + APP_VERSION;
+
   function telaAvisoMobile(titulo, texto) {
     return (
       '<section class="avantalab-mobile-bg fixed inset-0 flex items-center justify-center overflow-hidden px-4" style="height:100dvh;">' +
@@ -3374,7 +3377,6 @@
       '<section class="avantalab-mobile-bg fixed inset-0 flex flex-col items-center justify-center overflow-hidden px-4 py-5" style="height:100dvh;--avantalab-mobile-bg-overlay:linear-gradient(rgba(255,255,255,.08),rgba(255,255,255,0));">' +
         '<div class="mx-auto w-full max-w-md overflow-y-auto rounded-3xl border border-white/35 p-5 text-slate-900 shadow-2xl backdrop-blur-xl" style="background-color:rgba(255,255,255,.18);max-height:calc(100dvh - 8rem);overscroll-behavior:contain;">' +
           '<div class="mb-5">' +
-            
             '<h1 class="text-3xl font-black text-slate-900">' + escapeHtml(titulo) + '</h1>' +
             '<p class="mt-1 text-xs leading-snug text-slate-600">' + escapeHtml(subtitulo) + '</p>' +
           '</div>' +
@@ -3397,7 +3399,6 @@
           (boasVindas
             ? telaBoasVindas()
             : '<div class="' + (state.modoCadastro ? 'mb-2' : 'mb-3') + '">' +
-                
                 '<h1 class="' + (state.modoCadastro ? 'text-xl' : 'text-2xl') + ' font-black text-slate-900">' + (state.modoCadastro ? 'Criar cadastro' : state.modoSenha ? 'Recuperar senha' : 'Acesse sua conta') + '</h1>' +
                 '<p class="mt-1 text-xs leading-snug text-slate-600">' +
                   (state.modoCadastro ? 'Preencha seus dados e confirme o celular por SMS.' : state.modoSenha ? 'Digite seu login, receba o codigo por SMS e defina uma nova senha.' : 'Entre para acompanhar sua gestao financeira, lancamentos e resultados.') +
@@ -3415,7 +3416,6 @@
     return (
       '<div class="grid gap-4">' +
         '<div>' +
-          
           '<h1 class="text-3xl font-black leading-tight text-slate-900">Descubra quanto realmente sobra no seu neg&oacute;cio ou nas suas despesas pessoais.</h1>' +
           '<p class="mt-3 text-sm font-semibold leading-relaxed text-slate-600">Controle entradas e despesas de forma simples.</p>' +
         '</div>' +
@@ -3541,7 +3541,6 @@
       '<section class="avantalab-mobile-bg fixed inset-0 flex flex-col items-center justify-center overflow-hidden px-4 py-5" style="height:100dvh;--avantalab-mobile-bg-overlay:linear-gradient(rgba(255,255,255,.08),rgba(255,255,255,0));">' +
         '<div class="mx-auto w-full max-w-md overflow-y-auto rounded-3xl border border-white/35 p-3 text-slate-900 shadow-2xl backdrop-blur-xl" style="background-color:rgba(255,255,255,.18);max-height:calc(100dvh - 2.5rem);overscroll-behavior:contain;">' +
           '<div class="mb-3">' +
-            
             '<h1 class="text-2xl font-black text-slate-900">Confirme seu celular</h1>' +
             '<p class="mt-1 text-xs leading-snug text-slate-600">Para manter seu acesso seguro, confirme um celular com DDD por SMS.</p>' +
           '</div>' +
@@ -3700,7 +3699,7 @@
       : '<span class="inline-flex items-center rounded-full border border-white/15 bg-white/10 px-2 py-0.5 font-black text-white shadow-sm">Usu&aacute;rios ativos ' + inteiro(state.usuariosAtivosSistema) + '</span>';
     return (
       '<footer class="mt-2 overflow-hidden rounded-2xl border border-white/15 px-4 py-4 text-center text-[11px] text-white shadow-lg shadow-sky-950/15" style="background:linear-gradient(135deg,#003E73 0%,#075985 54%,#00A6C8 100%);">' +
-        '<div class="text-xs font-black tracking-[0.22em] text-white">AVANTALAB</div>' +
+        '<div class="text-xs font-black tracking-[0.18em] text-white">' + APP_VERSION_LABEL + '</div>' +
         '<p class="mt-1 flex flex-wrap items-center justify-center gap-x-2 gap-y-1 font-semibold text-cyan-50/90">&copy; ' + ano + ' Todos os direitos reservados.' + usuariosAtivosHtml + '</p>' +
         '<div class="mt-3 flex flex-wrap items-center justify-center gap-2 font-bold">' +
           '<a href="https://www.instagram.com/avanta.lab" target="_blank" rel="noopener noreferrer" class="rounded-full border border-white/15 bg-white/15 px-3 py-1.5 text-cyan-50 shadow-sm backdrop-blur">@avanta.lab</a>' +

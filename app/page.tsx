@@ -33,6 +33,7 @@ import {
   rotuloTipoPerfil,
   type TipoPerfil,
 } from './lib/perfis';
+import { APP_VERSION } from './lib/version';
 import {
   buscarEmpresaDoUsuario,
   buscarEmpresasDoUsuario,
@@ -6888,6 +6889,7 @@ setAjustesAberto(false);
       <span className="text-sm tracking-wide">
         <span style={{ color: '#003E73' }}>AVANTA</span>
         <span style={{ color: '#00A6C8' }}>LAB</span>
+        <span className={darkMode ? 'text-slate-300' : 'text-slate-700'}> Gestão v{APP_VERSION}</span>
       </span>
 
       <span className={darkMode ? 'text-slate-500' : 'text-slate-400'}>
