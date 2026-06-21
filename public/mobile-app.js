@@ -3374,7 +3374,7 @@
       '<section class="avantalab-mobile-bg fixed inset-0 flex flex-col items-center justify-center overflow-hidden px-4 py-5" style="height:100dvh;--avantalab-mobile-bg-overlay:linear-gradient(rgba(255,255,255,.08),rgba(255,255,255,0));">' +
         '<div class="mx-auto w-full max-w-md overflow-y-auto rounded-3xl border border-white/35 p-5 text-slate-900 shadow-2xl backdrop-blur-xl" style="background-color:rgba(255,255,255,.18);max-height:calc(100dvh - 8rem);overscroll-behavior:contain;">' +
           '<div class="mb-5">' +
-            '<p class="mb-2 text-xs font-bold uppercase tracking-[0.32em] text-sky-700">AvantaLab Gestao</p>' +
+            
             '<h1 class="text-3xl font-black text-slate-900">' + escapeHtml(titulo) + '</h1>' +
             '<p class="mt-2 text-sm leading-relaxed text-slate-600">' + escapeHtml(subtitulo) + '</p>' +
           '</div>' +
@@ -3393,7 +3393,7 @@
           (boasVindas
             ? telaBoasVindas()
             : '<div class="mb-5">' +
-                '<p class="mb-2 text-xs font-bold uppercase tracking-[0.32em] text-sky-700">AvantaLab Gestao</p>' +
+                
                 '<h1 class="text-3xl font-black text-slate-900">' + (state.modoCadastro ? 'Criar cadastro' : state.modoSenha ? 'Recuperar senha' : 'Acesse sua conta') + '</h1>' +
                 '<p class="mt-2 text-sm leading-relaxed text-slate-600">' +
                   (state.modoCadastro ? 'Preencha seus dados e confirme o celular por SMS.' : state.modoSenha ? 'Digite seu login, receba o codigo por SMS e defina uma nova senha.' : 'Entre para acompanhar sua gestao financeira, lancamentos e resultados.') +
@@ -3411,7 +3411,7 @@
     return (
       '<div class="grid gap-5">' +
         '<div>' +
-          '<p class="mb-2 text-xs font-bold uppercase tracking-[0.32em] text-sky-700">AvantaLab Gestao</p>' +
+          
           '<h1 class="text-3xl font-black leading-tight text-slate-900">Descubra quanto realmente sobra no seu neg&oacute;cio ou nas suas despesas pessoais.</h1>' +
           '<p class="mt-3 text-sm font-semibold leading-relaxed text-slate-600">Controle entradas e despesas de forma simples.</p>' +
         '</div>' +
@@ -3537,7 +3537,7 @@
       '<section class="avantalab-mobile-bg fixed inset-0 flex flex-col items-center justify-center overflow-hidden px-4 py-5" style="height:100dvh;--avantalab-mobile-bg-overlay:linear-gradient(rgba(255,255,255,.08),rgba(255,255,255,0));">' +
         '<div class="mx-auto w-full max-w-md overflow-y-auto rounded-3xl border border-white/35 p-5 text-slate-900 shadow-2xl backdrop-blur-xl" style="background-color:rgba(255,255,255,.18);max-height:calc(100dvh - 2.5rem);overscroll-behavior:contain;">' +
           '<div class="mb-5">' +
-            '<p class="mb-2 text-xs font-bold uppercase tracking-[0.32em] text-sky-700">AvantaLab Gestao</p>' +
+            
             '<h1 class="text-3xl font-black text-slate-900">Confirme seu celular</h1>' +
             '<p class="mt-2 text-sm leading-relaxed text-slate-600">Para manter seu acesso seguro, confirme um celular com DDD por SMS.</p>' +
           '</div>' +
