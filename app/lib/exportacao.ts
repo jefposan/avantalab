@@ -65,14 +65,37 @@ export type AnaliseBackupImportacao = {
 export type ResultadoImportacaoBackup = {
   despesasBaseInseridas: number;
   despesasBaseIgnoradas: number;
+  despesasBaseAtualizadas?: number;
+  despesasBaseRemovidas?: number;
   lancamentosInseridos: number;
   lancamentosIgnorados: number;
+  lancamentosAtualizados?: number;
+  lancamentosRemovidos?: number;
   receitasEntradasInseridas: number;
   receitasEntradasIgnoradas: number;
+  receitasEntradasAtualizadas?: number;
+  receitasEntradasRemovidas?: number;
   receitasTotaisInseridas: number;
   receitasTotaisIgnoradas: number;
+  receitasTotaisAtualizadas?: number;
+  receitasTotaisRemovidas?: number;
   recorrenciasInseridas: number;
   recorrenciasIgnoradas: number;
+  recorrenciasAtualizadas?: number;
+  recorrenciasRemovidas?: number;
+};
+
+export type ModoImportacaoBackup = 'adicionar' | 'atualizar' | 'substituir';
+
+type ImportarBackupExcelParams = {
+  arquivo: File;
+  empresaId: string;
+};
+
+type LinhaImportacao<T> = {
+  idOriginal: string;
+  dados: T;
+  valido: boolean;
 };
 
 function sanitizarNomeArquivo(valor: string) {
@@ -106,6 +129,35 @@ function valorNumero(row: any, chaves: string[], fallback = 0) {
 function normalizarMes(valor: unknown) {
   const chave = String(valor || '').trim().toUpperCase();
   return MAPA_MESES[chave] || chave;
+}
+
+function idOriginal(row: any) {
+  return valorTexto(row, ['ID original', 'Id original', 'id', 'ID']);
+}
+
+function resultadoImportacaoVazio(): ResultadoImportacaoBackup {
+  return {
+    despesasBaseInseridas: 0,
+    despesasBaseIgnoradas: 0,
+    despesasBaseAtualizadas: 0,
+    despesasBaseRemovidas: 0,
+    lancamentosInseridos: 0,
+    lancamentosIgnorados: 0,
+    lancamentosAtualizados: 0,
+    lancamentosRemovidos: 0,
+    receitasEntradasInseridas: 0,
+    receitasEntradasIgnoradas: 0,
+    receitasEntradasAtualizadas: 0,
+    receitasEntradasRemovidas: 0,
+    receitasTotaisInseridas: 0,
+    receitasTotaisIgnoradas: 0,
+    receitasTotaisAtualizadas: 0,
+    receitasTotaisRemovidas: 0,
+    recorrenciasInseridas: 0,
+    recorrenciasIgnoradas: 0,
+    recorrenciasAtualizadas: 0,
+    recorrenciasRemovidas: 0,
+  };
 }
 
 function sheetRows(wb: XLSX.WorkBook, nome: string) {
@@ -447,10 +499,7 @@ export async function analisarBackupExcel(arquivo: File): Promise<AnaliseBackupI
 export async function importarBackupExcelAdicionar({
   arquivo,
   empresaId,
-}: {
-  arquivo: File;
-  empresaId: string;
-}): Promise<ResultadoImportacaoBackup> {
+}: ImportarBackupExcelParams): Promise<ResultadoImportacaoBackup> {
   const { data: usuarioLogado } = await supabase.auth.getUser();
   const usuarioId = usuarioLogado.user?.id || null;
   const wb = await lerWorkbookArquivo(arquivo);
@@ -655,4 +704,449 @@ export async function importarBackupExcelAdicionar({
   }
 
   return resultado;
+}
+
+function parseDespesasBase(rows: any[], empresaId: string): LinhaImportacao<{
+  empresa_id: string;
+  nome: string;
+  categoria: string;
+}>[] {
+  return rows.map((row) => {
+    const dados = {
+      empresa_id: empresaId,
+      nome: valorTexto(row, ['Nome', 'Despesa']),
+      categoria: valorTexto(row, ['Categoria'], 'Outros'),
+    };
+
+    return {
+      idOriginal: idOriginal(row),
+      dados,
+      valido: Boolean(dados.nome),
+    };
+  });
+}
+
+function parseLancamentos(rows: any[], empresaId: string): LinhaImportacao<{
+  empresa_id: string;
+  ano: number;
+  mes: string;
+  dia: number;
+  despesa_nome: string;
+  descricao: string;
+  valor: number;
+}>[] {
+  return rows.map((row) => {
+    const dados = {
+      empresa_id: empresaId,
+      ano: Math.trunc(valorNumero(row, ['Ano'])),
+      mes: normalizarMes(valorTexto(row, ['Mes', 'Mês'])),
+      dia: Math.trunc(valorNumero(row, ['Dia'])),
+      despesa_nome: valorTexto(row, ['Despesa', 'Nome']),
+      descricao: valorTexto(row, ['Descricao', 'Descrição'], ''),
+      valor: valorNumero(row, ['Valor', 'Valor (R$)']),
+    };
+
+    return {
+      idOriginal: idOriginal(row),
+      dados,
+      valido: dados.ano > 0 && MESES.includes(dados.mes) && dados.dia > 0 && Boolean(dados.despesa_nome) && dados.valor > 0,
+    };
+  });
+}
+
+function parseReceitasEntradas(rows: any[], empresaId: string, usuarioId: string | null): LinhaImportacao<{
+  empresa_id: string;
+  ano: number;
+  mes: string;
+  dia: number;
+  origem: string;
+  valor: number;
+  criado_por: string | null;
+}>[] {
+  return rows.map((row) => {
+    const dados = {
+      empresa_id: empresaId,
+      ano: Math.trunc(valorNumero(row, ['Ano'])),
+      mes: normalizarMes(valorTexto(row, ['Mes', 'Mês'])),
+      dia: Math.trunc(valorNumero(row, ['Dia'])),
+      origem: valorTexto(row, ['Origem'], ''),
+      valor: valorNumero(row, ['Valor', 'Valor (R$)']),
+      criado_por: usuarioId,
+    };
+
+    return {
+      idOriginal: idOriginal(row),
+      dados,
+      valido: dados.ano > 0 && MESES.includes(dados.mes) && dados.dia > 0 && Boolean(dados.origem) && dados.valor > 0,
+    };
+  });
+}
+
+function parseReceitasTotais(rows: any[], empresaId: string): LinhaImportacao<{
+  empresa_id: string;
+  ano: number;
+  mes: string;
+  valor: number;
+}>[] {
+  return rows.map((row) => {
+    const dados = {
+      empresa_id: empresaId,
+      ano: Math.trunc(valorNumero(row, ['Ano'])),
+      mes: normalizarMes(valorTexto(row, ['Mes', 'Mês'])),
+      valor: valorNumero(row, ['Valor', 'Valor (R$)']),
+    };
+
+    return {
+      idOriginal: idOriginal(row),
+      dados,
+      valido: dados.ano > 0 && MESES.includes(dados.mes) && dados.valor > 0,
+    };
+  });
+}
+
+function parseRecorrencias(rows: any[], empresaId: string): LinhaImportacao<{
+  empresa_id: string;
+  nome: string;
+  categoria: string;
+  descricao: string;
+  dia: number;
+  ativo: boolean;
+}>[] {
+  return rows.map((row) => {
+    const dados = {
+      empresa_id: empresaId,
+      nome: valorTexto(row, ['Nome']),
+      categoria: valorTexto(row, ['Categoria'], 'Outros'),
+      descricao: valorTexto(row, ['Descricao', 'Descrição'], ''),
+      dia: Math.trunc(valorNumero(row, ['Dia'])),
+      ativo: normalizarTexto(valorTexto(row, ['Ativo'], 'sim')) !== 'nao',
+    };
+
+    return {
+      idOriginal: idOriginal(row),
+      dados,
+      valido: Boolean(dados.nome) && dados.dia > 0,
+    };
+  });
+}
+
+async function consultarDadosExistentesImportacao(empresaId: string) {
+  const [
+    despesasExistentesRes,
+    lancamentosExistentesRes,
+    entradasExistentesRes,
+    totaisExistentesRes,
+    recorrenciasExistentesRes,
+  ] = await Promise.all([
+    supabase.from('despesas_cadastradas').select('id,nome,categoria').eq('empresa_id', empresaId),
+    supabase.from('lancamentos').select('id,ano,mes,dia,despesa_nome,descricao,valor').eq('empresa_id', empresaId),
+    supabase.from('faturamentos_entradas').select('id,ano,mes,dia,origem,valor').eq('empresa_id', empresaId),
+    supabase.from('faturamentos').select('id,ano,mes,valor').eq('empresa_id', empresaId),
+    supabase.from('recorrencias').select('id,nome,categoria,descricao,dia').eq('empresa_id', empresaId),
+  ]);
+
+  if (despesasExistentesRes.error) throw new Error(`Erro ao consultar despesas base: ${despesasExistentesRes.error.message}`);
+  if (lancamentosExistentesRes.error) throw new Error(`Erro ao consultar lançamentos: ${lancamentosExistentesRes.error.message}`);
+  if (entradasExistentesRes.error) throw new Error(`Erro ao consultar entradas/receitas: ${entradasExistentesRes.error.message}`);
+  if (totaisExistentesRes.error) throw new Error(`Erro ao consultar totais mensais: ${totaisExistentesRes.error.message}`);
+
+  return {
+    despesas: despesasExistentesRes.data || [],
+    lancamentos: lancamentosExistentesRes.data || [],
+    entradas: entradasExistentesRes.data || [],
+    totais: totaisExistentesRes.data || [],
+    recorrencias: recorrenciasExistentesRes.error ? [] : (recorrenciasExistentesRes.data || []),
+    recorrenciasDisponiveis: !recorrenciasExistentesRes.error,
+  };
+}
+
+async function importarLinhasBackup({
+  arquivo,
+  empresaId,
+  modo,
+}: ImportarBackupExcelParams & { modo: ModoImportacaoBackup }): Promise<ResultadoImportacaoBackup> {
+  const { data: usuarioLogado } = await supabase.auth.getUser();
+  const usuarioId = usuarioLogado.user?.id || null;
+  const wb = await lerWorkbookArquivo(arquivo);
+  const resultado = resultadoImportacaoVazio();
+
+  const despesasBase = parseDespesasBase(sheetRows(wb, 'Despesas Base'), empresaId);
+  const lancamentos = parseLancamentos(sheetRows(wb, 'Lancamentos Despesas'), empresaId);
+  const receitasEntradas = parseReceitasEntradas(sheetRows(wb, 'Receitas Entradas'), empresaId, usuarioId);
+  const receitasTotais = parseReceitasTotais(sheetRows(wb, 'Receitas Totais'), empresaId);
+  const recorrencias = parseRecorrencias(sheetRows(wb, 'Recorrencias'), empresaId);
+
+  const existentes = await consultarDadosExistentesImportacao(empresaId);
+
+  const chaveDespesa = (nome: string) => normalizarTexto(nome);
+  const chaveLancamento = (row: any) => [
+    row.ano,
+    normalizarMes(row.mes),
+    row.dia,
+    normalizarTexto(row.despesa_nome),
+    normalizarTexto(row.descricao || ''),
+    Number(row.valor || 0).toFixed(2),
+  ].join('|');
+  const chaveEntrada = (row: any) => [
+    row.ano,
+    normalizarMes(row.mes),
+    row.dia,
+    normalizarTexto(row.origem || ''),
+    Number(row.valor || 0).toFixed(2),
+  ].join('|');
+  const chaveTotal = (row: any) => `${row.ano}|${normalizarMes(row.mes)}`;
+  const chaveRecorrencia = (row: any) => [
+    normalizarTexto(row.nome),
+    Math.trunc(Number(row.dia || 0)),
+  ].join('|');
+
+  const idsDespesas = new Set(existentes.despesas.map((item: any) => item.id));
+  const idsLancamentos = new Set(existentes.lancamentos.map((item: any) => item.id));
+  const idsEntradas = new Set(existentes.entradas.map((item: any) => item.id));
+  const idsTotais = new Set(existentes.totais.map((item: any) => item.id));
+  const idsRecorrencias = new Set(existentes.recorrencias.map((item: any) => item.id));
+
+  const despesasPorChave = new Map(existentes.despesas.map((item: any) => [chaveDespesa(item.nome), item]));
+  const lancamentosChaves = new Set(existentes.lancamentos.map((item: any) => chaveLancamento(item)));
+  const entradasChaves = new Set(existentes.entradas.map((item: any) => chaveEntrada(item)));
+  const totaisPorChave = new Map(existentes.totais.map((item: any) => [chaveTotal(item), item]));
+  const recorrenciasPorChave = new Map(existentes.recorrencias.map((item: any) => [chaveRecorrencia(item), item]));
+
+  const novasDespesas: any[] = [];
+  for (const linha of despesasBase) {
+    const chave = chaveDespesa(linha.dados.nome);
+    const existentePorNome = despesasPorChave.get(chave) as any;
+
+    if (!linha.valido) {
+      resultado.despesasBaseIgnoradas += 1;
+    } else if (modo === 'atualizar' && linha.idOriginal && idsDespesas.has(linha.idOriginal)) {
+      const { error } = await supabase
+        .from('despesas_cadastradas')
+        .update({ nome: linha.dados.nome, categoria: linha.dados.categoria })
+        .eq('id', linha.idOriginal)
+        .eq('empresa_id', empresaId);
+      if (error) throw new Error(`Erro ao atualizar despesa base: ${error.message}`);
+      resultado.despesasBaseAtualizadas = (resultado.despesasBaseAtualizadas || 0) + 1;
+      despesasPorChave.set(chave, { ...linha.dados, id: linha.idOriginal });
+    } else if (modo === 'atualizar' && existentePorNome) {
+      const { error } = await supabase
+        .from('despesas_cadastradas')
+        .update({ categoria: linha.dados.categoria })
+        .eq('id', existentePorNome.id)
+        .eq('empresa_id', empresaId);
+      if (error) throw new Error(`Erro ao atualizar categoria da despesa: ${error.message}`);
+      resultado.despesasBaseAtualizadas = (resultado.despesasBaseAtualizadas || 0) + 1;
+    } else if (despesasPorChave.has(chave)) {
+      resultado.despesasBaseIgnoradas += 1;
+    } else {
+      novasDespesas.push(linha.dados);
+      despesasPorChave.set(chave, linha.dados);
+    }
+  }
+
+  if (novasDespesas.length > 0) {
+    const { error } = await supabase.from('despesas_cadastradas').insert(novasDespesas);
+    if (error) throw new Error(`Erro ao inserir despesas base: ${error.message}`);
+    resultado.despesasBaseInseridas = novasDespesas.length;
+  }
+
+  const novosLancamentos: any[] = [];
+  for (const linha of lancamentos) {
+    const chave = chaveLancamento(linha.dados);
+
+    if (!linha.valido) {
+      resultado.lancamentosIgnorados += 1;
+    } else if (modo === 'atualizar' && linha.idOriginal && idsLancamentos.has(linha.idOriginal)) {
+      const { empresa_id, ...campos } = linha.dados;
+      const { error } = await supabase
+        .from('lancamentos')
+        .update(campos)
+        .eq('id', linha.idOriginal)
+        .eq('empresa_id', empresaId);
+      if (error) throw new Error(`Erro ao atualizar lançamento: ${error.message}`);
+      resultado.lancamentosAtualizados = (resultado.lancamentosAtualizados || 0) + 1;
+      lancamentosChaves.add(chave);
+    } else if (lancamentosChaves.has(chave)) {
+      resultado.lancamentosIgnorados += 1;
+    } else {
+      novosLancamentos.push(linha.dados);
+      lancamentosChaves.add(chave);
+    }
+  }
+
+  if (novosLancamentos.length > 0) {
+    const { error } = await supabase.from('lancamentos').insert(novosLancamentos);
+    if (error) throw new Error(`Erro ao inserir lançamentos: ${error.message}`);
+    resultado.lancamentosInseridos = novosLancamentos.length;
+  }
+
+  const novasEntradas: any[] = [];
+  for (const linha of receitasEntradas) {
+    const chave = chaveEntrada(linha.dados);
+
+    if (!linha.valido) {
+      resultado.receitasEntradasIgnoradas += 1;
+    } else if (modo === 'atualizar' && linha.idOriginal && idsEntradas.has(linha.idOriginal)) {
+      const { empresa_id, ...campos } = linha.dados;
+      const { error } = await supabase
+        .from('faturamentos_entradas')
+        .update(campos)
+        .eq('id', linha.idOriginal)
+        .eq('empresa_id', empresaId);
+      if (error) throw new Error(`Erro ao atualizar entrada/receita: ${error.message}`);
+      resultado.receitasEntradasAtualizadas = (resultado.receitasEntradasAtualizadas || 0) + 1;
+      entradasChaves.add(chave);
+    } else if (entradasChaves.has(chave)) {
+      resultado.receitasEntradasIgnoradas += 1;
+    } else {
+      novasEntradas.push(linha.dados);
+      entradasChaves.add(chave);
+    }
+  }
+
+  if (novasEntradas.length > 0) {
+    const { error } = await supabase.from('faturamentos_entradas').insert(novasEntradas);
+    if (error) throw new Error(`Erro ao inserir entradas/receitas: ${error.message}`);
+    resultado.receitasEntradasInseridas = novasEntradas.length;
+  }
+
+  const novosTotais: any[] = [];
+  for (const linha of receitasTotais) {
+    const chave = chaveTotal(linha.dados);
+    const totalExistente = totaisPorChave.get(chave) as any;
+
+    if (!linha.valido) {
+      resultado.receitasTotaisIgnoradas += 1;
+    } else if (modo === 'atualizar' && linha.idOriginal && idsTotais.has(linha.idOriginal)) {
+      const { empresa_id, ...campos } = linha.dados;
+      const { error } = await supabase
+        .from('faturamentos')
+        .update(campos)
+        .eq('id', linha.idOriginal)
+        .eq('empresa_id', empresaId);
+      if (error) throw new Error(`Erro ao atualizar total mensal: ${error.message}`);
+      resultado.receitasTotaisAtualizadas = (resultado.receitasTotaisAtualizadas || 0) + 1;
+      totaisPorChave.set(chave, { ...linha.dados, id: linha.idOriginal });
+    } else if (modo === 'atualizar' && totalExistente) {
+      const { error } = await supabase
+        .from('faturamentos')
+        .update({ valor: linha.dados.valor })
+        .eq('id', totalExistente.id)
+        .eq('empresa_id', empresaId);
+      if (error) throw new Error(`Erro ao atualizar total mensal: ${error.message}`);
+      resultado.receitasTotaisAtualizadas = (resultado.receitasTotaisAtualizadas || 0) + 1;
+    } else if (totaisPorChave.has(chave)) {
+      resultado.receitasTotaisIgnoradas += 1;
+    } else {
+      novosTotais.push(linha.dados);
+      totaisPorChave.set(chave, linha.dados);
+    }
+  }
+
+  if (novosTotais.length > 0) {
+    const { error } = await supabase.from('faturamentos').insert(novosTotais);
+    if (error) throw new Error(`Erro ao inserir totais mensais: ${error.message}`);
+    resultado.receitasTotaisInseridas = novosTotais.length;
+  }
+
+  if (existentes.recorrenciasDisponiveis) {
+    const novasRecorrencias: any[] = [];
+    for (const linha of recorrencias) {
+      const chave = chaveRecorrencia(linha.dados);
+      const recorrenciaExistente = recorrenciasPorChave.get(chave) as any;
+
+      if (!linha.valido) {
+        resultado.recorrenciasIgnoradas += 1;
+      } else if (modo === 'atualizar' && linha.idOriginal && idsRecorrencias.has(linha.idOriginal)) {
+        const { empresa_id, ...campos } = linha.dados;
+        const { error } = await supabase
+          .from('recorrencias')
+          .update(campos)
+          .eq('id', linha.idOriginal)
+          .eq('empresa_id', empresaId);
+        if (error) throw new Error(`Erro ao atualizar despesa fixa: ${error.message}`);
+        resultado.recorrenciasAtualizadas = (resultado.recorrenciasAtualizadas || 0) + 1;
+        recorrenciasPorChave.set(chave, { ...linha.dados, id: linha.idOriginal });
+      } else if (modo === 'atualizar' && recorrenciaExistente) {
+        const { error } = await supabase
+          .from('recorrencias')
+          .update({
+            categoria: linha.dados.categoria,
+            descricao: linha.dados.descricao,
+            ativo: linha.dados.ativo,
+          })
+          .eq('id', recorrenciaExistente.id)
+          .eq('empresa_id', empresaId);
+        if (error) throw new Error(`Erro ao atualizar despesa fixa: ${error.message}`);
+        resultado.recorrenciasAtualizadas = (resultado.recorrenciasAtualizadas || 0) + 1;
+      } else if (recorrenciasPorChave.has(chave)) {
+        resultado.recorrenciasIgnoradas += 1;
+      } else {
+        novasRecorrencias.push(linha.dados);
+        recorrenciasPorChave.set(chave, linha.dados);
+      }
+    }
+
+    if (novasRecorrencias.length > 0) {
+      const { error } = await supabase.from('recorrencias').insert(novasRecorrencias);
+      if (error) throw new Error(`Erro ao inserir despesas fixas: ${error.message}`);
+      resultado.recorrenciasInseridas = novasRecorrencias.length;
+    }
+  } else {
+    resultado.recorrenciasIgnoradas += recorrencias.length;
+  }
+
+  return resultado;
+}
+
+async function apagarDadosFinanceirosAtuais(empresaId: string): Promise<Partial<ResultadoImportacaoBackup>> {
+  const remover = async (tabela: string, opcional = false) => {
+    const { count, error } = await supabase
+      .from(tabela)
+      .delete({ count: 'exact' })
+      .eq('empresa_id', empresaId);
+
+    if (error) {
+      if (opcional) return 0;
+      throw new Error(`Erro ao remover dados atuais de ${tabela}: ${error.message}`);
+    }
+
+    return count || 0;
+  };
+
+  const [
+    recorrenciasRemovidas,
+    lancamentosRemovidos,
+    receitasEntradasRemovidas,
+    receitasTotaisRemovidas,
+    despesasBaseRemovidas,
+  ] = await Promise.all([
+    remover('recorrencias', true),
+    remover('lancamentos'),
+    remover('faturamentos_entradas'),
+    remover('faturamentos'),
+    remover('despesas_cadastradas'),
+  ]);
+
+  return {
+    recorrenciasRemovidas,
+    lancamentosRemovidos,
+    receitasEntradasRemovidas,
+    receitasTotaisRemovidas,
+    despesasBaseRemovidas,
+  };
+}
+
+export async function importarBackupExcelAtualizar(params: ImportarBackupExcelParams): Promise<ResultadoImportacaoBackup> {
+  return importarLinhasBackup({ ...params, modo: 'atualizar' });
+}
+
+export async function importarBackupExcelSubstituir(params: ImportarBackupExcelParams): Promise<ResultadoImportacaoBackup> {
+  const removidos = await apagarDadosFinanceirosAtuais(params.empresaId);
+  const resultado = await importarLinhasBackup({ ...params, modo: 'substituir' });
+
+  return {
+    ...resultado,
+    ...removidos,
+  };
 }

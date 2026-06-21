@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.2.0 - 2026-06-21
+
+- Restauracao de backup com escolha entre atualizar dados e importar copia limpa substituindo os dados financeiros pelo backup.
+- Modo substituir protegido por confirmacao textual e ponto de restauracao antes da importacao.
+
 ## 1.1.4 - 2026-06-21
 
 - Logo removida do conteudo do backup para evitar base64 truncado e erro no Excel.

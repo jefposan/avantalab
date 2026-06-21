@@ -77,7 +77,11 @@ import { supabase } from './lib/supabase';
 import {
   analisarBackupExcel,
   gerarBackupExcel,
-  importarBackupExcelAdicionar,
+  importarBackupExcelAtualizar,
+  importarBackupExcelSubstituir,
+  type AnaliseBackupImportacao,
+  type ModoImportacaoBackup,
+  type ResultadoImportacaoBackup,
 } from './lib/exportacao';
 import { useUI } from './hooks/useUI';
 import { useAuth } from './hooks/useAuth';
@@ -326,6 +330,12 @@ const [despesaAnaliseAtiva, setDespesaAnaliseAtiva] = useState<{
   const [painelAjusteLogo, setPainelAjusteLogo] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const backupImportInputRef = useRef<HTMLInputElement>(null);
+  const [modalRestauracaoBackupAberto, setModalRestauracaoBackupAberto] = useState(false);
+  const [backupRestauracaoArquivo, setBackupRestauracaoArquivo] = useState<File | null>(null);
+  const [backupRestauracaoAnalise, setBackupRestauracaoAnalise] = useState<AnaliseBackupImportacao | null>(null);
+  const [modoRestauracaoBackup, setModoRestauracaoBackup] = useState<ModoImportacaoBackup>('atualizar');
+  const [confirmacaoSubstituirBackup, setConfirmacaoSubstituirBackup] = useState('');
+  const [importandoBackup, setImportandoBackup] = useState(false);
 
   // Modais e Calc
   const [modalInstrucoes, setModalInstrucoes] = useState(false);
@@ -2756,6 +2766,132 @@ const abrirImportacaoBackup = () => {
   }
 };
 
+const fecharModalRestauracaoBackup = () => {
+  if (importandoBackup) return;
+
+  setModalRestauracaoBackupAberto(false);
+  setBackupRestauracaoArquivo(null);
+  setBackupRestauracaoAnalise(null);
+  setModoRestauracaoBackup('atualizar');
+  setConfirmacaoSubstituirBackup('');
+};
+
+const rotuloModoRestauracaoBackup = (modo: ModoImportacaoBackup) => {
+  if (modo === 'substituir') return 'Importar copia limpa';
+  return 'Atualizar dados';
+};
+
+const montarResumoResultadoImportacao = (
+  resultado: ResultadoImportacaoBackup,
+  modo: ModoImportacaoBackup
+) => {
+  const totalIgnorados =
+    resultado.despesasBaseIgnoradas +
+    resultado.lancamentosIgnorados +
+    resultado.receitasEntradasIgnoradas +
+    resultado.receitasTotaisIgnoradas +
+    resultado.recorrenciasIgnoradas;
+
+  const linhas = [
+    `Modo usado: ${rotuloModoRestauracaoBackup(modo)}`,
+    '',
+    `Despesas base adicionadas: ${resultado.despesasBaseInseridas}`,
+    `Lancamentos adicionados: ${resultado.lancamentosInseridos}`,
+    `Entradas/receitas adicionadas: ${resultado.receitasEntradasInseridas}`,
+    `Totais mensais adicionados: ${resultado.receitasTotaisInseridas}`,
+    `Despesas fixas adicionadas: ${resultado.recorrenciasInseridas}`,
+  ];
+
+  if (modo === 'atualizar') {
+    linhas.push(
+      '',
+      `Despesas base atualizadas: ${resultado.despesasBaseAtualizadas || 0}`,
+      `Lancamentos atualizados: ${resultado.lancamentosAtualizados || 0}`,
+      `Entradas/receitas atualizadas: ${resultado.receitasEntradasAtualizadas || 0}`,
+      `Totais mensais atualizados: ${resultado.receitasTotaisAtualizadas || 0}`,
+      `Despesas fixas atualizadas: ${resultado.recorrenciasAtualizadas || 0}`
+    );
+  }
+
+  if (modo === 'substituir') {
+    linhas.push(
+      '',
+      `Despesas base removidas antes da importacao: ${resultado.despesasBaseRemovidas || 0}`,
+      `Lancamentos removidos antes da importacao: ${resultado.lancamentosRemovidos || 0}`,
+      `Entradas/receitas removidas antes da importacao: ${resultado.receitasEntradasRemovidas || 0}`,
+      `Totais mensais removidos antes da importacao: ${resultado.receitasTotaisRemovidas || 0}`,
+      `Despesas fixas removidas antes da importacao: ${resultado.recorrenciasRemovidas || 0}`
+    );
+  }
+
+  linhas.push('', `Registros ignorados por duplicidade ou dados incompletos: ${totalIgnorados}`);
+
+  return linhas.join('\n');
+};
+
+const executarImportacaoBackup = async () => {
+  if (!backupRestauracaoArquivo || !empresaId) return;
+
+  if (
+    modoRestauracaoBackup === 'substituir' &&
+    confirmacaoSubstituirBackup.trim().toUpperCase() !== 'SUBSTITUIR'
+  ) {
+    abrirAviso(
+      'Confirmacao obrigatoria',
+      'Para substituir todos os dados financeiros atuais, digite SUBSTITUIR no campo de confirmacao.',
+      undefined,
+      'alerta'
+    );
+    return;
+  }
+
+  try {
+    setImportandoBackup(true);
+
+    await gerarBackupExcel({
+      ...backupParams(),
+      nomeArquivoPrefixo: 'ponto_restauracao_avantalab',
+    });
+
+    const resultado =
+      modoRestauracaoBackup === 'substituir'
+        ? await importarBackupExcelSubstituir({
+            arquivo: backupRestauracaoArquivo,
+            empresaId,
+          })
+        : await importarBackupExcelAtualizar({
+            arquivo: backupRestauracaoArquivo,
+            empresaId,
+          });
+
+    await recarregarDadosFinanceirosAtual();
+
+    const modoUsado = modoRestauracaoBackup;
+    setModalRestauracaoBackupAberto(false);
+    setBackupRestauracaoArquivo(null);
+    setBackupRestauracaoAnalise(null);
+    setModoRestauracaoBackup('atualizar');
+    setConfirmacaoSubstituirBackup('');
+
+    abrirAviso(
+      'Importacao concluida',
+      montarResumoResultadoImportacao(resultado, modoUsado),
+      undefined,
+      'sucesso'
+    );
+  } catch (error: any) {
+    console.error('Erro ao executar importacao de backup:', error);
+    abrirAviso(
+      'Erro ao importar backup',
+      error?.message || 'Nao foi possivel importar o arquivo selecionado.',
+      undefined,
+      'erro'
+    );
+  } finally {
+    setImportandoBackup(false);
+  }
+};
+
 const selecionarArquivoBackup = async (e: React.ChangeEvent<HTMLInputElement>) => {
   const arquivo = e.target.files?.[0];
   e.target.value = '';
@@ -2775,6 +2911,14 @@ const selecionarArquivoBackup = async (e: React.ChangeEvent<HTMLInputElement>) =
       return;
     }
 
+    setBackupRestauracaoArquivo(arquivo);
+    setBackupRestauracaoAnalise(analise);
+    setModoRestauracaoBackup('atualizar');
+    setConfirmacaoSubstituirBackup('');
+    setModalRestauracaoBackupAberto(true);
+    return;
+
+    /*
     const resumo = [
       `Arquivo: ${analise.nomeArquivo}`,
       `Perfil de origem: ${analise.perfilOrigem || 'Não identificado'}`,
@@ -2803,8 +2947,8 @@ const selecionarArquivoBackup = async (e: React.ChangeEvent<HTMLInputElement>) =
           });
 
           const resultado = await importarBackupExcelAdicionar({
-            arquivo,
-            empresaId,
+            arquivo: arquivo!,
+            empresaId: empresaId!,
           });
 
           await recarregarDadosFinanceirosAtual();
@@ -2840,6 +2984,7 @@ const selecionarArquivoBackup = async (e: React.ChangeEvent<HTMLInputElement>) =
         }
       },
     });
+    */
   } catch (error: any) {
     console.error('Erro ao importar backup:', error);
     abrirAviso(
@@ -4534,6 +4679,175 @@ if (isTelaMobile) {
   aoCancelar={() => { fecharConfirmacao(); if (acaoCancelarConfirmacao) acaoCancelarConfirmacao(); }}
   aoConfirmar={confirmarAcao}
 />
+
+{modalRestauracaoBackupAberto && backupRestauracaoAnalise && (
+  <div
+    className="fixed inset-0 z-[6200] flex items-center justify-center bg-black/70 px-4"
+    onClick={fecharModalRestauracaoBackup}
+  >
+    <div
+      className={`flex max-h-[92vh] w-full max-w-2xl flex-col overflow-hidden rounded-2xl border shadow-2xl ${
+        darkMode ? 'border-slate-700 bg-slate-800' : 'border-slate-200 bg-white'
+      }`}
+      onClick={(e) => e.stopPropagation()}
+    >
+      <div className="px-6 py-5" style={estiloTemaPrimario}>
+        <p className="text-xs font-black uppercase tracking-[0.18em]">
+          Restauracao de dados
+        </p>
+        <h2 className="mt-1 text-2xl font-black">
+          Importar backup
+        </h2>
+      </div>
+
+      <div className="overflow-y-auto px-6 py-5">
+        <div
+          className={`rounded-xl border p-4 text-sm ${
+            darkMode
+              ? 'border-slate-700 bg-slate-900/60 text-slate-300'
+              : 'border-slate-200 bg-slate-50 text-slate-600'
+          }`}
+        >
+          <p><strong className={textStrong}>Arquivo:</strong> {backupRestauracaoAnalise.nomeArquivo}</p>
+          <p><strong className={textStrong}>Perfil de origem:</strong> {backupRestauracaoAnalise.perfilOrigem || 'Nao identificado'}</p>
+          <p><strong className={textStrong}>Versao do backup:</strong> {backupRestauracaoAnalise.versaoBackup || 'Nao identificada'}</p>
+          <div className="mt-3 grid gap-2 text-xs font-black uppercase tracking-wide sm:grid-cols-5">
+            <span>Base: {backupRestauracaoAnalise.totalDespesasBase}</span>
+            <span>Despesas: {backupRestauracaoAnalise.totalLancamentos}</span>
+            <span>Entradas: {backupRestauracaoAnalise.totalReceitasEntradas}</span>
+            <span>Totais: {backupRestauracaoAnalise.totalReceitasTotais}</span>
+            <span>Fixas: {backupRestauracaoAnalise.totalRecorrencias}</span>
+          </div>
+        </div>
+
+        {backupRestauracaoAnalise.avisos.length > 0 && (
+          <div
+            className={`mt-4 rounded-xl border p-3 text-sm font-semibold leading-relaxed ${
+              darkMode
+                ? 'border-amber-500/30 bg-amber-950/30 text-amber-200'
+                : 'border-amber-200 bg-amber-50 text-amber-800'
+            }`}
+          >
+            {backupRestauracaoAnalise.avisos.map((aviso) => (
+              <p key={aviso}>{aviso}</p>
+            ))}
+          </div>
+        )}
+
+        <div className="mt-5 grid gap-3">
+          {([
+            {
+              modo: 'atualizar' as ModoImportacaoBackup,
+              titulo: 'Atualizar dados',
+              texto: 'Aplica alteracoes feitas no backup e adiciona os registros que ainda nao existem.',
+            },
+            {
+              modo: 'substituir' as ModoImportacaoBackup,
+              titulo: 'Importar copia limpa',
+              texto: 'Apaga os dados financeiros atuais e importa somente o conteudo do backup, sem mesclagem.',
+            },
+          ]).map((opcao) => {
+            const ativo = modoRestauracaoBackup === opcao.modo;
+            const perigo = opcao.modo === 'substituir';
+
+            return (
+              <button
+                key={opcao.modo}
+                type="button"
+                onClick={() => setModoRestauracaoBackup(opcao.modo)}
+                disabled={importandoBackup}
+                className={`rounded-xl border p-4 text-left transition cursor-pointer disabled:cursor-not-allowed disabled:opacity-70 ${
+                  ativo
+                    ? 'border-transparent text-white shadow-md'
+                    : perigo
+                      ? darkMode
+                        ? 'border-red-500/30 bg-red-950/20 text-red-100 hover:bg-red-950/35'
+                        : 'border-red-100 bg-red-50 text-red-900 hover:bg-red-100'
+                      : darkMode
+                        ? 'border-slate-700 bg-slate-900/50 text-slate-300 hover:bg-slate-900'
+                        : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50'
+                }`}
+                style={ativo ? estiloTemaPrimario : undefined}
+              >
+                <span className="block text-sm font-black uppercase tracking-wide">
+                  {opcao.titulo}
+                </span>
+                <span className="mt-1 block text-xs font-semibold leading-relaxed opacity-90">
+                  {opcao.texto}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+
+        {modoRestauracaoBackup === 'substituir' && (
+          <div
+            className={`mt-4 rounded-xl border p-4 ${
+              darkMode
+                ? 'border-red-500/30 bg-red-950/25'
+                : 'border-red-100 bg-red-50'
+            }`}
+          >
+            <p className={`text-sm font-bold ${darkMode ? 'text-red-100' : 'text-red-800'}`}>
+              Este modo apaga os dados financeiros atuais antes de importar o backup. Um ponto de restauracao sera baixado antes da operacao.
+            </p>
+            <label className={`mt-3 block text-xs font-black uppercase tracking-wide ${textMuted}`}>
+              Digite SUBSTITUIR para confirmar
+            </label>
+            <input
+              value={confirmacaoSubstituirBackup}
+              onChange={(e) => setConfirmacaoSubstituirBackup(e.target.value)}
+              disabled={importandoBackup}
+              className={`mt-2 w-full rounded-xl border px-3 py-3 text-sm font-black uppercase outline-none ${
+                darkMode
+                  ? 'border-slate-600 bg-slate-900 text-white'
+                  : 'border-slate-300 bg-white text-slate-800'
+              }`}
+            />
+          </div>
+        )}
+
+        <p className={`mt-4 text-xs font-semibold leading-relaxed ${textMuted}`}>
+          Antes de qualquer importacao, o sistema baixa um ponto de restauracao com o estado atual deste perfil.
+        </p>
+      </div>
+
+      <div className={`flex flex-col gap-3 border-t px-6 py-4 sm:flex-row sm:justify-end ${
+        darkMode ? 'border-slate-700 bg-slate-800' : 'border-slate-100 bg-slate-50'
+      }`}>
+        <button
+          type="button"
+          onClick={fecharModalRestauracaoBackup}
+          disabled={importandoBackup}
+          className={`rounded-xl border px-5 py-3 text-xs font-black uppercase transition cursor-pointer disabled:cursor-not-allowed disabled:opacity-60 ${
+            darkMode
+              ? 'border-slate-600 text-slate-300 hover:bg-slate-700'
+              : 'border-slate-300 text-slate-600 hover:bg-slate-100'
+          }`}
+        >
+          Cancelar
+        </button>
+
+        <button
+          type="button"
+          onClick={executarImportacaoBackup}
+          disabled={
+            importandoBackup ||
+            (modoRestauracaoBackup === 'substituir' &&
+              confirmacaoSubstituirBackup.trim().toUpperCase() !== 'SUBSTITUIR')
+          }
+          className={`rounded-xl px-5 py-3 text-xs font-black uppercase text-white shadow-md transition disabled:cursor-not-allowed disabled:opacity-60 cursor-pointer ${
+            modoRestauracaoBackup === 'substituir'
+              ? 'bg-red-700 hover:bg-red-800'
+              : 'bg-emerald-600 hover:bg-emerald-700'
+          }`}
+        >
+          {importandoBackup ? 'Importando...' : rotuloModoRestauracaoBackup(modoRestauracaoBackup)}
+        </button>
+      </div>
+    </div>
+  </div>
+)}
 
 {modalReceitaDashboardAberto && (
   <div
