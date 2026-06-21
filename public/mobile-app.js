@@ -3376,7 +3376,7 @@
           '<div class="mb-5">' +
             
             '<h1 class="text-3xl font-black text-slate-900">' + escapeHtml(titulo) + '</h1>' +
-            '<p class="mt-2 text-sm leading-relaxed text-slate-600">' + escapeHtml(subtitulo) + '</p>' +
+            '<p class="mt-1 text-xs leading-snug text-slate-600">' + escapeHtml(subtitulo) + '</p>' +
           '</div>' +
           conteudo +
         '</div>' +
@@ -3389,17 +3389,17 @@
     var maxH = (state.modoCadastro || state.modoSenha)
       ? 'calc(80dvh - 1.5rem)'
       : 'calc(80dvh - 5.5rem)';
-    var padClass = state.modoCadastro ? 'p-4' : 'p-5';
+    var padClass = state.modoCadastro ? 'p-3' : 'p-3';
 
     return (
       '<section class="avantalab-mobile-bg fixed inset-0 flex flex-col items-center overflow-hidden px-4 pb-4" style="height:100dvh;padding-top:20dvh;--avantalab-mobile-bg-overlay:linear-gradient(rgba(255,255,255,.08),rgba(255,255,255,0));">' +
         '<div class="mx-auto w-full max-w-md overflow-y-auto rounded-3xl border border-white/35 ' + padClass + ' text-slate-900 shadow-2xl backdrop-blur-xl" style="background-color:rgba(255,255,255,.18);max-height:' + maxH + ';overscroll-behavior:contain;">' +
           (boasVindas
             ? telaBoasVindas()
-            : '<div class="' + (state.modoCadastro ? 'mb-3' : 'mb-5') + '">' +
+            : '<div class="' + (state.modoCadastro ? 'mb-2' : 'mb-3') + '">' +
                 
-                '<h1 class="' + (state.modoCadastro ? 'text-2xl' : 'text-3xl') + ' font-black text-slate-900">' + (state.modoCadastro ? 'Criar cadastro' : state.modoSenha ? 'Recuperar senha' : 'Acesse sua conta') + '</h1>' +
-                '<p class="mt-2 text-sm leading-relaxed text-slate-600">' +
+                '<h1 class="' + (state.modoCadastro ? 'text-xl' : 'text-2xl') + ' font-black text-slate-900">' + (state.modoCadastro ? 'Criar cadastro' : state.modoSenha ? 'Recuperar senha' : 'Acesse sua conta') + '</h1>' +
+                '<p class="mt-1 text-xs leading-snug text-slate-600">' +
                   (state.modoCadastro ? 'Preencha seus dados e confirme o celular por SMS.' : state.modoSenha ? 'Digite seu login, receba o codigo por SMS e defina uma nova senha.' : 'Entre para acompanhar sua gestao financeira, lancamentos e resultados.') +
                 '</p>' +
               '</div>' +
@@ -3413,22 +3413,22 @@
 
   function telaBoasVindas() {
     return (
-      '<div class="grid gap-4">' +
+      '<div class="grid gap-3">' +
         '<div>' +
           
-          '<h1 class="text-3xl font-black leading-tight text-slate-900">Descubra quanto realmente sobra no seu neg&oacute;cio ou nas suas despesas pessoais.</h1>' +
-          '<p class="mt-3 text-sm font-semibold leading-relaxed text-slate-600">Controle entradas e despesas de forma simples.</p>' +
+          '<h1 class="text-2xl font-black leading-tight text-slate-900">Descubra quanto realmente sobra no seu neg&oacute;cio ou nas suas despesas pessoais.</h1>' +
+          '<p class="mt-1 text-xs font-semibold leading-relaxed text-slate-600">Controle entradas e despesas de forma simples.</p>' +
         '</div>' +
-        '<div class="grid gap-2 rounded-2xl bg-white/22 p-3 text-sm font-bold leading-snug text-slate-700">' +
+        '<div class="grid gap-1 rounded-xl bg-white/22 p-2 text-xs font-bold leading-snug text-slate-700">' +
           '<p>&#10003; Entenda seus gastos.</p>' +
           '<p>&#10003; Compare seus resultados mes a mes.</p>' +
           '<p>&#10003; Descubra quais despesas mais impactam seu lucro.</p>' +
           '<p>&#10003; Use no computador ou celular.</p>' +
         '</div>' +
-        '<button id="boas-vindas-cadastro" type="button" class="h-12 rounded-xl px-4 text-sm font-black uppercase tracking-wide text-white shadow-lg" style="background:linear-gradient(135deg,#003E73,#00A6C8)">' +
+        '<button id="boas-vindas-cadastro" type="button" class="h-10 rounded-xl px-4 text-xs font-black uppercase tracking-wide text-white shadow-lg" style="background:linear-gradient(135deg,#003E73,#00A6C8)">' +
           'Criar conta gratis' +
         '</button>' +
-        '<div class="text-center text-sm text-slate-600">Ja tem conta? <button id="boas-vindas-login" type="button" class="font-bold text-sky-700 underline">Entrar</button></div>' +
+        '<div class="text-center text-xs text-slate-600">Ja tem conta? <button id="boas-vindas-login" type="button" class="font-bold text-sky-700 underline">Entrar</button></div>' +
       '</div>'
     );
   }
@@ -3465,13 +3465,13 @@
 
   function telaLoginCampos() {
     return (
-      '<div class="grid gap-4">' +
+      '<div class="grid gap-2">' +
         inputHtml('login', 'Email ou login', 'text', 'seuemail@exemplo.com ou seu login', state.loginValor) +
         senhaInputHtml('senha', 'Senha', 'Digite sua senha', 'mostrarSenhaLogin', 'toggle-senha-login') +
-        '<label class="flex items-start gap-3 rounded-2xl border border-white/35 bg-white/35 px-3 py-3 text-left shadow-sm">' +
-          '<input id="manter-conectado" type="checkbox" class="mt-0.5 h-5 w-5 shrink-0 accent-cyan-700"' + (state.manterConectado ? ' checked' : '') + ' />' +
+        '<label class="flex items-start gap-2 rounded-xl border border-white/35 bg-white/35 px-3 py-2 text-left shadow-sm">' +
+          '<input id="manter-conectado" type="checkbox" class="mt-0.5 h-4 w-4 shrink-0 accent-cyan-700"' + (state.manterConectado ? ' checked' : '') + ' />' +
           '<span class="min-w-0">' +
-            '<span class="block text-sm font-black text-slate-800">Manter conectado</span>' +
+            '<span class="block text-xs font-black text-slate-800">Manter conectado</span>' +
             '<span class="mt-0.5 block text-xs font-semibold leading-snug text-slate-600">Nao pedir login neste celular por 30 dias.</span>' +
           '</span>' +
         '</label>' +
@@ -3479,14 +3479,14 @@
           '<button id="esqueci-senha" type="button" class="text-xs font-bold text-sky-700 underline">Esqueci minha senha</button>' +
         '</div>' +
         alertaHtml() +
-        '<button id="entrar" type="button" class="h-12 rounded-xl bg-slate-900 px-4 text-sm font-black uppercase tracking-wide text-white shadow-lg">' +
+        '<button id="entrar" type="button" class="h-10 rounded-xl bg-slate-900 px-4 text-xs font-black uppercase tracking-wide text-white shadow-lg">' +
           (state.loginAcao === 'senha' ? 'Entrando...' : 'Entrar') +
         '</button>' +
-        '<button id="entrar-google" type="button" class="flex h-12 items-center justify-center gap-3 rounded-xl border border-slate-300 bg-white/90 px-4 text-sm font-bold text-slate-700 shadow-sm">' +
-          '<img src="/images/google-logo.svg" alt="Google" class="h-5 w-5" />' +
+        '<button id="entrar-google" type="button" class="flex h-10 items-center justify-center gap-2 rounded-xl border border-slate-300 bg-white/90 px-4 text-xs font-bold text-slate-700 shadow-sm">' +
+          '<img src="/images/google-logo.svg" alt="Google" class="h-4 w-4" />' +
           '<span>' + (state.loginAcao === 'google' ? 'Conectando...' : 'Entrar ou cadastrar com Google') + '</span>' +
         '</button>' +
-        '<div class="pt-2 text-center text-sm text-slate-600">Ainda nao tem conta? <button id="abrir-cadastro" type="button" class="font-bold text-sky-700 underline">Criar cadastro</button></div>' +
+        '<div class="text-center text-xs text-slate-600">Ainda nao tem conta? <button id="abrir-cadastro" type="button" class="font-bold text-sky-700 underline">Criar cadastro</button></div>' +
       '</div>'
     );
   }
@@ -3506,18 +3506,18 @@
         senhaInputHtml('cadastro-confirmar-senha', 'Confirmar senha', 'Repita a senha', 'mostrarConfirmarSenhaCadastro', 'toggle-confirmar-cadastro', state.cadastro.confirmarSenha) +
         (state.smsCadastroEnviado ? inputHtml('cadastro-codigo', 'Codigo recebido por SMS', 'text', 'Digite o codigo recebido') + '<p class="-mt-1 text-[11px] font-semibold text-slate-500">Enviamos o codigo para o celular informado.</p>' : '') +
         alertaHtml() +
-        '<button id="cadastro-submit" type="button" class="h-10 rounded-xl bg-slate-900 px-4 text-sm font-black uppercase tracking-wide text-white shadow-lg">' +
+        '<button id="cadastro-submit" type="button" class="h-10 rounded-xl bg-slate-900 px-4 text-xs font-black uppercase tracking-wide text-white shadow-lg">' +
           (state.carregando ? (state.smsCadastroEnviado ? 'Validando...' : 'Enviando...') : (state.smsCadastroEnviado ? 'Concluir cadastro' : 'Enviar codigo por SMS')) +
         '</button>' +
         (state.smsCadastroEnviado ? '<button id="reenviar-cadastro" type="button" class="text-xs font-bold text-sky-700 underline">Reenviar codigo</button>' : '') +
-        '<div class="text-center text-sm text-slate-600">Ja tem conta? <button id="voltar-login-cadastro" type="button" class="font-bold text-sky-700 underline">Entrar</button></div>' +
+        '<div class="text-center text-xs text-slate-600">Ja tem conta? <button id="voltar-login-cadastro" type="button" class="font-bold text-sky-700 underline">Entrar</button></div>' +
       '</div>'
     );
   }
 
   function telaSenha() {
     return (
-      '<div class="grid gap-4">' +
+      '<div class="grid gap-2">' +
         inputHtml('login-senha', 'Email ou login', 'text', 'Informe seu email ou login', state.loginRecuperacao) +
         (state.smsSenhaEnviado
           ? inputHtml('codigo-senha', 'Codigo recebido por SMS', 'text', 'Digite o codigo recebido') +
@@ -3525,13 +3525,13 @@
             senhaInputHtml('confirmar-senha', 'Confirmar nova senha', 'Repita a nova senha', 'mostrarConfirmarSenha', 'toggle-confirmar-senha')
           : '') +
         alertaHtml() +
-        '<button id="redefinir-senha" type="button" class="h-12 rounded-xl bg-slate-900 px-4 text-sm font-black uppercase tracking-wide text-white shadow-lg">' +
+        '<button id="redefinir-senha" type="button" class="h-10 rounded-xl bg-slate-900 px-4 text-xs font-black uppercase tracking-wide text-white shadow-lg">' +
           (state.carregando ? (state.smsSenhaEnviado ? 'Redefinindo...' : 'Enviando...') : (state.smsSenhaEnviado ? 'Redefinir senha' : 'Enviar codigo por SMS')) +
         '</button>' +
         (state.smsSenhaEnviado
           ? '<button id="reenviar-senha" type="button" class="text-xs font-bold text-sky-700 underline">Reenviar codigo</button>'
           : '') +
-        '<button id="voltar-login" type="button" class="text-sm font-bold text-slate-600 underline">Voltar para login</button>' +
+        '<button id="voltar-login" type="button" class="text-xs font-bold text-slate-600 underline">Voltar para login</button>' +
       '</div>'
     );
   }
@@ -3539,20 +3539,20 @@
   function telaTelefoneObrigatorioMobile() {
     return (
       '<section class="avantalab-mobile-bg fixed inset-0 flex flex-col items-center justify-center overflow-hidden px-4 py-5" style="height:100dvh;--avantalab-mobile-bg-overlay:linear-gradient(rgba(255,255,255,.08),rgba(255,255,255,0));">' +
-        '<div class="mx-auto w-full max-w-md overflow-y-auto rounded-3xl border border-white/35 p-5 text-slate-900 shadow-2xl backdrop-blur-xl" style="background-color:rgba(255,255,255,.18);max-height:calc(100dvh - 2.5rem);overscroll-behavior:contain;">' +
-          '<div class="mb-5">' +
+        '<div class="mx-auto w-full max-w-md overflow-y-auto rounded-3xl border border-white/35 p-3 text-slate-900 shadow-2xl backdrop-blur-xl" style="background-color:rgba(255,255,255,.18);max-height:calc(100dvh - 2.5rem);overscroll-behavior:contain;">' +
+          '<div class="mb-3">' +
             
-            '<h1 class="text-3xl font-black text-slate-900">Confirme seu celular</h1>' +
-            '<p class="mt-2 text-sm leading-relaxed text-slate-600">Para manter seu acesso seguro, confirme um celular com DDD por SMS.</p>' +
+            '<h1 class="text-2xl font-black text-slate-900">Confirme seu celular</h1>' +
+            '<p class="mt-1 text-xs leading-snug text-slate-600">Para manter seu acesso seguro, confirme um celular com DDD por SMS.</p>' +
           '</div>' +
-          '<div class="grid gap-4">' +
+          '<div class="grid gap-2">' +
             inputHtml('telefone-obrigatorio', 'Celular', 'tel', 'DDD + numero. Ex: 11999999999', state.telefoneObrigatorio) +
             (state.smsTelefoneObrigatorioEnviado
               ? inputHtml('codigo-telefone-obrigatorio', 'Codigo recebido por SMS', 'text', 'Digite o codigo recebido', state.codigoTelefoneObrigatorio) +
                 '<p class="-mt-1 text-[11px] font-semibold text-slate-500">Enviamos o codigo para o celular informado.</p>'
               : '') +
             alertaHtml() +
-            '<button id="confirmar-telefone-obrigatorio" type="button" class="h-12 rounded-xl bg-slate-900 px-4 text-sm font-black uppercase tracking-wide text-white shadow-lg">' +
+            '<button id="confirmar-telefone-obrigatorio" type="button" class="h-10 rounded-xl bg-slate-900 px-4 text-xs font-black uppercase tracking-wide text-white shadow-lg">' +
               (state.validandoTelefoneObrigatorio
                 ? (state.smsTelefoneObrigatorioEnviado ? 'Validando...' : 'Enviando...')
                 : (state.smsTelefoneObrigatorioEnviado ? 'Confirmar celular' : 'Enviar codigo por SMS')) +
@@ -3560,7 +3560,7 @@
             (state.smsTelefoneObrigatorioEnviado
               ? '<button id="reenviar-telefone-obrigatorio" type="button" class="text-xs font-bold text-sky-700 underline">Reenviar codigo</button>'
               : '') +
-            '<button id="sair-telefone-obrigatorio" type="button" class="text-sm font-bold text-slate-600 underline">Sair</button>' +
+            '<button id="sair-telefone-obrigatorio" type="button" class="text-xs font-bold text-slate-600 underline">Sair</button>' +
           '</div>' +
         '</div>' +
       '</section>'
@@ -3579,9 +3579,9 @@
 
   function inputHtml(id, label, type, placeholder, value) {
     return (
-      '<label class="grid gap-2 text-sm font-semibold text-slate-700">' +
+      '<label class="grid gap-1 text-xs font-semibold text-slate-700">' +
         escapeHtml(label) +
-        '<input id="' + id + '" type="' + type + '" placeholder="' + escapeHtml(placeholder || '') + '" value="' + escapeHtml(value || '') + '" style="font-size:16px;background-color:rgba(255,255,255,.62)" class="h-12 rounded-xl border border-white/60 px-4 text-base text-slate-800 outline-none transition focus:border-sky-600 focus:ring-2 focus:ring-sky-600/20" />' +
+        '<input id="' + id + '" type="' + type + '" placeholder="' + escapeHtml(placeholder || '') + '" value="' + escapeHtml(value || '') + '" style="font-size:16px;background-color:rgba(255,255,255,.62)" class="h-10 rounded-xl border border-white/60 px-3 text-sm text-slate-800 outline-none transition focus:border-sky-600 focus:ring-2 focus:ring-sky-600/20" />' +
       '</label>'
     );
   }
@@ -3590,11 +3590,11 @@
     var visivel = !!state[stateKey];
 
     return (
-      '<label class="grid gap-2 text-sm font-semibold text-slate-700">' +
+      '<label class="grid gap-1 text-xs font-semibold text-slate-700">' +
         escapeHtml(label) +
         '<span class="relative block">' +
-          '<input id="' + id + '" type="' + (visivel ? 'text' : 'password') + '" placeholder="' + escapeHtml(placeholder || '') + '" value="' + escapeHtml(value || '') + '" style="font-size:16px;background-color:rgba(255,255,255,.62)" class="h-12 w-full rounded-xl border border-white/60 px-4 pr-12 text-base text-slate-800 outline-none transition focus:border-sky-600 focus:ring-2 focus:ring-sky-600/20" />' +
-          '<button id="' + toggleId + '" type="button" class="absolute right-2 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full bg-white/35 text-sm font-black text-slate-600 backdrop-blur-sm" aria-label="' + (visivel ? 'Ocultar senha' : 'Exibir senha') + '">' +
+          '<input id="' + id + '" type="' + (visivel ? 'text' : 'password') + '" placeholder="' + escapeHtml(placeholder || '') + '" value="' + escapeHtml(value || '') + '" style="font-size:16px;background-color:rgba(255,255,255,.62)" class="h-10 w-full rounded-xl border border-white/60 px-4 pr-10 text-sm text-slate-800 outline-none transition focus:border-sky-600 focus:ring-2 focus:ring-sky-600/20" />' +
+          '<button id="' + toggleId + '" type="button" class="absolute right-2 top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full bg-white/35 text-xs font-black text-slate-600 backdrop-blur-sm" aria-label="' + (visivel ? 'Ocultar senha' : 'Exibir senha') + '">' +
             (visivel ? '◉' : '◎') +
           '</button>' +
         '</span>' +
