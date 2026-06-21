@@ -72,8 +72,6 @@ export default function AppHeader({
     { aba: 'Relatório', label: 'Relatório' },
   ] as const;
 
-  const indiceAtivo = Math.max(0, itensMenu.findIndex((item) => item.aba === abaAtiva));
-
   return (
     <>
       {/* ── MENU RESPONSIVO (gaveta lateral mobile) ── */}
@@ -229,18 +227,10 @@ export default function AppHeader({
             <div className="relative hidden items-center gap-3 lg:flex">
               {/* Nav principal */}
               <nav
-                className={`relative grid min-w-[450px] grid-cols-5 gap-1 overflow-hidden rounded-xl border p-1 shadow-sm ${
+                className={`relative grid min-w-[450px] grid-cols-5 gap-1 rounded-xl border p-1 shadow-sm ${
                   darkMode ? 'border-slate-700 bg-slate-900/70' : 'border-slate-200 bg-slate-50'
                 }`}
               >
-                <span
-                  className="absolute bottom-1 left-1 top-1 rounded-lg shadow-sm transition-transform duration-300 ease-out"
-                  style={{
-                    width: 'calc((100% - 1.5rem) / 5)',
-                    transform: `translateX(calc(${indiceAtivo} * (100% + 0.25rem)))`,
-                    backgroundColor: corPrimaria,
-                  }}
-                />
                 {itensMenu.map((item) => {
                   const ativo = abaAtiva === item.aba;
                   return (
@@ -254,14 +244,14 @@ export default function AppHeader({
                         setAbaAtiva(item.aba);
                         setMenuResponsivoAberto(false);
                       }}
-                      className={`relative z-10 whitespace-nowrap rounded-lg px-3 py-2 text-xs font-black uppercase tracking-wide transition-colors active:scale-[0.98] cursor-pointer ${
+                      className={`whitespace-nowrap rounded-lg px-3 py-2 text-xs font-black uppercase tracking-wide transition-all active:scale-[0.98] cursor-pointer ${
                         ativo
-                          ? ''
+                          ? 'shadow-sm'
                           : darkMode
                             ? 'text-slate-300 hover:text-white'
                             : 'text-slate-600 hover:text-slate-900'
                       }`}
-                      style={ativo ? { color: textoSobreCorPrimaria } : undefined}
+                      style={ativo ? { backgroundColor: corPrimaria, color: textoSobreCorPrimaria } : undefined}
                     >
                       {item.label}
                     </button>
