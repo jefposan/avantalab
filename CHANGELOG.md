@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.1.0 - 2026-06-21
+
+- Backup completo em Excel estruturado para portabilidade e restauração.
+- Importação conservadora de backup em modo adicionar dados ausentes.
+- Geração de ponto de restauração antes da importação.
+
 ## 1.0.1 - 2026-06-21
 
 - Corrigido espaçamento e destaque ativo do menu web no header.

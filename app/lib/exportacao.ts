@@ -2,16 +2,35 @@
 import * as XLSX from 'xlsx';
 import { supabase } from './supabase';
 import { normalizarTexto } from './formatters';
-import { CATEGORIAS_EXCLUSAO_EBITDA } from './perfis';
+import { APP_VERSION } from './version';
+import { CATEGORIAS_EXCLUSAO_EBITDA, normalizarTipoPerfil } from './perfis';
 import type { AbrirAvisoFn } from '../hooks/useUI';
 
 const MESES = [
-  'JANEIRO','FEVEREIRO','MARÇO','ABRIL','MAIO','JUNHO',
-  'JULHO','AGOSTO','SETEMBRO','OUTUBRO','NOVEMBRO','DEZEMBRO',
+  'JANEIRO', 'FEVEREIRO', 'MARÇO', 'ABRIL', 'MAIO', 'JUNHO',
+  'JULHO', 'AGOSTO', 'SETEMBRO', 'OUTUBRO', 'NOVEMBRO', 'DEZEMBRO',
 ];
+
+const MAPA_MESES: Record<string, string> = {
+  JANEIRO: 'JANEIRO',
+  FEVEREIRO: 'FEVEREIRO',
+  MARCO: 'MARÇO',
+  MARÇO: 'MARÇO',
+  ABRIL: 'ABRIL',
+  MAIO: 'MAIO',
+  JUNHO: 'JUNHO',
+  JULHO: 'JULHO',
+  AGOSTO: 'AGOSTO',
+  SETEMBRO: 'SETEMBRO',
+  OUTUBRO: 'OUTUBRO',
+  NOVEMBRO: 'NOVEMBRO',
+  DEZEMBRO: 'DEZEMBRO',
+};
 
 export interface GerarBackupExcelParams {
   empresaId: string;
+  nomePerfil?: string;
+  tipoPerfil?: string;
   despesasCadastradas: { nome: string; categoria?: string }[];
   logoUrl: string;
   logoSettings: { scale: number; x: number; y: number };
@@ -23,10 +42,120 @@ export interface GerarBackupExcelParams {
   setNomeConfirmacaoExclusao: (val: string) => void;
   setModalExcluirEmpresa: (val: boolean) => void;
   abrirExclusaoDepois?: boolean;
+  nomeArquivoPrefixo?: string;
+}
+
+export type AnaliseBackupImportacao = {
+  valido: boolean;
+  nomeArquivo: string;
+  versaoBackup: string;
+  perfilOrigem: string;
+  tipoPerfilOrigem: string;
+  totalDespesasBase: number;
+  totalLancamentos: number;
+  totalReceitasEntradas: number;
+  totalReceitasTotais: number;
+  totalRecorrencias: number;
+  avisos: string[];
+  erros: string[];
+};
+
+export type ResultadoImportacaoBackup = {
+  despesasBaseInseridas: number;
+  despesasBaseIgnoradas: number;
+  lancamentosInseridos: number;
+  lancamentosIgnorados: number;
+  receitasEntradasInseridas: number;
+  receitasEntradasIgnoradas: number;
+  receitasTotaisInseridas: number;
+  receitasTotaisIgnoradas: number;
+  recorrenciasInseridas: number;
+  recorrenciasIgnoradas: number;
+};
+
+function sanitizarNomeArquivo(valor: string) {
+  return normalizarTexto(valor || 'perfil')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, 48) || 'perfil';
+}
+
+function valorTexto(row: any, chaves: string[], fallback = '') {
+  for (const chave of chaves) {
+    const valor = row?.[chave];
+    if (valor !== undefined && valor !== null && String(valor).trim() !== '') {
+      return String(valor).trim();
+    }
+  }
+  return fallback;
+}
+
+function valorNumero(row: any, chaves: string[], fallback = 0) {
+  const bruto = valorTexto(row, chaves, '');
+  if (!bruto) return fallback;
+  const normalizado = String(bruto)
+    .replace(/[^\d,.-]/g, '')
+    .replace(/\.(?=\d{3}(,|$))/g, '')
+    .replace(',', '.');
+  const numero = Number(normalizado);
+  return Number.isFinite(numero) ? numero : fallback;
+}
+
+function normalizarMes(valor: unknown) {
+  const chave = String(valor || '').trim().toUpperCase();
+  return MAPA_MESES[chave] || chave;
+}
+
+function sheetRows(wb: XLSX.WorkBook, nome: string) {
+  const ws = wb.Sheets[nome];
+  if (!ws) return [];
+  return XLSX.utils.sheet_to_json(ws, { defval: '' }) as any[];
+}
+
+function adicionarPlanilha(wb: XLSX.WorkBook, nome: string, dados: any[]) {
+  const ws = XLSX.utils.json_to_sheet(dados.length > 0 ? dados : [{}]);
+  XLSX.utils.book_append_sheet(wb, ws, nome);
+}
+
+async function lerWorkbookArquivo(arquivo: File): Promise<XLSX.WorkBook> {
+  const buffer = await arquivo.arrayBuffer();
+  return XLSX.read(buffer, { type: 'array' });
+}
+
+async function buscarDadosBackup(empresaId: string) {
+  const consultas = await Promise.allSettled([
+    supabase.from('empresas').select('*').eq('id', empresaId).single(),
+    supabase.from('configuracoes').select('*').eq('empresa_id', empresaId).maybeSingle(),
+    supabase.from('despesas_cadastradas').select('*').eq('empresa_id', empresaId).order('nome', { ascending: true }),
+    supabase.from('lancamentos').select('*').eq('empresa_id', empresaId).order('ano', { ascending: true }).order('mes', { ascending: true }).order('dia', { ascending: true }),
+    supabase.from('faturamentos').select('*').eq('empresa_id', empresaId).order('ano', { ascending: true }),
+    supabase.from('faturamentos_entradas').select('*').eq('empresa_id', empresaId).order('ano', { ascending: true }).order('mes', { ascending: true }).order('dia', { ascending: true }),
+    supabase.rpc('listar_usuarios_empresa_rpc', { p_empresa_id: empresaId }),
+    supabase.from('recorrencias').select('*').eq('empresa_id', empresaId).order('nome', { ascending: true }),
+  ]);
+
+  const resultado = (index: number) => {
+    const item = consultas[index];
+    if (item.status !== 'fulfilled') return { data: null, error: item.reason };
+    return item.value as { data: any; error: any };
+  };
+
+  return {
+    empresa: resultado(0),
+    configuracoes: resultado(1),
+    despesasBase: resultado(2),
+    lancamentos: resultado(3),
+    faturamentos: resultado(4),
+    faturamentosEntradas: resultado(5),
+    usuarios: resultado(6),
+    recorrencias: resultado(7),
+  };
 }
 
 export async function gerarBackupExcel({
   empresaId,
+  nomePerfil,
+  tipoPerfil,
   despesasCadastradas,
   logoUrl,
   logoSettings,
@@ -38,243 +167,446 @@ export async function gerarBackupExcel({
   setNomeConfirmacaoExclusao,
   setModalExcluirEmpresa,
   abrirExclusaoDepois = false,
+  nomeArquivoPrefixo = 'backup_avantalab',
 }: GerarBackupExcelParams): Promise<void> {
-  const meses = MESES;
   if (!empresaId) {
-  abrirAviso(
-    'Empresa não carregada',
-    'Faça login novamente e tente gerar o backup.'
-  );
-  return;
-}
+    abrirAviso('Perfil nao carregado', 'Faca login novamente e tente gerar o backup.', undefined, 'erro');
+    return;
+  }
 
-  const dadosResumo: any[] = [];
-  const dadosLancamentos: any[] = [];
+  const dados = await buscarDadosBackup(empresaId);
 
-  const { data: lancamentosBanco, error: erroLancamentos } = await supabase
-    .from('lancamentos')
-    .select('*')
-    .eq('empresa_id', empresaId)
-    .order('ano', { ascending: true })
-    .order('mes', { ascending: true })
-    .order('dia', { ascending: true });
+  if (dados.lancamentos.error) {
+    console.error('Erro ao buscar lancamentos para backup:', dados.lancamentos.error);
+    abrirAviso('Erro ao gerar backup', dados.lancamentos.error.message || 'Nao foi possivel buscar os lancamentos para o backup.', undefined, 'erro');
+    return;
+  }
 
-  if (erroLancamentos) {
-  console.error('Erro ao buscar lançamentos para backup:', erroLancamentos);
-  abrirAviso(
-    'Erro ao gerar backup',
-    erroLancamentos.message || 'Não foi possível buscar os lançamentos para o backup.'
-  );
-  return;
-}
+  if (dados.faturamentos.error) {
+    console.error('Erro ao buscar receitas totais para backup:', dados.faturamentos.error);
+    abrirAviso('Erro ao gerar backup', dados.faturamentos.error.message || 'Nao foi possivel buscar as receitas totais para o backup.', undefined, 'erro');
+    return;
+  }
 
-  const { data: faturamentosBanco, error: erroFaturamentos } = await supabase
-    .from('faturamentos')
-    .select('*')
-    .eq('empresa_id', empresaId)
-    .order('ano', { ascending: true });
+  const empresa = dados.empresa.data || {};
+  const config = dados.configuracoes.data || {};
+  const despesasBaseBanco = dados.despesasBase.data || [];
+  const lancamentosBackup = dados.lancamentos.data || [];
+  const faturamentosBackup = dados.faturamentos.data || [];
+  const faturamentosEntradasBackup = dados.faturamentosEntradas.data || [];
+  const usuariosBackup = dados.usuarios.data || [];
+  const recorrenciasBackup = dados.recorrencias.data || [];
 
-  if (erroFaturamentos) {
-  console.error('Erro ao buscar faturamentos para backup:', erroFaturamentos);
-  abrirAviso(
-    'Erro ao gerar backup',
-    erroFaturamentos.message || 'Não foi possível buscar os faturamentos para o backup.'
-  );
-  return;
-}
-
-  const lancamentosBackup = lancamentosBanco || [];
-  const faturamentosBackup = faturamentosBanco || [];
-
-  const anosNoBanco = Array.from(
-    new Set([
-      ...lancamentosBackup.map((l: any) => String(l.ano)),
-      ...faturamentosBackup.map((f: any) => String(f.ano)),
-    ])
-  ).sort();
-
-  if (anosNoBanco.length === 0) {
-  abrirAviso(
-    'Backup sem dados',
-    'Nenhum dado foi encontrado para gerar o backup.',
-    abrirExclusaoDepois
-      ? () => {
-          setNomeConfirmacaoExclusao('');
-          setModalExcluirEmpresa(true);
-        }
-      : undefined
-  );
-  return;
-}
-
-  anosNoBanco.forEach((ano) => {
-    const lancsAno = lancamentosBackup.filter((l: any) => String(l.ano) === ano);
-    const fatsAno = faturamentosBackup.filter((f: any) => String(f.ano) === ano);
-
-    const faturamentosPorMes: Record<string, number> = {};
-
-    fatsAno.forEach((f: any) => {
-      faturamentosPorMes[f.mes] = Number(f.valor || 0);
-    });
-
-    let totalFatAno = 0;
-    let totalDespAno = 0;
-    let totalLucroAno = 0;
-    let totalEbitdaAno = 0;
-
-    lancsAno.forEach((l: any) => {
-      dadosLancamentos.push({
-        Ano: ano,
-        Mês: l.mes,
-        Dia: l.dia,
-        Despesa: l.despesa_nome,
-        Descrição: l.descricao || '-',
-        'Valor (R$)': Number(l.valor || 0),
-      });
-    });
-
-    meses.forEach((mes) => {
-      const faturamento = faturamentosPorMes[mes] || 0;
-      const lancsMes = lancsAno.filter((l: any) => l.mes === mes);
-
-      let despesas = 0;
-      let exclusoesEbitda = 0;
-
-      lancsMes.forEach((l: any) => {
-        const valor = Number(l.valor || 0);
-        despesas += valor;
-
-        const despesaCat =
-  despesasCadastradas.find(
-    (d) => normalizarTexto(d.nome) === normalizarTexto(l.despesa_nome)
-  )?.categoria || 'Outros';
-
-        if (CATEGORIAS_EXCLUSAO_EBITDA.includes(despesaCat)) {
-          exclusoesEbitda += valor;
-        }
-      });
-
-      const lucro = faturamento - despesas;
-      const ebitda = lucro + exclusoesEbitda;
-
-      if (faturamento > 0 || despesas > 0) {
-        dadosResumo.push({
-          Ano: ano,
-          Mês: mes,
-          'Faturamento (R$)': faturamento,
-          'Despesas (R$)': despesas,
-          'Lucro (R$)': lucro,
-          'EBITDA (R$)': ebitda,
-        });
-
-        totalFatAno += faturamento;
-        totalDespAno += despesas;
-        totalLucroAno += lucro;
-        totalEbitdaAno += ebitda;
-      }
-    });
-
-    if (totalFatAno > 0 || totalDespAno > 0) {
-      dadosResumo.push({
-        Ano: ano,
-        Mês: 'TOTAL ANUAL',
-        'Faturamento (R$)': totalFatAno,
-        'Despesas (R$)': totalDespAno,
-        'Lucro (R$)': totalLucroAno,
-        'EBITDA (R$)': totalEbitdaAno,
-      });
-
-      dadosResumo.push({
-        Ano: '',
-        Mês: '',
-        'Faturamento (R$)': null,
-        'Despesas (R$)': null,
-        'Lucro (R$)': null,
-        'EBITDA (R$)': null,
-      });
-    }
-  });
+  const nomePerfilFinal = nomePerfil || empresa.nome || 'Perfil financeiro';
+  const tipoPerfilFinal = normalizarTipoPerfil(tipoPerfil || empresa.tipo_perfil || 'empresa');
+  const agora = new Date().toISOString();
+  const dataHoje = agora.split('T')[0];
 
   const wb = XLSX.utils.book_new();
 
-  const wsResumo = XLSX.utils.json_to_sheet(dadosResumo);
-  XLSX.utils.book_append_sheet(wb, wsResumo, 'Resumo Financeiro');
+  adicionarPlanilha(wb, 'Resumo', [
+    { Campo: 'Sistema', Valor: 'AvantaLab Gestao' },
+    { Campo: 'Versao do sistema', Valor: APP_VERSION },
+    { Campo: 'Tipo do arquivo', Valor: 'Backup completo para restauracao' },
+    { Campo: 'Data do backup', Valor: agora },
+    { Campo: 'Perfil financeiro', Valor: nomePerfilFinal },
+    { Campo: 'Tipo do perfil', Valor: tipoPerfilFinal },
+    { Campo: 'ID original do perfil', Valor: empresaId },
+    { Campo: 'Aviso', Valor: 'Edite os dados com cuidado. Mantenha os nomes das abas e colunas para importar novamente.' },
+  ]);
 
-  if (dadosLancamentos.length > 0) {
-    const wsLancs = XLSX.utils.json_to_sheet(dadosLancamentos);
-    XLSX.utils.book_append_sheet(wb, wsLancs, 'Lançamentos Detalhados');
+  adicionarPlanilha(wb, 'Perfil', [
+    {
+      'ID original': empresaId,
+      Nome: nomePerfilFinal,
+      'Tipo do perfil': tipoPerfilFinal,
+      'Criado em': empresa.created_at || empresa.criado_em || '',
+      'Atualizado em': empresa.updated_at || empresa.atualizado_em || '',
+    },
+  ]);
+
+  adicionarPlanilha(
+    wb,
+    'Despesas Base',
+    (despesasBaseBanco.length > 0 ? despesasBaseBanco : despesasCadastradas).map((d: any) => ({
+      'ID original': d.id || '',
+      Nome: d.nome || '',
+      Categoria: d.categoria || 'Outros',
+    }))
+  );
+
+  adicionarPlanilha(
+    wb,
+    'Lancamentos Despesas',
+    lancamentosBackup.map((l: any) => ({
+      'ID original': l.id || '',
+      Ano: l.ano,
+      Mes: normalizarMes(l.mes),
+      Dia: l.dia,
+      Despesa: l.despesa_nome,
+      Descricao: l.descricao || '',
+      Valor: Number(l.valor || 0),
+    }))
+  );
+
+  adicionarPlanilha(
+    wb,
+    'Receitas Entradas',
+    faturamentosEntradasBackup.map((entrada: any) => ({
+      'ID original': entrada.id || '',
+      Ano: entrada.ano,
+      Mes: normalizarMes(entrada.mes),
+      Dia: entrada.dia,
+      Origem: entrada.origem || '',
+      Valor: Number(entrada.valor || 0),
+    }))
+  );
+
+  adicionarPlanilha(
+    wb,
+    'Receitas Totais',
+    faturamentosBackup.map((f: any) => ({
+      'ID original': f.id || '',
+      Ano: f.ano,
+      Mes: normalizarMes(f.mes),
+      Valor: Number(f.valor || 0),
+    }))
+  );
+
+  adicionarPlanilha(
+    wb,
+    'Recorrencias',
+    recorrenciasBackup.map((r: any) => ({
+      'ID original': r.id || '',
+      Nome: r.nome || '',
+      Categoria: r.categoria || '',
+      Descricao: r.descricao || '',
+      Dia: r.dia || '',
+      Ativo: r.ativo !== false ? 'sim' : 'nao',
+    }))
+  );
+
+  adicionarPlanilha(
+    wb,
+    'Usuarios Vinculados',
+    usuariosBackup.map((u: any) => ({
+      Nome: u.nome || u.nome_usuario || '',
+      Login: u.login || u.email || '',
+      Email: u.email || '',
+      Perfil: u.perfil || '',
+      Status: u.status || '',
+      'Telefone confirmado': u.telefone_confirmado === true ? 'sim' : 'nao',
+    }))
+  );
+
+  adicionarPlanilha(wb, 'Configuracoes', [
+    { Chave: 'empresaIdOriginal', Valor: empresaId },
+    { Chave: 'logoUrl', Valor: config.logo_url ?? logoUrl ?? '' },
+    { Chave: 'logoSettings', Valor: JSON.stringify(config.logo_settings || logoSettings || { scale: 100, x: 0, y: 0 }) },
+    { Chave: 'corPrimaria', Valor: config.cor_primaria || corPrimaria || '#003E73' },
+    { Chave: 'darkMode', Valor: String(config.dark_mode ?? darkMode) },
+    { Chave: 'duplicadosAtivo', Valor: String(config.duplicados_ativo ?? duplicadosAtivo) },
+    { Chave: 'ultimoBackupEm', Valor: agora },
+  ]);
+
+  const dadosResumoFinanceiro: any[] = [];
+  const anosNoBanco = Array.from(new Set([
+    ...lancamentosBackup.map((l: any) => String(l.ano)),
+    ...faturamentosBackup.map((f: any) => String(f.ano)),
+  ])).sort();
+
+  anosNoBanco.forEach((ano) => {
+    MESES.forEach((mes) => {
+      const faturamento = Number(faturamentosBackup.find((f: any) => String(f.ano) === ano && normalizarMes(f.mes) === mes)?.valor || 0);
+      const lancsMes = lancamentosBackup.filter((l: any) => String(l.ano) === ano && normalizarMes(l.mes) === mes);
+      const despesas = lancsMes.reduce((total: number, l: any) => total + Number(l.valor || 0), 0);
+      const exclusoesEbitda = lancsMes.reduce((total: number, l: any) => {
+        const categoria = despesasCadastradas.find((d) => normalizarTexto(d.nome) === normalizarTexto(l.despesa_nome))?.categoria || 'Outros';
+        return CATEGORIAS_EXCLUSAO_EBITDA.includes(categoria) ? total + Number(l.valor || 0) : total;
+      }, 0);
+
+      if (faturamento > 0 || despesas > 0) {
+        dadosResumoFinanceiro.push({
+          Ano: ano,
+          Mes: mes,
+          'Receitas totais': faturamento,
+          Despesas: despesas,
+          Saldo: faturamento - despesas,
+          EBITDA: faturamento - despesas + exclusoesEbitda,
+        });
+      }
+    });
+  });
+
+  adicionarPlanilha(wb, 'Resumo Financeiro', dadosResumoFinanceiro);
+
+  const nomeArquivo = `${nomeArquivoPrefixo}_${sanitizarNomeArquivo(nomePerfilFinal)}_${dataHoje}_v${APP_VERSION}.xlsx`;
+  XLSX.writeFile(wb, nomeArquivo);
+
+  const { error: erroSalvarBackup } = await supabase
+    .from('configuracoes')
+    .upsert({ empresa_id: empresaId, ultimo_backup_em: agora }, { onConflict: 'empresa_id' });
+
+  if (erroSalvarBackup) {
+    console.error('Erro ao salvar data do backup:', erroSalvarBackup);
+    abrirAviso('Backup gerado', 'O arquivo foi gerado, mas nao foi possivel salvar a data do ultimo backup.', undefined, 'alerta');
+    return;
   }
 
-  const dadosConfiguracoes = [
-    {
-      chave: 'empresaId',
-      valor: empresaId,
-    },
-    {
-      chave: 'logoUrl',
-      valor: logoUrl || '',
-    },
-    {
-      chave: 'logoSettings',
-      valor: JSON.stringify(logoSettings || { scale: 100, x: 0, y: 0 }),
-    },
-    {
-      chave: 'corPrimaria',
-      valor: corPrimaria || '#003E73',
-    },
-    {
-      chave: 'darkMode',
-      valor: String(darkMode),
-    },
-    {
-      chave: 'duplicadosAtivo',
-      valor: String(duplicadosAtivo),
-    },
-    {
-      chave: 'despesasCadastradas',
-      valor: JSON.stringify(despesasCadastradas || []),
-    },
-  ];
+  setUltimoBackupEm(agora);
 
-  const wsConfig = XLSX.utils.json_to_sheet(dadosConfiguracoes);
-  XLSX.utils.book_append_sheet(wb, wsConfig, 'Configurações');
+  if (abrirExclusaoDepois) {
+    abrirAviso(
+      'Backup gerado',
+      'O backup foi gerado com sucesso. Agora confirme a exclusao digitando exatamente o nome do perfil.',
+      () => {
+        setNomeConfirmacaoExclusao('');
+        setModalExcluirEmpresa(true);
+      },
+      'sucesso'
+    );
+  }
+}
 
-  const dataHoje = new Date().toISOString().split('T')[0];
-XLSX.writeFile(wb, `backup_avantalab_${dataHoje}.xlsx`);
+export async function analisarBackupExcel(arquivo: File): Promise<AnaliseBackupImportacao> {
+  const wb = await lerWorkbookArquivo(arquivo);
+  const resumo = sheetRows(wb, 'Resumo');
+  const perfil = sheetRows(wb, 'Perfil');
+  const despesasBase = sheetRows(wb, 'Despesas Base');
+  const lancamentos = sheetRows(wb, 'Lancamentos Despesas');
+  const receitasEntradas = sheetRows(wb, 'Receitas Entradas');
+  const receitasTotais = sheetRows(wb, 'Receitas Totais');
+  const recorrencias = sheetRows(wb, 'Recorrencias');
 
-const agora = new Date().toISOString();
+  const erros: string[] = [];
+  const avisos: string[] = [];
+  const temFormatoNovo = wb.SheetNames.includes('Resumo') && wb.SheetNames.includes('Lancamentos Despesas');
 
-const { error: erroSalvarBackup } = await supabase
-  .from('configuracoes')
-  .upsert(
-    {
+  if (!temFormatoNovo) {
+    erros.push('O arquivo nao parece ser um backup completo gerado pelo AvantaLab nesta nova estrutura.');
+  }
+
+  if (lancamentos.length === 0 && receitasEntradas.length === 0 && receitasTotais.length === 0 && despesasBase.length === 0) {
+    avisos.push('Nenhum dado financeiro importavel foi encontrado no arquivo.');
+  }
+
+  const campoResumo = (nome: string) => {
+    const linha = resumo.find((r) => normalizarTexto(r.Campo) === normalizarTexto(nome));
+    return linha?.Valor ? String(linha.Valor) : '';
+  };
+
+  return {
+    valido: erros.length === 0,
+    nomeArquivo: arquivo.name,
+    versaoBackup: campoResumo('Versao do sistema') || '',
+    perfilOrigem: campoResumo('Perfil financeiro') || valorTexto(perfil[0], ['Nome'], 'Nao identificado'),
+    tipoPerfilOrigem: campoResumo('Tipo do perfil') || valorTexto(perfil[0], ['Tipo do perfil'], ''),
+    totalDespesasBase: despesasBase.length,
+    totalLancamentos: lancamentos.length,
+    totalReceitasEntradas: receitasEntradas.length,
+    totalReceitasTotais: receitasTotais.length,
+    totalRecorrencias: recorrencias.length,
+    avisos,
+    erros,
+  };
+}
+
+export async function importarBackupExcelAdicionar({
+  arquivo,
+  empresaId,
+}: {
+  arquivo: File;
+  empresaId: string;
+}): Promise<ResultadoImportacaoBackup> {
+  const wb = await lerWorkbookArquivo(arquivo);
+  const despesasBase = sheetRows(wb, 'Despesas Base');
+  const lancamentos = sheetRows(wb, 'Lancamentos Despesas');
+  const receitasEntradas = sheetRows(wb, 'Receitas Entradas');
+  const receitasTotais = sheetRows(wb, 'Receitas Totais');
+  const recorrencias = sheetRows(wb, 'Recorrencias');
+
+  const resultado: ResultadoImportacaoBackup = {
+    despesasBaseInseridas: 0,
+    despesasBaseIgnoradas: 0,
+    lancamentosInseridos: 0,
+    lancamentosIgnorados: 0,
+    receitasEntradasInseridas: 0,
+    receitasEntradasIgnoradas: 0,
+    receitasTotaisInseridas: 0,
+    receitasTotaisIgnoradas: 0,
+    recorrenciasInseridas: 0,
+    recorrenciasIgnoradas: 0,
+  };
+
+  const [
+    despesasExistentesRes,
+    lancamentosExistentesRes,
+    entradasExistentesRes,
+    totaisExistentesRes,
+    recorrenciasExistentesRes,
+  ] = await Promise.all([
+    supabase.from('despesas_cadastradas').select('nome,categoria').eq('empresa_id', empresaId),
+    supabase.from('lancamentos').select('ano,mes,dia,despesa_nome,descricao,valor').eq('empresa_id', empresaId),
+    supabase.from('faturamentos_entradas').select('ano,mes,dia,origem,valor').eq('empresa_id', empresaId),
+    supabase.from('faturamentos').select('ano,mes,valor').eq('empresa_id', empresaId),
+    supabase.from('recorrencias').select('nome,categoria,descricao,dia').eq('empresa_id', empresaId),
+  ]);
+
+  const chaveDespesa = (nome: string) => normalizarTexto(nome);
+  const chavesDespesas = new Set((despesasExistentesRes.data || []).map((d: any) => chaveDespesa(d.nome)));
+
+  const novasDespesas = despesasBase
+    .map((row) => ({
       empresa_id: empresaId,
-      ultimo_backup_em: agora,
-    },
-    {
-      onConflict: 'empresa_id',
-    }
-  );
+      nome: valorTexto(row, ['Nome', 'Despesa']),
+      categoria: valorTexto(row, ['Categoria'], 'Outros'),
+    }))
+    .filter((row) => {
+      if (!row.nome || chavesDespesas.has(chaveDespesa(row.nome))) {
+        resultado.despesasBaseIgnoradas += 1;
+        return false;
+      }
+      chavesDespesas.add(chaveDespesa(row.nome));
+      return true;
+    });
 
-if (erroSalvarBackup) {
-  console.error('Erro ao salvar data do backup:', erroSalvarBackup);
-  abrirAviso(
-    'Backup gerado',
-    'O arquivo foi gerado, mas não foi possível salvar a data do último backup.'
-  );
-  return;
-}
+  if (novasDespesas.length > 0) {
+    const { error } = await supabase.from('despesas_cadastradas').insert(novasDespesas);
+    if (error) throw error;
+    resultado.despesasBaseInseridas = novasDespesas.length;
+  }
 
-setUltimoBackupEm(agora);
+  const chaveLancamento = (row: any) => [
+    row.ano,
+    normalizarMes(row.mes),
+    row.dia,
+    normalizarTexto(row.despesa_nome),
+    normalizarTexto(row.descricao || ''),
+    Number(row.valor || 0).toFixed(2),
+  ].join('|');
+  const chavesLancamentos = new Set((lancamentosExistentesRes.data || []).map((l: any) => chaveLancamento(l)));
 
-if (abrirExclusaoDepois) {
-  abrirAviso(
-    'Backup gerado',
-    'O backup foi gerado com sucesso. Agora confirme a exclusão digitando exatamente o nome da empresa.',
-    () => {
-      setNomeConfirmacaoExclusao('');
-      setModalExcluirEmpresa(true);
-    }
-  );
-}
+  const novosLancamentos = lancamentos
+    .map((row) => ({
+      empresa_id: empresaId,
+      ano: Math.trunc(valorNumero(row, ['Ano'])),
+      mes: normalizarMes(valorTexto(row, ['Mes', 'Mês'])),
+      dia: Math.trunc(valorNumero(row, ['Dia'])),
+      despesa_nome: valorTexto(row, ['Despesa', 'Nome']),
+      descricao: valorTexto(row, ['Descricao', 'Descrição'], ''),
+      valor: valorNumero(row, ['Valor', 'Valor (R$)']),
+    }))
+    .filter((row) => {
+      const valido = row.ano > 0 && MESES.includes(row.mes) && row.dia > 0 && row.despesa_nome && row.valor > 0;
+      const chave = chaveLancamento(row);
+      if (!valido || chavesLancamentos.has(chave)) {
+        resultado.lancamentosIgnorados += 1;
+        return false;
+      }
+      chavesLancamentos.add(chave);
+      return true;
+    });
+
+  if (novosLancamentos.length > 0) {
+    const { error } = await supabase.from('lancamentos').insert(novosLancamentos);
+    if (error) throw error;
+    resultado.lancamentosInseridos = novosLancamentos.length;
+  }
+
+  const chaveEntrada = (row: any) => [
+    row.ano,
+    normalizarMes(row.mes),
+    row.dia,
+    normalizarTexto(row.origem || ''),
+    Number(row.valor || 0).toFixed(2),
+  ].join('|');
+  const chavesEntradas = new Set((entradasExistentesRes.data || []).map((e: any) => chaveEntrada(e)));
+
+  const novasEntradas = receitasEntradas
+    .map((row) => ({
+      empresa_id: empresaId,
+      ano: Math.trunc(valorNumero(row, ['Ano'])),
+      mes: normalizarMes(valorTexto(row, ['Mes', 'Mês'])),
+      dia: Math.trunc(valorNumero(row, ['Dia'])),
+      origem: valorTexto(row, ['Origem'], ''),
+      valor: valorNumero(row, ['Valor', 'Valor (R$)']),
+    }))
+    .filter((row) => {
+      const valido = row.ano > 0 && MESES.includes(row.mes) && row.dia > 0 && row.origem && row.valor > 0;
+      const chave = chaveEntrada(row);
+      if (!valido || chavesEntradas.has(chave)) {
+        resultado.receitasEntradasIgnoradas += 1;
+        return false;
+      }
+      chavesEntradas.add(chave);
+      return true;
+    });
+
+  if (novasEntradas.length > 0) {
+    const { error } = await supabase.from('faturamentos_entradas').insert(novasEntradas);
+    if (error) throw error;
+    resultado.receitasEntradasInseridas = novasEntradas.length;
+  }
+
+  const chaveTotal = (row: any) => `${row.ano}|${normalizarMes(row.mes)}`;
+  const chavesTotais = new Set((totaisExistentesRes.data || []).map((f: any) => chaveTotal(f)));
+
+  const novosTotais = receitasTotais
+    .map((row) => ({
+      empresa_id: empresaId,
+      ano: Math.trunc(valorNumero(row, ['Ano'])),
+      mes: normalizarMes(valorTexto(row, ['Mes', 'Mês'])),
+      valor: valorNumero(row, ['Valor', 'Valor (R$)']),
+    }))
+    .filter((row) => {
+      const valido = row.ano > 0 && MESES.includes(row.mes) && row.valor > 0;
+      const chave = chaveTotal(row);
+      if (!valido || chavesTotais.has(chave)) {
+        resultado.receitasTotaisIgnoradas += 1;
+        return false;
+      }
+      chavesTotais.add(chave);
+      return true;
+    });
+
+  if (novosTotais.length > 0) {
+    const { error } = await supabase.from('faturamentos').insert(novosTotais);
+    if (error) throw error;
+    resultado.receitasTotaisInseridas = novosTotais.length;
+  }
+
+  const chaveRecorrencia = (row: any) => [
+    normalizarTexto(row.nome),
+    normalizarTexto(row.categoria),
+    Math.trunc(Number(row.dia || 0)),
+  ].join('|');
+  const chavesRecorrencias = new Set((recorrenciasExistentesRes.data || []).map((r: any) => chaveRecorrencia(r)));
+
+  const novasRecorrencias = recorrencias
+    .map((row) => ({
+      empresa_id: empresaId,
+      nome: valorTexto(row, ['Nome']),
+      categoria: valorTexto(row, ['Categoria'], 'Outros'),
+      descricao: valorTexto(row, ['Descricao', 'Descrição'], ''),
+      dia: Math.trunc(valorNumero(row, ['Dia'])),
+      ativo: normalizarTexto(valorTexto(row, ['Ativo'], 'sim')) !== 'nao',
+    }))
+    .filter((row) => {
+      const valido = row.nome && row.dia > 0;
+      const chave = chaveRecorrencia(row);
+      if (!valido || chavesRecorrencias.has(chave)) {
+        resultado.recorrenciasIgnoradas += 1;
+        return false;
+      }
+      chavesRecorrencias.add(chave);
+      return true;
+    });
+
+  if (novasRecorrencias.length > 0) {
+    const { error } = await supabase.from('recorrencias').insert(novasRecorrencias);
+    if (error) throw error;
+    resultado.recorrenciasInseridas = novasRecorrencias.length;
+  }
+
+  return resultado;
 }

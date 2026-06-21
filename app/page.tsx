@@ -1,6 +1,5 @@
 'use client';
 import { useState, useMemo, useRef, useEffect } from 'react';
-import * as XLSX from 'xlsx';
 import Calculadora from './components/Calculadora';
 import Dashboard from './components/Dashboard';
 import BalancoGeral from './components/BalancoGeral'; 
@@ -75,7 +74,11 @@ import {
 } from './lib/database';
 
 import { supabase } from './lib/supabase';
-import { gerarBackupExcel } from './lib/exportacao';
+import {
+  analisarBackupExcel,
+  gerarBackupExcel,
+  importarBackupExcelAdicionar,
+} from './lib/exportacao';
 import { useUI } from './hooks/useUI';
 import { useAuth } from './hooks/useAuth';
 import { useEmpresas } from './hooks/useEmpresas';
@@ -322,6 +325,7 @@ const [despesaAnaliseAtiva, setDespesaAnaliseAtiva] = useState<{
   const [modalLogo, setModalLogo] = useState(false);
   const [painelAjusteLogo, setPainelAjusteLogo] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const backupImportInputRef = useRef<HTMLInputElement>(null);
 
   // Modais e Calc
   const [modalInstrucoes, setModalInstrucoes] = useState(false);
@@ -2665,6 +2669,8 @@ const salvo = await salvarConfiguracoesBanco({
 
 const backupParams = () => ({
   empresaId: empresaId!,
+  nomePerfil: nomeEmpresaAtual,
+  tipoPerfil: tipoPerfilAtualNormalizado,
   despesasCadastradas,
   logoUrl,
   logoSettings,
@@ -2676,6 +2682,164 @@ const backupParams = () => ({
   setNomeConfirmacaoExclusao,
   setModalExcluirEmpresa,
 });
+
+const recarregarDadosFinanceirosAtual = async () => {
+  if (!empresaId) return;
+
+  const ano = Number(anoSelecionado);
+  const [
+    despesasBanco,
+    lancamentosBanco,
+    faturamentosBanco,
+    faturamentosEntradasBanco,
+    recorrenciasBanco,
+  ] = await Promise.all([
+    buscarDespesasCadastradas(empresaId),
+    buscarLancamentos(empresaId, ano),
+    buscarFaturamentos(empresaId, ano),
+    buscarFaturamentosEntradas(empresaId, ano),
+    buscarRecorrencias(empresaId),
+  ]);
+
+  setDespesasCadastradas(
+    despesasBanco.map((d: any) => ({
+      nome: d.nome,
+      categoria: d.categoria,
+    }))
+  );
+
+  setLancamentos(
+    lancamentosBanco.map((l: any) => ({
+      id: l.id,
+      mes: l.mes,
+      dia: l.dia,
+      despesa: l.despesa_nome,
+      descricao: l.descricao || '',
+      valor: Number(l.valor),
+    }))
+  );
+
+  setFaturamentosEntradas(
+    faturamentosEntradasBanco.map((entrada: any) => ({
+      id: entrada.id,
+      mes: entrada.mes,
+      dia: entrada.dia,
+      origem: entrada.origem,
+      valor: Number(entrada.valor),
+    }))
+  );
+
+  const faturamentosFormatados: Record<string, number> = {};
+  faturamentosBanco.forEach((f: any) => {
+    faturamentosFormatados[f.mes] = Number(f.valor);
+  });
+  setFaturamentos(faturamentosFormatados);
+  setRecorrencias(recorrenciasBanco);
+};
+
+const abrirImportacaoBackup = () => {
+  if (!podeAcessarAjustes) {
+    abrirAviso(
+      'Acesso não permitido',
+      'Você não tem permissão para restaurar dados neste perfil.',
+      undefined,
+      'erro'
+    );
+    return;
+  }
+
+  setAjustesAberto(false);
+
+  if (backupImportInputRef.current) {
+    backupImportInputRef.current.value = '';
+    backupImportInputRef.current.click();
+  }
+};
+
+const selecionarArquivoBackup = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const arquivo = e.target.files?.[0];
+  e.target.value = '';
+
+  if (!arquivo || !empresaId) return;
+
+  try {
+    const analise = await analisarBackupExcel(arquivo);
+
+    if (!analise.valido) {
+      abrirAviso(
+        'Backup inválido',
+        analise.erros.join('\n') || 'O arquivo selecionado não pôde ser importado.',
+        undefined,
+        'erro'
+      );
+      return;
+    }
+
+    const resumo = [
+      `Arquivo: ${analise.nomeArquivo}`,
+      `Perfil de origem: ${analise.perfilOrigem || 'Não identificado'}`,
+      `Versão do backup: ${analise.versaoBackup || 'Não identificada'}`,
+      '',
+      `Despesas base: ${analise.totalDespesasBase}`,
+      `Lançamentos de despesas: ${analise.totalLancamentos}`,
+      `Entradas/receitas: ${analise.totalReceitasEntradas}`,
+      `Totais mensais de receita: ${analise.totalReceitasTotais}`,
+      `Despesas fixas: ${analise.totalRecorrencias}`,
+      '',
+      'Modo desta etapa: adicionar somente dados ausentes. Dados existentes não serão substituídos.',
+      'Antes da importação, o sistema vai baixar um ponto de restauração do estado atual.',
+      ...(analise.avisos.length ? ['', ...analise.avisos] : []),
+    ].join('\n');
+
+    abrirConfirmacao({
+      titulo: 'Importar backup',
+      mensagem: resumo,
+      textoConfirmar: 'Importar dados',
+      acao: async () => {
+        await gerarBackupExcel({
+          ...backupParams(),
+          nomeArquivoPrefixo: 'ponto_restauracao_avantalab',
+        });
+
+        const resultado = await importarBackupExcelAdicionar({
+          arquivo,
+          empresaId,
+        });
+
+        await recarregarDadosFinanceirosAtual();
+
+        abrirAviso(
+          'Importação concluída',
+          [
+            `Despesas base adicionadas: ${resultado.despesasBaseInseridas}`,
+            `Lançamentos adicionados: ${resultado.lancamentosInseridos}`,
+            `Entradas/receitas adicionadas: ${resultado.receitasEntradasInseridas}`,
+            `Totais mensais adicionados: ${resultado.receitasTotaisInseridas}`,
+            `Despesas fixas adicionadas: ${resultado.recorrenciasInseridas}`,
+            '',
+            `Registros ignorados por já existirem ou por dados incompletos: ${
+              resultado.despesasBaseIgnoradas +
+              resultado.lancamentosIgnorados +
+              resultado.receitasEntradasIgnoradas +
+              resultado.receitasTotaisIgnoradas +
+              resultado.recorrenciasIgnoradas
+            }`,
+          ].join('\n'),
+          undefined,
+          'sucesso'
+        );
+      },
+    });
+  } catch (error: any) {
+    console.error('Erro ao importar backup:', error);
+    abrirAviso(
+      'Erro ao importar backup',
+      error?.message || 'Não foi possível importar o arquivo selecionado.',
+      undefined,
+      'erro'
+    );
+  }
+};
 
 const backupPendente = useMemo(() => {
   const hoje = new Date();
@@ -6093,6 +6257,25 @@ setAjustesAberto(false);
               >
                 <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
                 Backup
+              </button>
+
+              <input
+                ref={backupImportInputRef}
+                type="file"
+                accept=".xlsx,.xls"
+                className="hidden"
+                onChange={selecionarArquivoBackup}
+              />
+
+              <button
+                type="button"
+                onClick={abrirImportacaoBackup}
+                className="whitespace-nowrap bg-cyan-700 hover:bg-cyan-600 px-3 py-1.5 rounded shadow border border-cyan-800 transition-colors font-bold flex items-center gap-1.5 text-xs text-white cursor-pointer"
+              >
+                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 8V7a3 3 0 013-3h10a3 3 0 013 3v1M12 4v12m0 0l-4-4m4 4l4-4M5 20h14" />
+                </svg>
+                Restaurar
               </button>
 
               <button
