@@ -1,0 +1,25 @@
+{
+  "name": "AvantaLab Gestão",
+  "short_name": "AvantaLab",
+  "description": "Gestão financeira AvantaLab",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#f1f5f9",
+  "theme_color": "#003E73",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "/images/avantalab-icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/images/avantalab-icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
