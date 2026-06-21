@@ -6762,4 +6762,43 @@
         state.autenticado = true;
         await carregarEmpresas(state.usuario.id);
         await carregarDados();
- 
+      }
+      state.pronto = true;
+      render();
+    } catch (error) {
+      state.pronto = true;
+      state.erro = 'Nao foi possivel recuperar a sessao. Entre novamente.';
+      render();
+    }
+  }
+
+
+  function garantirRenderDepoisDaHidratacao() {
+    [900, 1800, 3200].forEach(function (tempo) {
+      window.setTimeout(function () {
+        var textoAtual = root.textContent || '';
+
+        if (state.pronto && textoAtual.indexOf('Preparando acesso') >= 0) {
+          render();
+        }
+      }, tempo);
+    });
+  }
+
+  function iniciarQuandoPaginaEstiverPronta() {
+    var iniciarComAtraso = function () {
+      window.setTimeout(function () {
+        iniciar();
+        garantirRenderDepoisDaHidratacao();
+      }, 650);
+    };
+
+    if (document.readyState === 'complete') {
+      iniciarComAtraso();
+    } else {
+      window.addEventListener('load', iniciarComAtraso, { once: true });
+    }
+  }
+
+  iniciarQuandoPaginaEstiverPronta();
+})();
