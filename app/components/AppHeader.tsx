@@ -229,15 +229,15 @@ export default function AppHeader({
             <div className="relative hidden items-center gap-3 lg:flex">
               {/* Nav principal */}
               <nav
-                className={`relative grid min-w-0 grid-cols-5 overflow-hidden rounded-xl border p-1 shadow-sm ${
+                className={`relative grid min-w-[450px] grid-cols-5 gap-1 overflow-hidden rounded-xl border p-1 shadow-sm ${
                   darkMode ? 'border-slate-700 bg-slate-900/70' : 'border-slate-200 bg-slate-50'
                 }`}
               >
                 <span
                   className="absolute bottom-1 left-1 top-1 rounded-lg shadow-sm transition-transform duration-300 ease-out"
                   style={{
-                    width: 'calc((100% - 0.5rem) / 5)',
-                    transform: `translateX(${indiceAtivo * 100}%)`,
+                    width: 'calc((100% - 1.5rem) / 5)',
+                    transform: `translateX(calc(${indiceAtivo} * (100% + 0.25rem)))`,
                     backgroundColor: corPrimaria,
                   }}
                 />
