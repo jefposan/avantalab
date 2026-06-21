@@ -227,7 +227,7 @@ export default function AppHeader({
             <div className="relative hidden items-center gap-3 lg:flex">
               {/* Nav principal */}
               <nav
-                className={`relative grid min-w-[450px] grid-cols-5 gap-1 rounded-xl border p-1 shadow-sm ${
+                className={`relative grid w-[560px] shrink-0 grid-cols-5 gap-2 rounded-xl border p-1 shadow-sm ${
                   darkMode ? 'border-slate-700 bg-slate-900/70' : 'border-slate-200 bg-slate-50'
                 }`}
               >
