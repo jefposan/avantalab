@@ -25,4 +25,40 @@ export const metadata: Metadata = {
   twitter: {
     card: 'summary_large_image',
     title: 'AvantaLab Gestao',
-    desc
+    description: 'Controle entradas, despesas e saldo de forma simples.',
+    images: [shareImage],
+  },
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'default',
+    title: 'AvantaLab',
+  },
+};
+
+export default function RootLayout({
+  children,
+}: Readonly<{
+  children: React.ReactNode;
+}>) {
+  return (
+    <html lang="pt-BR" className="h-full antialiased">
+      <head>
+        <link
+          rel="preload"
+          href="/images/bg-avantalab.webp"
+          as="image"
+          type="image/webp"
+          media="(min-width: 1024px)"
+        />
+        <link
+          rel="preload"
+          href="/images/bg-avantalab-mobile.webp"
+          as="image"
+          type="image/webp"
+          media="(max-width: 1023px)"
+        />
+      </head>
+      <body className="min-h-full flex flex-col">{children}</body>
+    </html>
+  );
+}
