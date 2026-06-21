@@ -3386,15 +3386,17 @@
 
   function telaLogin() {
     var boasVindas = state.telaAcesso === 'boasVindas' && !state.modoCadastro && !state.modoSenha;
+    var maxH = (state.modoCadastro || state.modoSenha) ? 'calc(100dvh - 3.5rem)' : 'calc(100dvh - 7rem)';
+    var padClass = state.modoCadastro ? 'p-4' : 'p-5';
 
     return (
-      '<section class="avantalab-mobile-bg fixed inset-0 flex flex-col items-center justify-center overflow-hidden px-4 py-5" style="height:100dvh;--avantalab-mobile-bg-overlay:linear-gradient(rgba(255,255,255,.08),rgba(255,255,255,0));">' +
-        '<div class="mx-auto w-full max-w-md overflow-y-auto rounded-3xl border border-white/35 p-5 text-slate-900 shadow-2xl backdrop-blur-xl" style="background-color:rgba(255,255,255,.18);max-height:calc(100dvh - 8rem);overscroll-behavior:contain;">' +
+      '<section class="avantalab-mobile-bg fixed inset-0 flex flex-col items-center justify-end overflow-hidden px-4 pb-5 pt-4" style="height:100dvh;--avantalab-mobile-bg-overlay:linear-gradient(rgba(255,255,255,.08),rgba(255,255,255,0));">' +
+        '<div class="mx-auto w-full max-w-md overflow-y-auto rounded-3xl border border-white/35 ' + padClass + ' text-slate-900 shadow-2xl backdrop-blur-xl" style="background-color:rgba(255,255,255,.18);max-height:' + maxH + ';overscroll-behavior:contain;">' +
           (boasVindas
             ? telaBoasVindas()
-            : '<div class="mb-5">' +
+            : '<div class="' + (state.modoCadastro ? 'mb-3' : 'mb-5') + '">' +
                 
-                '<h1 class="text-3xl font-black text-slate-900">' + (state.modoCadastro ? 'Criar cadastro' : state.modoSenha ? 'Recuperar senha' : 'Acesse sua conta') + '</h1>' +
+                '<h1 class="' + (state.modoCadastro ? 'text-2xl' : 'text-3xl') + ' font-black text-slate-900">' + (state.modoCadastro ? 'Criar cadastro' : state.modoSenha ? 'Recuperar senha' : 'Acesse sua conta') + '</h1>' +
                 '<p class="mt-2 text-sm leading-relaxed text-slate-600">' +
                   (state.modoCadastro ? 'Preencha seus dados e confirme o celular por SMS.' : state.modoSenha ? 'Digite seu login, receba o codigo por SMS e defina uma nova senha.' : 'Entre para acompanhar sua gestao financeira, lancamentos e resultados.') +
                 '</p>' +
@@ -3409,7 +3411,7 @@
 
   function telaBoasVindas() {
     return (
-      '<div class="grid gap-5">' +
+      '<div class="grid gap-4">' +
         '<div>' +
           
           '<h1 class="text-3xl font-black leading-tight text-slate-900">Descubra quanto realmente sobra no seu neg&oacute;cio ou nas suas despesas pessoais.</h1>' +
@@ -3490,7 +3492,7 @@
   function telaCadastro() {
     var tipoCadastro = normalizarTipoPerfil(state.cadastroTipoPerfil);
     return (
-      '<div class="grid gap-3">' +
+      '<div class="grid gap-2">' +
         inputHtml('cadastro-nome', 'Nome', 'text', 'Seu nome completo', state.cadastro.nome) +
         '<div>' +
           '<p class="mb-1 text-[10px] font-black uppercase tracking-wide text-slate-600">Tipo do primeiro perfil</p>' +
@@ -3502,11 +3504,11 @@
         senhaInputHtml('cadastro-confirmar-senha', 'Confirmar senha', 'Repita a senha', 'mostrarConfirmarSenhaCadastro', 'toggle-confirmar-cadastro', state.cadastro.confirmarSenha) +
         (state.smsCadastroEnviado ? inputHtml('cadastro-codigo', 'Codigo recebido por SMS', 'text', 'Digite o codigo recebido') + '<p class="-mt-1 text-[11px] font-semibold text-slate-500">Enviamos o codigo para o celular informado.</p>' : '') +
         alertaHtml() +
-        '<button id="cadastro-submit" type="button" class="h-12 rounded-xl bg-slate-900 px-4 text-sm font-black uppercase tracking-wide text-white shadow-lg">' +
+        '<button id="cadastro-submit" type="button" class="h-10 rounded-xl bg-slate-900 px-4 text-sm font-black uppercase tracking-wide text-white shadow-lg">' +
           (state.carregando ? (state.smsCadastroEnviado ? 'Validando...' : 'Enviando...') : (state.smsCadastroEnviado ? 'Concluir cadastro' : 'Enviar codigo por SMS')) +
         '</button>' +
         (state.smsCadastroEnviado ? '<button id="reenviar-cadastro" type="button" class="text-xs font-bold text-sky-700 underline">Reenviar codigo</button>' : '') +
-        '<div class="pt-1 text-center text-sm text-slate-600">Ja tem conta? <button id="voltar-login-cadastro" type="button" class="font-bold text-sky-700 underline">Entrar</button></div>' +
+        '<div class="text-center text-sm text-slate-600">Ja tem conta? <button id="voltar-login-cadastro" type="button" class="font-bold text-sky-700 underline">Entrar</button></div>' +
       '</div>'
     );
   }
