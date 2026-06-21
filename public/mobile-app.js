@@ -4731,21 +4731,32 @@
     }).join('');
 
     return (
-      '<div class="mt-3 grid gap-2 rounded-2xl border border-cyan-100 bg-cyan-50/60 p-3">' +
-        '<select id="agenda-tipo" style="font-size:16px" class="h-11 rounded-xl border border-slate-200 bg-white px-3 text-sm font-black text-slate-800 outline-none">' +
-          '<option value="lembrete"' + (state.agendaTipoItem === 'lembrete' ? ' selected' : '') + '>Lembrete</option>' +
-          '<option value="lancamento"' + (state.agendaTipoItem === 'lancamento' ? ' selected' : '') + '>Lancamento futuro</option>' +
-        '</select>' +
-        '<input id="agenda-titulo" value="' + escapeHtml(state.agendaTitulo || '') + '" placeholder="Titulo" style="font-size:16px" class="h-11 rounded-xl border border-slate-200 bg-white px-3 text-base font-bold text-slate-900 outline-none" />' +
-        '<textarea id="agenda-descricao" placeholder="Descricao opcional" style="font-size:16px" class="min-h-[72px] resize-none rounded-xl border border-slate-200 bg-white px-3 py-2 text-base font-semibold text-slate-800 outline-none">' + escapeHtml(state.agendaDescricao || '') + '</textarea>' +
-        '<label class="flex items-center gap-3 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-black text-slate-800">' +
-          '<input id="agenda-repetir" type="checkbox" class="h-5 w-5 rounded border-slate-300" ' + (state.agendaRepetir ? 'checked' : '') + ' />' +
-          '<span>Repetir</span>' +
-        '</label>' +
-        '<select id="agenda-repeticao" style="font-size:16px" class="h-11 rounded-xl border border-slate-200 bg-white px-3 text-sm font-black text-slate-800 outline-none">' + opcoesRepeticao + '</select>' +
-        '<div class="grid grid-cols-2 gap-2">' +
-          '<button id="cancelar-agenda-item" type="button" class="h-10 rounded-xl border border-slate-200 bg-white px-3 text-xs font-black uppercase text-slate-600">Cancelar</button>' +
-          '<button id="salvar-agenda-item" type="button" class="h-10 rounded-xl bg-slate-950 px-3 text-xs font-black uppercase text-white">Salvar</button>' +
+      '<div id="agenda-form-overlay" class="fixed inset-0 z-[75] flex items-center justify-center bg-slate-950/65 px-4 backdrop-blur-sm">' +
+        '<div class="w-full max-w-sm rounded-[26px] border border-white/70 bg-white p-4 shadow-2xl shadow-slate-950/30">' +
+          '<div class="mb-3 flex items-center justify-between gap-3">' +
+            '<div>' +
+              '<p class="text-[10px] font-black uppercase tracking-[0.2em] text-cyan-700">Novo item</p>' +
+              '<h3 class="mt-1 text-lg font-black text-slate-950">' + String(state.agendaDiaSelecionado || '').padStart(2, '0') + ' de ' + escapeHtml(nomeMesCompleto(state.mes)) + '</h3>' +
+            '</div>' +
+            '<button id="cancelar-agenda-item-topo" type="button" class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-slate-50 text-xl font-black text-slate-600">&times;</button>' +
+          '</div>' +
+          '<div class="grid gap-2">' +
+            '<select id="agenda-tipo" style="font-size:16px" class="h-11 rounded-xl border border-slate-200 bg-white px-3 text-sm font-black text-slate-800 outline-none">' +
+              '<option value="lembrete"' + (state.agendaTipoItem === 'lembrete' ? ' selected' : '') + '>Lembrete</option>' +
+              '<option value="lancamento"' + (state.agendaTipoItem === 'lancamento' ? ' selected' : '') + '>Lancamento futuro</option>' +
+            '</select>' +
+            '<input id="agenda-titulo" value="' + escapeHtml(state.agendaTitulo || '') + '" placeholder="Titulo" style="font-size:16px" class="h-11 rounded-xl border border-slate-200 bg-white px-3 text-base font-bold text-slate-900 outline-none" />' +
+            '<textarea id="agenda-descricao" placeholder="Descricao opcional" style="font-size:16px" class="h-[66px] resize-none rounded-xl border border-slate-200 bg-white px-3 py-2 text-base font-semibold text-slate-800 outline-none">' + escapeHtml(state.agendaDescricao || '') + '</textarea>' +
+            '<label class="flex items-center gap-3 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-black text-slate-800">' +
+              '<input id="agenda-repetir" type="checkbox" class="h-5 w-5 rounded border-slate-300" ' + (state.agendaRepetir ? 'checked' : '') + ' />' +
+              '<span>Repetir</span>' +
+            '</label>' +
+            '<select id="agenda-repeticao" style="font-size:16px" class="h-11 rounded-xl border border-slate-200 bg-white px-3 text-sm font-black text-slate-800 outline-none">' + opcoesRepeticao + '</select>' +
+            '<div class="grid grid-cols-2 gap-2 pt-1">' +
+              '<button id="cancelar-agenda-item" type="button" class="h-10 rounded-xl border border-slate-200 bg-white px-3 text-xs font-black uppercase text-slate-600">Cancelar</button>' +
+              '<button id="salvar-agenda-item" type="button" class="h-10 rounded-xl bg-slate-950 px-3 text-xs font-black uppercase text-white">Salvar</button>' +
+            '</div>' +
+          '</div>' +
         '</div>' +
       '</div>'
     );
@@ -4795,21 +4806,28 @@
 
     var itensDia = diaSelecionado ? itensAgendaDoDia(state.ano, state.mes, diaSelecionado) : [];
     var painelDia = '';
+    var formularioAgenda = state.agendaFormAberto ? formularioAgendaHtml() : '';
+    var classeGrade = diaSelecionado
+      ? 'grid min-h-0 grid-cols-7 grid-rows-[auto_repeat(6,minmax(0,1fr))] gap-1.5'
+      : 'grid min-h-0 flex-1 grid-cols-7 grid-rows-[auto_repeat(6,minmax(0,1fr))] gap-1.5';
+    var estiloGrade = diaSelecionado ? 'style="height:58%;"' : '';
 
     if (diaSelecionado) {
       painelDia =
-        '<div class="absolute inset-x-3 bottom-3 max-h-[46%] overflow-y-auto rounded-[24px] border border-slate-200 bg-white p-4 shadow-2xl shadow-slate-950/20">' +
+        '<div class="mt-3 shrink-0 rounded-[24px] border-2 border-cyan-200 bg-cyan-50/85 p-4 shadow-xl shadow-cyan-950/10" style="max-height:calc(42% - 12px);overflow-y:auto;">' +
           '<div class="flex items-center justify-between gap-3">' +
             '<div>' +
               '<p class="text-[10px] font-black uppercase tracking-[0.18em] text-slate-400">Dia selecionado</p>' +
               '<h3 class="mt-1 text-lg font-black text-slate-950">' + String(diaSelecionado).padStart(2, '0') + ' de ' + escapeHtml(nomeMesCompleto(state.mes)) + '</h3>' +
             '</div>' +
-            '<button id="abrir-agenda-item" type="button" class="h-10 rounded-xl bg-cyan-600 px-3 text-xs font-black uppercase text-white">Adicionar</button>' +
+            '<div class="flex shrink-0 items-center gap-2">' +
+              '<button id="abrir-agenda-item" type="button" class="h-10 rounded-xl bg-cyan-600 px-3 text-xs font-black uppercase text-white">Adicionar</button>' +
+              '<button id="fechar-agenda-dia" type="button" class="flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 bg-white text-xl font-black text-slate-600" aria-label="Fechar dia">&times;</button>' +
+            '</div>' +
           '</div>' +
           '<div class="mt-3 grid gap-2">' +
-            (itensDia.length ? itensDia.map(agendaItemHtml).join('') : '<div class="rounded-2xl border border-dashed border-slate-200 bg-slate-50 px-4 py-4 text-center"><p class="text-sm font-black text-slate-700">Nenhum item neste dia.</p></div>') +
+            (itensDia.length ? itensDia.map(agendaItemHtml).join('') : '<div class="rounded-2xl border border-dashed border-cyan-300 bg-white/70 px-4 py-4 text-center"><p class="text-sm font-black text-slate-700">Nenhum item neste dia.</p></div>') +
           '</div>' +
-          (state.agendaFormAberto ? formularioAgendaHtml() : '') +
         '</div>';
     }
 
@@ -4820,9 +4838,10 @@
             '<h2 class="text-center text-lg font-black tracking-[0.22em] text-slate-950">AGENDA</h2>' +
             '<p class="mt-1 text-center text-xs font-black uppercase tracking-wide text-cyan-700">' + escapeHtml(nomeMesCompleto(state.mes)) + ' ' + escapeHtml(state.ano) + '</p>' +
           '</div>' +
-          '<div class="grid min-h-0 flex-1 grid-cols-7 grid-rows-[auto_repeat(6,minmax(0,1fr))] gap-1.5">' + celulas.join('') + '</div>' +
+          '<div class="' + classeGrade + '" ' + estiloGrade + '>' + celulas.join('') + '</div>' +
+          painelDia +
         '</div>' +
-        painelDia +
+        formularioAgenda +
       '</section>'
     );
   }
@@ -6607,7 +6626,20 @@
     });
     bind('abrir-agenda-item', abrirFormularioAgendaMobile);
     bind('cancelar-agenda-item', cancelarFormularioAgendaMobile);
+    bind('cancelar-agenda-item-topo', cancelarFormularioAgendaMobile);
     bind('salvar-agenda-item', salvarItemAgendaMobile);
+    bind('fechar-agenda-dia', function () {
+      state.agendaDiaSelecionado = null;
+      state.agendaFormAberto = false;
+      render();
+    });
+    var agendaFormOverlay = document.getElementById('agenda-form-overlay');
+    if (agendaFormOverlay) {
+      agendaFormOverlay.addEventListener('click', function (event) {
+        if (event.target !== agendaFormOverlay) return;
+        cancelarFormularioAgendaMobile();
+      });
+    }
     Array.prototype.forEach.call(document.querySelectorAll('[data-agenda-dia]'), function (botao) {
       botao.addEventListener('click', function () {
         state.agendaDiaSelecionado = Number(botao.getAttribute('data-agenda-dia')) || 1;
@@ -7501,7 +7533,7 @@
           return Promise.all(
             keys
               .filter(function (key) {
-                return key.indexOf('avantalab-mobile-') === 0 && key !== 'avantalab-mobile-v112';
+                return key.indexOf('avantalab-mobile-') === 0 && key !== 'avantalab-mobile-v113';
               })
               .map(function (key) {
                 return caches.delete(key);
@@ -7518,7 +7550,7 @@
     });
 
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/mobile-sw.js?v=112').then(function (registro) {
+      navigator.serviceWorker.register('/mobile-sw.js?v=113').then(function (registro) {
         if (registro && registro.update) registro.update();
       }).catch(function () {});
     }
