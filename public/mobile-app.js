@@ -3387,12 +3387,12 @@
   function telaLogin() {
     var boasVindas = state.telaAcesso === 'boasVindas' && !state.modoCadastro && !state.modoSenha;
     var maxH = (state.modoCadastro || state.modoSenha)
-      ? 'calc(75dvh - 1.5rem)'
-      : 'calc(75dvh - 5.5rem)';
+      ? 'calc(80dvh - 1.5rem)'
+      : 'calc(80dvh - 5.5rem)';
     var padClass = state.modoCadastro ? 'p-4' : 'p-5';
 
     return (
-      '<section class="avantalab-mobile-bg fixed inset-0 flex flex-col items-center justify-end overflow-hidden px-4 pb-5" style="height:100dvh;--avantalab-mobile-bg-overlay:linear-gradient(rgba(255,255,255,.08),rgba(255,255,255,0));">' +
+      '<section class="avantalab-mobile-bg fixed inset-0 flex flex-col items-center overflow-hidden px-4 pb-4" style="height:100dvh;padding-top:20dvh;--avantalab-mobile-bg-overlay:linear-gradient(rgba(255,255,255,.08),rgba(255,255,255,0));">' +
         '<div class="mx-auto w-full max-w-md overflow-y-auto rounded-3xl border border-white/35 ' + padClass + ' text-slate-900 shadow-2xl backdrop-blur-xl" style="background-color:rgba(255,255,255,.18);max-height:' + maxH + ';overscroll-behavior:contain;">' +
           (boasVindas
             ? telaBoasVindas()
