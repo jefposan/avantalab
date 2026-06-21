@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.1.1 - 2026-06-21
+
+- Corrigida seleção de arquivo na restauração de backup.
+
 ## 1.1.0 - 2026-06-21
 
 - Backup completo em Excel estruturado para portabilidade e restauração.
