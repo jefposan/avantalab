@@ -3401,7 +3401,7 @@
               '</div>' +
               (state.modoCadastro ? telaCadastro() : state.modoSenha ? telaSenha() : telaLoginCampos())) +
         '</div>' +
-        (!boasVindas && !state.modoCadastro && !state.modoSenha ? cardInstalarLoginHtml() : '') +
+        (!state.modoCadastro && !state.modoSenha ? cardInstalarLoginHtml() : '') +
         (state.modalMenu ? modalMenuHtml() : '') +
       '</section>'
     );
