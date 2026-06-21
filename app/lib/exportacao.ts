@@ -27,6 +27,8 @@ const MAPA_MESES: Record<string, string> = {
   DEZEMBRO: 'DEZEMBRO',
 };
 
+const LIMITE_TEXTO_EXCEL = 32000;
+
 export interface GerarBackupExcelParams {
   empresaId: string;
   nomePerfil?: string;
@@ -113,8 +115,38 @@ function sheetRows(wb: XLSX.WorkBook, nome: string) {
 }
 
 function adicionarPlanilha(wb: XLSX.WorkBook, nome: string, dados: any[]) {
-  const ws = XLSX.utils.json_to_sheet(dados.length > 0 ? dados : [{}]);
+  const ws = XLSX.utils.json_to_sheet(sanitizarLinhasExcel(dados.length > 0 ? dados : [{}]));
   XLSX.utils.book_append_sheet(wb, ws, nome);
+}
+
+function sanitizarLinhasExcel(dados: any[]) {
+  return dados.map((linha) => {
+    const linhaSegura: Record<string, any> = {};
+
+    Object.entries(linha || {}).forEach(([chave, valor]) => {
+      if (typeof valor === 'string' && valor.length > LIMITE_TEXTO_EXCEL) {
+        linhaSegura[chave] = `${valor.slice(0, LIMITE_TEXTO_EXCEL - 120)}\n\n[Texto truncado pelo AvantaLab: excedia o limite de caracteres por celula do Excel.]`;
+      } else {
+        linhaSegura[chave] = valor;
+      }
+    });
+
+    return linhaSegura;
+  });
+}
+
+function valorConfiguracaoExcel(chave: string, valor: unknown) {
+  const texto = typeof valor === 'string' ? valor : JSON.stringify(valor ?? '');
+
+  if (chave === 'logoUrl') {
+    return '[Logo nao incluida no backup. Reenvie a logo pelos Ajustes se precisar restaurar a identidade visual.]';
+  }
+
+  if (texto.length <= LIMITE_TEXTO_EXCEL) {
+    return texto;
+  }
+
+  return `${texto.slice(0, LIMITE_TEXTO_EXCEL - 120)}\n\n[Texto truncado pelo AvantaLab: excedia o limite de caracteres por celula do Excel.]`;
 }
 
 async function lerWorkbookArquivo(arquivo: File): Promise<XLSX.WorkBook> {
@@ -301,12 +333,13 @@ export async function gerarBackupExcel({
 
   adicionarPlanilha(wb, 'Configuracoes', [
     { Chave: 'empresaIdOriginal', Valor: empresaId },
-    { Chave: 'logoUrl', Valor: config.logo_url ?? logoUrl ?? '' },
-    { Chave: 'logoSettings', Valor: JSON.stringify(config.logo_settings || logoSettings || { scale: 100, x: 0, y: 0 }) },
-    { Chave: 'corPrimaria', Valor: config.cor_primaria || corPrimaria || '#003E73' },
-    { Chave: 'darkMode', Valor: String(config.dark_mode ?? darkMode) },
-    { Chave: 'duplicadosAtivo', Valor: String(config.duplicados_ativo ?? duplicadosAtivo) },
+    { Chave: 'logoUrl', Valor: valorConfiguracaoExcel('logoUrl', config.logo_url ?? logoUrl ?? '') },
+    { Chave: 'logoSettings', Valor: valorConfiguracaoExcel('logoSettings', config.logo_settings || logoSettings || { scale: 100, x: 0, y: 0 }) },
+    { Chave: 'corPrimaria', Valor: valorConfiguracaoExcel('corPrimaria', config.cor_primaria || corPrimaria || '#003E73') },
+    { Chave: 'darkMode', Valor: valorConfiguracaoExcel('darkMode', String(config.dark_mode ?? darkMode)) },
+    { Chave: 'duplicadosAtivo', Valor: valorConfiguracaoExcel('duplicadosAtivo', String(config.duplicados_ativo ?? duplicadosAtivo)) },
     { Chave: 'ultimoBackupEm', Valor: agora },
+    { Chave: 'observacaoLogo', Valor: 'A logo nao e incluida no backup para evitar arquivos pesados e limites tecnicos do Excel. Os dados financeiros nao sao afetados.' },
   ]);
 
   const dadosResumoFinanceiro: any[] = [];

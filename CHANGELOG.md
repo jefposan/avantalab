@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.1.4 - 2026-06-21
+
+- Logo removida do conteudo do backup para evitar base64 truncado e erro no Excel.
+
+## 1.1.3 - 2026-06-21
+
+- Corrigido erro de limite de caracteres do Excel ao gerar ponto de restauração.
+
 ## 1.1.2 - 2026-06-21
 
 - Corrigida importação de entradas no backup restaurado e mensagens de erro da restauração.
