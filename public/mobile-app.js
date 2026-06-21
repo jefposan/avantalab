@@ -3883,13 +3883,14 @@
         ? 'border-cyan-500 bg-cyan-50 shadow-md shadow-cyan-900/10'
         : 'border-slate-200 bg-white shadow-sm';
       var textoNumero = selecionado ? 'text-cyan-900' : 'text-slate-900';
+      var tamanhoNumero = hojeClasse && selecionado ? 'text-base' : 'text-xl';
       var dataDia = new Date(ano, mesIndice, dia);
       var rotuloSemana = dataDia.toLocaleDateString('pt-BR', { weekday: 'short' }).replace('.', '');
 
       celulas.push(
         '<button type="button" data-agenda-dia="' + dia + '" class="relative min-h-0 overflow-hidden rounded-2xl border p-1.5 text-left transition active:scale-[0.98] ' + estilo + '">' +
           '<span class="block text-[10px] font-black uppercase tracking-wide ' + (selecionado ? 'text-cyan-700' : 'text-slate-400') + '">' + escapeHtml(rotuloSemana) + '</span>' +
-          '<span class="mt-1 block text-xl font-black leading-none ' + textoNumero + '">' + String(dia).padStart(2, '0') + '</span>' +
+          '<span class="mt-1 block ' + tamanhoNumero + ' font-black leading-none ' + textoNumero + '">' + String(dia).padStart(2, '0') + '</span>' +
           (hojeClasse ? '<span class="absolute bottom-1 right-1 rounded-full bg-slate-950 px-1 py-0.5 text-[7px] font-black uppercase leading-none text-white">Hoje</span>' : '') +
         '</button>'
       );
@@ -6632,7 +6633,7 @@
           return Promise.all(
             keys
               .filter(function (key) {
-                return key.indexOf('avantalab-mobile-') === 0 && key !== 'avantalab-mobile-v115';
+                return key.indexOf('avantalab-mobile-') === 0 && key !== 'avantalab-mobile-v116';
               })
               .map(function (key) {
                 return caches.delete(key);
@@ -6649,7 +6650,7 @@
     });
 
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/mobile-sw.js?v=115').then(function (registro) {
+      navigator.serviceWorker.register('/mobile-sw.js?v=116').then(function (registro) {
         if (registro && registro.update) registro.update();
       }).catch(function () {});
     }
