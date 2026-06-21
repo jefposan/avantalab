@@ -44,6 +44,8 @@ interface AppHeaderProps {
   logoUrl: string;
   logoSettings: LogoSettings;
   setModalEmpresasAberto: React.Dispatch<React.SetStateAction<boolean>>;
+  agendaHojeCount: number;
+  onAbrirAgenda: () => void;
 }
 
 const ABAS = ['Dashboard', 'Balanço Geral', 'Gráficos', 'Por Categoria', 'Relatório'] as const;
@@ -60,6 +62,7 @@ export default function AppHeader({
   calcAberta, setCalcAberta,
   confirmarLogout, logoUrl, logoSettings,
   setModalEmpresasAberto,
+  agendaHojeCount, onAbrirAgenda,
 }: AppHeaderProps) {
   const itensMenu = [
     { aba: 'Dashboard', label: 'Início' },
@@ -305,6 +308,28 @@ export default function AppHeader({
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"
                       d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
                   </svg>
+                </button>
+
+                {/* Agenda */}
+                <button
+                  type="button"
+                  onClick={onAbrirAgenda}
+                  className={`relative flex h-9 w-9 items-center justify-center rounded-lg border shadow-sm transition hover:scale-[1.03] active:scale-[0.98] cursor-pointer ${
+                    darkMode
+                      ? 'border-slate-700 bg-slate-800 text-slate-200 hover:bg-slate-700'
+                      : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50'
+                  }`}
+                  title="Agenda"
+                >
+                  <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"
+                      d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                  </svg>
+                  {agendaHojeCount > 0 && (
+                    <span className="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-cyan-500 text-[9px] font-black leading-none text-white shadow-md">
+                      {agendaHojeCount > 9 ? '9+' : agendaHojeCount}
+                    </span>
+                  )}
                 </button>
 
                 {/* Avisos */}

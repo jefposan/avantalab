@@ -93,6 +93,7 @@ type AgendaItem = {
   repetir: boolean;
   repeticao: 'diaria' | 'semanal' | 'quinzenal' | 'mensal' | 'anual';
   criadoEm: string;
+  excluirDias?: string[];
 };
 
 export default function AppGestao() {
@@ -289,6 +290,7 @@ const [agendaTitulo, setAgendaTitulo] = useState('');
 const [agendaDescricao, setAgendaDescricao] = useState('');
 const [agendaRepetir, setAgendaRepetir] = useState(false);
 const [agendaRepeticao, setAgendaRepeticao] = useState<'diaria'|'semanal'|'quinzenal'|'mensal'|'anual'>('mensal');
+const [agendaItemParaExcluir, setAgendaItemParaExcluir] = useState<AgendaItem | null>(null);
 const [menuResponsivoAberto, setMenuResponsivoAberto] = useState(false);
 const [subAcaoGerenciar, setSubAcaoGerenciar] = useState<null | 'editar' | 'criar'>(null);
   const [ultimoBackupEm, setUltimoBackupEm] = useState<string | null>(null);
@@ -1152,6 +1154,8 @@ useEffect(() => {
   }
 
   function itemAgendaApareceNoDiaWeb(item: AgendaItem, ano: number, mes: number, dia: number) {
+    const chaveExclusao = `${ano}-${mes}-${dia}`;
+    if (item.excluirDias?.includes(chaveExclusao)) return false;
     const alvo = new Date(ano, mes, dia);
     const inicio = new Date(item.ano, item.mes, item.dia);
     const diferenca = diasEntreDatasAgenda(inicio, alvo);
@@ -1209,10 +1213,26 @@ useEffect(() => {
     salvarAgendaItensWeb(novosItens);
   }
 
+  function excluirItemAgendaDia(id: string, ano: number, mes: number, dia: number) {
+    const chave = `${ano}-${mes}-${dia}`;
+    const novosItens = agendaItens.map(item =>
+      item.id === id
+        ? { ...item, excluirDias: [...(item.excluirDias || []), chave] }
+        : item
+    );
+    setAgendaItens(novosItens);
+    salvarAgendaItensWeb(novosItens);
+  }
+
   function rotuloRepeticaoAgendaWeb(valor: string) {
     return ({ diaria: 'Diária', semanal: 'Semanal', quinzenal: 'Quinzenal', mensal: 'Mensal', anual: 'Anual' } as Record<string, string>)[valor] || '';
   }
   // ---- FIM AGENDA WEB ----
+
+  const agendaHojeCount = (() => {
+    const hoje = new Date();
+    return itensAgendaDoDiaWeb(hoje.getFullYear(), hoje.getMonth(), hoje.getDate()).length;
+  })();
 
   
   const mesParaAnalise = mesAtivo || mesResumoDash;
@@ -4193,7 +4213,7 @@ if (isTelaMobile) {
                                 )}
                                 <button
                                   type="button"
-                                  onClick={() => excluirItemAgendaWeb(item.id)}
+                                  onClick={() => item.repetir ? setAgendaItemParaExcluir(item) : excluirItemAgendaWeb(item.id)}
                                   title="Excluir"
                                   className="flex h-7 w-7 items-center justify-center rounded-full border border-slate-200 bg-slate-50 text-slate-400 transition hover:border-red-200 hover:bg-red-50 hover:text-red-500"
                                 >
@@ -4224,6 +4244,40 @@ if (isTelaMobile) {
                 )}
               </div>
             </div>
+
+        {/* Confirmação de exclusão de item com repetição */}
+        {agendaItemParaExcluir && (
+          <div className="absolute inset-0 z-10 flex items-center justify-center rounded-2xl bg-black/40 backdrop-blur-sm">
+            <div className="mx-4 w-full max-w-sm rounded-2xl border border-slate-200 bg-white p-6 shadow-2xl">
+              <p className="text-[10px] font-black uppercase tracking-[0.2em] text-red-500">Excluir lembrete</p>
+              <h3 className="mt-2 text-base font-black text-slate-900">{agendaItemParaExcluir.titulo}</h3>
+              <p className="mt-1 text-xs text-slate-500">Este lembrete se repete. O que deseja excluir?</p>
+              <div className="mt-4 flex flex-col gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (agendaDiaSelecionado) excluirItemAgendaDia(agendaItemParaExcluir.id, agendaAnoAtivo, agendaMesAtivo, agendaDiaSelecionado);
+                    setAgendaItemParaExcluir(null);
+                  }}
+                  className="h-10 w-full rounded-xl border border-slate-200 bg-slate-50 text-xs font-black text-slate-700 transition hover:bg-slate-100"
+                >Somente este dia</button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    excluirItemAgendaWeb(agendaItemParaExcluir.id);
+                    setAgendaItemParaExcluir(null);
+                  }}
+                  className="h-10 w-full rounded-xl bg-red-500 text-xs font-black text-white transition hover:bg-red-600"
+                >Excluir de todos os meses</button>
+                <button
+                  type="button"
+                  onClick={() => setAgendaItemParaExcluir(null)}
+                  className="h-8 w-full text-xs font-semibold text-slate-400 transition hover:text-slate-600"
+                >Cancelar</button>
+              </div>
+            </div>
+          </div>
+        )}
           </div>
         </div>
       )}
@@ -5790,6 +5844,15 @@ name="novo-usuario-login"
         logoUrl={logoUrl}
         logoSettings={logoSettings}
         setModalEmpresasAberto={setModalEmpresasAberto}
+        agendaHojeCount={agendaHojeCount}
+        onAbrirAgenda={() => {
+          const hoje = new Date();
+          setAgendaMesAtivo(hoje.getMonth());
+          setAgendaAnoAtivo(hoje.getFullYear());
+          setAgendaDiaSelecionado(hoje.getDate());
+          setAgendaFormAberto(false);
+          setAgendaAberta(true);
+        }}
       />
 
             {/* ================= MENU DE AJUSTES GERAL ================= */}
