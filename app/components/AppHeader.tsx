@@ -175,11 +175,12 @@ export default function AppHeader({
       >
         <div className="mx-auto flex w-full max-w-7xl items-center gap-4 px-6 xl:gap-6 xl:px-8">
           {/* LOGO */}
+          {logoUrl !== '__blank__' && (
           <div
             className="w-44 h-[72px] xl:w-64 xl:h-[88px] flex items-center justify-center relative cursor-pointer shrink-0 mb-2"
             onClick={() => { setAbaAtiva('Dashboard'); setMesAtivo(null); setMenuResponsivoAberto(false); }}
           >
-            {logoUrl && logoUrl !== '__blank__' ? (
+            {logoUrl ? (
               <div className="absolute inset-0 overflow-hidden rounded-lg">
                 <img
                   src={logoUrl}
@@ -194,7 +195,7 @@ export default function AppHeader({
                   }}
                 />
               </div>
-            ) : logoUrl !== '__blank__' ? (
+            ) : (
               <>
                 <div
                   className="absolute pointer-events-none rounded-lg"
@@ -205,8 +206,9 @@ export default function AppHeader({
                   <span className="mt-1 block text-base font-black tracking-wide">LOGOMARCA</span>
                 </span>
               </>
-            ) : null}
+            )}
           </div>
+          )}
 
           {/* Hamburger mobile */}
           <button

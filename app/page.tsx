@@ -6067,25 +6067,6 @@ setModalLogo(true);
   Perfil
 </button>
 
-<button
-  type="button"
-  onClick={() => {
-    setAjustesAberto(false);
-    const hoje = new Date();
-    setAgendaMesAtivo(hoje.getMonth());
-    setAgendaAnoAtivo(hoje.getFullYear());
-    setAgendaDiaSelecionado(null);
-    setAgendaFormAberto(false);
-    setAgendaAberta(true);
-  }}
-  className="whitespace-nowrap bg-slate-800 hover:bg-slate-700 px-3 py-1.5 rounded shadow border border-slate-700 transition-colors text-xs cursor-pointer flex items-center gap-1.5"
->
-  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-  </svg>
-  Agenda
-</button>
-
               {/* BOTÃO DE BACKUP EXCEL */}
               <button 
                 onClick={() => {
