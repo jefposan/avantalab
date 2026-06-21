@@ -5,7 +5,6 @@ const APP_SHELL = [
   '/mobile-manifest.json',
   '/images/ava-logo-principal.png',
   '/images/bg-avantalab-mobile-1080x1920.webp',
-  '/images/bg-avantalab-mobile-1080x1920.png',
   '/images/bg-avantalab-mobile.webp',
   '/images/bg-avantalab.webp',
   '/images/google-logo.svg',
