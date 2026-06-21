@@ -3413,22 +3413,22 @@
 
   function telaBoasVindas() {
     return (
-      '<div class="grid gap-3">' +
+      '<div class="grid gap-4">' +
         '<div>' +
           
-          '<h1 class="text-2xl font-black leading-tight text-slate-900">Descubra quanto realmente sobra no seu neg&oacute;cio ou nas suas despesas pessoais.</h1>' +
-          '<p class="mt-1 text-xs font-semibold leading-relaxed text-slate-600">Controle entradas e despesas de forma simples.</p>' +
+          '<h1 class="text-3xl font-black leading-tight text-slate-900">Descubra quanto realmente sobra no seu neg&oacute;cio ou nas suas despesas pessoais.</h1>' +
+          '<p class="mt-3 text-sm font-semibold leading-relaxed text-slate-600">Controle entradas e despesas de forma simples.</p>' +
         '</div>' +
-        '<div class="grid gap-1 rounded-xl bg-white/22 p-2 text-xs font-bold leading-snug text-slate-700">' +
+        '<div class="grid gap-2 rounded-2xl bg-white/22 p-3 text-sm font-bold leading-snug text-slate-700">' +
           '<p>&#10003; Entenda seus gastos.</p>' +
           '<p>&#10003; Compare seus resultados mes a mes.</p>' +
           '<p>&#10003; Descubra quais despesas mais impactam seu lucro.</p>' +
           '<p>&#10003; Use no computador ou celular.</p>' +
         '</div>' +
-        '<button id="boas-vindas-cadastro" type="button" class="h-10 rounded-xl px-4 text-xs font-black uppercase tracking-wide text-white shadow-lg" style="background:linear-gradient(135deg,#003E73,#00A6C8)">' +
+        '<button id="boas-vindas-cadastro" type="button" class="h-12 rounded-xl px-4 text-sm font-black uppercase tracking-wide text-white shadow-lg" style="background:linear-gradient(135deg,#003E73,#00A6C8)">' +
           'Criar conta gratis' +
         '</button>' +
-        '<div class="text-center text-xs text-slate-600">Ja tem conta? <button id="boas-vindas-login" type="button" class="font-bold text-sky-700 underline">Entrar</button></div>' +
+        '<div class="text-center text-sm text-slate-600">Ja tem conta? <button id="boas-vindas-login" type="button" class="font-bold text-sky-700 underline">Entrar</button></div>' +
       '</div>'
     );
   }
