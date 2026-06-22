@@ -722,13 +722,23 @@
       var idsRemotos = {};
       remotos.forEach(function (r) { idsRemotos[String(r.id)] = true; });
 
-      // Migra para o servidor os itens que so existem no aparelho
-      var soLocais = locais.filter(function (l) { return !idsRemotos[String(l.id)]; });
-      for (var i = 0; i < soLocais.length; i++) {
-        await gravarItemAgendaSupabase(soLocais[i]);
+      var migrada = false;
+      try { migrada = localStorage.getItem('avantalab_mobile_agenda_migrada') === '1'; } catch (e) {}
+
+      if (!migrada) {
+        // Primeira sincronizacao: envia ao servidor os itens que so
+        // existem neste aparelho e marca como migrado.
+        var soLocais = locais.filter(function (l) { return !idsRemotos[String(l.id)]; });
+        for (var i = 0; i < soLocais.length; i++) {
+          await gravarItemAgendaSupabase(soLocais[i]);
+        }
+        state.agendaItens = remotos.concat(soLocais.map(normalizarItemAgenda));
+        try { localStorage.setItem('avantalab_mobile_agenda_migrada', '1'); } catch (e) {}
+      } else {
+        // Servidor e a fonte da verdade: exclusoes refletem aqui.
+        state.agendaItens = remotos;
       }
 
-      state.agendaItens = remotos.concat(soLocais.map(normalizarItemAgenda));
       salvarAgendaItensMobile();
       render();
     } catch (e) {}

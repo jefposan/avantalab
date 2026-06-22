@@ -1159,6 +1159,27 @@ useEffect(() => {
   // eslint-disable-next-line react-hooks/exhaustive-deps
 }, [mounted, empresaId]);
 
+// Agenda: atualiza em tempo real (mudancas em qualquer aparelho)
+useEffect(() => {
+  if (!mounted || !empresaId) return;
+  let canal: any;
+  (async () => {
+    const { data: u } = await supabase.auth.getUser();
+    const userId = u.user?.id;
+    if (!userId) return;
+    canal = supabase
+      .channel('agenda_itens_web_' + userId)
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'agenda_itens', filter: 'user_id=eq.' + userId },
+        () => { sincronizarAgendaSupabaseWeb(); }
+      )
+      .subscribe();
+  })();
+  return () => { if (canal) supabase.removeChannel(canal); };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+}, [mounted, empresaId]);
+
   // --- CÁLCULOS E FUNÇÕES ---
 
   // ---- AGENDA WEB ----
@@ -1240,15 +1261,26 @@ useEffect(() => {
       if (error) return;
       const remotos = (data || []).map(agendaItemFromSupabase);
       const idsRemotos = new Set(remotos.map(r => String(r.id)));
+      let migrada = false;
+      try { migrada = localStorage.getItem('avantalab_web_agenda_migrada') === '1'; } catch {}
       setAgendaItens(prev => {
         const locais = prev || [];
         const soLocais = locais.filter(l => !idsRemotos.has(String(l.id)));
-        const combinados = [...remotos, ...soLocais];
-        setTimeout(() => {
-          salvarAgendaItensWeb(combinados);
-          soLocais.forEach(l => { gravarItemAgendaSupabaseWeb(l); });
-        }, 0);
-        return combinados;
+        if (!migrada) {
+          // Primeira sincronizacao: envia ao servidor os itens que so
+          // existem neste aparelho e marca como migrado.
+          const combinados = [...remotos, ...soLocais];
+          setTimeout(() => {
+            salvarAgendaItensWeb(combinados);
+            soLocais.forEach(l => { gravarItemAgendaSupabaseWeb(l); });
+            try { localStorage.setItem('avantalab_web_agenda_migrada', '1'); } catch {}
+          }, 0);
+          return combinados;
+        }
+        // Depois de migrado, o servidor e a fonte da verdade: exclusoes
+        // feitas em qualquer aparelho passam a refletir aqui.
+        setTimeout(() => { salvarAgendaItensWeb(remotos); }, 0);
+        return remotos;
       });
     } catch {}
   }
@@ -4629,7 +4661,7 @@ if (isTelaMobile) {
                                 )}
                                 <button
                                   type="button"
-                                  onClick={() => item.repetir ? setAgendaItemParaExcluir(item) : excluirItemAgendaWeb(item.id)}
+                                  onClick={() => setAgendaItemParaExcluir(item)}
                                   title="Excluir"
                                   className="flex h-7 w-7 items-center justify-center rounded-full border border-slate-200 bg-slate-50 text-slate-400 transition hover:border-red-200 hover:bg-red-50 hover:text-red-500"
                                 >
@@ -4667,30 +4699,53 @@ if (isTelaMobile) {
             <div className="mx-4 w-full max-w-sm rounded-2xl border border-slate-200 bg-white p-6 shadow-2xl">
               <p className="text-[10px] font-black uppercase tracking-[0.2em] text-red-500">Excluir lembrete</p>
               <h3 className="mt-2 text-base font-black text-slate-900">{agendaItemParaExcluir.titulo}</h3>
-              <p className="mt-1 text-xs text-slate-500">Este lembrete se repete. O que deseja excluir?</p>
-              <div className="mt-4 flex flex-col gap-2">
-                <button
-                  type="button"
-                  onClick={() => {
-                    if (agendaDiaSelecionado) excluirItemAgendaDia(agendaItemParaExcluir.id, agendaAnoAtivo, agendaMesAtivo, agendaDiaSelecionado);
-                    setAgendaItemParaExcluir(null);
-                  }}
-                  className="h-10 w-full rounded-xl border border-slate-200 bg-slate-50 text-xs font-black text-slate-700 transition hover:bg-slate-100"
-                >Somente este dia</button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    excluirItemAgendaWeb(agendaItemParaExcluir.id);
-                    setAgendaItemParaExcluir(null);
-                  }}
-                  className="h-10 w-full rounded-xl bg-red-500 text-xs font-black text-white transition hover:bg-red-600"
-                >Excluir de todos os meses</button>
-                <button
-                  type="button"
-                  onClick={() => setAgendaItemParaExcluir(null)}
-                  className="h-8 w-full text-xs font-semibold text-slate-400 transition hover:text-slate-600"
-                >Cancelar</button>
-              </div>
+              {agendaItemParaExcluir.repetir ? (
+                <>
+                  <p className="mt-1 text-xs text-slate-500">Este lembrete se repete. O que deseja excluir?</p>
+                  <div className="mt-4 flex flex-col gap-2">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (agendaDiaSelecionado) excluirItemAgendaDia(agendaItemParaExcluir.id, agendaAnoAtivo, agendaMesAtivo, agendaDiaSelecionado);
+                        setAgendaItemParaExcluir(null);
+                      }}
+                      className="h-10 w-full rounded-xl border border-slate-200 bg-slate-50 text-xs font-black text-slate-700 transition hover:bg-slate-100"
+                    >Somente este dia</button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        excluirItemAgendaWeb(agendaItemParaExcluir.id);
+                        setAgendaItemParaExcluir(null);
+                      }}
+                      className="h-10 w-full rounded-xl bg-red-500 text-xs font-black text-white transition hover:bg-red-600"
+                    >Excluir de todos os meses</button>
+                    <button
+                      type="button"
+                      onClick={() => setAgendaItemParaExcluir(null)}
+                      className="h-8 w-full text-xs font-semibold text-slate-400 transition hover:text-slate-600"
+                    >Cancelar</button>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <p className="mt-1 text-xs text-slate-500">Tem certeza que deseja excluir este lembrete?</p>
+                  <div className="mt-4 flex flex-col gap-2">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        excluirItemAgendaWeb(agendaItemParaExcluir.id);
+                        setAgendaItemParaExcluir(null);
+                      }}
+                      className="h-10 w-full rounded-xl bg-red-500 text-xs font-black text-white transition hover:bg-red-600"
+                    >Excluir</button>
+                    <button
+                      type="button"
+                      onClick={() => setAgendaItemParaExcluir(null)}
+                      className="h-8 w-full text-xs font-semibold text-slate-400 transition hover:text-slate-600"
+                    >Cancelar</button>
+                  </div>
+                </>
+              )}
             </div>
           </div>
         )}
