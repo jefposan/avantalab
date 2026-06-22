@@ -1042,20 +1042,24 @@
     window.scrollTo(0, scrollY);
   }
 
-  function atualizarScrollBloqueado() {
+  function atualizarScrollBloqueado(scrollPrevio) {
     if (deveBloquearScroll()) {
-      if (!state.chatIAAberto) liberarScrollChatIA();
-      document.documentElement.style.overflow = 'hidden';
-      document.body.style.overflow = 'hidden';
-      if (state.chatIAAberto && !window._avaBodyLocked) {
+      // Trava o body em position:fixed para QUALQUER modal (acao, edicao,
+      // menu, chat). Sem isso, ao reconstruir o innerHTML em render() a
+      // posicao de scroll da lista se perde e volta ao topo.
+      if (!window._avaBodyLocked) {
         window._avaBodyLocked = true;
-        window._avaScrollY = window.scrollY || document.documentElement.scrollTop || 0;
+        window._avaScrollY = (typeof scrollPrevio === 'number')
+          ? scrollPrevio
+          : (window.scrollY || document.documentElement.scrollTop || 0);
         document.body.style.position = 'fixed';
         document.body.style.top = '-' + window._avaScrollY + 'px';
         document.body.style.left = '0';
         document.body.style.right = '0';
         document.body.style.width = '100%';
       }
+      document.documentElement.style.overflow = 'hidden';
+      document.body.style.overflow = 'hidden';
       return;
     }
 
@@ -5551,6 +5555,11 @@
   }
 
   function render() {
+    // Captura o scroll real do usuario ANTES de reconstruir o innerHTML.
+    // Se o body ja estiver travado, scrollY vale 0, entao usa o valor salvo.
+    var _scrollPrevio = window._avaBodyLocked
+      ? (window._avaScrollY || 0)
+      : (window.scrollY || document.documentElement.scrollTop || 0);
     root.setAttribute('data-avantalab-mobile-ready', '1');
     if (!state.chatIAAberto) configurarCamadaFundoChatIA(false);
     removerChatIAOverlay();
@@ -5560,7 +5569,7 @@
         ? (state.validacaoTelefoneObrigatoria ? telaTelefoneObrigatorioMobile() : (state.modoCriarPerfil ? telaLoginWrapper(telaCriarPerfilInicial(), 'Criar perfil financeiro', 'Informe os dados do seu primeiro perfil.') : telaApp()))
         : (state.modoCriarPerfil ? telaLoginWrapper(telaCriarPerfilInicial(), 'Criar perfil financeiro', 'Informe os dados do seu primeiro perfil.') : telaLogin()));
     root.innerHTML = telaAtual + (state.chatIAAberto ? chatIAModalHtml() : '');
-    atualizarScrollBloqueado();
+    atualizarScrollBloqueado(_scrollPrevio);
 
     if (state.chatIAAberto) {
       var ov = document.getElementById('chat-ia-overlay');
