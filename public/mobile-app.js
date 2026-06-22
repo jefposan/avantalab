@@ -710,6 +710,19 @@
     };
   }
 
+  function configurarRealtimeAgendaMobile() {
+    try {
+      if (window._avaRealtimeAgenda) return;
+      if (!state.usuario || !state.usuario.id) return;
+      window._avaRealtimeAgenda = db
+        .channel('agenda_mobile_' + state.usuario.id)
+        .on('postgres_changes',
+          { event: '*', schema: 'public', table: 'agenda_itens', filter: 'user_id=eq.' + state.usuario.id },
+          function () { sincronizarAgendaSupabase(); })
+        .subscribe();
+    } catch (e) {}
+  }
+
   async function sincronizarAgendaSupabase() {
     if (!state.usuario || !state.usuario.id) return;
     try {
@@ -1898,8 +1911,9 @@
     state.carregando = false;
     render();
 
-    // Sincroniza a agenda com o servidor (em segundo plano)
+    // Sincroniza a agenda com o servidor (em segundo plano) + tempo real
     sincronizarAgendaSupabase();
+    configurarRealtimeAgendaMobile();
     // Atualiza a contagem de notificacoes nao lidas (sino + badge do icone)
     carregarNotificacoesNaoLidas();
     // Na primeira abertura, oferece ativar as notificacoes
