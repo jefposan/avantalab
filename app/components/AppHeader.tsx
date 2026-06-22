@@ -1,5 +1,5 @@
 'use client';
-import React from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 
 interface Aviso {
   id: string;
@@ -71,6 +71,28 @@ export default function AppHeader({
     { aba: 'Por Categoria', label: 'Categorias' },
     { aba: 'Relatório', label: 'Relatório' },
   ] as const;
+
+  // Indicador deslizante do menu (a "pilula" que escorrega ate a aba ativa)
+  const navRef = useRef<HTMLElement>(null);
+  const [indicador, setIndicador] = useState<{ left: number; top: number; width: number; height: number } | null>(null);
+
+  useEffect(() => {
+    const nav = navRef.current;
+    if (!nav) return;
+    const calcular = () => {
+      let ativoEl: HTMLButtonElement | null = null;
+      nav.querySelectorAll<HTMLButtonElement>('[data-aba]').forEach((b) => {
+        if (b.getAttribute('data-aba') === abaAtiva) ativoEl = b;
+      });
+      if (ativoEl) {
+        const el = ativoEl as HTMLButtonElement;
+        setIndicador({ left: el.offsetLeft, top: el.offsetTop, width: el.offsetWidth, height: el.offsetHeight });
+      }
+    };
+    calcular();
+    window.addEventListener('resize', calcular);
+    return () => window.removeEventListener('resize', calcular);
+  }, [abaAtiva]);
 
   return (
     <>
@@ -227,16 +249,32 @@ export default function AppHeader({
             <div className="relative hidden items-center gap-3 lg:flex">
               {/* Nav principal */}
               <nav
+                ref={navRef}
                 className={`relative grid w-[560px] shrink-0 grid-cols-5 gap-2 rounded-xl border p-1 shadow-sm ${
                   darkMode ? 'border-slate-700 bg-slate-900/70' : 'border-slate-200 bg-slate-50'
                 }`}
               >
+                {/* Pilula deslizante atras da aba ativa */}
+                {indicador && (
+                  <span
+                    aria-hidden="true"
+                    className="pointer-events-none absolute z-0 rounded-lg shadow-sm transition-all duration-300 ease-out"
+                    style={{
+                      left: indicador.left,
+                      top: indicador.top,
+                      width: indicador.width,
+                      height: indicador.height,
+                      backgroundColor: corPrimaria,
+                    }}
+                  />
+                )}
                 {itensMenu.map((item) => {
                   const ativo = abaAtiva === item.aba;
                   return (
                     <button
                       key={item.aba}
                       type="button"
+                      data-aba={item.aba}
                       onClick={() => {
                         setAjustesAberto(false);
                         setPainelAvisosAberto(false);
@@ -244,14 +282,14 @@ export default function AppHeader({
                         setAbaAtiva(item.aba);
                         setMenuResponsivoAberto(false);
                       }}
-                      className={`whitespace-nowrap rounded-lg px-3 py-2 text-xs font-black uppercase tracking-wide transition-all active:scale-[0.98] cursor-pointer ${
+                      className={`relative z-[1] whitespace-nowrap rounded-lg px-3 py-2 text-xs font-black uppercase tracking-wide transition-colors active:scale-[0.98] cursor-pointer ${
                         ativo
-                          ? 'shadow-sm'
+                          ? ''
                           : darkMode
                             ? 'text-slate-300 hover:text-white'
                             : 'text-slate-600 hover:text-slate-900'
                       }`}
-                      style={ativo ? { backgroundColor: corPrimaria, color: textoSobreCorPrimaria } : undefined}
+                      style={ativo ? { color: textoSobreCorPrimaria } : undefined}
                     >
                       {item.label}
                     </button>
