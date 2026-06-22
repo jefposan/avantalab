@@ -402,7 +402,7 @@
     return '<div class="mx-auto max-w-md px-4 py-5">' + conteudo + '</div>';
   }
 
-  var APP_VERSION = '1.2.5';
+  var APP_VERSION = '1.3.0';
   var APP_VERSION_LABEL = 'AvantaLab Gest&atilde;o v' + APP_VERSION;
 
   function telaAvisoMobile(titulo, texto) {
@@ -645,6 +645,13 @@
       '<path d="M6.5 10.2c0-3.1 2.2-5.7 5.5-5.7s5.5 2.6 5.5 5.7v2.7l1.5 2.8H5l1.5-2.8v-2.7Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>' +
       '<path d="M10 18.2c.4.9 1.1 1.3 2 1.3s1.6-.4 2-1.3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>' +
       '<path d="M12 2.8v1.4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>' +
+    '</svg>';
+  }
+
+  function iconeAgendaSvg() {
+    return '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">' +
+      '<rect x="3.5" y="4.5" width="17" height="16" rx="2.5" stroke="currentColor" stroke-width="2"/>' +
+      '<path d="M3.5 9h17M8 3v3M16 3v3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>' +
     '</svg>';
   }
 
@@ -1215,6 +1222,41 @@
     } catch (e) {
       mostrarToast('Falha ao ativar notificacoes.');
     }
+  }
+
+  async function desativarNotificacoesMobile() {
+    try {
+      var registro = await navigator.serviceWorker.ready;
+      var inscricao = await registro.pushManager.getSubscription();
+      if (inscricao) {
+        var endpoint = inscricao.endpoint;
+        await inscricao.unsubscribe().catch(function () {});
+        if (state.usuario && state.usuario.id) {
+          await db.from('push_subscriptions').delete().eq('endpoint', endpoint);
+        }
+      }
+      atualizarBadgeApp(0);
+      mostrarToast('Notificacoes desativadas neste aparelho.');
+    } catch (e) {
+      mostrarToast('Falha ao desativar notificacoes.');
+    }
+  }
+
+  async function desativarOuReativarNotificacoes() {
+    try {
+      var registro = await navigator.serviceWorker.ready;
+      var inscricao = await registro.pushManager.getSubscription();
+      if (inscricao) await desativarNotificacoesMobile();
+      else await ativarNotificacoesMobile();
+    } catch (e) {}
+  }
+
+  // Liga/desliga. Se a permissao ainda nao foi dada, chama ativar
+  // direto (o iOS exige o pedido de permissao no proprio toque).
+  function alternarNotificacoesMobile() {
+    if (!('Notification' in window)) { ativarNotificacoesMobile(); return; }
+    if (Notification.permission === 'granted') desativarOuReativarNotificacoes();
+    else ativarNotificacoesMobile();
   }
 
   // Na primeira abertura (uma vez por aparelho), oferece ativar as
@@ -4740,8 +4782,8 @@
             '</div>' +
           '</div>' +
           '<div class="grid gap-2">' +
-            menuBotaoHtml('menu-agenda', 'Agenda', 'Lembretes e avisos', '&#128197;') +
-            menuBotaoHtml('menu-notificacoes', 'Ativar notificacoes', 'Receber avisos no celular', '&#128276;') +
+            menuBotaoHtml('menu-agenda', 'Agenda', 'Lembretes e avisos', iconeAgendaSvg()) +
+            menuBotaoHtml('menu-notificacoes', 'Ativar / Desativar notificacoes', 'Receber avisos no celular', sinoAvisoSvg()) +
             menuBotaoHtml('menu-configurar-resumo', 'Organizar resumo', 'Exibir e ocultar cards', '&#9776;') +
             menuBotaoHtml('menu-categorias', 'Cadastrar despesas', 'Adicionar tipos de despesa', '+') +
             menuBotaoHtml('menu-despesas-fixas', 'Despesas fixas', 'Lancamentos automaticos mensais', '&#10227;') +
@@ -5952,7 +5994,7 @@
     bind('menu-gerenciar', function () { abrirModalMenu('gerenciar'); });
     bind('menu-organizar-dashboard', function () { abrirModalMenu('organizarDashboard'); });
     bind('menu-agenda', abrirAgendaMobile);
-    bind('menu-notificacoes', function () { state.menuAberto = false; render(); ativarNotificacoesMobile(); });
+    bind('menu-notificacoes', function () { state.menuAberto = false; render(); alternarNotificacoesMobile(); });
     bind('prompt-notif-ativar', function () {
       marcarPromptNotifVisto();
       state.mostrarPromptNotificacoes = false;
@@ -7022,7 +7064,7 @@
     });
 
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/mobile-sw.js?v=132').then(function (registro) {
+      navigator.serviceWorker.register('/mobile-sw.js?v=133').then(function (registro) {
         if (registro && registro.update) registro.update();
       }).catch(function () {});
     }
