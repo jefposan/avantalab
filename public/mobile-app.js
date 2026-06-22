@@ -399,7 +399,7 @@
     return '<div class="mx-auto max-w-md px-4 py-5">' + conteudo + '</div>';
   }
 
-  var APP_VERSION = '1.2.3';
+  var APP_VERSION = '1.2.4';
   var APP_VERSION_LABEL = 'AvantaLab Gest&atilde;o v' + APP_VERSION;
 
   function telaAvisoMobile(titulo, texto) {
@@ -4709,7 +4709,7 @@
             '<h2 class="text-base font-black">' + escapeHtml(titulo) + '</h2>' +
             '<button id="fechar-modal-menu" type="button" class="flex h-9 w-9 items-center justify-center rounded-full ' + (state.darkMode ? 'bg-slate-800' : 'bg-slate-100') + ' text-xl">&times;</button>' +
           '</div>' +
-          '<div class="min-h-0 flex-1 overflow-y-auto p-4 overscroll-contain">' + conteudoModalMenuHtml() + '</div>' +
+          '<div id="modal-menu-scroll" data-preserve-scroll class="min-h-0 flex-1 overflow-y-auto p-4 overscroll-contain">' + conteudoModalMenuHtml() + '</div>' +
         '</section>' +
       '</div>'
     );
@@ -5560,6 +5560,16 @@
     var _scrollPrevio = window._avaBodyLocked
       ? (window._avaScrollY || 0)
       : (window.scrollY || document.documentElement.scrollTop || 0);
+    // Salva o scrollTop de containers internos rolaveis (ex.: lista do
+    // cadastro de despesas dentro do modal) ANTES de reconstruir o DOM,
+    // para restaurar logo apos e a lista nao voltar ao topo ao editar.
+    var _scrollContainers = {};
+    var _preservaveis = document.querySelectorAll('[data-preserve-scroll]');
+    for (var _i = 0; _i < _preservaveis.length; _i++) {
+      if (_preservaveis[_i].id) {
+        _scrollContainers[_preservaveis[_i].id] = _preservaveis[_i].scrollTop;
+      }
+    }
     root.setAttribute('data-avantalab-mobile-ready', '1');
     if (!state.chatIAAberto) configurarCamadaFundoChatIA(false);
     removerChatIAOverlay();
@@ -5570,6 +5580,11 @@
         : (state.modoCriarPerfil ? telaLoginWrapper(telaCriarPerfilInicial(), 'Criar perfil financeiro', 'Informe os dados do seu primeiro perfil.') : telaLogin()));
     root.innerHTML = telaAtual + (state.chatIAAberto ? chatIAModalHtml() : '');
     atualizarScrollBloqueado(_scrollPrevio);
+    // Restaura o scrollTop dos containers internos preservados.
+    for (var _id in _scrollContainers) {
+      var _alvo = document.getElementById(_id);
+      if (_alvo) _alvo.scrollTop = _scrollContainers[_id];
+    }
 
     if (state.chatIAAberto) {
       var ov = document.getElementById('chat-ia-overlay');
@@ -6751,7 +6766,7 @@
     });
 
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/mobile-sw.js?v=130').then(function (registro) {
+      navigator.serviceWorker.register('/mobile-sw.js?v=131').then(function (registro) {
         if (registro && registro.update) registro.update();
       }).catch(function () {});
     }

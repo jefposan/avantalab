@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.2.4 - 2026-06-21
+
+- Corrigido de fato o scroll do cadastro de despesas no mobile: ao tocar numa despesa para editar, a lista mantem a posicao (preserva o scroll do container interno do modal) em vez de voltar ao topo.
+
 ## 1.2.3 - 2026-06-21
 
 - Corrigido o scroll da lista de despesas no mobile: ao abrir acoes ou editar um lancamento, a lista mantem a posicao em que estava em vez de voltar ao topo.
