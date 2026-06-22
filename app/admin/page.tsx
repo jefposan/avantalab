@@ -96,6 +96,55 @@ export default function PaginaAdminFeedbacks() {
     'todos' | 'sugestao' | 'duvida' | 'reclamacao' | 'avaliacao'
   >('todos');
 
+  const [novidadeTitulo, setNovidadeTitulo] = useState('Novidade no AvantaLab');
+  const [novidadeMensagem, setNovidadeMensagem] = useState('');
+  const [enviandoNovidade, setEnviandoNovidade] = useState(false);
+  const [resultadoNovidade, setResultadoNovidade] = useState('');
+
+  const dispararNovidade = async () => {
+    const tokenLimpo = token.trim();
+    const mensagem = novidadeMensagem.trim();
+    const titulo = novidadeTitulo.trim() || 'Novidade';
+
+    if (!mensagem) {
+      setResultadoNovidade('Digite a mensagem.');
+      return;
+    }
+
+    if (!window.confirm('Enviar este aviso para TODOS os usuários?')) return;
+
+    setEnviandoNovidade(true);
+    setResultadoNovidade('');
+
+    try {
+      const url = (process.env.NEXT_PUBLIC_SUPABASE_URL || '') + '/functions/v1/broadcast';
+      const anon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
+      const resposta = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          apikey: anon,
+          Authorization: `Bearer ${anon}`,
+        },
+        body: JSON.stringify({ token: tokenLimpo, titulo, corpo: mensagem }),
+      });
+      const dados = await resposta.json();
+
+      if (!resposta.ok || !dados.ok) {
+        setResultadoNovidade(dados.erro || 'Não foi possível enviar.');
+      } else {
+        setResultadoNovidade(
+          `Enviado! Avisos criados: ${dados.usuarios}, notificações push: ${dados.enviados}.`
+        );
+        setNovidadeMensagem('');
+      }
+    } catch {
+      setResultadoNovidade('Erro ao enviar.');
+    } finally {
+      setEnviandoNovidade(false);
+    }
+  };
+
   const feedbacksFiltrados = useMemo(() => {
     if (filtroTipo === 'todos') return feedbacks;
 
@@ -340,6 +389,44 @@ export default function PaginaAdminFeedbacks() {
 
         {acessoLiberado && (
           <>
+            <section className="mb-5 rounded-2xl border border-slate-200 bg-white p-4 shadow">
+              <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">
+                Comunicação
+              </p>
+              <h2 className="mt-0.5 text-lg font-black text-slate-900">
+                Disparar aviso para usuários
+              </h2>
+              <p className="mt-0.5 text-xs text-slate-500">
+                Envia notificação push e aviso no sininho (mobile e web) para todos os usuários.
+              </p>
+              <div className="mt-3 grid gap-2">
+                <input
+                  value={novidadeTitulo}
+                  onChange={(e) => setNovidadeTitulo(e.target.value)}
+                  placeholder="Título (ex: Novidade!)"
+                  className="rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm font-bold text-slate-800 outline-none transition focus:border-sky-600 focus:ring-2 focus:ring-sky-600/20"
+                />
+                <textarea
+                  value={novidadeMensagem}
+                  onChange={(e) => setNovidadeMensagem(e.target.value)}
+                  rows={3}
+                  placeholder="Mensagem curta..."
+                  className="rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-800 outline-none transition focus:border-sky-600 focus:ring-2 focus:ring-sky-600/20"
+                />
+                <button
+                  type="button"
+                  onClick={dispararNovidade}
+                  disabled={enviandoNovidade}
+                  className="rounded-xl bg-sky-700 px-5 py-2.5 text-xs font-black uppercase tracking-wide text-white shadow-lg shadow-sky-900/20 transition hover:bg-sky-800 disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  {enviandoNovidade ? 'Enviando...' : 'Disparar para todos'}
+                </button>
+                {resultadoNovidade && (
+                  <p className="text-xs font-bold text-slate-600">{resultadoNovidade}</p>
+                )}
+              </div>
+            </section>
+
             <section className="mb-5 rounded-2xl border border-slate-200 bg-white p-4 shadow">
               <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
                 <div>
