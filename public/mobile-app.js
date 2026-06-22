@@ -399,7 +399,7 @@
     return '<div class="mx-auto max-w-md px-4 py-5">' + conteudo + '</div>';
   }
 
-  var APP_VERSION = '1.2.4';
+  var APP_VERSION = '1.2.5';
   var APP_VERSION_LABEL = 'AvantaLab Gest&atilde;o v' + APP_VERSION;
 
   function telaAvisoMobile(titulo, texto) {
@@ -5401,7 +5401,7 @@
         '</label>' +
         alertaHtml().replace('mt-4', '') +
         '<button id="salvar-categoria" type="button" class="h-10 rounded-xl bg-slate-950 px-4 text-xs font-black uppercase tracking-wide text-white">' + (state.carregando ? 'Salvando...' : 'Cadastrar despesa') + '</button>' +
-        '<div class="mt-1 max-h-[42vh] overflow-y-auto rounded-xl border border-slate-100 p-1 grid gap-1.5">' +
+        '<div id="categorias-lista-scroll" data-preserve-scroll class="mt-1 max-h-[42vh] overflow-y-auto rounded-xl border border-slate-100 p-1 grid gap-1.5">' +
           state.despesas.map(function (despesa) {
             return categoriaLinhaHtml(despesa);
           }).join('') +
@@ -6766,7 +6766,7 @@
     });
 
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/mobile-sw.js?v=131').then(function (registro) {
+      navigator.serviceWorker.register('/mobile-sw.js?v=132').then(function (registro) {
         if (registro && registro.update) registro.update();
       }).catch(function () {});
     }
