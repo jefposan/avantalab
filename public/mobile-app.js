@@ -4969,10 +4969,10 @@
     var saud = 'Ol&aacute;' + (primeiro ? ', ' + escapeHtml(primeiro) : '') + '.';
 
     var sugs = [
-      { ic:'chart',  cor:'#f59e0b', bg:'rgba(245,158,11,0.16)', t:'Quanto gastei este mes?' },
-      { ic:'doc',    cor:'#22c55e', bg:'rgba(34,197,94,0.16)',  t:'Por onde devo iniciar?' },
-      { ic:'plus',   cor:'#ef4444', bg:'rgba(239,68,68,0.16)',  t:'Registrar nova despesa' },
-      { ic:'wallet', cor:'#3b82f6', bg:'rgba(59,130,246,0.16)', t:'Qual o meu saldo atual?' }
+      { ic:'doc',    cor:'#22c55e', bg:'rgba(34,197,94,0.16)',  t:'Por onde inicio o uso do sistema?' },
+      { ic:'chart',  cor:'#f59e0b', bg:'rgba(245,158,11,0.16)', t:'Analise meus resultados.' },
+      { ic:'wallet', cor:'#3b82f6', bg:'rgba(59,130,246,0.16)', t:'Como reduzir gastos sem afetar o essencial?' },
+      { ic:'plus',   cor:'#ef4444', bg:'rgba(239,68,68,0.16)',  t:'Como montar uma reserva de emergência?' }
     ];
     var cards = sugs.map(function(srg, i) {
       return '<button id="chat-ia-sug-' + i + '" type="button" style="' +
@@ -4988,7 +4988,7 @@
     var welcome =
       '<div style="text-align:center;padding:18px 6px 4px;">' +
         '<p style="margin:0;font-size:18px;font-weight:800;color:' + C.text + ';letter-spacing:-0.01em;">' + saud + '</p>' +
-        '<p style="margin:7px auto 0;max-width:282px;font-size:12.5px;line-height:1.5;color:' + C.muted + ';">Pergunte sobre periodos, categorias, contas ou tipos de transacao.</p>' +
+        '<p style="margin:7px auto 0;max-width:282px;font-size:12.5px;line-height:1.5;color:' + C.muted + ';">Sou a Ava, sua assistente financeira. Como posso ajudar?</p>' +
       '</div>' +
       '<div style="display:grid;grid-template-columns:1fr 1fr;gap:9px;padding:14px 2px 4px;">' + cards + '</div>';
 
@@ -6326,7 +6326,7 @@
         e.preventDefault();
       }, { passive: false });
     }
-    var _avaSug = ['Quanto gastei este mes?', 'Por onde devo iniciar?', 'Quero registrar uma nova despesa', 'Qual e o meu saldo atual?'];
+    var _avaSug = ['Por onde inicio o uso do sistema?', 'Analise meus resultados.', 'Como reduzir gastos sem afetar o essencial?', 'Como montar uma reserva de emergência?'];
     for (var _si = 0; _si < _avaSug.length; _si++) {
       (function(idx) {
         bind('chat-ia-sug-' + idx, function() {
