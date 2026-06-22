@@ -619,6 +619,9 @@ useEffect(() => {
 
 const carregarEmpresaSelecionada = async (empresa: any) => {
   setCarregandoPerfil(true);
+  // Fecha o card de selecao na hora (antes do trabalho assincrono)
+  setModalSelecionarEmpresa(false);
+  setModalEmpresasAberto(false);
   // Rede de seguranca: nunca deixar o loading preso
   setTimeout(() => setCarregandoPerfil(false), 12000);
   const mesAtual = meses[new Date().getMonth()];
