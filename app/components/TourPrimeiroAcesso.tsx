@@ -14,6 +14,7 @@ type Passo = {
   localizacao: string;
   titulo: string;
   descricao: string;
+  destaque?: boolean;
 };
 
 const PASSOS: Passo[] = [
@@ -22,98 +23,78 @@ const PASSOS: Passo[] = [
     localizacao: '',
     titulo: 'Bem-vindo ao AvantaLab Gestão!',
     descricao:
-      'Este passo a passo vai te guiar pelos principais recursos do sistema. Você pode pular a qualquer momento e acessar novamente pelo menu Ajustes → Tutorial.',
+      'Vamos te mostrar os principais recursos em poucos passos. E o mais importante: sempre que tiver qualquer dúvida sobre como usar o sistema, é só perguntar à Ava, nossa assistente de inteligência artificial. Você pode pular este tour quando quiser e revê-lo em Ajustes → Tutorial.',
+  },
+  {
+    icone: '🤖',
+    localizacao: 'Botão no canto inferior direito',
+    titulo: 'Converse com a Ava',
+    descricao:
+      'A Ava é sua assistente de IA dentro do AvantaLab. Pergunte como usar qualquer função, peça análises dos seus números e dicas financeiras. Ela conhece todo o sistema e responde na hora — use sempre que tiver uma dúvida, em vez de ficar procurando.',
+    destaque: true,
+  },
+  {
+    icone: '✅',
+    localizacao: 'Ajustes → Cadastrar despesas',
+    titulo: 'Por onde começar: cadastrar despesas',
+    descricao:
+      'O primeiro passo para usar o sistema é cadastrar as suas despesas, conforme a sua necessidade. Em Ajustes → "Cadastrar despesas", adicione cada tipo de despesa e a sua categoria. É isso que alimenta os lançamentos e os relatórios.',
   },
   {
     icone: '⚙️',
-    localizacao: 'Barra superior → botão Ajustes',
+    localizacao: 'Barra superior → Ajustes',
     titulo: 'Menu Ajustes',
     descricao:
-      'Clique em "Ajustes" na barra superior para acessar todas as configurações do sistema: logo, cor, usuários, perfis financeiros, backup e muito mais. O menu se expande logo abaixo da barra.',
+      'No botão "Ajustes" você acessa todas as configurações: logo e cor do perfil, cadastro de despesas, usuários, perfis financeiros, backup e preferências. O menu se expande logo abaixo da barra.',
   },
   {
-    icone: '🎨',
-    localizacao: 'Ajustes → Logo / Cor Tema',
-    titulo: 'Logo e cor do perfil',
+    icone: '💰',
+    localizacao: 'Início → clique em um mês',
+    titulo: 'Entradas e total do mês',
     descricao:
-      'Personalize a identidade visual do perfil financeiro. Adicione a logomarca (PNG, JPG ou SVG) e escolha a cor principal que será aplicada em todos os elementos visuais do sistema.',
+      'No Início, clique em qualquer mês para abrir os lançamentos. No topo, registre as entradas (receitas) e o total do mês — esses valores alimentam o balanço automaticamente.',
   },
   {
-    icone: '📋',
-    localizacao: 'Ajustes → Cadastrar Despesas / Instruções categorias',
-    titulo: 'Despesas base e categorias',
+    icone: '📊',
+    localizacao: 'Início → mês selecionado → tabela de despesas',
+    titulo: 'Lançar despesas',
     descricao:
-      'Cadastre as despesas fixas e recorrentes do perfil. Use "Instruções categorias" para entender como classificar cada tipo de gasto e garantir relatórios precisos.',
+      'Dentro do mês, registre cada despesa por categoria. O sistema avisa lançamentos duplicados e mostra o total por categoria. Você também pode criar despesas fixas (lançadas todo mês) e parcelar em vários meses.',
+  },
+  {
+    icone: '📈',
+    localizacao: 'Menu superior → Balanço, Gráficos, Por Categoria, Relatório',
+    titulo: 'Dashboard, gráficos e relatórios',
+    descricao:
+      'Tudo o que você lança vira análise automaticamente: balanço geral, evolução mensal, visão por categoria e relatório completo, pelos itens do menu superior.',
+  },
+  {
+    icone: '📅',
+    localizacao: 'Sininho no topo / Ajustes → Agenda',
+    titulo: 'Agenda e notificações',
+    descricao:
+      'Crie lembretes e avisos com repetição (diária, semanal, quinzenal, mensal ou anual). Eles aparecem no sininho e, no celular, chegam como notificação — mesmo com o app fechado. Ative as notificações pelo menu para receber.',
   },
   {
     icone: '👥',
     localizacao: 'Ajustes → Usuários',
     titulo: 'Usuários e permissões',
     descricao:
-      'Adicione colaboradores com diferentes níveis de acesso: Gestor Master, Administrador, Operador Completo e Operador Simples. Cada perfil tem permissões específicas para manter a segurança dos dados.',
-  },
-  {
-    icone: '🏢',
-    localizacao: 'Ajustes → Perfil',
-    titulo: 'Perfis financeiros',
-    descricao:
-      'Gerencie os dados do perfil atual, crie novos perfis financeiros e alterne entre eles quando seu acesso estiver vinculado a mais de um perfil.',
+      'Adicione colaboradores com diferentes níveis de acesso: Gestor Master, Administrador, Operador Completo e Operador Simples. Cada perfil tem permissões próprias para manter a segurança dos dados.',
   },
   {
     icone: '💾',
     localizacao: 'Ajustes → Backup',
     titulo: 'Backup dos dados',
     descricao:
-      'Gere um arquivo Excel com todos os dados do perfil financeiro a qualquer momento. O sininho no topo da tela envia uma notificação mensal lembrando você de realizar o backup — não ignore esse aviso!',
-  },
-  {
-    icone: '🧮',
-    localizacao: 'Barra superior → ícone de calculadora',
-    titulo: 'Calculadora rápida',
-    descricao:
-      'Acesse a calculadora flutuante pelo ícone na barra superior. Ela suporta operações básicas, porcentagem e inversão de sinal. Pode ser arrastada pela tela e responde ao teclado.',
-  },
-  {
-    icone: '💰',
-    localizacao: 'Menu Início → clique em um mês',
-    titulo: 'Entradas mensais',
-    descricao:
-      'No Dashboard, clique em qualquer mês para abrir a visão de lançamentos. Na parte superior, registre entradas e defina o total do mês. Esses valores alimentam o balanço automaticamente.',
-  },
-  {
-    icone: '📊',
-    localizacao: 'Menu Início → mês selecionado → tabela de despesas',
-    titulo: 'Lançamento de despesas',
-    descricao:
-      'Dentro da visão mensal, registre cada despesa por categoria. O sistema detecta lançamentos duplicados e exibe o total por categoria para fácil acompanhamento.',
-  },
-  {
-    icone: '📈',
-    localizacao: 'Menu → Balanço Geral / Gráficos / Por Categoria / Relatório',
-    titulo: 'Dashboard, gráficos e relatórios',
-    descricao:
-      'Todos os dados lançados alimentam automaticamente as análises. Acesse Balanço Geral, Gráficos de evolução, visão Por Categoria e Relatório completo pelos itens do menu superior.',
-  },
-  {
-    icone: '💬',
-    localizacao: 'Canto inferior direito da tela',
-    titulo: 'Suporte e feedback',
-    descricao:
-      'O botão flutuante no canto inferior direito abre o canal de comunicação com a AvantaLab. Envie sugestões, tire dúvidas ou reporte problemas diretamente pelo sistema.',
-  },
-  {
-    icone: '✅',
-    localizacao: 'Ajustes → Cadastrar Despesas',
-    titulo: 'Por onde começar?',
-    descricao:
-      'O primeiro passo é cadastrar as despesas base do perfil financeiro. Acesse o menu Ajustes e clique em "Cadastrar Despesas". Lá você define todas as categorias e gastos recorrentes que serão usados nos lançamentos mensais. Com isso feito, o sistema estará pronto para uso completo.',
+      'Gere um arquivo Excel com todos os dados do perfil quando quiser. O sininho lembra você periodicamente de realizar o backup — não ignore esse aviso.',
   },
   {
     icone: '🚀',
     localizacao: '',
     titulo: 'Tudo pronto!',
     descricao:
-      'Você conheceu os principais recursos do AvantaLab Gestão. Explore à vontade! Este tutorial estará sempre disponível em Ajustes → Tutorial.',
+      'Você já conhece o essencial do AvantaLab Gestão. Explore à vontade — e lembre-se: qualquer dúvida sobre o uso, é só chamar a Ava no canto inferior direito. Este tutorial fica sempre disponível em Ajustes → Tutorial.',
   },
 ];
 
@@ -213,9 +194,20 @@ export default function TourPrimeiroAcesso({
           )}
 
           {/* Descrição */}
-          <p className={`text-sm leading-relaxed ${darkMode ? 'text-slate-300' : 'text-slate-600'}`}>
-            {atual.descricao}
-          </p>
+          {atual.destaque ? (
+            <div
+              className="rounded-xl border-2 p-3"
+              style={{ borderColor: corPrimaria, backgroundColor: corPrimaria + '14' }}
+            >
+              <p className={`text-sm leading-relaxed ${darkMode ? 'text-slate-200' : 'text-slate-700'}`}>
+                {atual.descricao}
+              </p>
+            </div>
+          ) : (
+            <p className={`text-sm leading-relaxed ${darkMode ? 'text-slate-300' : 'text-slate-600'}`}>
+              {atual.descricao}
+            </p>
+          )}
 
           {/* Dots de progresso — clicáveis */}
           <div className="mt-6 flex items-center justify-center gap-1.5 flex-wrap">
