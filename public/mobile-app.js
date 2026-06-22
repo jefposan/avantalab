@@ -4672,7 +4672,7 @@
 
     return (
       '<div id="modal-lancamento-overlay" class="fixed inset-0 z-40 flex items-center justify-center overflow-hidden bg-slate-950/60 px-3 py-4">' +
-        '<section class="mx-auto max-h-[calc(100dvh-32px)] w-full max-w-md overflow-x-hidden overflow-y-auto rounded-3xl bg-white p-4 shadow-2xl overscroll-contain">' +
+        '<section class="mx-auto w-full max-w-md overflow-x-hidden overflow-y-auto rounded-3xl bg-white p-4 shadow-2xl overscroll-contain" style="max-height:calc(100dvh - 32px - env(keyboard-inset-height, 0px));padding-bottom:calc(1.5rem + env(keyboard-inset-height, 0px));">' +
           (novaAberta
             ? '<div class="-mx-4 -mt-4 mb-5 flex items-center gap-3 rounded-t-3xl border-b border-sky-100 bg-sky-50 px-4 py-3">' +
                 '<button id="fechar-nova-despesa" type="button" class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-sky-100 text-lg font-black text-slate-700">&larr;</button>' +
@@ -6509,6 +6509,15 @@
         state.modalLancamento = false;
         state.erro = '';
         render();
+      });
+      // Android: ao focar um campo, rola ate ele ficar visivel acima do teclado
+      var camposModalLanc = modalLancamentoOverlay.querySelectorAll('input, select, textarea');
+      Array.prototype.forEach.call(camposModalLanc, function (campoEl) {
+        campoEl.addEventListener('focus', function () {
+          setTimeout(function () {
+            try { campoEl.scrollIntoView({ behavior: 'smooth', block: 'center' }); } catch (e) {}
+          }, 300);
+        });
       });
     }
     bind('tipo-despesa', function () {
