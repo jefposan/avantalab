@@ -4071,7 +4071,7 @@
               '<button id="menu-toggle" type="button" class="flex h-10 w-10 items-center justify-center rounded-full border border-white/15 bg-white/15 text-xl font-black text-white shadow-sm backdrop-blur" aria-label="Abrir menu">&#9776;</button>' +
               '<div class="min-w-0 text-center">' +
                 '<p class="text-[9px] font-black uppercase tracking-[0.26em] text-cyan-100">AvantaLab</p>' +
-                '<h1 class="mt-0.5 truncate text-sm font-black text-white">' + escapeHtml(nomeEmpresa(state.empresa)) + '</h1>' +
+                '<h1 class="mt-0.5 truncate text-sm font-black text-white">' + (function(){ var pn = primeiroNomeUsuarioAva(); return 'Ol&aacute;' + (pn ? ', ' + escapeHtml(pn) : ''); })() + '</h1>' +
               '</div>' +
               (state.visao === 'home'
                 ? ((agendaTemAvisoHoje() || state.notificacoesNaoLidas > 0)
