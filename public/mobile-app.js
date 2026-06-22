@@ -191,6 +191,7 @@
     agendaDiaSelecionado: null,
     agendaFormAberto: false,
     agendaItens: [],
+    notificacoesNaoLidas: 0,
     agendaTipoItem: 'lembrete',
     agendaTitulo: '',
     agendaDescricao: '',
@@ -742,6 +743,17 @@
     render();
   }
 
+  function excluirItemAgendaMobile(id) {
+    if (!id) return;
+    if (!window.confirm('Excluir este lembrete?')) return;
+    state.agendaItens = (state.agendaItens || []).filter(function (it) {
+      return String(it.id) !== String(id);
+    });
+    salvarAgendaItensMobile();
+    excluirItemAgendaSupabase(id);
+    render();
+  }
+
   function salvarItemAgendaMobile() {
     var dia = Number(state.agendaDiaSelecionado);
     var titulo = campo('agenda-titulo').trim();
@@ -1201,6 +1213,41 @@
     } catch (e) {
       mostrarToast('Falha ao ativar notificacoes.');
     }
+  }
+
+  // ─── Sininho + badge (notificacoes nao lidas) ───────────────
+  function atualizarBadgeApp(quantidade) {
+    try {
+      if ('setAppBadge' in navigator) {
+        if (quantidade > 0) navigator.setAppBadge(quantidade);
+        else if ('clearAppBadge' in navigator) navigator.clearAppBadge();
+      }
+    } catch (e) {}
+  }
+
+  async function carregarNotificacoesNaoLidas() {
+    if (!state.usuario || !state.usuario.id) return;
+    try {
+      var resposta = await db
+        .from('notificacoes')
+        .select('id', { count: 'exact', head: true })
+        .eq('lida', false);
+      if (resposta.error) return;
+      state.notificacoesNaoLidas = resposta.count || 0;
+      atualizarBadgeApp(state.notificacoesNaoLidas);
+      render();
+    } catch (e) {}
+  }
+
+  async function marcarNotificacoesComoLidas() {
+    state.notificacoesNaoLidas = 0;
+    atualizarBadgeApp(0);
+    render();
+    try {
+      if (state.usuario && state.usuario.id) {
+        await db.from('notificacoes').update({ lida: true }).eq('lida', false);
+      }
+    } catch (e) {}
   }
 
   async function instalarApp() {
@@ -1761,6 +1808,8 @@
 
     // Sincroniza a agenda com o servidor (em segundo plano)
     sincronizarAgendaSupabase();
+    // Atualiza a contagem de notificacoes nao lidas (sino + badge do icone)
+    carregarNotificacoesNaoLidas();
   }
 
   async function entrar() {
@@ -3817,8 +3866,12 @@
                 '<h1 class="mt-0.5 truncate text-sm font-black text-white">' + escapeHtml(nomeEmpresa(state.empresa)) + '</h1>' +
               '</div>' +
               (state.visao === 'home'
-                ? (agendaTemAvisoHoje()
-                  ? '<button id="avisos-dashboard" type="button" class="relative flex h-10 w-10 items-center justify-center rounded-full border border-white/15 bg-white/15 text-white shadow-sm backdrop-blur" aria-label="Avisos">' + sinoAvisoSvg() + '<span class="absolute right-1 top-1 h-2.5 w-2.5 rounded-full bg-rose-400 ring-2 ring-white/60"></span></button>'
+                ? ((agendaTemAvisoHoje() || state.notificacoesNaoLidas > 0)
+                  ? '<button id="avisos-dashboard" type="button" class="relative flex h-10 w-10 items-center justify-center rounded-full border border-white/15 bg-white/15 text-white shadow-sm backdrop-blur" aria-label="Avisos">' + sinoAvisoSvg() +
+                    (state.notificacoesNaoLidas > 0
+                      ? '<span class="absolute -right-1 -top-1 flex h-5 min-w-[20px] items-center justify-center rounded-full bg-rose-500 px-1 text-[10px] font-black text-white ring-2 ring-white/60">' + (state.notificacoesNaoLidas > 99 ? '99+' : state.notificacoesNaoLidas) + '</span>'
+                      : '<span class="absolute right-1 top-1 h-2.5 w-2.5 rounded-full bg-rose-400 ring-2 ring-white/60"></span>') +
+                    '</button>'
                   : '<span class="h-10 w-10" aria-hidden="true"></span>')
                 : '<button id="voltar-dashboard-topo" type="button" class="flex h-10 w-10 items-center justify-center rounded-full border border-white/15 bg-white/15 text-lg font-black text-white shadow-sm backdrop-blur" aria-label="Voltar ao dashboard">&#8962;</button>') +
             '</div>' +
@@ -3998,7 +4051,10 @@
             '<p class="truncate text-sm font-black text-slate-900">' + escapeHtml(item.titulo) + '</p>' +
             '<p class="mt-0.5 text-[10px] font-black uppercase tracking-wide text-cyan-700">Lembrete</p>' +
           '</div>' +
-          (item.repetir ? '<span class="shrink-0 rounded-full bg-cyan-50 px-2 py-1 text-[9px] font-black uppercase text-cyan-700">' + escapeHtml(rotuloRepeticaoAgenda(item.repeticao)) + '</span>' : '') +
+          '<div class="flex shrink-0 items-center gap-2">' +
+            (item.repetir ? '<span class="rounded-full bg-cyan-50 px-2 py-1 text-[9px] font-black uppercase text-cyan-700">' + escapeHtml(rotuloRepeticaoAgenda(item.repeticao)) + '</span>' : '') +
+            '<button type="button" data-agenda-excluir="' + escapeHtml(item.id) + '" class="flex h-7 w-7 items-center justify-center rounded-full bg-slate-200 text-base font-black leading-none text-slate-600 active:scale-95" aria-label="Excluir lembrete">&times;</button>' +
+          '</div>' +
         '</div>' +
         (item.descricao ? '<p class="mt-2 text-xs font-semibold leading-relaxed text-slate-500">' + escapeHtml(item.descricao) + '</p>' : '') +
       '</div>'
@@ -5969,6 +6025,7 @@
     bind('feedback-outra', voltarFeedbackMobile);
     bind('abrir-agenda-card', abrirAgendaMobile);
     bind('avisos-dashboard', function () {
+      marcarNotificacoesComoLidas();
       abrirAgendaMobile();
       var hoje = new Date();
       state.mes = meses[hoje.getMonth()];
@@ -6003,6 +6060,12 @@
         state.agendaDiaSelecionado = Number(botao.getAttribute('data-agenda-dia')) || 1;
         state.agendaFormAberto = false;
         render();
+      });
+    });
+    Array.prototype.forEach.call(document.querySelectorAll('[data-agenda-excluir]'), function (botao) {
+      botao.addEventListener('click', function (evento) {
+        evento.stopPropagation();
+        excluirItemAgendaMobile(botao.getAttribute('data-agenda-excluir'));
       });
     });
     bind('cancelar-edicao-usuario', function () {
@@ -6912,6 +6975,11 @@
     }
 
     configurarPullToRefresh();
+
+    // Ao voltar ao app (apos receber um push), reconfere as nao lidas
+    document.addEventListener('visibilitychange', function () {
+      if (!document.hidden) carregarNotificacoesNaoLidas();
+    });
 
     render();
 

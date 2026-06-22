@@ -42,7 +42,9 @@ alter table public.notificacoes
   add column if not exists origem_id text,
   add column if not exists ref_data date;
 
--- Garante UMA notificacao por item por dia (o job usa ON CONFLICT)
+-- Garante UMA notificacao por item por dia (o job usa ON CONFLICT).
+-- Indice NAO-parcial de proposito: o upsert/ON CONFLICT nao consegue
+-- inferir um indice parcial. NULLs sao tratados como distintos pelo
+-- Postgres, entao notificacoes sem origem_id nao conflitam entre si.
 create unique index if not exists notificacoes_origem_ref_uidx
-  on public.notificacoes(origem_id, ref_data)
-  where origem_id is not null;
+  on public.notificacoes(origem_id, ref_data);
