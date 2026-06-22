@@ -842,11 +842,11 @@
     }
 
     return (
-      '<div class="relative flex h-16 items-center gap-2 overflow-hidden rounded-3xl border border-white/15 bg-white/10 px-3 shadow-sm backdrop-blur">' +
-        '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true" class="shrink-0 text-cyan-200"><rect x="3.5" y="4.5" width="17" height="16" rx="2.5" stroke="currentColor" stroke-width="2"/><path d="M3.5 9h17M8 3v3M16 3v3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>' +
+      '<div class="relative flex h-11 items-center gap-1.5 overflow-hidden rounded-2xl border border-white/15 bg-white/10 px-2 shadow-sm backdrop-blur">' +
+        '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" aria-hidden="true" class="shrink-0 text-cyan-200"><rect x="3.5" y="4.5" width="17" height="16" rx="2.5" stroke="currentColor" stroke-width="2"/><path d="M3.5 9h17M8 3v3M16 3v3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>' +
         '<div class="leading-none">' +
-          '<p class="text-xl font-black text-white">' + escapeHtml(String(state.ano)) + '</p>' +
-          '<p class="mt-0.5 text-[10px] font-black uppercase tracking-wide text-cyan-300">Ano</p>' +
+          '<p class="text-sm font-black text-white">' + escapeHtml(String(state.ano)) + '</p>' +
+          '<p class="mt-0.5 text-[8px] font-black uppercase tracking-wide text-cyan-300">Ano</p>' +
         '</div>' +
         '<select id="ano" aria-label="Selecionar ano" style="font-size:16px" class="absolute inset-0 cursor-pointer opacity-0">' +
           opcoes.join('') +
@@ -4072,11 +4072,11 @@
       '<div class="' + (state.visao === 'agenda' ? 'h-screen overflow-hidden' : 'min-h-screen pb-24') + ' mobile-app-shell ' + (state.darkMode ? 'mobile-dark bg-slate-950 text-slate-100' : 'mobile-light bg-slate-100 text-slate-900') + '">' +
         '<header class="fixed inset-x-0 top-0 z-40 border-b border-white/15 px-4 pb-3 text-white shadow-xl shadow-sky-950/20 backdrop-blur" style="padding-top:calc(env(safe-area-inset-top) + 10px);background:linear-gradient(135deg,#003E73 0%,#075985 54%,#00A6C8 100%);">' +
           '<div class="mx-auto max-w-md">' +
-            '<div class="flex items-center gap-4">' +
-              '<button id="menu-toggle" type="button" class="flex h-14 w-14 shrink-0 items-center justify-center rounded-full border border-white/20 bg-white/12 text-2xl font-black text-white shadow-sm backdrop-blur" aria-label="Abrir menu">&#9776;</button>' +
+            '<div class="flex items-center gap-3">' +
+              '<button id="menu-toggle" type="button" class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-white/20 bg-white/12 text-lg font-black text-white shadow-sm backdrop-blur" aria-label="Abrir menu">&#9776;</button>' +
               '<div class="min-w-0 flex-1">' +
-                '<h1 class="truncate text-3xl font-black leading-none text-white">' + (function(){ var pn = primeiroNomeUsuarioAva(); return 'Ol&aacute;' + (pn ? ', ' + escapeHtml(pn) : ''); })() + '</h1>' +
-                '<p class="mt-1.5 truncate text-sm font-semibold text-cyan-100/80">Bem-vindo ao AvantaLab</p>' +
+                '<h1 class="truncate text-lg font-black leading-tight text-white">' + (function(){ var pn = primeiroNomeUsuarioAva(); return 'Ol&aacute;' + (pn ? ', ' + escapeHtml(pn) : ''); })() + '</h1>' +
+                '<p class="truncate text-[11px] font-semibold text-cyan-100/75">Bem-vindo ao AvantaLab</p>' +
               '</div>' +
               (state.visao === 'home'
                 ? ((agendaTemAvisoHoje() || state.notificacoesNaoLidas > 0)
@@ -4088,22 +4088,22 @@
                   : '<span class="h-10 w-10 shrink-0" aria-hidden="true"></span>')
                 : '<button id="voltar-dashboard-topo" type="button" class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-white/15 bg-white/15 text-lg font-black text-white shadow-sm backdrop-blur" aria-label="Voltar ao dashboard">&#8962;</button>') +
             '</div>' +
-            '<div class="mt-5 grid grid-cols-[120px_minmax(0,1fr)] gap-3">' +
+            '<div class="mt-3 grid grid-cols-[84px_minmax(0,1fr)] gap-2">' +
               anoHeaderHtml() +
-              '<div class="flex h-16 items-center justify-between rounded-3xl border border-white/15 bg-white/10 px-2 shadow-sm backdrop-blur">' +
-                '<button id="mes-anterior" type="button" class="flex h-11 w-11 items-center justify-center rounded-full text-3xl font-black leading-none text-white active:bg-white/10" aria-label="Mes anterior">&lsaquo;</button>' +
-                '<h2 class="min-w-0 flex-1 truncate px-1 text-center text-xl font-black tracking-wide text-white">' + escapeHtml(state.mes.charAt(0) + state.mes.slice(1).toLowerCase()) + '</h2>' +
-                '<button id="mes-proximo" type="button" class="flex h-11 w-11 items-center justify-center rounded-full text-3xl font-black leading-none text-white active:bg-white/10" aria-label="Proximo mes">&rsaquo;</button>' +
+              '<div class="flex h-11 items-center justify-between rounded-2xl border border-white/15 bg-white/10 px-1 shadow-sm backdrop-blur">' +
+                '<button id="mes-anterior" type="button" class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-2xl font-black leading-none text-white active:bg-white/10" aria-label="Mes anterior">&lsaquo;</button>' +
+                '<h2 class="min-w-0 flex-1 truncate text-center text-base font-black tracking-wide text-white">' + escapeHtml(state.mes.charAt(0) + state.mes.slice(1).toLowerCase()) + '</h2>' +
+                '<button id="mes-proximo" type="button" class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-2xl font-black leading-none text-white active:bg-white/10" aria-label="Proximo mes">&rsaquo;</button>' +
               '</div>' +
             '</div>' +
-            '<div class="mt-3 flex items-center gap-2 text-xs">' +
-              '<span class="flex h-5 w-5 shrink-0 items-center justify-center rounded-full border border-cyan-300/60 text-[10px] font-black text-cyan-200">i</span>' +
+            '<div class="mt-2 flex items-center gap-1.5 text-[11px]">' +
+              '<span class="flex h-4 w-4 shrink-0 items-center justify-center rounded-full border border-cyan-300/60 text-[9px] font-black text-cyan-200">i</span>' +
               '<span class="font-semibold text-cyan-50/75">Per&iacute;odo ativo</span>' +
               '<span class="font-black text-cyan-300">&bull; ' + escapeHtml(state.mes.charAt(0) + state.mes.slice(1).toLowerCase()) + '/' + escapeHtml(String(state.ano)) + '</span>' +
             '</div>' +
           '</div>' +
         '</header>' +
-        '<div class="mx-auto grid max-w-md gap-3 px-4" style="padding-top:calc(env(safe-area-inset-top) + ' + (state.visao === 'agenda' ? '226px' : '210px') + ');">' +
+        '<div class="mx-auto grid max-w-md gap-3 px-4" style="padding-top:calc(env(safe-area-inset-top) + ' + (state.visao === 'agenda' ? '168px' : '152px') + ');">' +
           (state.visao === 'agenda' ? '' : empresaHtml()) +
           alertaHtml().replace('mt-4', '') +
           (state.visao === 'home' ? homeHtml(atual, anterior) : (state.visao === 'agenda' ? agendaMobileHtml(atual) : listaDetalhadaHtml(atual))) +
