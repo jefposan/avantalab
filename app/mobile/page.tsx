@@ -158,6 +158,25 @@ export default function MobilePage() {
             .mobile-dark textarea::placeholder {
               color: #94a3b8 !important;
             }
+
+            /* Sub-botoes de Configuracoes: aparencia de sub-itens com bolinha */
+            .cfg-sub-group > button {
+              position: relative;
+            }
+            .cfg-sub-group > button::before {
+              content: '\\2022';
+              position: absolute;
+              left: -13px;
+              top: 50%;
+              transform: translateY(-50%);
+              color: #0f172a;
+              font-weight: 900;
+              font-size: 14px;
+              line-height: 1;
+            }
+            .mobile-dark .cfg-sub-group > button::before {
+              color: #cbd5e1;
+            }
           `,
         }}
       />
