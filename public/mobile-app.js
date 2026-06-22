@@ -4869,7 +4869,7 @@
 
     var sugs = [
       { ic:'chart',  cor:'#f59e0b', bg:'rgba(245,158,11,0.16)', t:'Quanto gastei este mes?' },
-      { ic:'doc',    cor:'#22c55e', bg:'rgba(34,197,94,0.16)',  t:'Relatorio por categorias' },
+      { ic:'doc',    cor:'#22c55e', bg:'rgba(34,197,94,0.16)',  t:'Por onde devo iniciar?' },
       { ic:'plus',   cor:'#ef4444', bg:'rgba(239,68,68,0.16)',  t:'Registrar nova despesa' },
       { ic:'wallet', cor:'#3b82f6', bg:'rgba(59,130,246,0.16)', t:'Qual o meu saldo atual?' }
     ];
@@ -6205,7 +6205,7 @@
         e.preventDefault();
       }, { passive: false });
     }
-    var _avaSug = ['Quanto gastei este mes?', 'Crie um relatorio de gastos por categorias', 'Quero registrar uma nova despesa', 'Qual e o meu saldo atual?'];
+    var _avaSug = ['Quanto gastei este mes?', 'Por onde devo iniciar?', 'Quero registrar uma nova despesa', 'Qual e o meu saldo atual?'];
     for (var _si = 0; _si < _avaSug.length; _si++) {
       (function(idx) {
         bind('chat-ia-sug-' + idx, function() {
