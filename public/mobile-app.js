@@ -1068,6 +1068,65 @@
     document.body.style.overflow = '';
   }
 
+  // ─── Notificacoes push (Web Push / VAPID) ───────────────────
+  var VAPID_PUBLIC_KEY = 'BL_wlTejki6TPH1TJSHw8q6VeeSoaoH5Ciiirjs0nSg0M4riD5jl-RnkUVArlGMuI5h-eshP98kQKFPsjjM7f4c';
+
+  function urlBase64ToUint8Array(base64String) {
+    var padding = '='.repeat((4 - (base64String.length % 4)) % 4);
+    var base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+    var raw = atob(base64);
+    var arr = new Uint8Array(raw.length);
+    for (var i = 0; i < raw.length; i++) arr[i] = raw.charCodeAt(i);
+    return arr;
+  }
+
+  async function ativarNotificacoesMobile() {
+    try {
+      if (!('serviceWorker' in navigator) || !('PushManager' in window) || !('Notification' in window)) {
+        mostrarToast('Este aparelho/navegador nao suporta notificacoes push.');
+        return;
+      }
+      if (!state.usuario || !state.usuario.id) {
+        mostrarToast('Faca login para ativar as notificacoes.');
+        return;
+      }
+
+      var permissao = await Notification.requestPermission();
+      if (permissao !== 'granted') {
+        mostrarToast('Permissao de notificacao negada.');
+        return;
+      }
+
+      var registro = await navigator.serviceWorker.ready;
+      var inscricao = await registro.pushManager.getSubscription();
+      if (!inscricao) {
+        inscricao = await registro.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY),
+        });
+      }
+
+      var dados = inscricao.toJSON();
+      var resultado = await db.from('push_subscriptions').upsert({
+        user_id: state.usuario.id,
+        empresa_id: state.empresa ? state.empresa.id : null,
+        endpoint: dados.endpoint,
+        p256dh: dados.keys ? dados.keys.p256dh : '',
+        auth: dados.keys ? dados.keys.auth : '',
+        user_agent: navigator.userAgent,
+        atualizado_em: new Date().toISOString(),
+      }, { onConflict: 'endpoint' });
+
+      if (resultado.error) {
+        mostrarToast('Nao foi possivel salvar a inscricao.');
+        return;
+      }
+      mostrarToast('Notificacoes ativadas neste aparelho.');
+    } catch (e) {
+      mostrarToast('Falha ao ativar notificacoes.');
+    }
+  }
+
   async function instalarApp() {
     if (state.isIos) {
       abrirModalMenu('instalar-ios');
@@ -4505,6 +4564,7 @@
           '</div>' +
           '<div class="grid gap-2">' +
             menuBotaoHtml('menu-agenda', 'Agenda', 'Lembretes e avisos', '&#128197;') +
+            menuBotaoHtml('menu-notificacoes', 'Ativar notificacoes', 'Receber avisos no celular', '&#128276;') +
             menuBotaoHtml('menu-configurar-resumo', 'Organizar resumo', 'Exibir e ocultar cards', '&#9776;') +
             menuBotaoHtml('menu-categorias', 'Cadastrar despesas', 'Adicionar tipos de despesa', '+') +
             menuBotaoHtml('menu-despesas-fixas', 'Despesas fixas', 'Lancamentos automaticos mensais', '&#10227;') +
@@ -5715,6 +5775,7 @@
     bind('menu-gerenciar', function () { abrirModalMenu('gerenciar'); });
     bind('menu-organizar-dashboard', function () { abrirModalMenu('organizarDashboard'); });
     bind('menu-agenda', abrirAgendaMobile);
+    bind('menu-notificacoes', function () { state.menuAberto = false; render(); ativarNotificacoesMobile(); });
     bind('menu-categorias', function () { abrirModalMenu('categorias'); });
     bind('menu-despesas-fixas', function () { abrirModalMenuDespesasFixas(); });
     bind('menu-ajuda-categorias', function () { abrirModalMenu('ajudaCategorias'); });
