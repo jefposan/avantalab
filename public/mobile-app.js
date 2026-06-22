@@ -6510,15 +6510,6 @@
         state.erro = '';
         render();
       });
-      // Android: ao focar um campo, rola ate ele ficar visivel acima do teclado
-      var camposModalLanc = modalLancamentoOverlay.querySelectorAll('input, select, textarea');
-      Array.prototype.forEach.call(camposModalLanc, function (campoEl) {
-        campoEl.addEventListener('focus', function () {
-          setTimeout(function () {
-            try { campoEl.scrollIntoView({ behavior: 'smooth', block: 'center' }); } catch (e) {}
-          }, 300);
-        });
-      });
     }
     bind('tipo-despesa', function () {
       state.tipoLancamento = 'despesa';
@@ -7213,6 +7204,21 @@
     // Ao voltar ao app (apos receber um push), reconfere as nao lidas
     document.addEventListener('visibilitychange', function () {
       if (!document.hidden) carregarNotificacoesNaoLidas();
+    });
+
+    // Android: ao focar um campo dentro de qualquer modal/formulario, rola
+    // ate ele ficar visivel acima do teclado (cobre todos os cards de uma vez).
+    // O chat da Ava usa contenteditable, entao nao e afetado por este seletor.
+    document.addEventListener('focusin', function (e) {
+      // No iOS o Safari ja rola o campo sozinho; nao mexemos pra nao conflitar.
+      if (state.isIos) return;
+      var el = e.target;
+      if (!el || typeof el.matches !== 'function') return;
+      if (!el.matches('input, select, textarea')) return;
+      if (!(deveBloquearScroll() || state.agendaFormAberto)) return;
+      setTimeout(function () {
+        try { el.scrollIntoView({ behavior: 'smooth', block: 'center' }); } catch (err) {}
+      }, 300);
     });
 
     render();
