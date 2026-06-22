@@ -21,6 +21,11 @@ create table if not exists public.agenda_itens (
   criado_em   timestamptz not null default now()
 );
 
+-- Datas de ocorrencias removidas individualmente (exclusao de 1 dia no web).
+-- Formato de cada item: "ANO-MESINDEX(0-11)-DIA" (ex.: "2026-5-22").
+alter table public.agenda_itens
+  add column if not exists excluir_dias text[] not null default '{}';
+
 create index if not exists agenda_itens_user_id_idx on public.agenda_itens(user_id);
 
 alter table public.agenda_itens enable row level security;

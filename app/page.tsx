@@ -1152,6 +1152,13 @@ useEffect(() => {
   } catch {}
 }, []);
 
+// Agenda: sincroniza com o Supabase quando o perfil esta ativo
+useEffect(() => {
+  if (!mounted || !empresaId) return;
+  sincronizarAgendaSupabaseWeb();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+}, [mounted, empresaId]);
+
   // --- CÁLCULOS E FUNÇÕES ---
 
   // ---- AGENDA WEB ----
@@ -1159,6 +1166,91 @@ useEffect(() => {
 
   function salvarAgendaItensWeb(itens: AgendaItem[]) {
     try { localStorage.setItem('avantalab_web_agenda_itens', JSON.stringify(itens)); } catch {}
+  }
+
+  // ---- Sincronizacao da agenda com o Supabase (compartilhada com o mobile) ----
+  const MESES_AGENDA_UP = MESES_AGENDA.map(m => m.toUpperCase());
+
+  function agendaMesNome(mes: number) { return MESES_AGENDA_UP[mes] || ''; }
+  function agendaMesIndex(nome: string) {
+    const i = MESES_AGENDA_UP.indexOf(String(nome || '').toUpperCase());
+    return i < 0 ? 0 : i;
+  }
+
+  function agendaItemFromSupabase(r: any): AgendaItem {
+    return {
+      id: String(r.id),
+      titulo: r.titulo || '',
+      descricao: r.descricao || '',
+      dia: Number(r.dia) || 1,
+      mes: agendaMesIndex(r.mes),
+      ano: Number(r.ano) || new Date().getFullYear(),
+      repetir: !!r.repetir,
+      repeticao: (r.repeticao || 'mensal') as AgendaItem['repeticao'],
+      criadoEm: r.criado_em || new Date().toISOString(),
+      excluirDias: Array.isArray(r.excluir_dias) ? r.excluir_dias : [],
+    };
+  }
+
+  async function agendaItemToSupabaseWeb(item: AgendaItem) {
+    const { data: u } = await supabase.auth.getUser();
+    return {
+      id: String(item.id),
+      user_id: u.user?.id || null,
+      empresa_id: empresaId || null,
+      tipo: 'lembrete',
+      titulo: item.titulo || '',
+      descricao: item.descricao || '',
+      ano: String(item.ano || ''),
+      mes: agendaMesNome(item.mes),
+      dia: Number(item.dia) || 1,
+      repetir: !!item.repetir,
+      repeticao: item.repetir ? item.repeticao : '',
+      excluir_dias: item.excluirDias || [],
+    };
+  }
+
+  async function gravarItemAgendaSupabaseWeb(item: AgendaItem) {
+    try {
+      const row = await agendaItemToSupabaseWeb(item);
+      if (!row.user_id) return;
+      await supabase.from('agenda_itens').upsert(row, { onConflict: 'id' });
+    } catch {}
+  }
+
+  async function excluirItemAgendaSupabaseWeb(id: string) {
+    try {
+      await supabase.from('agenda_itens').delete().eq('id', String(id));
+      await supabase.from('notificacoes').delete().eq('origem_id', String(id));
+    } catch {}
+  }
+
+  async function atualizarExcluirDiasSupabaseWeb(id: string, dias: string[]) {
+    try {
+      await supabase.from('agenda_itens').update({ excluir_dias: dias }).eq('id', String(id));
+    } catch {}
+  }
+
+  async function sincronizarAgendaSupabaseWeb() {
+    try {
+      const { data: u } = await supabase.auth.getUser();
+      const userId = u.user?.id;
+      if (!userId) return;
+      const { data, error } = await supabase.from('agenda_itens').select('*').eq('user_id', userId);
+      if (error) return;
+      const remotos = (data || []).map(agendaItemFromSupabase);
+      const idsRemotos = new Set(remotos.map(r => String(r.id)));
+      setAgendaItens(prev => {
+        const locais = prev || [];
+        const soLocais = locais.filter(l => !idsRemotos.has(String(l.id)));
+        const combinados = [...remotos, ...soLocais];
+        setTimeout(() => {
+          salvarAgendaItensWeb(combinados);
+          soLocais.forEach(l => { gravarItemAgendaSupabaseWeb(l); });
+        }, 0);
+        return combinados;
+      });
+    } catch {}
   }
 
   function diasEntreDatasAgenda(inicio: Date, fim: Date) {
@@ -1215,6 +1307,7 @@ useEffect(() => {
     const novosItens = [...agendaItens, novoItem];
     setAgendaItens(novosItens);
     salvarAgendaItensWeb(novosItens);
+    gravarItemAgendaSupabaseWeb(novoItem);
     setAgendaTitulo('');
     setAgendaDescricao('');
     setAgendaRepetir(false);
@@ -1226,17 +1319,20 @@ useEffect(() => {
     const novosItens = agendaItens.filter(item => item.id !== id);
     setAgendaItens(novosItens);
     salvarAgendaItensWeb(novosItens);
+    excluirItemAgendaSupabaseWeb(id);
   }
 
   function excluirItemAgendaDia(id: string, ano: number, mes: number, dia: number) {
     const chave = `${ano}-${mes}-${dia}`;
-    const novosItens = agendaItens.map(item =>
-      item.id === id
-        ? { ...item, excluirDias: [...(item.excluirDias || []), chave] }
-        : item
-    );
+    let novoExcluir: string[] = [];
+    const novosItens = agendaItens.map(item => {
+      if (item.id !== id) return item;
+      novoExcluir = [...(item.excluirDias || []), chave];
+      return { ...item, excluirDias: novoExcluir };
+    });
     setAgendaItens(novosItens);
     salvarAgendaItensWeb(novosItens);
+    atualizarExcluirDiasSupabaseWeb(id, novoExcluir);
   }
 
   function rotuloRepeticaoAgendaWeb(valor: string) {

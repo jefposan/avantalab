@@ -44,6 +44,11 @@ function apareceHoje(item: any, hoje: any) {
   const mi = mesIndex(item.mes);
   if (mi < 0) return false;
 
+  // Ocorrencia removida individualmente (exclusao de um unico dia no web)
+  const chaveHoje = hoje.ano + "-" + hoje.mesIdx + "-" + hoje.dia;
+  const excluir = Array.isArray(item.excluir_dias) ? item.excluir_dias : [];
+  if (excluir.indexOf(chaveHoje) !== -1) return false;
+
   const inicio = Date.UTC(Number(item.ano) || hoje.ano, mi, Number(item.dia) || 1);
   const alvo = Date.UTC(hoje.ano, hoje.mesIdx, hoje.dia);
   const diff = Math.floor((alvo - inicio) / 86400000);
