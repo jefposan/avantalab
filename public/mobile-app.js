@@ -651,6 +651,79 @@
     } catch (error) {}
   }
 
+  // ─── Sincronizacao da agenda com o Supabase ─────────────────
+  function agendaItemParaSupabase(item) {
+    return {
+      id: String(item.id),
+      user_id: state.usuario ? state.usuario.id : null,
+      empresa_id: state.empresa ? state.empresa.id : null,
+      tipo: item.tipo || 'lembrete',
+      titulo: item.titulo || '',
+      descricao: item.descricao || '',
+      ano: String(item.ano || ''),
+      mes: item.mes || '',
+      dia: Number(item.dia) || 1,
+      repetir: !!item.repetir,
+      repeticao: item.repeticao || '',
+    };
+  }
+
+  async function gravarItemAgendaSupabase(item) {
+    if (!state.usuario || !state.usuario.id) return;
+    try {
+      await db.from('agenda_itens').upsert(agendaItemParaSupabase(item), { onConflict: 'id' });
+    } catch (e) {}
+  }
+
+  // Pronta para quando a exclusao de itens for adicionada na UI:
+  // remove o item e as notificacoes que ele gerou.
+  async function excluirItemAgendaSupabase(id) {
+    if (!id) return;
+    try {
+      await db.from('agenda_itens').delete().eq('id', String(id));
+      await db.from('notificacoes').delete().eq('origem_id', String(id));
+    } catch (e) {}
+  }
+
+  function normalizarItemAgenda(r) {
+    return {
+      id: String(r.id),
+      tipo: r.tipo || 'lembrete',
+      titulo: r.titulo || '',
+      descricao: r.descricao || '',
+      mes: r.mes || '',
+      ano: String(r.ano || ''),
+      dia: Number(r.dia) || 1,
+      repetir: !!r.repetir,
+      repeticao: r.repeticao || '',
+      criadoEm: r.criado_em || r.criadoEm || new Date().toISOString(),
+    };
+  }
+
+  async function sincronizarAgendaSupabase() {
+    if (!state.usuario || !state.usuario.id) return;
+    try {
+      var resposta = await db.from('agenda_itens').select('*').eq('user_id', state.usuario.id);
+      if (resposta.error) return;
+
+      var remotos = (resposta.data || []).map(normalizarItemAgenda);
+      var locais = Array.isArray(state.agendaItens) ? state.agendaItens : [];
+
+      var idsRemotos = {};
+      remotos.forEach(function (r) { idsRemotos[String(r.id)] = true; });
+
+      // Migra para o servidor os itens que so existem no aparelho
+      var soLocais = locais.filter(function (l) { return !idsRemotos[String(l.id)]; });
+      for (var i = 0; i < soLocais.length; i++) {
+        await gravarItemAgendaSupabase(soLocais[i]);
+      }
+
+      state.agendaItens = remotos.concat(soLocais.map(normalizarItemAgenda));
+      salvarAgendaItensMobile();
+      render();
+    } catch (e) {}
+  }
+
   function abrirFormularioAgendaMobile() {
     if (!state.agendaDiaSelecionado) return;
     state.agendaFormAberto = true;
@@ -687,7 +760,7 @@
     var repeticao = campo('agenda-repeticao') || 'mensal';
     var tipo = campo('agenda-tipo') || 'lembrete';
 
-    state.agendaItens = (state.agendaItens || []).concat([{
+    var novoItemAgenda = {
       id: String(Date.now()) + '-' + Math.random().toString(36).slice(2, 8),
       tipo: tipo,
       titulo: titulo,
@@ -698,9 +771,12 @@
       repetir: repetir,
       repeticao: repetir ? repeticao : '',
       criadoEm: new Date().toISOString(),
-    }]);
+    };
+
+    state.agendaItens = (state.agendaItens || []).concat([novoItemAgenda]);
 
     salvarAgendaItensMobile();
+    gravarItemAgendaSupabase(novoItemAgenda);
     state.agendaFormAberto = false;
     state.agendaTitulo = '';
     state.agendaDescricao = '';
@@ -1682,6 +1758,9 @@
 
     state.carregando = false;
     render();
+
+    // Sincroniza a agenda com o servidor (em segundo plano)
+    sincronizarAgendaSupabase();
   }
 
   async function entrar() {
