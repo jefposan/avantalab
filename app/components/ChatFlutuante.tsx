@@ -73,12 +73,46 @@ export default function ChatFlutuante({
   ]);
   const [iaInput, setIaInput] = useState('');
   const [iaDigitando, setIaDigitando] = useState(false);
+  const [balaoVisivel, setBalaoVisivel] = useState(false);
+  const balaoVezes = useRef(0);
+  const jaInteragiu = useRef(false);
+  const prefereMenosMovimento = useRef(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
     if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
   }, [iaMensagens]);
+
+  // Balão periódico de boas-vindas da Ava (descoberta do recurso).
+  useEffect(() => {
+    try {
+      prefereMenosMovimento.current = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    } catch {}
+    const MAX_VEZES = 3;
+    let ocultar: ReturnType<typeof setTimeout> | undefined;
+    const mostrar = () => {
+      if (jaInteragiu.current || balaoVezes.current >= MAX_VEZES) return;
+      setBalaoVisivel(true);
+      balaoVezes.current += 1;
+      ocultar = setTimeout(() => setBalaoVisivel(false), 6000);
+    };
+    const primeira = setTimeout(mostrar, 30000);
+    const intervalo = setInterval(mostrar, 180000);
+    return () => {
+      clearTimeout(primeira);
+      clearInterval(intervalo);
+      if (ocultar) clearTimeout(ocultar);
+    };
+  }, []);
+
+  // Ao abrir o chat, para de mostrar o balão (usuário já descobriu)
+  useEffect(() => {
+    if (chatFeedbackAberto) {
+      jaInteragiu.current = true;
+      setBalaoVisivel(false);
+    }
+  }, [chatFeedbackAberto]);
 
   useEffect(() => {
     if (chatFeedbackEtapa === 'ia' && inputRef.current) inputRef.current.focus();
@@ -365,11 +399,37 @@ export default function ChatFlutuante({
         </div>
       )}
 
+      {/* Balão de boas-vindas da Ava */}
+      {!chatFeedbackAberto && balaoVisivel && (
+        <div
+          className={
+            'mb-3 ml-auto flex max-w-[240px] items-center gap-2 rounded-2xl border px-3 py-2 shadow-xl ' +
+            (darkMode ? 'border-slate-700 bg-slate-800 text-slate-100' : 'border-slate-200 bg-white text-slate-700')
+          }
+        >
+          <button
+            type="button"
+            onClick={() => { jaInteragiu.current = true; setBalaoVisivel(false); setChatFeedbackAberto(true); }}
+            className="text-left text-xs font-semibold leading-snug cursor-pointer"
+          >
+            Oi, sou a Ava 👋 No que posso ajudar?
+          </button>
+          <button
+            type="button"
+            onClick={() => { jaInteragiu.current = true; setBalaoVisivel(false); }}
+            aria-label="Dispensar"
+            className={'shrink-0 rounded-full px-1 text-sm font-black ' + (darkMode ? 'text-slate-400 hover:text-slate-200' : 'text-slate-400 hover:text-slate-600')}
+          >
+            ×
+          </button>
+        </div>
+      )}
+
       {/* Botão flutuante */}
       <button
         type="button"
         onClick={() => setChatFeedbackAberto((aberto) => !aberto)}
-        className="flex h-16 w-16 items-center justify-center rounded-full text-white shadow-2xl transition hover:-translate-y-1 hover:shadow-sky-900/30 active:scale-95 cursor-pointer"
+        className="relative ml-auto flex h-16 w-16 items-center justify-center rounded-full text-white shadow-2xl transition hover:-translate-y-1 hover:shadow-sky-900/30 active:scale-95 cursor-pointer"
         style={{ background: 'linear-gradient(135deg, #020617, #003E73)' }}
         aria-label="Abrir chat AvantaLab"
       >
@@ -384,6 +444,9 @@ export default function ChatFlutuante({
               d="M8 10h8M8 14h5m7-2a8 8 0 11-3.2-6.4L21 5l-1.2 4.2A7.96 7.96 0 0120 12z"
             />
           </svg>
+        )}
+        {!chatFeedbackAberto && balaoVisivel && (
+          <span className={'absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-amber-400 text-[11px] font-black text-white ' + (prefereMenosMovimento.current ? '' : 'animate-pulse')}>?</span>
         )}
       </button>
     </div>
