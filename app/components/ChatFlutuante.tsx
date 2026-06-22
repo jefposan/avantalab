@@ -235,7 +235,7 @@ export default function ChatFlutuante({
                   className="text-[11px] font-black uppercase tracking-[0.24em]"
                   style={{ color: chatFeedbackEtapa === 'ia' ? '#0A1F44' : 'rgba(255,255,255,0.65)' }}
                 >AvantaLab</p>
-                <h3 className="mt-1 text-base font-black leading-tight">
+                <h3 className="mt-1 whitespace-nowrap text-sm font-black leading-tight">
                   {chatFeedbackEtapa === 'ia' ? 'Ava — Assistente IA' : 'Como podemos ajudar?'}
                 </h3>
               </div>
@@ -352,11 +352,10 @@ export default function ChatFlutuante({
                     type="button"
                     onClick={() => enviarIA()}
                     disabled={!iaInput.trim() || iaDigitando}
-                    className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-sky-600 text-white shadow-sm transition hover:bg-sky-700 active:scale-95 disabled:opacity-40 cursor-pointer disabled:cursor-not-allowed"
+                    aria-label="Enviar"
+                    className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-cyan-600 text-base font-black text-white shadow-sm transition hover:bg-cyan-700 active:scale-95 disabled:opacity-40 cursor-pointer disabled:cursor-not-allowed"
                   >
-                    <svg className="h-4 w-4 rotate-90" fill="currentColor" viewBox="0 0 24 24">
-                      <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z" />
-                    </svg>
+                    &#8593;
                   </button>
                 </div>
                 <div className="mt-2 flex items-center justify-between">
