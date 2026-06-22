@@ -6,6 +6,7 @@ type Mensagem = { role: 'user' | 'assistant'; content: string };
 interface ChatFlutuanteProps {
   darkMode: boolean;
   textMuted: string;
+  nomeUsuario?: string;
   chatFeedbackAberto: boolean;
   setChatFeedbackAberto: React.Dispatch<React.SetStateAction<boolean>>;
   chatFeedbackEtapa: 'inicio' | 'formulario' | 'confirmacao' | 'ia';
@@ -54,6 +55,7 @@ function mensagemErroAva(error: unknown) {
 export default function ChatFlutuante({
   darkMode,
   textMuted,
+  nomeUsuario,
   chatFeedbackAberto,
   setChatFeedbackAberto,
   chatFeedbackEtapa,
@@ -208,6 +210,11 @@ export default function ChatFlutuante({
   const bgMsg = darkMode ? 'bg-slate-800' : 'bg-slate-100';
   const textMain = darkMode ? 'text-white' : 'text-slate-900';
   const borderT = darkMode ? 'border-slate-700' : 'border-slate-200';
+  const primeiroNomeAva = (nomeUsuario || '').trim().split(/\s+/)[0] || '';
+  const saudacaoAva = 'Olá' + (primeiroNomeAva ? ', ' + primeiroNomeAva : '') + '.';
+  const idxPrimeiroUserAva = iaMensagens.findIndex((m) => m.role === 'user');
+  const conversaIniciadaAva = idxPrimeiroUserAva >= 0;
+  const msgsExibidasAva = conversaIniciadaAva ? iaMensagens.slice(idxPrimeiroUserAva) : [];
   const cardCls = darkMode
     ? 'border-slate-700 bg-slate-800 hover:bg-slate-700'
     : 'border-slate-200 bg-slate-50 hover:bg-sky-50';
@@ -301,23 +308,32 @@ export default function ChatFlutuante({
           {chatFeedbackEtapa === 'ia' && (
             <div className="flex flex-col" style={{ height: '420px' }}>
               <div ref={scrollRef} className="flex-1 overflow-y-auto p-4 space-y-2">
-                {iaMensagens.map((msg, i) => {
-                  const isUser = msg.role === 'user';
-                  const wrapCls = 'flex ' + (isUser ? 'justify-end' : 'justify-start');
-                  const bubbleCls = 'max-w-[85%] rounded-2xl px-3.5 py-2.5 text-[13px] leading-relaxed whitespace-pre-wrap '
-                    + (isUser ? 'bg-sky-600 text-white rounded-br-sm' : bgMsg + ' ' + textMain + ' rounded-bl-sm');
-                  return (
-                    <div key={i} className={wrapCls}>
-                      <div className={bubbleCls}>
-                        {msg.content ? msg.content : <DotsBounce />}
+                {!conversaIniciadaAva ? (
+                  <div className="px-2 pt-4 pb-1 text-center">
+                    <p className={'text-lg font-extrabold tracking-tight ' + textMain}>{saudacaoAva}</p>
+                    <p className={'mx-auto mt-2 max-w-[282px] text-xs leading-relaxed ' + textMuted}>
+                      Sou a Ava, sua assistente financeira. Como posso ajudar?
+                    </p>
+                  </div>
+                ) : (
+                  msgsExibidasAva.map((msg, i) => {
+                    const isUser = msg.role === 'user';
+                    const wrapCls = 'flex ' + (isUser ? 'justify-end' : 'justify-start');
+                    const bubbleCls = 'max-w-[85%] rounded-2xl px-3.5 py-2.5 text-[13px] leading-relaxed whitespace-pre-wrap '
+                      + (isUser ? 'bg-sky-600 text-white rounded-br-sm' : bgMsg + ' ' + textMain + ' rounded-bl-sm');
+                    return (
+                      <div key={i} className={wrapCls}>
+                        <div className={bubbleCls}>
+                          {msg.content ? msg.content : <DotsBounce />}
+                        </div>
                       </div>
-                    </div>
-                  );
-                })}
+                    );
+                  })
+                )}
               </div>
-              {iaMensagens.length <= 1 && !iaDigitando && (
+              {!conversaIniciadaAva && !iaDigitando && (
                 <div className="grid grid-cols-2 gap-2 px-3 pb-1">
-                  {['Quanto gastei este mês?', 'Por onde devo iniciar?', 'Registrar nova despesa', 'Qual meu saldo atual?'].map((s) => (
+                  {['Por onde inicio o uso do sistema?', 'Analise meus resultados.', 'Como reduzir gastos sem afetar o essencial?', 'Como montar uma reserva de emergência?'].map((s) => (
                     <button
                       key={s}
                       type="button"

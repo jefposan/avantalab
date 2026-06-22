@@ -7435,6 +7435,7 @@ setAjustesAberto(false);
 <ChatFlutuante
   darkMode={darkMode}
   textMuted={textMuted}
+  nomeUsuario={nomeUsuarioAtual}
   chatFeedbackAberto={chatFeedbackAberto}
   setChatFeedbackAberto={setChatFeedbackAberto}
   chatFeedbackEtapa={chatFeedbackEtapa}
