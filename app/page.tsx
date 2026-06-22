@@ -299,6 +299,8 @@ const [agendaDescricao, setAgendaDescricao] = useState('');
 const [agendaRepetir, setAgendaRepetir] = useState(false);
 const [agendaRepeticao, setAgendaRepeticao] = useState<'diaria'|'semanal'|'quinzenal'|'mensal'|'anual'>('mensal');
 const [agendaItemParaExcluir, setAgendaItemParaExcluir] = useState<AgendaItem | null>(null);
+const [notificacoesWeb, setNotificacoesWeb] = useState<{ id: string; titulo: string; corpo: string }[]>([]);
+const painelAvisosAbertoAnterior = useRef(false);
 const [menuResponsivoAberto, setMenuResponsivoAberto] = useState(false);
 const [subAcaoGerenciar, setSubAcaoGerenciar] = useState<null | 'editar' | 'criar'>(null);
   const [ultimoBackupEm, setUltimoBackupEm] = useState<string | null>(null);
@@ -1180,6 +1182,37 @@ useEffect(() => {
   // eslint-disable-next-line react-hooks/exhaustive-deps
 }, [mounted, empresaId]);
 
+// Sininho: carrega notificacoes (avisos) do Supabase + tempo real
+useEffect(() => {
+  if (!mounted || !empresaId) return;
+  carregarNotificacoesWeb();
+  let canal: any;
+  (async () => {
+    const { data: u } = await supabase.auth.getUser();
+    const userId = u.user?.id;
+    if (!userId) return;
+    canal = supabase
+      .channel('notificacoes_web_' + userId)
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'notificacoes', filter: 'user_id=eq.' + userId },
+        () => { carregarNotificacoesWeb(); }
+      )
+      .subscribe();
+  })();
+  return () => { if (canal) supabase.removeChannel(canal); };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+}, [mounted, empresaId]);
+
+// Marca as notificacoes como lidas ao FECHAR o painel de avisos
+useEffect(() => {
+  if (painelAvisosAbertoAnterior.current && !painelAvisosAberto) {
+    marcarNotificacoesLidasWeb();
+  }
+  painelAvisosAbertoAnterior.current = painelAvisosAberto;
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+}, [painelAvisosAberto]);
+
   // --- CÁLCULOS E FUNÇÕES ---
 
   // ---- AGENDA WEB ----
@@ -1249,6 +1282,33 @@ useEffect(() => {
   async function atualizarExcluirDiasSupabaseWeb(id: string, dias: string[]) {
     try {
       await supabase.from('agenda_itens').update({ excluir_dias: dias }).eq('id', String(id));
+    } catch {}
+  }
+
+  async function carregarNotificacoesWeb() {
+    try {
+      const { data, error } = await supabase
+        .from('notificacoes')
+        .select('id, titulo, corpo')
+        .eq('lida', false)
+        .order('criado_em', { ascending: false });
+      if (error) return;
+      setNotificacoesWeb(
+        (data || []).map((n: any) => ({
+          id: String(n.id),
+          titulo: n.titulo || '',
+          corpo: n.corpo || '',
+        }))
+      );
+    } catch {}
+  }
+
+  async function marcarNotificacoesLidasWeb() {
+    try {
+      const ids = notificacoesWeb.map((n) => n.id);
+      if (!ids.length) return;
+      setNotificacoesWeb([]);
+      await supabase.from('notificacoes').update({ lida: true }).in('id', ids);
     } catch {}
   }
 
@@ -3151,6 +3211,11 @@ const alertasSistema = useMemo(() => {
     acao?: () => void | Promise<void>;
   }[] = [];
 
+  // Avisos/novidades vindos do Supabase (disparos do /admin)
+  notificacoesWeb.forEach((n) => {
+    alertas.push({ id: 'notif-' + n.id, titulo: n.titulo, mensagem: n.corpo });
+  });
+
   if (backupPendente) {
     alertas.push({
       id: 'backup-pendente',
@@ -3163,7 +3228,7 @@ const alertasSistema = useMemo(() => {
   }
 
   return alertas;
-}, [backupPendente]);
+}, [backupPendente, notificacoesWeb]);
 
   const analiseDespesas = useMemo(() => {
   const totais: Record<string, { nome: string; valor: number }> = {};
