@@ -329,6 +329,7 @@ const [despesaAnaliseAtiva, setDespesaAnaliseAtiva] = useState<{
   const [logoUrl, setLogoUrl] = useState('');
   const [logoSettings, setLogoSettings] = useState({ scale: 100, x: 0, y: 0 });
   const [modalLogo, setModalLogo] = useState(false);
+  const [carregandoPerfil, setCarregandoPerfil] = useState(false);
   const [painelAjusteLogo, setPainelAjusteLogo] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const backupImportInputRef = useRef<HTMLInputElement>(null);
@@ -617,6 +618,9 @@ useEffect(() => {
 }, []);
 
 const carregarEmpresaSelecionada = async (empresa: any) => {
+  setCarregandoPerfil(true);
+  // Rede de seguranca: nunca deixar o loading preso
+  setTimeout(() => setCarregandoPerfil(false), 12000);
   const mesAtual = meses[new Date().getMonth()];
 setMesResumoDash(mesAtual);
 setMesFaturamento(mesAtual);
@@ -668,6 +672,7 @@ if (empresa.telefone_confirmado !== true) {
   setAcessoLiberado(true);
   setModalSelecionarEmpresa(false);
 
+  setCarregandoPerfil(false);
   return;
 }
 
@@ -902,7 +907,7 @@ useEffect(() => {
     setFaturamentos(faturamentosFormatados);
   };
 
-  carregarDadosFinanceiros();
+  carregarDadosFinanceiros().finally(() => setCarregandoPerfil(false));
 }, [anoSelecionado, mounted, empresaId]);
 
   // 3. Salva Configurações Globais no Supabase
@@ -7382,6 +7387,16 @@ setAjustesAberto(false);
     </div>
   </main>
 )}
+
+      {carregandoPerfil && (
+        <div className="fixed inset-0 z-[9500] flex flex-col items-center justify-center gap-4 bg-slate-950/70 backdrop-blur-sm">
+          <div
+            className="h-12 w-12 animate-spin rounded-full border-4 border-white/30"
+            style={{ borderTopColor: corPrimaria }}
+          />
+          <p className="text-sm font-black uppercase tracking-wide text-white">Carregando perfil...</p>
+        </div>
+      )}
 
       <ModalTermos
   aberto={modalTermos}
