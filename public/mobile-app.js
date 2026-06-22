@@ -193,6 +193,8 @@
     agendaItens: [],
     notificacoesNaoLidas: 0,
     mostrarPromptNotificacoes: false,
+    tourAberto: false,
+    tourPasso: 0,
     agendaTipoItem: 'lembrete',
     agendaTitulo: '',
     agendaDescricao: '',
@@ -1146,7 +1148,7 @@
   }
 
   function deveBloquearScroll() {
-    return Boolean(state.modalLancamento || state.modalMenu || state.menuAberto || state.modalAcao || state.chatIAAberto);
+    return Boolean(state.modalLancamento || state.modalMenu || state.menuAberto || state.modalAcao || state.chatIAAberto || state.tourAberto);
   }
 
   function liberarScrollChatIA() {
@@ -1291,6 +1293,8 @@
       if (Notification.permission !== 'default') return;
       if (!state.usuario || !state.usuario.id) return;
       if (localStorage.getItem(CHAVE_PROMPT_NOTIF) === '1') return;
+      // So oferece notificacoes depois que o tutorial foi concluido/pulado
+      if (localStorage.getItem('avantalab_mobile_tour_concluido') !== '1') return;
       setTimeout(function () {
         if (Notification.permission !== 'default') return;
         if (localStorage.getItem(CHAVE_PROMPT_NOTIF) === '1') return;
@@ -1314,6 +1318,101 @@
           '<div class="mt-4 grid gap-2">' +
             '<button id="prompt-notif-ativar" type="button" class="h-11 rounded-xl bg-slate-950 text-sm font-black uppercase tracking-wide text-white">Ativar</button>' +
             '<button id="prompt-notif-agora-nao" type="button" class="h-10 rounded-xl text-xs font-bold text-slate-500">Agora nao</button>' +
+          '</div>' +
+        '</div>' +
+      '</div>'
+    );
+  }
+
+  // ─── Tutorial (tour de primeiro acesso) ─────────────────────
+  var PASSOS_TOUR = [
+    { icone: '👋', local: '', titulo: 'Bem-vindo ao AvantaLab!', descricao: 'Vamos te mostrar o essencial em poucos passos. E lembre-se: qualquer dúvida sobre como usar o app, é só perguntar à Ava, nossa assistente de IA. Você pode pular e rever depois pelo menu.' },
+    { icone: '🤖', local: 'Botão da Ava, no app', titulo: 'Converse com a Ava', descricao: 'A Ava é sua assistente de IA. Pergunte como usar qualquer função, peça análises dos seus números e dicas. Use sempre que tiver dúvida, em vez de ficar procurando.', destaque: true },
+    { icone: '✅', local: 'Menu → Cadastrar despesas', titulo: 'Comece cadastrando as despesas', descricao: 'O primeiro passo é cadastrar as suas despesas, conforme a sua necessidade. Abra o menu e toque em "Cadastrar despesas" para adicionar cada tipo de despesa e a categoria.' },
+    { icone: '📋', local: 'Botão de menu (☰)', titulo: 'Menu do app', descricao: 'No menu você encontra Agenda, Cadastrar despesas, Ativar/Desativar notificações, Configurações e mais.' },
+    { icone: '💰', local: 'Tela inicial → mês', titulo: 'Entradas e total do mês', descricao: 'Registre as receitas e o total do mês. Esses valores alimentam o seu saldo automaticamente.' },
+    { icone: '📊', local: 'Lançamentos do mês', titulo: 'Lançar despesas', descricao: 'Registre cada despesa por categoria. Você também pode criar despesas fixas (todo mês) e parcelar em vários meses.' },
+    { icone: '📅', local: 'Menu → Agenda', titulo: 'Agenda e notificações', descricao: 'Crie lembretes com repetição (diária, semanal, mensal e mais) e receba como notificação no celular, mesmo com o app fechado. Ative em "Ativar notificações".' },
+    { icone: '🔔', local: 'Sininho no topo', titulo: 'Avisos no sininho', descricao: 'O sininho mostra seus lembretes do dia e avisos. O número indica quantos estão pendentes.' },
+    { icone: '🚀', local: '', titulo: 'Tudo pronto!', descricao: 'Você já conhece o essencial. Qualquer dúvida, chame a Ava. Este tutorial fica sempre no menu, em "Tutorial".' },
+  ];
+
+  function abrirTourMobile() {
+    state.tourAberto = true;
+    state.tourPasso = 0;
+    render();
+  }
+
+  function fecharTourMobile() {
+    state.tourAberto = false;
+    try { localStorage.setItem('avantalab_mobile_tour_concluido', '1'); } catch (e) {}
+    render();
+    avaliarPromptNotificacoes();
+  }
+
+  function tourIr(delta) {
+    var n = state.tourPasso + delta;
+    if (n < 0) n = 0;
+    if (n > PASSOS_TOUR.length - 1) n = PASSOS_TOUR.length - 1;
+    state.tourPasso = n;
+    render();
+  }
+
+  function avaliarTourMobile() {
+    try {
+      if (!state.usuario || !state.usuario.id) return;
+      if (localStorage.getItem('avantalab_mobile_tour_concluido') === '1') return;
+      setTimeout(function () {
+        if (localStorage.getItem('avantalab_mobile_tour_concluido') === '1') return;
+        state.tourAberto = true;
+        state.tourPasso = 0;
+        render();
+      }, 700);
+    } catch (e) {}
+  }
+
+  function tourHtml() {
+    if (!state.tourAberto) return '';
+    var total = PASSOS_TOUR.length;
+    var idx = Math.max(0, Math.min(total - 1, state.tourPasso));
+    var p = PASSOS_TOUR[idx];
+    var ehPrimeiro = idx === 0;
+    var ehUltimo = idx === total - 1;
+    var azul = '#003E73';
+
+    var dots = '';
+    for (var i = 0; i < total; i++) {
+      dots += '<span style="width:' + (i === idx ? '20px' : '8px') + ';height:8px;border-radius:9999px;background-color:' + (i === idx ? azul : '#cbd5e1') + ';display:inline-block;"></span>';
+    }
+
+    return (
+      '<div id="tour-overlay" class="fixed inset-0 z-[75] flex items-center justify-center bg-slate-950/70 px-4">' +
+        '<div class="flex w-full max-w-sm flex-col overflow-hidden rounded-3xl bg-white shadow-2xl" style="max-height:88vh;">' +
+          '<div class="px-5 pt-4 pb-4" style="background-color:' + azul + ';">' +
+            '<div class="flex items-start justify-between gap-3">' +
+              '<div class="flex items-center gap-3 min-w-0">' +
+                '<span class="text-3xl leading-none shrink-0">' + p.icone + '</span>' +
+                '<div class="min-w-0">' +
+                  '<p class="text-[10px] font-black uppercase tracking-widest text-white/60">Passo ' + (idx + 1) + ' de ' + total + '</p>' +
+                  '<h2 class="text-base font-black leading-tight text-white">' + escapeHtml(p.titulo) + '</h2>' +
+                '</div>' +
+              '</div>' +
+              '<button id="tour-pular" type="button" class="shrink-0 rounded-lg px-2 py-1 text-xs font-bold text-white/90">Pular ✕</button>' +
+            '</div>' +
+            '<div class="mt-3 h-1.5 rounded-full bg-white/20 overflow-hidden"><div class="h-full rounded-full bg-white/80" style="width:' + Math.round(((idx + 1) / total) * 100) + '%;"></div></div>' +
+          '</div>' +
+          '<div class="flex-1 overflow-y-auto px-5 py-4">' +
+            (p.local ? '<div class="mb-3 flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-semibold text-slate-500"><span>📍</span><span>' + escapeHtml(p.local) + '</span></div>' : '') +
+            (p.destaque
+              ? '<div class="rounded-xl border-2 p-3" style="border-color:' + azul + ';background-color:rgba(0,62,115,0.08);"><p class="text-sm leading-relaxed text-slate-700">' + escapeHtml(p.descricao) + '</p></div>'
+              : '<p class="text-sm leading-relaxed text-slate-600">' + escapeHtml(p.descricao) + '</p>') +
+            '<div class="mt-5 flex items-center justify-center gap-1.5 flex-wrap">' + dots + '</div>' +
+          '</div>' +
+          '<div class="flex items-center gap-3 border-t border-slate-200 px-5 py-3">' +
+            '<button id="tour-anterior" type="button" class="rounded-xl border border-slate-300 px-4 py-2 text-sm font-bold text-slate-600' + (ehPrimeiro ? ' opacity-30' : '') + '">← Anterior</button>' +
+            (ehUltimo
+              ? '<button id="tour-concluir" type="button" class="flex-1 rounded-xl py-2 text-sm font-black text-white" style="background-color:' + azul + ';">Concluir 🎉</button>'
+              : '<button id="tour-proximo" type="button" class="flex-1 rounded-xl py-2 text-sm font-black text-white" style="background-color:' + azul + ';">' + (ehPrimeiro ? 'Começar →' : 'Próximo →') + '</button>') +
           '</div>' +
         '</div>' +
       '</div>'
@@ -1916,7 +2015,8 @@
     configurarRealtimeAgendaMobile();
     // Atualiza a contagem de notificacoes nao lidas (sino + badge do icone)
     carregarNotificacoesNaoLidas();
-    // Na primeira abertura, oferece ativar as notificacoes
+    // Primeiro acesso: tutorial (e, ao concluir, oferece notificacoes)
+    avaliarTourMobile();
     avaliarPromptNotificacoes();
   }
 
@@ -4812,6 +4912,7 @@
             menuBotaoHtml('menu-categorias', 'Cadastrar despesas', 'Adicionar tipos de despesa', '+') +
             menuBotaoHtml('menu-despesas-fixas', 'Despesas fixas', 'Lancamentos automaticos mensais', '&#10227;') +
             menuBotaoHtml('menu-ajuda-categorias', 'Instrucoes sobre categorias', 'Como organizar seus gastos', '?') +
+            menuBotaoHtml('menu-tutorial', 'Tutorial', 'Como usar o AvantaLab', '&#127891;') +
             '<button id="menu-config-toggle" type="button" class="rounded-2xl border ' + (configAberto ? (dk ? 'border-cyan-700 bg-cyan-900/40' : 'border-cyan-200 bg-cyan-50') : bordaBase) + ' p-3 text-left shadow-sm active:scale-[0.99]">' +
               '<div class="flex items-center gap-3">' +
                 '<span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-sm font-black ' + (configAberto ? 'bg-cyan-600 text-white' : 'bg-cyan-50 text-cyan-700') + '">&#9881;</span>' +
@@ -5881,7 +5982,7 @@
       : (state.autenticado
         ? (state.validacaoTelefoneObrigatoria ? telaTelefoneObrigatorioMobile() : (state.modoCriarPerfil ? telaLoginWrapper(telaCriarPerfilInicial(), 'Criar perfil financeiro', 'Informe os dados do seu primeiro perfil.') : telaApp()))
         : (state.modoCriarPerfil ? telaLoginWrapper(telaCriarPerfilInicial(), 'Criar perfil financeiro', 'Informe os dados do seu primeiro perfil.') : telaLogin()));
-    root.innerHTML = telaAtual + (state.chatIAAberto ? chatIAModalHtml() : '') + (state.mostrarPromptNotificacoes ? promptNotificacoesHtml() : '');
+    root.innerHTML = telaAtual + (state.chatIAAberto ? chatIAModalHtml() : '') + (state.mostrarPromptNotificacoes ? promptNotificacoesHtml() : '') + (state.tourAberto ? tourHtml() : '');
     atualizarScrollBloqueado(_scrollPrevio);
     // Restaura o scrollTop dos containers internos preservados.
     for (var _id in _scrollContainers) {
@@ -6030,6 +6131,11 @@
       state.mostrarPromptNotificacoes = false;
       render();
     });
+    bind('menu-tutorial', function () { state.menuAberto = false; abrirTourMobile(); });
+    bind('tour-pular', fecharTourMobile);
+    bind('tour-concluir', fecharTourMobile);
+    bind('tour-anterior', function () { tourIr(-1); });
+    bind('tour-proximo', function () { tourIr(1); });
     bind('menu-categorias', function () { abrirModalMenu('categorias'); });
     bind('menu-despesas-fixas', function () { abrirModalMenuDespesasFixas(); });
     bind('menu-ajuda-categorias', function () { abrirModalMenu('ajudaCategorias'); });
