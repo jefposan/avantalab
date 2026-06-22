@@ -192,6 +192,7 @@
     agendaFormAberto: false,
     agendaItens: [],
     notificacoesNaoLidas: 0,
+    mostrarPromptNotificacoes: false,
     agendaTipoItem: 'lembrete',
     agendaTitulo: '',
     agendaDescricao: '',
@@ -203,6 +204,7 @@
   var CHAVE_SESSAO_TEMPORARIA = 'avantalab_mobile_sessao_temporaria';
   var CHAVE_OAUTH_TEMPORARIO_ATE = 'avantalab_mobile_oauth_temporario_ate';
   var CHAVE_AGENDA_ITENS = 'avantalab_mobile_agenda_itens';
+  var CHAVE_PROMPT_NOTIF = 'avantalab_mobile_prompt_notif';
   var TRINTA_DIAS_MS = 30 * 24 * 60 * 60 * 1000;
   var DEZ_MINUTOS_MS = 10 * 60 * 1000;
 
@@ -1215,6 +1217,44 @@
     }
   }
 
+  // Na primeira abertura (uma vez por aparelho), oferece ativar as
+  // notificacoes. O toque no botao "Ativar" e o gesto que o iOS exige
+  // para disparar o pedido de permissao do sistema.
+  function avaliarPromptNotificacoes() {
+    try {
+      if (!('Notification' in window) || !('serviceWorker' in navigator) || !('PushManager' in window)) return;
+      if (Notification.permission !== 'default') return;
+      if (!state.usuario || !state.usuario.id) return;
+      if (localStorage.getItem(CHAVE_PROMPT_NOTIF) === '1') return;
+      setTimeout(function () {
+        if (Notification.permission !== 'default') return;
+        if (localStorage.getItem(CHAVE_PROMPT_NOTIF) === '1') return;
+        state.mostrarPromptNotificacoes = true;
+        render();
+      }, 1500);
+    } catch (e) {}
+  }
+
+  function marcarPromptNotifVisto() {
+    try { localStorage.setItem(CHAVE_PROMPT_NOTIF, '1'); } catch (e) {}
+  }
+
+  function promptNotificacoesHtml() {
+    return (
+      '<div id="prompt-notif-overlay" class="fixed inset-0 z-[70] flex items-center justify-center bg-slate-950/60 px-5">' +
+        '<div class="w-full max-w-xs rounded-3xl bg-white p-5 text-center shadow-2xl">' +
+          '<div class="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-cyan-50 text-2xl">&#128276;</div>' +
+          '<h2 class="text-base font-black text-slate-900">Ativar notificacoes?</h2>' +
+          '<p class="mt-1.5 text-xs font-semibold text-slate-500">Receba no celular os lembretes e avisos da sua agenda, mesmo com o app fechado.</p>' +
+          '<div class="mt-4 grid gap-2">' +
+            '<button id="prompt-notif-ativar" type="button" class="h-11 rounded-xl bg-slate-950 text-sm font-black uppercase tracking-wide text-white">Ativar</button>' +
+            '<button id="prompt-notif-agora-nao" type="button" class="h-10 rounded-xl text-xs font-bold text-slate-500">Agora nao</button>' +
+          '</div>' +
+        '</div>' +
+      '</div>'
+    );
+  }
+
   // ─── Sininho + badge (notificacoes nao lidas) ───────────────
   function atualizarBadgeApp(quantidade) {
     try {
@@ -1810,6 +1850,8 @@
     sincronizarAgendaSupabase();
     // Atualiza a contagem de notificacoes nao lidas (sino + badge do icone)
     carregarNotificacoesNaoLidas();
+    // Na primeira abertura, oferece ativar as notificacoes
+    avaliarPromptNotificacoes();
   }
 
   async function entrar() {
@@ -5773,7 +5815,7 @@
       : (state.autenticado
         ? (state.validacaoTelefoneObrigatoria ? telaTelefoneObrigatorioMobile() : (state.modoCriarPerfil ? telaLoginWrapper(telaCriarPerfilInicial(), 'Criar perfil financeiro', 'Informe os dados do seu primeiro perfil.') : telaApp()))
         : (state.modoCriarPerfil ? telaLoginWrapper(telaCriarPerfilInicial(), 'Criar perfil financeiro', 'Informe os dados do seu primeiro perfil.') : telaLogin()));
-    root.innerHTML = telaAtual + (state.chatIAAberto ? chatIAModalHtml() : '');
+    root.innerHTML = telaAtual + (state.chatIAAberto ? chatIAModalHtml() : '') + (state.mostrarPromptNotificacoes ? promptNotificacoesHtml() : '');
     atualizarScrollBloqueado(_scrollPrevio);
     // Restaura o scrollTop dos containers internos preservados.
     for (var _id in _scrollContainers) {
@@ -5911,6 +5953,17 @@
     bind('menu-organizar-dashboard', function () { abrirModalMenu('organizarDashboard'); });
     bind('menu-agenda', abrirAgendaMobile);
     bind('menu-notificacoes', function () { state.menuAberto = false; render(); ativarNotificacoesMobile(); });
+    bind('prompt-notif-ativar', function () {
+      marcarPromptNotifVisto();
+      state.mostrarPromptNotificacoes = false;
+      render();
+      ativarNotificacoesMobile();
+    });
+    bind('prompt-notif-agora-nao', function () {
+      marcarPromptNotifVisto();
+      state.mostrarPromptNotificacoes = false;
+      render();
+    });
     bind('menu-categorias', function () { abrirModalMenu('categorias'); });
     bind('menu-despesas-fixas', function () { abrirModalMenuDespesasFixas(); });
     bind('menu-ajuda-categorias', function () { abrirModalMenu('ajudaCategorias'); });
