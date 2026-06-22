@@ -218,7 +218,8 @@ export default function ChatFlutuante({
         <div className={'mb-4 w-[360px] overflow-hidden rounded-3xl border shadow-2xl ' + bg}>
           {/* Header */}
           <div
-            className="flex items-start justify-between gap-3 border-b border-slate-200 bg-white px-5 py-4 text-slate-900"
+            className="flex items-start justify-between gap-3 px-5 py-4 text-white"
+            style={{ background: 'linear-gradient(135deg, #020617, #003E73)' }}
           >
             <div className="flex items-center gap-3">
               {chatFeedbackEtapa === 'ia' && (
@@ -227,8 +228,8 @@ export default function ChatFlutuante({
                 </span>
               )}
               <div>
-                <p className="text-[11px] font-black uppercase tracking-[0.24em]" style={{ color: '#0A1F44' }}>AvantaLab</p>
-                <h3 className="mt-1 text-base font-black leading-tight">
+                <p className="text-[11px] font-black uppercase tracking-[0.24em]" style={{ color: 'rgba(255,255,255,0.65)' }}>AvantaLab</p>
+                <h3 className="mt-1 text-base font-black leading-tight text-white">
                   {chatFeedbackEtapa === 'ia' ? 'Ava — Assistente IA' : 'Como podemos ajudar?'}
                 </h3>
               </div>
@@ -236,7 +237,7 @@ export default function ChatFlutuante({
             <button
               type="button"
               onClick={fecharChatFeedback}
-              className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-100 text-lg font-black text-slate-600 transition hover:bg-slate-200 hover:text-slate-900 cursor-pointer"
+              className="flex h-8 w-8 items-center justify-center rounded-full bg-white/15 text-lg font-black text-white transition hover:bg-white/25 cursor-pointer"
               aria-label="Fechar chat"
             >×</button>
           </div>
@@ -245,7 +246,6 @@ export default function ChatFlutuante({
           {chatFeedbackEtapa === 'inicio' && (
             <div className="p-5">
               <p className={'text-sm leading-relaxed ' + textMuted}>
-                Olá, agradecemos sua interação com a AvantaLab.<br />
                 Selecione uma das opções abaixo:
               </p>
               <div className="mt-5 grid gap-3">
