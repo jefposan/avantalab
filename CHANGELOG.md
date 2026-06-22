@@ -1,5 +1,16 @@
 # Changelog
 
+## 1.3.1 - 2026-06-22
+
+- Agenda web/mobile: exclusao sincronizada, confirmacao ao excluir no web e atualizacao em tempo real.
+- /admin: disparo de avisos (push + sino) para todos os usuarios; sino do web passa a ler as notificacoes do Supabase.
+- Ava (IA) atualizada para gpt-4o com prompt revisado; balao periodico de boas-vindas da Ava no web.
+- Tutorial reescrito (desktop e mobile) com a Ava em destaque e recursos atuais.
+- Correcoes mobile: campo coberto pelo teclado (Android), scroll de cards, menu de Configuracoes (rolagem e sub-botoes).
+- Header web: indicador deslizante das abas; card do chat com header colorido.
+- Troca de perfil no web com loading imediato.
+- Limpeza: removido componente ChatIA nao utilizado.
+
 ## 1.3.0 - 2026-06-22
 
 - Notificacoes push (PWA mobile): inscricao por aparelho, service worker, sino com contador de nao lidas e badge no icone; convite para ativar na primeira abertura.
