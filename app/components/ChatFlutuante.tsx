@@ -118,8 +118,8 @@ export default function ChatFlutuante({
     if (chatFeedbackEtapa === 'ia' && inputRef.current) inputRef.current.focus();
   }, [chatFeedbackEtapa]);
 
-  const enviarIA = async () => {
-    const texto = iaInput.trim();
+  const enviarIA = async (textoDireto?: string) => {
+    const texto = (textoDireto ?? iaInput).trim();
     if (!texto || iaDigitando) return;
     const novas: Mensagem[] = [...iaMensagens, { role: 'user', content: texto }];
     setIaMensagens(novas);
@@ -218,8 +218,11 @@ export default function ChatFlutuante({
         <div className={'mb-4 w-[360px] overflow-hidden rounded-3xl border shadow-2xl ' + bg}>
           {/* Header */}
           <div
-            className="flex items-start justify-between gap-3 px-5 py-4 text-white"
-            style={{ background: 'linear-gradient(135deg, #020617, #003E73)' }}
+            className={
+              'flex items-start justify-between gap-3 px-5 py-4 ' +
+              (chatFeedbackEtapa === 'ia' ? 'border-b border-slate-200 bg-white text-slate-900' : 'text-white')
+            }
+            style={chatFeedbackEtapa === 'ia' ? undefined : { background: 'linear-gradient(135deg, #020617, #003E73)' }}
           >
             <div className="flex items-center gap-3">
               {chatFeedbackEtapa === 'ia' && (
@@ -228,8 +231,11 @@ export default function ChatFlutuante({
                 </span>
               )}
               <div>
-                <p className="text-[11px] font-black uppercase tracking-[0.24em]" style={{ color: 'rgba(255,255,255,0.65)' }}>AvantaLab</p>
-                <h3 className="mt-1 text-base font-black leading-tight text-white">
+                <p
+                  className="text-[11px] font-black uppercase tracking-[0.24em]"
+                  style={{ color: chatFeedbackEtapa === 'ia' ? '#0A1F44' : 'rgba(255,255,255,0.65)' }}
+                >AvantaLab</p>
+                <h3 className="mt-1 text-base font-black leading-tight">
                   {chatFeedbackEtapa === 'ia' ? 'Ava — Assistente IA' : 'Como podemos ajudar?'}
                 </h3>
               </div>
@@ -237,7 +243,12 @@ export default function ChatFlutuante({
             <button
               type="button"
               onClick={fecharChatFeedback}
-              className="flex h-8 w-8 items-center justify-center rounded-full bg-white/15 text-lg font-black text-white transition hover:bg-white/25 cursor-pointer"
+              className={
+                'flex h-8 w-8 items-center justify-center rounded-full text-lg font-black transition cursor-pointer ' +
+                (chatFeedbackEtapa === 'ia'
+                  ? 'bg-slate-100 text-slate-600 hover:bg-slate-200 hover:text-slate-900'
+                  : 'bg-white/15 text-white hover:bg-white/25')
+              }
               aria-label="Fechar chat"
             >×</button>
           </div>
@@ -304,6 +315,23 @@ export default function ChatFlutuante({
                   );
                 })}
               </div>
+              {iaMensagens.length <= 1 && !iaDigitando && (
+                <div className="grid grid-cols-2 gap-2 px-3 pb-1">
+                  {['Quanto gastei este mês?', 'Por onde devo iniciar?', 'Registrar nova despesa', 'Qual meu saldo atual?'].map((s) => (
+                    <button
+                      key={s}
+                      type="button"
+                      onClick={() => enviarIA(s)}
+                      className={'rounded-xl border px-2.5 py-2 text-left text-[11px] font-bold transition active:scale-[0.98] cursor-pointer ' +
+                        (darkMode
+                          ? 'border-slate-600 bg-slate-800 text-slate-200 hover:bg-slate-700'
+                          : 'border-slate-200 bg-slate-50 text-slate-600 hover:bg-slate-100')}
+                    >
+                      {s}
+                    </button>
+                  ))}
+                </div>
+              )}
               <div className={'border-t p-3 ' + borderT}>
                 <div className="flex items-end gap-2">
                   <textarea
@@ -322,7 +350,7 @@ export default function ChatFlutuante({
                   />
                   <button
                     type="button"
-                    onClick={enviarIA}
+                    onClick={() => enviarIA()}
                     disabled={!iaInput.trim() || iaDigitando}
                     className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-sky-600 text-white shadow-sm transition hover:bg-sky-700 active:scale-95 disabled:opacity-40 cursor-pointer disabled:cursor-not-allowed"
                   >
