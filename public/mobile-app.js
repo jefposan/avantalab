@@ -4898,7 +4898,7 @@
 
     return (
       '<div id="menu-overlay" class="fixed inset-0 z-50 bg-slate-950/55 backdrop-blur-sm">' +
-        '<aside id="menu-aside" class="h-full w-[84vw] max-w-[328px] overflow-y-auto ' + (dk ? 'bg-slate-950 text-slate-100' : 'bg-slate-50 text-slate-900') + ' p-3 shadow-2xl">' +
+        '<aside id="menu-aside" data-preserve-scroll class="h-full w-[84vw] max-w-[328px] overflow-y-auto ' + (dk ? 'bg-slate-950 text-slate-100' : 'bg-slate-50 text-slate-900') + ' p-3 shadow-2xl">' +
           '<div class="mb-3 overflow-hidden rounded-2xl border border-white/15 p-3 text-white shadow-lg shadow-sky-950/15" style="background:linear-gradient(135deg,#003E73 0%,#075985 54%,#00A6C8 100%);">' +
             '<div class="flex items-start justify-between gap-3">' +
               '<div class="min-w-0"><p class="text-[9px] font-black uppercase tracking-[0.24em] text-cyan-100">AvantaLab</p><h2 class="mt-1 truncate text-base font-black">' + escapeHtml(nomeEmpresa(state.empresa)) + '</h2><p class="mt-0.5 truncate text-[11px] font-semibold text-cyan-50/85">' + escapeHtml(state.usuario && state.usuario.email ? state.usuario.email : 'Usuario logado') + '</p></div>' +
@@ -6147,10 +6147,11 @@
       render();
       if (state.menuConfigAberto) {
         setTimeout(function () {
-          var grupo = document.querySelector('.cfg-sub-group');
+          var toggle = document.getElementById('menu-config-toggle');
           var aside = document.getElementById('menu-aside');
-          if (grupo && grupo.scrollIntoView) {
-            grupo.scrollIntoView({ behavior: 'smooth', block: 'end' });
+          if (toggle && toggle.scrollIntoView) {
+            // Leva o botao Configuracoes ao topo, deixando as opcoes visiveis
+            toggle.scrollIntoView({ behavior: 'smooth', block: 'start' });
           } else if (aside) {
             aside.scrollTo({ top: aside.scrollHeight, behavior: 'smooth' });
           }
