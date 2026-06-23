@@ -302,8 +302,8 @@ const [reenviandoTelefoneObrigatorio, setReenviandoTelefoneObrigatorio] = useSta
 const [validandoTelefoneObrigatorio, setValidandoTelefoneObrigatorio] = useState(false);
   const [abaAtiva, setAbaAtiva] = useState('Dashboard');
   const [saldoCardMesIdx, setSaldoCardMesIdx] = useState<number>(new Date().getMonth());
-  const dashboardCardsKanban = ['aConfirmar', 'saldo', 'resumoFinanceiro', 'registrarEntradas'];
-  const ordemDashboardPadrao = { a: ['aConfirmar', 'saldo'], b: ['resumoFinanceiro', 'registrarEntradas'] };
+  const dashboardCardsKanban = ['aConfirmar', 'saldo', 'resumoFinanceiro', 'evolucaoMensal', 'registrarEntradas'];
+  const ordemDashboardPadrao = { a: ['aConfirmar', 'saldo'], b: ['resumoFinanceiro', 'evolucaoMensal', 'registrarEntradas'] };
   const [dashboardOrdem, setDashboardOrdem] = useState<{ a: string[]; b: string[] }>(ordemDashboardPadrao);
   const [dashboardOcultos, setDashboardOcultos] = useState<string[]>([]);
 const [ajustesAberto, setAjustesAberto] = useState(false);
@@ -7501,6 +7501,9 @@ setAjustesAberto(false);
       <Dashboard 
         meses={meses}
         lancamentos={lancamentos}
+        faturamentos={faturamentos}
+        anoSelecionado={anoSelecionado}
+        setAnoSelecionado={setAnoSelecionado}
         setMesAtivo={setMesAtivo}
         bgCard={bgCard}
         corPrimaria={corPrimaria}

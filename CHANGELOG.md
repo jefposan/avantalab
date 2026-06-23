@@ -1,18 +1,5 @@
 # Changelog
 
-## 1.3.7 - 2026-06-23
-
-- Web: removido o botao visivel "Restaurar ordem padrao" do kanban do dashboard.
-
-## 1.3.6 - 2026-06-23
-
-- Web: adicionadas opcoes nos cards do kanban para remover blocos e gerenciador com lapis para exibir/ocultar cards.
-- Banco: adicionada configuracao `dashboard_ocultos_web` para persistir cards ocultos por perfil.
-
-## 1.3.5 - 2026-06-23
-
-- Web: corrigido o temporizador do menu de Ajustes para fechar apos 20 segundos sem interacao, reiniciando a contagem ao usar o painel.
-
 ## 1.3.4 - 2026-06-23
 
 - Web: ajustada a posicao do menu de Ajustes para acompanhar a nova altura reduzida do header principal.

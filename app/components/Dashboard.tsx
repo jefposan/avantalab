@@ -72,6 +72,9 @@ function ColunaKanban({ id, items, children }: { id: string; items: string[]; ch
 interface DashboardProps {
   meses: string[];
   lancamentos: any[];
+  faturamentos: Record<string, number>;
+  anoSelecionado: string;
+  setAnoSelecionado: React.Dispatch<React.SetStateAction<string>>;
   setMesAtivo: (mes: string) => void;
   bgCard: string;
   corPrimaria: string;
@@ -119,7 +122,7 @@ interface DashboardProps {
 }
 
 export default function Dashboard({
-  meses, lancamentos, setMesAtivo, bgCard, corPrimaria, textStrong, textMuted, darkMode,
+  meses, lancamentos, faturamentos, anoSelecionado, setAnoSelecionado, setMesAtivo, bgCard, corPrimaria, textStrong, textMuted, darkMode,
   mesResumoDash, setMesResumoDash, totalDespesasMes, maiorGasto, lucroOperacional,
   inputFaturamento, setInputFaturamento, placeholderFaturamento,
   solicitarFaturamentoDashboard,
@@ -142,6 +145,14 @@ export default function Dashboard({
   const [ocultarValores, setOcultarValores] = useState(true);
   const [menuCardAberto, setMenuCardAberto] = useState<string | null>(null);
   const [gerenciadorAberto, setGerenciadorAberto] = useState(false);
+  const [evolucaoModo, setEvolucaoModo] = useState<'ambos' | 'receitas' | 'despesas'>('ambos');
+  const [tooltipEvolucao, setTooltipEvolucao] = useState<{
+    x: number;
+    y: number;
+    mes: string;
+    receitas: number;
+    despesas: number;
+  } | null>(null);
   const [cols, setCols] = useState(dashboardOrdem);
   const [ordemAnterior, setOrdemAnterior] = useState(dashboardOrdem);
   if (ordemAnterior !== dashboardOrdem) {
@@ -234,11 +245,64 @@ const corBarraResumoDash =
 const mostrarComparativoResumoDash =
   !!mesAnteriorResumoDash && totalDespesasMesAnteriorResumoDash > 0;
 
+  const formatarValorCompacto = (valor: number) => {
+    const abs = Math.abs(valor);
+    if (abs >= 1000000) {
+      const v = valor / 1000000;
+      return `${Number.isInteger(v) ? v.toFixed(0) : v.toFixed(1).replace('.', ',')}M`;
+    }
+    if (abs >= 1000) {
+      const v = valor / 1000;
+      return `${Number.isInteger(v) ? v.toFixed(0) : v.toFixed(1).replace('.', ',')}k`;
+    }
+    return String(Math.round(valor));
+  };
+
+  const limiteEscala = (valorMaximo: number) => {
+    const valor = Math.max(10, valorMaximo);
+    const limites = [
+      50, 100, 500, 1000, 5000, 10000, 50000, 100000, 500000,
+      1000000, 5000000, 10000000, 50000000, 100000000,
+    ];
+    return limites.find((limite) => valor <= limite) || Math.ceil(valor / 100000000) * 100000000;
+  };
+
+  const dadosEvolucao = meses.map((mes) => {
+    const receitas = Number(faturamentos[mes] || 0);
+    const despesas = lancamentos
+      .filter((l) => l.mes === mes && l.status !== 'cancelada')
+      .reduce((total, l) => total + Number(l.valor || 0), 0);
+
+    return { mes, receitas, despesas };
+  });
+
+  const maiorValorEvolucao = Math.max(
+    0,
+    ...dadosEvolucao.map((item) =>
+      evolucaoModo === 'receitas'
+        ? item.receitas
+        : evolucaoModo === 'despesas'
+          ? item.despesas
+          : Math.max(item.receitas, item.despesas)
+    )
+  );
+  const escalaMaxEvolucao = limiteEscala(maiorValorEvolucao);
+  const marcasEscalaEvolucao = [1, 0.75, 0.5, 0.25, 0].map((p) => Math.round(escalaMaxEvolucao * p));
+
+  const alturaBarraEvolucao = (valor: number) =>
+    `${Math.max(2, Math.min(100, (Number(valor || 0) / escalaMaxEvolucao) * 100))}%`;
+
+  const anosDisponiveis = Array.from(
+    { length: new Date().getFullYear() + 5 - 2024 + 1 },
+    (_, i) => (2024 + i).toString()
+  );
+
   const temAConfirmar = !!(despesasAConfirmar && despesasAConfirmar.length > 0);
   const catalogoCardsKanban = [
     { id: 'aConfirmar', titulo: 'Despesas a confirmar', descricao: 'Banner de despesas previstas que chegaram na data.' },
     { id: 'saldo', titulo: 'Saldo do mês', descricao: 'Inicial, final e previsto do mês selecionado.' },
     { id: 'resumoFinanceiro', titulo: 'Resumo financeiro', descricao: 'Despesas, maior gasto e lucro operacional.' },
+    { id: 'evolucaoMensal', titulo: 'Evolução mensal', descricao: 'Gráfico mensal de receitas e despesas.' },
     { id: 'registrarEntradas', titulo: 'Registrar entradas', descricao: 'Lançamento de receitas e total mensal.' },
   ];
   const ocultosSet = new Set(dashboardOcultos || []);
@@ -278,8 +342,32 @@ const mostrarComparativoResumoDash =
       {menuCardAberto === id && (
         <div
           onPointerDown={(e) => e.stopPropagation()}
-          className="absolute right-0 top-8 z-30 w-44 overflow-hidden rounded-xl border border-slate-200 bg-white py-1 text-slate-800 shadow-2xl"
+          className="absolute right-0 top-8 z-30 w-52 overflow-hidden rounded-xl border border-slate-200 bg-white py-1 text-slate-800 shadow-2xl"
         >
+          {id === 'evolucaoMensal' && (
+            <>
+              {[
+                ['ambos', 'Receitas e despesas'],
+                ['receitas', 'Somente receitas'],
+                ['despesas', 'Somente despesas'],
+              ].map(([modo, label]) => (
+                <button
+                  key={modo}
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setEvolucaoModo(modo as 'ambos' | 'receitas' | 'despesas');
+                    setMenuCardAberto(null);
+                  }}
+                  className="flex w-full items-center justify-between gap-2 px-3 py-2 text-left text-xs font-black text-slate-700 transition hover:bg-slate-50"
+                >
+                  {label}
+                  {evolucaoModo === modo && <span style={{ color: corPrimaria }}>✓</span>}
+                </button>
+              ))}
+              <div className="my-1 border-t border-slate-100" />
+            </>
+          )}
           <button
             type="button"
             onClick={(e) => {
@@ -455,6 +543,146 @@ const mostrarComparativoResumoDash =
           <div className="flex justify-between items-center">
             <span className={`font-semibold text-sm ${textMuted}`}>Lucro Operacional</span>
             <span className={`font-semibold text-base tabular-nums tracking-tight ${lucroOperacional >= 0 ? 'text-green-500' : 'text-red-500'}`}>{formatarMoeda(lucroOperacional)}</span>
+          </div>
+        </div>
+      </div>
+    ),
+
+    evolucaoMensal: (
+      <div className={`${bgCard} w-full rounded-2xl shadow-lg border-2 overflow-hidden transition-colors`} style={{ borderColor: corPrimaria }}>
+        <div className="flex items-start justify-between gap-3 px-5 pb-3 pt-4">
+          <div className="min-w-0">
+            <h3 className={`text-base font-black ${textStrong}`}>Evolução mensal</h3>
+            <p className={`mt-0.5 text-[11px] font-semibold ${textMuted}`}>
+              {evolucaoModo === 'receitas'
+                ? 'Receitas por mês'
+                : evolucaoModo === 'despesas'
+                  ? 'Despesas por mês'
+                  : 'Receitas e despesas por mês'}
+            </p>
+          </div>
+          <div className="flex shrink-0 items-center gap-2">
+            <select
+              value={anoSelecionado}
+              onChange={(e) => setAnoSelecionado(e.target.value)}
+              className={`h-8 rounded-lg border px-2 text-xs font-black outline-none ${
+                darkMode ? 'border-slate-700 bg-slate-800 text-slate-100' : 'border-slate-200 bg-slate-50 text-slate-700'
+              }`}
+            >
+              {anosDisponiveis.map((ano) => (
+                <option key={ano} value={ano} className="bg-white text-slate-800">{ano}</option>
+              ))}
+            </select>
+            <DragHandle />
+            <BotaoOpcoesCard id="evolucaoMensal" />
+          </div>
+        </div>
+
+        <div data-evolucao-card className="relative px-5 pb-5 pt-1" onMouseLeave={() => setTooltipEvolucao(null)}>
+          <div className="mb-3 flex items-center gap-3 pl-12 text-[10px] font-black uppercase tracking-wide">
+            {evolucaoModo !== 'despesas' && (
+              <span className="flex items-center gap-1.5 text-sky-600">
+                <span className="h-2 w-2 rounded-full bg-sky-500" /> Receitas
+              </span>
+            )}
+            {evolucaoModo !== 'receitas' && (
+              <span className="flex items-center gap-1.5 text-rose-600">
+                <span className="h-2 w-2 rounded-full bg-rose-500" /> Despesas
+              </span>
+            )}
+          </div>
+
+          <div className="grid h-[230px] grid-cols-[42px_minmax(0,1fr)] gap-3">
+            <div className="relative text-right text-[11px] font-black tabular-nums text-slate-400">
+              {marcasEscalaEvolucao.map((marca, index) => (
+                <span
+                  key={`${marca}-${index}`}
+                  className="absolute right-0 -translate-y-1/2"
+                  style={{ top: `${index * 25}%` }}
+                >
+                  {formatarValorCompacto(marca)}
+                </span>
+              ))}
+            </div>
+
+            <div className="relative">
+              {[0, 25, 50, 75, 100].map((top) => (
+                <span key={top} className="absolute left-0 right-0 h-px bg-slate-200/80" style={{ top: `${top}%` }} />
+              ))}
+              <div className="absolute inset-0 grid grid-cols-12 items-end gap-1.5 px-1">
+                {dadosEvolucao.map((item) => {
+                  const mesAbrev = abreviarMes(item.mes);
+                  return (
+                    <div
+                      key={item.mes}
+                      className="group relative flex h-full min-w-0 items-end justify-center gap-0.5 pb-7"
+                      onMouseMove={(e) => {
+                        const rect = e.currentTarget.closest('[data-evolucao-card]')?.getBoundingClientRect();
+                        setTooltipEvolucao({
+                          x: rect ? e.clientX - rect.left : e.nativeEvent.offsetX,
+                          y: rect ? e.clientY - rect.top : e.nativeEvent.offsetY,
+                          mes: mesAbrev,
+                          receitas: item.receitas,
+                          despesas: item.despesas,
+                        });
+                      }}
+                    >
+                      {evolucaoModo !== 'despesas' && (
+                        <span
+                          className={`w-full max-w-[12px] rounded-t-md bg-gradient-to-b from-sky-400 to-sky-600 shadow-sm transition group-hover:brightness-110 ${
+                            evolucaoModo === 'ambos' ? 'max-w-[9px]' : ''
+                          }`}
+                          style={{ height: alturaBarraEvolucao(item.receitas) }}
+                        />
+                      )}
+                      {evolucaoModo !== 'receitas' && (
+                        <span
+                          className={`w-full max-w-[12px] rounded-t-md bg-gradient-to-b from-rose-400 to-rose-600 shadow-sm transition group-hover:brightness-110 ${
+                            evolucaoModo === 'ambos' ? 'max-w-[9px]' : ''
+                          }`}
+                          style={{ height: alturaBarraEvolucao(item.despesas) }}
+                        />
+                      )}
+                      <span className="absolute bottom-0 left-1/2 -translate-x-1/2 text-[10px] font-black text-slate-400">
+                        {mesAbrev}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+
+          <div className="pointer-events-none absolute inset-0">
+            {tooltipEvolucao && (
+              <div
+                className="absolute z-30 w-44 rounded-xl bg-slate-900 px-3 py-2 text-white shadow-2xl"
+                style={{
+                  left: Math.min(Math.max(tooltipEvolucao.x + 12, 8), 350),
+                  top: Math.max(tooltipEvolucao.y - 20, 8),
+                }}
+              >
+                <p className="mb-1 text-[10px] font-black uppercase tracking-wide text-white/60">{tooltipEvolucao.mes} {anoSelecionado}</p>
+                {evolucaoModo !== 'despesas' && (
+                  <div className="flex justify-between gap-3 text-[11px] font-bold">
+                    <span>Receitas</span>
+                    <strong>{formatarMoeda(tooltipEvolucao.receitas)}</strong>
+                  </div>
+                )}
+                {evolucaoModo !== 'receitas' && (
+                  <div className="flex justify-between gap-3 text-[11px] font-bold">
+                    <span>Despesas</span>
+                    <strong>{formatarMoeda(tooltipEvolucao.despesas)}</strong>
+                  </div>
+                )}
+                {evolucaoModo === 'ambos' && (
+                  <div className="mt-1 flex justify-between gap-3 border-t border-white/15 pt-1 text-[11px] font-black text-cyan-200">
+                    <span>Saldo</span>
+                    <strong>{formatarMoeda(tooltipEvolucao.receitas - tooltipEvolucao.despesas)}</strong>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         </div>
       </div>
