@@ -1,4 +1,73 @@
-import React, { useState } from 'react';
+import React, { useState, useContext, createContext } from 'react';
+import {
+  DndContext,
+  DragOverlay,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  useDroppable,
+  closestCorners,
+  type DragStartEvent,
+  type DragOverEvent,
+  type DragEndEvent,
+} from '@dnd-kit/core';
+import {
+  SortableContext,
+  useSortable,
+  arrayMove,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
+
+const HandleContext = createContext<Record<string, any> | null>(null);
+
+function DragHandle({ tone = 'dark' }: { tone?: 'dark' | 'light' }) {
+  const h = useContext(HandleContext);
+  return (
+    <button
+      {...(h || {})}
+      type="button"
+      aria-label="Arrastar para reordenar"
+      title="Arrastar para reordenar"
+      className={`flex h-6 w-6 shrink-0 items-center justify-center rounded cursor-grab active:cursor-grabbing select-none transition ${
+        tone === 'light' ? 'text-white/70 hover:text-white' : 'text-slate-400 hover:text-slate-600'
+      }`}
+    >
+      <svg width="14" height="14" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+        <circle cx="7" cy="5" r="1.6" /><circle cx="13" cy="5" r="1.6" />
+        <circle cx="7" cy="10" r="1.6" /><circle cx="13" cy="10" r="1.6" />
+        <circle cx="7" cy="15" r="1.6" /><circle cx="13" cy="15" r="1.6" />
+      </svg>
+    </button>
+  );
+}
+
+function SortableItem({ id, children }: { id: string; children: React.ReactNode }) {
+  const { attributes, listeners, setNodeRef, setActivatorNodeRef, transform, transition, isDragging } =
+    useSortable({ id });
+  const style: React.CSSProperties = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.4 : 1,
+  };
+  const handleProps = { ref: setActivatorNodeRef, ...attributes, ...listeners };
+  return (
+    <div ref={setNodeRef} style={style}>
+      <HandleContext.Provider value={handleProps}>{children}</HandleContext.Provider>
+    </div>
+  );
+}
+
+function ColunaKanban({ id, items, children }: { id: string; items: string[]; children: React.ReactNode }) {
+  const { setNodeRef } = useDroppable({ id });
+  return (
+    <div ref={setNodeRef} className="flex flex-col gap-6">
+      <SortableContext items={items} strategy={verticalListSortingStrategy}>
+        {children}
+      </SortableContext>
+    </div>
+  );
+}
 
 interface DashboardProps {
   meses: string[];
@@ -42,8 +111,8 @@ interface DashboardProps {
   saldoInicial: number;
   saldoFinal: number;
   saldoPrevisto: number;
-  dashboardOrdem: string[];
-  onReordenarDashboard: (ordem: string[]) => void;
+  dashboardOrdem: { a: string[]; b: string[] };
+  onReordenarDashboard: (ordem: { a: string[]; b: string[] }) => void;
   onRestaurarOrdemDashboard: () => void;
 }
 
@@ -68,7 +137,14 @@ export default function Dashboard({
 }: DashboardProps) {
 
   const [ocultarValores, setOcultarValores] = useState(true);
-  const [dragId, setDragId] = useState<string | null>(null);
+  const [cols, setCols] = useState(dashboardOrdem);
+  const [ordemAnterior, setOrdemAnterior] = useState(dashboardOrdem);
+  if (ordemAnterior !== dashboardOrdem) {
+    setOrdemAnterior(dashboardOrdem);
+    setCols(dashboardOrdem);
+  }
+  const [activeId, setActiveId] = useState<string | null>(null);
+  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
 
   // Função local para formatar o faturamento enquanto digita
   const handleInputFaturamento = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -153,41 +229,217 @@ const corBarraResumoDash =
 const mostrarComparativoResumoDash =
   !!mesAnteriorResumoDash && totalDespesasMesAnteriorResumoDash > 0;
 
-  const moverCard = (fromId: string, toId: string) => {
-    if (fromId === toId) return;
-    const nova = [...dashboardOrdem];
-    const from = nova.indexOf(fromId);
-    const to = nova.indexOf(toId);
-    if (from < 0 || to < 0) return;
-    nova.splice(to, 0, nova.splice(from, 1)[0]);
-    onReordenarDashboard(nova);
+  const temAConfirmar = !!(despesasAConfirmar && despesasAConfirmar.length > 0);
+
+  const findColumn = (id: string): 'a' | 'b' | null => {
+    if (id === 'a' || id === 'b') return id;
+    if (cols.a.includes(id)) return 'a';
+    if (cols.b.includes(id)) return 'b';
+    return null;
   };
 
-  const kanbanCard = (id: string, node: React.ReactNode) => {
-    if (!node) return null;
-    return (
-      <div
-        key={id}
-        style={{ order: dashboardOrdem.indexOf(id) }}
-        onDragOver={(e) => e.preventDefault()}
-        onDrop={(e) => { e.preventDefault(); if (dragId) moverCard(dragId, id); setDragId(null); }}
-        className={dragId === id ? 'opacity-50' : ''}
-      >
-        <div
-          draggable
-          onDragStart={() => setDragId(id)}
-          onDragEnd={() => setDragId(null)}
-          className="mb-1 flex h-5 cursor-grab items-center justify-center rounded text-slate-300 hover:text-slate-500 active:cursor-grabbing select-none"
-          title="Arrastar para reordenar"
-        >
-          <span className="text-base leading-none tracking-[0.4em]">⠿</span>
+  const filtraColuna = (arr: string[]) => arr.filter((id) => id !== 'aConfirmar' || temAConfirmar);
+  const colsView = { a: filtraColuna(cols.a), b: filtraColuna(cols.b) };
+
+  const handleDragStart = (e: DragStartEvent) => setActiveId(String(e.active.id));
+
+  const handleDragOver = (e: DragOverEvent) => {
+    const { active, over } = e;
+    if (!over) return;
+    const activeKey = String(active.id);
+    const overKey = String(over.id);
+    const from = findColumn(activeKey);
+    const to = findColumn(overKey);
+    if (!from || !to || from === to) return;
+    setCols((prev) => {
+      const fromItems = prev[from].filter((x) => x !== activeKey);
+      const overItems = prev[to];
+      let idx = overItems.indexOf(overKey);
+      if (idx < 0) idx = overItems.length;
+      const toItems = [...overItems.slice(0, idx), activeKey, ...overItems.slice(idx)];
+      return { ...prev, [from]: fromItems, [to]: toItems };
+    });
+  };
+
+  const handleDragEnd = (e: DragEndEvent) => {
+    const { active, over } = e;
+    setActiveId(null);
+    if (!over) { onReordenarDashboard(cols); return; }
+    const activeKey = String(active.id);
+    const overKey = String(over.id);
+    const col = findColumn(activeKey);
+    if (!col) { onReordenarDashboard(cols); return; }
+    const items = cols[col];
+    const oldIndex = items.indexOf(activeKey);
+    const newIndex = items.indexOf(overKey);
+    let novo = cols;
+    if (oldIndex !== -1 && newIndex !== -1 && oldIndex !== newIndex) {
+      novo = { ...cols, [col]: arrayMove(items, oldIndex, newIndex) };
+      setCols(novo);
+    }
+    onReordenarDashboard(novo);
+  };
+
+  const cardsById: Record<string, React.ReactNode> = {
+    aConfirmar: temAConfirmar ? (
+      <div className="w-full rounded-2xl border-2 border-amber-200 bg-amber-50 p-5 shadow-lg">
+        <div className="flex items-center gap-2">
+          <span className="text-lg">🔔</span>
+          <h3 className="flex-1 text-sm font-black text-amber-900">
+            {despesasAConfirmar.length} despesa{despesasAConfirmar.length > 1 ? 's' : ''} prevista{despesasAConfirmar.length > 1 ? 's' : ''} para confirmar
+          </h3>
+          <strong className="text-sm font-black text-amber-900">
+            {formatarMoeda(despesasAConfirmar.reduce((s, i) => s + Number(i.valor || 0), 0))}
+          </strong>
+          <DragHandle />
         </div>
-        {node}
+        <p className="mt-1 text-xs font-semibold text-amber-700">
+          Já entraram no total pelo valor previsto. Confirme, ajuste o valor ou exclua.
+        </p>
+        <div className="mt-4 grid gap-2">
+          {despesasAConfirmar.map((d) => (
+            <div key={d.id} className="flex flex-col gap-2 rounded-xl border border-amber-100 bg-white p-3 sm:flex-row sm:items-center sm:justify-between">
+              <div className="min-w-0">
+                <p className="truncate text-sm font-bold text-slate-800">{d.despesa}</p>
+                <p className="truncate text-xs text-slate-500">{d.mes} · Dia {d.dia}{d.descricao ? ` - ${d.descricao}` : ''}</p>
+              </div>
+              <div className="flex shrink-0 items-center gap-2">
+                <strong className="mr-2 text-sm font-black text-red-600">{formatarMoeda(Number(d.valor || 0))}</strong>
+                <button type="button" onClick={() => onConfirmarPrevista(d.id)} className="h-9 rounded-lg bg-emerald-600 px-3 text-xs font-black text-white hover:bg-emerald-700 cursor-pointer">Confirmar</button>
+                <button type="button" onClick={() => onAjustarPrevista(d)} className="h-9 rounded-lg border border-slate-300 bg-white px-3 text-xs font-black text-slate-700 hover:bg-slate-50 cursor-pointer">Ajustar valor</button>
+                <button type="button" onClick={() => onExcluirPrevista(d.id)} className="h-9 rounded-lg border border-red-200 bg-white px-3 text-xs font-black text-red-600 hover:bg-red-50 cursor-pointer">Excluir</button>
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
-    );
+    ) : null,
+
+    saldo: (
+      <div className={`${bgCard} w-full rounded-2xl shadow-lg border-2 overflow-hidden transition-colors`} style={{ borderColor: corPrimaria }}>
+        <div className="text-center text-sm font-bold uppercase tracking-wider flex justify-between px-6 py-3 items-center" style={{ backgroundColor: corPrimaria, color: textoSobreCorPrimaria }}>
+          <span>Saldo do mês</span>
+          <div className="flex items-center gap-2">
+            <select value={meses[saldoCardMesIdx]} onChange={e => setSaldoCardMesIdx(meses.indexOf(e.target.value))} className="text-xs rounded p-1 outline-none font-bold cursor-pointer border" style={{ color: textoSobreCorPrimaria, backgroundColor: corEhClara(corPrimaria) ? 'rgba(15, 23, 42, 0.08)' : 'rgba(0, 0, 0, 0.20)', borderColor: corEhClara(corPrimaria) ? 'rgba(15, 23, 42, 0.18)' : 'rgba(255, 255, 255, 0.12)' }}>
+              {meses.map(m => <option key={m} value={m} className="text-slate-800 bg-white">{m}</option>)}
+            </select>
+            <DragHandle tone="light" />
+          </div>
+        </div>
+        <div className="p-5 space-y-2.5">
+          <div className={`flex justify-between items-center pb-2.5 border-b border-dotted ${darkMode ? 'border-slate-500/50' : 'border-slate-300'}`}>
+            <span className={`font-semibold text-sm ${textMuted}`}>Inicial</span>
+            <span className={`font-semibold text-base tabular-nums tracking-tight ${textStrong}`}>{formatarMoeda(saldoInicial)}</span>
+          </div>
+          <div className={`flex justify-between items-center pb-2.5 border-b border-dotted ${darkMode ? 'border-slate-500/50' : 'border-slate-300'}`}>
+            <span className={`font-semibold text-sm ${textMuted}`}>Final</span>
+            <span className={`font-semibold text-base tabular-nums tracking-tight ${saldoFinal >= 0 ? 'text-green-500' : 'text-red-500'}`}>{formatarMoeda(saldoFinal)}</span>
+          </div>
+          <div className="flex justify-between items-center">
+            <span className={`font-semibold text-sm ${textMuted}`}>Previsto</span>
+            <span className={`font-semibold text-base tabular-nums tracking-tight ${saldoPrevisto >= 0 ? 'text-cyan-500' : 'text-red-500'}`}>{formatarMoeda(saldoPrevisto)}</span>
+          </div>
+        </div>
+      </div>
+    ),
+
+    resumoFinanceiro: (
+      <div className={`${bgCard} w-full rounded-2xl shadow-lg border-2 overflow-hidden transition-colors`} style={{ borderColor: corPrimaria }}>
+        <div className="text-center text-sm font-bold uppercase tracking-wider flex justify-between px-6 py-3 items-center" style={{ backgroundColor: corPrimaria, color: textoSobreCorPrimaria }}>
+          <span>Resumo Financeiro</span>
+          <div className="flex items-center gap-2">
+            <select value={mesResumoDash} onChange={e => setMesResumoDash(e.target.value)} className="text-xs rounded p-1 outline-none font-bold cursor-pointer border" style={{ color: textoSobreCorPrimaria, backgroundColor: corEhClara(corPrimaria) ? 'rgba(15, 23, 42, 0.08)' : 'rgba(0, 0, 0, 0.20)', borderColor: corEhClara(corPrimaria) ? 'rgba(15, 23, 42, 0.18)' : 'rgba(255, 255, 255, 0.12)' }}>
+              {meses.map(m => <option key={m} value={m} className="text-slate-800 bg-white">{m}</option>)}
+            </select>
+            <DragHandle tone="light" />
+          </div>
+        </div>
+        <div className="p-5 space-y-2.5">
+          <div className={`pb-2.5 border-b border-dotted ${darkMode ? 'border-slate-500/50' : 'border-slate-300'}`}>
+            <div className="flex justify-between items-center">
+              <span className={`font-semibold text-sm ${textMuted}`}>Total Despesas</span>
+              <span className={`font-semibold text-base tabular-nums tracking-tight ${textStrong}`}>{formatarMoeda(totalDespesasMes)}</span>
+            </div>
+            <div className="mt-2">
+              <div className="mb-2 flex items-center justify-between gap-3">
+                <span className={`text-[10px] font-black uppercase tracking-wide ${textMuted}`}>{mostrarComparativoResumoDash ? `Vs. ${mesAnteriorResumoDash}` : 'Vs. mês ant.'}</span>
+                <span className="text-xs font-black" style={{ color: mostrarComparativoResumoDash ? corBarraResumoDash : '#94a3b8' }}>{mostrarComparativoResumoDash ? `${percentualDespesasResumoDash.toFixed(1)}%` : '--'}</span>
+              </div>
+              <div className="h-3 w-full overflow-hidden rounded-full bg-slate-200 shadow-inner">
+                <div className="h-full rounded-full transition-all duration-500" style={{ width: mostrarComparativoResumoDash ? `${percentualBarraResumoDash}%` : '0%', backgroundColor: mostrarComparativoResumoDash ? corBarraResumoDash : '#94a3b8' }} />
+              </div>
+              <div className="mt-2 flex items-center justify-between text-[10px] font-semibold text-slate-400">
+                <span>Atual: {formatarMoeda(totalDespesasMes)}</span>
+                <span>Ant.: {mostrarComparativoResumoDash ? formatarMoeda(totalDespesasMesAnteriorResumoDash) : '--'}</span>
+              </div>
+            </div>
+          </div>
+          <div className={`flex justify-between items-center pb-2.5 border-b border-dotted ${darkMode ? 'border-slate-500/50' : 'border-slate-300'}`}>
+            <div className="flex flex-col">
+              <span className={`font-semibold text-sm ${textMuted}`}>Maior Gasto</span>
+              <span className="text-xs text-slate-400 mt-0.5">{maiorGasto.despesa || 'Nenhuma'}</span>
+            </div>
+            <span className={`font-semibold text-base tabular-nums tracking-tight ${maiorGasto.valor > 0 ? 'text-red-500' : textMuted}`}>{maiorGasto.valor > 0 ? formatarMoeda(maiorGasto.valor) : '-'}</span>
+          </div>
+          <div className="flex justify-between items-center">
+            <span className={`font-semibold text-sm ${textMuted}`}>Lucro Operacional</span>
+            <span className={`font-semibold text-base tabular-nums tracking-tight ${lucroOperacional >= 0 ? 'text-green-500' : 'text-red-500'}`}>{formatarMoeda(lucroOperacional)}</span>
+          </div>
+        </div>
+      </div>
+    ),
+
+    registrarEntradas: (
+      <div className={bgCard + " w-full rounded-2xl shadow-lg border-2 overflow-hidden transition-colors"} style={{ borderColor: corPrimaria }}>
+        <div className="text-center text-sm font-bold uppercase tracking-wider flex justify-between px-6 py-3 items-center" style={{ backgroundColor: corPrimaria, color: textoSobreCorPrimaria }}>
+          <span>REGISTRAR ENTRADAS</span>
+          <DragHandle tone="light" />
+        </div>
+        <div className="p-5 space-y-3">
+          <section className={(darkMode ? 'border-slate-700 bg-slate-800/60' : 'border-slate-200 bg-slate-50') + ' rounded-xl border p-3'}>
+            <div className="mb-2 flex items-center gap-2">
+              <span className="h-2 w-2 rounded-full bg-emerald-500" />
+              <p className={textMuted + " text-[10px] font-black uppercase tracking-wide"}>Lançar receita</p>
+            </div>
+            <div className="grid grid-cols-[64px_1fr] gap-2 mb-2">
+              <input type="number" min="1" max="31" value={entradaFaturamentoDia} onChange={(e) => setEntradaFaturamentoDia(e.target.value)} placeholder="Dia" className="w-full rounded-lg bg-white px-3 py-2 text-sm font-bold text-slate-800 shadow-inner outline-none" />
+              <input type="text" value={entradaFaturamentoOrigem} onChange={(e) => setEntradaFaturamentoOrigem(e.target.value)} placeholder="Origem da entrada" className="w-full rounded-lg bg-white px-3 py-2 text-sm font-semibold text-slate-800 shadow-inner outline-none" />
+            </div>
+            <div className="flex gap-2">
+              <div className="relative w-full">
+                <input type="text" value={entradaFaturamentoValor} onChange={handleEntradaFaturamentoValorChange} onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); solicitarEntradaFaturamentoDashboard(); } }} placeholder="0,00" className="w-full px-4 py-2 rounded-lg bg-white text-slate-800 font-bold focus:outline-none shadow-inner text-right" />
+              </div>
+              <button onClick={solicitarEntradaFaturamentoDashboard} className="px-4 rounded-lg font-bold border shadow-md text-xs transition-all duration-200 hover:brightness-110 hover:shadow-lg hover:scale-[1.03] active:scale-95 active:shadow-inner cursor-pointer select-none" style={{ color: '#ffffff', backgroundColor: '#059669', borderColor: '#047857' }}>Lançar</button>
+            </div>
+          </section>
+          <section className={(darkMode ? 'border-slate-700 bg-slate-800/60' : 'border-slate-200 bg-slate-50') + ' rounded-xl border p-3'}>
+            <div className="mb-2 flex items-center gap-2">
+              <span className="h-2 w-2 rounded-full" style={{ backgroundColor: corPrimaria }} />
+              <p className={textMuted + " text-[10px] font-black uppercase tracking-wide"}>Definir total do mês</p>
+            </div>
+            <div className="flex gap-2">
+              <div className="relative w-full">
+                <input type="text" value={inputFaturamento} onChange={handleInputFaturamento} onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); solicitarFaturamentoDashboard(); } }} placeholder={placeholderFaturamento || '0,00'} className="w-full px-4 py-2.5 rounded-lg bg-white text-slate-800 font-bold focus:outline-none shadow-inner text-right" />
+              </div>
+              <button onClick={solicitarFaturamentoDashboard} className="px-4 rounded-lg font-bold border shadow-md text-xs transition-all duration-200 hover:brightness-110 hover:shadow-lg hover:scale-[1.03] active:scale-95 active:shadow-inner cursor-pointer select-none" style={{ color: textoSobreCorPrimaria, backgroundColor: corPrimaria, borderColor: corPrimaria }}>Definir</button>
+            </div>
+            {faturamentoDoMes > 0 && (
+              <button type="button" onClick={excluirTotalMes} className={"mt-2 w-full rounded-lg border px-3 py-1.5 text-xs font-black transition cursor-pointer " + (darkMode ? "border-red-800/50 bg-red-950/30 text-red-400 hover:bg-red-900/40" : "border-red-200 bg-red-50 text-red-600 hover:bg-red-100")}>Excluir total do mês</button>
+            )}
+          </section>
+        </div>
+      </div>
+    ),
   };
 
   return (
+    <DndContext
+      sensors={sensors}
+      collisionDetection={closestCorners}
+      onDragStart={handleDragStart}
+      onDragOver={handleDragOver}
+      onDragEnd={handleDragEnd}
+    >
     <main className="grid w-full grid-cols-1 xl:grid-cols-3 items-start gap-6 animate-fade-in print:m-0 print:p-0">
 
       <section
@@ -277,354 +529,31 @@ const mostrarComparativoResumoDash =
         </div>
       </section>
 
-      <div className="xl:col-span-2 grid grid-cols-1 sm:grid-cols-2 items-start gap-6 content-start">
-
-        {kanbanCard('aConfirmar', (despesasAConfirmar && despesasAConfirmar.length > 0) ? (
-          <div className="w-full rounded-2xl border-2 border-amber-200 bg-amber-50 p-5 shadow-lg">
-            <div className="flex items-center gap-2">
-              <span className="text-lg">🔔</span>
-              <h3 className="flex-1 text-sm font-black text-amber-900">
-                {despesasAConfirmar.length} despesa{despesasAConfirmar.length > 1 ? 's' : ''} prevista{despesasAConfirmar.length > 1 ? 's' : ''} para confirmar
-              </h3>
-              <strong className="text-sm font-black text-amber-900">
-                {formatarMoeda(despesasAConfirmar.reduce((s, i) => s + Number(i.valor || 0), 0))}
-              </strong>
-            </div>
-            <p className="mt-1 text-xs font-semibold text-amber-700">
-              Já entraram no total pelo valor previsto. Confirme, ajuste o valor ou exclua.
-            </p>
-            <div className="mt-4 grid gap-2">
-              {despesasAConfirmar.map((d) => (
-                <div
-                  key={d.id}
-                  className="flex flex-col gap-2 rounded-xl border border-amber-100 bg-white p-3 sm:flex-row sm:items-center sm:justify-between"
-                >
-                  <div className="min-w-0">
-                    <p className="truncate text-sm font-bold text-slate-800">{d.despesa}</p>
-                    <p className="truncate text-xs text-slate-500">
-                      {d.mes} · Dia {d.dia}{d.descricao ? ` - ${d.descricao}` : ''}
-                    </p>
-                  </div>
-                  <div className="flex shrink-0 items-center gap-2">
-                    <strong className="mr-2 text-sm font-black text-red-600">{formatarMoeda(Number(d.valor || 0))}</strong>
-                    <button
-                      type="button"
-                      onClick={() => onConfirmarPrevista(d.id)}
-                      className="h-9 rounded-lg bg-emerald-600 px-3 text-xs font-black text-white hover:bg-emerald-700 cursor-pointer"
-                    >
-                      Confirmar
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => onAjustarPrevista(d)}
-                      className="h-9 rounded-lg border border-slate-300 bg-white px-3 text-xs font-black text-slate-700 hover:bg-slate-50 cursor-pointer"
-                    >
-                      Ajustar valor
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => onExcluirPrevista(d.id)}
-                      className="h-9 rounded-lg border border-red-200 bg-white px-3 text-xs font-black text-red-600 hover:bg-red-50 cursor-pointer"
-                    >
-                      Excluir
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        ) : null)}
-
-        {kanbanCard('saldo', (
-          <div className={`${bgCard} w-full rounded-2xl shadow-lg border-2 overflow-hidden transition-colors`} style={{ borderColor: corPrimaria }}>
-          <div
-            className="text-center text-sm font-bold uppercase tracking-wider flex justify-between px-6 py-3 items-center"
-            style={{ backgroundColor: corPrimaria, color: textoSobreCorPrimaria }}
-          >
-            <span>Saldo do mês</span>
-            <select
-              value={meses[saldoCardMesIdx]}
-              onChange={e => setSaldoCardMesIdx(meses.indexOf(e.target.value))}
-              className="text-xs rounded p-1 outline-none font-bold cursor-pointer border"
-              style={{
-                color: textoSobreCorPrimaria,
-                backgroundColor: corEhClara(corPrimaria) ? 'rgba(15, 23, 42, 0.08)' : 'rgba(0, 0, 0, 0.20)',
-                borderColor: corEhClara(corPrimaria) ? 'rgba(15, 23, 42, 0.18)' : 'rgba(255, 255, 255, 0.12)',
-              }}
-            >
-              {meses.map(m => <option key={m} value={m} className="text-slate-800 bg-white">{m}</option>)}
-            </select>
-          </div>
-          <div className="p-5 space-y-2.5">
-            <div className={`flex justify-between items-center pb-2.5 border-b border-dotted ${darkMode ? 'border-slate-500/50' : 'border-slate-300'}`}>
-              <span className={`font-semibold text-sm ${textMuted}`}>Inicial</span>
-              <span className={`font-semibold text-base tabular-nums tracking-tight ${textStrong}`}>{formatarMoeda(saldoInicial)}</span>
-            </div>
-            <div className={`flex justify-between items-center pb-2.5 border-b border-dotted ${darkMode ? 'border-slate-500/50' : 'border-slate-300'}`}>
-              <span className={`font-semibold text-sm ${textMuted}`}>Final</span>
-              <span className={`font-semibold text-base tabular-nums tracking-tight ${saldoFinal >= 0 ? 'text-green-500' : 'text-red-500'}`}>{formatarMoeda(saldoFinal)}</span>
-            </div>
-            <div className="flex justify-between items-center">
-              <span className={`font-semibold text-sm ${textMuted}`}>Previsto</span>
-              <span className={`font-semibold text-base tabular-nums tracking-tight ${saldoPrevisto >= 0 ? 'text-cyan-500' : 'text-red-500'}`}>{formatarMoeda(saldoPrevisto)}</span>
-            </div>
-          </div>
-      </div>
-        ))}
-
-        {kanbanCard('resumoFinanceiro', (
-          <div className={`${bgCard} w-full rounded-2xl shadow-lg border-2 overflow-hidden transition-colors`} style={{ borderColor: corPrimaria }}>
-          <div
-            className="text-center text-sm font-bold uppercase tracking-wider flex justify-between px-6 py-3 items-center"
-            style={{
-              backgroundColor: corPrimaria,
-              color: textoSobreCorPrimaria,
-            }}
-          >
-            <span>Resumo Financeiro</span>
-            <select
-              value={mesResumoDash}
-              onChange={e => setMesResumoDash(e.target.value)}
-              className="text-xs rounded p-1 outline-none font-bold cursor-pointer border"
-              style={{
-                color: textoSobreCorPrimaria,
-                backgroundColor: corEhClara(corPrimaria)
-                  ? 'rgba(15, 23, 42, 0.08)'
-                  : 'rgba(0, 0, 0, 0.20)',
-                borderColor: corEhClara(corPrimaria)
-                  ? 'rgba(15, 23, 42, 0.18)'
-                  : 'rgba(255, 255, 255, 0.12)',
-              }}
-            >
-              {meses.map(m => <option key={m} value={m} className="text-slate-800 bg-white">{m}</option>)}
-            </select>
-          </div>
-          <div className="p-5 space-y-2.5">
-  <div className={`pb-2.5 border-b border-dotted ${
-  darkMode ? 'border-slate-500/50' : 'border-slate-300'
-}`}>
-    <div className="flex justify-between items-center">
-      <span className={`font-semibold text-sm ${textMuted}`}>Total Despesas</span>
-      <span className={`font-semibold text-base tabular-nums tracking-tight ${textStrong}`}>
-        {formatarMoeda(totalDespesasMes)}
-      </span>
-    </div>
-
-    <div className="mt-2">
-      <div className="mb-2 flex items-center justify-between gap-3">
-        <span className={`text-[10px] font-black uppercase tracking-wide ${textMuted}`}>
-          {mostrarComparativoResumoDash
-            ? `Vs. ${mesAnteriorResumoDash}`
-            : 'Vs. mês ant.'}
-        </span>
-
-        <span
-          className="text-xs font-black"
-          style={{
-            color: mostrarComparativoResumoDash
-              ? corBarraResumoDash
-              : '#94a3b8',
-          }}
-        >
-          {mostrarComparativoResumoDash
-            ? `${percentualDespesasResumoDash.toFixed(1)}%`
-            : '--'}
-        </span>
-      </div>
-
-      <div className="h-3 w-full overflow-hidden rounded-full bg-slate-200 shadow-inner">
-        <div
-          className="h-full rounded-full transition-all duration-500"
-          style={{
-            width: mostrarComparativoResumoDash
-              ? `${percentualBarraResumoDash}%`
-              : '0%',
-            backgroundColor: mostrarComparativoResumoDash
-              ? corBarraResumoDash
-              : '#94a3b8',
-          }}
-        />
-      </div>
-
-      <div className="mt-2 flex items-center justify-between text-[10px] font-semibold text-slate-400">
-        <span>Atual: {formatarMoeda(totalDespesasMes)}</span>
-        <span>
-          Ant.: {mostrarComparativoResumoDash
-            ? formatarMoeda(totalDespesasMesAnteriorResumoDash)
-            : '--'}
-        </span>
-      </div>
-    </div>
-  </div>
-            <div className={`flex justify-between items-center pb-2.5 border-b border-dotted ${
-  darkMode ? 'border-slate-500/50' : 'border-slate-300'
-}`}>
-              <div className="flex flex-col">
-                <span className={`font-semibold text-sm ${textMuted}`}>Maior Gasto</span>
-                <span className="text-xs text-slate-400 mt-0.5">{maiorGasto.despesa || 'Nenhuma'}</span>
-              </div>
-              <span className={`font-semibold text-base tabular-nums tracking-tight ${maiorGasto.valor > 0 ? 'text-red-500' : textMuted}`}>
-                {maiorGasto.valor > 0 ? formatarMoeda(maiorGasto.valor) : '-'}
-              </span>
-            </div>
-            <div className="flex justify-between items-center">
-              <span className={`font-semibold text-sm ${textMuted}`}>Lucro Operacional</span>
-              <span className={`font-semibold text-base tabular-nums tracking-tight ${lucroOperacional >= 0 ? 'text-green-500' : 'text-red-500'}`}>{formatarMoeda(lucroOperacional)}</span>
-            </div>
-          </div>
-        </div>
-        ))}
-
-        {kanbanCard('registrarEntradas', (
-          <div className={bgCard + " w-full rounded-2xl shadow-lg border-2 overflow-hidden transition-colors"} style={{ borderColor: corPrimaria }}>
-          <div
-            className="text-center text-sm font-bold uppercase tracking-wider flex justify-between px-6 py-3 items-center"
-            style={{
-              backgroundColor: corPrimaria,
-              color: textoSobreCorPrimaria,
-            }}
-          >
-            <span>REGISTRAR ENTRADAS</span>
-          </div>
-
-          <div className="p-5 space-y-3">
-            <section
-              className={(darkMode
-                ? 'border-slate-700 bg-slate-800/60'
-                : 'border-slate-200 bg-slate-50') + ' rounded-xl border p-3'}
-            >
-              <div className="mb-2 flex items-center gap-2">
-                <span className="h-2 w-2 rounded-full bg-emerald-500" />
-                <p className={textMuted + " text-[10px] font-black uppercase tracking-wide"}>
-                  Lançar receita
-                </p>
-              </div>
-
-              <div className="grid grid-cols-[64px_1fr] gap-2 mb-2">
-                <input
-                  type="number"
-                  min="1"
-                  max="31"
-                  value={entradaFaturamentoDia}
-                  onChange={(e) => setEntradaFaturamentoDia(e.target.value)}
-                  placeholder="Dia"
-                  className="w-full rounded-lg bg-white px-3 py-2 text-sm font-bold text-slate-800 shadow-inner outline-none"
-                />
-
-                <input
-                  type="text"
-                  value={entradaFaturamentoOrigem}
-                  onChange={(e) => setEntradaFaturamentoOrigem(e.target.value)}
-                  placeholder="Origem da entrada"
-                  className="w-full rounded-lg bg-white px-3 py-2 text-sm font-semibold text-slate-800 shadow-inner outline-none"
-                />
-              </div>
-
-              <div className="flex gap-2">
-                <div className="relative w-full">
-                  <input
-                    type="text"
-                    value={entradaFaturamentoValor}
-                    onChange={handleEntradaFaturamentoValorChange}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') {
-                        e.preventDefault();
-                        solicitarEntradaFaturamentoDashboard();
-                      }
-                    }}
-                    placeholder="0,00"
-                    className="w-full px-4 py-2 rounded-lg bg-white text-slate-800 font-bold focus:outline-none shadow-inner text-right"
-                  />
-                </div>
-
-                <button
-                  onClick={solicitarEntradaFaturamentoDashboard}
-                  className="px-4 rounded-lg font-bold border shadow-md text-xs transition-all duration-200 hover:brightness-110 hover:shadow-lg hover:scale-[1.03] active:scale-95 active:shadow-inner cursor-pointer select-none"
-                  style={{
-                    color: '#ffffff',
-                    backgroundColor: '#059669',
-                    borderColor: '#047857',
-                  }}
-                >
-                  Lançar
-                </button>
-              </div>
-            </section>
-
-            <section
-              className={(darkMode
-                ? 'border-slate-700 bg-slate-800/60'
-                : 'border-slate-200 bg-slate-50') + ' rounded-xl border p-3'}
-            >
-              <div className="mb-2 flex items-center gap-2">
-                <span
-                  className="h-2 w-2 rounded-full"
-                  style={{ backgroundColor: corPrimaria }}
-                />
-                <p className={textMuted + " text-[10px] font-black uppercase tracking-wide"}>
-                  Definir total do mês
-                </p>
-              </div>
-
-              <div className="flex gap-2">
-                <div className="relative w-full">
-                  <input
-                    type="text"
-                    value={inputFaturamento}
-                    onChange={handleInputFaturamento}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') {
-                        e.preventDefault();
-                        solicitarFaturamentoDashboard();
-                      }
-                    }}
-                    placeholder={placeholderFaturamento || '0,00'}
-                    className="w-full px-4 py-2.5 rounded-lg bg-white text-slate-800 font-bold focus:outline-none shadow-inner text-right"
-                  />
-                </div>
-
-                <button
-                  onClick={solicitarFaturamentoDashboard}
-                  className="px-4 rounded-lg font-bold border shadow-md text-xs transition-all duration-200 hover:brightness-110 hover:shadow-lg hover:scale-[1.03] active:scale-95 active:shadow-inner cursor-pointer select-none"
-                  style={{
-                    color: textoSobreCorPrimaria,
-                    backgroundColor: corPrimaria,
-                    borderColor: corPrimaria,
-                  }}
-                >
-                  Definir
-                </button>
-              </div>
-              {faturamentoDoMes > 0 && (
-                <button
-                  type="button"
-                  onClick={excluirTotalMes}
-                  className={"mt-2 w-full rounded-lg border px-3 py-1.5 text-xs font-black transition cursor-pointer " + (darkMode
-                    ? "border-red-800/50 bg-red-950/30 text-red-400 hover:bg-red-900/40"
-                    : "border-red-200 bg-red-50 text-red-600 hover:bg-red-100")}
-                >
-                  Excluir total do mês
-                </button>
-              )}
-            </section>
-          </div>
-        </div>
-        ))}
-
-        <div style={{ order: 998, minHeight: '120px' }} className="hidden sm:flex w-full items-center justify-center rounded-2xl border-2 border-dashed border-slate-300 text-slate-400 text-sm font-semibold">
-          Espaço para novos cards
-        </div>
-
+      <div className="xl:col-span-2 grid grid-cols-1 sm:grid-cols-2 items-start gap-6">
+        <ColunaKanban id="a" items={colsView.a}>
+          {colsView.a.map((id) => (
+            <SortableItem key={id} id={id}>{cardsById[id]}</SortableItem>
+          ))}
+        </ColunaKanban>
+        <ColunaKanban id="b" items={colsView.b}>
+          {colsView.b.map((id) => (
+            <SortableItem key={id} id={id}>{cardsById[id]}</SortableItem>
+          ))}
+        </ColunaKanban>
         <button
           type="button"
           onClick={onRestaurarOrdemDashboard}
-          style={{ order: 999 }}
-          className="sm:col-span-2 mt-1 text-xs font-bold text-slate-400 hover:text-slate-600 cursor-pointer"
+          className="sm:col-span-2 mt-1 text-left text-xs font-bold text-slate-400 hover:text-slate-600 cursor-pointer"
         >
           ↺ Restaurar ordem padrão
         </button>
-
       </div>
     </main>
+    <DragOverlay dropAnimation={null}>
+      {activeId && cardsById[activeId] ? (
+        <div className="cursor-grabbing shadow-2xl rounded-2xl">{cardsById[activeId]}</div>
+      ) : null}
+    </DragOverlay>
+    </DndContext>
   );
 }

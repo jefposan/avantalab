@@ -302,8 +302,8 @@ const [reenviandoTelefoneObrigatorio, setReenviandoTelefoneObrigatorio] = useSta
 const [validandoTelefoneObrigatorio, setValidandoTelefoneObrigatorio] = useState(false);
   const [abaAtiva, setAbaAtiva] = useState('Dashboard');
   const [saldoCardMesIdx, setSaldoCardMesIdx] = useState<number>(new Date().getMonth());
-  const ordemDashboardPadrao = ['aConfirmar', 'saldo', 'resumoFinanceiro', 'registrarEntradas'];
-  const [dashboardOrdem, setDashboardOrdem] = useState<string[]>(ordemDashboardPadrao);
+  const ordemDashboardPadrao = { a: ['aConfirmar', 'saldo'], b: ['resumoFinanceiro', 'registrarEntradas'] };
+  const [dashboardOrdem, setDashboardOrdem] = useState<{ a: string[]; b: string[] }>(ordemDashboardPadrao);
 const [ajustesAberto, setAjustesAberto] = useState(false);
 const [agendaAberta, setAgendaAberta] = useState(false);
 const [agendaItens, setAgendaItens] = useState<AgendaItem[]>([]);
@@ -714,12 +714,14 @@ if (empresa.telefone_confirmado !== true) {
     setLogoUrl(config.logo_url ?? '');
     if (config.logo_settings) setLogoSettings(config.logo_settings);
 
-    if (Array.isArray(config.dashboard_ordem_web)) {
-      const salva = config.dashboard_ordem_web.filter((id: string) =>
-        ordemDashboardPadrao.includes(id)
-      );
-      const faltantes = ordemDashboardPadrao.filter((id) => !salva.includes(id));
-      setDashboardOrdem([...salva, ...faltantes]);
+    const TODOS_CARDS = ['aConfirmar', 'saldo', 'resumoFinanceiro', 'registrarEntradas'];
+    const rawOrdem = config.dashboard_ordem_web;
+    if (rawOrdem && Array.isArray(rawOrdem.a) && Array.isArray(rawOrdem.b)) {
+      const a = rawOrdem.a.filter((id: string) => TODOS_CARDS.includes(id));
+      const b = rawOrdem.b.filter((id: string) => TODOS_CARDS.includes(id) && !a.includes(id));
+      const usados = [...a, ...b];
+      const faltantes = TODOS_CARDS.filter((id) => !usados.includes(id));
+      setDashboardOrdem({ a: [...a, ...faltantes], b });
     } else {
       setDashboardOrdem(ordemDashboardPadrao);
     }
@@ -2386,7 +2388,7 @@ const ajustarDespesaPrevista = (despesa: any) => {
   if (despesa && despesa.mes) setMesAtivo(despesa.mes);
 };
 
-const persistirOrdemDashboard = (novaOrdem: string[]) => {
+const persistirOrdemDashboard = (novaOrdem: { a: string[]; b: string[] }) => {
   setDashboardOrdem(novaOrdem);
   if (empresaId) salvarDashboardOrdemWeb(empresaId, novaOrdem);
 };
