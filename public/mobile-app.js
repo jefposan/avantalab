@@ -877,6 +877,38 @@
     return dadosMes(meses[indice]);
   }
 
+  function insightDespesasHtml(atual, anterior) {
+    var lampSvg = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" aria-hidden="true" class="shrink-0" style="color:#1F8A9E"><path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-4 10.5c.6.6 1 1.2 1 2V16h6v-.5c0-.8.4-1.4 1-2A6 6 0 0 0 12 3Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+    var atualD = (atual && atual.despesas) || 0;
+    var antD = (anterior && anterior.despesas) || 0;
+    var inicio = '<div class="mt-2 flex items-center gap-1.5 text-[11px]">' + lampSvg;
+    var fim = '</div>';
+
+    if (!(antD > 0)) {
+      return inicio +
+        '<span class="font-semibold" style="color:rgba(255,255,255,0.65)">Compare seus gastos conforme registra novos meses</span>' +
+        fim;
+    }
+
+    var pct = (atualD - antD) / antD * 100;
+    var pctInt = Math.round(Math.abs(pct));
+
+    if (pctInt === 0) {
+      return inicio +
+        '<span class="font-semibold" style="color:rgba(255,255,255,0.85)">Despesas est&aacute;veis em rela&ccedil;&atilde;o ao m&ecirc;s anterior</span>' +
+        fim;
+    }
+
+    var subiu = pct > 0;
+    var corPct = subiu ? '#E5484D' : '#2EAD68';
+    var verbo = subiu ? 'aumentaram' : 'reduziram';
+    return inicio +
+      '<span class="font-semibold" style="color:rgba(255,255,255,0.85)">Despesas ' + verbo + ' </span>' +
+      '<span class="font-black" style="color:' + corPct + '">' + pctInt + '%</span>' +
+      '<span class="font-semibold" style="color:rgba(255,255,255,0.85)"> em rela&ccedil;&atilde;o ao m&ecirc;s anterior</span>' +
+      fim;
+  }
+
   function setErro(texto) {
     state.erro = texto || '';
     state.mensagem = '';
@@ -4096,11 +4128,7 @@
                 '<button id="mes-proximo" type="button" class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-2xl font-black leading-none text-white active:bg-white/10" aria-label="Proximo mes">&rsaquo;</button>' +
               '</div>' +
             '</div>' +
-            '<div class="mt-2 flex items-center gap-1.5 text-[11px]">' +
-              '<span class="flex h-4 w-4 shrink-0 items-center justify-center rounded-full border border-cyan-300/60 text-[9px] font-black text-cyan-200">i</span>' +
-              '<span class="font-semibold text-cyan-50/75">Per&iacute;odo ativo</span>' +
-              '<span class="font-black text-cyan-300">&bull; ' + escapeHtml(state.mes.charAt(0) + state.mes.slice(1).toLowerCase()) + '/' + escapeHtml(String(state.ano)) + '</span>' +
-            '</div>' +
+            insightDespesasHtml(atual, anterior) +
           '</div>' +
         '</header>' +
         '<div class="mx-auto grid max-w-md gap-3 px-4" style="padding-top:calc(env(safe-area-inset-top) + ' + (state.visao === 'agenda' ? '168px' : '152px') + ');">' +
