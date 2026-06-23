@@ -197,7 +197,7 @@ export default function AppHeader({
           {/* LOGO */}
           {logoUrl !== '__blank__' && (
           <div
-            className="w-44 h-[72px] xl:w-64 xl:h-[88px] flex items-center justify-center relative cursor-pointer shrink-0 mb-2"
+            className="w-36 h-[60px] xl:w-48 xl:h-[72px] flex items-center justify-center relative cursor-pointer shrink-0 mb-2"
             onClick={() => { setAbaAtiva('Dashboard'); setMesAtivo(null); setMenuResponsivoAberto(false); }}
           >
             {logoUrl ? (
