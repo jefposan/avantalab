@@ -22,8 +22,13 @@ Desenho do módulo antes de criar tabelas/telas. **Ainda não rodar SQL** — a 
    - Após Retorno → **Saída**
    - Após Saída → dia encerrado
 4. Ao tocar na ação, **captura geolocalização** (GPS do navegador), **data e hora**, e a ação.
-5. **Salva** o registro (imutável) e mostra um **comprovante** na tela (e, idealmente, PDF) com: empresa, funcionário, ação, data/hora, local e um **código/hash** do registro.
+5. **Salva** o registro (imutável) e mostra um **comprovante** na tela com: empresa, funcionário, ação, data/hora, local e um **código/hash** do registro.
 6. Registro fica disponível ao **acesso administrativo** da empresa.
+
+### 3.1 Meus registros (acompanhamento do funcionário)
+- O funcionário acessa, no mobile, os **próprios** registros para acompanhamento.
+- **Relatórios por período:** diário, semanal, mensal e anual (entradas/saídas, refeições e total de horas trabalhadas).
+- **Exportar PDF** do relatório do período selecionado (a definir a forma: biblioteca cliente tipo jsPDF, ou impressão do navegador "salvar como PDF").
 
 ## 4. Visão administrativa (gestor)
 - **Funcionários:** cadastrar, editar, desativar.
@@ -70,12 +75,17 @@ RLS: funcionário **insere o próprio** registro e **lê os seus**; gestor lê o
 - Para ter **validade jurídica plena** como REP-P, faltaria: registro do software no **INPI**, **assinatura eletrônica ICP-Brasil** em cada comprovante, **comprovante em PDF assinado** (empresa, local, data/hora, hash), **NSR** sequencial e imutabilidade auditável.
 - **Recomendação:** v1 como **controle interno funcional** (não certificado), já com o modelo preparado (imutabilidade, hash, comprovante, geolocalização) para evoluir ao REP-P quando fizer sentido. Deixar isso explícito para o cliente.
 
-## 8. Pontos a confirmar antes do SQL/código
-1. **Admin no web também?** O funcionário bate ponto no mobile. A gestão/relatórios de ponto fica **só no mobile** ou também no **web** (melhor para administrar)?
-2. **Localização negada:** bloquear o registro ou permitir sem localização (marcando como "sem GPS")?
-3. **Login do funcionário:** por **e-mail** ou por **login/usuário** (como nos acessos internos atuais)?
-4. **Comprovante:** basta a tela de confirmação na v1, ou já quer o **PDF** do comprovante?
-5. **Cargo/jornada:** cadastrar cargo e jornada do funcionário já na v1, ou só nome/login/senha?
+## 8. Decisões (confirmadas)
+1. **Administração no WEB.** O funcionário bate ponto no **mobile**; o gestor cadastra funcionários e vê registros/relatórios no **web**. A área "Módulos" (instalar/desinstalar) fica no **web**.
+2. **Localização obrigatória.** Se o funcionário negar o GPS, o registro é **bloqueado** (não bate ponto sem localização).
+3. **Login por login/usuário** (como os acessos internos atuais), sem exigir e-mail real.
+4. **Comprovante = só a tela de confirmação** na v1 (sem PDF por enquanto).
+5. **Cargo:** opcional no cadastro; jornada fica para depois.
+
+## 9. Roteiro de implementação
+- **Fase 1 — Fundação (web):** SQL `modulos`/`empresa_modulos` (+RLS, seed `ponto`); área "Módulos" no web (catálogo filtrado para perfil empresa) com instalar/desinstalar; leitura de módulos ativos.
+- **Fase 2 — Ponto admin (web):** SQL `ponto_funcionarios` + `ponto_registros`; rota de servidor para criar funcionário (auth user + vínculo `funcionario_ponto`); telas de cadastro de funcionários e de registros/relatórios.
+- **Fase 3 — Bater ponto (mobile):** login de `funcionario_ponto` abre a tela de ponto (boas-vindas + máquina de estados + geolocalização obrigatória + comprovante na tela) **+ "Meus registros"** com relatórios (diário/semanal/mensal/anual) e exportação em PDF.
 
 ---
 

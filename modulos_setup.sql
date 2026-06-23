@@ -10,6 +10,8 @@ create table if not exists public.modulos (
   descricao   text not null default '',
   icone       text not null default '',
   disponivel  boolean not null default true,
+  -- tipos de perfil que podem instalar (vazio = todos): ex.: '{empresa}'
+  perfis      text[] not null default '{}',
   ordem       integer not null default 0,
   criado_em   timestamptz not null default now()
 );
@@ -58,6 +60,6 @@ create policy "empresa_modulos_delete" on public.empresa_modulos
   );
 
 -- ─── Semear o catálogo com o módulo de Controle de Ponto ────
-insert into public.modulos (id, nome, descricao, icone, ordem)
-values ('ponto', 'Controle de Ponto', 'Registro de entrada e saída dos colaboradores.', 'relogio', 1)
+insert into public.modulos (id, nome, descricao, icone, perfis, ordem)
+values ('ponto', 'Controle de Ponto', 'Registro de entrada e saída dos colaboradores.', 'relogio', '{empresa}', 1)
 on conflict (id) do nothing;
