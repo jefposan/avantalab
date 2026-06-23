@@ -855,20 +855,30 @@
     );
   }
 
-  function ehDespesaFutura(mesIndice, dia) {
+  function dataFutura(ano, mesIndice, dia) {
     var hoje = new Date();
-    var anoSel = Number(state.ano);
     var anoHoje = hoje.getFullYear();
-    if (anoSel > anoHoje) return true;
-    if (anoSel < anoHoje) return false;
+    if (ano > anoHoje) return true;
+    if (ano < anoHoje) return false;
     var mesHoje = hoje.getMonth();
     if (mesIndice > mesHoje) return true;
     if (mesIndice < mesHoje) return false;
     return Number(dia) > hoje.getDate();
   }
 
+  function ehDespesaFutura(mesIndice, dia) {
+    return dataFutura(Number(state.ano), mesIndice, dia);
+  }
+
+  // Despesa que era prevista, cuja data ja chegou e ainda nao foi confirmada/cancelada.
+  function ehDespesaAConfirmar(item) {
+    return item && item.status === 'prevista' && !ehDespesaFutura(indiceMes(item.mes), item.dia);
+  }
+
   function dadosMes(mes) {
-    var lancamentos = state.lancamentos.filter(function (item) { return item.mes === mes; });
+    var lancamentos = state.lancamentos.filter(function (item) {
+      return item.mes === mes && item.status !== 'cancelada';
+    });
     var entradas = state.entradas.filter(function (item) { return item.mes === mes; });
     var mesIndice = indiceMes(mes);
     var despesasRealizadas = 0;
@@ -2036,6 +2046,7 @@
         despesa: item.despesa_nome,
         descricao: item.descricao || '',
         valor: Number(item.valor || 0),
+        status: item.status || null,
       };
     });
 
@@ -2994,6 +3005,7 @@
           despesa_nome: nome,
           descricao: descParc,
           valor: valor,
+          status: dataFutura(anoParc, idxMes, dia) ? 'prevista' : null,
         })
         .select()
         .single();
@@ -3855,6 +3867,7 @@
           despesa_nome: despesaNome,
           descricao: formatarDescricao(descricao),
           valor: valor,
+          status: item.status === 'prevista' ? 'confirmada' : (item.status || null),
         })
         .eq('id', item.id)
         .eq('empresa_id', state.empresa.id)
@@ -3871,6 +3884,41 @@
     state.modalAcao = null;
     await carregarDados();
     mostrarToast(tipo === 'receita' ? 'Receita atualizada.' : 'Despesa atualizada.');
+  }
+
+  async function confirmarDespesaPrevista(id) {
+    if (!state.empresa) return;
+    state.carregando = true;
+    render();
+    var resp = await db.from('lancamentos').update({ status: 'confirmada' }).eq('id', id).eq('empresa_id', state.empresa.id);
+    if (resp.error) {
+      state.carregando = false;
+      setErro('Nao foi possivel confirmar a despesa.');
+      return;
+    }
+    await carregarDados();
+    mostrarToast('Despesa confirmada.');
+  }
+
+  async function marcarDespesaNaoOcorreu(id) {
+    if (!state.empresa) return;
+    if (!window.confirm('Marcar esta despesa como nao ocorrida? Ela sai do total do mes.')) return;
+    state.carregando = true;
+    render();
+    var resp = await db.from('lancamentos').update({ status: 'cancelada' }).eq('id', id).eq('empresa_id', state.empresa.id);
+    if (resp.error) {
+      state.carregando = false;
+      setErro('Nao foi possivel atualizar a despesa.');
+      return;
+    }
+    await carregarDados();
+    mostrarToast('Marcada como nao ocorrida.');
+  }
+
+  function ajustarDespesaPrevista(id) {
+    abrirAcaoLancamento('despesa', id);
+    if (state.modalAcao) state.modalAcao.modo = 'editar';
+    render();
   }
 
   function telaLoginWrapper(conteudo, titulo, subtitulo) {
@@ -4216,7 +4264,41 @@
     );
   }
 
+  function avisoConfirmarHtml() {
+    var pendentes = (state.lancamentos || []).filter(ehDespesaAConfirmar);
+    if (!pendentes.length) return '';
+    var total = pendentes.reduce(function (s, i) { return s + i.valor; }, 0);
+    var plural = pendentes.length > 1;
+    return (
+      '<section class="overflow-hidden rounded-2xl border border-amber-200 bg-amber-50 shadow-sm">' +
+        '<div class="flex items-center gap-2 px-4 pt-3">' +
+          '<span class="text-base">&#128276;</span>' +
+          '<h2 class="min-w-0 flex-1 text-sm font-black text-amber-900">' + pendentes.length + ' despesa' + (plural ? 's' : '') + ' prevista' + (plural ? 's' : '') + ' para confirmar</h2>' +
+          '<strong class="shrink-0 text-sm font-black text-amber-900">' + dinheiro(total) + '</strong>' +
+        '</div>' +
+        '<p class="px-4 pt-1 text-[11px] font-semibold leading-snug text-amber-700">J&aacute; entraram no total pelo valor previsto. Confirme, ajuste o valor ou marque que n&atilde;o ocorreu.</p>' +
+        '<div class="grid gap-2 p-4">' +
+          pendentes.map(function (item) {
+            return '<div class="rounded-xl border border-amber-100 bg-white p-3">' +
+              '<div class="flex items-center justify-between gap-2">' +
+                '<div class="min-w-0"><p class="truncate text-sm font-bold text-slate-800">' + escapeHtml(item.despesa) + '</p>' +
+                '<p class="truncate text-xs text-slate-500">' + escapeHtml(item.mes.charAt(0) + item.mes.slice(1).toLowerCase()) + ' &middot; Dia ' + item.dia + (item.descricao ? ' - ' + escapeHtml(item.descricao) : '') + '</p></div>' +
+                '<strong class="shrink-0 text-sm font-black text-red-600">' + dinheiro(item.valor) + '</strong>' +
+              '</div>' +
+              '<div class="mt-2 grid grid-cols-3 gap-2">' +
+                '<button type="button" data-confirmar-id="' + escapeHtml(item.id) + '" class="h-9 rounded-lg bg-emerald-600 text-xs font-black text-white active:bg-emerald-700">Confirmar</button>' +
+                '<button type="button" data-ajustar-id="' + escapeHtml(item.id) + '" class="h-9 rounded-lg border border-slate-300 bg-white text-xs font-black text-slate-700 active:bg-slate-50">Ajustar valor</button>' +
+                '<button type="button" data-naoocorreu-id="' + escapeHtml(item.id) + '" class="h-9 rounded-lg border border-red-200 bg-white text-xs font-black text-red-600 active:bg-red-50">N&atilde;o ocorreu</button>' +
+              '</div>' +
+            '</div>';
+          }).join('') +
+        '</div>' +
+      '</section>'
+    );
+  }
+
   function homeHtml(atual, anterior) {
+    var banner = avisoConfirmarHtml();
     var cards = {
       saldo: saldoTopoHtml(atual, anterior),
       ia: perguntaIaHtml(),
@@ -4233,6 +4315,7 @@
     var visiveis = cardsDashboardVisiveis();
     if (!visiveis.length) {
       return (
+        banner +
         '<section class="rounded-2xl border border-cyan-100 bg-white p-4 text-center shadow-sm">' +
           '<p class="text-sm font-black text-slate-900">Nenhum card visivel</p>' +
           '<p class="mt-1 text-xs font-semibold leading-relaxed text-slate-500">Abra o menu e use Configurar resumo para reexibir os cards.</p>' +
@@ -4240,7 +4323,7 @@
       );
     }
 
-    return visiveis
+    return banner + visiveis
       .map(function (id) {
         if (!cards[id]) return '';
         return '<div data-dashboard-card="' + escapeHtml(id) + '" class="relative pb-2 transition-[transform,opacity,filter] duration-200 ease-out">' +
@@ -4588,10 +4671,15 @@
         '<div class="grid gap-1 p-4" id="ultimas-despesas-lista">' +
           (itens.length ? itens.map(function (item) {
             var valor = dinheiro(item.valor);
-            var futura = ehDespesaFutura(indiceMes(state.mes), item.dia);
+            var selo = '';
+            if (ehDespesaFutura(indiceMes(state.mes), item.dia)) {
+              selo = ' <span class="ml-1 inline-block rounded-full bg-sky-100 px-1.5 align-middle text-[10px] font-black text-sky-700">Prevista</span>';
+            } else if (item.status === 'prevista') {
+              selo = ' <span class="ml-1 inline-block rounded-full bg-amber-100 px-1.5 align-middle text-[10px] font-black text-amber-700">A confirmar</span>';
+            }
             var buscaItem = textoBusca([item.descricao, item.despesa, valor, item.valor].join(' '));
             return '<button type="button" data-tipo-lancamento="despesa" data-lancamento-id="' + escapeHtml(item.id) + '" data-busca-ultimas-despesas="' + escapeHtml(buscaItem) + '" class="flex w-full items-center justify-between gap-3 border-b border-slate-100 py-2 text-left last:border-b-0">' +
-              '<div class="min-w-0"><p class="truncate text-sm font-bold text-slate-800">' + escapeHtml(item.despesa) + (futura ? ' <span class="ml-1 inline-block rounded-full bg-amber-100 px-1.5 align-middle text-[10px] font-black text-amber-700">Prevista</span>' : '') + '</p><p class="truncate text-xs text-slate-500">Dia ' + item.dia + (item.descricao ? ' - ' + escapeHtml(item.descricao) : '') + '</p></div>' +
+              '<div class="min-w-0"><p class="truncate text-sm font-bold text-slate-800">' + escapeHtml(item.despesa) + selo + '</p><p class="truncate text-xs text-slate-500">Dia ' + item.dia + (item.descricao ? ' - ' + escapeHtml(item.descricao) : '') + '</p></div>' +
               '<strong class="shrink-0 text-sm font-black text-red-600">' + valor + '</strong>' +
             '</button>';
           }).join('') + '<p id="ultimas-despesas-vazia" style="display:none" class="text-xs text-slate-500">Nenhuma despesa encontrada.</p>' : '<p class="text-xs text-slate-500">Nenhuma despesa neste mes.</p>') +
@@ -6756,6 +6844,21 @@
     Array.prototype.forEach.call(document.querySelectorAll('[data-lancamento-id]'), function (botao) {
       botao.addEventListener('click', function () {
         abrirAcaoLancamento(botao.getAttribute('data-tipo-lancamento'), botao.getAttribute('data-lancamento-id'));
+      });
+    });
+    Array.prototype.forEach.call(document.querySelectorAll('[data-confirmar-id]'), function (botao) {
+      botao.addEventListener('click', function () {
+        confirmarDespesaPrevista(botao.getAttribute('data-confirmar-id'));
+      });
+    });
+    Array.prototype.forEach.call(document.querySelectorAll('[data-ajustar-id]'), function (botao) {
+      botao.addEventListener('click', function () {
+        ajustarDespesaPrevista(botao.getAttribute('data-ajustar-id'));
+      });
+    });
+    Array.prototype.forEach.call(document.querySelectorAll('[data-naoocorreu-id]'), function (botao) {
+      botao.addEventListener('click', function () {
+        marcarDespesaNaoOcorreu(botao.getAttribute('data-naoocorreu-id'));
       });
     });
     Array.prototype.forEach.call(document.querySelectorAll('[data-dashboard-move]'), function (botao) {
