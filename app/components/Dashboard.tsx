@@ -1,4 +1,4 @@
-import React, { useState, useContext, createContext, useEffect } from 'react';
+import React, { useState, useContext, createContext, useEffect, useRef } from 'react';
 import {
   DndContext,
   DragOverlay,
@@ -15,6 +15,7 @@ import {
   SortableContext,
   useSortable,
   arrayMove,
+  rectSortingStrategy,
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
@@ -56,6 +57,47 @@ function SortableItem({ id, children }: { id: string; children: React.ReactNode 
   return (
     <div ref={setNodeRef} style={style}>
       <HandleContext.Provider value={handleProps}>{children}</HandleContext.Provider>
+    </div>
+  );
+}
+
+function MasonrySortableItem({ id, expanded, children }: { id: string; expanded: boolean; children: React.ReactNode }) {
+  const contentRef = useRef<HTMLDivElement>(null);
+  const [rowSpan, setRowSpan] = useState(1);
+
+  useEffect(() => {
+    const el = contentRef.current;
+    if (!el) return;
+
+    const rowHeight = 4;
+    const rowGap = 24;
+    const updateSpan = () => {
+      const height = el.getBoundingClientRect().height;
+      setRowSpan(Math.max(1, Math.ceil((height + rowGap) / (rowHeight + rowGap))));
+    };
+
+    updateSpan();
+    const observer = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(updateSpan) : null;
+    observer?.observe(el);
+    window.addEventListener('resize', updateSpan);
+
+    return () => {
+      observer?.disconnect();
+      window.removeEventListener('resize', updateSpan);
+    };
+  }, [children, expanded]);
+
+  return (
+    <div
+      className={`transition-[transform,opacity] duration-300 ease-out ${expanded ? 'sm:col-span-2' : ''}`}
+      style={{
+        gridRowEnd: `span ${rowSpan}`,
+        viewTransitionName: `dashboard-card-${id}`,
+      } as React.CSSProperties}
+    >
+      <div ref={contentRef}>
+        <SortableItem id={id}>{children}</SortableItem>
+      </div>
     </div>
   );
 }
@@ -982,19 +1024,16 @@ const mostrarComparativoResumoDash =
           </div>
         )}
 
-        <div className="sm:columns-2 sm:gap-6">
-          <SortableContext items={itensVisiveis} strategy={verticalListSortingStrategy}>
+        <div className="grid grid-cols-1 auto-rows-[4px] grid-flow-dense items-start gap-6 sm:grid-cols-2">
+          <SortableContext items={itensVisiveis} strategy={rectSortingStrategy}>
             {itensVisiveis.map((id) => (
-              <div
+              <MasonrySortableItem
                 key={id}
-                className="mb-6 break-inside-avoid transition-[transform,opacity] duration-300 ease-out"
-                style={{
-                  columnSpan: expandidosSet.has(id) ? 'all' : 'none',
-                  viewTransitionName: `dashboard-card-${id}`,
-                } as React.CSSProperties}
+                id={id}
+                expanded={expandidosSet.has(id)}
               >
-                <SortableItem id={id}>{cardsById[id]}</SortableItem>
-              </div>
+                {cardsById[id]}
+              </MasonrySortableItem>
             ))}
           </SortableContext>
         </div>
