@@ -855,19 +855,43 @@
     );
   }
 
+  function ehDespesaFutura(mesIndice, dia) {
+    var hoje = new Date();
+    var anoSel = Number(state.ano);
+    var anoHoje = hoje.getFullYear();
+    if (anoSel > anoHoje) return true;
+    if (anoSel < anoHoje) return false;
+    var mesHoje = hoje.getMonth();
+    if (mesIndice > mesHoje) return true;
+    if (mesIndice < mesHoje) return false;
+    return Number(dia) > hoje.getDate();
+  }
+
   function dadosMes(mes) {
     var lancamentos = state.lancamentos.filter(function (item) { return item.mes === mes; });
     var entradas = state.entradas.filter(function (item) { return item.mes === mes; });
-    var despesas = lancamentos.reduce(function (total, item) { return total + item.valor; }, 0);
+    var mesIndice = indiceMes(mes);
+    var despesasRealizadas = 0;
+    var despesasFuturas = 0;
+    lancamentos.forEach(function (item) {
+      if (ehDespesaFutura(mesIndice, item.dia)) {
+        despesasFuturas += item.valor;
+      } else {
+        despesasRealizadas += item.valor;
+      }
+    });
     var temTotalDefinido = Object.prototype.hasOwnProperty.call(state.faturamentos, mes);
     var receitas = temTotalDefinido ? state.faturamentos[mes] : entradas.reduce(function (total, item) { return total + item.valor; }, 0);
 
     return {
       lancamentos: lancamentos,
       entradas: entradas,
-      despesas: despesas,
+      despesas: despesasRealizadas,
+      despesasFuturas: despesasFuturas,
+      despesasTotais: despesasRealizadas + despesasFuturas,
       receitas: receitas,
-      saldo: receitas - despesas,
+      saldo: receitas - despesasRealizadas,
+      saldoPrevisto: receitas - (despesasRealizadas + despesasFuturas),
     };
   }
 
@@ -4233,7 +4257,7 @@
         '<div class="grid grid-cols-3 gap-2 text-center">' +
           miniSaldoHtml('Inicial', anterior.saldo, 'text-slate-200') +
           miniSaldoHtml('Final', atual.saldo, atual.saldo >= 0 ? 'text-emerald-300' : 'text-red-300') +
-          miniSaldoHtml('Previsto', atual.saldo, atual.saldo >= 0 ? 'text-cyan-300' : 'text-red-300') +
+          miniSaldoHtml('Previsto', atual.saldoPrevisto, atual.saldoPrevisto >= 0 ? 'text-cyan-300' : 'text-red-300') +
         '</div>' +
       '</section>'
     );
@@ -4564,9 +4588,10 @@
         '<div class="grid gap-1 p-4" id="ultimas-despesas-lista">' +
           (itens.length ? itens.map(function (item) {
             var valor = dinheiro(item.valor);
+            var futura = ehDespesaFutura(indiceMes(state.mes), item.dia);
             var buscaItem = textoBusca([item.descricao, item.despesa, valor, item.valor].join(' '));
             return '<button type="button" data-tipo-lancamento="despesa" data-lancamento-id="' + escapeHtml(item.id) + '" data-busca-ultimas-despesas="' + escapeHtml(buscaItem) + '" class="flex w-full items-center justify-between gap-3 border-b border-slate-100 py-2 text-left last:border-b-0">' +
-              '<div class="min-w-0"><p class="truncate text-sm font-bold text-slate-800">' + escapeHtml(item.despesa) + '</p><p class="truncate text-xs text-slate-500">Dia ' + item.dia + (item.descricao ? ' - ' + escapeHtml(item.descricao) : '') + '</p></div>' +
+              '<div class="min-w-0"><p class="truncate text-sm font-bold text-slate-800">' + escapeHtml(item.despesa) + (futura ? ' <span class="ml-1 inline-block rounded-full bg-amber-100 px-1.5 align-middle text-[10px] font-black text-amber-700">Prevista</span>' : '') + '</p><p class="truncate text-xs text-slate-500">Dia ' + item.dia + (item.descricao ? ' - ' + escapeHtml(item.descricao) : '') + '</p></div>' +
               '<strong class="shrink-0 text-sm font-black text-red-600">' + valor + '</strong>' +
             '</button>';
           }).join('') + '<p id="ultimas-despesas-vazia" style="display:none" class="text-xs text-slate-500">Nenhuma despesa encontrada.</p>' : '<p class="text-xs text-slate-500">Nenhuma despesa neste mes.</p>') +
