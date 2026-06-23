@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.3.7 - 2026-06-23
+
+- Web: removido o botao visivel "Restaurar ordem padrao" do kanban do dashboard.
+
 ## 1.3.6 - 2026-06-23
 
 - Web: adicionadas opcoes nos cards do kanban para remover blocos e gerenciador com lapis para exibir/ocultar cards.

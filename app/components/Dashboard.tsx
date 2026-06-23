@@ -114,7 +114,6 @@ interface DashboardProps {
   dashboardOrdem: { a: string[]; b: string[] };
   dashboardOcultos: string[];
   onReordenarDashboard: (ordem: { a: string[]; b: string[] }) => void;
-  onRestaurarOrdemDashboard: () => void;
   onOcultarCardDashboard: (id: string) => void;
   onDefinirOcultosDashboard: (ids: string[]) => void;
 }
@@ -136,7 +135,7 @@ export default function Dashboard({
   receitasTotais, despesasTotais, lucroTotalAnual, formatarMoeda,
   despesasAConfirmar, onConfirmarPrevista, onAjustarPrevista, onExcluirPrevista,
   saldoCardMesIdx, setSaldoCardMesIdx, saldoInicial, saldoFinal, saldoPrevisto,
-  dashboardOrdem, dashboardOcultos, onReordenarDashboard, onRestaurarOrdemDashboard,
+  dashboardOrdem, dashboardOcultos, onReordenarDashboard,
   onOcultarCardDashboard, onDefinirOcultosDashboard
 }: DashboardProps) {
 
@@ -689,13 +688,6 @@ const mostrarComparativoResumoDash =
               <SortableItem key={id} id={id}>{cardsById[id]}</SortableItem>
             ))}
           </ColunaKanban>
-          <button
-            type="button"
-            onClick={onRestaurarOrdemDashboard}
-            className="sm:col-span-2 mt-1 text-left text-xs font-bold text-slate-400 hover:text-slate-600 cursor-pointer"
-          >
-            ↺ Restaurar ordem padrão
-          </button>
         </div>
       </div>
     </main>

@@ -7541,7 +7541,6 @@ setAjustesAberto(false);
         dashboardOrdem={dashboardOrdem}
         dashboardOcultos={dashboardOcultos}
         onReordenarDashboard={persistirOrdemDashboard}
-        onRestaurarOrdemDashboard={restaurarOrdemDashboard}
         onOcultarCardDashboard={ocultarCardDashboard}
         onDefinirOcultosDashboard={definirOcultosDashboard}
       />
