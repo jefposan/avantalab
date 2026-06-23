@@ -300,6 +300,7 @@ const [segundosReenvioTelefoneObrigatorio, setSegundosReenvioTelefoneObrigatorio
 const [reenviandoTelefoneObrigatorio, setReenviandoTelefoneObrigatorio] = useState(false);
 const [validandoTelefoneObrigatorio, setValidandoTelefoneObrigatorio] = useState(false);
   const [abaAtiva, setAbaAtiva] = useState('Dashboard');
+  const [saldoCardMesIdx, setSaldoCardMesIdx] = useState<number>(new Date().getMonth());
 const [ajustesAberto, setAjustesAberto] = useState(false);
 const [agendaAberta, setAgendaAberta] = useState(false);
 const [agendaItens, setAgendaItens] = useState<AgendaItem[]>([]);
@@ -1512,6 +1513,27 @@ const despesasAConfirmar = lancamentos.filter(
     l.status === 'prevista' &&
     !dataFutura(Number(anoSelecionado), meses.indexOf(l.mes), l.dia)
 );
+
+// Card de saldo (Inicial/Final/Previsto) com seletor proprio de mes.
+const mesSaldoCardNome = meses[saldoCardMesIdx];
+const mesSaldoAntNome = saldoCardMesIdx > 0 ? meses[saldoCardMesIdx - 1] : null;
+const somaDespesasMesSaldo = (mesNome: string, mIdx: number, futuras: boolean) =>
+  lancamentos
+    .filter((l) => l.mes === mesNome)
+    .reduce(
+      (acc, l) =>
+        acc + (dataFutura(Number(anoSelecionado), mIdx, l.dia) === futuras ? l.valor : 0),
+      0
+    );
+const recSaldoCard = faturamentos[mesSaldoCardNome] || 0;
+const despRealSaldoCard = somaDespesasMesSaldo(mesSaldoCardNome, saldoCardMesIdx, false);
+const despFutSaldoCard = somaDespesasMesSaldo(mesSaldoCardNome, saldoCardMesIdx, true);
+const saldoFinalCard = recSaldoCard - despRealSaldoCard;
+const saldoPrevistoCard = recSaldoCard - (despRealSaldoCard + despFutSaldoCard);
+const saldoInicialCard = mesSaldoAntNome
+  ? (faturamentos[mesSaldoAntNome] || 0) -
+    somaDespesasMesSaldo(mesSaldoAntNome, saldoCardMesIdx - 1, false)
+  : 0;
   const lancamentosOrdenados = useMemo(() => {
   return [...lancamentos].sort((a, b) => {
     const diaA = Number(a.dia);
@@ -7447,6 +7469,11 @@ setAjustesAberto(false);
         onConfirmarPrevista={confirmarDespesaPrevista}
         onAjustarPrevista={ajustarDespesaPrevista}
         onExcluirPrevista={excluirDespesaPrevista}
+        saldoCardMesIdx={saldoCardMesIdx}
+        setSaldoCardMesIdx={setSaldoCardMesIdx}
+        saldoInicial={saldoInicialCard}
+        saldoFinal={saldoFinalCard}
+        saldoPrevisto={saldoPrevistoCard}
       />
     </div>
   </main>
