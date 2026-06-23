@@ -18,6 +18,7 @@ import {
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
+import { createPortal } from 'react-dom';
 import { buscarFaturamentos, buscarLancamentos } from '../lib/database';
 
 const HandleContext = createContext<Record<string, any> | null>(null);
@@ -611,7 +612,7 @@ const mostrarComparativoResumoDash =
     ),
 
     evolucaoMensal: (
-      <div className={`${bgCard} w-full rounded-2xl shadow-lg border-2 overflow-hidden transition-colors`} style={{ borderColor: corPrimaria }}>
+      <div className={`${bgCard} w-full rounded-2xl shadow-lg border-2 overflow-visible transition-colors`} style={{ borderColor: corPrimaria }}>
         <div className="flex items-start justify-between gap-3 px-5 pb-3 pt-4">
           <div className="min-w-0">
             <h3 className={`text-base font-black ${textStrong}`}>Evolução mensal</h3>
@@ -683,10 +684,9 @@ const mostrarComparativoResumoDash =
                       key={item.mes}
                       className="group relative flex h-full min-w-0 items-end justify-center gap-0.5 pb-7"
                       onMouseMove={(e) => {
-                        const rect = e.currentTarget.closest('[data-evolucao-card]')?.getBoundingClientRect();
                         setTooltipEvolucao({
-                          x: rect ? e.clientX - rect.left : e.nativeEvent.offsetX,
-                          y: rect ? e.clientY - rect.top : e.nativeEvent.offsetY,
+                          x: e.clientX,
+                          y: e.clientY,
                           mes: mesAbrev,
                           receitas: item.receitas,
                           despesas: item.despesas,
@@ -725,37 +725,6 @@ const mostrarComparativoResumoDash =
             </div>
           )}
 
-          <div className="pointer-events-none absolute inset-0">
-            {tooltipEvolucao && (
-              <div
-                className="absolute z-30 w-44 rounded-xl bg-slate-900 px-3 py-2 text-white shadow-2xl"
-                style={{
-                  left: Math.min(Math.max(tooltipEvolucao.x + 12, 8), 350),
-                  top: Math.max(tooltipEvolucao.y - 34, -18),
-                }}
-              >
-                <p className="mb-1 text-[10px] font-black uppercase tracking-wide text-white/60">{tooltipEvolucao.mes} {evolucaoAno}</p>
-                {evolucaoModo !== 'despesas' && (
-                  <div className="flex justify-between gap-3 text-[11px] font-bold">
-                    <span>Receitas</span>
-                    <strong>{formatarMoeda(tooltipEvolucao.receitas)}</strong>
-                  </div>
-                )}
-                {evolucaoModo !== 'receitas' && (
-                  <div className="flex justify-between gap-3 text-[11px] font-bold">
-                    <span>Despesas</span>
-                    <strong>{formatarMoeda(tooltipEvolucao.despesas)}</strong>
-                  </div>
-                )}
-                {evolucaoModo === 'ambos' && (
-                  <div className="mt-1 flex justify-between gap-3 border-t border-white/15 pt-1 text-[11px] font-black text-cyan-200">
-                    <span>Saldo</span>
-                    <strong>{formatarMoeda(tooltipEvolucao.receitas - tooltipEvolucao.despesas)}</strong>
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
         </div>
       </div>
     ),
@@ -807,6 +776,7 @@ const mostrarComparativoResumoDash =
   };
 
   return (
+    <>
     <DndContext
       sensors={sensors}
       collisionDetection={closestCorners}
@@ -903,26 +873,26 @@ const mostrarComparativoResumoDash =
         </div>
       </section>
 
-      <div className="xl:col-span-2 relative pt-12">
+      <div className="xl:col-span-2 relative pt-7">
         <button
           type="button"
           onClick={() => setGerenciadorAberto(!gerenciadorAberto)}
-          className={`absolute right-0 top-0 flex h-9 w-9 items-center justify-center rounded-lg border shadow-sm transition hover:scale-[1.03] active:scale-[0.98] ${
+          className={`absolute right-1 top-0 flex h-5 w-5 items-center justify-center transition hover:scale-110 active:scale-95 ${
             darkMode
-              ? 'border-slate-700 bg-slate-800 text-slate-200 hover:bg-slate-700'
-              : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50'
+              ? 'text-slate-300 hover:text-white'
+              : 'text-slate-700 hover:text-slate-950'
           }`}
           title="Organizar blocos"
           aria-label="Organizar blocos"
         >
-          <svg className="h-4.5 w-4.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.4" d="M16.862 4.487l1.651-1.651a2.121 2.121 0 113 3l-9.193 9.193a4 4 0 01-1.695 1.009l-3.16.948.948-3.16a4 4 0 011.009-1.695l8.44-8.44z" />
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.4" d="M19 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h6" />
+          <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M4 17.17V20h2.83L17.81 9.02l-2.83-2.83L4 17.17Z" />
+            <path d="M19.71 7.04a1 1 0 0 0 0-1.41l-1.34-1.34a1 1 0 0 0-1.41 0l-1.05 1.05 2.83 2.83.97-1.13Z" />
           </svg>
         </button>
 
         {gerenciadorAberto && (
-          <div className={`absolute right-0 top-11 z-40 w-80 rounded-2xl border p-4 shadow-2xl ${
+          <div className={`absolute right-0 top-7 z-40 w-80 rounded-2xl border p-4 shadow-2xl ${
             darkMode ? 'border-slate-700 bg-slate-900 text-slate-100' : 'border-slate-200 bg-white text-slate-900'
           }`}>
             <div className="mb-3 flex items-center justify-between gap-3">
@@ -997,5 +967,36 @@ const mostrarComparativoResumoDash =
       ) : null}
     </DragOverlay>
     </DndContext>
+    {typeof document !== 'undefined' && tooltipEvolucao && createPortal(
+      <div
+        className="pointer-events-none fixed z-[9999] w-44 rounded-xl bg-slate-900 px-3 py-2 text-white shadow-2xl"
+        style={{
+          left: `min(max(${tooltipEvolucao.x + 14}px, 8px), calc(100vw - 188px))`,
+          top: `max(${tooltipEvolucao.y - 38}px, 8px)`,
+        }}
+      >
+        <p className="mb-1 text-[10px] font-black uppercase tracking-wide text-white/60">{tooltipEvolucao.mes} {evolucaoAno}</p>
+        {evolucaoModo !== 'despesas' && (
+          <div className="flex justify-between gap-3 text-[11px] font-bold">
+            <span>Receitas</span>
+            <strong>{formatarMoeda(tooltipEvolucao.receitas)}</strong>
+          </div>
+        )}
+        {evolucaoModo !== 'receitas' && (
+          <div className="flex justify-between gap-3 text-[11px] font-bold">
+            <span>Despesas</span>
+            <strong>{formatarMoeda(tooltipEvolucao.despesas)}</strong>
+          </div>
+        )}
+        {evolucaoModo === 'ambos' && (
+          <div className="mt-1 flex justify-between gap-3 border-t border-white/15 pt-1 text-[11px] font-black text-cyan-200">
+            <span>Saldo</span>
+            <strong>{formatarMoeda(tooltipEvolucao.receitas - tooltipEvolucao.despesas)}</strong>
+          </div>
+        )}
+      </div>,
+      document.body
+    )}
+    </>
   );
 }
