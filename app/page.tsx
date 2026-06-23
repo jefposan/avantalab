@@ -306,6 +306,7 @@ const [validandoTelefoneObrigatorio, setValidandoTelefoneObrigatorio] = useState
   const ordemDashboardPadrao = { a: ['aConfirmar', 'saldo'], b: ['resumoFinanceiro', 'evolucaoMensal', 'registrarEntradas'] };
   const [dashboardOrdem, setDashboardOrdem] = useState<{ a: string[]; b: string[] }>(ordemDashboardPadrao);
   const [dashboardOcultos, setDashboardOcultos] = useState<string[]>([]);
+  const [dashboardExpandidos, setDashboardExpandidos] = useState<string[]>([]);
 const [ajustesAberto, setAjustesAberto] = useState(false);
 const [agendaAberta, setAgendaAberta] = useState(false);
 const [agendaItens, setAgendaItens] = useState<AgendaItem[]>([]);
@@ -724,8 +725,14 @@ if (empresa.telefone_confirmado !== true) {
       const usados = [...a, ...b];
       const faltantes = dashboardCardsKanban.filter((id) => !usados.includes(id));
       setDashboardOrdem({ a: [...a, ...faltantes], b });
+      setDashboardExpandidos(
+        Array.isArray(rawOrdem.expandidos)
+          ? rawOrdem.expandidos.filter((id: string, index: number) => dashboardCardsKanban.includes(id) && rawOrdem.expandidos.indexOf(id) === index)
+          : []
+      );
     } else {
       setDashboardOrdem(ordemDashboardPadrao);
+      setDashboardExpandidos([]);
     }
 
     const rawOcultos = config.dashboard_ocultos_web;
@@ -2412,13 +2419,14 @@ const ajustarDespesaPrevista = (despesa: any) => {
 
 const persistirOrdemDashboard = (novaOrdem: { a: string[]; b: string[] }) => {
   setDashboardOrdem(novaOrdem);
-  if (empresaId) salvarDashboardOrdemWeb(empresaId, novaOrdem, dashboardOcultos);
+  if (empresaId) salvarDashboardOrdemWeb(empresaId, novaOrdem, dashboardOcultos, dashboardExpandidos);
 };
 
 const restaurarOrdemDashboard = () => {
   setDashboardOrdem(ordemDashboardPadrao);
   setDashboardOcultos([]);
-  if (empresaId) salvarDashboardOrdemWeb(empresaId, ordemDashboardPadrao, []);
+  setDashboardExpandidos([]);
+  if (empresaId) salvarDashboardOrdemWeb(empresaId, ordemDashboardPadrao, [], []);
 };
 
 const definirOcultosDashboard = (novosOcultos: string[]) => {
@@ -2426,11 +2434,19 @@ const definirOcultosDashboard = (novosOcultos: string[]) => {
     (id, index) => dashboardCardsKanban.includes(id) && novosOcultos.indexOf(id) === index
   );
   setDashboardOcultos(ocultosNormalizados);
-  if (empresaId) salvarDashboardOrdemWeb(empresaId, dashboardOrdem, ocultosNormalizados);
+  if (empresaId) salvarDashboardOrdemWeb(empresaId, dashboardOrdem, ocultosNormalizados, dashboardExpandidos);
 };
 
 const ocultarCardDashboard = (id: string) => {
   definirOcultosDashboard([...dashboardOcultos, id]);
+};
+
+const definirExpandidosDashboard = (novosExpandidos: string[]) => {
+  const expandidosNormalizados = novosExpandidos.filter(
+    (id, index) => dashboardCardsKanban.includes(id) && novosExpandidos.indexOf(id) === index
+  );
+  setDashboardExpandidos(expandidosNormalizados);
+  if (empresaId) salvarDashboardOrdemWeb(empresaId, dashboardOrdem, dashboardOcultos, expandidosNormalizados);
 };
 
 const solicitarExclusaoLancamento = (lanc: any) => {
@@ -7543,9 +7559,11 @@ setAjustesAberto(false);
         saldoPrevisto={saldoPrevistoCard}
         dashboardOrdem={dashboardOrdem}
         dashboardOcultos={dashboardOcultos}
+        dashboardExpandidos={dashboardExpandidos}
         onReordenarDashboard={persistirOrdemDashboard}
         onOcultarCardDashboard={ocultarCardDashboard}
         onDefinirOcultosDashboard={definirOcultosDashboard}
+        onDefinirExpandidosDashboard={definirExpandidosDashboard}
       />
     </div>
   </main>

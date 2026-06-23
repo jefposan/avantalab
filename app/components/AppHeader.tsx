@@ -424,6 +424,10 @@ export default function AppHeader({
               </div>
             </div>
 
+            <div
+              className="absolute bottom-0 left-0 right-0 h-1"
+              style={{ backgroundColor: corPrimaria }}
+            />
           </div>
         </div>
       </header>

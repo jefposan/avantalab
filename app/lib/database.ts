@@ -282,10 +282,11 @@ export async function buscarEmpresasDoUsuario(usuarioId: string) {
 export async function salvarDashboardOrdemWeb(
   empresaId: string,
   ordem: { a: string[]; b: string[] },
-  ocultos?: string[]
+  ocultos?: string[],
+  expandidos?: string[]
 ) {
-  const valores: { dashboard_ordem_web: { a: string[]; b: string[] }; dashboard_ocultos_web?: string[] } = {
-    dashboard_ordem_web: ordem,
+  const valores: { dashboard_ordem_web: { a: string[]; b: string[]; expandidos?: string[] }; dashboard_ocultos_web?: string[] } = {
+    dashboard_ordem_web: expandidos ? { ...ordem, expandidos } : ordem,
   };
 
   if (ocultos) valores.dashboard_ocultos_web = ocultos;

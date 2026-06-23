@@ -119,9 +119,11 @@ interface DashboardProps {
   saldoPrevisto: number;
   dashboardOrdem: { a: string[]; b: string[] };
   dashboardOcultos: string[];
+  dashboardExpandidos: string[];
   onReordenarDashboard: (ordem: { a: string[]; b: string[] }) => void;
   onOcultarCardDashboard: (id: string) => void;
   onDefinirOcultosDashboard: (ids: string[]) => void;
+  onDefinirExpandidosDashboard: (ids: string[]) => void;
 }
 
 export default function Dashboard({
@@ -142,7 +144,8 @@ export default function Dashboard({
   despesasAConfirmar, onConfirmarPrevista, onAjustarPrevista, onExcluirPrevista,
   saldoCardMesIdx, setSaldoCardMesIdx, saldoInicial, saldoFinal, saldoPrevisto,
   dashboardOrdem, dashboardOcultos, onReordenarDashboard,
-  onOcultarCardDashboard, onDefinirOcultosDashboard
+  dashboardExpandidos, onOcultarCardDashboard, onDefinirOcultosDashboard,
+  onDefinirExpandidosDashboard
 }: DashboardProps) {
 
   const [ocultarValores, setOcultarValores] = useState(true);
@@ -372,6 +375,7 @@ const mostrarComparativoResumoDash =
     { id: 'registrarEntradas', titulo: 'Registrar entradas', descricao: 'Lançamento de receitas e total mensal.' },
   ];
   const ocultosSet = new Set(dashboardOcultos || []);
+  const expandidosSet = new Set(dashboardExpandidos || []);
 
   const alternarVisibilidadeCard = (id: string) => {
     const proximos = ocultosSet.has(id)
@@ -379,6 +383,15 @@ const mostrarComparativoResumoDash =
       : [...dashboardOcultos, id];
 
     onDefinirOcultosDashboard(proximos);
+  };
+
+  const alternarLarguraCard = (id: string) => {
+    const proximos = expandidosSet.has(id)
+      ? dashboardExpandidos.filter((cardId) => cardId !== id)
+      : [...dashboardExpandidos, id];
+
+    onDefinirExpandidosDashboard(proximos);
+    setMenuCardAberto(null);
   };
 
   const BotaoOpcoesCard = ({ id, tone = 'dark' }: { id: string; tone?: 'dark' | 'light' }) => (
@@ -438,6 +451,17 @@ const mostrarComparativoResumoDash =
             type="button"
             onClick={(e) => {
               e.stopPropagation();
+              alternarLarguraCard(id);
+            }}
+            className="flex w-full items-center gap-2 px-3 py-2 text-left text-xs font-black text-slate-700 transition hover:bg-slate-50"
+          >
+            <span className="text-sm leading-none">{expandidosSet.has(id) ? '↙' : '↔'}</span>
+            {expandidosSet.has(id) ? 'Reduzir' : 'Expandir'}
+          </button>
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
               setMenuCardAberto(null);
               onOcultarCardDashboard(id);
             }}
@@ -451,37 +475,30 @@ const mostrarComparativoResumoDash =
     </div>
   );
 
-  const findColumn = (id: string): 'a' | 'b' | null => {
-    if (id === 'a' || id === 'b') return id;
-    if (cols.a.includes(id)) return 'a';
-    if (cols.b.includes(id)) return 'b';
-    return null;
+  const linearizarOrdem = (ordem: { a: string[]; b: string[] }) => {
+    const total = Math.max(ordem.a.length, ordem.b.length);
+    const itens: string[] = [];
+    for (let i = 0; i < total; i += 1) {
+      if (ordem.a[i]) itens.push(ordem.a[i]);
+      if (ordem.b[i]) itens.push(ordem.b[i]);
+    }
+    return itens;
   };
 
-  const filtraColuna = (arr: string[]) => arr.filter((id) =>
+  const distribuirOrdem = (itens: string[]) => ({
+    a: itens.filter((_, index) => index % 2 === 0),
+    b: itens.filter((_, index) => index % 2 === 1),
+  });
+
+  const filtraItens = (arr: string[]) => arr.filter((id) =>
     !ocultosSet.has(id) && (id !== 'aConfirmar' || temAConfirmar)
   );
-  const colsView = { a: filtraColuna(cols.a), b: filtraColuna(cols.b) };
+  const itensOrdenados = linearizarOrdem(cols);
+  const itensVisiveis = filtraItens(itensOrdenados);
 
   const handleDragStart = (e: DragStartEvent) => setActiveId(String(e.active.id));
 
-  const handleDragOver = (e: DragOverEvent) => {
-    const { active, over } = e;
-    if (!over) return;
-    const activeKey = String(active.id);
-    const overKey = String(over.id);
-    const from = findColumn(activeKey);
-    const to = findColumn(overKey);
-    if (!from || !to || from === to) return;
-    setCols((prev) => {
-      const fromItems = prev[from].filter((x) => x !== activeKey);
-      const overItems = prev[to];
-      let idx = overItems.indexOf(overKey);
-      if (idx < 0) idx = overItems.length;
-      const toItems = [...overItems.slice(0, idx), activeKey, ...overItems.slice(idx)];
-      return { ...prev, [from]: fromItems, [to]: toItems };
-    });
-  };
+  const handleDragOver = (_e: DragOverEvent) => {};
 
   const handleDragEnd = (e: DragEndEvent) => {
     const { active, over } = e;
@@ -489,14 +506,11 @@ const mostrarComparativoResumoDash =
     if (!over) { onReordenarDashboard(cols); return; }
     const activeKey = String(active.id);
     const overKey = String(over.id);
-    const col = findColumn(activeKey);
-    if (!col) { onReordenarDashboard(cols); return; }
-    const items = cols[col];
-    const oldIndex = items.indexOf(activeKey);
-    const newIndex = items.indexOf(overKey);
+    const oldIndex = itensOrdenados.indexOf(activeKey);
+    const newIndex = itensOrdenados.indexOf(overKey);
     let novo = cols;
     if (oldIndex !== -1 && newIndex !== -1 && oldIndex !== newIndex) {
-      novo = { ...cols, [col]: arrayMove(items, oldIndex, newIndex) };
+      novo = distribuirOrdem(arrayMove(itensOrdenados, oldIndex, newIndex));
       setCols(novo);
     }
     onReordenarDashboard(novo);
@@ -957,17 +971,14 @@ const mostrarComparativoResumoDash =
           </div>
         )}
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 items-start gap-6">
-          <ColunaKanban id="a" items={colsView.a}>
-            {colsView.a.map((id) => (
-              <SortableItem key={id} id={id}>{cardsById[id]}</SortableItem>
+        <div className="grid grid-cols-1 items-start gap-6 sm:grid-cols-2">
+          <SortableContext items={itensVisiveis} strategy={verticalListSortingStrategy}>
+            {itensVisiveis.map((id) => (
+              <div key={id} className={expandidosSet.has(id) ? 'sm:col-span-2' : ''}>
+                <SortableItem id={id}>{cardsById[id]}</SortableItem>
+              </div>
             ))}
-          </ColunaKanban>
-          <ColunaKanban id="b" items={colsView.b}>
-            {colsView.b.map((id) => (
-              <SortableItem key={id} id={id}>{cardsById[id]}</SortableItem>
-            ))}
-          </ColunaKanban>
+          </SortableContext>
         </div>
       </div>
     </main>
