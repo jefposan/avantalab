@@ -404,7 +404,7 @@
     return '<div class="mx-auto max-w-md px-4 py-5">' + conteudo + '</div>';
   }
 
-  var APP_VERSION = '1.3.1';
+  var APP_VERSION = '1.3.2';
   var APP_VERSION_LABEL = 'AvantaLab Gest&atilde;o v' + APP_VERSION;
 
   function telaAvisoMobile(titulo, texto) {
@@ -7371,7 +7371,7 @@
     });
 
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/mobile-sw.js?v=134').then(function (registro) {
+      navigator.serviceWorker.register('/mobile-sw.js?v=135').then(function (registro) {
         if (registro && registro.update) registro.update();
       }).catch(function () {});
     }
