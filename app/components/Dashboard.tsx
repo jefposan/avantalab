@@ -220,7 +220,7 @@ const mostrarComparativoResumoDash =
             <button 
               key={mes} 
               onClick={() => setMesAtivo(mes)}
-              className={`${darkMode ? 'bg-slate-800 hover:bg-slate-700 border-slate-700' : 'bg-slate-50 hover:bg-white border-slate-200'} border-2 rounded-xl shadow-sm hover:shadow-md transition-all font-bold ${textMuted} text-sm flex items-center justify-center group h-14 cursor-pointer`}
+              className={`${darkMode ? 'bg-slate-800 hover:bg-slate-700 border-slate-700' : 'bg-slate-50 hover:bg-white border-slate-200'} border-2 rounded-xl shadow-sm hover:shadow-md transition-all font-bold ${textMuted} text-xs flex items-center justify-center group h-14 cursor-pointer`}
               onMouseOver={e => { e.currentTarget.style.color = corPrimaria; e.currentTarget.style.borderColor = corPrimaria; }}
               onMouseOut={e => { e.currentTarget.style.color = ''; e.currentTarget.style.borderColor = ''; }}
             >
@@ -268,7 +268,7 @@ const mostrarComparativoResumoDash =
               <span className={`block text-xs font-black uppercase tracking-wide ${textMuted}`}>
                 Receitas
               </span>
-              <span className={`mt-1 block truncate text-lg font-bold ${ocultarValores ? textMuted : 'text-emerald-500'}`}>
+              <span className={`mt-1 block truncate text-lg font-semibold tabular-nums tracking-tight ${ocultarValores ? textMuted : 'text-emerald-500'}`}>
                 {ocultarValores ? 'R$ •••••••' : formatarMoeda(receitasTotais)}
               </span>
             </div>
@@ -277,7 +277,7 @@ const mostrarComparativoResumoDash =
               <span className={`block text-xs font-black uppercase tracking-wide ${textMuted}`}>
                 Despesas
               </span>
-              <span className={`mt-1 block truncate text-lg font-bold ${ocultarValores ? textMuted : 'text-red-500'}`}>
+              <span className={`mt-1 block truncate text-lg font-semibold tabular-nums tracking-tight ${ocultarValores ? textMuted : 'text-red-500'}`}>
                 {ocultarValores ? 'R$ •••••••' : formatarMoeda(despesasTotais)}
               </span>
             </div>
@@ -286,7 +286,7 @@ const mostrarComparativoResumoDash =
               <span className={`block text-xs font-black uppercase tracking-wide ${textStrong}`}>
                 Lucro
               </span>
-              <span className={`mt-1 block truncate text-lg font-black ${ocultarValores ? textMuted : (lucroTotalAnual >= 0 ? textStrong : 'text-red-500')}`}>
+              <span className={`mt-1 block truncate text-lg font-bold tabular-nums tracking-tight ${ocultarValores ? textMuted : (lucroTotalAnual >= 0 ? textStrong : 'text-red-500')}`}>
                 {ocultarValores ? 'R$ •••••••' : formatarMoeda(lucroTotalAnual)}
               </span>
             </div>
@@ -316,15 +316,15 @@ const mostrarComparativoResumoDash =
           <div className="p-5 space-y-2.5">
             <div className={`flex justify-between items-center pb-2.5 border-b border-dotted ${darkMode ? 'border-slate-500/50' : 'border-slate-300'}`}>
               <span className={`font-semibold text-sm ${textMuted}`}>Inicial</span>
-              <span className={`font-bold text-xl ${textStrong}`}>{formatarMoeda(saldoInicial)}</span>
+              <span className={`font-semibold text-xl tabular-nums tracking-tight ${textStrong}`}>{formatarMoeda(saldoInicial)}</span>
             </div>
             <div className={`flex justify-between items-center pb-2.5 border-b border-dotted ${darkMode ? 'border-slate-500/50' : 'border-slate-300'}`}>
               <span className={`font-semibold text-sm ${textMuted}`}>Final</span>
-              <span className={`font-bold text-xl ${saldoFinal >= 0 ? 'text-green-500' : 'text-red-500'}`}>{formatarMoeda(saldoFinal)}</span>
+              <span className={`font-semibold text-xl tabular-nums tracking-tight ${saldoFinal >= 0 ? 'text-green-500' : 'text-red-500'}`}>{formatarMoeda(saldoFinal)}</span>
             </div>
             <div className="flex justify-between items-center">
               <span className={`font-semibold text-sm ${textMuted}`}>Previsto</span>
-              <span className={`font-bold text-xl ${saldoPrevisto >= 0 ? 'text-cyan-500' : 'text-red-500'}`}>{formatarMoeda(saldoPrevisto)}</span>
+              <span className={`font-semibold text-xl tabular-nums tracking-tight ${saldoPrevisto >= 0 ? 'text-cyan-500' : 'text-red-500'}`}>{formatarMoeda(saldoPrevisto)}</span>
             </div>
           </div>
       </div>
@@ -361,7 +361,7 @@ const mostrarComparativoResumoDash =
 }`}>
     <div className="flex justify-between items-center">
       <span className={`font-semibold text-sm ${textMuted}`}>Total Despesas</span>
-      <span className={`font-bold text-xl ${textStrong}`}>
+      <span className={`font-semibold text-xl tabular-nums tracking-tight ${textStrong}`}>
         {formatarMoeda(totalDespesasMes)}
       </span>
     </div>
@@ -419,13 +419,13 @@ const mostrarComparativoResumoDash =
                 <span className={`font-semibold text-sm ${textMuted}`}>Maior Gasto</span>
                 <span className="text-xs text-slate-400 mt-0.5">{maiorGasto.despesa || 'Nenhuma'}</span>
               </div>
-              <span className={`font-bold text-xl ${maiorGasto.valor > 0 ? 'text-red-500' : textMuted}`}>
+              <span className={`font-semibold text-xl tabular-nums tracking-tight ${maiorGasto.valor > 0 ? 'text-red-500' : textMuted}`}>
                 {maiorGasto.valor > 0 ? formatarMoeda(maiorGasto.valor) : '-'}
               </span>
             </div>
             <div className="flex justify-between items-center">
               <span className={`font-semibold text-sm ${textMuted}`}>Lucro Operacional</span>
-              <span className={`font-bold text-xl ${lucroOperacional >= 0 ? 'text-green-500' : 'text-red-500'}`}>{formatarMoeda(lucroOperacional)}</span>
+              <span className={`font-semibold text-xl tabular-nums tracking-tight ${lucroOperacional >= 0 ? 'text-green-500' : 'text-red-500'}`}>{formatarMoeda(lucroOperacional)}</span>
             </div>
           </div>
         </div>
