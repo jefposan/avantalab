@@ -149,10 +149,10 @@ const mostrarComparativoResumoDash =
   !!mesAnteriorResumoDash && totalDespesasMesAnteriorResumoDash > 0;
 
   return (
-    <main className="flex w-full flex-wrap items-start gap-6 animate-fade-in print:m-0 print:p-0">
+    <main className="grid w-full grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 items-start gap-6 animate-fade-in print:m-0 print:p-0">
 
       {despesasAConfirmar && despesasAConfirmar.length > 0 && (
-        <div className="w-full xl:w-[600px] rounded-2xl border-2 border-amber-200 bg-amber-50 p-5 shadow-lg">
+        <div className="w-full rounded-2xl border-2 border-amber-200 bg-amber-50 p-5 shadow-lg">
           <div className="flex items-center gap-2">
             <span className="text-lg">🔔</span>
             <h3 className="flex-1 text-sm font-black text-amber-900">
@@ -208,7 +208,7 @@ const mostrarComparativoResumoDash =
       )}
 
       <section
-        className={`${bgCard} w-full xl:w-[600px] p-6 rounded-2xl shadow-lg border border-t-4 transition-colors`}
+        className={`${bgCard} w-full p-6 rounded-2xl shadow-lg border border-t-4 transition-colors`}
         style={{ borderTopColor: corPrimaria }}
       >
         <h2 className={`text-2xl font-black ${textStrong} mb-10 flex items-center`}>
@@ -294,7 +294,7 @@ const mostrarComparativoResumoDash =
         </div>
       </section>
 
-      <div className={`${bgCard} w-full sm:w-96 rounded-2xl shadow-lg border-2 overflow-hidden transition-colors`} style={{ borderColor: corPrimaria }}>
+      <div className={`${bgCard} w-full rounded-2xl shadow-lg border-2 overflow-hidden transition-colors`} style={{ borderColor: corPrimaria }}>
           <div
             className="text-center text-sm font-bold uppercase tracking-wider flex justify-between px-6 py-3 items-center"
             style={{ backgroundColor: corPrimaria, color: textoSobreCorPrimaria }}
@@ -329,7 +329,7 @@ const mostrarComparativoResumoDash =
           </div>
       </div>
 
-      <div className={`${bgCard} w-full sm:w-96 rounded-2xl shadow-lg border-2 overflow-hidden transition-colors`} style={{ borderColor: corPrimaria }}>
+      <div className={`${bgCard} w-full rounded-2xl shadow-lg border-2 overflow-hidden transition-colors`} style={{ borderColor: corPrimaria }}>
           <div
             className="text-center text-sm font-bold uppercase tracking-wider flex justify-between px-6 py-3 items-center"
             style={{
@@ -431,7 +431,7 @@ const mostrarComparativoResumoDash =
         </div>
 
                 {/* ================= QUADRANTE FATURAMENTO ================= */}
-      <div className={bgCard + " w-full sm:w-96 rounded-2xl shadow-lg border-2 overflow-hidden transition-colors"} style={{ borderColor: corPrimaria }}>
+      <div className={bgCard + " w-full rounded-2xl shadow-lg border-2 overflow-hidden transition-colors"} style={{ borderColor: corPrimaria }}>
           <div
             className="text-center text-sm font-bold uppercase tracking-wider flex justify-between px-6 py-3 items-center"
             style={{
@@ -566,7 +566,7 @@ const mostrarComparativoResumoDash =
         </div>
         {/* ========================================================= */}
 
-      <div className="hidden xl:flex w-[280px] items-center justify-center rounded-2xl border-2 border-dashed border-slate-300 text-slate-400 text-sm font-semibold" style={{ minHeight: '120px' }}>
+      <div className="hidden sm:flex w-full items-center justify-center rounded-2xl border-2 border-dashed border-slate-300 text-slate-400 text-sm font-semibold" style={{ minHeight: '120px' }}>
         Espaço para novos cards
       </div>
     </main>
