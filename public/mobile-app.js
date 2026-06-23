@@ -404,7 +404,7 @@
     return '<div class="mx-auto max-w-md px-4 py-5">' + conteudo + '</div>';
   }
 
-  var APP_VERSION = '1.3.2';
+  var APP_VERSION = '1.3.3';
   var APP_VERSION_LABEL = 'AvantaLab Gest&atilde;o v' + APP_VERSION;
 
   function telaAvisoMobile(titulo, texto) {
@@ -3900,19 +3900,19 @@
     mostrarToast('Despesa confirmada.');
   }
 
-  async function marcarDespesaNaoOcorreu(id) {
+  async function excluirDespesaPrevista(id) {
     if (!state.empresa) return;
-    if (!window.confirm('Marcar esta despesa como nao ocorrida? Ela sai do total do mes.')) return;
+    if (!window.confirm('Excluir esta despesa prevista? Ela nao ocorreu e sera removida.')) return;
     state.carregando = true;
     render();
-    var resp = await db.from('lancamentos').update({ status: 'cancelada' }).eq('id', id).eq('empresa_id', state.empresa.id);
+    var resp = await db.from('lancamentos').delete().eq('id', id).eq('empresa_id', state.empresa.id);
     if (resp.error) {
       state.carregando = false;
-      setErro('Nao foi possivel atualizar a despesa.');
+      setErro('Nao foi possivel excluir a despesa.');
       return;
     }
     await carregarDados();
-    mostrarToast('Marcada como nao ocorrida.');
+    mostrarToast('Despesa excluida.');
   }
 
   function ajustarDespesaPrevista(id) {
@@ -4288,7 +4288,7 @@
               '<div class="mt-2 grid grid-cols-3 gap-2">' +
                 '<button type="button" data-confirmar-id="' + escapeHtml(item.id) + '" class="h-9 rounded-lg bg-emerald-600 text-xs font-black text-white active:bg-emerald-700">Confirmar</button>' +
                 '<button type="button" data-ajustar-id="' + escapeHtml(item.id) + '" class="h-9 rounded-lg border border-slate-300 bg-white text-xs font-black text-slate-700 active:bg-slate-50">Ajustar valor</button>' +
-                '<button type="button" data-naoocorreu-id="' + escapeHtml(item.id) + '" class="h-9 rounded-lg border border-red-200 bg-white text-xs font-black text-red-600 active:bg-red-50">N&atilde;o ocorreu</button>' +
+                '<button type="button" data-excluir-prevista-id="' + escapeHtml(item.id) + '" class="h-9 rounded-lg border border-red-200 bg-white text-xs font-black text-red-600 active:bg-red-50">Excluir</button>' +
               '</div>' +
             '</div>';
           }).join('') +
@@ -6856,9 +6856,9 @@
         ajustarDespesaPrevista(botao.getAttribute('data-ajustar-id'));
       });
     });
-    Array.prototype.forEach.call(document.querySelectorAll('[data-naoocorreu-id]'), function (botao) {
+    Array.prototype.forEach.call(document.querySelectorAll('[data-excluir-prevista-id]'), function (botao) {
       botao.addEventListener('click', function () {
-        marcarDespesaNaoOcorreu(botao.getAttribute('data-naoocorreu-id'));
+        excluirDespesaPrevista(botao.getAttribute('data-excluir-prevista-id'));
       });
     });
     Array.prototype.forEach.call(document.querySelectorAll('[data-dashboard-move]'), function (botao) {
@@ -7371,7 +7371,7 @@
     });
 
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/mobile-sw.js?v=135').then(function (registro) {
+      navigator.serviceWorker.register('/mobile-sw.js?v=136').then(function (registro) {
         if (registro && registro.update) registro.update();
       }).catch(function () {});
     }
