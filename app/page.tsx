@@ -45,6 +45,7 @@ import {
   apagarLancamento,
   atualizarLancamento,
   definirStatusLancamento,
+  salvarDashboardOrdemWeb,
   salvarFaturamentoBanco,
   excluirFaturamentoBanco,
   salvarFaturamentoEntrada,
@@ -301,6 +302,8 @@ const [reenviandoTelefoneObrigatorio, setReenviandoTelefoneObrigatorio] = useSta
 const [validandoTelefoneObrigatorio, setValidandoTelefoneObrigatorio] = useState(false);
   const [abaAtiva, setAbaAtiva] = useState('Dashboard');
   const [saldoCardMesIdx, setSaldoCardMesIdx] = useState<number>(new Date().getMonth());
+  const ordemDashboardPadrao = ['aConfirmar', 'saldo', 'resumoFinanceiro', 'registrarEntradas'];
+  const [dashboardOrdem, setDashboardOrdem] = useState<string[]>(ordemDashboardPadrao);
 const [ajustesAberto, setAjustesAberto] = useState(false);
 const [agendaAberta, setAgendaAberta] = useState(false);
 const [agendaItens, setAgendaItens] = useState<AgendaItem[]>([]);
@@ -710,6 +713,16 @@ if (empresa.telefone_confirmado !== true) {
     if (config.duplicados_ativo !== undefined) setDuplicadosAtivo(config.duplicados_ativo);
     setLogoUrl(config.logo_url ?? '');
     if (config.logo_settings) setLogoSettings(config.logo_settings);
+
+    if (Array.isArray(config.dashboard_ordem_web)) {
+      const salva = config.dashboard_ordem_web.filter((id: string) =>
+        ordemDashboardPadrao.includes(id)
+      );
+      const faltantes = ordemDashboardPadrao.filter((id) => !salva.includes(id));
+      setDashboardOrdem([...salva, ...faltantes]);
+    } else {
+      setDashboardOrdem(ordemDashboardPadrao);
+    }
 
     if (config.ultimo_backup_em) {
       setUltimoBackupEm(config.ultimo_backup_em);
@@ -2371,6 +2384,16 @@ const excluirDespesaPrevista = (id: string | number) => {
 
 const ajustarDespesaPrevista = (despesa: any) => {
   if (despesa && despesa.mes) setMesAtivo(despesa.mes);
+};
+
+const persistirOrdemDashboard = (novaOrdem: string[]) => {
+  setDashboardOrdem(novaOrdem);
+  if (empresaId) salvarDashboardOrdemWeb(empresaId, novaOrdem);
+};
+
+const restaurarOrdemDashboard = () => {
+  setDashboardOrdem(ordemDashboardPadrao);
+  if (empresaId) salvarDashboardOrdemWeb(empresaId, ordemDashboardPadrao);
 };
 
 const solicitarExclusaoLancamento = (lanc: any) => {
@@ -7474,6 +7497,9 @@ setAjustesAberto(false);
         saldoInicial={saldoInicialCard}
         saldoFinal={saldoFinalCard}
         saldoPrevisto={saldoPrevistoCard}
+        dashboardOrdem={dashboardOrdem}
+        onReordenarDashboard={persistirOrdemDashboard}
+        onRestaurarOrdemDashboard={restaurarOrdemDashboard}
       />
     </div>
   </main>

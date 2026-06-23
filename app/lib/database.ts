@@ -279,6 +279,20 @@ export async function buscarEmpresasDoUsuario(usuarioId: string) {
     .sort((a: any, b: any) => a.nome.localeCompare(b.nome, 'pt-BR', { sensitivity: 'base' }));
 }
 
+export async function salvarDashboardOrdemWeb(empresaId: string, ordem: string[]) {
+  const { error } = await supabase
+    .from('configuracoes')
+    .update({ dashboard_ordem_web: ordem })
+    .eq('empresa_id', empresaId);
+
+  if (error) {
+    console.error('Erro ao salvar ordem do dashboard:', error);
+    return false;
+  }
+
+  return true;
+}
+
 export async function buscarConfiguracoes(empresaId: string) {
   const { data, error } = await supabase
     .from('configuracoes')

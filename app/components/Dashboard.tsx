@@ -42,6 +42,9 @@ interface DashboardProps {
   saldoInicial: number;
   saldoFinal: number;
   saldoPrevisto: number;
+  dashboardOrdem: string[];
+  onReordenarDashboard: (ordem: string[]) => void;
+  onRestaurarOrdemDashboard: () => void;
 }
 
 export default function Dashboard({
@@ -60,10 +63,12 @@ export default function Dashboard({
   solicitarEntradaFaturamentoDashboard,
   receitasTotais, despesasTotais, lucroTotalAnual, formatarMoeda,
   despesasAConfirmar, onConfirmarPrevista, onAjustarPrevista, onExcluirPrevista,
-  saldoCardMesIdx, setSaldoCardMesIdx, saldoInicial, saldoFinal, saldoPrevisto
+  saldoCardMesIdx, setSaldoCardMesIdx, saldoInicial, saldoFinal, saldoPrevisto,
+  dashboardOrdem, onReordenarDashboard, onRestaurarOrdemDashboard
 }: DashboardProps) {
-  
+
   const [ocultarValores, setOcultarValores] = useState(true);
+  const [dragId, setDragId] = useState<string | null>(null);
 
   // Função local para formatar o faturamento enquanto digita
   const handleInputFaturamento = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -148,64 +153,42 @@ const corBarraResumoDash =
 const mostrarComparativoResumoDash =
   !!mesAnteriorResumoDash && totalDespesasMesAnteriorResumoDash > 0;
 
-  return (
-    <main className="grid w-full grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 items-start gap-6 animate-fade-in print:m-0 print:p-0">
+  const moverCard = (fromId: string, toId: string) => {
+    if (fromId === toId) return;
+    const nova = [...dashboardOrdem];
+    const from = nova.indexOf(fromId);
+    const to = nova.indexOf(toId);
+    if (from < 0 || to < 0) return;
+    nova.splice(to, 0, nova.splice(from, 1)[0]);
+    onReordenarDashboard(nova);
+  };
 
-      {despesasAConfirmar && despesasAConfirmar.length > 0 && (
-        <div className="w-full rounded-2xl border-2 border-amber-200 bg-amber-50 p-5 shadow-lg">
-          <div className="flex items-center gap-2">
-            <span className="text-lg">🔔</span>
-            <h3 className="flex-1 text-sm font-black text-amber-900">
-              {despesasAConfirmar.length} despesa{despesasAConfirmar.length > 1 ? 's' : ''} prevista{despesasAConfirmar.length > 1 ? 's' : ''} para confirmar
-            </h3>
-            <strong className="text-sm font-black text-amber-900">
-              {formatarMoeda(despesasAConfirmar.reduce((s, i) => s + Number(i.valor || 0), 0))}
-            </strong>
-          </div>
-          <p className="mt-1 text-xs font-semibold text-amber-700">
-            Já entraram no total pelo valor previsto. Confirme, ajuste o valor ou exclua.
-          </p>
-          <div className="mt-4 grid gap-2">
-            {despesasAConfirmar.map((d) => (
-              <div
-                key={d.id}
-                className="flex flex-col gap-2 rounded-xl border border-amber-100 bg-white p-3 sm:flex-row sm:items-center sm:justify-between"
-              >
-                <div className="min-w-0">
-                  <p className="truncate text-sm font-bold text-slate-800">{d.despesa}</p>
-                  <p className="truncate text-xs text-slate-500">
-                    {d.mes} · Dia {d.dia}{d.descricao ? ` - ${d.descricao}` : ''}
-                  </p>
-                </div>
-                <div className="flex shrink-0 items-center gap-2">
-                  <strong className="mr-2 text-sm font-black text-red-600">{formatarMoeda(Number(d.valor || 0))}</strong>
-                  <button
-                    type="button"
-                    onClick={() => onConfirmarPrevista(d.id)}
-                    className="h-9 rounded-lg bg-emerald-600 px-3 text-xs font-black text-white hover:bg-emerald-700 cursor-pointer"
-                  >
-                    Confirmar
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => onAjustarPrevista(d)}
-                    className="h-9 rounded-lg border border-slate-300 bg-white px-3 text-xs font-black text-slate-700 hover:bg-slate-50 cursor-pointer"
-                  >
-                    Ajustar valor
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => onExcluirPrevista(d.id)}
-                    className="h-9 rounded-lg border border-red-200 bg-white px-3 text-xs font-black text-red-600 hover:bg-red-50 cursor-pointer"
-                  >
-                    Excluir
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
+  const kanbanCard = (id: string, node: React.ReactNode) => {
+    if (!node) return null;
+    return (
+      <div
+        key={id}
+        style={{ order: dashboardOrdem.indexOf(id) }}
+        onDragOver={(e) => e.preventDefault()}
+        onDrop={(e) => { e.preventDefault(); if (dragId) moverCard(dragId, id); setDragId(null); }}
+        className={dragId === id ? 'opacity-50' : ''}
+      >
+        <div
+          draggable
+          onDragStart={() => setDragId(id)}
+          onDragEnd={() => setDragId(null)}
+          className="mb-1 flex h-5 cursor-grab items-center justify-center rounded text-slate-300 hover:text-slate-500 active:cursor-grabbing select-none"
+          title="Arrastar para reordenar"
+        >
+          <span className="text-base leading-none tracking-[0.4em]">⠿</span>
         </div>
-      )}
+        {node}
+      </div>
+    );
+  };
+
+  return (
+    <main className="grid w-full grid-cols-1 xl:grid-cols-3 items-start gap-6 animate-fade-in print:m-0 print:p-0">
 
       <section
         className={`${bgCard} w-full p-6 rounded-2xl shadow-lg border border-t-4 transition-colors`}
@@ -294,7 +277,66 @@ const mostrarComparativoResumoDash =
         </div>
       </section>
 
-      <div className={`${bgCard} w-full rounded-2xl shadow-lg border-2 overflow-hidden transition-colors`} style={{ borderColor: corPrimaria }}>
+      <div className="xl:col-span-2 grid grid-cols-1 sm:grid-cols-2 items-start gap-6 content-start">
+
+        {kanbanCard('aConfirmar', (despesasAConfirmar && despesasAConfirmar.length > 0) ? (
+          <div className="w-full rounded-2xl border-2 border-amber-200 bg-amber-50 p-5 shadow-lg">
+            <div className="flex items-center gap-2">
+              <span className="text-lg">🔔</span>
+              <h3 className="flex-1 text-sm font-black text-amber-900">
+                {despesasAConfirmar.length} despesa{despesasAConfirmar.length > 1 ? 's' : ''} prevista{despesasAConfirmar.length > 1 ? 's' : ''} para confirmar
+              </h3>
+              <strong className="text-sm font-black text-amber-900">
+                {formatarMoeda(despesasAConfirmar.reduce((s, i) => s + Number(i.valor || 0), 0))}
+              </strong>
+            </div>
+            <p className="mt-1 text-xs font-semibold text-amber-700">
+              Já entraram no total pelo valor previsto. Confirme, ajuste o valor ou exclua.
+            </p>
+            <div className="mt-4 grid gap-2">
+              {despesasAConfirmar.map((d) => (
+                <div
+                  key={d.id}
+                  className="flex flex-col gap-2 rounded-xl border border-amber-100 bg-white p-3 sm:flex-row sm:items-center sm:justify-between"
+                >
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-bold text-slate-800">{d.despesa}</p>
+                    <p className="truncate text-xs text-slate-500">
+                      {d.mes} · Dia {d.dia}{d.descricao ? ` - ${d.descricao}` : ''}
+                    </p>
+                  </div>
+                  <div className="flex shrink-0 items-center gap-2">
+                    <strong className="mr-2 text-sm font-black text-red-600">{formatarMoeda(Number(d.valor || 0))}</strong>
+                    <button
+                      type="button"
+                      onClick={() => onConfirmarPrevista(d.id)}
+                      className="h-9 rounded-lg bg-emerald-600 px-3 text-xs font-black text-white hover:bg-emerald-700 cursor-pointer"
+                    >
+                      Confirmar
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => onAjustarPrevista(d)}
+                      className="h-9 rounded-lg border border-slate-300 bg-white px-3 text-xs font-black text-slate-700 hover:bg-slate-50 cursor-pointer"
+                    >
+                      Ajustar valor
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => onExcluirPrevista(d.id)}
+                      className="h-9 rounded-lg border border-red-200 bg-white px-3 text-xs font-black text-red-600 hover:bg-red-50 cursor-pointer"
+                    >
+                      Excluir
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        ) : null)}
+
+        {kanbanCard('saldo', (
+          <div className={`${bgCard} w-full rounded-2xl shadow-lg border-2 overflow-hidden transition-colors`} style={{ borderColor: corPrimaria }}>
           <div
             className="text-center text-sm font-bold uppercase tracking-wider flex justify-between px-6 py-3 items-center"
             style={{ backgroundColor: corPrimaria, color: textoSobreCorPrimaria }}
@@ -328,8 +370,10 @@ const mostrarComparativoResumoDash =
             </div>
           </div>
       </div>
+        ))}
 
-      <div className={`${bgCard} w-full rounded-2xl shadow-lg border-2 overflow-hidden transition-colors`} style={{ borderColor: corPrimaria }}>
+        {kanbanCard('resumoFinanceiro', (
+          <div className={`${bgCard} w-full rounded-2xl shadow-lg border-2 overflow-hidden transition-colors`} style={{ borderColor: corPrimaria }}>
           <div
             className="text-center text-sm font-bold uppercase tracking-wider flex justify-between px-6 py-3 items-center"
             style={{
@@ -429,9 +473,10 @@ const mostrarComparativoResumoDash =
             </div>
           </div>
         </div>
+        ))}
 
-                {/* ================= QUADRANTE FATURAMENTO ================= */}
-      <div className={bgCard + " w-full rounded-2xl shadow-lg border-2 overflow-hidden transition-colors"} style={{ borderColor: corPrimaria }}>
+        {kanbanCard('registrarEntradas', (
+          <div className={bgCard + " w-full rounded-2xl shadow-lg border-2 overflow-hidden transition-colors"} style={{ borderColor: corPrimaria }}>
           <div
             className="text-center text-sm font-bold uppercase tracking-wider flex justify-between px-6 py-3 items-center"
             style={{
@@ -564,10 +609,21 @@ const mostrarComparativoResumoDash =
             </section>
           </div>
         </div>
-        {/* ========================================================= */}
+        ))}
 
-      <div className="hidden sm:flex w-full items-center justify-center rounded-2xl border-2 border-dashed border-slate-300 text-slate-400 text-sm font-semibold" style={{ minHeight: '120px' }}>
-        Espaço para novos cards
+        <div style={{ order: 998, minHeight: '120px' }} className="hidden sm:flex w-full items-center justify-center rounded-2xl border-2 border-dashed border-slate-300 text-slate-400 text-sm font-semibold">
+          Espaço para novos cards
+        </div>
+
+        <button
+          type="button"
+          onClick={onRestaurarOrdemDashboard}
+          style={{ order: 999 }}
+          className="sm:col-span-2 mt-1 text-xs font-bold text-slate-400 hover:text-slate-600 cursor-pointer"
+        >
+          ↺ Restaurar ordem padrão
+        </button>
+
       </div>
     </main>
   );
