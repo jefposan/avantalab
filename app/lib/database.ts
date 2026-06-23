@@ -408,6 +408,7 @@ export async function salvarLancamento({
   despesaNome,
   descricao,
   valor,
+  status = null,
 }: {
   empresaId: string;
   ano: number;
@@ -416,6 +417,7 @@ export async function salvarLancamento({
   despesaNome: string;
   descricao: string;
   valor: number;
+  status?: string | null;
 }) {
   const { data, error } = await supabase
     .from('lancamentos')
@@ -427,6 +429,7 @@ export async function salvarLancamento({
       despesa_nome: despesaNome,
       descricao,
       valor,
+      status,
     })
     .select()
     .single();
@@ -453,6 +456,25 @@ export async function apagarLancamento(id: string) {
 
   if (error) {
     console.error('Erro ao apagar lançamento:', error);
+    return false;
+  }
+
+  return true;
+}
+
+export async function definirStatusLancamento(
+  id: string | number,
+  empresaId: string,
+  status: string | null
+) {
+  const { error } = await supabase
+    .from('lancamentos')
+    .update({ status })
+    .eq('id', id)
+    .eq('empresa_id', empresaId);
+
+  if (error) {
+    console.error('Erro ao atualizar status do lançamento:', error);
     return false;
   }
 

@@ -33,6 +33,10 @@ interface DashboardProps {
   despesasTotais: number;
   lucroTotalAnual: number;
   formatarMoeda: (valor: number) => string;
+  despesasAConfirmar: any[];
+  onConfirmarPrevista: (id: any) => void;
+  onAjustarPrevista: (despesa: any) => void;
+  onExcluirPrevista: (id: any) => void;
 }
 
 export default function Dashboard({
@@ -49,7 +53,8 @@ export default function Dashboard({
   entradaFaturamentoValor,
   handleEntradaFaturamentoValorChange,
   solicitarEntradaFaturamentoDashboard,
-  receitasTotais, despesasTotais, lucroTotalAnual, formatarMoeda
+  receitasTotais, despesasTotais, lucroTotalAnual, formatarMoeda,
+  despesasAConfirmar, onConfirmarPrevista, onAjustarPrevista, onExcluirPrevista
 }: DashboardProps) {
   
   const [ocultarValores, setOcultarValores] = useState(true);
@@ -144,6 +149,61 @@ const mostrarComparativoResumoDash =
         className={`${bgCard} flex-1 p-10 rounded-2xl shadow-lg border border-t-4 transition-colors`} 
         style={{ borderTopColor: corPrimaria }}
       >
+        {despesasAConfirmar && despesasAConfirmar.length > 0 && (
+          <div className="mb-8 rounded-2xl border border-amber-200 bg-amber-50 p-5">
+            <div className="flex items-center gap-2">
+              <span className="text-lg">🔔</span>
+              <h3 className="flex-1 text-sm font-black text-amber-900">
+                {despesasAConfirmar.length} despesa{despesasAConfirmar.length > 1 ? 's' : ''} prevista{despesasAConfirmar.length > 1 ? 's' : ''} para confirmar
+              </h3>
+              <strong className="text-sm font-black text-amber-900">
+                {formatarMoeda(despesasAConfirmar.reduce((s, i) => s + Number(i.valor || 0), 0))}
+              </strong>
+            </div>
+            <p className="mt-1 text-xs font-semibold text-amber-700">
+              Já entraram no total pelo valor previsto. Confirme, ajuste o valor ou exclua.
+            </p>
+            <div className="mt-4 grid gap-2">
+              {despesasAConfirmar.map((d) => (
+                <div
+                  key={d.id}
+                  className="flex flex-col gap-2 rounded-xl border border-amber-100 bg-white p-3 sm:flex-row sm:items-center sm:justify-between"
+                >
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-bold text-slate-800">{d.despesa}</p>
+                    <p className="truncate text-xs text-slate-500">
+                      {d.mes} · Dia {d.dia}{d.descricao ? ` - ${d.descricao}` : ''}
+                    </p>
+                  </div>
+                  <div className="flex shrink-0 items-center gap-2">
+                    <strong className="mr-2 text-sm font-black text-red-600">{formatarMoeda(Number(d.valor || 0))}</strong>
+                    <button
+                      type="button"
+                      onClick={() => onConfirmarPrevista(d.id)}
+                      className="h-9 rounded-lg bg-emerald-600 px-3 text-xs font-black text-white hover:bg-emerald-700 cursor-pointer"
+                    >
+                      Confirmar
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => onAjustarPrevista(d)}
+                      className="h-9 rounded-lg border border-slate-300 bg-white px-3 text-xs font-black text-slate-700 hover:bg-slate-50 cursor-pointer"
+                    >
+                      Ajustar valor
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => onExcluirPrevista(d.id)}
+                      className="h-9 rounded-lg border border-red-200 bg-white px-3 text-xs font-black text-red-600 hover:bg-red-50 cursor-pointer"
+                    >
+                      Excluir
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
         <h2 className={`text-2xl font-black ${textStrong} mb-10 flex items-center`}>
           <span className="w-3 h-8 rounded-full mr-4 shadow-sm" style={{ backgroundColor: corPrimaria }}></span>
           LANÇAMENTOS MENSAIS

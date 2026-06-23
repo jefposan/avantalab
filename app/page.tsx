@@ -44,6 +44,7 @@ import {
   salvarLancamento,
   apagarLancamento,
   atualizarLancamento,
+  definirStatusLancamento,
   salvarFaturamentoBanco,
   excluirFaturamentoBanco,
   salvarFaturamentoEntrada,
@@ -103,6 +104,18 @@ type AgendaItem = {
   criadoEm: string;
   excluirDias?: string[];
 };
+
+// Despesa com data (ano/mes/dia) ainda no futuro em relacao a hoje (horario do dispositivo).
+function dataFutura(ano: number, mesIndice: number, dia: number): boolean {
+  const hoje = new Date();
+  const anoHoje = hoje.getFullYear();
+  if (ano > anoHoje) return true;
+  if (ano < anoHoje) return false;
+  const mesHoje = hoje.getMonth();
+  if (mesIndice > mesHoje) return true;
+  if (mesIndice < mesHoje) return false;
+  return Number(dia) > hoje.getDate();
+}
 
 export default function AppGestao() {
 
@@ -888,6 +901,7 @@ useEffect(() => {
         despesa: l.despesa_nome,
         descricao: l.descricao || '',
         valor: Number(l.valor),
+        status: l.status || null,
       }))
     );
         setFaturamentosEntradas(
@@ -1458,7 +1472,12 @@ const lancamentosDoMesAnterior = mesAnteriorParaAnalise
   ? lancamentos.filter(l => l.mes === mesAnteriorParaAnalise)
   : [];
 
-const totalDespesasMes = lancamentosDoMes.reduce((acc, lanc) => acc + lanc.valor, 0);
+// Despesas com data futura nao entram no total realizado do mes; somam no previsto.
+const totalDespesasMes = lancamentosDoMes.reduce(
+  (acc, lanc) =>
+    acc + (dataFutura(Number(anoSelecionado), indiceMesParaAnalise, lanc.dia) ? 0 : lanc.valor),
+  0
+);
 
 const totalDespesasMesAnterior = lancamentosDoMesAnterior.reduce(
   (acc, lanc) => acc + lanc.valor,
@@ -1486,6 +1505,13 @@ const mostrarBarraComparativoDespesas =
 
 const faturamentoDoMesAtual = faturamentos[mesParaAnalise] || 0;
 const lucroOperacional = faturamentoDoMesAtual - totalDespesasMes;
+
+// Todas as despesas previstas do ano cuja data ja chegou e ainda nao foram confirmadas.
+const despesasAConfirmar = lancamentos.filter(
+  (l) =>
+    l.status === 'prevista' &&
+    !dataFutura(Number(anoSelecionado), meses.indexOf(l.mes), l.dia)
+);
   const lancamentosOrdenados = useMemo(() => {
   return [...lancamentos].sort((a, b) => {
     const diaA = Number(a.dia);
@@ -2250,6 +2276,7 @@ const executarParcelamento = async () => {
       despesaNome: formDespesa,
       descricao: descParc,
       valor: valorNumericoRaw,
+      status: dataFutura(anoParc, idxMes, parseInt(formDia)) ? 'prevista' : null,
     });
 
     if (!salvo.erro && salvo.data) {
@@ -2260,6 +2287,7 @@ const executarParcelamento = async () => {
         despesa: salvo.data.despesa_nome,
         descricao: salvo.data.descricao || '',
         valor: Number(salvo.data.valor),
+        status: salvo.data.status || null,
       });
     } else {
       abrirAviso(
@@ -2293,6 +2321,34 @@ const apagarDespesa = async (id: string) => {
       'Não foi possível apagar o lançamento no banco.'
     );
   }
+};
+
+const confirmarDespesaPrevista = async (id: string | number) => {
+  if (!empresaId) return;
+  const ok = await definirStatusLancamento(id, empresaId, 'confirmada');
+  if (ok) {
+    setLancamentos((prev) =>
+      prev.map((l: any) => (l.id === id ? { ...l, status: 'confirmada' } : l))
+    );
+  } else {
+    abrirAviso('Erro', 'Não foi possível confirmar a despesa.');
+  }
+};
+
+const excluirDespesaPrevista = (id: string | number) => {
+  abrirConfirmacao({
+    titulo: 'Excluir despesa prevista',
+    mensagem:
+      'Esta despesa era uma previsão e não ocorreu. Ela será removida. Deseja excluir?',
+    textoConfirmar: 'Excluir',
+    acao: async () => {
+      await apagarDespesa(id as string);
+    },
+  });
+};
+
+const ajustarDespesaPrevista = (despesa: any) => {
+  if (despesa && despesa.mes) setMesAtivo(despesa.mes);
 };
 
 const solicitarExclusaoLancamento = (lanc: any) => {
@@ -2922,6 +2978,7 @@ const recarregarDadosFinanceirosAtual = async () => {
       despesa: l.despesa_nome,
       descricao: l.descricao || '',
       valor: Number(l.valor),
+      status: l.status || null,
     }))
   );
 
@@ -7386,6 +7443,10 @@ setAjustesAberto(false);
         despesasTotais={despesasTotais}
         lucroTotalAnual={lucroTotalAnual}
         formatarMoeda={formatarMoeda}
+        despesasAConfirmar={despesasAConfirmar}
+        onConfirmarPrevista={confirmarDespesaPrevista}
+        onAjustarPrevista={ajustarDespesaPrevista}
+        onExcluirPrevista={excluirDespesaPrevista}
       />
     </div>
   </main>
