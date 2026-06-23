@@ -281,11 +281,18 @@ export async function buscarEmpresasDoUsuario(usuarioId: string) {
 
 export async function salvarDashboardOrdemWeb(
   empresaId: string,
-  ordem: { a: string[]; b: string[] }
+  ordem: { a: string[]; b: string[] },
+  ocultos?: string[]
 ) {
+  const valores: { dashboard_ordem_web: { a: string[]; b: string[] }; dashboard_ocultos_web?: string[] } = {
+    dashboard_ordem_web: ordem,
+  };
+
+  if (ocultos) valores.dashboard_ocultos_web = ocultos;
+
   const { error } = await supabase
     .from('configuracoes')
-    .update({ dashboard_ordem_web: ordem })
+    .update(valores)
     .eq('empresa_id', empresaId);
 
   if (error) {

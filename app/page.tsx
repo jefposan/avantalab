@@ -302,8 +302,10 @@ const [reenviandoTelefoneObrigatorio, setReenviandoTelefoneObrigatorio] = useSta
 const [validandoTelefoneObrigatorio, setValidandoTelefoneObrigatorio] = useState(false);
   const [abaAtiva, setAbaAtiva] = useState('Dashboard');
   const [saldoCardMesIdx, setSaldoCardMesIdx] = useState<number>(new Date().getMonth());
+  const dashboardCardsKanban = ['aConfirmar', 'saldo', 'resumoFinanceiro', 'registrarEntradas'];
   const ordemDashboardPadrao = { a: ['aConfirmar', 'saldo'], b: ['resumoFinanceiro', 'registrarEntradas'] };
   const [dashboardOrdem, setDashboardOrdem] = useState<{ a: string[]; b: string[] }>(ordemDashboardPadrao);
+  const [dashboardOcultos, setDashboardOcultos] = useState<string[]>([]);
 const [ajustesAberto, setAjustesAberto] = useState(false);
 const [agendaAberta, setAgendaAberta] = useState(false);
 const [agendaItens, setAgendaItens] = useState<AgendaItem[]>([]);
@@ -715,17 +717,23 @@ if (empresa.telefone_confirmado !== true) {
     setLogoUrl(config.logo_url ?? '');
     if (config.logo_settings) setLogoSettings(config.logo_settings);
 
-    const TODOS_CARDS = ['aConfirmar', 'saldo', 'resumoFinanceiro', 'registrarEntradas'];
     const rawOrdem = config.dashboard_ordem_web;
     if (rawOrdem && Array.isArray(rawOrdem.a) && Array.isArray(rawOrdem.b)) {
-      const a = rawOrdem.a.filter((id: string) => TODOS_CARDS.includes(id));
-      const b = rawOrdem.b.filter((id: string) => TODOS_CARDS.includes(id) && !a.includes(id));
+      const a = rawOrdem.a.filter((id: string) => dashboardCardsKanban.includes(id));
+      const b = rawOrdem.b.filter((id: string) => dashboardCardsKanban.includes(id) && !a.includes(id));
       const usados = [...a, ...b];
-      const faltantes = TODOS_CARDS.filter((id) => !usados.includes(id));
+      const faltantes = dashboardCardsKanban.filter((id) => !usados.includes(id));
       setDashboardOrdem({ a: [...a, ...faltantes], b });
     } else {
       setDashboardOrdem(ordemDashboardPadrao);
     }
+
+    const rawOcultos = config.dashboard_ocultos_web;
+    setDashboardOcultos(
+      Array.isArray(rawOcultos)
+        ? rawOcultos.filter((id: string, index: number) => dashboardCardsKanban.includes(id) && rawOcultos.indexOf(id) === index)
+        : []
+    );
 
     if (config.ultimo_backup_em) {
       setUltimoBackupEm(config.ultimo_backup_em);
@@ -2404,12 +2412,25 @@ const ajustarDespesaPrevista = (despesa: any) => {
 
 const persistirOrdemDashboard = (novaOrdem: { a: string[]; b: string[] }) => {
   setDashboardOrdem(novaOrdem);
-  if (empresaId) salvarDashboardOrdemWeb(empresaId, novaOrdem);
+  if (empresaId) salvarDashboardOrdemWeb(empresaId, novaOrdem, dashboardOcultos);
 };
 
 const restaurarOrdemDashboard = () => {
   setDashboardOrdem(ordemDashboardPadrao);
-  if (empresaId) salvarDashboardOrdemWeb(empresaId, ordemDashboardPadrao);
+  setDashboardOcultos([]);
+  if (empresaId) salvarDashboardOrdemWeb(empresaId, ordemDashboardPadrao, []);
+};
+
+const definirOcultosDashboard = (novosOcultos: string[]) => {
+  const ocultosNormalizados = novosOcultos.filter(
+    (id, index) => dashboardCardsKanban.includes(id) && novosOcultos.indexOf(id) === index
+  );
+  setDashboardOcultos(ocultosNormalizados);
+  if (empresaId) salvarDashboardOrdemWeb(empresaId, dashboardOrdem, ocultosNormalizados);
+};
+
+const ocultarCardDashboard = (id: string) => {
+  definirOcultosDashboard([...dashboardOcultos, id]);
 };
 
 const solicitarExclusaoLancamento = (lanc: any) => {
@@ -7518,8 +7539,11 @@ setAjustesAberto(false);
         saldoFinal={saldoFinalCard}
         saldoPrevisto={saldoPrevistoCard}
         dashboardOrdem={dashboardOrdem}
+        dashboardOcultos={dashboardOcultos}
         onReordenarDashboard={persistirOrdemDashboard}
         onRestaurarOrdemDashboard={restaurarOrdemDashboard}
+        onOcultarCardDashboard={ocultarCardDashboard}
+        onDefinirOcultosDashboard={definirOcultosDashboard}
       />
     </div>
   </main>

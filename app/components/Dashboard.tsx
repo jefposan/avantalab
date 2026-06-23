@@ -112,8 +112,11 @@ interface DashboardProps {
   saldoFinal: number;
   saldoPrevisto: number;
   dashboardOrdem: { a: string[]; b: string[] };
+  dashboardOcultos: string[];
   onReordenarDashboard: (ordem: { a: string[]; b: string[] }) => void;
   onRestaurarOrdemDashboard: () => void;
+  onOcultarCardDashboard: (id: string) => void;
+  onDefinirOcultosDashboard: (ids: string[]) => void;
 }
 
 export default function Dashboard({
@@ -133,10 +136,13 @@ export default function Dashboard({
   receitasTotais, despesasTotais, lucroTotalAnual, formatarMoeda,
   despesasAConfirmar, onConfirmarPrevista, onAjustarPrevista, onExcluirPrevista,
   saldoCardMesIdx, setSaldoCardMesIdx, saldoInicial, saldoFinal, saldoPrevisto,
-  dashboardOrdem, onReordenarDashboard, onRestaurarOrdemDashboard
+  dashboardOrdem, dashboardOcultos, onReordenarDashboard, onRestaurarOrdemDashboard,
+  onOcultarCardDashboard, onDefinirOcultosDashboard
 }: DashboardProps) {
 
   const [ocultarValores, setOcultarValores] = useState(true);
+  const [menuCardAberto, setMenuCardAberto] = useState<string | null>(null);
+  const [gerenciadorAberto, setGerenciadorAberto] = useState(false);
   const [cols, setCols] = useState(dashboardOrdem);
   const [ordemAnterior, setOrdemAnterior] = useState(dashboardOrdem);
   if (ordemAnterior !== dashboardOrdem) {
@@ -230,6 +236,67 @@ const mostrarComparativoResumoDash =
   !!mesAnteriorResumoDash && totalDespesasMesAnteriorResumoDash > 0;
 
   const temAConfirmar = !!(despesasAConfirmar && despesasAConfirmar.length > 0);
+  const catalogoCardsKanban = [
+    { id: 'aConfirmar', titulo: 'Despesas a confirmar', descricao: 'Banner de despesas previstas que chegaram na data.' },
+    { id: 'saldo', titulo: 'Saldo do mês', descricao: 'Inicial, final e previsto do mês selecionado.' },
+    { id: 'resumoFinanceiro', titulo: 'Resumo financeiro', descricao: 'Despesas, maior gasto e lucro operacional.' },
+    { id: 'registrarEntradas', titulo: 'Registrar entradas', descricao: 'Lançamento de receitas e total mensal.' },
+  ];
+  const ocultosSet = new Set(dashboardOcultos || []);
+
+  const alternarVisibilidadeCard = (id: string) => {
+    const proximos = ocultosSet.has(id)
+      ? dashboardOcultos.filter((cardId) => cardId !== id)
+      : [...dashboardOcultos, id];
+
+    onDefinirOcultosDashboard(proximos);
+  };
+
+  const BotaoOpcoesCard = ({ id, tone = 'dark' }: { id: string; tone?: 'dark' | 'light' }) => (
+    <div className="relative shrink-0">
+      <button
+        type="button"
+        aria-label="Opções do bloco"
+        title="Opções do bloco"
+        onPointerDown={(e) => e.stopPropagation()}
+        onClick={(e) => {
+          e.stopPropagation();
+          setMenuCardAberto(menuCardAberto === id ? null : id);
+        }}
+        className={`flex h-6 w-6 items-center justify-center rounded transition ${
+          tone === 'light'
+            ? 'text-white/80 hover:bg-white/10 hover:text-white'
+            : 'text-slate-400 hover:bg-slate-100 hover:text-slate-700'
+        }`}
+      >
+        <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+          <circle cx="5" cy="12" r="2" />
+          <circle cx="12" cy="12" r="2" />
+          <circle cx="19" cy="12" r="2" />
+        </svg>
+      </button>
+
+      {menuCardAberto === id && (
+        <div
+          onPointerDown={(e) => e.stopPropagation()}
+          className="absolute right-0 top-8 z-30 w-44 overflow-hidden rounded-xl border border-slate-200 bg-white py-1 text-slate-800 shadow-2xl"
+        >
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              setMenuCardAberto(null);
+              onOcultarCardDashboard(id);
+            }}
+            className="flex w-full items-center gap-2 px-3 py-2 text-left text-xs font-black text-slate-700 transition hover:bg-slate-50"
+          >
+            <span className="text-sm leading-none">−</span>
+            Remover bloco
+          </button>
+        </div>
+      )}
+    </div>
+  );
 
   const findColumn = (id: string): 'a' | 'b' | null => {
     if (id === 'a' || id === 'b') return id;
@@ -238,7 +305,9 @@ const mostrarComparativoResumoDash =
     return null;
   };
 
-  const filtraColuna = (arr: string[]) => arr.filter((id) => id !== 'aConfirmar' || temAConfirmar);
+  const filtraColuna = (arr: string[]) => arr.filter((id) =>
+    !ocultosSet.has(id) && (id !== 'aConfirmar' || temAConfirmar)
+  );
   const colsView = { a: filtraColuna(cols.a), b: filtraColuna(cols.b) };
 
   const handleDragStart = (e: DragStartEvent) => setActiveId(String(e.active.id));
@@ -292,6 +361,7 @@ const mostrarComparativoResumoDash =
             {formatarMoeda(despesasAConfirmar.reduce((s, i) => s + Number(i.valor || 0), 0))}
           </strong>
           <DragHandle />
+          <BotaoOpcoesCard id="aConfirmar" />
         </div>
         <p className="mt-1 text-xs font-semibold text-amber-700">
           Já entraram no total pelo valor previsto. Confirme, ajuste o valor ou exclua.
@@ -324,6 +394,7 @@ const mostrarComparativoResumoDash =
               {meses.map(m => <option key={m} value={m} className="text-slate-800 bg-white">{m}</option>)}
             </select>
             <DragHandle tone="light" />
+            <BotaoOpcoesCard id="saldo" tone="light" />
           </div>
         </div>
         <div className="p-5 space-y-2.5">
@@ -352,6 +423,7 @@ const mostrarComparativoResumoDash =
               {meses.map(m => <option key={m} value={m} className="text-slate-800 bg-white">{m}</option>)}
             </select>
             <DragHandle tone="light" />
+            <BotaoOpcoesCard id="resumoFinanceiro" tone="light" />
           </div>
         </div>
         <div className="p-5 space-y-2.5">
@@ -393,7 +465,10 @@ const mostrarComparativoResumoDash =
       <div className={bgCard + " w-full rounded-2xl shadow-lg border-2 overflow-hidden transition-colors"} style={{ borderColor: corPrimaria }}>
         <div className="text-center text-sm font-bold uppercase tracking-wider flex justify-between px-6 py-3 items-center" style={{ backgroundColor: corPrimaria, color: textoSobreCorPrimaria }}>
           <span>REGISTRAR ENTRADAS</span>
-          <DragHandle tone="light" />
+          <div className="flex items-center gap-2">
+            <DragHandle tone="light" />
+            <BotaoOpcoesCard id="registrarEntradas" tone="light" />
+          </div>
         </div>
         <div className="p-5 space-y-3">
           <section className={(darkMode ? 'border-slate-700 bg-slate-800/60' : 'border-slate-200 bg-slate-50') + ' rounded-xl border p-3'}>
@@ -529,24 +604,99 @@ const mostrarComparativoResumoDash =
         </div>
       </section>
 
-      <div className="xl:col-span-2 grid grid-cols-1 sm:grid-cols-2 items-start gap-6">
-        <ColunaKanban id="a" items={colsView.a}>
-          {colsView.a.map((id) => (
-            <SortableItem key={id} id={id}>{cardsById[id]}</SortableItem>
-          ))}
-        </ColunaKanban>
-        <ColunaKanban id="b" items={colsView.b}>
-          {colsView.b.map((id) => (
-            <SortableItem key={id} id={id}>{cardsById[id]}</SortableItem>
-          ))}
-        </ColunaKanban>
+      <div className="xl:col-span-2 relative pt-12">
         <button
           type="button"
-          onClick={onRestaurarOrdemDashboard}
-          className="sm:col-span-2 mt-1 text-left text-xs font-bold text-slate-400 hover:text-slate-600 cursor-pointer"
+          onClick={() => setGerenciadorAberto(!gerenciadorAberto)}
+          className={`absolute right-0 top-0 flex h-9 w-9 items-center justify-center rounded-lg border shadow-sm transition hover:scale-[1.03] active:scale-[0.98] ${
+            darkMode
+              ? 'border-slate-700 bg-slate-800 text-slate-200 hover:bg-slate-700'
+              : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50'
+          }`}
+          title="Organizar blocos"
+          aria-label="Organizar blocos"
         >
-          ↺ Restaurar ordem padrão
+          <svg className="h-4.5 w-4.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.4" d="M16.862 4.487l1.651-1.651a2.121 2.121 0 113 3l-9.193 9.193a4 4 0 01-1.695 1.009l-3.16.948.948-3.16a4 4 0 011.009-1.695l8.44-8.44z" />
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.4" d="M19 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h6" />
+          </svg>
         </button>
+
+        {gerenciadorAberto && (
+          <div className={`absolute right-0 top-11 z-40 w-80 rounded-2xl border p-4 shadow-2xl ${
+            darkMode ? 'border-slate-700 bg-slate-900 text-slate-100' : 'border-slate-200 bg-white text-slate-900'
+          }`}>
+            <div className="mb-3 flex items-center justify-between gap-3">
+              <div>
+                <h3 className="text-sm font-black">Organizar blocos</h3>
+                <p className={`mt-0.5 text-xs font-semibold ${textMuted}`}>Exiba ou oculte cards do kanban.</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setGerenciadorAberto(false)}
+                className={`flex h-8 w-8 items-center justify-center rounded-lg text-lg font-black ${
+                  darkMode ? 'hover:bg-slate-800' : 'hover:bg-slate-100'
+                }`}
+                aria-label="Fechar"
+              >
+                ×
+              </button>
+            </div>
+            <div className="grid gap-2">
+              {catalogoCardsKanban.map((card) => {
+                const visivel = !ocultosSet.has(card.id);
+                const indisponivelAgora = card.id === 'aConfirmar' && !temAConfirmar;
+                return (
+                  <button
+                    key={card.id}
+                    type="button"
+                    onClick={() => alternarVisibilidadeCard(card.id)}
+                    className={`flex items-center gap-3 rounded-xl border p-3 text-left transition ${
+                      darkMode
+                        ? 'border-slate-700 bg-slate-800/70 hover:bg-slate-800'
+                        : 'border-slate-200 bg-slate-50 hover:bg-white'
+                    }`}
+                  >
+                    <span
+                      className={`flex h-5 w-9 shrink-0 items-center rounded-full p-0.5 transition ${
+                        visivel ? 'justify-end' : 'justify-start bg-slate-300'
+                      }`}
+                      style={{ backgroundColor: visivel ? corPrimaria : undefined }}
+                    >
+                      <span className="h-4 w-4 rounded-full bg-white shadow" />
+                    </span>
+                    <span className="min-w-0 flex-1">
+                      <span className={`block text-xs font-black ${textStrong}`}>{card.titulo}</span>
+                      <span className={`mt-0.5 block text-[11px] font-semibold leading-snug ${textMuted}`}>
+                        {indisponivelAgora ? 'Aparece quando houver despesas previstas para confirmar.' : card.descricao}
+                      </span>
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 items-start gap-6">
+          <ColunaKanban id="a" items={colsView.a}>
+            {colsView.a.map((id) => (
+              <SortableItem key={id} id={id}>{cardsById[id]}</SortableItem>
+            ))}
+          </ColunaKanban>
+          <ColunaKanban id="b" items={colsView.b}>
+            {colsView.b.map((id) => (
+              <SortableItem key={id} id={id}>{cardsById[id]}</SortableItem>
+            ))}
+          </ColunaKanban>
+          <button
+            type="button"
+            onClick={onRestaurarOrdemDashboard}
+            className="sm:col-span-2 mt-1 text-left text-xs font-bold text-slate-400 hover:text-slate-600 cursor-pointer"
+          >
+            ↺ Restaurar ordem padrão
+          </button>
+        </div>
       </div>
     </main>
     <DragOverlay dropAnimation={null}>
