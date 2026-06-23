@@ -18,7 +18,7 @@ import {
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { createPortal } from 'react-dom';
+import { createPortal, flushSync } from 'react-dom';
 import { buscarFaturamentos, buscarLancamentos } from '../lib/database';
 
 const HandleContext = createContext<Record<string, any> | null>(null);
@@ -390,8 +390,19 @@ const mostrarComparativoResumoDash =
       ? dashboardExpandidos.filter((cardId) => cardId !== id)
       : [...dashboardExpandidos, id];
 
-    onDefinirExpandidosDashboard(proximos);
-    setMenuCardAberto(null);
+    const aplicarMudanca = () => {
+      onDefinirExpandidosDashboard(proximos);
+      setMenuCardAberto(null);
+    };
+
+    if (typeof document !== 'undefined' && 'startViewTransition' in document) {
+      (document as Document & { startViewTransition: (callback: () => void) => void }).startViewTransition(() => {
+        flushSync(aplicarMudanca);
+      });
+      return;
+    }
+
+    aplicarMudanca();
   };
 
   const BotaoOpcoesCard = ({ id, tone = 'dark' }: { id: string; tone?: 'dark' | 'light' }) => (
@@ -974,7 +985,11 @@ const mostrarComparativoResumoDash =
         <div className="grid grid-cols-1 items-start gap-6 sm:grid-cols-2">
           <SortableContext items={itensVisiveis} strategy={verticalListSortingStrategy}>
             {itensVisiveis.map((id) => (
-              <div key={id} className={expandidosSet.has(id) ? 'sm:col-span-2' : ''}>
+              <div
+                key={id}
+                className={`transition-[transform,opacity] duration-300 ease-out ${expandidosSet.has(id) ? 'sm:col-span-2' : ''}`}
+                style={{ viewTransitionName: `dashboard-card-${id}` } as React.CSSProperties}
+              >
                 <SortableItem id={id}>{cardsById[id]}</SortableItem>
               </div>
             ))}
