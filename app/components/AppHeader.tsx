@@ -36,7 +36,6 @@ interface AppHeaderProps {
   anoSelecionado: string;
   setAnoSelecionado: React.Dispatch<React.SetStateAction<string>>;
   setMesAtivo: React.Dispatch<React.SetStateAction<string | null>>;
-  nomeEmpresaAtual: string;
   alertasSistema: Aviso[];
   calcAberta: boolean;
   setCalcAberta: React.Dispatch<React.SetStateAction<boolean>>;
@@ -58,7 +57,7 @@ export default function AppHeader({
   menuResponsivoAberto, setMenuResponsivoAberto,
   painelAvisosAberto, setPainelAvisosAberto,
   anoSelecionado, setAnoSelecionado, setMesAtivo,
-  nomeEmpresaAtual, alertasSistema,
+  alertasSistema,
   calcAberta, setCalcAberta,
   confirmarLogout, logoUrl, logoSettings,
   setModalEmpresasAberto,
@@ -425,21 +424,6 @@ export default function AppHeader({
               </div>
             </div>
 
-            {/* Faixa colorida inferior */}
-            <div
-              className="absolute bottom-0 left-0 right-0 h-5 text-xs font-semibold z-10"
-              style={{ backgroundColor: corPrimaria, color: textoSobreCorPrimaria }}
-            >
-              <div className="mx-auto flex h-full w-full max-w-[1280px] items-center px-8">
-                <div className="flex items-center gap-2 min-w-0">
-                  <svg className="h-3.5 w-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"
-                      d="M5.121 17.804A9 9 0 1118.88 17.8M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                  </svg>
-                  <span className="truncate font-black">Olá, {nomeEmpresaAtual || 'Empresa'}</span>
-                </div>
-              </div>
-            </div>
           </div>
         </div>
       </header>

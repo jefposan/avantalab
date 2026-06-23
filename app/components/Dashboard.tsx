@@ -77,6 +77,7 @@ interface DashboardProps {
   faturamentos: Record<string, number>;
   anoSelecionado: string;
   empresaId?: string | null;
+  nomePerfilAtual?: string;
   setMesAtivo: (mes: string) => void;
   bgCard: string;
   corPrimaria: string;
@@ -124,7 +125,7 @@ interface DashboardProps {
 }
 
 export default function Dashboard({
-  meses, lancamentos, faturamentos, anoSelecionado, empresaId, setMesAtivo, bgCard, corPrimaria, textStrong, textMuted, darkMode,
+  meses, lancamentos, faturamentos, anoSelecionado, empresaId, nomePerfilAtual, setMesAtivo, bgCard, corPrimaria, textStrong, textMuted, darkMode,
   mesResumoDash, setMesResumoDash, totalDespesasMes, maiorGasto, lucroOperacional,
   inputFaturamento, setInputFaturamento, placeholderFaturamento,
   solicitarFaturamentoDashboard,
@@ -167,6 +168,8 @@ export default function Dashboard({
   }
   const [activeId, setActiveId] = useState<string | null>(null);
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
+  const horaAtual = new Date().getHours();
+  const saudacaoPeriodo = horaAtual < 12 ? 'Bom dia!' : horaAtual < 18 ? 'Boa tarde!' : 'Boa noite!';
 
   useEffect(() => {
     let ativo = true;
@@ -786,6 +789,12 @@ const mostrarComparativoResumoDash =
     >
     <main className="grid w-full grid-cols-1 xl:grid-cols-3 items-start gap-6 animate-fade-in print:m-0 print:p-0">
 
+      <div className="relative pt-7">
+        <div className={`absolute left-1 top-0 flex h-5 max-w-full items-center gap-1.5 text-sm font-black leading-none ${textStrong}`}>
+          <span className="truncate">Olá, {nomePerfilAtual || 'Empresa'}.</span>
+          <span className={`shrink-0 ${textMuted}`}>{saudacaoPeriodo}</span>
+        </div>
+
       <section
         className={`${bgCard} w-full p-6 rounded-2xl shadow-lg border border-t-4 transition-colors`}
         style={{ borderTopColor: corPrimaria }}
@@ -872,6 +881,7 @@ const mostrarComparativoResumoDash =
           </div>
         </div>
       </section>
+      </div>
 
       <div className="xl:col-span-2 relative pt-7">
         <button

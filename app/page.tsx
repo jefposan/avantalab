@@ -6705,7 +6705,6 @@ name="novo-usuario-login"
         anoSelecionado={anoSelecionado}
         setAnoSelecionado={setAnoSelecionado}
         setMesAtivo={setMesAtivo}
-        nomeEmpresaAtual={nomeEmpresaAtual}
         alertasSistema={alertasSistema}
         calcAberta={calcAberta}
         setCalcAberta={setCalcAberta}
@@ -7504,6 +7503,7 @@ setAjustesAberto(false);
         faturamentos={faturamentos}
         anoSelecionado={anoSelecionado}
         empresaId={empresaId}
+        nomePerfilAtual={nomeEmpresaAtual}
         setMesAtivo={setMesAtivo}
         bgCard={bgCard}
         corPrimaria={corPrimaria}
