@@ -6706,7 +6706,7 @@ name="novo-usuario-login"
     />
 
     <div
-      className="print-ocultar fixed left-0 right-0 top-[116px] z-[1200] bg-slate-900 text-white p-4 shadow-xl border-t border-slate-700 transition-all"
+      className="print-ocultar fixed left-0 right-0 top-[92px] z-[1200] bg-slate-900 text-white p-4 shadow-xl border-t border-slate-700 transition-all xl:top-[108px]"
     style={{ borderTopColor: corPrimaria, borderTopWidth: '2px' }}
   >
     {/* Adicionado overflow-x-auto e removido flex-wrap para forçar 1 linha */}

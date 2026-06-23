@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.3.4 - 2026-06-23
+
+- Web: ajustada a posicao do menu de Ajustes para acompanhar a nova altura reduzida do header principal.
+
 ## 1.3.1 - 2026-06-22
 
 - Agenda web/mobile: exclusao sincronizada, confirmacao ao excluir no web e atualizacao em tempo real.
