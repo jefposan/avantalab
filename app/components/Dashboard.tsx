@@ -263,12 +263,12 @@ const mostrarComparativoResumoDash =
             </button>
           </div>
 
-          <div className="grid grid-cols-1 gap-4 pt-4 md:grid-cols-3">
+          <div className="grid grid-cols-1 gap-2 pt-4">
             <div className="min-w-0">
               <span className={`block text-xs font-black uppercase tracking-wide ${textMuted}`}>
                 Receitas
               </span>
-              <span className={`mt-1 block truncate text-lg font-semibold tabular-nums tracking-tight ${ocultarValores ? textMuted : 'text-emerald-500'}`}>
+              <span className={`mt-1 block text-base font-semibold tabular-nums tracking-tight ${ocultarValores ? textMuted : 'text-emerald-500'}`}>
                 {ocultarValores ? 'R$ •••••••' : formatarMoeda(receitasTotais)}
               </span>
             </div>
@@ -277,7 +277,7 @@ const mostrarComparativoResumoDash =
               <span className={`block text-xs font-black uppercase tracking-wide ${textMuted}`}>
                 Despesas
               </span>
-              <span className={`mt-1 block truncate text-lg font-semibold tabular-nums tracking-tight ${ocultarValores ? textMuted : 'text-red-500'}`}>
+              <span className={`mt-1 block text-base font-semibold tabular-nums tracking-tight ${ocultarValores ? textMuted : 'text-red-500'}`}>
                 {ocultarValores ? 'R$ •••••••' : formatarMoeda(despesasTotais)}
               </span>
             </div>
@@ -286,7 +286,7 @@ const mostrarComparativoResumoDash =
               <span className={`block text-xs font-black uppercase tracking-wide ${textStrong}`}>
                 Lucro
               </span>
-              <span className={`mt-1 block truncate text-lg font-bold tabular-nums tracking-tight ${ocultarValores ? textMuted : (lucroTotalAnual >= 0 ? textStrong : 'text-red-500')}`}>
+              <span className={`mt-1 block text-base font-bold tabular-nums tracking-tight ${ocultarValores ? textMuted : (lucroTotalAnual >= 0 ? textStrong : 'text-red-500')}`}>
                 {ocultarValores ? 'R$ •••••••' : formatarMoeda(lucroTotalAnual)}
               </span>
             </div>
@@ -316,15 +316,15 @@ const mostrarComparativoResumoDash =
           <div className="p-5 space-y-2.5">
             <div className={`flex justify-between items-center pb-2.5 border-b border-dotted ${darkMode ? 'border-slate-500/50' : 'border-slate-300'}`}>
               <span className={`font-semibold text-sm ${textMuted}`}>Inicial</span>
-              <span className={`font-semibold text-xl tabular-nums tracking-tight ${textStrong}`}>{formatarMoeda(saldoInicial)}</span>
+              <span className={`font-semibold text-base tabular-nums tracking-tight ${textStrong}`}>{formatarMoeda(saldoInicial)}</span>
             </div>
             <div className={`flex justify-between items-center pb-2.5 border-b border-dotted ${darkMode ? 'border-slate-500/50' : 'border-slate-300'}`}>
               <span className={`font-semibold text-sm ${textMuted}`}>Final</span>
-              <span className={`font-semibold text-xl tabular-nums tracking-tight ${saldoFinal >= 0 ? 'text-green-500' : 'text-red-500'}`}>{formatarMoeda(saldoFinal)}</span>
+              <span className={`font-semibold text-base tabular-nums tracking-tight ${saldoFinal >= 0 ? 'text-green-500' : 'text-red-500'}`}>{formatarMoeda(saldoFinal)}</span>
             </div>
             <div className="flex justify-between items-center">
               <span className={`font-semibold text-sm ${textMuted}`}>Previsto</span>
-              <span className={`font-semibold text-xl tabular-nums tracking-tight ${saldoPrevisto >= 0 ? 'text-cyan-500' : 'text-red-500'}`}>{formatarMoeda(saldoPrevisto)}</span>
+              <span className={`font-semibold text-base tabular-nums tracking-tight ${saldoPrevisto >= 0 ? 'text-cyan-500' : 'text-red-500'}`}>{formatarMoeda(saldoPrevisto)}</span>
             </div>
           </div>
       </div>
@@ -361,7 +361,7 @@ const mostrarComparativoResumoDash =
 }`}>
     <div className="flex justify-between items-center">
       <span className={`font-semibold text-sm ${textMuted}`}>Total Despesas</span>
-      <span className={`font-semibold text-xl tabular-nums tracking-tight ${textStrong}`}>
+      <span className={`font-semibold text-base tabular-nums tracking-tight ${textStrong}`}>
         {formatarMoeda(totalDespesasMes)}
       </span>
     </div>
@@ -419,13 +419,13 @@ const mostrarComparativoResumoDash =
                 <span className={`font-semibold text-sm ${textMuted}`}>Maior Gasto</span>
                 <span className="text-xs text-slate-400 mt-0.5">{maiorGasto.despesa || 'Nenhuma'}</span>
               </div>
-              <span className={`font-semibold text-xl tabular-nums tracking-tight ${maiorGasto.valor > 0 ? 'text-red-500' : textMuted}`}>
+              <span className={`font-semibold text-base tabular-nums tracking-tight ${maiorGasto.valor > 0 ? 'text-red-500' : textMuted}`}>
                 {maiorGasto.valor > 0 ? formatarMoeda(maiorGasto.valor) : '-'}
               </span>
             </div>
             <div className="flex justify-between items-center">
               <span className={`font-semibold text-sm ${textMuted}`}>Lucro Operacional</span>
-              <span className={`font-semibold text-xl tabular-nums tracking-tight ${lucroOperacional >= 0 ? 'text-green-500' : 'text-red-500'}`}>{formatarMoeda(lucroOperacional)}</span>
+              <span className={`font-semibold text-base tabular-nums tracking-tight ${lucroOperacional >= 0 ? 'text-green-500' : 'text-red-500'}`}>{formatarMoeda(lucroOperacional)}</span>
             </div>
           </div>
         </div>
