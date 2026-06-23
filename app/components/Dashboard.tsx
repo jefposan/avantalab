@@ -258,13 +258,27 @@ const mostrarComparativoResumoDash =
     return String(Math.round(valor));
   };
 
-  const limiteEscala = (valorMaximo: number) => {
-    const valor = Math.max(10, valorMaximo);
-    const limites = [
-      50, 100, 500, 1000, 5000, 10000, 50000, 100000, 500000,
-      1000000, 5000000, 10000000, 50000000, 100000000,
+  const escalaEvolucao = (valorMaximo: number) => {
+    const valor = Math.max(0, Number(valorMaximo || 0));
+    const passos = [
+      { limite: 100, passo: 10 },
+      { limite: 500, passo: 50 },
+      { limite: 1000, passo: 100 },
+      { limite: 5000, passo: 500 },
+      { limite: 10000, passo: 1000 },
+      { limite: 50000, passo: 5000 },
+      { limite: 100000, passo: 10000 },
+      { limite: 500000, passo: 50000 },
+      { limite: 1000000, passo: 100000 },
+      { limite: 5000000, passo: 500000 },
+      { limite: 10000000, passo: 1000000 },
+      { limite: 50000000, passo: 5000000 },
+      { limite: 100000000, passo: 10000000 },
     ];
-    return limites.find((limite) => valor <= limite) || Math.ceil(valor / 100000000) * 100000000;
+    const faixa = passos.find((item) => valor <= item.limite) || { passo: 100000000 };
+    const maximo = Math.max(faixa.passo, (Math.floor(valor / faixa.passo) + 1) * faixa.passo);
+
+    return { maximo, passo: faixa.passo };
   };
 
   const dadosEvolucao = meses.map((mes) => {
@@ -286,8 +300,12 @@ const mostrarComparativoResumoDash =
           : Math.max(item.receitas, item.despesas)
     )
   );
-  const escalaMaxEvolucao = limiteEscala(maiorValorEvolucao);
-  const marcasEscalaEvolucao = [1, 0.75, 0.5, 0.25, 0].map((p) => Math.round(escalaMaxEvolucao * p));
+  const escalaCalculadaEvolucao = escalaEvolucao(maiorValorEvolucao);
+  const escalaMaxEvolucao = escalaCalculadaEvolucao.maximo;
+  const marcasEscalaEvolucao = Array.from(
+    { length: Math.floor(escalaMaxEvolucao / escalaCalculadaEvolucao.passo) + 1 },
+    (_, index) => escalaMaxEvolucao - index * escalaCalculadaEvolucao.passo
+  );
 
   const alturaBarraEvolucao = (valor: number) =>
     `${Math.max(2, Math.min(100, (Number(valor || 0) / escalaMaxEvolucao) * 100))}%`;
@@ -579,7 +597,7 @@ const mostrarComparativoResumoDash =
         </div>
 
         <div data-evolucao-card className="relative px-5 pb-5 pt-1" onMouseLeave={() => setTooltipEvolucao(null)}>
-          <div className="mb-3 flex items-center gap-3 pl-12 text-[10px] font-black uppercase tracking-wide">
+          <div className="mb-3 flex items-center gap-3 pl-9 text-[10px] font-black uppercase tracking-wide">
             {evolucaoModo !== 'despesas' && (
               <span className="flex items-center gap-1.5 text-sky-600">
                 <span className="h-2 w-2 rounded-full bg-sky-500" /> Receitas
@@ -592,13 +610,13 @@ const mostrarComparativoResumoDash =
             )}
           </div>
 
-          <div className="grid h-[230px] grid-cols-[42px_minmax(0,1fr)] gap-3">
-            <div className="relative text-right text-[11px] font-black tabular-nums text-slate-400">
+          <div className="grid h-[238px] grid-cols-[28px_minmax(0,1fr)] gap-2">
+            <div className="relative text-right text-[10px] font-black tabular-nums text-slate-400">
               {marcasEscalaEvolucao.map((marca, index) => (
                 <span
                   key={`${marca}-${index}`}
                   className="absolute right-0 -translate-y-1/2"
-                  style={{ top: `${index * 25}%` }}
+                  style={{ top: `${((escalaMaxEvolucao - marca) / escalaMaxEvolucao) * 100}%` }}
                 >
                   {formatarValorCompacto(marca)}
                 </span>
@@ -606,10 +624,14 @@ const mostrarComparativoResumoDash =
             </div>
 
             <div className="relative">
-              {[0, 25, 50, 75, 100].map((top) => (
-                <span key={top} className="absolute left-0 right-0 h-px bg-slate-200/80" style={{ top: `${top}%` }} />
+              {marcasEscalaEvolucao.map((marca) => (
+                <span
+                  key={marca}
+                  className="absolute left-0 right-0 h-px bg-slate-200/80"
+                  style={{ top: `${((escalaMaxEvolucao - marca) / escalaMaxEvolucao) * 100}%` }}
+                />
               ))}
-              <div className="absolute inset-0 grid grid-cols-12 items-end gap-1.5 px-1">
+              <div className="absolute inset-0 grid grid-cols-12 items-end gap-1 px-0.5">
                 {dadosEvolucao.map((item) => {
                   const mesAbrev = abreviarMes(item.mes);
                   return (
