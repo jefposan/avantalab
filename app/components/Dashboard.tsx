@@ -537,7 +537,7 @@ const mostrarComparativoResumoDash =
 
     saldo: (
       <div className={`${bgCard} relative w-full rounded-2xl shadow-lg border-2 overflow-visible transition-colors`} style={{ borderColor: corPrimaria }}>
-        <div className="text-center text-sm font-bold uppercase tracking-wider flex justify-between px-6 py-3 items-center" style={{ backgroundColor: corPrimaria, color: textoSobreCorPrimaria }}>
+        <div className="text-center text-sm font-bold uppercase tracking-wider flex justify-between px-6 py-3 items-center rounded-t-[14px]" style={{ backgroundColor: corPrimaria, color: textoSobreCorPrimaria }}>
           <span>Saldo do mês</span>
           <div className="flex items-center gap-2">
             <select value={meses[saldoCardMesIdx]} onChange={e => setSaldoCardMesIdx(meses.indexOf(e.target.value))} className="text-xs rounded p-1 outline-none font-bold cursor-pointer border" style={{ color: textoSobreCorPrimaria, backgroundColor: corEhClara(corPrimaria) ? 'rgba(15, 23, 42, 0.08)' : 'rgba(0, 0, 0, 0.20)', borderColor: corEhClara(corPrimaria) ? 'rgba(15, 23, 42, 0.18)' : 'rgba(255, 255, 255, 0.12)' }}>
