@@ -12,7 +12,45 @@ export type LancamentoDespesa = {
   despesa: string;
   descricao?: string | null;
   valor: number;
+  status?: string | null;
 };
+
+const MESES_TAB = ['JANEIRO', 'FEVEREIRO', 'MARÇO', 'ABRIL', 'MAIO', 'JUNHO', 'JULHO', 'AGOSTO', 'SETEMBRO', 'OUTUBRO', 'NOVEMBRO', 'DEZEMBRO'];
+
+function dataFuturaTab(ano: number, mesIndice: number, dia: number): boolean {
+  const hoje = new Date();
+  const anoHoje = hoje.getFullYear();
+  if (ano > anoHoje) return true;
+  if (ano < anoHoje) return false;
+  const mesHoje = hoje.getMonth();
+  if (mesIndice > mesHoje) return true;
+  if (mesIndice < mesHoje) return false;
+  return Number(dia) > hoje.getDate();
+}
+
+function renderSeloPrevista(
+  lanc: LancamentoDespesa,
+  mesAtivo: string | null,
+  anoSelecionado: string
+) {
+  const mesIdx = MESES_TAB.indexOf(lanc.mes ?? mesAtivo ?? '');
+  if (mesIdx < 0) return null;
+  if (dataFuturaTab(Number(anoSelecionado), mesIdx, Number(lanc.dia))) {
+    return (
+      <div className="mb-1">
+        <span className="inline-block rounded-full bg-sky-100 px-2 py-0.5 text-[10px] font-black text-sky-700">Prevista</span>
+      </div>
+    );
+  }
+  if (lanc.status === 'prevista') {
+    return (
+      <div className="mb-1">
+        <span className="inline-block rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-black text-amber-700">A confirmar</span>
+      </div>
+    );
+  }
+  return null;
+}
 
 type TabelaLancamentosDespesaProps = {
   bgCard: string;
@@ -363,6 +401,7 @@ export default function TabelaLancamentosDespesa({
                         </td>
 
                         <td className="py-1.5 px-4 w-1/3 text-[11px] text-slate-500">
+                          {renderSeloPrevista(lanc, mesAtivo, anoSelecionado)}
                           {lanc.descricao || '-'}
                         </td>
 
