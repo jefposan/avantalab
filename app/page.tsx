@@ -7503,7 +7503,7 @@ setAjustesAberto(false);
         lancamentos={lancamentos}
         faturamentos={faturamentos}
         anoSelecionado={anoSelecionado}
-        setAnoSelecionado={setAnoSelecionado}
+        empresaId={empresaId}
         setMesAtivo={setMesAtivo}
         bgCard={bgCard}
         corPrimaria={corPrimaria}

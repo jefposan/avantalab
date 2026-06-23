@@ -1,4 +1,4 @@
-import React, { useState, useContext, createContext } from 'react';
+import React, { useState, useContext, createContext, useEffect } from 'react';
 import {
   DndContext,
   DragOverlay,
@@ -18,6 +18,7 @@ import {
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
+import { buscarFaturamentos, buscarLancamentos } from '../lib/database';
 
 const HandleContext = createContext<Record<string, any> | null>(null);
 
@@ -74,7 +75,7 @@ interface DashboardProps {
   lancamentos: any[];
   faturamentos: Record<string, number>;
   anoSelecionado: string;
-  setAnoSelecionado: React.Dispatch<React.SetStateAction<string>>;
+  empresaId?: string | null;
   setMesAtivo: (mes: string) => void;
   bgCard: string;
   corPrimaria: string;
@@ -122,7 +123,7 @@ interface DashboardProps {
 }
 
 export default function Dashboard({
-  meses, lancamentos, faturamentos, anoSelecionado, setAnoSelecionado, setMesAtivo, bgCard, corPrimaria, textStrong, textMuted, darkMode,
+  meses, lancamentos, faturamentos, anoSelecionado, empresaId, setMesAtivo, bgCard, corPrimaria, textStrong, textMuted, darkMode,
   mesResumoDash, setMesResumoDash, totalDespesasMes, maiorGasto, lucroOperacional,
   inputFaturamento, setInputFaturamento, placeholderFaturamento,
   solicitarFaturamentoDashboard,
@@ -145,6 +146,10 @@ export default function Dashboard({
   const [ocultarValores, setOcultarValores] = useState(true);
   const [menuCardAberto, setMenuCardAberto] = useState<string | null>(null);
   const [gerenciadorAberto, setGerenciadorAberto] = useState(false);
+  const [evolucaoAno, setEvolucaoAno] = useState(anoSelecionado);
+  const [evolucaoLancamentos, setEvolucaoLancamentos] = useState<any[]>(lancamentos);
+  const [evolucaoFaturamentos, setEvolucaoFaturamentos] = useState<Record<string, number>>(faturamentos);
+  const [evolucaoCarregando, setEvolucaoCarregando] = useState(false);
   const [evolucaoModo, setEvolucaoModo] = useState<'ambos' | 'receitas' | 'despesas'>('ambos');
   const [tooltipEvolucao, setTooltipEvolucao] = useState<{
     x: number;
@@ -161,6 +166,45 @@ export default function Dashboard({
   }
   const [activeId, setActiveId] = useState<string | null>(null);
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
+
+  useEffect(() => {
+    let ativo = true;
+
+    if (!empresaId || evolucaoAno === anoSelecionado) {
+      setEvolucaoLancamentos(lancamentos);
+      setEvolucaoFaturamentos(faturamentos);
+      setEvolucaoCarregando(false);
+      return () => {
+        ativo = false;
+      };
+    }
+
+    async function carregarEvolucaoAno() {
+      setEvolucaoCarregando(true);
+
+      const [lancamentosAno, faturamentosAno] = await Promise.all([
+        buscarLancamentos(empresaId as string, Number(evolucaoAno)),
+        buscarFaturamentos(empresaId as string, Number(evolucaoAno)),
+      ]);
+
+      if (!ativo) return;
+
+      const faturamentosMap: Record<string, number> = {};
+      (faturamentosAno || []).forEach((item: any) => {
+        faturamentosMap[item.mes] = Number(item.valor || 0);
+      });
+
+      setEvolucaoLancamentos(lancamentosAno || []);
+      setEvolucaoFaturamentos(faturamentosMap);
+      setEvolucaoCarregando(false);
+    }
+
+    carregarEvolucaoAno();
+
+    return () => {
+      ativo = false;
+    };
+  }, [empresaId, evolucaoAno, anoSelecionado, lancamentos, faturamentos]);
 
   // Função local para formatar o faturamento enquanto digita
   const handleInputFaturamento = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -282,8 +326,8 @@ const mostrarComparativoResumoDash =
   };
 
   const dadosEvolucao = meses.map((mes) => {
-    const receitas = Number(faturamentos[mes] || 0);
-    const despesas = lancamentos
+    const receitas = Number(evolucaoFaturamentos[mes] || 0);
+    const despesas = evolucaoLancamentos
       .filter((l) => l.mes === mes && l.status !== 'cancelada')
       .reduce((total, l) => total + Number(l.valor || 0), 0);
 
@@ -491,7 +535,7 @@ const mostrarComparativoResumoDash =
     ) : null,
 
     saldo: (
-      <div className={`${bgCard} w-full rounded-2xl shadow-lg border-2 overflow-hidden transition-colors`} style={{ borderColor: corPrimaria }}>
+      <div className={`${bgCard} relative w-full rounded-2xl shadow-lg border-2 overflow-visible transition-colors`} style={{ borderColor: corPrimaria }}>
         <div className="text-center text-sm font-bold uppercase tracking-wider flex justify-between px-6 py-3 items-center" style={{ backgroundColor: corPrimaria, color: textoSobreCorPrimaria }}>
           <span>Saldo do mês</span>
           <div className="flex items-center gap-2">
@@ -581,8 +625,8 @@ const mostrarComparativoResumoDash =
           </div>
           <div className="flex shrink-0 items-center gap-2">
             <select
-              value={anoSelecionado}
-              onChange={(e) => setAnoSelecionado(e.target.value)}
+              value={evolucaoAno}
+              onChange={(e) => setEvolucaoAno(e.target.value)}
               className={`h-8 rounded-lg border px-2 text-xs font-black outline-none ${
                 darkMode ? 'border-slate-700 bg-slate-800 text-slate-100' : 'border-slate-200 bg-slate-50 text-slate-700'
               }`}
@@ -596,8 +640,8 @@ const mostrarComparativoResumoDash =
           </div>
         </div>
 
-        <div data-evolucao-card className="relative px-5 pb-5 pt-1" onMouseLeave={() => setTooltipEvolucao(null)}>
-          <div className="mb-3 flex items-center gap-3 pl-9 text-[10px] font-black uppercase tracking-wide">
+        <div data-evolucao-card className="relative px-4 pb-5 pt-1" onMouseLeave={() => setTooltipEvolucao(null)}>
+          <div className="mb-3 flex items-center gap-3 pl-6 text-[10px] font-black uppercase tracking-wide">
             {evolucaoModo !== 'despesas' && (
               <span className="flex items-center gap-1.5 text-sky-600">
                 <span className="h-2 w-2 rounded-full bg-sky-500" /> Receitas
@@ -610,8 +654,8 @@ const mostrarComparativoResumoDash =
             )}
           </div>
 
-          <div className="grid h-[238px] grid-cols-[28px_minmax(0,1fr)] gap-2">
-            <div className="relative text-right text-[10px] font-black tabular-nums text-slate-400">
+          <div className="grid h-[238px] grid-cols-[18px_minmax(0,1fr)] gap-1.5">
+            <div className="relative text-right text-[9px] font-black tabular-nums text-slate-400">
               {marcasEscalaEvolucao.map((marca, index) => (
                 <span
                   key={`${marca}-${index}`}
@@ -631,7 +675,7 @@ const mostrarComparativoResumoDash =
                   style={{ top: `${((escalaMaxEvolucao - marca) / escalaMaxEvolucao) * 100}%` }}
                 />
               ))}
-              <div className="absolute inset-0 grid grid-cols-12 items-end gap-1 px-0.5">
+              <div className="absolute inset-0 grid grid-cols-12 items-end gap-1 px-0">
                 {dadosEvolucao.map((item) => {
                   const mesAbrev = abreviarMes(item.mes);
                   return (
@@ -675,16 +719,22 @@ const mostrarComparativoResumoDash =
             </div>
           </div>
 
+          {evolucaoCarregando && (
+            <div className="absolute inset-x-4 top-14 rounded-xl border border-slate-200 bg-white/85 px-3 py-2 text-center text-[11px] font-black text-slate-500 shadow-sm backdrop-blur">
+              Carregando {evolucaoAno}...
+            </div>
+          )}
+
           <div className="pointer-events-none absolute inset-0">
             {tooltipEvolucao && (
               <div
                 className="absolute z-30 w-44 rounded-xl bg-slate-900 px-3 py-2 text-white shadow-2xl"
                 style={{
                   left: Math.min(Math.max(tooltipEvolucao.x + 12, 8), 350),
-                  top: Math.max(tooltipEvolucao.y - 20, 8),
+                  top: Math.max(tooltipEvolucao.y - 34, -18),
                 }}
               >
-                <p className="mb-1 text-[10px] font-black uppercase tracking-wide text-white/60">{tooltipEvolucao.mes} {anoSelecionado}</p>
+                <p className="mb-1 text-[10px] font-black uppercase tracking-wide text-white/60">{tooltipEvolucao.mes} {evolucaoAno}</p>
                 {evolucaoModo !== 'despesas' && (
                   <div className="flex justify-between gap-3 text-[11px] font-bold">
                     <span>Receitas</span>
