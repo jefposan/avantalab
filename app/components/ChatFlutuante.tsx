@@ -455,7 +455,8 @@ export default function ChatFlutuante({
             onClick={() => { jaInteragiu.current = true; setBalaoVisivel(false); setChatFeedbackAberto(true); }}
             className="text-left text-xs font-semibold leading-snug cursor-pointer"
           >
-            Oi, sou a Ava 👋 No que posso ajudar?
+            <span className="block">Olá, sou Ava 👋</span>
+            <span className="block">No que posso ajudar?</span>
           </button>
           <button
             type="button"
