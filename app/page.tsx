@@ -317,6 +317,7 @@ const [agendaRepetir, setAgendaRepetir] = useState(false);
 const [agendaRepeticao, setAgendaRepeticao] = useState<'diaria'|'semanal'|'quinzenal'|'mensal'|'anual'>('mensal');
 const [agendaItemParaExcluir, setAgendaItemParaExcluir] = useState<AgendaItem | null>(null);
 const [notificacoesWeb, setNotificacoesWeb] = useState<{ id: string; titulo: string; corpo: string }[]>([]);
+const ajustesAutoFecharTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 const painelAvisosAbertoAnterior = useRef(false);
 const [menuResponsivoAberto, setMenuResponsivoAberto] = useState(false);
 const [subAcaoGerenciar, setSubAcaoGerenciar] = useState<null | 'editar' | 'criar'>(null);
@@ -999,17 +1000,30 @@ useEffect(() => {
 ]);
 
   
-// 5. Auto-fechar o Menu de Ajustes após tempo inativo
-  useEffect(() => {
-    // Se o menu estiver aberto, inicia o cronômetro
-    if (ajustesAberto) {
-      const tempo = setTimeout(() => {
-        setAjustesAberto(false);
-      }, 20000); // <-- 10000 milissegundos = 10 segundos. Altere este valor como preferir!
+const limparTimerAjustes = () => {
+  if (ajustesAutoFecharTimerRef.current) {
+    clearTimeout(ajustesAutoFecharTimerRef.current);
+    ajustesAutoFecharTimerRef.current = null;
+  }
+};
 
-      // Limpa o cronômetro se o utilizador fechar o menu manualmente antes do tempo
-      return () => clearTimeout(tempo);
+const reiniciarTimerAjustes = () => {
+  limparTimerAjustes();
+  ajustesAutoFecharTimerRef.current = setTimeout(() => {
+    setAjustesAberto(false);
+  }, 20000);
+};
+
+// 5. Auto-fechar o Menu de Ajustes após 20 segundos sem interação
+  useEffect(() => {
+    if (!ajustesAberto) {
+      limparTimerAjustes();
+      return;
     }
+
+    reiniciarTimerAjustes();
+
+    return limparTimerAjustes;
   }, [ajustesAberto]);
 
   useEffect(() => {
@@ -6708,6 +6722,10 @@ name="novo-usuario-login"
     <div
       className="print-ocultar fixed left-0 right-0 top-[92px] z-[1200] bg-slate-900 text-white p-4 shadow-xl border-t border-slate-700 transition-all xl:top-[108px]"
     style={{ borderTopColor: corPrimaria, borderTopWidth: '2px' }}
+    onMouseMove={reiniciarTimerAjustes}
+    onMouseDown={reiniciarTimerAjustes}
+    onKeyDown={reiniciarTimerAjustes}
+    onFocus={reiniciarTimerAjustes}
   >
     {/* Adicionado overflow-x-auto e removido flex-wrap para forçar 1 linha */}
     <div className="flex justify-between items-center max-w-7xl mx-auto gap-4 overflow-x-auto custom-scroll pb-1">

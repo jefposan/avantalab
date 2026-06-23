@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.3.5 - 2026-06-23
+
+- Web: corrigido o temporizador do menu de Ajustes para fechar apos 20 segundos sem interacao, reiniciando a contagem ao usar o painel.
+
 ## 1.3.4 - 2026-06-23
 
 - Web: ajustada a posicao do menu de Ajustes para acompanhar a nova altura reduzida do header principal.
