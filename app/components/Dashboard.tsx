@@ -982,13 +982,16 @@ const mostrarComparativoResumoDash =
           </div>
         )}
 
-        <div className="grid grid-cols-1 items-start gap-6 sm:grid-cols-2">
+        <div className="sm:columns-2 sm:gap-6">
           <SortableContext items={itensVisiveis} strategy={verticalListSortingStrategy}>
             {itensVisiveis.map((id) => (
               <div
                 key={id}
-                className={`transition-[transform,opacity] duration-300 ease-out ${expandidosSet.has(id) ? 'sm:col-span-2' : ''}`}
-                style={{ viewTransitionName: `dashboard-card-${id}` } as React.CSSProperties}
+                className="mb-6 break-inside-avoid transition-[transform,opacity] duration-300 ease-out"
+                style={{
+                  columnSpan: expandidosSet.has(id) ? 'all' : 'none',
+                  viewTransitionName: `dashboard-card-${id}`,
+                } as React.CSSProperties}
               >
                 <SortableItem id={id}>{cardsById[id]}</SortableItem>
               </div>
