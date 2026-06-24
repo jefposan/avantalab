@@ -4508,7 +4508,7 @@
       var temLembreteDia = itensAgendaDoDia(state.ano, state.mes, dia).length > 0;
       var temDespesaFuturaDia = despesasFuturasDoDia(state.ano, state.mes, dia).length > 0;
       var indicadoresDia = (temLembreteDia || temDespesaFuturaDia)
-        ? '<span class="absolute right-1.5 top-8 flex flex-col items-center gap-0.5">' +
+        ? '<span class="absolute right-1.5 top-6 flex flex-col items-center gap-0.5">' +
             (temLembreteDia ? '<span class="h-1.5 w-1.5 rounded-full bg-cyan-500 shadow-sm"></span>' : '') +
             (temDespesaFuturaDia ? '<span class="h-1.5 w-1.5 rounded-full bg-rose-500 shadow-sm"></span>' : '') +
           '</span>'
@@ -4539,7 +4539,7 @@
 
     if (diaSelecionado) {
       painelDia =
-        '<div class="-mt-2 flex min-h-0 flex-1 flex-col rounded-[24px] border-2 border-cyan-200 bg-cyan-50/85 p-4 shadow-xl shadow-cyan-950/10">' +
+        '<div class="-mt-8 flex min-h-0 flex-1 flex-col rounded-[24px] border-2 border-cyan-200 bg-cyan-50/85 p-4 shadow-xl shadow-cyan-950/10">' +
           '<div class="sticky top-0 z-10 -mx-1 flex shrink-0 items-center justify-between gap-3 border-b border-cyan-200/70 bg-cyan-50/95 px-1 pb-2 backdrop-blur">' +
             '<h3 class="min-w-0 flex-1 truncate text-sm font-black text-slate-950">Dia selecionado: ' + String(diaSelecionado).padStart(2, '0') + ' de ' + escapeHtml(nomeMesCompleto(state.mes)) + '</h3>' +
             '<button id="fechar-agenda-dia" type="button" class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-slate-200 bg-white text-xl font-black text-slate-600" aria-label="Fechar dia">&times;</button>' +
