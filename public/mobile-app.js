@@ -637,6 +637,13 @@
     });
   }
 
+  function despesasFuturasDoDia(ano, mes, dia) {
+    var mesIndice = indiceMes(mes);
+    return (state.lancamentos || []).filter(function (item) {
+      return item && item.mes === mes && Number(item.dia) === Number(dia) && dataFutura(Number(ano), mesIndice, dia);
+    });
+  }
+
   function agendaTemAvisoHoje() {
     var hoje = new Date();
     return itensAgendaDoDia(String(hoje.getFullYear()), meses[hoje.getMonth()], hoje.getDate()).length > 0;
@@ -4414,6 +4421,21 @@
     );
   }
 
+  function agendaDespesaHtml(item) {
+    return (
+      '<div class="rounded-2xl border border-rose-100 bg-white p-3 shadow-sm">' +
+        '<div class="flex items-start justify-between gap-3">' +
+          '<div class="min-w-0">' +
+            '<p class="truncate text-sm font-black text-slate-900">' + escapeHtml(item.despesa || 'Despesa') + '</p>' +
+            '<p class="mt-0.5 text-[10px] font-black uppercase tracking-wide text-rose-600">Despesa futura</p>' +
+          '</div>' +
+          '<strong class="shrink-0 text-sm font-black tabular-nums text-rose-600">' + Number(item.valor || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) + '</strong>' +
+        '</div>' +
+        (item.descricao ? '<p class="mt-2 text-xs font-semibold leading-relaxed text-slate-500">' + escapeHtml(item.descricao) + '</p>' : '') +
+      '</div>'
+    );
+  }
+
   function formularioAgendaHtml() {
     var opcoesRepeticao = [
       ['diaria', 'Diaria'],
@@ -4483,11 +4505,20 @@
       var tamanhoNumero = hojeClasse && diaSelecionado ? 'text-xs' : 'text-xl';
       var dataDia = new Date(ano, mesIndice, dia);
       var rotuloSemana = dataDia.toLocaleDateString('pt-BR', { weekday: 'short' }).replace('.', '');
+      var temLembreteDia = itensAgendaDoDia(state.ano, state.mes, dia).length > 0;
+      var temDespesaFuturaDia = despesasFuturasDoDia(state.ano, state.mes, dia).length > 0;
+      var indicadoresDia = (temLembreteDia || temDespesaFuturaDia)
+        ? '<span class="absolute bottom-1 left-1.5 flex items-center gap-1">' +
+            (temLembreteDia ? '<span class="h-1.5 w-1.5 rounded-full bg-cyan-500 shadow-sm"></span>' : '') +
+            (temDespesaFuturaDia ? '<span class="h-1.5 w-1.5 rounded-full bg-rose-500 shadow-sm"></span>' : '') +
+          '</span>'
+        : '';
 
       celulas.push(
         '<button type="button" data-agenda-dia="' + dia + '" class="relative min-h-0 overflow-hidden rounded-2xl border p-1.5 text-left transition active:scale-[0.98] ' + estilo + '">' +
           '<span class="block text-[10px] font-black uppercase tracking-wide ' + (selecionado ? 'text-cyan-700' : 'text-slate-400') + '">' + escapeHtml(rotuloSemana) + '</span>' +
           '<span class="mt-1 block ' + tamanhoNumero + ' font-black leading-none ' + textoNumero + '">' + String(dia).padStart(2, '0') + '</span>' +
+          indicadoresDia +
           (hojeClasse ? '<span class="absolute bottom-1 right-1 rounded-full bg-slate-950 px-1 py-0.5 text-[7px] font-black uppercase leading-none text-white">Hoje</span>' : '') +
         '</button>'
       );
@@ -4498,6 +4529,7 @@
     }
 
     var itensDia = diaSelecionado ? itensAgendaDoDia(state.ano, state.mes, diaSelecionado) : [];
+    var despesasDia = diaSelecionado ? despesasFuturasDoDia(state.ano, state.mes, diaSelecionado) : [];
     var painelDia = '';
     var formularioAgenda = state.agendaFormAberto ? formularioAgendaHtml() : '';
     var classeGrade = diaSelecionado
@@ -4519,7 +4551,9 @@
             '</div>' +
           '</div>' +
           '<div class="mt-3 grid gap-2">' +
-            (itensDia.length ? itensDia.map(agendaItemHtml).join('') : '<div class="rounded-2xl border border-dashed border-cyan-300 bg-white/70 px-4 py-4 text-center"><p class="text-sm font-black text-slate-700">Nenhum item neste dia.</p></div>') +
+            ((itensDia.length || despesasDia.length)
+              ? itensDia.map(agendaItemHtml).join('') + despesasDia.map(agendaDespesaHtml).join('')
+              : '<div class="rounded-2xl border border-dashed border-cyan-300 bg-white/70 px-4 py-4 text-center"><p class="text-sm font-black text-slate-700">Nenhum item neste dia.</p></div>') +
           '</div>' +
         '</div>';
     }
