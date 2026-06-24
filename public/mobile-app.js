@@ -1,4 +1,3 @@
-error: improper chunk offset(s) 26990 and 35eb8
 (function () {
   var root = document.getElementById('mobile-root');
   var config = window.AVANTALAB_MOBILE_CONFIG || {};
