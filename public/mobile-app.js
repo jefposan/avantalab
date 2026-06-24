@@ -4508,7 +4508,7 @@
       var temLembreteDia = itensAgendaDoDia(state.ano, state.mes, dia).length > 0;
       var temDespesaFuturaDia = despesasFuturasDoDia(state.ano, state.mes, dia).length > 0;
       var indicadoresDia = (temLembreteDia || temDespesaFuturaDia)
-        ? '<span class="absolute bottom-1 left-1.5 flex items-center gap-1">' +
+        ? '<span class="absolute right-1.5 top-8 flex flex-col items-center gap-0.5">' +
             (temLembreteDia ? '<span class="h-1.5 w-1.5 rounded-full bg-cyan-500 shadow-sm"></span>' : '') +
             (temDespesaFuturaDia ? '<span class="h-1.5 w-1.5 rounded-full bg-rose-500 shadow-sm"></span>' : '') +
           '</span>'
@@ -4517,7 +4517,7 @@
       celulas.push(
         '<button type="button" data-agenda-dia="' + dia + '" class="relative min-h-0 overflow-hidden rounded-2xl border p-1.5 text-left transition active:scale-[0.98] ' + estilo + '">' +
           '<span class="block text-[10px] font-black uppercase tracking-wide ' + (selecionado ? 'text-cyan-700' : 'text-slate-400') + '">' + escapeHtml(rotuloSemana) + '</span>' +
-          '<span class="mt-1 block ' + tamanhoNumero + ' font-black leading-none ' + textoNumero + '">' + String(dia).padStart(2, '0') + '</span>' +
+          '<span class="mt-1 block pr-3 ' + tamanhoNumero + ' font-black leading-none ' + textoNumero + '">' + String(dia).padStart(2, '0') + '</span>' +
           indicadoresDia +
           (hojeClasse ? '<span class="absolute bottom-1 right-1 rounded-full bg-slate-950 px-1 py-0.5 text-[7px] font-black uppercase leading-none text-white">Hoje</span>' : '') +
         '</button>'
@@ -4541,20 +4541,26 @@
       painelDia =
         '<div class="mt-3 shrink-0 rounded-[24px] border-2 border-cyan-200 bg-cyan-50/85 p-4 shadow-xl shadow-cyan-950/10" style="max-height:calc(42% - 12px);overflow-y:auto;">' +
           '<div class="flex items-center justify-between gap-3">' +
-            '<div>' +
-              '<p class="text-[10px] font-black uppercase tracking-[0.18em] text-slate-400">Dia selecionado</p>' +
-              '<h3 class="mt-1 text-lg font-black text-slate-950">' + String(diaSelecionado).padStart(2, '0') + ' de ' + escapeHtml(nomeMesCompleto(state.mes)) + '</h3>' +
+            '<h3 class="min-w-0 flex-1 truncate text-sm font-black text-slate-950">Dia selecionado: ' + String(diaSelecionado).padStart(2, '0') + ' de ' + escapeHtml(nomeMesCompleto(state.mes)) + '</h3>' +
+            '<button id="fechar-agenda-dia" type="button" class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-slate-200 bg-white text-xl font-black text-slate-600" aria-label="Fechar dia">&times;</button>' +
+          '</div>' +
+          '<div class="mt-3 rounded-2xl border border-cyan-200 bg-white/85 p-3 shadow-sm">' +
+            '<div class="mb-2 flex items-center justify-between gap-2">' +
+              '<h4 class="text-xs font-black uppercase tracking-wide text-cyan-800">Lembretes:</h4>' +
+              '<button id="abrir-agenda-item" type="button" class="h-8 rounded-xl bg-cyan-600 px-3 text-[10px] font-black uppercase text-white">Adicionar</button>' +
             '</div>' +
-            '<div class="flex shrink-0 items-center gap-2">' +
-              '<button id="abrir-agenda-item" type="button" class="h-10 rounded-xl bg-cyan-600 px-3 text-xs font-black uppercase text-white">Adicionar</button>' +
-              '<button id="fechar-agenda-dia" type="button" class="flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 bg-white text-xl font-black text-slate-600" aria-label="Fechar dia">&times;</button>' +
+            '<div class="grid gap-2">' +
+              (itensDia.length
+                ? itensDia.map(agendaItemHtml).join('')
+                : '<div class="rounded-2xl border border-dashed border-cyan-200 bg-cyan-50/70 px-3 py-3 text-center"><p class="text-xs font-black text-slate-500">Nenhum lembrete neste dia.</p></div>') +
             '</div>' +
           '</div>' +
-          '<div class="mt-3 grid gap-2">' +
-            ((itensDia.length || despesasDia.length)
-              ? itensDia.map(agendaItemHtml).join('') + despesasDia.map(agendaDespesaHtml).join('')
-              : '<div class="rounded-2xl border border-dashed border-cyan-300 bg-white/70 px-4 py-4 text-center"><p class="text-sm font-black text-slate-700">Nenhum item neste dia.</p></div>') +
-          '</div>' +
+          (despesasDia.length
+            ? '<div class="mt-4">' +
+                '<h4 class="mb-2 text-xs font-black uppercase tracking-wide text-rose-700">Despesas para o dia:</h4>' +
+                '<div class="grid gap-2">' + despesasDia.map(agendaDespesaHtml).join('') + '</div>' +
+              '</div>'
+            : '') +
         '</div>';
     }
 
