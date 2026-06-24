@@ -1,5 +1,6 @@
 'use client';
 import React, { useState, useEffect } from 'react';
+import * as XLSX from 'xlsx';
 
 export type FuncionarioPonto = {
   id: string;
@@ -176,6 +177,62 @@ export default function PontoAdminModal({
   const pontuais = diasRel.filter((d) => d.statusEntrada === 'pontual').length;
   const atrasos = diasRel.filter((d) => d.statusEntrada === 'atraso').length;
   const pctPontual = totalComHorario ? Math.round((pontuais / totalComHorario) * 100) : 0;
+
+  const rotuloStatus = (s: DiaRel['statusEntrada']) => s === 'pontual' ? 'Pontual' : s === 'atraso' ? 'Atraso' : s === 'adiantado' ? 'Adiantado' : '-';
+  const rotuloPeriodo = relPeriodo === 'semana' ? 'Última semana' : relPeriodo === 'mes' ? 'Último mês' : 'Último ano';
+  const slugNome = (t: string) => (t || 'funcionario').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+  const dataBr = (dia: string) => `${dia.slice(8, 10)}/${dia.slice(5, 7)}/${dia.slice(0, 4)}`;
+  const resumoPontualidade = funcSel?.hora_entrada ? `${pctPontual}% (${pontuais} pontuais, ${atrasos} atrasos de ${totalComHorario} dias)` : 'Não avaliada';
+  const horarioPrevisto = funcSel?.hora_entrada ? `${funcSel.hora_entrada.slice(0, 5)} às ${funcSel.hora_saida ? funcSel.hora_saida.slice(0, 5) : '-'}` : 'Não definido';
+
+  const gerarRelatorioXlsx = () => {
+    if (!funcSel) return;
+    const cabecalho = [
+      ['Relatório de Ponto'],
+      ['Funcionário', funcSel.nome],
+      ['Cargo', funcSel.cargo || '-'],
+      ['Período', rotuloPeriodo],
+      ['Horário previsto', horarioPrevisto],
+      ['Pontualidade na entrada', resumoPontualidade],
+      [],
+      ['Data', 'Entrada', 'Saída', 'Distância (m)', 'Status'],
+    ];
+    const linhas = diasRel.map((d) => [dataBr(d.dia), d.entrada || '--:--', d.saida || '--:--', d.distancia != null ? Math.round(d.distancia) : '', rotuloStatus(d.statusEntrada)]);
+    const ws = XLSX.utils.aoa_to_sheet([...cabecalho, ...linhas]);
+    ws['!cols'] = [{ wch: 16 }, { wch: 10 }, { wch: 10 }, { wch: 14 }, { wch: 12 }];
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Ponto');
+    XLSX.writeFile(wb, `ponto_${slugNome(funcSel.nome)}_${relPeriodo}.xlsx`);
+  };
+
+  const gerarRelatorioPdf = () => {
+    if (!funcSel) return;
+    const esc = (t: string) => String(t).replace(/[&<>]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' } as Record<string, string>)[c]);
+    const corStatus = (s: DiaRel['statusEntrada']) => s === 'pontual' ? '#047857' : s === 'atraso' ? '#b91c1c' : s === 'adiantado' ? '#b45309' : '#64748b';
+    const linhas = diasRel.map((d) => `<tr><td>${dataBr(d.dia)}</td><td>${d.entrada || '--:--'}</td><td>${d.saida || '--:--'}</td><td>${d.distancia != null ? Math.round(d.distancia) + ' m' : '-'}</td><td style="color:${corStatus(d.statusEntrada)};font-weight:700">${rotuloStatus(d.statusEntrada)}</td></tr>`).join('');
+    const html = `<!doctype html><html lang="pt-br"><head><meta charset="utf-8"><title>Ponto - ${esc(funcSel.nome)}</title><style>
+      *{font-family:Arial,Helvetica,sans-serif;box-sizing:border-box}body{margin:24px;color:#0f172a}
+      h1{font-size:18px;margin:0 0 2px}.sub{color:#64748b;font-size:12px;margin:0 0 14px}
+      .meta{font-size:12px;margin:2px 0}.meta b{display:inline-block;min-width:150px}
+      table{width:100%;border-collapse:collapse;margin-top:14px;font-size:12px}
+      th,td{border:1px solid #e2e8f0;padding:7px 9px;text-align:left}th{background:#f1f5f9;text-transform:uppercase;font-size:10px;letter-spacing:.04em}
+      .rod{margin-top:18px;color:#94a3b8;font-size:10px}
+    </style></head><body>
+      <h1>Relatório de Ponto</h1><p class="sub">${esc(rotuloPeriodo)}</p>
+      <p class="meta"><b>Funcionário:</b> ${esc(funcSel.nome)}</p>
+      <p class="meta"><b>Cargo:</b> ${esc(funcSel.cargo || '-')}</p>
+      <p class="meta"><b>Horário previsto:</b> ${esc(horarioPrevisto)}</p>
+      <p class="meta"><b>Pontualidade na entrada:</b> ${esc(resumoPontualidade)}</p>
+      <table><thead><tr><th>Data</th><th>Entrada</th><th>Saída</th><th>Distância</th><th>Status</th></tr></thead><tbody>${linhas}</tbody></table>
+      <p class="rod">Gerado pelo AvantaLab em ${new Date().toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' })}. Tolerância de pontualidade: ${TOLERANCIA_MIN} min.</p>
+      <script>window.onload=function(){window.print();}</script>
+    </body></html>`;
+    const w = window.open('', '_blank');
+    if (!w) return;
+    w.document.open();
+    w.document.write(html);
+    w.document.close();
+  };
 
   const capturarLocal = () => {
     setMsgLocal(null);
@@ -373,6 +430,17 @@ export default function PontoAdminModal({
                   ) : (
                     <p className={`rounded-xl border p-3 text-[11px] ${itemBorda} ${textMuted}`}>Sem horário previsto cadastrado — a pontualidade não pode ser avaliada. Edite na lista de funcionários.</p>
                   )}
+
+                  <div className="flex gap-2">
+                    <button type="button" onClick={gerarRelatorioXlsx} className="flex flex-1 items-center justify-center gap-1.5 rounded-lg bg-emerald-600 py-2 text-xs font-black uppercase tracking-wide text-white transition hover:bg-emerald-500">
+                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                      Excel
+                    </button>
+                    <button type="button" onClick={gerarRelatorioPdf} className="flex flex-1 items-center justify-center gap-1.5 rounded-lg bg-rose-600 py-2 text-xs font-black uppercase tracking-wide text-white transition hover:bg-rose-500">
+                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" /></svg>
+                      PDF
+                    </button>
+                  </div>
 
                   <div className="grid gap-1.5">
                     {diasRel.map((d) => (
