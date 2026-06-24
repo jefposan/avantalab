@@ -4535,11 +4535,11 @@
     var classeGrade = diaSelecionado
       ? 'grid min-h-0 shrink-0 grid-cols-7 grid-rows-[auto_repeat(6,minmax(0,1fr))] gap-1.5'
       : 'grid min-h-0 flex-1 grid-cols-7 grid-rows-[auto_repeat(6,minmax(0,1fr))] gap-1.5';
-    var estiloGrade = diaSelecionado ? 'style="height:54%;"' : '';
+    var estiloGrade = diaSelecionado ? 'style="height:50%;"' : '';
 
     if (diaSelecionado) {
       painelDia =
-        '<div class="mt-3 flex min-h-0 flex-1 flex-col rounded-[24px] border-2 border-cyan-200 bg-cyan-50/85 p-4 shadow-xl shadow-cyan-950/10">' +
+        '<div class="mt-1 flex min-h-0 flex-1 flex-col rounded-[24px] border-2 border-cyan-200 bg-cyan-50/85 p-4 shadow-xl shadow-cyan-950/10">' +
           '<div class="sticky top-0 z-10 -mx-1 flex shrink-0 items-center justify-between gap-3 border-b border-cyan-200/70 bg-cyan-50/95 px-1 pb-2 backdrop-blur">' +
             '<h3 class="min-w-0 flex-1 truncate text-sm font-black text-slate-950">Dia selecionado: ' + String(diaSelecionado).padStart(2, '0') + ' de ' + escapeHtml(nomeMesCompleto(state.mes)) + '</h3>' +
             '<button id="fechar-agenda-dia" type="button" class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-slate-200 bg-white text-xl font-black text-slate-600" aria-label="Fechar dia">&times;</button>' +
