@@ -1537,10 +1537,11 @@ useEffect(() => {
     }
   }
 
-  async function atualizarFuncionarioPonto(id: string, dados: { cargo: string; horaEntrada?: string; horaSaida?: string; ativo: boolean; diasTrabalho?: number[] }) {
+  async function atualizarFuncionarioPonto(id: string, dados: { nome?: string; cargo: string; horaEntrada?: string; horaSaida?: string; ativo: boolean; diasTrabalho?: number[] }) {
     if (!empresaId) return { erro: true, mensagem: 'Perfil não identificado.' };
     try {
       const atualizacao: Record<string, unknown> = { cargo: dados.cargo, hora_entrada: dados.horaEntrada || null, hora_saida: dados.horaSaida || null, ativo: dados.ativo };
+      if (dados.nome) atualizacao.nome = dados.nome;
       if (dados.diasTrabalho) atualizacao.dias_trabalho = dados.diasTrabalho;
       const { error } = await supabase
         .from('ponto_funcionarios')
