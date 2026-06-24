@@ -1,5 +1,5 @@
 'use client';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import * as XLSX from 'xlsx';
 
 export type FuncionarioPonto = {
@@ -37,7 +37,7 @@ interface PontoAdminModalProps {
   funcionarios: FuncionarioPonto[];
   carregando: boolean;
   onCriar: (dados: { nome: string; login: string; senha: string; cargo: string; horaEntrada?: string; horaSaida?: string; diasTrabalho?: number[] }) => Promise<{ erro: boolean; mensagem?: string }>;
-  onAtualizar: (id: string, dados: { cargo: string; horaEntrada?: string; horaSaida?: string; ativo: boolean; diasTrabalho?: number[] }) => Promise<{ erro: boolean; mensagem?: string }>;
+  onAtualizar: (id: string, dados: { nome?: string; cargo: string; horaEntrada?: string; horaSaida?: string; ativo: boolean; diasTrabalho?: number[] }) => Promise<{ erro: boolean; mensagem?: string }>;
   config: PontoConfig;
   onSalvarConfig: (dados: { latitude: number; longitude: number; raio_m: number }) => Promise<{ erro: boolean; mensagem?: string }>;
   onCarregarRegistros: (funcionarioUserId: string, dataInicioISO: string) => Promise<RegistroPonto[]>;
@@ -77,6 +77,7 @@ export default function PontoAdminModal({
   const [msgLocal, setMsgLocal] = useState<{ tipo: 'ok' | 'erro'; texto: string } | null>(null);
 
   const [editId, setEditId] = useState<string | null>(null);
+  const [editNome, setEditNome] = useState('');
   const [editCargo, setEditCargo] = useState('');
   const [editEntrada, setEditEntrada] = useState('');
   const [editSaida, setEditSaida] = useState('');
@@ -86,11 +87,32 @@ export default function PontoAdminModal({
   const [msgEdit, setMsgEdit] = useState<string | null>(null);
 
   const [relFuncId, setRelFuncId] = useState('');
-  const [relPeriodo, setRelPeriodo] = useState<'semana' | 'mes' | 'ano'>('mes');
+  const [relAno, setRelAno] = useState<number>(new Date().getFullYear());
+  const [relMesIdx, setRelMesIdx] = useState<number>(new Date().getMonth());
+  const [relDataInicio, setRelDataInicio] = useState<string>(() => {
+    const n = new Date();
+    return `${n.getFullYear()}-${String(n.getMonth() + 1).padStart(2, '0')}-01`;
+  });
+  const [relDataFim, setRelDataFim] = useState<string>(() => {
+    const n = new Date();
+    return new Date(n.getFullYear(), n.getMonth() + 1, 0).toISOString().slice(0, 10);
+  });
   const [relRegistros, setRelRegistros] = useState<RegistroPonto[]>([]);
   const [relCarregando, setRelCarregando] = useState(false);
 
+  const [dragPos, setDragPos] = useState({ x: 0, y: 0 });
+  const isDragging = useRef(false);
+  const dragStart = useRef({ mouseX: 0, mouseY: 0, posX: 0, posY: 0 });
+
   const TOLERANCIA_MIN = 10;
+  const MESES_REL = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+
+  const aplicarMes = (ano: number, mesIdx: number) => {
+    const mm = String(mesIdx + 1).padStart(2, '0');
+    const ultimoDia = new Date(ano, mesIdx + 1, 0).getDate();
+    setRelDataInicio(`${ano}-${mm}-01`);
+    setRelDataFim(`${ano}-${mm}-${String(ultimoDia).padStart(2, '0')}`);
+  };
 
   useEffect(() => {
     if (config) {
@@ -99,6 +121,25 @@ export default function PontoAdminModal({
       setRaio(String(config.raio_m || 100));
     }
   }, [config]);
+
+  useEffect(() => {
+    const onMouseMove = (e: MouseEvent) => {
+      if (!isDragging.current) return;
+      setDragPos({
+        x: dragStart.current.posX + e.clientX - dragStart.current.mouseX,
+        y: dragStart.current.posY + e.clientY - dragStart.current.mouseY,
+      });
+    };
+    const onMouseUp = () => { isDragging.current = false; };
+    document.addEventListener('mousemove', onMouseMove);
+    document.addEventListener('mouseup', onMouseUp);
+    return () => {
+      document.removeEventListener('mousemove', onMouseMove);
+      document.removeEventListener('mouseup', onMouseUp);
+    };
+  }, []);
+
+  useEffect(() => { if (aberto) setDragPos({ x: 0, y: 0 }); }, [aberto]);
 
   if (!aberto) return null;
 
@@ -154,6 +195,7 @@ export default function PontoAdminModal({
 
   const abrirEdicao = (f: FuncionarioPonto) => {
     setEditId(f.id);
+    setEditNome(f.nome || '');
     setEditCargo(f.cargo || '');
     setEditEntrada(f.hora_entrada ? f.hora_entrada.slice(0, 5) : '');
     setEditSaida(f.hora_saida ? f.hora_saida.slice(0, 5) : '');
@@ -165,7 +207,7 @@ export default function PontoAdminModal({
   const salvarEdicao = async (id: string) => {
     setMsgEdit(null);
     setSalvandoEdit(true);
-    const r = await onAtualizar(id, { cargo: editCargo.trim(), horaEntrada: editEntrada || undefined, horaSaida: editSaida || undefined, ativo: editAtivo, diasTrabalho: editDias });
+    const r = await onAtualizar(id, { nome: editNome.trim(), cargo: editCargo.trim(), horaEntrada: editEntrada || undefined, horaSaida: editSaida || undefined, ativo: editAtivo, diasTrabalho: editDias });
     setSalvandoEdit(false);
     if (r.erro) setMsgEdit(r.mensagem || 'Não foi possível salvar.');
     else setEditId(null);
@@ -174,17 +216,11 @@ export default function PontoAdminModal({
   const horaBrasilia = (ts: string) => new Date(ts).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', timeZone: 'America/Sao_Paulo', hour12: false });
   const minutosDoDia = (hhmm: string) => { const [h, m] = hhmm.slice(0, 5).split(':').map(Number); return h * 60 + m; };
 
-  const carregarRelatorio = async (funcId: string, periodo: 'semana' | 'mes' | 'ano') => {
+  const carregarRelatorio = async (funcId: string) => {
     if (!funcId) { setRelRegistros([]); return; }
     setRelCarregando(true);
-    const hoje = new Date();
-    const inicio = new Date(hoje);
-    if (periodo === 'semana') inicio.setDate(hoje.getDate() - 7);
-    else if (periodo === 'mes') inicio.setMonth(hoje.getMonth() - 1);
-    else inicio.setFullYear(hoje.getFullYear() - 1);
-    const iso = inicio.toISOString().slice(0, 10);
-    const regs = await onCarregarRegistros(funcId, iso);
-    setRelRegistros(regs);
+    const regs = await onCarregarRegistros(funcId, relDataInicio);
+    setRelRegistros(regs.filter((r) => r.dia >= relDataInicio && r.dia <= relDataFim));
     setRelCarregando(false);
   };
 
@@ -219,10 +255,7 @@ export default function PontoAdminModal({
     if (!relFuncId || diasTrabSet.size === 0 || relRegistros.length === 0) return 0;
     const isoLocal = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
     const hoje = new Date(); hoje.setHours(0, 0, 0, 0);
-    const inicio = new Date(); inicio.setHours(0, 0, 0, 0);
-    if (relPeriodo === 'semana') inicio.setDate(inicio.getDate() - 7);
-    else if (relPeriodo === 'mes') inicio.setMonth(inicio.getMonth() - 1);
-    else inicio.setFullYear(inicio.getFullYear() - 1);
+    const inicio = new Date(relDataInicio + 'T00:00:00');
     const primeiroDia = relRegistros.reduce((min, r) => (r.dia < min ? r.dia : min), relRegistros[0].dia);
     let count = 0;
     for (const d = new Date(inicio); d < hoje; d.setDate(d.getDate() + 1)) {
@@ -234,7 +267,7 @@ export default function PontoAdminModal({
   })();
 
   const rotuloStatus = (s: DiaRel['statusEntrada']) => s === 'pontual' ? 'Pontual' : s === 'atraso' ? 'Atraso' : s === 'adiantado' ? 'Adiantado' : '-';
-  const rotuloPeriodo = relPeriodo === 'semana' ? 'Última semana' : relPeriodo === 'mes' ? 'Último mês' : 'Último ano';
+  const rotuloPeriodo = `${relDataInicio.slice(8, 10)}/${relDataInicio.slice(5, 7)}/${relDataInicio.slice(0, 4)} a ${relDataFim.slice(8, 10)}/${relDataFim.slice(5, 7)}/${relDataFim.slice(0, 4)}`;
   const slugNome = (t: string) => (t || 'funcionario').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
   const dataBr = (dia: string) => `${dia.slice(8, 10)}/${dia.slice(5, 7)}/${dia.slice(0, 4)}`;
   const resumoPontualidade = funcSel?.hora_entrada ? `${pctPontual}% (${pontuais} pontuais, ${atrasos} atrasos de ${totalComHorario} dias)` : 'Não avaliada';
@@ -259,7 +292,7 @@ export default function PontoAdminModal({
     ws['!cols'] = [{ wch: 16 }, { wch: 10 }, { wch: 10 }, { wch: 14 }, { wch: 12 }];
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, 'Ponto');
-    XLSX.writeFile(wb, `ponto_${slugNome(funcSel.nome)}_${relPeriodo}.xlsx`);
+    XLSX.writeFile(wb, `ponto_${slugNome(funcSel.nome)}_${relDataInicio}_${relDataFim}.xlsx`);
   };
 
   const gerarRelatorioPdf = () => {
@@ -320,8 +353,16 @@ export default function PontoAdminModal({
     <div className="fixed inset-0 z-[2000] flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onFechar} />
 
-      <div className={`relative flex max-h-[88vh] w-full max-w-lg flex-col overflow-hidden rounded-2xl border shadow-2xl ${card}`}>
-        <div className="flex items-start justify-between gap-3 px-5 py-4 text-white" style={{ background: 'linear-gradient(135deg, #020617, #003E73)' }}>
+      <div className={`relative flex max-h-[88vh] w-full max-w-lg flex-col overflow-hidden rounded-2xl border shadow-2xl ${card}`} style={{ transform: `translate(${dragPos.x}px, ${dragPos.y}px)` }}>
+        <div
+          className="flex items-start justify-between gap-3 px-5 py-4 text-white select-none"
+          style={{ background: 'linear-gradient(135deg, #020617, #003E73)', cursor: 'grab' }}
+          onMouseDown={(e) => {
+            isDragging.current = true;
+            dragStart.current = { mouseX: e.clientX, mouseY: e.clientY, posX: dragPos.x, posY: dragPos.y };
+            e.preventDefault();
+          }}
+        >
           <div>
             <p className="text-[10px] font-black uppercase tracking-[0.24em]" style={{ color: 'rgba(255,255,255,0.65)' }}>Controle de Ponto</p>
             <h2 className="mt-0.5 text-lg font-black leading-tight text-white">Administração</h2>
@@ -366,6 +407,9 @@ export default function PontoAdminModal({
 
                     {editId === f.id && (
                       <div className={`mt-3 grid gap-2 border-t pt-3 ${itemBorda}`}>
+                        <label className="grid gap-1 text-[11px] font-black uppercase tracking-wide text-slate-500">Nome
+                          <input className={inputCls} value={editNome} onChange={(e) => setEditNome(e.target.value)} placeholder="Nome do funcionário" />
+                        </label>
                         <label className="grid gap-1 text-[11px] font-black uppercase tracking-wide text-slate-500">Cargo
                           <input className={inputCls} value={editCargo} onChange={(e) => setEditCargo(e.target.value)} placeholder="ex: Vendedor" />
                         </label>
@@ -449,27 +493,92 @@ export default function PontoAdminModal({
 
           {aba === 'relatorios' && (
             <div className="grid gap-3">
-              <div className="grid gap-2">
-                <select
-                  className={inputCls}
-                  value={relFuncId}
-                  onChange={(e) => { setRelFuncId(e.target.value); carregarRelatorio(e.target.value, relPeriodo); }}
-                >
-                  <option value="">Selecione o funcionário</option>
-                  {funcionarios.map((f) => <option key={f.user_id} value={f.user_id}>{f.nome}</option>)}
-                </select>
-                <div className="flex gap-1">
-                  {(['semana', 'mes', 'ano'] as const).map((p) => (
-                    <button
-                      key={p}
-                      type="button"
-                      onClick={() => { setRelPeriodo(p); if (relFuncId) carregarRelatorio(relFuncId, p); }}
-                      className="flex-1 rounded-lg py-1.5 text-[11px] font-black uppercase tracking-wide"
-                      style={relPeriodo === p ? { backgroundColor: corPrimaria, color: '#fff' } : { backgroundColor: darkMode ? '#1e293b' : '#f1f5f9', color: darkMode ? '#94a3b8' : '#64748b' }}
-                    >{p === 'semana' ? 'Semana' : p === 'mes' ? 'Mês' : 'Ano'}</button>
-                  ))}
+              {/* Funcionário */}
+              <select
+                className={inputCls}
+                value={relFuncId}
+                onChange={(e) => setRelFuncId(e.target.value)}
+              >
+                <option value="">Selecione o funcionário</option>
+                {funcionarios.map((f) => <option key={f.user_id} value={f.user_id}>{f.nome}</option>)}
+              </select>
+
+              {/* Ano + Mês — estilo pill como no mobile */}
+              <div className="grid grid-cols-[88px_minmax(0,1fr)] gap-2">
+                {/* Ano pill */}
+                <div className={`relative flex h-11 items-center gap-1.5 overflow-hidden rounded-2xl border px-2.5 ${darkMode ? 'border-slate-700 bg-slate-800' : 'border-slate-200 bg-slate-50'}`}>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" className="shrink-0" style={{ color: corPrimaria }}><rect x="3.5" y="4.5" width="17" height="16" rx="2.5" stroke="currentColor" strokeWidth="2"/><path d="M3.5 9h17M8 3v3M16 3v3" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/></svg>
+                  <div className="leading-none">
+                    <p className="text-sm font-black">{relAno}</p>
+                    <p className="mt-0.5 text-[8px] font-black uppercase tracking-wide" style={{ color: corPrimaria }}>Ano</p>
+                  </div>
+                  <select
+                    aria-label="Selecionar ano"
+                    className="absolute inset-0 cursor-pointer opacity-0"
+                    style={{ fontSize: 16 }}
+                    value={relAno}
+                    onChange={(e) => {
+                      const ano = Number(e.target.value);
+                      setRelAno(ano);
+                      aplicarMes(ano, relMesIdx);
+                    }}
+                  >
+                    {Array.from({ length: 6 }, (_, i) => new Date().getFullYear() - 3 + i).map((a) => (
+                      <option key={a} value={a}>{a}</option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Mês pill */}
+                <div className={`flex h-11 items-center justify-between gap-1 rounded-2xl border px-1 ${darkMode ? 'border-slate-700 bg-slate-800' : 'border-slate-200 bg-slate-50'}`}>
+                  <button
+                    type="button"
+                    aria-label="Mês anterior"
+                    onClick={() => {
+                      let mes = relMesIdx - 1, ano = relAno;
+                      if (mes < 0) { mes = 11; ano = relAno - 1; setRelAno(ano); }
+                      setRelMesIdx(mes);
+                      aplicarMes(ano, mes);
+                    }}
+                    className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xl font-black leading-none transition ${darkMode ? 'text-slate-300 hover:bg-slate-700 active:bg-slate-600' : 'text-slate-600 hover:bg-slate-200 active:bg-slate-300'}`}
+                  >‹</button>
+                  <span className="flex-1 truncate text-center text-sm font-black tracking-wide">{MESES_REL[relMesIdx]}</span>
+                  <button
+                    type="button"
+                    aria-label="Próximo mês"
+                    onClick={() => {
+                      let mes = relMesIdx + 1, ano = relAno;
+                      if (mes > 11) { mes = 0; ano = relAno + 1; setRelAno(ano); }
+                      setRelMesIdx(mes);
+                      aplicarMes(ano, mes);
+                    }}
+                    className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xl font-black leading-none transition ${darkMode ? 'text-slate-300 hover:bg-slate-700 active:bg-slate-600' : 'text-slate-600 hover:bg-slate-200 active:bg-slate-300'}`}
+                  >›</button>
                 </div>
               </div>
+
+              {/* Período personalizado */}
+              <div className="grid grid-cols-2 gap-2">
+                <label className="grid gap-1 text-[11px] font-black uppercase tracking-wide text-slate-500">
+                  De
+                  <input className={inputCls} type="date" value={relDataInicio} onChange={(e) => setRelDataInicio(e.target.value)} />
+                </label>
+                <label className="grid gap-1 text-[11px] font-black uppercase tracking-wide text-slate-500">
+                  Até
+                  <input className={inputCls} type="date" value={relDataFim} onChange={(e) => setRelDataFim(e.target.value)} />
+                </label>
+              </div>
+
+              {/* Buscar */}
+              <button
+                type="button"
+                onClick={() => carregarRelatorio(relFuncId)}
+                disabled={!relFuncId || relCarregando}
+                className="h-11 rounded-xl text-sm font-black text-white shadow transition hover:brightness-110 disabled:opacity-40"
+                style={{ backgroundColor: corPrimaria }}
+              >
+                {relCarregando ? 'Buscando...' : 'Buscar registros'}
+              </button>
 
               {!relFuncId ? (
                 <p className={`py-6 text-center text-sm font-semibold ${textMuted}`}>Selecione um funcionário para ver os registros.</p>

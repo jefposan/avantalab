@@ -1,6 +1,6 @@
-const CACHE_NAME = 'avantalab-mobile-v136';
+const CACHE_NAME = 'avantalab-mobile-v137';
 const APP_SHELL = [
-  '/mobile-app.js?v=139',
+  '/mobile-app.js?v=140',
   '/mobile-supabase.js',
   '/mobile-manifest.json',
   '/images/ava-logo-principal.png',
@@ -50,49 +50,4 @@ self.addEventListener('fetch', (event) => {
         caches.open(CACHE_NAME).then((cache) => cache.put(event.request, copy)).catch(() => undefined);
         return response;
       })
-      .catch(() => caches.match(event.request))
-  );
-});
-
-// ─── Push: exibe a notificacao recebida ─────────────────────
-self.addEventListener('push', (event) => {
-  let dados = {};
-  try {
-    dados = event.data ? event.data.json() : {};
-  } catch (e) {
-    dados = { titulo: 'AvantaLab', corpo: event.data ? event.data.text() : '' };
-  }
-
-  const titulo = dados.titulo || 'AvantaLab';
-  const opcoes = {
-    body: dados.corpo || '',
-    icon: '/images/avantalab-icon-192.png',
-    badge: '/images/avantalab-icon-192.png',
-    data: { url: dados.url || '/mobile' },
-  };
-
-  event.waitUntil(
-    self.registration.showNotification(titulo, opcoes).then(() => {
-      if (self.navigator && self.navigator.setAppBadge) {
-        return self.navigator.setAppBadge().catch(() => undefined);
-      }
-    })
-  );
-});
-
-// ─── Clique na notificacao: abre/foca o app ─────────────────
-self.addEventListener('notificationclick', (event) => {
-  event.notification.close();
-  const destino = (event.notification.data && event.notification.data.url) || '/mobile';
-
-  event.waitUntil(
-    self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientes) => {
-      for (const cliente of clientes) {
-        if (cliente.url.indexOf(destino) !== -1 && 'focus' in cliente) {
-          return cliente.focus();
-        }
-      }
-      if (self.clients.openWindow) return self.clients.openWindow(destino);
-    })
-  );
-});
+     
