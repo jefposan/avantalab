@@ -1464,7 +1464,7 @@ useEffect(() => {
     try {
       const { data, error } = await supabase
         .from('ponto_funcionarios')
-        .select('id, user_id, nome, login, cargo, ativo, hora_entrada, hora_saida')
+        .select('id, user_id, nome, login, cargo, ativo, hora_entrada, hora_saida, dias_trabalho')
         .eq('empresa_id', empresaId)
         .order('nome', { ascending: true });
       if (!error && data) setPontoFuncionarios(data as FuncionarioPonto[]);
@@ -1472,7 +1472,7 @@ useEffect(() => {
     setPontoFuncCarregando(false);
   }
 
-  async function criarFuncionarioPonto(dados: { nome: string; login: string; senha: string; cargo: string; horaEntrada?: string; horaSaida?: string }) {
+  async function criarFuncionarioPonto(dados: { nome: string; login: string; senha: string; cargo: string; horaEntrada?: string; horaSaida?: string; diasTrabalho?: number[] }) {
     if (!empresaId) return { erro: true, mensagem: 'Perfil não identificado.' };
     try {
       const { data: sessao } = await supabase.auth.getSession();
@@ -1537,12 +1537,14 @@ useEffect(() => {
     }
   }
 
-  async function atualizarFuncionarioPonto(id: string, dados: { cargo: string; horaEntrada?: string; horaSaida?: string; ativo: boolean }) {
+  async function atualizarFuncionarioPonto(id: string, dados: { cargo: string; horaEntrada?: string; horaSaida?: string; ativo: boolean; diasTrabalho?: number[] }) {
     if (!empresaId) return { erro: true, mensagem: 'Perfil não identificado.' };
     try {
+      const atualizacao: Record<string, unknown> = { cargo: dados.cargo, hora_entrada: dados.horaEntrada || null, hora_saida: dados.horaSaida || null, ativo: dados.ativo };
+      if (dados.diasTrabalho) atualizacao.dias_trabalho = dados.diasTrabalho;
       const { error } = await supabase
         .from('ponto_funcionarios')
-        .update({ cargo: dados.cargo, hora_entrada: dados.horaEntrada || null, hora_saida: dados.horaSaida || null, ativo: dados.ativo })
+        .update(atualizacao)
         .eq('id', id)
         .eq('empresa_id', empresaId);
       if (error) { console.error('atualizarFuncionarioPonto', error); return { erro: true, mensagem: 'Não foi possível salvar.' }; }

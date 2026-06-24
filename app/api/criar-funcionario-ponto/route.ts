@@ -43,6 +43,9 @@ export async function POST(request: Request) {
     const cargo = String(corpo.cargo || '').trim();
     const horaEntrada = /^\d{2}:\d{2}$/.test(String(corpo.horaEntrada || '')) ? String(corpo.horaEntrada) : null;
     const horaSaida = /^\d{2}:\d{2}$/.test(String(corpo.horaSaida || '')) ? String(corpo.horaSaida) : null;
+    const diasTrabalho = Array.isArray(corpo.diasTrabalho)
+      ? Array.from(new Set(corpo.diasTrabalho.filter((n: unknown) => Number.isInteger(n) && (n as number) >= 0 && (n as number) <= 6))).sort()
+      : [1, 2, 3, 4, 5];
     const login = normalizarLogin(loginOriginal);
 
     if (!empresaId) return respostaErro('Empresa não informada.');
@@ -127,7 +130,7 @@ export async function POST(request: Request) {
 
     const { error: erroFunc } = await supabaseAdmin
       .from('ponto_funcionarios')
-      .insert({ user_id: novoUserId, empresa_id: empresaId, nome, login, cargo, hora_entrada: horaEntrada, hora_saida: horaSaida });
+      .insert({ user_id: novoUserId, empresa_id: empresaId, nome, login, cargo, hora_entrada: horaEntrada, hora_saida: horaSaida, dias_trabalho: diasTrabalho });
 
     if (erroFunc) {
       console.error('Erro ao salvar dados do funcionário de ponto:', erroFunc);

@@ -11,7 +11,10 @@ export type FuncionarioPonto = {
   ativo: boolean;
   hora_entrada: string | null;
   hora_saida: string | null;
+  dias_trabalho: number[] | null;
 };
+
+export const DIAS_SEMANA: Array<[number, string]> = [[0, 'Dom'], [1, 'Seg'], [2, 'Ter'], [3, 'Qua'], [4, 'Qui'], [5, 'Sex'], [6, 'Sáb']];
 
 export type RegistroPonto = {
   tipo: string;
@@ -33,8 +36,8 @@ interface PontoAdminModalProps {
   onFechar: () => void;
   funcionarios: FuncionarioPonto[];
   carregando: boolean;
-  onCriar: (dados: { nome: string; login: string; senha: string; cargo: string; horaEntrada?: string; horaSaida?: string }) => Promise<{ erro: boolean; mensagem?: string }>;
-  onAtualizar: (id: string, dados: { cargo: string; horaEntrada?: string; horaSaida?: string; ativo: boolean }) => Promise<{ erro: boolean; mensagem?: string }>;
+  onCriar: (dados: { nome: string; login: string; senha: string; cargo: string; horaEntrada?: string; horaSaida?: string; diasTrabalho?: number[] }) => Promise<{ erro: boolean; mensagem?: string }>;
+  onAtualizar: (id: string, dados: { cargo: string; horaEntrada?: string; horaSaida?: string; ativo: boolean; diasTrabalho?: number[] }) => Promise<{ erro: boolean; mensagem?: string }>;
   config: PontoConfig;
   onSalvarConfig: (dados: { latitude: number; longitude: number; raio_m: number }) => Promise<{ erro: boolean; mensagem?: string }>;
   onCarregarRegistros: (funcionarioUserId: string, dataInicioISO: string) => Promise<RegistroPonto[]>;
@@ -62,6 +65,7 @@ export default function PontoAdminModal({
   const [cargo, setCargo] = useState('');
   const [horaEntrada, setHoraEntrada] = useState('');
   const [horaSaida, setHoraSaida] = useState('');
+  const [diasNovo, setDiasNovo] = useState<number[]>([1, 2, 3, 4, 5]);
   const [enviando, setEnviando] = useState(false);
   const [msg, setMsg] = useState<{ tipo: 'ok' | 'erro'; texto: string } | null>(null);
 
@@ -77,6 +81,7 @@ export default function PontoAdminModal({
   const [editEntrada, setEditEntrada] = useState('');
   const [editSaida, setEditSaida] = useState('');
   const [editAtivo, setEditAtivo] = useState(true);
+  const [editDias, setEditDias] = useState<number[]>([1, 2, 3, 4, 5]);
   const [salvandoEdit, setSalvandoEdit] = useState(false);
   const [msgEdit, setMsgEdit] = useState<string | null>(null);
 
@@ -109,15 +114,42 @@ export default function PontoAdminModal({
       return;
     }
     setEnviando(true);
-    const r = await onCriar({ nome: nome.trim(), login: login.trim(), senha, cargo: cargo.trim(), horaEntrada: horaEntrada || undefined, horaSaida: horaSaida || undefined });
+    const r = await onCriar({ nome: nome.trim(), login: login.trim(), senha, cargo: cargo.trim(), horaEntrada: horaEntrada || undefined, horaSaida: horaSaida || undefined, diasTrabalho: diasNovo });
     setEnviando(false);
     if (r.erro) {
       setMsg({ tipo: 'erro', texto: r.mensagem || 'Não foi possível cadastrar.' });
     } else {
       setMsg({ tipo: 'ok', texto: 'Funcionário cadastrado!' });
-      setNome(''); setLogin(''); setSenha(''); setCargo(''); setHoraEntrada(''); setHoraSaida('');
+      setNome(''); setLogin(''); setSenha(''); setCargo(''); setHoraEntrada(''); setHoraSaida(''); setDiasNovo([1, 2, 3, 4, 5]);
       setAba('lista');
     }
+  };
+
+  const toggleDia = (dias: number[], setDias: (v: number[]) => void, n: number) => {
+    setDias(dias.includes(n) ? dias.filter((d) => d !== n) : [...dias, n].sort((a, b) => a - b));
+  };
+
+  const renderSeletorDias = (dias: number[], setDias: (v: number[]) => void) => (
+    <div className="flex gap-1">
+      {DIAS_SEMANA.map(([n, lbl]) => {
+        const ativo = dias.includes(n);
+        return (
+          <button
+            key={n}
+            type="button"
+            onClick={() => toggleDia(dias, setDias, n)}
+            className="flex-1 rounded-md py-1.5 text-[10px] font-black uppercase transition"
+            style={ativo ? { backgroundColor: corPrimaria, color: '#fff' } : { backgroundColor: darkMode ? '#1e293b' : '#f1f5f9', color: darkMode ? '#94a3b8' : '#64748b' }}
+          >{lbl}</button>
+        );
+      })}
+    </div>
+  );
+
+  const resumoDias = (dias: number[] | null) => {
+    if (!dias || dias.length === 0) return 'Nenhum dia';
+    if (dias.length === 7) return 'Todos os dias';
+    return DIAS_SEMANA.filter(([n]) => dias.includes(n)).map(([, l]) => l).join(', ');
   };
 
   const abrirEdicao = (f: FuncionarioPonto) => {
@@ -126,13 +158,14 @@ export default function PontoAdminModal({
     setEditEntrada(f.hora_entrada ? f.hora_entrada.slice(0, 5) : '');
     setEditSaida(f.hora_saida ? f.hora_saida.slice(0, 5) : '');
     setEditAtivo(f.ativo);
+    setEditDias(Array.isArray(f.dias_trabalho) ? f.dias_trabalho : [1, 2, 3, 4, 5]);
     setMsgEdit(null);
   };
 
   const salvarEdicao = async (id: string) => {
     setMsgEdit(null);
     setSalvandoEdit(true);
-    const r = await onAtualizar(id, { cargo: editCargo.trim(), horaEntrada: editEntrada || undefined, horaSaida: editSaida || undefined, ativo: editAtivo });
+    const r = await onAtualizar(id, { cargo: editCargo.trim(), horaEntrada: editEntrada || undefined, horaSaida: editSaida || undefined, ativo: editAtivo, diasTrabalho: editDias });
     setSalvandoEdit(false);
     if (r.erro) setMsgEdit(r.mensagem || 'Não foi possível salvar.');
     else setEditId(null);
@@ -178,6 +211,28 @@ export default function PontoAdminModal({
   const atrasos = diasRel.filter((d) => d.statusEntrada === 'atraso').length;
   const pctPontual = totalComHorario ? Math.round((pontuais / totalComHorario) * 100) : 0;
 
+  // Faltas: dias de trabalho (Dom–Sáb selecionados) sem registro de entrada,
+  // contados a partir do primeiro registro do funcionário até ontem.
+  const diasTrabSet = new Set(funcSel?.dias_trabalho ?? []);
+  const diasComEntrada = new Set(relRegistros.filter((r) => r.tipo === 'entrada').map((r) => r.dia));
+  const faltas = (() => {
+    if (!relFuncId || diasTrabSet.size === 0 || relRegistros.length === 0) return 0;
+    const isoLocal = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    const hoje = new Date(); hoje.setHours(0, 0, 0, 0);
+    const inicio = new Date(); inicio.setHours(0, 0, 0, 0);
+    if (relPeriodo === 'semana') inicio.setDate(inicio.getDate() - 7);
+    else if (relPeriodo === 'mes') inicio.setMonth(inicio.getMonth() - 1);
+    else inicio.setFullYear(inicio.getFullYear() - 1);
+    const primeiroDia = relRegistros.reduce((min, r) => (r.dia < min ? r.dia : min), relRegistros[0].dia);
+    let count = 0;
+    for (const d = new Date(inicio); d < hoje; d.setDate(d.getDate() + 1)) {
+      const iso = isoLocal(d);
+      if (iso < primeiroDia) continue;
+      if (diasTrabSet.has(d.getDay()) && !diasComEntrada.has(iso)) count++;
+    }
+    return count;
+  })();
+
   const rotuloStatus = (s: DiaRel['statusEntrada']) => s === 'pontual' ? 'Pontual' : s === 'atraso' ? 'Atraso' : s === 'adiantado' ? 'Adiantado' : '-';
   const rotuloPeriodo = relPeriodo === 'semana' ? 'Última semana' : relPeriodo === 'mes' ? 'Último mês' : 'Último ano';
   const slugNome = (t: string) => (t || 'funcionario').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
@@ -193,7 +248,9 @@ export default function PontoAdminModal({
       ['Cargo', funcSel.cargo || '-'],
       ['Período', rotuloPeriodo],
       ['Horário previsto', horarioPrevisto],
+      ['Dias de trabalho', resumoDias(funcSel.dias_trabalho)],
       ['Pontualidade na entrada', resumoPontualidade],
+      ['Faltas no período', String(faltas)],
       [],
       ['Data', 'Entrada', 'Saída', 'Distância (m)', 'Status'],
     ];
@@ -222,7 +279,9 @@ export default function PontoAdminModal({
       <p class="meta"><b>Funcionário:</b> ${esc(funcSel.nome)}</p>
       <p class="meta"><b>Cargo:</b> ${esc(funcSel.cargo || '-')}</p>
       <p class="meta"><b>Horário previsto:</b> ${esc(horarioPrevisto)}</p>
+      <p class="meta"><b>Dias de trabalho:</b> ${esc(resumoDias(funcSel.dias_trabalho))}</p>
       <p class="meta"><b>Pontualidade na entrada:</b> ${esc(resumoPontualidade)}</p>
+      <p class="meta"><b>Faltas no período:</b> ${faltas}</p>
       <table><thead><tr><th>Data</th><th>Entrada</th><th>Saída</th><th>Distância</th><th>Status</th></tr></thead><tbody>${linhas}</tbody></table>
       <p class="rod">Gerado pelo AvantaLab em ${new Date().toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' })}. Tolerância de pontualidade: ${TOLERANCIA_MIN} min.</p>
       <script>window.onload=function(){window.print();}</script>
@@ -299,6 +358,7 @@ export default function PontoAdminModal({
                       <div className="min-w-0 flex-1">
                         <p className="truncate text-sm font-black">{f.nome}</p>
                         <p className={`truncate text-xs ${textMuted}`}>{f.login}{f.cargo ? ' · ' + f.cargo : ''}{f.hora_entrada ? ' · ' + f.hora_entrada.slice(0, 5) + (f.hora_saida ? '–' + f.hora_saida.slice(0, 5) : '') : ''}</p>
+                        <p className={`truncate text-[10px] ${textMuted}`}>{resumoDias(f.dias_trabalho)}</p>
                       </div>
                       {!f.ativo && <span className="shrink-0 rounded-full bg-slate-200 px-2 py-0.5 text-[10px] font-black uppercase text-slate-600">Inativo</span>}
                       <button type="button" onClick={() => (editId === f.id ? setEditId(null) : abrirEdicao(f))} className="shrink-0 rounded-lg px-2 py-1 text-[11px] font-black uppercase tracking-wide" style={{ color: corPrimaria }}>{editId === f.id ? 'Fechar' : 'Editar'}</button>
@@ -316,6 +376,10 @@ export default function PontoAdminModal({
                           <label className="grid gap-1 text-[11px] font-black uppercase tracking-wide text-slate-500">Saída
                             <input className={inputCls} type="time" value={editSaida} onChange={(e) => setEditSaida(e.target.value)} />
                           </label>
+                        </div>
+                        <div className="grid gap-1">
+                          <span className="text-[11px] font-black uppercase tracking-wide text-slate-500">Dias de trabalho</span>
+                          {renderSeletorDias(editDias, setEditDias)}
                         </div>
                         <label className="flex items-center gap-2 text-xs font-bold">
                           <input type="checkbox" checked={editAtivo} onChange={(e) => setEditAtivo(e.target.checked)} className="h-4 w-4" />
@@ -352,6 +416,10 @@ export default function PontoAdminModal({
                 <label className="grid gap-1 text-[11px] font-black uppercase tracking-wide text-slate-500">Saída prevista
                   <input className={inputCls} type="time" value={horaSaida} onChange={(e) => setHoraSaida(e.target.value)} />
                 </label>
+              </div>
+              <div className="grid gap-1">
+                <span className="text-[11px] font-black uppercase tracking-wide text-slate-500">Dias de trabalho</span>
+                {renderSeletorDias(diasNovo, setDiasNovo)}
               </div>
               <button type="button" onClick={enviar} disabled={enviando} className="mt-1 h-11 rounded-xl text-sm font-black text-white shadow transition hover:brightness-110 disabled:opacity-60" style={{ backgroundColor: corPrimaria }}>{enviando ? 'Cadastrando...' : 'Cadastrar funcionário'}</button>
               {msg && <p className={`text-xs font-bold ${msg.tipo === 'ok' ? 'text-emerald-600' : 'text-red-600'}`}>{msg.texto}</p>}
@@ -429,6 +497,13 @@ export default function PontoAdminModal({
                     </div>
                   ) : (
                     <p className={`rounded-xl border p-3 text-[11px] ${itemBorda} ${textMuted}`}>Sem horário previsto cadastrado — a pontualidade não pode ser avaliada. Edite na lista de funcionários.</p>
+                  )}
+
+                  {diasTrabSet.size > 0 && (
+                    <div className={`flex items-center justify-between gap-2 rounded-xl border p-3 ${itemBorda}`}>
+                      <span className="text-xs font-black">Faltas no período</span>
+                      <span className="text-sm font-black" style={{ color: faltas > 0 ? '#dc2626' : '#059669' }}>{faltas}</span>
+                    </div>
                   )}
 
                   <div className="flex gap-2">
