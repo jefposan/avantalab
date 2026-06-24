@@ -12,6 +12,8 @@ import Tooltip from './components/Tooltip';
 import ModalInstrucoes from './components/ModalInstrucoes';
 import ModalDespesasBase from './components/ModalDespesasBase';
 import ModalLogo from './components/ModalLogo';
+import ModulosModal, { type Modulo } from './components/ModulosModal';
+import PontoAdminModal, { type FuncionarioPonto, type PontoConfig } from './components/PontoAdminModal';
 import ModalConfirmacao from "./components/ModalConfirmacao";
 import CardEntradaFaturamento from './components/CardEntradaFaturamento';
 import TabelaLancamentosDespesa from './components/TabelaLancamentosDespesa';
@@ -308,6 +310,8 @@ const [validandoTelefoneObrigatorio, setValidandoTelefoneObrigatorio] = useState
   const [dashboardOcultos, setDashboardOcultos] = useState<string[]>([]);
   const [dashboardExpandidos, setDashboardExpandidos] = useState<string[]>([]);
 const [ajustesAberto, setAjustesAberto] = useState(false);
+const [menuAjuste, setMenuAjuste] = useState<null | 'visual' | 'config'>(null);
+const [menuAjusteRect, setMenuAjusteRect] = useState<{ top: number; left: number } | null>(null);
 const [agendaAberta, setAgendaAberta] = useState(false);
 const [agendaItens, setAgendaItens] = useState<AgendaItem[]>([]);
 const [agendaAnoAtivo, setAgendaAnoAtivo] = useState(new Date().getFullYear());
@@ -351,6 +355,15 @@ const [despesaAnaliseAtiva, setDespesaAnaliseAtiva] = useState<{
   const [logoSettings, setLogoSettings] = useState({ scale: 100, x: 0, y: 0 });
   const [modalLogo, setModalLogo] = useState(false);
   const [carregandoPerfil, setCarregandoPerfil] = useState(false);
+  const [modalModulos, setModalModulos] = useState(false);
+  const [modulosCatalogo, setModulosCatalogo] = useState<Modulo[]>([]);
+  const [modulosAtivos, setModulosAtivos] = useState<string[]>([]);
+  const [modulosCarregando, setModulosCarregando] = useState(false);
+  const [moduloAcaoId, setModuloAcaoId] = useState<string | null>(null);
+  const [modalPontoAdmin, setModalPontoAdmin] = useState(false);
+  const [pontoFuncionarios, setPontoFuncionarios] = useState<FuncionarioPonto[]>([]);
+  const [pontoFuncCarregando, setPontoFuncCarregando] = useState(false);
+  const [pontoConfig, setPontoConfig] = useState<PontoConfig>(null);
   const [painelAjusteLogo, setPainelAjusteLogo] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const backupImportInputRef = useRef<HTMLInputElement>(null);
@@ -452,6 +465,9 @@ const podeEditarLancamentos =
   perfilUsuario === 'operador_completo';
 
 const podeExcluirLancamentos =
+  perfilUsuario === 'gestor_master' || perfilUsuario === 'administrador';
+
+const podeGerenciarPonto =
   perfilUsuario === 'gestor_master' || perfilUsuario === 'administrador';
 
 const podeAcessarAjustes =
@@ -1033,6 +1049,7 @@ const reiniciarTimerAjustes = () => {
   useEffect(() => {
     if (!ajustesAberto) {
       limparTimerAjustes();
+      setMenuAjuste(null);
       return;
     }
 
@@ -1040,6 +1057,13 @@ const reiniciarTimerAjustes = () => {
 
     return limparTimerAjustes;
   }, [ajustesAberto]);
+
+  const alternarMenuAjuste = (qual: 'visual' | 'config', e: React.MouseEvent<HTMLButtonElement>) => {
+    if (menuAjuste === qual) { setMenuAjuste(null); return; }
+    const r = e.currentTarget.getBoundingClientRect();
+    setMenuAjusteRect({ top: r.bottom + 6, left: r.left });
+    setMenuAjuste(qual);
+  };
 
   useEffect(() => {
   if (!modalUsuarios) return;
@@ -1228,6 +1252,13 @@ useEffect(() => {
   // eslint-disable-next-line react-hooks/exhaustive-deps
 }, [mounted, empresaId]);
 
+// Módulos: carrega catálogo e ativos quando o perfil esta ativo
+useEffect(() => {
+  if (!mounted || !empresaId) return;
+  carregarModulos();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+}, [mounted, empresaId]);
+
 // Agenda: atualiza em tempo real (mudancas em qualquer aparelho)
 useEffect(() => {
   if (!mounted || !empresaId) return;
@@ -1377,6 +1408,149 @@ useEffect(() => {
       setNotificacoesWeb([]);
       await supabase.from('notificacoes').update({ lida: true }).in('id', ids);
     } catch {}
+  }
+
+  // ── Sistema de Módulos ──
+  async function carregarModulos() {
+    if (!empresaId) return;
+    setModulosCarregando(true);
+    try {
+      const [catRes, ativosRes] = await Promise.all([
+        supabase.from('modulos').select('id, nome, descricao, icone, perfis').eq('disponivel', true).order('ordem', { ascending: true }),
+        supabase.from('empresa_modulos').select('modulo_id').eq('empresa_id', empresaId).eq('ativo', true),
+      ]);
+      if (!catRes.error && catRes.data) {
+        setModulosCatalogo(catRes.data.map((m: any) => ({
+          id: String(m.id), nome: m.nome || '', descricao: m.descricao || '',
+          icone: m.icone || '', perfis: Array.isArray(m.perfis) ? m.perfis : [],
+        })));
+      }
+      if (!ativosRes.error && ativosRes.data) {
+        setModulosAtivos(ativosRes.data.map((r: any) => String(r.modulo_id)));
+      }
+    } catch {}
+    setModulosCarregando(false);
+  }
+
+  async function instalarModulo(moduloId: string) {
+    if (!empresaId) return;
+    setModuloAcaoId(moduloId);
+    try {
+      await supabase.from('empresa_modulos').upsert(
+        { empresa_id: empresaId, modulo_id: moduloId, ativo: true, origem: 'avulso', atualizado_em: new Date().toISOString() },
+        { onConflict: 'empresa_id,modulo_id' }
+      );
+      setModulosAtivos((prev) => (prev.includes(moduloId) ? prev : [...prev, moduloId]));
+    } catch {}
+    setModuloAcaoId(null);
+  }
+
+  async function desinstalarModulo(moduloId: string) {
+    if (!empresaId) return;
+    setModuloAcaoId(moduloId);
+    try {
+      await supabase.from('empresa_modulos')
+        .update({ ativo: false, atualizado_em: new Date().toISOString() })
+        .eq('empresa_id', empresaId).eq('modulo_id', moduloId);
+      setModulosAtivos((prev) => prev.filter((id) => id !== moduloId));
+    } catch {}
+    setModuloAcaoId(null);
+  }
+
+  // ── Controle de Ponto (admin) ──
+  async function carregarFuncionariosPonto() {
+    if (!empresaId) return;
+    setPontoFuncCarregando(true);
+    try {
+      const { data, error } = await supabase
+        .from('ponto_funcionarios')
+        .select('id, user_id, nome, login, cargo, ativo, hora_entrada, hora_saida')
+        .eq('empresa_id', empresaId)
+        .order('nome', { ascending: true });
+      if (!error && data) setPontoFuncionarios(data as FuncionarioPonto[]);
+    } catch {}
+    setPontoFuncCarregando(false);
+  }
+
+  async function criarFuncionarioPonto(dados: { nome: string; login: string; senha: string; cargo: string; horaEntrada?: string; horaSaida?: string }) {
+    if (!empresaId) return { erro: true, mensagem: 'Perfil não identificado.' };
+    try {
+      const { data: sessao } = await supabase.auth.getSession();
+      const token = sessao.session?.access_token;
+      if (!token) return { erro: true, mensagem: 'Sessão não encontrada. Faça login novamente.' };
+      const resp = await fetch('/api/criar-funcionario-ponto', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ empresaId, ...dados }),
+      });
+      const r = await resp.json();
+      if (!resp.ok || r.erro) return { erro: true, mensagem: r.mensagem || 'Não foi possível cadastrar.' };
+      await carregarFuncionariosPonto();
+      return { erro: false };
+    } catch {
+      return { erro: true, mensagem: 'Erro ao cadastrar funcionário.' };
+    }
+  }
+
+  async function carregarPontoConfig() {
+    if (!empresaId) return;
+    try {
+      const { data, error } = await supabase
+        .from('ponto_config')
+        .select('latitude, longitude, raio_m')
+        .eq('empresa_id', empresaId)
+        .maybeSingle();
+      if (!error) {
+        setPontoConfig(data ? { latitude: data.latitude, longitude: data.longitude, raio_m: data.raio_m ?? 100 } : { latitude: null, longitude: null, raio_m: 100 });
+      }
+    } catch {}
+  }
+
+  async function salvarPontoConfig(dados: { latitude: number; longitude: number; raio_m: number }) {
+    if (!empresaId) return { erro: true, mensagem: 'Perfil não identificado.' };
+    try {
+      const { error } = await supabase
+        .from('ponto_config')
+        .upsert({ empresa_id: empresaId, latitude: dados.latitude, longitude: dados.longitude, raio_m: dados.raio_m, atualizado_em: new Date().toISOString() }, { onConflict: 'empresa_id' });
+      if (error) { console.error('salvarPontoConfig', error); return { erro: true, mensagem: 'Não foi possível salvar o local.' }; }
+      setPontoConfig({ latitude: dados.latitude, longitude: dados.longitude, raio_m: dados.raio_m });
+      return { erro: false };
+    } catch {
+      return { erro: true, mensagem: 'Erro ao salvar o local da empresa.' };
+    }
+  }
+
+  async function carregarRegistrosPonto(funcionarioUserId: string, dataInicioISO: string) {
+    if (!empresaId || !funcionarioUserId) return [];
+    try {
+      const { data, error } = await supabase
+        .from('ponto_registros')
+        .select('tipo, registrado_em, dia, distancia_m, latitude, longitude')
+        .eq('empresa_id', empresaId)
+        .eq('user_id', funcionarioUserId)
+        .gte('dia', dataInicioISO)
+        .order('registrado_em', { ascending: true });
+      if (error) { console.error('carregarRegistrosPonto', error); return []; }
+      return data || [];
+    } catch {
+      return [];
+    }
+  }
+
+  async function atualizarFuncionarioPonto(id: string, dados: { cargo: string; horaEntrada?: string; horaSaida?: string; ativo: boolean }) {
+    if (!empresaId) return { erro: true, mensagem: 'Perfil não identificado.' };
+    try {
+      const { error } = await supabase
+        .from('ponto_funcionarios')
+        .update({ cargo: dados.cargo, hora_entrada: dados.horaEntrada || null, hora_saida: dados.horaSaida || null, ativo: dados.ativo })
+        .eq('id', id)
+        .eq('empresa_id', empresaId);
+      if (error) { console.error('atualizarFuncionarioPonto', error); return { erro: true, mensagem: 'Não foi possível salvar.' }; }
+      await carregarFuncionariosPonto();
+      return { erro: false };
+    } catch {
+      return { erro: true, mensagem: 'Erro ao salvar o funcionário.' };
+    }
   }
 
   async function sincronizarAgendaSupabaseWeb() {
@@ -5048,6 +5222,33 @@ if (isTelaMobile) {
   handleImageUpload={handleImageUpload}
 />
 
+<ModulosModal
+  aberto={modalModulos}
+  onFechar={() => setModalModulos(false)}
+  modulos={modulosCatalogo.filter((m) => m.perfis.length === 0 || m.perfis.includes(tipoPerfilAtualNormalizado))}
+  ativos={modulosAtivos}
+  carregando={modulosCarregando}
+  acaoEmId={moduloAcaoId}
+  onInstalar={instalarModulo}
+  onDesinstalar={desinstalarModulo}
+  darkMode={darkMode}
+  corPrimaria={corPrimaria}
+/>
+
+<PontoAdminModal
+  aberto={modalPontoAdmin}
+  onFechar={() => setModalPontoAdmin(false)}
+  funcionarios={pontoFuncionarios}
+  carregando={pontoFuncCarregando}
+  onCriar={criarFuncionarioPonto}
+  onAtualizar={atualizarFuncionarioPonto}
+  config={pontoConfig}
+  onSalvarConfig={salvarPontoConfig}
+  onCarregarRegistros={carregarRegistrosPonto}
+  darkMode={darkMode}
+  corPrimaria={corPrimaria}
+/>
+
 <ModalConfirmacao
   aberto={modalConfirmacaoAberto}
   titulo={tituloConfirmacao}
@@ -6763,257 +6964,192 @@ name="novo-usuario-login"
     onKeyDown={reiniciarTimerAjustes}
     onFocus={reiniciarTimerAjustes}
   >
-    {/* Adicionado overflow-x-auto e removido flex-wrap para forçar 1 linha */}
-    <div className="flex justify-between items-center max-w-7xl mx-auto gap-4 overflow-x-auto custom-scroll pb-1">
-      
-      {/* GRUPO DA ESQUERDA (Botões menores: text-xs, py-1.5) */}
-      <div className="flex items-center gap-3">
-        <button
-  onClick={() => {
-  setAjustesAberto(false);
-  setModalDespesasBase(true);
-}}
-  className="whitespace-nowrap bg-slate-800 hover:bg-slate-700 px-3 py-1.5 rounded-lg border transition-colors font-bold shadow flex items-center gap-1.5 text-xs"
-  style={{ borderColor: corPrimaria }}
->
-  <svg
-    className="w-3.5 h-3.5"
-    fill="none"
-    stroke="#ffffff"
-    viewBox="0 0 24 24"
-  >
-    <path
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      strokeWidth="2"
-      d="M12 4v16m8-8H4"
-    />
-  </svg>
-  Cadastrar Despesas
-</button>
+    {/* Bloco único de botões, alinhado ao limite do sistema (max-w-7xl + px-8) */}
+    <div className="flex items-center gap-3 max-w-7xl mx-auto px-8 overflow-x-auto custom-scroll pb-1">
 
+        {/* 1. Cadastrar Despesas + 2. Instrucoes (icone ?) */}
+        <div className="flex items-center gap-1.5">
+          <Tooltip texto="Cadastre e edite as despesas base (modelos) usadas nos lançamentos." posicao="bottom">
+            <button
+              onClick={() => { setAjustesAberto(false); setModalDespesasBase(true); }}
+              className="whitespace-nowrap bg-slate-800 hover:bg-slate-700 px-3 py-1.5 rounded-lg border transition-colors font-bold shadow flex items-center gap-1.5 text-xs"
+              style={{ borderColor: corPrimaria }}
+            >
+              <svg className="w-3.5 h-3.5" fill="none" stroke="#ffffff" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
+              </svg>
+              Cadastrar Despesas
+            </button>
+          </Tooltip>
 
-        
-        <button
-  onClick={() => {
-  setAjustesAberto(false);
-  setModalInstrucoes(true);
-}}
-  className="whitespace-nowrap bg-slate-800 hover:bg-slate-700 px-3 py-1.5 rounded-lg border transition-colors font-bold shadow flex items-center gap-1.5 text-xs"
-  style={{ borderColor: corPrimaria }}
->
-  <svg
-    className="w-3.5 h-3.5"
-    fill="none"
-    stroke="#ffffff"
-    viewBox="0 0 24 24"
-  >
-    <path
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      strokeWidth="2"
-      d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-    />
-  </svg>
-  Instruções categorias
-</button>
-      </div>
-      
-      {/* GRUPO DA DIREITA (Removido flex-wrap, botões menores) */}
-      
-      <div className="flex items-center gap-2">
-        <button onClick={() => {
-  if (!podeAcessarAjustes) {
-    abrirAviso(
-      'Acesso não permitido',
-      'Você não tem permissão para alterar a logomarca da empresa.'
-    );
-    return;
-  }
-
-  setAjustesAberto(false);
-setModalLogo(true);
-}} className="whitespace-nowrap bg-slate-800 hover:bg-slate-700 px-3 py-1.5 rounded shadow border border-slate-700 transition-colors text-xs">Logo</button>
-
-<div className="whitespace-nowrap relative overflow-hidden bg-slate-800 hover:bg-slate-700 px-3 py-1.5 rounded shadow border border-slate-700 transition-colors text-xs flex items-center gap-1.5">
-  <span
-    className="w-2.5 h-2.5 rounded-full"
-    style={{ backgroundColor: corPrimaria }}
-  ></span>
-
-  <span>Cor Tema</span>
-
-  {podeAcessarAjustes ? (
-    <input
-      type="color"
-      value={corPrimaria}
-      onChange={(e) => {
-        setCorPrimaria(e.target.value);
-      }}
-      className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-    />
-  ) : (
-    <button
-      type="button"
-      onClick={() => {
-        abrirAviso(
-          'Acesso não permitido',
-          'Você não tem permissão para alterar a cor tema da empresa.'
-        );
-      }}
-      className="absolute inset-0 w-full h-full cursor-not-allowed opacity-0"
-      aria-label="Sem permissão para alterar a cor tema"
-    />
-  )}
-</div>
-
-<div className="whitespace-nowrap flex items-center space-x-2 bg-slate-800 px-3 py-1.5 rounded shadow border border-slate-700 cursor-pointer" onClick={() => setDarkMode(!darkMode)}>
-          <span className="text-xs">Modo Escuro</span>
-          <div
-  className={`w-7 h-3.5 rounded-full relative transition-colors ${
-    darkMode ? '' : 'bg-slate-600'
-  }`}
-  style={{
-    backgroundColor: darkMode ? corPrimaria : '',
-    border: darkMode && corEhClara(corPrimaria) ? '1px solid rgba(15, 23, 42, 0.35)' : '',
-  }}
->
-  <span
-    className={`absolute left-0.5 top-0.5 w-2.5 h-2.5 rounded-full transition-transform ${
-      darkMode ? 'translate-x-3.5' : ''
-    }`}
-    style={{
-      backgroundColor: darkMode && corEhClara(corPrimaria) ? '#0f172a' : '#ffffff',
-    }}
-  />
-</div>
+          <Tooltip texto="Instruções sobre categoria" posicao="bottom">
+            <button
+              type="button"
+              aria-label="Instruções sobre categoria"
+              onClick={() => { setAjustesAberto(false); setModalInstrucoes(true); }}
+              className="flex h-6 w-6 items-center justify-center rounded-full border bg-slate-800 hover:bg-slate-700 transition-colors"
+              style={{ borderColor: corPrimaria }}
+            >
+              <svg className="w-3.5 h-3.5" fill="none" stroke="#ffffff" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </button>
+          </Tooltip>
         </div>
-        <Tooltip
-  texto="Quando ativado, o sistema avisa se você tentar lançar uma despesa com o mesmo nome e valor no mesmo mês."
-  posicao="bottom"
->
-  <div
-    className="whitespace-nowrap flex items-center space-x-2 bg-slate-800 px-3 py-1.5 rounded shadow border border-slate-700 cursor-pointer"
-    onClick={() => setDuplicadosAtivo(!duplicadosAtivo)}
-  >
-    <span className="text-xs">Duplicados</span>
 
-    <div
-      className={`w-7 h-3.5 rounded-full relative transition-colors ${
-        duplicadosAtivo ? '' : 'bg-slate-600'
-      }`}
-      style={{
-        backgroundColor: duplicadosAtivo ? corPrimaria : '',
-        border:
-          duplicadosAtivo && corEhClara(corPrimaria)
-            ? '1px solid rgba(15, 23, 42, 0.35)'
-            : '',
-      }}
-    >
-      <span
-        className={`absolute left-0.5 top-0.5 w-2.5 h-2.5 rounded-full transition-transform ${
-          duplicadosAtivo ? 'translate-x-3.5' : ''
-        }`}
-        style={{
-          backgroundColor:
-            duplicadosAtivo && corEhClara(corPrimaria)
-              ? '#0f172a'
-              : '#ffffff',
-        }}
-      />
+        {/* 3. Modulos */}
+        <Tooltip texto="Ative módulos extras (como o Controle de Ponto) para a sua empresa." posicao="bottom">
+          <button
+            onClick={() => { setAjustesAberto(false); setModalModulos(true); }}
+            className="whitespace-nowrap bg-slate-800 hover:bg-slate-700 px-3 py-1.5 rounded-lg border transition-colors font-bold shadow flex items-center gap-1.5 text-xs"
+            style={{ borderColor: corPrimaria }}
+          >
+            <svg className="w-3.5 h-3.5" fill="none" stroke="#ffffff" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 5a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM14 5a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1V5zM4 15a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1v-4zM14 15a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1v-4z" />
+            </svg>
+            Módulos
+          </button>
+        </Tooltip>
+
+        {/* 4. Ponto */}
+        {modulosAtivos.includes('ponto') && podeGerenciarPonto && (
+          <Tooltip texto="Gerencie funcionários, local da empresa e relatórios de ponto." posicao="bottom">
+            <button
+              onClick={() => { setAjustesAberto(false); setModalPontoAdmin(true); carregarFuncionariosPonto(); carregarPontoConfig(); }}
+              className="whitespace-nowrap bg-slate-800 hover:bg-slate-700 px-3 py-1.5 rounded-lg border transition-colors font-bold shadow flex items-center gap-1.5 text-xs"
+              style={{ borderColor: corPrimaria }}
+            >
+              <svg className="w-3.5 h-3.5" fill="none" stroke="#ffffff" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              Ponto
+            </button>
+          </Tooltip>
+        )}
+
+        {/* 5. Visual (dropdown) */}
+        <Tooltip texto="Personalize a aparência: logo, cor do tema e modo escuro." posicao="bottom">
+          <button
+            type="button"
+            onClick={(e) => alternarMenuAjuste('visual', e)}
+            className="whitespace-nowrap bg-slate-800 hover:bg-slate-700 px-3 py-1.5 rounded-lg border transition-colors font-bold shadow flex items-center gap-1.5 text-xs"
+            style={{ borderColor: corPrimaria }}
+          >
+            <svg className="w-3.5 h-3.5" fill="none" stroke="#ffffff" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828L11 18.657" />
+            </svg>
+            Visual
+            <svg className="w-3 h-3" fill="none" stroke="#ffffff" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M19 9l-7 7-7-7" /></svg>
+          </button>
+        </Tooltip>
+
+        {/* 7. Configuracoes (dropdown) */}
+        <Tooltip texto="Configurações: duplicados, usuários, perfil, backup e restauração." posicao="bottom">
+          <button
+            type="button"
+            onClick={(e) => alternarMenuAjuste('config', e)}
+            className="whitespace-nowrap bg-slate-800 hover:bg-slate-700 px-3 py-1.5 rounded-lg border transition-colors font-bold shadow flex items-center gap-1.5 text-xs text-white cursor-pointer"
+            style={{ borderColor: corPrimaria }}
+          >
+            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+            </svg>
+            Configurações
+            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M19 9l-7 7-7-7" /></svg>
+          </button>
+        </Tooltip>
+
+        {/* 8. Tutorial (colado à direita, com leve cor) */}
+        <div className="ml-auto shrink-0">
+          <Tooltip texto="Reveja o tour guiado de uso do sistema." posicao="bottom">
+            <button
+              type="button"
+              onClick={() => { setAjustesAberto(false); setTourAberto(true); }}
+              className="whitespace-nowrap bg-indigo-600 hover:bg-indigo-500 px-3 py-1.5 rounded-lg shadow border border-indigo-400/50 transition-colors font-bold flex items-center gap-1.5 text-xs text-white cursor-pointer"
+            >
+              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+              Tutorial
+            </button>
+          </Tooltip>
+        </div>
     </div>
-  </div>
-</Tooltip>
 
-{podeGerenciarUsuarios && (
-  <button
-    type="button"
-    onClick={() => {
-  setAjustesAberto(false);
-  abrirModalUsuarios();
-}}
-    className="whitespace-nowrap bg-slate-800 hover:bg-slate-700 px-3 py-1.5 rounded shadow border border-slate-700 transition-colors font-bold flex items-center gap-1.5 text-xs text-white cursor-pointer"
-  >
-    <svg
-      className="w-3.5 h-3.5"
-      fill="none"
-      stroke="currentColor"
-      viewBox="0 0 24 24"
-    >
-      <path
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeWidth="2"
-        d="M17 20h5v-2a4 4 0 00-4-4h-1M9 20H4v-2a4 4 0 014-4h1m8-6a4 4 0 11-8 0 4 4 0 018 0zm6 2a3 3 0 11-6 0 3 3 0 016 0z"
-      />
-    </svg>
+    {/* ===== DROPDOWN: VISUAL ===== */}
+    {menuAjuste === 'visual' && menuAjusteRect && (
+      <>
+        <div className="fixed inset-0 z-[1205]" onClick={() => setMenuAjuste(null)} />
+        <div className="fixed z-[1210] w-52 rounded-xl border border-slate-700 bg-slate-900 p-2 shadow-2xl" style={{ top: menuAjusteRect.top, left: menuAjusteRect.left }}>
+          <button
+            type="button"
+            onClick={() => { if (!podeAcessarAjustes) { abrirAviso('Acesso não permitido', 'Você não tem permissão para alterar a logomarca da empresa.'); return; } setAjustesAberto(false); setModalLogo(true); }}
+            className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-xs font-bold text-white transition-colors hover:bg-slate-700"
+          >
+            <svg className="w-3.5 h-3.5" fill="none" stroke="#ffffff" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+            Logo
+          </button>
 
-    Usuários
-  </button>
-)}
+          <div className="relative flex items-center gap-2 rounded-lg px-3 py-2 text-xs font-bold text-white hover:bg-slate-700 cursor-pointer">
+            <span className="w-3.5 h-3.5 rounded-full" style={{ backgroundColor: corPrimaria }}></span>
+            Cor do tema
+            {podeAcessarAjustes ? (
+              <input type="color" value={corPrimaria} onChange={(e) => setCorPrimaria(e.target.value)} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" />
+            ) : (
+              <button type="button" onClick={() => abrirAviso('Acesso não permitido', 'Você não tem permissão para alterar a cor tema da empresa.')} className="absolute inset-0 w-full h-full cursor-not-allowed opacity-0" aria-label="Sem permissao para alterar a cor tema" />
+            )}
+          </div>
 
-<button
-  type="button"
-  onClick={() => {
-    setAjustesAberto(false);
-    setModalEmpresasAberto(true);
-  }}
-  className="whitespace-nowrap bg-slate-800 hover:bg-slate-700 px-3 py-1.5 rounded shadow border border-slate-700 transition-colors text-xs cursor-pointer"
->
-  Perfil
-</button>
-
-              {/* BOTÃO DE BACKUP EXCEL */}
-              <button 
-                onClick={() => {
-  if (!podeAcessarAjustes) {
-    abrirAviso(
-      'Acesso não permitido',
-      'Você não tem permissão para gerar backup dos dados da empresa.'
-    );
-    return;
-  }
-setAjustesAberto(false);
-  abrirConfirmacao({
-    titulo: 'Gerar backup',
-    mensagem:
-      'O sistema vai gerar um arquivo Excel com os dados da empresa atual.\n\nDeseja continuar?',
-    textoConfirmar: 'Gerar backup',
-    acao: async () => {
-      await gerarBackupExcel(backupParams());
-    },
-  });
-}}
-                className="whitespace-nowrap bg-emerald-600 hover:bg-emerald-500 px-3 py-1.5 rounded shadow border border-emerald-700 transition-colors font-bold flex items-center gap-1.5 text-xs text-white"
-              >
-                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
-                Backup
-              </button>
-
-              <button
-                type="button"
-                onClick={abrirImportacaoBackup}
-                className="whitespace-nowrap bg-cyan-700 hover:bg-cyan-600 px-3 py-1.5 rounded shadow border border-cyan-800 transition-colors font-bold flex items-center gap-1.5 text-xs text-white cursor-pointer"
-              >
-                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 8V7a3 3 0 013-3h10a3 3 0 013 3v1M12 4v12m0 0l-4-4m4 4l4-4M5 20h14" />
-                </svg>
-                Restaurar
-              </button>
-
-              <button
-                type="button"
-                onClick={() => {
-                  setAjustesAberto(false);
-                  setTourAberto(true);
-                }}
-                className="whitespace-nowrap bg-slate-700 hover:bg-slate-600 px-3 py-1.5 rounded shadow border border-slate-600 transition-colors font-bold flex items-center gap-1.5 text-xs text-white cursor-pointer"
-              >
-                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                Tutorial
-              </button>
+          <div className="flex items-center justify-between gap-2 rounded-lg px-3 py-2 text-xs font-bold text-white hover:bg-slate-700 cursor-pointer" onClick={() => setDarkMode(!darkMode)}>
+            <span>Modo escuro</span>
+            <div className={`w-7 h-3.5 rounded-full relative transition-colors ${darkMode ? '' : 'bg-slate-600'}`} style={{ backgroundColor: darkMode ? corPrimaria : '', border: darkMode && corEhClara(corPrimaria) ? '1px solid rgba(15, 23, 42, 0.35)' : '' }}>
+              <span className={`absolute left-0.5 top-0.5 w-2.5 h-2.5 rounded-full transition-transform ${darkMode ? 'translate-x-3.5' : ''}`} style={{ backgroundColor: darkMode && corEhClara(corPrimaria) ? '#0f172a' : '#ffffff' }} />
             </div>
           </div>
+        </div>
+      </>
+    )}
+
+    {/* ===== DROPDOWN: CONFIGURACOES ===== */}
+    {menuAjuste === 'config' && menuAjusteRect && (
+      <>
+        <div className="fixed inset-0 z-[1205]" onClick={() => setMenuAjuste(null)} />
+        <div className="fixed z-[1210] w-56 rounded-xl border border-slate-700 bg-slate-900 p-2 shadow-2xl" style={{ top: menuAjusteRect.top, left: menuAjusteRect.left }}>
+          <div className="flex items-center justify-between gap-2 rounded-lg px-3 py-2 text-xs font-bold text-white hover:bg-slate-700 cursor-pointer" onClick={() => setDuplicadosAtivo(!duplicadosAtivo)}>
+            <span>Duplicados</span>
+            <div className={`w-7 h-3.5 rounded-full relative transition-colors ${duplicadosAtivo ? '' : 'bg-slate-600'}`} style={{ backgroundColor: duplicadosAtivo ? corPrimaria : '', border: duplicadosAtivo && corEhClara(corPrimaria) ? '1px solid rgba(15, 23, 42, 0.35)' : '' }}>
+              <span className={`absolute left-0.5 top-0.5 w-2.5 h-2.5 rounded-full transition-transform ${duplicadosAtivo ? 'translate-x-3.5' : ''}`} style={{ backgroundColor: duplicadosAtivo && corEhClara(corPrimaria) ? '#0f172a' : '#ffffff' }} />
+            </div>
+          </div>
+
+          {podeGerenciarUsuarios && (
+            <button type="button" onClick={() => { setAjustesAberto(false); abrirModalUsuarios(); }} className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-xs font-bold text-white transition-colors hover:bg-slate-700">
+              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 20h5v-2a4 4 0 00-4-4h-1M9 20H4v-2a4 4 0 014-4h1m8-6a4 4 0 11-8 0 4 4 0 018 0zm6 2a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+              Usuários
+            </button>
+          )}
+
+          <button type="button" onClick={() => { setAjustesAberto(false); setModalEmpresasAberto(true); }} className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-xs font-bold text-white transition-colors hover:bg-slate-700">
+            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5.121 17.804A13 13 0 0112 16c2.5 0 4.847.655 6.879 1.804M15 10a3 3 0 11-6 0 3 3 0 016 0zm6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+            Perfil
+          </button>
+
+          <div className="my-1 border-t border-slate-700" />
+
+          <button
+            onClick={() => { if (!podeAcessarAjustes) { abrirAviso('Acesso não permitido', 'Você não tem permissão para gerar backup dos dados da empresa.'); return; } setAjustesAberto(false); abrirConfirmacao({ titulo: 'Gerar backup', mensagem: 'O sistema vai gerar um arquivo Excel com os dados da empresa atual.\n\nDeseja continuar?', textoConfirmar: 'Gerar backup', acao: async () => { await gerarBackupExcel(backupParams()); } }); }}
+            className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-xs font-bold text-emerald-300 transition-colors hover:bg-slate-700"
+          >
+            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+            Backup
+          </button>
+
+          <button type="button" onClick={() => { setMenuAjuste(null); abrirImportacaoBackup(); }} className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-xs font-bold text-cyan-300 transition-colors hover:bg-slate-700">
+            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 8V7a3 3 0 013-3h10a3 3 0 013 3v1M12 4v12m0 0l-4-4m4 4l4-4M5 20h14" /></svg>
+            Restauração
+          </button>
+        </div>
+      </>
+    )}
 
           {statusConfig !== 'idle' && (
             <div

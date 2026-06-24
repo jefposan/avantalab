@@ -987,7 +987,7 @@ const mostrarComparativoResumoDash =
             {itensVisiveis.map((id) => (
               <div
                 key={id}
-                className="mb-6 break-inside-avoid transition-[transform,opacity] duration-300 ease-out"
+                className="pb-6 break-inside-avoid transition-[transform,opacity] duration-300 ease-out"
                 style={{
                   columnSpan: expandidosSet.has(id) ? 'all' : 'none',
                   viewTransitionName: `dashboard-card-${id}`,

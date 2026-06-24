@@ -9,6 +9,8 @@ create table if not exists public.ponto_funcionarios (
   id          uuid primary key default gen_random_uuid(),
   user_id     uuid not null references auth.users(id) on delete cascade,
   empresa_id  uuid not null references public.empresas(id) on delete cascade,
+  nome        text not null default '',
+  login       text not null default '',
   cargo       text not null default '',
   ativo       boolean not null default true,
   criado_em   timestamptz not null default now(),
@@ -19,7 +21,10 @@ create index if not exists ponto_funcionarios_empresa_idx
 
 alter table public.ponto_funcionarios enable row level security;
 create policy "ponto_funcionarios_select" on public.ponto_funcionarios
-  for select using (empresa_id in (select empresa_id from public.usuarios_empresa where user_id = auth.uid()));
+  for select using (
+    user_id = auth.uid()
+    or empresa_id in (select empresa_id from public.usuarios_empresa where user_id = auth.uid() and perfil in ('gestor_master','administrador'))
+  );
 create policy "ponto_funcionarios_insert" on public.ponto_funcionarios
   for insert with check (empresa_id in (select empresa_id from public.usuarios_empresa where user_id = auth.uid()));
 create policy "ponto_funcionarios_update" on public.ponto_funcionarios
@@ -44,9 +49,12 @@ create index if not exists ponto_registros_empresa_dia_idx on public.ponto_regis
 create index if not exists ponto_registros_user_dia_idx on public.ponto_registros(user_id, dia);
 
 alter table public.ponto_registros enable row level security;
--- Gestor vê os da empresa; a UI mostra ao funcionário só os dele.
+-- Cada um lê os próprios; gestor/admin lê os de todos da empresa.
 create policy "ponto_registros_select" on public.ponto_registros
-  for select using (empresa_id in (select empresa_id from public.usuarios_empresa where user_id = auth.uid()));
+  for select using (
+    user_id = auth.uid()
+    or empresa_id in (select empresa_id from public.usuarios_empresa where user_id = auth.uid() and perfil in ('gestor_master','administrador'))
+  );
 -- Cada um registra o PRÓPRIO ponto.
 create policy "ponto_registros_insert" on public.ponto_registros
   for insert with check (
