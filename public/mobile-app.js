@@ -7749,7 +7749,7 @@
     });
 
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/mobile-sw.js?v=139').then(function (registro) {
+      navigator.serviceWorker.register('/mobile-sw.js?v=140').then(function (registro) {
         if (registro && registro.update) registro.update();
       }).catch(function () {});
     }
