@@ -201,6 +201,7 @@
     pontoRegistrosLista: [],
     pontoPeriodo: 'dia',
     pontoConfig: null,
+    pontoFuncDados: null,
     tourAberto: false,
     tourPasso: 0,
     agendaTipoItem: 'lembrete',
@@ -4236,9 +4237,29 @@
     }
   }
 
+  async function carregarPontoFuncMobile() {
+    if (state.pontoFuncDados || !state.usuario || !state.usuario.id) return;
+    try {
+      var resp = await db.from('ponto_funcionarios')
+        .select('dias_trabalho, hora_entrada, hora_saida')
+        .eq('user_id', state.usuario.id)
+        .maybeSingle();
+      state.pontoFuncDados = (!resp.error && resp.data) ? resp.data : { dias_trabalho: null };
+    } catch (e) {
+      state.pontoFuncDados = { dias_trabalho: null };
+    }
+  }
+
+  // weekday (0=Dom..6=Sab) da data de hoje em Brasilia, independente do fuso do aparelho
+  function diaSemanaHojePonto() {
+    var p = diaPontoHoje().split('-');
+    return new Date(Date.UTC(+p[0], +p[1] - 1, +p[2])).getUTCDay();
+  }
+
   async function carregarPontoHoje() {
     if (!state.usuario || !state.usuario.id) return;
     await carregarPontoConfigMobile();
+    await carregarPontoFuncMobile();
     try {
       var resp = await db.from('ponto_registros')
         .select('id, tipo, registrado_em')
@@ -4252,6 +4273,11 @@
 
   function baterPonto(tipo) {
     if (state.pontoBatendo) return;
+    var fd = state.pontoFuncDados;
+    if (fd && Array.isArray(fd.dias_trabalho) && fd.dias_trabalho.length > 0 && fd.dias_trabalho.indexOf(diaSemanaHojePonto()) === -1) {
+      mostrarToast('Hoje nao e um dia de trabalho. Nao e possivel bater o ponto.');
+      return;
+    }
     if (!navigator.geolocation) { mostrarToast('Geolocalizacao indisponivel neste aparelho.'); return; }
     state.pontoBatendo = true;
     render();
@@ -7723,7 +7749,7 @@
     });
 
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/mobile-sw.js?v=138').then(function (registro) {
+      navigator.serviceWorker.register('/mobile-sw.js?v=139').then(function (registro) {
         if (registro && registro.update) registro.update();
       }).catch(function () {});
     }
