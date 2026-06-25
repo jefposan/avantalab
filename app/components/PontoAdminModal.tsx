@@ -57,13 +57,13 @@ interface PontoAdminModalProps {
   funcionarios: FuncionarioPonto[];
   carregando: boolean;
   onCriar: (dados: { nome: string; cpf: string; senha: string; cargo: string; horaEntrada?: string; horaSaida?: string; diasTrabalho?: number[] }) => Promise<{ erro: boolean; mensagem?: string }>;
-  onAtualizar: (id: string, dados: { nome?: string; cargo: string; horaEntrada?: string; horaSaida?: string; ativo: boolean; diasTrabalho?: number[] }) => Promise<{ erro: boolean; mensagem?: string }>;
+  onAtualizar: (funcionarioUserId: string, dados: { nome: string; cargo: string; cpf?: string; horaEntrada?: string; horaSaida?: string; ativo: boolean; diasTrabalho?: number[] }) => Promise<{ erro: boolean; mensagem?: string }>;
   onRedefinirSenha: (funcionarioUserId: string, novaSenha: string) => Promise<{ erro: boolean; mensagem?: string }>;
   config: PontoConfig;
   onSalvarConfig: (dados: { latitude: number; longitude: number; raio_m: number }) => Promise<{ erro: boolean; mensagem?: string }>;
   onCarregarRegistros: (funcionarioUserId: string, dataInicioISO: string) => Promise<RegistroPonto[]>;
+  onExcluir: (funcionarioUserId: string) => Promise<{ erro: boolean; mensagem?: string }>;
   darkMode: boolean;
-  corPrimaria: string;
 }
 
 export default function PontoAdminModal({
@@ -74,12 +74,14 @@ export default function PontoAdminModal({
   onCriar,
   onAtualizar,
   onRedefinirSenha,
+  onExcluir,
   config,
   onSalvarConfig,
   onCarregarRegistros,
   darkMode,
-  corPrimaria,
 }: PontoAdminModalProps) {
+  // Cor padrão do sistema (marca AvantaLab) — não usa a cor do usuário (corSistema).
+  const corSistema = '#003E73';
   const [aba, setAba] = useState<'lista' | 'novo' | 'local' | 'relatorios'>('lista');
   const [nome, setNome] = useState('');
   const [cpf, setCpf] = useState('');
@@ -109,10 +111,14 @@ export default function PontoAdminModal({
   const [editDias, setEditDias] = useState<number[]>([1, 2, 3, 4, 5]);
   const [salvandoEdit, setSalvandoEdit] = useState(false);
   const [msgEdit, setMsgEdit] = useState<string | null>(null);
+  const [editCpf, setEditCpf] = useState('');
   const [editSenha, setEditSenha] = useState('');
   const [verEditSenha, setVerEditSenha] = useState(false);
   const [salvandoSenha, setSalvandoSenha] = useState(false);
   const [msgSenha, setMsgSenha] = useState<{ tipo: 'ok' | 'erro'; texto: string } | null>(null);
+  const [excluindo, setExcluindo] = useState(false);
+  const [confirmandoExcluir, setConfirmandoExcluir] = useState(false);
+  const cardEditRef = useRef<HTMLDivElement | null>(null);
 
   const [relFuncId, setRelFuncId] = useState('');
   const [relAno, setRelAno] = useState<number>(new Date().getFullYear());
@@ -175,6 +181,7 @@ export default function PontoAdminModal({
   const itemBorda = darkMode ? 'border-slate-700' : 'border-slate-200';
   const textMuted = darkMode ? 'text-slate-400' : 'text-slate-500';
   const inputCls = `h-10 w-full rounded-lg border px-3 text-sm outline-none ${darkMode ? 'border-slate-600 bg-slate-800 text-white' : 'border-slate-300 bg-white text-slate-800'}`;
+  const labelCls = `grid gap-1 text-[11px] font-black uppercase tracking-wide ${darkMode ? 'text-slate-300' : 'text-slate-500'}`;
 
   const enviar = async () => {
     setMsg(null);
@@ -207,7 +214,7 @@ export default function PontoAdminModal({
             type="button"
             onClick={() => toggleDia(dias, setDias, n)}
             className="flex-1 rounded-md py-1.5 text-[10px] font-black uppercase transition"
-            style={ativo ? { backgroundColor: corPrimaria, color: '#fff' } : { backgroundColor: darkMode ? '#1e293b' : '#f1f5f9', color: darkMode ? '#94a3b8' : '#64748b' }}
+            style={ativo ? { backgroundColor: corSistema, color: '#fff' } : { backgroundColor: darkMode ? '#1e293b' : '#f1f5f9', color: darkMode ? '#94a3b8' : '#64748b' }}
           >{lbl}</button>
         );
       })}
@@ -224,23 +231,43 @@ export default function PontoAdminModal({
     setEditId(f.id);
     setEditNome(f.nome || '');
     setEditCargo(f.cargo || '');
+    setEditCpf(f.cpf ? f.cpf : '');
     setEditEntrada(f.hora_entrada ? f.hora_entrada.slice(0, 5) : '');
     setEditSaida(f.hora_saida ? f.hora_saida.slice(0, 5) : '');
     setEditAtivo(f.ativo);
     setEditDias(Array.isArray(f.dias_trabalho) ? f.dias_trabalho : [1, 2, 3, 4, 5]);
     setEditSenha(''); setVerEditSenha(false); setMsgSenha(null);
-    setMsgEdit(null);
-    // rola o painel para o topo para ver o formulário de edição
-    setTimeout(() => { if (listaScrollRef.current) listaScrollRef.current.scrollTop = 0; }, 0);
+    setMsgEdit(null); setConfirmandoExcluir(false);
+    // rola o card em edição para o topo do painel (nome logo abaixo do header)
+    setTimeout(() => { if (cardEditRef.current) cardEditRef.current.scrollIntoView({ block: 'start', behavior: 'smooth' }); }, 60);
   };
 
-  const salvarEdicao = async (id: string) => {
+  const cpfEditDigitos = editCpf.replace(/\D/g, '');
+  const cpfEditInvalido = cpfEditDigitos.length > 0 && !cpfValido(editCpf);
+  const cpfNovoInvalido = cpf.replace(/\D/g, '').length > 0 && !cpfValido(cpf);
+
+  const salvarEdicao = async (userId: string) => {
     setMsgEdit(null);
+    if (cpfEditDigitos.length > 0 && !cpfValido(editCpf)) { setMsgEdit('CPF inválido. Corrija para salvar.'); return; }
     setSalvandoEdit(true);
-    const r = await onAtualizar(id, { nome: editNome.trim(), cargo: editCargo.trim(), horaEntrada: editEntrada || undefined, horaSaida: editSaida || undefined, ativo: editAtivo, diasTrabalho: editDias });
+    const r = await onAtualizar(userId, {
+      nome: editNome.trim(), cargo: editCargo.trim(),
+      cpf: cpfEditDigitos.length === 11 ? cpfEditDigitos : undefined,
+      horaEntrada: editEntrada || undefined, horaSaida: editSaida || undefined,
+      ativo: editAtivo, diasTrabalho: editDias,
+    });
     setSalvandoEdit(false);
     if (r.erro) setMsgEdit(r.mensagem || 'Não foi possível salvar.');
     else setEditId(null);
+  };
+
+  const excluirFuncionario = async (userId: string) => {
+    setMsgEdit(null);
+    setExcluindo(true);
+    const r = await onExcluir(userId);
+    setExcluindo(false);
+    if (r.erro) setMsgEdit(r.mensagem || 'Não foi possível excluir.');
+    else { setConfirmandoExcluir(false); setEditId(null); }
   };
 
   const salvarSenha = async (userId: string) => {
@@ -419,7 +446,7 @@ export default function PontoAdminModal({
               type="button"
               onClick={() => { setAba(a); setMsg(null); setMsgLocal(null); }}
               className="rounded-t-lg px-2.5 py-2 text-[11px] font-black uppercase tracking-wide"
-              style={aba === a ? { color: corPrimaria, borderBottom: `2px solid ${corPrimaria}` } : { color: darkMode ? '#94a3b8' : '#64748b' }}
+              style={aba === a ? { color: corSistema, borderBottom: `2px solid ${corSistema}` } : { color: darkMode ? '#94a3b8' : '#64748b' }}
             >
               {label}
             </button>
@@ -435,47 +462,58 @@ export default function PontoAdminModal({
             ) : (
               <div className="grid gap-2">
                 {funcionarios.map((f) => (
-                  <div key={f.id} className={`rounded-xl border p-3 ${itemBorda}`}>
+                  <div
+                    key={f.id}
+                    ref={editId === f.id ? cardEditRef : undefined}
+                    className={`rounded-xl border p-3 ${itemBorda}`}
+                    style={editId === f.id ? { borderColor: corSistema, borderWidth: 2 } : undefined}
+                  >
                     <div className="flex items-center gap-3">
-                      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-cyan-50 text-sm font-black text-cyan-700">{(f.nome || '?').charAt(0).toUpperCase()}</span>
+                      <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-sm font-black ${darkMode ? 'bg-slate-700 text-slate-100' : 'bg-cyan-50 text-cyan-700'}`}>{(f.nome || '?').charAt(0).toUpperCase()}</span>
                       <div className="min-w-0 flex-1">
                         <p className="truncate text-sm font-black">{f.nome}</p>
                         <p className={`truncate text-xs ${textMuted}`}>{formatarCpf(f.cpf || f.login)}{f.cargo ? ' · ' + f.cargo : ''}{f.hora_entrada ? ' · ' + f.hora_entrada.slice(0, 5) + (f.hora_saida ? '–' + f.hora_saida.slice(0, 5) : '') : ''}</p>
                         <p className={`truncate text-[10px] ${textMuted}`}>{resumoDias(f.dias_trabalho)}</p>
                       </div>
-                      {!f.ativo && <span className="shrink-0 rounded-full bg-slate-200 px-2 py-0.5 text-[10px] font-black uppercase text-slate-600">Inativo</span>}
-                      <button type="button" onClick={() => (editId === f.id ? setEditId(null) : abrirEdicao(f))} className="shrink-0 rounded-lg px-2 py-1 text-[11px] font-black uppercase tracking-wide" style={{ color: corPrimaria }}>{editId === f.id ? 'Fechar' : 'Editar'}</button>
+                      {!f.ativo && <span className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-black uppercase ${darkMode ? 'bg-slate-700 text-slate-300' : 'bg-slate-200 text-slate-600'}`}>Inativo</span>}
+                      <button type="button" onClick={() => (editId === f.id ? setEditId(null) : abrirEdicao(f))} className="shrink-0 rounded-lg px-2 py-1 text-[11px] font-black uppercase tracking-wide" style={{ color: corSistema }}>{editId === f.id ? 'Fechar' : 'Editar'}</button>
                     </div>
 
                     {editId === f.id && (
                       <div className={`mt-3 grid gap-2 border-t pt-3 ${itemBorda}`}>
-                        <label className="grid gap-1 text-[11px] font-black uppercase tracking-wide text-slate-500">Nome
+                        <label className={labelCls}>Nome
                           <input className={inputCls} value={editNome} onChange={(e) => setEditNome(e.target.value)} placeholder="Nome do funcionário" />
                         </label>
-                        <label className="grid gap-1 text-[11px] font-black uppercase tracking-wide text-slate-500">Cargo
+                        <label className={labelCls}>CPF (login)
+                          <input className={inputCls + (cpfEditInvalido ? ' border-red-500' : '')} value={formatarCpf(editCpf)} onChange={(e) => setEditCpf(e.target.value.replace(/\D/g, '').slice(0, 11))} placeholder="000.000.000-00" inputMode="numeric" autoComplete="off" />
+                          {cpfEditInvalido
+                            ? <span className="text-[11px] font-bold text-red-600">CPF inválido — confira os dígitos.</span>
+                            : (!editCpf && <span className={`text-[10px] ${textMuted}`}>Defina um CPF para este funcionário passar a logar por CPF.</span>)}
+                        </label>
+                        <label className={labelCls}>Cargo
                           <input className={inputCls} value={editCargo} onChange={(e) => setEditCargo(e.target.value)} placeholder="ex: Vendedor" />
                         </label>
                         <div className="grid grid-cols-2 gap-2">
-                          <label className="grid gap-1 text-[11px] font-black uppercase tracking-wide text-slate-500">Entrada
+                          <label className={labelCls}>Entrada
                             <input className={inputCls} type="time" value={editEntrada} onChange={(e) => setEditEntrada(e.target.value)} />
                           </label>
-                          <label className="grid gap-1 text-[11px] font-black uppercase tracking-wide text-slate-500">Saída
+                          <label className={labelCls}>Saída
                             <input className={inputCls} type="time" value={editSaida} onChange={(e) => setEditSaida(e.target.value)} />
                           </label>
                         </div>
                         <div className="grid gap-1">
-                          <span className="text-[11px] font-black uppercase tracking-wide text-slate-500">Dias de trabalho</span>
+                          <span className={`text-[11px] font-black uppercase tracking-wide ${darkMode ? 'text-slate-300' : 'text-slate-500'}`}>Dias de trabalho</span>
                           {renderSeletorDias(editDias, setEditDias)}
                         </div>
                         <label className="flex items-center gap-2 text-xs font-bold">
                           <input type="checkbox" checked={editAtivo} onChange={(e) => setEditAtivo(e.target.checked)} className="h-4 w-4" />
                           Funcionário ativo
                         </label>
-                        <button type="button" onClick={() => salvarEdicao(f.id)} disabled={salvandoEdit} className="mt-1 h-10 rounded-xl text-sm font-black text-white shadow transition hover:brightness-110 disabled:opacity-60" style={{ backgroundColor: corPrimaria }}>{salvandoEdit ? 'Salvando...' : 'Salvar alterações'}</button>
+                        <button type="button" onClick={() => salvarEdicao(f.user_id)} disabled={salvandoEdit} className="mt-1 h-10 rounded-xl text-sm font-black text-white shadow transition hover:brightness-110 disabled:opacity-60" style={{ backgroundColor: corSistema }}>{salvandoEdit ? 'Salvando...' : 'Salvar alterações'}</button>
                         {msgEdit && <p className="text-xs font-bold text-red-600">{msgEdit}</p>}
 
                         <div className={`mt-1 grid gap-2 border-t pt-3 ${itemBorda}`}>
-                          <span className="text-[11px] font-black uppercase tracking-wide text-slate-500">Alterar senha</span>
+                          <span className={`text-[11px] font-black uppercase tracking-wide ${darkMode ? 'text-slate-300' : 'text-slate-500'}`}>Alterar senha</span>
                           <div className="relative">
                             <input className={inputCls + ' pr-10'} type={verEditSenha ? 'text' : 'password'} value={editSenha} onChange={(e) => setEditSenha(e.target.value)} placeholder="Nova senha (mín. 8)" />
                             <button type="button" onClick={() => setVerEditSenha(!verEditSenha)} aria-label={verEditSenha ? 'Ocultar senha' : 'Mostrar senha'} className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
@@ -489,6 +527,20 @@ export default function PontoAdminModal({
                           <button type="button" onClick={() => salvarSenha(f.user_id)} disabled={salvandoSenha} className={`h-9 rounded-xl border text-xs font-black uppercase tracking-wide transition disabled:opacity-60 ${darkMode ? 'border-slate-600 text-slate-200 hover:bg-slate-700' : 'border-slate-300 text-slate-600 hover:bg-slate-100'}`}>{salvandoSenha ? 'Salvando...' : 'Salvar nova senha'}</button>
                           {msgSenha && <p className={`text-xs font-bold ${msgSenha.tipo === 'ok' ? 'text-emerald-600' : 'text-red-600'}`}>{msgSenha.texto}</p>}
                         </div>
+
+                        <div className={`mt-1 border-t pt-3 ${itemBorda}`}>
+                          {!confirmandoExcluir ? (
+                            <button type="button" onClick={() => setConfirmandoExcluir(true)} className={`h-9 w-full rounded-xl border text-xs font-black uppercase tracking-wide transition ${darkMode ? 'border-red-500/40 text-red-300 hover:bg-red-500/10' : 'border-red-200 text-red-600 hover:bg-red-50'}`}>Excluir funcionário</button>
+                          ) : (
+                            <div className="grid gap-2">
+                              <p className={`text-xs font-bold ${darkMode ? 'text-red-300' : 'text-red-600'}`}>Excluir {f.nome}? Esta ação não pode ser desfeita.</p>
+                              <div className="flex gap-2">
+                                <button type="button" onClick={() => setConfirmandoExcluir(false)} disabled={excluindo} className={`h-9 flex-1 rounded-xl border text-xs font-black uppercase tracking-wide transition disabled:opacity-60 ${darkMode ? 'border-slate-600 text-slate-200 hover:bg-slate-700' : 'border-slate-300 text-slate-600 hover:bg-slate-100'}`}>Cancelar</button>
+                                <button type="button" onClick={() => excluirFuncionario(f.user_id)} disabled={excluindo} className="h-9 flex-1 rounded-xl bg-red-600 text-xs font-black uppercase tracking-wide text-white transition hover:bg-red-500 disabled:opacity-60">{excluindo ? 'Excluindo...' : 'Confirmar exclusão'}</button>
+                              </div>
+                            </div>
+                          )}
+                        </div>
                       </div>
                     )}
                   </div>
@@ -499,13 +551,14 @@ export default function PontoAdminModal({
 
           {aba === 'novo' && (
             <div className="grid gap-3">
-              <label className="grid gap-1 text-[11px] font-black uppercase tracking-wide text-slate-500">Nome
+              <label className={labelCls}>Nome
                 <input className={inputCls} value={nome} onChange={(e) => setNome(e.target.value)} placeholder="Nome do funcionário" />
               </label>
-              <label className="grid gap-1 text-[11px] font-black uppercase tracking-wide text-slate-500">CPF (será o login)
-                <input className={inputCls} value={formatarCpf(cpf)} onChange={(e) => setCpf(e.target.value.replace(/\D/g, '').slice(0, 11))} placeholder="000.000.000-00" inputMode="numeric" autoComplete="off" />
+              <label className={labelCls}>CPF (será o login)
+                <input className={inputCls + (cpfNovoInvalido ? ' border-red-500' : '')} value={formatarCpf(cpf)} onChange={(e) => setCpf(e.target.value.replace(/\D/g, '').slice(0, 11))} placeholder="000.000.000-00" inputMode="numeric" autoComplete="off" />
+                {cpfNovoInvalido && <span className="text-[11px] font-bold text-red-600">CPF inválido — confira os dígitos.</span>}
               </label>
-              <label className="grid gap-1 text-[11px] font-black uppercase tracking-wide text-slate-500">Senha (mín. 8)
+              <label className={labelCls}>Senha (mín. 8)
                 <div className="relative">
                   <input className={inputCls + ' pr-10'} type={verSenha ? 'text' : 'password'} value={senha} onChange={(e) => setSenha(e.target.value)} placeholder="Senha de acesso" />
                   <button type="button" onClick={() => setVerSenha(!verSenha)} aria-label={verSenha ? 'Ocultar senha' : 'Mostrar senha'} className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
@@ -517,22 +570,22 @@ export default function PontoAdminModal({
                   </button>
                 </div>
               </label>
-              <label className="grid gap-1 text-[11px] font-black uppercase tracking-wide text-slate-500">Cargo (opcional)
+              <label className={labelCls}>Cargo (opcional)
                 <input className={inputCls} value={cargo} onChange={(e) => setCargo(e.target.value)} placeholder="ex: Vendedor" />
               </label>
               <div className="grid grid-cols-2 gap-2">
-                <label className="grid gap-1 text-[11px] font-black uppercase tracking-wide text-slate-500">Entrada prevista
+                <label className={labelCls}>Entrada prevista
                   <input className={inputCls} type="time" value={horaEntrada} onChange={(e) => setHoraEntrada(e.target.value)} />
                 </label>
-                <label className="grid gap-1 text-[11px] font-black uppercase tracking-wide text-slate-500">Saída prevista
+                <label className={labelCls}>Saída prevista
                   <input className={inputCls} type="time" value={horaSaida} onChange={(e) => setHoraSaida(e.target.value)} />
                 </label>
               </div>
               <div className="grid gap-1">
-                <span className="text-[11px] font-black uppercase tracking-wide text-slate-500">Dias de trabalho</span>
+                <span className={`text-[11px] font-black uppercase tracking-wide ${darkMode ? 'text-slate-300' : 'text-slate-500'}`}>Dias de trabalho</span>
                 {renderSeletorDias(diasNovo, setDiasNovo)}
               </div>
-              <button type="button" onClick={enviar} disabled={enviando} className="mt-1 h-11 rounded-xl text-sm font-black text-white shadow transition hover:brightness-110 disabled:opacity-60" style={{ backgroundColor: corPrimaria }}>{enviando ? 'Cadastrando...' : 'Cadastrar funcionário'}</button>
+              <button type="button" onClick={enviar} disabled={enviando} className="mt-1 h-11 rounded-xl text-sm font-black text-white shadow transition hover:brightness-110 disabled:opacity-60" style={{ backgroundColor: corSistema }}>{enviando ? 'Cadastrando...' : 'Cadastrar funcionário'}</button>
               {msg && <p className={`text-xs font-bold ${msg.tipo === 'ok' ? 'text-emerald-600' : 'text-red-600'}`}>{msg.texto}</p>}
             </div>
           )}
@@ -540,19 +593,19 @@ export default function PontoAdminModal({
           {aba === 'local' && (
             <div className="grid gap-3">
               <p className={`text-xs ${textMuted}`}>Defina a localização da empresa. O funcionário só consegue bater o ponto dentro do raio definido.</p>
-              <button type="button" onClick={capturarLocal} disabled={capturando} className="h-10 rounded-xl border px-3 text-xs font-black uppercase tracking-wide transition disabled:opacity-60" style={{ borderColor: corPrimaria, color: corPrimaria }}>{capturando ? 'Capturando...' : 'Usar minha localização atual'}</button>
+              <button type="button" onClick={capturarLocal} disabled={capturando} className="h-10 rounded-xl border px-3 text-xs font-black uppercase tracking-wide transition disabled:opacity-60" style={{ borderColor: corSistema, color: corSistema }}>{capturando ? 'Capturando...' : 'Usar minha localização atual'}</button>
               <div className="grid grid-cols-2 gap-2">
-                <label className="grid gap-1 text-[11px] font-black uppercase tracking-wide text-slate-500">Latitude
+                <label className={labelCls}>Latitude
                   <input className={inputCls} value={lat} onChange={(e) => setLat(e.target.value)} placeholder="-23.5..." />
                 </label>
-                <label className="grid gap-1 text-[11px] font-black uppercase tracking-wide text-slate-500">Longitude
+                <label className={labelCls}>Longitude
                   <input className={inputCls} value={lng} onChange={(e) => setLng(e.target.value)} placeholder="-46.6..." />
                 </label>
               </div>
-              <label className="grid gap-1 text-[11px] font-black uppercase tracking-wide text-slate-500">Raio permitido (metros)
+              <label className={labelCls}>Raio permitido (metros)
                 <input className={inputCls} type="number" value={raio} onChange={(e) => setRaio(e.target.value)} placeholder="100" />
               </label>
-              <button type="button" onClick={salvarLocal} disabled={salvandoLocal} className="mt-1 h-11 rounded-xl text-sm font-black text-white shadow transition hover:brightness-110 disabled:opacity-60" style={{ backgroundColor: corPrimaria }}>{salvandoLocal ? 'Salvando...' : 'Salvar local da empresa'}</button>
+              <button type="button" onClick={salvarLocal} disabled={salvandoLocal} className="mt-1 h-11 rounded-xl text-sm font-black text-white shadow transition hover:brightness-110 disabled:opacity-60" style={{ backgroundColor: corSistema }}>{salvandoLocal ? 'Salvando...' : 'Salvar local da empresa'}</button>
               {msgLocal && <p className={`text-xs font-bold ${msgLocal.tipo === 'ok' ? 'text-emerald-600' : 'text-red-600'}`}>{msgLocal.texto}</p>}
               <p className={`text-[11px] ${textMuted}`}>Dica: para pegar as coordenadas exatas, abra o Google Maps no local, toque/clique com o botão direito e copie a latitude/longitude.</p>
             </div>
@@ -575,10 +628,10 @@ export default function PontoAdminModal({
               <div className="grid grid-cols-[88px_minmax(0,1fr)] gap-2">
                 {/* Ano pill */}
                 <div className={`relative flex h-11 items-center gap-1.5 overflow-hidden rounded-2xl border px-2.5 ${darkMode ? 'border-slate-700 bg-slate-800' : 'border-slate-200 bg-slate-50'}`}>
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" className="shrink-0" style={{ color: corPrimaria }}><rect x="3.5" y="4.5" width="17" height="16" rx="2.5" stroke="currentColor" strokeWidth="2"/><path d="M3.5 9h17M8 3v3M16 3v3" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/></svg>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" className="shrink-0" style={{ color: corSistema }}><rect x="3.5" y="4.5" width="17" height="16" rx="2.5" stroke="currentColor" strokeWidth="2"/><path d="M3.5 9h17M8 3v3M16 3v3" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/></svg>
                   <div className="leading-none">
                     <p className="text-sm font-black">{relAno}</p>
-                    <p className="mt-0.5 text-[8px] font-black uppercase tracking-wide" style={{ color: corPrimaria }}>Ano</p>
+                    <p className="mt-0.5 text-[8px] font-black uppercase tracking-wide" style={{ color: corSistema }}>Ano</p>
                   </div>
                   <select
                     aria-label="Selecionar ano"
@@ -627,11 +680,11 @@ export default function PontoAdminModal({
 
               {/* Período personalizado */}
               <div className="grid grid-cols-2 gap-2">
-                <label className="grid gap-1 text-[11px] font-black uppercase tracking-wide text-slate-500">
+                <label className={labelCls}>
                   De
                   <input className={inputCls} type="date" value={relDataInicio} onChange={(e) => setRelDataInicio(e.target.value)} />
                 </label>
-                <label className="grid gap-1 text-[11px] font-black uppercase tracking-wide text-slate-500">
+                <label className={labelCls}>
                   Até
                   <input className={inputCls} type="date" value={relDataFim} onChange={(e) => setRelDataFim(e.target.value)} />
                 </label>
@@ -643,7 +696,7 @@ export default function PontoAdminModal({
                 onClick={() => carregarRelatorio(relFuncId)}
                 disabled={!relFuncId || relCarregando}
                 className="h-11 rounded-xl text-sm font-black text-white shadow transition hover:brightness-110 disabled:opacity-40"
-                style={{ backgroundColor: corPrimaria }}
+                style={{ backgroundColor: corSistema }}
               >
                 {relCarregando ? 'Buscando...' : 'Buscar registros'}
               </button>
@@ -660,7 +713,7 @@ export default function PontoAdminModal({
                     <div className={`grid gap-2 rounded-xl border p-3 ${itemBorda}`}>
                       <div className="flex items-center justify-between text-xs font-black">
                         <span>Pontualidade na entrada</span>
-                        <span style={{ color: corPrimaria }}>{pctPontual}%</span>
+                        <span style={{ color: corSistema }}>{pctPontual}%</span>
                       </div>
                       <div className="h-2 w-full overflow-hidden rounded-full" style={{ backgroundColor: darkMode ? '#334155' : '#e2e8f0' }}>
                         <div className="h-full rounded-full" style={{ width: pctPontual + '%', backgroundColor: '#10b981' }} />

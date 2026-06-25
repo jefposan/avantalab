@@ -1573,22 +1573,43 @@ useEffect(() => {
     }
   }
 
-  async function atualizarFuncionarioPonto(id: string, dados: { nome?: string; cargo: string; horaEntrada?: string; horaSaida?: string; ativo: boolean; diasTrabalho?: number[] }) {
+  async function atualizarFuncionarioPonto(funcionarioUserId: string, dados: { nome: string; cargo: string; cpf?: string; horaEntrada?: string; horaSaida?: string; ativo: boolean; diasTrabalho?: number[] }) {
     if (!empresaId) return { erro: true, mensagem: 'Perfil não identificado.' };
     try {
-      const atualizacao: Record<string, unknown> = { cargo: dados.cargo, hora_entrada: dados.horaEntrada || null, hora_saida: dados.horaSaida || null, ativo: dados.ativo };
-      if (dados.nome) atualizacao.nome = dados.nome;
-      if (dados.diasTrabalho) atualizacao.dias_trabalho = dados.diasTrabalho;
-      const { error } = await supabase
-        .from('ponto_funcionarios')
-        .update(atualizacao)
-        .eq('id', id)
-        .eq('empresa_id', empresaId);
-      if (error) { console.error('atualizarFuncionarioPonto', error); return { erro: true, mensagem: 'Não foi possível salvar.' }; }
+      const { data: sessao } = await supabase.auth.getSession();
+      const token = sessao.session?.access_token;
+      if (!token) return { erro: true, mensagem: 'Sessão não encontrada. Faça login novamente.' };
+      const resp = await fetch('/api/atualizar-funcionario-ponto', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ empresaId, funcionarioUserId, ...dados }),
+      });
+      const r = await resp.json();
+      if (!resp.ok || r.erro) return { erro: true, mensagem: r.mensagem || 'Não foi possível salvar.' };
       await carregarFuncionariosPonto();
       return { erro: false };
     } catch {
       return { erro: true, mensagem: 'Erro ao salvar o funcionário.' };
+    }
+  }
+
+  async function excluirFuncionarioPonto(funcionarioUserId: string) {
+    if (!empresaId) return { erro: true, mensagem: 'Perfil não identificado.' };
+    try {
+      const { data: sessao } = await supabase.auth.getSession();
+      const token = sessao.session?.access_token;
+      if (!token) return { erro: true, mensagem: 'Sessão não encontrada. Faça login novamente.' };
+      const resp = await fetch('/api/excluir-funcionario-ponto', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ empresaId, funcionarioUserId }),
+      });
+      const r = await resp.json();
+      if (!resp.ok || r.erro) return { erro: true, mensagem: r.mensagem || 'Não foi possível excluir.' };
+      await carregarFuncionariosPonto();
+      return { erro: false };
+    } catch {
+      return { erro: true, mensagem: 'Erro ao excluir o funcionário.' };
     }
   }
 
@@ -5317,12 +5338,12 @@ if (isTelaMobile) {
   carregando={pontoFuncCarregando}
   onCriar={criarFuncionarioPonto}
   onAtualizar={atualizarFuncionarioPonto}
+  onExcluir={excluirFuncionarioPonto}
   onRedefinirSenha={redefinirSenhaPonto}
   config={pontoConfig}
   onSalvarConfig={salvarPontoConfig}
   onCarregarRegistros={carregarRegistrosPonto}
   darkMode={darkMode}
-  corPrimaria={corPrimaria}
 />
 
 <ModalConfirmacao
