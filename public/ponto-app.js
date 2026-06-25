@@ -50,6 +50,7 @@
     entrando: false,
     carregando: false,
     toast: null,
+    instalarInstrucao: false,
   };
 
   // ---------- helpers ----------
@@ -260,6 +261,10 @@
     return h + 'h ' + String(min % 60).padStart(2, '0') + 'min';
   }
 
+  function iconeCompartilhar() {
+    return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-4 w-4"><path stroke-linecap="round" stroke-linejoin="round" d="M12 15V4m0 0L8.5 7.5M12 4l3.5 3.5"/><path stroke-linecap="round" stroke-linejoin="round" d="M5 12v6a2 2 0 002 2h10a2 2 0 002-2v-6"/></svg>';
+  }
+
   function instalarPonto() {
     if (ehStandalone()) return;
     if (installPrompt) {
@@ -267,8 +272,26 @@
       installPrompt.userChoice.then(function () { installPrompt = null; render(); });
       return;
     }
-    if (ehIos) mostrarToast('No Safari, toque em Compartilhar e em "Adicionar à Tela de Início".');
-    else mostrarToast('Abra o menu do navegador e toque em "Adicionar à tela inicial".');
+    // iOS (ou navegador sem prompt nativo): mostra instruções com o ícone de compartilhar.
+    state.instalarInstrucao = true;
+    render();
+  }
+
+  function instrucaoInstalarHtml() {
+    if (!state.instalarInstrucao) return '';
+    return (
+      '<div id="ponto-instalar-overlay" class="fixed inset-0 z-[60] flex items-end justify-center bg-slate-950/50 p-4">' +
+        '<div class="w-full max-w-sm rounded-3xl bg-white p-5 shadow-2xl">' +
+          '<h2 class="text-base font-black text-slate-900">Instalar o Controle de Ponto</h2>' +
+          '<div class="mt-3 space-y-3 text-sm leading-relaxed text-slate-600">' +
+            '<p>No seu navegador, toque no botão <strong>Compartilhar</strong> <span class="inline-flex h-5 w-5 items-center justify-center align-middle text-sky-600">' + iconeCompartilhar() + '</span>.</p>' +
+            '<p>Depois escolha <strong>Adicionar à Tela de Início</strong>.</p>' +
+            '<p class="text-xs font-semibold text-slate-500">Assim o ponto abre como um app no seu celular.</p>' +
+          '</div>' +
+          '<button id="ponto-instalar-fechar" type="button" class="mt-4 h-11 w-full rounded-xl bg-slate-950 text-sm font-black uppercase tracking-wide text-white">Entendi</button>' +
+        '</div>' +
+      '</div>'
+    );
   }
 
   function cardInstalarHtml() {
@@ -455,9 +478,12 @@
     if (!state.pronto) tela = telaCarregandoPonto();
     else if (!state.autenticado) tela = telaLogin();
     else tela = telaPonto();
-    root.innerHTML = tela + toastHtml();
+    root.innerHTML = tela + toastHtml() + instrucaoInstalarHtml();
 
     bind('ponto-entrar', entrar);
+    bind('ponto-instalar-fechar', function () { state.instalarInstrucao = false; render(); });
+    var ovInstalar = document.getElementById('ponto-instalar-overlay');
+    if (ovInstalar) ovInstalar.addEventListener('click', function (e) { if (e.target === ovInstalar) { state.instalarInstrucao = false; render(); } });
     bind('ponto-instalar', instalarPonto);
     bind('ponto-ver-senha', function () { state.senha = campo('ponto-senha'); state.cpf = String(campo('ponto-cpf') || state.cpf).replace(/\D/g, ''); state.verSenha = !state.verSenha; render(); });
     bindInput('ponto-cpf', function () {

@@ -414,7 +414,7 @@
     return '<div class="mx-auto max-w-md px-4 py-5">' + conteudo + '</div>';
   }
 
-  var APP_VERSION = '1.3.14';
+  var APP_VERSION = '1.3.16';
   var APP_VERSION_LABEL = 'AvantaLab Gest&atilde;o v' + APP_VERSION;
 
   function telaAvisoMobile(titulo, texto) {
@@ -4951,17 +4951,19 @@
     return (
       '<div class="flex flex-col" style="height:100dvh;">' +
         // Cabeçalho próprio da agenda: sanduíche (menu) à esquerda, casinha (dashboard) à direita.
-        '<div class="flex shrink-0 items-center justify-between gap-3 px-4 pb-3 text-white shadow-lg" style="padding-top:calc(env(safe-area-inset-top) + 10px);background:linear-gradient(135deg,#003E73 0%,#075985 54%,#00A6C8 100%);">' +
+        '<div class="flex shrink-0 items-center gap-2 px-3 pb-3 text-white shadow-lg" style="padding-top:calc(env(safe-area-inset-top) + 10px);background:linear-gradient(135deg,#003E73 0%,#075985 54%,#00A6C8 100%);">' +
           '<button id="menu-toggle" type="button" class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-white/20 bg-white/12 text-lg font-black text-white shadow-sm backdrop-blur" aria-label="Abrir menu">&#9776;</button>' +
-          '<span class="text-sm font-black uppercase tracking-[0.22em] text-white/90">Agenda</span>' +
+          '<div class="flex h-10 flex-1 items-center justify-between rounded-2xl border border-white/15 bg-white/10 px-1 shadow-sm backdrop-blur">' +
+            '<button id="agenda-mes-prev" type="button" class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-2xl font-black leading-none text-white active:bg-white/10" aria-label="M&ecirc;s anterior">&lsaquo;</button>' +
+            '<h2 class="min-w-0 flex-1 truncate text-center text-sm font-black tracking-wide text-white">' + escapeHtml(nomeMesCompleto(state.mes)) + ' ' + escapeHtml(state.ano) + '</h2>' +
+            '<button id="agenda-mes-prox" type="button" class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-2xl font-black leading-none text-white active:bg-white/10" aria-label="Pr&oacute;ximo m&ecirc;s">&rsaquo;</button>' +
+          '</div>' +
           '<button id="voltar-dashboard-topo" type="button" class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-white/20 bg-white/12 text-lg font-black text-white shadow-sm backdrop-blur" aria-label="Ir para o dashboard">&#8962;</button>' +
         '</div>' +
         '<div class="min-h-0 flex-1 px-2 pb-2 pt-2" style="padding-bottom:calc(env(safe-area-inset-bottom) + 8px);">' +
           '<section id="agenda-mobile-screen" class="relative flex h-full overflow-hidden rounded-[28px] border border-slate-200 bg-slate-50 p-3 shadow-sm" style="touch-action:pan-y;">' +
             '<div class="flex min-h-0 w-full flex-col' + animAgenda + '">' +
-              '<div class="shrink-0 px-1 pb-2">' +
-                '<p class="text-center text-xs font-black uppercase tracking-wide text-cyan-700">' + escapeHtml(nomeMesCompleto(state.mes)) + ' ' + escapeHtml(state.ano) + '</p>' +
-              '</div>' +
+              '<h2 class="shrink-0 pb-2 text-center text-base font-black tracking-[0.22em] text-slate-700">AGENDA</h2>' +
               '<div class="' + classeGrade + '" ' + estiloGrade + '>' + celulas.join('') + '</div>' +
               painelDia +
             '</div>' +
@@ -6459,8 +6461,17 @@
     );
   }
 
+  function iconeCompartilharSvg() {
+    return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-4 w-4"><path stroke-linecap="round" stroke-linejoin="round" d="M12 15V4m0 0L8.5 7.5M12 4l3.5 3.5"/><path stroke-linecap="round" stroke-linejoin="round" d="M5 12v6a2 2 0 002 2h10a2 2 0 002-2v-6"/></svg>';
+  }
+
   function instalarIosHtml() {
-    return '<div class="space-y-3 text-sm leading-relaxed text-slate-600"><p>No iPhone, toque no botao de compartilhar do navegador.</p><p>Depois escolha <strong>Adicionar a Tela de Inicio</strong>.</p><p>Confirme o nome AvantaLab Gestao para abrir como aplicativo.</p><p class="text-xs font-semibold text-slate-500">Se essa opcao nao aparecer, procure no menu do navegador por compartilhar ou adicionar a tela inicial.</p></div>';
+    return '<div class="space-y-3 text-sm leading-relaxed text-slate-600">' +
+      '<p>No seu navegador, toque no bot&atilde;o <strong>Compartilhar</strong> <span class="inline-flex h-5 w-5 align-middle items-center justify-center text-sky-600">' + iconeCompartilharSvg() + '</span>.</p>' +
+      '<p>Depois escolha <strong>Adicionar &agrave; Tela de In&iacute;cio</strong>.</p>' +
+      '<p>Confirme o nome para abrir como aplicativo.</p>' +
+      '<p class="text-xs font-semibold text-slate-500">Se n&atilde;o aparecer, procure no menu do navegador por Compartilhar ou Adicionar &agrave; tela inicial.</p>' +
+    '</div>';
   }
 
   function instalarAndroidHtml() {
@@ -7080,6 +7091,8 @@
     bind('reset-resumo-dashboard', restaurarResumoPadrao);
     bind('mes-anterior', function () { mudarMes(-1); });
     bind('mes-proximo', function () { mudarMes(1); });
+    bind('agenda-mes-prev', function () { state.agendaAnimar = 'prev'; mudarMes(-1); });
+    bind('agenda-mes-prox', function () { state.agendaAnimar = 'prox'; mudarMes(1); });
     bind('ver-despesas', function () {
       state.visao = 'despesas';
       state.busca = '';
@@ -7826,7 +7839,7 @@
     });
 
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/mobile-sw.js?v=149').then(function (registro) {
+      navigator.serviceWorker.register('/mobile-sw.js?v=151').then(function (registro) {
         if (registro && registro.update) registro.update();
       }).catch(function () {});
     }

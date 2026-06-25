@@ -7,7 +7,7 @@ export const metadata: Metadata = {
   description: 'Registre seu ponto com CPF e senha.',
   manifest: '/ponto-manifest.json',
   robots: { index: false, follow: false },
-  appleWebApp: { capable: true, statusBarStyle: 'default', title: 'Ponto' },
+  appleWebApp: { capable: true, statusBarStyle: 'default', title: 'Avanta Ponto' },
   icons: {
     icon: '/images/ponto-icon-192.png',
     apple: '/images/ponto-icon-180.png',
@@ -84,7 +84,7 @@ export default function PontoPage() {
       </div>
 
       <script src="/mobile-supabase.js" defer />
-      <script src="/ponto-app.js?v=6" defer />
+      <script src="/ponto-app.js?v=7" defer />
     </main>
   );
 }

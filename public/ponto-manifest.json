@@ -1,6 +1,6 @@
 {
-  "name": "AvantaLab Ponto",
-  "short_name": "Ponto",
+  "name": "Avanta Ponto",
+  "short_name": "Avanta Ponto",
   "description": "Controle de Ponto AvantaLab",
   "start_url": "/ponto",
   "scope": "/ponto",
