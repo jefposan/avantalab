@@ -1481,13 +1481,30 @@ useEffect(() => {
     if (!empresaId) return;
     setPontoFuncCarregando(true);
     try {
-      const { data, error } = await supabase
+      const principal = await supabase
         .from('ponto_funcionarios')
         .select('id, user_id, nome, login, cpf, cargo, ativo, hora_entrada, hora_saida, dias_trabalho')
         .eq('empresa_id', empresaId)
         .order('nome', { ascending: true });
-      if (!error && data) setPontoFuncionarios(data as FuncionarioPonto[]);
-    } catch {}
+      if (!principal.error && principal.data) {
+        setPontoFuncionarios(principal.data as FuncionarioPonto[]);
+      } else {
+        // Compatibilidade: se a coluna cpf ainda não existir, recarrega sem ela
+        // (evita lista vazia "como se os funcionários tivessem sido apagados").
+        console.error('Erro ao carregar funcionários (tentando sem cpf):', principal.error);
+        const fallback = await supabase
+          .from('ponto_funcionarios')
+          .select('id, user_id, nome, login, cargo, ativo, hora_entrada, hora_saida, dias_trabalho')
+          .eq('empresa_id', empresaId)
+          .order('nome', { ascending: true });
+        if (!fallback.error && fallback.data) {
+          const comCpf = fallback.data.map((f: Record<string, unknown>) => ({ ...f, cpf: null }));
+          setPontoFuncionarios(comCpf as unknown as FuncionarioPonto[]);
+        }
+      }
+    } catch (e) {
+      console.error('Erro inesperado ao carregar funcionários de ponto:', e);
+    }
     setPontoFuncCarregando(false);
   }
 

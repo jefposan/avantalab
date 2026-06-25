@@ -17,7 +17,8 @@ export type FuncionarioPonto = {
 
 export function formatarCpf(v: string | null | undefined) {
   const d = String(v || '').replace(/\D/g, '').slice(0, 11);
-  if (d.length !== 11) return d;
+  // Não é CPF (ex.: funcionário antigo com login de texto): mostra o valor original.
+  if (d.length !== 11) return String(v || '');
   return `${d.slice(0, 3)}.${d.slice(3, 6)}.${d.slice(6, 9)}-${d.slice(9)}`;
 }
 
