@@ -414,7 +414,7 @@
     return '<div class="mx-auto max-w-md px-4 py-5">' + conteudo + '</div>';
   }
 
-  var APP_VERSION = '1.3.16';
+  var APP_VERSION = '1.3.17';
   var APP_VERSION_LABEL = 'AvantaLab Gest&atilde;o v' + APP_VERSION;
 
   function telaAvisoMobile(titulo, texto) {
@@ -4650,28 +4650,27 @@
   function avisoConfirmarHtml() {
     var pendentes = (state.lancamentos || []).filter(ehDespesaAConfirmar);
     if (!pendentes.length) return '';
-    var total = pendentes.reduce(function (s, i) { return s + i.valor; }, 0);
     var plural = pendentes.length > 1;
+    var sino = '<svg class="h-5 w-5 shrink-0" style="color:#d97706" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6 6 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" /></svg>';
     return (
-      '<section class="overflow-hidden rounded-2xl border border-amber-200 bg-amber-50 shadow-sm">' +
-        '<div class="flex items-center gap-2 px-4 pt-3">' +
-          '<span class="text-base">&#128276;</span>' +
-          '<h2 class="min-w-0 flex-1 text-sm font-black text-amber-900">' + pendentes.length + ' despesa' + (plural ? 's' : '') + ' prevista' + (plural ? 's' : '') + ' para confirmar</h2>' +
-          '<strong class="shrink-0 text-sm font-black text-amber-900">' + dinheiro(total) + '</strong>' +
+      '<section class="overflow-hidden rounded-2xl border border-amber-200 bg-white shadow-sm">' +
+        // Topo fixo: só o sininho + o aviso da quantidade.
+        '<div class="flex items-center gap-2 border-b border-amber-100 px-4 py-3">' +
+          sino +
+          '<h2 class="min-w-0 flex-1 text-sm font-black text-slate-900">' + pendentes.length + ' despesa' + (plural ? 's' : '') + ' prevista' + (plural ? 's' : '') + ' para confirmar</h2>' +
         '</div>' +
-        '<p class="px-4 pt-1 text-[11px] font-semibold leading-snug text-amber-700">J&aacute; entraram no total pelo valor previsto. Confirme, ajuste o valor ou marque que n&atilde;o ocorreu.</p>' +
-        '<div class="grid gap-2 p-4">' +
+        // Área das despesas: scroll próprio (o topo fica fixo).
+        '<div class="grid gap-2 overflow-y-auto p-3" style="max-height:42vh;">' +
           pendentes.map(function (item) {
-            return '<div class="rounded-xl border border-amber-100 bg-white p-3">' +
+            return '<div class="rounded-xl border border-slate-200 bg-white p-2.5">' +
               '<div class="flex items-center justify-between gap-2">' +
-                '<div class="min-w-0"><p class="truncate text-sm font-bold text-slate-800">' + escapeHtml(item.despesa) + '</p>' +
-                '<p class="truncate text-xs text-slate-500">' + escapeHtml(item.mes.charAt(0) + item.mes.slice(1).toLowerCase()) + ' &middot; Dia ' + item.dia + (item.descricao ? ' - ' + escapeHtml(item.descricao) : '') + '</p></div>' +
+                '<p class="min-w-0 truncate text-sm font-bold text-slate-800">' + escapeHtml(item.despesa) + ' <span class="text-xs font-semibold text-slate-400">&middot; dia ' + item.dia + '</span></p>' +
                 '<strong class="shrink-0 text-sm font-black text-red-600">' + dinheiro(item.valor) + '</strong>' +
               '</div>' +
-              '<div class="mt-2 grid grid-cols-3 gap-2">' +
-                '<button type="button" data-confirmar-id="' + escapeHtml(item.id) + '" class="h-9 rounded-lg bg-emerald-600 text-xs font-black text-white active:bg-emerald-700">Confirmar</button>' +
-                '<button type="button" data-ajustar-id="' + escapeHtml(item.id) + '" class="h-9 rounded-lg border border-slate-300 bg-white text-xs font-black text-slate-700 active:bg-slate-50">Ajustar valor</button>' +
-                '<button type="button" data-excluir-prevista-id="' + escapeHtml(item.id) + '" class="h-9 rounded-lg border border-red-200 bg-white text-xs font-black text-red-600 active:bg-red-50">Excluir</button>' +
+              '<div class="mt-2 grid grid-cols-3 gap-1.5">' +
+                '<button type="button" data-confirmar-id="' + escapeHtml(item.id) + '" class="h-8 rounded-lg bg-emerald-600 text-[11px] font-black text-white active:bg-emerald-700">Confirmar</button>' +
+                '<button type="button" data-ajustar-id="' + escapeHtml(item.id) + '" class="h-8 rounded-lg border border-slate-300 bg-white text-[11px] font-black text-slate-700 active:bg-slate-50">Ajustar valor</button>' +
+                '<button type="button" data-excluir-prevista-id="' + escapeHtml(item.id) + '" class="h-8 rounded-lg border border-red-200 bg-white text-[11px] font-black text-red-600 active:bg-red-50">Excluir</button>' +
               '</div>' +
             '</div>';
           }).join('') +
@@ -7839,7 +7838,7 @@
     });
 
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/mobile-sw.js?v=151').then(function (registro) {
+      navigator.serviceWorker.register('/mobile-sw.js?v=152').then(function (registro) {
         if (registro && registro.update) registro.update();
       }).catch(function () {});
     }

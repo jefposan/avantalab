@@ -529,33 +529,28 @@ const mostrarComparativoResumoDash =
 
   const cardsById: Record<string, React.ReactNode> = {
     aConfirmar: temAConfirmar ? (
-      <div className="w-full rounded-2xl border-2 border-amber-200 bg-amber-50 p-5 shadow-lg">
-        <div className="flex items-center gap-2">
-          <span className="text-lg">🔔</span>
-          <h3 className="flex-1 text-sm font-black text-amber-900">
+      <div className="flex max-h-[60vh] w-full flex-col overflow-hidden rounded-2xl border border-amber-200 bg-white shadow-sm">
+        <div className="flex shrink-0 items-center gap-2 border-b border-amber-100 px-4 py-3">
+          <svg className="h-5 w-5 shrink-0" style={{ color: '#d97706' }} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6 6 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+          </svg>
+          <h3 className="min-w-0 flex-1 text-sm font-black text-slate-900">
             {despesasAConfirmar.length} despesa{despesasAConfirmar.length > 1 ? 's' : ''} prevista{despesasAConfirmar.length > 1 ? 's' : ''} para confirmar
           </h3>
-          <strong className="text-sm font-black text-amber-900">
-            {formatarMoeda(despesasAConfirmar.reduce((s, i) => s + Number(i.valor || 0), 0))}
-          </strong>
           <DragHandle />
           <BotaoOpcoesCard id="aConfirmar" />
         </div>
-        <p className="mt-1 text-xs font-semibold text-amber-700">
-          Já entraram no total pelo valor previsto. Confirme, ajuste o valor ou exclua.
-        </p>
-        <div className="mt-4 grid gap-2">
+        <div className="grid gap-2 overflow-y-auto p-3">
           {despesasAConfirmar.map((d) => (
-            <div key={d.id} className="flex flex-col gap-2 rounded-xl border border-amber-100 bg-white p-3 sm:flex-row sm:items-center sm:justify-between">
-              <div className="min-w-0">
-                <p className="truncate text-sm font-bold text-slate-800">{d.despesa}</p>
-                <p className="truncate text-xs text-slate-500">{d.mes} · Dia {d.dia}{d.descricao ? ` - ${d.descricao}` : ''}</p>
+            <div key={d.id} className="rounded-xl border border-slate-200 bg-white p-2.5">
+              <div className="flex items-center justify-between gap-2">
+                <p className="min-w-0 truncate text-sm font-bold text-slate-800">{d.despesa} <span className="text-xs font-semibold text-slate-400">· dia {d.dia}</span></p>
+                <strong className="shrink-0 text-sm font-black text-red-600">{formatarMoeda(Number(d.valor || 0))}</strong>
               </div>
-              <div className="flex shrink-0 items-center gap-2">
-                <strong className="mr-2 text-sm font-black text-red-600">{formatarMoeda(Number(d.valor || 0))}</strong>
-                <button type="button" onClick={() => onConfirmarPrevista(d.id)} className="h-9 rounded-lg bg-emerald-600 px-3 text-xs font-black text-white hover:bg-emerald-700 cursor-pointer">Confirmar</button>
-                <button type="button" onClick={() => onAjustarPrevista(d)} className="h-9 rounded-lg border border-slate-300 bg-white px-3 text-xs font-black text-slate-700 hover:bg-slate-50 cursor-pointer">Ajustar valor</button>
-                <button type="button" onClick={() => onExcluirPrevista(d.id)} className="h-9 rounded-lg border border-red-200 bg-white px-3 text-xs font-black text-red-600 hover:bg-red-50 cursor-pointer">Excluir</button>
+              <div className="mt-2 grid grid-cols-3 gap-1.5">
+                <button type="button" onClick={() => onConfirmarPrevista(d.id)} className="h-8 rounded-lg bg-emerald-600 text-[11px] font-black text-white hover:bg-emerald-700 cursor-pointer">Confirmar</button>
+                <button type="button" onClick={() => onAjustarPrevista(d)} className="h-8 rounded-lg border border-slate-300 bg-white text-[11px] font-black text-slate-700 hover:bg-slate-50 cursor-pointer">Ajustar valor</button>
+                <button type="button" onClick={() => onExcluirPrevista(d.id)} className="h-8 rounded-lg border border-red-200 bg-white text-[11px] font-black text-red-600 hover:bg-red-50 cursor-pointer">Excluir</button>
               </div>
             </div>
           ))}

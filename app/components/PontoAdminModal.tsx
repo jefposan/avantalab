@@ -461,11 +461,13 @@ export default function PontoAdminModal({
         <div ref={listaScrollRef} className="flex-1 overflow-y-auto p-4">
           {aba === 'lista' && (
             <div className="grid gap-3">
-              <div className={`rounded-xl border p-3 ${itemBorda}`}>
-                <p className={`text-[11px] font-black uppercase tracking-wide ${darkMode ? 'text-slate-300' : 'text-slate-500'}`}>Link de acesso dos funcionários</p>
-                <p className="mt-1 break-all text-sm font-bold" style={{ color: corSistema }}>{linkPonto}</p>
-                <p className={`mt-0.5 text-[11px] ${textMuted}`}>Eles entram com CPF e senha. O mesmo link serve para todas as empresas.</p>
-                <button type="button" onClick={copiarLinkPonto} className="mt-2 h-8 rounded-lg px-3 text-[11px] font-black uppercase tracking-wide text-white" style={{ backgroundColor: corSistema }}>{linkCopiado ? 'Copiado!' : 'Copiar link'}</button>
+              <div className={`flex items-start justify-between gap-3 rounded-xl border p-2.5 ${itemBorda}`}>
+                <div className="min-w-0">
+                  <p className={`text-[10px] font-black uppercase tracking-wide ${darkMode ? 'text-slate-300' : 'text-slate-500'}`}>Link de acesso dos funcionários</p>
+                  <p className="truncate text-sm font-bold" style={{ color: corSistema }}>{linkPonto}</p>
+                  <p className={`text-[10px] ${textMuted}`}>Entram com CPF e senha · mesmo link p/ todas as empresas.</p>
+                </div>
+                <button type="button" onClick={copiarLinkPonto} className="shrink-0 rounded-lg px-2.5 py-1.5 text-[10px] font-black uppercase tracking-wide text-white" style={{ backgroundColor: corSistema }}>{linkCopiado ? 'Copiado!' : 'Copiar'}</button>
               </div>
               {carregando ? (
                 <p className={`py-8 text-center text-sm font-semibold ${textMuted}`}>Carregando...</p>
@@ -496,15 +498,17 @@ export default function PontoAdminModal({
                         <label className={labelCls}>Nome
                           <input className={inputCls} value={editNome} onChange={(e) => setEditNome(e.target.value)} placeholder="Nome do funcionário" />
                         </label>
-                        <label className={labelCls}>CPF (login)
-                          <input className={inputCls + (cpfEditInvalido ? ' border-red-500' : '')} value={formatarCpf(editCpf)} onChange={(e) => setEditCpf(e.target.value.replace(/\D/g, '').slice(0, 11))} placeholder="000.000.000-00" inputMode="numeric" autoComplete="off" />
-                          {cpfEditInvalido
-                            ? <span className="text-[11px] font-bold text-red-600">CPF inválido — confira os dígitos.</span>
-                            : (!editCpf && <span className={`text-[10px] ${textMuted}`}>Defina um CPF para este funcionário passar a logar por CPF.</span>)}
-                        </label>
-                        <label className={labelCls}>Cargo
-                          <input className={inputCls} value={editCargo} onChange={(e) => setEditCargo(e.target.value)} placeholder="ex: Vendedor" />
-                        </label>
+                        <div className="grid grid-cols-2 gap-2">
+                          <label className={labelCls}>CPF (login)
+                            <input className={inputCls + (cpfEditInvalido ? ' border-red-500' : '')} value={formatarCpf(editCpf)} onChange={(e) => setEditCpf(e.target.value.replace(/\D/g, '').slice(0, 11))} placeholder="000.000.000-00" inputMode="numeric" autoComplete="off" />
+                          </label>
+                          <label className={labelCls}>Cargo
+                            <input className={inputCls} value={editCargo} onChange={(e) => setEditCargo(e.target.value)} placeholder="ex: Vendedor" />
+                          </label>
+                        </div>
+                        {cpfEditInvalido
+                          ? <span className="-mt-1 text-[11px] font-bold text-red-600">CPF inválido — confira os dígitos.</span>
+                          : (!editCpf && <span className={`-mt-1 text-[10px] ${textMuted}`}>Defina um CPF para este funcionário passar a logar por CPF.</span>)}
                         <div className="grid grid-cols-2 gap-2">
                           <label className={labelCls}>Entrada
                             <input className={inputCls} type="time" value={editEntrada} onChange={(e) => setEditEntrada(e.target.value)} />
@@ -567,10 +571,15 @@ export default function PontoAdminModal({
               <label className={labelCls}>Nome
                 <input className={inputCls} value={nome} onChange={(e) => setNome(e.target.value)} placeholder="Nome do funcionário" />
               </label>
-              <label className={labelCls}>CPF (será o login)
-                <input className={inputCls + (cpfNovoInvalido ? ' border-red-500' : '')} value={formatarCpf(cpf)} onChange={(e) => setCpf(e.target.value.replace(/\D/g, '').slice(0, 11))} placeholder="000.000.000-00" inputMode="numeric" autoComplete="off" />
-                {cpfNovoInvalido && <span className="text-[11px] font-bold text-red-600">CPF inválido — confira os dígitos.</span>}
-              </label>
+              <div className="grid grid-cols-2 gap-2">
+                <label className={labelCls}>CPF (login)
+                  <input className={inputCls + (cpfNovoInvalido ? ' border-red-500' : '')} value={formatarCpf(cpf)} onChange={(e) => setCpf(e.target.value.replace(/\D/g, '').slice(0, 11))} placeholder="000.000.000-00" inputMode="numeric" autoComplete="off" />
+                  {cpfNovoInvalido && <span className="text-[11px] font-bold text-red-600">CPF inválido.</span>}
+                </label>
+                <label className={labelCls}>Cargo
+                  <input className={inputCls} value={cargo} onChange={(e) => setCargo(e.target.value)} placeholder="ex: Vendedor" />
+                </label>
+              </div>
               <label className={labelCls}>Senha (mín. 8)
                 <div className="relative">
                   <input className={inputCls + ' pr-10'} type={verSenha ? 'text' : 'password'} value={senha} onChange={(e) => setSenha(e.target.value)} placeholder="Senha de acesso" />
@@ -582,9 +591,6 @@ export default function PontoAdminModal({
                     )}
                   </button>
                 </div>
-              </label>
-              <label className={labelCls}>Cargo (opcional)
-                <input className={inputCls} value={cargo} onChange={(e) => setCargo(e.target.value)} placeholder="ex: Vendedor" />
               </label>
               <div className="grid grid-cols-2 gap-2">
                 <label className={labelCls}>Entrada prevista
