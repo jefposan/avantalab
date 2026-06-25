@@ -24,6 +24,11 @@
 
   var db = supabaseGlobal.createClient(config.supabaseUrl, config.supabaseAnonKey);
 
+  var ehIos = /iphone|ipad|ipod/i.test(navigator.userAgent || '');
+  function ehStandalone() { return window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true; }
+  var installPrompt = null;
+  window.addEventListener('beforeinstallprompt', function (e) { e.preventDefault(); installPrompt = e; render(); });
+
   var state = {
     pronto: false,
     autenticado: false,
@@ -250,6 +255,32 @@
     return h + 'h ' + String(min % 60).padStart(2, '0') + 'min';
   }
 
+  function instalarPonto() {
+    if (ehStandalone()) return;
+    if (installPrompt) {
+      installPrompt.prompt();
+      installPrompt.userChoice.then(function () { installPrompt = null; render(); });
+      return;
+    }
+    if (ehIos) mostrarToast('No Safari, toque em Compartilhar e em "Adicionar à Tela de Início".');
+    else mostrarToast('Abra o menu do navegador e toque em "Adicionar à tela inicial".');
+  }
+
+  function cardInstalarHtml() {
+    if (ehStandalone()) return '';
+    return (
+      '<div class="mx-auto mt-3 w-full max-w-sm rounded-2xl border border-white/30 p-3 text-slate-800 shadow-lg backdrop-blur-lg" style="background-color:rgba(255,255,255,.16)">' +
+        '<div class="flex items-center justify-between gap-3">' +
+          '<div class="min-w-0">' +
+            '<p class="text-xs font-black uppercase tracking-wide" style="color:#003E73">Controle de Ponto</p>' +
+            '<p class="mt-0.5 text-xs font-semibold leading-snug text-slate-600">Instale como app no seu celular.</p>' +
+          '</div>' +
+          '<button id="ponto-instalar" type="button" class="shrink-0 rounded-xl px-3 py-2 text-xs font-black uppercase tracking-wide text-white shadow-md" style="background:linear-gradient(135deg,#003E73,#00A6C8)">Instalar</button>' +
+        '</div>' +
+      '</div>'
+    );
+  }
+
   // ---------- telas ----------
   function telaLogin() {
     return (
@@ -278,6 +309,7 @@
             '<button id="ponto-entrar" type="button" ' + (state.entrando ? 'disabled' : '') + ' class="mt-1 h-12 w-full rounded-xl text-base font-black uppercase tracking-wide text-white shadow-lg disabled:opacity-60" style="background:linear-gradient(135deg,#003E73,#00A6C8)">' + (state.entrando ? 'Entrando...' : 'Entrar') + '</button>' +
           '</div>' +
         '</div>' +
+        cardInstalarHtml() +
       '</section>'
     );
   }
@@ -285,7 +317,7 @@
   function telaComprovante() {
     var c = state.comprovante;
     return (
-      '<div class="flex min-h-screen flex-col items-center justify-center bg-slate-100 px-5">' +
+      '<div class="fixed inset-0 flex flex-col items-center justify-center overflow-y-auto bg-slate-100 px-5 py-6">' +
         '<div class="w-full max-w-sm rounded-3xl bg-white p-6 text-center shadow-2xl">' +
           '<div class="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-full bg-emerald-100 text-3xl font-black text-emerald-600">&#10003;</div>' +
           '<h2 class="text-lg font-black text-slate-900">' + escapeHtml(rotuloAcao(c.tipo)) + ' registrada</h2>' +
@@ -322,14 +354,14 @@
           }).join(''));
 
     return (
-      '<div class="min-h-screen bg-slate-100">' +
-        '<header class="no-print px-5 pb-4 text-white shadow-xl" style="padding-top:calc(env(safe-area-inset-top) + 18px);background:linear-gradient(135deg,#003E73 0%,#075985 54%,#00A6C8 100%)">' +
+      '<div class="fixed inset-0 flex flex-col bg-slate-100">' +
+        '<header class="no-print shrink-0 px-5 pb-4 text-white shadow-xl" style="padding-top:calc(env(safe-area-inset-top) + 18px);background:linear-gradient(135deg,#003E73 0%,#075985 54%,#00A6C8 100%)">' +
           '<div class="mx-auto flex max-w-md items-center gap-3">' +
             '<button id="ponto-voltar" type="button" class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-white/15 bg-white/15 text-lg font-black text-white" aria-label="Voltar">&lsaquo;</button>' +
             '<div><p class="text-[10px] font-black uppercase tracking-[0.24em] text-cyan-100">Meus registros</p><h1 class="text-lg font-black text-white">' + escapeHtml(nomeFunc()) + '</h1></div>' +
           '</div>' +
         '</header>' +
-        '<div class="mx-auto max-w-md px-5 pt-4 pb-10">' +
+        '<div class="flex-1 overflow-y-auto"><div class="mx-auto max-w-md px-5 pt-4" style="padding-bottom:calc(env(safe-area-inset-bottom) + 40px)">' +
           '<div class="no-print mb-3 grid grid-cols-4 gap-1">' +
             periodos.map(function (p) {
               var ativo = state.periodo === p[0];
@@ -341,7 +373,7 @@
             listaHtml +
           '</div>' +
           '<button id="ponto-gerar-pdf" type="button" class="no-print mt-5 h-12 w-full rounded-xl bg-slate-950 text-sm font-black uppercase tracking-wide text-white">Gerar PDF</button>' +
-        '</div>' +
+        '</div></div>' +
       '</div>'
     );
   }
@@ -374,8 +406,8 @@
     }
 
     return (
-      '<div class="min-h-screen bg-slate-100 text-slate-900">' +
-        '<header class="px-5 pb-5 text-white shadow-xl" style="padding-top:calc(env(safe-area-inset-top) + 18px);background:linear-gradient(135deg,#003E73 0%,#075985 54%,#00A6C8 100%)">' +
+      '<div class="fixed inset-0 flex flex-col bg-slate-100 text-slate-900">' +
+        '<header class="shrink-0 px-5 pb-5 text-white shadow-xl" style="padding-top:calc(env(safe-area-inset-top) + 18px);background:linear-gradient(135deg,#003E73 0%,#075985 54%,#00A6C8 100%)">' +
           '<div class="mx-auto max-w-md">' +
             '<p class="text-[10px] font-black uppercase tracking-[0.24em] text-cyan-100">Controle de Ponto</p>' +
             '<h1 class="mt-1 text-2xl font-black leading-tight text-white">Olá, ' + escapeHtml(String(nomeFunc()).split(' ')[0]) + '</h1>' +
@@ -383,12 +415,14 @@
             '<p class="mt-2 text-[11px] font-semibold text-cyan-50">' + escapeHtml(dataHoje.charAt(0).toUpperCase() + dataHoje.slice(1)) + '</p>' +
           '</div>' +
         '</header>' +
-        '<div class="mx-auto max-w-md px-5 pt-5 pb-10">' +
-          '<p class="mb-2 text-[11px] font-black uppercase tracking-wide text-slate-400">Registros de hoje</p>' +
-          '<div class="grid gap-2">' + statusHtml + '</div>' +
-          '<div class="mt-6">' + botoesHtml + '</div>' +
-          '<button id="ponto-meus-registros" type="button" class="mt-4 h-11 w-full rounded-xl border border-slate-300 bg-white text-xs font-black uppercase tracking-wide text-slate-600">Meus registros</button>' +
-          '<button id="ponto-sair" type="button" class="mt-2 h-11 w-full rounded-xl text-xs font-bold text-slate-400">Sair</button>' +
+        '<div class="flex-1 overflow-y-auto">' +
+          '<div class="mx-auto max-w-md px-5 pt-5" style="padding-bottom:calc(env(safe-area-inset-bottom) + 40px)">' +
+            '<p class="mb-2 text-[11px] font-black uppercase tracking-wide text-slate-400">Registros de hoje</p>' +
+            '<div class="grid gap-2">' + statusHtml + '</div>' +
+            '<div class="mt-6">' + botoesHtml + '</div>' +
+            '<button id="ponto-meus-registros" type="button" class="mt-4 h-11 w-full rounded-xl border border-slate-300 bg-white text-xs font-black uppercase tracking-wide text-slate-600">Meus registros</button>' +
+            '<button id="ponto-sair" type="button" class="mt-2 h-11 w-full rounded-xl text-xs font-bold text-slate-400">Sair</button>' +
+          '</div>' +
         '</div>' +
       '</div>'
     );
@@ -407,6 +441,7 @@
     root.innerHTML = tela + toastHtml();
 
     bind('ponto-entrar', entrar);
+    bind('ponto-instalar', instalarPonto);
     bind('ponto-ver-senha', function () { state.senha = campo('ponto-senha'); state.cpf = String(campo('ponto-cpf') || state.cpf).replace(/\D/g, ''); state.verSenha = !state.verSenha; render(); });
     bindInput('ponto-cpf', function () {
       state.cpf = this.value.replace(/\D/g, '').slice(0, 11);

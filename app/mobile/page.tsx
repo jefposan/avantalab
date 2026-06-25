@@ -73,6 +73,10 @@ export default function MobilePage() {
             @keyframes avaSpin { to { transform: rotate(360deg); } }
             @keyframes avaSlideIn { from { transform: translateX(100%); } to { transform: translateX(0); } }
             @keyframes avaSlideOut { from { transform: translateX(0); } to { transform: translateX(100%); } }
+            @keyframes agendaInProx { from { opacity: .35; transform: translateX(26px); } to { opacity: 1; transform: none; } }
+            @keyframes agendaInPrev { from { opacity: .35; transform: translateX(-26px); } to { opacity: 1; transform: none; } }
+            .agenda-anim-prox { animation: agendaInProx .24s ease-out; }
+            .agenda-anim-prev { animation: agendaInPrev .24s ease-out; }
             #chat-ia-input::placeholder { color: #94a3b8; opacity: 1; }
             #chat-ia-input:empty::before { content: attr(data-placeholder); color: #94a3b8; pointer-events: none; }
             #chat-ia-msgs { scroll-behavior: smooth; }
@@ -216,7 +220,7 @@ export default function MobilePage() {
       </div>
 
       <script src="/mobile-supabase.js" defer />
-      <script src="/mobile-app.js?v=143" defer />
+      <script src="/mobile-app.js?v=146" defer />
     </main>
   );
 }

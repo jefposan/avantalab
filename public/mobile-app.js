@@ -190,6 +190,7 @@
     chatIAAnimacao: '',
     agendaDiaSelecionado: null,
     agendaFormAberto: false,
+    agendaAnimar: null,
     agendaItens: [],
     notificacoesNaoLidas: 0,
     mostrarPromptNotificacoes: false,
@@ -413,7 +414,7 @@
     return '<div class="mx-auto max-w-md px-4 py-5">' + conteudo + '</div>';
   }
 
-  var APP_VERSION = '1.3.8';
+  var APP_VERSION = '1.3.11';
   var APP_VERSION_LABEL = 'AvantaLab Gest&atilde;o v' + APP_VERSION;
 
   function telaAvisoMobile(titulo, texto) {
@@ -3824,27 +3825,27 @@
 
     var tipo = state.modalAcao.tipo;
     var item = state.modalAcao.item;
+    var limite = maxDias(state.mes, state.ano);
+
+    // Lê TODOS os campos ANTES do render() — o render reconstrói o DOM e zera os inputs.
     var dia = Number(campo('editar-dia'));
     var valor = normalizarValor(campo('editar-valor'));
-    var limite = maxDias(state.mes, state.ano);
+    var origem = tipo === 'receita' ? campo('editar-origem').trim() : '';
+    var despesaNome = tipo === 'receita' ? '' : campo('editar-despesa').trim();
+    var descricao = tipo === 'receita' ? '' : campo('editar-descricao');
 
     if (!dia || dia < 1 || dia > limite || valor <= 0) {
       setErro('Informe dia e valor validos.');
       return;
     }
+    if (tipo === 'receita' && !origem) { setErro('Informe a origem.'); return; }
+    if (tipo !== 'receita' && !despesaNome) { setErro('Informe a despesa.'); return; }
 
     state.carregando = true;
     state.erro = '';
     render();
 
     if (tipo === 'receita') {
-      var origem = campo('editar-origem').trim();
-      if (!origem) {
-        state.carregando = false;
-        setErro('Informe a origem.');
-        return;
-      }
-
       var receita = await db
         .from('faturamentos_entradas')
         .update({
@@ -3878,14 +3879,6 @@
           { onConflict: 'empresa_id,ano,mes' }
         );
     } else {
-      var despesaNome = campo('editar-despesa').trim();
-      var descricao = campo('editar-descricao');
-      if (!despesaNome) {
-        state.carregando = false;
-        setErro('Informe a despesa.');
-        return;
-      }
-
       var despesa = await db
         .from('lancamentos')
         .update({
@@ -3902,7 +3895,7 @@
 
       if (despesa.error) {
         state.carregando = false;
-        setErro('Nao foi possivel editar a despesa.');
+        setErro('Nao foi possivel editar a despesa: ' + (despesa.error.message || despesa.error.code || 'erro'));
         return;
       }
     }
@@ -4846,6 +4839,9 @@
   }
 
   function agendaMobileHtml() {
+    // Animação de transição ao trocar de mês por arraste (usada uma vez e limpa).
+    var animAgenda = state.agendaAnimar ? (' agenda-anim-' + state.agendaAnimar) : '';
+    state.agendaAnimar = null;
     var ano = Number(state.ano) || new Date().getFullYear();
     var mesIndice = indiceMes(state.mes);
     var totalDias = maxDias(state.mes, state.ano);
@@ -4893,7 +4889,9 @@
       );
     }
 
-    while (celulas.length < 49) {
+    // Número real de linhas do mês (4, 5 ou 6) — a grade e o painel se ajustam a ele.
+    var numLinhas = Math.ceil((primeiroDiaSemana + totalDias) / 7);
+    while (celulas.length < 7 + numLinhas * 7) {
       celulas.push('<div class="min-h-0 rounded-2xl border border-transparent"></div>');
     }
 
@@ -4902,13 +4900,18 @@
     var painelDia = '';
     var formularioAgenda = state.agendaFormAberto ? formularioAgendaHtml() : '';
     var classeGrade = diaSelecionado
-      ? 'grid min-h-0 shrink-0 grid-cols-7 grid-rows-[auto_repeat(6,minmax(0,1fr))] gap-1.5'
-      : 'grid min-h-0 flex-1 grid-cols-7 grid-rows-[auto_repeat(6,minmax(0,1fr))] gap-1.5';
-    var estiloGrade = diaSelecionado ? 'style="height:54%;"' : '';
+      ? 'grid min-h-0 shrink-0 grid-cols-7 gap-1.5'
+      : 'grid min-h-0 flex-1 grid-cols-7 gap-1.5';
+    // Com dia selecionado, cada linha tem altura fixa (grade compacta natural);
+    // sem dia selecionado, as linhas ocupam o espaço (1fr). Em ambos, o nº de
+    // linhas é o real do mês, então o painel abaixo acompanha a altura da grade.
+    var estiloGrade = diaSelecionado
+      ? 'style="grid-template-rows:auto repeat(' + numLinhas + ', 50px);"'
+      : 'style="grid-template-rows:auto repeat(' + numLinhas + ', minmax(0,1fr));"';
 
     if (diaSelecionado) {
       painelDia =
-        '<div class="-mt-8 flex min-h-0 flex-1 flex-col rounded-[24px] border-2 border-cyan-200 bg-cyan-50/85 p-4 shadow-xl shadow-cyan-950/10">' +
+        '<div class="mt-3 flex min-h-0 flex-1 flex-col rounded-[24px] border-2 border-cyan-200 bg-cyan-50/85 p-4 shadow-xl shadow-cyan-950/10">' +
           '<div class="sticky top-0 z-10 -mx-1 flex shrink-0 items-center justify-between gap-3 border-b border-cyan-200/70 bg-cyan-50/95 px-1 pb-2 backdrop-blur">' +
             '<h3 class="min-w-0 flex-1 truncate text-sm font-black text-slate-950">Dia selecionado: ' + String(diaSelecionado).padStart(2, '0') + ' de ' + escapeHtml(nomeMesCompleto(state.mes)) + '</h3>' +
             '<button id="fechar-agenda-dia" type="button" class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-slate-200 bg-white text-xl font-black text-slate-600" aria-label="Fechar dia">&times;</button>' +
@@ -4936,8 +4939,8 @@
     }
 
     return (
-      '<section id="agenda-mobile-screen" class="relative -mx-1 flex overflow-hidden rounded-[28px] border border-slate-200 bg-slate-50 p-3 shadow-sm" style="height:calc(100dvh - 170px - env(safe-area-inset-top));touch-action:pan-x;">' +
-        '<div class="flex min-h-0 w-full flex-col">' +
+      '<section id="agenda-mobile-screen" class="relative -mx-1 flex overflow-hidden rounded-[28px] border border-slate-200 bg-slate-50 p-3 shadow-sm" style="height:calc(100dvh - 170px - env(safe-area-inset-top));touch-action:pan-y;">' +
+        '<div class="flex min-h-0 w-full flex-col' + animAgenda + '">' +
           '<div class="shrink-0 px-1 pb-2">' +
             '<h2 class="text-center text-lg font-black tracking-[0.22em] text-slate-950">AGENDA</h2>' +
             '<p class="mt-1 text-center text-xs font-black uppercase tracking-wide text-cyan-700">' + escapeHtml(nomeMesCompleto(state.mes)) + ' ' + escapeHtml(state.ano) + '</p>' +
@@ -7375,7 +7378,9 @@
       var deltaX = fimX - inicioX;
       var deltaY = fimY - inicioY;
 
-      if (Math.abs(deltaX) < 64 || Math.abs(deltaX) < Math.abs(deltaY) * 1.35) return;
+      if (Math.abs(deltaX) < 56 || Math.abs(deltaX) < Math.abs(deltaY) * 1.35) return;
+      // Define a direção da transição suave antes de trocar o mês.
+      state.agendaAnimar = deltaX < 0 ? 'prox' : 'prev';
       mudarMes(deltaX < 0 ? 1 : -1);
     }, { passive: true });
   }
@@ -7802,7 +7807,7 @@
     });
 
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/mobile-sw.js?v=143').then(function (registro) {
+      navigator.serviceWorker.register('/mobile-sw.js?v=146').then(function (registro) {
         if (registro && registro.update) registro.update();
       }).catch(function () {});
     }
@@ -7811,7 +7816,13 @@
 
     // Ao voltar ao app (apos receber um push), reconfere as nao lidas
     document.addEventListener('visibilitychange', function () {
-      if (!document.hidden) carregarNotificacoesNaoLidas();
+      if (document.hidden) return;
+      carregarNotificacoesNaoLidas();
+      // Reavalia o estado dependente da data ao reabrir o app (ex.: card de
+      // "despesas previstas para confirmar" quando o dia da despesa chega).
+      if (state.autenticado && state.empresa && !ehFuncionarioPontoMobile() && !state.validacaoTelefoneObrigatoria) {
+        carregarDados();
+      }
     });
 
     // Android: ao focar um campo dentro de qualquer modal/formulario, rola
