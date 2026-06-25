@@ -74,13 +74,17 @@ export default function PontoPage() {
         data-supabase-url={supabaseUrl}
         data-supabase-anon-key={supabaseAnonKey}
       >
-        <div className="flex min-h-screen items-center justify-center">
-          <p className="text-sm font-bold text-slate-400">Carregando…</p>
-        </div>
+        <section className="avantalab-mobile-bg fixed inset-0 flex items-center justify-center overflow-hidden px-4" style={{ height: '100dvh' }}>
+          <div className="w-full max-w-xs rounded-3xl border border-white/40 bg-white/25 p-5 text-center text-slate-900 shadow-2xl backdrop-blur-xl">
+            <p className="text-xs font-black uppercase tracking-[0.24em] text-cyan-700">AvantaLab</p>
+            <h1 className="mt-2 text-xl font-black">Controle de Ponto</h1>
+            <p className="mt-2 text-sm font-semibold text-slate-600">Preparando acesso…</p>
+          </div>
+        </section>
       </div>
 
       <script src="/mobile-supabase.js" defer />
-      <script src="/ponto-app.js?v=5" defer />
+      <script src="/ponto-app.js?v=6" defer />
     </main>
   );
 }

@@ -142,21 +142,26 @@
   }
 
   async function carregarTudo() {
-    state.carregando = true; render();
     var uid = state.usuario.id;
     var md = state.usuario.user_metadata || {};
-    var empresaId = md.empresa_id;
+    var empresaId = md.empresa_id || null;
+    var vazio = Promise.resolve({ data: null, error: null });
     try {
-      var f = await db.from('ponto_funcionarios').select('nome, cpf, cargo, dias_trabalho, hora_entrada, hora_saida, empresa_id').eq('user_id', uid).maybeSingle();
-      if (!f.error && f.data) { state.funcionario = f.data; if (f.data.empresa_id) empresaId = f.data.empresa_id; }
-    } catch (e) {}
-    try {
-      if (empresaId) { var emp = await db.from('empresas').select('id, nome').eq('id', empresaId).maybeSingle(); if (!emp.error && emp.data) state.empresa = emp.data; }
-    } catch (e) {}
-    try {
-      if (empresaId) { var cfg = await db.from('ponto_config').select('latitude, longitude, raio_m').eq('empresa_id', empresaId).maybeSingle(); state.pontoConfig = (!cfg.error && cfg.data) ? cfg.data : null; }
-    } catch (e) {}
-    await carregarHoje();
+      // Carrega tudo em paralelo (mais rápido e evita travar em sequência).
+      var res = await Promise.all([
+        db.from('ponto_funcionarios').select('nome, cpf, cargo, dias_trabalho, hora_entrada, hora_saida, empresa_id').eq('user_id', uid).maybeSingle(),
+        empresaId ? db.from('empresas').select('id, nome').eq('id', empresaId).maybeSingle() : vazio,
+        empresaId ? db.from('ponto_config').select('latitude, longitude, raio_m').eq('empresa_id', empresaId).maybeSingle() : vazio,
+        db.from('ponto_registros').select('id, tipo, registrado_em').eq('user_id', uid).eq('dia', diaPontoHoje()).order('registrado_em', { ascending: true }),
+      ]);
+      var f = res[0], emp = res[1], cfg = res[2], hoje = res[3];
+      if (f && !f.error && f.data) state.funcionario = f.data;
+      if (emp && !emp.error && emp.data) state.empresa = emp.data;
+      state.pontoConfig = (cfg && !cfg.error && cfg.data) ? cfg.data : null;
+      if (hoje && !hoje.error) state.pontoHoje = hoje.data || [];
+    } catch (e) {
+      console.error('Erro ao carregar dados do ponto:', e);
+    }
     state.carregando = false; state.pronto = true; render();
   }
 
@@ -428,6 +433,18 @@
     );
   }
 
+  function telaCarregandoPonto() {
+    return (
+      '<section class="avantalab-mobile-bg fixed inset-0 flex items-center justify-center overflow-hidden px-4" style="height:100dvh;">' +
+        '<div class="w-full max-w-xs rounded-3xl border border-white/40 bg-white/25 p-5 text-center text-slate-900 shadow-2xl backdrop-blur-xl">' +
+          '<p class="text-xs font-black uppercase tracking-[0.24em] text-cyan-700">AvantaLab</p>' +
+          '<h1 class="mt-2 text-xl font-black">Controle de Ponto</h1>' +
+          '<p class="mt-2 text-sm font-semibold text-slate-600">Preparando acesso...</p>' +
+        '</div>' +
+      '</section>'
+    );
+  }
+
   function toastHtml() {
     if (!state.toast) return '';
     return '<div class="no-print fixed inset-x-0 bottom-6 z-50 flex justify-center px-5"><div class="max-w-sm rounded-xl bg-slate-900 px-4 py-3 text-center text-sm font-bold text-white shadow-2xl">' + escapeHtml(state.toast) + '</div></div>';
@@ -435,7 +452,7 @@
 
   function render() {
     var tela;
-    if (!state.pronto) tela = '<div class="flex min-h-screen items-center justify-center bg-slate-100"><p class="text-sm font-bold text-slate-400">Carregando...</p></div>';
+    if (!state.pronto) tela = telaCarregandoPonto();
     else if (!state.autenticado) tela = telaLogin();
     else tela = telaPonto();
     root.innerHTML = tela + toastHtml();
@@ -469,18 +486,25 @@
 
   // ---------- init ----------
   (async function init() {
+    // Watchdog: se o carregamento travar (rede), libera a tela em vez de ficar preso.
+    var watchdog = setTimeout(function () {
+      if (!state.pronto) { state.pronto = true; render(); }
+    }, 9000);
     try {
       var sess = await db.auth.getSession();
       if (sess.data.session && sess.data.session.user) {
         var tipo = sess.data.session.user.user_metadata && sess.data.session.user.user_metadata.tipo;
         if (tipo === 'funcionario_ponto') {
           state.usuario = sess.data.session.user; state.autenticado = true;
-          await carregarTudo(); return;
+          await carregarTudo();
+          clearTimeout(watchdog);
+          return;
         }
         // sessão de outro tipo de usuário: encerra para não misturar
         try { await db.auth.signOut(); } catch (e) {}
       }
     } catch (e) {}
+    clearTimeout(watchdog);
     state.pronto = true; render();
   })();
 })();

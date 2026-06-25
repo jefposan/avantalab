@@ -414,7 +414,7 @@
     return '<div class="mx-auto max-w-md px-4 py-5">' + conteudo + '</div>';
   }
 
-  var APP_VERSION = '1.3.11';
+  var APP_VERSION = '1.3.14';
   var APP_VERSION_LABEL = 'AvantaLab Gest&atilde;o v' + APP_VERSION;
 
   function telaAvisoMobile(titulo, texto) {
@@ -4541,6 +4541,20 @@
     var atual = dadosMes(state.mes);
     var anterior = dadosMesAnterior();
 
+    // Agenda: tela cheia, sem o cabeçalho global (que mostra outro mês e confunde).
+    if (state.visao === 'agenda') {
+      return (
+        '<div class="mobile-app-shell ' + (state.darkMode ? 'mobile-dark bg-slate-950 text-slate-100' : 'mobile-light bg-slate-100 text-slate-900') + '" style="height:100dvh;overflow:hidden;">' +
+          agendaMobileHtml(atual) +
+          (state.modalLancamento ? modalLancamentoHtml() : '') +
+          (state.modalAcao ? modalAcaoLancamentoHtml() : '') +
+          (state.menuAberto ? menuLateralHtml() : '') +
+          (state.modalMenu ? modalMenuHtml() : '') +
+          toastHtml() +
+        '</div>'
+      );
+    }
+
     return (
       '<div class="' + (state.visao === 'agenda' ? 'h-screen overflow-hidden' : 'min-h-screen pb-24') + ' mobile-app-shell ' + (state.darkMode ? 'mobile-dark bg-slate-950 text-slate-100' : 'mobile-light bg-slate-100 text-slate-900') + '">' +
         '<header class="fixed inset-x-0 top-0 z-40 border-b border-white/15 px-4 pb-3 text-white shadow-xl shadow-sky-950/20 backdrop-blur" style="padding-top:calc(env(safe-area-inset-top) + 10px);background:linear-gradient(135deg,#003E73 0%,#075985 54%,#00A6C8 100%);">' +
@@ -4852,8 +4866,9 @@
     var semana = ['D', 'S', 'T', 'Q', 'Q', 'S', 'S'];
     var celulas = [];
 
-    semana.forEach(function (dia) {
-      celulas.push('<div class="text-center text-[10px] font-black uppercase tracking-wide text-slate-400">' + dia + '</div>');
+    semana.forEach(function (dia, idx) {
+      var corCab = idx === 0 ? 'text-rose-500' : (idx === 6 ? 'text-sky-600' : 'text-slate-400');
+      celulas.push('<div class="text-center text-[10px] font-black uppercase tracking-wide ' + corCab + '">' + dia + '</div>');
     });
 
     for (var vazio = 0; vazio < primeiroDiaSemana; vazio += 1) {
@@ -4863,28 +4878,27 @@
     for (var dia = 1; dia <= totalDias; dia += 1) {
       var selecionado = dia === diaSelecionado;
       var hojeClasse = ehMesAtual && dia === hoje.getDate();
-      var estilo = selecionado
-        ? 'border-cyan-500 bg-cyan-50 shadow-md shadow-cyan-900/10'
-        : 'border-slate-200 bg-white shadow-sm';
-      var textoNumero = selecionado ? 'text-cyan-900' : 'text-slate-900';
-      var tamanhoNumero = hojeClasse && diaSelecionado ? 'text-xs' : 'text-xl';
       var dataDia = new Date(ano, mesIndice, dia);
-      var rotuloSemana = dataDia.toLocaleDateString('pt-BR', { weekday: 'short' }).replace('.', '');
+      var dsem = dataDia.getDay(); // 0 = domingo, 6 = sábado
+      var estilo, textoNumero;
+      if (selecionado) { estilo = 'border-cyan-500 bg-cyan-50 shadow-md shadow-cyan-900/10'; textoNumero = 'text-cyan-900'; }
+      else if (dsem === 0) { estilo = 'border-rose-100 bg-rose-50 shadow-sm'; textoNumero = 'text-rose-600'; }
+      else if (dsem === 6) { estilo = 'border-sky-100 bg-sky-50 shadow-sm'; textoNumero = 'text-sky-700'; }
+      else { estilo = 'border-slate-200 bg-white shadow-sm'; textoNumero = 'text-slate-900'; }
       var temLembreteDia = itensAgendaDoDia(state.ano, state.mes, dia).length > 0;
       var temDespesaFuturaDia = despesasFuturasDoDia(state.ano, state.mes, dia).length > 0;
       var indicadoresDia = (temLembreteDia || temDespesaFuturaDia)
-        ? '<span class="absolute right-1.5 top-6 flex flex-col items-center gap-0.5">' +
+        ? '<span class="absolute right-1 top-1 flex items-center gap-0.5">' +
             (temLembreteDia ? '<span class="h-1.5 w-1.5 rounded-full bg-cyan-500 shadow-sm"></span>' : '') +
             (temDespesaFuturaDia ? '<span class="h-1.5 w-1.5 rounded-full bg-rose-500 shadow-sm"></span>' : '') +
           '</span>'
         : '';
 
       celulas.push(
-        '<button type="button" data-agenda-dia="' + dia + '" class="relative min-h-0 overflow-hidden rounded-2xl border p-1.5 text-left transition active:scale-[0.98] ' + estilo + '">' +
-          '<span class="block text-[10px] font-black uppercase tracking-wide ' + (selecionado ? 'text-cyan-700' : 'text-slate-400') + '">' + escapeHtml(rotuloSemana) + '</span>' +
-          '<span class="mt-1 block pr-3 ' + tamanhoNumero + ' font-black leading-none ' + textoNumero + '">' + String(dia).padStart(2, '0') + '</span>' +
+        '<button type="button" data-agenda-dia="' + dia + '" class="relative flex min-h-0 items-center justify-center overflow-hidden rounded-xl border p-0.5 transition active:scale-[0.98] ' + estilo + '">' +
+          '<span class="block text-base font-black leading-none ' + textoNumero + '">' + String(dia).padStart(2, '0') + '</span>' +
           indicadoresDia +
-          (hojeClasse ? '<span class="absolute bottom-1 right-1 rounded-full bg-slate-950 px-1 py-0.5 text-[7px] font-black uppercase leading-none text-white">Hoje</span>' : '') +
+          (hojeClasse ? '<span class="absolute bottom-0.5 left-1/2 -translate-x-1/2 rounded-full bg-slate-950 px-1 text-[6px] font-black uppercase leading-[1.4] text-white">Hoje</span>' : '') +
         '</button>'
       );
     }
@@ -4899,15 +4913,11 @@
     var despesasDia = diaSelecionado ? despesasFuturasDoDia(state.ano, state.mes, diaSelecionado) : [];
     var painelDia = '';
     var formularioAgenda = state.agendaFormAberto ? formularioAgendaHtml() : '';
-    var classeGrade = diaSelecionado
-      ? 'grid min-h-0 shrink-0 grid-cols-7 gap-1.5'
-      : 'grid min-h-0 flex-1 grid-cols-7 gap-1.5';
-    // Com dia selecionado, cada linha tem altura fixa (grade compacta natural);
-    // sem dia selecionado, as linhas ocupam o espaço (1fr). Em ambos, o nº de
-    // linhas é o real do mês, então o painel abaixo acompanha a altura da grade.
-    var estiloGrade = diaSelecionado
-      ? 'style="grid-template-rows:auto repeat(' + numLinhas + ', 50px);"'
-      : 'style="grid-template-rows:auto repeat(' + numLinhas + ', minmax(0,1fr));"';
+    // Grade sempre com altura natural (shrink-0); linhas com altura fixa.
+    // Sem dia selecionado, as células ficam só um pouco maiores (não esticam
+    // para preencher o card). Com dia selecionado, ficam compactas.
+    var classeGrade = 'grid min-h-0 shrink-0 grid-cols-7 gap-1';
+    var estiloGrade = 'style="grid-template-rows:auto repeat(' + numLinhas + ', ' + (diaSelecionado ? '40px' : '54px') + ');"';
 
     if (diaSelecionado) {
       painelDia =
@@ -4939,17 +4949,26 @@
     }
 
     return (
-      '<section id="agenda-mobile-screen" class="relative -mx-1 flex overflow-hidden rounded-[28px] border border-slate-200 bg-slate-50 p-3 shadow-sm" style="height:calc(100dvh - 170px - env(safe-area-inset-top));touch-action:pan-y;">' +
-        '<div class="flex min-h-0 w-full flex-col' + animAgenda + '">' +
-          '<div class="shrink-0 px-1 pb-2">' +
-            '<h2 class="text-center text-lg font-black tracking-[0.22em] text-slate-950">AGENDA</h2>' +
-            '<p class="mt-1 text-center text-xs font-black uppercase tracking-wide text-cyan-700">' + escapeHtml(nomeMesCompleto(state.mes)) + ' ' + escapeHtml(state.ano) + '</p>' +
-          '</div>' +
-          '<div class="' + classeGrade + '" ' + estiloGrade + '>' + celulas.join('') + '</div>' +
-          painelDia +
+      '<div class="flex flex-col" style="height:100dvh;">' +
+        // Cabeçalho próprio da agenda: sanduíche (menu) à esquerda, casinha (dashboard) à direita.
+        '<div class="flex shrink-0 items-center justify-between gap-3 px-4 pb-3 text-white shadow-lg" style="padding-top:calc(env(safe-area-inset-top) + 10px);background:linear-gradient(135deg,#003E73 0%,#075985 54%,#00A6C8 100%);">' +
+          '<button id="menu-toggle" type="button" class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-white/20 bg-white/12 text-lg font-black text-white shadow-sm backdrop-blur" aria-label="Abrir menu">&#9776;</button>' +
+          '<span class="text-sm font-black uppercase tracking-[0.22em] text-white/90">Agenda</span>' +
+          '<button id="voltar-dashboard-topo" type="button" class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-white/20 bg-white/12 text-lg font-black text-white shadow-sm backdrop-blur" aria-label="Ir para o dashboard">&#8962;</button>' +
         '</div>' +
-        formularioAgenda +
-      '</section>'
+        '<div class="min-h-0 flex-1 px-2 pb-2 pt-2" style="padding-bottom:calc(env(safe-area-inset-bottom) + 8px);">' +
+          '<section id="agenda-mobile-screen" class="relative flex h-full overflow-hidden rounded-[28px] border border-slate-200 bg-slate-50 p-3 shadow-sm" style="touch-action:pan-y;">' +
+            '<div class="flex min-h-0 w-full flex-col' + animAgenda + '">' +
+              '<div class="shrink-0 px-1 pb-2">' +
+                '<p class="text-center text-xs font-black uppercase tracking-wide text-cyan-700">' + escapeHtml(nomeMesCompleto(state.mes)) + ' ' + escapeHtml(state.ano) + '</p>' +
+              '</div>' +
+              '<div class="' + classeGrade + '" ' + estiloGrade + '>' + celulas.join('') + '</div>' +
+              painelDia +
+            '</div>' +
+            formularioAgenda +
+          '</section>' +
+        '</div>' +
+      '</div>'
     );
   }
 
@@ -7807,7 +7826,7 @@
     });
 
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/mobile-sw.js?v=146').then(function (registro) {
+      navigator.serviceWorker.register('/mobile-sw.js?v=149').then(function (registro) {
         if (registro && registro.update) registro.update();
       }).catch(function () {});
     }
