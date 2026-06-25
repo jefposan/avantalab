@@ -1,14 +1,21 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 
-function normalizarLogin(login: string) {
-  return login
-    .trim()
-    .toLowerCase()
-    .normalize('NFD')
-    .replace(/[̀-ͯ]/g, '')
-    .replace(/\s+/g, '.')
-    .replace(/[^a-z0-9._-]/g, '');
+function soDigitos(v: string) {
+  return String(v || '').replace(/\D/g, '');
+}
+
+// Valida CPF (11 dígitos + dígitos verificadores).
+function cpfValido(cpf: string) {
+  const d = soDigitos(cpf);
+  if (d.length !== 11 || /^(\d)\1{10}$/.test(d)) return false;
+  const calc = (base: number) => {
+    let soma = 0;
+    for (let i = 0; i < base; i++) soma += Number(d[i]) * (base + 1 - i);
+    const resto = (soma * 10) % 11;
+    return resto === 10 ? 0 : resto;
+  };
+  return calc(9) === Number(d[9]) && calc(10) === Number(d[10]);
 }
 
 function respostaErro(mensagem: string, status = 400) {
@@ -38,7 +45,7 @@ export async function POST(request: Request) {
     const corpo = await request.json();
     const empresaId = String(corpo.empresaId || '').trim();
     const nome = String(corpo.nome || '').trim();
-    const loginOriginal = String(corpo.login || '').trim();
+    const cpf = soDigitos(corpo.cpf || '');
     const senha = String(corpo.senha || '');
     const cargo = String(corpo.cargo || '').trim();
     const horaEntrada = /^\d{2}:\d{2}$/.test(String(corpo.horaEntrada || '')) ? String(corpo.horaEntrada) : null;
@@ -46,11 +53,12 @@ export async function POST(request: Request) {
     const diasTrabalho = Array.isArray(corpo.diasTrabalho)
       ? Array.from(new Set(corpo.diasTrabalho.filter((n: unknown) => Number.isInteger(n) && (n as number) >= 0 && (n as number) <= 6))).sort()
       : [1, 2, 3, 4, 5];
-    const login = normalizarLogin(loginOriginal);
+    // O login do funcionário de ponto é sempre o CPF (só dígitos).
+    const login = cpf;
 
     if (!empresaId) return respostaErro('Empresa não informada.');
     if (!nome) return respostaErro('Informe o nome do funcionário.');
-    if (!login) return respostaErro('Informe um login válido.');
+    if (!cpfValido(cpf)) return respostaErro('Informe um CPF válido.');
     if (!senha || senha.length < 8) return respostaErro('A senha deve ter pelo menos 8 caracteres.');
 
     const supabaseAdmin = createClient(supabaseUrl, supabaseServiceRoleKey);
@@ -78,14 +86,15 @@ export async function POST(request: Request) {
       .maybeSingle();
     if (!moduloAtivo) return respostaErro('O módulo Controle de Ponto não está ativo nesta empresa.', 403);
 
-    // Login único
+    // CPF (login) único dentro da empresa
     const { data: loginExistente } = await supabaseAdmin
       .from('usuarios_empresa')
       .select('id')
       .eq('login', login)
+      .eq('empresa_id', empresaId)
       .limit(1)
       .maybeSingle();
-    if (loginExistente) return respostaErro('Este login já está em uso. Escolha outro.');
+    if (loginExistente) return respostaErro('Este CPF já está cadastrado nesta empresa. Use outro.');
 
     const emailInterno = `${login}+${empresaId}@usuarios.avantalab.local`;
 
@@ -93,13 +102,13 @@ export async function POST(request: Request) {
       email: emailInterno,
       password: senha,
       email_confirm: true,
-      user_metadata: { nome, login, empresa_id: empresaId, tipo: 'funcionario_ponto' },
+      user_metadata: { nome, login, cpf, empresa_id: empresaId, tipo: 'funcionario_ponto' },
     });
 
     if (erroCriarAuth || !usuarioCriado.user) {
       const msg = erroCriarAuth?.message || '';
       if (msg.includes('already')) {
-        return respostaErro('Este login já foi criado anteriormente. Escolha outro.');
+        return respostaErro('Este CPF já está cadastrado nesta empresa. Use outro.');
       }
       return respostaErro('Não foi possível criar o acesso do funcionário.', 500);
     }
@@ -123,14 +132,14 @@ export async function POST(request: Request) {
       await supabaseAdmin.auth.admin.deleteUser(novoUserId);
       const m = String(erroVinculo.message || erroVinculo.code || '').toLowerCase();
       if (erroVinculo.code === '23505' || m.includes('duplicate') || m.includes('unique')) {
-        return respostaErro('Este login já está em uso. Escolha outro.');
+        return respostaErro('Este CPF já está cadastrado nesta empresa. Use outro.');
       }
       return respostaErro('Não foi possível cadastrar o funcionário. Tente novamente.', 500);
     }
 
     const { error: erroFunc } = await supabaseAdmin
       .from('ponto_funcionarios')
-      .insert({ user_id: novoUserId, empresa_id: empresaId, nome, login, cargo, hora_entrada: horaEntrada, hora_saida: horaSaida, dias_trabalho: diasTrabalho });
+      .insert({ user_id: novoUserId, empresa_id: empresaId, nome, login, cpf, cargo, hora_entrada: horaEntrada, hora_saida: horaSaida, dias_trabalho: diasTrabalho });
 
     if (erroFunc) {
       console.error('Erro ao salvar dados do funcionário de ponto:', erroFunc);

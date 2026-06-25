@@ -7,12 +7,31 @@ export type FuncionarioPonto = {
   user_id: string;
   nome: string;
   login: string;
+  cpf: string | null;
   cargo: string;
   ativo: boolean;
   hora_entrada: string | null;
   hora_saida: string | null;
   dias_trabalho: number[] | null;
 };
+
+export function formatarCpf(v: string | null | undefined) {
+  const d = String(v || '').replace(/\D/g, '').slice(0, 11);
+  if (d.length !== 11) return d;
+  return `${d.slice(0, 3)}.${d.slice(3, 6)}.${d.slice(6, 9)}-${d.slice(9)}`;
+}
+
+function cpfValido(cpf: string) {
+  const d = (cpf || '').replace(/\D/g, '');
+  if (d.length !== 11 || /^(\d)\1{10}$/.test(d)) return false;
+  const calc = (base: number) => {
+    let soma = 0;
+    for (let i = 0; i < base; i++) soma += Number(d[i]) * (base + 1 - i);
+    const resto = (soma * 10) % 11;
+    return resto === 10 ? 0 : resto;
+  };
+  return calc(9) === Number(d[9]) && calc(10) === Number(d[10]);
+}
 
 export const DIAS_SEMANA: Array<[number, string]> = [[0, 'Dom'], [1, 'Seg'], [2, 'Ter'], [3, 'Qua'], [4, 'Qui'], [5, 'Sex'], [6, 'Sáb']];
 
@@ -36,8 +55,9 @@ interface PontoAdminModalProps {
   onFechar: () => void;
   funcionarios: FuncionarioPonto[];
   carregando: boolean;
-  onCriar: (dados: { nome: string; login: string; senha: string; cargo: string; horaEntrada?: string; horaSaida?: string; diasTrabalho?: number[] }) => Promise<{ erro: boolean; mensagem?: string }>;
+  onCriar: (dados: { nome: string; cpf: string; senha: string; cargo: string; horaEntrada?: string; horaSaida?: string; diasTrabalho?: number[] }) => Promise<{ erro: boolean; mensagem?: string }>;
   onAtualizar: (id: string, dados: { nome?: string; cargo: string; horaEntrada?: string; horaSaida?: string; ativo: boolean; diasTrabalho?: number[] }) => Promise<{ erro: boolean; mensagem?: string }>;
+  onRedefinirSenha: (funcionarioUserId: string, novaSenha: string) => Promise<{ erro: boolean; mensagem?: string }>;
   config: PontoConfig;
   onSalvarConfig: (dados: { latitude: number; longitude: number; raio_m: number }) => Promise<{ erro: boolean; mensagem?: string }>;
   onCarregarRegistros: (funcionarioUserId: string, dataInicioISO: string) => Promise<RegistroPonto[]>;
@@ -52,6 +72,7 @@ export default function PontoAdminModal({
   carregando,
   onCriar,
   onAtualizar,
+  onRedefinirSenha,
   config,
   onSalvarConfig,
   onCarregarRegistros,
@@ -60,14 +81,16 @@ export default function PontoAdminModal({
 }: PontoAdminModalProps) {
   const [aba, setAba] = useState<'lista' | 'novo' | 'local' | 'relatorios'>('lista');
   const [nome, setNome] = useState('');
-  const [login, setLogin] = useState('');
+  const [cpf, setCpf] = useState('');
   const [senha, setSenha] = useState('');
+  const [verSenha, setVerSenha] = useState(false);
   const [cargo, setCargo] = useState('');
   const [horaEntrada, setHoraEntrada] = useState('');
   const [horaSaida, setHoraSaida] = useState('');
   const [diasNovo, setDiasNovo] = useState<number[]>([1, 2, 3, 4, 5]);
   const [enviando, setEnviando] = useState(false);
   const [msg, setMsg] = useState<{ tipo: 'ok' | 'erro'; texto: string } | null>(null);
+  const listaScrollRef = useRef<HTMLDivElement | null>(null);
 
   const [lat, setLat] = useState('');
   const [lng, setLng] = useState('');
@@ -85,6 +108,10 @@ export default function PontoAdminModal({
   const [editDias, setEditDias] = useState<number[]>([1, 2, 3, 4, 5]);
   const [salvandoEdit, setSalvandoEdit] = useState(false);
   const [msgEdit, setMsgEdit] = useState<string | null>(null);
+  const [editSenha, setEditSenha] = useState('');
+  const [verEditSenha, setVerEditSenha] = useState(false);
+  const [salvandoSenha, setSalvandoSenha] = useState(false);
+  const [msgSenha, setMsgSenha] = useState<{ tipo: 'ok' | 'erro'; texto: string } | null>(null);
 
   const [relFuncId, setRelFuncId] = useState('');
   const [relAno, setRelAno] = useState<number>(new Date().getFullYear());
@@ -150,18 +177,17 @@ export default function PontoAdminModal({
 
   const enviar = async () => {
     setMsg(null);
-    if (!nome.trim() || !login.trim() || senha.length < 8) {
-      setMsg({ tipo: 'erro', texto: 'Preencha nome, login e senha (mín. 8 caracteres).' });
-      return;
-    }
+    if (!nome.trim()) { setMsg({ tipo: 'erro', texto: 'Informe o nome do funcionário.' }); return; }
+    if (!cpfValido(cpf)) { setMsg({ tipo: 'erro', texto: 'Informe um CPF válido (o login será o CPF).' }); return; }
+    if (senha.length < 8) { setMsg({ tipo: 'erro', texto: 'A senha deve ter pelo menos 8 caracteres.' }); return; }
     setEnviando(true);
-    const r = await onCriar({ nome: nome.trim(), login: login.trim(), senha, cargo: cargo.trim(), horaEntrada: horaEntrada || undefined, horaSaida: horaSaida || undefined, diasTrabalho: diasNovo });
+    const r = await onCriar({ nome: nome.trim(), cpf: cpf.replace(/\D/g, ''), senha, cargo: cargo.trim(), horaEntrada: horaEntrada || undefined, horaSaida: horaSaida || undefined, diasTrabalho: diasNovo });
     setEnviando(false);
     if (r.erro) {
       setMsg({ tipo: 'erro', texto: r.mensagem || 'Não foi possível cadastrar.' });
     } else {
       setMsg({ tipo: 'ok', texto: 'Funcionário cadastrado!' });
-      setNome(''); setLogin(''); setSenha(''); setCargo(''); setHoraEntrada(''); setHoraSaida(''); setDiasNovo([1, 2, 3, 4, 5]);
+      setNome(''); setCpf(''); setSenha(''); setVerSenha(false); setCargo(''); setHoraEntrada(''); setHoraSaida(''); setDiasNovo([1, 2, 3, 4, 5]);
       setAba('lista');
     }
   };
@@ -201,7 +227,10 @@ export default function PontoAdminModal({
     setEditSaida(f.hora_saida ? f.hora_saida.slice(0, 5) : '');
     setEditAtivo(f.ativo);
     setEditDias(Array.isArray(f.dias_trabalho) ? f.dias_trabalho : [1, 2, 3, 4, 5]);
+    setEditSenha(''); setVerEditSenha(false); setMsgSenha(null);
     setMsgEdit(null);
+    // rola o painel para o topo para ver o formulário de edição
+    setTimeout(() => { if (listaScrollRef.current) listaScrollRef.current.scrollTop = 0; }, 0);
   };
 
   const salvarEdicao = async (id: string) => {
@@ -211,6 +240,16 @@ export default function PontoAdminModal({
     setSalvandoEdit(false);
     if (r.erro) setMsgEdit(r.mensagem || 'Não foi possível salvar.');
     else setEditId(null);
+  };
+
+  const salvarSenha = async (userId: string) => {
+    setMsgSenha(null);
+    if (editSenha.length < 8) { setMsgSenha({ tipo: 'erro', texto: 'A senha deve ter pelo menos 8 caracteres.' }); return; }
+    setSalvandoSenha(true);
+    const r = await onRedefinirSenha(userId, editSenha);
+    setSalvandoSenha(false);
+    if (r.erro) setMsgSenha({ tipo: 'erro', texto: r.mensagem || 'Não foi possível alterar a senha.' });
+    else { setMsgSenha({ tipo: 'ok', texto: 'Senha alterada!' }); setEditSenha(''); }
   };
 
   const horaBrasilia = (ts: string) => new Date(ts).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', timeZone: 'America/Sao_Paulo', hour12: false });
@@ -278,6 +317,7 @@ export default function PontoAdminModal({
     const cabecalho = [
       ['Relatório de Ponto'],
       ['Funcionário', funcSel.nome],
+      ['CPF', formatarCpf(funcSel.cpf || funcSel.login)],
       ['Cargo', funcSel.cargo || '-'],
       ['Período', rotuloPeriodo],
       ['Horário previsto', horarioPrevisto],
@@ -310,6 +350,7 @@ export default function PontoAdminModal({
     </style></head><body>
       <h1>Relatório de Ponto</h1><p class="sub">${esc(rotuloPeriodo)}</p>
       <p class="meta"><b>Funcionário:</b> ${esc(funcSel.nome)}</p>
+      <p class="meta"><b>CPF:</b> ${esc(formatarCpf(funcSel.cpf || funcSel.login))}</p>
       <p class="meta"><b>Cargo:</b> ${esc(funcSel.cargo || '-')}</p>
       <p class="meta"><b>Horário previsto:</b> ${esc(horarioPrevisto)}</p>
       <p class="meta"><b>Dias de trabalho:</b> ${esc(resumoDias(funcSel.dias_trabalho))}</p>
@@ -384,7 +425,7 @@ export default function PontoAdminModal({
           ))}
         </div>
 
-        <div className="flex-1 overflow-y-auto p-4">
+        <div ref={listaScrollRef} className="flex-1 overflow-y-auto p-4">
           {aba === 'lista' && (
             carregando ? (
               <p className={`py-8 text-center text-sm font-semibold ${textMuted}`}>Carregando...</p>
@@ -398,7 +439,7 @@ export default function PontoAdminModal({
                       <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-cyan-50 text-sm font-black text-cyan-700">{(f.nome || '?').charAt(0).toUpperCase()}</span>
                       <div className="min-w-0 flex-1">
                         <p className="truncate text-sm font-black">{f.nome}</p>
-                        <p className={`truncate text-xs ${textMuted}`}>{f.login}{f.cargo ? ' · ' + f.cargo : ''}{f.hora_entrada ? ' · ' + f.hora_entrada.slice(0, 5) + (f.hora_saida ? '–' + f.hora_saida.slice(0, 5) : '') : ''}</p>
+                        <p className={`truncate text-xs ${textMuted}`}>{formatarCpf(f.cpf || f.login)}{f.cargo ? ' · ' + f.cargo : ''}{f.hora_entrada ? ' · ' + f.hora_entrada.slice(0, 5) + (f.hora_saida ? '–' + f.hora_saida.slice(0, 5) : '') : ''}</p>
                         <p className={`truncate text-[10px] ${textMuted}`}>{resumoDias(f.dias_trabalho)}</p>
                       </div>
                       {!f.ativo && <span className="shrink-0 rounded-full bg-slate-200 px-2 py-0.5 text-[10px] font-black uppercase text-slate-600">Inativo</span>}
@@ -431,6 +472,22 @@ export default function PontoAdminModal({
                         </label>
                         <button type="button" onClick={() => salvarEdicao(f.id)} disabled={salvandoEdit} className="mt-1 h-10 rounded-xl text-sm font-black text-white shadow transition hover:brightness-110 disabled:opacity-60" style={{ backgroundColor: corPrimaria }}>{salvandoEdit ? 'Salvando...' : 'Salvar alterações'}</button>
                         {msgEdit && <p className="text-xs font-bold text-red-600">{msgEdit}</p>}
+
+                        <div className={`mt-1 grid gap-2 border-t pt-3 ${itemBorda}`}>
+                          <span className="text-[11px] font-black uppercase tracking-wide text-slate-500">Alterar senha</span>
+                          <div className="relative">
+                            <input className={inputCls + ' pr-10'} type={verEditSenha ? 'text' : 'password'} value={editSenha} onChange={(e) => setEditSenha(e.target.value)} placeholder="Nova senha (mín. 8)" />
+                            <button type="button" onClick={() => setVerEditSenha(!verEditSenha)} aria-label={verEditSenha ? 'Ocultar senha' : 'Mostrar senha'} className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
+                              {verEditSenha ? (
+                                <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88L3 3m6.88 6.88L21 21" /></svg>
+                              ) : (
+                                <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
+                              )}
+                            </button>
+                          </div>
+                          <button type="button" onClick={() => salvarSenha(f.user_id)} disabled={salvandoSenha} className={`h-9 rounded-xl border text-xs font-black uppercase tracking-wide transition disabled:opacity-60 ${darkMode ? 'border-slate-600 text-slate-200 hover:bg-slate-700' : 'border-slate-300 text-slate-600 hover:bg-slate-100'}`}>{salvandoSenha ? 'Salvando...' : 'Salvar nova senha'}</button>
+                          {msgSenha && <p className={`text-xs font-bold ${msgSenha.tipo === 'ok' ? 'text-emerald-600' : 'text-red-600'}`}>{msgSenha.texto}</p>}
+                        </div>
                       </div>
                     )}
                   </div>
@@ -444,11 +501,20 @@ export default function PontoAdminModal({
               <label className="grid gap-1 text-[11px] font-black uppercase tracking-wide text-slate-500">Nome
                 <input className={inputCls} value={nome} onChange={(e) => setNome(e.target.value)} placeholder="Nome do funcionário" />
               </label>
-              <label className="grid gap-1 text-[11px] font-black uppercase tracking-wide text-slate-500">Login
-                <input className={inputCls} value={login} onChange={(e) => setLogin(e.target.value)} placeholder="ex: joao.silva" autoCapitalize="none" />
+              <label className="grid gap-1 text-[11px] font-black uppercase tracking-wide text-slate-500">CPF (será o login)
+                <input className={inputCls} value={formatarCpf(cpf)} onChange={(e) => setCpf(e.target.value.replace(/\D/g, '').slice(0, 11))} placeholder="000.000.000-00" inputMode="numeric" autoComplete="off" />
               </label>
               <label className="grid gap-1 text-[11px] font-black uppercase tracking-wide text-slate-500">Senha (mín. 8)
-                <input className={inputCls} type="password" value={senha} onChange={(e) => setSenha(e.target.value)} placeholder="Senha de acesso" />
+                <div className="relative">
+                  <input className={inputCls + ' pr-10'} type={verSenha ? 'text' : 'password'} value={senha} onChange={(e) => setSenha(e.target.value)} placeholder="Senha de acesso" />
+                  <button type="button" onClick={() => setVerSenha(!verSenha)} aria-label={verSenha ? 'Ocultar senha' : 'Mostrar senha'} className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
+                    {verSenha ? (
+                      <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88L3 3m6.88 6.88L21 21" /></svg>
+                    ) : (
+                      <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
+                    )}
+                  </button>
+                </div>
               </label>
               <label className="grid gap-1 text-[11px] font-black uppercase tracking-wide text-slate-500">Cargo (opcional)
                 <input className={inputCls} value={cargo} onChange={(e) => setCargo(e.target.value)} placeholder="ex: Vendedor" />
@@ -502,6 +568,7 @@ export default function PontoAdminModal({
                 <option value="">Selecione o funcionário</option>
                 {funcionarios.map((f) => <option key={f.user_id} value={f.user_id}>{f.nome}</option>)}
               </select>
+              {funcSel && <p className={`-mt-1 text-[11px] font-bold ${textMuted}`}>CPF: {formatarCpf(funcSel.cpf || funcSel.login)}</p>}
 
               {/* Ano + Mês — estilo pill como no mobile */}
               <div className="grid grid-cols-[88px_minmax(0,1fr)] gap-2">

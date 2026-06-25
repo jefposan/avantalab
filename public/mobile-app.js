@@ -413,7 +413,7 @@
     return '<div class="mx-auto max-w-md px-4 py-5">' + conteudo + '</div>';
   }
 
-  var APP_VERSION = '1.3.5.1';
+  var APP_VERSION = '1.3.6';
   var APP_VERSION_LABEL = 'AvantaLab Gest&atilde;o v' + APP_VERSION;
 
   function telaAvisoMobile(titulo, texto) {
@@ -2029,7 +2029,8 @@
 
     carregarUsuariosAtivosSistema();
 
-    if (state.empresa.telefone_confirmado !== true) {
+    // Funcionário de ponto não precisa confirmar celular: loga e vai direto bater ponto.
+    if (!ehFuncionarioPontoMobile() && state.empresa.telefone_confirmado !== true) {
       state.validacaoTelefoneObrigatoria = true;
       state.telefoneObrigatorio = state.empresa.telefone || '';
       state.telefoneObrigatorioConfirmado = '';
@@ -4281,7 +4282,20 @@
     if (!navigator.geolocation) { mostrarToast('Geolocalizacao indisponivel neste aparelho.'); return; }
     state.pontoBatendo = true;
     render();
+
+    // Watchdog: garante que nunca fica travado mesmo se o GPS nao responder.
+    var finalizado = false;
+    var watchdog = setTimeout(function () {
+      if (finalizado) return;
+      finalizado = true;
+      state.pontoBatendo = false;
+      mostrarToast('Demorou para obter a localizacao. Tente novamente.');
+      render();
+    }, 22000);
+    function concluir() { finalizado = true; clearTimeout(watchdog); }
+
     navigator.geolocation.getCurrentPosition(async function (pos) {
+      if (finalizado) return;
       try {
         var md = state.usuario && state.usuario.user_metadata;
         var empresaId = state.empresa ? state.empresa.id : (md && md.empresa_id);
@@ -4292,6 +4306,7 @@
           distancia = distanciaMetros(cfg.latitude, cfg.longitude, pos.coords.latitude, pos.coords.longitude);
           var raio = cfg.raio_m || 100;
           if (distancia > raio) {
+            concluir();
             state.pontoBatendo = false;
             mostrarToast('Voce esta a ' + Math.round(distancia) + 'm da empresa. Aproxime-se (limite ' + raio + 'm) para bater o ponto.');
             render();
@@ -4299,31 +4314,42 @@
           }
         }
         var hash = (Date.now().toString(36) + Math.random().toString(36).slice(2, 8)).toUpperCase();
-        var resp = await db.from('ponto_registros').insert({
+        var registro = {
           empresa_id: empresaId,
           user_id: state.usuario.id,
           tipo: tipo,
           latitude: pos.coords.latitude,
           longitude: pos.coords.longitude,
           precisao_m: pos.coords.accuracy,
-          distancia_m: distancia,
           dispositivo: navigator.userAgent,
           hash: hash,
-        }).select().single();
+        };
+        if (distancia != null) registro.distancia_m = distancia;
+        var resp = await db.from('ponto_registros').insert(registro).select().single();
+        concluir();
         state.pontoBatendo = false;
-        if (resp.error) { mostrarToast('Nao foi possivel registrar o ponto.'); render(); return; }
+        if (resp.error) {
+          console.error('Erro ao registrar ponto:', resp.error);
+          mostrarToast('Nao registrou: ' + (resp.error.message || resp.error.code || 'erro desconhecido'));
+          render();
+          return;
+        }
         state.pontoComprovante = { tipo: tipo, registrado_em: resp.data.registrado_em, hash: hash, lat: pos.coords.latitude, lng: pos.coords.longitude, distancia: distancia };
         await carregarPontoHoje();
       } catch (e) {
+        concluir();
         state.pontoBatendo = false;
-        mostrarToast('Erro ao registrar o ponto.');
+        console.error('Erro ao bater ponto:', e);
+        mostrarToast('Erro ao registrar: ' + ((e && e.message) ? e.message : 'tente novamente'));
         render();
       }
-    }, function () {
+    }, function (err) {
+      if (finalizado) return;
+      concluir();
       state.pontoBatendo = false;
-      mostrarToast('Ative a localizacao para bater o ponto.');
+      mostrarToast('Localizacao indisponivel: ' + ((err && err.message) ? err.message : 'ative o GPS e tente novamente'));
       render();
-    }, { enableHighAccuracy: true, timeout: 12000, maximumAge: 0 });
+    }, { enableHighAccuracy: true, timeout: 15000, maximumAge: 30000 });
   }
 
   function telaPonto() {
@@ -7749,7 +7775,7 @@
     });
 
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/mobile-sw.js?v=140').then(function (registro) {
+      navigator.serviceWorker.register('/mobile-sw.js?v=141').then(function (registro) {
         if (registro && registro.update) registro.update();
       }).catch(function () {});
     }

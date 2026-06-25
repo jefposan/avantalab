@@ -1464,7 +1464,7 @@ useEffect(() => {
     try {
       const { data, error } = await supabase
         .from('ponto_funcionarios')
-        .select('id, user_id, nome, login, cargo, ativo, hora_entrada, hora_saida, dias_trabalho')
+        .select('id, user_id, nome, login, cpf, cargo, ativo, hora_entrada, hora_saida, dias_trabalho')
         .eq('empresa_id', empresaId)
         .order('nome', { ascending: true });
       if (!error && data) setPontoFuncionarios(data as FuncionarioPonto[]);
@@ -1472,7 +1472,7 @@ useEffect(() => {
     setPontoFuncCarregando(false);
   }
 
-  async function criarFuncionarioPonto(dados: { nome: string; login: string; senha: string; cargo: string; horaEntrada?: string; horaSaida?: string; diasTrabalho?: number[] }) {
+  async function criarFuncionarioPonto(dados: { nome: string; cpf: string; senha: string; cargo: string; horaEntrada?: string; horaSaida?: string; diasTrabalho?: number[] }) {
     if (!empresaId) return { erro: true, mensagem: 'Perfil não identificado.' };
     try {
       const { data: sessao } = await supabase.auth.getSession();
@@ -1553,6 +1553,25 @@ useEffect(() => {
       return { erro: false };
     } catch {
       return { erro: true, mensagem: 'Erro ao salvar o funcionário.' };
+    }
+  }
+
+  async function redefinirSenhaPonto(funcionarioUserId: string, novaSenha: string) {
+    if (!empresaId) return { erro: true, mensagem: 'Perfil não identificado.' };
+    try {
+      const { data: sessao } = await supabase.auth.getSession();
+      const token = sessao.session?.access_token;
+      if (!token) return { erro: true, mensagem: 'Sessão não encontrada. Faça login novamente.' };
+      const resp = await fetch('/api/redefinir-senha-ponto', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ empresaId, funcionarioUserId, novaSenha }),
+      });
+      const r = await resp.json();
+      if (!resp.ok || r.erro) return { erro: true, mensagem: r.mensagem || 'Não foi possível alterar a senha.' };
+      return { erro: false };
+    } catch {
+      return { erro: true, mensagem: 'Erro ao alterar a senha.' };
     }
   }
 
@@ -5245,6 +5264,7 @@ if (isTelaMobile) {
   carregando={pontoFuncCarregando}
   onCriar={criarFuncionarioPonto}
   onAtualizar={atualizarFuncionarioPonto}
+  onRedefinirSenha={redefinirSenhaPonto}
   config={pontoConfig}
   onSalvarConfig={salvarPontoConfig}
   onCarregarRegistros={carregarRegistrosPonto}
