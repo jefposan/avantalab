@@ -83,6 +83,7 @@ export default function PontoAdminModal({
   // Cor padrão do sistema (marca AvantaLab) — não usa a cor do usuário (corSistema).
   const corSistema = '#003E73';
   const [aba, setAba] = useState<'lista' | 'novo' | 'local' | 'relatorios'>('lista');
+  const [linkCopiado, setLinkCopiado] = useState(false);
   const [nome, setNome] = useState('');
   const [cpf, setCpf] = useState('');
   const [senha, setSenha] = useState('');
@@ -182,6 +183,10 @@ export default function PontoAdminModal({
   const textMuted = darkMode ? 'text-slate-400' : 'text-slate-500';
   const inputCls = `h-10 w-full rounded-lg border px-3 text-sm outline-none ${darkMode ? 'border-slate-600 bg-slate-800 text-white' : 'border-slate-300 bg-white text-slate-800'}`;
   const labelCls = `grid gap-1 text-[11px] font-black uppercase tracking-wide ${darkMode ? 'text-slate-300' : 'text-slate-500'}`;
+  const linkPonto = (typeof window !== 'undefined' ? window.location.origin : '') + '/ponto';
+  const copiarLinkPonto = () => {
+    try { navigator.clipboard.writeText(linkPonto); setLinkCopiado(true); setTimeout(() => setLinkCopiado(false), 2500); } catch { /* ignore */ }
+  };
 
   const enviar = async () => {
     setMsg(null);
@@ -243,8 +248,8 @@ export default function PontoAdminModal({
   };
 
   const cpfEditDigitos = editCpf.replace(/\D/g, '');
-  const cpfEditInvalido = cpfEditDigitos.length > 0 && !cpfValido(editCpf);
-  const cpfNovoInvalido = cpf.replace(/\D/g, '').length > 0 && !cpfValido(cpf);
+  const cpfEditInvalido = cpfEditDigitos.length === 11 && !cpfValido(editCpf);
+  const cpfNovoInvalido = cpf.replace(/\D/g, '').length === 11 && !cpfValido(cpf);
 
   const salvarEdicao = async (userId: string) => {
     setMsgEdit(null);
@@ -455,11 +460,18 @@ export default function PontoAdminModal({
 
         <div ref={listaScrollRef} className="flex-1 overflow-y-auto p-4">
           {aba === 'lista' && (
-            carregando ? (
-              <p className={`py-8 text-center text-sm font-semibold ${textMuted}`}>Carregando...</p>
-            ) : funcionarios.length === 0 ? (
-              <p className={`py-8 text-center text-sm font-semibold ${textMuted}`}>Nenhum funcionário cadastrado. Use a aba "Novo".</p>
-            ) : (
+            <div className="grid gap-3">
+              <div className={`rounded-xl border p-3 ${itemBorda}`}>
+                <p className={`text-[11px] font-black uppercase tracking-wide ${darkMode ? 'text-slate-300' : 'text-slate-500'}`}>Link de acesso dos funcionários</p>
+                <p className="mt-1 break-all text-sm font-bold" style={{ color: corSistema }}>{linkPonto}</p>
+                <p className={`mt-0.5 text-[11px] ${textMuted}`}>Eles entram com CPF e senha. O mesmo link serve para todas as empresas.</p>
+                <button type="button" onClick={copiarLinkPonto} className="mt-2 h-8 rounded-lg px-3 text-[11px] font-black uppercase tracking-wide text-white" style={{ backgroundColor: corSistema }}>{linkCopiado ? 'Copiado!' : 'Copiar link'}</button>
+              </div>
+              {carregando ? (
+                <p className={`py-8 text-center text-sm font-semibold ${textMuted}`}>Carregando...</p>
+              ) : funcionarios.length === 0 ? (
+                <p className={`py-8 text-center text-sm font-semibold ${textMuted}`}>Nenhum funcionário cadastrado. Use a aba "Novo".</p>
+              ) : (
               <div className="grid gap-2">
                 {funcionarios.map((f) => (
                   <div
@@ -546,7 +558,8 @@ export default function PontoAdminModal({
                   </div>
                 ))}
               </div>
-            )
+              )}
+            </div>
           )}
 
           {aba === 'novo' && (

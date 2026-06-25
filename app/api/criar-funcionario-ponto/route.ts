@@ -86,15 +86,16 @@ export async function POST(request: Request) {
       .maybeSingle();
     if (!moduloAtivo) return respostaErro('O módulo Controle de Ponto não está ativo nesta empresa.', 403);
 
-    // CPF (login) único dentro da empresa
+    // CPF (login) único GLOBALMENTE entre funcionários de ponto.
+    // (Um CPF = uma empresa: permite o login único em /ponto resolver a empresa.)
     const { data: loginExistente } = await supabaseAdmin
       .from('usuarios_empresa')
       .select('id')
       .eq('login', login)
-      .eq('empresa_id', empresaId)
+      .eq('perfil', 'funcionario_ponto')
       .limit(1)
       .maybeSingle();
-    if (loginExistente) return respostaErro('Este CPF já está cadastrado nesta empresa. Use outro.');
+    if (loginExistente) return respostaErro('Este CPF já está cadastrado no sistema. Use outro.');
 
     const emailInterno = `${login}+${empresaId}@usuarios.avantalab.local`;
 

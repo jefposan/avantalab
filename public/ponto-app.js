@@ -1,0 +1,451 @@
+(function () {
+  var root = document.getElementById('ponto-root');
+  if (!root) return;
+  var supabaseGlobal = window.supabase;
+  var config = {
+    supabaseUrl: root.getAttribute('data-supabase-url') || '',
+    supabaseAnonKey: root.getAttribute('data-supabase-anon-key') || '',
+  };
+
+  function avisoSimples(titulo, msg) {
+    root.innerHTML =
+      '<div class="flex min-h-screen items-center justify-center bg-slate-100 px-6 text-center">' +
+        '<div class="w-full max-w-sm rounded-3xl bg-white p-7 shadow-2xl">' +
+          '<h1 class="text-lg font-black text-slate-900">' + titulo + '</h1>' +
+          '<p class="mt-2 text-sm font-semibold text-slate-500">' + msg + '</p>' +
+        '</div>' +
+      '</div>';
+  }
+
+  if (!supabaseGlobal || !config.supabaseUrl || !config.supabaseAnonKey) {
+    avisoSimples('Conexao necessaria', 'Conecte-se a internet e tente novamente.');
+    return;
+  }
+
+  var db = supabaseGlobal.createClient(config.supabaseUrl, config.supabaseAnonKey);
+
+  var state = {
+    pronto: false,
+    autenticado: false,
+    usuario: null,
+    empresa: null,
+    funcionario: null,
+    pontoConfig: null,
+    pontoHoje: [],
+    batendo: false,
+    comprovante: null,
+    view: 'bater',
+    registros: [],
+    periodo: 'dia',
+    carregandoReg: false,
+    cpf: '',
+    senha: '',
+    verSenha: false,
+    erro: '',
+    entrando: false,
+    carregando: false,
+    toast: null,
+  };
+
+  // ---------- helpers ----------
+  function escapeHtml(v) {
+    return String(v == null ? '' : v)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+  }
+  function campo(id) { var el = document.getElementById(id); return el ? el.value : ''; }
+  function fmtCpf(v) {
+    var d = String(v || '').replace(/\D/g, '').slice(0, 11);
+    if (d.length !== 11) return d;
+    return d.slice(0, 3) + '.' + d.slice(3, 6) + '.' + d.slice(6, 9) + '-' + d.slice(9);
+  }
+  function cpfValido(v) {
+    var d = String(v || '').replace(/\D/g, '');
+    if (d.length !== 11 || /^(\d)\1{10}$/.test(d)) return false;
+    function calc(base) {
+      var soma = 0;
+      for (var i = 0; i < base; i++) soma += Number(d[i]) * (base + 1 - i);
+      var resto = (soma * 10) % 11;
+      return resto === 10 ? 0 : resto;
+    }
+    return calc(9) === Number(d[9]) && calc(10) === Number(d[10]);
+  }
+  function mostrarToast(msg) {
+    state.toast = msg; render();
+    setTimeout(function () { state.toast = null; render(); }, 4500);
+  }
+  function diaPontoHoje() { return new Date().toLocaleDateString('en-CA', { timeZone: 'America/Sao_Paulo' }); }
+  function horaPonto(ts) { return new Date(ts).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', timeZone: 'America/Sao_Paulo', hour12: false }); }
+  function diaSemanaHoje() { var p = diaPontoHoje().split('-'); return new Date(Date.UTC(+p[0], +p[1] - 1, +p[2])).getUTCDay(); }
+  var ROTULOS = { entrada: 'Entrada', saida_refeicao: 'Saída p/ refeição', retorno_refeicao: 'Retorno da refeição', saida: 'Saída' };
+  function rotuloAcao(t) { return ROTULOS[t] || t; }
+  function proximaAcao(tipos) {
+    if (tipos.indexOf('saida') !== -1) return null;
+    if (tipos.indexOf('entrada') === -1) return 'entrada';
+    if (tipos.indexOf('saida_refeicao') === -1) return 'saida_refeicao';
+    if (tipos.indexOf('retorno_refeicao') === -1) return 'retorno_refeicao';
+    return 'saida';
+  }
+  function distanciaMetros(lat1, lon1, lat2, lon2) {
+    var R = 6371000, toRad = function (g) { return (g * Math.PI) / 180; };
+    var dLat = toRad(lat2 - lat1), dLon = toRad(lon2 - lon1);
+    var a = Math.sin(dLat / 2) * Math.sin(dLat / 2) + Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLon / 2) * Math.sin(dLon / 2);
+    return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  }
+  function nomeEmpresa() { return (state.empresa && state.empresa.nome) || 'Empresa'; }
+  function nomeFunc() { var f = state.funcionario || {}; var md = (state.usuario && state.usuario.user_metadata) || {}; return f.nome || md.nome || 'Funcionário'; }
+
+  function bind(id, fn) { var el = document.getElementById(id); if (el) el.addEventListener('click', fn); }
+  function bindInput(id, fn) { var el = document.getElementById(id); if (el) el.addEventListener('input', fn); }
+
+  // ---------- login ----------
+  async function entrar() {
+    if (state.entrando) return;
+    var cpf = String(campo('ponto-cpf') || state.cpf).replace(/\D/g, '');
+    var senha = campo('ponto-senha') || state.senha;
+    state.cpf = cpf; state.senha = senha;
+    if (!cpfValido(cpf)) { state.erro = 'CPF inválido. Confira os dígitos antes de continuar.'; render(); return; }
+    if (!senha) { state.erro = 'Informe a senha.'; render(); return; }
+    state.entrando = true; state.erro = ''; render();
+    try {
+      var resp = await fetch('/api/ponto/resolver-email', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ cpf: cpf }),
+      });
+      var r = await resp.json();
+      if (!resp.ok || r.erro || !r.email) {
+        state.entrando = false; state.erro = 'CPF ou senha inválidos.'; render(); return;
+      }
+      var login = await db.auth.signInWithPassword({ email: r.email, password: senha });
+      if (login.error || !login.data.user) {
+        state.entrando = false; state.erro = 'CPF ou senha inválidos.'; render(); return;
+      }
+      state.usuario = login.data.user; state.autenticado = true;
+      state.entrando = false; state.senha = ''; state.cpf = ''; state.erro = ''; state.verSenha = false;
+      await carregarTudo();
+    } catch (e) {
+      state.entrando = false; state.erro = 'Não foi possível entrar. Tente novamente.'; render();
+    }
+  }
+
+  async function sair() {
+    try { await db.auth.signOut(); } catch (e) {}
+    state.autenticado = false; state.usuario = null; state.empresa = null; state.funcionario = null;
+    state.pontoConfig = null; state.pontoHoje = []; state.comprovante = null; state.view = 'bater';
+    state.cpf = ''; state.senha = ''; state.verSenha = false; state.erro = '';
+    state.entrando = false; state.batendo = false; state.registros = []; state.periodo = 'dia';
+    render();
+  }
+
+  async function carregarTudo() {
+    state.carregando = true; render();
+    var uid = state.usuario.id;
+    var md = state.usuario.user_metadata || {};
+    var empresaId = md.empresa_id;
+    try {
+      var f = await db.from('ponto_funcionarios').select('nome, cpf, cargo, dias_trabalho, hora_entrada, hora_saida, empresa_id').eq('user_id', uid).maybeSingle();
+      if (!f.error && f.data) { state.funcionario = f.data; if (f.data.empresa_id) empresaId = f.data.empresa_id; }
+    } catch (e) {}
+    try {
+      if (empresaId) { var emp = await db.from('empresas').select('id, nome').eq('id', empresaId).maybeSingle(); if (!emp.error && emp.data) state.empresa = emp.data; }
+    } catch (e) {}
+    try {
+      if (empresaId) { var cfg = await db.from('ponto_config').select('latitude, longitude, raio_m').eq('empresa_id', empresaId).maybeSingle(); state.pontoConfig = (!cfg.error && cfg.data) ? cfg.data : null; }
+    } catch (e) {}
+    await carregarHoje();
+    state.carregando = false; state.pronto = true; render();
+  }
+
+  async function carregarHoje() {
+    try {
+      var resp = await db.from('ponto_registros').select('id, tipo, registrado_em').eq('user_id', state.usuario.id).eq('dia', diaPontoHoje()).order('registrado_em', { ascending: true });
+      if (!resp.error) state.pontoHoje = resp.data || [];
+    } catch (e) {}
+  }
+
+  // ---------- bater ponto ----------
+  async function registrarComPos(tipo, pos) {
+    var md = state.usuario.user_metadata || {};
+    var empresaId = (state.empresa && state.empresa.id) || (state.funcionario && state.funcionario.empresa_id) || md.empresa_id;
+    var distancia = null;
+    var cfg = state.pontoConfig;
+    if (cfg && cfg.latitude != null && cfg.longitude != null) {
+      distancia = distanciaMetros(cfg.latitude, cfg.longitude, pos.coords.latitude, pos.coords.longitude);
+      var raio = cfg.raio_m || 100;
+      if (distancia > raio) {
+        state.batendo = false;
+        mostrarToast('Voce esta a ' + Math.round(distancia) + 'm da empresa. Aproxime-se (limite ' + raio + 'm).');
+        return;
+      }
+    }
+    var hash = (Date.now().toString(36) + Math.random().toString(36).slice(2, 8)).toUpperCase();
+    var registro = {
+      empresa_id: empresaId, user_id: state.usuario.id, tipo: tipo,
+      latitude: pos.coords.latitude, longitude: pos.coords.longitude,
+      precisao_m: pos.coords.accuracy, dispositivo: navigator.userAgent, hash: hash,
+    };
+    if (distancia != null) registro.distancia_m = distancia;
+    var resp;
+    try { resp = await db.from('ponto_registros').insert(registro).select().single(); }
+    catch (e) { state.batendo = false; mostrarToast('Erro ao registrar: ' + ((e && e.message) ? e.message : 'tente novamente')); return; }
+    state.batendo = false;
+    if (resp.error) { mostrarToast('Nao registrou: ' + (resp.error.message || resp.error.code || 'erro')); return; }
+    state.comprovante = { tipo: tipo, registrado_em: resp.data.registrado_em, hash: hash, lat: pos.coords.latitude, lng: pos.coords.longitude, distancia: distancia };
+    await carregarHoje();
+    render();
+  }
+
+  function bater(tipo) {
+    if (state.batendo) return;
+    var f = state.funcionario;
+    if (f && Array.isArray(f.dias_trabalho) && f.dias_trabalho.length > 0 && f.dias_trabalho.indexOf(diaSemanaHoje()) === -1) {
+      mostrarToast('Hoje nao e um dia de trabalho. Nao e possivel bater o ponto.'); return;
+    }
+    if (!navigator.geolocation) { mostrarToast('Geolocalizacao indisponivel neste aparelho.'); return; }
+    state.batendo = true; render();
+
+    var finalizado = false;
+    var watchdog = setTimeout(function () {
+      if (finalizado) return; finalizado = true; state.batendo = false;
+      mostrarToast('Nao consegui a localizacao. Verifique a permissao de localizacao e tente de novo.'); render();
+    }, 14000);
+
+    var sucesso = function (pos) { if (finalizado) return; finalizado = true; clearTimeout(watchdog); registrarComPos(tipo, pos); };
+    var pedir = function (alta, aoFalhar) {
+      try { navigator.geolocation.getCurrentPosition(sucesso, aoFalhar, { enableHighAccuracy: alta, timeout: 9000, maximumAge: 60000 }); }
+      catch (e) { aoFalhar(e); }
+    };
+    pedir(true, function () {
+      if (finalizado) return;
+      pedir(false, function (err) {
+        if (finalizado) return; finalizado = true; clearTimeout(watchdog); state.batendo = false;
+        mostrarToast('Localizacao indisponivel: ' + ((err && err.message) ? err.message : 'permita a localizacao e tente de novo')); render();
+      });
+    });
+  }
+
+  // ---------- registros ----------
+  function inicioPeriodo(p) {
+    var d = new Date();
+    if (p === 'semana') d.setDate(d.getDate() - 7);
+    else if (p === 'mes') d.setMonth(d.getMonth() - 1);
+    else if (p === 'ano') d.setFullYear(d.getFullYear() - 1);
+    return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+  }
+  async function carregarRegistros(periodo) {
+    state.periodo = periodo; state.view = 'registros'; state.carregandoReg = true; render();
+    try {
+      var resp = await db.from('ponto_registros').select('tipo, registrado_em, dia, distancia_m').eq('user_id', state.usuario.id).gte('dia', inicioPeriodo(periodo)).order('registrado_em', { ascending: true });
+      state.registros = (!resp.error && resp.data) ? resp.data : [];
+    } catch (e) { state.registros = []; }
+    state.carregandoReg = false; render();
+  }
+  function calcHorasDia(regs) {
+    function t(tp) { var r = regs.filter(function (x) { return x.tipo === tp; })[0]; return r ? new Date(r.registrado_em).getTime() : null; }
+    var ent = t('entrada'), sai = t('saida'), sref = t('saida_refeicao'), rref = t('retorno_refeicao');
+    if (ent == null || sai == null) return '';
+    var ms = sai - ent;
+    if (sref != null && rref != null) ms -= (rref - sref);
+    if (ms < 0) return '';
+    var min = Math.round(ms / 60000), h = Math.floor(min / 60);
+    return h + 'h ' + String(min % 60).padStart(2, '0') + 'min';
+  }
+
+  // ---------- telas ----------
+  function telaLogin() {
+    return (
+      '<section class="avantalab-mobile-bg fixed inset-0 flex flex-col items-center overflow-hidden px-4 pb-6" style="height:100dvh;padding-top:22dvh;--avantalab-mobile-bg-overlay:linear-gradient(rgba(255,255,255,.10),rgba(255,255,255,0));">' +
+        '<div class="mx-auto w-full max-w-sm overflow-y-auto rounded-3xl border border-white/35 p-6 text-slate-900 shadow-2xl backdrop-blur-xl" style="background-color:rgba(255,255,255,.22);max-height:calc(82dvh);overscroll-behavior:contain;">' +
+          '<div class="mb-4">' +
+            '<h1 class="text-2xl font-black text-slate-900">Controle de Ponto</h1>' +
+            '<p class="mt-1 text-sm font-semibold text-slate-600">Entre com seu CPF e senha</p>' +
+          '</div>' +
+          '<div class="grid gap-3">' +
+            '<label class="grid gap-1 text-[11px] font-black uppercase tracking-wide text-slate-500">CPF' +
+              '<input id="ponto-cpf" inputmode="numeric" autocomplete="off" value="' + escapeHtml(fmtCpf(state.cpf)) + '" placeholder="000.000.000-00" class="h-12 w-full rounded-xl border border-slate-300 bg-white px-3 text-base text-slate-800 outline-none" />' +
+              '<span id="ponto-cpf-aviso" class="text-xs font-bold text-red-600" style="display:' + (state.cpf.length === 11 && !cpfValido(state.cpf) ? 'block' : 'none') + '">CPF inválido — confira os dígitos.</span>' +
+            '</label>' +
+            '<label class="grid gap-1 text-[11px] font-black uppercase tracking-wide text-slate-500">Senha' +
+              '<div class="relative">' +
+                '<input id="ponto-senha" type="' + (state.verSenha ? 'text' : 'password') + '" value="' + escapeHtml(state.senha) + '" placeholder="Sua senha" class="h-12 w-full rounded-xl border border-slate-300 bg-white px-3 pr-12 text-base text-slate-800 outline-none" />' +
+                '<button id="ponto-ver-senha" type="button" aria-label="' + (state.verSenha ? 'Ocultar senha' : 'Mostrar senha') + '" class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">' +
+                  (state.verSenha
+                    ? '<svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88L3 3m6.88 6.88L21 21" /></svg>'
+                    : '<svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>') +
+                '</button>' +
+              '</div>' +
+            '</label>' +
+            (state.erro ? '<p class="text-xs font-bold text-red-600">' + escapeHtml(state.erro) + '</p>' : '') +
+            '<button id="ponto-entrar" type="button" ' + (state.entrando ? 'disabled' : '') + ' class="mt-1 h-12 w-full rounded-xl text-base font-black uppercase tracking-wide text-white shadow-lg disabled:opacity-60" style="background:linear-gradient(135deg,#003E73,#00A6C8)">' + (state.entrando ? 'Entrando...' : 'Entrar') + '</button>' +
+          '</div>' +
+        '</div>' +
+      '</section>'
+    );
+  }
+
+  function telaComprovante() {
+    var c = state.comprovante;
+    return (
+      '<div class="flex min-h-screen flex-col items-center justify-center bg-slate-100 px-5">' +
+        '<div class="w-full max-w-sm rounded-3xl bg-white p-6 text-center shadow-2xl">' +
+          '<div class="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-full bg-emerald-100 text-3xl font-black text-emerald-600">&#10003;</div>' +
+          '<h2 class="text-lg font-black text-slate-900">' + escapeHtml(rotuloAcao(c.tipo)) + ' registrada</h2>' +
+          '<p class="mt-1 text-sm font-semibold text-slate-500">' + escapeHtml(horaPonto(c.registrado_em)) + ' &middot; ' + escapeHtml(diaPontoHoje().split('-').reverse().join('/')) + '</p>' +
+          '<div class="mt-4 grid gap-1 rounded-xl bg-slate-50 p-3 text-left text-xs font-semibold text-slate-600">' +
+            '<p>Funcionário: ' + escapeHtml(nomeFunc()) + '</p>' +
+            '<p>Empresa: ' + escapeHtml(nomeEmpresa()) + '</p>' +
+            '<p>Local: ' + Number(c.lat).toFixed(5) + ', ' + Number(c.lng).toFixed(5) + '</p>' +
+            (c.distancia != null ? '<p>Distância da empresa: ' + Math.round(c.distancia) + 'm</p>' : '') +
+            '<p>Código: ' + escapeHtml(c.hash) + '</p>' +
+          '</div>' +
+          '<button id="ponto-comprovante-ok" type="button" class="mt-5 h-12 w-full rounded-xl bg-slate-950 text-sm font-black uppercase tracking-wide text-white">Concluir</button>' +
+        '</div>' +
+      '</div>'
+    );
+  }
+
+  function telaRegistros() {
+    var grupos = {};
+    state.registros.forEach(function (r) { (grupos[r.dia] = grupos[r.dia] || []).push(r); });
+    var dias = Object.keys(grupos).sort().reverse();
+    var periodos = [['dia', 'Dia'], ['semana', 'Semana'], ['mes', 'Mês'], ['ano', 'Ano']];
+    var listaHtml = state.carregandoReg
+      ? '<p class="py-8 text-center text-sm font-semibold text-slate-400">Carregando...</p>'
+      : (dias.length === 0
+        ? '<p class="py-8 text-center text-sm font-semibold text-slate-400">Nenhum registro no período.</p>'
+        : dias.map(function (dia) {
+            var regs = grupos[dia];
+            var linhas = regs.map(function (r) {
+              return '<div class="flex items-center justify-between text-xs"><span class="font-bold text-slate-500">' + escapeHtml(rotuloAcao(r.tipo)) + '</span><span class="font-black text-slate-800">' + escapeHtml(horaPonto(r.registrado_em)) + '</span></div>';
+            }).join('');
+            var horas = calcHorasDia(regs);
+            return '<div class="rounded-xl border border-slate-200 bg-white p-3"><div class="mb-1 flex items-center justify-between"><p class="text-sm font-black text-slate-900">' + escapeHtml(dia.slice(8, 10) + '/' + dia.slice(5, 7) + '/' + dia.slice(0, 4)) + '</p>' + (horas ? '<span class="text-[11px] font-black text-cyan-700">' + horas + '</span>' : '') + '</div><div class="grid gap-0.5">' + linhas + '</div></div>';
+          }).join(''));
+
+    return (
+      '<div class="min-h-screen bg-slate-100">' +
+        '<header class="no-print px-5 pb-4 text-white shadow-xl" style="padding-top:calc(env(safe-area-inset-top) + 18px);background:linear-gradient(135deg,#003E73 0%,#075985 54%,#00A6C8 100%)">' +
+          '<div class="mx-auto flex max-w-md items-center gap-3">' +
+            '<button id="ponto-voltar" type="button" class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-white/15 bg-white/15 text-lg font-black text-white" aria-label="Voltar">&lsaquo;</button>' +
+            '<div><p class="text-[10px] font-black uppercase tracking-[0.24em] text-cyan-100">Meus registros</p><h1 class="text-lg font-black text-white">' + escapeHtml(nomeFunc()) + '</h1></div>' +
+          '</div>' +
+        '</header>' +
+        '<div class="mx-auto max-w-md px-5 pt-4 pb-10">' +
+          '<div class="no-print mb-3 grid grid-cols-4 gap-1">' +
+            periodos.map(function (p) {
+              var ativo = state.periodo === p[0];
+              return '<button id="ponto-periodo-' + p[0] + '" type="button" class="rounded-lg px-1 py-2 text-[11px] font-black ' + (ativo ? 'bg-cyan-600 text-white' : 'bg-white text-slate-500 border border-slate-200') + '">' + p[1] + '</button>';
+            }).join('') +
+          '</div>' +
+          '<div id="ponto-relatorio-print" class="grid gap-2">' +
+            '<div class="hidden print:block"><h2 style="font-weight:900">Relatório de Ponto</h2><p>' + escapeHtml(nomeFunc()) + ' · ' + escapeHtml(nomeEmpresa()) + '</p></div>' +
+            listaHtml +
+          '</div>' +
+          '<button id="ponto-gerar-pdf" type="button" class="no-print mt-5 h-12 w-full rounded-xl bg-slate-950 text-sm font-black uppercase tracking-wide text-white">Gerar PDF</button>' +
+        '</div>' +
+      '</div>'
+    );
+  }
+
+  function telaPonto() {
+    if (state.view === 'registros') return telaRegistros();
+    if (state.comprovante) return telaComprovante();
+
+    var tipos = (state.pontoHoje || []).map(function (r) { return r.tipo; });
+    var proxima = proximaAcao(tipos);
+    var podeEncerrar = tipos.indexOf('entrada') !== -1 && tipos.indexOf('saida') === -1;
+    var dataHoje = new Date().toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: 'long', year: 'numeric', timeZone: 'America/Sao_Paulo' });
+
+    var statusHtml = ['entrada', 'saida_refeicao', 'retorno_refeicao', 'saida'].map(function (t) {
+      var reg = (state.pontoHoje || []).filter(function (r) { return r.tipo === t; })[0];
+      return '<div class="flex items-center justify-between rounded-xl border px-3 py-2.5 ' + (reg ? 'border-emerald-200 bg-emerald-50' : 'border-slate-200 bg-white') + '">' +
+          '<span class="text-xs font-bold ' + (reg ? 'text-emerald-800' : 'text-slate-500') + '">' + escapeHtml(rotuloAcao(t)) + '</span>' +
+          '<span class="text-sm font-black ' + (reg ? 'text-emerald-700' : 'text-slate-300') + '">' + (reg ? escapeHtml(horaPonto(reg.registrado_em)) : '&mdash;') + '</span>' +
+        '</div>';
+    }).join('');
+
+    var botoesHtml = '';
+    if (proxima) {
+      botoesHtml += '<button id="ponto-acao" data-tipo="' + proxima + '" type="button" ' + (state.batendo ? 'disabled' : '') + ' class="h-14 w-full rounded-2xl bg-cyan-600 text-base font-black uppercase tracking-wide text-white shadow-lg disabled:opacity-60">' + (state.batendo ? 'Registrando...' : escapeHtml(rotuloAcao(proxima))) + '</button>';
+      if (podeEncerrar && proxima !== 'saida') {
+        botoesHtml += '<button id="ponto-encerrar" type="button" ' + (state.batendo ? 'disabled' : '') + ' class="mt-2 h-12 w-full rounded-2xl border-2 border-rose-300 bg-white text-sm font-black uppercase tracking-wide text-rose-600 disabled:opacity-60">Encerrar (Saída)</button>';
+      }
+    } else {
+      botoesHtml += '<div class="rounded-2xl border-2 border-emerald-200 bg-emerald-50 px-4 py-4 text-center text-sm font-black text-emerald-700">Expediente encerrado. Até amanhã! &#128075;</div>';
+    }
+
+    return (
+      '<div class="min-h-screen bg-slate-100 text-slate-900">' +
+        '<header class="px-5 pb-5 text-white shadow-xl" style="padding-top:calc(env(safe-area-inset-top) + 18px);background:linear-gradient(135deg,#003E73 0%,#075985 54%,#00A6C8 100%)">' +
+          '<div class="mx-auto max-w-md">' +
+            '<p class="text-[10px] font-black uppercase tracking-[0.24em] text-cyan-100">Controle de Ponto</p>' +
+            '<h1 class="mt-1 text-2xl font-black leading-tight text-white">Olá, ' + escapeHtml(String(nomeFunc()).split(' ')[0]) + '</h1>' +
+            '<p class="mt-0.5 text-xs font-semibold text-cyan-50">' + escapeHtml(nomeEmpresa()) + '</p>' +
+            '<p class="mt-2 text-[11px] font-semibold text-cyan-50">' + escapeHtml(dataHoje.charAt(0).toUpperCase() + dataHoje.slice(1)) + '</p>' +
+          '</div>' +
+        '</header>' +
+        '<div class="mx-auto max-w-md px-5 pt-5 pb-10">' +
+          '<p class="mb-2 text-[11px] font-black uppercase tracking-wide text-slate-400">Registros de hoje</p>' +
+          '<div class="grid gap-2">' + statusHtml + '</div>' +
+          '<div class="mt-6">' + botoesHtml + '</div>' +
+          '<button id="ponto-meus-registros" type="button" class="mt-4 h-11 w-full rounded-xl border border-slate-300 bg-white text-xs font-black uppercase tracking-wide text-slate-600">Meus registros</button>' +
+          '<button id="ponto-sair" type="button" class="mt-2 h-11 w-full rounded-xl text-xs font-bold text-slate-400">Sair</button>' +
+        '</div>' +
+      '</div>'
+    );
+  }
+
+  function toastHtml() {
+    if (!state.toast) return '';
+    return '<div class="no-print fixed inset-x-0 bottom-6 z-50 flex justify-center px-5"><div class="max-w-sm rounded-xl bg-slate-900 px-4 py-3 text-center text-sm font-bold text-white shadow-2xl">' + escapeHtml(state.toast) + '</div></div>';
+  }
+
+  function render() {
+    var tela;
+    if (!state.pronto) tela = '<div class="flex min-h-screen items-center justify-center bg-slate-100"><p class="text-sm font-bold text-slate-400">Carregando...</p></div>';
+    else if (!state.autenticado) tela = telaLogin();
+    else tela = telaPonto();
+    root.innerHTML = tela + toastHtml();
+
+    bind('ponto-entrar', entrar);
+    bind('ponto-ver-senha', function () { state.senha = campo('ponto-senha'); state.cpf = String(campo('ponto-cpf') || state.cpf).replace(/\D/g, ''); state.verSenha = !state.verSenha; render(); });
+    bindInput('ponto-cpf', function () {
+      state.cpf = this.value.replace(/\D/g, '').slice(0, 11);
+      var invalido = state.cpf.length === 11 && !cpfValido(state.cpf);
+      var aviso = document.getElementById('ponto-cpf-aviso');
+      if (aviso) aviso.style.display = invalido ? 'block' : 'none';
+      this.style.borderColor = invalido ? '#ef4444' : '';
+    });
+    bindInput('ponto-senha', function () { state.senha = this.value; });
+    var cpfEl = document.getElementById('ponto-cpf');
+    if (cpfEl) cpfEl.addEventListener('blur', function () { this.value = fmtCpf(this.value); });
+
+    bind('ponto-acao', function () { var el = document.getElementById('ponto-acao'); if (el) bater(el.getAttribute('data-tipo')); });
+    bind('ponto-encerrar', function () { bater('saida'); });
+    bind('ponto-comprovante-ok', function () { state.comprovante = null; render(); });
+    bind('ponto-meus-registros', function () { carregarRegistros('dia'); });
+    bind('ponto-voltar', function () { state.view = 'bater'; render(); });
+    bind('ponto-periodo-dia', function () { carregarRegistros('dia'); });
+    bind('ponto-periodo-semana', function () { carregarRegistros('semana'); });
+    bind('ponto-periodo-mes', function () { carregarRegistros('mes'); });
+    bind('ponto-periodo-ano', function () { carregarRegistros('ano'); });
+    bind('ponto-gerar-pdf', function () { try { window.print(); } catch (e) {} });
+    bind('ponto-sair', sair);
+  }
+
+  // ---------- init ----------
+  (async function init() {
+    try {
+      var sess = await db.auth.getSession();
+      if (sess.data.session && sess.data.session.user) {
+        var tipo = sess.data.session.user.user_metadata && sess.data.session.user.user_metadata.tipo;
+        if (tipo === 'funcionario_ponto') {
+          state.usuario = sess.data.session.user; state.autenticado = true;
+          await carregarTudo(); return;
+        }
+        // sessão de outro tipo de usuário: encerra para não misturar
+        try { await db.auth.signOut(); } catch (e) {}
+      }
+    } catch (e) {}
+    state.pronto = true; render();
+  })();
+})();

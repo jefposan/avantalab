@@ -87,12 +87,12 @@ export async function POST(request: Request) {
       const { data: jaExiste } = await supabaseAdmin
         .from('usuarios_empresa')
         .select('id')
-        .eq('empresa_id', empresaId)
         .eq('login', cpf)
+        .eq('perfil', 'funcionario_ponto')
         .neq('user_id', funcionarioUserId)
         .limit(1)
         .maybeSingle();
-      if (jaExiste) return respostaErro('Este CPF já está cadastrado nesta empresa. Use outro.');
+      if (jaExiste) return respostaErro('Este CPF já está cadastrado no sistema. Use outro.');
 
       const novoEmail = `${cpf}+${empresaId}@usuarios.avantalab.local`;
       const { error: erroAuth } = await supabaseAdmin.auth.admin.updateUserById(funcionarioUserId, {
