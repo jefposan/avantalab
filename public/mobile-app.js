@@ -413,7 +413,7 @@
     return '<div class="mx-auto max-w-md px-4 py-5">' + conteudo + '</div>';
   }
 
-  var APP_VERSION = '1.3.6';
+  var APP_VERSION = '1.3.7';
   var APP_VERSION_LABEL = 'AvantaLab Gest&atilde;o v' + APP_VERSION;
 
   function telaAvisoMobile(titulo, texto) {
@@ -2027,10 +2027,19 @@
   async function carregarDados() {
     if (!state.empresa) return;
 
+    // Funcionário de ponto: NÃO carrega dados financeiros, tour, agenda ou prompt de
+    // notificações (esses overlays cobririam a tela e bloqueariam o botão de bater ponto).
+    // Vai direto para a tela de ponto; o carregamento do ponto é feito no render.
+    if (ehFuncionarioPontoMobile()) {
+      state.validacaoTelefoneObrigatoria = false;
+      state.carregando = false;
+      render();
+      return;
+    }
+
     carregarUsuariosAtivosSistema();
 
-    // Funcionário de ponto não precisa confirmar celular: loga e vai direto bater ponto.
-    if (!ehFuncionarioPontoMobile() && state.empresa.telefone_confirmado !== true) {
+    if (state.empresa.telefone_confirmado !== true) {
       state.validacaoTelefoneObrigatoria = true;
       state.telefoneObrigatorio = state.empresa.telefone || '';
       state.telefoneObrigatorioConfirmado = '';
@@ -7775,7 +7784,7 @@
     });
 
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/mobile-sw.js?v=141').then(function (registro) {
+      navigator.serviceWorker.register('/mobile-sw.js?v=142').then(function (registro) {
         if (registro && registro.update) registro.update();
       }).catch(function () {});
     }
