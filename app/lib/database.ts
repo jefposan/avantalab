@@ -164,12 +164,11 @@ export async function buscarEmpresasDoUsuario(usuarioId: string) {
       .is('user_id', null)
       .in('status', ['pendente', 'ativo']);
 
+    // Vinculação de convites é "best-effort": se falhar, apenas registra e segue,
+    // nunca devolve lista vazia (que seria confundida com "usuário sem empresa").
     if (erroConvites) {
       console.error('Erro ao buscar convites pendentes:', erroConvites);
-      return [];
-    }
-
-    if (convitesPendentes && convitesPendentes.length > 0) {
+    } else if (convitesPendentes && convitesPendentes.length > 0) {
       const idsConvites = convitesPendentes.map((convite) => convite.id);
 
       const { error: erroAtualizarConvites } = await supabase
@@ -183,7 +182,6 @@ export async function buscarEmpresasDoUsuario(usuarioId: string) {
 
       if (erroAtualizarConvites) {
         console.error('Erro ao vincular convites ao usuário:', erroAtualizarConvites);
-        return [];
       }
     }
   }
@@ -196,9 +194,11 @@ export async function buscarEmpresasDoUsuario(usuarioId: string) {
     .eq('status', 'ativo')
     .order('nome', { ascending: true });
 
+  // Erro de query é DIFERENTE de "sem empresa": lança para o chamador
+  // poder voltar ao login em vez de mandar para o cadastro/onboarding.
   if (erroVinculos) {
     console.error('Erro ao buscar empresas do usuário:', erroVinculos);
-    return [];
+    throw new Error('Falha ao carregar os vínculos do usuário.');
   }
 
   if (!vinculos || vinculos.length === 0) {
@@ -248,7 +248,7 @@ export async function buscarEmpresasDoUsuario(usuarioId: string) {
 
   if (erroEmpresas) {
     console.error('Erro ao buscar dados das empresas:', erroEmpresas);
-    return [];
+    throw new Error('Falha ao carregar os dados das empresas.');
   }
 
   // 4. Une vínculo + dados da empresa

@@ -575,9 +575,16 @@ export function useEmpresas(deps: UseEmpresasDeps) {
       return;
     }
 
-    const empresasAtualizadas = (await buscarEmpresasDoUsuario(usuarioId)).filter(
-      (empresa): empresa is NonNullable<typeof empresa> => Boolean(empresa)
-    );
+    let empresasAtualizadas;
+    try {
+      empresasAtualizadas = (await buscarEmpresasDoUsuario(usuarioId)).filter(
+        (empresa): empresa is NonNullable<typeof empresa> => Boolean(empresa)
+      );
+    } catch (e) {
+      console.error('Erro ao carregar empresas para troca:', e);
+      abrirAviso('Não foi possível carregar', 'Houve uma falha ao buscar suas empresas. Tente novamente em instantes.');
+      return;
+    }
     setEmpresasDoUsuario(empresasAtualizadas);
 
     if (empresasAtualizadas.length <= 1) {

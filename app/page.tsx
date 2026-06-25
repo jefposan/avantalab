@@ -837,6 +837,7 @@ if (paramsConfirmacao.get('confirmado') === '1') {
     let empresa = null;
 
     if (sessaoAtual.session) {
+     try {
       const params = new URLSearchParams(window.location.search);
       const hash = new URLSearchParams(window.location.hash.replace('#', ''));
 
@@ -913,6 +914,24 @@ setMensagemCarregamentoSistema('Carregando empresa...');
       if (empresa) {
         await carregarEmpresaSelecionada(empresa);
       }
+     } catch (e) {
+       console.error('Erro ao carregar pagina ja logada; voltando ao login:', e);
+       // Falha de carregamento em pagina ja logada -> SEMPRE login, nunca cadastro/onboarding.
+       setAcessoNaoConfigurado(false);
+       setAcessoLiberado(false);
+       setModalSelecionarEmpresa(false);
+       setModoRedefinirSenha(false);
+       setEmailConfirmado(false);
+       setEmpresaId(null);
+       setNomeEmpresaAtual('');
+       setPerfilUsuario(null);
+       setModoAuth('login');
+       setMostrarLandingPreLogin(false);
+       setAuthErro('Nao foi possivel carregar seus dados. Faca login novamente.');
+       setMounted(true);
+       setCarregandoSistema(false);
+       return;
+     }
     }
 
     const mesAtual = meses[new Date().getMonth()];
@@ -3694,9 +3713,16 @@ const abrirTrocaEmpresa = async () => {
     return;
   }
 
-  const empresasAtualizadas = (await buscarEmpresasDoUsuario(usuarioId)).filter(
-    (empresa): empresa is NonNullable<typeof empresa> => Boolean(empresa)
-  );
+  let empresasAtualizadas;
+  try {
+    empresasAtualizadas = (await buscarEmpresasDoUsuario(usuarioId)).filter(
+      (empresa): empresa is NonNullable<typeof empresa> => Boolean(empresa)
+    );
+  } catch (e) {
+    console.error('Erro ao carregar empresas para troca:', e);
+    abrirAviso('Não foi possível carregar', 'Houve uma falha ao buscar suas empresas. Tente novamente em instantes.');
+    return;
+  }
   setEmpresasDoUsuario(empresasAtualizadas);
 
   if (empresasAtualizadas.length <= 1) {
@@ -3796,7 +3822,17 @@ const executarExclusaoEmpresaAtual = async () => {
     return;
   }
 
-  const empresasRestantes = await buscarEmpresasDoUsuario(usuarioLogado.user.id);
+  let empresasRestantes;
+  try {
+    empresasRestantes = await buscarEmpresasDoUsuario(usuarioLogado.user.id);
+  } catch (e) {
+    console.error('Erro ao recarregar empresas após exclusão:', e);
+    setExcluindoEmpresa(false);
+    setModalExcluirEmpresa(false);
+    abrirAviso('Empresa excluída', 'A empresa foi excluída. Recarregando o sistema...');
+    setTimeout(() => window.location.reload(), 1200);
+    return;
+  }
 
   setModalExcluirEmpresa(false);
   setNomeConfirmacaoExclusao('');
