@@ -118,6 +118,7 @@
     busca: '',
     modalLancamento: false,
     modalAcao: null,
+    exclusaoRecorrencia: null,
     tipoLancamento: 'despesa',
     modoReceita: 'entrada',
     menuAberto: false,
@@ -1310,7 +1311,7 @@
   }
 
   function deveBloquearScroll() {
-    return Boolean(state.visao === 'agenda' || state.modalLancamento || state.modalMenu || state.menuAberto || state.modalAcao || state.chatIAAberto || state.tourAberto);
+    return Boolean(state.visao === 'agenda' || state.modalLancamento || state.modalMenu || state.menuAberto || state.modalAcao || state.exclusaoRecorrencia || state.chatIAAberto || state.tourAberto);
   }
 
   function liberarScrollChatIA() {
@@ -1473,13 +1474,17 @@
   function promptNotificacoesHtml() {
     return (
       '<div id="prompt-notif-overlay" class="fixed inset-0 z-[70] flex items-center justify-center bg-slate-950/60 px-5">' +
-        '<div class="w-full max-w-xs rounded-3xl bg-white p-5 text-center shadow-2xl">' +
-          '<div class="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-cyan-50 text-2xl">&#128276;</div>' +
-          '<h2 class="text-base font-black text-slate-900">Ativar notificacoes?</h2>' +
-          '<p class="mt-1.5 text-xs font-semibold text-slate-500">Receba no celular os lembretes e avisos da sua agenda, mesmo com o app fechado.</p>' +
-          '<div class="mt-4 grid gap-2">' +
+        '<div class="w-full max-w-xs overflow-hidden rounded-3xl bg-white text-center shadow-2xl">' +
+          '<div class="flex items-center gap-3 px-5 py-4 text-left text-white" style="background-color:#003E73">' +
+            '<div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white/15 text-xl">&#128276;</div>' +
+            '<h2 class="text-base font-black">Ativar notificacoes?</h2>' +
+          '</div>' +
+          '<div class="p-5">' +
+            '<p class="text-xs font-semibold text-slate-500">Receba no celular os lembretes e avisos da sua agenda, mesmo com o app fechado.</p>' +
+            '<div class="mt-4 grid gap-2">' +
             '<button id="prompt-notif-ativar" type="button" class="h-11 rounded-xl bg-slate-950 text-sm font-black uppercase tracking-wide text-white">Ativar</button>' +
             '<button id="prompt-notif-agora-nao" type="button" class="h-10 rounded-xl text-xs font-bold text-slate-500">Agora nao</button>' +
+            '</div>' +
           '</div>' +
         '</div>' +
       '</div>'
@@ -4460,6 +4465,7 @@
           (state.modalAcao ? modalAcaoLancamentoHtml() : '') +
           (state.menuAberto ? menuLateralHtml() : '') +
           (state.modalMenu ? modalMenuHtml() : '') +
+          (state.exclusaoRecorrencia ? confirmacaoExclusaoRecorrenciaHtml() : '') +
           toastHtml() +
         '</div>'
       );
@@ -4507,6 +4513,7 @@
         (state.modalAcao ? modalAcaoLancamentoHtml() : '') +
         (state.menuAberto ? menuLateralHtml() : '') +
         (state.modalMenu ? modalMenuHtml() : '') +
+        (state.exclusaoRecorrencia ? confirmacaoExclusaoRecorrenciaHtml() : '') +
         toastHtml() +
       '</div>'
     );
@@ -4739,15 +4746,15 @@
 
     return (
       '<div id="agenda-form-overlay" class="fixed inset-0 z-[75] flex items-center justify-center bg-slate-950/65 px-4 backdrop-blur-sm">' +
-        '<div class="w-full max-w-sm rounded-[26px] border border-white/70 bg-white p-4 shadow-2xl shadow-slate-950/30">' +
-          '<div class="mb-3 flex items-center justify-between gap-3">' +
+        '<div class="w-full max-w-sm overflow-hidden rounded-[26px] border border-white/70 bg-white shadow-2xl shadow-slate-950/30">' +
+          '<div class="flex items-center justify-between gap-3 px-4 py-3 text-white" style="background-color:#003E73">' +
             '<div>' +
-              '<p class="text-[10px] font-black uppercase tracking-[0.2em] text-cyan-700">Novo item</p>' +
-              '<h3 class="mt-1 text-lg font-black text-slate-950">' + String(state.agendaDiaSelecionado || '').padStart(2, '0') + ' de ' + escapeHtml(nomeMesCompleto(state.mes)) + '</h3>' +
+              '<p class="text-[10px] font-black uppercase tracking-[0.2em] text-cyan-100/75">Novo item</p>' +
+              '<h3 class="mt-0.5 text-lg font-black">' + String(state.agendaDiaSelecionado || '').padStart(2, '0') + ' de ' + escapeHtml(nomeMesCompleto(state.mes)) + '</h3>' +
             '</div>' +
-            '<button id="cancelar-agenda-item-topo" type="button" class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-slate-50 text-xl font-black text-slate-600">&times;</button>' +
+            '<button id="cancelar-agenda-item-topo" type="button" class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-white/20 bg-white/10 text-xl font-black text-white">&times;</button>' +
           '</div>' +
-          '<div class="grid gap-2">' +
+          '<div class="grid gap-2 p-4">' +
             '<input type="hidden" id="agenda-tipo" value="lembrete" />' +
             '<input id="agenda-titulo" value="' + escapeHtml(state.agendaTitulo || '') + '" placeholder="Titulo" style="font-size:16px" class="h-11 rounded-xl border border-slate-200 bg-white px-3 text-base font-bold text-slate-900 outline-none" />' +
             '<textarea id="agenda-descricao" placeholder="Descricao opcional" style="font-size:16px" class="h-[66px] resize-none rounded-xl border border-slate-200 bg-white px-3 py-2 text-base font-semibold text-slate-800 outline-none">' + escapeHtml(state.agendaDescricao || '') + '</textarea>' +
@@ -5175,17 +5182,17 @@
       '<div id="modal-lancamento-overlay" class="fixed inset-0 z-40 flex items-center justify-center overflow-hidden bg-slate-950/60 px-3 py-4">' +
         '<section class="mx-auto max-h-[calc(100dvh-32px)] w-full max-w-md overflow-x-hidden overflow-y-auto rounded-3xl bg-white p-4 shadow-2xl overscroll-contain">' +
           (novaAberta
-            ? '<div class="-mx-4 -mt-4 mb-5 flex items-center gap-3 rounded-t-3xl border-b border-sky-100 bg-sky-50 px-4 py-3">' +
-                '<button id="fechar-nova-despesa" type="button" class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-sky-100 text-lg font-black text-slate-700">&larr;</button>' +
+            ? '<div class="-mx-4 -mt-4 mb-5 flex items-center gap-3 rounded-t-3xl px-4 py-3 text-white" style="background-color:#003E73">' +
+                '<button id="fechar-nova-despesa" type="button" class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-white/20 bg-white/10 text-lg font-black text-white">&larr;</button>' +
                 '<div class="min-w-0 flex-1">' +
-                  '<p class="text-[10px] font-black uppercase tracking-wide text-sky-500">Novo lan&ccedil;amento &rsaquo; Despesa</p>' +
-                  '<h2 class="text-sm font-black text-sky-900">Cadastrar tipo de despesa</h2>' +
+                  '<p class="text-[10px] font-black uppercase tracking-wide text-cyan-100/75">Novo lan&ccedil;amento &rsaquo; Despesa</p>' +
+                  '<h2 class="text-sm font-black">Cadastrar tipo de despesa</h2>' +
                 '</div>' +
               '</div>' +
               novaDespesaFormHtml()
-            : '<div class="-mx-4 -mt-4 mb-4 flex items-center justify-between rounded-t-3xl border-b border-cyan-100 bg-cyan-50/90 px-4 py-3">' +
+            : '<div class="-mx-4 -mt-4 mb-4 flex items-center justify-between rounded-t-3xl px-4 py-3 text-white" style="background-color:#003E73">' +
                 '<h2 class="text-base font-black">Novo lancamento</h2>' +
-                '<button id="fechar-lancamento" type="button" class="flex h-9 w-9 items-center justify-center rounded-full bg-slate-100 text-xl text-slate-600">&times;</button>' +
+                '<button id="fechar-lancamento" type="button" class="flex h-9 w-9 items-center justify-center rounded-full border border-white/20 bg-white/10 text-xl text-white">&times;</button>' +
               '</div>' +
               '<div class="mb-3 grid grid-cols-2 gap-2 rounded-xl bg-slate-100 p-1">' +
                 '<button id="tipo-despesa" type="button" class="h-9 rounded-lg text-sm font-black transition ' + (despesaAtiva ? 'bg-red-600 text-white shadow-sm' : 'text-slate-500') + '">Despesa</button>' +
@@ -5301,9 +5308,9 @@
     return (
       '<div id="modal-acao-overlay" class="fixed inset-0 z-[55] flex items-center justify-center overflow-hidden bg-slate-950/60 px-3 py-4">' +
         '<section class="mx-auto max-h-[calc(100dvh-32px)] w-full max-w-md overflow-x-hidden overflow-y-auto rounded-3xl bg-white p-4 shadow-2xl overscroll-contain">' +
-          '<div class="-mx-4 -mt-4 mb-4 flex items-center justify-between gap-3 rounded-t-3xl border-b border-cyan-100 bg-cyan-50/90 px-4 py-3">' +
-            '<div class="min-w-0"><p class="text-[10px] font-black uppercase tracking-wide text-slate-400">' + detalhe + '</p><h2 class="truncate text-base font-black">' + escapeHtml(titulo) + '</h2></div>' +
-            '<button id="fechar-acao-lancamento" type="button" class="flex h-9 w-9 items-center justify-center rounded-full bg-slate-100 text-xl text-slate-600">&times;</button>' +
+          '<div class="-mx-4 -mt-4 mb-4 flex items-center justify-between gap-3 rounded-t-3xl px-4 py-3 text-white" style="background-color:#003E73">' +
+            '<div class="min-w-0"><p class="text-[10px] font-black uppercase tracking-wide text-cyan-100/75">' + detalhe + '</p><h2 class="truncate text-base font-black">' + escapeHtml(titulo) + '</h2></div>' +
+            '<button id="fechar-acao-lancamento" type="button" class="flex h-9 w-9 items-center justify-center rounded-full border border-white/20 bg-white/10 text-xl text-white">&times;</button>' +
           '</div>' +
           alertaHtml().replace('mt-4', 'mb-3') +
           (acao.modo === 'editar' ? modalEditarLancamentoHtml(acao) : modalOpcoesLancamentoHtml(acao)) +
@@ -5611,9 +5618,9 @@
     return (
       '<div id="modal-menu-overlay" class="fixed inset-0 z-[60] flex items-center justify-center overflow-hidden bg-slate-950/60 px-3 py-4">' +
         '<section class="mx-auto flex max-h-[calc(100dvh-32px)] w-full max-w-md flex-col overflow-hidden rounded-3xl ' + (state.darkMode ? 'bg-slate-900 text-slate-100' : 'bg-white text-slate-900') + ' shadow-2xl">' +
-          '<div class="shrink-0 flex items-center justify-between gap-3 border-b ' + (state.darkMode ? 'border-slate-700 bg-slate-800' : 'border-cyan-100 bg-cyan-50/90') + ' px-4 py-3">' +
+          '<div class="shrink-0 flex items-center justify-between gap-3 px-4 py-3 text-white" style="background-color:#003E73">' +
             '<h2 class="text-base font-black">' + escapeHtml(titulo) + '</h2>' +
-            '<button id="fechar-modal-menu" type="button" class="flex h-9 w-9 items-center justify-center rounded-full ' + (state.darkMode ? 'bg-slate-800' : 'bg-slate-100') + ' text-xl">&times;</button>' +
+            '<button id="fechar-modal-menu" type="button" class="flex h-9 w-9 items-center justify-center rounded-full border border-white/20 bg-white/10 text-xl text-white">&times;</button>' +
           '</div>' +
           '<div id="modal-menu-scroll" data-preserve-scroll class="min-h-0 flex-1 overflow-y-auto p-4 overscroll-contain">' + conteudoModalMenuHtml() + '</div>' +
         '</section>' +
@@ -6314,10 +6321,25 @@
 
   async function excluirRecorrenciaMobile(id, nome) {
     if (!state.empresa) return;
-    if (!window.confirm('Excluir a despesa fixa "' + nome + '" e todos os lancamentos gerados por ela?')) return;
+    state.exclusaoRecorrencia = { id: id, nome: nome || 'Despesa fixa' };
+    render();
+  }
+
+  function cancelarExclusaoRecorrenciaMobile() {
+    state.exclusaoRecorrencia = null;
+    render();
+  }
+
+  async function confirmarExclusaoRecorrenciaMobile() {
+    if (!state.empresa || !state.exclusaoRecorrencia) return;
+    var id = state.exclusaoRecorrencia.id;
     var empresaId = state.empresa.id || state.empresa.empresa_id;
+    state.carregando = true;
+    render();
     var lancamentosResp = await db.from('lancamentos').delete().eq('empresa_id', empresaId).eq('recorrencia_id', id);
     if (lancamentosResp.error) {
+      state.carregando = false;
+      state.exclusaoRecorrencia = null;
       state.erro = 'Nao foi possivel remover os lancamentos desta despesa fixa.';
       render();
       return;
@@ -6327,9 +6349,45 @@
       state.recorrencias = state.recorrencias.filter(function(r) { return r.id !== id; });
       state.lancamentos = (state.lancamentos || []).filter(function(l) { return l.recorrenciaId !== id; });
       if (state.recorrEditandoId === id) state.recorrEditandoId = null;
+      state.exclusaoRecorrencia = null;
+      state.carregando = false;
       notificarFinanceiroAtualizadoMobile();
       render();
+      mostrarToast('Despesa fixa excluida.');
+      return;
     }
+    state.carregando = false;
+    state.exclusaoRecorrencia = null;
+    state.erro = 'Nao foi possivel excluir esta despesa fixa.';
+    render();
+  }
+
+  function confirmacaoExclusaoRecorrenciaHtml() {
+    var item = state.exclusaoRecorrencia;
+    if (!item) return '';
+    return (
+      '<div id="excluir-recorrencia-overlay" class="fixed inset-0 z-[80] flex items-center justify-center bg-slate-950/65 px-4 backdrop-blur-sm">' +
+        '<section class="w-full max-w-sm overflow-hidden rounded-3xl bg-white shadow-2xl">' +
+          '<div class="flex items-center justify-between gap-3 px-4 py-3 text-white" style="background-color:#003E73">' +
+            '<div class="min-w-0">' +
+              '<p class="text-[10px] font-black uppercase tracking-wide text-cyan-100/75">Confirmar exclusao</p>' +
+              '<h2 class="truncate text-base font-black">Excluir despesa fixa</h2>' +
+            '</div>' +
+            '<button id="cancelar-exclusao-recorrencia-topo" type="button" class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-white/20 bg-white/10 text-xl text-white" aria-label="Fechar">&times;</button>' +
+          '</div>' +
+          '<div class="p-4">' +
+            '<div class="rounded-2xl border border-red-100 bg-red-50 p-4">' +
+              '<p class="text-sm font-black text-slate-900">' + escapeHtml(item.nome) + '</p>' +
+              '<p class="mt-1.5 text-xs font-semibold leading-relaxed text-slate-600">Esta acao exclui a despesa fixa e todos os lancamentos mensais gerados por ela. A exclusao nao pode ser desfeita.</p>' +
+            '</div>' +
+            '<div class="mt-4 grid grid-cols-2 gap-2">' +
+              '<button id="cancelar-exclusao-recorrencia" type="button" class="h-11 rounded-xl border border-slate-200 bg-white px-3 text-xs font-black uppercase text-slate-600">Cancelar</button>' +
+              '<button id="confirmar-exclusao-recorrencia" type="button" ' + (state.carregando ? 'disabled ' : '') + 'class="h-11 rounded-xl bg-red-600 px-3 text-xs font-black uppercase text-white shadow-sm disabled:opacity-60">' + (state.carregando ? 'Excluindo...' : 'Excluir') + '</button>' +
+            '</div>' +
+          '</div>' +
+        '</section>' +
+      '</div>'
+    );
   }
 
   function despesasFixasMenuHtml() {
@@ -7233,6 +7291,16 @@
       render();
     });
     bind('fechar-acao-lancamento', fecharAcaoLancamento);
+    bind('cancelar-exclusao-recorrencia', cancelarExclusaoRecorrenciaMobile);
+    bind('cancelar-exclusao-recorrencia-topo', cancelarExclusaoRecorrenciaMobile);
+    bind('confirmar-exclusao-recorrencia', confirmarExclusaoRecorrenciaMobile);
+    var excluirRecorrenciaOverlay = document.getElementById('excluir-recorrencia-overlay');
+    if (excluirRecorrenciaOverlay) {
+      excluirRecorrenciaOverlay.addEventListener('click', function (event) {
+        if (event.target !== excluirRecorrenciaOverlay || state.carregando) return;
+        cancelarExclusaoRecorrenciaMobile();
+      });
+    }
     var modalAcaoOverlay = document.getElementById('modal-acao-overlay');
     if (modalAcaoOverlay) {
       modalAcaoOverlay.addEventListener('click', function (event) {
