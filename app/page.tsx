@@ -486,9 +486,13 @@ const podeGerenciarPonto =
 const podeAcessarAjustes =
   perfilUsuario === 'gestor_master' || perfilUsuario === 'administrador';
 
+// Qualquer usuario autenticado pode criar seu proprio perfil (empresa ou pessoal),
+// independente do papel (gestor_master, administrador, operador_completo, operador_simples).
 const podeCriarNovaEmpresa =
   perfilUsuario === 'gestor_master' ||
-  empresasDoUsuario.some((empresa) => empresa.perfil === 'gestor_master');
+  perfilUsuario === 'administrador' ||
+  perfilUsuario === 'operador_completo' ||
+  perfilUsuario === 'operador_simples';
 
 const podeTrocarEmpresa = empresasDoUsuario.length > 1;
 
@@ -3756,14 +3760,17 @@ const classeConteudoPagina =
 
 
 const abrirCriacaoNovaEmpresa = () => {
+  // Qualquer usuario autenticado pode criar seu proprio perfil (empresa ou pessoal).
   const podeCriarEmpresa =
     perfilUsuario === 'gestor_master' ||
-    empresasDoUsuario.some((empresa) => empresa.perfil === 'gestor_master');
+    perfilUsuario === 'administrador' ||
+    perfilUsuario === 'operador_completo' ||
+    perfilUsuario === 'operador_simples';
 
   if (!podeCriarEmpresa) {
     abrirAviso(
       'Acesso não permitido',
-      'Somente o Gestor Master pode criar uma nova empresa.'
+      'Não foi possível identificar seu acesso. Faça login novamente.'
     );
     return;
   }
