@@ -1284,7 +1284,7 @@
   }
 
   function deveBloquearScroll() {
-    return Boolean(state.modalLancamento || state.modalMenu || state.menuAberto || state.modalAcao || state.chatIAAberto || state.tourAberto);
+    return Boolean(state.visao === 'agenda' || state.modalLancamento || state.modalMenu || state.menuAberto || state.modalAcao || state.chatIAAberto || state.tourAberto);
   }
 
   function liberarScrollChatIA() {
@@ -4680,7 +4680,7 @@
     // Agenda: tela cheia, sem o cabeçalho global (que mostra outro mês e confunde).
     if (state.visao === 'agenda') {
       return (
-        '<div class="mobile-app-shell ' + (state.darkMode ? 'mobile-dark bg-slate-950 text-slate-100' : 'mobile-light bg-slate-100 text-slate-900') + '" style="height:100dvh;overflow:hidden;overscroll-behavior:none;">' +
+        '<div class="mobile-app-shell ' + (state.darkMode ? 'mobile-dark bg-slate-950 text-slate-100' : 'mobile-light bg-slate-100 text-slate-900') + '" style="position:fixed;inset:0;overflow:hidden;overscroll-behavior:none;">' +
           agendaMobileHtml(atual) +
           (state.modalLancamento ? modalLancamentoHtml() : '') +
           (state.modalAcao ? modalAcaoLancamentoHtml() : '') +
@@ -5066,7 +5066,7 @@
             '<h3 class="min-w-0 flex-1 truncate text-sm font-black text-slate-950">Dia selecionado: ' + String(diaSelecionado).padStart(2, '0') + ' de ' + escapeHtml(nomeMesCompleto(state.mes)) + '</h3>' +
             '<button id="fechar-agenda-dia" type="button" class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-slate-200 bg-white text-xl font-black text-slate-600" aria-label="Fechar dia">&times;</button>' +
           '</div>' +
-          '<div class="mt-3 min-h-0 flex-1 overflow-y-auto overscroll-contain pr-0.5" style="-webkit-overflow-scrolling:touch;">' +
+          '<div data-agenda-scroll="true" class="mt-3 min-h-0 flex-1 overflow-y-auto overscroll-contain pr-0.5" style="-webkit-overflow-scrolling:touch;">' +
             '<div class="rounded-2xl border border-cyan-200 bg-white/85 p-3 shadow-sm">' +
               '<div class="mb-2 flex items-center justify-between gap-2">' +
                 '<h4 class="text-xs font-black uppercase tracking-wide text-cyan-800">Lembretes:</h4>' +
@@ -7595,6 +7595,45 @@
     });
     configurarDragDashboard();
     configurarGestosAgenda();
+    configurarScrollFixoAgenda();
+  }
+
+  function configurarScrollFixoAgenda() {
+    var tela = document.getElementById('agenda-mobile-screen');
+    if (!tela || state.visao !== 'agenda') return;
+
+    var ultimoY = 0;
+
+    tela.addEventListener('touchstart', function (event) {
+      if (!event.touches || !event.touches.length) return;
+      ultimoY = event.touches[0].clientY;
+    }, { passive: true });
+
+    tela.addEventListener('touchmove', function (event) {
+      if (!event.touches || !event.touches.length) return;
+
+      var alvo = event.target;
+      var rolavel = alvo && typeof alvo.closest === 'function'
+        ? alvo.closest('[data-agenda-scroll="true"]')
+        : null;
+
+      if (!rolavel) {
+        event.preventDefault();
+        return;
+      }
+
+      var yAtual = event.touches[0].clientY;
+      var deltaY = yAtual - ultimoY;
+      ultimoY = yAtual;
+
+      var semScroll = rolavel.scrollHeight <= rolavel.clientHeight + 1;
+      var noTopo = rolavel.scrollTop <= 0;
+      var noFim = Math.ceil(rolavel.scrollTop + rolavel.clientHeight) >= rolavel.scrollHeight;
+
+      if (semScroll || (noTopo && deltaY > 0) || (noFim && deltaY < 0)) {
+        event.preventDefault();
+      }
+    }, { passive: false });
   }
 
   function configurarGestosAgenda() {
