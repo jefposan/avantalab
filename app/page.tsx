@@ -1557,7 +1557,8 @@ useEffect(() => {
         .eq('empresa_id', empresaId)
         .maybeSingle();
       if (!error) {
-        setPontoConfig(data ? { latitude: data.latitude, longitude: data.longitude, raio_m: data.raio_m ?? 100 } : { latitude: null, longitude: null, raio_m: 100 });
+        const raioConfig = Math.min(100, Math.max(1, Number(data?.raio_m ?? 100) || 100));
+        setPontoConfig(data ? { latitude: data.latitude, longitude: data.longitude, raio_m: raioConfig } : { latitude: null, longitude: null, raio_m: 100 });
       }
     } catch {}
   }
@@ -1565,11 +1566,12 @@ useEffect(() => {
   async function salvarPontoConfig(dados: { latitude: number; longitude: number; raio_m: number }) {
     if (!empresaId) return { erro: true, mensagem: 'Perfil não identificado.' };
     try {
+      const raioConfig = Math.min(100, Math.max(1, Number(dados.raio_m) || 100));
       const { error } = await supabase
         .from('ponto_config')
-        .upsert({ empresa_id: empresaId, latitude: dados.latitude, longitude: dados.longitude, raio_m: dados.raio_m, atualizado_em: new Date().toISOString() }, { onConflict: 'empresa_id' });
+        .upsert({ empresa_id: empresaId, latitude: dados.latitude, longitude: dados.longitude, raio_m: raioConfig, atualizado_em: new Date().toISOString() }, { onConflict: 'empresa_id' });
       if (error) { console.error('salvarPontoConfig', error); return { erro: true, mensagem: 'Não foi possível salvar o local.' }; }
-      setPontoConfig({ latitude: dados.latitude, longitude: dados.longitude, raio_m: dados.raio_m });
+      setPontoConfig({ latitude: dados.latitude, longitude: dados.longitude, raio_m: raioConfig });
       return { erro: false };
     } catch {
       return { erro: true, mensagem: 'Erro ao salvar o local da empresa.' };

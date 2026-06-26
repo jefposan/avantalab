@@ -414,10 +414,12 @@ export default function PontoAdminModal({
   const salvarLocal = async () => {
     setMsgLocal(null);
     const la = parseFloat(lat), lo = parseFloat(lng), ra = parseInt(raio, 10);
+    const raioNormalizado = isNaN(ra) || ra <= 0 ? 100 : Math.min(100, ra);
     if (isNaN(la) || isNaN(lo)) { setMsgLocal({ tipo: 'erro', texto: 'Latitude/longitude inválidas.' }); return; }
     setSalvandoLocal(true);
-    const r = await onSalvarConfig({ latitude: la, longitude: lo, raio_m: isNaN(ra) || ra <= 0 ? 100 : ra });
+    const r = await onSalvarConfig({ latitude: la, longitude: lo, raio_m: raioNormalizado });
     setSalvandoLocal(false);
+    setRaio(String(raioNormalizado));
     setMsgLocal(r.erro ? { tipo: 'erro', texto: r.mensagem || 'Não foi possível salvar.' } : { tipo: 'ok', texto: 'Local da empresa salvo!' });
   };
 
@@ -622,7 +624,7 @@ export default function PontoAdminModal({
                 </label>
               </div>
               <label className={labelCls}>Raio permitido (metros)
-                <input className={inputCls} type="number" value={raio} onChange={(e) => setRaio(e.target.value)} placeholder="100" />
+                <input className={inputCls} type="number" min="1" max="100" value={raio} onChange={(e) => setRaio(e.target.value)} placeholder="100" />
               </label>
               <button type="button" onClick={salvarLocal} disabled={salvandoLocal} className="mt-1 h-11 rounded-xl text-sm font-black text-white shadow transition hover:brightness-110 disabled:opacity-60" style={{ backgroundColor: corSistema }}>{salvandoLocal ? 'Salvando...' : 'Salvar local da empresa'}</button>
               {msgLocal && <p className={`text-xs font-bold ${msgLocal.tipo === 'ok' ? 'text-emerald-600' : 'text-red-600'}`}>{msgLocal.texto}</p>}

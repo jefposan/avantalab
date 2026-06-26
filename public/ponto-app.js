@@ -186,7 +186,7 @@
     var cfg = state.pontoConfig;
     var latEmpresa = numeroConfig(cfg && cfg.latitude);
     var lngEmpresa = numeroConfig(cfg && cfg.longitude);
-    var raio = Math.max(1, Math.round(numeroConfig(cfg && cfg.raio_m) || 100));
+    var raio = Math.min(100, Math.max(1, Math.round(numeroConfig(cfg && cfg.raio_m) || 100)));
     var latAtual = numeroConfig(pos && pos.coords && pos.coords.latitude);
     var lngAtual = numeroConfig(pos && pos.coords && pos.coords.longitude);
     var precisao = numeroConfig(pos && pos.coords && pos.coords.accuracy);
