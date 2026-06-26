@@ -2457,11 +2457,26 @@ const solicitarFaturamentoDashboard = () => {
   const excluirRecorrenciaHandler = async (id: string, nome: string) => {
     abrirConfirmacao({
       titulo: 'Excluir despesa fixa',
-      mensagem: `"${nome}" será removida das despesas fixas. Os lançamentos já realizados não serão afetados.`,
+      mensagem: `"${nome}" será removida das despesas fixas e de todos os meses em que foi lançada.`,
       textoConfirmar: 'Excluir',
       acao: async () => {
+        if (!empresaId) return;
+        const { error } = await supabase
+          .from('lancamentos')
+          .delete()
+          .eq('empresa_id', empresaId)
+          .eq('recorrencia_id', id);
+
+        if (error) {
+          abrirAviso('Erro ao excluir despesa fixa', 'Não foi possível remover os lançamentos desta despesa fixa.');
+          return;
+        }
+
         const ok = await deletarRecorrencia(id);
-        if (ok) setRecorrencias((prev) => prev.filter((r) => r.id !== id));
+        if (ok) {
+          setRecorrencias((prev) => prev.filter((r) => r.id !== id));
+          setLancamentos((prev) => prev.filter((l: any) => l.recorrenciaId !== id));
+        }
       },
     });
   };

@@ -6283,10 +6283,19 @@
   }
 
   async function excluirRecorrenciaMobile(id, nome) {
-    if (!window.confirm('Excluir a despesa fixa "' + nome + '"?')) return;
+    if (!state.empresa) return;
+    if (!window.confirm('Excluir a despesa fixa "' + nome + '" e todos os lancamentos gerados por ela?')) return;
+    var empresaId = state.empresa.id || state.empresa.empresa_id;
+    var lancamentosResp = await db.from('lancamentos').delete().eq('empresa_id', empresaId).eq('recorrencia_id', id);
+    if (lancamentosResp.error) {
+      state.erro = 'Nao foi possivel remover os lancamentos desta despesa fixa.';
+      render();
+      return;
+    }
     var resp = await db.from('recorrencias').delete().eq('id', id);
     if (!resp.error) {
       state.recorrencias = state.recorrencias.filter(function(r) { return r.id !== id; });
+      state.lancamentos = (state.lancamentos || []).filter(function(l) { return l.recorrenciaId !== id; });
       if (state.recorrEditandoId === id) state.recorrEditandoId = null;
       render();
     }
