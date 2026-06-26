@@ -13,6 +13,7 @@ export type LancamentoDespesa = {
   descricao?: string | null;
   valor: number;
   status?: string | null;
+  tipo?: string | null;
 };
 
 const MESES_TAB = ['JANEIRO', 'FEVEREIRO', 'MARÇO', 'ABRIL', 'MAIO', 'JUNHO', 'JULHO', 'AGOSTO', 'SETEMBRO', 'OUTUBRO', 'NOVEMBRO', 'DEZEMBRO'];
@@ -28,28 +29,24 @@ function dataFuturaTab(ano: number, mesIndice: number, dia: number): boolean {
   return Number(dia) > hoje.getDate();
 }
 
+const SELO_TIPO: Record<string, { txt: string; cls: string }> = {
+  previsto: { txt: 'Previsto', cls: 'bg-amber-100 text-amber-700' },
+  fixa: { txt: 'Fixa', cls: 'bg-indigo-100 text-indigo-700' },
+  parcela: { txt: 'Parcela', cls: 'bg-violet-100 text-violet-700' },
+};
+
 function renderSeloPrevista(
   lanc: LancamentoDespesa,
-  mesAtivo: string | null,
-  anoSelecionado: string
+  _mesAtivo: string | null,
+  _anoSelecionado: string
 ) {
-  const mesIdx = MESES_TAB.indexOf(lanc.mes ?? mesAtivo ?? '');
-  if (mesIdx < 0) return null;
-  if (dataFuturaTab(Number(anoSelecionado), mesIdx, Number(lanc.dia))) {
-    return (
-      <div className="mb-1">
-        <span className="inline-block rounded-full bg-sky-100 px-2 py-0.5 text-[10px] font-black text-sky-700">Prevista</span>
-      </div>
-    );
-  }
-  if (lanc.status === 'prevista') {
-    return (
-      <div className="mb-1">
-        <span className="inline-block rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-black text-amber-700">A confirmar</span>
-      </div>
-    );
-  }
-  return null;
+  const selo = lanc.tipo ? SELO_TIPO[lanc.tipo] : null;
+  if (!selo) return null;
+  return (
+    <div className="mb-1">
+      <span className={`inline-block rounded-full px-2 py-0.5 text-[10px] font-black ${selo.cls}`}>{selo.txt}</span>
+    </div>
+  );
 }
 
 type TabelaLancamentosDespesaProps = {

@@ -416,7 +416,7 @@
     return '<div class="mx-auto max-w-md px-4 py-5">' + conteudo + '</div>';
   }
 
-  var APP_VERSION = '1.3.18';
+  var APP_VERSION = '1.3.19';
   var APP_VERSION_LABEL = 'AvantaLab Gest&atilde;o v' + APP_VERSION;
 
   function telaAvisoMobile(titulo, texto) {
@@ -889,9 +889,37 @@
     return dataFutura(Number(state.ano), mesIndice, dia);
   }
 
-  // Despesa que era prevista, cuja data ja chegou e ainda nao foi confirmada/cancelada.
+  // A data do item (ano/mes/dia) e exatamente hoje?
+  function ehDataHoje(ano, mesIndice, dia) {
+    var hoje = new Date();
+    return Number(ano) === hoje.getFullYear() && Number(mesIndice) === hoje.getMonth() && Number(dia) === hoje.getDate();
+  }
+  function ehDespesaHoje(item) {
+    return item && ehDataHoje(Number(state.ano), indiceMes(item.mes), item.dia);
+  }
+
+  // Tipos que pedem confirmacao na data (parcela NAO pede).
+  function tipoPedeConfirmacao(tipo) {
+    return tipo === 'previsto' || tipo === 'fixa';
+  }
+
+  // Card de confirmacao: aparece SO no dia (00:00 ate o ultimo segundo).
+  // Passando o dia sem acao, a despesa e considerada confirmada automaticamente (sem card).
   function ehDespesaAConfirmar(item) {
-    return item && item.status === 'prevista' && !ehDespesaFutura(indiceMes(item.mes), item.dia);
+    return item && item.status === 'prevista' && tipoPedeConfirmacao(item.tipo) && ehDespesaHoje(item);
+  }
+
+  // Selo colorido por tipo de despesa (previsto/fixa/parcela).
+  function seloTipoHtml(item) {
+    if (!item || !item.tipo) return '';
+    var mapa = {
+      previsto: { txt: 'Previsto', cls: 'bg-amber-100 text-amber-700' },
+      fixa: { txt: 'Fixa', cls: 'bg-indigo-100 text-indigo-700' },
+      parcela: { txt: 'Parcela', cls: 'bg-violet-100 text-violet-700' },
+    };
+    var s = mapa[item.tipo];
+    if (!s) return '';
+    return ' <span class="ml-1 inline-block rounded-full px-1.5 align-middle text-[10px] font-black ' + s.cls + '">' + s.txt + '</span>';
   }
 
   function dadosMes(mes) {
@@ -2044,6 +2072,68 @@
     }
   }
 
+  // Valor da mesma fixa no mes anterior mais proximo (dentro do ano carregado).
+  function valorAnteriorFixa(recorrenciaId, mesAtualIdx) {
+    var melhor = null;
+    (state.lancamentos || []).forEach(function (l) {
+      if (l.recorrenciaId !== recorrenciaId) return;
+      var idx = indiceMes(l.mes);
+      if (idx < mesAtualIdx && (melhor === null || idx > melhor.idx)) {
+        melhor = { idx: idx, valor: Number(l.valor || 0) };
+      }
+    });
+    return melhor ? melhor.valor : 0;
+  }
+
+  // Garante que cada despesa fixa ativa tenha um lancamento no mes corrente real.
+  // Idempotente (checa recorrencia_id). So gera no mes/ano atual para nao reescrever historico.
+  async function garantirFixasDoMes(empresaId, anoCarregado) {
+    try {
+      var hoje = new Date();
+      var anoAtual = hoje.getFullYear();
+      var mesAtualIdx = hoje.getMonth();
+      if (Number(anoCarregado) !== anoAtual) return;
+      var mesAtualNome = meses[mesAtualIdx];
+
+      var recsResp = await db.from('recorrencias').select('*').eq('empresa_id', empresaId).eq('ativo', true);
+      var recs = recsResp.data || [];
+      if (!recs.length) return;
+
+      var novos = [];
+      for (var i = 0; i < recs.length; i++) {
+        var rec = recs[i];
+        var dia = Number(rec.dia);
+        if (!dia || dia < 1 || dia > 31) continue;
+        var jaExiste = (state.lancamentos || []).some(function (l) {
+          return l.recorrenciaId === rec.id && l.mes === mesAtualNome;
+        });
+        if (jaExiste) continue;
+        var valorBase = valorAnteriorFixa(rec.id, mesAtualIdx);
+        var ins = await db.from('lancamentos').insert({
+          empresa_id: empresaId,
+          ano: anoAtual,
+          mes: mesAtualNome,
+          dia: dia,
+          despesa_nome: rec.nome,
+          descricao: rec.descricao || '',
+          valor: valorBase,
+          status: 'prevista',
+          tipo_obs: 'fixa',
+          recorrencia_id: rec.id,
+        }).select().single();
+        if (ins.data) {
+          novos.push({
+            id: ins.data.id, mes: ins.data.mes, dia: Number(ins.data.dia),
+            despesa: ins.data.despesa_nome, descricao: ins.data.descricao || '',
+            valor: Number(ins.data.valor || 0), status: ins.data.status || null,
+            tipo: ins.data.tipo_obs || null, recorrenciaId: ins.data.recorrencia_id || null,
+          });
+        }
+      }
+      if (novos.length) state.lancamentos = (state.lancamentos || []).concat(novos);
+    } catch (e) {}
+  }
+
   async function carregarDados() {
     if (!state.empresa) return;
 
@@ -2093,6 +2183,8 @@
         descricao: item.descricao || '',
         valor: Number(item.valor || 0),
         status: item.status || null,
+        tipo: item.tipo_obs || null,
+        recorrenciaId: item.recorrencia_id || null,
       };
     });
 
@@ -2124,6 +2216,9 @@
     } else {
       state.duplicadosAtivo = true;
     }
+
+    // Materializa as despesas fixas do mes corrente (idempotente).
+    await garantirFixasDoMes(empresaId, ano);
 
     state.carregando = false;
     render();
@@ -3041,6 +3136,13 @@
         ? (descBase ? descBase + ' (' + (p + 1) + '/' + totalParcelas + ')' : '(' + (p + 1) + '/' + totalParcelas + ')')
         : descBase;
 
+      var ehFuturo = dataFutura(anoParc, idxMes, dia);
+      var ehParcelado = totalParcelas > 1;
+      // Parcela: valor e data definidos -> nao pede confirmacao (so badge).
+      // Avulso futuro: "previsto" -> pede confirmacao na data.
+      var tipoLanc = ehParcelado ? 'parcela' : (ehFuturo ? 'previsto' : null);
+      var statusLanc = (!ehParcelado && ehFuturo) ? 'prevista' : null;
+
       var resposta = await db
         .from('lancamentos')
         .insert({
@@ -3051,7 +3153,8 @@
           despesa_nome: nome,
           descricao: descParc,
           valor: valor,
-          status: dataFutura(anoParc, idxMes, dia) ? 'prevista' : null,
+          status: statusLanc,
+          tipo_obs: tipoLanc,
         })
         .select()
         .single();
@@ -4655,13 +4758,17 @@
       : '<span class="inline-flex items-center rounded-full border border-white/15 bg-white/10 px-2 py-0.5 font-black text-white shadow-sm">Usu&aacute;rios ativos ' + inteiro(state.usuariosAtivosSistema) + '</span>';
     return (
       '<footer class="mt-2 overflow-hidden rounded-2xl border border-white/15 px-4 py-4 text-center text-[11px] text-white shadow-lg shadow-sky-950/15" style="background:linear-gradient(135deg,#003E73 0%,#075985 54%,#00A6C8 100%);">' +
-        '<button id="sobre-mobile-versao" type="button" class="text-xs font-black tracking-[0.18em] text-white underline decoration-white/30 underline-offset-2">' + APP_VERSION_LABEL + '</button>' +
+        '<div class="text-xs font-black tracking-[0.18em] text-white">' + APP_VERSION_LABEL + '</div>' +
         '<p class="mt-1 flex flex-wrap items-center justify-center gap-x-2 gap-y-1 font-semibold text-cyan-50/90">&copy; ' + ano + ' Todos os direitos reservados.' + usuariosAtivosHtml + '</p>' +
-        '<div class="mt-3 flex flex-wrap items-center justify-center gap-2 font-bold">' +
-          '<button id="sobre-mobile" type="button" class="rounded-full border border-white/15 bg-white/15 px-3 py-1.5 text-cyan-50 shadow-sm backdrop-blur">Sobre e novidades</button>' +
-          '<a href="https://www.instagram.com/avanta.lab" target="_blank" rel="noopener noreferrer" class="rounded-full border border-white/15 bg-white/15 px-3 py-1.5 text-cyan-50 shadow-sm backdrop-blur">@avanta.lab</a>' +
-          '<button id="termos-mobile" type="button" class="rounded-full border border-white/15 bg-white/15 px-3 py-1.5 text-cyan-50 shadow-sm backdrop-blur">Termos de Uso</button>' +
-          '<button id="privacidade-mobile" type="button" class="rounded-full border border-white/15 bg-white/15 px-3 py-1.5 text-cyan-50 shadow-sm backdrop-blur">Privacidade</button>' +
+        '<div class="mt-3 flex justify-center">' +
+          '<button id="sobre-mobile" type="button" class="inline-flex items-center gap-1.5 rounded-full border border-white/25 bg-white/20 px-4 py-1.5 font-black text-white shadow-sm backdrop-blur">' +
+            '<span class="text-[13px] leading-none">&#9432;</span>Sobre e novidades' +
+          '</button>' +
+        '</div>' +
+        '<div class="mt-2 flex flex-wrap items-center justify-center gap-x-2 gap-y-1.5 font-bold text-cyan-50/90">' +
+          '<a href="https://www.instagram.com/avanta.lab" target="_blank" rel="noopener noreferrer" class="rounded-full border border-white/15 bg-white/10 px-3 py-1 text-cyan-50 backdrop-blur">@avanta.lab</a>' +
+          '<button id="termos-mobile" type="button" class="rounded-full border border-white/15 bg-white/10 px-3 py-1 text-cyan-50 backdrop-blur">Termos de Uso</button>' +
+          '<button id="privacidade-mobile" type="button" class="rounded-full border border-white/15 bg-white/10 px-3 py-1 text-cyan-50 backdrop-blur">Privacidade</button>' +
         '</div>' +
       '</footer>'
     );
@@ -5125,12 +5232,7 @@
         '<div class="grid gap-1 p-4" id="ultimas-despesas-lista">' +
           (itens.length ? itens.map(function (item) {
             var valor = dinheiro(item.valor);
-            var selo = '';
-            if (ehDespesaFutura(indiceMes(state.mes), item.dia)) {
-              selo = ' <span class="ml-1 inline-block rounded-full bg-sky-100 px-1.5 align-middle text-[10px] font-black text-sky-700">Prevista</span>';
-            } else if (item.status === 'prevista') {
-              selo = ' <span class="ml-1 inline-block rounded-full bg-amber-100 px-1.5 align-middle text-[10px] font-black text-amber-700">A confirmar</span>';
-            }
+            var selo = seloTipoHtml(item);
             var buscaItem = textoBusca([item.descricao, item.despesa, valor, item.valor].join(' '));
             return '<button type="button" data-tipo-lancamento="despesa" data-lancamento-id="' + escapeHtml(item.id) + '" data-busca-ultimas-despesas="' + escapeHtml(buscaItem) + '" class="flex w-full items-center justify-between gap-3 border-b border-slate-100 py-2 text-left last:border-b-0">' +
               '<div class="min-w-0"><p class="truncate text-sm font-bold text-slate-800">' + escapeHtml(item.despesa) + selo + '</p><p class="truncate text-xs text-slate-500">Dia ' + item.dia + (item.descricao ? ' - ' + escapeHtml(item.descricao) : '') + '</p></div>' +
@@ -6277,6 +6379,7 @@
       await db.from('lancamentos').insert({
         empresa_id: empresaId,
         nome: nome,
+        despesa_nome: nome,
         categoria: categoria,
         descricao: descricao,
         valor: valorNum,
@@ -6284,6 +6387,9 @@
         mes: mesAtual,
         ano: anoAtual,
         tipo: 'saida',
+        tipo_obs: 'fixa',
+        status: 'prevista',
+        recorrencia_id: resp.data.id,
       });
     }
     state.recorrencias = [resp.data].concat(state.recorrencias || []);
@@ -6917,7 +7023,6 @@
     bind('termos-mobile', function () { abrirModalMenu('termos'); });
     bind('privacidade-mobile', function () { abrirModalMenu('privacidade'); });
     bind('sobre-mobile', function () { abrirSobreMobile(); });
-    bind('sobre-mobile-versao', function () { abrirSobreMobile(); });
     bind('abrir-edicao-empresa-mobile', abrirEdicaoEmpresaMobile);
     bind('abrir-criar-empresa-mobile', abrirCriarEmpresaMobile);
     bind('cancelar-criar-empresa-mobile', cancelarCriarEmpresaMobile);
@@ -7913,7 +8018,7 @@
     });
 
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/mobile-sw.js?v=153').then(function (registro) {
+      navigator.serviceWorker.register('/mobile-sw.js?v=154').then(function (registro) {
         if (registro && registro.update) registro.update();
       }).catch(function () {});
     }

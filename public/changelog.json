@@ -23,6 +23,9 @@
         "App do ponto instalável no celular (\"Avanta Ponto\"), com ícone próprio.",
         "Agenda em tela cheia, com troca de mês por setas e por arraste.",
         "Card de despesas previstas redesenhado.",
+        "Despesas identificadas como Previsto, Fixa ou Parcela, cada uma com sua cor.",
+        "Despesas fixas geradas a cada mês e despesas previstas com confirmação no dia.",
+        "Aviso por notificação no celular das despesas do dia.",
         "Nova tela \"Sobre\" com as novidades de cada versão.",
         "Mais correções de desempenho e estabilidade."
       ]

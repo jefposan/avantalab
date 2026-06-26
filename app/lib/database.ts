@@ -350,6 +350,62 @@ export async function buscarLancamentos(empresaId: string, ano: number) {
   return data;
 }
 
+const MESES_DB = ['JANEIRO', 'FEVEREIRO', 'MARÇO', 'ABRIL', 'MAIO', 'JUNHO', 'JULHO', 'AGOSTO', 'SETEMBRO', 'OUTUBRO', 'NOVEMBRO', 'DEZEMBRO'];
+
+// Garante que cada despesa fixa ativa tenha um lancamento no mes corrente real.
+// Idempotente (checa recorrencia_id no mes). Valor inicial = valor da mesma fixa no mes anterior mais proximo.
+export async function garantirFixasDoMesAtual(empresaId: string): Promise<void> {
+  try {
+    const hoje = new Date();
+    const anoAtual = hoje.getFullYear();
+    const mesIdx = hoje.getMonth();
+    const mesNome = MESES_DB[mesIdx];
+
+    const { data: recs } = await supabase
+      .from('recorrencias')
+      .select('*')
+      .eq('empresa_id', empresaId)
+      .eq('ativo', true);
+    if (!recs || !recs.length) return;
+
+    const { data: lancs } = await supabase
+      .from('lancamentos')
+      .select('id, mes, valor, recorrencia_id')
+      .eq('empresa_id', empresaId)
+      .eq('ano', anoAtual);
+
+    const existentesMes = new Set(
+      (lancs || []).filter((l: any) => l.mes === mesNome && l.recorrencia_id).map((l: any) => l.recorrencia_id)
+    );
+
+    for (const rec of recs as any[]) {
+      const dia = Number(rec.dia);
+      if (!dia || dia < 1 || dia > 31) continue;
+      if (existentesMes.has(rec.id)) continue;
+
+      const anteriores = (lancs || [])
+        .filter((l: any) => l.recorrencia_id === rec.id && MESES_DB.indexOf(l.mes) >= 0 && MESES_DB.indexOf(l.mes) < mesIdx)
+        .sort((a: any, b: any) => MESES_DB.indexOf(b.mes) - MESES_DB.indexOf(a.mes));
+      const valorBase = anteriores.length ? Number(anteriores[0].valor || 0) : 0;
+
+      await supabase.from('lancamentos').insert({
+        empresa_id: empresaId,
+        ano: anoAtual,
+        mes: mesNome,
+        dia,
+        despesa_nome: rec.nome,
+        descricao: rec.descricao || '',
+        valor: valorBase,
+        status: 'prevista',
+        tipo_obs: 'fixa',
+        recorrencia_id: rec.id,
+      });
+    }
+  } catch (e) {
+    console.error('Erro ao garantir despesas fixas do mes:', e);
+  }
+}
+
 export async function buscarFaturamentos(empresaId: string, ano: number) {
   const { data, error } = await supabase
     .from('faturamentos')
@@ -434,6 +490,8 @@ export async function salvarLancamento({
   descricao,
   valor,
   status = null,
+  tipoObs = null,
+  recorrenciaId = null,
 }: {
   empresaId: string;
   ano: number;
@@ -443,6 +501,8 @@ export async function salvarLancamento({
   descricao: string;
   valor: number;
   status?: string | null;
+  tipoObs?: string | null;
+  recorrenciaId?: string | null;
 }) {
   const { data, error } = await supabase
     .from('lancamentos')
@@ -455,6 +515,8 @@ export async function salvarLancamento({
       descricao,
       valor,
       status,
+      tipo_obs: tipoObs ?? null,
+      recorrencia_id: recorrenciaId ?? null,
     })
     .select()
     .single();

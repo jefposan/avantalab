@@ -42,6 +42,7 @@ import {
   buscarConfiguracoes,
   buscarDespesasCadastradas,
   buscarLancamentos,
+  garantirFixasDoMesAtual,
   buscarFaturamentos,
   buscarFaturamentosEntradas,
   salvarLancamento,
@@ -119,6 +120,16 @@ function dataFutura(ano: number, mesIndice: number, dia: number): boolean {
   if (mesIndice > mesHoje) return true;
   if (mesIndice < mesHoje) return false;
   return Number(dia) > hoje.getDate();
+}
+
+function ehDataHoje(ano: number, mesIndice: number, dia: number): boolean {
+  const hoje = new Date();
+  return Number(ano) === hoje.getFullYear() && Number(mesIndice) === hoje.getMonth() && Number(dia) === hoje.getDate();
+}
+
+// Tipos que pedem confirmacao na data (parcela NAO pede).
+function tipoPedeConfirmacao(tipo: string | null | undefined): boolean {
+  return tipo === 'previsto' || tipo === 'fixa';
 }
 
 export default function AppGestao() {
@@ -955,6 +966,7 @@ useEffect(() => {
   const carregarDadosFinanceiros = async () => {
     const ano = Number(anoSelecionado);
 
+    await garantirFixasDoMesAtual(empresaId);
     const lancamentosBanco = await buscarLancamentos(empresaId, ano);
     const faturamentosBanco = await buscarFaturamentos(empresaId, ano);
     const faturamentosEntradasBanco = await buscarFaturamentosEntradas(
@@ -971,6 +983,8 @@ useEffect(() => {
         descricao: l.descricao || '',
         valor: Number(l.valor),
         status: l.status || null,
+        tipo: l.tipo_obs || null,
+        recorrenciaId: l.recorrencia_id || null,
       }))
     );
         setFaturamentosEntradas(
@@ -1806,11 +1820,13 @@ const mostrarBarraComparativoDespesas =
 const faturamentoDoMesAtual = faturamentos[mesParaAnalise] || 0;
 const lucroOperacional = faturamentoDoMesAtual - totalDespesasMes;
 
-// Todas as despesas previstas do ano cuja data ja chegou e ainda nao foram confirmadas.
+// Card de confirmacao: aparece SO no dia (00:00 ate o ultimo segundo).
+// Parcela nao pede confirmacao; passando o dia sem acao, vira confirmada automaticamente (sem card).
 const despesasAConfirmar = lancamentos.filter(
   (l) =>
     l.status === 'prevista' &&
-    !dataFutura(Number(anoSelecionado), meses.indexOf(l.mes), l.dia)
+    tipoPedeConfirmacao(l.tipo) &&
+    ehDataHoje(Number(anoSelecionado), meses.indexOf(l.mes), l.dia)
 );
 
 // Card de saldo (Inicial/Final/Previsto) com seletor proprio de mes.
@@ -2262,6 +2278,9 @@ const solicitarFaturamentoDashboard = () => {
           despesaNome: novaRecorrNome.trim(),
           descricao: novaRecorrDescricao.trim(),
           valor: valorNum,
+          status: 'prevista',
+          tipoObs: 'fixa',
+          recorrenciaId: resultado.data!.id,
         });
         if (!salvo.erro && salvo.data) {
           setLancamentos((prev) => [{
@@ -2271,6 +2290,9 @@ const solicitarFaturamentoDashboard = () => {
             despesa: salvo.data!.despesa_nome,
             descricao: salvo.data!.descricao || '',
             valor: Number(salvo.data!.valor),
+            status: salvo.data!.status || null,
+            tipo: salvo.data!.tipo_obs || null,
+            recorrenciaId: salvo.data!.recorrencia_id || null,
           }, ...prev]);
         }
       }
@@ -2327,6 +2349,9 @@ const solicitarFaturamentoDashboard = () => {
           despesaNome: editRecorrNome.trim(),
           descricao: editRecorrDescricao.trim(),
           valor: editRecorrValorNumerico,
+          status: 'prevista',
+          tipoObs: 'fixa',
+          recorrenciaId: recorrEditandoId,
         });
         if (!salvo.erro && salvo.data) {
           setLancamentos((prev) => [{
@@ -2336,6 +2361,9 @@ const solicitarFaturamentoDashboard = () => {
             despesa: salvo.data!.despesa_nome,
             descricao: salvo.data!.descricao || '',
             valor: Number(salvo.data!.valor),
+            status: salvo.data!.status || null,
+            tipo: salvo.data!.tipo_obs || null,
+            recorrenciaId: salvo.data!.recorrencia_id || null,
           }, ...prev]);
         }
       }
@@ -2589,6 +2617,13 @@ const executarParcelamento = async () => {
       ? (formatarDescricao(formDescricao) ? `${formatarDescricao(formDescricao)} (${p + 1}/${totalParcelas})` : `(${p + 1}/${totalParcelas})`)
       : formatarDescricao(formDescricao);
 
+    const ehFuturo = dataFutura(anoParc, idxMes, parseInt(formDia));
+    const ehParcelado = totalParcelas > 1;
+    // Parcela: valor e data definidos -> nao pede confirmacao (so badge).
+    // Avulso futuro: "previsto" -> pede confirmacao na data.
+    const tipoLanc = ehParcelado ? 'parcela' : (ehFuturo ? 'previsto' : null);
+    const statusLanc = (!ehParcelado && ehFuturo) ? 'prevista' : null;
+
     const salvo = await salvarLancamento({
       empresaId: empresaId as string,
       ano: anoParc,
@@ -2597,7 +2632,8 @@ const executarParcelamento = async () => {
       despesaNome: formDespesa,
       descricao: descParc,
       valor: valorNumericoRaw,
-      status: dataFutura(anoParc, idxMes, parseInt(formDia)) ? 'prevista' : null,
+      status: statusLanc,
+      tipoObs: tipoLanc,
     });
 
     if (!salvo.erro && salvo.data) {
@@ -2609,6 +2645,8 @@ const executarParcelamento = async () => {
         descricao: salvo.data.descricao || '',
         valor: Number(salvo.data.valor),
         status: salvo.data.status || null,
+        tipo: salvo.data.tipo_obs || null,
+        recorrenciaId: salvo.data.recorrencia_id || null,
       });
     } else {
       abrirAviso(
@@ -3302,6 +3340,7 @@ const recarregarDadosFinanceirosAtual = async () => {
   if (!empresaId) return;
 
   const ano = Number(anoSelecionado);
+  await garantirFixasDoMesAtual(empresaId);
   const [
     despesasBanco,
     lancamentosBanco,
@@ -3332,6 +3371,8 @@ const recarregarDadosFinanceirosAtual = async () => {
       descricao: l.descricao || '',
       valor: Number(l.valor),
       status: l.status || null,
+      tipo: l.tipo_obs || null,
+      recorrenciaId: l.recorrencia_id || null,
     }))
   );
 
