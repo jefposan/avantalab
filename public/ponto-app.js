@@ -52,6 +52,10 @@
     toast: null,
     instalarInstrucao: false,
     confirmarTipo: null,
+    localizacaoAtual: null,
+    localizacaoAtualizadaEm: 0,
+    localizacaoAtualizando: false,
+    localizacaoMsg: '',
   };
 
   // ---------- helpers ----------
@@ -83,6 +87,7 @@
   }
   function diaPontoHoje() { return new Date().toLocaleDateString('en-CA', { timeZone: 'America/Sao_Paulo' }); }
   function horaPonto(ts) { return new Date(ts).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', timeZone: 'America/Sao_Paulo', hour12: false }); }
+  function horaCurta(ts) { return new Date(ts).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', timeZone: 'America/Sao_Paulo', hour12: false }); }
   function diaSemanaHoje() { var p = diaPontoHoje().split('-'); return new Date(Date.UTC(+p[0], +p[1] - 1, +p[2])).getUTCDay(); }
   var ROTULOS = { entrada: 'Entrada', saida_refeicao: 'Saída p/ refeição', retorno_refeicao: 'Retorno da refeição', saida: 'Saída' };
   function rotuloAcao(t) { return ROTULOS[t] || t; }
@@ -145,6 +150,7 @@
     state.pontoConfig = null; state.pontoHoje = []; state.comprovante = null; state.view = 'bater';
     state.cpf = ''; state.senha = ''; state.verSenha = false; state.erro = '';
     state.entrando = false; state.batendo = false; state.registros = []; state.periodo = 'dia';
+    state.localizacaoAtual = null; state.localizacaoAtualizadaEm = 0; state.localizacaoAtualizando = false; state.localizacaoMsg = '';
     render();
   }
 
@@ -234,6 +240,66 @@
     render();
   }
 
+  function guardarLocalizacao(pos) {
+    state.localizacaoAtual = pos;
+    state.localizacaoAtualizadaEm = Date.now();
+    var precisao = numeroConfig(pos && pos.coords && pos.coords.accuracy);
+    state.localizacaoMsg = 'Atualizada as ' + horaCurta(state.localizacaoAtualizadaEm) + (isFinite(precisao) ? ' - precisao ' + Math.round(precisao) + 'm' : '');
+  }
+
+  function localizacaoRecente() {
+    return state.localizacaoAtual && state.localizacaoAtualizadaEm && (Date.now() - state.localizacaoAtualizadaEm < 120000);
+  }
+
+  function solicitarLocalizacao(sucesso, falha) {
+    if (!navigator.geolocation) { falha('Geolocalizacao indisponivel neste aparelho.'); return; }
+
+    var finalizado = false;
+    var watchdog = setTimeout(function () {
+      if (finalizado) return;
+      finalizado = true;
+      falha('Nao consegui a localizacao. Verifique a permissao de localizacao e tente de novo.');
+    }, 14000);
+
+    var concluir = function (pos) {
+      if (finalizado) return;
+      finalizado = true;
+      clearTimeout(watchdog);
+      sucesso(pos);
+    };
+    var pedir = function (alta, aoFalhar) {
+      try { navigator.geolocation.getCurrentPosition(concluir, aoFalhar, { enableHighAccuracy: alta, timeout: 12000, maximumAge: 0 }); }
+      catch (e) { aoFalhar(e); }
+    };
+    pedir(true, function () {
+      if (finalizado) return;
+      pedir(false, function (err) {
+        if (finalizado) return;
+        finalizado = true;
+        clearTimeout(watchdog);
+        falha('Localizacao indisponivel: ' + ((err && err.message) ? err.message : 'permita a localizacao e tente de novo'));
+      });
+    });
+  }
+
+  function atualizarLocalizacao() {
+    if (state.localizacaoAtualizando || state.batendo) return;
+    state.localizacaoAtualizando = true;
+    state.localizacaoMsg = 'Atualizando localizacao...';
+    render();
+    solicitarLocalizacao(function (pos) {
+      guardarLocalizacao(pos);
+      state.localizacaoAtualizando = false;
+      mostrarToast('Localizacao atualizada.');
+      render();
+    }, function (msg) {
+      state.localizacaoAtualizando = false;
+      state.localizacaoMsg = msg;
+      mostrarToast(msg);
+      render();
+    });
+  }
+
   function bater(tipo) {
     if (state.batendo) return;
     state.confirmarTipo = null;
@@ -244,23 +310,18 @@
     if (!navigator.geolocation) { mostrarToast('Geolocalizacao indisponivel neste aparelho.'); return; }
     state.batendo = true; render();
 
-    var finalizado = false;
-    var watchdog = setTimeout(function () {
-      if (finalizado) return; finalizado = true; state.batendo = false;
-      mostrarToast('Nao consegui a localizacao. Verifique a permissao de localizacao e tente de novo.'); render();
-    }, 14000);
+    if (localizacaoRecente()) {
+      registrarComPos(tipo, state.localizacaoAtual);
+      return;
+    }
 
-    var sucesso = function (pos) { if (finalizado) return; finalizado = true; clearTimeout(watchdog); registrarComPos(tipo, pos); };
-    var pedir = function (alta, aoFalhar) {
-      try { navigator.geolocation.getCurrentPosition(sucesso, aoFalhar, { enableHighAccuracy: alta, timeout: 12000, maximumAge: 0 }); }
-      catch (e) { aoFalhar(e); }
-    };
-    pedir(true, function () {
-      if (finalizado) return;
-      pedir(false, function (err) {
-        if (finalizado) return; finalizado = true; clearTimeout(watchdog); state.batendo = false;
-        mostrarToast('Localizacao indisponivel: ' + ((err && err.message) ? err.message : 'permita a localizacao e tente de novo')); render();
-      });
+    solicitarLocalizacao(function (pos) {
+      guardarLocalizacao(pos);
+      registrarComPos(tipo, pos);
+    }, function (msg) {
+      state.batendo = false;
+      mostrarToast(msg);
+      render();
     });
   }
 
@@ -462,6 +523,18 @@
     var proxima = proximaAcao(tipos);
     var podeEncerrar = tipos.indexOf('entrada') !== -1 && tipos.indexOf('saida') === -1;
     var dataHoje = new Date().toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: 'long', year: 'numeric', timeZone: 'America/Sao_Paulo' });
+    var localizacaoHtml =
+      '<div class="mb-4 rounded-2xl border border-cyan-100 bg-white p-3 shadow-sm">' +
+        '<div class="flex items-center justify-between gap-3">' +
+          '<div class="min-w-0">' +
+            '<p class="text-[10px] font-black uppercase tracking-wide text-cyan-700">Localizacao</p>' +
+            '<p class="mt-0.5 truncate text-xs font-semibold text-slate-500">' + escapeHtml(state.localizacaoMsg || 'Atualize antes de registrar se o GPS estiver desatualizado.') + '</p>' +
+          '</div>' +
+          '<button id="ponto-atualizar-localizacao" type="button" ' + (state.localizacaoAtualizando || state.batendo ? 'disabled' : '') + ' class="shrink-0 rounded-xl border border-cyan-200 bg-cyan-50 px-3 py-2 text-[10px] font-black uppercase tracking-wide text-cyan-700 disabled:opacity-60">' +
+            (state.localizacaoAtualizando ? 'Atualizando...' : 'Atualizar') +
+          '</button>' +
+        '</div>' +
+      '</div>';
 
     var statusHtml = ['entrada', 'saida_refeicao', 'retorno_refeicao', 'saida'].map(function (t) {
       var reg = (state.pontoHoje || []).filter(function (r) { return r.tipo === t; })[0];
@@ -493,6 +566,7 @@
         '</header>' +
         '<div class="flex-1 overflow-y-auto">' +
           '<div class="mx-auto max-w-md px-5 pt-5" style="padding-bottom:calc(env(safe-area-inset-bottom) + 40px)">' +
+            localizacaoHtml +
             '<p class="mb-2 text-[11px] font-black uppercase tracking-wide text-slate-400">Registros de hoje</p>' +
             '<div class="grid gap-2">' + statusHtml + '</div>' +
             '<div class="mt-6">' + botoesHtml + '</div>' +
@@ -553,6 +627,7 @@
       if (!tipo) return;
       bater(tipo);
     });
+    bind('ponto-atualizar-localizacao', atualizarLocalizacao);
     var ovConfirmar = document.getElementById('ponto-confirmar-overlay');
     if (ovConfirmar) ovConfirmar.addEventListener('click', function (e) { if (e.target === ovConfirmar) { state.confirmarTipo = null; render(); } });
     bind('ponto-comprovante-ok', function () { state.comprovante = null; render(); });
