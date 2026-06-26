@@ -742,22 +742,32 @@
       if (!state.empresa || !state.empresa.id) return;
       var empresaId = state.empresa.id;
       if (window._avaRealtimeFinanceiroEmpresaId === empresaId) return;
-      if (window._avaRealtimeLancamentos) db.removeChannel(window._avaRealtimeLancamentos);
-      if (window._avaRealtimeRecorrencias) db.removeChannel(window._avaRealtimeRecorrencias);
+      if (window._avaRealtimeFinanceiro) db.removeChannel(window._avaRealtimeFinanceiro);
 
       window._avaRealtimeFinanceiroEmpresaId = empresaId;
-      window._avaRealtimeLancamentos = db
-        .channel('financeiro_lancamentos_mobile_' + empresaId)
+      window._avaRealtimeFinanceiro = db
+        .channel('financeiro_sync_' + empresaId)
         .on('postgres_changes',
           { event: '*', schema: 'public', table: 'lancamentos', filter: 'empresa_id=eq.' + empresaId },
           function () { carregarDados(); })
-        .subscribe();
-      window._avaRealtimeRecorrencias = db
-        .channel('financeiro_recorrencias_mobile_' + empresaId)
         .on('postgres_changes',
           { event: '*', schema: 'public', table: 'recorrencias', filter: 'empresa_id=eq.' + empresaId },
           function () { carregarRecorrencias(); carregarDados(); })
+        .on('broadcast',
+          { event: 'financeiro_atualizado' },
+          function () { carregarRecorrencias(); carregarDados(); })
         .subscribe();
+    } catch (e) {}
+  }
+
+  function notificarFinanceiroAtualizadoMobile() {
+    try {
+      if (!state.empresa || !state.empresa.id || !window._avaRealtimeFinanceiro) return;
+      window._avaRealtimeFinanceiro.send({
+        type: 'broadcast',
+        event: 'financeiro_atualizado',
+        payload: { empresaId: state.empresa.id, origem: 'mobile', ts: Date.now() },
+      });
     } catch (e) {}
   }
 
@@ -3220,6 +3230,7 @@
     state.modoReceita = 'entrada';
     state.erro = '';
     await carregarDados();
+    notificarFinanceiroAtualizadoMobile();
     mostrarToast(totalParcelas > 1 ? 'Despesa parcelada em ' + totalParcelas + 'x.' : 'Despesa lancada.');
   }
 
@@ -3311,6 +3322,7 @@
     state.modoReceita = 'entrada';
     state.erro = '';
     await carregarDados();
+    notificarFinanceiroAtualizadoMobile();
     mostrarToast('Entrada lancada.');
   }
 
@@ -3353,6 +3365,7 @@
     state.modoReceita = 'entrada';
     state.erro = '';
     await carregarDados();
+    notificarFinanceiroAtualizadoMobile();
     mostrarToast('Total do mes atualizado.');
   }
 
@@ -3413,6 +3426,7 @@
     }
 
     state.carregando = false;
+    notificarFinanceiroAtualizadoMobile();
     mostrarToast('Total do mes excluido.');
     render();
   }
@@ -3945,6 +3959,7 @@
           }
           state.modalAcao = null;
           await carregarDados();
+          notificarFinanceiroAtualizadoMobile();
           mostrarToast(resp ? 'Parcelas excluidas.' : 'Despesa excluida.');
           return;
         }
@@ -4003,6 +4018,7 @@
 
     state.modalAcao = null;
     await carregarDados();
+    notificarFinanceiroAtualizadoMobile();
     mostrarToast(tipo === 'receita' ? 'Receita excluida.' : 'Despesa excluida.');
   }
 
@@ -4088,6 +4104,7 @@
 
     state.modalAcao = null;
     await carregarDados();
+    notificarFinanceiroAtualizadoMobile();
     mostrarToast(tipo === 'receita' ? 'Receita atualizada.' : 'Despesa atualizada.');
   }
 
@@ -4102,6 +4119,7 @@
       return;
     }
     await carregarDados();
+    notificarFinanceiroAtualizadoMobile();
     mostrarToast('Despesa confirmada.');
   }
 
@@ -4134,6 +4152,7 @@
       return;
     }
     await carregarDados();
+    notificarFinanceiroAtualizadoMobile();
     mostrarToast('Despesa excluida.');
   }
 
@@ -6225,6 +6244,7 @@
     state.novaRecorrLancarAgora = false;
     state.novaRecorrMesesFrente = 1;
     state.mensagem = 'Despesa fixa adicionada!';
+    notificarFinanceiroAtualizadoMobile();
     render();
     setTimeout(function() { state.mensagem = ''; render(); }, 2000);
   }
@@ -6236,6 +6256,7 @@
       state.recorrencias = state.recorrencias.map(function(r) {
         return r.id === id ? Object.assign({}, r, { ativo: novoAtivo }) : r;
       });
+      notificarFinanceiroAtualizadoMobile();
       render();
     }
   }
@@ -6286,6 +6307,7 @@
     state.recorrEditandoId = null;
     state.editRecorrValorNumerico = 0;
     state.mensagem = 'Salvo!';
+    notificarFinanceiroAtualizadoMobile();
     render();
     setTimeout(function() { state.mensagem = ''; render(); }, 1500);
   }
@@ -6305,6 +6327,7 @@
       state.recorrencias = state.recorrencias.filter(function(r) { return r.id !== id; });
       state.lancamentos = (state.lancamentos || []).filter(function(l) { return l.recorrenciaId !== id; });
       if (state.recorrEditandoId === id) state.recorrEditandoId = null;
+      notificarFinanceiroAtualizadoMobile();
       render();
     }
   }

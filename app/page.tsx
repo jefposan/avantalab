@@ -339,6 +339,7 @@ const [agendaItemParaExcluir, setAgendaItemParaExcluir] = useState<AgendaItem | 
 const [notificacoesWeb, setNotificacoesWeb] = useState<{ id: string; titulo: string; corpo: string }[]>([]);
 const ajustesAutoFecharTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 const painelAvisosAbertoAnterior = useRef(false);
+const financeiroRealtimeChannelRef = useRef<any>(null);
 const [menuResponsivoAberto, setMenuResponsivoAberto] = useState(false);
 const [subAcaoGerenciar, setSubAcaoGerenciar] = useState<null | 'editar' | 'criar'>(null);
   const [ultimoBackupEm, setUltimoBackupEm] = useState<string | null>(null);
@@ -1303,27 +1304,29 @@ useEffect(() => {
 useEffect(() => {
   if (!mounted || !empresaId) return;
 
-  const canalLancamentos = supabase
-    .channel('financeiro_lancamentos_web_' + empresaId)
+  const canalFinanceiro = supabase
+    .channel('financeiro_sync_' + empresaId)
     .on(
       'postgres_changes',
       { event: '*', schema: 'public', table: 'lancamentos', filter: 'empresa_id=eq.' + empresaId },
       () => { recarregarDadosFinanceirosAtual(); }
     )
-    .subscribe();
-
-  const canalRecorrencias = supabase
-    .channel('financeiro_recorrencias_web_' + empresaId)
     .on(
       'postgres_changes',
       { event: '*', schema: 'public', table: 'recorrencias', filter: 'empresa_id=eq.' + empresaId },
       () => { recarregarDadosFinanceirosAtual(); }
     )
+    .on(
+      'broadcast',
+      { event: 'financeiro_atualizado' },
+      () => { recarregarDadosFinanceirosAtual(); }
+    )
     .subscribe();
+  financeiroRealtimeChannelRef.current = canalFinanceiro;
 
   return () => {
-    supabase.removeChannel(canalLancamentos);
-    supabase.removeChannel(canalRecorrencias);
+    financeiroRealtimeChannelRef.current = null;
+    supabase.removeChannel(canalFinanceiro);
   };
   // eslint-disable-next-line react-hooks/exhaustive-deps
 }, [mounted, empresaId, anoSelecionado]);
@@ -2020,6 +2023,7 @@ const totalEntradasFaturamentoDoMes = entradasFaturamentoOrdenadasDoMes.reduce(
     ...prev,
     [mes]: valor,
   }));
+  notificarFinanceiroAtualizado();
 };
 
 const salvarFaturamento = async (
@@ -2090,6 +2094,7 @@ const salvarFaturamento = async (
     }));
 
     setInputFaturamento('');
+    notificarFinanceiroAtualizado();
   } else {
     abrirAviso(
       'Erro ao salvar faturamento',
@@ -2205,6 +2210,7 @@ const adicionarEntradaFaturamento = async (mesInformado?: string) => {
     setEntradaFaturamentoDia('');
     setEntradaFaturamentoOrigem('');
     setEntradaFaturamentoValor('');
+    notificarFinanceiroAtualizado();
     setEntradaFaturamentoValorNumerico(0);
   } finally {
     setEntradaFaturamentoSalvando(false);
@@ -2366,6 +2372,7 @@ const solicitarFaturamentoDashboard = () => {
         }
       }
       if (novosLancamentos.length) setLancamentos((prev) => [...novosLancamentos, ...prev]);
+      notificarFinanceiroAtualizado();
       setNovaRecorrNome('');
       setNovaRecorrCategoria('');
       setNovaRecorrDescricao('');
@@ -2450,6 +2457,7 @@ const solicitarFaturamentoDashboard = () => {
           }, ...prev]);
         }
       }
+      notificarFinanceiroAtualizado();
       setRecorrEditandoId(null);
     }
   };
@@ -2476,6 +2484,7 @@ const solicitarFaturamentoDashboard = () => {
         if (ok) {
           setRecorrencias((prev) => prev.filter((r) => r.id !== id));
           setLancamentos((prev) => prev.filter((l: any) => l.recorrenciaId !== id));
+          notificarFinanceiroAtualizado();
         }
       },
     });
@@ -2519,6 +2528,7 @@ const excluirTotalMes = async () => {
           return next;
         });
       }
+      notificarFinanceiroAtualizado();
     },
   });
 };
@@ -2757,6 +2767,7 @@ const executarParcelamento = async () => {
 
   if (novosLancamentos.length > 0) {
     setLancamentos((prev) => [...novosLancamentos, ...prev]);
+    notificarFinanceiroAtualizado();
     setFormDia('');
     setFormDespesa('');
     setFormDescricao('');
@@ -2772,6 +2783,7 @@ const apagarDespesa = async (id: string) => {
 
   if (apagou) {
     setLancamentos((prev) => prev.filter((l) => l.id !== id));
+    notificarFinanceiroAtualizado();
   } else {
     abrirAviso(
       'Erro ao apagar lançamento',
@@ -2795,6 +2807,7 @@ const cancelarDespesaFixaDoMes = async (lanc: any) => {
   }
 
   setLancamentos((prev) => prev.filter((l) => l.id !== lanc.id));
+  notificarFinanceiroAtualizado();
 };
 
 const confirmarDespesaPrevista = async (id: string | number) => {
@@ -2804,6 +2817,7 @@ const confirmarDespesaPrevista = async (id: string | number) => {
     setLancamentos((prev) =>
       prev.map((l: any) => (l.id === id ? { ...l, status: 'confirmada' } : l))
     );
+    notificarFinanceiroAtualizado();
   } else {
     abrirAviso('Erro', 'Não foi possível confirmar a despesa.');
   }
@@ -2893,6 +2907,7 @@ Deseja excluir TODAS as parcelas ou apenas esta?`,
             await apagarLancamento(p.id);
           }
           setLancamentos((prev) => prev.filter((l: any) => !parcelasGrupo.some((p: any) => p.id === l.id)));
+          notificarFinanceiroAtualizado();
         },
         acaoCancelar: () => apagarDespesa(lanc.id),
       });
@@ -2988,6 +3003,7 @@ const excluirEntradaFaturamento = async (entrada: any) => {
         ...prev,
         [mesEntrada]: novoTotal,
       }));
+      notificarFinanceiroAtualizado();
     },
   });
 };
@@ -3244,6 +3260,7 @@ const salvarEdicaoEntradaFaturamento = async () => {
   }));
 
   cancelarEdicaoEntradaFaturamento();
+  notificarFinanceiroAtualizado();
 };
 
 const handleValorChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -3339,6 +3356,7 @@ const salvarEdicaoLancamento = async () => {
     );
 
     cancelarEdicaoLancamento();
+    notificarFinanceiroAtualizado();
   } else {
   abrirAviso(
     'Erro ao atualizar lançamento',
@@ -3519,6 +3537,18 @@ const recarregarDadosFinanceirosAtual = async () => {
   });
   setFaturamentos(faturamentosFormatados);
   setRecorrencias(recorrenciasBanco);
+};
+
+const notificarFinanceiroAtualizado = () => {
+  try {
+    financeiroRealtimeChannelRef.current?.send({
+      type: 'broadcast',
+      event: 'financeiro_atualizado',
+      payload: { empresaId, origem: 'web', ts: Date.now() },
+    });
+  } catch (e) {
+    console.warn('Não foi possível notificar atualização financeira:', e);
+  }
 };
 
 const abrirImportacaoBackup = () => {
