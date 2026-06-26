@@ -84,7 +84,7 @@ export default function PontoPage() {
       </div>
 
       <script src="/mobile-supabase.js" defer />
-      <script src="/ponto-app.js?v=7" defer />
+      <script src="/ponto-app.js?v=8" defer />
     </main>
   );
 }

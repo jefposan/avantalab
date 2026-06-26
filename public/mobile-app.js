@@ -4360,6 +4360,12 @@
     return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
   }
 
+  function numeroConfigPonto(valor) {
+    if (valor == null || valor === '') return NaN;
+    if (typeof valor === 'number') return valor;
+    return Number(String(valor).trim().replace(',', '.').replace(/[^\d.-]/g, ''));
+  }
+
   async function carregarPontoConfigMobile() {
     if (state.pontoConfig) return;
     var md = state.usuario && state.usuario.user_metadata;
@@ -4415,29 +4421,51 @@
     var empresaId = state.empresa ? state.empresa.id : (md && md.empresa_id);
     await carregarPontoConfigMobile();
     var cfg = state.pontoConfig;
-    var distancia = null;
-    if (cfg && cfg.latitude != null && cfg.longitude != null) {
-      distancia = distanciaMetros(cfg.latitude, cfg.longitude, pos.coords.latitude, pos.coords.longitude);
-      var raio = cfg.raio_m || 100;
-      if (distancia > raio) {
-        state.pontoBatendo = false;
-        mostrarToast('Voce esta a ' + Math.round(distancia) + 'm da empresa. Aproxime-se (limite ' + raio + 'm) para bater o ponto.');
-        render();
-        return;
-      }
+    var latEmpresa = numeroConfigPonto(cfg && cfg.latitude);
+    var lngEmpresa = numeroConfigPonto(cfg && cfg.longitude);
+    var raio = Math.max(1, Math.round(numeroConfigPonto(cfg && cfg.raio_m) || 100));
+    var latAtual = numeroConfigPonto(pos && pos.coords && pos.coords.latitude);
+    var lngAtual = numeroConfigPonto(pos && pos.coords && pos.coords.longitude);
+    var precisao = numeroConfigPonto(pos && pos.coords && pos.coords.accuracy);
+
+    if (!empresaId || !isFinite(latEmpresa) || !isFinite(lngEmpresa)) {
+      state.pontoBatendo = false;
+      mostrarToast('Local da empresa nao configurado. Solicite ao gestor para ajustar o ponto.');
+      render();
+      return;
+    }
+    if (!isFinite(latAtual) || !isFinite(lngAtual) || !isFinite(precisao)) {
+      state.pontoBatendo = false;
+      mostrarToast('Localizacao imprecisa. Ative o GPS e tente novamente.');
+      render();
+      return;
+    }
+    if (precisao > Math.max(raio, 100)) {
+      state.pontoBatendo = false;
+      mostrarToast('Localizacao com baixa precisao (' + Math.round(precisao) + 'm). Ative o GPS e tente novamente.');
+      render();
+      return;
+    }
+
+    var distancia = distanciaMetros(latEmpresa, lngEmpresa, latAtual, lngAtual);
+    if (!isFinite(distancia) || distancia > raio) {
+      state.pontoBatendo = false;
+      mostrarToast('Voce esta a ' + Math.round(distancia || 0) + 'm da empresa. Aproxime-se (limite ' + raio + 'm) para bater o ponto.');
+      render();
+      return;
     }
     var hash = (Date.now().toString(36) + Math.random().toString(36).slice(2, 8)).toUpperCase();
     var registro = {
       empresa_id: empresaId,
       user_id: state.usuario.id,
       tipo: tipo,
-      latitude: pos.coords.latitude,
-      longitude: pos.coords.longitude,
-      precisao_m: pos.coords.accuracy,
+      latitude: latAtual,
+      longitude: lngAtual,
+      precisao_m: precisao,
       dispositivo: navigator.userAgent,
       hash: hash,
     };
-    if (distancia != null) registro.distancia_m = distancia;
+    registro.distancia_m = distancia;
     var resp;
     try {
       resp = await db.from('ponto_registros').insert(registro).select().single();
@@ -4455,7 +4483,7 @@
       render();
       return;
     }
-    state.pontoComprovante = { tipo: tipo, registrado_em: resp.data.registrado_em, hash: hash, lat: pos.coords.latitude, lng: pos.coords.longitude, distancia: distancia };
+    state.pontoComprovante = { tipo: tipo, registrado_em: resp.data.registrado_em, hash: hash, lat: latAtual, lng: lngAtual, distancia: distancia };
     await carregarPontoHoje();
   }
 
@@ -4488,7 +4516,7 @@
     var pedir = function (altaPrecisao, aoFalhar) {
       try {
         navigator.geolocation.getCurrentPosition(sucesso, aoFalhar, {
-          enableHighAccuracy: altaPrecisao, timeout: 9000, maximumAge: 60000,
+          enableHighAccuracy: altaPrecisao, timeout: 12000, maximumAge: 0,
         });
       } catch (e) {
         aoFalhar(e);

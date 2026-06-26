@@ -98,6 +98,11 @@
     var a = Math.sin(dLat / 2) * Math.sin(dLat / 2) + Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLon / 2) * Math.sin(dLon / 2);
     return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
   }
+  function numeroConfig(valor) {
+    if (valor == null || valor === '') return NaN;
+    if (typeof valor === 'number') return valor;
+    return Number(String(valor).trim().replace(',', '.').replace(/[^\d.-]/g, ''));
+  }
   function nomeEmpresa() { return (state.empresa && state.empresa.nome) || 'Empresa'; }
   function nomeFunc() { var f = state.funcionario || {}; var md = (state.usuario && state.usuario.user_metadata) || {}; return f.nome || md.nome || 'Funcionário'; }
 
@@ -177,30 +182,53 @@
   async function registrarComPos(tipo, pos) {
     var md = state.usuario.user_metadata || {};
     var empresaId = (state.empresa && state.empresa.id) || (state.funcionario && state.funcionario.empresa_id) || md.empresa_id;
-    var distancia = null;
     var cfg = state.pontoConfig;
-    if (cfg && cfg.latitude != null && cfg.longitude != null) {
-      distancia = distanciaMetros(cfg.latitude, cfg.longitude, pos.coords.latitude, pos.coords.longitude);
-      var raio = cfg.raio_m || 100;
-      if (distancia > raio) {
-        state.batendo = false;
-        mostrarToast('Voce esta a ' + Math.round(distancia) + 'm da empresa. Aproxime-se (limite ' + raio + 'm).');
-        return;
-      }
+    var latEmpresa = numeroConfig(cfg && cfg.latitude);
+    var lngEmpresa = numeroConfig(cfg && cfg.longitude);
+    var raio = Math.max(1, Math.round(numeroConfig(cfg && cfg.raio_m) || 100));
+    var latAtual = numeroConfig(pos && pos.coords && pos.coords.latitude);
+    var lngAtual = numeroConfig(pos && pos.coords && pos.coords.longitude);
+    var precisao = numeroConfig(pos && pos.coords && pos.coords.accuracy);
+
+    if (!empresaId || !isFinite(latEmpresa) || !isFinite(lngEmpresa)) {
+      state.batendo = false;
+      mostrarToast('Local da empresa nao configurado. Solicite ao gestor para ajustar o ponto.');
+      render();
+      return;
+    }
+    if (!isFinite(latAtual) || !isFinite(lngAtual) || !isFinite(precisao)) {
+      state.batendo = false;
+      mostrarToast('Localizacao imprecisa. Ative o GPS e tente novamente.');
+      render();
+      return;
+    }
+    if (precisao > Math.max(raio, 100)) {
+      state.batendo = false;
+      mostrarToast('Localizacao com baixa precisao (' + Math.round(precisao) + 'm). Ative o GPS e tente novamente.');
+      render();
+      return;
+    }
+
+    var distancia = distanciaMetros(latEmpresa, lngEmpresa, latAtual, lngAtual);
+    if (!isFinite(distancia) || distancia > raio) {
+      state.batendo = false;
+      mostrarToast('Voce esta a ' + Math.round(distancia || 0) + 'm da empresa. Aproxime-se (limite ' + raio + 'm).');
+      render();
+      return;
     }
     var hash = (Date.now().toString(36) + Math.random().toString(36).slice(2, 8)).toUpperCase();
     var registro = {
       empresa_id: empresaId, user_id: state.usuario.id, tipo: tipo,
-      latitude: pos.coords.latitude, longitude: pos.coords.longitude,
-      precisao_m: pos.coords.accuracy, dispositivo: navigator.userAgent, hash: hash,
+      latitude: latAtual, longitude: lngAtual,
+      precisao_m: precisao, dispositivo: navigator.userAgent, hash: hash,
     };
-    if (distancia != null) registro.distancia_m = distancia;
+    registro.distancia_m = distancia;
     var resp;
     try { resp = await db.from('ponto_registros').insert(registro).select().single(); }
     catch (e) { state.batendo = false; mostrarToast('Erro ao registrar: ' + ((e && e.message) ? e.message : 'tente novamente')); return; }
     state.batendo = false;
     if (resp.error) { mostrarToast('Nao registrou: ' + (resp.error.message || resp.error.code || 'erro')); return; }
-    state.comprovante = { tipo: tipo, registrado_em: resp.data.registrado_em, hash: hash, lat: pos.coords.latitude, lng: pos.coords.longitude, distancia: distancia };
+    state.comprovante = { tipo: tipo, registrado_em: resp.data.registrado_em, hash: hash, lat: latAtual, lng: lngAtual, distancia: distancia };
     await carregarHoje();
     render();
   }
@@ -222,7 +250,7 @@
 
     var sucesso = function (pos) { if (finalizado) return; finalizado = true; clearTimeout(watchdog); registrarComPos(tipo, pos); };
     var pedir = function (alta, aoFalhar) {
-      try { navigator.geolocation.getCurrentPosition(sucesso, aoFalhar, { enableHighAccuracy: alta, timeout: 9000, maximumAge: 60000 }); }
+      try { navigator.geolocation.getCurrentPosition(sucesso, aoFalhar, { enableHighAccuracy: alta, timeout: 12000, maximumAge: 0 }); }
       catch (e) { aoFalhar(e); }
     };
     pedir(true, function () {
