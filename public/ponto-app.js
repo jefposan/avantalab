@@ -51,6 +51,7 @@
     carregando: false,
     toast: null,
     instalarInstrucao: false,
+    confirmarTipo: null,
   };
 
   // ---------- helpers ----------
@@ -235,6 +236,7 @@
 
   function bater(tipo) {
     if (state.batendo) return;
+    state.confirmarTipo = null;
     var f = state.funcionario;
     if (f && Array.isArray(f.dias_trabalho) && f.dias_trabalho.length > 0 && f.dias_trabalho.indexOf(diaSemanaHoje()) === -1) {
       mostrarToast('Hoje nao e um dia de trabalho. Nao e possivel bater o ponto.'); return;
@@ -318,6 +320,24 @@
           '</div>' +
           '<button id="ponto-instalar-fechar" type="button" class="mt-4 h-11 w-full rounded-xl bg-slate-950 text-sm font-black uppercase tracking-wide text-white">Entendi</button>' +
         '</div>' +
+      '</div>'
+    );
+  }
+
+  function confirmacaoPontoHtml() {
+    if (!state.confirmarTipo) return '';
+    var rotulo = rotuloAcao(state.confirmarTipo);
+    return (
+      '<div id="ponto-confirmar-overlay" class="fixed inset-0 z-[70] flex items-end justify-center bg-slate-950/60 p-4 sm:items-center">' +
+        '<section class="w-full max-w-sm rounded-3xl bg-white p-5 text-slate-900 shadow-2xl">' +
+          '<p class="text-[10px] font-black uppercase tracking-[0.22em] text-cyan-700">Confirmar registro</p>' +
+          '<h2 class="mt-2 text-xl font-black">Registrar ' + escapeHtml(rotulo).toLowerCase() + '?</h2>' +
+          '<p class="mt-2 text-sm font-semibold leading-relaxed text-slate-500">Confirme somente se deseja registrar este ponto agora. Após salvar, o registro fica vinculado ao seu horário e localização.</p>' +
+          '<div class="mt-5 grid grid-cols-2 gap-2">' +
+            '<button id="ponto-confirmar-cancelar" type="button" class="h-12 rounded-2xl border border-slate-300 bg-white text-sm font-black uppercase tracking-wide text-slate-600">Cancelar</button>' +
+            '<button id="ponto-confirmar-ok" type="button" class="h-12 rounded-2xl bg-cyan-600 text-sm font-black uppercase tracking-wide text-white shadow-lg">Confirmar</button>' +
+          '</div>' +
+        '</section>' +
       '</div>'
     );
   }
@@ -506,7 +526,7 @@
     if (!state.pronto) tela = telaCarregandoPonto();
     else if (!state.autenticado) tela = telaLogin();
     else tela = telaPonto();
-    root.innerHTML = tela + toastHtml() + instrucaoInstalarHtml();
+    root.innerHTML = tela + toastHtml() + instrucaoInstalarHtml() + confirmacaoPontoHtml();
 
     bind('ponto-entrar', entrar);
     bind('ponto-instalar-fechar', function () { state.instalarInstrucao = false; render(); });
@@ -525,8 +545,16 @@
     var cpfEl = document.getElementById('ponto-cpf');
     if (cpfEl) cpfEl.addEventListener('blur', function () { this.value = fmtCpf(this.value); });
 
-    bind('ponto-acao', function () { var el = document.getElementById('ponto-acao'); if (el) bater(el.getAttribute('data-tipo')); });
-    bind('ponto-encerrar', function () { bater('saida'); });
+    bind('ponto-acao', function () { var el = document.getElementById('ponto-acao'); if (el) { state.confirmarTipo = el.getAttribute('data-tipo'); render(); } });
+    bind('ponto-encerrar', function () { state.confirmarTipo = 'saida'; render(); });
+    bind('ponto-confirmar-cancelar', function () { state.confirmarTipo = null; render(); });
+    bind('ponto-confirmar-ok', function () {
+      var tipo = state.confirmarTipo;
+      if (!tipo) return;
+      bater(tipo);
+    });
+    var ovConfirmar = document.getElementById('ponto-confirmar-overlay');
+    if (ovConfirmar) ovConfirmar.addEventListener('click', function (e) { if (e.target === ovConfirmar) { state.confirmarTipo = null; render(); } });
     bind('ponto-comprovante-ok', function () { state.comprovante = null; render(); });
     bind('ponto-meus-registros', function () { carregarRegistros('dia'); });
     bind('ponto-voltar', function () { state.view = 'bater'; render(); });

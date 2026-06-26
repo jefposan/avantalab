@@ -181,14 +181,6 @@ export default function MobilePage() {
             .mobile-dark .cfg-sub-group > button::before {
               color: #cbd5e1;
             }
-
-            /* Impressão / PDF do relatório de ponto: só o relatório */
-            @media print {
-              body * { visibility: hidden !important; }
-              #ponto-relatorio-print, #ponto-relatorio-print * { visibility: visible !important; }
-              #ponto-relatorio-print { position: absolute; left: 0; top: 0; width: 100%; padding: 16px; }
-              .no-print { display: none !important; }
-            }
           `,
         }}
       />
@@ -220,7 +212,7 @@ export default function MobilePage() {
       </div>
 
       <script src="/mobile-supabase.js" defer />
-      <script src="/mobile-app.js?v=156" defer />
+      <script src="/mobile-app.js?v=157" defer />
     </main>
   );
 }
