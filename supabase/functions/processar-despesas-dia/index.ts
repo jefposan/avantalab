@@ -1,7 +1,7 @@
 // ─────────────────────────────────────────────────────────────
 // Edge Function: processar-despesas-dia
 // Cria a notificacao (sininho) + envia push para as despesas
-// "previsto" e "fixa" que vencem HOJE e ainda estao "prevista".
+// "previsto", "fixa" e "parcela" que vencem HOJE e ainda estao agendadas.
 //
 // Agende para rodar 1x/dia logo apos 00:00 (ex.: 00:05) via
 // Supabase Scheduled Functions ou pg_cron. Assim o aviso aparece
@@ -22,7 +22,7 @@
 import { createClient } from 'jsr:@supabase/supabase-js@2';
 import webpush from 'npm:web-push@3.6.7';
 
-const MESES = ['JANEIRO', 'FEVEREIRO', 'MARÇO', 'ABRIL', 'MAIO', 'JUNHO', 'JULHO', 'AGOSTO', 'SETEMBRO', 'OUTUBRO', 'NOVEMBRO', 'DEZEMBRO'];
+const MESES = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
 
 Deno.serve(async () => {
   try {
@@ -37,21 +37,29 @@ Deno.serve(async () => {
       Deno.env.get('VAPID_PRIVATE_KEY')!,
     );
 
-    const hoje = new Date();
-    const ano = hoje.getFullYear();
-    const mesNome = MESES[hoje.getMonth()];
-    const dia = hoje.getDate();
-    const refData = hoje.toISOString().slice(0, 10); // YYYY-MM-DD
+    const partesHoje = new Intl.DateTimeFormat('en-CA', {
+      timeZone: 'America/Sao_Paulo',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+    }).formatToParts(new Date());
+    const parte = (tipo: string) => partesHoje.find((item) => item.type === tipo)?.value || '';
+    const ano = Number(parte('year'));
+    const mesIndice = Number(parte('month')) - 1;
+    const mesNome = MESES[mesIndice];
+    const dia = Number(parte('day'));
+    const refData = `${parte('year')}-${parte('month')}-${parte('day')}`;
 
-    // Despesas que vencem hoje e ainda estao previstas (previsto/fixa).
+    // Despesas agendadas que vencem hoje. Parcelas nao pedem confirmacao,
+    // mas tambem geram o lembrete de pagamento no PWA.
     const { data: despesas, error } = await supabase
       .from('lancamentos')
-      .select('id, empresa_id, despesa_nome, valor, tipo_obs')
+      .select('id, empresa_id, despesa_nome, valor, tipo_obs, status')
       .eq('ano', ano)
       .eq('mes', mesNome)
       .eq('dia', dia)
-      .eq('status', 'prevista')
-      .in('tipo_obs', ['previsto', 'fixa']);
+      .or('status.is.null,status.neq.cancelada')
+      .in('tipo_obs', ['previsto', 'fixa', 'parcela']);
 
     if (error) throw error;
     const lista = despesas || [];
@@ -63,8 +71,11 @@ Deno.serve(async () => {
     for (const d of lista) {
       if (!d.empresa_id) continue;
       const valorFmt = Number(d.valor || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-      const titulo = d.tipo_obs === 'fixa' ? 'Despesa fixa para confirmar' : 'Despesa prevista para confirmar';
-      const corpo = `${d.despesa_nome} - ${valorFmt}. Toque para confirmar, ajustar ou excluir.`;
+      const pedeConfirmacao = d.tipo_obs !== 'parcela' && d.status === 'prevista';
+      const titulo = pedeConfirmacao ? 'Despesa para confirmar hoje' : 'Pagamento agendado para hoje';
+      const corpo = pedeConfirmacao
+        ? `${d.despesa_nome} - ${valorFmt}. Toque para confirmar, ajustar ou excluir.`
+        : `${d.despesa_nome} - ${valorFmt}.`;
 
       // Dedup por (origem_id, ref_data): no maximo 1 notificacao por despesa por dia.
       const { error: nErr } = await supabase
@@ -96,8 +107,8 @@ Deno.serve(async () => {
       const despesasEmpresa = lista.filter((x) => x.empresa_id === empresaId);
       const qtd = despesasEmpresa.length;
       const payload = JSON.stringify({
-        title: qtd > 1 ? `${qtd} despesas para confirmar hoje` : 'Despesa para confirmar hoje',
-        body: qtd > 1 ? 'Abra o app para confirmar, ajustar ou excluir.' : (despesasEmpresa[0]?.despesa_nome || 'Despesa do dia'),
+        title: qtd > 1 ? `${qtd} pagamentos agendados para hoje` : 'Pagamento agendado para hoje',
+        body: qtd > 1 ? 'Abra o app para consultar os pagamentos do dia.' : (despesasEmpresa[0]?.despesa_nome || 'Despesa do dia'),
         url: '/mobile',
       });
 

@@ -3328,6 +3328,19 @@ const salvarEdicaoLancamento = async () => {
   return;
 }
 
+  const lancamentoAtual = lancamentos.find((item: any) => String(item.id) === String(lancamentoEditandoId));
+  const ehFixaEditada = lancamentoAtual?.tipo === 'fixa' || Boolean(lancamentoAtual?.recorrenciaId);
+  const ehParcelaEditada = lancamentoAtual?.tipo === 'parcela';
+  const ehFuturaEditada = dataFutura(Number(anoSelecionado), meses.indexOf(mesAtivo), diaNumerico);
+  const tipoEditado = ehFixaEditada ? 'fixa' : ehParcelaEditada ? 'parcela' : ehFuturaEditada ? 'previsto' : null;
+  const statusEditado = ehParcelaEditada
+    ? (lancamentoAtual?.status || null)
+    : ehFuturaEditada
+      ? 'prevista'
+      : ehFixaEditada && lancamentoAtual?.status === 'prevista'
+        ? 'confirmada'
+        : null;
+
   const salvo = await atualizarLancamento({
     id: lancamentoEditandoId,
     empresaId,
@@ -3337,6 +3350,8 @@ const salvarEdicaoLancamento = async () => {
     despesaNome: editDespesa,
     descricao: formatarDescricao(editDescricao),
     valor: editValorNumerico,
+    status: statusEditado,
+    tipoObs: tipoEditado,
   });
 
   if (!salvo.erro && salvo.data) {
@@ -3350,6 +3365,8 @@ const salvarEdicaoLancamento = async () => {
               despesa: salvo.data.despesa_nome,
               descricao: salvo.data.descricao || '',
               valor: Number(salvo.data.valor),
+              status: salvo.data.status || null,
+              tipo: salvo.data.tipo_obs || null,
             }
           : l
       )

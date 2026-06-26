@@ -789,6 +789,8 @@ export async function atualizarLancamento({
   despesaNome,
   descricao,
   valor,
+  status,
+  tipoObs,
 }: {
   id: string | number;
   empresaId: string;
@@ -798,6 +800,8 @@ export async function atualizarLancamento({
   despesaNome: string;
   descricao: string;
   valor: number;
+  status: string | null;
+  tipoObs: string | null;
 }) {
   const { data, error } = await supabase
     .from('lancamentos')
@@ -809,6 +813,8 @@ export async function atualizarLancamento({
       despesa_nome: despesaNome,
       descricao,
       valor,
+      status,
+      tipo_obs: tipoObs,
       updated_at: new Date().toISOString(),
     })
     .eq('id', id)

@@ -4086,6 +4086,14 @@
           { onConflict: 'empresa_id,ano,mes' }
         );
     } else {
+      var mesItem = item.mes || state.mes;
+      var ehFixaEditada = item.tipo === 'fixa' || Boolean(item.recorrenciaId);
+      var ehParcelaEditada = item.tipo === 'parcela';
+      var ehFuturaEditada = dataFutura(Number(state.ano), indiceMes(mesItem), dia);
+      var tipoEditado = ehFixaEditada ? 'fixa' : (ehParcelaEditada ? 'parcela' : (ehFuturaEditada ? 'previsto' : null));
+      var statusEditado = ehParcelaEditada
+        ? (item.status || null)
+        : (ehFuturaEditada ? 'prevista' : (ehFixaEditada && item.status === 'prevista' ? 'confirmada' : null));
       var despesa = await db
         .from('lancamentos')
         .update({
@@ -4093,7 +4101,8 @@
           despesa_nome: despesaNome,
           descricao: formatarDescricao(descricao),
           valor: valor,
-          status: item.status === 'prevista' ? 'confirmada' : (item.status || null),
+          status: statusEditado,
+          tipo_obs: tipoEditado,
         })
         .eq('id', item.id)
         .eq('empresa_id', state.empresa.id)
