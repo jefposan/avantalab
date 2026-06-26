@@ -1,0 +1,62 @@
+{
+  "empresa": {
+    "nome": "AvantaLab",
+    "subtitulo": "Sistema de gestão financeira",
+    "descricao": [
+      "A AvantaLab é uma plataforma de gestão simples, prática e intuitiva, criada para ajudar negócios a controlarem entradas, despesas, resultados, agenda, ponto e informações importantes em um só lugar.",
+      "Com acesso via web e mobile, o sistema facilita o abastecimento de dados, a visualização dos resultados e o compartilhamento de informações de forma clara e objetiva.",
+      "Nossa proposta é oferecer uma gestão bonita, fácil de usar e em constante evolução, com apoio de IA para dúvidas sobre o sistema e orientações financeiras."
+    ],
+    "site": "https://avantalab.com.br",
+    "instagram": "@avanta.lab",
+    "instagramUrl": "https://www.instagram.com/avanta.lab"
+  },
+  "versoes": [
+    {
+      "versao": "1.3",
+      "titulo": "Módulo Controle de Ponto",
+      "data": "Junho/2026",
+      "itens": [
+        "Controle de Ponto com página exclusiva de acesso por CPF e senha.",
+        "Registro de ponto com geolocalização.",
+        "Relatórios de ponto com pontualidade e faltas, exportação em PDF e Excel.",
+        "App do ponto instalável no celular (\"Avanta Ponto\"), com ícone próprio.",
+        "Agenda em tela cheia, com troca de mês por setas e por arraste.",
+        "Card de despesas previstas redesenhado.",
+        "Nova tela \"Sobre\" com as novidades de cada versão.",
+        "Mais correções de desempenho e estabilidade."
+      ]
+    },
+    {
+      "versao": "1.2",
+      "titulo": "Agenda e Notificações",
+      "data": "2026",
+      "itens": [
+        "Agenda completa com lembretes e despesas futuras, sincronizada entre celular e web.",
+        "Notificações no celular (PWA), mesmo com o app fechado.",
+        "Aviso de despesas previstas que chegaram na data, para confirmar, ajustar ou excluir."
+      ]
+    },
+    {
+      "versao": "1.1",
+      "titulo": "Experiência no celular",
+      "data": "2026",
+      "itens": [
+        "App instalável no celular (PWA), com modo escuro.",
+        "Assistente Ava para tirar dúvidas e analisar seus resultados.",
+        "Melhorias de navegação e de visual em todo o aplicativo."
+      ]
+    },
+    {
+      "versao": "1.0",
+      "titulo": "Lançamento",
+      "data": "2025",
+      "itens": [
+        "Gestão financeira: entradas, despesas, despesas fixas e dashboard de resultados.",
+        "Relatórios por mês e por categoria.",
+        "Backup e restauração dos dados em Excel.",
+        "Vários perfis/empresas e múltiplos usuários."
+      ]
+    }
+  ]
+}

@@ -14,6 +14,7 @@ import ModalDespesasBase from './components/ModalDespesasBase';
 import ModalLogo from './components/ModalLogo';
 import ModulosModal, { type Modulo } from './components/ModulosModal';
 import PontoAdminModal, { type FuncionarioPonto, type PontoConfig } from './components/PontoAdminModal';
+import SobreModal from './components/SobreModal';
 import ModalConfirmacao from "./components/ModalConfirmacao";
 import CardEntradaFaturamento from './components/CardEntradaFaturamento';
 import TabelaLancamentosDespesa from './components/TabelaLancamentosDespesa';
@@ -312,6 +313,7 @@ const [validandoTelefoneObrigatorio, setValidandoTelefoneObrigatorio] = useState
 const [ajustesAberto, setAjustesAberto] = useState(false);
 const [menuAjuste, setMenuAjuste] = useState<null | 'visual' | 'config'>(null);
 const [menuAjusteRect, setMenuAjusteRect] = useState<{ top: number; left: number } | null>(null);
+const [modalSobre, setModalSobre] = useState(false);
 const [agendaAberta, setAgendaAberta] = useState(false);
 const [agendaItens, setAgendaItens] = useState<AgendaItem[]>([]);
 const [agendaAnoAtivo, setAgendaAnoAtivo] = useState(new Date().getFullYear());
@@ -5346,6 +5348,13 @@ if (isTelaMobile) {
   darkMode={darkMode}
 />
 
+<SobreModal
+  aberto={modalSobre}
+  onFechar={() => setModalSobre(false)}
+  darkMode={darkMode}
+  versaoAtual={APP_VERSION}
+/>
+
 <ModalConfirmacao
   aberto={modalConfirmacaoAberto}
   titulo={tituloConfirmacao}
@@ -7157,8 +7166,19 @@ name="novo-usuario-login"
           </button>
         </Tooltip>
 
-        {/* 8. Tutorial (colado à direita, com leve cor) */}
-        <div className="ml-auto shrink-0">
+        {/* 8. Sobre + Tutorial (colados à direita) */}
+        <div className="ml-auto flex shrink-0 items-center gap-2">
+          <Tooltip texto="Sobre o AvantaLab e novidades das versões." posicao="bottom">
+            <button
+              type="button"
+              onClick={() => { setAjustesAberto(false); setModalSobre(true); }}
+              className="whitespace-nowrap bg-slate-800 hover:bg-slate-700 px-3 py-1.5 rounded-lg shadow border transition-colors font-bold flex items-center gap-1.5 text-xs text-white cursor-pointer"
+              style={{ borderColor: corPrimaria }}
+            >
+              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+              Sobre
+            </button>
+          </Tooltip>
           <Tooltip texto="Reveja o tour guiado de uso do sistema." posicao="bottom">
             <button
               type="button"

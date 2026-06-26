@@ -123,6 +123,8 @@
     menuAberto: false,
      menuConfigAberto: false,
     modalMenu: '',
+    changelog: null,
+    changelogCarregando: false,
     darkMode: false,
     installPrompt: null,
     isIos: /iphone|ipad|ipod/i.test(navigator.userAgent),
@@ -414,7 +416,7 @@
     return '<div class="mx-auto max-w-md px-4 py-5">' + conteudo + '</div>';
   }
 
-  var APP_VERSION = '1.3.17';
+  var APP_VERSION = '1.3.18';
   var APP_VERSION_LABEL = 'AvantaLab Gest&atilde;o v' + APP_VERSION;
 
   function telaAvisoMobile(titulo, texto) {
@@ -1017,6 +1019,23 @@
     state.modalMenu = nome;
     if (nome === 'gerenciar') state.empresaExclusaoAberta = false;
     render();
+  }
+
+  function abrirSobreMobile() {
+    state.menuAberto = false;
+    state.modalMenu = 'sobre';
+    render();
+    if (!state.changelog && !state.changelogCarregando) {
+      state.changelogCarregando = true;
+      fetch('/changelog.json')
+        .then(function (r) { return r.json(); })
+        .then(function (d) { state.changelog = d; })
+        .catch(function () {})
+        .finally(function () {
+          state.changelogCarregando = false;
+          if (state.modalMenu === 'sobre') render();
+        });
+    }
   }
 
   function fecharModalMenu() {
@@ -4636,9 +4655,10 @@
       : '<span class="inline-flex items-center rounded-full border border-white/15 bg-white/10 px-2 py-0.5 font-black text-white shadow-sm">Usu&aacute;rios ativos ' + inteiro(state.usuariosAtivosSistema) + '</span>';
     return (
       '<footer class="mt-2 overflow-hidden rounded-2xl border border-white/15 px-4 py-4 text-center text-[11px] text-white shadow-lg shadow-sky-950/15" style="background:linear-gradient(135deg,#003E73 0%,#075985 54%,#00A6C8 100%);">' +
-        '<div class="text-xs font-black tracking-[0.18em] text-white">' + APP_VERSION_LABEL + '</div>' +
+        '<button id="sobre-mobile-versao" type="button" class="text-xs font-black tracking-[0.18em] text-white underline decoration-white/30 underline-offset-2">' + APP_VERSION_LABEL + '</button>' +
         '<p class="mt-1 flex flex-wrap items-center justify-center gap-x-2 gap-y-1 font-semibold text-cyan-50/90">&copy; ' + ano + ' Todos os direitos reservados.' + usuariosAtivosHtml + '</p>' +
         '<div class="mt-3 flex flex-wrap items-center justify-center gap-2 font-bold">' +
+          '<button id="sobre-mobile" type="button" class="rounded-full border border-white/15 bg-white/15 px-3 py-1.5 text-cyan-50 shadow-sm backdrop-blur">Sobre e novidades</button>' +
           '<a href="https://www.instagram.com/avanta.lab" target="_blank" rel="noopener noreferrer" class="rounded-full border border-white/15 bg-white/15 px-3 py-1.5 text-cyan-50 shadow-sm backdrop-blur">@avanta.lab</a>' +
           '<button id="termos-mobile" type="button" class="rounded-full border border-white/15 bg-white/15 px-3 py-1.5 text-cyan-50 shadow-sm backdrop-blur">Termos de Uso</button>' +
           '<button id="privacidade-mobile" type="button" class="rounded-full border border-white/15 bg-white/15 px-3 py-1.5 text-cyan-50 shadow-sm backdrop-blur">Privacidade</button>' +
@@ -5695,6 +5715,7 @@
       privacidade: 'Privacidade',
       feedback: 'Dúvidas e Sugestões',
       despesasFixas: 'Gerenciar despesas fixas',
+      sobre: 'Sobre',
     }[state.modalMenu] || 'Menu';
 
     return (
@@ -5724,7 +5745,59 @@
     if (state.modalMenu === 'privacidade') return privacidadeMobileHtml();
     if (state.modalMenu === 'feedback') return feedbackMobileHtml();
     if (state.modalMenu === 'despesasFixas') return despesasFixasMenuHtml();
+    if (state.modalMenu === 'sobre') return sobreMobileHtml();
     return '';
+  }
+
+  function sobreMobileHtml() {
+    var dk = !!state.darkMode;
+    var muted = dk ? 'text-slate-400' : 'text-slate-500';
+    var itemBorda = dk ? 'border-slate-700' : 'border-slate-200';
+    var corLink = dk ? '#7dd3fc' : '#003E73';
+
+    if (!state.changelog) {
+      return '<p class="py-8 text-center text-sm font-semibold ' + muted + '">Carregando...</p>';
+    }
+
+    var emp = state.changelog.empresa || {};
+    var versoes = state.changelog.versoes || [];
+
+    var paragrafos = Array.isArray(emp.descricao) ? emp.descricao : (emp.descricao ? [emp.descricao] : []);
+    var descricaoHtml = paragrafos.map(function (par) {
+      return '<p class="mt-2 text-[12px] font-semibold leading-relaxed text-cyan-50/90">' + escapeHtml(par) + '</p>';
+    }).join('');
+
+    var topo =
+      '<div class="overflow-hidden rounded-2xl border border-white/15 p-4 text-white shadow-lg" style="background:linear-gradient(135deg,#003E73 0%,#075985 54%,#00A6C8 100%);">' +
+        '<h2 class="text-lg font-black text-white">' + escapeHtml(emp.nome || 'AvantaLab') + '</h2>' +
+        (emp.subtitulo ? '<p class="mt-0.5 text-[12px] font-semibold text-cyan-50/90">' + escapeHtml(emp.subtitulo) + '</p>' : '') +
+        descricaoHtml +
+        '<div class="mt-3 flex flex-wrap gap-2 font-bold">' +
+          (emp.site ? '<a href="' + escapeHtml(emp.site) + '" target="_blank" rel="noopener noreferrer" class="rounded-full border border-white/20 bg-white/15 px-3 py-1.5 text-[11px] text-white">' + escapeHtml((emp.site || '').replace('https://', '')) + '</a>' : '') +
+          (emp.instagramUrl ? '<a href="' + escapeHtml(emp.instagramUrl) + '" target="_blank" rel="noopener noreferrer" class="rounded-full border border-white/20 bg-white/15 px-3 py-1.5 text-[11px] text-white">' + escapeHtml(emp.instagram || 'Instagram') + '</a>' : '') +
+        '</div>' +
+      '</div>';
+
+    var cabVersoes =
+      '<div class="mt-4 mb-2 flex items-baseline justify-between">' +
+        '<h3 class="text-[11px] font-black uppercase tracking-wide ' + muted + '">Novidades das vers&otilde;es</h3>' +
+        '<span class="text-[11px] font-bold" style="color:' + corLink + '">Instalada: ' + escapeHtml(APP_VERSION) + '</span>' +
+      '</div>';
+
+    var lista = versoes.map(function (v) {
+      var itens = (v.itens || []).map(function (it) {
+        return '<li class="flex gap-2 text-[12px] ' + (dk ? 'text-slate-300' : 'text-slate-600') + '"><span style="color:#00A6C8">&bull;</span><span>' + escapeHtml(it) + '</span></li>';
+      }).join('');
+      return '<div class="rounded-xl border ' + itemBorda + ' p-3">' +
+          '<div class="flex items-baseline justify-between gap-2">' +
+            '<p class="text-sm font-black">v' + escapeHtml(v.versao) + ' &middot; ' + escapeHtml(v.titulo || '') + '</p>' +
+            '<span class="shrink-0 text-[11px] font-bold ' + muted + '">' + escapeHtml(v.data || '') + '</span>' +
+          '</div>' +
+          '<ul class="mt-2 grid gap-1">' + itens + '</ul>' +
+        '</div>';
+    }).join('');
+
+    return topo + cabVersoes + '<div class="grid gap-3">' + lista + '</div>';
   }
 
   function feedbackMobileHtml() {
@@ -6843,6 +6916,8 @@
     bind('trocar-empresa-gerenciar', function () { abrirModalMenu('empresa'); });
     bind('termos-mobile', function () { abrirModalMenu('termos'); });
     bind('privacidade-mobile', function () { abrirModalMenu('privacidade'); });
+    bind('sobre-mobile', function () { abrirSobreMobile(); });
+    bind('sobre-mobile-versao', function () { abrirSobreMobile(); });
     bind('abrir-edicao-empresa-mobile', abrirEdicaoEmpresaMobile);
     bind('abrir-criar-empresa-mobile', abrirCriarEmpresaMobile);
     bind('cancelar-criar-empresa-mobile', cancelarCriarEmpresaMobile);
@@ -7838,7 +7913,7 @@
     });
 
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/mobile-sw.js?v=152').then(function (registro) {
+      navigator.serviceWorker.register('/mobile-sw.js?v=153').then(function (registro) {
         if (registro && registro.update) registro.update();
       }).catch(function () {});
     }
