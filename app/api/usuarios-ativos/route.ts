@@ -25,7 +25,8 @@ export async function GET() {
     const { count, error } = await supabaseAdmin
       .from('usuarios_empresa')
       .select('id', { count: 'exact', head: true })
-      .eq('status', 'ativo');
+      .eq('status', 'ativo')
+      .neq('perfil', 'funcionario_ponto');
 
     if (error) {
       console.error('Erro ao contar usuarios ativos:', error);

@@ -4572,10 +4572,22 @@ if (acessoNaoConfigurado) {
 
 <div className="mt-6 text-left">
   <label className="mb-1 block text-sm font-semibold text-slate-700">
+    {labelNomePerfilInicial}
+  </label>
+
+  <input
+    type="text"
+    value={nomeEmpresaInicial}
+    onChange={(e) => setNomeEmpresaInicial(e.target.value)}
+    placeholder={placeholderPerfilInicial}
+    className="mb-4 w-full rounded-xl border border-slate-300 bg-white/90 px-4 py-3 text-slate-800 outline-none transition focus:border-sky-600 focus:ring-2 focus:ring-sky-600/20"
+  />
+
+  <label className="mb-1 block text-sm font-semibold text-slate-700">
     Tipo do perfil
   </label>
 
-  <div className="mb-4 grid grid-cols-2 gap-2 rounded-xl border border-slate-200 bg-slate-50 p-1">
+  <div className="grid grid-cols-2 gap-2 rounded-xl border border-slate-200 bg-slate-50 p-1">
     {(['empresa', 'pessoal'] as TipoPerfil[]).map((tipo) => {
       const ativo = tipoPerfilInicialNormalizado === tipo;
 
@@ -4595,18 +4607,6 @@ if (acessoNaoConfigurado) {
       );
     })}
   </div>
-
-  <label className="mb-1 block text-sm font-semibold text-slate-700">
-    {labelNomePerfilInicial}
-  </label>
-
-  <input
-    type="text"
-    value={nomeEmpresaInicial}
-    onChange={(e) => setNomeEmpresaInicial(e.target.value)}
-    placeholder={placeholderPerfilInicial}
-    className="w-full rounded-xl border border-slate-300 bg-white/90 px-4 py-3 text-slate-800 outline-none transition focus:border-sky-600 focus:ring-2 focus:ring-sky-600/20"
-  />
 </div>
 
 {authErro && (
@@ -6171,6 +6171,24 @@ if (isTelaMobile) {
           <div className="space-y-4">
             <div>
               <label className={`mb-1 block text-xs font-black uppercase tracking-wide ${textMuted}`}>
+                {labelNomePerfilInicial}
+              </label>
+              <input
+                type="text"
+                value={nomeEmpresaInicial}
+                onChange={(e) => setNomeEmpresaInicial(e.target.value)}
+                placeholder={placeholderPerfilInicial}
+                autoFocus
+                className={`w-full rounded-xl border px-4 py-3 text-sm font-semibold outline-none transition focus:ring-2 ${
+                  darkMode
+                    ? 'border-slate-600 bg-slate-900 text-white placeholder:text-slate-500 focus:border-sky-500 focus:ring-sky-500/20'
+                    : 'border-slate-300 bg-white text-slate-800 placeholder:text-slate-400 focus:border-sky-600 focus:ring-sky-600/20'
+                }`}
+              />
+            </div>
+
+            <div>
+              <label className={`mb-1 block text-xs font-black uppercase tracking-wide ${textMuted}`}>
                 Tipo do perfil
               </label>
               <div className={`grid grid-cols-2 gap-2 rounded-xl border p-1 ${
@@ -6190,24 +6208,6 @@ if (isTelaMobile) {
                   );
                 })}
               </div>
-            </div>
-
-            <div>
-              <label className={`mb-1 block text-xs font-black uppercase tracking-wide ${textMuted}`}>
-                {labelNomePerfilInicial}
-              </label>
-              <input
-                type="text"
-                value={nomeEmpresaInicial}
-                onChange={(e) => setNomeEmpresaInicial(e.target.value)}
-                placeholder={placeholderPerfilInicial}
-                autoFocus
-                className={`w-full rounded-xl border px-4 py-3 text-sm font-semibold outline-none transition focus:ring-2 ${
-                  darkMode
-                    ? 'border-slate-600 bg-slate-900 text-white placeholder:text-slate-500 focus:border-sky-500 focus:ring-sky-500/20'
-                    : 'border-slate-300 bg-white text-slate-800 placeholder:text-slate-400 focus:border-sky-600 focus:ring-sky-600/20'
-                }`}
-              />
             </div>
 
             {authErro && (

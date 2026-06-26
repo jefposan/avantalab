@@ -155,6 +155,7 @@
     empresaExclusaoAberta: false,
     empresaEdicaoAberta: false,
     empresaCriarAberta: false,
+    criarPerfilErro: '',
     editEmpresaNome: '',
     editEmpresaLogin: '',
     editEmpresaSenha: '',
@@ -416,7 +417,7 @@
     return '<div class="mx-auto max-w-md px-4 py-5">' + conteudo + '</div>';
   }
 
-  var APP_VERSION = '1.3.19';
+  var APP_VERSION = '1.3.20';
   var APP_VERSION_LABEL = 'AvantaLab Gest&atilde;o v' + APP_VERSION;
 
   function telaAvisoMobile(titulo, texto) {
@@ -2583,19 +2584,19 @@
     var tipo = normalizarTipoPerfil(state.criarPerfilTipo);
 
     if (!nome) {
-      setErro(rotuloNomePerfil(tipo) + ' e obrigatorio.');
+      setErroCriarPerfil(rotuloNomePerfil(tipo) + ' e obrigatorio.');
       return;
     }
 
     state.carregando = true;
-    state.erro = '';
+    state.criarPerfilErro = '';
     render();
 
     var resposta = await db.rpc('criar_empresa_inicial_rpc', { p_nome_empresa: nome });
 
     if (resposta.error || !resposta.data) {
       state.carregando = false;
-      setErro(mensagemErro(resposta.error, 'Nao foi possivel criar o perfil financeiro.'));
+      setErroCriarPerfil(mensagemErro(resposta.error, 'Nao foi possivel criar o perfil financeiro.'));
       return;
     }
 
@@ -2629,12 +2630,12 @@
     return (
       '<div class="grid gap-3">' +
         '<p class="text-sm font-semibold text-slate-600">Bem-vindo! Crie seu primeiro perfil financeiro para comecar.</p>' +
+        inputHtml('criar-perfil-inicial-nome', rotuloNomePerfil(tipo), 'text', placeholderNomePerfil(tipo), state.criarPerfilNome) +
         '<div>' +
           '<p class="mb-1 text-[10px] font-black uppercase tracking-wide text-slate-600">Tipo do perfil</p>' +
           seletorTipoPerfilHtml('criar-perfil', tipo) +
         '</div>' +
-        inputHtml('criar-perfil-inicial-nome', rotuloNomePerfil(tipo), 'text', placeholderNomePerfil(tipo), state.criarPerfilNome) +
-        alertaHtml() +
+        alertaCriarPerfilHtml() +
         '<button id="criar-perfil-inicial-submit" type="button" class="h-12 rounded-xl bg-slate-900 px-4 text-sm font-black uppercase tracking-wide text-white shadow-lg">' +
           (state.carregando ? 'Criando...' : 'Criar perfil') +
         '</button>' +
@@ -3562,13 +3563,13 @@
     var tipoPerfil = normalizarTipoPerfil(state.novaEmpresaTipoPerfil);
 
     if (!nome) {
-      setErro('Informe o nome do perfil financeiro.');
+      setErroCriarPerfil('Informe o nome do perfil financeiro.');
       return;
     }
 
     state.carregando = true;
     state.empresaAcao = 'criar';
-    state.erro = '';
+    state.criarPerfilErro = '';
     render();
 
     var resposta = await db.rpc('criar_empresa_inicial_rpc', {
@@ -3578,7 +3579,7 @@
     if (resposta.error) {
       state.carregando = false;
       state.empresaAcao = '';
-      setErro(mensagemErro(resposta.error, 'Não foi possível criar o perfil financeiro.'));
+      setErroCriarPerfil(mensagemErro(resposta.error, 'Não foi possível criar o perfil financeiro.'));
       return;
     }
 
@@ -3587,7 +3588,7 @@
     if (semDados) {
       state.carregando = false;
       state.empresaAcao = '';
-      setErro('O servidor criou o perfil mas não retornou os dados. Recarregue a página e verifique se o perfil foi criado antes de tentar novamente.');
+      setErroCriarPerfil('O servidor criou o perfil mas não retornou os dados. Recarregue a página e verifique se o perfil foi criado antes de tentar novamente.');
       return;
     }
 
@@ -3597,7 +3598,7 @@
     if (!criadaId) {
       state.carregando = false;
       state.empresaAcao = '';
-      setErro('Perfil criado, mas o identificador não foi reconhecido. Recarregue a página para verificar.');
+      setErroCriarPerfil('Perfil criado, mas o identificador não foi reconhecido. Recarregue a página para verificar.');
       return;
     }
 
@@ -3627,6 +3628,7 @@
     state.empresaAcao = '';
     state.empresaExclusaoAberta = false;
     state.empresaCriarAberta = false;
+    state.criarPerfilErro = '';
     state.novaEmpresaTipoPerfil = 'empresa';
     salvarUltimoPerfilMobile(criadaId);
     await carregarEmpresas(state.usuario.id);
@@ -3674,6 +3676,7 @@
     state.empresaEdicaoAberta = false;
     state.empresaExclusaoAberta = false;
     state.novaEmpresaTipoPerfil = 'empresa';
+    state.criarPerfilErro = '';
     state.erro = '';
     render();
   }
@@ -3682,6 +3685,7 @@
     if (state.carregando) return;
     state.empresaCriarAberta = false;
     state.novaEmpresaTipoPerfil = 'empresa';
+    state.criarPerfilErro = '';
     state.erro = '';
     render();
   }
@@ -4256,6 +4260,16 @@
     );
   }
 
+  // Aviso isolado do card de criar perfil (nao vaza para a dashboard).
+  function setErroCriarPerfil(texto) {
+    state.criarPerfilErro = texto || '';
+    render();
+  }
+  function alertaCriarPerfilHtml() {
+    if (!state.criarPerfilErro) return '';
+    return '<p class="rounded-xl bg-red-100 px-4 py-3 text-sm font-semibold text-red-700">' + escapeHtml(state.criarPerfilErro) + '</p>';
+  }
+
   function alertaHtml() {
     if (state.erro) {
       return '<p class="mt-4 rounded-xl bg-red-100 px-4 py-3 text-sm font-semibold text-red-700">' + escapeHtml(state.erro) + '</p>';
@@ -4666,7 +4680,7 @@
     // Agenda: tela cheia, sem o cabeçalho global (que mostra outro mês e confunde).
     if (state.visao === 'agenda') {
       return (
-        '<div class="mobile-app-shell ' + (state.darkMode ? 'mobile-dark bg-slate-950 text-slate-100' : 'mobile-light bg-slate-100 text-slate-900') + '" style="height:100dvh;overflow:hidden;">' +
+        '<div class="mobile-app-shell ' + (state.darkMode ? 'mobile-dark bg-slate-950 text-slate-100' : 'mobile-light bg-slate-100 text-slate-900') + '" style="height:100dvh;overflow:hidden;overscroll-behavior:none;">' +
           agendaMobileHtml(atual) +
           (state.modalLancamento ? modalLancamentoHtml() : '') +
           (state.modalAcao ? modalAcaoLancamentoHtml() : '') +
@@ -5052,7 +5066,7 @@
             '<h3 class="min-w-0 flex-1 truncate text-sm font-black text-slate-950">Dia selecionado: ' + String(diaSelecionado).padStart(2, '0') + ' de ' + escapeHtml(nomeMesCompleto(state.mes)) + '</h3>' +
             '<button id="fechar-agenda-dia" type="button" class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-slate-200 bg-white text-xl font-black text-slate-600" aria-label="Fechar dia">&times;</button>' +
           '</div>' +
-          '<div class="mt-3 min-h-0 flex-1 overflow-y-auto pr-0.5">' +
+          '<div class="mt-3 min-h-0 flex-1 overflow-y-auto overscroll-contain pr-0.5" style="-webkit-overflow-scrolling:touch;">' +
             '<div class="rounded-2xl border border-cyan-200 bg-white/85 p-3 shadow-sm">' +
               '<div class="mb-2 flex items-center justify-between gap-2">' +
                 '<h4 class="text-xs font-black uppercase tracking-wide text-cyan-800">Lembretes:</h4>' +
@@ -5075,7 +5089,7 @@
     }
 
     return (
-      '<div class="flex flex-col" style="height:100dvh;">' +
+      '<div class="flex flex-col overflow-hidden" style="height:100dvh;overscroll-behavior:none;">' +
         // Cabeçalho próprio da agenda: sanduíche (menu) à esquerda, casinha (dashboard) à direita.
         '<div class="flex shrink-0 items-center gap-2 px-3 pb-3 text-white shadow-lg" style="padding-top:calc(env(safe-area-inset-top) + 10px);background:linear-gradient(135deg,#003E73 0%,#075985 54%,#00A6C8 100%);">' +
           '<button id="menu-toggle" type="button" class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-white/20 bg-white/12 text-lg font-black text-white shadow-sm backdrop-blur" aria-label="Abrir menu">&#9776;</button>' +
@@ -5959,6 +5973,21 @@
     );
   }
 
+  // Espelha a web: usuarios sem email real (login interno) mostram o login,
+  // nunca o email sintetico do supabase (login+empresaId@usuarios.avantalab.local).
+  function loginVisivelUsuario(u) {
+    if (!u) return '-';
+    if (u.login) return u.login;
+    var email = String(u.email || '');
+    if (email.indexOf('@usuarios.avantalab.local') >= 0) return email.split('+')[0];
+    return email || '-';
+  }
+  function emailRealUsuario(u) {
+    var email = String((u && u.email) || '');
+    if (!email || email.indexOf('@usuarios.avantalab.local') >= 0) return '';
+    return email;
+  }
+
   function usuarioHtml() {
     if (!podeGerenciarUsuarios()) {
       return (
@@ -5993,7 +6022,7 @@
             var protegido = usuario.perfil === 'gestor_master' && !atual && !(state.empresa && state.empresa.perfil === 'gestor_master');
             return '<div class="min-w-0 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2">' +
               '<div class="grid min-w-0 gap-2">' +
-                '<div class="min-w-0"><p class="truncate text-xs font-black text-slate-900">' + escapeHtml(usuario.nome || usuario.login || usuario.email || 'Usuario') + '</p><p class="truncate text-[10px] font-semibold text-slate-500">' + escapeHtml(usuario.login || usuario.email || '-') + ' · ' + escapeHtml(perfilFormatado(usuario.perfil)) + (bloqueado ? ' · Bloqueado' : '') + '</p></div>' +
+                '<div class="min-w-0"><p class="truncate text-xs font-black text-slate-900">' + escapeHtml(usuario.nome || loginVisivelUsuario(usuario)) + '</p><p class="truncate text-[10px] font-semibold text-slate-500">' + escapeHtml(loginVisivelUsuario(usuario)) + ' · ' + escapeHtml(perfilFormatado(usuario.perfil)) + (bloqueado ? ' · Bloqueado' : '') + '</p></div>' +
                 '<div class="flex min-w-0 gap-1">' +
                   '<button type="button" data-editar-usuario="' + escapeHtml(usuario.id) + '" class="rounded-lg bg-white px-2 py-1 text-[10px] font-black text-cyan-700">Editar</button>' +
                   (protegido ? '' : '<button type="button" data-excluir-usuario="' + escapeHtml(usuario.id) + '" class="rounded-lg border border-rose-100 bg-white px-2 py-1 text-[10px] font-black text-rose-600">Excluir</button>') +
@@ -6059,8 +6088,9 @@
           ? '<div class="mt-2 grid gap-2 rounded-2xl border border-cyan-100 bg-white p-3">' +
               '<p class="text-[10px] font-black uppercase tracking-wide text-cyan-800">Usuario encontrado</p>' +
               '<div class="grid gap-1 text-xs font-semibold text-slate-600">' +
-                '<p><span class="font-black text-slate-900">Email:</span><br>' + escapeHtml(usuario.email || '-') + '</p>' +
-                '<p><span class="font-black text-slate-900">Login:</span><br>' + escapeHtml(usuario.login || '-') + '</p>' +
+                '<p><span class="font-black text-slate-900">Nome:</span><br>' + escapeHtml(usuario.nome || loginVisivelUsuario(usuario)) + '</p>' +
+                (emailRealUsuario(usuario) ? '<p><span class="font-black text-slate-900">Email:</span><br>' + escapeHtml(emailRealUsuario(usuario)) + '</p>' : '') +
+                '<p><span class="font-black text-slate-900">Login:</span><br>' + escapeHtml(loginVisivelUsuario(usuario)) + '</p>' +
               '</div>' +
               '<label class="text-[10px] font-black uppercase tracking-wide text-slate-400">Perfil de acesso</label>' +
               '<select id="usuario-existente-perfil" style="font-size:16px" class="h-10 w-full min-w-0 rounded-lg border border-slate-200 bg-white px-3 text-base font-bold outline-none">' + opcoesPerfilHtml(state.usuarioExistentePerfil || 'operador_simples', true) + '</select>' +
@@ -6180,15 +6210,15 @@
           cabecalho +
           '<div class="grid gap-2 rounded-2xl border border-emerald-100 bg-emerald-50/70 p-3">' +
             '<p class="text-[10px] font-black uppercase tracking-wide text-emerald-800">Criar novo perfil</p>' +
+            '<input id="nova-empresa-nome" placeholder="' + escapeHtml(rotuloNomePerfil(tipoNovo)) + '" style="font-size:16px" class="h-11 rounded-md border border-emerald-100 bg-white px-3 text-base font-bold text-slate-900 outline-none focus:border-emerald-500" />' +
             '<p class="text-[10px] font-black uppercase tracking-wide text-slate-500">Tipo do perfil</p>' +
             seletorTipoPerfilHtml('novo-tipo', tipoNovo) +
-            '<input id="nova-empresa-nome" placeholder="' + escapeHtml(rotuloNomePerfil(tipoNovo)) + '" style="font-size:16px" class="h-11 rounded-md border border-emerald-100 bg-white px-3 text-base font-bold text-slate-900 outline-none focus:border-emerald-500" />' +
             '<div class="grid grid-cols-2 gap-2">' +
               '<button id="cancelar-criar-empresa-mobile" type="button" class="h-10 rounded-xl bg-white border border-slate-200 px-3 text-xs font-black uppercase tracking-wide text-slate-600">Cancelar</button>' +
               '<button id="criar-empresa-mobile" type="button" class="h-10 rounded-xl bg-emerald-600 px-3 text-xs font-black uppercase tracking-wide text-white">' + (state.empresaAcao === 'criar' ? 'Criando...' : 'Criar perfil') + '</button>' +
             '</div>' +
           '</div>' +
-          alertaHtml().replace('mt-4', '') +
+          alertaCriarPerfilHtml() +
         '</div>'
       );
     }
@@ -6903,6 +6933,7 @@
     });
     bind('fechar-menu', function () {
       state.menuAberto = false;
+      state.menuConfigAberto = false;
       render();
     });
     var menuOverlay = document.getElementById('menu-overlay');
@@ -6910,6 +6941,7 @@
       menuOverlay.addEventListener('click', function (event) {
         if (event.target !== menuOverlay) return;
         state.menuAberto = false;
+        state.menuConfigAberto = false;
         render();
       });
     }
@@ -8018,7 +8050,7 @@
     });
 
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/mobile-sw.js?v=154').then(function (registro) {
+      navigator.serviceWorker.register('/mobile-sw.js?v=155').then(function (registro) {
         if (registro && registro.update) registro.update();
       }).catch(function () {});
     }
