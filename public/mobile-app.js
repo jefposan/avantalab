@@ -6125,14 +6125,21 @@
   }
 
   async function salvarNovaRecorrenciaMobile() {
-    var nome = (document.getElementById('nova-recorr-nome') || {}).value || '';
-    var dia = parseInt((document.getElementById('nova-recorr-dia') || {}).value || '0', 10);
-    var descricao = (document.getElementById('nova-recorr-descricao') || {}).value || '';
-    var valorNum = normalizarValor((document.getElementById('nova-recorr-valor') || {}).value || '');
-    var mesesFrente = parseInt((document.getElementById('nova-recorr-meses-frente') || {}).value || '1', 10);
+    var nome = (document.getElementById('nova-recorr-nome') || {}).value || state.novaRecorrNome || '';
+    var dia = parseInt((document.getElementById('nova-recorr-dia') || {}).value || state.novaRecorrDia || '0', 10);
+    var descricao = (document.getElementById('nova-recorr-descricao') || {}).value || state.novaRecorrDescricao || '';
+    var valorCampo = (document.getElementById('nova-recorr-valor') || {}).value || state.novaRecorrValor || '';
+    var valorNum = normalizarValor(valorCampo);
+    if (!valorNum && state.novaRecorrValorNumerico) valorNum = Number(state.novaRecorrValorNumerico || 0);
+    var mesesFrente = parseInt((document.getElementById('nova-recorr-meses-frente') || {}).value || state.novaRecorrMesesFrente || '1', 10);
     mesesFrente = Math.max(1, Math.min(60, mesesFrente || 1));
     if (!nome || !dia || dia < 1 || dia > 31) {
       state.erro = 'Preencha a despesa e o dia (1-31).';
+      render();
+      return;
+    }
+    if (!(valorNum > 0)) {
+      state.erro = 'Informe o valor da despesa fixa.';
       render();
       return;
     }
@@ -6158,7 +6165,8 @@
       return;
     }
     // if lancar agora checked and valor > 0, insert lancamento
-    var lancarAgora = document.getElementById('nova-recorr-lancar-agora') && document.getElementById('nova-recorr-lancar-agora').checked;
+    var lancarAgoraEl = document.getElementById('nova-recorr-lancar-agora');
+    var lancarAgora = lancarAgoraEl ? lancarAgoraEl.checked : !!state.novaRecorrLancarAgora;
     var novosLancamentos = [];
     if (lancarAgora && valorNum > 0) {
       var hoje = new Date();
@@ -6779,6 +6787,30 @@
     // Despesas fixas mobile
     bind('salvar-nova-recorrencia', salvarNovaRecorrenciaMobile);
 
+    var novaRecorrNomeEl = document.getElementById('nova-recorr-nome');
+    if (novaRecorrNomeEl) {
+      novaRecorrNomeEl.addEventListener('change', function(e) {
+        state.novaRecorrNome = e.target.value || '';
+      });
+    }
+    var novaRecorrDiaEl = document.getElementById('nova-recorr-dia');
+    if (novaRecorrDiaEl) {
+      novaRecorrDiaEl.addEventListener('input', function(e) {
+        state.novaRecorrDia = e.target.value || '';
+      });
+    }
+    var novaRecorrDescricaoEl = document.getElementById('nova-recorr-descricao');
+    if (novaRecorrDescricaoEl) {
+      novaRecorrDescricaoEl.addEventListener('input', function(e) {
+        state.novaRecorrDescricao = e.target.value || '';
+      });
+    }
+    var novaRecorrLancarEl = document.getElementById('nova-recorr-lancar-agora');
+    if (novaRecorrLancarEl) {
+      novaRecorrLancarEl.addEventListener('change', function(e) {
+        state.novaRecorrLancarAgora = !!e.target.checked;
+      });
+    }
     var novaRecorrValorEl = document.getElementById('nova-recorr-valor');
     if (novaRecorrValorEl) {
       novaRecorrValorEl.addEventListener('input', function(e) {
