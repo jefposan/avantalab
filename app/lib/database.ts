@@ -347,19 +347,26 @@ export async function buscarLancamentos(empresaId: string, ano: number) {
     return [];
   }
 
-  return data;
+  return (data || []).filter((item: any) => item.status !== 'cancelada');
 }
 
 const MESES_DB = ['JANEIRO', 'FEVEREIRO', 'MARÇO', 'ABRIL', 'MAIO', 'JUNHO', 'JULHO', 'AGOSTO', 'SETEMBRO', 'OUTUBRO', 'NOVEMBRO', 'DEZEMBRO'];
 
-// Garante que cada despesa fixa ativa tenha um lancamento no mes corrente real.
+// Garante que cada despesa fixa ativa tenha lancamento no mes corrente real e no proximo mes.
 // Idempotente (checa recorrencia_id no mes). Valor inicial = valor da mesma fixa no mes anterior mais proximo.
 export async function garantirFixasDoMesAtual(empresaId: string): Promise<void> {
   try {
     const hoje = new Date();
     const anoAtual = hoje.getFullYear();
     const mesIdx = hoje.getMonth();
-    const mesNome = MESES_DB[mesIdx];
+    const alvos = [0, 1].map((offset) => {
+      const idxTotal = mesIdx + offset;
+      return {
+        ano: anoAtual + Math.floor(idxTotal / 12),
+        mesIdx: idxTotal % 12,
+        mesNome: MESES_DB[idxTotal % 12],
+      };
+    });
 
     const { data: recs } = await supabase
       .from('recorrencias')
@@ -368,38 +375,50 @@ export async function garantirFixasDoMesAtual(empresaId: string): Promise<void> 
       .eq('ativo', true);
     if (!recs || !recs.length) return;
 
+    const anosAlvo = Array.from(new Set(alvos.map((alvo) => alvo.ano)));
     const { data: lancs } = await supabase
       .from('lancamentos')
-      .select('id, mes, valor, recorrencia_id')
+      .select('id, ano, mes, valor, recorrencia_id, status')
       .eq('empresa_id', empresaId)
-      .eq('ano', anoAtual);
-
-    const existentesMes = new Set(
-      (lancs || []).filter((l: any) => l.mes === mesNome && l.recorrencia_id).map((l: any) => l.recorrencia_id)
-    );
+      .in('ano', anosAlvo);
 
     for (const rec of recs as any[]) {
       const dia = Number(rec.dia);
       if (!dia || dia < 1 || dia > 31) continue;
-      if (existentesMes.has(rec.id)) continue;
 
-      const anteriores = (lancs || [])
-        .filter((l: any) => l.recorrencia_id === rec.id && MESES_DB.indexOf(l.mes) >= 0 && MESES_DB.indexOf(l.mes) < mesIdx)
-        .sort((a: any, b: any) => MESES_DB.indexOf(b.mes) - MESES_DB.indexOf(a.mes));
-      const valorBase = anteriores.length ? Number(anteriores[0].valor || 0) : 0;
+      for (const alvo of alvos) {
+        const jaExiste = (lancs || []).some(
+          (l: any) => Number(l.ano) === alvo.ano && l.mes === alvo.mesNome && l.recorrencia_id === rec.id
+        );
+        if (jaExiste) continue;
 
-      await supabase.from('lancamentos').insert({
-        empresa_id: empresaId,
-        ano: anoAtual,
-        mes: mesNome,
-        dia,
-        despesa_nome: rec.nome,
-        descricao: rec.descricao || '',
-        valor: valorBase,
-        status: 'prevista',
-        tipo_obs: 'fixa',
-        recorrencia_id: rec.id,
-      });
+        const anteriores = (lancs || [])
+          .filter((l: any) => {
+            if (l.recorrencia_id !== rec.id || l.status === 'cancelada') return false;
+            const idx = MESES_DB.indexOf(l.mes);
+            if (idx < 0) return false;
+            return Number(l.ano) < alvo.ano || (Number(l.ano) === alvo.ano && idx < alvo.mesIdx);
+          })
+          .sort((a: any, b: any) => {
+            const posA = Number(a.ano) * 12 + MESES_DB.indexOf(a.mes);
+            const posB = Number(b.ano) * 12 + MESES_DB.indexOf(b.mes);
+            return posB - posA;
+          });
+        const valorBase = anteriores.length ? Number(anteriores[0].valor || 0) : 0;
+
+        await supabase.from('lancamentos').insert({
+          empresa_id: empresaId,
+          ano: alvo.ano,
+          mes: alvo.mesNome,
+          dia,
+          despesa_nome: rec.nome,
+          descricao: rec.descricao || '',
+          valor: valorBase,
+          status: 'prevista',
+          tipo_obs: 'fixa',
+          recorrencia_id: rec.id,
+        });
+      }
     }
   } catch (e) {
     console.error('Erro ao garantir despesas fixas do mes:', e);

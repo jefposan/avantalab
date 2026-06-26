@@ -400,6 +400,7 @@ const [despesaAnaliseAtiva, setDespesaAnaliseAtiva] = useState<{
   const [novaRecorrValor, setNovaRecorrValor] = useState('');
   const [novaRecorrValorNumerico, setNovaRecorrValorNumerico] = useState(0);
   const [novaRecorrLancarAgora, setNovaRecorrLancarAgora] = useState(false);
+  const [novaRecorrMesesFrente, setNovaRecorrMesesFrente] = useState('1');
   const [recorrEditandoId, setRecorrEditandoId] = useState<string | null>(null);
   const [editRecorrNome, setEditRecorrNome] = useState('');
   const [editRecorrCategoria, setEditRecorrCategoria] = useState('');
@@ -1297,6 +1298,35 @@ useEffect(() => {
   carregarModulos();
   // eslint-disable-next-line react-hooks/exhaustive-deps
 }, [mounted, empresaId]);
+
+// Financeiro: mantem lancamentos e despesas fixas sincronizados entre web/mobile.
+useEffect(() => {
+  if (!mounted || !empresaId) return;
+
+  const canalLancamentos = supabase
+    .channel('financeiro_lancamentos_web_' + empresaId)
+    .on(
+      'postgres_changes',
+      { event: '*', schema: 'public', table: 'lancamentos', filter: 'empresa_id=eq.' + empresaId },
+      () => { recarregarDadosFinanceirosAtual(); }
+    )
+    .subscribe();
+
+  const canalRecorrencias = supabase
+    .channel('financeiro_recorrencias_web_' + empresaId)
+    .on(
+      'postgres_changes',
+      { event: '*', schema: 'public', table: 'recorrencias', filter: 'empresa_id=eq.' + empresaId },
+      () => { recarregarDadosFinanceirosAtual(); }
+    )
+    .subscribe();
+
+  return () => {
+    supabase.removeChannel(canalLancamentos);
+    supabase.removeChannel(canalRecorrencias);
+  };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+}, [mounted, empresaId, anoSelecionado]);
 
 // Agenda: atualiza em tempo real (mudancas em qualquer aparelho)
 useEffect(() => {
@@ -2265,6 +2295,7 @@ const solicitarFaturamentoDashboard = () => {
     setRecorrSalvando(true);
     const dia = Math.max(1, Math.min(31, Number(novaRecorrDia) || 1));
     const valorNum = novaRecorrValorNumerico;
+    const mesesFrente = Math.max(1, Math.min(60, Number(novaRecorrMesesFrente) || 1));
     const resultado = await inserirRecorrencia({
       empresaId,
       nome: novaRecorrNome.trim(),
@@ -2274,7 +2305,7 @@ const solicitarFaturamentoDashboard = () => {
     });
     if (!resultado.erro && resultado.data) {
       setRecorrencias((prev) => [...prev, resultado.data!].sort((a, b) => a.nome.localeCompare(b.nome)));
-      // Lançar no mês atual se solicitado
+      const novosLancamentos: any[] = [];
       if (novaRecorrLancarAgora && mesAtivo && valorNum > 0) {
         const salvo = await salvarLancamento({
           empresaId,
@@ -2289,7 +2320,7 @@ const solicitarFaturamentoDashboard = () => {
           recorrenciaId: resultado.data!.id,
         });
         if (!salvo.erro && salvo.data) {
-          setLancamentos((prev) => [{
+          novosLancamentos.push({
             id: salvo.data!.id,
             mes: salvo.data!.mes,
             dia: salvo.data!.dia,
@@ -2299,9 +2330,42 @@ const solicitarFaturamentoDashboard = () => {
             status: salvo.data!.status || null,
             tipo: salvo.data!.tipo_obs || null,
             recorrenciaId: salvo.data!.recorrencia_id || null,
-          }, ...prev]);
+          });
         }
       }
+      if (valorNum > 0) {
+        for (let i = 1; i <= mesesFrente; i++) {
+          const baseIdx = meses.indexOf(mesAtivo || meses[new Date().getMonth()]);
+          const idx = (baseIdx + i) % 12;
+          const anoFuturo = Number(anoSelecionado) + Math.floor((baseIdx + i) / 12);
+          const salvo = await salvarLancamento({
+            empresaId,
+            ano: anoFuturo,
+            mes: meses[idx],
+            dia,
+            despesaNome: novaRecorrNome.trim(),
+            descricao: novaRecorrDescricao.trim(),
+            valor: valorNum,
+            status: 'prevista',
+            tipoObs: 'fixa',
+            recorrenciaId: resultado.data!.id,
+          });
+          if (!salvo.erro && salvo.data) {
+            novosLancamentos.push({
+              id: salvo.data.id,
+              mes: salvo.data.mes,
+              dia: salvo.data.dia,
+              despesa: salvo.data.despesa_nome,
+              descricao: salvo.data.descricao || '',
+              valor: Number(salvo.data.valor),
+              status: salvo.data.status || null,
+              tipo: salvo.data.tipo_obs || null,
+              recorrenciaId: salvo.data.recorrencia_id || null,
+            });
+          }
+        }
+      }
+      if (novosLancamentos.length) setLancamentos((prev) => [...novosLancamentos, ...prev]);
       setNovaRecorrNome('');
       setNovaRecorrCategoria('');
       setNovaRecorrDescricao('');
@@ -2309,6 +2373,7 @@ const solicitarFaturamentoDashboard = () => {
       setNovaRecorrValor('');
       setNovaRecorrValorNumerico(0);
       setNovaRecorrLancarAgora(false);
+      setNovaRecorrMesesFrente('1');
     }
     setRecorrSalvando(false);
   };
@@ -2339,6 +2404,18 @@ const solicitarFaturamentoDashboard = () => {
       dia,
     });
     if (ok) {
+      if (empresaId) {
+        await supabase
+          .from('lancamentos')
+          .update({
+            despesa_nome: editRecorrNome.trim(),
+            descricao: editRecorrDescricao.trim(),
+            dia,
+            updated_at: new Date().toISOString(),
+          })
+          .eq('empresa_id', empresaId)
+          .eq('recorrencia_id', recorrEditandoId);
+      }
       setRecorrencias((prev) =>
         prev.map((r) => r.id === recorrEditandoId
           ? { ...r, nome: editRecorrNome.trim(), categoria: editRecorrCategoria.trim(), descricao: editRecorrDescricao.trim(), dia }
@@ -2688,6 +2765,23 @@ const apagarDespesa = async (id: string) => {
   }
 };
 
+const cancelarDespesaFixaDoMes = async (lanc: any) => {
+  if (!empresaId) return;
+
+  const { error } = await supabase
+    .from('lancamentos')
+    .update({ status: 'cancelada', updated_at: new Date().toISOString() })
+    .eq('id', lanc.id)
+    .eq('empresa_id', empresaId);
+
+  if (error) {
+    abrirAviso('Erro ao apagar lançamento', 'Não foi possível apagar a despesa fixa deste mês.');
+    return;
+  }
+
+  setLancamentos((prev) => prev.filter((l) => l.id !== lanc.id));
+};
+
 const confirmarDespesaPrevista = async (id: string | number) => {
   if (!empresaId) return;
   const ok = await definirStatusLancamento(id, empresaId, 'confirmada');
@@ -2789,6 +2883,18 @@ Deseja excluir TODAS as parcelas ou apenas esta?`,
       });
       return;
     }
+  }
+
+  if (lanc.tipo === 'fixa' || lanc.recorrenciaId) {
+    abrirConfirmacao({
+      titulo: 'Excluir despesa fixa do mês',
+      mensagem: `Esta exclusão remove somente o lançamento deste mês.\n\nPara remover a despesa fixa de todos os meses, acesse "Despesas fixas".`,
+      textoConfirmar: 'Excluir este mês',
+      textoCancelar: 'Abrir Despesas fixas',
+      acao: () => cancelarDespesaFixaDoMes(lanc),
+      acaoCancelar: abrirModalDespesasFixas,
+    });
+    return;
   }
 
   abrirConfirmacao({
@@ -8018,6 +8124,17 @@ name="novo-usuario-login"
                 className={`h-9 w-full rounded-md border px-2.5 text-right text-xs font-bold outline-none transition focus:ring-1 ${darkMode ? 'border-slate-600 bg-slate-700 text-white' : 'border-slate-300 bg-white text-slate-700'}`}
               />
             </div>
+            <label className={`grid gap-1 text-[10px] font-black uppercase tracking-wide ${darkMode ? 'text-slate-300' : 'text-slate-500'}`}>
+              Aplicar nos próximos meses
+              <input
+                type="number"
+                min="1"
+                max="60"
+                value={novaRecorrMesesFrente}
+                onChange={(e) => setNovaRecorrMesesFrente(e.target.value)}
+                className={`h-9 w-full rounded-md border px-2.5 text-xs font-bold outline-none transition focus:ring-1 ${darkMode ? 'border-slate-600 bg-slate-700 text-white' : 'border-slate-300 bg-white text-slate-700'}`}
+              />
+            </label>
             <button type="button" onClick={salvarNovaRecorrencia}
               disabled={recorrSalvando || !novaRecorrNome.trim()}
               className="h-9 rounded-md text-xs font-black uppercase text-white shadow-sm transition hover:brightness-110 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"

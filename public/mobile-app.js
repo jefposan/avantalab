@@ -173,6 +173,7 @@
     novaRecorrValor: '',
     novaRecorrValorNumerico: 0,
     novaRecorrLancarAgora: false,
+    novaRecorrMesesFrente: 1,
     recorrEditandoId: null,
     editRecorrNome: '',
     editRecorrDia: '',
@@ -732,6 +733,30 @@
         .on('postgres_changes',
           { event: '*', schema: 'public', table: 'agenda_itens', filter: 'user_id=eq.' + state.usuario.id },
           function () { sincronizarAgendaSupabase(); })
+        .subscribe();
+    } catch (e) {}
+  }
+
+  function configurarRealtimeFinanceiroMobile() {
+    try {
+      if (!state.empresa || !state.empresa.id) return;
+      var empresaId = state.empresa.id;
+      if (window._avaRealtimeFinanceiroEmpresaId === empresaId) return;
+      if (window._avaRealtimeLancamentos) db.removeChannel(window._avaRealtimeLancamentos);
+      if (window._avaRealtimeRecorrencias) db.removeChannel(window._avaRealtimeRecorrencias);
+
+      window._avaRealtimeFinanceiroEmpresaId = empresaId;
+      window._avaRealtimeLancamentos = db
+        .channel('financeiro_lancamentos_mobile_' + empresaId)
+        .on('postgres_changes',
+          { event: '*', schema: 'public', table: 'lancamentos', filter: 'empresa_id=eq.' + empresaId },
+          function () { carregarDados(); })
+        .subscribe();
+      window._avaRealtimeRecorrencias = db
+        .channel('financeiro_recorrencias_mobile_' + empresaId)
+        .on('postgres_changes',
+          { event: '*', schema: 'public', table: 'recorrencias', filter: 'empresa_id=eq.' + empresaId },
+          function () { carregarRecorrencias(); carregarDados(); })
         .subscribe();
     } catch (e) {}
   }
@@ -2077,49 +2102,74 @@
     return melhor ? melhor.valor : 0;
   }
 
-  // Garante que cada despesa fixa ativa tenha um lancamento no mes corrente real.
-  // Idempotente (checa recorrencia_id). So gera no mes/ano atual para nao reescrever historico.
+  // Garante que cada despesa fixa ativa tenha lancamento no mes corrente real e no proximo mes.
+  // Idempotente (checa recorrencia_id no banco, inclusive meses cancelados pelo usuario).
   async function garantirFixasDoMes(empresaId, anoCarregado) {
     try {
       var hoje = new Date();
       var anoAtual = hoje.getFullYear();
       var mesAtualIdx = hoje.getMonth();
       if (Number(anoCarregado) !== anoAtual) return;
-      var mesAtualNome = meses[mesAtualIdx];
+      var alvos = [0, 1].map(function(offset) {
+        var idxTotal = mesAtualIdx + offset;
+        return {
+          ano: anoAtual + Math.floor(idxTotal / 12),
+          mesIdx: idxTotal % 12,
+          mesNome: meses[idxTotal % 12],
+        };
+      });
 
       var recsResp = await db.from('recorrencias').select('*').eq('empresa_id', empresaId).eq('ativo', true);
       var recs = recsResp.data || [];
       if (!recs.length) return;
 
+      var anosAlvo = alvos.map(function(alvo) { return alvo.ano; }).filter(function(ano, idx, arr) {
+        return arr.indexOf(ano) === idx;
+      });
+      var lancsResp = await db.from('lancamentos').select('id, ano, mes, valor, status, recorrencia_id').eq('empresa_id', empresaId).in('ano', anosAlvo);
+      var lancsBanco = lancsResp.data || [];
       var novos = [];
       for (var i = 0; i < recs.length; i++) {
         var rec = recs[i];
         var dia = Number(rec.dia);
         if (!dia || dia < 1 || dia > 31) continue;
-        var jaExiste = (state.lancamentos || []).some(function (l) {
-          return l.recorrenciaId === rec.id && l.mes === mesAtualNome;
-        });
-        if (jaExiste) continue;
-        var valorBase = valorAnteriorFixa(rec.id, mesAtualIdx);
-        var ins = await db.from('lancamentos').insert({
-          empresa_id: empresaId,
-          ano: anoAtual,
-          mes: mesAtualNome,
-          dia: dia,
-          despesa_nome: rec.nome,
-          descricao: rec.descricao || '',
-          valor: valorBase,
-          status: 'prevista',
-          tipo_obs: 'fixa',
-          recorrencia_id: rec.id,
-        }).select().single();
-        if (ins.data) {
-          novos.push({
-            id: ins.data.id, mes: ins.data.mes, dia: Number(ins.data.dia),
-            despesa: ins.data.despesa_nome, descricao: ins.data.descricao || '',
-            valor: Number(ins.data.valor || 0), status: ins.data.status || null,
-            tipo: ins.data.tipo_obs || null, recorrenciaId: ins.data.recorrencia_id || null,
+        for (var a = 0; a < alvos.length; a++) {
+          var alvo = alvos[a];
+          var jaExiste = lancsBanco.some(function (l) {
+            return Number(l.ano) === alvo.ano && l.mes === alvo.mesNome && l.recorrencia_id === rec.id;
           });
+          if (jaExiste) continue;
+          var anteriores = lancsBanco.filter(function(l) {
+            var idxMes = indiceMes(l.mes);
+            if (l.recorrencia_id !== rec.id || l.status === 'cancelada' || idxMes < 0) return false;
+            return Number(l.ano) < alvo.ano || (Number(l.ano) === alvo.ano && idxMes < alvo.mesIdx);
+          }).sort(function(x, y) {
+            return (Number(y.ano) * 12 + indiceMes(y.mes)) - (Number(x.ano) * 12 + indiceMes(x.mes));
+          });
+          var valorBase = anteriores.length ? Number(anteriores[0].valor || 0) : valorAnteriorFixa(rec.id, alvo.mesIdx);
+          var ins = await db.from('lancamentos').insert({
+            empresa_id: empresaId,
+            ano: alvo.ano,
+            mes: alvo.mesNome,
+            dia: dia,
+            despesa_nome: rec.nome,
+            descricao: rec.descricao || '',
+            valor: valorBase,
+            status: 'prevista',
+            tipo_obs: 'fixa',
+            recorrencia_id: rec.id,
+          }).select().single();
+          if (ins.data) {
+            lancsBanco.push(ins.data);
+            if (Number(ins.data.ano) === Number(anoCarregado)) {
+              novos.push({
+                id: ins.data.id, mes: ins.data.mes, dia: Number(ins.data.dia),
+                despesa: ins.data.despesa_nome, descricao: ins.data.descricao || '',
+                valor: Number(ins.data.valor || 0), status: ins.data.status || null,
+                tipo: ins.data.tipo_obs || null, recorrenciaId: ins.data.recorrencia_id || null,
+              });
+            }
+          }
         }
       }
       if (novos.length) state.lancamentos = (state.lancamentos || []).concat(novos);
@@ -2165,7 +2215,9 @@
       db.from('configuracoes').select('duplicados_ativo').eq('empresa_id', empresaId).maybeSingle(),
     ]);
 
-    state.lancamentos = (resultados[0].data || []).map(function (item) {
+    state.lancamentos = (resultados[0].data || []).filter(function(item) {
+      return item.status !== 'cancelada';
+    }).map(function (item) {
       return {
         id: item.id,
         mes: item.mes,
@@ -2217,6 +2269,7 @@
     // Sincroniza a agenda com o servidor (em segundo plano) + tempo real
     sincronizarAgendaSupabase();
     configurarRealtimeAgendaMobile();
+    configurarRealtimeFinanceiroMobile();
     // Atualiza a contagem de notificacoes nao lidas (sino + badge do icone)
     carregarNotificacoesNaoLidas();
     // Primeiro acesso: tutorial (e, ao concluir, oferece notificacoes)
@@ -3923,7 +3976,24 @@
           { onConflict: 'empresa_id,ano,mes' }
         );
     } else {
-      var removida = await db.from('lancamentos').delete().eq('id', item.id).eq('empresa_id', state.empresa.id);
+      var ehFixa = item.tipo === 'fixa' || item.recorrenciaId;
+      if (ehFixa) {
+        var confirmarFixa = window.confirm(
+          'Esta exclusao remove somente o lancamento deste mes.\n\n' +
+          'Para remover a despesa fixa de todos os meses, acesse "Despesas fixas".\n\n' +
+          'OK = Excluir este mes\n' +
+          'Cancelar = Abrir Despesas fixas'
+        );
+        if (!confirmarFixa) {
+          state.carregando = false;
+          state.modalAcao = null;
+          abrirModalMenuDespesasFixas();
+          return;
+        }
+      }
+      var removida = ehFixa
+        ? await db.from('lancamentos').update({ status: 'cancelada' }).eq('id', item.id).eq('empresa_id', state.empresa.id)
+        : await db.from('lancamentos').delete().eq('id', item.id).eq('empresa_id', state.empresa.id);
       if (removida.error) {
         state.carregando = false;
         setErro('Nao foi possivel excluir a despesa.');
@@ -4037,10 +4107,27 @@
 
   async function excluirDespesaPrevista(id) {
     if (!state.empresa) return;
-    if (!window.confirm('Excluir esta despesa prevista? Ela nao ocorreu e sera removida.')) return;
+    var despesaPrevista = (state.lancamentos || []).find(function(l) { return String(l.id) === String(id); });
+    var ehFixaPrevista = despesaPrevista && (despesaPrevista.tipo === 'fixa' || despesaPrevista.recorrenciaId);
+    if (ehFixaPrevista) {
+      var confirmarFixa = window.confirm(
+        'Esta exclusao remove somente o lancamento deste mes.\n\n' +
+        'Para remover a despesa fixa de todos os meses, acesse "Despesas fixas".\n\n' +
+        'OK = Excluir este mes\n' +
+        'Cancelar = Abrir Despesas fixas'
+      );
+      if (!confirmarFixa) {
+        abrirModalMenuDespesasFixas();
+        return;
+      }
+    } else if (!window.confirm('Excluir esta despesa prevista? Ela nao ocorreu e sera removida.')) {
+      return;
+    }
     state.carregando = true;
     render();
-    var resp = await db.from('lancamentos').delete().eq('id', id).eq('empresa_id', state.empresa.id);
+    var resp = ehFixaPrevista
+      ? await db.from('lancamentos').update({ status: 'cancelada' }).eq('id', id).eq('empresa_id', state.empresa.id)
+      : await db.from('lancamentos').delete().eq('id', id).eq('empresa_id', state.empresa.id);
     if (resp.error) {
       state.carregando = false;
       setErro('Nao foi possivel excluir a despesa.');
@@ -6041,6 +6128,9 @@
     var nome = (document.getElementById('nova-recorr-nome') || {}).value || '';
     var dia = parseInt((document.getElementById('nova-recorr-dia') || {}).value || '0', 10);
     var descricao = (document.getElementById('nova-recorr-descricao') || {}).value || '';
+    var valorNum = normalizarValor((document.getElementById('nova-recorr-valor') || {}).value || '');
+    var mesesFrente = parseInt((document.getElementById('nova-recorr-meses-frente') || {}).value || '1', 10);
+    mesesFrente = Math.max(1, Math.min(60, mesesFrente || 1));
     if (!nome || !dia || dia < 1 || dia > 31) {
       state.erro = 'Preencha a despesa e o dia (1-31).';
       render();
@@ -6069,28 +6159,55 @@
     }
     // if lancar agora checked and valor > 0, insert lancamento
     var lancarAgora = document.getElementById('nova-recorr-lancar-agora') && document.getElementById('nova-recorr-lancar-agora').checked;
-    var valorNum = state.novaRecorrValorNumerico;
+    var novosLancamentos = [];
     if (lancarAgora && valorNum > 0) {
       var hoje = new Date();
-      var anoAtual = String(hoje.getFullYear());
+      var anoAtual = hoje.getFullYear();
       var mesAtual = meses[hoje.getMonth()];
-      await db.from('lancamentos').insert({
+      var lancAtual = await db.from('lancamentos').insert({
         empresa_id: empresaId,
-        nome: nome,
         despesa_nome: nome,
-        categoria: categoria,
         descricao: descricao,
         valor: valorNum,
         dia: dia,
         mes: mesAtual,
         ano: anoAtual,
-        tipo: 'saida',
         tipo_obs: 'fixa',
         status: 'prevista',
         recorrencia_id: resp.data.id,
-      });
+      }).select().single();
+      if (lancAtual.data && Number(lancAtual.data.ano) === Number(state.ano)) novosLancamentos.push(lancAtual.data);
+    }
+    if (valorNum > 0) {
+      var baseIdx = indiceMes(state.mes);
+      for (var mf = 1; mf <= mesesFrente; mf++) {
+        var idx = (baseIdx + mf) % 12;
+        var anoFuturo = Number(state.ano) + Math.floor((baseIdx + mf) / 12);
+        var lancFuturo = await db.from('lancamentos').insert({
+          empresa_id: empresaId,
+          despesa_nome: nome,
+          descricao: descricao,
+          valor: valorNum,
+          dia: dia,
+          mes: meses[idx],
+          ano: anoFuturo,
+          tipo_obs: 'fixa',
+          status: 'prevista',
+          recorrencia_id: resp.data.id,
+        }).select().single();
+        if (lancFuturo.data && Number(lancFuturo.data.ano) === Number(state.ano)) novosLancamentos.push(lancFuturo.data);
+      }
     }
     state.recorrencias = [resp.data].concat(state.recorrencias || []);
+    if (novosLancamentos.length) {
+      state.lancamentos = novosLancamentos.map(function(item) {
+        return {
+          id: item.id, mes: item.mes, dia: Number(item.dia), despesa: item.despesa_nome,
+          descricao: item.descricao || '', valor: Number(item.valor || 0),
+          status: item.status || null, tipo: item.tipo_obs || null, recorrenciaId: item.recorrencia_id || null,
+        };
+      }).concat(state.lancamentos || []);
+    }
     state.recorrSalvando = false;
     state.novaRecorrNome = '';
     state.novaRecorrDia = '';
@@ -6098,6 +6215,7 @@
     state.novaRecorrValor = '';
     state.novaRecorrValorNumerico = 0;
     state.novaRecorrLancarAgora = false;
+    state.novaRecorrMesesFrente = 1;
     state.mensagem = 'Despesa fixa adicionada!';
     render();
     setTimeout(function() { state.mensagem = ''; render(); }, 2000);
@@ -6125,28 +6243,33 @@
     }
     var despesaObj = (state.despesas || []).find(function(d) { return d.nome === nome; });
     var categoria = despesaObj ? (despesaObj.categoria || '') : '';
+    var empresaId = state.empresa.id || state.empresa.empresa_id;
     var resp = await db.from('recorrencias').update({ nome: nome, categoria: categoria, descricao: descricao, dia: dia }).eq('id', id).select().single();
     if (resp.error) {
       state.erro = 'Erro: ' + resp.error.message;
       render();
       return;
     }
+    await db.from('lancamentos')
+      .update({ despesa_nome: nome, descricao: descricao, dia: dia })
+      .eq('empresa_id', empresaId)
+      .eq('recorrencia_id', id);
     // lancar agora
     var lancarAgora = document.getElementById('edit-recorr-lancar-' + id) && document.getElementById('edit-recorr-lancar-' + id).checked;
     var valorNum = state.editRecorrValorNumerico;
     if (lancarAgora && valorNum > 0) {
       var hoje = new Date();
-      var empresaId = state.empresa.id || state.empresa.empresa_id;
       await db.from('lancamentos').insert({
         empresa_id: empresaId,
-        nome: nome,
-        categoria: categoria,
+        despesa_nome: nome,
         descricao: descricao,
         valor: valorNum,
         dia: dia,
         mes: meses[hoje.getMonth()],
-        ano: String(hoje.getFullYear()),
-        tipo: 'saida',
+        ano: hoje.getFullYear(),
+        status: 'prevista',
+        tipo_obs: 'fixa',
+        recorrencia_id: id,
       });
     }
     state.recorrencias = state.recorrencias.map(function(r) {
@@ -6248,6 +6371,9 @@
             '</label>' +
             '<input id="nova-recorr-valor" type="text" inputmode="numeric" placeholder="0,00" value="' + escapeHtml(state.novaRecorrValor) + '" class="h-11 w-24 shrink-0 rounded-md border border-slate-300 bg-white px-2 text-right text-base font-bold text-slate-900 outline-none focus:border-cyan-500" />' +
           '</div>' +
+          '<label class="grid gap-1 text-[10px] font-black uppercase tracking-wide text-slate-600">Aplicar nos próximos meses' +
+            '<input id="nova-recorr-meses-frente" type="number" min="1" max="60" value="' + escapeHtml(String(state.novaRecorrMesesFrente || 1)) + '" style="font-size:16px" class="h-10 rounded-md border border-slate-300 bg-white px-3 text-base font-bold text-slate-900 outline-none focus:border-cyan-500" />' +
+          '</label>' +
           '<button id="salvar-nova-recorrencia" type="button" class="h-11 rounded-xl bg-slate-950 px-4 text-xs font-black uppercase text-white">' + (state.recorrSalvando ? 'Salvando...' : '+ Adicionar') + '</button>' +
         '</div>' +
         (state.recorrencias && state.recorrencias.length > 0
@@ -6655,6 +6781,12 @@
       });
       novaRecorrValorEl.addEventListener('focus', function(e) {
         var len = e.target.value.length; e.target.setSelectionRange(len, len);
+      });
+    }
+    var novaRecorrMesesEl = document.getElementById('nova-recorr-meses-frente');
+    if (novaRecorrMesesEl) {
+      novaRecorrMesesEl.addEventListener('input', function(e) {
+        state.novaRecorrMesesFrente = Math.max(1, Math.min(60, parseInt(e.target.value || '1', 10) || 1));
       });
     }
 
