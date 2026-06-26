@@ -94,6 +94,15 @@ export async function POST(request: Request) {
         .maybeSingle();
       if (jaExiste) return respostaErro('Este CPF já está cadastrado no sistema. Use outro.');
 
+      const { data: cpfJaExiste } = await supabaseAdmin
+        .from('ponto_funcionarios')
+        .select('id')
+        .eq('cpf', cpf)
+        .neq('user_id', funcionarioUserId)
+        .limit(1)
+        .maybeSingle();
+      if (cpfJaExiste) return respostaErro('Este CPF já está cadastrado no sistema. Use outro.');
+
       const novoEmail = `${cpf}+${empresaId}@usuarios.avantalab.local`;
       const { error: erroAuth } = await supabaseAdmin.auth.admin.updateUserById(funcionarioUserId, {
         email: novoEmail,
@@ -129,6 +138,10 @@ export async function POST(request: Request) {
       .eq('user_id', funcionarioUserId);
     if (erroFunc) {
       console.error('Erro ao atualizar funcionário de ponto:', erroFunc);
+      const m = String(erroFunc.message || erroFunc.code || '').toLowerCase();
+      if (erroFunc.code === '23505' || m.includes('duplicate') || m.includes('unique')) {
+        return respostaErro('Este CPF já está cadastrado no sistema. Use outro.');
+      }
       return respostaErro('Não foi possível salvar as alterações.', 500);
     }
 

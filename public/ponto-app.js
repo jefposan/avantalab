@@ -571,7 +571,7 @@
             '<div class="grid gap-2">' + statusHtml + '</div>' +
             '<div class="mt-6">' + botoesHtml + '</div>' +
             '<button id="ponto-meus-registros" type="button" class="mt-4 h-11 w-full rounded-xl border border-slate-300 bg-white text-xs font-black uppercase tracking-wide text-slate-600">Meus registros</button>' +
-            '<button id="ponto-sair" type="button" class="mt-2 h-11 w-full rounded-xl text-xs font-bold text-slate-400">Sair</button>' +
+            '<button id="ponto-sair" type="button" class="mt-2 flex h-11 w-full items-center justify-center rounded-xl border border-rose-200 bg-white text-xs font-black uppercase tracking-wide text-rose-600 shadow-sm">Sair</button>' +
           '</div>' +
         '</div>' +
       '</div>'

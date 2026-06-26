@@ -97,6 +97,14 @@ export async function POST(request: Request) {
       .maybeSingle();
     if (loginExistente) return respostaErro('Este CPF já está cadastrado no sistema. Use outro.');
 
+    const { data: cpfExistente } = await supabaseAdmin
+      .from('ponto_funcionarios')
+      .select('id')
+      .eq('cpf', cpf)
+      .limit(1)
+      .maybeSingle();
+    if (cpfExistente) return respostaErro('Este CPF já está cadastrado no sistema. Use outro.');
+
     const emailInterno = `${login}+${empresaId}@usuarios.avantalab.local`;
 
     const { data: usuarioCriado, error: erroCriarAuth } = await supabaseAdmin.auth.admin.createUser({
@@ -147,6 +155,10 @@ export async function POST(request: Request) {
       // rollback: remove o vínculo e o acesso, evitando funcionário órfão
       await supabaseAdmin.from('usuarios_empresa').delete().eq('user_id', novoUserId).eq('empresa_id', empresaId);
       await supabaseAdmin.auth.admin.deleteUser(novoUserId);
+      const m = String(erroFunc.message || erroFunc.code || '').toLowerCase();
+      if (erroFunc.code === '23505' || m.includes('duplicate') || m.includes('unique')) {
+        return respostaErro('Este CPF já está cadastrado no sistema. Use outro.');
+      }
       return respostaErro('Não foi possível cadastrar o funcionário. Tente novamente.', 500);
     }
 
