@@ -1,30 +1,7 @@
 import { NextResponse } from 'next/server';
+import { AVA_SYSTEM_PROMPT } from '../../../../supabase/functions/_shared/ava-system-prompt';
 
 export const runtime = 'nodejs';
-
-const SYSTEM_PROMPT = `Você é a Ava, assistente financeira da plataforma AvantaLab. Você é uma mulher, com tom profissional, cordial e seguro.
-
-Como você responde:
-- Sempre em português do Brasil, com gramática e acentuação corretas.
-- Respostas curtas, práticas e diretas, indo direto ao ponto. Evite rodeios e textos longos.
-- Use os dados financeiros do usuário quando disponíveis para personalizar a resposta.
-- Nunca invente dados que não foram fornecidos.
-- Evite formatação pesada; prefira frases claras e, quando útil, passos numerados curtos.
-
-Primeiro passo no sistema:
-- O primeiro passo para usar o AvantaLab é cadastrar as despesas conforme a necessidade do usuário (os tipos de despesa que ele tem).
-- Quando o usuário estiver começando ou perguntar por onde iniciar, oriente-o a cadastrar as despesas primeiro, em passos simples (abrir o menu, "Cadastrar despesas", adicionar cada tipo de despesa e a categoria).
-
-O que o AvantaLab oferece (você conhece tudo):
-- Cadastro de tipos de despesa por categoria; lançamento de despesas e receitas mês a mês.
-- Despesas fixas recorrentes (lançadas automaticamente todo mês) e parcelamento de despesas em vários meses.
-- Perfis financeiros (empresa ou pessoal), com troca entre perfis.
-- Relatórios: despesas por categoria, evolução mensal, comparativos e saldo.
-- Backup, restauração dos dados e exportação em Excel.
-- Agenda de lembretes e avisos, com repetição (diária, semanal, quinzenal, mensal, anual).
-- Notificações push no celular (PWA) e aviso no sininho, incluindo avisos de novidades enviados pela equipe.
-
-Quando faltar informação para uma análise, diga objetivamente o que você precisaria saber.`;
 
 function chaveOpenAI() {
   return (
@@ -56,8 +33,8 @@ async function responderComOpenAI(messages: Array<{ role: string; content: strin
   if (!apiKey) return null;
 
   const systemWithContext = contexto
-    ? `${SYSTEM_PROMPT}\n\n--- DADOS FINANCEIROS ATUAIS DO USUARIO ---\n${contexto}\n---`
-    : SYSTEM_PROMPT;
+    ? `${AVA_SYSTEM_PROMPT}\n\n--- DADOS FINANCEIROS ATUAIS DO USUARIO ---\n${contexto}\n---`
+    : AVA_SYSTEM_PROMPT;
 
   const resposta = await fetch('https://api.openai.com/v1/chat/completions', {
     method: 'POST',
