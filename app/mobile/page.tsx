@@ -73,6 +73,10 @@ export default function MobilePage() {
             @keyframes avaSpin { to { transform: rotate(360deg); } }
             @keyframes avaSlideIn { from { transform: translateX(100%); } to { transform: translateX(0); } }
             @keyframes avaSlideOut { from { transform: translateX(0); } to { transform: translateX(100%); } }
+            @keyframes menuSlideIn { from { transform: translate3d(-100%,0,0); } to { transform: translate3d(0,0,0); } }
+            @keyframes menuSlideOut { from { transform: translate3d(0,0,0); } to { transform: translate3d(-100%,0,0); } }
+            @keyframes menuOverlayIn { from { opacity: 0; } to { opacity: 1; } }
+            @keyframes menuOverlayOut { from { opacity: 1; } to { opacity: 0; } }
             @keyframes agendaInProx { from { opacity: .35; transform: translateX(26px); } to { opacity: 1; transform: none; } }
             @keyframes agendaInPrev { from { opacity: .35; transform: translateX(-26px); } to { opacity: 1; transform: none; } }
             .agenda-anim-prox { animation: agendaInProx .24s ease-out; }
