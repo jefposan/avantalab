@@ -4649,10 +4649,10 @@
             '<div class="mt-3 flex h-7 items-center overflow-hidden rounded-lg border border-white/15 bg-white/10 shadow-sm backdrop-blur">' +
               anoHeaderHtml() +
               '<span class="h-4 w-px shrink-0 bg-white/20" aria-hidden="true"></span>' +
-              '<div class="flex min-w-0 flex-1 items-center justify-center gap-1 px-1">' +
-                '<button id="mes-anterior" type="button" class="flex h-6 w-7 shrink-0 items-center justify-center rounded-full text-lg font-black leading-none text-white active:bg-white/10" aria-label="Mes anterior">&lsaquo;</button>' +
-                '<h2 class="w-24 shrink-0 truncate text-center text-sm font-black tracking-wide text-white">' + escapeHtml(state.mes.charAt(0) + state.mes.slice(1).toLowerCase()) + '</h2>' +
-                '<button id="mes-proximo" type="button" class="flex h-6 w-7 shrink-0 items-center justify-center rounded-full text-lg font-black leading-none text-white active:bg-white/10" aria-label="Proximo mes">&rsaquo;</button>' +
+              '<div class="grid min-w-0 flex-1 grid-cols-[minmax(0,1fr)_96px_minmax(0,1fr)] items-center">' +
+                '<button id="mes-anterior" type="button" class="flex h-7 w-full items-center justify-center text-white active:bg-white/10" aria-label="Mes anterior"><span class="text-lg font-black leading-none">&lsaquo;</span></button>' +
+                '<h2 class="w-24 truncate text-center text-sm font-black tracking-wide text-white">' + escapeHtml(state.mes.charAt(0) + state.mes.slice(1).toLowerCase()) + '</h2>' +
+                '<button id="mes-proximo" type="button" class="flex h-7 w-full items-center justify-center text-white active:bg-white/10" aria-label="Proximo mes"><span class="text-lg font-black leading-none">&rsaquo;</span></button>' +
               '</div>' +
             '</div>' +
             insightDespesasHtml(atual, anterior) +
