@@ -934,8 +934,8 @@
     }
 
     return (
-      '<div class="relative flex h-9 items-center justify-center gap-1.5 overflow-hidden rounded-xl border border-white/15 bg-white/10 px-2 shadow-sm backdrop-blur">' +
-        '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" aria-hidden="true" class="shrink-0 text-cyan-200"><rect x="3.5" y="4.5" width="17" height="16" rx="2.5" stroke="currentColor" stroke-width="2"/><path d="M3.5 9h17M8 3v3M16 3v3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>' +
+      '<div class="relative flex h-7 w-[84px] shrink-0 items-center justify-center gap-1.5 px-2">' +
+        '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" aria-hidden="true" class="shrink-0 text-cyan-200"><rect x="3.5" y="4.5" width="17" height="16" rx="2.5" stroke="currentColor" stroke-width="2"/><path d="M3.5 9h17M8 3v3M16 3v3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>' +
         '<p class="text-sm font-black leading-none text-white">' + escapeHtml(String(state.ano)) + '</p>' +
         '<select id="ano" aria-label="Selecionar ano" style="font-size:16px" class="absolute inset-0 cursor-pointer opacity-0">' +
           opcoes.join('') +
@@ -4646,18 +4646,20 @@
                   : '<span class="h-10 w-10 shrink-0" aria-hidden="true"></span>')
                 : '<span class="h-10 w-10 shrink-0" aria-hidden="true"></span>') +
             '</div>' +
-            '<div class="mt-3 grid grid-cols-[84px_minmax(0,1fr)] gap-2">' +
+            '<div class="mt-3 flex h-7 items-center overflow-hidden rounded-lg border border-white/15 bg-white/10 shadow-sm backdrop-blur">' +
               anoHeaderHtml() +
-              '<div class="flex h-9 items-center justify-between rounded-xl border border-white/15 bg-white/10 px-1 shadow-sm backdrop-blur">' +
-                '<button id="mes-anterior" type="button" class="flex h-7 w-8 shrink-0 items-center justify-center rounded-full text-xl font-black leading-none text-white active:bg-white/10" aria-label="Mes anterior">&lsaquo;</button>' +
-                '<h2 class="min-w-0 flex-1 truncate text-center text-sm font-black tracking-wide text-white">' + escapeHtml(state.mes.charAt(0) + state.mes.slice(1).toLowerCase()) + '</h2>' +
-                '<button id="mes-proximo" type="button" class="flex h-7 w-8 shrink-0 items-center justify-center rounded-full text-xl font-black leading-none text-white active:bg-white/10" aria-label="Proximo mes">&rsaquo;</button>' +
+              '<span class="h-4 w-px shrink-0 bg-white/20" aria-hidden="true"></span>' +
+              '<div class="flex min-w-0 flex-1 items-center justify-center gap-1 px-1">' +
+                '<button id="mes-anterior" type="button" class="flex h-6 w-7 shrink-0 items-center justify-center rounded-full text-lg font-black leading-none text-white active:bg-white/10" aria-label="Mes anterior">&lsaquo;</button>' +
+                '<h2 class="w-24 shrink-0 truncate text-center text-sm font-black tracking-wide text-white">' + escapeHtml(state.mes.charAt(0) + state.mes.slice(1).toLowerCase()) + '</h2>' +
+                '<button id="mes-proximo" type="button" class="flex h-6 w-7 shrink-0 items-center justify-center rounded-full text-lg font-black leading-none text-white active:bg-white/10" aria-label="Proximo mes">&rsaquo;</button>' +
               '</div>' +
             '</div>' +
             insightDespesasHtml(atual, anterior) +
           '</div>' +
         '</header>' +
-        '<div class="mx-auto grid max-w-md gap-3 px-4" style="padding-top:calc(env(safe-area-inset-top) + ' + (state.visao === 'agenda' ? '168px' : '152px') + ');">' +
+        '<div class="mx-auto grid max-w-md gap-3 px-4" style="padding-top:calc(env(safe-area-inset-top) + ' + (state.visao === 'agenda' ? '168px' : '132px') + ');">' +
+          '<div class="-mb-2 min-w-0 text-center"><p class="truncate text-[15px] font-semibold leading-5 ' + (state.darkMode ? 'text-slate-200' : 'text-slate-700') + '">' + escapeHtml(nomeEmpresa(state.empresa)) + '</p></div>' +
           alertaHtml().replace('mt-4', '') +
           (state.visao === 'home' ? homeHtml(atual, anterior) : (state.visao === 'agenda' ? agendaMobileHtml(atual) : listaDetalhadaHtml(atual))) +
           (state.visao === 'agenda' ? '' : rodapeMobileHtml()) +
