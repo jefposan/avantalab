@@ -1418,6 +1418,16 @@
     }, 220);
   }
 
+  function fecharChatIAParaHome() {
+    state.visao = 'home';
+    state.busca = '';
+    state.modalMenu = '';
+    state.menuAberto = false;
+    state.modalLancamento = false;
+    state.modalAcao = null;
+    fecharChatIA();
+  }
+
   function primeiroNomeUsuarioAva() {
     var candidatos = [
       state.empresa && state.empresa.usuario_nome,
@@ -3084,20 +3094,15 @@
     var ov = document.getElementById('chat-ia-overlay');
     var vv = window.visualViewport;
     if (!ov) return;
-    ov.style.left = '0px';
-    ov.style.right = '0px';
-    ov.style.width = '100vw';
-    ov.style.bottom = 'auto';
-    ov.style.transform = 'none';
-    ov.style.setProperty('--ava-keyboard-offset', '0px');
     if (vv) {
-      ov.style.top = Math.max(0, Math.round(vv.offsetTop || 0)) + 'px';
-      ov.style.height = Math.max(320, Math.round(vv.height || window.innerHeight || 0)) + 'px';
-      ov.style.minHeight = ov.style.height;
+      var base = window._avaBaseViewportHeight || window.innerHeight || vv.height;
+      var topo = Math.max(0, Math.round(vv.offsetTop || 0));
+      var teclado = Math.max(0, Math.round(base - vv.height - topo));
+      ov.style.setProperty('--ava-viewport-top', topo + 'px');
+      ov.style.setProperty('--ava-keyboard-offset', teclado + 'px');
     } else {
-      ov.style.top = '0px';
-      ov.style.height = '100dvh';
-      ov.style.minHeight = '100dvh';
+      ov.style.setProperty('--ava-viewport-top', '0px');
+      ov.style.setProperty('--ava-keyboard-offset', '0px');
     }
   }
 
@@ -5734,18 +5739,22 @@
     }
 
     var header =
-      '<div style="position:absolute;top:0;left:0;right:0;z-index:4;display:flex;align-items:center;gap:10px;' +
+      '<div style="position:absolute;top:var(--ava-viewport-top,0px);left:0;right:0;z-index:4;display:flex;align-items:center;gap:10px;' +
         'padding-top:calc(env(safe-area-inset-top,0px) + 12px);padding-left:8px;padding-right:14px;padding-bottom:12px;' +
         'background:' + C.bar + ';border-bottom:1px solid ' + C.border + ';">' +
         '<button id="chat-ia-fechar" type="button" aria-label="Voltar" style="background:transparent;border:none;width:36px;height:36px;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;">' +
           '<svg width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="' + C.text + '" stroke-width="2.2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>' +
         '</button>' +
         avaLogoPrincipalHtml(96, 52) +
+        '<span style="flex:1;min-width:0;"></span>' +
+        '<button id="chat-ia-home" type="button" aria-label="Voltar para o início" style="background:' + C.pill + ';border:1px solid ' + C.pillBorder + ';width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;">' +
+          '<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="' + C.text + '" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5v9a1.5 1.5 0 0 1-1.5 1.5h-15A1.5 1.5 0 0 1 3 19.5v-9Z"/><path d="M9 21v-7h6v7"/></svg>' +
+        '</button>' +
       '</div>';
 
     var body =
-      '<div id="chat-ia-msgs" style="position:absolute;left:0;right:0;z-index:2;top:calc(env(safe-area-inset-top,0px) + 76px);bottom:64px;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;padding:6px 14px 16px;">' +
-        welcome + convoHtml +
+      '<div id="chat-ia-msgs" style="position:absolute;left:0;right:0;top:var(--ava-viewport-top,0px);bottom:calc(64px + var(--ava-keyboard-offset,0px));z-index:2;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;padding:calc(env(safe-area-inset-top,0px) + 82px) 14px 16px;">' +
+        (firstUser < 0 ? welcome : '') + convoHtml +
       '</div>';
 
     var micInner = transcrevendoAudio
@@ -5767,12 +5776,12 @@
     var fieldBg = dark ? '#111b2d' : '#ffffff';
     var fieldBorder = dark ? '#27364f' : '#d8e4ef';
     var keyboardShield =
-      '<div aria-hidden="true" style="position:absolute;left:0;right:0;bottom:0;z-index:1;height:86px;background:' + C.bg + ';pointer-events:none;"></div>';
+      '<div aria-hidden="true" style="position:absolute;left:0;right:0;bottom:var(--ava-keyboard-offset,0px);z-index:1;height:86px;background:' + C.bg + ';pointer-events:none;"></div>';
     var inputBar =
-      '<div style="position:absolute;left:0;right:0;bottom:0;z-index:3;padding:5px 10px;' +
+      '<div id="chat-ia-input-bar" style="position:absolute;left:0;right:0;bottom:var(--ava-keyboard-offset,0px);z-index:3;padding:5px 10px;' +
         'padding-bottom:calc(env(safe-area-inset-bottom,0px) + 8px);background:' + C.bg + ';">' +
-        '<div style="width:100%;display:flex;align-items:flex-end;gap:4px;background:' + fieldBg + ';border:1px solid ' + fieldBorder + ';border-radius:24px;padding:5px 6px 5px 14px;min-height:46px;box-shadow:' + (dark ? 'none' : '0 8px 20px rgba(15,35,61,0.08)') + ';">' +
-          '<div id="chat-ia-input" role="textbox" aria-multiline="true" inputmode="text" enterkeyhint="send" autocapitalize="sentences" autocomplete="off" autocorrect="on" spellcheck="true" contenteditable="' + (enviando ? 'false' : 'plaintext-only') + '" data-placeholder="Como posso ajudar voce hoje?" style="flex:1;min-height:22px;max-height:96px;overflow-y:auto;outline:none;background:transparent;font-size:16px;font-family:inherit;color:' + C.text + ';line-height:1.4;padding:7px 2px;margin:0;width:100%;white-space:pre-wrap;word-break:break-word;-webkit-user-select:text;user-select:text;">' + escapeHtml(state.chatIAInput) + '</div>' +
+        '<div id="chat-ia-composer" style="width:100%;display:flex;align-items:flex-end;gap:4px;background:' + fieldBg + ';border:1px solid ' + fieldBorder + ';border-radius:24px;padding:5px 6px 5px 14px;min-height:46px;box-shadow:' + (dark ? 'none' : '0 8px 20px rgba(15,35,61,0.08)') + ';">' +
+          '<div id="chat-ia-input" role="textbox" aria-multiline="true" tabindex="0" inputmode="text" enterkeyhint="send" autocapitalize="sentences" autocomplete="off" autocorrect="on" spellcheck="true" contenteditable="true" data-placeholder="Como posso ajudar voce hoje?" style="position:relative;z-index:1;flex:1;min-width:0;min-height:36px;max-height:96px;overflow-y:auto;outline:none;border:none;background:transparent;font-size:16px;font-family:inherit;color:' + C.text + ';line-height:1.4;padding:7px 2px;margin:0;white-space:pre-wrap;word-break:break-word;-webkit-user-select:text;user-select:text;pointer-events:auto;touch-action:auto;cursor:text;">' + escapeHtml(state.chatIAInput) + '</div>' +
           micBtn +
           sendBtn +
         '</div>' +
@@ -5785,7 +5794,7 @@
         : '';
 
     return (
-      '<div id="chat-ia-overlay" style="position:fixed;top:0;left:0;right:0;bottom:auto;width:100vw;height:100dvh;min-height:100dvh;z-index:5000;display:block;background:' + C.bg + ';overflow:hidden;isolation:isolate;overscroll-behavior:contain;--ava-keyboard-offset:0px;' + animacao + '">' +
+      '<div id="chat-ia-overlay" style="position:fixed;inset:0;width:100vw;height:100dvh;min-height:100dvh;z-index:5000;display:block;background:' + C.bg + ';overflow:hidden;isolation:isolate;overscroll-behavior:contain;--ava-viewport-top:0px;--ava-keyboard-offset:0px;' + animacao + '">' +
         keyboardShield + header + body + inputBar +
       '</div>'
     );
@@ -7291,15 +7300,9 @@
     bind('chat-ia-btn', abrirChatIA);
     bind('chat-ia-card', abrirChatIA);
     bind('chat-ia-fechar', fecharChatIA);
+    bind('chat-ia-home', fecharChatIAParaHome);
     bind('chat-ia-mic', function() { gravarVoz(); });
     bind('chat-ia-enviar', function() { enviarMensagemIA(); });
-    var chatOverlay = document.getElementById('chat-ia-overlay');
-    if (chatOverlay) {
-      chatOverlay.addEventListener('touchmove', function(e) {
-        if (e.target && e.target.closest && e.target.closest('#chat-ia-msgs')) return;
-        e.preventDefault();
-      }, { passive: false });
-    }
     var _avaSug = ['Por onde inicio o uso do sistema?', 'Analise meus resultados.', 'Como reduzir gastos sem afetar o essencial?', 'Como montar uma reserva de emergência?'];
     for (var _si = 0; _si < _avaSug.length; _si++) {
       (function(idx) {
@@ -7315,8 +7318,8 @@
     var chatInput = document.getElementById('chat-ia-input');
     if (chatInput) {
       chatInput.addEventListener('keydown', function(e) { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); enviarMensagemIA(); } });
-      chatInput.addEventListener('focus', function() { _avaManterTelaFixa(); setTimeout(_avaManterTelaFixa, 120); setTimeout(_avaManterTelaFixa, 350); });
-      chatInput.addEventListener('blur', function() { setTimeout(_avaManterTelaFixa, 120); });
+      chatInput.addEventListener('focus', function() { _avaPinViewport(); setTimeout(_avaPinViewport, 120); setTimeout(_avaPinViewport, 350); });
+      chatInput.addEventListener('blur', function() { setTimeout(_avaPinViewport, 120); });
       chatInput.addEventListener('input', function() {
         state.chatIAInput = typeof this.value === 'string' ? this.value : (this.textContent || '');
         // Atualizar botão enviar dinamicamente sem re-render completo
@@ -7330,9 +7333,15 @@
           var svg = envBtn.querySelector('svg');
           if (svg) svg.querySelector('path').setAttribute('fill', tem ? '#fff' : (_dk ? '#5b6b82' : '#94a3b8'));
         }
-        // Auto-resize textarea
         this.style.maxHeight = '96px';
       });
+      var chatComposer = document.getElementById('chat-ia-composer');
+      if (chatComposer) {
+        chatComposer.addEventListener('click', function(e) {
+          if (e.target && e.target.closest && e.target.closest('button')) return;
+          chatInput.focus();
+        });
+      }
     }
     bind('salvar-despesa', salvarDespesa);
     var diaInputEl = document.getElementById('despesa-dia');
@@ -8230,7 +8239,7 @@
           return Promise.all(
             keys
               .filter(function (key) {
-                return key.indexOf('avantalab-mobile-') === 0 && key !== 'avantalab-mobile-v118';
+                return key.indexOf('avantalab-mobile-') === 0 && key !== 'avantalab-mobile-v160';
               })
               .map(function (key) {
                 return caches.delete(key);
@@ -8247,7 +8256,7 @@
     });
 
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/mobile-sw.js?v=155').then(function (registro) {
+      navigator.serviceWorker.register('/mobile-sw.js?v=160').then(function (registro) {
         if (registro && registro.update) registro.update();
       }).catch(function () {});
     }
@@ -8267,13 +8276,14 @@
 
     // Android: ao focar um campo dentro de qualquer modal/formulario, rola
     // ate ele ficar visivel acima do teclado (cobre todos os cards de uma vez).
-    // O chat da Ava usa contenteditable, entao nao e afetado por este seletor.
+    // A Ava controla o teclado e o viewport de forma independente.
     document.addEventListener('focusin', function (e) {
       // No iOS o Safari ja rola o campo sozinho; nao mexemos pra nao conflitar.
       if (state.isIos) return;
       var el = e.target;
       if (!el || typeof el.matches !== 'function') return;
       if (!el.matches('input, select, textarea')) return;
+      if (el.id === 'chat-ia-input') return;
       if (!(deveBloquearScroll() || state.agendaFormAberto)) return;
       setTimeout(function () {
         try { el.scrollIntoView({ behavior: 'smooth', block: 'center' }); } catch (err) {}

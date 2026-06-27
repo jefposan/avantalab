@@ -1,6 +1,6 @@
-const CACHE_NAME = 'avantalab-mobile-v152';
+const CACHE_NAME = 'avantalab-mobile-v160';
 const APP_SHELL = [
-  '/mobile-app.js?v=152',
+  '/mobile-app.js?v=160',
   '/mobile-supabase.js',
   '/mobile-manifest.json',
   '/images/ava-logo-principal.png',
@@ -50,4 +50,6 @@ self.addEventListener('fetch', (event) => {
         caches.open(CACHE_NAME).then((cache) => cache.put(event.request, copy)).catch(() => undefined);
         return response;
       })
-     
+      .catch(() => caches.match(event.request))
+  );
+});

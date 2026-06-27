@@ -82,6 +82,7 @@ export default function MobilePage() {
             .agenda-anim-prox { animation: agendaInProx .24s ease-out; }
             .agenda-anim-prev { animation: agendaInPrev .24s ease-out; }
             #chat-ia-input::placeholder { color: #94a3b8; opacity: 1; }
+            #chat-ia-input { background: transparent !important; border: 0 !important; box-shadow: none !important; }
             #chat-ia-input:empty::before { content: attr(data-placeholder); color: #94a3b8; pointer-events: none; }
             #chat-ia-msgs { scroll-behavior: smooth; }
             .avantalab-mobile-bg {
@@ -216,7 +217,7 @@ export default function MobilePage() {
       </div>
 
       <script src="/mobile-supabase.js" defer />
-      <script src="/mobile-app.js?v=157" defer />
+      <script src="/mobile-app.js?v=160" defer />
     </main>
   );
 }
