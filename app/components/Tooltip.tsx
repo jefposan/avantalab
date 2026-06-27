@@ -7,12 +7,14 @@ interface TooltipProps {
   texto: string;
   children: ReactNode;
   posicao?: 'top' | 'bottom' | 'left' | 'right';
+  wrapperClassName?: string;
 }
 
 export default function Tooltip({
   texto,
   children,
   posicao = 'top',
+  wrapperClassName = '',
 }: TooltipProps) {
   const ref = useRef<HTMLSpanElement | null>(null);
   const [visivel, setVisivel] = useState(false);
@@ -70,7 +72,7 @@ export default function Tooltip({
     <>
       <span
         ref={ref}
-        className="inline-flex"
+        className={`inline-flex ${wrapperClassName}`}
         onMouseEnter={abrirTooltip}
         onMouseLeave={fecharTooltip}
         onFocus={abrirTooltip}

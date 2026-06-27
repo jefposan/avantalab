@@ -7449,39 +7449,49 @@ name="novo-usuario-login"
       <>
         <div className="fixed inset-0 z-[1205]" onClick={() => setMenuAjuste(null)} />
         <div className="fixed z-[1210] w-56 rounded-xl border border-slate-700 bg-slate-900 p-2 shadow-2xl" style={{ top: menuAjusteRect.top, left: menuAjusteRect.left }}>
-          <div className="flex items-center justify-between gap-2 rounded-lg px-3 py-2 text-xs font-bold text-white hover:bg-slate-700 cursor-pointer" onClick={() => setDuplicadosAtivo(!duplicadosAtivo)}>
-            <span>Duplicados</span>
-            <div className={`w-7 h-3.5 rounded-full relative transition-colors ${duplicadosAtivo ? '' : 'bg-slate-600'}`} style={{ backgroundColor: duplicadosAtivo ? corPrimaria : '', border: duplicadosAtivo && corEhClara(corPrimaria) ? '1px solid rgba(15, 23, 42, 0.35)' : '' }}>
-              <span className={`absolute left-0.5 top-0.5 w-2.5 h-2.5 rounded-full transition-transform ${duplicadosAtivo ? 'translate-x-3.5' : ''}`} style={{ backgroundColor: duplicadosAtivo && corEhClara(corPrimaria) ? '#0f172a' : '#ffffff' }} />
-            </div>
-          </div>
+          <Tooltip texto="Ativa ou desativa o aviso ao lançar uma despesa duplicada no mesmo mês." posicao="right" wrapperClassName="w-full">
+            <button type="button" className="flex w-full items-center justify-between gap-2 rounded-lg px-3 py-2 text-xs font-bold text-white hover:bg-slate-700 cursor-pointer" onClick={() => setDuplicadosAtivo(!duplicadosAtivo)}>
+              <span>Duplicados</span>
+              <div className={`w-7 h-3.5 rounded-full relative transition-colors ${duplicadosAtivo ? '' : 'bg-slate-600'}`} style={{ backgroundColor: duplicadosAtivo ? corPrimaria : '', border: duplicadosAtivo && corEhClara(corPrimaria) ? '1px solid rgba(15, 23, 42, 0.35)' : '' }}>
+                <span className={`absolute left-0.5 top-0.5 w-2.5 h-2.5 rounded-full transition-transform ${duplicadosAtivo ? 'translate-x-3.5' : ''}`} style={{ backgroundColor: duplicadosAtivo && corEhClara(corPrimaria) ? '#0f172a' : '#ffffff' }} />
+              </div>
+            </button>
+          </Tooltip>
 
           {podeGerenciarUsuarios && (
-            <button type="button" onClick={() => { setAjustesAberto(false); abrirModalUsuarios(); }} className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-xs font-bold text-white transition-colors hover:bg-slate-700">
-              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 20h5v-2a4 4 0 00-4-4h-1M9 20H4v-2a4 4 0 014-4h1m8-6a4 4 0 11-8 0 4 4 0 018 0zm6 2a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
-              Usuários
-            </button>
+            <Tooltip texto="Cadastre usuários e gerencie suas permissões de acesso ao perfil." posicao="right" wrapperClassName="w-full">
+              <button type="button" onClick={() => { setAjustesAberto(false); abrirModalUsuarios(); }} className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-xs font-bold text-white transition-colors hover:bg-slate-700">
+                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 20h5v-2a4 4 0 00-4-4h-1M9 20H4v-2a4 4 0 014-4h1m8-6a4 4 0 11-8 0 4 4 0 018 0zm6 2a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+                Usuários
+              </button>
+            </Tooltip>
           )}
 
-          <button type="button" onClick={() => { setAjustesAberto(false); setModalEmpresasAberto(true); }} className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-xs font-bold text-white transition-colors hover:bg-slate-700">
-            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5.121 17.804A13 13 0 0112 16c2.5 0 4.847.655 6.879 1.804M15 10a3 3 0 11-6 0 3 3 0 016 0zm6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-            Perfil
-          </button>
+          <Tooltip texto="Gerencie, alterne ou edite seus perfis financeiros." posicao="right" wrapperClassName="w-full">
+            <button type="button" onClick={() => { setAjustesAberto(false); setModalEmpresasAberto(true); }} className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-xs font-bold text-white transition-colors hover:bg-slate-700">
+              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5.121 17.804A13 13 0 0112 16c2.5 0 4.847.655 6.879 1.804M15 10a3 3 0 11-6 0 3 3 0 016 0zm6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+              Perfil
+            </button>
+          </Tooltip>
 
           <div className="my-1 border-t border-slate-700" />
 
-          <button
-            onClick={() => { if (!podeAcessarAjustes) { abrirAviso('Acesso não permitido', 'Você não tem permissão para gerar backup dos dados da empresa.'); return; } setAjustesAberto(false); abrirConfirmacao({ titulo: 'Gerar backup', mensagem: 'O sistema vai gerar um arquivo Excel com os dados da empresa atual.\n\nDeseja continuar?', textoConfirmar: 'Gerar backup', acao: async () => { await gerarBackupExcel(backupParams()); } }); }}
-            className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-xs font-bold text-emerald-300 transition-colors hover:bg-slate-700"
-          >
-            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
-            Backup
-          </button>
+          <Tooltip texto="Exporte os dados do perfil atual para um arquivo Excel." posicao="right" wrapperClassName="w-full">
+            <button
+              onClick={() => { if (!podeAcessarAjustes) { abrirAviso('Acesso não permitido', 'Você não tem permissão para gerar backup dos dados da empresa.'); return; } setAjustesAberto(false); abrirConfirmacao({ titulo: 'Gerar backup', mensagem: 'O sistema vai gerar um arquivo Excel com os dados da empresa atual.\n\nDeseja continuar?', textoConfirmar: 'Gerar backup', acao: async () => { await gerarBackupExcel(backupParams()); } }); }}
+              className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-xs font-bold text-emerald-300 transition-colors hover:bg-slate-700"
+            >
+              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+              Backup
+            </button>
+          </Tooltip>
 
-          <button type="button" onClick={() => { setMenuAjuste(null); abrirImportacaoBackup(); }} className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-xs font-bold text-cyan-300 transition-colors hover:bg-slate-700">
-            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 8V7a3 3 0 013-3h10a3 3 0 013 3v1M12 4v12m0 0l-4-4m4 4l4-4M5 20h14" /></svg>
-            Restauração
-          </button>
+          <Tooltip texto="Importe um arquivo de backup para restaurar os dados do perfil." posicao="right" wrapperClassName="w-full">
+            <button type="button" onClick={() => { setMenuAjuste(null); abrirImportacaoBackup(); }} className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-xs font-bold text-cyan-300 transition-colors hover:bg-slate-700">
+              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 8V7a3 3 0 013-3h10a3 3 0 013 3v1M12 4v12m0 0l-4-4m4 4l4-4M5 20h14" /></svg>
+              Restauração
+            </button>
+          </Tooltip>
         </div>
       </>
     )}
