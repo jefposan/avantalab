@@ -3095,14 +3095,12 @@
     var vv = window.visualViewport;
     if (!ov) return;
     if (vv) {
-      var base = window._avaBaseViewportHeight || window.innerHeight || vv.height;
       var topo = Math.max(0, Math.round(vv.offsetTop || 0));
-      var teclado = Math.max(0, Math.round(base - vv.height - topo));
-      ov.style.setProperty('--ava-viewport-top', topo + 'px');
-      ov.style.setProperty('--ava-keyboard-offset', teclado + 'px');
+      ov.style.top = topo + 'px';
+      ov.style.height = Math.max(320, Math.round(vv.height || window.innerHeight || 0)) + 'px';
     } else {
-      ov.style.setProperty('--ava-viewport-top', '0px');
-      ov.style.setProperty('--ava-keyboard-offset', '0px');
+      ov.style.top = '0px';
+      ov.style.height = '100dvh';
     }
   }
 
@@ -5739,7 +5737,7 @@
     }
 
     var header =
-      '<div style="position:absolute;top:var(--ava-viewport-top,0px);left:0;right:0;z-index:4;display:flex;align-items:center;gap:10px;' +
+      '<div id="chat-ia-header" style="position:absolute;top:0;left:0;right:0;z-index:4;display:flex;align-items:center;gap:10px;' +
         'padding-top:calc(env(safe-area-inset-top,0px) + 12px);padding-left:8px;padding-right:14px;padding-bottom:12px;' +
         'background:' + C.bar + ';border-bottom:1px solid ' + C.border + ';">' +
         '<button id="chat-ia-fechar" type="button" aria-label="Voltar" style="background:transparent;border:none;width:36px;height:36px;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;">' +
@@ -5753,7 +5751,7 @@
       '</div>';
 
     var body =
-      '<div id="chat-ia-msgs" style="position:absolute;left:0;right:0;top:var(--ava-viewport-top,0px);bottom:calc(64px + var(--ava-keyboard-offset,0px));z-index:2;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;padding:calc(env(safe-area-inset-top,0px) + 82px) 14px 16px;">' +
+      '<div id="chat-ia-msgs" style="position:absolute;left:0;right:0;top:0;bottom:64px;z-index:2;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;padding:calc(env(safe-area-inset-top,0px) + 82px) 14px 16px;">' +
         (firstUser < 0 ? welcome : '') + convoHtml +
       '</div>';
 
@@ -5776,9 +5774,9 @@
     var fieldBg = dark ? '#111b2d' : '#ffffff';
     var fieldBorder = dark ? '#27364f' : '#d8e4ef';
     var keyboardShield =
-      '<div aria-hidden="true" style="position:absolute;left:0;right:0;bottom:var(--ava-keyboard-offset,0px);z-index:1;height:86px;background:' + C.bg + ';pointer-events:none;"></div>';
+      '<div aria-hidden="true" style="position:absolute;left:0;right:0;bottom:0;z-index:1;height:86px;background:' + C.bg + ';pointer-events:none;"></div>';
     var inputBar =
-      '<div id="chat-ia-input-bar" style="position:absolute;left:0;right:0;bottom:var(--ava-keyboard-offset,0px);z-index:3;padding:5px 10px;' +
+      '<div id="chat-ia-input-bar" style="position:absolute;left:0;right:0;bottom:0;z-index:3;padding:5px 10px;' +
         'padding-bottom:calc(env(safe-area-inset-bottom,0px) + 8px);background:' + C.bg + ';">' +
         '<div id="chat-ia-composer" style="width:100%;display:flex;align-items:flex-end;gap:4px;background:' + fieldBg + ';border:1px solid ' + fieldBorder + ';border-radius:24px;padding:5px 6px 5px 14px;min-height:46px;box-shadow:' + (dark ? 'none' : '0 8px 20px rgba(15,35,61,0.08)') + ';">' +
           '<div id="chat-ia-input" role="textbox" aria-multiline="true" tabindex="0" inputmode="text" enterkeyhint="send" autocapitalize="sentences" autocomplete="off" autocorrect="on" spellcheck="true" contenteditable="true" data-placeholder="Como posso ajudar voce hoje?" style="position:relative;z-index:1;flex:1;min-width:0;min-height:36px;max-height:96px;overflow-y:auto;outline:none;border:none;background:transparent;font-size:16px;font-family:inherit;color:' + C.text + ';line-height:1.4;padding:7px 2px;margin:0;white-space:pre-wrap;word-break:break-word;-webkit-user-select:text;user-select:text;pointer-events:auto;touch-action:auto;cursor:text;">' + escapeHtml(state.chatIAInput) + '</div>' +
@@ -5794,7 +5792,7 @@
         : '';
 
     return (
-      '<div id="chat-ia-overlay" style="position:fixed;inset:0;width:100vw;height:100dvh;min-height:100dvh;z-index:5000;display:block;background:' + C.bg + ';overflow:hidden;isolation:isolate;overscroll-behavior:contain;--ava-viewport-top:0px;--ava-keyboard-offset:0px;' + animacao + '">' +
+      '<div id="chat-ia-overlay" style="position:fixed;top:0;left:0;right:0;bottom:auto;width:100vw;height:100dvh;z-index:5000;display:block;background:' + C.bg + ';overflow:hidden;isolation:isolate;overscroll-behavior:contain;' + animacao + '">' +
         keyboardShield + header + body + inputBar +
       '</div>'
     );
@@ -8239,7 +8237,7 @@
           return Promise.all(
             keys
               .filter(function (key) {
-                return key.indexOf('avantalab-mobile-') === 0 && key !== 'avantalab-mobile-v160';
+                return key.indexOf('avantalab-mobile-') === 0 && key !== 'avantalab-mobile-v161';
               })
               .map(function (key) {
                 return caches.delete(key);
@@ -8256,7 +8254,7 @@
     });
 
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/mobile-sw.js?v=160').then(function (registro) {
+      navigator.serviceWorker.register('/mobile-sw.js?v=161').then(function (registro) {
         if (registro && registro.update) registro.update();
       }).catch(function () {});
     }
