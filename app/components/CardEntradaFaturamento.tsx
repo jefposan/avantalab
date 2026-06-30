@@ -85,7 +85,7 @@ export default function CardEntradaFaturamento({
 
   return (
     <div
-      className="h-full min-w-0 rounded-[18px] border border-t-[4px] bg-white p-4 text-slate-900"
+      className="h-full w-full min-w-0 max-w-full overflow-hidden rounded-[18px] border border-t-[4px] bg-white p-3 text-slate-900 sm:p-4"
       style={{
         borderColor: '#E2E8F0',
         borderTopColor: '#1F8A9E',

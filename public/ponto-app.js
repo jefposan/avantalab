@@ -499,7 +499,7 @@
           '</div>' +
         '</header>' +
         '<div class="flex-1 overflow-y-auto"><div class="mx-auto max-w-md px-5 pt-4" style="padding-bottom:calc(env(safe-area-inset-bottom) + 40px)">' +
-          '<div class="no-print mb-3 grid grid-cols-4 gap-1">' +
+          '<div class="no-print mb-3 grid grid-cols-2 gap-1 min-[380px]:grid-cols-4">' +
             periodos.map(function (p) {
               var ativo = state.periodo === p[0];
               return '<button id="ponto-periodo-' + p[0] + '" type="button" class="rounded-lg px-1 py-2 text-[11px] font-black ' + (ativo ? 'bg-cyan-600 text-white' : 'bg-white text-slate-500 border border-slate-200') + '">' + p[1] + '</button>';

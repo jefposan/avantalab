@@ -61,11 +61,11 @@ export default function ModalLogo({
 
   return (
     <div
-      className="fixed inset-0 bg-black/60 z-[2000] flex items-center justify-center p-4"
+      className="fixed inset-0 bg-black/60 z-[2000] flex items-center justify-center p-3 sm:p-4"
       onClick={aoFechar}
     >
       <div
-        className={`${bgCard} rounded-2xl shadow-2xl max-w-md w-full border-2 p-5`}
+        className={`${bgCard} max-h-[calc(100dvh-1.5rem)] w-full max-w-md overflow-y-auto rounded-2xl border-2 p-4 shadow-2xl sm:p-5`}
         style={{ borderColor: corPrimaria }}
         onClick={(e) => e.stopPropagation()}
       >
@@ -209,7 +209,7 @@ export default function ModalLogo({
             />
           </div>
 
-          <div className="grid grid-cols-3 gap-2">
+          <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
             <button
               type="button"
               onClick={aoLimpar}

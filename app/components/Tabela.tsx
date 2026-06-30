@@ -8,8 +8,9 @@ export default function Tabela({
   const textStrong = darkMode ? 'text-white' : 'text-slate-800';
 
  return (
-  <div className={`${bgCard} rounded-xl shadow-lg border p-6 border-t-4`} style={{ borderTopColor: corPrimaria }}>
-    <table className="w-full text-left">
+  <div className={`${bgCard} w-full min-w-0 max-w-full overflow-hidden rounded-xl border border-t-4 p-3 shadow-lg sm:p-6`} style={{ borderTopColor: corPrimaria }}>
+    <div className="w-full max-w-full overflow-x-auto">
+    <table className="w-full min-w-[680px] text-left">
         <thead>
           <tr className="border-b uppercase text-xs text-slate-400">
             <th className="p-4">Dia</th>
@@ -45,6 +46,7 @@ export default function Tabela({
           ))}
         </tbody>
       </table>
+    </div>
     </div>
   );
 }

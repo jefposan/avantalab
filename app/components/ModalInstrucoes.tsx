@@ -35,26 +35,26 @@ export default function ModalInstrucoes({
 
   return (
     <div
-      className="fixed inset-0 bg-black/60 z-[5000] flex items-center justify-center p-4"
+      className="fixed inset-0 z-[5000] flex items-center justify-center bg-black/60 p-3 sm:p-4"
       onClick={aoFechar}
     >
       <div
-        className={`${bgCard} rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto border-2 flex flex-col`}
+        className={`${bgCard} flex max-h-[calc(100dvh-1.5rem)] w-full min-w-0 max-w-2xl flex-col overflow-y-auto rounded-2xl border-2 shadow-2xl sm:max-h-[90vh]`}
         style={{ borderColor: corPrimaria }}
         onClick={(e) => e.stopPropagation()}
       >
         <div
-          className="sticky top-0 px-5 py-3 border-b border-slate-200/20 flex justify-between items-center shadow-md z-10"
+          className="sticky top-0 z-10 flex min-w-0 items-center justify-between gap-3 border-b border-slate-200/20 px-4 py-3 shadow-md sm:px-5"
           style={estiloTemaPrimario}
         >
-          <h2 className="text-base font-bold uppercase">
+          <h2 className="min-w-0 break-words text-sm font-bold uppercase sm:text-base">
             Instruções sobre Categorias
           </h2>
 
           <button
             type="button"
             onClick={aoFechar}
-            className="px-3 py-1 rounded-lg text-sm font-bold transition-colors cursor-pointer"
+            className="shrink-0 cursor-pointer rounded-lg px-3 py-1 text-sm font-bold transition-colors"
             style={{
               color: textoSobreCorPrimaria,
               backgroundColor: corEhClara(corPrimaria)
@@ -66,7 +66,7 @@ export default function ModalInstrucoes({
           </button>
         </div>
 
-        <div className={`p-5 space-y-3 text-xs ${textMuted} leading-snug overflow-y-auto`}>
+        <div className={`space-y-3 overflow-y-auto p-4 text-xs ${textMuted} leading-snug sm:p-5`}>
           {categoriasPerfil.map((categoria) => (
             <div key={categoria.nome}>
               <strong className={textStrong}>{categoria.nome.toUpperCase()}:</strong>

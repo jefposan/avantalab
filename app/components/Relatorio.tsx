@@ -436,10 +436,10 @@ export default function Relatorio({
         .dark .custom-scroll::-webkit-scrollbar-thumb { background: #475569; }
       `}</style>
 
-      <div className="flex justify-between items-center mb-6 print-ocultar">
-        <div className="flex items-center">
+      <div className="mb-6 flex min-w-0 items-center justify-between print-ocultar">
+        <div className="flex min-w-0 items-center">
           <span className="w-3 h-8 rounded-full mr-4 shadow-sm" style={{ backgroundColor: corPrimaria }}></span>
-          <h2 className={`text-2xl font-black ${textClass} uppercase tracking-wider`}>Relatório Contábil</h2>
+          <h2 className={`min-w-0 break-words text-xl font-black sm:text-2xl ${textClass} uppercase tracking-wider`}>Relatório Contábil</h2>
         </div>
       </div>
 
@@ -450,13 +450,13 @@ export default function Relatorio({
         <TabelaMatriz titulo="EBITDA" dataKey="ebitda" totalKey={dadosRelatorio.totais.ebitda} />
       </div>
 
-      <div className="flex justify-between items-center mt-8 mb-6 print-ocultar">
-  <div className="flex items-center">
+      <div className="mb-6 mt-8 flex min-w-0 items-center justify-between print-ocultar">
+  <div className="flex min-w-0 items-center">
     <span
       className="w-3 h-8 rounded-full mr-4 shadow-sm"
       style={{ backgroundColor: corPrimaria }}
     ></span>
-    <h2 className={`text-2xl font-black ${textClass} uppercase tracking-wider`}>
+    <h2 className={`min-w-0 break-words text-xl font-black sm:text-2xl ${textClass} uppercase tracking-wider`}>
       Análise Evolutiva Multianual
     </h2>
   </div>
@@ -472,7 +472,7 @@ export default function Relatorio({
       <button
         key={key}
         onClick={() => setMetricaEvolutiva(key)}
-        className={`min-w-[120px] px-5 py-2.5 rounded-xl font-bold text-[12px] transition-all shadow-sm cursor-pointer hover:scale-[1.03] active:scale-95 ${
+        className={`w-full min-w-0 rounded-xl px-3 py-2.5 font-bold text-[12px] transition-all shadow-sm sm:w-auto sm:min-w-[120px] sm:px-5 cursor-pointer hover:scale-[1.03] active:scale-95 ${
           metricaEvolutiva === key
             ? ''
             : `${

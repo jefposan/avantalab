@@ -156,7 +156,7 @@ export default function ModalDespesasBase({
                 placeholder="Nome (Ex: Aluguel)"
                 value={novaBaseNome}
                 onChange={(e) => setNovaBaseNome(e.target.value)}
-                className={`flex-1 min-w-[200px] p-2 rounded-lg border text-sm focus:outline-none focus:ring-2 ${
+                className={`w-full min-w-0 flex-1 p-2 rounded-lg border text-sm focus:outline-none focus:ring-2 sm:min-w-[200px] ${
                   darkMode
                     ? 'bg-slate-700 border-slate-600 text-white'
                     : 'bg-white border-slate-300'
@@ -167,7 +167,7 @@ export default function ModalDespesasBase({
               <select
                 value={novaBaseCat}
                 onChange={(e) => setNovaBaseCat(e.target.value)}
-                className={`flex-1 min-w-[200px] p-2 rounded-lg border text-sm focus:outline-none focus:ring-2 ${
+                className={`w-full min-w-0 flex-1 p-2 rounded-lg border text-sm focus:outline-none focus:ring-2 sm:min-w-[200px] ${
                   darkMode
                     ? 'bg-slate-700 border-slate-600 text-white'
                     : 'bg-white border-slate-300'
@@ -186,7 +186,7 @@ export default function ModalDespesasBase({
                 type="button"
                 onClick={adicionarDespesaBase}
                 style={estiloTemaPrimario}
-                className="px-4 py-2 rounded-lg text-sm font-bold shadow hover:brightness-110 cursor-pointer"
+                className="w-full rounded-lg px-4 py-2 text-sm font-bold shadow hover:brightness-110 sm:w-auto cursor-pointer"
               >
                 Salvar
               </button>
@@ -197,7 +197,7 @@ export default function ModalDespesasBase({
   {despesasCadastradas.map((d) => (
     <div
       key={d.nome}
-      className={`flex items-center justify-between gap-3 rounded-md border border-slate-200/10 px-3 py-1 ${
+      className={`flex min-w-0 flex-col gap-2 rounded-md border border-slate-200/10 px-3 py-2 sm:flex-row sm:items-center sm:justify-between sm:py-1 ${
         darkMode ? 'bg-slate-700' : 'bg-white shadow-sm'
       }`}
     >
@@ -207,7 +207,7 @@ export default function ModalDespesasBase({
         </span>
 
         <span
-          className={`shrink-0 rounded px-1.5 py-0.5 text-[10px] font-semibold leading-tight bg-slate-500/20 ${textMuted}`}
+          className={`max-w-full truncate rounded px-1.5 py-0.5 text-[10px] font-semibold leading-tight bg-slate-500/20 ${textMuted}`}
         >
           {d.categoria}
         </span>

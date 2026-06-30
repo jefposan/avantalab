@@ -59,8 +59,8 @@ export default function TabelaEntradasFaturamento({
   }
 
   return (
-    <div className="overflow-hidden rounded-xl border border-slate-200/20">
-      <table className="w-full text-left border-collapse">
+    <div className="w-full max-w-full overflow-x-auto rounded-xl border border-slate-200/20">
+      <table className="w-full min-w-[560px] text-left border-collapse">
         <tbody>
           {entradas.map((entrada) => (
             <tr
@@ -136,7 +136,7 @@ export default function TabelaEntradasFaturamento({
                     {String(entrada.dia).padStart(2, '0')}
                   </td>
 
-                  <td className="py-2 px-4 text-xs font-semibold">
+                  <td className="max-w-[240px] break-words py-2 px-4 text-xs font-semibold">
                     {entrada.origem || '-'}
                   </td>
 

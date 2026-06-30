@@ -24,6 +24,22 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+html,
+body {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: clip;
+}
+
+main,
+section,
+article,
+header,
+footer,
+nav {
+  min-width: 0;
+}
 .select-despesa-avantalab {
   color: #0f172a !important;
   -webkit-text-fill-color: #0f172a !important;

@@ -198,6 +198,8 @@ export default function MobilePage() {
           className="avantalab-mobile-bg fixed inset-0 flex items-center justify-center overflow-hidden px-4"
           style={{
             height: '100dvh',
+            backgroundPosition: 'center bottom',
+            backgroundSize: 'auto 108%',
           }}
         >
           <div
@@ -217,7 +219,7 @@ export default function MobilePage() {
       </div>
 
       <script src="/mobile-supabase.js" defer />
-      <script src="/mobile-app.js?v=161" defer />
+      <script src="/mobile-app.js?v=165" defer />
     </main>
   );
 }

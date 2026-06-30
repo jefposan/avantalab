@@ -189,14 +189,14 @@ export default function AppHeader({
 
       {/* ── HEADER PRINCIPAL ── */}
       <header
-        className={`print-ocultar ${bgCard} sticky top-0 z-[900] shadow-[0_4px_18px_rgba(15,23,42,0.10)] border-b px-8 pt-1 pb-4 relative overflow-hidden`}
+        className={`print-ocultar ${bgCard} sticky top-0 z-[900] w-full max-w-full overflow-hidden border-b px-3 pb-3 pt-1 shadow-[0_4px_18px_rgba(15,23,42,0.10)] sm:px-4 lg:px-6 xl:px-8 xl:pb-4 relative`}
         style={{ borderBottomColor: darkMode ? '#334155' : 'transparent', borderBottomWidth: '1px' }}
       >
-        <div className="mx-auto flex w-full max-w-7xl items-center gap-4 px-6 xl:gap-6 xl:px-8 min-h-[72px] xl:min-h-[88px]">
+        <div className="mx-auto flex min-h-[68px] w-full min-w-0 max-w-7xl items-center gap-3 px-0 sm:min-h-[72px] sm:gap-4 xl:min-h-[88px] xl:gap-6 xl:px-8">
           {/* LOGO */}
           {logoUrl !== '__blank__' && (
           <div
-            className="w-36 h-[60px] xl:w-48 xl:h-[72px] flex items-center justify-center relative cursor-pointer shrink-0 mb-2"
+            className="relative mb-1 flex h-[54px] w-28 shrink-0 cursor-pointer items-center justify-center sm:h-[60px] sm:w-36 xl:mb-2 xl:h-[72px] xl:w-48"
             onClick={() => { setAbaAtiva('Dashboard'); setMesAtivo(null); setMenuResponsivoAberto(false); }}
           >
             {logoUrl ? (
@@ -233,7 +233,7 @@ export default function AppHeader({
           <button
             type="button"
             onClick={() => setMenuResponsivoAberto(true)}
-            className={`lg:hidden flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border text-2xl font-black transition cursor-pointer ${
+            className={`xl:hidden flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border text-2xl font-black transition cursor-pointer ${
               darkMode
                 ? 'border-slate-700 text-slate-100 hover:bg-slate-800'
                 : 'border-slate-200 text-slate-700 hover:bg-slate-100'
@@ -245,11 +245,11 @@ export default function AppHeader({
 
           {/* Área direita */}
           <div className="flex-1 flex flex-col gap-3 xl:gap-5 min-w-0">
-            <div className="relative hidden items-center gap-3 lg:flex">
+            <div className="relative hidden min-w-0 items-center gap-3 xl:flex">
               {/* Nav principal */}
               <nav
                 ref={navRef}
-                className={`relative grid w-[560px] shrink-0 grid-cols-5 gap-2 rounded-xl border p-1 shadow-sm ${
+                className={`relative grid w-full min-w-0 max-w-[560px] flex-1 grid-cols-5 gap-2 rounded-xl border p-1 shadow-sm ${
                   darkMode ? 'border-slate-700 bg-slate-900/70' : 'border-slate-200 bg-slate-50'
                 }`}
               >
@@ -440,7 +440,7 @@ export default function AppHeader({
             onClick={() => setPainelAvisosAberto(false)}
           />
           <div
-            className={`fixed right-8 top-[135px] w-80 overflow-hidden rounded-2xl border shadow-2xl z-[8500] ${
+            className={`fixed inset-x-3 top-[92px] z-[8500] max-h-[calc(100dvh-108px)] w-auto max-w-sm overflow-hidden rounded-2xl border shadow-2xl sm:left-auto sm:right-4 sm:w-80 xl:right-8 xl:top-[135px] ${
               darkMode
                 ? 'bg-slate-900 border-slate-700 text-slate-100'
                 : 'bg-white border-slate-200 text-slate-800'

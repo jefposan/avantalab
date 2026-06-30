@@ -82,7 +82,7 @@ export default function ModulosModal({
                 const instalado = ativos.includes(m.id);
                 const processando = acaoEmId === m.id;
                 return (
-                  <div key={m.id} className={`flex items-center gap-3 rounded-xl border p-3 ${itemBorda}`}>
+                  <div key={m.id} className={`flex min-w-0 flex-col gap-3 rounded-xl border p-3 sm:flex-row sm:items-center ${itemBorda}`}>
                     <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-cyan-50 text-xl">{iconeModulo(m.icone)}</span>
                     <div className="min-w-0 flex-1">
                       <p className="truncate text-sm font-black">{m.nome}</p>

@@ -68,8 +68,8 @@ export default function SobreModal({ aberto, onFechar, darkMode, versaoAtual }: 
                 <div className="grid gap-3">
                   {dados.versoes.map((v) => (
                     <div key={v.versao} className={`rounded-xl border p-3 ${itemBorda}`}>
-                      <div className="flex items-baseline justify-between gap-2">
-                        <p className="text-sm font-black">v{v.versao} · {v.titulo}</p>
+                      <div className="flex min-w-0 flex-col gap-1 sm:flex-row sm:items-baseline sm:justify-between sm:gap-2">
+                        <p className="min-w-0 break-words text-sm font-black">v{v.versao} · {v.titulo}</p>
                         <span className={`shrink-0 text-[11px] font-bold ${muted}`}>{v.data}</span>
                       </div>
                       <ul className="mt-2 grid gap-1">

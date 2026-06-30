@@ -42,8 +42,8 @@ export default function ModalTermos({
             borderColor: bordaSobreCorPrimaria,
           }}
         >
-          <div>
-            <h2 className="text-lg font-black uppercase tracking-wide">
+          <div className="min-w-0">
+            <h2 className="break-words text-base font-black uppercase tracking-wide sm:text-lg">
               Termos de Uso
             </h2>
             <p className="text-xs opacity-80 mt-1">AvantaLab Gestão</p>
@@ -59,7 +59,7 @@ export default function ModalTermos({
           </button>
         </div>
 
-        <div className="p-6 overflow-y-auto space-y-5 text-sm leading-relaxed">
+        <div className="space-y-5 overflow-y-auto p-4 text-sm leading-relaxed sm:p-6">
           <section>
             <h3 className="font-black uppercase text-xs tracking-widest mb-2">
               1. Aceitação dos termos

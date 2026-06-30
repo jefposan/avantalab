@@ -220,9 +220,9 @@ export default function ChatFlutuante({
     : 'border-slate-200 bg-slate-50 hover:bg-sky-50';
 
   return (
-    <div className="print-ocultar fixed bottom-6 right-6 z-[7800]">
+    <div className="print-ocultar fixed inset-x-3 bottom-3 z-[7800] sm:inset-x-auto sm:bottom-6 sm:right-6">
       {chatFeedbackAberto && (
-        <div className={'mb-4 w-[360px] overflow-hidden rounded-3xl border shadow-2xl ' + bg}>
+        <div className={'mb-3 w-full max-w-full overflow-hidden rounded-2xl border shadow-2xl sm:mb-4 sm:w-[360px] sm:rounded-3xl ' + bg}>
           {/* Header */}
           <div
             className={
@@ -231,18 +231,18 @@ export default function ChatFlutuante({
             }
             style={chatFeedbackEtapa === 'ia' ? undefined : { background: 'linear-gradient(135deg, #020617, #003E73)' }}
           >
-            <div className="flex items-center gap-3">
+            <div className="flex min-w-0 items-center gap-3">
               {chatFeedbackEtapa === 'ia' && (
                 <span className="flex h-10 w-28 items-center justify-center">
                   <AvaLogo className="h-11 w-28" />
                 </span>
               )}
-              <div>
+              <div className="min-w-0">
                 <p
                   className="text-[11px] font-black uppercase tracking-[0.24em]"
                   style={{ color: chatFeedbackEtapa === 'ia' ? '#0A1F44' : 'rgba(255,255,255,0.65)' }}
                 >AvantaLab</p>
-                <h3 className="mt-1 whitespace-nowrap text-sm font-black leading-tight">
+                <h3 className="mt-1 truncate text-sm font-black leading-tight">
                   {chatFeedbackEtapa === 'ia' ? 'Ava — Assistente IA' : 'Como podemos ajudar?'}
                 </h3>
               </div>

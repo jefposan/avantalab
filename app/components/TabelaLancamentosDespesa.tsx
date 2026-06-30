@@ -161,7 +161,7 @@ export default function TabelaLancamentosDespesa({
 }: TabelaLancamentosDespesaProps) {
   return (
     <div
-      className="h-full min-w-0 rounded-[18px] border border-t-[4px] bg-white p-4 text-slate-900"
+      className="h-full w-full min-w-0 max-w-full overflow-hidden rounded-[18px] border border-t-[4px] bg-white p-3 text-slate-900 sm:p-4"
       style={{
         borderColor: '#E2E8F0',
         borderTopColor: '#0A1F44',
@@ -278,7 +278,7 @@ export default function TabelaLancamentosDespesa({
             maxHeight: `${alturaMaximaTabelaLancamentos}px`,
           }}
         >
-          <table className="w-full text-left border-collapse">
+          <table className="w-full min-w-[620px] text-left border-collapse">
             <tbody>
               {lancamentosFiltradosDoMes.length > 0 ? (
                 lancamentosFiltradosDoMes.map((lanc) => (

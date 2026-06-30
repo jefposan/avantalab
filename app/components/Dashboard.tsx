@@ -807,9 +807,9 @@ const mostrarComparativoResumoDash =
       onDragOver={handleDragOver}
       onDragEnd={handleDragEnd}
     >
-    <main className="grid w-full grid-cols-1 xl:grid-cols-3 items-start gap-6 animate-fade-in print:m-0 print:p-0">
+    <main className="grid w-full min-w-0 max-w-full grid-cols-1 items-start gap-6 overflow-x-hidden xl:grid-cols-3 animate-fade-in print:m-0 print:p-0">
 
-      <div className="relative pt-7">
+      <div className="relative min-w-0 pt-7">
         <div className={`absolute left-1 top-0 flex h-5 max-w-full items-center gap-1.5 text-sm font-black leading-none ${textStrong}`}>
           <span className="truncate">Olá, {nomePerfilAtual || 'Empresa'}.</span>
           <span className={`shrink-0 ${textMuted}`}>{saudacaoPeriodo}</span>
@@ -823,7 +823,7 @@ const mostrarComparativoResumoDash =
           <span className="w-3 h-8 rounded-full mr-4 shadow-sm" style={{ backgroundColor: corPrimaria }}></span>
           LANÇAMENTOS MENSAIS
         </h2>
-        <div className="grid grid-cols-3 gap-x-6 gap-y-3">
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-x-6 sm:gap-y-3">
           {meses.map((mes) => (
             <button 
               key={mes} 
@@ -922,7 +922,7 @@ const mostrarComparativoResumoDash =
         </button>
 
         {gerenciadorAberto && (
-          <div className={`absolute right-0 top-7 z-40 w-80 rounded-2xl border p-4 shadow-2xl ${
+          <div className={`absolute right-0 top-7 z-40 w-[min(20rem,calc(100vw-1.5rem))] max-w-full rounded-2xl border p-4 shadow-2xl ${
             darkMode ? 'border-slate-700 bg-slate-900 text-slate-100' : 'border-slate-200 bg-white text-slate-900'
           }`}>
             <div className="mb-3 flex items-center justify-between gap-3">

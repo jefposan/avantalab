@@ -426,10 +426,10 @@ export default function PontoAdminModal({
   const abas: Array<['lista' | 'novo' | 'local' | 'relatorios', string]> = [['lista', 'Funcionários'], ['novo', 'Novo'], ['local', 'Local'], ['relatorios', 'Relatórios']];
 
   return (
-    <div className="fixed inset-0 z-[2000] flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-[2000] flex items-center justify-center p-3 sm:p-4">
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onFechar} />
 
-      <div className={`relative flex max-h-[88vh] w-full max-w-lg flex-col overflow-hidden rounded-2xl border shadow-2xl ${card}`} style={{ transform: `translate(${dragPos.x}px, ${dragPos.y}px)` }}>
+      <div className={`relative flex max-h-[calc(100dvh-1.5rem)] w-full max-w-[calc(100vw-1.5rem)] flex-col overflow-hidden rounded-2xl border shadow-2xl sm:max-h-[88vh] sm:max-w-lg ${card}`} style={{ transform: `translate(${dragPos.x}px, ${dragPos.y}px)` }}>
         <div
           className="flex items-start justify-between gap-3 px-5 py-4 text-white select-none"
           style={{ background: 'linear-gradient(135deg, #020617, #003E73)', cursor: 'grab' }}
@@ -446,7 +446,7 @@ export default function PontoAdminModal({
           <button type="button" onClick={onFechar} className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white/15 text-lg font-black text-white transition hover:bg-white/25" aria-label="Fechar">×</button>
         </div>
 
-        <div className={`flex gap-2 border-b px-4 pt-3 ${itemBorda}`}>
+        <div className={`flex max-w-full gap-2 overflow-x-auto border-b px-3 pt-3 sm:px-4 ${itemBorda}`}>
           {abas.map(([a, label]) => (
             <button
               key={a}
@@ -500,7 +500,7 @@ export default function PontoAdminModal({
                         <label className={labelCls}>Nome
                           <input className={inputCls} value={editNome} onChange={(e) => setEditNome(e.target.value)} placeholder="Nome do funcionário" />
                         </label>
-                        <div className="grid grid-cols-2 gap-2">
+                        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
                           <label className={labelCls}>CPF (login)
                             <input className={inputCls + (cpfEditInvalido ? ' border-red-500' : '')} value={formatarCpf(editCpf)} onChange={(e) => setEditCpf(e.target.value.replace(/\D/g, '').slice(0, 11))} placeholder="000.000.000-00" inputMode="numeric" autoComplete="off" />
                           </label>
@@ -511,7 +511,7 @@ export default function PontoAdminModal({
                         {cpfEditInvalido
                           ? <span className="-mt-1 text-[11px] font-bold text-red-600">CPF inválido — confira os dígitos.</span>
                           : (!editCpf && <span className={`-mt-1 text-[10px] ${textMuted}`}>Defina um CPF para este funcionário passar a logar por CPF.</span>)}
-                        <div className="grid grid-cols-2 gap-2">
+                        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
                           <label className={labelCls}>Entrada
                             <input className={inputCls} type="time" value={editEntrada} onChange={(e) => setEditEntrada(e.target.value)} />
                           </label>
@@ -573,7 +573,7 @@ export default function PontoAdminModal({
               <label className={labelCls}>Nome
                 <input className={inputCls} value={nome} onChange={(e) => setNome(e.target.value)} placeholder="Nome do funcionário" />
               </label>
-              <div className="grid grid-cols-2 gap-2">
+              <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
                 <label className={labelCls}>CPF (login)
                   <input className={inputCls + (cpfNovoInvalido ? ' border-red-500' : '')} value={formatarCpf(cpf)} onChange={(e) => setCpf(e.target.value.replace(/\D/g, '').slice(0, 11))} placeholder="000.000.000-00" inputMode="numeric" autoComplete="off" />
                   {cpfNovoInvalido && <span className="text-[11px] font-bold text-red-600">CPF inválido.</span>}
@@ -594,7 +594,7 @@ export default function PontoAdminModal({
                   </button>
                 </div>
               </label>
-              <div className="grid grid-cols-2 gap-2">
+              <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
                 <label className={labelCls}>Entrada prevista
                   <input className={inputCls} type="time" value={horaEntrada} onChange={(e) => setHoraEntrada(e.target.value)} />
                 </label>
@@ -615,7 +615,7 @@ export default function PontoAdminModal({
             <div className="grid gap-3">
               <p className={`text-xs ${textMuted}`}>Defina a localização da empresa. O funcionário só consegue bater o ponto dentro do raio definido.</p>
               <button type="button" onClick={capturarLocal} disabled={capturando} className="h-10 rounded-xl border px-3 text-xs font-black uppercase tracking-wide transition disabled:opacity-60" style={{ borderColor: corSistema, color: corSistema }}>{capturando ? 'Capturando...' : 'Usar minha localização atual'}</button>
-              <div className="grid grid-cols-2 gap-2">
+              <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
                 <label className={labelCls}>Latitude
                   <input className={inputCls} value={lat} onChange={(e) => setLat(e.target.value)} placeholder="-23.5..." />
                 </label>
@@ -700,7 +700,7 @@ export default function PontoAdminModal({
               </div>
 
               {/* Período personalizado */}
-              <div className="grid grid-cols-2 gap-2">
+              <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
                 <label className={labelCls}>
                   De
                   <input className={inputCls} type="date" value={relDataInicio} onChange={(e) => setRelDataInicio(e.target.value)} />

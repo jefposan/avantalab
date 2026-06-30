@@ -3923,7 +3923,7 @@ const alertasSistema = useMemo(() => {
   const textStrong = darkMode ? 'text-white' : 'text-slate-800';
 
   const classePaginaInterna =
-  'av-page flex-1 w-full max-w-7xl mx-auto px-8 pt-3 pb-8';
+  'av-page mx-auto w-full min-w-0 max-w-7xl flex-1 overflow-x-hidden px-3 pb-8 pt-3 sm:px-5 lg:px-6 xl:px-8';
 
 const classeConteudoPagina =
   'w-full [&>*:first-child]:!mt-0 [&>*:first-child]:!pt-0';
@@ -7289,7 +7289,7 @@ name="novo-usuario-login"
     onFocus={reiniciarTimerAjustes}
   >
     {/* Bloco único de botões, alinhado ao limite do sistema (max-w-7xl + px-8) */}
-    <div className="flex items-center gap-3 max-w-7xl mx-auto px-8 overflow-x-auto custom-scroll pb-1">
+    <div className="mx-auto flex w-full max-w-7xl items-center gap-3 overflow-x-auto px-3 pb-1 sm:px-5 lg:px-6 xl:px-8 custom-scroll">
 
         {/* 1. Cadastrar Despesas + 2. Instrucoes (icone ?) */}
         <div className="flex items-center gap-1.5">
@@ -7448,7 +7448,7 @@ name="novo-usuario-login"
     {menuAjuste === 'config' && menuAjusteRect && (
       <>
         <div className="fixed inset-0 z-[1205]" onClick={() => setMenuAjuste(null)} />
-        <div className="fixed z-[1210] w-56 rounded-xl border border-slate-700 bg-slate-900 p-2 shadow-2xl" style={{ top: menuAjusteRect.top, left: menuAjusteRect.left }}>
+        <div className="fixed z-[1210] w-56 max-w-[calc(100vw-1.5rem)] rounded-xl border border-slate-700 bg-slate-900 p-2 shadow-2xl" style={{ top: menuAjusteRect.top, left: `min(max(${menuAjusteRect.left}px, 12px), calc(100vw - 236px))` }}>
           <Tooltip texto="Ativa ou desativa o aviso ao lançar uma despesa duplicada no mesmo mês." posicao="right" wrapperClassName="w-full">
             <button type="button" className="flex w-full items-center justify-between gap-2 rounded-lg px-3 py-2 text-xs font-bold text-white hover:bg-slate-700 cursor-pointer" onClick={() => setDuplicadosAtivo(!duplicadosAtivo)}>
               <span>Duplicados</span>
@@ -7522,10 +7522,10 @@ name="novo-usuario-login"
   className="print-ocultar sticky top-[116px] z-[850] shadow-md py-2 text-white"
   style={{ backgroundColor: corPrimaria }}
 >
-  <div className="max-w-7xl mx-auto grid w-full grid-cols-[minmax(260px,0.8fr)_minmax(0,1.2fr)] items-center gap-4 px-8">
+  <div className="mx-auto grid w-full min-w-0 max-w-7xl grid-cols-1 items-center gap-3 px-3 sm:px-5 lg:px-6 xl:grid-cols-[minmax(260px,0.8fr)_minmax(0,1.2fr)] xl:gap-4 xl:px-8">
     {/* ESQUERDA: MÊS COM SETAS + DESPESAS FIXAS */}
-    <div className="flex items-center justify-between gap-3">
-      <div className="flex items-center gap-2">
+    <div className="flex min-w-0 flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex min-w-0 items-center gap-2">
         <button
           type="button"
           onClick={() => {
@@ -7542,7 +7542,7 @@ name="novo-usuario-login"
           ‹
         </button>
 
-        <h2 className="min-w-[190px] text-center text-lg font-black uppercase tracking-wider">
+        <h2 className="min-w-0 flex-1 truncate text-center text-base font-black uppercase tracking-wider sm:min-w-[190px] sm:text-lg">
           {mesAtivo} / {anoSelecionado}
         </h2>
 
@@ -7566,7 +7566,7 @@ name="novo-usuario-login"
       <button
         type="button"
         onClick={abrirModalDespesasFixas}
-        className="flex items-center gap-1.5 rounded-md bg-black/15 px-2.5 py-1.5 text-xs font-black uppercase tracking-wide text-white transition hover:bg-black/25 whitespace-nowrap cursor-pointer"
+        className="flex w-full items-center justify-center gap-1.5 whitespace-nowrap rounded-md bg-black/15 px-2.5 py-1.5 text-xs font-black uppercase tracking-wide text-white transition hover:bg-black/25 sm:w-auto cursor-pointer"
         title="Gerenciar despesas fixas"
       >
         <span>⚙</span>
@@ -7755,14 +7755,14 @@ name="novo-usuario-login"
               </div>
             </div>
 
-<div className="flex justify-between items-center mt-6 mb-3 print-ocultar">
-  <div className="flex items-center gap-3">
+<div className="mb-3 mt-6 flex min-w-0 items-center justify-between print-ocultar">
+  <div className="flex min-w-0 items-center gap-3">
   <span
     className="block h-6 w-2 shrink-0 rounded-full shadow-sm"
     style={{ backgroundColor: corPrimaria }}
   />
 
-  <h2 className={`m-0 text-xl font-black leading-none ${textStrong} uppercase tracking-wider`}>
+  <h2 className={`m-0 min-w-0 break-words text-base font-black leading-tight sm:text-xl ${textStrong} uppercase tracking-wider`}>
     Análise de despesas de {mesAtivo}
   </h2>
 </div>

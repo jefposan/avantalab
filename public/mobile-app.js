@@ -4341,14 +4341,16 @@
 
   function telaLogin() {
     var boasVindas = state.telaAcesso === 'boasVindas' && !state.modoCadastro && !state.modoSenha;
-    var maxH = (state.modoCadastro || state.modoSenha)
-      ? 'calc(80dvh - 1.5rem)'
-      : 'calc(80dvh - 5.5rem)';
+    var maxH = boasVindas
+      ? 'none'
+      : ((state.modoCadastro || state.modoSenha)
+        ? 'calc(80dvh - 1.5rem)'
+        : 'calc(80dvh - 5.5rem)');
     var padClass = state.modoCadastro ? 'p-3' : 'p-3';
 
     return (
-      '<section class="avantalab-mobile-bg fixed inset-0 flex flex-col items-center overflow-hidden px-4 pb-4" style="height:100dvh;padding-top:20dvh;--avantalab-mobile-bg-overlay:linear-gradient(rgba(255,255,255,.08),rgba(255,255,255,0));">' +
-        '<div class="mx-auto w-full max-w-md overflow-y-auto rounded-3xl border border-white/35 ' + padClass + ' text-slate-900 shadow-2xl backdrop-blur-xl" style="background-color:rgba(255,255,255,.18);max-height:' + maxH + ';overscroll-behavior:contain;">' +
+      '<section class="avantalab-mobile-bg fixed inset-0 flex flex-col items-center overflow-x-hidden overflow-y-auto px-4 pb-4" style="height:100dvh;padding-top:clamp(12rem,28dvh,14rem);background-position:center bottom;background-size:auto 108%;overscroll-behavior:contain;--avantalab-mobile-bg-overlay:linear-gradient(rgba(255,255,255,.08),rgba(255,255,255,0));">' +
+        '<div class="mx-auto w-full max-w-md shrink-0 overflow-y-auto rounded-3xl border border-white/35 ' + padClass + ' text-slate-900 shadow-2xl backdrop-blur-xl" style="background-color:rgba(255,255,255,.18);max-height:' + maxH + ';overscroll-behavior:contain;">' +
           (boasVindas
             ? telaBoasVindas()
             : '<div class="' + (state.modoCadastro ? 'mb-2' : 'mb-3') + '">' +
@@ -4388,7 +4390,7 @@
 
   function telaCarregandoMobile() {
     return (
-      '<section class="avantalab-mobile-bg fixed inset-0 flex items-center justify-center overflow-hidden px-4" style="height:100dvh;">' +
+      '<section class="avantalab-mobile-bg fixed inset-0 flex items-center justify-center overflow-hidden px-4" style="height:100dvh;background-position:center bottom;background-size:auto 108%;">' +
         '<div class="w-full max-w-xs rounded-3xl border border-white/40 bg-white/25 p-5 text-center text-slate-900 shadow-2xl backdrop-blur-xl">' +
           '<p class="text-xs font-black uppercase tracking-[0.24em] text-cyan-700">AvantaLab</p>' +
           '<h1 class="mt-2 text-xl font-black">Preparando acesso</h1>' +
@@ -4402,7 +4404,7 @@
     if (isStandalone()) return '';
 
     return (
-      '<div class="mx-auto mt-3 w-full max-w-md rounded-2xl border border-white/25 p-3 text-slate-800 shadow-lg backdrop-blur-lg" style="background-color:rgba(255,255,255,.14)">' +
+      '<div class="mx-auto mt-3 w-full max-w-md shrink-0 rounded-2xl border border-white/25 p-3 text-slate-800 shadow-lg backdrop-blur-lg" style="background-color:rgba(255,255,255,.14)">' +
         '<div class="flex items-center justify-between gap-3">' +
           '<div class="min-w-0">' +
             '<p class="text-xs font-black uppercase tracking-wide"><span style="color:#003E73">AVANTA</span><span style="color:#00A6C8">LAB</span> app</p>' +
@@ -4631,8 +4633,8 @@
     }
 
     return (
-      '<div class="' + (state.visao === 'agenda' ? 'h-screen overflow-hidden' : 'min-h-screen pb-32') + ' mobile-app-shell ' + (state.darkMode ? 'mobile-dark bg-slate-950 text-slate-100' : 'mobile-light bg-slate-100 text-slate-900') + '">' +
-        '<header class="fixed inset-x-0 top-0 z-40 border-b border-white/15 px-4 pb-3 text-white shadow-xl shadow-sky-950/20 backdrop-blur" style="padding-top:calc(env(safe-area-inset-top) + 10px);background:linear-gradient(135deg,#003E73 0%,#075985 54%,#00A6C8 100%);">' +
+      '<div class="mobile-app-shell fixed inset-0 flex min-w-0 flex-col overflow-hidden ' + (state.darkMode ? 'mobile-dark bg-slate-950 text-slate-100' : 'mobile-light bg-slate-100 text-slate-900') + '" style="overscroll-behavior:none;">' +
+        '<header class="z-40 shrink-0 border-b border-white/15 px-3 pb-3 text-white shadow-xl shadow-sky-950/20 backdrop-blur sm:px-4" style="padding-top:calc(env(safe-area-inset-top) + 10px);background:linear-gradient(135deg,#003E73 0%,#075985 54%,#00A6C8 100%);">' +
           '<div class="mx-auto max-w-md">' +
             '<div class="flex items-center gap-3">' +
               '<div class="min-w-0 flex-1">' +
@@ -4661,12 +4663,13 @@
             insightDespesasHtml(atual, anterior) +
           '</div>' +
         '</header>' +
-        '<div class="mx-auto grid max-w-md gap-3 px-4" style="padding-top:calc(env(safe-area-inset-top) + ' + (state.visao === 'agenda' ? '168px' : '132px') + ');">' +
+        '<div class="min-h-0 flex-1 overflow-y-auto overscroll-contain" style="padding-bottom:calc(env(safe-area-inset-bottom) + 82px);-webkit-overflow-scrolling:touch;">' +
+        '<div class="mx-auto grid w-full min-w-0 max-w-md gap-3 px-3 pt-3 sm:px-4">' +
           '<div class="-mb-2 min-w-0 text-center"><p class="truncate text-[15px] font-semibold leading-5 ' + (state.darkMode ? 'text-slate-200' : 'text-slate-700') + '">' + escapeHtml(nomeEmpresa(state.empresa)) + '</p></div>' +
           alertaHtml().replace('mt-4', '') +
           (state.visao === 'home' ? homeHtml(atual, anterior) : (state.visao === 'agenda' ? agendaMobileHtml(atual) : listaDetalhadaHtml(atual))) +
           (state.visao === 'agenda' ? '' : rodapeMobileHtml()) +
-        '</div>' +
+        '</div></div>' +
         (state.modalLancamento ? modalLancamentoHtml() : '') +
         (state.modalAcao ? modalAcaoLancamentoHtml() : '') +
         (state.menuAberto ? menuLateralHtml() : '') +
@@ -4792,7 +4795,7 @@
                 '<p class="min-w-0 truncate text-sm font-bold text-slate-800">' + escapeHtml(item.despesa) + ' <span class="text-xs font-semibold text-slate-400">&middot; dia ' + item.dia + '</span></p>' +
                 '<strong class="shrink-0 text-sm font-black text-red-600">' + dinheiro(item.valor) + '</strong>' +
               '</div>' +
-              '<div class="mt-2 grid grid-cols-3 gap-1.5">' +
+              '<div class="mt-2 grid grid-cols-1 gap-1.5 min-[380px]:grid-cols-3">' +
                 '<button type="button" data-confirmar-id="' + escapeHtml(item.id) + '" class="h-8 rounded-lg bg-emerald-600 text-[11px] font-black text-white active:bg-emerald-700">Confirmar</button>' +
                 '<button type="button" data-ajustar-id="' + escapeHtml(item.id) + '" class="h-8 rounded-lg border border-slate-300 bg-white text-[11px] font-black text-slate-700 active:bg-slate-50">Ajustar valor</button>' +
                 '<button type="button" data-excluir-prevista-id="' + escapeHtml(item.id) + '" class="h-8 rounded-lg border border-red-200 bg-white text-[11px] font-black text-red-600 active:bg-red-50">Excluir</button>' +
@@ -6767,7 +6770,7 @@
               return '<option value="' + escapeHtml(categoria) + '"' + (categoria === despesa.categoria ? ' selected' : '') + '>' + escapeHtml(categoria) + '</option>';
             }).join('') +
           '</select>' +
-          '<div class="grid grid-cols-3 gap-1.5">' +
+          '<div class="grid grid-cols-1 gap-1.5 min-[380px]:grid-cols-3">' +
             '<button type="button" data-categoria-cancelar="' + escapeHtml(id) + '" class="h-9 rounded-lg border border-slate-200 bg-white text-[10px] font-black uppercase text-slate-600">Cancelar</button>' +
             '<button type="button" data-categoria-excluir="' + escapeHtml(id) + '" class="h-9 rounded-lg border border-rose-100 bg-white text-[10px] font-black uppercase text-rose-600">Excluir</button>' +
             '<button type="button" data-categoria-salvar="' + escapeHtml(id) + '" class="h-9 rounded-lg bg-slate-950 text-[10px] font-black uppercase text-white">' + (state.carregando ? 'Salvando' : 'Salvar') + '</button>' +

@@ -58,30 +58,30 @@ export default function Graficos({ meses, lancamentos, faturamentos, corPrimaria
   }, [lancamentos, corPrimaria]);
 
   return (
-    <main className="w-full space-y-8 animate-fade-in">
-      <div className="flex items-center mb-6">
+    <main className="w-full min-w-0 max-w-full space-y-6 overflow-x-hidden animate-fade-in sm:space-y-8">
+      <div className="mb-5 flex min-w-0 items-center sm:mb-6">
         <span className="w-3 h-8 rounded-full mr-4 shadow-sm" style={{ backgroundColor: corPrimaria }}></span>
-        <h2 className={`text-2xl font-black ${textStrong} uppercase tracking-wider`}>Análise Gráfica</h2>
+        <h2 className={`min-w-0 break-words text-xl font-black sm:text-2xl ${textStrong} uppercase tracking-wider`}>Análise Gráfica</h2>
       </div>
 
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-8 items-start">
         
         {/* GRÁFICO 1: BARRAS - RECEITAS X DESPESAS */}
 <div 
-  className={`xl:col-span-2 ${bgCard} rounded-2xl shadow-lg border p-8 flex flex-col border-t-4 self-start min-h-[460px]`} 
+  className={`xl:col-span-2 ${bgCard} min-w-0 rounded-2xl shadow-lg border p-4 sm:p-6 xl:p-8 flex flex-col border-t-4 self-start min-h-[400px] sm:min-h-[460px]`}
   style={{ borderTopColor: corPrimaria }}
 >
-  <div className="flex justify-between items-end mb-8">
+  <div className="mb-6 flex flex-col gap-3 sm:mb-8 sm:flex-row sm:items-end sm:justify-between">
     <h3 className={`font-bold uppercase tracking-wider ${textStrong}`}>
       Comparativo Anual
     </h3>
-            <div className="flex gap-4 text-xs font-bold">
+            <div className="flex flex-wrap gap-x-4 gap-y-2 text-xs font-bold">
               <div className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-full bg-[#00b050]"></span> Faturamento</div>
               <div className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-full bg-red-600"></span> Despesas</div>
             </div>
           </div>
 
-          <div className="flex items-end gap-2 h-[285px] pb-4 border-b border-slate-200/20 relative mt-4">
+          <div className="relative mt-4 flex h-[240px] min-w-0 items-end gap-1 overflow-hidden border-b border-slate-200/20 pb-4 sm:h-[285px] sm:gap-2">
             {/* Linhas de grade horizontais de fundo */}
             <div className="absolute inset-0 flex flex-col justify-between pointer-events-none opacity-10">
               {[...Array(5)].map((_, i) => <div key={i} className="border-b border-black w-full h-0"></div>)}
