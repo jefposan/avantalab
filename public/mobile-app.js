@@ -204,6 +204,8 @@
     agendaAnimar: null,
     agendaItens: [],
     notificacoesNaoLidas: 0,
+    notificacoesLista: [],
+    notificacoesCarregando: false,
     mostrarPromptNotificacoes: false,
     tourAberto: false,
     tourPasso: 0,
@@ -1786,6 +1788,76 @@
         await db.from('notificacoes').update({ lida: true }).eq('lida', false);
       }
     } catch (e) {}
+  }
+
+  // ── Painel de notificacoes (lista as mensagens do sininho) ──
+  async function abrirNotificacoesMobile() {
+    state.menuAberto = false;
+    state.modalMenu = 'notificacoes';
+    state.notificacoesCarregando = true;
+    render();
+    await carregarNotificacoesLista();
+    render();
+    // marca como lidas (zera a bolinha) mantendo as mensagens visiveis no painel
+    marcarNotificacoesComoLidas();
+  }
+
+  async function carregarNotificacoesLista() {
+    state.notificacoesCarregando = true;
+    try {
+      var resp = await db
+        .from('notificacoes')
+        .select('id, titulo, corpo, url, tipo, lida, criado_em')
+        .order('criado_em', { ascending: false })
+        .limit(50);
+      state.notificacoesLista = (resp && resp.data) ? resp.data : [];
+    } catch (e) {
+      state.notificacoesLista = [];
+    }
+    state.notificacoesCarregando = false;
+  }
+
+  function quandoNotificacaoTexto(criadoEm) {
+    if (!criadoEm) return '';
+    var d = new Date(criadoEm);
+    if (isNaN(d.getTime())) return '';
+    var agora = new Date();
+    var difMin = Math.floor((agora.getTime() - d.getTime()) / 60000);
+    if (difMin < 1) return 'Agora';
+    if (difMin < 60) return 'Ha ' + difMin + ' min';
+    if (difMin < 1440 && agora.getDate() === d.getDate()) return 'Hoje ' + ('0' + d.getHours()).slice(-2) + ':' + ('0' + d.getMinutes()).slice(-2);
+    return ('0' + d.getDate()).slice(-2) + '/' + ('0' + (d.getMonth() + 1)).slice(-2) + '/' + d.getFullYear() + ' ' + ('0' + d.getHours()).slice(-2) + ':' + ('0' + d.getMinutes()).slice(-2);
+  }
+
+  function notificacoesMobileHtml() {
+    if (state.notificacoesCarregando) {
+      return '<p class="py-8 text-center text-sm font-semibold text-slate-500">Carregando...</p>';
+    }
+    var lista = state.notificacoesLista || [];
+    if (!lista.length) {
+      return '<div class="py-10 text-center"><p class="text-sm font-semibold text-slate-500">Nenhuma notificacao por aqui ainda.</p></div>';
+    }
+    var coresTipo = {
+      despesa: 'bg-amber-100 text-amber-700',
+      agenda: 'bg-cyan-100 text-cyan-700',
+      novidade: 'bg-emerald-100 text-emerald-700',
+      sistema: 'bg-slate-100 text-slate-600'
+    };
+    var rotulosTipo = { despesa: 'Despesa', agenda: 'Agenda', novidade: 'Novidade', sistema: 'Sistema' };
+    return '<div class="grid gap-2">' + lista.map(function (n) {
+      var naoLida = n.lida === false;
+      var selo = coresTipo[n.tipo] || coresTipo.sistema;
+      var rotulo = rotulosTipo[n.tipo] || 'Aviso';
+      return '<div class="rounded-2xl border p-3 ' + (naoLida ? 'border-cyan-200 bg-cyan-50/60' : 'border-slate-200 bg-white') + '">' +
+          '<div class="mb-1 flex items-center gap-2">' +
+            (naoLida ? '<span class="h-2 w-2 shrink-0 rounded-full bg-cyan-500"></span>' : '') +
+            '<span class="inline-block rounded-full px-2 py-0.5 text-[10px] font-black uppercase ' + selo + '">' + escapeHtml(rotulo) + '</span>' +
+            '<span class="ml-auto shrink-0 text-[10px] font-bold text-slate-400">' + escapeHtml(quandoNotificacaoTexto(n.criado_em)) + '</span>' +
+          '</div>' +
+          '<p class="text-sm font-black text-slate-900">' + escapeHtml(n.titulo || '') + '</p>' +
+          (n.corpo ? '<p class="mt-0.5 whitespace-pre-line text-xs font-semibold text-slate-600">' + escapeHtml(n.corpo) + '</p>' : '') +
+        '</div>';
+    }).join('') + '</div>';
   }
 
   async function instalarApp() {
@@ -5881,6 +5953,7 @@
       feedback: 'Dúvidas e Sugestões',
       despesasFixas: 'Gerenciar despesas fixas',
       sobre: 'Sobre',
+      notificacoes: 'Notificações',
     }[state.modalMenu] || 'Menu';
 
     return (
@@ -5912,6 +5985,7 @@
     if (state.modalMenu === 'feedback') return feedbackMobileHtml();
     if (state.modalMenu === 'despesasFixas') return despesasFixasMenuHtml();
     if (state.modalMenu === 'sobre') return sobreMobileHtml();
+    if (state.modalMenu === 'notificacoes') return notificacoesMobileHtml();
     return '';
   }
 
@@ -7331,13 +7405,7 @@
     bind('feedback-outra', voltarFeedbackMobile);
     bind('abrir-agenda-card', abrirAgendaMobile);
     bind('avisos-dashboard', function () {
-      marcarNotificacoesComoLidas();
-      abrirAgendaMobile();
-      var hoje = new Date();
-      state.mes = meses[hoje.getMonth()];
-      state.ano = String(hoje.getFullYear());
-      state.agendaDiaSelecionado = hoje.getDate();
-      render();
+      abrirNotificacoesMobile();
     });
     bind('abrir-agenda-item', abrirFormularioAgendaMobile);
     bind('cancelar-agenda-item', cancelarFormularioAgendaMobile);
