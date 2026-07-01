@@ -151,6 +151,7 @@
     dragDashboardId: '',
     evolucaoSelecionada: {},
     evolucaoSelecionadaMes: {},
+    sobreAbertos: {},
     toast: '',
     duplicadosAtivo: true,
     feedbackEtapa: 'inicio',
@@ -416,7 +417,7 @@
     return '<div class="mx-auto max-w-md px-4 py-5">' + conteudo + '</div>';
   }
 
-  var APP_VERSION = '1.3.21';
+  var APP_VERSION = '1.3.3';
   var APP_VERSION_LABEL = 'AvantaLab Gest&atilde;o v' + APP_VERSION;
 
   function telaAvisoMobile(titulo, texto) {
@@ -5950,15 +5951,16 @@
       '</div>';
 
     var lista = versoes.map(function (v) {
+      var aberto = !!state.sobreAbertos[v.versao];
       var itens = (v.itens || []).map(function (it) {
         return '<li class="flex gap-2 text-[12px] ' + (dk ? 'text-slate-300' : 'text-slate-600') + '"><span style="color:#00A6C8">&bull;</span><span>' + escapeHtml(it) + '</span></li>';
       }).join('');
       return '<div class="rounded-xl border ' + itemBorda + ' p-3">' +
-          '<div class="flex items-baseline justify-between gap-2">' +
-            '<p class="text-sm font-black">v' + escapeHtml(v.versao) + ' &middot; ' + escapeHtml(v.titulo || '') + '</p>' +
-            '<span class="shrink-0 text-[11px] font-bold ' + muted + '">' + escapeHtml(v.data || '') + '</span>' +
-          '</div>' +
-          '<ul class="mt-2 grid gap-1">' + itens + '</ul>' +
+          '<button type="button" data-sobre-versao="' + escapeHtml(v.versao) + '" class="flex w-full items-start justify-between gap-3 text-left">' +
+            '<span class="min-w-0"><span class="block text-sm font-black">v' + escapeHtml(v.versao) + ' &middot; ' + escapeHtml(v.titulo || '') + '</span><span class="mt-0.5 block text-[11px] font-bold ' + muted + '">' + escapeHtml(v.data || '') + '</span></span>' +
+            '<span class="mt-0.5 flex shrink-0 items-center gap-1 text-[11px] font-black" style="color:' + corLink + '">' + (aberto ? 'Ocultar' : 'Ver melhorias') + '<span class="text-[9px] leading-none">' + (aberto ? '&#9650;' : '&#9660;') + '</span></span>' +
+          '</button>' +
+          (aberto ? '<ul class="mt-3 grid gap-1 border-t ' + itemBorda + ' pt-3">' + itens + '</ul>' : '') +
         '</div>';
     }).join('');
 
@@ -7840,6 +7842,13 @@
         render();
       });
     });
+    Array.prototype.forEach.call(document.querySelectorAll('[data-sobre-versao]'), function (botao) {
+      botao.addEventListener('click', function () {
+        var v = botao.getAttribute('data-sobre-versao');
+        state.sobreAbertos[v] = !state.sobreAbertos[v];
+        render();
+      });
+    });
     configurarDragDashboard();
     configurarGestosAgenda();
     configurarScrollFixoAgenda();
@@ -8484,7 +8493,7 @@
     });
 
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/mobile-sw.js?v=162').then(function (registro) {
+      navigator.serviceWorker.register('/mobile-sw.js?v=163').then(function (registro) {
         if (registro && registro.update) registro.update();
       }).catch(function () {});
     }

@@ -16,6 +16,7 @@ interface SobreModalProps {
 export default function SobreModal({ aberto, onFechar, darkMode, versaoAtual }: SobreModalProps) {
   const [dados, setDados] = useState<Changelog | null>(null);
   const [carregando, setCarregando] = useState(false);
+  const [abertos, setAbertos] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
     if (!aberto || dados) return;
@@ -66,21 +67,36 @@ export default function SobreModal({ aberto, onFechar, darkMode, versaoAtual }: 
                 <h3 className={`mb-1 text-[11px] font-black uppercase tracking-wide ${muted}`}>Novidades das versões</h3>
                 <p className="mb-3 text-xs font-bold" style={{ color: darkMode ? '#7dd3fc' : '#003E73' }}>Versão instalada: {versaoAtual}</p>
                 <div className="grid gap-3">
-                  {dados.versoes.map((v) => (
-                    <div key={v.versao} className={`rounded-xl border p-3 ${itemBorda}`}>
-                      <div className="flex min-w-0 flex-col gap-1 sm:flex-row sm:items-baseline sm:justify-between sm:gap-2">
-                        <p className="min-w-0 break-words text-sm font-black">v{v.versao} · {v.titulo}</p>
-                        <span className={`shrink-0 text-[11px] font-bold ${muted}`}>{v.data}</span>
+                  {dados.versoes.map((v) => {
+                    const aberto = !!abertos[v.versao];
+                    return (
+                      <div key={v.versao} className={`rounded-xl border p-3 ${itemBorda}`}>
+                        <button
+                          type="button"
+                          onClick={() => setAbertos((p) => ({ ...p, [v.versao]: !p[v.versao] }))}
+                          className="flex w-full items-start justify-between gap-3 text-left"
+                        >
+                          <span className="min-w-0">
+                            <span className="block min-w-0 break-words text-sm font-black">v{v.versao} · {v.titulo}</span>
+                            <span className={`mt-0.5 block text-[11px] font-bold ${muted}`}>{v.data}</span>
+                          </span>
+                          <span className="mt-0.5 flex shrink-0 items-center gap-1 text-[11px] font-black" style={{ color: darkMode ? '#7dd3fc' : '#003E73' }}>
+                            {aberto ? 'Ocultar' : 'Ver melhorias'}
+                            <svg className={`h-3.5 w-3.5 transition-transform ${aberto ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7" /></svg>
+                          </span>
+                        </button>
+                        {aberto && (
+                          <ul className="mt-3 grid gap-1 border-t pt-3" style={{ borderColor: darkMode ? 'rgba(148,163,184,0.2)' : 'rgba(148,163,184,0.25)' }}>
+                            {v.itens.map((it, i) => (
+                              <li key={i} className={`flex gap-2 text-xs ${darkMode ? 'text-slate-300' : 'text-slate-600'}`}>
+                                <span style={{ color: '#00A6C8' }}>•</span><span>{it}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        )}
                       </div>
-                      <ul className="mt-2 grid gap-1">
-                        {v.itens.map((it, i) => (
-                          <li key={i} className={`flex gap-2 text-xs ${darkMode ? 'text-slate-300' : 'text-slate-600'}`}>
-                            <span style={{ color: '#00A6C8' }}>•</span><span>{it}</span>
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </section>
             </div>

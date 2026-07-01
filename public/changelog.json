@@ -13,6 +13,26 @@
   },
   "versoes": [
     {
+      "versao": "1.3.3",
+      "titulo": "Gráficos, tipos de despesa e melhorias gerais",
+      "data": "Julho/2026",
+      "itens": [
+        "Despesas identificadas como Previsto, Fixa ou Parcela, cada uma com sua cor.",
+        "Despesas fixas geradas automaticamente a cada mês; previstas e fixas pedem confirmação no dia, com confirmação automática ao fim do dia.",
+        "Aviso das despesas do dia por notificação no celular e no sininho.",
+        "Criação de perfil (empresa ou pessoal) liberada para qualquer usuário.",
+        "Nova página de Gráficos com painel organizável em duas colunas: arraste, expanda/reduza e oculte os blocos.",
+        "Novos gráficos: resultado mensal, evolução acumulada, EBITDA, gastos por categoria, composição por tipo, top 10 despesas e despesa sobre faturamento, com detalhes que seguem o mouse.",
+        "Backup e restauração dos seus dados, também pelo celular.",
+        "Por privacidade, os valores agora começam ocultos ao abrir o app.",
+        "Novo cabeçalho, com saudação por horário.",
+        "Novo menu no rodapé, personalizável.",
+        "Agenda redesenhada — mais fluida e organizada.",
+        "Nova animação ao puxar a tela para atualizar.",
+        "Diversas correções de estabilidade, layout e desempenho."
+      ]
+    },
+    {
       "versao": "1.3",
       "titulo": "Módulo Controle de Ponto",
       "data": "Junho/2026",
