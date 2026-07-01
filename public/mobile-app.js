@@ -150,6 +150,7 @@
     atalhoInferiorDireito: 'agenda',
     dragDashboardId: '',
     evolucaoSelecionada: {},
+    evolucaoSelecionadaMes: {},
     toast: '',
     duplicadosAtivo: true,
     feedbackEtapa: 'inicio',
@@ -415,7 +416,7 @@
     return '<div class="mx-auto max-w-md px-4 py-5">' + conteudo + '</div>';
   }
 
-  var APP_VERSION = '1.3.20';
+  var APP_VERSION = '1.3.21';
   var APP_VERSION_LABEL = 'AvantaLab Gest&atilde;o v' + APP_VERSION;
 
   function telaAvisoMobile(titulo, texto) {
@@ -1369,7 +1370,8 @@
   }
 
   function avaLogoPrincipalHtml(width, height) {
-    return '<img src="/images/ava-logo-principal.png" alt="Ava" style="display:block;width:' + width + 'px;height:' + height + 'px;object-fit:contain;flex-shrink:0;">';
+    // background-image (em vez de <img>) para nao "piscar" ao reconstruir o innerHTML a cada render.
+    return '<span role="img" aria-label="Ava" style="display:block;width:' + width + 'px;height:' + height + 'px;background-image:url(/images/ava-logo-principal.png);background-size:contain;background-position:center;background-repeat:no-repeat;flex-shrink:0;"></span>';
   }
 
   function pararGravacaoIA() {
@@ -4766,17 +4768,13 @@
       ? ''
       : '<span class="inline-flex items-center rounded-full border border-white/15 bg-white/10 px-2 py-0.5 font-black text-white shadow-sm">Usu&aacute;rios ativos ' + inteiro(state.usuariosAtivosSistema) + '</span>';
     return (
-      '<footer class="mt-2 overflow-hidden rounded-2xl border border-white/15 px-4 py-4 text-center text-[11px] text-white shadow-lg shadow-sky-950/15" style="background:linear-gradient(135deg,#003E73 0%,#075985 54%,#00A6C8 100%);">' +
-        '<div class="text-xs font-black tracking-[0.18em] text-white">' + APP_VERSION_LABEL + '</div>' +
-        '<p class="mt-1 flex flex-wrap items-center justify-center gap-x-2 gap-y-1 font-semibold text-cyan-50/90">&copy; ' + ano + ' Todos os direitos reservados.' + usuariosAtivosHtml + '</p>' +
-        '<div class="mt-3 flex justify-center">' +
-          '<button id="sobre-mobile" type="button" class="inline-flex items-center gap-1.5 rounded-full border border-white/25 bg-white/20 px-4 py-1.5 font-black text-white shadow-sm backdrop-blur">' +
-            '<span class="text-[13px] leading-none">&#9432;</span>Sobre e novidades' +
-          '</button>' +
-        '</div>' +
-        '<div class="mt-2 flex flex-wrap items-center justify-center gap-x-2 gap-y-1.5 font-bold text-cyan-50/90">' +
+      '<footer class="mt-2 overflow-hidden rounded-2xl border border-white/15 px-3 py-2.5 text-center text-[11px] text-white shadow-lg shadow-sky-950/15" style="background:linear-gradient(135deg,#003E73 0%,#075985 54%,#00A6C8 100%);">' +
+        '<div class="text-[11px] font-black tracking-[0.16em] text-white">' + APP_VERSION_LABEL + '</div>' +
+        '<p class="mt-0.5 flex flex-wrap items-center justify-center gap-x-2 gap-y-0.5 font-semibold text-cyan-50/90">&copy; ' + ano + ' Todos os direitos reservados.' + usuariosAtivosHtml + '</p>' +
+        '<div class="mt-1.5 flex flex-wrap items-center justify-center gap-1.5 font-bold text-cyan-50/90">' +
+          '<button id="sobre-mobile" type="button" class="inline-flex items-center gap-1 rounded-full border border-white/25 bg-white/20 px-3 py-1 text-cyan-50 backdrop-blur"><span class="text-[12px] leading-none">&#9432;</span>Sobre</button>' +
           '<a href="https://www.instagram.com/avanta.lab" target="_blank" rel="noopener noreferrer" class="rounded-full border border-white/15 bg-white/10 px-3 py-1 text-cyan-50 backdrop-blur">@avanta.lab</a>' +
-          '<button id="termos-mobile" type="button" class="rounded-full border border-white/15 bg-white/10 px-3 py-1 text-cyan-50 backdrop-blur">Termos de Uso</button>' +
+          '<button id="termos-mobile" type="button" class="rounded-full border border-white/15 bg-white/10 px-3 py-1 text-cyan-50 backdrop-blur">Termos</button>' +
           '<button id="privacidade-mobile" type="button" class="rounded-full border border-white/15 bg-white/10 px-3 py-1 text-cyan-50 backdrop-blur">Privacidade</button>' +
         '</div>' +
       '</footer>'
@@ -5333,7 +5331,9 @@
     });
     var max = Math.max.apply(null, lista.map(function (item) { return item.valor; }).concat([1]));
     var cor = tipo === 'despesas' ? 'bg-red-400' : 'bg-emerald-400';
+    var corForte = tipo === 'despesas' ? 'bg-red-600' : 'bg-emerald-600';
     var valorSelecionado = state.evolucaoSelecionada[tipo];
+    var mesSelecionado = state.evolucaoSelecionadaMes[tipo];
 
     return (
       '<section class="rounded-2xl bg-white p-4 shadow-sm">' +
@@ -5344,7 +5344,11 @@
         '<div class="flex h-28 items-end gap-2">' +
           lista.map(function (item) {
             var altura = Math.max(8, Math.round((item.valor / max) * 100));
-            return '<button type="button" data-evolucao-tipo="' + escapeHtml(tipo) + '" data-evolucao-mes="' + escapeHtml(item.mes) + '" data-evolucao-valor="' + escapeHtml(item.valor) + '" class="flex min-w-0 flex-1 flex-col items-center gap-1"><div class="flex h-24 w-full items-end"><div class="w-full rounded-t-md ' + cor + '" style="height:' + altura + '%"></div></div><span class="text-[9px] font-bold text-slate-400">' + item.mes.slice(0, 3) + '</span></button>';
+            var sel = item.mes === mesSelecionado;
+            var corBarra = sel ? corForte : cor;
+            var classeBtn = 'flex min-w-0 flex-1 flex-col items-center gap-1 rounded-lg px-0.5 py-1 transition' + (sel ? (tipo === 'despesas' ? ' bg-red-50 ring-1 ring-red-200' : ' bg-emerald-50 ring-1 ring-emerald-200') : '');
+            var classeLabel = 'text-[9px] font-bold ' + (sel ? (tipo === 'despesas' ? 'text-red-700' : 'text-emerald-700') : 'text-slate-400');
+            return '<button type="button" data-evolucao-tipo="' + escapeHtml(tipo) + '" data-evolucao-mes="' + escapeHtml(item.mes) + '" data-evolucao-valor="' + escapeHtml(item.valor) + '" class="' + classeBtn + '"><div class="flex h-24 w-full items-end"><div class="w-full rounded-t-md ' + corBarra + '" style="height:' + altura + '%"></div></div><span class="' + classeLabel + '">' + item.mes.slice(0, 3) + '</span></button>';
           }).join('') +
         '</div>' +
       '</section>'
@@ -7832,6 +7836,7 @@
       botao.addEventListener('click', function () {
         var tipo = botao.getAttribute('data-evolucao-tipo');
         state.evolucaoSelecionada[tipo] = Number(botao.getAttribute('data-evolucao-valor') || 0);
+        state.evolucaoSelecionadaMes[tipo] = botao.getAttribute('data-evolucao-mes');
         render();
       });
     });
@@ -8479,7 +8484,7 @@
     });
 
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/mobile-sw.js?v=161').then(function (registro) {
+      navigator.serviceWorker.register('/mobile-sw.js?v=162').then(function (registro) {
         if (registro && registro.update) registro.update();
       }).catch(function () {});
     }

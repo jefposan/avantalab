@@ -7957,6 +7957,7 @@ name="novo-usuario-login"
         faturamentos={faturamentos}
         despesasCadastradas={despesasCadastradas}
         tipoPerfil={tipoPerfilAtualNormalizado}
+        empresaId={empresaId}
         corPrimaria={corPrimaria}
         darkMode={darkMode}
         formatarMoeda={formatarMoeda}
