@@ -1455,6 +1455,13 @@
     return '';
   }
 
+  function saudacaoPeriodoMobile() {
+    var horaAtual = new Date().getHours();
+    if (horaAtual < 12) return 'Bom dia!';
+    if (horaAtual < 18) return 'Boa tarde!';
+    return 'Boa noite!';
+  }
+
   function trocarTema() {
     state.darkMode = !state.darkMode;
     try {
@@ -4639,7 +4646,7 @@
           '<div class="mx-auto max-w-md">' +
             '<div class="flex items-center gap-3">' +
               '<div class="min-w-0 flex-1">' +
-                '<h1 class="truncate text-lg font-black leading-tight text-white">' + (function(){ var pn = primeiroNomeUsuarioAva(); return 'Ol&aacute;' + (pn ? ', ' + escapeHtml(pn) : ''); })() + '</h1>' +
+                '<h1 class="truncate text-lg font-black leading-tight text-white">' + (function(){ var pn = primeiroNomeUsuarioAva(); return 'Ol&aacute;' + (pn ? ', ' + escapeHtml(pn) : '') + '. ' + saudacaoPeriodoMobile(); })() + '</h1>' +
                 '<p class="truncate text-[11px] font-semibold text-cyan-100/75">Bem-vindo ao AvantaLab</p>' +
               '</div>' +
               (state.visao === 'home'
@@ -7943,8 +7950,16 @@
       indicador = document.createElement('div');
       indicador.id = 'pull-refresh-indicator';
       indicador.className = 'pointer-events-none';
-      indicador.style.cssText = 'position:fixed;left:50%;top:0;z-index:9999;display:flex;align-items:center;gap:8px;border:1px solid rgba(255,255,255,.82);border-radius:9999px;background:rgba(255,255,255,.97);padding:9px 15px;color:#334155;font-size:11px;font-weight:900;text-transform:uppercase;letter-spacing:.04em;box-shadow:0 14px 30px rgba(15,23,42,.20);backdrop-filter:blur(10px);opacity:0;transform:translate(-50%,-6px) scale(.96);transform-origin:top center;transition:opacity .14s ease,transform .14s ease;';
-      indicador.innerHTML = '<span data-pull-icon class="block text-lg leading-none transition-transform duration-150">&#8635;</span><span data-pull-text>Puxe para atualizar</span>';
+      indicador.style.cssText = 'position:fixed;left:50%;top:0;z-index:9999;display:flex;width:170px;flex-direction:column;align-items:center;pointer-events:none;opacity:0;transform:translateX(-50%);transform-origin:top center;transition:opacity .12s ease;';
+      indicador.innerHTML =
+        '<span data-pull-ring style="position:relative;display:flex;width:58px;height:58px;align-items:center;justify-content:center;border-radius:999px;background:rgba(2,6,23,.58);box-shadow:0 10px 24px rgba(2,6,23,.24);backdrop-filter:blur(8px);transform:scale(.84);will-change:transform;">' +
+          '<svg data-pull-svg width="58" height="58" viewBox="0 0 58 58" fill="none" style="position:absolute;inset:0;transform:rotate(-90deg);transform-origin:center;will-change:transform;">' +
+            '<circle cx="29" cy="29" r="24" stroke="rgba(255,255,255,.22)" stroke-width="6"></circle>' +
+            '<circle data-pull-progress cx="29" cy="29" r="24" stroke="#38bdf8" stroke-width="6" stroke-linecap="round" stroke-dasharray="150.8" stroke-dashoffset="150.8" style="will-change:stroke-dashoffset;"></circle>' +
+          '</svg>' +
+          '<span data-pull-symbol style="position:relative;color:#e0f2fe;font-size:22px;font-weight:900;line-height:1;will-change:transform;">&#8635;</span>' +
+        '</span>' +
+        '<span data-pull-text style="margin-top:8px;border:1px solid rgba(255,255,255,.24);border-radius:999px;background:rgba(2,6,23,.62);padding:6px 11px;color:#fff;font-size:10px;font-weight:900;text-transform:uppercase;letter-spacing:.05em;box-shadow:0 8px 20px rgba(2,6,23,.20);opacity:0;white-space:nowrap;transition:opacity .12s ease;">Puxe para atualizar</span>';
       document.body.appendChild(indicador);
       posicionarIndicador();
       return indicador;
@@ -7957,25 +7972,42 @@
       var progressoEscurecimentoRapido = Math.max(0, Math.min(distancia / opacoEm, 1));
       var visivel = distancia >= exibirApos;
       var texto = item.querySelector('[data-pull-text]');
-      var icone = item.querySelector('[data-pull-icon]');
-      var deslocamento = -6 + Math.round(6 * progressoAviso);
-      var escala = 0.96 + (0.04 * progressoAviso);
+      var anel = item.querySelector('[data-pull-ring]');
+      var svg = item.querySelector('[data-pull-svg]');
+      var progressoCirculo = item.querySelector('[data-pull-progress]');
+      var simbolo = item.querySelector('[data-pull-symbol]');
+      var circunferencia = 150.8;
 
       posicionarIndicador();
       var opacidadeFundo = distancia > 0
         ? 0.10 + (0.28 * progressoEscurecimentoRapido) + (0.12 * progresso)
         : 0;
       animarOpacidadeFundo(soltou ? 0.72 : opacidadeFundo);
-      item.style.opacity = visivel ? String(Math.max(0.35, progressoAviso)) : '0';
-      item.style.transform = 'translate(-50%, ' + deslocamento + 'px) scale(' + escala.toFixed(3) + ')';
+      item.style.opacity = distancia > 2 ? String(Math.max(0.28, Math.min(distancia / 36, 1))) : '0';
+      item.style.transform = 'translate(-50%, ' + Math.round(64 * progresso) + 'px)';
       if (texto) texto.textContent = soltou ? 'Recarregando...' : (distancia >= limite ? 'Recarregar' : 'Puxe para atualizar');
-      if (icone) icone.style.transform = 'rotate(' + Math.round((soltou ? 360 : 260 * progresso)) + 'deg)';
+      if (texto) texto.style.opacity = soltou ? '1' : (visivel ? String(Math.max(0.35, progressoAviso)) : '0');
+      if (anel) {
+        anel.style.transform = 'scale(' + (0.84 + (0.16 * progressoAviso)).toFixed(3) + ')';
+        anel.style.animation = !soltou && distancia >= limite ? 'pullRefreshReady .8s ease-in-out infinite' : 'none';
+      }
+      if (progressoCirculo) {
+        if (soltou) {
+          progressoCirculo.setAttribute('stroke-dasharray', '42 108.8');
+          progressoCirculo.setAttribute('stroke-dashoffset', '0');
+        } else {
+          progressoCirculo.setAttribute('stroke-dasharray', String(circunferencia));
+          progressoCirculo.setAttribute('stroke-dashoffset', (circunferencia * (1 - progresso)).toFixed(2));
+        }
+      }
+      if (svg) svg.style.animation = soltou ? 'pullRefreshSpin .72s linear infinite' : 'none';
+      if (simbolo) simbolo.style.transform = 'rotate(' + Math.round(260 * progresso) + 'deg)';
     }
 
     function esconderIndicador() {
       if (indicador) {
         indicador.style.opacity = '0';
-        indicador.style.transform = 'translate(-50%, -6px) scale(.96)';
+        indicador.style.transform = 'translate(-50%, 0)';
       }
       if (camada) {
         camada.style.pointerEvents = 'none';
