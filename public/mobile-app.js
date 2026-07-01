@@ -4664,7 +4664,7 @@
             insightDespesasHtml(atual, anterior) +
           '</div>' +
         '</header>' +
-        '<div class="min-h-0 flex-1 overflow-y-auto overscroll-contain" style="padding-bottom:calc(env(safe-area-inset-bottom) + 82px);-webkit-overflow-scrolling:touch;">' +
+        '<div id="mobile-main-scroll" data-preserve-scroll class="min-h-0 flex-1 overflow-y-auto overscroll-contain" style="padding-bottom:calc(env(safe-area-inset-bottom) + 82px);-webkit-overflow-scrolling:touch;">' +
         '<div class="mx-auto grid w-full min-w-0 max-w-md gap-3 px-3 pt-3 sm:px-4">' +
           '<div class="-mb-2 min-w-0 text-center"><p class="truncate text-[15px] font-semibold leading-5 ' + (state.darkMode ? 'text-slate-200' : 'text-slate-700') + '">' + escapeHtml(nomeEmpresa(state.empresa)) + '</p></div>' +
           alertaHtml().replace('mt-4', '') +
@@ -6976,6 +6976,12 @@
     for (var _id in _scrollContainers) {
       var _alvo = document.getElementById(_id);
       if (_alvo) _alvo.scrollTop = _scrollContainers[_id];
+      (function (idPreservado, scrollPreservado) {
+        window.requestAnimationFrame(function () {
+          var alvoPreservado = document.getElementById(idPreservado);
+          if (alvoPreservado) alvoPreservado.scrollTop = scrollPreservado;
+        });
+      })(_id, _scrollContainers[_id]);
     }
 
     if (state.chatIAAberto) {
