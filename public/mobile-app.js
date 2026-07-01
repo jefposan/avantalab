@@ -7879,6 +7879,13 @@
     var limite = 280;
     var exibirApos = 20;
     var opacoEm = 70;
+    var opacidadeAtual = 0;
+    var opacidadeDestino = 0;
+    var frameOpacidade = null;
+    var ultimoFrameOpacidade = 0;
+    var solicitarFrame = window.requestAnimationFrame || function (callback) {
+      return window.setTimeout(function () { callback(Date.now()); }, 16);
+    };
 
     function scrollPrincipal() {
       return document.getElementById('mobile-main-scroll');
@@ -7896,9 +7903,38 @@
 
       camada = document.createElement('div');
       camada.id = 'pull-refresh-backdrop';
-      camada.style.cssText = 'position:fixed;inset:0;z-index:9998;pointer-events:none;background:#020617;opacity:0;transition:opacity .14s ease;';
+      camada.style.cssText = 'position:fixed;inset:0;z-index:9998;pointer-events:none;background:#020617;opacity:0;will-change:opacity;';
       document.body.appendChild(camada);
       return camada;
+    }
+
+    function animarOpacidadeFundo(destino) {
+      camadaPullToRefresh();
+      opacidadeDestino = Math.max(0, Math.min(Number(destino) || 0, 0.78));
+      if (frameOpacidade !== null) return;
+
+      ultimoFrameOpacidade = 0;
+      function renderizarFrame(timestamp) {
+        var agora = Number(timestamp) || Date.now();
+        var intervalo = ultimoFrameOpacidade ? Math.min(40, Math.max(1, agora - ultimoFrameOpacidade)) : 16;
+        ultimoFrameOpacidade = agora;
+        var fator = 1 - Math.exp(-intervalo / 48);
+        opacidadeAtual += (opacidadeDestino - opacidadeAtual) * fator;
+
+        if (Math.abs(opacidadeDestino - opacidadeAtual) < 0.003) {
+          opacidadeAtual = opacidadeDestino;
+        }
+        if (camada) camada.style.opacity = opacidadeAtual.toFixed(3);
+
+        if (opacidadeAtual !== opacidadeDestino) {
+          frameOpacidade = solicitarFrame(renderizarFrame);
+        } else {
+          frameOpacidade = null;
+          ultimoFrameOpacidade = 0;
+        }
+      }
+
+      frameOpacidade = solicitarFrame(renderizarFrame);
     }
 
     function indicadorPullToRefresh() {
@@ -7916,7 +7952,6 @@
 
     function atualizarIndicador(distancia, soltou) {
       var item = indicadorPullToRefresh();
-      var fundo = camadaPullToRefresh();
       var progresso = Math.max(0, Math.min(distancia / limite, 1));
       var progressoAviso = Math.max(0, Math.min((distancia - exibirApos) / (opacoEm - exibirApos), 1));
       var progressoEscurecimentoRapido = Math.max(0, Math.min(distancia / opacoEm, 1));
@@ -7930,7 +7965,7 @@
       var opacidadeFundo = distancia > 0
         ? 0.10 + (0.28 * progressoEscurecimentoRapido) + (0.12 * progresso)
         : 0;
-      fundo.style.opacity = String((soltou ? 0.72 : opacidadeFundo).toFixed(3));
+      animarOpacidadeFundo(soltou ? 0.72 : opacidadeFundo);
       item.style.opacity = visivel ? String(Math.max(0.35, progressoAviso)) : '0';
       item.style.transform = 'translate(-50%, ' + deslocamento + 'px) scale(' + escala.toFixed(3) + ')';
       if (texto) texto.textContent = soltou ? 'Recarregando...' : (distancia >= limite ? 'Recarregar' : 'Puxe para atualizar');
@@ -7943,9 +7978,9 @@
         indicador.style.transform = 'translate(-50%, -6px) scale(.96)';
       }
       if (camada) {
-        camada.style.opacity = '0';
         camada.style.pointerEvents = 'none';
       }
+      animarOpacidadeFundo(0);
     }
 
     function cancelarGesto() {
