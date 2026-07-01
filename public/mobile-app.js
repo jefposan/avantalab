@@ -7877,7 +7877,8 @@
     var indicador = null;
     var camada = null;
     var limite = 280;
-    var exibirApos = 80;
+    var exibirApos = 20;
+    var opacoEm = 70;
 
     function scrollPrincipal() {
       return document.getElementById('mobile-main-scroll');
@@ -7917,16 +7918,16 @@
       var item = indicadorPullToRefresh();
       var fundo = camadaPullToRefresh();
       var progresso = Math.max(0, Math.min(distancia / limite, 1));
-      var progressoAviso = Math.max(0, Math.min((distancia - exibirApos) / (limite - exibirApos), 1));
+      var progressoAviso = Math.max(0, Math.min((distancia - exibirApos) / (opacoEm - exibirApos), 1));
       var visivel = distancia >= exibirApos;
       var texto = item.querySelector('[data-pull-text]');
       var icone = item.querySelector('[data-pull-icon]');
       var deslocamento = -6 + Math.round(6 * progressoAviso);
-      var escala = 0.96 + (0.04 * progresso);
+      var escala = 0.96 + (0.04 * progressoAviso);
 
       posicionarIndicador();
       fundo.style.opacity = String((soltou ? 0.68 : 0.46 * progresso).toFixed(3));
-      item.style.opacity = visivel ? String(Math.max(0.32, progressoAviso)) : '0';
+      item.style.opacity = visivel ? String(Math.max(0.35, progressoAviso)) : '0';
       item.style.transform = 'translate(-50%, ' + deslocamento + 'px) scale(' + escala.toFixed(3) + ')';
       if (texto) texto.textContent = soltou ? 'Recarregando...' : (distancia >= limite ? 'Recarregar' : 'Puxe para atualizar');
       if (icone) icone.style.transform = 'rotate(' + Math.round((soltou ? 360 : 260 * progresso)) + 'deg)';
