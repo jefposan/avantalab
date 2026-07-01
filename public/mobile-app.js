@@ -7872,8 +7872,12 @@
     var inicioY = 0;
     var inicioX = 0;
     var acompanhando = false;
+    var puxando = false;
+    var recarregando = false;
     var indicador = null;
-    var limite = 190;
+    var camada = null;
+    var limite = 280;
+    var exibirApos = 80;
 
     function scrollPrincipal() {
       return document.getElementById('mobile-main-scroll');
@@ -7882,8 +7886,18 @@
     function posicionarIndicador() {
       if (!indicador) return;
       var header = document.getElementById('mobile-main-header');
-      var topo = header ? Math.round(header.getBoundingClientRect().bottom + 8) : 12;
+      var topo = header ? Math.round(header.getBoundingClientRect().bottom + 10) : 12;
       indicador.style.top = topo + 'px';
+    }
+
+    function camadaPullToRefresh() {
+      if (camada) return camada;
+
+      camada = document.createElement('div');
+      camada.id = 'pull-refresh-backdrop';
+      camada.style.cssText = 'position:fixed;inset:0;z-index:9998;pointer-events:none;background:#020617;opacity:0;transition:opacity .14s ease;';
+      document.body.appendChild(camada);
+      return camada;
     }
 
     function indicadorPullToRefresh() {
@@ -7892,7 +7906,7 @@
       indicador = document.createElement('div');
       indicador.id = 'pull-refresh-indicator';
       indicador.className = 'pointer-events-none';
-      indicador.style.cssText = 'position:fixed;left:50%;top:0;z-index:35;display:flex;align-items:center;gap:8px;border:1px solid rgba(255,255,255,.75);border-radius:9999px;background:rgba(255,255,255,.96);padding:8px 14px;color:#334155;font-size:11px;font-weight:900;text-transform:uppercase;letter-spacing:.04em;box-shadow:0 14px 30px rgba(15,23,42,.16);backdrop-filter:blur(10px);opacity:0;transform:translate(-50%,-8px) scale(.96);transform-origin:top center;transition:opacity .15s ease,transform .15s ease;';
+      indicador.style.cssText = 'position:fixed;left:50%;top:0;z-index:9999;display:flex;align-items:center;gap:8px;border:1px solid rgba(255,255,255,.82);border-radius:9999px;background:rgba(255,255,255,.97);padding:9px 15px;color:#334155;font-size:11px;font-weight:900;text-transform:uppercase;letter-spacing:.04em;box-shadow:0 14px 30px rgba(15,23,42,.20);backdrop-filter:blur(10px);opacity:0;transform:translate(-50%,-6px) scale(.96);transform-origin:top center;transition:opacity .14s ease,transform .14s ease;';
       indicador.innerHTML = '<span data-pull-icon class="block text-lg leading-none transition-transform duration-150">&#8635;</span><span data-pull-text>Puxe para atualizar</span>';
       document.body.appendChild(indicador);
       posicionarIndicador();
@@ -7901,71 +7915,113 @@
 
     function atualizarIndicador(distancia, soltou) {
       var item = indicadorPullToRefresh();
+      var fundo = camadaPullToRefresh();
       var progresso = Math.max(0, Math.min(distancia / limite, 1));
-      var visivel = distancia > 2;
+      var progressoAviso = Math.max(0, Math.min((distancia - exibirApos) / (limite - exibirApos), 1));
+      var visivel = distancia >= exibirApos;
       var texto = item.querySelector('[data-pull-text]');
       var icone = item.querySelector('[data-pull-icon]');
-      var deslocamento = -8 + Math.round(8 * progresso);
+      var deslocamento = -6 + Math.round(6 * progressoAviso);
       var escala = 0.96 + (0.04 * progresso);
 
       posicionarIndicador();
-      item.style.opacity = visivel ? String(Math.max(0.25, progresso)) : '0';
+      fundo.style.opacity = String((soltou ? 0.68 : 0.46 * progresso).toFixed(3));
+      item.style.opacity = visivel ? String(Math.max(0.32, progressoAviso)) : '0';
       item.style.transform = 'translate(-50%, ' + deslocamento + 'px) scale(' + escala.toFixed(3) + ')';
       if (texto) texto.textContent = soltou ? 'Recarregando...' : (distancia >= limite ? 'Recarregar' : 'Puxe para atualizar');
-      if (icone) icone.style.transform = 'rotate(' + Math.round(220 * progresso) + 'deg)';
+      if (icone) icone.style.transform = 'rotate(' + Math.round((soltou ? 360 : 260 * progresso)) + 'deg)';
     }
 
     function esconderIndicador() {
-      if (!indicador) return;
-      indicador.style.opacity = '0';
-      indicador.style.transform = 'translate(-50%, -8px) scale(.96)';
+      if (indicador) {
+        indicador.style.opacity = '0';
+        indicador.style.transform = 'translate(-50%, -6px) scale(.96)';
+      }
+      if (camada) {
+        camada.style.opacity = '0';
+        camada.style.pointerEvents = 'none';
+      }
+    }
+
+    function cancelarGesto() {
+      acompanhando = false;
+      puxando = false;
+      esconderIndicador();
+    }
+
+    function iniciarRecarregamento() {
+      var rolavel = scrollPrincipal();
+      recarregando = true;
+      acompanhando = false;
+      puxando = false;
+      atualizarIndicador(limite, true);
+      if (camada) camada.style.pointerEvents = 'auto';
+      if (rolavel) rolavel.style.overflow = 'hidden';
+      window.setTimeout(function () {
+        window.location.reload();
+      }, 750);
     }
 
     window.addEventListener('touchstart', function (event) {
+      if (recarregando) return;
       var rolavel = scrollPrincipal();
-      if (deveBloquearScroll() || !rolavel || rolavel.scrollTop > 1 || !event.touches.length) {
-        acompanhando = false;
-        esconderIndicador();
+      if (deveBloquearScroll() || !rolavel || !event.touches.length) {
+        cancelarGesto();
         return;
       }
 
       acompanhando = true;
+      puxando = rolavel.scrollTop <= 1;
       inicioY = event.touches[0].clientY;
       inicioX = event.touches[0].clientX;
     }, { passive: true });
 
     window.addEventListener('touchmove', function (event) {
-      if (!acompanhando || deveBloquearScroll() || !event.touches.length) return;
+      if (!acompanhando || recarregando || deveBloquearScroll() || !event.touches.length) return;
 
       var rolavel = scrollPrincipal();
-      var distancia = event.touches[0].clientY - inicioY;
-      var distanciaX = event.touches[0].clientX - inicioX;
-      if (!rolavel || rolavel.scrollTop > 1 || distancia <= 0 || Math.abs(distanciaX) > distancia * 0.75) {
-        acompanhando = false;
-        esconderIndicador();
+      if (!rolavel) {
+        cancelarGesto();
         return;
       }
 
+      var yAtual = event.touches[0].clientY;
+      var xAtual = event.touches[0].clientX;
+
+      if (!puxando) {
+        if (rolavel.scrollTop > 1) return;
+        puxando = true;
+        inicioY = yAtual;
+        inicioX = xAtual;
+      }
+
+      var distancia = Math.max(0, yAtual - inicioY);
+      var distanciaX = xAtual - inicioX;
+      if (Math.abs(distanciaX) > Math.max(32, distancia * 0.8)) {
+        cancelarGesto();
+        return;
+      }
+
+      if (distancia > 0 && event.cancelable) event.preventDefault();
+
       atualizarIndicador(distancia, false);
-    }, { passive: true });
+    }, { passive: false });
 
     window.addEventListener('touchend', function (event) {
-      if (!acompanhando || deveBloquearScroll()) return;
+      if (!acompanhando || recarregando || deveBloquearScroll()) return;
       acompanhando = false;
 
       var toque = event.changedTouches && event.changedTouches[0];
       var rolavel = scrollPrincipal();
-      if (toque && rolavel && rolavel.scrollTop <= 1 && toque.clientY - inicioY >= limite) {
-        atualizarIndicador(limite, true);
-        window.location.reload();
+      if (puxando && toque && rolavel && rolavel.scrollTop <= 1 && toque.clientY - inicioY >= limite) {
+        iniciarRecarregamento();
       } else {
-        esconderIndicador();
+        cancelarGesto();
       }
     }, { passive: true });
 
     window.addEventListener('touchcancel', function () {
-      acompanhando = false;
-      esconderIndicador();
+      if (!recarregando) cancelarGesto();
     }, { passive: true });
   }
 
