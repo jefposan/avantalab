@@ -336,7 +336,7 @@ const [agendaDescricao, setAgendaDescricao] = useState('');
 const [agendaRepetir, setAgendaRepetir] = useState(false);
 const [agendaRepeticao, setAgendaRepeticao] = useState<'diaria'|'semanal'|'quinzenal'|'mensal'|'anual'>('mensal');
 const [agendaItemParaExcluir, setAgendaItemParaExcluir] = useState<AgendaItem | null>(null);
-const [notificacoesWeb, setNotificacoesWeb] = useState<{ id: string; titulo: string; corpo: string }[]>([]);
+const [notificacoesWeb, setNotificacoesWeb] = useState<{ id: string; titulo: string; corpo: string; lida: boolean }[]>([]);
 const ajustesAutoFecharTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 const painelAvisosAbertoAnterior = useRef(false);
 const financeiroRealtimeChannelRef = useRef<any>(null);
@@ -1459,26 +1459,28 @@ useEffect(() => {
     try {
       const { data, error } = await supabase
         .from('notificacoes')
-        .select('id, titulo, corpo')
-        .eq('lida', false)
-        .order('criado_em', { ascending: false });
+        .select('id, titulo, corpo, lida')
+        .order('criado_em', { ascending: false })
+        .limit(50);
       if (error) return;
       setNotificacoesWeb(
         (data || []).map((n: any) => ({
           id: String(n.id),
           titulo: n.titulo || '',
           corpo: n.corpo || '',
+          lida: n.lida === true,
         }))
       );
     } catch {}
   }
 
+  // Ao fechar o painel: marca as nao lidas como lidas, mas mantem o historico visivel.
   async function marcarNotificacoesLidasWeb() {
     try {
-      const ids = notificacoesWeb.map((n) => n.id);
-      if (!ids.length) return;
-      setNotificacoesWeb([]);
-      await supabase.from('notificacoes').update({ lida: true }).in('id', ids);
+      const idsNaoLidas = notificacoesWeb.filter((n) => !n.lida).map((n) => n.id);
+      if (!idsNaoLidas.length) return;
+      setNotificacoesWeb((prev) => prev.map((n) => ({ ...n, lida: true })));
+      await supabase.from('notificacoes').update({ lida: true }).in('id', idsNaoLidas);
     } catch {}
   }
 
@@ -1487,6 +1489,13 @@ useEffect(() => {
     const id = alertaId.slice('notif-'.length);
     setNotificacoesWeb((prev) => prev.filter((n) => n.id !== id));
     try { await supabase.from('notificacoes').delete().eq('id', id); } catch {}
+  }
+
+  async function limparNotificacoesWeb() {
+    const ids = notificacoesWeb.map((n) => n.id);
+    if (!ids.length) return;
+    setNotificacoesWeb([]);
+    try { await supabase.from('notificacoes').delete().in('id', ids); } catch {}
   }
 
   // ── Sistema de Módulos ──
@@ -3852,11 +3861,12 @@ const alertasSistema = useMemo(() => {
     mensagem: string;
     acaoTexto?: string;
     acao?: () => void | Promise<void>;
+    naoLida?: boolean;
   }[] = [];
 
   // Avisos/novidades vindos do Supabase (disparos do /admin)
   notificacoesWeb.forEach((n) => {
-    alertas.push({ id: 'notif-' + n.id, titulo: n.titulo, mensagem: n.corpo });
+    alertas.push({ id: 'notif-' + n.id, titulo: n.titulo, mensagem: n.corpo, naoLida: !n.lida });
   });
 
   if (backupPendente) {
@@ -3867,6 +3877,7 @@ const alertasSistema = useMemo(() => {
         'Recomendamos gerar um backup local dos dados da empresa após o encerramento de cada mês.',
       acaoTexto: 'Gerar backup agora',
       acao: () => gerarBackupExcel(backupParams()),
+      naoLida: true,
     });
   }
 
@@ -7258,6 +7269,7 @@ name="novo-usuario-login"
         setMesAtivo={setMesAtivo}
         alertasSistema={alertasSistema}
         onExcluirAviso={excluirNotificacaoWeb}
+        onLimparAvisos={limparNotificacoesWeb}
         calcAberta={calcAberta}
         setCalcAberta={setCalcAberta}
         confirmarLogout={confirmarLogout}

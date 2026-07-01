@@ -7,6 +7,7 @@ interface Aviso {
   mensagem: string;
   acao?: () => void | Promise<void>;
   acaoTexto?: string;
+  naoLida?: boolean;
 }
 
 interface LogoSettings {
@@ -38,6 +39,7 @@ interface AppHeaderProps {
   setMesAtivo: React.Dispatch<React.SetStateAction<string | null>>;
   alertasSistema: Aviso[];
   onExcluirAviso?: (id: string) => void;
+  onLimparAvisos?: () => void;
   calcAberta: boolean;
   setCalcAberta: React.Dispatch<React.SetStateAction<boolean>>;
   confirmarLogout: () => void;
@@ -60,6 +62,7 @@ export default function AppHeader({
   anoSelecionado, setAnoSelecionado, setMesAtivo,
   alertasSistema,
   onExcluirAviso,
+  onLimparAvisos,
   calcAberta, setCalcAberta,
   confirmarLogout, logoUrl, logoSettings,
   setModalEmpresasAberto,
@@ -378,9 +381,9 @@ export default function AppHeader({
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.2"
                       d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6 6 0 10-12 0v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0a3 3 0 11-6 0m6 0H9" />
                   </svg>
-                  {alertasSistema.length > 0 && (
+                  {alertasSistema.filter((a) => a.naoLida).length > 0 && (
                     <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-black leading-none text-white shadow-md">
-                      {alertasSistema.length}
+                      {alertasSistema.filter((a) => a.naoLida).length}
                     </span>
                   )}
                 </button>
@@ -452,12 +455,29 @@ export default function AppHeader({
               className="px-4 py-3 border-b"
               style={{ backgroundColor: corPrimaria, color: textoSobreCorPrimaria, borderColor: bordaSobreCorPrimaria }}
             >
-              <h3 className="text-sm font-black uppercase tracking-wide">Avisos do sistema</h3>
-              <p className="text-[11px] opacity-80">
-                {alertasSistema.length > 0
-                  ? `${alertasSistema.length} aviso(s) pendente(s)`
-                  : 'Nenhum aviso pendente'}
-              </p>
+              <div className="flex items-start justify-between gap-2">
+                <div className="min-w-0">
+                  <h3 className="text-sm font-black uppercase tracking-wide">Avisos e notificações</h3>
+                  <p className="text-[11px] opacity-80">
+                    {alertasSistema.length === 0
+                      ? 'Nenhum aviso'
+                      : (alertasSistema.filter((a) => a.naoLida).length > 0
+                          ? `${alertasSistema.filter((a) => a.naoLida).length} não lido(s) de ${alertasSistema.length}`
+                          : `${alertasSistema.length} aviso(s)`)}
+                  </p>
+                </div>
+                {onLimparAvisos && alertasSistema.some((a) => String(a.id).startsWith('notif-')) && (
+                  <button
+                    type="button"
+                    onClick={() => onLimparAvisos()}
+                    className="shrink-0 rounded-lg border px-2 py-1 text-[11px] font-black uppercase tracking-wide transition hover:brightness-110"
+                    style={{ borderColor: bordaSobreCorPrimaria, color: textoSobreCorPrimaria }}
+                    title="Apagar todos os avisos"
+                  >
+                    Limpar
+                  </button>
+                )}
+              </div>
             </div>
             <div className="max-h-80 overflow-y-auto p-3">
               {alertasSistema.length === 0 ? (
@@ -468,11 +488,16 @@ export default function AppHeader({
                     <div
                       key={aviso.id}
                       className={`rounded-xl border p-3 ${
-                        darkMode ? 'border-slate-700 bg-slate-800/70' : 'border-slate-200 bg-slate-50'
+                        aviso.naoLida
+                          ? (darkMode ? 'border-cyan-700 bg-slate-800/70' : 'border-cyan-200 bg-cyan-50/60')
+                          : (darkMode ? 'border-slate-700 bg-slate-800/40' : 'border-slate-200 bg-slate-50')
                       }`}
                     >
                       <div className="flex items-start justify-between gap-2">
-                        <h4 className={`min-w-0 text-sm font-black ${textStrong}`}>{aviso.titulo}</h4>
+                        <h4 className={`flex min-w-0 items-center gap-1.5 text-sm font-black ${textStrong}`}>
+                          {aviso.naoLida && <span className="h-2 w-2 shrink-0 rounded-full bg-cyan-500" />}
+                          <span className="min-w-0 truncate">{aviso.titulo}</span>
+                        </h4>
                         {String(aviso.id).startsWith('notif-') && onExcluirAviso && (
                           <button
                             type="button"
