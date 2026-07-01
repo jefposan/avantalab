@@ -72,13 +72,22 @@ export default function CardLancamentoDespesa({
 
   return (
     <>
-      <div className="mb-3 grid h-8 grid-cols-[minmax(68px,78px)_minmax(0,1fr)_minmax(68px,78px)] items-center gap-2 rounded-md bg-white px-2 shadow-sm [container-type:inline-size]">
+      <div
+        className="mb-3 grid grid-cols-[minmax(68px,84px)_minmax(0,1fr)_minmax(68px,84px)] items-center gap-2 px-3 py-2.5 transition-all duration-300 [container-type:inline-size]"
+        style={{
+          borderRadius: '6px 16px 16px 16px',
+          background: expandido
+            ? 'linear-gradient(120deg, #E5484D 0%, #D63A57 55%, #B4232A 100%)'
+            : 'linear-gradient(120deg, #64748B 0%, #94A3B8 100%)',
+          boxShadow: expandido ? 'inset 0 -1px 0 rgba(255,255,255,0.25)' : 'none',
+        }}
+      >
         <button
           type="button"
           onClick={() =>
             setOrdemLancamentos((prev) => (prev === 'desc' ? 'asc' : 'desc'))
           }
-          className="flex h-6 w-full items-center justify-center gap-1 rounded-full border border-slate-200 bg-white px-1.5 text-[10px] font-black uppercase text-[#0A1F44] shadow-sm ring-1 ring-slate-200/70 transition-all hover:scale-[1.03] hover:border-slate-300 hover:bg-slate-50 active:scale-95 cursor-pointer"
+          className="flex h-6 w-full items-center justify-center gap-1 rounded-full border border-white/40 bg-white/20 px-1.5 text-[10px] font-black uppercase text-white shadow-sm backdrop-blur-sm transition-all hover:scale-[1.03] hover:bg-white/30 active:scale-95 cursor-pointer"
           title={
             ordemLancamentos === 'desc'
               ? 'Clique para ordenar do menor dia para o maior'
@@ -86,17 +95,19 @@ export default function CardLancamentoDespesa({
           }
         >
           <span>Ordenar</span>
-          <span className="text-xs font-black" style={{ color: '#E5484D' }}>
+          <span className="text-xs font-black">
             {ordemLancamentos === 'desc' ? '\u2193' : '\u2191'}
           </span>
         </button>
 
         <h3
-          className="min-w-0 truncate text-center font-black uppercase leading-none"
-          style={{ color: '#0A1F44', fontSize: 'clamp(0.5rem, 3.8cqw, 0.875rem)' }}
+          className="flex min-w-0 items-center justify-center gap-1.5 truncate text-center font-black uppercase leading-none text-white"
+          style={{ fontSize: 'clamp(0.5rem, 3.8cqw, 0.9rem)', textShadow: '0 1px 2px rgba(0,0,0,0.18)' }}
         >
-          {/* L\u00e2ncamento de despesas */}
-          Lançamento de despesas
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.6} className="h-3.5 w-3.5 shrink-0">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M12 20V4m0 16l5-5m-5 5l-5-5" />
+          </svg>
+          <span className="truncate">Despesas</span>
         </h3>
         <div aria-hidden="true" className="h-6 w-full" />
       </div>

@@ -629,6 +629,8 @@ export async function salvarFaturamentoEntrada({
   dia,
   origem,
   valor,
+  status = null,
+  tipoObs = null,
 }: {
   empresaId: string;
   ano: number;
@@ -636,6 +638,8 @@ export async function salvarFaturamentoEntrada({
   dia: number;
   origem: string;
   valor: number;
+  status?: string | null;
+  tipoObs?: string | null;
 }) {
   const { data: usuarioLogado } = await supabase.auth.getUser();
 
@@ -648,6 +652,8 @@ export async function salvarFaturamentoEntrada({
       dia,
       origem,
       valor,
+      status,
+      tipo_obs: tipoObs,
       criado_por: usuarioLogado.user?.id || null,
     })
     .select()
@@ -678,6 +684,8 @@ export async function atualizarFaturamentoEntrada({
   dia,
   origem,
   valor,
+  status,
+  tipoObs,
 }: {
   id: string;
   empresaId: string;
@@ -686,15 +694,22 @@ export async function atualizarFaturamentoEntrada({
   dia: number;
   origem: string;
   valor: number;
+  status?: string | null;
+  tipoObs?: string | null;
 }) {
+  const payload: Record<string, unknown> = {
+    dia,
+    origem,
+    valor,
+    updated_at: new Date().toISOString(),
+  };
+  // status/tipo_obs so sao alterados quando explicitamente informados (undefined preserva o valor atual).
+  if (status !== undefined) payload.status = status;
+  if (tipoObs !== undefined) payload.tipo_obs = tipoObs;
+
   const { data, error } = await supabase
     .from('faturamentos_entradas')
-    .update({
-      dia,
-      origem,
-      valor,
-      updated_at: new Date().toISOString(),
-    })
+    .update(payload)
     .eq('id', id)
     .eq('empresa_id', empresaId)
     .eq('ano', ano)

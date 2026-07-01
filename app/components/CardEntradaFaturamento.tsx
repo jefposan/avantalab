@@ -42,6 +42,7 @@ type CardEntradaFaturamentoProps = {
   onCancelarEdicaoEntrada: () => void;
   onExcluirEntrada: (entrada: EntradaFaturamento) => void | Promise<void>;
   onFocoReceita: () => void;
+  ativo?: boolean;
 };
 
 export default function CardEntradaFaturamento({
@@ -76,6 +77,7 @@ export default function CardEntradaFaturamento({
   onCancelarEdicaoEntrada,
   onExcluirEntrada,
   onFocoReceita,
+  ativo = false,
 }: CardEntradaFaturamentoProps) {
   const inputBase = `h-9 w-full rounded-md border px-2.5 text-xs font-semibold shadow-sm outline-none transition focus:ring-1 ${
     darkMode
@@ -85,20 +87,31 @@ export default function CardEntradaFaturamento({
 
   return (
     <div
-      className="h-full w-full min-w-0 max-w-full overflow-hidden rounded-[18px] border border-t-[4px] bg-white p-3 text-slate-900 sm:p-4"
+      className="relative h-full w-full min-w-0 max-w-full overflow-hidden bg-white p-3 text-slate-900 transition-all duration-300 sm:p-4"
       style={{
-        borderColor: '#E2E8F0',
-        borderTopColor: '#1F8A9E',
-        boxShadow: '0 10px 25px rgba(10, 31, 68, 0.08)',
+        borderRadius: '8px 22px 22px 22px',
+        boxShadow: ativo
+          ? '0 20px 44px -14px rgba(46, 173, 104, 0.55), 0 0 0 2px rgba(31, 158, 180, 0.35)'
+          : '0 8px 20px rgba(15, 23, 42, 0.07), 0 0 0 1px rgba(15, 23, 42, 0.06)',
+        filter: ativo ? 'none' : 'saturate(0.85)',
       }}
     >
-      <div className="mb-3 grid h-8 grid-cols-[minmax(68px,78px)_minmax(0,1fr)_minmax(68px,78px)] items-center gap-2 rounded-md bg-white px-2 shadow-sm [container-type:inline-size]">
+      <div
+        className="mb-3 grid grid-cols-[minmax(68px,84px)_minmax(0,1fr)_minmax(68px,84px)] items-center gap-2 px-3 py-2.5 transition-all duration-300 [container-type:inline-size]"
+        style={{
+          borderRadius: '6px 16px 16px 16px',
+          background: ativo
+            ? 'linear-gradient(120deg, #1F9EB4 0%, #24A98A 55%, #2EAD68 100%)'
+            : 'linear-gradient(120deg, #64748B 0%, #94A3B8 100%)',
+          boxShadow: ativo ? 'inset 0 -1px 0 rgba(255,255,255,0.25)' : 'none',
+        }}
+      >
         <button
           type="button"
           onClick={() =>
             setOrdemEntradasFaturamento((prev) => (prev === 'desc' ? 'asc' : 'desc'))
           }
-          className="flex h-6 w-full items-center justify-center gap-1 rounded-full border border-slate-200 bg-white px-1.5 text-[10px] font-black uppercase text-[#1F8A9E] shadow-sm ring-1 ring-slate-200/70 transition-all hover:scale-[1.03] hover:border-slate-300 hover:bg-slate-50 active:scale-95 cursor-pointer"
+          className="flex h-6 w-full items-center justify-center gap-1 rounded-full border border-white/40 bg-white/20 px-1.5 text-[10px] font-black uppercase text-white shadow-sm backdrop-blur-sm transition-all hover:scale-[1.03] hover:bg-white/30 active:scale-95 cursor-pointer"
           title={
             ordemEntradasFaturamento === 'desc'
               ? 'Clique para ordenar do menor dia para o maior'
@@ -106,16 +119,19 @@ export default function CardEntradaFaturamento({
           }
         >
           <span>Ordenar</span>
-          <span className="text-xs font-black" style={{ color: '#2EAD68' }}>
+          <span className="text-xs font-black">
             {ordemEntradasFaturamento === 'desc' ? '↓' : '↑'}
           </span>
         </button>
 
         <h3
-          className="min-w-0 truncate text-center font-black uppercase leading-none"
-          style={{ color: '#1F8A9E', fontSize: 'clamp(0.5rem, 3.8cqw, 0.875rem)' }}
+          className="flex min-w-0 items-center justify-center gap-1.5 truncate text-center font-black uppercase leading-none text-white"
+          style={{ fontSize: 'clamp(0.5rem, 3.8cqw, 0.9rem)', textShadow: '0 1px 2px rgba(0,0,0,0.18)' }}
         >
-          Lançamento de receita
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.6} className="h-3.5 w-3.5 shrink-0">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m0-16l5 5m-5-5L7 9" />
+          </svg>
+          <span className="truncate">Receitas</span>
         </h3>
         <div aria-hidden="true" className="h-6 w-full" />
       </div>

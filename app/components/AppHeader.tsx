@@ -1,5 +1,6 @@
 'use client';
 import React, { useRef, useState, useEffect } from 'react';
+import Tooltip from './Tooltip';
 
 interface Aviso {
   id: string;
@@ -251,10 +252,11 @@ export default function AppHeader({
           {/* Área direita */}
           <div className="flex-1 flex flex-col gap-3 xl:gap-5 min-w-0">
             <div className="relative hidden min-w-0 items-center gap-3 xl:flex">
-              {/* Nav principal */}
+              {/* Nav principal (centralizado no espaco entre logo e controles) */}
+              <div className="flex min-w-0 flex-1 justify-center">
               <nav
                 ref={navRef}
-                className={`relative grid w-full min-w-0 max-w-[560px] flex-1 grid-cols-5 gap-2 rounded-xl border p-1 shadow-sm ${
+                className={`relative grid w-full min-w-0 max-w-[560px] grid-cols-5 gap-2 rounded-xl border p-1 shadow-sm ${
                   darkMode ? 'border-slate-700 bg-slate-900/70' : 'border-slate-200 bg-slate-50'
                 }`}
               >
@@ -300,10 +302,12 @@ export default function AppHeader({
                   );
                 })}
               </nav>
+              </div>
 
               {/* Controles lado direito */}
-              <div className="ml-auto flex items-center gap-2">
+              <div className="ml-auto flex shrink-0 items-center gap-2">
                 {/* Seletor de ano */}
+                <Tooltip texto="Ano de referência dos lançamentos e relatórios." posicao="bottom">
                 <div
                   className={`flex h-9 items-center gap-2 rounded-lg border px-2.5 shadow-sm ${
                     darkMode
@@ -326,36 +330,42 @@ export default function AppHeader({
                     ))}
                   </select>
                 </div>
+                </Tooltip>
 
+                {/* Grade de acoes rapidas 2x2: Calc/Agenda em cima, Sino/Perfil embaixo */}
+                <div className="grid grid-cols-[repeat(2,auto)] gap-2">
                 {/* Calculadora */}
+                <Tooltip texto="Abra a calculadora." posicao="bottom">
                 <button
                   type="button"
                   onClick={() => setCalcAberta(!calcAberta)}
+                  aria-label="Calculadora"
                   className={`flex h-9 w-9 items-center justify-center rounded-lg border shadow-sm transition hover:scale-[1.03] active:scale-[0.98] cursor-pointer ${
                     darkMode
                       ? 'border-slate-700 bg-slate-800 text-slate-200 hover:bg-slate-700'
                       : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50'
                   }`}
-                  title="Calculadora"
                 >
-                  <svg className="h-4.5 w-4.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="h-4.5 w-4.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" style={{ color: '#6366F1' }}>
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"
                       d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
                   </svg>
                 </button>
+                </Tooltip>
 
                 {/* Agenda */}
+                <Tooltip texto="Abra a agenda de compromissos." posicao="bottom">
                 <button
                   type="button"
                   onClick={onAbrirAgenda}
+                  aria-label="Agenda"
                   className={`relative flex h-9 w-9 items-center justify-center rounded-lg border shadow-sm transition hover:scale-[1.03] active:scale-[0.98] cursor-pointer ${
                     darkMode
                       ? 'border-slate-700 bg-slate-800 text-slate-200 hover:bg-slate-700'
                       : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50'
                   }`}
-                  title="Agenda"
                 >
-                  <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" style={{ color: '#0891B2' }}>
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"
                       d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                   </svg>
@@ -365,19 +375,21 @@ export default function AppHeader({
                     </span>
                   )}
                 </button>
+                </Tooltip>
 
                 {/* Avisos */}
+                <Tooltip texto="Avisos e novidades do sistema." posicao="bottom">
                 <button
                   type="button"
                   onClick={() => { setAjustesAberto(false); setPainelAvisosAberto((prev) => !prev); }}
+                  aria-label="Avisos do sistema"
                   className={`relative flex h-9 w-9 items-center justify-center rounded-lg border shadow-sm transition hover:scale-[1.03] active:scale-[0.98] cursor-pointer ${
                     darkMode
                       ? 'border-slate-700 bg-slate-800 text-slate-200 hover:bg-slate-700'
                       : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50'
                   }`}
-                  title="Avisos do sistema"
                 >
-                  <svg className="h-4.5 w-4.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="h-4.5 w-4.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" style={{ color: '#D97706' }}>
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.2"
                       d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6 6 0 10-12 0v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0a3 3 0 11-6 0m6 0H9" />
                   </svg>
@@ -387,8 +399,30 @@ export default function AppHeader({
                     </span>
                   )}
                 </button>
+                </Tooltip>
+
+                {/* Trocar perfil (2a linha, abaixo da calculadora) */}
+                <Tooltip texto="Troque, edite ou gerencie seus perfis financeiros." posicao="bottom">
+                <button
+                  type="button"
+                  onClick={() => { setAjustesAberto(false); setPainelAvisosAberto(false); setModalEmpresasAberto(true); }}
+                  aria-label="Trocar perfil"
+                  className={`flex h-9 w-9 items-center justify-center rounded-lg border shadow-sm transition hover:scale-[1.03] active:scale-[0.98] cursor-pointer ${
+                    darkMode
+                      ? 'border-slate-700 bg-slate-800 text-slate-200 hover:bg-slate-700'
+                      : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50'
+                  }`}
+                >
+                  <svg className="h-4.5 w-4.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" style={{ color: '#059669' }}>
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"
+                      d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+                  </svg>
+                </button>
+                </Tooltip>
+                </div>
 
                 {/* Ajustes */}
+                <Tooltip texto="Abra os ajustes do sistema." posicao="bottom">
                 <button
                   type="button"
                   onClick={() => { setPainelAvisosAberto(false); setAjustesAberto(!ajustesAberto); }}
@@ -400,7 +434,6 @@ export default function AppHeader({
                         : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50'
                   }`}
                   style={ajustesAberto ? { backgroundColor: '#475569', borderColor: '#475569' } : undefined}
-                  title="Abrir ajustes"
                 >
                   <svg
                     className={`h-4 w-4 transition-transform duration-300 ${ajustesAberto ? 'rotate-90' : 'rotate-0'}`}
@@ -413,6 +446,7 @@ export default function AppHeader({
                   </svg>
                   Ajustes
                 </button>
+                </Tooltip>
 
                 {/* Sair */}
                 <button
@@ -466,17 +500,31 @@ export default function AppHeader({
                           : `${alertasSistema.length} aviso(s)`)}
                   </p>
                 </div>
-                {onLimparAvisos && alertasSistema.some((a) => String(a.id).startsWith('notif-')) && (
+                <div className="flex shrink-0 items-center gap-2">
+                  {onLimparAvisos && alertasSistema.some((a) => String(a.id).startsWith('notif-')) && (
+                    <button
+                      type="button"
+                      onClick={() => onLimparAvisos()}
+                      className="rounded-lg border px-2 py-1 text-[11px] font-black uppercase tracking-wide transition hover:brightness-110"
+                      style={{ borderColor: bordaSobreCorPrimaria, color: textoSobreCorPrimaria }}
+                      title="Apagar todos os avisos"
+                    >
+                      Limpar
+                    </button>
+                  )}
                   <button
                     type="button"
-                    onClick={() => onLimparAvisos()}
-                    className="shrink-0 rounded-lg border px-2 py-1 text-[11px] font-black uppercase tracking-wide transition hover:brightness-110"
+                    onClick={() => setPainelAvisosAberto(false)}
+                    className="flex h-7 w-7 items-center justify-center rounded-lg border transition hover:brightness-110"
                     style={{ borderColor: bordaSobreCorPrimaria, color: textoSobreCorPrimaria }}
-                    title="Apagar todos os avisos"
+                    aria-label="Fechar"
+                    title="Fechar"
                   >
-                    Limpar
+                    <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.4" d="M6 6l12 12M18 6L6 18" />
+                    </svg>
                   </button>
-                )}
+                </div>
               </div>
             </div>
             <div className="max-h-80 overflow-y-auto p-3">

@@ -112,6 +112,10 @@ interface DashboardProps {
   onConfirmarPrevista: (id: any) => void;
   onAjustarPrevista: (despesa: any) => void;
   onExcluirPrevista: (id: any) => void;
+  receitasAConfirmar: any[];
+  onConfirmarReceita: (id: any) => void;
+  onEditarReceita: (id: any) => void;
+  onExcluirReceita: (id: any) => void;
   saldoCardMesIdx: number;
   setSaldoCardMesIdx: (idx: number) => void;
   saldoInicial: number;
@@ -142,6 +146,7 @@ export default function Dashboard({
   solicitarEntradaFaturamentoDashboard,
   receitasTotais, despesasTotais, lucroTotalAnual, formatarMoeda,
   despesasAConfirmar, onConfirmarPrevista, onAjustarPrevista, onExcluirPrevista,
+  receitasAConfirmar, onConfirmarReceita, onEditarReceita, onExcluirReceita,
   saldoCardMesIdx, setSaldoCardMesIdx, saldoInicial, saldoFinal, saldoPrevisto,
   dashboardOrdem, dashboardOcultos, onReordenarDashboard,
   dashboardExpandidos, onOcultarCardDashboard, onDefinirOcultosDashboard,
@@ -366,9 +371,12 @@ const mostrarComparativoResumoDash =
     (_, i) => (2024 + i).toString()
   );
 
-  const temAConfirmar = !!(despesasAConfirmar && despesasAConfirmar.length > 0);
+  const qtdReceitasAConfirmar = receitasAConfirmar ? receitasAConfirmar.length : 0;
+  const qtdDespesasAConfirmar = despesasAConfirmar ? despesasAConfirmar.length : 0;
+  const totalAConfirmar = qtdDespesasAConfirmar + qtdReceitasAConfirmar;
+  const temAConfirmar = totalAConfirmar > 0;
   const catalogoCardsKanban = [
-    { id: 'aConfirmar', titulo: 'Despesas a confirmar', descricao: 'Banner de despesas previstas que chegaram na data.' },
+    { id: 'aConfirmar', titulo: 'Lançamentos a confirmar', descricao: 'Banner de despesas e receitas previstas que chegaram na data.' },
     { id: 'saldo', titulo: 'Saldo do mês', descricao: 'Inicial, final e previsto do mês selecionado.' },
     { id: 'resumoFinanceiro', titulo: 'Resumo financeiro', descricao: 'Despesas, maior gasto e lucro operacional.' },
     { id: 'evolucaoMensal', titulo: 'Evolução mensal', descricao: 'Gráfico mensal de receitas e despesas.' },
@@ -535,22 +543,35 @@ const mostrarComparativoResumoDash =
             <path strokeLinecap="round" strokeLinejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6 6 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
           </svg>
           <h3 className="min-w-0 flex-1 text-sm font-black text-slate-900">
-            {despesasAConfirmar.length} despesa{despesasAConfirmar.length > 1 ? 's' : ''} prevista{despesasAConfirmar.length > 1 ? 's' : ''} para confirmar
+            {totalAConfirmar} lançamento{totalAConfirmar > 1 ? 's' : ''} para confirmar
           </h3>
           <DragHandle />
           <BotaoOpcoesCard id="aConfirmar" />
         </div>
         <div className="grid gap-2 overflow-y-auto p-3">
           {despesasAConfirmar.map((d) => (
-            <div key={d.id} className="rounded-xl border border-slate-200 bg-white p-2.5">
+            <div key={`desp-${d.id}`} className="rounded-xl border border-slate-200 bg-white p-2.5">
               <div className="flex items-center justify-between gap-2">
                 <p className="min-w-0 truncate text-sm font-bold text-slate-800">{d.despesa} <span className="text-xs font-semibold text-slate-400">· dia {d.dia}</span></p>
                 <strong className="shrink-0 text-sm font-black text-red-600">{formatarMoeda(Number(d.valor || 0))}</strong>
               </div>
               <div className="mt-2 grid grid-cols-3 gap-1.5">
                 <button type="button" onClick={() => onConfirmarPrevista(d.id)} className="h-8 rounded-lg bg-emerald-600 text-[11px] font-black text-white hover:bg-emerald-700 cursor-pointer">Confirmar</button>
-                <button type="button" onClick={() => onAjustarPrevista(d)} className="h-8 rounded-lg border border-slate-300 bg-white text-[11px] font-black text-slate-700 hover:bg-slate-50 cursor-pointer">Ajustar valor</button>
+                <button type="button" onClick={() => onAjustarPrevista(d)} className="h-8 rounded-lg border border-slate-300 bg-white text-[11px] font-black text-slate-700 hover:bg-slate-50 cursor-pointer">Editar</button>
                 <button type="button" onClick={() => onExcluirPrevista(d.id)} className="h-8 rounded-lg border border-red-200 bg-white text-[11px] font-black text-red-600 hover:bg-red-50 cursor-pointer">Excluir</button>
+              </div>
+            </div>
+          ))}
+          {receitasAConfirmar.map((r) => (
+            <div key={`rec-${r.id}`} className="rounded-xl border border-emerald-200 bg-white p-2.5">
+              <div className="flex items-center justify-between gap-2">
+                <p className="min-w-0 truncate text-sm font-bold text-slate-800">{r.origem} <span className="text-xs font-semibold text-slate-400">· dia {r.dia}</span></p>
+                <strong className="shrink-0 text-sm font-black text-emerald-600">{formatarMoeda(Number(r.valor || 0))}</strong>
+              </div>
+              <div className="mt-2 grid grid-cols-3 gap-1.5">
+                <button type="button" onClick={() => onConfirmarReceita(r.id)} className="h-8 rounded-lg bg-emerald-600 text-[11px] font-black text-white hover:bg-emerald-700 cursor-pointer">Confirmar</button>
+                <button type="button" onClick={() => onEditarReceita(r.id)} className="h-8 rounded-lg border border-slate-300 bg-white text-[11px] font-black text-slate-700 hover:bg-slate-50 cursor-pointer">Editar</button>
+                <button type="button" onClick={() => onExcluirReceita(r.id)} className="h-8 rounded-lg border border-red-200 bg-white text-[11px] font-black text-red-600 hover:bg-red-50 cursor-pointer">Excluir</button>
               </div>
             </div>
           ))}

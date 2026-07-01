@@ -8,6 +8,8 @@ export type EntradaFaturamento = {
   dia: number | string | null;
   origem: string | null;
   valor: number | string | null;
+  status?: string | null;
+  tipo?: string | null;
 };
 
 type TabelaEntradasFaturamentoProps = {
@@ -137,7 +139,14 @@ export default function TabelaEntradasFaturamento({
                   </td>
 
                   <td className="max-w-[240px] break-words py-2 px-4 text-xs font-semibold">
-                    {entrada.origem || '-'}
+                    <span className="inline-flex flex-wrap items-center gap-1.5">
+                      <span>{entrada.origem || '-'}</span>
+                      {entrada.status === 'prevista' && (
+                        <span className="inline-flex items-center rounded-full bg-emerald-100 px-1.5 py-0.5 text-[9px] font-black uppercase tracking-wide text-emerald-700">
+                          Previsto
+                        </span>
+                      )}
+                    </span>
                   </td>
 
                   <td className="py-2 px-4 w-40 text-right text-xs font-black" style={{ color: '#2EAD68' }}>

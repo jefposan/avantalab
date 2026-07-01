@@ -1000,6 +1000,8 @@ useEffect(() => {
         dia: entrada.dia,
         origem: entrada.origem,
         valor: Number(entrada.valor),
+        status: entrada.status || null,
+        tipo: entrada.tipo_obs || null,
       }))
     );
 
@@ -1884,6 +1886,13 @@ const despesasAConfirmar = lancamentos.filter(
     ehDataHoje(Number(anoSelecionado), meses.indexOf(l.mes), l.dia)
 );
 
+// Receitas previstas cuja data chegou hoje: pedem confirmacao (mesmo card das despesas).
+const receitasAConfirmar = faturamentosEntradas.filter(
+  (e) =>
+    e.status === 'prevista' &&
+    ehDataHoje(Number(anoSelecionado), meses.indexOf(e.mes), e.dia)
+);
+
 // Card de saldo (Inicial/Final/Previsto) com seletor proprio de mes.
 const mesSaldoCardNome = meses[saldoCardMesIdx];
 const mesSaldoAntNome = saldoCardMesIdx > 0 ? meses[saldoCardMesIdx - 1] : null;
@@ -1895,18 +1904,34 @@ const somaDespesasMesSaldo = (mesNome: string, mIdx: number, futuras: boolean) =
         acc + (dataFutura(Number(anoSelecionado), mIdx, l.dia) === futuras ? l.valor : 0),
       0
     );
-const recSaldoCard = faturamentos[mesSaldoCardNome] || 0;
+// Receitas previstas: nao entram no total efetivado ate a confirmacao.
+// noDiaOuFuturo (hoje ou futuro) = alimentam o Previsto; passadas = lazy auto-confirm (viram efetivadas na exibicao).
+const somaReceitasPrevistasMes = (mesNome: string, mIdx: number, futurasOuHoje: boolean) =>
+  faturamentosEntradas
+    .filter((e) => e.mes === mesNome && e.status === 'prevista')
+    .reduce((acc, e) => {
+      const noDiaOuFuturo =
+        dataFutura(Number(anoSelecionado), mIdx, e.dia) ||
+        ehDataHoje(Number(anoSelecionado), mIdx, e.dia);
+      return acc + (noDiaOuFuturo === futurasOuHoje ? e.valor : 0);
+    }, 0);
+
+const recPrevPassadasSaldo = somaReceitasPrevistasMes(mesSaldoCardNome, saldoCardMesIdx, false);
+const recPrevFuturasSaldo = somaReceitasPrevistasMes(mesSaldoCardNome, saldoCardMesIdx, true);
+// Receitas efetivadas = total do mes + previstas cuja data ja passou (auto-confirmadas na exibicao).
+const recSaldoCard = (faturamentos[mesSaldoCardNome] || 0) + recPrevPassadasSaldo;
 const despRealSaldoCard = somaDespesasMesSaldo(mesSaldoCardNome, saldoCardMesIdx, false);
 const despFutSaldoCard = somaDespesasMesSaldo(mesSaldoCardNome, saldoCardMesIdx, true);
 // Saldo inicial = resultado do mes anterior (entra como saldo de abertura do mes atual).
 const saldoInicialCard = mesSaldoAntNome
-  ? (faturamentos[mesSaldoAntNome] || 0) -
+  ? (faturamentos[mesSaldoAntNome] || 0) +
+    somaReceitasPrevistasMes(mesSaldoAntNome, saldoCardMesIdx - 1, false) -
     somaDespesasMesSaldo(mesSaldoAntNome, saldoCardMesIdx - 1, false)
   : 0;
-// Final = Inicial + Receitas - Despesas realizadas.
+// Final = Inicial + Receitas efetivadas - Despesas realizadas.
 const saldoFinalCard = saldoInicialCard + recSaldoCard - despRealSaldoCard;
-// Previsto = Final - Despesas futuras do mes.
-const saldoPrevistoCard = saldoFinalCard - despFutSaldoCard;
+// Previsto = Final + Receitas previstas (hoje/futuras) - Despesas futuras do mes.
+const saldoPrevistoCard = saldoFinalCard + recPrevFuturasSaldo - despFutSaldoCard;
   const lancamentosOrdenados = useMemo(() => {
   return [...lancamentos].sort((a, b) => {
     const diaA = Number(a.dia);
@@ -2175,6 +2200,9 @@ const adicionarEntradaFaturamento = async (mesInformado?: string) => {
 
     const origemLimpa = formatarDescricao(entradaFaturamentoOrigem);
 
+    // Receita futura -> "prevista": nao entra no total efetivado agora, so na previsao.
+    const ehFuturaEntrada = dataFutura(Number(anoSelecionado), meses.indexOf(mesReferenciaFaturamento), diaNumerico);
+
     const entradaSalva = await salvarFaturamentoEntrada({
       empresaId,
       ano: Number(anoSelecionado),
@@ -2182,6 +2210,8 @@ const adicionarEntradaFaturamento = async (mesInformado?: string) => {
       dia: diaNumerico,
       origem: origemLimpa,
       valor: entradaFaturamentoValorNumerico,
+      status: ehFuturaEntrada ? 'prevista' : null,
+      tipoObs: ehFuturaEntrada ? 'previsto' : null,
     });
 
     if (entradaSalva.erro || !entradaSalva.data) {
@@ -2192,22 +2222,29 @@ const adicionarEntradaFaturamento = async (mesInformado?: string) => {
       return;
     }
 
-    const totalAtual = faturamentos[mesReferenciaFaturamento] || 0;
-    const novoTotal = totalAtual + entradaFaturamentoValorNumerico;
+    if (!ehFuturaEntrada) {
+      const totalAtual = faturamentos[mesReferenciaFaturamento] || 0;
+      const novoTotal = totalAtual + entradaFaturamentoValorNumerico;
 
-    const faturamentoSalvo = await salvarFaturamentoBanco({
-      empresaId,
-      ano: Number(anoSelecionado),
-      mes: mesReferenciaFaturamento,
-      valor: novoTotal,
-    });
+      const faturamentoSalvo = await salvarFaturamentoBanco({
+        empresaId,
+        ano: Number(anoSelecionado),
+        mes: mesReferenciaFaturamento,
+        valor: novoTotal,
+      });
 
-    if (!faturamentoSalvo) {
-      abrirAviso(
-        'Entrada salva parcialmente',
-        'A entrada foi registrada, mas não foi possível atualizar o total do mês. Atualize a página e confira o faturamento.'
-      );
-      return;
+      if (!faturamentoSalvo) {
+        abrirAviso(
+          'Entrada salva parcialmente',
+          'A entrada foi registrada, mas não foi possível atualizar o total do mês. Atualize a página e confira o faturamento.'
+        );
+        return;
+      }
+
+      setFaturamentos((prev) => ({
+        ...prev,
+        [mesReferenciaFaturamento]: novoTotal,
+      }));
     }
 
     const novaEntrada = {
@@ -2216,15 +2253,11 @@ const adicionarEntradaFaturamento = async (mesInformado?: string) => {
       dia: entradaSalva.data.dia,
       origem: entradaSalva.data.origem,
       valor: Number(entradaSalva.data.valor),
+      status: entradaSalva.data.status || null,
+      tipo: entradaSalva.data.tipo_obs || null,
     };
 
-    
     setFaturamentosEntradas((prev) => [novaEntrada, ...prev]);
-
-    setFaturamentos((prev) => ({
-      ...prev,
-      [mesReferenciaFaturamento]: novoTotal,
-    }));
 
     setEntradaFaturamentoDia('');
     setEntradaFaturamentoOrigem('');
@@ -2858,6 +2891,73 @@ const ajustarDespesaPrevista = (despesa: any) => {
   if (despesa && despesa.mes) setMesAtivo(despesa.mes);
 };
 
+// ---- Receitas previstas: confirmar / excluir / editar (a partir do card de confirmacao) ----
+const confirmarReceitaPrevista = async (id: string | number) => {
+  if (!empresaId) return;
+  const entrada = faturamentosEntradas.find((e) => e.id === id);
+  if (!entrada) {
+    abrirAviso('Erro', 'Não foi possível localizar a receita.');
+    return;
+  }
+
+  const mesEntrada = entrada.mes;
+  const valorEntrada = Number(entrada.valor || 0);
+
+  const resultado = await atualizarFaturamentoEntrada({
+    id: id as string,
+    empresaId,
+    ano: Number(anoSelecionado),
+    mes: mesEntrada,
+    dia: Number(entrada.dia),
+    origem: entrada.origem,
+    valor: valorEntrada,
+    status: 'confirmada',
+    tipoObs: null,
+  });
+
+  if (resultado.erro) {
+    abrirAviso('Erro', resultado.mensagem || 'Não foi possível confirmar a receita.');
+    return;
+  }
+
+  // Ao confirmar, a receita passa a integrar o total efetivado do mes.
+  const totalAtual = faturamentos[mesEntrada] || 0;
+  const novoTotal = totalAtual + valorEntrada;
+
+  const faturamentoSalvo = await salvarFaturamentoBanco({
+    empresaId,
+    ano: Number(anoSelecionado),
+    mes: mesEntrada,
+    valor: novoTotal,
+  });
+
+  if (!faturamentoSalvo) {
+    abrirAviso(
+      'Receita confirmada parcialmente',
+      'A receita foi confirmada, mas não foi possível atualizar o total do mês. Atualize a página e confira o faturamento.'
+    );
+    return;
+  }
+
+  setFaturamentosEntradas((prev) =>
+    prev.map((e) => (e.id === id ? { ...e, status: 'confirmada', tipo: null } : e))
+  );
+  setFaturamentos((prev) => ({ ...prev, [mesEntrada]: novoTotal }));
+  notificarFinanceiroAtualizado();
+};
+
+const excluirReceitaPrevista = (id: string | number) => {
+  const entrada = faturamentosEntradas.find((e) => e.id === id);
+  if (entrada) excluirEntradaFaturamento(entrada);
+};
+
+const editarReceitaPrevista = (id: string | number) => {
+  const entrada = faturamentosEntradas.find((e) => e.id === id);
+  if (!entrada) return;
+  if (entrada.mes) setMesAtivo(entrada.mes);
+  iniciarEdicaoEntradaFaturamento(entrada);
+};
+
 const persistirOrdemDashboard = (novaOrdem: { a: string[]; b: string[] }) => {
   setDashboardOrdem(novaOrdem);
   if (empresaId) salvarDashboardOrdemWeb(empresaId, novaOrdem, dashboardOcultos, dashboardExpandidos);
@@ -2978,10 +3078,13 @@ const excluirEntradaFaturamento = async (entrada: any) => {
     return;
   }
 
+  const entradaPrevista = entrada.status === 'prevista';
+
   abrirConfirmacao({
     titulo: 'Excluir entrada',
-    mensagem:
-      `Deseja excluir a entrada "${entrada.origem}" no valor de ${formatarMoeda(Number(entrada.valor || 0))}?\n\nO valor será descontado do faturamento total do mês.`,
+    mensagem: entradaPrevista
+      ? `Deseja excluir a receita prevista "${entrada.origem}" no valor de ${formatarMoeda(Number(entrada.valor || 0))}?`
+      : `Deseja excluir a entrada "${entrada.origem}" no valor de ${formatarMoeda(Number(entrada.valor || 0))}?\n\nO valor será descontado do faturamento total do mês.`,
     textoConfirmar: 'Excluir',
     acao: async () => {
       const resultado = await apagarFaturamentoEntrada(entrada.id);
@@ -2991,6 +3094,15 @@ const excluirEntradaFaturamento = async (entrada: any) => {
           'Erro ao excluir entrada',
           resultado.mensagem || 'Não foi possível excluir a entrada.'
         );
+        return;
+      }
+
+      // Receita prevista nunca entrou no total efetivado -> nao mexe no faturamento.
+      if (entradaPrevista) {
+        setFaturamentosEntradas((prev) =>
+          prev.filter((item) => item.id !== entrada.id)
+        );
+        notificarFinanceiroAtualizado();
         return;
       }
 
@@ -3220,6 +3332,8 @@ const salvarEdicaoEntradaFaturamento = async () => {
     return;
   }
 
+  const eraPrevista = entradaOriginal.status === 'prevista';
+
   const resultado = await atualizarFaturamentoEntrada({
     id: entradaFaturamentoEditandoId,
     empresaId,
@@ -3228,6 +3342,8 @@ const salvarEdicaoEntradaFaturamento = async () => {
     dia: diaNumerico,
     origem: origemLimpa,
     valor: editEntradaFaturamentoValorNumerico,
+    // Prevista continua prevista ate a confirmacao (status/tipo preservados).
+    ...(eraPrevista ? { status: 'prevista', tipoObs: 'previsto' } : {}),
   });
 
   if (resultado.erro || !resultado.data) {
@@ -3235,6 +3351,27 @@ const salvarEdicaoEntradaFaturamento = async () => {
       'Erro ao editar entrada',
       resultado.mensagem || 'Não foi possível salvar a edição da entrada.'
     );
+    return;
+  }
+
+  // Receita prevista nao integra o total efetivado -> nao recalcula faturamento.
+  if (eraPrevista) {
+    setFaturamentosEntradas((prev) =>
+      prev.map((entrada) =>
+        entrada.id === entradaFaturamentoEditandoId
+          ? {
+              ...entrada,
+              dia: diaNumerico,
+              origem: origemLimpa,
+              valor: editEntradaFaturamentoValorNumerico,
+              status: 'prevista',
+              tipo: 'previsto',
+            }
+          : entrada
+      )
+    );
+    cancelarEdicaoEntradaFaturamento();
+    notificarFinanceiroAtualizado();
     return;
   }
 
@@ -7542,59 +7679,91 @@ name="novo-usuario-login"
       {mesAtivo ? (
         <>
           <div
-  className="print-ocultar sticky top-[116px] z-[850] shadow-md py-2 text-white"
+  className="print-ocultar sticky top-[92px] z-[850] shadow-md pt-1 pb-2 text-white xl:top-[108px]"
   style={{ backgroundColor: corPrimaria }}
 >
   <div className="mx-auto grid w-full min-w-0 max-w-7xl grid-cols-1 items-center gap-3 px-3 sm:px-5 lg:px-6 xl:grid-cols-[minmax(260px,0.8fr)_minmax(0,1.2fr)] xl:gap-4 xl:px-8">
     {/* ESQUERDA: MÊS COM SETAS + DESPESAS FIXAS */}
-    <div className="flex min-w-0 flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-      <div className="flex min-w-0 items-center gap-2">
-        <button
-          type="button"
-          onClick={() => {
-            const indiceAtual = meses.indexOf(mesAtivo);
-            const mesAnterior = meses[indiceAtual - 1];
+    <div className="flex min-w-0 flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+      {/* MÊS SELECIONADO */}
+      <div className="flex min-w-0 flex-col items-center gap-1">
+        <span className="text-[8px] font-black uppercase tracking-[0.26em] text-white/70 leading-none">
+          Mês do lançamento
+        </span>
+        <div className="flex min-w-0 items-stretch overflow-hidden rounded-xl bg-white shadow-[0_4px_14px_rgba(0,0,0,0.18)]">
+          <button
+            type="button"
+            onClick={() => {
+              const indiceAtual = meses.indexOf(mesAtivo);
+              const mesAnterior = meses[indiceAtual - 1];
 
-            if (mesAnterior) {
-              setMesAtivo(mesAnterior);
-            }
-          }}
-          disabled={meses.indexOf(mesAtivo) === 0}
-          className="rounded-md bg-black/10 px-2.5 py-1.5 text-sm font-bold transition hover:bg-black/20 disabled:cursor-not-allowed disabled:opacity-40"
-        >
-          ‹
-        </button>
+              if (mesAnterior) {
+                setMesAtivo(mesAnterior);
+              }
+            }}
+            disabled={meses.indexOf(mesAtivo) === 0}
+            className="flex shrink-0 items-center justify-center px-3.5 transition hover:bg-slate-50 active:scale-95 disabled:cursor-not-allowed disabled:opacity-25"
+            style={{ color: corPrimaria }}
+            aria-label="Mês anterior"
+          >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.8} className="h-5 w-5">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M15 6l-6 6 6 6" />
+            </svg>
+          </button>
 
-        <h2 className="min-w-0 flex-1 truncate text-center text-base font-black uppercase tracking-wider sm:min-w-[190px] sm:text-lg">
-          {mesAtivo} / {anoSelecionado}
-        </h2>
+          <div className="w-px shrink-0 bg-slate-200" />
 
-        <button
-          type="button"
-          onClick={() => {
-            const indiceAtual = meses.indexOf(mesAtivo);
-            const proximoMes = meses[indiceAtual + 1];
+          <div className="flex min-w-0 flex-1 items-center justify-center gap-2 px-4 py-2 sm:min-w-[168px]">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.4} className="h-4 w-4 shrink-0 opacity-70" style={{ color: corPrimaria }}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3M4 11h16M5 5h14a1 1 0 011 1v13a1 1 0 01-1 1H5a1 1 0 01-1-1V6a1 1 0 011-1z" />
+            </svg>
+            <span className="truncate text-base font-black uppercase tracking-wide sm:text-lg" style={{ color: corPrimaria }}>
+              {mesAtivo}
+            </span>
+            <span className="shrink-0 text-sm font-bold text-slate-400 sm:text-base">
+              {anoSelecionado}
+            </span>
+          </div>
 
-            if (proximoMes) {
-              setMesAtivo(proximoMes);
-            }
-          }}
-          disabled={meses.indexOf(mesAtivo) === meses.length - 1}
-          className="rounded-md bg-black/10 px-2.5 py-1.5 text-sm font-bold transition hover:bg-black/20 disabled:cursor-not-allowed disabled:opacity-40"
-        >
-          ›
-        </button>
+          <div className="w-px shrink-0 bg-slate-200" />
+
+          <button
+            type="button"
+            onClick={() => {
+              const indiceAtual = meses.indexOf(mesAtivo);
+              const proximoMes = meses[indiceAtual + 1];
+
+              if (proximoMes) {
+                setMesAtivo(proximoMes);
+              }
+            }}
+            disabled={meses.indexOf(mesAtivo) === meses.length - 1}
+            className="flex shrink-0 items-center justify-center px-3.5 transition hover:bg-slate-50 active:scale-95 disabled:cursor-not-allowed disabled:opacity-25"
+            style={{ color: corPrimaria }}
+            aria-label="Próximo mês"
+          >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.8} className="h-5 w-5">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M9 6l6 6-6 6" />
+            </svg>
+          </button>
+        </div>
       </div>
 
-      <button
-        type="button"
-        onClick={abrirModalDespesasFixas}
-        className="flex w-full items-center justify-center gap-1.5 whitespace-nowrap rounded-md bg-black/15 px-2.5 py-1.5 text-xs font-black uppercase tracking-wide text-white transition hover:bg-black/25 sm:w-auto cursor-pointer"
-        title="Gerenciar despesas fixas"
-      >
-        <span>⚙</span>
-        <span>Despesas fixas</span>
-      </button>
+      {/* DESPESAS FIXAS */}
+      <div className="flex flex-col items-center gap-1">
+        <span className="text-[8px] font-black uppercase tracking-[0.26em] text-white/70 leading-none">
+          Repetem todo mês
+        </span>
+        <button
+          type="button"
+          onClick={abrirModalDespesasFixas}
+          className="flex h-9 w-full items-center justify-center gap-1.5 whitespace-nowrap rounded-lg bg-black/15 px-3 text-xs font-black uppercase tracking-wide text-white transition hover:bg-black/25 sm:w-auto cursor-pointer"
+          title="Gerenciar despesas fixas"
+        >
+          <span>⚙</span>
+          <span>Despesas fixas</span>
+        </button>
+      </div>
     </div>
 
     {/* DIREITA: RESUMOS ALINHADOS AO LIMITE DO CONTEÚDO */}
@@ -7677,8 +7846,8 @@ name="novo-usuario-login"
 </div>
 
           <main className={classePaginaInterna}>
-            <div className="flex flex-col gap-6 xl:flex-row xl:items-start">
-              <div className="min-w-0 transition-[width,opacity] duration-300 ease-in-out" style={{ width: typeof window !== 'undefined' && window.innerWidth >= 1280 ? (blocoAtivo === 'despesa' ? '62%' : blocoAtivo === 'receita' ? '38%' : '50%') : '100%', opacity: blocoAtivo === 'receita' ? 0.45 : 1 }}>
+            <div className="mt-5 flex flex-col gap-6 xl:flex-row xl:items-start">
+              <div onClick={() => setBlocoAtivo('despesa')} className="min-w-0 cursor-pointer transition-[width,opacity] duration-300 ease-in-out" style={{ width: typeof window !== 'undefined' && window.innerWidth >= 1280 ? (blocoAtivo === 'despesa' ? '62%' : blocoAtivo === 'receita' ? '38%' : '50%') : '100%', opacity: blocoAtivo === 'receita' ? 0.5 : 1 }}>
 <TabelaLancamentosDespesa
               bgCard={bgCard}
               corPrimaria={corPrimaria}
@@ -7736,7 +7905,7 @@ name="novo-usuario-login"
             />
               </div>
 
-              <div className="min-w-0 transition-[width,opacity] duration-300 ease-in-out" style={{ width: typeof window !== 'undefined' && window.innerWidth >= 1280 ? (blocoAtivo === 'receita' ? '62%' : blocoAtivo === 'despesa' ? '38%' : '50%') : '100%', opacity: blocoAtivo === 'despesa' ? 0.45 : 1 }}>
+              <div onClick={() => setBlocoAtivo('receita')} className="min-w-0 cursor-pointer transition-[width,opacity] duration-300 ease-in-out" style={{ width: typeof window !== 'undefined' && window.innerWidth >= 1280 ? (blocoAtivo === 'receita' ? '62%' : blocoAtivo === 'despesa' ? '38%' : '50%') : '100%', opacity: blocoAtivo === 'despesa' ? 0.5 : 1 }}>
 <CardEntradaFaturamento
   mesAtivo={mesAtivo}
   anoSelecionado={anoSelecionado}
@@ -7774,11 +7943,12 @@ name="novo-usuario-login"
   onCancelarEdicaoEntrada={cancelarEdicaoEntradaFaturamento}
   onExcluirEntrada={excluirEntradaFaturamento}
   onFocoReceita={() => setBlocoAtivo('receita')}
+  ativo={blocoAtivo === 'receita'}
 />
               </div>
             </div>
 
-<div className="mb-3 mt-6 flex min-w-0 items-center justify-between print-ocultar">
+<div className="mb-3 mt-12 flex min-w-0 items-center justify-between print-ocultar">
   <div className="flex min-w-0 items-center gap-3">
   <span
     className="block h-6 w-2 shrink-0 rounded-full shadow-sm"
@@ -8059,6 +8229,10 @@ name="novo-usuario-login"
         onConfirmarPrevista={confirmarDespesaPrevista}
         onAjustarPrevista={ajustarDespesaPrevista}
         onExcluirPrevista={excluirDespesaPrevista}
+        receitasAConfirmar={receitasAConfirmar}
+        onConfirmarReceita={confirmarReceitaPrevista}
+        onEditarReceita={editarReceitaPrevista}
+        onExcluirReceita={excluirReceitaPrevista}
         saldoCardMesIdx={saldoCardMesIdx}
         setSaldoCardMesIdx={setSaldoCardMesIdx}
         saldoInicial={saldoInicialCard}

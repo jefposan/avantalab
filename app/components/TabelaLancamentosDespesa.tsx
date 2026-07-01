@@ -161,11 +161,13 @@ export default function TabelaLancamentosDespesa({
 }: TabelaLancamentosDespesaProps) {
   return (
     <div
-      className="h-full w-full min-w-0 max-w-full overflow-hidden rounded-[18px] border border-t-[4px] bg-white p-3 text-slate-900 sm:p-4"
+      className="relative h-full w-full min-w-0 max-w-full overflow-hidden bg-white p-3 text-slate-900 transition-all duration-300 sm:p-4"
       style={{
-        borderColor: '#E2E8F0',
-        borderTopColor: '#0A1F44',
-        boxShadow: '0 10px 25px rgba(10, 31, 68, 0.08)',
+        borderRadius: '8px 22px 22px 22px',
+        boxShadow: expandidoDespesa
+          ? '0 20px 44px -14px rgba(229, 72, 77, 0.5), 0 0 0 2px rgba(229, 72, 77, 0.32)'
+          : '0 8px 20px rgba(15, 23, 42, 0.07), 0 0 0 1px rgba(15, 23, 42, 0.06)',
+        filter: expandidoDespesa ? 'none' : 'saturate(0.85)',
       }}
     >
       <div
