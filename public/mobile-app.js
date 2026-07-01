@@ -7873,7 +7873,7 @@
     var inicioX = 0;
     var acompanhando = false;
     var indicador = null;
-    var limite = 140;
+    var limite = 190;
 
     function scrollPrincipal() {
       return document.getElementById('mobile-main-scroll');
@@ -7892,8 +7892,8 @@
       indicador = document.createElement('div');
       indicador.id = 'pull-refresh-indicator';
       indicador.className = 'pointer-events-none';
-      indicador.style.cssText = 'position:fixed;left:50%;top:0;z-index:35;display:flex;align-items:center;gap:8px;border:1px solid rgba(255,255,255,.75);border-radius:9999px;background:rgba(255,255,255,.96);padding:8px 14px;color:#334155;font-size:11px;font-weight:900;text-transform:uppercase;letter-spacing:.04em;box-shadow:0 14px 30px rgba(15,23,42,.16);backdrop-filter:blur(10px);opacity:0;transform:translate(-50%,-56px);transition:opacity .15s ease,transform .15s ease;';
-      indicador.innerHTML = '<span data-pull-icon class="block text-lg leading-none transition-transform duration-150">&#8635;</span><span data-pull-text>Puxe para recarregar</span>';
+      indicador.style.cssText = 'position:fixed;left:50%;top:0;z-index:35;display:flex;align-items:center;gap:8px;border:1px solid rgba(255,255,255,.75);border-radius:9999px;background:rgba(255,255,255,.96);padding:8px 14px;color:#334155;font-size:11px;font-weight:900;text-transform:uppercase;letter-spacing:.04em;box-shadow:0 14px 30px rgba(15,23,42,.16);backdrop-filter:blur(10px);opacity:0;transform:translate(-50%,-8px) scale(.96);transform-origin:top center;transition:opacity .15s ease,transform .15s ease;';
+      indicador.innerHTML = '<span data-pull-icon class="block text-lg leading-none transition-transform duration-150">&#8635;</span><span data-pull-text>Puxe para atualizar</span>';
       document.body.appendChild(indicador);
       posicionarIndicador();
       return indicador;
@@ -7905,19 +7905,20 @@
       var visivel = distancia > 2;
       var texto = item.querySelector('[data-pull-text]');
       var icone = item.querySelector('[data-pull-icon]');
-      var deslocamento = -56 + Math.round(56 * progresso);
+      var deslocamento = -8 + Math.round(8 * progresso);
+      var escala = 0.96 + (0.04 * progresso);
 
       posicionarIndicador();
       item.style.opacity = visivel ? String(Math.max(0.25, progresso)) : '0';
-      item.style.transform = 'translate(-50%, ' + deslocamento + 'px)';
-      if (texto) texto.textContent = soltou ? 'Recarregando...' : (distancia >= limite ? 'Recarregar' : 'Puxe para recarregar');
+      item.style.transform = 'translate(-50%, ' + deslocamento + 'px) scale(' + escala.toFixed(3) + ')';
+      if (texto) texto.textContent = soltou ? 'Recarregando...' : (distancia >= limite ? 'Recarregar' : 'Puxe para atualizar');
       if (icone) icone.style.transform = 'rotate(' + Math.round(220 * progresso) + 'deg)';
     }
 
     function esconderIndicador() {
       if (!indicador) return;
       indicador.style.opacity = '0';
-      indicador.style.transform = 'translate(-50%, -56px)';
+      indicador.style.transform = 'translate(-50%, -8px) scale(.96)';
     }
 
     window.addEventListener('touchstart', function (event) {
