@@ -145,6 +145,7 @@
     ultimasReceitasBusca: '',
     dashboardOrdem: ordemDashboardPadrao(),
     dashboardOcultos: [],
+    dashboardValoresVisiveis: {},
     atalhoInferiorEsquerdo: 'perfil',
     atalhoInferiorDireito: 'agenda',
     dragDashboardId: '',
@@ -4499,7 +4500,7 @@
             '<h1 class="text-2xl font-black text-slate-900">Confirme seu celular</h1>' +
             '<p class="mt-1 text-xs leading-snug text-slate-600">Para manter seu acesso seguro, confirme um celular com DDD por SMS.</p>' +
           '</div>' +
-          '<div class="grid gap-2">' +
+          '<div class="grid gap-1.5">' +
             inputHtml('telefone-obrigatorio', 'Celular', 'tel', 'DDD + numero. Ex: 11999999999', state.telefoneObrigatorio) +
             (state.smsTelefoneObrigatorioEnviado
               ? inputHtml('codigo-telefone-obrigatorio', 'Codigo recebido por SMS', 'text', 'Digite o codigo recebido', state.codigoTelefoneObrigatorio) +
@@ -4845,24 +4846,50 @@
   }
 
   function saldoTopoHtml(atual, anterior) {
+    var cardId = 'saldo';
     return (
       '<section class="rounded-2xl bg-slate-950 p-4 text-white shadow-lg">' +
+        '<div class="mb-1 flex justify-end">' + botaoVisibilidadeValoresHtml(cardId, true) + '</div>' +
         '<div class="grid grid-cols-3 gap-2 text-center">' +
-          miniSaldoHtml('Inicial', anterior.saldo, 'text-slate-200') +
-          miniSaldoHtml('Final', atual.saldo, atual.saldo >= 0 ? 'text-emerald-300' : 'text-red-300') +
-          miniSaldoHtml('Previsto', atual.saldoPrevisto, atual.saldoPrevisto >= 0 ? 'text-cyan-300' : 'text-red-300') +
+          miniSaldoHtml('Inicial', anterior.saldo, 'text-slate-200', cardId) +
+          miniSaldoHtml('Final', atual.saldo, atual.saldo >= 0 ? 'text-emerald-300' : 'text-red-300', cardId) +
+          miniSaldoHtml('Previsto', atual.saldoPrevisto, atual.saldoPrevisto >= 0 ? 'text-cyan-300' : 'text-red-300', cardId) +
         '</div>' +
       '</section>'
     );
   }
 
-  function miniSaldoHtml(rotulo, valor, cor) {
+  function miniSaldoHtml(rotulo, valor, cor, cardId) {
     return (
       '<div class="min-w-0">' +
         '<p class="text-[10px] font-bold uppercase tracking-wide text-slate-400">' + rotulo + '</p>' +
-        '<strong class="mt-1 block truncate text-sm font-black ' + cor + '">' + dinheiro(valor) + '</strong>' +
+        '<strong class="mt-1 block truncate text-sm font-black ' + cor + '">' + valorFinanceiroCardHtml(valor, cardId) + '</strong>' +
       '</div>'
     );
+  }
+
+  function valoresCardVisiveis(cardId) {
+    return !!state.dashboardValoresVisiveis[cardId];
+  }
+
+  function valorFinanceiroCardHtml(valor, cardId) {
+    return valoresCardVisiveis(cardId) ? dinheiro(valor) : 'R$ &bull;&bull;&bull;&bull;&bull;&bull;';
+  }
+
+  function iconeVisibilidadeValoresHtml(visivel) {
+    return visivel
+      ? '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z" stroke="currentColor" stroke-width="1.8"/><circle cx="12" cy="12" r="2.6" stroke="currentColor" stroke-width="1.8"/></svg>'
+      : '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M3 3l18 18M10.6 6.2A9.8 9.8 0 0 1 12 6c6 0 9.5 6 9.5 6a15 15 0 0 1-2.4 3.1M6.2 6.3C3.8 8 2.5 12 2.5 12s3.5 6 9.5 6a9.8 9.8 0 0 0 3.1-.5M9.9 9.9a3 3 0 0 0 4.2 4.2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+  }
+
+  function botaoVisibilidadeValoresHtml(cardId, escuro) {
+    var visivel = valoresCardVisiveis(cardId);
+    return '<button id="toggle-valores-' + escapeHtml(cardId) + '" type="button" class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full ' + (escuro ? 'bg-white/10 text-slate-200 active:bg-white/20' : 'bg-slate-100 text-slate-500 active:bg-slate-200') + '" aria-label="' + (visivel ? 'Ocultar valores' : 'Exibir valores') + '">' + iconeVisibilidadeValoresHtml(visivel) + '</button>';
+  }
+
+  function alternarVisibilidadeValoresCard(cardId) {
+    state.dashboardValoresVisiveis[cardId] = !valoresCardVisiveis(cardId);
+    render();
   }
 
   function perguntaIaHtml() {
@@ -5146,6 +5173,7 @@
   }
 
   function graficoPizzaHtml(configuracao) {
+    var cardId = configuracao.toggleId === 'toggle-categorias' ? 'categorias' : 'tipos';
     var categorias = configuracao.itens || [];
     var total = configuracao.total || 0;
     var totalFormatado = dinheiro(total);
@@ -5168,18 +5196,18 @@
 
     return (
       '<section class="rounded-2xl bg-white p-4 pb-8 shadow-sm">' +
-        '<div class="mb-3 flex items-center justify-between"><h2 class="text-sm font-black">' + escapeHtml(configuracao.titulo) + '</h2><span class="text-xs font-bold text-slate-400">' + dinheiro(total) + '</span></div>' +
+        '<div class="mb-3 flex items-center justify-between gap-2"><h2 class="min-w-0 flex-1 text-sm font-black">' + escapeHtml(configuracao.titulo) + '</h2><span class="text-xs font-bold text-slate-400">' + valorFinanceiroCardHtml(total, cardId) + '</span>' + botaoVisibilidadeValoresHtml(cardId, false) + '</div>' +
         '<div class="grid grid-cols-[136px_1fr] items-center gap-3">' +
           '<div class="relative h-32 w-32 rounded-full" style="background:' + fundo + '">' +
             '<div class="absolute left-1/2 top-1/2 flex h-[86px] w-[86px] -translate-x-1/2 -translate-y-1/2 flex-col items-center justify-center rounded-full bg-white px-1 text-center shadow-inner">' +
-              '<span class="text-[9px] font-bold leading-none text-slate-400">Total</span><strong class="mt-1 block max-w-[78px] truncate leading-none ' + classeValorCentral + ' font-black text-slate-900">' + totalFormatado + '</strong>' +
+              '<span class="text-[9px] font-bold leading-none text-slate-400">Total</span><strong class="mt-1 block max-w-[78px] truncate leading-none ' + classeValorCentral + ' font-black text-slate-900">' + valorFinanceiroCardHtml(total, cardId) + '</strong>' +
             '</div>' +
           '</div>' +
           '<div class="grid gap-2">' +
             (categorias.length ? categoriasVisiveis.map(function (item, index) {
               return '<div class="flex min-w-0 items-center justify-between gap-2 text-xs">' +
                 '<span class="min-w-0 truncate font-bold text-slate-600"><i class="mr-2 inline-block h-2.5 w-2.5 rounded-full" style="background:' + cores[index % cores.length] + '"></i>' + escapeHtml(item.categoria) + '</span>' +
-                '<strong class="shrink-0 text-slate-900">' + dinheiro(item.valor) + '</strong>' +
+                '<strong class="shrink-0 text-slate-900">' + valorFinanceiroCardHtml(item.valor, cardId) + '</strong>' +
               '</div>';
             }).join('') : '<p class="text-xs text-slate-500">Sem despesas no mes.</p>') +
             (categorias.length > 3 ? '<button id="' + escapeHtml(configuracao.toggleId) + '" type="button" class="mt-1 text-left text-xs font-black text-cyan-700">' + (configuracao.expandido ? 'Recolher' : escapeHtml(configuracao.textoExpandir)) + '</button>' : '') +
@@ -5268,21 +5296,22 @@
   }
 
   function totaisHtml(atual) {
+    var cardId = 'totais';
     return (
       '<section class="rounded-2xl bg-white p-4 pb-12 shadow-sm">' +
-        '<h2 class="mb-3 text-sm font-black">Vis&atilde;o geral do m&ecirc;s</h2>' +
+        '<div class="mb-3 flex items-center justify-between gap-3"><h2 class="text-sm font-black">Vis&atilde;o geral do m&ecirc;s</h2>' + botaoVisibilidadeValoresHtml(cardId, false) + '</div>' +
         '<div class="grid grid-cols-3 gap-2">' +
-          totalBoxHtml('Despesas', atual.despesas, 'text-red-600', 'ver-despesas-total') +
-          totalBoxHtml('Receitas', atual.receitas, 'text-emerald-600', 'ver-receitas-total') +
-          totalBoxHtml('Saldo', atual.saldo, atual.saldo >= 0 ? 'text-cyan-700' : 'text-red-600', '') +
+          totalBoxHtml('Despesas', atual.despesas, 'text-red-600', 'ver-despesas-total', cardId) +
+          totalBoxHtml('Receitas', atual.receitas, 'text-emerald-600', 'ver-receitas-total', cardId) +
+          totalBoxHtml('Saldo', atual.saldo, atual.saldo >= 0 ? 'text-cyan-700' : 'text-red-600', '', cardId) +
         '</div>' +
       '</section>'
     );
   }
 
-  function totalBoxHtml(titulo, valor, cor, id) {
+  function totalBoxHtml(titulo, valor, cor, id, cardId) {
     var tag = id ? 'button' : 'div';
-    return '<' + tag + (id ? ' id="' + id + '" type="button"' : '') + ' class="min-w-0 rounded-2xl bg-slate-50 p-3 text-left shadow-sm"><p class="text-[10px] font-black uppercase tracking-wide text-slate-400">' + titulo + '</p><strong class="mt-1 block truncate text-xs font-black ' + cor + '">' + dinheiro(valor) + '</strong></' + tag + '>';
+    return '<' + tag + (id ? ' id="' + id + '" type="button"' : '') + ' class="min-w-0 rounded-2xl bg-slate-50 p-3 text-left shadow-sm"><p class="text-[10px] font-black uppercase tracking-wide text-slate-400">' + titulo + '</p><strong class="mt-1 block truncate text-xs font-black ' + cor + '">' + valorFinanceiroCardHtml(valor, cardId) + '</strong></' + tag + '>';
   }
 
   function evolucaoHtml(tipo) {
@@ -5631,16 +5660,16 @@
             menuBotaoHtml('menu-despesas-fixas', 'Despesas fixas', 'Lancamentos automaticos mensais', '&#10227;') +
             menuBotaoHtml('menu-ajuda-categorias', 'Instrucoes sobre categorias', 'Como organizar seus gastos', '?') +
             menuBotaoHtml('menu-tutorial', 'Tutorial', 'Como usar o AvantaLab', '&#127891;') +
-            '<button id="menu-config-toggle" type="button" class="rounded-2xl border ' + (configAberto ? (dk ? 'border-cyan-700 bg-cyan-900/40' : 'border-cyan-200 bg-cyan-50') : bordaBase) + ' p-3 text-left shadow-sm active:scale-[0.99]">' +
-              '<div class="flex items-center gap-3">' +
-                '<span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-sm font-black ' + (configAberto ? 'bg-cyan-600 text-white' : 'bg-cyan-50 text-cyan-700') + '">&#9881;</span>' +
-                '<span class="min-w-0 flex-1"><span class="block text-xs font-black">Configuracoes</span><span class="mt-0.5 block truncate text-[10px] font-semibold text-slate-500">Perfil, tema e preferencias</span></span>' +
+            '<button id="menu-config-toggle" type="button" class="rounded-xl border ' + (configAberto ? (dk ? 'border-cyan-700 bg-cyan-900/40' : 'border-cyan-200 bg-cyan-50') : bordaBase) + ' px-2.5 py-2 text-left shadow-sm active:scale-[0.99]">' +
+              '<div class="flex items-center gap-2">' +
+                '<span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-xs font-black ' + (configAberto ? 'bg-cyan-600 text-white' : 'bg-cyan-50 text-cyan-700') + '">&#9881;</span>' +
+                '<span class="min-w-0 flex-1"><span class="block text-xs font-black leading-none">Configuracoes</span><span class="mt-1 block truncate text-[10px] font-semibold leading-none text-slate-500">Perfil, tema e preferencias</span></span>' +
                 '<span class="text-[10px] font-black text-slate-400">' + (configAberto ? '&#9650;' : '&#9660;') + '</span>' +
               '</div>' +
             '</button>' +
             configSubItens +
-            '<button id="menu-feedback" type="button" class="rounded-2xl border border-cyan-200 bg-cyan-50 p-3 text-left shadow-sm active:scale-[0.99]"><div class="flex items-center gap-3"><span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-sm font-black text-white" style="background:linear-gradient(135deg,#003E73,#00A6C8)">!</span><span class="min-w-0 flex-1"><span class="block text-xs font-black text-slate-900">Duvidas e Sugestoes</span><span class="mt-0.5 block truncate text-[10px] font-semibold text-cyan-800">Ajude a melhorar o AvantaLab</span></span></div></button>' +
-            '<button id="sair" type="button" class="mt-1 rounded-2xl border border-rose-100 bg-white p-3 text-left text-xs font-black text-rose-700 shadow-sm">Sair</button>' +
+            '<button id="menu-feedback" type="button" class="rounded-xl border border-cyan-200 bg-cyan-50 px-2.5 py-2 text-left shadow-sm active:scale-[0.99]"><div class="flex items-center gap-2"><span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-xs font-black text-white" style="background:linear-gradient(135deg,#003E73,#00A6C8)">!</span><span class="min-w-0 flex-1"><span class="block text-xs font-black leading-none text-slate-900">Duvidas e Sugestoes</span><span class="mt-1 block truncate text-[10px] font-semibold leading-none text-cyan-800">Ajude a melhorar o AvantaLab</span></span></div></button>' +
+            '<button id="sair" type="button" class="mt-1 rounded-xl border border-rose-100 bg-white px-3 py-2.5 text-left text-xs font-black text-rose-700 shadow-sm">Sair</button>' +
           '</div>' +
         '</aside>' +
       '</div>'
@@ -5803,10 +5832,10 @@
 
 
     function menuBotaoHtml(id, titulo, subtitulo, icone) {
-    return '<button id="' + id + '" type="button" class="rounded-2xl border ' + (state.darkMode ? 'border-slate-800 bg-slate-900' : 'border-slate-200 bg-white') + ' p-3 text-left shadow-sm active:scale-[0.99]">' +
-      '<div class="flex items-center gap-3">' +
-        '<span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-cyan-50 text-sm font-black text-cyan-700">' + (icone || '&bull;') + '</span>' +
-        '<span class="min-w-0 flex-1"><span class="block text-xs font-black">' + escapeHtml(titulo) + '</span><span class="mt-0.5 block truncate text-[10px] font-semibold text-slate-500">' + escapeHtml(subtitulo || '') + '</span></span>' +
+    return '<button id="' + id + '" type="button" class="rounded-xl border ' + (state.darkMode ? 'border-slate-800 bg-slate-900' : 'border-slate-200 bg-white') + ' px-2.5 py-2 text-left shadow-sm active:scale-[0.99]">' +
+      '<div class="flex items-center gap-2">' +
+        '<span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-cyan-50 text-xs font-black text-cyan-700">' + (icone || '&bull;') + '</span>' +
+        '<span class="min-w-0 flex-1"><span class="block text-xs font-black leading-none">' + escapeHtml(titulo) + '</span><span class="mt-1 block truncate text-[10px] font-semibold leading-none text-slate-500">' + escapeHtml(subtitulo || '') + '</span></span>' +
       '</div>' +
     '</button>';
   }
@@ -7419,6 +7448,10 @@
     bind('salvar-entrada', salvarEntrada);
     bind('salvar-total-receita', salvarTotalReceita);
     bind('excluir-total-receita', excluirTotalMesMobile);
+    bind('toggle-valores-saldo', function () { alternarVisibilidadeValoresCard('saldo'); });
+    bind('toggle-valores-totais', function () { alternarVisibilidadeValoresCard('totais'); });
+    bind('toggle-valores-categorias', function () { alternarVisibilidadeValoresCard('categorias'); });
+    bind('toggle-valores-tipos', function () { alternarVisibilidadeValoresCard('tipos'); });
     bind('toggle-categorias', function () {
       state.categoriasExpandido = !state.categoriasExpandido;
       render();
