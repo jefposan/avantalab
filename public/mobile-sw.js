@@ -1,6 +1,6 @@
-const CACHE_NAME = 'avantalab-mobile-v163';
+const CACHE_NAME = 'avantalab-mobile-v164';
 const APP_SHELL = [
-  '/mobile-app.js?v=161',
+  '/mobile-app.js?v=184',
   '/mobile-supabase.js',
   '/mobile-manifest.json',
   '/images/ava-logo-principal.png',
@@ -51,5 +51,52 @@ self.addEventListener('fetch', (event) => {
         return response;
       })
       .catch(() => caches.match(event.request))
+  );
+});
+
+// ─── Push: exibe a notificacao recebida ───────────────────────
+self.addEventListener('push', (event) => {
+  let dados = {};
+  try {
+    dados = event.data ? event.data.json() : {};
+  } catch (e) {
+    try { dados = { title: event.data && event.data.text ? event.data.text() : '' }; } catch (e2) { dados = {}; }
+  }
+
+  const titulo = dados.title || dados.titulo || 'AvantaLab';
+  const corpo = dados.body || dados.corpo || dados.mensagem || '';
+  const url = dados.url || '/mobile';
+
+  const opcoes = {
+    body: corpo,
+    icon: '/images/avantalab-icon-192.png',
+    badge: '/images/avantalab-icon-192.png',
+    data: { url: url },
+    tag: dados.tag || undefined,
+    renotify: dados.tag ? true : undefined,
+    vibrate: [80, 40, 80]
+  };
+
+  event.waitUntil(self.registration.showNotification(titulo, opcoes));
+});
+
+// ─── Clique na notificacao: foca/abre o app na URL ────────────
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+  const destino = (event.notification.data && event.notification.data.url) || '/mobile';
+
+  event.waitUntil(
+    self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientes) => {
+      for (const cliente of clientes) {
+        if (cliente.url.indexOf(destino) >= 0 && 'focus' in cliente) return cliente.focus();
+      }
+      for (const cliente of clientes) {
+        if ('focus' in cliente) {
+          if (cliente.navigate) { try { cliente.navigate(destino); } catch (e) {} }
+          return cliente.focus();
+        }
+      }
+      if (self.clients.openWindow) return self.clients.openWindow(destino);
+    })
   );
 });
