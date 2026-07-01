@@ -5646,6 +5646,18 @@
             '<span class="min-w-0 flex-1"><span class="block text-[11px] font-black">Usuarios</span><span class="mt-0.5 block truncate text-[9px] font-semibold text-slate-500">' + escapeHtml(perfilFormatado(state.empresa && state.empresa.perfil)) + '</span></span>' +
           '</div>' +
         '</button>' +
+        '<button id="menu-backup" type="button" class="rounded-xl border ' + bordaBase + ' px-3 py-2.5 text-left active:scale-[0.99]">' +
+          '<div class="flex items-center gap-2.5">' +
+            '<span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-cyan-50 text-sm font-black text-cyan-700">&#8595;</span>' +
+            '<span class="min-w-0 flex-1"><span class="block text-[11px] font-black">Backup</span><span class="mt-0.5 block truncate text-[9px] font-semibold text-slate-500">Exportar os dados do perfil</span></span>' +
+          '</div>' +
+        '</button>' +
+        '<button id="menu-restauracao" type="button" class="rounded-xl border ' + bordaBase + ' px-3 py-2.5 text-left active:scale-[0.99]">' +
+          '<div class="flex items-center gap-2.5">' +
+            '<span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-cyan-50 text-sm font-black text-cyan-700">&#8635;</span>' +
+            '<span class="min-w-0 flex-1"><span class="block text-[11px] font-black">Restauracao</span><span class="mt-0.5 block truncate text-[9px] font-semibold text-slate-500">Importar um backup do AvantaLab</span></span>' +
+          '</div>' +
+        '</button>' +
       '</div>'
     ) : '';
 
@@ -7137,6 +7149,28 @@
     bind('menu-instalar', function () { fecharMenuLateralAnimado(instalarApp); });
     bind('menu-duplicados', alternarDuplicados);
     bind('menu-tema', trocarTema);
+    function acionarBackupMobile(acao) {
+      if (!podeGerenciarUsuarios()) {
+        mostrarToast('Voce nao tem permissao para esta acao.');
+        return;
+      }
+      var detalhe = {
+        acao: acao,
+        dados: {
+          empresaId: state.empresa && state.empresa.id,
+          nomePerfil: nomeEmpresa(state.empresa),
+          tipoPerfil: state.empresa && state.empresa.tipo_perfil,
+          despesasCadastradas: state.despesas.map(function (item) { return { nome: item.nome, categoria: item.categoria }; }),
+          darkMode: state.darkMode,
+          duplicadosAtivo: state.duplicadosAtivo
+        }
+      };
+      fecharMenuLateralAnimado(function () {
+        window.dispatchEvent(new CustomEvent('avantalab:mobile-backup', { detail: detalhe }));
+      });
+    }
+    bind('menu-backup', function () { acionarBackupMobile('backup'); });
+    bind('menu-restauracao', function () { acionarBackupMobile('restauracao'); });
     bind('menu-config-toggle', function () {
       state.menuConfigAberto = !state.menuConfigAberto;
       render();

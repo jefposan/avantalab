@@ -278,7 +278,7 @@ export default function TabelaLancamentosDespesa({
             maxHeight: `${alturaMaximaTabelaLancamentos}px`,
           }}
         >
-          <table className="w-full min-w-[620px] text-left border-collapse">
+          <table className="w-full min-w-[540px] table-fixed text-left border-collapse">
             <tbody>
               {lancamentosFiltradosDoMes.length > 0 ? (
                 lancamentosFiltradosDoMes.map((lanc) => (
@@ -367,7 +367,9 @@ export default function TabelaLancamentosDespesa({
                           />
                         </td>
 
-                        <td className="py-1.5 px-1.5 w-20 text-center">
+                        <td className={`sticky right-0 z-10 w-20 border-l py-1.5 px-1.5 text-center ${
+                          darkMode ? 'border-slate-600 bg-slate-800' : 'border-slate-200 bg-white'
+                        }`}>
                           <div className="flex items-center justify-center gap-1">
                             <button
                               onClick={salvarEdicaoLancamento}
@@ -389,27 +391,34 @@ export default function TabelaLancamentosDespesa({
                       </>
                     ) : (
                       <>
-                        <td className="py-1.5 px-4 w-24 text-center text-xs font-bold text-slate-800">
+                        <td className="w-16 py-1.5 px-2 text-center text-xs font-bold text-slate-800">
                           {lanc.dia.toString().padStart(2, '0')}
                         </td>
 
-                        <td className="py-1.5 px-4 w-1/4 text-xs font-bold text-slate-800">
+                        <td className="w-[25%] py-1.5 px-2 text-xs font-bold text-slate-800">
                           {lanc.despesa}
                         </td>
 
-                        <td className="py-1.5 px-4 w-1/3 text-[11px] text-slate-500">
+                        <td className="w-[30%] py-1.5 px-2 text-[11px] text-slate-500">
                           {renderSeloPrevista(lanc, mesAtivo, anoSelecionado)}
                           {lanc.descricao || '-'}
                         </td>
 
-                        <td className="py-1.5 px-4 w-40 text-right text-xs font-black whitespace-nowrap" style={{ color: '#E5484D' }}>
+                        <td className="w-32 py-1.5 px-2 text-right text-xs font-black whitespace-nowrap" style={{ color: '#E5484D' }}>
                           -{formatarMoeda(lanc.valor)}
                         </td>
 
-                        <td className="py-1.5 px-4 w-28 text-center">
+                        <td className={`sticky right-0 z-10 w-20 border-l py-1.5 px-1 text-center ${
+                          buscaLancamento.trim()
+                            ? 'border-sky-200 bg-sky-50'
+                            : 'border-slate-200 bg-white'
+                        }`}>
                           <div className="flex items-center justify-center gap-1">
                             <button
-                              onClick={() => iniciarEdicaoLancamento(lanc)}
+                              onClick={() => {
+                                onFocoDespesa();
+                                iniciarEdicaoLancamento(lanc);
+                              }}
                               className="text-slate-400 hover:text-blue-500 hover:bg-blue-500/10 p-1.5 rounded transition-all cursor-pointer"
                               title="Editar"
                             >

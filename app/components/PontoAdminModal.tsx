@@ -35,6 +35,7 @@ function cpfValido(cpf: string) {
 }
 
 export const DIAS_SEMANA: Array<[number, string]> = [[0, 'Dom'], [1, 'Seg'], [2, 'Ter'], [3, 'Qua'], [4, 'Qui'], [5, 'Sex'], [6, 'Sáb']];
+const TODOS_FUNCIONARIOS = '__todos__';
 
 export type RegistroPonto = {
   tipo: string;
@@ -121,7 +122,7 @@ export default function PontoAdminModal({
   const [confirmandoExcluir, setConfirmandoExcluir] = useState(false);
   const cardEditRef = useRef<HTMLDivElement | null>(null);
 
-  const [relFuncId, setRelFuncId] = useState('');
+  const [relFuncId, setRelFuncId] = useState(TODOS_FUNCIONARIOS);
   const [relAno, setRelAno] = useState<number>(new Date().getFullYear());
   const [relMesIdx, setRelMesIdx] = useState<number>(new Date().getMonth());
   const [relDataInicio, setRelDataInicio] = useState<string>(() => {
@@ -133,6 +134,7 @@ export default function PontoAdminModal({
     return new Date(n.getFullYear(), n.getMonth() + 1, 0).toISOString().slice(0, 10);
   });
   const [relRegistros, setRelRegistros] = useState<RegistroPonto[]>([]);
+  const [relRegistrosTodos, setRelRegistrosTodos] = useState<Record<string, RegistroPonto[]>>({});
   const [relCarregando, setRelCarregando] = useState(false);
 
   const [dragPos, setDragPos] = useState({ x: 0, y: 0 });
@@ -289,31 +291,45 @@ export default function PontoAdminModal({
   const minutosDoDia = (hhmm: string) => { const [h, m] = hhmm.slice(0, 5).split(':').map(Number); return h * 60 + m; };
 
   const carregarRelatorio = async (funcId: string) => {
-    if (!funcId) { setRelRegistros([]); return; }
+    if (!funcId) { setRelRegistros([]); setRelRegistrosTodos({}); return; }
     setRelCarregando(true);
+    if (funcId === TODOS_FUNCIONARIOS) {
+      const resultados = await Promise.all(
+        funcionarios.map(async (funcionario) => {
+          const regs = await onCarregarRegistros(funcionario.user_id, relDataInicio);
+          return [funcionario.user_id, regs.filter((r) => r.dia >= relDataInicio && r.dia <= relDataFim)] as const;
+        })
+      );
+      setRelRegistros([]);
+      setRelRegistrosTodos(Object.fromEntries(resultados));
+      setRelCarregando(false);
+      return;
+    }
     const regs = await onCarregarRegistros(funcId, relDataInicio);
     setRelRegistros(regs.filter((r) => r.dia >= relDataInicio && r.dia <= relDataFim));
+    setRelRegistrosTodos({});
     setRelCarregando(false);
   };
 
   type DiaRel = { dia: string; entrada?: string; saida?: string; distancia: number | null; statusEntrada: 'pontual' | 'atraso' | 'adiantado' | 'sem' };
   const funcSel = funcionarios.find((f) => f.user_id === relFuncId) || null;
-  const diasRel: DiaRel[] = (() => {
+  const montarDiasRel = (funcionario: FuncionarioPonto | null, registros: RegistroPonto[]): DiaRel[] => {
     const mapa: Record<string, RegistroPonto[]> = {};
-    relRegistros.forEach((r) => { (mapa[r.dia] = mapa[r.dia] || []).push(r); });
+    registros.forEach((r) => { (mapa[r.dia] = mapa[r.dia] || []).push(r); });
     return Object.keys(mapa).sort().reverse().map((dia) => {
       const regs = mapa[dia];
       const entradaReg = regs.find((r) => r.tipo === 'entrada');
       const saidaReg = [...regs].reverse().find((r) => r.tipo === 'saida');
       const distancia = entradaReg?.distancia_m ?? regs[0]?.distancia_m ?? null;
       let statusEntrada: DiaRel['statusEntrada'] = 'sem';
-      if (entradaReg && funcSel?.hora_entrada) {
-        const diff = minutosDoDia(horaBrasilia(entradaReg.registrado_em)) - minutosDoDia(funcSel.hora_entrada);
+      if (entradaReg && funcionario?.hora_entrada) {
+        const diff = minutosDoDia(horaBrasilia(entradaReg.registrado_em)) - minutosDoDia(funcionario.hora_entrada);
         statusEntrada = diff > TOLERANCIA_MIN ? 'atraso' : diff < -TOLERANCIA_MIN ? 'adiantado' : 'pontual';
       }
       return { dia, entrada: entradaReg ? horaBrasilia(entradaReg.registrado_em) : undefined, saida: saidaReg ? horaBrasilia(saidaReg.registrado_em) : undefined, distancia, statusEntrada };
     });
-  })();
+  };
+  const diasRel = montarDiasRel(funcSel, relRegistros);
   const totalComHorario = diasRel.filter((d) => d.statusEntrada !== 'sem').length;
   const pontuais = diasRel.filter((d) => d.statusEntrada === 'pontual').length;
   const atrasos = diasRel.filter((d) => d.statusEntrada === 'atraso').length;
@@ -338,6 +354,38 @@ export default function PontoAdminModal({
     return count;
   })();
 
+  const calcularFaltas = (funcionario: FuncionarioPonto, registros: RegistroPonto[]) => {
+    const diasTrabalho = new Set(funcionario.dias_trabalho ?? []);
+    if (diasTrabalho.size === 0 || registros.length === 0) return 0;
+    const entradas = new Set(registros.filter((r) => r.tipo === 'entrada').map((r) => r.dia));
+    const primeiroDia = registros.reduce((min, r) => (r.dia < min ? r.dia : min), registros[0].dia);
+    const hoje = new Date(); hoje.setHours(0, 0, 0, 0);
+    let total = 0;
+    for (const data = new Date(relDataInicio + 'T00:00:00'); data < hoje; data.setDate(data.getDate() + 1)) {
+      const iso = `${data.getFullYear()}-${String(data.getMonth() + 1).padStart(2, '0')}-${String(data.getDate()).padStart(2, '0')}`;
+      if (iso >= primeiroDia && iso <= relDataFim && diasTrabalho.has(data.getDay()) && !entradas.has(iso)) total++;
+    }
+    return total;
+  };
+
+  const relatorioTodos = funcionarios.map((funcionario) => {
+    const registros = relRegistrosTodos[funcionario.user_id] || [];
+    const dias = montarDiasRel(funcionario, registros);
+    const avaliados = dias.filter((d) => d.statusEntrada !== 'sem');
+    const pontuaisFuncionario = avaliados.filter((d) => d.statusEntrada === 'pontual').length;
+    const atrasosFuncionario = avaliados.filter((d) => d.statusEntrada === 'atraso').length;
+    return {
+      funcionario,
+      dias,
+      pontuais: pontuaisFuncionario,
+      atrasos: atrasosFuncionario,
+      percentual: avaliados.length ? Math.round((pontuaisFuncionario / avaliados.length) * 100) : null,
+      faltas: calcularFaltas(funcionario, registros),
+    };
+  });
+  const modoTodos = relFuncId === TODOS_FUNCIONARIOS;
+  const totalDiasTodos = relatorioTodos.reduce((total, item) => total + item.dias.length, 0);
+
   const rotuloStatus = (s: DiaRel['statusEntrada']) => s === 'pontual' ? 'Pontual' : s === 'atraso' ? 'Atraso' : s === 'adiantado' ? 'Adiantado' : '-';
   const rotuloPeriodo = `${relDataInicio.slice(8, 10)}/${relDataInicio.slice(5, 7)}/${relDataInicio.slice(0, 4)} a ${relDataFim.slice(8, 10)}/${relDataFim.slice(5, 7)}/${relDataFim.slice(0, 4)}`;
   const slugNome = (t: string) => (t || 'funcionario').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
@@ -346,6 +394,23 @@ export default function PontoAdminModal({
   const horarioPrevisto = funcSel?.hora_entrada ? `${funcSel.hora_entrada.slice(0, 5)} às ${funcSel.hora_saida ? funcSel.hora_saida.slice(0, 5) : '-'}` : 'Não definido';
 
   const gerarRelatorioXlsx = () => {
+    if (modoTodos) {
+      const linhas = relatorioTodos.flatMap((item) => item.dias.length
+        ? item.dias.map((d) => [item.funcionario.nome, formatarCpf(item.funcionario.cpf || item.funcionario.login), item.funcionario.cargo || '-', dataBr(d.dia), d.entrada || '--:--', d.saida || '--:--', d.distancia != null ? Math.round(d.distancia) : '', rotuloStatus(d.statusEntrada)])
+        : [[item.funcionario.nome, formatarCpf(item.funcionario.cpf || item.funcionario.login), item.funcionario.cargo || '-', 'Sem registros', '', '', '', '']]);
+      const ws = XLSX.utils.aoa_to_sheet([
+        ['Relatório de Ponto - Todos os funcionários'],
+        ['Período', rotuloPeriodo],
+        [],
+        ['Funcionário', 'CPF', 'Cargo', 'Data', 'Entrada', 'Saída', 'Distância (m)', 'Status'],
+        ...linhas,
+      ]);
+      ws['!cols'] = [{ wch: 28 }, { wch: 16 }, { wch: 20 }, { wch: 14 }, { wch: 10 }, { wch: 10 }, { wch: 14 }, { wch: 12 }];
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, 'Todos');
+      XLSX.writeFile(wb, `ponto_todos_${relDataInicio}_${relDataFim}.xlsx`);
+      return;
+    }
     if (!funcSel) return;
     const cabecalho = [
       ['Relatório de Ponto'],
@@ -369,9 +434,20 @@ export default function PontoAdminModal({
   };
 
   const gerarRelatorioPdf = () => {
-    if (!funcSel) return;
     const esc = (t: string) => String(t).replace(/[&<>]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' } as Record<string, string>)[c]);
     const corStatus = (s: DiaRel['statusEntrada']) => s === 'pontual' ? '#047857' : s === 'atraso' ? '#b91c1c' : s === 'adiantado' ? '#b45309' : '#64748b';
+    if (modoTodos) {
+      const secoes = relatorioTodos.map((item) => {
+        const linhasFuncionario = item.dias.map((d) => `<tr><td>${dataBr(d.dia)}</td><td>${d.entrada || '--:--'}</td><td>${d.saida || '--:--'}</td><td>${d.distancia != null ? Math.round(d.distancia) + ' m' : '-'}</td><td style="color:${corStatus(d.statusEntrada)};font-weight:700">${rotuloStatus(d.statusEntrada)}</td></tr>`).join('');
+        return `<section><h2>${esc(item.funcionario.nome)}</h2><p class="meta">${esc(item.funcionario.cargo || '-')} · CPF ${esc(formatarCpf(item.funcionario.cpf || item.funcionario.login))} · Faltas: ${item.faltas} · Pontualidade: ${item.percentual == null ? 'Não avaliada' : item.percentual + '%'}</p>${item.dias.length ? `<table><thead><tr><th>Data</th><th>Entrada</th><th>Saída</th><th>Distância</th><th>Status</th></tr></thead><tbody>${linhasFuncionario}</tbody></table>` : '<p class="vazio">Sem registros no período.</p>'}</section>`;
+      }).join('');
+      const htmlTodos = `<!doctype html><html lang="pt-br"><head><meta charset="utf-8"><title>Ponto - Todos os funcionários</title><style>*{font-family:Arial,Helvetica,sans-serif;box-sizing:border-box}body{margin:24px;color:#0f172a}h1{font-size:20px;margin:0 0 2px}h2{font-size:15px;margin:20px 0 3px}.sub,.meta{color:#64748b;font-size:11px;margin:0 0 8px}section{break-inside:avoid}table{width:100%;border-collapse:collapse;font-size:11px}th,td{border:1px solid #e2e8f0;padding:6px 8px;text-align:left}th{background:#f1f5f9;text-transform:uppercase;font-size:9px}.vazio{padding:10px;background:#f8fafc;color:#64748b;font-size:11px}.rod{margin-top:18px;color:#94a3b8;font-size:10px}</style></head><body><h1>Relatório de Ponto - Todos os funcionários</h1><p class="sub">${esc(rotuloPeriodo)}</p>${secoes}<p class="rod">Gerado pelo AvantaLab em ${new Date().toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' })}.</p><script>window.onload=function(){window.print();}</script></body></html>`;
+      const janela = window.open('', '_blank');
+      if (!janela) return;
+      janela.document.open(); janela.document.write(htmlTodos); janela.document.close();
+      return;
+    }
+    if (!funcSel) return;
     const linhas = diasRel.map((d) => `<tr><td>${dataBr(d.dia)}</td><td>${d.entrada || '--:--'}</td><td>${d.saida || '--:--'}</td><td>${d.distancia != null ? Math.round(d.distancia) + ' m' : '-'}</td><td style="color:${corStatus(d.statusEntrada)};font-weight:700">${rotuloStatus(d.statusEntrada)}</td></tr>`).join('');
     const html = `<!doctype html><html lang="pt-br"><head><meta charset="utf-8"><title>Ponto - ${esc(funcSel.nome)}</title><style>
       *{font-family:Arial,Helvetica,sans-serif;box-sizing:border-box}body{margin:24px;color:#0f172a}
@@ -431,7 +507,7 @@ export default function PontoAdminModal({
 
       <div className={`relative flex max-h-[calc(100dvh-1.5rem)] w-full max-w-[calc(100vw-1.5rem)] flex-col overflow-hidden rounded-2xl border shadow-2xl sm:max-h-[88vh] sm:max-w-lg ${card}`} style={{ transform: `translate(${dragPos.x}px, ${dragPos.y}px)` }}>
         <div
-          className="flex items-start justify-between gap-3 px-5 py-4 text-white select-none"
+          className="flex shrink-0 items-start justify-between gap-3 px-5 py-4 text-white select-none"
           style={{ background: 'linear-gradient(135deg, #020617, #003E73)', cursor: 'grab' }}
           onMouseDown={(e) => {
             isDragging.current = true;
@@ -446,12 +522,17 @@ export default function PontoAdminModal({
           <button type="button" onClick={onFechar} className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white/15 text-lg font-black text-white transition hover:bg-white/25" aria-label="Fechar">×</button>
         </div>
 
-        <div className={`flex max-w-full gap-2 overflow-x-auto border-b px-3 pt-3 sm:px-4 ${itemBorda}`}>
+        <div className={`relative z-10 flex max-w-full shrink-0 gap-2 overflow-x-auto border-b px-3 pt-3 sm:px-4 ${darkMode ? 'bg-slate-900' : 'bg-white'} ${itemBorda}`}>
           {abas.map(([a, label]) => (
             <button
               key={a}
               type="button"
-              onClick={() => { setAba(a); setMsg(null); setMsgLocal(null); }}
+              onClick={() => {
+                setAba(a);
+                setMsg(null);
+                setMsgLocal(null);
+                if (listaScrollRef.current) listaScrollRef.current.scrollTop = 0;
+              }}
               className="rounded-t-lg px-2.5 py-2 text-[11px] font-black uppercase tracking-wide"
               style={aba === a ? { color: corSistema, borderBottom: `2px solid ${corSistema}` } : { color: darkMode ? '#94a3b8' : '#64748b' }}
             >
@@ -460,7 +541,7 @@ export default function PontoAdminModal({
           ))}
         </div>
 
-        <div ref={listaScrollRef} className="flex-1 overflow-y-auto p-4">
+        <div ref={listaScrollRef} className="min-h-0 flex-1 overflow-y-auto p-4">
           {aba === 'lista' && (
             <div className="grid gap-3">
               <div className={`flex items-start justify-between gap-3 rounded-xl border p-2.5 ${itemBorda}`}>
@@ -640,7 +721,7 @@ export default function PontoAdminModal({
                 value={relFuncId}
                 onChange={(e) => setRelFuncId(e.target.value)}
               >
-                <option value="">Selecione o funcionário</option>
+                <option value={TODOS_FUNCIONARIOS}>Todos os funcionários</option>
                 {funcionarios.map((f) => <option key={f.user_id} value={f.user_id}>{f.nome}</option>)}
               </select>
               {funcSel && <p className={`-mt-1 text-[11px] font-bold ${textMuted}`}>CPF: {formatarCpf(funcSel.cpf || funcSel.login)}</p>}
@@ -726,11 +807,38 @@ export default function PontoAdminModal({
                 <p className={`py-6 text-center text-sm font-semibold ${textMuted}`}>Selecione um funcionário para ver os registros.</p>
               ) : relCarregando ? (
                 <p className={`py-6 text-center text-sm font-semibold ${textMuted}`}>Carregando...</p>
-              ) : diasRel.length === 0 ? (
+              ) : modoTodos && totalDiasTodos === 0 ? (
+                <p className={`py-6 text-center text-sm font-semibold ${textMuted}`}>Nenhum funcionário possui registro no período.</p>
+              ) : !modoTodos && diasRel.length === 0 ? (
                 <p className={`py-6 text-center text-sm font-semibold ${textMuted}`}>Nenhum registro no período.</p>
               ) : (
                 <>
-                  {funcSel?.hora_entrada ? (
+                  {modoTodos ? (
+                    <div className="grid gap-2">
+                      <div className="flex gap-2">
+                        <button type="button" onClick={gerarRelatorioXlsx} className="flex flex-1 items-center justify-center gap-1.5 rounded-lg bg-emerald-600 py-2 text-xs font-black uppercase tracking-wide text-white transition hover:bg-emerald-500">Excel</button>
+                        <button type="button" onClick={gerarRelatorioPdf} className="flex flex-1 items-center justify-center gap-1.5 rounded-lg bg-rose-600 py-2 text-xs font-black uppercase tracking-wide text-white transition hover:bg-rose-500">PDF</button>
+                      </div>
+                      {relatorioTodos.map((item) => (
+                        <div key={item.funcionario.user_id} className={`rounded-xl border p-3 ${itemBorda}`}>
+                          <div className="flex items-start justify-between gap-3">
+                            <div className="min-w-0">
+                              <p className="truncate text-sm font-black">{item.funcionario.nome}</p>
+                              <p className={`truncate text-[10px] ${textMuted}`}>{item.funcionario.cargo || 'Sem cargo'} · {item.dias.length} dia{item.dias.length === 1 ? '' : 's'} com registro</p>
+                            </div>
+                            <span className="shrink-0 text-xs font-black" style={{ color: item.percentual == null ? '#64748b' : corSistema }}>
+                              {item.percentual == null ? '--' : `${item.percentual}%`}
+                            </span>
+                          </div>
+                          <div className="mt-2 grid grid-cols-3 gap-2 text-center">
+                            <div className={`rounded-lg p-1.5 ${darkMode ? 'bg-slate-800' : 'bg-slate-50'}`}><p className="text-[9px] font-black uppercase text-emerald-600">Pontuais</p><p className="text-sm font-black">{item.pontuais}</p></div>
+                            <div className={`rounded-lg p-1.5 ${darkMode ? 'bg-slate-800' : 'bg-slate-50'}`}><p className="text-[9px] font-black uppercase text-red-600">Atrasos</p><p className="text-sm font-black">{item.atrasos}</p></div>
+                            <div className={`rounded-lg p-1.5 ${darkMode ? 'bg-slate-800' : 'bg-slate-50'}`}><p className="text-[9px] font-black uppercase text-amber-600">Faltas</p><p className="text-sm font-black">{item.faltas}</p></div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : funcSel?.hora_entrada ? (
                     <div className={`grid gap-2 rounded-xl border p-3 ${itemBorda}`}>
                       <div className="flex items-center justify-between text-xs font-black">
                         <span>Pontualidade na entrada</span>
@@ -750,14 +858,14 @@ export default function PontoAdminModal({
                     <p className={`rounded-xl border p-3 text-[11px] ${itemBorda} ${textMuted}`}>Sem horário previsto cadastrado — a pontualidade não pode ser avaliada. Edite na lista de funcionários.</p>
                   )}
 
-                  {diasTrabSet.size > 0 && (
+                  {!modoTodos && diasTrabSet.size > 0 && (
                     <div className={`flex items-center justify-between gap-2 rounded-xl border p-3 ${itemBorda}`}>
                       <span className="text-xs font-black">Faltas no período</span>
                       <span className="text-sm font-black" style={{ color: faltas > 0 ? '#dc2626' : '#059669' }}>{faltas}</span>
                     </div>
                   )}
 
-                  <div className="flex gap-2">
+                  {!modoTodos && <div className="flex gap-2">
                     <button type="button" onClick={gerarRelatorioXlsx} className="flex flex-1 items-center justify-center gap-1.5 rounded-lg bg-emerald-600 py-2 text-xs font-black uppercase tracking-wide text-white transition hover:bg-emerald-500">
                       <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
                       Excel
@@ -766,9 +874,9 @@ export default function PontoAdminModal({
                       <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" /></svg>
                       PDF
                     </button>
-                  </div>
+                  </div>}
 
-                  <div className="grid gap-1.5">
+                  {!modoTodos && <div className="grid gap-1.5">
                     {diasRel.map((d) => (
                       <div key={d.dia} className={`flex items-center gap-3 rounded-xl border p-2.5 text-xs ${itemBorda}`}>
                         <div className="w-14 shrink-0 font-black">{d.dia.slice(8, 10)}/{d.dia.slice(5, 7)}</div>
@@ -784,7 +892,7 @@ export default function PontoAdminModal({
                         )}
                       </div>
                     ))}
-                  </div>
+                  </div>}
                 </>
               )}
             </div>
