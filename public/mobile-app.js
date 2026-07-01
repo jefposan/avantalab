@@ -1844,7 +1844,12 @@
       sistema: 'bg-slate-100 text-slate-600'
     };
     var rotulosTipo = { despesa: 'Despesa', agenda: 'Agenda', novidade: 'Novidade', sistema: 'Sistema' };
-    return '<div class="grid gap-2">' + lista.map(function (n) {
+    var lixeiraSvg = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>';
+    var header = '<div class="mb-2 flex items-center justify-between gap-2">' +
+      '<span class="text-[11px] font-bold text-slate-500">' + lista.length + ' notifica&ccedil;' + (lista.length > 1 ? '&otilde;es' : '&atilde;o') + '</span>' +
+      '<button id="limpar-notificacoes" type="button" class="rounded-lg border border-rose-200 bg-white px-2.5 py-1 text-[11px] font-black text-rose-600 active:bg-rose-50">Limpar todas</button>' +
+    '</div>';
+    return header + '<div class="grid gap-2">' + lista.map(function (n) {
       var naoLida = n.lida === false;
       var selo = coresTipo[n.tipo] || coresTipo.sistema;
       var rotulo = rotulosTipo[n.tipo] || 'Aviso';
@@ -1853,11 +1858,29 @@
             (naoLida ? '<span class="h-2 w-2 shrink-0 rounded-full bg-cyan-500"></span>' : '') +
             '<span class="inline-block rounded-full px-2 py-0.5 text-[10px] font-black uppercase ' + selo + '">' + escapeHtml(rotulo) + '</span>' +
             '<span class="ml-auto shrink-0 text-[10px] font-bold text-slate-400">' + escapeHtml(quandoNotificacaoTexto(n.criado_em)) + '</span>' +
+            '<button type="button" data-excluir-notificacao="' + escapeHtml(n.id) + '" class="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg text-slate-400 active:bg-slate-100" aria-label="Excluir">' + lixeiraSvg + '</button>' +
           '</div>' +
           '<p class="text-sm font-black text-slate-900">' + escapeHtml(n.titulo || '') + '</p>' +
           (n.corpo ? '<p class="mt-0.5 whitespace-pre-line text-xs font-semibold text-slate-600">' + escapeHtml(n.corpo) + '</p>' : '') +
         '</div>';
     }).join('') + '</div>';
+  }
+
+  async function excluirNotificacaoMobile(id) {
+    state.notificacoesLista = (state.notificacoesLista || []).filter(function (n) { return String(n.id) !== String(id); });
+    render();
+    try { await db.from('notificacoes').delete().eq('id', id); } catch (e) {}
+    carregarNotificacoesNaoLidas();
+  }
+
+  async function limparNotificacoesMobile() {
+    var ids = (state.notificacoesLista || []).map(function (n) { return n.id; });
+    if (!ids.length) return;
+    state.notificacoesLista = [];
+    state.notificacoesNaoLidas = 0;
+    atualizarBadgeApp(0);
+    render();
+    try { await db.from('notificacoes').delete().in('id', ids); } catch (e) {}
   }
 
   async function instalarApp() {
@@ -4726,7 +4749,7 @@
               '</div>' +
               (state.visao === 'home'
                 ? ((agendaTemAvisoHoje() || state.notificacoesNaoLidas > 0)
-                  ? '<button id="avisos-dashboard" type="button" class="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-white/15 bg-white/15 text-white shadow-sm backdrop-blur" aria-label="Avisos">' + sinoAvisoSvg() +
+                  ? '<button id="avisos-dashboard" type="button" class="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-white/15 bg-white/15 text-white shadow-sm backdrop-blur" aria-label="Notificacoes">' + sinoAvisoSvg() +
                     (state.notificacoesNaoLidas > 0
                       ? '<span class="absolute -right-1 -top-1 flex h-5 min-w-[20px] items-center justify-center rounded-full bg-rose-500 px-1 text-[10px] font-black text-white ring-2 ring-white/60">' + (state.notificacoesNaoLidas > 99 ? '99+' : state.notificacoesNaoLidas) + '</span>'
                       : '<span class="absolute right-1 top-1 h-2.5 w-2.5 rounded-full bg-rose-400 ring-2 ring-white/60"></span>') +
@@ -4925,13 +4948,18 @@
 
   function saldoTopoHtml(atual, anterior) {
     var cardId = 'saldo';
+    // Inicial = saldo do mes anterior. Final = Inicial + (receitas - despesas realizadas).
+    // Previsto = Final - despesas futuras do mes.
+    var inicial = anterior.saldo;
+    var final = inicial + atual.saldo;
+    var previsto = inicial + atual.saldoPrevisto;
     return (
       '<section class="rounded-2xl bg-slate-950 p-4 text-white shadow-lg">' +
         '<div class="mb-1 flex justify-end">' + botaoVisibilidadeValoresHtml(cardId, true) + '</div>' +
         '<div class="grid grid-cols-3 gap-2 text-center">' +
-          miniSaldoHtml('Inicial', anterior.saldo, 'text-slate-200', cardId) +
-          miniSaldoHtml('Final', atual.saldo, atual.saldo >= 0 ? 'text-emerald-300' : 'text-red-300', cardId) +
-          miniSaldoHtml('Previsto', atual.saldoPrevisto, atual.saldoPrevisto >= 0 ? 'text-cyan-300' : 'text-red-300', cardId) +
+          miniSaldoHtml('Inicial', inicial, 'text-slate-200', cardId) +
+          miniSaldoHtml('Final', final, final >= 0 ? 'text-emerald-300' : 'text-red-300', cardId) +
+          miniSaldoHtml('Previsto', previsto, previsto >= 0 ? 'text-cyan-300' : 'text-red-300', cardId) +
         '</div>' +
       '</section>'
     );
@@ -5711,6 +5739,12 @@
             '<span class="min-w-0 flex-1"><span class="block text-[11px] font-black">Modo escuro</span><span class="mt-0.5 block truncate text-[9px] font-semibold text-slate-500">' + (dk ? 'Ativo' : 'Inativo') + '</span></span>' +
           '</div>' +
         '</button>' +
+        '<button id="menu-notificacoes" type="button" class="rounded-xl border ' + bordaBase + ' px-3 py-2.5 text-left active:scale-[0.99]">' +
+          '<div class="flex items-center gap-2.5">' +
+            '<span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-cyan-50 text-[10px] font-black text-cyan-700">N</span>' +
+            '<span class="min-w-0 flex-1"><span class="block text-[11px] font-black">Notificacoes</span><span class="mt-0.5 block truncate text-[9px] font-semibold text-slate-500">Ativar ou desativar avisos no celular</span></span>' +
+          '</div>' +
+        '</button>' +
         '<button id="menu-organizar-dashboard" type="button" class="rounded-xl border ' + bordaBase + ' px-3 py-2.5 text-left active:scale-[0.99]">' +
           '<div class="flex items-center gap-2.5">' +
             '<span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-cyan-50 text-sm font-black text-cyan-700">&#8597;</span>' +
@@ -5749,7 +5783,7 @@
           '</div>' +
           '<div class="grid gap-2">' +
             menuBotaoHtml('menu-agenda', 'Agenda', 'Lembretes e avisos', iconeAgendaSvg()) +
-            menuBotaoHtml('menu-notificacoes', 'Ativar / Desativar notificacoes', 'Receber avisos no celular', sinoAvisoSvg()) +
+            menuBotaoHtml('menu-avisos', 'Avisos e notificacoes', 'Ver e apagar seus avisos', sinoAvisoSvg()) +
             menuBotaoHtml('menu-configurar-resumo', 'Organizar resumo', 'Exibir e ocultar cards', '&#9776;') +
             menuBotaoHtml('menu-organizar-atalhos', 'Organizar atalhos', 'Personalizar a barra inferior', '&#8644;') +
             menuBotaoHtml('menu-categorias', 'Cadastrar despesas', 'Adicionar tipos de despesa', '+') +
@@ -7206,6 +7240,7 @@
     bind('menu-organizar-dashboard', function () { fecharMenuLateralAnimado(function () { abrirModalMenu('organizarDashboard'); }); });
     bind('menu-organizar-atalhos', function () { fecharMenuLateralAnimado(function () { abrirModalMenu('organizarAtalhos'); }); });
     bind('menu-agenda', function () { fecharMenuLateralAnimado(abrirAgendaMobile); });
+    bind('menu-avisos', function () { fecharMenuLateralAnimado(abrirNotificacoesMobile); });
     bind('menu-notificacoes', function () { fecharMenuLateralAnimado(alternarNotificacoesMobile); });
     bind('prompt-notif-ativar', function () {
       marcarPromptNotifVisto();
@@ -7915,6 +7950,13 @@
         var v = botao.getAttribute('data-sobre-versao');
         state.sobreAbertos[v] = !state.sobreAbertos[v];
         render();
+      });
+    });
+    bind('limpar-notificacoes', function () { limparNotificacoesMobile(); });
+    Array.prototype.forEach.call(document.querySelectorAll('[data-excluir-notificacao]'), function (botao) {
+      botao.addEventListener('click', function (event) {
+        event.stopPropagation();
+        excluirNotificacaoMobile(botao.getAttribute('data-excluir-notificacao'));
       });
     });
     configurarDragDashboard();

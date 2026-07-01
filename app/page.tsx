@@ -1482,6 +1482,13 @@ useEffect(() => {
     } catch {}
   }
 
+  async function excluirNotificacaoWeb(alertaId: string) {
+    if (!alertaId.startsWith('notif-')) return;
+    const id = alertaId.slice('notif-'.length);
+    setNotificacoesWeb((prev) => prev.filter((n) => n.id !== id));
+    try { await supabase.from('notificacoes').delete().eq('id', id); } catch {}
+  }
+
   // ── Sistema de Módulos ──
   async function carregarModulos() {
     if (!empresaId) return;
@@ -1882,12 +1889,15 @@ const somaDespesasMesSaldo = (mesNome: string, mIdx: number, futuras: boolean) =
 const recSaldoCard = faturamentos[mesSaldoCardNome] || 0;
 const despRealSaldoCard = somaDespesasMesSaldo(mesSaldoCardNome, saldoCardMesIdx, false);
 const despFutSaldoCard = somaDespesasMesSaldo(mesSaldoCardNome, saldoCardMesIdx, true);
-const saldoFinalCard = recSaldoCard - despRealSaldoCard;
-const saldoPrevistoCard = recSaldoCard - (despRealSaldoCard + despFutSaldoCard);
+// Saldo inicial = resultado do mes anterior (entra como saldo de abertura do mes atual).
 const saldoInicialCard = mesSaldoAntNome
   ? (faturamentos[mesSaldoAntNome] || 0) -
     somaDespesasMesSaldo(mesSaldoAntNome, saldoCardMesIdx - 1, false)
   : 0;
+// Final = Inicial + Receitas - Despesas realizadas.
+const saldoFinalCard = saldoInicialCard + recSaldoCard - despRealSaldoCard;
+// Previsto = Final - Despesas futuras do mes.
+const saldoPrevistoCard = saldoFinalCard - despFutSaldoCard;
   const lancamentosOrdenados = useMemo(() => {
   return [...lancamentos].sort((a, b) => {
     const diaA = Number(a.dia);
@@ -7247,6 +7257,7 @@ name="novo-usuario-login"
         setAnoSelecionado={setAnoSelecionado}
         setMesAtivo={setMesAtivo}
         alertasSistema={alertasSistema}
+        onExcluirAviso={excluirNotificacaoWeb}
         calcAberta={calcAberta}
         setCalcAberta={setCalcAberta}
         confirmarLogout={confirmarLogout}
