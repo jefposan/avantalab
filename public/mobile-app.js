@@ -7919,6 +7919,7 @@
       var fundo = camadaPullToRefresh();
       var progresso = Math.max(0, Math.min(distancia / limite, 1));
       var progressoAviso = Math.max(0, Math.min((distancia - exibirApos) / (opacoEm - exibirApos), 1));
+      var progressoEscurecimentoRapido = Math.max(0, Math.min(distancia / opacoEm, 1));
       var visivel = distancia >= exibirApos;
       var texto = item.querySelector('[data-pull-text]');
       var icone = item.querySelector('[data-pull-icon]');
@@ -7926,7 +7927,10 @@
       var escala = 0.96 + (0.04 * progressoAviso);
 
       posicionarIndicador();
-      fundo.style.opacity = String((soltou ? 0.68 : 0.46 * progresso).toFixed(3));
+      var opacidadeFundo = distancia > 0
+        ? 0.10 + (0.28 * progressoEscurecimentoRapido) + (0.12 * progresso)
+        : 0;
+      fundo.style.opacity = String((soltou ? 0.72 : opacidadeFundo).toFixed(3));
       item.style.opacity = visivel ? String(Math.max(0.35, progressoAviso)) : '0';
       item.style.transform = 'translate(-50%, ' + deslocamento + 'px) scale(' + escala.toFixed(3) + ')';
       if (texto) texto.textContent = soltou ? 'Recarregando...' : (distancia >= limite ? 'Recarregar' : 'Puxe para atualizar');
