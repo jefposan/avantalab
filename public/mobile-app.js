@@ -700,6 +700,12 @@
     });
   }
 
+  function receitasPrevistasDoDia(ano, mes, dia) {
+    return (state.entradas || []).filter(function (item) {
+      return item && item.mes === mes && Number(item.dia) === Number(dia) && item.status === 'prevista';
+    });
+  }
+
   function agendaTemAvisoHoje() {
     var hoje = new Date();
     return itensAgendaDoDia(String(hoje.getFullYear()), meses[hoje.getMonth()], hoje.getDate()).length > 0;
@@ -984,6 +990,11 @@
     return item && item.status === 'prevista' && tipoPedeConfirmacao(item.tipo) && ehDespesaHoje(item);
   }
 
+  // Receita prevista cuja data e hoje -> pede confirmacao (igual as despesas).
+  function ehReceitaAConfirmar(item) {
+    return item && item.status === 'prevista' && ehDespesaHoje(item);
+  }
+
   // Selo colorido por tipo de despesa (previsto/fixa/parcela).
   function seloTipoHtml(item) {
     if (!item || !item.tipo) return '';
@@ -1013,7 +1024,23 @@
       }
     });
     var temTotalDefinido = Object.prototype.hasOwnProperty.call(state.faturamentos, mes);
-    var receitas = temTotalDefinido ? state.faturamentos[mes] : entradas.reduce(function (total, item) { return total + item.valor; }, 0);
+    // Receita "prevista" (data futura, nao confirmada) nao entra no efetivado, so na previsao.
+    // Passando o dia sem confirmar, e considerada efetivada (lazy, igual as despesas).
+    var receitasNaoPrevistas = 0;
+    var receitasPrevistasFuturas = 0;
+    var receitasPrevistasPassadas = 0;
+    entradas.forEach(function (item) {
+      if (item.status === 'prevista') {
+        var noDiaOuFuturo = ehDespesaFutura(mesIndice, item.dia) || ehDataHoje(Number(state.ano), mesIndice, item.dia);
+        if (noDiaOuFuturo) receitasPrevistasFuturas += item.valor;
+        else receitasPrevistasPassadas += item.valor;
+      } else {
+        receitasNaoPrevistas += item.valor;
+      }
+    });
+    var receitasBase = temTotalDefinido ? state.faturamentos[mes] : receitasNaoPrevistas;
+    var receitas = receitasBase + receitasPrevistasPassadas;
+    var receitasPrevistas = receitasPrevistasFuturas;
 
     return {
       lancamentos: lancamentos,
@@ -1022,8 +1049,9 @@
       despesasFuturas: despesasFuturas,
       despesasTotais: despesasRealizadas + despesasFuturas,
       receitas: receitas,
+      receitasPrevistas: receitasPrevistas,
       saldo: receitas - despesasRealizadas,
-      saldoPrevisto: receitas - (despesasRealizadas + despesasFuturas),
+      saldoPrevisto: (receitas + receitasPrevistas) - (despesasRealizadas + despesasFuturas),
     };
   }
 
@@ -2520,6 +2548,8 @@
         dia: Number(item.dia),
         origem: item.origem,
         valor: Number(item.valor || 0),
+        status: item.status || null,
+        tipo: item.tipo_obs || null,
       };
     });
 
@@ -3536,6 +3566,10 @@
     state.erro = '';
     render();
 
+    // Receita com data futura -> "prevista": nao entra no total efetivado agora
+    // (entra so na previsao). Ao confirmar, e somada ao total do mes.
+    var ehFutura = dataFutura(Number(state.ano), indiceMes(state.mes), dia);
+
     var resposta = await db
       .from('faturamentos_entradas')
       .insert({
@@ -3545,6 +3579,8 @@
         dia: dia,
         origem: formatarDescricao(origem),
         valor: valor,
+        status: ehFutura ? 'prevista' : null,
+        tipo_obs: ehFutura ? 'previsto' : null,
         criado_por: state.usuario ? state.usuario.id : null,
       })
       .select()
@@ -3556,25 +3592,27 @@
       return;
     }
 
-    var totalAtual = state.faturamentos[state.mes] || 0;
-    var total = await db
-      .from('faturamentos')
-      .upsert(
-        {
-          empresa_id: state.empresa.id,
-          ano: Number(state.ano),
-          mes: state.mes,
-          valor: totalAtual + valor,
-        },
-        { onConflict: 'empresa_id,ano,mes' }
-      )
-      .select()
-      .single();
+    if (!ehFutura) {
+      var totalAtual = state.faturamentos[state.mes] || 0;
+      var total = await db
+        .from('faturamentos')
+        .upsert(
+          {
+            empresa_id: state.empresa.id,
+            ano: Number(state.ano),
+            mes: state.mes,
+            valor: totalAtual + valor,
+          },
+          { onConflict: 'empresa_id,ano,mes' }
+        )
+        .select()
+        .single();
 
-    if (total.error) {
-      state.carregando = false;
-      setErro('Entrada salva, mas o total do mes nao foi atualizado.');
-      return;
+      if (total.error) {
+        state.carregando = false;
+        setErro('Entrada salva, mas o total do mes nao foi atualizado.');
+        return;
+      }
     }
 
     state.modalLancamento = false;
@@ -4238,18 +4276,21 @@
         return;
       }
 
-      var totalAtual = state.faturamentos[state.mes] || 0;
-      await db
-        .from('faturamentos')
-        .upsert(
-          {
-            empresa_id: state.empresa.id,
-            ano: Number(state.ano),
-            mes: state.mes,
-            valor: Math.max(0, totalAtual - Number(item.valor || 0)),
-          },
-          { onConflict: 'empresa_id,ano,mes' }
-        );
+      // Prevista nao entrou no total efetivado; nao subtrair.
+      if (item.status !== 'prevista') {
+        var totalAtual = state.faturamentos[state.mes] || 0;
+        await db
+          .from('faturamentos')
+          .upsert(
+            {
+              empresa_id: state.empresa.id,
+              ano: Number(state.ano),
+              mes: state.mes,
+              valor: Math.max(0, totalAtual - Number(item.valor || 0)),
+            },
+            { onConflict: 'empresa_id,ano,mes' }
+          );
+      }
     } else {
       var ehFixa = item.tipo === 'fixa' || item.recorrenciaId;
       if (ehFixa) {
@@ -4308,12 +4349,17 @@
     render();
 
     if (tipo === 'receita') {
+      // Receita prevista nao entra no total efetivado; entao ao editar uma prevista
+      // nao mexemos no total do mes (so quando ela ja esta efetivada).
+      var eraPrevista = item.status === 'prevista';
       var receita = await db
         .from('faturamentos_entradas')
         .update({
           dia: dia,
           origem: formatarDescricao(origem),
           valor: valor,
+          status: eraPrevista ? 'prevista' : (item.status || null),
+          tipo_obs: eraPrevista ? 'previsto' : (item.tipo || null),
           updated_at: new Date().toISOString(),
         })
         .eq('id', item.id)
@@ -4327,19 +4373,21 @@
         return;
       }
 
-      var totalAtual = state.faturamentos[state.mes] || 0;
-      var diferenca = valor - Number(item.valor || 0);
-      await db
-        .from('faturamentos')
-        .upsert(
-          {
-            empresa_id: state.empresa.id,
-            ano: Number(state.ano),
-            mes: state.mes,
-            valor: Math.max(0, totalAtual + diferenca),
-          },
-          { onConflict: 'empresa_id,ano,mes' }
-        );
+      if (!eraPrevista) {
+        var totalAtual = state.faturamentos[state.mes] || 0;
+        var diferenca = valor - Number(item.valor || 0);
+        await db
+          .from('faturamentos')
+          .upsert(
+            {
+              empresa_id: state.empresa.id,
+              ano: Number(state.ano),
+              mes: state.mes,
+              valor: Math.max(0, totalAtual + diferenca),
+            },
+            { onConflict: 'empresa_id,ano,mes' }
+          );
+      }
     } else {
       var mesItem = item.mes || state.mes;
       var ehFixaEditada = item.tipo === 'fixa' || Boolean(item.recorrenciaId);
@@ -4427,6 +4475,51 @@
 
   function ajustarDespesaPrevista(id) {
     abrirAcaoLancamento('despesa', id);
+    if (state.modalAcao) state.modalAcao.modo = 'editar';
+    render();
+  }
+
+  async function confirmarReceitaPrevista(id) {
+    if (!state.empresa) return;
+    var entrada = (state.entradas || []).find(function (e) { return String(e.id) === String(id); });
+    if (!entrada) return;
+    state.carregando = true;
+    render();
+    var resp = await db.from('faturamentos_entradas').update({ status: 'confirmada', tipo_obs: null }).eq('id', id).eq('empresa_id', state.empresa.id);
+    if (resp.error) {
+      state.carregando = false;
+      setErro('Nao foi possivel confirmar a receita.');
+      return;
+    }
+    // Efetiva a receita: soma no total do mes.
+    var totalAtual = state.faturamentos[entrada.mes] || 0;
+    await db.from('faturamentos').upsert(
+      { empresa_id: state.empresa.id, ano: Number(state.ano), mes: entrada.mes, valor: totalAtual + Number(entrada.valor || 0) },
+      { onConflict: 'empresa_id,ano,mes' }
+    );
+    await carregarDados();
+    notificarFinanceiroAtualizadoMobile();
+    mostrarToast('Receita confirmada.');
+  }
+
+  async function excluirReceitaPrevista(id) {
+    if (!state.empresa) return;
+    if (!window.confirm('Excluir esta receita prevista? Ela nao ocorreu e sera removida.')) return;
+    state.carregando = true;
+    render();
+    var resp = await db.from('faturamentos_entradas').delete().eq('id', id).eq('empresa_id', state.empresa.id);
+    if (resp.error) {
+      state.carregando = false;
+      setErro('Nao foi possivel excluir a receita.');
+      return;
+    }
+    await carregarDados();
+    notificarFinanceiroAtualizadoMobile();
+    mostrarToast('Receita excluida.');
+  }
+
+  function editarReceitaPrevista(id) {
+    abrirAcaoLancamento('receita', id);
     if (state.modalAcao) state.modalAcao.modo = 'editar';
     render();
   }
@@ -4878,29 +4971,35 @@
   }
 
   function avisoConfirmarHtml() {
-    var pendentes = (state.lancamentos || []).filter(ehDespesaAConfirmar);
+    var pDesp = (state.lancamentos || []).filter(ehDespesaAConfirmar).map(function (i) { return { rec: false, item: i }; });
+    var pRec = (state.entradas || []).filter(ehReceitaAConfirmar).map(function (i) { return { rec: true, item: i }; });
+    var pendentes = pDesp.concat(pRec);
     if (!pendentes.length) return '';
     var plural = pendentes.length > 1;
     var sino = '<svg class="h-5 w-5 shrink-0" style="color:#d97706" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6 6 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" /></svg>';
     return (
       '<section class="overflow-hidden rounded-2xl border border-amber-200 bg-white shadow-sm">' +
-        // Topo fixo: só o sininho + o aviso da quantidade.
         '<div class="flex items-center gap-2 border-b border-amber-100 px-4 py-3">' +
           sino +
-          '<h2 class="min-w-0 flex-1 text-sm font-black text-slate-900">' + pendentes.length + ' despesa' + (plural ? 's' : '') + ' prevista' + (plural ? 's' : '') + ' para confirmar</h2>' +
+          '<h2 class="min-w-0 flex-1 text-sm font-black text-slate-900">' + pendentes.length + ' lan&ccedil;amento' + (plural ? 's' : '') + ' para confirmar</h2>' +
         '</div>' +
-        // Área das despesas: scroll próprio (o topo fica fixo).
         '<div class="grid gap-2 overflow-y-auto p-3" style="max-height:42vh;">' +
-          pendentes.map(function (item) {
+          pendentes.map(function (p) {
+            var item = p.item;
+            var nome = p.rec ? item.origem : item.despesa;
+            var corValor = p.rec ? 'text-emerald-600' : 'text-red-600';
+            var attrConfirmar = p.rec ? 'data-confirmar-receita-id' : 'data-confirmar-id';
+            var attrEditar = p.rec ? 'data-editar-receita-id' : 'data-ajustar-id';
+            var attrExcluir = p.rec ? 'data-excluir-receita-id' : 'data-excluir-prevista-id';
             return '<div class="rounded-xl border border-slate-200 bg-white p-2.5">' +
               '<div class="flex items-center justify-between gap-2">' +
-                '<p class="min-w-0 truncate text-sm font-bold text-slate-800">' + escapeHtml(item.despesa) + ' <span class="text-xs font-semibold text-slate-400">&middot; dia ' + item.dia + '</span></p>' +
-                '<strong class="shrink-0 text-sm font-black text-red-600">' + dinheiro(item.valor) + '</strong>' +
+                '<p class="min-w-0 truncate text-sm font-bold text-slate-800">' + escapeHtml(nome) + ' <span class="text-xs font-semibold text-slate-400">&middot; ' + (p.rec ? 'receita &middot; ' : '') + 'dia ' + item.dia + '</span></p>' +
+                '<strong class="shrink-0 text-sm font-black ' + corValor + '">' + dinheiro(item.valor) + '</strong>' +
               '</div>' +
               '<div class="mt-2 grid grid-cols-1 gap-1.5 min-[380px]:grid-cols-3">' +
-                '<button type="button" data-confirmar-id="' + escapeHtml(item.id) + '" class="h-8 rounded-lg bg-emerald-600 text-[11px] font-black text-white active:bg-emerald-700">Confirmar</button>' +
-                '<button type="button" data-ajustar-id="' + escapeHtml(item.id) + '" class="h-8 rounded-lg border border-slate-300 bg-white text-[11px] font-black text-slate-700 active:bg-slate-50">Ajustar valor</button>' +
-                '<button type="button" data-excluir-prevista-id="' + escapeHtml(item.id) + '" class="h-8 rounded-lg border border-red-200 bg-white text-[11px] font-black text-red-600 active:bg-red-50">Excluir</button>' +
+                '<button type="button" ' + attrConfirmar + '="' + escapeHtml(item.id) + '" class="h-8 rounded-lg bg-emerald-600 text-[11px] font-black text-white active:bg-emerald-700">Confirmar</button>' +
+                '<button type="button" ' + attrEditar + '="' + escapeHtml(item.id) + '" class="h-8 rounded-lg border border-slate-300 bg-white text-[11px] font-black text-slate-700 active:bg-slate-50">Editar</button>' +
+                '<button type="button" ' + attrExcluir + '="' + escapeHtml(item.id) + '" class="h-8 rounded-lg border border-red-200 bg-white text-[11px] font-black text-red-600 active:bg-red-50">Excluir</button>' +
               '</div>' +
             '</div>';
           }).join('') +
@@ -5072,6 +5171,20 @@
     );
   }
 
+  function agendaReceitaHtml(item) {
+    return (
+      '<div class="rounded-2xl border border-emerald-100 bg-white p-3 shadow-sm">' +
+        '<div class="flex items-start justify-between gap-3">' +
+          '<div class="min-w-0">' +
+            '<p class="truncate text-sm font-black text-slate-900">' + escapeHtml(item.origem || 'Receita') + '</p>' +
+            '<p class="mt-0.5 text-[10px] font-black uppercase tracking-wide text-emerald-600">Receita prevista</p>' +
+          '</div>' +
+          '<strong class="shrink-0 text-sm font-black tabular-nums text-emerald-600">' + Number(item.valor || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) + '</strong>' +
+        '</div>' +
+      '</div>'
+    );
+  }
+
   function formularioAgendaHtml() {
     var opcoesRepeticao = [
       ['diaria', 'Diaria'],
@@ -5147,10 +5260,12 @@
       else { estilo = 'border-slate-200 bg-white shadow-sm'; textoNumero = 'text-slate-900'; }
       var temLembreteDia = itensAgendaDoDia(state.ano, state.mes, dia).length > 0;
       var temDespesaFuturaDia = despesasFuturasDoDia(state.ano, state.mes, dia).length > 0;
-      var indicadoresDia = (temLembreteDia || temDespesaFuturaDia)
+      var temReceitaPrevistaDia = receitasPrevistasDoDia(state.ano, state.mes, dia).length > 0;
+      var indicadoresDia = (temLembreteDia || temDespesaFuturaDia || temReceitaPrevistaDia)
         ? '<span class="absolute right-1 top-1 flex items-center gap-0.5">' +
             (temLembreteDia ? '<span class="h-1.5 w-1.5 rounded-full bg-cyan-500 shadow-sm"></span>' : '') +
             (temDespesaFuturaDia ? '<span class="h-1.5 w-1.5 rounded-full bg-rose-500 shadow-sm"></span>' : '') +
+            (temReceitaPrevistaDia ? '<span class="h-1.5 w-1.5 rounded-full bg-emerald-500 shadow-sm"></span>' : '') +
           '</span>'
         : '';
 
@@ -5171,6 +5286,7 @@
 
     var itensDia = diaSelecionado ? itensAgendaDoDia(state.ano, state.mes, diaSelecionado) : [];
     var despesasDia = diaSelecionado ? despesasFuturasDoDia(state.ano, state.mes, diaSelecionado) : [];
+    var receitasDia = diaSelecionado ? receitasPrevistasDoDia(state.ano, state.mes, diaSelecionado) : [];
     var painelDia = '';
     var formularioAgenda = state.agendaFormAberto ? formularioAgendaHtml() : '';
     // Grade sempre com altura natural (shrink-0); linhas com altura fixa.
@@ -5202,6 +5318,12 @@
               ? '<div class="mt-4">' +
                   '<h4 class="mb-2 text-xs font-black uppercase tracking-wide text-rose-700">Despesas para o dia:</h4>' +
                   '<div class="grid gap-2">' + despesasDia.map(agendaDespesaHtml).join('') + '</div>' +
+                '</div>'
+              : '') +
+            (receitasDia.length
+              ? '<div class="mt-4">' +
+                  '<h4 class="mb-2 text-xs font-black uppercase tracking-wide text-emerald-700">Receitas previstas para o dia:</h4>' +
+                  '<div class="grid gap-2">' + receitasDia.map(agendaReceitaHtml).join('') + '</div>' +
                 '</div>'
               : '') +
           '</div>' +
@@ -5391,7 +5513,7 @@
             var valor = dinheiro(item.valor);
             var buscaItem = textoBusca([item.origem, item.descricao, valor, item.valor].join(' '));
             return '<button type="button" data-tipo-lancamento="receita" data-lancamento-id="' + escapeHtml(item.id) + '" data-busca-ultimas-receitas="' + escapeHtml(buscaItem) + '" class="flex w-full items-center justify-between gap-3 border-b border-slate-100 py-2 text-left last:border-b-0">' +
-              '<div class="min-w-0"><p class="truncate text-sm font-bold text-slate-800">' + escapeHtml(item.origem) + '</p><p class="truncate text-xs text-slate-500">Dia ' + item.dia + '</p></div>' +
+              '<div class="min-w-0"><p class="truncate text-sm font-bold text-slate-800">' + escapeHtml(item.origem) + seloTipoHtml(item) + '</p><p class="truncate text-xs text-slate-500">Dia ' + item.dia + '</p></div>' +
               '<strong class="shrink-0 text-sm font-black text-emerald-600">' + valor + '</strong>' +
             '</button>';
           }).join('') + '<p id="ultimas-receitas-vazia" style="display:none" class="text-xs text-slate-500">Nenhuma receita encontrada.</p>' : '<p class="text-xs text-slate-500">Nenhuma receita neste mes.</p>') +
@@ -7882,6 +8004,21 @@
     Array.prototype.forEach.call(document.querySelectorAll('[data-excluir-prevista-id]'), function (botao) {
       botao.addEventListener('click', function () {
         excluirDespesaPrevista(botao.getAttribute('data-excluir-prevista-id'));
+      });
+    });
+    Array.prototype.forEach.call(document.querySelectorAll('[data-confirmar-receita-id]'), function (botao) {
+      botao.addEventListener('click', function () {
+        confirmarReceitaPrevista(botao.getAttribute('data-confirmar-receita-id'));
+      });
+    });
+    Array.prototype.forEach.call(document.querySelectorAll('[data-editar-receita-id]'), function (botao) {
+      botao.addEventListener('click', function () {
+        editarReceitaPrevista(botao.getAttribute('data-editar-receita-id'));
+      });
+    });
+    Array.prototype.forEach.call(document.querySelectorAll('[data-excluir-receita-id]'), function (botao) {
+      botao.addEventListener('click', function () {
+        excluirReceitaPrevista(botao.getAttribute('data-excluir-receita-id'));
       });
     });
     Array.prototype.forEach.call(document.querySelectorAll('[data-dashboard-move]'), function (botao) {
