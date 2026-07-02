@@ -2,6 +2,10 @@
 
 import { useMemo, useState } from 'react';
 
+type FeedbackStatus = 'novo' | 'em_analise' | 'respondido' | 'arquivado';
+type AdminView = 'avaliacoes' | 'disparos' | 'configuracoes';
+type StatusFilter = 'ativos' | 'todos' | FeedbackStatus;
+
 type Feedback = {
   id: string;
   empresa_id: string | null;
@@ -12,601 +16,336 @@ type Feedback = {
   email_usuario: string | null;
   tipo: 'sugestao' | 'duvida' | 'reclamacao' | 'avaliacao';
   mensagem: string;
-  status: 'novo' | 'em_analise' | 'respondido' | 'arquivado';
+  status: FeedbackStatus;
   created_at: string;
 };
 
-function formatarTipo(tipo: string) {
-  if (tipo === 'sugestao') return 'Sugestão';
-  if (tipo === 'duvida') return 'Dúvida';
-  if (tipo === 'reclamacao') return 'Reclamação';
-  if (tipo === 'avaliacao') return 'Avaliação';
+type Disparo = {
+  id?: string;
+  titulo: string;
+  mensagem: string;
+  usuarios: number;
+  pushes_enviados: number;
+  total_inscricoes: number;
+  status: 'enviado' | 'erro';
+  erro?: string | null;
+  created_at?: string;
+};
 
-  return 'Feedback';
+type IconName = 'inbox' | 'send' | 'settings' | 'refresh' | 'check' | 'archive' | 'trash' | 'reopen' | 'logout' | 'lock';
+
+function Icon({ name, size = 17 }: { name: IconName; size?: number }) {
+  const common = { width: size, height: size, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: 2, strokeLinecap: 'round' as const, strokeLinejoin: 'round' as const };
+  if (name === 'send') return <svg {...common}><path d="m22 2-7 20-4-9-9-4Z" /><path d="M22 2 11 13" /></svg>;
+  if (name === 'settings') return <svg {...common}><path d="M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Z" /><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.88l.06.06-2.83 2.83-.06-.06A1.7 1.7 0 0 0 15 19.4a1.7 1.7 0 0 0-1 .6 1.7 1.7 0 0 0-.4 1.1V21h-4v-.1A1.7 1.7 0 0 0 8.6 19.4a1.7 1.7 0 0 0-1.88.34l-.06.06-2.83-2.83.06-.06A1.7 1.7 0 0 0 4.2 15a1.7 1.7 0 0 0-.6-1 1.7 1.7 0 0 0-1.1-.4H2v-4h.5A1.7 1.7 0 0 0 4.2 8a1.7 1.7 0 0 0-.34-1.88l-.06-.06 2.83-2.83.06.06A1.7 1.7 0 0 0 8.6 3.6a1.7 1.7 0 0 0 1-.6 1.7 1.7 0 0 0 .4-1.1V2h4v.1A1.7 1.7 0 0 0 15 3.6a1.7 1.7 0 0 0 1.88-.34l.06-.06 2.83 2.83-.06.06A1.7 1.7 0 0 0 19.4 8a1.7 1.7 0 0 0 .6 1 1.7 1.7 0 0 0 1.1.4h.9v4h-.9a1.7 1.7 0 0 0-1.7 1.6Z" /></svg>;
+  if (name === 'refresh') return <svg {...common}><path d="M20 7h-5V2" /><path d="M20 7a8 8 0 1 0 1 8" /></svg>;
+  if (name === 'check') return <svg {...common}><path d="m5 12 4 4L19 6" /></svg>;
+  if (name === 'archive') return <svg {...common}><path d="M3 5h18v4H3zM5 9v11h14V9M9 13h6" /></svg>;
+  if (name === 'trash') return <svg {...common}><path d="M3 6h18M8 6V4h8v2M19 6l-1 15H6L5 6M10 11v6M14 11v6" /></svg>;
+  if (name === 'reopen') return <svg {...common}><path d="M3 12a9 9 0 1 0 3-6.7L3 8" /><path d="M3 3v5h5" /></svg>;
+  if (name === 'logout') return <svg {...common}><path d="M10 17l5-5-5-5M15 12H3M14 3h5a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-5" /></svg>;
+  if (name === 'lock') return <svg {...common}><rect x="4" y="10" width="16" height="11" rx="2" /><path d="M8 10V7a4 4 0 0 1 8 0v3" /></svg>;
+  return <svg {...common}><path d="M4 4h16v13H7l-3 3Z" /><path d="M8 9h8M8 13h5" /></svg>;
 }
 
-function formatarStatus(status: string) {
-  if (status === 'novo') return 'Novo';
-  if (status === 'em_analise') return 'Em análise';
-  if (status === 'respondido') return 'Resolvido';
-  if (status === 'arquivado') return 'Arquivado';
-
-  return status;
+function formatDate(value?: string) {
+  if (!value) return '-';
+  return new Intl.DateTimeFormat('pt-BR', { dateStyle: 'short', timeStyle: 'short' }).format(new Date(value));
 }
 
-function formatarData(data: string) {
-  if (!data) return '-';
-
-  return new Intl.DateTimeFormat('pt-BR', {
-    dateStyle: 'short',
-    timeStyle: 'short',
-  }).format(new Date(data));
+function typeLabel(type: Feedback['tipo']) {
+  return { sugestao: 'Sugestão', duvida: 'Dúvida', reclamacao: 'Reclamação', avaliacao: 'Avaliação' }[type];
 }
 
-function getClasseTipo(tipo: string) {
-  if (tipo === 'sugestao') {
-    return 'border-sky-200 bg-sky-50 text-sky-800';
-  }
-
-  if (tipo === 'duvida') {
-    return 'border-emerald-200 bg-emerald-50 text-emerald-800';
-  }
-
-  if (tipo === 'reclamacao') {
-    return 'border-red-200 bg-red-50 text-red-800';
-  }
-
-  if (tipo === 'avaliacao') {
-    return 'border-violet-200 bg-violet-50 text-violet-800';
-  }
-
-  return 'border-slate-200 bg-slate-50 text-slate-700';
+function statusLabel(status: FeedbackStatus) {
+  return { novo: 'Novo', em_analise: 'Em análise', respondido: 'Resolvido', arquivado: 'Arquivado' }[status];
 }
 
-function getClasseStatus(status: string) {
-  if (status === 'novo') {
-    return 'border-emerald-200 bg-emerald-50 text-emerald-800';
-  }
-
-  if (status === 'em_analise') {
-    return 'border-amber-200 bg-amber-50 text-amber-800';
-  }
-
-  if (status === 'respondido') {
-    return 'border-emerald-300 bg-emerald-100 text-emerald-900';
-  }
-
-  if (status === 'arquivado') {
-    return 'border-slate-200 bg-slate-100 text-slate-600';
-  }
-
-  return 'border-slate-200 bg-slate-50 text-slate-700';
+function typeClass(type: Feedback['tipo']) {
+  if (type === 'reclamacao') return 'border-red-200 bg-red-50 text-red-700';
+  if (type === 'duvida') return 'border-cyan-200 bg-cyan-50 text-cyan-800';
+  if (type === 'avaliacao') return 'border-indigo-200 bg-indigo-50 text-indigo-700';
+  return 'border-emerald-200 bg-emerald-50 text-emerald-700';
 }
 
-export default function PaginaAdminFeedbacks() {
+function statusClass(status: FeedbackStatus) {
+  if (status === 'novo') return 'border-amber-200 bg-amber-50 text-amber-800';
+  if (status === 'respondido') return 'border-emerald-200 bg-emerald-50 text-emerald-700';
+  if (status === 'arquivado') return 'border-slate-200 bg-slate-100 text-slate-600';
+  return 'border-cyan-200 bg-cyan-50 text-cyan-800';
+}
+
+export default function AdminPage() {
   const [token, setToken] = useState('');
-  const [acessoLiberado, setAcessoLiberado] = useState(false);
+  const [authorized, setAuthorized] = useState(false);
+  const [view, setView] = useState<AdminView>('avaliacoes');
   const [feedbacks, setFeedbacks] = useState<Feedback[]>([]);
-  const [carregando, setCarregando] = useState(false);
-  const [erro, setErro] = useState('');
-  const [feedbackAtualizandoId, setFeedbackAtualizandoId] = useState<string | null>(
-    null
-  );
-  const [filtroTipo, setFiltroTipo] = useState<
-    'todos' | 'sugestao' | 'duvida' | 'reclamacao' | 'avaliacao'
-  >('todos');
+  const [broadcasts, setBroadcasts] = useState<Disparo[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [workingId, setWorkingId] = useState<string | null>(null);
+  const [error, setError] = useState('');
+  const [notice, setNotice] = useState('');
+  const [typeFilter, setTypeFilter] = useState<'todos' | Feedback['tipo']>('todos');
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>('ativos');
+  const [broadcastTitle, setBroadcastTitle] = useState('Novidade no AvantaLab');
+  const [broadcastMessage, setBroadcastMessage] = useState('');
+  const [sending, setSending] = useState(false);
+  const [historyPending, setHistoryPending] = useState(false);
+  const [customPassword, setCustomPassword] = useState(false);
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [savingPassword, setSavingPassword] = useState(false);
 
-  const [novidadeTitulo, setNovidadeTitulo] = useState('Novidade no AvantaLab');
-  const [novidadeMensagem, setNovidadeMensagem] = useState('');
-  const [enviandoNovidade, setEnviandoNovidade] = useState(false);
-  const [resultadoNovidade, setResultadoNovidade] = useState('');
+  const authHeaders = (value = token) => ({ Authorization: `Bearer ${value.trim()}` });
 
-  const dispararNovidade = async () => {
-    const tokenLimpo = token.trim();
-    const mensagem = novidadeMensagem.trim();
-    const titulo = novidadeTitulo.trim() || 'Novidade';
+  const loadBroadcasts = async (value = token) => {
+    const response = await fetch('/api/admin-disparos', { headers: authHeaders(value) });
+    const data = await response.json().catch(() => null);
+    if (response.ok && !data?.erro) {
+      setBroadcasts(data.disparos || []);
+      setHistoryPending(Boolean(data.configuracaoPendente));
+    }
+  };
 
-    if (!mensagem) {
-      setResultadoNovidade('Digite a mensagem.');
+  const loadSettings = async (value = token) => {
+    const response = await fetch('/api/admin-configuracoes', { headers: authHeaders(value) });
+    const data = await response.json().catch(() => null);
+    if (response.ok && !data?.erro) setCustomPassword(Boolean(data.senhaPersonalizada));
+  };
+
+  const loadPanel = async (value = token) => {
+    const cleanToken = value.trim();
+    if (!cleanToken) {
+      setError('Informe a senha administrativa.');
       return;
     }
 
-    if (!window.confirm('Enviar este aviso para TODOS os usuários?')) return;
-
-    setEnviandoNovidade(true);
-    setResultadoNovidade('');
-
+    setLoading(true);
+    setError('');
     try {
-      const url = (process.env.NEXT_PUBLIC_SUPABASE_URL || '') + '/functions/v1/broadcast';
-      const anon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
-      const resposta = await fetch(url, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          apikey: anon,
-          Authorization: `Bearer ${anon}`,
-        },
-        body: JSON.stringify({ token: tokenLimpo, titulo, corpo: mensagem }),
-      });
-      const dados = await resposta.json();
-
-      if (!resposta.ok || !dados.ok) {
-        setResultadoNovidade(dados.erro || 'Não foi possível enviar.');
-      } else {
-        setResultadoNovidade(
-          `Enviado! Avisos criados: ${dados.usuarios}, notificações push: ${dados.enviados}.`
-        );
-        setNovidadeMensagem('');
+      const response = await fetch('/api/admin-feedbacks', { headers: authHeaders(cleanToken) });
+      const data = await response.json().catch(() => null);
+      if (!response.ok || data?.erro) {
+        setAuthorized(false);
+        setError(data?.mensagem || 'Não foi possível acessar o painel.');
+        return;
       }
+      setFeedbacks(data.feedbacks || []);
+      setAuthorized(true);
+      await Promise.allSettled([loadBroadcasts(cleanToken), loadSettings(cleanToken)]);
     } catch {
-      setResultadoNovidade('Erro ao enviar.');
+      setAuthorized(false);
+      setError('Erro inesperado ao acessar o painel.');
     } finally {
-      setEnviandoNovidade(false);
+      setLoading(false);
     }
   };
 
-  const feedbacksFiltrados = useMemo(() => {
-    if (filtroTipo === 'todos') return feedbacks;
+  const filteredFeedbacks = useMemo(() => feedbacks.filter((feedback) => {
+    const statusMatches = statusFilter === 'todos'
+      || (statusFilter === 'ativos' && feedback.status !== 'arquivado')
+      || feedback.status === statusFilter;
+    const typeMatches = typeFilter === 'todos' || feedback.tipo === typeFilter;
+    return statusMatches && typeMatches;
+  }), [feedbacks, statusFilter, typeFilter]);
 
-    return feedbacks.filter((feedback) => feedback.tipo === filtroTipo);
-  }, [feedbacks, filtroTipo]);
+  const totals = useMemo(() => ({
+    total: feedbacks.length,
+    novos: feedbacks.filter((item) => item.status === 'novo').length,
+    resolvidos: feedbacks.filter((item) => item.status === 'respondido').length,
+    arquivados: feedbacks.filter((item) => item.status === 'arquivado').length,
+  }), [feedbacks]);
 
-  const totalNovos = feedbacks.filter(
-    (feedback) => feedback.status === 'novo'
-  ).length;
-
-  const totalResolvidos = feedbacks.filter(
-    (feedback) => feedback.status === 'respondido'
-  ).length;
-
-  const carregarFeedbacks = async (tokenInformado = token) => {
-    const tokenLimpo = tokenInformado.trim();
-
-    if (!tokenLimpo) {
-      setErro('Informe a senha administrativa para acessar.');
-      return;
-    }
-
-    setCarregando(true);
-    setErro('');
-
+  const updateFeedback = async (id: string, status: FeedbackStatus) => {
+    setWorkingId(id);
+    setError('');
     try {
-      const resposta = await fetch('/api/admin-feedbacks', {
-        method: 'GET',
-        headers: {
-          Authorization: `Bearer ${tokenLimpo}`,
-        },
-      });
-
-      const dados = await resposta.json().catch(() => null);
-
-      if (!resposta.ok || dados?.erro) {
-        setAcessoLiberado(false);
-        setFeedbacks([]);
-        setErro(dados?.mensagem || 'Não foi possível carregar os feedbacks.');
-        return;
-      }
-
-      setFeedbacks(dados.feedbacks || []);
-      setAcessoLiberado(true);
-    } catch (error) {
-      console.error('Erro ao carregar feedbacks:', error);
-      setAcessoLiberado(false);
-      setFeedbacks([]);
-      setErro('Erro inesperado ao carregar os feedbacks.');
-    } finally {
-      setCarregando(false);
-    }
-  };
-
-  const atualizarStatusFeedback = async (
-    feedbackId: string,
-    novoStatus: 'novo' | 'em_analise' | 'respondido' | 'arquivado'
-  ) => {
-    const tokenLimpo = token.trim();
-
-    if (!tokenLimpo) {
-      setErro('Sessão administrativa expirada. Faça login novamente.');
-      setAcessoLiberado(false);
-      return;
-    }
-
-    setFeedbackAtualizandoId(feedbackId);
-    setErro('');
-
-    try {
-      const resposta = await fetch('/api/admin-feedbacks', {
+      const response = await fetch('/api/admin-feedbacks', {
         method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${tokenLimpo}`,
-        },
-        body: JSON.stringify({
-          id: feedbackId,
-          status: novoStatus,
-        }),
+        headers: { ...authHeaders(), 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id, status }),
       });
-
-      const dados = await resposta.json().catch(() => null);
-
-      if (!resposta.ok || dados?.erro) {
-        setErro(dados?.mensagem || 'Não foi possível atualizar o feedback.');
-        return;
-      }
-
-      setFeedbacks((feedbacksAtuais) =>
-        feedbacksAtuais.map((feedback) =>
-          feedback.id === feedbackId
-            ? {
-                ...feedback,
-                status: novoStatus,
-              }
-            : feedback
-        )
-      );
-    } catch (error) {
-      console.error('Erro ao atualizar status do feedback:', error);
-      setErro('Erro inesperado ao atualizar o feedback.');
+      const data = await response.json().catch(() => null);
+      if (!response.ok || data?.erro) throw new Error(data?.mensagem || 'Não foi possível atualizar.');
+      setFeedbacks((current) => current.map((item) => item.id === id ? { ...item, status } : item));
+    } catch (requestError) {
+      setError(requestError instanceof Error ? requestError.message : 'Não foi possível atualizar.');
     } finally {
-      setFeedbackAtualizandoId(null);
+      setWorkingId(null);
     }
   };
 
-  const sair = () => {
-    setToken('');
-    setAcessoLiberado(false);
-    setFeedbacks([]);
-    setErro('');
-    setFiltroTipo('todos');
+  const deleteFeedback = async (feedback: Feedback) => {
+    if (!window.confirm('Apagar esta mensagem definitivamente? Esta ação não pode ser desfeita.')) return;
+    setWorkingId(feedback.id);
+    setError('');
+    try {
+      const response = await fetch(`/api/admin-feedbacks?id=${encodeURIComponent(feedback.id)}`, { method: 'DELETE', headers: authHeaders() });
+      const data = await response.json().catch(() => null);
+      if (!response.ok || data?.erro) throw new Error(data?.mensagem || 'Não foi possível apagar.');
+      setFeedbacks((current) => current.filter((item) => item.id !== feedback.id));
+    } catch (requestError) {
+      setError(requestError instanceof Error ? requestError.message : 'Não foi possível apagar.');
+    } finally {
+      setWorkingId(null);
+    }
   };
+
+  const sendBroadcast = async () => {
+    if (!broadcastMessage.trim()) {
+      setError('Digite a mensagem do disparo.');
+      return;
+    }
+    if (!window.confirm('Enviar este aviso para todos os usuários?')) return;
+
+    setSending(true);
+    setError('');
+    setNotice('');
+    try {
+      const response = await fetch('/api/admin-disparos', {
+        method: 'POST',
+        headers: { ...authHeaders(), 'Content-Type': 'application/json' },
+        body: JSON.stringify({ titulo: broadcastTitle, mensagem: broadcastMessage }),
+      });
+      const data = await response.json().catch(() => null);
+      if (!response.ok || data?.erro) throw new Error(data?.mensagem || 'Não foi possível enviar.');
+      setNotice(`Aviso enviado para ${data.resultado?.usuarios || 0} usuários.`);
+      setBroadcastMessage('');
+      await loadBroadcasts();
+    } catch (requestError) {
+      setError(requestError instanceof Error ? requestError.message : 'Não foi possível enviar.');
+    } finally {
+      setSending(false);
+    }
+  };
+
+  const changePassword = async () => {
+    setSavingPassword(true);
+    setError('');
+    setNotice('');
+    try {
+      const response = await fetch('/api/admin-configuracoes', {
+        method: 'PATCH',
+        headers: { ...authHeaders(), 'Content-Type': 'application/json' },
+        body: JSON.stringify({ novaSenha: newPassword, confirmarSenha: confirmPassword }),
+      });
+      const data = await response.json().catch(() => null);
+      if (!response.ok || data?.erro) throw new Error(data?.mensagem || 'Não foi possível alterar a senha.');
+      setToken(newPassword);
+      setNewPassword('');
+      setConfirmPassword('');
+      setCustomPassword(true);
+      setNotice('Senha alterada. Esta sessão já está usando a nova senha.');
+    } catch (requestError) {
+      setError(requestError instanceof Error ? requestError.message : 'Não foi possível alterar a senha.');
+    } finally {
+      setSavingPassword(false);
+    }
+  };
+
+  const logout = () => {
+    setToken('');
+    setAuthorized(false);
+    setFeedbacks([]);
+    setBroadcasts([]);
+    setError('');
+    setNotice('');
+    setView('avaliacoes');
+  };
+
+  const navigation: { id: AdminView; label: string; icon: IconName }[] = [
+    { id: 'avaliacoes', label: 'Avaliações', icon: 'inbox' },
+    { id: 'disparos', label: 'Disparos', icon: 'send' },
+    { id: 'configuracoes', label: 'Configurações', icon: 'settings' },
+  ];
 
   return (
-    <main className="min-h-screen bg-slate-50 px-5 pb-4 text-slate-800">
-      <div className="mx-auto max-w-5xl pt-4">
-        <header className="fixed left-0 right-0 top-0 z-50 bg-slate-50/95 px-5 py-3 backdrop-blur">
-  <div className="mx-auto max-w-5xl overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-lg">
-          <div className="flex flex-col gap-3 border-b border-slate-100 bg-gradient-to-r from-slate-950 via-sky-950 to-cyan-800 px-5 py-3 md:flex-row md:items-center md:justify-between">
-            <div>
-              <p className="text-[10px] font-black uppercase tracking-[0.22em] text-cyan-200">
-                AvantaLab Admin
-              </p>
-
-              <h1 className="mt-1 text-xl font-black tracking-tight text-white">
-                Feedbacks recebidos
-              </h1>
-
-              <p className="mt-1 max-w-2xl text-xs leading-snug text-sky-100/80">
-                Área administrativa para visualizar mensagens enviadas pelo chat
-                do sistema.
-              </p>
+    <main className="min-h-screen bg-[#f4f7f9] text-slate-800">
+      <header className="sticky top-0 z-40 border-b border-slate-200 bg-white/95 backdrop-blur">
+        <div className="mx-auto max-w-6xl px-3 sm:px-5">
+          <div className="flex h-14 items-center justify-between gap-3">
+            <div className="min-w-0">
+              <p className="text-[9px] font-black uppercase tracking-[0.22em] text-cyan-700">AvantaLab</p>
+              <h1 className="truncate text-base font-black text-slate-950">Central administrativa</h1>
             </div>
-
-            {acessoLiberado && (
-              <button
-                type="button"
-                onClick={sair}
-                className="rounded-xl border border-white/20 bg-white/10 px-4 py-2 text-xs font-black uppercase tracking-wide text-white transition hover:bg-white/20"
-              >
-                Sair
-              </button>
-            )}
+            {authorized && <button type="button" onClick={logout} className="flex h-9 items-center gap-2 rounded-md border border-slate-300 px-3 text-xs font-bold text-slate-700 hover:bg-slate-50"><Icon name="logout" />Sair</button>}
           </div>
 
-          {acessoLiberado && (
-            <div className="grid gap-3 bg-white p-3 md:grid-cols-4">
-              <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
-                <p className="text-[10px] font-black uppercase tracking-wide text-slate-500">
-                  Total
-                </p>
-                <p className="mt-0.5 text-2xl font-black text-slate-900">
-                  {feedbacks.length}
-                </p>
-              </div>
+          {authorized && <nav className="grid grid-cols-3 gap-1 border-t border-slate-100 py-2" aria-label="Áreas administrativas">
+            {navigation.map((item) => <button key={item.id} type="button" onClick={() => { setView(item.id); setError(''); setNotice(''); }} className={`flex h-10 min-w-0 items-center justify-center gap-2 rounded-md px-2 text-xs font-black transition ${view === item.id ? 'bg-cyan-700 text-white shadow-sm' : 'text-slate-600 hover:bg-slate-100'}`}><Icon name={item.icon} /><span className="truncate">{item.label}</span></button>)}
+          </nav>}
+        </div>
+      </header>
 
-              <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3">
-                <p className="text-[10px] font-black uppercase tracking-wide text-emerald-700">
-                  Novos
-                </p>
-                <p className="mt-0.5 text-2xl font-black text-emerald-800">
-                  {totalNovos}
-                </p>
-              </div>
+      <div className="mx-auto max-w-6xl px-3 py-4 sm:px-5 sm:py-6">
+        {!authorized ? <section className="mx-auto mt-8 max-w-sm rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+          <span className="flex h-10 w-10 items-center justify-center rounded-md bg-cyan-50 text-cyan-800"><Icon name="lock" size={20} /></span>
+          <h2 className="mt-4 text-lg font-black text-slate-950">Acesso administrativo</h2>
+          <p className="mt-1 text-sm text-slate-500">Entre com a senha administrativa para acessar mensagens, disparos e configurações.</p>
+          <label className="mt-5 block text-[10px] font-black uppercase tracking-wide text-slate-500">Senha</label>
+          <input type="password" value={token} onChange={(event) => setToken(event.target.value)} onKeyDown={(event) => { if (event.key === 'Enter') void loadPanel(); }} autoComplete="current-password" className="mt-1 h-11 w-full rounded-md border border-slate-300 bg-white px-3 text-base outline-none focus:border-cyan-700 focus:ring-2 focus:ring-cyan-700/15" placeholder="Digite a senha" />
+          {error && <p className="mt-3 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-xs font-bold text-red-700">{error}</p>}
+          <button type="button" onClick={() => void loadPanel()} disabled={loading} className="mt-4 h-11 w-full rounded-md bg-cyan-700 text-xs font-black uppercase text-white hover:bg-cyan-800 disabled:opacity-60">{loading ? 'Acessando...' : 'Acessar painel'}</button>
+        </section> : <>
+          {(error || notice) && <div className={`mb-4 rounded-md border px-3 py-2.5 text-sm font-bold ${error ? 'border-red-200 bg-red-50 text-red-700' : 'border-emerald-200 bg-emerald-50 text-emerald-700'}`}>{error || notice}</div>}
 
-              <div className="rounded-xl border border-sky-200 bg-sky-50 px-4 py-3">
-                <p className="text-[10px] font-black uppercase tracking-wide text-sky-700">
-                  Exibindo
-                </p>
-                <p className="mt-0.5 text-2xl font-black text-sky-800">
-                  {feedbacksFiltrados.length}
-                </p>
-              </div>
-
-              <div className="rounded-xl border border-emerald-300 bg-emerald-100 px-4 py-3">
-                <p className="text-[10px] font-black uppercase tracking-wide text-emerald-800">
-                  Resolvidos
-                </p>
-                <p className="mt-0.5 text-2xl font-black text-emerald-900">
-                  {totalResolvidos}
-                </p>
-              </div>
-            </div>
-          )}
-          </div>
-</header>
-
-<div className={acessoLiberado ? 'h-[220px]' : 'h-[145px]'} />
-
-        {!acessoLiberado && (
-          <section className="mx-auto max-w-md rounded-2xl border border-slate-200 bg-white p-5 shadow-lg">
-            <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-xl bg-sky-50 text-xl font-black text-sky-700">
-              A
-            </div>
-
-            <h2 className="text-lg font-black text-slate-900">
-              Acesso administrativo
-            </h2>
-
-            <p className="mt-1 text-sm leading-relaxed text-slate-500">
-              Informe a senha administrativa para carregar os feedbacks do
-              AvantaLab.
-            </p>
-
-            <div className="mt-4">
-              <label className="mb-1.5 block text-[11px] font-bold uppercase tracking-wide text-slate-500">
-                Senha administrativa
-              </label>
-
-              <input
-                type="password"
-                value={token}
-                onChange={(e) => setToken(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    carregarFeedbacks();
-                  }
-                }}
-                placeholder="Digite a senha"
-                className="w-full rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-sky-600 focus:ring-2 focus:ring-sky-600/20"
-              />
-            </div>
-
-            {erro && (
-              <div className="mt-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-700">
-                {erro}
-              </div>
-            )}
-
-            <button
-              type="button"
-              onClick={() => carregarFeedbacks()}
-              disabled={carregando}
-              className="mt-4 w-full rounded-xl bg-sky-700 px-5 py-2.5 text-xs font-black uppercase tracking-wide text-white shadow-lg shadow-sky-900/20 transition hover:bg-sky-800 disabled:cursor-not-allowed disabled:opacity-60"
-            >
-              {carregando ? 'Carregando...' : 'Acessar feedbacks'}
-            </button>
-          </section>
-        )}
-
-        {acessoLiberado && (
-          <>
-            <section className="mb-5 rounded-2xl border border-slate-200 bg-white p-4 shadow">
-              <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">
-                Comunicação
-              </p>
-              <h2 className="mt-0.5 text-lg font-black text-slate-900">
-                Disparar aviso para usuários
-              </h2>
-              <p className="mt-0.5 text-xs text-slate-500">
-                Envia notificação push e aviso no sininho (mobile e web) para todos os usuários.
-              </p>
-              <div className="mt-3 grid gap-2">
-                <input
-                  value={novidadeTitulo}
-                  onChange={(e) => setNovidadeTitulo(e.target.value)}
-                  placeholder="Título (ex: Novidade!)"
-                  className="rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm font-bold text-slate-800 outline-none transition focus:border-sky-600 focus:ring-2 focus:ring-sky-600/20"
-                />
-                <textarea
-                  value={novidadeMensagem}
-                  onChange={(e) => setNovidadeMensagem(e.target.value)}
-                  rows={3}
-                  placeholder="Mensagem curta..."
-                  className="rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-800 outline-none transition focus:border-sky-600 focus:ring-2 focus:ring-sky-600/20"
-                />
-                <button
-                  type="button"
-                  onClick={dispararNovidade}
-                  disabled={enviandoNovidade}
-                  className="rounded-xl bg-sky-700 px-5 py-2.5 text-xs font-black uppercase tracking-wide text-white shadow-lg shadow-sky-900/20 transition hover:bg-sky-800 disabled:cursor-not-allowed disabled:opacity-60"
-                >
-                  {enviandoNovidade ? 'Enviando...' : 'Disparar para todos'}
-                </button>
-                {resultadoNovidade && (
-                  <p className="text-xs font-bold text-slate-600">{resultadoNovidade}</p>
-                )}
+          {view === 'avaliacoes' && <div className="space-y-4">
+            <section className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm" aria-label="Totais de mensagens">
+              <div className="grid grid-cols-2 divide-x divide-y divide-slate-200 sm:grid-cols-4 sm:divide-y-0">
+                {[['Total', totals.total, 'text-slate-950'], ['Novos', totals.novos, 'text-amber-700'], ['Resolvidos', totals.resolvidos, 'text-emerald-700'], ['Arquivados', totals.arquivados, 'text-slate-600']].map(([label, value, color]) => <div key={String(label)} className="px-4 py-3"><p className="text-[9px] font-black uppercase tracking-wide text-slate-400">{label}</p><p className={`mt-0.5 text-xl font-black ${color}`}>{value}</p></div>)}
               </div>
             </section>
 
-            <section className="mb-5 rounded-2xl border border-slate-200 bg-white p-4 shadow">
-              <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
-                <div>
-                  <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">
-                    Filtros
-                  </p>
-
-                  <h2 className="mt-0.5 text-lg font-black text-slate-900">
-                    Lista de feedbacks
-                  </h2>
-
-                  <p className="mt-0.5 text-xs text-slate-500">
-                    Visualize as mensagens recebidas do mais recente para o mais
-                    antigo.
-                  </p>
-                </div>
-
+            <section className="rounded-lg border border-slate-200 bg-white p-3 shadow-sm">
+              <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+                <div><h2 className="text-base font-black text-slate-950">Mensagens recebidas</h2><p className="text-xs text-slate-500">Acompanhe, resolva ou arquive os contatos enviados pelo sistema.</p></div>
                 <div className="flex flex-col gap-2 sm:flex-row">
-                  <select
-                    value={filtroTipo}
-                    onChange={(e) =>
-                      setFiltroTipo(
-                        e.target.value as
-                          | 'todos'
-                          | 'sugestao'
-                          | 'duvida'
-                          | 'reclamacao'
-                          | 'avaliacao'
-                      )
-                    }
-                    className="min-w-[210px] rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm font-bold text-slate-800 outline-none transition focus:border-sky-600 focus:ring-2 focus:ring-sky-600/20"
-                  >
-                    <option value="todos">Todos os tipos</option>
-                    <option value="sugestao">Sugestões</option>
-                    <option value="duvida">Dúvidas</option>
-                    <option value="reclamacao">Reclamações</option>
-                    <option value="avaliacao">Avaliações</option>
-                  </select>
-
-                  <button
-                    type="button"
-                    onClick={() => carregarFeedbacks()}
-                    disabled={carregando}
-                    className="rounded-xl border border-slate-300 bg-slate-900 px-4 py-2.5 text-xs font-black uppercase tracking-wide text-white transition hover:bg-slate-800 disabled:opacity-60"
-                  >
-                    {carregando ? 'Atualizando...' : 'Atualizar'}
-                  </button>
+                  <select value={typeFilter} onChange={(event) => setTypeFilter(event.target.value as typeof typeFilter)} className="h-10 rounded-md border border-slate-300 bg-white px-3 text-xs font-bold outline-none focus:border-cyan-700"><option value="todos">Todos os tipos</option><option value="sugestao">Sugestões</option><option value="duvida">Dúvidas</option><option value="reclamacao">Reclamações</option><option value="avaliacao">Avaliações</option></select>
+                  <button type="button" onClick={() => void loadPanel()} disabled={loading} className="flex h-10 items-center justify-center gap-2 rounded-md border border-slate-300 px-3 text-xs font-bold hover:bg-slate-50 disabled:opacity-50"><Icon name="refresh" />Atualizar</button>
                 </div>
+              </div>
+              <div className="mt-3 flex gap-1 overflow-x-auto border-t border-slate-100 pt-3">
+                {([['ativos', 'Ativas'], ['novo', 'Novas'], ['respondido', 'Resolvidas'], ['arquivado', 'Arquivadas'], ['todos', 'Todas']] as const).map(([id, label]) => <button key={id} type="button" onClick={() => setStatusFilter(id)} className={`h-9 shrink-0 rounded-md px-3 text-[11px] font-black ${statusFilter === id ? 'bg-slate-900 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}>{label}</button>)}
               </div>
             </section>
 
-            {erro && (
-              <div className="mb-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-700">
-                {erro}
-              </div>
-            )}
+            {filteredFeedbacks.length === 0 ? <div className="rounded-lg border border-dashed border-slate-300 bg-white px-4 py-10 text-center text-sm text-slate-500">Nenhuma mensagem encontrada neste filtro.</div> : <div className="grid gap-3">
+              {filteredFeedbacks.map((feedback) => {
+                const busy = workingId === feedback.id;
+                return <article key={feedback.id} className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
+                  <header className="flex flex-col gap-2 border-b border-slate-100 bg-slate-50 px-3 py-3 sm:flex-row sm:items-start sm:justify-between">
+                    <div className="min-w-0"><div className="flex flex-wrap gap-1.5"><span className={`rounded-full border px-2 py-0.5 text-[9px] font-black uppercase ${typeClass(feedback.tipo)}`}>{typeLabel(feedback.tipo)}</span><span className={`rounded-full border px-2 py-0.5 text-[9px] font-black uppercase ${statusClass(feedback.status)}`}>{statusLabel(feedback.status)}</span></div><h3 className="mt-2 truncate text-sm font-black text-slate-950">{feedback.nome_empresa || 'Perfil não informado'}</h3><p className="mt-0.5 break-words text-[11px] text-slate-500">{feedback.nome_usuario || 'Usuário não informado'}{feedback.email_usuario ? ` · ${feedback.email_usuario}` : ''}</p></div>
+                    <time className="shrink-0 text-[10px] font-bold text-slate-400">{formatDate(feedback.created_at)}</time>
+                  </header>
+                  <div className="p-3"><p className="whitespace-pre-wrap break-words text-sm leading-relaxed text-slate-700">{feedback.mensagem}</p></div>
+                  <footer className="flex flex-wrap justify-end gap-2 border-t border-slate-100 bg-white p-2.5">
+                    {feedback.status === 'respondido' || feedback.status === 'arquivado' ? <button type="button" onClick={() => void updateFeedback(feedback.id, 'novo')} disabled={busy} className="flex h-9 items-center gap-1.5 rounded-md border border-cyan-200 px-3 text-[10px] font-black uppercase text-cyan-800 hover:bg-cyan-50 disabled:opacity-50"><Icon name="reopen" size={15} />Reabrir</button> : <button type="button" onClick={() => void updateFeedback(feedback.id, 'respondido')} disabled={busy} className="flex h-9 items-center gap-1.5 rounded-md bg-emerald-600 px-3 text-[10px] font-black uppercase text-white hover:bg-emerald-700 disabled:opacity-50"><Icon name="check" size={15} />Resolver</button>}
+                    {feedback.status !== 'arquivado' && <button type="button" onClick={() => void updateFeedback(feedback.id, 'arquivado')} disabled={busy} className="flex h-9 items-center gap-1.5 rounded-md border border-slate-300 px-3 text-[10px] font-black uppercase text-slate-600 hover:bg-slate-50 disabled:opacity-50"><Icon name="archive" size={15} />Arquivar</button>}
+                    <button type="button" onClick={() => void deleteFeedback(feedback)} disabled={busy} className="flex h-9 items-center gap-1.5 rounded-md border border-red-200 px-3 text-[10px] font-black uppercase text-red-700 hover:bg-red-50 disabled:opacity-50"><Icon name="trash" size={15} />Apagar</button>
+                  </footer>
+                </article>;
+              })}
+            </div>}
+          </div>}
 
-            {feedbacksFiltrados.length === 0 ? (
-              <div className="rounded-2xl border border-slate-200 bg-white p-6 text-center text-sm text-slate-500 shadow">
-                Nenhum feedback encontrado para este filtro.
-              </div>
-            ) : (
-              <div className="grid gap-3">
-                {feedbacksFiltrados.map((feedback) => (
-                  <article
-                    key={feedback.id}
-                    className={`overflow-hidden rounded-2xl border shadow transition ${
-                      feedback.status === 'respondido'
-                        ? 'border-emerald-300 bg-emerald-50 shadow-emerald-900/10'
-                        : 'border-slate-200 bg-white'
-                    }`}
-                  >
-                    <div
-                      className={`flex flex-col gap-3 border-b px-4 py-3 md:flex-row md:items-start md:justify-between ${
-                        feedback.status === 'respondido'
-                          ? 'border-emerald-200 bg-emerald-100/70'
-                          : 'border-slate-100 bg-slate-50'
-                      }`}
-                    >
-                      <div>
-                        <div className="flex flex-wrap items-center gap-2">
-                          <span
-                            className={`rounded-full border px-2.5 py-1 text-[10px] font-black uppercase tracking-wide ${getClasseTipo(
-                              feedback.tipo
-                            )}`}
-                          >
-                            {formatarTipo(feedback.tipo)}
-                          </span>
+          {view === 'disparos' && <div className="grid gap-4 lg:grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)]">
+            <section className="self-start rounded-lg border border-slate-200 bg-white p-4 shadow-sm lg:sticky lg:top-32">
+              <p className="text-[9px] font-black uppercase tracking-[0.2em] text-cyan-700">Comunicação</p><h2 className="mt-1 text-lg font-black text-slate-950">Novo disparo</h2><p className="mt-1 text-xs leading-relaxed text-slate-500">Envia aviso no sininho e notificação push para todos os usuários.</p>
+              <label className="mt-4 block text-[10px] font-black uppercase text-slate-500">Título</label><input value={broadcastTitle} onChange={(event) => setBroadcastTitle(event.target.value)} className="mt-1 h-10 w-full rounded-md border border-slate-300 px-3 text-sm font-bold outline-none focus:border-cyan-700" />
+              <label className="mt-3 block text-[10px] font-black uppercase text-slate-500">Mensagem</label><textarea value={broadcastMessage} onChange={(event) => setBroadcastMessage(event.target.value)} rows={5} className="mt-1 w-full resize-y rounded-md border border-slate-300 p-3 text-sm outline-none focus:border-cyan-700" placeholder="Escreva uma mensagem objetiva..." />
+              <button type="button" onClick={() => void sendBroadcast()} disabled={sending} className="mt-3 flex h-11 w-full items-center justify-center gap-2 rounded-md bg-cyan-700 text-xs font-black uppercase text-white hover:bg-cyan-800 disabled:opacity-60"><Icon name="send" />{sending ? 'Enviando...' : 'Disparar para todos'}</button>
+            </section>
+            <section className="min-w-0"><div className="mb-3 flex items-center justify-between gap-2"><div><h2 className="text-base font-black text-slate-950">Histórico de envios</h2><p className="text-xs text-slate-500">Últimos 100 disparos realizados.</p></div><button type="button" onClick={() => void loadBroadcasts()} className="flex h-9 items-center gap-1.5 rounded-md border border-slate-300 bg-white px-3 text-[10px] font-black uppercase"><Icon name="refresh" size={15} />Atualizar</button></div>
+              {historyPending && <div className="mb-3 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-bold text-amber-800">Execute a migração administrativa no Supabase para ativar o histórico.</div>}
+              {broadcasts.length === 0 ? <div className="rounded-lg border border-dashed border-slate-300 bg-white px-4 py-10 text-center text-sm text-slate-500">Nenhum disparo registrado.</div> : <div className="grid gap-2">{broadcasts.map((item, index) => <article key={item.id || `${item.created_at}-${index}`} className="rounded-lg border border-slate-200 bg-white p-3 shadow-sm"><div className="flex items-start justify-between gap-3"><div className="min-w-0"><h3 className="truncate text-sm font-black text-slate-950">{item.titulo}</h3><p className="mt-1 whitespace-pre-wrap break-words text-xs leading-relaxed text-slate-600">{item.mensagem}</p></div><span className={`shrink-0 rounded-full px-2 py-1 text-[9px] font-black uppercase ${item.status === 'enviado' ? 'bg-emerald-50 text-emerald-700' : 'bg-red-50 text-red-700'}`}>{item.status}</span></div><div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 border-t border-slate-100 pt-2 text-[10px] font-bold text-slate-500"><span>{formatDate(item.created_at)}</span><span>{item.usuarios} usuários</span><span>{item.pushes_enviados}/{item.total_inscricoes} pushes</span></div>{item.erro && <p className="mt-2 text-xs font-bold text-red-700">{item.erro}</p>}</article>)}</div>}
+            </section>
+          </div>}
 
-                          <span
-                            className={`rounded-full border px-2.5 py-1 text-[10px] font-black uppercase tracking-wide ${getClasseStatus(
-                              feedback.status
-                            )}`}
-                          >
-                            {formatarStatus(feedback.status)}
-                          </span>
-                        </div>
-
-                        <h2 className="mt-2 text-base font-black text-slate-900">
-                          {feedback.nome_empresa || 'Empresa não informada'}
-                        </h2>
-
-                        <p className="mt-0.5 text-xs text-slate-500">
-                          Usuário:{' '}
-                          <span className="font-bold text-slate-800">
-                            {feedback.nome_usuario || 'Não informado'}
-                          </span>
-                          {feedback.email_usuario && (
-                            <>
-                              {' '}
-                              ·{' '}
-                              <span className="text-slate-500">
-                                {feedback.email_usuario}
-                              </span>
-                            </>
-                          )}
-                        </p>
-                      </div>
-
-                      <p className="text-xs font-semibold text-slate-500">
-                        {formatarData(feedback.created_at)}
-                      </p>
-                    </div>
-
-                    <div className="p-4">
-                      <div className="mb-2 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                        <p className="text-[10px] font-black uppercase tracking-wide text-slate-400">
-                          Mensagem
-                        </p>
-
-                        {feedback.status === 'respondido' ? (
-                          <button
-                            type="button"
-                            onClick={() =>
-                              atualizarStatusFeedback(feedback.id, 'novo')
-                            }
-                            disabled={feedbackAtualizandoId === feedback.id}
-                            className="rounded-full border border-emerald-300 bg-white px-3.5 py-1.5 text-[10px] font-black uppercase tracking-wide text-emerald-700 transition hover:bg-emerald-50 disabled:cursor-not-allowed disabled:opacity-60"
-                          >
-                            {feedbackAtualizandoId === feedback.id
-                              ? 'Atualizando...'
-                              : 'Reabrir'}
-                          </button>
-                        ) : (
-                          <button
-                            type="button"
-                            onClick={() =>
-                              atualizarStatusFeedback(
-                                feedback.id,
-                                'respondido'
-                              )
-                            }
-                            disabled={feedbackAtualizandoId === feedback.id}
-                            className="rounded-full border border-emerald-300 bg-emerald-600 px-3.5 py-1.5 text-[10px] font-black uppercase tracking-wide text-white shadow-sm transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
-                          >
-                            {feedbackAtualizandoId === feedback.id
-                              ? 'Atualizando...'
-                              : 'Marcar como resolvido'}
-                          </button>
-                        )}
-                      </div>
-
-                      {feedback.status === 'respondido' && (
-                        <div className="mb-3 rounded-xl border border-emerald-200 bg-emerald-100 px-3 py-2 text-xs font-bold text-emerald-800">
-                          Este feedback já foi marcado como resolvido.
-                        </div>
-                      )}
-
-                      <div className="rounded-xl border border-slate-200 bg-white p-3">
-                        <p className="whitespace-pre-wrap text-sm leading-relaxed text-slate-700">
-                          {feedback.mensagem}
-                        </p>
-                      </div>
-                    </div>
-                  </article>
-                ))}
-              </div>
-            )}
-          </>
-        )}
+          {view === 'configuracoes' && <div className="grid gap-4 md:grid-cols-2">
+            <section className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm"><span className="flex h-9 w-9 items-center justify-center rounded-md bg-cyan-50 text-cyan-800"><Icon name="lock" /></span><h2 className="mt-3 text-base font-black text-slate-950">Senha administrativa</h2><p className="mt-1 text-xs leading-relaxed text-slate-500">{customPassword ? 'Uma senha personalizada está ativa.' : 'A senha inicial do ambiente ainda está ativa.'} A alteração vale no próximo acesso.</p><label className="mt-4 block text-[10px] font-black uppercase text-slate-500">Nova senha</label><input type="password" value={newPassword} onChange={(event) => setNewPassword(event.target.value)} autoComplete="new-password" className="mt-1 h-10 w-full rounded-md border border-slate-300 px-3 text-sm outline-none focus:border-cyan-700" placeholder="Mínimo de 10 caracteres" /><label className="mt-3 block text-[10px] font-black uppercase text-slate-500">Confirmar nova senha</label><input type="password" value={confirmPassword} onChange={(event) => setConfirmPassword(event.target.value)} autoComplete="new-password" className="mt-1 h-10 w-full rounded-md border border-slate-300 px-3 text-sm outline-none focus:border-cyan-700" /><button type="button" onClick={() => void changePassword()} disabled={savingPassword || !newPassword || !confirmPassword} className="mt-3 h-10 w-full rounded-md bg-cyan-700 text-xs font-black uppercase text-white hover:bg-cyan-800 disabled:opacity-40">{savingPassword ? 'Salvando...' : 'Alterar senha'}</button></section>
+            <section className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm"><span className="flex h-9 w-9 items-center justify-center rounded-md bg-emerald-50 text-emerald-700"><Icon name="settings" /></span><h2 className="mt-3 text-base font-black text-slate-950">Sessão administrativa</h2><p className="mt-1 text-xs leading-relaxed text-slate-500">A senha permanece somente na memória desta página. Ao sair ou fechar a aba, será necessário informar novamente.</p><dl className="mt-4 divide-y divide-slate-100 rounded-md border border-slate-200 text-xs"><div className="flex justify-between gap-3 p-3"><dt className="font-bold text-slate-500">Acesso</dt><dd className="font-black text-emerald-700">Autorizado</dd></div><div className="flex justify-between gap-3 p-3"><dt className="font-bold text-slate-500">Persistência local</dt><dd className="font-black text-slate-700">Desativada</dd></div></dl><button type="button" onClick={logout} className="mt-3 flex h-10 w-full items-center justify-center gap-2 rounded-md border border-red-200 text-xs font-black uppercase text-red-700 hover:bg-red-50"><Icon name="logout" />Encerrar sessão</button></section>
+          </div>}
+        </>}
       </div>
     </main>
   );

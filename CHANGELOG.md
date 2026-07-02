@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.4.0 - 2026-07-02
+
+- Admin: painel reorganizado em Avaliacoes, Disparos e Configuracoes, com navegacao responsiva para desktop e mobile.
+- Admin: mensagens agora podem ser resolvidas, reabertas, arquivadas e apagadas, com resumo compacto de totais.
+- Admin: adicionado historico persistente de disparos e troca segura da senha administrativa.
+
 ## 1.3.9 - 2026-07-02
 
 - Ava mobile: o chat agora abre em portal fullscreen sobre o dashboard, mantendo a pagina montada para que voltar e inicio fechem o chat sem recarregar no Android ou iOS.
