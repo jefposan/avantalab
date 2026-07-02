@@ -59,6 +59,7 @@
     localizacaoMsg: '',
     notificacoesAtivas: false,
     notificacoesAtualizando: false,
+    ajustesAberto: false,
   };
 
   // ---------- helpers ----------
@@ -141,51 +142,90 @@
     } catch (e) { state.notificacoesAtivas = false; }
   }
 
-  async function alternarNotificacoesPonto() {
-    if (state.notificacoesAtualizando || !state.usuario) return;
+  // Preferencia do usuario (default = ativado). So marca opt-out quando o proprio desativa.
+  function lembretesOptOut() { try { return localStorage.getItem('ponto_lembretes_optout') === '1'; } catch (e) { return false; } }
+  function setLembretesOptOut(v) { try { if (v) localStorage.setItem('ponto_lembretes_optout', '1'); else localStorage.removeItem('ponto_lembretes_optout'); } catch (e) {} }
+
+  async function ativarNotificacoesPonto(silencioso) {
+    if (state.notificacoesAtualizando || !state.usuario) return false;
     if (!('Notification' in window) || !('PushManager' in window) || !('serviceWorker' in navigator)) {
-      mostrarToast('Este navegador nao suporta notificacoes push.'); return;
+      if (!silencioso) mostrarToast('Este navegador nao suporta notificacoes push.');
+      return false;
     }
-    if (ehIos && !ehStandalone()) { state.instalarInstrucao = true; render(); return; }
+    if (ehIos && !ehStandalone()) { if (!silencioso) { state.instalarInstrucao = true; render(); } return false; }
 
     state.notificacoesAtualizando = true; render();
     try {
       var registro = await registroServiceWorkerPonto();
       if (!registro) throw new Error('service-worker');
       var atual = await registro.pushManager.getSubscription();
-      if (atual) {
-        var endpoint = atual.endpoint;
-        await atual.unsubscribe();
-        await db.from('push_subscriptions').delete().eq('endpoint', endpoint);
-        state.notificacoesAtivas = false;
-        mostrarToast('Lembretes de ponto desativados.');
-      } else {
-        var permission = await Notification.requestPermission();
+      if (!atual) {
+        var permission = Notification.permission === 'granted' ? 'granted' : await Notification.requestPermission();
         if (permission !== 'granted') throw new Error('permission');
-        var subscription = await registro.pushManager.subscribe({
+        atual = await registro.pushManager.subscribe({
           userVisibleOnly: true,
           applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY),
         });
-        var data = subscription.toJSON();
-        var empresaId = (state.funcionario && state.funcionario.empresa_id) || (state.empresa && state.empresa.id) || null;
-        var saved = await db.from('push_subscriptions').upsert({
-          user_id: state.usuario.id,
-          empresa_id: empresaId,
-          endpoint: data.endpoint,
-          p256dh: data.keys ? data.keys.p256dh : '',
-          auth: data.keys ? data.keys.auth : '',
-          user_agent: navigator.userAgent,
-          atualizado_em: new Date().toISOString(),
-        }, { onConflict: 'endpoint' });
-        if (saved.error) throw saved.error;
-        state.notificacoesAtivas = true;
-        mostrarToast('Lembretes de entrada e saida ativados.');
       }
+      var data = atual.toJSON();
+      var empresaId = (state.funcionario && state.funcionario.empresa_id) || (state.empresa && state.empresa.id) || null;
+      var saved = await db.from('push_subscriptions').upsert({
+        user_id: state.usuario.id,
+        empresa_id: empresaId,
+        endpoint: data.endpoint,
+        p256dh: data.keys ? data.keys.p256dh : '',
+        auth: data.keys ? data.keys.auth : '',
+        user_agent: navigator.userAgent,
+        atualizado_em: new Date().toISOString(),
+      }, { onConflict: 'endpoint' });
+      if (saved.error) throw saved.error;
+      state.notificacoesAtivas = true;
+      setLembretesOptOut(false);
+      if (!silencioso) mostrarToast('Lembretes de entrada e saida ativados.');
+      return true;
     } catch (e) {
-      mostrarToast(e && e.message === 'permission' ? 'Permissao de notificacao nao concedida.' : 'Nao foi possivel alterar as notificacoes.');
+      if (!silencioso) mostrarToast(e && e.message === 'permission' ? 'Permissao de notificacao nao concedida.' : 'Nao foi possivel ativar as notificacoes.');
+      return false;
     } finally {
       state.notificacoesAtualizando = false; render();
     }
+  }
+
+  async function desativarNotificacoesPonto() {
+    if (state.notificacoesAtualizando || !state.usuario) return;
+    state.notificacoesAtualizando = true; render();
+    try {
+      var registro = await registroServiceWorkerPonto();
+      if (registro) {
+        var atual = await registro.pushManager.getSubscription();
+        if (atual) {
+          var endpoint = atual.endpoint;
+          await atual.unsubscribe();
+          await db.from('push_subscriptions').delete().eq('endpoint', endpoint);
+        }
+      }
+      state.notificacoesAtivas = false;
+      setLembretesOptOut(true);
+      mostrarToast('Lembretes de ponto desativados.');
+    } catch (e) {
+      mostrarToast('Nao foi possivel desativar as notificacoes.');
+    } finally {
+      state.notificacoesAtualizando = false; render();
+    }
+  }
+
+  function alternarNotificacoesPonto() {
+    if (state.notificacoesAtivas) return desativarNotificacoesPonto();
+    return ativarNotificacoesPonto(false);
+  }
+
+  // Lembretes ligados por padrao: tenta ativar na entrada, a menos que o usuario tenha desativado.
+  async function autoAtivarLembretes() {
+    if (lembretesOptOut() || state.notificacoesAtivas) return;
+    if (!('Notification' in window) || !('PushManager' in window) || !('serviceWorker' in navigator)) return;
+    if (ehIos && !ehStandalone()) return;
+    if (Notification.permission === 'denied') return;
+    await ativarNotificacoesPonto(true);
   }
 
   // ---------- login ----------
@@ -251,6 +291,7 @@
       console.error('Erro ao carregar dados do ponto:', e);
     }
     state.carregando = false; state.pronto = true; render();
+    autoAtivarLembretes();
   }
 
   async function carregarHoje() {
@@ -478,6 +519,37 @@
     );
   }
 
+  function ajustesPontoHtml() {
+    if (!state.ajustesAberto) return '';
+    var ativo = state.notificacoesAtivas;
+    var carregando = state.notificacoesAtualizando;
+    return (
+      '<div id="ponto-ajustes-overlay" class="fixed inset-0 z-[70] flex items-end justify-center bg-slate-950/60 p-4 sm:items-center">' +
+        '<section class="w-full max-w-sm rounded-3xl bg-white p-5 text-slate-900 shadow-2xl">' +
+          '<div class="flex items-start justify-between gap-3">' +
+            '<div>' +
+              '<p class="text-[10px] font-black uppercase tracking-[0.22em] text-cyan-700">Ajustes</p>' +
+              '<h2 class="mt-1 text-xl font-black">Preferências</h2>' +
+            '</div>' +
+            '<button id="ponto-ajustes-fechar" type="button" aria-label="Fechar" class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-500">' +
+              '<svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M6 6l12 12M18 6L6 18"/></svg>' +
+            '</button>' +
+          '</div>' +
+          '<div class="mt-5 flex items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-slate-50 p-3">' +
+            '<div class="min-w-0">' +
+              '<p class="text-sm font-black text-slate-800">Lembretes de ponto</p>' +
+              '<p class="mt-0.5 text-xs font-semibold leading-snug text-slate-500">Avisos de entrada e saída — 10 min antes e no horário.</p>' +
+            '</div>' +
+            '<button id="ponto-lembretes-toggle" type="button" ' + (carregando ? 'disabled' : '') + ' role="switch" aria-checked="' + (ativo ? 'true' : 'false') + '" class="relative h-7 w-12 shrink-0 rounded-full transition disabled:opacity-60 ' + (ativo ? 'bg-emerald-500' : 'bg-slate-300') + '">' +
+              '<span class="absolute top-0.5 h-6 w-6 rounded-full bg-white shadow transition-all ' + (ativo ? 'left-[22px]' : 'left-0.5') + '"></span>' +
+            '</button>' +
+          '</div>' +
+          (carregando ? '<p class="mt-2 text-center text-[11px] font-bold text-slate-400">Atualizando…</p>' : '') +
+        '</section>' +
+      '</div>'
+    );
+  }
+
   function cardInstalarHtml() {
     if (ehStandalone()) return '';
     return (
@@ -610,19 +682,6 @@
           '</button>' +
         '</div>' +
       '</div>';
-    var notificacoesHtml =
-      '<div class="mb-4 rounded-2xl border border-sky-100 bg-white p-3 shadow-sm">' +
-        '<div class="flex items-center justify-between gap-3">' +
-          '<div class="min-w-0">' +
-            '<p class="text-[10px] font-black uppercase tracking-wide text-sky-700">Lembretes de ponto</p>' +
-            '<p class="mt-0.5 text-xs font-semibold leading-snug text-slate-500">' + (state.notificacoesAtivas ? 'Ativos · ' : '') + 'Entrada e saida: 10 min antes e no horario.</p>' +
-          '</div>' +
-          '<button id="ponto-notificacoes" type="button" ' + (state.notificacoesAtualizando ? 'disabled' : '') + ' class="shrink-0 rounded-xl border px-3 py-2 text-[10px] font-black uppercase tracking-wide disabled:opacity-60 ' + (state.notificacoesAtivas ? 'border-emerald-200 bg-emerald-50 text-emerald-700' : 'border-sky-200 bg-sky-50 text-sky-700') + '">' +
-            (state.notificacoesAtualizando ? 'Aguarde...' : (state.notificacoesAtivas ? 'Desativar' : 'Ativar')) +
-          '</button>' +
-        '</div>' +
-      '</div>';
-
     var statusHtml = ['entrada', 'saida_refeicao', 'retorno_refeicao', 'saida'].map(function (t) {
       var reg = (state.pontoHoje || []).filter(function (r) { return r.tipo === t; })[0];
       return '<div class="flex items-center justify-between rounded-xl border px-3 py-2.5 ' + (reg ? 'border-emerald-200 bg-emerald-50' : 'border-slate-200 bg-white') + '">' +
@@ -645,21 +704,29 @@
       '<div class="fixed inset-0 flex flex-col bg-slate-100 text-slate-900">' +
         '<header class="shrink-0 px-5 pb-5 text-white shadow-xl" style="padding-top:calc(env(safe-area-inset-top) + 18px);background:linear-gradient(135deg,#003E73 0%,#075985 54%,#00A6C8 100%)">' +
           '<div class="mx-auto max-w-md">' +
-            '<p class="text-[10px] font-black uppercase tracking-[0.24em] text-cyan-100">Controle de Ponto</p>' +
-            '<h1 class="mt-1 text-2xl font-black leading-tight text-white">Olá, ' + escapeHtml(String(nomeFunc()).split(' ')[0]) + '</h1>' +
-            '<p class="mt-0.5 text-xs font-semibold text-cyan-50">' + escapeHtml(nomeEmpresa()) + '</p>' +
+            '<div class="flex items-start justify-between gap-3">' +
+              '<div class="min-w-0">' +
+                '<p class="text-[10px] font-black uppercase tracking-[0.24em] text-cyan-100">Controle de Ponto</p>' +
+                '<h1 class="mt-1 text-2xl font-black leading-tight text-white">Olá, ' + escapeHtml(String(nomeFunc()).split(' ')[0]) + '</h1>' +
+                '<p class="mt-0.5 text-xs font-semibold text-cyan-50">' + escapeHtml(nomeEmpresa()) + '</p>' +
+              '</div>' +
+              '<button id="ponto-ajustes" type="button" aria-label="Ajustes" class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-white/25 bg-white/15 text-white transition active:scale-95">' +
+                '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-5 w-5"><path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317a1.724 1.724 0 013.35 0 1.724 1.724 0 002.573 1.066 1.724 1.724 0 012.451 2.451 1.724 1.724 0 001.066 2.573 1.724 1.724 0 010 3.35 1.724 1.724 0 00-1.066 2.573 1.724 1.724 0 01-2.451 2.451 1.724 1.724 0 00-2.573 1.066 1.724 1.724 0 01-3.35 0 1.724 1.724 0 00-2.573-1.066 1.724 1.724 0 01-2.451-2.451 1.724 1.724 0 00-1.066-2.573 1.724 1.724 0 010-3.35 1.724 1.724 0 001.066-2.573 1.724 1.724 0 012.451-2.451 1.724 1.724 0 002.573-1.066z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>' +
+              '</button>' +
+            '</div>' +
             '<p class="mt-2 text-[11px] font-semibold text-cyan-50">' + escapeHtml(dataHoje.charAt(0).toUpperCase() + dataHoje.slice(1)) + '</p>' +
           '</div>' +
         '</header>' +
         '<div class="flex-1 overflow-y-auto">' +
           '<div class="mx-auto max-w-md px-5 pt-5" style="padding-bottom:calc(env(safe-area-inset-bottom) + 40px)">' +
             localizacaoHtml +
-            notificacoesHtml +
             '<p class="mb-2 text-[11px] font-black uppercase tracking-wide text-slate-400">Registros de hoje</p>' +
             '<div class="grid gap-2">' + statusHtml + '</div>' +
             '<div class="mt-6">' + botoesHtml + '</div>' +
-            '<button id="ponto-meus-registros" type="button" class="mt-4 h-11 w-full rounded-xl border border-slate-300 bg-white text-xs font-black uppercase tracking-wide text-slate-600">Meus registros</button>' +
-            '<button id="ponto-sair" type="button" class="mt-2 flex h-11 w-full items-center justify-center rounded-xl border border-rose-200 bg-white text-xs font-black uppercase tracking-wide text-rose-600 shadow-sm">Sair</button>' +
+            '<div class="mt-4 grid grid-cols-2 gap-2">' +
+              '<button id="ponto-meus-registros" type="button" class="flex h-11 w-full items-center justify-center rounded-xl border border-slate-300 bg-white text-xs font-black uppercase tracking-wide text-slate-600 shadow-sm">Meus registros</button>' +
+              '<button id="ponto-sair" type="button" class="flex h-11 w-full items-center justify-center rounded-xl border border-rose-200 bg-white text-xs font-black uppercase tracking-wide text-rose-600 shadow-sm">Sair</button>' +
+            '</div>' +
           '</div>' +
         '</div>' +
       '</div>'
@@ -688,7 +755,7 @@
     if (!state.pronto) tela = telaCarregandoPonto();
     else if (!state.autenticado) tela = telaLogin();
     else tela = telaPonto();
-    root.innerHTML = tela + toastHtml() + instrucaoInstalarHtml() + confirmacaoPontoHtml();
+    root.innerHTML = tela + toastHtml() + instrucaoInstalarHtml() + confirmacaoPontoHtml() + ajustesPontoHtml();
 
     bind('ponto-entrar', entrar);
     bind('ponto-instalar-fechar', function () { state.instalarInstrucao = false; render(); });
@@ -716,7 +783,11 @@
       bater(tipo);
     });
     bind('ponto-atualizar-localizacao', atualizarLocalizacao);
-    bind('ponto-notificacoes', alternarNotificacoesPonto);
+    bind('ponto-ajustes', function () { state.ajustesAberto = true; render(); });
+    bind('ponto-ajustes-fechar', function () { state.ajustesAberto = false; render(); });
+    var ovAjustes = document.getElementById('ponto-ajustes-overlay');
+    if (ovAjustes) ovAjustes.addEventListener('click', function (e) { if (e.target === ovAjustes) { state.ajustesAberto = false; render(); } });
+    bind('ponto-lembretes-toggle', alternarNotificacoesPonto);
     var ovConfirmar = document.getElementById('ponto-confirmar-overlay');
     if (ovConfirmar) ovConfirmar.addEventListener('click', function (e) { if (e.target === ovConfirmar) { state.confirmarTipo = null; render(); } });
     bind('ponto-comprovante-ok', function () { state.comprovante = null; render(); });
