@@ -203,9 +203,6 @@ export default function AvaChatClient() {
       htmlBackground: html.style.background,
       bodyOverflow: body.style.overflow,
       bodyOverscroll: body.style.overscrollBehavior,
-      bodyPosition: body.style.position,
-      bodyInset: body.style.inset,
-      bodyWidth: body.style.width,
       bodyHeight: body.style.height,
       bodyBackground: body.style.background,
     };
@@ -217,15 +214,12 @@ export default function AvaChatClient() {
     html.style.overflow = 'hidden';
     html.style.overscrollBehavior = 'none';
     html.style.background = chatBackground;
-    body.style.position = 'fixed';
-    body.style.inset = '0';
-    body.style.width = '100%';
     body.style.height = '100%';
     body.style.overflow = 'hidden';
     body.style.overscrollBehavior = 'none';
     body.style.background = chatBackground;
 
-    const syncHeight = () => {
+    const syncViewport = () => {
       const messages = messagesRef.current;
       const keepLastMessageVisible = Boolean(messages && (
         messages.scrollHeight - messages.scrollTop - messages.clientHeight < 96
@@ -233,9 +227,14 @@ export default function AvaChatClient() {
 
       cancelAnimationFrame(viewportFrame);
       viewportFrame = requestAnimationFrame(() => {
-        const visualHeight = window.visualViewport?.height;
-        const height = visualHeight && visualHeight > 0 ? visualHeight : window.innerHeight;
-        shell.style.setProperty('--ava-chat-height', `${Math.round(height)}px`);
+        const viewport = window.visualViewport;
+        const layoutHeight = Math.max(window.innerHeight || 0, document.documentElement.clientHeight || 0);
+        const viewportTop = viewport ? Math.max(0, viewport.offsetTop || 0) : 0;
+        const visibleHeight = viewport?.height || layoutHeight;
+        const keyboardInset = Math.max(0, layoutHeight - viewportTop - visibleHeight);
+
+        shell.style.setProperty('--ava-viewport-top', `${Math.round(viewportTop)}px`);
+        shell.style.setProperty('--ava-keyboard-inset', `${Math.round(keyboardInset)}px`);
 
         if (keepLastMessageVisible && messages) {
           cancelAnimationFrame(messageScrollFrame);
@@ -246,27 +245,25 @@ export default function AvaChatClient() {
       });
     };
 
-    syncHeight();
-    window.visualViewport?.addEventListener('resize', syncHeight);
-    window.visualViewport?.addEventListener('scroll', syncHeight);
-    window.addEventListener('resize', syncHeight);
+    syncViewport();
+    window.visualViewport?.addEventListener('resize', syncViewport);
+    window.visualViewport?.addEventListener('scroll', syncViewport);
+    window.addEventListener('resize', syncViewport);
 
     return () => {
       cancelAnimationFrame(viewportFrame);
       cancelAnimationFrame(messageScrollFrame);
-      window.visualViewport?.removeEventListener('resize', syncHeight);
-      window.visualViewport?.removeEventListener('scroll', syncHeight);
-      window.removeEventListener('resize', syncHeight);
-      shell.style.removeProperty('--ava-chat-height');
+      window.visualViewport?.removeEventListener('resize', syncViewport);
+      window.visualViewport?.removeEventListener('scroll', syncViewport);
+      window.removeEventListener('resize', syncViewport);
+      shell.style.removeProperty('--ava-viewport-top');
+      shell.style.removeProperty('--ava-keyboard-inset');
       html.style.overflow = previous.htmlOverflow;
       html.style.height = previous.htmlHeight;
       html.style.overscrollBehavior = previous.htmlOverscroll;
       html.style.background = previous.htmlBackground;
       body.style.overflow = previous.bodyOverflow;
       body.style.overscrollBehavior = previous.bodyOverscroll;
-      body.style.position = previous.bodyPosition;
-      body.style.inset = previous.bodyInset;
-      body.style.width = previous.bodyWidth;
       body.style.height = previous.bodyHeight;
       body.style.background = previous.bodyBackground;
     };

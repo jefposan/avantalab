@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.3.6 - 2026-07-02
+
+- Ava mobile: o teclado agora ajusta somente a area interna da conversa e o campo de digitacao, mantendo o header fixo e o shell do chat imovel.
+
 ## 1.3.5 - 2026-07-02
 
 - Ava mobile: chat movido definitivamente para uma rota fullscreen independente, com header fixo, mensagens rolaveis e campo de digitacao ancorado acima do teclado.
