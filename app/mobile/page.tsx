@@ -225,7 +225,7 @@ export default function MobilePage() {
       <BackupMobileBridge />
 
       <script src="/mobile-supabase.js" defer />
-      <script src="/mobile-app.js?v=200" defer />
+      <script src="/mobile-app.js?v=201" defer />
     </main>
   );
 }

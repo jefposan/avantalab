@@ -2525,7 +2525,7 @@
         id: item.id,
         mes: item.mes,
         dia: Number(item.dia),
-        despesa: item.despesa_nome,
+        despesa: formatarDescricao(item.despesa_nome),
         descricao: item.descricao || '',
         valor: Number(item.valor || 0),
         status: item.status || null,
@@ -2554,7 +2554,7 @@
     state.despesas = (resultados[3].data || []).map(function (item) {
       return {
         id: item.id,
-        nome: item.nome,
+        nome: formatarDescricao(item.nome),
         categoria: formatarDescricao(item.categoria || 'Sem categoria'),
       };
     });
@@ -6743,7 +6743,9 @@
     var empresaId = state.empresa.id || state.empresa.empresa_id;
     var resp = await db.from('recorrencias').select('*').eq('empresa_id', empresaId).order('dia', { ascending: true });
     if (!resp.error && resp.data) {
-      state.recorrencias = resp.data;
+      state.recorrencias = (resp.data || []).map(function (item) {
+        return Object.assign({}, item, { nome: formatarDescricao(item.nome) });
+      });
       render();
     }
   }
@@ -6834,7 +6836,7 @@
     if (novosLancamentos.length) {
       state.lancamentos = novosLancamentos.map(function(item) {
         return {
-          id: item.id, mes: item.mes, dia: Number(item.dia), despesa: item.despesa_nome,
+          id: item.id, mes: item.mes, dia: Number(item.dia), despesa: formatarDescricao(item.despesa_nome),
           descricao: item.descricao || '', valor: Number(item.valor || 0),
           status: item.status || null, tipo: item.tipo_obs || null, recorrenciaId: item.recorrencia_id || null,
         };

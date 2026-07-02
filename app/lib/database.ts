@@ -501,7 +501,7 @@ export async function atualizarDespesaCadastrada(
       categoria: formatarNomeCategoria(categoria),
     })
     .eq('empresa_id', empresaId)
-    .eq('nome', nomeAtual)
+    .ilike('nome', nomeAtual)
     .select()
     .single();
 
@@ -521,7 +521,7 @@ export async function apagarDespesaCadastrada(
     .from('despesas_cadastradas')
     .delete()
     .eq('empresa_id', empresaId)
-    .eq('nome', nome);
+    .ilike('nome', nome);
 
   if (error) {
     console.error('Erro ao apagar despesa cadastrada:', error);

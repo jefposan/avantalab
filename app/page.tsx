@@ -788,7 +788,7 @@ if (empresa.telefone_confirmado !== true) {
   if (despesas && despesas.length > 0) {
     setDespesasCadastradas(
       despesas.map((d: any) => ({
-        nome: d.nome,
+        nome: formatarNomeCategoria(d.nome),
         categoria: formatarNomeCategoria(d.categoria),
       }))
     );
@@ -995,7 +995,7 @@ useEffect(() => {
         id: l.id,
         mes: l.mes,
         dia: l.dia,
-        despesa: l.despesa_nome,
+        despesa: formatarNomeCategoria(l.despesa_nome),
         descricao: l.descricao || '',
         valor: Number(l.valor),
         status: l.status || null,
@@ -3722,7 +3722,7 @@ const recarregarDadosFinanceirosAtual = async () => {
 
   setDespesasCadastradas(
     despesasBanco.map((d: any) => ({
-      nome: d.nome,
+      nome: formatarNomeCategoria(d.nome),
       categoria: formatarNomeCategoria(d.categoria),
     }))
   );
@@ -3732,7 +3732,7 @@ const recarregarDadosFinanceirosAtual = async () => {
       id: l.id,
       mes: l.mes,
       dia: l.dia,
-      despesa: l.despesa_nome,
+      despesa: formatarNomeCategoria(l.despesa_nome),
       descricao: l.descricao || '',
       valor: Number(l.valor),
       status: l.status || null,

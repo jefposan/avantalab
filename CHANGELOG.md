@@ -2,7 +2,7 @@
 
 ## 1.3.4 - 2026-07-02
 
-- Web e mobile: cadastro de despesas padronizado, com nomes e categorias em formato de frase e edicao disponivel na lista web.
+- Web e mobile: cadastro de despesas padronizado, com nomes de despesas e categorias em formato de frase e edicao disponivel na lista web.
 - Novos perfis de empresa e pessoais recebem uma lista inicial de despesas totalmente editavel e excluivel.
 - Mobile: arrastar cards do dashboard bloqueia temporariamente o gesto de puxar para atualizar.
 - Mobile: o grafico por tipo de despesa permite abrir os lancamentos que compoem cada total.
