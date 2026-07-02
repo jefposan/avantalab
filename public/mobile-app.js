@@ -985,15 +985,14 @@
     return tipo === 'previsto' || tipo === 'fixa';
   }
 
-  // Card de confirmacao: aparece SO no dia (00:00 ate o ultimo segundo).
-  // Passando o dia sem acao, a despesa e considerada confirmada automaticamente (sem card).
+  // Permanece pendente desde a data programada ate confirmar ou excluir.
   function ehDespesaAConfirmar(item) {
-    return item && item.status === 'prevista' && tipoPedeConfirmacao(item.tipo) && ehDespesaHoje(item);
+    return item && item.status === 'prevista' && tipoPedeConfirmacao(item.tipo) && !dataFutura(Number(state.ano), indiceMes(item.mes), item.dia);
   }
 
-  // Receita prevista cuja data e hoje -> pede confirmacao (igual as despesas).
+  // Receita prevista tambem permanece pendente ate uma acao explicita.
   function ehReceitaAConfirmar(item) {
-    return item && item.status === 'prevista' && ehDespesaHoje(item);
+    return item && item.status === 'prevista' && !dataFutura(Number(state.ano), indiceMes(item.mes), item.dia);
   }
 
   // Selo colorido por tipo de despesa (previsto/fixa/parcela).

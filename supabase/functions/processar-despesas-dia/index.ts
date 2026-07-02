@@ -25,7 +25,7 @@ import webpush from 'npm:web-push@3.6.7';
 // Os lancamentos gravam o mes por extenso em MAIUSCULO (ex.: 'JULHO'). Precisa casar exatamente.
 const MESES = ['JANEIRO', 'FEVEREIRO', 'MARÇO', 'ABRIL', 'MAIO', 'JUNHO', 'JULHO', 'AGOSTO', 'SETEMBRO', 'OUTUBRO', 'NOVEMBRO', 'DEZEMBRO'];
 
-Deno.serve(async () => {
+Deno.serve(async (request) => {
   try {
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL')!,
@@ -38,18 +38,30 @@ Deno.serve(async () => {
       Deno.env.get('VAPID_PRIVATE_KEY')!,
     );
 
-    const partesHoje = new Intl.DateTimeFormat('en-CA', {
-      timeZone: 'America/Sao_Paulo',
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit',
-    }).formatToParts(new Date());
-    const parte = (tipo: string) => partesHoje.find((item) => item.type === tipo)?.value || '';
-    const ano = Number(parte('year'));
-    const mesIndice = Number(parte('month')) - 1;
+    let body: { data?: string } = {};
+    try {
+      body = await request.json();
+    } catch {
+      body = {};
+    }
+
+    const dataTeste = typeof body.data === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(body.data)
+      ? body.data
+      : null;
+    const partesHoje = dataTeste
+      ? dataTeste.split('-')
+      : new Intl.DateTimeFormat('en-CA', {
+          timeZone: 'America/Sao_Paulo',
+          year: 'numeric',
+          month: '2-digit',
+          day: '2-digit',
+        }).format(new Date()).split('-');
+    const [anoTexto, mesTexto, diaTexto] = partesHoje;
+    const ano = Number(anoTexto);
+    const mesIndice = Number(mesTexto) - 1;
     const mesNome = MESES[mesIndice];
-    const dia = Number(parte('day'));
-    const refData = `${parte('year')}-${parte('month')}-${parte('day')}`;
+    const dia = Number(diaTexto);
+    const refData = `${anoTexto}-${mesTexto}-${diaTexto}`;
 
     // Despesas agendadas que vencem hoje. Parcelas nao pedem confirmacao,
     // mas tambem geram o lembrete de pagamento no PWA.
@@ -131,7 +143,7 @@ Deno.serve(async () => {
     }
 
     return new Response(
-      JSON.stringify({ ok: true, despesas: lista.length, notificadas, pushesEnviados }),
+      JSON.stringify({ ok: true, data: refData, modoTeste: Boolean(dataTeste), despesas: lista.length, notificadas, pushesEnviados }),
       { headers: { 'Content-Type': 'application/json' } },
     );
   } catch (e) {

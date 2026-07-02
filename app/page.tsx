@@ -1385,6 +1385,11 @@ useEffect(() => {
         { event: '*', schema: 'public', table: 'notificacoes', filter: 'user_id=eq.' + userId },
         () => { carregarNotificacoesWeb(); }
       )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'notificacoes', filter: 'empresa_id=eq.' + empresaId },
+        () => { carregarNotificacoesWeb(); }
+      )
       .subscribe();
   })();
   return () => { if (canal) supabase.removeChannel(canal); };
@@ -1892,20 +1897,19 @@ const mostrarBarraComparativoDespesas =
 const faturamentoDoMesAtual = faturamentos[mesParaAnalise] || 0;
 const lucroOperacional = faturamentoDoMesAtual - totalDespesasMes;
 
-// Card de confirmacao: aparece SO no dia (00:00 ate o ultimo segundo).
-// Parcela nao pede confirmacao; passando o dia sem acao, vira confirmada automaticamente (sem card).
+// O card permanece pendente desde a data programada ate o usuario confirmar ou excluir.
 const despesasAConfirmar = lancamentos.filter(
   (l) =>
     l.status === 'prevista' &&
     tipoPedeConfirmacao(l.tipo) &&
-    ehDataHoje(Number(anoSelecionado), meses.indexOf(l.mes), l.dia)
+    !dataFutura(Number(anoSelecionado), meses.indexOf(l.mes), l.dia)
 );
 
-// Receitas previstas cuja data chegou hoje: pedem confirmacao (mesmo card das despesas).
+// Receitas previstas tambem permanecem pendentes ate uma acao explicita.
 const receitasAConfirmar = faturamentosEntradas.filter(
   (e) =>
     e.status === 'prevista' &&
-    ehDataHoje(Number(anoSelecionado), meses.indexOf(e.mes), e.dia)
+    !dataFutura(Number(anoSelecionado), meses.indexOf(e.mes), e.dia)
 );
 
 // Card de saldo (Inicial/Final/Previsto) com seletor proprio de mes.
