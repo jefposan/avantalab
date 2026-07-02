@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { createClient } from '@supabase/supabase-js';
 import { AVA_SYSTEM_PROMPT } from '../../../../supabase/functions/_shared/ava-system-prompt';
 
 export const runtime = 'nodejs';
@@ -7,9 +8,26 @@ function chaveOpenAI() {
   return (
     process.env.OPENAI_API_KEY ||
     process.env.OPENAI_API_KEY_AVA ||
-    process.env.NEXT_PUBLIC_OPENAI_API_KEY ||
     ''
   );
+}
+
+// A Ava só responde para usuários autenticados (evita uso anônimo/abuso da chave).
+async function usuarioAutenticado(request: Request): Promise<boolean> {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
+  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
+  if (!supabaseUrl || !supabaseAnonKey) return false;
+
+  const token = (request.headers.get('authorization') || '').replace(/^Bearer\s+/i, '').trim();
+  if (!token) return false;
+
+  try {
+    const supabase = createClient(supabaseUrl, supabaseAnonKey);
+    const { data, error } = await supabase.auth.getUser(token);
+    return Boolean(!error && data?.user);
+  } catch {
+    return false;
+  }
 }
 
 function mensagensValidas(messages: unknown) {
@@ -134,6 +152,13 @@ async function responderComSupabase(body: string) {
 
 export async function POST(request: Request) {
   try {
+    if (!(await usuarioAutenticado(request))) {
+      return NextResponse.json(
+        { erro: true, mensagem: 'Faça login para conversar com a Ava.' },
+        { status: 401 }
+      );
+    }
+
     const payload = await request.json();
     const messages = mensagensValidas(payload?.messages);
     const contexto = String(payload?.contexto || '').trim();

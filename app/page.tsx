@@ -694,9 +694,6 @@ setMesFaturamento(mesAtual);
 setMesAtivo(null);
   setConfiguracoesCarregadas(false);
 
-  console.log('EMPRESA CARREGADA:', empresa);
-console.log('TELEFONE CONFIRMADO:', empresa.telefone_confirmado);
-
   setEmpresaId(empresa.id);
   setNomeEmpresaAtual(empresa.nome || empresa.empresa_nome || '');
   setTipoPerfilAtual(normalizarTipoPerfil(empresa.tipo_perfil));

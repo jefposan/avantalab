@@ -412,9 +412,13 @@ export default function AvaChatClient({ initialYear, initialMonth, onClose }: Av
     setMessages((current) => [...current, userMessage, assistantMessage]);
 
     try {
+      const { data: { session } } = await db.auth.getSession();
       const response = await fetch('/api/ava/chat', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          ...(session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {}),
+        },
         body: JSON.stringify({ messages: outbound, contexto: context }),
       });
 

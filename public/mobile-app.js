@@ -3402,9 +3402,13 @@
     }, 50);
 
     try {
+      var sessaoIA = await db.auth.getSession();
+      var tokenIA = sessaoIA && sessaoIA.data && sessaoIA.data.session ? sessaoIA.data.session.access_token : '';
+      var headersIA = { 'Content-Type': 'application/json' };
+      if (tokenIA) headersIA['Authorization'] = 'Bearer ' + tokenIA;
       var res = await fetch('/api/ava/chat', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: headersIA,
         body: JSON.stringify({
           messages: state.chatIAMensagens.slice(0, -1).map(function(m) { return { role: m.role, content: m.content }; }),
           contexto: montarContextoIA(),
