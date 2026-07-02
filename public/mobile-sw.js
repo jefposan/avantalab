@@ -1,6 +1,6 @@
-const CACHE_NAME = 'avantalab-mobile-v173';
+const CACHE_NAME = 'avantalab-mobile-v174';
 const APP_SHELL = [
-  '/mobile-app.js?v=196',
+  '/mobile-app.js?v=197',
   '/mobile-supabase.js',
   '/mobile-manifest.json',
   '/images/ava-logo-principal.png',
@@ -69,8 +69,8 @@ self.addEventListener('push', (event) => {
 
   const opcoes = {
     body: corpo,
-    icon: '/images/avantalab-icon-192.png',
-    badge: '/images/avantalab-icon-192.png',
+    icon: dados.icon || '/images/avantalab-icon-192.png',
+    badge: dados.badge || '/images/avantalab-icon-192.png',
     data: { url: url },
     tag: dados.tag || undefined,
     renotify: dados.tag ? true : undefined,

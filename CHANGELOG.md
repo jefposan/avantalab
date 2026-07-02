@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.5.0 - 2026-07-02
+
+- Ponto: lembretes push opcionais de entrada e saida, enviados 10 minutos antes e no horario quando o registro ainda estiver pendente.
+- Ponto: notificacoes podem ser ativadas ou desativadas pelo proprio funcionario no card de ponto.
+
 ## 1.4.0 - 2026-07-02
 
 - Admin: painel reorganizado em Avaliacoes, Disparos e Configuracoes, com navegacao responsiva para desktop e mobile.

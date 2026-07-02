@@ -23,6 +23,7 @@
   }
 
   var db = supabaseGlobal.createClient(config.supabaseUrl, config.supabaseAnonKey);
+  var VAPID_PUBLIC_KEY = 'BL_wlTejki6TPH1TJSHw8q6VeeSoaoH5Ciiirjs0nSg0M4riD5jl-RnkUVArlGMuI5h-eshP98kQKFPsjjM7f4c';
 
   var ehIos = /iphone|ipad|ipod/i.test(navigator.userAgent || '');
   function ehStandalone() { return window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true; }
@@ -56,6 +57,8 @@
     localizacaoAtualizadaEm: 0,
     localizacaoAtualizando: false,
     localizacaoMsg: '',
+    notificacoesAtivas: false,
+    notificacoesAtualizando: false,
   };
 
   // ---------- helpers ----------
@@ -114,6 +117,76 @@
 
   function bind(id, fn) { var el = document.getElementById(id); if (el) el.addEventListener('click', fn); }
   function bindInput(id, fn) { var el = document.getElementById(id); if (el) el.addEventListener('input', fn); }
+  function urlBase64ToUint8Array(base64String) {
+    var padding = '='.repeat((4 - (base64String.length % 4)) % 4);
+    var base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+    var raw = atob(base64);
+    var result = new Uint8Array(raw.length);
+    for (var i = 0; i < raw.length; i++) result[i] = raw.charCodeAt(i);
+    return result;
+  }
+
+  async function registroServiceWorkerPonto() {
+    if (!('serviceWorker' in navigator)) return null;
+    try { return await navigator.serviceWorker.register('/ponto-sw.js?v=1', { scope: '/ponto' }); }
+    catch (e) { return null; }
+  }
+
+  async function verificarNotificacoesPonto() {
+    try {
+      if (!('Notification' in window) || !('serviceWorker' in navigator)) return;
+      var registro = await registroServiceWorkerPonto();
+      if (!registro) return;
+      state.notificacoesAtivas = Notification.permission === 'granted' && Boolean(await registro.pushManager.getSubscription());
+    } catch (e) { state.notificacoesAtivas = false; }
+  }
+
+  async function alternarNotificacoesPonto() {
+    if (state.notificacoesAtualizando || !state.usuario) return;
+    if (!('Notification' in window) || !('PushManager' in window) || !('serviceWorker' in navigator)) {
+      mostrarToast('Este navegador nao suporta notificacoes push.'); return;
+    }
+    if (ehIos && !ehStandalone()) { state.instalarInstrucao = true; render(); return; }
+
+    state.notificacoesAtualizando = true; render();
+    try {
+      var registro = await registroServiceWorkerPonto();
+      if (!registro) throw new Error('service-worker');
+      var atual = await registro.pushManager.getSubscription();
+      if (atual) {
+        var endpoint = atual.endpoint;
+        await atual.unsubscribe();
+        await db.from('push_subscriptions').delete().eq('endpoint', endpoint);
+        state.notificacoesAtivas = false;
+        mostrarToast('Lembretes de ponto desativados.');
+      } else {
+        var permission = await Notification.requestPermission();
+        if (permission !== 'granted') throw new Error('permission');
+        var subscription = await registro.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY),
+        });
+        var data = subscription.toJSON();
+        var empresaId = (state.funcionario && state.funcionario.empresa_id) || (state.empresa && state.empresa.id) || null;
+        var saved = await db.from('push_subscriptions').upsert({
+          user_id: state.usuario.id,
+          empresa_id: empresaId,
+          endpoint: data.endpoint,
+          p256dh: data.keys ? data.keys.p256dh : '',
+          auth: data.keys ? data.keys.auth : '',
+          user_agent: navigator.userAgent,
+          atualizado_em: new Date().toISOString(),
+        }, { onConflict: 'endpoint' });
+        if (saved.error) throw saved.error;
+        state.notificacoesAtivas = true;
+        mostrarToast('Lembretes de entrada e saida ativados.');
+      }
+    } catch (e) {
+      mostrarToast(e && e.message === 'permission' ? 'Permissao de notificacao nao concedida.' : 'Nao foi possivel alterar as notificacoes.');
+    } finally {
+      state.notificacoesAtualizando = false; render();
+    }
+  }
 
   // ---------- login ----------
   async function entrar() {
@@ -151,6 +224,7 @@
     state.cpf = ''; state.senha = ''; state.verSenha = false; state.erro = '';
     state.entrando = false; state.batendo = false; state.registros = []; state.periodo = 'dia';
     state.localizacaoAtual = null; state.localizacaoAtualizadaEm = 0; state.localizacaoAtualizando = false; state.localizacaoMsg = '';
+    state.notificacoesAtivas = false; state.notificacoesAtualizando = false;
     render();
   }
 
@@ -172,6 +246,7 @@
       if (emp && !emp.error && emp.data) state.empresa = emp.data;
       state.pontoConfig = (cfg && !cfg.error && cfg.data) ? cfg.data : null;
       if (hoje && !hoje.error) state.pontoHoje = hoje.data || [];
+      await verificarNotificacoesPonto();
     } catch (e) {
       console.error('Erro ao carregar dados do ponto:', e);
     }
@@ -535,6 +610,18 @@
           '</button>' +
         '</div>' +
       '</div>';
+    var notificacoesHtml =
+      '<div class="mb-4 rounded-2xl border border-sky-100 bg-white p-3 shadow-sm">' +
+        '<div class="flex items-center justify-between gap-3">' +
+          '<div class="min-w-0">' +
+            '<p class="text-[10px] font-black uppercase tracking-wide text-sky-700">Lembretes de ponto</p>' +
+            '<p class="mt-0.5 text-xs font-semibold leading-snug text-slate-500">' + (state.notificacoesAtivas ? 'Ativos · ' : '') + 'Entrada e saida: 10 min antes e no horario.</p>' +
+          '</div>' +
+          '<button id="ponto-notificacoes" type="button" ' + (state.notificacoesAtualizando ? 'disabled' : '') + ' class="shrink-0 rounded-xl border px-3 py-2 text-[10px] font-black uppercase tracking-wide disabled:opacity-60 ' + (state.notificacoesAtivas ? 'border-emerald-200 bg-emerald-50 text-emerald-700' : 'border-sky-200 bg-sky-50 text-sky-700') + '">' +
+            (state.notificacoesAtualizando ? 'Aguarde...' : (state.notificacoesAtivas ? 'Desativar' : 'Ativar')) +
+          '</button>' +
+        '</div>' +
+      '</div>';
 
     var statusHtml = ['entrada', 'saida_refeicao', 'retorno_refeicao', 'saida'].map(function (t) {
       var reg = (state.pontoHoje || []).filter(function (r) { return r.tipo === t; })[0];
@@ -567,6 +654,7 @@
         '<div class="flex-1 overflow-y-auto">' +
           '<div class="mx-auto max-w-md px-5 pt-5" style="padding-bottom:calc(env(safe-area-inset-bottom) + 40px)">' +
             localizacaoHtml +
+            notificacoesHtml +
             '<p class="mb-2 text-[11px] font-black uppercase tracking-wide text-slate-400">Registros de hoje</p>' +
             '<div class="grid gap-2">' + statusHtml + '</div>' +
             '<div class="mt-6">' + botoesHtml + '</div>' +
@@ -628,6 +716,7 @@
       bater(tipo);
     });
     bind('ponto-atualizar-localizacao', atualizarLocalizacao);
+    bind('ponto-notificacoes', alternarNotificacoesPonto);
     var ovConfirmar = document.getElementById('ponto-confirmar-overlay');
     if (ovConfirmar) ovConfirmar.addEventListener('click', function (e) { if (e.target === ovConfirmar) { state.confirmarTipo = null; render(); } });
     bind('ponto-comprovante-ok', function () { state.comprovante = null; render(); });
@@ -648,6 +737,7 @@
       if (!state.pronto) { state.pronto = true; render(); }
     }, 9000);
     try {
+      await registroServiceWorkerPonto();
       var sess = await db.auth.getSession();
       if (sess.data.session && sess.data.session.user) {
         var tipo = sess.data.session.user.user_metadata && sess.data.session.user.user_metadata.tipo;
