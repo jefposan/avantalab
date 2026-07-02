@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.3.8 - 2026-07-02
+
+- Ava mobile: adicionado botao SVG para iniciar uma nova conversa e limpar o historico atual.
+- Ava mobile: os botoes voltar e inicio retornam ao dashboard pela mesma navegacao, sem recarregar a pagina mobile.
+
 ## 1.3.7 - 2026-07-02
 
 - Ava mobile: eliminado o deslocamento automatico ao focar o campo no iOS e Android; o header fica fixo diretamente no viewport e somente conversa e campo se acomodam ao teclado.

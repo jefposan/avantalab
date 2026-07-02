@@ -120,6 +120,10 @@ function HomeIcon() {
   return <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 10.5 12 3l9 7.5v9a1.5 1.5 0 0 1-1.5 1.5h-15A1.5 1.5 0 0 1 3 19.5v-9Z" /><path d="M9 21v-7h6v7" /></svg>;
 }
 
+function NewConversationIcon() {
+  return <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a4 4 0 0 1-4 4H8l-5 3V7a4 4 0 0 1 4-4h6" /><path d="M18 2v6M15 5h6" /></svg>;
+}
+
 function BackIcon() {
   return <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><path strokeLinecap="round" strokeLinejoin="round" d="m15 19-7-7 7-7" /></svg>;
 }
@@ -515,6 +519,15 @@ export default function AvaChatClient() {
     else window.location.assign('/mobile');
   };
 
+  const startNewConversation = () => {
+    if (sending || transcribing || recording) return;
+    if (storageKey) sessionStorage.removeItem(storageKey);
+    textareaRef.current?.blur();
+    setMessages([]);
+    setInput('');
+    setError('');
+  };
+
   return (
     <main ref={shellRef} className={`${styles.shell} ${darkMode ? styles.dark : ''}`}>
       <header className={styles.header}>
@@ -523,7 +536,10 @@ export default function AvaChatClient() {
         </button>
         <Image src="/images/ava-logo-principal.png" alt="Ava" width={96} height={52} priority className={styles.logo} />
         <span className={styles.headerSpacer} />
-        <button type="button" className={`${styles.headerButton} ${styles.homeButton}`} onClick={() => window.location.assign('/mobile')} aria-label="Voltar para o início">
+        <button type="button" className={`${styles.headerButton} ${styles.headerActionButton}`} onClick={startNewConversation} disabled={sending || transcribing || recording} aria-label="Nova conversa" title="Nova conversa">
+          <NewConversationIcon />
+        </button>
+        <button type="button" className={`${styles.headerButton} ${styles.headerActionButton}`} onClick={goBack} aria-label="Voltar para o início" title="Voltar para o início">
           <HomeIcon />
         </button>
       </header>

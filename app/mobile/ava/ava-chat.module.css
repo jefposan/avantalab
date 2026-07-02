@@ -68,9 +68,13 @@
   cursor: pointer;
 }
 
-.homeButton {
+.headerActionButton {
   border: 1px solid var(--ava-border);
   background: color-mix(in srgb, var(--ava-surface) 80%, #dbe7f2);
+}
+
+.headerActionButton:disabled {
+  opacity: .45;
 }
 
 .logo {
