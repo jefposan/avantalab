@@ -5,6 +5,7 @@
 - Web e mobile: cadastro de despesas padronizado, com nomes e categorias em formato de frase e edicao disponivel na lista web.
 - Novos perfis de empresa e pessoais recebem uma lista inicial de despesas totalmente editavel e excluivel.
 - Mobile: arrastar cards do dashboard bloqueia temporariamente o gesto de puxar para atualizar.
+- Mobile: o grafico por tipo de despesa permite abrir os lancamentos que compoem cada total.
 - Ava mobile: chat fullscreen com cabecalho fixo, campo ajustado ao teclado, nova conversa e retorno ao dashboard sem recarregar.
 - Admin: painel responsivo reorganizado, mensagens arquivaveis e historico de disparos.
 - Ponto: lembretes opcionais de entrada e saida, enviados antes e no horario quando o registro estiver pendente.

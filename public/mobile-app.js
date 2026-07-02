@@ -136,6 +136,7 @@
     novaDespesaNome: '',
     novaDespesaCategoria: '',
     categoriasExpandido: false,
+    tipoDespesaDetalhe: '',
     tiposDespesaExpandido: false,
     ultimasDespesasExpandido: false,
     ultimasReceitasExpandido: false,
@@ -5428,6 +5429,7 @@
       expandido: state.tiposDespesaExpandido,
       toggleId: 'toggle-tipos-despesa',
       textoExpandir: 'Expandir tipos',
+      detalharTipos: true,
     });
   }
 
@@ -5464,10 +5466,12 @@
           '</div>' +
           '<div class="grid gap-2">' +
             (categorias.length ? categoriasVisiveis.map(function (item, index) {
-              return '<div class="flex min-w-0 items-center justify-between gap-2 text-xs">' +
+              var tag = configuracao.detalharTipos ? 'button' : 'div';
+              var atributoDetalhe = configuracao.detalharTipos ? ' type="button" data-detalhar-tipo-despesa="' + escapeHtml(item.categoria) + '"' : '';
+              return '<' + tag + atributoDetalhe + ' class="flex min-w-0 w-full items-center justify-between gap-2 rounded-lg px-1 py-1 text-left text-xs transition active:bg-cyan-50">' +
                 '<span class="min-w-0 truncate font-bold text-slate-600"><i class="mr-2 inline-block h-2.5 w-2.5 rounded-full" style="background:' + cores[index % cores.length] + '"></i>' + escapeHtml(item.categoria) + '</span>' +
-                '<strong class="shrink-0 text-slate-900">' + valorFinanceiroCardHtml(item.valor, cardId) + '</strong>' +
-              '</div>';
+                '<span class="flex shrink-0 items-center gap-1"><strong class="text-slate-900">' + valorFinanceiroCardHtml(item.valor, cardId) + '</strong>' + (configuracao.detalharTipos ? '<span class="text-base leading-none text-cyan-700">&rsaquo;</span>' : '') + '</span>' +
+              '</' + tag + '>';
             }).join('') : '<p class="text-xs text-slate-500">Sem despesas no mes.</p>') +
             (categorias.length > 3 ? '<button id="' + escapeHtml(configuracao.toggleId) + '" type="button" class="mt-1 text-left text-xs font-black text-cyan-700">' + (configuracao.expandido ? 'Recolher' : escapeHtml(configuracao.textoExpandir)) + '</button>' : '') +
           '</div>' +
@@ -6141,6 +6145,7 @@
       despesasFixas: 'Gerenciar despesas fixas',
       sobre: 'Sobre',
       notificacoes: 'Notificações',
+      detalheTipoDespesa: state.tipoDespesaDetalhe || 'Lançamentos',
     }[state.modalMenu] || 'Menu';
 
     return (
@@ -6173,7 +6178,33 @@
     if (state.modalMenu === 'despesasFixas') return despesasFixasMenuHtml();
     if (state.modalMenu === 'sobre') return sobreMobileHtml();
     if (state.modalMenu === 'notificacoes') return notificacoesMobileHtml();
+    if (state.modalMenu === 'detalheTipoDespesa') return detalheTipoDespesaHtml();
     return '';
+  }
+
+  function detalheTipoDespesaHtml() {
+    var nome = state.tipoDespesaDetalhe || '';
+    var atual = dadosMesAtual();
+    var itens = (atual.lancamentos || [])
+      .filter(function (item) { return item.despesa === nome; })
+      .sort(function (a, b) { return Number(a.dia || 0) - Number(b.dia || 0); });
+    var total = itens.reduce(function (soma, item) { return soma + Number(item.valor || 0); }, 0);
+
+    return (
+      '<div class="grid gap-3">' +
+        '<div class="flex items-center justify-between gap-3 rounded-xl bg-cyan-50 px-3 py-2">' +
+          '<span class="text-xs font-bold text-cyan-900">' + escapeHtml(nomeMesCompleto(state.mes)) + ' de ' + escapeHtml(state.ano) + '</span>' +
+          '<strong class="text-sm font-black text-cyan-950">' + dinheiro(total) + '</strong>' +
+        '</div>' +
+        (itens.length ? itens.map(function (item) {
+          return '<div class="flex items-center justify-between gap-3 border-b border-slate-100 px-1 py-2.5 last:border-b-0">' +
+            '<div class="min-w-0"><strong class="block text-sm text-slate-800">Dia ' + escapeHtml(String(item.dia || '-')) + '</strong>' +
+            '<span class="block truncate text-xs font-semibold text-slate-500">' + escapeHtml(item.descricao || 'Sem descrição') + '</span></div>' +
+            '<strong class="shrink-0 text-sm font-black text-red-600">' + dinheiro(item.valor) + '</strong>' +
+          '</div>';
+        }).join('') : '<p class="py-6 text-center text-sm font-semibold text-slate-500">Nenhum lançamento encontrado.</p>') +
+      '</div>'
+    );
   }
 
   function sobreMobileHtml() {
@@ -7459,6 +7490,13 @@
     });
     bind('menu-feedback', function () { fecharMenuLateralAnimado(abrirFeedbackMobile); });
     bind('fechar-modal-menu', fecharModalMenu);
+    Array.prototype.forEach.call(document.querySelectorAll('[data-detalhar-tipo-despesa]'), function (item) {
+      item.addEventListener('click', function () {
+        state.tipoDespesaDetalhe = item.getAttribute('data-detalhar-tipo-despesa') || '';
+        state.modalMenu = 'detalheTipoDespesa';
+        render();
+      });
+    });
 
     // Despesas fixas mobile
     bind('salvar-nova-recorrencia', salvarNovaRecorrenciaMobile);

@@ -26,7 +26,8 @@
         "Novos perfis de empresa e pessoais recebem despesas iniciais que podem ser editadas ou excluídas.",
         "No celular, mover um card bloqueia o gesto de puxar para atualizar até o fim do arraste.",
         "Chat da Ava aprimorado para o teclado do celular, mantendo o cabeçalho fixo e o dashboard totalmente coberto.",
-        "Painel administrativo reorganizado e controle de ponto com lembretes opcionais de entrada e saída."
+        "Painel administrativo reorganizado e controle de ponto com lembretes opcionais de entrada e saída.",
+        "No gráfico Total por tipo de despesa, cada tipo pode ser aberto para consultar os lançamentos que formam o total."
       ]
     },
     {
