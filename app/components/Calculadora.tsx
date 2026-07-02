@@ -51,7 +51,20 @@ function opSymbol(op: string): string {
 export default function Calculadora({ onClose, corPrimaria, darkMode }: CalculadoraProps) {
   const [calcPos, setCalcPos] = useState({ x: 50, y: 50 });
   const dragRef = useRef({ isDragging: false, startX: 0, startY: 0 });
+  const calcRef = useRef<HTMLDivElement | null>(null);
   const [calc, setCalc] = useState<CalcState>(INITIAL_STATE);
+
+  const limitarPosicao = (x: number, y: number) => {
+    const margem = 8;
+    const largura = calcRef.current?.offsetWidth || 260;
+    const altura = calcRef.current?.offsetHeight || 0;
+    const maxX = Math.max(margem, window.innerWidth - largura - margem);
+    const maxY = Math.max(margem, window.innerHeight - altura - margem);
+    return {
+      x: Math.min(Math.max(x, margem), maxX),
+      y: Math.min(Math.max(y, margem), maxY),
+    };
+  };
 
   const startDrag = (e: React.PointerEvent) => {
     dragRef.current = { isDragging: true, startX: e.clientX - calcPos.x, startY: e.clientY - calcPos.y };
@@ -59,7 +72,7 @@ export default function Calculadora({ onClose, corPrimaria, darkMode }: Calculad
   };
   const doDrag = (e: React.PointerEvent) => {
     if (dragRef.current.isDragging)
-      setCalcPos({ x: e.clientX - dragRef.current.startX, y: e.clientY - dragRef.current.startY });
+      setCalcPos(limitarPosicao(e.clientX - dragRef.current.startX, e.clientY - dragRef.current.startY));
   };
   const stopDrag = (e: React.PointerEvent) => {
     dragRef.current.isDragging = false;
@@ -179,6 +192,13 @@ export default function Calculadora({ onClose, corPrimaria, darkMode }: Calculad
     return () => window.removeEventListener('keydown', onKey);
   });
 
+  useEffect(() => {
+    const ajustarAoViewport = () => setCalcPos((posicao) => limitarPosicao(posicao.x, posicao.y));
+    ajustarAoViewport();
+    window.addEventListener('resize', ajustarAoViewport);
+    return () => window.removeEventListener('resize', ajustarAoViewport);
+  }, []);
+
   const corEhClara = (hex: string) => {
     const c = hex.replace('#', '');
     if (c.length !== 6) return false;
@@ -219,6 +239,7 @@ export default function Calculadora({ onClose, corPrimaria, darkMode }: Calculad
 
   return (
     <div
+      ref={calcRef}
       className={`fixed shadow-2xl rounded-xl border flex flex-col z-[5000] overflow-hidden select-none ${bg}`}
       style={{ left: calcPos.x, top: calcPos.y, width: 260 }}
     >

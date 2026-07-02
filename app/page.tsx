@@ -6287,11 +6287,11 @@ if (isTelaMobile) {
       onClick={(e) => e.stopPropagation()}
     >
       {/* Cabeçalho */}
-      <div className="px-6 pt-6 pb-4">
-        <p className="text-xs font-black uppercase tracking-[0.18em] text-slate-400">
+      <div className="px-6 pt-5 pb-4" style={estiloTemaPrimario}>
+        <p className="text-xs font-black uppercase tracking-[0.18em] opacity-75">
           Perfis financeiros
         </p>
-        <h2 className={`mt-1 text-xl font-black ${darkMode ? 'text-white' : 'text-slate-800'}`}>
+        <h2 className="mt-1 text-xl font-black">
           {subAcaoGerenciar === 'editar'
             ? 'Editar dados do perfil'
             : subAcaoGerenciar === 'criar'
@@ -6299,10 +6299,10 @@ if (isTelaMobile) {
               : 'Gerenciar perfil financeiro'}
         </h2>
         {!subAcaoGerenciar && (
-          <div className={`mt-3 space-y-0.5 text-sm font-semibold ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>
-            <p><span className={darkMode ? 'text-slate-300' : 'text-slate-700'}>Perfil atual:</span> {nomeEmpresaAtual || 'Não carregado'}</p>
-            <p><span className={darkMode ? 'text-slate-300' : 'text-slate-700'}>Acesso:</span> {perfilUsuarioFormatado}</p>
-            <p><span className={darkMode ? 'text-slate-300' : 'text-slate-700'}>Tipo:</span> {rotuloTipoPerfilAtual}</p>
+          <div className="mt-3 space-y-0.5 text-sm font-semibold opacity-85">
+            <p><span className="font-black">Perfil atual:</span> {nomeEmpresaAtual || 'Não carregado'}</p>
+            <p><span className="font-black">Acesso:</span> {perfilUsuarioFormatado}</p>
+            <p><span className="font-black">Tipo:</span> {rotuloTipoPerfilAtual}</p>
           </div>
         )}
       </div>
