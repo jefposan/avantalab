@@ -6184,7 +6184,7 @@
 
   function detalheTipoDespesaHtml() {
     var nome = state.tipoDespesaDetalhe || '';
-    var atual = dadosMesAtual();
+    var atual = dadosMes(state.mes);
     var itens = (atual.lancamentos || [])
       .filter(function (item) { return item.despesa === nome; })
       .sort(function (a, b) { return Number(a.dia || 0) - Number(b.dia || 0); });
