@@ -357,6 +357,11 @@ const [despesaAnaliseAtiva, setDespesaAnaliseAtiva] = useState<{
   percentual: number;
   cor: string;
 } | null>(null);
+const [despesaRelatorioAberta, setDespesaRelatorioAberta] = useState<{
+  nome: string;
+  valor: number;
+  cor: string;
+} | null>(null);
   const ALTURA_LINHA_LANCAMENTO = 44;
   const ALTURA_PADRAO_TABELA = 440;
   const ESPACO_PUXADOR_TABELA = 42;
@@ -8043,13 +8048,18 @@ name="novo-usuario-login"
     <div className="grid grid-cols-1 items-center gap-4 xl:grid-cols-[minmax(0,1fr)_300px]">
       <div className="grid grid-cols-1 gap-1.5 md:grid-cols-2">
         {analiseDespesas.dados.map((item) => (
-          <div
+          <button
+            type="button"
             key={item.nome}
-            className={`min-w-0 rounded-md border px-2.5 py-2 ${
+            onClick={() => setDespesaRelatorioAberta(item)}
+            className={`min-w-0 rounded-md border px-2.5 py-2 text-left transition hover:-translate-y-0.5 hover:shadow-md focus:outline-none focus:ring-2 ${
               darkMode
                 ? 'border-slate-700 bg-slate-800/50'
                 : 'border-slate-200 bg-slate-50'
             }`}
+            style={{ '--tw-ring-color': item.cor } as React.CSSProperties}
+            aria-label={`Ver lançamentos de ${item.nome}`}
+            title="Ver lançamentos"
           >
             <div className="flex items-center justify-between gap-3">
               <div className="flex min-w-0 items-center gap-2">
@@ -8086,7 +8096,7 @@ name="novo-usuario-login"
                 {formatarMoeda(item.valor)}
               </span>
             </div>
-          </div>
+          </button>
         ))}
       </div>
 
@@ -8325,6 +8335,56 @@ name="novo-usuario-login"
             style={{ borderTopColor: corPrimaria }}
           />
           <p className="text-sm font-black uppercase tracking-wide text-white">Carregando perfil...</p>
+        </div>
+      )}
+
+      {despesaRelatorioAberta && (
+        <div
+          className="fixed inset-0 z-[9200] flex items-center justify-center bg-slate-950/60 px-4 py-6"
+          onClick={(e) => { if (e.target === e.currentTarget) setDespesaRelatorioAberta(null); }}
+        >
+          <DraggableModalCard className={`flex max-h-[86vh] w-full max-w-xl flex-col overflow-hidden rounded-2xl shadow-2xl ${bgCard}`}>
+            <div
+              data-modal-drag-handle
+              className="flex shrink-0 cursor-grab items-center justify-between gap-4 px-5 py-4 text-white active:cursor-grabbing"
+              style={{ backgroundColor: corPrimaria }}
+            >
+              <div className="min-w-0">
+                <p className="text-[10px] font-black uppercase tracking-widest text-white/70">Lançamentos da despesa</p>
+                <h2 className="truncate text-lg font-black">{despesaRelatorioAberta.nome}</h2>
+              </div>
+              <button
+                type="button"
+                onClick={() => setDespesaRelatorioAberta(null)}
+                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-white/20 bg-white/10 text-xl transition hover:bg-white/20"
+                aria-label="Fechar"
+              >
+                ×
+              </button>
+            </div>
+
+            <div className="flex min-h-0 flex-1 flex-col p-4">
+              <div className={`mb-3 flex items-center justify-between gap-4 rounded-lg border px-3 py-2 ${darkMode ? 'border-slate-700 bg-slate-900/60' : 'border-slate-200 bg-slate-50'}`}>
+                <span className={`text-xs font-bold uppercase ${textMuted}`}>{mesAtivo} de {anoSelecionado}</span>
+                <strong className="text-sm font-black text-red-500">{formatarMoeda(despesaRelatorioAberta.valor)}</strong>
+              </div>
+
+              <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
+                {lancamentosDoMes
+                  .filter((l) => normalizarTexto(l.despesa) === normalizarTexto(despesaRelatorioAberta.nome))
+                  .sort((a, b) => Number(a.dia || 0) - Number(b.dia || 0))
+                  .map((l) => (
+                    <div key={l.id} className={`flex items-center justify-between gap-4 border-b px-1 py-3 last:border-b-0 ${darkMode ? 'border-slate-700' : 'border-slate-100'}`}>
+                      <div className="min-w-0">
+                        <strong className={`block text-sm ${textStrong}`}>Dia {l.dia}</strong>
+                        <span className={`block truncate text-xs font-semibold ${textMuted}`}>{l.descricao || 'Sem descrição'}</span>
+                      </div>
+                      <strong className="shrink-0 text-sm font-black text-red-500">{formatarMoeda(Number(l.valor || 0))}</strong>
+                    </div>
+                  ))}
+              </div>
+            </div>
+          </DraggableModalCard>
         </div>
       )}
 

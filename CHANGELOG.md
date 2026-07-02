@@ -6,6 +6,7 @@
 - Novos perfis de empresa e pessoais recebem uma lista inicial de despesas totalmente editavel e excluivel.
 - Mobile: arrastar cards do dashboard bloqueia temporariamente o gesto de puxar para atualizar.
 - Mobile: o grafico por tipo de despesa permite abrir os lancamentos que compoem cada total.
+- Web: os blocos de despesas de cada mes permitem consultar os lancamentos que compoem seus valores e percentuais.
 - Ava mobile: chat fullscreen com cabecalho fixo, campo ajustado ao teclado, nova conversa e retorno ao dashboard sem recarregar.
 - Admin: painel responsivo reorganizado, mensagens arquivaveis e historico de disparos.
 - Ponto: lembretes opcionais de entrada e saida, enviados antes e no horario quando o registro estiver pendente.
