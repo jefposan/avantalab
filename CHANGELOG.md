@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.3.7 - 2026-07-02
+
+- Ava mobile: eliminado o deslocamento automatico ao focar o campo no iOS e Android; o header fica fixo diretamente no viewport e somente conversa e campo se acomodam ao teclado.
+
 ## 1.3.6 - 2026-07-02
 
 - Ava mobile: o teclado agora ajusta somente a area interna da conversa e o campo de digitacao, mantendo o header fixo e o shell do chat imovel.

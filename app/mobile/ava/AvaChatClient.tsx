@@ -20,6 +20,15 @@ type CompanyAccess = {
   nome: string | null;
 };
 
+type MobileVirtualKeyboard = EventTarget & {
+  overlaysContent: boolean;
+  boundingRect: { height: number };
+};
+
+type NavigatorWithVirtualKeyboard = Navigator & {
+  virtualKeyboard?: MobileVirtualKeyboard;
+};
+
 const MONTHS = [
   'JANEIRO',
   'FEVEREIRO',
@@ -209,6 +218,8 @@ export default function AvaChatClient() {
     let viewportFrame = 0;
     let messageScrollFrame = 0;
     const chatBackground = darkMode ? '#0b1220' : '#f4f8fc';
+    const virtualKeyboard = (navigator as NavigatorWithVirtualKeyboard).virtualKeyboard;
+    const previousKeyboardOverlay = virtualKeyboard?.overlaysContent;
 
     html.style.height = '100%';
     html.style.overflow = 'hidden';
@@ -219,7 +230,9 @@ export default function AvaChatClient() {
     body.style.overscrollBehavior = 'none';
     body.style.background = chatBackground;
 
-    const syncViewport = () => {
+    if (virtualKeyboard) virtualKeyboard.overlaysContent = true;
+
+    const syncKeyboardInset = () => {
       const messages = messagesRef.current;
       const keepLastMessageVisible = Boolean(messages && (
         messages.scrollHeight - messages.scrollTop - messages.clientHeight < 96
@@ -229,11 +242,12 @@ export default function AvaChatClient() {
       viewportFrame = requestAnimationFrame(() => {
         const viewport = window.visualViewport;
         const layoutHeight = Math.max(window.innerHeight || 0, document.documentElement.clientHeight || 0);
-        const viewportTop = viewport ? Math.max(0, viewport.offsetTop || 0) : 0;
         const visibleHeight = viewport?.height || layoutHeight;
-        const keyboardInset = Math.max(0, layoutHeight - viewportTop - visibleHeight);
+        const nativeKeyboardHeight = virtualKeyboard?.boundingRect?.height || 0;
+        const keyboardInset = nativeKeyboardHeight > 0
+          ? nativeKeyboardHeight
+          : Math.max(0, layoutHeight - visibleHeight);
 
-        shell.style.setProperty('--ava-viewport-top', `${Math.round(viewportTop)}px`);
         shell.style.setProperty('--ava-keyboard-inset', `${Math.round(keyboardInset)}px`);
 
         if (keepLastMessageVisible && messages) {
@@ -245,18 +259,20 @@ export default function AvaChatClient() {
       });
     };
 
-    syncViewport();
-    window.visualViewport?.addEventListener('resize', syncViewport);
-    window.visualViewport?.addEventListener('scroll', syncViewport);
-    window.addEventListener('resize', syncViewport);
+    syncKeyboardInset();
+    virtualKeyboard?.addEventListener('geometrychange', syncKeyboardInset);
+    window.visualViewport?.addEventListener('resize', syncKeyboardInset);
+    window.addEventListener('resize', syncKeyboardInset);
 
     return () => {
       cancelAnimationFrame(viewportFrame);
       cancelAnimationFrame(messageScrollFrame);
-      window.visualViewport?.removeEventListener('resize', syncViewport);
-      window.visualViewport?.removeEventListener('scroll', syncViewport);
-      window.removeEventListener('resize', syncViewport);
-      shell.style.removeProperty('--ava-viewport-top');
+      virtualKeyboard?.removeEventListener('geometrychange', syncKeyboardInset);
+      window.visualViewport?.removeEventListener('resize', syncKeyboardInset);
+      window.removeEventListener('resize', syncKeyboardInset);
+      if (virtualKeyboard && previousKeyboardOverlay !== undefined) {
+        virtualKeyboard.overlaysContent = previousKeyboardOverlay;
+      }
       shell.style.removeProperty('--ava-keyboard-inset');
       html.style.overflow = previous.htmlOverflow;
       html.style.height = previous.htmlHeight;
@@ -552,6 +568,13 @@ export default function AvaChatClient() {
             ref={textareaRef}
             value={input}
             onChange={(event) => setInput(event.target.value)}
+            onPointerDown={(event) => {
+              if (document.activeElement === event.currentTarget) return;
+              event.preventDefault();
+              const textarea = event.currentTarget;
+              textarea.focus({ preventScroll: true });
+              textarea.setSelectionRange(textarea.value.length, textarea.value.length);
+            }}
             onKeyDown={(event) => {
               if (event.key === 'Enter' && !event.shiftKey) {
                 event.preventDefault();
