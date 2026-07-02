@@ -1960,7 +1960,8 @@
       p_empresa_id: state.empresa.id,
     });
 
-    state.usuariosEmpresa = resposta.error ? [] : (resposta.data || []);
+    // Funcionários do Controle de Ponto não são usuários do sistema — não listar.
+    state.usuariosEmpresa = resposta.error ? [] : (resposta.data || []).filter(function (u) { return u && u.perfil !== 'funcionario_ponto'; });
     state.usuariosCarregando = false;
     render();
   }
@@ -2613,6 +2614,16 @@
       state.carregando = false;
       state.loginAcao = '';
       setErro('Nao foi possivel entrar. Confira seus dados.');
+      return;
+    }
+
+    // Funcionario do Controle de Ponto nao entra no sistema (usa o app /ponto).
+    var mdLogin = (resposta.data.user && resposta.data.user.user_metadata) || {};
+    if (mdLogin.tipo === 'funcionario_ponto') {
+      try { await db.auth.signOut(); } catch (e) {}
+      state.carregando = false;
+      state.loginAcao = '';
+      setErro('Este acesso e do Controle de Ponto. Registre seu horario pelo app de ponto.');
       return;
     }
 
@@ -8784,6 +8795,13 @@
 
       var sessao = await db.auth.getSession();
       if (sessao.data.session && sessao.data.session.user) {
+        var mdSessao = sessao.data.session.user.user_metadata || {};
+        // Funcionario do Controle de Ponto nao acessa o sistema: encaminha para /ponto.
+        if (mdSessao.tipo === 'funcionario_ponto') {
+          try { await db.auth.signOut(); } catch (e) {}
+          window.location.replace('/ponto');
+          return;
+        }
         state.usuario = sessao.data.session.user;
         state.autenticado = true;
         await carregarEmpresas(state.usuario.id);

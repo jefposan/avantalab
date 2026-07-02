@@ -880,7 +880,8 @@ export async function buscarUsuariosEmpresa(empresaId: string) {
     return [];
   }
 
-  return data || [];
+  // Funcionários do Controle de Ponto não são usuários do sistema — não listar.
+  return (data || []).filter((u: any) => u?.perfil !== 'funcionario_ponto');
 }
 
 export async function criarUsuarioEmpresa({

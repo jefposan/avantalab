@@ -265,6 +265,14 @@ export function useAuth(deps: UseAuthDeps) {
       return;
     }
 
+    // Funcionário do Controle de Ponto não entra no sistema (usa o app /ponto).
+    if (dadosLogin.user?.user_metadata?.tipo === 'funcionario_ponto') {
+      try { await supabase.auth.signOut(); } catch {}
+      setAuthErro('Este acesso é do Controle de Ponto. Registre seu horário pelo app de ponto.');
+      setAuthLoading(false);
+      return;
+    }
+
     setAuthMensagem('Login realizado. Carregando seus dados...');
     setMensagemCarregamentoSistema('Carregando seus dados...');
     setCarregandoSistema(true);

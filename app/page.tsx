@@ -856,6 +856,13 @@ if (paramsConfirmacao.get('confirmado') === '1') {
 
     let empresa = null;
 
+    // Funcionário do Controle de Ponto não acessa o sistema: encaminha para /ponto.
+    if (sessaoAtual.session?.user?.user_metadata?.tipo === 'funcionario_ponto') {
+      try { await supabase.auth.signOut(); } catch {}
+      window.location.replace('/ponto');
+      return;
+    }
+
     if (sessaoAtual.session) {
      try {
       const params = new URLSearchParams(window.location.search);
