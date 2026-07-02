@@ -524,8 +524,8 @@
     var ativo = state.notificacoesAtivas;
     var carregando = state.notificacoesAtualizando;
     return (
-      '<div id="ponto-ajustes-overlay" class="fixed inset-0 z-[70] flex items-end justify-center bg-slate-950/60 p-4 sm:items-center">' +
-        '<section class="w-full max-w-sm rounded-3xl bg-white p-5 text-slate-900 shadow-2xl">' +
+      '<div id="ponto-ajustes-overlay" class="fixed inset-0 z-[70] flex items-center justify-center overflow-y-auto bg-slate-950/60 p-4">' +
+        '<section class="my-auto w-full max-w-sm rounded-3xl bg-white p-5 text-slate-900 shadow-2xl">' +
           '<div class="flex items-start justify-between gap-3">' +
             '<div>' +
               '<p class="text-[10px] font-black uppercase tracking-[0.22em] text-cyan-700">Ajustes</p>' +
