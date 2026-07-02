@@ -1,5 +1,11 @@
 import { supabase } from './supabase';
-import { normalizarTipoPerfil, type TipoPerfil } from './perfis';
+import {
+  DESPESAS_PADRAO_EMPRESA,
+  DESPESAS_PADRAO_PESSOAL,
+  formatarNomeCategoria,
+  normalizarTipoPerfil,
+  type TipoPerfil,
+} from './perfis';
 
 function tratarErroSupabase(error: any) {
   if (!error?.message) {
@@ -468,14 +474,39 @@ export async function salvarDespesaCadastrada(
     .from('despesas_cadastradas')
     .insert({
       empresa_id: empresaId,
-      nome,
-      categoria,
+      nome: formatarNomeCategoria(nome),
+      categoria: formatarNomeCategoria(categoria),
     })
     .select()
     .single();
 
   if (error) {
     console.error('Erro ao salvar despesa cadastrada:', error);
+    return null;
+  }
+
+  return data;
+}
+
+export async function atualizarDespesaCadastrada(
+  empresaId: string,
+  nomeAtual: string,
+  novoNome: string,
+  categoria: string
+) {
+  const { data, error } = await supabase
+    .from('despesas_cadastradas')
+    .update({
+      nome: formatarNomeCategoria(novoNome),
+      categoria: formatarNomeCategoria(categoria),
+    })
+    .eq('empresa_id', empresaId)
+    .eq('nome', nomeAtual)
+    .select()
+    .single();
+
+  if (error) {
+    console.error('Erro ao atualizar despesa cadastrada:', error);
     return null;
   }
 
@@ -1442,47 +1473,19 @@ export async function salvarFeedback({
   };
 }
 
-const DESPESAS_PADRAO_PESSOAL = [
-  { nome: 'Aluguel',             categoria: 'Moradia' },
-  { nome: 'Parcela casa',        categoria: 'Moradia' },
-  { nome: 'Condomínio',          categoria: 'Moradia' },
-  { nome: 'Água',                categoria: 'Moradia' },
-  { nome: 'Energia',             categoria: 'Moradia' },
-  { nome: 'Gás',                 categoria: 'Moradia' },
-  { nome: 'Internet',            categoria: 'Moradia' },
-  { nome: 'Itens para casa',     categoria: 'Moradia' },
-  { nome: 'Manutenção casa',     categoria: 'Moradia' },
-  { nome: 'Mercado',             categoria: 'Custos de Vida' },
-  { nome: 'Saúde',               categoria: 'Custos de Vida' },
-  { nome: 'Farmácia',            categoria: 'Custos de Vida' },
-  { nome: 'Educação',            categoria: 'Custos de Vida' },
-  { nome: 'Celular',             categoria: 'Custos de Vida' },
-  { nome: 'Combustível',         categoria: 'Custos de Vida' },
-  { nome: 'Transporte',          categoria: 'Custos de Vida' },
-  { nome: 'Gastos com veículo',  categoria: 'Custos de Vida' },
-  { nome: 'Parcela veículo',     categoria: 'Custos de Vida' },
-  { nome: 'Alimentação',         categoria: 'Lazer e Consumo' },
-  { nome: 'Passeios',            categoria: 'Lazer e Consumo' },
-  { nome: 'Assinaturas',         categoria: 'Lazer e Consumo' },
-  { nome: 'Vestuário',           categoria: 'Lazer e Consumo' },
-  { nome: 'Viagem',              categoria: 'Lazer e Consumo' },
-  { nome: 'Taxas bancárias',     categoria: 'Financeiro e Impostos' },
-  { nome: 'Cartão de crédito',   categoria: 'Financeiro e Impostos' },
-  { nome: 'Seguro',              categoria: 'Financeiro e Impostos' },
-  { nome: 'IPVA',                categoria: 'Financeiro e Impostos' },
-  { nome: 'IPTU',                categoria: 'Financeiro e Impostos' },
-  { nome: 'Investimento',        categoria: 'Investimentos' },
-];
-
-export async function inserirDespesasPadraoPersonal(empresaId: string): Promise<void> {
-  const rows = DESPESAS_PADRAO_PESSOAL.map((d) => ({
+export async function inserirDespesasPadraoPerfil(
+  empresaId: string,
+  tipoPerfil: TipoPerfil
+): Promise<void> {
+  const despesas = tipoPerfil === 'pessoal' ? DESPESAS_PADRAO_PESSOAL : DESPESAS_PADRAO_EMPRESA;
+  const rows = despesas.map((d) => ({
     empresa_id: empresaId,
     nome: d.nome,
     categoria: d.categoria,
   }));
   const { error } = await supabase.from('despesas_cadastradas').insert(rows);
   if (error) {
-    console.error('Erro ao inserir despesas padrão pessoal:', error);
+    console.error('Erro ao inserir despesas padrão do perfil:', error);
   }
 }
 

@@ -228,18 +228,18 @@
   // --- Helpers de tipo de perfil ---
   var CATEGORIAS_EMPRESA_MOBILE = [
     { nome: 'Amortizacao', descricao: 'Custos nao fisicos.', exemplos: 'Softwares, patente.' },
-    { nome: 'Custos Variaveis', descricao: 'Variam com venda/producao.', exemplos: 'Embalagem, materia-prima, frete, comissao.' },
+    { nome: 'Custos variaveis', descricao: 'Variam com venda/producao.', exemplos: 'Embalagem, materia-prima, frete, comissao.' },
     { nome: 'Depreciacao', descricao: 'Uso/desgaste de bens fisicos.', exemplos: 'Maquinas, veiculos, equipamentos.' },
-    { nome: 'Despesas Financeiras', descricao: 'Bancos, juros e operacoes.', exemplos: 'Juros, tarifas, taxas, cambio.' },
-    { nome: 'Despesas Operacionais', descricao: 'Mantem o negocio funcionando.', exemplos: 'Aluguel, agua, luz, salarios, manutencao, pro-labore, publicidade.' },
-    { nome: 'Impostos sobre Lucro', descricao: 'Tributos sobre lucro.', exemplos: 'IR e CSLL.' },
+    { nome: 'Despesas financeiras', descricao: 'Bancos, juros e operacoes.', exemplos: 'Juros, tarifas, taxas, cambio.' },
+    { nome: 'Despesas operacionais', descricao: 'Mantem o negocio funcionando.', exemplos: 'Aluguel, agua, luz, salarios, manutencao, pro-labore, publicidade.' },
+    { nome: 'Imposto sobre lucro', descricao: 'Tributos sobre lucro.', exemplos: 'IR e CSLL.' },
   ];
 
   var CATEGORIAS_PESSOAL_MOBILE = [
     { nome: 'Moradia', descricao: 'Gastos com sua casa ou local onde mora.', exemplos: 'Aluguel, condominio, financiamento, manutencao.' },
-    { nome: 'Custos de Vida', descricao: 'Despesas essenciais do dia a dia.', exemplos: 'Mercado, agua, luz, internet, transporte, saude, educacao.' },
-    { nome: 'Lazer e Consumo', descricao: 'Gastos nao essenciais e experiencias.', exemplos: 'Restaurantes, viagens, compras, assinaturas, presentes.' },
-    { nome: 'Financeiro e Impostos', descricao: 'Custos financeiros e obrigacoes.', exemplos: 'Tarifas bancarias, juros, cartao, seguros, impostos, multas.' },
+    { nome: 'Custos de vida', descricao: 'Despesas essenciais do dia a dia.', exemplos: 'Mercado, agua, luz, internet, transporte, saude, educacao.' },
+    { nome: 'Lazer e consumo', descricao: 'Gastos nao essenciais e experiencias.', exemplos: 'Restaurantes, viagens, compras, assinaturas, presentes.' },
+    { nome: 'Financeiro e impostos', descricao: 'Custos financeiros e obrigacoes.', exemplos: 'Tarifas bancarias, juros, cartao, seguros, impostos, multas.' },
     { nome: 'Investimentos', descricao: 'Valores para patrimonio ou reservas.', exemplos: 'Aplicacoes, reserva de emergencia, previdencia, aportes.' },
   ];
 
@@ -419,7 +419,7 @@
     return '<div class="mx-auto max-w-md px-4 py-5">' + conteudo + '</div>';
   }
 
-  var APP_VERSION = '1.5.0';
+  var APP_VERSION = '1.3.4';
   var APP_VERSION_LABEL = 'AvantaLab Gest&atilde;o v' + APP_VERSION;
 
   function telaAvisoMobile(titulo, texto) {
@@ -2554,7 +2554,7 @@
       return {
         id: item.id,
         nome: item.nome,
-        categoria: item.categoria || 'Sem categoria',
+        categoria: formatarDescricao(item.categoria || 'Sem categoria'),
       };
     });
 
@@ -2894,6 +2894,26 @@
     setMensagem('Cadastro criado e celular confirmado. Faca login para acessar.');
   }
 
+  var DESPESAS_PADRAO_EMPRESA_MOBILE = [
+    { nome: 'Aluguel', categoria: 'Despesas operacionais' },
+    { nome: 'Agua', categoria: 'Despesas operacionais' },
+    { nome: 'Energia', categoria: 'Despesas operacionais' },
+    { nome: 'Internet', categoria: 'Despesas operacionais' },
+    { nome: 'Telefone', categoria: 'Despesas operacionais' },
+    { nome: 'Folha de pagamento', categoria: 'Despesas operacionais' },
+    { nome: 'Pro-labore', categoria: 'Despesas operacionais' },
+    { nome: 'Contabilidade', categoria: 'Despesas operacionais' },
+    { nome: 'Manutencao', categoria: 'Despesas operacionais' },
+    { nome: 'Publicidade', categoria: 'Despesas operacionais' },
+    { nome: 'Materia-prima', categoria: 'Custos variaveis' },
+    { nome: 'Embalagens', categoria: 'Custos variaveis' },
+    { nome: 'Fretes', categoria: 'Custos variaveis' },
+    { nome: 'Comissoes', categoria: 'Custos variaveis' },
+    { nome: 'Tarifas bancarias', categoria: 'Despesas financeiras' },
+    { nome: 'Juros', categoria: 'Despesas financeiras' },
+    { nome: 'Impostos', categoria: 'Imposto sobre lucro' },
+  ];
+
   var DESPESAS_PADRAO_PESSOAL_MOBILE = [
     { nome: 'Aluguel',            categoria: 'Moradia' },
     { nome: 'Parcela casa',       categoria: 'Moradia' },
@@ -2904,35 +2924,38 @@
     { nome: 'Internet',           categoria: 'Moradia' },
     { nome: 'Itens para casa',    categoria: 'Moradia' },
     { nome: 'Manutencao casa',    categoria: 'Moradia' },
-    { nome: 'Mercado',            categoria: 'Custos de Vida' },
-    { nome: 'Saude',              categoria: 'Custos de Vida' },
-    { nome: 'Farmacia',           categoria: 'Custos de Vida' },
-    { nome: 'Educacao',           categoria: 'Custos de Vida' },
-    { nome: 'Celular',            categoria: 'Custos de Vida' },
-    { nome: 'Combustivel',        categoria: 'Custos de Vida' },
-    { nome: 'Transporte',         categoria: 'Custos de Vida' },
-    { nome: 'Gastos com veiculo', categoria: 'Custos de Vida' },
-    { nome: 'Parcela veiculo',    categoria: 'Custos de Vida' },
-    { nome: 'Alimentacao',        categoria: 'Lazer e Consumo' },
-    { nome: 'Passeios',           categoria: 'Lazer e Consumo' },
-    { nome: 'Assinaturas',        categoria: 'Lazer e Consumo' },
-    { nome: 'Vestuario',          categoria: 'Lazer e Consumo' },
-    { nome: 'Viagem',             categoria: 'Lazer e Consumo' },
-    { nome: 'Taxas bancarias',    categoria: 'Financeiro e Impostos' },
-    { nome: 'Cartao de credito',  categoria: 'Financeiro e Impostos' },
-    { nome: 'Seguro',             categoria: 'Financeiro e Impostos' },
-    { nome: 'IPVA',               categoria: 'Financeiro e Impostos' },
-    { nome: 'IPTU',               categoria: 'Financeiro e Impostos' },
+    { nome: 'Mercado',            categoria: 'Custos de vida' },
+    { nome: 'Saude',              categoria: 'Custos de vida' },
+    { nome: 'Farmacia',           categoria: 'Custos de vida' },
+    { nome: 'Educacao',           categoria: 'Custos de vida' },
+    { nome: 'Celular',            categoria: 'Custos de vida' },
+    { nome: 'Combustivel',        categoria: 'Custos de vida' },
+    { nome: 'Transporte',         categoria: 'Custos de vida' },
+    { nome: 'Gastos com veiculo', categoria: 'Custos de vida' },
+    { nome: 'Parcela veiculo',    categoria: 'Custos de vida' },
+    { nome: 'Alimentacao',        categoria: 'Lazer e consumo' },
+    { nome: 'Passeios',           categoria: 'Lazer e consumo' },
+    { nome: 'Assinaturas',        categoria: 'Lazer e consumo' },
+    { nome: 'Vestuario',          categoria: 'Lazer e consumo' },
+    { nome: 'Viagem',             categoria: 'Lazer e consumo' },
+    { nome: 'Taxas bancarias',    categoria: 'Financeiro e impostos' },
+    { nome: 'Cartao de credito',  categoria: 'Financeiro e impostos' },
+    { nome: 'Seguro',             categoria: 'Financeiro e impostos' },
+    { nome: 'IPVA',               categoria: 'Financeiro e impostos' },
+    { nome: 'IPTU',               categoria: 'Financeiro e impostos' },
     { nome: 'Investimento',       categoria: 'Investimentos' },
   ];
 
-  async function inserirDespesasPadraoMobile(empresaId) {
-    var rows = DESPESAS_PADRAO_PESSOAL_MOBILE.map(function (d) {
+  async function inserirDespesasPadraoMobile(empresaId, tipoPerfil) {
+    var despesasPadrao = normalizarTipoPerfil(tipoPerfil) === 'pessoal'
+      ? DESPESAS_PADRAO_PESSOAL_MOBILE
+      : DESPESAS_PADRAO_EMPRESA_MOBILE;
+    var rows = despesasPadrao.map(function (d) {
       return { empresa_id: empresaId, nome: d.nome, categoria: d.categoria };
     });
     var resp = await db.from('despesas_cadastradas').insert(rows);
     if (resp.error) {
-      console.error('Erro ao inserir despesas padrao pessoal:', resp.error);
+      console.error('Erro ao inserir despesas padrao do perfil:', resp.error);
     }
   }
 
@@ -2972,8 +2995,8 @@
       }
     }
 
-    if (tipo === 'pessoal' && criadaId) {
-      await inserirDespesasPadraoMobile(criadaId);
+    if (criadaId) {
+      await inserirDespesasPadraoMobile(criadaId, tipo);
     }
 
     state.modoCriarPerfil = false;
@@ -3982,9 +4005,7 @@
       console.warn('criarEmpresaMobile: sem token — tipo_perfil não aplicado');
     }
 
-    if (tipoPerfil === 'pessoal') {
-      await inserirDespesasPadraoMobile(criadaId);
-    }
+    await inserirDespesasPadraoMobile(criadaId, tipoPerfil);
 
     state.modalMenu = '';
     state.empresaAcao = '';
@@ -8343,6 +8364,10 @@
 
     window.addEventListener('touchstart', function (event) {
       if (recarregando) return;
+      if (window.__avantaDashboardDragBloqueado || (event.target && event.target.closest && event.target.closest('[data-dashboard-handle]'))) {
+        cancelarGesto();
+        return;
+      }
       var rolavel = scrollPrincipal();
       if (deveBloquearScroll() || !rolavel || !event.touches.length) {
         cancelarGesto();
@@ -8356,6 +8381,10 @@
     }, { passive: true });
 
     window.addEventListener('touchmove', function (event) {
+      if (window.__avantaDashboardDragBloqueado) {
+        cancelarGesto();
+        return;
+      }
       if (!acompanhando || recarregando || deveBloquearScroll() || !event.touches.length) return;
 
       var rolavel = scrollPrincipal();
@@ -8462,6 +8491,7 @@
       ghostPointerOffsetX = 0;
       ghostPointerOffsetY = 0;
       state.dragDashboardId = '';
+      window.__avantaDashboardDragBloqueado = false;
     }
 
     function posicionarGhost(x, y) {
@@ -8629,6 +8659,7 @@
         if (deveBloquearScroll() || state.visao !== 'home') return;
 
         event.preventDefault();
+        window.__avantaDashboardDragBloqueado = true;
         pointerId = event.pointerId;
         idAtivo = handle.getAttribute('data-dashboard-handle') || '';
         cardAtivo = handle.closest('[data-dashboard-card]');

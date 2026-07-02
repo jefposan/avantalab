@@ -8,7 +8,7 @@ import {
   buscarEmailPorLogin,
   criarEmpresaInicial,
   atualizarEmpresa,
-  inserirDespesasPadraoPersonal,
+  inserirDespesasPadraoPerfil,
 } from '../lib/database';
 import { normalizarTipoPerfil, type TipoPerfil } from '../lib/perfis';
 import type { AbrirAvisoFn } from './useUI';
@@ -694,9 +694,7 @@ export function useAuth(deps: UseAuthDeps) {
         );
       }
 
-      if (tipoPerfil === 'pessoal') {
-        await inserirDespesasPadraoPersonal(empresaCriadaId);
-      }
+      await inserirDespesasPadraoPerfil(empresaCriadaId, tipoPerfil);
 
       const { error: erroConfigInicial } = await supabase
         .from('configuracoes')

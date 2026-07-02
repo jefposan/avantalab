@@ -14,14 +14,19 @@
   "versoes": [
     {
       "versao": "1.3.4",
-      "titulo": "Receitas previstas",
+      "titulo": "Correções e melhorias gerais",
       "data": "Julho/2026",
       "itens": [
         "Receitas com data futura entram como Previsto, com selo próprio na lista de entradas.",
         "Receita prevista não soma como receita efetivada até a confirmação, mas já aparece no saldo Previsto.",
         "No dia, a receita prevista aparece no card de confirmação (Confirmar, Editar ou Excluir), com confirmação automática ao fim do dia.",
         "No celular, as receitas previstas também aparecem na agenda do dia.",
-        "O botão \"Ajustar valor\" do card de confirmação passou a se chamar \"Editar\", abrindo a edição completa do lançamento."
+        "O botão \"Ajustar valor\" do card de confirmação passou a se chamar \"Editar\", abrindo a edição completa do lançamento.",
+        "Cadastro de despesas com edição na web e nomes de categorias padronizados no web e mobile.",
+        "Novos perfis de empresa e pessoais recebem despesas iniciais que podem ser editadas ou excluídas.",
+        "No celular, mover um card bloqueia o gesto de puxar para atualizar até o fim do arraste.",
+        "Chat da Ava aprimorado para o teclado do celular, mantendo o cabeçalho fixo e o dashboard totalmente coberto.",
+        "Painel administrativo reorganizado e controle de ponto com lembretes opcionais de entrada e saída."
       ]
     },
     {

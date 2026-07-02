@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import type { CategoriaPerfil } from '../lib/perfis';
 import DraggableModalCard from './DraggableModalCard';
 
@@ -33,6 +34,7 @@ type ModalDespesasBaseProps = {
   categoriasPerfil: CategoriaPerfil[];
 
   adicionarDespesaBase: () => void;
+  editarDespesaBase: (nomeAtual: string) => Promise<boolean>;
   apagarDespesaBase: (nome: string) => void;
 };
 
@@ -63,13 +65,37 @@ export default function ModalDespesasBase({
   categoriasPerfil,
 
   adicionarDespesaBase,
+  editarDespesaBase,
   apagarDespesaBase,
 }: ModalDespesasBaseProps) {
+  const [nomeEmEdicao, setNomeEmEdicao] = useState<string | null>(null);
+
   if (!aberto) return null;
 
   const fecharTudo = () => {
     aoFechar();
     setAjudaCategoriasAberta(false);
+    setNomeEmEdicao(null);
+  };
+
+  const iniciarEdicao = (despesa: DespesaCadastrada) => {
+    setNomeEmEdicao(despesa.nome);
+    setNovaBaseNome(despesa.nome);
+    setNovaBaseCat(despesa.categoria);
+  };
+
+  const cancelarEdicao = () => {
+    setNomeEmEdicao(null);
+    setNovaBaseNome('');
+    setNovaBaseCat('');
+  };
+
+  const salvar = async () => {
+    if (!nomeEmEdicao) {
+      adicionarDespesaBase();
+      return;
+    }
+    if (await editarDespesaBase(nomeEmEdicao)) cancelarEdicao();
   };
 
   return (
@@ -148,7 +174,7 @@ export default function ModalDespesasBase({
   }`}
 >
   <h3 className={`text-sm font-bold mb-2 ${textStrong}`}>
-    Nova Despesa
+    {nomeEmEdicao ? 'Editar despesa' : 'Nova despesa'}
   </h3>
 
   <div className="flex flex-wrap gap-2">
@@ -185,12 +211,21 @@ export default function ModalDespesasBase({
 
               <button
                 type="button"
-                onClick={adicionarDespesaBase}
+                onClick={salvar}
                 style={estiloTemaPrimario}
                 className="w-full rounded-lg px-4 py-2 text-sm font-bold shadow hover:brightness-110 sm:w-auto cursor-pointer"
               >
-                Salvar
+                {nomeEmEdicao ? 'Salvar alterações' : 'Salvar'}
               </button>
+              {nomeEmEdicao && (
+                <button
+                  type="button"
+                  onClick={cancelarEdicao}
+                  className="w-full rounded-lg border border-slate-300 px-4 py-2 text-sm font-bold sm:w-auto cursor-pointer"
+                >
+                  Cancelar
+                </button>
+              )}
             </div>
           </div>
 
@@ -214,13 +249,28 @@ export default function ModalDespesasBase({
         </span>
       </div>
 
-      <button
-        type="button"
-        onClick={() => apagarDespesaBase(d.nome)}
-        className="shrink-0 rounded-md px-2 py-0.5 text-sm font-black leading-none text-red-500 transition-colors hover:bg-red-500/10 hover:text-red-700 cursor-pointer"
-      >
-        ×
-      </button>
+      <div className="flex shrink-0 items-center gap-1">
+        <button
+          type="button"
+          onClick={() => iniciarEdicao(d)}
+          className="flex h-7 w-7 items-center justify-center rounded-md text-cyan-600 transition-colors hover:bg-cyan-500/10 cursor-pointer"
+          aria-label={`Editar ${d.nome}`}
+          title="Editar"
+        >
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-4 w-4" aria-hidden="true">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M16.862 4.487l2.651 2.651M18.75 2.999a1.875 1.875 0 012.651 2.652L8.25 18.802 3 20.25l1.448-5.25L18.75 2.999z" />
+          </svg>
+        </button>
+        <button
+          type="button"
+          onClick={() => apagarDespesaBase(d.nome)}
+          className="flex h-7 w-7 items-center justify-center rounded-md text-sm font-black leading-none text-red-500 transition-colors hover:bg-red-500/10 hover:text-red-700 cursor-pointer"
+          aria-label={`Excluir ${d.nome}`}
+          title="Excluir"
+        >
+          ×
+        </button>
+      </div>
     </div>
   ))}
 </div>

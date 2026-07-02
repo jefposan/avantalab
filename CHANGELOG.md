@@ -1,41 +1,14 @@
 # Changelog
 
-## 1.5.0 - 2026-07-02
+## 1.3.4 - 2026-07-02
 
-- Ponto: lembretes push opcionais de entrada e saida, enviados 10 minutos antes e no horario quando o registro ainda estiver pendente.
-- Ponto: notificacoes podem ser ativadas ou desativadas pelo proprio funcionario no card de ponto.
-
-## 1.4.0 - 2026-07-02
-
-- Admin: painel reorganizado em Avaliacoes, Disparos e Configuracoes, com navegacao responsiva para desktop e mobile.
-- Admin: mensagens agora podem ser resolvidas, reabertas, arquivadas e apagadas, com resumo compacto de totais.
-- Admin: adicionado historico persistente de disparos e troca segura da senha administrativa.
-
-## 1.3.9 - 2026-07-02
-
-- Ava mobile: o chat agora abre em portal fullscreen sobre o dashboard, mantendo a pagina montada para que voltar e inicio fechem o chat sem recarregar no Android ou iOS.
-
-## 1.3.8 - 2026-07-02
-
-- Ava mobile: adicionado botao SVG para iniciar uma nova conversa e limpar o historico atual.
-- Ava mobile: os botoes voltar e inicio retornam ao dashboard pela mesma navegacao, sem recarregar a pagina mobile.
-
-## 1.3.7 - 2026-07-02
-
-- Ava mobile: eliminado o deslocamento automatico ao focar o campo no iOS e Android; o header fica fixo diretamente no viewport e somente conversa e campo se acomodam ao teclado.
-
-## 1.3.6 - 2026-07-02
-
-- Ava mobile: o teclado agora ajusta somente a area interna da conversa e o campo de digitacao, mantendo o header fixo e o shell do chat imovel.
-
-## 1.3.5 - 2026-07-02
-
-- Ava mobile: chat movido definitivamente para uma rota fullscreen independente, com header fixo, mensagens rolaveis e campo de digitacao ancorado acima do teclado.
-- Ava mobile: bloqueio completo do scroll e fundo opaco durante a conversa, com ajuste de altura pelo VisualViewport no Android e iOS.
-
-## 1.3.4 - 2026-06-23
-
-- Web: ajustada a posicao do menu de Ajustes para acompanhar a nova altura reduzida do header principal.
+- Web e mobile: cadastro de despesas padronizado, com nomes e categorias em formato de frase e edicao disponivel na lista web.
+- Novos perfis de empresa e pessoais recebem uma lista inicial de despesas totalmente editavel e excluivel.
+- Mobile: arrastar cards do dashboard bloqueia temporariamente o gesto de puxar para atualizar.
+- Ava mobile: chat fullscreen com cabecalho fixo, campo ajustado ao teclado, nova conversa e retorno ao dashboard sem recarregar.
+- Admin: painel responsivo reorganizado, mensagens arquivaveis e historico de disparos.
+- Ponto: lembretes opcionais de entrada e saida, enviados antes e no horario quando o registro estiver pendente.
+- Web: ajustada a posicao do menu de Ajustes para acompanhar a altura reduzida do header principal.
 
 ## 1.3.1 - 2026-06-22
 

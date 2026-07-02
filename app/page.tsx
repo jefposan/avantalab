@@ -30,6 +30,7 @@ import {
 import {
   CATEGORIAS_EXCLUSAO_EBITDA,
   categoriasDoPerfil,
+  formatarNomeCategoria,
   normalizarTipoPerfil,
   placeholderNomePerfil,
   rotuloNomePerfil,
@@ -58,6 +59,7 @@ import {
   apagarFaturamentoEntrada,
   salvarConfiguracoesBanco,
   salvarDespesaCadastrada,
+  atualizarDespesaCadastrada,
   apagarDespesaCadastrada,
   buscarUsuariosEmpresa,
   buscarMeuAcessoEmpresa,
@@ -787,7 +789,7 @@ if (empresa.telefone_confirmado !== true) {
     setDespesasCadastradas(
       despesas.map((d: any) => ({
         nome: d.nome,
-        categoria: d.categoria,
+        categoria: formatarNomeCategoria(d.categoria),
       }))
     );
   } else {
@@ -2623,7 +2625,7 @@ const adicionarDespesaBase = async () => {
   );
   return;
 }
-  const nomeLimpo = novaBaseNome.trim();
+  const nomeLimpo = formatarNomeCategoria(novaBaseNome);
 
   if (!nomeLimpo || !novaBaseCat) {
   abrirAviso(
@@ -2656,7 +2658,7 @@ const adicionarDespesaBase = async () => {
   const despesaSalva = await salvarDespesaCadastrada(
     empresaId,
     nomeLimpo,
-    novaBaseCat
+    formatarNomeCategoria(novaBaseCat)
   );
 
   if (!despesaSalva) {
@@ -2677,6 +2679,43 @@ const adicionarDespesaBase = async () => {
 
   setNovaBaseNome('');
   setNovaBaseCat('');
+};
+
+const editarDespesaBase = async (nomeAtual: string): Promise<boolean> => {
+  if (!podeAcessarAjustes || !empresaId) return false;
+
+  const novoNome = formatarNomeCategoria(novaBaseNome);
+  const novaCategoria = formatarNomeCategoria(novaBaseCat);
+  if (!novoNome || !novaCategoria) {
+    abrirAviso('Campos obrigatórios', 'Preencha o nome e a categoria da despesa.');
+    return false;
+  }
+
+  const duplicada = despesasCadastradas.some(
+    (d) => d.nome !== nomeAtual && normalizarTexto(d.nome) === normalizarTexto(novoNome)
+  );
+  if (duplicada) {
+    abrirAviso('Despesa já cadastrada', 'Esta despesa já existe na lista de despesas base.');
+    return false;
+  }
+
+  const atualizada = await atualizarDespesaCadastrada(
+    empresaId,
+    nomeAtual,
+    novoNome,
+    novaCategoria
+  );
+  if (!atualizada) {
+    abrirAviso('Erro ao editar despesa', 'Não foi possível atualizar a despesa no banco.');
+    return false;
+  }
+
+  setDespesasCadastradas((prev) => prev.map((d) =>
+    d.nome === nomeAtual
+      ? { nome: formatarNomeCategoria(atualizada.nome), categoria: formatarNomeCategoria(atualizada.categoria) }
+      : d
+  ));
+  return true;
 };
 
 const apagarDespesaBase = async (nome: string) => {
@@ -3684,7 +3723,7 @@ const recarregarDadosFinanceirosAtual = async () => {
   setDespesasCadastradas(
     despesasBanco.map((d: any) => ({
       nome: d.nome,
-      categoria: d.categoria,
+      categoria: formatarNomeCategoria(d.categoria),
     }))
   );
 
@@ -5677,6 +5716,7 @@ if (isTelaMobile) {
   categoriasPerfil={categoriasPerfilAtual}
 
   adicionarDespesaBase={adicionarDespesaBase}
+  editarDespesaBase={editarDespesaBase}
   apagarDespesaBase={apagarDespesaBase}
 />
 
