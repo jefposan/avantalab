@@ -1,6 +1,7 @@
 'use client';
 import React, { useState, useEffect, useRef } from 'react';
 import * as XLSX from 'xlsx';
+import DraggableModalCard from './DraggableModalCard';
 
 export type FuncionarioPonto = {
   id: string;
@@ -137,11 +138,6 @@ export default function PontoAdminModal({
   const [relRegistrosTodos, setRelRegistrosTodos] = useState<Record<string, RegistroPonto[]>>({});
   const [relCarregando, setRelCarregando] = useState(false);
 
-  const [dragPos, setDragPos] = useState({ x: 0, y: 0 });
-  const isDragging = useRef(false);
-  const modalRef = useRef<HTMLDivElement | null>(null);
-  const dragStart = useRef({ mouseX: 0, mouseY: 0, posX: 0, posY: 0, minX: 0, maxX: 0, minY: 0, maxY: 0 });
-
   const TOLERANCIA_MIN = 10;
   const MESES_REL = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
 
@@ -159,27 +155,6 @@ export default function PontoAdminModal({
       setRaio(String(config.raio_m || 100));
     }
   }, [config]);
-
-  useEffect(() => {
-    const onMouseMove = (e: MouseEvent) => {
-      if (!isDragging.current) return;
-      const proximoX = dragStart.current.posX + e.clientX - dragStart.current.mouseX;
-      const proximoY = dragStart.current.posY + e.clientY - dragStart.current.mouseY;
-      setDragPos({
-        x: Math.min(Math.max(proximoX, dragStart.current.minX), dragStart.current.maxX),
-        y: Math.min(Math.max(proximoY, dragStart.current.minY), dragStart.current.maxY),
-      });
-    };
-    const onMouseUp = () => { isDragging.current = false; };
-    document.addEventListener('mousemove', onMouseMove);
-    document.addEventListener('mouseup', onMouseUp);
-    return () => {
-      document.removeEventListener('mousemove', onMouseMove);
-      document.removeEventListener('mouseup', onMouseUp);
-    };
-  }, []);
-
-  useEffect(() => { if (aberto) setDragPos({ x: 0, y: 0 }); }, [aberto]);
 
   if (!aberto) return null;
 
@@ -508,30 +483,11 @@ export default function PontoAdminModal({
     <div className="fixed inset-0 z-[2000] flex items-center justify-center p-3 sm:p-4">
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onFechar} />
 
-      <div ref={modalRef} className={`relative flex max-h-[calc(100dvh-1.5rem)] w-full max-w-[calc(100vw-1.5rem)] flex-col overflow-hidden rounded-2xl border shadow-2xl sm:max-h-[88vh] sm:max-w-lg ${card}`} style={{ transform: `translate(${dragPos.x}px, ${dragPos.y}px)` }}>
+      <DraggableModalCard className={`relative flex max-h-[calc(100dvh-1.5rem)] w-full max-w-[calc(100vw-1.5rem)] flex-col overflow-hidden rounded-2xl border shadow-2xl sm:max-h-[88vh] sm:max-w-lg ${card}`}>
         <div
-          className="flex shrink-0 items-start justify-between gap-3 px-5 py-4 text-white select-none"
+          data-modal-drag-handle
+          className="flex shrink-0 cursor-grab items-start justify-between gap-3 px-5 py-4 text-white select-none active:cursor-grabbing"
           style={{ background: 'linear-gradient(135deg, #020617, #003E73)', cursor: 'grab' }}
-          onMouseDown={(e) => {
-            const rect = modalRef.current?.getBoundingClientRect();
-            const margem = 8;
-            const baseLeft = rect ? rect.left - dragPos.x : 0;
-            const baseTop = rect ? rect.top - dragPos.y : 0;
-            const largura = rect?.width || 0;
-            const altura = rect?.height || 0;
-            isDragging.current = true;
-            dragStart.current = {
-              mouseX: e.clientX,
-              mouseY: e.clientY,
-              posX: dragPos.x,
-              posY: dragPos.y,
-              minX: margem - baseLeft,
-              maxX: Math.max(margem - baseLeft, window.innerWidth - margem - baseLeft - largura),
-              minY: margem - baseTop,
-              maxY: Math.max(margem - baseTop, window.innerHeight - margem - baseTop - altura),
-            };
-            e.preventDefault();
-          }}
         >
           <div>
             <p className="text-[10px] font-black uppercase tracking-[0.24em]" style={{ color: 'rgba(255,255,255,0.65)' }}>Controle de Ponto</p>
@@ -916,7 +872,7 @@ export default function PontoAdminModal({
             </div>
           )}
         </div>
-      </div>
+      </DraggableModalCard>
     </div>
   );
 }

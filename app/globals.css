@@ -70,6 +70,27 @@ button:not(:disabled),
 button:disabled {
   cursor: not-allowed !important;
 }
+
+@media (min-width: 768px) and (pointer: fine) {
+  .draggable-modal-card [data-modal-drag-handle],
+  .draggable-modal-card [data-modal-drag-handle] * {
+    cursor: grab !important;
+    user-select: none;
+  }
+
+  .draggable-modal-card [data-modal-drag-handle]:active,
+  .draggable-modal-card [data-modal-drag-handle]:active * {
+    cursor: grabbing !important;
+  }
+
+  .draggable-modal-card [data-modal-drag-handle] button:not(:disabled),
+  .draggable-modal-card [data-modal-drag-handle] a,
+  .draggable-modal-card [data-modal-drag-handle] input,
+  .draggable-modal-card [data-modal-drag-handle] select,
+  .draggable-modal-card [data-modal-drag-handle] label {
+    cursor: pointer !important;
+  }
+}
 .av-page h1 {
   font-size: 1.5rem !important;
   line-height: 1.9rem !important;

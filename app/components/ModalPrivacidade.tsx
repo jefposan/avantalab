@@ -1,3 +1,5 @@
+import DraggableModalCard from './DraggableModalCard';
+
 interface ModalPrivacidadeProps {
   aberto: boolean;
   onClose: () => void;
@@ -26,7 +28,7 @@ export default function ModalPrivacidade({
       className="fixed inset-0 z-[2000] flex items-center justify-center bg-black/60 p-4"
       onClick={onClose}
     >
-      <div
+      <DraggableModalCard
         className={`w-full max-w-3xl max-h-[85vh] rounded-2xl shadow-2xl border flex flex-col overflow-hidden ${
           darkMode
             ? 'bg-slate-900 border-slate-700 text-slate-100'
@@ -34,7 +36,7 @@ export default function ModalPrivacidade({
         }`}
         onClick={(e) => e.stopPropagation()}
       >
-        <div
+        <div data-modal-drag-handle
           className="px-6 py-4 flex items-center justify-between border-b"
           style={{
             backgroundColor: corPrimaria,
@@ -165,7 +167,7 @@ export default function ModalPrivacidade({
             Entendi
           </button>
         </div>
-      </div>
+      </DraggableModalCard>
     </div>
   );
 }

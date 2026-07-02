@@ -5054,7 +5054,10 @@
     var previsto = inicial + atual.saldoPrevisto;
     return (
       '<section class="rounded-2xl bg-slate-950 p-4 text-white shadow-lg">' +
-        '<div class="mb-1 flex justify-end">' + botaoVisibilidadeValoresHtml(cardId, true) + '</div>' +
+        '<div class="mb-3 flex items-center justify-between gap-3">' +
+          '<h2 class="text-sm font-black tracking-wide text-white">Saldo do m&ecirc;s</h2>' +
+          botaoVisibilidadeValoresHtml(cardId, true) +
+        '</div>' +
         '<div class="grid grid-cols-3 gap-2 text-center">' +
           miniSaldoHtml('Inicial', inicial, 'text-slate-200', cardId) +
           miniSaldoHtml('Final', final, final >= 0 ? 'text-emerald-300' : 'text-red-300', cardId) +
@@ -6443,18 +6446,20 @@
 
     // ── Vista: lista de ações (estado neutro) ──────────────────────────────
     if (!algumAberto) {
+      var iconeEditarPerfil = '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true"><path d="M11 5H6a2 2 0 0 0-2 2v11a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2v-5M18.5 2.5a2.12 2.12 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+      var iconeCriarPerfil = '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true"><path d="M12 5v14M5 12h14" stroke-width="2.4" stroke-linecap="round"/></svg>';
+      var iconeTrocarPerfil = '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true"><path d="M7 7h11m0 0-3-3m3 3-3 3M17 17H6m0 0 3 3m-3-3 3-3" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+      var iconeExcluirPerfil = '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true"><path d="M19 7l-.9 12.1A2 2 0 0 1 16.1 21H7.9a2 2 0 0 1-2-1.9L5 7m5 4v6m4-6v6m1-10V4a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v3M4 7h16" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"/></svg>';
       return (
         '<div class="grid gap-3 text-sm">' +
           cabecalho +
           '<div class="grid gap-2">' +
             (podeEditar
-              ? '<button id="abrir-edicao-empresa-mobile" type="button" class="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-left text-sm font-black text-slate-800 transition active:scale-[0.99]">✏️  Editar dados</button>'
+              ? '<button id="abrir-edicao-empresa-mobile" type="button" class="flex h-12 w-full items-center gap-3 rounded-lg border border-[#0A1F44] bg-[#0A1F44] px-4 text-left text-sm font-black text-white shadow-md transition active:scale-[0.98]">' + iconeEditarPerfil + '<span>Editar perfil atual</span></button>'
               : '') +
-            '<button id="abrir-criar-empresa-mobile" type="button" class="w-full rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-left text-sm font-black text-emerald-800 transition active:scale-[0.99]">＋  Criar novo perfil</button>' +
-            '<button id="trocar-empresa-gerenciar" type="button" class="w-full rounded-xl border px-4 py-3 text-left text-sm font-black transition ' + (podeTrocar ? 'border-cyan-200 bg-cyan-50 text-cyan-800 active:scale-[0.99]' : 'border-slate-100 bg-slate-50 text-slate-400 cursor-not-allowed') + '"' + (podeTrocar ? '' : ' disabled') + '>⇄  Trocar perfil</button>' +
-            (gestorMaster
-              ? '<button id="abrir-exclusao-empresa-mobile" type="button" class="w-full rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-left text-sm font-black text-rose-700 transition active:scale-[0.99]">✕  Excluir perfil</button>'
-              : '') +
+            '<button id="abrir-criar-empresa-mobile" type="button" class="flex h-12 w-full items-center gap-3 rounded-lg border border-cyan-700 bg-cyan-700 px-4 text-left text-sm font-black text-white shadow-md transition active:scale-[0.98]">' + iconeCriarPerfil + '<span>Criar novo perfil</span></button>' +
+            '<button id="trocar-empresa-gerenciar" type="button" class="flex h-12 w-full items-center gap-3 rounded-lg border px-4 text-left text-sm font-black shadow-md transition ' + (podeTrocar ? 'border-blue-700 bg-blue-600 text-white active:scale-[0.98]' : 'border-slate-200 bg-slate-100 text-slate-400 cursor-not-allowed opacity-80') + '"' + (podeTrocar ? '' : ' disabled') + '>' + iconeTrocarPerfil + '<span>Trocar perfil</span></button>' +
+            '<button id="abrir-exclusao-empresa-mobile" type="button" class="flex h-12 w-full items-center gap-3 rounded-lg border px-4 text-left text-sm font-black shadow-md transition ' + (gestorMaster ? 'border-red-700 bg-red-600 text-white active:scale-[0.98]' : 'border-slate-200 bg-slate-100 text-slate-400 cursor-not-allowed opacity-80') + '"' + (gestorMaster ? '' : ' disabled title="Somente o Gestor Master pode excluir o perfil"') + '>' + iconeExcluirPerfil + '<span>Excluir perfil</span></button>' +
           '</div>' +
           alertaHtml().replace('mt-4', '') +
         '</div>'

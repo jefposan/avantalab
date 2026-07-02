@@ -1,6 +1,7 @@
 'use client';
 import React from 'react';
 import { normalizarTipoPerfil, rotuloTipoPerfil, type TipoPerfil } from '../lib/perfis';
+import DraggableModalCard from './DraggableModalCard';
 
 interface AuthCardProps {
   // Modal Aviso
@@ -116,11 +117,11 @@ export default function AuthCard({
     className="fixed inset-0 z-[8000] flex items-center justify-center bg-black/60 px-4"
     onClick={fecharAviso}
   >
-    <div
+    <DraggableModalCard
       className="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-6 shadow-2xl"
       onClick={(e) => e.stopPropagation()}
     >
-      <div className="mb-4 flex items-center gap-3">
+      <div data-modal-drag-handle className="mb-4 flex cursor-grab items-center gap-3 active:cursor-grabbing">
         <div
   className={`flex h-11 w-11 items-center justify-center rounded-xl ${
     tipoAviso === 'sucesso'
@@ -157,7 +158,7 @@ export default function AuthCard({
           Entendi
         </button>
       </div>
-    </div>
+    </DraggableModalCard>
   </div>
 )}
       <div

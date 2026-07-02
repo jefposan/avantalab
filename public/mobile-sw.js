@@ -1,6 +1,6 @@
-const CACHE_NAME = 'avantalab-mobile-v165';
+const CACHE_NAME = 'avantalab-mobile-v167';
 const APP_SHELL = [
-  '/mobile-app.js?v=184',
+  '/mobile-app.js?v=190',
   '/mobile-supabase.js',
   '/mobile-manifest.json',
   '/images/ava-logo-principal.png',

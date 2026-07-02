@@ -1,3 +1,5 @@
+import DraggableModalCard from './DraggableModalCard';
+
 type ModalConfirmacaoProps = {
   aberto: boolean;
   titulo: string;
@@ -5,6 +7,8 @@ type ModalConfirmacaoProps = {
   textoCancelar?: string;
   textoConfirmar?: string;
   carregando?: boolean;
+  corPrimaria?: string;
+  textoSobreCorPrimaria?: string;
   aoCancelar: () => void;
   aoConfirmar: () => void;
 };
@@ -16,6 +20,8 @@ export default function ModalConfirmacao({
   textoCancelar = "Cancelar",
   textoConfirmar = "Confirmar",
   carregando = false,
+  corPrimaria = '#003E73',
+  textoSobreCorPrimaria = '#ffffff',
   aoCancelar,
   aoConfirmar,
 }: ModalConfirmacaoProps) {
@@ -28,19 +34,20 @@ export default function ModalConfirmacao({
         if (!carregando) aoCancelar();
       }}
     >
-      <div
-        className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl border border-slate-200"
+      <DraggableModalCard
+        className="w-full max-w-md overflow-hidden rounded-2xl bg-white shadow-2xl border border-slate-200"
         onClick={(e) => e.stopPropagation()}
       >
-        <h2 className="text-xl font-bold text-slate-900 mb-3">
-          {titulo}
-        </h2>
+        <div data-modal-drag-handle className="px-5 py-4" style={{ backgroundColor: corPrimaria, color: textoSobreCorPrimaria }}>
+          <h2 className="text-xl font-black">{titulo}</h2>
+        </div>
 
-        <p className="text-sm text-slate-600 leading-relaxed mb-6 whitespace-pre-line">
-          {mensagem}
-        </p>
+        <div className="p-5">
+          <p className="text-sm text-slate-600 leading-relaxed mb-6 whitespace-pre-line">
+            {mensagem}
+          </p>
 
-        <div className="flex justify-end gap-3">
+          <div className="flex justify-end gap-3">
           <button
   type="button"
   onClick={aoCancelar}
@@ -58,8 +65,9 @@ export default function ModalConfirmacao({
 >
   {carregando ? "Aguarde..." : textoConfirmar}
 </button>
+          </div>
         </div>
-      </div>
+      </DraggableModalCard>
     </div>
   );
 }

@@ -1,4 +1,5 @@
 import type { CategoriaPerfil } from '../lib/perfis';
+import DraggableModalCard from './DraggableModalCard';
 
 type DespesaCadastrada = {
   nome: string;
@@ -76,12 +77,12 @@ export default function ModalDespesasBase({
       className="fixed inset-0 bg-black/60 z-[2000] flex items-center justify-center p-4"
       onClick={fecharTudo}
     >
-      <div
+      <DraggableModalCard
         className={`${bgCard} rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] flex flex-col border-2 overflow-hidden`}
         style={{ borderColor: corPrimaria }}
         onClick={(e) => e.stopPropagation()}
       >
-        <div
+        <div data-modal-drag-handle
           className="sticky top-0 p-6 border-b border-slate-200/20 flex justify-between items-center z-10"
           style={estiloTemaPrimario}
         >
@@ -224,7 +225,7 @@ export default function ModalDespesasBase({
   ))}
 </div>
         </div>
-      </div>
+      </DraggableModalCard>
 
       {ajudaCategoriasAberta && (
         <div

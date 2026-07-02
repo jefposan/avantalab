@@ -1,4 +1,5 @@
 import type { CategoriaPerfil } from '../lib/perfis';
+import DraggableModalCard from './DraggableModalCard';
 
 type ModalInstrucoesProps = {
   aberto: boolean;
@@ -38,12 +39,12 @@ export default function ModalInstrucoes({
       className="fixed inset-0 z-[5000] flex items-center justify-center bg-black/60 p-3 sm:p-4"
       onClick={aoFechar}
     >
-      <div
+      <DraggableModalCard
         className={`${bgCard} flex max-h-[calc(100dvh-1.5rem)] w-full min-w-0 max-w-2xl flex-col overflow-y-auto rounded-2xl border-2 shadow-2xl sm:max-h-[90vh]`}
         style={{ borderColor: corPrimaria }}
         onClick={(e) => e.stopPropagation()}
       >
-        <div
+        <div data-modal-drag-handle
           className="sticky top-0 z-10 flex min-w-0 items-center justify-between gap-3 border-b border-slate-200/20 px-4 py-3 shadow-md sm:px-5"
           style={estiloTemaPrimario}
         >
@@ -84,7 +85,7 @@ export default function ModalInstrucoes({
             </div>
           )}
         </div>
-      </div>
+      </DraggableModalCard>
     </div>
   );
 }

@@ -1,5 +1,6 @@
 'use client';
 import React, { useEffect, useState } from 'react';
+import DraggableModalCard from './DraggableModalCard';
 
 type Changelog = {
   empresa: { nome: string; subtitulo?: string; descricao: string[]; site: string; instagram: string; instagramUrl: string };
@@ -37,8 +38,8 @@ export default function SobreModal({ aberto, onFechar, darkMode, versaoAtual }: 
   return (
     <div className="fixed inset-0 z-[2000] flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onFechar} />
-      <div className={`relative flex max-h-[88vh] w-full max-w-lg flex-col overflow-hidden rounded-2xl border shadow-2xl ${card}`}>
-        <div className="flex items-start justify-between gap-3 px-5 py-4 text-white" style={{ background: 'linear-gradient(135deg, #020617, #003E73)' }}>
+      <DraggableModalCard className={`relative flex max-h-[88vh] w-full max-w-lg flex-col overflow-hidden rounded-2xl border shadow-2xl ${card}`}>
+        <div data-modal-drag-handle className="flex cursor-grab items-start justify-between gap-3 px-5 py-4 text-white active:cursor-grabbing" style={{ background: 'linear-gradient(135deg, #020617, #003E73)' }}>
           <div>
             <p className="text-[10px] font-black uppercase tracking-[0.24em]" style={{ color: 'rgba(255,255,255,0.65)' }}>Sobre</p>
             <h2 className="mt-0.5 text-lg font-black leading-tight text-white">{dados?.empresa?.nome || 'AvantaLab'}</h2>
@@ -102,7 +103,7 @@ export default function SobreModal({ aberto, onFechar, darkMode, versaoAtual }: 
             </div>
           )}
         </div>
-      </div>
+      </DraggableModalCard>
     </div>
   );
 }

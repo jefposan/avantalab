@@ -16,6 +16,7 @@ import ModulosModal, { type Modulo } from './components/ModulosModal';
 import PontoAdminModal, { type FuncionarioPonto, type PontoConfig } from './components/PontoAdminModal';
 import SobreModal from './components/SobreModal';
 import ModalConfirmacao from "./components/ModalConfirmacao";
+import DraggableModalCard from './components/DraggableModalCard';
 import CardEntradaFaturamento from './components/CardEntradaFaturamento';
 import TabelaLancamentosDespesa from './components/TabelaLancamentosDespesa';
 import TourPrimeiroAcesso from './components/TourPrimeiroAcesso';
@@ -5358,13 +5359,13 @@ if (isTelaMobile) {
           className="fixed inset-0 z-[8500] flex items-center justify-center bg-black/60 px-4 py-6"
           onClick={() => { setAgendaAberta(false); setAgendaDiaSelecionado(null); setAgendaFormAberto(false); }}
         >
-          <div
+          <DraggableModalCard
             className="relative flex w-full max-w-4xl flex-col overflow-hidden rounded-2xl bg-white shadow-2xl"
             style={{ maxHeight: '90vh' }}
             onClick={e => e.stopPropagation()}
           >
             {/* Header */}
-            <div className="flex shrink-0 items-center justify-between px-6 py-4" style={{ background: corPrimaria }}>
+            <div data-modal-drag-handle className="flex shrink-0 cursor-grab items-center justify-between px-6 py-4 active:cursor-grabbing" style={{ background: corPrimaria }}>
               <h2 className="text-xl font-black tracking-[0.2em] text-white">AGENDA</h2>
               <div className="flex items-center gap-2">
                 <button
@@ -5625,7 +5626,7 @@ if (isTelaMobile) {
             </div>
           </div>
         )}
-          </div>
+        </DraggableModalCard>
         </div>
       )}
 
@@ -5738,6 +5739,8 @@ if (isTelaMobile) {
   textoConfirmar={textoConfirmarConfirmacao}
   carregando={confirmacaoCarregando}
   textoCancelar={textoCancelarConfirmacao}
+  corPrimaria={corPrimaria}
+  textoSobreCorPrimaria={textoSobreCorPrimaria}
   aoCancelar={() => { fecharConfirmacao(); if (acaoCancelarConfirmacao) acaoCancelarConfirmacao(); }}
   aoConfirmar={confirmarAcao}
 />
@@ -5747,13 +5750,13 @@ if (isTelaMobile) {
     className="fixed inset-0 z-[6200] flex items-center justify-center bg-black/70 px-4"
     onClick={fecharModalRestauracaoBackup}
   >
-    <div
+    <DraggableModalCard
       className={`flex max-h-[92vh] w-full max-w-2xl flex-col overflow-hidden rounded-2xl border shadow-2xl ${
         darkMode ? 'border-slate-700 bg-slate-800' : 'border-slate-200 bg-white'
       }`}
       onClick={(e) => e.stopPropagation()}
     >
-      <div className="px-6 py-5" style={estiloTemaPrimario}>
+      <div data-modal-drag-handle className="cursor-grab px-6 py-5 active:cursor-grabbing" style={estiloTemaPrimario}>
         <p className="text-xs font-black uppercase tracking-[0.18em]">
           Restauracao de dados
         </p>
@@ -5924,7 +5927,7 @@ if (isTelaMobile) {
           {importandoBackup ? 'Importando...' : rotuloModoRestauracaoBackup(modoRestauracaoBackup)}
         </button>
       </div>
-    </div>
+    </DraggableModalCard>
   </div>
 )}
 
@@ -5933,7 +5936,7 @@ if (isTelaMobile) {
     className="fixed inset-0 z-[6200] flex items-center justify-center bg-black/60 px-4"
     onClick={fecharModalReceitaDashboard}
   >
-    <div
+    <DraggableModalCard
       className={`w-full max-w-md rounded-2xl border p-5 shadow-2xl ${
         darkMode
           ? 'bg-slate-800 border-slate-700'
@@ -5941,8 +5944,8 @@ if (isTelaMobile) {
       }`}
       onClick={(e) => e.stopPropagation()}
     >
-      <div
-        className="mb-4 rounded-xl px-4 py-3"
+      <div data-modal-drag-handle
+        className="mb-4 cursor-grab rounded-xl px-4 py-3 active:cursor-grabbing"
         style={estiloTemaPrimario}
       >
         <p className="text-xs font-black uppercase tracking-[0.18em]">
@@ -6021,7 +6024,7 @@ if (isTelaMobile) {
           Confirmar
         </button>
       </div>
-    </div>
+    </DraggableModalCard>
   </div>
 )}
 
@@ -6035,7 +6038,7 @@ if (isTelaMobile) {
       setNomeConfirmacaoExclusao('');
     }}
   >
-    <div
+    <DraggableModalCard
       className={`w-full max-w-lg rounded-2xl border p-6 shadow-2xl ${
         darkMode
           ? 'bg-slate-800 border-slate-700'
@@ -6043,7 +6046,7 @@ if (isTelaMobile) {
       }`}
       onClick={(e) => e.stopPropagation()}
     >
-      <div className="mb-5">
+      <div data-modal-drag-handle className="mb-5 cursor-grab active:cursor-grabbing">
         <p className="text-xs font-black uppercase tracking-[0.18em] text-red-500">
           Exclusão definitiva
         </p>
@@ -6126,7 +6129,7 @@ if (isTelaMobile) {
           {excluindoEmpresa ? 'Excluindo...' : 'Excluir definitivamente'}
         </button>
       </div>
-    </div>
+    </DraggableModalCard>
   </div>
 )}
 
@@ -6135,7 +6138,7 @@ if (isTelaMobile) {
     className="fixed inset-0 z-[5600] flex items-center justify-center bg-black/60 px-4"
     onClick={fecharEdicaoEmpresaAtual}
   >
-    <div
+    <DraggableModalCard
       className={`w-full max-w-lg rounded-2xl border p-6 shadow-2xl ${
         darkMode
           ? 'bg-slate-800 border-slate-700'
@@ -6143,8 +6146,8 @@ if (isTelaMobile) {
       }`}
       onClick={(e) => e.stopPropagation()}
     >
-      <div
-        className="mb-5 rounded-xl px-4 py-3"
+      <div data-modal-drag-handle
+        className="mb-5 cursor-grab rounded-xl px-4 py-3 active:cursor-grabbing"
         style={estiloTemaPrimario}
       >
         <p className="text-xs font-black uppercase tracking-[0.18em]">
@@ -6271,7 +6274,7 @@ if (isTelaMobile) {
           {editEmpresaSalvando ? 'Salvando...' : 'Salvar alterações'}
         </button>
       </div>
-    </div>
+    </DraggableModalCard>
   </div>
 )}
 
@@ -6280,14 +6283,14 @@ if (isTelaMobile) {
     className="fixed inset-0 z-[5500] flex items-center justify-center bg-black/60 px-4"
     onClick={() => { if (!editEmpresaSalvando && !criandoEmpresaInicial) { setSubAcaoGerenciar(null); setModalEmpresasAberto(false); } }}
   >
-    <div
+    <DraggableModalCard
       className={`w-full max-w-md rounded-2xl border shadow-2xl overflow-hidden ${
         darkMode ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200'
       }`}
       onClick={(e) => e.stopPropagation()}
     >
       {/* Cabeçalho */}
-      <div className="px-6 pt-5 pb-4" style={estiloTemaPrimario}>
+      <div data-modal-drag-handle className="cursor-grab px-6 pt-5 pb-4 active:cursor-grabbing" style={estiloTemaPrimario}>
         <p className="text-xs font-black uppercase tracking-[0.18em] opacity-75">
           Perfis financeiros
         </p>
@@ -6299,10 +6302,27 @@ if (isTelaMobile) {
               : 'Gerenciar perfil financeiro'}
         </h2>
         {!subAcaoGerenciar && (
-          <div className="mt-3 space-y-0.5 text-sm font-semibold opacity-85">
-            <p><span className="font-black">Perfil atual:</span> {nomeEmpresaAtual || 'Não carregado'}</p>
-            <p><span className="font-black">Acesso:</span> {perfilUsuarioFormatado}</p>
-            <p><span className="font-black">Tipo:</span> {rotuloTipoPerfilAtual}</p>
+          <div className="mt-5 border-t pt-4" style={{ borderColor: bordaSobreCorPrimaria }}>
+            <div className="mb-3 flex items-center gap-2">
+              <span className="h-4 w-1 rounded-full bg-current opacity-90" aria-hidden="true" />
+              <p className="text-[11px] font-black uppercase tracking-[0.2em]">
+                Perfil ativo
+              </p>
+            </div>
+            <div className="grid gap-3 text-sm sm:grid-cols-[minmax(0,2fr)_minmax(110px,1fr)_minmax(90px,1fr)] sm:gap-5">
+              <div className="min-w-0">
+                <span className="block text-[9px] font-black uppercase tracking-wide opacity-65">Nome</span>
+                <strong className="mt-0.5 block break-words text-sm font-black">{nomeEmpresaAtual || 'Não carregado'}</strong>
+              </div>
+              <div className="min-w-0">
+                <span className="block text-[9px] font-black uppercase tracking-wide opacity-65">Acesso</span>
+                <strong className="mt-0.5 block truncate text-sm font-black">{perfilUsuarioFormatado}</strong>
+              </div>
+              <div className="min-w-0">
+                <span className="block text-[9px] font-black uppercase tracking-wide opacity-65">Tipo</span>
+                <strong className="mt-0.5 block truncate text-sm font-black">{rotuloTipoPerfilAtual}</strong>
+              </div>
+            </div>
           </div>
         )}
       </div>
@@ -6319,13 +6339,12 @@ if (isTelaMobile) {
                   await abrirEdicaoEmpresaAtual(podeAcessarAjustes, tipoPerfilAtualNormalizado, true);
                   setSubAcaoGerenciar('editar');
                 }}
-                className={`w-full rounded-xl border px-4 py-3 text-sm font-black text-left transition cursor-pointer ${
-                  darkMode
-                    ? 'border-slate-600 bg-slate-700 text-white hover:bg-slate-600'
-                    : 'border-slate-200 bg-slate-50 text-slate-800 hover:bg-slate-100'
-                }`}
+                className="flex h-12 w-full cursor-pointer items-center gap-3 rounded-lg border border-[#0A1F44] bg-[#0A1F44] px-4 text-left text-sm font-black text-white shadow-md transition hover:-translate-y-0.5 hover:brightness-110 hover:shadow-lg"
               >
-                ✏️  Editar dados
+                <svg className="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" />
+                </svg>
+                <span>Editar perfil atual</span>
               </button>
             )}
 
@@ -6338,13 +6357,13 @@ if (isTelaMobile) {
                   setAuthErro('');
                   setSubAcaoGerenciar('criar');
                 }}
-                className={`w-full rounded-xl border px-4 py-3 text-sm font-black text-left transition cursor-pointer ${
-                  darkMode
-                    ? 'border-emerald-700 bg-emerald-900/30 text-emerald-300 hover:bg-emerald-900/50'
-                    : 'border-emerald-200 bg-emerald-50 text-emerald-800 hover:bg-emerald-100'
-                }`}
+                className="flex h-12 w-full cursor-pointer items-center gap-3 rounded-lg border px-4 text-left text-sm font-black shadow-md transition hover:-translate-y-0.5 hover:brightness-110 hover:shadow-lg"
+                style={estiloTemaPrimario}
               >
-                ＋  Criar novo perfil
+                <svg className="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.4" d="M12 5v14M5 12h14" />
+                </svg>
+                <span>Criar novo perfil</span>
               </button>
             )}
 
@@ -6352,28 +6371,36 @@ if (isTelaMobile) {
               type="button"
               onClick={() => { setModalEmpresasAberto(false); abrirTrocaEmpresa(); }}
               disabled={!podeTrocarEmpresa}
-              className={`w-full rounded-xl border px-4 py-3 text-sm font-black text-left transition ${
+              className={`flex h-12 w-full items-center gap-3 rounded-lg border px-4 text-left text-sm font-black shadow-md transition ${
                 podeTrocarEmpresa
-                  ? `cursor-pointer ${darkMode ? 'border-blue-700 bg-blue-900/30 text-blue-300 hover:bg-blue-900/50' : 'border-blue-200 bg-blue-50 text-blue-800 hover:bg-blue-100'}`
+                  ? 'cursor-pointer border-blue-700 bg-blue-600 text-white hover:-translate-y-0.5 hover:bg-blue-700 hover:shadow-lg'
                   : 'cursor-not-allowed border-slate-200 bg-slate-100 text-slate-400'
               }`}
             >
-              ⇄  Trocar perfil
+              <svg className="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.2" d="M7 7h11m0 0l-3-3m3 3l-3 3M17 17H6m0 0l3 3m-3-3l3-3" />
+              </svg>
+              <span>Trocar perfil</span>
             </button>
 
-            {perfilUsuario === 'gestor_master' && (
-              <button
-                type="button"
-                onClick={() => { setModalEmpresasAberto(false); confirmarExclusaoEmpresaAtual(); }}
-                className={`w-full rounded-xl border px-4 py-3 text-sm font-black text-left transition cursor-pointer ${
-                  darkMode
-                    ? 'border-red-800 bg-red-900/30 text-red-300 hover:bg-red-900/50'
-                    : 'border-red-200 bg-red-50 text-red-700 hover:bg-red-100'
-                }`}
-              >
-                ✕  Excluir perfil
-              </button>
-            )}
+            <button
+              type="button"
+              onClick={() => { setModalEmpresasAberto(false); confirmarExclusaoEmpresaAtual(); }}
+              disabled={perfilUsuario !== 'gestor_master'}
+              title={perfilUsuario === 'gestor_master' ? 'Excluir o perfil atual' : 'Somente o Gestor Master pode excluir o perfil'}
+              className={`flex h-12 w-full items-center gap-3 rounded-lg border px-4 text-left text-sm font-black shadow-md transition ${
+                perfilUsuario === 'gestor_master'
+                  ? 'cursor-pointer border-red-700 bg-red-600 text-white hover:-translate-y-0.5 hover:bg-red-700 hover:shadow-lg'
+                  : darkMode
+                    ? 'cursor-not-allowed border-slate-600 bg-slate-700 text-slate-400 opacity-70'
+                    : 'cursor-not-allowed border-slate-300 bg-slate-100 text-slate-400 opacity-80'
+              }`}
+            >
+              <svg className="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.1" d="M19 7l-.9 12.1A2 2 0 0116.1 21H7.9a2 2 0 01-2-1.9L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+              </svg>
+              <span>Excluir perfil</span>
+            </button>
 
             <button
               type="button"
@@ -6574,7 +6601,7 @@ if (isTelaMobile) {
         )}
 
       </div>
-    </div>
+    </DraggableModalCard>
   </div>
 )}
 
@@ -6583,11 +6610,11 @@ if (isTelaMobile) {
     className="fixed inset-0 z-[8000] flex items-center justify-center bg-black/60 px-4"
     onClick={fecharAviso}
   >
-    <div
+    <DraggableModalCard
       className="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-6 shadow-2xl"
       onClick={(e) => e.stopPropagation()}
     >
-      <div className="mb-4 flex items-center gap-3">
+      <div data-modal-drag-handle className="mb-4 flex cursor-grab items-center gap-3 active:cursor-grabbing">
         <div
   className={`flex h-11 w-11 items-center justify-center rounded-xl ${
     tipoAviso === 'sucesso'
@@ -6624,7 +6651,7 @@ if (isTelaMobile) {
           Entendi
         </button>
       </div>
-    </div>
+    </DraggableModalCard>
   </div>
 )}
 
@@ -6633,7 +6660,7 @@ if (isTelaMobile) {
     className="fixed inset-0 z-[6000] flex items-center justify-center bg-black/60 px-4"
     onClick={cancelarEdicaoUsuario}
   >
-    <div
+    <DraggableModalCard
       className={`w-full max-w-xl rounded-2xl border p-6 shadow-2xl ${
         darkMode
           ? 'bg-slate-800 border-slate-700'
@@ -6641,13 +6668,18 @@ if (isTelaMobile) {
       }`}
       onClick={(e) => e.stopPropagation()}
     >
-      <div className="mb-5 flex items-start justify-between gap-4">
-        <div>
-          <h2 className={`text-xl font-black ${textStrong}`}>
+      <div
+        data-modal-drag-handle
+        className="-mx-6 -mt-6 mb-5 flex min-h-[96px] cursor-grab items-center justify-between gap-4 rounded-t-2xl px-6 py-5 active:cursor-grabbing"
+        style={estiloTemaPrimario}
+      >
+        <div className="min-w-0">
+          <p className="text-[10px] font-black uppercase tracking-[0.2em] opacity-70">Usuários e permissões</p>
+          <h2 className="mt-1 text-xl font-black">
             Editar usuário
           </h2>
 
-          <p className={`mt-1 text-sm ${textMuted}`}>
+          <p className="mt-1 text-sm opacity-80">
             Altere os dados do usuário ou redefina a senha diretamente.
           </p>
         </div>
@@ -6655,11 +6687,8 @@ if (isTelaMobile) {
         <button
           type="button"
           onClick={cancelarEdicaoUsuario}
-          className={`flex h-9 w-9 items-center justify-center rounded-full text-lg font-black transition cursor-pointer ${
-            darkMode
-              ? 'text-slate-300 hover:bg-slate-700 hover:text-white'
-              : 'text-slate-500 hover:bg-slate-100 hover:text-slate-800'
-          }`}
+          className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-full border text-lg font-black transition hover:bg-black/10"
+          style={{ borderColor: bordaSobreCorPrimaria, color: textoSobreCorPrimaria }}
           title="Fechar"
         >
           ×
@@ -6808,7 +6837,7 @@ if (isTelaMobile) {
           Salvar alterações
         </button>
       </div>
-    </div>
+    </DraggableModalCard>
   </div>
 )}
 
@@ -6820,7 +6849,7 @@ if (isTelaMobile) {
       setAjudaUsuariosAberta(false);
     }}
   >
-    <div
+    <DraggableModalCard
       className={`max-h-[90vh] w-full max-w-3xl overflow-y-auto rounded-2xl border p-6 shadow-2xl ${
         darkMode
           ? 'bg-slate-800 border-slate-700'
@@ -6828,19 +6857,17 @@ if (isTelaMobile) {
       }`}
       onClick={(e) => e.stopPropagation()}
     >
-      <div
-        className={`sticky top-0 z-20 -mx-6 -mt-6 mb-5 flex items-start justify-between gap-4 border-b px-6 py-4 backdrop-blur ${
-          darkMode
-            ? 'border-slate-700 bg-slate-800/95'
-            : 'border-slate-200 bg-white/95'
-        }`}
+      <div data-modal-drag-handle
+        className="-mx-6 -mt-6 mb-5 flex min-h-[108px] items-center justify-between gap-4 rounded-t-2xl border-b px-6 py-5"
+        style={{ ...estiloTemaPrimario, borderColor: bordaSobreCorPrimaria }}
       >
   <div className="min-w-0 flex-1">
-    <h2 className={`text-xl font-black ${textStrong}`}>
+    <p className="text-[10px] font-black uppercase tracking-[0.2em] opacity-70">Configurações</p>
+    <h2 className="mt-1 text-xl font-black">
       Usuários e Permissões
     </h2>
 
-    <p className={`mt-1 text-sm ${textMuted}`}>
+    <p className="mt-1 text-sm opacity-80">
       Cadastre usuários para acessar esta empresa e defina o nível de permissão.
     </p>
   </div>
@@ -6852,11 +6879,8 @@ if (isTelaMobile) {
         setModalUsuarios(false);
         setAjudaUsuariosAberta(false);
       }}
-      className={`rounded-lg px-3 py-1 text-sm font-black transition cursor-pointer ${
-        darkMode
-          ? 'text-slate-300 hover:bg-slate-700 hover:text-white'
-          : 'text-slate-500 hover:bg-slate-100 hover:text-slate-800'
-      }`}
+      className="cursor-pointer rounded-lg px-3 py-1 text-sm font-black transition hover:bg-black/10"
+      style={{ color: textoSobreCorPrimaria }}
     >
       ✕
     </button>
@@ -6864,11 +6888,8 @@ if (isTelaMobile) {
     <button
       type="button"
       onClick={() => setAjudaUsuariosAberta((aberto) => !aberto)}
-      className={`flex h-7 w-7 items-center justify-center rounded-full border text-xs font-black transition cursor-pointer ${
-        darkMode
-          ? 'border-slate-600 bg-slate-900 text-slate-200 hover:bg-slate-700'
-          : 'border-slate-300 bg-slate-50 text-slate-600 hover:bg-slate-100'
-      }`}
+      className="flex h-7 w-7 cursor-pointer items-center justify-center rounded-full border text-xs font-black transition hover:bg-black/10"
+      style={{ borderColor: bordaSobreCorPrimaria, color: textoSobreCorPrimaria }}
       title="Ver explicação dos tipos de usuário"
     >
       ?
@@ -7373,7 +7394,7 @@ name="novo-usuario-login"
           )}
         </div>
       </div>
-    </div>
+    </DraggableModalCard>
   </div>
 )}
 
@@ -8337,8 +8358,8 @@ name="novo-usuario-login"
     className="fixed inset-0 z-[900] flex items-center justify-center bg-slate-950/60 px-4 py-6"
     onClick={(e) => { if (e.target === e.currentTarget) setModalDespesasFixas(false); }}
   >
-    <div className={`relative flex w-full max-w-lg flex-col rounded-2xl shadow-2xl overflow-hidden max-h-[90vh] ${darkMode ? 'bg-slate-800' : 'bg-white'}`}>
-      <div className="flex shrink-0 items-center justify-between px-5 py-4" style={{ backgroundColor: corPrimaria }}>
+    <DraggableModalCard className={`relative flex w-full max-w-lg flex-col rounded-2xl shadow-2xl overflow-hidden max-h-[90vh] ${darkMode ? 'bg-slate-800' : 'bg-white'}`}>
+      <div data-modal-drag-handle className="flex shrink-0 cursor-grab items-center justify-between px-5 py-4 active:cursor-grabbing" style={{ backgroundColor: corPrimaria }}>
         <div>
           <h2 className="text-base font-black text-white">Gerenciar despesas fixas</h2>
         </div>
@@ -8501,7 +8522,7 @@ name="novo-usuario-login"
           Despesas fixas são lançadas automaticamente no início de cada mês com o valor do mês anterior.
         </p>
       </div>
-    </div>
+    </DraggableModalCard>
   </div>
 )}
 

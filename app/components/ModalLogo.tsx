@@ -1,4 +1,5 @@
 import type { RefObject } from 'react';
+import DraggableModalCard from './DraggableModalCard';
 
 type LogoSettings = {
   scale: number;
@@ -64,12 +65,12 @@ export default function ModalLogo({
       className="fixed inset-0 bg-black/60 z-[2000] flex items-center justify-center p-3 sm:p-4"
       onClick={aoFechar}
     >
-      <div
+      <DraggableModalCard
         className={`${bgCard} max-h-[calc(100dvh-1.5rem)] w-full max-w-md overflow-y-auto rounded-2xl border-2 p-4 shadow-2xl sm:p-5`}
         style={{ borderColor: corPrimaria }}
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex justify-between items-center mb-6">
+        <div data-modal-drag-handle className="flex justify-between items-center mb-6 cursor-grab active:cursor-grabbing">
           <div>
             <h2 className={`text-lg font-bold ${textStrong}`}>
               Adicionar Logo
@@ -242,7 +243,7 @@ export default function ModalLogo({
             </button>
           </div>
         </div>
-      </div>
+      </DraggableModalCard>
     </div>
   );
 }
