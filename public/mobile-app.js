@@ -419,7 +419,7 @@
     return '<div class="mx-auto max-w-md px-4 py-5">' + conteudo + '</div>';
   }
 
-  var APP_VERSION = '1.3.8';
+  var APP_VERSION = '1.3.9';
   var APP_VERSION_LABEL = 'AvantaLab Gest&atilde;o v' + APP_VERSION;
 
   function telaAvisoMobile(titulo, texto) {
@@ -1424,7 +1424,12 @@
     var parametros = new URLSearchParams();
     parametros.set('ano', String(state.ano || new Date().getFullYear()));
     parametros.set('mes', String(state.mes || ''));
-    window.location.assign('/mobile/ava?' + parametros.toString());
+    var evento = new CustomEvent('avantalab:open-ava', {
+      cancelable: true,
+      detail: { ano: state.ano, mes: state.mes }
+    });
+    var tratadoPeloPortal = !window.dispatchEvent(evento);
+    if (!tratadoPeloPortal) window.location.assign('/mobile/ava?' + parametros.toString());
   }
 
   function fecharChatIA() {

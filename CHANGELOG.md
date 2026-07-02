@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.3.9 - 2026-07-02
+
+- Ava mobile: o chat agora abre em portal fullscreen sobre o dashboard, mantendo a pagina montada para que voltar e inicio fechem o chat sem recarregar no Android ou iOS.
+
 ## 1.3.8 - 2026-07-02
 
 - Ava mobile: adicionado botao SVG para iniciar uma nova conversa e limpar o historico atual.

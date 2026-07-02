@@ -29,6 +29,12 @@ type NavigatorWithVirtualKeyboard = Navigator & {
   virtualKeyboard?: MobileVirtualKeyboard;
 };
 
+type AvaChatClientProps = {
+  initialYear?: number;
+  initialMonth?: string;
+  onClose?: () => void;
+};
+
 const MONTHS = [
   'JANEIRO',
   'FEVEREIRO',
@@ -182,7 +188,7 @@ async function buildFinancialContext(db: SupabaseClient, companyId: string, comp
   ].filter(Boolean).join('\n');
 }
 
-export default function AvaChatClient() {
+export default function AvaChatClient({ initialYear, initialMonth, onClose }: AvaChatClientProps = {}) {
   const db = useMemo(() => supabase, []);
   const [darkMode] = useState(() => typeof window !== 'undefined' && localStorage.getItem('avantalab_mobile_dark') === '1');
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -324,8 +330,8 @@ export default function AvaChatClient() {
       }
 
       const params = new URLSearchParams(window.location.search);
-      const monthIndex = normalizedMonth(params.get('mes'));
-      const requestedYear = Number(params.get('ano'));
+      const monthIndex = normalizedMonth(initialMonth ?? params.get('mes'));
+      const requestedYear = initialYear ?? Number(params.get('ano'));
       const year = Number.isInteger(requestedYear) && requestedYear >= 2000 && requestedYear <= 2200
         ? requestedYear
         : new Date().getFullYear();
@@ -364,7 +370,7 @@ export default function AvaChatClient() {
     return () => {
       active = false;
     };
-  }, [db]);
+  }, [db, initialMonth, initialYear]);
 
   useEffect(() => {
     if (!storageKey) return;
@@ -515,6 +521,10 @@ export default function AvaChatClient() {
   }, [recording, sendMessage, sending, transcribing]);
 
   const goBack = () => {
+    if (onClose) {
+      onClose();
+      return;
+    }
     if (window.history.length > 1) window.history.back();
     else window.location.assign('/mobile');
   };
