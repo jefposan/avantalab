@@ -119,7 +119,7 @@ const getValorMensal = (despesa: string, mes: string) => {
     style={{ borderLeft: `4px solid ${corPrimaria}` }}
   >
     <span className={`text-xs font-black uppercase tracking-wide ${textMuted}`}>
-      Total anual
+      Total de despesas anual
     </span>
 
     <span
