@@ -182,6 +182,7 @@ export default function AvaChatClient() {
   const [userName, setUserName] = useState('');
   const [error, setError] = useState('');
   const [storageKey, setStorageKey] = useState('');
+  const shellRef = useRef<HTMLElement>(null);
   const messagesRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
@@ -192,35 +193,84 @@ export default function AvaChatClient() {
   useEffect(() => {
     const html = document.documentElement;
     const body = document.body;
+    const shell = shellRef.current;
+    if (!shell) return;
+
     const previous = {
       htmlOverflow: html.style.overflow,
+      htmlHeight: html.style.height,
+      htmlOverscroll: html.style.overscrollBehavior,
+      htmlBackground: html.style.background,
       bodyOverflow: body.style.overflow,
       bodyOverscroll: body.style.overscrollBehavior,
+      bodyPosition: body.style.position,
+      bodyInset: body.style.inset,
+      bodyWidth: body.style.width,
+      bodyHeight: body.style.height,
+      bodyBackground: body.style.background,
     };
+    let viewportFrame = 0;
+    let messageScrollFrame = 0;
+    const chatBackground = darkMode ? '#0b1220' : '#f4f8fc';
 
+    html.style.height = '100%';
     html.style.overflow = 'hidden';
+    html.style.overscrollBehavior = 'none';
+    html.style.background = chatBackground;
+    body.style.position = 'fixed';
+    body.style.inset = '0';
+    body.style.width = '100%';
+    body.style.height = '100%';
     body.style.overflow = 'hidden';
     body.style.overscrollBehavior = 'none';
+    body.style.background = chatBackground;
 
     const syncHeight = () => {
-      const height = window.visualViewport?.height || window.innerHeight;
-      html.style.setProperty('--ava-chat-height', `${Math.round(height)}px`);
-      window.scrollTo(0, 0);
+      const messages = messagesRef.current;
+      const keepLastMessageVisible = Boolean(messages && (
+        messages.scrollHeight - messages.scrollTop - messages.clientHeight < 96
+      ));
+
+      cancelAnimationFrame(viewportFrame);
+      viewportFrame = requestAnimationFrame(() => {
+        const visualHeight = window.visualViewport?.height;
+        const height = visualHeight && visualHeight > 0 ? visualHeight : window.innerHeight;
+        shell.style.setProperty('--ava-chat-height', `${Math.round(height)}px`);
+
+        if (keepLastMessageVisible && messages) {
+          cancelAnimationFrame(messageScrollFrame);
+          messageScrollFrame = requestAnimationFrame(() => {
+            messages.scrollTop = messages.scrollHeight;
+          });
+        }
+      });
     };
 
     syncHeight();
     window.visualViewport?.addEventListener('resize', syncHeight);
+    window.visualViewport?.addEventListener('scroll', syncHeight);
     window.addEventListener('resize', syncHeight);
 
     return () => {
+      cancelAnimationFrame(viewportFrame);
+      cancelAnimationFrame(messageScrollFrame);
       window.visualViewport?.removeEventListener('resize', syncHeight);
+      window.visualViewport?.removeEventListener('scroll', syncHeight);
       window.removeEventListener('resize', syncHeight);
-      html.style.removeProperty('--ava-chat-height');
+      shell.style.removeProperty('--ava-chat-height');
       html.style.overflow = previous.htmlOverflow;
+      html.style.height = previous.htmlHeight;
+      html.style.overscrollBehavior = previous.htmlOverscroll;
+      html.style.background = previous.htmlBackground;
       body.style.overflow = previous.bodyOverflow;
       body.style.overscrollBehavior = previous.bodyOverscroll;
+      body.style.position = previous.bodyPosition;
+      body.style.inset = previous.bodyInset;
+      body.style.width = previous.bodyWidth;
+      body.style.height = previous.bodyHeight;
+      body.style.background = previous.bodyBackground;
     };
-  }, []);
+  }, [darkMode]);
 
   useEffect(() => {
     let active = true;
@@ -453,7 +503,7 @@ export default function AvaChatClient() {
   };
 
   return (
-    <main className={`${styles.shell} ${darkMode ? styles.dark : ''}`}>
+    <main ref={shellRef} className={`${styles.shell} ${darkMode ? styles.dark : ''}`}>
       <header className={styles.header}>
         <button type="button" className={styles.headerButton} onClick={goBack} aria-label="Voltar">
           <BackIcon />

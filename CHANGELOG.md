@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.3.5 - 2026-07-02
+
+- Ava mobile: chat movido definitivamente para uma rota fullscreen independente, com header fixo, mensagens rolaveis e campo de digitacao ancorado acima do teclado.
+- Ava mobile: bloqueio completo do scroll e fundo opaco durante a conversa, com ajuste de altura pelo VisualViewport no Android e iOS.
+
 ## 1.3.4 - 2026-06-23
 
 - Web: ajustada a posicao do menu de Ajustes para acompanhar a nova altura reduzida do header principal.

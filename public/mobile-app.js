@@ -419,7 +419,7 @@
     return '<div class="mx-auto max-w-md px-4 py-5">' + conteudo + '</div>';
   }
 
-  var APP_VERSION = '1.3.4';
+  var APP_VERSION = '1.3.5';
   var APP_VERSION_LABEL = 'AvantaLab Gest&atilde;o v' + APP_VERSION;
 
   function telaAvisoMobile(titulo, texto) {
@@ -1421,19 +1421,10 @@
   }
 
   function abrirChatIA() {
-    window._avaBaseViewportHeight = Math.max(window.innerHeight || 0, document.documentElement.clientHeight || 0, window.visualViewport ? window.visualViewport.height : 0);
-    state.chatIAAberto = true;
-    state.chatIAAnimacao = 'entrar';
-    state.erro = '';
-    render();
-    setTimeout(function () {
-      if (state.chatIAAberto && state.chatIAAnimacao === 'entrar') state.chatIAAnimacao = '';
-    }, 260);
-    setTimeout(function() {
-      var msgsEl = document.getElementById('chat-ia-msgs');
-      if (msgsEl) msgsEl.scrollTop = msgsEl.scrollHeight;
-      _avaPinViewport();
-    }, 50);
+    var parametros = new URLSearchParams();
+    parametros.set('ano', String(state.ano || new Date().getFullYear()));
+    parametros.set('mes', String(state.mes || ''));
+    window.location.assign('/mobile/ava?' + parametros.toString());
   }
 
   function fecharChatIA() {
