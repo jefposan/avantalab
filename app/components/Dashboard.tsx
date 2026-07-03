@@ -1034,6 +1034,13 @@ const mostrarComparativoResumoDash =
         </button>
 
         {gerenciadorAberto && (
+          <>
+          <button
+            type="button"
+            className="fixed inset-0 z-30 cursor-default bg-black/60 backdrop-blur-sm"
+            onClick={() => setGerenciadorAberto(false)}
+            aria-label="Fechar organização de blocos"
+          />
           <div className={`absolute right-0 top-7 z-40 w-[min(20rem,calc(100vw-1.5rem))] max-w-full rounded-2xl border p-4 shadow-2xl ${
             darkMode ? 'border-slate-700 bg-slate-900 text-slate-100' : 'border-slate-200 bg-white text-slate-900'
           }`}>
@@ -1087,6 +1094,7 @@ const mostrarComparativoResumoDash =
               })}
             </div>
           </div>
+          </>
         )}
 
         <div className="flex flex-col gap-6">
