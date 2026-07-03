@@ -891,7 +891,7 @@ export default function PontoAdminModal({
                           <div className="grid grid-cols-2 gap-x-3 gap-y-1 text-[10px] sm:grid-cols-4">
                             <span><strong className="block text-[8px] uppercase text-slate-400">Entrada</strong>{d.entrada || '--:--'}</span>
                             <span><strong className="block text-[8px] uppercase text-slate-400">Saída almoço</strong>{d.saidaAlmoco || '--:--'}</span>
-                            <span><strong className="block text-[8px] uppercase text-slate-400">Entrada almoço</strong>{d.entradaAlmoco || '--:--'}</span>
+                            <span><strong className="block text-[8px] uppercase text-slate-400">Retorno almoço</strong>{d.entradaAlmoco || '--:--'}</span>
                             <span><strong className="block text-[8px] uppercase text-slate-400">Saída</strong>{d.saida || '--:--'}</span>
                           </div>
                           {d.distancia != null && <p className={`text-[10px] ${textMuted}`}>{Math.round(d.distancia)}m da empresa</p>}

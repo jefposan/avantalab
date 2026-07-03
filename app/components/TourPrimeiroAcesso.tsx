@@ -23,78 +23,99 @@ const PASSOS: Passo[] = [
     localizacao: '',
     titulo: 'Bem-vindo ao AvantaLab Gestão!',
     descricao:
-      'Vamos te mostrar os principais recursos em poucos passos. E o mais importante: sempre que tiver qualquer dúvida sobre como usar o sistema, é só perguntar à Ava, nossa assistente de inteligência artificial. Você pode pular este tour quando quiser e revê-lo em Ajustes → Tutorial.',
+      'Este tour apresenta os recursos atuais da versão web. Você pode pular quando quiser e revê-lo em Ajustes → Tutorial. Sempre que surgir uma dúvida, pergunte à Ava.',
   },
   {
     icone: '🤖',
     localizacao: 'Botão no canto inferior direito',
     titulo: 'Converse com a Ava',
     descricao:
-      'A Ava é sua assistente de IA dentro do AvantaLab. Pergunte como usar qualquer função, peça análises dos seus números e dicas financeiras. Ela conhece todo o sistema e responde na hora — use sempre que tiver uma dúvida, em vez de ficar procurando.',
+      'A Ava explica como usar o sistema e analisa os dados financeiros disponíveis. Ela orienta, mas não altera registros por você. Use Nova conversa quando quiser limpar o histórico atual.',
     destaque: true,
+  },
+  {
+    icone: '🏢',
+    localizacao: 'Ajustes → Perfil',
+    titulo: 'Perfis financeiros',
+    descricao:
+      'Use perfis Empresa ou Pessoal e alterne entre os perfis vinculados ao seu login. No card de Perfil você pode editar o perfil atual, criar outro, trocar e, quando autorizado, excluir.',
   },
   {
     icone: '✅',
     localizacao: 'Ajustes → Cadastrar despesas',
-    titulo: 'Por onde começar: cadastrar despesas',
+    titulo: 'Cadastre suas despesas',
     descricao:
-      'O primeiro passo para usar o sistema é cadastrar as suas despesas, conforme a sua necessidade. Em Ajustes → "Cadastrar despesas", adicione cada tipo de despesa e a sua categoria. É isso que alimenta os lançamentos e os relatórios.',
-  },
-  {
-    icone: '⚙️',
-    localizacao: 'Barra superior → Ajustes',
-    titulo: 'Menu Ajustes',
-    descricao:
-      'No botão "Ajustes" você acessa todas as configurações: logo e cor do perfil, cadastro de despesas, usuários, perfis financeiros, backup e preferências. O menu se expande logo abaixo da barra.',
+      'Revise a lista inicial e cadastre os tipos de despesa que utiliza, vinculando cada item à categoria correta. Esses cadastros alimentam lançamentos, gráficos e relatórios.',
   },
   {
     icone: '💰',
     localizacao: 'Início → clique em um mês',
-    titulo: 'Entradas e total do mês',
+    titulo: 'Receitas e despesas',
     descricao:
-      'No Início, clique em qualquer mês para abrir os lançamentos. No topo, registre as entradas (receitas) e o total do mês — esses valores alimentam o balanço automaticamente.',
+      'Abra um mês para registrar receitas, total mensal e despesas. Você pode editar ou excluir lançamentos e pesquisar itens. Web e mobile compartilham os mesmos dados.',
   },
   {
-    icone: '📊',
-    localizacao: 'Início → mês selecionado → tabela de despesas',
-    titulo: 'Lançar despesas',
+    icone: '🔁',
+    localizacao: 'Ajustes → Despesas fixas / lançamento mensal',
+    titulo: 'Fixas, parcelas e previsões',
     descricao:
-      'Dentro do mês, registre cada despesa por categoria. O sistema avisa lançamentos duplicados e mostra o total por categoria. Você também pode criar despesas fixas (lançadas todo mês) e parcelar em vários meses.',
+      'Crie despesas futuras, parcelamentos e recorrências fixas com projeção para os próximos meses. A edição pela linha altera somente o mês; em Despesas fixas você administra toda a recorrência.',
+  },
+  {
+    icone: '🧩',
+    localizacao: 'Dashboard → lápis / menu de cada card',
+    titulo: 'Organize o dashboard',
+    descricao:
+      'Arraste os cards entre as colunas. Pelo lápis, escolha os blocos visíveis; no menu de cada card, use Expandir, Reduzir ou Remover bloco. É possível manter todos em uma única coluna.',
   },
   {
     icone: '📈',
-    localizacao: 'Menu superior → Balanço, Gráficos, Por Categoria, Relatório',
-    titulo: 'Dashboard, gráficos e relatórios',
+    localizacao: 'Balanço Geral, Gráficos, Por Categoria e Relatório',
+    titulo: 'Análises detalhadas',
     descricao:
-      'Tudo o que você lança vira análise automaticamente: balanço geral, evolução mensal, visão por categoria e relatório completo, pelos itens do menu superior.',
+      'Acompanhe saldo, evolução, categorias e relatórios. Os gráficos também podem ser reorganizados e expandidos. Clique em uma despesa nos gráficos para consultar os lançamentos que formam o total.',
   },
   {
     icone: '📅',
-    localizacao: 'Sininho no topo / Ajustes → Agenda',
+    localizacao: 'Agenda e sininho',
     titulo: 'Agenda e notificações',
     descricao:
-      'Crie lembretes e avisos com repetição (diária, semanal, quinzenal, mensal ou anual). Eles aparecem no sininho e, no celular, chegam como notificação — mesmo com o app fechado. Ative as notificações pelo menu para receber.',
+      'A agenda reúne lembretes e despesas futuras. Os marcadores distinguem cada tipo. Ative as notificações no aparelho para receber lembretes e avisos de pagamentos agendados.',
   },
   {
     icone: '👥',
     localizacao: 'Ajustes → Usuários',
     titulo: 'Usuários e permissões',
     descricao:
-      'Adicione colaboradores com diferentes níveis de acesso: Gestor Master, Administrador, Operador Completo e Operador Simples. Cada perfil tem permissões próprias para manter a segurança dos dados.',
+      'Gestor Master e Administrador podem criar ou vincular usuários. Os níveis Gestor Master, Administrador, Operador Completo e Operador Simples determinam o que cada pessoa pode fazer.',
+  },
+  {
+    icone: '⏱️',
+    localizacao: 'Ajustes → Módulos / Ponto',
+    titulo: 'Controle de Ponto',
+    descricao:
+      'Quando o módulo estiver instalado, gestores podem cadastrar funcionários, horários, local e raio, além de consultar relatórios. Funcionários registram Entrada, Saída almoço, Retorno almoço e Saída em /ponto.',
   },
   {
     icone: '💾',
-    localizacao: 'Ajustes → Backup',
-    titulo: 'Backup dos dados',
+    localizacao: 'Ajustes → Configurações → Backup e Restauração',
+    titulo: 'Proteja seus dados',
     descricao:
-      'Gere um arquivo Excel com todos os dados do perfil quando quiser. O sininho lembra você periodicamente de realizar o backup — não ignore esse aviso.',
+      'Gere backups do perfil e use Restauração para importar um arquivo compatível. Confira o modo escolhido antes de substituir dados existentes.',
+  },
+  {
+    icone: '🎨',
+    localizacao: 'Ajustes → Visual e Configurações',
+    titulo: 'Personalização e ferramentas',
+    descricao:
+      'Personalize logo, cor principal e modo escuro. Em Configurações também ficam usuários, perfil, backup, restauração e outras preferências disponíveis para sua permissão.',
   },
   {
     icone: '🚀',
     localizacao: '',
     titulo: 'Tudo pronto!',
     descricao:
-      'Você já conhece o essencial do AvantaLab Gestão. Explore à vontade — e lembre-se: qualquer dúvida sobre o uso, é só chamar a Ava no canto inferior direito. Este tutorial fica sempre disponível em Ajustes → Tutorial.',
+      'Você já conhece os recursos principais. Explore o sistema e chame a Ava quando precisar. Este tutorial permanece disponível em Ajustes → Tutorial.',
   },
 ];
 

@@ -1686,7 +1686,7 @@ useEffect(() => {
       const rotulosFalha: Record<string, string> = {
         entrada: 'Entrada',
         saida_refeicao: 'Saída almoço',
-        retorno_refeicao: 'Entrada almoço',
+        retorno_refeicao: 'Retorno almoço',
         saida: 'Saída',
       };
       const resumo = (funcionariosResp.data || []).reduce<ItemResumoPonto[]>((itens, funcionario) => {

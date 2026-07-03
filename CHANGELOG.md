@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.3.5 - 2026-07-03
+
+- Ava: conhecimento atualizado com os recursos, locais, permissoes, dependencias e limitacoes atuais do sistema web, mobile e Controle de Ponto.
+- Web e mobile: tutoriais revisados para refletir os fluxos atuais de perfis, lancamentos, dashboard, atalhos, notificacoes, backup e restauracao.
+- Controle de Ponto: nomenclatura padronizada para Retorno almoco nos resumos e relatorios.
+- Controle de Ponto: card do dashboard compactado, com acesso direto ao relatorio diario do funcionario e indicacao de mais itens na lista.
+- Dashboard e Graficos: arraste dos cards limitado a area visivel da tela e organizacao por colunas aprimorada.
+- Mobile: persistencia da sessao reforcada, com renovacao de Manter conectado e encerramento restrito ao dispositivo atual.
+
 ## 1.3.4 - 2026-07-02
 
 - Web e mobile: cadastro de despesas padronizado, com nomes de despesas e categorias em formato de frase e edicao disponivel na lista web.

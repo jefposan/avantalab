@@ -1719,15 +1719,18 @@
 
   // ─── Tutorial (tour de primeiro acesso) ─────────────────────
   var PASSOS_TOUR = [
-    { icone: '👋', local: '', titulo: 'Bem-vindo ao AvantaLab!', descricao: 'Vamos te mostrar o essencial em poucos passos. E lembre-se: qualquer dúvida sobre como usar o app, é só perguntar à Ava, nossa assistente de IA. Você pode pular e rever depois pelo menu.' },
-    { icone: '🤖', local: 'Botão da Ava, no app', titulo: 'Converse com a Ava', descricao: 'A Ava é sua assistente de IA. Pergunte como usar qualquer função, peça análises dos seus números e dicas. Use sempre que tiver dúvida, em vez de ficar procurando.', destaque: true },
-    { icone: '✅', local: 'Menu → Cadastrar despesas', titulo: 'Comece cadastrando as despesas', descricao: 'O primeiro passo é cadastrar as suas despesas, conforme a sua necessidade. Abra o menu e toque em "Cadastrar despesas" para adicionar cada tipo de despesa e a categoria.' },
-    { icone: '📋', local: 'Botão de menu (☰)', titulo: 'Menu do app', descricao: 'No menu você encontra Agenda, Cadastrar despesas, Ativar/Desativar notificações, Configurações e mais.' },
-    { icone: '💰', local: 'Tela inicial → mês', titulo: 'Entradas e total do mês', descricao: 'Registre as receitas e o total do mês. Esses valores alimentam o seu saldo automaticamente.' },
-    { icone: '📊', local: 'Lançamentos do mês', titulo: 'Lançar despesas', descricao: 'Registre cada despesa por categoria. Você também pode criar despesas fixas (todo mês) e parcelar em vários meses.' },
-    { icone: '📅', local: 'Menu → Agenda', titulo: 'Agenda e notificações', descricao: 'Crie lembretes com repetição (diária, semanal, mensal e mais) e receba como notificação no celular, mesmo com o app fechado. Ative em "Ativar notificações".' },
-    { icone: '🔔', local: 'Sininho no topo', titulo: 'Avisos no sininho', descricao: 'O sininho mostra seus lembretes do dia e avisos. O número indica quantos estão pendentes.' },
-    { icone: '🚀', local: '', titulo: 'Tudo pronto!', descricao: 'Você já conhece o essencial. Qualquer dúvida, chame a Ava. Este tutorial fica sempre no menu, em "Tutorial".' },
+    { icone: '👋', local: '', titulo: 'Bem-vindo ao AvantaLab!', descricao: 'Este tour apresenta os recursos atuais do app. Você pode pular agora e rever quando quiser em Menu → Tutorial.' },
+    { icone: '🤖', local: 'Ava no dashboard', titulo: 'Converse com a Ava', descricao: 'A Ava explica o app e analisa os dados financeiros disponíveis. O chat abre em tela cheia; use Nova conversa quando quiser começar novamente.', destaque: true },
+    { icone: '🏢', local: 'Atalho Perfil / Menu → Configurações', titulo: 'Perfis financeiros', descricao: 'Alterne entre perfis Empresa ou Pessoal vinculados ao seu login. Você também pode editar o perfil atual ou criar outro perfil.' },
+    { icone: '✅', local: 'Menu → Cadastrar despesas', titulo: 'Cadastre suas despesas', descricao: 'Revise a lista inicial e adicione os tipos de despesa que utiliza, sempre vinculando cada item à categoria correta.' },
+    { icone: '➕', local: 'Botão Lançar, no centro da barra inferior', titulo: 'Faça lançamentos', descricao: 'Registre despesas, receitas, previsões e parcelamentos. Os mesmos dados ficam disponíveis na web.' },
+    { icone: '🔁', local: 'Menu → Despesas fixas', titulo: 'Despesas fixas', descricao: 'Crie recorrências e projete os próximos meses. Edite pela linha para alterar apenas o mês ou use Despesas fixas para administrar toda a recorrência.' },
+    { icone: '🧩', local: 'Menu → Organizar resumo', titulo: 'Organize o dashboard', descricao: 'Escolha quais cards aparecem e altere a ordem. Valores financeiros iniciam ocultos e podem ser revelados pelo ícone de olho.' },
+    { icone: '↔️', local: 'Menu → Organizar atalhos', titulo: 'Personalize a barra inferior', descricao: 'Início, Lançar e Menu são fixos. Personalize os dois atalhos laterais com Perfil, Agenda, Modo escuro ou Despesas fixas.' },
+    { icone: '📅', local: 'Agenda e sininho', titulo: 'Agenda e notificações', descricao: 'A agenda reúne lembretes e despesas futuras. Ative as notificações para receber lembretes e avisos de pagamentos agendados.' },
+    { icone: '💾', local: 'Menu → Configurações', titulo: 'Backup e restauração', descricao: 'Gere um backup do perfil ou restaure um arquivo compatível diretamente pelo celular.' },
+    { icone: '🔐', local: 'Tela de acesso', titulo: 'Mantenha sua sessão', descricao: 'Marque Manter conectado para conservar e renovar a sessão neste aparelho por até 30 dias.' },
+    { icone: '🚀', local: '', titulo: 'Tudo pronto!', descricao: 'Você já conhece os recursos principais. Chame a Ava quando precisar. Este tutorial fica sempre em Menu → Tutorial.' },
   ];
 
   function abrirTourMobile() {
