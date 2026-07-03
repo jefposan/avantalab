@@ -50,7 +50,8 @@ function SortableItem({ id, children }: { id: string; children: React.ReactNode 
   const style: React.CSSProperties = {
     transform: CSS.Transform.toString(transform),
     transition,
-    opacity: isDragging ? 0.4 : 1,
+    opacity: isDragging ? 0 : 1,
+    zIndex: isDragging ? 50 : undefined,
   };
   const handleProps = { ref: setActivatorNodeRef, ...attributes, ...listeners };
   return (
@@ -60,16 +61,30 @@ function SortableItem({ id, children }: { id: string; children: React.ReactNode 
   );
 }
 
-function ColunaKanban({ id, items, children }: { id: string; items: string[]; children: React.ReactNode }) {
-  const { setNodeRef } = useDroppable({ id });
+function ColunaKanban({ id, items, arrastando, className, children }: { id: keyof DashboardCols; items: string[]; arrastando: boolean; className?: string; children: React.ReactNode }) {
+  const { setNodeRef, isOver } = useDroppable({ id });
+  const vazia = items.length === 0;
+  const exibirAreaSoltar = vazia && arrastando;
   return (
-    <div ref={setNodeRef} className="flex flex-col gap-6">
+    <div
+      ref={setNodeRef}
+      className={`flex min-h-0 flex-col gap-6 ${className || ''} ${
+        exibirAreaSoltar
+          ? `min-h-[120px] justify-center rounded-2xl border-2 border-dashed ${isOver ? 'border-cyan-400 bg-cyan-50/40' : 'border-slate-300/60'}`
+          : ''
+      }`}
+    >
       <SortableContext items={items} strategy={verticalListSortingStrategy}>
         {children}
       </SortableContext>
+      {exibirAreaSoltar && (
+        <p className="py-6 text-center text-xs font-bold text-slate-400">Solte um bloco aqui</p>
+      )}
     </div>
   );
 }
+
+type DashboardCols = { full: string[]; a: string[]; b: string[] };
 
 interface DashboardProps {
   meses: string[];
@@ -124,10 +139,9 @@ interface DashboardProps {
   dashboardOrdem: { a: string[]; b: string[] };
   dashboardOcultos: string[];
   dashboardExpandidos: string[];
-  onReordenarDashboard: (ordem: { a: string[]; b: string[] }) => void;
+  onAtualizarLayoutDashboard: (ordem: { a: string[]; b: string[] }, expandidos: string[]) => void;
   onOcultarCardDashboard: (id: string) => void;
   onDefinirOcultosDashboard: (ids: string[]) => void;
-  onDefinirExpandidosDashboard: (ids: string[]) => void;
   pontoDisponivel: boolean;
   pontoResumo: Array<{ userId: string; nome: string; status: 'atraso' | 'falta' | 'incompleto' }>;
   pontoResumoCarregando: boolean;
@@ -153,9 +167,9 @@ export default function Dashboard({
   despesasAConfirmar, onConfirmarPrevista, onAjustarPrevista, onExcluirPrevista,
   receitasAConfirmar, onConfirmarReceita, onEditarReceita, onExcluirReceita,
   saldoCardMesIdx, setSaldoCardMesIdx, saldoInicial, saldoFinal, saldoPrevisto,
-  dashboardOrdem, dashboardOcultos, onReordenarDashboard,
+  dashboardOrdem, dashboardOcultos, onAtualizarLayoutDashboard,
   dashboardExpandidos, onOcultarCardDashboard, onDefinirOcultosDashboard,
-  onDefinirExpandidosDashboard, pontoDisponivel, pontoResumo, pontoResumoCarregando,
+  pontoDisponivel, pontoResumo, pontoResumoCarregando,
   pontoFuncionariosHoje, onAbrirControlePonto
 }: DashboardProps) {
 
@@ -174,11 +188,19 @@ export default function Dashboard({
     receitas: number;
     despesas: number;
   } | null>(null);
-  const [cols, setCols] = useState(dashboardOrdem);
-  const [ordemAnterior, setOrdemAnterior] = useState(dashboardOrdem);
-  if (ordemAnterior !== dashboardOrdem) {
-    setOrdemAnterior(dashboardOrdem);
-    setCols(dashboardOrdem);
+  const criarCols = (ordem: { a: string[]; b: string[] }, expandidos: string[]): DashboardCols => {
+    const full = [...new Set(expandidos)];
+    return {
+      full,
+      a: ordem.a.filter((id) => !full.includes(id)),
+      b: ordem.b.filter((id) => !full.includes(id)),
+    };
+  };
+  const [cols, setCols] = useState<DashboardCols>(() => criarCols(dashboardOrdem, dashboardExpandidos));
+  const [layoutExternoAnterior, setLayoutExternoAnterior] = useState({ dashboardOrdem, dashboardExpandidos });
+  if (layoutExternoAnterior.dashboardOrdem !== dashboardOrdem || layoutExternoAnterior.dashboardExpandidos !== dashboardExpandidos) {
+    setLayoutExternoAnterior({ dashboardOrdem, dashboardExpandidos });
+    setCols(criarCols(dashboardOrdem, dashboardExpandidos));
   }
   const [activeId, setActiveId] = useState<string | null>(null);
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
@@ -390,7 +412,7 @@ const mostrarComparativoResumoDash =
     ...(pontoDisponivel ? [{ id: 'controlePonto', titulo: 'Controle de ponto', descricao: 'Pendências dos funcionários no dia atual.' }] : []),
   ];
   const ocultosSet = new Set(dashboardOcultos || []);
-  const expandidosSet = new Set(dashboardExpandidos || []);
+  const expandidosSet = new Set(cols.full);
 
   const alternarVisibilidadeCard = (id: string) => {
     const proximos = ocultosSet.has(id)
@@ -401,12 +423,19 @@ const mostrarComparativoResumoDash =
   };
 
   const alternarLarguraCard = (id: string) => {
-    const proximos = expandidosSet.has(id)
-      ? dashboardExpandidos.filter((cardId) => cardId !== id)
-      : [...dashboardExpandidos, id];
-
     const aplicarMudanca = () => {
-      onDefinirExpandidosDashboard(proximos);
+      const origem = containerDe(cols, id);
+      if (!origem) return;
+      const destino: keyof DashboardCols = origem === 'full'
+        ? (cols.a.length <= cols.b.length ? 'a' : 'b')
+        : 'full';
+      const proximos = {
+        ...cols,
+        [origem]: cols[origem].filter((cardId) => cardId !== id),
+        [destino]: [id, ...cols[destino]],
+      };
+      setCols(proximos);
+      onAtualizarLayoutDashboard({ a: proximos.a, b: proximos.b }, proximos.full);
       setMenuCardAberto(null);
     };
 
@@ -501,47 +530,57 @@ const mostrarComparativoResumoDash =
     </div>
   );
 
-  const linearizarOrdem = (ordem: { a: string[]; b: string[] }) => {
-    const total = Math.max(ordem.a.length, ordem.b.length);
-    const itens: string[] = [];
-    for (let i = 0; i < total; i += 1) {
-      if (ordem.a[i]) itens.push(ordem.a[i]);
-      if (ordem.b[i]) itens.push(ordem.b[i]);
-    }
-    return itens;
-  };
-
-  const distribuirOrdem = (itens: string[]) => ({
-    a: itens.filter((_, index) => index % 2 === 0),
-    b: itens.filter((_, index) => index % 2 === 1),
-  });
-
   const filtraItens = (arr: string[]) => arr.filter((id) =>
     !ocultosSet.has(id)
     && (id !== 'aConfirmar' || temAConfirmar)
     && (id !== 'controlePonto' || pontoDisponivel)
   );
-  const itensOrdenados = linearizarOrdem(cols);
-  const itensVisiveis = filtraItens(itensOrdenados);
+  const containerDe = (ordem: DashboardCols, id: string): keyof DashboardCols | null => {
+    if (id === 'full' || id === 'a' || id === 'b') return id;
+    return (['full', 'a', 'b'] as (keyof DashboardCols)[]).find((coluna) => ordem[coluna].includes(id)) || null;
+  };
 
   const handleDragStart = (e: DragStartEvent) => setActiveId(String(e.active.id));
 
-  const handleDragOver = (_e: DragOverEvent) => {};
+  const handleDragOver = ({ active, over }: DragOverEvent) => {
+    if (!over) return;
+    const activeIdAtual = String(active.id);
+    const overId = String(over.id);
+    setCols((atuais) => {
+      const origem = containerDe(atuais, activeIdAtual);
+      const destino = containerDe(atuais, overId);
+      if (!origem || !destino || origem === destino) return atuais;
+      if ((origem === 'full') !== (destino === 'full')) return atuais;
+
+      const itensOrigem = atuais[origem].filter((id) => id !== activeIdAtual);
+      const itensDestino = atuais[destino];
+      const indiceDestino = Math.max(0, itensDestino.indexOf(overId));
+      return {
+        ...atuais,
+        [origem]: itensOrigem,
+        [destino]: [...itensDestino.slice(0, indiceDestino), activeIdAtual, ...itensDestino.slice(indiceDestino)],
+      };
+    });
+  };
 
   const handleDragEnd = (e: DragEndEvent) => {
     const { active, over } = e;
     setActiveId(null);
-    if (!over) { onReordenarDashboard(cols); return; }
+    if (!over) {
+      onAtualizarLayoutDashboard({ a: cols.a, b: cols.b }, cols.full);
+      return;
+    }
     const activeKey = String(active.id);
     const overKey = String(over.id);
-    const oldIndex = itensOrdenados.indexOf(activeKey);
-    const newIndex = itensOrdenados.indexOf(overKey);
-    let novo = cols;
-    if (oldIndex !== -1 && newIndex !== -1 && oldIndex !== newIndex) {
-      novo = distribuirOrdem(arrayMove(itensOrdenados, oldIndex, newIndex));
-      setCols(novo);
-    }
-    onReordenarDashboard(novo);
+    const coluna = containerDe(cols, activeKey);
+    if (!coluna) return;
+    const oldIndex = cols[coluna].indexOf(activeKey);
+    const newIndex = cols[coluna].indexOf(overKey);
+    const novo = oldIndex >= 0 && newIndex >= 0 && oldIndex !== newIndex
+      ? { ...cols, [coluna]: arrayMove(cols[coluna], oldIndex, newIndex) }
+      : cols;
+    setCols(novo);
+    onAtualizarLayoutDashboard({ a: novo.a, b: novo.b }, novo.full);
   };
 
   const cardsById: Record<string, React.ReactNode> = {
@@ -1050,21 +1089,26 @@ const mostrarComparativoResumoDash =
           </div>
         )}
 
-        <div className="sm:columns-2 sm:gap-6">
-          <SortableContext items={itensVisiveis} strategy={verticalListSortingStrategy}>
-            {itensVisiveis.map((id) => (
-              <div
-                key={id}
-                className="pb-6 break-inside-avoid transition-[transform,opacity] duration-300 ease-out"
-                style={{
-                  columnSpan: expandidosSet.has(id) ? 'all' : 'none',
-                  viewTransitionName: `dashboard-card-${id}`,
-                } as React.CSSProperties}
-              >
-                <SortableItem id={id}>{cardsById[id]}</SortableItem>
-              </div>
-            ))}
-          </SortableContext>
+        <div className="flex flex-col gap-6">
+          {filtraItens(cols.full).length > 0 && (
+            <ColunaKanban id="full" items={filtraItens(cols.full)} arrastando={!!activeId}>
+              {filtraItens(cols.full).map((id) => (
+                <SortableItem key={id} id={id}>{cardsById[id]}</SortableItem>
+              ))}
+            </ColunaKanban>
+          )}
+          <div className="flex flex-col gap-6 sm:flex-row sm:items-start">
+            {(['a', 'b'] as (keyof DashboardCols)[]).map((coluna) => {
+              const itens = filtraItens(cols[coluna]);
+              return (
+                <ColunaKanban key={coluna} id={coluna} items={itens} arrastando={!!activeId} className="min-w-0 flex-1">
+                  {itens.map((id) => (
+                    <SortableItem key={id} id={id}>{cardsById[id]}</SortableItem>
+                  ))}
+                </ColunaKanban>
+              );
+            })}
+          </div>
         </div>
       </div>
     </main>

@@ -3145,9 +3145,10 @@ const editarReceitaPrevista = (id: string | number) => {
   iniciarEdicaoEntradaFaturamento(entrada);
 };
 
-const persistirOrdemDashboard = (novaOrdem: { a: string[]; b: string[] }) => {
+const atualizarLayoutDashboard = (novaOrdem: { a: string[]; b: string[] }, novosExpandidos: string[]) => {
   setDashboardOrdem(novaOrdem);
-  if (empresaId) salvarDashboardOrdemWeb(empresaId, novaOrdem, dashboardOcultos, dashboardExpandidos);
+  setDashboardExpandidos(novosExpandidos);
+  if (empresaId) salvarDashboardOrdemWeb(empresaId, novaOrdem, dashboardOcultos, novosExpandidos);
 };
 
 const restaurarOrdemDashboard = () => {
@@ -3167,14 +3168,6 @@ const definirOcultosDashboard = (novosOcultos: string[]) => {
 
 const ocultarCardDashboard = (id: string) => {
   definirOcultosDashboard([...dashboardOcultos, id]);
-};
-
-const definirExpandidosDashboard = (novosExpandidos: string[]) => {
-  const expandidosNormalizados = novosExpandidos.filter(
-    (id, index) => dashboardCardsKanban.includes(id) && novosExpandidos.indexOf(id) === index
-  );
-  setDashboardExpandidos(expandidosNormalizados);
-  if (empresaId) salvarDashboardOrdemWeb(empresaId, dashboardOrdem, dashboardOcultos, expandidosNormalizados);
 };
 
 const solicitarExclusaoLancamento = (lanc: any) => {
@@ -8454,10 +8447,9 @@ name="novo-usuario-login"
         dashboardOrdem={dashboardOrdem}
         dashboardOcultos={dashboardOcultos}
         dashboardExpandidos={dashboardExpandidos}
-        onReordenarDashboard={persistirOrdemDashboard}
+        onAtualizarLayoutDashboard={atualizarLayoutDashboard}
         onOcultarCardDashboard={ocultarCardDashboard}
         onDefinirOcultosDashboard={definirOcultosDashboard}
-        onDefinirExpandidosDashboard={definirExpandidosDashboard}
         pontoDisponivel={podeGerenciarPonto}
         pontoResumo={pontoResumoDia}
         pontoResumoCarregando={pontoResumoCarregando}
