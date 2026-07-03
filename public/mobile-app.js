@@ -983,8 +983,8 @@
 
     return (
       '<div class="relative flex h-7 w-[84px] shrink-0 items-center justify-center gap-1.5 px-2">' +
-        '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" aria-hidden="true" class="shrink-0 text-cyan-200"><rect x="3.5" y="4.5" width="17" height="16" rx="2.5" stroke="currentColor" stroke-width="2"/><path d="M3.5 9h17M8 3v3M16 3v3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>' +
-        '<p class="text-sm font-black leading-none text-white">' + escapeHtml(String(state.ano)) + '</p>' +
+        '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" aria-hidden="true" class="shrink-0 text-[#082B57]"><rect x="3.5" y="4.5" width="17" height="16" rx="2.5" stroke="currentColor" stroke-width="2"/><path d="M3.5 9h17M8 3v3M16 3v3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>' +
+        '<p class="text-sm font-black leading-none text-[#082B57]">' + escapeHtml(String(state.ano)) + '</p>' +
         '<select id="ano" aria-label="Selecionar ano" style="font-size:16px" class="absolute inset-0 cursor-pointer opacity-0">' +
           opcoes.join('') +
         '</select>' +
@@ -4942,7 +4942,7 @@
 
     return (
       '<div class="mobile-app-shell fixed inset-0 flex min-w-0 flex-col overflow-hidden ' + (state.darkMode ? 'mobile-dark bg-slate-950 text-slate-100' : 'mobile-light bg-slate-100 text-slate-900') + '" style="overscroll-behavior:none;">' +
-        '<header id="mobile-main-header" class="z-40 shrink-0 border-b border-white/15 px-3 pb-3 text-white shadow-xl shadow-sky-950/20 backdrop-blur sm:px-4" style="padding-top:calc(env(safe-area-inset-top) + 10px);background:linear-gradient(135deg,#003E73 0%,#075985 54%,#00A6C8 100%);">' +
+        '<header id="mobile-main-header" class="z-40 shrink-0 overflow-hidden rounded-[0_0_28px_28px] border-b border-white/15 px-3 pb-3 text-white shadow-xl shadow-sky-950/20 backdrop-blur sm:px-4" style="padding-top:calc(env(safe-area-inset-top) + 10px);background:linear-gradient(135deg,#003E73 0%,#075985 54%,#00A6C8 100%);">' +
           '<div class="mx-auto max-w-md">' +
             '<div class="flex items-center gap-3">' +
               '<div class="min-w-0 flex-1">' +
@@ -4959,13 +4959,13 @@
                   : '<span class="h-10 w-10 shrink-0" aria-hidden="true"></span>')
                 : '<span class="h-10 w-10 shrink-0" aria-hidden="true"></span>') +
             '</div>' +
-            '<div class="mt-3 flex h-7 items-center overflow-hidden rounded-lg border border-white/15 bg-white/10 shadow-sm backdrop-blur">' +
+            '<div class="mt-3 flex h-7 items-center overflow-hidden rounded-lg border shadow-[0_8px_18px_rgba(15,23,42,0.16)] backdrop-blur-md" style="background:rgba(255,255,255,0.94);color:#082B57;border-color:rgba(255,255,255,0.75);backdrop-filter:blur(10px);">' +
               anoHeaderHtml() +
-              '<span class="h-4 w-px shrink-0 bg-white/20" aria-hidden="true"></span>' +
+              '<span class="h-4 w-px shrink-0" style="background:rgba(8,43,87,0.18)" aria-hidden="true"></span>' +
               '<div class="grid min-w-0 flex-1 grid-cols-[minmax(0,1fr)_96px_minmax(0,1fr)] items-center">' +
-                '<button id="mes-anterior" type="button" class="flex h-7 w-full items-center justify-center text-white active:bg-white/10" aria-label="Mes anterior"><span class="text-lg font-black leading-none">&lsaquo;</span></button>' +
-                '<h2 class="w-24 truncate text-center text-sm font-black tracking-wide text-white">' + escapeHtml(state.mes.charAt(0) + state.mes.slice(1).toLowerCase()) + '</h2>' +
-                '<button id="mes-proximo" type="button" class="flex h-7 w-full items-center justify-center text-white active:bg-white/10" aria-label="Proximo mes"><span class="text-lg font-black leading-none">&rsaquo;</span></button>' +
+                '<button id="mes-anterior" type="button" class="flex h-7 w-full items-center justify-center text-[#082B57] active:bg-[#082B57]/10" aria-label="Mes anterior"><span class="text-lg font-black leading-none">&lsaquo;</span></button>' +
+                '<h2 class="w-24 truncate text-center text-sm font-black tracking-wide text-[#082B57]">' + escapeHtml(state.mes.charAt(0) + state.mes.slice(1).toLowerCase()) + '</h2>' +
+                '<button id="mes-proximo" type="button" class="flex h-7 w-full items-center justify-center text-[#082B57] active:bg-[#082B57]/10" aria-label="Proximo mes"><span class="text-lg font-black leading-none">&rsaquo;</span></button>' +
               '</div>' +
             '</div>' +
             insightDespesasHtml(atual, anterior) +
