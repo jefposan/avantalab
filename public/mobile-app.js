@@ -392,10 +392,23 @@
         return true;
       }
 
-      return true;
+      // Sem marcador customizado, respeita a sessao valida persistida pelo Supabase.
+      return false;
     } catch (error) {
-      return true;
+      return false;
     }
+  }
+
+  async function consultaMobileComRetry(executar) {
+    var ultimaResposta = null;
+    for (var tentativa = 0; tentativa < 3; tentativa++) {
+      ultimaResposta = await executar();
+      if (ultimaResposta && !ultimaResposta.error) return ultimaResposta;
+      await new Promise(function (resolve) {
+        window.setTimeout(resolve, 300 * (tentativa + 1));
+      });
+    }
+    return ultimaResposta;
   }
 
   function maxDias(mes, ano) {
@@ -2291,7 +2304,7 @@
   }
 
   async function carregarEmpresas(usuarioId) {
-    var usuarioAtual = await db.auth.getUser();
+    var usuarioAtual = await consultaMobileComRetry(function () { return db.auth.getUser(); });
     var emailUsuario = (usuarioAtual.data.user && usuarioAtual.data.user.email || '').toLowerCase();
 
     if (emailUsuario) {
@@ -2314,17 +2327,24 @@
       }
     }
 
-    var vinculos = await db
-      .from('usuarios_empresa')
-      .select('id, empresa_id, nome, email, login, perfil, status, telefone, telefone_confirmado')
-      .eq('user_id', usuarioId)
-      .eq('status', 'ativo')
-      .order('nome', { ascending: true });
+    var vinculos = await consultaMobileComRetry(function () {
+      return db
+        .from('usuarios_empresa')
+        .select('id, empresa_id, nome, email, login, perfil, status, telefone, telefone_confirmado')
+        .eq('user_id', usuarioId)
+        .eq('status', 'ativo')
+        .order('nome', { ascending: true });
+    });
 
-    if (vinculos.error || !vinculos.data || !vinculos.data.length) {
+    if (!vinculos || vinculos.error) {
+      console.error('Falha ao carregar perfis apos novas tentativas:', vinculos && vinculos.error);
+      return false;
+    }
+
+    if (!vinculos.data || !vinculos.data.length) {
       state.empresas = [];
       state.empresa = null;
-      return;
+      return true;
     }
 
     var acessoComTelefone = vinculos.data.find(function (vinculo) {
@@ -2351,12 +2371,13 @@
     }
 
     var ids = vinculos.data.map(function (vinculo) { return vinculo.empresa_id; }).filter(Boolean);
-    var empresas = await db.from('empresas').select('id, nome, tipo_perfil').in('id', ids);
+    var empresas = await consultaMobileComRetry(function () {
+      return db.from('empresas').select('id, nome, tipo_perfil').in('id', ids);
+    });
 
-    if (empresas.error || !empresas.data) {
-      state.empresas = [];
-      state.empresa = null;
-      return;
+    if (!empresas || empresas.error || !empresas.data) {
+      console.error('Falha ao carregar dados dos perfis apos novas tentativas:', empresas && empresas.error);
+      return false;
     }
 
     state.empresas = vinculos.data
@@ -2389,6 +2410,7 @@
     if (state.empresa) {
       salvarUltimoPerfilMobile(state.empresa.id);
     }
+    return true;
   }
 
   // Valor da mesma fixa no mes anterior mais proximo (dentro do ano carregado).
@@ -2630,7 +2652,14 @@
     registrarPreferenciaSessaoMobile(state.manterConectado, false);
     state.usuario = resposta.data.user;
     state.autenticado = true;
-    await carregarEmpresas(resposta.data.user.id);
+    var perfisCarregados = await carregarEmpresas(resposta.data.user.id);
+
+    if (perfisCarregados === false) {
+      state.carregando = false;
+      state.loginAcao = '';
+      setErro('Sua sessao foi iniciada, mas os perfis demoraram para responder. Tente novamente.');
+      return;
+    }
 
     if (!state.empresa) {
       state.carregando = false;

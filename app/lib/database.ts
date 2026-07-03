@@ -193,12 +193,20 @@ export async function buscarEmpresasDoUsuario(usuarioId: string) {
   }
 
   // 2. Busca todos os vínculos ativos do usuário
-  const { data: vinculos, error: erroVinculos } = await supabase
-    .from('usuarios_empresa')
-    .select('id, empresa_id, user_id, nome, email, login, perfil, status, telefone, telefone_confirmado, telefone_confirmado_em')
-    .eq('user_id', usuarioId)
-    .eq('status', 'ativo')
-    .order('nome', { ascending: true });
+  let vinculos: any[] | null = null;
+  let erroVinculos: any = null;
+  for (let tentativa = 0; tentativa < 3; tentativa++) {
+    const resposta = await supabase
+      .from('usuarios_empresa')
+      .select('id, empresa_id, user_id, nome, email, login, perfil, status, telefone, telefone_confirmado, telefone_confirmado_em')
+      .eq('user_id', usuarioId)
+      .eq('status', 'ativo')
+      .order('nome', { ascending: true });
+    vinculos = resposta.data;
+    erroVinculos = resposta.error;
+    if (!erroVinculos) break;
+    await new Promise((resolve) => setTimeout(resolve, 300 * (tentativa + 1)));
+  }
 
   // Erro de query é DIFERENTE de "sem empresa": lança para o chamador
   // poder voltar ao login em vez de mandar para o cadastro/onboarding.
@@ -247,10 +255,18 @@ export async function buscarEmpresasDoUsuario(usuarioId: string) {
     .filter(Boolean);
 
   // 3. Busca os dados das empresas vinculadas
-  const { data: empresas, error: erroEmpresas } = await supabase
-    .from('empresas')
-    .select('id, nome, tipo_perfil')
-    .in('id', empresasIds);
+  let empresas: any[] | null = null;
+  let erroEmpresas: any = null;
+  for (let tentativa = 0; tentativa < 3; tentativa++) {
+    const resposta = await supabase
+      .from('empresas')
+      .select('id, nome, tipo_perfil')
+      .in('id', empresasIds);
+    empresas = resposta.data;
+    erroEmpresas = resposta.error;
+    if (!erroEmpresas) break;
+    await new Promise((resolve) => setTimeout(resolve, 300 * (tentativa + 1)));
+  }
 
   if (erroEmpresas) {
     console.error('Erro ao buscar dados das empresas:', erroEmpresas);

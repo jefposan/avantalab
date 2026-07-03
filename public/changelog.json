@@ -22,6 +22,7 @@
         "Na data programada, receitas e despesas previstas aparecem no card de confirmação e permanecem pendentes até confirmar, editar ou excluir.",
         "O sininho web recebe em tempo real os avisos de despesas destinados à empresa.",
         "Usuários com vários perfis recebem avisos de todos eles, com o nome do perfil identificado no push.",
+        "O carregamento inicial dos perfis ficou mais resistente a oscilações de conexão, evitando retornos indevidos ao login.",
         "No celular, as receitas previstas também aparecem na agenda do dia.",
         "O botão \"Ajustar valor\" do card de confirmação passou a se chamar \"Editar\", abrindo a edição completa do lançamento.",
         "Cadastro de despesas com edição na web e nomes de despesas e categorias padronizados no web e mobile.",

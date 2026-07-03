@@ -869,6 +869,7 @@ if (paramsConfirmacao.get('confirmado') === '1') {
 
     if (sessaoAtual.session) {
      try {
+      localStorage.setItem(CHAVE_ULTIMA_ATIVIDADE, String(Date.now()));
       const params = new URLSearchParams(window.location.search);
       const hash = new URLSearchParams(window.location.hash.replace('#', ''));
 
