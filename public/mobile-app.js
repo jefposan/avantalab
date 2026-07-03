@@ -4925,6 +4925,60 @@
     );
   }
 
+  function sincronizarGradienteHeaderPerfil() {
+    var wrapper = document.getElementById('mobile-header-wrap');
+    var header = document.getElementById('mobile-main-header');
+    var pill = document.getElementById('mobile-profile-pill');
+    if (!wrapper || !header || !pill) return;
+
+    var wrapperRect = wrapper.getBoundingClientRect();
+    var headerRect = header.getBoundingClientRect();
+    var largura = Math.max(1, wrapperRect.width);
+    var pillX = pill.offsetLeft - (pill.offsetWidth / 2);
+    var pillY = pill.offsetTop;
+    var alturaTotal = Math.max(headerRect.height, pillY + pill.offsetHeight);
+    var gradiente = 'linear-gradient(135deg,#003E73 0%,#075985 54%,#00A6C8 100%)';
+    var tamanho = largura + 'px ' + alturaTotal + 'px';
+
+    header.style.backgroundImage = gradiente;
+    header.style.backgroundSize = tamanho;
+    header.style.backgroundPosition = '0 0';
+    header.style.backgroundRepeat = 'no-repeat';
+    pill.style.backgroundImage = gradiente;
+    pill.style.backgroundSize = tamanho;
+    pill.style.backgroundPosition = (-pillX) + 'px ' + (-pillY) + 'px';
+    pill.style.backgroundRepeat = 'no-repeat';
+    pill.style.opacity = '1';
+
+    if (!window._avaHeaderGradientResizeBound) {
+      window._avaHeaderGradientResizeBound = true;
+      window.addEventListener('resize', function () {
+        window.requestAnimationFrame(sincronizarGradienteHeaderPerfil);
+      });
+    }
+  }
+
+  function configurarRecolhimentoPerfilHeader() {
+    var scroll = document.getElementById('mobile-main-scroll');
+    var pill = document.getElementById('mobile-profile-pill');
+    if (!scroll || !pill) return;
+
+    var ultimoScroll = scroll.scrollTop;
+    var aplicarEstado = function (oculto) {
+      window._avaProfilePillHidden = oculto;
+      pill.style.setProperty('--profile-pill-y', oculto ? '-100%' : '0%');
+    };
+
+    aplicarEstado(Boolean(window._avaProfilePillHidden));
+    scroll.addEventListener('scroll', function () {
+      var atual = scroll.scrollTop;
+      var diferenca = atual - ultimoScroll;
+      if (atual <= 4) aplicarEstado(false);
+      else if (diferenca > 3) aplicarEstado(true);
+      ultimoScroll = atual;
+    }, { passive: true });
+  }
+
   function telaApp() {
     var atual = dadosMes(state.mes);
     var anterior = dadosMesAnterior();
@@ -4947,7 +5001,8 @@
 
     return (
       '<div class="mobile-app-shell fixed inset-0 flex min-w-0 flex-col overflow-hidden ' + (state.darkMode ? 'mobile-dark bg-slate-950 text-slate-100' : 'mobile-light bg-slate-100 text-slate-900') + '" style="overscroll-behavior:none;">' +
-        '<header id="mobile-main-header" class="z-40 shrink-0 overflow-hidden rounded-[0_0_28px_28px] border-b border-white/15 px-3 pb-3 text-white shadow-xl shadow-sky-950/20 backdrop-blur sm:px-4" style="padding-top:calc(env(safe-area-inset-top) + 10px);background:linear-gradient(135deg,#003E73 0%,#075985 54%,#00A6C8 100%);">' +
+        '<div id="mobile-header-wrap" class="relative z-40 shrink-0" style="filter:drop-shadow(0 10px 10px rgba(8,47,73,0.18));">' +
+        '<header id="mobile-main-header" class="relative z-10 overflow-hidden rounded-[0_0_28px_28px] px-3 pb-3 text-white backdrop-blur sm:px-4" style="padding-top:calc(env(safe-area-inset-top) + 10px);background:linear-gradient(135deg,#003E73 0%,#075985 54%,#00A6C8 100%);">' +
           '<div class="mx-auto max-w-md">' +
             '<div class="flex items-center gap-3">' +
               '<div class="min-w-0 flex-1">' +
@@ -4976,9 +5031,12 @@
             insightDespesasHtml(atual, anterior) +
           '</div>' +
         '</header>' +
+        '<div id="mobile-profile-pill" class="absolute left-1/2 z-0 w-max rounded-[0_0_14px_14px] border-0 px-6 py-1.5 text-center text-[13px] font-bold leading-tight text-white" style="top:calc(100% - 6px);max-width:calc(100% - 48px);opacity:0;transform:translate(-50%,var(--profile-pill-y,0%));transition:transform .28s cubic-bezier(.22,1,.36,1);will-change:transform;">' +
+          '<span class="relative z-10 block truncate">' + escapeHtml(nomeEmpresa(state.empresa)) + '</span>' +
+        '</div>' +
+        '</div>' +
         '<div id="mobile-main-scroll" data-preserve-scroll class="min-h-0 flex-1 overflow-y-auto overscroll-contain" style="padding-bottom:calc(env(safe-area-inset-bottom) + 82px);-webkit-overflow-scrolling:touch;">' +
-        '<div class="mx-auto grid w-full min-w-0 max-w-md gap-3 px-3 pt-3 sm:px-4">' +
-          '<div class="-mb-2 min-w-0 text-center"><p class="truncate text-[15px] font-semibold leading-5 ' + (state.darkMode ? 'text-slate-200' : 'text-slate-700') + '">' + escapeHtml(nomeEmpresa(state.empresa)) + '</p></div>' +
+        '<div class="mx-auto grid w-full min-w-0 max-w-md gap-3 px-3 pt-10 sm:px-4">' +
           alertaHtml().replace('mt-4', '') +
           (state.visao === 'home' ? homeHtml(atual, anterior) : (state.visao === 'agenda' ? agendaMobileHtml(atual) : listaDetalhadaHtml(atual))) +
           (state.visao === 'agenda' ? '' : rodapeMobileHtml()) +
@@ -7433,6 +7491,8 @@
         ? (ehFuncionarioPontoMobile() ? telaRedirecionandoPonto() : (state.validacaoTelefoneObrigatoria ? telaTelefoneObrigatorioMobile() : (state.modoCriarPerfil ? telaLoginWrapper(telaCriarPerfilInicial(), 'Criar perfil financeiro', 'Informe os dados do seu primeiro perfil.') : telaApp())))
         : (state.modoCriarPerfil ? telaLoginWrapper(telaCriarPerfilInicial(), 'Criar perfil financeiro', 'Informe os dados do seu primeiro perfil.') : telaLogin()));
     root.innerHTML = telaAtual + (state.chatIAAberto ? chatIAModalHtml() : '') + (state.mostrarPromptNotificacoes ? promptNotificacoesHtml() : '') + (state.tourAberto ? tourHtml() : '');
+    sincronizarGradienteHeaderPerfil();
+    configurarRecolhimentoPerfilHeader();
     var indicadorNav = document.querySelector('[data-nav-indicador]');
     if (indicadorNav) {
       var destinoNav = Number(indicadorNav.getAttribute('data-nav-destino')) || 0;
