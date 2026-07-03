@@ -131,7 +131,8 @@ Deno.serve(async (request) => {
       const { data: subs } = await supabase
         .from('push_subscriptions')
         .select('endpoint, p256dh, auth')
-        .in('user_id', usuariosEmpresa);
+        .in('user_id', usuariosEmpresa)
+        .eq('app_origem', 'mobile');
 
       const despesasEmpresa = lista.filter((x) => x.empresa_id === empresaId);
       const qtd = despesasEmpresa.length;

@@ -129,7 +129,7 @@
 
   async function registroServiceWorkerPonto() {
     if (!('serviceWorker' in navigator)) return null;
-    try { return await navigator.serviceWorker.register('/ponto-sw.js?v=1', { scope: '/ponto' }); }
+    try { return await navigator.serviceWorker.register('/ponto-sw.js?v=2', { scope: '/ponto' }); }
     catch (e) { return null; }
   }
 
@@ -138,7 +138,11 @@
       if (!('Notification' in window) || !('serviceWorker' in navigator)) return;
       var registro = await registroServiceWorkerPonto();
       if (!registro) return;
-      state.notificacoesAtivas = Notification.permission === 'granted' && Boolean(await registro.pushManager.getSubscription());
+      var inscricao = await registro.pushManager.getSubscription();
+      state.notificacoesAtivas = Notification.permission === 'granted' && Boolean(inscricao);
+      if (inscricao && state.usuario && state.usuario.id) {
+        await db.from('push_subscriptions').update({ app_origem: 'ponto', atualizado_em: new Date().toISOString() }).eq('endpoint', inscricao.endpoint);
+      }
     } catch (e) { state.notificacoesAtivas = false; }
   }
 
@@ -176,6 +180,7 @@
         p256dh: data.keys ? data.keys.p256dh : '',
         auth: data.keys ? data.keys.auth : '',
         user_agent: navigator.userAgent,
+        app_origem: 'ponto',
         atualizado_em: new Date().toISOString(),
       }, { onConflict: 'endpoint' });
       if (saved.error) throw saved.error;

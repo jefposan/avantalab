@@ -11,6 +11,7 @@
 - Web e mobile: cards, popups e menus com a nova identidade visual assimetrica.
 - Web e mobile: Ava e tutoriais atualizados com os recursos atuais do sistema.
 - Web e mobile: diversas correcoes de navegacao, rolagem, animacoes e responsividade.
+- Push: comunicados, agenda e despesas separados dos lembretes exclusivos do PWA Ponto.
 
 ## 1.3.4 - 2026-07-02
 

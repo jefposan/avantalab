@@ -497,8 +497,8 @@
       agenda: 'Agenda',
       categorias: 'Despesas por categoria',
       tipos: 'Total por tipo de despesa',
-      ultimasDespesas: 'Ultimas despesas',
-      ultimasReceitas: 'Ultimas receitas',
+      ultimasDespesas: 'Despesas do mês',
+      ultimasReceitas: 'Receitas do mês',
       totais: 'Totais',
       evolucaoDespesas: 'Evolucao das despesas',
       evolucaoReceitas: 'Evolucao das receitas',
@@ -1631,6 +1631,7 @@
         p256dh: dados.keys ? dados.keys.p256dh : '',
         auth: dados.keys ? dados.keys.auth : '',
         user_agent: navigator.userAgent,
+        app_origem: 'mobile',
         atualizado_em: new Date().toISOString(),
       }, { onConflict: 'endpoint' });
 
@@ -1686,7 +1687,11 @@
     try {
       if ('Notification' in window && Notification.permission === 'granted' && 'serviceWorker' in navigator && 'PushManager' in window) {
         var registro = await navigator.serviceWorker.ready;
-        ativas = Boolean(await registro.pushManager.getSubscription());
+        var inscricao = await registro.pushManager.getSubscription();
+        ativas = Boolean(inscricao);
+        if (inscricao && state.usuario && state.usuario.id) {
+          await db.from('push_subscriptions').update({ app_origem: 'mobile', atualizado_em: new Date().toISOString() }).eq('endpoint', inscricao.endpoint);
+        }
       }
     } catch (e) {}
     state.notificacoesAtivas = ativas;
@@ -5602,7 +5607,7 @@
 
     return (
       '<section class="overflow-hidden rounded-2xl bg-white shadow-sm">' +
-        '<div class="flex items-center justify-between gap-3 bg-red-50 px-4 py-3"><h2 class="text-sm font-black text-red-900">Ultimas despesas</h2><div class="flex items-center gap-2">' + (!pesquisando && state.ultimasDespesasExpandido && todos.length > 3 ? '<button id="toggle-ultimas-despesas" type="button" class="flex h-8 items-center justify-center rounded-full bg-white/80 px-3 text-xs font-black text-red-700 shadow-sm">Recolher</button>' : '') + '<button id="buscar-ultimas-despesas" type="button" class="flex h-8 w-8 items-center justify-center rounded-full bg-white/80 text-sm font-black text-red-700 shadow-sm" aria-label="' + (pesquisando ? 'Fechar busca' : 'Buscar despesas') + '">' + iconeBuscaUltimas(pesquisando) + '</button></div></div>' +
+        '<div class="flex items-center justify-between gap-3 px-4 py-3.5 text-white shadow-sm" style="background:linear-gradient(135deg,#7F1D3A 0%,#BE123C 100%)"><div class="flex min-w-0 items-center gap-2.5"><span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-white/15 bg-white/10"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 3h12v18l-3-2-3 2-3-2-3 2V3Z" stroke-linejoin="round"/><path d="M9 8h6M9 12h6" stroke-linecap="round"/></svg></span><div class="min-w-0"><h2 class="truncate text-sm font-black">Despesas do mês</h2><p class="mt-0.5 text-[9px] font-bold uppercase tracking-wide text-white/65">Lançamentos do período</p></div></div><div class="flex items-center gap-2">' + (!pesquisando && state.ultimasDespesasExpandido && todos.length > 3 ? '<button id="toggle-ultimas-despesas" type="button" class="flex h-8 items-center justify-center rounded-full border border-white/20 bg-white/10 px-3 text-xs font-black text-white shadow-sm backdrop-blur">Recolher</button>' : '') + '<button id="buscar-ultimas-despesas" type="button" class="flex h-8 w-8 items-center justify-center rounded-full border border-white/20 bg-white/10 text-sm font-black text-white shadow-sm backdrop-blur active:bg-white/20" aria-label="' + (pesquisando ? 'Fechar busca' : 'Buscar despesas') + '">' + iconeBuscaUltimas(pesquisando) + '</button></div></div>' +
         (state.ultimasDespesasBuscaAberta ? '<div class="px-4 pt-3"><div class="flex h-10 items-center gap-2 rounded-xl border border-red-100 bg-red-50/60 px-3"><input id="busca-ultimas-despesas" type="search" autocomplete="off" enterkeyhint="search" value="' + escapeHtml(state.ultimasDespesasBusca) + '" placeholder="Buscar descricao ou valor" style="font-size:16px" class="min-w-0 flex-1 bg-transparent text-base font-semibold text-slate-800 outline-none" /><button id="limpar-ultimas-despesas" type="button" class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-white text-sm font-black text-red-600 shadow-sm" aria-label="Limpar busca">&times;</button></div></div>' : '') +
         '<div class="grid gap-1 p-4" id="ultimas-despesas-lista">' +
           (itens.length ? itens.map(function (item) {
@@ -5627,7 +5632,7 @@
 
     return (
       '<section class="overflow-hidden rounded-2xl bg-white shadow-sm">' +
-        '<div class="flex items-center justify-between gap-3 bg-emerald-50 px-4 py-3"><h2 class="text-sm font-black text-emerald-900">Ultimas receitas</h2><div class="flex items-center gap-2">' + (!pesquisando && state.ultimasReceitasExpandido && todos.length > 3 ? '<button id="toggle-ultimas-receitas" type="button" class="flex h-8 items-center justify-center rounded-full bg-white/80 px-3 text-xs font-black text-emerald-700 shadow-sm">Recolher</button>' : '') + '<button id="buscar-ultimas-receitas" type="button" class="flex h-8 w-8 items-center justify-center rounded-full bg-white/80 text-sm font-black text-emerald-700 shadow-sm" aria-label="' + (pesquisando ? 'Fechar busca' : 'Buscar receitas') + '">' + iconeBuscaUltimas(pesquisando) + '</button></div></div>' +
+        '<div class="flex items-center justify-between gap-3 px-4 py-3.5 text-white shadow-sm" style="background:linear-gradient(135deg,#065F46 0%,#0F8A78 100%)"><div class="flex min-w-0 items-center gap-2.5"><span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-white/15 bg-white/10"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 16 10 10l4 4 6-7" stroke-linecap="round" stroke-linejoin="round"/><path d="M15 7h5v5" stroke-linecap="round" stroke-linejoin="round"/></svg></span><div class="min-w-0"><h2 class="truncate text-sm font-black">Receitas do mês</h2><p class="mt-0.5 text-[9px] font-bold uppercase tracking-wide text-white/65">Lançamentos do período</p></div></div><div class="flex items-center gap-2">' + (!pesquisando && state.ultimasReceitasExpandido && todos.length > 3 ? '<button id="toggle-ultimas-receitas" type="button" class="flex h-8 items-center justify-center rounded-full border border-white/20 bg-white/10 px-3 text-xs font-black text-white shadow-sm backdrop-blur">Recolher</button>' : '') + '<button id="buscar-ultimas-receitas" type="button" class="flex h-8 w-8 items-center justify-center rounded-full border border-white/20 bg-white/10 text-sm font-black text-white shadow-sm backdrop-blur active:bg-white/20" aria-label="' + (pesquisando ? 'Fechar busca' : 'Buscar receitas') + '">' + iconeBuscaUltimas(pesquisando) + '</button></div></div>' +
         (state.ultimasReceitasBuscaAberta ? '<div class="px-4 pt-3"><div class="flex h-10 items-center gap-2 rounded-xl border border-emerald-100 bg-emerald-50/60 px-3"><input id="busca-ultimas-receitas" type="search" autocomplete="off" enterkeyhint="search" value="' + escapeHtml(state.ultimasReceitasBusca) + '" placeholder="Buscar descricao ou valor" style="font-size:16px" class="min-w-0 flex-1 bg-transparent text-base font-semibold text-slate-800 outline-none" /><button id="limpar-ultimas-receitas" type="button" class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-white text-sm font-black text-emerald-600 shadow-sm" aria-label="Limpar busca">&times;</button></div></div>' : '') +
         '<div class="grid gap-1 p-4" id="ultimas-receitas-lista">' +
           (itens.length ? itens.map(function (item) {

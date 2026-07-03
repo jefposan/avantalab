@@ -65,7 +65,8 @@ Deno.serve(async (req) => {
     // Push para todas as inscricoes
     const { data: subs } = await db
       .from("push_subscriptions")
-      .select("id, endpoint, p256dh, auth");
+      .select("id, endpoint, p256dh, auth")
+      .eq("app_origem", "mobile");
 
     const payload = JSON.stringify({ titulo, corpo, url: "/mobile" });
     let enviados = 0;

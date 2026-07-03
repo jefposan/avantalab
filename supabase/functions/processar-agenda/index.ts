@@ -105,7 +105,8 @@ Deno.serve(async (req) => {
       const { data: subs } = await db
         .from("push_subscriptions")
         .select("id, endpoint, p256dh, auth")
-        .eq("user_id", item.user_id);
+        .eq("user_id", item.user_id)
+        .eq("app_origem", "mobile");
 
       const payload = JSON.stringify({
         titulo: item.titulo,

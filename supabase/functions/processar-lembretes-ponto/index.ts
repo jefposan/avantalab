@@ -75,7 +75,7 @@ Deno.serve(async () => {
     const userIds = elegiveis.map((item) => item.user_id);
     const [{ data: registros, error: registrosError }, { data: subscriptions, error: subscriptionsError }] = await Promise.all([
       db.from('ponto_registros').select('user_id, tipo').eq('dia', now.iso).in('user_id', userIds),
-      db.from('push_subscriptions').select('id, user_id, endpoint, p256dh, auth').in('user_id', userIds),
+      db.from('push_subscriptions').select('id, user_id, endpoint, p256dh, auth').in('user_id', userIds).eq('app_origem', 'ponto'),
     ]);
     if (registrosError) throw registrosError;
     if (subscriptionsError) throw subscriptionsError;

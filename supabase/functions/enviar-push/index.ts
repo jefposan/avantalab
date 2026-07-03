@@ -86,7 +86,8 @@ async function enviarParaUsuarios(
   const { data: subs } = await db
     .from("push_subscriptions")
     .select("id, endpoint, p256dh, auth")
-    .in("user_id", userIds);
+    .in("user_id", userIds)
+    .eq("app_origem", "mobile");
 
   const payload = JSON.stringify({ titulo, corpo, url });
   let enviados = 0;
