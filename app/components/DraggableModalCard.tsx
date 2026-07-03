@@ -66,7 +66,7 @@ export default function DraggableModalCard({ children, className = '', style, ..
   return (
     <div
       ref={cardRef}
-      className={`draggable-modal-card ${className}`}
+      className={`draggable-modal-card card-radius-avantalab-lg ${className}`}
       style={{ ...style, transform: desktop ? `translate3d(${posicao.x}px, ${posicao.y}px, 0)` : undefined }}
       onPointerDown={iniciar}
       onPointerMove={mover}

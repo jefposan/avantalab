@@ -61,7 +61,7 @@ function Coluna({ id, items, isEmpty, arrastando, className, children }: { id: s
   const { setNodeRef, isOver } = useDroppable({ id });
   const dropZone = isEmpty && arrastando;
   return (
-    <div ref={setNodeRef} className={`flex min-h-0 flex-col gap-6 ${className || ''} ${dropZone ? `min-h-[120px] justify-center rounded-2xl border-2 border-dashed ${isOver ? 'border-cyan-400 bg-cyan-50/40' : 'border-slate-300/60'}` : ''}`}>
+    <div ref={setNodeRef} className={`card-radius-avantalab flex min-h-0 flex-col gap-6 ${className || ''} ${dropZone ? `min-h-[120px] justify-center rounded-2xl border-2 border-dashed ${isOver ? 'border-cyan-400 bg-cyan-50/40' : 'border-slate-300/60'}` : ''}`}>
       <SortableContext items={items} strategy={verticalListSortingStrategy}>
         {children}
       </SortableContext>
@@ -75,7 +75,7 @@ export default function Graficos({ meses, lancamentos, faturamentos, despesasCad
   const bgCard = darkMode ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-100';
   const textStrong = darkMode ? 'text-white' : 'text-slate-800';
   const textMuted = darkMode ? 'text-slate-400' : 'text-slate-500';
-  const cardBase = `${bgCard} min-w-0 rounded-2xl shadow-lg border p-5 sm:p-6 flex flex-col border-t-4`;
+  const cardBase = `${bgCard} card-radius-avantalab min-w-0 rounded-2xl shadow-lg border p-5 sm:p-6 flex flex-col border-t-4`;
   const cardStyle = { borderTopColor: corPrimaria } as const;
   const ehEmpresa = tipoPerfil !== 'pessoal';
 
@@ -566,7 +566,7 @@ export default function Graficos({ meses, lancamentos, faturamentos, despesasCad
         </button>
 
         {gerenciadorAberto && (
-          <div className={`absolute right-0 top-10 z-40 w-[min(22rem,calc(100vw-1.5rem))] rounded-2xl border p-4 shadow-2xl ${darkMode ? 'border-slate-700 bg-slate-900 text-slate-100' : 'border-slate-200 bg-white text-slate-900'}`}>
+          <div className={`card-radius-avantalab-lg absolute right-0 top-10 z-40 w-[min(22rem,calc(100vw-1.5rem))] rounded-2xl border p-4 shadow-2xl ${darkMode ? 'border-slate-700 bg-slate-900 text-slate-100' : 'border-slate-200 bg-white text-slate-900'}`}>
             <div className="mb-3 flex items-center justify-between gap-3">
               <div><h3 className="text-sm font-black">Organizar blocos</h3><p className={`mt-0.5 text-xs font-semibold ${textMuted}`}>Exiba, oculte, arraste e redimensione os gráficos.</p></div>
               <button type="button" onClick={() => setGerenciadorAberto(false)} className={`flex h-8 w-8 items-center justify-center rounded-lg text-lg font-black ${darkMode ? 'hover:bg-slate-800' : 'hover:bg-slate-100'}`} aria-label="Fechar">×</button>

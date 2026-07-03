@@ -463,7 +463,7 @@ export default function Relatorio({
 </div>
 
       <div
-        className={`mt-3 ${bgCard} p-2.5 rounded-xl shadow-lg border-x border-b border-t-[4px]`}
+        className={`card-radius-avantalab mt-3 ${bgCard} p-2.5 rounded-xl shadow-lg border-x border-b border-t-[4px]`}
         style={{ borderTopColor: corPrimaria }}
       >
         <div className="flex flex-col lg:flex-row lg:items-end lg:justify-center gap-3 mt-3 mb-4 border-b border-slate-200/20 pb-3">

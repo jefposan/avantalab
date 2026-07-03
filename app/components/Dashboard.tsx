@@ -69,7 +69,7 @@ function ColunaKanban({ id, items, arrastando, className, children }: { id: keyo
   return (
     <div
       ref={setNodeRef}
-      className={`flex min-h-0 flex-col gap-6 ${className || ''} ${
+      className={`card-radius-avantalab flex min-h-0 flex-col gap-6 ${className || ''} ${
         exibirAreaSoltar
           ? `min-h-[120px] justify-center rounded-2xl border-2 border-dashed ${isOver ? 'border-cyan-400 bg-cyan-50/40' : 'border-slate-300/60'}`
           : ''
@@ -606,7 +606,7 @@ const mostrarComparativoResumoDash =
 
   const cardsById: Record<string, React.ReactNode> = {
     aConfirmar: temAConfirmar ? (
-      <div className="flex max-h-[60vh] w-full flex-col overflow-hidden rounded-2xl border border-amber-200 bg-white shadow-sm">
+      <div className="card-radius-avantalab flex max-h-[60vh] w-full flex-col overflow-hidden rounded-2xl border border-amber-200 bg-white shadow-sm">
         <div className="flex shrink-0 items-center gap-2 border-b border-amber-100 px-4 py-3">
           <svg className="h-5 w-5 shrink-0" style={{ color: '#d97706' }} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6 6 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
@@ -649,7 +649,7 @@ const mostrarComparativoResumoDash =
     ) : null,
 
     controlePonto: pontoDisponivel ? (
-      <div className={`${bgCard} w-full overflow-hidden rounded-2xl border-2 shadow-lg transition-colors`} style={{ borderColor: corPrimaria }}>
+      <div className={`${bgCard} card-radius-avantalab w-full overflow-hidden rounded-2xl border-2 shadow-lg transition-colors`} style={{ borderColor: corPrimaria }}>
         <div className="flex items-center justify-between gap-3 px-5 py-3 text-sm font-bold uppercase tracking-wider" style={{ backgroundColor: corPrimaria, color: textoSobreCorPrimaria }}>
           <span className="min-w-0 truncate">Controle de ponto</span>
           <div className="flex items-center gap-2">
@@ -701,8 +701,8 @@ const mostrarComparativoResumoDash =
     ) : null,
 
     saldo: (
-      <div className={`${bgCard} relative w-full rounded-2xl shadow-lg border-2 overflow-visible transition-colors`} style={{ borderColor: corPrimaria }}>
-        <div className="text-center text-sm font-bold uppercase tracking-wider flex justify-between px-6 py-3 items-center rounded-t-[14px]" style={{ backgroundColor: corPrimaria, color: textoSobreCorPrimaria }}>
+      <div className={`${bgCard} card-radius-avantalab relative w-full rounded-2xl shadow-lg border-2 overflow-visible transition-colors`} style={{ borderColor: corPrimaria }}>
+        <div className="flex items-center justify-between rounded-tl-[14px] rounded-tr-[28px] px-6 py-3 text-center text-sm font-bold uppercase tracking-wider" style={{ backgroundColor: corPrimaria, color: textoSobreCorPrimaria }}>
           <span>Saldo do mês</span>
           <div className="flex items-center gap-2">
             <select value={meses[saldoCardMesIdx]} onChange={e => setSaldoCardMesIdx(meses.indexOf(e.target.value))} className="text-xs rounded p-1 outline-none font-bold cursor-pointer border" style={{ color: textoSobreCorPrimaria, backgroundColor: corEhClara(corPrimaria) ? 'rgba(15, 23, 42, 0.08)' : 'rgba(0, 0, 0, 0.20)', borderColor: corEhClara(corPrimaria) ? 'rgba(15, 23, 42, 0.18)' : 'rgba(255, 255, 255, 0.12)' }}>
@@ -730,7 +730,7 @@ const mostrarComparativoResumoDash =
     ),
 
     resumoFinanceiro: (
-      <div className={`${bgCard} w-full rounded-2xl shadow-lg border-2 overflow-hidden transition-colors`} style={{ borderColor: corPrimaria }}>
+      <div className={`${bgCard} card-radius-avantalab w-full rounded-2xl shadow-lg border-2 overflow-hidden transition-colors`} style={{ borderColor: corPrimaria }}>
         <div className="text-center text-sm font-bold uppercase tracking-wider flex justify-between px-6 py-3 items-center" style={{ backgroundColor: corPrimaria, color: textoSobreCorPrimaria }}>
           <span>Resumo Financeiro</span>
           <div className="flex items-center gap-2">
@@ -777,7 +777,7 @@ const mostrarComparativoResumoDash =
     ),
 
     evolucaoMensal: (
-      <div className={`${bgCard} w-full rounded-2xl shadow-lg border-2 overflow-visible transition-colors`} style={{ borderColor: corPrimaria }}>
+      <div className={`${bgCard} card-radius-avantalab w-full rounded-2xl shadow-lg border-2 overflow-visible transition-colors`} style={{ borderColor: corPrimaria }}>
         <div className="flex items-start justify-between gap-3 px-5 pb-3 pt-4">
           <div className="min-w-0">
             <h3 className={`text-base font-black ${textStrong}`}>Evolução mensal</h3>
@@ -895,7 +895,7 @@ const mostrarComparativoResumoDash =
     ),
 
     registrarEntradas: (
-      <div className={bgCard + " w-full rounded-2xl shadow-lg border-2 overflow-hidden transition-colors"} style={{ borderColor: corPrimaria }}>
+      <div className={bgCard + " card-radius-avantalab w-full rounded-2xl shadow-lg border-2 overflow-hidden transition-colors"} style={{ borderColor: corPrimaria }}>
         <div className="text-center text-sm font-bold uppercase tracking-wider flex justify-between px-6 py-3 items-center" style={{ backgroundColor: corPrimaria, color: textoSobreCorPrimaria }}>
           <span>REGISTRAR ENTRADAS</span>
           <div className="flex items-center gap-2">
@@ -958,7 +958,7 @@ const mostrarComparativoResumoDash =
         </div>
 
       <section
-        className={`${bgCard} w-full p-6 rounded-2xl shadow-lg border border-t-4 transition-colors`}
+        className={`${bgCard} card-radius-avantalab w-full p-6 rounded-2xl shadow-lg border border-t-4 transition-colors`}
         style={{ borderTopColor: corPrimaria }}
       >
         <h2 className={`text-2xl font-black ${textStrong} mb-10 flex items-center`}>
@@ -1071,7 +1071,7 @@ const mostrarComparativoResumoDash =
             onClick={() => setGerenciadorAberto(false)}
             aria-label="Fechar organização de blocos"
           />
-          <div className={`absolute right-0 top-7 z-40 w-[min(20rem,calc(100vw-1.5rem))] max-w-full rounded-2xl border p-4 shadow-2xl ${
+          <div className={`card-radius-avantalab-lg absolute right-0 top-7 z-40 w-[min(20rem,calc(100vw-1.5rem))] max-w-full rounded-2xl border p-4 shadow-2xl ${
             darkMode ? 'border-slate-700 bg-slate-900 text-slate-100' : 'border-slate-200 bg-white text-slate-900'
           }`}>
             <div className="mb-3 flex items-center justify-between gap-3">

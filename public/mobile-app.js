@@ -135,6 +135,7 @@
     changelog: null,
     changelogCarregando: false,
     darkMode: false,
+    notificacoesAtivas: false,
     installPrompt: null,
     isIos: /iphone|ipad|ipod/i.test(navigator.userAgent),
     novaCategoriaNome: '',
@@ -1365,6 +1366,7 @@
     state.menuAberto = true;
     state.menuAnimacao = 'entrar';
     render();
+    atualizarEstadoNotificacoesMobile(true);
     setTimeout(function () {
       if (state.menuAberto && state.menuAnimacao === 'entrar') state.menuAnimacao = '';
     }, 390);
@@ -1636,6 +1638,7 @@
         mostrarToast('Nao foi possivel salvar a inscricao.');
         return;
       }
+      state.notificacoesAtivas = true;
       mostrarToast('Notificacoes ativadas neste aparelho.');
     } catch (e) {
       mostrarToast('Falha ao ativar notificacoes.');
@@ -1653,6 +1656,7 @@
           await db.from('push_subscriptions').delete().eq('endpoint', endpoint);
         }
       }
+      state.notificacoesAtivas = false;
       atualizarBadgeApp(0);
       mostrarToast('Notificacoes desativadas neste aparelho.');
     } catch (e) {
@@ -1671,10 +1675,22 @@
 
   // Liga/desliga. Se a permissao ainda nao foi dada, chama ativar
   // direto (o iOS exige o pedido de permissao no proprio toque).
-  function alternarNotificacoesMobile() {
-    if (!('Notification' in window)) { ativarNotificacoesMobile(); return; }
-    if (Notification.permission === 'granted') desativarOuReativarNotificacoes();
-    else ativarNotificacoesMobile();
+  async function alternarNotificacoesMobile() {
+    if (!('Notification' in window)) return ativarNotificacoesMobile();
+    if (Notification.permission === 'granted') return desativarOuReativarNotificacoes();
+    return ativarNotificacoesMobile();
+  }
+
+  async function atualizarEstadoNotificacoesMobile(renderizar) {
+    var ativas = false;
+    try {
+      if ('Notification' in window && Notification.permission === 'granted' && 'serviceWorker' in navigator && 'PushManager' in window) {
+        var registro = await navigator.serviceWorker.ready;
+        ativas = Boolean(await registro.pushManager.getSubscription());
+      }
+    } catch (e) {}
+    state.notificacoesAtivas = ativas;
+    if (renderizar && state.menuAberto) render();
   }
 
   // Na primeira abertura (uma vez por aparelho), oferece ativar as
@@ -5934,7 +5950,9 @@
     var configAberto = !!state.menuConfigAberto;
     var configAnimacao = state.menuConfigAnimacao === 'sair'
       ? 'animation:configSubOut .22s ease-in forwards;transform-origin:top;'
-      : 'animation:configSubIn .26s cubic-bezier(.22,1,.36,1) both;transform-origin:top;';
+      : (state.menuConfigAnimacao === 'entrar'
+        ? 'animation:configSubIn .26s cubic-bezier(.22,1,.36,1) both;transform-origin:top;'
+        : '');
     var saindo = state.menuAnimacao === 'sair';
     var entrando = state.menuAnimacao === 'entrar';
     var animacaoOverlay = saindo ? 'animation:menuOverlayOut .28s ease forwards;' : (entrando ? 'animation:menuOverlayIn .24s ease both;' : '');
@@ -5943,53 +5961,55 @@
       : (entrando ? 'will-change:transform;animation:menuSlideIn .38s cubic-bezier(.22,1,.36,1) both;' : '');
 
     var configSubItens = configAberto ? (
-      '<div class="cfg-sub-group mt-1 grid gap-1 overflow-hidden rounded-2xl border p-1.5 ' + (dk ? 'border-slate-700 bg-slate-800/60' : 'border-cyan-100') + '" style="' + configAnimacao + (dk ? '' : 'background:#FCFFFF;box-shadow:inset 0 1px 0 rgba(255,255,255,.8);') + '">' +
-        '<button id="menu-duplicados" type="button" class="rounded-xl border ' + bordaBase + ' px-2.5 py-1.5 text-left shadow-[0_4px_11px_rgba(15,23,42,.05)]" style="' + (dk ? '' : 'background:linear-gradient(90deg,#EAFBF3 0%,#FFFFFF 78%);border-color:#BFE8D5;') + '">' +
+      '<div class="cfg-sub-group mt-1 grid gap-1 overflow-hidden rounded-[12px_24px_24px_24px] border p-1.5 pl-5 ' + (dk ? 'border-slate-700 bg-slate-800/60' : 'border-cyan-100') + '" style="' + configAnimacao + (dk ? '' : 'background:#FCFFFF;box-shadow:inset 0 1px 0 rgba(255,255,255,.8);') + '">' +
+        '<button id="menu-duplicados" type="button" class="rounded-[12px_24px_24px_24px] border ' + bordaBase + ' px-2.5 py-1.5 text-left shadow-[0_4px_11px_rgba(15,23,42,.05)]" style="' + (dk ? '' : 'background:linear-gradient(90deg,#EAFBF3 0%,#FFFFFF 78%);border-color:#BFE8D5;') + '">' +
           '<div class="flex items-center gap-2">' +
-            '<span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-[10px] font-black" style="background:#DDF7EB;color:#0F8A6A">D</span>' +
+            '<span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg" style="background:#DDF7EB;color:#0F8A6A">' + iconeMenuLateralSvg('menu-duplicados') + '</span>' +
             '<span class="min-w-0 flex-1"><span class="block text-[11px] font-black">Duplicados</span><span class="mt-0.5 block truncate text-[9px] font-semibold text-slate-500">' + (state.duplicadosAtivo ? 'Avisar despesas repetidas' : 'Nao avisar repeticoes') + '</span></span>' +
-            '<span class="relative h-5 w-9 shrink-0 rounded-full p-0.5 shadow-inner ' + (state.duplicadosAtivo ? 'bg-emerald-500' : 'bg-rose-400') + '"><span class="block h-4 w-4 rounded-full bg-white shadow-md transition-transform ' + (state.duplicadosAtivo ? 'translate-x-4' : 'translate-x-0') + '"></span></span>' +
+            chaveMenuHtml(state.duplicadosAtivo) +
           '</div>' +
         '</button>' +
-        '<button id="menu-gerenciar" type="button" class="rounded-xl border ' + bordaBase + ' px-2.5 py-1.5 text-left shadow-[0_4px_11px_rgba(15,23,42,.05)] active:scale-[0.99]" style="' + (dk ? '' : 'background:linear-gradient(90deg,#EAF6FF 0%,#FFFFFF 78%);border-color:#C8E4F6;') + '">' +
+        '<button id="menu-gerenciar" type="button" class="rounded-[12px_24px_24px_24px] border ' + bordaBase + ' px-2.5 py-1.5 text-left shadow-[0_4px_11px_rgba(15,23,42,.05)] active:scale-[0.99]" style="' + (dk ? '' : 'background:linear-gradient(90deg,#EAF6FF 0%,#FFFFFF 78%);border-color:#C8E4F6;') + '">' +
           '<div class="flex items-center gap-2">' +
-            '<span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-[10px] font-black" style="background:#DDF0FF;color:#1783C7">P</span>' +
+            '<span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg" style="background:#DDF0FF;color:#1783C7">' + iconeMenuLateralSvg('menu-gerenciar') + '</span>' +
             '<span class="min-w-0 flex-1"><span class="block text-[11px] font-black">Gerenciar perfil</span><span class="mt-0.5 block truncate text-[9px] font-semibold text-slate-500">Editar, criar ou excluir perfil</span></span>' +
           '</div>' +
         '</button>' +
-        '<button id="menu-tema" type="button" class="rounded-xl border ' + bordaBase + ' px-2.5 py-1.5 text-left shadow-[0_4px_11px_rgba(15,23,42,.05)]" style="' + (dk ? '' : 'background:linear-gradient(90deg,#EFEEFF 0%,#FFFFFF 78%);border-color:#D5D3FA;') + '">' +
+        '<button id="menu-tema" type="button" class="rounded-[12px_24px_24px_24px] border ' + bordaBase + ' px-2.5 py-1.5 text-left shadow-[0_4px_11px_rgba(15,23,42,.05)]" style="' + (dk ? '' : 'background:linear-gradient(90deg,#EFEEFF 0%,#FFFFFF 78%);border-color:#D5D3FA;') + '">' +
           '<div class="flex items-center gap-2">' +
-            '<span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-[9px] font-black" style="background:#E4E6FF;color:#2946A8">' + (dk ? 'ON' : 'OFF') + '</span>' +
+            '<span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg" style="background:#E4E6FF;color:#2946A8">' + iconeMenuLateralSvg('menu-tema') + '</span>' +
             '<span class="min-w-0 flex-1"><span class="block text-[11px] font-black">Modo escuro</span><span class="mt-0.5 block truncate text-[9px] font-semibold text-slate-500">' + (dk ? 'Ativo' : 'Inativo') + '</span></span>' +
+            chaveMenuHtml(dk) +
           '</div>' +
         '</button>' +
-        '<button id="menu-notificacoes" type="button" class="rounded-xl border ' + bordaBase + ' px-2.5 py-1.5 text-left shadow-[0_4px_11px_rgba(15,23,42,.05)] active:scale-[0.99]" style="' + (dk ? '' : 'background:linear-gradient(90deg,#E8F9FD 0%,#FFFFFF 78%);border-color:#C4EAF4;') + '">' +
+        '<button id="menu-notificacoes" type="button" class="rounded-[12px_24px_24px_24px] border ' + bordaBase + ' px-2.5 py-1.5 text-left shadow-[0_4px_11px_rgba(15,23,42,.05)] active:scale-[0.99]" style="' + (dk ? '' : 'background:linear-gradient(90deg,#E8F9FD 0%,#FFFFFF 78%);border-color:#C4EAF4;') + '">' +
           '<div class="flex items-center gap-2">' +
-            '<span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-[10px] font-black" style="background:#D7F2F8;color:#167FA0">N</span>' +
-            '<span class="min-w-0 flex-1"><span class="block text-[11px] font-black">Notificacoes</span><span class="mt-0.5 block truncate text-[9px] font-semibold text-slate-500">Ativar ou desativar avisos no celular</span></span>' +
+            '<span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg" style="background:#D7F2F8;color:#167FA0">' + iconeMenuLateralSvg('menu-notificacoes') + '</span>' +
+            '<span class="min-w-0 flex-1"><span class="block text-[11px] font-black">Notificacoes</span><span class="mt-0.5 block truncate text-[9px] font-semibold text-slate-500">' + (state.notificacoesAtivas ? 'Ativas neste aparelho' : 'Inativas neste aparelho') + '</span></span>' +
+            chaveMenuHtml(state.notificacoesAtivas) +
           '</div>' +
         '</button>' +
-        '<button id="menu-organizar-dashboard" type="button" class="rounded-xl border ' + bordaBase + ' px-2.5 py-1.5 text-left shadow-[0_4px_11px_rgba(15,23,42,.05)] active:scale-[0.99]" style="' + (dk ? '' : 'background:linear-gradient(90deg,#EAF4FF 0%,#FFFFFF 78%);border-color:#C9DEF6;') + '">' +
+        '<button id="menu-organizar-dashboard" type="button" class="rounded-[12px_24px_24px_24px] border ' + bordaBase + ' px-2.5 py-1.5 text-left shadow-[0_4px_11px_rgba(15,23,42,.05)] active:scale-[0.99]" style="' + (dk ? '' : 'background:linear-gradient(90deg,#EAF4FF 0%,#FFFFFF 78%);border-color:#C9DEF6;') + '">' +
           '<div class="flex items-center gap-2">' +
-            '<span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-sm font-black" style="background:#E0EEFF;color:#2383F0">&#8597;</span>' +
+            '<span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg" style="background:#E0EEFF;color:#2383F0">' + iconeMenuLateralSvg('menu-organizar-dashboard') + '</span>' +
             '<span class="min-w-0 flex-1"><span class="block text-[11px] font-black">Organizar Dashboard</span><span class="mt-0.5 block truncate text-[9px] font-semibold text-slate-500">Definir a ordem dos cards</span></span>' +
           '</div>' +
         '</button>' +
-        '<button id="menu-usuario" type="button" class="rounded-xl border ' + bordaBase + ' px-2.5 py-1.5 text-left shadow-[0_4px_11px_rgba(15,23,42,.05)] active:scale-[0.99]" style="' + (dk ? '' : 'background:linear-gradient(90deg,#E8FAF7 0%,#FFFFFF 78%);border-color:#BFE5E0;') + '">' +
+        '<button id="menu-usuario" type="button" class="rounded-[12px_24px_24px_24px] border ' + bordaBase + ' px-2.5 py-1.5 text-left shadow-[0_4px_11px_rgba(15,23,42,.05)] active:scale-[0.99]" style="' + (dk ? '' : 'background:linear-gradient(90deg,#E8FAF7 0%,#FFFFFF 78%);border-color:#BFE5E0;') + '">' +
           '<div class="flex items-center gap-2">' +
-            '<span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-[10px] font-black" style="background:#D5F3EF;color:#0F8A8C">U</span>' +
+            '<span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg" style="background:#D5F3EF;color:#0F8A8C">' + iconeMenuLateralSvg('menu-usuario') + '</span>' +
             '<span class="min-w-0 flex-1"><span class="block text-[11px] font-black">Usuarios</span><span class="mt-0.5 block truncate text-[9px] font-semibold text-slate-500">' + escapeHtml(perfilFormatado(state.empresa && state.empresa.perfil)) + '</span></span>' +
           '</div>' +
         '</button>' +
-        '<button id="menu-backup" type="button" class="rounded-xl border ' + bordaBase + ' px-2.5 py-1.5 text-left shadow-[0_4px_11px_rgba(15,23,42,.05)] active:scale-[0.99]" style="' + (dk ? '' : 'background:linear-gradient(90deg,#EAF3FF 0%,#FFFFFF 78%);border-color:#C8DCF5;') + '">' +
+        '<button id="menu-backup" type="button" class="rounded-[12px_24px_24px_24px] border ' + bordaBase + ' px-2.5 py-1.5 text-left shadow-[0_4px_11px_rgba(15,23,42,.05)] active:scale-[0.99]" style="' + (dk ? '' : 'background:linear-gradient(90deg,#EAF3FF 0%,#FFFFFF 78%);border-color:#C8DCF5;') + '">' +
           '<div class="flex items-center gap-2">' +
-            '<span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-sm font-black" style="background:#DFECFF;color:#2580E8">&#8595;</span>' +
+            '<span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg" style="background:#DFECFF;color:#2580E8">' + iconeMenuLateralSvg('menu-backup') + '</span>' +
             '<span class="min-w-0 flex-1"><span class="block text-[11px] font-black">Backup</span><span class="mt-0.5 block truncate text-[9px] font-semibold text-slate-500">Exportar os dados do perfil</span></span>' +
           '</div>' +
         '</button>' +
-        '<button id="menu-restauracao" type="button" class="rounded-xl border ' + bordaBase + ' px-2.5 py-1.5 text-left shadow-[0_4px_11px_rgba(15,23,42,.05)] active:scale-[0.99]" style="' + (dk ? '' : 'background:linear-gradient(90deg,#EEEEFF 0%,#FFFFFF 78%);border-color:#D2D2F1;') + '">' +
+        '<button id="menu-restauracao" type="button" class="rounded-[12px_24px_24px_24px] border ' + bordaBase + ' px-2.5 py-1.5 text-left shadow-[0_4px_11px_rgba(15,23,42,.05)] active:scale-[0.99]" style="' + (dk ? '' : 'background:linear-gradient(90deg,#EEEEFF 0%,#FFFFFF 78%);border-color:#D2D2F1;') + '">' +
           '<div class="flex items-center gap-2">' +
-            '<span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-sm font-black" style="background:#E3E7FF;color:#1480A1">&#8635;</span>' +
+            '<span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg" style="background:#E3E7FF;color:#1480A1">' + iconeMenuLateralSvg('menu-restauracao') + '</span>' +
             '<span class="min-w-0 flex-1"><span class="block text-[11px] font-black">Restauracao</span><span class="mt-0.5 block truncate text-[9px] font-semibold text-slate-500">Importar um backup do AvantaLab</span></span>' +
           '</div>' +
         '</button>' +
@@ -5999,7 +6019,7 @@
     return (
       '<div id="menu-overlay" class="fixed inset-0 z-50 bg-slate-950/55" style="' + animacaoOverlay + '">' +
         '<aside id="menu-aside" data-preserve-scroll class="h-full w-[84vw] max-w-[348px] overflow-y-auto rounded-r-3xl ' + (dk ? 'bg-slate-950 text-slate-100' : 'text-slate-900') + ' p-3 shadow-2xl" style="background:' + (dk ? '#020617' : 'linear-gradient(180deg,#F8FBFF 0%,#F4F8FC 100%)') + ';padding-bottom:calc(env(safe-area-inset-bottom) + 82px);' + animacaoPainel + '">' +
-          '<div class="relative mb-3 overflow-hidden rounded-3xl border border-white/20 p-4 text-white shadow-xl shadow-sky-950/15" style="background-image:radial-gradient(circle at 86% 18%,rgba(255,255,255,.2),transparent 28%),linear-gradient(135deg,#073B78 0%,#007EA7 55%,#00BFD1 100%);">' +
+          '<div class="relative mb-3 overflow-hidden rounded-[16px_32px_32px_32px] border border-white/20 p-4 text-white shadow-xl shadow-sky-950/15" style="background-image:radial-gradient(circle at 86% 18%,rgba(255,255,255,.2),transparent 28%),linear-gradient(135deg,#073B78 0%,#007EA7 55%,#00BFD1 100%);">' +
             '<div class="pointer-events-none absolute -bottom-8 -right-6 h-24 w-32 rounded-[50%] border border-white/10"></div>' +
             '<div class="flex items-start justify-between gap-3">' +
               '<div class="relative min-w-0"><p class="text-[9px] font-black uppercase tracking-[0.28em] text-cyan-100">AvantaLab</p><h2 class="mt-1 truncate text-lg font-black">' + escapeHtml(nomeEmpresa(state.empresa)) + '</h2><p class="mt-1 truncate text-[11px] font-semibold text-cyan-50/90">' + escapeHtml(state.usuario && state.usuario.email ? state.usuario.email : 'Usuario logado') + '</p></div>' +
@@ -6015,7 +6035,7 @@
             menuBotaoHtml('menu-despesas-fixas', 'Despesas fixas', 'Lancamentos automaticos mensais', '&#10227;') +
             menuBotaoHtml('menu-ajuda-categorias', 'Instrucoes sobre categorias', 'Como organizar seus gastos', '?') +
             menuBotaoHtml('menu-tutorial', 'Tutorial', 'Como usar o AvantaLab', '&#127891;') +
-            '<button id="menu-config-toggle" type="button" class="rounded-[14px] border px-2.5 py-1.5 text-left shadow-[0_5px_13px_rgba(15,23,42,.07)] transition active:scale-[0.99] ' + (dk ? 'border-slate-700 bg-slate-900' : '') + '" style="' + (dk ? '' : (configAberto ? 'background:linear-gradient(90deg,#E8FAFD 0%,#F3FBFF 100%);border-color:#79DCE9;' : 'background:linear-gradient(90deg,#EDF6FF 0%,#FFFFFF 72%);border-color:#C8DFF5;')) + '">' +
+            '<button id="menu-config-toggle" type="button" class="rounded-[14px_26px_26px_26px] border px-2.5 py-2 text-left shadow-[0_5px_13px_rgba(15,23,42,.07)] transition active:scale-[0.99] ' + (dk ? 'border-slate-700 bg-slate-900' : '') + '" style="' + (dk ? '' : (configAberto ? 'background:linear-gradient(90deg,#E8FAFD 0%,#F3FBFF 100%);border-color:#79DCE9;' : 'background:linear-gradient(90deg,#EDF6FF 0%,#FFFFFF 72%);border-color:#C8DFF5;')) + '">' +
               '<div class="flex items-center gap-2">' +
                 '<span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-white shadow-sm" style="background:linear-gradient(135deg,#0284C7,#075985)">' + iconeMenuLateralSvg('menu-config-toggle') + '</span>' +
                 '<span class="min-w-0 flex-1"><span class="block text-xs font-black leading-none">Configuracoes</span><span class="mt-1 block truncate text-[10px] font-semibold leading-none text-slate-500">Perfil, tema e preferencias</span></span>' +
@@ -6023,8 +6043,8 @@
               '</div>' +
             '</button>' +
             configSubItens +
-            '<button id="menu-feedback" type="button" class="rounded-[14px] border border-cyan-300 px-2.5 py-1.5 text-left shadow-[0_6px_15px_rgba(8,145,178,.13)] transition active:scale-[0.99]" style="background:radial-gradient(circle at 90% 50%,rgba(20,184,166,.18),transparent 28%),linear-gradient(135deg,#E6FFFB 0%,#CFFAFE 100%)"><div class="flex items-center gap-2"><span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-white shadow-sm" style="background:linear-gradient(135deg,#06B6D4,#0891B2)">' + iconeMenuLateralSvg('menu-feedback') + '</span><span class="min-w-0 flex-1"><span class="block text-xs font-black leading-none text-sky-900">Duvidas e Sugestoes</span><span class="mt-1 block truncate text-[10px] font-semibold leading-none text-cyan-700">Ajude a melhorar o AvantaLab</span></span><span class="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-white/75 text-cyan-700 shadow-sm">' + chevronMenuSvg() + '</span></div></button>' +
-            '<button id="sair" type="button" class="rounded-[14px] border border-rose-100 px-2.5 py-1.5 text-left text-xs font-black text-rose-700 shadow-sm transition active:scale-[0.99]" style="background:linear-gradient(90deg,#FFF1F2 0%,#FFFFFF 72%)"><span class="flex items-center gap-2"><span class="flex h-7 w-7 items-center justify-center text-rose-600">' + iconeMenuLateralSvg('sair') + '</span><span>Sair</span></span></button>' +
+            '<button id="menu-feedback" type="button" class="rounded-[14px_26px_26px_26px] border border-cyan-300 px-2.5 py-2 text-left shadow-[0_6px_15px_rgba(8,145,178,.13)] transition active:scale-[0.99]" style="background:radial-gradient(circle at 90% 50%,rgba(20,184,166,.18),transparent 28%),linear-gradient(135deg,#E6FFFB 0%,#CFFAFE 100%)"><div class="flex items-center gap-2"><span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-white shadow-sm" style="background:linear-gradient(135deg,#06B6D4,#0891B2)">' + iconeMenuLateralSvg('menu-feedback') + '</span><span class="min-w-0 flex-1"><span class="block text-xs font-black leading-none text-sky-900">Duvidas e Sugestoes</span><span class="mt-1 block truncate text-[10px] font-semibold leading-none text-cyan-700">Ajude a melhorar o AvantaLab</span></span><span class="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-white/75 text-cyan-700 shadow-sm">' + chevronMenuSvg() + '</span></div></button>' +
+            '<button id="sair" type="button" class="rounded-[14px_26px_26px_26px] border border-rose-100 px-2.5 py-2 text-left text-xs font-black text-rose-700 shadow-sm transition active:scale-[0.99]" style="background:linear-gradient(90deg,#FFF1F2 0%,#FFFFFF 72%)"><span class="flex items-center gap-2"><span class="flex h-7 w-7 items-center justify-center text-rose-600">' + iconeMenuLateralSvg('sair') + '</span><span>Sair</span></span></button>' +
           '</div>' +
         '</aside>' +
       '</div>'
@@ -6190,6 +6210,10 @@
     return '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true"><path d="m9 18 6-6-6-6" stroke-linecap="round" stroke-linejoin="round"/></svg>';
   }
 
+  function chaveMenuHtml(ativa) {
+    return '<span class="relative h-5 w-9 shrink-0 rounded-full p-0.5 shadow-inner ' + (ativa ? 'bg-emerald-500' : 'bg-slate-300') + '"><span class="block h-4 w-4 rounded-full bg-white shadow-md transition-transform ' + (ativa ? 'translate-x-4' : 'translate-x-0') + '"></span></span>';
+  }
+
   function iconeMenuLateralSvg(id) {
     var base = 'width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"';
     var caminhos = {
@@ -6202,6 +6226,14 @@
       'menu-ajuda-categorias': '<circle cx="12" cy="12" r="9"/><path d="M9.6 9a2.5 2.5 0 1 1 3.3 2.37c-.9.36-.9 1.13-.9 1.63M12 17h.01"/>',
       'menu-tutorial': '<path d="m3 10 9-5 9 5-9 5-9-5Z"/><path d="M7 12.5V17c3 2 7 2 10 0v-4.5M21 10v6"/>',
       'menu-config-toggle': '<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.88l.06.06-2.83 2.83-.06-.06A1.7 1.7 0 0 0 15 19.4a1.7 1.7 0 0 0-1 .6 1.7 1.7 0 0 0-.4 1v.1h-4V21a1.7 1.7 0 0 0-1.1-1.6 1.7 1.7 0 0 0-1.88.34l-.06.06-2.83-2.83.06-.06A1.7 1.7 0 0 0 4.6 15a1.7 1.7 0 0 0-.6-1 1.7 1.7 0 0 0-1-.4h-.1v-4H3a1.7 1.7 0 0 0 1.6-1.1 1.7 1.7 0 0 0-.34-1.88l-.06-.06 2.83-2.83.06.06A1.7 1.7 0 0 0 9 4.6a1.7 1.7 0 0 0 1-.6 1.7 1.7 0 0 0 .4-1v-.1h4V3a1.7 1.7 0 0 0 1.1 1.6 1.7 1.7 0 0 0 1.88-.34l.06-.06 2.83 2.83-.06.06A1.7 1.7 0 0 0 19.4 9c.14.37.36.7.6 1 .27.28.62.4 1 .4h.1v4H21a1.7 1.7 0 0 0-1.6.6Z"/>',
+      'menu-duplicados': '<rect x="4" y="4" width="12" height="12" rx="2"/><path d="M8 8h12v12H8z"/>',
+      'menu-gerenciar': '<circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/>',
+      'menu-tema': '<path d="M21 12.8A9 9 0 1 1 11.2 3 7 7 0 0 0 21 12.8Z"/>',
+      'menu-notificacoes': '<path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4"/>',
+      'menu-organizar-dashboard': '<rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>',
+      'menu-usuario': '<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M19 8v6M22 11h-6"/>',
+      'menu-backup': '<path d="M12 3v12M7 10l5 5 5-5"/><path d="M5 21h14"/>',
+      'menu-restauracao': '<path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/><path d="M12 7v5l3 2"/>',
       'menu-feedback': '<path d="M21 15a4 4 0 0 1-4 4H8l-5 3v-7a4 4 0 0 1-1-2.7V7a4 4 0 0 1 4-4h11a4 4 0 0 1 4 4v8Z"/><path d="M8 10h.01M12 10h.01M16 10h.01"/>',
       'sair': '<path d="M10 17l5-5-5-5M15 12H3M14 3h5a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-5"/>',
     };
@@ -6221,7 +6253,7 @@
     };
     var visual = estilos[id] || ['#FFFFFF', '#E2E8F0', '#ECFEFF', '#0E7490'];
     var cardStyle = state.darkMode ? 'background:#0F172A;border-color:#334155;' : 'background:' + visual[0] + ';border-color:' + visual[1] + ';';
-    return '<button id="' + id + '" type="button" class="rounded-[14px] border px-2.5 py-1.5 text-left shadow-[0_5px_13px_rgba(15,23,42,.07)] transition active:scale-[0.99]" style="' + cardStyle + '">' +
+    return '<button id="' + id + '" type="button" class="rounded-[14px_26px_26px_26px] border px-2.5 py-2 text-left shadow-[0_5px_13px_rgba(15,23,42,.07)] transition active:scale-[0.99]" style="' + cardStyle + '">' +
       '<div class="flex items-center gap-2">' +
         '<span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg shadow-sm" style="background:' + visual[2] + ';color:' + visual[3] + '">' + iconeMenuLateralSvg(id) + '</span>' +
         '<span class="min-w-0 flex-1"><span class="block text-xs font-black leading-none">' + escapeHtml(titulo) + '</span><span class="mt-1 block truncate text-[10px] font-semibold leading-none text-slate-500">' + escapeHtml(subtitulo || '') + '</span></span>' +
@@ -7378,6 +7410,9 @@
         _scrollContainers[_preservaveis[_i].id] = _preservaveis[_i].scrollTop;
       }
     }
+    if (typeof window._avaMenuScrollTravado === 'number') {
+      _scrollContainers['menu-aside'] = window._avaMenuScrollTravado;
+    }
     root.setAttribute('data-avantalab-mobile-ready', '1');
     if (!state.chatIAAberto) configurarCamadaFundoChatIA(false);
     removerChatIAOverlay();
@@ -7532,7 +7567,37 @@
     bind('menu-organizar-atalhos', function () { fecharMenuLateralAnimado(function () { abrirModalMenu('organizarAtalhos'); }); });
     bind('menu-agenda', function () { fecharMenuLateralAnimado(abrirAgendaMobile); });
     bind('menu-avisos', function () { fecharMenuLateralAnimado(abrirNotificacoesMobile); });
-    bind('menu-notificacoes', function () { fecharMenuLateralAnimado(alternarNotificacoesMobile); });
+    async function executarChaveMenuSemMover(id, acao) {
+      var aside = document.getElementById('menu-aside');
+      var scrollAtual = aside ? aside.scrollTop : 0;
+      window._avaMenuScrollTravado = scrollAtual;
+      try {
+        await acao();
+      } finally {
+        if (state.menuAberto) render();
+        var restaurarPosicao = function () {
+          var asideAtual = document.getElementById('menu-aside');
+          if (asideAtual) asideAtual.scrollTop = scrollAtual;
+        };
+        window.requestAnimationFrame(function () {
+          restaurarPosicao();
+          var botaoAtual = document.getElementById(id);
+          if (botaoAtual) {
+            try { botaoAtual.focus({ preventScroll: true }); }
+            catch (e) { botaoAtual.focus(); restaurarPosicao(); }
+          }
+          window.requestAnimationFrame(restaurarPosicao);
+        });
+        setTimeout(function () {
+          restaurarPosicao();
+          delete window._avaMenuScrollTravado;
+        }, 180);
+      }
+    }
+
+    bind('menu-notificacoes', function () {
+      executarChaveMenuSemMover('menu-notificacoes', alternarNotificacoesMobile);
+    });
     bind('prompt-notif-ativar', function () {
       marcarPromptNotifVisto();
       state.mostrarPromptNotificacoes = false;
@@ -7553,8 +7618,12 @@
     bind('menu-despesas-fixas', function () { fecharMenuLateralAnimado(abrirModalMenuDespesasFixas); });
     bind('menu-ajuda-categorias', function () { fecharMenuLateralAnimado(function () { abrirModalMenu('ajudaCategorias'); }); });
     bind('menu-instalar', function () { fecharMenuLateralAnimado(instalarApp); });
-    bind('menu-duplicados', alternarDuplicados);
-    bind('menu-tema', trocarTema);
+    bind('menu-duplicados', function () {
+      executarChaveMenuSemMover('menu-duplicados', alternarDuplicados);
+    });
+    bind('menu-tema', function () {
+      executarChaveMenuSemMover('menu-tema', trocarTema);
+    });
     function acionarBackupMobile(acao) {
       if (!podeGerenciarUsuarios()) {
         mostrarToast('Voce nao tem permissao para esta acao.');
@@ -7595,15 +7664,13 @@
           if (state.menuConfigAberto && state.menuConfigAnimacao === 'entrar') state.menuConfigAnimacao = '';
         }, 270);
         setTimeout(function () {
-          var toggle = document.getElementById('menu-config-toggle');
           var aside = document.getElementById('menu-aside');
-          if (toggle && toggle.scrollIntoView) {
-            // Leva o botao Configuracoes ao topo, deixando as opcoes visiveis
-            toggle.scrollIntoView({ behavior: 'smooth', block: 'start' });
-          } else if (aside) {
-            aside.scrollTo({ top: aside.scrollHeight, behavior: 'smooth' });
-          }
-        }, 80);
+          if (!aside || !state.menuConfigAberto) return;
+          window.requestAnimationFrame(function () {
+            var limite = Math.max(0, aside.scrollHeight - aside.clientHeight);
+            aside.scrollTo({ top: limite, behavior: 'smooth' });
+          });
+        }, 285);
       }
     });
     bind('menu-feedback', function () { fecharMenuLateralAnimado(abrirFeedbackMobile); });

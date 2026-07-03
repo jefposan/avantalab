@@ -9,6 +9,7 @@
 - Dashboard e Graficos: arraste dos cards limitado a area visivel da tela e organizacao por colunas aprimorada.
 - Mobile: persistencia da sessao reforcada, com renovacao de Manter conectado e encerramento restrito ao dispositivo atual.
 - Mobile: menu lateral redesenhado com hierarquia visual, icones, cores funcionais e destaques para suporte e saida.
+- Web e mobile: cards, Kanbans, menus e popups padronizados com cantos assimetricos da identidade AvantaLab.
 
 ## 1.3.4 - 2026-07-02
 

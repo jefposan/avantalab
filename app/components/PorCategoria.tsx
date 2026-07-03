@@ -162,7 +162,7 @@ const getValorMensal = (despesa: string, mes: string) => {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         
         {/* COLUNA 1: Despesas Parte 1 */}
-        <div className={`${bgCard} rounded-xl shadow-lg border p-6 border-t-4`} style={{ borderTopColor: corPrimaria }}>
+        <div className={`${bgCard} card-radius-avantalab rounded-xl shadow-lg border p-6 border-t-4`} style={{ borderTopColor: corPrimaria }}>
           <div className="space-y-3.5">
             {despesasCol1.map(nome => {
               const valor = despMap[nome];
@@ -185,7 +185,7 @@ const getValorMensal = (despesa: string, mes: string) => {
         </div>
 
         {/* COLUNA 2: Despesas Parte 2 */}
-        <div className={`${bgCard} rounded-xl shadow-lg border p-6 flex flex-col border-t-4`} style={{ borderTopColor: corPrimaria }}>
+        <div className={`${bgCard} card-radius-avantalab rounded-xl shadow-lg border p-6 flex flex-col border-t-4`} style={{ borderTopColor: corPrimaria }}>
           <div className="space-y-3.5 flex-1">
             {despesasCol2.map(nome => {
               const valor = despMap[nome];
@@ -208,7 +208,7 @@ const getValorMensal = (despesa: string, mes: string) => {
         </div>
 
         {/* COLUNA 3: Categorias */}
-        <div className={`${bgCard} rounded-xl shadow-lg border p-6 border-t-4`} style={{ borderTopColor: corPrimaria }}>
+        <div className={`${bgCard} card-radius-avantalab rounded-xl shadow-lg border p-6 border-t-4`} style={{ borderTopColor: corPrimaria }}>
           <div className="space-y-4">
             {categoriasNomes.map(nome => {
               const valor = catMap[nome];
@@ -248,7 +248,7 @@ const getValorMensal = (despesa: string, mes: string) => {
 
 {/* BLOCO INFERIOR: MATRIZ MENSAL */}
 <div
-  className={`${bgCard} rounded-xl shadow-lg border overflow-hidden border-t-4`}
+  className={`${bgCard} card-radius-avantalab rounded-xl shadow-lg border overflow-hidden border-t-4`}
   style={{ borderTopColor: corPrimaria }}
 >
         <div className="overflow-x-auto">

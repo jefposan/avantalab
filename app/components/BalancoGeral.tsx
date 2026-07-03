@@ -169,19 +169,19 @@ export default function BalancoGeral({
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 print-ocultar">
         
         {/* Quadrante 1: Despesas */}
-        <div className={`${bgCard} rounded-lg shadow-sm border px-3 py-2 border-t-2 text-center`} style={{ borderTopColor: corPrimaria }}>
+        <div className={`${bgCard} card-radius-avantalab rounded-lg shadow-sm border px-3 py-2 border-t-2 text-center`} style={{ borderTopColor: corPrimaria }}>
           <h3 className={`text-[10px] font-semibold uppercase tracking-wide ${textMuted} mb-0.5`}>Total Despesas</h3>
           <p className="text-base font-bold text-red-500">{formatarMoeda(totaisAnuais.desp)}</p>
         </div>
 
         {/* Quadrante 2: Faturamento */}
-        <div className={`${bgCard} rounded-lg shadow-sm border px-3 py-2 border-t-2 text-center`} style={{ borderTopColor: corPrimaria }}>
+        <div className={`${bgCard} card-radius-avantalab rounded-lg shadow-sm border px-3 py-2 border-t-2 text-center`} style={{ borderTopColor: corPrimaria }}>
           <h3 className={`text-[10px] font-semibold uppercase tracking-wide ${textMuted} mb-0.5`}>Total Faturamento</h3>
           <p className="text-base font-bold text-[#00b050]">{formatarMoeda(totaisAnuais.fat)}</p>
         </div>
 
         {/* Quadrante 3: A + B */}
-        <div className={`${bgCard} rounded-lg shadow-sm border px-3 py-2 border-t-2 text-center`} style={{ borderTopColor: corPrimaria }}>
+        <div className={`${bgCard} card-radius-avantalab rounded-lg shadow-sm border px-3 py-2 border-t-2 text-center`} style={{ borderTopColor: corPrimaria }}>
           <h3 className={`text-[10px] font-semibold uppercase tracking-wide ${textMuted} mb-0.5`}>A + B (Líquido)</h3>
           <p className={`text-base font-bold ${totaisAnuais.ab >= 0 ? 'text-blue-500' : 'text-red-500'}`}>
             {formatarMoeda(totaisAnuais.ab)}
@@ -189,7 +189,7 @@ export default function BalancoGeral({
         </div>
 
         {/* Quadrante 4: Total % */}
-        <div className={`${bgCard} rounded-lg shadow-sm border px-3 py-2 border-t-2 text-center`} style={{ borderTopColor: corPrimaria }}>
+        <div className={`${bgCard} card-radius-avantalab rounded-lg shadow-sm border px-3 py-2 border-t-2 text-center`} style={{ borderTopColor: corPrimaria }}>
           <h3 className={`text-[10px] font-semibold uppercase tracking-wide ${textMuted} mb-0.5`}>Margem Total (%)</h3>
           <p className={`text-base font-bold ${textStrong}`}>{totaisAnuais.perc.toFixed(2)}%</p>
         </div>
@@ -198,7 +198,7 @@ export default function BalancoGeral({
 
       {/* MATRIZ MENSAL (ENVOLVIDA NUM QUADRANTE PADRÃO) */}
       <div className="balanco-print-frame">
-      <div className={`${bgCard} rounded-lg shadow-sm border p-4 border-t-2 overflow-hidden`} style={{ borderTopColor: corPrimaria }}>
+      <div className={`${bgCard} card-radius-avantalab rounded-lg shadow-sm border p-4 border-t-2 overflow-hidden`} style={{ borderTopColor: corPrimaria }}>
         <div id="painel-balanco" className="overflow-x-auto pb-2">
           <div className="min-w-[960px] space-y-2 pt-1">
             

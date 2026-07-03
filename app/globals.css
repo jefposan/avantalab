@@ -40,6 +40,30 @@ footer,
 nav {
   min-width: 0;
 }
+
+.card-radius-avantalab {
+  border-radius: 14px 28px 28px 28px !important;
+}
+
+.card-radius-avantalab-lg,
+.draggable-modal-card {
+  border-radius: 16px 32px 32px 32px !important;
+}
+
+.av-page section.rounded-2xl,
+.av-page article.rounded-2xl,
+#mobile-root section.rounded-2xl,
+#mobile-root [data-dashboard-card] > section,
+#mobile-root [data-dashboard-card] > div.rounded-2xl {
+  border-radius: 14px 28px 28px 28px !important;
+}
+
+#mobile-root .fixed.inset-0 > section.rounded-3xl,
+#mobile-root .fixed.inset-0 > div.rounded-3xl,
+#mobile-root .fixed.inset-0 > div > section.rounded-3xl,
+#mobile-root .fixed.inset-0 > div > div.rounded-3xl {
+  border-radius: 16px 32px 32px 32px !important;
+}
 .select-despesa-avantalab {
   color: #0f172a !important;
   -webkit-text-fill-color: #0f172a !important;
