@@ -128,6 +128,11 @@ interface DashboardProps {
   onOcultarCardDashboard: (id: string) => void;
   onDefinirOcultosDashboard: (ids: string[]) => void;
   onDefinirExpandidosDashboard: (ids: string[]) => void;
+  pontoDisponivel: boolean;
+  pontoResumo: Array<{ userId: string; nome: string; status: 'atraso' | 'falta' | 'incompleto' }>;
+  pontoResumoCarregando: boolean;
+  pontoFuncionariosHoje: number;
+  onAbrirControlePonto: () => void;
 }
 
 export default function Dashboard({
@@ -150,7 +155,8 @@ export default function Dashboard({
   saldoCardMesIdx, setSaldoCardMesIdx, saldoInicial, saldoFinal, saldoPrevisto,
   dashboardOrdem, dashboardOcultos, onReordenarDashboard,
   dashboardExpandidos, onOcultarCardDashboard, onDefinirOcultosDashboard,
-  onDefinirExpandidosDashboard
+  onDefinirExpandidosDashboard, pontoDisponivel, pontoResumo, pontoResumoCarregando,
+  pontoFuncionariosHoje, onAbrirControlePonto
 }: DashboardProps) {
 
   const [ocultarValores, setOcultarValores] = useState(true);
@@ -381,6 +387,7 @@ const mostrarComparativoResumoDash =
     { id: 'resumoFinanceiro', titulo: 'Resumo financeiro', descricao: 'Despesas, maior gasto e lucro operacional.' },
     { id: 'evolucaoMensal', titulo: 'Evolução mensal', descricao: 'Gráfico mensal de receitas e despesas.' },
     { id: 'registrarEntradas', titulo: 'Registrar entradas', descricao: 'Lançamento de receitas e total mensal.' },
+    ...(pontoDisponivel ? [{ id: 'controlePonto', titulo: 'Controle de ponto', descricao: 'Pendências dos funcionários no dia atual.' }] : []),
   ];
   const ocultosSet = new Set(dashboardOcultos || []);
   const expandidosSet = new Set(dashboardExpandidos || []);
@@ -510,7 +517,9 @@ const mostrarComparativoResumoDash =
   });
 
   const filtraItens = (arr: string[]) => arr.filter((id) =>
-    !ocultosSet.has(id) && (id !== 'aConfirmar' || temAConfirmar)
+    !ocultosSet.has(id)
+    && (id !== 'aConfirmar' || temAConfirmar)
+    && (id !== 'controlePonto' || pontoDisponivel)
   );
   const itensOrdenados = linearizarOrdem(cols);
   const itensVisiveis = filtraItens(itensOrdenados);
@@ -575,6 +584,49 @@ const mostrarComparativoResumoDash =
               </div>
             </div>
           ))}
+        </div>
+      </div>
+    ) : null,
+
+    controlePonto: pontoDisponivel ? (
+      <div className={`${bgCard} w-full overflow-hidden rounded-2xl border-2 shadow-lg transition-colors`} style={{ borderColor: corPrimaria }}>
+        <div className="flex items-center justify-between gap-3 px-5 py-3 text-sm font-bold uppercase tracking-wider" style={{ backgroundColor: corPrimaria, color: textoSobreCorPrimaria }}>
+          <span className="min-w-0 truncate">Controle de ponto</span>
+          <div className="flex items-center gap-2">
+            <DragHandle tone="light" />
+            <BotaoOpcoesCard id="controlePonto" tone="light" />
+          </div>
+        </div>
+        <div className="p-4">
+          {pontoResumoCarregando ? (
+            <p className={`py-3 text-center text-xs font-semibold ${textMuted}`}>Atualizando resumo...</p>
+          ) : pontoFuncionariosHoje === 0 ? (
+            <p className={`py-3 text-center text-xs font-semibold ${textMuted}`}>Nenhum funcionário previsto para hoje.</p>
+          ) : pontoResumo.length === 0 ? (
+            <div className="flex items-center justify-center gap-2 py-3 text-sm font-bold text-emerald-600">
+              <span className="flex h-6 w-6 items-center justify-center rounded-full bg-emerald-100">✓</span>
+              Equipe em dia
+            </div>
+          ) : (
+            <div className="grid max-h-52 gap-1 overflow-y-auto pr-1">
+              {pontoResumo.map((item) => {
+                const status = {
+                  atraso: { label: 'Atraso', classe: 'bg-amber-100 text-amber-700' },
+                  falta: { label: 'Falta', classe: 'bg-red-100 text-red-700' },
+                  incompleto: { label: 'Incompleto', classe: 'bg-violet-100 text-violet-700' },
+                }[item.status];
+                return (
+                  <div key={item.userId} className={`flex items-center justify-between gap-3 rounded-lg px-2.5 py-2 ${darkMode ? 'bg-slate-700/60' : 'bg-slate-50'}`}>
+                    <span className={`min-w-0 truncate text-xs font-bold ${textStrong}`}>{item.nome}</span>
+                    <span className={`shrink-0 rounded-full px-2 py-1 text-[10px] font-black uppercase ${status.classe}`}>{status.label}</span>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+          <button type="button" onClick={onAbrirControlePonto} className="mt-3 w-full border-t border-slate-200/20 pt-3 text-left text-xs font-black transition hover:opacity-75" style={{ color: corPrimaria }}>
+            Ver controle de ponto
+          </button>
         </div>
       </div>
     ) : null,

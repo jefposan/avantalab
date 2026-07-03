@@ -319,8 +319,8 @@ const [reenviandoTelefoneObrigatorio, setReenviandoTelefoneObrigatorio] = useSta
 const [validandoTelefoneObrigatorio, setValidandoTelefoneObrigatorio] = useState(false);
   const [abaAtiva, setAbaAtiva] = useState('Dashboard');
   const [saldoCardMesIdx, setSaldoCardMesIdx] = useState<number>(new Date().getMonth());
-  const dashboardCardsKanban = ['aConfirmar', 'saldo', 'resumoFinanceiro', 'evolucaoMensal', 'registrarEntradas'];
-  const ordemDashboardPadrao = { a: ['aConfirmar', 'saldo'], b: ['resumoFinanceiro', 'evolucaoMensal', 'registrarEntradas'] };
+  const dashboardCardsKanban = ['aConfirmar', 'saldo', 'resumoFinanceiro', 'evolucaoMensal', 'registrarEntradas', 'controlePonto'];
+  const ordemDashboardPadrao = { a: ['aConfirmar', 'saldo', 'controlePonto'], b: ['resumoFinanceiro', 'evolucaoMensal', 'registrarEntradas'] };
   const [dashboardOrdem, setDashboardOrdem] = useState<{ a: string[]; b: string[] }>(ordemDashboardPadrao);
   const [dashboardOcultos, setDashboardOcultos] = useState<string[]>([]);
   const [dashboardExpandidos, setDashboardExpandidos] = useState<string[]>([]);
@@ -386,6 +386,13 @@ const [despesaRelatorioAberta, setDespesaRelatorioAberta] = useState<{
   const [pontoFuncionarios, setPontoFuncionarios] = useState<FuncionarioPonto[]>([]);
   const [pontoFuncCarregando, setPontoFuncCarregando] = useState(false);
   const [pontoConfig, setPontoConfig] = useState<PontoConfig>(null);
+  const [pontoResumoDia, setPontoResumoDia] = useState<Array<{
+    userId: string;
+    nome: string;
+    status: 'atraso' | 'falta' | 'incompleto';
+  }>>([]);
+  const [pontoResumoCarregando, setPontoResumoCarregando] = useState(true);
+  const [pontoFuncionariosHoje, setPontoFuncionariosHoje] = useState(0);
   const [painelAjusteLogo, setPainelAjusteLogo] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const backupImportInputRef = useRef<HTMLInputElement>(null);
@@ -1346,6 +1353,37 @@ useEffect(() => {
   // eslint-disable-next-line react-hooks/exhaustive-deps
 }, [mounted, empresaId, anoSelecionado]);
 
+// Controle de ponto: resumo do dia atualizado por Realtime.
+useEffect(() => {
+  if (!mounted || !empresaId || !podeGerenciarPonto) {
+    setPontoResumoDia([]);
+    return;
+  }
+
+  setPontoResumoCarregando(true);
+  carregarResumoPontoDashboard();
+  const canal = supabase
+    .channel('ponto_dashboard_' + empresaId)
+    .on(
+      'postgres_changes',
+      { event: '*', schema: 'public', table: 'ponto_registros', filter: 'empresa_id=eq.' + empresaId },
+      () => { carregarResumoPontoDashboard(); }
+    )
+    .on(
+      'postgres_changes',
+      { event: '*', schema: 'public', table: 'ponto_funcionarios', filter: 'empresa_id=eq.' + empresaId },
+      () => { carregarResumoPontoDashboard(); }
+    )
+    .subscribe();
+  const intervalo = window.setInterval(() => { carregarResumoPontoDashboard(); }, 30000);
+
+  return () => {
+    window.clearInterval(intervalo);
+    supabase.removeChannel(canal);
+  };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+}, [mounted, empresaId, podeGerenciarPonto]);
+
 // Agenda: atualiza em tempo real (mudancas em qualquer aparelho)
 useEffect(() => {
   if (!mounted || !empresaId) return;
@@ -1595,6 +1633,101 @@ useEffect(() => {
       console.error('Erro inesperado ao carregar funcionários de ponto:', e);
     }
     setPontoFuncCarregando(false);
+  }
+
+  async function carregarResumoPontoDashboard() {
+    if (!empresaId || !podeGerenciarPonto) return;
+    try {
+      const agora = new Date();
+      const dataPartes = new Intl.DateTimeFormat('en-CA', {
+        timeZone: 'America/Sao_Paulo', year: 'numeric', month: '2-digit', day: '2-digit',
+      }).format(agora);
+      const horaPartes = new Intl.DateTimeFormat('pt-BR', {
+        timeZone: 'America/Sao_Paulo', hour: '2-digit', minute: '2-digit', hourCycle: 'h23',
+      }).formatToParts(agora);
+      const parteHora = (tipo: string) => Number(horaPartes.find((p) => p.type === tipo)?.value || 0);
+      const minutosAgora = parteHora('hour') * 60 + parteHora('minute');
+      const [ano, mes, dia] = dataPartes.split('-').map(Number);
+      const diaSemana = new Date(Date.UTC(ano, mes - 1, dia)).getUTCDay();
+      const minutosHorario = (valor: string | null) => {
+        const match = String(valor || '').match(/^(\d{1,2}):(\d{2})/);
+        return match ? Number(match[1]) * 60 + Number(match[2]) : null;
+      };
+
+      const [funcionariosResp, registrosResp] = await Promise.all([
+        supabase
+          .from('ponto_funcionarios')
+          .select('user_id, nome, hora_entrada, hora_saida, dias_trabalho')
+          .eq('empresa_id', empresaId)
+          .eq('ativo', true)
+          .order('nome', { ascending: true }),
+        supabase
+          .from('ponto_registros')
+          .select('user_id, tipo, registrado_em')
+          .eq('empresa_id', empresaId)
+          .eq('dia', dataPartes)
+          .order('registrado_em', { ascending: true }),
+      ]);
+      if (funcionariosResp.error || registrosResp.error) return;
+
+      const registrosPorUsuario = new Map<string, Array<{ tipo: string; registrado_em: string }>>();
+      (registrosResp.data || []).forEach((registro) => {
+        const lista = registrosPorUsuario.get(registro.user_id) || [];
+        lista.push(registro);
+        registrosPorUsuario.set(registro.user_id, lista);
+      });
+
+      type ItemResumoPonto = { userId: string; nome: string; status: 'atraso' | 'falta' | 'incompleto' };
+      const resumo = (funcionariosResp.data || []).reduce<ItemResumoPonto[]>((itens, funcionario) => {
+        if (!funcionario.user_id || !Array.isArray(funcionario.dias_trabalho) || !funcionario.dias_trabalho.includes(diaSemana)) return itens;
+        const entradaPrevista = minutosHorario(funcionario.hora_entrada);
+        const saidaPrevista = minutosHorario(funcionario.hora_saida);
+        const registros = registrosPorUsuario.get(funcionario.user_id) || [];
+        const tipos = new Set(registros.map((registro) => registro.tipo));
+
+        if (!tipos.has('entrada') && saidaPrevista !== null && minutosAgora > saidaPrevista + 10) {
+          itens.push({ userId: funcionario.user_id, nome: funcionario.nome, status: 'falta' });
+          return itens;
+        }
+        if (tipos.has('entrada') && saidaPrevista !== null && minutosAgora > saidaPrevista + 10) {
+          const completo = ['entrada', 'saida_refeicao', 'retorno_refeicao', 'saida'].every((tipo) => tipos.has(tipo));
+          if (!completo) {
+            itens.push({ userId: funcionario.user_id, nome: funcionario.nome, status: 'incompleto' });
+            return itens;
+          }
+        }
+
+        const entrada = registros.find((registro) => registro.tipo === 'entrada');
+        if (entradaPrevista !== null) {
+          if (!entrada && minutosAgora > entradaPrevista + 10) {
+            itens.push({ userId: funcionario.user_id, nome: funcionario.nome, status: 'atraso' });
+            return itens;
+          }
+          if (entrada) {
+            const entradaPartes = new Intl.DateTimeFormat('pt-BR', {
+              timeZone: 'America/Sao_Paulo', hour: '2-digit', minute: '2-digit', hourCycle: 'h23',
+            }).formatToParts(new Date(entrada.registrado_em));
+            const horaEntrada = Number(entradaPartes.find((p) => p.type === 'hour')?.value || 0) * 60
+              + Number(entradaPartes.find((p) => p.type === 'minute')?.value || 0);
+            if (horaEntrada > entradaPrevista + 10) {
+              itens.push({ userId: funcionario.user_id, nome: funcionario.nome, status: 'atraso' });
+              return itens;
+            }
+          }
+        }
+        return itens;
+      }, []);
+      setPontoFuncionariosHoje((funcionariosResp.data || []).filter((funcionario) => (
+        funcionario.user_id
+        && Array.isArray(funcionario.dias_trabalho)
+        && funcionario.dias_trabalho.includes(diaSemana)
+      )).length);
+      setPontoResumoDia(resumo);
+    } catch (error) {
+      console.error('Erro ao carregar resumo diário do ponto:', error);
+    } finally {
+      setPontoResumoCarregando(false);
+    }
   }
 
   async function criarFuncionarioPonto(dados: { nome: string; cpf: string; senha: string; cargo: string; horaEntrada?: string; horaSaida?: string; diasTrabalho?: number[] }) {
@@ -8325,6 +8458,15 @@ name="novo-usuario-login"
         onOcultarCardDashboard={ocultarCardDashboard}
         onDefinirOcultosDashboard={definirOcultosDashboard}
         onDefinirExpandidosDashboard={definirExpandidosDashboard}
+        pontoDisponivel={podeGerenciarPonto}
+        pontoResumo={pontoResumoDia}
+        pontoResumoCarregando={pontoResumoCarregando}
+        pontoFuncionariosHoje={pontoFuncionariosHoje}
+        onAbrirControlePonto={() => {
+          setModalPontoAdmin(true);
+          carregarFuncionariosPonto();
+          carregarPontoConfig();
+        }}
       />
     </div>
   </main>

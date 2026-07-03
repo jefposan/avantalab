@@ -7,6 +7,7 @@
 - Web: o sininho recebe em tempo real os avisos de despesas destinados a toda a empresa.
 - Push: usuarios vinculados a varios perfis recebem os avisos de despesas de cada perfil em seus aparelhos inscritos.
 - Web e mobile: o primeiro login tolera falhas transitorias ao carregar perfis sem encerrar uma sessao valida.
+- Dashboard web: novo card de controle de ponto com atrasos, faltas e jornadas incompletas atualizados em tempo real.
 - Novos perfis de empresa e pessoais recebem uma lista inicial de despesas totalmente editavel e excluivel.
 - Mobile: arrastar cards do dashboard bloqueia temporariamente o gesto de puxar para atualizar.
 - Mobile: o grafico por tipo de despesa permite abrir os lancamentos que compoem cada total.
