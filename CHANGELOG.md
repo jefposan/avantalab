@@ -8,6 +8,7 @@
 - Controle de Ponto: card do dashboard compactado, com acesso direto ao relatorio diario do funcionario e indicacao de mais itens na lista.
 - Dashboard e Graficos: arraste dos cards limitado a area visivel da tela e organizacao por colunas aprimorada.
 - Mobile: persistencia da sessao reforcada, com renovacao de Manter conectado e encerramento restrito ao dispositivo atual.
+- Mobile: menu lateral redesenhado com hierarquia visual, icones, cores funcionais e destaques para suporte e saida.
 
 ## 1.3.4 - 2026-07-02
 

@@ -79,6 +79,8 @@ export default function MobilePage() {
             @keyframes menuSlideOut { from { transform: translate3d(0,0,0); } to { transform: translate3d(-100%,0,0); } }
             @keyframes menuOverlayIn { from { opacity: 0; } to { opacity: 1; } }
             @keyframes menuOverlayOut { from { opacity: 1; } to { opacity: 0; } }
+            @keyframes configSubIn { from { max-height: 0; opacity: 0; transform: translateY(-6px); } to { max-height: 420px; opacity: 1; transform: translateY(0); } }
+            @keyframes configSubOut { from { max-height: 420px; opacity: 1; transform: translateY(0); } to { max-height: 0; opacity: 0; transform: translateY(-6px); } }
             @keyframes agendaInProx { from { opacity: .35; transform: translateX(26px); } to { opacity: 1; transform: none; } }
             @keyframes agendaInPrev { from { opacity: .35; transform: translateX(-26px); } to { opacity: 1; transform: none; } }
             @keyframes pullRefreshSpin { to { transform: rotate(270deg); } }
@@ -225,7 +227,7 @@ export default function MobilePage() {
       <BackupMobileBridge />
 
       <script src="/mobile-supabase.js" defer />
-      <script src="/mobile-app.js?v=207" defer />
+      <script src="/mobile-app.js?v=208" defer />
     </main>
   );
 }
