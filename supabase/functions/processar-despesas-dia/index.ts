@@ -112,16 +112,34 @@ Deno.serve(async (request) => {
 
     // Push para todos os aparelhos inscritos das empresas afetadas.
     for (const empresaId of empresasAfetadas) {
+      const { data: empresa } = await supabase
+        .from('empresas')
+        .select('nome')
+        .eq('id', empresaId)
+        .maybeSingle();
+      const nomePerfil = empresa?.nome || 'Perfil financeiro';
+
+      const { data: vinculos } = await supabase
+        .from('usuarios_empresa')
+        .select('user_id')
+        .eq('empresa_id', empresaId);
+      const usuariosEmpresa = Array.from(new Set(
+        (vinculos || []).map((item) => item.user_id).filter(Boolean),
+      ));
+      if (!usuariosEmpresa.length) continue;
+
       const { data: subs } = await supabase
         .from('push_subscriptions')
         .select('endpoint, p256dh, auth')
-        .eq('empresa_id', empresaId);
+        .in('user_id', usuariosEmpresa);
 
       const despesasEmpresa = lista.filter((x) => x.empresa_id === empresaId);
       const qtd = despesasEmpresa.length;
       const payload = JSON.stringify({
         title: qtd > 1 ? `${qtd} pagamentos agendados para hoje` : 'Pagamento agendado para hoje',
-        body: qtd > 1 ? 'Abra o app para consultar os pagamentos do dia.' : (despesasEmpresa[0]?.despesa_nome || 'Despesa do dia'),
+        body: qtd > 1
+          ? `${nomePerfil}: abra o app para consultar os pagamentos do dia.`
+          : `${nomePerfil}: ${despesasEmpresa[0]?.despesa_nome || 'Despesa do dia'}`,
         url: '/mobile',
       });
 
