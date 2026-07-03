@@ -41,7 +41,13 @@
     return;
   }
 
-  var db = supabaseGlobal.createClient(config.supabaseUrl, config.supabaseAnonKey);
+  var db = supabaseGlobal.createClient(config.supabaseUrl, config.supabaseAnonKey, {
+    auth: {
+      persistSession: true,
+      autoRefreshToken: true,
+      detectSessionInUrl: true,
+    },
+  });
   var CHAVE_ULTIMO_PERFIL_MOBILE = 'avantalab_mobile_ultimo_perfil_id';
   var meses = [
     'JANEIRO',
@@ -368,6 +374,20 @@
       return false;
     }
   }
+
+  function renovarSessaoPersistenteMobile() {
+    if (!sessaoPersistenteValidaMobile()) return;
+    try {
+      localStorage.setItem(CHAVE_MANTER_CONECTADO_ATE, String(Date.now() + TRINTA_DIAS_MS));
+      state.manterConectado = true;
+    } catch (error) {}
+  }
+
+  db.auth.onAuthStateChange(function (evento, sessao) {
+    if (sessao && (evento === 'SIGNED_IN' || evento === 'TOKEN_REFRESHED')) {
+      renovarSessaoPersistenteMobile();
+    }
+  });
 
   function permitirRetornoOAuthTemporarioMobile() {
     try {
@@ -2606,6 +2626,11 @@
   async function entrar() {
     if (state.carregando) return;
 
+    var checkboxManterConectado = document.getElementById('manter-conectado');
+    if (checkboxManterConectado) {
+      state.manterConectado = Boolean(checkboxManterConectado.checked);
+    }
+
     var login = campo('login').trim();
     var senha = campo('senha');
     state.loginValor = login;
@@ -2642,7 +2667,7 @@
     // Funcionario do Controle de Ponto nao entra no sistema (usa o app /ponto).
     var mdLogin = (resposta.data.user && resposta.data.user.user_metadata) || {};
     if (mdLogin.tipo === 'funcionario_ponto') {
-      try { await db.auth.signOut(); } catch (e) {}
+      try { await db.auth.signOut({ scope: 'local' }); } catch (e) {}
       state.carregando = false;
       state.loginAcao = '';
       setErro('Este acesso e do Controle de Ponto. Registre seu horario pelo app de ponto.');
@@ -3218,7 +3243,7 @@
   }
 
   async function sair() {
-    await db.auth.signOut();
+    await db.auth.signOut({ scope: 'local' });
     limparPreferenciaSessaoMobile();
     state.autenticado = false;
     state.usuario = null;
@@ -8893,15 +8918,16 @@
 
     try {
       if (deveEncerrarSessaoSalvaMobile()) {
-        await db.auth.signOut();
+        await db.auth.signOut({ scope: 'local' });
       }
 
       var sessao = await db.auth.getSession();
       if (sessao.data.session && sessao.data.session.user) {
+        renovarSessaoPersistenteMobile();
         var mdSessao = sessao.data.session.user.user_metadata || {};
         // Funcionario do Controle de Ponto nao acessa o sistema: encaminha para /ponto.
         if (mdSessao.tipo === 'funcionario_ponto') {
-          try { await db.auth.signOut(); } catch (e) {}
+          try { await db.auth.signOut({ scope: 'local' }); } catch (e) {}
           window.location.replace('/ponto');
           return;
         }

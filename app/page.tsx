@@ -849,7 +849,7 @@ if (modoUrl === 'redefinir-senha' || tipoUrl === 'recovery') {
 }
 
 if (paramsConfirmacao.get('confirmado') === '1') {
-      await supabase.auth.signOut();
+      await supabase.auth.signOut({ scope: 'local' });
 
       setEmailConfirmado(true);
       setAcessoLiberado(false);
@@ -871,7 +871,7 @@ if (paramsConfirmacao.get('confirmado') === '1') {
 
     // Funcionário do Controle de Ponto não acessa o sistema: encaminha para /ponto.
     if (sessaoAtual.session?.user?.user_metadata?.tipo === 'funcionario_ponto') {
-      try { await supabase.auth.signOut(); } catch {}
+      try { await supabase.auth.signOut({ scope: 'local' }); } catch {}
       window.location.replace('/ponto');
       return;
     }
@@ -1228,7 +1228,7 @@ useEffect(() => {
   };
 
   const encerrarPorInatividade = async () => {
-    await supabase.auth.signOut();
+    await supabase.auth.signOut({ scope: 'local' });
 
     localStorage.removeItem(CHAVE_ULTIMA_ATIVIDADE);
 
@@ -4501,7 +4501,7 @@ const sairDaSelecaoEmpresa = async () => {
 };
 
 const handleLogout = async () => {
-  await supabase.auth.signOut();
+  await supabase.auth.signOut({ scope: 'local' });
 
   localStorage.removeItem(CHAVE_ULTIMA_ATIVIDADE);
 
