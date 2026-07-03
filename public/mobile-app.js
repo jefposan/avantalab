@@ -5210,10 +5210,16 @@
   }
 
   function perguntaIaHtml() {
+    var cardAvaStyle = state.darkMode
+      ? 'background:linear-gradient(90deg,#FFFFFF 0%,#FFFFFF 29%,#DCE7EF 39%,#0F172A 58%,#0F172A 100%);border-color:#334155;'
+      : 'background:#FFFFFF;border-color:#E2E8F0;';
+    var textoAvaStyle = state.darkMode
+      ? 'background:linear-gradient(90deg,#334155 0%,#334155 42%,#64748B 56%,#CBD5E1 68%,#FFFFFF 78%,#FFFFFF 100%);-webkit-background-clip:text;background-clip:text;color:transparent;'
+      : '';
     return (
-      '<button id="chat-ia-card" type="button" class="flex w-full items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-2 text-left shadow-sm active:scale-[0.99]">' +
+      '<button id="chat-ia-card" type="button" class="flex w-full items-center gap-2 rounded-full border px-3 py-2 text-left shadow-sm active:scale-[0.99]" style="' + cardAvaStyle + '">' +
         '<span class="flex h-9 w-[88px] shrink-0 items-center justify-center">' + avaLogoPrincipalHtml(82, 40) + '</span>' +
-        '<span class="min-w-0 flex-1 truncate text-sm font-semibold text-slate-400">Pergunte para a Ava...</span>' +
+        '<span class="min-w-0 flex-1 overflow-hidden text-sm font-semibold ' + (state.darkMode ? '' : 'text-slate-400') + '"><span class="inline-block max-w-full truncate align-middle" style="' + textoAvaStyle + '">Pergunte para a Ava...</span></span>' +
         '<span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-cyan-600 text-base font-black text-white">&#8593;</span>' +
       '</button>'
     );
