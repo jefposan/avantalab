@@ -385,6 +385,7 @@ const [despesaRelatorioAberta, setDespesaRelatorioAberta] = useState<{
   const [modalPontoAdmin, setModalPontoAdmin] = useState(false);
   const [abaInicialPontoAdmin, setAbaInicialPontoAdmin] = useState<AbaPontoAdmin>('lista');
   const [instanciaPontoAdmin, setInstanciaPontoAdmin] = useState(0);
+  const [relatorioInicialPonto, setRelatorioInicialPonto] = useState<{ funcionarioUserId: string; data: string } | null>(null);
   const [pontoFuncionarios, setPontoFuncionarios] = useState<FuncionarioPonto[]>([]);
   const [pontoFuncCarregando, setPontoFuncCarregando] = useState(false);
   const [pontoConfig, setPontoConfig] = useState<PontoConfig>(null);
@@ -392,6 +393,7 @@ const [despesaRelatorioAberta, setDespesaRelatorioAberta] = useState<{
     userId: string;
     nome: string;
     status: 'atraso' | 'falta' | 'incompleto';
+    falhas?: string[];
   }>>([]);
   const [pontoResumoCarregando, setPontoResumoCarregando] = useState(true);
   const [pontoFuncionariosHoje, setPontoFuncionariosHoje] = useState(0);
@@ -1679,7 +1681,14 @@ useEffect(() => {
         registrosPorUsuario.set(registro.user_id, lista);
       });
 
-      type ItemResumoPonto = { userId: string; nome: string; status: 'atraso' | 'falta' | 'incompleto' };
+      type ItemResumoPonto = { userId: string; nome: string; status: 'atraso' | 'falta' | 'incompleto'; falhas?: string[] };
+      const tiposObrigatorios = ['entrada', 'saida_refeicao', 'retorno_refeicao', 'saida'];
+      const rotulosFalha: Record<string, string> = {
+        entrada: 'Entrada',
+        saida_refeicao: 'Saída almoço',
+        retorno_refeicao: 'Entrada almoço',
+        saida: 'Saída',
+      };
       const resumo = (funcionariosResp.data || []).reduce<ItemResumoPonto[]>((itens, funcionario) => {
         if (!funcionario.user_id || !Array.isArray(funcionario.dias_trabalho) || !funcionario.dias_trabalho.includes(diaSemana)) return itens;
         const entradaPrevista = minutosHorario(funcionario.hora_entrada);
@@ -1687,14 +1696,16 @@ useEffect(() => {
         const registros = registrosPorUsuario.get(funcionario.user_id) || [];
         const tipos = new Set(registros.map((registro) => registro.tipo));
 
-        if (!tipos.has('entrada') && saidaPrevista !== null && minutosAgora > saidaPrevista + 10) {
-          itens.push({ userId: funcionario.user_id, nome: funcionario.nome, status: 'falta' });
-          return itens;
-        }
-        if (tipos.has('entrada') && saidaPrevista !== null && minutosAgora > saidaPrevista + 10) {
-          const completo = ['entrada', 'saida_refeicao', 'retorno_refeicao', 'saida'].every((tipo) => tipos.has(tipo));
-          if (!completo) {
-            itens.push({ userId: funcionario.user_id, nome: funcionario.nome, status: 'incompleto' });
+        if (saidaPrevista !== null && minutosAgora > saidaPrevista + 10) {
+          if (registros.length === 0) {
+            itens.push({ userId: funcionario.user_id, nome: funcionario.nome, status: 'falta' });
+            return itens;
+          }
+          const falhas = tiposObrigatorios
+            .filter((tipo) => !tipos.has(tipo))
+            .map((tipo) => rotulosFalha[tipo]);
+          if (falhas.length > 0) {
+            itens.push({ userId: funcionario.user_id, nome: funcionario.nome, status: 'incompleto', falhas });
             return itens;
           }
         }
@@ -5896,6 +5907,7 @@ if (isTelaMobile) {
   key={`${abaInicialPontoAdmin}-${instanciaPontoAdmin}`}
   aberto={modalPontoAdmin}
   abaInicial={abaInicialPontoAdmin}
+  relatorioInicial={relatorioInicialPonto}
   onFechar={() => setModalPontoAdmin(false)}
   funcionarios={pontoFuncionarios}
   carregando={pontoFuncCarregando}
@@ -7704,7 +7716,7 @@ name="novo-usuario-login"
         {modulosAtivos.includes('ponto') && podeGerenciarPonto && (
           <Tooltip texto="Gerencie funcionários, local da empresa e relatórios de ponto." posicao="bottom">
             <button
-              onClick={() => { setAjustesAberto(false); setAbaInicialPontoAdmin('lista'); setInstanciaPontoAdmin((atual) => atual + 1); setModalPontoAdmin(true); carregarFuncionariosPonto(); carregarPontoConfig(); }}
+              onClick={() => { setAjustesAberto(false); setAbaInicialPontoAdmin('lista'); setRelatorioInicialPonto(null); setInstanciaPontoAdmin((atual) => atual + 1); setModalPontoAdmin(true); carregarFuncionariosPonto(); carregarPontoConfig(); }}
               className="whitespace-nowrap bg-slate-800 hover:bg-slate-700 px-3 py-1.5 rounded-lg border transition-colors font-bold shadow flex items-center gap-1.5 text-xs"
               style={{ borderColor: corPrimaria }}
             >
@@ -8458,8 +8470,12 @@ name="novo-usuario-login"
         pontoResumo={pontoResumoDia}
         pontoResumoCarregando={pontoResumoCarregando}
         pontoFuncionariosHoje={pontoFuncionariosHoje}
-        onAbrirControlePonto={() => {
+        onAbrirControlePonto={(funcionarioUserId) => {
           setAbaInicialPontoAdmin('relatorios');
+          setRelatorioInicialPonto(funcionarioUserId ? {
+            funcionarioUserId,
+            data: new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Sao_Paulo' }).format(new Date()),
+          } : null);
           setInstanciaPontoAdmin((atual) => atual + 1);
           setModalPontoAdmin(true);
           carregarFuncionariosPonto();

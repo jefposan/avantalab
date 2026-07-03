@@ -57,6 +57,7 @@ export type PontoConfig = {
 interface PontoAdminModalProps {
   aberto: boolean;
   abaInicial?: AbaPontoAdmin;
+  relatorioInicial?: { funcionarioUserId: string; data: string } | null;
   onFechar: () => void;
   funcionarios: FuncionarioPonto[];
   carregando: boolean;
@@ -73,6 +74,7 @@ interface PontoAdminModalProps {
 export default function PontoAdminModal({
   aberto,
   abaInicial = 'lista',
+  relatorioInicial = null,
   onFechar,
   funcionarios,
   carregando,
@@ -126,20 +128,25 @@ export default function PontoAdminModal({
   const [confirmandoExcluir, setConfirmandoExcluir] = useState(false);
   const cardEditRef = useRef<HTMLDivElement | null>(null);
 
-  const [relFuncId, setRelFuncId] = useState(TODOS_FUNCIONARIOS);
-  const [relAno, setRelAno] = useState<number>(new Date().getFullYear());
-  const [relMesIdx, setRelMesIdx] = useState<number>(new Date().getMonth());
+  const dataRelatorioInicial = relatorioInicial?.data || '';
+  const dataRelatorioInicialObj = dataRelatorioInicial ? new Date(`${dataRelatorioInicial}T12:00:00`) : new Date();
+  const [relFuncId, setRelFuncId] = useState(relatorioInicial?.funcionarioUserId || TODOS_FUNCIONARIOS);
+  const [relAno, setRelAno] = useState<number>(dataRelatorioInicialObj.getFullYear());
+  const [relMesIdx, setRelMesIdx] = useState<number>(dataRelatorioInicialObj.getMonth());
   const [relDataInicio, setRelDataInicio] = useState<string>(() => {
+    if (dataRelatorioInicial) return dataRelatorioInicial;
     const n = new Date();
     return `${n.getFullYear()}-${String(n.getMonth() + 1).padStart(2, '0')}-01`;
   });
   const [relDataFim, setRelDataFim] = useState<string>(() => {
+    if (dataRelatorioInicial) return dataRelatorioInicial;
     const n = new Date();
     return new Date(n.getFullYear(), n.getMonth() + 1, 0).toISOString().slice(0, 10);
   });
   const [relRegistros, setRelRegistros] = useState<RegistroPonto[]>([]);
   const [relRegistrosTodos, setRelRegistrosTodos] = useState<Record<string, RegistroPonto[]>>({});
   const [relCarregando, setRelCarregando] = useState(false);
+  const relatorioInicialCarregadoRef = useRef(false);
 
   const TOLERANCIA_MIN = 10;
   const MESES_REL = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
@@ -158,8 +165,6 @@ export default function PontoAdminModal({
       setRaio(String(config.raio_m || 100));
     }
   }, [config]);
-
-  if (!aberto) return null;
 
   const card = darkMode ? 'bg-slate-900 text-slate-100 border-slate-700' : 'bg-white text-slate-900 border-slate-200';
   const itemBorda = darkMode ? 'border-slate-700' : 'border-slate-200';
@@ -292,7 +297,22 @@ export default function PontoAdminModal({
     setRelCarregando(false);
   };
 
-  type DiaRel = { dia: string; entrada?: string; saida?: string; distancia: number | null; statusEntrada: 'pontual' | 'atraso' | 'adiantado' | 'sem' };
+  useEffect(() => {
+    if (!aberto || aba !== 'relatorios' || !relatorioInicial || relatorioInicialCarregadoRef.current) return;
+    if (!funcionarios.some((funcionario) => funcionario.user_id === relatorioInicial.funcionarioUserId)) return;
+    relatorioInicialCarregadoRef.current = true;
+    setRelCarregando(true);
+    onCarregarRegistros(relatorioInicial.funcionarioUserId, relatorioInicial.data)
+      .then((registros) => {
+        setRelRegistros(registros.filter((registro) => registro.dia === relatorioInicial.data));
+        setRelRegistrosTodos({});
+      })
+      .finally(() => setRelCarregando(false));
+  }, [aberto, aba, funcionarios, onCarregarRegistros, relatorioInicial]);
+
+  if (!aberto) return null;
+
+  type DiaRel = { dia: string; entrada?: string; saidaAlmoco?: string; entradaAlmoco?: string; saida?: string; distancia: number | null; statusEntrada: 'pontual' | 'atraso' | 'adiantado' | 'sem' };
   const funcSel = funcionarios.find((f) => f.user_id === relFuncId) || null;
   const montarDiasRel = (funcionario: FuncionarioPonto | null, registros: RegistroPonto[]): DiaRel[] => {
     const mapa: Record<string, RegistroPonto[]> = {};
@@ -300,6 +320,8 @@ export default function PontoAdminModal({
     return Object.keys(mapa).sort().reverse().map((dia) => {
       const regs = mapa[dia];
       const entradaReg = regs.find((r) => r.tipo === 'entrada');
+      const saidaAlmocoReg = regs.find((r) => r.tipo === 'saida_refeicao');
+      const entradaAlmocoReg = regs.find((r) => r.tipo === 'retorno_refeicao');
       const saidaReg = [...regs].reverse().find((r) => r.tipo === 'saida');
       const distancia = entradaReg?.distancia_m ?? regs[0]?.distancia_m ?? null;
       let statusEntrada: DiaRel['statusEntrada'] = 'sem';
@@ -307,7 +329,15 @@ export default function PontoAdminModal({
         const diff = minutosDoDia(horaBrasilia(entradaReg.registrado_em)) - minutosDoDia(funcionario.hora_entrada);
         statusEntrada = diff > TOLERANCIA_MIN ? 'atraso' : diff < -TOLERANCIA_MIN ? 'adiantado' : 'pontual';
       }
-      return { dia, entrada: entradaReg ? horaBrasilia(entradaReg.registrado_em) : undefined, saida: saidaReg ? horaBrasilia(saidaReg.registrado_em) : undefined, distancia, statusEntrada };
+      return {
+        dia,
+        entrada: entradaReg ? horaBrasilia(entradaReg.registrado_em) : undefined,
+        saidaAlmoco: saidaAlmocoReg ? horaBrasilia(saidaAlmocoReg.registrado_em) : undefined,
+        entradaAlmoco: entradaAlmocoReg ? horaBrasilia(entradaAlmocoReg.registrado_em) : undefined,
+        saida: saidaReg ? horaBrasilia(saidaReg.registrado_em) : undefined,
+        distancia,
+        statusEntrada,
+      };
     });
   };
   const diasRel = montarDiasRel(funcSel, relRegistros);
@@ -857,8 +887,13 @@ export default function PontoAdminModal({
                     {diasRel.map((d) => (
                       <div key={d.dia} className={`flex items-center gap-3 rounded-xl border p-2.5 text-xs ${itemBorda}`}>
                         <div className="w-14 shrink-0 font-black">{d.dia.slice(8, 10)}/{d.dia.slice(5, 7)}</div>
-                        <div className="flex-1">
-                          <p className="font-bold">{d.entrada || '--:--'} → {d.saida || '--:--'}</p>
+                        <div className="min-w-0 flex-1">
+                          <div className="grid grid-cols-2 gap-x-3 gap-y-1 text-[10px] sm:grid-cols-4">
+                            <span><strong className="block text-[8px] uppercase text-slate-400">Entrada</strong>{d.entrada || '--:--'}</span>
+                            <span><strong className="block text-[8px] uppercase text-slate-400">Saída almoço</strong>{d.saidaAlmoco || '--:--'}</span>
+                            <span><strong className="block text-[8px] uppercase text-slate-400">Entrada almoço</strong>{d.entradaAlmoco || '--:--'}</span>
+                            <span><strong className="block text-[8px] uppercase text-slate-400">Saída</strong>{d.saida || '--:--'}</span>
+                          </div>
                           {d.distancia != null && <p className={`text-[10px] ${textMuted}`}>{Math.round(d.distancia)}m da empresa</p>}
                         </div>
                         {d.statusEntrada !== 'sem' && (

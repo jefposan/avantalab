@@ -1,4 +1,4 @@
-import React, { useState, useContext, createContext, useEffect } from 'react';
+import React, { useState, useContext, createContext, useEffect, useRef } from 'react';
 import {
   DndContext,
   DragOverlay,
@@ -143,10 +143,10 @@ interface DashboardProps {
   onOcultarCardDashboard: (id: string) => void;
   onDefinirOcultosDashboard: (ids: string[]) => void;
   pontoDisponivel: boolean;
-  pontoResumo: Array<{ userId: string; nome: string; status: 'atraso' | 'falta' | 'incompleto' }>;
+  pontoResumo: Array<{ userId: string; nome: string; status: 'atraso' | 'falta' | 'incompleto'; falhas?: string[] }>;
   pontoResumoCarregando: boolean;
   pontoFuncionariosHoje: number;
-  onAbrirControlePonto: () => void;
+  onAbrirControlePonto: (funcionarioUserId?: string) => void;
 }
 
 export default function Dashboard({
@@ -203,9 +203,29 @@ export default function Dashboard({
     setCols(criarCols(dashboardOrdem, dashboardExpandidos));
   }
   const [activeId, setActiveId] = useState<string | null>(null);
+  const pontoListaRef = useRef<HTMLDivElement | null>(null);
+  const [pontoTemMaisAbaixo, setPontoTemMaisAbaixo] = useState(false);
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
   const horaAtual = new Date().getHours();
   const saudacaoPeriodo = horaAtual < 12 ? 'Bom dia!' : horaAtual < 18 ? 'Boa tarde!' : 'Boa noite!';
+
+  const atualizarIndicadorPonto = () => {
+    const lista = pontoListaRef.current;
+    if (!lista) {
+      setPontoTemMaisAbaixo(false);
+      return;
+    }
+    setPontoTemMaisAbaixo(lista.scrollTop + lista.clientHeight < lista.scrollHeight - 2);
+  };
+
+  useEffect(() => {
+    const frame = window.requestAnimationFrame(atualizarIndicadorPonto);
+    window.addEventListener('resize', atualizarIndicadorPonto);
+    return () => {
+      window.cancelAnimationFrame(frame);
+      window.removeEventListener('resize', atualizarIndicadorPonto);
+    };
+  }, [pontoResumo]);
 
   useEffect(() => {
     let ativo = true;
@@ -647,7 +667,8 @@ const mostrarComparativoResumoDash =
               Equipe em dia
             </div>
           ) : (
-            <div className="grid max-h-52 gap-1 overflow-y-auto pr-1">
+            <div className="relative">
+              <div ref={pontoListaRef} onScroll={atualizarIndicadorPonto} className="grid max-h-72 gap-0.5 overflow-y-auto pr-1">
               {pontoResumo.map((item) => {
                 const status = {
                   atraso: { label: 'Atraso', classe: 'bg-amber-100 text-amber-700' },
@@ -655,15 +676,23 @@ const mostrarComparativoResumoDash =
                   incompleto: { label: 'Incompleto', classe: 'bg-violet-100 text-violet-700' },
                 }[item.status];
                 return (
-                  <div key={item.userId} className={`flex items-center justify-between gap-3 rounded-lg px-2.5 py-2 ${darkMode ? 'bg-slate-700/60' : 'bg-slate-50'}`}>
-                    <span className={`min-w-0 truncate text-xs font-bold ${textStrong}`}>{item.nome}</span>
-                    <span className={`shrink-0 rounded-full px-2 py-1 text-[10px] font-black uppercase ${status.classe}`}>{status.label}</span>
-                  </div>
+                  <button type="button" onClick={() => onAbrirControlePonto(item.userId)} key={item.userId} className={`flex min-h-7 w-full items-center justify-between gap-2 rounded-md px-2 py-1 text-left transition hover:brightness-95 focus:outline-none focus:ring-2 focus:ring-cyan-500/40 ${darkMode ? 'bg-slate-700/60' : 'bg-slate-50'}`}>
+                    <span className={`min-w-0 flex-1 truncate text-[11px] font-bold ${textStrong}`}>{item.nome}</span>
+                    <span className={`shrink-0 rounded-full px-1.5 py-0.5 text-[8px] font-black uppercase leading-tight ${status.classe}`}>{status.label}</span>
+                  </button>
                 );
               })}
+              </div>
+              {pontoTemMaisAbaixo && (
+                <div className={`pointer-events-none absolute inset-x-0 bottom-0 flex h-9 items-end justify-center bg-gradient-to-t pb-0.5 ${darkMode ? 'from-slate-800' : 'from-white'} to-transparent`}>
+                  <svg className="h-4 w-4 animate-bounce" style={{ color: corPrimaria }} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" aria-hidden="true">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="m7 10 5 5 5-5" />
+                  </svg>
+                </div>
+              )}
             </div>
           )}
-          <button type="button" onClick={onAbrirControlePonto} className="mt-3 w-full border-t border-slate-200/20 pt-3 text-left text-xs font-black transition hover:opacity-75" style={{ color: corPrimaria }}>
+          <button type="button" onClick={() => onAbrirControlePonto()} className="mt-3 w-full border-t border-slate-200/20 pt-3 text-left text-xs font-black transition hover:opacity-75" style={{ color: corPrimaria }}>
             Ver controle de ponto
           </button>
         </div>
