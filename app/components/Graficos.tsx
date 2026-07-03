@@ -7,6 +7,7 @@ import {
 import { SortableContext, useSortable, arrayMove, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { CATEGORIAS_EXCLUSAO_EBITDA } from '../lib/perfis';
+import { restringirArrasteAJanela } from '../lib/dnd';
 
 interface GraficosProps {
   meses: string[];
@@ -606,7 +607,7 @@ export default function Graficos({ meses, lancamentos, faturamentos, despesasCad
             ))}
           </div>
         </div>
-        <DragOverlay dropAnimation={null}>{activeId && cardsById[activeId] ? <div className="cursor-grabbing rounded-2xl shadow-2xl">{cardsById[activeId]}</div> : null}</DragOverlay>
+        <DragOverlay dropAnimation={null} modifiers={[restringirArrasteAJanela]}>{activeId && cardsById[activeId] ? <div className="cursor-grabbing rounded-2xl shadow-2xl">{cardsById[activeId]}</div> : null}</DragOverlay>
       </DndContext>
     </main>
 

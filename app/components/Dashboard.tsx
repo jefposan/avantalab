@@ -20,6 +20,7 @@ import {
 import { CSS } from '@dnd-kit/utilities';
 import { createPortal, flushSync } from 'react-dom';
 import { buscarFaturamentos, buscarLancamentos } from '../lib/database';
+import { restringirArrasteAJanela } from '../lib/dnd';
 
 const HandleContext = createContext<Record<string, any> | null>(null);
 
@@ -1149,7 +1150,7 @@ const mostrarComparativoResumoDash =
         </div>
       </div>
     </main>
-    <DragOverlay dropAnimation={null}>
+    <DragOverlay dropAnimation={null} modifiers={[restringirArrasteAJanela]}>
       {activeId && cardsById[activeId] ? (
         <div className="cursor-grabbing shadow-2xl rounded-2xl">{cardsById[activeId]}</div>
       ) : null}
