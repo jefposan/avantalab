@@ -3,12 +3,26 @@
 :root {
   --background: #ffffff;
   --foreground: #171717;
+
+  /* Tipografia AvantaLab: altere este bloco para atualizar todo o sistema. */
+  --av-font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+    var(--font-avantalab-inter), Helvetica, Arial, sans-serif;
+  --av-font-weight-body: 400;
+  --av-font-weight-muted: 400;
+  --av-font-weight-control: 500;
+  --av-font-weight-subtitle: 500;
+  --av-font-weight-title: 600;
+  --av-line-height-title: 1.2;
+  --av-line-height-subtitle: 1.35;
+  --av-line-height-body: 1.5;
+  --av-line-height-control: 1.2;
+  --av-letter-spacing-title: -0.01em;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: Arial, Helvetica, sans-serif;
+  --font-sans: var(--av-font-family);
   --font-mono: "Courier New", Courier, monospace;
 }
 
@@ -22,7 +36,74 @@
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--av-font-family);
+}
+
+/* Hierarquia tipografica global do AvantaLab. */
+.typography-system {
+  font-family: var(--av-font-family);
+  font-weight: var(--av-font-weight-body);
+  line-height: var(--av-line-height-body);
+}
+
+.typography-system .font-sans {
+  font-family: inherit !important;
+}
+
+.typography-system h1,
+.typography-system h2,
+.typography-system h3,
+.typography-system .font-black,
+.typography-system .font-bold {
+  font-weight: var(--av-font-weight-title) !important;
+  letter-spacing: var(--av-letter-spacing-title);
+}
+
+.typography-system h1,
+.typography-system h2,
+.typography-system h3 {
+  line-height: var(--av-line-height-title);
+}
+
+.typography-system .font-semibold,
+.typography-system button,
+.typography-system [role="button"],
+.typography-system label,
+.typography-system nav {
+  font-weight: var(--av-font-weight-control) !important;
+}
+
+.typography-system input,
+.typography-system select,
+.typography-system textarea {
+  font-family: inherit;
+  font-weight: var(--av-font-weight-body);
+}
+
+.av-text-title,
+.av-text-card-title {
+  font-weight: var(--av-font-weight-title);
+  line-height: var(--av-line-height-title);
+  letter-spacing: var(--av-letter-spacing-title);
+}
+
+.av-text-subtitle {
+  font-weight: var(--av-font-weight-subtitle);
+  line-height: var(--av-line-height-subtitle);
+}
+
+.av-text-body,
+.av-text-muted {
+  font-weight: var(--av-font-weight-body);
+  line-height: var(--av-line-height-body);
+}
+
+.av-text-button,
+.av-text-label,
+.av-text-input,
+.av-text-menu {
+  font-weight: var(--av-font-weight-control);
+  line-height: var(--av-line-height-control);
 }
 
 html,

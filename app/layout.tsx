@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import { inter } from "./lib/fonts";
 
 const shareImage = 'https://avantalab.com.br/images/avantalab-share-meta-safe-center-v2.jpg';
 
@@ -41,7 +42,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="pt-BR" className="h-full antialiased">
+    <html lang="pt-BR" className={`${inter.variable} h-full antialiased`}>
       <head>
         <link
           rel="preload"
@@ -58,7 +59,7 @@ export default function RootLayout({
           media="(max-width: 1023px)"
         />
       </head>
-      <body className="min-h-full flex flex-col">{children}</body>
+      <body className="typography-system min-h-full flex flex-col">{children}</body>
     </html>
   );
 }

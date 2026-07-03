@@ -5191,7 +5191,7 @@ if (acessoNaoConfigurado) {
 
 if (modalSelecionarEmpresa) {
   return (
-    <main className={`min-h-screen flex items-center justify-center px-4 py-10 font-sans ${
+    <main className={`min-h-screen flex items-center justify-center px-4 py-10 ${
       darkMode ? 'bg-slate-950 text-slate-100' : 'bg-slate-100 text-slate-800'
     }`}>
       <section
@@ -5313,7 +5313,7 @@ if (modalSelecionarEmpresa) {
 
 if (validacaoTelefoneObrigatoria) {
   return (
-    <main className="relative min-h-screen overflow-hidden font-sans">
+    <main className="relative min-h-screen overflow-hidden">
       <div
         className="absolute inset-0 bg-cover bg-center"
         style={{ backgroundImage: "image-set(url('/images/bg-avantalab.webp') type('image/webp'), url('/images/bg-avantalab.png') type('image/png'))" }}
@@ -5541,7 +5541,7 @@ if (isTelaMobile) {
 
 
   return (
-    <div className={`min-h-screen flex flex-col font-sans transition-colors duration-300 ${bgMain}`}>
+    <div className={`min-h-screen flex flex-col transition-colors duration-300 ${bgMain}`}>
       
       {/* ================= MODAIS ================= */}
 
