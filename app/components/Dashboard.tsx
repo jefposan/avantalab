@@ -470,6 +470,22 @@ const mostrarComparativoResumoDash =
     aplicarMudanca();
   };
 
+  const SeletorMesCard = ({ value, onChange, ariaLabel }: { value: string; onChange: (mes: string) => void; ariaLabel: string }) => (
+    <div className="relative shrink-0">
+      <select
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        aria-label={ariaLabel}
+        className="h-8 min-w-[108px] appearance-none rounded-lg border border-white/70 bg-white/95 pl-3 pr-8 text-[11px] font-black uppercase tracking-wide text-[#123451] shadow-[0_4px_12px_rgba(15,23,42,0.16)] outline-none transition hover:bg-white focus:ring-2 focus:ring-white/60 cursor-pointer"
+      >
+        {meses.map((mes) => <option key={mes} value={mes} className="bg-white text-slate-800">{mes}</option>)}
+      </select>
+      <svg className="pointer-events-none absolute right-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-[#123451]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" aria-hidden="true">
+        <path d="m7 10 5 5 5-5" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+    </div>
+  );
+
   const BotaoOpcoesCard = ({ id, tone = 'dark' }: { id: string; tone?: 'dark' | 'light' }) => (
     <div className="relative shrink-0">
       <button
@@ -702,12 +718,10 @@ const mostrarComparativoResumoDash =
 
     saldo: (
       <div className={`${bgCard} card-radius-avantalab relative w-full rounded-2xl shadow-lg border-2 overflow-visible transition-colors`} style={{ borderColor: corPrimaria }}>
-        <div className="flex items-center justify-between rounded-tl-[14px] rounded-tr-[28px] px-6 py-3 text-center text-sm font-bold uppercase tracking-wider" style={{ backgroundColor: corPrimaria, color: textoSobreCorPrimaria }}>
+        <div className="flex items-center justify-between rounded-tl-[12px] rounded-tr-[26px] px-6 py-3 text-center text-sm font-bold uppercase tracking-wider" style={{ backgroundColor: corPrimaria, color: textoSobreCorPrimaria }}>
           <span>Saldo do mês</span>
           <div className="flex items-center gap-2">
-            <select value={meses[saldoCardMesIdx]} onChange={e => setSaldoCardMesIdx(meses.indexOf(e.target.value))} className="text-xs rounded p-1 outline-none font-bold cursor-pointer border" style={{ color: textoSobreCorPrimaria, backgroundColor: corEhClara(corPrimaria) ? 'rgba(15, 23, 42, 0.08)' : 'rgba(0, 0, 0, 0.20)', borderColor: corEhClara(corPrimaria) ? 'rgba(15, 23, 42, 0.18)' : 'rgba(255, 255, 255, 0.12)' }}>
-              {meses.map(m => <option key={m} value={m} className="text-slate-800 bg-white">{m}</option>)}
-            </select>
+            <SeletorMesCard value={meses[saldoCardMesIdx]} onChange={(mes) => setSaldoCardMesIdx(meses.indexOf(mes))} ariaLabel="Selecionar mês do saldo" />
             <DragHandle tone="light" />
             <BotaoOpcoesCard id="saldo" tone="light" />
           </div>
@@ -734,9 +748,7 @@ const mostrarComparativoResumoDash =
         <div className="text-center text-sm font-bold uppercase tracking-wider flex justify-between px-6 py-3 items-center" style={{ backgroundColor: corPrimaria, color: textoSobreCorPrimaria }}>
           <span>Resumo Financeiro</span>
           <div className="flex items-center gap-2">
-            <select value={mesResumoDash} onChange={e => setMesResumoDash(e.target.value)} className="text-xs rounded p-1 outline-none font-bold cursor-pointer border" style={{ color: textoSobreCorPrimaria, backgroundColor: corEhClara(corPrimaria) ? 'rgba(15, 23, 42, 0.08)' : 'rgba(0, 0, 0, 0.20)', borderColor: corEhClara(corPrimaria) ? 'rgba(15, 23, 42, 0.18)' : 'rgba(255, 255, 255, 0.12)' }}>
-              {meses.map(m => <option key={m} value={m} className="text-slate-800 bg-white">{m}</option>)}
-            </select>
+            <SeletorMesCard value={mesResumoDash} onChange={setMesResumoDash} ariaLabel="Selecionar mês do resumo financeiro" />
             <DragHandle tone="light" />
             <BotaoOpcoesCard id="resumoFinanceiro" tone="light" />
           </div>
