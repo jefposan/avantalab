@@ -13,6 +13,22 @@
   },
   "versoes": [
     {
+      "versao": "1.3.5",
+      "titulo": "Nova identidade visual e melhorias de experiência",
+      "data": "Julho/2026",
+      "itens": [
+        "Web: novo resumo diário do Controle de Ponto no dashboard.",
+        "Web: Kanban do dashboard e gráficos mais fluido e organizado.",
+        "Mobile: sessão mais estável com Manter conectado.",
+        "Mobile: menu redesenhado, com novos ícones, cores e controles.",
+        "Mobile: modo escuro aprimorado, incluindo a adaptação do card da Ava.",
+        "Mobile: header renovado, com seletor de período mais legível.",
+        "Web e mobile: cards, popups e menus com a nova identidade visual assimétrica.",
+        "Web e mobile: Ava e tutoriais atualizados com os recursos atuais do sistema.",
+        "Web e mobile: diversas correções de navegação, rolagem, animações e responsividade."
+      ]
+    },
+    {
       "versao": "1.3.4",
       "titulo": "Correções e melhorias gerais",
       "data": "Julho/2026",
