@@ -37,6 +37,7 @@ function cpfValido(cpf: string) {
 
 export const DIAS_SEMANA: Array<[number, string]> = [[0, 'Dom'], [1, 'Seg'], [2, 'Ter'], [3, 'Qua'], [4, 'Qui'], [5, 'Sex'], [6, 'Sáb']];
 const TODOS_FUNCIONARIOS = '__todos__';
+export type AbaPontoAdmin = 'lista' | 'novo' | 'local' | 'relatorios';
 
 export type RegistroPonto = {
   tipo: string;
@@ -55,6 +56,7 @@ export type PontoConfig = {
 
 interface PontoAdminModalProps {
   aberto: boolean;
+  abaInicial?: AbaPontoAdmin;
   onFechar: () => void;
   funcionarios: FuncionarioPonto[];
   carregando: boolean;
@@ -70,6 +72,7 @@ interface PontoAdminModalProps {
 
 export default function PontoAdminModal({
   aberto,
+  abaInicial = 'lista',
   onFechar,
   funcionarios,
   carregando,
@@ -84,7 +87,7 @@ export default function PontoAdminModal({
 }: PontoAdminModalProps) {
   // Cor padrão do sistema (marca AvantaLab) — não usa a cor do usuário (corSistema).
   const corSistema = '#003E73';
-  const [aba, setAba] = useState<'lista' | 'novo' | 'local' | 'relatorios'>('lista');
+  const [aba, setAba] = useState<AbaPontoAdmin>(abaInicial);
   const [linkCopiado, setLinkCopiado] = useState(false);
   const [nome, setNome] = useState('');
   const [cpf, setCpf] = useState('');

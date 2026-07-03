@@ -13,7 +13,7 @@ import ModalInstrucoes from './components/ModalInstrucoes';
 import ModalDespesasBase from './components/ModalDespesasBase';
 import ModalLogo from './components/ModalLogo';
 import ModulosModal, { type Modulo } from './components/ModulosModal';
-import PontoAdminModal, { type FuncionarioPonto, type PontoConfig } from './components/PontoAdminModal';
+import PontoAdminModal, { type AbaPontoAdmin, type FuncionarioPonto, type PontoConfig } from './components/PontoAdminModal';
 import SobreModal from './components/SobreModal';
 import ModalConfirmacao from "./components/ModalConfirmacao";
 import DraggableModalCard from './components/DraggableModalCard';
@@ -383,6 +383,8 @@ const [despesaRelatorioAberta, setDespesaRelatorioAberta] = useState<{
   const [modulosCarregando, setModulosCarregando] = useState(false);
   const [moduloAcaoId, setModuloAcaoId] = useState<string | null>(null);
   const [modalPontoAdmin, setModalPontoAdmin] = useState(false);
+  const [abaInicialPontoAdmin, setAbaInicialPontoAdmin] = useState<AbaPontoAdmin>('lista');
+  const [instanciaPontoAdmin, setInstanciaPontoAdmin] = useState(0);
   const [pontoFuncionarios, setPontoFuncionarios] = useState<FuncionarioPonto[]>([]);
   const [pontoFuncCarregando, setPontoFuncCarregando] = useState(false);
   const [pontoConfig, setPontoConfig] = useState<PontoConfig>(null);
@@ -5891,7 +5893,9 @@ if (isTelaMobile) {
 />
 
 <PontoAdminModal
+  key={`${abaInicialPontoAdmin}-${instanciaPontoAdmin}`}
   aberto={modalPontoAdmin}
+  abaInicial={abaInicialPontoAdmin}
   onFechar={() => setModalPontoAdmin(false)}
   funcionarios={pontoFuncionarios}
   carregando={pontoFuncCarregando}
@@ -7700,7 +7704,7 @@ name="novo-usuario-login"
         {modulosAtivos.includes('ponto') && podeGerenciarPonto && (
           <Tooltip texto="Gerencie funcionários, local da empresa e relatórios de ponto." posicao="bottom">
             <button
-              onClick={() => { setAjustesAberto(false); setModalPontoAdmin(true); carregarFuncionariosPonto(); carregarPontoConfig(); }}
+              onClick={() => { setAjustesAberto(false); setAbaInicialPontoAdmin('lista'); setInstanciaPontoAdmin((atual) => atual + 1); setModalPontoAdmin(true); carregarFuncionariosPonto(); carregarPontoConfig(); }}
               className="whitespace-nowrap bg-slate-800 hover:bg-slate-700 px-3 py-1.5 rounded-lg border transition-colors font-bold shadow flex items-center gap-1.5 text-xs"
               style={{ borderColor: corPrimaria }}
             >
@@ -8455,6 +8459,8 @@ name="novo-usuario-login"
         pontoResumoCarregando={pontoResumoCarregando}
         pontoFuncionariosHoje={pontoFuncionariosHoje}
         onAbrirControlePonto={() => {
+          setAbaInicialPontoAdmin('relatorios');
+          setInstanciaPontoAdmin((atual) => atual + 1);
           setModalPontoAdmin(true);
           carregarFuncionariosPonto();
           carregarPontoConfig();
