@@ -20,6 +20,8 @@ import DraggableModalCard from './components/DraggableModalCard';
 import CardEntradaFaturamento from './components/CardEntradaFaturamento';
 import TabelaLancamentosDespesa from './components/TabelaLancamentosDespesa';
 import TourPrimeiroAcesso from './components/TourPrimeiroAcesso';
+import PaywallEmpresa from './components/PaywallEmpresa';
+import { COBRANCA_ATIVA, precisaPaywallEmpresa, type EstadoAcesso } from './lib/cobranca';
 import {
   formatarMoeda,
   formatarDescricao,
@@ -318,6 +320,25 @@ const [segundosReenvioTelefoneObrigatorio, setSegundosReenvioTelefoneObrigatorio
 const [reenviandoTelefoneObrigatorio, setReenviandoTelefoneObrigatorio] = useState(false);
 const [validandoTelefoneObrigatorio, setValidandoTelefoneObrigatorio] = useState(false);
   const [abaAtiva, setAbaAtiva] = useState('Dashboard');
+  // Cobrança: estado de acesso do perfil (só é buscado quando COBRANCA_ATIVA=true).
+  const [estadoAcesso, setEstadoAcesso] = useState<EstadoAcesso | null>(null);
+  useEffect(() => {
+    if (!COBRANCA_ATIVA || !acessoLiberado || !empresaId) { setEstadoAcesso(null); return; }
+    let ativo = true;
+    (async () => {
+      try {
+        const { data: sessao } = await supabase.auth.getSession();
+        const token = sessao.session?.access_token;
+        if (!token) return;
+        const resp = await fetch(`/api/cobranca/estado?empresaId=${encodeURIComponent(empresaId)}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        const json = await resp.json();
+        if (ativo && resp.ok) setEstadoAcesso(json.estado || null);
+      } catch { /* silencioso: em caso de falha, não bloqueia (fail-open) */ }
+    })();
+    return () => { ativo = false; };
+  }, [acessoLiberado, empresaId]);
   const [saldoCardMesIdx, setSaldoCardMesIdx] = useState<number>(new Date().getMonth());
   const dashboardCardsKanban = ['aConfirmar', 'saldo', 'resumoFinanceiro', 'evolucaoMensal', 'registrarEntradas', 'controlePonto'];
   const ordemDashboardPadrao = { a: ['aConfirmar', 'saldo', 'controlePonto'], b: ['resumoFinanceiro', 'evolucaoMensal', 'registrarEntradas'] };
@@ -5551,6 +5572,19 @@ if (isTelaMobile) {
     );
   }
 
+  // Cobrança: perfil empresa com trial vencido / sem assinatura → paywall total.
+  // (precisaPaywallEmpresa retorna false enquanto COBRANCA_ATIVA=false, então
+  // esta tela nunca aparece até ligarmos a flag.)
+  if (precisaPaywallEmpresa(estadoAcesso)) {
+    return (
+      <PaywallEmpresa
+        darkMode={darkMode}
+        corPrimaria={corPrimaria}
+        nomePerfil={nomeEmpresaAtual}
+        onSair={confirmarLogout}
+      />
+    );
+  }
 
   return (
     <div className={`min-h-screen flex flex-col transition-colors duration-300 ${bgMain}`}>
