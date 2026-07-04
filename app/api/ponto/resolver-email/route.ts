@@ -25,7 +25,7 @@ export async function POST(request: Request) {
 
     const { data, error } = await supabaseAdmin
       .from('usuarios_empresa')
-      .select('email')
+      .select('email, empresa_id')
       .eq('login', cpf)
       .eq('perfil', 'funcionario_ponto')
       .eq('status', 'ativo')
@@ -35,6 +35,28 @@ export async function POST(request: Request) {
     // Resposta genérica para não vazar se um CPF existe ou não.
     if (error || !data || !data.email) {
       return NextResponse.json({ erro: true, mensagem: 'CPF ou senha inválidos.' }, { status: 404 });
+    }
+
+    // Bloqueio: se o módulo Controle de Ponto foi removido (desativado) para a
+    // empresa do funcionário, o acesso fica bloqueado (sem excluir o cadastro).
+    if (data.empresa_id) {
+      const { data: modulo, error: erroModulo } = await supabaseAdmin
+        .from('empresa_modulos')
+        .select('id')
+        .eq('empresa_id', data.empresa_id)
+        .eq('modulo_id', 'ponto')
+        .eq('ativo', true)
+        .limit(1)
+        .maybeSingle();
+
+      // Só bloqueia quando a consulta foi bem-sucedida e o módulo não está ativo.
+      // Em erro de leitura, mantém o acesso (fail-open) para não travar por instabilidade.
+      if (!erroModulo && !modulo) {
+        return NextResponse.json(
+          { erro: true, bloqueado: true, mensagem: 'O controle de ponto está indisponível para a sua empresa no momento. Fale com o gestor.' },
+          { status: 403 }
+        );
+      }
     }
 
     return NextResponse.json({ erro: false, email: data.email });

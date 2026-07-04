@@ -247,6 +247,11 @@
         method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ cpf: cpf }),
       });
       var r = await resp.json();
+      if (r && r.bloqueado) {
+        state.entrando = false;
+        state.erro = r.mensagem || 'O controle de ponto está indisponível para a sua empresa no momento. Fale com o gestor.';
+        render(); return;
+      }
       if (!resp.ok || r.erro || !r.email) {
         state.entrando = false; state.erro = 'CPF ou senha inválidos.'; render(); return;
       }
@@ -273,6 +278,33 @@
     render();
   }
 
+  // Verifica no servidor se o módulo Controle de Ponto continua ativo para a
+  // empresa. Fail-open: em erro de rede/servidor, não bloqueia (retorna true).
+  async function pontoAcessoAtivo(empresaId) {
+    if (!empresaId) return true;
+    try {
+      var resp = await fetch('/api/ponto/verificar-acesso', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ empresaId: empresaId }),
+      });
+      if (!resp.ok) return true;
+      var r = await resp.json();
+      return r && r.ativo !== false;
+    } catch (e) { return true; }
+  }
+
+  // Encerra a sessão e mostra a tela de login com a mensagem de bloqueio.
+  async function bloquearPonto(msg) {
+    try { await db.auth.signOut(); } catch (e) {}
+    state.autenticado = false; state.usuario = null; state.empresa = null; state.funcionario = null;
+    state.pontoConfig = null; state.pontoHoje = []; state.comprovante = null; state.view = 'bater';
+    state.cpf = ''; state.senha = ''; state.verSenha = false;
+    state.entrando = false; state.batendo = false; state.registros = []; state.periodo = 'dia';
+    state.carregando = false; state.pronto = true;
+    state.notificacoesAtivas = false; state.notificacoesAtualizando = false;
+    state.erro = msg || 'O controle de ponto está indisponível para a sua empresa no momento. Fale com o gestor.';
+    render();
+  }
+
   async function carregarTudo() {
     var uid = state.usuario.id;
     var md = state.usuario.user_metadata || {};
@@ -287,6 +319,13 @@
         db.from('ponto_registros').select('id, tipo, registrado_em').eq('user_id', uid).eq('dia', diaPontoHoje()).order('registrado_em', { ascending: true }),
       ]);
       var f = res[0], emp = res[1], cfg = res[2], hoje = res[3];
+      // Bloqueio de sessão já aberta ("Manter conectado"): se o gestor removeu o
+      // módulo, encerra a sessão em vez de carregar a tela de bater ponto.
+      var empresaIdCheck = (f && f.data && f.data.empresa_id) || empresaId;
+      if (!(await pontoAcessoAtivo(empresaIdCheck))) {
+        await bloquearPonto('O controle de ponto foi desativado para a sua empresa. Fale com o gestor.');
+        return;
+      }
       if (f && !f.error && f.data) state.funcionario = f.data;
       if (emp && !emp.error && emp.data) state.empresa = emp.data;
       state.pontoConfig = (cfg && !cfg.error && cfg.data) ? cfg.data : null;
@@ -342,6 +381,12 @@
       state.batendo = false;
       mostrarToast('Voce esta a ' + Math.round(distancia || 0) + 'm da empresa. Aproxime-se (limite ' + raio + 'm).');
       render();
+      return;
+    }
+    // Revalida o módulo antes de registrar (caso tenha sido removido durante a sessão).
+    if (!(await pontoAcessoAtivo(empresaId))) {
+      state.batendo = false;
+      await bloquearPonto('O controle de ponto foi desativado para a sua empresa. Fale com o gestor.');
       return;
     }
     var hash = (Date.now().toString(36) + Math.random().toString(36).slice(2, 8)).toUpperCase();
