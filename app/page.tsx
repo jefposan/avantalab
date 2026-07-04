@@ -1597,14 +1597,26 @@ useEffect(() => {
 
   async function desinstalarModulo(moduloId: string) {
     if (!empresaId) return;
-    setModuloAcaoId(moduloId);
-    try {
-      await supabase.from('empresa_modulos')
-        .update({ ativo: false, atualizado_em: new Date().toISOString() })
-        .eq('empresa_id', empresaId).eq('modulo_id', moduloId);
-      setModulosAtivos((prev) => prev.filter((id) => id !== moduloId));
-    } catch {}
-    setModuloAcaoId(null);
+    const nomeModulo = modulosCatalogo.find((m) => m.id === moduloId)?.nome || 'este módulo';
+    const avisoPonto = moduloId === 'ponto'
+      ? '\n\nImportante: os funcionários do Controle de Ponto continuam conseguindo fazer login e registrar ponto normalmente, mesmo com o módulo removido daqui.'
+      : '';
+    abrirConfirmacao({
+      titulo: `Remover ${nomeModulo}?`,
+      mensagem:
+        `O módulo será desativado e sairá do menu deste perfil.\n\nSeus dados NÃO são apagados: ao reinstalar, tudo volta como estava.${avisoPonto}`,
+      textoConfirmar: 'Remover módulo',
+      acao: async () => {
+        setModuloAcaoId(moduloId);
+        try {
+          await supabase.from('empresa_modulos')
+            .update({ ativo: false, atualizado_em: new Date().toISOString() })
+            .eq('empresa_id', empresaId).eq('modulo_id', moduloId);
+          setModulosAtivos((prev) => prev.filter((id) => id !== moduloId));
+        } catch {}
+        setModuloAcaoId(null);
+      },
+    });
   }
 
   // ── Controle de Ponto (admin) ──
