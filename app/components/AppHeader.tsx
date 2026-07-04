@@ -195,14 +195,14 @@ export default function AppHeader({
 
       {/* ── HEADER PRINCIPAL ── */}
       <header
-        className={`print-ocultar ${bgCard} sticky top-0 z-[900] w-full max-w-full overflow-hidden border-b px-3 pb-3 pt-1 shadow-[0_4px_18px_rgba(15,23,42,0.10)] sm:px-4 lg:px-6 xl:px-8 xl:pb-4 relative`}
+        className={`print-ocultar ${bgCard} sticky top-0 z-[900] w-full max-w-full overflow-hidden border-b px-3 py-2 shadow-[0_4px_18px_rgba(15,23,42,0.10)] sm:px-4 lg:px-6 xl:px-8 xl:py-3 relative`}
         style={{ borderBottomColor: darkMode ? '#334155' : 'transparent', borderBottomWidth: '1px' }}
       >
         <div className="mx-auto flex min-h-[68px] w-full min-w-0 max-w-7xl items-center gap-3 px-0 sm:min-h-[72px] sm:gap-4 xl:min-h-[88px] xl:gap-6 xl:px-8">
           {/* LOGO */}
           {logoUrl !== '__blank__' && (
           <div
-            className="relative mb-1 flex h-[54px] w-28 shrink-0 cursor-pointer items-center justify-center sm:h-[60px] sm:w-36 xl:mb-2 xl:h-[72px] xl:w-48"
+            className="relative flex h-[60px] w-40 shrink-0 cursor-pointer items-center justify-center sm:h-[68px] sm:w-48 xl:h-[82px] xl:w-64"
             onClick={() => { setAbaAtiva('Dashboard'); setMesAtivo(null); setMenuResponsivoAberto(false); }}
           >
             {logoUrl ? (
@@ -332,93 +332,83 @@ export default function AppHeader({
                 </div>
                 </Tooltip>
 
-                {/* Grade de acoes rapidas 2x2: Calc/Agenda em cima, Sino/Perfil embaixo */}
-                <div className="grid grid-cols-[repeat(2,auto)] gap-2">
-                {/* Calculadora */}
-                <Tooltip texto="Abra a calculadora." posicao="bottom">
-                <button
-                  type="button"
-                  onClick={() => setCalcAberta(!calcAberta)}
-                  aria-label="Calculadora"
-                  className={`flex h-9 w-9 items-center justify-center rounded-lg border shadow-sm transition hover:scale-[1.03] active:scale-[0.98] cursor-pointer ${
-                    darkMode
-                      ? 'border-slate-700 bg-slate-800 text-slate-200 hover:bg-slate-700'
-                      : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50'
+                {/* Controle radial de acoes rapidas */}
+                <div
+                  className={`relative grid h-[92px] w-[92px] shrink-0 grid-cols-2 grid-rows-2 gap-[2px] overflow-hidden rounded-full border-2 shadow-[0_8px_18px_rgba(15,23,42,0.18)] ${
+                    darkMode ? 'border-slate-600 bg-slate-600' : 'border-white bg-white'
                   }`}
+                  aria-label="Ações rápidas"
                 >
-                  <svg className="h-4.5 w-4.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" style={{ color: '#6366F1' }}>
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"
-                      d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
-                  </svg>
-                </button>
-                </Tooltip>
+                  <Tooltip texto="Abra a agenda de compromissos." posicao="left" wrapperClassName="h-full w-full">
+                    <button
+                      type="button"
+                      onClick={onAbrirAgenda}
+                      aria-label="Agenda"
+                      className="relative flex h-full w-full items-center justify-center bg-[#104F86] text-white transition duration-200 hover:brightness-110 active:brightness-90 focus-visible:z-20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-white cursor-pointer"
+                    >
+                      <svg className="h-[18px] w-[18px] translate-x-1 translate-y-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                      </svg>
+                      {agendaHojeCount > 0 && (
+                        <span className="absolute left-1 top-1 flex h-3.5 min-w-3.5 items-center justify-center rounded-full bg-cyan-300 px-0.5 text-[8px] font-black leading-none text-slate-900 shadow">
+                          {agendaHojeCount > 9 ? '9+' : agendaHojeCount}
+                        </span>
+                      )}
+                    </button>
+                  </Tooltip>
 
-                {/* Agenda */}
-                <Tooltip texto="Abra a agenda de compromissos." posicao="bottom">
-                <button
-                  type="button"
-                  onClick={onAbrirAgenda}
-                  aria-label="Agenda"
-                  className={`relative flex h-9 w-9 items-center justify-center rounded-lg border shadow-sm transition hover:scale-[1.03] active:scale-[0.98] cursor-pointer ${
-                    darkMode
-                      ? 'border-slate-700 bg-slate-800 text-slate-200 hover:bg-slate-700'
-                      : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50'
-                  }`}
-                >
-                  <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" style={{ color: '#0891B2' }}>
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"
-                      d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                  </svg>
-                  {agendaHojeCount > 0 && (
-                    <span className="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-cyan-500 text-[9px] font-black leading-none text-white shadow-md">
-                      {agendaHojeCount > 9 ? '9+' : agendaHojeCount}
-                    </span>
-                  )}
-                </button>
-                </Tooltip>
+                  <Tooltip texto="Troque ou gerencie seus perfis financeiros." posicao="right" wrapperClassName="h-full w-full">
+                    <button
+                      type="button"
+                      onClick={() => { setAjustesAberto(false); setPainelAvisosAberto(false); setModalEmpresasAberto(true); }}
+                      aria-label="Trocar perfil"
+                      className="flex h-full w-full items-center justify-center bg-[#0E7490] text-white transition duration-200 hover:brightness-110 active:brightness-90 focus-visible:z-20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-white cursor-pointer"
+                    >
+                      <svg className="h-[19px] w-[19px] -translate-x-1 translate-y-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                        <circle cx="12" cy="8" r="3.5" strokeWidth="2" />
+                        <path d="M5 20c.7-4 3-6 7-6s6.3 2 7 6" strokeWidth="2" strokeLinecap="round" />
+                      </svg>
+                    </button>
+                  </Tooltip>
 
-                {/* Avisos */}
-                <Tooltip texto="Avisos e novidades do sistema." posicao="bottom">
-                <button
-                  type="button"
-                  onClick={() => { setAjustesAberto(false); setPainelAvisosAberto((prev) => !prev); }}
-                  aria-label="Avisos do sistema"
-                  className={`relative flex h-9 w-9 items-center justify-center rounded-lg border shadow-sm transition hover:scale-[1.03] active:scale-[0.98] cursor-pointer ${
-                    darkMode
-                      ? 'border-slate-700 bg-slate-800 text-slate-200 hover:bg-slate-700'
-                      : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50'
-                  }`}
-                >
-                  <svg className="h-4.5 w-4.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" style={{ color: '#D97706' }}>
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.2"
-                      d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6 6 0 10-12 0v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0a3 3 0 11-6 0m6 0H9" />
-                  </svg>
-                  {alertasSistema.filter((a) => a.naoLida).length > 0 && (
-                    <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-black leading-none text-white shadow-md">
-                      {alertasSistema.filter((a) => a.naoLida).length}
-                    </span>
-                  )}
-                </button>
-                </Tooltip>
+                  <Tooltip texto="Abra a calculadora." posicao="left" wrapperClassName="h-full w-full">
+                    <button
+                      type="button"
+                      onClick={() => setCalcAberta(!calcAberta)}
+                      aria-label="Calculadora"
+                      className={`flex h-full w-full items-center justify-center text-white transition duration-200 hover:brightness-110 active:brightness-90 focus-visible:z-20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-white cursor-pointer ${calcAberta ? 'bg-[#52647C]' : 'bg-[#64748B]'}`}
+                    >
+                      <svg className="h-[19px] w-[19px] translate-x-1 -translate-y-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                        <rect x="5" y="3" width="14" height="18" rx="2" strokeWidth="2" />
+                        <path d="M8 7h8M8 12h.01M12 12h.01M16 12h.01M8 16h.01M12 16h.01M16 16h.01" strokeWidth="2" strokeLinecap="round" />
+                      </svg>
+                    </button>
+                  </Tooltip>
 
-                {/* Trocar perfil (2a linha, abaixo da calculadora) */}
-                <Tooltip texto="Troque, edite ou gerencie seus perfis financeiros." posicao="bottom">
-                <button
-                  type="button"
-                  onClick={() => { setAjustesAberto(false); setPainelAvisosAberto(false); setModalEmpresasAberto(true); }}
-                  aria-label="Trocar perfil"
-                  className={`flex h-9 w-9 items-center justify-center rounded-lg border shadow-sm transition hover:scale-[1.03] active:scale-[0.98] cursor-pointer ${
-                    darkMode
-                      ? 'border-slate-700 bg-slate-800 text-slate-200 hover:bg-slate-700'
-                      : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50'
-                  }`}
-                >
-                  <svg className="h-4.5 w-4.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" style={{ color: '#059669' }}>
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"
-                      d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
-                  </svg>
-                </button>
-                </Tooltip>
+                  <Tooltip texto="Avisos e novidades do sistema." posicao="right" wrapperClassName="h-full w-full">
+                    <button
+                      type="button"
+                      onClick={() => { setAjustesAberto(false); setPainelAvisosAberto((prev) => !prev); }}
+                      aria-label="Avisos do sistema"
+                      className={`relative flex h-full w-full items-center justify-center text-white transition duration-200 hover:brightness-110 active:brightness-90 focus-visible:z-20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-white cursor-pointer ${painelAvisosAberto ? 'bg-[#0B625E]' : 'bg-[#0F766E]'}`}
+                    >
+                      <svg className="h-[19px] w-[19px] -translate-x-1 -translate-y-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4" />
+                      </svg>
+                      {alertasSistema.filter((a) => a.naoLida).length > 0 && (
+                        <span className="absolute right-1 top-1 flex h-3.5 min-w-3.5 items-center justify-center rounded-full bg-red-500 px-0.5 text-[8px] font-black leading-none text-white shadow">
+                          {alertasSistema.filter((a) => a.naoLida).length > 9 ? '9+' : alertasSistema.filter((a) => a.naoLida).length}
+                        </span>
+                      )}
+                    </button>
+                  </Tooltip>
+
+                  <span
+                    aria-hidden="true"
+                    className={`absolute left-1/2 top-1/2 z-10 h-7 w-7 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 shadow-inner ${
+                      darkMode ? 'border-slate-500 bg-slate-900' : 'border-white bg-slate-100'
+                    }`}
+                  />
                 </div>
 
                 {/* Ajustes */}

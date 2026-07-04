@@ -13,6 +13,19 @@
   },
   "versoes": [
     {
+      "versao": "1.3.6",
+      "titulo": "Cabeçalho renovado e ajustes de experiência",
+      "data": "Julho/2026",
+      "itens": [
+        "Web: novo controle radial de ações rápidas no cabeçalho, reunindo agenda, troca de perfil, calculadora e avisos.",
+        "Web: logotipo centralizado e ampliado no cabeçalho.",
+        "Web: menus de opções dos cards agora fecham ao clicar fora ou com a tecla Esc.",
+        "Web: modal de troca de perfil padronizado, com botão de fechar (X) no cabeçalho.",
+        "Web e mobile: Ava com acesso protegido por login.",
+        "Web e mobile: refinamentos de tipografia, cores e cards, alinhados à nova identidade visual."
+      ]
+    },
+    {
       "versao": "1.3.5",
       "titulo": "Nova identidade visual e melhorias de experiência",
       "data": "Julho/2026",

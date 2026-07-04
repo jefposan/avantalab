@@ -6487,16 +6487,29 @@ if (isTelaMobile) {
     >
       {/* Cabeçalho */}
       <div data-modal-drag-handle className="cursor-grab px-6 pt-5 pb-4 active:cursor-grabbing" style={estiloTemaPrimario}>
-        <p className="text-xs font-black uppercase tracking-[0.18em] opacity-75">
-          Perfis financeiros
-        </p>
-        <h2 className="mt-1 text-xl font-black">
-          {subAcaoGerenciar === 'editar'
-            ? 'Editar dados do perfil'
-            : subAcaoGerenciar === 'criar'
-              ? 'Criar novo perfil'
-              : 'Gerenciar perfil financeiro'}
-        </h2>
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0">
+            <p className="text-xs font-black uppercase tracking-[0.18em] opacity-75">
+              Perfis financeiros
+            </p>
+            <h2 className="mt-1 text-xl font-black">
+              {subAcaoGerenciar === 'editar'
+                ? 'Editar dados do perfil'
+                : subAcaoGerenciar === 'criar'
+                  ? 'Criar novo perfil'
+                  : 'Gerenciar perfil financeiro'}
+            </h2>
+          </div>
+          <button
+            type="button"
+            onPointerDown={(e) => e.stopPropagation()}
+            onClick={() => { setSubAcaoGerenciar(null); setModalEmpresasAberto(false); }}
+            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white/15 text-lg font-black text-white transition hover:bg-white/25"
+            aria-label="Fechar"
+          >
+            ×
+          </button>
+        </div>
         {!subAcaoGerenciar && (
           <div className="mt-5 border-t pt-4" style={{ borderColor: bordaSobreCorPrimaria }}>
             <div className="mb-3 flex items-center gap-2">
@@ -6596,16 +6609,6 @@ if (isTelaMobile) {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.1" d="M19 7l-.9 12.1A2 2 0 0116.1 21H7.9a2 2 0 01-2-1.9L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
               </svg>
               <span>Excluir perfil</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => { setSubAcaoGerenciar(null); setModalEmpresasAberto(false); }}
-              className={`mt-1 w-full rounded-xl px-4 py-2.5 text-xs font-black uppercase tracking-wide transition cursor-pointer ${
-                darkMode ? 'text-slate-400 hover:text-slate-200' : 'text-slate-400 hover:text-slate-600'
-              }`}
-            >
-              Fechar
             </button>
           </div>
         )}

@@ -206,6 +206,26 @@ export default function Dashboard({
   const [activeId, setActiveId] = useState<string | null>(null);
   const pontoListaRef = useRef<HTMLDivElement | null>(null);
   const [pontoTemMaisAbaixo, setPontoTemMaisAbaixo] = useState(false);
+
+  useEffect(() => {
+    if (!menuCardAberto) return;
+
+    const fecharAoClicarFora = (event: PointerEvent) => {
+      const alvo = event.target;
+      if (alvo instanceof Element && alvo.closest('[data-card-options-menu]')) return;
+      setMenuCardAberto(null);
+    };
+    const fecharComEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setMenuCardAberto(null);
+    };
+
+    document.addEventListener('pointerdown', fecharAoClicarFora);
+    document.addEventListener('keydown', fecharComEscape);
+    return () => {
+      document.removeEventListener('pointerdown', fecharAoClicarFora);
+      document.removeEventListener('keydown', fecharComEscape);
+    };
+  }, [menuCardAberto]);
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
   const horaAtual = new Date().getHours();
   const saudacaoPeriodo = horaAtual < 12 ? 'Bom dia!' : horaAtual < 18 ? 'Boa tarde!' : 'Boa noite!';
@@ -487,7 +507,7 @@ const mostrarComparativoResumoDash =
   );
 
   const BotaoOpcoesCard = ({ id, tone = 'dark' }: { id: string; tone?: 'dark' | 'light' }) => (
-    <div className="relative shrink-0">
+    <div data-card-options-menu className="relative shrink-0">
       <button
         type="button"
         aria-label="Opções do bloco"

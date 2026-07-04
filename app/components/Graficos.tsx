@@ -118,6 +118,26 @@ export default function Graficos({ meses, lancamentos, faturamentos, despesasCad
   const [menuCardAberto, setMenuCardAberto] = useState<string | null>(null);
   const [gerenciadorAberto, setGerenciadorAberto] = useState(false);
 
+  useEffect(() => {
+    if (!menuCardAberto) return;
+
+    const fecharAoClicarFora = (event: PointerEvent) => {
+      const alvo = event.target;
+      if (alvo instanceof Element && alvo.closest('[data-card-options-menu]')) return;
+      setMenuCardAberto(null);
+    };
+    const fecharComEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setMenuCardAberto(null);
+    };
+
+    document.addEventListener('pointerdown', fecharAoClicarFora);
+    document.addEventListener('keydown', fecharComEscape);
+    return () => {
+      document.removeEventListener('pointerdown', fecharAoClicarFora);
+      document.removeEventListener('keydown', fecharComEscape);
+    };
+  }, [menuCardAberto]);
+
   const reconciliar = (c: Partial<Cols>): Cols => {
     const seen = new Set<string>();
     const limpar = (arr?: string[]) => (arr || []).filter((id) => catIds.includes(id) && !seen.has(id) && (seen.add(id), true));
@@ -327,7 +347,7 @@ export default function Graficos({ meses, lancamentos, faturamentos, despesasCad
 
   // ===== Menu de opções (3 pontos) por card =====
   const BotaoOpcoesCard = ({ id }: { id: string }) => (
-    <div className="relative shrink-0">
+    <div data-card-options-menu className="relative shrink-0">
       <button type="button" aria-label="Opções do bloco" title="Opções do bloco"
         onPointerDown={(e) => e.stopPropagation()}
         onClick={(e) => { e.stopPropagation(); setMenuCardAberto(menuCardAberto === id ? null : id); }}
