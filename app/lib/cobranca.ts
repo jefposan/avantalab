@@ -11,6 +11,15 @@
 // 🔌 Chave de liga/desliga da versão paga. Manter FALSE até o go-live.
 export const COBRANCA_ATIVA = false;
 
+// Dias de trial do perfil empresa (contados da criação do perfil).
+export const TRIAL_DIAS = 7;
+
+// Data de lançamento da cobrança. Perfis criados ANTES desta data mantêm
+// acesso (clientes atuais / avaliadores). Deixamos no futuro por enquanto,
+// então hoje TODOS são tratados como "clientes atuais" (nada muda).
+// No go-live, ajustamos para a data real de lançamento.
+export const DATA_LANCAMENTO = '2099-01-01T00:00:00Z';
+
 export type TipoPerfil = 'empresa' | 'pessoal';
 
 export type StatusAssinatura =
