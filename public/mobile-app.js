@@ -155,6 +155,14 @@
     dashboardOrdem: ordemDashboardPadrao(),
     dashboardOcultos: [],
     dashboardValoresVisiveis: {},
+    pontoModuloAtivo: false,
+    pontoResumo: [],
+    pontoFuncionariosHoje: 0,
+    pontoResumoCarregando: false,
+    pontoRelatorioUsuarioId: '',
+    pontoRelatorioNome: '',
+    pontoRelatorioRegistros: [],
+    pontoRelatorioCarregando: false,
     atalhoInferiorEsquerdo: 'perfil',
     atalhoInferiorDireito: 'agenda',
     dragDashboardId: '',
@@ -481,6 +489,7 @@
       'agenda',
       'saldo',
       'totais',
+      'controlePonto',
       'ultimasDespesas',
       'ultimasReceitas',
       'categorias',
@@ -500,6 +509,7 @@
       ultimasDespesas: 'Despesas do mês',
       ultimasReceitas: 'Receitas do mês',
       totais: 'Totais',
+      controlePonto: 'Controle de ponto',
       evolucaoDespesas: 'Evolucao das despesas',
       evolucaoReceitas: 'Evolucao das receitas',
     }[id] || id;
@@ -528,8 +538,21 @@
   function cardsDashboardVisiveis() {
     var ocultos = normalizarOcultosDashboard(state.dashboardOcultos);
     return normalizarOrdemDashboard(state.dashboardOrdem).filter(function (id) {
-      return ocultos.indexOf(id) < 0;
+      return ocultos.indexOf(id) < 0 && cardDashboardPermitido(id);
     });
+  }
+
+  function podeGerenciarPontoMobile() {
+    return !!(
+      state.empresa
+      && normalizarTipoPerfil(state.empresa.tipo_perfil) === 'empresa'
+      && (state.empresa.perfil === 'gestor_master' || state.empresa.perfil === 'administrador')
+      && state.pontoModuloAtivo
+    );
+  }
+
+  function cardDashboardPermitido(id) {
+    return id !== 'controlePonto' || podeGerenciarPontoMobile();
   }
 
   function salvarOrdemDashboard() {
@@ -656,6 +679,10 @@
     if (!empresaSelecionada) return false;
 
     state.empresa = empresaSelecionada;
+    state.pontoModuloAtivo = false;
+    state.pontoResumo = [];
+    state.pontoFuncionariosHoje = 0;
+    state.pontoResumoCarregando = false;
 
     if (salvarEscolha !== false) {
       salvarUltimoPerfilMobile(empresaSelecionada.id);
@@ -851,6 +878,147 @@
           { event: 'financeiro_atualizado' },
           function () { carregarRecorrencias(); carregarDados(); })
         .subscribe();
+    } catch (e) {}
+  }
+
+  function dataHoraPontoMobile() {
+    var agora = new Date();
+    var dataPartes = new Intl.DateTimeFormat('pt-BR', {
+      timeZone: 'America/Sao_Paulo',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+    }).formatToParts(agora);
+    var horaPartes = new Intl.DateTimeFormat('pt-BR', {
+      timeZone: 'America/Sao_Paulo',
+      hour: '2-digit',
+      minute: '2-digit',
+      hourCycle: 'h23',
+    }).formatToParts(agora);
+    function parte(lista, tipo) {
+      return Number((lista.find(function (item) { return item.type === tipo; }) || {}).value || 0);
+    }
+    var ano = parte(dataPartes, 'year');
+    var mes = parte(dataPartes, 'month');
+    var dia = parte(dataPartes, 'day');
+    return {
+      data: String(ano) + '-' + String(mes).padStart(2, '0') + '-' + String(dia).padStart(2, '0'),
+      diaSemana: new Date(Date.UTC(ano, mes - 1, dia)).getUTCDay(),
+      minutos: parte(horaPartes, 'hour') * 60 + parte(horaPartes, 'minute'),
+    };
+  }
+
+  function minutosHorarioPontoMobile(valor) {
+    var match = String(valor || '').match(/^(\d{1,2}):(\d{2})/);
+    return match ? Number(match[1]) * 60 + Number(match[2]) : null;
+  }
+
+  async function carregarResumoPontoMobile() {
+    if (!podeGerenciarPontoMobile()) {
+      state.pontoResumo = [];
+      state.pontoFuncionariosHoje = 0;
+      state.pontoResumoCarregando = false;
+      return;
+    }
+
+    state.pontoResumoCarregando = true;
+    var periodo = dataHoraPontoMobile();
+    var empresaId = state.empresa.id;
+    var respostas = await Promise.all([
+      db.from('ponto_funcionarios')
+        .select('user_id, nome, hora_entrada, hora_saida, dias_trabalho')
+        .eq('empresa_id', empresaId)
+        .eq('ativo', true)
+        .order('nome', { ascending: true }),
+      db.from('ponto_registros')
+        .select('user_id, tipo, registrado_em')
+        .eq('empresa_id', empresaId)
+        .eq('dia', periodo.data)
+        .order('registrado_em', { ascending: true }),
+    ]);
+
+    if (respostas[0].error || respostas[1].error) {
+      state.pontoResumoCarregando = false;
+      render();
+      return;
+    }
+
+    var funcionariosHoje = (respostas[0].data || []).filter(function (funcionario) {
+      return funcionario.user_id
+        && Array.isArray(funcionario.dias_trabalho)
+        && funcionario.dias_trabalho.indexOf(periodo.diaSemana) >= 0;
+    });
+    var registrosPorUsuario = {};
+    (respostas[1].data || []).forEach(function (registro) {
+      if (!registrosPorUsuario[registro.user_id]) registrosPorUsuario[registro.user_id] = [];
+      registrosPorUsuario[registro.user_id].push(registro);
+    });
+
+    var tiposObrigatorios = ['entrada', 'saida_refeicao', 'retorno_refeicao', 'saida'];
+    var resumo = [];
+    funcionariosHoje.forEach(function (funcionario) {
+      var entradaPrevista = minutosHorarioPontoMobile(funcionario.hora_entrada);
+      var saidaPrevista = minutosHorarioPontoMobile(funcionario.hora_saida);
+      var registros = registrosPorUsuario[funcionario.user_id] || [];
+      var tipos = registros.map(function (registro) { return registro.tipo; });
+
+      if (saidaPrevista !== null && periodo.minutos > saidaPrevista + 10) {
+        if (!registros.length) {
+          resumo.push({ userId: funcionario.user_id, nome: funcionario.nome, status: 'falta' });
+          return;
+        }
+        if (tiposObrigatorios.some(function (tipo) { return tipos.indexOf(tipo) < 0; })) {
+          resumo.push({ userId: funcionario.user_id, nome: funcionario.nome, status: 'incompleto' });
+          return;
+        }
+      }
+
+      var entrada = registros.find(function (registro) { return registro.tipo === 'entrada'; });
+      if (entradaPrevista !== null) {
+        if (!entrada && periodo.minutos > entradaPrevista + 10) {
+          resumo.push({ userId: funcionario.user_id, nome: funcionario.nome, status: 'atraso' });
+          return;
+        }
+        if (entrada) {
+          var partesEntrada = new Intl.DateTimeFormat('pt-BR', {
+            timeZone: 'America/Sao_Paulo', hour: '2-digit', minute: '2-digit', hourCycle: 'h23',
+          }).formatToParts(new Date(entrada.registrado_em));
+          var hora = Number((partesEntrada.find(function (item) { return item.type === 'hour'; }) || {}).value || 0);
+          var minuto = Number((partesEntrada.find(function (item) { return item.type === 'minute'; }) || {}).value || 0);
+          if (hora * 60 + minuto > entradaPrevista + 10) {
+            resumo.push({ userId: funcionario.user_id, nome: funcionario.nome, status: 'atraso' });
+          }
+        }
+      }
+    });
+
+    state.pontoFuncionariosHoje = funcionariosHoje.length;
+    state.pontoResumo = resumo;
+    state.pontoResumoCarregando = false;
+    render();
+  }
+
+  function configurarRealtimePontoMobile() {
+    try {
+      if (!podeGerenciarPontoMobile()) {
+        if (window._avaRealtimePonto) db.removeChannel(window._avaRealtimePonto);
+        window._avaRealtimePonto = null;
+        window._avaRealtimePontoEmpresaId = '';
+        if (window._avaIntervaloPonto) window.clearInterval(window._avaIntervaloPonto);
+        window._avaIntervaloPonto = null;
+        return;
+      }
+      var empresaId = state.empresa.id;
+      if (window._avaRealtimePontoEmpresaId === empresaId) return;
+      if (window._avaRealtimePonto) db.removeChannel(window._avaRealtimePonto);
+      if (window._avaIntervaloPonto) window.clearInterval(window._avaIntervaloPonto);
+      window._avaRealtimePontoEmpresaId = empresaId;
+      window._avaRealtimePonto = db
+        .channel('ponto_dashboard_mobile_' + empresaId)
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'ponto_registros', filter: 'empresa_id=eq.' + empresaId }, carregarResumoPontoMobile)
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'ponto_funcionarios', filter: 'empresa_id=eq.' + empresaId }, carregarResumoPontoMobile)
+        .subscribe();
+      window._avaIntervaloPonto = window.setInterval(carregarResumoPontoMobile, 30000);
     } catch (e) {}
   }
 
@@ -2585,6 +2753,7 @@
       db.from('faturamentos_entradas').select('*').eq('empresa_id', empresaId).eq('ano', ano).order('dia', { ascending: true }),
       db.from('despesas_cadastradas').select('*').eq('empresa_id', empresaId).order('nome', { ascending: true }),
       db.from('configuracoes').select('duplicados_ativo').eq('empresa_id', empresaId).maybeSingle(),
+      db.from('empresa_modulos').select('modulo_id').eq('empresa_id', empresaId).eq('modulo_id', 'ponto').eq('ativo', true).maybeSingle(),
     ]);
 
     state.lancamentos = (resultados[0].data || []).filter(function(item) {
@@ -2634,6 +2803,13 @@
       state.duplicadosAtivo = true;
     }
 
+    state.pontoModuloAtivo = !!(resultados[5] && resultados[5].data && resultados[5].data.modulo_id === 'ponto');
+    if (!podeGerenciarPontoMobile()) {
+      state.pontoResumo = [];
+      state.pontoFuncionariosHoje = 0;
+      state.pontoResumoCarregando = false;
+    }
+
     // Materializa as despesas fixas do mes corrente (idempotente).
     await garantirFixasDoMes(empresaId, ano);
 
@@ -2644,6 +2820,8 @@
     sincronizarAgendaSupabase();
     configurarRealtimeAgendaMobile();
     configurarRealtimeFinanceiroMobile();
+    configurarRealtimePontoMobile();
+    carregarResumoPontoMobile();
     // Atualiza a contagem de notificacoes nao lidas (sino + badge do icone)
     carregarNotificacoesNaoLidas();
     // Primeiro acesso: tutorial (e, ao concluir, oferece notificacoes)
@@ -5180,6 +5358,92 @@
     );
   }
 
+  function controlePontoCardHtml() {
+    if (!podeGerenciarPontoMobile()) return '';
+    var corpo = '';
+    if (state.pontoResumoCarregando) {
+      corpo = '<p class="py-4 text-center text-xs font-semibold text-slate-500">Atualizando resumo...</p>';
+    } else if (!state.pontoFuncionariosHoje) {
+      corpo = '<p class="py-4 text-center text-xs font-semibold text-slate-500">Nenhum funcionario previsto para hoje.</p>';
+    } else if (!state.pontoResumo.length) {
+      corpo = '<div class="flex items-center justify-center gap-2 py-4 text-sm font-bold text-emerald-600"><span class="flex h-6 w-6 items-center justify-center rounded-full bg-emerald-100">&#10003;</span>Equipe em dia</div>';
+    } else {
+      corpo = '<div class="relative">' +
+        '<div class="grid max-h-56 gap-1 overflow-y-auto pr-1">' +
+          state.pontoResumo.map(function (item) {
+            var visual = {
+              atraso: ['Atraso', 'bg-amber-100 text-amber-700'],
+              falta: ['Falta', 'bg-red-100 text-red-700'],
+              incompleto: ['Incompleto', 'bg-violet-100 text-violet-700'],
+            }[item.status] || ['Aviso', 'bg-slate-100 text-slate-700'];
+            return '<button type="button" data-ponto-relatorio-user="' + escapeHtml(item.userId) + '" data-ponto-relatorio-nome="' + escapeHtml(item.nome) + '" class="flex min-h-8 w-full items-center justify-between gap-2 rounded-lg ' + (state.darkMode ? 'bg-slate-800' : 'bg-slate-50') + ' px-2.5 py-1.5 text-left active:brightness-95">' +
+              '<span class="min-w-0 flex-1 truncate text-[11px] font-bold ' + (state.darkMode ? 'text-slate-100' : 'text-slate-800') + '">' + escapeHtml(item.nome) + '</span>' +
+              '<span class="shrink-0 rounded-full px-2 py-0.5 text-[8px] font-black uppercase leading-tight ' + visual[1] + '">' + visual[0] + '</span>' +
+            '</button>';
+          }).join('') +
+        '</div>' +
+        (state.pontoResumo.length > 5 ? '<div class="pointer-events-none absolute inset-x-0 bottom-0 flex h-8 items-end justify-center bg-gradient-to-t ' + (state.darkMode ? 'from-slate-900' : 'from-white') + ' to-transparent pb-0.5 text-cyan-600"><span class="animate-bounce text-sm">&#8964;</span></div>' : '') +
+      '</div>';
+    }
+
+    return '<section class="overflow-hidden rounded-2xl border-2 shadow-lg ' + (state.darkMode ? 'bg-slate-900 text-slate-100' : 'bg-white text-slate-900') + '" style="border-color:#003E73">' +
+      '<div class="flex items-center justify-between gap-3 px-4 py-3 text-white" style="background:#003E73">' +
+        '<div class="min-w-0"><p class="text-[9px] font-bold uppercase tracking-[0.18em] text-cyan-100/75">Resumo diario</p><h2 class="truncate text-sm font-black">Controle de ponto</h2></div>' +
+        '<span class="flex h-8 w-8 items-center justify-center rounded-lg border border-white/15 bg-white/10">' + iconeMenuLateralSvg('menu-usuario') + '</span>' +
+      '</div>' +
+      '<div class="p-3">' + corpo +
+        '<button id="abrir-resumo-ponto-mobile" type="button" class="mt-2 w-full border-t border-slate-200/30 pt-2.5 text-left text-[11px] font-black text-cyan-700">Ver controle de ponto</button>' +
+      '</div>' +
+    '</section>';
+  }
+
+  async function abrirRelatorioPontoMobile(userId, nome) {
+    if (!podeGerenciarPontoMobile()) return;
+    state.pontoRelatorioUsuarioId = userId || '';
+    state.pontoRelatorioNome = nome || '';
+    state.pontoRelatorioRegistros = [];
+    state.pontoRelatorioCarregando = !!userId;
+    state.modalMenu = 'pontoRelatorio';
+    render();
+    if (!userId) return;
+
+    var resposta = await db.from('ponto_registros')
+      .select('id, tipo, registrado_em')
+      .eq('empresa_id', state.empresa.id)
+      .eq('user_id', userId)
+      .eq('dia', dataHoraPontoMobile().data)
+      .order('registrado_em', { ascending: true });
+    state.pontoRelatorioRegistros = resposta.error ? [] : (resposta.data || []);
+    state.pontoRelatorioCarregando = false;
+    if (state.modalMenu === 'pontoRelatorio') render();
+  }
+
+  function pontoRelatorioMobileHtml() {
+    if (!state.pontoRelatorioUsuarioId) {
+      return '<div class="grid gap-2">' +
+        '<p class="rounded-xl bg-cyan-50 px-3 py-2 text-xs font-semibold text-cyan-900">Resumo de ocorrencias do dia. Toque em um funcionario para ver os registros.</p>' +
+        (state.pontoResumo.length ? state.pontoResumo.map(function (item) {
+          return '<button type="button" data-ponto-relatorio-user="' + escapeHtml(item.userId) + '" data-ponto-relatorio-nome="' + escapeHtml(item.nome) + '" class="flex min-h-10 items-center justify-between rounded-xl border border-slate-200 bg-slate-50 px-3 text-left"><span class="truncate text-xs font-bold text-slate-800">' + escapeHtml(item.nome) + '</span><span class="text-[10px] font-black uppercase text-cyan-700">' + escapeHtml(item.status) + '</span></button>';
+        }).join('') : '<p class="py-5 text-center text-sm font-semibold text-emerald-600">Equipe em dia.</p>') +
+      '</div>';
+    }
+
+    if (state.pontoRelatorioCarregando) return '<p class="py-6 text-center text-sm font-semibold text-slate-500">Carregando registros...</p>';
+    var rotulos = {
+      entrada: 'Entrada',
+      saida_refeicao: 'Saida para almoco',
+      retorno_refeicao: 'Retorno do almoco',
+      saida: 'Saida',
+    };
+    return '<div class="grid gap-2">' +
+      '<div class="rounded-xl bg-slate-50 px-3 py-2"><p class="text-[10px] font-black uppercase tracking-wide text-slate-400">Funcionario</p><p class="mt-0.5 text-sm font-black text-slate-900">' + escapeHtml(state.pontoRelatorioNome) + '</p></div>' +
+      (state.pontoRelatorioRegistros.length ? state.pontoRelatorioRegistros.map(function (registro) {
+        var horario = new Intl.DateTimeFormat('pt-BR', { timeZone: 'America/Sao_Paulo', hour: '2-digit', minute: '2-digit' }).format(new Date(registro.registrado_em));
+        return '<div class="flex items-center justify-between rounded-xl border border-slate-200 bg-white px-3 py-2.5"><span class="text-xs font-bold text-slate-700">' + escapeHtml(rotulos[registro.tipo] || registro.tipo) + '</span><strong class="text-sm font-black text-cyan-700">' + escapeHtml(horario) + '</strong></div>';
+      }).join('') : '<p class="py-5 text-center text-sm font-semibold text-slate-500">Nenhum registro realizado hoje.</p>') +
+    '</div>';
+  }
+
   function homeHtml(atual, anterior) {
     var banner = avisoConfirmarHtml();
     var cards = {
@@ -5191,6 +5455,7 @@
       ultimasDespesas: ultimasDespesasHtml(atual.lancamentos),
       ultimasReceitas: ultimasReceitasHtml(atual.entradas),
       totais: totaisHtml(atual),
+      controlePonto: controlePontoCardHtml(),
       evolucaoDespesas: evolucaoHtml('despesas'),
       evolucaoReceitas: evolucaoHtml('receitas'),
     };
@@ -6113,11 +6378,11 @@
             menuBotaoHtml('menu-despesas-fixas', 'Despesas fixas', 'Lancamentos automaticos mensais', '&#10227;') +
             menuBotaoHtml('menu-ajuda-categorias', 'Instrucoes sobre categorias', 'Como organizar seus gastos', '?') +
             menuBotaoHtml('menu-tutorial', 'Tutorial', 'Como usar o AvantaLab', '&#127891;') +
-            '<button id="menu-config-toggle" type="button" class="rounded-[14px_26px_26px_26px] border px-2.5 py-2.5 text-left shadow-[0_5px_13px_rgba(15,23,42,.07)] transition active:scale-[0.99] ' + (dk ? 'border-slate-700 bg-slate-900' : '') + '" style="' + (dk ? '' : (configAberto ? 'background:linear-gradient(90deg,#E8FAFD 0%,#F3FBFF 100%);border-color:#79DCE9;' : 'background:linear-gradient(90deg,#EDF6FF 0%,#FFFFFF 72%);border-color:#C8DFF5;')) + '">' +
+            '<button id="menu-config-toggle" type="button" class="rounded-[14px_26px_26px_26px] border border-slate-300 px-2.5 py-2.5 text-left text-slate-800 shadow-[0_5px_13px_rgba(15,23,42,.09)] transition active:scale-[0.99]" style="background:' + (configAberto ? 'linear-gradient(90deg,#B8C3D0 0%,#A5B2C1 100%)' : 'linear-gradient(90deg,#CBD5E1 0%,#B4C0CE 100%)') + '">' +
               '<div class="flex items-center gap-2">' +
-                '<span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-white shadow-sm" style="background:linear-gradient(135deg,#0284C7,#075985)">' + iconeMenuLateralSvg('menu-config-toggle') + '</span>' +
-                '<span class="min-w-0 flex-1"><span class="block text-xs font-black leading-none">Configuracoes</span><span class="mt-1 block truncate text-[10px] font-semibold leading-none text-slate-500">Perfil, tema e preferencias</span></span>' +
-                '<span class="flex h-6 w-6 items-center justify-center text-slate-500 transition-transform ' + (configAberto ? 'rotate-90' : '') + '">' + chevronMenuSvg() + '</span>' +
+                '<span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border border-white/15 bg-slate-800 text-white shadow-sm">' + iconeMenuLateralSvg('menu-config-toggle') + '</span>' +
+                '<span class="min-w-0 flex-1"><span class="block text-xs font-black leading-none text-slate-800">Configuracoes</span><span class="mt-1 block truncate text-[10px] font-semibold leading-none text-slate-600">Perfil, tema e preferencias</span></span>' +
+                '<span class="flex h-6 w-6 items-center justify-center text-slate-600 transition-transform ' + (configAberto ? 'rotate-90' : '') + '">' + chevronMenuSvg() + '</span>' +
               '</div>' +
             '</button>' +
             configSubItens +
@@ -6359,6 +6624,7 @@
       sobre: 'Sobre',
       notificacoes: 'Notificações',
       detalheTipoDespesa: state.tipoDespesaDetalhe || 'Lançamentos',
+      pontoRelatorio: state.pontoRelatorioNome ? 'Relatorio do dia' : 'Controle de ponto',
     }[state.modalMenu] || 'Menu';
 
     return (
@@ -6392,6 +6658,7 @@
     if (state.modalMenu === 'sobre') return sobreMobileHtml();
     if (state.modalMenu === 'notificacoes') return notificacoesMobileHtml();
     if (state.modalMenu === 'detalheTipoDespesa') return detalheTipoDespesaHtml();
+    if (state.modalMenu === 'pontoRelatorio') return pontoRelatorioMobileHtml();
     return '';
   }
 
@@ -6805,7 +7072,7 @@
   }
 
   function organizarDashboardHtml() {
-    var ordem = normalizarOrdemDashboard(state.dashboardOrdem);
+    var ordem = normalizarOrdemDashboard(state.dashboardOrdem).filter(cardDashboardPermitido);
 
     return (
       '<div class="grid gap-2">' +
@@ -6858,7 +7125,7 @@
   }
 
   function configurarResumoHtml() {
-    var ordem = normalizarOrdemDashboard(state.dashboardOrdem);
+    var ordem = normalizarOrdemDashboard(state.dashboardOrdem).filter(cardDashboardPermitido);
     var ocultos = normalizarOcultosDashboard(state.dashboardOcultos);
 
     return (
@@ -7760,6 +8027,15 @@
         state.tipoDespesaDetalhe = item.getAttribute('data-detalhar-tipo-despesa') || '';
         state.modalMenu = 'detalheTipoDespesa';
         render();
+      });
+    });
+    bind('abrir-resumo-ponto-mobile', function () { abrirRelatorioPontoMobile('', ''); });
+    Array.prototype.forEach.call(document.querySelectorAll('[data-ponto-relatorio-user]'), function (item) {
+      item.addEventListener('click', function () {
+        abrirRelatorioPontoMobile(
+          item.getAttribute('data-ponto-relatorio-user') || '',
+          item.getAttribute('data-ponto-relatorio-nome') || ''
+        );
       });
     });
 
@@ -9069,7 +9345,7 @@
           return Promise.all(
             keys
               .filter(function (key) {
-                return key.indexOf('avantalab-mobile-') === 0 && key !== 'avantalab-mobile-v161';
+                return key.indexOf('avantalab-mobile-') === 0 && key !== 'avantalab-mobile-v219';
               })
               .map(function (key) {
                 return caches.delete(key);
@@ -9086,7 +9362,7 @@
     });
 
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/mobile-sw.js?v=174').then(function (registro) {
+      navigator.serviceWorker.register('/mobile-sw.js?v=219').then(function (registro) {
         if (registro && registro.update) registro.update();
       }).catch(function () {});
     }
