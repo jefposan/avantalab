@@ -1,6 +1,5 @@
 'use client';
 import React, { useState, useEffect, useRef } from 'react';
-import * as XLSX from 'xlsx';
 import DraggableModalCard from './DraggableModalCard';
 
 export type FuncionarioPonto = {
@@ -404,7 +403,8 @@ export default function PontoAdminModal({
   const resumoPontualidade = funcSel?.hora_entrada ? `${pctPontual}% (${pontuais} pontuais, ${atrasos} atrasos de ${totalComHorario} dias)` : 'Não avaliada';
   const horarioPrevisto = funcSel?.hora_entrada ? `${funcSel.hora_entrada.slice(0, 5)} às ${funcSel.hora_saida ? funcSel.hora_saida.slice(0, 5) : '-'}` : 'Não definido';
 
-  const gerarRelatorioXlsx = () => {
+  const gerarRelatorioXlsx = async () => {
+    const XLSX = await import('xlsx');
     if (modoTodos) {
       const linhas = relatorioTodos.flatMap((item) => item.dias.length
         ? item.dias.map((d) => [item.funcionario.nome, formatarCpf(item.funcionario.cpf || item.funcionario.login), item.funcionario.cargo || '-', dataBr(d.dia), d.entrada || '--:--', d.saida || '--:--', d.distancia != null ? Math.round(d.distancia) : '', rotuloStatus(d.statusEntrada)])

@@ -1,10 +1,18 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import * as XLSX from 'xlsx';
+import type { WorkBook } from 'xlsx';
 import { supabase } from './supabase';
 import { normalizarTexto } from './formatters';
 import { APP_VERSION } from './version';
 import { CATEGORIAS_EXCLUSAO_EBITDA, normalizarTipoPerfil } from './perfis';
 import type { AbrirAvisoFn } from '../hooks/useUI';
+
+// Carregamento sob demanda da biblioteca xlsx (~300-400 KB no bundle):
+// só é baixada quando uma exportação/importação Excel é realmente executada.
+type XLSXModule = typeof import('xlsx');
+let XLSX!: XLSXModule;
+async function ensureXLSX(): Promise<void> {
+  if (!XLSX) XLSX = await import('xlsx');
+}
 
 const MESES = [
   'JANEIRO', 'FEVEREIRO', 'MARÇO', 'ABRIL', 'MAIO', 'JUNHO',
@@ -160,13 +168,13 @@ function resultadoImportacaoVazio(): ResultadoImportacaoBackup {
   };
 }
 
-function sheetRows(wb: XLSX.WorkBook, nome: string) {
+function sheetRows(wb: WorkBook, nome: string) {
   const ws = wb.Sheets[nome];
   if (!ws) return [];
   return XLSX.utils.sheet_to_json(ws, { defval: '' }) as any[];
 }
 
-function adicionarPlanilha(wb: XLSX.WorkBook, nome: string, dados: any[]) {
+function adicionarPlanilha(wb: WorkBook, nome: string, dados: any[]) {
   const ws = XLSX.utils.json_to_sheet(sanitizarLinhasExcel(dados.length > 0 ? dados : [{}]));
   XLSX.utils.book_append_sheet(wb, ws, nome);
 }
@@ -201,7 +209,8 @@ function valorConfiguracaoExcel(chave: string, valor: unknown) {
   return `${texto.slice(0, LIMITE_TEXTO_EXCEL - 120)}\n\n[Texto truncado pelo AvantaLab: excedia o limite de caracteres por celula do Excel.]`;
 }
 
-async function lerWorkbookArquivo(arquivo: File): Promise<XLSX.WorkBook> {
+async function lerWorkbookArquivo(arquivo: File): Promise<WorkBook> {
+  await ensureXLSX();
   const buffer = await arquivo.arrayBuffer();
   return XLSX.read(buffer, { type: 'array' });
 }
@@ -286,6 +295,7 @@ export async function gerarBackupExcel({
   const agora = new Date().toISOString();
   const dataHoje = agora.split('T')[0];
 
+  await ensureXLSX();
   const wb = XLSX.utils.book_new();
 
   adicionarPlanilha(wb, 'Resumo', [
