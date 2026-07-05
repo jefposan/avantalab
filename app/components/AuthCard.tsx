@@ -567,6 +567,7 @@ export default function AuthCard({
               <div className="space-y-2">
                 <input
   type="text"
+  autoComplete="off"
   placeholder="Nome completo"
   value={cadastroNome}
   onChange={(e) => setCadastroNome(e.target.value)}
@@ -595,6 +596,7 @@ export default function AuthCard({
 
                 <input
   type="email"
+  autoComplete="off"
   placeholder="Email"
   value={cadastroEmail}
   onChange={(e) => setCadastroEmail(e.target.value)}
@@ -603,6 +605,7 @@ export default function AuthCard({
 
                 <input
   type="tel"
+  autoComplete="off"
   placeholder="Celular (DDD + número)"
   value={cadastroTelefone}
   onChange={(e) => setCadastroTelefone(e.target.value)}
@@ -612,6 +615,7 @@ export default function AuthCard({
                 <div className="relative">
     <input
       type={mostrarSenhaCadastro ? 'text' : 'password'}
+      autoComplete="new-password"
       placeholder="Crie uma senha"
       value={cadastroSenha}
       onChange={(e) => setCadastroSenha(e.target.value)}
@@ -678,6 +682,7 @@ export default function AuthCard({
                 <div className="relative">
     <input
       type={mostrarConfirmarSenhaCadastro ? 'text' : 'password'}
+      autoComplete="new-password"
       placeholder="Confirmar senha"
       value={cadastroConfirmarSenha}
       onChange={(e) => setCadastroConfirmarSenha(e.target.value)}
