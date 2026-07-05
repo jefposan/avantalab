@@ -108,10 +108,15 @@ export default function PaywallEmpresa({ nomePerfil, onAssinar, onResgatarCupom,
           <h1 className="text-2xl font-black leading-tight text-slate-900 lg:text-3xl">
             Seu teste de 7 dias terminou
           </h1>
-          <p className="mt-2 text-sm font-semibold leading-relaxed text-slate-600">
-            {nomePerfil ? `O perfil "${nomePerfil}" ` : 'Este perfil '}
-            está com o período de avaliação encerrado. Escolha um plano para continuar —
-            seus dados estão guardados e voltam assim que assinar.
+
+          {/* Nome do perfil vencido em destaque */}
+          <div className="mt-3 rounded-xl border border-sky-200 bg-sky-50 px-4 py-2.5 text-center">
+            <span className="block text-[10px] font-black uppercase tracking-[0.2em] text-sky-600">Perfil vencido</span>
+            <span className="mt-0.5 block truncate text-base font-black text-sky-900">{nomePerfil || 'Este perfil'}</span>
+          </div>
+
+          <p className="mt-3 text-sm font-semibold leading-relaxed text-slate-600">
+            Assine para continuar usando este perfil — seus dados estão guardados e voltam assim que assinar.
           </p>
 
           {erro && (
@@ -210,18 +215,18 @@ export default function PaywallEmpresa({ nomePerfil, onAssinar, onResgatarCupom,
             {cupomErro && <p className="mt-2 text-xs font-bold text-red-600">{cupomErro}</p>}
           </div>
 
-          <div className="mt-6 flex flex-wrap items-center justify-center gap-x-4 gap-y-2 text-center">
+          <div className="mt-6 grid gap-2 border-t border-slate-200 pt-4 sm:grid-cols-2">
             {onTrocarPerfil && (
-              <button type="button" onClick={onTrocarPerfil} className="text-xs font-black uppercase tracking-wide text-sky-700 transition hover:text-sky-900">
+              <button type="button" onClick={onTrocarPerfil} className="h-12 w-full rounded-xl border border-slate-300 bg-white/85 text-xs font-black uppercase tracking-wide text-slate-700 shadow-sm transition hover:bg-white active:scale-[0.98]">
                 Trocar de perfil
               </button>
             )}
             {onCriarPerfil && (
-              <button type="button" onClick={onCriarPerfil} className="text-xs font-black uppercase tracking-wide text-sky-700 transition hover:text-sky-900">
+              <button type="button" onClick={onCriarPerfil} className="h-12 w-full rounded-xl border border-slate-300 bg-white/85 text-xs font-black uppercase tracking-wide text-slate-700 shadow-sm transition hover:bg-white active:scale-[0.98]">
                 Criar novo perfil
               </button>
             )}
-            <button type="button" onClick={onSair} className="text-xs font-black uppercase tracking-wide text-slate-500 transition hover:text-slate-800">
+            <button type="button" onClick={onSair} className="h-12 w-full rounded-xl border border-red-200 bg-red-50 text-xs font-black uppercase tracking-wide text-red-600 shadow-sm transition hover:bg-red-100 active:scale-[0.98]">
               Sair
             </button>
           </div>
