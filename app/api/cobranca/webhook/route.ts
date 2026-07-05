@@ -12,6 +12,29 @@ import { createClient } from '@supabase/supabase-js';
 // A escrita usa a service role do Supabase (ignora RLS).
 // ─────────────────────────────────────────────────────────────
 
+// TESTE (temporário): abrir esta URL no navegador grava uma linha 'TESTE_GET'
+// no log. Se aparecer no SELECT, o nosso lado (endpoint + gravação) está 100%.
+export async function GET() {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
+  const serviceRole = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
+  let logInserido = false;
+  let erro = '';
+  if (supabaseUrl && serviceRole) {
+    try {
+      const { error } = await createClient(supabaseUrl, serviceRole)
+        .from('cobranca_webhook_log')
+        .insert({ evento: 'TESTE_GET', esperado_len: 0, recebido_len: 0, autorizado: false });
+      if (error) erro = error.message;
+      else logInserido = true;
+    } catch (e) {
+      erro = e instanceof Error ? e.message : 'falha';
+    }
+  } else {
+    erro = 'env do supabase ausente';
+  }
+  return NextResponse.json({ endpoint: 'ok', logInserido, erro: erro || undefined });
+}
+
 export async function POST(request: Request) {
   // (trim tolera espaço/quebra de linha acidental ao colar o valor)
   const tokenEsperado = (process.env.ASAAS_WEBHOOK_TOKEN || '').trim();
