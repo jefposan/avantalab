@@ -215,17 +215,19 @@ export default function PaywallEmpresa({ nomePerfil, onAssinar, onResgatarCupom,
             {cupomErro && <p className="mt-2 text-xs font-bold text-red-600">{cupomErro}</p>}
           </div>
 
-          <div className="mt-6 grid gap-2 border-t border-slate-200 pt-4 sm:grid-cols-2">
-            {onTrocarPerfil && (
-              <button type="button" onClick={onTrocarPerfil} className="h-12 w-full rounded-xl border border-slate-300 bg-white/85 text-xs font-black uppercase tracking-wide text-slate-700 shadow-sm transition hover:bg-white active:scale-[0.98]">
-                Trocar de perfil
-              </button>
-            )}
-            {onCriarPerfil && (
-              <button type="button" onClick={onCriarPerfil} className="h-12 w-full rounded-xl border border-slate-300 bg-white/85 text-xs font-black uppercase tracking-wide text-slate-700 shadow-sm transition hover:bg-white active:scale-[0.98]">
-                Criar novo perfil
-              </button>
-            )}
+          <div className="mt-6 grid gap-2 border-t border-slate-200 pt-4">
+            <div className={`grid gap-2 ${onTrocarPerfil ? 'sm:grid-cols-2' : ''}`}>
+              {onTrocarPerfil && (
+                <button type="button" onClick={onTrocarPerfil} className="h-12 w-full rounded-xl border border-slate-300 bg-white/85 text-xs font-black uppercase tracking-wide text-slate-700 shadow-sm transition hover:bg-white active:scale-[0.98]">
+                  Trocar de perfil
+                </button>
+              )}
+              {onCriarPerfil && (
+                <button type="button" onClick={onCriarPerfil} className="h-12 w-full rounded-xl border border-slate-300 bg-white/85 text-xs font-black uppercase tracking-wide text-slate-700 shadow-sm transition hover:bg-white active:scale-[0.98]">
+                  Criar novo perfil
+                </button>
+              )}
+            </div>
             <button type="button" onClick={onSair} className="h-12 w-full rounded-xl border border-red-200 bg-red-50 text-xs font-black uppercase tracking-wide text-red-600 shadow-sm transition hover:bg-red-100 active:scale-[0.98]">
               Sair
             </button>
