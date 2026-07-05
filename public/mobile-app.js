@@ -559,13 +559,11 @@
             '</div>' +
             '<p id="paywall-cupom-msg" class="mt-2 text-xs font-bold text-red-600"></p>' +
           '</div>' +
-          // Rodapé com botões estruturados
-          '<div class="mt-6 grid gap-2 border-t border-slate-200 pt-4">' +
-            '<div class="grid gap-2' + (temTrocar ? ' grid-cols-2' : '') + '">' +
-              (temTrocar ? '<button type="button" onclick="window._avaPaywallTrocar()" class="h-12 w-full rounded-xl border border-slate-300 bg-white text-xs font-black uppercase tracking-wide text-slate-700 active:scale-[0.98]">Trocar de perfil</button>' : '') +
-              '<button type="button" onclick="window._avaPaywallCriar()" class="h-12 w-full rounded-xl border border-slate-300 bg-white text-xs font-black uppercase tracking-wide text-slate-700 active:scale-[0.98]">Criar novo perfil</button>' +
-            '</div>' +
-            '<button type="button" onclick="window._avaPaywallSair()" class="h-12 w-full rounded-xl border border-red-200 bg-red-50 text-xs font-black uppercase tracking-wide text-red-600 active:scale-[0.98]">Sair</button>' +
+          // Rodapé com botões estruturados — três na mesma linha, com cor
+          '<div class="mt-6 flex gap-2 border-t border-slate-200 pt-4">' +
+            (temTrocar ? '<button type="button" onclick="window._avaPaywallTrocar()" class="h-9 flex-1 rounded-lg border border-sky-300 bg-sky-50 px-1 text-[10px] font-black uppercase tracking-wide text-sky-700 shadow-sm active:scale-[0.98] active:bg-sky-700 active:text-white">Trocar</button>' : '') +
+            '<button type="button" onclick="window._avaPaywallCriar()" class="h-9 flex-1 rounded-lg border border-sky-300 bg-sky-50 px-1 text-[10px] font-black uppercase tracking-wide text-sky-700 shadow-sm active:scale-[0.98] active:bg-sky-700 active:text-white">Criar</button>' +
+            '<button type="button" onclick="window._avaPaywallSair()" class="h-9 flex-1 rounded-lg border border-red-200 bg-red-50 px-1 text-[10px] font-black uppercase tracking-wide text-red-600 shadow-sm active:scale-[0.98] active:bg-red-600 active:text-white">Sair</button>' +
           '</div>' +
         '</div>' +
       '</section>'
