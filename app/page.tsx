@@ -323,6 +323,7 @@ const [validandoTelefoneObrigatorio, setValidandoTelefoneObrigatorio] = useState
   const [abaAtiva, setAbaAtiva] = useState('Dashboard');
   // Cobrança: estado de acesso do perfil (só é buscado quando COBRANCA_ATIVA=true).
   const [estadoAcesso, setEstadoAcesso] = useState<EstadoAcesso | null>(null);
+  const [estadoDebug, setEstadoDebug] = useState(''); // temporário: diagnóstico da consulta
   const [modalAssinatura, setModalAssinatura] = useState(false);
   useEffect(() => {
     if (!COBRANCA_ATIVA || !acessoLiberado || !empresaId) { setEstadoAcesso(null); return; }
@@ -331,13 +332,18 @@ const [validandoTelefoneObrigatorio, setValidandoTelefoneObrigatorio] = useState
       try {
         const { data: sessao } = await supabase.auth.getSession();
         const token = sessao.session?.access_token;
-        if (!token) return;
+        if (!token) { if (ativo) setEstadoDebug('sem token de sessao'); return; }
         const resp = await fetch(`/api/cobranca/estado?empresaId=${encodeURIComponent(empresaId)}`, {
           headers: { Authorization: `Bearer ${token}` },
         });
-        const json = await resp.json();
-        if (ativo && resp.ok) setEstadoAcesso(json.estado || null);
-      } catch { /* silencioso: em caso de falha, não bloqueia (fail-open) */ }
+        const texto = await resp.text();
+        if (ativo) setEstadoDebug('HTTP ' + resp.status + ' · ' + texto.slice(0, 140));
+        let json: { estado?: EstadoAcesso | null } | null = null;
+        try { json = JSON.parse(texto); } catch { /* resposta nao-JSON */ }
+        if (ativo && resp.ok && json) setEstadoAcesso(json.estado || null);
+      } catch (e) {
+        if (ativo) setEstadoDebug('erro fetch: ' + (e instanceof Error ? e.message : 'falha'));
+      }
     })();
     return () => { ativo = false; };
   }, [acessoLiberado, empresaId]);
@@ -5609,7 +5615,13 @@ if (isTelaMobile) {
 
   return (
     <div className={`min-h-screen flex flex-col transition-colors duration-300 ${bgMain}`}>
-      
+
+      {COBRANCA_ATIVA && estadoDebug && (
+        <div style={{ position: 'fixed', bottom: 8, left: 8, zIndex: 99999, background: '#000', color: '#0f0', fontSize: 11, padding: '4px 8px', borderRadius: 6, maxWidth: '92vw', overflow: 'hidden', fontFamily: 'monospace' }}>
+          estado: {estadoDebug}
+        </div>
+      )}
+
       {/* ================= MODAIS ================= */}
 
       {/* ================= MODAL AGENDA ================= */}
