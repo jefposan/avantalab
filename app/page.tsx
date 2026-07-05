@@ -339,7 +339,7 @@ const [validandoTelefoneObrigatorio, setValidandoTelefoneObrigatorio] = useState
     })();
     return () => { ativo = false; };
   }, [acessoLiberado, empresaId]);
-  const iniciarAssinatura = async (ciclo: 'mensal' | 'anual'): Promise<string | null> => {
+  const iniciarAssinatura = async (ciclo: 'mensal' | 'anual', cpfCnpj: string): Promise<string | null> => {
     try {
       const { data: sessao } = await supabase.auth.getSession();
       const token = sessao.session?.access_token;
@@ -347,7 +347,7 @@ const [validandoTelefoneObrigatorio, setValidandoTelefoneObrigatorio] = useState
       const resp = await fetch('/api/cobranca/assinar', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ empresaId, plano: 'empresa', ciclo }),
+        body: JSON.stringify({ empresaId, plano: 'empresa', ciclo, cpfCnpj }),
       });
       const json = await resp.json();
       if (resp.ok && json.invoiceUrl) { window.location.href = json.invoiceUrl; return null; }

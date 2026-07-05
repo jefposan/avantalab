@@ -23,6 +23,7 @@ export async function POST(request: Request) {
   const empresaId = String(corpo.empresaId || '').trim();
   const plano = String(corpo.plano || '') as PlanoPago;
   const ciclo = String(corpo.ciclo || '') as Ciclo;
+  const cpfCnpj = String(corpo.cpfCnpj || '').replace(/\D/g, ''); // só dígitos
   if (!empresaId || !(plano in PRECOS) || (ciclo !== 'mensal' && ciclo !== 'anual')) {
     return NextResponse.json({ erro: true, mensagem: 'dados inválidos' }, { status: 400 });
   }
@@ -60,7 +61,10 @@ export async function POST(request: Request) {
 
   let clienteId = assinExistente?.gateway_customer_id || '';
   if (!clienteId) {
-    const c = await criarClienteAsaas({ name: nomePerfil, email: userEmail || undefined, externalReference: empresaId });
+    if (cpfCnpj.length !== 11 && cpfCnpj.length !== 14) {
+      return NextResponse.json({ erro: true, mensagem: 'Informe um CPF (11 dígitos) ou CNPJ (14 dígitos) válido.' }, { status: 400 });
+    }
+    const c = await criarClienteAsaas({ name: nomePerfil, email: userEmail || undefined, cpfCnpj, externalReference: empresaId });
     if (!c.ok || !c.data?.id) return NextResponse.json({ erro: true, mensagem: c.erro || 'falha ao criar cliente' }, { status: 502 });
     clienteId = c.data.id;
   }

@@ -7,7 +7,7 @@ interface PaywallEmpresaProps {
   nomePerfil?: string;
   // Retorna uma mensagem de erro (string) em caso de falha, ou nada em caso de
   // sucesso (nesse caso a navegação para o pagamento já acontece).
-  onAssinar?: (ciclo: 'mensal' | 'anual') => Promise<string | null | void>;
+  onAssinar?: (ciclo: 'mensal' | 'anual', cpfCnpj: string) => Promise<string | null | void>;
   onSair?: () => void;
 }
 
@@ -21,13 +21,19 @@ export default function PaywallEmpresa({
 }: PaywallEmpresaProps) {
   const [carregando, setCarregando] = useState<'mensal' | 'anual' | null>(null);
   const [erro, setErro] = useState('');
+  const [cpfCnpj, setCpfCnpj] = useState('');
 
   const clicar = async (ciclo: 'mensal' | 'anual') => {
     if (carregando) return;
+    const digitos = cpfCnpj.replace(/\D/g, '');
+    if (digitos.length !== 11 && digitos.length !== 14) {
+      setErro('Informe um CPF (11 dígitos) ou CNPJ (14 dígitos) para a cobrança.');
+      return;
+    }
     setErro('');
     setCarregando(ciclo);
     try {
-      const r = await onAssinar?.(ciclo);
+      const r = await onAssinar?.(ciclo, digitos);
       if (typeof r === 'string' && r) setErro(r);
     } catch {
       setErro('Não foi possível iniciar a assinatura agora.');
@@ -58,7 +64,25 @@ export default function PaywallEmpresa({
           </div>
         )}
 
-        <div className="mt-8 grid gap-4 sm:grid-cols-2">
+        <div className="mx-auto mt-6 max-w-md">
+          <label className="mb-1 block text-xs font-black uppercase tracking-wide opacity-60">
+            CPF ou CNPJ para a cobrança
+          </label>
+          <input
+            type="text"
+            inputMode="numeric"
+            value={cpfCnpj}
+            onChange={(e) => setCpfCnpj(e.target.value)}
+            placeholder="Somente números"
+            className={`w-full rounded-xl border px-4 py-3 text-sm font-semibold outline-none transition focus:ring-2 ${
+              darkMode
+                ? 'border-slate-600 bg-slate-900 text-white focus:ring-sky-500/30'
+                : 'border-slate-300 bg-white text-slate-800 focus:ring-sky-600/20'
+            }`}
+          />
+        </div>
+
+        <div className="mt-6 grid gap-4 sm:grid-cols-2">
           {/* Mensal */}
           <div className={`rounded-2xl border p-5 shadow-sm ${card}`}>
             <p className="text-sm font-black uppercase tracking-wide opacity-60">Mensal</p>
