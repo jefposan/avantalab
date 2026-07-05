@@ -36,6 +36,8 @@ interface AuthCardProps {
   setCadastroSenha: React.Dispatch<React.SetStateAction<string>>;
   cadastroConfirmarSenha: string;
   setCadastroConfirmarSenha: React.Dispatch<React.SetStateAction<string>>;
+  cadastroCupom: string;
+  setCadastroCupom: React.Dispatch<React.SetStateAction<string>>;
   codigoSmsCadastro: string;
   setCodigoSmsCadastro: React.Dispatch<React.SetStateAction<string>>;
   smsCadastroEnviado: boolean;
@@ -86,6 +88,7 @@ export default function AuthCard({
   cadastroTelefone, setCadastroTelefone,
   cadastroSenha, setCadastroSenha,
   cadastroConfirmarSenha, setCadastroConfirmarSenha,
+  cadastroCupom, setCadastroCupom,
   codigoSmsCadastro, setCodigoSmsCadastro,
   smsCadastroEnviado, segundosReenvioSms, reenviandoSmsCadastro,
   authErro, authMensagem, authLoading, googleLoading,
@@ -747,6 +750,15 @@ export default function AuthCard({
       )}
     </button>
   </div>
+
+                <input
+  type="text"
+  autoComplete="off"
+  placeholder="Cupom (opcional)"
+  value={cadastroCupom}
+  onChange={(e) => setCadastroCupom(e.target.value.toUpperCase())}
+  className="w-full rounded-xl border border-slate-300 bg-white/90 px-3 py-2 text-sm uppercase tracking-wide text-slate-800 outline-none transition focus:border-sky-600 focus:ring-2 focus:ring-sky-600/20"
+/>
 
                 {smsCadastroEnviado && (
   <div>

@@ -59,6 +59,7 @@ export function useAuth(deps: UseAuthDeps) {
   const [cadastroEmail, setCadastroEmail] = useState('');
   const [cadastroTelefone, setCadastroTelefone] = useState('');
   const [cadastroSenha, setCadastroSenha] = useState('');
+  const [cadastroCupom, setCadastroCupom] = useState('');
   const [cadastroConfirmarSenha, setCadastroConfirmarSenha] = useState('');
 
   // --- Estados de SMS cadastro ---
@@ -708,6 +709,21 @@ export function useAuth(deps: UseAuthDeps) {
       }
     }
 
+    // Cupom informado no cadastro: concede cortesia ao novo perfil (opcional).
+    // Falha silenciosa — se o cupom for inválido, o cadastro segue no trial normal.
+    if (empresaCriadaId && cadastroCupom.trim()) {
+      try {
+        const tokenSessao = sessaoAtual.session?.access_token;
+        if (tokenSessao) {
+          await fetch('/api/cobranca/resgatar-cupom', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${tokenSessao}` },
+            body: JSON.stringify({ empresaId: empresaCriadaId, codigo: cadastroCupom.trim() }),
+          });
+        }
+      } catch { /* silencioso */ }
+    }
+
     setDuplicadosAtivo(true);
     setTipoPerfilAtual(tipoPerfil);
     setAuthMensagem('Perfil financeiro criado com sucesso. Carregando o sistema...');
@@ -739,6 +755,7 @@ export function useAuth(deps: UseAuthDeps) {
     cadastroTelefone, setCadastroTelefone,
     cadastroSenha, setCadastroSenha,
     cadastroConfirmarSenha, setCadastroConfirmarSenha,
+    cadastroCupom, setCadastroCupom,
 
     // SMS cadastro
     codigoSmsCadastro, setCodigoSmsCadastro,
