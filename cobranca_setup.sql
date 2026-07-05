@@ -14,7 +14,8 @@ create table if not exists public.cupons (
   id             uuid primary key default gen_random_uuid(),
   codigo         text not null unique,                 -- o que o usuário digita
   tipo           text not null check (tipo in ('periodo','vitalicio')),
-  duracao_meses  integer,                              -- usado quando tipo = 'periodo'
+  duracao_valor    integer,                            -- quantidade (quando tipo = 'periodo')
+  duracao_unidade  text check (duracao_unidade in ('dias','semanas','meses')),
   max_usos       integer,                              -- limite de resgates (nulo = ilimitado)
   usos           integer not null default 0,           -- quantas vezes já foi resgatado
   validade       timestamptz,                          -- até quando o cupom pode ser resgatado (nulo = sem prazo)

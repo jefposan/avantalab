@@ -1,7 +1,8 @@
 import { NextResponse } from 'next/server';
 import { exigirAdmin } from '../../lib/admin-server';
 
-const CAMPOS = 'id, codigo, tipo, duracao_meses, max_usos, usos, validade, ativo, criado_em';
+const CAMPOS = 'id, codigo, tipo, duracao_valor, duracao_unidade, max_usos, usos, validade, ativo, criado_em';
+const UNIDADES = ['dias', 'semanas', 'meses'];
 
 function naoAutorizado() {
   return NextResponse.json({ erro: true, mensagem: 'Acesso não autorizado.' }, { status: 401 });
@@ -31,17 +32,18 @@ export async function POST(request: Request) {
     const corpo = await request.json().catch(() => ({}));
     const codigo = String(corpo.codigo || '').trim().toUpperCase();
     const tipo = corpo.tipo === 'periodo' ? 'periodo' : 'vitalicio';
-    const duracaoMeses = tipo === 'periodo' ? (Number(corpo.duracaoMeses) || 0) : null;
-    const maxUsos = corpo.maxUsos ? Number(corpo.maxUsos) : null;
+    const duracaoValor = tipo === 'periodo' ? (Number(corpo.duracaoValor) || 0) : null;
+    const duracaoUnidade = tipo === 'periodo' ? (UNIDADES.includes(corpo.duracaoUnidade) ? corpo.duracaoUnidade : 'meses') : null;
+    const maxUsos = corpo.maxUsos ? Math.max(1, Number(corpo.maxUsos)) : null; // null = ilimitado
 
     if (!codigo) return NextResponse.json({ erro: true, mensagem: 'Informe o código.' }, { status: 400 });
-    if (tipo === 'periodo' && (!duracaoMeses || duracaoMeses < 1)) {
-      return NextResponse.json({ erro: true, mensagem: 'Informe a duração (meses) do cupom por período.' }, { status: 400 });
+    if (tipo === 'periodo' && (!duracaoValor || duracaoValor < 1)) {
+      return NextResponse.json({ erro: true, mensagem: 'Informe a duração do cupom por período.' }, { status: 400 });
     }
 
     const { data, error } = await db
       .from('cupons')
-      .insert({ codigo, tipo, duracao_meses: duracaoMeses, max_usos: maxUsos, ativo: true })
+      .insert({ codigo, tipo, duracao_valor: duracaoValor, duracao_unidade: duracaoUnidade, max_usos: maxUsos, ativo: true })
       .select(CAMPOS)
       .single();
 

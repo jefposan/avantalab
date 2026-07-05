@@ -10,7 +10,8 @@ type Cupom = {
   id: string;
   codigo: string;
   tipo: 'vitalicio' | 'periodo';
-  duracao_meses: number | null;
+  duracao_valor: number | null;
+  duracao_unidade: 'dias' | 'semanas' | 'meses' | null;
   max_usos: number | null;
   usos: number;
   validade: string | null;
@@ -111,8 +112,10 @@ export default function AdminPage() {
   const [cupons, setCupons] = useState<Cupom[]>([]);
   const [cupomCodigo, setCupomCodigo] = useState('');
   const [cupomTipo, setCupomTipo] = useState<'vitalicio' | 'periodo'>('vitalicio');
-  const [cupomDuracao, setCupomDuracao] = useState('3');
-  const [cupomMaxUsos, setCupomMaxUsos] = useState('');
+  const [cupomDuracaoValor, setCupomDuracaoValor] = useState('3');
+  const [cupomDuracaoUnidade, setCupomDuracaoUnidade] = useState<'dias' | 'semanas' | 'meses'>('meses');
+  const [cupomUsosIlimitado, setCupomUsosIlimitado] = useState(true);
+  const [cupomMaxUsos, setCupomMaxUsos] = useState('50');
   const [creatingCupom, setCreatingCupom] = useState(false);
 
   const authHeaders = (value = token) => ({ Authorization: `Bearer ${value.trim()}` });
@@ -136,8 +139,9 @@ export default function AdminPage() {
         body: JSON.stringify({
           codigo,
           tipo: cupomTipo,
-          duracaoMeses: cupomTipo === 'periodo' ? Number(cupomDuracao) : null,
-          maxUsos: cupomMaxUsos ? Number(cupomMaxUsos) : null,
+          duracaoValor: cupomTipo === 'periodo' ? Number(cupomDuracaoValor) : null,
+          duracaoUnidade: cupomTipo === 'periodo' ? cupomDuracaoUnidade : null,
+          maxUsos: cupomUsosIlimitado ? null : Number(cupomMaxUsos),
         }),
       });
       const data = await response.json().catch(() => null);
@@ -421,15 +425,20 @@ export default function AdminPage() {
               <p className="text-[9px] font-black uppercase tracking-[0.2em] text-cyan-700">Cortesias</p><h2 className="mt-1 text-lg font-black text-slate-950">Novo cupom</h2><p className="mt-1 text-xs leading-relaxed text-slate-500">Libera acesso sem pagamento (avaliadores, promoções). Vale para empresa e pessoal.</p>
               <label className="mt-4 block text-[10px] font-black uppercase text-slate-500">Código</label><input value={cupomCodigo} onChange={(event) => setCupomCodigo(event.target.value.toUpperCase())} placeholder="EX: AVALIADOR" className="mt-1 h-10 w-full rounded-md border border-slate-300 px-3 text-sm font-bold uppercase tracking-wide outline-none focus:border-cyan-700" />
               <label className="mt-3 block text-[10px] font-black uppercase text-slate-500">Tipo</label><select value={cupomTipo} onChange={(event) => setCupomTipo(event.target.value as 'vitalicio' | 'periodo')} className="mt-1 h-10 w-full rounded-md border border-slate-300 bg-white px-3 text-sm font-bold outline-none focus:border-cyan-700"><option value="vitalicio">Vitalício (sem prazo)</option><option value="periodo">Período (meses)</option></select>
-              {cupomTipo === 'periodo' && <><label className="mt-3 block text-[10px] font-black uppercase text-slate-500">Duração (meses)</label><input type="number" min={1} value={cupomDuracao} onChange={(event) => setCupomDuracao(event.target.value)} className="mt-1 h-10 w-full rounded-md border border-slate-300 px-3 text-sm outline-none focus:border-cyan-700" /></>}
-              <label className="mt-3 block text-[10px] font-black uppercase text-slate-500">Limite de usos (opcional)</label><input type="number" min={1} value={cupomMaxUsos} onChange={(event) => setCupomMaxUsos(event.target.value)} placeholder="Ilimitado" className="mt-1 h-10 w-full rounded-md border border-slate-300 px-3 text-sm outline-none focus:border-cyan-700" />
+              {cupomTipo === 'periodo' && <><label className="mt-3 block text-[10px] font-black uppercase text-slate-500">Duração do acesso</label><div className="mt-1 flex gap-2"><input type="number" min={1} value={cupomDuracaoValor} onChange={(event) => setCupomDuracaoValor(event.target.value)} className="h-10 w-24 rounded-md border border-slate-300 px-3 text-sm outline-none focus:border-cyan-700" /><select value={cupomDuracaoUnidade} onChange={(event) => setCupomDuracaoUnidade(event.target.value as 'dias' | 'semanas' | 'meses')} className="h-10 flex-1 rounded-md border border-slate-300 bg-white px-3 text-sm font-bold outline-none focus:border-cyan-700"><option value="dias">Dias</option><option value="semanas">Semanas</option><option value="meses">Meses</option></select></div></>}
+              <label className="mt-3 block text-[10px] font-black uppercase text-slate-500">Quantidade de usos</label>
+              <div className="mt-1 grid grid-cols-2 gap-1.5 rounded-md border border-slate-200 bg-slate-50 p-1">
+                <button type="button" onClick={() => setCupomUsosIlimitado(true)} className={`rounded px-3 py-1.5 text-xs font-black uppercase transition ${cupomUsosIlimitado ? 'bg-slate-900 text-white shadow' : 'text-slate-500 hover:bg-white'}`}>Ilimitado</button>
+                <button type="button" onClick={() => setCupomUsosIlimitado(false)} className={`rounded px-3 py-1.5 text-xs font-black uppercase transition ${!cupomUsosIlimitado ? 'bg-slate-900 text-white shadow' : 'text-slate-500 hover:bg-white'}`}>Definir número</button>
+              </div>
+              {!cupomUsosIlimitado && <input type="number" min={1} value={cupomMaxUsos} onChange={(event) => setCupomMaxUsos(event.target.value)} placeholder="Ex: 50" className="mt-2 h-10 w-full rounded-md border border-slate-300 px-3 text-sm outline-none focus:border-cyan-700" />}
               <button type="button" onClick={() => void criarCupom()} disabled={creatingCupom || !cupomCodigo.trim()} className="mt-4 flex h-11 w-full items-center justify-center gap-2 rounded-md bg-cyan-700 text-xs font-black uppercase text-white hover:bg-cyan-800 disabled:opacity-60"><Icon name="ticket" />{creatingCupom ? 'Criando...' : 'Criar cupom'}</button>
             </section>
             <section className="min-w-0">
               <div className="mb-3 flex items-center justify-between gap-2"><div><h2 className="text-base font-black text-slate-950">Cupons</h2><p className="text-xs text-slate-500">Ative ou desative a qualquer momento.</p></div><button type="button" onClick={() => void loadCupons()} className="flex h-9 items-center gap-1.5 rounded-md border border-slate-300 bg-white px-3 text-[10px] font-black uppercase"><Icon name="refresh" size={15} />Atualizar</button></div>
               {cupons.length === 0 ? <div className="rounded-lg border border-dashed border-slate-300 bg-white px-4 py-10 text-center text-sm text-slate-500">Nenhum cupom criado.</div> : <div className="grid gap-2">{cupons.map((cupom) => {
                 const busy = workingId === cupom.id;
-                const detalhe = cupom.tipo === 'vitalicio' ? 'Vitalício' : `${cupom.duracao_meses} ${cupom.duracao_meses === 1 ? 'mês' : 'meses'}`;
+                const detalhe = cupom.tipo === 'vitalicio' ? 'Vitalício' : `${cupom.duracao_valor} ${cupom.duracao_unidade}`;
                 const usosTxt = cupom.max_usos ? `${cupom.usos}/${cupom.max_usos} usos` : `${cupom.usos} usos`;
                 return <article key={cupom.id} className="flex items-center justify-between gap-3 rounded-lg border border-slate-200 bg-white p-3 shadow-sm">
                   <div className="min-w-0"><div className="flex flex-wrap items-center gap-1.5"><span className="font-mono text-sm font-black text-slate-950">{cupom.codigo}</span><span className={`rounded-full border px-2 py-0.5 text-[9px] font-black uppercase ${cupom.ativo ? 'border-emerald-200 bg-emerald-50 text-emerald-700' : 'border-slate-200 bg-slate-100 text-slate-500'}`}>{cupom.ativo ? 'Ativo' : 'Inativo'}</span></div><p className="mt-1 text-[11px] font-bold text-slate-500">{detalhe} · {usosTxt}</p></div>

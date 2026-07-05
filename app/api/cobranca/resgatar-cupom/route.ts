@@ -51,10 +51,16 @@ export async function POST(request: Request) {
 
   // 4) Calcula até quando o acesso vale (período) ou sem prazo (vitalício).
   let validoAte: string | null = null;
-  if (cupom.tipo === 'periodo' && cupom.duracao_meses) {
+  if (cupom.tipo === 'periodo') {
     const fim = new Date(agora);
-    fim.setMonth(fim.getMonth() + Number(cupom.duracao_meses));
-    validoAte = fim.toISOString();
+    const unidade = cupom.duracao_unidade || 'meses';
+    const valor = Number(cupom.duracao_valor ?? cupom.duracao_meses ?? 0);
+    if (valor > 0) {
+      if (unidade === 'dias') fim.setDate(fim.getDate() + valor);
+      else if (unidade === 'semanas') fim.setDate(fim.getDate() + valor * 7);
+      else fim.setMonth(fim.getMonth() + valor);
+      validoAte = fim.toISOString();
+    }
   }
 
   const { data: emp } = await admin.from('empresas').select('tipo_perfil').eq('id', empresaId).maybeSingle();
