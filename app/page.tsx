@@ -259,6 +259,7 @@ export default function AppGestao() {
     cadastroSenha, setCadastroSenha,
     cadastroConfirmarSenha, setCadastroConfirmarSenha,
     cadastroCupom, setCadastroCupom,
+    aceitouTermos, setAceitouTermos,
     codigoSmsCadastro, setCodigoSmsCadastro,
     smsCadastroEnviado, setSmsCadastroEnviado,
     telefoneSmsCadastroConfirmado, setTelefoneSmsCadastroConfirmado,
@@ -5591,6 +5592,10 @@ if (isTelaMobile) {
         setCadastroConfirmarSenha={setCadastroConfirmarSenha}
         cadastroCupom={cadastroCupom}
         setCadastroCupom={setCadastroCupom}
+        aceitouTermos={aceitouTermos}
+        setAceitouTermos={setAceitouTermos}
+        onAbrirTermos={() => setModalTermos(true)}
+        onAbrirPrivacidade={() => setModalPrivacidade(true)}
         codigoSmsCadastro={codigoSmsCadastro}
         setCodigoSmsCadastro={setCodigoSmsCadastro}
         smsCadastroEnviado={smsCadastroEnviado}

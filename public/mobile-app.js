@@ -109,6 +109,8 @@
     modoCadastro: false,
     smsSenhaEnviado: false,
     smsCadastroEnviado: false,
+    aceitouTermos: false,
+    aceiteTermosEm: null,
     mostrarSenhaLogin: false,
     mostrarNovaSenha: false,
     mostrarConfirmarSenha: false,
@@ -3243,6 +3245,15 @@
 
     if (!validarCadastroBase()) return;
 
+    // Aceite obrigatório dos Termos/Privacidade.
+    var chkAceite = document.getElementById('cadastro-aceite');
+    state.aceitouTermos = chkAceite ? chkAceite.checked : state.aceitouTermos;
+    if (!state.aceitouTermos) {
+      setErro('Para criar sua conta, é necessário aceitar os Termos de Uso e a Política de Privacidade.');
+      return;
+    }
+    state.aceiteTermosEm = new Date().toISOString();
+
     state.carregando = true;
     state.erro = '';
     state.mensagem = '';
@@ -3321,6 +3332,9 @@
         data: {
           nome: state.cadastro.nome,
           telefone: state.cadastro.telefone,
+          // Prova de consentimento (LGPD): versão e data/hora do aceite.
+          aceite_termos_versao: (window.__TERMOS_VERSAO || '2026-07-05'),
+          aceite_termos_em: state.aceiteTermosEm || new Date().toISOString(),
         },
       },
     });
@@ -3335,6 +3349,8 @@
     state.telaAcesso = 'login';
     state.modoCadastro = false;
     state.smsCadastroEnviado = false;
+    state.aceitouTermos = false;
+    state.aceiteTermosEm = null;
     state.telefoneCadastroConfirmado = '';
     // criarPerfilTipo guarda a escolha para usar na criação do primeiro perfil
     state.criarPerfilTipo = normalizarTipoPerfil(state.cadastroTipoPerfil);
@@ -5145,6 +5161,12 @@
         senhaInputHtml('cadastro-senha', 'Senha', 'Crie uma senha', 'mostrarSenhaCadastro', 'toggle-senha-cadastro', state.cadastro.senha) +
         senhaInputHtml('cadastro-confirmar-senha', 'Confirmar senha', 'Repita a senha', 'mostrarConfirmarSenhaCadastro', 'toggle-confirmar-cadastro', state.cadastro.confirmarSenha) +
         (state.smsCadastroEnviado ? inputHtml('cadastro-codigo', 'Codigo recebido por SMS', 'text', 'Digite o codigo recebido') + '<p class="-mt-1 text-[11px] font-semibold text-slate-500">Enviamos o codigo para o celular informado.</p>' : '') +
+        (!state.smsCadastroEnviado ?
+          '<label class="flex cursor-pointer items-start gap-2 rounded-xl border border-slate-200 bg-white/60 px-3 py-2 text-[11px] leading-snug text-slate-600">' +
+            '<input id="cadastro-aceite" type="checkbox" ' + (state.aceitouTermos ? 'checked' : '') + ' class="mt-0.5 h-4 w-4 shrink-0" style="accent-color:#0369a1;" />' +
+            '<span>Li e concordo com os <button id="cadastro-termos-link" type="button" class="font-bold text-sky-700 underline">Termos de Uso</button> e a <button id="cadastro-privacidade-link" type="button" class="font-bold text-sky-700 underline">Pol&iacute;tica de Privacidade</button>.</span>' +
+          '</label>'
+        : '') +
         alertaHtml() +
         '<button id="cadastro-submit" type="button" class="h-10 rounded-xl bg-slate-900 px-4 text-xs font-black uppercase tracking-wide text-white shadow-lg">' +
           (state.carregando ? (state.smsCadastroEnviado ? 'Validando...' : 'Enviando...') : (state.smsCadastroEnviado ? 'Concluir cadastro' : 'Enviar codigo por SMS')) +
@@ -8059,6 +8081,19 @@
       }
     });
     bind('reenviar-cadastro', enviarCodigoCadastro);
+    bindChange('cadastro-aceite', function (e) { state.aceitouTermos = !!(e.target && e.target.checked); });
+    bind('cadastro-termos-link', function () {
+      lerCadastroDaTela();
+      var chk = document.getElementById('cadastro-aceite');
+      if (chk) state.aceitouTermos = chk.checked;
+      abrirModalMenu('termos');
+    });
+    bind('cadastro-privacidade-link', function () {
+      lerCadastroDaTela();
+      var chk = document.getElementById('cadastro-aceite');
+      if (chk) state.aceitouTermos = chk.checked;
+      abrirModalMenu('privacidade');
+    });
     bind('cadastro-tipo-empresa', function () { state.cadastroTipoPerfil = 'empresa'; render(); });
     bind('cadastro-tipo-pessoal', function () { state.cadastroTipoPerfil = 'pessoal'; render(); });
     bind('criar-perfil-inicial-submit', criarPerfilInicial);

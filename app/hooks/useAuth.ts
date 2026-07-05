@@ -11,6 +11,7 @@ import {
   inserirDespesasPadraoPerfil,
 } from '../lib/database';
 import { normalizarTipoPerfil, type TipoPerfil } from '../lib/perfis';
+import { TERMOS_VERSAO } from '../lib/legal';
 import type { AbrirAvisoFn } from './useUI';
 
 // ---------------------------------------------------------------------------
@@ -61,6 +62,8 @@ export function useAuth(deps: UseAuthDeps) {
   const [cadastroSenha, setCadastroSenha] = useState('');
   const [cadastroCupom, setCadastroCupom] = useState('');
   const [cadastroConfirmarSenha, setCadastroConfirmarSenha] = useState('');
+  // Aceite obrigatório dos Termos/Privacidade no cadastro.
+  const [aceitouTermos, setAceitouTermos] = useState(false);
 
   // --- Estados de SMS cadastro ---
   const [codigoSmsCadastro, setCodigoSmsCadastro] = useState('');
@@ -390,6 +393,10 @@ export function useAuth(deps: UseAuthDeps) {
     if (cadastroSenha !== cadastroConfirmarSenha) {
       setAuthErro('As senhas não coincidem.'); setAuthLoading(false); return;
     }
+    if (!aceitouTermos) {
+      setAuthErro('Para criar sua conta, é necessário aceitar os Termos de Uso e a Política de Privacidade.');
+      setAuthLoading(false); return;
+    }
 
     if (!smsCadastroEnviado) {
       const respostaSms = await fetch('/api/sms/enviar-codigo', {
@@ -450,7 +457,15 @@ export function useAuth(deps: UseAuthDeps) {
     const { error } = await supabase.auth.signUp({
       email: emailLimpo,
       password: cadastroSenha,
-      options: { data: { nome: nomeLimpo, telefone: telefoneLimpo } },
+      options: {
+        data: {
+          nome: nomeLimpo,
+          telefone: telefoneLimpo,
+          // Prova de consentimento (LGPD): versão e data/hora do aceite.
+          aceite_termos_versao: TERMOS_VERSAO,
+          aceite_termos_em: new Date().toISOString(),
+        },
+      },
     });
 
     setAuthLoading(false);
@@ -479,6 +494,7 @@ export function useAuth(deps: UseAuthDeps) {
     setTelefoneSmsCadastroConfirmado('');
     setSegundosReenvioSms(0);
     setReenviandoSmsCadastro(false);
+    setAceitouTermos(false);
     setModoAuth('login');
   };
 
@@ -756,6 +772,7 @@ export function useAuth(deps: UseAuthDeps) {
     cadastroSenha, setCadastroSenha,
     cadastroConfirmarSenha, setCadastroConfirmarSenha,
     cadastroCupom, setCadastroCupom,
+    aceitouTermos, setAceitouTermos,
 
     // SMS cadastro
     codigoSmsCadastro, setCodigoSmsCadastro,

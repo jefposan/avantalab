@@ -63,6 +63,10 @@ interface AuthCardProps {
   reenviandoSmsRedefinirSenha: boolean;
   tipoPerfilInicial: TipoPerfil;
   setTipoPerfilInicial: React.Dispatch<React.SetStateAction<TipoPerfil>>;
+  aceitouTermos: boolean;
+  setAceitouTermos: React.Dispatch<React.SetStateAction<boolean>>;
+  onAbrirTermos: () => void;
+  onAbrirPrivacidade: () => void;
 
   // Auth handlers
   handleLogin: () => Promise<void>;
@@ -100,6 +104,8 @@ export default function AuthCard({
   codigoSmsRedefinirSenha, setCodigoSmsRedefinirSenha,
   smsRedefinirSenhaEnviado, segundosReenvioRedefinirSenha, reenviandoSmsRedefinirSenha,
   tipoPerfilInicial, setTipoPerfilInicial,
+  aceitouTermos, setAceitouTermos,
+  onAbrirTermos, onAbrirPrivacidade,
   handleLogin, handleCadastroTeste, handleGoogleLogin,
   handleRecuperarSenha, handleAtualizarSenha,
   reenviarCodigoSmsCadastro, reenviarCodigoRedefinirSenha,
@@ -801,10 +807,27 @@ export default function AuthCard({
   </div>
 )}
 
+                {!smsCadastroEnviado && (
+  <label className="flex cursor-pointer items-start gap-2 rounded-xl border border-slate-200 bg-white/70 px-3 py-2 text-xs leading-snug text-slate-600">
+    <input
+      type="checkbox"
+      checked={aceitouTermos}
+      onChange={(e) => setAceitouTermos(e.target.checked)}
+      className="mt-0.5 h-4 w-4 shrink-0 accent-sky-700"
+    />
+    <span>
+      Li e concordo com os{' '}
+      <button type="button" onClick={onAbrirTermos} className="font-bold text-sky-700 underline">Termos de Uso</button>
+      {' '}e a{' '}
+      <button type="button" onClick={onAbrirPrivacidade} className="font-bold text-sky-700 underline">Política de Privacidade</button>.
+    </span>
+  </label>
+)}
+
                 <button
   type="button"
   onClick={handleCadastroTeste}
-  disabled={authLoading}
+  disabled={authLoading || (!smsCadastroEnviado && !aceitouTermos)}
   className="w-full rounded-xl bg-slate-900 px-4 py-2 font-bold text-white shadow-lg transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
 >
   {authLoading
