@@ -1,16 +1,17 @@
 'use client';
-import React from 'react';
+import React, { useState } from 'react';
 
 interface PaywallEmpresaProps {
   darkMode?: boolean;
   corPrimaria?: string;
   nomePerfil?: string;
-  onAssinar?: (ciclo: 'mensal' | 'anual') => void;
+  // Retorna uma mensagem de erro (string) em caso de falha, ou nada em caso de
+  // sucesso (nesse caso a navegação para o pagamento já acontece).
+  onAssinar?: (ciclo: 'mensal' | 'anual') => Promise<string | null | void>;
   onSair?: () => void;
 }
 
 // Tela mostrada quando o trial de 7 dias da empresa venceu e não há assinatura.
-// Bloqueia o sistema e oferece os planos.
 export default function PaywallEmpresa({
   darkMode = false,
   corPrimaria = '#0A1F44',
@@ -18,6 +19,23 @@ export default function PaywallEmpresa({
   onAssinar,
   onSair,
 }: PaywallEmpresaProps) {
+  const [carregando, setCarregando] = useState<'mensal' | 'anual' | null>(null);
+  const [erro, setErro] = useState('');
+
+  const clicar = async (ciclo: 'mensal' | 'anual') => {
+    if (carregando) return;
+    setErro('');
+    setCarregando(ciclo);
+    try {
+      const r = await onAssinar?.(ciclo);
+      if (typeof r === 'string' && r) setErro(r);
+    } catch {
+      setErro('Não foi possível iniciar a assinatura agora.');
+    } finally {
+      setCarregando(null);
+    }
+  };
+
   const fundo = darkMode ? 'bg-slate-900 text-slate-100' : 'bg-slate-50 text-slate-900';
   const card = darkMode ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200';
 
@@ -34,6 +52,12 @@ export default function PaywallEmpresa({
           </p>
         </div>
 
+        {erro && (
+          <div className="mx-auto mt-6 max-w-md rounded-xl border border-red-300 bg-red-50 px-4 py-3 text-center text-sm font-bold text-red-700">
+            {erro}
+          </div>
+        )}
+
         <div className="mt-8 grid gap-4 sm:grid-cols-2">
           {/* Mensal */}
           <div className={`rounded-2xl border p-5 shadow-sm ${card}`}>
@@ -42,11 +66,12 @@ export default function PaywallEmpresa({
             <p className="mt-1 text-xs font-semibold opacity-60">Cobrança todo mês. Cancele quando quiser.</p>
             <button
               type="button"
-              onClick={() => onAssinar?.('mensal')}
-              className="mt-4 w-full rounded-xl border px-4 py-3 text-sm font-black transition hover:brightness-105"
+              onClick={() => clicar('mensal')}
+              disabled={carregando !== null}
+              className="mt-4 w-full rounded-xl border px-4 py-3 text-sm font-black transition hover:brightness-105 disabled:opacity-50"
               style={{ borderColor: corPrimaria, color: corPrimaria }}
             >
-              Assinar mensal
+              {carregando === 'mensal' ? 'Processando…' : 'Assinar mensal'}
             </button>
           </div>
 
@@ -63,11 +88,12 @@ export default function PaywallEmpresa({
             <p className="mt-1 text-xs font-semibold opacity-60">R$ 348,00 por ano — economize ~R$ 70.</p>
             <button
               type="button"
-              onClick={() => onAssinar?.('anual')}
-              className="mt-4 w-full rounded-xl px-4 py-3 text-sm font-black text-white shadow transition hover:brightness-110"
+              onClick={() => clicar('anual')}
+              disabled={carregando !== null}
+              className="mt-4 w-full rounded-xl px-4 py-3 text-sm font-black text-white shadow transition hover:brightness-110 disabled:opacity-50"
               style={{ backgroundColor: corPrimaria }}
             >
-              Assinar anual
+              {carregando === 'anual' ? 'Processando…' : 'Assinar anual'}
             </button>
           </div>
         </div>

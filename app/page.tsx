@@ -339,21 +339,21 @@ const [validandoTelefoneObrigatorio, setValidandoTelefoneObrigatorio] = useState
     })();
     return () => { ativo = false; };
   }, [acessoLiberado, empresaId]);
-  const iniciarAssinatura = async (ciclo: 'mensal' | 'anual') => {
+  const iniciarAssinatura = async (ciclo: 'mensal' | 'anual'): Promise<string | null> => {
     try {
       const { data: sessao } = await supabase.auth.getSession();
       const token = sessao.session?.access_token;
-      if (!token || !empresaId) return;
+      if (!token || !empresaId) return 'Sessão não encontrada. Entre novamente.';
       const resp = await fetch('/api/cobranca/assinar', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify({ empresaId, plano: 'empresa', ciclo }),
       });
       const json = await resp.json();
-      if (resp.ok && json.invoiceUrl) { window.location.href = json.invoiceUrl; return; }
-      abrirAviso('Não foi possível iniciar a assinatura', json.mensagem || 'Tente novamente em instantes.', undefined, 'erro');
+      if (resp.ok && json.invoiceUrl) { window.location.href = json.invoiceUrl; return null; }
+      return json.mensagem || 'Não foi possível iniciar a assinatura. Tente novamente.';
     } catch {
-      abrirAviso('Erro', 'Não foi possível iniciar a assinatura agora.', undefined, 'erro');
+      return 'Não foi possível iniciar a assinatura agora.';
     }
   };
   const [saldoCardMesIdx, setSaldoCardMesIdx] = useState<number>(new Date().getMonth());
@@ -5599,7 +5599,7 @@ if (isTelaMobile) {
         corPrimaria={corPrimaria}
         nomePerfil={nomeEmpresaAtual}
         onAssinar={iniciarAssinatura}
-        onSair={confirmarLogout}
+        onSair={handleLogout}
       />
     );
   }
