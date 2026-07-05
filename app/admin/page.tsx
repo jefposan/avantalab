@@ -9,13 +9,32 @@ type Perfil = {
   id: string;
   nome: string;
   tipo_perfil: string;
-  assinatura: { status: string; plano: string | null; ciclo: string | null; valido_ate: string | null; trial_fim: string | null } | null;
+  status: string;
+  plano: string | null;
+  ciclo: string | null;
+  valido_ate: string | null;
+  trial_fim: string | null;
+  tem_acesso: boolean;
+  tem_registro: boolean;
 };
 
-function statusPerfilLabel(a: Perfil['assinatura']) {
-  if (!a) return 'Sem registro';
+function situacaoPerfil(p: Perfil): { rotulo: string; detalhe: string; cor: string } {
   const mapa: Record<string, string> = { trial: 'Trial', ativa: 'Ativa', expirada: 'Vencida', cancelada: 'Revogada', cortesia: 'Cortesia', inadimplente: 'Pendente' };
-  return mapa[a.status] || a.status;
+  const rotulo = mapa[p.status] || p.status;
+  let detalhe = '';
+  if (p.status === 'ativa' && p.plano) {
+    const plano = p.plano === 'pessoal_premium' ? 'Premium Pessoal' : 'Empresa';
+    const ciclo = p.ciclo === 'anual' ? 'Anual' : p.ciclo === 'mensal' ? 'Mensal' : '';
+    detalhe = ciclo ? `${plano} · ${ciclo}` : plano;
+  } else if (p.status === 'trial' && p.trial_fim) {
+    detalhe = `até ${formatDate(p.trial_fim)}`;
+  } else if (p.status === 'cortesia') {
+    detalhe = p.valido_ate ? `até ${formatDate(p.valido_ate)}` : 'sem prazo';
+  }
+  const cor = p.tem_acesso
+    ? (p.status === 'trial' ? 'border-amber-200 bg-amber-50 text-amber-800' : 'border-emerald-200 bg-emerald-50 text-emerald-700')
+    : 'border-red-200 bg-red-50 text-red-700';
+  return { rotulo, detalhe, cor };
 }
 type StatusFilter = 'ativos' | 'todos' | FeedbackStatus;
 
@@ -169,7 +188,7 @@ export default function AdminPage() {
       const data = await response.json().catch(() => null);
       if (!response.ok || data?.erro) throw new Error(data?.mensagem || 'Não foi possível executar.');
       setPerfis((current) => current.map((item) => item.id === perfil.id
-        ? { ...item, assinatura: { plano: null, ciclo: null, valido_ate: null, trial_fim: null, ...(item.assinatura || {}), status: data.status } }
+        ? { ...item, status: data.status, tem_acesso: acao === 'liberar', tem_registro: true, plano: null, ciclo: null, valido_ate: null, trial_fim: null }
         : item));
       setNotice(acao === 'revogar' ? 'Acesso revogado.' : 'Acesso liberado (cortesia).');
     } catch (requestError) {
@@ -518,12 +537,13 @@ export default function AdminPage() {
             </section>
             {perfis.length === 0 ? <div className="rounded-lg border border-dashed border-slate-300 bg-white px-4 py-10 text-center text-sm text-slate-500">Nenhum perfil na busca. Digite um nome (ou deixe vazio) e clique em Buscar.</div> : <div className="grid gap-2">{perfis.map((perfil) => {
               const busy = workingId === perfil.id;
-              const status = perfil.assinatura?.status;
-              const bloqueado = status === 'cancelada' || status === 'expirada' || status === 'inadimplente';
-              const cor = !perfil.assinatura ? 'border-slate-200 bg-slate-100 text-slate-500' : bloqueado ? 'border-red-200 bg-red-50 text-red-700' : status === 'trial' ? 'border-amber-200 bg-amber-50 text-amber-800' : 'border-emerald-200 bg-emerald-50 text-emerald-700';
+              const s = situacaoPerfil(perfil);
               return <article key={perfil.id} className="flex flex-col gap-2 rounded-lg border border-slate-200 bg-white p-3 shadow-sm sm:flex-row sm:items-center sm:justify-between">
-                <div className="min-w-0"><div className="flex flex-wrap items-center gap-1.5"><h3 className="truncate text-sm font-black text-slate-950">{perfil.nome}</h3><span className="rounded-full border border-slate-200 bg-slate-50 px-2 py-0.5 text-[9px] font-black uppercase text-slate-500">{perfil.tipo_perfil}</span><span className={`rounded-full border px-2 py-0.5 text-[9px] font-black uppercase ${cor}`}>{statusPerfilLabel(perfil.assinatura)}</span></div></div>
-                <div className="flex shrink-0 gap-2"><button type="button" onClick={() => void acaoPerfil(perfil, 'liberar')} disabled={busy} className="rounded-md border border-emerald-200 px-3 py-2 text-[10px] font-black uppercase text-emerald-700 hover:bg-emerald-50 disabled:opacity-50">Liberar</button><button type="button" onClick={() => void acaoPerfil(perfil, 'revogar')} disabled={busy} className="rounded-md border border-red-200 px-3 py-2 text-[10px] font-black uppercase text-red-700 hover:bg-red-50 disabled:opacity-50">Revogar</button></div>
+                <div className="min-w-0"><div className="flex flex-wrap items-center gap-1.5"><h3 className="truncate text-sm font-black text-slate-950">{perfil.nome}</h3><span className="rounded-full border border-slate-200 bg-slate-50 px-2 py-0.5 text-[9px] font-black uppercase text-slate-500">{perfil.tipo_perfil}</span><span className={`rounded-full border px-2 py-0.5 text-[9px] font-black uppercase ${s.cor}`}>{s.rotulo}{s.detalhe ? ` · ${s.detalhe}` : ''}</span></div></div>
+                <div className="flex shrink-0 gap-2">{perfil.tem_acesso
+                  ? <button type="button" onClick={() => void acaoPerfil(perfil, 'revogar')} disabled={busy} className="rounded-md border border-red-200 px-3 py-2 text-[10px] font-black uppercase text-red-700 hover:bg-red-50 disabled:opacity-50">Revogar acesso</button>
+                  : <button type="button" onClick={() => void acaoPerfil(perfil, 'liberar')} disabled={busy} className="rounded-md border border-emerald-200 px-3 py-2 text-[10px] font-black uppercase text-emerald-700 hover:bg-emerald-50 disabled:opacity-50">Liberar acesso</button>}
+                </div>
               </article>;
             })}</div>}
           </div>}

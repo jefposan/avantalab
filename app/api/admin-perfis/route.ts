@@ -1,35 +1,64 @@
 import { NextResponse } from 'next/server';
 import { exigirAdmin } from '../../lib/admin-server';
+import { DATA_LANCAMENTO, TRIAL_DIAS, assinaturaVigente, type EstadoAcesso, type TipoPerfil, type StatusAssinatura } from '../../lib/cobranca';
 
 function naoAutorizado() {
   return NextResponse.json({ erro: true, mensagem: 'Acesso não autorizado.' }, { status: 401 });
 }
 
-// Busca perfis (empresas/pessoais) por nome, com a situação da assinatura.
+type AssinaturaRow = { empresa_id: string; status: string; plano: string | null; ciclo: string | null; valido_ate: string | null; trial_fim: string | null };
+
+// Reproduz a lógica do resolver para o admin ver a situação real de cada perfil.
+function estadoDoPerfil(tipoPerfil: TipoPerfil, criadoEmISO: string | null, row: AssinaturaRow | undefined): EstadoAcesso & { plano: string | null; ciclo: string | null } {
+  if (row) {
+    return { tipoPerfil, status: row.status as StatusAssinatura, validoAte: row.valido_ate, trialFim: row.trial_fim, plano: row.plano, ciclo: row.ciclo };
+  }
+  const criadoEm = criadoEmISO ? new Date(criadoEmISO) : null;
+  const anteriorAoLancamento = !criadoEm || criadoEm < new Date(DATA_LANCAMENTO);
+  if (anteriorAoLancamento) return { tipoPerfil, status: 'ativa', validoAte: null, trialFim: null, plano: null, ciclo: null };
+  if (tipoPerfil === 'empresa') {
+    const fim = new Date(criadoEm as Date);
+    fim.setDate(fim.getDate() + TRIAL_DIAS);
+    return { tipoPerfil, status: 'trial', validoAte: null, trialFim: fim.toISOString(), plano: null, ciclo: null };
+  }
+  return { tipoPerfil, status: 'expirada', validoAte: null, trialFim: null, plano: null, ciclo: null };
+}
+
+// Busca perfis por nome, com a situação REAL da assinatura.
 export async function GET(request: Request) {
   try {
     const { autorizado, db } = await exigirAdmin(request);
     if (!autorizado) return naoAutorizado();
 
     const q = (new URL(request.url).searchParams.get('q') || '').trim();
-    let query = db.from('empresas').select('id, nome, tipo_perfil').order('nome', { ascending: true }).limit(50);
+    let query = db.from('empresas').select('id, nome, tipo_perfil, created_at').order('nome', { ascending: true }).limit(50);
     if (q) query = query.ilike('nome', `%${q}%`);
 
     const { data: empresas, error } = await query;
     if (error) throw error;
 
     const ids = (empresas || []).map((e) => e.id);
-    const assinaturas = ids.length
+    const assinaturas: AssinaturaRow[] = ids.length
       ? (await db.from('assinaturas').select('empresa_id, status, plano, ciclo, valido_ate, trial_fim').in('empresa_id', ids)).data || []
       : [];
     const mapa = new Map(assinaturas.map((a) => [a.empresa_id, a]));
 
-    const perfis = (empresas || []).map((e) => ({
-      id: e.id,
-      nome: e.nome,
-      tipo_perfil: e.tipo_perfil,
-      assinatura: mapa.get(e.id) || null,
-    }));
+    const perfis = (empresas || []).map((e) => {
+      const tipoPerfil: TipoPerfil = e.tipo_perfil === 'pessoal' ? 'pessoal' : 'empresa';
+      const estado = estadoDoPerfil(tipoPerfil, e.created_at, mapa.get(e.id));
+      return {
+        id: e.id,
+        nome: e.nome,
+        tipo_perfil: tipoPerfil,
+        status: estado.status,
+        plano: estado.plano,
+        ciclo: estado.ciclo,
+        valido_ate: estado.validoAte,
+        trial_fim: estado.trialFim,
+        tem_acesso: assinaturaVigente(estado),
+        tem_registro: Boolean(mapa.get(e.id)),
+      };
+    });
     return NextResponse.json({ erro: false, perfis });
   } catch (error) {
     console.error('Erro ao buscar perfis:', error);
@@ -56,7 +85,7 @@ export async function PATCH(request: Request) {
       empresa_id: empresaId,
       tipo_perfil: tipoPerfil,
       status,
-      valido_ate: null, // revogar: bloqueado; liberar: cortesia sem prazo
+      valido_ate: null,
       atualizado_em: new Date().toISOString(),
     };
 
