@@ -23,6 +23,7 @@ import TourPrimeiroAcesso from './components/TourPrimeiroAcesso';
 import PaywallEmpresa from './components/PaywallEmpresa';
 import AssinaturaModal from './components/AssinaturaModal';
 import { COBRANCA_ATIVA, precisaPaywallEmpresa, type EstadoAcesso } from './lib/cobranca';
+import { PAISES } from './lib/paises';
 import {
   formatarMoeda,
   formatarDescricao,
@@ -260,6 +261,7 @@ export default function AppGestao() {
     cadastroConfirmarSenha, setCadastroConfirmarSenha,
     cadastroCupom, setCadastroCupom,
     aceitouTermos, setAceitouTermos,
+    cadastroDdi, setCadastroDdi,
     codigoSmsCadastro, setCodigoSmsCadastro,
     smsCadastroEnviado, setSmsCadastroEnviado,
     telefoneSmsCadastroConfirmado, setTelefoneSmsCadastroConfirmado,
@@ -316,6 +318,7 @@ const [ajudaCategoriasAberta, setAjudaCategoriasAberta] = useState(false);
 const [validacaoTelefoneObrigatoria, setValidacaoTelefoneObrigatoria] = useState(false);
 const [empresaAguardandoTelefone, setEmpresaAguardandoTelefone] = useState<any | null>(null);
 const [telefoneObrigatorio, setTelefoneObrigatorio] = useState('');
+const [ddiTelefoneObrigatorio, setDdiTelefoneObrigatorio] = useState('55');
 const [codigoSmsTelefoneObrigatorio, setCodigoSmsTelefoneObrigatorio] = useState('');
 const [smsTelefoneObrigatorioEnviado, setSmsTelefoneObrigatorioEnviado] = useState(false);
 const [telefoneObrigatorioConfirmado, setTelefoneObrigatorioConfirmado] = useState('');
@@ -4741,14 +4744,17 @@ const enviarCodigoTelefoneObrigatorio = async () => {
   if (validandoTelefoneObrigatorio) return;
 
   const telefoneLimpo = telefoneObrigatorio.replace(/\D/g, '');
+  const ddiObrig = (ddiTelefoneObrigatorio || '55').replace(/\D/g, '') || '55';
+  const telefoneObrigE164 = `+${ddiObrig}${telefoneLimpo}`;
+  const ehBrasilObrig = ddiObrig === '55';
 
   if (!telefoneLimpo) {
     setAuthErro('Informe seu número de celular.');
     return;
   }
 
-  if (telefoneLimpo.length < 10 || telefoneLimpo.length > 13) {
-    setAuthErro('Informe um celular válido com DDD.');
+  if (ehBrasilObrig ? (telefoneLimpo.length < 10 || telefoneLimpo.length > 11) : (telefoneLimpo.length < 6 || telefoneLimpo.length > 15)) {
+    setAuthErro(ehBrasilObrig ? 'Informe um celular válido com DDD.' : 'Informe um número de celular válido para o país selecionado.');
     return;
   }
 
@@ -4762,7 +4768,7 @@ const enviarCodigoTelefoneObrigatorio = async () => {
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      telefone: telefoneLimpo,
+      telefone: telefoneObrigE164,
     }),
   });
 
@@ -4786,14 +4792,17 @@ const reenviarCodigoTelefoneObrigatorio = async () => {
   if (reenviandoTelefoneObrigatorio || segundosReenvioTelefoneObrigatorio > 0) return;
 
   const telefoneLimpo = telefoneObrigatorio.replace(/\D/g, '');
+  const ddiObrig = (ddiTelefoneObrigatorio || '55').replace(/\D/g, '') || '55';
+  const telefoneObrigE164 = `+${ddiObrig}${telefoneLimpo}`;
+  const ehBrasilObrig = ddiObrig === '55';
 
   if (!telefoneLimpo) {
     setAuthErro('Informe seu número de celular.');
     return;
   }
 
-  if (telefoneLimpo.length < 10 || telefoneLimpo.length > 13) {
-    setAuthErro('Informe um celular válido com DDD.');
+  if (ehBrasilObrig ? (telefoneLimpo.length < 10 || telefoneLimpo.length > 11) : (telefoneLimpo.length < 6 || telefoneLimpo.length > 15)) {
+    setAuthErro(ehBrasilObrig ? 'Informe um celular válido com DDD.' : 'Informe um número de celular válido para o país selecionado.');
     return;
   }
 
@@ -4807,7 +4816,7 @@ const reenviarCodigoTelefoneObrigatorio = async () => {
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      telefone: telefoneLimpo,
+      telefone: telefoneObrigE164,
     }),
   });
 
@@ -4834,14 +4843,17 @@ const confirmarTelefoneObrigatorio = async () => {
   }
 
   const telefoneLimpo = telefoneObrigatorio.replace(/\D/g, '');
+  const ddiObrig = (ddiTelefoneObrigatorio || '55').replace(/\D/g, '') || '55';
+  const telefoneObrigE164 = `+${ddiObrig}${telefoneLimpo}`;
+  const ehBrasilObrig = ddiObrig === '55';
 
   if (!telefoneLimpo) {
     setAuthErro('Informe seu número de celular.');
     return;
   }
 
-  if (telefoneLimpo.length < 10 || telefoneLimpo.length > 13) {
-    setAuthErro('Informe um celular válido com DDD.');
+  if (ehBrasilObrig ? (telefoneLimpo.length < 10 || telefoneLimpo.length > 11) : (telefoneLimpo.length < 6 || telefoneLimpo.length > 15)) {
+    setAuthErro(ehBrasilObrig ? 'Informe um celular válido com DDD.' : 'Informe um número de celular válido para o país selecionado.');
     return;
   }
 
@@ -4875,7 +4887,7 @@ const confirmarTelefoneObrigatorio = async () => {
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      telefone: telefoneLimpo,
+      telefone: telefoneObrigE164,
       codigo: codigoSmsTelefoneObrigatorio.trim(),
     }),
   });
@@ -5447,19 +5459,36 @@ if (validacaoTelefoneObrigatoria) {
               Celular com DDD
             </label>
 
-            <input
-              type="tel"
-              inputMode="tel"
-              value={telefoneObrigatorio}
-              onChange={(e) => {
-                setTelefoneObrigatorio(e.target.value);
-                setSmsTelefoneObrigatorioEnviado(false);
-                setCodigoSmsTelefoneObrigatorio('');
-                setTelefoneObrigatorioConfirmado('');
-              }}
-              placeholder="Ex: 11 99999-9999"
-              className="w-full rounded-xl border border-slate-300 bg-white/90 px-4 py-2.5 text-slate-800 outline-none transition focus:border-sky-600 focus:ring-2 focus:ring-sky-600/20"
-            />
+            <div className="flex gap-2">
+              <select
+                value={ddiTelefoneObrigatorio}
+                onChange={(e) => {
+                  setDdiTelefoneObrigatorio(e.target.value);
+                  setSmsTelefoneObrigatorioEnviado(false);
+                  setCodigoSmsTelefoneObrigatorio('');
+                  setTelefoneObrigatorioConfirmado('');
+                }}
+                aria-label="País (DDI)"
+                className="w-28 shrink-0 rounded-xl border border-slate-300 bg-white/90 px-2 py-2.5 text-slate-800 outline-none transition focus:border-sky-600 focus:ring-2 focus:ring-sky-600/20"
+              >
+                {PAISES.map((p) => (
+                  <option key={`${p.ddi}-${p.nome}`} value={p.ddi}>{p.flag} +{p.ddi}</option>
+                ))}
+              </select>
+              <input
+                type="tel"
+                inputMode="tel"
+                value={telefoneObrigatorio}
+                onChange={(e) => {
+                  setTelefoneObrigatorio(e.target.value);
+                  setSmsTelefoneObrigatorioEnviado(false);
+                  setCodigoSmsTelefoneObrigatorio('');
+                  setTelefoneObrigatorioConfirmado('');
+                }}
+                placeholder="Ex: 11 99999-9999"
+                className="w-full min-w-0 rounded-xl border border-slate-300 bg-white/90 px-4 py-2.5 text-slate-800 outline-none transition focus:border-sky-600 focus:ring-2 focus:ring-sky-600/20"
+              />
+            </div>
             <p className="mt-2 text-xs leading-relaxed text-slate-500">
   Digite apenas um celular com DDD. O código será enviado por SMS.
 </p>
@@ -5596,6 +5625,8 @@ if (isTelaMobile) {
         setAceitouTermos={setAceitouTermos}
         onAbrirTermos={() => setModalTermos(true)}
         onAbrirPrivacidade={() => setModalPrivacidade(true)}
+        cadastroDdi={cadastroDdi}
+        setCadastroDdi={setCadastroDdi}
         codigoSmsCadastro={codigoSmsCadastro}
         setCodigoSmsCadastro={setCodigoSmsCadastro}
         smsCadastroEnviado={smsCadastroEnviado}

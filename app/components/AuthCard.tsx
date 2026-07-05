@@ -1,6 +1,7 @@
 'use client';
 import React from 'react';
 import { normalizarTipoPerfil, rotuloTipoPerfil, type TipoPerfil } from '../lib/perfis';
+import { PAISES } from '../lib/paises';
 import DraggableModalCard from './DraggableModalCard';
 
 interface AuthCardProps {
@@ -67,6 +68,8 @@ interface AuthCardProps {
   setAceitouTermos: React.Dispatch<React.SetStateAction<boolean>>;
   onAbrirTermos: () => void;
   onAbrirPrivacidade: () => void;
+  cadastroDdi: string;
+  setCadastroDdi: React.Dispatch<React.SetStateAction<string>>;
 
   // Auth handlers
   handleLogin: () => Promise<void>;
@@ -106,6 +109,7 @@ export default function AuthCard({
   tipoPerfilInicial, setTipoPerfilInicial,
   aceitouTermos, setAceitouTermos,
   onAbrirTermos, onAbrirPrivacidade,
+  cadastroDdi, setCadastroDdi,
   handleLogin, handleCadastroTeste, handleGoogleLogin,
   handleRecuperarSenha, handleAtualizarSenha,
   reenviarCodigoSmsCadastro, reenviarCodigoRedefinirSenha,
@@ -612,14 +616,26 @@ export default function AuthCard({
   className="w-full rounded-xl border border-slate-300 bg-white/90 px-3 py-2 text-sm text-slate-800 outline-none transition focus:border-sky-600 focus:ring-2 focus:ring-sky-600/20"
 />
 
-                <input
-  type="tel"
-  autoComplete="off"
-  placeholder="Celular (DDD + número)"
-  value={cadastroTelefone}
-  onChange={(e) => setCadastroTelefone(e.target.value)}
-  className="w-full rounded-xl border border-slate-300 bg-white/90 px-3 py-2 text-sm text-slate-800 outline-none transition focus:border-sky-600 focus:ring-2 focus:ring-sky-600/20"
-/>
+                <div className="flex gap-2">
+  <select
+    value={cadastroDdi}
+    onChange={(e) => setCadastroDdi(e.target.value)}
+    aria-label="País (DDI)"
+    className="w-28 shrink-0 rounded-xl border border-slate-300 bg-white/90 px-2 py-2 text-sm text-slate-800 outline-none transition focus:border-sky-600 focus:ring-2 focus:ring-sky-600/20"
+  >
+    {PAISES.map((p) => (
+      <option key={`${p.ddi}-${p.nome}`} value={p.ddi}>{p.flag} +{p.ddi}</option>
+    ))}
+  </select>
+  <input
+    type="tel"
+    autoComplete="off"
+    placeholder="Celular (DDD + número)"
+    value={cadastroTelefone}
+    onChange={(e) => setCadastroTelefone(e.target.value)}
+    className="w-full min-w-0 rounded-xl border border-slate-300 bg-white/90 px-3 py-2 text-sm text-slate-800 outline-none transition focus:border-sky-600 focus:ring-2 focus:ring-sky-600/20"
+  />
+</div>
 
                 <div className="relative">
     <input

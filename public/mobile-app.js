@@ -111,6 +111,7 @@
     smsCadastroEnviado: false,
     aceitouTermos: false,
     aceiteTermosEm: null,
+    cadastroDdi: '55',
     mostrarSenhaLogin: false,
     mostrarNovaSenha: false,
     mostrarConfirmarSenha: false,
@@ -120,6 +121,7 @@
     telefoneCadastroConfirmado: '',
     validacaoTelefoneObrigatoria: false,
     telefoneObrigatorio: '',
+    ddiTelefoneObrigatorio: '55',
     telefoneObrigatorioConfirmado: '',
     codigoTelefoneObrigatorio: '',
     smsTelefoneObrigatorioEnviado: false,
@@ -1484,6 +1486,33 @@
         render();
       }
     }, 1600);
+  }
+
+  // Lista curada de países + DDI (espelho de app/lib/paises.ts).
+  var PAISES_MOBILE = [
+    ['Brasil','55','🇧🇷'],['Portugal','351','🇵🇹'],['Estados Unidos / Canadá','1','🇺🇸'],
+    ['Argentina','54','🇦🇷'],['Uruguai','598','🇺🇾'],['Paraguai','595','🇵🇾'],['Chile','56','🇨🇱'],
+    ['Bolívia','591','🇧🇴'],['Peru','51','🇵🇪'],['Colômbia','57','🇨🇴'],['Equador','593','🇪🇨'],
+    ['Venezuela','58','🇻🇪'],['México','52','🇲🇽'],['Panamá','507','🇵🇦'],['Costa Rica','506','🇨🇷'],
+    ['Guatemala','502','🇬🇹'],['Honduras','504','🇭🇳'],['El Salvador','503','🇸🇻'],['Nicarágua','505','🇳🇮'],
+    ['Cuba','53','🇨🇺'],['Angola','244','🇦🇴'],['Moçambique','258','🇲🇿'],['Cabo Verde','238','🇨🇻'],
+    ['Espanha','34','🇪🇸'],['França','33','🇫🇷'],['Itália','39','🇮🇹'],['Alemanha','49','🇩🇪'],
+    ['Reino Unido','44','🇬🇧'],['Irlanda','353','🇮🇪'],['Países Baixos','31','🇳🇱'],['Bélgica','32','🇧🇪'],
+    ['Suíça','41','🇨🇭'],['Áustria','43','🇦🇹'],['Suécia','46','🇸🇪'],['Noruega','47','🇳🇴'],
+    ['Dinamarca','45','🇩🇰'],['Finlândia','358','🇫🇮'],['Polônia','48','🇵🇱'],['Rússia','7','🇷🇺'],
+    ['Ucrânia','380','🇺🇦'],['Grécia','30','🇬🇷'],['Turquia','90','🇹🇷'],['Israel','972','🇮🇱'],
+    ['Emirados Árabes Unidos','971','🇦🇪'],['Arábia Saudita','966','🇸🇦'],['Catar','974','🇶🇦'],
+    ['Índia','91','🇮🇳'],['China','86','🇨🇳'],['Japão','81','🇯🇵'],['Coreia do Sul','82','🇰🇷'],
+    ['Singapura','65','🇸🇬'],['Malásia','60','🇲🇾'],['Tailândia','66','🇹🇭'],['Indonésia','62','🇮🇩'],
+    ['Filipinas','63','🇵🇭'],['Vietnã','84','🇻🇳'],['Austrália','61','🇦🇺'],['Nova Zelândia','64','🇳🇿'],
+    ['África do Sul','27','🇿🇦'],['Nigéria','234','🇳🇬'],['Egito','20','🇪🇬'],['Marrocos','212','🇲🇦']
+  ];
+
+  function opcoesDdiHtml(selecionado) {
+    var sel = selecionado || '55';
+    return PAISES_MOBILE.map(function (p) {
+      return '<option value="' + p[1] + '"' + (p[1] === sel ? ' selected' : '') + '>' + p[2] + ' +' + p[1] + '</option>';
+    }).join('');
   }
 
   function campo(id) {
@@ -3237,7 +3266,15 @@
       senha: campo('cadastro-senha'),
       confirmarSenha: campo('cadastro-confirmar-senha'),
     };
+    var ddiEl = document.getElementById('cadastro-ddi');
+    if (ddiEl && ddiEl.value) state.cadastroDdi = ddiEl.value.replace(/\D/g, '');
     // preserva o tipo selecionado (já está em state.cadastroTipoPerfil via botão)
+  }
+
+  // Número do cadastro no formato internacional E.164 (+DDI + nacional).
+  function telefoneCadastroE164() {
+    var ddi = (state.cadastroDdi || '55').replace(/\D/g, '') || '55';
+    return '+' + ddi + (state.cadastro.telefone || '');
   }
 
   async function enviarCodigoCadastro() {
@@ -3265,7 +3302,7 @@
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        telefone: state.cadastro.telefone,
+        telefone: telefoneCadastroE164(),
       }),
     });
 
@@ -3312,7 +3349,7 @@
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        telefone: state.cadastro.telefone,
+        telefone: telefoneCadastroE164(),
         codigo: codigo,
       }),
     });
@@ -3331,7 +3368,7 @@
       options: {
         data: {
           nome: state.cadastro.nome,
-          telefone: state.cadastro.telefone,
+          telefone: telefoneCadastroE164(),
           // Prova de consentimento (LGPD): versão e data/hora do aceite.
           aceite_termos_versao: (window.__TERMOS_VERSAO || '2026-07-05'),
           aceite_termos_em: state.aceiteTermosEm || new Date().toISOString(),
@@ -3351,6 +3388,7 @@
     state.smsCadastroEnviado = false;
     state.aceitouTermos = false;
     state.aceiteTermosEm = null;
+    state.cadastroDdi = '55';
     state.telefoneCadastroConfirmado = '';
     // criarPerfilTipo guarda a escolha para usar na criação do primeiro perfil
     state.criarPerfilTipo = normalizarTipoPerfil(state.cadastroTipoPerfil);
@@ -3498,9 +3536,13 @@
     if (state.validandoTelefoneObrigatorio) return;
 
     var telefone = campo('telefone-obrigatorio').replace(/\D/g, '');
+    var ddiO = (campo('ddi-telefone-obrigatorio') || state.ddiTelefoneObrigatorio || '55').replace(/\D/g, '') || '55';
+    state.ddiTelefoneObrigatorio = ddiO;
+    var telE164 = '+' + ddiO + telefone;
+    var ehBrO = ddiO === '55';
 
-    if (!telefone || telefone.length < 10 || telefone.length > 13) {
-      setErro('Informe um celular valido com DDD.');
+    if (!telefone || (ehBrO ? (telefone.length < 10 || telefone.length > 11) : (telefone.length < 6 || telefone.length > 15))) {
+      setErro(ehBrO ? 'Informe um celular valido com DDD.' : 'Informe um numero de celular valido para o pais selecionado.');
       return;
     }
 
@@ -3515,7 +3557,7 @@
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        telefone: telefone,
+        telefone: telE164,
       }),
     });
 
@@ -3539,9 +3581,13 @@
 
     var telefone = campo('telefone-obrigatorio').replace(/\D/g, '');
     var codigo = campo('codigo-telefone-obrigatorio').trim();
+    var ddiO = (campo('ddi-telefone-obrigatorio') || state.ddiTelefoneObrigatorio || '55').replace(/\D/g, '') || '55';
+    state.ddiTelefoneObrigatorio = ddiO;
+    var telE164 = '+' + ddiO + telefone;
+    var ehBrO = ddiO === '55';
 
-    if (!telefone || telefone.length < 10 || telefone.length > 13) {
-      setErro('Informe um celular valido com DDD.');
+    if (!telefone || (ehBrO ? (telefone.length < 10 || telefone.length > 11) : (telefone.length < 6 || telefone.length > 15))) {
+      setErro(ehBrO ? 'Informe um celular valido com DDD.' : 'Informe um numero de celular valido para o pais selecionado.');
       return;
     }
 
@@ -3572,7 +3618,7 @@
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        telefone: telefone,
+        telefone: telE164,
         codigo: codigo,
       }),
     });
@@ -3614,6 +3660,7 @@
     });
     state.validacaoTelefoneObrigatoria = false;
     state.telefoneObrigatorio = '';
+    state.ddiTelefoneObrigatorio = '55';
     state.telefoneObrigatorioConfirmado = '';
     state.codigoTelefoneObrigatorio = '';
     state.smsTelefoneObrigatorioEnviado = false;
@@ -3632,8 +3679,10 @@
       return false;
     }
 
-    if (!state.cadastro.telefone || state.cadastro.telefone.length < 10 || state.cadastro.telefone.length > 13) {
-      setErro('Informe um celular valido com DDD.');
+    var ehBrasilCad = (state.cadastroDdi || '55').replace(/\D/g, '') === '55';
+    var lenTel = (state.cadastro.telefone || '').length;
+    if (ehBrasilCad ? (lenTel < 10 || lenTel > 11) : (lenTel < 6 || lenTel > 15)) {
+      setErro(ehBrasilCad ? 'Informe um celular valido com DDD.' : 'Informe um numero de celular valido para o pais selecionado.');
       return false;
     }
 
@@ -5157,7 +5206,10 @@
           seletorTipoPerfilHtml('cadastro-tipo', tipoCadastro) +
         '</div>' +
         inputHtml('cadastro-email', 'Email', 'email', 'seuemail@exemplo.com', state.cadastro.email) +
-        inputHtml('cadastro-telefone', 'Celular', 'tel', 'DDD + numero. Ex: 11999999999', state.cadastro.telefone) +
+        '<div class="grid grid-cols-[7rem_1fr] gap-2">' +
+          '<div><p class="mb-1 text-[10px] font-black uppercase tracking-wide text-slate-600">País</p><select id="cadastro-ddi" class="h-[38px] w-full rounded-xl border border-slate-300 bg-white/90 px-2 text-sm text-slate-800 outline-none">' + opcoesDdiHtml(state.cadastroDdi) + '</select></div>' +
+          '<div>' + inputHtml('cadastro-telefone', 'Celular', 'tel', 'DDD + numero. Ex: 11999999999', state.cadastro.telefone) + '</div>' +
+        '</div>' +
         senhaInputHtml('cadastro-senha', 'Senha', 'Crie uma senha', 'mostrarSenhaCadastro', 'toggle-senha-cadastro', state.cadastro.senha) +
         senhaInputHtml('cadastro-confirmar-senha', 'Confirmar senha', 'Repita a senha', 'mostrarConfirmarSenhaCadastro', 'toggle-confirmar-cadastro', state.cadastro.confirmarSenha) +
         (state.smsCadastroEnviado ? inputHtml('cadastro-codigo', 'Codigo recebido por SMS', 'text', 'Digite o codigo recebido') + '<p class="-mt-1 text-[11px] font-semibold text-slate-500">Enviamos o codigo para o celular informado.</p>' : '') +
@@ -5207,7 +5259,10 @@
             '<p class="mt-1 text-xs leading-snug text-slate-600">Para manter seu acesso seguro, confirme um celular com DDD por SMS.</p>' +
           '</div>' +
           '<div class="grid gap-1">' +
-            inputHtml('telefone-obrigatorio', 'Celular', 'tel', 'DDD + numero. Ex: 11999999999', state.telefoneObrigatorio) +
+            '<div class="grid grid-cols-[7rem_1fr] gap-2">' +
+              '<div><p class="mb-1 text-[10px] font-black uppercase tracking-wide text-slate-600">País</p><select id="ddi-telefone-obrigatorio" class="h-[38px] w-full rounded-xl border border-slate-300 bg-white/90 px-2 text-sm text-slate-800 outline-none">' + opcoesDdiHtml(state.ddiTelefoneObrigatorio) + '</select></div>' +
+              '<div>' + inputHtml('telefone-obrigatorio', 'Celular', 'tel', 'DDD + numero. Ex: 11999999999', state.telefoneObrigatorio) + '</div>' +
+            '</div>' +
             (state.smsTelefoneObrigatorioEnviado
               ? inputHtml('codigo-telefone-obrigatorio', 'Codigo recebido por SMS', 'text', 'Digite o codigo recebido', state.codigoTelefoneObrigatorio) +
                 '<p class="-mt-1 text-[11px] font-semibold text-slate-500">Enviamos o codigo para o celular informado.</p>'
@@ -8021,6 +8076,7 @@
 
     bind('confirmar-telefone-obrigatorio', confirmarTelefoneObrigatorioMobile);
     bind('reenviar-telefone-obrigatorio', enviarCodigoTelefoneObrigatorioMobile);
+    bindChange('ddi-telefone-obrigatorio', function (e) { state.ddiTelefoneObrigatorio = (e.target && e.target.value ? e.target.value : '55').replace(/\D/g, ''); });
     bind('sair-telefone-obrigatorio', sair);
 
     bind('entrar', entrar);
@@ -8082,6 +8138,7 @@
     });
     bind('reenviar-cadastro', enviarCodigoCadastro);
     bindChange('cadastro-aceite', function (e) { state.aceitouTermos = !!(e.target && e.target.checked); });
+    bindChange('cadastro-ddi', function (e) { state.cadastroDdi = (e.target && e.target.value ? e.target.value : '55').replace(/\D/g, ''); });
     bind('cadastro-termos-link', function () {
       lerCadastroDaTela();
       var chk = document.getElementById('cadastro-aceite');

@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { formatarE164 } from '../../../lib/telefone';
 
 export async function POST(request: Request) {
   try {
@@ -22,11 +23,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const telefoneLimpo = String(telefone).replace(/\D/g, '');
-
-    const telefoneFormatado = telefoneLimpo.startsWith('55')
-      ? `+${telefoneLimpo}`
-      : `+55${telefoneLimpo}`;
+    const telefoneFormatado = formatarE164(String(telefone));
 
     const resposta = await fetch(
       `https://verify.twilio.com/v2/Services/${verifyServiceSid}/Verifications`,

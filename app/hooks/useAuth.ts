@@ -12,6 +12,7 @@ import {
 } from '../lib/database';
 import { normalizarTipoPerfil, type TipoPerfil } from '../lib/perfis';
 import { TERMOS_VERSAO } from '../lib/legal';
+import { DDI_PADRAO } from '../lib/paises';
 import type { AbrirAvisoFn } from './useUI';
 
 // ---------------------------------------------------------------------------
@@ -64,6 +65,8 @@ export function useAuth(deps: UseAuthDeps) {
   const [cadastroConfirmarSenha, setCadastroConfirmarSenha] = useState('');
   // Aceite obrigatório dos Termos/Privacidade no cadastro.
   const [aceitouTermos, setAceitouTermos] = useState(false);
+  // DDI (código do país) do celular do cadastro. Padrão: Brasil.
+  const [cadastroDdi, setCadastroDdi] = useState(DDI_PADRAO);
 
   // --- Estados de SMS cadastro ---
   const [codigoSmsCadastro, setCodigoSmsCadastro] = useState('');
@@ -375,6 +378,10 @@ export function useAuth(deps: UseAuthDeps) {
     const nomeLimpo = cadastroNome.trim();
     const emailLimpo = cadastroEmail.trim().toLowerCase();
     const telefoneLimpo = cadastroTelefone.replace(/\D/g, '');
+    const ddiLimpo = cadastroDdi.replace(/\D/g, '') || DDI_PADRAO;
+    // Número no formato internacional E.164 (+DDI + número nacional).
+    const telefoneCompleto = `+${ddiLimpo}${telefoneLimpo}`;
+    const ehBrasil = ddiLimpo === '55';
 
     if (!nomeLimpo) { setAuthErro('Informe seu nome completo.'); setAuthLoading(false); return; }
     if (!emailLimpo) { setAuthErro('Informe seu email.'); setAuthLoading(false); return; }
@@ -382,8 +389,9 @@ export function useAuth(deps: UseAuthDeps) {
       setAuthErro('Informe um email válido.'); setAuthLoading(false); return;
     }
     if (!telefoneLimpo) { setAuthErro('Informe seu número de celular.'); setAuthLoading(false); return; }
-    if (telefoneLimpo.length < 10 || telefoneLimpo.length > 13) {
-      setAuthErro('Informe um celular válido com DDD.'); setAuthLoading(false); return;
+    if (ehBrasil ? (telefoneLimpo.length < 10 || telefoneLimpo.length > 11) : (telefoneLimpo.length < 6 || telefoneLimpo.length > 15)) {
+      setAuthErro(ehBrasil ? 'Informe um celular válido com DDD.' : 'Informe um número de celular válido para o país selecionado.');
+      setAuthLoading(false); return;
     }
     if (!cadastroSenha) { setAuthErro('Crie uma senha.'); setAuthLoading(false); return; }
     if (cadastroSenha.length < 8) {
@@ -402,7 +410,7 @@ export function useAuth(deps: UseAuthDeps) {
       const respostaSms = await fetch('/api/sms/enviar-codigo', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ telefone: telefoneLimpo }),
+        body: JSON.stringify({ telefone: telefoneCompleto }),
       });
 
       const resultadoSms = await lerRespostaApi(respostaSms);
@@ -443,7 +451,7 @@ export function useAuth(deps: UseAuthDeps) {
     const respostaVerificacaoSms = await fetch('/api/sms/verificar-codigo', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ telefone: telefoneLimpo, codigo: codigoSmsCadastro.trim() }),
+      body: JSON.stringify({ telefone: telefoneCompleto, codigo: codigoSmsCadastro.trim() }),
     });
 
     const resultadoVerificacaoSms = await lerRespostaApi(respostaVerificacaoSms);
@@ -460,7 +468,7 @@ export function useAuth(deps: UseAuthDeps) {
       options: {
         data: {
           nome: nomeLimpo,
-          telefone: telefoneLimpo,
+          telefone: telefoneCompleto,
           // Prova de consentimento (LGPD): versão e data/hora do aceite.
           aceite_termos_versao: TERMOS_VERSAO,
           aceite_termos_em: new Date().toISOString(),
@@ -495,6 +503,7 @@ export function useAuth(deps: UseAuthDeps) {
     setSegundosReenvioSms(0);
     setReenviandoSmsCadastro(false);
     setAceitouTermos(false);
+    setCadastroDdi(DDI_PADRAO);
     setModoAuth('login');
   };
 
@@ -773,6 +782,7 @@ export function useAuth(deps: UseAuthDeps) {
     cadastroConfirmarSenha, setCadastroConfirmarSenha,
     cadastroCupom, setCadastroCupom,
     aceitouTermos, setAceitouTermos,
+    cadastroDdi, setCadastroDdi,
 
     // SMS cadastro
     codigoSmsCadastro, setCodigoSmsCadastro,
