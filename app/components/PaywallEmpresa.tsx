@@ -103,20 +103,20 @@ export default function PaywallEmpresa({ nomePerfil, onAssinar, onResgatarCupom,
 
       <section className="relative z-10 flex min-h-screen items-start px-4 pb-6 pt-8 lg:items-center lg:px-20 lg:py-10">
         <div className="w-full lg:max-w-7xl">
-          <div className="relative z-20 w-full rounded-3xl border border-white/20 bg-white/10 p-5 shadow-2xl lg:max-w-2xl lg:border-white/30 lg:bg-white/70 lg:p-8 lg:backdrop-blur-xl">
-          <p className="mb-2 text-xs font-bold uppercase tracking-[0.35em] text-sky-700">Assinatura</p>
-          <h1 className="text-2xl font-black leading-tight text-slate-900 lg:text-3xl">
+          <div className="relative z-20 w-full rounded-3xl border border-white/20 bg-white/10 p-5 shadow-2xl lg:max-w-2xl lg:border-white/30 lg:bg-white/70 lg:p-6 lg:backdrop-blur-xl">
+          <p className="mb-1.5 text-xs font-bold uppercase tracking-[0.35em] text-sky-700">Assinatura</p>
+          <h1 className="text-xl font-black leading-tight text-slate-900 lg:text-2xl">
             Seu teste de 7 dias terminou
           </h1>
 
-          {/* Nome do perfil vencido em destaque */}
-          <div className="mt-3 rounded-xl border border-sky-200 bg-sky-50 px-4 py-2.5 text-center">
-            <span className="block text-[10px] font-black uppercase tracking-[0.2em] text-sky-600">Perfil vencido</span>
-            <span className="mt-0.5 block truncate text-base font-black text-sky-900">{nomePerfil || 'Este perfil'}</span>
+          {/* Perfil bloqueado — destaque forte */}
+          <div className="mt-3 rounded-2xl border-2 border-sky-400 px-4 py-3 text-center shadow-md" style={{ background: GRADIENTE }}>
+            <span className="block text-[10px] font-black uppercase tracking-[0.22em] text-white/80">Perfil bloqueado</span>
+            <span className="mt-0.5 block truncate text-xl font-black text-white">{nomePerfil || 'Este perfil'}</span>
           </div>
 
-          <p className="mt-3 text-sm font-semibold leading-relaxed text-slate-600">
-            Assine para continuar usando este perfil — seus dados estão guardados e voltam assim que assinar.
+          <p className="mt-2.5 text-sm font-semibold text-slate-600">
+            Assine para reativar — seus dados estão guardados.
           </p>
 
           {erro && (
@@ -140,7 +140,7 @@ export default function PaywallEmpresa({ nomePerfil, onAssinar, onResgatarCupom,
           )}
 
           {/* CPF/CNPJ */}
-          <div className="mt-5">
+          <div className="mt-4">
             <label className="mb-1 block text-sm font-semibold text-slate-700">CPF ou CNPJ para a cobrança</label>
             <input
               type="text"
@@ -154,7 +154,7 @@ export default function PaywallEmpresa({ nomePerfil, onAssinar, onResgatarCupom,
           </div>
 
           {/* Planos */}
-          <div className="mt-5 grid gap-3 sm:grid-cols-2">
+          <div className="mt-4 grid gap-3 sm:grid-cols-2">
             <div className="group rounded-2xl border-2 border-slate-200 bg-white/80 p-4 transition hover:border-sky-600">
               <p className="text-xs font-black uppercase tracking-wide text-slate-500">Mensal</p>
               <p className="mt-1 text-2xl font-black text-slate-900">
@@ -193,7 +193,7 @@ export default function PaywallEmpresa({ nomePerfil, onAssinar, onResgatarCupom,
           </div>
 
           {/* Cupom */}
-          <div className="mt-5 border-t border-slate-200 pt-4">
+          <div className="mt-4 border-t border-slate-200 pt-3">
             <label className="mb-1 block text-xs font-black uppercase tracking-wide text-slate-500">Tem um cupom?</label>
             <div className="flex gap-2">
               <input
@@ -215,7 +215,7 @@ export default function PaywallEmpresa({ nomePerfil, onAssinar, onResgatarCupom,
             {cupomErro && <p className="mt-2 text-xs font-bold text-red-600">{cupomErro}</p>}
           </div>
 
-          <div className="mt-6 flex flex-wrap gap-2 border-t border-slate-200 pt-4">
+          <div className="mt-4 flex flex-wrap gap-2 border-t border-slate-200 pt-3">
             {onTrocarPerfil && (
               <button type="button" onClick={onTrocarPerfil} className="h-9 flex-1 rounded-lg border border-slate-300 bg-white/85 px-3 text-[11px] font-black uppercase tracking-wide text-slate-700 shadow-sm transition hover:border-sky-700 hover:bg-sky-700 hover:text-white hover:shadow-md active:scale-[0.98]">
                 Trocar de perfil

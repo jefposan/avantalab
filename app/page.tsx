@@ -324,10 +324,14 @@ const [validandoTelefoneObrigatorio, setValidandoTelefoneObrigatorio] = useState
   const [abaAtiva, setAbaAtiva] = useState('Dashboard');
   // Cobrança: estado de acesso do perfil (só é buscado quando COBRANCA_ATIVA=true).
   const [estadoAcesso, setEstadoAcesso] = useState<EstadoAcesso | null>(null);
+  // Só liberamos a renderização do app depois de conhecer o estado de acesso,
+  // evitando o "flash" do conteúdo antes de o paywall bloquear.
+  const [estadoCarregado, setEstadoCarregado] = useState(false);
   const [modalAssinatura, setModalAssinatura] = useState(false);
   useEffect(() => {
-    if (!COBRANCA_ATIVA || !acessoLiberado || !empresaId) { setEstadoAcesso(null); return; }
+    if (!COBRANCA_ATIVA || !acessoLiberado || !empresaId) { setEstadoAcesso(null); setEstadoCarregado(true); return; }
     let ativo = true;
+    setEstadoCarregado(false);
     (async () => {
       try {
         const { data: sessao } = await supabase.auth.getSession();
@@ -339,6 +343,7 @@ const [validandoTelefoneObrigatorio, setValidandoTelefoneObrigatorio] = useState
         const json = await resp.json();
         if (ativo && resp.ok) setEstadoAcesso(json.estado || null);
       } catch { /* silencioso: em caso de falha, não bloqueia (fail-open) */ }
+      finally { if (ativo) setEstadoCarregado(true); }
     })();
     return () => { ativo = false; };
   }, [acessoLiberado, empresaId]);
@@ -5619,6 +5624,24 @@ if (isTelaMobile) {
         reenviarCodigoSmsCadastro={reenviarCodigoSmsCadastro}
         reenviarCodigoRedefinirSenha={reenviarCodigoRedefinirSenha}
       />
+    );
+  }
+
+  // Cobrança: enquanto o estado de acesso não for conhecido, não renderiza o app
+  // (evita o flash do conteúdo antes de o paywall bloquear).
+  if (COBRANCA_ATIVA && acessoLiberado && empresaId && !estadoCarregado) {
+    return (
+      <main className="relative flex min-h-screen items-center justify-center overflow-hidden font-sans">
+        <div
+          className="absolute inset-0 bg-cover bg-center"
+          style={{ backgroundImage: "image-set(url('/images/bg-avantalab.webp') type('image/webp'), url('/images/bg-avantalab.png') type('image/png'))" }}
+        />
+        <div className="absolute inset-0 bg-white/10" />
+        <div className="relative z-10 flex flex-col items-center gap-3">
+          <div className="h-9 w-9 animate-spin rounded-full border-[3px] border-white/40 border-t-white" />
+          <p className="text-sm font-black uppercase tracking-[0.24em] text-white/90 drop-shadow">Carregando…</p>
+        </div>
+      </main>
     );
   }
 

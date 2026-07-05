@@ -72,6 +72,7 @@
     empresa: null,
     // Cobrança (paywall do perfil empresa vencido)
     paywallAtivo: false,
+    paywallVerificado: false,
     paywallNome: '',
     paywallPrecos: null,
     paywallMsg: '',
@@ -526,19 +527,19 @@
     var temTrocar = (state.empresas && state.empresas.length > 1);
     return (
       '<section class="avantalab-mobile-bg fixed inset-0 flex items-start justify-center overflow-auto px-4 py-8" style="min-height:100dvh;">' +
-        '<div class="w-full max-w-md rounded-3xl border border-white/40 bg-white/85 p-5 text-slate-900 shadow-2xl backdrop-blur-xl">' +
+        '<div class="w-full max-w-md rounded-3xl border border-white/40 bg-white/85 p-4 text-slate-900 shadow-2xl backdrop-blur-xl">' +
           '<p class="text-xs font-black uppercase tracking-[0.24em] text-sky-700">Assinatura</p>' +
-          '<h1 class="mt-1 text-2xl font-black">Seu teste de 7 dias terminou</h1>' +
-          // Nome do perfil vencido em destaque
-          '<div class="mt-3 rounded-xl border border-sky-200 bg-sky-50 px-4 py-2.5 text-center">' +
-            '<span class="block text-[10px] font-black uppercase tracking-[0.2em] text-sky-600">Perfil vencido</span>' +
-            '<span class="mt-0.5 block truncate text-base font-black text-sky-900">' + nome + '</span>' +
+          '<h1 class="mt-1 text-xl font-black">Seu teste de 7 dias terminou</h1>' +
+          // Perfil bloqueado — destaque forte
+          '<div class="mt-3 rounded-2xl border-2 border-sky-400 px-4 py-3 text-center shadow-md" style="background:linear-gradient(135deg,#003E73,#00A6C8);">' +
+            '<span class="block text-[10px] font-black uppercase tracking-[0.22em] text-white/80">Perfil bloqueado</span>' +
+            '<span class="mt-0.5 block truncate text-xl font-black text-white">' + nome + '</span>' +
           '</div>' +
-          '<p class="mt-3 text-sm font-semibold leading-relaxed text-slate-600">Assine para continuar usando este perfil — seus dados estão guardados e voltam assim que assinar.</p>' +
-          '<p id="paywall-msg" class="mt-3 text-sm font-bold text-red-600"></p>' +
-          '<label class="mt-4 block text-xs font-black uppercase tracking-wide text-slate-500">CPF ou CNPJ para a cobrança</label>' +
-          '<input id="paywall-cpf" type="text" inputmode="numeric" placeholder="Somente números" class="mt-1 w-full rounded-xl border border-slate-300 bg-white/90 px-4 py-3 text-sm font-semibold text-slate-800 outline-none" />' +
-          '<div class="mt-4 grid grid-cols-2 gap-3">' +
+          '<p class="mt-2.5 text-sm font-semibold text-slate-600">Assine para reativar — seus dados estão guardados.</p>' +
+          '<p id="paywall-msg" class="mt-2 text-sm font-bold text-red-600"></p>' +
+          '<label class="mt-3 block text-xs font-black uppercase tracking-wide text-slate-500">CPF ou CNPJ para a cobrança</label>' +
+          '<input id="paywall-cpf" type="text" inputmode="numeric" placeholder="Somente números" class="mt-1 w-full rounded-xl border border-slate-300 bg-white/90 px-4 py-2.5 text-sm font-semibold text-slate-800 outline-none" />' +
+          '<div class="mt-3 grid grid-cols-2 gap-3">' +
             '<div class="rounded-2xl border border-slate-200 bg-white/80 p-4">' +
               '<p class="text-xs font-black uppercase tracking-wide text-slate-500">Mensal</p>' +
               '<p class="mt-1 text-xl font-black">' + brl(mensal) + '<span class="text-xs font-bold text-slate-500">/mês</span></p>' +
@@ -551,7 +552,7 @@
               '<button type="button" onclick="window._avaPaywallAssinar(\'anual\')" class="mt-3 h-11 w-full rounded-xl bg-sky-700 text-xs font-black uppercase tracking-wide text-white active:scale-[0.98]">Assinar anual</button>' +
             '</div>' +
           '</div>' +
-          '<div class="mt-5 border-t border-slate-200 pt-4">' +
+          '<div class="mt-4 border-t border-slate-200 pt-3">' +
             '<label class="mb-1 block text-xs font-black uppercase tracking-wide text-slate-500">Tem um cupom?</label>' +
             '<div class="flex gap-2">' +
               '<input id="paywall-cupom" type="text" placeholder="Código" class="min-w-0 flex-1 rounded-xl border border-slate-300 bg-white/90 px-4 py-3 text-sm font-semibold uppercase text-slate-800 outline-none" />' +
@@ -560,7 +561,7 @@
             '<p id="paywall-cupom-msg" class="mt-2 text-xs font-bold text-red-600"></p>' +
           '</div>' +
           // Rodapé com botões estruturados — três na mesma linha, com cor
-          '<div class="mt-6 flex gap-2 border-t border-slate-200 pt-4">' +
+          '<div class="mt-4 flex gap-2 border-t border-slate-200 pt-3">' +
             (temTrocar ? '<button type="button" onclick="window._avaPaywallTrocar()" class="h-9 flex-1 rounded-lg border border-sky-300 bg-sky-50 px-1 text-[10px] font-black uppercase tracking-wide text-sky-700 shadow-sm active:scale-[0.98] active:bg-sky-700 active:text-white">Trocar</button>' : '') +
             '<button type="button" onclick="window._avaPaywallCriar()" class="h-9 flex-1 rounded-lg border border-sky-300 bg-sky-50 px-1 text-[10px] font-black uppercase tracking-wide text-sky-700 shadow-sm active:scale-[0.98] active:bg-sky-700 active:text-white">Criar</button>' +
             '<button type="button" onclick="window._avaPaywallSair()" class="h-9 flex-1 rounded-lg border border-red-200 bg-red-50 px-1 text-[10px] font-black uppercase tracking-wide text-red-600 shadow-sm active:scale-[0.98] active:bg-red-600 active:text-white">Sair</button>' +
@@ -2881,11 +2882,11 @@
   // Cobrança: verifica no servidor se o perfil empresa vencido precisa de paywall.
   // Fail-open: qualquer falha não bloqueia o acesso.
   async function verificarPaywallMobile() {
-    if (!state.empresa || !state.empresa.id) { state.paywallAtivo = false; return; }
+    if (!state.empresa || !state.empresa.id) { state.paywallAtivo = false; state.paywallVerificado = true; render(); return; }
     try {
       var sessao = await db.auth.getSession();
       var token = sessao && sessao.data && sessao.data.session ? sessao.data.session.access_token : '';
-      if (!token) { state.paywallAtivo = false; return; }
+      if (!token) { state.paywallAtivo = false; state.paywallVerificado = true; render(); return; }
       var resp = await fetch('/api/cobranca/estado?empresaId=' + encodeURIComponent(state.empresa.id), {
         headers: { Authorization: 'Bearer ' + token },
       });
@@ -2900,6 +2901,7 @@
     } catch (e) {
       state.paywallAtivo = false;
     }
+    state.paywallVerificado = true;
     render();
   }
 
@@ -2928,7 +2930,9 @@
       return;
     }
 
-    // Cobrança: checa o paywall em paralelo (não bloqueia o carregamento).
+    // Cobrança: checa o paywall ANTES de liberar o app (evita flash do conteúdo).
+    // Enquanto paywallVerificado for false, o render mostra a tela de carregamento.
+    state.paywallVerificado = false;
     verificarPaywallMobile();
 
     state.carregando = true;
@@ -7954,7 +7958,7 @@
     var telaAtual = !state.pronto
       ? telaCarregandoMobile()
       : (state.autenticado
-        ? (ehFuncionarioPontoMobile() ? telaRedirecionandoPonto() : (state.validacaoTelefoneObrigatoria ? telaTelefoneObrigatorioMobile() : (state.paywallAtivo ? telaPaywallMobile() : (state.modoCriarPerfil ? telaLoginWrapper(telaCriarPerfilInicial(), 'Criar perfil financeiro', 'Informe os dados do seu primeiro perfil.') : telaApp()))))
+        ? (ehFuncionarioPontoMobile() ? telaRedirecionandoPonto() : (state.validacaoTelefoneObrigatoria ? telaTelefoneObrigatorioMobile() : (state.paywallAtivo ? telaPaywallMobile() : (state.modoCriarPerfil ? telaLoginWrapper(telaCriarPerfilInicial(), 'Criar perfil financeiro', 'Informe os dados do seu primeiro perfil.') : (!state.paywallVerificado ? telaCarregandoMobile() : telaApp())))))
         : (state.modoCriarPerfil ? telaLoginWrapper(telaCriarPerfilInicial(), 'Criar perfil financeiro', 'Informe os dados do seu primeiro perfil.') : telaLogin()));
     root.innerHTML = telaAtual + (state.chatIAAberto ? chatIAModalHtml() : '') + (state.mostrarPromptNotificacoes ? promptNotificacoesHtml() : '') + (state.tourAberto ? tourHtml() : '');
     sincronizarGradienteHeaderPerfil();
