@@ -3,7 +3,20 @@
 import { useMemo, useState } from 'react';
 
 type FeedbackStatus = 'novo' | 'em_analise' | 'respondido' | 'arquivado';
-type AdminView = 'avaliacoes' | 'disparos' | 'cupons' | 'configuracoes';
+type AdminView = 'avaliacoes' | 'disparos' | 'cupons' | 'perfis' | 'configuracoes';
+
+type Perfil = {
+  id: string;
+  nome: string;
+  tipo_perfil: string;
+  assinatura: { status: string; plano: string | null; ciclo: string | null; valido_ate: string | null; trial_fim: string | null } | null;
+};
+
+function statusPerfilLabel(a: Perfil['assinatura']) {
+  if (!a) return 'Sem registro';
+  const mapa: Record<string, string> = { trial: 'Trial', ativa: 'Ativa', expirada: 'Vencida', cancelada: 'Revogada', cortesia: 'Cortesia', inadimplente: 'Pendente' };
+  return mapa[a.status] || a.status;
+}
 type StatusFilter = 'ativos' | 'todos' | FeedbackStatus;
 
 type Cupom = {
@@ -45,7 +58,7 @@ type Disparo = {
   created_at?: string;
 };
 
-type IconName = 'inbox' | 'send' | 'settings' | 'refresh' | 'check' | 'archive' | 'trash' | 'reopen' | 'logout' | 'lock' | 'ticket';
+type IconName = 'inbox' | 'send' | 'settings' | 'refresh' | 'check' | 'archive' | 'trash' | 'reopen' | 'logout' | 'lock' | 'ticket' | 'search';
 
 function Icon({ name, size = 17 }: { name: IconName; size?: number }) {
   const common = { width: size, height: size, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: 2, strokeLinecap: 'round' as const, strokeLinejoin: 'round' as const };
@@ -59,6 +72,7 @@ function Icon({ name, size = 17 }: { name: IconName; size?: number }) {
   if (name === 'logout') return <svg {...common}><path d="M10 17l5-5-5-5M15 12H3M14 3h5a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-5" /></svg>;
   if (name === 'lock') return <svg {...common}><rect x="4" y="10" width="16" height="11" rx="2" /><path d="M8 10V7a4 4 0 0 1 8 0v3" /></svg>;
   if (name === 'ticket') return <svg {...common}><path d="M3 9a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2 2 2 0 0 0 0 4 2 2 0 0 1-2 2H5a2 2 0 0 1-2-2 2 2 0 0 0 0-4Z" /><path d="M13 7v10" /></svg>;
+  if (name === 'search') return <svg {...common}><circle cx="11" cy="11" r="7" /><path d="m21 21-4.3-4.3" /></svg>;
   return <svg {...common}><path d="M4 4h16v13H7l-3 3Z" /><path d="M8 9h8M8 13h5" /></svg>;
 }
 
@@ -117,8 +131,53 @@ export default function AdminPage() {
   const [cupomUsosIlimitado, setCupomUsosIlimitado] = useState(true);
   const [cupomMaxUsos, setCupomMaxUsos] = useState('50');
   const [creatingCupom, setCreatingCupom] = useState(false);
+  const [perfis, setPerfis] = useState<Perfil[]>([]);
+  const [perfilBusca, setPerfilBusca] = useState('');
+  const [buscandoPerfis, setBuscandoPerfis] = useState(false);
 
   const authHeaders = (value = token) => ({ Authorization: `Bearer ${value.trim()}` });
+
+  const buscarPerfis = async () => {
+    setBuscandoPerfis(true);
+    setError('');
+    try {
+      const response = await fetch(`/api/admin-perfis?q=${encodeURIComponent(perfilBusca.trim())}`, { headers: authHeaders() });
+      const data = await response.json().catch(() => null);
+      if (!response.ok || data?.erro) throw new Error(data?.mensagem || 'Não foi possível buscar.');
+      setPerfis(data.perfis || []);
+    } catch (requestError) {
+      setError(requestError instanceof Error ? requestError.message : 'Não foi possível buscar.');
+    } finally {
+      setBuscandoPerfis(false);
+    }
+  };
+
+  const acaoPerfil = async (perfil: Perfil, acao: 'revogar' | 'liberar') => {
+    const msg = acao === 'revogar'
+      ? `Revogar o acesso de "${perfil.nome}"? O perfil ficará bloqueado até assinar ou receber cortesia.`
+      : `Liberar acesso (cortesia, sem prazo) para "${perfil.nome}"?`;
+    if (!window.confirm(msg)) return;
+    setWorkingId(perfil.id);
+    setError('');
+    setNotice('');
+    try {
+      const response = await fetch('/api/admin-perfis', {
+        method: 'PATCH',
+        headers: { ...authHeaders(), 'Content-Type': 'application/json' },
+        body: JSON.stringify({ empresaId: perfil.id, acao }),
+      });
+      const data = await response.json().catch(() => null);
+      if (!response.ok || data?.erro) throw new Error(data?.mensagem || 'Não foi possível executar.');
+      setPerfis((current) => current.map((item) => item.id === perfil.id
+        ? { ...item, assinatura: { plano: null, ciclo: null, valido_ate: null, trial_fim: null, ...(item.assinatura || {}), status: data.status } }
+        : item));
+      setNotice(acao === 'revogar' ? 'Acesso revogado.' : 'Acesso liberado (cortesia).');
+    } catch (requestError) {
+      setError(requestError instanceof Error ? requestError.message : 'Não foi possível executar.');
+    } finally {
+      setWorkingId(null);
+    }
+  };
 
   const loadCupons = async (value = token) => {
     const response = await fetch('/api/admin-cupons', { headers: authHeaders(value) });
@@ -335,6 +394,7 @@ export default function AdminPage() {
     { id: 'avaliacoes', label: 'Avaliações', icon: 'inbox' },
     { id: 'disparos', label: 'Disparos', icon: 'send' },
     { id: 'cupons', label: 'Cupons', icon: 'ticket' },
+    { id: 'perfis', label: 'Perfis', icon: 'search' },
     { id: 'configuracoes', label: 'Configurações', icon: 'settings' },
   ];
 
@@ -350,7 +410,7 @@ export default function AdminPage() {
             {authorized && <button type="button" onClick={logout} className="flex h-9 items-center gap-2 rounded-md border border-slate-300 px-3 text-xs font-bold text-slate-700 hover:bg-slate-50"><Icon name="logout" />Sair</button>}
           </div>
 
-          {authorized && <nav className="grid grid-cols-4 gap-1 border-t border-slate-100 py-2" aria-label="Áreas administrativas">
+          {authorized && <nav className="grid grid-cols-3 gap-1 border-t border-slate-100 py-2 sm:grid-cols-5" aria-label="Áreas administrativas">
             {navigation.map((item) => <button key={item.id} type="button" onClick={() => { setView(item.id); setError(''); setNotice(''); }} className={`flex h-10 min-w-0 items-center justify-center gap-2 rounded-md px-2 text-xs font-black transition ${view === item.id ? 'bg-cyan-700 text-white shadow-sm' : 'text-slate-600 hover:bg-slate-100'}`}><Icon name={item.icon} /><span className="truncate">{item.label}</span></button>)}
           </nav>}
         </div>
@@ -446,6 +506,26 @@ export default function AdminPage() {
                 </article>;
               })}</div>}
             </section>
+          </div>}
+
+          {view === 'perfis' && <div className="space-y-4">
+            <section className="rounded-lg border border-slate-200 bg-white p-3 shadow-sm">
+              <h2 className="text-base font-black text-slate-950">Buscar perfil</h2><p className="text-xs text-slate-500">Encontre um perfil pelo nome para ver a situação e agir (revogar ou liberar acesso).</p>
+              <div className="mt-3 flex gap-2">
+                <input value={perfilBusca} onChange={(event) => setPerfilBusca(event.target.value)} onKeyDown={(event) => { if (event.key === 'Enter') void buscarPerfis(); }} placeholder="Nome do perfil (vazio lista os primeiros)" className="h-10 flex-1 rounded-md border border-slate-300 px-3 text-sm outline-none focus:border-cyan-700" />
+                <button type="button" onClick={() => void buscarPerfis()} disabled={buscandoPerfis} className="flex h-10 items-center gap-2 rounded-md bg-cyan-700 px-4 text-xs font-black uppercase text-white hover:bg-cyan-800 disabled:opacity-60"><Icon name="search" size={15} />{buscandoPerfis ? 'Buscando...' : 'Buscar'}</button>
+              </div>
+            </section>
+            {perfis.length === 0 ? <div className="rounded-lg border border-dashed border-slate-300 bg-white px-4 py-10 text-center text-sm text-slate-500">Nenhum perfil na busca. Digite um nome (ou deixe vazio) e clique em Buscar.</div> : <div className="grid gap-2">{perfis.map((perfil) => {
+              const busy = workingId === perfil.id;
+              const status = perfil.assinatura?.status;
+              const bloqueado = status === 'cancelada' || status === 'expirada' || status === 'inadimplente';
+              const cor = !perfil.assinatura ? 'border-slate-200 bg-slate-100 text-slate-500' : bloqueado ? 'border-red-200 bg-red-50 text-red-700' : status === 'trial' ? 'border-amber-200 bg-amber-50 text-amber-800' : 'border-emerald-200 bg-emerald-50 text-emerald-700';
+              return <article key={perfil.id} className="flex flex-col gap-2 rounded-lg border border-slate-200 bg-white p-3 shadow-sm sm:flex-row sm:items-center sm:justify-between">
+                <div className="min-w-0"><div className="flex flex-wrap items-center gap-1.5"><h3 className="truncate text-sm font-black text-slate-950">{perfil.nome}</h3><span className="rounded-full border border-slate-200 bg-slate-50 px-2 py-0.5 text-[9px] font-black uppercase text-slate-500">{perfil.tipo_perfil}</span><span className={`rounded-full border px-2 py-0.5 text-[9px] font-black uppercase ${cor}`}>{statusPerfilLabel(perfil.assinatura)}</span></div></div>
+                <div className="flex shrink-0 gap-2"><button type="button" onClick={() => void acaoPerfil(perfil, 'liberar')} disabled={busy} className="rounded-md border border-emerald-200 px-3 py-2 text-[10px] font-black uppercase text-emerald-700 hover:bg-emerald-50 disabled:opacity-50">Liberar</button><button type="button" onClick={() => void acaoPerfil(perfil, 'revogar')} disabled={busy} className="rounded-md border border-red-200 px-3 py-2 text-[10px] font-black uppercase text-red-700 hover:bg-red-50 disabled:opacity-50">Revogar</button></div>
+              </article>;
+            })}</div>}
           </div>}
 
           {view === 'configuracoes' && <div className="grid gap-4 md:grid-cols-2">
