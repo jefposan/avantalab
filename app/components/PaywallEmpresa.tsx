@@ -155,7 +155,7 @@ export default function PaywallEmpresa({ nomePerfil, onAssinar, onResgatarCupom,
 
           {/* Planos */}
           <div className="mt-5 grid gap-3 sm:grid-cols-2">
-            <div className="rounded-2xl border border-slate-200 bg-white/80 p-4">
+            <div className="group rounded-2xl border-2 border-slate-200 bg-white/80 p-4 transition hover:border-sky-600">
               <p className="text-xs font-black uppercase tracking-wide text-slate-500">Mensal</p>
               <p className="mt-1 text-2xl font-black text-slate-900">
                 R$ 34,90<span className="text-sm font-bold text-slate-500">/mês</span>
@@ -165,7 +165,7 @@ export default function PaywallEmpresa({ nomePerfil, onAssinar, onResgatarCupom,
                 type="button"
                 onClick={() => clicar('mensal')}
                 disabled={carregando !== null}
-                className="mt-3 h-11 w-full rounded-xl border border-slate-300 bg-white/85 text-sm font-black uppercase tracking-wide text-slate-700 shadow-sm transition hover:bg-white active:scale-[0.98] disabled:opacity-50"
+                className="mt-3 h-11 w-full rounded-xl border border-slate-300 bg-white/85 text-sm font-black uppercase tracking-wide text-slate-700 shadow-sm transition group-hover:border-sky-700 group-hover:bg-sky-700 group-hover:text-white group-hover:shadow-lg active:scale-[0.98] disabled:opacity-50"
               >
                 {carregando === 'mensal' ? 'Processando…' : 'Assinar mensal'}
               </button>
@@ -215,20 +215,18 @@ export default function PaywallEmpresa({ nomePerfil, onAssinar, onResgatarCupom,
             {cupomErro && <p className="mt-2 text-xs font-bold text-red-600">{cupomErro}</p>}
           </div>
 
-          <div className="mt-6 grid gap-2 border-t border-slate-200 pt-4">
-            <div className={`grid gap-2 ${onTrocarPerfil ? 'sm:grid-cols-2' : ''}`}>
-              {onTrocarPerfil && (
-                <button type="button" onClick={onTrocarPerfil} className="h-12 w-full rounded-xl border border-slate-300 bg-white/85 text-xs font-black uppercase tracking-wide text-slate-700 shadow-sm transition hover:bg-white active:scale-[0.98]">
-                  Trocar de perfil
-                </button>
-              )}
-              {onCriarPerfil && (
-                <button type="button" onClick={onCriarPerfil} className="h-12 w-full rounded-xl border border-slate-300 bg-white/85 text-xs font-black uppercase tracking-wide text-slate-700 shadow-sm transition hover:bg-white active:scale-[0.98]">
-                  Criar novo perfil
-                </button>
-              )}
-            </div>
-            <button type="button" onClick={onSair} className="h-12 w-full rounded-xl border border-red-200 bg-red-50 text-xs font-black uppercase tracking-wide text-red-600 shadow-sm transition hover:bg-red-100 active:scale-[0.98]">
+          <div className="mt-6 flex flex-wrap gap-2 border-t border-slate-200 pt-4">
+            {onTrocarPerfil && (
+              <button type="button" onClick={onTrocarPerfil} className="h-9 flex-1 rounded-lg border border-slate-300 bg-white/85 px-3 text-[11px] font-black uppercase tracking-wide text-slate-700 shadow-sm transition hover:bg-white active:scale-[0.98]">
+                Trocar de perfil
+              </button>
+            )}
+            {onCriarPerfil && (
+              <button type="button" onClick={onCriarPerfil} className="h-9 flex-1 rounded-lg border border-slate-300 bg-white/85 px-3 text-[11px] font-black uppercase tracking-wide text-slate-700 shadow-sm transition hover:bg-white active:scale-[0.98]">
+                Criar novo perfil
+              </button>
+            )}
+            <button type="button" onClick={onSair} className="h-9 flex-1 rounded-lg border border-red-200 bg-red-50 px-3 text-[11px] font-black uppercase tracking-wide text-red-600 shadow-sm transition hover:bg-red-100 active:scale-[0.98]">
               Sair
             </button>
           </div>
