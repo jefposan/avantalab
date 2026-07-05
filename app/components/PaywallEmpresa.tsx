@@ -68,8 +68,9 @@ export default function PaywallEmpresa({ nomePerfil, onAssinar, onSair }: Paywal
       />
       <div className="pointer-events-none absolute inset-0 hidden bg-white/10 lg:block" />
 
-      <section className="relative z-10 flex min-h-screen items-center justify-center px-4 py-8 lg:px-20 lg:py-10">
-        <div className="relative z-20 w-full max-w-lg rounded-3xl border border-white/20 bg-white/10 p-5 shadow-2xl lg:border-white/30 lg:bg-white/70 lg:p-8 lg:backdrop-blur-xl">
+      <section className="relative z-10 flex min-h-screen items-start px-4 pb-6 pt-8 lg:items-center lg:px-20 lg:py-10">
+        <div className="w-full lg:max-w-7xl">
+          <div className="relative z-20 w-full rounded-3xl border border-white/20 bg-white/10 p-5 shadow-2xl lg:max-w-2xl lg:border-white/30 lg:bg-white/70 lg:p-8 lg:backdrop-blur-xl">
           <p className="mb-2 text-xs font-bold uppercase tracking-[0.35em] text-sky-700">Assinatura</p>
           <h1 className="text-2xl font-black leading-tight text-slate-900 lg:text-3xl">
             Seu teste de 7 dias terminou
@@ -147,6 +148,7 @@ export default function PaywallEmpresa({ nomePerfil, onAssinar, onSair }: Paywal
             >
               Sair
             </button>
+          </div>
           </div>
         </div>
       </section>
