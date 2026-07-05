@@ -5595,8 +5595,6 @@ if (isTelaMobile) {
   if (precisaPaywallEmpresa(estadoAcesso)) {
     return (
       <PaywallEmpresa
-        darkMode={darkMode}
-        corPrimaria={corPrimaria}
         nomePerfil={nomeEmpresaAtual}
         onAssinar={iniciarAssinatura}
         onSair={handleLogout}

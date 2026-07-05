@@ -17,23 +17,18 @@ function formatarCpfCnpj(valor: string): string {
 }
 
 interface PaywallEmpresaProps {
-  darkMode?: boolean;
-  corPrimaria?: string;
   nomePerfil?: string;
-  // Retorna uma mensagem de erro (string) em caso de falha, ou nada em caso de
-  // sucesso (nesse caso a navegação para o pagamento já acontece).
+  // Retorna mensagem de erro (string) em caso de falha; em caso de sucesso a
+  // navegação para o pagamento já acontece.
   onAssinar?: (ciclo: 'mensal' | 'anual', cpfCnpj: string) => Promise<string | null | void>;
   onSair?: () => void;
 }
 
-// Tela mostrada quando o trial de 7 dias da empresa venceu e não há assinatura.
-export default function PaywallEmpresa({
-  darkMode = false,
-  corPrimaria = '#0A1F44',
-  nomePerfil,
-  onAssinar,
-  onSair,
-}: PaywallEmpresaProps) {
+const GRADIENTE = 'linear-gradient(135deg,#003E73,#00A6C8)';
+
+// Tela mostrada quando o trial de 7 dias da empresa venceu — com a identidade
+// visual da tela de login (fundo AvantaLab + card "vidro fosco").
+export default function PaywallEmpresa({ nomePerfil, onAssinar, onSair }: PaywallEmpresaProps) {
   const [carregando, setCarregando] = useState<'mensal' | 'anual' | null>(null);
   const [erro, setErro] = useState('');
   const [cpfCnpj, setCpfCnpj] = useState('');
@@ -57,97 +52,104 @@ export default function PaywallEmpresa({
     }
   };
 
-  const fundo = darkMode ? 'bg-slate-900 text-slate-100' : 'bg-slate-50 text-slate-900';
-  const card = darkMode ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200';
+  const inputCls =
+    'w-full rounded-xl border border-slate-300 bg-white/90 px-4 py-3 text-slate-800 outline-none transition focus:border-sky-600 focus:ring-2 focus:ring-sky-600/20';
 
   return (
-    <div className={`min-h-screen w-full ${fundo} flex items-center justify-center px-4 py-10`}>
-      <div className="w-full max-w-2xl">
-        <div className="text-center">
-          <p className="text-xs font-black uppercase tracking-[0.24em] opacity-60">AvantaLab</p>
-          <h1 className="mt-2 text-2xl font-black sm:text-3xl">Seu teste de 7 dias terminou</h1>
-          <p className="mx-auto mt-3 max-w-md text-sm font-semibold opacity-70">
+    <main className="relative min-h-screen overflow-hidden font-sans">
+      {/* Fundo (mesmo da tela de login) */}
+      <div
+        className="absolute inset-0 hidden bg-cover bg-center lg:block"
+        style={{ backgroundImage: "image-set(url('/images/bg-avantalab.webp') type('image/webp'), url('/images/bg-avantalab.png') type('image/png'))" }}
+      />
+      <div
+        className="absolute inset-0 bg-cover bg-center bg-no-repeat lg:hidden"
+        style={{ backgroundImage: "image-set(url('/images/bg-avantalab-mobile.webp') type('image/webp'), url('/images/bg-avantalab-mobile.png') type('image/png'))" }}
+      />
+      <div className="pointer-events-none absolute inset-0 hidden bg-white/10 lg:block" />
+
+      <section className="relative z-10 flex min-h-screen items-center justify-center px-4 py-8 lg:px-20 lg:py-10">
+        <div className="relative z-20 w-full max-w-lg rounded-3xl border border-white/20 bg-white/10 p-5 shadow-2xl lg:border-white/30 lg:bg-white/70 lg:p-8 lg:backdrop-blur-xl">
+          <p className="mb-2 text-xs font-bold uppercase tracking-[0.35em] text-sky-700">Assinatura</p>
+          <h1 className="text-2xl font-black leading-tight text-slate-900 lg:text-3xl">
+            Seu teste de 7 dias terminou
+          </h1>
+          <p className="mt-2 text-sm font-semibold leading-relaxed text-slate-600">
             {nomePerfil ? `O perfil "${nomePerfil}" ` : 'Este perfil '}
-            está com o período de avaliação encerrado. Escolha um plano para continuar
-            usando o sistema completo — seus dados estão guardados e voltam assim que assinar.
+            está com o período de avaliação encerrado. Escolha um plano para continuar —
+            seus dados estão guardados e voltam assim que assinar.
           </p>
-        </div>
 
-        {erro && (
-          <div className="mx-auto mt-6 max-w-md rounded-xl border border-red-300 bg-red-50 px-4 py-3 text-center text-sm font-bold text-red-700">
-            {erro}
+          {erro && (
+            <div className="mt-5 rounded-xl border border-red-300 bg-red-50/90 px-4 py-3 text-sm font-bold text-red-700">
+              {erro}
+            </div>
+          )}
+
+          {/* CPF/CNPJ */}
+          <div className="mt-5">
+            <label className="mb-1 block text-sm font-semibold text-slate-700">CPF ou CNPJ para a cobrança</label>
+            <input
+              type="text"
+              inputMode="numeric"
+              value={cpfCnpj}
+              onChange={(e) => setCpfCnpj(formatarCpfCnpj(e.target.value))}
+              placeholder="000.000.000-00"
+              maxLength={18}
+              className={inputCls}
+            />
           </div>
-        )}
 
-        <div className="mx-auto mt-6 max-w-md">
-          <label className="mb-1 block text-xs font-black uppercase tracking-wide opacity-60">
-            CPF ou CNPJ para a cobrança
-          </label>
-          <input
-            type="text"
-            inputMode="numeric"
-            value={cpfCnpj}
-            onChange={(e) => setCpfCnpj(formatarCpfCnpj(e.target.value))}
-            placeholder="000.000.000-00"
-            maxLength={18}
-            className={`w-full rounded-xl border px-4 py-3 text-sm font-semibold outline-none transition focus:ring-2 ${
-              darkMode
-                ? 'border-slate-600 bg-slate-900 text-white focus:ring-sky-500/30'
-                : 'border-slate-300 bg-white text-slate-800 focus:ring-sky-600/20'
-            }`}
-          />
-        </div>
+          {/* Planos */}
+          <div className="mt-5 grid gap-3 sm:grid-cols-2">
+            <div className="rounded-2xl border border-slate-200 bg-white/80 p-4">
+              <p className="text-xs font-black uppercase tracking-wide text-slate-500">Mensal</p>
+              <p className="mt-1 text-2xl font-black text-slate-900">
+                R$ 34,90<span className="text-sm font-bold text-slate-500">/mês</span>
+              </p>
+              <p className="mt-1 text-xs font-semibold text-slate-500">Cancele quando quiser.</p>
+              <button
+                type="button"
+                onClick={() => clicar('mensal')}
+                disabled={carregando !== null}
+                className="mt-3 h-11 w-full rounded-xl border border-slate-300 bg-white/85 text-sm font-black uppercase tracking-wide text-slate-700 shadow-sm transition hover:bg-white active:scale-[0.98] disabled:opacity-50"
+              >
+                {carregando === 'mensal' ? 'Processando…' : 'Assinar mensal'}
+              </button>
+            </div>
 
-        <div className="mt-6 grid gap-4 sm:grid-cols-2">
-          {/* Mensal */}
-          <div className={`rounded-2xl border p-5 shadow-sm ${card}`}>
-            <p className="text-sm font-black uppercase tracking-wide opacity-60">Mensal</p>
-            <p className="mt-2 text-3xl font-black">R$ 34,90<span className="text-base font-bold opacity-60">/mês</span></p>
-            <p className="mt-1 text-xs font-semibold opacity-60">Cobrança todo mês. Cancele quando quiser.</p>
+            <div className="relative rounded-2xl border-2 border-sky-600 bg-white/85 p-4">
+              <span className="absolute -top-2.5 left-4 rounded-full px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wide text-white" style={{ background: GRADIENTE }}>
+                2 meses grátis
+              </span>
+              <p className="text-xs font-black uppercase tracking-wide text-slate-500">Anual</p>
+              <p className="mt-1 text-2xl font-black text-slate-900">
+                R$ 29,00<span className="text-sm font-bold text-slate-500">/mês</span>
+              </p>
+              <p className="mt-1 text-xs font-semibold text-slate-500">R$ 348,00/ano — economize ~R$ 70.</p>
+              <button
+                type="button"
+                onClick={() => clicar('anual')}
+                disabled={carregando !== null}
+                className="mt-3 h-11 w-full rounded-xl text-sm font-black uppercase tracking-wide text-white shadow-lg transition hover:brightness-110 active:scale-[0.98] disabled:opacity-50"
+                style={{ background: GRADIENTE }}
+              >
+                {carregando === 'anual' ? 'Processando…' : 'Assinar anual'}
+              </button>
+            </div>
+          </div>
+
+          <div className="mt-6 text-center">
             <button
               type="button"
-              onClick={() => clicar('mensal')}
-              disabled={carregando !== null}
-              className="mt-4 w-full rounded-xl border px-4 py-3 text-sm font-black transition hover:brightness-105 disabled:opacity-50"
-              style={{ borderColor: corPrimaria, color: corPrimaria }}
+              onClick={onSair}
+              className="text-xs font-black uppercase tracking-wide text-slate-500 transition hover:text-slate-800"
             >
-              {carregando === 'mensal' ? 'Processando…' : 'Assinar mensal'}
-            </button>
-          </div>
-
-          {/* Anual (destaque) */}
-          <div className="relative rounded-2xl border-2 p-5 shadow-md" style={{ borderColor: corPrimaria }}>
-            <span
-              className="absolute -top-3 left-5 rounded-full px-3 py-1 text-[10px] font-black uppercase tracking-wide text-white"
-              style={{ backgroundColor: corPrimaria }}
-            >
-              Melhor valor · 2 meses grátis
-            </span>
-            <p className="text-sm font-black uppercase tracking-wide opacity-60">Anual</p>
-            <p className="mt-2 text-3xl font-black">R$ 29,00<span className="text-base font-bold opacity-60">/mês</span></p>
-            <p className="mt-1 text-xs font-semibold opacity-60">R$ 348,00 por ano — economize ~R$ 70.</p>
-            <button
-              type="button"
-              onClick={() => clicar('anual')}
-              disabled={carregando !== null}
-              className="mt-4 w-full rounded-xl px-4 py-3 text-sm font-black text-white shadow transition hover:brightness-110 disabled:opacity-50"
-              style={{ backgroundColor: corPrimaria }}
-            >
-              {carregando === 'anual' ? 'Processando…' : 'Assinar anual'}
+              Sair
             </button>
           </div>
         </div>
-
-        <div className="mt-6 text-center">
-          <button
-            type="button"
-            onClick={onSair}
-            className="text-xs font-black uppercase tracking-wide opacity-50 transition hover:opacity-80"
-          >
-            Sair
-          </button>
-        </div>
-      </div>
-    </div>
+      </section>
+    </main>
   );
 }
