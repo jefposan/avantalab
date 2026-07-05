@@ -153,6 +153,10 @@ export default function AdminPage() {
   const [perfilPorPagina, setPerfilPorPagina] = useState(20);
   const [perfilTotal, setPerfilTotal] = useState(0);
   const [perfisCarregados, setPerfisCarregados] = useState(false);
+  const [liberarPerfil, setLiberarPerfil] = useState<Perfil | null>(null);
+  const [liberarTipo, setLiberarTipo] = useState<'vitalicio' | 'periodo'>('vitalicio');
+  const [liberarValor, setLiberarValor] = useState('1');
+  const [liberarUnidade, setLiberarUnidade] = useState<'dias' | 'semanas' | 'meses'>('meses');
 
   const authHeaders = (value = token) => ({ Authorization: `Bearer ${value.trim()}` });
 
@@ -174,11 +178,7 @@ export default function AdminPage() {
     }
   };
 
-  const acaoPerfil = async (perfil: Perfil, acao: 'revogar' | 'liberar') => {
-    const msg = acao === 'revogar'
-      ? `Revogar o acesso de "${perfil.nome}"? O perfil ficará bloqueado até assinar ou receber cortesia.`
-      : `Liberar acesso (cortesia, sem prazo) para "${perfil.nome}"?`;
-    if (!window.confirm(msg)) return;
+  const executarAcaoPerfil = async (perfil: Perfil, corpo: { acao: 'revogar' | 'liberar'; duracaoValor?: number; duracaoUnidade?: string }) => {
     setWorkingId(perfil.id);
     setError('');
     setNotice('');
@@ -186,19 +186,41 @@ export default function AdminPage() {
       const response = await fetch('/api/admin-perfis', {
         method: 'PATCH',
         headers: { ...authHeaders(), 'Content-Type': 'application/json' },
-        body: JSON.stringify({ empresaId: perfil.id, acao }),
+        body: JSON.stringify({ empresaId: perfil.id, ...corpo }),
       });
       const data = await response.json().catch(() => null);
       if (!response.ok || data?.erro) throw new Error(data?.mensagem || 'Não foi possível executar.');
       setPerfis((current) => current.map((item) => item.id === perfil.id
-        ? { ...item, status: data.status, tem_acesso: acao === 'liberar', tem_registro: true, plano: null, ciclo: null, valido_ate: null, trial_fim: null }
+        ? { ...item, status: data.status, valido_ate: data.validoAte ?? null, trial_fim: null, plano: null, ciclo: null, tem_acesso: corpo.acao === 'liberar', tem_registro: true }
         : item));
-      setNotice(acao === 'revogar' ? 'Acesso revogado.' : 'Acesso liberado (cortesia).');
+      setNotice(corpo.acao === 'revogar' ? 'Acesso revogado.' : 'Acesso liberado (cortesia).');
     } catch (requestError) {
       setError(requestError instanceof Error ? requestError.message : 'Não foi possível executar.');
     } finally {
       setWorkingId(null);
     }
+  };
+
+  const revogarPerfil = async (perfil: Perfil) => {
+    if (!window.confirm(`Revogar o acesso de "${perfil.nome}"? O perfil ficará bloqueado até assinar ou receber cortesia.`)) return;
+    await executarAcaoPerfil(perfil, { acao: 'revogar' });
+  };
+
+  const abrirLiberar = (perfil: Perfil) => {
+    setLiberarTipo('vitalicio');
+    setLiberarValor('1');
+    setLiberarUnidade('meses');
+    setLiberarPerfil(perfil);
+  };
+
+  const confirmarLiberar = async () => {
+    if (!liberarPerfil) return;
+    const alvo = liberarPerfil;
+    const corpo = liberarTipo === 'periodo'
+      ? { acao: 'liberar' as const, duracaoValor: Number(liberarValor), duracaoUnidade: liberarUnidade }
+      : { acao: 'liberar' as const };
+    setLiberarPerfil(null);
+    await executarAcaoPerfil(alvo, corpo);
   };
 
   const loadCupons = async (value = token) => {
@@ -554,8 +576,8 @@ export default function AdminPage() {
                     <p className="mt-0.5 text-[11px] font-bold text-slate-500">Tipo: {tipoTxt} · Situação: <span className={perfil.tem_acesso ? 'text-emerald-700' : 'text-red-600'}>{perfil.tem_acesso ? 'Ativo' : 'Inativo'}</span>{detalhe ? ` · ${detalhe}` : ''}</p>
                   </div>
                   <div className="flex shrink-0 gap-2">{perfil.tem_acesso
-                    ? <button type="button" onClick={() => void acaoPerfil(perfil, 'revogar')} disabled={busy} className="rounded-md border border-red-200 px-3 py-2 text-[10px] font-black uppercase text-red-700 hover:bg-red-50 disabled:opacity-50">Revogar acesso</button>
-                    : <button type="button" onClick={() => void acaoPerfil(perfil, 'liberar')} disabled={busy} className="rounded-md border border-emerald-200 px-3 py-2 text-[10px] font-black uppercase text-emerald-700 hover:bg-emerald-50 disabled:opacity-50">Liberar acesso</button>}
+                    ? <button type="button" onClick={() => void revogarPerfil(perfil)} disabled={busy} className="rounded-md border border-red-200 px-3 py-2 text-[10px] font-black uppercase text-red-700 hover:bg-red-50 disabled:opacity-50">Revogar acesso</button>
+                    : <button type="button" onClick={() => abrirLiberar(perfil)} disabled={busy} className="rounded-md border border-emerald-200 px-3 py-2 text-[10px] font-black uppercase text-emerald-700 hover:bg-emerald-50 disabled:opacity-50">Liberar acesso</button>}
                   </div>
                 </article>;
               })}</div>
@@ -578,6 +600,32 @@ export default function AdminPage() {
           </div>}
         </>}
       </div>
+
+      {liberarPerfil && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4" onClick={() => setLiberarPerfil(null)}>
+          <div className="w-full max-w-sm rounded-lg border border-slate-200 bg-white p-5 shadow-2xl" onClick={(event) => event.stopPropagation()}>
+            <h3 className="text-base font-black text-slate-950">Liberar acesso</h3>
+            <p className="mt-1 text-xs text-slate-500">Cortesia para <strong>{liberarPerfil.nome}</strong>. Escolha se é permanente ou por um período.</p>
+
+            <div className="mt-4 grid grid-cols-2 gap-1.5 rounded-md border border-slate-200 bg-slate-50 p-1">
+              <button type="button" onClick={() => setLiberarTipo('vitalicio')} className={`rounded px-3 py-1.5 text-xs font-black uppercase transition ${liberarTipo === 'vitalicio' ? 'bg-slate-900 text-white shadow' : 'text-slate-500 hover:bg-white'}`}>Vitalícia</button>
+              <button type="button" onClick={() => setLiberarTipo('periodo')} className={`rounded px-3 py-1.5 text-xs font-black uppercase transition ${liberarTipo === 'periodo' ? 'bg-slate-900 text-white shadow' : 'text-slate-500 hover:bg-white'}`}>Por período</button>
+            </div>
+
+            {liberarTipo === 'periodo' && (
+              <div className="mt-3 flex gap-2">
+                <input type="number" min={1} value={liberarValor} onChange={(event) => setLiberarValor(event.target.value)} className="h-10 w-24 rounded-md border border-slate-300 px-3 text-sm outline-none focus:border-cyan-700" />
+                <select value={liberarUnidade} onChange={(event) => setLiberarUnidade(event.target.value as 'dias' | 'semanas' | 'meses')} className="h-10 flex-1 rounded-md border border-slate-300 bg-white px-3 text-sm font-bold outline-none focus:border-cyan-700"><option value="dias">Dias</option><option value="semanas">Semanas</option><option value="meses">Meses</option></select>
+              </div>
+            )}
+
+            <div className="mt-5 flex gap-2">
+              <button type="button" onClick={() => setLiberarPerfil(null)} className="h-10 flex-1 rounded-md border border-slate-300 text-xs font-black uppercase text-slate-600 hover:bg-slate-50">Cancelar</button>
+              <button type="button" onClick={() => void confirmarLiberar()} className="h-10 flex-1 rounded-md bg-emerald-600 text-xs font-black uppercase text-white hover:bg-emerald-700">Liberar</button>
+            </div>
+          </div>
+        </div>
+      )}
     </main>
   );
 }

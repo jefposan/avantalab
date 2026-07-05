@@ -81,7 +81,9 @@ export async function PATCH(request: Request) {
     const { autorizado, db } = await exigirAdmin(request);
     if (!autorizado) return naoAutorizado();
 
-    const { empresaId, acao } = await request.json();
+    const corpo = await request.json().catch(() => ({}));
+    const empresaId = corpo.empresaId;
+    const acao = corpo.acao;
     if (!empresaId || (acao !== 'revogar' && acao !== 'liberar')) {
       return NextResponse.json({ erro: true, mensagem: 'Dados inválidos.' }, { status: 400 });
     }
@@ -90,11 +92,25 @@ export async function PATCH(request: Request) {
     const tipoPerfil = emp?.tipo_perfil === 'pessoal' ? 'pessoal' : 'empresa';
     const status = acao === 'revogar' ? 'cancelada' : 'cortesia';
 
+    // Liberar: cortesia vitalícia (sem duração) ou por período (valor + unidade).
+    let validoAte: string | null = null;
+    if (acao === 'liberar') {
+      const valor = Number(corpo.duracaoValor) || 0;
+      const unidade = corpo.duracaoUnidade;
+      if (valor > 0 && (unidade === 'dias' || unidade === 'semanas' || unidade === 'meses')) {
+        const fim = new Date();
+        if (unidade === 'dias') fim.setDate(fim.getDate() + valor);
+        else if (unidade === 'semanas') fim.setDate(fim.getDate() + valor * 7);
+        else fim.setMonth(fim.getMonth() + valor);
+        validoAte = fim.toISOString();
+      }
+    }
+
     const base = {
       empresa_id: empresaId,
       tipo_perfil: tipoPerfil,
       status,
-      valido_ate: null,
+      valido_ate: validoAte,
       atualizado_em: new Date().toISOString(),
     };
 
@@ -102,7 +118,7 @@ export async function PATCH(request: Request) {
     if (existe) await db.from('assinaturas').update(base).eq('empresa_id', empresaId);
     else await db.from('assinaturas').insert(base);
 
-    return NextResponse.json({ erro: false, status });
+    return NextResponse.json({ erro: false, status, validoAte });
   } catch (error) {
     console.error('Erro na ação sobre o perfil:', error);
     return NextResponse.json({ erro: true, mensagem: 'Não foi possível executar a ação.' }, { status: 500 });
