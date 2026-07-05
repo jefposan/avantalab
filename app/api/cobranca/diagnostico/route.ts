@@ -9,6 +9,7 @@ export async function GET() {
   const asaasKey = (process.env.ASAAS_API_KEY || '').trim();
 
   return NextResponse.json({
+    commit: (process.env.VERCEL_GIT_COMMIT_SHA || 'local').slice(0, 7), // qual versão está no ar
     cobrancaAtiva: process.env.NEXT_PUBLIC_COBRANCA_ATIVA === 'true',
     dataLancamento: process.env.NEXT_PUBLIC_COBRANCA_LANCAMENTO || '(padrão 2099)',
     asaasWebhookTokenLen: tokenWebhook.length, // deve bater com o token do webhook no Asaas (ex.: 32)
