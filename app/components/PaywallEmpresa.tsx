@@ -18,9 +18,8 @@ function formatarCpfCnpj(valor: string): string {
 
 interface PaywallEmpresaProps {
   nomePerfil?: string;
-  // Retorna mensagem de erro (string) em caso de falha; em caso de sucesso a
-  // navegação para o pagamento já acontece.
-  onAssinar?: (ciclo: 'mensal' | 'anual', cpfCnpj: string) => Promise<string | null | void>;
+  // Retorna { ok, url } em caso de sucesso, ou { ok:false, mensagem } em caso de falha.
+  onAssinar?: (ciclo: 'mensal' | 'anual', cpfCnpj: string) => Promise<{ ok: boolean; url?: string; mensagem?: string } | void>;
   onSair?: () => void;
 }
 
@@ -32,6 +31,7 @@ export default function PaywallEmpresa({ nomePerfil, onAssinar, onSair }: Paywal
   const [carregando, setCarregando] = useState<'mensal' | 'anual' | null>(null);
   const [erro, setErro] = useState('');
   const [cpfCnpj, setCpfCnpj] = useState('');
+  const [aguardandoPagamento, setAguardandoPagamento] = useState(false);
 
   const clicar = async (ciclo: 'mensal' | 'anual') => {
     if (carregando) return;
@@ -40,12 +40,22 @@ export default function PaywallEmpresa({ nomePerfil, onAssinar, onSair }: Paywal
       setErro('Informe um CPF (11 dígitos) ou CNPJ (14 dígitos) para a cobrança.');
       return;
     }
+    // Abre a aba do pagamento já no clique (evita bloqueio de pop-up).
+    const janela = window.open('', '_blank');
     setErro('');
     setCarregando(ciclo);
     try {
       const r = await onAssinar?.(ciclo, digitos);
-      if (typeof r === 'string' && r) setErro(r);
+      if (r && typeof r === 'object' && r.ok && r.url) {
+        if (janela) janela.location.href = r.url;
+        else window.open(r.url, '_blank');
+        setAguardandoPagamento(true);
+      } else {
+        if (janela) janela.close();
+        setErro((r && typeof r === 'object' && r.mensagem) || 'Não foi possível iniciar a assinatura.');
+      }
     } catch {
+      if (janela) janela.close();
       setErro('Não foi possível iniciar a assinatura agora.');
     } finally {
       setCarregando(null);
@@ -84,6 +94,20 @@ export default function PaywallEmpresa({ nomePerfil, onAssinar, onSair }: Paywal
           {erro && (
             <div className="mt-5 rounded-xl border border-red-300 bg-red-50/90 px-4 py-3 text-sm font-bold text-red-700">
               {erro}
+            </div>
+          )}
+
+          {aguardandoPagamento && (
+            <div className="mt-5 rounded-xl border border-sky-300 bg-sky-50/90 px-4 py-3 text-sm font-semibold text-sky-900">
+              Abrimos o pagamento em outra aba. Depois de concluir (Pix na hora, ou boleto ao compensar), volte aqui e clique em atualizar.
+              <button
+                type="button"
+                onClick={() => window.location.reload()}
+                className="mt-3 h-10 w-full rounded-xl text-sm font-black uppercase tracking-wide text-white shadow transition hover:brightness-110"
+                style={{ background: GRADIENTE }}
+              >
+                Já paguei — atualizar
+              </button>
             </div>
           )}
 

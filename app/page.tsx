@@ -341,21 +341,24 @@ const [validandoTelefoneObrigatorio, setValidandoTelefoneObrigatorio] = useState
     })();
     return () => { ativo = false; };
   }, [acessoLiberado, empresaId]);
-  const iniciarAssinatura = async (ciclo: 'mensal' | 'anual', cpfCnpj: string): Promise<string | null> => {
+  const iniciarAssinatura = async (
+    ciclo: 'mensal' | 'anual',
+    cpfCnpj: string,
+  ): Promise<{ ok: boolean; url?: string; mensagem?: string }> => {
     try {
       const { data: sessao } = await supabase.auth.getSession();
       const token = sessao.session?.access_token;
-      if (!token || !empresaId) return 'Sessão não encontrada. Entre novamente.';
+      if (!token || !empresaId) return { ok: false, mensagem: 'Sessão não encontrada. Entre novamente.' };
       const resp = await fetch('/api/cobranca/assinar', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify({ empresaId, plano: 'empresa', ciclo, cpfCnpj }),
       });
       const json = await resp.json();
-      if (resp.ok && json.invoiceUrl) { window.location.href = json.invoiceUrl; return null; }
-      return json.mensagem || 'Não foi possível iniciar a assinatura. Tente novamente.';
+      if (resp.ok && json.invoiceUrl) return { ok: true, url: json.invoiceUrl };
+      return { ok: false, mensagem: json.mensagem || 'Não foi possível iniciar a assinatura. Tente novamente.' };
     } catch {
-      return 'Não foi possível iniciar a assinatura agora.';
+      return { ok: false, mensagem: 'Não foi possível iniciar a assinatura agora.' };
     }
   };
   const [saldoCardMesIdx, setSaldoCardMesIdx] = useState<number>(new Date().getMonth());
