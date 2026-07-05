@@ -1,6 +1,21 @@
 'use client';
 import React, { useState } from 'react';
 
+// Formata como CPF (000.000.000-00) até 11 dígitos, ou CNPJ (00.000.000/0000-00) acima.
+function formatarCpfCnpj(valor: string): string {
+  const d = valor.replace(/\D/g, '').slice(0, 14);
+  if (d.length <= 11) {
+    let out = d.slice(0, 3);
+    if (d.length > 3) out += '.' + d.slice(3, 6);
+    if (d.length > 6) out += '.' + d.slice(6, 9);
+    if (d.length > 9) out += '-' + d.slice(9, 11);
+    return out;
+  }
+  let out = d.slice(0, 2) + '.' + d.slice(2, 5) + '.' + d.slice(5, 8) + '/' + d.slice(8, 12);
+  if (d.length > 12) out += '-' + d.slice(12, 14);
+  return out;
+}
+
 interface PaywallEmpresaProps {
   darkMode?: boolean;
   corPrimaria?: string;
@@ -72,8 +87,9 @@ export default function PaywallEmpresa({
             type="text"
             inputMode="numeric"
             value={cpfCnpj}
-            onChange={(e) => setCpfCnpj(e.target.value)}
-            placeholder="Somente números"
+            onChange={(e) => setCpfCnpj(formatarCpfCnpj(e.target.value))}
+            placeholder="000.000.000-00"
+            maxLength={18}
             className={`w-full rounded-xl border px-4 py-3 text-sm font-semibold outline-none transition focus:ring-2 ${
               darkMode
                 ? 'border-slate-600 bg-slate-900 text-white focus:ring-sky-500/30'
