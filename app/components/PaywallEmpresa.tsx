@@ -22,6 +22,8 @@ interface PaywallEmpresaProps {
   onAssinar?: (ciclo: 'mensal' | 'anual', cpfCnpj: string) => Promise<{ ok: boolean; url?: string; mensagem?: string } | void>;
   // Resgate de cupom: retorna mensagem de erro (string) ou nada em caso de sucesso.
   onResgatarCupom?: (codigo: string) => Promise<string | null | void>;
+  onTrocarPerfil?: () => void; // volta à seleção de perfis (se houver mais de um)
+  onCriarPerfil?: () => void;  // cria um novo perfil (empresa/pessoal)
   onSair?: () => void;
 }
 
@@ -29,7 +31,7 @@ const GRADIENTE = 'linear-gradient(135deg,#003E73,#00A6C8)';
 
 // Tela mostrada quando o trial de 7 dias da empresa venceu — com a identidade
 // visual da tela de login (fundo AvantaLab + card "vidro fosco").
-export default function PaywallEmpresa({ nomePerfil, onAssinar, onResgatarCupom, onSair }: PaywallEmpresaProps) {
+export default function PaywallEmpresa({ nomePerfil, onAssinar, onResgatarCupom, onTrocarPerfil, onCriarPerfil, onSair }: PaywallEmpresaProps) {
   const [carregando, setCarregando] = useState<'mensal' | 'anual' | null>(null);
   const [erro, setErro] = useState('');
   const [cpfCnpj, setCpfCnpj] = useState('');
@@ -208,12 +210,18 @@ export default function PaywallEmpresa({ nomePerfil, onAssinar, onResgatarCupom,
             {cupomErro && <p className="mt-2 text-xs font-bold text-red-600">{cupomErro}</p>}
           </div>
 
-          <div className="mt-6 text-center">
-            <button
-              type="button"
-              onClick={onSair}
-              className="text-xs font-black uppercase tracking-wide text-slate-500 transition hover:text-slate-800"
-            >
+          <div className="mt-6 flex flex-wrap items-center justify-center gap-x-4 gap-y-2 text-center">
+            {onTrocarPerfil && (
+              <button type="button" onClick={onTrocarPerfil} className="text-xs font-black uppercase tracking-wide text-sky-700 transition hover:text-sky-900">
+                Trocar de perfil
+              </button>
+            )}
+            {onCriarPerfil && (
+              <button type="button" onClick={onCriarPerfil} className="text-xs font-black uppercase tracking-wide text-sky-700 transition hover:text-sky-900">
+                Criar novo perfil
+              </button>
+            )}
+            <button type="button" onClick={onSair} className="text-xs font-black uppercase tracking-wide text-slate-500 transition hover:text-slate-800">
               Sair
             </button>
           </div>

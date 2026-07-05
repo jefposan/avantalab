@@ -5378,6 +5378,14 @@ if (modalSelecionarEmpresa) {
               Cancelar
             </button>
           </div>
+
+          <button
+            type="button"
+            onClick={abrirCriacaoNovaEmpresa}
+            className="mt-3 w-full text-center text-xs font-black uppercase tracking-wide text-sky-700 transition hover:text-sky-900 cursor-pointer"
+          >
+            Criar novo perfil
+          </button>
         </div>
       </section>
     </main>
@@ -5623,6 +5631,8 @@ if (isTelaMobile) {
         nomePerfil={nomeEmpresaAtual}
         onAssinar={iniciarAssinatura}
         onResgatarCupom={resgatarCupom}
+        onTrocarPerfil={empresasDoUsuario.length > 1 ? () => { setEmpresaId(null); setModalSelecionarEmpresa(true); } : undefined}
+        onCriarPerfil={abrirCriacaoNovaEmpresa}
         onSair={handleLogout}
       />
     );
