@@ -71,3 +71,11 @@ export function criarAssinaturaAsaas(dados: {
 export function obterAssinaturaAsaas(id: string) {
   return asaasFetch(`/subscriptions/${id}`, { method: 'GET' });
 }
+
+// Lista as cobranças de uma assinatura (a 1ª traz o link de pagamento: invoiceUrl).
+export function listarCobrancasAssinaturaAsaas(id: string) {
+  return asaasFetch<{ data: { id: string; invoiceUrl?: string; status?: string }[] }>(
+    `/subscriptions/${id}/payments`,
+    { method: 'GET' }
+  );
+}

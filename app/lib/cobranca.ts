@@ -22,6 +22,14 @@ export const DATA_LANCAMENTO = '2099-01-01T00:00:00Z';
 
 export type TipoPerfil = 'empresa' | 'pessoal';
 
+// Planos pagos e preços (R$). Fonte única da verdade.
+export type PlanoPago = 'empresa' | 'pessoal_premium';
+export type Ciclo = 'mensal' | 'anual';
+export const PRECOS: Record<PlanoPago, Record<Ciclo, number>> = {
+  empresa: { mensal: 34.9, anual: 348.0 },
+  pessoal_premium: { mensal: 9.9, anual: 99.0 },
+};
+
 export type StatusAssinatura =
   | 'trial'        // empresa nos 7 dias de teste
   | 'ativa'        // assinatura paga em dia

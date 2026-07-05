@@ -339,6 +339,23 @@ const [validandoTelefoneObrigatorio, setValidandoTelefoneObrigatorio] = useState
     })();
     return () => { ativo = false; };
   }, [acessoLiberado, empresaId]);
+  const iniciarAssinatura = async (ciclo: 'mensal' | 'anual') => {
+    try {
+      const { data: sessao } = await supabase.auth.getSession();
+      const token = sessao.session?.access_token;
+      if (!token || !empresaId) return;
+      const resp = await fetch('/api/cobranca/assinar', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ empresaId, plano: 'empresa', ciclo }),
+      });
+      const json = await resp.json();
+      if (resp.ok && json.invoiceUrl) { window.location.href = json.invoiceUrl; return; }
+      abrirAviso('Não foi possível iniciar a assinatura', json.mensagem || 'Tente novamente em instantes.', undefined, 'erro');
+    } catch {
+      abrirAviso('Erro', 'Não foi possível iniciar a assinatura agora.', undefined, 'erro');
+    }
+  };
   const [saldoCardMesIdx, setSaldoCardMesIdx] = useState<number>(new Date().getMonth());
   const dashboardCardsKanban = ['aConfirmar', 'saldo', 'resumoFinanceiro', 'evolucaoMensal', 'registrarEntradas', 'controlePonto'];
   const ordemDashboardPadrao = { a: ['aConfirmar', 'saldo', 'controlePonto'], b: ['resumoFinanceiro', 'evolucaoMensal', 'registrarEntradas'] };
@@ -5581,6 +5598,7 @@ if (isTelaMobile) {
         darkMode={darkMode}
         corPrimaria={corPrimaria}
         nomePerfil={nomeEmpresaAtual}
+        onAssinar={iniciarAssinatura}
         onSair={confirmarLogout}
       />
     );
