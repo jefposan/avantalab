@@ -30,11 +30,20 @@ export async function GET(request: Request) {
     const { autorizado, db } = await exigirAdmin(request);
     if (!autorizado) return naoAutorizado();
 
-    const q = (new URL(request.url).searchParams.get('q') || '').trim();
-    let query = db.from('empresas').select('id, nome, tipo_perfil, created_at').order('nome', { ascending: true }).limit(50);
+    const url = new URL(request.url);
+    const q = (url.searchParams.get('q') || '').trim();
+    const pagina = Math.max(1, Number(url.searchParams.get('pagina')) || 1);
+    const porPagina = [20, 50, 100].includes(Number(url.searchParams.get('porPagina'))) ? Number(url.searchParams.get('porPagina')) : 20;
+    const de = (pagina - 1) * porPagina;
+    const ate = de + porPagina - 1;
+
+    let query = db.from('empresas')
+      .select('id, nome, tipo_perfil, created_at', { count: 'exact' })
+      .order('nome', { ascending: true })
+      .range(de, ate);
     if (q) query = query.ilike('nome', `%${q}%`);
 
-    const { data: empresas, error } = await query;
+    const { data: empresas, error, count } = await query;
     if (error) throw error;
 
     const ids = (empresas || []).map((e) => e.id);
@@ -59,7 +68,7 @@ export async function GET(request: Request) {
         tem_registro: Boolean(mapa.get(e.id)),
       };
     });
-    return NextResponse.json({ erro: false, perfis });
+    return NextResponse.json({ erro: false, perfis, total: count || 0, pagina, porPagina });
   } catch (error) {
     console.error('Erro ao buscar perfis:', error);
     return NextResponse.json({ erro: true, mensagem: 'Não foi possível buscar os perfis.' }, { status: 500 });
