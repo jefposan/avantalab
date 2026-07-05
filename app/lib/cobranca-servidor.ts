@@ -33,7 +33,7 @@ export async function resolverEstadoAcesso(empresaId: string): Promise<EstadoAce
   // 1) Já existe assinatura registrada? Ela é a fonte da verdade.
   const { data: assin } = await db
     .from('assinaturas')
-    .select('tipo_perfil, status, valido_ate, trial_fim')
+    .select('tipo_perfil, status, valido_ate, trial_fim, plano, ciclo')
     .eq('empresa_id', empresaId)
     .maybeSingle();
 
@@ -43,6 +43,8 @@ export async function resolverEstadoAcesso(empresaId: string): Promise<EstadoAce
       status: assin.status as StatusAssinatura,
       validoAte: assin.valido_ate,
       trialFim: assin.trial_fim,
+      plano: assin.plano ?? null,
+      ciclo: assin.ciclo ?? null,
     };
   }
 
@@ -61,16 +63,16 @@ export async function resolverEstadoAcesso(empresaId: string): Promise<EstadoAce
 
   // Clientes/avaliadores anteriores ao lançamento: mantêm acesso.
   if (anteriorAoLancamento) {
-    return { tipoPerfil, status: 'ativa', validoAte: null, trialFim: null };
+    return { tipoPerfil, status: 'ativa', validoAte: null, trialFim: null, plano: null, ciclo: null };
   }
 
   // Novos, após o lançamento:
   if (tipoPerfil === 'empresa') {
     const fim = new Date(criadoEm as Date);
     fim.setDate(fim.getDate() + TRIAL_DIAS);
-    return { tipoPerfil, status: 'trial', validoAte: null, trialFim: fim.toISOString() };
+    return { tipoPerfil, status: 'trial', validoAte: null, trialFim: fim.toISOString(), plano: null, ciclo: null };
   }
 
   // Pessoal novo → grátis (núcleo sempre livre; recursos premium bloqueados).
-  return { tipoPerfil, status: 'expirada', validoAte: null, trialFim: null };
+  return { tipoPerfil, status: 'expirada', validoAte: null, trialFim: null, plano: null, ciclo: null };
 }

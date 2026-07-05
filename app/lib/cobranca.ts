@@ -46,7 +46,30 @@ export type EstadoAcesso = {
   status: StatusAssinatura;
   validoAte: string | null;   // até quando o acesso vale (nulo = sem prazo)
   trialFim: string | null;    // fim do trial (perfil empresa)
+  plano: string | null;       // ex.: 'empresa', 'pessoal_premium'
+  ciclo: string | null;       // 'mensal' | 'anual'
 };
+
+// Rótulo amigável do status, para exibir ao usuário.
+export function rotuloStatusAssinatura(status: StatusAssinatura): string {
+  const mapa: Record<StatusAssinatura, string> = {
+    trial: 'Período de teste',
+    ativa: 'Ativa',
+    expirada: 'Vencida',
+    cancelada: 'Cancelada',
+    cortesia: 'Cortesia',
+    inadimplente: 'Pagamento pendente',
+  };
+  return mapa[status] || status;
+}
+
+// Rótulo amigável do plano + ciclo.
+export function rotuloPlano(plano: string | null, ciclo: string | null): string {
+  if (!plano) return '—';
+  const nome = plano === 'pessoal_premium' ? 'Premium Pessoal' : 'Empresa';
+  const cic = ciclo === 'anual' ? 'Anual' : ciclo === 'mensal' ? 'Mensal' : '';
+  return cic ? `${nome} · ${cic}` : nome;
+}
 
 // Recursos premium — bloqueados no plano grátis do perfil Pessoal.
 // (No perfil Empresa o acesso é tudo-ou-nada, tratado pelo paywall.)

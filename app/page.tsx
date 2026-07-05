@@ -21,6 +21,7 @@ import CardEntradaFaturamento from './components/CardEntradaFaturamento';
 import TabelaLancamentosDespesa from './components/TabelaLancamentosDespesa';
 import TourPrimeiroAcesso from './components/TourPrimeiroAcesso';
 import PaywallEmpresa from './components/PaywallEmpresa';
+import AssinaturaModal from './components/AssinaturaModal';
 import { COBRANCA_ATIVA, precisaPaywallEmpresa, type EstadoAcesso } from './lib/cobranca';
 import {
   formatarMoeda,
@@ -322,6 +323,7 @@ const [validandoTelefoneObrigatorio, setValidandoTelefoneObrigatorio] = useState
   const [abaAtiva, setAbaAtiva] = useState('Dashboard');
   // Cobrança: estado de acesso do perfil (só é buscado quando COBRANCA_ATIVA=true).
   const [estadoAcesso, setEstadoAcesso] = useState<EstadoAcesso | null>(null);
+  const [modalAssinatura, setModalAssinatura] = useState(false);
   useEffect(() => {
     if (!COBRANCA_ATIVA || !acessoLiberado || !empresaId) { setEstadoAcesso(null); return; }
     let ativo = true;
@@ -5990,6 +5992,14 @@ if (isTelaMobile) {
   versaoAtual={APP_VERSION}
 />
 
+<AssinaturaModal
+  aberto={modalAssinatura}
+  onFechar={() => setModalAssinatura(false)}
+  darkMode={darkMode}
+  corPrimaria={corPrimaria}
+  estado={estadoAcesso}
+/>
+
 <ModalConfirmacao
   aberto={modalConfirmacaoAberto}
   titulo={tituloConfirmacao}
@@ -7776,6 +7786,22 @@ name="novo-usuario-login"
             Módulos
           </button>
         </Tooltip>
+
+        {/* 3b. Assinatura (só com cobrança ativa, para gestor master / administrador) */}
+        {COBRANCA_ATIVA && (perfilUsuario === 'gestor_master' || perfilUsuario === 'administrador') && (
+          <Tooltip texto="Veja a situação da sua assinatura e do plano." posicao="bottom">
+            <button
+              onClick={() => { setAjustesAberto(false); setModalAssinatura(true); }}
+              className="whitespace-nowrap bg-slate-800 hover:bg-slate-700 px-3 py-1.5 rounded-lg border transition-colors font-bold shadow flex items-center gap-1.5 text-xs"
+              style={{ borderColor: corPrimaria }}
+            >
+              <svg className="w-3.5 h-3.5" fill="none" stroke="#ffffff" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+              </svg>
+              Assinatura
+            </button>
+          </Tooltip>
+        )}
 
         {/* 4. Ponto */}
         {modulosAtivos.includes('ponto') && podeGerenciarPonto && (
