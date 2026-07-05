@@ -3,8 +3,20 @@
 import { useMemo, useState } from 'react';
 
 type FeedbackStatus = 'novo' | 'em_analise' | 'respondido' | 'arquivado';
-type AdminView = 'avaliacoes' | 'disparos' | 'configuracoes';
+type AdminView = 'avaliacoes' | 'disparos' | 'cupons' | 'configuracoes';
 type StatusFilter = 'ativos' | 'todos' | FeedbackStatus;
+
+type Cupom = {
+  id: string;
+  codigo: string;
+  tipo: 'vitalicio' | 'periodo';
+  duracao_meses: number | null;
+  max_usos: number | null;
+  usos: number;
+  validade: string | null;
+  ativo: boolean;
+  criado_em: string;
+};
 
 type Feedback = {
   id: string;
@@ -32,7 +44,7 @@ type Disparo = {
   created_at?: string;
 };
 
-type IconName = 'inbox' | 'send' | 'settings' | 'refresh' | 'check' | 'archive' | 'trash' | 'reopen' | 'logout' | 'lock';
+type IconName = 'inbox' | 'send' | 'settings' | 'refresh' | 'check' | 'archive' | 'trash' | 'reopen' | 'logout' | 'lock' | 'ticket';
 
 function Icon({ name, size = 17 }: { name: IconName; size?: number }) {
   const common = { width: size, height: size, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: 2, strokeLinecap: 'round' as const, strokeLinejoin: 'round' as const };
@@ -45,6 +57,7 @@ function Icon({ name, size = 17 }: { name: IconName; size?: number }) {
   if (name === 'reopen') return <svg {...common}><path d="M3 12a9 9 0 1 0 3-6.7L3 8" /><path d="M3 3v5h5" /></svg>;
   if (name === 'logout') return <svg {...common}><path d="M10 17l5-5-5-5M15 12H3M14 3h5a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-5" /></svg>;
   if (name === 'lock') return <svg {...common}><rect x="4" y="10" width="16" height="11" rx="2" /><path d="M8 10V7a4 4 0 0 1 8 0v3" /></svg>;
+  if (name === 'ticket') return <svg {...common}><path d="M3 9a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2 2 2 0 0 0 0 4 2 2 0 0 1-2 2H5a2 2 0 0 1-2-2 2 2 0 0 0 0-4Z" /><path d="M13 7v10" /></svg>;
   return <svg {...common}><path d="M4 4h16v13H7l-3 3Z" /><path d="M8 9h8M8 13h5" /></svg>;
 }
 
@@ -95,8 +108,69 @@ export default function AdminPage() {
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [savingPassword, setSavingPassword] = useState(false);
+  const [cupons, setCupons] = useState<Cupom[]>([]);
+  const [cupomCodigo, setCupomCodigo] = useState('');
+  const [cupomTipo, setCupomTipo] = useState<'vitalicio' | 'periodo'>('vitalicio');
+  const [cupomDuracao, setCupomDuracao] = useState('3');
+  const [cupomMaxUsos, setCupomMaxUsos] = useState('');
+  const [creatingCupom, setCreatingCupom] = useState(false);
 
   const authHeaders = (value = token) => ({ Authorization: `Bearer ${value.trim()}` });
+
+  const loadCupons = async (value = token) => {
+    const response = await fetch('/api/admin-cupons', { headers: authHeaders(value) });
+    const data = await response.json().catch(() => null);
+    if (response.ok && !data?.erro) setCupons(data.cupons || []);
+  };
+
+  const criarCupom = async () => {
+    const codigo = cupomCodigo.trim().toUpperCase();
+    if (!codigo) { setError('Informe o código do cupom.'); return; }
+    setCreatingCupom(true);
+    setError('');
+    setNotice('');
+    try {
+      const response = await fetch('/api/admin-cupons', {
+        method: 'POST',
+        headers: { ...authHeaders(), 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          codigo,
+          tipo: cupomTipo,
+          duracaoMeses: cupomTipo === 'periodo' ? Number(cupomDuracao) : null,
+          maxUsos: cupomMaxUsos ? Number(cupomMaxUsos) : null,
+        }),
+      });
+      const data = await response.json().catch(() => null);
+      if (!response.ok || data?.erro) throw new Error(data?.mensagem || 'Não foi possível criar o cupom.');
+      setCupons((current) => [data.cupom, ...current]);
+      setCupomCodigo('');
+      setCupomMaxUsos('');
+      setNotice(`Cupom "${codigo}" criado.`);
+    } catch (requestError) {
+      setError(requestError instanceof Error ? requestError.message : 'Não foi possível criar o cupom.');
+    } finally {
+      setCreatingCupom(false);
+    }
+  };
+
+  const toggleCupom = async (cupom: Cupom) => {
+    setWorkingId(cupom.id);
+    setError('');
+    try {
+      const response = await fetch('/api/admin-cupons', {
+        method: 'PATCH',
+        headers: { ...authHeaders(), 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: cupom.id, ativo: !cupom.ativo }),
+      });
+      const data = await response.json().catch(() => null);
+      if (!response.ok || data?.erro) throw new Error(data?.mensagem || 'Não foi possível atualizar.');
+      setCupons((current) => current.map((item) => item.id === cupom.id ? { ...item, ativo: !item.ativo } : item));
+    } catch (requestError) {
+      setError(requestError instanceof Error ? requestError.message : 'Não foi possível atualizar.');
+    } finally {
+      setWorkingId(null);
+    }
+  };
 
   const loadBroadcasts = async (value = token) => {
     const response = await fetch('/api/admin-disparos', { headers: authHeaders(value) });
@@ -132,7 +206,7 @@ export default function AdminPage() {
       }
       setFeedbacks(data.feedbacks || []);
       setAuthorized(true);
-      await Promise.allSettled([loadBroadcasts(cleanToken), loadSettings(cleanToken)]);
+      await Promise.allSettled([loadBroadcasts(cleanToken), loadSettings(cleanToken), loadCupons(cleanToken)]);
     } catch {
       setAuthorized(false);
       setError('Erro inesperado ao acessar o painel.');
@@ -256,6 +330,7 @@ export default function AdminPage() {
   const navigation: { id: AdminView; label: string; icon: IconName }[] = [
     { id: 'avaliacoes', label: 'Avaliações', icon: 'inbox' },
     { id: 'disparos', label: 'Disparos', icon: 'send' },
+    { id: 'cupons', label: 'Cupons', icon: 'ticket' },
     { id: 'configuracoes', label: 'Configurações', icon: 'settings' },
   ];
 
@@ -271,7 +346,7 @@ export default function AdminPage() {
             {authorized && <button type="button" onClick={logout} className="flex h-9 items-center gap-2 rounded-md border border-slate-300 px-3 text-xs font-bold text-slate-700 hover:bg-slate-50"><Icon name="logout" />Sair</button>}
           </div>
 
-          {authorized && <nav className="grid grid-cols-3 gap-1 border-t border-slate-100 py-2" aria-label="Áreas administrativas">
+          {authorized && <nav className="grid grid-cols-4 gap-1 border-t border-slate-100 py-2" aria-label="Áreas administrativas">
             {navigation.map((item) => <button key={item.id} type="button" onClick={() => { setView(item.id); setError(''); setNotice(''); }} className={`flex h-10 min-w-0 items-center justify-center gap-2 rounded-md px-2 text-xs font-black transition ${view === item.id ? 'bg-cyan-700 text-white shadow-sm' : 'text-slate-600 hover:bg-slate-100'}`}><Icon name={item.icon} /><span className="truncate">{item.label}</span></button>)}
           </nav>}
         </div>
@@ -338,6 +413,29 @@ export default function AdminPage() {
             <section className="min-w-0"><div className="mb-3 flex items-center justify-between gap-2"><div><h2 className="text-base font-black text-slate-950">Histórico de envios</h2><p className="text-xs text-slate-500">Últimos 100 disparos realizados.</p></div><button type="button" onClick={() => void loadBroadcasts()} className="flex h-9 items-center gap-1.5 rounded-md border border-slate-300 bg-white px-3 text-[10px] font-black uppercase"><Icon name="refresh" size={15} />Atualizar</button></div>
               {historyPending && <div className="mb-3 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-bold text-amber-800">Execute a migração administrativa no Supabase para ativar o histórico.</div>}
               {broadcasts.length === 0 ? <div className="rounded-lg border border-dashed border-slate-300 bg-white px-4 py-10 text-center text-sm text-slate-500">Nenhum disparo registrado.</div> : <div className="grid gap-2">{broadcasts.map((item, index) => <article key={item.id || `${item.created_at}-${index}`} className="rounded-lg border border-slate-200 bg-white p-3 shadow-sm"><div className="flex items-start justify-between gap-3"><div className="min-w-0"><h3 className="truncate text-sm font-black text-slate-950">{item.titulo}</h3><p className="mt-1 whitespace-pre-wrap break-words text-xs leading-relaxed text-slate-600">{item.mensagem}</p></div><span className={`shrink-0 rounded-full px-2 py-1 text-[9px] font-black uppercase ${item.status === 'enviado' ? 'bg-emerald-50 text-emerald-700' : 'bg-red-50 text-red-700'}`}>{item.status}</span></div><div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 border-t border-slate-100 pt-2 text-[10px] font-bold text-slate-500"><span>{formatDate(item.created_at)}</span><span>{item.usuarios} usuários</span><span>{item.pushes_enviados}/{item.total_inscricoes} pushes</span></div>{item.erro && <p className="mt-2 text-xs font-bold text-red-700">{item.erro}</p>}</article>)}</div>}
+            </section>
+          </div>}
+
+          {view === 'cupons' && <div className="grid gap-4 lg:grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)]">
+            <section className="self-start rounded-lg border border-slate-200 bg-white p-4 shadow-sm lg:sticky lg:top-32">
+              <p className="text-[9px] font-black uppercase tracking-[0.2em] text-cyan-700">Cortesias</p><h2 className="mt-1 text-lg font-black text-slate-950">Novo cupom</h2><p className="mt-1 text-xs leading-relaxed text-slate-500">Libera acesso sem pagamento (avaliadores, promoções). Vale para empresa e pessoal.</p>
+              <label className="mt-4 block text-[10px] font-black uppercase text-slate-500">Código</label><input value={cupomCodigo} onChange={(event) => setCupomCodigo(event.target.value.toUpperCase())} placeholder="EX: AVALIADOR" className="mt-1 h-10 w-full rounded-md border border-slate-300 px-3 text-sm font-bold uppercase tracking-wide outline-none focus:border-cyan-700" />
+              <label className="mt-3 block text-[10px] font-black uppercase text-slate-500">Tipo</label><select value={cupomTipo} onChange={(event) => setCupomTipo(event.target.value as 'vitalicio' | 'periodo')} className="mt-1 h-10 w-full rounded-md border border-slate-300 bg-white px-3 text-sm font-bold outline-none focus:border-cyan-700"><option value="vitalicio">Vitalício (sem prazo)</option><option value="periodo">Período (meses)</option></select>
+              {cupomTipo === 'periodo' && <><label className="mt-3 block text-[10px] font-black uppercase text-slate-500">Duração (meses)</label><input type="number" min={1} value={cupomDuracao} onChange={(event) => setCupomDuracao(event.target.value)} className="mt-1 h-10 w-full rounded-md border border-slate-300 px-3 text-sm outline-none focus:border-cyan-700" /></>}
+              <label className="mt-3 block text-[10px] font-black uppercase text-slate-500">Limite de usos (opcional)</label><input type="number" min={1} value={cupomMaxUsos} onChange={(event) => setCupomMaxUsos(event.target.value)} placeholder="Ilimitado" className="mt-1 h-10 w-full rounded-md border border-slate-300 px-3 text-sm outline-none focus:border-cyan-700" />
+              <button type="button" onClick={() => void criarCupom()} disabled={creatingCupom || !cupomCodigo.trim()} className="mt-4 flex h-11 w-full items-center justify-center gap-2 rounded-md bg-cyan-700 text-xs font-black uppercase text-white hover:bg-cyan-800 disabled:opacity-60"><Icon name="ticket" />{creatingCupom ? 'Criando...' : 'Criar cupom'}</button>
+            </section>
+            <section className="min-w-0">
+              <div className="mb-3 flex items-center justify-between gap-2"><div><h2 className="text-base font-black text-slate-950">Cupons</h2><p className="text-xs text-slate-500">Ative ou desative a qualquer momento.</p></div><button type="button" onClick={() => void loadCupons()} className="flex h-9 items-center gap-1.5 rounded-md border border-slate-300 bg-white px-3 text-[10px] font-black uppercase"><Icon name="refresh" size={15} />Atualizar</button></div>
+              {cupons.length === 0 ? <div className="rounded-lg border border-dashed border-slate-300 bg-white px-4 py-10 text-center text-sm text-slate-500">Nenhum cupom criado.</div> : <div className="grid gap-2">{cupons.map((cupom) => {
+                const busy = workingId === cupom.id;
+                const detalhe = cupom.tipo === 'vitalicio' ? 'Vitalício' : `${cupom.duracao_meses} ${cupom.duracao_meses === 1 ? 'mês' : 'meses'}`;
+                const usosTxt = cupom.max_usos ? `${cupom.usos}/${cupom.max_usos} usos` : `${cupom.usos} usos`;
+                return <article key={cupom.id} className="flex items-center justify-between gap-3 rounded-lg border border-slate-200 bg-white p-3 shadow-sm">
+                  <div className="min-w-0"><div className="flex flex-wrap items-center gap-1.5"><span className="font-mono text-sm font-black text-slate-950">{cupom.codigo}</span><span className={`rounded-full border px-2 py-0.5 text-[9px] font-black uppercase ${cupom.ativo ? 'border-emerald-200 bg-emerald-50 text-emerald-700' : 'border-slate-200 bg-slate-100 text-slate-500'}`}>{cupom.ativo ? 'Ativo' : 'Inativo'}</span></div><p className="mt-1 text-[11px] font-bold text-slate-500">{detalhe} · {usosTxt}</p></div>
+                  <button type="button" onClick={() => void toggleCupom(cupom)} disabled={busy} className={`shrink-0 rounded-md border px-3 py-2 text-[10px] font-black uppercase disabled:opacity-50 ${cupom.ativo ? 'border-slate-300 text-slate-600 hover:bg-slate-50' : 'border-emerald-200 text-emerald-700 hover:bg-emerald-50'}`}>{cupom.ativo ? 'Desativar' : 'Ativar'}</button>
+                </article>;
+              })}</div>}
             </section>
           </div>}
 
