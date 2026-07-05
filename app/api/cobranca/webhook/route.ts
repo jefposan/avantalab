@@ -13,15 +13,33 @@ import { createClient } from '@supabase/supabase-js';
 // ─────────────────────────────────────────────────────────────
 
 export async function POST(request: Request) {
-  // 1) Autenticidade: só aceita se o token bater com o nosso segredo.
   // (trim tolera espaço/quebra de linha acidental ao colar o valor)
   const tokenEsperado = (process.env.ASAAS_WEBHOOK_TOKEN || '').trim();
   const tokenRecebido = (request.headers.get('asaas-access-token') || '').trim();
-  if (!tokenEsperado || tokenRecebido !== tokenEsperado) {
-    // Diagnóstico seguro (só tamanhos, nunca os valores):
-    //  esperadoLen = 0  → variável ASAAS_WEBHOOK_TOKEN vazia no deploy (não setada / sem redeploy)
-    //  recebidoLen = 0  → Asaas não enviou o header (token não salvo no webhook)
-    //  tamanhos diferentes → tokens diferentes; iguais → provável erro de digitação
+  const autorizado = Boolean(tokenEsperado) && tokenRecebido === tokenEsperado;
+
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
+  const serviceRole = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
+
+  const corpo = await request.json().catch(() => null);
+  const evento: string | null = corpo?.event ? String(corpo.event) : null;
+  const assinaturaGw: string | null = corpo?.payment?.subscription || null;
+
+  // LOG de diagnóstico (TEMPORÁRIO): registra toda chamada, mesmo recusada.
+  if (supabaseUrl && serviceRole) {
+    try {
+      await createClient(supabaseUrl, serviceRole).from('cobranca_webhook_log').insert({
+        evento,
+        assinatura_gw: assinaturaGw,
+        esperado_len: tokenEsperado.length,
+        recebido_len: tokenRecebido.length,
+        autorizado,
+      });
+    } catch { /* ignora falha de log */ }
+  }
+
+  // 1) Autenticidade
+  if (!autorizado) {
     return NextResponse.json({
       erro: true,
       mensagem: 'não autorizado',
@@ -29,23 +47,8 @@ export async function POST(request: Request) {
     }, { status: 401 });
   }
 
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const serviceRole = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  if (!supabaseUrl || !serviceRole) {
-    return NextResponse.json({ erro: true }, { status: 500 });
-  }
-
-  const corpo = await request.json().catch(() => null);
-  if (!corpo || !corpo.event) {
-    // Responde 200 pra Asaas não reenviar; simplesmente não há o que fazer.
-    return NextResponse.json({ recebido: true });
-  }
-
-  const evento = String(corpo.event);
-  const pagamento = corpo.payment || {};
-  const assinaturaGw: string | null = pagamento.subscription || null; // id da assinatura na Asaas
-
-  // Só tratamos eventos ligados a uma assinatura nossa.
+  if (!supabaseUrl || !serviceRole) return NextResponse.json({ erro: true }, { status: 500 });
+  if (!corpo || !evento) return NextResponse.json({ recebido: true });
   if (!assinaturaGw) return NextResponse.json({ recebido: true });
 
   // Mapeia o evento da Asaas para o status da nossa assinatura.
@@ -62,11 +65,9 @@ export async function POST(request: Request) {
     novoStatus = 'cancelada';
   }
 
-  // Evento que ainda não tratamos → apenas confirma o recebimento.
   if (!novoStatus) return NextResponse.json({ recebido: true });
 
   const db = createClient(supabaseUrl, serviceRole);
-  // Atualização idempotente: reprocessar o mesmo evento não causa efeito colateral.
   await db
     .from('assinaturas')
     .update({ status: novoStatus, atualizado_em: new Date().toISOString() })
