@@ -49,14 +49,14 @@ export async function resolverEstadoAcesso(empresaId: string): Promise<EstadoAce
   // 2) Sem assinatura → derivar do próprio perfil.
   const { data: emp } = await db
     .from('empresas')
-    .select('tipo_perfil, criado_em')
+    .select('tipo_perfil, created_at')
     .eq('id', empresaId)
     .maybeSingle();
 
   if (!emp) return null; // sem info → o "cérebro" trata como fail-open (não bloqueia)
 
   const tipoPerfil: TipoPerfil = emp.tipo_perfil === 'pessoal' ? 'pessoal' : 'empresa';
-  const criadoEm = emp.criado_em ? new Date(emp.criado_em) : null;
+  const criadoEm = emp.created_at ? new Date(emp.created_at) : null;
   const anteriorAoLancamento = !criadoEm || criadoEm < new Date(DATA_LANCAMENTO);
 
   // Clientes/avaliadores anteriores ao lançamento: mantêm acesso.
