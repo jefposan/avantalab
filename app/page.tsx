@@ -361,6 +361,23 @@ const [validandoTelefoneObrigatorio, setValidandoTelefoneObrigatorio] = useState
       return { ok: false, mensagem: 'Não foi possível iniciar a assinatura agora.' };
     }
   };
+  const resgatarCupom = async (codigo: string): Promise<string | null> => {
+    try {
+      const { data: sessao } = await supabase.auth.getSession();
+      const token = sessao.session?.access_token;
+      if (!token || !empresaId) return 'Sessão não encontrada. Entre novamente.';
+      const resp = await fetch('/api/cobranca/resgatar-cupom', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ empresaId, codigo }),
+      });
+      const json = await resp.json();
+      if (resp.ok && json.ok) { window.location.reload(); return null; }
+      return json.mensagem || 'Não foi possível aplicar o cupom.';
+    } catch {
+      return 'Não foi possível aplicar o cupom agora.';
+    }
+  };
   const [saldoCardMesIdx, setSaldoCardMesIdx] = useState<number>(new Date().getMonth());
   const dashboardCardsKanban = ['aConfirmar', 'saldo', 'resumoFinanceiro', 'evolucaoMensal', 'registrarEntradas', 'controlePonto'];
   const ordemDashboardPadrao = { a: ['aConfirmar', 'saldo', 'controlePonto'], b: ['resumoFinanceiro', 'evolucaoMensal', 'registrarEntradas'] };
@@ -5602,6 +5619,7 @@ if (isTelaMobile) {
       <PaywallEmpresa
         nomePerfil={nomeEmpresaAtual}
         onAssinar={iniciarAssinatura}
+        onResgatarCupom={resgatarCupom}
         onSair={handleLogout}
       />
     );

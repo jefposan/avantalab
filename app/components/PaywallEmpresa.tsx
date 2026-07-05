@@ -20,6 +20,8 @@ interface PaywallEmpresaProps {
   nomePerfil?: string;
   // Retorna { ok, url } em caso de sucesso, ou { ok:false, mensagem } em caso de falha.
   onAssinar?: (ciclo: 'mensal' | 'anual', cpfCnpj: string) => Promise<{ ok: boolean; url?: string; mensagem?: string } | void>;
+  // Resgate de cupom: retorna mensagem de erro (string) ou nada em caso de sucesso.
+  onResgatarCupom?: (codigo: string) => Promise<string | null | void>;
   onSair?: () => void;
 }
 
@@ -27,11 +29,30 @@ const GRADIENTE = 'linear-gradient(135deg,#003E73,#00A6C8)';
 
 // Tela mostrada quando o trial de 7 dias da empresa venceu — com a identidade
 // visual da tela de login (fundo AvantaLab + card "vidro fosco").
-export default function PaywallEmpresa({ nomePerfil, onAssinar, onSair }: PaywallEmpresaProps) {
+export default function PaywallEmpresa({ nomePerfil, onAssinar, onResgatarCupom, onSair }: PaywallEmpresaProps) {
   const [carregando, setCarregando] = useState<'mensal' | 'anual' | null>(null);
   const [erro, setErro] = useState('');
   const [cpfCnpj, setCpfCnpj] = useState('');
   const [aguardandoPagamento, setAguardandoPagamento] = useState(false);
+  const [cupom, setCupom] = useState('');
+  const [resgatando, setResgatando] = useState(false);
+  const [cupomErro, setCupomErro] = useState('');
+
+  const resgatar = async () => {
+    const codigo = cupom.trim();
+    if (!codigo || resgatando) return;
+    setCupomErro('');
+    setResgatando(true);
+    try {
+      const r = await onResgatarCupom?.(codigo);
+      if (typeof r === 'string' && r) setCupomErro(r);
+      // sucesso: o handler recarrega a página (o acesso é liberado)
+    } catch {
+      setCupomErro('Não foi possível aplicar o cupom agora.');
+    } finally {
+      setResgatando(false);
+    }
+  };
 
   const clicar = async (ciclo: 'mensal' | 'anual') => {
     if (carregando) return;
@@ -162,6 +183,29 @@ export default function PaywallEmpresa({ nomePerfil, onAssinar, onSair }: Paywal
                 {carregando === 'anual' ? 'Processando…' : 'Assinar anual'}
               </button>
             </div>
+          </div>
+
+          {/* Cupom */}
+          <div className="mt-5 border-t border-slate-200 pt-4">
+            <label className="mb-1 block text-xs font-black uppercase tracking-wide text-slate-500">Tem um cupom?</label>
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={cupom}
+                onChange={(e) => { setCupom(e.target.value.toUpperCase()); setCupomErro(''); }}
+                placeholder="Digite o código"
+                className="min-w-0 flex-1 rounded-xl border border-slate-300 bg-white/90 px-4 py-3 text-sm font-semibold uppercase tracking-wide text-slate-800 outline-none transition focus:border-sky-600 focus:ring-2 focus:ring-sky-600/20"
+              />
+              <button
+                type="button"
+                onClick={resgatar}
+                disabled={resgatando || !cupom.trim()}
+                className="shrink-0 rounded-xl border border-slate-300 bg-white/85 px-4 text-sm font-black uppercase tracking-wide text-slate-700 shadow-sm transition hover:bg-white active:scale-[0.98] disabled:opacity-50"
+              >
+                {resgatando ? '...' : 'Aplicar'}
+              </button>
+            </div>
+            {cupomErro && <p className="mt-2 text-xs font-bold text-red-600">{cupomErro}</p>}
           </div>
 
           <div className="mt-6 text-center">
