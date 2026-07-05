@@ -14,10 +14,19 @@ import { createClient } from '@supabase/supabase-js';
 
 export async function POST(request: Request) {
   // 1) Autenticidade: só aceita se o token bater com o nosso segredo.
-  const tokenEsperado = process.env.ASAAS_WEBHOOK_TOKEN || '';
-  const tokenRecebido = request.headers.get('asaas-access-token') || '';
+  // (trim tolera espaço/quebra de linha acidental ao colar o valor)
+  const tokenEsperado = (process.env.ASAAS_WEBHOOK_TOKEN || '').trim();
+  const tokenRecebido = (request.headers.get('asaas-access-token') || '').trim();
   if (!tokenEsperado || tokenRecebido !== tokenEsperado) {
-    return NextResponse.json({ erro: true, mensagem: 'não autorizado' }, { status: 401 });
+    // Diagnóstico seguro (só tamanhos, nunca os valores):
+    //  esperadoLen = 0  → variável ASAAS_WEBHOOK_TOKEN vazia no deploy (não setada / sem redeploy)
+    //  recebidoLen = 0  → Asaas não enviou o header (token não salvo no webhook)
+    //  tamanhos diferentes → tokens diferentes; iguais → provável erro de digitação
+    return NextResponse.json({
+      erro: true,
+      mensagem: 'não autorizado',
+      debug: { esperadoLen: tokenEsperado.length, recebidoLen: tokenRecebido.length },
+    }, { status: 401 });
   }
 
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
