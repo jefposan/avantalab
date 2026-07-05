@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { resolverEstadoAcesso } from '../../../lib/cobranca-servidor';
+import { precisaPaywallEmpresa, PRECOS } from '../../../lib/cobranca';
 
 export const runtime = 'nodejs';
 
@@ -46,7 +47,8 @@ export async function GET(request: Request) {
     return NextResponse.json({ erro: true, mensagem: 'sem acesso a este perfil' }, { status: 403 });
   }
 
-  // 3) Resolve e devolve o estado.
+  // 3) Resolve e devolve o estado. `precisaPaywall` é calculado no servidor
+  //    (já considera a flag COBRANCA_ATIVA) — usado pelo app mobile.
   const estado = await resolverEstadoAcesso(empresaId);
-  return NextResponse.json({ estado });
+  return NextResponse.json({ estado, precisaPaywall: precisaPaywallEmpresa(estado), precos: PRECOS });
 }

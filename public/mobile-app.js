@@ -70,6 +70,13 @@
     usuario: null,
     empresas: [],
     empresa: null,
+    // Cobrança (paywall do perfil empresa vencido)
+    paywallAtivo: false,
+    paywallNome: '',
+    paywallPrecos: null,
+    paywallMsg: '',
+    paywallCupomMsg: '',
+    paywallProcessando: false,
     mes: meses[new Date().getMonth()],
     ano: String(new Date().getFullYear()),
     faturamentos: {},
@@ -482,6 +489,113 @@
   function nomeEmpresa(empresa) {
     return (empresa && (empresa.nome || empresa.empresa_nome)) || 'Perfil';
   }
+
+  // ── Cobrança: paywall do perfil empresa vencido ──────────────
+  function telaPaywallMobile() {
+    var precos = state.paywallPrecos || { empresa: { mensal: 34.9, anual: 348 } };
+    var mensal = (precos.empresa && precos.empresa.mensal) || 34.9;
+    var anualAno = (precos.empresa && precos.empresa.anual) || 348;
+    var anualMes = anualAno / 12;
+    function brl(v) { return 'R$ ' + Number(v).toFixed(2).replace('.', ','); }
+    var nome = state.paywallNome ? escapeHtml(state.paywallNome) : 'Este perfil';
+    var temTrocar = (state.empresas && state.empresas.length > 1);
+    return (
+      '<section class="avantalab-mobile-bg fixed inset-0 flex items-start justify-center overflow-auto px-4 py-8" style="min-height:100dvh;">' +
+        '<div class="w-full max-w-md rounded-3xl border border-white/40 bg-white/85 p-5 text-slate-900 shadow-2xl backdrop-blur-xl">' +
+          '<p class="text-xs font-black uppercase tracking-[0.24em] text-sky-700">Assinatura</p>' +
+          '<h1 class="mt-1 text-2xl font-black">Seu teste de 7 dias terminou</h1>' +
+          '<p class="mt-2 text-sm font-semibold leading-relaxed text-slate-600">O perfil "' + nome + '" está com o período de avaliação encerrado. Assine para continuar — seus dados estão guardados.</p>' +
+          '<p id="paywall-msg" class="mt-3 text-sm font-bold text-red-600"></p>' +
+          '<label class="mt-4 block text-xs font-black uppercase tracking-wide text-slate-500">CPF ou CNPJ para a cobrança</label>' +
+          '<input id="paywall-cpf" type="text" inputmode="numeric" placeholder="Somente números" class="mt-1 w-full rounded-xl border border-slate-300 bg-white/90 px-4 py-3 text-sm font-semibold text-slate-800 outline-none" />' +
+          '<div class="mt-4 grid grid-cols-2 gap-3">' +
+            '<div class="rounded-2xl border border-slate-200 bg-white/80 p-4">' +
+              '<p class="text-xs font-black uppercase tracking-wide text-slate-500">Mensal</p>' +
+              '<p class="mt-1 text-xl font-black">' + brl(mensal) + '<span class="text-xs font-bold text-slate-500">/mês</span></p>' +
+              '<button type="button" onclick="window._avaPaywallAssinar(\'mensal\')" class="mt-3 h-11 w-full rounded-xl border border-slate-300 bg-white text-xs font-black uppercase tracking-wide text-slate-700">Assinar mensal</button>' +
+            '</div>' +
+            '<div class="rounded-2xl border-2 border-sky-600 bg-white/85 p-4">' +
+              '<p class="text-xs font-black uppercase tracking-wide text-slate-500">Anual</p>' +
+              '<p class="mt-1 text-xl font-black">' + brl(anualMes) + '<span class="text-xs font-bold text-slate-500">/mês</span></p>' +
+              '<p class="mt-0.5 text-[11px] font-semibold text-slate-500">' + brl(anualAno) + '/ano</p>' +
+              '<button type="button" onclick="window._avaPaywallAssinar(\'anual\')" class="mt-3 h-11 w-full rounded-xl bg-sky-700 text-xs font-black uppercase tracking-wide text-white">Assinar anual</button>' +
+            '</div>' +
+          '</div>' +
+          '<div class="mt-5 border-t border-slate-200 pt-4">' +
+            '<label class="mb-1 block text-xs font-black uppercase tracking-wide text-slate-500">Tem um cupom?</label>' +
+            '<div class="flex gap-2">' +
+              '<input id="paywall-cupom" type="text" placeholder="Código" class="min-w-0 flex-1 rounded-xl border border-slate-300 bg-white/90 px-4 py-3 text-sm font-semibold uppercase text-slate-800 outline-none" />' +
+              '<button type="button" onclick="window._avaPaywallCupom()" class="shrink-0 rounded-xl border border-slate-300 bg-white px-4 text-xs font-black uppercase text-slate-700">Aplicar</button>' +
+            '</div>' +
+            '<p id="paywall-cupom-msg" class="mt-2 text-xs font-bold text-red-600"></p>' +
+          '</div>' +
+          '<div class="mt-6 flex items-center justify-center gap-4">' +
+            (temTrocar ? '<button type="button" onclick="window._avaPaywallTrocar()" class="text-xs font-black uppercase tracking-wide text-sky-700">Trocar de perfil</button>' : '') +
+            '<button type="button" onclick="window._avaPaywallSair()" class="text-xs font-black uppercase tracking-wide text-slate-500">Sair</button>' +
+          '</div>' +
+        '</div>' +
+      '</section>'
+    );
+  }
+
+  async function _avaPaywallToken() {
+    var sessao = await db.auth.getSession();
+    return sessao && sessao.data && sessao.data.session ? sessao.data.session.access_token : '';
+  }
+
+  window._avaPaywallAssinar = async function (ciclo) {
+    var msgEl = document.getElementById('paywall-msg');
+    var cpfEl = document.getElementById('paywall-cpf');
+    var cpf = (cpfEl ? cpfEl.value : '').replace(/\D/g, '');
+    if (cpf.length !== 11 && cpf.length !== 14) { if (msgEl) { msgEl.className = 'mt-3 text-sm font-bold text-red-600'; msgEl.textContent = 'Informe um CPF (11 dígitos) ou CNPJ (14 dígitos).'; } return; }
+    if (msgEl) { msgEl.className = 'mt-3 text-sm font-bold text-slate-600'; msgEl.textContent = 'Processando...'; }
+    try {
+      var token = await _avaPaywallToken();
+      if (!token || !state.empresa) { if (msgEl) { msgEl.className = 'mt-3 text-sm font-bold text-red-600'; msgEl.textContent = 'Sessão não encontrada.'; } return; }
+      var resp = await fetch('/api/cobranca/assinar', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
+        body: JSON.stringify({ empresaId: state.empresa.id, plano: 'empresa', ciclo: ciclo, cpfCnpj: cpf }),
+      });
+      var json = await resp.json();
+      if (resp.ok && json.invoiceUrl) {
+        window.open(json.invoiceUrl, '_blank');
+        if (msgEl) { msgEl.className = 'mt-3 text-sm font-bold text-sky-700'; msgEl.textContent = 'Abrimos o pagamento em outra aba. Depois de pagar, recarregue esta tela.'; }
+        return;
+      }
+      if (msgEl) { msgEl.className = 'mt-3 text-sm font-bold text-red-600'; msgEl.textContent = json.mensagem || 'Não foi possível iniciar a assinatura.'; }
+    } catch (e) {
+      if (msgEl) { msgEl.className = 'mt-3 text-sm font-bold text-red-600'; msgEl.textContent = 'Não foi possível iniciar a assinatura agora.'; }
+    }
+  };
+
+  window._avaPaywallCupom = async function () {
+    var msgEl = document.getElementById('paywall-cupom-msg');
+    var el = document.getElementById('paywall-cupom');
+    var codigo = (el ? el.value : '').trim();
+    if (!codigo) { if (msgEl) msgEl.textContent = 'Digite o código.'; return; }
+    if (msgEl) { msgEl.className = 'mt-2 text-xs font-bold text-slate-600'; msgEl.textContent = 'Aplicando...'; }
+    try {
+      var token = await _avaPaywallToken();
+      if (!token || !state.empresa) { if (msgEl) { msgEl.className = 'mt-2 text-xs font-bold text-red-600'; msgEl.textContent = 'Sessão não encontrada.'; } return; }
+      var resp = await fetch('/api/cobranca/resgatar-cupom', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
+        body: JSON.stringify({ empresaId: state.empresa.id, codigo: codigo }),
+      });
+      var json = await resp.json();
+      if (resp.ok && json.ok) { state.paywallAtivo = false; render(); carregarDados(); return; }
+      if (msgEl) { msgEl.className = 'mt-2 text-xs font-bold text-red-600'; msgEl.textContent = json.mensagem || 'Não foi possível aplicar o cupom.'; }
+    } catch (e) {
+      if (msgEl) { msgEl.className = 'mt-2 text-xs font-bold text-red-600'; msgEl.textContent = 'Não foi possível aplicar o cupom agora.'; }
+    }
+  };
+
+  window._avaPaywallSair = function () { sair(); };
+  window._avaPaywallTrocar = function () {
+    try { localStorage.removeItem(CHAVE_ULTIMO_PERFIL_MOBILE); } catch (e) {}
+    window.location.reload();
+  };
 
   function ordemDashboardPadrao() {
     return [
@@ -2716,6 +2830,31 @@
     } catch (e) {}
   }
 
+  // Cobrança: verifica no servidor se o perfil empresa vencido precisa de paywall.
+  // Fail-open: qualquer falha não bloqueia o acesso.
+  async function verificarPaywallMobile() {
+    if (!state.empresa || !state.empresa.id) { state.paywallAtivo = false; return; }
+    try {
+      var sessao = await db.auth.getSession();
+      var token = sessao && sessao.data && sessao.data.session ? sessao.data.session.access_token : '';
+      if (!token) { state.paywallAtivo = false; return; }
+      var resp = await fetch('/api/cobranca/estado?empresaId=' + encodeURIComponent(state.empresa.id), {
+        headers: { Authorization: 'Bearer ' + token },
+      });
+      var json = await resp.json();
+      if (resp.ok) {
+        state.paywallAtivo = Boolean(json.precisaPaywall);
+        state.paywallNome = state.empresa.nome || '';
+        state.paywallPrecos = json.precos || null;
+      } else {
+        state.paywallAtivo = false;
+      }
+    } catch (e) {
+      state.paywallAtivo = false;
+    }
+    render();
+  }
+
   async function carregarDados() {
     if (!state.empresa) return;
 
@@ -2740,6 +2879,9 @@
       render();
       return;
     }
+
+    // Cobrança: checa o paywall em paralelo (não bloqueia o carregamento).
+    verificarPaywallMobile();
 
     state.carregando = true;
     render();
@@ -7764,7 +7906,7 @@
     var telaAtual = !state.pronto
       ? telaCarregandoMobile()
       : (state.autenticado
-        ? (ehFuncionarioPontoMobile() ? telaRedirecionandoPonto() : (state.validacaoTelefoneObrigatoria ? telaTelefoneObrigatorioMobile() : (state.modoCriarPerfil ? telaLoginWrapper(telaCriarPerfilInicial(), 'Criar perfil financeiro', 'Informe os dados do seu primeiro perfil.') : telaApp())))
+        ? (ehFuncionarioPontoMobile() ? telaRedirecionandoPonto() : (state.validacaoTelefoneObrigatoria ? telaTelefoneObrigatorioMobile() : (state.paywallAtivo ? telaPaywallMobile() : (state.modoCriarPerfil ? telaLoginWrapper(telaCriarPerfilInicial(), 'Criar perfil financeiro', 'Informe os dados do seu primeiro perfil.') : telaApp()))))
         : (state.modoCriarPerfil ? telaLoginWrapper(telaCriarPerfilInicial(), 'Criar perfil financeiro', 'Informe os dados do seu primeiro perfil.') : telaLogin()));
     root.innerHTML = telaAtual + (state.chatIAAberto ? chatIAModalHtml() : '') + (state.mostrarPromptNotificacoes ? promptNotificacoesHtml() : '') + (state.tourAberto ? tourHtml() : '');
     sincronizarGradienteHeaderPerfil();
