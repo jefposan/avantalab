@@ -112,6 +112,7 @@
     aceitouTermos: false,
     aceiteTermosEm: null,
     cadastroDdi: '55',
+    cadastroCupom: '',
     mostrarSenhaLogin: false,
     mostrarNovaSenha: false,
     mostrarConfirmarSenha: false,
@@ -3268,6 +3269,8 @@
     };
     var ddiEl = document.getElementById('cadastro-ddi');
     if (ddiEl && ddiEl.value) state.cadastroDdi = ddiEl.value.replace(/\D/g, '');
+    var cupomEl = document.getElementById('cadastro-cupom');
+    if (cupomEl) state.cadastroCupom = cupomEl.value.trim().toUpperCase();
     // preserva o tipo selecionado (já está em state.cadastroTipoPerfil via botão)
   }
 
@@ -3505,6 +3508,22 @@
 
     if (criadaId) {
       await inserirDespesasPadraoMobile(criadaId, tipo);
+    }
+
+    // Cupom informado no cadastro: concede cortesia ao novo perfil (opcional).
+    // Falha silenciosa — se o cupom for inválido, segue no trial normal.
+    if (criadaId && state.cadastroCupom && state.cadastroCupom.trim()) {
+      try {
+        var tokCupom = await tokenSessao();
+        if (tokCupom) {
+          await fetch('/api/cobranca/resgatar-cupom', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + tokCupom },
+            body: JSON.stringify({ empresaId: criadaId, codigo: state.cadastroCupom.trim() }),
+          });
+        }
+      } catch (e) { /* silencioso */ }
+      state.cadastroCupom = '';
     }
 
     state.modoCriarPerfil = false;
@@ -5220,6 +5239,7 @@
           '</label>'
         : '') +
         alertaHtml() +
+        '<input id="cadastro-cupom" type="text" placeholder="Cupom (opcional)" value="' + (state.cadastroCupom || '') + '" class="h-10 w-full rounded-xl border border-slate-300 bg-white/90 px-3 text-sm font-semibold uppercase tracking-wide text-slate-800 outline-none" />' +
         '<button id="cadastro-submit" type="button" class="h-10 rounded-xl bg-slate-900 px-4 text-xs font-black uppercase tracking-wide text-white shadow-lg">' +
           (state.carregando ? (state.smsCadastroEnviado ? 'Validando...' : 'Enviando...') : (state.smsCadastroEnviado ? 'Concluir cadastro' : 'Enviar codigo por SMS')) +
         '</button>' +
