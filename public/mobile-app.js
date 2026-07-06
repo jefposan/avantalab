@@ -5231,7 +5231,13 @@
         '</div>' +
         senhaInputHtml('cadastro-senha', 'Senha', 'Crie uma senha', 'mostrarSenhaCadastro', 'toggle-senha-cadastro', state.cadastro.senha) +
         senhaInputHtml('cadastro-confirmar-senha', 'Confirmar senha', 'Repita a senha', 'mostrarConfirmarSenhaCadastro', 'toggle-confirmar-cadastro', state.cadastro.confirmarSenha) +
-        (state.smsCadastroEnviado ? inputHtml('cadastro-codigo', 'Codigo recebido por SMS', 'text', 'Digite o codigo recebido') + '<p class="-mt-1 text-[11px] font-semibold text-slate-500">Enviamos o codigo para o celular informado.</p>' : '') +
+        (state.smsCadastroEnviado ?
+          '<div class="rounded-xl border-2 border-sky-400 bg-sky-50 px-3 py-2.5 shadow-sm">' +
+            '<p class="mb-1 text-[11px] font-black uppercase tracking-wide text-sky-700">Digite o c&oacute;digo recebido</p>' +
+            '<input id="cadastro-codigo" type="text" inputmode="numeric" autofocus placeholder="Codigo recebido por SMS" class="w-full rounded-xl border border-sky-300 bg-white px-3 py-2 text-sm font-semibold tracking-widest text-slate-800 outline-none" />' +
+            '<p class="mt-1 text-[11px] font-semibold text-sky-800">Enviamos o codigo para o celular informado.</p>' +
+          '</div>'
+        : '') +
         (!state.smsCadastroEnviado ?
           '<label class="flex cursor-pointer items-start gap-2 rounded-xl border border-slate-200 bg-white/60 px-3 py-2 text-[11px] leading-snug text-slate-600">' +
             '<input id="cadastro-aceite" type="checkbox" ' + (state.aceitouTermos ? 'checked' : '') + ' class="mt-0.5 h-4 w-4 shrink-0" style="accent-color:#0369a1;" />' +

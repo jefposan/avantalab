@@ -774,17 +774,19 @@ export default function AuthCard({
   </div>
 
                 {smsCadastroEnviado && (
-  <div>
+  <div className="rounded-xl border-2 border-sky-400 bg-sky-50 px-3 py-2.5 shadow-sm">
+    <p className="mb-1 text-xs font-black uppercase tracking-wide text-sky-700">Digite o código recebido</p>
     <input
       type="text"
       inputMode="numeric"
+      autoFocus
       placeholder="Código recebido por SMS"
       value={codigoSmsCadastro}
       onChange={(e) => setCodigoSmsCadastro(e.target.value)}
-      className="w-full rounded-xl border border-slate-300 bg-white/90 px-3 py-2 text-sm text-slate-800 outline-none transition focus:border-sky-600 focus:ring-2 focus:ring-sky-600/20"
+      className="w-full rounded-xl border border-sky-300 bg-white px-3 py-2 text-sm font-semibold tracking-widest text-slate-800 outline-none transition focus:border-sky-600 focus:ring-2 focus:ring-sky-600/20"
     />
 
-    <p className="mt-0.5 text-[11px] text-slate-500">
+    <p className="mt-1 text-[11px] text-sky-800">
       Enviamos o código para o celular informado.
     </p>
 <button
