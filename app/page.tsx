@@ -781,6 +781,10 @@ setMesAtivo(null);
   setTipoPerfilAtual(normalizarTipoPerfil(empresa.tipo_perfil));
   setPerfilUsuario(empresa.perfil || null);
   setAcessoUsuarioAtualId(empresa.acessoId || empresa.acesso_id || null);
+  // Libera o acesso já aqui (com carregandoPerfil ativo, o gate mostra a tela de
+  // carregamento). Evita a "corrida" em que carregandoPerfil zera antes do fim e
+  // o render cai na tela de login/início enquanto os dados ainda carregam.
+  setAcessoLiberado(true);
 
   const { data: usuarioLogado } = await supabase.auth.getUser();
 
@@ -5338,7 +5342,7 @@ if (modalSelecionarEmpresa) {
         </div>
 
         <div className="p-4 space-y-3">
-          <div className="space-y-2">
+          <div className="space-y-2 max-h-[45vh] overflow-y-auto pr-1">
             {empresasDoUsuario.map((empresa) => {
               const selecionada = empresaParaSelecionar?.id === empresa.id;
 
