@@ -577,7 +577,7 @@ export default function AuthCard({
 
               </div>
             ) : (
-              <div className="space-y-2">
+              <div className="space-y-1.5">
                 <input
   type="text"
   autoComplete="off"
@@ -773,15 +773,6 @@ export default function AuthCard({
     </button>
   </div>
 
-                <input
-  type="text"
-  autoComplete="off"
-  placeholder="Cupom (opcional)"
-  value={cadastroCupom}
-  onChange={(e) => setCadastroCupom(e.target.value.toUpperCase())}
-  className="w-full rounded-xl border border-slate-300 bg-white/90 px-3 py-2 text-sm uppercase tracking-wide text-slate-800 outline-none transition focus:border-sky-600 focus:ring-2 focus:ring-sky-600/20"
-/>
-
                 {smsCadastroEnviado && (
   <div>
     <input
@@ -839,6 +830,15 @@ export default function AuthCard({
     </span>
   </label>
 )}
+
+                <input
+  type="text"
+  autoComplete="off"
+  placeholder="Cupom (opcional)"
+  value={cadastroCupom}
+  onChange={(e) => setCadastroCupom(e.target.value.toUpperCase())}
+  className="w-full rounded-xl border border-slate-300 bg-white/90 px-3 py-2 text-sm uppercase tracking-wide text-slate-800 outline-none transition focus:border-sky-600 focus:ring-2 focus:ring-sky-600/20"
+/>
 
                 <button
   type="button"
