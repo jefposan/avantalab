@@ -73,14 +73,16 @@
     usuario: null,
     empresas: [],
     empresa: null,
-    // Cobrança (paywall do perfil empresa vencido)
+    // Cobrança (paywall do perfil empresa sem acesso vigente)
     paywallAtivo: false,
     paywallVerificado: false,
     paywallNome: '',
+    paywallEstado: null,
     paywallPrecos: null,
     paywallMsg: '',
     paywallCupomMsg: '',
     paywallProcessando: false,
+    paywallCupomProcessando: false,
     paywallSelecionando: false,
     mes: meses[new Date().getMonth()],
     ano: String(new Date().getFullYear()),
@@ -501,7 +503,7 @@
     return (empresa && (empresa.nome || empresa.empresa_nome)) || 'Perfil';
   }
 
-  // ── Cobrança: paywall do perfil empresa vencido ──────────────
+  // ── Cobrança: paywall do perfil empresa sem acesso vigente ───
   function telaPaywallSelecaoMobile() {
     var itens = (state.empresas || []).map(function (emp) {
       var atual = state.empresa && state.empresa.id === emp.id;
@@ -534,17 +536,33 @@
     function brl(v) { return 'R$ ' + Number(v).toFixed(2).replace('.', ','); }
     var nome = state.paywallNome ? escapeHtml(state.paywallNome) : 'Este perfil';
     var temTrocar = (state.empresas && state.empresas.length > 1);
+    var estado = state.paywallEstado || {};
+    var trialVencido = (estado.status === 'trial' || estado.status === 'expirada') && estado.trialFim && new Date(estado.trialFim).getTime() <= Date.now();
+    var tituloBloqueio = trialVencido
+      ? 'Seu teste de 7 dias terminou'
+      : estado.status === 'inadimplente'
+        ? 'H&aacute; um pagamento pendente'
+        : estado.status === 'cancelada'
+          ? 'Sua assinatura foi cancelada'
+          : estado.status === 'expirada'
+            ? 'Este perfil aguarda uma assinatura ativa'
+            : 'Este perfil precisa de uma assinatura ativa';
+    var textoBloqueio = trialVencido
+      ? 'Assine para continuar. Seus dados permanecem guardados.'
+      : estado.status === 'inadimplente'
+        ? 'Regularize o pagamento para liberar novamente o acesso ao perfil.'
+        : 'Escolha um plano para ativar o perfil. Seus dados permanecem guardados.';
     return (
       '<section class="avantalab-mobile-bg fixed inset-0 flex flex-col items-center overflow-x-hidden overflow-y-auto px-4 pb-4" style="height:100dvh;padding-top:clamp(8rem,18dvh,11rem);background-position:center bottom;background-size:auto 108%;overscroll-behavior:contain;--avantalab-mobile-bg-overlay:linear-gradient(rgba(255,255,255,.08),rgba(255,255,255,0));">' +
         '<div class="mx-auto w-full max-w-md shrink-0 overflow-y-auto rounded-3xl border border-white/40 bg-white/85 p-4 text-slate-900 shadow-2xl backdrop-blur-xl" style="max-height:calc(100dvh - 9rem);overscroll-behavior:contain;">' +
           '<p class="text-[11px] font-black uppercase tracking-[0.24em] text-sky-700">Assinatura</p>' +
-          '<h1 class="mt-0.5 text-lg font-black leading-tight">Seu teste de 7 dias terminou</h1>' +
+          '<h1 class="mt-0.5 text-lg font-black leading-tight">' + tituloBloqueio + '</h1>' +
           // Perfil bloqueado — destaque forte
           '<div class="mt-2 rounded-xl border-2 border-sky-400 px-3 py-2 text-center shadow-md" style="background:linear-gradient(135deg,#003E73,#00A6C8);">' +
             '<span class="block text-[9px] font-black uppercase tracking-[0.22em] text-white/80">Perfil bloqueado</span>' +
             '<span class="mt-0.5 block truncate text-lg font-black text-white">' + nome + '</span>' +
           '</div>' +
-          '<p class="mt-2 text-xs font-semibold text-slate-600">Assine para reativar — seus dados estão guardados.</p>' +
+          '<p class="mt-2 text-xs font-semibold text-slate-600">' + textoBloqueio + '</p>' +
           '<p id="paywall-msg" class="mt-1.5 text-xs font-bold text-red-600"></p>' +
           '<label class="mt-2.5 block text-[11px] font-black uppercase tracking-wide text-slate-500">CPF ou CNPJ para a cobrança</label>' +
           '<input id="paywall-cpf" type="text" inputmode="numeric" placeholder="Somente números" class="mt-1 w-full rounded-lg border border-slate-300 bg-white/90 px-3 py-2 text-sm font-semibold text-slate-800 outline-none" />' +
@@ -586,10 +604,12 @@
   }
 
   window._avaPaywallAssinar = async function (ciclo) {
+    if (state.paywallProcessando) return;
     var msgEl = document.getElementById('paywall-msg');
     var cpfEl = document.getElementById('paywall-cpf');
     var cpf = (cpfEl ? cpfEl.value : '').replace(/\D/g, '');
     if (cpf.length !== 11 && cpf.length !== 14) { if (msgEl) { msgEl.className = 'mt-3 text-sm font-bold text-red-600'; msgEl.textContent = 'Informe um CPF (11 dígitos) ou CNPJ (14 dígitos).'; } return; }
+    state.paywallProcessando = true;
     if (msgEl) { msgEl.className = 'mt-3 text-sm font-bold text-slate-600'; msgEl.textContent = 'Processando...'; }
     try {
       var token = await _avaPaywallToken();
@@ -608,14 +628,18 @@
       if (msgEl) { msgEl.className = 'mt-3 text-sm font-bold text-red-600'; msgEl.textContent = json.mensagem || 'Não foi possível iniciar a assinatura.'; }
     } catch (e) {
       if (msgEl) { msgEl.className = 'mt-3 text-sm font-bold text-red-600'; msgEl.textContent = 'Não foi possível iniciar a assinatura agora.'; }
+    } finally {
+      state.paywallProcessando = false;
     }
   };
 
   window._avaPaywallCupom = async function () {
+    if (state.paywallCupomProcessando) return;
     var msgEl = document.getElementById('paywall-cupom-msg');
     var el = document.getElementById('paywall-cupom');
     var codigo = (el ? el.value : '').trim();
     if (!codigo) { if (msgEl) msgEl.textContent = 'Digite o código.'; return; }
+    state.paywallCupomProcessando = true;
     if (msgEl) { msgEl.className = 'mt-2 text-xs font-bold text-slate-600'; msgEl.textContent = 'Aplicando...'; }
     try {
       var token = await _avaPaywallToken();
@@ -630,6 +654,8 @@
       if (msgEl) { msgEl.className = 'mt-2 text-xs font-bold text-red-600'; msgEl.textContent = json.mensagem || 'Não foi possível aplicar o cupom.'; }
     } catch (e) {
       if (msgEl) { msgEl.className = 'mt-2 text-xs font-bold text-red-600'; msgEl.textContent = 'Não foi possível aplicar o cupom agora.'; }
+    } finally {
+      state.paywallCupomProcessando = false;
     }
   };
 
@@ -2930,6 +2956,7 @@
       if (resp.ok) {
         state.paywallAtivo = Boolean(json.precisaPaywall);
         state.paywallNome = nomeEmpresa(state.empresa);
+        state.paywallEstado = json.estado || null;
         state.paywallPrecos = json.precos || null;
       } else {
         state.paywallAtivo = false;
@@ -3475,6 +3502,7 @@
   }
 
   async function criarPerfilInicial() {
+    if (state.carregando) return;
     var nome = campo('criar-perfil-inicial-nome').trim();
     var tipo = normalizarTipoPerfil(state.criarPerfilTipo);
 
@@ -3568,7 +3596,7 @@
           '</div>'
         : '') +
         alertaCriarPerfilHtml() +
-        '<button id="criar-perfil-inicial-submit" type="button" class="h-12 rounded-xl bg-slate-900 px-4 text-sm font-black uppercase tracking-wide text-white shadow-lg">' +
+        '<button id="criar-perfil-inicial-submit" type="button" ' + (state.carregando ? 'disabled ' : '') + 'class="h-12 rounded-xl bg-slate-900 px-4 text-sm font-black uppercase tracking-wide text-white shadow-lg disabled:cursor-not-allowed disabled:opacity-60">' +
           (state.carregando ? 'Criando...' : 'Criar perfil') +
         '</button>' +
         '<button id="sair-criar-perfil" type="button" class="text-xs font-bold text-slate-500 underline">Cancelar e sair</button>' +
@@ -4511,6 +4539,8 @@
   }
 
   async function criarEmpresaMobile() {
+    if (state.carregando || state.empresaAcao === 'criar') return;
+
     var nome = campo('nova-empresa-nome').trim();
     var tipoPerfil = normalizarTipoPerfil(state.novaEmpresaTipoPerfil);
 
@@ -7362,7 +7392,7 @@
             seletorTipoPerfilHtml('novo-tipo', tipoNovo) +
             '<div class="grid grid-cols-2 gap-2">' +
               '<button id="cancelar-criar-empresa-mobile" type="button" class="h-10 rounded-xl bg-white border border-slate-200 px-3 text-xs font-black uppercase tracking-wide text-slate-600">Cancelar</button>' +
-              '<button id="criar-empresa-mobile" type="button" class="h-10 rounded-xl bg-emerald-600 px-3 text-xs font-black uppercase tracking-wide text-white">' + (state.empresaAcao === 'criar' ? 'Criando...' : 'Criar perfil') + '</button>' +
+              '<button id="criar-empresa-mobile" type="button" ' + (state.empresaAcao === 'criar' ? 'disabled ' : '') + 'class="h-10 rounded-xl bg-emerald-600 px-3 text-xs font-black uppercase tracking-wide text-white disabled:cursor-not-allowed disabled:opacity-60">' + (state.empresaAcao === 'criar' ? 'Criando...' : 'Criar perfil') + '</button>' +
             '</div>' +
           '</div>' +
           alertaCriarPerfilHtml() +

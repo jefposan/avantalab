@@ -47,17 +47,61 @@ export async function POST(request: Request) {
 
   // 2) Confirma vínculo e carrega dados do perfil.
   const { data: vinculo } = await admin
-    .from('usuarios_empresa').select('id').eq('user_id', userId).eq('empresa_id', empresaId).limit(1).maybeSingle();
+    .from('usuarios_empresa')
+    .select('id, perfil, status')
+    .eq('user_id', userId)
+    .eq('empresa_id', empresaId)
+    .eq('status', 'ativo')
+    .limit(1)
+    .maybeSingle();
   if (!vinculo) return NextResponse.json({ erro: true, mensagem: 'sem acesso a este perfil' }, { status: 403 });
+  if (!['gestor_master', 'administrador'].includes(vinculo.perfil || '')) {
+    return NextResponse.json({ erro: true, mensagem: 'Somente gestores e administradores podem contratar um plano.' }, { status: 403 });
+  }
 
   const { data: emp } = await admin
     .from('empresas').select('nome, tipo_perfil').eq('id', empresaId).maybeSingle();
   const nomePerfil = emp?.nome || 'Cliente AvantaLab';
   const tipoPerfil = emp?.tipo_perfil === 'pessoal' ? 'pessoal' : 'empresa';
+  const planoEsperado: PlanoPago = tipoPerfil === 'pessoal' ? 'pessoal_premium' : 'empresa';
+  if (plano !== planoEsperado) {
+    return NextResponse.json({ erro: true, mensagem: 'O plano informado não corresponde ao tipo deste perfil.' }, { status: 400 });
+  }
 
   // 3) Reaproveita o cliente Asaas se já houver; senão cria.
   const { data: assinExistente } = await admin
-    .from('assinaturas').select('gateway_customer_id').eq('empresa_id', empresaId).maybeSingle();
+    .from('assinaturas')
+    .select('status, plano, ciclo, gateway_customer_id, gateway_subscription_id')
+    .eq('empresa_id', empresaId)
+    .maybeSingle();
+
+  // Um segundo clique (ou uma repetição de rede) deve reutilizar a cobrança já
+  // criada, nunca abrir outra assinatura recorrente para o mesmo perfil.
+  if (
+    assinExistente?.gateway_subscription_id
+    && assinExistente.status !== 'cancelada'
+  ) {
+    if (assinExistente.plano !== plano || assinExistente.ciclo !== ciclo) {
+      return NextResponse.json({
+        erro: true,
+        mensagem: 'Já existe uma assinatura em andamento para este perfil. Conclua ou cancele essa cobrança antes de trocar o plano.',
+      }, { status: 409 });
+    }
+    const existentes = await listarCobrancasAssinaturaAsaas(assinExistente.gateway_subscription_id);
+    const cobranca = existentes.data?.data?.find((item) => item.invoiceUrl) || existentes.data?.data?.[0];
+    if (existentes.ok && cobranca?.invoiceUrl) {
+      return NextResponse.json({
+        ok: true,
+        reutilizada: true,
+        invoiceUrl: cobranca.invoiceUrl,
+        assinaturaId: assinExistente.gateway_subscription_id,
+      });
+    }
+    return NextResponse.json({
+      erro: true,
+      mensagem: 'A assinatura já foi criada, mas o link de pagamento ainda não está disponível. Aguarde alguns instantes e tente novamente.',
+    }, { status: 409 });
+  }
 
   let clienteId = assinExistente?.gateway_customer_id || '';
   if (!clienteId) {

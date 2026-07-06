@@ -765,6 +765,8 @@ useEffect(() => {
 
 const carregarEmpresaSelecionada = async (empresa: any) => {
   setCarregandoPerfil(true);
+  setEstadoAcesso(null);
+  setEstadoCarregado(false);
   // Fecha o card de selecao na hora (antes do trabalho assincrono)
   setModalSelecionarEmpresa(false);
   setModalEmpresasAberto(false);
@@ -5315,11 +5317,11 @@ if (acessoNaoConfigurado) {
 
 if (modalSelecionarEmpresa) {
   return (
-    <main className={`min-h-screen flex items-center justify-center px-4 py-10 ${
+    <main className={`min-h-screen flex items-center justify-center overflow-y-auto px-4 py-10 ${
       darkMode ? 'bg-slate-950 text-slate-100' : 'bg-slate-100 text-slate-800'
     }`}>
       <section
-        className={`w-full max-w-sm rounded-2xl border shadow-2xl overflow-hidden ${
+        className={`my-auto flex max-h-[90vh] w-full max-w-sm flex-col overflow-hidden rounded-2xl border shadow-2xl ${
           darkMode
             ? 'bg-slate-900 border-slate-700'
             : 'bg-white border-slate-200'
@@ -5740,6 +5742,7 @@ if (isTelaMobile) {
     return (
       <PaywallEmpresa
         nomePerfil={nomeEmpresaAtual}
+        estadoAcesso={estadoAcesso}
         onAssinar={iniciarAssinatura}
         onResgatarCupom={resgatarCupom}
         onTrocarPerfil={empresasDoUsuario.length > 1 ? () => { setEmpresaId(null); setModalSelecionarEmpresa(true); } : undefined}

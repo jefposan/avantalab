@@ -46,11 +46,18 @@ export async function POST(request: Request) {
   }
   if (!novoStatus) return NextResponse.json({ recebido: true });
 
-  // Casa pelo empresa_id (externalReference) — robusto mesmo com várias
-  // assinaturas de teste; cai para o id da assinatura se faltar.
+  // Quando os dois identificadores vêm no evento, ambos precisam pertencer à
+  // assinatura atual. Assim um webhook atrasado de uma assinatura antiga não
+  // altera o estado da cobrança nova do mesmo perfil.
   const db = createClient(supabaseUrl, serviceRole);
   const atualizacao = { status: novoStatus, atualizado_em: new Date().toISOString() };
-  if (empresaId) {
+  if (empresaId && assinaturaGw) {
+    await db
+      .from('assinaturas')
+      .update(atualizacao)
+      .eq('empresa_id', empresaId)
+      .eq('gateway_subscription_id', assinaturaGw);
+  } else if (empresaId) {
     await db.from('assinaturas').update(atualizacao).eq('empresa_id', empresaId);
   } else {
     await db.from('assinaturas').update(atualizacao).eq('gateway_subscription_id', assinaturaGw);

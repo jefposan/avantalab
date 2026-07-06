@@ -1,5 +1,6 @@
 'use client';
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
+import type { EstadoAcesso } from '../lib/cobranca';
 
 // Formata como CPF (000.000.000-00) até 11 dígitos, ou CNPJ (00.000.000/0000-00) acima.
 function formatarCpfCnpj(valor: string): string {
@@ -18,6 +19,7 @@ function formatarCpfCnpj(valor: string): string {
 
 interface PaywallEmpresaProps {
   nomePerfil?: string;
+  estadoAcesso?: EstadoAcesso | null;
   // Retorna { ok, url } em caso de sucesso, ou { ok:false, mensagem } em caso de falha.
   onAssinar?: (ciclo: 'mensal' | 'anual', cpfCnpj: string) => Promise<{ ok: boolean; url?: string; mensagem?: string } | void>;
   // Resgate de cupom: retorna mensagem de erro (string) ou nada em caso de sucesso.
@@ -29,9 +31,9 @@ interface PaywallEmpresaProps {
 
 const GRADIENTE = 'linear-gradient(135deg,#003E73,#00A6C8)';
 
-// Tela mostrada quando o trial de 7 dias da empresa venceu — com a identidade
-// visual da tela de login (fundo AvantaLab + card "vidro fosco").
-export default function PaywallEmpresa({ nomePerfil, onAssinar, onResgatarCupom, onTrocarPerfil, onCriarPerfil, onSair }: PaywallEmpresaProps) {
+// Tela mostrada quando o perfil empresa precisa regularizar ou iniciar a
+// assinatura, com a identidade visual da tela de login.
+export default function PaywallEmpresa({ nomePerfil, estadoAcesso, onAssinar, onResgatarCupom, onTrocarPerfil, onCriarPerfil, onSair }: PaywallEmpresaProps) {
   const [carregando, setCarregando] = useState<'mensal' | 'anual' | null>(null);
   const [erro, setErro] = useState('');
   const [cpfCnpj, setCpfCnpj] = useState('');
@@ -39,10 +41,32 @@ export default function PaywallEmpresa({ nomePerfil, onAssinar, onResgatarCupom,
   const [cupom, setCupom] = useState('');
   const [resgatando, setResgatando] = useState(false);
   const [cupomErro, setCupomErro] = useState('');
+  const [instanteAbertura] = useState(() => Date.now());
+  const assinaturaEmCursoRef = useRef(false);
+  const resgateEmCursoRef = useRef(false);
+
+  const trialRealmenteVencido = (estadoAcesso?.status === 'trial' || estadoAcesso?.status === 'expirada')
+    && !!estadoAcesso.trialFim
+    && new Date(estadoAcesso.trialFim).getTime() <= instanteAbertura;
+  const tituloBloqueio = trialRealmenteVencido
+    ? 'Seu teste de 7 dias terminou'
+    : estadoAcesso?.status === 'inadimplente'
+      ? 'Há um pagamento pendente'
+      : estadoAcesso?.status === 'cancelada'
+        ? 'Sua assinatura foi cancelada'
+        : estadoAcesso?.status === 'expirada'
+          ? 'Este perfil aguarda uma assinatura ativa'
+          : 'Este perfil precisa de uma assinatura ativa';
+  const textoBloqueio = trialRealmenteVencido
+    ? 'Assine para continuar. Seus dados permanecem guardados.'
+    : estadoAcesso?.status === 'inadimplente'
+      ? 'Regularize o pagamento para liberar novamente o acesso ao perfil.'
+      : 'Escolha um plano para ativar o perfil. Seus dados permanecem guardados.';
 
   const resgatar = async () => {
     const codigo = cupom.trim();
-    if (!codigo || resgatando) return;
+    if (!codigo || resgateEmCursoRef.current) return;
+    resgateEmCursoRef.current = true;
     setCupomErro('');
     setResgatando(true);
     try {
@@ -52,12 +76,13 @@ export default function PaywallEmpresa({ nomePerfil, onAssinar, onResgatarCupom,
     } catch {
       setCupomErro('Não foi possível aplicar o cupom agora.');
     } finally {
+      resgateEmCursoRef.current = false;
       setResgatando(false);
     }
   };
 
   const clicar = async (ciclo: 'mensal' | 'anual') => {
-    if (carregando) return;
+    if (assinaturaEmCursoRef.current) return;
     const digitos = cpfCnpj.replace(/\D/g, '');
     if (digitos.length !== 11 && digitos.length !== 14) {
       setErro('Informe um CPF (11 dígitos) ou CNPJ (14 dígitos) para a cobrança.');
@@ -65,6 +90,7 @@ export default function PaywallEmpresa({ nomePerfil, onAssinar, onResgatarCupom,
     }
     // Abre a aba do pagamento já no clique (evita bloqueio de pop-up).
     const janela = window.open('', '_blank');
+    assinaturaEmCursoRef.current = true;
     setErro('');
     setCarregando(ciclo);
     try {
@@ -81,6 +107,7 @@ export default function PaywallEmpresa({ nomePerfil, onAssinar, onResgatarCupom,
       if (janela) janela.close();
       setErro('Não foi possível iniciar a assinatura agora.');
     } finally {
+      assinaturaEmCursoRef.current = false;
       setCarregando(null);
     }
   };
@@ -106,7 +133,7 @@ export default function PaywallEmpresa({ nomePerfil, onAssinar, onResgatarCupom,
           <div className="relative z-20 w-full rounded-3xl border border-white/20 bg-white/10 p-5 shadow-2xl lg:max-w-2xl lg:border-white/30 lg:bg-white/70 lg:p-6 lg:backdrop-blur-xl">
           <p className="mb-1.5 text-xs font-bold uppercase tracking-[0.35em] text-sky-700">Assinatura</p>
           <h1 className="text-xl font-black leading-tight text-slate-900 lg:text-2xl">
-            Seu teste de 7 dias terminou
+            {tituloBloqueio}
           </h1>
 
           {/* Perfil bloqueado — destaque forte */}
@@ -116,7 +143,7 @@ export default function PaywallEmpresa({ nomePerfil, onAssinar, onResgatarCupom,
           </div>
 
           <p className="mt-2.5 text-sm font-semibold text-slate-600">
-            Assine para reativar — seus dados estão guardados.
+            {textoBloqueio}
           </p>
 
           {erro && (
@@ -215,7 +242,7 @@ export default function PaywallEmpresa({ nomePerfil, onAssinar, onResgatarCupom,
             {cupomErro && <p className="mt-2 text-xs font-bold text-red-600">{cupomErro}</p>}
           </div>
 
-          <div className="mt-4 flex flex-wrap gap-2 border-t border-slate-200 pt-3">
+          <div className={`mt-4 grid gap-2 border-t border-slate-200 pt-3 ${onTrocarPerfil ? 'grid-cols-3' : 'grid-cols-2'}`}>
             {onTrocarPerfil && (
               <button type="button" onClick={onTrocarPerfil} className="h-9 flex-1 rounded-lg border border-slate-300 bg-white/85 px-3 text-[11px] font-black uppercase tracking-wide text-slate-700 shadow-sm transition hover:border-sky-700 hover:bg-sky-700 hover:text-white hover:shadow-md active:scale-[0.98]">
                 Trocar de perfil

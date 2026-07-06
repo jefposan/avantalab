@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 'use client';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { supabase } from '../lib/supabase';
 import {
   buscarEmpresasDoUsuario,
@@ -104,6 +104,7 @@ export function useAuth(deps: UseAuthDeps) {
   const [nomeEmpresaInicial, setNomeEmpresaInicial] = useState('');
   const [tipoPerfilInicial, setTipoPerfilInicial] = useState<TipoPerfil>('empresa');
   const [criandoEmpresaInicial, setCriandoEmpresaInicial] = useState(false);
+  const criandoEmpresaInicialRef = useRef(false);
   const [criandoNovaEmpresaLogada, setCriandoNovaEmpresaLogada] = useState(false);
 
   // ---------------------------------------------------------------------------
@@ -667,6 +668,8 @@ export function useAuth(deps: UseAuthDeps) {
   // ---------------------------------------------------------------------------
 
   const handleCriarEmpresaInicial = async () => {
+    if (criandoEmpresaInicialRef.current) return;
+
     const nomeLimpo = nomeEmpresaInicial.trim();
     const tipoPerfil = normalizarTipoPerfil(tipoPerfilInicial);
 
@@ -675,12 +678,14 @@ export function useAuth(deps: UseAuthDeps) {
       return;
     }
 
+    criandoEmpresaInicialRef.current = true;
     setAuthErro('');
     setAuthMensagem('');
     setCriandoEmpresaInicial(true);
 
     const { data: sessaoAtual } = await supabase.auth.getSession();
     if (!sessaoAtual.session) {
+      criandoEmpresaInicialRef.current = false;
       setCriandoEmpresaInicial(false);
       setAuthErro('Sua sessão expirou. Faça login novamente para continuar.');
       return;
@@ -690,15 +695,16 @@ export function useAuth(deps: UseAuthDeps) {
     try {
       resultado = await criarEmpresaInicial(nomeLimpo);
     } catch (e: any) {
+      criandoEmpresaInicialRef.current = false;
       setCriandoEmpresaInicial(false);
       console.error('Erro inesperado ao criar empresa inicial:', e);
       setAuthErro(e?.message || 'Erro inesperado ao criar o perfil. Tente novamente.');
       return;
     }
 
-    setCriandoEmpresaInicial(false);
-
     if (resultado.erro || !resultado.data) {
+      criandoEmpresaInicialRef.current = false;
+      setCriandoEmpresaInicial(false);
       setAuthErro(resultado.mensagem || 'Não foi possível criar o perfil financeiro. Tente novamente.');
       return;
     }
