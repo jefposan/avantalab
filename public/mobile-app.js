@@ -5,6 +5,9 @@
 
   if (!root) return;
 
+  // Flag da versão paga (espelha NEXT_PUBLIC_COBRANCA_ATIVA no web).
+  var COBRANCA_ATIVA_MOBILE = root.getAttribute('data-cobranca-ativa') === 'true';
+
   function deveRedirecionarMobileParaWeb() {
     var standalone =
       window.matchMedia('(display-mode: standalone)').matches ||
@@ -113,6 +116,7 @@
     aceiteTermosEm: null,
     cadastroDdi: '55',
     cadastroCupom: '',
+    inicioEmpresaModo: 'trial',
     mostrarSenhaLogin: false,
     mostrarNovaSenha: false,
     mostrarConfirmarSenha: false,
@@ -3524,6 +3528,18 @@
         }
       } catch (e) { /* silencioso */ }
       state.cadastroCupom = '';
+    } else if (criadaId && COBRANCA_ATIVA_MOBILE && tipo === 'empresa') {
+      // Sem cupom: define o início do perfil empresa (7 dias grátis x assinar agora).
+      try {
+        var tokInicio = await tokenSessao();
+        if (tokInicio) {
+          await fetch('/api/cobranca/definir-inicio', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + tokInicio },
+            body: JSON.stringify({ empresaId: criadaId, modo: state.inicioEmpresaModo }),
+          });
+        }
+      } catch (e) { /* silencioso */ }
     }
 
     state.modoCriarPerfil = false;
@@ -3542,6 +3558,15 @@
           '<p class="mb-1 text-[10px] font-black uppercase tracking-wide text-slate-600">Tipo do perfil</p>' +
           seletorTipoPerfilHtml('criar-perfil', tipo) +
         '</div>' +
+        ((COBRANCA_ATIVA_MOBILE && tipo === 'empresa') ?
+          '<div class="rounded-xl border border-sky-200 bg-sky-50 p-3">' +
+            '<p class="text-[11px] font-bold leading-snug text-sky-900">Perfil empresa tem <b>7 dias gr&aacute;tis</b>. Depois: R$ 34,90/m&ecirc;s, ou R$ 29,00/m&ecirc;s no plano anual.</p>' +
+            '<div class="mt-2 grid grid-cols-2 gap-2">' +
+              '<button id="inicio-empresa-trial" type="button" class="rounded-lg px-2 py-2 text-[10px] font-black uppercase tracking-wide transition ' + (state.inicioEmpresaModo === 'trial' ? 'bg-sky-700 text-white shadow' : 'bg-white text-slate-600') + '">7 dias gr&aacute;tis</button>' +
+              '<button id="inicio-empresa-assinar" type="button" class="rounded-lg px-2 py-2 text-[10px] font-black uppercase tracking-wide transition ' + (state.inicioEmpresaModo === 'assinar' ? 'bg-sky-700 text-white shadow' : 'bg-white text-slate-600') + '">Assinar agora</button>' +
+            '</div>' +
+          '</div>'
+        : '') +
         alertaCriarPerfilHtml() +
         '<button id="criar-perfil-inicial-submit" type="button" class="h-12 rounded-xl bg-slate-900 px-4 text-sm font-black uppercase tracking-wide text-white shadow-lg">' +
           (state.carregando ? 'Criando...' : 'Criar perfil') +
@@ -8183,6 +8208,8 @@
     bind('sair-criar-perfil', function () { state.modoCriarPerfil = false; sair(); });
     bind('criar-perfil-empresa', function () { state.criarPerfilTipo = 'empresa'; render(); });
     bind('criar-perfil-pessoal', function () { state.criarPerfilTipo = 'pessoal'; render(); });
+    bind('inicio-empresa-trial', function () { state.inicioEmpresaModo = 'trial'; render(); });
+    bind('inicio-empresa-assinar', function () { state.inicioEmpresaModo = 'assinar'; render(); });
     bind('toggle-senha-login', function () {
       alternarSenha('mostrarSenhaLogin', 'senha', 'toggle-senha-login');
     });

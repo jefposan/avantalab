@@ -285,6 +285,7 @@ export default function AppGestao() {
     emailConfirmado, setEmailConfirmado,
     nomeEmpresaInicial, setNomeEmpresaInicial,
     tipoPerfilInicial, setTipoPerfilInicial,
+    inicioEmpresaModo, setInicioEmpresaModo,
     criandoEmpresaInicial, setCriandoEmpresaInicial,
     criandoNovaEmpresaLogada, setCriandoNovaEmpresaLogada,
     handleLogin,
@@ -5219,6 +5220,31 @@ if (acessoNaoConfigurado) {
       );
     })}
   </div>
+
+  {COBRANCA_ATIVA && tipoPerfilInicialNormalizado === 'empresa' && (
+    <div className="mt-4 rounded-xl border border-sky-200 bg-sky-50 p-3">
+      <p className="text-xs font-bold leading-snug text-sky-900">
+        Perfil empresa tem <b>7 dias grátis</b>. Depois: R$ 34,90/mês, ou R$ 29,00/mês no plano anual.
+      </p>
+      <div className="mt-2 grid grid-cols-2 gap-2">
+        {(['trial', 'assinar'] as const).map((m) => {
+          const ativo = inicioEmpresaModo === m;
+          return (
+            <button
+              key={m}
+              type="button"
+              onClick={() => setInicioEmpresaModo(m)}
+              className={`rounded-lg px-2 py-2 text-[11px] font-black uppercase tracking-wide transition ${
+                ativo ? 'bg-sky-700 text-white shadow' : 'bg-white text-slate-600 hover:bg-sky-100'
+              }`}
+            >
+              {m === 'trial' ? '7 dias grátis' : 'Assinar agora'}
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  )}
 </div>
 
 {authErro && (
@@ -6947,6 +6973,28 @@ if (isTelaMobile) {
                 })}
               </div>
             </div>
+
+            {COBRANCA_ATIVA && tipoPerfilInicialNormalizado === 'empresa' && (
+              <div className="rounded-xl border border-sky-200 bg-sky-50 p-3">
+                <p className="text-xs font-bold leading-snug text-sky-900">
+                  Perfil empresa tem <b>7 dias grátis</b>. Depois: R$ 34,90/mês, ou R$ 29,00/mês no plano anual.
+                </p>
+                <div className="mt-2 grid grid-cols-2 gap-2">
+                  {(['trial', 'assinar'] as const).map((m) => {
+                    const ativo = inicioEmpresaModo === m;
+                    return (
+                      <button key={m} type="button" onClick={() => setInicioEmpresaModo(m)}
+                        className={`rounded-lg px-2 py-2 text-[11px] font-black uppercase tracking-wide transition ${
+                          ativo ? 'bg-sky-700 text-white shadow' : 'bg-white text-slate-600 hover:bg-sky-100'
+                        }`}
+                      >
+                        {m === 'trial' ? '7 dias grátis' : 'Assinar agora'}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
 
             {authErro && (
               <div className="rounded-xl bg-red-100 px-4 py-3 text-sm font-semibold text-red-700">

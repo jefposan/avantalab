@@ -13,6 +13,7 @@ import {
 import { normalizarTipoPerfil, type TipoPerfil } from '../lib/perfis';
 import { TERMOS_VERSAO } from '../lib/legal';
 import { DDI_PADRAO } from '../lib/paises';
+import { COBRANCA_ATIVA } from '../lib/cobranca';
 import type { AbrirAvisoFn } from './useUI';
 
 // ---------------------------------------------------------------------------
@@ -67,6 +68,8 @@ export function useAuth(deps: UseAuthDeps) {
   const [aceitouTermos, setAceitouTermos] = useState(false);
   // DDI (código do país) do celular do cadastro. Padrão: Brasil.
   const [cadastroDdi, setCadastroDdi] = useState(DDI_PADRAO);
+  // Início do perfil empresa: '7 dias grátis' (trial) ou 'assinar agora'.
+  const [inicioEmpresaModo, setInicioEmpresaModo] = useState<'trial' | 'assinar'>('trial');
 
   // --- Estados de SMS cadastro ---
   const [codigoSmsCadastro, setCodigoSmsCadastro] = useState('');
@@ -749,6 +752,21 @@ export function useAuth(deps: UseAuthDeps) {
       } catch { /* silencioso */ }
     }
 
+    // Cobrança: define o início do perfil EMPRESA (7 dias grátis x assinar agora).
+    // Só quando a flag está ligada e não houve cupom (o cupom já concede cortesia).
+    if (empresaCriadaId && COBRANCA_ATIVA && tipoPerfil === 'empresa' && !cadastroCupom.trim()) {
+      try {
+        const tokenSessao = sessaoAtual.session?.access_token;
+        if (tokenSessao) {
+          await fetch('/api/cobranca/definir-inicio', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${tokenSessao}` },
+            body: JSON.stringify({ empresaId: empresaCriadaId, modo: inicioEmpresaModo }),
+          });
+        }
+      } catch { /* silencioso */ }
+    }
+
     setDuplicadosAtivo(true);
     setTipoPerfilAtual(tipoPerfil);
     setAuthMensagem('Perfil financeiro criado com sucesso. Carregando o sistema...');
@@ -814,6 +832,7 @@ export function useAuth(deps: UseAuthDeps) {
     emailConfirmado, setEmailConfirmado,
     nomeEmpresaInicial, setNomeEmpresaInicial,
     tipoPerfilInicial, setTipoPerfilInicial,
+    inicioEmpresaModo, setInicioEmpresaModo,
     criandoEmpresaInicial, setCriandoEmpresaInicial,
     criandoNovaEmpresaLogada, setCriandoNovaEmpresaLogada,
 

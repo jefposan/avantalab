@@ -57,6 +57,7 @@ export const viewport: Viewport = {
 export default function MobilePage() {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
+  const cobrancaAtiva = process.env.NEXT_PUBLIC_COBRANCA_ATIVA === 'true' ? 'true' : 'false';
 
   return (
     <main className="min-h-screen bg-slate-950 text-white" style={{overflow:'visible'}}>
@@ -199,6 +200,7 @@ export default function MobilePage() {
         id="mobile-root"
         data-supabase-url={supabaseUrl}
         data-supabase-anon-key={supabaseAnonKey}
+        data-cobranca-ativa={cobrancaAtiva}
       >
         <section
           className="avantalab-mobile-bg fixed inset-0 flex items-center justify-center overflow-hidden px-4"
@@ -227,7 +229,7 @@ export default function MobilePage() {
       <BackupMobileBridge />
 
       <script src="/mobile-supabase.js" defer />
-      <script src="/mobile-app.js?v=252" defer />
+      <script src="/mobile-app.js?v=253" defer />
     </main>
   );
 }
