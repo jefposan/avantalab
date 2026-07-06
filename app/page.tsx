@@ -5633,7 +5633,7 @@ if (isTelaMobile) {
           style={{ backgroundImage: "image-set(url('/images/bg-avantalab.webp') type('image/webp'), url('/images/bg-avantalab.png') type('image/png'))" }}
         />
         <div className="absolute inset-0 bg-white/10" />
-        <div className="relative z-10 flex flex-col items-center gap-3 rounded-2xl border border-white/40 bg-white/80 px-8 py-6 shadow-2xl backdrop-blur-xl">
+        <div className="relative z-10 flex -translate-y-24 flex-col items-center gap-3 rounded-2xl border border-white/40 bg-white/80 px-8 py-6 shadow-2xl backdrop-blur-xl">
           <div className="h-9 w-9 animate-spin rounded-full border-[3px] border-sky-200 border-t-sky-700" />
           <p className="text-sm font-black uppercase tracking-[0.24em] text-sky-800">Carregando perfil…</p>
         </div>
