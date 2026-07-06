@@ -4365,7 +4365,10 @@ const classeConteudoPagina =
 
 const abrirCriacaoNovaEmpresa = () => {
   // Qualquer usuario autenticado pode criar seu proprio perfil (empresa ou pessoal).
+  // Na tela de seleção de perfil nenhum perfil está carregado ainda, então
+  // perfilUsuario é nulo — nesse caso também liberamos (o usuário está logado).
   const podeCriarEmpresa =
+    !perfilUsuario ||
     perfilUsuario === 'gestor_master' ||
     perfilUsuario === 'administrador' ||
     perfilUsuario === 'operador_completo' ||
@@ -5426,7 +5429,7 @@ if (modalSelecionarEmpresa) {
           <button
             type="button"
             onClick={abrirCriacaoNovaEmpresa}
-            className="mt-3 w-full text-center text-xs font-black uppercase tracking-wide text-sky-700 transition hover:text-sky-900 cursor-pointer"
+            className="mt-3 w-full rounded-xl border border-sky-300 bg-sky-50 px-4 py-2.5 text-xs font-black uppercase tracking-wide text-sky-700 shadow-sm transition hover:border-sky-600 hover:bg-sky-700 hover:text-white active:scale-[0.98] cursor-pointer"
           >
             Criar novo perfil
           </button>
