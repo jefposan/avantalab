@@ -111,6 +111,15 @@ export async function PATCH(request: Request) {
       tipo_perfil: tipoPerfil,
       status,
       valido_ate: validoAte,
+      ...(acao === 'liberar'
+        ? {
+            plano: null,
+            ciclo: null,
+            trial_fim: null,
+            gateway: null,
+            gateway_subscription_id: null,
+          }
+        : {}),
       atualizado_em: new Date().toISOString(),
     };
 

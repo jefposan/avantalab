@@ -87,7 +87,7 @@ export async function POST(request: Request) {
       }, { onConflict: 'gateway_payment_id' });
     }
 
-    if (assinaturaAtual) {
+    if (assinaturaAtual && assinaturaAtual.status !== 'cortesia') {
       let novoStatus: string | null = null;
       let validoAte: string | null = null;
       if (evento === 'PAYMENT_CONFIRMED' || evento === 'PAYMENT_RECEIVED') novoStatus = 'ativa';

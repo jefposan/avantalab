@@ -46,7 +46,7 @@ Deno.serve(async () => {
     const falhas: Array<{ empresaId: string; erro: string }> = [];
 
     for (const assinatura of (data || []) as Assinatura[]) {
-      if (assinatura.status === 'cancelada') continue;
+      if (assinatura.status === 'cancelada' || assinatura.status === 'cortesia') continue;
       verificadas++;
       try {
         const [detalhe, pagamentosResposta] = await Promise.all([
