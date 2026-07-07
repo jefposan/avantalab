@@ -49,6 +49,9 @@ interface AppHeaderProps {
   setModalEmpresasAberto: React.Dispatch<React.SetStateAction<boolean>>;
   agendaHojeCount: number;
   onAbrirAgenda: () => void;
+  // Abas premium bloqueadas no plano grátis (mostram cadeado; o clique é
+  // interceptado pelo setAbaAtiva que a página passa).
+  abasPremium?: string[];
 }
 
 const ABAS = ['Dashboard', 'Balanço Geral', 'Gráficos', 'Por Categoria', 'Relatório'] as const;
@@ -68,6 +71,7 @@ export default function AppHeader({
   confirmarLogout, logoUrl, logoSettings,
   setModalEmpresasAberto,
   agendaHojeCount, onAbrirAgenda,
+  abasPremium = [],
 }: AppHeaderProps) {
   const itensMenu = [
     { aba: 'Dashboard', label: 'Início' },
@@ -156,6 +160,7 @@ export default function AppHeader({
                   style={abaAtiva === item.aba ? estiloTemaPrimario : undefined}
                 >
                   {item.label}
+                  {abasPremium.includes(item.aba) && <span className="ml-1.5 text-[10px]" title="Recurso Premium">🔒</span>}
                 </button>
               ))}
             </div>
@@ -298,6 +303,7 @@ export default function AppHeader({
                       style={ativo ? { color: textoSobreCorPrimaria } : undefined}
                     >
                       {item.label}
+                      {abasPremium.includes(item.aba) && <span className="ml-1 text-[10px]" title="Recurso Premium">🔒</span>}
                     </button>
                   );
                 })}

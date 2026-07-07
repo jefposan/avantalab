@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { COBRANCA_ATIVA, podeUsar } from '../../lib/cobranca';
+import { resolverEstadoAcessoParaUsuario } from '../../lib/cobranca-servidor';
 
 type PerfilUsuario =
   | 'administrador'
@@ -107,6 +109,18 @@ export async function POST(request: Request) {
 
     if (!permissao) {
       return respostaErro('Você não tem permissão para criar usuários.', 403);
+    }
+
+    // Cobrança: criar usuário é recurso do Premium Pessoal (fail-open em falha).
+    if (COBRANCA_ATIVA) {
+      try {
+        const estado = await resolverEstadoAcessoParaUsuario(empresaId, user.id);
+        if (!podeUsar('usuarios_internos', estado)) {
+          return respostaErro('Criar usuários faz parte do Premium Pessoal. Assine para desbloquear.', 403);
+        }
+      } catch (erroCobranca) {
+        console.error('Erro ao validar Premium (criar usuário):', erroCobranca);
+      }
     }
 
     const { data: loginExistente, error: erroLoginExistente } = await supabaseAdmin

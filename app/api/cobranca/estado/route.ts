@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
-import { resolverEstadoAcesso } from '../../../lib/cobranca-servidor';
+import { resolverEstadoAcessoParaUsuario } from '../../../lib/cobranca-servidor';
 import { precisaPaywallEmpresa, PRECOS } from '../../../lib/cobranca';
 import { listarCobrancasAssinaturaAsaas } from '../../../lib/asaas';
 
@@ -51,7 +51,7 @@ export async function GET(request: Request) {
 
   // 3) Resolve e devolve o estado. `precisaPaywall` é calculado no servidor
   //    (já considera a flag COBRANCA_ATIVA) — usado pelo app mobile.
-  const estado = await resolverEstadoAcesso(empresaId);
+  const estado = await resolverEstadoAcessoParaUsuario(empresaId, userId);
   let faturaPendente: { invoiceUrl: string; valor: number | null; vencimento: string | null; status: string | null } | null = null;
   const { data: assinatura } = await admin
     .from('assinaturas')

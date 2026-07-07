@@ -22,6 +22,11 @@ interface ChatFlutuanteProps {
   enviarFeedbackVisual: () => Promise<void>;
   supabaseUrl: string;
   contexto: string;
+  // Perfil ativo — enviado à API da Ava para a checagem do Premium no servidor.
+  empresaId?: string | null;
+  // Ava bloqueada no plano Pessoal grátis (mostra o cadeado; o clique é
+  // interceptado pelo setChatFeedbackEtapa que a página passa).
+  avaBloqueada?: boolean;
 }
 
 function DotsBounce() {
@@ -70,6 +75,8 @@ export default function ChatFlutuante({
   voltarInicioChatFeedback,
   enviarFeedbackVisual,
   contexto,
+  empresaId = null,
+  avaBloqueada = false,
 }: ChatFlutuanteProps) {
   const [iaMensagens, setIaMensagens] = useState<Mensagem[]>([
     { role: 'assistant', content: 'Olá! Sou a Ava, sua assistente financeira. Posso analisar seus resultados, dar dicas ou tirar dúvidas sobre o sistema. Como posso ajudar?' },
@@ -139,6 +146,7 @@ export default function ChatFlutuante({
         body: JSON.stringify({
           messages: novas.map(m => ({ role: m.role, content: m.content })),
           contexto,
+          empresaId: empresaId || undefined,
         }),
       });
 
@@ -285,6 +293,7 @@ export default function ChatFlutuante({
                   </span>
                   <span className="min-w-0 flex-1 truncate text-sm font-semibold text-slate-400">
                     Pergunte para Ava...
+                    {avaBloqueada && <span className="ml-1.5 text-xs" title="Recurso Premium">🔒</span>}
                   </span>
                   <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-sky-600 text-base font-black text-white shadow-sm">
                     &#8593;

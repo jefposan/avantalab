@@ -71,6 +71,10 @@ type TabelaLancamentosDespesaProps = {
   despesasCadastradas: DespesaCadastrada[];
   buscaLancamento: string;
   setBuscaLancamento: (valor: string) => void;
+  // Busca premium bloqueada no plano Pessoal grátis: o campo mostra o cadeado
+  // e o toque chama onBuscaBloqueada (abre o modal de upgrade) em vez de digitar.
+  buscaBloqueada?: boolean;
+  onBuscaBloqueada?: () => void;
   lancamentosFiltradosDoMes: LancamentoDespesa[];
   lancamentoEditandoId: string | number | null;
   editDia: string;
@@ -126,6 +130,8 @@ export default function TabelaLancamentosDespesa({
   despesasCadastradas,
   buscaLancamento,
   setBuscaLancamento,
+  buscaBloqueada = false,
+  onBuscaBloqueada,
   lancamentosFiltradosDoMes,
   lancamentoEditandoId,
   editDia,
@@ -232,10 +238,12 @@ export default function TabelaLancamentosDespesa({
                 inputMode="search"
                 enterKeyHint="search"
                 autoComplete="off"
+                readOnly={buscaBloqueada}
                 value={buscaLancamento}
-                onChange={(e) => setBuscaLancamento(e.target.value)}
+                onChange={(e) => { if (buscaBloqueada) return; setBuscaLancamento(e.target.value); }}
                 onFocus={onFocoDespesa}
-                placeholder="Buscar lançamento do mês por despesa, descrição, dia ou valor..."
+                onClick={() => { if (buscaBloqueada) onBuscaBloqueada?.(); }}
+                placeholder={buscaBloqueada ? '🔒 Busca nos lançamentos — recurso Premium' : 'Buscar lançamento do mês por despesa, descrição, dia ou valor...'}
                 className={`h-9 w-full rounded-lg border py-2 pl-9 pr-9 text-xs font-semibold outline-none transition focus:ring-1 focus:ring-inset ${
                   darkMode
                     ? 'bg-slate-700 border-slate-600 text-white placeholder:text-slate-400'

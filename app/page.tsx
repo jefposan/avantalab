@@ -22,7 +22,8 @@ import TabelaLancamentosDespesa from './components/TabelaLancamentosDespesa';
 import TourPrimeiroAcesso from './components/TourPrimeiroAcesso';
 import PaywallEmpresa from './components/PaywallEmpresa';
 import AssinaturaModal from './components/AssinaturaModal';
-import { COBRANCA_ATIVA, emCarencia, precisaPaywallEmpresa, type DadosCobrancaAssinatura, type EstadoAcesso } from './lib/cobranca';
+import PremiumPessoalModal from './components/PremiumPessoalModal';
+import { COBRANCA_ATIVA, assinaturaVigente, emCarencia, precisaPaywallEmpresa, precisaUpgradePessoal, type DadosCobrancaAssinatura, type EstadoAcesso, type Recurso } from './lib/cobranca';
 import { PAISES } from './lib/paises';
 import {
   formatarMoeda,
@@ -335,6 +336,35 @@ const [validandoTelefoneObrigatorio, setValidandoTelefoneObrigatorio] = useState
   // evitando o "flash" do conteúdo antes de o paywall bloquear.
   const [estadoCarregado, setEstadoCarregado] = useState(false);
   const [modalAssinatura, setModalAssinatura] = useState(false);
+  // Premium Pessoal: recurso premium que o usuário grátis tentou usar
+  // (abre o modal de upgrade; null = fechado).
+  const [premiumRecurso, setPremiumRecurso] = useState<Recurso | null>(null);
+  // Recurso premium bloqueado neste perfil? (false sempre que a flag está off)
+  const recursoBloqueado = (recurso: Recurso) => precisaUpgradePessoal(recurso, estadoAcesso);
+  const abrirPremium = (recurso: Recurso) => setPremiumRecurso(recurso);
+  // Intercepta as abas premium (Relatório/Gráficos) no plano Pessoal grátis.
+  const setAbaAtivaComGate: React.Dispatch<React.SetStateAction<string>> = (valor) => {
+    setAbaAtiva((atual) => {
+      const proxima = typeof valor === 'function' ? (valor as (aba: string) => string)(atual) : valor;
+      if ((proxima === 'Gráficos' || proxima === 'Relatório') && precisaUpgradePessoal('analises', estadoAcesso)) {
+        window.setTimeout(() => setPremiumRecurso('analises'), 0);
+        return atual;
+      }
+      return proxima;
+    });
+  };
+  // Intercepta a etapa 'ia' do chat (Ava) no plano Pessoal grátis — o
+  // formulário de sugestões/dúvidas continua livre.
+  const setChatFeedbackEtapaComGate: React.Dispatch<React.SetStateAction<'inicio' | 'formulario' | 'confirmacao' | 'ia'>> = (valor) => {
+    setChatFeedbackEtapa((atual: 'inicio' | 'formulario' | 'confirmacao' | 'ia') => {
+      const proxima = typeof valor === 'function' ? (valor as (etapa: typeof atual) => typeof atual)(atual) : valor;
+      if (proxima === 'ia' && precisaUpgradePessoal('ava', estadoAcesso)) {
+        window.setTimeout(() => setPremiumRecurso('ava'), 0);
+        return atual;
+      }
+      return proxima;
+    });
+  };
   useEffect(() => {
     if (!COBRANCA_ATIVA || !acessoLiberado || !empresaId) { setEstadoAcesso(null); setFaturaPendenteUrl(null); setEstadoCarregado(true); return; }
     let ativo = true;
@@ -628,6 +658,30 @@ const rotuloTipoPerfilAtual = rotuloTipoPerfil(tipoPerfilAtualNormalizado);
 const labelNomePerfilInicial = rotuloNomePerfil(tipoPerfilInicialNormalizado);
 const placeholderPerfilInicial = placeholderNomePerfil(tipoPerfilInicialNormalizado);
 const labelNomePerfilEdicao = rotuloNomePerfil(editTipoPerfilNormalizado);
+
+// Premium Pessoal — múltiplos perfis: no grátis o usuário tem direito a 1
+// perfil pessoal. Criar perfil EMPRESA continua sempre livre (tem trial
+// próprio); e quem assina a Empresa ganha o Premium no pessoal (o servidor
+// devolve o estado como cortesia nesse caso).
+const criarPerfilPessoalBloqueado = (): boolean => {
+  if (!COBRANCA_ATIVA || !estadoAcesso) return false;
+  const jaTemPessoal = empresasDoUsuario.some(
+    (empresa: { tipo_perfil?: string | null }) => normalizarTipoPerfil(empresa.tipo_perfil) === 'pessoal'
+  );
+  if (!jaTemPessoal) return false; // primeiro perfil pessoal é o grátis
+  if (estadoAcesso.tipoPerfil === 'pessoal') return !assinaturaVigente(estadoAcesso);
+  // Perfil atual é empresa: só a assinatura PAGA (não o trial) libera novos pessoais.
+  return estadoAcesso.status !== 'ativa';
+};
+
+// Envolve a criação de perfil com o gate do Premium (só bloqueia perfil pessoal extra).
+const handleCriarEmpresaInicialComGate = () => {
+  if (criandoNovaEmpresaLogada && tipoPerfilInicialNormalizado === 'pessoal' && criarPerfilPessoalBloqueado()) {
+    abrirPremium('multiplos_perfis');
+    return;
+  }
+  handleCriarEmpresaInicial();
+};
 
 const textoSobreCorPrimaria = corEhClara(corPrimaria) ? '#0f172a' : '#ffffff';
 const bordaSobreCorPrimaria = corEhClara(corPrimaria)
@@ -3270,6 +3324,13 @@ const editarReceitaPrevista = (id: string | number) => {
 };
 
 const atualizarLayoutDashboard = (novaOrdem: { a: string[]; b: string[] }, novosExpandidos: string[]) => {
+  // Premium Pessoal: organizar o dashboard (kanban) é pago — avisa e mantém o padrão.
+  if (recursoBloqueado('organizar_dashboard')) {
+    setDashboardOrdem(ordemDashboardPadrao);
+    setDashboardExpandidos([]);
+    abrirPremium('organizar_dashboard');
+    return;
+  }
   setDashboardOrdem(novaOrdem);
   setDashboardExpandidos(novosExpandidos);
   if (empresaId) salvarDashboardOrdemWeb(empresaId, novaOrdem, dashboardOcultos, novosExpandidos);
@@ -3283,6 +3344,12 @@ const restaurarOrdemDashboard = () => {
 };
 
 const definirOcultosDashboard = (novosOcultos: string[]) => {
+  // Premium Pessoal: ocultar/exibir cards faz parte de organizar o dashboard.
+  if (recursoBloqueado('organizar_dashboard')) {
+    setDashboardOcultos([]);
+    abrirPremium('organizar_dashboard');
+    return;
+  }
   const ocultosNormalizados = novosOcultos.filter(
     (id, index) => dashboardCardsKanban.includes(id) && novosOcultos.indexOf(id) === index
   );
@@ -4310,7 +4377,7 @@ const alertasSistema = useMemo(() => {
     alertas.push({ id: 'notif-' + n.id, titulo: n.titulo, mensagem: n.corpo, naoLida: !n.lida });
   });
 
-  if (backupPendente) {
+  if (backupPendente && !recursoBloqueado('exportacao')) {
     alertas.push({
       id: 'backup-pendente',
       titulo: 'Backup recomendado',
@@ -5258,6 +5325,7 @@ if (acessoNaoConfigurado) {
           }`}
         >
           {rotuloTipoPerfil(tipo)}
+          {tipo === 'pessoal' && criandoNovaEmpresaLogada && criarPerfilPessoalBloqueado() && <span className="ml-1 text-xs" title="Recurso Premium">🔒</span>}
         </button>
       );
     })}
@@ -5304,7 +5372,7 @@ if (acessoNaoConfigurado) {
 <div className="mt-6 grid grid-cols-1 sm:grid-cols-[1fr_140px] gap-3">
   <button
     type="button"
-    onClick={handleCriarEmpresaInicial}
+    onClick={handleCriarEmpresaInicialComGate}
     disabled={criandoEmpresaInicial}
     className="h-13 rounded-xl bg-slate-900 px-4 py-3 font-bold text-white shadow-lg transition hover:bg-slate-800 cursor-pointer disabled:cursor-not-allowed disabled:opacity-60"
   >
@@ -6190,6 +6258,16 @@ if (isTelaMobile) {
   estado={estadoAcesso}
 />
 
+<PremiumPessoalModal
+  aberto={premiumRecurso !== null}
+  recurso={premiumRecurso}
+  onFechar={() => setPremiumRecurso(null)}
+  onAssinar={() => setModalAssinatura(true)}
+  onResgatarCupom={resgatarCupom}
+  darkMode={darkMode}
+  corPrimaria={corPrimaria}
+/>
+
 <ModalConfirmacao
   aberto={modalConfirmacaoAberto}
   titulo={tituloConfirmacao}
@@ -7020,6 +7098,7 @@ if (isTelaMobile) {
                       style={ativo ? estiloTemaPrimario : undefined}
                     >
                       {rotuloTipoPerfil(tipo)}
+                      {tipo === 'pessoal' && criandoNovaEmpresaLogada && criarPerfilPessoalBloqueado() && <span className="ml-1 text-xs" title="Recurso Premium">🔒</span>}
                     </button>
                   );
                 })}
@@ -7072,7 +7151,7 @@ if (isTelaMobile) {
               </button>
               <button
                 type="button"
-                onClick={handleCriarEmpresaInicial}
+                onClick={handleCriarEmpresaInicialComGate}
                 disabled={criandoEmpresaInicial}
                 className="rounded-xl px-4 py-3 text-xs font-black uppercase text-white shadow-md transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-60 cursor-pointer"
                 style={estiloTemaPrimario}
@@ -7434,7 +7513,7 @@ if (isTelaMobile) {
       <div className="mb-5 mt-7 grid grid-cols-1 gap-3 sm:grid-cols-2">
         <button
           type="button"
-          onClick={abrirCriarNovoUsuario}
+          onClick={() => { if (recursoBloqueado('usuarios_internos')) { abrirPremium('usuarios_internos'); return; } abrirCriarNovoUsuario(); }}
           className={`rounded-xl border px-4 py-3 text-sm font-black uppercase tracking-wide shadow-sm transition hover:-translate-y-0.5 hover:shadow-md active:translate-y-0 cursor-pointer ${
             modoFormularioUsuario === 'criar'
               ? darkMode
@@ -7445,12 +7524,12 @@ if (isTelaMobile) {
                 : 'border-sky-100 bg-sky-50/80 text-sky-800 hover:border-sky-200 hover:bg-sky-100'
           }`}
         >
-          Criar novo usuário
+          Criar novo usuário{recursoBloqueado('usuarios_internos') && <span className="ml-1.5 text-xs" title="Recurso Premium">🔒</span>}
         </button>
 
         <button
           type="button"
-          onClick={abrirAdicionarUsuarioExistente}
+          onClick={() => { if (recursoBloqueado('usuarios_internos')) { abrirPremium('usuarios_internos'); return; } abrirAdicionarUsuarioExistente(); }}
           className={`rounded-xl border px-4 py-3 text-sm font-black uppercase tracking-wide shadow-sm transition hover:-translate-y-0.5 hover:shadow-md active:translate-y-0 cursor-pointer ${
             modoFormularioUsuario === 'existente'
               ? darkMode
@@ -7461,7 +7540,7 @@ if (isTelaMobile) {
                 : 'border-emerald-100 bg-emerald-50/80 text-emerald-800 hover:border-emerald-200 hover:bg-emerald-100'
           }`}
         >
-          Adicionar usuário existente
+          Adicionar usuário existente{recursoBloqueado('usuarios_internos') && <span className="ml-1.5 text-xs" title="Recurso Premium">🔒</span>}
         </button>
       </div>
 
@@ -7898,7 +7977,8 @@ name="novo-usuario-login"
         corEhClara={corEhClara}
         estiloTemaPrimario={estiloTemaPrimario}
         abaAtiva={abaAtiva}
-        setAbaAtiva={setAbaAtiva}
+        setAbaAtiva={setAbaAtivaComGate}
+        abasPremium={recursoBloqueado('analises') ? ['Gráficos', 'Relatório'] : []}
         ajustesAberto={ajustesAberto}
         setAjustesAberto={setAjustesAberto}
         menuResponsivoAberto={menuResponsivoAberto}
@@ -8168,18 +8248,18 @@ name="novo-usuario-login"
 
           <Tooltip texto="Exporte os dados do perfil atual para um arquivo Excel." posicao="right" wrapperClassName="w-full">
             <button
-              onClick={() => { if (!podeAcessarAjustes) { abrirAviso('Acesso não permitido', 'Você não tem permissão para gerar backup dos dados da empresa.'); return; } setAjustesAberto(false); abrirConfirmacao({ titulo: 'Gerar backup', mensagem: 'O sistema vai gerar um arquivo Excel com os dados da empresa atual.\n\nDeseja continuar?', textoConfirmar: 'Gerar backup', acao: async () => { await gerarBackupExcel(backupParams()); } }); }}
+              onClick={() => { if (recursoBloqueado('exportacao')) { setAjustesAberto(false); abrirPremium('exportacao'); return; } if (!podeAcessarAjustes) { abrirAviso('Acesso não permitido', 'Você não tem permissão para gerar backup dos dados da empresa.'); return; } setAjustesAberto(false); abrirConfirmacao({ titulo: 'Gerar backup', mensagem: 'O sistema vai gerar um arquivo Excel com os dados da empresa atual.\n\nDeseja continuar?', textoConfirmar: 'Gerar backup', acao: async () => { await gerarBackupExcel(backupParams()); } }); }}
               className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-xs font-bold text-emerald-300 transition-colors hover:bg-slate-700"
             >
               <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
-              Backup
+              Backup{recursoBloqueado('exportacao') && <span className="ml-auto text-[10px]" title="Recurso Premium">🔒</span>}
             </button>
           </Tooltip>
 
           <Tooltip texto="Importe um arquivo de backup para restaurar os dados do perfil." posicao="right" wrapperClassName="w-full">
-            <button type="button" onClick={() => { setMenuAjuste(null); abrirImportacaoBackup(); }} className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-xs font-bold text-cyan-300 transition-colors hover:bg-slate-700">
+            <button type="button" onClick={() => { if (recursoBloqueado('exportacao')) { setAjustesAberto(false); setMenuAjuste(null); abrirPremium('exportacao'); return; } setMenuAjuste(null); abrirImportacaoBackup(); }} className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-xs font-bold text-cyan-300 transition-colors hover:bg-slate-700">
               <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 8V7a3 3 0 013-3h10a3 3 0 013 3v1M12 4v12m0 0l-4-4m4 4l4-4M5 20h14" /></svg>
-              Restauração
+              Restauração{recursoBloqueado('exportacao') && <span className="ml-auto text-[10px]" title="Recurso Premium">🔒</span>}
             </button>
           </Tooltip>
         </div>
@@ -8400,6 +8480,8 @@ name="novo-usuario-login"
               despesasCadastradas={despesasCadastradas}
               buscaLancamento={buscaLancamento}
               setBuscaLancamento={setBuscaLancamento}
+              buscaBloqueada={recursoBloqueado('busca_lancamentos')}
+              onBuscaBloqueada={() => abrirPremium('busca_lancamentos')}
               lancamentosFiltradosDoMes={lancamentosFiltradosDoMes}
               lancamentoEditandoId={lancamentoEditandoId}
               editDia={editDia}
@@ -8773,9 +8855,9 @@ name="novo-usuario-login"
         saldoInicial={saldoInicialCard}
         saldoFinal={saldoFinalCard}
         saldoPrevisto={saldoPrevistoCard}
-        dashboardOrdem={dashboardOrdem}
-        dashboardOcultos={dashboardOcultos}
-        dashboardExpandidos={dashboardExpandidos}
+        dashboardOrdem={recursoBloqueado('organizar_dashboard') ? ordemDashboardPadrao : dashboardOrdem}
+        dashboardOcultos={recursoBloqueado('organizar_dashboard') ? [] : dashboardOcultos}
+        dashboardExpandidos={recursoBloqueado('organizar_dashboard') ? [] : dashboardExpandidos}
         onAtualizarLayoutDashboard={atualizarLayoutDashboard}
         onOcultarCardDashboard={ocultarCardDashboard}
         onDefinirOcultosDashboard={definirOcultosDashboard}
@@ -8897,7 +8979,9 @@ name="novo-usuario-login"
   chatFeedbackAberto={chatFeedbackAberto}
   setChatFeedbackAberto={setChatFeedbackAberto}
   chatFeedbackEtapa={chatFeedbackEtapa}
-  setChatFeedbackEtapa={setChatFeedbackEtapa}
+  setChatFeedbackEtapa={setChatFeedbackEtapaComGate}
+  empresaId={empresaId}
+  avaBloqueada={recursoBloqueado('ava')}
   feedbackTipo={feedbackTipo}
   feedbackMensagem={feedbackMensagem}
   setFeedbackMensagem={setFeedbackMensagem}

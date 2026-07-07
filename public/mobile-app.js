@@ -85,6 +85,9 @@
     paywallProcessando: false,
     paywallCupomProcessando: false,
     paywallSelecionando: false,
+    // Premium Pessoal: recurso premium tocado no plano grátis (destaque no modal de upgrade)
+    premiumRecursoDestaque: '',
+    premiumCupomProcessando: false,
     assinaturaDetalhes: null,
     assinaturaCarregando: false,
     assinaturaAcao: '',
@@ -747,6 +750,134 @@
     return !!(estado && estado.status === 'inadimplente' && estado.validoAte && new Date(estado.validoAte).getTime() > Date.now());
   }
 
+  // ── Premium Pessoal (espelha app/lib/cobranca.ts) ─────────────
+  // A assinatura está vigente (paga, trial válido ou cortesia ativa)?
+  function assinaturaVigenteMobile(estado) {
+    if (!estado) return false;
+    var agora = Date.now();
+    if (estado.status === 'ativa') return true;
+    if (estado.status === 'cortesia') return !estado.validoAte || new Date(estado.validoAte).getTime() > agora;
+    if (estado.status === 'trial') return !!estado.trialFim && new Date(estado.trialFim).getTime() > agora;
+    if (estado.status === 'inadimplente' || estado.status === 'cancelada') {
+      return !!estado.validoAte && new Date(estado.validoAte).getTime() > agora;
+    }
+    return false;
+  }
+
+  // Perfil PESSOAL grátis tentando usar recurso premium? (flag off → nunca bloqueia)
+  function premiumPessoalBloqueadoMobile() {
+    if (!COBRANCA_ATIVA_MOBILE) return false;
+    var estado = state.paywallEstado;
+    if (!estado) return false; // sem info → fail-open
+    return estado.tipoPerfil === 'pessoal' && !assinaturaVigenteMobile(estado);
+  }
+
+  // Criar mais um perfil PESSOAL é premium (grátis = 1). Perfil empresa é livre.
+  // Quem assina a Empresa ganha o Premium (o servidor devolve cortesia).
+  function criarPerfilPessoalBloqueadoMobile() {
+    if (!COBRANCA_ATIVA_MOBILE) return false;
+    var estado = state.paywallEstado;
+    if (!estado) return false;
+    var jaTemPessoal = (state.empresas || []).some(function (emp) {
+      return normalizarTipoPerfil(emp.tipo_perfil) === 'pessoal';
+    });
+    if (!jaTemPessoal) return false; // o primeiro pessoal é o grátis
+    if (estado.tipoPerfil === 'pessoal') return !assinaturaVigenteMobile(estado);
+    return estado.status !== 'ativa'; // empresa: só assinatura paga libera
+  }
+
+  // Catálogo dos benefícios (mesma ordem de app/lib/cobranca.ts).
+  var RECURSOS_PREMIUM_PESSOAL_MOBILE = [
+    { recurso: 'ava', icone: '🤖', titulo: 'Ava (IA)', descricao: 'Assistente que analisa seus resultados e tira dúvidas.' },
+    { recurso: 'analises', icone: '📊', titulo: 'Análises avançadas', descricao: 'Aba Relatório e Gráficos completos.' },
+    { recurso: 'exportacao', icone: '💾', titulo: 'Backup e exportação', descricao: 'Exporte e restaure seus dados em Excel.' },
+    { recurso: 'busca_lancamentos', icone: '🔎', titulo: 'Busca nos lançamentos', descricao: 'Encontre qualquer lançamento na hora.' },
+    { recurso: 'multiplos_perfis', icone: '👥', titulo: 'Múltiplos perfis pessoais', descricao: 'Crie mais perfis pessoais (grátis = 1).' },
+    { recurso: 'notificacoes', icone: '🔔', titulo: 'Notificações', descricao: 'Lembretes e avisos de pagamentos.' },
+    { recurso: 'organizar_dashboard', icone: '🧩', titulo: 'Organizar dashboard', descricao: 'Reordene os cards do seu jeito.' },
+    { recurso: 'organizar_atalhos', icone: '↔️', titulo: 'Organizar atalhos', descricao: 'Personalize os atalhos do app.' },
+    { recurso: 'usuarios_internos', icone: '🧑‍💼', titulo: 'Usuários internos', descricao: 'Convide outras pessoas para o perfil.' },
+  ];
+
+  // Abre o modal de upgrade destacando o recurso tocado.
+  function abrirPremiumMobile(recurso) {
+    state.premiumRecursoDestaque = recurso || '';
+    state.menuAberto = false;
+    state.modalMenu = 'premium';
+    render();
+  }
+
+  function premiumPessoalHtml() {
+    var destaque = state.premiumRecursoDestaque;
+    return (
+      '<div class="grid gap-2">' +
+        '<p class="text-xs font-semibold leading-relaxed text-slate-500">Este recurso faz parte do <b>Premium Pessoal</b>. O essencial continua grátis para sempre — o Premium desbloqueia os recursos avançados:</p>' +
+        RECURSOS_PREMIUM_PESSOAL_MOBILE.map(function (item) {
+          var ativo = item.recurso === destaque;
+          return '<div class="flex items-start gap-2.5 rounded-xl border px-3 py-2 ' + (ativo ? 'border-sky-400 bg-sky-50' : 'border-slate-200 bg-slate-50') + '">' +
+            '<span class="mt-0.5 text-base leading-none">' + item.icone + '</span>' +
+            '<div class="min-w-0">' +
+              '<p class="text-xs font-black text-slate-900">' + escapeHtml(item.titulo) +
+                (ativo ? ' <span class="ml-1 rounded-full bg-sky-600 px-2 py-0.5 text-[9px] font-black uppercase tracking-wide text-white">Você tentou usar</span>' : '') +
+              '</p>' +
+              '<p class="mt-0.5 text-[11px] font-semibold leading-snug text-slate-500">' + escapeHtml(item.descricao) + '</p>' +
+            '</div>' +
+          '</div>';
+        }).join('') +
+        '<div class="mt-1 flex items-center justify-between gap-3 rounded-2xl border-2 border-sky-400 px-4 py-3" style="background:linear-gradient(135deg,#003E73,#00A6C8)">' +
+          '<div>' +
+            '<p class="text-[9px] font-black uppercase tracking-[0.2em] text-white/80">A partir de</p>' +
+            '<p class="text-xl font-black text-white">R$ 8,25<span class="text-xs font-bold text-white/80">/mês</span></p>' +
+            '<p class="text-[10px] font-semibold text-white/80">no anual (R$ 99,00/ano) · ou R$ 9,90/mês</p>' +
+          '</div>' +
+          '<button id="premium-assinar" type="button" class="shrink-0 rounded-xl bg-white px-4 py-2.5 text-[11px] font-black uppercase tracking-wide text-sky-800 shadow-lg active:scale-[0.98]">Assinar</button>' +
+        '</div>' +
+        '<div class="mt-1">' +
+          '<p class="mb-1 text-[11px] font-black uppercase tracking-wide text-slate-500">Tem um cupom?</p>' +
+          '<div class="flex gap-2">' +
+            '<input id="premium-cupom" type="text" placeholder="Digite o código" style="font-size:16px;text-transform:uppercase" class="min-w-0 flex-1 rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-800 outline-none" />' +
+            '<button id="premium-cupom-aplicar" type="button" class="shrink-0 rounded-xl border border-slate-300 bg-white px-4 text-xs font-black uppercase tracking-wide text-slate-700 active:scale-[0.98]">Aplicar</button>' +
+          '</div>' +
+          '<p id="premium-cupom-msg" class="mt-1.5 text-[11px] font-bold text-red-600"></p>' +
+        '</div>' +
+      '</div>'
+    );
+  }
+
+  async function aplicarCupomPremiumMobile() {
+    if (state.premiumCupomProcessando) return;
+    var msgEl = document.getElementById('premium-cupom-msg');
+    var el = document.getElementById('premium-cupom');
+    var codigo = (el ? el.value : '').trim().toUpperCase();
+    if (!codigo) { if (msgEl) msgEl.textContent = 'Digite o código.'; return; }
+    state.premiumCupomProcessando = true;
+    if (msgEl) { msgEl.className = 'mt-1.5 text-[11px] font-bold text-slate-600'; msgEl.textContent = 'Aplicando...'; }
+    try {
+      var token = await _avaPaywallToken();
+      if (!token || !state.empresa) { if (msgEl) { msgEl.className = 'mt-1.5 text-[11px] font-bold text-red-600'; msgEl.textContent = 'Sessão não encontrada.'; } return; }
+      var resp = await fetch('/api/cobranca/resgatar-cupom', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
+        body: JSON.stringify({ empresaId: state.empresa.id, codigo: codigo }),
+      });
+      var json = await resp.json();
+      if (resp.ok && json.ok) {
+        state.modalMenu = '';
+        state.premiumRecursoDestaque = '';
+        mostrarToast('Cupom aplicado! Premium liberado.');
+        state.paywallVerificado = false;
+        render();
+        verificarPaywallMobile();
+        return;
+      }
+      if (msgEl) { msgEl.className = 'mt-1.5 text-[11px] font-bold text-red-600'; msgEl.textContent = json.mensagem || 'Não foi possível aplicar o cupom.'; }
+    } catch (e) {
+      if (msgEl) { msgEl.className = 'mt-1.5 text-[11px] font-bold text-red-600'; msgEl.textContent = 'Não foi possível aplicar o cupom agora.'; }
+    } finally {
+      state.premiumCupomProcessando = false;
+    }
+  }
+
   function assinaturaCanceladaNoFimMobile(estado) {
     return !!(estado && estado.status === 'cancelada' && estado.validoAte && new Date(estado.validoAte).getTime() > Date.now());
   }
@@ -964,6 +1095,11 @@
   }
 
   function cardsDashboardVisiveis() {
+    // Premium Pessoal: no grátis o dashboard fica sempre no padrão (sem
+    // ordem personalizada e sem cards ocultos).
+    if (premiumPessoalBloqueadoMobile()) {
+      return normalizarOrdemDashboard(ordemDashboardPadrao()).filter(cardDashboardPermitido);
+    }
     var ocultos = normalizarOcultosDashboard(state.dashboardOcultos);
     return normalizarOrdemDashboard(state.dashboardOrdem).filter(function (id) {
       return ocultos.indexOf(id) < 0 && cardDashboardPermitido(id);
@@ -2110,6 +2246,8 @@
   }
 
   function abrirChatIA() {
+    // Premium Pessoal: a Ava é recurso pago no plano grátis.
+    if (premiumPessoalBloqueadoMobile()) { abrirPremiumMobile('ava'); return; }
     var parametros = new URLSearchParams();
     parametros.set('ano', String(state.ano || new Date().getFullYear()));
     parametros.set('mes', String(state.mes || ''));
@@ -2336,6 +2474,8 @@
   // Liga/desliga. Se a permissao ainda nao foi dada, chama ativar
   // direto (o iOS exige o pedido de permissao no proprio toque).
   async function alternarNotificacoesMobile() {
+    // Premium Pessoal: notificações são recurso pago no plano grátis.
+    if (premiumPessoalBloqueadoMobile()) { abrirPremiumMobile('notificacoes'); return; }
     if (!('Notification' in window)) return ativarNotificacoesMobile();
     if (Notification.permission === 'granted') return desativarOuReativarNotificacoes();
     return ativarNotificacoesMobile();
@@ -2362,6 +2502,7 @@
   // para disparar o pedido de permissao do sistema.
   function avaliarPromptNotificacoes() {
     try {
+      if (premiumPessoalBloqueadoMobile()) return; // premium: não oferece no grátis
       if (!('Notification' in window) || !('serviceWorker' in navigator) || !('PushManager' in window)) return;
       if (Notification.permission !== 'default') return;
       if (!state.usuario || !state.usuario.id) return;
@@ -2687,6 +2828,8 @@
   }
 
   function abrirCriarUsuarioMobile() {
+    // Premium Pessoal: usuários internos são recurso pago no plano grátis.
+    if (premiumPessoalBloqueadoMobile()) { abrirPremiumMobile('usuarios_internos'); return; }
     state.usuarioModo = 'criar';
     state.usuarioExistenteTermo = '';
     state.usuarioExistenteResultado = null;
@@ -2709,6 +2852,8 @@
   }
 
   function abrirAdicionarUsuarioExistenteMobile() {
+    // Premium Pessoal: usuários internos são recurso pago no plano grátis.
+    if (premiumPessoalBloqueadoMobile()) { abrirPremiumMobile('usuarios_internos'); return; }
     state.usuarioModo = 'existente';
     state.usuarioEditandoId = '';
     state.usuarioExistenteTermo = '';
@@ -3809,6 +3954,13 @@
       return;
     }
 
+    // Premium Pessoal: 2º perfil pessoal é pago (o primeiro e o empresa são livres).
+    if (tipo === 'pessoal' && criarPerfilPessoalBloqueadoMobile()) {
+      state.modoCriarPerfil = false;
+      abrirPremiumMobile('multiplos_perfis');
+      return;
+    }
+
     state.carregando = true;
     state.criarPerfilErro = '';
     render();
@@ -4841,6 +4993,12 @@
 
     var nome = campo('nova-empresa-nome').trim();
     var tipoPerfil = normalizarTipoPerfil(state.novaEmpresaTipoPerfil);
+
+    // Premium Pessoal: 2º perfil pessoal é pago (criar perfil empresa é livre).
+    if (tipoPerfil === 'pessoal' && criarPerfilPessoalBloqueadoMobile()) {
+      abrirPremiumMobile('multiplos_perfis');
+      return;
+    }
 
     if (!nome) {
       setErroCriarPerfil('Informe o nome do perfil financeiro.');
@@ -5923,8 +6081,10 @@
 
   function navegacaoInferiorHtml() {
     if (state.chatIAAberto) return '';
-    var esquerdo = normalizarAtalhoInferior(state.atalhoInferiorEsquerdo, 'perfil');
-    var direito = normalizarAtalhoInferior(state.atalhoInferiorDireito, 'agenda');
+    // Premium Pessoal: no grátis os atalhos ficam sempre no padrão.
+    var atalhosBloqueados = premiumPessoalBloqueadoMobile();
+    var esquerdo = atalhosBloqueados ? 'perfil' : normalizarAtalhoInferior(state.atalhoInferiorEsquerdo, 'perfil');
+    var direito = atalhosBloqueados ? 'agenda' : normalizarAtalhoInferior(state.atalhoInferiorDireito, 'agenda');
     var agendaAtiva = state.visao === 'agenda';
     var perfilAtivo = state.modalMenu === 'empresa';
     var fixasAtivo = state.modalMenu === 'despesasFixas';
@@ -7301,6 +7461,7 @@
       feedback: 'Dúvidas e Sugestões',
       despesasFixas: 'Gerenciar despesas fixas',
       assinatura: 'Assinatura',
+      premium: 'Premium Pessoal',
       sobre: 'Sobre',
       notificacoes: 'Notificações',
       detalheTipoDespesa: state.tipoDespesaDetalhe || 'Lançamentos',
@@ -7336,6 +7497,7 @@
     if (state.modalMenu === 'feedback') return feedbackMobileHtml();
     if (state.modalMenu === 'despesasFixas') return despesasFixasMenuHtml();
     if (state.modalMenu === 'assinatura') return assinaturaMobileHtml();
+    if (state.modalMenu === 'premium') return premiumPessoalHtml();
     if (state.modalMenu === 'sobre') return sobreMobileHtml();
     if (state.modalMenu === 'notificacoes') return notificacoesMobileHtml();
     if (state.modalMenu === 'detalheTipoDespesa') return detalheTipoDespesaHtml();
@@ -7906,6 +8068,8 @@
   }
 
   function moverCardDashboard(id, direcao) {
+    // Premium Pessoal: organizar o dashboard é pago — avisa e mantém o padrão.
+    if (premiumPessoalBloqueadoMobile()) { abrirPremiumMobile('organizar_dashboard'); return; }
     var ordem = normalizarOrdemDashboard(state.dashboardOrdem);
     var index = ordem.indexOf(id);
     var destino = index + direcao;
@@ -7920,6 +8084,12 @@
   }
 
   function moverCardDashboardPara(idOrigem, idDestino, depois) {
+    // Premium Pessoal: organizar o dashboard é pago — avisa e mantém o padrão.
+    if (premiumPessoalBloqueadoMobile()) {
+      state.dragDashboardId = '';
+      abrirPremiumMobile('organizar_dashboard');
+      return;
+    }
     var ordem = normalizarOrdemDashboard(state.dashboardOrdem);
     var origem = ordem.indexOf(idOrigem);
     var destinoOriginal = ordem.indexOf(idDestino);
@@ -8661,12 +8831,15 @@
         fecharMenuLateralAnimado();
       });
     }
-    bind('menu-configurar-resumo', function () { fecharMenuLateralAnimado(function () { abrirModalMenu('configurarResumo'); }); });
+    bind('menu-configurar-resumo', function () { fecharMenuLateralAnimado(function () { if (premiumPessoalBloqueadoMobile()) { abrirPremiumMobile('organizar_dashboard'); return; } abrirModalMenu('configurarResumo'); }); });
     bind('menu-usuario', function () { fecharMenuLateralAnimado(abrirUsuariosMobile); });
     bind('menu-gerenciar', function () { fecharMenuLateralAnimado(function () { abrirModalMenu('gerenciar'); }); });
     bind('menu-assinatura', function () { fecharMenuLateralAnimado(abrirAssinaturaMobile); });
-    bind('menu-organizar-dashboard', function () { fecharMenuLateralAnimado(function () { abrirModalMenu('organizarDashboard'); }); });
-    bind('menu-organizar-atalhos', function () { fecharMenuLateralAnimado(function () { abrirModalMenu('organizarAtalhos'); }); });
+    bind('menu-organizar-dashboard', function () { fecharMenuLateralAnimado(function () { if (premiumPessoalBloqueadoMobile()) { abrirPremiumMobile('organizar_dashboard'); return; } abrirModalMenu('organizarDashboard'); }); });
+    bind('menu-organizar-atalhos', function () { fecharMenuLateralAnimado(function () { if (premiumPessoalBloqueadoMobile()) { abrirPremiumMobile('organizar_atalhos'); return; } abrirModalMenu('organizarAtalhos'); }); });
+    // Premium Pessoal: CTA e cupom do modal de upgrade
+    bind('premium-assinar', function () { state.modalMenu = ''; state.premiumRecursoDestaque = ''; abrirAssinaturaMobile(); });
+    bind('premium-cupom-aplicar', aplicarCupomPremiumMobile);
     bind('menu-agenda', function () { fecharMenuLateralAnimado(abrirAgendaMobile); });
     bind('menu-avisos', function () { fecharMenuLateralAnimado(abrirNotificacoesMobile); });
     async function executarChaveMenuSemMover(id, acao) {
@@ -8730,6 +8903,8 @@
       executarChaveMenuSemMover('menu-inicio-valores-ocultos', alternarInicioValoresOcultos);
     });
     function acionarBackupMobile(acao) {
+      // Premium Pessoal: backup/restauração é recurso pago no plano grátis.
+      if (premiumPessoalBloqueadoMobile()) { abrirPremiumMobile('exportacao'); return; }
       if (!podeGerenciarUsuarios()) {
         mostrarToast('Voce nao tem permissao para esta acao.');
         return;
@@ -9126,11 +9301,13 @@
       render();
     });
     bind('buscar-ultimas-despesas', function () {
+      if (premiumPessoalBloqueadoMobile()) { abrirPremiumMobile('busca_lancamentos'); return; }
       state.ultimasDespesasBuscaAberta = !state.ultimasDespesasBuscaAberta;
       if (!state.ultimasDespesasBuscaAberta) state.ultimasDespesasBusca = '';
       render();
     });
     bind('buscar-ultimas-receitas', function () {
+      if (premiumPessoalBloqueadoMobile()) { abrirPremiumMobile('busca_lancamentos'); return; }
       state.ultimasReceitasBuscaAberta = !state.ultimasReceitasBuscaAberta;
       if (!state.ultimasReceitasBuscaAberta) state.ultimasReceitasBusca = '';
       render();
@@ -9146,8 +9323,8 @@
     bind('nav-home', voltarDashboard);
     bind('nav-lancamento', function () { executarAposFecharMenu(abrirLancamentoPelaNavegacao); });
     bind('nav-menu', abrirMenuPelaNavegacao);
-    bind('nav-atalho-esquerdo', function () { executarAposFecharMenu(function () { executarAtalhoInferior(state.atalhoInferiorEsquerdo); }); });
-    bind('nav-atalho-direito', function () { executarAposFecharMenu(function () { executarAtalhoInferior(state.atalhoInferiorDireito); }); });
+    bind('nav-atalho-esquerdo', function () { executarAposFecharMenu(function () { executarAtalhoInferior(premiumPessoalBloqueadoMobile() ? 'perfil' : state.atalhoInferiorEsquerdo); }); });
+    bind('nav-atalho-direito', function () { executarAposFecharMenu(function () { executarAtalhoInferior(premiumPessoalBloqueadoMobile() ? 'agenda' : state.atalhoInferiorDireito); }); });
     bind('mes-anterior', function () { mudarMes(-1); });
     bind('mes-proximo', function () { mudarMes(1); });
     bind('agenda-mes-prev', function () { state.agendaAnimar = 'prev'; mudarMes(-1); });

@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { AVA_SYSTEM_PROMPT } from '../../../../supabase/functions/_shared/ava-system-prompt';
+import { COBRANCA_ATIVA, podeUsar } from '../../../lib/cobranca';
+import { resolverEstadoAcessoParaUsuario } from '../../../lib/cobranca-servidor';
 
 export const runtime = 'nodejs';
 
@@ -13,20 +15,46 @@ function chaveOpenAI() {
 }
 
 // A Ava só responde para usuários autenticados (evita uso anônimo/abuso da chave).
-async function usuarioAutenticado(request: Request): Promise<boolean> {
+// Devolve o id do usuário (ou null se não autenticado).
+async function usuarioAutenticado(request: Request): Promise<string | null> {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
-  if (!supabaseUrl || !supabaseAnonKey) return false;
+  if (!supabaseUrl || !supabaseAnonKey) return null;
 
   const token = (request.headers.get('authorization') || '').replace(/^Bearer\s+/i, '').trim();
-  if (!token) return false;
+  if (!token) return null;
 
   try {
     const supabase = createClient(supabaseUrl, supabaseAnonKey);
     const { data, error } = await supabase.auth.getUser(token);
-    return Boolean(!error && data?.user);
+    return !error && data?.user ? data.user.id : null;
   } catch {
-    return false;
+    return null;
+  }
+}
+
+// Cobrança: a Ava é recurso premium. Confirma o vínculo do usuário com o
+// perfil e checa o estado de acesso. Fail-open: sem flag, sem empresaId
+// (clientes antigos em cache) ou com falha de infra, não bloqueia.
+async function avaLiberadaParaPerfil(userId: string, empresaId: string): Promise<boolean> {
+  if (!COBRANCA_ATIVA || !empresaId) return true;
+  try {
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
+    const serviceRole = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
+    if (!supabaseUrl || !serviceRole) return true;
+    const db = createClient(supabaseUrl, serviceRole);
+    const { data: vinculo } = await db
+      .from('usuarios_empresa')
+      .select('id')
+      .eq('user_id', userId)
+      .eq('empresa_id', empresaId)
+      .limit(1)
+      .maybeSingle();
+    if (!vinculo) return false; // perfil que não é do usuário → nega
+    const estado = await resolverEstadoAcessoParaUsuario(empresaId, userId);
+    return podeUsar('ava', estado);
+  } catch {
+    return true; // fail-open
   }
 }
 
@@ -152,7 +180,8 @@ async function responderComSupabase(body: string) {
 
 export async function POST(request: Request) {
   try {
-    if (!(await usuarioAutenticado(request))) {
+    const userId = await usuarioAutenticado(request);
+    if (!userId) {
       return NextResponse.json(
         { erro: true, mensagem: 'Faça login para conversar com a Ava.' },
         { status: 401 }
@@ -162,6 +191,14 @@ export async function POST(request: Request) {
     const payload = await request.json();
     const messages = mensagensValidas(payload?.messages);
     const contexto = String(payload?.contexto || '').trim();
+    const empresaId = String(payload?.empresaId || '').trim();
+
+    if (!(await avaLiberadaParaPerfil(userId, empresaId))) {
+      return NextResponse.json(
+        { erro: true, premium: true, mensagem: 'A Ava faz parte do Premium Pessoal. Assine para desbloquear.' },
+        { status: 403 }
+      );
+    }
 
     if (!messages.length) {
       return NextResponse.json(

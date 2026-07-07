@@ -107,3 +107,45 @@ export async function resolverEstadoAcesso(empresaId: string): Promise<EstadoAce
   // Pessoal novo → grátis (núcleo sempre livre; recursos premium bloqueados).
   return { tipoPerfil, status: 'expirada', validoAte: null, trialFim: null, plano: null, ciclo: null };
 }
+
+// Benefício cruzado: quem ASSINA o plano Empresa (status 'ativa') ganha o
+// Premium Pessoal nos perfis pessoais em que é gestor/administrador.
+// (Trial de empresa NÃO libera — só assinatura paga.)
+export async function usuarioTemEmpresaAssinante(userId: string): Promise<boolean> {
+  if (!userId) return false;
+  const db = servico();
+  const { data: vinculos } = await db
+    .from('usuarios_empresa')
+    .select('empresa_id, perfil, status')
+    .eq('user_id', userId)
+    .eq('status', 'ativo')
+    .in('perfil', ['gestor_master', 'administrador']);
+  const ids = (vinculos || []).map((v) => v.empresa_id).filter(Boolean);
+  if (!ids.length) return false;
+  const { data: assinaturas } = await db
+    .from('assinaturas')
+    .select('empresa_id, tipo_perfil, status, valido_ate')
+    .in('empresa_id', ids)
+    .eq('tipo_perfil', 'empresa')
+    .eq('status', 'ativa');
+  return (assinaturas || []).length > 0;
+}
+
+// Resolve o estado de acesso já aplicando o benefício cruzado do usuário:
+// perfil pessoal sem assinatura própria, mas dono de empresa assinante,
+// é tratado como cortesia Premium Pessoal.
+export async function resolverEstadoAcessoParaUsuario(
+  empresaId: string,
+  userId: string,
+): Promise<EstadoAcesso | null> {
+  const estado = await resolverEstadoAcesso(empresaId);
+  if (!estado || estado.tipoPerfil !== 'pessoal') return estado;
+  const vigente = estado.status === 'ativa'
+    || (estado.status === 'cortesia' && (!estado.validoAte || new Date(estado.validoAte) > new Date()))
+    || ((estado.status === 'inadimplente' || estado.status === 'cancelada') && !!estado.validoAte && new Date(estado.validoAte) > new Date());
+  if (vigente) return estado;
+  if (await usuarioTemEmpresaAssinante(userId)) {
+    return { ...estado, status: 'cortesia', validoAte: null, plano: 'pessoal_premium', ciclo: null };
+  }
+  return estado;
+}

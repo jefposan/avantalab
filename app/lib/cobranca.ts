@@ -88,8 +88,29 @@ export type Recurso =
   | 'multiplos_perfis'   // criar/trocar entre perfis (grátis = 1 só)
   | 'notificacoes'
   | 'organizar_atalhos'
+  | 'organizar_dashboard' // reordenar cards do dashboard (kanban)
   | 'usuarios_internos'  // criar usuário / equipe
   | 'ponto';             // módulo de ponto (empresa)
+
+// Catálogo dos recursos premium do Pessoal — fonte única para as telas de
+// upgrade (web e mobile). A ordem é a ordem de exibição.
+export const RECURSOS_PREMIUM_PESSOAL: { recurso: Recurso; icone: string; titulo: string; descricao: string }[] = [
+  { recurso: 'ava', icone: '🤖', titulo: 'Ava (IA)', descricao: 'Assistente que analisa seus resultados e tira dúvidas.' },
+  { recurso: 'analises', icone: '📊', titulo: 'Análises avançadas', descricao: 'Aba Relatório e Gráficos completos.' },
+  { recurso: 'exportacao', icone: '💾', titulo: 'Backup e exportação', descricao: 'Exporte e restaure seus dados em Excel.' },
+  { recurso: 'busca_lancamentos', icone: '🔎', titulo: 'Busca nos lançamentos', descricao: 'Encontre qualquer lançamento na hora.' },
+  { recurso: 'multiplos_perfis', icone: '👥', titulo: 'Múltiplos perfis pessoais', descricao: 'Crie mais perfis pessoais (grátis = 1). Criar perfil empresa continua livre.' },
+  { recurso: 'notificacoes', icone: '🔔', titulo: 'Notificações', descricao: 'Lembretes e avisos de pagamentos.' },
+  { recurso: 'organizar_dashboard', icone: '🧩', titulo: 'Organizar dashboard', descricao: 'Reordene os cards do seu jeito.' },
+  { recurso: 'organizar_atalhos', icone: '↔️', titulo: 'Organizar atalhos', descricao: 'Personalize os atalhos do app.' },
+  { recurso: 'usuarios_internos', icone: '🧑‍💼', titulo: 'Usuários internos', descricao: 'Convide outras pessoas para o perfil.' },
+];
+
+// Rótulo curto de um recurso premium (para toasts/selos).
+export function tituloRecursoPremium(recurso: Recurso): string {
+  const item = RECURSOS_PREMIUM_PESSOAL.find((r) => r.recurso === recurso);
+  return item ? item.titulo : 'Recurso premium';
+}
 
 // A assinatura está "vigente" (pagando, em trial válido, ou cortesia ativa)?
 export function assinaturaVigente(e: EstadoAcesso, agora: Date = new Date()): boolean {
@@ -121,6 +142,17 @@ export function precisaPaywallEmpresa(e: EstadoAcesso | null, agora: Date = new 
   if (!COBRANCA_ATIVA) return false;          // flag desligada → nunca bloqueia
   if (!e) return false;                        // sem info → não bloqueia (fail-open)
   return e.tipoPerfil === 'empresa' && !assinaturaVigente(e, agora);
+}
+
+// Perfil PESSOAL grátis tentando usar um recurso premium → mostrar o modal
+// de upgrade "Premium Pessoal" (não bloqueia o núcleo, só o recurso).
+export function precisaUpgradePessoal(
+  recurso: Recurso,
+  e: EstadoAcesso | null,
+  agora: Date = new Date()
+): boolean {
+  if (!COBRANCA_ATIVA || !e) return false; // flag off / sem info → não bloqueia
+  return e.tipoPerfil === 'pessoal' && !podeUsar(recurso, e, agora);
 }
 
 // Pode usar um recurso premium? (usado principalmente no perfil Pessoal)

@@ -198,6 +198,7 @@ export default function AvaChatClient({ initialYear, initialMonth, onClose }: Av
   const [transcribing, setTranscribing] = useState(false);
   const [ready, setReady] = useState(false);
   const [context, setContext] = useState('');
+  const [companyId, setCompanyId] = useState('');
   const [userName, setUserName] = useState('');
   const [error, setError] = useState('');
   const [storageKey, setStorageKey] = useState('');
@@ -359,6 +360,7 @@ export default function AvaChatClient({ initialYear, initialMonth, onClose }: Av
       }
       setUserName(firstName(String(access.nome || metadataName)));
       setStorageKey(chatStorageKey);
+      setCompanyId(access.empresa_id);
       setReady(true);
     }
 
@@ -419,7 +421,7 @@ export default function AvaChatClient({ initialYear, initialMonth, onClose }: Av
           'Content-Type': 'application/json',
           ...(session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {}),
         },
-        body: JSON.stringify({ messages: outbound, contexto: context }),
+        body: JSON.stringify({ messages: outbound, contexto: context, empresaId: companyId || undefined }),
       });
 
       if (!response.ok || !response.body) {
@@ -467,7 +469,7 @@ export default function AvaChatClient({ initialYear, initialMonth, onClose }: Av
     } finally {
       setSending(false);
     }
-  }, [context, input, messages, ready, sending]);
+  }, [companyId, context, input, messages, ready, sending]);
 
   const toggleRecording = useCallback(async () => {
     if (transcribing || sending) return;

@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { COBRANCA_ATIVA, podeUsar } from '../../lib/cobranca';
+import { resolverEstadoAcessoParaUsuario } from '../../lib/cobranca-servidor';
 
 type PerfilUsuario =
   | 'gestor_master'
@@ -162,6 +164,18 @@ export async function POST(request: Request) {
         'Voce nao tem permissao para gerenciar usuarios.',
         403
       );
+    }
+
+    // Cobrança: gerenciar usuários é recurso do Premium Pessoal (fail-open em falha).
+    if (COBRANCA_ATIVA) {
+      try {
+        const estado = await resolverEstadoAcessoParaUsuario(empresaId, user.id);
+        if (!podeUsar('usuarios_internos', estado)) {
+          return respostaErro('Adicionar usuários faz parte do Premium Pessoal. Assine para desbloquear.', 403);
+        }
+      } catch (erroCobranca) {
+        console.error('Erro ao validar Premium (vincular usuário):', erroCobranca);
+      }
     }
 
     if (acao === 'buscar') {
