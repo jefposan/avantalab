@@ -532,8 +532,8 @@ export default function AdminPage() {
             {authorized && <button type="button" onClick={logout} className="flex h-9 items-center gap-2 rounded-md border border-slate-300 px-3 text-xs font-bold text-slate-700 hover:bg-slate-50"><Icon name="logout" />Sair</button>}
           </div>
 
-          {authorized && <nav className="grid grid-cols-3 gap-1 border-t border-slate-100 py-2 sm:grid-cols-5" aria-label="Áreas administrativas">
-            {navigation.map((item) => <button key={item.id} type="button" onClick={() => { setView(item.id); setError(''); setNotice(''); }} className={`flex h-10 min-w-0 items-center justify-center gap-2 rounded-md px-2 text-xs font-black transition ${view === item.id ? 'bg-cyan-700 text-white shadow-sm' : 'text-slate-600 hover:bg-slate-100'}`}><Icon name={item.icon} /><span className="truncate">{item.label}</span></button>)}
+          {authorized && <nav className="grid grid-cols-6 gap-1 border-t border-slate-100 py-2" aria-label="Áreas administrativas">
+            {navigation.map((item) => <button key={item.id} type="button" onClick={() => { setView(item.id); setError(''); setNotice(''); }} className={`flex h-11 w-full min-w-0 flex-col items-center justify-center gap-0.5 rounded-md px-1 text-[9px] font-black transition sm:h-10 sm:flex-row sm:gap-1.5 sm:px-2 sm:text-xs ${view === item.id ? 'bg-cyan-700 text-white shadow-sm' : 'text-slate-600 hover:bg-slate-100'}`}><Icon name={item.icon} size={14} /><span className="max-w-full truncate">{item.label}</span></button>)}
           </nav>}
         </div>
       </header>
