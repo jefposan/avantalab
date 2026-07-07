@@ -22,7 +22,7 @@ import TabelaLancamentosDespesa from './components/TabelaLancamentosDespesa';
 import TourPrimeiroAcesso from './components/TourPrimeiroAcesso';
 import PaywallEmpresa from './components/PaywallEmpresa';
 import AssinaturaModal from './components/AssinaturaModal';
-import { COBRANCA_ATIVA, emCarencia, precisaPaywallEmpresa, type EstadoAcesso } from './lib/cobranca';
+import { COBRANCA_ATIVA, emCarencia, precisaPaywallEmpresa, type DadosCobrancaAssinatura, type EstadoAcesso } from './lib/cobranca';
 import { PAISES } from './lib/paises';
 import {
   formatarMoeda,
@@ -319,6 +319,7 @@ const [ajudaCategoriasAberta, setAjudaCategoriasAberta] = useState(false);
 const [validacaoTelefoneObrigatoria, setValidacaoTelefoneObrigatoria] = useState(false);
 const [empresaAguardandoTelefone, setEmpresaAguardandoTelefone] = useState<any | null>(null);
 const [telefoneObrigatorio, setTelefoneObrigatorio] = useState('');
+const [telefoneCobrancaPadrao, setTelefoneCobrancaPadrao] = useState('');
 const [ddiTelefoneObrigatorio, setDdiTelefoneObrigatorio] = useState('55');
 const [codigoSmsTelefoneObrigatorio, setCodigoSmsTelefoneObrigatorio] = useState('');
 const [smsTelefoneObrigatorioEnviado, setSmsTelefoneObrigatorioEnviado] = useState(false);
@@ -366,7 +367,7 @@ const [validandoTelefoneObrigatorio, setValidandoTelefoneObrigatorio] = useState
   }, [acessoLiberado, empresaId]);
   const iniciarAssinatura = async (
     ciclo: 'mensal' | 'anual',
-    cpfCnpj: string,
+    dadosCobranca: DadosCobrancaAssinatura,
   ): Promise<{ ok: boolean; url?: string; mensagem?: string }> => {
     try {
       const { data: sessao } = await supabase.auth.getSession();
@@ -379,7 +380,7 @@ const [validandoTelefoneObrigatorio, setValidandoTelefoneObrigatorio] = useState
           empresaId,
           plano: tipoPerfilAtual === 'pessoal' ? 'pessoal_premium' : 'empresa',
           ciclo,
-          cpfCnpj,
+          cobranca: dadosCobranca,
         }),
       });
       const json = await resp.json();
@@ -800,6 +801,7 @@ setMesAtivo(null);
 
   setEmpresaId(empresa.id);
   setNomeEmpresaAtual(empresa.nome || empresa.empresa_nome || '');
+  setTelefoneCobrancaPadrao(String(empresa.telefone || ''));
   setTipoPerfilAtual(normalizarTipoPerfil(empresa.tipo_perfil));
   setPerfilUsuario(empresa.perfil || null);
   setAcessoUsuarioAtualId(empresa.acessoId || empresa.acesso_id || null);
@@ -5773,6 +5775,8 @@ if (isTelaMobile) {
     return (
       <PaywallEmpresa
         nomePerfil={nomeEmpresaAtual}
+        emailPadrao={emailUsuarioAtual}
+        telefonePadrao={telefoneCobrancaPadrao}
         estadoAcesso={estadoAcesso}
         faturaPendenteUrl={faturaPendenteUrl}
         onAssinar={iniciarAssinatura}
@@ -6178,6 +6182,9 @@ if (isTelaMobile) {
   onEstadoAtualizado={setEstadoAcesso}
   onAssinar={iniciarAssinatura}
   empresaId={empresaId}
+  nomePadrao={nomeEmpresaAtual}
+  emailPadrao={emailUsuarioAtual}
+  telefonePadrao={telefoneCobrancaPadrao}
   darkMode={darkMode}
   corPrimaria={corPrimaria}
   estado={estadoAcesso}

@@ -1,6 +1,6 @@
 'use client';
 import React, { useRef, useState } from 'react';
-import type { EstadoAcesso } from '../lib/cobranca';
+import type { DadosCobrancaAssinatura, EstadoAcesso } from '../lib/cobranca';
 
 // Formata como CPF (000.000.000-00) até 11 dígitos, ou CNPJ (00.000.000/0000-00) acima.
 function formatarCpfCnpj(valor: string): string {
@@ -19,10 +19,12 @@ function formatarCpfCnpj(valor: string): string {
 
 interface PaywallEmpresaProps {
   nomePerfil?: string;
+  emailPadrao?: string;
+  telefonePadrao?: string;
   estadoAcesso?: EstadoAcesso | null;
   faturaPendenteUrl?: string | null;
   // Retorna { ok, url } em caso de sucesso, ou { ok:false, mensagem } em caso de falha.
-  onAssinar?: (ciclo: 'mensal' | 'anual', cpfCnpj: string) => Promise<{ ok: boolean; url?: string; mensagem?: string } | void>;
+  onAssinar?: (ciclo: 'mensal' | 'anual', dados: DadosCobrancaAssinatura) => Promise<{ ok: boolean; url?: string; mensagem?: string } | void>;
   // Resgate de cupom: retorna mensagem de erro (string) ou nada em caso de sucesso.
   onResgatarCupom?: (codigo: string) => Promise<string | null | void>;
   onTrocarPerfil?: () => void; // volta à seleção de perfis (se houver mais de um)
@@ -34,10 +36,13 @@ const GRADIENTE = 'linear-gradient(135deg,#003E73,#00A6C8)';
 
 // Tela mostrada quando o perfil empresa precisa regularizar ou iniciar a
 // assinatura, com a identidade visual da tela de login.
-export default function PaywallEmpresa({ nomePerfil, estadoAcesso, faturaPendenteUrl, onAssinar, onResgatarCupom, onTrocarPerfil, onCriarPerfil, onSair }: PaywallEmpresaProps) {
+export default function PaywallEmpresa({ nomePerfil, emailPadrao, telefonePadrao, estadoAcesso, faturaPendenteUrl, onAssinar, onResgatarCupom, onTrocarPerfil, onCriarPerfil, onSair }: PaywallEmpresaProps) {
   const [carregando, setCarregando] = useState<'mensal' | 'anual' | null>(null);
   const [erro, setErro] = useState('');
+  const [nomeCobranca, setNomeCobranca] = useState(nomePerfil || '');
   const [cpfCnpj, setCpfCnpj] = useState('');
+  const [emailCobranca, setEmailCobranca] = useState(emailPadrao || '');
+  const [telefoneCobranca, setTelefoneCobranca] = useState(telefonePadrao || '');
   const [aguardandoPagamento, setAguardandoPagamento] = useState(false);
   const [cupom, setCupom] = useState('');
   const [resgatando, setResgatando] = useState(false);
@@ -85,8 +90,23 @@ export default function PaywallEmpresa({ nomePerfil, estadoAcesso, faturaPendent
   const clicar = async (ciclo: 'mensal' | 'anual') => {
     if (assinaturaEmCursoRef.current) return;
     const digitos = cpfCnpj.replace(/\D/g, '');
+    const telefone = telefoneCobranca.replace(/\D/g, '');
+    const nome = nomeCobranca.trim().replace(/\s+/g, ' ');
+    const email = emailCobranca.trim().toLowerCase();
+    if (nome.length < 3) {
+      setErro('Informe o nome ou razão social para a cobrança.');
+      return;
+    }
     if (digitos.length !== 11 && digitos.length !== 14) {
       setErro('Informe um CPF (11 dígitos) ou CNPJ (14 dígitos) para a cobrança.');
+      return;
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      setErro('Informe um e-mail de cobrança válido.');
+      return;
+    }
+    if (telefone.length < 10 || telefone.length > 13) {
+      setErro('Informe um telefone de cobrança válido.');
       return;
     }
     // Abre a aba do pagamento já no clique (evita bloqueio de pop-up).
@@ -95,7 +115,7 @@ export default function PaywallEmpresa({ nomePerfil, estadoAcesso, faturaPendent
     setErro('');
     setCarregando(ciclo);
     try {
-      const r = await onAssinar?.(ciclo, digitos);
+      const r = await onAssinar?.(ciclo, { nome, cpfCnpj: digitos, email, telefone });
       if (r && typeof r === 'object' && r.ok && r.url) {
         if (janela) janela.location.href = r.url;
         else window.open(r.url, '_blank');
@@ -190,18 +210,50 @@ export default function PaywallEmpresa({ nomePerfil, estadoAcesso, faturaPendent
             </div>
           ) : (
             <>
-              {/* CPF/CNPJ */}
-              <div className="mt-3">
-                <label className="mb-1 block text-xs font-semibold text-slate-700">CPF ou CNPJ para a cobrança</label>
-                <input
-                  type="text"
-                  inputMode="numeric"
-                  value={cpfCnpj}
-                  onChange={(e) => setCpfCnpj(formatarCpfCnpj(e.target.value))}
-                  placeholder="000.000.000-00"
-                  maxLength={18}
-                  className={inputCls}
-                />
+              <div className="mt-3 grid gap-2 sm:grid-cols-2">
+                <label className="block text-xs font-semibold text-slate-700">
+                  Nome ou razão social
+                  <input
+                    type="text"
+                    value={nomeCobranca}
+                    onChange={(e) => setNomeCobranca(e.target.value)}
+                    placeholder="Nome completo ou empresa"
+                    className={`${inputCls} mt-1`}
+                  />
+                </label>
+                <label className="block text-xs font-semibold text-slate-700">
+                  CPF ou CNPJ
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    value={cpfCnpj}
+                    onChange={(e) => setCpfCnpj(formatarCpfCnpj(e.target.value))}
+                    placeholder="000.000.000-00"
+                    maxLength={18}
+                    className={`${inputCls} mt-1`}
+                  />
+                </label>
+                <label className="block text-xs font-semibold text-slate-700">
+                  E-mail de cobrança
+                  <input
+                    type="email"
+                    value={emailCobranca}
+                    onChange={(e) => setEmailCobranca(e.target.value)}
+                    placeholder="financeiro@empresa.com"
+                    className={`${inputCls} mt-1`}
+                  />
+                </label>
+                <label className="block text-xs font-semibold text-slate-700">
+                  Telefone
+                  <input
+                    type="tel"
+                    inputMode="tel"
+                    value={telefoneCobranca}
+                    onChange={(e) => setTelefoneCobranca(e.target.value)}
+                    placeholder="(11) 99999-9999"
+                    className={`${inputCls} mt-1`}
+                  />
+                </label>
               </div>
 
               {/* Planos */}

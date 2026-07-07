@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
-import { criarClienteAsaas, criarAssinaturaAsaas, listarCobrancasAssinaturaAsaas, removerAssinaturaAsaas } from '../../../lib/asaas';
+import { atualizarClienteAsaas, criarClienteAsaas, criarAssinaturaAsaas, listarCobrancasAssinaturaAsaas, removerAssinaturaAsaas } from '../../../lib/asaas';
 import { PRECOS, type PlanoPago, type Ciclo } from '../../../lib/cobranca';
 
 export const runtime = 'nodejs';
@@ -10,6 +10,10 @@ function hojeSaoPaulo(): string {
   return new Intl.DateTimeFormat('en-CA', {
     timeZone: 'America/Sao_Paulo', year: 'numeric', month: '2-digit', day: '2-digit',
   }).format(new Date());
+}
+
+function limparTexto(valor: unknown) {
+  return String(valor || '').trim().replace(/\s+/g, ' ');
 }
 
 // Inicia a assinatura: cria (ou reaproveita) o cliente na Asaas, cria a
@@ -24,9 +28,25 @@ export async function POST(request: Request) {
   const empresaId = String(corpo.empresaId || '').trim();
   const plano = String(corpo.plano || '') as PlanoPago;
   const ciclo = String(corpo.ciclo || '') as Ciclo;
-  const cpfCnpj = String(corpo.cpfCnpj || '').replace(/\D/g, ''); // só dígitos
+  const dadosCobranca = corpo.cobranca && typeof corpo.cobranca === 'object' ? corpo.cobranca : {};
+  const nomeCobranca = limparTexto(dadosCobranca.nome || corpo.nomeCobranca);
+  const emailCobranca = limparTexto(dadosCobranca.email || corpo.emailCobranca).toLowerCase();
+  const telefoneCobranca = String(dadosCobranca.telefone || corpo.telefoneCobranca || '').replace(/\D/g, '');
+  const cpfCnpj = String(dadosCobranca.cpfCnpj || corpo.cpfCnpj || '').replace(/\D/g, ''); // só dígitos
   if (!empresaId || !(plano in PRECOS) || (ciclo !== 'mensal' && ciclo !== 'anual')) {
     return NextResponse.json({ erro: true, mensagem: 'dados inválidos' }, { status: 400 });
+  }
+  if (nomeCobranca.length < 3) {
+    return NextResponse.json({ erro: true, mensagem: 'Informe o nome ou razão social para a cobrança.' }, { status: 400 });
+  }
+  if (cpfCnpj.length !== 11 && cpfCnpj.length !== 14) {
+    return NextResponse.json({ erro: true, mensagem: 'Informe um CPF (11 dígitos) ou CNPJ (14 dígitos) válido.' }, { status: 400 });
+  }
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailCobranca)) {
+    return NextResponse.json({ erro: true, mensagem: 'Informe um e-mail de cobrança válido.' }, { status: 400 });
+  }
+  if (telefoneCobranca.length < 10 || telefoneCobranca.length > 13) {
+    return NextResponse.json({ erro: true, mensagem: 'Informe um telefone de cobrança válido.' }, { status: 400 });
   }
 
   // 1) Autentica o usuário e pega o e-mail.
@@ -82,37 +102,52 @@ export async function POST(request: Request) {
     assinExistente?.gateway_subscription_id
     && assinExistente.status !== 'cancelada'
   ) {
-    if (assinExistente.plano !== plano || assinExistente.ciclo !== ciclo) {
-      return NextResponse.json({
-        erro: true,
-        mensagem: 'Já existe uma assinatura em andamento para este perfil. Conclua ou cancele essa cobrança antes de trocar o plano.',
-      }, { status: 409 });
-    }
     const existentes = await listarCobrancasAssinaturaAsaas(assinExistente.gateway_subscription_id);
     const cobranca = existentes.data?.data?.find((item) => item.invoiceUrl && STATUS_FATURA_PAGAVEL.has(item.status || ''));
     if (existentes.ok && cobranca?.invoiceUrl) {
-      return NextResponse.json({
-        ok: true,
-        reutilizada: true,
-        invoiceUrl: cobranca.invoiceUrl,
-        assinaturaId: assinExistente.gateway_subscription_id,
-      });
+      if (assinExistente.plano !== plano || assinExistente.ciclo !== ciclo) {
+        await removerAssinaturaAsaas(assinExistente.gateway_subscription_id).catch(() => null);
+        await admin.from('assinaturas').update({
+          gateway_subscription_id: null,
+          atualizado_em: new Date().toISOString(),
+        }).eq('empresa_id', empresaId);
+      } else {
+        return NextResponse.json({
+          ok: true,
+          reutilizada: true,
+          invoiceUrl: cobranca.invoiceUrl,
+          assinaturaId: assinExistente.gateway_subscription_id,
+        });
+      }
+    } else {
+      await removerAssinaturaAsaas(assinExistente.gateway_subscription_id).catch(() => null);
+      await admin.from('assinaturas').update({
+        gateway_subscription_id: null,
+        atualizado_em: new Date().toISOString(),
+      }).eq('empresa_id', empresaId);
     }
-    await removerAssinaturaAsaas(assinExistente.gateway_subscription_id).catch(() => null);
-    await admin.from('assinaturas').update({
-      gateway_subscription_id: null,
-      atualizado_em: new Date().toISOString(),
-    }).eq('empresa_id', empresaId);
   }
 
   let clienteId = assinExistente?.gateway_customer_id || '';
   if (!clienteId) {
-    if (cpfCnpj.length !== 11 && cpfCnpj.length !== 14) {
-      return NextResponse.json({ erro: true, mensagem: 'Informe um CPF (11 dígitos) ou CNPJ (14 dígitos) válido.' }, { status: 400 });
-    }
-    const c = await criarClienteAsaas({ name: nomePerfil, email: userEmail || undefined, cpfCnpj, externalReference: empresaId });
+    const c = await criarClienteAsaas({
+      name: nomeCobranca || nomePerfil,
+      email: emailCobranca || userEmail || undefined,
+      cpfCnpj,
+      mobilePhone: telefoneCobranca,
+      externalReference: empresaId,
+    });
     if (!c.ok || !c.data?.id) return NextResponse.json({ erro: true, mensagem: c.erro || 'falha ao criar cliente' }, { status: 502 });
     clienteId = c.data.id;
+  } else {
+    const c = await atualizarClienteAsaas(clienteId, {
+      name: nomeCobranca || nomePerfil,
+      email: emailCobranca || userEmail || undefined,
+      cpfCnpj,
+      mobilePhone: telefoneCobranca,
+      externalReference: empresaId,
+    });
+    if (!c.ok) return NextResponse.json({ erro: true, mensagem: c.erro || 'falha ao atualizar cliente' }, { status: 502 });
   }
 
   // 4) Cria a assinatura recorrente. billingType UNDEFINED = cliente escolhe
@@ -145,6 +180,10 @@ export async function POST(request: Request) {
     gateway: 'asaas',
     gateway_customer_id: clienteId,
     gateway_subscription_id: assinaturaGwId,
+    cobranca_nome: nomeCobranca || nomePerfil,
+    cobranca_documento: cpfCnpj,
+    cobranca_email: emailCobranca || userEmail || null,
+    cobranca_telefone: telefoneCobranca,
     atualizado_em: new Date().toISOString(),
   };
   if (assinExistente) {

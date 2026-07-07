@@ -50,6 +50,13 @@ export type EstadoAcesso = {
   ciclo: string | null;       // 'mensal' | 'anual'
 };
 
+export type DadosCobrancaAssinatura = {
+  nome: string;
+  cpfCnpj: string;
+  email: string;
+  telefone: string;
+};
+
 // Rótulo amigável do status, para exibir ao usuário.
 export function rotuloStatusAssinatura(status: StatusAssinatura): string {
   const mapa: Record<StatusAssinatura, string> = {

@@ -90,6 +90,9 @@
     assinaturaAcao: '',
     assinaturaErro: '',
     assinaturaCpf: '',
+    assinaturaNome: '',
+    assinaturaEmail: '',
+    assinaturaTelefone: '',
     assinaturaConfirmarCancelamento: false,
     mes: meses[new Date().getMonth()],
     ano: String(new Date().getFullYear()),
@@ -510,6 +513,14 @@
     return (empresa && (empresa.nome || empresa.empresa_nome)) || 'Perfil';
   }
 
+  function emailUsuarioAtualMobile() {
+    return (state.usuario && state.usuario.email) || state.cadastro.email || '';
+  }
+
+  function telefonePadraoMobile() {
+    return (state.empresa && state.empresa.telefone) || state.cadastro.telefone || state.telefoneObrigatorio || '';
+  }
+
   // ── Cobrança: paywall do perfil empresa sem acesso vigente ───
   function telaPaywallSelecaoMobile() {
     var itens = (state.empresas || []).map(function (emp) {
@@ -566,8 +577,12 @@
           '<p class="mt-1 text-[10px] font-semibold leading-relaxed text-slate-600">Já existe uma cobrança pendente para este perfil.</p>' +
           '<button type="button" onclick="window._avaPaywallPagarCobranca()" class="mt-2 h-8 w-full rounded-lg bg-sky-700 text-[10px] font-black uppercase tracking-wide text-white active:scale-[0.98]">Pagar cobrança</button>' +
         '</div>'
-      : '<label class="mt-2 block text-[10px] font-black uppercase tracking-wide text-slate-500">CPF ou CNPJ para a cobrança</label>' +
-        '<input id="paywall-cpf" type="text" inputmode="numeric" placeholder="Somente números" class="mt-1 w-full rounded-lg border border-slate-300 bg-white/90 px-3 py-1.5 text-sm font-semibold text-slate-800 outline-none" />' +
+      : '<div class="mt-2 grid grid-cols-2 gap-1.5">' +
+          '<input id="paywall-nome" type="text" placeholder="Nome ou razão social" value="' + escapeHtml(state.paywallNome || '') + '" class="h-8 rounded-lg border border-slate-300 bg-white/90 px-2 text-[11px] font-semibold text-slate-800 outline-none" />' +
+          '<input id="paywall-cpf" type="text" inputmode="numeric" placeholder="CPF/CNPJ" class="h-8 rounded-lg border border-slate-300 bg-white/90 px-2 text-[11px] font-semibold text-slate-800 outline-none" />' +
+          '<input id="paywall-email" type="email" placeholder="E-mail cobrança" value="' + escapeHtml(emailUsuarioAtualMobile()) + '" class="h-8 rounded-lg border border-slate-300 bg-white/90 px-2 text-[11px] font-semibold text-slate-800 outline-none" />' +
+          '<input id="paywall-telefone" type="tel" inputmode="tel" placeholder="Telefone" value="' + escapeHtml(telefonePadraoMobile()) + '" class="h-8 rounded-lg border border-slate-300 bg-white/90 px-2 text-[11px] font-semibold text-slate-800 outline-none" />' +
+        '</div>' +
         '<div class="mt-2 grid grid-cols-2 gap-2">' +
           '<div class="rounded-xl border border-slate-200 bg-white/80 p-2.5">' +
             '<p class="text-[10px] font-black uppercase tracking-wide text-slate-500">Mensal</p>' +
@@ -622,9 +637,18 @@
   window._avaPaywallAssinar = async function (ciclo) {
     if (state.paywallProcessando) return;
     var msgEl = document.getElementById('paywall-msg');
+    var nomeEl = document.getElementById('paywall-nome');
     var cpfEl = document.getElementById('paywall-cpf');
+    var emailEl = document.getElementById('paywall-email');
+    var telefoneEl = document.getElementById('paywall-telefone');
+    var nome = (nomeEl ? nomeEl.value : '').trim().replace(/\s+/g, ' ');
     var cpf = (cpfEl ? cpfEl.value : '').replace(/\D/g, '');
+    var email = (emailEl ? emailEl.value : '').trim().toLowerCase();
+    var telefone = (telefoneEl ? telefoneEl.value : '').replace(/\D/g, '');
+    if (nome.length < 3) { if (msgEl) { msgEl.className = 'mt-3 text-sm font-bold text-red-600'; msgEl.textContent = 'Informe nome ou razão social.'; } return; }
     if (cpf.length !== 11 && cpf.length !== 14) { if (msgEl) { msgEl.className = 'mt-3 text-sm font-bold text-red-600'; msgEl.textContent = 'Informe um CPF (11 dígitos) ou CNPJ (14 dígitos).'; } return; }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { if (msgEl) { msgEl.className = 'mt-3 text-sm font-bold text-red-600'; msgEl.textContent = 'Informe um e-mail de cobrança válido.'; } return; }
+    if (telefone.length < 10 || telefone.length > 13) { if (msgEl) { msgEl.className = 'mt-3 text-sm font-bold text-red-600'; msgEl.textContent = 'Informe um telefone válido.'; } return; }
     var janelaPagamento = window.open('', '_blank');
     state.paywallProcessando = true;
     if (msgEl) { msgEl.className = 'mt-3 text-sm font-bold text-slate-600'; msgEl.textContent = 'Processando...'; }
@@ -634,7 +658,7 @@
       var resp = await fetch('/api/cobranca/assinar', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
-        body: JSON.stringify({ empresaId: state.empresa.id, plano: 'empresa', ciclo: ciclo, cpfCnpj: cpf }),
+        body: JSON.stringify({ empresaId: state.empresa.id, plano: 'empresa', ciclo: ciclo, cobranca: { nome: nome, cpfCnpj: cpf, email: email, telefone: telefone } }),
       });
       var json = await resp.json();
       if (resp.ok && json.invoiceUrl) {
@@ -796,10 +820,29 @@
 
   async function assinarPeloPainelMobile(ciclo) {
     if (!state.empresa || state.assinaturaAcao) return;
+    state.assinaturaNome = campo('assinatura-nome').trim().replace(/\s+/g, ' ');
     state.assinaturaCpf = campo('assinatura-cpf');
+    state.assinaturaEmail = campo('assinatura-email').trim().toLowerCase();
+    state.assinaturaTelefone = campo('assinatura-telefone');
+    var telefone = state.assinaturaTelefone.replace(/\D/g, '');
     var documento = state.assinaturaCpf.replace(/\D/g, '');
+    if (state.assinaturaNome.length < 3) {
+      state.assinaturaErro = 'Informe nome ou razão social.';
+      render();
+      return;
+    }
     if (documento.length !== 11 && documento.length !== 14) {
       state.assinaturaErro = 'Informe um CPF ou CNPJ valido.';
+      render();
+      return;
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(state.assinaturaEmail)) {
+      state.assinaturaErro = 'Informe um e-mail de cobrança válido.';
+      render();
+      return;
+    }
+    if (telefone.length < 10 || telefone.length > 13) {
+      state.assinaturaErro = 'Informe um telefone válido.';
       render();
       return;
     }
@@ -816,7 +859,7 @@
           empresaId: state.empresa.id,
           plano: normalizarTipoPerfil(state.empresa.tipo_perfil) === 'pessoal' ? 'pessoal_premium' : 'empresa',
           ciclo: ciclo,
-          cpfCnpj: documento
+          cobranca: { nome: state.assinaturaNome, cpfCnpj: documento, email: state.assinaturaEmail, telefone: telefone }
         }),
       });
       var json = await resposta.json();
@@ -7665,7 +7708,7 @@
         '<div><p class="text-[9px] font-black uppercase tracking-wide text-slate-400">Valor</p><strong class="mt-1 block text-xs text-slate-900">' + (assinatura ? dinheiro(assinatura.valor) : '—') + '</strong></div>' +
         '<div><p class="text-[9px] font-black uppercase tracking-wide text-slate-400">Proximo vencimento</p><strong class="mt-1 block text-xs text-slate-900">' + dataAssinaturaMobile(assinatura && assinatura.proximoVencimento) + '</strong></div>' +
       '</div>' +
-      (podeGerenciar && podeContratar ? '<div><h3 class="text-xs font-black text-slate-900">Contratar assinatura</h3><p class="mt-1 text-[10px] font-semibold leading-relaxed text-slate-500">' + (pessoal ? 'Ative os recursos Premium deste perfil.' : 'Contrate agora sem perder os dias restantes do teste.') + '</p><input id="assinatura-cpf" type="text" inputmode="numeric" value="' + escapeHtml(state.assinaturaCpf || '') + '" placeholder="CPF ou CNPJ" class="mt-2 h-10 w-full rounded-lg border border-slate-300 bg-white px-3 text-base font-bold text-slate-900 outline-none"/><div class="mt-2 grid grid-cols-2 gap-2"><button id="assinatura-assinar-mensal" type="button" ' + (state.assinaturaAcao ? 'disabled ' : '') + 'class="h-10 rounded-xl border border-sky-300 bg-sky-50 text-[9px] font-black uppercase text-sky-700 disabled:opacity-60">' + (state.assinaturaAcao === 'assinar-mensal' ? 'Processando...' : 'Mensal · ' + precoMensal) + '</button><button id="assinatura-assinar-anual" type="button" ' + (state.assinaturaAcao ? 'disabled ' : '') + 'class="h-10 rounded-xl bg-sky-700 text-[9px] font-black uppercase text-white disabled:opacity-60">' + (state.assinaturaAcao === 'assinar-anual' ? 'Processando...' : 'Anual · ' + precoAnual) + '</button></div></div>' : '') +
+      (podeGerenciar && podeContratar ? '<div><h3 class="text-xs font-black text-slate-900">Contratar assinatura</h3><p class="mt-1 text-[10px] font-semibold leading-relaxed text-slate-500">' + (pessoal ? 'Ative os recursos Premium deste perfil.' : 'Contrate agora sem perder os dias restantes do teste.') + '</p><div class="mt-2 grid grid-cols-2 gap-1.5"><input id="assinatura-nome" type="text" value="' + escapeHtml(state.assinaturaNome || nomeEmpresa(state.empresa || {})) + '" placeholder="Nome/razão social" class="h-9 rounded-lg border border-slate-300 bg-white px-2 text-[11px] font-bold text-slate-900 outline-none"/><input id="assinatura-cpf" type="text" inputmode="numeric" value="' + escapeHtml(state.assinaturaCpf || '') + '" placeholder="CPF/CNPJ" class="h-9 rounded-lg border border-slate-300 bg-white px-2 text-[11px] font-bold text-slate-900 outline-none"/><input id="assinatura-email" type="email" value="' + escapeHtml(state.assinaturaEmail || emailUsuarioAtualMobile()) + '" placeholder="E-mail cobrança" class="h-9 rounded-lg border border-slate-300 bg-white px-2 text-[11px] font-bold text-slate-900 outline-none"/><input id="assinatura-telefone" type="tel" inputmode="tel" value="' + escapeHtml(state.assinaturaTelefone || telefonePadraoMobile()) + '" placeholder="Telefone" class="h-9 rounded-lg border border-slate-300 bg-white px-2 text-[11px] font-bold text-slate-900 outline-none"/></div><div class="mt-2 grid grid-cols-2 gap-2"><button id="assinatura-assinar-mensal" type="button" ' + (state.assinaturaAcao ? 'disabled ' : '') + 'class="h-10 rounded-xl border border-sky-300 bg-sky-50 text-[9px] font-black uppercase text-sky-700 disabled:opacity-60">' + (state.assinaturaAcao === 'assinar-mensal' ? 'Processando...' : 'Mensal · ' + precoMensal) + '</button><button id="assinatura-assinar-anual" type="button" ' + (state.assinaturaAcao ? 'disabled ' : '') + 'class="h-10 rounded-xl bg-sky-700 text-[9px] font-black uppercase text-white disabled:opacity-60">' + (state.assinaturaAcao === 'assinar-anual' ? 'Processando...' : 'Anual · ' + precoAnual) + '</button></div></div>' : '') +
       (podeGerenciar && assinatura && !canceladaNoFim ? '<div><h3 class="text-xs font-black text-slate-900">Ciclo de cobranca</h3><p class="mt-1 text-[10px] font-semibold leading-relaxed text-slate-500">A mudanca vale para a proxima renovacao.</p><div class="mt-2 grid grid-cols-2 gap-2">' +
         '<button id="assinatura-mensal" type="button" ' + (state.assinaturaAcao || ciclo === 'mensal' ? 'disabled ' : '') + 'class="h-10 rounded-xl border text-[10px] font-black uppercase ' + (ciclo === 'mensal' ? 'border-sky-600 bg-sky-600 text-white' : 'border-slate-300 bg-white text-slate-700') + ' disabled:opacity-70">' + (state.assinaturaAcao === 'mensal' ? 'Alterando...' : 'Mensal') + '</button>' +
         '<button id="assinatura-anual" type="button" ' + (state.assinaturaAcao || ciclo === 'anual' ? 'disabled ' : '') + 'class="h-10 rounded-xl border text-[10px] font-black uppercase ' + (ciclo === 'anual' ? 'border-sky-600 bg-sky-600 text-white' : 'border-slate-300 bg-white text-slate-700') + ' disabled:opacity-70">' + (state.assinaturaAcao === 'anual' ? 'Alterando...' : 'Anual') + '</button>' +
@@ -9978,7 +10021,7 @@
           return Promise.all(
             keys
               .filter(function (key) {
-                return key.indexOf('avantalab-mobile-') === 0 && key !== 'avantalab-mobile-v233';
+                return key.indexOf('avantalab-mobile-') === 0 && key !== 'avantalab-mobile-v235';
               })
               .map(function (key) {
                 return caches.delete(key);
@@ -9995,7 +10038,7 @@
     });
 
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/mobile-sw.js?v=222').then(function (registro) {
+      navigator.serviceWorker.register('/mobile-sw.js?v=224').then(function (registro) {
         if (registro && registro.update) registro.update();
       }).catch(function () {});
     }

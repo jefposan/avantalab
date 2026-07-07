@@ -7,6 +7,7 @@ import {
   emCarencia,
   rotuloPlano,
   rotuloStatusAssinatura,
+  type DadosCobrancaAssinatura,
   type EstadoAcesso,
 } from '../lib/cobranca';
 
@@ -37,8 +38,11 @@ interface AssinaturaModalProps {
   aberto: boolean;
   onFechar: () => void;
   onEstadoAtualizado?: (estado: EstadoAcesso | null) => void;
-  onAssinar?: (ciclo: 'mensal' | 'anual', cpfCnpj: string) => Promise<{ ok: boolean; url?: string; mensagem?: string } | void>;
+  onAssinar?: (ciclo: 'mensal' | 'anual', dados: DadosCobrancaAssinatura) => Promise<{ ok: boolean; url?: string; mensagem?: string } | void>;
   empresaId: string | null;
+  nomePadrao?: string;
+  emailPadrao?: string;
+  telefonePadrao?: string;
   darkMode?: boolean;
   corPrimaria?: string;
   estado: EstadoAcesso | null;
@@ -76,6 +80,9 @@ export default function AssinaturaModal({
   onEstadoAtualizado,
   onAssinar,
   empresaId,
+  nomePadrao = '',
+  emailPadrao = '',
+  telefonePadrao = '',
   darkMode = false,
   corPrimaria = '#0A1F44',
   estado,
@@ -84,7 +91,10 @@ export default function AssinaturaModal({
   const [carregando, setCarregando] = useState(false);
   const [acao, setAcao] = useState<'mensal' | 'anual' | 'cancelar' | 'assinar-mensal' | 'assinar-anual' | null>(null);
   const [erro, setErro] = useState('');
+  const [nomeCobranca, setNomeCobranca] = useState(nomePadrao);
   const [cpfCnpj, setCpfCnpj] = useState('');
+  const [emailCobranca, setEmailCobranca] = useState(emailPadrao);
+  const [telefoneCobranca, setTelefoneCobranca] = useState(telefonePadrao);
   const [confirmarCancelamento, setConfirmarCancelamento] = useState(false);
   const requisicaoRef = useRef(false);
 
@@ -114,9 +124,14 @@ export default function AssinaturaModal({
 
   useEffect(() => {
     if (!aberto) return;
-    const timer = window.setTimeout(() => void carregar(), 0);
+    const timer = window.setTimeout(() => {
+      setNomeCobranca((atual) => atual || nomePadrao);
+      setEmailCobranca((atual) => atual || emailPadrao);
+      setTelefoneCobranca((atual) => atual || telefonePadrao);
+      void carregar();
+    }, 0);
     return () => window.clearTimeout(timer);
-  }, [aberto, carregar]);
+  }, [aberto, carregar, nomePadrao, emailPadrao, telefonePadrao]);
 
   if (!aberto) return null;
 
@@ -152,15 +167,30 @@ export default function AssinaturaModal({
   const assinar = async (ciclo: 'mensal' | 'anual') => {
     if (acao) return;
     const documento = cpfCnpj.replace(/\D/g, '');
+    const telefone = telefoneCobranca.replace(/\D/g, '');
+    const nome = nomeCobranca.trim().replace(/\s+/g, ' ');
+    const email = emailCobranca.trim().toLowerCase();
+    if (nome.length < 3) {
+      setErro('Informe o nome ou razão social para a cobrança.');
+      return;
+    }
     if (documento.length !== 11 && documento.length !== 14) {
       setErro('Informe um CPF ou CNPJ válido para a cobrança.');
+      return;
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      setErro('Informe um e-mail de cobrança válido.');
+      return;
+    }
+    if (telefone.length < 10 || telefone.length > 13) {
+      setErro('Informe um telefone de cobrança válido.');
       return;
     }
     const janela = window.open('', '_blank');
     setAcao(`assinar-${ciclo}`);
     setErro('');
     try {
-      const resultado = await onAssinar?.(ciclo, documento);
+      const resultado = await onAssinar?.(ciclo, { nome, cpfCnpj: documento, email, telefone });
       if (resultado && resultado.ok && resultado.url) {
         if (janela) janela.location.href = resultado.url;
         else window.open(resultado.url, '_blank');
@@ -226,7 +256,12 @@ export default function AssinaturaModal({
             {podeGerenciar && podeContratar && <section className="mt-5">
               <h3 className="text-sm font-semibold">Contratar assinatura</h3>
               <p className={`mt-1 text-xs ${muted}`}>Você pode contratar agora sem perder os dias restantes do período de teste.</p>
-              <input type="text" inputMode="numeric" value={cpfCnpj} onChange={(e) => setCpfCnpj(e.target.value)} placeholder="CPF ou CNPJ" className={`mt-3 h-11 w-full rounded-lg border px-3 text-sm outline-none focus:border-sky-600 ${darkMode ? 'border-slate-600 bg-slate-800 text-white' : 'border-slate-300 bg-white text-slate-800'}`} />
+              <div className="mt-3 grid gap-2 sm:grid-cols-2">
+                <input type="text" value={nomeCobranca} onChange={(e) => setNomeCobranca(e.target.value)} placeholder="Nome ou razão social" className={`h-10 rounded-lg border px-3 text-sm outline-none focus:border-sky-600 ${darkMode ? 'border-slate-600 bg-slate-800 text-white' : 'border-slate-300 bg-white text-slate-800'}`} />
+                <input type="text" inputMode="numeric" value={cpfCnpj} onChange={(e) => setCpfCnpj(e.target.value)} placeholder="CPF ou CNPJ" className={`h-10 rounded-lg border px-3 text-sm outline-none focus:border-sky-600 ${darkMode ? 'border-slate-600 bg-slate-800 text-white' : 'border-slate-300 bg-white text-slate-800'}`} />
+                <input type="email" value={emailCobranca} onChange={(e) => setEmailCobranca(e.target.value)} placeholder="E-mail de cobrança" className={`h-10 rounded-lg border px-3 text-sm outline-none focus:border-sky-600 ${darkMode ? 'border-slate-600 bg-slate-800 text-white' : 'border-slate-300 bg-white text-slate-800'}`} />
+                <input type="tel" inputMode="tel" value={telefoneCobranca} onChange={(e) => setTelefoneCobranca(e.target.value)} placeholder="Telefone" className={`h-10 rounded-lg border px-3 text-sm outline-none focus:border-sky-600 ${darkMode ? 'border-slate-600 bg-slate-800 text-white' : 'border-slate-300 bg-white text-slate-800'}`} />
+              </div>
               <div className="mt-2 grid grid-cols-2 gap-2">
                 <button type="button" disabled={acao !== null} onClick={() => void assinar('mensal')} className="h-11 rounded-lg border border-sky-300 bg-sky-50 text-xs font-semibold uppercase text-sky-700 disabled:opacity-60">{acao === 'assinar-mensal' ? 'Processando...' : `Mensal · ${precoMensal}`}</button>
                 <button type="button" disabled={acao !== null} onClick={() => void assinar('anual')} className="h-11 rounded-lg bg-sky-700 text-xs font-semibold uppercase text-white disabled:opacity-60">{acao === 'assinar-anual' ? 'Processando...' : `Anual · ${precoAnual}`}</button>

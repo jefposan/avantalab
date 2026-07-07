@@ -57,9 +57,22 @@ export function criarClienteAsaas(dados: {
   name: string;
   cpfCnpj?: string;
   email?: string;
+  phone?: string;
+  mobilePhone?: string;
   externalReference?: string;
 }) {
   return asaasFetch<{ id: string }>('/customers', { method: 'POST', body: JSON.stringify(dados) });
+}
+
+export function atualizarClienteAsaas(id: string, dados: {
+  name?: string;
+  cpfCnpj?: string;
+  email?: string;
+  phone?: string;
+  mobilePhone?: string;
+  externalReference?: string;
+}) {
+  return asaasFetch<{ id: string }>(`/customers/${id}`, { method: 'PUT', body: JSON.stringify(dados) });
 }
 
 // Cria uma assinatura recorrente (mensal/anual).
