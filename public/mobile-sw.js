@@ -1,6 +1,6 @@
-const CACHE_NAME = 'avantalab-mobile-v235';
+const CACHE_NAME = 'avantalab-mobile-v236';
 const APP_SHELL = [
-  '/mobile-app.js?v=258',
+  '/mobile-app.js?v=259',
   '/mobile-supabase.js',
   '/mobile-manifest.json',
   '/images/ava-logo-principal.png',
@@ -16,7 +16,6 @@ self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => cache.addAll(APP_SHELL)).catch(() => undefined)
   );
-  self.skipWaiting();
 });
 
 self.addEventListener('activate', (event) => {
@@ -28,7 +27,6 @@ self.addEventListener('activate', (event) => {
       )
       .catch(() => undefined)
   );
-  self.clients.claim();
 });
 
 self.addEventListener('fetch', (event) => {

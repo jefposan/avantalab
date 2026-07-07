@@ -185,6 +185,7 @@
     dashboardOrdem: ordemDashboardPadrao(),
     dashboardOcultos: [],
     dashboardValoresVisiveis: {},
+    iniciarValoresOcultos: true,
     pontoModuloAtivo: false,
     pontoResumo: [],
     pontoFuncionariosHoje: 0,
@@ -269,8 +270,10 @@
   var CHAVE_AGENDA_ITENS = 'avantalab_mobile_agenda_itens';
   var CHAVE_PROMPT_NOTIF = 'avantalab_mobile_prompt_notif';
   var CHAVE_ATALHOS_INFERIORES = 'avantalab_mobile_atalhos_inferiores';
+  var CHAVE_INICIAR_VALORES_OCULTOS = 'avantalab_mobile_iniciar_valores_ocultos';
   var TRINTA_DIAS_MS = 30 * 24 * 60 * 60 * 1000;
   var DEZ_MINUTOS_MS = 10 * 60 * 1000;
+  var CARDS_COM_VALORES = ['saldo', 'totais', 'categorias', 'tipos'];
 
   // --- Helpers de tipo de perfil ---
   var CATEGORIAS_EMPRESA_MOBILE = [
@@ -993,6 +996,32 @@
     } catch (error) {}
   }
 
+  function iniciarValoresOcultosAtivo() {
+    return state.iniciarValoresOcultos !== false;
+  }
+
+  function aplicarPreferenciaInicialValores() {
+    state.dashboardValoresVisiveis = {};
+    if (iniciarValoresOcultosAtivo()) return;
+    CARDS_COM_VALORES.forEach(function (cardId) {
+      state.dashboardValoresVisiveis[cardId] = true;
+    });
+  }
+
+  function salvarPreferenciaInicialValores() {
+    try {
+      localStorage.setItem(CHAVE_INICIAR_VALORES_OCULTOS, iniciarValoresOcultosAtivo() ? '1' : '0');
+    } catch (error) {}
+  }
+
+  function alternarInicioValoresOcultos() {
+    state.iniciarValoresOcultos = !iniciarValoresOcultosAtivo();
+    salvarPreferenciaInicialValores();
+    aplicarPreferenciaInicialValores();
+    render();
+    mostrarToast(iniciarValoresOcultosAtivo() ? 'Valores iniciam ocultos.' : 'Valores iniciam visiveis.');
+  }
+
   function atalhosInferioresDisponiveis() {
     return ['perfil', 'agenda', 'tema', 'despesasFixas'];
   }
@@ -1104,6 +1133,7 @@
     if (!empresaSelecionada) return false;
 
     state.empresa = empresaSelecionada;
+    window._avaProfilePillHidden = false;
     state.pontoModuloAtivo = false;
     state.pontoResumo = [];
     state.pontoFuncionariosHoje = 0;
@@ -2061,7 +2091,7 @@
 
   function avaLogoPrincipalHtml(width, height) {
     // background-image (em vez de <img>) para nao "piscar" ao reconstruir o innerHTML a cada render.
-    return '<span role="img" aria-label="Ava" style="display:block;width:' + width + 'px;height:' + height + 'px;background-image:url(/images/ava-logo-principal.png);background-size:contain;background-position:center;background-repeat:no-repeat;flex-shrink:0;"></span>';
+    return '<span class="ava-logo-principal" role="img" aria-label="Ava" style="display:block;width:' + width + 'px;height:' + height + 'px;background-image:url(/images/ava-logo-principal.png);background-size:contain;background-position:center;background-repeat:no-repeat;flex-shrink:0;transform:translateZ(0);backface-visibility:hidden;-webkit-backface-visibility:hidden;contain:paint;"></span>';
   }
 
   function pararGravacaoIA() {
@@ -2164,6 +2194,15 @@
 
   function deveBloquearScroll() {
     return Boolean(state.visao === 'agenda' || state.modalLancamento || state.modalMenu || state.menuAberto || state.modalAcao || state.exclusaoRecorrencia || state.chatIAAberto || state.tourAberto);
+  }
+
+  function podeAtualizarDadosAoRetornar() {
+    var ativo = document.activeElement;
+    if (ativo && ativo.matches && ativo.matches('input, select, textarea, [contenteditable="true"]')) return false;
+    if (state.carregando || state.lancandoDespesa || state.recorrSalvando || state.empresaAcao || state.assinaturaAcao) return false;
+    if (state.modalLancamento || state.modalMenu || state.menuAberto || state.modalAcao || state.exclusaoRecorrencia || state.chatIAAberto || state.tourAberto) return false;
+    if (state.agendaFormAberto || state.empresaEdicaoAberta || state.empresaCriarAberta || state.empresaExclusaoAberta) return false;
+    return true;
   }
 
   function liberarScrollChatIA() {
@@ -5791,7 +5830,7 @@
             insightDespesasHtml(atual, anterior) +
           '</div>' +
         '</header>' +
-        '<div id="mobile-profile-pill" class="absolute left-1/2 z-0 w-max rounded-[0_0_14px_14px] border-0 px-6 py-1.5 text-center text-[13px] font-bold leading-tight text-white" style="top:calc(100% - 6px);max-width:calc(100% - 48px);opacity:0;transform:translate(-50%,var(--profile-pill-y,0%));transition:transform .28s cubic-bezier(.22,1,.36,1);will-change:transform;">' +
+        '<div id="mobile-profile-pill" class="absolute left-1/2 z-0 w-max rounded-[0_0_14px_14px] border-0 px-6 py-1.5 text-center text-[13px] font-bold leading-tight text-white" style="top:calc(100% - 6px);max-width:calc(100% - 48px);opacity:1;transform:translate(-50%,var(--profile-pill-y,0%));transition:transform .28s cubic-bezier(.22,1,.36,1);will-change:transform;">' +
           '<span class="relative z-10 block truncate">' + escapeHtml(nomeEmpresa(state.empresa)) + '</span>' +
         '</div>' +
         '</div>' +
@@ -6509,9 +6548,9 @@
   function recorteHeaderLancamentosHtml(tipo) {
     var fundoCard = state.darkMode ? '#0F172A' : '#FFFFFF';
     var corDetalhe = tipo === 'despesa' ? '#FB7185' : '#34D399';
-    return '<svg class="pointer-events-none absolute inset-x-0 bottom-[-1px] h-4 w-full" viewBox="0 0 100 16" preserveAspectRatio="none" aria-hidden="true">' +
-      '<path d="M0 16H72C79 16 80 3 87 3H100V16Z" fill="' + fundoCard + '"/>' +
-      '<path d="M0 15.4H72C79 15.4 80 2.4 87 2.4H100" fill="none" stroke="' + corDetalhe + '" stroke-width="1.2" vector-effect="non-scaling-stroke"/>' +
+    return '<svg class="pointer-events-none absolute inset-x-0 bottom-[-0.5px] h-4 w-full" viewBox="0 0 100 16" preserveAspectRatio="none" aria-hidden="true" style="display:block;">' +
+      '<path d="M0 16H70C78 16 80 3 87 3H100V16Z" fill="' + fundoCard + '"/>' +
+      '<path d="M70 15.4C78 15.4 80 2.4 87 2.4H100" fill="none" stroke="' + corDetalhe + '" stroke-width="1.2" vector-effect="non-scaling-stroke"/>' +
     '</svg>';
   }
 
@@ -6521,7 +6560,7 @@
     var itens = pesquisando ? todos : (state.ultimasDespesasExpandido ? todos : todos.slice(0, 3));
 
     return (
-      '<section class="overflow-hidden rounded-2xl bg-white shadow-sm">' +
+      '<section class="overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-slate-200/70" style="background:' + (state.darkMode ? '#0F172A' : '#FFFFFF') + ';">' +
         '<div class="relative flex items-center justify-between gap-3 overflow-hidden px-4 py-3.5 text-white" style="background:linear-gradient(135deg,#A63D52 0%,#D65F6D 100%)"><div class="relative z-10 flex min-w-0 items-center gap-2.5"><span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-white/15 bg-white/10"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 3h12v18l-3-2-3 2-3-2-3 2V3Z" stroke-linejoin="round"/><path d="M9 8h6M9 12h6" stroke-linecap="round"/></svg></span><div class="min-w-0"><h2 class="truncate text-sm font-black">Despesas do mês</h2><p class="mt-0.5 text-[9px] font-bold uppercase tracking-wide text-white/65">Lançamentos do período</p></div></div><div class="relative z-10 flex -translate-y-1 items-center gap-2">' + (!pesquisando && state.ultimasDespesasExpandido && todos.length > 3 ? '<button id="toggle-ultimas-despesas" type="button" class="flex h-8 items-center justify-center rounded-full border border-white/20 bg-white/10 px-3 text-xs font-bold text-white shadow-sm backdrop-blur">Recolher</button>' : '') + '<button id="buscar-ultimas-despesas" type="button" class="flex h-8 w-8 items-center justify-center rounded-full border border-white/20 bg-white/10 text-sm font-black text-white shadow-sm backdrop-blur active:bg-white/20" aria-label="' + (pesquisando ? 'Fechar busca' : 'Buscar despesas') + '">' + iconeBuscaUltimas(pesquisando) + '</button></div>' + recorteHeaderLancamentosHtml('despesa') + '</div>' +
         (state.ultimasDespesasBuscaAberta ? '<div class="px-4 pt-3"><div class="flex h-10 items-center gap-2 rounded-xl border border-red-100 bg-red-50/60 px-3"><input id="busca-ultimas-despesas" type="search" autocomplete="off" enterkeyhint="search" value="' + escapeHtml(state.ultimasDespesasBusca) + '" placeholder="Buscar descricao ou valor" style="font-size:16px" class="min-w-0 flex-1 bg-transparent text-base font-semibold text-slate-800 outline-none" /><button id="limpar-ultimas-despesas" type="button" class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-white text-sm font-black text-red-600 shadow-sm" aria-label="Limpar busca">&times;</button></div></div>' : '') +
         '<div class="grid gap-1 p-4" id="ultimas-despesas-lista">' +
@@ -6546,7 +6585,7 @@
     var itens = pesquisando ? todos : (state.ultimasReceitasExpandido ? todos : todos.slice(0, 3));
 
     return (
-      '<section class="overflow-hidden rounded-2xl bg-white shadow-sm">' +
+      '<section class="overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-slate-200/70" style="background:' + (state.darkMode ? '#0F172A' : '#FFFFFF') + ';">' +
         '<div class="relative flex items-center justify-between gap-3 overflow-hidden px-4 py-3.5 text-white" style="background:linear-gradient(135deg,#14786F 0%,#2A9D8F 100%)"><div class="relative z-10 flex min-w-0 items-center gap-2.5"><span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-white/15 bg-white/10"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 16 10 10l4 4 6-7" stroke-linecap="round" stroke-linejoin="round"/><path d="M15 7h5v5" stroke-linecap="round" stroke-linejoin="round"/></svg></span><div class="min-w-0"><h2 class="truncate text-sm font-black">Receitas do mês</h2><p class="mt-0.5 text-[9px] font-bold uppercase tracking-wide text-white/65">Lançamentos do período</p></div></div><div class="relative z-10 flex -translate-y-1 items-center gap-2">' + (!pesquisando && state.ultimasReceitasExpandido && todos.length > 3 ? '<button id="toggle-ultimas-receitas" type="button" class="flex h-8 items-center justify-center rounded-full border border-white/20 bg-white/10 px-3 text-xs font-bold text-white shadow-sm backdrop-blur">Recolher</button>' : '') + '<button id="buscar-ultimas-receitas" type="button" class="flex h-8 w-8 items-center justify-center rounded-full border border-white/20 bg-white/10 text-sm font-black text-white shadow-sm backdrop-blur active:bg-white/20" aria-label="' + (pesquisando ? 'Fechar busca' : 'Buscar receitas') + '">' + iconeBuscaUltimas(pesquisando) + '</button></div>' + recorteHeaderLancamentosHtml('receita') + '</div>' +
         (state.ultimasReceitasBuscaAberta ? '<div class="px-4 pt-3"><div class="flex h-10 items-center gap-2 rounded-xl border border-emerald-100 bg-emerald-50/60 px-3"><input id="busca-ultimas-receitas" type="search" autocomplete="off" enterkeyhint="search" value="' + escapeHtml(state.ultimasReceitasBusca) + '" placeholder="Buscar descricao ou valor" style="font-size:16px" class="min-w-0 flex-1 bg-transparent text-base font-semibold text-slate-800 outline-none" /><button id="limpar-ultimas-receitas" type="button" class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-white text-sm font-black text-emerald-600 shadow-sm" aria-label="Limpar busca">&times;</button></div></div>' : '') +
         '<div class="grid gap-1 p-4" id="ultimas-receitas-lista">' +
@@ -6908,6 +6947,13 @@
             chaveMenuHtml(dk) +
           '</div>' +
         '</button>' +
+        '<button id="menu-inicio-valores-ocultos" type="button" class="rounded-[12px_24px_24px_24px] border ' + bordaBase + ' px-2.5 py-1.5 text-left shadow-[0_4px_11px_rgba(15,23,42,.05)]" style="' + (dk ? '' : 'background:linear-gradient(90deg,#F0F9FF 0%,#FFFFFF 78%);border-color:#C9E9F7;') + '">' +
+          '<div class="flex items-center gap-2">' +
+            '<span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg" style="background:#DCF4FF;color:#0369A1">' + iconeVisibilidadeValoresHtml(!iniciarValoresOcultosAtivo()) + '</span>' +
+            '<span class="min-w-0 flex-1"><span class="block text-[11px] font-black">Iniciar valores ocultos</span><span class="mt-0.5 block truncate text-[9px] font-semibold text-slate-500">' + (iniciarValoresOcultosAtivo() ? 'Privacidade ativa ao abrir' : 'Valores visiveis ao abrir') + '</span></span>' +
+            chaveMenuHtml(iniciarValoresOcultosAtivo()) +
+          '</div>' +
+        '</button>' +
         '<button id="menu-notificacoes" type="button" class="rounded-[12px_24px_24px_24px] border ' + bordaBase + ' px-2.5 py-1.5 text-left shadow-[0_4px_11px_rgba(15,23,42,.05)] active:scale-[0.99]" style="' + (dk ? '' : 'background:linear-gradient(90deg,#E8F9FD 0%,#FFFFFF 78%);border-color:#C4EAF4;') + '">' +
           '<div class="flex items-center gap-2">' +
             '<span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg" style="background:#D7F2F8;color:#167FA0">' + iconeMenuLateralSvg('menu-notificacoes') + '</span>' +
@@ -6951,7 +6997,7 @@
 
     return (
       '<div id="menu-overlay" class="fixed inset-0 z-50 bg-slate-950/55" style="will-change:opacity;transform:translateZ(0);backface-visibility:hidden;-webkit-backface-visibility:hidden;isolation:isolate;' + animacaoOverlay + '">' +
-        '<aside id="menu-aside" data-preserve-scroll class="h-full w-[84vw] max-w-[348px] overflow-y-auto rounded-r-3xl ' + (dk ? 'bg-slate-950 text-slate-100' : 'text-slate-900') + ' p-3 shadow-2xl" style="background:' + (dk ? '#020617' : 'linear-gradient(180deg,#F8FBFF 0%,#F4F8FC 100%)') + ';padding-bottom:calc(env(safe-area-inset-bottom) + 82px);backface-visibility:hidden;-webkit-backface-visibility:hidden;contain:paint;' + animacaoPainel + '">' +
+        '<aside id="menu-aside" data-preserve-scroll class="h-full w-[84vw] max-w-[348px] overflow-y-auto rounded-r-3xl ' + (dk ? 'bg-slate-950 text-slate-100' : 'text-slate-900') + ' p-3 shadow-2xl" style="background:' + (dk ? '#020617' : 'linear-gradient(180deg,#F8FBFF 0%,#F4F8FC 100%)') + ';padding-bottom:calc(env(safe-area-inset-bottom) + 120px);backface-visibility:hidden;-webkit-backface-visibility:hidden;contain:paint;' + animacaoPainel + '">' +
           '<div class="relative mb-4 overflow-hidden rounded-[16px_32px_32px_32px] border border-white/20 p-4 text-white shadow-xl shadow-sky-950/15" style="background-image:radial-gradient(circle at 86% 18%,rgba(255,255,255,.2),transparent 28%),linear-gradient(135deg,#073B78 0%,#007EA7 55%,#00BFD1 100%);">' +
             '<div class="pointer-events-none absolute -bottom-8 -right-6 h-24 w-32 rounded-[50%] border border-white/10"></div>' +
             '<div class="flex items-start justify-between gap-3">' +
@@ -8638,6 +8684,9 @@
     bind('menu-tema', function () {
       executarChaveMenuSemMover('menu-tema', trocarTema);
     });
+    bind('menu-inicio-valores-ocultos', function () {
+      executarChaveMenuSemMover('menu-inicio-valores-ocultos', alternarInicioValoresOcultos);
+    });
     function acionarBackupMobile(acao) {
       if (!podeGerenciarUsuarios()) {
         mostrarToast('Voce nao tem permissao para esta acao.');
@@ -10000,8 +10049,19 @@
     });
   }
   async function iniciar() {
+    window._avaProfilePillHidden = false;
+
+    try {
+      window._avaLogoPrincipalPreload = window._avaLogoPrincipalPreload || new Image();
+      window._avaLogoPrincipalPreload.decoding = 'async';
+      window._avaLogoPrincipalPreload.src = '/images/ava-logo-principal.png';
+      if (window._avaLogoPrincipalPreload.decode) window._avaLogoPrincipalPreload.decode().catch(function () {});
+    } catch (error) {}
+
     try {
       state.darkMode = localStorage.getItem('avantalab_mobile_dark') === '1';
+      state.iniciarValoresOcultos = localStorage.getItem(CHAVE_INICIAR_VALORES_OCULTOS) !== '0';
+      aplicarPreferenciaInicialValores();
       state.dashboardOrdem = normalizarOrdemDashboard(JSON.parse(localStorage.getItem('avantalab_mobile_dashboard_ordem') || '[]'));
       state.dashboardOcultos = normalizarOcultosDashboard(JSON.parse(localStorage.getItem('avantalab_mobile_dashboard_ocultos') || '[]'));
       var atalhosSalvos = JSON.parse(localStorage.getItem(CHAVE_ATALHOS_INFERIORES) || '{}');
@@ -10021,7 +10081,7 @@
           return Promise.all(
             keys
               .filter(function (key) {
-                return key.indexOf('avantalab-mobile-') === 0 && key !== 'avantalab-mobile-v235';
+                return key.indexOf('avantalab-mobile-') === 0 && key !== 'avantalab-mobile-v236';
               })
               .map(function (key) {
                 return caches.delete(key);
@@ -10038,7 +10098,7 @@
     });
 
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/mobile-sw.js?v=224').then(function (registro) {
+      navigator.serviceWorker.register('/mobile-sw.js?v=225').then(function (registro) {
         if (registro && registro.update) registro.update();
       }).catch(function () {});
     }
@@ -10055,7 +10115,7 @@
       carregarNotificacoesNaoLidas();
       // Reavalia o estado dependente da data ao reabrir o app (ex.: card de
       // "despesas previstas para confirmar" quando o dia da despesa chega).
-      if (state.autenticado && state.empresa && !ehFuncionarioPontoMobile() && !state.validacaoTelefoneObrigatoria) {
+      if (state.autenticado && state.empresa && !ehFuncionarioPontoMobile() && !state.validacaoTelefoneObrigatoria && podeAtualizarDadosAoRetornar()) {
         carregarDados();
       }
     });
