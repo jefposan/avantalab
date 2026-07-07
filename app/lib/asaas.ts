@@ -9,7 +9,7 @@
 //   $aact_hmlg_...  → sandbox (testes)
 // ─────────────────────────────────────────────────────────────
 
-const API_KEY = process.env.ASAAS_API_KEY || '';
+const API_KEY = normalizarSecret(process.env.ASAAS_API_KEY);
 
 function baseUrl(): string {
   if (process.env.ASAAS_BASE_URL) return process.env.ASAAS_BASE_URL.replace(/\/$/, '');
@@ -19,6 +19,14 @@ function baseUrl(): string {
 }
 
 type AsaasResposta<T> = { ok: boolean; status: number; data: T | null; erro?: string };
+
+function normalizarSecret(valor: string | undefined) {
+  return (valor || '')
+    .trim()
+    .replace(/^["']|["']$/g, '')
+    .replace(/\s/g, '')
+    .replace(/[^\x21-\x7E]/g, '');
+}
 
 async function asaasFetch<T = unknown>(caminho: string, init?: RequestInit): Promise<AsaasResposta<T>> {
   if (!API_KEY) return { ok: false, status: 0, data: null, erro: 'ASAAS_API_KEY não configurada' };

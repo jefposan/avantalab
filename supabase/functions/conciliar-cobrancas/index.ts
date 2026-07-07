@@ -8,16 +8,18 @@ type Assinatura = {
   gateway_subscription_id: string;
 };
 
-const ASAAS_URL = (Deno.env.get('ASAAS_BASE_URL') || (
-  (Deno.env.get('ASAAS_API_KEY') || '').startsWith('$aact_prod_')
-    ? 'https://api.asaas.com/v3'
-    : 'https://api-sandbox.asaas.com/v3'
-)).replace(/\/$/, '');
-
 async function asaas(path: string) {
+  const ASAAS_API_KEY = normalizarSecret(Deno.env.get('ASAAS_API_KEY'));
+  if (!ASAAS_API_KEY) throw new Error('ASAAS_API_KEY não configurada');
+  const ASAAS_URL = (Deno.env.get('ASAAS_BASE_URL') || (
+    ASAAS_API_KEY.startsWith('$aact_prod_')
+      ? 'https://api.asaas.com/v3'
+      : 'https://api-sandbox.asaas.com/v3'
+  )).replace(/\/$/, '');
+
   const response = await fetch(`${ASAAS_URL}${path}`, {
     headers: {
-      access_token: Deno.env.get('ASAAS_API_KEY') || '',
+      access_token: ASAAS_API_KEY,
       'User-Agent': 'AvantaLab',
     },
   });
@@ -117,4 +119,12 @@ function resposta(body: unknown, status = 200) {
     status,
     headers: { 'Content-Type': 'application/json' },
   });
+}
+
+function normalizarSecret(valor: string | undefined | null) {
+  return (valor || '')
+    .trim()
+    .replace(/^["']|["']$/g, '')
+    .replace(/\s/g, '')
+    .replace(/[^\x21-\x7E]/g, '');
 }
