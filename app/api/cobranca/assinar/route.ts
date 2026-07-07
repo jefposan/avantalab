@@ -1,9 +1,10 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
-import { criarClienteAsaas, criarAssinaturaAsaas, listarCobrancasAssinaturaAsaas } from '../../../lib/asaas';
+import { criarClienteAsaas, criarAssinaturaAsaas, listarCobrancasAssinaturaAsaas, removerAssinaturaAsaas } from '../../../lib/asaas';
 import { PRECOS, type PlanoPago, type Ciclo } from '../../../lib/cobranca';
 
 export const runtime = 'nodejs';
+const STATUS_FATURA_PAGAVEL = new Set(['PENDING', 'OVERDUE']);
 
 function hojeSaoPaulo(): string {
   return new Intl.DateTimeFormat('en-CA', {
@@ -88,7 +89,7 @@ export async function POST(request: Request) {
       }, { status: 409 });
     }
     const existentes = await listarCobrancasAssinaturaAsaas(assinExistente.gateway_subscription_id);
-    const cobranca = existentes.data?.data?.find((item) => item.invoiceUrl) || existentes.data?.data?.[0];
+    const cobranca = existentes.data?.data?.find((item) => item.invoiceUrl && STATUS_FATURA_PAGAVEL.has(item.status || ''));
     if (existentes.ok && cobranca?.invoiceUrl) {
       return NextResponse.json({
         ok: true,
@@ -97,10 +98,11 @@ export async function POST(request: Request) {
         assinaturaId: assinExistente.gateway_subscription_id,
       });
     }
-    return NextResponse.json({
-      erro: true,
-      mensagem: 'A assinatura já foi criada, mas o link de pagamento ainda não está disponível. Aguarde alguns instantes e tente novamente.',
-    }, { status: 409 });
+    await removerAssinaturaAsaas(assinExistente.gateway_subscription_id).catch(() => null);
+    await admin.from('assinaturas').update({
+      gateway_subscription_id: null,
+      atualizado_em: new Date().toISOString(),
+    }).eq('empresa_id', empresaId);
   }
 
   let clienteId = assinExistente?.gateway_customer_id || '';
@@ -131,7 +133,8 @@ export async function POST(request: Request) {
   // 5) Pega o link de pagamento da primeira cobrança.
   let invoiceUrl = '';
   const pgs = await listarCobrancasAssinaturaAsaas(assinaturaGwId);
-  if (pgs.ok && pgs.data?.data?.length) invoiceUrl = pgs.data.data[0].invoiceUrl || '';
+  const primeiraCobranca = pgs.data?.data?.find((item) => item.invoiceUrl && STATUS_FATURA_PAGAVEL.has(item.status || ''));
+  if (pgs.ok && primeiraCobranca) invoiceUrl = primeiraCobranca.invoiceUrl || '';
 
   // 6) Guarda os identificadores no nosso banco (status vira 'ativa' via webhook).
   const base = {
