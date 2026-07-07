@@ -6452,7 +6452,7 @@
 
   function categoriasDoMes(atual) {
     var categoriasMap = {};
-    atual.lancamentos.forEach(function (lancamento) {
+    lancamentosRealizadosDoMes(atual).forEach(function (lancamento) {
       var despesa = state.despesas.find(function (item) { return item.nome === lancamento.despesa; });
       var categoria = despesa ? despesa.categoria : 'Sem categoria';
       categoriasMap[categoria] = (categoriasMap[categoria] || 0) + lancamento.valor;
@@ -6465,7 +6465,7 @@
 
   function tiposDespesaDoMes(atual) {
     var tiposMap = {};
-    atual.lancamentos.forEach(function (lancamento) {
+    lancamentosRealizadosDoMes(atual).forEach(function (lancamento) {
       var tipo = lancamento.despesa || 'Sem tipo';
       tiposMap[tipo] = (tiposMap[tipo] || 0) + lancamento.valor;
     });
@@ -6473,6 +6473,13 @@
     return Object.keys(tiposMap)
       .map(function (tipo) { return { categoria: tipo, valor: tiposMap[tipo] }; })
       .sort(function (a, b) { return b.valor - a.valor; });
+  }
+
+  function lancamentosRealizadosDoMes(atual) {
+    var mesIndice = indiceMes(state.mes);
+    return (atual.lancamentos || []).filter(function (lancamento) {
+      return !ehDespesaFutura(mesIndice, lancamento.dia);
+    });
   }
 
   function graficoCategoriaHtml(atual) {
@@ -7339,7 +7346,7 @@
   function detalheTipoDespesaHtml() {
     var nome = state.tipoDespesaDetalhe || '';
     var atual = dadosMes(state.mes);
-    var itens = (atual.lancamentos || [])
+    var itens = lancamentosRealizadosDoMes(atual)
       .filter(function (item) { return item.despesa === nome; })
       .sort(function (a, b) { return Number(a.dia || 0) - Number(b.dia || 0); });
     var total = itens.reduce(function (soma, item) { return soma + Number(item.valor || 0); }, 0);
@@ -10116,7 +10123,7 @@
           return Promise.all(
             keys
               .filter(function (key) {
-                return key.indexOf('avantalab-mobile-') === 0 && key !== 'avantalab-mobile-v238';
+                return key.indexOf('avantalab-mobile-') === 0 && key !== 'avantalab-mobile-v239';
               })
               .map(function (key) {
                 return caches.delete(key);
