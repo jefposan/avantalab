@@ -3237,6 +3237,35 @@
     render();
   }
 
+  async function buscarLancamentosAnoMobile(empresaId, ano) {
+    var pageSize = 1000;
+    var inicio = 0;
+    var todos = [];
+
+    while (true) {
+      var resposta = await db
+        .from('lancamentos')
+        .select('*')
+        .eq('empresa_id', empresaId)
+        .eq('ano', ano)
+        .order('dia', { ascending: true })
+        .range(inicio, inicio + pageSize - 1);
+
+      if (resposta.error) {
+        console.error('Erro ao buscar lancamentos mobile:', resposta.error);
+        return todos;
+      }
+
+      var pagina = resposta.data || [];
+      todos = todos.concat(pagina);
+
+      if (pagina.length < pageSize) break;
+      inicio += pageSize;
+    }
+
+    return todos;
+  }
+
   async function carregarDados() {
     if (!state.empresa) return;
 
@@ -3274,7 +3303,7 @@
     var ano = Number(state.ano);
 
     var resultados = await Promise.all([
-      db.from('lancamentos').select('*').eq('empresa_id', empresaId).eq('ano', ano).order('dia', { ascending: true }),
+      buscarLancamentosAnoMobile(empresaId, ano),
       db.from('faturamentos').select('*').eq('empresa_id', empresaId).eq('ano', ano),
       db.from('faturamentos_entradas').select('*').eq('empresa_id', empresaId).eq('ano', ano).order('dia', { ascending: true }),
       db.from('despesas_cadastradas').select('*').eq('empresa_id', empresaId).order('nome', { ascending: true }),
@@ -3282,7 +3311,7 @@
       db.from('empresa_modulos').select('modulo_id').eq('empresa_id', empresaId).eq('modulo_id', 'ponto').eq('ativo', true).maybeSingle(),
     ]);
 
-    state.lancamentos = (resultados[0].data || []).filter(function(item) {
+    state.lancamentos = (resultados[0] || []).filter(function(item) {
       return item.status !== 'cancelada';
     }).map(function (item) {
       return {
@@ -10087,7 +10116,7 @@
           return Promise.all(
             keys
               .filter(function (key) {
-                return key.indexOf('avantalab-mobile-') === 0 && key !== 'avantalab-mobile-v237';
+                return key.indexOf('avantalab-mobile-') === 0 && key !== 'avantalab-mobile-v238';
               })
               .map(function (key) {
                 return caches.delete(key);

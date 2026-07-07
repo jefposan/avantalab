@@ -357,19 +357,32 @@ export async function buscarDespesasCadastradas(empresaId: string) {
 }
 
 export async function buscarLancamentos(empresaId: string, ano: number) {
-  const { data, error } = await supabase
-    .from('lancamentos')
-    .select('*')
-    .eq('empresa_id', empresaId)
-    .eq('ano', ano)
-    .order('dia', { ascending: true });
+  const pageSize = 1000;
+  let inicio = 0;
+  const todos: any[] = [];
 
-  if (error) {
-    console.error('Erro ao buscar lançamentos:', error);
-    return [];
+  while (true) {
+    const { data, error } = await supabase
+      .from('lancamentos')
+      .select('*')
+      .eq('empresa_id', empresaId)
+      .eq('ano', ano)
+      .order('dia', { ascending: true })
+      .range(inicio, inicio + pageSize - 1);
+
+    if (error) {
+      console.error('Erro ao buscar lançamentos:', error);
+      return todos.filter((item: any) => item.status !== 'cancelada');
+    }
+
+    const pagina = data || [];
+    todos.push(...pagina);
+
+    if (pagina.length < pageSize) break;
+    inicio += pageSize;
   }
 
-  return (data || []).filter((item: any) => item.status !== 'cancelada');
+  return todos.filter((item: any) => item.status !== 'cancelada');
 }
 
 const MESES_DB = ['JANEIRO', 'FEVEREIRO', 'MARÇO', 'ABRIL', 'MAIO', 'JUNHO', 'JULHO', 'AGOSTO', 'SETEMBRO', 'OUTUBRO', 'NOVEMBRO', 'DEZEMBRO'];
