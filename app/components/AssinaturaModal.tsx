@@ -221,7 +221,10 @@ export default function AssinaturaModal({
   const podeGerenciar = detalhes?.podeGerenciar !== false;
   // Cortesia (admin/benefício Empresa) e cupom: não exibem dados de cobrança
   // do gateway — mesmo que exista um registro antigo na Asaas.
-  const cortesiaAtiva = status === 'cortesia';
+  // Cortesia explícita, ou "ativa" sem cobrança e sem plano (cliente anterior
+  // ao lançamento — acesso liberado de graça = cortesia na prática).
+  const cortesiaAtiva = status === 'cortesia'
+    || (status === 'ativa' && !assinatura && !cicloAtual && !estadoAtual?.plano);
   const viaCupom = cortesiaAtiva && Boolean(detalhes?.viaCupom);
   const tipoPessoal = (tipoPerfil ?? estadoAtual?.tipoPerfil) === 'pessoal';
   const tipoLabel = tipoPessoal ? 'Pessoal' : 'Empresa';
@@ -233,6 +236,7 @@ export default function AssinaturaModal({
     ? 'Cancelada ao fim do período'
     : viaCupom ? 'Cupom'
     : emAtraso ? 'Atraso'
+    : cortesiaAtiva ? 'Cortesia'
     : rotuloStatusAssinatura(status);
   // Plano atual: "<Tipo> · mensal/anual" (pago) ou "<Tipo> · cortesia/cupom".
   const rotuloPlanoExibido = cortesiaAtiva

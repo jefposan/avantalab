@@ -7937,13 +7937,16 @@
       ? normalizarTipoPerfil(state.empresa.tipo_perfil) === 'pessoal'
       : estado.tipoPerfil === 'pessoal';
     // Cortesia (admin/benefício) e cupom: não exibem dados de cobrança do gateway.
-    var cortesiaAtiva = estado.status === 'cortesia';
+    // Cortesia explícita, ou "ativa" sem cobrança e sem plano (cliente anterior
+    // ao lançamento — acesso liberado de graça = cortesia na prática).
+    var cortesiaAtiva = estado.status === 'cortesia'
+      || (estado.status === 'ativa' && !assinatura && !ciclo && !estado.plano);
     var viaCupom = cortesiaAtiva && !!(detalhes && detalhes.viaCupom);
     var tipoLabel = pessoal ? 'Pessoal' : 'Empresa';
     // Atraso: pagamento pendente ou fatura vencida (cortesia tem prioridade).
     var temFaturaVencida = faturas.some(function (f) { return f.status === 'OVERDUE'; });
     var emAtraso = !cortesiaAtiva && (estado.status === 'inadimplente' || temFaturaVencida);
-    var situacaoRotulo = viaCupom ? 'Cupom' : (emAtraso ? 'Atraso' : (statusRotulos[estado.status] || 'Sem assinatura'));
+    var situacaoRotulo = viaCupom ? 'Cupom' : (emAtraso ? 'Atraso' : (cortesiaAtiva ? 'Cortesia' : (statusRotulos[estado.status] || 'Sem assinatura')));
     if (emAtraso) statusEstilo = 'background:#FEE2E2;color:#B91C1C';
     // Plano atual: "<Tipo> · mensal/anual" (pago) ou "<Tipo> · cortesia/cupom".
     var planoExibido = cortesiaAtiva
