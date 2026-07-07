@@ -20,6 +20,7 @@ function formatarCpfCnpj(valor: string): string {
 interface PaywallEmpresaProps {
   nomePerfil?: string;
   estadoAcesso?: EstadoAcesso | null;
+  faturaPendenteUrl?: string | null;
   // Retorna { ok, url } em caso de sucesso, ou { ok:false, mensagem } em caso de falha.
   onAssinar?: (ciclo: 'mensal' | 'anual', cpfCnpj: string) => Promise<{ ok: boolean; url?: string; mensagem?: string } | void>;
   // Resgate de cupom: retorna mensagem de erro (string) ou nada em caso de sucesso.
@@ -33,7 +34,7 @@ const GRADIENTE = 'linear-gradient(135deg,#003E73,#00A6C8)';
 
 // Tela mostrada quando o perfil empresa precisa regularizar ou iniciar a
 // assinatura, com a identidade visual da tela de login.
-export default function PaywallEmpresa({ nomePerfil, estadoAcesso, onAssinar, onResgatarCupom, onTrocarPerfil, onCriarPerfil, onSair }: PaywallEmpresaProps) {
+export default function PaywallEmpresa({ nomePerfil, estadoAcesso, faturaPendenteUrl, onAssinar, onResgatarCupom, onTrocarPerfil, onCriarPerfil, onSair }: PaywallEmpresaProps) {
   const [carregando, setCarregando] = useState<'mensal' | 'anual' | null>(null);
   const [erro, setErro] = useState('');
   const [cpfCnpj, setCpfCnpj] = useState('');
@@ -112,6 +113,12 @@ export default function PaywallEmpresa({ nomePerfil, estadoAcesso, onAssinar, on
     }
   };
 
+  const pagarCobranca = () => {
+    if (!faturaPendenteUrl) return;
+    window.open(faturaPendenteUrl, '_blank', 'noopener,noreferrer');
+    setAguardandoPagamento(true);
+  };
+
   const inputCls =
     'w-full rounded-xl border border-slate-300 bg-white/90 px-4 py-3 text-slate-800 outline-none transition focus:border-sky-600 focus:ring-2 focus:ring-sky-600/20';
 
@@ -166,58 +173,77 @@ export default function PaywallEmpresa({ nomePerfil, estadoAcesso, onAssinar, on
             </div>
           )}
 
-          {/* CPF/CNPJ */}
-          <div className="mt-4">
-            <label className="mb-1 block text-sm font-semibold text-slate-700">CPF ou CNPJ para a cobrança</label>
-            <input
-              type="text"
-              inputMode="numeric"
-              value={cpfCnpj}
-              onChange={(e) => setCpfCnpj(formatarCpfCnpj(e.target.value))}
-              placeholder="000.000.000-00"
-              maxLength={18}
-              className={inputCls}
-            />
-          </div>
-
-          {/* Planos */}
-          <div className="mt-4 grid gap-3 sm:grid-cols-2">
-            <div className="group rounded-2xl border-2 border-slate-200 bg-white/80 p-4 transition hover:border-sky-600">
-              <p className="text-xs font-black uppercase tracking-wide text-slate-500">Mensal</p>
-              <p className="mt-1 text-2xl font-black text-slate-900">
-                R$ 34,90<span className="text-sm font-bold text-slate-500">/mês</span>
+          {faturaPendenteUrl ? (
+            <div className="mt-4 rounded-2xl border border-sky-200 bg-sky-50/90 p-4 shadow-sm">
+              <p className="text-sm font-black text-slate-900">Cobrança disponível</p>
+              <p className="mt-1 text-xs font-semibold leading-relaxed text-slate-600">
+                Já existe uma cobrança pendente para este perfil. Abra o link de pagamento para regularizar o acesso.
               </p>
-              <p className="mt-1 text-xs font-semibold text-slate-500">Cancele quando quiser.</p>
               <button
                 type="button"
-                onClick={() => clicar('mensal')}
-                disabled={carregando !== null}
-                className="mt-3 h-11 w-full rounded-xl border border-slate-300 bg-white/85 text-sm font-black uppercase tracking-wide text-slate-700 shadow-sm transition hover:border-sky-700 hover:bg-sky-700 hover:text-white hover:shadow-lg hover:brightness-110 group-hover:border-sky-700 group-hover:bg-sky-700 group-hover:text-white group-hover:shadow-lg active:scale-[0.98] disabled:opacity-50"
-              >
-                {carregando === 'mensal' ? 'Processando…' : 'Assinar mensal'}
-              </button>
-            </div>
-
-            <div className="relative rounded-2xl border-2 border-sky-600 bg-white/85 p-4">
-              <span className="absolute -top-2.5 left-4 rounded-full px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wide text-white" style={{ background: GRADIENTE }}>
-                2 meses grátis
-              </span>
-              <p className="text-xs font-black uppercase tracking-wide text-slate-500">Anual</p>
-              <p className="mt-1 text-2xl font-black text-slate-900">
-                R$ 29,00<span className="text-sm font-bold text-slate-500">/mês</span>
-              </p>
-              <p className="mt-1 text-xs font-semibold text-slate-500">R$ 348,00/ano — economize ~R$ 70.</p>
-              <button
-                type="button"
-                onClick={() => clicar('anual')}
-                disabled={carregando !== null}
-                className="mt-3 h-11 w-full rounded-xl text-sm font-black uppercase tracking-wide text-white shadow-lg transition hover:brightness-110 active:scale-[0.98] disabled:opacity-50"
+                onClick={pagarCobranca}
+                className="mt-3 h-11 w-full rounded-xl text-sm font-black uppercase tracking-wide text-white shadow-lg transition hover:brightness-110 active:scale-[0.98]"
                 style={{ background: GRADIENTE }}
               >
-                {carregando === 'anual' ? 'Processando…' : 'Assinar anual'}
+                Pagar cobrança
               </button>
             </div>
-          </div>
+          ) : (
+            <>
+              {/* CPF/CNPJ */}
+              <div className="mt-4">
+                <label className="mb-1 block text-sm font-semibold text-slate-700">CPF ou CNPJ para a cobrança</label>
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  value={cpfCnpj}
+                  onChange={(e) => setCpfCnpj(formatarCpfCnpj(e.target.value))}
+                  placeholder="000.000.000-00"
+                  maxLength={18}
+                  className={inputCls}
+                />
+              </div>
+
+              {/* Planos */}
+              <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                <div className="group rounded-2xl border-2 border-slate-200 bg-white/80 p-4 transition hover:border-sky-600">
+                  <p className="text-xs font-black uppercase tracking-wide text-slate-500">Mensal</p>
+                  <p className="mt-1 text-2xl font-black text-slate-900">
+                    R$ 34,90<span className="text-sm font-bold text-slate-500">/mês</span>
+                  </p>
+                  <p className="mt-1 text-xs font-semibold text-slate-500">Cancele quando quiser.</p>
+                  <button
+                    type="button"
+                    onClick={() => clicar('mensal')}
+                    disabled={carregando !== null}
+                    className="mt-3 h-11 w-full rounded-xl border border-slate-300 bg-white/85 text-sm font-black uppercase tracking-wide text-slate-700 shadow-sm transition hover:border-sky-700 hover:bg-sky-700 hover:text-white hover:shadow-lg hover:brightness-110 group-hover:border-sky-700 group-hover:bg-sky-700 group-hover:text-white group-hover:shadow-lg active:scale-[0.98] disabled:opacity-50"
+                  >
+                    {carregando === 'mensal' ? 'Processando…' : 'Gerar cobrança mensal'}
+                  </button>
+                </div>
+
+                <div className="relative rounded-2xl border-2 border-sky-600 bg-white/85 p-4">
+                  <span className="absolute -top-2.5 left-4 rounded-full px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wide text-white" style={{ background: GRADIENTE }}>
+                    2 meses grátis
+                  </span>
+                  <p className="text-xs font-black uppercase tracking-wide text-slate-500">Anual</p>
+                  <p className="mt-1 text-2xl font-black text-slate-900">
+                    R$ 29,00<span className="text-sm font-bold text-slate-500">/mês</span>
+                  </p>
+                  <p className="mt-1 text-xs font-semibold text-slate-500">R$ 348,00/ano — economize ~R$ 70.</p>
+                  <button
+                    type="button"
+                    onClick={() => clicar('anual')}
+                    disabled={carregando !== null}
+                    className="mt-3 h-11 w-full rounded-xl text-sm font-black uppercase tracking-wide text-white shadow-lg transition hover:brightness-110 active:scale-[0.98] disabled:opacity-50"
+                    style={{ background: GRADIENTE }}
+                  >
+                    {carregando === 'anual' ? 'Processando…' : 'Gerar cobrança anual'}
+                  </button>
+                </div>
+              </div>
+            </>
+          )}
 
           {/* Cupom */}
           <div className="mt-4 border-t border-slate-200 pt-3">

@@ -50,5 +50,22 @@ export async function GET(request: Request) {
   // 3) Resolve e devolve o estado. `precisaPaywall` é calculado no servidor
   //    (já considera a flag COBRANCA_ATIVA) — usado pelo app mobile.
   const estado = await resolverEstadoAcesso(empresaId);
-  return NextResponse.json({ estado, precisaPaywall: precisaPaywallEmpresa(estado), precos: PRECOS });
+  let faturaPendente: { invoiceUrl: string; valor: number | null; vencimento: string | null; status: string | null } | null = null;
+  const { data: faturas } = await admin
+    .from('assinatura_faturas')
+    .select('invoice_url, valor, vencimento, status, atualizado_em')
+    .eq('empresa_id', empresaId)
+    .not('invoice_url', 'is', null)
+    .order('atualizado_em', { ascending: false })
+    .limit(8);
+  const fatura = (faturas || []).find((item) => !['RECEIVED', 'CONFIRMED', 'RECEIVED_IN_CASH'].includes(item.status || ''));
+  if (fatura?.invoice_url) {
+    faturaPendente = {
+      invoiceUrl: fatura.invoice_url,
+      valor: fatura.valor === null || fatura.valor === undefined ? null : Number(fatura.valor),
+      vencimento: fatura.vencimento || null,
+      status: fatura.status || null,
+    };
+  }
+  return NextResponse.json({ estado, precisaPaywall: precisaPaywallEmpresa(estado), precos: PRECOS, faturaPendente });
 }

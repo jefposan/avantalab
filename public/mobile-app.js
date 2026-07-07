@@ -79,6 +79,7 @@
     paywallNome: '',
     paywallEstado: null,
     paywallPrecos: null,
+    paywallFaturaUrl: '',
     paywallMsg: '',
     paywallCupomMsg: '',
     paywallProcessando: false,
@@ -558,6 +559,28 @@
       : estado.status === 'inadimplente'
         ? 'Regularize o pagamento para liberar novamente o acesso ao perfil.'
         : 'Escolha um plano para ativar o perfil. Seus dados permanecem guardados.';
+    var faturaUrl = state.paywallFaturaUrl || '';
+    var blocoCobranca = faturaUrl
+      ? '<div class="mt-2.5 rounded-xl border border-sky-200 bg-sky-50 px-3 py-2.5 shadow-sm">' +
+          '<p class="text-xs font-black text-slate-900">Cobrança disponível</p>' +
+          '<p class="mt-1 text-[10px] font-semibold leading-relaxed text-slate-600">Já existe uma cobrança pendente para este perfil.</p>' +
+          '<button type="button" onclick="window._avaPaywallPagarCobranca()" class="mt-2 h-9 w-full rounded-lg bg-sky-700 text-[11px] font-black uppercase tracking-wide text-white active:scale-[0.98]">Pagar cobrança</button>' +
+        '</div>'
+      : '<label class="mt-2.5 block text-[11px] font-black uppercase tracking-wide text-slate-500">CPF ou CNPJ para a cobrança</label>' +
+        '<input id="paywall-cpf" type="text" inputmode="numeric" placeholder="Somente números" class="mt-1 w-full rounded-lg border border-slate-300 bg-white/90 px-3 py-2 text-sm font-semibold text-slate-800 outline-none" />' +
+        '<div class="mt-2.5 grid grid-cols-2 gap-2">' +
+          '<div class="rounded-xl border border-slate-200 bg-white/80 p-3">' +
+            '<p class="text-[11px] font-black uppercase tracking-wide text-slate-500">Mensal</p>' +
+            '<p class="mt-0.5 text-lg font-black">' + brl(mensal) + '<span class="text-[11px] font-bold text-slate-500">/mês</span></p>' +
+            '<button type="button" onclick="window._avaPaywallAssinar(\'mensal\')" class="mt-2 h-9 w-full rounded-lg border border-slate-300 bg-white text-[10px] font-black uppercase tracking-wide text-slate-700 active:scale-[0.98] active:bg-sky-700 active:text-white">Gerar mensal</button>' +
+          '</div>' +
+          '<div class="rounded-xl border-2 border-sky-600 bg-white/85 p-3">' +
+            '<p class="text-[11px] font-black uppercase tracking-wide text-slate-500">Anual</p>' +
+            '<p class="mt-0.5 text-lg font-black">' + brl(anualMes) + '<span class="text-[11px] font-bold text-slate-500">/mês</span></p>' +
+            '<p class="text-[10px] font-semibold text-slate-500">' + brl(anualAno) + '/ano</p>' +
+            '<button type="button" onclick="window._avaPaywallAssinar(\'anual\')" class="mt-2 h-9 w-full rounded-lg bg-sky-700 text-[10px] font-black uppercase tracking-wide text-white active:scale-[0.98]">Gerar anual</button>' +
+          '</div>' +
+        '</div>';
     return (
       '<section class="avantalab-mobile-bg fixed inset-0 flex flex-col items-center overflow-x-hidden overflow-y-auto px-4 pb-4" style="height:100dvh;padding-top:clamp(8rem,18dvh,11rem);background-position:center bottom;background-size:auto 108%;overscroll-behavior:contain;--avantalab-mobile-bg-overlay:linear-gradient(rgba(255,255,255,.08),rgba(255,255,255,0));">' +
         '<div class="mx-auto w-full max-w-md shrink-0 overflow-y-auto rounded-3xl border border-white/40 bg-white/85 p-4 text-slate-900 shadow-2xl backdrop-blur-xl" style="max-height:calc(100dvh - 9rem);overscroll-behavior:contain;">' +
@@ -571,21 +594,7 @@
           '<p class="mt-2 text-xs font-semibold text-slate-600">' + textoBloqueio + '</p>' +
           '<p id="paywall-msg" class="mt-1.5 text-xs font-bold text-red-600"></p>' +
           '<button type="button" onclick="window._avaPaywallAtualizar()" class="mt-2 h-8 w-full rounded-lg border border-sky-200 bg-sky-50 text-[10px] font-black uppercase text-sky-700">Ja paguei - atualizar</button>' +
-          '<label class="mt-2.5 block text-[11px] font-black uppercase tracking-wide text-slate-500">CPF ou CNPJ para a cobrança</label>' +
-          '<input id="paywall-cpf" type="text" inputmode="numeric" placeholder="Somente números" class="mt-1 w-full rounded-lg border border-slate-300 bg-white/90 px-3 py-2 text-sm font-semibold text-slate-800 outline-none" />' +
-          '<div class="mt-2.5 grid grid-cols-2 gap-2">' +
-            '<div class="rounded-xl border border-slate-200 bg-white/80 p-3">' +
-              '<p class="text-[11px] font-black uppercase tracking-wide text-slate-500">Mensal</p>' +
-              '<p class="mt-0.5 text-lg font-black">' + brl(mensal) + '<span class="text-[11px] font-bold text-slate-500">/mês</span></p>' +
-              '<button type="button" onclick="window._avaPaywallAssinar(\'mensal\')" class="mt-2 h-9 w-full rounded-lg border border-slate-300 bg-white text-[11px] font-black uppercase tracking-wide text-slate-700 active:scale-[0.98] active:bg-sky-700 active:text-white">Assinar mensal</button>' +
-            '</div>' +
-            '<div class="rounded-xl border-2 border-sky-600 bg-white/85 p-3">' +
-              '<p class="text-[11px] font-black uppercase tracking-wide text-slate-500">Anual</p>' +
-              '<p class="mt-0.5 text-lg font-black">' + brl(anualMes) + '<span class="text-[11px] font-bold text-slate-500">/mês</span></p>' +
-              '<p class="text-[10px] font-semibold text-slate-500">' + brl(anualAno) + '/ano</p>' +
-              '<button type="button" onclick="window._avaPaywallAssinar(\'anual\')" class="mt-2 h-9 w-full rounded-lg bg-sky-700 text-[11px] font-black uppercase tracking-wide text-white active:scale-[0.98]">Assinar anual</button>' +
-            '</div>' +
-          '</div>' +
+          blocoCobranca +
           '<div class="mt-3 border-t border-slate-200 pt-2.5">' +
             '<label class="mb-1 block text-[11px] font-black uppercase tracking-wide text-slate-500">Tem um cupom?</label>' +
             '<div class="flex gap-2">' +
@@ -629,6 +638,7 @@
       });
       var json = await resp.json();
       if (resp.ok && json.invoiceUrl) {
+        state.paywallFaturaUrl = json.invoiceUrl;
         if (janelaPagamento) janelaPagamento.location.href = json.invoiceUrl;
         else window.open(json.invoiceUrl, '_blank');
         if (msgEl) { msgEl.className = 'mt-3 text-sm font-bold text-sky-700'; msgEl.textContent = 'Abrimos o pagamento em outra aba. Depois de pagar, recarregue esta tela.'; }
@@ -642,6 +652,13 @@
     } finally {
       state.paywallProcessando = false;
     }
+  };
+
+  window._avaPaywallPagarCobranca = function () {
+    if (!state.paywallFaturaUrl) return;
+    window.open(state.paywallFaturaUrl, '_blank', 'noopener,noreferrer');
+    var msgEl = document.getElementById('paywall-msg');
+    if (msgEl) { msgEl.className = 'mt-3 text-sm font-bold text-sky-700'; msgEl.textContent = 'Abrimos a cobrança em outra aba. Depois de pagar, toque em atualizar.'; }
   };
 
   window._avaPaywallCupom = async function () {
@@ -3125,11 +3142,14 @@
         state.paywallNome = nomeEmpresa(state.empresa);
         state.paywallEstado = json.estado || null;
         state.paywallPrecos = json.precos || null;
+        state.paywallFaturaUrl = (json.faturaPendente && json.faturaPendente.invoiceUrl) || '';
       } else {
         state.paywallAtivo = false;
+        state.paywallFaturaUrl = '';
       }
     } catch (e) {
       state.paywallAtivo = false;
+      state.paywallFaturaUrl = '';
     }
     state.paywallVerificado = true;
     render();
@@ -9958,7 +9978,7 @@
           return Promise.all(
             keys
               .filter(function (key) {
-                return key.indexOf('avantalab-mobile-') === 0 && key !== 'avantalab-mobile-v231';
+                return key.indexOf('avantalab-mobile-') === 0 && key !== 'avantalab-mobile-v232';
               })
               .map(function (key) {
                 return caches.delete(key);
@@ -9975,7 +9995,7 @@
     });
 
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/mobile-sw.js?v=220').then(function (registro) {
+      navigator.serviceWorker.register('/mobile-sw.js?v=221').then(function (registro) {
         if (registro && registro.update) registro.update();
       }).catch(function () {});
     }

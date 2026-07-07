@@ -329,12 +329,13 @@ const [validandoTelefoneObrigatorio, setValidandoTelefoneObrigatorio] = useState
   const [abaAtiva, setAbaAtiva] = useState('Dashboard');
   // Cobrança: estado de acesso do perfil (só é buscado quando COBRANCA_ATIVA=true).
   const [estadoAcesso, setEstadoAcesso] = useState<EstadoAcesso | null>(null);
+  const [faturaPendenteUrl, setFaturaPendenteUrl] = useState<string | null>(null);
   // Só liberamos a renderização do app depois de conhecer o estado de acesso,
   // evitando o "flash" do conteúdo antes de o paywall bloquear.
   const [estadoCarregado, setEstadoCarregado] = useState(false);
   const [modalAssinatura, setModalAssinatura] = useState(false);
   useEffect(() => {
-    if (!COBRANCA_ATIVA || !acessoLiberado || !empresaId) { setEstadoAcesso(null); setEstadoCarregado(true); return; }
+    if (!COBRANCA_ATIVA || !acessoLiberado || !empresaId) { setEstadoAcesso(null); setFaturaPendenteUrl(null); setEstadoCarregado(true); return; }
     let ativo = true;
     setEstadoCarregado(false);
     const carregarEstado = async () => {
@@ -346,7 +347,10 @@ const [validandoTelefoneObrigatorio, setValidandoTelefoneObrigatorio] = useState
           headers: { Authorization: `Bearer ${token}` },
         });
         const json = await resp.json();
-        if (ativo && resp.ok) setEstadoAcesso(json.estado || null);
+        if (ativo && resp.ok) {
+          setEstadoAcesso(json.estado || null);
+          setFaturaPendenteUrl(json.faturaPendente?.invoiceUrl || null);
+        }
       } catch { /* silencioso: em caso de falha, não bloqueia (fail-open) */ }
       finally { if (ativo) setEstadoCarregado(true); }
     };
@@ -379,7 +383,10 @@ const [validandoTelefoneObrigatorio, setValidandoTelefoneObrigatorio] = useState
         }),
       });
       const json = await resp.json();
-      if (resp.ok && json.invoiceUrl) return { ok: true, url: json.invoiceUrl };
+      if (resp.ok && json.invoiceUrl) {
+        setFaturaPendenteUrl(json.invoiceUrl);
+        return { ok: true, url: json.invoiceUrl };
+      }
       return { ok: false, mensagem: json.mensagem || 'Não foi possível iniciar a assinatura. Tente novamente.' };
     } catch {
       return { ok: false, mensagem: 'Não foi possível iniciar a assinatura agora.' };
@@ -5767,6 +5774,7 @@ if (isTelaMobile) {
       <PaywallEmpresa
         nomePerfil={nomeEmpresaAtual}
         estadoAcesso={estadoAcesso}
+        faturaPendenteUrl={faturaPendenteUrl}
         onAssinar={iniciarAssinatura}
         onResgatarCupom={resgatarCupom}
         onTrocarPerfil={empresasDoUsuario.length > 1 ? () => { setEmpresaId(null); setModalSelecionarEmpresa(true); } : undefined}
