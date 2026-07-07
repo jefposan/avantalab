@@ -3,7 +3,23 @@
 import { useMemo, useState } from 'react';
 
 type FeedbackStatus = 'novo' | 'em_analise' | 'respondido' | 'arquivado';
-type AdminView = 'avaliacoes' | 'disparos' | 'cupons' | 'perfis' | 'configuracoes';
+type AdminView = 'avaliacoes' | 'disparos' | 'cupons' | 'perfis' | 'consumo' | 'configuracoes';
+
+type ConsumoItem = {
+  nome: string;
+  usado: number | null;
+  limite: number | null;
+  formato: 'bytes' | 'numero' | 'minutos' | 'reais';
+  detalhe?: string;
+};
+
+type ConsumoPlataforma = {
+  nome: string;
+  configurado: boolean;
+  itens: ConsumoItem[];
+  avisos: string[];
+  link: string;
+};
 
 type Perfil = {
   id: string;
@@ -73,7 +89,7 @@ type Disparo = {
   created_at?: string;
 };
 
-type IconName = 'inbox' | 'send' | 'settings' | 'refresh' | 'check' | 'archive' | 'trash' | 'reopen' | 'logout' | 'lock' | 'ticket' | 'search';
+type IconName = 'inbox' | 'send' | 'settings' | 'refresh' | 'check' | 'archive' | 'trash' | 'reopen' | 'logout' | 'lock' | 'ticket' | 'search' | 'gauge';
 
 function Icon({ name, size = 17 }: { name: IconName; size?: number }) {
   const common = { width: size, height: size, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: 2, strokeLinecap: 'round' as const, strokeLinejoin: 'round' as const };
@@ -88,7 +104,29 @@ function Icon({ name, size = 17 }: { name: IconName; size?: number }) {
   if (name === 'lock') return <svg {...common}><rect x="4" y="10" width="16" height="11" rx="2" /><path d="M8 10V7a4 4 0 0 1 8 0v3" /></svg>;
   if (name === 'ticket') return <svg {...common}><path d="M3 9a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2 2 2 0 0 0 0 4 2 2 0 0 1-2 2H5a2 2 0 0 1-2-2 2 2 0 0 0 0-4Z" /><path d="M13 7v10" /></svg>;
   if (name === 'search') return <svg {...common}><circle cx="11" cy="11" r="7" /><path d="m21 21-4.3-4.3" /></svg>;
+  if (name === 'gauge') return <svg {...common}><path d="M12 14 8 8" /><path d="M3.3 17a10 10 0 1 1 17.4 0" /></svg>;
   return <svg {...common}><path d="M4 4h16v13H7l-3 3Z" /><path d="M8 9h8M8 13h5" /></svg>;
+}
+
+function formatBytes(valor: number) {
+  if (valor >= 1024 * 1024 * 1024) return `${(valor / (1024 * 1024 * 1024)).toFixed(2)} GB`;
+  if (valor >= 1024 * 1024) return `${(valor / (1024 * 1024)).toFixed(1)} MB`;
+  if (valor >= 1024) return `${(valor / 1024).toFixed(0)} KB`;
+  return `${valor} B`;
+}
+
+function formatConsumo(valor: number | null, formato: ConsumoItem['formato']) {
+  if (valor === null) return '—';
+  if (formato === 'bytes') return formatBytes(valor);
+  if (formato === 'minutos') return `${valor.toLocaleString('pt-BR')} min`;
+  if (formato === 'reais') return `US$ ${valor.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
+  return valor.toLocaleString('pt-BR');
+}
+
+function corBarraConsumo(pct: number) {
+  if (pct >= 90) return '#DC2626';
+  if (pct >= 70) return '#D97706';
+  return '#059669';
 }
 
 function formatDate(value?: string) {
@@ -153,12 +191,32 @@ export default function AdminPage() {
   const [perfilPorPagina, setPerfilPorPagina] = useState(20);
   const [perfilTotal, setPerfilTotal] = useState(0);
   const [perfisCarregados, setPerfisCarregados] = useState(false);
+  const [consumo, setConsumo] = useState<ConsumoPlataforma[]>([]);
+  const [consumoCarregando, setConsumoCarregando] = useState(false);
+  const [consumoGeradoEm, setConsumoGeradoEm] = useState('');
   const [liberarPerfil, setLiberarPerfil] = useState<Perfil | null>(null);
   const [liberarTipo, setLiberarTipo] = useState<'vitalicio' | 'periodo'>('vitalicio');
   const [liberarValor, setLiberarValor] = useState('1');
   const [liberarUnidade, setLiberarUnidade] = useState<'dias' | 'semanas' | 'meses'>('meses');
 
   const authHeaders = (value = token) => ({ Authorization: `Bearer ${value.trim()}` });
+
+  const carregarConsumo = async () => {
+    if (consumoCarregando) return;
+    setConsumoCarregando(true);
+    setError('');
+    try {
+      const response = await fetch('/api/admin-consumo', { headers: authHeaders() });
+      const data = await response.json().catch(() => null);
+      if (!response.ok || data?.erro) throw new Error(data?.mensagem || 'Não foi possível consultar o consumo.');
+      setConsumo(data.plataformas || []);
+      setConsumoGeradoEm(data.geradoEm || '');
+    } catch (requestError) {
+      setError(requestError instanceof Error ? requestError.message : 'Não foi possível consultar o consumo.');
+    } finally {
+      setConsumoCarregando(false);
+    }
+  };
 
   const buscarPerfis = async (pagina = 1) => {
     setBuscandoPerfis(true);
@@ -458,6 +516,7 @@ export default function AdminPage() {
     { id: 'disparos', label: 'Disparos', icon: 'send' },
     { id: 'cupons', label: 'Cupons', icon: 'ticket' },
     { id: 'perfis', label: 'Perfis', icon: 'search' },
+    { id: 'consumo', label: 'Consumo', icon: 'gauge' },
     { id: 'configuracoes', label: 'Configurações', icon: 'settings' },
   ];
 
@@ -618,6 +677,68 @@ export default function AdminPage() {
                 </div>;
               })()}
              </>}
+          </div>}
+
+          {view === 'consumo' && <div className="space-y-4">
+            <section className="flex flex-col gap-3 rounded-lg border border-slate-200 bg-white p-3 shadow-sm sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <h2 className="text-base font-black text-slate-950">Consumo das plataformas</h2>
+                <p className="text-xs text-slate-500">Uso atual x limite do plano gratuito de cada serviço.{consumoGeradoEm ? ` Atualizado em ${formatDate(consumoGeradoEm)}.` : ''}</p>
+              </div>
+              <button type="button" onClick={() => void carregarConsumo()} disabled={consumoCarregando} className="flex h-10 items-center justify-center gap-2 rounded-md bg-cyan-700 px-4 text-xs font-black uppercase text-white hover:bg-cyan-800 disabled:opacity-60">
+                <Icon name="refresh" size={15} />{consumoCarregando ? 'Consultando...' : consumo.length ? 'Atualizar' : 'Consultar consumo'}
+              </button>
+            </section>
+
+            {!consumo.length && !consumoCarregando && (
+              <div className="rounded-lg border border-dashed border-slate-300 bg-white px-4 py-10 text-center text-sm text-slate-500">Clique em &quot;Consultar consumo&quot; para carregar os dados.</div>
+            )}
+
+            <div className="grid gap-4 lg:grid-cols-3">
+              {consumo.map((plataforma) => (
+                <section key={plataforma.nome} className="flex flex-col rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
+                  <div className="flex items-center justify-between gap-2">
+                    <h3 className="text-sm font-black text-slate-950">{plataforma.nome}</h3>
+                    <a href={plataforma.link} target="_blank" rel="noreferrer" className="rounded-md border border-slate-300 px-2.5 py-1.5 text-[10px] font-black uppercase text-slate-600 hover:bg-slate-50">Abrir painel</a>
+                  </div>
+
+                  <div className="mt-3 grid gap-3">
+                    {plataforma.itens.map((item) => {
+                      const pct = item.usado !== null && item.limite ? Math.min(100, Math.round((item.usado / item.limite) * 100)) : null;
+                      return (
+                        <div key={item.nome}>
+                          <div className="flex items-baseline justify-between gap-2">
+                            <span className="text-xs font-bold text-slate-700">{item.nome}</span>
+                            <span className="text-xs font-black text-slate-900">
+                              {formatConsumo(item.usado, item.formato)}
+                              {item.limite !== null && <span className="font-bold text-slate-400"> / {formatConsumo(item.limite, item.formato)}</span>}
+                            </span>
+                          </div>
+                          {pct !== null && (
+                            <div className="mt-1 flex items-center gap-2">
+                              <div className="h-2 flex-1 overflow-hidden rounded-full bg-slate-100">
+                                <div className="h-full rounded-full transition-all" style={{ width: `${Math.max(pct, 2)}%`, backgroundColor: corBarraConsumo(pct) }} />
+                              </div>
+                              <span className="w-9 text-right text-[10px] font-black" style={{ color: corBarraConsumo(pct) }}>{pct}%</span>
+                            </div>
+                          )}
+                          {item.detalhe && <p className="mt-0.5 text-[10px] leading-snug text-slate-400">{item.detalhe}</p>}
+                        </div>
+                      );
+                    })}
+                    {!plataforma.itens.length && <p className="text-xs text-slate-400">Sem métricas disponíveis.</p>}
+                  </div>
+
+                  {plataforma.avisos.length > 0 && (
+                    <div className="mt-3 rounded-md border border-amber-200 bg-amber-50 p-2.5">
+                      {plataforma.avisos.map((aviso, indice) => aviso.trimStart().startsWith('create or replace')
+                        ? <pre key={indice} className="mt-1 overflow-x-auto rounded bg-slate-900 p-2 text-[9px] leading-relaxed text-emerald-300">{aviso}</pre>
+                        : <p key={indice} className="text-[11px] font-semibold leading-snug text-amber-800">{aviso}</p>)}
+                    </div>
+                  )}
+                </section>
+              ))}
+            </div>
           </div>}
 
           {view === 'configuracoes' && <div className="grid gap-4 md:grid-cols-2">
