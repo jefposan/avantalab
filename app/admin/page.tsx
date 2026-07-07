@@ -178,7 +178,7 @@ export default function AdminPage() {
     }
   };
 
-  const executarAcaoPerfil = async (perfil: Perfil, corpo: { acao: 'revogar' | 'liberar'; duracaoValor?: number; duracaoUnidade?: string }) => {
+  const executarAcaoPerfil = async (perfil: Perfil, corpo: { acao: 'revogar' | 'liberar' | 'gratis' | 'resetar'; duracaoValor?: number; duracaoUnidade?: string }) => {
     setWorkingId(perfil.id);
     setError('');
     setNotice('');
@@ -191,9 +191,15 @@ export default function AdminPage() {
       const data = await response.json().catch(() => null);
       if (!response.ok || data?.erro) throw new Error(data?.mensagem || 'Não foi possível executar.');
       setPerfis((current) => current.map((item) => item.id === perfil.id
-        ? { ...item, status: data.status, valido_ate: data.validoAte ?? null, trial_fim: null, plano: null, ciclo: null, tem_acesso: corpo.acao === 'liberar', tem_registro: true }
+        ? { ...item, status: data.status, valido_ate: data.validoAte ?? null, trial_fim: data.trialFim ?? null, plano: null, ciclo: null, tem_acesso: Boolean(data.temAcesso), tem_registro: Boolean(data.temRegistro) }
         : item));
-      setNotice(corpo.acao === 'revogar' ? 'Acesso revogado.' : 'Acesso liberado (cortesia).');
+      const mensagens: Record<string, string> = {
+        revogar: 'Acesso revogado.',
+        liberar: 'Acesso liberado (cortesia).',
+        gratis: 'Perfil no plano grátis — recursos premium bloqueados (núcleo livre no Pessoal).',
+        resetar: 'Registro removido — perfil voltou ao estado automático.',
+      };
+      setNotice(mensagens[corpo.acao]);
     } catch (requestError) {
       setError(requestError instanceof Error ? requestError.message : 'Não foi possível executar.');
     } finally {
@@ -204,6 +210,19 @@ export default function AdminPage() {
   const revogarPerfil = async (perfil: Perfil) => {
     if (!window.confirm(`Revogar o acesso de "${perfil.nome}"? O perfil ficará bloqueado até assinar ou receber cortesia.`)) return;
     await executarAcaoPerfil(perfil, { acao: 'revogar' });
+  };
+
+  const tornarGratisPerfil = async (perfil: Perfil) => {
+    const aviso = perfil.tipo_perfil === 'pessoal'
+      ? `Colocar "${perfil.nome}" no plano GRÁTIS? O núcleo continua livre e os recursos premium ficam bloqueados (bom para testar o Premium Pessoal).`
+      : `Colocar "${perfil.nome}" como EXPIRADA? Perfil empresa cai no paywall total.`;
+    if (!window.confirm(aviso)) return;
+    await executarAcaoPerfil(perfil, { acao: 'gratis' });
+  };
+
+  const resetarPerfil = async (perfil: Perfil) => {
+    if (!window.confirm(`Resetar "${perfil.nome}"? O registro de assinatura será apagado e o perfil volta ao estado automático (anterior ao lançamento = liberado; novo = trial/grátis).`)) return;
+    await executarAcaoPerfil(perfil, { acao: 'resetar' });
   };
 
   const abrirLiberar = (perfil: Perfil) => {
@@ -575,9 +594,16 @@ export default function AdminPage() {
                     <h3 className="truncate text-sm font-black text-slate-950">{perfil.nome}</h3>
                     <p className="mt-0.5 text-[11px] font-bold text-slate-500">Tipo: {tipoTxt} · Situação: <span className={perfil.tem_acesso ? 'text-emerald-700' : 'text-red-600'}>{perfil.tem_acesso ? 'Ativo' : 'Inativo'}</span>{detalhe ? ` · ${detalhe}` : ''}</p>
                   </div>
-                  <div className="flex shrink-0 gap-2">{perfil.tem_acesso
-                    ? <button type="button" onClick={() => void revogarPerfil(perfil)} disabled={busy} className="rounded-md border border-red-200 px-3 py-2 text-[10px] font-black uppercase text-red-700 hover:bg-red-50 disabled:opacity-50">Revogar acesso</button>
-                    : <button type="button" onClick={() => abrirLiberar(perfil)} disabled={busy} className="rounded-md border border-emerald-200 px-3 py-2 text-[10px] font-black uppercase text-emerald-700 hover:bg-emerald-50 disabled:opacity-50">Liberar acesso</button>}
+                  <div className="flex shrink-0 flex-wrap gap-2">
+                    {perfil.tem_acesso
+                      ? <button type="button" onClick={() => void revogarPerfil(perfil)} disabled={busy} className="rounded-md border border-red-200 px-3 py-2 text-[10px] font-black uppercase text-red-700 hover:bg-red-50 disabled:opacity-50">Revogar acesso</button>
+                      : <button type="button" onClick={() => abrirLiberar(perfil)} disabled={busy} className="rounded-md border border-emerald-200 px-3 py-2 text-[10px] font-black uppercase text-emerald-700 hover:bg-emerald-50 disabled:opacity-50">Liberar acesso</button>}
+                    {perfil.status !== 'expirada' && (
+                      <button type="button" onClick={() => void tornarGratisPerfil(perfil)} disabled={busy} title={perfil.tipo_perfil === 'pessoal' ? 'Plano grátis: núcleo livre, premium bloqueado (testar bloqueios)' : 'Expirada: cai no paywall total'} className="rounded-md border border-amber-300 px-3 py-2 text-[10px] font-black uppercase text-amber-700 hover:bg-amber-50 disabled:opacity-50">Tornar grátis</button>
+                    )}
+                    {perfil.tem_registro && (
+                      <button type="button" onClick={() => void resetarPerfil(perfil)} disabled={busy} title="Apaga o registro de assinatura; o perfil volta ao estado automático" className="rounded-md border border-slate-300 px-3 py-2 text-[10px] font-black uppercase text-slate-600 hover:bg-slate-50 disabled:opacity-50">Resetar</button>
+                    )}
                   </div>
                 </article>;
               })}</div>
