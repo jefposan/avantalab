@@ -21,6 +21,7 @@ import { CSS } from '@dnd-kit/utilities';
 import { createPortal, flushSync } from 'react-dom';
 import { buscarFaturamentos, buscarLancamentos } from '../lib/database';
 import { restringirArrasteAJanela } from '../lib/dnd';
+import { corEhClara } from '../lib/formatters';
 
 const HandleContext = createContext<Record<string, any> | null>(null);
 
@@ -998,20 +999,61 @@ const mostrarComparativoResumoDash =
           LANÇAMENTOS MENSAIS
         </h2>
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-x-6 sm:gap-y-3">
-          {meses.map((mes) => (
-            <button 
-              key={mes} 
-              onClick={() => setMesAtivo(mes)}
-              className={`${darkMode ? 'bg-slate-800 hover:bg-slate-700 border-slate-700' : 'bg-slate-50 hover:bg-white border-slate-200'} border-2 rounded-xl shadow-sm hover:shadow-md transition-all font-bold ${textMuted} text-xs flex items-center justify-center group h-14 cursor-pointer`}
-              onMouseOver={e => { e.currentTarget.style.color = corPrimaria; e.currentTarget.style.borderColor = corPrimaria; }}
-              onMouseOut={e => { e.currentTarget.style.color = ''; e.currentTarget.style.borderColor = ''; }}
-            >
-              <span className="group-hover:scale-105 transition-transform">
-  <span className="hidden xl:inline">{mes}</span>
-  <span className="inline xl:hidden">{abreviarMes(mes)}</span>
-</span>
-            </button>
-          ))}
+          {(() => {
+            const anoEhAtual = String(anoSelecionado) === String(new Date().getFullYear());
+            const mesAtualCalendario = meses[new Date().getMonth()];
+            const textoSobrePrimaria = corEhClara(corPrimaria) ? '#0f172a' : '#ffffff';
+            return meses.map((mes) => {
+              const dadosMes = dadosEvolucao.find((item) => item.mes === mes);
+              const temMovimento = Boolean(dadosMes && (dadosMes.receitas > 0 || dadosMes.despesas > 0));
+              const ehMesAtual = anoEhAtual && mes === mesAtualCalendario;
+
+              // Mês corrente: preenchido com a cor do tema (ponto focal do card).
+              if (ehMesAtual) {
+                return (
+                  <button
+                    key={mes}
+                    onClick={() => setMesAtivo(mes)}
+                    className="group flex h-14 cursor-pointer items-center justify-center rounded-xl border-2 text-xs font-black shadow-md transition-all hover:-translate-y-0.5 hover:shadow-lg"
+                    style={{
+                      background: `linear-gradient(135deg, ${corPrimaria}, ${corPrimaria}cc)`,
+                      borderColor: corPrimaria,
+                      color: textoSobrePrimaria,
+                      boxShadow: `0 6px 16px ${corPrimaria}40`,
+                    }}
+                    title="Mês atual"
+                  >
+                    <span className="flex items-center gap-1.5 transition-transform group-hover:scale-105">
+                      <span className="hidden xl:inline">{mes}</span>
+                      <span className="inline xl:hidden">{abreviarMes(mes)}</span>
+                      <span className="h-1.5 w-1.5 animate-pulse rounded-full" style={{ backgroundColor: textoSobrePrimaria }} />
+                    </span>
+                  </button>
+                );
+              }
+
+              const bordaBase = temMovimento ? `${corPrimaria}45` : '';
+              return (
+                <button
+                  key={mes}
+                  onClick={() => setMesAtivo(mes)}
+                  className={`${darkMode ? 'bg-slate-800 hover:bg-slate-700 border-slate-700 text-slate-300' : 'bg-white border-slate-200 text-slate-600'} group flex h-14 cursor-pointer items-center justify-center rounded-xl border-2 text-xs font-black shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md`}
+                  style={{
+                    borderColor: bordaBase || undefined,
+                    background: temMovimento && !darkMode ? `linear-gradient(180deg, ${corPrimaria}0d, #ffffff 70%)` : undefined,
+                  }}
+                  onMouseOver={e => { e.currentTarget.style.color = corPrimaria; e.currentTarget.style.borderColor = corPrimaria; }}
+                  onMouseOut={e => { e.currentTarget.style.color = ''; e.currentTarget.style.borderColor = bordaBase; }}
+                >
+                  <span className="flex items-center gap-1.5 transition-transform group-hover:scale-105">
+                    <span className="hidden xl:inline">{mes}</span>
+                    <span className="inline xl:hidden">{abreviarMes(mes)}</span>
+                    {temMovimento && <span className="h-1.5 w-1.5 rounded-full opacity-80" style={{ backgroundColor: corPrimaria }} title="Mês com lançamentos" />}
+                  </span>
+                </button>
+              );
+            });
+          })()}
         </div>
 
         <div
