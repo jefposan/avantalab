@@ -85,6 +85,11 @@
     paywallProcessando: false,
     paywallCupomProcessando: false,
     paywallSelecionando: false,
+    // Perfil já verificado pelo paywall (evita a tela cheia de carregamento
+    // nas recargas de dados) e dia da última carga (só recarrega ao voltar
+    // ao app quando o dia virou).
+    paywallPerfilVerificado: '',
+    diaUltimoCarregamento: '',
     // Premium Pessoal: recurso premium tocado no plano grátis (destaque no modal de upgrade)
     premiumRecursoDestaque: '',
     premiumCupomProcessando: false,
@@ -3379,6 +3384,9 @@
       state.paywallFaturaUrl = '';
     }
     state.paywallVerificado = true;
+    // Marca o perfil como verificado: próximas chamadas de carregarDados
+    // reconferem em silêncio, sem a tela cheia de carregamento.
+    state.paywallPerfilVerificado = state.empresa && state.empresa.id;
     render();
   }
 
@@ -3437,9 +3445,18 @@
     }
 
     // Cobrança: checa o paywall ANTES de liberar o app (evita flash do conteúdo).
-    // Enquanto paywallVerificado for false, o render mostra a tela de carregamento.
-    state.paywallVerificado = false;
+    // A tela cheia "Preparando acesso" só aparece na PRIMEIRA verificação de
+    // cada perfil (carga inicial / troca de perfil). Nas demais chamadas de
+    // carregarDados (lançamentos, alterações, retorno ao app), a verificação
+    // roda em silêncio, sem sair da tela.
+    if (state.paywallPerfilVerificado !== state.empresa.id) {
+      state.paywallVerificado = false;
+    }
     verificarPaywallMobile();
+
+    // Guarda o dia da carga (São Paulo) — usado para só recarregar ao voltar
+    // ao app quando o dia virou (despesas previstas do novo dia).
+    try { state.diaUltimoCarregamento = dataHoraPontoMobile().data; } catch (e) {}
 
     state.carregando = true;
     render();
@@ -10358,9 +10375,14 @@
     document.addEventListener('visibilitychange', function () {
       if (document.hidden) return;
       carregarNotificacoesNaoLidas();
-      // Reavalia o estado dependente da data ao reabrir o app (ex.: card de
-      // "despesas previstas para confirmar" quando o dia da despesa chega).
-      if (state.autenticado && state.empresa && !ehFuncionarioPontoMobile() && !state.validacaoTelefoneObrigatoria && podeAtualizarDadosAoRetornar()) {
+      // Congela a tela ao trocar de janela e voltar: só recarrega os dados se
+      // o DIA virou desde a última carga (ex.: despesas previstas do novo dia
+      // precisam aparecer). No mesmo dia, nada recarrega nem mostra loading.
+      var diaVirou = false;
+      try {
+        diaVirou = !!state.diaUltimoCarregamento && dataHoraPontoMobile().data !== state.diaUltimoCarregamento;
+      } catch (e) {}
+      if (diaVirou && state.autenticado && state.empresa && !ehFuncionarioPontoMobile() && !state.validacaoTelefoneObrigatoria && podeAtualizarDadosAoRetornar()) {
         carregarDados();
       }
     });
