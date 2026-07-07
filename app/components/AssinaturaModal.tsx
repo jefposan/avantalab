@@ -213,7 +213,6 @@ export default function AssinaturaModal({
 
   const estadoAtual = detalhes?.estado || estado;
   const status = estadoAtual?.status || 'expirada';
-  const selo = corStatus(status);
   const carencia = emCarencia(estadoAtual);
   const canceladaNoFim = cancelamentoProgramado(estadoAtual);
   const cicloAtual = estadoAtual?.ciclo;
@@ -225,18 +224,29 @@ export default function AssinaturaModal({
   const cortesiaAtiva = status === 'cortesia';
   const viaCupom = cortesiaAtiva && Boolean(detalhes?.viaCupom);
   const tipoPessoal = (tipoPerfil ?? estadoAtual?.tipoPerfil) === 'pessoal';
+  const tipoLabel = tipoPessoal ? 'Pessoal' : 'Empresa';
+  // Atraso: pagamento pendente ou fatura vencida (cortesia tem prioridade).
+  const temFaturaVencida = faturas.some((f) => f.status === 'OVERDUE');
+  const emAtraso = !cortesiaAtiva && (status === 'inadimplente' || temFaturaVencida);
+  const selo = emAtraso ? { bg: '#FEE2E2', texto: '#B91C1C' } : corStatus(status);
   const rotuloSituacao = canceladaNoFim
     ? 'Cancelada ao fim do período'
-    : viaCupom ? 'Cupom' : rotuloStatusAssinatura(status);
+    : viaCupom ? 'Cupom'
+    : emAtraso ? 'Atraso'
+    : rotuloStatusAssinatura(status);
+  // Plano atual: "<Tipo> · mensal/anual" (pago) ou "<Tipo> · cortesia/cupom".
   const rotuloPlanoExibido = cortesiaAtiva
-    ? (viaCupom
-        ? `${tipoPessoal ? 'Pessoal' : 'Empresa'} · cupom`
-        : tipoPessoal ? 'Pessoal · cortesia' : '—')
-    : rotuloPlano(estadoAtual?.plano ?? null, cicloAtual ?? null);
-  const valorExibido = cortesiaAtiva ? '—' : (assinatura ? dinheiro(assinatura.valor) : '—');
-  const vencimentoExibido = cortesiaAtiva
-    ? (viaCupom ? (estadoAtual?.validoAte ? formatarData(estadoAtual.validoAte) : 'Sem prazo') : '—')
-    : formatarData(assinatura?.proximoVencimento || null);
+    ? `${tipoLabel} · ${viaCupom ? 'cupom' : 'cortesia'}`
+    : cicloAtual ? `${tipoLabel} · ${cicloAtual}`
+    : estadoAtual?.plano ? tipoLabel
+    : '—';
+  // Valor e vencimento: só em plano pago (mensal/anual).
+  const planoPago = !cortesiaAtiva && Boolean(assinatura);
+  const valorExibido = planoPago && assinatura ? dinheiro(assinatura.valor) : '—';
+  const vencimentoExibido = viaCupom
+    ? (estadoAtual?.validoAte ? formatarData(estadoAtual.validoAte) : 'Sem prazo')
+    : planoPago ? formatarData(assinatura?.proximoVencimento || null)
+    : '—';
   const podeContratar = !assinatura && (
     estadoAtual?.status === 'trial'
     || (tipoPessoal && estadoAtual?.status === 'expirada')

@@ -7939,14 +7939,22 @@
     // Cortesia (admin/benefício) e cupom: não exibem dados de cobrança do gateway.
     var cortesiaAtiva = estado.status === 'cortesia';
     var viaCupom = cortesiaAtiva && !!(detalhes && detalhes.viaCupom);
-    var situacaoRotulo = viaCupom ? 'Cupom' : (statusRotulos[estado.status] || 'Sem assinatura');
+    var tipoLabel = pessoal ? 'Pessoal' : 'Empresa';
+    // Atraso: pagamento pendente ou fatura vencida (cortesia tem prioridade).
+    var temFaturaVencida = faturas.some(function (f) { return f.status === 'OVERDUE'; });
+    var emAtraso = !cortesiaAtiva && (estado.status === 'inadimplente' || temFaturaVencida);
+    var situacaoRotulo = viaCupom ? 'Cupom' : (emAtraso ? 'Atraso' : (statusRotulos[estado.status] || 'Sem assinatura'));
+    if (emAtraso) statusEstilo = 'background:#FEE2E2;color:#B91C1C';
+    // Plano atual: "<Tipo> · mensal/anual" (pago) ou "<Tipo> · cortesia/cupom".
     var planoExibido = cortesiaAtiva
-      ? (viaCupom ? (pessoal ? 'Pessoal · cupom' : 'Empresa · cupom') : (pessoal ? 'Pessoal · cortesia' : '—'))
-      : plano + (ciclo ? ' · ' + ciclo : '');
-    var valorExibido = cortesiaAtiva ? '—' : (assinatura ? dinheiro(assinatura.valor) : '—');
-    var vencimentoExibido = cortesiaAtiva
-      ? (viaCupom ? (estado.validoAte ? dataAssinaturaMobile(estado.validoAte) : 'Sem prazo') : '—')
-      : dataAssinaturaMobile(assinatura && assinatura.proximoVencimento);
+      ? tipoLabel + ' · ' + (viaCupom ? 'cupom' : 'cortesia')
+      : (ciclo ? tipoLabel + ' · ' + ciclo : (estado.plano ? tipoLabel : '—'));
+    // Valor e vencimento: só em plano pago (mensal/anual).
+    var planoPago = !cortesiaAtiva && !!assinatura;
+    var valorExibido = planoPago ? dinheiro(assinatura.valor) : '—';
+    var vencimentoExibido = viaCupom
+      ? (estado.validoAte ? dataAssinaturaMobile(estado.validoAte) : 'Sem prazo')
+      : (planoPago ? dataAssinaturaMobile(assinatura.proximoVencimento) : '—');
     var podeContratar = !assinatura && (estado.status === 'trial' || (pessoal && estado.status === 'expirada'));
     var precoMensal = pessoal ? 'R$ 9,90' : 'R$ 34,90';
     var precoAnual = pessoal ? 'R$ 99,00' : 'R$ 348,00';
