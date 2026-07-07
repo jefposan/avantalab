@@ -6726,27 +6726,33 @@
 
     return (
       '<div id="modal-lancamento-overlay" class="fixed inset-0 z-40 flex items-center justify-center overflow-hidden bg-slate-950/60 px-3 pt-4" style="padding-bottom:calc(env(safe-area-inset-bottom) + 78px)">' +
-        '<section class="mx-auto w-full max-w-md overflow-x-hidden overflow-y-auto rounded-3xl bg-white p-4 shadow-2xl overscroll-contain" style="max-height:calc(100dvh - env(safe-area-inset-bottom) - 102px)">' +
+        '<section class="mx-auto w-full max-w-md overflow-hidden rounded-3xl bg-white shadow-2xl" style="max-height:calc(100dvh - env(safe-area-inset-bottom) - 102px)">' +
+          '<div class="max-h-[inherit] overflow-y-auto overscroll-contain">' +
           (novaAberta
-            ? '<div class="-mx-4 -mt-4 mb-5 flex items-center gap-3 rounded-t-3xl px-4 py-3 text-white" style="background-color:#003E73">' +
+            ? '<div class="flex items-center gap-3 px-4 py-3 text-white" style="background-color:#003E73">' +
                 '<button id="fechar-nova-despesa" type="button" class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-white/20 bg-white/10 text-lg font-black text-white">&larr;</button>' +
                 '<div class="min-w-0 flex-1">' +
                   '<p class="text-[10px] font-black uppercase tracking-wide text-cyan-100/75">Novo lan&ccedil;amento &rsaquo; Despesa</p>' +
                   '<h2 class="text-sm font-black">Cadastrar tipo de despesa</h2>' +
                 '</div>' +
               '</div>' +
-              novaDespesaFormHtml()
-            : '<div class="-mx-4 -mt-4 mb-4 flex items-center justify-between rounded-t-3xl px-4 py-3 text-white" style="background-color:#003E73">' +
+              '<div class="bg-white p-4">' +
+              novaDespesaFormHtml() +
+              '</div>'
+            : '<div class="flex items-center justify-between px-4 py-3 text-white" style="background-color:#003E73">' +
                 '<h2 class="text-base font-black">Novo lancamento</h2>' +
                 '<button id="fechar-lancamento" type="button" class="flex h-9 w-9 items-center justify-center rounded-full border border-white/20 bg-white/10 text-xl text-white">&times;</button>' +
               '</div>' +
+              '<div class="bg-white p-4">' +
               '<div class="mb-3 grid grid-cols-2 gap-2 rounded-xl bg-slate-100 p-1">' +
                 '<button id="tipo-despesa" type="button" class="h-9 rounded-lg text-sm font-black transition ' + (despesaAtiva ? 'bg-red-600 text-white shadow-sm' : 'text-slate-500') + '">Despesa</button>' +
                 '<button id="tipo-receita" type="button" class="h-9 rounded-lg text-sm font-black transition ' + (!despesaAtiva ? 'bg-emerald-600 text-white shadow-sm' : 'text-slate-500') + '">Receita</button>' +
               '</div>' +
               '<p id="lancamento-alerta-dia" class="rounded-lg bg-rose-50 px-3 py-2 text-[11px] font-black text-rose-700 mb-3"' + (state.erro ? '' : ' style="display:none"') + '>' + escapeHtml(state.erro) + '</p>' +
-              (despesaAtiva ? modalDespesaCamposHtml() : modalReceitaCamposHtml())
+              (despesaAtiva ? modalDespesaCamposHtml() : modalReceitaCamposHtml()) +
+              '</div>'
           ) +
+          '</div>' +
         '</section>' +
       '</div>'
     );
@@ -10081,7 +10087,7 @@
           return Promise.all(
             keys
               .filter(function (key) {
-                return key.indexOf('avantalab-mobile-') === 0 && key !== 'avantalab-mobile-v236';
+                return key.indexOf('avantalab-mobile-') === 0 && key !== 'avantalab-mobile-v237';
               })
               .map(function (key) {
                 return caches.delete(key);
