@@ -84,6 +84,12 @@
     paywallProcessando: false,
     paywallCupomProcessando: false,
     paywallSelecionando: false,
+    assinaturaDetalhes: null,
+    assinaturaCarregando: false,
+    assinaturaAcao: '',
+    assinaturaErro: '',
+    assinaturaCpf: '',
+    assinaturaConfirmarCancelamento: false,
     mes: meses[new Date().getMonth()],
     ano: String(new Date().getFullYear()),
     faturamentos: {},
@@ -483,7 +489,7 @@
     return '<div class="mx-auto max-w-md px-4 py-5">' + conteudo + '</div>';
   }
 
-  var APP_VERSION = '1.3.5';
+  var APP_VERSION = root.getAttribute('data-app-version') || '1.3.6';
   var APP_VERSION_LABEL = 'AvantaLab Gest&atilde;o v' + APP_VERSION;
 
   function telaAvisoMobile(titulo, texto) {
@@ -564,6 +570,7 @@
           '</div>' +
           '<p class="mt-2 text-xs font-semibold text-slate-600">' + textoBloqueio + '</p>' +
           '<p id="paywall-msg" class="mt-1.5 text-xs font-bold text-red-600"></p>' +
+          '<button type="button" onclick="window._avaPaywallAtualizar()" class="mt-2 h-8 w-full rounded-lg border border-sky-200 bg-sky-50 text-[10px] font-black uppercase text-sky-700">Ja paguei - atualizar</button>' +
           '<label class="mt-2.5 block text-[11px] font-black uppercase tracking-wide text-slate-500">CPF ou CNPJ para a cobrança</label>' +
           '<input id="paywall-cpf" type="text" inputmode="numeric" placeholder="Somente números" class="mt-1 w-full rounded-lg border border-slate-300 bg-white/90 px-3 py-2 text-sm font-semibold text-slate-800 outline-none" />' +
           '<div class="mt-2.5 grid grid-cols-2 gap-2">' +
@@ -609,6 +616,7 @@
     var cpfEl = document.getElementById('paywall-cpf');
     var cpf = (cpfEl ? cpfEl.value : '').replace(/\D/g, '');
     if (cpf.length !== 11 && cpf.length !== 14) { if (msgEl) { msgEl.className = 'mt-3 text-sm font-bold text-red-600'; msgEl.textContent = 'Informe um CPF (11 dígitos) ou CNPJ (14 dígitos).'; } return; }
+    var janelaPagamento = window.open('', '_blank');
     state.paywallProcessando = true;
     if (msgEl) { msgEl.className = 'mt-3 text-sm font-bold text-slate-600'; msgEl.textContent = 'Processando...'; }
     try {
@@ -621,12 +629,15 @@
       });
       var json = await resp.json();
       if (resp.ok && json.invoiceUrl) {
-        window.open(json.invoiceUrl, '_blank');
+        if (janelaPagamento) janelaPagamento.location.href = json.invoiceUrl;
+        else window.open(json.invoiceUrl, '_blank');
         if (msgEl) { msgEl.className = 'mt-3 text-sm font-bold text-sky-700'; msgEl.textContent = 'Abrimos o pagamento em outra aba. Depois de pagar, recarregue esta tela.'; }
         return;
       }
+      if (janelaPagamento) janelaPagamento.close();
       if (msgEl) { msgEl.className = 'mt-3 text-sm font-bold text-red-600'; msgEl.textContent = json.mensagem || 'Não foi possível iniciar a assinatura.'; }
     } catch (e) {
+      if (janelaPagamento) janelaPagamento.close();
       if (msgEl) { msgEl.className = 'mt-3 text-sm font-bold text-red-600'; msgEl.textContent = 'Não foi possível iniciar a assinatura agora.'; }
     } finally {
       state.paywallProcessando = false;
@@ -660,6 +671,12 @@
   };
 
   window._avaPaywallSair = function () { sair(); };
+  window._avaPaywallAtualizar = function () {
+    if (state.paywallProcessando) return;
+    state.paywallVerificado = false;
+    render();
+    verificarPaywallMobile();
+  };
   window._avaPaywallCriar = function () {
     state.paywallAtivo = false;
     state.paywallSelecionando = false;
@@ -680,6 +697,156 @@
     state.paywallAtivo = false;
     carregarDados();
   };
+
+  function assinaturaEmCarenciaMobile() {
+    var estado = state.paywallEstado;
+    return !!(estado && estado.status === 'inadimplente' && estado.validoAte && new Date(estado.validoAte).getTime() > Date.now());
+  }
+
+  function assinaturaCanceladaNoFimMobile(estado) {
+    return !!(estado && estado.status === 'cancelada' && estado.validoAte && new Date(estado.validoAte).getTime() > Date.now());
+  }
+
+  function dataAssinaturaMobile(valor) {
+    if (!valor) return '—';
+    var data = new Date(String(valor).length === 10 ? valor + 'T12:00:00' : valor);
+    return Number.isNaN(data.getTime()) ? '—' : data.toLocaleDateString('pt-BR');
+  }
+
+  function rotuloFaturaMobile(status) {
+    if (['RECEIVED', 'CONFIRMED', 'RECEIVED_IN_CASH'].indexOf(status) >= 0) return ['Paga', 'background:#DCFCE7;color:#15803D'];
+    if (status === 'OVERDUE') return ['Vencida', 'background:#FEE2E2;color:#B91C1C'];
+    if (status === 'PENDING') return ['Pendente', 'background:#FEF3C7;color:#B45309'];
+    if (status === 'REFUNDED') return ['Estornada', 'background:#E2E8F0;color:#475569'];
+    return ['Em analise', 'background:#DBEAFE;color:#1D4ED8'];
+  }
+
+  async function carregarAssinaturaMobile() {
+    if (!state.empresa || state.assinaturaCarregando) return;
+    state.assinaturaCarregando = true;
+    state.assinaturaErro = '';
+    render();
+    try {
+      var token = await _avaPaywallToken();
+      if (!token) throw new Error('Sessao nao encontrada.');
+      var resposta = await fetch('/api/cobranca/gerenciar?empresaId=' + encodeURIComponent(state.empresa.id), {
+        headers: { Authorization: 'Bearer ' + token },
+      });
+      var json = await resposta.json();
+      if (!resposta.ok) throw new Error(json.mensagem || 'Nao foi possivel carregar a assinatura.');
+      state.assinaturaDetalhes = json;
+      state.paywallEstado = json.estado || state.paywallEstado;
+    } catch (erro) {
+      state.assinaturaErro = erro && erro.message ? erro.message : 'Nao foi possivel carregar a assinatura.';
+    }
+    state.assinaturaCarregando = false;
+    render();
+  }
+
+  function abrirAssinaturaMobile() {
+    state.modalMenu = 'assinatura';
+    state.assinaturaDetalhes = null;
+    state.assinaturaErro = '';
+    state.assinaturaConfirmarCancelamento = false;
+    render();
+    carregarAssinaturaMobile();
+  }
+
+  async function alterarAssinaturaMobile(ciclo) {
+    if (!state.empresa || state.assinaturaAcao) return;
+    state.assinaturaAcao = ciclo;
+    state.assinaturaErro = '';
+    render();
+    try {
+      var token = await _avaPaywallToken();
+      var resposta = await fetch('/api/cobranca/gerenciar', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
+        body: JSON.stringify({ empresaId: state.empresa.id, ciclo: ciclo }),
+      });
+      var json = await resposta.json();
+      if (!resposta.ok) throw new Error(json.mensagem || 'Nao foi possivel alterar o plano.');
+      state.assinaturaAcao = '';
+      await carregarAssinaturaMobile();
+      mostrarToast('Novo ciclo aplicado a proxima renovacao.');
+      return;
+    } catch (erro) {
+      state.assinaturaErro = erro && erro.message ? erro.message : 'Nao foi possivel alterar o plano.';
+    }
+    state.assinaturaAcao = '';
+    render();
+  }
+
+  async function assinarPeloPainelMobile(ciclo) {
+    if (!state.empresa || state.assinaturaAcao) return;
+    state.assinaturaCpf = campo('assinatura-cpf');
+    var documento = state.assinaturaCpf.replace(/\D/g, '');
+    if (documento.length !== 11 && documento.length !== 14) {
+      state.assinaturaErro = 'Informe um CPF ou CNPJ valido.';
+      render();
+      return;
+    }
+    var janela = window.open('', '_blank');
+    state.assinaturaAcao = 'assinar-' + ciclo;
+    state.assinaturaErro = '';
+    render();
+    try {
+      var token = await _avaPaywallToken();
+      var resposta = await fetch('/api/cobranca/assinar', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
+        body: JSON.stringify({
+          empresaId: state.empresa.id,
+          plano: normalizarTipoPerfil(state.empresa.tipo_perfil) === 'pessoal' ? 'pessoal_premium' : 'empresa',
+          ciclo: ciclo,
+          cpfCnpj: documento
+        }),
+      });
+      var json = await resposta.json();
+      if (!resposta.ok || !json.invoiceUrl) throw new Error(json.mensagem || 'Nao foi possivel iniciar a assinatura.');
+      if (janela) janela.location.href = json.invoiceUrl;
+      else window.open(json.invoiceUrl, '_blank');
+      state.assinaturaAcao = '';
+      await carregarAssinaturaMobile();
+      return;
+    } catch (erro) {
+      if (janela) janela.close();
+      state.assinaturaErro = erro && erro.message ? erro.message : 'Nao foi possivel iniciar a assinatura.';
+    }
+    state.assinaturaAcao = '';
+    render();
+  }
+
+  async function cancelarAssinaturaMobile() {
+    if (!state.empresa || state.assinaturaAcao) return;
+    state.assinaturaAcao = 'cancelar';
+    state.assinaturaErro = '';
+    render();
+    try {
+      var token = await _avaPaywallToken();
+      var resposta = await fetch('/api/cobranca/gerenciar', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
+        body: JSON.stringify({ empresaId: state.empresa.id }),
+      });
+      var json = await resposta.json();
+      if (!resposta.ok) throw new Error(json.mensagem || 'Nao foi possivel cancelar a assinatura.');
+      state.assinaturaConfirmarCancelamento = false;
+      state.assinaturaAcao = '';
+      await carregarAssinaturaMobile();
+      mostrarToast('Renovacao cancelada.');
+      return;
+    } catch (erro) {
+      state.assinaturaErro = erro && erro.message ? erro.message : 'Nao foi possivel cancelar a assinatura.';
+    }
+    state.assinaturaAcao = '';
+    render();
+  }
+
+  function avisoCarenciaMobileHtml() {
+    if (!assinaturaEmCarenciaMobile()) return '';
+    return '<button id="aviso-carencia-assinatura" type="button" class="w-full rounded-[12px_22px_22px_22px] border border-amber-300 bg-amber-50 px-3 py-2.5 text-left text-[11px] font-semibold leading-snug text-amber-900 shadow-sm"><strong>Pagamento pendente.</strong> Regularize ate ' + dataAssinaturaMobile(state.paywallEstado.validoAte) + ' para evitar o bloqueio. <span class="font-black underline">Ver assinatura</span></button>';
+  }
 
   function ordemDashboardPadrao() {
     return [
@@ -5567,6 +5734,7 @@
         '</div>' +
         '<div id="mobile-main-scroll" data-preserve-scroll class="min-h-0 flex-1 overflow-y-auto overscroll-contain" style="padding-bottom:calc(env(safe-area-inset-bottom) + 82px);-webkit-overflow-scrolling:touch;">' +
         '<div class="mx-auto grid w-full min-w-0 max-w-md gap-3 px-3 pt-10 sm:px-4">' +
+          avisoCarenciaMobileHtml() +
           alertaHtml().replace('mt-4', '') +
           (state.visao === 'home' ? homeHtml(atual, anterior) : (state.visao === 'agenda' ? agendaMobileHtml(atual) : listaDetalhadaHtml(atual))) +
           (state.visao === 'agenda' ? '' : rodapeMobileHtml()) +
@@ -6684,6 +6852,13 @@
             chaveMenuHtml(state.notificacoesAtivas) +
           '</div>' +
         '</button>' +
+        ((COBRANCA_ATIVA_MOBILE && podeGerenciarUsuarios()) ?
+        '<button id="menu-assinatura" type="button" class="rounded-[12px_24px_24px_24px] border ' + bordaBase + ' px-2.5 py-1.5 text-left shadow-[0_4px_11px_rgba(15,23,42,.05)] active:scale-[0.99]" style="' + (dk ? '' : 'background:linear-gradient(90deg,#FFF5E8 0%,#FFFFFF 78%);border-color:#F1D7B5;') + '">' +
+          '<div class="flex items-center gap-2">' +
+            '<span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg" style="background:#FDE8C8;color:#9A5A12">' + iconeMenuLateralSvg('menu-assinatura') + '</span>' +
+            '<span class="min-w-0 flex-1"><span class="block text-[11px] font-black">Assinatura</span><span class="mt-0.5 block truncate text-[9px] font-semibold text-slate-500">Plano, faturas e renovacao</span></span>' +
+          '</div>' +
+        '</button>' : '') +
         '<button id="menu-organizar-dashboard" type="button" class="rounded-[12px_24px_24px_24px] border ' + bordaBase + ' px-2.5 py-1.5 text-left shadow-[0_4px_11px_rgba(15,23,42,.05)] active:scale-[0.99]" style="' + (dk ? '' : 'background:linear-gradient(90deg,#EAF4FF 0%,#FFFFFF 78%);border-color:#C9DEF6;') + '">' +
           '<div class="flex items-center gap-2">' +
             '<span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg" style="background:#E0EEFF;color:#2383F0">' + iconeMenuLateralSvg('menu-organizar-dashboard') + '</span>' +
@@ -6925,6 +7100,7 @@
       'menu-gerenciar': '<circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/>',
       'menu-tema': '<path d="M21 12.8A9 9 0 1 1 11.2 3 7 7 0 0 0 21 12.8Z"/>',
       'menu-notificacoes': '<path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4"/>',
+      'menu-assinatura': '<rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 10h18M7 15h2M12 15h2"/>',
       'menu-organizar-dashboard': '<rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>',
       'menu-usuario': '<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M19 8v6M22 11h-6"/>',
       'menu-backup': '<path d="M12 3v12M7 10l5 5 5-5"/><path d="M5 21h14"/>',
@@ -6973,6 +7149,7 @@
       privacidade: 'Privacidade',
       feedback: 'Dúvidas e Sugestões',
       despesasFixas: 'Gerenciar despesas fixas',
+      assinatura: 'Assinatura',
       sobre: 'Sobre',
       notificacoes: 'Notificações',
       detalheTipoDespesa: state.tipoDespesaDetalhe || 'Lançamentos',
@@ -7007,6 +7184,7 @@
     if (state.modalMenu === 'privacidade') return privacidadeMobileHtml();
     if (state.modalMenu === 'feedback') return feedbackMobileHtml();
     if (state.modalMenu === 'despesasFixas') return despesasFixasMenuHtml();
+    if (state.modalMenu === 'assinatura') return assinaturaMobileHtml();
     if (state.modalMenu === 'sobre') return sobreMobileHtml();
     if (state.modalMenu === 'notificacoes') return notificacoesMobileHtml();
     if (state.modalMenu === 'detalheTipoDespesa') return detalheTipoDespesaHtml();
@@ -7421,6 +7599,62 @@
     }
 
     return '<div class="text-sm text-slate-500 p-4">Carregando...</div>';
+  }
+
+  function assinaturaMobileHtml() {
+    var detalhes = state.assinaturaDetalhes;
+    var estado = (detalhes && detalhes.estado) || state.paywallEstado || {};
+    var assinatura = detalhes && detalhes.assinatura;
+    var faturas = (detalhes && detalhes.faturas) || [];
+    var podeGerenciar = !detalhes || detalhes.podeGerenciar !== false;
+    var canceladaNoFim = assinaturaCanceladaNoFimMobile(estado);
+    var statusRotulos = {
+      ativa: 'Ativa', trial: 'Periodo de teste', expirada: 'Vencida',
+      cancelada: canceladaNoFim ? 'Cancelada ao fim do periodo' : 'Cancelada',
+      cortesia: 'Cortesia', inadimplente: 'Pagamento pendente'
+    };
+    var statusEstilo = estado.status === 'ativa' || estado.status === 'cortesia'
+      ? 'background:#DCFCE7;color:#15803D'
+      : (estado.status === 'trial' ? 'background:#DBEAFE;color:#1D4ED8' : (estado.status === 'inadimplente' ? 'background:#FEF3C7;color:#B45309' : 'background:#FEE2E2;color:#B91C1C'));
+    var ciclo = estado.ciclo || '';
+    var plano = estado.plano === 'pessoal_premium' ? 'Premium Pessoal' : (estado.plano ? 'Empresa' : '—');
+    var pessoal = estado.tipoPerfil === 'pessoal';
+    var podeContratar = !assinatura && (estado.status === 'trial' || (pessoal && estado.status === 'expirada'));
+    var precoMensal = pessoal ? 'R$ 9,90' : 'R$ 34,90';
+    var precoAnual = pessoal ? 'R$ 99,00' : 'R$ 348,00';
+    var listaFaturas = faturas.map(function (fatura) {
+      var rotulo = rotuloFaturaMobile(fatura.status);
+      var paga = ['RECEIVED', 'CONFIRMED', 'RECEIVED_IN_CASH'].indexOf(fatura.status) >= 0;
+      return '<div class="grid grid-cols-[1fr_auto] items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5">' +
+        '<div class="min-w-0"><div class="flex flex-wrap items-center gap-1.5"><strong class="text-xs font-black text-slate-900">' + dinheiro(fatura.valor) + '</strong><span class="rounded-full px-2 py-0.5 text-[8px] font-black uppercase" style="' + rotulo[1] + '">' + rotulo[0] + '</span></div><p class="mt-1 text-[10px] font-semibold text-slate-500">Vencimento: ' + dataAssinaturaMobile(fatura.vencimento) + '</p></div>' +
+        (fatura.invoiceUrl && !paga ? '<a href="' + escapeHtml(fatura.invoiceUrl) + '" target="_blank" rel="noreferrer" class="rounded-lg border border-sky-300 bg-sky-50 px-2.5 py-2 text-[9px] font-black uppercase text-sky-700">2a via</a>' : '') +
+      '</div>';
+    }).join('');
+
+    if (state.assinaturaCarregando && !detalhes) {
+      return '<div class="py-12 text-center text-sm font-semibold text-slate-500">Carregando assinatura...</div>';
+    }
+
+    return '<div class="grid gap-4">' +
+      (state.assinaturaErro ? '<div class="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-xs font-bold text-red-700">' + escapeHtml(state.assinaturaErro) + '</div>' : '') +
+      (assinaturaEmCarenciaMobile() ? '<div class="rounded-xl border border-amber-300 bg-amber-50 px-3 py-2.5 text-xs leading-relaxed text-amber-900"><strong>Pagamento pendente.</strong> Regularize ate ' + dataAssinaturaMobile(estado.validoAte) + ' para evitar o bloqueio.</div>' : '') +
+      (canceladaNoFim ? '<div class="rounded-xl border border-sky-200 bg-sky-50 px-3 py-2.5 text-xs leading-relaxed text-sky-900"><strong>Renovacao cancelada.</strong> O acesso continua ate ' + dataAssinaturaMobile(estado.validoAte) + '.</div>' : '') +
+      '<div class="grid grid-cols-2 gap-2 rounded-[14px_24px_24px_24px] border border-slate-200 bg-slate-50 p-3">' +
+        '<div><p class="text-[9px] font-black uppercase tracking-wide text-slate-400">Situacao</p><span class="mt-1 inline-flex rounded-full px-2 py-1 text-[9px] font-black" style="' + statusEstilo + '">' + escapeHtml(statusRotulos[estado.status] || 'Sem assinatura') + '</span></div>' +
+        '<div><p class="text-[9px] font-black uppercase tracking-wide text-slate-400">Plano</p><strong class="mt-1 block text-xs text-slate-900">' + escapeHtml(plano + (ciclo ? ' · ' + ciclo : '')) + '</strong></div>' +
+        '<div><p class="text-[9px] font-black uppercase tracking-wide text-slate-400">Valor</p><strong class="mt-1 block text-xs text-slate-900">' + (assinatura ? dinheiro(assinatura.valor) : '—') + '</strong></div>' +
+        '<div><p class="text-[9px] font-black uppercase tracking-wide text-slate-400">Proximo vencimento</p><strong class="mt-1 block text-xs text-slate-900">' + dataAssinaturaMobile(assinatura && assinatura.proximoVencimento) + '</strong></div>' +
+      '</div>' +
+      (podeGerenciar && podeContratar ? '<div><h3 class="text-xs font-black text-slate-900">Contratar assinatura</h3><p class="mt-1 text-[10px] font-semibold leading-relaxed text-slate-500">' + (pessoal ? 'Ative os recursos Premium deste perfil.' : 'Contrate agora sem perder os dias restantes do teste.') + '</p><input id="assinatura-cpf" type="text" inputmode="numeric" value="' + escapeHtml(state.assinaturaCpf || '') + '" placeholder="CPF ou CNPJ" class="mt-2 h-10 w-full rounded-lg border border-slate-300 bg-white px-3 text-base font-bold text-slate-900 outline-none"/><div class="mt-2 grid grid-cols-2 gap-2"><button id="assinatura-assinar-mensal" type="button" ' + (state.assinaturaAcao ? 'disabled ' : '') + 'class="h-10 rounded-xl border border-sky-300 bg-sky-50 text-[9px] font-black uppercase text-sky-700 disabled:opacity-60">' + (state.assinaturaAcao === 'assinar-mensal' ? 'Processando...' : 'Mensal · ' + precoMensal) + '</button><button id="assinatura-assinar-anual" type="button" ' + (state.assinaturaAcao ? 'disabled ' : '') + 'class="h-10 rounded-xl bg-sky-700 text-[9px] font-black uppercase text-white disabled:opacity-60">' + (state.assinaturaAcao === 'assinar-anual' ? 'Processando...' : 'Anual · ' + precoAnual) + '</button></div></div>' : '') +
+      (podeGerenciar && assinatura && !canceladaNoFim ? '<div><h3 class="text-xs font-black text-slate-900">Ciclo de cobranca</h3><p class="mt-1 text-[10px] font-semibold leading-relaxed text-slate-500">A mudanca vale para a proxima renovacao.</p><div class="mt-2 grid grid-cols-2 gap-2">' +
+        '<button id="assinatura-mensal" type="button" ' + (state.assinaturaAcao || ciclo === 'mensal' ? 'disabled ' : '') + 'class="h-10 rounded-xl border text-[10px] font-black uppercase ' + (ciclo === 'mensal' ? 'border-sky-600 bg-sky-600 text-white' : 'border-slate-300 bg-white text-slate-700') + ' disabled:opacity-70">' + (state.assinaturaAcao === 'mensal' ? 'Alterando...' : 'Mensal') + '</button>' +
+        '<button id="assinatura-anual" type="button" ' + (state.assinaturaAcao || ciclo === 'anual' ? 'disabled ' : '') + 'class="h-10 rounded-xl border text-[10px] font-black uppercase ' + (ciclo === 'anual' ? 'border-sky-600 bg-sky-600 text-white' : 'border-slate-300 bg-white text-slate-700') + ' disabled:opacity-70">' + (state.assinaturaAcao === 'anual' ? 'Alterando...' : 'Anual') + '</button>' +
+      '</div></div>' : '') +
+      '<div><div class="flex items-center justify-between"><h3 class="text-xs font-black text-slate-900">Faturas recentes</h3><button id="assinatura-atualizar" type="button" class="text-[9px] font-black uppercase text-sky-700">Atualizar</button></div><div class="mt-2 grid gap-1.5">' + (listaFaturas || '<p class="rounded-xl border border-dashed border-slate-300 px-3 py-5 text-center text-xs font-semibold text-slate-400">Nenhuma fatura disponivel.</p>') + '</div></div>' +
+      (podeGerenciar && assinatura && !canceladaNoFim ? (!state.assinaturaConfirmarCancelamento
+        ? '<button id="assinatura-abrir-cancelamento" type="button" class="h-10 rounded-xl border border-red-200 bg-red-50 text-[10px] font-black uppercase text-red-600">Cancelar renovacao</button>'
+        : '<div class="rounded-xl border border-red-200 bg-red-50 p-3"><p class="text-[10px] font-semibold leading-relaxed text-red-800">A renovacao sera interrompida. O acesso continua ate o fim do periodo pago.</p><div class="mt-2 grid grid-cols-2 gap-2"><button id="assinatura-voltar-cancelamento" type="button" class="h-9 rounded-lg border border-slate-300 bg-white text-[10px] font-black text-slate-600">Voltar</button><button id="assinatura-confirmar-cancelamento" type="button" ' + (state.assinaturaAcao ? 'disabled ' : '') + 'class="h-9 rounded-lg bg-red-600 text-[10px] font-black text-white disabled:opacity-60">' + (state.assinaturaAcao === 'cancelar' ? 'Cancelando...' : 'Confirmar') + '</button></div></div>') : '') +
+    '</div>';
   }
 
   function organizarDashboardHtml() {
@@ -8279,6 +8513,7 @@
     bind('menu-configurar-resumo', function () { fecharMenuLateralAnimado(function () { abrirModalMenu('configurarResumo'); }); });
     bind('menu-usuario', function () { fecharMenuLateralAnimado(abrirUsuariosMobile); });
     bind('menu-gerenciar', function () { fecharMenuLateralAnimado(function () { abrirModalMenu('gerenciar'); }); });
+    bind('menu-assinatura', function () { fecharMenuLateralAnimado(abrirAssinaturaMobile); });
     bind('menu-organizar-dashboard', function () { fecharMenuLateralAnimado(function () { abrirModalMenu('organizarDashboard'); }); });
     bind('menu-organizar-atalhos', function () { fecharMenuLateralAnimado(function () { abrirModalMenu('organizarAtalhos'); }); });
     bind('menu-agenda', function () { fecharMenuLateralAnimado(abrirAgendaMobile); });
@@ -8391,6 +8626,15 @@
     });
     bind('menu-feedback', function () { fecharMenuLateralAnimado(abrirFeedbackMobile); });
     bind('fechar-modal-menu', fecharModalMenu);
+    bind('aviso-carencia-assinatura', abrirAssinaturaMobile);
+    bind('assinatura-atualizar', carregarAssinaturaMobile);
+    bind('assinatura-mensal', function () { alterarAssinaturaMobile('mensal'); });
+    bind('assinatura-anual', function () { alterarAssinaturaMobile('anual'); });
+    bind('assinatura-assinar-mensal', function () { assinarPeloPainelMobile('mensal'); });
+    bind('assinatura-assinar-anual', function () { assinarPeloPainelMobile('anual'); });
+    bind('assinatura-abrir-cancelamento', function () { state.assinaturaConfirmarCancelamento = true; render(); });
+    bind('assinatura-voltar-cancelamento', function () { state.assinaturaConfirmarCancelamento = false; render(); });
+    bind('assinatura-confirmar-cancelamento', cancelarAssinaturaMobile);
     Array.prototype.forEach.call(document.querySelectorAll('[data-detalhar-tipo-despesa]'), function (item) {
       item.addEventListener('click', function () {
         state.tipoDespesaDetalhe = item.getAttribute('data-detalhar-tipo-despesa') || '';
@@ -9714,7 +9958,7 @@
           return Promise.all(
             keys
               .filter(function (key) {
-                return key.indexOf('avantalab-mobile-') === 0 && key !== 'avantalab-mobile-v219';
+                return key.indexOf('avantalab-mobile-') === 0 && key !== 'avantalab-mobile-v231';
               })
               .map(function (key) {
                 return caches.delete(key);
@@ -9731,12 +9975,16 @@
     });
 
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/mobile-sw.js?v=219').then(function (registro) {
+      navigator.serviceWorker.register('/mobile-sw.js?v=220').then(function (registro) {
         if (registro && registro.update) registro.update();
       }).catch(function () {});
     }
 
     configurarPullToRefresh();
+
+    window.setInterval(function () {
+      if (state.autenticado && state.empresa && !ehFuncionarioPontoMobile()) verificarPaywallMobile();
+    }, 5 * 60 * 1000);
 
     // Ao voltar ao app (apos receber um push), reconfere as nao lidas
     document.addEventListener('visibilitychange', function () {

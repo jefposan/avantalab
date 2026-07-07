@@ -22,7 +22,7 @@ import TabelaLancamentosDespesa from './components/TabelaLancamentosDespesa';
 import TourPrimeiroAcesso from './components/TourPrimeiroAcesso';
 import PaywallEmpresa from './components/PaywallEmpresa';
 import AssinaturaModal from './components/AssinaturaModal';
-import { COBRANCA_ATIVA, precisaPaywallEmpresa, type EstadoAcesso } from './lib/cobranca';
+import { COBRANCA_ATIVA, emCarencia, precisaPaywallEmpresa, type EstadoAcesso } from './lib/cobranca';
 import { PAISES } from './lib/paises';
 import {
   formatarMoeda,
@@ -337,7 +337,7 @@ const [validandoTelefoneObrigatorio, setValidandoTelefoneObrigatorio] = useState
     if (!COBRANCA_ATIVA || !acessoLiberado || !empresaId) { setEstadoAcesso(null); setEstadoCarregado(true); return; }
     let ativo = true;
     setEstadoCarregado(false);
-    (async () => {
+    const carregarEstado = async () => {
       try {
         const { data: sessao } = await supabase.auth.getSession();
         const token = sessao.session?.access_token;
@@ -349,8 +349,16 @@ const [validandoTelefoneObrigatorio, setValidandoTelefoneObrigatorio] = useState
         if (ativo && resp.ok) setEstadoAcesso(json.estado || null);
       } catch { /* silencioso: em caso de falha, não bloqueia (fail-open) */ }
       finally { if (ativo) setEstadoCarregado(true); }
-    })();
-    return () => { ativo = false; };
+    };
+    void carregarEstado();
+    const intervalo = window.setInterval(() => void carregarEstado(), 5 * 60 * 1000);
+    const aoFocar = () => void carregarEstado();
+    window.addEventListener('focus', aoFocar);
+    return () => {
+      ativo = false;
+      window.clearInterval(intervalo);
+      window.removeEventListener('focus', aoFocar);
+    };
   }, [acessoLiberado, empresaId]);
   const iniciarAssinatura = async (
     ciclo: 'mensal' | 'anual',
@@ -363,7 +371,12 @@ const [validandoTelefoneObrigatorio, setValidandoTelefoneObrigatorio] = useState
       const resp = await fetch('/api/cobranca/assinar', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ empresaId, plano: 'empresa', ciclo, cpfCnpj }),
+        body: JSON.stringify({
+          empresaId,
+          plano: tipoPerfilAtual === 'pessoal' ? 'pessoal_premium' : 'empresa',
+          ciclo,
+          cpfCnpj,
+        }),
       });
       const json = await resp.json();
       if (resp.ok && json.invoiceUrl) return { ok: true, url: json.invoiceUrl };
@@ -4300,8 +4313,19 @@ const alertasSistema = useMemo(() => {
     });
   }
 
+  if (emCarencia(estadoAcesso)) {
+    alertas.unshift({
+      id: 'cobranca-carencia',
+      titulo: 'Pagamento pendente',
+      mensagem: `Regularize a assinatura até ${new Date(estadoAcesso!.validoAte!).toLocaleDateString('pt-BR')} para evitar o bloqueio do perfil.`,
+      acaoTexto: 'Ver assinatura',
+      acao: () => setModalAssinatura(true),
+      naoLida: true,
+    });
+  }
+
   return alertas;
-}, [backupPendente, notificacoesWeb]);
+}, [backupPendente, notificacoesWeb, estadoAcesso]);
 
   const analiseDespesas = useMemo(() => {
   const totais: Record<string, { nome: string; valor: number }> = {};
@@ -6143,6 +6167,9 @@ if (isTelaMobile) {
 <AssinaturaModal
   aberto={modalAssinatura}
   onFechar={() => setModalAssinatura(false)}
+  onEstadoAtualizado={setEstadoAcesso}
+  onAssinar={iniciarAssinatura}
+  empresaId={empresaId}
   darkMode={darkMode}
   corPrimaria={corPrimaria}
   estado={estadoAcesso}
@@ -7885,6 +7912,16 @@ name="novo-usuario-login"
           setAgendaAberta(true);
         }}
       />
+
+      {emCarencia(estadoAcesso) && (
+        <button
+          type="button"
+          onClick={() => setModalAssinatura(true)}
+          className="print-ocultar w-full border-b border-amber-300 bg-amber-50 px-4 py-2 text-center text-xs font-semibold text-amber-900 transition hover:bg-amber-100"
+        >
+          Pagamento pendente. Regularize até {new Date(estadoAcesso!.validoAte!).toLocaleDateString('pt-BR')} para evitar o bloqueio. Ver assinatura
+        </button>
+      )}
 
       <input
         ref={backupImportInputRef}

@@ -1,5 +1,13 @@
 # Changelog
 
+## Em desenvolvimento
+
+- Web e mobile: area de assinatura com plano, proximo vencimento, historico de faturas, segunda via, troca de ciclo e cancelamento da renovacao.
+- Cobranca: carencia de tres dias para pagamentos vencidos, com aviso persistente ate pagamento ou cancelamento.
+- Cobranca: cancelamento preserva o acesso ate o fim do periodo efetivamente pago.
+- Cobranca: webhooks idempotentes, historico financeiro e conciliacao automatica com a Asaas.
+- Ponto: respeita a situacao da assinatura da empresa, mantendo acesso durante a carencia.
+
 ## 1.3.5 - 2026-07-03
 
 - Web: novo resumo diario do Controle de Ponto no dashboard.

@@ -26,6 +26,37 @@ function servico() {
   return createClient(url, key);
 }
 
+export async function autenticarPerfilCobranca(
+  request: Request,
+  empresaId: string,
+  exigirGestao = false,
+) {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
+  const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
+  const serviceRole = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
+  if (!url || !anonKey || !serviceRole || !empresaId) return null;
+
+  const token = (request.headers.get('authorization') || '').replace(/^Bearer\s+/i, '').trim();
+  if (!token) return null;
+  const cliente = createClient(url, anonKey);
+  const { data: auth, error } = await cliente.auth.getUser(token);
+  if (error || !auth.user) return null;
+
+  const db = createClient(url, serviceRole);
+  const { data: vinculo } = await db
+    .from('usuarios_empresa')
+    .select('id, perfil, status')
+    .eq('user_id', auth.user.id)
+    .eq('empresa_id', empresaId)
+    .eq('status', 'ativo')
+    .limit(1)
+    .maybeSingle();
+  if (!vinculo) return null;
+  const podeGerenciar = ['gestor_master', 'administrador'].includes(vinculo.perfil || '');
+  if (exigirGestao && !podeGerenciar) return null;
+  return { db, usuario: auth.user, vinculo, podeGerenciar };
+}
+
 export async function resolverEstadoAcesso(empresaId: string): Promise<EstadoAcesso | null> {
   if (!empresaId) return null;
   const db = servico();

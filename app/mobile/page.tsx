@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from 'next';
 import AvaMobileBridge from './AvaMobileBridge';
 import BackupMobileBridge from './BackupMobileBridge';
+import { APP_VERSION } from '../lib/version';
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL
   ? process.env.NEXT_PUBLIC_SITE_URL
@@ -201,6 +202,7 @@ export default function MobilePage() {
         data-supabase-url={supabaseUrl}
         data-supabase-anon-key={supabaseAnonKey}
         data-cobranca-ativa={cobrancaAtiva}
+        data-app-version={APP_VERSION}
       >
         <section
           className="avantalab-mobile-bg fixed inset-0 flex items-center justify-center overflow-hidden px-4"
@@ -229,7 +231,7 @@ export default function MobilePage() {
       <BackupMobileBridge />
 
       <script src="/mobile-supabase.js" defer />
-      <script src="/mobile-app.js?v=253" defer />
+      <script src="/mobile-app.js?v=254" defer />
     </main>
   );
 }

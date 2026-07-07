@@ -60,6 +60,7 @@
     notificacoesAtivas: false,
     notificacoesAtualizando: false,
     ajustesAberto: false,
+    pontoAcessoMotivo: '',
   };
 
   // ---------- helpers ----------
@@ -129,7 +130,7 @@
 
   async function registroServiceWorkerPonto() {
     if (!('serviceWorker' in navigator)) return null;
-    try { return await navigator.serviceWorker.register('/ponto-sw.js?v=2', { scope: '/ponto' }); }
+    try { return await navigator.serviceWorker.register('/ponto-sw.js?v=3', { scope: '/ponto' }); }
     catch (e) { return null; }
   }
 
@@ -288,6 +289,7 @@
       });
       if (!resp.ok) return true;
       var r = await resp.json();
+      state.pontoAcessoMotivo = r && r.motivo ? r.motivo : '';
       return r && r.ativo !== false;
     } catch (e) { return true; }
   }
@@ -323,7 +325,9 @@
       // módulo, encerra a sessão em vez de carregar a tela de bater ponto.
       var empresaIdCheck = (f && f.data && f.data.empresa_id) || empresaId;
       if (!(await pontoAcessoAtivo(empresaIdCheck))) {
-        await bloquearPonto('O controle de ponto foi desativado para a sua empresa. Fale com o gestor.');
+        await bloquearPonto(state.pontoAcessoMotivo === 'assinatura'
+          ? 'A assinatura da empresa precisa ser regularizada. Fale com o gestor.'
+          : 'O controle de ponto foi desativado para a sua empresa. Fale com o gestor.');
         return;
       }
       if (f && !f.error && f.data) state.funcionario = f.data;
@@ -386,7 +390,9 @@
     // Revalida o módulo antes de registrar (caso tenha sido removido durante a sessão).
     if (!(await pontoAcessoAtivo(empresaId))) {
       state.batendo = false;
-      await bloquearPonto('O controle de ponto foi desativado para a sua empresa. Fale com o gestor.');
+      await bloquearPonto(state.pontoAcessoMotivo === 'assinatura'
+        ? 'A assinatura da empresa precisa ser regularizada. Fale com o gestor.'
+        : 'O controle de ponto foi desativado para a sua empresa. Fale com o gestor.');
       return;
     }
     var hash = (Date.now().toString(36) + Math.random().toString(36).slice(2, 8)).toUpperCase();

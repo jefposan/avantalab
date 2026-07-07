@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { COBRANCA_ATIVA, assinaturaVigente } from '../../../lib/cobranca';
+import { resolverEstadoAcesso } from '../../../lib/cobranca-servidor';
 
 // Verifica se o módulo Controle de Ponto está ativo para a empresa informada.
 // Usado pelo app do funcionário (/ponto) para bloquear sessões já abertas
@@ -37,7 +39,16 @@ export async function POST(request: Request) {
       return NextResponse.json({ ativo: true, indeterminado: true });
     }
 
-    return NextResponse.json({ ativo: Boolean(data) });
+    if (!data) return NextResponse.json({ ativo: false, motivo: 'modulo' });
+
+    if (COBRANCA_ATIVA) {
+      const estado = await resolverEstadoAcesso(empresaId);
+      if (estado?.tipoPerfil === 'empresa' && !assinaturaVigente(estado)) {
+        return NextResponse.json({ ativo: false, motivo: 'assinatura' });
+      }
+    }
+
+    return NextResponse.json({ ativo: true });
   } catch (error) {
     console.error('Erro inesperado ao verificar acesso ao ponto:', error);
     return NextResponse.json({ ativo: true, indeterminado: true });

@@ -68,13 +68,53 @@ export function criarAssinaturaAsaas(dados: {
 }
 
 // Consulta uma assinatura na Asaas.
+export type AssinaturaAsaas = {
+  id: string;
+  status?: 'ACTIVE' | 'INACTIVE' | 'EXPIRED';
+  value?: number;
+  cycle?: string;
+  nextDueDate?: string;
+  billingType?: string;
+  description?: string;
+};
+
+export type CobrancaAssinaturaAsaas = {
+  id: string;
+  invoiceUrl?: string;
+  status?: string;
+  dueDate?: string;
+  value?: number;
+  billingType?: string;
+  paymentDate?: string;
+  confirmedDate?: string;
+  description?: string;
+};
+
 export function obterAssinaturaAsaas(id: string) {
-  return asaasFetch(`/subscriptions/${id}`, { method: 'GET' });
+  return asaasFetch<AssinaturaAsaas>(`/subscriptions/${id}`, { method: 'GET' });
+}
+
+export function atualizarAssinaturaAsaas(id: string, dados: {
+  value?: number;
+  cycle?: 'MONTHLY' | 'YEARLY';
+  status?: 'ACTIVE' | 'INACTIVE';
+  nextDueDate?: string;
+  description?: string;
+  updatePendingPayments?: boolean;
+}) {
+  return asaasFetch<AssinaturaAsaas>(`/subscriptions/${id}`, {
+    method: 'PUT',
+    body: JSON.stringify(dados),
+  });
+}
+
+export function removerAssinaturaAsaas(id: string) {
+  return asaasFetch(`/subscriptions/${id}`, { method: 'DELETE' });
 }
 
 // Lista as cobranças de uma assinatura (a 1ª traz o link de pagamento: invoiceUrl).
 export function listarCobrancasAssinaturaAsaas(id: string) {
-  return asaasFetch<{ data: { id: string; invoiceUrl?: string; status?: string }[] }>(
+  return asaasFetch<{ data: CobrancaAssinaturaAsaas[] }>(
     `/subscriptions/${id}/payments`,
     { method: 'GET' }
   );

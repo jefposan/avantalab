@@ -93,7 +93,20 @@ export function assinaturaVigente(e: EstadoAcesso, agora: Date = new Date()): bo
   if (e.status === 'trial') {
     return !!e.trialFim && new Date(e.trialFim) > agora;
   }
+  // Inadimplência: três dias de carência. Cancelamento: acesso preservado até
+  // o fim do período que já foi pago.
+  if (e.status === 'inadimplente' || e.status === 'cancelada') {
+    return !!e.validoAte && new Date(e.validoAte) > agora;
+  }
   return false; // expirada, cancelada, inadimplente
+}
+
+export function emCarencia(e: EstadoAcesso | null, agora: Date = new Date()): boolean {
+  return !!e && e.status === 'inadimplente' && assinaturaVigente(e, agora);
+}
+
+export function cancelamentoProgramado(e: EstadoAcesso | null, agora: Date = new Date()): boolean {
+  return !!e && e.status === 'cancelada' && assinaturaVigente(e, agora);
 }
 
 // Perfil EMPRESA sem acesso vigente → mostrar o paywall (bloqueio total).
