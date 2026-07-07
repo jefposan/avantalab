@@ -9795,7 +9795,8 @@
     function posicionarIndicador() {
       if (!indicador) return;
       var header = document.getElementById('mobile-main-header');
-      var topo = header ? Math.round(header.getBoundingClientRect().bottom + 10) : 12;
+      // Começa mais abaixo do header para o indicador ficar em área confortável.
+      var topo = header ? Math.round(header.getBoundingClientRect().bottom + 64) : 72;
       indicador.style.top = topo + 'px';
     }
 
@@ -9844,16 +9845,16 @@
       indicador = document.createElement('div');
       indicador.id = 'pull-refresh-indicator';
       indicador.className = 'pointer-events-none';
-      indicador.style.cssText = 'position:fixed;left:50%;top:0;z-index:9999;display:flex;width:170px;flex-direction:column;align-items:center;pointer-events:none;opacity:0;transform:translateX(-50%);transform-origin:top center;transition:opacity .12s ease;';
+      indicador.style.cssText = 'position:fixed;left:50%;top:0;z-index:9999;display:flex;width:220px;flex-direction:column;align-items:center;pointer-events:none;opacity:0;transform:translateX(-50%);transform-origin:top center;transition:opacity .12s ease;';
       indicador.innerHTML =
-        '<span data-pull-ring style="position:relative;display:flex;width:58px;height:58px;align-items:center;justify-content:center;border-radius:999px;background:rgba(2,6,23,.58);box-shadow:0 10px 24px rgba(2,6,23,.24);backdrop-filter:blur(8px);transform:scale(.84);will-change:transform;">' +
-          '<svg data-pull-svg width="58" height="58" viewBox="0 0 58 58" fill="none" style="position:absolute;inset:0;transform:rotate(-90deg);transform-origin:center;will-change:transform;">' +
-            '<circle cx="29" cy="29" r="24" stroke="rgba(255,255,255,.22)" stroke-width="6"></circle>' +
-            '<circle data-pull-progress cx="29" cy="29" r="24" stroke="#38bdf8" stroke-width="6" stroke-linecap="round" stroke-dasharray="150.8" stroke-dashoffset="150.8" style="will-change:stroke-dashoffset;"></circle>' +
+        '<span data-pull-ring style="position:relative;display:flex;width:88px;height:88px;align-items:center;justify-content:center;border-radius:999px;background:rgba(2,6,23,.58);box-shadow:0 12px 28px rgba(2,6,23,.26);backdrop-filter:blur(8px);transform:scale(.84);will-change:transform;">' +
+          '<svg data-pull-svg width="88" height="88" viewBox="0 0 88 88" fill="none" style="position:absolute;inset:0;transform:rotate(-90deg);transform-origin:center;will-change:transform;">' +
+            '<circle cx="44" cy="44" r="36" stroke="rgba(255,255,255,.22)" stroke-width="9"></circle>' +
+            '<circle data-pull-progress cx="44" cy="44" r="36" stroke="#38bdf8" stroke-width="9" stroke-linecap="round" stroke-dasharray="226.2" stroke-dashoffset="226.2" style="will-change:stroke-dashoffset;"></circle>' +
           '</svg>' +
-          '<span data-pull-symbol style="position:relative;color:#e0f2fe;font-size:22px;font-weight:900;line-height:1;will-change:transform;">&#8635;</span>' +
+          '<span data-pull-symbol style="position:relative;color:#e0f2fe;font-size:33px;font-weight:900;line-height:1;will-change:transform;">&#8635;</span>' +
         '</span>' +
-        '<span data-pull-text style="margin-top:8px;border:1px solid rgba(255,255,255,.24);border-radius:999px;background:rgba(2,6,23,.62);padding:6px 11px;color:#fff;font-size:10px;font-weight:900;text-transform:uppercase;letter-spacing:.05em;box-shadow:0 8px 20px rgba(2,6,23,.20);opacity:0;white-space:nowrap;transition:opacity .12s ease;">Puxe para atualizar</span>';
+        '<span data-pull-text style="margin-top:12px;border:1px solid rgba(255,255,255,.24);border-radius:999px;background:rgba(2,6,23,.62);padding:8px 15px;color:#fff;font-size:13px;font-weight:900;text-transform:uppercase;letter-spacing:.05em;box-shadow:0 10px 24px rgba(2,6,23,.22);opacity:0;white-space:nowrap;transition:opacity .12s ease;">Puxe para atualizar</span>';
       document.body.appendChild(indicador);
       posicionarIndicador();
       return indicador;
@@ -9870,7 +9871,7 @@
       var svg = item.querySelector('[data-pull-svg]');
       var progressoCirculo = item.querySelector('[data-pull-progress]');
       var simbolo = item.querySelector('[data-pull-symbol]');
-      var circunferencia = 150.8;
+      var circunferencia = 226.2; // 2π × r(36) do anel maior
 
       posicionarIndicador();
       var opacidadeFundo = distancia > 0
@@ -9878,7 +9879,7 @@
         : 0;
       animarOpacidadeFundo(soltou ? 0.72 : opacidadeFundo);
       item.style.opacity = distancia > 2 ? String(Math.max(0.28, Math.min(distancia / 36, 1))) : '0';
-      item.style.transform = 'translate(-50%, ' + Math.round(64 * progresso) + 'px)';
+      item.style.transform = 'translate(-50%, ' + Math.round(96 * progresso) + 'px)';
       if (texto) texto.textContent = soltou ? 'Recarregando...' : (distancia >= limite ? 'Recarregar' : 'Puxe para atualizar');
       if (texto) texto.style.opacity = soltou ? '1' : (visivel ? String(Math.max(0.35, progressoAviso)) : '0');
       if (anel) {
@@ -9887,7 +9888,7 @@
       }
       if (progressoCirculo) {
         if (soltou) {
-          progressoCirculo.setAttribute('stroke-dasharray', '42 108.8');
+          progressoCirculo.setAttribute('stroke-dasharray', '63 163.2');
           progressoCirculo.setAttribute('stroke-dashoffset', '0');
         } else {
           progressoCirculo.setAttribute('stroke-dasharray', String(circunferencia));
