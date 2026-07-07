@@ -61,25 +61,8 @@ export async function resolverEstadoAcesso(empresaId: string): Promise<EstadoAce
   if (!empresaId) return null;
   const db = servico();
 
-  // 1) Já existe assinatura registrada? Ela é a fonte da verdade.
-  const { data: assin } = await db
-    .from('assinaturas')
-    .select('tipo_perfil, status, valido_ate, trial_fim, plano, ciclo')
-    .eq('empresa_id', empresaId)
-    .maybeSingle();
-
-  if (assin) {
-    return {
-      tipoPerfil: assin.tipo_perfil as TipoPerfil,
-      status: assin.status as StatusAssinatura,
-      validoAte: assin.valido_ate,
-      trialFim: assin.trial_fim,
-      plano: assin.plano ?? null,
-      ciclo: assin.ciclo ?? null,
-    };
-  }
-
-  // 2) Sem assinatura → derivar do próprio perfil.
+  // O tipo do perfil vem SEMPRE da tabela `empresas` (fonte da verdade) —
+  // a coluna tipo_perfil da assinatura pode estar desatualizada/errada.
   const { data: emp } = await db
     .from('empresas')
     .select('tipo_perfil, created_at')
@@ -89,6 +72,26 @@ export async function resolverEstadoAcesso(empresaId: string): Promise<EstadoAce
   if (!emp) return null; // sem info → o "cérebro" trata como fail-open (não bloqueia)
 
   const tipoPerfil: TipoPerfil = emp.tipo_perfil === 'pessoal' ? 'pessoal' : 'empresa';
+
+  // 1) Já existe assinatura registrada? Ela é a fonte da verdade do STATUS.
+  const { data: assin } = await db
+    .from('assinaturas')
+    .select('tipo_perfil, status, valido_ate, trial_fim, plano, ciclo')
+    .eq('empresa_id', empresaId)
+    .maybeSingle();
+
+  if (assin) {
+    return {
+      tipoPerfil,
+      status: assin.status as StatusAssinatura,
+      validoAte: assin.valido_ate,
+      trialFim: assin.trial_fim,
+      plano: assin.plano ?? null,
+      ciclo: assin.ciclo ?? null,
+    };
+  }
+
+  // 2) Sem assinatura → derivar do próprio perfil.
   const criadoEm = emp.created_at ? new Date(emp.created_at) : null;
   const anteriorAoLancamento = !criadoEm || criadoEm < new Date(DATA_LANCAMENTO);
 

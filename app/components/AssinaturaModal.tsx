@@ -47,6 +47,8 @@ interface AssinaturaModalProps {
   darkMode?: boolean;
   corPrimaria?: string;
   estado: EstadoAcesso | null;
+  // Tipo do perfil aberto (fonte confiável; o tipoPerfil do estado é fallback).
+  tipoPerfil?: 'empresa' | 'pessoal';
 }
 
 function formatarData(iso: string | null): string {
@@ -87,6 +89,7 @@ export default function AssinaturaModal({
   darkMode = false,
   corPrimaria = '#0A1F44',
   estado,
+  tipoPerfil,
 }: AssinaturaModalProps) {
   const [detalhes, setDetalhes] = useState<DetalhesAssinatura | null>(null);
   const [carregando, setCarregando] = useState(false);
@@ -221,7 +224,7 @@ export default function AssinaturaModal({
   // do gateway — mesmo que exista um registro antigo na Asaas.
   const cortesiaAtiva = status === 'cortesia';
   const viaCupom = cortesiaAtiva && Boolean(detalhes?.viaCupom);
-  const tipoPessoal = estadoAtual?.tipoPerfil === 'pessoal';
+  const tipoPessoal = (tipoPerfil ?? estadoAtual?.tipoPerfil) === 'pessoal';
   const rotuloSituacao = canceladaNoFim
     ? 'Cancelada ao fim do período'
     : viaCupom ? 'Cupom' : rotuloStatusAssinatura(status);
@@ -236,10 +239,10 @@ export default function AssinaturaModal({
     : formatarData(assinatura?.proximoVencimento || null);
   const podeContratar = !assinatura && (
     estadoAtual?.status === 'trial'
-    || (estadoAtual?.tipoPerfil === 'pessoal' && estadoAtual.status === 'expirada')
+    || (tipoPessoal && estadoAtual?.status === 'expirada')
   );
-  const precoMensal = estadoAtual?.tipoPerfil === 'pessoal' ? 'R$ 9,90' : 'R$ 34,90';
-  const precoAnual = estadoAtual?.tipoPerfil === 'pessoal' ? 'R$ 99,00' : 'R$ 348,00';
+  const precoMensal = tipoPessoal ? 'R$ 9,90' : 'R$ 34,90';
+  const precoAnual = tipoPessoal ? 'R$ 99,00' : 'R$ 348,00';
   const card = darkMode ? 'bg-slate-900 text-slate-100 border-slate-700' : 'bg-white text-slate-900 border-slate-200';
   const muted = darkMode ? 'text-slate-400' : 'text-slate-500';
   const painel = darkMode ? 'border-slate-700 bg-slate-800' : 'border-slate-200 bg-slate-50';

@@ -6256,6 +6256,7 @@ if (isTelaMobile) {
   darkMode={darkMode}
   corPrimaria={corPrimaria}
   estado={estadoAcesso}
+  tipoPerfil={tipoPerfilAtualNormalizado}
 />
 
 <PremiumPessoalModal

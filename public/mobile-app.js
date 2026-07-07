@@ -7931,7 +7931,11 @@
       : (estado.status === 'trial' ? 'background:#DBEAFE;color:#1D4ED8' : (estado.status === 'inadimplente' ? 'background:#FEF3C7;color:#B45309' : 'background:#FEE2E2;color:#B91C1C'));
     var ciclo = estado.ciclo || '';
     var plano = estado.plano === 'pessoal_premium' ? 'Premium Pessoal' : (estado.plano ? 'Empresa' : '—');
-    var pessoal = estado.tipoPerfil === 'pessoal';
+    // Tipo do perfil: prioriza o perfil aberto no app (fonte confiável);
+    // o tipoPerfil do estado é só fallback.
+    var pessoal = state.empresa && state.empresa.tipo_perfil
+      ? normalizarTipoPerfil(state.empresa.tipo_perfil) === 'pessoal'
+      : estado.tipoPerfil === 'pessoal';
     // Cortesia (admin/benefício) e cupom: não exibem dados de cobrança do gateway.
     var cortesiaAtiva = estado.status === 'cortesia';
     var viaCupom = cortesiaAtiva && !!(detalhes && detalhes.viaCupom);
