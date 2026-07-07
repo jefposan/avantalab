@@ -7,7 +7,7 @@ import {
   type CobrancaAssinaturaAsaas,
 } from '../../../lib/asaas';
 import { PRECOS, type Ciclo, type PlanoPago } from '../../../lib/cobranca';
-import { autenticarPerfilCobranca, resolverEstadoAcesso } from '../../../lib/cobranca-servidor';
+import { autenticarPerfilCobranca, resolverEstadoAcessoParaUsuario } from '../../../lib/cobranca-servidor';
 
 export const runtime = 'nodejs';
 
@@ -32,10 +32,10 @@ export async function GET(request: Request) {
   const acesso = await autenticarPerfilCobranca(request, empresaId);
   if (!acesso) return NextResponse.json({ erro: true, mensagem: 'Acesso não autorizado.' }, { status: 401 });
 
-  const estado = await resolverEstadoAcesso(empresaId);
+  const estado = await resolverEstadoAcessoParaUsuario(empresaId, acesso.usuario.id);
   const { data: local } = await acesso.db
     .from('assinaturas')
-    .select('id, gateway_subscription_id')
+    .select('id, gateway_subscription_id, cupom_id')
     .eq('empresa_id', empresaId)
     .maybeSingle();
 
@@ -79,7 +79,9 @@ export async function GET(request: Request) {
     }
   }
 
-  return NextResponse.json({ ok: true, estado, assinatura, faturas, podeGerenciar: acesso.podeGerenciar });
+  // Cortesia vinda de cupom (cupom_id preenchido) é exibida como "Cupom" nas telas.
+  const viaCupom = Boolean(local?.cupom_id) && estado?.status === 'cortesia';
+  return NextResponse.json({ ok: true, estado, assinatura, faturas, viaCupom, podeGerenciar: acesso.podeGerenciar });
 }
 
 export async function PATCH(request: Request) {

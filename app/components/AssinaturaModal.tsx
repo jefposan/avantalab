@@ -31,6 +31,7 @@ type DetalhesAssinatura = {
     formaPagamento: string | null;
   } | null;
   faturas: Fatura[];
+  viaCupom?: boolean; // cortesia concedida por cupom
   podeGerenciar: boolean;
 };
 
@@ -216,6 +217,23 @@ export default function AssinaturaModal({
   const assinatura = detalhes?.assinatura;
   const faturas = detalhes?.faturas || [];
   const podeGerenciar = detalhes?.podeGerenciar !== false;
+  // Cortesia (admin/benefício Empresa) e cupom: não exibem dados de cobrança
+  // do gateway — mesmo que exista um registro antigo na Asaas.
+  const cortesiaAtiva = status === 'cortesia';
+  const viaCupom = cortesiaAtiva && Boolean(detalhes?.viaCupom);
+  const tipoPessoal = estadoAtual?.tipoPerfil === 'pessoal';
+  const rotuloSituacao = canceladaNoFim
+    ? 'Cancelada ao fim do período'
+    : viaCupom ? 'Cupom' : rotuloStatusAssinatura(status);
+  const rotuloPlanoExibido = cortesiaAtiva
+    ? (viaCupom
+        ? `${tipoPessoal ? 'Pessoal' : 'Empresa'} · cupom`
+        : tipoPessoal ? 'Pessoal · cortesia' : '—')
+    : rotuloPlano(estadoAtual?.plano ?? null, cicloAtual ?? null);
+  const valorExibido = cortesiaAtiva ? '—' : (assinatura ? dinheiro(assinatura.valor) : '—');
+  const vencimentoExibido = cortesiaAtiva
+    ? (viaCupom ? (estadoAtual?.validoAte ? formatarData(estadoAtual.validoAte) : 'Sem prazo') : '—')
+    : formatarData(assinatura?.proximoVencimento || null);
   const podeContratar = !assinatura && (
     estadoAtual?.status === 'trial'
     || (estadoAtual?.tipoPerfil === 'pessoal' && estadoAtual.status === 'expirada')
@@ -247,10 +265,10 @@ export default function AssinaturaModal({
             {canceladaNoFim && <div className="mb-4 rounded-lg border border-sky-200 bg-sky-50 px-4 py-3 text-sm text-sky-900"><strong>Renovação cancelada.</strong> O acesso permanece disponível até {formatarData(estadoAtual?.validoAte || null)}.</div>}
 
             <div className={`grid gap-3 rounded-[14px_24px_24px_24px] border p-4 sm:grid-cols-2 ${painel}`}>
-              <div><span className={`text-[10px] font-semibold uppercase tracking-wide ${muted}`}>Situação</span><div className="mt-1"><span className="inline-flex rounded-full px-3 py-1 text-xs font-semibold" style={{ backgroundColor: selo.bg, color: selo.texto }}>{canceladaNoFim ? 'Cancelada ao fim do período' : rotuloStatusAssinatura(status)}</span></div></div>
-              <div><span className={`text-[10px] font-semibold uppercase tracking-wide ${muted}`}>Plano atual</span><strong className="mt-1 block text-sm font-semibold">{rotuloPlano(estadoAtual?.plano ?? null, cicloAtual ?? null)}</strong></div>
-              <div><span className={`text-[10px] font-semibold uppercase tracking-wide ${muted}`}>Valor</span><strong className="mt-1 block text-sm font-semibold">{assinatura ? dinheiro(assinatura.valor) : '—'}</strong></div>
-              <div><span className={`text-[10px] font-semibold uppercase tracking-wide ${muted}`}>Próximo vencimento</span><strong className="mt-1 block text-sm font-semibold">{formatarData(assinatura?.proximoVencimento || null)}</strong></div>
+              <div><span className={`text-[10px] font-semibold uppercase tracking-wide ${muted}`}>Situação</span><div className="mt-1"><span className="inline-flex rounded-full px-3 py-1 text-xs font-semibold" style={{ backgroundColor: selo.bg, color: selo.texto }}>{rotuloSituacao}</span></div></div>
+              <div><span className={`text-[10px] font-semibold uppercase tracking-wide ${muted}`}>Plano atual</span><strong className="mt-1 block text-sm font-semibold">{rotuloPlanoExibido}</strong></div>
+              <div><span className={`text-[10px] font-semibold uppercase tracking-wide ${muted}`}>Valor</span><strong className="mt-1 block text-sm font-semibold">{valorExibido}</strong></div>
+              <div><span className={`text-[10px] font-semibold uppercase tracking-wide ${muted}`}>Próximo vencimento</span><strong className="mt-1 block text-sm font-semibold">{vencimentoExibido}</strong></div>
             </div>
 
             {podeGerenciar && podeContratar && <section className="mt-5">
@@ -268,7 +286,7 @@ export default function AssinaturaModal({
               </div>
             </section>}
 
-            {podeGerenciar && assinatura && !canceladaNoFim && <section className="mt-5">
+            {podeGerenciar && assinatura && !canceladaNoFim && !cortesiaAtiva && <section className="mt-5">
               <h3 className="text-sm font-semibold">Ciclo de cobrança</h3>
               <p className={`mt-1 text-xs ${muted}`}>A alteração vale para a próxima renovação e não modifica cobranças já geradas.</p>
               <div className="mt-3 grid grid-cols-2 gap-2">
@@ -289,7 +307,7 @@ export default function AssinaturaModal({
               </div>
             </section>
 
-            {podeGerenciar && assinatura && !canceladaNoFim && <section className="mt-5 border-t border-slate-200 pt-4">
+            {podeGerenciar && assinatura && !canceladaNoFim && !cortesiaAtiva && <section className="mt-5 border-t border-slate-200 pt-4">
               {!confirmarCancelamento ? <button type="button" onClick={() => setConfirmarCancelamento(true)} className="h-10 w-full rounded-lg border border-red-200 bg-red-50 text-xs font-semibold uppercase text-red-600 transition hover:bg-red-600 hover:text-white">Cancelar renovação</button> : <div className="rounded-lg border border-red-200 bg-red-50 p-3"><p className="text-xs font-medium leading-relaxed text-red-800">A renovação será interrompida. O perfil continuará acessível até o fim do período já pago.</p><div className="mt-3 grid grid-cols-2 gap-2"><button type="button" onClick={() => setConfirmarCancelamento(false)} className="h-9 rounded-lg border border-slate-300 bg-white text-xs font-semibold text-slate-600">Voltar</button><button type="button" disabled={acao !== null} onClick={() => void executar('cancelar')} className="h-9 rounded-lg bg-red-600 text-xs font-semibold text-white disabled:opacity-60">{acao === 'cancelar' ? 'Cancelando...' : 'Confirmar'}</button></div></div>}
             </section>}
           </>}
