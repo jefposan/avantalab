@@ -561,53 +561,53 @@
         : 'Escolha um plano para ativar o perfil. Seus dados permanecem guardados.';
     var faturaUrl = state.paywallFaturaUrl || '';
     var blocoCobranca = faturaUrl
-      ? '<div class="mt-2.5 rounded-xl border border-sky-200 bg-sky-50 px-3 py-2.5 shadow-sm">' +
+      ? '<div class="mt-2 rounded-xl border border-sky-200 bg-sky-50 px-3 py-2 shadow-sm">' +
           '<p class="text-xs font-black text-slate-900">Cobrança disponível</p>' +
           '<p class="mt-1 text-[10px] font-semibold leading-relaxed text-slate-600">Já existe uma cobrança pendente para este perfil.</p>' +
-          '<button type="button" onclick="window._avaPaywallPagarCobranca()" class="mt-2 h-9 w-full rounded-lg bg-sky-700 text-[11px] font-black uppercase tracking-wide text-white active:scale-[0.98]">Pagar cobrança</button>' +
+          '<button type="button" onclick="window._avaPaywallPagarCobranca()" class="mt-2 h-8 w-full rounded-lg bg-sky-700 text-[10px] font-black uppercase tracking-wide text-white active:scale-[0.98]">Pagar cobrança</button>' +
         '</div>'
-      : '<label class="mt-2.5 block text-[11px] font-black uppercase tracking-wide text-slate-500">CPF ou CNPJ para a cobrança</label>' +
-        '<input id="paywall-cpf" type="text" inputmode="numeric" placeholder="Somente números" class="mt-1 w-full rounded-lg border border-slate-300 bg-white/90 px-3 py-2 text-sm font-semibold text-slate-800 outline-none" />' +
-        '<div class="mt-2.5 grid grid-cols-2 gap-2">' +
-          '<div class="rounded-xl border border-slate-200 bg-white/80 p-3">' +
-            '<p class="text-[11px] font-black uppercase tracking-wide text-slate-500">Mensal</p>' +
-            '<p class="mt-0.5 text-lg font-black">' + brl(mensal) + '<span class="text-[11px] font-bold text-slate-500">/mês</span></p>' +
-            '<button type="button" onclick="window._avaPaywallAssinar(\'mensal\')" class="mt-2 h-9 w-full rounded-lg border border-slate-300 bg-white text-[10px] font-black uppercase tracking-wide text-slate-700 active:scale-[0.98] active:bg-sky-700 active:text-white">Gerar mensal</button>' +
+      : '<label class="mt-2 block text-[10px] font-black uppercase tracking-wide text-slate-500">CPF ou CNPJ para a cobrança</label>' +
+        '<input id="paywall-cpf" type="text" inputmode="numeric" placeholder="Somente números" class="mt-1 w-full rounded-lg border border-slate-300 bg-white/90 px-3 py-1.5 text-sm font-semibold text-slate-800 outline-none" />' +
+        '<div class="mt-2 grid grid-cols-2 gap-2">' +
+          '<div class="rounded-xl border border-slate-200 bg-white/80 p-2.5">' +
+            '<p class="text-[10px] font-black uppercase tracking-wide text-slate-500">Mensal</p>' +
+            '<p class="mt-0.5 text-base font-black">' + brl(mensal) + '<span class="text-[10px] font-bold text-slate-500">/mês</span></p>' +
+            '<button type="button" onclick="window._avaPaywallAssinar(\'mensal\')" class="mt-1.5 h-8 w-full rounded-lg border border-slate-300 bg-white text-[9px] font-black uppercase tracking-wide text-slate-700 active:scale-[0.98] active:bg-sky-700 active:text-white">Gerar mensal</button>' +
           '</div>' +
-          '<div class="rounded-xl border-2 border-sky-600 bg-white/85 p-3">' +
-            '<p class="text-[11px] font-black uppercase tracking-wide text-slate-500">Anual</p>' +
-            '<p class="mt-0.5 text-lg font-black">' + brl(anualMes) + '<span class="text-[11px] font-bold text-slate-500">/mês</span></p>' +
-            '<p class="text-[10px] font-semibold text-slate-500">' + brl(anualAno) + '/ano</p>' +
-            '<button type="button" onclick="window._avaPaywallAssinar(\'anual\')" class="mt-2 h-9 w-full rounded-lg bg-sky-700 text-[10px] font-black uppercase tracking-wide text-white active:scale-[0.98]">Gerar anual</button>' +
+          '<div class="rounded-xl border-2 border-sky-600 bg-white/85 p-2.5">' +
+            '<p class="text-[10px] font-black uppercase tracking-wide text-slate-500">Anual</p>' +
+            '<p class="mt-0.5 text-base font-black">' + brl(anualMes) + '<span class="text-[10px] font-bold text-slate-500">/mês</span></p>' +
+            '<p class="text-[9px] font-semibold text-slate-500">' + brl(anualAno) + '/ano</p>' +
+            '<button type="button" onclick="window._avaPaywallAssinar(\'anual\')" class="mt-1.5 h-8 w-full rounded-lg bg-sky-700 text-[9px] font-black uppercase tracking-wide text-white active:scale-[0.98]">Gerar anual</button>' +
           '</div>' +
         '</div>';
     return (
-      '<section class="avantalab-mobile-bg fixed inset-0 flex flex-col items-center overflow-x-hidden overflow-y-auto px-4 pb-4" style="height:100dvh;padding-top:clamp(8rem,18dvh,11rem);background-position:center bottom;background-size:auto 108%;overscroll-behavior:contain;--avantalab-mobile-bg-overlay:linear-gradient(rgba(255,255,255,.08),rgba(255,255,255,0));">' +
-        '<div class="mx-auto w-full max-w-md shrink-0 overflow-y-auto rounded-3xl border border-white/40 bg-white/85 p-4 text-slate-900 shadow-2xl backdrop-blur-xl" style="max-height:calc(100dvh - 9rem);overscroll-behavior:contain;">' +
-          '<p class="text-[11px] font-black uppercase tracking-[0.24em] text-sky-700">Assinatura</p>' +
-          '<h1 class="mt-0.5 text-lg font-black leading-tight">' + tituloBloqueio + '</h1>' +
+      '<section class="avantalab-mobile-bg fixed inset-0 flex flex-col items-center overflow-x-hidden overflow-y-auto px-4 pb-4" style="height:100dvh;padding-top:clamp(6.5rem,14dvh,9rem);background-position:center bottom;background-size:auto 108%;overscroll-behavior:contain;--avantalab-mobile-bg-overlay:linear-gradient(rgba(255,255,255,.08),rgba(255,255,255,0));">' +
+        '<div class="mx-auto w-full max-w-md shrink-0 overflow-y-auto rounded-3xl border border-white/40 bg-white/85 p-3.5 text-slate-900 shadow-2xl backdrop-blur-xl" style="max-height:calc(100dvh - 7.5rem);overscroll-behavior:contain;">' +
+          '<p class="text-[10px] font-black uppercase tracking-[0.22em] text-sky-700">Assinatura</p>' +
+          '<h1 class="mt-0.5 text-base font-black leading-tight">' + tituloBloqueio + '</h1>' +
           // Perfil bloqueado — destaque forte
-          '<div class="mt-2 rounded-xl border-2 border-sky-400 px-3 py-2 text-center shadow-md" style="background:linear-gradient(135deg,#003E73,#00A6C8);">' +
+          '<div class="mt-1.5 rounded-xl border-2 border-sky-400 px-3 py-1.5 text-center shadow-md" style="background:linear-gradient(135deg,#003E73,#00A6C8);">' +
             '<span class="block text-[9px] font-black uppercase tracking-[0.22em] text-white/80">Perfil bloqueado</span>' +
-            '<span class="mt-0.5 block truncate text-lg font-black text-white">' + nome + '</span>' +
+            '<span class="mt-0.5 block truncate text-base font-black text-white">' + nome + '</span>' +
           '</div>' +
-          '<p class="mt-2 text-xs font-semibold text-slate-600">' + textoBloqueio + '</p>' +
+          '<p class="mt-1.5 text-[11px] font-semibold leading-snug text-slate-600">' + textoBloqueio + '</p>' +
           '<p id="paywall-msg" class="mt-1.5 text-xs font-bold text-red-600"></p>' +
-          '<button type="button" onclick="window._avaPaywallAtualizar()" class="mt-2 h-8 w-full rounded-lg border border-sky-200 bg-sky-50 text-[10px] font-black uppercase text-sky-700">Ja paguei - atualizar</button>' +
+          '<button type="button" onclick="window._avaPaywallAtualizar()" class="mt-1.5 h-7 w-full rounded-lg border border-sky-200 bg-sky-50 text-[9px] font-black uppercase text-sky-700">Ja paguei - atualizar</button>' +
           blocoCobranca +
-          '<div class="mt-3 border-t border-slate-200 pt-2.5">' +
-            '<label class="mb-1 block text-[11px] font-black uppercase tracking-wide text-slate-500">Tem um cupom?</label>' +
+          '<div class="mt-2.5 border-t border-slate-200 pt-2">' +
+            '<label class="mb-1 block text-[10px] font-black uppercase tracking-wide text-slate-500">Tem um cupom?</label>' +
             '<div class="flex gap-2">' +
-              '<input id="paywall-cupom" type="text" placeholder="Código" class="min-w-0 flex-1 rounded-lg border border-slate-300 bg-white/90 px-3 py-2 text-sm font-semibold uppercase text-slate-800 outline-none" />' +
-              '<button type="button" onclick="window._avaPaywallCupom()" class="shrink-0 rounded-lg border border-slate-300 bg-white px-4 text-[11px] font-black uppercase text-slate-700 active:scale-[0.98]">Aplicar</button>' +
+              '<input id="paywall-cupom" type="text" placeholder="Código" class="min-w-0 flex-1 rounded-lg border border-slate-300 bg-white/90 px-3 py-1.5 text-sm font-semibold uppercase text-slate-800 outline-none" />' +
+              '<button type="button" onclick="window._avaPaywallCupom()" class="shrink-0 rounded-lg border border-slate-300 bg-white px-3 text-[10px] font-black uppercase text-slate-700 active:scale-[0.98]">Aplicar</button>' +
             '</div>' +
             '<p id="paywall-cupom-msg" class="mt-1.5 text-[11px] font-bold text-red-600"></p>' +
           '</div>' +
           // Rodapé com botões estruturados — três na mesma linha, com cor
-          '<div class="mt-3 flex gap-2 border-t border-slate-200 pt-2.5">' +
-            (temTrocar ? '<button type="button" onclick="window._avaPaywallTrocar()" class="h-8 flex-1 rounded-lg border border-sky-300 bg-sky-50 px-1 text-[10px] font-black uppercase tracking-wide text-sky-700 shadow-sm active:scale-[0.98] active:bg-sky-700 active:text-white">Trocar</button>' : '') +
-            '<button type="button" onclick="window._avaPaywallCriar()" class="h-8 flex-1 rounded-lg border border-sky-300 bg-sky-50 px-1 text-[10px] font-black uppercase tracking-wide text-sky-700 shadow-sm active:scale-[0.98] active:bg-sky-700 active:text-white">Criar</button>' +
-            '<button type="button" onclick="window._avaPaywallSair()" class="h-8 flex-1 rounded-lg border border-red-200 bg-red-50 px-1 text-[10px] font-black uppercase tracking-wide text-red-600 shadow-sm active:scale-[0.98] active:bg-red-600 active:text-white">Sair</button>' +
+          '<div class="mt-2.5 flex gap-2 border-t border-slate-200 pt-2">' +
+            (temTrocar ? '<button type="button" onclick="window._avaPaywallTrocar()" class="h-7 flex-1 rounded-lg border border-sky-300 bg-sky-50 px-1 text-[9px] font-black uppercase tracking-wide text-sky-700 shadow-sm active:scale-[0.98] active:bg-sky-700 active:text-white">Trocar</button>' : '') +
+            '<button type="button" onclick="window._avaPaywallCriar()" class="h-7 flex-1 rounded-lg border border-sky-300 bg-sky-50 px-1 text-[9px] font-black uppercase tracking-wide text-sky-700 shadow-sm active:scale-[0.98] active:bg-sky-700 active:text-white">Criar</button>' +
+            '<button type="button" onclick="window._avaPaywallSair()" class="h-7 flex-1 rounded-lg border border-red-200 bg-red-50 px-1 text-[9px] font-black uppercase tracking-wide text-red-600 shadow-sm active:scale-[0.98] active:bg-red-600 active:text-white">Sair</button>' +
           '</div>' +
         '</div>' +
       '</section>'
@@ -9978,7 +9978,7 @@
           return Promise.all(
             keys
               .filter(function (key) {
-                return key.indexOf('avantalab-mobile-') === 0 && key !== 'avantalab-mobile-v232';
+                return key.indexOf('avantalab-mobile-') === 0 && key !== 'avantalab-mobile-v233';
               })
               .map(function (key) {
                 return caches.delete(key);
@@ -9995,7 +9995,7 @@
     });
 
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/mobile-sw.js?v=221').then(function (registro) {
+      navigator.serviceWorker.register('/mobile-sw.js?v=222').then(function (registro) {
         if (registro && registro.update) registro.update();
       }).catch(function () {});
     }
