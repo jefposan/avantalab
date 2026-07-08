@@ -994,10 +994,32 @@ const mostrarComparativoResumoDash =
         className={`${bgCard} card-radius-avantalab w-full p-6 rounded-2xl shadow-lg border border-t-4 transition-colors`}
         style={{ borderTopColor: corPrimaria }}
       >
-        <h2 className={`text-2xl font-black ${textStrong} mb-10 flex items-center`}>
-          <span className="w-3 h-8 rounded-full mr-4 shadow-sm" style={{ backgroundColor: corPrimaria }}></span>
-          LANÇAMENTOS MENSAIS
-        </h2>
+        {/* Topo do card: faixa com degradê suave da cor do tema (identidade
+            própria em relação aos demais cards) + selo do ano. */}
+        <div
+          className="-mx-6 -mt-6 mb-8 px-6 pb-5 pt-6"
+          style={{
+            background: `linear-gradient(180deg, ${corPrimaria}${darkMode ? '2e' : '14'} 0%, ${corPrimaria}05 70%, transparent 100%)`,
+            borderRadius: '12px 28px 0 0',
+          }}
+        >
+          <div className="flex items-center justify-between gap-3">
+            <h2 className={`text-2xl font-black ${textStrong} flex min-w-0 items-center`}>
+              <span
+                className="mr-4 h-8 w-3 shrink-0 rounded-full shadow-sm"
+                style={{ background: `linear-gradient(180deg, ${corPrimaria}, ${corPrimaria}66)` }}
+              ></span>
+              <span className="truncate">LANÇAMENTOS MENSAIS</span>
+            </h2>
+            <span
+              className="shrink-0 rounded-full border px-3 py-1 text-xs font-black tabular-nums"
+              style={{ borderColor: `${corPrimaria}40`, color: corPrimaria, background: `${corPrimaria}0d` }}
+            >
+              {anoSelecionado}
+            </span>
+          </div>
+          <p className={`mt-2 text-xs font-semibold ${textMuted}`}>Toque em um mês para abrir os lançamentos.</p>
+        </div>
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-x-6 sm:gap-y-3">
           {(() => {
             const anoEhAtual = String(anoSelecionado) === String(new Date().getFullYear());
@@ -1016,10 +1038,12 @@ const mostrarComparativoResumoDash =
                     onClick={() => setMesAtivo(mes)}
                     className="group flex h-14 cursor-pointer items-center justify-center rounded-xl border-2 text-xs font-black shadow-md transition-all hover:-translate-y-0.5 hover:shadow-lg"
                     style={{
-                      background: `linear-gradient(135deg, ${corPrimaria}, ${corPrimaria}cc)`,
-                      borderColor: corPrimaria,
+                      // Degradê bem esmaecido: começa na cor cheia e dilui até
+                      // ~55%, para não ficar chapado nem pesado em cores fortes.
+                      background: `linear-gradient(135deg, ${corPrimaria} 0%, ${corPrimaria}d9 35%, ${corPrimaria}8c 100%)`,
+                      borderColor: `${corPrimaria}66`,
                       color: textoSobrePrimaria,
-                      boxShadow: `0 6px 16px ${corPrimaria}40`,
+                      boxShadow: `0 6px 16px ${corPrimaria}33`,
                     }}
                     title="Mês atual"
                   >
@@ -1060,11 +1084,18 @@ const mostrarComparativoResumoDash =
           className={`mt-8 rounded-xl border p-5 ${
             darkMode
               ? 'border-slate-700 bg-slate-800/70'
-              : 'border-slate-200 bg-slate-50'
+              : 'border-slate-200'
           }`}
+          style={{
+            borderLeft: `4px solid ${corPrimaria}`,
+            background: darkMode
+              ? `linear-gradient(135deg, ${corPrimaria}1f, rgba(30,41,59,.7) 55%)`
+              : `linear-gradient(135deg, ${corPrimaria}0f, #ffffff 55%)`,
+          }}
         >
           <div className="flex items-center justify-between border-b border-slate-200/10 pb-3">
-            <h3 className={`font-bold ${textStrong} text-sm uppercase tracking-wider`}>
+            <h3 className={`font-bold ${textStrong} text-sm uppercase tracking-wider flex items-center gap-2`}>
+              <span className="h-2 w-2 rounded-full" style={{ backgroundColor: corPrimaria }} />
               Resumo Anual
             </h3>
 
