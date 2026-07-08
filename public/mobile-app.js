@@ -7160,17 +7160,19 @@
     var titulo = receita ? item.origem : item.despesa;
     var detalhe = receita ? 'Receita' : 'Despesa';
 
-    return (
-      '<div id="modal-acao-overlay" class="fixed inset-0 z-[55] flex items-center justify-center overflow-hidden bg-slate-950/60 px-3 pt-4" style="padding-bottom:calc(env(safe-area-inset-bottom) + 78px)">' +
-        '<section class="mx-auto w-full max-w-md overflow-x-hidden overflow-y-auto rounded-3xl bg-white p-4 shadow-2xl overscroll-contain" style="max-height:calc(100dvh - env(safe-area-inset-bottom) - 102px)">' +
-          '<div class="-mx-4 -mt-4 mb-4 flex items-center justify-between gap-3 rounded-t-3xl px-4 py-3 text-white" style="background-color:#003E73">' +
-            '<div class="min-w-0"><p class="text-[10px] font-black uppercase tracking-wide text-cyan-100/75">' + detalhe + '</p><h2 class="truncate text-base font-black">' + escapeHtml(titulo) + '</h2></div>' +
-            '<button id="fechar-acao-lancamento" type="button" class="flex h-9 w-9 items-center justify-center rounded-full border border-white/20 bg-white/10 text-xl text-white">&times;</button>' +
-          '</div>' +
-          alertaHtml().replace('mt-4', 'mb-3') +
-	          (acao.modo === 'editar'
-	            ? modalEditarLancamentoHtml(acao)
-	            : (acao.modo === 'excluir' ? modalConfirmarExclusaoLancamentoHtml(acao) : modalOpcoesLancamentoHtml(acao))) +
+	    return (
+	      '<div id="modal-acao-overlay" class="fixed inset-0 z-[55] flex items-center justify-center overflow-hidden bg-slate-950/60 px-3 pt-4" style="padding-bottom:calc(env(safe-area-inset-bottom) + 78px)">' +
+	        '<section class="mx-auto flex w-full max-w-md flex-col overflow-hidden rounded-3xl bg-white shadow-2xl" style="max-height:calc(100dvh - env(safe-area-inset-bottom) - 102px)">' +
+	          '<div class="flex shrink-0 items-center justify-between gap-3 px-4 py-3 text-white" style="background-color:#003E73">' +
+	            '<div class="min-w-0"><p class="text-[10px] font-black uppercase tracking-wide text-cyan-100/75">' + detalhe + '</p><h2 class="truncate text-base font-black">' + escapeHtml(titulo) + '</h2></div>' +
+	            '<button id="fechar-acao-lancamento" type="button" class="flex h-9 w-9 items-center justify-center rounded-full border border-white/20 bg-white/10 text-xl text-white">&times;</button>' +
+	          '</div>' +
+	          '<div class="min-h-0 overflow-y-auto p-4 overscroll-contain">' +
+	            alertaHtml().replace('mt-4', 'mb-3') +
+	            (acao.modo === 'editar'
+	              ? modalEditarLancamentoHtml(acao)
+	              : (acao.modo === 'excluir' ? modalConfirmarExclusaoLancamentoHtml(acao) : modalOpcoesLancamentoHtml(acao))) +
+	          '</div>' +
 	        '</section>' +
 	      '</div>'
 	    );

@@ -64,7 +64,7 @@ export function criarAvantaShellPreset({ corPrimaria, darkMode }: AvantaShellPre
       ['--avanta-tras-overlay' as string]: sombraEntreCamadas,
       ['--avanta-front-bg' as string]: superficie,
       ['--avanta-body-bg' as string]: superficie,
-      ['--avanta-body-shadow' as string]: `inset 1px 0 0 ${borda}`,
+      ['--avanta-body-shadow' as string]: `inset 1px 0 0 ${borda}, inset -1px 0 0 ${borda}, inset 0 -1px 0 ${borda}`,
       ['--avanta-body-top-left-radius' as string]: '0px',
       ['--avanta-title-color' as string]: 'currentColor',
       ['--avanta-accent-bg' as string]: corPrimaria,
