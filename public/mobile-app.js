@@ -1189,6 +1189,7 @@
     return [
       'ia',
       'agenda',
+      'insightsAva',
       'saldo',
       'caixinha',
       'totais',
@@ -1205,6 +1206,7 @@
   function tituloCardDashboard(id) {
     return {
       saldo: 'Resumo inicial',
+      insightsAva: 'Insights da Ava',
       caixinha: 'Caixinha',
       ia: 'Perguntas para IA',
       agenda: 'Agenda',
@@ -6684,6 +6686,7 @@
     var banner = avisoConfirmarHtml();
     var cards = {
       saldo: saldoTopoHtml(atual, anterior),
+      insightsAva: insightsAvaHtml(atual),
       caixinha: caixinhaCardHtml(atual),
       ia: perguntaIaHtml(),
       agenda: agendaResumoHtml(),
@@ -6717,6 +6720,67 @@
         '</div>';
       })
       .join('');
+  }
+
+  function insightsAvaHtml(atual) {
+    var receitas = Number(atual.receitas || 0);
+    var despesas = Number(atual.despesasTotais || atual.despesas || 0);
+    var resultado = receitas - despesas;
+    var caixinha = caixinhaResumo(atual);
+    var porDespesa = {};
+
+    (atual.lancamentos || []).forEach(function (item) {
+      if (!item || item.status === 'cancelada') return;
+      var nome = item.despesa || 'Despesa';
+      porDespesa[nome] = (porDespesa[nome] || 0) + Number(item.valor || 0);
+    });
+
+    var maior = Object.keys(porDespesa).map(function (nome) {
+      return { nome: nome, valor: porDespesa[nome] };
+    }).sort(function (a, b) { return b.valor - a.valor; })[0];
+
+    var insights = [];
+    if (!receitas && !despesas) {
+      insights.push({ tom: 'neutro', titulo: 'Comece pelo basico', texto: 'Registre receitas e despesas para a Ava enxergar padroes e sugerir proximos passos.' });
+    } else if (resultado >= 0) {
+      insights.push({ tom: 'bom', titulo: 'Resultado positivo', texto: 'Voce esta com ' + dinheiro(resultado) + ' de sobra em ' + nomeMesCompleto(atual.mes) + '. Avalie separar parte para a Caixinha.' });
+    } else {
+      insights.push({ tom: 'alerta', titulo: 'Atencao ao resultado', texto: 'As despesas superam as receitas em ' + dinheiro(Math.abs(resultado)) + '. Revise os maiores gastos primeiro.' });
+    }
+
+    if (maior && despesas > 0) {
+      var percentual = (maior.valor / despesas) * 100;
+      insights.push({
+        tom: percentual >= 35 ? 'alerta' : 'neutro',
+        titulo: 'Maior concentracao',
+        texto: maior.nome + ' representa ' + percentual.toFixed(1) + '% das despesas do mes.',
+      });
+    }
+
+    if (caixinha.saldo > 0) {
+      insights.push({ tom: 'bom', titulo: 'Reserva em andamento', texto: 'Sua Caixinha ja soma ' + dinheiro(caixinha.saldo) + '. Aportes recorrentes ajudam a transformar sobra em patrimonio.' });
+    } else if (resultado > 0) {
+      insights.push({ tom: 'neutro', titulo: 'Proximo passo', texto: 'Como houve sobra no mes, este pode ser um bom momento para iniciar sua Caixinha.' });
+    }
+
+    var cards = insights.slice(0, 3).map(function (insight) {
+      var visual = insight.tom === 'bom'
+        ? ['bg-emerald-500', 'border-emerald-100 bg-emerald-50']
+        : (insight.tom === 'alerta' ? ['bg-amber-500', 'border-amber-100 bg-amber-50'] : ['bg-cyan-500', 'border-cyan-100 bg-cyan-50']);
+      return '<div class="rounded-2xl border ' + visual[1] + ' px-3 py-2.5">' +
+        '<div class="flex items-center gap-2"><span class="h-2 w-2 shrink-0 rounded-full ' + visual[0] + '"></span><strong class="min-w-0 truncate text-[11px] font-black uppercase tracking-wide text-slate-900">' + escapeHtml(insight.titulo) + '</strong></div>' +
+        '<p class="mt-1.5 text-xs font-semibold leading-relaxed text-slate-600">' + escapeHtml(insight.texto) + '</p>' +
+      '</div>';
+    }).join('');
+
+    return '<section class="w-full overflow-hidden rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">' +
+      '<div class="mb-3 flex items-center justify-between gap-3">' +
+        '<div class="min-w-0"><h2 class="text-sm font-black tracking-wide text-slate-900">Insights da Ava</h2><p class="mt-0.5 truncate text-[11px] font-semibold text-slate-500">Sugestoes rapidas para ' + escapeHtml(nomeMesCompleto(atual.mes)) + '</p></div>' +
+        '<span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-cyan-50 text-cyan-700">' + avaLogoPrincipalHtml(42, 22) + '</span>' +
+      '</div>' +
+      '<div class="grid gap-2">' + cards + '</div>' +
+      '<button id="abrir-insights-ava" type="button" class="mt-3 h-10 w-full rounded-xl border border-cyan-700 bg-white px-3 text-xs font-black uppercase tracking-wide text-cyan-700 active:scale-[0.99]">Conversar com a Ava</button>' +
+    '</section>';
   }
 
   function saldoTopoHtml(atual, anterior) {
@@ -9769,6 +9833,7 @@
     bind('salvar-categoria', salvarCategoriaDespesa);
     bind('chat-ia-btn', abrirChatIA);
     bind('chat-ia-card', abrirChatIA);
+    bind('abrir-insights-ava', abrirChatIA);
     bind('chat-ia-fechar', fecharChatIA);
     bind('chat-ia-home', fecharChatIAParaHome);
     bind('chat-ia-mic', function() { gravarVoz(); });
@@ -10985,7 +11050,7 @@
           return Promise.all(
             keys
               .filter(function (key) {
-                return key.indexOf('avantalab-mobile-') === 0 && key !== 'avantalab-mobile-v243';
+                return key.indexOf('avantalab-mobile-') === 0 && key !== 'avantalab-mobile-v244';
               })
               .map(function (key) {
                 return caches.delete(key);
@@ -11002,7 +11067,7 @@
     });
 
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/mobile-sw.js?v=229').then(function (registro) {
+      navigator.serviceWorker.register('/mobile-sw.js?v=230').then(function (registro) {
         if (registro && registro.update) registro.update();
       }).catch(function () {});
     }

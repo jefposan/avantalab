@@ -128,6 +128,16 @@ export default function ChatFlutuante({
     if (chatFeedbackEtapa === 'ia' && inputRef.current) inputRef.current.focus();
   }, [chatFeedbackEtapa]);
 
+  useEffect(() => {
+    const abrirAva = () => {
+      setChatFeedbackAberto(true);
+      setChatFeedbackEtapa('ia');
+    };
+
+    window.addEventListener('avantalab:abrir-chat-ia', abrirAva);
+    return () => window.removeEventListener('avantalab:abrir-chat-ia', abrirAva);
+  }, [setChatFeedbackAberto, setChatFeedbackEtapa]);
+
   const enviarIA = async (textoDireto?: string) => {
     const texto = (textoDireto ?? iaInput).trim();
     if (!texto || iaDigitando) return;

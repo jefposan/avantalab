@@ -602,9 +602,71 @@ const mostrarComparativoResumoDash =
   const qtdDespesasAConfirmar = despesasAConfirmar ? despesasAConfirmar.length : 0;
   const totalAConfirmar = qtdDespesasAConfirmar + qtdReceitasAConfirmar;
   const temAConfirmar = totalAConfirmar > 0;
+  const insightsAva = (() => {
+    const mes = mesResumoDash;
+    const receitas = Number(faturamentos[mes] || 0);
+    const despesasMes = (lancamentos || []).filter((item) => item.mes === mes && item.status !== 'cancelada');
+    const totalDespesas = despesasMes.reduce((total, item) => total + Number(item.valor || 0), 0);
+    const resultado = receitas - totalDespesas;
+    const porDespesa = new Map<string, number>();
+
+    despesasMes.forEach((item) => {
+      const nome = String(item.despesa || item.despesa_nome || 'Despesa');
+      porDespesa.set(nome, (porDespesa.get(nome) || 0) + Number(item.valor || 0));
+    });
+
+    const maiorDespesa = Array.from(porDespesa.entries()).sort((a, b) => b[1] - a[1])[0];
+    const itens: Array<{ tom: 'bom' | 'alerta' | 'neutro'; titulo: string; texto: string }> = [];
+
+    if (!receitas && !totalDespesas) {
+      itens.push({
+        tom: 'neutro',
+        titulo: 'Comece pelo básico',
+        texto: 'Registre receitas e despesas do mês para a Ava enxergar padrões e sugerir próximos passos.',
+      });
+    } else if (resultado >= 0) {
+      itens.push({
+        tom: 'bom',
+        titulo: 'Resultado positivo',
+        texto: `Você está com ${formatarMoeda(resultado)} de sobra em ${mes}. Avalie separar parte disso para a Caixinha.`,
+      });
+    } else {
+      itens.push({
+        tom: 'alerta',
+        titulo: 'Atenção ao resultado',
+        texto: `As despesas superam as receitas em ${formatarMoeda(Math.abs(resultado))}. Priorize revisar os maiores gastos.`,
+      });
+    }
+
+    if (maiorDespesa && totalDespesas > 0) {
+      const percentual = (maiorDespesa[1] / totalDespesas) * 100;
+      itens.push({
+        tom: percentual >= 35 ? 'alerta' : 'neutro',
+        titulo: 'Maior concentração',
+        texto: `${maiorDespesa[0]} representa ${percentual.toFixed(1)}% das despesas do mês.`,
+      });
+    }
+
+    if (caixinhaSaldo > 0) {
+      itens.push({
+        tom: 'bom',
+        titulo: 'Reserva em andamento',
+        texto: `Sua Caixinha já soma ${formatarMoeda(caixinhaSaldo)}. Manter aportes recorrentes ajuda a transformar sobra em patrimônio.`,
+      });
+    } else if (resultado > 0) {
+      itens.push({
+        tom: 'neutro',
+        titulo: 'Próximo passo',
+        texto: 'Como houve sobra no mês, este pode ser um bom momento para iniciar uma reserva na Caixinha.',
+      });
+    }
+
+    return itens.slice(0, 3);
+  })();
   const catalogoCardsKanban = [
     { id: 'aConfirmar', titulo: 'Lançamentos a confirmar', descricao: 'Banner de despesas e receitas previstas que chegaram na data.' },
     { id: 'saldo', titulo: 'Saldo do mês', descricao: 'Inicial, final e previsto do mês selecionado.' },
+    { id: 'insightsAva', titulo: 'Insights da Ava', descricao: 'Sugestões práticas geradas a partir dos dados do mês.' },
     { id: 'caixinha', titulo: 'Caixinha', descricao: 'Reserva ou investimento com aporte que gera despesa automaticamente.' },
     { id: 'resumoFinanceiro', titulo: 'Resumo financeiro', descricao: 'Despesas, maior gasto e lucro operacional.' },
     { id: 'evolucaoMensal', titulo: 'Evolução mensal', descricao: 'Gráfico mensal de receitas e despesas.' },
@@ -919,6 +981,54 @@ const mostrarComparativoResumoDash =
             <span className={`font-semibold text-sm ${textMuted}`}>Previsto</span>
             <span className={`font-semibold text-base tabular-nums tracking-tight ${saldoPrevisto >= 0 ? 'text-cyan-500' : 'text-red-500'}`}>{formatarMoeda(saldoPrevisto)}</span>
           </div>
+        </div>
+      </div>
+    ),
+
+    insightsAva: (
+      <div className={`${bgCard} card-radius-avantalab w-full overflow-hidden rounded-2xl border-2 shadow-lg transition-colors`} style={{ borderColor: corPrimaria }}>
+        <div className="flex items-center justify-between gap-3 px-6 py-3 text-sm font-bold uppercase tracking-wider" style={{ backgroundColor: corPrimaria, color: textoSobreCorPrimaria }}>
+          <span>Insights da Ava</span>
+          <div className="flex items-center gap-2">
+            <DragHandle tone="light" />
+            <BotaoOpcoesCard id="insightsAva" tone="light" />
+          </div>
+        </div>
+        <div className="space-y-3 p-5">
+          <p className={`text-xs font-semibold leading-relaxed ${textMuted}`}>
+            Sugestões rápidas para {mesResumoDash}. Use como ponto de atenção, não como regra fixa.
+          </p>
+          <div className="grid gap-2">
+            {insightsAva.map((insight, index) => {
+              const visual = insight.tom === 'bom'
+                ? { dot: 'bg-emerald-500', box: darkMode ? 'border-emerald-500/30 bg-emerald-950/20' : 'border-emerald-100 bg-emerald-50' }
+                : insight.tom === 'alerta'
+                  ? { dot: 'bg-amber-500', box: darkMode ? 'border-amber-500/30 bg-amber-950/20' : 'border-amber-100 bg-amber-50' }
+                  : { dot: 'bg-cyan-500', box: darkMode ? 'border-cyan-500/30 bg-cyan-950/20' : 'border-cyan-100 bg-cyan-50' };
+
+              return (
+                <div key={`${insight.titulo}-${index}`} className={`rounded-xl border px-3 py-2.5 ${visual.box}`}>
+                  <div className="flex items-center gap-2">
+                    <span className={`h-2 w-2 shrink-0 rounded-full ${visual.dot}`} />
+                    <strong className={`min-w-0 truncate text-xs font-black uppercase tracking-wide ${textStrong}`}>{insight.titulo}</strong>
+                  </div>
+                  <p className={`mt-1.5 text-xs font-semibold leading-relaxed ${textMuted}`}>{insight.texto}</p>
+                </div>
+              );
+            })}
+          </div>
+          <button
+            type="button"
+            onClick={() => {
+              if (typeof window !== 'undefined') {
+                window.dispatchEvent(new CustomEvent('avantalab:abrir-chat-ia'));
+              }
+            }}
+            className="w-full rounded-xl border px-3 py-2 text-xs font-black uppercase tracking-wide transition hover:brightness-95"
+            style={{ borderColor: corPrimaria, color: corPrimaria }}
+          >
+            Conversar com a Ava
+          </button>
         </div>
       </div>
     ),

@@ -2,6 +2,7 @@
 
 ## Em desenvolvimento
 
+- Web e mobile: inicio dos Insights da Ava no dashboard, com sugestoes contextuais sobre resultado, maiores gastos e Caixinha.
 - Web e mobile: Caixinha ganha aporte inicial separado, sem gerar despesa ou alterar receitas, e inputs mobile deixam de causar zoom ao preencher.
 - Mobile: pull-to-refresh passa a escurecer a tela com mais intensidade durante o carregamento.
 - Web e mobile: Caixinha adicionada ao dashboard com saldo, aporte mensal e aporte que cria automaticamente um lancamento de despesa vinculado.

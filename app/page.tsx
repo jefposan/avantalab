@@ -574,8 +574,8 @@ const [validandoTelefoneObrigatorio, setValidandoTelefoneObrigatorio] = useState
     }
   };
   const [saldoCardMesIdx, setSaldoCardMesIdx] = useState<number>(new Date().getMonth());
-  const dashboardCardsKanban = ['aConfirmar', 'saldo', 'caixinha', 'resumoFinanceiro', 'evolucaoMensal', 'registrarEntradas', 'controlePonto'];
-  const ordemDashboardPadrao = { a: ['aConfirmar', 'saldo', 'caixinha', 'controlePonto'], b: ['resumoFinanceiro', 'evolucaoMensal', 'registrarEntradas'] };
+  const dashboardCardsKanban = ['aConfirmar', 'saldo', 'insightsAva', 'caixinha', 'resumoFinanceiro', 'evolucaoMensal', 'registrarEntradas', 'controlePonto'];
+  const ordemDashboardPadrao = { a: ['aConfirmar', 'saldo', 'insightsAva', 'caixinha', 'controlePonto'], b: ['resumoFinanceiro', 'evolucaoMensal', 'registrarEntradas'] };
   const [dashboardOrdem, setDashboardOrdem] = useState<{ a: string[]; b: string[] }>(ordemDashboardPadrao);
   const [dashboardOcultos, setDashboardOcultos] = useState<string[]>([]);
   const [dashboardExpandidos, setDashboardExpandidos] = useState<string[]>([]);
