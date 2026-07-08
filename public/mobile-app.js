@@ -5651,8 +5651,12 @@
         : 'calc(80dvh - 5.5rem)');
     var padClass = state.modoCadastro ? 'p-3' : 'p-3';
 
+    var topLogin = boasVindas
+      ? 'clamp(12rem,28dvh,14rem)'
+      : (state.modoCadastro ? 'clamp(5rem,12dvh,7rem)' : 'clamp(7rem,18dvh,10rem)');
+
     return (
-      '<section class="avantalab-mobile-bg fixed inset-0 flex flex-col items-center overflow-x-hidden overflow-y-auto px-4 pb-4" style="height:100dvh;padding-top:clamp(12rem,28dvh,14rem);background-position:center bottom;background-size:auto 108%;overscroll-behavior:contain;--avantalab-mobile-bg-overlay:linear-gradient(rgba(255,255,255,.08),rgba(255,255,255,0));">' +
+      '<section class="avantalab-mobile-bg fixed inset-0 flex flex-col items-center overflow-x-hidden overflow-y-auto px-4 pb-4" style="height:100dvh;padding-top:' + topLogin + ';background-position:center bottom;background-size:auto 108%;overscroll-behavior:contain;--avantalab-mobile-bg-overlay:linear-gradient(rgba(255,255,255,.08),rgba(255,255,255,0));">' +
         '<div class="mx-auto w-full max-w-md shrink-0 overflow-y-auto rounded-3xl border border-white/35 ' + padClass + ' text-slate-900 shadow-2xl backdrop-blur-xl" style="background-color:rgba(255,255,255,.18);max-height:' + maxH + ';overscroll-behavior:contain;">' +
           (boasVindas
             ? telaBoasVindas()
@@ -5870,7 +5874,7 @@
     return (
       '<label class="grid gap-1 text-xs font-semibold text-slate-700">' +
         escapeHtml(label) +
-        '<input id="' + id + '" type="' + type + '" placeholder="' + escapeHtml(placeholder || '') + '" value="' + escapeHtml(value || '') + '" style="font-size:16px;background-color:rgba(255,255,255,.62)" class="h-10 rounded-xl border border-white/60 px-3 text-sm text-slate-800 outline-none transition focus:border-sky-600 focus:ring-2 focus:ring-sky-600/20" />' +
+        '<input id="' + id + '" type="' + type + '" placeholder="' + escapeHtml(placeholder || '') + '" value="' + escapeHtml(value || '') + '" style="font-size:16px;background-color:rgba(255,255,255,.94)" class="h-10 rounded-xl border border-slate-300 px-3 text-sm font-semibold text-slate-900 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-sky-600 focus:bg-white focus:ring-2 focus:ring-sky-600/20" />' +
       '</label>'
     );
   }
@@ -5882,7 +5886,7 @@
       '<label class="grid gap-1 text-xs font-semibold text-slate-700">' +
         escapeHtml(label) +
         '<span class="relative block">' +
-          '<input id="' + id + '" type="' + (visivel ? 'text' : 'password') + '" placeholder="' + escapeHtml(placeholder || '') + '" value="' + escapeHtml(value || '') + '" style="font-size:16px;background-color:rgba(255,255,255,.62)" class="h-10 w-full rounded-xl border border-white/60 px-4 pr-10 text-sm text-slate-800 outline-none transition focus:border-sky-600 focus:ring-2 focus:ring-sky-600/20" />' +
+          '<input id="' + id + '" type="' + (visivel ? 'text' : 'password') + '" placeholder="' + escapeHtml(placeholder || '') + '" value="' + escapeHtml(value || '') + '" style="font-size:16px;background-color:rgba(255,255,255,.94)" class="h-10 w-full rounded-xl border border-slate-300 px-4 pr-10 text-sm font-semibold text-slate-900 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-sky-600 focus:bg-white focus:ring-2 focus:ring-sky-600/20" />' +
           '<button id="' + toggleId + '" type="button" class="absolute right-2 top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full bg-white/35 text-xs font-black text-slate-600 backdrop-blur-sm" aria-label="' + (visivel ? 'Ocultar senha' : 'Exibir senha') + '">' +
             (visivel ? '◉' : '◎') +
           '</button>' +

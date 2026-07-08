@@ -2,6 +2,7 @@
 
 ## Em desenvolvimento
 
+- Mobile: campos de login, cadastro e recuperacao de senha com contraste reforcado e card de cadastro mais proximo do topo.
 - Landing: texto inicial refinado para reforcar gestao empresarial, seguranca e facilidade de uso.
 - Landing: primeira abordagem reposicionada com chamada profissional e beneficios de ponto, IA, graficos, pagamentos programados, avisos e notificacoes.
 - Legal: cadastro web e mobile passam a registrar aceite de Termos e Privacidade com versao, data/hora e origem.
