@@ -10347,10 +10347,19 @@
     var ghostPointerOffsetX = 0;
     var ghostPointerOffsetY = 0;
     var ghostEscala = 0.94;
+    var autoScrollFrame = null;
+    var ultimoPointerX = null;
+    var ultimoPointerY = null;
 
     function limparDrag() {
       if (timer) window.clearTimeout(timer);
       timer = null;
+      if (autoScrollFrame !== null) {
+        window.cancelAnimationFrame(autoScrollFrame);
+        autoScrollFrame = null;
+      }
+      ultimoPointerX = null;
+      ultimoPointerY = null;
 
       if (ghost && ghost.parentNode) ghost.parentNode.removeChild(ghost);
       ghost = null;
@@ -10428,6 +10437,8 @@
       preview.style.opacity = '1';
       preview.style.filter = 'none';
       preview.style.minHeight = '';
+      preview.style.outline = 'none';
+      preview.style.background = 'transparent';
       Array.prototype.forEach.call(preview.querySelectorAll('[id]'), function (item) {
         item.removeAttribute('id');
       });
@@ -10490,7 +10501,7 @@
 
       var destino = zonasDestino[zonasDestino.length - 1];
       var indiceDestino = zonasDestino.length - 1;
-      var yPagina = y + window.scrollY;
+      var yPagina = y;
 
       for (var i = 0; i < zonasDestino.length; i += 1) {
         if (yPagina < zonasDestino[i].limite) {
@@ -10532,23 +10543,54 @@
       return ultimoDestino;
     }
 
+    function scrollDashboardMobile() {
+      return document.getElementById('mobile-main-scroll') || document.scrollingElement || document.documentElement;
+    }
+
     function rolarSeNecessario(y) {
+      var scroll = scrollDashboardMobile();
+      if (!scroll) return false;
       var limiteSuperior = 176;
       var limiteInferior = 120;
       var velocidadeMaxima = 24;
+      var delta = 0;
 
-      if (y < limiteSuperior && window.scrollY > 0) {
+      if (y < limiteSuperior && scroll.scrollTop > 0) {
         var intensidadeSubida = Math.max(0, limiteSuperior - y) / limiteSuperior;
-        var velocidadeSubida = Math.max(8, Math.round(velocidadeMaxima * intensidadeSubida));
-        window.scrollBy({ top: -velocidadeSubida, behavior: 'auto' });
-        return;
-      }
-
-      if (y > window.innerHeight - limiteInferior) {
+        delta = -Math.max(8, Math.round(velocidadeMaxima * intensidadeSubida));
+      } else if (y > window.innerHeight - limiteInferior && scroll.scrollTop + scroll.clientHeight < scroll.scrollHeight - 1) {
         var distanciaInferior = Math.max(0, y - (window.innerHeight - limiteInferior));
         var intensidadeDescida = distanciaInferior / limiteInferior;
-        var velocidadeDescida = Math.max(8, Math.round(velocidadeMaxima * intensidadeDescida));
-        window.scrollBy({ top: velocidadeDescida, behavior: 'auto' });
+        delta = Math.max(8, Math.round(velocidadeMaxima * intensidadeDescida));
+      }
+
+      if (!delta) return false;
+      var antes = scroll.scrollTop;
+      if (typeof scroll.scrollBy === 'function') {
+        scroll.scrollBy({ top: delta, behavior: 'auto' });
+      } else {
+        scroll.scrollTop += delta;
+      }
+      return scroll.scrollTop !== antes;
+    }
+
+    function executarAutoScrollDrag() {
+      autoScrollFrame = null;
+      if (!iniciouDrag || ultimoPointerY === null) return;
+
+      if (rolarSeNecessario(ultimoPointerY)) {
+        calcularZonasDestino();
+        if (ultimoPointerX !== null) destacarDestino(ultimoPointerX, ultimoPointerY);
+      }
+
+      autoScrollFrame = window.requestAnimationFrame(executarAutoScrollDrag);
+    }
+
+    function atualizarAutoScrollDrag(x, y) {
+      ultimoPointerX = x;
+      ultimoPointerY = y;
+      if (autoScrollFrame === null) {
+        autoScrollFrame = window.requestAnimationFrame(executarAutoScrollDrag);
       }
     }
 
@@ -10586,12 +10628,13 @@
             };
             cardAtivo.classList.add('select-none');
             cardAtivo.style.minHeight = rect.height + 'px';
-            cardAtivo.style.opacity = '0.32';
-            cardAtivo.style.transform = 'scale(0.985)';
-            cardAtivo.style.filter = 'saturate(0.85)';
-            cardAtivo.style.outline = '1px dashed rgba(8, 145, 178, .32)';
-            cardAtivo.style.background = 'rgba(236, 254, 255, .55)';
+            cardAtivo.style.opacity = '0';
+            cardAtivo.style.transform = 'none';
+            cardAtivo.style.filter = 'none';
+            cardAtivo.style.outline = 'none';
+            cardAtivo.style.background = 'transparent';
             criarGhost(cardAtivo, event.clientX, event.clientY);
+            atualizarAutoScrollDrag(event.clientX, event.clientY);
           }
         }, 520);
       });
@@ -10603,7 +10646,7 @@
         event.preventDefault();
         moverGhost(event.clientX, event.clientY);
         destacarDestino(event.clientX, event.clientY);
-        rolarSeNecessario(event.clientY);
+        atualizarAutoScrollDrag(event.clientX, event.clientY);
       });
 
       handle.addEventListener('pointerup', function (event) {
