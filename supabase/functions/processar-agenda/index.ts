@@ -40,6 +40,16 @@ function mesIndex(nome: string) {
   return MESES.indexOf(String(nome || "").toUpperCase());
 }
 
+async function buscarNomePerfil(db: any, empresaId?: string) {
+  if (!empresaId) return "";
+  const { data } = await db
+    .from("empresas")
+    .select("nome")
+    .eq("id", empresaId)
+    .maybeSingle();
+  return String(data?.nome || "").trim();
+}
+
 function apareceHoje(item: any, hoje: any) {
   const mi = mesIndex(item.mes);
   if (mi < 0) return false;
@@ -81,8 +91,17 @@ Deno.serve(async (req) => {
 
     let criadas = 0;
     let enviados = 0;
+    const nomesPerfil = new Map<string, string>();
 
     for (const item of devidos) {
+      let perfil = "";
+      if (item.empresa_id) {
+        if (!nomesPerfil.has(item.empresa_id)) {
+          nomesPerfil.set(item.empresa_id, await buscarNomePerfil(db, item.empresa_id));
+        }
+        perfil = nomesPerfil.get(item.empresa_id) || "";
+      }
+
       // Cria a notificacao (sem duplicar no mesmo dia)
       const { data: inseridas } = await db
         .from("notificacoes")
@@ -112,6 +131,7 @@ Deno.serve(async (req) => {
         titulo: item.titulo,
         corpo: item.descricao || "Lembrete de hoje",
         url: "/mobile",
+        perfil,
       });
 
       for (const s of subs || []) {

@@ -3,7 +3,7 @@
 //
 // Invocacao (POST JSON), duas formas:
 //   1) { "notificacao_id": "<uuid>" }  -> carrega titulo/corpo/url da tabela
-//   2) { "user_id": "<uuid>", "titulo": "...", "corpo": "...", "url": "/mobile" }
+//   2) { "user_id": "<uuid>", "titulo": "...", "corpo": "...", "url": "/mobile", "empresa_id": "<uuid>" }
 //
 // Secrets necessarios (painel: Edge Functions > enviar-push > Secrets):
 //   VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY, VAPID_SUBJECT (ex: mailto:contato@avantalab.com.br)
@@ -37,6 +37,8 @@ Deno.serve(async (req) => {
     let titulo = body.titulo as string | undefined;
     let corpo = (body.corpo as string | undefined) || "";
     let url = (body.url as string | undefined) || "/mobile";
+    let empresaId = body.empresa_id as string | undefined;
+    let perfil = (body.perfil as string | undefined) || "";
 
     // Forma 1: carregar dados a partir de uma notificacao existente
     if (body.notificacao_id) {
@@ -52,6 +54,8 @@ Deno.serve(async (req) => {
       corpo = notif.corpo;
       url = notif.url || "/mobile";
       userId = notif.user_id || undefined;
+      empresaId = notif.empresa_id || undefined;
+      perfil = await buscarNomePerfil(db, empresaId);
 
       // Notificacao geral da empresa: envia para todos os usuarios vinculados
       if (!userId && notif.empresa_id) {
@@ -60,7 +64,7 @@ Deno.serve(async (req) => {
           .select("user_id")
           .eq("empresa_id", notif.empresa_id);
         const ids = (vinculos || []).map((v: any) => v.user_id);
-        return await enviarParaUsuarios(db, ids, titulo!, corpo, url);
+        return await enviarParaUsuarios(db, ids, titulo!, corpo, url, perfil);
       }
     }
 
@@ -68,11 +72,23 @@ Deno.serve(async (req) => {
       return json({ ok: false, erro: "Informe notificacao_id, ou user_id + titulo." }, 400);
     }
 
-    return await enviarParaUsuarios(db, [userId], titulo, corpo, url);
+    if (!perfil) perfil = await buscarNomePerfil(db, empresaId);
+
+    return await enviarParaUsuarios(db, [userId], titulo, corpo, url, perfil);
   } catch (e) {
     return json({ ok: false, erro: String(e) }, 500);
   }
 });
+
+async function buscarNomePerfil(db: any, empresaId?: string) {
+  if (!empresaId) return "";
+  const { data } = await db
+    .from("empresas")
+    .select("nome")
+    .eq("id", empresaId)
+    .maybeSingle();
+  return String(data?.nome || "").trim();
+}
 
 async function enviarParaUsuarios(
   db: any,
@@ -80,6 +96,7 @@ async function enviarParaUsuarios(
   titulo: string,
   corpo: string,
   url: string,
+  perfil = "",
 ) {
   if (!userIds.length) return json({ ok: true, enviados: 0, total: 0 });
 
@@ -89,7 +106,7 @@ async function enviarParaUsuarios(
     .in("user_id", userIds)
     .eq("app_origem", "mobile");
 
-  const payload = JSON.stringify({ titulo, corpo, url });
+  const payload = JSON.stringify({ titulo, corpo, url, perfil });
   let enviados = 0;
 
   for (const s of subs || []) {

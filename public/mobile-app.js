@@ -10718,7 +10718,7 @@
           return Promise.all(
             keys
               .filter(function (key) {
-                return key.indexOf('avantalab-mobile-') === 0 && key !== 'avantalab-mobile-v239';
+                return key.indexOf('avantalab-mobile-') === 0 && key !== 'avantalab-mobile-v240';
               })
               .map(function (key) {
                 return caches.delete(key);
@@ -10735,7 +10735,7 @@
     });
 
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/mobile-sw.js?v=225').then(function (registro) {
+      navigator.serviceWorker.register('/mobile-sw.js?v=226').then(function (registro) {
         if (registro && registro.update) registro.update();
       }).catch(function () {});
     }

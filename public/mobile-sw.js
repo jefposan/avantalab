@@ -1,6 +1,6 @@
-const CACHE_NAME = 'avantalab-mobile-v239';
+const CACHE_NAME = 'avantalab-mobile-v240';
 const APP_SHELL = [
-  '/mobile-app.js?v=262',
+  '/mobile-app.js?v=263',
   '/mobile-supabase.js',
   '/mobile-manifest.json',
   '/images/ava-logo-principal.png',
@@ -62,7 +62,13 @@ self.addEventListener('push', (event) => {
   }
 
   const titulo = dados.title || dados.titulo || 'AvantaLab';
-  const corpo = dados.body || dados.corpo || dados.mensagem || '';
+  const corpoOriginal = dados.body || dados.corpo || dados.mensagem || '';
+  const perfil = String(dados.perfil || dados.nomePerfil || dados.perfilNome || '').trim();
+  const corpo = perfil && corpoOriginal && corpoOriginal.indexOf(perfil + ':') !== 0
+    ? perfil + ': ' + corpoOriginal
+    : perfil && !corpoOriginal
+      ? perfil
+    : corpoOriginal;
   const url = dados.url || '/mobile';
 
   const opcoes = {

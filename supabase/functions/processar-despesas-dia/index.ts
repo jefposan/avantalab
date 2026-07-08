@@ -142,6 +142,7 @@ Deno.serve(async (request) => {
           ? `${nomePerfil}: abra o app para consultar os pagamentos do dia.`
           : `${nomePerfil}: ${despesasEmpresa[0]?.despesa_nome || 'Despesa do dia'}`,
         url: '/mobile',
+        perfil: nomePerfil,
       });
 
       for (const s of subs || []) {

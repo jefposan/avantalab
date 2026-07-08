@@ -2,6 +2,7 @@
 
 ## Em desenvolvimento
 
+- Mobile/PWA: notificacoes push passam a exibir o nome do perfil financeiro quando o aviso pertence a uma empresa ou perfil especifico.
 - Mobile: drag do kanban do dashboard passa a manter o card original invisivel e transparente no modo noturno e volta a rolar o container da tela durante o arraste.
 - Web e mobile: exclusao de avisos passa a sincronizar imediatamente a lista e o badge entre as versoes.
 - Cobranca: botao "Ja paguei - atualizar" consulta a Asaas sem sair da tela e libera o perfil assim que o pagamento for confirmado.
