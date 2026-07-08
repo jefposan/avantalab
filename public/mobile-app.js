@@ -5672,16 +5672,19 @@
 
   function telaBoasVindas() {
     return (
-      '<div class="grid gap-4">' +
+      '<div class="grid gap-3">' +
         '<div>' +
-          '<h1 class="text-3xl font-black leading-tight text-slate-900">Descubra quanto realmente sobra no seu neg&oacute;cio ou nas suas despesas pessoais.</h1>' +
-          '<p class="mt-3 text-sm font-semibold leading-relaxed text-slate-600">Controle entradas e despesas de forma simples.</p>' +
+          '<h1 class="text-2xl font-black leading-tight text-slate-900">Gestão empresarial integrada, segura e simples de operar.</h1>' +
+          '<p class="mt-2 text-xs font-semibold leading-snug text-slate-600">O AvantaLab Gestão centraliza rotinas financeiras e operacionais em uma plataforma prática, moderna e fácil de usar, com estrutura segura para organizar informações, acompanhar indicadores e apoiar decisões do dia a dia empresarial.</p>' +
         '</div>' +
-        '<div class="grid gap-2 rounded-2xl bg-white/22 p-3 text-sm font-bold leading-snug text-slate-700">' +
-          '<p>&#10003; Entenda seus gastos.</p>' +
-          '<p>&#10003; Compare seus resultados mes a mes.</p>' +
-          '<p>&#10003; Descubra quais despesas mais impactam seu lucro.</p>' +
-          '<p>&#10003; Use no computador ou celular.</p>' +
+        '<div class="grid gap-1.5 rounded-2xl bg-white/22 p-3 text-[11px] font-bold leading-snug text-slate-700">' +
+          '<p class="text-[9px] font-black uppercase tracking-[0.18em] text-sky-800">Principais benefícios</p>' +
+          '<p>&#10003; Controle receitas, despesas e pagamentos programados.</p>' +
+          '<p>&#10003; Acompanhe gráficos e comparativos mês a mês.</p>' +
+          '<p>&#10003; Receba avisos e notificações sobre compromissos financeiros.</p>' +
+          '<p>&#10003; Use IA para entender seus números e tirar dúvidas do sistema.</p>' +
+          '<p>&#10003; Gerencie ponto e rotinas operacionais.</p>' +
+          '<p>&#10003; Acesse pelo computador ou celular.</p>' +
         '</div>' +
         '<button id="boas-vindas-cadastro" type="button" class="h-12 rounded-xl px-4 text-sm font-black uppercase tracking-wide text-white shadow-lg" style="background:linear-gradient(135deg,#003E73,#00A6C8)">' +
           'Criar conta gratis' +

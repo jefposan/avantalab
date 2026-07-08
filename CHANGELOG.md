@@ -2,6 +2,8 @@
 
 ## Em desenvolvimento
 
+- Landing: texto inicial refinado para reforcar gestao empresarial, seguranca e facilidade de uso.
+- Landing: primeira abordagem reposicionada com chamada profissional e beneficios de ponto, IA, graficos, pagamentos programados, avisos e notificacoes.
 - Legal: cadastro web e mobile passam a registrar aceite de Termos e Privacidade com versao, data/hora e origem.
 - Legal: Termos de Uso e Politica de Privacidade reforcados com LGPD, bases legais, guarda, retencao, suboperadores, incidentes e direitos dos titulares.
 - Web: botão Visual atualizado com ícone de personalizacao visual.
