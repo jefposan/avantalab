@@ -30,23 +30,29 @@ type Perfil = {
   ciclo: string | null;
   valido_ate: string | null;
   trial_fim: string | null;
+  cupom_id: string | null;
   tem_acesso: boolean;
   tem_registro: boolean;
 };
 
-// Detalhe da situação, mostrado só quando o perfil está ATIVO.
-function detalheAtivo(p: Perfil): string {
-  if (p.status === 'cortesia') return p.valido_ate ? `Cortesia até ${formatDate(p.valido_ate)}` : 'Cortesia (sem prazo)';
+function detalheAcesso(p: Perfil): string {
+  if (p.status === 'cortesia') {
+    const origem = p.cupom_id ? 'Cupom' : 'Cortesia';
+    return p.valido_ate ? `${origem} até ${formatDate(p.valido_ate)}` : `${origem} (sem prazo)`;
+  }
   if (p.status === 'trial') return p.trial_fim ? `Trial até ${formatDate(p.trial_fim)}` : 'Trial';
   if (p.status === 'ativa') {
     if (p.plano) {
       const plano = p.plano === 'pessoal_premium' ? 'Premium Pessoal' : 'Empresa';
       const ciclo = p.ciclo === 'anual' ? 'Anual' : p.ciclo === 'mensal' ? 'Mensal' : '';
-      return ciclo ? `${plano} · ${ciclo}` : plano;
+      return ciclo ? `Assinatura · ${plano} · ${ciclo}` : `Assinatura · ${plano}`;
     }
     return 'Assinatura ativa';
   }
-  return '';
+  if (p.status === 'cancelada') return 'Acesso revogado';
+  if (p.status === 'expirada') return p.tipo_perfil === 'pessoal' ? 'Grátis' : 'Expirada';
+  if (p.status === 'inadimplente') return p.valido_ate ? `Pagamento pendente até ${formatDate(p.valido_ate)}` : 'Pagamento pendente';
+  return p.status || 'Sem assinatura';
 }
 type StatusFilter = 'ativos' | 'todos' | FeedbackStatus;
 
@@ -195,7 +201,7 @@ export default function AdminPage() {
   const [consumoCarregando, setConsumoCarregando] = useState(false);
   const [consumoGeradoEm, setConsumoGeradoEm] = useState('');
   const [liberarPerfil, setLiberarPerfil] = useState<Perfil | null>(null);
-  const [liberarTipo, setLiberarTipo] = useState<'vitalicio' | 'periodo'>('vitalicio');
+  const [liberarTipo, setLiberarTipo] = useState<'indeterminado' | 'periodo'>('indeterminado');
   const [liberarValor, setLiberarValor] = useState('1');
   const [liberarUnidade, setLiberarUnidade] = useState<'dias' | 'semanas' | 'meses'>('meses');
 
@@ -236,7 +242,7 @@ export default function AdminPage() {
     }
   };
 
-  const executarAcaoPerfil = async (perfil: Perfil, corpo: { acao: 'revogar' | 'liberar' | 'gratis' | 'resetar'; duracaoValor?: number; duracaoUnidade?: string }) => {
+  const executarAcaoPerfil = async (perfil: Perfil, corpo: { acao: 'revogar' | 'liberar'; duracaoValor?: number; duracaoUnidade?: string }) => {
     setWorkingId(perfil.id);
     setError('');
     setNotice('');
@@ -249,13 +255,11 @@ export default function AdminPage() {
       const data = await response.json().catch(() => null);
       if (!response.ok || data?.erro) throw new Error(data?.mensagem || 'Não foi possível executar.');
       setPerfis((current) => current.map((item) => item.id === perfil.id
-        ? { ...item, status: data.status, valido_ate: data.validoAte ?? null, trial_fim: data.trialFim ?? null, plano: null, ciclo: null, tem_acesso: Boolean(data.temAcesso), tem_registro: Boolean(data.temRegistro) }
+        ? { ...item, status: data.status, valido_ate: data.validoAte ?? null, trial_fim: data.trialFim ?? null, plano: null, ciclo: null, cupom_id: data.cupomId ?? null, tem_acesso: Boolean(data.temAcesso), tem_registro: Boolean(data.temRegistro) }
         : item));
       const mensagens: Record<string, string> = {
         revogar: 'Acesso revogado.',
-        liberar: 'Acesso liberado (cortesia).',
-        gratis: 'Perfil no plano grátis — recursos premium bloqueados (núcleo livre no Pessoal).',
-        resetar: 'Registro removido — perfil voltou ao estado automático.',
+        liberar: 'Acesso liberado por cortesia.',
       };
       setNotice(mensagens[corpo.acao]);
     } catch (requestError) {
@@ -266,25 +270,12 @@ export default function AdminPage() {
   };
 
   const revogarPerfil = async (perfil: Perfil) => {
-    if (!window.confirm(`Revogar o acesso de "${perfil.nome}"? O perfil ficará bloqueado até assinar ou receber cortesia.`)) return;
+    if (!window.confirm(`Revogar a cortesia de "${perfil.nome}"? O perfil ficará bloqueado até assinar ou receber nova liberação.`)) return;
     await executarAcaoPerfil(perfil, { acao: 'revogar' });
   };
 
-  const tornarGratisPerfil = async (perfil: Perfil) => {
-    const aviso = perfil.tipo_perfil === 'pessoal'
-      ? `Colocar "${perfil.nome}" no plano GRÁTIS? O núcleo continua livre e os recursos premium ficam bloqueados (bom para testar o Premium Pessoal).`
-      : `Colocar "${perfil.nome}" como EXPIRADA? Perfil empresa cai no paywall total.`;
-    if (!window.confirm(aviso)) return;
-    await executarAcaoPerfil(perfil, { acao: 'gratis' });
-  };
-
-  const resetarPerfil = async (perfil: Perfil) => {
-    if (!window.confirm(`Resetar "${perfil.nome}"? O registro de assinatura será apagado e o perfil volta ao estado automático (anterior ao lançamento = liberado; novo = trial/grátis).`)) return;
-    await executarAcaoPerfil(perfil, { acao: 'resetar' });
-  };
-
   const abrirLiberar = (perfil: Perfil) => {
-    setLiberarTipo('vitalicio');
+    setLiberarTipo('indeterminado');
     setLiberarValor('1');
     setLiberarUnidade('meses');
     setLiberarPerfil(perfil);
@@ -647,22 +638,21 @@ export default function AdminPage() {
               <div className="grid gap-2">{perfis.map((perfil) => {
                 const busy = workingId === perfil.id;
                 const tipoTxt = perfil.tipo_perfil === 'pessoal' ? 'Pessoal' : 'Empresa';
-                const detalhe = perfil.tem_acesso ? detalheAtivo(perfil) : '';
-                return <article key={perfil.id} className="flex flex-col gap-2 rounded-lg border border-slate-200 bg-white p-3 shadow-sm sm:flex-row sm:items-center sm:justify-between">
+                const podeRevogar = perfil.status === 'cortesia' && perfil.tem_acesso;
+                return <article key={perfil.id} className="flex flex-col gap-3 rounded-lg border border-slate-200 bg-white p-3 shadow-sm sm:flex-row sm:items-center sm:justify-between">
                   <div className="min-w-0">
                     <h3 className="truncate text-sm font-black text-slate-950">{perfil.nome}</h3>
-                    <p className="mt-0.5 text-[11px] font-bold text-slate-500">Tipo: {tipoTxt} · Situação: <span className={perfil.tem_acesso ? 'text-emerald-700' : 'text-red-600'}>{perfil.tem_acesso ? 'Ativo' : 'Inativo'}</span>{detalhe ? ` · ${detalhe}` : ''}</p>
+                    <dl className="mt-1 grid gap-0.5 text-[11px] font-bold text-slate-500 sm:grid-cols-3 sm:gap-x-4">
+                      <div><dt className="inline text-slate-400">Tipo: </dt><dd className="inline text-slate-700">{tipoTxt}</dd></div>
+                      <div><dt className="inline text-slate-400">Situação: </dt><dd className={`inline ${perfil.tem_acesso ? 'text-emerald-700' : 'text-red-600'}`}>{perfil.tem_acesso ? 'Ativo' : 'Inativo'}</dd></div>
+                      <div className="sm:col-span-3"><dt className="inline text-slate-400">Acesso: </dt><dd className="inline text-slate-700">{detalheAcesso(perfil)}</dd></div>
+                    </dl>
                   </div>
-                  <div className="flex shrink-0 flex-wrap gap-2">
-                    {perfil.tem_acesso
-                      ? <button type="button" onClick={() => void revogarPerfil(perfil)} disabled={busy} className="rounded-md border border-red-200 px-3 py-2 text-[10px] font-black uppercase text-red-700 hover:bg-red-50 disabled:opacity-50">Revogar acesso</button>
-                      : <button type="button" onClick={() => abrirLiberar(perfil)} disabled={busy} className="rounded-md border border-emerald-200 px-3 py-2 text-[10px] font-black uppercase text-emerald-700 hover:bg-emerald-50 disabled:opacity-50">Liberar acesso</button>}
-                    {perfil.status !== 'expirada' && (
-                      <button type="button" onClick={() => void tornarGratisPerfil(perfil)} disabled={busy} title={perfil.tipo_perfil === 'pessoal' ? 'Plano grátis: núcleo livre, premium bloqueado (testar bloqueios)' : 'Expirada: cai no paywall total'} className="rounded-md border border-amber-300 px-3 py-2 text-[10px] font-black uppercase text-amber-700 hover:bg-amber-50 disabled:opacity-50">Tornar grátis</button>
+                  <div className="flex shrink-0 flex-wrap gap-2 sm:justify-end">
+                    {podeRevogar && (
+                      <button type="button" onClick={() => void revogarPerfil(perfil)} disabled={busy} className="rounded-md border border-red-200 px-3 py-2 text-[10px] font-black uppercase text-red-700 hover:bg-red-50 disabled:opacity-50">Revogar acesso</button>
                     )}
-                    {perfil.tem_registro && (
-                      <button type="button" onClick={() => void resetarPerfil(perfil)} disabled={busy} title="Apaga o registro de assinatura; o perfil volta ao estado automático" className="rounded-md border border-slate-300 px-3 py-2 text-[10px] font-black uppercase text-slate-600 hover:bg-slate-50 disabled:opacity-50">Resetar</button>
-                    )}
+                    <button type="button" onClick={() => abrirLiberar(perfil)} disabled={busy} className="rounded-md border border-emerald-200 px-3 py-2 text-[10px] font-black uppercase text-emerald-700 hover:bg-emerald-50 disabled:opacity-50">Liberar</button>
                   </div>
                 </article>;
               })}</div>
@@ -752,10 +742,10 @@ export default function AdminPage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4" onClick={() => setLiberarPerfil(null)}>
           <div className="w-full max-w-sm rounded-lg border border-slate-200 bg-white p-5 shadow-2xl" onClick={(event) => event.stopPropagation()}>
             <h3 className="text-base font-black text-slate-950">Liberar acesso</h3>
-            <p className="mt-1 text-xs text-slate-500">Cortesia para <strong>{liberarPerfil.nome}</strong>. Escolha se é permanente ou por um período.</p>
+            <p className="mt-1 text-xs text-slate-500">Cortesia para <strong>{liberarPerfil.nome}</strong>. Escolha acesso ilimitado ou uma duração definida.</p>
 
             <div className="mt-4 grid grid-cols-2 gap-1.5 rounded-md border border-slate-200 bg-slate-50 p-1">
-              <button type="button" onClick={() => setLiberarTipo('vitalicio')} className={`rounded px-3 py-1.5 text-xs font-black uppercase transition ${liberarTipo === 'vitalicio' ? 'bg-slate-900 text-white shadow' : 'text-slate-500 hover:bg-white'}`}>Vitalícia</button>
+              <button type="button" onClick={() => setLiberarTipo('indeterminado')} className={`rounded px-3 py-1.5 text-xs font-black uppercase transition ${liberarTipo === 'indeterminado' ? 'bg-slate-900 text-white shadow' : 'text-slate-500 hover:bg-white'}`}>Ilimitado</button>
               <button type="button" onClick={() => setLiberarTipo('periodo')} className={`rounded px-3 py-1.5 text-xs font-black uppercase transition ${liberarTipo === 'periodo' ? 'bg-slate-900 text-white shadow' : 'text-slate-500 hover:bg-white'}`}>Por período</button>
             </div>
 

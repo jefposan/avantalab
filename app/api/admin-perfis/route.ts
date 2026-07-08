@@ -6,7 +6,7 @@ function naoAutorizado() {
   return NextResponse.json({ erro: true, mensagem: 'Acesso não autorizado.' }, { status: 401 });
 }
 
-type AssinaturaRow = { empresa_id: string; status: string; plano: string | null; ciclo: string | null; valido_ate: string | null; trial_fim: string | null };
+type AssinaturaRow = { empresa_id: string; status: string; plano: string | null; ciclo: string | null; valido_ate: string | null; trial_fim: string | null; cupom_id: string | null };
 
 // Reproduz a lógica do resolver para o admin ver a situação real de cada perfil.
 function estadoDoPerfil(tipoPerfil: TipoPerfil, criadoEmISO: string | null, row: AssinaturaRow | undefined): EstadoAcesso & { plano: string | null; ciclo: string | null } {
@@ -48,7 +48,7 @@ export async function GET(request: Request) {
 
     const ids = (empresas || []).map((e) => e.id);
     const assinaturas: AssinaturaRow[] = ids.length
-      ? (await db.from('assinaturas').select('empresa_id, status, plano, ciclo, valido_ate, trial_fim').in('empresa_id', ids)).data || []
+      ? (await db.from('assinaturas').select('empresa_id, status, plano, ciclo, valido_ate, trial_fim, cupom_id').in('empresa_id', ids)).data || []
       : [];
     const mapa = new Map(assinaturas.map((a) => [a.empresa_id, a]));
 
@@ -64,6 +64,7 @@ export async function GET(request: Request) {
         ciclo: estado.ciclo,
         valido_ate: estado.validoAte,
         trial_fim: estado.trialFim,
+        cupom_id: mapa.get(e.id)?.cupom_id || null,
         tem_acesso: assinaturaVigente(estado),
         tem_registro: Boolean(mapa.get(e.id)),
       };
@@ -76,12 +77,8 @@ export async function GET(request: Request) {
 }
 
 // Ação sobre um perfil:
-//   'revogar' → bloqueia (cancelada)
+//   'revogar' → bloqueia uma cortesia/cupom vigente (cancelada)
 //   'liberar' → concede cortesia (Premium/acesso)
-//   'gratis'  → força o plano grátis (expirada) — útil para TESTAR os bloqueios
-//               premium num perfil pessoal (o núcleo continua livre)
-//   'resetar' → apaga o registro de assinatura; o perfil volta ao estado
-//               automático (anterior ao lançamento = liberado; novo = trial/grátis)
 export async function PATCH(request: Request) {
   try {
     const { autorizado, db } = await exigirAdmin(request);
@@ -90,28 +87,20 @@ export async function PATCH(request: Request) {
     const corpo = await request.json().catch(() => ({}));
     const empresaId = corpo.empresaId;
     const acao = corpo.acao;
-    if (!empresaId || !['revogar', 'liberar', 'gratis', 'resetar'].includes(acao)) {
+    if (!empresaId || !['revogar', 'liberar'].includes(acao)) {
       return NextResponse.json({ erro: true, mensagem: 'Dados inválidos.' }, { status: 400 });
     }
 
     const { data: emp } = await db.from('empresas').select('tipo_perfil, created_at').eq('id', empresaId).maybeSingle();
     const tipoPerfil = emp?.tipo_perfil === 'pessoal' ? 'pessoal' : 'empresa';
 
-    // Resetar: remove o registro → volta ao estado derivado (fonte automática).
-    if (acao === 'resetar') {
-      await db.from('assinaturas').delete().eq('empresa_id', empresaId);
-      const estado = estadoDoPerfil(tipoPerfil as TipoPerfil, emp?.created_at || null, undefined);
-      return NextResponse.json({
-        erro: false,
-        status: estado.status,
-        validoAte: estado.validoAte,
-        trialFim: estado.trialFim,
-        temAcesso: assinaturaVigente(estado),
-        temRegistro: false,
-      });
+    const { data: existe } = await db.from('assinaturas').select('id, status').eq('empresa_id', empresaId).maybeSingle();
+
+    if (acao === 'revogar' && existe?.status !== 'cortesia') {
+      return NextResponse.json({ erro: true, mensagem: 'Só é possível revogar perfis liberados por cortesia ou cupom.' }, { status: 409 });
     }
 
-    const status = acao === 'revogar' ? 'cancelada' : acao === 'gratis' ? 'expirada' : 'cortesia';
+    const status = acao === 'revogar' ? 'cancelada' : 'cortesia';
 
     // Liberar: cortesia vitalícia (sem duração) ou por período (valor + unidade).
     let validoAte: string | null = null;
@@ -132,23 +121,20 @@ export async function PATCH(request: Request) {
       tipo_perfil: tipoPerfil,
       status,
       valido_ate: validoAte,
-      ...(acao === 'liberar' || acao === 'gratis'
-        ? {
-            plano: null,
-            ciclo: null,
-            trial_fim: null,
-            gateway: null,
-            gateway_subscription_id: null,
-          }
-        : {}),
+      plano: null,
+      ciclo: null,
+      trial_fim: null,
+      gateway: null,
+      gateway_customer_id: null,
+      gateway_subscription_id: null,
+      cupom_id: null,
       atualizado_em: new Date().toISOString(),
     };
 
-    const { data: existe } = await db.from('assinaturas').select('id').eq('empresa_id', empresaId).maybeSingle();
     if (existe) await db.from('assinaturas').update(base).eq('empresa_id', empresaId);
     else await db.from('assinaturas').insert(base);
 
-    return NextResponse.json({ erro: false, status, validoAte, temAcesso: acao === 'liberar', temRegistro: true });
+    return NextResponse.json({ erro: false, status, validoAte, trialFim: null, cupomId: null, temAcesso: acao === 'liberar', temRegistro: true });
   } catch (error) {
     console.error('Erro na ação sobre o perfil:', error);
     return NextResponse.json({ erro: true, mensagem: 'Não foi possível executar a ação.' }, { status: 500 });

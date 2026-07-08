@@ -8,10 +8,15 @@ This version has breaking changes — APIs, conventions, and file structure may 
 
 - A versao oficial do sistema fica em `app/lib/version.ts`.
 - Sempre que uma alteracao funcional, visual relevante, ajuste de banco, backup, importacao, mobile ou web for concluida, avaliar incremento da versao.
-- Usar o formato `MAJOR.MINOR.PATCH`.
+- Usar o formato `MAJOR.MINOR.PATCH` para versoes base e `MAJOR.MINOR.PATCH.MICRO`
+  para micro ajustes dentro da mesma entrega.
 - `PATCH`: correcoes pequenas, ajustes visuais e bugs. Exemplo: `1.0.0` para `1.0.1`.
 - `MINOR`: novo recurso ou melhoria relevante. Exemplo: `1.0.1` para `1.1.0`.
 - `MAJOR`: mudanca estrutural, banco, fluxo principal ou incompatibilidade. Exemplo: `1.1.0` para `2.0.0`.
+- `MICRO`: ajustes finos, texto, rótulos, pequenas correcoes visuais ou refinamentos
+  da entrega atual. Exemplo: `1.3.6` para `1.3.6.01`, depois `1.3.6.02`.
+- Depois da `1.3.5`, agrupar os ajustes grandes atuais na base `1.3.6`;
+  micro ajustes subsequentes devem avançar apenas a quarta casa.
 - Atualizar tambem o `CHANGELOG.md` com resumo da alteracao.
 
 ## Padrão de cards — AvantaShell

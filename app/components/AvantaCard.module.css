@@ -1,45 +1,21 @@
 /* ─────────────────────────────────────────────────────────────
-   AvantaCard — "aba de pasta" em DUAS CAMADAS REAIS.
+   AvantaCard / AvantaShell — modelagem estrutural do header.
 
-   CARD DE TRÁS (.cardTras): superfície mais clara com o título;
-   fica recuado e aparece pelo recorte do card da frente.
-
-   CARD DA FRENTE (.frente): silhueta única composta por
-   corpo (baixo, largura total) + platô dos controles (topo direito)
-   + duas soldas côncavas (radial-gradient) formando o vale.
-   O wrapper .frente aplica filter: drop-shadow → o CONTORNO (traço
-   fino) e a SOMBRA seguem o recorte, inclusive nas curvas.
-
-   Cores derivadas de --cp (corPrimaria) com color-mix.
+   Este arquivo define apenas a geometria: chapa de trás, recorte superior,
+   curva SVG contínua, platô dos controles e corpo. Cor, fundo, texto, borda
+   e sombra pertencem à tela que usa o componente e entram por variáveis CSS.
    ───────────────────────────────────────────────────────────── */
 
 .card {
-  --cp: #3b82f6;
   --topo: 78px;    /* altura do recorte (onde o card de trás aparece) */
   --raio: 30px;    /* cantos convexos */
-  /* Curva "S" diagonal do vale → platô: a metade de baixo é côncava e a
-     de cima é convexa, com o MESMO raio (metade do recorte cada) — assim
-     não existe trecho reto vertical e a descida é uma diagonal contínua. */
-  --curva: calc(var(--topo) / 2);
   --plato-w: 25%;  /* largura do platô dos controles */
-
-  --cor-tras-ini: color-mix(in srgb, var(--cp) 30%, #131b2b);
-  --cor-tras-fim: color-mix(in srgb, var(--cp) 14%, #0d1422);
-  --cor-corpo-topo: color-mix(in srgb, var(--cp) 8%, #0d1420);
-  --cor-corpo-fim: color-mix(in srgb, var(--cp) 3%, #070b13);
-  --cor-contorno: color-mix(in srgb, var(--cp) 45%, rgba(160, 180, 255, 0.35));
-  --cor-texto: #f5f7ff;
-  --cor-texto-2: color-mix(in srgb, var(--cp) 24%, #8e9ab8);
 
   position: relative;
   width: 100%;
-  color: var(--cor-texto);
 }
 
-/* ── CARD DE TRÁS (título) ──
-   Largura TOTAL do card: preenche todo o fundo atrás da frente
-   (sem "buraco" no vale). A base e o lado direito somem atrás do
-   corpo e do platô. */
+/* Card de trás: largura total, título e superfície fornecida pelo consumidor. */
 .cardTras {
   position: absolute;
   top: 0;
@@ -51,13 +27,24 @@
   display: flex;
   align-items: center;
   /* padding-right reserva o espaço do platô (título não passa por baixo) */
-  padding: 0 calc(var(--plato-w) + 30px) 20px 30px;
+  padding: 0 calc(var(--plato-w) + 30px) 20px var(--avanta-title-left, 30px);
 
   border-radius: var(--raio) var(--raio) 0 0;
-  background: linear-gradient(160deg, var(--cor-tras-ini), var(--cor-tras-fim) 70%);
-  box-shadow:
-    inset 0 1px 0 color-mix(in srgb, var(--cp) 35%, rgba(255, 255, 255, 0.10)),
-    0 10px 26px rgba(0, 0, 0, 0.45);
+  background: var(--avanta-tras-bg, transparent);
+  background-repeat: no-repeat;
+  background-size: var(--avanta-tras-bg-size, auto);
+  box-shadow: var(--avanta-tras-shadow, none);
+}
+
+.cardTras::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: calc(var(--topo) * 0.72);
+  pointer-events: none;
+  background: var(--avanta-tras-overlay, transparent);
 }
 
 .titulo {
@@ -70,6 +57,7 @@
   font-weight: 800;
   letter-spacing: 0.05em;
   text-transform: uppercase;
+  color: var(--avanta-title-color, currentColor);
 }
 
 .titulo > span:last-child {
@@ -83,70 +71,69 @@
   height: 24px;
   flex-shrink: 0;
   border-radius: 999px;
-  background: linear-gradient(180deg, var(--cp), transparent 140%);
+  background: var(--avanta-accent-bg, currentColor);
 }
 
-/* ── CARD DA FRENTE (silhueta recortada) ── */
+/* Card da frente: a sombra/contorno tambem vem da tela consumidora. */
 .frente {
   position: relative;
   z-index: 1;
   padding-top: var(--topo);
-  /* traço fino + sombras: seguem o RECORTE da silhueta composta */
-  filter:
-    drop-shadow(0 -0.5px 0 var(--cor-contorno))
-    drop-shadow(0 0.5px 0 var(--cor-contorno))
-    drop-shadow(-0.5px 0 0 var(--cor-contorno))
-    drop-shadow(0.5px 0 0 var(--cor-contorno))
-    drop-shadow(0 22px 34px rgba(0, 0, 0, 0.5));
+  filter: var(--avanta-front-filter, none);
 }
 
-/* Platô dos controles: sobe acima do corpo, mesma superfície. */
+.frontShape {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 0;
+  width: 100%;
+  height: calc(var(--topo) + var(--raio));
+  border-top-right-radius: var(--raio);
+  clip-path: inset(0 0 0 0 round 0 var(--raio) 0 0);
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.frontShapePath {
+  fill: var(--avanta-front-bg, transparent);
+}
+
+/* Platô dos controles: só posiciona interações; a superfície vem do SVG. */
 .plato {
   position: absolute;
   top: 0;
   right: 0;
   width: var(--plato-w);
   min-width: 132px;
-  height: calc(var(--topo) + var(--raio));
-  z-index: 1;
+  height: var(--topo);
+  z-index: 2;
 
   display: flex;
   align-items: flex-start;
   justify-content: flex-end;
   gap: 16px;
-  padding: calc((var(--topo) - 44px) / 2) 24px 0;
-
-  /* canto esquerdo com o mesmo raio da côncava → tangentes, "S" perfeito */
-  border-radius: var(--curva) var(--raio) 0 0;
-  background: var(--cor-corpo-topo);
+  padding: calc((var(--topo) - 44px) / 2) 24px 0 0;
 }
 
-/* Solda côncava do vale subindo para o platô. (No lado esquerdo do vale
-   NÃO há solda: a linha do corpo segue reta e quem desce é o card de trás.) */
-.frente::after {
-  content: '';
-  position: absolute;
-  right: var(--plato-w);
-  top: calc(var(--topo) - var(--curva));
-  width: var(--curva);
-  height: var(--curva);
-  background: radial-gradient(circle at 0 0, transparent calc(var(--curva) - 0.5px), var(--cor-corpo-topo) var(--curva));
+.headerRight {
+  display: flex;
+  min-width: 0;
+  height: 44px;
+  align-items: center;
 }
 
-/* Canto convexo saindo da aba para o vale (lado esquerdo do vale). */
+/* Corpo do card: conteúdo livre. O topo visual vem da silhueta SVG. */
 .body {
   position: relative;
+  z-index: 1;
   min-height: 240px;
   padding: 32px;
   border-radius: var(--raio);
+  border-top-left-radius: var(--avanta-body-top-left-radius, 0);
   border-top-right-radius: 0; /* contínuo com o platô */
-  background: linear-gradient(
-    180deg,
-    var(--cor-corpo-topo) 0px,
-    var(--cor-corpo-topo) 110px,
-    var(--cor-corpo-fim) 100%
-  );
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  background: var(--avanta-body-bg, var(--avanta-front-bg, transparent));
+  box-shadow: var(--avanta-body-shadow, none);
 }
 
 /* Pontinhos de arrastar: 2 colunas × 3 linhas. */
@@ -162,7 +149,7 @@
 }
 
 .dragHandle:hover {
-  background: color-mix(in srgb, var(--cp) 18%, transparent);
+  background: var(--avanta-control-hover-bg, transparent);
 }
 
 .dragHandle:active {
@@ -173,13 +160,14 @@
   width: 4px;
   height: 4px;
   border-radius: 999px;
-  background: color-mix(in srgb, var(--cp) 35%, rgba(220, 230, 255, 0.75));
+  background: var(--avanta-control-color, currentColor);
+  opacity: 0.75;
 }
 
 .menu {
   border: 0;
   background: transparent;
-  color: var(--cor-texto-2);
+  color: var(--avanta-control-color, currentColor);
   font-size: 22px;
   font-weight: 900;
   line-height: 1;
@@ -190,8 +178,8 @@
 }
 
 .menu:hover {
-  background: color-mix(in srgb, var(--cp) 18%, transparent);
-  color: var(--cor-texto);
+  background: var(--avanta-control-hover-bg, transparent);
+  color: var(--avanta-control-hover-color, currentColor);
 }
 
 /* Mobile */

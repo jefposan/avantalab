@@ -22,6 +22,7 @@ import { createPortal, flushSync } from 'react-dom';
 import { buscarFaturamentos, buscarLancamentos } from '../lib/database';
 import { restringirArrasteAJanela } from '../lib/dnd';
 import { corEhClara } from '../lib/formatters';
+import AvantaCard, { criarAvantaShellPreset } from './AvantaCard';
 
 const HandleContext = createContext<Record<string, any> | null>(null);
 
@@ -319,6 +320,7 @@ export default function Dashboard({
   };
 
   const textoSobreCorPrimaria = corEhClara(corPrimaria) ? '#0f172a' : '#ffffff';
+  const avantaShellPreset = criarAvantaShellPreset({ corPrimaria, darkMode });
   const abreviarMes = (mes: string) => {
   const abreviacoes: Record<string, string> = {
     JANEIRO: 'JAN',
@@ -990,35 +992,27 @@ const mostrarComparativoResumoDash =
           <span className={`shrink-0 ${textMuted}`}>{saudacaoPeriodo}</span>
         </div>
 
-      <section
-        className={`${bgCard} card-radius-avantalab w-full p-6 rounded-2xl shadow-lg border transition-colors`}
+      <AvantaCard
+        title="Lançamentos Mensais"
+        className={textStrong}
+        bodyClassName={`${bgCard} transition-colors`}
+        bodyStyle={avantaShellPreset.bodyStyle}
+        headerRight={
+          <span
+            className="shrink-0 rounded-full border px-3 py-1 text-xs font-black tabular-nums"
+            style={{ borderColor: `${corPrimaria}40`, color: corPrimaria, background: `${corPrimaria}0d` }}
+          >
+            {anoSelecionado}
+          </span>
+        }
+        style={avantaShellPreset.cardStyle}
+        hideDragHandle
+        hideMenu
       >
-        {/* Topo do card: em vez da faixa/borda colorida clássica, a identidade
-            vem de uma "luz ambiente" — brilho radial da cor do tema nascendo
-            no canto superior direito e um véu que desce e some. */}
-        <div
-          className="-mx-6 -mt-6 mb-8 px-6 pb-5 pt-6"
-          style={{
-            background: `radial-gradient(130% 110% at 100% 0%, ${corPrimaria}${darkMode ? '3d' : '24'} 0%, transparent 55%), linear-gradient(180deg, ${corPrimaria}${darkMode ? '1f' : '0d'} 0%, transparent 85%)`,
-            borderRadius: '14px 28px 0 0',
-          }}
-        >
-          <div className="flex items-center justify-between gap-3">
-            <h2 className={`text-2xl font-black ${textStrong} flex min-w-0 items-center`}>
-              <span
-                className="mr-4 h-8 w-3 shrink-0 rounded-full shadow-sm"
-                style={{ background: `linear-gradient(180deg, ${corPrimaria}, ${corPrimaria}66)` }}
-              ></span>
-              <span className="truncate">LANÇAMENTOS MENSAIS</span>
-            </h2>
-            <span
-              className="shrink-0 rounded-full border px-3 py-1 text-xs font-black tabular-nums"
-              style={{ borderColor: `${corPrimaria}40`, color: corPrimaria, background: `${corPrimaria}0d` }}
-            >
-              {anoSelecionado}
-            </span>
-          </div>
-          <p className={`mt-2 text-xs font-semibold ${textMuted}`}>Toque em um mês para abrir os lançamentos.</p>
+        <div className="mb-6">
+          <p className={`min-w-0 text-xs font-semibold ${textMuted}`}>
+            Toque em um mês para abrir os lançamentos.
+          </p>
         </div>
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-x-6 sm:gap-y-3">
           {(() => {
@@ -1148,7 +1142,7 @@ const mostrarComparativoResumoDash =
             </div>
           </div>
         </div>
-      </section>
+      </AvantaCard>
       </div>
 
       <div className="xl:col-span-2 relative pt-7">

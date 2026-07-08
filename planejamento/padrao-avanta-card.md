@@ -2,7 +2,12 @@
 
 Nome do padrão: **AvantaShell** ("concha" em duas camadas).
 Componente: `app/components/AvantaCard.tsx` + `AvantaCard.module.css`.
+Preset aprovado: `criarAvantaShellPreset({ corPrimaria, darkMode })`.
 Demo: `/avanta-card-demo`.
+
+Regra central: **AvantaShell não é paleta visual.** Ele fornece somente a
+modelagem estrutural do header/recorte. Fundos, textos, bordas, sombras,
+estados e cores pertencem à tela que usa o componente.
 
 ---
 
@@ -19,68 +24,91 @@ Demo: `/avanta-card-demo`.
 └──────────────────────────────────────────────────────────┘
 ```
 
-- **CHAPA** (`.cardTras`): card de trás, **largura total**, tom mais claro
-  (mais tinta da corPrimaria), com o TÍTULO. Aparece pelo recorte da frente.
-- **CORPO** (`.frente` + `.body`): card da frente. O topo dele corre **reto**
-  pelo vale e sobe ao platô por uma **diagonal em "S" contínua**: metade
-  côncava (vale) + metade convexa (platô), com o mesmo raio (`--topo/2`),
-  tangentes — nunca um degrau reto vertical.
-- **PLATÔ** (`.plato`): topo direito da frente (~25%), mesma superfície do
-  corpo (sem emenda). Contém SOMENTE controles: pontinhos de arrastar (2×3)
-  e menu `...`. Nunca conteúdo.
-- **CONTORNO**: traço fino que segue o recorte (drop-shadow de 0,5px no
-  conjunto da frente) + sombra profunda que também acompanha a silhueta.
+- **CHAPA** (`.cardTras`): card de trás, **largura total**, com o TÍTULO.
+  Aparece pelo recorte da frente. A superfície/cor vem da tela consumidora.
+- **SILHUETA DA FRENTE** (`.frontShape`): SVG com um único `<path>`, responsável
+  por desenhar o topo do corpo, o vale, a subida em "S" e o platô. Essa é a
+  superfície visual da frente; não usar soldas CSS separadas.
+- **CORPO** (`.body`): área de conteúdo livre (`children`). Ele continua a
+  superfície iniciada pelo SVG, mas não desenha a curva superior.
+- **PLATÔ** (`.plato`): topo direito (~25%), para controles ou metadado curto
+  via `headerRight` (ex.: ano). Nunca conteúdo longo e nunca fundo/curva.
+- **CONTORNO/SOMBRA**: quando usados, são fornecidos pela tela consumidora via
+  variáveis CSS. O shell apenas permite que acompanhem o recorte.
 
 ## 2. Regras de uso
 
-1. **Título só na chapa; controles só no platô.** Nada de botões no título
-   nem texto no platô.
-2. **A subida do vale para o platô é sempre a diagonal em "S"** (côncava +
-   convexa com raios iguais de `--topo/2`, tangentes). O lado esquerdo do
-   vale é sempre reto — sem "bico" e sem segmento vertical na subida.
-3. **Cores sempre derivadas da `corPrimaria`** via `color-mix`. Nenhuma cor
-   fixa de marca dentro do card; o tema do perfil comanda.
-4. **Sem bordas de 1px em elementos internos.** Profundidade = tom + luz
-   interna (inset) + sombra. O único traço é o contorno do recorte.
+1. **Título só na chapa; controles/metadado curto só no platô.** Nada de
+   botões no título nem conteúdo longo no platô.
+2. **A subida do vale para o platô é sempre um path SVG contínuo.** Não montar
+   a curva com `border-radius`, `radial-gradient`, pseudo-elementos ou peças
+   coladas: isso cria emenda/zig-zag no contorno.
+3. **AvantaShell não define cor.** Não colocar paleta, fundo, texto ou borda
+   fixa dentro do componente. A tela deve aplicar sua própria skin.
+4. **Sem bordas de 1px em elementos internos criadas pelo shell.** Se a tela
+   precisar de borda/contorno, ela fornece por classe ou variável CSS.
 5. Card **não arrastável/configurável**: usar `hideDragHandle` / `hideMenu`
    (o platô permanece, vazio, para manter a silhueta).
 6. Conteúdo do corpo é livre (`children`), mas subcards internos usam
    cantos `--raio` menores que o do card (hierarquia de raios).
-7. Mobile: o padrão já reduz `--topo/--raio/--curva` no breakpoint 640px.
-   Não sobrescrever por card.
+7. Mobile: o SVG usa `viewBox` + `preserveAspectRatio="none"` e escala com a
+   largura/altura da frente; o padrão já reduz `--topo/--raio` no breakpoint
+   640px. Não sobrescrever por card.
 
 ## 3. Tokens (variáveis CSS em `.card`)
 
-| Token         | Padrão | Função                                        |
-|---------------|--------|-----------------------------------------------|
-| `--cp`        | #3b82f6| corPrimaria do perfil (via prop `corPrimaria`) |
-| `--topo`      | 78px   | altura do recorte (faixa visível da chapa)     |
-| `--raio`      | 30px   | cantos convexos                                |
-| `--curva`     | `--topo/2` | raio do "S" do vale (derivado; não fixar em px) |
-| `--plato-w`   | 25%    | largura do platô                               |
+| Token         | Padrão | Função                                    |
+|---------------|--------|-------------------------------------------|
+| `--topo`      | 78px   | altura do recorte (faixa visível da chapa) |
+| `--raio`      | 30px   | cantos convexos                            |
+| `--plato-w`   | 25%    | largura do platô                           |
 
-Tons derivados (não alterar por card): `--cor-tras-*` (chapa),
-`--cor-corpo-*` (frente), `--cor-contorno`, `--cor-texto`, `--cor-texto-2`.
+Skin fornecida pela tela consumidora: `--avanta-tras-bg`,
+`--avanta-tras-bg-size`, `--avanta-tras-overlay`, `--avanta-tras-shadow`,
+`--avanta-front-bg`, `--avanta-body-bg`, `--avanta-body-shadow`,
+`--avanta-body-top-left-radius`, `--avanta-title-color`,
+`--avanta-accent-bg`, `--avanta-control-color`,
+`--avanta-control-hover-bg`, `--avanta-control-hover-color`,
+`--avanta-front-filter`.
 
-## 4. Uso do componente
+## 4. Implementação da Frente
+
+A frente tem três responsabilidades separadas:
+
+- `.frontShape`: SVG absoluto, `viewBox="0 0 1000 108"`, com um único `<path>`
+  para vale + subida + platô. É a única fonte visual da curva.
+- `.plato`: container absoluto dos controles. Não deve ter `background`,
+  `border-radius` ou pseudo-elemento de solda.
+- `.body`: corpo do card, com conteúdo livre e superfície fornecida pela tela.
+
+Regra crítica: **não recriar a solda com CSS.** Se a curva precisar mudar,
+ajustar o `d` do `<path>` em `AvantaCard.tsx`.
+
+## 5. Uso do componente
 
 ```tsx
-import AvantaCard from '@/app/components/AvantaCard';
+import AvantaCard, { criarAvantaShellPreset } from '@/app/components/AvantaCard';
+
+const avantaShell = criarAvantaShellPreset({ corPrimaria, darkMode });
 
 <AvantaCard
   title="Lançamentos Mensais"
-  corPrimaria={corPrimaria}          // tema do perfil
   onSettingsClick={abrirAjustes}     // menu "..."
   dragHandleProps={listeners}        // dnd-kit (opcional)
+  headerRight={<AnoBadge ano={anoSelecionado} />}
+  className={textStrong}
+  bodyClassName={bgCard}
+  style={avantaShell.cardStyle}
+  bodyStyle={avantaShell.bodyStyle}
 >
   {conteudo}
 </AvantaCard>
 ```
 
-## 5. Pendências / evolução
+## 6. Pendências / evolução
 
-- [ ] Variante light (o padrão atual é dark premium; derivar tons claros
-      da mesma corPrimaria quando aplicar no tema claro do sistema).
-- [ ] Aplicar no dashboard web (começar por "Lançamentos Mensais").
+- [x] Separar modelagem estrutural do AvantaShell da skin visual da tela.
+- [x] Aplicar no dashboard web em "Lançamentos Mensais" para avaliação.
+- [x] Consolidar os ajustes aprovados em `criarAvantaShellPreset`.
 - [ ] Depois: Por Categoria, Gráficos, Balanço, Relatório (substituindo a
       antiga faixa `border-t-4`).
