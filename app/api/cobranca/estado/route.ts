@@ -2,10 +2,11 @@ import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { resolverEstadoAcessoParaUsuario } from '../../../lib/cobranca-servidor';
 import { precisaPaywallEmpresa, PRECOS } from '../../../lib/cobranca';
-import { listarCobrancasAssinaturaAsaas } from '../../../lib/asaas';
+import { listarCobrancasAssinaturaAsaas, obterAssinaturaAsaas } from '../../../lib/asaas';
 
 export const runtime = 'nodejs';
 const STATUS_FATURA_PAGAVEL = new Set(['PENDING', 'OVERDUE']);
+const STATUS_FATURA_PAGA = new Set(['RECEIVED', 'CONFIRMED', 'RECEIVED_IN_CASH']);
 
 // Informa ao app o estado de acesso (trial/ativa/expirada...) de um perfil.
 // Exige usuário autenticado e que ele pertença à empresa consultada.
@@ -49,20 +50,73 @@ export async function GET(request: Request) {
     return NextResponse.json({ erro: true, mensagem: 'sem acesso a este perfil' }, { status: 403 });
   }
 
-  // 3) Resolve e devolve o estado. `precisaPaywall` é calculado no servidor
-  //    (já considera a flag COBRANCA_ATIVA) — usado pelo app mobile.
-  const estado = await resolverEstadoAcessoParaUsuario(empresaId, userId);
   let faturaPendente: { invoiceUrl: string; valor: number | null; vencimento: string | null; status: string | null } | null = null;
   const { data: assinatura } = await admin
     .from('assinaturas')
-    .select('id, gateway_subscription_id')
+    .select('id, gateway_subscription_id, status, valido_ate')
     .eq('empresa_id', empresaId)
     .maybeSingle();
 
   if (assinatura?.gateway_subscription_id) {
-    const cobrancas = await listarCobrancasAssinaturaAsaas(assinatura.gateway_subscription_id);
+    const [assinaturaGw, cobrancas] = await Promise.all([
+      obterAssinaturaAsaas(assinatura.gateway_subscription_id),
+      listarCobrancasAssinaturaAsaas(assinatura.gateway_subscription_id),
+    ]);
+    const pagamentos = cobrancas.ok ? (cobrancas.data?.data || []) : [];
+
+    for (const pagamento of pagamentos) {
+      if (!pagamento?.id) continue;
+      await admin.from('assinatura_faturas').upsert({
+        empresa_id: empresaId,
+        assinatura_id: assinatura.id,
+        gateway_payment_id: pagamento.id,
+        gateway_subscription_id: assinatura.gateway_subscription_id,
+        status: pagamento.status || 'UNKNOWN',
+        valor: Number(pagamento.value || 0),
+        vencimento: pagamento.dueDate || null,
+        pagamento_em: pagamento.paymentDate || pagamento.confirmedDate || null,
+        forma_pagamento: pagamento.billingType || null,
+        invoice_url: pagamento.invoiceUrl || null,
+        payload: pagamento,
+        atualizado_em: new Date().toISOString(),
+      }, { onConflict: 'gateway_payment_id' });
+    }
+
+    if (assinatura.status !== 'cortesia' && assinatura.status !== 'cancelada') {
+      const temPaga = pagamentos.some((item) => STATUS_FATURA_PAGA.has(item.status || ''));
+      const temVencida = pagamentos.some((item) => item.status === 'OVERDUE');
+      let novoStatus: string | null = null;
+      let validoAte: string | null = assinatura.valido_ate || null;
+      if (assinaturaGw.ok && (assinaturaGw.data?.status === 'INACTIVE' || assinaturaGw.data?.status === 'EXPIRED')) {
+        novoStatus = 'cancelada';
+        validoAte = new Date().toISOString();
+      } else if (temVencida) {
+        novoStatus = 'inadimplente';
+        if (assinatura.status !== 'inadimplente' || !assinatura.valido_ate) {
+          const fimCarencia = new Date();
+          fimCarencia.setDate(fimCarencia.getDate() + 3);
+          validoAte = fimCarencia.toISOString();
+        }
+      } else if (temPaga) {
+        novoStatus = 'ativa';
+        validoAte = null;
+      }
+      const ciclo = assinaturaGw.ok && assinaturaGw.data?.cycle === 'YEARLY'
+        ? 'anual'
+        : assinaturaGw.ok && assinaturaGw.data?.cycle === 'MONTHLY'
+          ? 'mensal'
+          : null;
+      if (novoStatus || ciclo) {
+        await admin.from('assinaturas').update({
+          ...(novoStatus ? { status: novoStatus, valido_ate: validoAte } : {}),
+          ...(ciclo ? { ciclo } : {}),
+          atualizado_em: new Date().toISOString(),
+        }).eq('id', assinatura.id);
+      }
+    }
+
     const cobranca = cobrancas.ok
-      ? (cobrancas.data?.data || []).find((item) => item.invoiceUrl && STATUS_FATURA_PAGAVEL.has(item.status || ''))
+      ? pagamentos.find((item) => item.invoiceUrl && STATUS_FATURA_PAGAVEL.has(item.status || ''))
       : null;
     if (cobranca?.invoiceUrl) {
       faturaPendente = {
@@ -92,5 +146,9 @@ export async function GET(request: Request) {
       };
     }
   }
+
+  // 3) Resolve e devolve o estado depois da conciliacao imediata com a Asaas.
+  //    `precisaPaywall` é calculado no servidor (já considera a flag COBRANCA_ATIVA).
+  const estado = await resolverEstadoAcessoParaUsuario(empresaId, userId);
   return NextResponse.json({ estado, precisaPaywall: precisaPaywallEmpresa(estado), precos: PRECOS, faturaPendente });
 }

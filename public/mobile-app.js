@@ -819,11 +819,46 @@
   };
 
   window._avaPaywallSair = function () { sair(); };
-  window._avaPaywallAtualizar = function () {
+  window._avaPaywallAtualizar = async function () {
     if (state.paywallProcessando) return;
-    state.paywallVerificado = false;
-    render();
-    verificarPaywallMobile();
+    var msgEl = document.getElementById('paywall-msg');
+    state.paywallProcessando = true;
+    if (msgEl) { msgEl.className = 'mt-1.5 text-xs font-bold text-slate-600'; msgEl.textContent = 'Atualizando pagamento...'; }
+    try {
+      var token = await _avaPaywallToken();
+      if (!token || !state.empresa) {
+        if (msgEl) { msgEl.className = 'mt-1.5 text-xs font-bold text-red-600'; msgEl.textContent = 'Sessao nao encontrada.'; }
+        return;
+      }
+      var resp = await fetch('/api/cobranca/estado?empresaId=' + encodeURIComponent(state.empresa.id), {
+        headers: { Authorization: 'Bearer ' + token },
+      });
+      var json = await resp.json();
+      if (!resp.ok) {
+        if (msgEl) { msgEl.className = 'mt-1.5 text-xs font-bold text-red-600'; msgEl.textContent = json.mensagem || 'Nao foi possivel atualizar o pagamento agora.'; }
+        return;
+      }
+      state.paywallAtivo = Boolean(json.precisaPaywall);
+      state.paywallNome = nomeEmpresa(state.empresa);
+      state.paywallEstado = json.estado || null;
+      state.paywallPrecos = json.precos || state.paywallPrecos;
+      state.paywallFaturaUrl = (json.faturaPendente && json.faturaPendente.invoiceUrl) || '';
+      state.paywallVerificado = true;
+      state.paywallPerfilVerificado = state.empresa && state.empresa.id;
+      if (!state.paywallAtivo) {
+        render();
+        carregarDados();
+        return;
+      }
+      if (msgEl) {
+        msgEl.className = 'mt-1.5 text-xs font-bold text-sky-700';
+        msgEl.textContent = 'Pagamento ainda nao confirmado pela Asaas. Tente novamente em instantes.';
+      }
+    } catch (e) {
+      if (msgEl) { msgEl.className = 'mt-1.5 text-xs font-bold text-red-600'; msgEl.textContent = 'Nao foi possivel consultar a Asaas agora.'; }
+    } finally {
+      state.paywallProcessando = false;
+    }
   };
   window._avaPaywallCriar = function () {
     state.paywallAtivo = false;
@@ -1570,6 +1605,42 @@
           { event: 'financeiro_atualizado' },
           function () { carregarRecorrencias(); carregarDados(); })
         .subscribe();
+    } catch (e) {}
+  }
+
+  function atualizarNotificacoesTempoRealMobile() {
+    try {
+      if (state.modalMenu === 'notificacoes') {
+        carregarNotificacoesLista().then(function () {
+          carregarNotificacoesNaoLidas();
+          render();
+        });
+        return;
+      }
+      carregarNotificacoesNaoLidas();
+    } catch (e) {}
+  }
+
+  function configurarRealtimeNotificacoesMobile() {
+    try {
+      if (!state.usuario || !state.usuario.id) return;
+      var empresaId = state.empresa && state.empresa.id ? state.empresa.id : 'sem_empresa';
+      var chave = state.usuario.id + '_' + empresaId;
+      if (window._avaRealtimeNotificacoesChave === chave) return;
+      if (window._avaRealtimeNotificacoes) db.removeChannel(window._avaRealtimeNotificacoes);
+
+      window._avaRealtimeNotificacoesChave = chave;
+      var canal = db
+        .channel('notificacoes_mobile_' + chave)
+        .on('postgres_changes',
+          { event: '*', schema: 'public', table: 'notificacoes', filter: 'user_id=eq.' + state.usuario.id },
+          atualizarNotificacoesTempoRealMobile);
+      if (state.empresa && state.empresa.id) {
+        canal = canal.on('postgres_changes',
+          { event: '*', schema: 'public', table: 'notificacoes', filter: 'empresa_id=eq.' + state.empresa.id },
+          atualizarNotificacoesTempoRealMobile);
+      }
+      window._avaRealtimeNotificacoes = canal.subscribe();
     } catch (e) {}
   }
 
@@ -3659,6 +3730,7 @@
     sincronizarAgendaSupabase();
     configurarRealtimeAgendaMobile();
     configurarRealtimeFinanceiroMobile();
+    configurarRealtimeNotificacoesMobile();
     configurarRealtimePontoMobile();
     carregarResumoPontoMobile();
     // Atualiza a contagem de notificacoes nao lidas (sino + badge do icone)

@@ -2,6 +2,8 @@
 
 ## Em desenvolvimento
 
+- Web e mobile: exclusao de avisos passa a sincronizar imediatamente a lista e o badge entre as versoes.
+- Cobranca: botao "Ja paguei - atualizar" consulta a Asaas sem sair da tela e libera o perfil assim que o pagamento for confirmado.
 - Web e mobile: descricoes financeiras passam a usar capitalizacao inteligente, preservando siglas, conectivos e termos especiais.
 - Mobile: header do card de confirmacao de exclusao de despesas alinhado ao raio e a faixa colorida do modal.
 - Web: AvantaShell recebe contorno inferior no corpo para corrigir a borda do card de Lancamentos Mensais.

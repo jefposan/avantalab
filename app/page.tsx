@@ -1,5 +1,5 @@
 'use client';
-import { useState, useMemo, useRef, useEffect } from 'react';
+import { useState, useMemo, useRef, useEffect, useCallback } from 'react';
 import Calculadora from './components/Calculadora';
 import Dashboard from './components/Dashboard';
 import BalancoGeral from './components/BalancoGeral'; 
@@ -18,7 +18,8 @@ import SobreModal from './components/SobreModal';
 import ModalConfirmacao from "./components/ModalConfirmacao";
 import DraggableModalCard from './components/DraggableModalCard';
 import CardEntradaFaturamento from './components/CardEntradaFaturamento';
-import TabelaLancamentosDespesa from './components/TabelaLancamentosDespesa';
+import type { EntradaFaturamento as TabelaEntradaFaturamento } from './components/TabelaEntradasFaturamento';
+import TabelaLancamentosDespesa, { type LancamentoDespesa as TabelaLancamentoDespesa } from './components/TabelaLancamentosDespesa';
 import TourPrimeiroAcesso from './components/TourPrimeiroAcesso';
 import PaywallEmpresa from './components/PaywallEmpresa';
 import AssinaturaModal from './components/AssinaturaModal';
@@ -117,6 +118,100 @@ type AgendaItem = {
   criadoEm: string;
   excluirDias?: string[];
 };
+
+type RegistroSupabase = Record<string, unknown>;
+type PerfilAcessoUsuario = 'gestor_master' | 'administrador' | 'operador_completo' | 'operador_simples';
+
+type EmpresaUsuarioResumo = RegistroSupabase & {
+  id: string;
+  nome?: string;
+  empresa_nome?: string;
+  telefone?: string;
+  telefone_confirmado?: boolean;
+  telefone_confirmado_em?: string;
+  tipo_perfil?: string;
+  perfil?: PerfilAcessoUsuario;
+  acessoId?: string;
+  acesso_id?: string;
+};
+
+type DespesaCadastrada = {
+  nome: string;
+  categoria: string;
+};
+
+type LancamentoFinanceiro = {
+  id: string | number;
+  mes: string;
+  dia: number;
+  despesa: string;
+  descricao: string;
+  valor: number;
+  status: string | null;
+  tipo: string | null;
+  recorrenciaId?: string | null;
+};
+
+type EntradaFaturamento = {
+  id: string;
+  mes: string;
+  dia: number;
+  origem: string;
+  valor: number;
+  status: string | null;
+  tipo: string | null;
+};
+
+function textoRegistro(valor: unknown): string {
+  return valor === null || valor === undefined ? '' : String(valor);
+}
+
+function TelaCarregandoSistema({
+  isTelaMobile,
+  mensagem,
+}: {
+  isTelaMobile: boolean;
+  mensagem: string;
+}) {
+  return (
+    <main className="relative min-h-screen overflow-hidden font-sans">
+      <div
+        className={`absolute inset-0 ${
+          isTelaMobile ? 'bg-no-repeat' : 'bg-cover bg-center'
+        }`}
+        style={{
+          backgroundImage: isTelaMobile
+            ? "image-set(url('/images/bg-avantalab-mobile.webp') type('image/webp'), url('/images/bg-avantalab-mobile.png') type('image/png'))"
+            : "image-set(url('/images/bg-avantalab.webp') type('image/webp'), url('/images/bg-avantalab.png') type('image/png'))",
+          backgroundSize: isTelaMobile ? 'cover' : undefined,
+          backgroundPosition: isTelaMobile ? 'center bottom' : 'center',
+        }}
+      />
+
+      <div className="absolute inset-0 bg-white/75 backdrop-blur-sm" />
+
+      <section className="relative z-10 flex min-h-screen items-center justify-center px-6 py-10">
+        <div className="w-full max-w-sm rounded-3xl border border-slate-200 bg-white/90 p-8 text-center shadow-2xl">
+          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-sky-50">
+            <span className="h-7 w-7 animate-spin rounded-full border-3 border-slate-200 border-t-sky-700" />
+          </div>
+
+          <p className="mt-5 text-xs font-bold uppercase tracking-[0.28em] text-sky-700">
+            AvantaLab Gestão
+          </p>
+
+          <h1 className="mt-2 text-xl font-black text-slate-900">
+            Carregando...
+          </h1>
+
+          <p className="mt-2 text-sm font-semibold text-slate-500">
+            {mensagem}
+          </p>
+        </div>
+      </section>
+    </main>
+  );
+}
 
 // Despesa com data (ano/mes/dia) ainda no futuro em relacao a hoje (horario do dispositivo).
 function dataFutura(ano: number, mesIndice: number, dia: number): boolean {
@@ -241,8 +336,8 @@ export default function AppGestao() {
 
   const auth = useAuth({
     abrirAviso,
-    carregarEmpresaSelecionada: (e: any) => carregarEmpresaSelecionada(e),
-    onMultiplasEmpresas: (es: any[]) => onMultiplasEmpresas(es),
+    carregarEmpresaSelecionada: (e: EmpresaUsuarioResumo) => carregarEmpresaSelecionada(e),
+    onMultiplasEmpresas: (es: EmpresaUsuarioResumo[]) => onMultiplasEmpresas(es),
     onSemEmpresa: () => onSemEmpresa(),
     setTipoPerfilAtual: empresas.setTipoPerfilAtual,
     setDuplicadosAtivo,
@@ -300,7 +395,7 @@ export default function AppGestao() {
   } = auth;
 
   // Callbacks de orquestração passados para useAuth
-  const onMultiplasEmpresas = (empresasList: any[]) => {
+  const onMultiplasEmpresas = (empresasList: EmpresaUsuarioResumo[]) => {
     empresas.setEmpresasDoUsuario(empresasList);
     empresas.setEmpresaParaSelecionar(empresasList[0] || null);
     empresas.setModalSelecionarEmpresa(true);
@@ -318,7 +413,7 @@ const [isTelaMobile, setIsTelaMobile] = useState(false);
 const [darkMode, setDarkMode] = useState(false);
 const [ajudaCategoriasAberta, setAjudaCategoriasAberta] = useState(false);
 const [validacaoTelefoneObrigatoria, setValidacaoTelefoneObrigatoria] = useState(false);
-const [empresaAguardandoTelefone, setEmpresaAguardandoTelefone] = useState<any | null>(null);
+const [empresaAguardandoTelefone, setEmpresaAguardandoTelefone] = useState<EmpresaUsuarioResumo | null>(null);
 const [telefoneObrigatorio, setTelefoneObrigatorio] = useState('');
 const [telefoneCobrancaPadrao, setTelefoneCobrancaPadrao] = useState('');
 const [ddiTelefoneObrigatorio, setDdiTelefoneObrigatorio] = useState('55');
@@ -365,36 +460,61 @@ const [validandoTelefoneObrigatorio, setValidandoTelefoneObrigatorio] = useState
       return proxima;
     });
   };
+  const atualizarEstadoCobranca = useCallback(async (): Promise<{
+    ok: boolean;
+    liberado: boolean;
+    mensagem?: string;
+  }> => {
+    if (!COBRANCA_ATIVA || !empresaId) {
+      setEstadoAcesso(null);
+      setFaturaPendenteUrl(null);
+      setEstadoCarregado(true);
+      return { ok: true, liberado: true };
+    }
+    try {
+      const { data: sessao } = await supabase.auth.getSession();
+      const token = sessao.session?.access_token;
+      if (!token) return { ok: false, liberado: false, mensagem: 'Sessão não encontrada. Entre novamente.' };
+      const resp = await fetch(`/api/cobranca/estado?empresaId=${encodeURIComponent(empresaId)}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const json = await resp.json();
+      if (!resp.ok) {
+        return { ok: false, liberado: false, mensagem: json.mensagem || 'Não foi possível atualizar o pagamento agora.' };
+      }
+      const estado = json.estado || null;
+      setEstadoAcesso(estado);
+      setFaturaPendenteUrl(json.faturaPendente?.invoiceUrl || null);
+      setEstadoCarregado(true);
+      return {
+        ok: true,
+        liberado: !precisaPaywallEmpresa(estado),
+        mensagem: !precisaPaywallEmpresa(estado)
+          ? 'Pagamento confirmado. Acesso liberado.'
+          : 'Pagamento ainda não confirmado pela Asaas. Tente novamente em instantes.',
+      };
+    } catch {
+      return { ok: false, liberado: false, mensagem: 'Não foi possível consultar a Asaas agora.' };
+    }
+  }, [empresaId]);
+
   useEffect(() => {
-    if (!COBRANCA_ATIVA || !acessoLiberado || !empresaId) { setEstadoAcesso(null); setFaturaPendenteUrl(null); setEstadoCarregado(true); return; }
-    let ativo = true;
-    setEstadoCarregado(false);
-    const carregarEstado = async () => {
-      try {
-        const { data: sessao } = await supabase.auth.getSession();
-        const token = sessao.session?.access_token;
-        if (!token) return;
-        const resp = await fetch(`/api/cobranca/estado?empresaId=${encodeURIComponent(empresaId)}`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        const json = await resp.json();
-        if (ativo && resp.ok) {
-          setEstadoAcesso(json.estado || null);
-          setFaturaPendenteUrl(json.faturaPendente?.invoiceUrl || null);
-        }
-      } catch { /* silencioso: em caso de falha, não bloqueia (fail-open) */ }
-      finally { if (ativo) setEstadoCarregado(true); }
-    };
+    const carregarEstado = () => atualizarEstadoCobranca();
+    if (!COBRANCA_ATIVA || !acessoLiberado || !empresaId) {
+      const timerResetCobranca = window.setTimeout(() => {
+        void atualizarEstadoCobranca();
+      }, 0);
+      return () => window.clearTimeout(timerResetCobranca);
+    }
     void carregarEstado();
     const intervalo = window.setInterval(() => void carregarEstado(), 5 * 60 * 1000);
     const aoFocar = () => void carregarEstado();
     window.addEventListener('focus', aoFocar);
     return () => {
-      ativo = false;
       window.clearInterval(intervalo);
       window.removeEventListener('focus', aoFocar);
     };
-  }, [acessoLiberado, empresaId]);
+  }, [acessoLiberado, empresaId, atualizarEstadoCobranca]);
   const iniciarAssinatura = async (
     ciclo: 'mensal' | 'anual',
     dadosCobranca: DadosCobrancaAssinatura,
@@ -464,7 +584,7 @@ const [agendaItemParaExcluir, setAgendaItemParaExcluir] = useState<AgendaItem | 
 const [notificacoesWeb, setNotificacoesWeb] = useState<{ id: string; titulo: string; corpo: string; lida: boolean }[]>([]);
 const ajustesAutoFecharTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 const painelAvisosAbertoAnterior = useRef(false);
-const financeiroRealtimeChannelRef = useRef<any>(null);
+const financeiroRealtimeChannelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
 const [menuResponsivoAberto, setMenuResponsivoAberto] = useState(false);
 const [subAcaoGerenciar, setSubAcaoGerenciar] = useState<null | 'editar' | 'criar'>(null);
   const [ultimoBackupEm, setUltimoBackupEm] = useState<string | null>(null);
@@ -561,7 +681,7 @@ const [faturamentos, setFaturamentos] = useState<Record<string, number>>({});
 const [inputFaturamento, setInputFaturamento] = useState('');
 const [mesResumoDash, setMesResumoDash] = useState('JANEIRO');
 
-const [faturamentosEntradas, setFaturamentosEntradas] = useState<any[]>([]);
+const [faturamentosEntradas, setFaturamentosEntradas] = useState<EntradaFaturamento[]>([]);
 const [entradaFaturamentoDia, setEntradaFaturamentoDia] = useState('');
 const [entradaFaturamentoOrigem, setEntradaFaturamentoOrigem] = useState('');
 const [entradaFaturamentoValor, setEntradaFaturamentoValor] = useState('');
@@ -578,13 +698,13 @@ const [editEntradaFaturamentoValor, setEditEntradaFaturamentoValor] = useState('
 const [editEntradaFaturamentoValorNumerico, setEditEntradaFaturamentoValorNumerico] = useState(0);
 
   const [despesasCadastradas, setDespesasCadastradas] = useState<
-  { nome: string; categoria: string }[]
+  DespesaCadastrada[]
 >([]);
 
   const [novaBaseNome, setNovaBaseNome] = useState('');
   const [novaBaseCat, setNovaBaseCat] = useState('');
 
-  const [lancamentos, setLancamentos] = useState<any[]>([]);
+  const [lancamentos, setLancamentos] = useState<LancamentoFinanceiro[]>([]);
   const [formDia, setFormDia] = useState('');
   const [formDespesa, setFormDespesa] = useState('');
   const [formDescricao, setFormDescricao] = useState('');
@@ -838,7 +958,7 @@ useEffect(() => {
   verificarDispositivoMobile();
 }, []);
 
-const carregarEmpresaSelecionada = async (empresa: any) => {
+const carregarEmpresaSelecionada = async (empresa: EmpresaUsuarioResumo) => {
   setCarregandoPerfil(true);
   setEstadoAcesso(null);
   setEstadoCarregado(false);
@@ -953,9 +1073,9 @@ if (empresa.telefone_confirmado !== true) {
 
   if (despesas && despesas.length > 0) {
     setDespesasCadastradas(
-      despesas.map((d: any) => ({
-        nome: formatarNomeCategoria(d.nome),
-        categoria: formatarNomeCategoria(d.categoria),
+      despesas.map((d: RegistroSupabase) => ({
+        nome: formatarNomeCategoria(textoRegistro(d.nome)),
+        categoria: formatarNomeCategoria(textoRegistro(d.categoria)),
       }))
     );
   } else {
@@ -1158,34 +1278,34 @@ useEffect(() => {
     );
 
     setLancamentos(
-      lancamentosBanco.map((l: any) => ({
-        id: l.id,
-        mes: l.mes,
-        dia: l.dia,
-        despesa: formatarNomeCategoria(l.despesa_nome),
-        descricao: l.descricao || '',
+      lancamentosBanco.map((l: RegistroSupabase) => ({
+        id: String(l.id),
+        mes: textoRegistro(l.mes),
+        dia: Number(l.dia),
+        despesa: formatarNomeCategoria(textoRegistro(l.despesa_nome)),
+        descricao: textoRegistro(l.descricao),
         valor: Number(l.valor),
-        status: l.status || null,
-        tipo: l.tipo_obs || null,
-        recorrenciaId: l.recorrencia_id || null,
+        status: l.status ? textoRegistro(l.status) : null,
+        tipo: l.tipo_obs ? textoRegistro(l.tipo_obs) : null,
+        recorrenciaId: l.recorrencia_id ? textoRegistro(l.recorrencia_id) : null,
       }))
     );
         setFaturamentosEntradas(
-      faturamentosEntradasBanco.map((entrada: any) => ({
-        id: entrada.id,
-        mes: entrada.mes,
-        dia: entrada.dia,
-        origem: entrada.origem,
+      faturamentosEntradasBanco.map((entrada: RegistroSupabase) => ({
+        id: String(entrada.id),
+        mes: textoRegistro(entrada.mes),
+        dia: Number(entrada.dia),
+        origem: textoRegistro(entrada.origem),
         valor: Number(entrada.valor),
-        status: entrada.status || null,
-        tipo: entrada.tipo_obs || null,
+        status: entrada.status ? textoRegistro(entrada.status) : null,
+        tipo: entrada.tipo_obs ? textoRegistro(entrada.tipo_obs) : null,
       }))
     );
 
     const faturamentosFormatados: Record<string, number> = {};
 
-    faturamentosBanco.forEach((f: any) => {
-      faturamentosFormatados[f.mes] = Number(f.valor);
+    faturamentosBanco.forEach((f: RegistroSupabase) => {
+      faturamentosFormatados[textoRegistro(f.mes)] = Number(f.valor);
       
     });
 
@@ -1200,14 +1320,19 @@ useEffect(() => {
   if (!mounted || !empresaId || !configuracoesCarregadas) return;
 
   if (!podeAcessarAjustes) {
-    setStatusConfig('idle');
-    return;
+    const timerStatus = window.setTimeout(() => setStatusConfig('idle'), 0);
+    return () => window.clearTimeout(timerStatus);
   }
+
+  const timerInicial = window.setTimeout(() => {
+    setStatusConfig('saving');
+  }, 0);
 
   let ativo = true;
 
   const salvarConfiguracoes = async () => {
-    setStatusConfig('saving');
+    window.clearTimeout(timerInicial);
+    if (ativo) setStatusConfig('saving');
 
     const resultado = await salvarConfiguracoesBanco({
   empresaId,
@@ -1238,6 +1363,7 @@ useEffect(() => {
 
   return () => {
     ativo = false;
+    window.clearTimeout(timerInicial);
     clearTimeout(timer);
   };
 }, [
@@ -1269,8 +1395,11 @@ const reiniciarTimerAjustes = () => {
   useEffect(() => {
     if (!ajustesAberto) {
       limparTimerAjustes();
-      setMenuAjuste(null);
-      return;
+      const timerMenu = window.setTimeout(() => setMenuAjuste(null), 0);
+      return () => {
+        window.clearTimeout(timerMenu);
+        limparTimerAjustes();
+      };
     }
 
     reiniciarTimerAjustes();
@@ -1296,40 +1425,64 @@ const reiniciarTimerAjustes = () => {
 useEffect(() => {
   if (!mounted || !acessoLiberado) return;
 
-  setBuscaLancamento('');
-  setBuscaEntradaFaturamento('');
-  setLancamentoEditandoId(null);
+  const timerReset = window.setTimeout(() => {
+    setBuscaLancamento('');
+    setBuscaEntradaFaturamento('');
+    setLancamentoEditandoId(null);
 
-  setFormDia('');
-  setFormDespesa('');
-  setFormDescricao('');
-  setFormValor('');
-  setValorNumericoRaw(0);
+    setFormDia('');
+    setFormDespesa('');
+    setFormDescricao('');
+    setFormValor('');
+    setValorNumericoRaw(0);
 
-  setEntradaFaturamentoDia('');
-  setEntradaFaturamentoOrigem('');
-  setEntradaFaturamentoValor('');
-  setEntradaFaturamentoValorNumerico(0);
-  setInputFaturamento('');
-  setValorReceitaDashboardConfirmacao(0);
-  setEntradaFaturamentoEditandoId(null);
-  setEditEntradaFaturamentoDia('');
-  setEditEntradaFaturamentoOrigem('');
-  setEditEntradaFaturamentoValor('');
-  setEditEntradaFaturamentoValorNumerico(0);
+    setEntradaFaturamentoDia('');
+    setEntradaFaturamentoOrigem('');
+    setEntradaFaturamentoValor('');
+    setEntradaFaturamentoValorNumerico(0);
+    setInputFaturamento('');
+    setValorReceitaDashboardConfirmacao(0);
 
-  setEditDia('');
-  setEditDespesa('');
-  setEditDescricao('');
-  setEditValor('');
-  setEditValorNumerico(0);
+    setEntradaFaturamentoEditandoId(null);
+    setEditEntradaFaturamentoDia('');
+    setEditEntradaFaturamentoOrigem('');
+    setEditEntradaFaturamentoValor('');
+    setEditEntradaFaturamentoValorNumerico(0);
 
-  window.scrollTo({
-    top: 0,
-    left: 0,
-    behavior: 'smooth',
-  });
+    setEditDia('');
+    setEditDespesa('');
+    setEditDescricao('');
+    setEditValor('');
+    setEditValorNumerico(0);
+
+    window.scrollTo({
+      top: 0,
+      left: 0,
+      behavior: 'smooth',
+    });
+  }, 0);
+
+  return () => window.clearTimeout(timerReset);
 }, [abaAtiva, mesAtivo, mounted, acessoLiberado]);
+
+useEffect(() => {
+  const timerBloco = window.setTimeout(() => setBlocoAtivo(null), 0);
+  return () => window.clearTimeout(timerBloco);
+}, [mesAtivo, empresaId, abaAtiva]);
+
+useEffect(() => {
+  if (segundosReenvioTelefoneObrigatorio <= 0) return;
+
+  const timer = window.setTimeout(() => {
+    setSegundosReenvioTelefoneObrigatorio((segundos) =>
+      Math.max(segundos - 1, 0)
+    );
+  }, 1000);
+
+  return () => {
+    window.clearTimeout(timer);
+  };
+}, [segundosReenvioTelefoneObrigatorio]);
 
 useEffect(() => {
   if (segundosReenvioSms <= 0) return;
@@ -1356,10 +1509,6 @@ useEffect(() => {
     window.clearTimeout(timer);
   };
 }, [segundosReenvioRedefinirSenha]);
-
-useEffect(() => {
-  setBlocoAtivo(null);
-}, [mesAtivo, empresaId, abaAtiva]);
 
 useEffect(() => {
   if (segundosReenvioTelefoneObrigatorio <= 0) return;
@@ -1453,150 +1602,10 @@ useEffect(() => {
   if (!mounted || !acessoLiberado || validacaoTelefoneObrigatoria) return;
   const jaConcluido = localStorage.getItem('avantalab_tour_concluido');
   if (!jaConcluido) {
-    setTourAberto(true);
+    const timerTour = window.setTimeout(() => setTourAberto(true), 0);
+    return () => window.clearTimeout(timerTour);
   }
 }, [mounted, acessoLiberado, validacaoTelefoneObrigatoria]);
-
-// Agenda: carrega itens do localStorage
-useEffect(() => {
-  try {
-    const saved = localStorage.getItem('avantalab_web_agenda_itens');
-    if (saved) setAgendaItens(JSON.parse(saved));
-  } catch {}
-}, []);
-
-// Agenda: sincroniza com o Supabase quando o perfil esta ativo
-useEffect(() => {
-  if (!mounted || !empresaId) return;
-  sincronizarAgendaSupabaseWeb();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-}, [mounted, empresaId]);
-
-// Módulos: carrega catálogo e ativos quando o perfil esta ativo
-useEffect(() => {
-  if (!mounted || !empresaId) return;
-  carregarModulos();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-}, [mounted, empresaId]);
-
-// Financeiro: mantem lancamentos e despesas fixas sincronizados entre web/mobile.
-useEffect(() => {
-  if (!mounted || !empresaId) return;
-
-  const canalFinanceiro = supabase
-    .channel('financeiro_sync_' + empresaId)
-    .on(
-      'postgres_changes',
-      { event: '*', schema: 'public', table: 'lancamentos', filter: 'empresa_id=eq.' + empresaId },
-      () => { recarregarDadosFinanceirosAtual(); }
-    )
-    .on(
-      'postgres_changes',
-      { event: '*', schema: 'public', table: 'recorrencias', filter: 'empresa_id=eq.' + empresaId },
-      () => { recarregarDadosFinanceirosAtual(); }
-    )
-    .on(
-      'broadcast',
-      { event: 'financeiro_atualizado' },
-      () => { recarregarDadosFinanceirosAtual(); }
-    )
-    .subscribe();
-  financeiroRealtimeChannelRef.current = canalFinanceiro;
-
-  return () => {
-    financeiroRealtimeChannelRef.current = null;
-    supabase.removeChannel(canalFinanceiro);
-  };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-}, [mounted, empresaId, anoSelecionado]);
-
-// Controle de ponto: resumo do dia atualizado por Realtime.
-useEffect(() => {
-  if (!mounted || !empresaId || !podeGerenciarPonto) {
-    setPontoResumoDia([]);
-    return;
-  }
-
-  setPontoResumoCarregando(true);
-  carregarResumoPontoDashboard();
-  const canal = supabase
-    .channel('ponto_dashboard_' + empresaId)
-    .on(
-      'postgres_changes',
-      { event: '*', schema: 'public', table: 'ponto_registros', filter: 'empresa_id=eq.' + empresaId },
-      () => { carregarResumoPontoDashboard(); }
-    )
-    .on(
-      'postgres_changes',
-      { event: '*', schema: 'public', table: 'ponto_funcionarios', filter: 'empresa_id=eq.' + empresaId },
-      () => { carregarResumoPontoDashboard(); }
-    )
-    .subscribe();
-  const intervalo = window.setInterval(() => { carregarResumoPontoDashboard(); }, 30000);
-
-  return () => {
-    window.clearInterval(intervalo);
-    supabase.removeChannel(canal);
-  };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-}, [mounted, empresaId, podeGerenciarPonto]);
-
-// Agenda: atualiza em tempo real (mudancas em qualquer aparelho)
-useEffect(() => {
-  if (!mounted || !empresaId) return;
-  let canal: any;
-  (async () => {
-    const { data: u } = await supabase.auth.getUser();
-    const userId = u.user?.id;
-    if (!userId) return;
-    canal = supabase
-      .channel('agenda_itens_web_' + userId)
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'agenda_itens', filter: 'user_id=eq.' + userId },
-        () => { sincronizarAgendaSupabaseWeb(); }
-      )
-      .subscribe();
-  })();
-  return () => { if (canal) supabase.removeChannel(canal); };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-}, [mounted, empresaId]);
-
-// Sininho: carrega notificacoes (avisos) do Supabase + tempo real
-useEffect(() => {
-  if (!mounted || !empresaId) return;
-  carregarNotificacoesWeb();
-  let canal: any;
-  (async () => {
-    const { data: u } = await supabase.auth.getUser();
-    const userId = u.user?.id;
-    if (!userId) return;
-    canal = supabase
-      .channel('notificacoes_web_' + userId)
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'notificacoes', filter: 'user_id=eq.' + userId },
-        () => { carregarNotificacoesWeb(); }
-      )
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'notificacoes', filter: 'empresa_id=eq.' + empresaId },
-        () => { carregarNotificacoesWeb(); }
-      )
-      .subscribe();
-  })();
-  return () => { if (canal) supabase.removeChannel(canal); };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-}, [mounted, empresaId]);
-
-// Ao fechar o painel, os avisos visualizados deixam de aparecer no sininho.
-useEffect(() => {
-  if (painelAvisosAbertoAnterior.current && !painelAvisosAberto) {
-    marcarNotificacoesLidasWeb();
-  }
-  painelAvisosAbertoAnterior.current = painelAvisosAberto;
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-}, [painelAvisosAberto]);
 
   // --- CÁLCULOS E FUNÇÕES ---
 
@@ -1616,17 +1625,17 @@ useEffect(() => {
     return i < 0 ? 0 : i;
   }
 
-  function agendaItemFromSupabase(r: any): AgendaItem {
+  function agendaItemFromSupabase(r: RegistroSupabase): AgendaItem {
     return {
       id: String(r.id),
-      titulo: r.titulo || '',
-      descricao: r.descricao || '',
+      titulo: textoRegistro(r.titulo),
+      descricao: textoRegistro(r.descricao),
       dia: Number(r.dia) || 1,
-      mes: agendaMesIndex(r.mes),
+      mes: agendaMesIndex(textoRegistro(r.mes)),
       ano: Number(r.ano) || new Date().getFullYear(),
       repetir: !!r.repetir,
-      repeticao: (r.repeticao || 'mensal') as AgendaItem['repeticao'],
-      criadoEm: r.criado_em || new Date().toISOString(),
+      repeticao: (textoRegistro(r.repeticao) || 'mensal') as AgendaItem['repeticao'],
+      criadoEm: textoRegistro(r.criado_em) || new Date().toISOString(),
       excluirDias: Array.isArray(r.excluir_dias) ? r.excluir_dias : [],
     };
   }
@@ -1679,10 +1688,10 @@ useEffect(() => {
         .limit(50);
       if (error) return;
       setNotificacoesWeb(
-        (data || []).map((n: any) => ({
+        (data || []).map((n: RegistroSupabase) => ({
           id: String(n.id),
-          titulo: n.titulo || '',
-          corpo: n.corpo || '',
+          titulo: textoRegistro(n.titulo),
+          corpo: textoRegistro(n.corpo),
           lida: n.lida === true,
         }))
       );
@@ -1723,13 +1732,13 @@ useEffect(() => {
         supabase.from('empresa_modulos').select('modulo_id').eq('empresa_id', empresaId).eq('ativo', true),
       ]);
       if (!catRes.error && catRes.data) {
-        setModulosCatalogo(catRes.data.map((m: any) => ({
-          id: String(m.id), nome: m.nome || '', descricao: m.descricao || '',
-          icone: m.icone || '', perfis: Array.isArray(m.perfis) ? m.perfis : [],
+        setModulosCatalogo(catRes.data.map((m: RegistroSupabase) => ({
+          id: String(m.id), nome: textoRegistro(m.nome), descricao: textoRegistro(m.descricao),
+          icone: textoRegistro(m.icone), perfis: Array.isArray(m.perfis) ? m.perfis.map(String) : [],
         })));
       }
       if (!ativosRes.error && ativosRes.data) {
-        setModulosAtivos(ativosRes.data.map((r: any) => String(r.modulo_id)));
+        setModulosAtivos(ativosRes.data.map((r: RegistroSupabase) => String(r.modulo_id)));
       }
     } catch {}
     setModulosCarregando(false);
@@ -2730,7 +2739,7 @@ const solicitarFaturamentoDashboard = () => {
     });
     if (!resultado.erro && resultado.data) {
       setRecorrencias((prev) => [...prev, resultado.data!].sort((a, b) => a.nome.localeCompare(b.nome)));
-      const novosLancamentos: any[] = [];
+      const novosLancamentos: LancamentoFinanceiro[] = [];
       if (novaRecorrLancarAgora && mesAtivo && valorNum > 0) {
         const salvo = await salvarLancamento({
           empresaId,
@@ -2902,7 +2911,7 @@ const solicitarFaturamentoDashboard = () => {
         const ok = await deletarRecorrencia(id);
         if (ok) {
           setRecorrencias((prev) => prev.filter((r) => r.id !== id));
-          setLancamentos((prev) => prev.filter((l: any) => l.recorrenciaId !== id));
+          setLancamentos((prev) => prev.filter((l) => l.recorrenciaId !== id));
           notificarFinanceiroAtualizado();
         }
       },
@@ -3170,7 +3179,7 @@ const adicionarDespesa = async () => {
 const executarParcelamento = async () => {
   const totalParcelas = formParcelar && formParcelas >= 2 ? formParcelas : 1;
   const mesIndex = meses.indexOf(mesAtivo ?? '');
-  const novosLancamentos: any[] = [];
+  const novosLancamentos: LancamentoFinanceiro[] = [];
 
   for (let p = 0; p < totalParcelas; p++) {
     const idxMes = (mesIndex + p) % 12;
@@ -3248,7 +3257,7 @@ const apagarDespesa = async (id: string) => {
   }
 };
 
-const cancelarDespesaFixaDoMes = async (lanc: any) => {
+const cancelarDespesaFixaDoMes = async (lanc: LancamentoFinanceiro | TabelaLancamentoDespesa) => {
   if (!empresaId) return;
 
   const { error } = await supabase
@@ -3271,7 +3280,7 @@ const confirmarDespesaPrevista = async (id: string | number) => {
   const ok = await definirStatusLancamento(id, empresaId, 'confirmada');
   if (ok) {
     setLancamentos((prev) =>
-      prev.map((l: any) => (l.id === id ? { ...l, status: 'confirmada' } : l))
+      prev.map((l) => (l.id === id ? { ...l, status: 'confirmada' } : l))
     );
     notificarFinanceiroAtualizado();
   } else {
@@ -3291,7 +3300,7 @@ const excluirDespesaPrevista = (id: string | number) => {
   });
 };
 
-const ajustarDespesaPrevista = (despesa: any) => {
+const ajustarDespesaPrevista = (despesa: TabelaLancamentoDespesa) => {
   if (despesa && despesa.mes) setMesAtivo(despesa.mes);
 };
 
@@ -3400,7 +3409,7 @@ const ocultarCardDashboard = (id: string) => {
   definirOcultosDashboard([...dashboardOcultos, id]);
 };
 
-const solicitarExclusaoLancamento = (lanc: any) => {
+const solicitarExclusaoLancamento = (lanc: TabelaLancamentoDespesa) => {
   if (!podeExcluirLancamentos) {
     abrirAviso(
       'Acesso não permitido',
@@ -3415,12 +3424,12 @@ const solicitarExclusaoLancamento = (lanc: any) => {
   if (matchParcela) {
     const total = parseInt(matchParcela[2], 10);
     // Encontrar todas as parcelas do mesmo grupo (mesma despesa, padrão X/total)
-    const parcelasGrupo = lancamentos.filter((l: any) => {
+    const parcelasGrupo = lancamentos.filter((l) => {
       if (l.despesa !== lanc.despesa) return false;
       const m = (l.descricao || '').match(/\((\d+)\/(\d+)\)$/);
       return m && parseInt(m[2], 10) === total;
     });
-    const pendentes = parcelasGrupo.filter((l: any) => l.id !== lanc.id);
+    const pendentes = parcelasGrupo.filter((l) => l.id !== lanc.id);
     if (pendentes.length > 0) {
       abrirConfirmacao({
         titulo: 'Excluir parcela',
@@ -3433,18 +3442,19 @@ Deseja excluir TODAS as parcelas ou apenas esta?`,
         textoCancelar: 'Só esta',
         acao: async () => {
           for (const p of parcelasGrupo) {
-            await apagarLancamento(p.id);
+            await apagarLancamento(String(p.id));
           }
-          setLancamentos((prev) => prev.filter((l: any) => !parcelasGrupo.some((p: any) => p.id === l.id)));
+          setLancamentos((prev) => prev.filter((l) => !parcelasGrupo.some((p) => p.id === l.id)));
           notificarFinanceiroAtualizado();
         },
-        acaoCancelar: () => apagarDespesa(lanc.id),
+        acaoCancelar: () => apagarDespesa(String(lanc.id)),
       });
       return;
     }
   }
 
-  if (lanc.tipo === 'fixa' || lanc.recorrenciaId) {
+  const recorrenciaId = (lanc as LancamentoFinanceiro).recorrenciaId;
+  if (lanc.tipo === 'fixa' || recorrenciaId) {
     abrirConfirmacao({
       titulo: 'Excluir despesa fixa do mês',
       mensagem: `Esta exclusão remove somente o lançamento deste mês.\n\nPara remover a despesa fixa de todos os meses, acesse "Despesas fixas".`,
@@ -3459,11 +3469,11 @@ Deseja excluir TODAS as parcelas ou apenas esta?`,
   abrirConfirmacao({
     titulo: 'Excluir lançamento',
     mensagem: `Deseja excluir este lançamento?\n\n${lanc.despesa} - ${formatarMoeda(Number(lanc.valor))}\n\nEssa ação não poderá ser desfeita.`,
-    acao: () => apagarDespesa(lanc.id),
+    acao: () => apagarDespesa(String(lanc.id)),
   });
 };
 
-const excluirEntradaFaturamento = async (entrada: any) => {
+const excluirEntradaFaturamento = async (entrada: TabelaEntradaFaturamento) => {
   if (!podeExcluirLancamentos) {
     abrirAviso(
       'Acesso não permitido',
@@ -3497,7 +3507,7 @@ const excluirEntradaFaturamento = async (entrada: any) => {
       : `Deseja excluir a entrada "${entrada.origem}" no valor de ${formatarMoeda(Number(entrada.valor || 0))}?\n\nO valor será descontado do faturamento total do mês.`,
     textoConfirmar: 'Excluir',
     acao: async () => {
-      const resultado = await apagarFaturamentoEntrada(entrada.id);
+      const resultado = await apagarFaturamentoEntrada(String(entrada.id));
 
       if (resultado.erro) {
         abrirAviso(
@@ -3516,7 +3526,7 @@ const excluirEntradaFaturamento = async (entrada: any) => {
         return;
       }
 
-      const mesEntrada = entrada.mes;
+      const mesEntrada = entrada.mes || mesAtivo || mesFaturamento;
       const valorEntrada = Number(entrada.valor || 0);
       const totalAtual = faturamentos[mesEntrada] || 0;
       const novoTotal = Math.max(0, totalAtual - valorEntrada);
@@ -3606,7 +3616,7 @@ setFeedbackMensagem('');
 setChatFeedbackEtapa('confirmacao');
 }
 
-const iniciarEdicaoLancamento = (lanc: any) => {
+const iniciarEdicaoLancamento = (lanc: TabelaLancamentoDespesa) => {
 
   if (!podeEditarLancamentos) {
   abrirAviso(
@@ -3648,7 +3658,7 @@ const handleEntradaFaturamentoValorChange = (
   setEntradaFaturamentoValor(formatarValorCampo(numericValue));
 };
 
-const iniciarEdicaoEntradaFaturamento = (entrada: any) => {
+const iniciarEdicaoEntradaFaturamento = (entrada: TabelaEntradaFaturamento) => {
   if (!podeEditarLancamentos) {
     abrirAviso(
       'Acesso não permitido',
@@ -3657,7 +3667,7 @@ const iniciarEdicaoEntradaFaturamento = (entrada: any) => {
     return;
   }
 
-  setEntradaFaturamentoEditandoId(entrada.id);
+  setEntradaFaturamentoEditandoId(String(entrada.id));
   setEditEntradaFaturamentoDia(String(entrada.dia || ''));
   setEditEntradaFaturamentoOrigem(entrada.origem || '');
   setEditEntradaFaturamentoValor(formatarValorCampo(Number(entrada.valor || 0)));
@@ -3830,7 +3840,7 @@ const salvarEdicaoEntradaFaturamento = async () => {
 };
 
 const handleValorChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-  let value = e.target.value.replace(/\D/g, '');
+  const value = e.target.value.replace(/\D/g, '');
 
   if (!value) {
     setFormValor('');
@@ -3894,7 +3904,7 @@ const salvarEdicaoLancamento = async () => {
   return;
 }
 
-  const lancamentoAtual = lancamentos.find((item: any) => String(item.id) === String(lancamentoEditandoId));
+  const lancamentoAtual = lancamentos.find((item) => String(item.id) === String(lancamentoEditandoId));
   const ehFixaEditada = lancamentoAtual?.tipo === 'fixa' || Boolean(lancamentoAtual?.recorrenciaId);
   const ehParcelaEditada = lancamentoAtual?.tipo === 'parcela';
   const ehFuturaEditada = dataFutura(Number(anoSelecionado), meses.indexOf(mesAtivo), diaNumerico);
@@ -4084,39 +4094,41 @@ const recarregarDadosFinanceirosAtual = async () => {
   ]);
 
   setDespesasCadastradas(
-    despesasBanco.map((d: any) => ({
-      nome: formatarNomeCategoria(d.nome),
-      categoria: formatarNomeCategoria(d.categoria),
+    despesasBanco.map((d: RegistroSupabase) => ({
+      nome: formatarNomeCategoria(textoRegistro(d.nome)),
+      categoria: formatarNomeCategoria(textoRegistro(d.categoria)),
     }))
   );
 
   setLancamentos(
-    lancamentosBanco.map((l: any) => ({
-      id: l.id,
-      mes: l.mes,
-      dia: l.dia,
-      despesa: formatarNomeCategoria(l.despesa_nome),
-      descricao: l.descricao || '',
+    lancamentosBanco.map((l: RegistroSupabase) => ({
+      id: String(l.id),
+      mes: textoRegistro(l.mes),
+      dia: Number(l.dia),
+      despesa: formatarNomeCategoria(textoRegistro(l.despesa_nome)),
+      descricao: textoRegistro(l.descricao),
       valor: Number(l.valor),
-      status: l.status || null,
-      tipo: l.tipo_obs || null,
-      recorrenciaId: l.recorrencia_id || null,
+      status: l.status ? textoRegistro(l.status) : null,
+      tipo: l.tipo_obs ? textoRegistro(l.tipo_obs) : null,
+      recorrenciaId: l.recorrencia_id ? textoRegistro(l.recorrencia_id) : null,
     }))
   );
 
   setFaturamentosEntradas(
-    faturamentosEntradasBanco.map((entrada: any) => ({
-      id: entrada.id,
-      mes: entrada.mes,
-      dia: entrada.dia,
-      origem: entrada.origem,
+    faturamentosEntradasBanco.map((entrada: RegistroSupabase) => ({
+      id: String(entrada.id),
+      mes: textoRegistro(entrada.mes),
+      dia: Number(entrada.dia),
+      origem: textoRegistro(entrada.origem),
       valor: Number(entrada.valor),
+      status: entrada.status ? textoRegistro(entrada.status) : null,
+      tipo: entrada.tipo_obs ? textoRegistro(entrada.tipo_obs) : null,
     }))
   );
 
   const faturamentosFormatados: Record<string, number> = {};
-  faturamentosBanco.forEach((f: any) => {
-    faturamentosFormatados[f.mes] = Number(f.valor);
+  faturamentosBanco.forEach((f: RegistroSupabase) => {
+    faturamentosFormatados[textoRegistro(f.mes)] = Number(f.valor);
   });
   setFaturamentos(faturamentosFormatados);
   setRecorrencias(recorrenciasBanco);
@@ -4133,6 +4145,164 @@ const notificarFinanceiroAtualizado = () => {
     console.warn('Não foi possível notificar atualização financeira:', e);
   }
 };
+
+// Agenda: carrega itens do localStorage
+useEffect(() => {
+  const timerAgendaLocal = window.setTimeout(() => {
+    try {
+      const saved = localStorage.getItem('avantalab_web_agenda_itens');
+      if (saved) setAgendaItens(JSON.parse(saved));
+    } catch {}
+  }, 0);
+  return () => window.clearTimeout(timerAgendaLocal);
+}, []);
+
+// Agenda: sincroniza com o Supabase quando o perfil esta ativo
+useEffect(() => {
+  if (!mounted || !empresaId) return;
+  const timerAgendaSync = window.setTimeout(() => {
+    sincronizarAgendaSupabaseWeb();
+  }, 0);
+  return () => window.clearTimeout(timerAgendaSync);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+}, [mounted, empresaId]);
+
+// Módulos: carrega catálogo e ativos quando o perfil esta ativo
+useEffect(() => {
+  if (!mounted || !empresaId) return;
+  const timerModulos = window.setTimeout(() => {
+    carregarModulos();
+  }, 0);
+  return () => window.clearTimeout(timerModulos);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+}, [mounted, empresaId]);
+
+// Financeiro: mantem lancamentos e despesas fixas sincronizados entre web/mobile.
+useEffect(() => {
+  if (!mounted || !empresaId) return;
+
+  const canalFinanceiro = supabase
+    .channel('financeiro_sync_' + empresaId)
+    .on(
+      'postgres_changes',
+      { event: '*', schema: 'public', table: 'lancamentos', filter: 'empresa_id=eq.' + empresaId },
+      () => { recarregarDadosFinanceirosAtual(); }
+    )
+    .on(
+      'postgres_changes',
+      { event: '*', schema: 'public', table: 'recorrencias', filter: 'empresa_id=eq.' + empresaId },
+      () => { recarregarDadosFinanceirosAtual(); }
+    )
+    .on(
+      'broadcast',
+      { event: 'financeiro_atualizado' },
+      () => { recarregarDadosFinanceirosAtual(); }
+    )
+    .subscribe();
+  financeiroRealtimeChannelRef.current = canalFinanceiro;
+
+  return () => {
+    financeiroRealtimeChannelRef.current = null;
+    supabase.removeChannel(canalFinanceiro);
+  };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+}, [mounted, empresaId, anoSelecionado]);
+
+// Controle de ponto: resumo do dia atualizado por Realtime.
+useEffect(() => {
+  if (!mounted || !empresaId || !podeGerenciarPonto) {
+    const timerPontoVazio = window.setTimeout(() => setPontoResumoDia([]), 0);
+    return () => window.clearTimeout(timerPontoVazio);
+  }
+
+  const timerPonto = window.setTimeout(() => {
+    setPontoResumoCarregando(true);
+    carregarResumoPontoDashboard();
+  }, 0);
+  const canal = supabase
+    .channel('ponto_dashboard_' + empresaId)
+    .on(
+      'postgres_changes',
+      { event: '*', schema: 'public', table: 'ponto_registros', filter: 'empresa_id=eq.' + empresaId },
+      () => { carregarResumoPontoDashboard(); }
+    )
+    .on(
+      'postgres_changes',
+      { event: '*', schema: 'public', table: 'ponto_funcionarios', filter: 'empresa_id=eq.' + empresaId },
+      () => { carregarResumoPontoDashboard(); }
+    )
+    .subscribe();
+  const intervalo = window.setInterval(() => { carregarResumoPontoDashboard(); }, 30000);
+
+  return () => {
+    window.clearTimeout(timerPonto);
+    window.clearInterval(intervalo);
+    supabase.removeChannel(canal);
+  };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+}, [mounted, empresaId, podeGerenciarPonto]);
+
+// Agenda: atualiza em tempo real (mudancas em qualquer aparelho)
+useEffect(() => {
+  if (!mounted || !empresaId) return;
+  let canal: ReturnType<typeof supabase.channel> | null = null;
+  (async () => {
+    const { data: u } = await supabase.auth.getUser();
+    const userId = u.user?.id;
+    if (!userId) return;
+    canal = supabase
+      .channel('agenda_itens_web_' + userId)
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'agenda_itens', filter: 'user_id=eq.' + userId },
+        () => { sincronizarAgendaSupabaseWeb(); }
+      )
+      .subscribe();
+  })();
+  return () => { if (canal) supabase.removeChannel(canal); };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+}, [mounted, empresaId]);
+
+// Sininho: carrega notificacoes (avisos) do Supabase + tempo real
+useEffect(() => {
+  if (!mounted || !empresaId) return;
+  const timerNotificacoes = window.setTimeout(() => {
+    carregarNotificacoesWeb();
+  }, 0);
+  let canal: ReturnType<typeof supabase.channel> | null = null;
+  (async () => {
+    const { data: u } = await supabase.auth.getUser();
+    const userId = u.user?.id;
+    if (!userId) return;
+    canal = supabase
+      .channel('notificacoes_web_' + userId)
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'notificacoes', filter: 'user_id=eq.' + userId },
+        () => { carregarNotificacoesWeb(); }
+      )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'notificacoes', filter: 'empresa_id=eq.' + empresaId },
+        () => { carregarNotificacoesWeb(); }
+      )
+      .subscribe();
+  })();
+  return () => {
+    window.clearTimeout(timerNotificacoes);
+    if (canal) supabase.removeChannel(canal);
+  };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+}, [mounted, empresaId]);
+
+// Ao fechar o painel, os avisos visualizados deixam de aparecer no sininho.
+useEffect(() => {
+  if (painelAvisosAbertoAnterior.current && !painelAvisosAberto) {
+    marcarNotificacoesLidasWeb();
+  }
+  painelAvisosAbertoAnterior.current = painelAvisosAberto;
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+}, [painelAvisosAberto]);
 
 const abrirImportacaoBackup = () => {
   if (!podeAcessarAjustes) {
@@ -4266,11 +4436,11 @@ const executarImportacaoBackup = async () => {
       undefined,
       'sucesso'
     );
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Erro ao executar importacao de backup:', error);
     abrirAviso(
       'Erro ao importar backup',
-      error?.message || 'Nao foi possivel importar o arquivo selecionado.',
+      (error instanceof Error ? error.message : '') || 'Nao foi possivel importar o arquivo selecionado.',
       undefined,
       'erro'
     );
@@ -4360,11 +4530,11 @@ const selecionarArquivoBackup = async (e: React.ChangeEvent<HTMLInputElement>) =
             undefined,
             'sucesso'
           );
-        } catch (error: any) {
+        } catch (error: unknown) {
           console.error('Erro ao executar importação de backup:', error);
           abrirAviso(
             'Erro ao importar backup',
-            error?.message || 'Não foi possível importar o arquivo selecionado.',
+            (error instanceof Error ? error.message : '') || 'Não foi possível importar o arquivo selecionado.',
             undefined,
             'erro'
           );
@@ -4372,11 +4542,11 @@ const selecionarArquivoBackup = async (e: React.ChangeEvent<HTMLInputElement>) =
       },
     });
     */
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Erro ao importar backup:', error);
     abrirAviso(
       'Erro ao importar backup',
-      error?.message || 'Não foi possível importar o arquivo selecionado.',
+      (error instanceof Error ? error.message : '') || 'Não foi possível importar o arquivo selecionado.',
       undefined,
       'erro'
     );
@@ -4442,7 +4612,7 @@ const alertasSistema = useMemo(() => {
   return alertas;
 }, [backupPendente, notificacoesWeb, estadoAcesso]);
 
-  const analiseDespesas = useMemo(() => {
+  const analiseDespesas = (() => {
   const totais: Record<string, { nome: string; valor: number }> = {};
 
   lancamentosDoMes.forEach((l) => {
@@ -4482,19 +4652,23 @@ const alertasSistema = useMemo(() => {
       cor: cores[index % cores.length],
     }));
 
-  let anguloAtual = 0;
-
-  const conicParts = dadosGrafico.map((item) => {
-    const inicio = anguloAtual;
-    anguloAtual += item.percentual;
-    return `${item.cor} ${inicio}% ${anguloAtual}%`;
-  });
+  const conicParts = dadosGrafico.reduce<{ partes: string[]; angulo: number }>(
+    (acc, item) => {
+      const inicio = acc.angulo;
+      const fim = inicio + item.percentual;
+      return {
+        partes: [...acc.partes, `${item.cor} ${inicio}% ${fim}%`],
+        angulo: fim,
+      };
+    },
+    { partes: [], angulo: 0 }
+  ).partes;
 
   return {
     dados: dadosGrafico,
     gradiente: `conic-gradient(${conicParts.join(', ')})`,
   };
-}, [lancamentosDoMes, totalDespesasMes, corPrimaria, despesasCadastradas]);
+})();
 
   const bgMain = darkMode ? 'bg-slate-900 text-slate-100' : 'bg-slate-50 text-slate-800';
   const bgCard = darkMode ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-100';
@@ -4662,9 +4836,12 @@ const executarExclusaoEmpresaAtual = async () => {
     return;
   }
 
-  let empresasRestantes;
+  let empresasRestantes: EmpresaUsuarioResumo[];
   try {
-    empresasRestantes = await buscarEmpresasDoUsuario(usuarioLogado.user.id);
+    const empresasBusca = await buscarEmpresasDoUsuario(usuarioLogado.user.id);
+    empresasRestantes = empresasBusca.filter(
+      (empresa): empresa is NonNullable<(typeof empresasBusca)[number]> => Boolean(empresa)
+    ) as EmpresaUsuarioResumo[];
   } catch (e) {
     console.error('Erro ao recarregar empresas após exclusão:', e);
     setExcluindoEmpresa(false);
@@ -5075,7 +5252,7 @@ const resultadoVerificacaoSms = await lerRespostaApi(respostaVerificacaoSms);
       telefone_confirmado_em: empresaLiberada.telefone_confirmado_em,
     }))
   );
-  setEmpresaParaSelecionar((empresaAtual: any | null) =>
+  setEmpresaParaSelecionar((empresaAtual: EmpresaUsuarioResumo | null) =>
     empresaAtual
       ? {
           ...empresaAtual,
@@ -5149,48 +5326,10 @@ const lancamentosMobile = [...lancamentosDoMes].sort(
 );
 const categoriasMobile = analiseDespesas.dados.slice(0, 4);
 
-const TelaCarregandoSistema = ({ mensagem }: { mensagem: string }) => (
-  <main className="relative min-h-screen overflow-hidden font-sans">
-    <div
-      className={`absolute inset-0 ${
-        isTelaMobile ? 'bg-no-repeat' : 'bg-cover bg-center'
-      }`}
-      style={{
-        backgroundImage: isTelaMobile
-          ? "image-set(url('/images/bg-avantalab-mobile.webp') type('image/webp'), url('/images/bg-avantalab-mobile.png') type('image/png'))"
-          : "image-set(url('/images/bg-avantalab.webp') type('image/webp'), url('/images/bg-avantalab.png') type('image/png'))",
-        backgroundSize: isTelaMobile ? 'cover' : undefined,
-        backgroundPosition: isTelaMobile ? 'center bottom' : 'center',
-      }}
-    />
-
-    <div className="absolute inset-0 bg-white/75 backdrop-blur-sm" />
-
-    <section className="relative z-10 flex min-h-screen items-center justify-center px-6 py-10">
-      <div className="w-full max-w-sm rounded-3xl border border-slate-200 bg-white/90 p-8 text-center shadow-2xl">
-        <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-sky-50">
-          <span className="h-7 w-7 animate-spin rounded-full border-3 border-slate-200 border-t-sky-700" />
-        </div>
-
-        <p className="mt-5 text-xs font-bold uppercase tracking-[0.28em] text-sky-700">
-          AvantaLab Gestão
-        </p>
-
-        <h1 className="mt-2 text-xl font-black text-slate-900">
-          Carregando...
-        </h1>
-
-        <p className="mt-2 text-sm font-semibold text-slate-500">
-          {mensagem}
-        </p>
-      </div>
-    </section>
-  </main>
-);
-
 if (!mounted || carregandoSistema || authLoading || googleLoading) {
   return (
     <TelaCarregandoSistema
+      isTelaMobile={isTelaMobile}
       mensagem={
         authLoading || googleLoading
           ? 'Entrando e preparando seus dados...'
@@ -5887,6 +6026,7 @@ if (isTelaMobile) {
         estadoAcesso={estadoAcesso}
         faturaPendenteUrl={faturaPendenteUrl}
         onAssinar={iniciarAssinatura}
+        onAtualizarPagamento={atualizarEstadoCobranca}
         onResgatarCupom={resgatarCupom}
         onTrocarPerfil={empresasDoUsuario.length > 1 ? () => { setEmpresaId(null); setModalSelecionarEmpresa(true); } : undefined}
         onCriarPerfil={abrirCriacaoNovaEmpresa}

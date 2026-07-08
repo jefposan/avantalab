@@ -25,6 +25,7 @@ interface PaywallEmpresaProps {
   faturaPendenteUrl?: string | null;
   // Retorna { ok, url } em caso de sucesso, ou { ok:false, mensagem } em caso de falha.
   onAssinar?: (ciclo: 'mensal' | 'anual', dados: DadosCobrancaAssinatura) => Promise<{ ok: boolean; url?: string; mensagem?: string } | void>;
+  onAtualizarPagamento?: () => Promise<{ ok: boolean; liberado: boolean; mensagem?: string }>;
   // Resgate de cupom: retorna mensagem de erro (string) ou nada em caso de sucesso.
   onResgatarCupom?: (codigo: string) => Promise<string | null | void>;
   onTrocarPerfil?: () => void; // volta à seleção de perfis (se houver mais de um)
@@ -36,7 +37,7 @@ const GRADIENTE = 'linear-gradient(135deg,#003E73,#00A6C8)';
 
 // Tela mostrada quando o perfil empresa precisa regularizar ou iniciar a
 // assinatura, com a identidade visual da tela de login.
-export default function PaywallEmpresa({ nomePerfil, emailPadrao, telefonePadrao, estadoAcesso, faturaPendenteUrl, onAssinar, onResgatarCupom, onTrocarPerfil, onCriarPerfil, onSair }: PaywallEmpresaProps) {
+export default function PaywallEmpresa({ nomePerfil, emailPadrao, telefonePadrao, estadoAcesso, faturaPendenteUrl, onAssinar, onAtualizarPagamento, onResgatarCupom, onTrocarPerfil, onCriarPerfil, onSair }: PaywallEmpresaProps) {
   const [carregando, setCarregando] = useState<'mensal' | 'anual' | null>(null);
   const [erro, setErro] = useState('');
   const [nomeCobranca, setNomeCobranca] = useState(nomePerfil || '');
@@ -44,6 +45,8 @@ export default function PaywallEmpresa({ nomePerfil, emailPadrao, telefonePadrao
   const [emailCobranca, setEmailCobranca] = useState(emailPadrao || '');
   const [telefoneCobranca, setTelefoneCobranca] = useState(telefonePadrao || '');
   const [aguardandoPagamento, setAguardandoPagamento] = useState(false);
+  const [atualizandoPagamento, setAtualizandoPagamento] = useState(false);
+  const [pagamentoMsg, setPagamentoMsg] = useState('');
   const [cupom, setCupom] = useState('');
   const [resgatando, setResgatando] = useState(false);
   const [cupomErro, setCupomErro] = useState('');
@@ -139,6 +142,27 @@ export default function PaywallEmpresa({ nomePerfil, emailPadrao, telefonePadrao
     setAguardandoPagamento(true);
   };
 
+  const atualizarPagamento = async () => {
+    if (!onAtualizarPagamento || atualizandoPagamento) return;
+    setAtualizandoPagamento(true);
+    setPagamentoMsg('');
+    setErro('');
+    try {
+      const resultado = await onAtualizarPagamento();
+      const mensagem = resultado.mensagem || (
+        resultado.liberado
+          ? 'Pagamento confirmado. Acesso liberado.'
+          : 'Pagamento ainda não confirmado pela Asaas. Tente novamente em instantes.'
+      );
+      if (resultado.liberado) setPagamentoMsg(mensagem);
+      else setErro(mensagem);
+    } catch {
+      setErro('Não foi possível consultar a Asaas agora.');
+    } finally {
+      setAtualizandoPagamento(false);
+    }
+  };
+
   const inputCls =
     'w-full rounded-xl border border-slate-300 bg-white/90 px-3 py-2.5 text-sm text-slate-800 outline-none transition focus:border-sky-600 focus:ring-2 focus:ring-sky-600/20';
 
@@ -184,12 +208,19 @@ export default function PaywallEmpresa({ nomePerfil, emailPadrao, telefonePadrao
               Abrimos o pagamento em outra aba. Depois de concluir (Pix na hora, ou boleto ao compensar), volte aqui e clique em atualizar.
               <button
                 type="button"
-                onClick={() => window.location.reload()}
+                onClick={atualizarPagamento}
+                disabled={atualizandoPagamento}
                 className="mt-2 h-9 w-full rounded-xl text-xs font-black uppercase tracking-wide text-white shadow transition hover:brightness-110"
                 style={{ background: GRADIENTE }}
               >
-                Já paguei — atualizar
+                {atualizandoPagamento ? 'Atualizando...' : 'Já paguei — atualizar'}
               </button>
+            </div>
+          )}
+
+          {pagamentoMsg && (
+            <div className="mt-3 rounded-xl border border-emerald-300 bg-emerald-50/90 px-3 py-2 text-xs font-bold text-emerald-700">
+              {pagamentoMsg}
             </div>
           )}
 
