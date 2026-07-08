@@ -7233,10 +7233,10 @@
             menuBotaoHtml('menu-despesas-fixas', 'Despesas fixas', 'Lancamentos automaticos mensais', '&#10227;') +
             menuBotaoHtml('menu-ajuda-categorias', 'Instrucoes sobre categorias', 'Como organizar seus gastos', '?') +
             menuBotaoHtml('menu-tutorial', 'Tutorial', 'Como usar o AvantaLab', '&#127891;') +
-            '<button id="menu-config-toggle" type="button" class="rounded-[14px_26px_26px_26px] border border-slate-300 px-2.5 py-2.5 text-left text-slate-800 shadow-[0_5px_13px_rgba(15,23,42,.09)] transition active:scale-[0.99]" style="background:' + (configAberto ? 'linear-gradient(90deg,#B8C3D0 0%,#A5B2C1 100%)' : 'linear-gradient(90deg,#CBD5E1 0%,#B4C0CE 100%)') + '">' +
+            '<button id="menu-config-toggle" type="button" class="mobile-config-main-btn rounded-[14px_26px_26px_26px] border border-slate-300 px-2.5 py-2.5 text-left text-slate-800 shadow-[0_5px_13px_rgba(15,23,42,.09)] transition active:scale-[0.99]" style="background:' + (configAberto ? 'linear-gradient(90deg,#B8C3D0 0%,#A5B2C1 100%)' : 'linear-gradient(90deg,#CBD5E1 0%,#B4C0CE 100%)') + '">' +
               '<div class="flex items-center gap-2">' +
                 '<span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border border-white/15 bg-slate-800 text-white shadow-sm">' + iconeMenuLateralSvg('menu-config-toggle') + '</span>' +
-                '<span class="min-w-0 flex-1"><span class="block text-xs font-black leading-none text-slate-800">Configuracoes</span><span class="mt-1 block truncate text-[10px] font-semibold leading-none text-slate-600">Perfil, tema e preferencias</span></span>' +
+                '<span class="min-w-0 flex-1"><span class="mobile-config-main-title block text-xs font-black leading-none text-slate-800">Configuracoes</span><span class="mobile-config-main-subtitle mt-1 block truncate text-[10px] font-semibold leading-none text-slate-600">Perfil, tema e preferencias</span></span>' +
                 '<span class="flex h-6 w-6 items-center justify-center text-slate-600 transition-transform ' + (configAberto ? 'rotate-90' : '') + '">' + chevronMenuSvg() + '</span>' +
               '</div>' +
             '</button>' +

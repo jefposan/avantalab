@@ -1,4 +1,4 @@
-import React, { useState, useContext, createContext, useEffect, useRef } from 'react';
+import React, { useState, useContext, createContext, useEffect, useRef, useCallback } from 'react';
 import {
   DndContext,
   DragOverlay,
@@ -54,7 +54,9 @@ function SortableItem({ id, children }: { id: string; children: React.ReactNode 
     transform: CSS.Transform.toString(transform),
     transition,
     opacity: isDragging ? 0 : 1,
+    visibility: isDragging ? 'hidden' : 'visible',
     zIndex: isDragging ? 50 : undefined,
+    outline: 'none',
   };
   const handleProps = { ref: setActivatorNodeRef, ...attributes, ...listeners };
   return (
@@ -206,8 +208,67 @@ export default function Dashboard({
     setCols(criarCols(dashboardOrdem, dashboardExpandidos));
   }
   const [activeId, setActiveId] = useState<string | null>(null);
+  const autoScrollYRef = useRef<number | null>(null);
+  const autoScrollFrameRef = useRef<number | null>(null);
   const pontoListaRef = useRef<HTMLDivElement | null>(null);
   const [pontoTemMaisAbaixo, setPontoTemMaisAbaixo] = useState(false);
+
+  const pararAutoScrollKanban = useCallback(() => {
+    autoScrollYRef.current = null;
+    if (autoScrollFrameRef.current !== null) {
+      window.cancelAnimationFrame(autoScrollFrameRef.current);
+      autoScrollFrameRef.current = null;
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!activeId) {
+      pararAutoScrollKanban();
+      return;
+    }
+
+    const executarAutoScrollKanban = () => {
+      const y = autoScrollYRef.current;
+      if (y === null) {
+        autoScrollFrameRef.current = null;
+        return;
+      }
+
+      const altura = window.visualViewport?.height || window.innerHeight;
+      const zona = Math.min(96, Math.max(64, altura * 0.14));
+      let delta = 0;
+
+      if (y < zona) {
+        delta = -Math.ceil(((zona - y) / zona) * 18);
+      } else if (y > altura - zona) {
+        delta = Math.ceil(((y - (altura - zona)) / zona) * 18);
+      }
+
+      if (delta !== 0) window.scrollBy({ top: delta, left: 0, behavior: 'auto' });
+      autoScrollFrameRef.current = window.requestAnimationFrame(executarAutoScrollKanban);
+    };
+
+    const atualizarAutoScrollKanban = (y: number) => {
+      autoScrollYRef.current = y;
+      if (autoScrollFrameRef.current === null) {
+        autoScrollFrameRef.current = window.requestAnimationFrame(executarAutoScrollKanban);
+      }
+    };
+
+    const onPointerMove = (event: PointerEvent) => atualizarAutoScrollKanban(event.clientY);
+    const onTouchMove = (event: TouchEvent) => {
+      const toque = event.touches[0];
+      if (toque) atualizarAutoScrollKanban(toque.clientY);
+    };
+
+    window.addEventListener('pointermove', onPointerMove, { passive: true });
+    window.addEventListener('touchmove', onTouchMove, { passive: true });
+    return () => {
+      window.removeEventListener('pointermove', onPointerMove);
+      window.removeEventListener('touchmove', onTouchMove);
+      pararAutoScrollKanban();
+    };
+  }, [activeId, pararAutoScrollKanban]);
 
   useEffect(() => {
     if (!menuCardAberto) return;
@@ -625,6 +686,7 @@ const mostrarComparativoResumoDash =
 
   const handleDragEnd = (e: DragEndEvent) => {
     const { active, over } = e;
+    pararAutoScrollKanban();
     setActiveId(null);
     if (!over) {
       onAtualizarLayoutDashboard({ a: cols.a, b: cols.b }, cols.full);
@@ -983,6 +1045,10 @@ const mostrarComparativoResumoDash =
       onDragStart={handleDragStart}
       onDragOver={handleDragOver}
       onDragEnd={handleDragEnd}
+      onDragCancel={() => {
+        pararAutoScrollKanban();
+        setActiveId(null);
+      }}
     >
     <main className="grid w-full min-w-0 max-w-full grid-cols-1 items-start gap-6 overflow-x-hidden xl:grid-cols-3 animate-fade-in print:m-0 print:p-0">
 

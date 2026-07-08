@@ -2,6 +2,7 @@
 
 ## Em desenvolvimento
 
+- Mobile: ajuste de contraste do botão Configuracoes no modo escuro e refinamento do arraste do Kanban com placeholder invisível e auto-scroll.
 - Versionamento: ajustes grandes apos a 1.3.5 consolidados na linha 1.3.6.x, com micro ajustes na quarta casa.
 - Admin: lista de perfis reorganizada com tipo, situacao e origem do acesso; acao Resetar removida da interface.
 - Admin: Liberar passa a conceder cortesia com acesso ilimitado ou periodo definido, e Revogar aparece apenas para cortesia/cupom vigente.

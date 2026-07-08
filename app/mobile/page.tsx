@@ -169,6 +169,19 @@ export default function MobilePage() {
               color: #cbd5e1 !important;
             }
 
+            .mobile-dark .mobile-config-main-btn {
+              background: linear-gradient(90deg, #0f766e 0%, #075985 100%) !important;
+              border-color: rgba(125, 211, 252, 0.42) !important;
+              color: #f8fafc !important;
+              box-shadow: 0 8px 18px rgba(8, 47, 73, 0.28) !important;
+            }
+
+            .mobile-dark .mobile-config-main-btn .mobile-config-main-title,
+            .mobile-dark .mobile-config-main-btn .mobile-config-main-subtitle,
+            .mobile-dark .mobile-config-main-btn .text-slate-600 {
+              color: #f8fafc !important;
+            }
+
             .mobile-dark input,
             .mobile-dark select,
             .mobile-dark textarea {
