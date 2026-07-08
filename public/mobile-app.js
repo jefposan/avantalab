@@ -2442,6 +2442,10 @@
     return '<span class="ava-logo-principal" role="img" aria-label="Ava" style="display:block;width:' + width + 'px;height:' + height + 'px;background-image:url(/images/ava-logo-principal.png);background-size:contain;background-position:center;background-repeat:no-repeat;flex-shrink:0;transform:translateZ(0);backface-visibility:hidden;-webkit-backface-visibility:hidden;contain:paint;"></span>';
   }
 
+  function avaLogoArquivoHtml(width, height, src) {
+    return '<img src="' + escapeHtml(src) + '" alt="Ava" width="' + width + '" height="' + height + '" style="display:block;width:' + width + 'px;height:' + height + 'px;object-fit:contain;flex-shrink:0;" onerror="this.onerror=null;this.src=&quot;/images/ava-logo-principal.png&quot;">';
+  }
+
   function pararGravacaoIA() {
     if (window._chatMediaRecorder && window._chatMediaRecorder.state !== 'inactive') {
       try { window._chatMediaRecorder.stop(); } catch (error) {}
@@ -6763,23 +6767,55 @@
       insights.push({ tom: 'neutro', titulo: 'Proximo passo', texto: 'Como houve sobra no mes, este pode ser um bom momento para iniciar sua Caixinha.' });
     }
 
+    var dk = state.darkMode;
+    var cardBaseStyle = dk
+      ? 'border-color:rgba(125,211,252,.22);background:linear-gradient(180deg,rgba(15,23,42,.98),rgba(2,6,23,.96));box-shadow:0 16px 36px rgba(2,6,23,.36);'
+      : 'border-color:#C9E3EE;background:#FFFFFF;box-shadow:0 10px 24px rgba(15,23,42,.08);';
+    var headerStyle = dk
+      ? 'background:linear-gradient(90deg,#FFFFFF 0%,#FFFFFF 31%,#E5EEF4 44%,#172033 66%,#071A2B 100%);'
+      : 'background:#FFFFFF;';
+    var logoInsightsSrc = dk ? '/images/ava-logo-fundo-escuro.png' : '/images/ava-logo-fundo-claro.png';
+    var tituloStyle = dk ? 'color:#F8FAFC;text-shadow:0 1px 8px rgba(0,0,0,.36);' : 'color:#0F172A;';
+    var subtituloStyle = dk ? 'color:#CBEAF5;' : 'color:#475569;';
+    var descricaoStyle = dk ? 'color:#CBD5E1;' : 'color:#64748B;';
+    var botaoStyle = dk
+      ? 'border-color:rgba(125,211,252,.45);background:rgba(15,23,42,.72);color:#E0F2FE;'
+      : 'border-color:#0E7490;background:#FFFFFF;color:#0E7490;';
+
     var cards = insights.slice(0, 3).map(function (insight) {
       var visual = insight.tom === 'bom'
-        ? ['bg-emerald-500', 'border-emerald-100 bg-emerald-50']
-        : (insight.tom === 'alerta' ? ['bg-amber-500', 'border-amber-100 bg-amber-50'] : ['bg-cyan-500', 'border-cyan-100 bg-cyan-50']);
-      return '<div class="rounded-2xl border ' + visual[1] + ' px-3 py-2.5">' +
-        '<div class="flex items-center gap-2"><span class="h-2 w-2 shrink-0 rounded-full ' + visual[0] + '"></span><strong class="min-w-0 truncate text-[11px] font-black uppercase tracking-wide text-slate-900">' + escapeHtml(insight.titulo) + '</strong></div>' +
-        '<p class="mt-1.5 text-xs font-semibold leading-relaxed text-slate-600">' + escapeHtml(insight.texto) + '</p>' +
+        ? {
+            dot: '#14B8A6',
+            border: dk ? 'rgba(45,212,191,.34)' : '#BFECE5',
+            bg: dk ? 'rgba(20,184,166,.12)' : '#ECFDF8',
+            title: dk ? '#99F6E4' : '#0F766E',
+          }
+        : (insight.tom === 'alerta'
+          ? {
+              dot: '#F43F5E',
+              border: dk ? 'rgba(251,113,133,.36)' : '#FFE0E6',
+              bg: dk ? 'rgba(244,63,94,.13)' : '#FFF1F4',
+              title: dk ? '#FDA4AF' : '#BE123C',
+            }
+          : {
+              dot: '#0EA5E9',
+              border: dk ? 'rgba(56,189,248,.34)' : '#C8EAF8',
+              bg: dk ? 'rgba(14,165,233,.12)' : '#F0F9FF',
+              title: dk ? '#7DD3FC' : '#0369A1',
+            });
+      return '<div class="rounded-2xl border px-3 py-2.5" style="border-color:' + visual.border + ';background:' + visual.bg + ';">' +
+        '<div class="flex items-center gap-2"><span class="h-2 w-2 shrink-0 rounded-full" style="background:' + visual.dot + ';"></span><strong class="min-w-0 truncate text-[11px] font-black uppercase tracking-wide" style="color:' + visual.title + ';">' + escapeHtml(insight.titulo) + '</strong></div>' +
+        '<p class="mt-1.5 text-xs font-semibold leading-relaxed" style="' + descricaoStyle + '">' + escapeHtml(insight.texto) + '</p>' +
       '</div>';
     }).join('');
 
-    return '<section class="w-full overflow-hidden rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">' +
-      '<div class="mb-3 flex items-center justify-between gap-3">' +
-        '<div class="min-w-0"><h2 class="text-sm font-black tracking-wide text-slate-900">Insights da Ava</h2><p class="mt-0.5 truncate text-[11px] font-semibold text-slate-500">Sugestoes rapidas para ' + escapeHtml(nomeMesCompleto(atual.mes)) + '</p></div>' +
-        '<span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-cyan-50 text-cyan-700">' + avaLogoPrincipalHtml(42, 22) + '</span>' +
+    return '<section class="w-full overflow-hidden rounded-2xl border shadow-sm" style="' + cardBaseStyle + '">' +
+      '<div class="mb-3 flex items-center justify-between gap-3 px-3 py-3" style="' + headerStyle + '">' +
+        '<span class="flex h-10 w-[92px] shrink-0 items-center justify-center rounded-full bg-white">' + avaLogoArquivoHtml(84, 40, logoInsightsSrc) + '</span>' +
+        '<div class="min-w-0 flex-1 text-right"><h2 class="truncate text-sm font-black tracking-wide" style="' + tituloStyle + '">Insights da Ava</h2><p class="mt-0.5 truncate text-[11px] font-semibold" style="' + subtituloStyle + '">Sugestoes rapidas para ' + escapeHtml(nomeMesCompleto(atual.mes)) + '</p></div>' +
       '</div>' +
-      '<div class="grid gap-2">' + cards + '</div>' +
-      '<button id="abrir-insights-ava" type="button" class="mt-3 h-10 w-full rounded-xl border border-cyan-700 bg-white px-3 text-xs font-black uppercase tracking-wide text-cyan-700 active:scale-[0.99]">Conversar com a Ava</button>' +
+      '<div class="grid gap-2 px-4">' + cards + '</div>' +
+      '<div class="px-4 pb-4"><button id="abrir-insights-ava" type="button" class="mt-3 h-10 w-full rounded-xl border px-3 text-xs font-black uppercase tracking-wide active:scale-[0.99]" style="' + botaoStyle + '">Conversar com a Ava</button></div>' +
     '</section>';
   }
 

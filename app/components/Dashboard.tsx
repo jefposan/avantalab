@@ -476,6 +476,9 @@ export default function Dashboard({
 
   const textoSobreCorPrimaria = corEhClara(corPrimaria) ? '#0f172a' : '#ffffff';
   const avantaShellPreset = criarAvantaShellPreset({ corPrimaria, darkMode });
+  const avaInsightsLogoSrc = darkMode
+    ? '/images/ava-logo-fundo-escuro.png'
+    : '/images/ava-logo-fundo-claro.png';
   const abreviarMes = (mes: string) => {
   const abreviacoes: Record<string, string> = {
     JANEIRO: 'JAN',
@@ -987,11 +990,33 @@ const mostrarComparativoResumoDash =
 
     insightsAva: (
       <div className={`${bgCard} card-radius-avantalab w-full overflow-hidden rounded-2xl border-2 shadow-lg transition-colors`} style={{ borderColor: corPrimaria }}>
-        <div className="flex items-center justify-between gap-3 px-6 py-3 text-sm font-bold uppercase tracking-wider" style={{ backgroundColor: corPrimaria, color: textoSobreCorPrimaria }}>
-          <span>Insights da Ava</span>
+        <div
+          className="flex items-center justify-between gap-3 px-4 py-3 text-sm font-bold uppercase tracking-wider"
+          style={{
+            background: darkMode
+              ? 'linear-gradient(90deg,#FFFFFF 0%,#FFFFFF 30%,#E5EEF4 42%,#172033 64%,#071A2B 100%)'
+              : '#FFFFFF',
+            color: darkMode ? '#FFFFFF' : '#0F172A',
+          }}
+        >
+          <div className="flex min-w-0 items-center gap-3">
+            <span className="flex h-10 w-[92px] shrink-0 items-center justify-center rounded-full bg-white">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={avaInsightsLogoSrc}
+                alt="Ava"
+                className="h-8 w-auto object-contain"
+                onError={(event) => {
+                  event.currentTarget.onerror = null;
+                  event.currentTarget.src = '/images/ava-logo-principal.png';
+                }}
+              />
+            </span>
+            <span className={`truncate ${darkMode ? 'text-white drop-shadow-sm' : 'text-slate-950'}`}>Insights da Ava</span>
+          </div>
           <div className="flex items-center gap-2">
-            <DragHandle tone="light" />
-            <BotaoOpcoesCard id="insightsAva" tone="light" />
+            <DragHandle tone={darkMode ? 'light' : 'dark'} />
+            <BotaoOpcoesCard id="insightsAva" tone={darkMode ? 'light' : 'dark'} />
           </div>
         </div>
         <div className="space-y-3 p-5">
@@ -1001,10 +1026,10 @@ const mostrarComparativoResumoDash =
           <div className="grid gap-2">
             {insightsAva.map((insight, index) => {
               const visual = insight.tom === 'bom'
-                ? { dot: 'bg-emerald-500', box: darkMode ? 'border-emerald-500/30 bg-emerald-950/20' : 'border-emerald-100 bg-emerald-50' }
+                ? { dot: 'bg-teal-500', box: darkMode ? 'border-teal-400/35 bg-teal-950/25' : 'border-teal-100 bg-teal-50' }
                 : insight.tom === 'alerta'
-                  ? { dot: 'bg-amber-500', box: darkMode ? 'border-amber-500/30 bg-amber-950/20' : 'border-amber-100 bg-amber-50' }
-                  : { dot: 'bg-cyan-500', box: darkMode ? 'border-cyan-500/30 bg-cyan-950/20' : 'border-cyan-100 bg-cyan-50' };
+                  ? { dot: 'bg-rose-500', box: darkMode ? 'border-rose-400/35 bg-rose-950/25' : 'border-rose-100 bg-rose-50' }
+                  : { dot: 'bg-sky-500', box: darkMode ? 'border-sky-400/35 bg-sky-950/25' : 'border-sky-100 bg-sky-50' };
 
               return (
                 <div key={`${insight.titulo}-${index}`} className={`rounded-xl border px-3 py-2.5 ${visual.box}`}>
@@ -1557,18 +1582,18 @@ const mostrarComparativoResumoDash =
             onClick={() => setGerenciadorAberto(false)}
             aria-label="Fechar organização de blocos"
           />
-          <div className={`card-radius-avantalab-lg absolute right-0 top-7 z-40 w-[min(20rem,calc(100vw-1.5rem))] max-w-full rounded-2xl border p-4 shadow-2xl ${
+          <div className={`card-radius-avantalab-lg absolute right-0 top-7 z-40 box-border w-[min(20rem,calc(100vw-1.5rem))] max-w-full overflow-hidden rounded-2xl border p-3 shadow-2xl ${
             darkMode ? 'border-slate-700 bg-slate-900 text-slate-100' : 'border-slate-200 bg-white text-slate-900'
           }`}>
-            <div className="mb-3 flex items-center justify-between gap-3">
-              <div>
-                <h3 className="text-sm font-black">Organizar blocos</h3>
-                <p className={`mt-0.5 text-xs font-semibold ${textMuted}`}>Exiba ou oculte cards do kanban.</p>
+            <div className="mb-2 flex min-w-0 items-center justify-between gap-3">
+              <div className="min-w-0">
+                <h3 className="text-[13px] font-black leading-tight">Organizar blocos</h3>
+                <p className={`mt-0.5 text-[10px] font-semibold leading-tight ${textMuted}`}>Exiba ou oculte cards do kanban.</p>
               </div>
               <button
                 type="button"
                 onClick={() => setGerenciadorAberto(false)}
-                className={`flex h-8 w-8 items-center justify-center rounded-lg text-lg font-black ${
+                className={`flex h-7 w-7 items-center justify-center rounded-lg text-base font-black ${
                   darkMode ? 'hover:bg-slate-800' : 'hover:bg-slate-100'
                 }`}
                 aria-label="Fechar"
@@ -1576,7 +1601,7 @@ const mostrarComparativoResumoDash =
                 ×
               </button>
             </div>
-            <div className="grid gap-2">
+            <div className="flex min-w-0 flex-col gap-1.5 overflow-hidden">
               {catalogoCardsKanban.map((card) => {
                 const visivel = !ocultosSet.has(card.id);
                 const indisponivelAgora = card.id === 'aConfirmar' && !temAConfirmar;
@@ -1585,23 +1610,23 @@ const mostrarComparativoResumoDash =
                     key={card.id}
                     type="button"
                     onClick={() => alternarVisibilidadeCard(card.id)}
-                    className={`flex items-center gap-3 rounded-xl border p-3 text-left transition ${
+                    className={`box-border flex min-h-11 w-full max-w-full items-center gap-2 overflow-hidden rounded-lg border px-2 py-1.5 text-left transition ${
                       darkMode
                         ? 'border-slate-700 bg-slate-800/70 hover:bg-slate-800'
                         : 'border-slate-200 bg-slate-50 hover:bg-white'
                     }`}
                   >
                     <span
-                      className={`flex h-5 w-9 shrink-0 items-center rounded-full p-0.5 transition ${
+                      className={`flex h-4 w-7 shrink-0 items-center rounded-full p-0.5 transition ${
                         visivel ? 'justify-end' : 'justify-start bg-slate-300'
                       }`}
                       style={{ backgroundColor: visivel ? corPrimaria : undefined }}
                     >
-                      <span className="h-4 w-4 rounded-full bg-white shadow" />
+                      <span className="h-3 w-3 rounded-full bg-white shadow" />
                     </span>
                     <span className="min-w-0 flex-1">
-                      <span className={`block text-xs font-black ${textStrong}`}>{card.titulo}</span>
-                      <span className={`mt-0.5 block text-[11px] font-semibold leading-snug ${textMuted}`}>
+                      <span className={`block max-w-full truncate text-[11px] font-black leading-tight ${textStrong}`}>{card.titulo}</span>
+                      <span className={`mt-0.5 block max-w-full truncate text-[10px] font-semibold leading-tight ${textMuted}`}>
                         {indisponivelAgora ? 'Aparece quando houver despesas previstas para confirmar.' : card.descricao}
                       </span>
                     </span>
