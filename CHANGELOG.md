@@ -3,8 +3,9 @@
 ## Em desenvolvimento
 
 - Web: lista de Organizar blocos do dashboard compactada e contida nas laterais do painel.
+- Mobile: card "Pergunte para a Ava" passa a usar logos especificos por modo e fundo solido sem degrade.
 - Web e mobile: card de Insights da Ava passa a alternar logos especificos para fundo claro e fundo escuro, com fallback para o logo atual.
-- Web e mobile: card de Insights da Ava redesenhado com paleta Avanta/Ava, header branco no modo claro, degradê branco-escuro no modo noturno e contraste corrigido no mobile.
+- Web e mobile: card de Insights da Ava redesenhado com paleta Avanta/Ava, header branco no modo claro, header escuro no modo noturno e contraste corrigido no mobile.
 - Web e mobile: inicio dos Insights da Ava no dashboard, com sugestoes contextuais sobre resultado, maiores gastos e Caixinha.
 - Web e mobile: Caixinha ganha aporte inicial separado, sem gerar despesa ou alterar receitas, e inputs mobile deixam de causar zoom ao preencher.
 - Mobile: pull-to-refresh passa a escurecer a tela com mais intensidade durante o carregamento.

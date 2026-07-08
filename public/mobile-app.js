@@ -6772,7 +6772,7 @@
       ? 'border-color:rgba(125,211,252,.22);background:linear-gradient(180deg,rgba(15,23,42,.98),rgba(2,6,23,.96));box-shadow:0 16px 36px rgba(2,6,23,.36);'
       : 'border-color:#C9E3EE;background:#FFFFFF;box-shadow:0 10px 24px rgba(15,23,42,.08);';
     var headerStyle = dk
-      ? 'background:linear-gradient(90deg,#FFFFFF 0%,#FFFFFF 31%,#E5EEF4 44%,#172033 66%,#071A2B 100%);'
+      ? 'background:#071A2B;'
       : 'background:#FFFFFF;';
     var logoInsightsSrc = dk ? '/images/ava-logo-fundo-escuro.png' : '/images/ava-logo-fundo-claro.png';
     var tituloStyle = dk ? 'color:#F8FAFC;text-shadow:0 1px 8px rgba(0,0,0,.36);' : 'color:#0F172A;';
@@ -6811,7 +6811,7 @@
 
     return '<section class="w-full overflow-hidden rounded-2xl border shadow-sm" style="' + cardBaseStyle + '">' +
       '<div class="mb-3 flex items-center justify-between gap-3 px-3 py-3" style="' + headerStyle + '">' +
-        '<span class="flex h-10 w-[92px] shrink-0 items-center justify-center rounded-full bg-white">' + avaLogoArquivoHtml(84, 40, logoInsightsSrc) + '</span>' +
+        '<span class="flex h-10 w-[92px] shrink-0 items-center justify-center rounded-full">' + avaLogoArquivoHtml(84, 40, logoInsightsSrc) + '</span>' +
         '<div class="min-w-0 flex-1 text-right"><h2 class="truncate text-sm font-black tracking-wide" style="' + tituloStyle + '">Insights da Ava</h2><p class="mt-0.5 truncate text-[11px] font-semibold" style="' + subtituloStyle + '">Sugestoes rapidas para ' + escapeHtml(nomeMesCompleto(atual.mes)) + '</p></div>' +
       '</div>' +
       '<div class="grid gap-2 px-4">' + cards + '</div>' +
@@ -6951,15 +6951,15 @@
   }
 
   function perguntaIaHtml() {
+    var dk = state.darkMode;
+    var logoAvaSrc = dk ? '/images/ava-logo-fundo-escuro.png' : '/images/ava-logo-fundo-claro.png';
     var cardAvaStyle = state.darkMode
-      ? 'background:linear-gradient(90deg,#FFFFFF 0%,#FFFFFF 29%,#DCE7EF 39%,#0F172A 58%,#0F172A 100%);border-color:#334155;'
+      ? 'background:#071A2B;border-color:#334155;'
       : 'background:#FFFFFF;border-color:#E2E8F0;';
-    var textoAvaStyle = state.darkMode
-      ? 'background:linear-gradient(90deg,#334155 0%,#334155 42%,#64748B 56%,#CBD5E1 68%,#FFFFFF 78%,#FFFFFF 100%);-webkit-background-clip:text;background-clip:text;color:transparent;'
-      : '';
+    var textoAvaStyle = state.darkMode ? 'color:#F8FAFC;' : '';
     return (
       '<button id="chat-ia-card" type="button" class="flex w-full items-center gap-2 rounded-full border px-3 py-2 text-left shadow-sm active:scale-[0.99]" style="' + cardAvaStyle + '">' +
-        '<span class="flex h-9 w-[88px] shrink-0 items-center justify-center">' + avaLogoPrincipalHtml(82, 40) + '</span>' +
+        '<span class="flex h-9 w-[88px] shrink-0 items-center justify-center">' + avaLogoArquivoHtml(82, 40, logoAvaSrc) + '</span>' +
         '<span class="min-w-0 flex-1 overflow-hidden text-sm font-semibold ' + (state.darkMode ? '' : 'text-slate-400') + '"><span class="inline-block max-w-full truncate align-middle" style="' + textoAvaStyle + '">Pergunte para a Ava...</span></span>' +
         '<span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-cyan-600 text-base font-black text-white">&#8593;</span>' +
       '</button>'

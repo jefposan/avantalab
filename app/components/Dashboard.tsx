@@ -993,14 +993,12 @@ const mostrarComparativoResumoDash =
         <div
           className="flex items-center justify-between gap-3 px-4 py-3 text-sm font-bold uppercase tracking-wider"
           style={{
-            background: darkMode
-              ? 'linear-gradient(90deg,#FFFFFF 0%,#FFFFFF 30%,#E5EEF4 42%,#172033 64%,#071A2B 100%)'
-              : '#FFFFFF',
+            background: darkMode ? '#071A2B' : '#FFFFFF',
             color: darkMode ? '#FFFFFF' : '#0F172A',
           }}
         >
           <div className="flex min-w-0 items-center gap-3">
-            <span className="flex h-10 w-[92px] shrink-0 items-center justify-center rounded-full bg-white">
+            <span className="flex h-10 w-[92px] shrink-0 items-center justify-center rounded-full">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={avaInsightsLogoSrc}
