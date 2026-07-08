@@ -1080,6 +1080,8 @@ const mostrarComparativoResumoDash =
           })()}
         </div>
 
+        {/* Mesma linguagem do topo do card: sem borda lateral — a identidade
+            é a luz radial do tema nascendo no canto superior direito. */}
         <div
           className={`mt-8 rounded-xl border p-5 ${
             darkMode
@@ -1087,10 +1089,9 @@ const mostrarComparativoResumoDash =
               : 'border-slate-200'
           }`}
           style={{
-            borderLeft: `4px solid ${corPrimaria}`,
             background: darkMode
-              ? `linear-gradient(135deg, ${corPrimaria}1f, rgba(30,41,59,.7) 55%)`
-              : `linear-gradient(135deg, ${corPrimaria}0f, #ffffff 55%)`,
+              ? `radial-gradient(130% 130% at 100% 0%, ${corPrimaria}3d 0%, transparent 55%), linear-gradient(180deg, ${corPrimaria}14 0%, rgba(30,41,59,.7) 85%)`
+              : `radial-gradient(130% 130% at 100% 0%, ${corPrimaria}21 0%, transparent 55%), linear-gradient(180deg, ${corPrimaria}0a 0%, #ffffff 85%)`,
           }}
         >
           <div className="flex items-center justify-between border-b border-slate-200/10 pb-3">
