@@ -2332,7 +2332,7 @@ const entradasFaturamentoDoMes = useMemo(() => {
 }, [buscaEntradaFaturamento, entradasFaturamentoOrdenadasDoMes]);
 
 const totalEntradasFaturamentoDoMes = entradasFaturamentoOrdenadasDoMes.reduce(
-  (acc, entrada) => acc + Number(entrada.valor || 0),
+  (acc, entrada) => entrada.status === 'prevista' ? acc : acc + Number(entrada.valor || 0),
   0
 );
 
@@ -2346,10 +2346,32 @@ const totalEntradasFaturamentoDoMes = entradasFaturamentoOrdenadasDoMes.reduce(
       maximumFractionDigits: 2,
     });
 
+  const getEntradasPorMes = (mes: string) =>
+    faturamentosEntradas.filter((entrada) => entrada.mes === mes);
+
   const getTotalEntradasPorMes = (mes: string) =>
-    faturamentosEntradas
-      .filter((entrada) => entrada.mes === mes)
+    getEntradasPorMes(mes)
+      .filter((entrada) => entrada.status !== 'prevista')
       .reduce((acc, entrada) => acc + Number(entrada.valor || 0), 0);
+
+  const excluirEntradasFaturamentoDoMes = async (mes: string) => {
+    if (!empresaId) return false;
+
+    const { error } = await supabase
+      .from('faturamentos_entradas')
+      .delete()
+      .eq('empresa_id', empresaId)
+      .eq('ano', Number(anoSelecionado))
+      .eq('mes', mes);
+
+    if (error) {
+      console.error('Erro ao apagar entradas de faturamento do mês:', error);
+      return false;
+    }
+
+    setFaturamentosEntradas((prev) => prev.filter((entrada) => entrada.mes !== mes));
+    return true;
+  };
 
   const salvarFaturamentoMes = async (mes: string, valor: number) => {
   if (!empresaId) {
@@ -2399,7 +2421,7 @@ const totalEntradasFaturamentoDoMes = entradasFaturamentoOrdenadasDoMes.reduce(
 };
 
 const salvarFaturamento = async (
-  confirmarSomaComEntradas = false,
+  modoAvulsas: 'perguntar' | 'somar' | 'substituir' = 'perguntar',
   mesInformado?: string,
   valorInformado?: number
 ) => {
@@ -2434,22 +2456,39 @@ const salvarFaturamento = async (
   return;
 }
 
+  const entradasMes = getEntradasPorMes(mesSelecionado);
   const totalEntradasMes = getTotalEntradasPorMes(mesSelecionado);
-  const valorFinal = totalEntradasMes > 0
+  const possuiEntradasAvulsas = entradasMes.length > 0;
+  const valorFinal = modoAvulsas === 'somar' && totalEntradasMes > 0
     ? totalEntradasMes + valorLimpo
     : valorLimpo;
 
-  if (totalEntradasMes > 0 && !confirmarSomaComEntradas) {
+  if (possuiEntradasAvulsas && modoAvulsas === 'perguntar') {
     abrirConfirmacao({
-      titulo: 'Confirmar total da receita',
+      titulo: 'Receitas avulsas existentes',
       mensagem:
-        `Este mes ja possui ${formatarMoeda(totalEntradasMes)} em receitas lancadas.\n\nO valor informado (${formatarMoeda(valorLimpo)}) sera somado as receitas existentes.\n\nTotal final de ${mesSelecionado}: ${formatarMoeda(valorFinal)}.`,
-      textoConfirmar: 'Confirmar total',
+        `Este mês já possui ${entradasMes.length} receita(s) avulsa(s) lançada(s).\n\nDeseja apagar esses lançamentos e manter somente o novo total de ${formatarMoeda(valorLimpo)}?\n\nSe escolher manter, o novo total será somado às receitas avulsas efetivadas e o total final de ${mesSelecionado} ficará em ${formatarMoeda(totalEntradasMes + valorLimpo)}.`,
+      textoConfirmar: 'Apagar avulsas',
+      textoCancelar: 'Manter e somar',
       acao: async () => {
-        await salvarFaturamento(true, mesSelecionado, valorLimpo);
+        await salvarFaturamento('substituir', mesSelecionado, valorLimpo);
+      },
+      acaoCancelar: async () => {
+        await salvarFaturamento('somar', mesSelecionado, valorLimpo);
       },
     });
     return;
+  }
+
+  if (modoAvulsas === 'substituir' && possuiEntradasAvulsas) {
+    const entradasApagadas = await excluirEntradasFaturamentoDoMes(mesSelecionado);
+    if (!entradasApagadas) {
+      abrirAviso(
+        'Erro ao apagar receitas',
+        'Não foi possível apagar as receitas avulsas deste mês. O total não foi alterado.'
+      );
+      return;
+    }
   }
 
   const salvo = await salvarFaturamentoBanco({
@@ -2931,7 +2970,7 @@ const confirmarEntradaFaturamentoDashboard = async () => {
     return;
   }
 
-  await salvarFaturamento(true, mesSelecionado, valorReceitaDashboardConfirmacao);
+  await salvarFaturamento('perguntar', mesSelecionado, valorReceitaDashboardConfirmacao);
   limparCamposReceitaDashboard('total');
 };
 
@@ -6532,9 +6571,9 @@ if (isTelaMobile) {
                 : valorReceitaDashboardConfirmacao
             )}
           </p>
-          {tipoReceitaDashboard === 'total' && getTotalEntradasPorMes(mesReceitaDashboard) > 0 && (
+          {tipoReceitaDashboard === 'total' && getEntradasPorMes(mesReceitaDashboard).length > 0 && (
             <p className={`mt-2 text-xs font-semibold leading-relaxed ${textMuted}`}>
-              Este mês já possui {formatarMoeda(getTotalEntradasPorMes(mesReceitaDashboard))} em receitas lançadas. O valor informado será somado a elas.
+              Este mês já possui {getEntradasPorMes(mesReceitaDashboard).length} receita(s) avulsa(s). Ao confirmar, escolha se deseja apagar esses lançamentos ou manter e somar.
             </p>
           )}
         </div>
@@ -8531,6 +8570,7 @@ name="novo-usuario-login"
   handleEntradaFaturamentoValorChange={handleEntradaFaturamentoValorChange}
   adicionarEntradaFaturamento={adicionarEntradaFaturamento}
   entradaFaturamentoSalvando={entradaFaturamentoSalvando}
+  faturamentoDoMes={faturamentos[mesAtivo || ''] || 0}
   totalEntradasFaturamentoDoMes={totalEntradasFaturamentoDoMes}
   ordemEntradasFaturamento={ordemEntradasFaturamento}
   setOrdemEntradasFaturamento={setOrdemEntradasFaturamento}

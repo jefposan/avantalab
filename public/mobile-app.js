@@ -1843,6 +1843,7 @@
     var receitasPrevistas = receitasPrevistasFuturas;
 
     return {
+      mes: mes,
       lancamentos: lancamentos,
       entradas: entradas,
       despesas: despesasRealizadas,
@@ -1859,6 +1860,31 @@
     var indice = indiceMes(state.mes) - 1;
     if (indice < 0) indice = 11;
     return dadosMes(meses[indice]);
+  }
+
+  function entradasReceitaVisiveis(atual) {
+    var mes = atual && atual.mes ? atual.mes : state.mes;
+    var entradas = (atual && atual.entradas ? atual.entradas : []).slice();
+    var temTotalDefinido = Object.prototype.hasOwnProperty.call(state.faturamentos, mes);
+    var totalMensal = Number(state.faturamentos[mes] || 0);
+    var totalEntradasRealizadas = entradas.reduce(function (acc, item) {
+      return item.status === 'prevista' ? acc : acc + Number(item.valor || 0);
+    }, 0);
+    var totalBase = Math.max(0, totalMensal - totalEntradasRealizadas);
+    var totalNaoRepresentado = temTotalDefinido && totalBase > 0.009;
+
+    if (!totalNaoRepresentado) return entradas;
+
+    return [{
+      id: '__total_mensal__-' + mes,
+      mes: mes,
+      dia: 0,
+      origem: 'Total do mes',
+      valor: totalBase,
+      status: 'total_mensal',
+      tipo: 'total_mensal',
+      totalMensal: true,
+    }].concat(entradas);
   }
 
   function insightDespesasHtml(atual, anterior) {
@@ -4732,9 +4758,38 @@
       return;
     }
 
+    var entradasAvulsas = state.entradas.filter(function (e) { return e.mes === state.mes; });
+    var totalEntradasRealizadas = entradasAvulsas.reduce(function (acc, e) {
+      return e.status === 'prevista' ? acc : acc + Number(e.valor || 0);
+    }, 0);
+    var apagarAvulsas = false;
+
+    if (entradasAvulsas.length > 0) {
+      apagarAvulsas = window.confirm(
+        'Este mes ja possui receitas avulsas lancadas.\n\n' +
+        'OK: apagar todos os lancamentos de receita do mes e manter somente este total.\n' +
+        'Cancelar: manter as receitas avulsas e somar este total a elas.'
+      );
+    }
+
     state.carregando = true;
     state.erro = '';
     render();
+
+    if (apagarAvulsas) {
+      var exclusaoEntradas = await db
+        .from('faturamentos_entradas')
+        .delete()
+        .eq('empresa_id', state.empresa.id)
+        .eq('ano', Number(state.ano))
+        .eq('mes', state.mes);
+
+      if (exclusaoEntradas.error) {
+        state.carregando = false;
+        setErro('Nao foi possivel apagar as receitas avulsas deste mes.');
+        return;
+      }
+    }
 
     var resposta = await db
       .from('faturamentos')
@@ -4743,7 +4798,7 @@
           empresa_id: state.empresa.id,
           ano: Number(state.ano),
           mes: state.mes,
-          valor: valor,
+          valor: apagarAvulsas ? valor : valor + totalEntradasRealizadas,
         },
         { onConflict: 'empresa_id,ano,mes' }
       )
@@ -5768,7 +5823,7 @@
         inputHtml('cadastro-email', 'Email', 'email', 'seuemail@exemplo.com', state.cadastro.email) +
         '<div class="grid grid-cols-[7rem_1fr] gap-2">' +
           '<div><p class="mb-1 text-[10px] font-black uppercase tracking-wide text-slate-600">País</p><select id="cadastro-ddi" class="h-[38px] w-full rounded-xl border border-slate-300 bg-white/90 px-2 text-sm text-slate-800 outline-none">' + opcoesDdiHtml(state.cadastroDdi) + '</select></div>' +
-          '<div>' + inputHtml('cadastro-telefone', 'Celular', 'tel', 'DDD + numero. Ex: 11999999999', state.cadastro.telefone) + '</div>' +
+          '<div>' + inputHtml('cadastro-telefone', 'Celular', 'tel', '(xx) xxxxx-xxxx', state.cadastro.telefone) + '</div>' +
         '</div>' +
         senhaInputHtml('cadastro-senha', 'Senha', 'Crie uma senha', 'mostrarSenhaCadastro', 'toggle-senha-cadastro', state.cadastro.senha) +
         senhaInputHtml('cadastro-confirmar-senha', 'Confirmar senha', 'Repita a senha', 'mostrarConfirmarSenhaCadastro', 'toggle-confirmar-cadastro', state.cadastro.confirmarSenha) +
@@ -5780,9 +5835,12 @@
           '</div>'
         : '') +
         (!state.smsCadastroEnviado ?
-          '<label class="flex cursor-pointer items-start gap-2 rounded-xl border border-slate-200 bg-white/60 px-3 py-2 text-[11px] leading-snug text-slate-600">' +
+          '<label class="flex cursor-pointer items-start gap-2 rounded-xl border border-slate-200 bg-white/70 px-3 py-2 text-[11px] leading-snug text-slate-600 shadow-sm">' +
             '<input id="cadastro-aceite" type="checkbox" ' + (state.aceitouTermos ? 'checked' : '') + ' class="mt-0.5 h-4 w-4 shrink-0" style="accent-color:#0369a1;" />' +
-            '<span>Li e concordo com os <button id="cadastro-termos-link" type="button" class="font-bold text-sky-700 underline">Termos de Uso</button> e a <button id="cadastro-privacidade-link" type="button" class="font-bold text-sky-700 underline">Pol&iacute;tica de Privacidade</button>.</span>' +
+            '<span class="min-w-0">' +
+              '<span class="block font-semibold text-slate-700">Li e concordo com as pol&iacute;ticas.</span>' +
+              '<span class="mt-0.5 block font-bold text-sky-700"><button id="cadastro-termos-link" type="button" class="underline">Termos de Uso</button> e <button id="cadastro-privacidade-link" type="button" class="underline">Pol&iacute;tica de Privacidade</button>.</span>' +
+            '</span>' +
           '</label>'
         : '') +
         alertaHtml() +
@@ -5828,7 +5886,7 @@
           '<div class="grid gap-1">' +
             '<div class="grid grid-cols-[7rem_1fr] gap-2">' +
               '<div><p class="mb-1 text-[10px] font-black uppercase tracking-wide text-slate-600">País</p><select id="ddi-telefone-obrigatorio" class="h-[38px] w-full rounded-xl border border-slate-300 bg-white/90 px-2 text-sm text-slate-800 outline-none">' + opcoesDdiHtml(state.ddiTelefoneObrigatorio) + '</select></div>' +
-              '<div>' + inputHtml('telefone-obrigatorio', 'Celular', 'tel', 'DDD + numero. Ex: 11999999999', state.telefoneObrigatorio) + '</div>' +
+              '<div>' + inputHtml('telefone-obrigatorio', 'Celular', 'tel', '(xx) xxxxx-xxxx', state.telefoneObrigatorio) + '</div>' +
             '</div>' +
             (state.smsTelefoneObrigatorioEnviado
               ? inputHtml('codigo-telefone-obrigatorio', 'Codigo recebido por SMS', 'text', 'Digite o codigo recebido', state.codigoTelefoneObrigatorio) +
@@ -6294,7 +6352,7 @@
       categorias: graficoCategoriaHtml(atual),
       tipos: graficoTipoDespesaHtml(atual),
       ultimasDespesas: ultimasDespesasHtml(atual.lancamentos),
-      ultimasReceitas: ultimasReceitasHtml(atual.entradas),
+	      ultimasReceitas: ultimasReceitasHtml(entradasReceitaVisiveis(atual)),
       totais: totaisHtml(atual),
       controlePonto: controlePontoCardHtml(),
       evolucaoDespesas: evolucaoHtml('despesas'),
@@ -6805,8 +6863,12 @@
     );
   }
 
-  function ultimasReceitasHtml(entradas) {
-    var todos = entradas.slice().sort(function (a, b) { return b.dia - a.dia; });
+	  function ultimasReceitasHtml(entradas) {
+	    var todos = entradas.slice().sort(function (a, b) {
+	      if (a.totalMensal) return -1;
+	      if (b.totalMensal) return 1;
+	      return b.dia - a.dia;
+	    });
     var pesquisando = state.ultimasReceitasBuscaAberta;
     var itens = pesquisando ? todos : (state.ultimasReceitasExpandido ? todos : todos.slice(0, 3));
 
@@ -6815,14 +6877,21 @@
         '<div class="relative flex items-center justify-between gap-3 overflow-hidden px-4 py-3.5 text-white" style="background:linear-gradient(135deg,#14786F 0%,#2A9D8F 100%)"><div class="relative z-10 flex min-w-0 items-center gap-2.5"><span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-white/15 bg-white/10"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 16 10 10l4 4 6-7" stroke-linecap="round" stroke-linejoin="round"/><path d="M15 7h5v5" stroke-linecap="round" stroke-linejoin="round"/></svg></span><div class="min-w-0"><h2 class="truncate text-sm font-black">Receitas do mês</h2><p class="mt-0.5 text-[9px] font-bold uppercase tracking-wide text-white/65">Lançamentos do período</p></div></div><div class="relative z-10 flex -translate-y-1 items-center gap-2">' + (!pesquisando && state.ultimasReceitasExpandido && todos.length > 3 ? '<button id="toggle-ultimas-receitas" type="button" class="flex h-8 items-center justify-center rounded-full border border-white/20 bg-white/10 px-3 text-xs font-bold text-white shadow-sm backdrop-blur">Recolher</button>' : '') + '<button id="buscar-ultimas-receitas" type="button" class="flex h-8 w-8 items-center justify-center rounded-full border border-white/20 bg-white/10 text-sm font-black text-white shadow-sm backdrop-blur active:bg-white/20" aria-label="' + (pesquisando ? 'Fechar busca' : 'Buscar receitas') + '">' + iconeBuscaUltimas(pesquisando) + '</button></div>' + recorteHeaderLancamentosHtml('receita') + '</div>' +
         (state.ultimasReceitasBuscaAberta ? '<div class="px-4 pt-3"><div class="flex h-10 items-center gap-2 rounded-xl border border-emerald-100 bg-emerald-50/60 px-3"><input id="busca-ultimas-receitas" type="search" autocomplete="off" enterkeyhint="search" value="' + escapeHtml(state.ultimasReceitasBusca) + '" placeholder="Buscar descricao ou valor" style="font-size:16px" class="min-w-0 flex-1 bg-transparent text-base font-semibold text-slate-800 outline-none" /><button id="limpar-ultimas-receitas" type="button" class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-white text-sm font-black text-emerald-600 shadow-sm" aria-label="Limpar busca">&times;</button></div></div>' : '') +
         '<div class="grid gap-1 p-4" id="ultimas-receitas-lista">' +
-          (itens.length ? itens.map(function (item) {
-            var valor = dinheiro(item.valor);
-            var buscaItem = textoBusca([item.origem, item.descricao, valor, item.valor].join(' '));
-            return '<button type="button" data-tipo-lancamento="receita" data-lancamento-id="' + escapeHtml(item.id) + '" data-busca-ultimas-receitas="' + escapeHtml(buscaItem) + '" class="flex w-full items-center justify-between gap-3 border-b border-slate-100 py-2 text-left last:border-b-0">' +
-              '<div class="min-w-0"><p class="truncate text-sm font-bold text-slate-800">' + escapeHtml(item.origem) + seloTipoHtml(item) + '</p><p class="truncate text-xs text-slate-500">Dia ' + item.dia + '</p></div>' +
-              '<strong class="shrink-0 text-sm font-black text-emerald-600">' + valor + '</strong>' +
-            '</button>';
-          }).join('') + '<p id="ultimas-receitas-vazia" style="display:none" class="text-xs text-slate-500">Nenhuma receita encontrada.</p>' : '<p class="text-xs text-slate-500">Nenhuma receita neste mes.</p>') +
+	          (itens.length ? itens.map(function (item) {
+	            var valor = dinheiro(item.valor);
+	            var totalMensal = item.totalMensal === true;
+	            var buscaItem = textoBusca([item.origem, item.descricao, totalMensal ? 'total mensal receita total' : '', valor, item.valor].join(' '));
+	            var tag = totalMensal ? 'div' : 'button';
+	            var acao = totalMensal ? '' : ' type="button" data-tipo-lancamento="receita" data-lancamento-id="' + escapeHtml(item.id) + '"';
+	            var selo = totalMensal
+	              ? ' <span class="ml-1 inline-block rounded-full bg-cyan-100 px-1.5 align-middle text-[10px] font-black text-cyan-700">Total mensal</span>'
+	              : seloTipoHtml(item);
+	            var detalhe = totalMensal ? 'Total do mes' : 'Dia ' + item.dia;
+	            return '<' + tag + acao + ' data-busca-ultimas-receitas="' + escapeHtml(buscaItem) + '" class="flex w-full items-center justify-between gap-3 border-b border-slate-100 py-2 text-left last:border-b-0">' +
+	              '<div class="min-w-0"><p class="truncate text-sm font-bold text-slate-800">' + escapeHtml(item.origem) + selo + '</p><p class="truncate text-xs text-slate-500">' + escapeHtml(detalhe) + '</p></div>' +
+	              '<strong class="shrink-0 text-sm font-black text-emerald-600">' + valor + '</strong>' +
+	            '</' + tag + '>';
+	          }).join('') + '<p id="ultimas-receitas-vazia" style="display:none" class="text-xs text-slate-500">Nenhuma receita encontrada.</p>' : '<p class="text-xs text-slate-500">Nenhuma receita neste mes.</p>') +
           (!pesquisando && !state.ultimasReceitasExpandido && todos.length > 3 ? '<button id="toggle-ultimas-receitas" type="button" class="pt-2 text-left text-xs font-black text-cyan-700">Expandir receitas</button>' : '') +
         '</div>' +
       '</section>'
@@ -6884,21 +6953,23 @@
     );
   }
 
-  function itensListaDetalhadaHtml(atual) {
-    var tipo = state.visao;
-    var itens = tipo === 'receitas'
-      ? atual.entradas.map(function (item) {
-          return {
-            id: item.id,
-            tipo: 'receita',
-            titulo: item.origem,
-            detalhe: 'Dia ' + item.dia,
-            valor: item.valor,
-            dia: item.dia,
-          };
-        })
-      : atual.lancamentos.map(function (item) {
-          return {
+	  function itensListaDetalhadaHtml(atual) {
+	    var tipo = state.visao;
+	    var itens = tipo === 'receitas'
+	      ? entradasReceitaVisiveis(atual).map(function (item) {
+	          var totalMensal = item.totalMensal === true;
+	          return {
+	            id: item.id,
+	            tipo: 'receita',
+	            titulo: item.origem,
+	            detalhe: totalMensal ? 'Total do mes' : 'Dia ' + item.dia,
+	            valor: item.valor,
+	            dia: totalMensal ? 999 : item.dia,
+	            totalMensal: totalMensal,
+	          };
+	        })
+	      : atual.lancamentos.map(function (item) {
+	          return {
             id: item.id,
             tipo: 'despesa',
             titulo: item.despesa,
@@ -6908,16 +6979,22 @@
           };
         });
 
-    itens = itens.sort(function (a, b) { return b.dia - a.dia; });
+	    itens = itens.sort(function (a, b) {
+	      if (a.totalMensal) return -1;
+	      if (b.totalMensal) return 1;
+	      return b.dia - a.dia;
+	    });
 
-    return itens.length ? itens.map(function (item) {
-      var buscaItem = String(item.titulo + ' ' + item.detalhe + ' ' + item.valor).toLowerCase();
-      return '<button type="button" data-tipo-lancamento="' + escapeHtml(item.tipo) + '" data-lancamento-id="' + escapeHtml(item.id) + '" data-busca-lancamento="' + escapeHtml(buscaItem) + '" class="flex w-full items-center justify-between gap-3 border-b border-slate-100 px-1 py-3 text-left last:border-b-0">' +
-        '<div class="min-w-0"><p class="truncate text-sm font-bold text-slate-800">' + escapeHtml(item.titulo) + '</p><p class="truncate text-xs text-slate-500">' + escapeHtml(item.detalhe) + '</p></div>' +
-        '<strong class="shrink-0 text-sm font-black ' + (tipo === 'receitas' ? 'text-emerald-600' : 'text-red-600') + '">' + dinheiro(item.valor) + '</strong>' +
-      '</button>';
-    }).join('') + '<p id="lista-detalhada-vazia" style="display:none" class="p-3 text-sm text-slate-500">Nenhum item encontrado.</p>' : '<p class="p-3 text-sm text-slate-500">Nenhum item encontrado.</p>';
-  }
+	    return itens.length ? itens.map(function (item) {
+	      var buscaItem = String(item.titulo + ' ' + item.detalhe + ' ' + item.valor).toLowerCase();
+	      var tag = item.totalMensal ? 'div' : 'button';
+	      var acao = item.totalMensal ? '' : ' type="button" data-tipo-lancamento="' + escapeHtml(item.tipo) + '" data-lancamento-id="' + escapeHtml(item.id) + '"';
+	      return '<' + tag + acao + ' data-busca-lancamento="' + escapeHtml(buscaItem) + '" class="flex w-full items-center justify-between gap-3 border-b border-slate-100 px-1 py-3 text-left last:border-b-0">' +
+	        '<div class="min-w-0"><p class="truncate text-sm font-bold text-slate-800">' + escapeHtml(item.titulo) + '</p><p class="truncate text-xs text-slate-500">' + escapeHtml(item.detalhe) + '</p></div>' +
+	        '<strong class="shrink-0 text-sm font-black ' + (tipo === 'receitas' ? 'text-emerald-600' : 'text-red-600') + '">' + dinheiro(item.valor) + '</strong>' +
+	      '</' + tag + '>';
+	    }).join('') + '<p id="lista-detalhada-vazia" style="display:none" class="p-3 text-sm text-slate-500">Nenhum item encontrado.</p>' : '<p class="p-3 text-sm text-slate-500">Nenhum item encontrado.</p>';
+	  }
 
   function listaDetalhadaHtml(atual) {
     var tipo = state.visao;
@@ -7091,11 +7168,13 @@
             '<button id="fechar-acao-lancamento" type="button" class="flex h-9 w-9 items-center justify-center rounded-full border border-white/20 bg-white/10 text-xl text-white">&times;</button>' +
           '</div>' +
           alertaHtml().replace('mt-4', 'mb-3') +
-          (acao.modo === 'editar' ? modalEditarLancamentoHtml(acao) : modalOpcoesLancamentoHtml(acao)) +
-        '</section>' +
-      '</div>'
-    );
-  }
+	          (acao.modo === 'editar'
+	            ? modalEditarLancamentoHtml(acao)
+	            : (acao.modo === 'excluir' ? modalConfirmarExclusaoLancamentoHtml(acao) : modalOpcoesLancamentoHtml(acao))) +
+	        '</section>' +
+	      '</div>'
+	    );
+	  }
 
   function modalOpcoesLancamentoHtml(acao) {
     return (
@@ -7104,10 +7183,53 @@
         '<button id="editar-lancamento" type="button" class="h-11 rounded-xl bg-slate-950 px-4 text-sm font-black uppercase tracking-wide text-white">Editar</button>' +
         '<button id="excluir-lancamento" type="button" class="h-11 rounded-xl bg-red-600 px-4 text-sm font-black uppercase tracking-wide text-white">' + (state.carregando ? 'Excluindo...' : 'Excluir') + '</button>' +
       '</div>'
-    );
-  }
+	    );
+	  }
 
-  function modalEditarLancamentoHtml(acao) {
+	  function modalConfirmarExclusaoLancamentoHtml(acao) {
+	    var item = acao.item;
+	    var receita = acao.tipo === 'receita';
+	    var titulo = receita ? item.origem : item.despesa;
+	    var subtitulo = receita ? 'Receita do mes' : 'Despesa do mes';
+	    var detalhe = 'Dia ' + escapeHtml(item.dia);
+	    if (!receita && item.descricao) detalhe += ' - ' + escapeHtml(item.descricao);
+	    var aviso = receita
+	      ? 'A receita sera removida dos lancamentos e descontada do total do mes quando ja estiver efetivada.'
+	      : 'A despesa sera removida dos lancamentos deste mes. Despesas fixas mantem a recorrencia original.';
+
+	    return (
+	      '<div class="grid gap-4">' +
+	        '<div class="overflow-hidden rounded-3xl border border-red-100 bg-gradient-to-b from-red-50 to-white shadow-sm">' +
+	          '<div class="flex items-start gap-3 p-4">' +
+	            '<span class="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-red-100 text-red-600 shadow-inner">' +
+	              '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 9v4M12 17h.01M10.3 4.2 2.8 17.2A2 2 0 0 0 4.5 20h15a2 2 0 0 0 1.7-2.8L13.7 4.2a2 2 0 0 0-3.4 0Z" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>' +
+	            '</span>' +
+	            '<div class="min-w-0 flex-1">' +
+	              '<p class="text-[10px] font-black uppercase tracking-[0.16em] text-red-500">Confirmar exclusao</p>' +
+	              '<h3 class="mt-1 text-base font-black leading-tight text-slate-950">Excluir este lancamento?</h3>' +
+	              '<p class="mt-1 text-xs font-semibold leading-relaxed text-slate-500">' + aviso + '</p>' +
+	            '</div>' +
+	          '</div>' +
+	          '<div class="mx-4 mb-4 rounded-2xl border border-slate-200 bg-white p-3 shadow-sm">' +
+	            '<div class="flex items-start justify-between gap-3">' +
+	              '<div class="min-w-0">' +
+	                '<p class="text-[10px] font-black uppercase tracking-wide text-slate-400">' + subtitulo + '</p>' +
+	                '<h4 class="mt-1 truncate text-sm font-black text-slate-900">' + escapeHtml(titulo) + '</h4>' +
+	                '<p class="mt-1 truncate text-xs font-semibold text-slate-500">' + detalhe + '</p>' +
+	              '</div>' +
+	              '<strong class="shrink-0 text-sm font-black ' + (receita ? 'text-emerald-600' : 'text-red-600') + '">' + dinheiro(item.valor) + '</strong>' +
+	            '</div>' +
+	          '</div>' +
+	        '</div>' +
+	        '<div class="grid grid-cols-2 gap-2">' +
+	          '<button id="cancelar-exclusao-lancamento" type="button" class="h-11 rounded-xl border border-slate-200 bg-white px-3 text-xs font-black uppercase tracking-wide text-slate-600 shadow-sm active:scale-[0.98]">Voltar</button>' +
+	          '<button id="confirmar-exclusao-lancamento" type="button" class="h-11 rounded-xl bg-red-600 px-3 text-xs font-black uppercase tracking-wide text-white shadow-lg shadow-red-600/20 active:scale-[0.98]">' + (state.carregando ? 'Excluindo...' : 'Excluir') + '</button>' +
+	        '</div>' +
+	      '</div>'
+	    );
+	  }
+
+	  function modalEditarLancamentoHtml(acao) {
     var item = acao.item;
     if (acao.tipo === 'receita') {
       return (
@@ -9508,8 +9630,20 @@
       state.erro = '';
       render();
     });
-    bind('excluir-lancamento', excluirLancamentoSelecionado);
-    bind('salvar-edicao-lancamento', salvarEdicaoLancamentoSelecionado);
+	    bind('excluir-lancamento', function () {
+	      if (!state.modalAcao) return;
+	      state.modalAcao.modo = 'excluir';
+	      state.erro = '';
+	      render();
+	    });
+	    bind('cancelar-exclusao-lancamento', function () {
+	      if (!state.modalAcao) return;
+	      state.modalAcao.modo = 'opcoes';
+	      state.erro = '';
+	      render();
+	    });
+	    bind('confirmar-exclusao-lancamento', excluirLancamentoSelecionado);
+	    bind('salvar-edicao-lancamento', salvarEdicaoLancamentoSelecionado);
     ['despesa-valor', 'entrada-valor', 'receita-total', 'editar-valor'].forEach(function (id) {
       bindInput(id, function () {
         var item = document.getElementById(id);

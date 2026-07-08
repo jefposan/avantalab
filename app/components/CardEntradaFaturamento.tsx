@@ -16,6 +16,7 @@ type CardEntradaFaturamentoProps = {
   handleEntradaFaturamentoValorChange: (e: ChangeEvent<HTMLInputElement>) => void;
   adicionarEntradaFaturamento: () => void | Promise<void>;
   entradaFaturamentoSalvando: boolean;
+  faturamentoDoMes: number;
   totalEntradasFaturamentoDoMes: number;
   ordemEntradasFaturamento: 'desc' | 'asc';
   setOrdemEntradasFaturamento: Dispatch<SetStateAction<'desc' | 'asc'>>;
@@ -56,11 +57,14 @@ export default function CardEntradaFaturamento({
   handleEntradaFaturamentoValorChange,
   adicionarEntradaFaturamento,
   entradaFaturamentoSalvando,
+  faturamentoDoMes,
+  totalEntradasFaturamentoDoMes,
   ordemEntradasFaturamento,
   setOrdemEntradasFaturamento,
   buscaEntradaFaturamento,
   setBuscaEntradaFaturamento,
   getMaxDias,
+  formatarMoeda,
   corPrimaria,
   darkMode,
   entradas,
@@ -84,6 +88,45 @@ export default function CardEntradaFaturamento({
       ? 'border-slate-600 bg-slate-700 text-white placeholder:text-slate-400'
       : 'border-slate-300 bg-white text-slate-700 placeholder:text-slate-400'
   }`;
+  const totalMensalBase = Math.max(
+    0,
+    Number(faturamentoDoMes || 0) - Number(totalEntradasFaturamentoDoMes || 0)
+  );
+  const normalizarBusca = (valor: string) =>
+    valor
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toLowerCase()
+      .trim();
+  const totalMensalNaoRepresentado = totalMensalBase > 0.009;
+  const termoBusca = normalizarBusca(buscaEntradaFaturamento);
+  const textoBuscaTotalMensal = normalizarBusca(
+    [
+      'Total do mes',
+      'Total mensal',
+      'Receita total',
+      formatarMoeda(totalMensalBase),
+      String(totalMensalBase.toFixed(2)).replace('.', ','),
+    ].join(' ')
+  );
+  const mostrarTotalMensal =
+    totalMensalNaoRepresentado &&
+    (!termoBusca || textoBuscaTotalMensal.includes(termoBusca));
+  const entradasVisiveis = mostrarTotalMensal
+    ? [
+        {
+          id: `__total_mensal__-${mesAtivo || 'mes'}`,
+          mes: mesAtivo || undefined,
+          dia: null,
+          origem: 'Total do mês',
+          valor: totalMensalBase,
+          status: 'total_mensal',
+          tipo: 'total_mensal',
+          totalMensal: true,
+        },
+        ...entradas,
+      ]
+    : entradas;
 
   return (
     <div
@@ -259,15 +302,15 @@ export default function CardEntradaFaturamento({
 
         {buscaEntradaFaturamento.trim() && (
           <div className="px-1.5 pt-2 text-xs font-bold text-slate-500">
-            {entradas.length > 0
-              ? `${entradas.length} entrada(s) localizada(s).`
+            {entradasVisiveis.length > 0
+              ? `${entradasVisiveis.length} entrada(s) localizada(s).`
               : 'Nenhuma entrada localizada com esse argumento.'}
           </div>
         )}
       </div>
 
       <TabelaEntradasFaturamento
-        entradas={entradas}
+        entradas={entradasVisiveis}
         podeEditarEntradas={podeEditarEntradas}
         entradaEditandoId={entradaEditandoId}
         editEntradaDia={editEntradaDia}

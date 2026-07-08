@@ -10,6 +10,7 @@ export type EntradaFaturamento = {
   valor: number | string | null;
   status?: string | null;
   tipo?: string | null;
+  totalMensal?: boolean;
 };
 
 type TabelaEntradasFaturamentoProps = {
@@ -64,12 +65,15 @@ export default function TabelaEntradasFaturamento({
     <div className="w-full max-w-full overflow-x-auto rounded-xl border border-slate-200/20">
       <table className="w-full min-w-[560px] text-left border-collapse">
         <tbody>
-          {entradas.map((entrada) => (
+          {entradas.map((entrada) => {
+            const ehTotalMensal = entrada.totalMensal === true;
+
+            return (
             <tr
               key={entrada.id}
               className="border-b border-dotted border-slate-300/40"
             >
-              {entradaEditandoId === entrada.id ? (
+              {entradaEditandoId === entrada.id && !ehTotalMensal ? (
                 <>
                   <td className="py-1.5 px-1.5 w-16 text-center">
                     <input
@@ -135,12 +139,23 @@ export default function TabelaEntradasFaturamento({
               ) : (
                 <>
                   <td className="py-2 px-4 w-24 text-center text-xs font-bold">
-                    {String(entrada.dia).padStart(2, '0')}
+                    {ehTotalMensal ? (
+                      <span className="inline-flex rounded-full bg-emerald-50 px-2 py-1 text-[10px] font-black uppercase text-emerald-700">
+                        Mes
+                      </span>
+                    ) : (
+                      String(entrada.dia).padStart(2, '0')
+                    )}
                   </td>
 
                   <td className="max-w-[240px] break-words py-2 px-4 text-xs font-semibold">
                     <span className="inline-flex flex-wrap items-center gap-1.5">
                       <span>{entrada.origem || '-'}</span>
+                      {ehTotalMensal && (
+                        <span className="inline-flex items-center rounded-full bg-cyan-100 px-1.5 py-0.5 text-[9px] font-black uppercase tracking-wide text-cyan-700">
+                          Total mensal
+                        </span>
+                      )}
                       {entrada.status === 'prevista' && (
                         <span className="inline-flex items-center rounded-full bg-emerald-100 px-1.5 py-0.5 text-[9px] font-black uppercase tracking-wide text-emerald-700">
                           Previsto
@@ -154,63 +169,70 @@ export default function TabelaEntradasFaturamento({
                   </td>
 
                   <td className="py-2 px-4 w-24 text-center">
-                    <div className="flex items-center justify-center gap-1">
-                      <button
-                        type="button"
-                        onClick={() => onIniciarEdicaoEntrada(entrada)}
-                        disabled={!podeEditarEntradas}
-                        className={
-                          podeEditarEntradas
-                            ? 'text-slate-400 hover:text-blue-500 hover:bg-blue-500/10 p-1.5 rounded transition-all cursor-pointer'
-                            : 'text-slate-300 p-1.5 rounded cursor-not-allowed'
-                        }
-                        title={
-                          podeEditarEntradas
-                            ? 'Editar'
-                            : 'Você não tem permissão para editar lançamentos.'
-                        }
-                      >
-                        <svg
-                          className="w-4 h-4 mx-auto"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
+                    {ehTotalMensal ? (
+                      <span className="text-[10px] font-black uppercase text-slate-400">
+                        Total
+                      </span>
+                    ) : (
+                      <div className="flex items-center justify-center gap-1">
+                        <button
+                          type="button"
+                          onClick={() => onIniciarEdicaoEntrada(entrada)}
+                          disabled={!podeEditarEntradas}
+                          className={
+                            podeEditarEntradas
+                              ? 'text-slate-400 hover:text-blue-500 hover:bg-blue-500/10 p-1.5 rounded transition-all cursor-pointer'
+                              : 'text-slate-300 p-1.5 rounded cursor-not-allowed'
+                          }
+                          title={
+                            podeEditarEntradas
+                              ? 'Editar'
+                              : 'Você não tem permissão para editar lançamentos.'
+                          }
                         >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth="2"
-                            d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"
-                          />
-                        </svg>
-                      </button>
+                          <svg
+                            className="w-4 h-4 mx-auto"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth="2"
+                              d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"
+                            />
+                          </svg>
+                        </button>
 
-                      <button
-                        type="button"
-                        onClick={() => onExcluirEntrada(entrada)}
-                        className="text-slate-400 hover:text-red-500 hover:bg-red-500/10 p-1.5 rounded transition-all cursor-pointer"
-                        title="Apagar"
-                      >
-                        <svg
-                          className="w-4 h-4 mx-auto"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
+                        <button
+                          type="button"
+                          onClick={() => onExcluirEntrada(entrada)}
+                          className="text-slate-400 hover:text-red-500 hover:bg-red-500/10 p-1.5 rounded transition-all cursor-pointer"
+                          title="Apagar"
                         >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth="2"
-                            d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                          />
-                        </svg>
-                      </button>
-                    </div>
+                          <svg
+                            className="w-4 h-4 mx-auto"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth="2"
+                              d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                            />
+                          </svg>
+                        </button>
+                      </div>
+                    )}
                   </td>
                 </>
               )}
             </tr>
-          ))}
+          );
+          })}
         </tbody>
       </table>
     </div>
