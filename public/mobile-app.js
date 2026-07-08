@@ -372,8 +372,104 @@
   }
 
   function formatarDescricao(texto) {
-    var limpo = String(texto || '').trim().toLowerCase();
-    return limpo ? limpo.charAt(0).toUpperCase() + limpo.slice(1) : '';
+    var limpo = String(texto || '').trim().replace(/\s+/g, ' ');
+    if (!limpo) return '';
+
+    var siglas = {
+      cnpj: 'CNPJ',
+      cofins: 'COFINS',
+      cpf: 'CPF',
+      csll: 'CSLL',
+      darf: 'DARF',
+      doc: 'DOC',
+      fgts: 'FGTS',
+      gps: 'GPS',
+      icms: 'ICMS',
+      inss: 'INSS',
+      iptu: 'IPTU',
+      ir: 'IR',
+      irpf: 'IRPF',
+      irpj: 'IRPJ',
+      iss: 'ISS',
+      issqn: 'ISSQN',
+      mei: 'MEI',
+      nf: 'NF',
+      nfe: 'NF-e',
+      'nf-e': 'NF-e',
+      nfse: 'NFS-e',
+      'nfs-e': 'NFS-e',
+      pis: 'PIS',
+      pix: 'PIX',
+      ted: 'TED',
+    };
+    var especiais = {
+      esocial: 'eSocial',
+      ifood: 'iFood',
+      mcdonalds: "McDonald's",
+      "mcdonald's": "McDonald's",
+      netflix: 'Netflix',
+      nubank: 'Nubank',
+      picpay: 'PicPay',
+      prolabore: 'Pró-labore',
+      'pro-labore': 'Pró-labore',
+      youtube: 'YouTube',
+    };
+    var conectivos = {
+      a: true,
+      ao: true,
+      aos: true,
+      as: true,
+      com: true,
+      da: true,
+      das: true,
+      de: true,
+      do: true,
+      dos: true,
+      e: true,
+      em: true,
+      na: true,
+      nas: true,
+      no: true,
+      nos: true,
+      o: true,
+      os: true,
+      para: true,
+      por: true,
+      sem: true,
+    };
+    var semAcento = function (valor) {
+      return String(valor || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    };
+    var capitalizar = function (valor) {
+      return String(valor || '').toLocaleLowerCase('pt-BR').split('-').map(function (parte) {
+        return parte ? parte.charAt(0).toLocaleUpperCase('pt-BR') + parte.slice(1) : parte;
+      }).join('-');
+    };
+    var contextoFiscal = limpo.split(' ').some(function (palavra) {
+      var chave = semAcento(palavra).toLocaleLowerCase('pt-BR');
+      return ['guia', 'imposto', 'mei', 'nacional', 'receita', 'simples', 'tributo', 'tributos'].indexOf(chave) >= 0;
+    });
+
+    return limpo.split(' ').map(function (palavra, indice) {
+      var partes = palavra.match(/^([^A-Za-zÀ-ÖØ-öø-ÿ0-9]*)(.*?)([^A-Za-zÀ-ÖØ-öø-ÿ0-9]*)$/);
+      if (!partes) return palavra;
+
+      var prefixo = partes[1];
+      var miolo = partes[2];
+      var sufixo = partes[3];
+      if (!miolo) return palavra;
+
+      var chave = semAcento(miolo).toLocaleLowerCase('pt-BR');
+      var originalMaiusculo = miolo === miolo.toLocaleUpperCase('pt-BR') && /[A-Za-zÀ-ÖØ-öø-ÿ]/.test(miolo);
+
+      if (chave === 'das' && (originalMaiusculo || contextoFiscal)) return prefixo + 'DAS' + sufixo;
+      if (siglas[chave]) return prefixo + siglas[chave] + sufixo;
+      if (especiais[chave]) return prefixo + especiais[chave] + sufixo;
+      if (/[a-zà-öø-ÿ][A-ZÀ-ÖØ-Þ]/.test(miolo)) return palavra;
+      if (indice > 0 && conectivos[chave]) return prefixo + chave + sufixo;
+
+      return prefixo + capitalizar(miolo) + sufixo;
+    }).join(' ');
   }
 
   function textoBusca(valor) {

@@ -2,6 +2,7 @@
 
 ## Em desenvolvimento
 
+- Web e mobile: descricoes financeiras passam a usar capitalizacao inteligente, preservando siglas, conectivos e termos especiais.
 - Mobile: header do card de confirmacao de exclusao de despesas alinhado ao raio e a faixa colorida do modal.
 - Web: AvantaShell recebe contorno inferior no corpo para corrigir a borda do card de Lancamentos Mensais.
 - Mobile: confirmação de exclusão de lançamento redesenhada como card visual no padrão do sistema, com resumo do item e ações claras.
