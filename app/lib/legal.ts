@@ -8,4 +8,4 @@
 // IMPORTANTE: manter o mesmo valor no mobile (public/mobile-app.js →
 // window.__TERMOS_VERSAO fallback), já que o mobile não importa TS.
 // ─────────────────────────────────────────────────────────────
-export const TERMOS_VERSAO = '2026-07-05';
+export const TERMOS_VERSAO = '2026-07-08';

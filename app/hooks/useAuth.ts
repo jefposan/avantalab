@@ -466,6 +466,8 @@ export function useAuth(deps: UseAuthDeps) {
       return;
     }
 
+    const aceiteLegalEm = new Date().toISOString();
+
     const { error } = await supabase.auth.signUp({
       email: emailLimpo,
       password: cadastroSenha,
@@ -473,9 +475,12 @@ export function useAuth(deps: UseAuthDeps) {
         data: {
           nome: nomeLimpo,
           telefone: telefoneCompleto,
-          // Prova de consentimento (LGPD): versão e data/hora do aceite.
+          // Prova de consentimento (LGPD): versao, data/hora e origem do aceite.
           aceite_termos_versao: TERMOS_VERSAO,
-          aceite_termos_em: new Date().toISOString(),
+          aceite_termos_em: aceiteLegalEm,
+          aceite_privacidade_versao: TERMOS_VERSAO,
+          aceite_privacidade_em: aceiteLegalEm,
+          aceite_origem: 'web',
         },
       },
     });

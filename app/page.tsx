@@ -1589,7 +1589,7 @@ useEffect(() => {
   // eslint-disable-next-line react-hooks/exhaustive-deps
 }, [mounted, empresaId]);
 
-// Marca as notificacoes como lidas ao FECHAR o painel de avisos
+// Ao fechar o painel, os avisos visualizados deixam de aparecer no sininho.
 useEffect(() => {
   if (painelAvisosAbertoAnterior.current && !painelAvisosAberto) {
     marcarNotificacoesLidasWeb();
@@ -4372,8 +4372,8 @@ const alertasSistema = useMemo(() => {
     naoLida?: boolean;
   }[] = [];
 
-  // Avisos/novidades vindos do Supabase (disparos do /admin)
-  notificacoesWeb.forEach((n) => {
+  // Avisos/novidades vindos do Supabase aparecem no sininho apenas enquanto nao foram visualizados.
+  notificacoesWeb.filter((n) => !n.lida).forEach((n) => {
     alertas.push({ id: 'notif-' + n.id, titulo: n.titulo, mensagem: n.corpo, naoLida: !n.lida });
   });
 
@@ -8131,7 +8131,8 @@ name="novo-usuario-login"
             style={{ borderColor: corPrimaria }}
           >
             <svg className="w-3.5 h-3.5" fill="none" stroke="#ffffff" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828L11 18.657" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 3l1.45 4.55L18 9l-4.55 1.45L12 15l-1.45-4.55L6 9l4.55-1.45L12 3z" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 16l.75 2.25L8 19l-2.25.75L5 22l-.75-2.25L2 19l2.25-.75L5 16zM19 14l.65 1.85L21.5 16.5l-1.85.65L19 19l-.65-1.85-1.85-.65 1.85-.65L19 14z" />
             </svg>
             Visual
             <svg className="w-3 h-3" fill="none" stroke="#ffffff" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M19 9l-7 7-7-7" /></svg>
