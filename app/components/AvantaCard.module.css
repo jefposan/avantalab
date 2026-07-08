@@ -1,38 +1,63 @@
 /* ─────────────────────────────────────────────────────────────
-   AvantaCard — card padrão AvantaLab (premium/dark/glass).
-   Header em DUAS CAMADAS sobrepostas:
-   • camada de trás (larga, ~75%): título — fica "recuada", mais baixa;
-   • camada da frente (canto sup. direito, ~25%): só os controles
-     (pontinhos de arrastar + menu ...), por cima, com sombra própria.
-   O corpo cobre a base do header traseiro, criando a profundidade.
+   AvantaCard — "aba de pasta" em DUAS CAMADAS REAIS.
+
+   CARD DE TRÁS (.cardTras): superfície mais clara com o título;
+   fica recuado e aparece pelo recorte do card da frente.
+
+   CARD DA FRENTE (.frente): silhueta única composta por
+   corpo (baixo, largura total) + platô dos controles (topo direito)
+   + duas soldas côncavas (radial-gradient) formando o vale.
+   O wrapper .frente aplica filter: drop-shadow → o CONTORNO (traço
+   fino) e a SOMBRA seguem o recorte, inclusive nas curvas.
+
+   Cores derivadas de --cp (corPrimaria) com color-mix.
    ───────────────────────────────────────────────────────────── */
 
 .card {
+  --cp: #3b82f6;
+  --topo: 78px;    /* altura do recorte (onde o card de trás aparece) */
+  --raio: 30px;    /* cantos convexos */
+  /* Curva "S" diagonal do vale → platô: a metade de baixo é côncava e a
+     de cima é convexa, com o MESMO raio (metade do recorte cada) — assim
+     não existe trecho reto vertical e a descida é uma diagonal contínua. */
+  --curva: calc(var(--topo) / 2);
+  --plato-w: 25%;  /* largura do platô dos controles */
+
+  --cor-tras-ini: color-mix(in srgb, var(--cp) 30%, #131b2b);
+  --cor-tras-fim: color-mix(in srgb, var(--cp) 14%, #0d1422);
+  --cor-corpo-topo: color-mix(in srgb, var(--cp) 8%, #0d1420);
+  --cor-corpo-fim: color-mix(in srgb, var(--cp) 3%, #070b13);
+  --cor-contorno: color-mix(in srgb, var(--cp) 45%, rgba(160, 180, 255, 0.35));
+  --cor-texto: #f5f7ff;
+  --cor-texto-2: color-mix(in srgb, var(--cp) 24%, #8e9ab8);
+
   position: relative;
   width: 100%;
-  min-height: 280px;
-  padding-top: 72px;
-  border-radius: 32px;
-  color: #f5f7ff;
+  color: var(--cor-texto);
 }
 
-/* Camada de TRÁS: header principal, largo, visualmente recuado. */
-.headerBack {
+/* ── CARD DE TRÁS (título) ──
+   Largura TOTAL do card: preenche todo o fundo atrás da frente
+   (sem "buraco" no vale). A base e o lado direito somem atrás do
+   corpo e do platô. */
+.cardTras {
   position: absolute;
   top: 0;
   left: 0;
-  width: 78%;
-  height: 96px;
-  z-index: 1;
+  right: 0;
+  height: calc(var(--topo) + 20px); /* 20px mergulham atrás do corpo */
+  z-index: 0;
 
   display: flex;
   align-items: center;
-  padding: 0 32px;
+  /* padding-right reserva o espaço do platô (título não passa por baixo) */
+  padding: 0 calc(var(--plato-w) + 30px) 20px 30px;
 
-  border-radius: 32px 32px 28px 0;
-  background: linear-gradient(145deg, #151e2c, #0d131f);
-  border: 1px solid rgba(120, 150, 255, 0.18);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  border-radius: var(--raio) var(--raio) 0 0;
+  background: linear-gradient(160deg, var(--cor-tras-ini), var(--cor-tras-fim) 70%);
+  box-shadow:
+    inset 0 1px 0 color-mix(in srgb, var(--cp) 35%, rgba(255, 255, 255, 0.10)),
+    0 10px 26px rgba(0, 0, 0, 0.45);
 }
 
 .titulo {
@@ -41,64 +66,87 @@
   align-items: center;
   gap: 14px;
   min-width: 0;
-  font-size: 18px;
-  font-weight: 700;
-  letter-spacing: 0.04em;
+  font-size: 17px;
+  font-weight: 800;
+  letter-spacing: 0.05em;
   text-transform: uppercase;
 }
 
-.titulo > span {
+.titulo > span:last-child {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-/* Barra de acento antes do título (o "|" do conceito). */
 .acento {
   width: 4px;
-  height: 26px;
+  height: 24px;
   flex-shrink: 0;
   border-radius: 999px;
-  background: linear-gradient(180deg, var(--avanta-acento, #7896ff), transparent 130%);
+  background: linear-gradient(180deg, var(--cp), transparent 140%);
 }
 
-/* Camada da FRENTE: bloco dos controles, por cima, no canto direito. */
-.headerFront {
+/* ── CARD DA FRENTE (silhueta recortada) ── */
+.frente {
+  position: relative;
+  z-index: 1;
+  padding-top: var(--topo);
+  /* traço fino + sombras: seguem o RECORTE da silhueta composta */
+  filter:
+    drop-shadow(0 -0.5px 0 var(--cor-contorno))
+    drop-shadow(0 0.5px 0 var(--cor-contorno))
+    drop-shadow(-0.5px 0 0 var(--cor-contorno))
+    drop-shadow(0.5px 0 0 var(--cor-contorno))
+    drop-shadow(0 22px 34px rgba(0, 0, 0, 0.5));
+}
+
+/* Platô dos controles: sobe acima do corpo, mesma superfície. */
+.plato {
   position: absolute;
   top: 0;
   right: 0;
-  width: 25%;
-  min-width: 120px;
-  height: 96px;
-  z-index: 3;
+  width: var(--plato-w);
+  min-width: 132px;
+  height: calc(var(--topo) + var(--raio));
+  z-index: 1;
 
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: flex-end;
-  gap: 22px;
-  padding: 0 28px;
+  gap: 16px;
+  padding: calc((var(--topo) - 44px) / 2) 24px 0;
 
-  border-radius: 36px 32px 0 36px;
-  background: linear-gradient(145deg, #182235, #111827);
-  border: 1px solid rgba(120, 150, 255, 0.22);
-  /* Sombra lançada para a esquerda: é ela que "descola" a camada
-     frontal e cria o efeito de profundidade sobre o header de trás. */
-  box-shadow: -18px 12px 32px rgba(0, 0, 0, 0.32);
+  /* canto esquerdo com o mesmo raio da côncava → tangentes, "S" perfeito */
+  border-radius: var(--curva) var(--raio) 0 0;
+  background: var(--cor-corpo-topo);
 }
 
-/* Corpo: cobre a base do header traseiro (z 2, entre as camadas). */
+/* Solda côncava do vale subindo para o platô. (No lado esquerdo do vale
+   NÃO há solda: a linha do corpo segue reta e quem desce é o card de trás.) */
+.frente::after {
+  content: '';
+  position: absolute;
+  right: var(--plato-w);
+  top: calc(var(--topo) - var(--curva));
+  width: var(--curva);
+  height: var(--curva);
+  background: radial-gradient(circle at 0 0, transparent calc(var(--curva) - 0.5px), var(--cor-corpo-topo) var(--curva));
+}
+
+/* Canto convexo saindo da aba para o vale (lado esquerdo do vale). */
 .body {
   position: relative;
-  z-index: 2;
-
-  min-height: 260px;
+  min-height: 240px;
   padding: 32px;
-  border-radius: 32px;
-  background: linear-gradient(160deg, #101722, #090d15);
-  border: 1px solid rgba(120, 150, 255, 0.16);
-  box-shadow:
-    0 24px 60px rgba(0, 0, 0, 0.42),
-    inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  border-radius: var(--raio);
+  border-top-right-radius: 0; /* contínuo com o platô */
+  background: linear-gradient(
+    180deg,
+    var(--cor-corpo-topo) 0px,
+    var(--cor-corpo-topo) 110px,
+    var(--cor-corpo-fim) 100%
+  );
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
 }
 
 /* Pontinhos de arrastar: 2 colunas × 3 linhas. */
@@ -107,14 +155,14 @@
   grid-template-columns: repeat(2, 4px);
   grid-template-rows: repeat(3, 4px);
   gap: 5px;
-  padding: 8px;
-  border-radius: 10px;
+  padding: 12px;
+  border-radius: 12px;
   cursor: grab;
   transition: background 0.15s ease;
 }
 
 .dragHandle:hover {
-  background: rgba(120, 150, 255, 0.12);
+  background: color-mix(in srgb, var(--cp) 18%, transparent);
 }
 
 .dragHandle:active {
@@ -125,54 +173,52 @@
   width: 4px;
   height: 4px;
   border-radius: 999px;
-  background: rgba(220, 230, 255, 0.75);
+  background: color-mix(in srgb, var(--cp) 35%, rgba(220, 230, 255, 0.75));
 }
 
-/* Botão de ajustes (...) */
 .menu {
   border: 0;
   background: transparent;
-  color: rgba(220, 230, 255, 0.8);
+  color: var(--cor-texto-2);
   font-size: 22px;
   font-weight: 900;
   line-height: 1;
-  padding: 4px 8px;
-  border-radius: 10px;
+  padding: 8px 10px 14px;
+  border-radius: 12px;
   cursor: pointer;
   transition: background 0.15s ease, color 0.15s ease;
 }
 
 .menu:hover {
-  background: rgba(120, 150, 255, 0.12);
-  color: #f5f7ff;
+  background: color-mix(in srgb, var(--cp) 18%, transparent);
+  color: var(--cor-texto);
 }
 
 /* Mobile */
 @media (max-width: 640px) {
   .card {
-    padding-top: 64px;
+    --topo: 62px;
+    --raio: 22px;
+    --plato-w: 30%;
   }
 
-  .headerBack {
-    width: 76%;
-    height: 82px;
-    padding: 0 20px;
+  .cardTras {
+    padding: 0 calc(var(--plato-w) + 16px) 16px 18px;
+    height: calc(var(--topo) + 16px);
   }
 
   .titulo {
-    font-size: 14px;
+    font-size: 13px;
     gap: 10px;
   }
 
-  .headerFront {
-    width: 28%;
-    min-width: 96px;
-    height: 82px;
-    gap: 14px;
-    padding: 0 18px;
+  .plato {
+    min-width: 108px;
+    gap: 10px;
+    padding-right: 14px;
   }
 
   .body {
-    padding: 22px;
+    padding: 20px;
   }
 }
