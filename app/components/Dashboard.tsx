@@ -991,7 +991,7 @@ const mostrarComparativoResumoDash =
         </div>
 
       <section
-        className={`${bgCard} card-radius-avantalab w-full p-6 rounded-2xl shadow-lg border border-t-4 transition-colors`}
+        className={`${bgCard} card-radius-avantalab w-full p-6 rounded-2xl border-t-4 transition-colors shadow-[0_1px_2px_rgba(15,23,42,.05),0_12px_32px_-12px_rgba(15,23,42,.18)]`}
         style={{ borderTopColor: corPrimaria }}
       >
         {/* Topo do card: faixa com degradê suave da cor do tema (identidade
@@ -1036,14 +1036,14 @@ const mostrarComparativoResumoDash =
                   <button
                     key={mes}
                     onClick={() => setMesAtivo(mes)}
-                    className="group flex h-14 cursor-pointer items-center justify-center rounded-xl border-2 text-xs font-black shadow-md transition-all hover:-translate-y-0.5 hover:shadow-lg"
+                    className="group flex h-14 cursor-pointer items-center justify-center rounded-xl text-xs font-black transition-all hover:-translate-y-0.5"
                     style={{
                       // Degradê bem esmaecido: começa na cor cheia e dilui até
                       // ~55%, para não ficar chapado nem pesado em cores fortes.
+                      // Sem borda: o volume vem da sombra colorida + brilho interno.
                       background: `linear-gradient(135deg, ${corPrimaria} 0%, ${corPrimaria}d9 35%, ${corPrimaria}8c 100%)`,
-                      borderColor: `${corPrimaria}66`,
                       color: textoSobrePrimaria,
-                      boxShadow: `0 6px 16px ${corPrimaria}33`,
+                      boxShadow: `inset 0 1px 0 rgba(255,255,255,.28), 0 8px 18px -6px ${corPrimaria}59`,
                     }}
                     title="Mês atual"
                   >
@@ -1056,18 +1056,34 @@ const mostrarComparativoResumoDash =
                 );
               }
 
-              const bordaBase = temMovimento ? `${corPrimaria}45` : '';
+              // Estilo próprio, sem bordas: superfícies tonais com brilho
+              // interno no topo e sombra que cresce no hover.
+              const fundoBase = darkMode
+                ? (temMovimento ? `linear-gradient(180deg, ${corPrimaria}26, rgba(30,41,59,.9) 75%)` : 'rgba(30,41,59,.85)')
+                : (temMovimento ? `linear-gradient(180deg, ${corPrimaria}14, #f8fafc 75%)` : '#f1f5f9');
               return (
                 <button
                   key={mes}
                   onClick={() => setMesAtivo(mes)}
-                  className={`${darkMode ? 'bg-slate-800 hover:bg-slate-700 border-slate-700 text-slate-300' : 'bg-white border-slate-200 text-slate-600'} group flex h-14 cursor-pointer items-center justify-center rounded-xl border-2 text-xs font-black shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md`}
+                  className={`${darkMode ? 'text-slate-300' : 'text-slate-600'} group flex h-14 cursor-pointer items-center justify-center rounded-xl text-xs font-black transition-all hover:-translate-y-0.5`}
                   style={{
-                    borderColor: bordaBase || undefined,
-                    background: temMovimento && !darkMode ? `linear-gradient(180deg, ${corPrimaria}0d, #ffffff 70%)` : undefined,
+                    background: fundoBase,
+                    boxShadow: darkMode
+                      ? 'inset 0 1px 0 rgba(255,255,255,.06), 0 1px 2px rgba(2,6,23,.5)'
+                      : 'inset 0 1px 0 rgba(255,255,255,.9), 0 1px 2px rgba(15,23,42,.08)',
                   }}
-                  onMouseOver={e => { e.currentTarget.style.color = corPrimaria; e.currentTarget.style.borderColor = corPrimaria; }}
-                  onMouseOut={e => { e.currentTarget.style.color = ''; e.currentTarget.style.borderColor = bordaBase; }}
+                  onMouseOver={e => {
+                    e.currentTarget.style.color = corPrimaria;
+                    e.currentTarget.style.boxShadow = `inset 0 1px 0 rgba(255,255,255,.9), 0 12px 22px -10px ${corPrimaria}59`;
+                    if (!darkMode) e.currentTarget.style.background = '#ffffff';
+                  }}
+                  onMouseOut={e => {
+                    e.currentTarget.style.color = '';
+                    e.currentTarget.style.boxShadow = darkMode
+                      ? 'inset 0 1px 0 rgba(255,255,255,.06), 0 1px 2px rgba(2,6,23,.5)'
+                      : 'inset 0 1px 0 rgba(255,255,255,.9), 0 1px 2px rgba(15,23,42,.08)';
+                    e.currentTarget.style.background = fundoBase;
+                  }}
                 >
                   <span className="flex items-center gap-1.5 transition-transform group-hover:scale-105">
                     <span className="hidden xl:inline">{mes}</span>
@@ -1081,16 +1097,15 @@ const mostrarComparativoResumoDash =
         </div>
 
         <div
-          className={`mt-8 rounded-xl border p-5 ${
-            darkMode
-              ? 'border-slate-700 bg-slate-800/70'
-              : 'border-slate-200'
-          }`}
+          className="mt-8 rounded-xl p-5"
           style={{
             borderLeft: `4px solid ${corPrimaria}`,
             background: darkMode
               ? `linear-gradient(135deg, ${corPrimaria}1f, rgba(30,41,59,.7) 55%)`
-              : `linear-gradient(135deg, ${corPrimaria}0f, #ffffff 55%)`,
+              : `linear-gradient(135deg, ${corPrimaria}0f, #f8fafc 55%)`,
+            boxShadow: darkMode
+              ? 'inset 0 1px 0 rgba(255,255,255,.05)'
+              : 'inset 0 1px 0 rgba(255,255,255,.9), 0 1px 3px rgba(15,23,42,.07)',
           }}
         >
           <div className="flex items-center justify-between border-b border-slate-200/10 pb-3">
