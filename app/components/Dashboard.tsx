@@ -141,6 +141,16 @@ interface DashboardProps {
   saldoInicial: number;
   saldoFinal: number;
   saldoPrevisto: number;
+  caixinhaSaldo: number;
+  caixinhaAportesMes: number;
+  caixinhaUltimosMovimentos: Array<{
+    id: string;
+    tipo: string;
+    descricao: string;
+    valor: number;
+    dataMovimento: string;
+  }>;
+  onAdicionarAporteCaixinha: (dados: { dia: string; descricao: string; valorTexto: string }) => Promise<{ ok: boolean; mensagem?: string }>;
   dashboardOrdem: { a: string[]; b: string[] };
   dashboardOcultos: string[];
   dashboardExpandidos: string[];
@@ -172,6 +182,7 @@ export default function Dashboard({
   despesasAConfirmar, onConfirmarPrevista, onAjustarPrevista, onExcluirPrevista,
   receitasAConfirmar, onConfirmarReceita, onEditarReceita, onExcluirReceita,
   saldoCardMesIdx, setSaldoCardMesIdx, saldoInicial, saldoFinal, saldoPrevisto,
+  caixinhaSaldo, caixinhaAportesMes, caixinhaUltimosMovimentos, onAdicionarAporteCaixinha,
   dashboardOrdem, dashboardOcultos, onAtualizarLayoutDashboard,
   dashboardExpandidos, onOcultarCardDashboard, onDefinirOcultosDashboard,
   pontoDisponivel, pontoResumo, pontoResumoCarregando,
@@ -193,6 +204,11 @@ export default function Dashboard({
     receitas: number;
     despesas: number;
   } | null>(null);
+  const [caixinhaDia, setCaixinhaDia] = useState(String(new Date().getDate()));
+  const [caixinhaDescricao, setCaixinhaDescricao] = useState('Reserva');
+  const [caixinhaValor, setCaixinhaValor] = useState('');
+  const [caixinhaSalvando, setCaixinhaSalvando] = useState(false);
+  const [caixinhaMensagem, setCaixinhaMensagem] = useState('');
   const criarCols = (ordem: { a: string[]; b: string[] }, expandidos: string[]): DashboardCols => {
     const full = [...new Set(expandidos)];
     return {
@@ -366,6 +382,41 @@ export default function Dashboard({
     setInputFaturamento(formatado);
   };
 
+  const handleCaixinhaValorChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value.replace(/\D/g, '');
+    if (!value) {
+      setCaixinhaValor('');
+      return;
+    }
+
+    const numericValue = parseInt(value, 10) / 100;
+    setCaixinhaValor(new Intl.NumberFormat('pt-BR', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }).format(numericValue));
+  };
+
+  const enviarAporteCaixinha = async () => {
+    if (caixinhaSalvando) return;
+    setCaixinhaSalvando(true);
+    setCaixinhaMensagem('');
+
+    const resultado = await onAdicionarAporteCaixinha({
+      dia: caixinhaDia,
+      descricao: caixinhaDescricao,
+      valorTexto: caixinhaValor,
+    });
+
+    if (resultado.ok) {
+      setCaixinhaValor('');
+      setCaixinhaMensagem('Aporte adicionado.');
+    } else {
+      setCaixinhaMensagem(resultado.mensagem || 'Não foi possível adicionar o aporte.');
+    }
+
+    setCaixinhaSalvando(false);
+  };
+
   const corEhClara = (hex: string) => {
     const cor = hex.replace('#', '');
 
@@ -511,6 +562,7 @@ const mostrarComparativoResumoDash =
   const catalogoCardsKanban = [
     { id: 'aConfirmar', titulo: 'Lançamentos a confirmar', descricao: 'Banner de despesas e receitas previstas que chegaram na data.' },
     { id: 'saldo', titulo: 'Saldo do mês', descricao: 'Inicial, final e previsto do mês selecionado.' },
+    { id: 'caixinha', titulo: 'Caixinha', descricao: 'Reserva ou investimento com aporte que gera despesa automaticamente.' },
     { id: 'resumoFinanceiro', titulo: 'Resumo financeiro', descricao: 'Despesas, maior gasto e lucro operacional.' },
     { id: 'evolucaoMensal', titulo: 'Evolução mensal', descricao: 'Gráfico mensal de receitas e despesas.' },
     { id: 'registrarEntradas', titulo: 'Registrar entradas', descricao: 'Lançamento de receitas e total mensal.' },
@@ -823,6 +875,90 @@ const mostrarComparativoResumoDash =
           <div className="flex justify-between items-center">
             <span className={`font-semibold text-sm ${textMuted}`}>Previsto</span>
             <span className={`font-semibold text-base tabular-nums tracking-tight ${saldoPrevisto >= 0 ? 'text-cyan-500' : 'text-red-500'}`}>{formatarMoeda(saldoPrevisto)}</span>
+          </div>
+        </div>
+      </div>
+    ),
+
+    caixinha: (
+      <div className={`${bgCard} card-radius-avantalab w-full overflow-hidden rounded-2xl border-2 shadow-lg transition-colors`} style={{ borderColor: corPrimaria }}>
+        <div className="flex items-center justify-between gap-3 px-6 py-3 text-sm font-bold uppercase tracking-wider" style={{ backgroundColor: corPrimaria, color: textoSobreCorPrimaria }}>
+          <span>Caixinha</span>
+          <div className="flex items-center gap-2">
+            <DragHandle tone="light" />
+            <BotaoOpcoesCard id="caixinha" tone="light" />
+          </div>
+        </div>
+        <div className="space-y-4 p-5">
+          <div className="grid grid-cols-2 gap-3">
+            <div className={`rounded-xl border p-3 ${darkMode ? 'border-slate-700 bg-slate-800/50' : 'border-slate-200 bg-slate-50'}`}>
+              <span className={`text-[10px] font-black uppercase tracking-wide ${textMuted}`}>Saldo</span>
+              <strong className={`mt-1 block text-lg font-black tabular-nums ${caixinhaSaldo >= 0 ? 'text-emerald-500' : 'text-red-500'}`}>
+                {ocultarValores ? 'R$ ••••••' : formatarMoeda(caixinhaSaldo)}
+              </strong>
+            </div>
+            <div className={`rounded-xl border p-3 ${darkMode ? 'border-slate-700 bg-slate-800/50' : 'border-slate-200 bg-slate-50'}`}>
+              <span className={`text-[10px] font-black uppercase tracking-wide ${textMuted}`}>Aportes no mês</span>
+              <strong className={`mt-1 block text-lg font-black tabular-nums ${textStrong}`}>
+                {ocultarValores ? 'R$ ••••••' : formatarMoeda(caixinhaAportesMes)}
+              </strong>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-[76px_minmax(0,1fr)_132px] gap-2 max-sm:grid-cols-1">
+            <input
+              type="number"
+              min={1}
+              max={31}
+              value={caixinhaDia}
+              onChange={(e) => setCaixinhaDia(e.target.value)}
+              className={`h-10 rounded-xl border px-3 text-sm font-bold outline-none ${darkMode ? 'border-slate-700 bg-slate-900 text-slate-100' : 'border-slate-200 bg-white text-slate-800'}`}
+              aria-label="Dia do aporte"
+              placeholder="Dia"
+            />
+            <input
+              value={caixinhaDescricao}
+              onChange={(e) => setCaixinhaDescricao(e.target.value)}
+              className={`h-10 rounded-xl border px-3 text-sm font-bold outline-none ${darkMode ? 'border-slate-700 bg-slate-900 text-slate-100' : 'border-slate-200 bg-white text-slate-800'}`}
+              placeholder="Descrição"
+            />
+            <input
+              value={caixinhaValor}
+              onChange={handleCaixinhaValorChange}
+              inputMode="decimal"
+              className={`h-10 rounded-xl border px-3 text-right text-sm font-black outline-none ${darkMode ? 'border-slate-700 bg-slate-900 text-slate-100' : 'border-slate-200 bg-white text-slate-800'}`}
+              placeholder="0,00"
+            />
+          </div>
+
+          <button
+            type="button"
+            onClick={enviarAporteCaixinha}
+            disabled={caixinhaSalvando}
+            className="h-10 w-full rounded-xl text-xs font-black uppercase tracking-wide text-white shadow-sm transition hover:brightness-95 disabled:cursor-not-allowed disabled:opacity-60"
+            style={{ backgroundColor: corPrimaria }}
+          >
+            {caixinhaSalvando ? 'Adicionando...' : 'Adicionar aporte'}
+          </button>
+
+          {caixinhaMensagem && (
+            <p className={`text-center text-xs font-bold ${caixinhaMensagem.includes('adicionado') ? 'text-emerald-500' : 'text-red-500'}`}>
+              {caixinhaMensagem}
+            </p>
+          )}
+
+          <div className="space-y-2">
+            <p className={`text-[10px] font-black uppercase tracking-wide ${textMuted}`}>Últimos movimentos</p>
+            {caixinhaUltimosMovimentos.length > 0 ? caixinhaUltimosMovimentos.map((mov) => (
+              <div key={mov.id} className={`flex items-center justify-between gap-3 rounded-lg px-3 py-2 ${darkMode ? 'bg-slate-800/50' : 'bg-slate-50'}`}>
+                <span className={`min-w-0 truncate text-xs font-bold ${textStrong}`}>{mov.descricao || 'Aporte na caixinha'}</span>
+                <strong className="shrink-0 text-xs font-black text-emerald-500">{ocultarValores ? 'R$ ••••' : formatarMoeda(mov.valor)}</strong>
+              </div>
+            )) : (
+              <p className={`rounded-lg px-3 py-2 text-center text-xs font-semibold ${darkMode ? 'bg-slate-800/50' : 'bg-slate-50'} ${textMuted}`}>
+                Nenhum aporte registrado.
+              </p>
+            )}
           </div>
         </div>
       </div>

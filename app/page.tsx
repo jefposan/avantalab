@@ -50,10 +50,12 @@ import {
   buscarConfiguracoes,
   buscarDespesasCadastradas,
   buscarLancamentos,
+  buscarCaixinhaMovimentos,
   garantirFixasDoMesAtual,
   buscarFaturamentos,
   buscarFaturamentosEntradas,
   salvarLancamento,
+  salvarCaixinhaMovimento,
   apagarLancamento,
   atualizarLancamento,
   definirStatusLancamento,
@@ -160,6 +162,16 @@ type EntradaFaturamento = {
   valor: number;
   status: string | null;
   tipo: string | null;
+};
+
+type CaixinhaMovimento = {
+  id: string;
+  lancamentoId: string | null;
+  tipo: 'aporte' | 'resgate' | 'rendimento' | 'ajuste';
+  descricao: string;
+  valor: number;
+  dataMovimento: string;
+  criadoEm: string;
 };
 
 function textoRegistro(valor: unknown): string {
@@ -561,8 +573,8 @@ const [validandoTelefoneObrigatorio, setValidandoTelefoneObrigatorio] = useState
     }
   };
   const [saldoCardMesIdx, setSaldoCardMesIdx] = useState<number>(new Date().getMonth());
-  const dashboardCardsKanban = ['aConfirmar', 'saldo', 'resumoFinanceiro', 'evolucaoMensal', 'registrarEntradas', 'controlePonto'];
-  const ordemDashboardPadrao = { a: ['aConfirmar', 'saldo', 'controlePonto'], b: ['resumoFinanceiro', 'evolucaoMensal', 'registrarEntradas'] };
+  const dashboardCardsKanban = ['aConfirmar', 'saldo', 'caixinha', 'resumoFinanceiro', 'evolucaoMensal', 'registrarEntradas', 'controlePonto'];
+  const ordemDashboardPadrao = { a: ['aConfirmar', 'saldo', 'caixinha', 'controlePonto'], b: ['resumoFinanceiro', 'evolucaoMensal', 'registrarEntradas'] };
   const [dashboardOrdem, setDashboardOrdem] = useState<{ a: string[]; b: string[] }>(ordemDashboardPadrao);
   const [dashboardOcultos, setDashboardOcultos] = useState<string[]>([]);
   const [dashboardExpandidos, setDashboardExpandidos] = useState<string[]>([]);
@@ -705,6 +717,7 @@ const [editEntradaFaturamentoValorNumerico, setEditEntradaFaturamentoValorNumeri
   const [novaBaseCat, setNovaBaseCat] = useState('');
 
   const [lancamentos, setLancamentos] = useState<LancamentoFinanceiro[]>([]);
+  const [caixinhaMovimentos, setCaixinhaMovimentos] = useState<CaixinhaMovimento[]>([]);
   const [formDia, setFormDia] = useState('');
   const [formDespesa, setFormDespesa] = useState('');
   const [formDescricao, setFormDescricao] = useState('');
@@ -1214,6 +1227,7 @@ setMensagemCarregamentoSistema('Carregando empresa...');
   setLogoSettings({ scale: 100, x: 0, y: 0 });
   setDespesasCadastradas([]);
   setLancamentos([]);
+  setCaixinhaMovimentos([]);
   setFaturamentos({});
   setFaturamentosEntradas([]);
 
@@ -1271,6 +1285,7 @@ useEffect(() => {
 
     await garantirFixasDoMesAtual(empresaId);
     const lancamentosBanco = await buscarLancamentos(empresaId, ano);
+    const caixinhaBanco = await buscarCaixinhaMovimentos(empresaId, ano);
     const faturamentosBanco = await buscarFaturamentos(empresaId, ano);
     const faturamentosEntradasBanco = await buscarFaturamentosEntradas(
       empresaId,
@@ -1288,6 +1303,18 @@ useEffect(() => {
         status: l.status ? textoRegistro(l.status) : null,
         tipo: l.tipo_obs ? textoRegistro(l.tipo_obs) : null,
         recorrenciaId: l.recorrencia_id ? textoRegistro(l.recorrencia_id) : null,
+      }))
+    );
+
+    setCaixinhaMovimentos(
+      caixinhaBanco.map((mov: RegistroSupabase) => ({
+        id: String(mov.id),
+        lancamentoId: mov.lancamento_id ? textoRegistro(mov.lancamento_id) : null,
+        tipo: (textoRegistro(mov.tipo) || 'aporte') as CaixinhaMovimento['tipo'],
+        descricao: textoRegistro(mov.descricao),
+        valor: Number(mov.valor || 0),
+        dataMovimento: textoRegistro(mov.data_movimento),
+        criadoEm: textoRegistro(mov.criado_em),
       }))
     );
         setFaturamentosEntradas(
@@ -2214,6 +2241,106 @@ const mostrarBarraComparativoDespesas =
 
 const faturamentoDoMesAtual = faturamentos[mesParaAnalise] || 0;
 const lucroOperacional = faturamentoDoMesAtual - totalDespesasMes;
+
+const caixinhaSaldo = caixinhaMovimentos.reduce((acc, mov) => {
+  const valor = Number(mov.valor || 0);
+  return mov.tipo === 'resgate' ? acc - valor : acc + valor;
+}, 0);
+const caixinhaMovimentosMes = caixinhaMovimentos.filter((mov) => {
+  if (!mov.dataMovimento) return false;
+  const [anoMov, mesMov] = mov.dataMovimento.split('-').map(Number);
+  return anoMov === Number(anoSelecionado) && mesMov === indiceMesParaAnalise + 1;
+});
+const caixinhaAportesMes = caixinhaMovimentosMes.reduce((acc, mov) => (
+  mov.tipo === 'aporte' ? acc + Number(mov.valor || 0) : acc
+), 0);
+const caixinhaUltimosMovimentos = [...caixinhaMovimentos]
+  .sort((a, b) => String(b.dataMovimento).localeCompare(String(a.dataMovimento)) || String(b.criadoEm).localeCompare(String(a.criadoEm)))
+  .slice(0, 3);
+
+const adicionarAporteCaixinha = async ({
+  dia,
+  descricao,
+  valorTexto,
+}: {
+  dia: string;
+  descricao: string;
+  valorTexto: string;
+}): Promise<{ ok: boolean; mensagem?: string }> => {
+  if (!empresaId) return { ok: false, mensagem: 'Perfil não identificado.' };
+  if (!podeInserirLancamentos) return { ok: false, mensagem: 'Seu perfil não pode adicionar lançamentos.' };
+
+  const mes = mesParaAnalise || mesAtivo || mesResumoDash;
+  const indiceMes = meses.indexOf(mes);
+  const diaNumerico = Number(dia);
+  const limite = getMaxDias(mes, anoSelecionado);
+  const valor = parseInt(String(valorTexto || '').replace(/\D/g, '') || '0', 10) / 100;
+  const descricaoFinal = formatarDescricao(descricao) || 'Aporte na caixinha';
+
+  if (indiceMes < 0 || !diaNumerico || diaNumerico < 1 || diaNumerico > limite) {
+    return { ok: false, mensagem: `Informe um dia entre 1 e ${limite}.` };
+  }
+  if (valor <= 0) {
+    return { ok: false, mensagem: 'Informe um valor válido para aportar.' };
+  }
+
+  const ano = Number(anoSelecionado);
+  const dataMovimento = `${ano}-${String(indiceMes + 1).padStart(2, '0')}-${String(diaNumerico).padStart(2, '0')}`;
+  const ehFuturo = dataFutura(ano, indiceMes, diaNumerico);
+  const lancamento = await salvarLancamento({
+    empresaId,
+    ano,
+    mes,
+    dia: diaNumerico,
+    despesaNome: 'Caixinha',
+    descricao: descricaoFinal,
+    valor,
+    status: ehFuturo ? 'prevista' : null,
+    tipoObs: ehFuturo ? 'previsto' : null,
+  });
+
+  if (lancamento.erro || !lancamento.data) {
+    return { ok: false, mensagem: lancamento.mensagem || 'Não foi possível salvar a despesa da caixinha.' };
+  }
+
+  const movimento = await salvarCaixinhaMovimento({
+    empresaId,
+    lancamentoId: String(lancamento.data.id),
+    tipo: 'aporte',
+    descricao: descricaoFinal,
+    valor,
+    dataMovimento,
+  });
+
+  if (movimento.erro || !movimento.data) {
+    await apagarLancamento(String(lancamento.data.id));
+    return { ok: false, mensagem: movimento.mensagem || 'Não foi possível salvar o aporte na caixinha.' };
+  }
+
+  setLancamentos((prev) => [{
+    id: String(lancamento.data.id),
+    mes: textoRegistro(lancamento.data.mes),
+    dia: Number(lancamento.data.dia),
+    despesa: formatarNomeCategoria(textoRegistro(lancamento.data.despesa_nome)),
+    descricao: textoRegistro(lancamento.data.descricao),
+    valor: Number(lancamento.data.valor || 0),
+    status: lancamento.data.status ? textoRegistro(lancamento.data.status) : null,
+    tipo: lancamento.data.tipo_obs ? textoRegistro(lancamento.data.tipo_obs) : null,
+    recorrenciaId: lancamento.data.recorrencia_id ? textoRegistro(lancamento.data.recorrencia_id) : null,
+  }, ...prev]);
+  setCaixinhaMovimentos((prev) => [{
+    id: String(movimento.data.id),
+    lancamentoId: movimento.data.lancamento_id ? textoRegistro(movimento.data.lancamento_id) : null,
+    tipo: (textoRegistro(movimento.data.tipo) || 'aporte') as CaixinhaMovimento['tipo'],
+    descricao: textoRegistro(movimento.data.descricao),
+    valor: Number(movimento.data.valor || 0),
+    dataMovimento: textoRegistro(movimento.data.data_movimento),
+    criadoEm: textoRegistro(movimento.data.criado_em),
+  }, ...prev]);
+  notificarFinanceiroAtualizado();
+
+  return { ok: true };
+};
 
 // O card permanece pendente desde a data programada ate o usuario confirmar ou excluir.
 const despesasAConfirmar = lancamentos.filter(
@@ -4082,12 +4209,14 @@ const recarregarDadosFinanceirosAtual = async () => {
   const [
     despesasBanco,
     lancamentosBanco,
+    caixinhaBanco,
     faturamentosBanco,
     faturamentosEntradasBanco,
     recorrenciasBanco,
   ] = await Promise.all([
     buscarDespesasCadastradas(empresaId),
     buscarLancamentos(empresaId, ano),
+    buscarCaixinhaMovimentos(empresaId, ano),
     buscarFaturamentos(empresaId, ano),
     buscarFaturamentosEntradas(empresaId, ano),
     buscarRecorrencias(empresaId),
@@ -4111,6 +4240,18 @@ const recarregarDadosFinanceirosAtual = async () => {
       status: l.status ? textoRegistro(l.status) : null,
       tipo: l.tipo_obs ? textoRegistro(l.tipo_obs) : null,
       recorrenciaId: l.recorrencia_id ? textoRegistro(l.recorrencia_id) : null,
+    }))
+  );
+
+  setCaixinhaMovimentos(
+    caixinhaBanco.map((mov: RegistroSupabase) => ({
+      id: String(mov.id),
+      lancamentoId: mov.lancamento_id ? textoRegistro(mov.lancamento_id) : null,
+      tipo: (textoRegistro(mov.tipo) || 'aporte') as CaixinhaMovimento['tipo'],
+      descricao: textoRegistro(mov.descricao),
+      valor: Number(mov.valor || 0),
+      dataMovimento: textoRegistro(mov.data_movimento),
+      criadoEm: textoRegistro(mov.criado_em),
     }))
   );
 
@@ -4186,6 +4327,11 @@ useEffect(() => {
     .on(
       'postgres_changes',
       { event: '*', schema: 'public', table: 'lancamentos', filter: 'empresa_id=eq.' + empresaId },
+      () => { recarregarDadosFinanceirosAtual(); }
+    )
+    .on(
+      'postgres_changes',
+      { event: '*', schema: 'public', table: 'caixinhas_movimentos', filter: 'empresa_id=eq.' + empresaId },
       () => { recarregarDadosFinanceirosAtual(); }
     )
     .on(
@@ -4863,6 +5009,7 @@ const executarExclusaoEmpresaAtual = async () => {
   setLogoSettings({ scale: 100, x: 0, y: 0 });
   setDespesasCadastradas([]);
   setLancamentos([]);
+  setCaixinhaMovimentos([]);
   setFaturamentos({});
 
   if (!empresasRestantes || empresasRestantes.length === 0) {
@@ -4955,6 +5102,7 @@ setFeedbackEnviando(false);
 setChatFeedbackEtapa('inicio');
 
 setLancamentos([]);
+setCaixinhaMovimentos([]);
 setFaturamentos({});
 setDespesasCadastradas([]);
 
@@ -9037,6 +9185,10 @@ name="novo-usuario-login"
         saldoInicial={saldoInicialCard}
         saldoFinal={saldoFinalCard}
         saldoPrevisto={saldoPrevistoCard}
+        caixinhaSaldo={caixinhaSaldo}
+        caixinhaAportesMes={caixinhaAportesMes}
+        caixinhaUltimosMovimentos={caixinhaUltimosMovimentos}
+        onAdicionarAporteCaixinha={adicionarAporteCaixinha}
         dashboardOrdem={recursoBloqueado('organizar_dashboard') ? ordemDashboardPadrao : dashboardOrdem}
         dashboardOcultos={recursoBloqueado('organizar_dashboard') ? [] : dashboardOcultos}
         dashboardExpandidos={recursoBloqueado('organizar_dashboard') ? [] : dashboardExpandidos}

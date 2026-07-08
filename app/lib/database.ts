@@ -385,6 +385,24 @@ export async function buscarLancamentos(empresaId: string, ano: number) {
   return todos.filter((item: any) => item.status !== 'cancelada');
 }
 
+export async function buscarCaixinhaMovimentos(empresaId: string, ano: number) {
+  const { data, error } = await supabase
+    .from('caixinhas_movimentos')
+    .select('*')
+    .eq('empresa_id', empresaId)
+    .gte('data_movimento', `${ano}-01-01`)
+    .lte('data_movimento', `${ano}-12-31`)
+    .order('data_movimento', { ascending: false })
+    .order('criado_em', { ascending: false });
+
+  if (error) {
+    console.error('Erro ao buscar movimentos da caixinha:', error);
+    return [];
+  }
+
+  return data || [];
+}
+
 const MESES_DB = ['JANEIRO', 'FEVEREIRO', 'MARÇO', 'ABRIL', 'MAIO', 'JUNHO', 'JULHO', 'AGOSTO', 'SETEMBRO', 'OUTUBRO', 'NOVEMBRO', 'DEZEMBRO'];
 
 // Garante que cada despesa fixa ativa tenha lancamento no mes corrente real e no proximo mes.
@@ -607,6 +625,48 @@ export async function salvarLancamento({
     mensagem: tratarErroSupabase(error),
   };
 }
+
+  return {
+    erro: false,
+    data,
+  };
+}
+
+export async function salvarCaixinhaMovimento({
+  empresaId,
+  lancamentoId,
+  tipo = 'aporte',
+  descricao,
+  valor,
+  dataMovimento,
+}: {
+  empresaId: string;
+  lancamentoId?: string | null;
+  tipo?: 'aporte' | 'resgate' | 'rendimento' | 'ajuste';
+  descricao: string;
+  valor: number;
+  dataMovimento: string;
+}) {
+  const { data, error } = await supabase
+    .from('caixinhas_movimentos')
+    .insert({
+      empresa_id: empresaId,
+      lancamento_id: lancamentoId ?? null,
+      tipo,
+      descricao,
+      valor,
+      data_movimento: dataMovimento,
+    })
+    .select()
+    .single();
+
+  if (error) {
+    console.error('Erro ao salvar movimento da caixinha:', error);
+    return {
+      erro: true,
+      mensagem: tratarErroSupabase(error),
+    };
+  }
 
   return {
     erro: false,

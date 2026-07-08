@@ -106,6 +106,7 @@
     ano: String(new Date().getFullYear()),
     faturamentos: {},
     lancamentos: [],
+    caixinhaMovimentos: [],
     entradas: [],
     despesas: [],
     usuariosEmpresa: [],
@@ -193,6 +194,10 @@
     dashboardOrdem: ordemDashboardPadrao(),
     dashboardOcultos: [],
     dashboardValoresVisiveis: {},
+    caixinhaDia: String(new Date().getDate()),
+    caixinhaDescricao: 'Reserva',
+    caixinhaValor: '',
+    caixinhaSalvando: false,
     iniciarValoresOcultos: true,
     pontoModuloAtivo: false,
     pontoResumo: [],
@@ -281,7 +286,7 @@
   var CHAVE_INICIAR_VALORES_OCULTOS = 'avantalab_mobile_iniciar_valores_ocultos';
   var TRINTA_DIAS_MS = 30 * 24 * 60 * 60 * 1000;
   var DEZ_MINUTOS_MS = 10 * 60 * 1000;
-  var CARDS_COM_VALORES = ['saldo', 'totais', 'categorias', 'tipos'];
+  var CARDS_COM_VALORES = ['saldo', 'caixinha', 'totais', 'categorias', 'tipos'];
 
   // --- Helpers de tipo de perfil ---
   var CATEGORIAS_EMPRESA_MOBILE = [
@@ -1183,6 +1188,7 @@
       'ia',
       'agenda',
       'saldo',
+      'caixinha',
       'totais',
       'controlePonto',
       'ultimasDespesas',
@@ -1197,6 +1203,7 @@
   function tituloCardDashboard(id) {
     return {
       saldo: 'Resumo inicial',
+      caixinha: 'Caixinha',
       ia: 'Perguntas para IA',
       agenda: 'Agenda',
       categorias: 'Despesas por categoria',
@@ -1597,6 +1604,9 @@
         .channel('financeiro_sync_' + empresaId)
         .on('postgres_changes',
           { event: '*', schema: 'public', table: 'lancamentos', filter: 'empresa_id=eq.' + empresaId },
+          function () { carregarDados(); })
+        .on('postgres_changes',
+          { event: '*', schema: 'public', table: 'caixinhas_movimentos', filter: 'empresa_id=eq.' + empresaId },
           function () { carregarDados(); })
         .on('postgres_changes',
           { event: '*', schema: 'public', table: 'recorrencias', filter: 'empresa_id=eq.' + empresaId },
@@ -3664,6 +3674,7 @@
       db.from('despesas_cadastradas').select('*').eq('empresa_id', empresaId).order('nome', { ascending: true }),
       db.from('configuracoes').select('duplicados_ativo').eq('empresa_id', empresaId).maybeSingle(),
       db.from('empresa_modulos').select('modulo_id').eq('empresa_id', empresaId).eq('modulo_id', 'ponto').eq('ativo', true).maybeSingle(),
+      db.from('caixinhas_movimentos').select('*').eq('empresa_id', empresaId).gte('data_movimento', ano + '-01-01').lte('data_movimento', ano + '-12-31').order('data_movimento', { ascending: false }).order('criado_em', { ascending: false }),
     ]);
 
     state.lancamentos = (resultados[0] || []).filter(function(item) {
@@ -3714,6 +3725,17 @@
     }
 
     state.pontoModuloAtivo = !!(resultados[5] && resultados[5].data && resultados[5].data.modulo_id === 'ponto');
+    state.caixinhaMovimentos = ((resultados[6] && resultados[6].data) || []).map(function (item) {
+      return {
+        id: item.id,
+        lancamentoId: item.lancamento_id || null,
+        tipo: item.tipo || 'aporte',
+        descricao: item.descricao || '',
+        valor: Number(item.valor || 0),
+        dataMovimento: item.data_movimento || '',
+        criadoEm: item.criado_em || '',
+      };
+    });
     if (!podeGerenciarPontoMobile()) {
       state.pontoResumo = [];
       state.pontoFuncionariosHoje = 0;
@@ -4454,6 +4476,7 @@
     state.empresas = [];
     state.empresa = null;
     state.lancamentos = [];
+    state.caixinhaMovimentos = [];
     state.entradas = [];
     state.faturamentos = {};
     state.telaAcesso = 'boasVindas';
@@ -4814,6 +4837,90 @@
     await carregarDados();
     notificarFinanceiroAtualizadoMobile();
     mostrarToast(totalParcelas > 1 ? 'Despesa parcelada em ' + totalParcelas + 'x.' : 'Despesa lancada.');
+  }
+
+  async function salvarAporteCaixinhaMobile() {
+    if (!state.empresa || state.caixinhaSalvando) return;
+
+    var dia = Number(campo('caixinha-dia'));
+    var descricao = campo('caixinha-descricao') || 'Reserva';
+    var valorTexto = campo('caixinha-valor');
+    var valor = normalizarValor(valorTexto);
+    var limite = maxDias(state.mes, state.ano);
+
+    state.caixinhaDia = campo('caixinha-dia') || state.caixinhaDia;
+    state.caixinhaDescricao = descricao;
+    state.caixinhaValor = valorTexto;
+
+    if (!dia || dia < 1 || dia > limite) {
+      setErro('Informe um dia entre 1 e ' + limite + '.');
+      return;
+    }
+    if (valor <= 0) {
+      setErro('Informe um valor valido para aportar.');
+      return;
+    }
+
+    state.caixinhaSalvando = true;
+    state.carregando = true;
+    state.erro = '';
+    render();
+
+    var mesIndice = indiceMes(state.mes);
+    var ano = Number(state.ano);
+    var descricaoFinal = formatarDescricao(descricao) || 'Aporte na caixinha';
+    var ehFuturo = dataFutura(ano, mesIndice, dia);
+    var dataMovimento = ano + '-' + String(mesIndice + 1).padStart(2, '0') + '-' + String(dia).padStart(2, '0');
+
+    var lancamento = await db
+      .from('lancamentos')
+      .insert({
+        empresa_id: state.empresa.id,
+        ano: ano,
+        mes: state.mes,
+        dia: dia,
+        despesa_nome: 'Caixinha',
+        descricao: descricaoFinal,
+        valor: valor,
+        status: ehFuturo ? 'prevista' : null,
+        tipo_obs: ehFuturo ? 'previsto' : null,
+      })
+      .select()
+      .single();
+
+    if (lancamento.error || !lancamento.data) {
+      state.caixinhaSalvando = false;
+      state.carregando = false;
+      setErro(mensagemErro(lancamento.error, 'Nao foi possivel salvar a despesa da caixinha.'));
+      return;
+    }
+
+    var movimento = await db
+      .from('caixinhas_movimentos')
+      .insert({
+        empresa_id: state.empresa.id,
+        lancamento_id: lancamento.data.id,
+        tipo: 'aporte',
+        descricao: descricaoFinal,
+        valor: valor,
+        data_movimento: dataMovimento,
+      })
+      .select()
+      .single();
+
+    if (movimento.error || !movimento.data) {
+      await db.from('lancamentos').delete().eq('id', lancamento.data.id).eq('empresa_id', state.empresa.id);
+      state.caixinhaSalvando = false;
+      state.carregando = false;
+      setErro(mensagemErro(movimento.error, 'Nao foi possivel salvar o aporte na caixinha.'));
+      return;
+    }
+
+    state.caixinhaValor = '';
+    state.caixinhaSalvando = false;
+    await carregarDados();
+    notificarFinanceiroAtualizadoMobile();
+    mostrarToast('Aporte adicionado na caixinha.');
   }
 
   async function alternarDuplicados() {
@@ -6515,6 +6622,7 @@
     var banner = avisoConfirmarHtml();
     var cards = {
       saldo: saldoTopoHtml(atual, anterior),
+      caixinha: caixinhaCardHtml(atual),
       ia: perguntaIaHtml(),
       agenda: agendaResumoHtml(),
       categorias: graficoCategoriaHtml(atual),
@@ -6567,6 +6675,69 @@
           miniSaldoHtml('Final', final, final >= 0 ? 'text-emerald-300' : 'text-red-300', cardId) +
           miniSaldoHtml('Previsto', previsto, previsto >= 0 ? 'text-cyan-300' : 'text-red-300', cardId) +
         '</div>' +
+      '</section>'
+    );
+  }
+
+  function caixinhaResumo(atual) {
+    var saldo = 0;
+    var aportesMes = 0;
+    var mesAtual = indiceMes(atual && atual.mes ? atual.mes : state.mes) + 1;
+    var anoAtual = Number(state.ano);
+    (state.caixinhaMovimentos || []).forEach(function (mov) {
+      var valor = Number(mov.valor || 0);
+      saldo += mov.tipo === 'resgate' ? -valor : valor;
+      var partes = String(mov.dataMovimento || '').split('-').map(Number);
+      if (mov.tipo === 'aporte' && partes[0] === anoAtual && partes[1] === mesAtual) {
+        aportesMes += valor;
+      }
+    });
+    var ultimos = (state.caixinhaMovimentos || []).slice().sort(function (a, b) {
+      return String(b.dataMovimento || '').localeCompare(String(a.dataMovimento || '')) ||
+        String(b.criadoEm || '').localeCompare(String(a.criadoEm || ''));
+    }).slice(0, 2);
+    return { saldo: saldo, aportesMes: aportesMes, ultimos: ultimos };
+  }
+
+  function caixinhaCardHtml(atual) {
+    var cardId = 'caixinha';
+    var resumo = caixinhaResumo(atual);
+    var escuro = state.darkMode;
+    var ultimosHtml = resumo.ultimos.length
+      ? resumo.ultimos.map(function (mov) {
+          return '<div class="flex items-center justify-between gap-2 rounded-xl ' + (escuro ? 'bg-slate-800/60' : 'bg-slate-50') + ' px-3 py-2">' +
+            '<span class="min-w-0 truncate text-xs font-bold text-slate-700">' + escapeHtml(mov.descricao || 'Aporte na caixinha') + '</span>' +
+            '<strong class="shrink-0 text-xs font-black text-emerald-600">' + valorFinanceiroCardHtml(mov.valor, cardId) + '</strong>' +
+          '</div>';
+        }).join('')
+      : '<p class="rounded-xl bg-slate-50 px-3 py-2 text-center text-xs font-semibold text-slate-500">Nenhum aporte registrado.</p>';
+
+    return (
+      '<section class="w-full overflow-hidden rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">' +
+        '<div class="mb-3 flex items-center justify-between gap-3">' +
+          '<div class="min-w-0">' +
+            '<h2 class="text-sm font-black tracking-wide text-slate-900">Caixinha</h2>' +
+            '<p class="mt-0.5 truncate text-[11px] font-semibold text-slate-500">Reserva e investimentos do perfil</p>' +
+          '</div>' +
+          botaoVisibilidadeValoresHtml(cardId, false) +
+        '</div>' +
+        '<div class="grid grid-cols-2 gap-2">' +
+          '<div class="rounded-2xl border border-slate-100 bg-slate-50 p-3">' +
+            '<p class="text-[10px] font-black uppercase tracking-wide text-slate-500">Saldo</p>' +
+            '<strong class="mt-1 block truncate text-base font-black text-emerald-600">' + valorFinanceiroCardHtml(resumo.saldo, cardId) + '</strong>' +
+          '</div>' +
+          '<div class="rounded-2xl border border-slate-100 bg-slate-50 p-3">' +
+            '<p class="text-[10px] font-black uppercase tracking-wide text-slate-500">Aportes no mês</p>' +
+            '<strong class="mt-1 block truncate text-base font-black text-slate-900">' + valorFinanceiroCardHtml(resumo.aportesMes, cardId) + '</strong>' +
+          '</div>' +
+        '</div>' +
+        '<div class="mt-3 grid grid-cols-[70px_minmax(0,1fr)] gap-2">' +
+          '<input id="caixinha-dia" type="number" min="1" max="31" value="' + escapeHtml(state.caixinhaDia || '') + '" placeholder="Dia" class="h-10 rounded-xl border border-slate-200 bg-white px-3 text-sm font-bold text-slate-900 outline-none">' +
+          '<input id="caixinha-descricao" type="text" value="' + escapeHtml(state.caixinhaDescricao || '') + '" placeholder="Descrição" class="h-10 rounded-xl border border-slate-200 bg-white px-3 text-sm font-bold text-slate-900 outline-none">' +
+        '</div>' +
+        '<input id="caixinha-valor" inputmode="decimal" value="' + escapeHtml(state.caixinhaValor || '') + '" placeholder="0,00" class="mt-2 h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-right text-sm font-black text-slate-900 outline-none">' +
+        '<button id="salvar-caixinha-aporte" type="button" class="mt-2 h-10 w-full rounded-xl bg-cyan-700 text-xs font-black uppercase tracking-wide text-white shadow-sm active:scale-[0.99]">' + (state.caixinhaSalvando ? 'Adicionando...' : 'Adicionar aporte') + '</button>' +
+        '<div class="mt-3 space-y-2">' + ultimosHtml + '</div>' +
       '</section>'
     );
   }
@@ -9643,9 +9814,22 @@
     bind('salvar-total-receita', salvarTotalReceita);
     bind('excluir-total-receita', excluirTotalMesMobile);
     bind('toggle-valores-saldo', function () { alternarVisibilidadeValoresCard('saldo'); });
+    bind('toggle-valores-caixinha', function () { alternarVisibilidadeValoresCard('caixinha'); });
     bind('toggle-valores-totais', function () { alternarVisibilidadeValoresCard('totais'); });
     bind('toggle-valores-categorias', function () { alternarVisibilidadeValoresCard('categorias'); });
     bind('toggle-valores-tipos', function () { alternarVisibilidadeValoresCard('tipos'); });
+    bind('salvar-caixinha-aporte', salvarAporteCaixinhaMobile);
+    var caixinhaValorEl = document.getElementById('caixinha-valor');
+    if (caixinhaValorEl) {
+      caixinhaValorEl.addEventListener('input', function () {
+        state.caixinhaValor = formatarMoedaDigitada(this.value);
+        this.value = state.caixinhaValor;
+      });
+    }
+    var caixinhaDiaEl = document.getElementById('caixinha-dia');
+    if (caixinhaDiaEl) caixinhaDiaEl.addEventListener('input', function () { state.caixinhaDia = this.value; });
+    var caixinhaDescricaoEl = document.getElementById('caixinha-descricao');
+    if (caixinhaDescricaoEl) caixinhaDescricaoEl.addEventListener('input', function () { state.caixinhaDescricao = this.value; });
     bind('toggle-categorias', function () {
       state.categoriasExpandido = !state.categoriasExpandido;
       render();
@@ -10718,7 +10902,7 @@
           return Promise.all(
             keys
               .filter(function (key) {
-                return key.indexOf('avantalab-mobile-') === 0 && key !== 'avantalab-mobile-v240';
+                return key.indexOf('avantalab-mobile-') === 0 && key !== 'avantalab-mobile-v241';
               })
               .map(function (key) {
                 return caches.delete(key);
@@ -10735,7 +10919,7 @@
     });
 
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/mobile-sw.js?v=226').then(function (registro) {
+      navigator.serviceWorker.register('/mobile-sw.js?v=227').then(function (registro) {
         if (registro && registro.update) registro.update();
       }).catch(function () {});
     }
