@@ -142,6 +142,7 @@ interface DashboardProps {
   saldoFinal: number;
   saldoPrevisto: number;
   caixinhaSaldo: number;
+  caixinhaSaldoInicial: number;
   caixinhaAportesMes: number;
   caixinhaUltimosMovimentos: Array<{
     id: string;
@@ -151,6 +152,7 @@ interface DashboardProps {
     dataMovimento: string;
   }>;
   onAdicionarAporteCaixinha: (dados: { dia: string; descricao: string; valorTexto: string }) => Promise<{ ok: boolean; mensagem?: string }>;
+  onDefinirSaldoInicialCaixinha: (valorTexto: string) => Promise<{ ok: boolean; mensagem?: string }>;
   dashboardOrdem: { a: string[]; b: string[] };
   dashboardOcultos: string[];
   dashboardExpandidos: string[];
@@ -182,7 +184,7 @@ export default function Dashboard({
   despesasAConfirmar, onConfirmarPrevista, onAjustarPrevista, onExcluirPrevista,
   receitasAConfirmar, onConfirmarReceita, onEditarReceita, onExcluirReceita,
   saldoCardMesIdx, setSaldoCardMesIdx, saldoInicial, saldoFinal, saldoPrevisto,
-  caixinhaSaldo, caixinhaAportesMes, caixinhaUltimosMovimentos, onAdicionarAporteCaixinha,
+  caixinhaSaldo, caixinhaSaldoInicial, caixinhaAportesMes, caixinhaUltimosMovimentos, onAdicionarAporteCaixinha, onDefinirSaldoInicialCaixinha,
   dashboardOrdem, dashboardOcultos, onAtualizarLayoutDashboard,
   dashboardExpandidos, onOcultarCardDashboard, onDefinirOcultosDashboard,
   pontoDisponivel, pontoResumo, pontoResumoCarregando,
@@ -207,7 +209,9 @@ export default function Dashboard({
   const [caixinhaDia, setCaixinhaDia] = useState(String(new Date().getDate()));
   const [caixinhaDescricao, setCaixinhaDescricao] = useState('Reserva');
   const [caixinhaValor, setCaixinhaValor] = useState('');
+  const [caixinhaSaldoInicialValor, setCaixinhaSaldoInicialValor] = useState('');
   const [caixinhaSalvando, setCaixinhaSalvando] = useState(false);
+  const [caixinhaSaldoInicialSalvando, setCaixinhaSaldoInicialSalvando] = useState(false);
   const [caixinhaMensagem, setCaixinhaMensagem] = useState('');
   const criarCols = (ordem: { a: string[]; b: string[] }, expandidos: string[]): DashboardCols => {
     const full = [...new Set(expandidos)];
@@ -396,6 +400,29 @@ export default function Dashboard({
     }).format(numericValue));
   };
 
+  useEffect(() => {
+    if (caixinhaSaldoInicial > 0) {
+      setCaixinhaSaldoInicialValor(new Intl.NumberFormat('pt-BR', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      }).format(caixinhaSaldoInicial));
+    }
+  }, [caixinhaSaldoInicial]);
+
+  const handleCaixinhaSaldoInicialChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value.replace(/\D/g, '');
+    if (!value) {
+      setCaixinhaSaldoInicialValor('');
+      return;
+    }
+
+    const numericValue = parseInt(value, 10) / 100;
+    setCaixinhaSaldoInicialValor(new Intl.NumberFormat('pt-BR', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }).format(numericValue));
+  };
+
   const enviarAporteCaixinha = async () => {
     if (caixinhaSalvando) return;
     setCaixinhaSalvando(true);
@@ -415,6 +442,22 @@ export default function Dashboard({
     }
 
     setCaixinhaSalvando(false);
+  };
+
+  const enviarSaldoInicialCaixinha = async () => {
+    if (caixinhaSaldoInicialSalvando) return;
+    setCaixinhaSaldoInicialSalvando(true);
+    setCaixinhaMensagem('');
+
+    const resultado = await onDefinirSaldoInicialCaixinha(caixinhaSaldoInicialValor);
+
+    if (resultado.ok) {
+      setCaixinhaMensagem('Saldo inicial salvo.');
+    } else {
+      setCaixinhaMensagem(resultado.mensagem || 'Não foi possível salvar o saldo inicial.');
+    }
+
+    setCaixinhaSaldoInicialSalvando(false);
   };
 
   const corEhClara = (hex: string) => {
@@ -905,6 +948,37 @@ const mostrarComparativoResumoDash =
             </div>
           </div>
 
+          <div className={`rounded-xl border p-3 ${darkMode ? 'border-slate-700 bg-slate-800/40' : 'border-slate-200 bg-slate-50/80'}`}>
+            <div className="mb-2 flex items-center justify-between gap-3">
+              <div className="min-w-0">
+                <p className={`text-[10px] font-black uppercase tracking-wide ${textMuted}`}>Aporte inicial</p>
+                <p className={`mt-0.5 text-[11px] font-semibold ${textMuted}`}>Valor que já existia antes do AvantaLab.</p>
+              </div>
+              <strong className="shrink-0 text-xs font-black text-emerald-500">
+                {ocultarValores ? 'R$ ••••' : formatarMoeda(caixinhaSaldoInicial)}
+              </strong>
+            </div>
+            <div className="grid grid-cols-[minmax(0,1fr)_150px] gap-2 max-sm:grid-cols-1">
+              <input
+                value={caixinhaSaldoInicialValor}
+                onChange={handleCaixinhaSaldoInicialChange}
+                inputMode="decimal"
+                className={`h-10 rounded-xl border px-3 text-right text-base font-black outline-none ${darkMode ? 'border-slate-700 bg-slate-900 text-slate-100' : 'border-slate-200 bg-white text-slate-800'}`}
+                placeholder="0,00"
+              />
+              <button
+                type="button"
+                onClick={enviarSaldoInicialCaixinha}
+                disabled={caixinhaSaldoInicialSalvando}
+                className={`h-10 rounded-xl border px-3 text-[11px] font-black uppercase tracking-wide transition disabled:cursor-not-allowed disabled:opacity-60 ${
+                  darkMode ? 'border-slate-600 bg-slate-900 text-slate-100 hover:bg-slate-800' : 'border-slate-300 bg-white text-slate-700 hover:bg-slate-50'
+                }`}
+              >
+                {caixinhaSaldoInicialSalvando ? 'Salvando...' : caixinhaSaldoInicial > 0 ? 'Atualizar' : 'Definir'}
+              </button>
+            </div>
+          </div>
+
           <div className="grid grid-cols-[76px_minmax(0,1fr)_132px] gap-2 max-sm:grid-cols-1">
             <input
               type="number"
@@ -912,21 +986,21 @@ const mostrarComparativoResumoDash =
               max={31}
               value={caixinhaDia}
               onChange={(e) => setCaixinhaDia(e.target.value)}
-              className={`h-10 rounded-xl border px-3 text-sm font-bold outline-none ${darkMode ? 'border-slate-700 bg-slate-900 text-slate-100' : 'border-slate-200 bg-white text-slate-800'}`}
+              className={`h-10 rounded-xl border px-3 text-base font-bold outline-none ${darkMode ? 'border-slate-700 bg-slate-900 text-slate-100' : 'border-slate-200 bg-white text-slate-800'}`}
               aria-label="Dia do aporte"
               placeholder="Dia"
             />
             <input
               value={caixinhaDescricao}
               onChange={(e) => setCaixinhaDescricao(e.target.value)}
-              className={`h-10 rounded-xl border px-3 text-sm font-bold outline-none ${darkMode ? 'border-slate-700 bg-slate-900 text-slate-100' : 'border-slate-200 bg-white text-slate-800'}`}
+              className={`h-10 rounded-xl border px-3 text-base font-bold outline-none ${darkMode ? 'border-slate-700 bg-slate-900 text-slate-100' : 'border-slate-200 bg-white text-slate-800'}`}
               placeholder="Descrição"
             />
             <input
               value={caixinhaValor}
               onChange={handleCaixinhaValorChange}
               inputMode="decimal"
-              className={`h-10 rounded-xl border px-3 text-right text-sm font-black outline-none ${darkMode ? 'border-slate-700 bg-slate-900 text-slate-100' : 'border-slate-200 bg-white text-slate-800'}`}
+              className={`h-10 rounded-xl border px-3 text-right text-base font-black outline-none ${darkMode ? 'border-slate-700 bg-slate-900 text-slate-100' : 'border-slate-200 bg-white text-slate-800'}`}
               placeholder="0,00"
             />
           </div>

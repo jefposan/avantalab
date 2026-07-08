@@ -385,13 +385,11 @@ export async function buscarLancamentos(empresaId: string, ano: number) {
   return todos.filter((item: any) => item.status !== 'cancelada');
 }
 
-export async function buscarCaixinhaMovimentos(empresaId: string, ano: number) {
+export async function buscarCaixinhaMovimentos(empresaId: string, ano?: number) {
   const { data, error } = await supabase
     .from('caixinhas_movimentos')
     .select('*')
     .eq('empresa_id', empresaId)
-    .gte('data_movimento', `${ano}-01-01`)
-    .lte('data_movimento', `${ano}-12-31`)
     .order('data_movimento', { ascending: false })
     .order('criado_em', { ascending: false });
 
@@ -641,8 +639,8 @@ export async function salvarCaixinhaMovimento({
   dataMovimento,
 }: {
   empresaId: string;
-  lancamentoId?: string | null;
-  tipo?: 'aporte' | 'resgate' | 'rendimento' | 'ajuste';
+  lancamentoId?: string | number | null;
+  tipo?: 'saldo_inicial' | 'aporte' | 'resgate' | 'rendimento' | 'ajuste';
   descricao: string;
   valor: number;
   dataMovimento: string;
@@ -662,6 +660,66 @@ export async function salvarCaixinhaMovimento({
 
   if (error) {
     console.error('Erro ao salvar movimento da caixinha:', error);
+    return {
+      erro: true,
+      mensagem: tratarErroSupabase(error),
+    };
+  }
+
+  return {
+    erro: false,
+    data,
+  };
+}
+
+export async function salvarSaldoInicialCaixinha({
+  empresaId,
+  valor,
+}: {
+  empresaId: string;
+  valor: number;
+}) {
+  const descricao = 'Saldo inicial';
+  const hoje = new Date().toISOString().slice(0, 10);
+  const { data: existente, error: erroBusca } = await supabase
+    .from('caixinhas_movimentos')
+    .select('*')
+    .eq('empresa_id', empresaId)
+    .eq('tipo', 'saldo_inicial')
+    .maybeSingle();
+
+  if (erroBusca) {
+    console.error('Erro ao buscar saldo inicial da caixinha:', erroBusca);
+    return {
+      erro: true,
+      mensagem: tratarErroSupabase(erroBusca),
+    };
+  }
+
+  const query = existente
+    ? supabase
+        .from('caixinhas_movimentos')
+        .update({
+          descricao,
+          valor,
+          atualizado_em: new Date().toISOString(),
+        })
+        .eq('id', existente.id)
+    : supabase
+        .from('caixinhas_movimentos')
+        .insert({
+          empresa_id: empresaId,
+          lancamento_id: null,
+          tipo: 'saldo_inicial',
+          descricao,
+          valor,
+          data_movimento: hoje,
+        });
+
+  const { data, error } = await query.select().single();
+
+  if (error) {
+    console.error('Erro ao salvar saldo inicial da caixinha:', error);
     return {
       erro: true,
       mensagem: tratarErroSupabase(error),

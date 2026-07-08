@@ -197,7 +197,9 @@
     caixinhaDia: String(new Date().getDate()),
     caixinhaDescricao: 'Reserva',
     caixinhaValor: '',
+    caixinhaSaldoInicialValor: '',
     caixinhaSalvando: false,
+    caixinhaSaldoInicialSalvando: false,
     iniciarValoresOcultos: true,
     pontoModuloAtivo: false,
     pontoResumo: [],
@@ -3674,7 +3676,7 @@
       db.from('despesas_cadastradas').select('*').eq('empresa_id', empresaId).order('nome', { ascending: true }),
       db.from('configuracoes').select('duplicados_ativo').eq('empresa_id', empresaId).maybeSingle(),
       db.from('empresa_modulos').select('modulo_id').eq('empresa_id', empresaId).eq('modulo_id', 'ponto').eq('ativo', true).maybeSingle(),
-      db.from('caixinhas_movimentos').select('*').eq('empresa_id', empresaId).gte('data_movimento', ano + '-01-01').lte('data_movimento', ano + '-12-31').order('data_movimento', { ascending: false }).order('criado_em', { ascending: false }),
+      db.from('caixinhas_movimentos').select('*').eq('empresa_id', empresaId).order('data_movimento', { ascending: false }).order('criado_em', { ascending: false }),
     ]);
 
     state.lancamentos = (resultados[0] || []).filter(function(item) {
@@ -4921,6 +4923,66 @@
     await carregarDados();
     notificarFinanceiroAtualizadoMobile();
     mostrarToast('Aporte adicionado na caixinha.');
+  }
+
+  async function salvarSaldoInicialCaixinhaMobile() {
+    if (!state.empresa || state.caixinhaSaldoInicialSalvando) return;
+
+    var valorTexto = campo('caixinha-saldo-inicial');
+    var valor = normalizarValor(valorTexto);
+    state.caixinhaSaldoInicialValor = valorTexto;
+
+    if (valor < 0) {
+      setErro('Informe um valor valido.');
+      return;
+    }
+
+    state.caixinhaSaldoInicialSalvando = true;
+    state.carregando = true;
+    state.erro = '';
+    render();
+
+    var existente = (state.caixinhaMovimentos || []).find(function (mov) {
+      return mov.tipo === 'saldo_inicial';
+    });
+
+    var resposta = existente
+      ? await db
+          .from('caixinhas_movimentos')
+          .update({
+            descricao: 'Saldo inicial',
+            valor: valor,
+            atualizado_em: new Date().toISOString(),
+          })
+          .eq('id', existente.id)
+          .eq('empresa_id', state.empresa.id)
+          .select()
+          .single()
+      : await db
+          .from('caixinhas_movimentos')
+          .insert({
+            empresa_id: state.empresa.id,
+            lancamento_id: null,
+            tipo: 'saldo_inicial',
+            descricao: 'Saldo inicial',
+            valor: valor,
+            data_movimento: dataHoraPontoMobile().data,
+          })
+          .select()
+          .single();
+
+    if (resposta.error || !resposta.data) {
+      state.caixinhaSaldoInicialSalvando = false;
+      state.carregando = false;
+      setErro(mensagemErro(resposta.error, 'Nao foi possivel salvar o saldo inicial.'));
+      return;
+    }
+
+    state.caixinhaSaldoInicialValor = '';
+    state.caixinhaSaldoInicialSalvando = false;
+    await carregarDados();
+    notificarFinanceiroAtualizadoMobile();
+    mostrarToast('Saldo inicial da caixinha salvo.');
   }
 
   async function alternarDuplicados() {
@@ -6681,12 +6743,14 @@
 
   function caixinhaResumo(atual) {
     var saldo = 0;
+    var saldoInicial = 0;
     var aportesMes = 0;
     var mesAtual = indiceMes(atual && atual.mes ? atual.mes : state.mes) + 1;
     var anoAtual = Number(state.ano);
     (state.caixinhaMovimentos || []).forEach(function (mov) {
       var valor = Number(mov.valor || 0);
       saldo += mov.tipo === 'resgate' ? -valor : valor;
+      if (mov.tipo === 'saldo_inicial') saldoInicial = valor;
       var partes = String(mov.dataMovimento || '').split('-').map(Number);
       if (mov.tipo === 'aporte' && partes[0] === anoAtual && partes[1] === mesAtual) {
         aportesMes += valor;
@@ -6696,13 +6760,14 @@
       return String(b.dataMovimento || '').localeCompare(String(a.dataMovimento || '')) ||
         String(b.criadoEm || '').localeCompare(String(a.criadoEm || ''));
     }).slice(0, 2);
-    return { saldo: saldo, aportesMes: aportesMes, ultimos: ultimos };
+    return { saldo: saldo, saldoInicial: saldoInicial, aportesMes: aportesMes, ultimos: ultimos };
   }
 
   function caixinhaCardHtml(atual) {
     var cardId = 'caixinha';
     var resumo = caixinhaResumo(atual);
     var escuro = state.darkMode;
+    var saldoInicialInput = state.caixinhaSaldoInicialValor || (resumo.saldoInicial > 0 ? dinheiro(resumo.saldoInicial).replace('R$', '').trim() : '');
     var ultimosHtml = resumo.ultimos.length
       ? resumo.ultimos.map(function (mov) {
           return '<div class="flex items-center justify-between gap-2 rounded-xl ' + (escuro ? 'bg-slate-800/60' : 'bg-slate-50') + ' px-3 py-2">' +
@@ -6731,11 +6796,21 @@
             '<strong class="mt-1 block truncate text-base font-black text-slate-900">' + valorFinanceiroCardHtml(resumo.aportesMes, cardId) + '</strong>' +
           '</div>' +
         '</div>' +
-        '<div class="mt-3 grid grid-cols-[70px_minmax(0,1fr)] gap-2">' +
-          '<input id="caixinha-dia" type="number" min="1" max="31" value="' + escapeHtml(state.caixinhaDia || '') + '" placeholder="Dia" class="h-10 rounded-xl border border-slate-200 bg-white px-3 text-sm font-bold text-slate-900 outline-none">' +
-          '<input id="caixinha-descricao" type="text" value="' + escapeHtml(state.caixinhaDescricao || '') + '" placeholder="Descrição" class="h-10 rounded-xl border border-slate-200 bg-white px-3 text-sm font-bold text-slate-900 outline-none">' +
+        '<div class="mt-3 rounded-2xl border border-slate-100 bg-slate-50 p-3">' +
+          '<div class="mb-2 flex items-center justify-between gap-2">' +
+            '<span class="min-w-0"><span class="block text-[10px] font-black uppercase tracking-wide text-slate-500">Aporte inicial</span><span class="mt-0.5 block truncate text-[11px] font-semibold text-slate-500">Valor que ja existia antes do AvantaLab</span></span>' +
+            '<strong class="shrink-0 text-xs font-black text-emerald-600">' + valorFinanceiroCardHtml(resumo.saldoInicial, cardId) + '</strong>' +
+          '</div>' +
+          '<div class="grid grid-cols-[minmax(0,1fr)_104px] gap-2">' +
+            '<input id="caixinha-saldo-inicial" inputmode="decimal" value="' + escapeHtml(saldoInicialInput) + '" placeholder="0,00" style="font-size:16px" class="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-right text-base font-black text-slate-900 outline-none">' +
+            '<button id="salvar-caixinha-saldo-inicial" type="button" class="h-10 rounded-xl border border-slate-300 bg-white px-3 text-[11px] font-black uppercase tracking-wide text-slate-700 active:scale-[0.99]">' + (state.caixinhaSaldoInicialSalvando ? 'Salvando...' : (resumo.saldoInicial > 0 ? 'Atualizar' : 'Definir')) + '</button>' +
+          '</div>' +
         '</div>' +
-        '<input id="caixinha-valor" inputmode="decimal" value="' + escapeHtml(state.caixinhaValor || '') + '" placeholder="0,00" class="mt-2 h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-right text-sm font-black text-slate-900 outline-none">' +
+        '<div class="mt-3 grid grid-cols-[70px_minmax(0,1fr)] gap-2">' +
+          '<input id="caixinha-dia" type="number" min="1" max="31" value="' + escapeHtml(state.caixinhaDia || '') + '" placeholder="Dia" style="font-size:16px" class="h-10 rounded-xl border border-slate-200 bg-white px-3 text-base font-bold text-slate-900 outline-none">' +
+          '<input id="caixinha-descricao" type="text" value="' + escapeHtml(state.caixinhaDescricao || '') + '" placeholder="Descrição" style="font-size:16px" class="h-10 rounded-xl border border-slate-200 bg-white px-3 text-base font-bold text-slate-900 outline-none">' +
+        '</div>' +
+        '<input id="caixinha-valor" inputmode="decimal" value="' + escapeHtml(state.caixinhaValor || '') + '" placeholder="0,00" style="font-size:16px" class="mt-2 h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-right text-base font-black text-slate-900 outline-none">' +
         '<button id="salvar-caixinha-aporte" type="button" class="mt-2 h-10 w-full rounded-xl bg-cyan-700 text-xs font-black uppercase tracking-wide text-white shadow-sm active:scale-[0.99]">' + (state.caixinhaSalvando ? 'Adicionando...' : 'Adicionar aporte') + '</button>' +
         '<div class="mt-3 space-y-2">' + ultimosHtml + '</div>' +
       '</section>'
@@ -9818,7 +9893,15 @@
     bind('toggle-valores-totais', function () { alternarVisibilidadeValoresCard('totais'); });
     bind('toggle-valores-categorias', function () { alternarVisibilidadeValoresCard('categorias'); });
     bind('toggle-valores-tipos', function () { alternarVisibilidadeValoresCard('tipos'); });
+    bind('salvar-caixinha-saldo-inicial', salvarSaldoInicialCaixinhaMobile);
     bind('salvar-caixinha-aporte', salvarAporteCaixinhaMobile);
+    var caixinhaSaldoInicialEl = document.getElementById('caixinha-saldo-inicial');
+    if (caixinhaSaldoInicialEl) {
+      caixinhaSaldoInicialEl.addEventListener('input', function () {
+        state.caixinhaSaldoInicialValor = formatarMoedaDigitada(this.value);
+        this.value = state.caixinhaSaldoInicialValor;
+      });
+    }
     var caixinhaValorEl = document.getElementById('caixinha-valor');
     if (caixinhaValorEl) {
       caixinhaValorEl.addEventListener('input', function () {
@@ -10294,7 +10377,7 @@
     var camada = null;
     var limite = 280;
     var exibirApos = 20;
-    var opacoEm = 70;
+    var opacoEm = 56;
     var opacidadeAtual = 0;
     var opacidadeDestino = 0;
     var frameOpacidade = null;
@@ -10327,7 +10410,7 @@
 
     function animarOpacidadeFundo(destino) {
       camadaPullToRefresh();
-      opacidadeDestino = Math.max(0, Math.min(Number(destino) || 0, 0.78));
+      opacidadeDestino = Math.max(0, Math.min(Number(destino) || 0, 0.86));
       if (frameOpacidade !== null) return;
 
       ultimoFrameOpacidade = 0;
@@ -10390,9 +10473,9 @@
 
       posicionarIndicador();
       var opacidadeFundo = distancia > 0
-        ? 0.10 + (0.28 * progressoEscurecimentoRapido) + (0.12 * progresso)
+        ? 0.16 + (0.42 * progressoEscurecimentoRapido) + (0.18 * progresso)
         : 0;
-      animarOpacidadeFundo(soltou ? 0.72 : opacidadeFundo);
+      animarOpacidadeFundo(soltou ? 0.84 : opacidadeFundo);
       item.style.opacity = distancia > 2 ? String(Math.max(0.28, Math.min(distancia / 36, 1))) : '0';
       item.style.transform = 'translate(-50%, ' + Math.round(96 * progresso) + 'px)';
       if (texto) texto.textContent = soltou ? 'Recarregando...' : (distancia >= limite ? 'Recarregar' : 'Puxe para atualizar');
@@ -10902,7 +10985,7 @@
           return Promise.all(
             keys
               .filter(function (key) {
-                return key.indexOf('avantalab-mobile-') === 0 && key !== 'avantalab-mobile-v241';
+                return key.indexOf('avantalab-mobile-') === 0 && key !== 'avantalab-mobile-v243';
               })
               .map(function (key) {
                 return caches.delete(key);
@@ -10919,7 +11002,7 @@
     });
 
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/mobile-sw.js?v=227').then(function (registro) {
+      navigator.serviceWorker.register('/mobile-sw.js?v=229').then(function (registro) {
         if (registro && registro.update) registro.update();
       }).catch(function () {});
     }

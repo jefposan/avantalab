@@ -56,6 +56,7 @@ import {
   buscarFaturamentosEntradas,
   salvarLancamento,
   salvarCaixinhaMovimento,
+  salvarSaldoInicialCaixinha,
   apagarLancamento,
   atualizarLancamento,
   definirStatusLancamento,
@@ -167,7 +168,7 @@ type EntradaFaturamento = {
 type CaixinhaMovimento = {
   id: string;
   lancamentoId: string | null;
-  tipo: 'aporte' | 'resgate' | 'rendimento' | 'ajuste';
+  tipo: 'saldo_inicial' | 'aporte' | 'resgate' | 'rendimento' | 'ajuste';
   descricao: string;
   valor: number;
   dataMovimento: string;
@@ -2246,6 +2247,7 @@ const caixinhaSaldo = caixinhaMovimentos.reduce((acc, mov) => {
   const valor = Number(mov.valor || 0);
   return mov.tipo === 'resgate' ? acc - valor : acc + valor;
 }, 0);
+const caixinhaSaldoInicial = caixinhaMovimentos.find((mov) => mov.tipo === 'saldo_inicial')?.valor || 0;
 const caixinhaMovimentosMes = caixinhaMovimentos.filter((mov) => {
   if (!mov.dataMovimento) return false;
   const [anoMov, mesMov] = mov.dataMovimento.split('-').map(Number);
@@ -2337,6 +2339,41 @@ const adicionarAporteCaixinha = async ({
     dataMovimento: textoRegistro(movimento.data.data_movimento),
     criadoEm: textoRegistro(movimento.data.criado_em),
   }, ...prev]);
+  notificarFinanceiroAtualizado();
+
+  return { ok: true };
+};
+
+const definirSaldoInicialCaixinha = async (valorTexto: string): Promise<{ ok: boolean; mensagem?: string }> => {
+  if (!empresaId) return { ok: false, mensagem: 'Perfil não identificado.' };
+  if (!podeInserirLancamentos) return { ok: false, mensagem: 'Seu perfil não pode alterar a caixinha.' };
+
+  const valor = parseInt(String(valorTexto || '').replace(/\D/g, '') || '0', 10) / 100;
+  if (valor < 0) return { ok: false, mensagem: 'Informe um valor válido.' };
+
+  const resultado = await salvarSaldoInicialCaixinha({
+    empresaId,
+    valor,
+  });
+
+  if (resultado.erro || !resultado.data) {
+    return { ok: false, mensagem: resultado.mensagem || 'Não foi possível salvar o saldo inicial.' };
+  }
+
+  const movimentoAtualizado: CaixinhaMovimento = {
+    id: String(resultado.data.id),
+    lancamentoId: resultado.data.lancamento_id ? textoRegistro(resultado.data.lancamento_id) : null,
+    tipo: (textoRegistro(resultado.data.tipo) || 'saldo_inicial') as CaixinhaMovimento['tipo'],
+    descricao: textoRegistro(resultado.data.descricao),
+    valor: Number(resultado.data.valor || 0),
+    dataMovimento: textoRegistro(resultado.data.data_movimento),
+    criadoEm: textoRegistro(resultado.data.criado_em),
+  };
+
+  setCaixinhaMovimentos((prev) => [
+    movimentoAtualizado,
+    ...prev.filter((mov) => mov.tipo !== 'saldo_inicial' && mov.id !== movimentoAtualizado.id),
+  ]);
   notificarFinanceiroAtualizado();
 
   return { ok: true };
@@ -9186,9 +9223,11 @@ name="novo-usuario-login"
         saldoFinal={saldoFinalCard}
         saldoPrevisto={saldoPrevistoCard}
         caixinhaSaldo={caixinhaSaldo}
+        caixinhaSaldoInicial={caixinhaSaldoInicial}
         caixinhaAportesMes={caixinhaAportesMes}
         caixinhaUltimosMovimentos={caixinhaUltimosMovimentos}
         onAdicionarAporteCaixinha={adicionarAporteCaixinha}
+        onDefinirSaldoInicialCaixinha={definirSaldoInicialCaixinha}
         dashboardOrdem={recursoBloqueado('organizar_dashboard') ? ordemDashboardPadrao : dashboardOrdem}
         dashboardOcultos={recursoBloqueado('organizar_dashboard') ? [] : dashboardOcultos}
         dashboardExpandidos={recursoBloqueado('organizar_dashboard') ? [] : dashboardExpandidos}
