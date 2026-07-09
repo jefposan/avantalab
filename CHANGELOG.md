@@ -1,10 +1,15 @@
 # Changelog
 
-## Em desenvolvimento
+## 1.4.0.03 - 2026-07-09
 
 - Web: nova landing page oficial em pagina cheia na porta do sistema, com hero, beneficios, secao da IA Ava, planos com precos anual/mensal, FAQ e CTAs que abrem direto a tela de criar cadastro.
 - Web e mobile: deep link ?cadastro=1 abre direto a tela de criar cadastro (web em / e mobile em /mobile).
 - Mobile: celular sem sessao passa a ver a landing responsiva em /; o redirect para /mobile ocorre apenas com sessao ativa ou ao tocar em Entrar/Teste gratis.
+- Mobile: corrigida a trava visual em "Abrindo versao mobile..." ao entrar pela landing.
+- Mobile: botao Entrar da landing abre direto a tela de login mobile.
+- Mobile: card de cadastro compactado para melhorar o preenchimento em telas menores.
+
+## Em desenvolvimento
 
 - Web: lista de Organizar blocos do dashboard compactada e contida nas laterais do painel.
 - Mobile: card "Pergunte para a Ava" passa a usar logos especificos por modo e fundo solido sem degrade.

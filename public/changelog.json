@@ -13,6 +13,20 @@
   },
   "versoes": [
     {
+      "versao": "1.4.0.03",
+      "titulo": "Landing oficial e ajustes de acesso",
+      "data": "Julho/2026",
+      "itens": [
+        "Web: nova landing page oficial em tela cheia na porta do sistema.",
+        "Landing: hero, benefícios, seção da IA Ava, planos com preços anual/mensal, FAQ e CTAs de cadastro.",
+        "Web e mobile: deep link ?cadastro=1 abre direto a tela de criar cadastro.",
+        "Mobile: acesso sem sessão passa a ver a landing responsiva em /, mantendo o redirect para /mobile apenas com sessão ativa ou ação do usuário.",
+        "Mobile: corrigida a trava visual em \"Abrindo versão mobile...\" ao entrar pela landing.",
+        "Mobile: botão Entrar da landing abre direto a tela de login mobile.",
+        "Mobile: card de cadastro compactado para melhorar o preenchimento em telas menores."
+      ]
+    },
+    {
       "versao": "1.3.6",
       "titulo": "Cabeçalho renovado e ajustes de experiência",
       "data": "Julho/2026",
