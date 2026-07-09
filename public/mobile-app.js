@@ -4000,13 +4000,9 @@
 
     if (!validarCadastroBase()) return;
 
-    // Aceite obrigatório dos Termos/Privacidade.
-    var chkAceite = document.getElementById('cadastro-aceite');
-    state.aceitouTermos = chkAceite ? chkAceite.checked : state.aceitouTermos;
-    if (!state.aceitouTermos) {
-      setErro('Para criar sua conta, é necessário aceitar os Termos de Uso e a Política de Privacidade.');
-      return;
-    }
+    // Aceite implícito dos Termos/Privacidade: o card informa que, ao se
+    // cadastrar, o usuário declara aceitar os termos (links disponíveis).
+    state.aceitouTermos = true;
     state.aceiteTermosEm = new Date().toISOString();
 
     state.carregando = true;
@@ -6158,18 +6154,20 @@
     var tipoCadastro = normalizarTipoPerfil(state.cadastroTipoPerfil);
     return (
       '<div class="grid gap-2">' +
-        inputHtml('cadastro-nome', 'Nome', 'text', 'Seu nome completo', state.cadastro.nome) +
         '<div>' +
           '<p class="mb-1 text-[10px] font-black uppercase tracking-wide text-slate-600">Tipo do primeiro perfil</p>' +
           seletorTipoPerfilHtml('cadastro-tipo', tipoCadastro) +
         '</div>' +
+        inputHtml('cadastro-nome', 'Nome', 'text', 'Seu nome completo', state.cadastro.nome) +
         inputHtml('cadastro-email', 'Email', 'email', 'seuemail@exemplo.com', state.cadastro.email) +
         '<div class="grid grid-cols-[7rem_1fr] gap-2">' +
           '<div><p class="mb-1 text-[10px] font-black uppercase tracking-wide text-slate-600">País</p><select id="cadastro-ddi" class="h-[38px] w-full rounded-xl border border-slate-300 bg-white/90 px-2 text-sm text-slate-800 outline-none">' + opcoesDdiHtml(state.cadastroDdi) + '</select></div>' +
           '<div>' + inputHtml('cadastro-telefone', 'Celular', 'tel', '(xx) xxxxx-xxxx', state.cadastro.telefone) + '</div>' +
         '</div>' +
-        senhaInputHtml('cadastro-senha', 'Senha', 'Crie uma senha', 'mostrarSenhaCadastro', 'toggle-senha-cadastro', state.cadastro.senha) +
-        senhaInputHtml('cadastro-confirmar-senha', 'Confirmar senha', 'Repita a senha', 'mostrarConfirmarSenhaCadastro', 'toggle-confirmar-cadastro', state.cadastro.confirmarSenha) +
+        '<div class="grid grid-cols-2 gap-2">' +
+          '<div>' + senhaInputHtml('cadastro-senha', 'Senha', 'Crie uma senha', 'mostrarSenhaCadastro', 'toggle-senha-cadastro', state.cadastro.senha) + '</div>' +
+          '<div>' + senhaInputHtml('cadastro-confirmar-senha', 'Confirmar senha', 'Repita a senha', 'mostrarConfirmarSenhaCadastro', 'toggle-confirmar-cadastro', state.cadastro.confirmarSenha) + '</div>' +
+        '</div>' +
         (state.smsCadastroEnviado ?
           '<div class="rounded-xl border-2 border-sky-400 bg-sky-50 px-3 py-2.5 shadow-sm">' +
             '<p class="mb-1 text-[11px] font-black uppercase tracking-wide text-sky-700">Digite o c&oacute;digo recebido</p>' +
@@ -6178,13 +6176,11 @@
           '</div>'
         : '') +
         (!state.smsCadastroEnviado ?
-          '<label class="flex cursor-pointer items-start gap-2 rounded-xl border border-slate-200 bg-white/70 px-3 py-2 text-[11px] leading-snug text-slate-600 shadow-sm">' +
-            '<input id="cadastro-aceite" type="checkbox" ' + (state.aceitouTermos ? 'checked' : '') + ' class="mt-0.5 h-4 w-4 shrink-0" style="accent-color:#0369a1;" />' +
-            '<span class="min-w-0">' +
-              '<span class="block font-semibold text-slate-700">Li e concordo com as pol&iacute;ticas.</span>' +
-              '<span class="mt-0.5 block font-bold text-sky-700"><button id="cadastro-termos-link" type="button" class="underline">Termos de Uso</button> e <button id="cadastro-privacidade-link" type="button" class="underline">Pol&iacute;tica de Privacidade</button>.</span>' +
-            '</span>' +
-          '</label>'
+          '<p class="rounded-xl border border-slate-200 bg-white/70 px-3 py-2 text-[11px] leading-snug text-slate-600 shadow-sm">' +
+            'Ao se cadastrar, declara estar aceitando nossos termos: ' +
+            '<button id="cadastro-termos-link" type="button" class="font-bold text-sky-700 underline">Termos de Uso</button> e ' +
+            '<button id="cadastro-privacidade-link" type="button" class="font-bold text-sky-700 underline">Pol&iacute;tica de Privacidade</button>.' +
+          '</p>'
         : '') +
         alertaHtml() +
         '<input id="cadastro-cupom" type="text" placeholder="Cupom (opcional)" value="' + (state.cadastroCupom || '') + '" class="h-10 w-full rounded-xl border border-slate-300 bg-white/90 px-3 text-sm font-semibold uppercase tracking-wide text-slate-800 outline-none" />' +
