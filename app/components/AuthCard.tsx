@@ -3,6 +3,7 @@ import React from 'react';
 import { normalizarTipoPerfil, rotuloTipoPerfil, type TipoPerfil } from '../lib/perfis';
 import { PAISES } from '../lib/paises';
 import DraggableModalCard from './DraggableModalCard';
+import LandingPage from './LandingPage';
 
 interface AuthCardProps {
   // Modal Aviso
@@ -122,6 +123,23 @@ export default function AuthCard({
     !authMensagem;
 
   const tipoPerfilInicialNormalizado = normalizarTipoPerfil(tipoPerfilInicial);
+
+  // Landing oficial em página cheia substitui a tela pré-login antiga.
+  // Com aviso aberto, mantém o fluxo clássico para exibir o modal.
+  if (mostrarLandingPreLoginAtiva && !modalAvisoAberto) {
+    return (
+      <LandingPage
+        onCriarConta={() => {
+          setMostrarLandingPreLogin(false);
+          setModoAuth('cadastro');
+        }}
+        onEntrar={() => {
+          setMostrarLandingPreLogin(false);
+          setModoAuth('login');
+        }}
+      />
+    );
+  }
 
   return (
     <main className="relative min-h-screen overflow-hidden font-sans">

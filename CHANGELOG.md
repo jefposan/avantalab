@@ -2,6 +2,9 @@
 
 ## Em desenvolvimento
 
+- Web: nova landing page oficial em pagina cheia na porta do sistema, com hero, beneficios, secao da IA Ava, planos com precos anual/mensal, FAQ e CTAs que abrem direto a tela de criar cadastro.
+- Web e mobile: deep link ?cadastro=1 abre direto a tela de criar cadastro (web em / e mobile em /mobile).
+
 - Web: lista de Organizar blocos do dashboard compactada e contida nas laterais do painel.
 - Mobile: card "Pergunte para a Ava" passa a usar logos especificos por modo e fundo solido sem degrade.
 - Web e mobile: card de Insights da Ava passa a alternar logos especificos para fundo claro e fundo escuro, com fallback para o logo atual.

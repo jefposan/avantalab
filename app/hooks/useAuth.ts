@@ -51,6 +51,18 @@ export function useAuth(deps: UseAuthDeps) {
   // --- Estados de autenticação de entrada ---
   const [modoAuth, setModoAuth] = useState<'login' | 'cadastro'>('login');
   const [mostrarLandingPreLogin, setMostrarLandingPreLogin] = useState(true);
+
+  // Deep link da landing: /?cadastro=1 abre direto a tela de criar cadastro.
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const parametros = new URLSearchParams(window.location.search);
+    if (parametros.get('cadastro') === '1') {
+      // Ajuste único no mount a partir de estado externo (URL); não gera cascata.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setMostrarLandingPreLogin(false);
+      setModoAuth('cadastro');
+    }
+  }, []);
   const [loginEmail, setLoginEmail] = useState('');
   const [loginSenha, setLoginSenha] = useState('');
   const [mostrarSenhaLogin, setMostrarSenhaLogin] = useState(false);

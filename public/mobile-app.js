@@ -11056,6 +11056,17 @@
   async function iniciar() {
     window._avaProfilePillHidden = false;
 
+    // Deep link da landing: /mobile?cadastro=1 abre direto a tela de criar cadastro.
+    try {
+      var parametrosLanding = new URLSearchParams(window.location.search);
+      if (parametrosLanding.get('cadastro') === '1') {
+        state.telaAcesso = 'login';
+        state.modoCadastro = true;
+        state.modoSenha = false;
+        state.smsCadastroEnviado = false;
+      }
+    } catch (error) {}
+
     try {
       window._avaLogoPrincipalPreload = window._avaLogoPrincipalPreload || new Image();
       window._avaLogoPrincipalPreload.decoding = 'async';
