@@ -667,6 +667,7 @@ const mostrarComparativoResumoDash =
     return itens.slice(0, 3);
   })();
   const catalogoCardsKanban = [
+    { id: 'lancamentosMensais', titulo: 'Lançamentos mensais', descricao: 'Atalho anual para abrir os lançamentos de cada mês.' },
     { id: 'aConfirmar', titulo: 'Lançamentos a confirmar', descricao: 'Banner de despesas e receitas previstas que chegaram na data.' },
     { id: 'saldo', titulo: 'Saldo do mês', descricao: 'Inicial, final e previsto do mês selecionado.' },
     { id: 'insightsAva', titulo: 'Insights da Ava', descricao: 'Sugestões práticas geradas a partir dos dados do mês.' },
@@ -730,7 +731,10 @@ const mostrarComparativoResumoDash =
     </div>
   );
 
-  const BotaoOpcoesCard = ({ id, tone = 'dark' }: { id: string; tone?: 'dark' | 'light' }) => (
+  const BotaoOpcoesCard = ({ id, tone = 'dark' }: { id: string; tone?: 'dark' | 'light' }) => {
+    const podeRedimensionar = Boolean(containerDe(cols, id));
+
+    return (
     <div data-card-options-menu className="relative shrink-0">
       <button
         type="button"
@@ -783,6 +787,7 @@ const mostrarComparativoResumoDash =
               <div className="my-1 border-t border-slate-100" />
             </>
           )}
+          {podeRedimensionar && (
           <button
             type="button"
             onClick={(e) => {
@@ -794,6 +799,7 @@ const mostrarComparativoResumoDash =
             <span className="text-sm leading-none">{expandidosSet.has(id) ? '↙' : '↔'}</span>
             {expandidosSet.has(id) ? 'Reduzir' : 'Expandir'}
           </button>
+          )}
           <button
             type="button"
             onClick={(e) => {
@@ -809,7 +815,8 @@ const mostrarComparativoResumoDash =
         </div>
       )}
     </div>
-  );
+    );
+  };
 
   const filtraItens = (arr: string[]) => arr.filter((id) =>
     !ocultosSet.has(id)
@@ -1401,18 +1408,22 @@ const mostrarComparativoResumoDash =
           <span className={`shrink-0 ${textMuted}`}>{saudacaoPeriodo}</span>
         </div>
 
+      {!ocultosSet.has('lancamentosMensais') && (
       <AvantaCard
         title="Lançamentos Mensais"
         className={textStrong}
         bodyClassName={`${bgCard} transition-colors`}
         bodyStyle={avantaShellPreset.bodyStyle}
         headerRight={
+          <div className="flex items-center gap-1.5">
           <span
             className="shrink-0 rounded-full border px-3 py-1 text-xs font-black tabular-nums"
             style={{ borderColor: `${corPrimaria}40`, color: corPrimaria, background: `${corPrimaria}0d` }}
           >
             {anoSelecionado}
           </span>
+          <BotaoOpcoesCard id="lancamentosMensais" />
+          </div>
         }
         style={avantaShellPreset.cardStyle}
         hideDragHandle
@@ -1552,6 +1563,7 @@ const mostrarComparativoResumoDash =
           </div>
         </div>
       </AvantaCard>
+      )}
       </div>
 
       <div className="xl:col-span-2 relative pt-7">

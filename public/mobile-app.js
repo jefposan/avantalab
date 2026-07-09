@@ -111,8 +111,6 @@
     despesas: [],
     usuariosEmpresa: [],
     usuariosCarregando: false,
-    usuariosAtivosSistema: null,
-    usuariosAtivosCarregando: false,
     usuarioEditandoId: '',
     usuarioModo: '',
     usuarioExistenteTermo: '',
@@ -166,6 +164,16 @@
     exclusaoRecorrencia: null,
     tipoLancamento: 'despesa',
     modoReceita: 'entrada',
+    despesaDia: '',
+    despesaDiaAutoHoje: false,
+    despesaNome: '',
+    despesaDescricao: '',
+    despesaValor: '',
+    entradaDia: '',
+    entradaDiaAutoHoje: false,
+    entradaOrigem: '',
+    entradaValor: '',
+    receitaTotal: '',
     menuAberto: false,
     menuConfigAberto: false,
     menuConfigAnimacao: '',
@@ -193,6 +201,7 @@
     ultimasReceitasBusca: '',
     dashboardOrdem: ordemDashboardPadrao(),
     dashboardOcultos: [],
+    dashboardOpcoesId: '',
     dashboardValoresVisiveis: {},
     caixinhaDia: String(new Date().getDate()),
     caixinhaDescricao: 'Reserva',
@@ -937,7 +946,7 @@
     { recurso: 'busca_lancamentos', icone: '🔎', titulo: 'Busca nos lançamentos', descricao: 'Encontre qualquer lançamento na hora.' },
     { recurso: 'multiplos_perfis', icone: '👥', titulo: 'Múltiplos perfis pessoais', descricao: 'Crie mais perfis pessoais (grátis = 1).' },
     { recurso: 'notificacoes', icone: '🔔', titulo: 'Notificações', descricao: 'Lembretes e avisos de pagamentos.' },
-    { recurso: 'organizar_dashboard', icone: '🧩', titulo: 'Organizar dashboard', descricao: 'Reordene os cards do seu jeito.' },
+    { recurso: 'organizar_dashboard', icone: '🧩', titulo: 'Ordenar cards', descricao: 'Reordene os cards do seu jeito.' },
     { recurso: 'organizar_atalhos', icone: '↔️', titulo: 'Organizar atalhos', descricao: 'Personalize os atalhos do app.' },
     { recurso: 'usuarios_internos', icone: '🧑‍💼', titulo: 'Usuários internos', descricao: 'Convide outras pessoas para o perfil.' },
   ];
@@ -2156,6 +2165,34 @@
     return item ? item.value : '';
   }
 
+  function diaHojeLancamentoMobile() {
+    return String(new Date().getDate());
+  }
+
+  function prepararNovoLancamentoMobile() {
+    if (!state.despesaDia) {
+      state.despesaDia = diaHojeLancamentoMobile();
+      state.despesaDiaAutoHoje = true;
+    }
+    if (!state.entradaDia) {
+      state.entradaDia = diaHojeLancamentoMobile();
+      state.entradaDiaAutoHoje = true;
+    }
+  }
+
+  function limparRascunhoLancamentoMobile() {
+    state.despesaDia = '';
+    state.despesaDiaAutoHoje = false;
+    state.despesaNome = '';
+    state.despesaDescricao = '';
+    state.despesaValor = '';
+    state.entradaDia = '';
+    state.entradaDiaAutoHoje = false;
+    state.entradaOrigem = '';
+    state.entradaValor = '';
+    state.receitaTotal = '';
+  }
+
   function bind(id, fn) {
     var item = document.getElementById(id);
     if (item) item.addEventListener('click', fn);
@@ -2348,6 +2385,7 @@
     state.visao = 'home';
     state.busca = '';
     state.agendaDiaSelecionado = null;
+    prepararNovoLancamentoMobile();
     state.modalLancamento = true;
     render();
   }
@@ -2766,7 +2804,7 @@
     { icone: '✅', local: 'Menu → Cadastrar despesas', titulo: 'Cadastre suas despesas', descricao: 'Revise a lista inicial e adicione os tipos de despesa que utiliza, sempre vinculando cada item à categoria correta.' },
     { icone: '➕', local: 'Botão Lançar, no centro da barra inferior', titulo: 'Faça lançamentos', descricao: 'Registre despesas, receitas, previsões e parcelamentos. Os mesmos dados ficam disponíveis na web.' },
     { icone: '🔁', local: 'Menu → Despesas fixas', titulo: 'Despesas fixas', descricao: 'Crie recorrências e projete os próximos meses. Edite pela linha para alterar apenas o mês ou use Despesas fixas para administrar toda a recorrência.' },
-    { icone: '🧩', local: 'Menu → Organizar resumo', titulo: 'Organize o dashboard', descricao: 'Escolha quais cards aparecem e altere a ordem. Valores financeiros iniciam ocultos e podem ser revelados pelo ícone de olho.' },
+    { icone: '🧩', local: 'Menu → Mostrar/ocultar cards', titulo: 'Organize os cards', descricao: 'Escolha quais cards aparecem e altere a ordem em Ordenar cards. Valores financeiros iniciam ocultos e podem ser revelados pelo ícone de olho.' },
     { icone: '↔️', local: 'Menu → Organizar atalhos', titulo: 'Personalize a barra inferior', descricao: 'Início, Lançar e Menu são fixos. Personalize os dois atalhos laterais com Perfil, Agenda, Modo escuro ou Despesas fixas.' },
     { icone: '📅', local: 'Agenda e sininho', titulo: 'Agenda e notificações', descricao: 'A agenda reúne lembretes e despesas futuras. Ative as notificações para receber lembretes e avisos de pagamentos agendados.' },
     { icone: '💾', local: 'Menu → Configurações', titulo: 'Backup e restauração', descricao: 'Gere um backup do perfil ou restaure um arquivo compatível diretamente pelo celular.' },
@@ -3348,29 +3386,6 @@
     return resposta.error ? null : resposta.data;
   }
 
-  async function carregarUsuariosAtivosSistema() {
-    if (state.usuariosAtivosCarregando || state.usuariosAtivosSistema !== null) return;
-
-    state.usuariosAtivosCarregando = true;
-
-    try {
-      var resposta = await fetch('/api/usuarios-ativos');
-      if (!resposta.ok) return;
-
-      var dados = await resposta.json();
-      var total = Number(dados && dados.total);
-
-      if (Number.isFinite(total)) {
-        state.usuariosAtivosSistema = total;
-        render();
-      }
-    } catch (error) {
-      console.error('Erro ao carregar usuarios ativos:', error);
-    } finally {
-      state.usuariosAtivosCarregando = false;
-    }
-  }
-
   async function carregarEmpresas(usuarioId) {
     var usuarioAtual = await consultaMobileComRetry(function () { return db.auth.getUser(); });
     var emailUsuario = (usuarioAtual.data.user && usuarioAtual.data.user.email || '').toLowerCase();
@@ -3641,8 +3656,6 @@
       render();
       return;
     }
-
-    carregarUsuariosAtivosSistema();
 
     if (state.empresa.telefone_confirmado !== true) {
       state.validacaoTelefoneObrigatoria = true;
@@ -4748,8 +4761,14 @@
     var dia = Number(campo('despesa-dia'));
     var nome = campo('despesa-nome');
     var descricao = campo('despesa-descricao');
-    var valor = normalizarValor(campo('despesa-valor'));
+    var valorTexto = campo('despesa-valor');
+    var valor = normalizarValor(valorTexto);
     var limite = maxDias(state.mes, state.ano);
+    state.despesaDia = campo('despesa-dia');
+    state.despesaDiaAutoHoje = false;
+    state.despesaNome = nome;
+    state.despesaDescricao = descricao;
+    state.despesaValor = valorTexto;
 
     if (!dia || dia < 1 || dia > limite || !nome || valor <= 0) {
       // Preservar campos preenchidos ao mostrar erro de validação
@@ -4834,6 +4853,7 @@
     state.lancandoDespesa = false;
     state.formParcelar = false;
     state.formParcelas = 2;
+    limparRascunhoLancamentoMobile();
     state.modalLancamento = false;
     state.tipoLancamento = 'despesa';
     state.modoReceita = 'entrada';
@@ -5017,8 +5037,13 @@
 
     var dia = Number(campo('entrada-dia'));
     var origem = campo('entrada-origem');
-    var valor = normalizarValor(campo('entrada-valor'));
+    var valorTexto = campo('entrada-valor');
+    var valor = normalizarValor(valorTexto);
     var limite = maxDias(state.mes, state.ano);
+    state.entradaDia = campo('entrada-dia');
+    state.entradaDiaAutoHoje = false;
+    state.entradaOrigem = origem;
+    state.entradaValor = valorTexto;
 
     if (!dia || dia < 1 || dia > limite || !origem.trim() || valor <= 0) {
       setErro('Informe dia, origem e valor validos.');
@@ -5081,6 +5106,7 @@
     state.modalLancamento = false;
     state.tipoLancamento = 'despesa';
     state.modoReceita = 'entrada';
+    limparRascunhoLancamentoMobile();
     state.erro = '';
     await carregarDados();
     notificarFinanceiroAtualizadoMobile();
@@ -5090,7 +5116,9 @@
   async function salvarTotalReceita() {
     if (!state.empresa) return;
 
-    var valor = normalizarValor(campo('receita-total'));
+    var valorTexto = campo('receita-total');
+    var valor = normalizarValor(valorTexto);
+    state.receitaTotal = valorTexto;
 
     if (valor < 0) {
       setErro('Informe um total valido.');
@@ -5153,6 +5181,7 @@
     state.modalLancamento = false;
     state.tipoLancamento = 'despesa';
     state.modoReceita = 'entrada';
+    limparRascunhoLancamentoMobile();
     state.erro = '';
     await carregarDados();
     notificarFinanceiroAtualizadoMobile();
@@ -6292,11 +6321,11 @@
     );
   }
 
-  function campoClaro(id, label, extra) {
+  function campoClaro(id, label, extra, value) {
     return (
       '<label class="grid gap-1 text-xs font-black uppercase tracking-wide text-slate-600">' +
         escapeHtml(label) +
-        '<input id="' + id + '" ' + (extra || '') + ' style="font-size:16px" class="h-11 w-full min-w-0 rounded-md border border-slate-300 bg-white px-3 text-base font-bold normal-case tracking-normal text-slate-900 outline-none focus:border-cyan-500" />' +
+        '<input id="' + id + '" ' + (extra || '') + ' value="' + escapeHtml(value || '') + '" style="font-size:16px" class="h-11 w-full min-w-0 rounded-md border border-slate-300 bg-white px-3 text-base font-bold normal-case tracking-normal text-slate-900 outline-none focus:border-cyan-500" />' +
       '</label>'
     );
   }
@@ -6541,13 +6570,10 @@
 
   function rodapeMobileHtml() {
     var ano = new Date().getFullYear();
-    var usuariosAtivosHtml = state.usuariosAtivosSistema === null
-      ? ''
-      : '<span class="inline-flex items-center rounded-full border border-white/15 bg-white/10 px-2 py-0.5 font-black text-white shadow-sm">Usu&aacute;rios ativos ' + inteiro(state.usuariosAtivosSistema) + '</span>';
     return (
       '<footer class="mt-2 overflow-hidden rounded-2xl border border-white/15 px-3 py-2.5 text-center text-[11px] text-white shadow-lg shadow-sky-950/15" style="background:linear-gradient(135deg,#003E73 0%,#075985 54%,#00A6C8 100%);">' +
         '<div class="text-[11px] font-black tracking-[0.16em] text-white">' + APP_VERSION_LABEL + '</div>' +
-        '<p class="mt-0.5 flex flex-wrap items-center justify-center gap-x-2 gap-y-0.5 font-semibold text-cyan-50/90">&copy; ' + ano + ' Todos os direitos reservados.' + usuariosAtivosHtml + '</p>' +
+        '<p class="mt-0.5 flex flex-wrap items-center justify-center gap-x-2 gap-y-0.5 font-semibold text-cyan-50/90">&copy; ' + ano + ' Todos os direitos reservados.</p>' +
         '<div class="mt-1.5 flex flex-wrap items-center justify-center gap-1.5 font-bold text-cyan-50/90">' +
           '<button id="sobre-mobile" type="button" class="inline-flex items-center gap-1 rounded-full border border-white/25 bg-white/20 px-3 py-1 text-cyan-50 backdrop-blur"><span class="text-[12px] leading-none">&#9432;</span>Sobre</button>' +
           '<a href="https://www.instagram.com/avanta.lab" target="_blank" rel="noopener noreferrer" class="rounded-full border border-white/15 bg-white/10 px-3 py-1 text-cyan-50 backdrop-blur">@avanta.lab</a>' +
@@ -6706,7 +6732,7 @@
         banner +
         '<section class="rounded-2xl border border-cyan-100 bg-white p-4 text-center shadow-sm">' +
           '<p class="text-sm font-black text-slate-900">Nenhum card visivel</p>' +
-          '<p class="mt-1 text-xs font-semibold leading-relaxed text-slate-500">Abra o menu e use Configurar resumo para reexibir os cards.</p>' +
+          '<p class="mt-1 text-xs font-semibold leading-relaxed text-slate-500">Abra o menu e use Mostrar/ocultar cards para reexibir os cards.</p>' +
         '</section>'
       );
     }
@@ -6714,7 +6740,14 @@
     return banner + visiveis
       .map(function (id) {
         if (!cards[id]) return '';
-        return '<div data-dashboard-card="' + escapeHtml(id) + '" class="relative pb-2 transition-[transform,opacity,filter] duration-200 ease-out">' +
+        var menuAberto = state.dashboardOpcoesId === id;
+        return '<div data-dashboard-card="' + escapeHtml(id) + '" class="relative pb-2 pt-8 transition-[transform,opacity,filter] duration-200 ease-out">' +
+          '<button type="button" data-dashboard-opcoes="' + escapeHtml(id) + '" class="absolute right-3 top-0 z-20 flex h-7 w-8 items-center justify-center rounded-full bg-white/90 text-[15px] font-black leading-none text-slate-500 shadow-sm ring-1 ring-slate-200 active:bg-slate-100" aria-label="Opcoes do bloco">...</button>' +
+          (menuAberto
+            ? '<div data-dashboard-menu-card="' + escapeHtml(id) + '" class="absolute right-3 top-8 z-30 w-44 overflow-hidden rounded-xl border border-slate-200 bg-white py-1 text-slate-800 shadow-2xl">' +
+                '<button type="button" data-dashboard-remover="' + escapeHtml(id) + '" class="flex w-full items-center gap-2 px-3 py-2 text-left text-[11px] font-black text-slate-700 active:bg-slate-50"><span class="text-sm leading-none">-</span>Remover bloco</button>' +
+              '</div>'
+            : '') +
           cards[id] +
           (id === 'ia' ? '' : '<button type="button" data-dashboard-handle="' + escapeHtml(id) + '" class="absolute bottom-1 right-3 flex h-7 w-8 select-none touch-none items-center justify-center rounded-full bg-transparent text-[11px] font-black leading-none text-slate-400" aria-label="Mover card">&vellip;&vellip;</button>') +
         '</div>';
@@ -7595,19 +7628,19 @@
     return (
       '<div class="grid gap-3">' +
         '<div class="flex items-end gap-6">' +
-          '<div class="w-20 shrink-0">' + campoClaro('despesa-dia', 'Dia', 'type="number" min="1" max="' + maxDias(state.mes, state.ano) + '" inputmode="numeric" style="font-size:16px;text-align:center"') + '</div>' +
+          '<div class="w-20 shrink-0">' + campoClaro('despesa-dia', 'Dia', 'type="number" min="1" max="' + maxDias(state.mes, state.ano) + '" inputmode="numeric" style="font-size:16px;text-align:center"', state.despesaDia) + '</div>' +
           '<label class="grid min-w-0 flex-1 gap-1 text-xs font-black uppercase tracking-wide text-slate-600">Despesa' +
             '<select id="despesa-nome" style="font-size:16px" class="h-11 w-full rounded-md border border-slate-300 bg-white px-3 text-base font-bold normal-case tracking-normal">' +
-              '<option value="">Selecione</option>' +
+              '<option value=""' + (!state.despesaNome ? ' selected' : '') + '>Selecione</option>' +
               state.despesas.map(function (despesa) {
-                return '<option value="' + escapeHtml(despesa.nome) + '">' + escapeHtml(despesa.nome) + '</option>';
+                return '<option value="' + escapeHtml(despesa.nome) + '"' + (state.despesaNome === despesa.nome ? ' selected' : '') + '>' + escapeHtml(despesa.nome) + '</option>';
               }).join('') +
             '</select>' +
           '</label>' +
         '</div>' +
         '<button id="abrir-nova-despesa" type="button" class="flex w-full items-center gap-2 rounded-xl border border-dashed border-slate-300 px-3 py-2.5 text-xs font-black text-slate-500 transition hover:border-slate-400 hover:text-slate-700">+ Cadastrar despesa</button>' +
-        campoClaro('despesa-descricao', 'Descricao') +
-        campoValor('despesa-valor', 'Valor') +
+        campoClaro('despesa-descricao', 'Descricao', '', state.despesaDescricao) +
+        campoValor('despesa-valor', 'Valor', state.despesaValor) +
         // Linha parcelamento
         '<div class="flex items-center gap-2 flex-wrap">' +
           '<button id="toggle-parcelar-despesa" type="button" class="flex h-8 items-center gap-1.5 rounded-full border px-3 text-[11px] font-black uppercase tracking-wide transition-all ' +
@@ -7643,15 +7676,15 @@
         (entradaAtiva
           ? '<div class="grid gap-3">' +
               '<div class="flex items-end gap-6">' +
-                '<div class="w-20 shrink-0">' + campoClaro('entrada-dia', 'Dia', 'inputmode="numeric"') + '</div>' +
-                '<div class="min-w-0 flex-1">' + campoClaro('entrada-origem', 'Origem') + '</div>' +
+                '<div class="w-20 shrink-0">' + campoClaro('entrada-dia', 'Dia', 'inputmode="numeric"', state.entradaDia) + '</div>' +
+                '<div class="min-w-0 flex-1">' + campoClaro('entrada-origem', 'Origem', '', state.entradaOrigem) + '</div>' +
               '</div>' +
-              campoValor('entrada-valor', 'Valor') +
+              campoValor('entrada-valor', 'Valor', state.entradaValor) +
               '<button id="salvar-entrada" type="button" class="h-11 rounded-xl bg-cyan-500 px-4 text-sm font-black uppercase tracking-wide text-slate-950">' + (state.carregando ? 'Salvando...' : 'Salvar receita') + '</button>' +
             '</div>'
           : '<div class="grid gap-3">' +
               '<p class="rounded-xl bg-cyan-50 px-3 py-2 text-xs font-semibold text-cyan-900">Define o faturamento total do mes selecionado, substituindo o valor atual.</p>' +
-              campoValor('receita-total', 'Total do mes') +
+              campoValor('receita-total', 'Total do mes', state.receitaTotal) +
               '<button id="salvar-total-receita" type="button" class="h-11 rounded-xl bg-slate-950 px-4 text-sm font-black uppercase tracking-wide text-white">' + (state.carregando ? 'Salvando...' : 'Definir total') + '</button>' +
               (Object.prototype.hasOwnProperty.call(state.faturamentos, state.mes)
                 ? '<button id="excluir-total-receita" type="button" class="h-10 rounded-xl border border-red-200 bg-red-50 px-4 text-xs font-black uppercase tracking-wide text-red-600">' + (state.carregando ? 'Excluindo...' : 'Excluir total do mes') + '</button>'
@@ -7874,7 +7907,7 @@
           '<div class="grid gap-1.5">' +
             menuBotaoHtml('menu-agenda', 'Agenda', 'Lembretes e avisos', iconeAgendaSvg()) +
             menuBotaoHtml('menu-avisos', 'Avisos e notificacoes', 'Ver e apagar seus avisos', sinoAvisoSvg()) +
-            menuBotaoHtml('menu-configurar-resumo', 'Organizar resumo', 'Exibir e ocultar cards', '&#9776;') +
+            menuBotaoHtml('menu-configurar-resumo', 'Mostrar/ocultar cards', 'Exibir ou remover blocos', '&#9776;') +
             menuBotaoHtml('menu-organizar-atalhos', 'Organizar atalhos', 'Personalizar a barra inferior', '&#8644;') +
             menuBotaoHtml('menu-categorias', 'Cadastrar despesas', 'Adicionar tipos de despesa', '+') +
             menuBotaoHtml('menu-despesas-fixas', 'Despesas fixas', 'Lancamentos automaticos mensais', '&#10227;') +
@@ -8113,8 +8146,8 @@
       usuario: 'Usuario',
       empresa: 'Trocar perfil',
       gerenciar: 'Gerenciar perfil',
-      configurarResumo: 'Configurar resumo',
-      organizarDashboard: 'Organizar dashboard',
+      configurarResumo: 'Mostrar/ocultar cards',
+      organizarDashboard: 'Ordenar cards',
       organizarAtalhos: 'Organizar atalhos',
       categorias: 'Cadastrar despesas',
       ajudaCategorias: 'Instrucoes',
@@ -8661,19 +8694,35 @@
   }
 
   function organizarDashboardHtml() {
-    var ordem = normalizarOrdemDashboard(state.dashboardOrdem).filter(cardDashboardPermitido);
+    var ordemCompleta = normalizarOrdemDashboard(state.dashboardOrdem).filter(cardDashboardPermitido);
+    var ocultos = normalizarOcultosDashboard(state.dashboardOcultos);
+    var ordem = ordemCompleta.filter(function (id) { return ocultos.indexOf(id) < 0; });
+    var removidos = ordemCompleta.filter(function (id) { return ocultos.indexOf(id) >= 0; });
 
     return (
       '<div class="grid gap-2">' +
-        '<p class="rounded-xl bg-cyan-50 px-3 py-2 text-xs font-semibold leading-relaxed text-cyan-900">Use as setas ou segure o puxador do card no dashboard para reposicionar. A ordem fica salva neste celular.</p>' +
-        ordem.map(function (id, index) {
+        '<p class="rounded-xl bg-cyan-50 px-3 py-2 text-xs font-semibold leading-relaxed text-cyan-900">Use as setas para reposicionar. Cards removidos pelo menu "..." podem ser reativados aqui.</p>' +
+        (ordem.length
+          ? ordem.map(function (id, index) {
           return '<div class="flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2">' +
             '<span class="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-white text-[10px] font-black text-slate-500">' + (index + 1) + '</span>' +
             '<span class="min-w-0 flex-1 truncate text-xs font-black text-slate-800">' + escapeHtml(tituloCardDashboard(id)) + '</span>' +
             '<button type="button" data-dashboard-move="' + escapeHtml(id) + '" data-dashboard-dir="-1" class="flex h-8 w-8 items-center justify-center rounded-lg bg-white text-sm font-black text-slate-700" aria-label="Subir">&uarr;</button>' +
             '<button type="button" data-dashboard-move="' + escapeHtml(id) + '" data-dashboard-dir="1" class="flex h-8 w-8 items-center justify-center rounded-lg bg-white text-sm font-black text-slate-700" aria-label="Descer">&darr;</button>' +
           '</div>';
-        }).join('') +
+        }).join('')
+          : '<p class="rounded-xl border border-dashed border-slate-300 px-3 py-4 text-center text-xs font-semibold text-slate-500">Nenhum card visivel.</p>') +
+        (removidos.length
+          ? '<div class="mt-2 grid gap-1.5">' +
+              '<p class="px-1 text-[10px] font-black uppercase tracking-wide text-slate-400">Blocos removidos</p>' +
+              removidos.map(function (id) {
+                return '<div class="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2">' +
+                  '<span class="min-w-0 flex-1 truncate text-xs font-black text-slate-800">' + escapeHtml(tituloCardDashboard(id)) + '</span>' +
+                  '<button type="button" data-dashboard-toggle="' + escapeHtml(id) + '" class="h-8 rounded-lg bg-cyan-600 px-3 text-[10px] font-black uppercase text-white">Reativar</button>' +
+                '</div>';
+              }).join('') +
+            '</div>'
+          : '') +
         '<button id="reset-dashboard" type="button" class="mt-1 h-10 rounded-xl border border-slate-200 bg-white px-4 text-xs font-black uppercase tracking-wide text-slate-700">Restaurar ordem padr&atilde;o</button>' +
       '</div>'
     );
@@ -8719,7 +8768,7 @@
 
     return (
       '<div class="grid gap-2">' +
-        '<p class="rounded-xl bg-cyan-50 px-3 py-2 text-[11px] font-semibold leading-relaxed text-cyan-900">Escolha quais cards aparecem no dashboard. A ordem continua no modo Organizar dashboard.</p>' +
+        '<p class="rounded-xl bg-cyan-50 px-3 py-2 text-[11px] font-semibold leading-relaxed text-cyan-900">Escolha quais cards aparecem no dashboard. Para mudar a posição, use Ordenar cards.</p>' +
         '<div class="grid gap-1">' +
           ordem.map(function (id) {
             var visivel = ocultos.indexOf(id) < 0;
@@ -8749,9 +8798,26 @@
     render();
   }
 
+  function abrirOpcoesCardDashboard(id) {
+    state.dashboardOpcoesId = state.dashboardOpcoesId === id ? '' : id;
+    render();
+  }
+
+  function removerCardDashboardMobile(id) {
+    if (premiumPessoalBloqueadoMobile()) { abrirPremiumMobile('organizar_dashboard'); return; }
+    var ocultos = normalizarOcultosDashboard(state.dashboardOcultos);
+    if (ocultos.indexOf(id) < 0) ocultos.push(id);
+    state.dashboardOcultos = ocultos;
+    state.dashboardOpcoesId = '';
+    salvarResumoDashboard();
+    render();
+    mostrarToast('Bloco removido do resumo.');
+  }
+
   function restaurarResumoPadrao() {
     state.dashboardOrdem = ordemDashboardPadrao();
     state.dashboardOcultos = [];
+    state.dashboardOpcoesId = '';
     salvarResumoDashboard();
     render();
     mostrarToast('Resumo padrao restaurado.');
@@ -9913,6 +9979,17 @@
     bind('salvar-despesa', salvarDespesa);
     var diaInputEl = document.getElementById('despesa-dia');
     if (diaInputEl) {
+      diaInputEl.addEventListener('focus', function() {
+        if (state.despesaDiaAutoHoje && this.value === diaHojeLancamentoMobile()) {
+          this.value = '';
+          state.despesaDia = '';
+          state.despesaDiaAutoHoje = false;
+        }
+      });
+      diaInputEl.addEventListener('input', function() {
+        state.despesaDia = this.value;
+        state.despesaDiaAutoHoje = false;
+      });
       diaInputEl.addEventListener('blur', function() {
         var val = Number(this.value);
         var limite = maxDias(state.mes, state.ano);
@@ -9937,6 +10014,41 @@
         }
       });
     }
+    bindChange('despesa-nome', function () { state.despesaNome = this.value || ''; });
+    bindInput('despesa-descricao', function () { state.despesaDescricao = this.value || ''; });
+    bindInput('despesa-valor', function () {
+      var item = document.getElementById('despesa-valor');
+      if (!item) return;
+      item.value = formatarMoedaDigitada(item.value);
+      state.despesaValor = item.value;
+    });
+    var entradaDiaEl = document.getElementById('entrada-dia');
+    if (entradaDiaEl) {
+      entradaDiaEl.addEventListener('focus', function() {
+        if (state.entradaDiaAutoHoje && this.value === diaHojeLancamentoMobile()) {
+          this.value = '';
+          state.entradaDia = '';
+          state.entradaDiaAutoHoje = false;
+        }
+      });
+      entradaDiaEl.addEventListener('input', function() {
+        state.entradaDia = this.value;
+        state.entradaDiaAutoHoje = false;
+      });
+    }
+    bindInput('entrada-origem', function () { state.entradaOrigem = this.value || ''; });
+    bindInput('entrada-valor', function () {
+      var item = document.getElementById('entrada-valor');
+      if (!item) return;
+      item.value = formatarMoedaDigitada(item.value);
+      state.entradaValor = item.value;
+    });
+    bindInput('receita-total', function () {
+      var item = document.getElementById('receita-total');
+      if (!item) return;
+      item.value = formatarMoedaDigitada(item.value);
+      state.receitaTotal = item.value;
+    });
     // Interceptar outros campos quando dia tem erro
     ['despesa-nome', 'despesa-descricao', 'despesa-valor'].forEach(function(fid) {
       var fel = document.getElementById(fid);
@@ -9953,6 +10065,10 @@
     bind('toggle-parcelar-despesa', function() {
       var diaVal = campo('despesa-dia'); var nomeVal = campo('despesa-nome');
       var descVal = campo('despesa-descricao'); var valorVal = campo('despesa-valor');
+      state.despesaDia = diaVal; state.despesaDiaAutoHoje = false;
+      state.despesaNome = nomeVal;
+      state.despesaDescricao = descVal;
+      state.despesaValor = valorVal;
       state.formParcelar = !state.formParcelar;
       if (state.formParcelar && state.formParcelas < 2) state.formParcelas = 2;
       render();
@@ -9965,6 +10081,10 @@
       if (state.formParcelas <= 2) return;
       var diaVal = campo('despesa-dia'); var nomeVal = campo('despesa-nome');
       var descVal = campo('despesa-descricao'); var valorVal = campo('despesa-valor');
+      state.despesaDia = diaVal; state.despesaDiaAutoHoje = false;
+      state.despesaNome = nomeVal;
+      state.despesaDescricao = descVal;
+      state.despesaValor = valorVal;
       state.formParcelas--;
       render();
       var d = document.getElementById('despesa-dia'); if (d) d.value = diaVal;
@@ -9975,6 +10095,10 @@
     bind('parcelar-mais', function() {
       var diaVal = campo('despesa-dia'); var nomeVal = campo('despesa-nome');
       var descVal = campo('despesa-descricao'); var valorVal = campo('despesa-valor');
+      state.despesaDia = diaVal; state.despesaDiaAutoHoje = false;
+      state.despesaNome = nomeVal;
+      state.despesaDescricao = descVal;
+      state.despesaValor = valorVal;
       state.formParcelas++;
       render();
       var d = document.getElementById('despesa-dia'); if (d) d.value = diaVal;
@@ -10085,17 +10209,9 @@
       state.novaDespesaAberta = false;
       state.novaDespesaNome = '';
       state.novaDespesaCategoria = '';
+      limparRascunhoLancamentoMobile();
       render();
     });
-    var modalLancamentoOverlay = document.getElementById('modal-lancamento-overlay');
-    if (modalLancamentoOverlay) {
-      modalLancamentoOverlay.addEventListener('click', function (event) {
-        if (event.target !== modalLancamentoOverlay) return;
-        state.modalLancamento = false;
-        state.erro = '';
-        render();
-      });
-    }
     bind('tipo-despesa', function () {
       state.tipoLancamento = 'despesa';
       render();
@@ -10142,13 +10258,6 @@
       excluirRecorrenciaOverlay.addEventListener('click', function (event) {
         if (event.target !== excluirRecorrenciaOverlay || state.carregando) return;
         cancelarExclusaoRecorrenciaMobile();
-      });
-    }
-    var modalAcaoOverlay = document.getElementById('modal-acao-overlay');
-    if (modalAcaoOverlay) {
-      modalAcaoOverlay.addEventListener('click', function (event) {
-        if (event.target !== modalAcaoOverlay) return;
-        fecharAcaoLancamento();
       });
     }
     var modalMenuOverlay = document.getElementById('modal-menu-overlay');
@@ -10323,6 +10432,18 @@
     Array.prototype.forEach.call(document.querySelectorAll('[data-dashboard-toggle]'), function (botao) {
       botao.addEventListener('click', function () {
         alternarCardResumo(botao.getAttribute('data-dashboard-toggle'));
+      });
+    });
+    Array.prototype.forEach.call(document.querySelectorAll('[data-dashboard-opcoes]'), function (botao) {
+      botao.addEventListener('click', function (event) {
+        event.stopPropagation();
+        abrirOpcoesCardDashboard(botao.getAttribute('data-dashboard-opcoes'));
+      });
+    });
+    Array.prototype.forEach.call(document.querySelectorAll('[data-dashboard-remover]'), function (botao) {
+      botao.addEventListener('click', function (event) {
+        event.stopPropagation();
+        removerCardDashboardMobile(botao.getAttribute('data-dashboard-remover'));
       });
     });
     Array.prototype.forEach.call(document.querySelectorAll('[data-atalho-lado]'), function (botao) {

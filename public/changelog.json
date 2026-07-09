@@ -13,6 +13,29 @@
   },
   "versoes": [
     {
+      "versao": "1.4.0.05",
+      "titulo": "Lançamentos mais seguros no mobile",
+      "data": "Julho/2026",
+      "itens": [
+        "Web e mobile: novo lançamento abre com o dia atual preenchido e limpa esse valor automaticamente ao focar no campo.",
+        "Mobile: rascunho de despesa passa a ser preservado durante re-renderizações do modal.",
+        "Mobile: modais de lançamento não fecham mais ao tocar fora.",
+        "Mobile: cards do resumo ganham menu \"...\" com opção de remover bloco.",
+        "Mobile: menus de organização dos cards foram renomeados para \"Ordenar cards\" e \"Mostrar/ocultar cards\".",
+        "Web: card de Lançamentos Mensais ganha menu de opções e pode ser removido/restaurado pelo organizador."
+      ]
+    },
+    {
+      "versao": "1.4.0.04",
+      "titulo": "Contagem de usuários no Admin",
+      "data": "Julho/2026",
+      "itens": [
+        "Admin: card de Perfis passa a exibir a quantidade de usuários ativos/cadastrados.",
+        "Admin: contagem mantém a regra do sistema e não inclui funcionários do Controle de Ponto.",
+        "Mobile: contagem de usuários ativos removida do rodapé."
+      ]
+    },
+    {
       "versao": "1.4.0.03",
       "titulo": "Landing oficial e ajustes de acesso",
       "data": "Julho/2026",

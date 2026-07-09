@@ -1,5 +1,19 @@
 # Changelog
 
+## 1.4.0.05 - 2026-07-09
+
+- Web e mobile: novo lançamento passa a abrir com o dia atual preenchido e limpa esse dia automaticamente ao focar no campo.
+- Mobile: rascunho do lançamento de despesa passa a ser preservado durante re-renderizações do modal.
+- Mobile: modais de lançamento deixam de fechar ao tocar fora, evitando perda acidental de preenchimento.
+- Mobile: cards do resumo ganham menu "..." com opção de remover bloco.
+- Mobile: menus de organização dos cards foram renomeados para "Ordenar cards" e "Mostrar/ocultar cards".
+- Web: card de Lançamentos Mensais passa a ter menu de opções e pode ser removido/restaurado pelo organizador.
+
+## 1.4.0.04 - 2026-07-09
+
+- Admin: card de Perfis passa a exibir a quantidade de usuários ativos/cadastrados, sem contar funcionários do Controle de Ponto.
+- Mobile: contagem de usuários ativos removida do rodapé.
+
 ## 1.4.0.03 - 2026-07-09
 
 - Web: nova landing page oficial em pagina cheia na porta do sistema, com hero, beneficios, secao da IA Ava, planos com precos anual/mensal, FAQ e CTAs que abrem direto a tela de criar cadastro.

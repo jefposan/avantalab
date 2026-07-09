@@ -35,6 +35,11 @@ type Perfil = {
   tem_registro: boolean;
 };
 
+type UsuariosAtivosSistema = {
+  total: number | null;
+  carregando: boolean;
+};
+
 function detalheAcesso(p: Perfil): string {
   if (p.status === 'cortesia') {
     const origem = p.cupom_id ? 'Cupom' : 'Cortesia';
@@ -197,6 +202,7 @@ export default function AdminPage() {
   const [perfilPorPagina, setPerfilPorPagina] = useState(20);
   const [perfilTotal, setPerfilTotal] = useState(0);
   const [perfisCarregados, setPerfisCarregados] = useState(false);
+  const [usuariosAtivosSistema, setUsuariosAtivosSistema] = useState<UsuariosAtivosSistema>({ total: null, carregando: false });
   const [consumo, setConsumo] = useState<ConsumoPlataforma[]>([]);
   const [consumoCarregando, setConsumoCarregando] = useState(false);
   const [consumoGeradoEm, setConsumoGeradoEm] = useState('');
@@ -239,6 +245,19 @@ export default function AdminPage() {
       setError(requestError instanceof Error ? requestError.message : 'Não foi possível buscar.');
     } finally {
       setBuscandoPerfis(false);
+    }
+  };
+
+  const carregarUsuariosAtivosSistema = async () => {
+    setUsuariosAtivosSistema((current) => current.carregando ? current : { ...current, carregando: true });
+    try {
+      const response = await fetch('/api/usuarios-ativos');
+      const data = await response.json().catch(() => null);
+      if (!response.ok || data?.erro) throw new Error(data?.mensagem || 'Não foi possível contar usuários.');
+      const total = Number(data?.total);
+      setUsuariosAtivosSistema({ total: Number.isFinite(total) ? total : 0, carregando: false });
+    } catch {
+      setUsuariosAtivosSistema({ total: null, carregando: false });
     }
   };
 
@@ -376,12 +395,13 @@ export default function AdminPage() {
       const data = await response.json().catch(() => null);
       if (!response.ok || data?.erro) {
         setAuthorized(false);
+        setUsuariosAtivosSistema({ total: null, carregando: false });
         setError(data?.mensagem || 'Não foi possível acessar o painel.');
         return;
       }
       setFeedbacks(data.feedbacks || []);
       setAuthorized(true);
-      await Promise.allSettled([loadBroadcasts(cleanToken), loadSettings(cleanToken), loadCupons(cleanToken)]);
+      await Promise.allSettled([loadBroadcasts(cleanToken), loadSettings(cleanToken), loadCupons(cleanToken), carregarUsuariosAtivosSistema()]);
     } catch {
       setAuthorized(false);
       setError('Erro inesperado ao acessar o painel.');
@@ -500,6 +520,7 @@ export default function AdminPage() {
     setError('');
     setNotice('');
     setView('avaliacoes');
+    setUsuariosAtivosSistema({ total: null, carregando: false });
   };
 
   const navigation: { id: AdminView; label: string; icon: IconName }[] = [
@@ -623,7 +644,22 @@ export default function AdminPage() {
 
           {view === 'perfis' && <div className="space-y-4">
             <section className="rounded-lg border border-slate-200 bg-white p-3 shadow-sm">
-              <h2 className="text-base font-black text-slate-950">Perfis</h2><p className="text-xs text-slate-500">Busque por nome, ou carregue a lista para ver qualquer perfil. Ordem alfabética.</p>
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                <div className="min-w-0">
+                  <h2 className="text-base font-black text-slate-950">Perfis</h2>
+                  <p className="text-xs text-slate-500">Busque por nome, ou carregue a lista para ver qualquer perfil. Ordem alfabética.</p>
+                </div>
+                <div className="shrink-0 rounded-lg border border-cyan-100 bg-cyan-50 px-3 py-2 text-right">
+                  <p className="text-[9px] font-black uppercase tracking-wide text-cyan-800">Usuários ativos/cadastrados</p>
+                  <p className="mt-0.5 text-xl font-black leading-none text-cyan-950">
+                    {usuariosAtivosSistema.carregando
+                      ? '...'
+                      : usuariosAtivosSistema.total === null
+                        ? '-'
+                        : usuariosAtivosSistema.total.toLocaleString('pt-BR')}
+                  </p>
+                </div>
+              </div>
               <div className="mt-3 flex flex-col gap-2 sm:flex-row">
                 <input value={perfilBusca} onChange={(event) => setPerfilBusca(event.target.value)} onKeyDown={(event) => { if (event.key === 'Enter') void buscarPerfis(1); }} placeholder="Nome do perfil (vazio = todos)" className="h-10 flex-1 rounded-md border border-slate-300 px-3 text-sm outline-none focus:border-cyan-700" />
                 <div className="flex gap-2">

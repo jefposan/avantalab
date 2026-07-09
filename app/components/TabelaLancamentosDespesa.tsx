@@ -61,6 +61,7 @@ type TabelaLancamentosDespesaProps = {
   setOrdemLancamentos: Dispatch<SetStateAction<'desc' | 'asc'>>;
   formDia: string;
   setFormDia: (valor: string) => void;
+  onFocoDiaLancamento?: () => void;
   formDespesa: string;
   setFormDespesa: (valor: string) => void;
   formDescricao: string;
@@ -120,6 +121,7 @@ export default function TabelaLancamentosDespesa({
   setOrdemLancamentos,
   formDia,
   setFormDia,
+  onFocoDiaLancamento,
   formDespesa,
   setFormDespesa,
   formDescricao,
@@ -195,6 +197,7 @@ export default function TabelaLancamentosDespesa({
           setOrdemLancamentos={setOrdemLancamentos}
           formDia={formDia}
           setFormDia={setFormDia}
+          onFocoDiaLancamento={onFocoDiaLancamento}
           formDespesa={formDespesa}
           setFormDespesa={setFormDespesa}
           formDescricao={formDescricao}
