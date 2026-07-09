@@ -126,14 +126,30 @@ export default function AuthCard({
 
   // Landing oficial em página cheia substitui a tela pré-login antiga.
   // Com aviso aberto, mantém o fluxo clássico para exibir o modal.
+  // No celular, login e cadastro acontecem no app mobile (/mobile).
+  const ehDispositivoMobile = () =>
+    typeof window !== 'undefined' &&
+    window.innerWidth < 1024 &&
+    ('ontouchstart' in window ||
+      navigator.maxTouchPoints > 0 ||
+      /Android|iPhone|iPad|iPod|Opera Mini|IEMobile|Mobile/i.test(navigator.userAgent));
+
   if (mostrarLandingPreLoginAtiva && !modalAvisoAberto) {
     return (
       <LandingPage
         onCriarConta={() => {
+          if (ehDispositivoMobile()) {
+            window.location.href = '/mobile?cadastro=1';
+            return;
+          }
           setMostrarLandingPreLogin(false);
           setModoAuth('cadastro');
         }}
         onEntrar={() => {
+          if (ehDispositivoMobile()) {
+            window.location.href = '/mobile';
+            return;
+          }
           setMostrarLandingPreLogin(false);
           setModoAuth('login');
         }}

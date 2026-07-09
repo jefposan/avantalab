@@ -948,7 +948,7 @@ const extrairCorPredominanteLogo = (imagemBase64: string): Promise<string | null
 };
 
 useEffect(() => {
-  const verificarDispositivoMobile = () => {
+  const verificarDispositivoMobile = async () => {
     const larguraPequena = window.innerWidth < 1024;
 
     const dispositivoComToque =
@@ -965,7 +965,24 @@ useEffect(() => {
     setIsTelaMobile(ehMobile);
 
     if (ehMobile && window.location.pathname !== '/mobile') {
-      window.location.replace('/mobile');
+      // Deep link de cadastro no celular segue direto para o app mobile.
+      const parametros = new URLSearchParams(window.location.search);
+      if (parametros.get('cadastro') === '1') {
+        window.location.replace('/mobile?cadastro=1');
+        return;
+      }
+
+      // Com sessão ativa, vai direto ao app mobile (comportamento atual).
+      // Sem sessão, permanece em / para exibir a landing responsiva;
+      // os botões Entrar/Teste grátis da landing levam ao /mobile.
+      try {
+        const { data } = await supabase.auth.getSession();
+        if (data?.session) {
+          window.location.replace('/mobile');
+        }
+      } catch {
+        // Em caso de falha na checagem, mantém a landing (sem redirect).
+      }
     }
   };
 
