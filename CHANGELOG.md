@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.4.0.07 - 2026-07-09
+
+- Web: campo de dia em lançamentos volta a permanecer vazio/manual ao abrir o card de despesa.
+- Mobile: menu "..." dos cards do resumo reposicionado junto ao puxador de arraste, sem criar espaço fora do card.
+
+## 1.4.0.06 - 2026-07-09
+
+- Web e mobile: telefone confirmado por SMS no cadastro passa a ser aplicado automaticamente ao primeiro perfil financeiro, evitando nova confirmação por SMS no primeiro acesso.
+- Segurança: SMS permanece necessário para redefinição de senha e para acessos antigos que ainda não possuem celular confirmado.
+
 ## 1.4.0.05 - 2026-07-09
 
 - Web e mobile: novo lançamento passa a abrir com o dia atual preenchido e limpa esse dia automaticamente ao focar no campo.

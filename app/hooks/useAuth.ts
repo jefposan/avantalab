@@ -34,6 +34,18 @@ export type UseAuthDeps = {
   setDuplicadosAtivo: React.Dispatch<React.SetStateAction<boolean>>;
 };
 
+function telefoneCadastroConfirmado(metadata: Record<string, unknown> | null | undefined) {
+  const telefoneOriginal = String(metadata?.telefone || '');
+  const digitos = telefoneOriginal.replace(/\D/g, '');
+  if (!digitos) return '';
+
+  if (digitos.startsWith('55') && (digitos.length === 12 || digitos.length === 13)) {
+    return digitos.slice(2);
+  }
+
+  return digitos;
+}
+
 // ---------------------------------------------------------------------------
 // Hook
 // ---------------------------------------------------------------------------
@@ -733,6 +745,25 @@ export function useAuth(deps: UseAuthDeps) {
     const empresaCriadaId = empresaCriada?.id || empresaCriada?.empresa_id;
 
     if (empresaCriadaId) {
+      const telefoneConfirmado = telefoneCadastroConfirmado(sessaoAtual.session.user.user_metadata);
+      if (telefoneConfirmado) {
+        const agoraTelefone = new Date().toISOString();
+        const { error: erroTelefoneConfirmado } = await supabase
+          .from('usuarios_empresa')
+          .update({
+            telefone: telefoneConfirmado,
+            telefone_confirmado: true,
+            telefone_confirmado_em: agoraTelefone,
+            atualizado_em: agoraTelefone,
+          })
+          .eq('empresa_id', empresaCriadaId)
+          .eq('user_id', sessaoAtual.session.user.id);
+
+        if (erroTelefoneConfirmado) {
+          console.error('Erro ao aplicar telefone confirmado do cadastro:', erroTelefoneConfirmado);
+        }
+      }
+
       const resultadoTipoPerfil = await atualizarEmpresa({
         empresaId: empresaCriadaId,
         nome: nomeLimpo,

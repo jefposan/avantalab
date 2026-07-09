@@ -17,7 +17,6 @@ type CardLancamentoDespesaProps = {
   setOrdemLancamentos: Dispatch<SetStateAction<'desc' | 'asc'>>;
   formDia: string;
   setFormDia: (valor: string) => void;
-  onFocoDiaLancamento?: () => void;
   formDespesa: string;
   setFormDespesa: (valor: string) => void;
   formDescricao: string;
@@ -47,7 +46,6 @@ export default function CardLancamentoDespesa({
   setOrdemLancamentos,
   formDia,
   setFormDia,
-  onFocoDiaLancamento,
   formDespesa,
   setFormDespesa,
   formDescricao,
@@ -133,10 +131,7 @@ export default function CardLancamentoDespesa({
                 setFormDia(e.target.value);
               }
             }}
-            onFocus={() => {
-              onFoco();
-              onFocoDiaLancamento?.();
-            }}
+            onFocus={onFoco}
             placeholder="Dia"
             className={`${inputBase} input-dia-compacto h-9 px-1.5 py-0 text-center font-bold leading-none`}
             style={{ outlineColor: corPrimaria }}

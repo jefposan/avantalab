@@ -13,6 +13,25 @@
   },
   "versoes": [
     {
+      "versao": "1.4.0.07",
+      "titulo": "Refino dos lançamentos e cards",
+      "data": "Julho/2026",
+      "itens": [
+        "Web: campo de dia em lançamentos volta a permanecer vazio/manual ao abrir o card de despesa.",
+        "Mobile: menu \"...\" dos cards do resumo foi reposicionado junto ao puxador de arraste, sem criar espaço fora do card."
+      ]
+    },
+    {
+      "versao": "1.4.0.06",
+      "titulo": "Cadastro com acesso mais direto",
+      "data": "Julho/2026",
+      "itens": [
+        "Web e mobile: telefone confirmado por SMS no cadastro passa a liberar automaticamente o primeiro perfil financeiro.",
+        "Onboarding: primeiro acesso deixa de pedir uma segunda confirmação por SMS após o cadastro.",
+        "Segurança: SMS permanece ativo para redefinição de senha e para acessos antigos sem celular confirmado."
+      ]
+    },
+    {
       "versao": "1.4.0.05",
       "titulo": "Lançamentos mais seguros no mobile",
       "data": "Julho/2026",

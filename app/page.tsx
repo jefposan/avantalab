@@ -722,7 +722,6 @@ const [editEntradaFaturamentoValorNumerico, setEditEntradaFaturamentoValorNumeri
   const [lancamentos, setLancamentos] = useState<LancamentoFinanceiro[]>([]);
   const [caixinhaMovimentos, setCaixinhaMovimentos] = useState<CaixinhaMovimento[]>([]);
   const [formDia, setFormDia] = useState('');
-  const [formDiaAutoHoje, setFormDiaAutoHoje] = useState(false);
   const [formDespesa, setFormDespesa] = useState('');
   const [formDescricao, setFormDescricao] = useState('');
   const [formValor, setFormValor] = useState('');
@@ -739,28 +738,6 @@ const [editValor, setEditValor] = useState('');
 const [editValorNumerico, setEditValorNumerico] = useState(0);
 const [ordemLancamentos, setOrdemLancamentos] = useState<'desc' | 'asc'>('desc');
 const [ordemEntradasFaturamento, setOrdemEntradasFaturamento] = useState<'desc' | 'asc'>('desc');
-
-const diaAtualLancamento = () => String(new Date().getDate());
-
-const ativarBlocoDespesa = () => {
-  setBlocoAtivo('despesa');
-  if (!formDia) {
-    setFormDia(diaAtualLancamento());
-    setFormDiaAutoHoje(true);
-  }
-};
-
-const alterarDiaLancamento = (valor: string) => {
-  setFormDiaAutoHoje(false);
-  setFormDia(valor);
-};
-
-const limparDiaAutomaticoAoFocar = () => {
-  if (formDiaAutoHoje && formDia === diaAtualLancamento()) {
-    setFormDia('');
-    setFormDiaAutoHoje(false);
-  }
-};
 const [buscaLancamento, setBuscaLancamento] = useState('');
 const [buscaEntradaFaturamento, setBuscaEntradaFaturamento] = useState('');
 
@@ -3436,7 +3413,6 @@ const executarParcelamento = async () => {
     setLancamentos((prev) => [...novosLancamentos, ...prev]);
     notificarFinanceiroAtualizado();
     setFormDia('');
-    setFormDiaAutoHoje(false);
     setFormDespesa('');
     setFormDescricao('');
     setFormValor('');
@@ -5535,7 +5511,6 @@ const mudarMesMobile = (mes: string) => {
   setLancamentoEditandoId(null);
   setEntradaFaturamentoEditandoId(null);
   setFormDia('');
-  setFormDiaAutoHoje(false);
   setFormDespesa('');
   setFormDescricao('');
   setFormValor('');
@@ -8863,7 +8838,7 @@ name="novo-usuario-login"
 
           <main className={classePaginaInterna}>
             <div className="mt-5 flex flex-col gap-6 xl:flex-row xl:items-start">
-              <div onClick={ativarBlocoDespesa} className="min-w-0 cursor-pointer transition-[width,opacity] duration-300 ease-in-out" style={{ width: typeof window !== 'undefined' && window.innerWidth >= 1280 ? (blocoAtivo === 'despesa' ? '62%' : blocoAtivo === 'receita' ? '38%' : '50%') : '100%', opacity: blocoAtivo === 'receita' ? 0.5 : 1 }}>
+              <div onClick={() => setBlocoAtivo('despesa')} className="min-w-0 cursor-pointer transition-[width,opacity] duration-300 ease-in-out" style={{ width: typeof window !== 'undefined' && window.innerWidth >= 1280 ? (blocoAtivo === 'despesa' ? '62%' : blocoAtivo === 'receita' ? '38%' : '50%') : '100%', opacity: blocoAtivo === 'receita' ? 0.5 : 1 }}>
 <TabelaLancamentosDespesa
               bgCard={bgCard}
               corPrimaria={corPrimaria}
@@ -8875,8 +8850,7 @@ name="novo-usuario-login"
               ordemLancamentos={ordemLancamentos}
               setOrdemLancamentos={setOrdemLancamentos}
               formDia={formDia}
-              setFormDia={alterarDiaLancamento}
-              onFocoDiaLancamento={limparDiaAutomaticoAoFocar}
+              setFormDia={setFormDia}
               formDespesa={formDespesa}
               setFormDespesa={setFormDespesa}
               formDescricao={formDescricao}
@@ -8915,7 +8889,7 @@ name="novo-usuario-login"
               formatarMoeda={formatarMoeda}
               formatarDescricao={formatarDescricao}
               expandidoDespesa={blocoAtivo === 'despesa'}
-              onFocoDespesa={ativarBlocoDespesa}
+              onFocoDespesa={() => setBlocoAtivo('despesa')}
               formParcelar={formParcelar}
               setFormParcelar={setFormParcelar}
               formParcelas={formParcelas}

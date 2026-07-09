@@ -4008,6 +4008,16 @@
     return '+' + ddi + (state.cadastro.telefone || '');
   }
 
+  function telefoneConfirmadoDoUsuarioMobile() {
+    var md = state.usuario && state.usuario.user_metadata ? state.usuario.user_metadata : {};
+    var digitos = String(md.telefone || '').replace(/\D/g, '');
+    if (!digitos) return '';
+    if (digitos.indexOf('55') === 0 && (digitos.length === 12 || digitos.length === 13)) {
+      return digitos.slice(2);
+    }
+    return digitos;
+  }
+
   async function enviarCodigoCadastro() {
     lerCadastroDaTela();
 
@@ -4233,6 +4243,24 @@
     var criadaId = criada && (criada.id || criada.empresa_id);
 
     if (criadaId) {
+      var telefoneConfirmado = telefoneConfirmadoDoUsuarioMobile();
+      if (telefoneConfirmado) {
+        var agoraTelefone = new Date().toISOString();
+        var atualizacaoTelefone = await db
+          .from('usuarios_empresa')
+          .update({
+            telefone: telefoneConfirmado,
+            telefone_confirmado: true,
+            telefone_confirmado_em: agoraTelefone,
+            atualizado_em: agoraTelefone,
+          })
+          .eq('empresa_id', criadaId)
+          .eq('user_id', state.usuario.id);
+        if (atualizacaoTelefone.error) {
+          console.error('Erro ao aplicar telefone confirmado do cadastro:', atualizacaoTelefone.error);
+        }
+      }
+
       await db.from('configuracoes').upsert({ empresa_id: criadaId, duplicados_ativo: true }, { onConflict: 'empresa_id' });
       var tokInicial = await tokenSessao();
       if (tokInicial) {
@@ -6741,15 +6769,15 @@
       .map(function (id) {
         if (!cards[id]) return '';
         var menuAberto = state.dashboardOpcoesId === id;
-        return '<div data-dashboard-card="' + escapeHtml(id) + '" class="relative pb-2 pt-8 transition-[transform,opacity,filter] duration-200 ease-out">' +
-          '<button type="button" data-dashboard-opcoes="' + escapeHtml(id) + '" class="absolute right-3 top-0 z-20 flex h-7 w-8 items-center justify-center rounded-full bg-white/90 text-[15px] font-black leading-none text-slate-500 shadow-sm ring-1 ring-slate-200 active:bg-slate-100" aria-label="Opcoes do bloco">...</button>' +
+        return '<div data-dashboard-card="' + escapeHtml(id) + '" class="relative pb-2 transition-[transform,opacity,filter] duration-200 ease-out">' +
+          cards[id] +
+          '<button type="button" data-dashboard-opcoes="' + escapeHtml(id) + '" class="absolute bottom-1 ' + (id === 'ia' ? 'right-3' : 'right-12') + ' z-20 flex h-7 w-8 items-center justify-center rounded-full bg-transparent text-[13px] font-black leading-none text-slate-400 active:bg-slate-100" aria-label="Opcoes do bloco">...</button>' +
+          (id === 'ia' ? '' : '<button type="button" data-dashboard-handle="' + escapeHtml(id) + '" class="absolute bottom-1 right-3 flex h-7 w-8 select-none touch-none items-center justify-center rounded-full bg-transparent text-[11px] font-black leading-none text-slate-400" aria-label="Mover card">&vellip;&vellip;</button>') +
           (menuAberto
-            ? '<div data-dashboard-menu-card="' + escapeHtml(id) + '" class="absolute right-3 top-8 z-30 w-44 overflow-hidden rounded-xl border border-slate-200 bg-white py-1 text-slate-800 shadow-2xl">' +
+            ? '<div data-dashboard-menu-card="' + escapeHtml(id) + '" class="absolute bottom-9 right-3 z-30 w-44 overflow-hidden rounded-xl border border-slate-200 bg-white py-1 text-slate-800 shadow-2xl">' +
                 '<button type="button" data-dashboard-remover="' + escapeHtml(id) + '" class="flex w-full items-center gap-2 px-3 py-2 text-left text-[11px] font-black text-slate-700 active:bg-slate-50"><span class="text-sm leading-none">-</span>Remover bloco</button>' +
               '</div>'
             : '') +
-          cards[id] +
-          (id === 'ia' ? '' : '<button type="button" data-dashboard-handle="' + escapeHtml(id) + '" class="absolute bottom-1 right-3 flex h-7 w-8 select-none touch-none items-center justify-center rounded-full bg-transparent text-[11px] font-black leading-none text-slate-400" aria-label="Mover card">&vellip;&vellip;</button>') +
         '</div>';
       })
       .join('');
