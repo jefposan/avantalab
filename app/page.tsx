@@ -423,6 +423,8 @@ export default function AppGestao() {
   
 const [mounted, setMounted] = useState(false);
 const [isTelaMobile, setIsTelaMobile] = useState(false);
+// True apenas enquanto um redirect para /mobile está em andamento.
+const [redirecionandoMobile, setRedirecionandoMobile] = useState(false);
 const [darkMode, setDarkMode] = useState(false);
 const [ajudaCategoriasAberta, setAjudaCategoriasAberta] = useState(false);
 const [validacaoTelefoneObrigatoria, setValidacaoTelefoneObrigatoria] = useState(false);
@@ -968,6 +970,7 @@ useEffect(() => {
       // Deep link de cadastro no celular segue direto para o app mobile.
       const parametros = new URLSearchParams(window.location.search);
       if (parametros.get('cadastro') === '1') {
+        setRedirecionandoMobile(true);
         window.location.replace('/mobile?cadastro=1');
         return;
       }
@@ -978,6 +981,7 @@ useEffect(() => {
       try {
         const { data } = await supabase.auth.getSession();
         if (data?.session) {
+          setRedirecionandoMobile(true);
           window.location.replace('/mobile');
         }
       } catch {
@@ -6083,7 +6087,7 @@ if (validacaoTelefoneObrigatoria) {
   );
 }
 
-if (isTelaMobile) {
+if (redirecionandoMobile) {
   return (
     <main className="flex min-h-screen items-center justify-center bg-slate-950 px-6 text-white">
       <section className="w-full max-w-sm text-center">
