@@ -147,7 +147,7 @@ export default function AuthCard({
         }}
         onEntrar={() => {
           if (ehDispositivoMobile()) {
-            window.location.href = '/mobile';
+            window.location.href = '/mobile?entrar=1';
             return;
           }
           setMostrarLandingPreLogin(false);

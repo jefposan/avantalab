@@ -11056,7 +11056,8 @@
   async function iniciar() {
     window._avaProfilePillHidden = false;
 
-    // Deep link da landing: /mobile?cadastro=1 abre direto a tela de criar cadastro.
+    // Deep links da landing: /mobile?cadastro=1 abre direto a tela de criar
+    // cadastro; /mobile?entrar=1 abre direto o card de login (pula boas-vindas).
     try {
       var parametrosLanding = new URLSearchParams(window.location.search);
       if (parametrosLanding.get('cadastro') === '1') {
@@ -11064,6 +11065,10 @@
         state.modoCadastro = true;
         state.modoSenha = false;
         state.smsCadastroEnviado = false;
+      } else if (parametrosLanding.get('entrar') === '1') {
+        state.telaAcesso = 'login';
+        state.modoCadastro = false;
+        state.modoSenha = false;
       }
     } catch (error) {}
 
