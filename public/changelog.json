@@ -13,6 +13,16 @@
   },
   "versoes": [
     {
+      "versao": "1.4.0.21",
+      "titulo": "Histórico no relatório de perfil",
+      "data": "Julho/2026",
+      "itens": [
+        "Web: relatório de perfil passa a exibir gráfico de receitas x despesas dos últimos 6 meses com tooltip.",
+        "Web: bloco \"Receitas x despesas por perfil\" ganha destaque com borda na cor primária.",
+        "Web: card reduzido troca o rótulo \"Resultado consolidado\" por \"Consolidado\" para melhorar o encaixe."
+      ]
+    },
+    {
       "versao": "1.4.0.20",
       "titulo": "Card Meus perfis refinado",
       "data": "Julho/2026",

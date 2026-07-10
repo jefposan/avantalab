@@ -91,6 +91,13 @@ function ColunaKanban({ id, items, arrastando, className, children }: { id: keyo
 
 type DashboardCols = { full: string[]; a: string[]; b: string[] };
 
+type HistoricoPerfilFinanceiro = {
+  mes: string;
+  ano: number;
+  receitas: number;
+  despesas: number;
+};
+
 type ResumoPerfilFinanceiro = {
   id: string;
   nome: string;
@@ -98,6 +105,7 @@ type ResumoPerfilFinanceiro = {
   receitas: number;
   despesas: number;
   resultado: number;
+  historicoMensal?: HistoricoPerfilFinanceiro[];
 };
 
 interface DashboardProps {
@@ -224,6 +232,14 @@ export default function Dashboard({
     x: number;
     y: number;
     nome: string;
+    receitas: number;
+    despesas: number;
+  } | null>(null);
+  const [tooltipHistoricoPerfil, setTooltipHistoricoPerfil] = useState<{
+    x: number;
+    y: number;
+    mes: string;
+    ano: number;
     receitas: number;
     despesas: number;
   } | null>(null);
@@ -1299,7 +1315,9 @@ const mostrarComparativoResumoDash =
         <div className="space-y-2 p-3">
           <div className={`grid grid-cols-3 gap-1.5 rounded-xl border p-1.5 ${darkMode ? 'border-slate-700 bg-slate-800/50' : 'border-slate-200 bg-slate-50'}`}>
             <div className="min-w-0 rounded-lg px-2.5 py-2 shadow-sm" style={{ backgroundColor: corPrimaria, color: textoSobreCorPrimaria }}>
-              <span className="block truncate text-[9px] font-black uppercase tracking-wide opacity-75">Resultado consolidado</span>
+              <span className="block truncate text-[9px] font-black uppercase tracking-wide opacity-75">
+                {cols.full.includes('meusPerfis') ? 'Resultado consolidado' : 'Consolidado'}
+              </span>
               <strong className="mt-0.5 block truncate text-[13px] font-black tabular-nums">
                 {ocultarValoresPerfis ? 'R$ •••••••' : formatarMoeda(resultadoPerfis)}
               </strong>
@@ -1380,7 +1398,10 @@ const mostrarComparativoResumoDash =
           </div>
 
           {cols.full.includes('meusPerfis') && perfisDashboard.length > 0 && (
-            <div className={`rounded-xl border p-2.5 ${darkMode ? 'border-slate-700 bg-slate-800/45' : 'border-slate-200 bg-slate-50/80'}`}>
+            <div
+              className={`rounded-xl border-2 p-2.5 shadow-sm ${darkMode ? 'bg-slate-800/45' : 'bg-white'}`}
+              style={{ borderColor: corPrimaria }}
+            >
               <div className="flex items-center justify-between gap-3">
                 <div className="min-w-0">
                   <h3 className={`truncate text-xs font-black uppercase tracking-wide ${textStrong}`}>Receitas x despesas por perfil</h3>
@@ -1945,7 +1966,22 @@ const mostrarComparativoResumoDash =
       const receitasPerfil = Number(perfilDetalhado.receitas || 0);
       const despesasPerfil = Number(perfilDetalhado.despesas || 0);
       const resultadoPerfil = Number(perfilDetalhado.resultado ?? receitasPerfil - despesasPerfil);
-      const maximoPerfil = Math.max(1, receitasPerfil, despesasPerfil);
+      const indiceMesDetalhe = Math.max(0, meses.indexOf(nomeMesPerfis));
+      const historicoFallback = Array.from({ length: 6 }, (_, offset) => {
+        const data = new Date(Number(anoSelecionado), indiceMesDetalhe, 1);
+        data.setMonth(data.getMonth() - (5 - offset));
+        const mes = meses[data.getMonth()];
+        return {
+          mes,
+          ano: data.getFullYear(),
+          receitas: offset === 5 ? receitasPerfil : 0,
+          despesas: offset === 5 ? despesasPerfil : 0,
+        };
+      });
+      const historicoPerfil = (perfilDetalhado.historicoMensal && perfilDetalhado.historicoMensal.length >= 6
+        ? perfilDetalhado.historicoMensal
+        : historicoFallback).slice(-6);
+      const maximoHistoricoPerfil = Math.max(1, ...historicoPerfil.flatMap((item) => [Number(item.receitas || 0), Number(item.despesas || 0)]));
       const participacaoReceitas = totalReceitasPerfis > 0 ? (receitasPerfil / totalReceitasPerfis) * 100 : 0;
       const participacaoDespesas = totalDespesasPerfis > 0 ? (despesasPerfil / totalDespesasPerfis) * 100 : 0;
       const margemPerfil = receitasPerfil > 0 ? (resultadoPerfil / receitasPerfil) * 100 : 0;
@@ -1966,7 +2002,10 @@ const mostrarComparativoResumoDash =
               </div>
               <button
                 type="button"
-                onClick={() => setPerfilDetalhado(null)}
+                onClick={() => {
+                  setTooltipHistoricoPerfil(null);
+                  setPerfilDetalhado(null);
+                }}
                 className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-xl font-black text-white/75 transition hover:bg-white/15 hover:text-white"
                 aria-label="Fechar relatório do perfil"
               >
@@ -1993,12 +2032,40 @@ const mostrarComparativoResumoDash =
                 <div className="flex items-center justify-between gap-3">
                   <h3 className={`truncate text-xs font-black uppercase tracking-wide ${textStrong}`}>Receitas x despesas</h3>
                   <span className={`text-[10px] font-black uppercase ${resultadoPerfil >= 0 ? 'text-emerald-500' : 'text-red-500'}`}>
-                    Margem {percentualPerfil(margemPerfil)}
+                    Últimos 6 meses · margem {percentualPerfil(margemPerfil)}
                   </span>
                 </div>
-                <div className="mt-3 flex h-24 items-end justify-center gap-4">
-                  <div className="flex h-full w-10 items-end justify-center rounded-t-lg bg-emerald-500 shadow-sm" style={{ height: `${Math.max(6, (receitasPerfil / maximoPerfil) * 100)}%` }} />
-                  <div className="flex h-full w-10 items-end justify-center rounded-t-lg bg-red-500 shadow-sm" style={{ height: `${Math.max(6, (despesasPerfil / maximoPerfil) * 100)}%` }} />
+                <div className="mt-3 grid grid-cols-6 items-end gap-2" onMouseLeave={() => setTooltipHistoricoPerfil(null)}>
+                  {historicoPerfil.map((item) => {
+                    const receitasItem = Number(item.receitas || 0);
+                    const despesasItem = Number(item.despesas || 0);
+                    return (
+                      <div
+                        key={`${item.ano}-${item.mes}`}
+                        className="flex min-w-0 flex-col items-center"
+                        onMouseMove={(event) => setTooltipHistoricoPerfil({
+                          x: event.clientX,
+                          y: event.clientY,
+                          mes: item.mes,
+                          ano: item.ano,
+                          receitas: receitasItem,
+                          despesas: despesasItem,
+                        })}
+                      >
+                        <div className="flex h-28 items-end justify-center gap-1">
+                          <span
+                            className="w-2 rounded-t bg-emerald-500 shadow-sm"
+                            style={{ height: `${receitasItem > 0 ? Math.max(7, (receitasItem / maximoHistoricoPerfil) * 100) : 2}%` }}
+                          />
+                          <span
+                            className="w-2 rounded-t bg-red-500 shadow-sm"
+                            style={{ height: `${despesasItem > 0 ? Math.max(7, (despesasItem / maximoHistoricoPerfil) * 100) : 2}%` }}
+                          />
+                        </div>
+                        <span className={`mt-1 truncate text-[9px] font-black uppercase ${textMuted}`}>{item.mes.slice(0, 3)}</span>
+                      </div>
+                    );
+                  })}
                 </div>
                 <div className="mt-2 flex justify-center gap-5 text-[10px] font-black uppercase tracking-wide">
                   <span className="text-emerald-500">Receitas</span>
@@ -2084,6 +2151,32 @@ const mostrarComparativoResumoDash =
         <div className={`mt-1 flex justify-between gap-3 border-t border-white/15 pt-1 text-[11px] font-black ${tooltipPerfis.receitas - tooltipPerfis.despesas >= 0 ? 'text-cyan-200' : 'text-red-200'}`}>
           <span>Saldo</span>
           <strong>{ocultarValoresPerfis ? 'R$ ••••' : formatarMoeda(tooltipPerfis.receitas - tooltipPerfis.despesas)}</strong>
+        </div>
+      </div>,
+      document.body
+    )}
+    {typeof document !== 'undefined' && tooltipHistoricoPerfil && createPortal(
+      <div
+        className="pointer-events-none fixed z-[10000] w-48 rounded-xl bg-slate-900 px-3 py-2 text-white shadow-2xl"
+        style={{
+          left: `min(max(${tooltipHistoricoPerfil.x + 14}px, 8px), calc(100vw - 204px))`,
+          top: `max(${tooltipHistoricoPerfil.y - 38}px, 8px)`,
+        }}
+      >
+        <p className="mb-1 truncate text-[10px] font-black uppercase tracking-wide text-white/60">
+          {tooltipHistoricoPerfil.mes} {tooltipHistoricoPerfil.ano}
+        </p>
+        <div className="flex justify-between gap-3 text-[11px] font-bold">
+          <span className="text-emerald-300">Receitas</span>
+          <strong>{ocultarValoresPerfis ? 'R$ ••••' : formatarMoeda(tooltipHistoricoPerfil.receitas)}</strong>
+        </div>
+        <div className="mt-1 flex justify-between gap-3 text-[11px] font-bold">
+          <span className="text-red-300">Despesas</span>
+          <strong>{ocultarValoresPerfis ? 'R$ ••••' : formatarMoeda(tooltipHistoricoPerfil.despesas)}</strong>
+        </div>
+        <div className={`mt-1 flex justify-between gap-3 border-t border-white/15 pt-1 text-[11px] font-black ${tooltipHistoricoPerfil.receitas - tooltipHistoricoPerfil.despesas >= 0 ? 'text-cyan-200' : 'text-red-200'}`}>
+          <span>Saldo</span>
+          <strong>{ocultarValoresPerfis ? 'R$ ••••' : formatarMoeda(tooltipHistoricoPerfil.receitas - tooltipHistoricoPerfil.despesas)}</strong>
         </div>
       </div>,
       document.body

@@ -145,6 +145,12 @@ type ResumoPerfilFinanceiro = {
   receitas: number;
   despesas: number;
   resultado: number;
+  historicoMensal?: {
+    mes: string;
+    ano: number;
+    receitas: number;
+    despesas: number;
+  }[];
 };
 
 type DespesaCadastrada = {
@@ -1394,14 +1400,14 @@ useEffect(() => {
     const [faturamentosResp, lancamentosResp] = await Promise.all([
       supabase
         .from('faturamentos')
-        .select('empresa_id, mes, valor')
+        .select('empresa_id, mes, ano, valor')
         .in('empresa_id', ids)
-        .eq('ano', ano),
+        .in('ano', [ano - 1, ano]),
       supabase
         .from('lancamentos')
-        .select('empresa_id, mes, dia, valor, status')
+        .select('empresa_id, mes, ano, dia, valor, status')
         .in('empresa_id', ids)
-        .eq('ano', ano),
+        .in('ano', [ano - 1, ano]),
     ]);
 
     if (cancelado) return;
@@ -1416,20 +1422,42 @@ useEffect(() => {
     const indiceMesResumo = meses.indexOf(mesResumo);
     const receitasPorPerfil = new Map<string, number>();
     const despesasPorPerfil = new Map<string, number>();
+    const receitasHistorico = new Map<string, number>();
+    const despesasHistorico = new Map<string, number>();
+    const mesesHistorico = Array.from({ length: 6 }, (_, offset) => {
+      const data = new Date(ano, Math.max(0, indiceMesResumo), 1);
+      data.setMonth(data.getMonth() - (5 - offset));
+      return {
+        mes: meses[data.getMonth()],
+        ano: data.getFullYear(),
+      };
+    });
+    const chaveHistorico = (id: string, anoItem: number, mesItem: string) => `${id}:${anoItem}:${mesItem}`;
 
     (faturamentosResp.data || []).forEach((item: RegistroSupabase) => {
-      if (textoRegistro(item.mes) !== mesResumo) return;
+      const mesItem = textoRegistro(item.mes);
+      const anoItem = Number(item.ano || ano);
       const id = textoRegistro(item.empresa_id);
-      receitasPorPerfil.set(id, (receitasPorPerfil.get(id) || 0) + Number(item.valor || 0));
+      const valor = Number(item.valor || 0);
+      if (anoItem === ano && mesItem === mesResumo) {
+        receitasPorPerfil.set(id, (receitasPorPerfil.get(id) || 0) + valor);
+      }
+      receitasHistorico.set(chaveHistorico(id, anoItem, mesItem), (receitasHistorico.get(chaveHistorico(id, anoItem, mesItem)) || 0) + valor);
     });
 
     (lancamentosResp.data || []).forEach((item: RegistroSupabase) => {
-      if (textoRegistro(item.mes) !== mesResumo) return;
       if (textoRegistro(item.status) === 'cancelada') return;
+      const mesItem = textoRegistro(item.mes);
+      const anoItem = Number(item.ano || ano);
       const dia = Number(item.dia || 1);
-      if (indiceMesResumo >= 0 && dataFutura(ano, indiceMesResumo, dia)) return;
+      const indiceMesItem = meses.indexOf(mesItem);
+      if (indiceMesItem >= 0 && dataFutura(anoItem, indiceMesItem, dia)) return;
       const id = textoRegistro(item.empresa_id);
-      despesasPorPerfil.set(id, (despesasPorPerfil.get(id) || 0) + Number(item.valor || 0));
+      const valor = Number(item.valor || 0);
+      if (anoItem === ano && mesItem === mesResumo) {
+        despesasPorPerfil.set(id, (despesasPorPerfil.get(id) || 0) + valor);
+      }
+      despesasHistorico.set(chaveHistorico(id, anoItem, mesItem), (despesasHistorico.get(chaveHistorico(id, anoItem, mesItem)) || 0) + valor);
     });
 
     const resumo = empresasDoUsuario.map((empresa) => {
@@ -1443,6 +1471,11 @@ useEffect(() => {
         receitas,
         despesas,
         resultado: receitas - despesas,
+        historicoMensal: mesesHistorico.map((item) => ({
+          ...item,
+          receitas: receitasHistorico.get(chaveHistorico(id, item.ano, item.mes)) || 0,
+          despesas: despesasHistorico.get(chaveHistorico(id, item.ano, item.mes)) || 0,
+        })),
       };
     });
 

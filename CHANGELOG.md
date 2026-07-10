@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.4.0.21 - 2026-07-10
+
+- Web: relatório de perfil passa a exibir gráfico de receitas x despesas dos últimos 6 meses com tooltip.
+- Web: bloco "Receitas x despesas por perfil" ganha destaque com borda na cor primária.
+- Web: card reduzido troca o rótulo "Resultado consolidado" por "Consolidado" para melhorar o encaixe.
+
 ## 1.4.0.20 - 2026-07-10
 
 - Web: card "Meus perfis" recebe contagem e controle de valores no header.
