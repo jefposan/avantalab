@@ -13,6 +13,14 @@
   },
   "versoes": [
     {
+      "versao": "1.4.0.19",
+      "titulo": "Card Meus perfis mais compacto",
+      "data": "Julho/2026",
+      "itens": [
+        "Web: card \"Meus perfis\" fica mais compacto com subcards, barras e área de gráficos reduzidos sem perder legibilidade."
+      ]
+    },
+    {
       "versao": "1.4.0.18",
       "titulo": "Tooltip nos gráficos de perfis",
       "data": "Julho/2026",

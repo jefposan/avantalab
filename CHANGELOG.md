@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.4.0.19 - 2026-07-10
+
+- Web: card "Meus perfis" fica mais compacto com subcards, barras e área de gráficos reduzidos sem perder legibilidade.
+
 ## 1.4.0.18 - 2026-07-10
 
 - Web: gráficos do card "Meus perfis" passam a usar tooltip flutuante no mesmo padrão dos demais cards.
