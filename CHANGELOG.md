@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.4.0.18 - 2026-07-10
+
+- Web: gráficos do card "Meus perfis" passam a usar tooltip flutuante no mesmo padrão dos demais cards.
+- Web: tooltip dos perfis respeita o controle independente de exibir ou ocultar valores.
+
 ## 1.4.0.17 - 2026-07-10
 
 - Web: card "Meus perfis" ganha controle independente para exibir ou ocultar valores.

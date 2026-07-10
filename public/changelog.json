@@ -13,6 +13,15 @@
   },
   "versoes": [
     {
+      "versao": "1.4.0.18",
+      "titulo": "Tooltip nos gráficos de perfis",
+      "data": "Julho/2026",
+      "itens": [
+        "Web: gráficos do card \"Meus perfis\" passam a usar tooltip flutuante no mesmo padrão dos demais cards.",
+        "Web: tooltip dos perfis respeita o controle independente de exibir ou ocultar valores."
+      ]
+    },
+    {
       "versao": "1.4.0.17",
       "titulo": "Refino do card Meus perfis",
       "data": "Julho/2026",

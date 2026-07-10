@@ -219,6 +219,13 @@ export default function Dashboard({
     receitas: number;
     despesas: number;
   } | null>(null);
+  const [tooltipPerfis, setTooltipPerfis] = useState<{
+    x: number;
+    y: number;
+    nome: string;
+    receitas: number;
+    despesas: number;
+  } | null>(null);
   const [caixinhaDia, setCaixinhaDia] = useState(String(new Date().getDate()));
   const [caixinhaDescricao, setCaixinhaDescricao] = useState('Reserva');
   const [caixinhaValor, setCaixinhaValor] = useState('');
@@ -1316,11 +1323,22 @@ const mostrarComparativoResumoDash =
                     {perfisDashboard.slice(0, 8).map((perfil) => {
                       const maximo = Math.max(1, perfil.receitas, perfil.despesas);
                       return (
-                        <div key={`grafico-${perfil.id}`} className={`flex min-w-0 flex-col rounded-xl border p-2 ${darkMode ? 'border-slate-700 bg-slate-900/45' : 'border-slate-200 bg-white'}`}>
+                        <div
+                          key={`grafico-${perfil.id}`}
+                          className={`flex min-w-0 flex-col rounded-xl border p-2 ${darkMode ? 'border-slate-700 bg-slate-900/45' : 'border-slate-200 bg-white'}`}
+                          onMouseMove={(event) => setTooltipPerfis({
+                            x: event.clientX,
+                            y: event.clientY,
+                            nome: perfil.nome,
+                            receitas: Number(perfil.receitas || 0),
+                            despesas: Number(perfil.despesas || 0),
+                          })}
+                          onMouseLeave={() => setTooltipPerfis(null)}
+                        >
                           <span className={`mb-2 truncate text-center text-[10px] font-black ${textStrong}`}>{perfil.nome}</span>
                           <div className="flex h-20 items-end justify-center gap-1.5">
-                            <span className="w-4 rounded-t-md bg-emerald-500 shadow-sm" style={{ height: `${Math.max(5, (perfil.receitas / maximo) * 100)}%` }} title={`Receitas: ${formatarMoeda(perfil.receitas)}`} />
-                            <span className="w-4 rounded-t-md bg-red-500 shadow-sm" style={{ height: `${Math.max(5, (perfil.despesas / maximo) * 100)}%` }} title={`Despesas: ${formatarMoeda(perfil.despesas)}`} />
+                            <span className="w-4 rounded-t-md bg-emerald-500 shadow-sm" style={{ height: `${Math.max(5, (perfil.receitas / maximo) * 100)}%` }} />
+                            <span className="w-4 rounded-t-md bg-red-500 shadow-sm" style={{ height: `${Math.max(5, (perfil.despesas / maximo) * 100)}%` }} />
                           </div>
                           <div className={`mt-2 grid grid-cols-2 gap-1 text-center text-[9px] font-black ${textMuted}`}>
                             <span className="truncate text-emerald-500">{ocultarValoresPerfis ? '•••' : formatarMoeda(perfil.receitas)}</span>
@@ -1868,6 +1886,30 @@ const mostrarComparativoResumoDash =
             <strong>{formatarMoeda(tooltipEvolucao.receitas - tooltipEvolucao.despesas)}</strong>
           </div>
         )}
+      </div>,
+      document.body
+    )}
+    {typeof document !== 'undefined' && tooltipPerfis && createPortal(
+      <div
+        className="pointer-events-none fixed z-[9999] w-48 rounded-xl bg-slate-900 px-3 py-2 text-white shadow-2xl"
+        style={{
+          left: `min(max(${tooltipPerfis.x + 14}px, 8px), calc(100vw - 204px))`,
+          top: `max(${tooltipPerfis.y - 38}px, 8px)`,
+        }}
+      >
+        <p className="mb-1 truncate text-[10px] font-black uppercase tracking-wide text-white/60">{tooltipPerfis.nome}</p>
+        <div className="flex justify-between gap-3 text-[11px] font-bold">
+          <span className="text-emerald-300">Receitas</span>
+          <strong>{ocultarValoresPerfis ? 'R$ ••••' : formatarMoeda(tooltipPerfis.receitas)}</strong>
+        </div>
+        <div className="mt-1 flex justify-between gap-3 text-[11px] font-bold">
+          <span className="text-red-300">Despesas</span>
+          <strong>{ocultarValoresPerfis ? 'R$ ••••' : formatarMoeda(tooltipPerfis.despesas)}</strong>
+        </div>
+        <div className={`mt-1 flex justify-between gap-3 border-t border-white/15 pt-1 text-[11px] font-black ${tooltipPerfis.receitas - tooltipPerfis.despesas >= 0 ? 'text-cyan-200' : 'text-red-200'}`}>
+          <span>Saldo</span>
+          <strong>{ocultarValoresPerfis ? 'R$ ••••' : formatarMoeda(tooltipPerfis.receitas - tooltipPerfis.despesas)}</strong>
+        </div>
       </div>,
       document.body
     )}
