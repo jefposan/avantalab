@@ -6871,16 +6871,18 @@
     var resetCaixinha = state.dashboardOpcoesId === 'caixinha';
     var largura = resetCaixinha ? 188 : 160;
     var altura = resetCaixinha ? 96 : 58;
+    var arrowLeft = Number(pos.arrowLeft);
     var margem = 12;
     var left = Number(pos.left);
     var top = Number(pos.top);
     if (!Number.isFinite(left)) left = Math.max(margem, Math.min(window.innerWidth - largura - margem, window.innerWidth - largura - 24));
     if (!Number.isFinite(top)) top = 120;
+    if (!Number.isFinite(arrowLeft)) arrowLeft = largura / 2 - 6;
     left = Math.max(margem, Math.min(window.innerWidth - largura - margem, left));
     top = Math.max(margem, Math.min(window.innerHeight - altura, top));
     return (
       '<div data-dashboard-menu-card="' + escapeHtml(state.dashboardOpcoesId) + '" class="fixed overflow-visible rounded-[24px] border border-cyan-100 bg-white p-1 text-slate-800 shadow-2xl shadow-slate-950/25" style="z-index:9010;left:' + left + 'px;top:' + top + 'px;">' +
-        '<span aria-hidden="true" class="absolute -bottom-1.5 right-4 h-3 w-3 rotate-45 border-b border-r border-cyan-100 bg-white"></span>' +
+        '<span aria-hidden="true" class="pointer-events-none absolute -bottom-1.5 h-3 w-3 rotate-45 border-b border-r border-cyan-100 bg-white" style="left:' + arrowLeft + 'px;"></span>' +
         '<div class="relative z-10 flex flex-col gap-1">' +
           '<button type="button" data-dashboard-remover="' + escapeHtml(state.dashboardOpcoesId) + '" class="inline-flex h-9 items-center justify-center whitespace-nowrap rounded-full bg-cyan-600 px-4 text-[11px] font-black text-white shadow-lg shadow-cyan-900/25 active:bg-cyan-700">- Ocultar card</button>' +
           (resetCaixinha ? '<button type="button" data-dashboard-reset-caixinha class="inline-flex h-9 items-center justify-center whitespace-nowrap rounded-full bg-rose-600 px-4 text-[11px] font-black text-white shadow-lg shadow-rose-900/20 active:bg-rose-700">- Resetar total</button>' : '') +
@@ -8944,12 +8946,16 @@
       return;
     }
     var rect = botao && botao.getBoundingClientRect ? botao.getBoundingClientRect() : null;
-    var largura = 160;
+    var largura = id === 'caixinha' ? 188 : 160;
+    var altura = id === 'caixinha' ? 96 : 58;
+    var margem = 12;
+    var distancia = 10;
     state.dashboardOpcoesId = id;
     state.dashboardOpcoesPos = rect
       ? {
-          left: Math.max(12, Math.min(window.innerWidth - largura - 12, rect.right - largura + 6)),
-          top: Math.max(12, rect.top - 50),
+          left: Math.max(margem, Math.min(window.innerWidth - largura - margem, rect.left + rect.width / 2 - largura / 2)),
+          top: Math.max(margem, rect.top - altura - distancia),
+          arrowLeft: Math.max(12, Math.min(largura - 20, rect.left + rect.width / 2 - (Math.max(margem, Math.min(window.innerWidth - largura - margem, rect.left + rect.width / 2 - largura / 2)) + 6))),
         }
       : null;
     render();
