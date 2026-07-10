@@ -13,6 +13,15 @@
   },
   "versoes": [
     {
+      "versao": "1.4.0.14",
+      "titulo": "Reset da Caixinha mobile",
+      "data": "Julho/2026",
+      "itens": [
+        "Mobile: menu \"...\" da Caixinha passa a exibir duas pílulas de ação: \"- Ocultar card\" e \"- Resetar total\".",
+        "Mobile: reset da Caixinha pede confirmação, apaga o aporte inicial, remove movimentos da caixinha e exclui as despesas geradas pelos aportes."
+      ]
+    },
+    {
       "versao": "1.4.0.13",
       "titulo": "Pílula do menu em destaque",
       "data": "Julho/2026",

@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.4.0.14 - 2026-07-10
+
+- Mobile: menu "..." da Caixinha passa a exibir duas pílulas de ação: "- Ocultar card" e "- Resetar total".
+- Mobile: reset da Caixinha pede confirmação, apaga o aporte inicial, remove movimentos da caixinha e exclui as despesas geradas pelos aportes.
+
 ## 1.4.0.13 - 2026-07-10
 
 - Mobile: pílula "- Ocultar card" do menu "..." passa a ficar acima do escurecimento global, mantendo todo o restante da tela escurecido.

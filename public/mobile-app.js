@@ -5040,6 +5040,67 @@
     mostrarToast('Saldo inicial da caixinha salvo.');
   }
 
+  async function resetarCaixinhaMobile() {
+    if (!state.empresa || state.carregando) return;
+
+    var movimentos = state.caixinhaMovimentos || [];
+    if (!movimentos.length) {
+      state.dashboardOpcoesId = '';
+      state.dashboardOpcoesPos = null;
+      render();
+      mostrarToast('Caixinha ja esta zerada.');
+      return;
+    }
+
+    var confirmar = window.confirm(
+      'Resetar total da caixinha?\n\n' +
+      'Isso vai apagar o aporte inicial, remover todos os aportes/resgates da caixinha e excluir as despesas geradas pelos aportes. Esta acao nao pode ser desfeita.'
+    );
+    if (!confirmar) return;
+
+    var lancamentoIds = movimentos
+      .map(function (mov) { return mov.lancamentoId; })
+      .filter(function (id, index, lista) { return id && lista.indexOf(id) === index; });
+
+    state.carregando = true;
+    state.erro = '';
+    state.dashboardOpcoesId = '';
+    state.dashboardOpcoesPos = null;
+    render();
+
+    if (lancamentoIds.length) {
+      var despesas = await db
+        .from('lancamentos')
+        .delete()
+        .eq('empresa_id', state.empresa.id)
+        .in('id', lancamentoIds);
+
+      if (despesas.error) {
+        state.carregando = false;
+        setErro(mensagemErro(despesas.error, 'Nao foi possivel remover as despesas vinculadas a caixinha.'));
+        return;
+      }
+    }
+
+    var limpeza = await db
+      .from('caixinhas_movimentos')
+      .delete()
+      .eq('empresa_id', state.empresa.id);
+
+    if (limpeza.error) {
+      state.carregando = false;
+      setErro(mensagemErro(limpeza.error, 'Nao foi possivel resetar a caixinha.'));
+      return;
+    }
+
+    state.caixinhaSaldoInicialValor = '';
+    state.caixinhaValor = '';
+    state.caixinhaDescricao = 'Reserva';
+    await carregarDados();
+    notificarFinanceiroAtualizadoMobile();
+    mostrarToast('Caixinha resetada.');
+  }
+
   async function alternarDuplicados() {
     if (!state.empresa || state.carregando) return;
 
@@ -6791,18 +6852,23 @@
 
   function menuOpcoesCardDashboardHtml() {
     var pos = state.dashboardOpcoesPos || {};
-    var largura = 160;
+    var resetCaixinha = state.dashboardOpcoesId === 'caixinha';
+    var largura = resetCaixinha ? 188 : 160;
+    var altura = resetCaixinha ? 96 : 58;
     var margem = 12;
     var left = Number(pos.left);
     var top = Number(pos.top);
     if (!Number.isFinite(left)) left = Math.max(margem, Math.min(window.innerWidth - largura - margem, window.innerWidth - largura - 24));
     if (!Number.isFinite(top)) top = 120;
     left = Math.max(margem, Math.min(window.innerWidth - largura - margem, left));
-    top = Math.max(margem, Math.min(window.innerHeight - 58, top));
+    top = Math.max(margem, Math.min(window.innerHeight - altura, top));
     return (
-      '<div data-dashboard-menu-card="' + escapeHtml(state.dashboardOpcoesId) + '" class="fixed overflow-visible rounded-full border border-cyan-100 bg-white p-1 text-slate-800 shadow-2xl shadow-slate-950/25" style="z-index:9010;left:' + left + 'px;top:' + top + 'px;">' +
+      '<div data-dashboard-menu-card="' + escapeHtml(state.dashboardOpcoesId) + '" class="fixed overflow-visible rounded-[24px] border border-cyan-100 bg-white p-1 text-slate-800 shadow-2xl shadow-slate-950/25" style="z-index:9010;left:' + left + 'px;top:' + top + 'px;">' +
         '<span aria-hidden="true" class="absolute -bottom-1.5 right-4 h-3 w-3 rotate-45 border-b border-r border-cyan-100 bg-white"></span>' +
-        '<button type="button" data-dashboard-remover="' + escapeHtml(state.dashboardOpcoesId) + '" class="relative z-10 inline-flex h-9 items-center justify-center whitespace-nowrap rounded-full bg-cyan-600 px-4 text-[11px] font-black text-white shadow-lg shadow-cyan-900/25 active:bg-cyan-700">- Ocultar card</button>' +
+        '<div class="relative z-10 flex flex-col gap-1">' +
+          '<button type="button" data-dashboard-remover="' + escapeHtml(state.dashboardOpcoesId) + '" class="inline-flex h-9 items-center justify-center whitespace-nowrap rounded-full bg-cyan-600 px-4 text-[11px] font-black text-white shadow-lg shadow-cyan-900/25 active:bg-cyan-700">- Ocultar card</button>' +
+          (resetCaixinha ? '<button type="button" data-dashboard-reset-caixinha class="inline-flex h-9 items-center justify-center whitespace-nowrap rounded-full bg-rose-600 px-4 text-[11px] font-black text-white shadow-lg shadow-rose-900/20 active:bg-rose-700">- Resetar total</button>' : '') +
+        '</div>' +
       '</div>'
     );
   }
@@ -10531,6 +10597,12 @@
       botao.addEventListener('click', function (event) {
         event.stopPropagation();
         removerCardDashboardMobile(botao.getAttribute('data-dashboard-remover'));
+      });
+    });
+    Array.prototype.forEach.call(document.querySelectorAll('[data-dashboard-reset-caixinha]'), function (botao) {
+      botao.addEventListener('click', function (event) {
+        event.stopPropagation();
+        resetarCaixinhaMobile();
       });
     });
     Array.prototype.forEach.call(document.querySelectorAll('[data-atalho-lado]'), function (botao) {
