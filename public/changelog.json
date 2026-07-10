@@ -13,6 +13,15 @@
   },
   "versoes": [
     {
+      "versao": "1.4.0.10",
+      "titulo": "Ajustes no resumo mobile",
+      "data": "Julho/2026",
+      "itens": [
+        "Mobile: fundo escurecido do menu \"...\" dos cards do resumo passa a ficar acima do header.",
+        "Mobile: card de Insights da Ava informa que as sugestões são atualizadas ao mudar dados ou mês."
+      ]
+    },
+    {
       "versao": "1.4.0.09",
       "titulo": "Foco no menu dos cards",
       "data": "Julho/2026",

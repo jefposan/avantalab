@@ -6774,15 +6774,15 @@
         if (!cards[id]) return '';
         var menuAberto = state.dashboardOpcoesId === id;
         var menuCardPosicao = id === 'ia' ? 'right-3' : 'right-12';
-        return '<div data-dashboard-card="' + escapeHtml(id) + '" class="relative pb-2 transition-[transform,opacity,filter] duration-200 ease-out' + (menuAberto ? ' z-40' : '') + '">' +
-          (menuAberto ? '<button type="button" data-dashboard-fechar-opcoes="' + escapeHtml(id) + '" class="fixed inset-0 z-20 cursor-default bg-slate-950/65 backdrop-blur-[1px]" aria-label="Fechar opcoes do card"></button>' : '') +
+        return '<div data-dashboard-card="' + escapeHtml(id) + '" class="relative pb-2 transition-[transform,opacity,filter] duration-200 ease-out' + (menuAberto ? ' z-40' : '') + '"' + (menuAberto ? ' style="z-index:9010;"' : '') + '>' +
+          (menuAberto ? '<button type="button" data-dashboard-fechar-opcoes="' + escapeHtml(id) + '" class="fixed inset-0 cursor-default bg-slate-950/65 backdrop-blur-[1px]" style="z-index:9000;" aria-label="Fechar opcoes do card"></button>' : '') +
           cards[id] +
-          '<button type="button" data-dashboard-opcoes="' + escapeHtml(id) + '" class="absolute bottom-1 ' + (id === 'ia' ? 'right-3' : 'right-12') + ' z-40 flex h-7 w-8 items-center justify-center rounded-full bg-slate-200/90 text-[13px] font-black leading-none text-slate-800 shadow-sm ring-1 ring-slate-300/70 active:bg-slate-300" aria-label="Opcoes do bloco">...</button>' +
-          (id === 'ia' ? '' : '<button type="button" data-dashboard-handle="' + escapeHtml(id) + '" class="absolute bottom-1 right-3 z-40 flex h-7 w-8 select-none touch-none items-center justify-center rounded-full bg-slate-200/90 text-[11px] font-black leading-none text-slate-800 shadow-sm ring-1 ring-slate-300/70 active:bg-slate-300" aria-label="Mover card">&vellip;&vellip;</button>') +
+          '<button type="button" data-dashboard-opcoes="' + escapeHtml(id) + '" class="absolute bottom-1 ' + (id === 'ia' ? 'right-3' : 'right-12') + ' z-40 flex h-7 w-8 items-center justify-center rounded-full bg-transparent text-[13px] font-black leading-none text-slate-600 active:bg-slate-100" style="z-index:9020;" aria-label="Opcoes do bloco">...</button>' +
+          (id === 'ia' ? '' : '<button type="button" data-dashboard-handle="' + escapeHtml(id) + '" class="absolute bottom-1 right-3 z-40 flex h-7 w-8 select-none touch-none items-center justify-center rounded-full bg-transparent text-[11px] font-black leading-none text-slate-600" style="z-index:9020;" aria-label="Mover card">&vellip;&vellip;</button>') +
           (menuAberto
-            ? '<div data-dashboard-menu-card="' + escapeHtml(id) + '" class="absolute bottom-9 ' + menuCardPosicao + ' z-50 w-40 overflow-visible rounded-2xl border border-slate-200 bg-white py-1.5 text-slate-800 shadow-2xl">' +
+            ? '<div data-dashboard-menu-card="' + escapeHtml(id) + '" class="absolute bottom-9 ' + menuCardPosicao + ' z-50 w-40 overflow-visible rounded-2xl border border-slate-200 bg-white py-1.5 text-slate-800 shadow-2xl" style="z-index:9020;">' +
                 '<span aria-hidden="true" class="absolute -bottom-2 right-3 h-4 w-4 rotate-45 border-b border-r border-slate-200 bg-white"></span>' +
-                '<button type="button" data-dashboard-remover="' + escapeHtml(id) + '" class="relative z-10 mx-1 flex h-9 w-[calc(100%-0.5rem)] items-center justify-center gap-2 rounded-xl bg-slate-900 px-3 text-center text-[11px] font-black uppercase tracking-wide text-white shadow-sm active:bg-slate-700"><span class="text-sm leading-none">−</span>Ocultar card</button>' +
+                '<button type="button" data-dashboard-remover="' + escapeHtml(id) + '" class="relative z-10 flex w-full items-center gap-2 rounded-2xl px-3 py-2 text-left text-[11px] font-black text-slate-700 active:bg-slate-50"><span class="text-sm leading-none">💬</span>Ocultar card</button>' +
               '</div>'
             : '') +
         '</div>';
@@ -6876,7 +6876,7 @@
     return '<section class="w-full overflow-hidden rounded-2xl border shadow-sm" style="' + cardBaseStyle + '">' +
       '<div class="mb-3 flex items-center justify-between gap-3 px-3 py-3" style="' + headerStyle + '">' +
         '<span class="flex h-10 w-[92px] shrink-0 items-center justify-center rounded-full">' + avaLogoArquivoHtml(84, 40, logoInsightsSrc) + '</span>' +
-        '<div class="min-w-0 flex-1 text-right"><h2 class="truncate text-sm font-black tracking-wide" style="' + tituloStyle + '">Insights da Ava</h2><p class="mt-0.5 truncate text-[11px] font-semibold" style="' + subtituloStyle + '">Sugestoes rapidas para ' + escapeHtml(nomeMesCompleto(atual.mes)) + '</p></div>' +
+        '<div class="min-w-0 flex-1 text-right"><h2 class="truncate text-sm font-black tracking-wide" style="' + tituloStyle + '">Insights da Ava</h2><p class="mt-0.5 truncate text-[11px] font-semibold" style="' + subtituloStyle + '">Atualiza ao mudar dados ou mes</p></div>' +
       '</div>' +
       '<div class="grid gap-2 px-4">' + cards + '</div>' +
       '<div class="px-4 pb-4"><button id="abrir-insights-ava" type="button" class="mt-3 h-10 w-full rounded-xl border px-3 text-xs font-black uppercase tracking-wide active:scale-[0.99]" style="' + botaoStyle + '">Conversar com a Ava</button></div>' +

@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.4.0.10 - 2026-07-10
+
+- Mobile: fundo escurecido do menu "..." dos cards do resumo passa a ficar acima do header, no mesmo patamar dos popups.
+- Mobile: card de Insights da Ava informa que as sugestões são atualizadas ao mudar dados ou mês.
+
 ## 1.4.0.09 - 2026-07-10
 
 - Mobile: ao abrir o balão do menu "..." dos cards, o restante da dashboard escurece para reforçar o foco.
