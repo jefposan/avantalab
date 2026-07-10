@@ -6509,6 +6509,9 @@
           '<span class="relative z-10 block truncate">' + escapeHtml(nomeEmpresa(state.empresa)) + '</span>' +
         '</div>' +
         '</div>' +
+        (state.visao === 'home' && state.dashboardOpcoesId && state.dashboardOpcoesId !== 'ia'
+          ? '<button type="button" data-dashboard-fechar-opcoes="' + escapeHtml(state.dashboardOpcoesId) + '" class="fixed inset-0 cursor-default bg-slate-950/75 backdrop-blur-[1px]" style="z-index:9000;" aria-label="Fechar opcoes do card"></button>'
+          : '') +
         '<div id="mobile-main-scroll" data-preserve-scroll class="min-h-0 flex-1 overflow-y-auto overscroll-contain" style="padding-bottom:calc(env(safe-area-inset-bottom) + 82px);-webkit-overflow-scrolling:touch;">' +
         '<div class="mx-auto grid w-full min-w-0 max-w-md gap-3 px-3 pt-10 sm:px-4">' +
           avisoCarenciaMobileHtml() +
@@ -6770,22 +6773,20 @@
     }
 
     return banner +
-      (state.dashboardOpcoesId
-        ? '<button type="button" data-dashboard-fechar-opcoes="' + escapeHtml(state.dashboardOpcoesId) + '" class="fixed inset-0 cursor-default bg-slate-950/75 backdrop-blur-[1px]" style="z-index:9000;" aria-label="Fechar opcoes do card"></button>'
-        : '') +
       visiveis
       .map(function (id) {
         if (!cards[id]) return '';
         var menuAberto = state.dashboardOpcoesId === id;
         var menuCardPosicao = id === 'ia' ? 'right-3' : 'right-12';
+        var menuDisponivel = id !== 'ia';
         return '<div data-dashboard-card="' + escapeHtml(id) + '" class="relative pb-2 transition-[transform,opacity,filter] duration-200 ease-out">' +
           cards[id] +
-          '<button type="button" data-dashboard-opcoes="' + escapeHtml(id) + '" class="absolute bottom-1 ' + (id === 'ia' ? 'right-3' : 'right-12') + ' z-40 flex h-7 w-8 items-center justify-center rounded-full bg-transparent text-[13px] font-black leading-none text-slate-600 active:bg-slate-100" aria-label="Opcoes do bloco">...</button>' +
+          (menuDisponivel ? '<button type="button" data-dashboard-opcoes="' + escapeHtml(id) + '" class="absolute bottom-1 right-12 z-40 flex h-7 w-8 items-center justify-center rounded-full bg-transparent text-[13px] font-black leading-none text-slate-600 active:bg-slate-100" aria-label="Opcoes do bloco">...</button>' : '') +
           (id === 'ia' ? '' : '<button type="button" data-dashboard-handle="' + escapeHtml(id) + '" class="absolute bottom-1 right-3 z-40 flex h-7 w-8 select-none touch-none items-center justify-center rounded-full bg-transparent text-[11px] font-black leading-none text-slate-600" aria-label="Mover card">&vellip;&vellip;</button>') +
-          (menuAberto
-            ? '<div data-dashboard-menu-card="' + escapeHtml(id) + '" class="absolute bottom-9 ' + menuCardPosicao + ' z-50 w-40 overflow-visible rounded-2xl border border-slate-200 bg-white py-1.5 text-slate-800 shadow-2xl" style="z-index:9010;">' +
-                '<span aria-hidden="true" class="absolute -bottom-2 right-3 h-4 w-4 rotate-45 border-b border-r border-slate-200 bg-white"></span>' +
-                '<button type="button" data-dashboard-remover="' + escapeHtml(id) + '" class="relative z-10 flex w-full items-center rounded-2xl px-3 py-2 text-left text-[11px] font-black text-slate-700 active:bg-slate-50">Ocultar card</button>' +
+          (menuDisponivel && menuAberto
+            ? '<div data-dashboard-menu-card="' + escapeHtml(id) + '" class="absolute bottom-9 ' + menuCardPosicao + ' z-50 overflow-visible rounded-full border border-cyan-100 bg-white p-1 text-slate-800 shadow-2xl shadow-slate-950/25" style="z-index:9010;">' +
+                '<span aria-hidden="true" class="absolute -bottom-1.5 right-4 h-3 w-3 rotate-45 border-b border-r border-cyan-100 bg-white"></span>' +
+                '<button type="button" data-dashboard-remover="' + escapeHtml(id) + '" class="relative z-10 inline-flex h-9 items-center justify-center whitespace-nowrap rounded-full bg-cyan-600 px-4 text-[11px] font-black text-white shadow-lg shadow-cyan-900/25 active:bg-cyan-700">- Ocultar card</button>' +
               '</div>'
             : '') +
         '</div>';

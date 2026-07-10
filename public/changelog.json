@@ -13,6 +13,16 @@
   },
   "versoes": [
     {
+      "versao": "1.4.0.12",
+      "titulo": "Menu dos cards mobile refinado",
+      "data": "Julho/2026",
+      "itens": [
+        "Mobile: menu \"...\" dos cards passa a escurecer a tela inteira, incluindo o header principal, deixando somente a pílula de ação em destaque.",
+        "Mobile: card \"Pergunte para a Ava\" deixa de exibir o menu \"...\".",
+        "Mobile: ação do balão passa a aparecer como pílula clicável com o texto \"- Ocultar card\"."
+      ]
+    },
+    {
       "versao": "1.4.0.11",
       "titulo": "Foco corrigido nos cards mobile",
       "data": "Julho/2026",

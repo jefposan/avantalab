@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.4.0.12 - 2026-07-10
+
+- Mobile: menu "..." dos cards passa a escurecer a tela inteira, incluindo o header principal, deixando somente a pílula de ação em destaque.
+- Mobile: card "Pergunte para a Ava" deixa de exibir o menu "...".
+- Mobile: ação do balão passa a aparecer como pílula clicável com o texto "- Ocultar card".
+
 ## 1.4.0.11 - 2026-07-10
 
 - Mobile: ao abrir o balão do menu "..." dos cards, todo o restante da tela fica escurecido como nos demais modais; apenas o balão permanece em destaque.
