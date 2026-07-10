@@ -13,6 +13,15 @@
   },
   "versoes": [
     {
+      "versao": "1.4.0.09",
+      "titulo": "Foco no menu dos cards",
+      "data": "Julho/2026",
+      "itens": [
+        "Mobile: ao abrir o balão do menu \"...\" dos cards, o restante da dashboard escurece.",
+        "Mobile: puxador de arraste dos cards recebeu contraste mais forte, alinhado ao botão \"...\"."
+      ]
+    },
+    {
       "versao": "1.4.0.08",
       "titulo": "Refinos no dashboard mobile",
       "data": "Julho/2026",

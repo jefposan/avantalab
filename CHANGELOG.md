@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.4.0.09 - 2026-07-10
+
+- Mobile: ao abrir o balão do menu "..." dos cards, o restante da dashboard escurece para reforçar o foco.
+- Mobile: puxador de arraste dos cards ganhou contraste mais forte, alinhado ao botão "...".
+
 ## 1.4.0.08 - 2026-07-10
 
 - Mobile: cards de Evolução de despesas e receitas passam a iniciar com o mês ativo selecionado.
