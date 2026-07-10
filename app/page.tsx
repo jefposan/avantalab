@@ -7187,11 +7187,12 @@ if (redirecionandoMobile) {
       }`}
       onClick={(e) => e.stopPropagation()}
     >
-      <div data-modal-drag-handle
-        className="mb-5 cursor-grab rounded-xl px-4 py-3 active:cursor-grabbing"
-        style={estiloTemaPrimario}
+      <div
+        data-modal-drag-handle
+        className="mb-5 cursor-grab rounded-2xl px-4 py-3 active:cursor-grabbing"
+        style={estiloTemaPrimarioGradiente}
       >
-        <p className="text-xs font-black uppercase tracking-[0.18em]">
+        <p className="text-xs font-black uppercase tracking-[0.18em] opacity-80">
           Gerenciar perfil financeiro
         </p>
         <h2 className="mt-1 text-xl font-black">
@@ -7325,16 +7326,20 @@ if (redirecionandoMobile) {
     onClick={() => { if (!editEmpresaSalvando && !criandoEmpresaInicial) { setSubAcaoGerenciar(null); setModalEmpresasAberto(false); } }}
   >
     <DraggableModalCard
-      className={`w-full max-w-md rounded-2xl border shadow-2xl overflow-hidden ${
-        darkMode ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200'
+      className={`w-full max-w-md overflow-hidden rounded-3xl border shadow-2xl ${
+        darkMode ? 'border-slate-700 bg-slate-900' : 'border-slate-200 bg-white'
       }`}
       onClick={(e) => e.stopPropagation()}
     >
       {/* Cabeçalho */}
-      <div data-modal-drag-handle className="cursor-grab px-6 pt-5 pb-4 active:cursor-grabbing" style={estiloTemaPrimario}>
+      <div
+        data-modal-drag-handle
+        className="cursor-grab px-6 pb-4 pt-5 active:cursor-grabbing"
+        style={estiloTemaPrimarioGradiente}
+      >
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
-            <p className="text-xs font-black uppercase tracking-[0.18em] opacity-75">
+            <p className="text-xs font-black uppercase tracking-[0.18em] opacity-80">
               Perfis financeiros
             </p>
             <h2 className="mt-1 text-xl font-black">
@@ -7356,10 +7361,10 @@ if (redirecionandoMobile) {
           </button>
         </div>
         {!subAcaoGerenciar && (
-          <div className="mt-5 border-t pt-4" style={{ borderColor: bordaSobreCorPrimaria }}>
+          <div className="mt-5 rounded-2xl border bg-white/10 p-3" style={{ borderColor: bordaSobreCorPrimaria }}>
             <div className="mb-3 flex items-center gap-2">
               <span className="h-4 w-1 rounded-full bg-current opacity-90" aria-hidden="true" />
-              <p className="text-[11px] font-black uppercase tracking-[0.2em]">
+              <p className="text-[11px] font-black uppercase tracking-[0.2em] opacity-80">
                 Perfil ativo
               </p>
             </div>
@@ -7381,11 +7386,11 @@ if (redirecionandoMobile) {
         )}
       </div>
 
-      <div className={`border-t px-6 pb-6 pt-4 ${darkMode ? 'border-slate-700' : 'border-slate-100'}`}>
+      <div className={`px-6 pb-6 pt-4 ${darkMode ? 'bg-slate-900' : 'bg-white'}`}>
 
         {/* ── VISTA: menu de ações ── */}
         {!subAcaoGerenciar && (
-          <div className="space-y-2">
+          <div className="space-y-2.5">
             {podeAcessarAjustes && (
               <button
                 type="button"
@@ -7393,11 +7398,15 @@ if (redirecionandoMobile) {
                   await abrirEdicaoEmpresaAtual(podeAcessarAjustes, tipoPerfilAtualNormalizado, true);
                   setSubAcaoGerenciar('editar');
                 }}
-                className="flex h-12 w-full cursor-pointer items-center gap-3 rounded-lg border border-[#0A1F44] bg-[#0A1F44] px-4 text-left text-sm font-black text-white shadow-md transition hover:-translate-y-0.5 hover:brightness-110 hover:shadow-lg"
+                className={`flex min-h-12 w-full cursor-pointer items-center gap-3 rounded-2xl border px-4 py-3 text-left text-sm font-black shadow-sm transition hover:-translate-y-0.5 hover:shadow-md ${
+                  darkMode ? 'border-slate-700 bg-slate-800/70 text-slate-100 hover:bg-slate-800' : 'border-slate-200 bg-white text-slate-800 hover:bg-slate-50'
+                }`}
               >
-                <svg className="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" />
-                </svg>
+                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl" style={{ backgroundColor: `${corPrimaria}14`, color: corPrimaria }}>
+                  <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" />
+                  </svg>
+                </span>
                 <span>Editar perfil atual</span>
               </button>
             )}
@@ -7411,12 +7420,15 @@ if (redirecionandoMobile) {
                   setAuthErro('');
                   setSubAcaoGerenciar('criar');
                 }}
-                className="flex h-12 w-full cursor-pointer items-center gap-3 rounded-lg border px-4 text-left text-sm font-black shadow-md transition hover:-translate-y-0.5 hover:brightness-110 hover:shadow-lg"
-                style={estiloTemaPrimario}
+                className={`flex min-h-12 w-full cursor-pointer items-center gap-3 rounded-2xl border px-4 py-3 text-left text-sm font-black shadow-sm transition hover:-translate-y-0.5 hover:shadow-md ${
+                  darkMode ? 'border-slate-700 bg-slate-800/70 text-slate-100 hover:bg-slate-800' : 'border-slate-200 bg-white text-slate-800 hover:bg-slate-50'
+                }`}
               >
-                <svg className="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.4" d="M12 5v14M5 12h14" />
-                </svg>
+                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl" style={{ backgroundColor: `${corPrimaria}14`, color: corPrimaria }}>
+                  <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.4" d="M12 5v14M5 12h14" />
+                  </svg>
+                </span>
                 <span>Criar novo perfil</span>
               </button>
             )}
@@ -7425,15 +7437,19 @@ if (redirecionandoMobile) {
               type="button"
               onClick={() => { setModalEmpresasAberto(false); abrirTrocaEmpresa(); }}
               disabled={!podeTrocarEmpresa}
-              className={`flex h-12 w-full items-center gap-3 rounded-lg border px-4 text-left text-sm font-black shadow-md transition ${
+              className={`flex min-h-12 w-full items-center gap-3 rounded-2xl border px-4 py-3 text-left text-sm font-black shadow-sm transition ${
                 podeTrocarEmpresa
-                  ? 'cursor-pointer border-blue-700 bg-blue-600 text-white hover:-translate-y-0.5 hover:bg-blue-700 hover:shadow-lg'
+                  ? darkMode
+                    ? 'cursor-pointer border-slate-700 bg-slate-800/70 text-slate-100 hover:-translate-y-0.5 hover:bg-slate-800 hover:shadow-md'
+                    : 'cursor-pointer border-slate-200 bg-white text-slate-800 hover:-translate-y-0.5 hover:bg-slate-50 hover:shadow-md'
                   : 'cursor-not-allowed border-slate-200 bg-slate-100 text-slate-400'
               }`}
             >
-              <svg className="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.2" d="M7 7h11m0 0l-3-3m3 3l-3 3M17 17H6m0 0l3 3m-3-3l3-3" />
-              </svg>
+              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl" style={{ backgroundColor: `${corPrimaria}14`, color: corPrimaria }}>
+                <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.2" d="M7 7h11m0 0l-3-3m3 3l-3 3M17 17H6m0 0l3 3m-3-3l3-3" />
+                </svg>
+              </span>
               <span>Trocar perfil</span>
             </button>
 
@@ -7442,17 +7458,23 @@ if (redirecionandoMobile) {
               onClick={() => { setModalEmpresasAberto(false); confirmarExclusaoEmpresaAtual(); }}
               disabled={perfilUsuario !== 'gestor_master'}
               title={perfilUsuario === 'gestor_master' ? 'Excluir o perfil atual' : 'Somente o Gestor Master pode excluir o perfil'}
-              className={`flex h-12 w-full items-center gap-3 rounded-lg border px-4 text-left text-sm font-black shadow-md transition ${
+              className={`flex min-h-12 w-full items-center gap-3 rounded-2xl border px-4 py-3 text-left text-sm font-black shadow-sm transition ${
                 perfilUsuario === 'gestor_master'
-                  ? 'cursor-pointer border-red-700 bg-red-600 text-white hover:-translate-y-0.5 hover:bg-red-700 hover:shadow-lg'
+                  ? darkMode
+                    ? 'cursor-pointer border-red-900/60 bg-red-950/30 text-red-200 hover:-translate-y-0.5 hover:bg-red-950/50 hover:shadow-md'
+                    : 'cursor-pointer border-red-200 bg-red-50 text-red-700 hover:-translate-y-0.5 hover:bg-red-100 hover:shadow-md'
                   : darkMode
-                    ? 'cursor-not-allowed border-slate-600 bg-slate-700 text-slate-400 opacity-70'
+                    ? 'cursor-not-allowed border-slate-700 bg-slate-800/60 text-slate-500 opacity-70'
                     : 'cursor-not-allowed border-slate-300 bg-slate-100 text-slate-400 opacity-80'
               }`}
             >
-              <svg className="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.1" d="M19 7l-.9 12.1A2 2 0 0116.1 21H7.9a2 2 0 01-2-1.9L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-              </svg>
+              <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-xl ${
+                perfilUsuario === 'gestor_master' ? 'bg-red-100 text-red-700' : darkMode ? 'bg-slate-700 text-slate-500' : 'bg-slate-200 text-slate-400'
+              }`}>
+                <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.1" d="M19 7l-.9 12.1A2 2 0 0116.1 21H7.9a2 2 0 01-2-1.9L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                </svg>
+              </span>
               <span>Excluir perfil</span>
             </button>
           </div>

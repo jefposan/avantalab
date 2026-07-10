@@ -214,6 +214,7 @@ export default function Dashboard({
   const [ocultarValoresPerfis, setOcultarValoresPerfis] = useState(true);
   const [graficosPerfisVisiveis, setGraficosPerfisVisiveis] = useState(false);
   const [perfilDetalhado, setPerfilDetalhado] = useState<ResumoPerfilFinanceiro | null>(null);
+  const [listaPerfisPodeDescer, setListaPerfisPodeDescer] = useState(false);
   const [menuCardAberto, setMenuCardAberto] = useState<string | null>(null);
   const [gerenciadorAberto, setGerenciadorAberto] = useState(false);
   const [evolucaoAno, setEvolucaoAno] = useState(anoSelecionado);
@@ -292,6 +293,20 @@ export default function Dashboard({
       listaPerfisVelocidadeRef.current = 0;
     }
   }, []);
+  const atualizarEstadoScrollPerfis = useCallback(() => {
+    const lista = listaPerfisRef.current;
+    if (!lista) {
+      setListaPerfisPodeDescer(false);
+      return;
+    }
+    setListaPerfisPodeDescer(lista.scrollTop + lista.clientHeight < lista.scrollHeight - 6);
+  }, []);
+  const rolarListaPerfisParaBaixo = useCallback(() => {
+    const lista = listaPerfisRef.current;
+    if (!lista) return;
+    lista.scrollBy({ top: Math.max(90, lista.clientHeight - 24), behavior: 'smooth' });
+    window.setTimeout(atualizarEstadoScrollPerfis, 320);
+  }, [atualizarEstadoScrollPerfis]);
   const abrirDetalhePerfil = useCallback((perfil: ResumoPerfilFinanceiro) => {
     if (listaPerfisArrastouRef.current) {
       listaPerfisArrastouRef.current = false;
@@ -766,6 +781,10 @@ const mostrarComparativoResumoDash =
   const resultadoPerfis = totalReceitasPerfis - totalDespesasPerfis;
   const maiorResultadoPerfil = Math.max(1, ...perfisDashboard.map((perfil) => Math.abs(Number(perfil.resultado || 0))));
   const nomeMesPerfis = mesPerfis || mesResumoDash;
+  useEffect(() => {
+    const timer = window.setTimeout(atualizarEstadoScrollPerfis, 0);
+    return () => window.clearTimeout(timer);
+  }, [atualizarEstadoScrollPerfis, perfisDashboard.length, cols.full.includes('meusPerfis')]);
   const catalogoCardsKanban = [
     { id: 'lancamentosMensais', titulo: 'Lançamentos mensais', descricao: 'Atalho anual para abrir os lançamentos de cada mês.' },
     { id: 'aConfirmar', titulo: 'Lançamentos a confirmar', descricao: 'Banner de despesas e receitas previstas que chegaram na data.' },
@@ -1284,9 +1303,12 @@ const mostrarComparativoResumoDash =
 
     meusPerfis: (
       <div className={`${bgCard} card-radius-avantalab w-full overflow-hidden rounded-2xl border-2 shadow-lg transition-colors`} style={{ borderColor: corPrimaria }}>
-        <div className="flex items-center justify-between gap-3 px-6 py-3 text-sm font-bold uppercase tracking-wider" style={{ backgroundColor: corPrimaria, color: textoSobreCorPrimaria }}>
-          <span>Meus perfis</span>
-          <div className="flex items-center gap-2">
+        <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-3 px-6 py-3 text-sm font-bold uppercase tracking-wider" style={{ backgroundColor: corPrimaria, color: textoSobreCorPrimaria }}>
+          <span className="truncate">Meus perfis</span>
+          <span className="rounded-full bg-white/15 px-3 py-1 text-[10px] font-black leading-none text-white/90">
+            {nomeMesPerfis}
+          </span>
+          <div className="flex items-center justify-end gap-2">
             <span className="rounded-full bg-white/15 px-2 py-0.5 text-[10px] font-black leading-none text-white">
               {perfisDashboard.length} perfil{perfisDashboard.length === 1 ? '' : 's'}
             </span>
@@ -1333,62 +1355,80 @@ const mostrarComparativoResumoDash =
           </div>
 
           <div className="space-y-2">
-            <div className="flex items-center justify-between gap-3">
-              <p className={`text-[10px] font-black uppercase tracking-wide ${textMuted}`}>{nomeMesPerfis}</p>
-              <p className={`text-[10px] font-semibold ${textMuted}`}>Perfis vinculados</p>
-            </div>
             {perfisDashboard.length > 0 ? (
-              <div
-                ref={listaPerfisRef}
-                className="max-h-[160px] space-y-2 overflow-y-auto overscroll-contain pr-1"
-                onMouseDown={(event) => {
-                  listaPerfisArrastandoRef.current = true;
-                  listaPerfisArrastouRef.current = false;
-                  listaPerfisInicioYRef.current = event.clientY;
-                  listaPerfisVelocidadeRef.current = 0;
-                }}
-                onMouseMove={(event) => {
-                  if (!listaPerfisArrastandoRef.current) return;
-                  if (Math.abs(event.clientY - listaPerfisInicioYRef.current) > 5) {
-                    listaPerfisArrastouRef.current = true;
-                    atualizarAutoScrollPerfis(event.clientY);
-                    iniciarAutoScrollPerfis();
-                  }
-                }}
-                onMouseLeave={() => {
-                  listaPerfisVelocidadeRef.current = 0;
-                }}
-              >
-                {perfisDashboard.map((perfil) => {
-                  const positivo = Number(perfil.resultado || 0) >= 0;
-                  const largura = Math.max(6, Math.round((Math.abs(Number(perfil.resultado || 0)) / maiorResultadoPerfil) * 100));
-                  const perfilAtual = perfil.id === empresaId;
-                  return (
-                    <button
-                      key={perfil.id}
-                      type="button"
-                      onClick={() => abrirDetalhePerfil(perfil)}
-                      className={`w-full rounded-xl border px-2.5 py-2 text-left transition hover:-translate-y-0.5 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-cyan-300 active:cursor-grabbing ${
-                        perfilAtual ? 'border-cyan-300' : darkMode ? 'border-slate-700' : 'border-slate-200'
-                      } ${darkMode ? 'bg-slate-800/45 hover:bg-slate-800' : 'bg-white hover:bg-cyan-50/40'}`}
-                    >
-                      <div className="flex items-center justify-between gap-3">
-                        <div className="min-w-0">
-                          <p className={`truncate text-[13px] font-black leading-tight ${textStrong}`}>{perfil.nome}</p>
-                          <p className={`mt-0.5 truncate text-[10px] font-semibold leading-tight ${textMuted}`}>
-                            {perfilAtual ? 'Perfil atual · ' : ''}Receitas {ocultarValoresPerfis ? '•••' : formatarMoeda(perfil.receitas)} · Despesas {ocultarValoresPerfis ? '•••' : formatarMoeda(perfil.despesas)}
-                          </p>
+              <div className="relative">
+                <div
+                  ref={listaPerfisRef}
+                  className="max-h-[160px] space-y-2 overflow-y-auto overscroll-contain pr-1"
+                  onScroll={atualizarEstadoScrollPerfis}
+                  onMouseDown={(event) => {
+                    listaPerfisArrastandoRef.current = true;
+                    listaPerfisArrastouRef.current = false;
+                    listaPerfisInicioYRef.current = event.clientY;
+                    listaPerfisVelocidadeRef.current = 0;
+                  }}
+                  onMouseMove={(event) => {
+                    if (!listaPerfisArrastandoRef.current) return;
+                    if (Math.abs(event.clientY - listaPerfisInicioYRef.current) > 5) {
+                      listaPerfisArrastouRef.current = true;
+                      atualizarAutoScrollPerfis(event.clientY);
+                      iniciarAutoScrollPerfis();
+                    }
+                  }}
+                  onMouseLeave={() => {
+                    listaPerfisVelocidadeRef.current = 0;
+                  }}
+                >
+                  {perfisDashboard.map((perfil) => {
+                    const positivo = Number(perfil.resultado || 0) >= 0;
+                    const largura = Math.max(6, Math.round((Math.abs(Number(perfil.resultado || 0)) / maiorResultadoPerfil) * 100));
+                    const perfilAtual = perfil.id === empresaId;
+                    return (
+                      <button
+                        key={perfil.id}
+                        type="button"
+                        onClick={() => abrirDetalhePerfil(perfil)}
+                        className={`w-full rounded-xl border px-2.5 py-2 text-left transition hover:-translate-y-0.5 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-cyan-300 active:cursor-grabbing ${
+                          perfilAtual ? 'border-cyan-300' : darkMode ? 'border-slate-700' : 'border-slate-200'
+                        } ${darkMode ? 'bg-slate-800/45 hover:bg-slate-800' : 'bg-white hover:bg-cyan-50/40'}`}
+                      >
+                        <div className="flex items-center justify-between gap-3">
+                          <div className="min-w-0">
+                            <p className={`truncate text-[13px] font-black leading-tight ${textStrong}`}>{perfil.nome}</p>
+                            <p className={`mt-0.5 truncate text-[10px] font-semibold leading-tight ${textMuted}`}>
+                              {perfilAtual ? 'Perfil atual · ' : ''}Receitas {ocultarValoresPerfis ? '•••' : formatarMoeda(perfil.receitas)} · Despesas {ocultarValoresPerfis ? '•••' : formatarMoeda(perfil.despesas)}
+                            </p>
+                          </div>
+                          <strong className={`shrink-0 text-[13px] font-black tabular-nums ${positivo ? 'text-emerald-500' : 'text-red-500'}`}>
+                            {ocultarValoresPerfis ? 'R$ ••••' : formatarMoeda(perfil.resultado)}
+                          </strong>
                         </div>
-                        <strong className={`shrink-0 text-[13px] font-black tabular-nums ${positivo ? 'text-emerald-500' : 'text-red-500'}`}>
-                          {ocultarValoresPerfis ? 'R$ ••••' : formatarMoeda(perfil.resultado)}
-                        </strong>
-                      </div>
-                      <div className={`mt-1.5 h-1.5 overflow-hidden rounded-full ${darkMode ? 'bg-slate-700' : 'bg-slate-100'}`}>
-                        <div className={`h-full rounded-full ${positivo ? 'bg-emerald-500' : 'bg-red-500'}`} style={{ width: `${largura}%` }} />
-                      </div>
+                        <div className={`mt-1.5 h-1.5 overflow-hidden rounded-full ${darkMode ? 'bg-slate-700' : 'bg-slate-100'}`}>
+                          <div className={`h-full rounded-full ${positivo ? 'bg-emerald-500' : 'bg-red-500'}`} style={{ width: `${largura}%` }} />
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+                {listaPerfisPodeDescer && (
+                  <div className={`pointer-events-none absolute inset-x-1 bottom-0 flex justify-center pb-1 pt-10 ${
+                    darkMode ? 'bg-gradient-to-t from-slate-950/80 to-transparent' : 'bg-gradient-to-t from-white/95 to-transparent'
+                  }`}>
+                    <button
+                      type="button"
+                      onClick={rolarListaPerfisParaBaixo}
+                      className={`pointer-events-auto flex h-10 w-10 items-center justify-center rounded-full border shadow-lg transition hover:scale-105 ${
+                        darkMode ? 'border-slate-600 bg-slate-900 text-slate-100 hover:bg-slate-800' : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50'
+                      }`}
+                      aria-label="Mostrar mais perfis"
+                      title="Mostrar mais perfis"
+                    >
+                      <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.25" d="M12 5v14m0 0l-6-6m6 6l6-6" />
+                      </svg>
                     </button>
-                  );
-                })}
+                  </div>
+                )}
               </div>
             ) : (
               <p className={`rounded-xl px-3 py-4 text-center text-xs font-semibold ${darkMode ? 'bg-slate-800/50' : 'bg-slate-50'} ${textMuted}`}>

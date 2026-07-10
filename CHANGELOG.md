@@ -1,5 +1,18 @@
 # Changelog
 
+## 1.4.0.25 - 2026-07-10
+
+- Web: card "Meus perfis" remove a tarja da lista e passa a exibir o mês centralizado no header para ganhar espaço.
+
+## 1.4.0.24 - 2026-07-10
+
+- Web: modal "Gerenciar perfil financeiro" recebe acabamento visual mais profissional, com ações suavizadas e acentos no padrão AvantaLab.
+
+## 1.4.0.23 - 2026-07-10
+
+- Web: lista de perfis do card "Meus perfis" ganha tarja de separação entre cabeçalho e scroll.
+- Web: área de scroll dos perfis passa a exibir botão circular para mostrar mais itens quando houver conteúdo abaixo.
+
 ## 1.4.0.22 - 2026-07-10
 
 - Web: relatório aberto ao clicar em um perfil passa a exibir valores sempre, independente do estado de ocultar valores no card "Meus perfis".

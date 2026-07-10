@@ -13,6 +13,31 @@
   },
   "versoes": [
     {
+      "versao": "1.4.0.25",
+      "titulo": "Mês no header dos perfis",
+      "data": "Julho/2026",
+      "itens": [
+        "Web: card \"Meus perfis\" remove a tarja da lista e passa a exibir o mês centralizado no header para ganhar espaço."
+      ]
+    },
+    {
+      "versao": "1.4.0.24",
+      "titulo": "Gerenciar perfil mais refinado",
+      "data": "Julho/2026",
+      "itens": [
+        "Web: modal \"Gerenciar perfil financeiro\" recebe acabamento visual mais profissional, com ações suavizadas e acentos no padrão AvantaLab."
+      ]
+    },
+    {
+      "versao": "1.4.0.23",
+      "titulo": "Scroll guiado nos perfis",
+      "data": "Julho/2026",
+      "itens": [
+        "Web: lista de perfis do card \"Meus perfis\" ganha tarja de separação entre cabeçalho e scroll.",
+        "Web: área de scroll dos perfis passa a exibir botão circular para mostrar mais itens quando houver conteúdo abaixo."
+      ]
+    },
+    {
       "versao": "1.4.0.22",
       "titulo": "Relatório de perfil com valores visíveis",
       "data": "Julho/2026",
