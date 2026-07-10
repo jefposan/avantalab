@@ -13,6 +13,17 @@
   },
   "versoes": [
     {
+      "versao": "1.4.0.20",
+      "titulo": "Card Meus perfis refinado",
+      "data": "Julho/2026",
+      "itens": [
+        "Web: card \"Meus perfis\" recebe contagem e controle de valores no header.",
+        "Web: resumo consolidado passa a destacar resultado, receitas e despesas na mesma linha.",
+        "Web: lista de perfis fica limitada a três empresas visíveis, com scroll e rolagem automática ao arrastar.",
+        "Web: clique em uma empresa volta a abrir o relatório detalhado do perfil."
+      ]
+    },
+    {
       "versao": "1.4.0.19",
       "titulo": "Card Meus perfis mais compacto",
       "data": "Julho/2026",

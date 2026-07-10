@@ -205,6 +205,7 @@ export default function Dashboard({
   const [ocultarValores, setOcultarValores] = useState(true);
   const [ocultarValoresPerfis, setOcultarValoresPerfis] = useState(true);
   const [graficosPerfisVisiveis, setGraficosPerfisVisiveis] = useState(false);
+  const [perfilDetalhado, setPerfilDetalhado] = useState<ResumoPerfilFinanceiro | null>(null);
   const [menuCardAberto, setMenuCardAberto] = useState<string | null>(null);
   const [gerenciadorAberto, setGerenciadorAberto] = useState(false);
   const [evolucaoAno, setEvolucaoAno] = useState(anoSelecionado);
@@ -233,6 +234,63 @@ export default function Dashboard({
   const [caixinhaSalvando, setCaixinhaSalvando] = useState(false);
   const [caixinhaSaldoInicialSalvando, setCaixinhaSaldoInicialSalvando] = useState(false);
   const [caixinhaMensagem, setCaixinhaMensagem] = useState('');
+  const listaPerfisRef = useRef<HTMLDivElement | null>(null);
+  const listaPerfisArrastandoRef = useRef(false);
+  const listaPerfisArrastouRef = useRef(false);
+  const listaPerfisInicioYRef = useRef(0);
+  const listaPerfisVelocidadeRef = useRef(0);
+  const listaPerfisAutoScrollRef = useRef<number | null>(null);
+  const pararAutoScrollPerfis = useCallback(() => {
+    listaPerfisArrastandoRef.current = false;
+    listaPerfisVelocidadeRef.current = 0;
+    if (listaPerfisAutoScrollRef.current !== null) {
+      window.cancelAnimationFrame(listaPerfisAutoScrollRef.current);
+      listaPerfisAutoScrollRef.current = null;
+    }
+  }, []);
+  const iniciarAutoScrollPerfis = useCallback(() => {
+    if (listaPerfisAutoScrollRef.current !== null) return;
+    const passo = () => {
+      const lista = listaPerfisRef.current;
+      if (!listaPerfisArrastandoRef.current || !lista) {
+        listaPerfisAutoScrollRef.current = null;
+        return;
+      }
+      if (listaPerfisVelocidadeRef.current !== 0) {
+        lista.scrollTop += listaPerfisVelocidadeRef.current;
+      }
+      listaPerfisAutoScrollRef.current = window.requestAnimationFrame(passo);
+    };
+    listaPerfisAutoScrollRef.current = window.requestAnimationFrame(passo);
+  }, []);
+  const atualizarAutoScrollPerfis = useCallback((clientY: number) => {
+    const lista = listaPerfisRef.current;
+    if (!lista) return;
+    const limite = 42;
+    const rect = lista.getBoundingClientRect();
+    if (clientY < rect.top + limite) {
+      listaPerfisVelocidadeRef.current = -Math.max(2, Math.round((limite - (clientY - rect.top)) / 4));
+    } else if (clientY > rect.bottom - limite) {
+      listaPerfisVelocidadeRef.current = Math.max(2, Math.round((limite - (rect.bottom - clientY)) / 4));
+    } else {
+      listaPerfisVelocidadeRef.current = 0;
+    }
+  }, []);
+  const abrirDetalhePerfil = useCallback((perfil: ResumoPerfilFinanceiro) => {
+    if (listaPerfisArrastouRef.current) {
+      listaPerfisArrastouRef.current = false;
+      return;
+    }
+    setPerfilDetalhado(perfil);
+  }, []);
+  useEffect(() => {
+    const soltarMouse = () => pararAutoScrollPerfis();
+    window.addEventListener('mouseup', soltarMouse);
+    return () => {
+      window.removeEventListener('mouseup', soltarMouse);
+      pararAutoScrollPerfis();
+    };
+  }, [pararAutoScrollPerfis]);
   const criarCols = (ordem: { a: string[]; b: string[] }, expandidos: string[]): DashboardCols => {
     const full = [...new Set(expandidos)];
     return {
@@ -691,7 +749,6 @@ const mostrarComparativoResumoDash =
   const totalDespesasPerfis = perfisDashboard.reduce((total, perfil) => total + Number(perfil.despesas || 0), 0);
   const resultadoPerfis = totalReceitasPerfis - totalDespesasPerfis;
   const maiorResultadoPerfil = Math.max(1, ...perfisDashboard.map((perfil) => Math.abs(Number(perfil.resultado || 0))));
-  const perfisParaExibir = perfisDashboard.slice(0, cols.full.includes('meusPerfis') ? 8 : 4);
   const nomeMesPerfis = mesPerfis || mesResumoDash;
   const catalogoCardsKanban = [
     { id: 'lancamentosMensais', titulo: 'Lançamentos mensais', descricao: 'Atalho anual para abrir os lançamentos de cada mês.' },
@@ -1214,52 +1271,46 @@ const mostrarComparativoResumoDash =
         <div className="flex items-center justify-between gap-3 px-6 py-3 text-sm font-bold uppercase tracking-wider" style={{ backgroundColor: corPrimaria, color: textoSobreCorPrimaria }}>
           <span>Meus perfis</span>
           <div className="flex items-center gap-2">
+            <span className="rounded-full bg-white/15 px-2 py-0.5 text-[10px] font-black leading-none text-white">
+              {perfisDashboard.length} perfil{perfisDashboard.length === 1 ? '' : 's'}
+            </span>
+            <button
+              type="button"
+              onClick={() => setOcultarValoresPerfis(!ocultarValoresPerfis)}
+              className="flex h-6 w-6 items-center justify-center rounded text-white/75 transition hover:bg-white/15 hover:text-white"
+              title={ocultarValoresPerfis ? 'Mostrar valores' : 'Ocultar valores'}
+              aria-label={ocultarValoresPerfis ? 'Mostrar valores do card Meus perfis' : 'Ocultar valores do card Meus perfis'}
+            >
+              {ocultarValoresPerfis ? (
+                <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
+                </svg>
+              ) : (
+                <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                </svg>
+              )}
+            </button>
             <DragHandle tone="light" />
             <BotaoOpcoesCard id="meusPerfis" tone="light" />
           </div>
         </div>
         <div className="space-y-2 p-3">
-          <div className={`rounded-xl border px-3 py-2.5 ${darkMode ? 'border-slate-700 bg-slate-800/50' : 'border-slate-200 bg-slate-50'}`}>
-            <div className="flex items-end justify-between gap-3">
-              <div className="min-w-0">
-                <p className={`text-[10px] font-black uppercase tracking-wide ${textMuted}`}>Resultado consolidado</p>
-                <strong className={`mt-0.5 block text-lg font-black tabular-nums ${resultadoPerfis >= 0 ? 'text-emerald-500' : 'text-red-500'}`}>
-                  {ocultarValoresPerfis ? 'R$ •••••••' : formatarMoeda(resultadoPerfis)}
-                </strong>
-              </div>
-              <div className="flex shrink-0 items-center gap-2">
-                <span className={`rounded-full px-2 py-0.5 text-[10px] font-black uppercase ${darkMode ? 'bg-slate-700 text-slate-100' : 'bg-cyan-50 text-cyan-700'}`}>
-                  {perfisDashboard.length} perfil{perfisDashboard.length === 1 ? '' : 's'}
-                </span>
-                <button
-                  type="button"
-                  onClick={() => setOcultarValoresPerfis(!ocultarValoresPerfis)}
-                  className={`flex h-7 w-7 items-center justify-center rounded-lg transition ${darkMode ? 'text-slate-300 hover:bg-slate-700 hover:text-white' : 'text-slate-500 hover:bg-white hover:text-slate-800'}`}
-                  title={ocultarValoresPerfis ? 'Mostrar valores' : 'Ocultar valores'}
-                  aria-label={ocultarValoresPerfis ? 'Mostrar valores do card Meus perfis' : 'Ocultar valores do card Meus perfis'}
-                >
-                  {ocultarValoresPerfis ? (
-                    <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
-                    </svg>
-                  ) : (
-                    <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                    </svg>
-                  )}
-                </button>
-              </div>
+          <div className={`grid grid-cols-3 gap-1.5 rounded-xl border p-1.5 ${darkMode ? 'border-slate-700 bg-slate-800/50' : 'border-slate-200 bg-slate-50'}`}>
+            <div className="min-w-0 rounded-lg px-2.5 py-2 shadow-sm" style={{ backgroundColor: corPrimaria, color: textoSobreCorPrimaria }}>
+              <span className="block truncate text-[9px] font-black uppercase tracking-wide opacity-75">Resultado consolidado</span>
+              <strong className="mt-0.5 block truncate text-[13px] font-black tabular-nums">
+                {ocultarValoresPerfis ? 'R$ •••••••' : formatarMoeda(resultadoPerfis)}
+              </strong>
             </div>
-            <div className="mt-2 grid grid-cols-2 gap-2">
-              <div>
-                <span className={`block text-[10px] font-black uppercase tracking-wide ${textMuted}`}>Receitas</span>
-                <span className="mt-0.5 block text-sm font-black text-emerald-500">{ocultarValoresPerfis ? 'R$ ••••••' : formatarMoeda(totalReceitasPerfis)}</span>
-              </div>
-              <div className="text-right">
-                <span className={`block text-[10px] font-black uppercase tracking-wide ${textMuted}`}>Despesas</span>
-                <span className="mt-0.5 block text-sm font-black text-red-500">{ocultarValoresPerfis ? 'R$ ••••••' : formatarMoeda(totalDespesasPerfis)}</span>
-              </div>
+            <div className={`min-w-0 rounded-lg px-2.5 py-2 ${darkMode ? 'bg-slate-900/50' : 'bg-white'}`}>
+              <span className={`block truncate text-[9px] font-black uppercase tracking-wide ${textMuted}`}>Receitas</span>
+              <span className="mt-0.5 block truncate text-[13px] font-black text-emerald-500">{ocultarValoresPerfis ? 'R$ ••••••' : formatarMoeda(totalReceitasPerfis)}</span>
+            </div>
+            <div className={`min-w-0 rounded-lg px-2.5 py-2 text-right ${darkMode ? 'bg-slate-900/50' : 'bg-white'}`}>
+              <span className={`block truncate text-[9px] font-black uppercase tracking-wide ${textMuted}`}>Despesas</span>
+              <span className="mt-0.5 block truncate text-[13px] font-black text-red-500">{ocultarValoresPerfis ? 'R$ ••••••' : formatarMoeda(totalDespesasPerfis)}</span>
             </div>
           </div>
 
@@ -1268,29 +1319,60 @@ const mostrarComparativoResumoDash =
               <p className={`text-[10px] font-black uppercase tracking-wide ${textMuted}`}>{nomeMesPerfis}</p>
               <p className={`text-[10px] font-semibold ${textMuted}`}>Perfis vinculados</p>
             </div>
-            {perfisParaExibir.length > 0 ? perfisParaExibir.map((perfil) => {
-              const positivo = Number(perfil.resultado || 0) >= 0;
-              const largura = Math.max(6, Math.round((Math.abs(Number(perfil.resultado || 0)) / maiorResultadoPerfil) * 100));
-              const perfilAtual = perfil.id === empresaId;
-              return (
-                <div key={perfil.id} className={`rounded-xl border px-2.5 py-2 ${perfilAtual ? 'border-cyan-300' : darkMode ? 'border-slate-700' : 'border-slate-200'} ${darkMode ? 'bg-slate-800/45' : 'bg-white'}`}>
-                  <div className="flex items-center justify-between gap-3">
-                    <div className="min-w-0">
-                      <p className={`truncate text-[13px] font-black leading-tight ${textStrong}`}>{perfil.nome}</p>
-                      <p className={`mt-0.5 truncate text-[10px] font-semibold leading-tight ${textMuted}`}>
-                        {perfilAtual ? 'Perfil atual · ' : ''}Receitas {ocultarValoresPerfis ? '•••' : formatarMoeda(perfil.receitas)} · Despesas {ocultarValoresPerfis ? '•••' : formatarMoeda(perfil.despesas)}
-                      </p>
-                    </div>
-                    <strong className={`shrink-0 text-[13px] font-black tabular-nums ${positivo ? 'text-emerald-500' : 'text-red-500'}`}>
-                      {ocultarValoresPerfis ? 'R$ ••••' : formatarMoeda(perfil.resultado)}
-                    </strong>
-                  </div>
-                  <div className={`mt-1.5 h-1.5 overflow-hidden rounded-full ${darkMode ? 'bg-slate-700' : 'bg-slate-100'}`}>
-                    <div className={`h-full rounded-full ${positivo ? 'bg-emerald-500' : 'bg-red-500'}`} style={{ width: `${largura}%` }} />
-                  </div>
-                </div>
-              );
-            }) : (
+            {perfisDashboard.length > 0 ? (
+              <div
+                ref={listaPerfisRef}
+                className="max-h-[160px] space-y-2 overflow-y-auto overscroll-contain pr-1"
+                onMouseDown={(event) => {
+                  listaPerfisArrastandoRef.current = true;
+                  listaPerfisArrastouRef.current = false;
+                  listaPerfisInicioYRef.current = event.clientY;
+                  listaPerfisVelocidadeRef.current = 0;
+                }}
+                onMouseMove={(event) => {
+                  if (!listaPerfisArrastandoRef.current) return;
+                  if (Math.abs(event.clientY - listaPerfisInicioYRef.current) > 5) {
+                    listaPerfisArrastouRef.current = true;
+                    atualizarAutoScrollPerfis(event.clientY);
+                    iniciarAutoScrollPerfis();
+                  }
+                }}
+                onMouseLeave={() => {
+                  listaPerfisVelocidadeRef.current = 0;
+                }}
+              >
+                {perfisDashboard.map((perfil) => {
+                  const positivo = Number(perfil.resultado || 0) >= 0;
+                  const largura = Math.max(6, Math.round((Math.abs(Number(perfil.resultado || 0)) / maiorResultadoPerfil) * 100));
+                  const perfilAtual = perfil.id === empresaId;
+                  return (
+                    <button
+                      key={perfil.id}
+                      type="button"
+                      onClick={() => abrirDetalhePerfil(perfil)}
+                      className={`w-full rounded-xl border px-2.5 py-2 text-left transition hover:-translate-y-0.5 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-cyan-300 active:cursor-grabbing ${
+                        perfilAtual ? 'border-cyan-300' : darkMode ? 'border-slate-700' : 'border-slate-200'
+                      } ${darkMode ? 'bg-slate-800/45 hover:bg-slate-800' : 'bg-white hover:bg-cyan-50/40'}`}
+                    >
+                      <div className="flex items-center justify-between gap-3">
+                        <div className="min-w-0">
+                          <p className={`truncate text-[13px] font-black leading-tight ${textStrong}`}>{perfil.nome}</p>
+                          <p className={`mt-0.5 truncate text-[10px] font-semibold leading-tight ${textMuted}`}>
+                            {perfilAtual ? 'Perfil atual · ' : ''}Receitas {ocultarValoresPerfis ? '•••' : formatarMoeda(perfil.receitas)} · Despesas {ocultarValoresPerfis ? '•••' : formatarMoeda(perfil.despesas)}
+                          </p>
+                        </div>
+                        <strong className={`shrink-0 text-[13px] font-black tabular-nums ${positivo ? 'text-emerald-500' : 'text-red-500'}`}>
+                          {ocultarValoresPerfis ? 'R$ ••••' : formatarMoeda(perfil.resultado)}
+                        </strong>
+                      </div>
+                      <div className={`mt-1.5 h-1.5 overflow-hidden rounded-full ${darkMode ? 'bg-slate-700' : 'bg-slate-100'}`}>
+                        <div className={`h-full rounded-full ${positivo ? 'bg-emerald-500' : 'bg-red-500'}`} style={{ width: `${largura}%` }} />
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            ) : (
               <p className={`rounded-xl px-3 py-4 text-center text-xs font-semibold ${darkMode ? 'bg-slate-800/50' : 'bg-slate-50'} ${textMuted}`}>
                 Carregando perfis vinculados...
               </p>
@@ -1859,6 +1941,99 @@ const mostrarComparativoResumoDash =
       ) : null}
     </DragOverlay>
     </DndContext>
+    {typeof document !== 'undefined' && perfilDetalhado && createPortal((() => {
+      const receitasPerfil = Number(perfilDetalhado.receitas || 0);
+      const despesasPerfil = Number(perfilDetalhado.despesas || 0);
+      const resultadoPerfil = Number(perfilDetalhado.resultado ?? receitasPerfil - despesasPerfil);
+      const maximoPerfil = Math.max(1, receitasPerfil, despesasPerfil);
+      const participacaoReceitas = totalReceitasPerfis > 0 ? (receitasPerfil / totalReceitasPerfis) * 100 : 0;
+      const participacaoDespesas = totalDespesasPerfis > 0 ? (despesasPerfil / totalDespesasPerfis) * 100 : 0;
+      const margemPerfil = receitasPerfil > 0 ? (resultadoPerfil / receitasPerfil) * 100 : 0;
+      const valorPerfil = (valor: number) => ocultarValoresPerfis ? 'R$ ••••' : formatarMoeda(valor);
+      const percentualPerfil = (valor: number) => ocultarValoresPerfis ? '•••' : `${valor.toFixed(1)}%`;
+      return (
+        <div className="fixed inset-0 z-[9998] flex items-center justify-center bg-slate-950/60 p-4">
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="relatorio-perfil-titulo"
+            className={`${bgCard} w-full max-w-3xl overflow-hidden rounded-2xl shadow-2xl`}
+          >
+            <div className="flex items-center justify-between gap-3 px-5 py-3" style={{ backgroundColor: corPrimaria, color: textoSobreCorPrimaria }}>
+              <div className="min-w-0">
+                <p className="text-[10px] font-black uppercase tracking-wide opacity-75">Relatório do perfil</p>
+                <h2 id="relatorio-perfil-titulo" className="truncate text-lg font-black">{perfilDetalhado.nome}</h2>
+              </div>
+              <button
+                type="button"
+                onClick={() => setPerfilDetalhado(null)}
+                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-xl font-black text-white/75 transition hover:bg-white/15 hover:text-white"
+                aria-label="Fechar relatório do perfil"
+              >
+                ×
+              </button>
+            </div>
+            <div className="max-h-[75vh] space-y-3 overflow-y-auto p-4">
+              <div className="grid grid-cols-3 gap-2">
+                <div className={`rounded-xl border px-3 py-2.5 ${darkMode ? 'border-slate-700 bg-slate-900/50' : 'border-slate-200 bg-slate-50'}`}>
+                  <span className={`block text-[10px] font-black uppercase tracking-wide ${textMuted}`}>Receitas</span>
+                  <strong className="mt-1 block truncate text-sm font-black text-emerald-500">{valorPerfil(receitasPerfil)}</strong>
+                </div>
+                <div className={`rounded-xl border px-3 py-2.5 ${darkMode ? 'border-slate-700 bg-slate-900/50' : 'border-slate-200 bg-slate-50'}`}>
+                  <span className={`block text-[10px] font-black uppercase tracking-wide ${textMuted}`}>Despesas</span>
+                  <strong className="mt-1 block truncate text-sm font-black text-red-500">{valorPerfil(despesasPerfil)}</strong>
+                </div>
+                <div className="rounded-xl px-3 py-2.5 shadow-sm" style={{ backgroundColor: corPrimaria, color: textoSobreCorPrimaria }}>
+                  <span className="block text-[10px] font-black uppercase tracking-wide opacity-75">Resultado</span>
+                  <strong className="mt-1 block truncate text-sm font-black">{valorPerfil(resultadoPerfil)}</strong>
+                </div>
+              </div>
+
+              <div className={`rounded-xl border p-3 ${darkMode ? 'border-slate-700 bg-slate-900/40' : 'border-slate-200 bg-white'}`}>
+                <div className="flex items-center justify-between gap-3">
+                  <h3 className={`truncate text-xs font-black uppercase tracking-wide ${textStrong}`}>Receitas x despesas</h3>
+                  <span className={`text-[10px] font-black uppercase ${resultadoPerfil >= 0 ? 'text-emerald-500' : 'text-red-500'}`}>
+                    Margem {percentualPerfil(margemPerfil)}
+                  </span>
+                </div>
+                <div className="mt-3 flex h-24 items-end justify-center gap-4">
+                  <div className="flex h-full w-10 items-end justify-center rounded-t-lg bg-emerald-500 shadow-sm" style={{ height: `${Math.max(6, (receitasPerfil / maximoPerfil) * 100)}%` }} />
+                  <div className="flex h-full w-10 items-end justify-center rounded-t-lg bg-red-500 shadow-sm" style={{ height: `${Math.max(6, (despesasPerfil / maximoPerfil) * 100)}%` }} />
+                </div>
+                <div className="mt-2 flex justify-center gap-5 text-[10px] font-black uppercase tracking-wide">
+                  <span className="text-emerald-500">Receitas</span>
+                  <span className="text-red-500">Despesas</span>
+                </div>
+              </div>
+
+              <div className={`rounded-xl border p-3 ${darkMode ? 'border-slate-700 bg-slate-900/40' : 'border-slate-200 bg-slate-50'}`}>
+                <h3 className={`text-xs font-black uppercase tracking-wide ${textStrong}`}>Participação no consolidado</h3>
+                <div className="mt-3 space-y-2">
+                  <div>
+                    <div className="mb-1 flex justify-between gap-3 text-[10px] font-black uppercase tracking-wide">
+                      <span className="text-emerald-500">Receitas</span>
+                      <span className={textMuted}>{percentualPerfil(participacaoReceitas)}</span>
+                    </div>
+                    <div className={`h-2 overflow-hidden rounded-full ${darkMode ? 'bg-slate-700' : 'bg-slate-200'}`}>
+                      <div className="h-full rounded-full bg-emerald-500" style={{ width: `${Math.min(100, participacaoReceitas)}%` }} />
+                    </div>
+                  </div>
+                  <div>
+                    <div className="mb-1 flex justify-between gap-3 text-[10px] font-black uppercase tracking-wide">
+                      <span className="text-red-500">Despesas</span>
+                      <span className={textMuted}>{percentualPerfil(participacaoDespesas)}</span>
+                    </div>
+                    <div className={`h-2 overflow-hidden rounded-full ${darkMode ? 'bg-slate-700' : 'bg-slate-200'}`}>
+                      <div className="h-full rounded-full bg-red-500" style={{ width: `${Math.min(100, participacaoDespesas)}%` }} />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      );
+    })(), document.body)}
     {typeof document !== 'undefined' && tooltipEvolucao && createPortal(
       <div
         className="pointer-events-none fixed z-[9999] w-44 rounded-xl bg-slate-900 px-3 py-2 text-white shadow-2xl"

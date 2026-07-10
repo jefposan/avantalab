@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.4.0.20 - 2026-07-10
+
+- Web: card "Meus perfis" recebe contagem e controle de valores no header.
+- Web: resumo consolidado passa a destacar resultado, receitas e despesas na mesma linha.
+- Web: lista de perfis fica limitada a três empresas visíveis, com scroll e rolagem automática ao arrastar.
+- Web: clique em uma empresa volta a abrir o relatório detalhado do perfil.
+
 ## 1.4.0.19 - 2026-07-10
 
 - Web: card "Meus perfis" fica mais compacto com subcards, barras e área de gráficos reduzidos sem perder legibilidade.
