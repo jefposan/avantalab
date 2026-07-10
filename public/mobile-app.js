@@ -6553,8 +6553,8 @@
 
     return (
       '<div class="mobile-app-shell fixed inset-0 flex min-w-0 flex-col overflow-hidden ' + (state.darkMode ? 'mobile-dark bg-slate-950 text-slate-100' : 'mobile-light bg-slate-100 text-slate-900') + '" style="overscroll-behavior:none;">' +
-        '<div id="mobile-header-wrap" class="relative z-40 shrink-0 bg-transparent" style="background:transparent;filter:drop-shadow(0 10px 10px rgba(8,47,73,0.18));isolation:isolate;">' +
-        '<header id="mobile-main-header" class="relative z-10 overflow-hidden rounded-[0_0_28px_28px] px-3 pb-3 text-white backdrop-blur sm:px-4" style="padding-top:calc(env(safe-area-inset-top) + 10px);background:linear-gradient(135deg,#003E73 0%,#075985 54%,#00A6C8 100%);">' +
+        '<div id="mobile-header-wrap" class="relative z-40 shrink-0 bg-transparent" style="background:transparent;isolation:isolate;">' +
+        '<header id="mobile-main-header" class="relative z-10 overflow-hidden rounded-[0_0_28px_28px] px-3 pb-3 text-white backdrop-blur sm:px-4" style="padding-top:calc(env(safe-area-inset-top) + 10px);background:linear-gradient(135deg,#003E73 0%,#075985 54%,#00A6C8 100%);filter:drop-shadow(0 10px 10px rgba(8,47,73,0.18));">' +
           '<div class="mx-auto max-w-md">' +
             '<div class="flex items-center gap-3">' +
               '<div class="min-w-0 flex-1">' +
@@ -6583,7 +6583,7 @@
             insightDespesasHtml(atual, anterior) +
           '</div>' +
         '</header>' +
-        '<div id="mobile-profile-pill" class="absolute left-1/2 z-0 w-max rounded-[0_0_14px_14px] border-0 px-6 py-1.5 text-center text-[13px] font-bold leading-tight text-white" style="top:calc(100% - 6px);max-width:calc(100% - 48px);opacity:1;transform:translate(-50%,var(--profile-pill-y,0%));transition:transform .28s cubic-bezier(.22,1,.36,1);will-change:transform;">' +
+        '<div id="mobile-profile-pill" class="absolute left-1/2 z-0 w-max rounded-[0_0_14px_14px] border-0 px-6 py-1.5 text-center text-[13px] font-bold leading-tight text-white" style="top:100%;max-width:calc(100% - 48px);opacity:1;transform:translate(-50%,var(--profile-pill-y,0%));transition:transform .28s cubic-bezier(.22,1,.36,1);will-change:transform;">' +
           '<span class="relative z-10 block truncate">' + escapeHtml(nomeEmpresa(state.empresa)) + '</span>' +
         '</div>' +
         '</div>' +
