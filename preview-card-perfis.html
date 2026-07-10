@@ -1,0 +1,1002 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Preview - Card Meus Perfis</title>
+  <style>
+    :root {
+      --cor-primaria: #003e73;
+      --azul: var(--cor-primaria);
+      --cyan: #00a6c8;
+      --ink: #082b57;
+      --muted: #64748b;
+      --paper: #ffffff;
+      --soft: #eef7fb;
+      --line: #dbeafe;
+      --green: #0f9f6e;
+      --red: #dc2626;
+      --amber: #d97706;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at 8% 10%, rgba(0, 166, 200, .18), transparent 28%),
+        radial-gradient(circle at 92% 16%, rgba(0, 62, 115, .15), transparent 30%),
+        linear-gradient(145deg, #f8fbff 0%, #edf7fb 48%, #f9fcff 100%);
+    }
+
+    main {
+      width: min(1120px, calc(100% - 32px));
+      margin: 0 auto;
+      padding: 42px 0;
+    }
+
+    .topo {
+      display: flex;
+      align-items: end;
+      justify-content: space-between;
+      gap: 24px;
+      margin-bottom: 22px;
+    }
+
+    .topo h1 {
+      margin: 0;
+      font-size: clamp(28px, 4vw, 44px);
+      line-height: 1;
+      letter-spacing: 0;
+      color: #07235a;
+    }
+
+    .topo p {
+      max-width: 560px;
+      margin: 10px 0 0;
+      color: var(--muted);
+      font-size: 15px;
+      line-height: 1.45;
+    }
+
+    .canvas {
+      display: grid;
+      grid-template-columns: minmax(0, 410px) minmax(0, 1fr);
+      gap: 22px;
+      align-items: start;
+    }
+
+    .painel {
+      border: 1px solid rgba(125, 211, 252, .55);
+      background: rgba(255, 255, 255, .88);
+      box-shadow: 0 18px 45px rgba(8, 43, 87, .14);
+      backdrop-filter: blur(18px);
+    }
+
+    .dashboard-card {
+      position: relative;
+      width: 100%;
+      overflow: visible;
+      border: 2px solid var(--azul);
+      border-radius: 14px 28px 28px 28px;
+      background: rgba(255, 255, 255, .92);
+      box-shadow: 0 18px 45px rgba(8, 43, 87, .14);
+      transition: grid-column .2s ease, transform .2s ease;
+    }
+
+    .canvas.card-expandido .dashboard-card {
+      grid-column: 1 / -1;
+    }
+
+    .canvas.card-expandido .painel {
+      display: none;
+    }
+
+    .web-card-header {
+      display: flex;
+      min-height: 50px;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      border-radius: 10px 24px 0 0;
+      background: var(--cor-primaria);
+      color: white;
+      padding: 10px 18px 10px 22px;
+      text-align: center;
+      font-size: 14px;
+      font-weight: 900;
+      letter-spacing: .09em;
+      text-transform: uppercase;
+    }
+
+    .web-card-title {
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .web-card-actions {
+      position: relative;
+      display: flex;
+      flex-shrink: 0;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .control-btn,
+    .menu-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 24px;
+      height: 24px;
+      flex-shrink: 0;
+      border: 0;
+      border-radius: 4px;
+      color: rgba(255, 255, 255, .80);
+      background: transparent;
+      cursor: pointer;
+      padding: 0;
+      transition: background .15s ease, color .15s ease, transform .15s ease;
+    }
+
+    .control-btn:hover,
+    .menu-btn:hover,
+    .handle:hover {
+      background: rgba(255, 255, 255, .16);
+      color: white;
+    }
+
+    .handle {
+      display: flex;
+      width: 24px;
+      height: 24px;
+      flex-shrink: 0;
+      align-items: center;
+      justify-content: center;
+      border: 0;
+      border-radius: 4px;
+      color: rgba(255, 255, 255, .70);
+      background: transparent;
+      cursor: grab;
+      padding: 0;
+      transition: background .15s ease, color .15s ease;
+    }
+
+    .handle:active {
+      cursor: grabbing;
+    }
+
+    .card-menu {
+      position: absolute;
+      top: 32px;
+      right: 0;
+      z-index: 30;
+      display: none;
+      width: 208px;
+      overflow: hidden;
+      padding: 4px 0;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      background: #fff;
+      color: #1e293b;
+      box-shadow: 0 18px 38px rgba(8, 43, 87, .18);
+    }
+
+    .card-menu.ativo {
+      display: block;
+    }
+
+    .card-menu button {
+      display: flex;
+      width: 100%;
+      min-height: 36px;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      border: 0;
+      border-radius: 0;
+      padding: 8px 12px;
+      color: #334155;
+      background: #fff;
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: 900;
+      text-align: left;
+      white-space: nowrap;
+    }
+
+    .card-menu button:hover {
+      background: #f8fafc;
+      color: #0f172a;
+    }
+
+    .card-body-shell {
+      position: relative;
+      z-index: 1;
+      min-height: 240px;
+      padding: 20px;
+      border-radius: 0 0 26px 26px;
+      background: rgba(255, 255, 255, .92);
+      backdrop-filter: blur(18px);
+    }
+
+    .card-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      margin-bottom: 16px;
+    }
+
+    .card-title {
+      min-width: 0;
+    }
+
+    .eyebrow {
+      margin: 0 0 3px;
+      font-size: 10px;
+      font-weight: 900;
+      letter-spacing: .16em;
+      text-transform: uppercase;
+      color: #0891b2;
+    }
+
+    h2,
+    h3 {
+      margin: 0;
+      letter-spacing: 0;
+    }
+
+    h2 {
+      font-size: 21px;
+      line-height: 1.1;
+      color: #061a44;
+    }
+
+    .icon-btn {
+      display: grid;
+      place-items: center;
+      width: 38px;
+      height: 38px;
+      border: 0;
+      border-radius: 999px;
+      color: white;
+      background: linear-gradient(135deg, var(--azul), var(--cyan));
+      box-shadow: 0 10px 22px rgba(0, 62, 115, .25);
+      cursor: pointer;
+      font-size: 20px;
+      font-weight: 900;
+    }
+
+    .restore-card {
+      display: none;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      grid-column: 1 / -1;
+      border: 1px dashed #7dd3fc;
+      border-radius: 18px;
+      background: rgba(255, 255, 255, .78);
+      padding: 16px;
+      box-shadow: 0 12px 30px rgba(8, 43, 87, .10);
+    }
+
+    .restore-card.ativo {
+      display: flex;
+    }
+
+    .restore-card b {
+      display: block;
+      color: #061a44;
+      font-size: 14px;
+    }
+
+    .restore-card small {
+      display: block;
+      margin-top: 3px;
+      color: var(--muted);
+      font-weight: 700;
+    }
+
+    .restore-card button {
+      height: 38px;
+      border: 0;
+      border-radius: 999px;
+      padding: 0 16px;
+      color: #fff;
+      background: linear-gradient(135deg, var(--azul), var(--cyan));
+      cursor: pointer;
+      font-weight: 900;
+    }
+
+    .expanded-section {
+      display: none;
+      margin-top: 16px;
+      border-top: 1px solid #e0f2fe;
+      padding-top: 16px;
+    }
+
+    .dashboard-card.expandido .expanded-section {
+      display: block;
+    }
+
+    .total {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 12px;
+      align-items: end;
+      padding: 14px;
+      border-radius: 14px 24px 24px 24px;
+      background: linear-gradient(135deg, rgba(0, 62, 115, .08), rgba(0, 166, 200, .12));
+    }
+
+    .total strong {
+      display: block;
+      margin-top: 3px;
+      font-size: 26px;
+      line-height: 1;
+      color: #052f6b;
+    }
+
+    .selo {
+      display: inline-flex;
+      align-items: center;
+      height: 26px;
+      border-radius: 999px;
+      padding: 0 10px;
+      font-size: 11px;
+      font-weight: 900;
+      color: #047857;
+      background: #d1fae5;
+    }
+
+    .mini-chart {
+      display: grid;
+      gap: 10px;
+      margin: 17px 0;
+    }
+
+    .bar-row {
+      display: grid;
+      grid-template-columns: 92px 1fr 70px;
+      align-items: center;
+      gap: 10px;
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .bar-track {
+      position: relative;
+      height: 12px;
+      overflow: hidden;
+      border-radius: 999px;
+      background: #e2edf7;
+    }
+
+    .bar-fill {
+      position: absolute;
+      inset: 0 auto 0 0;
+      border-radius: inherit;
+      background: linear-gradient(90deg, var(--azul), var(--cyan));
+    }
+
+    .valor {
+      text-align: right;
+      color: #0f766e;
+    }
+
+    .valor.negativo { color: var(--red); }
+
+    .perfil-lista {
+      display: grid;
+      gap: 9px;
+    }
+
+    .perfil-item {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 12px;
+      align-items: center;
+      border: 1px solid #e0f2fe;
+      border-radius: 13px;
+      background: #fff;
+      padding: 11px 12px;
+      cursor: pointer;
+      transition: transform .16s ease, box-shadow .16s ease, border-color .16s ease;
+    }
+
+    .perfil-item:hover {
+      transform: translateY(-1px);
+      border-color: #7dd3fc;
+      box-shadow: 0 10px 22px rgba(8, 43, 87, .11);
+    }
+
+    .perfil-item b {
+      display: block;
+      font-size: 13px;
+      color: #10234e;
+    }
+
+    .perfil-item small {
+      display: block;
+      margin-top: 2px;
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 700;
+    }
+
+    .painel {
+      border-radius: 22px;
+      padding: 20px;
+    }
+
+    .painel-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 18px;
+    }
+
+    .chart-card {
+      border: 1px solid #dff3fb;
+      border-radius: 18px;
+      background: #fff;
+      padding: 16px;
+    }
+
+    .chart-card h3 {
+      font-size: 15px;
+      color: #10234e;
+      margin-bottom: 14px;
+    }
+
+    .bars {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 14px;
+      align-items: end;
+      min-height: 205px;
+      padding-top: 10px;
+    }
+
+    .perfil-bar {
+      display: grid;
+      gap: 9px;
+      align-items: end;
+    }
+
+    .dupla {
+      display: flex;
+      justify-content: center;
+      align-items: end;
+      gap: 8px;
+      height: 150px;
+    }
+
+    .coluna {
+      width: 26px;
+      min-height: 8px;
+      border-radius: 9px 9px 3px 3px;
+      background: var(--cyan);
+      box-shadow: inset 0 -10px 18px rgba(0, 62, 115, .15);
+    }
+
+    .coluna.despesa {
+      background: #f97316;
+    }
+
+    .perfil-bar label {
+      text-align: center;
+      font-size: 11px;
+      font-weight: 900;
+      color: #1e3a8a;
+    }
+
+    .legenda {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 14px;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .legenda span {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .dot {
+      width: 9px;
+      height: 9px;
+      border-radius: 999px;
+      background: var(--cyan);
+    }
+
+    .dot.orange { background: #f97316; }
+
+    .detalhe {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 180px;
+      gap: 16px;
+      margin-top: 16px;
+    }
+
+    .metricas {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .metric {
+      border-radius: 16px;
+      background: #f8fcff;
+      padding: 13px;
+      border: 1px solid #e0f2fe;
+    }
+
+    .metric small {
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 900;
+      text-transform: uppercase;
+    }
+
+    .metric strong {
+      display: block;
+      margin-top: 6px;
+      font-size: 17px;
+      color: #061a44;
+    }
+
+    .donut {
+      width: 152px;
+      height: 152px;
+      margin: 0 auto;
+      border-radius: 999px;
+      background: conic-gradient(#003e73 0 42%, #00a6c8 42% 68%, #22c55e 68% 84%, #f97316 84% 100%);
+      position: relative;
+      box-shadow: 0 16px 26px rgba(8, 43, 87, .12);
+    }
+
+    .donut::after {
+      content: "";
+      position: absolute;
+      inset: 38px;
+      border-radius: inherit;
+      background: #fff;
+    }
+
+    .linha {
+      height: 126px;
+      margin-top: 14px;
+      border-radius: 18px;
+      background:
+        linear-gradient(to top, rgba(148, 163, 184, .16) 1px, transparent 1px) 0 0 / 100% 25%,
+        linear-gradient(180deg, #fff, #f6fbff);
+      border: 1px solid #e0f2fe;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .linha svg {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+    }
+
+    .modal {
+      position: fixed;
+      inset: 0;
+      display: none;
+      place-items: center;
+      padding: 22px;
+      background: rgba(2, 6, 23, .72);
+      backdrop-filter: blur(4px);
+      z-index: 30;
+    }
+
+    .modal.ativo { display: grid; }
+
+    .modal-box {
+      width: min(920px, 100%);
+      max-height: min(760px, calc(100vh - 34px));
+      overflow: auto;
+      border-radius: 26px;
+      background: #f8fcff;
+      box-shadow: 0 30px 80px rgba(0, 0, 0, .32);
+    }
+
+    .modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 18px 20px;
+      color: white;
+      background: linear-gradient(135deg, var(--azul), var(--cyan));
+    }
+
+    .modal-header h2 { color: white; }
+
+    .fechar {
+      width: 38px;
+      height: 38px;
+      border: 1px solid rgba(255, 255, 255, .34);
+      border-radius: 999px;
+      color: white;
+      background: rgba(255, 255, 255, .13);
+      cursor: pointer;
+      font-size: 25px;
+      line-height: 1;
+    }
+
+    .modal-body {
+      padding: 18px;
+    }
+
+    .tabs {
+      display: flex;
+      gap: 8px;
+      overflow-x: auto;
+      margin-bottom: 15px;
+    }
+
+    .tab {
+      height: 36px;
+      border: 1px solid #bae6fd;
+      border-radius: 999px;
+      padding: 0 14px;
+      color: #075985;
+      background: #fff;
+      font-weight: 900;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+
+    .tab.ativa {
+      color: white;
+      background: linear-gradient(135deg, var(--azul), var(--cyan));
+      border-color: transparent;
+    }
+
+    @media (max-width: 860px) {
+      main { width: min(100% - 22px, 480px); padding: 22px 0; }
+      .topo { display: block; }
+      .canvas { grid-template-columns: 1fr; }
+      .painel { display: none; }
+      .web-card-header { padding: 9px 12px 9px 16px; font-size: 12px; }
+      .web-card-actions { gap: 3px; }
+      .card-body-shell { padding: 18px; }
+      .detalhe { grid-template-columns: 1fr; }
+      .metricas { grid-template-columns: 1fr; }
+      .bars { min-height: 180px; }
+      .bar-row { grid-template-columns: 84px 1fr 64px; }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <section class="topo">
+      <div>
+        <p class="eyebrow">Protótipo visual</p>
+        <h1>Card Meus Perfis</h1>
+        <p>Resumo consolidado dos perfis vinculados ao usuário, com acesso rápido a uma visão mais completa de cada conta.</p>
+      </div>
+    </section>
+
+    <section class="canvas">
+      <article class="dashboard-card" id="cardPerfis" aria-label="Card Meus Perfis">
+        <div class="web-card-header">
+          <span class="web-card-title">Meus perfis</span>
+          <div class="web-card-actions">
+            <button class="control-btn" id="toggleExpandir" type="button" aria-label="Expandir card" title="Expandir">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true">
+                <path d="M8 3H3v5M16 3h5v5M21 16v5h-5M3 16v5h5" stroke-linecap="round" stroke-linejoin="round"></path>
+              </svg>
+            </button>
+            <button class="handle" type="button" title="Arrastar para reordenar" aria-label="Arrastar para reordenar">
+              <svg width="14" height="14" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                <circle cx="7" cy="5" r="1.6"></circle><circle cx="13" cy="5" r="1.6"></circle>
+                <circle cx="7" cy="10" r="1.6"></circle><circle cx="13" cy="10" r="1.6"></circle>
+                <circle cx="7" cy="15" r="1.6"></circle><circle cx="13" cy="15" r="1.6"></circle>
+              </svg>
+            </button>
+            <button class="menu-btn" id="abrirMenuCard" type="button" aria-label="Opções do bloco" title="Opções do bloco">
+              <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <circle cx="5" cy="12" r="2"></circle>
+                <circle cx="12" cy="12" r="2"></circle>
+                <circle cx="19" cy="12" r="2"></circle>
+              </svg>
+            </button>
+            <div class="card-menu" id="menuCard">
+              <button id="ocultarCard" type="button">Ocultar card</button>
+            </div>
+          </div>
+        </div>
+        <div class="card-body-shell">
+          <div class="card-head">
+            <div class="card-title">
+              <p class="eyebrow">Todas as contas</p>
+              <h2>Resumo dos perfis</h2>
+            </div>
+            <button class="icon-btn" id="abrirModal" aria-label="Abrir visão geral">›</button>
+          </div>
+
+          <div class="total">
+            <div>
+              <span class="eyebrow">Resultado consolidado</span>
+              <strong>R$ 8.940,00</strong>
+            </div>
+            <span class="selo">3 perfis</span>
+          </div>
+
+          <div class="mini-chart" aria-hidden="true">
+            <div class="bar-row">
+              <span>AvantaLab</span>
+              <span class="bar-track"><span class="bar-fill" style="width: 88%"></span></span>
+              <span class="valor">+8.430</span>
+            </div>
+            <div class="bar-row">
+              <span>Pessoal</span>
+              <span class="bar-track"><span class="bar-fill" style="width: 42%"></span></span>
+              <span class="valor">+1.250</span>
+            </div>
+            <div class="bar-row">
+              <span>Loja Centro</span>
+              <span class="bar-track"><span class="bar-fill" style="width: 24%; background: linear-gradient(90deg, #f97316, #ef4444)"></span></span>
+              <span class="valor negativo">-740</span>
+            </div>
+          </div>
+
+          <div class="perfil-lista">
+            <button class="perfil-item" data-perfil="AvantaLab">
+              <span><b>AvantaLab</b><small>Receitas R$ 22.000,00 · Despesas R$ 13.570,00</small></span>
+              <span class="valor">+R$ 8.430</span>
+            </button>
+            <button class="perfil-item" data-perfil="Conta pessoal">
+              <span><b>Conta pessoal</b><small>Receitas R$ 5.200,00 · Despesas R$ 3.950,00</small></span>
+              <span class="valor">+R$ 1.250</span>
+            </button>
+            <button class="perfil-item" data-perfil="Loja Centro">
+              <span><b>Loja Centro</b><small>Receitas R$ 12.100,00 · Despesas R$ 12.840,00</small></span>
+              <span class="valor negativo">-R$ 740</span>
+            </button>
+          </div>
+
+          <div class="expanded-section">
+            <div class="chart-card">
+              <h3>Receitas x despesas por perfil</h3>
+              <div class="bars">
+                <div class="perfil-bar">
+                  <div class="dupla"><span class="coluna" style="height: 136px"></span><span class="coluna despesa" style="height: 84px"></span></div>
+                  <label>AvantaLab</label>
+                </div>
+                <div class="perfil-bar">
+                  <div class="dupla"><span class="coluna" style="height: 72px"></span><span class="coluna despesa" style="height: 54px"></span></div>
+                  <label>Pessoal</label>
+                </div>
+                <div class="perfil-bar">
+                  <div class="dupla"><span class="coluna" style="height: 92px"></span><span class="coluna despesa" style="height: 104px"></span></div>
+                  <label>Loja Centro</label>
+                </div>
+              </div>
+              <div class="legenda">
+                <span><i class="dot"></i>Receitas</span>
+                <span><i class="dot orange"></i>Despesas</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </article>
+
+      <div class="restore-card" id="restoreCard">
+        <span>
+          <b>Card Meus perfis oculto</b>
+          <small>Este estado simula o organizador do dashboard.</small>
+        </span>
+        <button id="reexibirCard" type="button">Reexibir card</button>
+      </div>
+
+      <aside class="painel">
+        <div class="painel-head">
+          <div>
+            <p class="eyebrow">Tela expandida</p>
+            <h2>Visão geral dos perfis</h2>
+          </div>
+          <span class="selo">Julho/2026</span>
+        </div>
+        <div class="chart-card">
+          <h3>Receitas x despesas por perfil</h3>
+          <div class="bars">
+            <div class="perfil-bar">
+              <div class="dupla">
+                <span class="coluna" style="height: 136px"></span>
+                <span class="coluna despesa" style="height: 84px"></span>
+              </div>
+              <label>AvantaLab</label>
+            </div>
+            <div class="perfil-bar">
+              <div class="dupla">
+                <span class="coluna" style="height: 72px"></span>
+                <span class="coluna despesa" style="height: 54px"></span>
+              </div>
+              <label>Pessoal</label>
+            </div>
+            <div class="perfil-bar">
+              <div class="dupla">
+                <span class="coluna" style="height: 92px"></span>
+                <span class="coluna despesa" style="height: 104px"></span>
+              </div>
+              <label>Loja Centro</label>
+            </div>
+          </div>
+          <div class="legenda">
+            <span><i class="dot"></i>Receitas</span>
+            <span><i class="dot orange"></i>Despesas</span>
+          </div>
+        </div>
+      </aside>
+    </section>
+  </main>
+
+  <section class="modal" id="modal">
+    <div class="modal-box">
+      <div class="modal-header">
+        <div>
+          <p class="eyebrow" style="color:rgba(255,255,255,.78)">Resumo dos perfis</p>
+          <h2 id="modalTitulo">Visão geral</h2>
+        </div>
+        <button class="fechar" id="fecharModal" aria-label="Fechar">×</button>
+      </div>
+      <div class="modal-body">
+        <div class="tabs">
+          <button class="tab ativa" data-tab="geral">Geral</button>
+          <button class="tab" data-tab="AvantaLab">AvantaLab</button>
+          <button class="tab" data-tab="Conta pessoal">Conta pessoal</button>
+          <button class="tab" data-tab="Loja Centro">Loja Centro</button>
+        </div>
+
+        <div class="chart-card" id="conteudoModal">
+          <h3>Receitas x despesas por perfil</h3>
+          <div class="bars">
+            <div class="perfil-bar">
+              <div class="dupla"><span class="coluna" style="height:136px"></span><span class="coluna despesa" style="height:84px"></span></div>
+              <label>AvantaLab</label>
+            </div>
+            <div class="perfil-bar">
+              <div class="dupla"><span class="coluna" style="height:72px"></span><span class="coluna despesa" style="height:54px"></span></div>
+              <label>Pessoal</label>
+            </div>
+            <div class="perfil-bar">
+              <div class="dupla"><span class="coluna" style="height:92px"></span><span class="coluna despesa" style="height:104px"></span></div>
+              <label>Loja Centro</label>
+            </div>
+          </div>
+          <div class="legenda"><span><i class="dot"></i>Receitas</span><span><i class="dot orange"></i>Despesas</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <script>
+    const modal = document.getElementById('modal');
+    const titulo = document.getElementById('modalTitulo');
+    const conteudo = document.getElementById('conteudoModal');
+    const tabs = Array.from(document.querySelectorAll('.tab'));
+    const canvas = document.querySelector('.canvas');
+    const cardPerfis = document.getElementById('cardPerfis');
+    const menuCard = document.getElementById('menuCard');
+    const toggleExpandir = document.getElementById('toggleExpandir');
+    const restoreCard = document.getElementById('restoreCard');
+
+    const perfis = {
+      'AvantaLab': { receita: 'R$ 22.000,00', despesa: 'R$ 13.570,00', saldo: '+R$ 8.430,00', cor: 'green' },
+      'Conta pessoal': { receita: 'R$ 5.200,00', despesa: 'R$ 3.950,00', saldo: '+R$ 1.250,00', cor: 'green' },
+      'Loja Centro': { receita: 'R$ 12.100,00', despesa: 'R$ 12.840,00', saldo: '-R$ 740,00', cor: 'red' }
+    };
+
+    function abrir(tab = 'geral') {
+      modal.classList.add('ativo');
+      selecionar(tab);
+    }
+
+    function fechar() {
+      modal.classList.remove('ativo');
+    }
+
+    function fecharMenuCard() {
+      menuCard.classList.remove('ativo');
+    }
+
+    function alternarExpansao() {
+      const expandido = cardPerfis.classList.toggle('expandido');
+      canvas.classList.toggle('card-expandido', expandido);
+      toggleExpandir.setAttribute('aria-label', expandido ? 'Reduzir card' : 'Expandir card');
+      toggleExpandir.setAttribute('title', expandido ? 'Reduzir' : 'Expandir');
+      fecharMenuCard();
+    }
+
+    function ocultarCard() {
+      cardPerfis.hidden = true;
+      canvas.classList.remove('card-expandido');
+      restoreCard.classList.add('ativo');
+      fecharMenuCard();
+    }
+
+    function reexibirCard() {
+      cardPerfis.hidden = false;
+      restoreCard.classList.remove('ativo');
+    }
+
+    function selecionar(tab) {
+      tabs.forEach((item) => item.classList.toggle('ativa', item.dataset.tab === tab));
+
+      if (tab === 'geral') {
+        titulo.textContent = 'Visão geral';
+        conteudo.innerHTML = `
+          <h3>Receitas x despesas por perfil</h3>
+          <div class="bars">
+            <div class="perfil-bar"><div class="dupla"><span class="coluna" style="height:136px"></span><span class="coluna despesa" style="height:84px"></span></div><label>AvantaLab</label></div>
+            <div class="perfil-bar"><div class="dupla"><span class="coluna" style="height:72px"></span><span class="coluna despesa" style="height:54px"></span></div><label>Pessoal</label></div>
+            <div class="perfil-bar"><div class="dupla"><span class="coluna" style="height:92px"></span><span class="coluna despesa" style="height:104px"></span></div><label>Loja Centro</label></div>
+          </div>
+          <div class="legenda"><span><i class="dot"></i>Receitas</span><span><i class="dot orange"></i>Despesas</span></div>
+        `;
+        return;
+      }
+
+      const p = perfis[tab];
+      titulo.textContent = tab;
+      conteudo.innerHTML = `
+        <h3>Detalhe do perfil</h3>
+        <div class="metricas">
+          <div class="metric"><small>Receitas</small><strong>${p.receita}</strong></div>
+          <div class="metric"><small>Despesas</small><strong>${p.despesa}</strong></div>
+          <div class="metric"><small>Resultado</small><strong style="color:${p.cor === 'red' ? 'var(--red)' : 'var(--green)'}">${p.saldo}</strong></div>
+        </div>
+        <div class="detalhe">
+          <div>
+            <h3 style="margin-top:16px">Resultado dos últimos 6 meses</h3>
+            <div class="linha">
+              <svg viewBox="0 0 520 126" preserveAspectRatio="none" aria-hidden="true">
+                <path d="M0 94 C70 80 96 70 150 74 C210 79 230 42 286 52 C348 63 374 30 430 38 C474 44 496 28 520 22" fill="none" stroke="#00a6c8" stroke-width="5" stroke-linecap="round"/>
+                <path d="M0 94 C70 80 96 70 150 74 C210 79 230 42 286 52 C348 63 374 30 430 38 C474 44 496 28 520 22 L520 126 L0 126 Z" fill="rgba(0,166,200,.12)"/>
+              </svg>
+            </div>
+          </div>
+          <div class="chart-card" style="padding:14px">
+            <h3>Categorias</h3>
+            <div class="donut"></div>
+          </div>
+        </div>
+      `;
+    }
+
+    document.getElementById('abrirModal').addEventListener('click', () => abrir('geral'));
+    document.getElementById('fecharModal').addEventListener('click', fechar);
+    modal.addEventListener('click', (event) => { if (event.target === modal) fechar(); });
+    document.getElementById('abrirMenuCard').addEventListener('click', (event) => {
+      event.stopPropagation();
+      menuCard.classList.toggle('ativo');
+    });
+    toggleExpandir.addEventListener('click', alternarExpansao);
+    document.getElementById('ocultarCard').addEventListener('click', ocultarCard);
+    document.getElementById('reexibirCard').addEventListener('click', reexibirCard);
+    document.addEventListener('click', fecharMenuCard);
+    menuCard.addEventListener('click', (event) => event.stopPropagation());
+    document.querySelectorAll('[data-perfil]').forEach((item) => {
+      item.addEventListener('click', () => abrir(item.dataset.perfil));
+    });
+    tabs.forEach((tab) => tab.addEventListener('click', () => selecionar(tab.dataset.tab)));
+  </script>
+</body>
+</html>
