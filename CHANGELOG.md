@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.4.0.11 - 2026-07-10
+
+- Mobile: ao abrir o balão do menu "..." dos cards, todo o restante da tela fica escurecido como nos demais modais; apenas o balão permanece em destaque.
+
 ## 1.4.0.10 - 2026-07-10
 
 - Mobile: fundo escurecido do menu "..." dos cards do resumo passa a ficar acima do header, no mesmo patamar dos popups.

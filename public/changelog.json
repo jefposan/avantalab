@@ -13,6 +13,14 @@
   },
   "versoes": [
     {
+      "versao": "1.4.0.11",
+      "titulo": "Foco corrigido nos cards mobile",
+      "data": "Julho/2026",
+      "itens": [
+        "Mobile: ao abrir o balão do menu \"...\" dos cards, todo o restante da tela fica escurecido como nos demais modais; apenas o balão permanece em destaque."
+      ]
+    },
+    {
       "versao": "1.4.0.10",
       "titulo": "Ajustes no resumo mobile",
       "data": "Julho/2026",
