@@ -2378,6 +2378,10 @@
     state.busca = '';
     state.agendaDiaSelecionado = null;
     render();
+    requestAnimationFrame(function () {
+      var scroll = document.getElementById('mobile-main-scroll');
+      if (scroll) scroll.scrollTo({ top: 0, behavior: 'smooth' });
+    });
   }
 
   function abrirLancamentoPelaNavegacao() {
@@ -2778,7 +2782,7 @@
 
   function promptNotificacoesHtml() {
     return (
-      '<div id="prompt-notif-overlay" class="fixed inset-0 z-[70] flex items-center justify-center bg-slate-950/60 px-5 pt-4" style="padding-bottom:calc(env(safe-area-inset-bottom) + 78px)">' +
+      '<div id="prompt-notif-overlay" class="fixed inset-0 z-[70] flex items-center justify-center bg-slate-950/75 px-5 pt-4" style="padding-bottom:calc(env(safe-area-inset-bottom) + 78px)">' +
         '<div class="w-full max-w-xs overflow-y-auto rounded-3xl bg-white text-center shadow-2xl" style="max-height:calc(100dvh - env(safe-area-inset-bottom) - 102px)">' +
           '<div class="flex items-center gap-3 px-5 py-4 text-left text-white" style="background-color:#003E73">' +
             '<div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white/15 text-xl">&#128276;</div>' +
@@ -6769,13 +6773,15 @@
       .map(function (id) {
         if (!cards[id]) return '';
         var menuAberto = state.dashboardOpcoesId === id;
+        var menuCardPosicao = id === 'ia' ? 'right-3' : 'right-12';
         return '<div data-dashboard-card="' + escapeHtml(id) + '" class="relative pb-2 transition-[transform,opacity,filter] duration-200 ease-out">' +
           cards[id] +
           '<button type="button" data-dashboard-opcoes="' + escapeHtml(id) + '" class="absolute bottom-1 ' + (id === 'ia' ? 'right-3' : 'right-12') + ' z-20 flex h-7 w-8 items-center justify-center rounded-full bg-transparent text-[13px] font-black leading-none text-slate-400 active:bg-slate-100" aria-label="Opcoes do bloco">...</button>' +
           (id === 'ia' ? '' : '<button type="button" data-dashboard-handle="' + escapeHtml(id) + '" class="absolute bottom-1 right-3 flex h-7 w-8 select-none touch-none items-center justify-center rounded-full bg-transparent text-[11px] font-black leading-none text-slate-400" aria-label="Mover card">&vellip;&vellip;</button>') +
           (menuAberto
-            ? '<div data-dashboard-menu-card="' + escapeHtml(id) + '" class="absolute bottom-9 right-3 z-30 w-44 overflow-hidden rounded-xl border border-slate-200 bg-white py-1 text-slate-800 shadow-2xl">' +
-                '<button type="button" data-dashboard-remover="' + escapeHtml(id) + '" class="flex w-full items-center gap-2 px-3 py-2 text-left text-[11px] font-black text-slate-700 active:bg-slate-50"><span class="text-sm leading-none">-</span>Remover bloco</button>' +
+            ? '<div data-dashboard-menu-card="' + escapeHtml(id) + '" class="absolute bottom-9 ' + menuCardPosicao + ' z-30 w-40 overflow-visible rounded-2xl border border-slate-200 bg-white py-1.5 text-slate-800 shadow-2xl">' +
+                '<span aria-hidden="true" class="absolute -bottom-2 right-3 h-4 w-4 rotate-45 border-b border-r border-slate-200 bg-white"></span>' +
+                '<button type="button" data-dashboard-remover="' + escapeHtml(id) + '" class="relative z-10 flex w-full items-center gap-2 rounded-2xl px-3 py-2 text-left text-[11px] font-black text-slate-700 active:bg-slate-50"><span class="text-sm leading-none">💬</span>Ocultar card</button>' +
               '</div>'
             : '') +
         '</div>';
@@ -7113,7 +7119,7 @@
     }).join('');
 
     return (
-      '<div id="agenda-form-overlay" class="fixed inset-0 z-[75] flex items-center justify-center bg-slate-950/65 px-4 pt-4 backdrop-blur-sm" style="padding-bottom:calc(env(safe-area-inset-bottom) + 78px)">' +
+      '<div id="agenda-form-overlay" class="fixed inset-0 z-[75] flex items-center justify-center bg-slate-950/80 px-4 pt-4 backdrop-blur-sm" style="padding-bottom:calc(env(safe-area-inset-bottom) + 78px)">' +
         '<div class="w-full max-w-sm overflow-y-auto rounded-[26px] border border-white/70 bg-white shadow-2xl shadow-slate-950/30" style="max-height:calc(100dvh - env(safe-area-inset-bottom) - 102px)">' +
           '<div class="flex items-center justify-between gap-3 px-4 py-3 text-white" style="background-color:#003E73">' +
             '<div>' +
@@ -7501,8 +7507,11 @@
     var max = Math.max.apply(null, lista.map(function (item) { return item.valor; }).concat([1]));
     var cor = tipo === 'despesas' ? 'bg-red-400' : 'bg-emerald-400';
     var corForte = tipo === 'despesas' ? 'bg-red-600' : 'bg-emerald-600';
+    var mesSelecionado = state.evolucaoSelecionadaMes[tipo] || state.mes;
+    var itemSelecionado = lista.find(function (item) { return item.mes === mesSelecionado; }) || lista[lista.length - 1];
+    mesSelecionado = itemSelecionado ? itemSelecionado.mes : mesSelecionado;
     var valorSelecionado = state.evolucaoSelecionada[tipo];
-    var mesSelecionado = state.evolucaoSelecionadaMes[tipo];
+    if (valorSelecionado == null && itemSelecionado) valorSelecionado = itemSelecionado.valor;
 
     return (
       '<section class="rounded-2xl bg-white p-4 shadow-sm">' +
@@ -7599,7 +7608,7 @@
     var novaAberta = state.novaDespesaAberta;
 
     return (
-      '<div id="modal-lancamento-overlay" class="fixed inset-0 z-40 flex items-center justify-center overflow-hidden bg-slate-950/60 px-3 pt-4" style="padding-bottom:calc(env(safe-area-inset-bottom) + 78px)">' +
+      '<div id="modal-lancamento-overlay" class="fixed inset-0 z-40 flex items-center justify-center overflow-hidden bg-slate-950/75 px-3 pt-4" style="padding-bottom:calc(env(safe-area-inset-bottom) + 78px)">' +
         '<section class="mx-auto w-full max-w-md overflow-hidden rounded-3xl bg-white shadow-2xl" style="max-height:calc(100dvh - env(safe-area-inset-bottom) - 102px)">' +
           '<div class="max-h-[inherit] overflow-y-auto overscroll-contain">' +
           (novaAberta
@@ -7732,7 +7741,7 @@
     var detalhe = receita ? 'Receita' : 'Despesa';
 
 	    return (
-	      '<div id="modal-acao-overlay" class="fixed inset-0 z-[55] flex items-center justify-center overflow-hidden bg-slate-950/60 px-3 pt-4" style="padding-bottom:calc(env(safe-area-inset-bottom) + 78px)">' +
+	      '<div id="modal-acao-overlay" class="fixed inset-0 z-[55] flex items-center justify-center overflow-hidden bg-slate-950/75 px-3 pt-4" style="padding-bottom:calc(env(safe-area-inset-bottom) + 78px)">' +
 	        '<section class="mx-auto flex w-full max-w-md flex-col overflow-hidden rounded-3xl bg-white shadow-2xl" style="max-height:calc(100dvh - env(safe-area-inset-bottom) - 102px)">' +
 	          '<div class="flex shrink-0 items-center justify-between gap-3 px-4 py-3 text-white" style="background-color:#003E73">' +
 	            '<div class="min-w-0"><p class="text-[10px] font-black uppercase tracking-wide text-cyan-100/75">' + detalhe + '</p><h2 class="truncate text-base font-black">' + escapeHtml(titulo) + '</h2></div>' +
@@ -8194,7 +8203,7 @@
     }[state.modalMenu] || 'Menu';
 
     return (
-      '<div id="modal-menu-overlay" class="fixed inset-0 z-[60] flex items-center justify-center overflow-hidden bg-slate-950/60 px-3 pt-4" style="padding-bottom:calc(env(safe-area-inset-bottom) + 78px)">' +
+      '<div id="modal-menu-overlay" class="fixed inset-0 z-[60] flex items-center justify-center overflow-hidden bg-slate-950/75 px-3 pt-4" style="padding-bottom:calc(env(safe-area-inset-bottom) + 78px)">' +
         '<section class="mx-auto flex w-full max-w-md flex-col overflow-hidden rounded-3xl ' + (state.darkMode ? 'bg-slate-900 text-slate-100' : 'bg-white text-slate-900') + ' shadow-2xl" style="max-height:calc(100dvh - env(safe-area-inset-bottom) - 102px)">' +
           '<div class="shrink-0 flex items-center justify-between gap-3 px-4 py-3 text-white" style="background-color:#003E73">' +
             '<h2 class="text-base font-black">' + escapeHtml(titulo) + '</h2>' +
@@ -9137,7 +9146,7 @@
     var item = state.exclusaoRecorrencia;
     if (!item) return '';
     return (
-      '<div id="excluir-recorrencia-overlay" class="fixed inset-0 z-[80] flex items-center justify-center bg-slate-950/65 px-4 pt-4 backdrop-blur-sm" style="padding-bottom:calc(env(safe-area-inset-bottom) + 78px)">' +
+      '<div id="excluir-recorrencia-overlay" class="fixed inset-0 z-[80] flex items-center justify-center bg-slate-950/80 px-4 pt-4 backdrop-blur-sm" style="padding-bottom:calc(env(safe-area-inset-bottom) + 78px)">' +
         '<section class="w-full max-w-sm overflow-y-auto rounded-3xl bg-white shadow-2xl" style="max-height:calc(100dvh - env(safe-area-inset-bottom) - 102px)">' +
           '<div class="flex items-center justify-between gap-3 px-4 py-3 text-white" style="background-color:#003E73">' +
             '<div class="min-w-0">' +

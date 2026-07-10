@@ -13,6 +13,17 @@
   },
   "versoes": [
     {
+      "versao": "1.4.0.08",
+      "titulo": "Refinos no dashboard mobile",
+      "data": "Julho/2026",
+      "itens": [
+        "Mobile: Evolução de despesas e receitas passa a iniciar com o mês ativo selecionado.",
+        "Mobile: fundo escurecido dos cards e modais foi intensificado.",
+        "Mobile: tocar na casinha já estando na dashboard rola a tela para o topo.",
+        "Mobile: menu \"...\" dos cards passa a abrir um balão apontando para o botão, com ação \"Ocultar card\"."
+      ]
+    },
+    {
       "versao": "1.4.0.07",
       "titulo": "Refino dos lançamentos e cards",
       "data": "Julho/2026",

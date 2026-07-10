@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.4.0.08 - 2026-07-10
+
+- Mobile: cards de Evolução de despesas e receitas passam a iniciar com o mês ativo selecionado.
+- Mobile: fundo escurecido dos cards/modais foi intensificado para dar mais foco ao conteúdo aberto.
+- Mobile: tocar na casinha já estando na dashboard rola a tela para o topo.
+- Mobile: menu "..." dos cards passa a abrir um balão apontando para o botão, com ação "Ocultar card".
+
 ## 1.4.0.07 - 2026-07-09
 
 - Web: campo de dia em lançamentos volta a permanecer vazio/manual ao abrir o card de despesa.
