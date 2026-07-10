@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.4.0.22 - 2026-07-10
+
+- Web: relatório aberto ao clicar em um perfil passa a exibir valores sempre, independente do estado de ocultar valores no card "Meus perfis".
+
 ## 1.4.0.21 - 2026-07-10
 
 - Web: relatório de perfil passa a exibir gráfico de receitas x despesas dos últimos 6 meses com tooltip.

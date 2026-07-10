@@ -13,6 +13,14 @@
   },
   "versoes": [
     {
+      "versao": "1.4.0.22",
+      "titulo": "Relatório de perfil com valores visíveis",
+      "data": "Julho/2026",
+      "itens": [
+        "Web: relatório aberto ao clicar em um perfil passa a exibir valores sempre, independente do estado de ocultar valores no card \"Meus perfis\"."
+      ]
+    },
+    {
       "versao": "1.4.0.21",
       "titulo": "Histórico no relatório de perfil",
       "data": "Julho/2026",

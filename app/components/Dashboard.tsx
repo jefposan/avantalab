@@ -1985,8 +1985,8 @@ const mostrarComparativoResumoDash =
       const participacaoReceitas = totalReceitasPerfis > 0 ? (receitasPerfil / totalReceitasPerfis) * 100 : 0;
       const participacaoDespesas = totalDespesasPerfis > 0 ? (despesasPerfil / totalDespesasPerfis) * 100 : 0;
       const margemPerfil = receitasPerfil > 0 ? (resultadoPerfil / receitasPerfil) * 100 : 0;
-      const valorPerfil = (valor: number) => ocultarValoresPerfis ? 'R$ ••••' : formatarMoeda(valor);
-      const percentualPerfil = (valor: number) => ocultarValoresPerfis ? '•••' : `${valor.toFixed(1)}%`;
+      const valorPerfil = (valor: number) => formatarMoeda(valor);
+      const percentualPerfil = (valor: number) => `${valor.toFixed(1)}%`;
       return (
         <div className="fixed inset-0 z-[9998] flex items-center justify-center bg-slate-950/60 p-4">
           <div
@@ -2168,15 +2168,15 @@ const mostrarComparativoResumoDash =
         </p>
         <div className="flex justify-between gap-3 text-[11px] font-bold">
           <span className="text-emerald-300">Receitas</span>
-          <strong>{ocultarValoresPerfis ? 'R$ ••••' : formatarMoeda(tooltipHistoricoPerfil.receitas)}</strong>
+          <strong>{formatarMoeda(tooltipHistoricoPerfil.receitas)}</strong>
         </div>
         <div className="mt-1 flex justify-between gap-3 text-[11px] font-bold">
           <span className="text-red-300">Despesas</span>
-          <strong>{ocultarValoresPerfis ? 'R$ ••••' : formatarMoeda(tooltipHistoricoPerfil.despesas)}</strong>
+          <strong>{formatarMoeda(tooltipHistoricoPerfil.despesas)}</strong>
         </div>
         <div className={`mt-1 flex justify-between gap-3 border-t border-white/15 pt-1 text-[11px] font-black ${tooltipHistoricoPerfil.receitas - tooltipHistoricoPerfil.despesas >= 0 ? 'text-cyan-200' : 'text-red-200'}`}>
           <span>Saldo</span>
-          <strong>{ocultarValoresPerfis ? 'R$ ••••' : formatarMoeda(tooltipHistoricoPerfil.receitas - tooltipHistoricoPerfil.despesas)}</strong>
+          <strong>{formatarMoeda(tooltipHistoricoPerfil.receitas - tooltipHistoricoPerfil.despesas)}</strong>
         </div>
       </div>,
       document.body
