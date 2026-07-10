@@ -10294,6 +10294,13 @@
     bind('cancelar-exclusao-recorrencia', cancelarExclusaoRecorrenciaMobile);
     bind('cancelar-exclusao-recorrencia-topo', cancelarExclusaoRecorrenciaMobile);
     bind('confirmar-exclusao-recorrencia', confirmarExclusaoRecorrenciaMobile);
+    var modalAcaoOverlay = document.getElementById('modal-acao-overlay');
+    if (modalAcaoOverlay) {
+      modalAcaoOverlay.addEventListener('click', function (event) {
+        if (event.target !== modalAcaoOverlay) return;
+        fecharAcaoLancamento();
+      });
+    }
     var excluirRecorrenciaOverlay = document.getElementById('excluir-recorrencia-overlay');
     if (excluirRecorrenciaOverlay) {
       excluirRecorrenciaOverlay.addEventListener('click', function (event) {
