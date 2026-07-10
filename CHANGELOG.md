@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.4.0.13 - 2026-07-10
+
+- Mobile: pílula "- Ocultar card" do menu "..." passa a ficar acima do escurecimento global, mantendo todo o restante da tela escurecido.
+
 ## 1.4.0.12 - 2026-07-10
 
 - Mobile: menu "..." dos cards passa a escurecer a tela inteira, incluindo o header principal, deixando somente a pílula de ação em destaque.

@@ -202,6 +202,7 @@
     dashboardOrdem: ordemDashboardPadrao(),
     dashboardOcultos: [],
     dashboardOpcoesId: '',
+    dashboardOpcoesPos: null,
     dashboardValoresVisiveis: {},
     caixinhaDia: String(new Date().getDate()),
     caixinhaDescricao: 'Reserva',
@@ -6456,6 +6457,7 @@
   function telaApp() {
     var atual = dadosMes(state.mes);
     var anterior = dadosMesAnterior();
+    var opcoesDashboardAberta = state.visao === 'home' && state.dashboardOpcoesId && state.dashboardOpcoesId !== 'ia';
 
     // Agenda: tela cheia, sem o cabeçalho global (que mostra outro mês e confunde).
     if (state.visao === 'agenda') {
@@ -6509,7 +6511,7 @@
           '<span class="relative z-10 block truncate">' + escapeHtml(nomeEmpresa(state.empresa)) + '</span>' +
         '</div>' +
         '</div>' +
-        (state.visao === 'home' && state.dashboardOpcoesId && state.dashboardOpcoesId !== 'ia'
+        (opcoesDashboardAberta
           ? '<button type="button" data-dashboard-fechar-opcoes="' + escapeHtml(state.dashboardOpcoesId) + '" class="fixed inset-0 cursor-default bg-slate-950/75 backdrop-blur-[1px]" style="z-index:9000;" aria-label="Fechar opcoes do card"></button>'
           : '') +
         '<div id="mobile-main-scroll" data-preserve-scroll class="min-h-0 flex-1 overflow-y-auto overscroll-contain" style="padding-bottom:calc(env(safe-area-inset-bottom) + 82px);-webkit-overflow-scrolling:touch;">' +
@@ -6519,6 +6521,7 @@
           (state.visao === 'home' ? homeHtml(atual, anterior) : (state.visao === 'agenda' ? agendaMobileHtml(atual) : listaDetalhadaHtml(atual))) +
           (state.visao === 'agenda' ? '' : rodapeMobileHtml()) +
         '</div></div>' +
+        (opcoesDashboardAberta ? menuOpcoesCardDashboardHtml() : '') +
         (state.modalLancamento ? modalLancamentoHtml() : '') +
         (state.modalAcao ? modalAcaoLancamentoHtml() : '') +
         (state.menuAberto ? menuLateralHtml() : '') +
@@ -6776,22 +6779,32 @@
       visiveis
       .map(function (id) {
         if (!cards[id]) return '';
-        var menuAberto = state.dashboardOpcoesId === id;
-        var menuCardPosicao = id === 'ia' ? 'right-3' : 'right-12';
         var menuDisponivel = id !== 'ia';
         return '<div data-dashboard-card="' + escapeHtml(id) + '" class="relative pb-2 transition-[transform,opacity,filter] duration-200 ease-out">' +
           cards[id] +
           (menuDisponivel ? '<button type="button" data-dashboard-opcoes="' + escapeHtml(id) + '" class="absolute bottom-1 right-12 z-40 flex h-7 w-8 items-center justify-center rounded-full bg-transparent text-[13px] font-black leading-none text-slate-600 active:bg-slate-100" aria-label="Opcoes do bloco">...</button>' : '') +
           (id === 'ia' ? '' : '<button type="button" data-dashboard-handle="' + escapeHtml(id) + '" class="absolute bottom-1 right-3 z-40 flex h-7 w-8 select-none touch-none items-center justify-center rounded-full bg-transparent text-[11px] font-black leading-none text-slate-600" aria-label="Mover card">&vellip;&vellip;</button>') +
-          (menuDisponivel && menuAberto
-            ? '<div data-dashboard-menu-card="' + escapeHtml(id) + '" class="absolute bottom-9 ' + menuCardPosicao + ' z-50 overflow-visible rounded-full border border-cyan-100 bg-white p-1 text-slate-800 shadow-2xl shadow-slate-950/25" style="z-index:9010;">' +
-                '<span aria-hidden="true" class="absolute -bottom-1.5 right-4 h-3 w-3 rotate-45 border-b border-r border-cyan-100 bg-white"></span>' +
-                '<button type="button" data-dashboard-remover="' + escapeHtml(id) + '" class="relative z-10 inline-flex h-9 items-center justify-center whitespace-nowrap rounded-full bg-cyan-600 px-4 text-[11px] font-black text-white shadow-lg shadow-cyan-900/25 active:bg-cyan-700">- Ocultar card</button>' +
-              '</div>'
-            : '') +
         '</div>';
       })
       .join('');
+  }
+
+  function menuOpcoesCardDashboardHtml() {
+    var pos = state.dashboardOpcoesPos || {};
+    var largura = 160;
+    var margem = 12;
+    var left = Number(pos.left);
+    var top = Number(pos.top);
+    if (!Number.isFinite(left)) left = Math.max(margem, Math.min(window.innerWidth - largura - margem, window.innerWidth - largura - 24));
+    if (!Number.isFinite(top)) top = 120;
+    left = Math.max(margem, Math.min(window.innerWidth - largura - margem, left));
+    top = Math.max(margem, Math.min(window.innerHeight - 58, top));
+    return (
+      '<div data-dashboard-menu-card="' + escapeHtml(state.dashboardOpcoesId) + '" class="fixed overflow-visible rounded-full border border-cyan-100 bg-white p-1 text-slate-800 shadow-2xl shadow-slate-950/25" style="z-index:9010;left:' + left + 'px;top:' + top + 'px;">' +
+        '<span aria-hidden="true" class="absolute -bottom-1.5 right-4 h-3 w-3 rotate-45 border-b border-r border-cyan-100 bg-white"></span>' +
+        '<button type="button" data-dashboard-remover="' + escapeHtml(state.dashboardOpcoesId) + '" class="relative z-10 inline-flex h-9 items-center justify-center whitespace-nowrap rounded-full bg-cyan-600 px-4 text-[11px] font-black text-white shadow-lg shadow-cyan-900/25 active:bg-cyan-700">- Ocultar card</button>' +
+      '</div>'
+    );
   }
 
   function insightsAvaHtml(atual) {
@@ -8840,8 +8853,23 @@
     render();
   }
 
-  function abrirOpcoesCardDashboard(id) {
-    state.dashboardOpcoesId = state.dashboardOpcoesId === id ? '' : id;
+  function abrirOpcoesCardDashboard(id, botao) {
+    if (id === 'ia') return;
+    if (state.dashboardOpcoesId === id) {
+      state.dashboardOpcoesId = '';
+      state.dashboardOpcoesPos = null;
+      render();
+      return;
+    }
+    var rect = botao && botao.getBoundingClientRect ? botao.getBoundingClientRect() : null;
+    var largura = 160;
+    state.dashboardOpcoesId = id;
+    state.dashboardOpcoesPos = rect
+      ? {
+          left: Math.max(12, Math.min(window.innerWidth - largura - 12, rect.right - largura + 6)),
+          top: Math.max(12, rect.top - 50),
+        }
+      : null;
     render();
   }
 
@@ -8851,6 +8879,7 @@
     if (ocultos.indexOf(id) < 0) ocultos.push(id);
     state.dashboardOcultos = ocultos;
     state.dashboardOpcoesId = '';
+    state.dashboardOpcoesPos = null;
     salvarResumoDashboard();
     render();
     mostrarToast('Bloco removido do resumo.');
@@ -8860,6 +8889,7 @@
     state.dashboardOrdem = ordemDashboardPadrao();
     state.dashboardOcultos = [];
     state.dashboardOpcoesId = '';
+    state.dashboardOpcoesPos = null;
     salvarResumoDashboard();
     render();
     mostrarToast('Resumo padrao restaurado.');
@@ -10486,13 +10516,14 @@
     Array.prototype.forEach.call(document.querySelectorAll('[data-dashboard-opcoes]'), function (botao) {
       botao.addEventListener('click', function (event) {
         event.stopPropagation();
-        abrirOpcoesCardDashboard(botao.getAttribute('data-dashboard-opcoes'));
+        abrirOpcoesCardDashboard(botao.getAttribute('data-dashboard-opcoes'), botao);
       });
     });
     Array.prototype.forEach.call(document.querySelectorAll('[data-dashboard-fechar-opcoes]'), function (botao) {
       botao.addEventListener('click', function (event) {
         event.stopPropagation();
         state.dashboardOpcoesId = '';
+        state.dashboardOpcoesPos = null;
         render();
       });
     });

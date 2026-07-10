@@ -13,6 +13,14 @@
   },
   "versoes": [
     {
+      "versao": "1.4.0.13",
+      "titulo": "Pílula do menu em destaque",
+      "data": "Julho/2026",
+      "itens": [
+        "Mobile: pílula \"- Ocultar card\" do menu \"...\" passa a ficar acima do escurecimento global, mantendo todo o restante da tela escurecido."
+      ]
+    },
+    {
       "versao": "1.4.0.12",
       "titulo": "Menu dos cards mobile refinado",
       "data": "Julho/2026",
