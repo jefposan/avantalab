@@ -13,6 +13,15 @@
   },
   "versoes": [
     {
+      "versao": "1.4.0.17",
+      "titulo": "Refino do card Meus perfis",
+      "data": "Julho/2026",
+      "itens": [
+        "Web: card \"Meus perfis\" ganha controle independente para exibir ou ocultar valores.",
+        "Web: modo expandido do card \"Meus perfis\" fica mais compacto e passa a abrir os gráficos somente ao clicar em \"Exibir gráficos\"."
+      ]
+    },
+    {
       "versao": "1.4.0.16",
       "titulo": "Card Meus perfis no dashboard",
       "data": "Julho/2026",

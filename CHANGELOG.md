@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.4.0.17 - 2026-07-10
+
+- Web: card "Meus perfis" ganha controle independente para exibir ou ocultar valores.
+- Web: modo expandido do card "Meus perfis" fica mais compacto e passa a abrir os gráficos somente ao clicar em "Exibir gráficos".
+
 ## 1.4.0.16 - 2026-07-10
 
 - Web: dashboard ganha o card "Meus perfis" no kanban, com resumo financeiro dos perfis vinculados ao usuário.

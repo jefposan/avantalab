@@ -203,6 +203,8 @@ export default function Dashboard({
 }: DashboardProps) {
 
   const [ocultarValores, setOcultarValores] = useState(true);
+  const [ocultarValoresPerfis, setOcultarValoresPerfis] = useState(true);
+  const [graficosPerfisVisiveis, setGraficosPerfisVisiveis] = useState(false);
   const [menuCardAberto, setMenuCardAberto] = useState<string | null>(null);
   const [gerenciadorAberto, setGerenciadorAberto] = useState(false);
   const [evolucaoAno, setEvolucaoAno] = useState(anoSelecionado);
@@ -714,6 +716,9 @@ const mostrarComparativoResumoDash =
       const destino: keyof DashboardCols = origem === 'full'
         ? (cols.a.length <= cols.b.length ? 'a' : 'b')
         : 'full';
+      if (id === 'meusPerfis' && destino === 'full') {
+        setGraficosPerfisVisiveis(false);
+      }
       const proximos = {
         ...cols,
         [origem]: cols[origem].filter((cardId) => cardId !== id),
@@ -1206,27 +1211,47 @@ const mostrarComparativoResumoDash =
             <BotaoOpcoesCard id="meusPerfis" tone="light" />
           </div>
         </div>
-        <div className="space-y-4 p-5">
+        <div className="space-y-3 p-4">
           <div className={`rounded-xl border p-3 ${darkMode ? 'border-slate-700 bg-slate-800/50' : 'border-slate-200 bg-slate-50'}`}>
             <div className="flex items-end justify-between gap-3">
               <div className="min-w-0">
                 <p className={`text-[10px] font-black uppercase tracking-wide ${textMuted}`}>Resultado consolidado</p>
-                <strong className={`mt-1 block text-2xl font-black tabular-nums ${resultadoPerfis >= 0 ? 'text-emerald-500' : 'text-red-500'}`}>
-                  {ocultarValores ? 'R$ •••••••' : formatarMoeda(resultadoPerfis)}
+                <strong className={`mt-1 block text-xl font-black tabular-nums ${resultadoPerfis >= 0 ? 'text-emerald-500' : 'text-red-500'}`}>
+                  {ocultarValoresPerfis ? 'R$ •••••••' : formatarMoeda(resultadoPerfis)}
                 </strong>
               </div>
-              <span className={`shrink-0 rounded-full px-2.5 py-1 text-[10px] font-black uppercase ${darkMode ? 'bg-slate-700 text-slate-100' : 'bg-cyan-50 text-cyan-700'}`}>
-                {perfisDashboard.length} perfil{perfisDashboard.length === 1 ? '' : 's'}
-              </span>
+              <div className="flex shrink-0 items-center gap-2">
+                <span className={`rounded-full px-2.5 py-1 text-[10px] font-black uppercase ${darkMode ? 'bg-slate-700 text-slate-100' : 'bg-cyan-50 text-cyan-700'}`}>
+                  {perfisDashboard.length} perfil{perfisDashboard.length === 1 ? '' : 's'}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setOcultarValoresPerfis(!ocultarValoresPerfis)}
+                  className={`flex h-8 w-8 items-center justify-center rounded-lg transition ${darkMode ? 'text-slate-300 hover:bg-slate-700 hover:text-white' : 'text-slate-500 hover:bg-white hover:text-slate-800'}`}
+                  title={ocultarValoresPerfis ? 'Mostrar valores' : 'Ocultar valores'}
+                  aria-label={ocultarValoresPerfis ? 'Mostrar valores do card Meus perfis' : 'Ocultar valores do card Meus perfis'}
+                >
+                  {ocultarValoresPerfis ? (
+                    <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
+                    </svg>
+                  ) : (
+                    <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                    </svg>
+                  )}
+                </button>
+              </div>
             </div>
             <div className="mt-3 grid grid-cols-2 gap-2">
               <div>
                 <span className={`block text-[10px] font-black uppercase tracking-wide ${textMuted}`}>Receitas</span>
-                <span className="mt-0.5 block text-sm font-black text-emerald-500">{ocultarValores ? 'R$ ••••••' : formatarMoeda(totalReceitasPerfis)}</span>
+                <span className="mt-0.5 block text-sm font-black text-emerald-500">{ocultarValoresPerfis ? 'R$ ••••••' : formatarMoeda(totalReceitasPerfis)}</span>
               </div>
               <div className="text-right">
                 <span className={`block text-[10px] font-black uppercase tracking-wide ${textMuted}`}>Despesas</span>
-                <span className="mt-0.5 block text-sm font-black text-red-500">{ocultarValores ? 'R$ ••••••' : formatarMoeda(totalDespesasPerfis)}</span>
+                <span className="mt-0.5 block text-sm font-black text-red-500">{ocultarValoresPerfis ? 'R$ ••••••' : formatarMoeda(totalDespesasPerfis)}</span>
               </div>
             </div>
           </div>
@@ -1246,11 +1271,11 @@ const mostrarComparativoResumoDash =
                     <div className="min-w-0">
                       <p className={`truncate text-sm font-black ${textStrong}`}>{perfil.nome}</p>
                       <p className={`mt-0.5 text-[10px] font-semibold ${textMuted}`}>
-                        {perfilAtual ? 'Perfil atual · ' : ''}Receitas {ocultarValores ? '•••' : formatarMoeda(perfil.receitas)} · Despesas {ocultarValores ? '•••' : formatarMoeda(perfil.despesas)}
+                        {perfilAtual ? 'Perfil atual · ' : ''}Receitas {ocultarValoresPerfis ? '•••' : formatarMoeda(perfil.receitas)} · Despesas {ocultarValoresPerfis ? '•••' : formatarMoeda(perfil.despesas)}
                       </p>
                     </div>
                     <strong className={`shrink-0 text-sm font-black tabular-nums ${positivo ? 'text-emerald-500' : 'text-red-500'}`}>
-                      {ocultarValores ? 'R$ ••••' : formatarMoeda(perfil.resultado)}
+                      {ocultarValoresPerfis ? 'R$ ••••' : formatarMoeda(perfil.resultado)}
                     </strong>
                   </div>
                   <div className={`mt-2 h-2 overflow-hidden rounded-full ${darkMode ? 'bg-slate-700' : 'bg-slate-100'}`}>
@@ -1266,29 +1291,51 @@ const mostrarComparativoResumoDash =
           </div>
 
           {cols.full.includes('meusPerfis') && perfisDashboard.length > 0 && (
-            <div className={`rounded-xl border p-4 ${darkMode ? 'border-slate-700 bg-slate-800/45' : 'border-slate-200 bg-slate-50/80'}`}>
-              <div className="mb-4 flex items-center justify-between gap-3">
-                <h3 className={`text-sm font-black uppercase tracking-wide ${textStrong}`}>Receitas x despesas por perfil</h3>
-                <span className={`text-[10px] font-black uppercase ${textMuted}`}>{anoSelecionado}</span>
+            <div className={`rounded-xl border p-3 ${darkMode ? 'border-slate-700 bg-slate-800/45' : 'border-slate-200 bg-slate-50/80'}`}>
+              <div className="flex items-center justify-between gap-3">
+                <div className="min-w-0">
+                  <h3 className={`truncate text-sm font-black uppercase tracking-wide ${textStrong}`}>Receitas x despesas por perfil</h3>
+                  <p className={`mt-0.5 text-[10px] font-semibold ${textMuted}`}>Comparativo de {anoSelecionado}</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setGraficosPerfisVisiveis(!graficosPerfisVisiveis)}
+                  className={`h-8 shrink-0 rounded-lg border px-3 text-[10px] font-black uppercase tracking-wide transition ${
+                    darkMode
+                      ? 'border-slate-600 bg-slate-900 text-slate-100 hover:bg-slate-800'
+                      : 'border-slate-300 bg-white text-slate-700 hover:bg-slate-50'
+                  }`}
+                >
+                  {graficosPerfisVisiveis ? 'Ocultar gráficos' : 'Exibir gráficos'}
+                </button>
               </div>
-              <div className="grid min-h-[190px] grid-cols-2 items-end gap-4 sm:grid-cols-3 lg:grid-cols-4">
-                {perfisDashboard.slice(0, 8).map((perfil) => {
-                  const maximo = Math.max(1, perfil.receitas, perfil.despesas);
-                  return (
-                    <div key={`grafico-${perfil.id}`} className="flex min-w-0 flex-col items-center gap-2">
-                      <div className="flex h-32 items-end justify-center gap-2">
-                        <span className="w-5 rounded-t-md bg-emerald-500 shadow-sm" style={{ height: `${Math.max(5, (perfil.receitas / maximo) * 100)}%` }} title={`Receitas: ${formatarMoeda(perfil.receitas)}`} />
-                        <span className="w-5 rounded-t-md bg-red-500 shadow-sm" style={{ height: `${Math.max(5, (perfil.despesas / maximo) * 100)}%` }} title={`Despesas: ${formatarMoeda(perfil.despesas)}`} />
-                      </div>
-                      <span className={`max-w-full truncate text-center text-[10px] font-black ${textMuted}`}>{perfil.nome}</span>
-                    </div>
-                  );
-                })}
-              </div>
-              <div className="mt-4 flex flex-wrap items-center gap-3 text-[10px] font-black uppercase tracking-wide">
-                <span className="flex items-center gap-1.5 text-emerald-500"><span className="h-2 w-2 rounded-full bg-emerald-500" /> Receitas</span>
-                <span className="flex items-center gap-1.5 text-red-500"><span className="h-2 w-2 rounded-full bg-red-500" /> Despesas</span>
-              </div>
+
+              {graficosPerfisVisiveis && (
+                <>
+                  <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4">
+                    {perfisDashboard.slice(0, 8).map((perfil) => {
+                      const maximo = Math.max(1, perfil.receitas, perfil.despesas);
+                      return (
+                        <div key={`grafico-${perfil.id}`} className={`flex min-w-0 flex-col rounded-xl border p-2 ${darkMode ? 'border-slate-700 bg-slate-900/45' : 'border-slate-200 bg-white'}`}>
+                          <span className={`mb-2 truncate text-center text-[10px] font-black ${textStrong}`}>{perfil.nome}</span>
+                          <div className="flex h-20 items-end justify-center gap-1.5">
+                            <span className="w-4 rounded-t-md bg-emerald-500 shadow-sm" style={{ height: `${Math.max(5, (perfil.receitas / maximo) * 100)}%` }} title={`Receitas: ${formatarMoeda(perfil.receitas)}`} />
+                            <span className="w-4 rounded-t-md bg-red-500 shadow-sm" style={{ height: `${Math.max(5, (perfil.despesas / maximo) * 100)}%` }} title={`Despesas: ${formatarMoeda(perfil.despesas)}`} />
+                          </div>
+                          <div className={`mt-2 grid grid-cols-2 gap-1 text-center text-[9px] font-black ${textMuted}`}>
+                            <span className="truncate text-emerald-500">{ocultarValoresPerfis ? '•••' : formatarMoeda(perfil.receitas)}</span>
+                            <span className="truncate text-red-500">{ocultarValoresPerfis ? '•••' : formatarMoeda(perfil.despesas)}</span>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                  <div className="mt-3 flex flex-wrap items-center gap-3 text-[10px] font-black uppercase tracking-wide">
+                    <span className="flex items-center gap-1.5 text-emerald-500"><span className="h-2 w-2 rounded-full bg-emerald-500" /> Receitas</span>
+                    <span className="flex items-center gap-1.5 text-red-500"><span className="h-2 w-2 rounded-full bg-red-500" /> Despesas</span>
+                  </div>
+                </>
+              )}
             </div>
           )}
         </div>
