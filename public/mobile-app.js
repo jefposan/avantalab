@@ -6553,7 +6553,7 @@
 
     return (
       '<div class="mobile-app-shell fixed inset-0 flex min-w-0 flex-col overflow-hidden ' + (state.darkMode ? 'mobile-dark bg-slate-950 text-slate-100' : 'mobile-light bg-slate-100 text-slate-900') + '" style="overscroll-behavior:none;">' +
-        '<div id="mobile-header-wrap" class="relative z-40 shrink-0" style="filter:drop-shadow(0 10px 10px rgba(8,47,73,0.18));">' +
+        '<div id="mobile-header-wrap" class="relative z-40 shrink-0 bg-transparent" style="background:transparent;filter:drop-shadow(0 10px 10px rgba(8,47,73,0.18));isolation:isolate;">' +
         '<header id="mobile-main-header" class="relative z-10 overflow-hidden rounded-[0_0_28px_28px] px-3 pb-3 text-white backdrop-blur sm:px-4" style="padding-top:calc(env(safe-area-inset-top) + 10px);background:linear-gradient(135deg,#003E73 0%,#075985 54%,#00A6C8 100%);">' +
           '<div class="mx-auto max-w-md">' +
             '<div class="flex items-center gap-3">' +
@@ -6870,20 +6870,19 @@
     var pos = state.dashboardOpcoesPos || {};
     var resetCaixinha = state.dashboardOpcoesId === 'caixinha';
     var largura = resetCaixinha ? 188 : 160;
-    var altura = resetCaixinha ? 96 : 58;
     var arrowLeft = Number(pos.arrowLeft);
     var thoughtCenter = 0;
     var margem = 12;
     var left = Number(pos.left);
-    var top = Number(pos.top);
+    var bottom = Number(pos.bottom);
     if (!Number.isFinite(left)) left = Math.max(margem, Math.min(window.innerWidth - largura - margem, window.innerWidth - largura - 24));
-    if (!Number.isFinite(top)) top = 120;
+    if (!Number.isFinite(bottom)) bottom = 120;
     if (!Number.isFinite(arrowLeft)) arrowLeft = largura / 2 - 6;
     thoughtCenter = arrowLeft + 6;
     left = Math.max(margem, Math.min(window.innerWidth - largura - margem, left));
-    top = Math.max(margem, Math.min(window.innerHeight - altura, top));
+    bottom = Math.max(margem, bottom);
     return (
-      '<div data-dashboard-menu-card="' + escapeHtml(state.dashboardOpcoesId) + '" class="fixed overflow-visible rounded-[24px] border border-cyan-100 bg-white p-1 text-slate-800 shadow-2xl shadow-slate-950/25" style="z-index:9010;left:' + left + 'px;top:' + top + 'px;">' +
+      '<div data-dashboard-menu-card="' + escapeHtml(state.dashboardOpcoesId) + '" class="fixed overflow-visible rounded-[24px] border border-cyan-100 bg-white p-1 text-slate-800 shadow-2xl shadow-slate-950/25" style="z-index:9010;left:' + left + 'px;bottom:' + bottom + 'px;">' +
         '<span aria-hidden="true" class="pointer-events-none absolute rounded-full border border-cyan-100 bg-white shadow-md shadow-slate-950/15" style="left:' + (thoughtCenter - 7) + 'px;bottom:-15px;width:14px;height:14px;"></span>' +
         '<span aria-hidden="true" class="pointer-events-none absolute rounded-full border border-cyan-100 bg-white shadow-sm shadow-slate-950/10" style="left:' + (thoughtCenter - 3) + 'px;bottom:-26px;width:8px;height:8px;"></span>' +
         '<div class="relative z-10 flex flex-col gap-1">' +
@@ -8950,15 +8949,16 @@
     }
     var rect = botao && botao.getBoundingClientRect ? botao.getBoundingClientRect() : null;
     var largura = id === 'caixinha' ? 188 : 160;
-    var altura = id === 'caixinha' ? 96 : 58;
     var margem = 12;
     var distancia = 10;
+    var left = rect ? Math.max(margem, Math.min(window.innerWidth - largura - margem, rect.left + rect.width / 2 - largura / 2)) : margem;
+    var centroBotao = rect ? rect.left + rect.width / 2 : left + largura / 2;
     state.dashboardOpcoesId = id;
     state.dashboardOpcoesPos = rect
       ? {
-          left: Math.max(margem, Math.min(window.innerWidth - largura - margem, rect.left + rect.width / 2 - largura / 2)),
-          top: Math.max(margem, rect.top - altura - distancia),
-          arrowLeft: Math.max(12, Math.min(largura - 20, rect.left + rect.width / 2 - (Math.max(margem, Math.min(window.innerWidth - largura - margem, rect.left + rect.width / 2 - largura / 2)) + 6))),
+          left: left,
+          bottom: Math.max(margem, window.innerHeight - rect.top + distancia),
+          arrowLeft: Math.max(12, Math.min(largura - 20, centroBotao - left - 6)),
         }
       : null;
     render();
