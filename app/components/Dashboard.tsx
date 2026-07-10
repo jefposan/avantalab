@@ -91,6 +91,15 @@ function ColunaKanban({ id, items, arrastando, className, children }: { id: keyo
 
 type DashboardCols = { full: string[]; a: string[]; b: string[] };
 
+type ResumoPerfilFinanceiro = {
+  id: string;
+  nome: string;
+  tipoPerfil?: string;
+  receitas: number;
+  despesas: number;
+  resultado: number;
+};
+
 interface DashboardProps {
   meses: string[];
   lancamentos: any[];
@@ -98,6 +107,8 @@ interface DashboardProps {
   anoSelecionado: string;
   empresaId?: string | null;
   nomePerfilAtual?: string;
+  resumoPerfis?: ResumoPerfilFinanceiro[];
+  mesPerfis?: string;
   setMesAtivo: (mes: string) => void;
   bgCard: string;
   corPrimaria: string;
@@ -167,7 +178,7 @@ interface DashboardProps {
 }
 
 export default function Dashboard({
-  meses, lancamentos, faturamentos, anoSelecionado, empresaId, nomePerfilAtual, setMesAtivo, bgCard, corPrimaria, textStrong, textMuted, darkMode,
+  meses, lancamentos, faturamentos, anoSelecionado, empresaId, nomePerfilAtual, resumoPerfis = [], mesPerfis, setMesAtivo, bgCard, corPrimaria, textStrong, textMuted, darkMode,
   mesResumoDash, setMesResumoDash, totalDespesasMes, maiorGasto, lucroOperacional,
   inputFaturamento, setInputFaturamento, placeholderFaturamento,
   solicitarFaturamentoDashboard,
@@ -666,12 +677,20 @@ const mostrarComparativoResumoDash =
 
     return itens.slice(0, 3);
   })();
+  const perfisDashboard = [...(resumoPerfis || [])].sort((a, b) => b.resultado - a.resultado);
+  const totalReceitasPerfis = perfisDashboard.reduce((total, perfil) => total + Number(perfil.receitas || 0), 0);
+  const totalDespesasPerfis = perfisDashboard.reduce((total, perfil) => total + Number(perfil.despesas || 0), 0);
+  const resultadoPerfis = totalReceitasPerfis - totalDespesasPerfis;
+  const maiorResultadoPerfil = Math.max(1, ...perfisDashboard.map((perfil) => Math.abs(Number(perfil.resultado || 0))));
+  const perfisParaExibir = perfisDashboard.slice(0, cols.full.includes('meusPerfis') ? 8 : 4);
+  const nomeMesPerfis = mesPerfis || mesResumoDash;
   const catalogoCardsKanban = [
     { id: 'lancamentosMensais', titulo: 'Lançamentos mensais', descricao: 'Atalho anual para abrir os lançamentos de cada mês.' },
     { id: 'aConfirmar', titulo: 'Lançamentos a confirmar', descricao: 'Banner de despesas e receitas previstas que chegaram na data.' },
     { id: 'saldo', titulo: 'Saldo do mês', descricao: 'Inicial, final e previsto do mês selecionado.' },
     { id: 'insightsAva', titulo: 'Insights da Ava', descricao: 'Sugestões práticas geradas a partir dos dados do mês.' },
     { id: 'caixinha', titulo: 'Caixinha', descricao: 'Reserva ou investimento com aporte que gera despesa automaticamente.' },
+    { id: 'meusPerfis', titulo: 'Meus perfis', descricao: 'Resumo dos perfis financeiros vinculados ao usuário.' },
     { id: 'resumoFinanceiro', titulo: 'Resumo financeiro', descricao: 'Despesas, maior gasto e lucro operacional.' },
     { id: 'evolucaoMensal', titulo: 'Evolução mensal', descricao: 'Gráfico mensal de receitas e despesas.' },
     { id: 'registrarEntradas', titulo: 'Registrar entradas', descricao: 'Lançamento de receitas e total mensal.' },
@@ -1174,6 +1193,104 @@ const mostrarComparativoResumoDash =
               </p>
             )}
           </div>
+        </div>
+      </div>
+    ),
+
+    meusPerfis: (
+      <div className={`${bgCard} card-radius-avantalab w-full overflow-hidden rounded-2xl border-2 shadow-lg transition-colors`} style={{ borderColor: corPrimaria }}>
+        <div className="flex items-center justify-between gap-3 px-6 py-3 text-sm font-bold uppercase tracking-wider" style={{ backgroundColor: corPrimaria, color: textoSobreCorPrimaria }}>
+          <span>Meus perfis</span>
+          <div className="flex items-center gap-2">
+            <DragHandle tone="light" />
+            <BotaoOpcoesCard id="meusPerfis" tone="light" />
+          </div>
+        </div>
+        <div className="space-y-4 p-5">
+          <div className={`rounded-xl border p-3 ${darkMode ? 'border-slate-700 bg-slate-800/50' : 'border-slate-200 bg-slate-50'}`}>
+            <div className="flex items-end justify-between gap-3">
+              <div className="min-w-0">
+                <p className={`text-[10px] font-black uppercase tracking-wide ${textMuted}`}>Resultado consolidado</p>
+                <strong className={`mt-1 block text-2xl font-black tabular-nums ${resultadoPerfis >= 0 ? 'text-emerald-500' : 'text-red-500'}`}>
+                  {ocultarValores ? 'R$ •••••••' : formatarMoeda(resultadoPerfis)}
+                </strong>
+              </div>
+              <span className={`shrink-0 rounded-full px-2.5 py-1 text-[10px] font-black uppercase ${darkMode ? 'bg-slate-700 text-slate-100' : 'bg-cyan-50 text-cyan-700'}`}>
+                {perfisDashboard.length} perfil{perfisDashboard.length === 1 ? '' : 's'}
+              </span>
+            </div>
+            <div className="mt-3 grid grid-cols-2 gap-2">
+              <div>
+                <span className={`block text-[10px] font-black uppercase tracking-wide ${textMuted}`}>Receitas</span>
+                <span className="mt-0.5 block text-sm font-black text-emerald-500">{ocultarValores ? 'R$ ••••••' : formatarMoeda(totalReceitasPerfis)}</span>
+              </div>
+              <div className="text-right">
+                <span className={`block text-[10px] font-black uppercase tracking-wide ${textMuted}`}>Despesas</span>
+                <span className="mt-0.5 block text-sm font-black text-red-500">{ocultarValores ? 'R$ ••••••' : formatarMoeda(totalDespesasPerfis)}</span>
+              </div>
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <div className="flex items-center justify-between gap-3">
+              <p className={`text-[10px] font-black uppercase tracking-wide ${textMuted}`}>{nomeMesPerfis}</p>
+              <p className={`text-[10px] font-semibold ${textMuted}`}>Perfis vinculados</p>
+            </div>
+            {perfisParaExibir.length > 0 ? perfisParaExibir.map((perfil) => {
+              const positivo = Number(perfil.resultado || 0) >= 0;
+              const largura = Math.max(6, Math.round((Math.abs(Number(perfil.resultado || 0)) / maiorResultadoPerfil) * 100));
+              const perfilAtual = perfil.id === empresaId;
+              return (
+                <div key={perfil.id} className={`rounded-xl border px-3 py-2.5 ${perfilAtual ? 'border-cyan-300' : darkMode ? 'border-slate-700' : 'border-slate-200'} ${darkMode ? 'bg-slate-800/45' : 'bg-white'}`}>
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className={`truncate text-sm font-black ${textStrong}`}>{perfil.nome}</p>
+                      <p className={`mt-0.5 text-[10px] font-semibold ${textMuted}`}>
+                        {perfilAtual ? 'Perfil atual · ' : ''}Receitas {ocultarValores ? '•••' : formatarMoeda(perfil.receitas)} · Despesas {ocultarValores ? '•••' : formatarMoeda(perfil.despesas)}
+                      </p>
+                    </div>
+                    <strong className={`shrink-0 text-sm font-black tabular-nums ${positivo ? 'text-emerald-500' : 'text-red-500'}`}>
+                      {ocultarValores ? 'R$ ••••' : formatarMoeda(perfil.resultado)}
+                    </strong>
+                  </div>
+                  <div className={`mt-2 h-2 overflow-hidden rounded-full ${darkMode ? 'bg-slate-700' : 'bg-slate-100'}`}>
+                    <div className={`h-full rounded-full ${positivo ? 'bg-emerald-500' : 'bg-red-500'}`} style={{ width: `${largura}%` }} />
+                  </div>
+                </div>
+              );
+            }) : (
+              <p className={`rounded-xl px-3 py-4 text-center text-xs font-semibold ${darkMode ? 'bg-slate-800/50' : 'bg-slate-50'} ${textMuted}`}>
+                Carregando perfis vinculados...
+              </p>
+            )}
+          </div>
+
+          {cols.full.includes('meusPerfis') && perfisDashboard.length > 0 && (
+            <div className={`rounded-xl border p-4 ${darkMode ? 'border-slate-700 bg-slate-800/45' : 'border-slate-200 bg-slate-50/80'}`}>
+              <div className="mb-4 flex items-center justify-between gap-3">
+                <h3 className={`text-sm font-black uppercase tracking-wide ${textStrong}`}>Receitas x despesas por perfil</h3>
+                <span className={`text-[10px] font-black uppercase ${textMuted}`}>{anoSelecionado}</span>
+              </div>
+              <div className="grid min-h-[190px] grid-cols-2 items-end gap-4 sm:grid-cols-3 lg:grid-cols-4">
+                {perfisDashboard.slice(0, 8).map((perfil) => {
+                  const maximo = Math.max(1, perfil.receitas, perfil.despesas);
+                  return (
+                    <div key={`grafico-${perfil.id}`} className="flex min-w-0 flex-col items-center gap-2">
+                      <div className="flex h-32 items-end justify-center gap-2">
+                        <span className="w-5 rounded-t-md bg-emerald-500 shadow-sm" style={{ height: `${Math.max(5, (perfil.receitas / maximo) * 100)}%` }} title={`Receitas: ${formatarMoeda(perfil.receitas)}`} />
+                        <span className="w-5 rounded-t-md bg-red-500 shadow-sm" style={{ height: `${Math.max(5, (perfil.despesas / maximo) * 100)}%` }} title={`Despesas: ${formatarMoeda(perfil.despesas)}`} />
+                      </div>
+                      <span className={`max-w-full truncate text-center text-[10px] font-black ${textMuted}`}>{perfil.nome}</span>
+                    </div>
+                  );
+                })}
+              </div>
+              <div className="mt-4 flex flex-wrap items-center gap-3 text-[10px] font-black uppercase tracking-wide">
+                <span className="flex items-center gap-1.5 text-emerald-500"><span className="h-2 w-2 rounded-full bg-emerald-500" /> Receitas</span>
+                <span className="flex items-center gap-1.5 text-red-500"><span className="h-2 w-2 rounded-full bg-red-500" /> Despesas</span>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     ),

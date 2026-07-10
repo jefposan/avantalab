@@ -138,6 +138,15 @@ type EmpresaUsuarioResumo = RegistroSupabase & {
   acesso_id?: string;
 };
 
+type ResumoPerfilFinanceiro = {
+  id: string;
+  nome: string;
+  tipoPerfil?: string;
+  receitas: number;
+  despesas: number;
+  resultado: number;
+};
+
 type DespesaCadastrada = {
   nome: string;
   categoria: string;
@@ -576,8 +585,8 @@ const [validandoTelefoneObrigatorio, setValidandoTelefoneObrigatorio] = useState
     }
   };
   const [saldoCardMesIdx, setSaldoCardMesIdx] = useState<number>(new Date().getMonth());
-  const dashboardCardsKanban = ['aConfirmar', 'saldo', 'insightsAva', 'caixinha', 'resumoFinanceiro', 'evolucaoMensal', 'registrarEntradas', 'controlePonto'];
-  const ordemDashboardPadrao = { a: ['aConfirmar', 'saldo', 'insightsAva', 'caixinha', 'controlePonto'], b: ['resumoFinanceiro', 'evolucaoMensal', 'registrarEntradas'] };
+  const dashboardCardsKanban = ['aConfirmar', 'saldo', 'insightsAva', 'caixinha', 'meusPerfis', 'resumoFinanceiro', 'evolucaoMensal', 'registrarEntradas', 'controlePonto'];
+  const ordemDashboardPadrao = { a: ['aConfirmar', 'saldo', 'insightsAva', 'caixinha', 'controlePonto'], b: ['meusPerfis', 'resumoFinanceiro', 'evolucaoMensal', 'registrarEntradas'] };
   const [dashboardOrdem, setDashboardOrdem] = useState<{ a: string[]; b: string[] }>(ordemDashboardPadrao);
   const [dashboardOcultos, setDashboardOcultos] = useState<string[]>([]);
   const [dashboardExpandidos, setDashboardExpandidos] = useState<string[]>([]);
@@ -697,6 +706,7 @@ const [inputFaturamento, setInputFaturamento] = useState('');
 const [mesResumoDash, setMesResumoDash] = useState('JANEIRO');
 
 const [faturamentosEntradas, setFaturamentosEntradas] = useState<EntradaFaturamento[]>([]);
+const [resumoPerfisDashboard, setResumoPerfisDashboard] = useState<ResumoPerfilFinanceiro[]>([]);
 const [entradaFaturamentoDia, setEntradaFaturamentoDia] = useState('');
 const [entradaFaturamentoOrigem, setEntradaFaturamentoOrigem] = useState('');
 const [entradaFaturamentoValor, setEntradaFaturamentoValor] = useState('');
@@ -1363,6 +1373,88 @@ useEffect(() => {
 
   carregarDadosFinanceiros().finally(() => setCarregandoPerfil(false));
 }, [anoSelecionado, mounted, empresaId]);
+
+useEffect(() => {
+  if (!mounted || !empresaId || empresasDoUsuario.length === 0) {
+    setResumoPerfisDashboard([]);
+    return;
+  }
+
+  let cancelado = false;
+
+  const carregarResumoPerfis = async () => {
+    const ano = Number(anoSelecionado);
+    const ids = Array.from(new Set(empresasDoUsuario.map((empresa) => String(empresa.id || '')).filter(Boolean)));
+
+    if (ids.length === 0) {
+      if (!cancelado) setResumoPerfisDashboard([]);
+      return;
+    }
+
+    const [faturamentosResp, lancamentosResp] = await Promise.all([
+      supabase
+        .from('faturamentos')
+        .select('empresa_id, mes, valor')
+        .in('empresa_id', ids)
+        .eq('ano', ano),
+      supabase
+        .from('lancamentos')
+        .select('empresa_id, mes, dia, valor, status')
+        .in('empresa_id', ids)
+        .eq('ano', ano),
+    ]);
+
+    if (cancelado) return;
+
+    if (faturamentosResp.error || lancamentosResp.error) {
+      console.error('Erro ao carregar resumo dos perfis:', faturamentosResp.error || lancamentosResp.error);
+      setResumoPerfisDashboard([]);
+      return;
+    }
+
+    const mesResumo = mesAtivo || mesResumoDash;
+    const indiceMesResumo = meses.indexOf(mesResumo);
+    const receitasPorPerfil = new Map<string, number>();
+    const despesasPorPerfil = new Map<string, number>();
+
+    (faturamentosResp.data || []).forEach((item: RegistroSupabase) => {
+      if (textoRegistro(item.mes) !== mesResumo) return;
+      const id = textoRegistro(item.empresa_id);
+      receitasPorPerfil.set(id, (receitasPorPerfil.get(id) || 0) + Number(item.valor || 0));
+    });
+
+    (lancamentosResp.data || []).forEach((item: RegistroSupabase) => {
+      if (textoRegistro(item.mes) !== mesResumo) return;
+      if (textoRegistro(item.status) === 'cancelada') return;
+      const dia = Number(item.dia || 1);
+      if (indiceMesResumo >= 0 && dataFutura(ano, indiceMesResumo, dia)) return;
+      const id = textoRegistro(item.empresa_id);
+      despesasPorPerfil.set(id, (despesasPorPerfil.get(id) || 0) + Number(item.valor || 0));
+    });
+
+    const resumo = empresasDoUsuario.map((empresa) => {
+      const id = String(empresa.id || '');
+      const receitas = receitasPorPerfil.get(id) || 0;
+      const despesas = despesasPorPerfil.get(id) || 0;
+      return {
+        id,
+        nome: String(empresa.nome || empresa.empresa_nome || 'Perfil'),
+        tipoPerfil: empresa.tipo_perfil ? String(empresa.tipo_perfil) : undefined,
+        receitas,
+        despesas,
+        resultado: receitas - despesas,
+      };
+    });
+
+    setResumoPerfisDashboard(resumo);
+  };
+
+  carregarResumoPerfis();
+
+  return () => {
+    cancelado = true;
+  };
+}, [anoSelecionado, mounted, empresaId, empresasDoUsuario, mesAtivo, mesResumoDash]);
 
   // 3. Salva Configurações Globais no Supabase
 useEffect(() => {
@@ -9196,6 +9288,8 @@ name="novo-usuario-login"
         anoSelecionado={anoSelecionado}
         empresaId={empresaId}
         nomePerfilAtual={nomeEmpresaAtual}
+        resumoPerfis={resumoPerfisDashboard}
+        mesPerfis={mesAtivo || mesResumoDash}
         setMesAtivo={setMesAtivo}
         bgCard={bgCard}
         corPrimaria={corPrimaria}

@@ -13,6 +13,15 @@
   },
   "versoes": [
     {
+      "versao": "1.4.0.16",
+      "titulo": "Card Meus perfis no dashboard",
+      "data": "Julho/2026",
+      "itens": [
+        "Web: dashboard ganha o card \"Meus perfis\" no kanban, com resumo financeiro dos perfis vinculados ao usuário.",
+        "Web: novo card segue os controles padrão do dashboard para arrastar, expandir/reduzir, ocultar e reexibir pelo organizador."
+      ]
+    },
+    {
       "versao": "1.4.0.15",
       "titulo": "Confirmação da Caixinha refinada",
       "data": "Julho/2026",

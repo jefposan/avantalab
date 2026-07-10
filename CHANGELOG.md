@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.4.0.16 - 2026-07-10
+
+- Web: dashboard ganha o card "Meus perfis" no kanban, com resumo financeiro dos perfis vinculados ao usuário.
+- Web: novo card segue os controles padrão do dashboard para arrastar, expandir/reduzir, ocultar e reexibir pelo organizador.
+
 ## 1.4.0.15 - 2026-07-10
 
 - Mobile: confirmação de reset da Caixinha passa a usar card visual no padrão do sistema, com texto em português corrigido.
