@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.4.0.15 - 2026-07-10
+
+- Mobile: confirmação de reset da Caixinha passa a usar card visual no padrão do sistema, com texto em português corrigido.
+- Mobile: cancelar o reset fecha a confirmação e também remove a pílula do menu "...".
+
 ## 1.4.0.14 - 2026-07-10
 
 - Mobile: menu "..." da Caixinha passa a exibir duas pílulas de ação: "- Ocultar card" e "- Resetar total".

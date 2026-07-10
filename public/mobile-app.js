@@ -162,6 +162,7 @@
     modalLancamento: false,
     modalAcao: null,
     exclusaoRecorrencia: null,
+    caixinhaResetConfirmacao: false,
     tipoLancamento: 'despesa',
     modoReceita: 'entrada',
     despesaDia: '',
@@ -5040,11 +5041,26 @@
     mostrarToast('Saldo inicial da caixinha salvo.');
   }
 
+  function solicitarResetCaixinhaMobile() {
+    state.dashboardOpcoesId = '';
+    state.dashboardOpcoesPos = null;
+    state.caixinhaResetConfirmacao = true;
+    render();
+  }
+
+  function cancelarResetCaixinhaMobile() {
+    state.caixinhaResetConfirmacao = false;
+    state.dashboardOpcoesId = '';
+    state.dashboardOpcoesPos = null;
+    render();
+  }
+
   async function resetarCaixinhaMobile() {
     if (!state.empresa || state.carregando) return;
 
     var movimentos = state.caixinhaMovimentos || [];
     if (!movimentos.length) {
+      state.caixinhaResetConfirmacao = false;
       state.dashboardOpcoesId = '';
       state.dashboardOpcoesPos = null;
       render();
@@ -5052,18 +5068,13 @@
       return;
     }
 
-    var confirmar = window.confirm(
-      'Resetar total da caixinha?\n\n' +
-      'Isso vai apagar o aporte inicial, remover todos os aportes/resgates da caixinha e excluir as despesas geradas pelos aportes. Esta acao nao pode ser desfeita.'
-    );
-    if (!confirmar) return;
-
     var lancamentoIds = movimentos
       .map(function (mov) { return mov.lancamentoId; })
       .filter(function (id, index, lista) { return id && lista.indexOf(id) === index; });
 
     state.carregando = true;
     state.erro = '';
+    state.caixinhaResetConfirmacao = true;
     state.dashboardOpcoesId = '';
     state.dashboardOpcoesPos = null;
     render();
@@ -5077,6 +5088,7 @@
 
       if (despesas.error) {
         state.carregando = false;
+        state.caixinhaResetConfirmacao = false;
         setErro(mensagemErro(despesas.error, 'Nao foi possivel remover as despesas vinculadas a caixinha.'));
         return;
       }
@@ -5089,10 +5101,12 @@
 
     if (limpeza.error) {
       state.carregando = false;
+      state.caixinhaResetConfirmacao = false;
       setErro(mensagemErro(limpeza.error, 'Nao foi possivel resetar a caixinha.'));
       return;
     }
 
+    state.caixinhaResetConfirmacao = false;
     state.caixinhaSaldoInicialValor = '';
     state.caixinhaValor = '';
     state.caixinhaDescricao = 'Reserva';
@@ -6530,6 +6544,7 @@
           (state.menuAberto ? menuLateralHtml() : '') +
           (state.modalMenu ? modalMenuHtml() : '') +
           (state.exclusaoRecorrencia ? confirmacaoExclusaoRecorrenciaHtml() : '') +
+          (state.caixinhaResetConfirmacao ? confirmacaoResetCaixinhaHtml() : '') +
           navegacaoInferiorHtml() +
           toastHtml() +
         '</div>'
@@ -6588,6 +6603,7 @@
         (state.menuAberto ? menuLateralHtml() : '') +
         (state.modalMenu ? modalMenuHtml() : '') +
         (state.exclusaoRecorrencia ? confirmacaoExclusaoRecorrenciaHtml() : '') +
+        (state.caixinhaResetConfirmacao ? confirmacaoResetCaixinhaHtml() : '') +
         navegacaoInferiorHtml() +
         toastHtml() +
       '</div>'
@@ -9271,6 +9287,32 @@
     );
   }
 
+  function confirmacaoResetCaixinhaHtml() {
+    return (
+      '<div id="reset-caixinha-overlay" class="fixed inset-0 z-[80] flex items-center justify-center bg-slate-950/80 px-4 pt-4 backdrop-blur-sm" style="padding-bottom:calc(env(safe-area-inset-bottom) + 78px)">' +
+        '<section class="w-full max-w-sm overflow-y-auto rounded-3xl bg-white shadow-2xl" style="max-height:calc(100dvh - env(safe-area-inset-bottom) - 102px)">' +
+          '<div class="flex items-center justify-between gap-3 px-4 py-3 text-white" style="background-color:#003E73">' +
+            '<div class="min-w-0">' +
+              '<p class="text-[10px] font-black uppercase tracking-wide text-cyan-100/75">Confirmar ação</p>' +
+              '<h2 class="truncate text-base font-black">Resetar Caixinha</h2>' +
+            '</div>' +
+            '<button id="cancelar-reset-caixinha-topo" type="button" class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-white/20 bg-white/10 text-xl text-white" aria-label="Fechar">&times;</button>' +
+          '</div>' +
+          '<div class="p-4">' +
+            '<div class="rounded-2xl border border-red-100 bg-red-50 p-4">' +
+              '<p class="text-sm font-black text-slate-900">Resetar total da Caixinha?</p>' +
+              '<p class="mt-1.5 text-xs font-semibold leading-relaxed text-slate-600">Esta ação apaga o aporte inicial, remove todos os movimentos da Caixinha e exclui as despesas geradas pelos aportes. A ação não pode ser desfeita.</p>' +
+            '</div>' +
+            '<div class="mt-4 grid grid-cols-2 gap-2">' +
+              '<button id="cancelar-reset-caixinha" type="button" class="h-11 rounded-xl border border-slate-200 bg-white px-3 text-xs font-black uppercase text-slate-600">Cancelar</button>' +
+              '<button id="confirmar-reset-caixinha" type="button" ' + (state.carregando ? 'disabled ' : '') + 'class="h-11 rounded-xl bg-red-600 px-3 text-xs font-black uppercase text-white shadow-sm disabled:opacity-60">' + (state.carregando ? 'Resetando...' : 'Resetar') + '</button>' +
+            '</div>' +
+          '</div>' +
+        '</section>' +
+      '</div>'
+    );
+  }
+
   function despesasFixasMenuHtml() {
     var mesesNomes = { Jan: 'Janeiro', Fev: 'Fevereiro', Mar: 'Março', Abr: 'Abril', Mai: 'Maio', Jun: 'Junho', Jul: 'Julho', Ago: 'Agosto', Set: 'Setembro', Out: 'Outubro', Nov: 'Novembro', Dez: 'Dezembro' };
     var mesLabel = mesesNomes[state.mes] || state.mes;
@@ -10391,6 +10433,9 @@
     bind('cancelar-exclusao-recorrencia', cancelarExclusaoRecorrenciaMobile);
     bind('cancelar-exclusao-recorrencia-topo', cancelarExclusaoRecorrenciaMobile);
     bind('confirmar-exclusao-recorrencia', confirmarExclusaoRecorrenciaMobile);
+    bind('cancelar-reset-caixinha', cancelarResetCaixinhaMobile);
+    bind('cancelar-reset-caixinha-topo', cancelarResetCaixinhaMobile);
+    bind('confirmar-reset-caixinha', resetarCaixinhaMobile);
     var modalAcaoOverlay = document.getElementById('modal-acao-overlay');
     if (modalAcaoOverlay) {
       modalAcaoOverlay.addEventListener('click', function (event) {
@@ -10602,7 +10647,7 @@
     Array.prototype.forEach.call(document.querySelectorAll('[data-dashboard-reset-caixinha]'), function (botao) {
       botao.addEventListener('click', function (event) {
         event.stopPropagation();
-        resetarCaixinhaMobile();
+        solicitarResetCaixinhaMobile();
       });
     });
     Array.prototype.forEach.call(document.querySelectorAll('[data-atalho-lado]'), function (botao) {

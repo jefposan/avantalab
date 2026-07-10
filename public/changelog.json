@@ -13,6 +13,15 @@
   },
   "versoes": [
     {
+      "versao": "1.4.0.15",
+      "titulo": "Confirmação da Caixinha refinada",
+      "data": "Julho/2026",
+      "itens": [
+        "Mobile: confirmação de reset da Caixinha passa a usar card visual no padrão do sistema, com texto em português corrigido.",
+        "Mobile: cancelar o reset fecha a confirmação e também remove a pílula do menu \"...\"."
+      ]
+    },
+    {
       "versao": "1.4.0.14",
       "titulo": "Reset da Caixinha mobile",
       "data": "Julho/2026",
