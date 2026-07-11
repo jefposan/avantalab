@@ -17,7 +17,8 @@
       "titulo": "Landing mobile mais organizada",
       "data": "Julho/2026",
       "itens": [
-        "Web: reorganiza a hero da landing no mobile em tela cheia, exibe o menu compacto e adiciona seta para a área de demonstração do produto."
+        "Web: reorganiza a hero da landing no mobile em tela cheia, exibe o menu compacto e adiciona seta para a área de demonstração do produto.",
+        "Web: ajusta o ponto de rolagem dos botões Benefícios e Dúvidas no menu mobile da landing."
       ]
     },
     {

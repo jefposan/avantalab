@@ -3,6 +3,7 @@
 ## 1.4.0.35 - 2026-07-10
 
 - Web: reorganiza a hero da landing no mobile em tela cheia, exibe o menu compacto e adiciona seta para a área de demonstração do produto.
+- Web: ajusta o ponto de rolagem dos botões Benefícios e Dúvidas no menu mobile da landing.
 
 ## 1.4.0.34 - 2026-07-10
 

@@ -205,7 +205,7 @@ export default function LandingPage({ onCriarConta, onEntrar }: LandingPageProps
       </div>
 
       {/* ======================= BENEFÍCIOS ======================= */}
-      <section className="benefits" id="beneficios" style={{ scrollMarginTop: 22 }}>
+      <section className="benefits" id="beneficios" style={{ scrollMarginTop: 'var(--lp-edge-anchor-offset, 22px)' }}>
         <div className="wrap">
           <div className="sec-head center reveal">
             <span className="kicker">Por que AvantaLab</span>
@@ -370,7 +370,7 @@ export default function LandingPage({ onCriarConta, onEntrar }: LandingPageProps
       </section>
 
       {/* ======================= FAQ ======================= */}
-      <section className="faq" id="faq" style={{ scrollMarginTop: 22 }}>
+      <section className="faq" id="faq" style={{ scrollMarginTop: 'var(--lp-edge-anchor-offset, 22px)' }}>
         <div className="wrap">
           <div className="sec-head center reveal">
             <span className="kicker">Perguntas frequentes</span>

@@ -16,6 +16,7 @@
   --lp-radius: 18px;
   --lp-shadow-soft: 0 10px 40px -12px rgba(16, 36, 62, .14);
   --lp-shadow-strong: 0 24px 70px -20px rgba(16, 36, 62, .28);
+  --lp-edge-anchor-offset: 22px;
 
   font-family: var(--av-font-family, 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif);
   color: var(--lp-ink);
@@ -442,6 +443,9 @@
 
 /* ---------- mobile ---------- */
 @media (max-width: 760px) {
+  .landing {
+    --lp-edge-anchor-offset: 52px;
+  }
   .landing :global(.hero), .landing :global(.final) {
     background-image: image-set(url('/images/landing/bg-hero-mobile.webp') type('image/webp'), url('/images/landing/bg-hero-mobile.png') type('image/png'));
     background-position: center bottom;
