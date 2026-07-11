@@ -55,6 +55,10 @@ export default function LandingPage({ onCriarConta, onEntrar }: LandingPageProps
     document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' });
   };
 
+  const irParaProdutoMobile = () => {
+    document.getElementById('produto-mobile')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
+
   const precos = PRECOS[periodo];
 
   return (
@@ -102,10 +106,15 @@ export default function LandingPage({ onCriarConta, onEntrar }: LandingPageProps
               <span><Check size={15} />Sem cartão de crédito</span>
               <span><Check size={15} />Cancele quando quiser</span>
             </div>
+            <button type="button" className="hero-scroll" onClick={irParaProdutoMobile} aria-label="Ver demonstração do produto">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.25" d="M12 5v14m0 0l-6-6m6 6l6-6" />
+              </svg>
+            </button>
           </div>
 
           {/* mockup do produto */}
-          <div className="mock-stage">
+          <div className="mock-stage" id="produto-mobile">
             <div className="mock">
               <div className="mock-bar">
                 <i /><i /><i />

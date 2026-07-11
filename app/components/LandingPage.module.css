@@ -55,6 +55,7 @@
 }
 .landing :global(.btn-ghost:hover) { box-shadow: inset 0 0 0 1.5px rgba(27, 58, 95, .5); }
 .landing :global(.mobile-label) { display: none; }
+.landing :global(.hero-scroll) { display: none; }
 
 /* ---------- nav ---------- */
 .landing :global(header.nav) {
@@ -445,12 +446,17 @@
     background-image: image-set(url('/images/landing/bg-hero-mobile.webp') type('image/webp'), url('/images/landing/bg-hero-mobile.png') type('image/png'));
     background-position: center bottom;
   }
-  .landing :global(.hero) { padding: 132px 0 0; }
-  .landing :global(.hero-grid) { gap: 0; }
+  .landing :global(.hero) { padding: 0; }
+  .landing :global(.hero-grid) { display: block; gap: 0; }
   .landing :global(.hero-copy) {
     position: relative;
     z-index: 2;
-    padding-bottom: 2.3rem;
+    display: flex;
+    min-height: 100vh;
+    min-height: 100svh;
+    flex-direction: column;
+    justify-content: center;
+    padding: 132px 0 5.9rem;
   }
   .landing :global(h1) {
     font-size: clamp(2.05rem, 10.8vw, 2.85rem);
@@ -486,6 +492,28 @@
     margin-top: .85rem;
     font-size: .8rem;
   }
+  .landing :global(.hero-scroll) {
+    position: absolute;
+    left: 50%;
+    bottom: calc(1.15rem + env(safe-area-inset-bottom));
+    display: flex;
+    height: 44px;
+    width: 44px;
+    transform: translateX(-50%);
+    align-items: center;
+    justify-content: center;
+    border-radius: 999px;
+    border: 1px solid rgba(29, 111, 217, .14);
+    background: rgba(255, 255, 255, .86);
+    color: var(--lp-navy-700);
+    box-shadow: 0 12px 28px -18px rgba(16, 36, 62, .42), inset 0 1px 0 rgba(255, 255, 255, .92);
+    -webkit-backdrop-filter: blur(14px) saturate(150%);
+    backdrop-filter: blur(14px) saturate(150%);
+  }
+  .landing :global(.hero-scroll svg) {
+    width: 22px;
+    height: 22px;
+  }
   .landing :global(.nav-logo img) { height: 34px; }
   .landing :global(.nav-cta) { padding: .5rem 1rem; font-size: .8rem; }
   .landing :global(.nav-entrar) { padding: .45rem .7rem; font-size: .8rem; }
@@ -494,6 +522,7 @@
     position: relative;
     max-width: min(100%, 430px);
     margin: 0 auto;
+    scroll-margin-top: 0;
     padding: 2.15rem 0 4.6rem;
   }
   .landing :global(.mock-stage)::before {
