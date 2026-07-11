@@ -13,6 +13,22 @@
   },
   "versoes": [
     {
+      "versao": "1.4.0.27",
+      "titulo": "Calendário de dias não úteis no ponto",
+      "data": "Julho/2026",
+      "itens": [
+        "Ponto: adiciona calendário de dias não úteis da empresa para feriados, recesso, folga coletiva e dias fechados, evitando que essas datas contem como falta no web, mobile e relatórios."
+      ]
+    },
+    {
+      "versao": "1.4.0.26",
+      "titulo": "Carregamento em liquid glass",
+      "data": "Julho/2026",
+      "itens": [
+        "Web: cards de carregamento passam a usar acabamento translúcido estilo liquid glass, mantendo o restante dos cards do sistema sem alteração."
+      ]
+    },
+    {
       "versao": "1.4.0.25",
       "titulo": "Mês no header dos perfis",
       "data": "Julho/2026",

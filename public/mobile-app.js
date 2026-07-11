@@ -1701,6 +1701,16 @@
     return match ? Number(match[1]) * 60 + Number(match[2]) : null;
   }
 
+  function diaNaoUtilPontoMobile(iso, lista) {
+    var md = String(iso || '').slice(5);
+    return (lista || []).some(function (item) {
+      if (!item.recorrente_anual) return iso >= item.data_inicio && iso <= item.data_fim;
+      var inicio = String(item.data_inicio || '').slice(5);
+      var fim = String(item.data_fim || '').slice(5);
+      return inicio <= fim ? md >= inicio && md <= fim : md >= inicio || md <= fim;
+    });
+  }
+
   async function carregarResumoPontoMobile() {
     if (!podeGerenciarPontoMobile()) {
       state.pontoResumo = [];
@@ -1723,9 +1733,20 @@
         .eq('empresa_id', empresaId)
         .eq('dia', periodo.data)
         .order('registrado_em', { ascending: true }),
+      db.from('ponto_dias_nao_uteis')
+        .select('data_inicio, data_fim, recorrente_anual')
+        .eq('empresa_id', empresaId),
     ]);
 
     if (respostas[0].error || respostas[1].error) {
+      state.pontoResumoCarregando = false;
+      render();
+      return;
+    }
+    var diasNaoUteis = respostas[2].error ? [] : (respostas[2].data || []);
+    if (diaNaoUtilPontoMobile(periodo.data, diasNaoUteis)) {
+      state.pontoFuncionariosHoje = 0;
+      state.pontoResumo = [];
       state.pontoResumoCarregando = false;
       render();
       return;
@@ -1805,6 +1826,7 @@
         .channel('ponto_dashboard_mobile_' + empresaId)
         .on('postgres_changes', { event: '*', schema: 'public', table: 'ponto_registros', filter: 'empresa_id=eq.' + empresaId }, carregarResumoPontoMobile)
         .on('postgres_changes', { event: '*', schema: 'public', table: 'ponto_funcionarios', filter: 'empresa_id=eq.' + empresaId }, carregarResumoPontoMobile)
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'ponto_dias_nao_uteis', filter: 'empresa_id=eq.' + empresaId }, carregarResumoPontoMobile)
         .subscribe();
       window._avaIntervaloPonto = window.setInterval(carregarResumoPontoMobile, 30000);
     } catch (e) {}

@@ -1309,7 +1309,7 @@ const mostrarComparativoResumoDash =
             {nomeMesPerfis}
           </span>
           <div className="flex items-center justify-end gap-2">
-            <span className="rounded-full bg-white/15 px-2 py-0.5 text-[10px] font-black leading-none text-white">
+            <span className="inline-flex h-6 min-w-[76px] shrink-0 items-center justify-center whitespace-nowrap rounded-full bg-white/15 px-2 text-[9px] font-black leading-none text-white">
               {perfisDashboard.length} perfil{perfisDashboard.length === 1 ? '' : 's'}
             </span>
             <button

@@ -36,7 +36,18 @@ function cpfValido(cpf: string) {
 
 export const DIAS_SEMANA: Array<[number, string]> = [[0, 'Dom'], [1, 'Seg'], [2, 'Ter'], [3, 'Qua'], [4, 'Qui'], [5, 'Sex'], [6, 'Sáb']];
 const TODOS_FUNCIONARIOS = '__todos__';
-export type AbaPontoAdmin = 'lista' | 'novo' | 'local' | 'relatorios';
+export type AbaPontoAdmin = 'lista' | 'novo' | 'local' | 'calendario' | 'relatorios';
+
+export type PontoDiaNaoUtil = {
+  id: string;
+  empresa_id?: string;
+  data_inicio: string;
+  data_fim: string;
+  tipo: string;
+  descricao: string | null;
+  recorrente_anual: boolean;
+  criado_em?: string;
+};
 
 export type RegistroPonto = {
   tipo: string;
@@ -67,6 +78,10 @@ interface PontoAdminModalProps {
   onSalvarConfig: (dados: { latitude: number; longitude: number; raio_m: number }) => Promise<{ erro: boolean; mensagem?: string }>;
   onCarregarRegistros: (funcionarioUserId: string, dataInicioISO: string) => Promise<RegistroPonto[]>;
   onExcluir: (funcionarioUserId: string) => Promise<{ erro: boolean; mensagem?: string }>;
+  diasNaoUteis: PontoDiaNaoUtil[];
+  diasNaoUteisCarregando: boolean;
+  onCriarDiaNaoUtil: (dados: { dataInicio: string; dataFim: string; tipo: string; descricao: string; recorrenteAnual: boolean }) => Promise<{ erro: boolean; mensagem?: string }>;
+  onExcluirDiaNaoUtil: (id: string) => Promise<{ erro: boolean; mensagem?: string }>;
   darkMode: boolean;
 }
 
@@ -84,6 +99,10 @@ export default function PontoAdminModal({
   config,
   onSalvarConfig,
   onCarregarRegistros,
+  diasNaoUteis,
+  diasNaoUteisCarregando,
+  onCriarDiaNaoUtil,
+  onExcluirDiaNaoUtil,
   darkMode,
 }: PontoAdminModalProps) {
   // Cor padrão do sistema (marca AvantaLab) — não usa a cor do usuário (corSistema).
@@ -108,6 +127,18 @@ export default function PontoAdminModal({
   const [capturando, setCapturando] = useState(false);
   const [salvandoLocal, setSalvandoLocal] = useState(false);
   const [msgLocal, setMsgLocal] = useState<{ tipo: 'ok' | 'erro'; texto: string } | null>(null);
+  const hojeISO = () => {
+    const n = new Date();
+    return `${n.getFullYear()}-${String(n.getMonth() + 1).padStart(2, '0')}-${String(n.getDate()).padStart(2, '0')}`;
+  };
+  const [diaNaoUtilInicio, setDiaNaoUtilInicio] = useState(hojeISO);
+  const [diaNaoUtilFim, setDiaNaoUtilFim] = useState(hojeISO);
+  const [diaNaoUtilTipo, setDiaNaoUtilTipo] = useState('empresa_fechada');
+  const [diaNaoUtilDescricao, setDiaNaoUtilDescricao] = useState('');
+  const [diaNaoUtilRecorrente, setDiaNaoUtilRecorrente] = useState(false);
+  const [salvandoDiaNaoUtil, setSalvandoDiaNaoUtil] = useState(false);
+  const [excluindoDiaNaoUtilId, setExcluindoDiaNaoUtilId] = useState<string | null>(null);
+  const [msgCalendario, setMsgCalendario] = useState<{ tipo: 'ok' | 'erro'; texto: string } | null>(null);
 
   const [editId, setEditId] = useState<string | null>(null);
   const [editNome, setEditNome] = useState('');
@@ -313,6 +344,15 @@ export default function PontoAdminModal({
 
   type DiaRel = { dia: string; entrada?: string; saidaAlmoco?: string; entradaAlmoco?: string; saida?: string; distancia: number | null; statusEntrada: 'pontual' | 'atraso' | 'adiantado' | 'sem' };
   const funcSel = funcionarios.find((f) => f.user_id === relFuncId) || null;
+  const diaNaoUtilNaData = (iso: string) => {
+    const md = iso.slice(5);
+    return diasNaoUteis.some((item) => {
+      if (!item.recorrente_anual) return iso >= item.data_inicio && iso <= item.data_fim;
+      const inicio = item.data_inicio.slice(5);
+      const fim = item.data_fim.slice(5);
+      return inicio <= fim ? md >= inicio && md <= fim : md >= inicio || md <= fim;
+    });
+  };
   const montarDiasRel = (funcionario: FuncionarioPonto | null, registros: RegistroPonto[]): DiaRel[] => {
     const mapa: Record<string, RegistroPonto[]> = {};
     registros.forEach((r) => { (mapa[r.dia] = mapa[r.dia] || []).push(r); });
@@ -359,7 +399,7 @@ export default function PontoAdminModal({
     for (const d = new Date(inicio); d < hoje; d.setDate(d.getDate() + 1)) {
       const iso = isoLocal(d);
       if (iso < primeiroDia) continue;
-      if (diasTrabSet.has(d.getDay()) && !diasComEntrada.has(iso)) count++;
+      if (diasTrabSet.has(d.getDay()) && !diasComEntrada.has(iso) && !diaNaoUtilNaData(iso)) count++;
     }
     return count;
   })();
@@ -373,7 +413,7 @@ export default function PontoAdminModal({
     let total = 0;
     for (const data = new Date(relDataInicio + 'T00:00:00'); data < hoje; data.setDate(data.getDate() + 1)) {
       const iso = `${data.getFullYear()}-${String(data.getMonth() + 1).padStart(2, '0')}-${String(data.getDate()).padStart(2, '0')}`;
-      if (iso >= primeiroDia && iso <= relDataFim && diasTrabalho.has(data.getDay()) && !entradas.has(iso)) total++;
+      if (iso >= primeiroDia && iso <= relDataFim && diasTrabalho.has(data.getDay()) && !entradas.has(iso) && !diaNaoUtilNaData(iso)) total++;
     }
     return total;
   };
@@ -510,7 +550,62 @@ export default function PontoAdminModal({
     setMsgLocal(r.erro ? { tipo: 'erro', texto: r.mensagem || 'Não foi possível salvar.' } : { tipo: 'ok', texto: 'Local da empresa salvo!' });
   };
 
-  const abas: Array<['lista' | 'novo' | 'local' | 'relatorios', string]> = [['lista', 'Funcionários'], ['novo', 'Novo'], ['local', 'Local'], ['relatorios', 'Relatórios']];
+  const salvarDiaNaoUtil = async () => {
+    setMsgCalendario(null);
+    if (!diaNaoUtilInicio || !diaNaoUtilFim) {
+      setMsgCalendario({ tipo: 'erro', texto: 'Informe a data inicial e final.' });
+      return;
+    }
+    if (diaNaoUtilFim < diaNaoUtilInicio) {
+      setMsgCalendario({ tipo: 'erro', texto: 'A data final não pode ser anterior à inicial.' });
+      return;
+    }
+    setSalvandoDiaNaoUtil(true);
+    const r = await onCriarDiaNaoUtil({
+      dataInicio: diaNaoUtilInicio,
+      dataFim: diaNaoUtilFim,
+      tipo: diaNaoUtilTipo,
+      descricao: diaNaoUtilDescricao.trim(),
+      recorrenteAnual: diaNaoUtilRecorrente,
+    });
+    setSalvandoDiaNaoUtil(false);
+    if (r.erro) {
+      setMsgCalendario({ tipo: 'erro', texto: r.mensagem || 'Não foi possível salvar.' });
+      return;
+    }
+    setMsgCalendario({ tipo: 'ok', texto: 'Dia não útil salvo.' });
+    const hoje = hojeISO();
+    setDiaNaoUtilInicio(hoje);
+    setDiaNaoUtilFim(hoje);
+    setDiaNaoUtilTipo('empresa_fechada');
+    setDiaNaoUtilDescricao('');
+    setDiaNaoUtilRecorrente(false);
+  };
+
+  const excluirDiaNaoUtil = async (id: string) => {
+    setMsgCalendario(null);
+    setExcluindoDiaNaoUtilId(id);
+    const r = await onExcluirDiaNaoUtil(id);
+    setExcluindoDiaNaoUtilId(null);
+    setMsgCalendario(r.erro
+      ? { tipo: 'erro', texto: r.mensagem || 'Não foi possível excluir.' }
+      : { tipo: 'ok', texto: 'Dia removido do calendário.' });
+  };
+
+  const rotuloTipoDiaNaoUtil = (tipo: string) => ({
+    feriado: 'Feriado',
+    empresa_fechada: 'Empresa fechada',
+    recesso: 'Recesso',
+    folga_coletiva: 'Folga coletiva',
+    outro: 'Outro',
+  }[tipo] || 'Dia não útil');
+
+  const dataCurta = (iso: string) => {
+    if (!iso) return '--/--';
+    return `${iso.slice(8, 10)}/${iso.slice(5, 7)}/${iso.slice(0, 4)}`;
+  };
+
+  const abas: Array<[AbaPontoAdmin, string]> = [['lista', 'Funcionários'], ['novo', 'Novo'], ['local', 'Local'], ['calendario', 'Calendário'], ['relatorios', 'Relatórios']];
 
   return (
     <div className="fixed inset-0 z-[2000] flex items-center justify-center p-3 sm:p-4">
@@ -538,6 +633,7 @@ export default function PontoAdminModal({
                 setAba(a);
                 setMsg(null);
                 setMsgLocal(null);
+                setMsgCalendario(null);
                 if (listaScrollRef.current) listaScrollRef.current.scrollTop = 0;
               }}
               className="rounded-t-lg px-2.5 py-2 text-[11px] font-black uppercase tracking-wide"
@@ -717,6 +813,86 @@ export default function PontoAdminModal({
               <button type="button" onClick={salvarLocal} disabled={salvandoLocal} className="mt-1 h-11 rounded-xl text-sm font-black text-white shadow transition hover:brightness-110 disabled:opacity-60" style={{ backgroundColor: corSistema }}>{salvandoLocal ? 'Salvando...' : 'Salvar local da empresa'}</button>
               {msgLocal && <p className={`text-xs font-bold ${msgLocal.tipo === 'ok' ? 'text-emerald-600' : 'text-red-600'}`}>{msgLocal.texto}</p>}
               <p className={`text-[11px] ${textMuted}`}>Dica: para pegar as coordenadas exatas, abra o Google Maps no local, toque/clique com o botão direito e copie a latitude/longitude.</p>
+            </div>
+          )}
+
+          {aba === 'calendario' && (
+            <div className="grid gap-3">
+              <div className={`rounded-xl border p-3 ${itemBorda}`}>
+                <p className={`text-[10px] font-black uppercase tracking-wide ${darkMode ? 'text-slate-300' : 'text-slate-500'}`}>Dias sem expediente</p>
+                <p className={`mt-1 text-xs leading-relaxed ${textMuted}`}>Datas cadastradas aqui não entram como falta para os funcionários.</p>
+              </div>
+
+              <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                <label className={labelCls}>Data inicial
+                  <input className={inputCls} type="date" value={diaNaoUtilInicio} onChange={(e) => {
+                    setDiaNaoUtilInicio(e.target.value);
+                    if (!diaNaoUtilFim || diaNaoUtilFim < e.target.value) setDiaNaoUtilFim(e.target.value);
+                  }} />
+                </label>
+                <label className={labelCls}>Data final
+                  <input className={inputCls} type="date" value={diaNaoUtilFim} onChange={(e) => setDiaNaoUtilFim(e.target.value)} />
+                </label>
+              </div>
+
+              <div className="grid grid-cols-1 gap-2 sm:grid-cols-[160px_minmax(0,1fr)]">
+                <label className={labelCls}>Tipo
+                  <select className={inputCls} value={diaNaoUtilTipo} onChange={(e) => setDiaNaoUtilTipo(e.target.value)}>
+                    <option value="empresa_fechada">Empresa fechada</option>
+                    <option value="feriado">Feriado</option>
+                    <option value="recesso">Recesso</option>
+                    <option value="folga_coletiva">Folga coletiva</option>
+                    <option value="outro">Outro</option>
+                  </select>
+                </label>
+                <label className={labelCls}>Descrição
+                  <input className={inputCls} value={diaNaoUtilDescricao} onChange={(e) => setDiaNaoUtilDescricao(e.target.value)} placeholder="Ex: Feriado municipal" />
+                </label>
+              </div>
+
+              <label className={`flex items-center gap-2 rounded-xl border p-3 text-xs font-bold ${itemBorda}`}>
+                <input type="checkbox" checked={diaNaoUtilRecorrente} onChange={(e) => setDiaNaoUtilRecorrente(e.target.checked)} className="h-4 w-4" />
+                Repetir todo ano nesta data
+              </label>
+
+              <button type="button" onClick={salvarDiaNaoUtil} disabled={salvandoDiaNaoUtil} className="h-11 rounded-xl text-sm font-black text-white shadow transition hover:brightness-110 disabled:opacity-60" style={{ backgroundColor: corSistema }}>
+                {salvandoDiaNaoUtil ? 'Salvando...' : 'Salvar dia não útil'}
+              </button>
+              {msgCalendario && <p className={`text-xs font-bold ${msgCalendario.tipo === 'ok' ? 'text-emerald-600' : 'text-red-600'}`}>{msgCalendario.texto}</p>}
+
+              <div className="mt-1 grid gap-2">
+                <div className="flex items-center justify-between gap-2">
+                  <span className={`text-[11px] font-black uppercase tracking-wide ${darkMode ? 'text-slate-300' : 'text-slate-500'}`}>Calendário cadastrado</span>
+                  <span className={`rounded-full px-2 py-0.5 text-[10px] font-black ${darkMode ? 'bg-slate-800 text-slate-300' : 'bg-slate-100 text-slate-500'}`}>{diasNaoUteis.length}</span>
+                </div>
+                {diasNaoUteisCarregando ? (
+                  <p className={`py-6 text-center text-sm font-semibold ${textMuted}`}>Carregando...</p>
+                ) : diasNaoUteis.length === 0 ? (
+                  <p className={`rounded-xl border p-4 text-center text-sm font-semibold ${itemBorda} ${textMuted}`}>Nenhum dia não útil cadastrado.</p>
+                ) : (
+                  diasNaoUteis.map((item) => (
+                    <div key={item.id} className={`flex items-start justify-between gap-3 rounded-xl border p-3 ${itemBorda}`}>
+                      <div className="min-w-0">
+                        <p className="text-sm font-black">
+                          {dataCurta(item.data_inicio)}{item.data_fim !== item.data_inicio ? ` até ${dataCurta(item.data_fim)}` : ''}
+                        </p>
+                        <p className={`mt-0.5 truncate text-xs font-bold ${textMuted}`}>
+                          {rotuloTipoDiaNaoUtil(item.tipo)}{item.descricao ? ` · ${item.descricao}` : ''}
+                        </p>
+                        {item.recorrente_anual && <p className="mt-1 text-[10px] font-black uppercase tracking-wide text-cyan-600">Repete todo ano</p>}
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => excluirDiaNaoUtil(item.id)}
+                        disabled={excluindoDiaNaoUtilId === item.id}
+                        className={`shrink-0 rounded-lg border px-2.5 py-1.5 text-[10px] font-black uppercase tracking-wide transition disabled:opacity-60 ${darkMode ? 'border-red-500/40 text-red-300 hover:bg-red-500/10' : 'border-red-200 text-red-600 hover:bg-red-50'}`}
+                      >
+                        {excluindoDiaNaoUtilId === item.id ? 'Removendo...' : 'Remover'}
+                      </button>
+                    </div>
+                  ))
+                )}
+              </div>
             </div>
           )}
 

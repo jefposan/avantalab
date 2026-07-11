@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.4.0.27 - 2026-07-10
+
+- Ponto: adiciona calendário de dias não úteis da empresa para feriados, recesso, folga coletiva e dias fechados, evitando que essas datas contem como falta no web, mobile e relatórios.
+
+## 1.4.0.26 - 2026-07-10
+
+- Web: cards de carregamento passam a usar acabamento translúcido estilo liquid glass, mantendo o restante dos cards do sistema sem alteração.
+
 ## 1.4.0.25 - 2026-07-10
 
 - Web: card "Meus perfis" remove a tarja da lista e passa a exibir o mês centralizado no header para ganhar espaço.

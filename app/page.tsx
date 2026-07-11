@@ -13,7 +13,7 @@ import ModalInstrucoes from './components/ModalInstrucoes';
 import ModalDespesasBase from './components/ModalDespesasBase';
 import ModalLogo from './components/ModalLogo';
 import ModulosModal, { type Modulo } from './components/ModulosModal';
-import PontoAdminModal, { type AbaPontoAdmin, type FuncionarioPonto, type PontoConfig } from './components/PontoAdminModal';
+import PontoAdminModal, { type AbaPontoAdmin, type FuncionarioPonto, type PontoConfig, type PontoDiaNaoUtil } from './components/PontoAdminModal';
 import SobreModal from './components/SobreModal';
 import ModalConfirmacao from "./components/ModalConfirmacao";
 import DraggableModalCard from './components/DraggableModalCard';
@@ -219,8 +219,8 @@ function TelaCarregandoSistema({
       <div className="absolute inset-0 bg-white/75 backdrop-blur-sm" />
 
       <section className="relative z-10 flex min-h-screen items-center justify-center px-6 py-10">
-        <div className="w-full max-w-sm rounded-3xl border border-slate-200 bg-white/90 p-8 text-center shadow-2xl">
-          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-sky-50">
+        <div className="avanta-loading-glass w-full max-w-sm rounded-3xl border p-8 text-center shadow-2xl">
+          <div className="avanta-loading-glass-icon mx-auto flex h-14 w-14 items-center justify-center rounded-2xl">
             <span className="h-7 w-7 animate-spin rounded-full border-3 border-slate-200 border-t-sky-700" />
           </div>
 
@@ -661,6 +661,8 @@ const [despesaRelatorioAberta, setDespesaRelatorioAberta] = useState<{
   const [pontoFuncionarios, setPontoFuncionarios] = useState<FuncionarioPonto[]>([]);
   const [pontoFuncCarregando, setPontoFuncCarregando] = useState(false);
   const [pontoConfig, setPontoConfig] = useState<PontoConfig>(null);
+  const [pontoDiasNaoUteis, setPontoDiasNaoUteis] = useState<PontoDiaNaoUtil[]>([]);
+  const [pontoDiasNaoUteisCarregando, setPontoDiasNaoUteisCarregando] = useState(false);
   const [pontoResumoDia, setPontoResumoDia] = useState<Array<{
     userId: string;
     nome: string;
@@ -1981,6 +1983,40 @@ useEffect(() => {
     setPontoFuncCarregando(false);
   }
 
+  function diaNaoUtilPontoNaData(iso: string, lista: PontoDiaNaoUtil[] = pontoDiasNaoUteis) {
+    const md = iso.slice(5);
+    return lista.some((item) => {
+      if (!item.recorrente_anual) return iso >= item.data_inicio && iso <= item.data_fim;
+      const inicio = item.data_inicio.slice(5);
+      const fim = item.data_fim.slice(5);
+      return inicio <= fim ? md >= inicio && md <= fim : md >= inicio || md <= fim;
+    });
+  }
+
+  async function carregarDiasNaoUteisPonto() {
+    if (!empresaId) return [];
+    setPontoDiasNaoUteisCarregando(true);
+    try {
+      const { data, error } = await supabase
+        .from('ponto_dias_nao_uteis')
+        .select('id, empresa_id, data_inicio, data_fim, tipo, descricao, recorrente_anual, criado_em')
+        .eq('empresa_id', empresaId)
+        .order('data_inicio', { ascending: false });
+      if (error) {
+        console.error('carregarDiasNaoUteisPonto', error);
+        return pontoDiasNaoUteis;
+      }
+      const lista = (data || []) as PontoDiaNaoUtil[];
+      setPontoDiasNaoUteis(lista);
+      return lista;
+    } catch (error) {
+      console.error('Erro inesperado ao carregar dias não úteis do ponto:', error);
+      return pontoDiasNaoUteis;
+    } finally {
+      setPontoDiasNaoUteisCarregando(false);
+    }
+  }
+
   async function carregarResumoPontoDashboard() {
     if (!empresaId || !podeGerenciarPonto) return;
     try {
@@ -2000,7 +2036,7 @@ useEffect(() => {
         return match ? Number(match[1]) * 60 + Number(match[2]) : null;
       };
 
-      const [funcionariosResp, registrosResp] = await Promise.all([
+      const [funcionariosResp, registrosResp, diasNaoUteisResp] = await Promise.all([
         supabase
           .from('ponto_funcionarios')
           .select('user_id, nome, hora_entrada, hora_saida, dias_trabalho')
@@ -2013,8 +2049,19 @@ useEffect(() => {
           .eq('empresa_id', empresaId)
           .eq('dia', dataPartes)
           .order('registrado_em', { ascending: true }),
+        supabase
+          .from('ponto_dias_nao_uteis')
+          .select('id, empresa_id, data_inicio, data_fim, tipo, descricao, recorrente_anual, criado_em')
+          .eq('empresa_id', empresaId),
       ]);
       if (funcionariosResp.error || registrosResp.error) return;
+      const diasNaoUteis = diasNaoUteisResp.error ? pontoDiasNaoUteis : (diasNaoUteisResp.data || []) as PontoDiaNaoUtil[];
+      if (!diasNaoUteisResp.error) setPontoDiasNaoUteis(diasNaoUteis);
+      if (diaNaoUtilPontoNaData(dataPartes, diasNaoUteis)) {
+        setPontoFuncionariosHoje(0);
+        setPontoResumoDia([]);
+        return;
+      }
 
       const registrosPorUsuario = new Map<string, Array<{ tipo: string; registrado_em: string }>>();
       (registrosResp.data || []).forEach((registro) => {
@@ -2132,6 +2179,51 @@ useEffect(() => {
       return { erro: false };
     } catch {
       return { erro: true, mensagem: 'Erro ao salvar o local da empresa.' };
+    }
+  }
+
+  async function criarDiaNaoUtilPonto(dados: { dataInicio: string; dataFim: string; tipo: string; descricao: string; recorrenteAnual: boolean }) {
+    if (!empresaId) return { erro: true, mensagem: 'Perfil não identificado.' };
+    try {
+      const { error } = await supabase
+        .from('ponto_dias_nao_uteis')
+        .insert({
+          empresa_id: empresaId,
+          data_inicio: dados.dataInicio,
+          data_fim: dados.dataFim,
+          tipo: dados.tipo,
+          descricao: dados.descricao || null,
+          recorrente_anual: dados.recorrenteAnual,
+        });
+      if (error) {
+        console.error('criarDiaNaoUtilPonto', error);
+        return { erro: true, mensagem: 'Não foi possível salvar o dia não útil.' };
+      }
+      await carregarDiasNaoUteisPonto();
+      carregarResumoPontoDashboard();
+      return { erro: false };
+    } catch {
+      return { erro: true, mensagem: 'Erro ao salvar o dia não útil.' };
+    }
+  }
+
+  async function excluirDiaNaoUtilPonto(id: string) {
+    if (!empresaId) return { erro: true, mensagem: 'Perfil não identificado.' };
+    try {
+      const { error } = await supabase
+        .from('ponto_dias_nao_uteis')
+        .delete()
+        .eq('empresa_id', empresaId)
+        .eq('id', id);
+      if (error) {
+        console.error('excluirDiaNaoUtilPonto', error);
+        return { erro: true, mensagem: 'Não foi possível remover o dia.' };
+      }
+      await carregarDiasNaoUteisPonto();
+      carregarResumoPontoDashboard();
+      return { erro: false };
+    } catch {
+      return { erro: true, mensagem: 'Erro ao remover o dia.' };
     }
   }
 
@@ -4554,6 +4646,11 @@ useEffect(() => {
       { event: '*', schema: 'public', table: 'ponto_funcionarios', filter: 'empresa_id=eq.' + empresaId },
       () => { carregarResumoPontoDashboard(); }
     )
+    .on(
+      'postgres_changes',
+      { event: '*', schema: 'public', table: 'ponto_dias_nao_uteis', filter: 'empresa_id=eq.' + empresaId },
+      () => { carregarDiasNaoUteisPonto(); carregarResumoPontoDashboard(); }
+    )
     .subscribe();
   const intervalo = window.setInterval(() => { carregarResumoPontoDashboard(); }, 30000);
 
@@ -6237,7 +6334,7 @@ if (redirecionandoMobile) {
           style={{ backgroundImage: "image-set(url('/images/bg-avantalab.webp') type('image/webp'), url('/images/bg-avantalab.png') type('image/png'))" }}
         />
         <div className="absolute inset-0 bg-white/10" />
-        <div className="relative z-10 flex -translate-y-24 flex-col items-center gap-3 rounded-2xl border border-white/40 bg-white/80 px-8 py-6 shadow-2xl backdrop-blur-xl">
+        <div className="avanta-loading-glass relative z-10 flex -translate-y-24 flex-col items-center gap-3 rounded-2xl border px-8 py-6 shadow-2xl">
           <div className="h-9 w-9 animate-spin rounded-full border-[3px] border-sky-200 border-t-sky-700" />
           <p className="text-sm font-black uppercase tracking-[0.24em] text-sky-800">Carregando perfil…</p>
         </div>
@@ -6331,7 +6428,7 @@ if (redirecionandoMobile) {
           style={{ backgroundImage: "image-set(url('/images/bg-avantalab.webp') type('image/webp'), url('/images/bg-avantalab.png') type('image/png'))" }}
         />
         <div className="absolute inset-0 bg-white/10" />
-        <div className="relative z-10 flex flex-col items-center gap-3 rounded-2xl border border-white/40 bg-white/80 px-8 py-6 shadow-2xl backdrop-blur-xl">
+        <div className="avanta-loading-glass relative z-10 flex flex-col items-center gap-3 rounded-2xl border px-8 py-6 shadow-2xl">
           <div className="h-9 w-9 animate-spin rounded-full border-[3px] border-sky-200 border-t-sky-700" />
           <p className="text-sm font-black uppercase tracking-[0.24em] text-sky-800">Carregando…</p>
         </div>
@@ -6738,6 +6835,10 @@ if (redirecionandoMobile) {
   config={pontoConfig}
   onSalvarConfig={salvarPontoConfig}
   onCarregarRegistros={carregarRegistrosPonto}
+  diasNaoUteis={pontoDiasNaoUteis}
+  diasNaoUteisCarregando={pontoDiasNaoUteisCarregando}
+  onCriarDiaNaoUtil={criarDiaNaoUtilPonto}
+  onExcluirDiaNaoUtil={excluirDiaNaoUtilPonto}
   darkMode={darkMode}
 />
 
@@ -8636,7 +8737,7 @@ name="novo-usuario-login"
         {modulosAtivos.includes('ponto') && podeGerenciarPonto && (
           <Tooltip texto="Gerencie funcionários, local da empresa e relatórios de ponto." posicao="bottom">
             <button
-              onClick={() => { setAjustesAberto(false); setAbaInicialPontoAdmin('lista'); setRelatorioInicialPonto(null); setInstanciaPontoAdmin((atual) => atual + 1); setModalPontoAdmin(true); carregarFuncionariosPonto(); carregarPontoConfig(); }}
+              onClick={() => { setAjustesAberto(false); setAbaInicialPontoAdmin('lista'); setRelatorioInicialPonto(null); setInstanciaPontoAdmin((atual) => atual + 1); setModalPontoAdmin(true); carregarFuncionariosPonto(); carregarPontoConfig(); carregarDiasNaoUteisPonto(); }}
               className="whitespace-nowrap bg-slate-800 hover:bg-slate-700 px-3 py-1.5 rounded-lg border transition-colors font-bold shadow flex items-center gap-1.5 text-xs"
               style={{ borderColor: corPrimaria }}
             >
@@ -9412,6 +9513,7 @@ name="novo-usuario-login"
           setModalPontoAdmin(true);
           carregarFuncionariosPonto();
           carregarPontoConfig();
+          carregarDiasNaoUteisPonto();
         }}
       />
     </div>
@@ -9419,12 +9521,14 @@ name="novo-usuario-login"
 )}
 
       {carregandoPerfil && (
-        <div className="fixed inset-0 z-[9500] flex flex-col items-center justify-center gap-4 bg-slate-950/70 backdrop-blur-sm">
-          <div
-            className="h-12 w-12 animate-spin rounded-full border-4 border-white/30"
-            style={{ borderTopColor: corPrimaria }}
-          />
-          <p className="text-sm font-black uppercase tracking-wide text-white">Carregando perfil...</p>
+        <div className="fixed inset-0 z-[9500] flex items-center justify-center bg-slate-950/70 px-4 backdrop-blur-sm">
+          <div className="avanta-loading-glass flex flex-col items-center gap-4 rounded-3xl border px-10 py-8 text-center shadow-2xl">
+            <div
+              className="h-12 w-12 animate-spin rounded-full border-4 border-slate-200"
+              style={{ borderTopColor: corPrimaria }}
+            />
+            <p className="text-sm font-black uppercase tracking-wide text-sky-800">Carregando perfil...</p>
+          </div>
         </div>
       )}
 
