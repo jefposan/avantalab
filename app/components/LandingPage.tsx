@@ -81,7 +81,7 @@ export default function LandingPage({ onCriarConta, onEntrar }: LandingPageProps
       {/* ======================= HERO ======================= */}
       <section className="hero">
         <div className="wrap hero-grid">
-          <div>
+          <div className="hero-copy">
             <span className="eyebrow"><span className="dot" />Gestão financeira e operacional</span>
             <h1>Suas finanças, do zero ao <span className="grad">operacional.</span></h1>
             <p className="hero-sub">
@@ -93,7 +93,10 @@ export default function LandingPage({ onCriarConta, onEntrar }: LandingPageProps
                 Teste grátis
                 <Arrow />
               </button>
-              <a className="btn btn-ghost" href="#beneficios" onClick={irPara('beneficios')}>Conhecer o AvantaLab</a>
+              <a className="btn btn-ghost" href="#beneficios" onClick={irPara('beneficios')}>
+                <span className="desktop-label">Conhecer o AvantaLab</span>
+                <span className="mobile-label">Conhecer</span>
+              </a>
             </div>
             <div className="hero-note">
               <span><Check size={15} />Sem cartão de crédito</span>

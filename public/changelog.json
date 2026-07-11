@@ -13,6 +13,14 @@
   },
   "versoes": [
     {
+      "versao": "1.4.0.35",
+      "titulo": "Landing mobile mais organizada",
+      "data": "Julho/2026",
+      "itens": [
+        "Web: reorganiza a hero da landing no mobile, exibe o menu compacto e ajusta os botões principais para proporção de celular."
+      ]
+    },
+    {
       "versao": "1.4.0.34",
       "titulo": "Carregamentos com vidro translúcido",
       "data": "Julho/2026",
