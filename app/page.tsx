@@ -216,23 +216,23 @@ function TelaCarregandoSistema({
         }}
       />
 
-      <div className="absolute inset-0 bg-white/75 backdrop-blur-sm" />
+      <div className="absolute inset-0 bg-transparent" />
 
-      <section className="relative z-10 flex min-h-screen items-center justify-center px-6 py-10">
-        <div className="avanta-loading-glass w-full max-w-sm rounded-3xl border p-8 text-center shadow-2xl">
-          <div className="avanta-loading-glass-icon mx-auto flex h-14 w-14 items-center justify-center rounded-2xl">
-            <span className="h-7 w-7 animate-spin rounded-full border-3 border-slate-200 border-t-sky-700" />
+      <section className="avanta-loading-stage relative z-10">
+        <div className="avanta-loading-glass avanta-loading-card rounded-3xl border shadow-2xl">
+          <div className="avanta-loading-glass-icon mx-auto flex h-11 w-11 items-center justify-center rounded-xl">
+            <span className="avanta-loading-spinner animate-spin" />
           </div>
 
-          <p className="mt-5 text-xs font-bold uppercase tracking-[0.28em] text-sky-700">
+          <p className="text-xs font-bold uppercase tracking-[0.28em] text-sky-700">
             AvantaLab Gestão
           </p>
 
-          <h1 className="mt-2 text-xl font-black text-slate-900">
+          <h1 className="text-xl font-black text-slate-900">
             Carregando...
           </h1>
 
-          <p className="mt-2 text-sm font-semibold text-slate-500">
+          <p className="text-sm font-semibold text-slate-500">
             {mensagem}
           </p>
         </div>
@@ -6376,14 +6376,16 @@ if (redirecionandoMobile) {
   // "flash" de login entre selecionar o perfil e a página carregar).
   if (carregandoPerfil && !modalSelecionarEmpresa) {
     return (
-      <main className="relative flex min-h-screen items-center justify-center overflow-hidden font-sans">
+      <main className="avanta-loading-stage relative overflow-hidden font-sans">
         <div
           className="absolute inset-0 bg-cover bg-center"
           style={{ backgroundImage: "image-set(url('/images/bg-avantalab.webp') type('image/webp'), url('/images/bg-avantalab.png') type('image/png'))" }}
         />
-        <div className="absolute inset-0 bg-white/10" />
-        <div className="avanta-loading-glass relative z-10 flex -translate-y-24 flex-col items-center gap-3 rounded-2xl border px-8 py-6 shadow-2xl">
-          <div className="h-9 w-9 animate-spin rounded-full border-[3px] border-sky-200 border-t-sky-700" />
+        <div className="absolute inset-0 bg-transparent" />
+        <div className="avanta-loading-glass avanta-loading-card relative z-10 rounded-3xl border shadow-2xl">
+          <div className="avanta-loading-glass-icon mx-auto flex h-11 w-11 items-center justify-center rounded-xl">
+            <span className="avanta-loading-spinner animate-spin" />
+          </div>
           <p className="text-sm font-black uppercase tracking-[0.24em] text-sky-800">Carregando perfil…</p>
         </div>
       </main>
@@ -6470,14 +6472,16 @@ if (redirecionandoMobile) {
   // (evita o flash do conteúdo antes de o paywall bloquear).
   if (COBRANCA_ATIVA && acessoLiberado && empresaId && !estadoCarregado) {
     return (
-      <main className="relative flex min-h-screen items-center justify-center overflow-hidden font-sans">
+      <main className="avanta-loading-stage relative overflow-hidden font-sans">
         <div
           className="absolute inset-0 bg-cover bg-center"
           style={{ backgroundImage: "image-set(url('/images/bg-avantalab.webp') type('image/webp'), url('/images/bg-avantalab.png') type('image/png'))" }}
         />
-        <div className="absolute inset-0 bg-white/10" />
-        <div className="avanta-loading-glass relative z-10 flex flex-col items-center gap-3 rounded-2xl border px-8 py-6 shadow-2xl">
-          <div className="h-9 w-9 animate-spin rounded-full border-[3px] border-sky-200 border-t-sky-700" />
+        <div className="absolute inset-0 bg-transparent" />
+        <div className="avanta-loading-glass avanta-loading-card relative z-10 rounded-3xl border shadow-2xl">
+          <div className="avanta-loading-glass-icon mx-auto flex h-11 w-11 items-center justify-center rounded-xl">
+            <span className="avanta-loading-spinner animate-spin" />
+          </div>
           <p className="text-sm font-black uppercase tracking-[0.24em] text-sky-800">Carregando…</p>
         </div>
       </main>
@@ -9570,12 +9574,11 @@ name="novo-usuario-login"
 )}
 
       {carregandoPerfil && (
-        <div className="fixed inset-0 z-[9500] flex items-center justify-center bg-slate-950/70 px-4 backdrop-blur-sm">
-          <div className="avanta-loading-glass flex flex-col items-center gap-4 rounded-3xl border px-10 py-8 text-center shadow-2xl">
-            <div
-              className="h-12 w-12 animate-spin rounded-full border-4 border-slate-200"
-              style={{ borderTopColor: corPrimaria }}
-            />
+        <div className="avanta-loading-stage fixed inset-0 z-[9500] bg-slate-950/70 backdrop-blur-sm">
+          <div className="avanta-loading-glass avanta-loading-card rounded-3xl border shadow-2xl">
+            <div className="avanta-loading-glass-icon mx-auto flex h-11 w-11 items-center justify-center rounded-xl">
+              <span className="avanta-loading-spinner animate-spin" />
+            </div>
             <p className="text-sm font-black uppercase tracking-wide text-sky-800">Carregando perfil...</p>
           </div>
         </div>

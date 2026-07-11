@@ -13,6 +13,14 @@
   },
   "versoes": [
     {
+      "versao": "1.4.0.34",
+      "titulo": "Carregamentos com vidro translúcido",
+      "data": "Julho/2026",
+      "itens": [
+        "Web: compacta, reposiciona acima do logo do background e refina a transparência dos cards principais de carregamento."
+      ]
+    },
+    {
       "versao": "1.4.0.33",
       "titulo": "Cancelar troca mantém perfil",
       "data": "Julho/2026",
