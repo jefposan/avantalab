@@ -1,5 +1,17 @@
 # Changelog
 
+## 1.4.0.33 - 2026-07-10
+
+- Web: cancelar a troca de perfil mantém o usuário no perfil atual em vez de voltar para a tela de login.
+
+## 1.4.0.32 - 2026-07-10
+
+- Web: placeholder de logomarca no header passa a abrir o card de inserção de logo quando ainda não há logo configurada.
+
+## 1.4.0.31 - 2026-07-10
+
+- Web: abertura da seleção de perfil fica imediata ao usar a lista já carregada, atualizando os perfis em segundo plano.
+
 ## 1.4.0.30 - 2026-07-10
 
 - Relatórios: reduz a altura das linhas da Matriz Anual de Despesas para melhorar a densidade visual.

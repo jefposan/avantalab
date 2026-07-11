@@ -13,6 +13,30 @@
   },
   "versoes": [
     {
+      "versao": "1.4.0.33",
+      "titulo": "Cancelar troca mantém perfil",
+      "data": "Julho/2026",
+      "itens": [
+        "Web: cancelar a troca de perfil mantém o usuário no perfil atual em vez de voltar para a tela de login."
+      ]
+    },
+    {
+      "versao": "1.4.0.32",
+      "titulo": "Logo clicável quando vazio",
+      "data": "Julho/2026",
+      "itens": [
+        "Web: placeholder de logomarca no header passa a abrir o card de inserção de logo quando ainda não há logo configurada."
+      ]
+    },
+    {
+      "versao": "1.4.0.31",
+      "titulo": "Seleção de perfil mais rápida",
+      "data": "Julho/2026",
+      "itens": [
+        "Web: abertura da seleção de perfil fica imediata ao usar a lista já carregada, atualizando os perfis em segundo plano."
+      ]
+    },
+    {
       "versao": "1.4.0.30",
       "titulo": "Matriz anual mais compacta",
       "data": "Julho/2026",

@@ -46,6 +46,7 @@ interface AppHeaderProps {
   confirmarLogout: () => void;
   logoUrl: string;
   logoSettings: LogoSettings;
+  onAbrirLogo: () => void;
   setModalEmpresasAberto: React.Dispatch<React.SetStateAction<boolean>>;
   agendaHojeCount: number;
   onAbrirAgenda: () => void;
@@ -69,6 +70,7 @@ export default function AppHeader({
   onLimparAvisos,
   calcAberta, setCalcAberta,
   confirmarLogout, logoUrl, logoSettings,
+  onAbrirLogo,
   setModalEmpresasAberto,
   agendaHojeCount, onAbrirAgenda,
   abasPremium = [],
@@ -208,7 +210,31 @@ export default function AppHeader({
           {logoUrl !== '__blank__' && (
           <div
             className="relative flex h-[60px] w-40 shrink-0 cursor-pointer items-center justify-center sm:h-[68px] sm:w-48 xl:h-[82px] xl:w-64"
-            onClick={() => { setAbaAtiva('Dashboard'); setMesAtivo(null); setMenuResponsivoAberto(false); }}
+            onClick={() => {
+              if (logoUrl) {
+                setAbaAtiva('Dashboard');
+                setMesAtivo(null);
+                setMenuResponsivoAberto(false);
+                return;
+              }
+
+              onAbrirLogo();
+            }}
+            role="button"
+            tabIndex={0}
+            onKeyDown={(event) => {
+              if (event.key !== 'Enter' && event.key !== ' ') return;
+              event.preventDefault();
+              if (logoUrl) {
+                setAbaAtiva('Dashboard');
+                setMesAtivo(null);
+                setMenuResponsivoAberto(false);
+                return;
+              }
+
+              onAbrirLogo();
+            }}
+            aria-label={logoUrl ? 'Ir para o início' : 'Adicionar logomarca'}
           >
             {logoUrl ? (
               <div className="absolute inset-0 overflow-hidden rounded-lg">

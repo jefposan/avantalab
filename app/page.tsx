@@ -426,6 +426,7 @@ export default function AppGestao() {
   const onMultiplasEmpresas = (empresasList: EmpresaUsuarioResumo[]) => {
     empresas.setEmpresasDoUsuario(empresasList);
     empresas.setEmpresaParaSelecionar(empresasList[0] || null);
+    setModoSelecaoPerfil('entrada');
     empresas.setModalSelecionarEmpresa(true);
   };
 
@@ -649,6 +650,7 @@ const [despesaRelatorioAberta, setDespesaRelatorioAberta] = useState<{
   const [logoSettings, setLogoSettings] = useState({ scale: 100, x: 0, y: 0 });
   const [modalLogo, setModalLogo] = useState(false);
   const [carregandoPerfil, setCarregandoPerfil] = useState(false);
+  const [modoSelecaoPerfil, setModoSelecaoPerfil] = useState<'entrada' | 'troca'>('entrada');
   const [modalModulos, setModalModulos] = useState(false);
   const [modulosCatalogo, setModulosCatalogo] = useState<Modulo[]>([]);
   const [modulosAtivos, setModulosAtivos] = useState<string[]>([]);
@@ -1017,6 +1019,7 @@ const carregarEmpresaSelecionada = async (empresa: EmpresaUsuarioResumo) => {
   setEstadoCarregado(false);
   // Fecha o card de selecao na hora (antes do trabalho assincrono)
   setModalSelecionarEmpresa(false);
+  setModoSelecaoPerfil('entrada');
   setModalEmpresasAberto(false);
   // Rede de seguranca: nunca deixar o loading preso
   setTimeout(() => setCarregandoPerfil(false), 12000);
@@ -1273,6 +1276,7 @@ setMensagemCarregamentoSistema('Carregando empresa...');
 
   setEmpresasDoUsuario(empresasEncontradas);
   setEmpresaParaSelecionar(empresasEncontradas[0]);
+  setModoSelecaoPerfil('entrada');
   setModalSelecionarEmpresa(true);
   setAcessoNaoConfigurado(false);
   setAcessoLiberado(true);
@@ -4354,6 +4358,17 @@ const salvarEdicaoLancamento = async () => {
 }
 };
 
+const abrirModalLogoPeloHeader = () => {
+  if (!podeAcessarAjustes) {
+    abrirAviso('Acesso não permitido', 'Você não tem permissão para alterar a logomarca da empresa.');
+    return;
+  }
+
+  setAjustesAberto(false);
+  setPainelAvisosAberto(false);
+  setModalLogo(true);
+};
+
 const limparLogo = async () => {
   const defaultSettings = { scale: 100, x: 0, y: 0 };
   setLogoUrl('');
@@ -5135,46 +5150,70 @@ const abrirCriacaoNovaEmpresa = () => {
   setAcessoLiberado(false);
 };
 
-const abrirTrocaEmpresa = async () => {
-  const { data: usuarioLogado } = await supabase.auth.getUser();
-  const usuarioId = usuarioLogado.user?.id;
-
-  if (!usuarioId) {
-    abrirAviso(
-      'Sessao nao encontrada',
-      'Entre novamente para carregar suas empresas vinculadas.'
-    );
-    return;
-  }
-
-  let empresasAtualizadas;
-  try {
-    empresasAtualizadas = (await buscarEmpresasDoUsuario(usuarioId)).filter(
-      (empresa): empresa is NonNullable<typeof empresa> => Boolean(empresa)
-    );
-  } catch (e) {
-    console.error('Erro ao carregar empresas para troca:', e);
-    abrirAviso('Não foi possível carregar', 'Houve uma falha ao buscar suas empresas. Tente novamente em instantes.');
-    return;
-  }
-  setEmpresasDoUsuario(empresasAtualizadas);
-
-  if (empresasAtualizadas.length <= 1) {
-    abrirAviso(
-      'Troca indisponível',
-      'Este usuário possui acesso a apenas uma empresa no momento.'
-    );
-    return;
-  }
-
+const abrirTrocaEmpresa = () => {
   setAjustesAberto(false);
   setPainelAvisosAberto(false);
-  setEmpresaParaSelecionar(
-    empresasAtualizadas.find((empresa) => empresa.id !== empresaId) ||
-      empresasAtualizadas[0] ||
-      null
+  setModoSelecaoPerfil('troca');
+
+  const empresasEmCache = empresasDoUsuario.filter(
+    (empresa): empresa is NonNullable<typeof empresa> => Boolean(empresa)
   );
-  setModalSelecionarEmpresa(true);
+
+  if (empresasEmCache.length > 1) {
+    setEmpresaParaSelecionar((selecionadaAtual: EmpresaUsuarioResumo | null) => (
+      selecionadaAtual && empresasEmCache.some((empresa) => empresa.id === selecionadaAtual.id)
+        ? selecionadaAtual
+        : empresasEmCache.find((empresa) => empresa.id !== empresaId) || empresasEmCache[0] || null
+    ));
+    setModalSelecionarEmpresa(true);
+  }
+
+  void (async () => {
+    const { data: usuarioLogado } = await supabase.auth.getUser();
+    const usuarioId = usuarioLogado.user?.id;
+
+    if (!usuarioId) {
+      if (empresasEmCache.length === 0) {
+        abrirAviso(
+          'Sessao nao encontrada',
+          'Entre novamente para carregar suas empresas vinculadas.'
+        );
+      }
+      return;
+    }
+
+    let empresasAtualizadas;
+    try {
+      empresasAtualizadas = (await buscarEmpresasDoUsuario(usuarioId)).filter(
+        (empresa): empresa is NonNullable<typeof empresa> => Boolean(empresa)
+      );
+    } catch (e) {
+      console.error('Erro ao carregar empresas para troca:', e);
+      if (empresasEmCache.length === 0) {
+        abrirAviso('Não foi possível carregar', 'Houve uma falha ao buscar suas empresas. Tente novamente em instantes.');
+      }
+      return;
+    }
+
+    setEmpresasDoUsuario(empresasAtualizadas);
+
+    if (empresasAtualizadas.length <= 1) {
+      if (empresasEmCache.length === 0) {
+        abrirAviso(
+          'Troca indisponível',
+          'Este usuário possui acesso a apenas uma empresa no momento.'
+        );
+      }
+      return;
+    }
+
+    setEmpresaParaSelecionar((selecionadaAtual: EmpresaUsuarioResumo | null) => (
+      selecionadaAtual && empresasAtualizadas.some((empresa) => empresa.id === selecionadaAtual.id)
+        ? selecionadaAtual
+        : empresasAtualizadas.find((empresa) => empresa.id !== empresaId) || empresasAtualizadas[0] || null
+    ));
+    setModalSelecionarEmpresa(true);
+  })();
 };
 
 const confirmarExclusaoEmpresaAtual = () => {
@@ -5308,6 +5347,7 @@ const executarExclusaoEmpresaAtual = async () => {
   }
 
   setEmpresaParaSelecionar(empresasRestantes[0]);
+  setModoSelecaoPerfil('entrada');
   setModalSelecionarEmpresa(true);
   setAcessoNaoConfigurado(false);
   setAcessoLiberado(true);
@@ -5330,6 +5370,13 @@ const confirmarLogout = () => {
 };
 
 const sairDaSelecaoEmpresa = async () => {
+  if (modoSelecaoPerfil === 'troca') {
+    setModalSelecionarEmpresa(false);
+    setEmpresaParaSelecionar(null);
+    setModoSelecaoPerfil('entrada');
+    return;
+  }
+
   setModalSelecionarEmpresa(false);
   setEmpresaParaSelecionar(null);
   setEmpresasDoUsuario([]);
@@ -5990,6 +6037,7 @@ if (acessoNaoConfigurado) {
       setNomeEmpresaInicial('');
 
       if (empresasDoUsuario.length > 1 && !empresaId) {
+        setModoSelecaoPerfil('entrada');
         setModalSelecionarEmpresa(true);
         setAcessoLiberado(true);
         return;
@@ -6450,7 +6498,7 @@ if (redirecionandoMobile) {
         onAssinar={iniciarAssinatura}
         onAtualizarPagamento={atualizarEstadoCobranca}
         onResgatarCupom={resgatarCupom}
-        onTrocarPerfil={empresasDoUsuario.length > 1 ? () => { setEmpresaId(null); setModalSelecionarEmpresa(true); } : undefined}
+        onTrocarPerfil={empresasDoUsuario.length > 1 ? abrirTrocaEmpresa : undefined}
         onCriarPerfil={abrirCriacaoNovaEmpresa}
         onSair={handleLogout}
       />
@@ -8624,6 +8672,7 @@ name="novo-usuario-login"
         confirmarLogout={confirmarLogout}
         logoUrl={logoUrl}
         logoSettings={logoSettings}
+        onAbrirLogo={abrirModalLogoPeloHeader}
         setModalEmpresasAberto={setModalEmpresasAberto}
         agendaHojeCount={agendaHojeCount}
         onAbrirAgenda={() => {
