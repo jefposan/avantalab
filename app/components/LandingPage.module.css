@@ -83,6 +83,12 @@
 .landing :global(.nav-cta) { padding: .6rem 1.3rem; font-size: .9rem; }
 @media (max-width: 760px) {
   .landing :global(header.nav) {
+    background: transparent;
+    box-shadow: none;
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+  .landing :global(header.nav.scrolled) {
     background: rgba(255, 255, 255, .86);
     box-shadow: 0 1px 0 rgba(16, 36, 62, .07);
     -webkit-backdrop-filter: blur(14px) saturate(150%);

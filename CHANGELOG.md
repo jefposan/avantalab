@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.4.0.37 - 2026-07-11
+
+- Landing mobile: deixa o header transparente no topo e ativa o fundo translúcido somente após iniciar a rolagem.
+
 ## 1.4.0.36 - 2026-07-11
 
 - Mobile/Web: desativa a página legada `/mobile` e mantém landing, login e sistema na rota principal responsiva.

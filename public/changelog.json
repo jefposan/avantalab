@@ -13,6 +13,14 @@
   },
   "versoes": [
     {
+      "versao": "1.4.0.37",
+      "titulo": "Header mobile transparente",
+      "data": "Julho/2026",
+      "itens": [
+        "Landing mobile: deixa o header transparente no topo e ativa o fundo translúcido somente após iniciar a rolagem."
+      ]
+    },
+    {
       "versao": "1.4.0.36",
       "titulo": "Acesso mobile unificado",
       "data": "Julho/2026",
