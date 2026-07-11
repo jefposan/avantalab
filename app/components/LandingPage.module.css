@@ -533,8 +533,21 @@
     height: 18px;
   }
   .landing :global(.nav-logo img) { height: 34px; }
-  .landing :global(.nav-cta) { padding: .5rem 1rem; font-size: .8rem; }
-  .landing :global(.nav-entrar) { padding: .45rem .7rem; font-size: .8rem; }
+  .landing :global(.nav-actions) { gap: .34rem; }
+  .landing :global(.nav-cta) {
+    min-height: 30px;
+    padding: .34rem .72rem;
+    font-size: .7rem;
+    font-weight: 600;
+    box-shadow: 0 7px 16px -10px rgba(29, 111, 217, .52);
+  }
+  .landing :global(.nav-entrar) {
+    min-height: 30px;
+    padding: .32rem .55rem;
+    font-size: .7rem;
+    font-weight: 600;
+    box-shadow: inset 0 0 0 1px rgba(27, 58, 95, .17);
+  }
   .landing :global(.eyebrow) { font-size: .7rem; padding: .36rem .8rem; }
   .landing :global(.mock-stage) {
     position: relative;

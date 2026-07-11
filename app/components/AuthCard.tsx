@@ -5,6 +5,11 @@ import { PAISES } from '../lib/paises';
 import DraggableModalCard from './DraggableModalCard';
 import LandingPage from './LandingPage';
 
+interface BeforeInstallPromptEvent extends Event {
+  prompt: () => Promise<void>;
+  userChoice: Promise<{ outcome: 'accepted' | 'dismissed'; platform: string }>;
+}
+
 interface AuthCardProps {
   // Modal Aviso
   modalAvisoAberto: boolean;
@@ -115,6 +120,52 @@ export default function AuthCard({
   handleRecuperarSenha, handleAtualizarSenha,
   reenviarCodigoSmsCadastro, reenviarCodigoRedefinirSenha,
 }: AuthCardProps) {
+  const [promptInstalacao, setPromptInstalacao] = React.useState<BeforeInstallPromptEvent | null>(null);
+  const [instaladoComoApp, setInstaladoComoApp] = React.useState(false);
+  const [mostrarInstrucaoInstalacao, setMostrarInstrucaoInstalacao] = React.useState(false);
+
+  React.useEffect(() => {
+    const navegadorStandalone = navigator as Navigator & { standalone?: boolean };
+    const atualizarEstadoInstalacao = () => {
+      setInstaladoComoApp(
+        window.matchMedia('(display-mode: standalone)').matches ||
+        Boolean(navegadorStandalone.standalone),
+      );
+    };
+    const capturarPrompt = (evento: Event) => {
+      evento.preventDefault();
+      setPromptInstalacao(evento as BeforeInstallPromptEvent);
+      setMostrarInstrucaoInstalacao(false);
+    };
+    const concluirInstalacao = () => {
+      setInstaladoComoApp(true);
+      setPromptInstalacao(null);
+      setMostrarInstrucaoInstalacao(false);
+    };
+
+    atualizarEstadoInstalacao();
+    window.addEventListener('beforeinstallprompt', capturarPrompt);
+    window.addEventListener('appinstalled', concluirInstalacao);
+    navigator.serviceWorker?.register('/sw.js?v=1', { scope: '/' }).catch(() => undefined);
+
+    return () => {
+      window.removeEventListener('beforeinstallprompt', capturarPrompt);
+      window.removeEventListener('appinstalled', concluirInstalacao);
+    };
+  }, []);
+
+  const instalarAplicativo = async () => {
+    if (!promptInstalacao) {
+      setMostrarInstrucaoInstalacao(true);
+      return;
+    }
+
+    await promptInstalacao.prompt();
+    const escolha = await promptInstalacao.userChoice;
+    setPromptInstalacao(null);
+    if (escolha.outcome === 'accepted') setInstaladoComoApp(true);
+  };
+
   const mostrarLandingPreLoginAtiva =
     mostrarLandingPreLogin &&
     !modoRedefinirSenha &&
@@ -124,32 +175,14 @@ export default function AuthCard({
 
   const tipoPerfilInicialNormalizado = normalizarTipoPerfil(tipoPerfilInicial);
 
-  // Landing oficial em página cheia substitui a tela pré-login antiga.
-  // Com aviso aberto, mantém o fluxo clássico para exibir o modal.
-  // No celular, login e cadastro acontecem no app mobile (/mobile).
-  const ehDispositivoMobile = () =>
-    typeof window !== 'undefined' &&
-    window.innerWidth < 1024 &&
-    ('ontouchstart' in window ||
-      navigator.maxTouchPoints > 0 ||
-      /Android|iPhone|iPad|iPod|Opera Mini|IEMobile|Mobile/i.test(navigator.userAgent));
-
   if (mostrarLandingPreLoginAtiva && !modalAvisoAberto) {
     return (
       <LandingPage
         onCriarConta={() => {
-          if (ehDispositivoMobile()) {
-            window.location.href = '/mobile?cadastro=1';
-            return;
-          }
           setMostrarLandingPreLogin(false);
           setModoAuth('cadastro');
         }}
         onEntrar={() => {
-          if (ehDispositivoMobile()) {
-            window.location.href = '/mobile?entrar=1';
-            return;
-          }
           setMostrarLandingPreLogin(false);
           setModoAuth('login');
         }}
@@ -158,7 +191,7 @@ export default function AuthCard({
   }
 
   return (
-    <main className="relative min-h-screen overflow-hidden font-sans">
+    <main className="relative min-h-screen overflow-x-hidden font-sans">
       {modalAvisoAberto && (
   <div
     className="fixed inset-0 z-[8000] flex items-center justify-center bg-black/60 px-4"
@@ -224,9 +257,9 @@ export default function AuthCard({
 
       <div className="pointer-events-none absolute inset-0 hidden bg-white/10 lg:block" />
 
-      <section className="relative z-10 flex min-h-screen items-start px-4 pb-6 pt-8 lg:items-center lg:px-20 lg:py-10">
+      <section className="relative z-10 flex min-h-screen items-start px-4 pb-8 pt-24 sm:pt-28 lg:items-center lg:px-20 lg:py-10">
         <div className="w-full lg:max-w-7xl">
-          <div className={`relative z-20 w-full rounded-3xl border border-white/20 bg-white/10 p-5 shadow-2xl lg:border-white/30 lg:bg-white/70 lg:p-8 lg:backdrop-blur-xl ${
+          <div className={`relative z-20 w-full rounded-3xl border border-white/20 bg-white/10 p-4 shadow-2xl lg:border-white/30 lg:bg-white/70 lg:p-8 lg:backdrop-blur-xl ${
             mostrarLandingPreLoginAtiva ? 'lg:max-w-2xl' : 'lg:max-w-md'
           }`}>
             {mostrarLandingPreLoginAtiva ? (
@@ -284,12 +317,8 @@ export default function AuthCard({
               </div>
             ) : (
             <>
-            <div className="mb-5 lg:mb-7">
-              <p className="mb-2 text-xs font-bold uppercase tracking-[0.35em] text-sky-700">
-                AvantaLab Gestão
-              </p>
-
-              <h1 className="text-3xl font-black text-slate-900">
+            <div className="mb-3 lg:mb-5">
+              <h1 className="text-2xl font-black leading-tight text-slate-900">
   {modoRedefinirSenha
     ? 'Criar nova senha'
     : modoAuth === 'login'
@@ -297,7 +326,7 @@ export default function AuthCard({
       : 'Criar cadastro'}
 </h1>
 
-              <p className="mt-2 text-sm leading-relaxed text-slate-600">
+              <p className="mt-1.5 text-xs leading-relaxed text-slate-600">
   {modoRedefinirSenha
     ? 'Digite e confirme sua nova senha para recuperar o acesso ao sistema.'
     : modoAuth === 'login'
@@ -444,7 +473,7 @@ export default function AuthCard({
     </button>
   </div>
 ) : modoAuth === 'login' ? (
-  <div className="space-y-4">
+  <div className="space-y-3">
 
         {/* ================= INÍCIO DO FORMULÁRIO DE LOGIN ================= */}
 
@@ -453,10 +482,10 @@ export default function AuthCard({
     e.preventDefault();
     void handleLogin();
   }}
-  className="space-y-4"
+  className="space-y-3"
 >
   <div>
-    <label className="mb-1 block text-sm font-semibold text-slate-700">
+    <label className="mb-1 block text-xs font-semibold text-slate-700">
       Email ou login
     </label>
 
@@ -465,12 +494,12 @@ export default function AuthCard({
       placeholder="seuemail@exemplo.com ou seu login"
       value={loginEmail}
       onChange={(e) => setLoginEmail(e.target.value)}
-      className="w-full rounded-xl border border-slate-300 bg-white/90 px-4 py-3 text-slate-800 outline-none transition focus:border-sky-600 focus:ring-2 focus:ring-sky-600/20"
+      className="w-full rounded-xl border border-slate-300 bg-white/90 px-3.5 py-2.5 text-sm text-slate-800 outline-none transition focus:border-sky-600 focus:ring-2 focus:ring-sky-600/20"
     />
   </div>
 
   <div>
-    <label className="mb-1 block text-sm font-semibold text-slate-700">
+    <label className="mb-1 block text-xs font-semibold text-slate-700">
       Senha
     </label>
 
@@ -480,7 +509,7 @@ export default function AuthCard({
     placeholder="Digite sua senha"
     value={loginSenha}
     onChange={(e) => setLoginSenha(e.target.value)}
-    className="w-full rounded-xl border border-slate-300 bg-white/90 px-4 py-3 pr-10 text-slate-800 outline-none transition focus:border-sky-600 focus:ring-2 focus:ring-sky-600/20 [&::-ms-reveal]:hidden [&::-ms-clear]:hidden"
+    className="w-full rounded-xl border border-slate-300 bg-white/90 px-3.5 py-2.5 pr-10 text-sm text-slate-800 outline-none transition focus:border-sky-600 focus:ring-2 focus:ring-sky-600/20 [&::-ms-reveal]:hidden [&::-ms-clear]:hidden"
   />
 
   <button
@@ -565,41 +594,36 @@ export default function AuthCard({
     </div>
   )}
 
-  <button
-    type="submit"
-    disabled={authLoading}
-    className="w-full rounded-xl bg-slate-900 px-4 py-3 font-bold text-white shadow-lg transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
-  >
-    {authLoading ? 'Entrando...' : 'Entrar'}
-  </button>
+  <div className="grid grid-cols-2 gap-2">
+    <button
+      type="submit"
+      disabled={authLoading}
+      className="h-10 rounded-xl bg-slate-900 px-3 text-sm font-bold text-white shadow-lg transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
+    >
+      {authLoading ? 'Entrando...' : 'Entrar'}
+    </button>
+
+    <button
+      type="button"
+      onClick={handleGoogleLogin}
+      disabled={googleLoading}
+      className="flex h-10 items-center justify-center gap-1.5 whitespace-nowrap rounded-xl border border-slate-300 bg-white/90 px-2 text-[11px] font-semibold text-slate-700 shadow-sm transition hover:bg-white disabled:cursor-not-allowed disabled:opacity-70"
+    >
+      {googleLoading ? (
+        <span className="h-4 w-4 animate-spin rounded-full border-2 border-slate-300 border-t-sky-700" />
+      ) : (
+        <img src="/images/google-logo.svg" alt="" className="h-4 w-4" />
+      )}
+      <span>{googleLoading ? 'Conectando...' : 'Conectar com Google'}</span>
+    </button>
+  </div>
 </form>
 
-<button
-  type="button"
-  onClick={handleGoogleLogin}
-  disabled={googleLoading}
-  className="flex w-full items-center justify-center gap-3 rounded-xl border border-slate-300 bg-white/90 px-4 py-3 font-semibold text-slate-700 shadow-sm transition hover:bg-white disabled:cursor-not-allowed disabled:opacity-70"
->
-  {googleLoading ? (
-    <span className="h-5 w-5 animate-spin rounded-full border-2 border-slate-300 border-t-sky-700" />
-  ) : (
-    <img
-      src="/images/google-logo.svg"
-      alt="Google"
-      className="h-5 w-5"
-    />
-  )}
-
-  <span>
-    {googleLoading ? 'Conectando ao Google...' : 'Entrar ou cadastrar com Google'}
-  </span>
-</button>
-
-<p className="-mt-2 text-center text-[11px] leading-snug text-slate-500">
+<p className="text-center text-[10px] leading-snug text-slate-500">
   Se este for seu primeiro acesso com este email, uma nova conta será criada automaticamente.
 </p>
 
-<div className="pt-2 text-center text-sm text-slate-600">
+<div className="text-center text-xs text-slate-600">
   Ainda não tem conta?{' '}
   <button
     type="button"
@@ -609,6 +633,26 @@ export default function AuthCard({
     Criar cadastro
   </button>
 </div>
+
+{!instaladoComoApp && (
+  <div>
+    <button
+      type="button"
+      onClick={() => void instalarAplicativo()}
+      className="flex h-9 w-full items-center justify-center gap-2 rounded-xl border border-sky-200 bg-sky-50/90 px-3 text-xs font-bold text-sky-800 shadow-sm transition hover:bg-sky-100"
+    >
+      <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 3v12m0 0 4-4m-4 4-4-4M5 19h14" />
+      </svg>
+      Instalar AvantaLab
+    </button>
+    {mostrarInstrucaoInstalacao && (
+      <p className="mt-2 rounded-lg bg-white/70 px-3 py-2 text-center text-xs font-medium leading-relaxed text-slate-600">
+        No iPhone, use Compartilhar e Adicionar à Tela de Início. No Android, abra o menu do navegador e escolha Instalar app.
+      </p>
+    )}
+  </div>
+)}
 
 {/* ================= FIM DO FORMULÁRIO DE CADASTRO ================= */}
 

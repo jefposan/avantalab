@@ -194,27 +194,29 @@ function textoRegistro(valor: unknown): string {
   return valor === null || valor === undefined ? '' : String(valor);
 }
 
+function FundoCarregamentoResponsivo() {
+  return (
+    <picture className="absolute inset-0 block h-full w-full" aria-hidden="true">
+      <source media="(max-width: 1023px)" srcSet="/images/bg-avantalab-mobile.webp" type="image/webp" />
+      <source media="(max-width: 1023px)" srcSet="/images/bg-avantalab-mobile.png" type="image/png" />
+      <source srcSet="/images/bg-avantalab.webp" type="image/webp" />
+      <img
+        src="/images/bg-avantalab.png"
+        alt=""
+        className="h-full w-full object-cover object-bottom lg:object-center"
+      />
+    </picture>
+  );
+}
+
 function TelaCarregandoSistema({
-  isTelaMobile,
   mensagem,
 }: {
-  isTelaMobile: boolean;
   mensagem: string;
 }) {
   return (
     <main className="relative min-h-screen overflow-hidden font-sans">
-      <div
-        className={`absolute inset-0 ${
-          isTelaMobile ? 'bg-no-repeat' : 'bg-cover bg-center'
-        }`}
-        style={{
-          backgroundImage: isTelaMobile
-            ? "image-set(url('/images/bg-avantalab-mobile.webp') type('image/webp'), url('/images/bg-avantalab-mobile.png') type('image/png'))"
-            : "image-set(url('/images/bg-avantalab.webp') type('image/webp'), url('/images/bg-avantalab.png') type('image/png'))",
-          backgroundSize: isTelaMobile ? 'cover' : undefined,
-          backgroundPosition: isTelaMobile ? 'center bottom' : 'center',
-        }}
-      />
+      <FundoCarregamentoResponsivo />
 
       <div className="absolute inset-0 bg-transparent" />
 
@@ -439,8 +441,6 @@ export default function AppGestao() {
   
 const [mounted, setMounted] = useState(false);
 const [isTelaMobile, setIsTelaMobile] = useState(false);
-// True apenas enquanto um redirect para /mobile está em andamento.
-const [redirecionandoMobile, setRedirecionandoMobile] = useState(false);
 const [darkMode, setDarkMode] = useState(false);
 const [ajudaCategoriasAberta, setAjudaCategoriasAberta] = useState(false);
 const [validacaoTelefoneObrigatoria, setValidacaoTelefoneObrigatoria] = useState(false);
@@ -970,7 +970,7 @@ const extrairCorPredominanteLogo = (imagemBase64: string): Promise<string | null
 };
 
 useEffect(() => {
-  const verificarDispositivoMobile = async () => {
+  const verificarDispositivoMobile = () => {
     const larguraPequena = window.innerWidth < 1024;
 
     const dispositivoComToque =
@@ -986,27 +986,15 @@ useEffect(() => {
 
     setIsTelaMobile(ehMobile);
 
-    if (ehMobile && window.location.pathname !== '/mobile') {
-      // Deep link de cadastro no celular segue direto para o app mobile.
-      const parametros = new URLSearchParams(window.location.search);
-      if (parametros.get('cadastro') === '1') {
-        setRedirecionandoMobile(true);
-        window.location.replace('/mobile?cadastro=1');
-        return;
-      }
-
-      // Com sessão ativa, vai direto ao app mobile (comportamento atual).
-      // Sem sessão, permanece em / para exibir a landing responsiva;
-      // os botões Entrar/Teste grátis da landing levam ao /mobile.
-      try {
-        const { data } = await supabase.auth.getSession();
-        if (data?.session) {
-          setRedirecionandoMobile(true);
-          window.location.replace('/mobile');
-        }
-      } catch {
-        // Em caso de falha na checagem, mantém a landing (sem redirect).
-      }
+    const parametros = new URLSearchParams(window.location.search);
+    if (parametros.get('cadastro') === '1') {
+      setModoAuth('cadastro');
+      setMostrarLandingPreLogin(false);
+      window.history.replaceState(null, '', window.location.pathname);
+    } else if (parametros.get('entrar') === '1') {
+      setModoAuth('login');
+      setMostrarLandingPreLogin(false);
+      window.history.replaceState(null, '', window.location.pathname);
     }
   };
 
@@ -5798,7 +5786,6 @@ const categoriasMobile = analiseDespesas.dados.slice(0, 4);
 if (!mounted || carregandoSistema || authLoading || googleLoading) {
   return (
     <TelaCarregandoSistema
-      isTelaMobile={isTelaMobile}
       mensagem={
         authLoading || googleLoading
           ? 'Entrando e preparando seus dados...'
@@ -6351,36 +6338,13 @@ if (validacaoTelefoneObrigatoria) {
   );
 }
 
-if (redirecionandoMobile) {
-  return (
-    <main className="flex min-h-screen items-center justify-center bg-slate-950 px-6 text-white">
-      <section className="w-full max-w-sm text-center">
-        <p className="text-xs font-bold uppercase tracking-[0.28em] text-cyan-300">
-          AvantaLab Gestao
-        </p>
-
-        <h1 className="mt-3 text-2xl font-black">
-          Abrindo versao mobile...
-        </h1>
-
-        <p className="mt-3 text-sm leading-relaxed text-slate-300">
-          Voce sera direcionado automaticamente.
-        </p>
-      </section>
-    </main>
-  );
-}
-
   // Carregando um perfil recém-selecionado: mostra a tela de carregamento em vez
   // de cair na tela de login enquanto o acesso ainda não foi liberado (evita o
   // "flash" de login entre selecionar o perfil e a página carregar).
   if (carregandoPerfil && !modalSelecionarEmpresa) {
     return (
       <main className="avanta-loading-stage relative overflow-hidden font-sans">
-        <div
-          className="absolute inset-0 bg-cover bg-center"
-          style={{ backgroundImage: "image-set(url('/images/bg-avantalab.webp') type('image/webp'), url('/images/bg-avantalab.png') type('image/png'))" }}
-        />
+        <FundoCarregamentoResponsivo />
         <div className="absolute inset-0 bg-transparent" />
         <div className="avanta-loading-glass avanta-loading-card relative z-10 rounded-3xl border shadow-2xl">
           <div className="avanta-loading-glass-icon mx-auto flex h-11 w-11 items-center justify-center rounded-xl">
@@ -6473,10 +6437,7 @@ if (redirecionandoMobile) {
   if (COBRANCA_ATIVA && acessoLiberado && empresaId && !estadoCarregado) {
     return (
       <main className="avanta-loading-stage relative overflow-hidden font-sans">
-        <div
-          className="absolute inset-0 bg-cover bg-center"
-          style={{ backgroundImage: "image-set(url('/images/bg-avantalab.webp') type('image/webp'), url('/images/bg-avantalab.png') type('image/png'))" }}
-        />
+        <FundoCarregamentoResponsivo />
         <div className="absolute inset-0 bg-transparent" />
         <div className="avanta-loading-glass avanta-loading-card relative z-10 rounded-3xl border shadow-2xl">
           <div className="avanta-loading-glass-icon mx-auto flex h-11 w-11 items-center justify-center rounded-xl">

@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.4.0.36 - 2026-07-11
+
+- Mobile/Web: desativa a página legada `/mobile` e mantém landing, login e sistema na rota principal responsiva.
+- Login: adiciona a opção de instalar o AvantaLab como aplicativo, com suporte ao prompt do navegador e instruções para instalação manual.
+- PWA: substitui o service worker legado por uma versão sem cache de páginas antigas e mantém o suporte a notificações.
+- Landing mobile: mantém a seta ativa após Dúvidas e reserva o último clique para alcançar o final real da página.
+- Login mobile: reduz a altura do card, mantém seu topo abaixo do logo e posiciona Entrar e Conectar com Google lado a lado.
+- Carregamento mobile: utiliza o background vertical mobile por imagem responsiva WebP/PNG desde o primeiro frame, inclusive em navegadores sem suporte completo a `image-set()`.
+- Landing mobile: reduz altura, espaçamento e peso visual dos botões Entrar e Teste grátis no topo.
+
 ## 1.4.0.35 - 2026-07-10
 
 - Web: reorganiza a hero da landing no mobile em tela cheia, exibe o menu compacto e adiciona seta para a área de demonstração do produto.

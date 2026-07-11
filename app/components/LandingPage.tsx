@@ -28,13 +28,14 @@ type EtapaScroll = {
   final?: boolean;
 };
 
+const obterElementoRolagem = () => document.scrollingElement ?? document.documentElement;
+
 const obterFimDaPagina = () => {
-  const doc = document.documentElement;
-  const body = document.body;
-  return Math.max(0, Math.max(doc.scrollHeight, body.scrollHeight) - window.innerHeight);
+  const elemento = obterElementoRolagem();
+  return Math.max(0, elemento.scrollHeight - elemento.clientHeight);
 };
 
-const obterScrollAtual = () => window.scrollY || document.documentElement.scrollTop || document.body.scrollTop || 0;
+const obterScrollAtual = () => obterElementoRolagem().scrollTop;
 
 export default function LandingPage({ onCriarConta, onEntrar }: LandingPageProps) {
   const [scrolled, setScrolled] = useState(false);
@@ -99,8 +100,9 @@ export default function LandingPage({ onCriarConta, onEntrar }: LandingPageProps
     const ehMobile = window.matchMedia('(max-width: 760px)').matches;
     const rolarAteOFim = () => {
       const aplicarFimReal = (behavior: ScrollBehavior) => {
+        const elemento = obterElementoRolagem();
         window.scrollTo({
-          top: obterFimDaPagina(),
+          top: elemento.scrollHeight,
           left: 0,
           behavior,
         });
