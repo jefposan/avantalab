@@ -2,6 +2,7 @@
 // Landing oficial do AvantaLab, exibida na porta do sistema antes do login.
 // Origem: landing-preview/index.html (aprovada), componentizada para o fluxo de auth.
 import { useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import styles from './LandingPage.module.css';
 
 type LandingPageProps = {
@@ -40,6 +41,7 @@ const obterScrollAtual = () => obterElementoRolagem().scrollTop;
 export default function LandingPage({ onCriarConta, onEntrar }: LandingPageProps) {
   const [scrolled, setScrolled] = useState(false);
   const [mostrarSetaHero, setMostrarSetaHero] = useState(true);
+  const [portalScrollPronto, setPortalScrollPronto] = useState(false);
   const [periodo, setPeriodo] = useState<'anual' | 'mensal'>('anual');
   const rootRef = useRef<HTMLDivElement>(null);
 
@@ -61,6 +63,10 @@ export default function LandingPage({ onCriarConta, onEntrar }: LandingPageProps
       ? { el: document.documentElement, top: fimDaPagina, final: true }
       : null;
   };
+
+  useEffect(() => {
+    setPortalScrollPronto(true);
+  }, []);
 
   useEffect(() => {
     const onScroll = () => {
@@ -132,6 +138,7 @@ export default function LandingPage({ onCriarConta, onEntrar }: LandingPageProps
   const precos = PRECOS[periodo];
 
   return (
+    <>
     <div className={styles.landing} ref={rootRef}>
       {/* ======================= NAV ======================= */}
       <header className={`nav ${scrolled ? 'scrolled' : ''}`}>
@@ -176,16 +183,6 @@ export default function LandingPage({ onCriarConta, onEntrar }: LandingPageProps
               <span><Check size={15} />Sem cartão de crédito</span>
               <span><Check size={15} />Cancele quando quiser</span>
             </div>
-            <button
-              type="button"
-              className={`hero-scroll ${mostrarSetaHero ? 'is-visible' : ''}`}
-              onClick={irParaProdutoMobile}
-              aria-label="Ver demonstração do produto"
-            >
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.25" d="M12 5v14m0 0l-6-6m6 6l6-6" />
-              </svg>
-            </button>
           </div>
 
           {/* mockup do produto */}
@@ -492,5 +489,19 @@ export default function LandingPage({ onCriarConta, onEntrar }: LandingPageProps
         </div>
       </footer>
     </div>
+    {portalScrollPronto && createPortal(
+      <button
+        type="button"
+        className={`${styles.heroScrollPortal} ${mostrarSetaHero ? styles.heroScrollPortalVisible : ''}`}
+        onClick={irParaProdutoMobile}
+        aria-label="Avançar para o próximo conteúdo"
+      >
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.25" d="M12 5v14m0 0l-6-6m6 6l6-6" />
+        </svg>
+      </button>,
+      document.body,
+    )}
+    </>
   );
 }

@@ -551,6 +551,8 @@
   db.auth.onAuthStateChange(function (evento, sessao) {
     if (sessao && (evento === 'SIGNED_IN' || evento === 'TOKEN_REFRESHED')) {
       renovarSessaoPersistenteMobile();
+    } else if (evento === 'SIGNED_OUT' && state.pronto) {
+      window.location.replace('/?entrar=1');
     }
   });
 
@@ -4544,19 +4546,7 @@
   async function sair() {
     await db.auth.signOut({ scope: 'local' });
     limparPreferenciaSessaoMobile();
-    state.autenticado = false;
-    state.usuario = null;
-    state.empresas = [];
-    state.empresa = null;
-    state.lancamentos = [];
-    state.caixinhaMovimentos = [];
-    state.entradas = [];
-    state.faturamentos = {};
-    state.telaAcesso = 'boasVindas';
-    state.loginAcao = '';
-    state.modoCadastro = false;
-    state.modoSenha = false;
-    render();
+    window.location.replace('/?entrar=1');
   }
 
   function montarContextoIA() {
@@ -11517,10 +11507,6 @@
     render();
 
     try {
-      if (deveEncerrarSessaoSalvaMobile()) {
-        await db.auth.signOut({ scope: 'local' });
-      }
-
       var sessao = await db.auth.getSession();
       if (sessao.data.session && sessao.data.session.user) {
         renovarSessaoPersistenteMobile();
@@ -11535,6 +11521,9 @@
         state.autenticado = true;
         await carregarEmpresas(state.usuario.id);
         await carregarDados();
+      } else {
+        window.location.replace('/?entrar=1');
+        return;
       }
       state.pronto = true;
       render();

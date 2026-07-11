@@ -1,8 +1,15 @@
 # Changelog
 
+## 1.4.0.38 - 2026-07-11
+
+- PWA: passa a iniciar no dashboard mobile em `/mobile`, mantendo landing e autenticação na rota principal.
+- Mobile: quando não há sessão, `/mobile` retorna ao novo login em vez de exibir a tela de acesso legada.
+- Mobile: após autenticar pela rota principal, celulares e o PWA seguem automaticamente para o dashboard mobile.
+
 ## 1.4.0.37 - 2026-07-11
 
 - Landing mobile: deixa o header transparente no topo e ativa o fundo translúcido somente após iniciar a rolagem.
+- Landing mobile: move a seta flutuante para uma camada global, impedindo que a hero a recorte antes do fim da página.
 
 ## 1.4.0.36 - 2026-07-11
 

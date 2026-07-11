@@ -1,8 +1,9 @@
 {
   "name": "AvantaLab Gestão",
   "short_name": "AvantaLab",
+  "id": "/",
   "description": "Gestão financeira AvantaLab",
-  "start_url": "/",
+  "start_url": "/mobile",
   "scope": "/",
   "display": "standalone",
   "background_color": "#f1f5f9",

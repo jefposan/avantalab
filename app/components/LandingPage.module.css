@@ -56,7 +56,7 @@
 }
 .landing :global(.btn-ghost:hover) { box-shadow: inset 0 0 0 1.5px rgba(27, 58, 95, .5); }
 .landing :global(.mobile-label) { display: none; }
-.landing :global(.hero-scroll) { display: none; }
+.heroScrollPortal { display: none; }
 
 /* ---------- nav ---------- */
 .landing :global(header.nav) {
@@ -503,7 +503,7 @@
     margin-top: 0;
     font-size: .8rem;
   }
-  .landing :global(.hero-scroll) {
+  .heroScrollPortal {
     position: fixed;
     left: 50%;
     bottom: calc(1.15rem + env(safe-area-inset-bottom));
@@ -525,16 +525,16 @@
     transition: opacity .18s ease, background .18s ease, transform .18s ease;
     z-index: 58;
   }
-  .landing :global(.hero-scroll.is-visible) {
+  .heroScrollPortalVisible {
     opacity: .74;
     pointer-events: auto;
     animation: lpHeroScrollBounce 1.55s ease-in-out infinite;
   }
-  .landing :global(.hero-scroll.is-visible:hover) {
+  .heroScrollPortalVisible:hover {
     opacity: .9;
     background: rgba(255, 255, 255, .48);
   }
-  .landing :global(.hero-scroll svg) {
+  .heroScrollPortal svg {
     width: 18px;
     height: 18px;
   }
@@ -676,7 +676,7 @@
 .landing :global(.reveal.in) { opacity: 1; transform: none; }
 @media (prefers-reduced-motion: reduce) {
   .landing :global(.reveal) { opacity: 1; transform: none; transition: none; }
-  .landing :global(.float-notif), .landing :global(.float-ava), .landing :global(.msg-tag i), .landing :global(.hero-scroll.is-visible) { animation: none; }
+  .landing :global(.float-notif), .landing :global(.float-ava), .landing :global(.msg-tag i), .heroScrollPortalVisible { animation: none; }
 }
 
 @keyframes lpHeroScrollBounce {
