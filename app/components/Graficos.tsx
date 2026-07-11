@@ -79,8 +79,9 @@ export default function Graficos({ meses, lancamentos, faturamentos, despesasCad
   const cardStyle = { borderTopColor: corPrimaria } as const;
   const ehEmpresa = tipoPerfil !== 'pessoal';
 
+  const TOM_BARRA_POSITIVA = '#003E73';
   const cores = [corPrimaria, '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#14b8a6', '#f97316', '#06b6d4'];
-  const VERDE = '#34d399', VERMELHO = '#f87171', AZUL = '#7dd3fc';
+  const VERDE = TOM_BARRA_POSITIVA, VERMELHO = '#f87171', AZUL = '#7dd3fc';
 
   const [tip, setTip] = useState<Tip>(null);
   const mostrarTip = (e: { clientX: number; clientY: number }, titulo: string, linhas: LinhaTip[]) => setTip({ x: e.clientX, y: e.clientY, titulo, linhas });
@@ -405,7 +406,7 @@ export default function Graficos({ meses, lancamentos, faturamentos, despesasCad
                 { label: 'Saldo', valor: formatarMoeda(item.fat - item.desp), forte: true, sep: true },
               ])}>
               <div className="flex items-end justify-center w-full gap-1 h-full z-0">
-                <div className="w-1/3 bg-[#003E73] rounded-t-sm shadow-sm transition-all duration-500 hover:brightness-110" style={{ height: `${alturaFat}%`, minHeight: item.fat > 0 ? '4px' : '0' }}></div>
+                <div className="w-1/3 rounded-t-sm shadow-sm transition-all duration-500 hover:brightness-110" style={{ height: `${alturaFat}%`, minHeight: item.fat > 0 ? '4px' : '0', backgroundColor: TOM_BARRA_POSITIVA }}></div>
                 <div className="w-1/3 bg-[#94a3b8] rounded-t-sm shadow-sm transition-all duration-500 hover:brightness-110" style={{ height: `${alturaDesp}%`, minHeight: item.desp > 0 ? '4px' : '0' }}></div>
               </div>
               <span className={`text-[10px] font-bold mt-3 uppercase tracking-wider ${textMuted} truncate w-full text-center`}>{abrev(item.mes)}</span>
@@ -419,7 +420,7 @@ export default function Graficos({ meses, lancamentos, faturamentos, despesasCad
   cardsById.resultado = (
     <CardShell id="resultado" titulo="Resultado Mensal" extra={
       <div className="hidden shrink-0 gap-3 text-[11px] font-bold sm:flex">
-        <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>Lucro</span>
+        <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: TOM_BARRA_POSITIVA }}></span>Lucro</span>
         <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-red-500"></span>Prejuízo</span>
       </div>}>
       <div className="relative flex h-[240px] items-stretch gap-1 sm:gap-2" onMouseLeave={esconderTip}>
@@ -434,7 +435,7 @@ export default function Graficos({ meses, lancamentos, faturamentos, despesasCad
                 { label: 'Despesas', valor: formatarMoeda(m.desp), cor: VERMELHO },
                 { label: 'Resultado', valor: formatarMoeda(m.resultado), cor: pos ? VERDE : VERMELHO, forte: true, sep: true },
               ])}>
-              <div className="flex-1 flex items-end justify-center">{pos && <div className="w-2/3 rounded-t-sm bg-emerald-500 transition-all duration-500 hover:brightness-110" style={{ height: `${hPct}%`, minHeight: m.resultado > 0 ? '3px' : '0' }}></div>}</div>
+              <div className="flex-1 flex items-end justify-center">{pos && <div className="w-2/3 rounded-t-sm transition-all duration-500 hover:brightness-110" style={{ height: `${hPct}%`, minHeight: m.resultado > 0 ? '3px' : '0', backgroundColor: TOM_BARRA_POSITIVA }}></div>}</div>
               <div className="flex-1 flex items-start justify-center">{!pos && m.resultado !== 0 && <div className="w-2/3 rounded-b-sm bg-red-500 transition-all duration-500 hover:brightness-110" style={{ height: `${hPct}%`, minHeight: '3px' }}></div>}</div>
             </div>
           );
@@ -484,7 +485,7 @@ export default function Graficos({ meses, lancamentos, faturamentos, despesasCad
             const pos = m.ebitda >= 0;
             return (
               <div key={m.mes} className="flex-1 flex flex-col relative min-w-0" onMouseMove={(e) => mostrarTip(e, abrev(m.mes), [{ label: 'EBITDA', valor: formatarMoeda(m.ebitda), cor: pos ? VERDE : VERMELHO, forte: true }])}>
-                <div className="flex-1 flex items-end justify-center">{pos && <div className="w-2/3 rounded-t-sm transition-all duration-500 hover:brightness-110" style={{ height: `${hPct}%`, minHeight: m.ebitda > 0 ? '3px' : '0', backgroundColor: corPrimaria }}></div>}</div>
+                <div className="flex-1 flex items-end justify-center">{pos && <div className="w-2/3 rounded-t-sm transition-all duration-500 hover:brightness-110" style={{ height: `${hPct}%`, minHeight: m.ebitda > 0 ? '3px' : '0', backgroundColor: TOM_BARRA_POSITIVA }}></div>}</div>
                 <div className="flex-1 flex items-start justify-center">{!pos && m.ebitda !== 0 && <div className="w-2/3 rounded-b-sm bg-red-500 transition-all duration-500 hover:brightness-110" style={{ height: `${hPct}%`, minHeight: '3px' }}></div>}</div>
               </div>
             );
@@ -502,7 +503,7 @@ export default function Graficos({ meses, lancamentos, faturamentos, despesasCad
         {gradeFundo}
         {margem.map((m) => {
           const alt = Math.min(m.pct, 100);
-          const cor = m.pct >= 100 ? 'bg-red-500' : m.pct >= 70 ? 'bg-amber-500' : 'bg-emerald-500';
+          const cor = m.pct >= 100 ? '#ef4444' : m.pct >= 70 ? '#f59e0b' : TOM_BARRA_POSITIVA;
           const temDados = m.fat > 0 || m.desp > 0;
           return (
             <div key={m.mes} className="flex-1 flex flex-col items-center justify-end h-full relative min-w-0"
@@ -511,7 +512,7 @@ export default function Graficos({ meses, lancamentos, faturamentos, despesasCad
                 { label: 'Despesas', valor: formatarMoeda(m.desp), cor: VERMELHO },
                 { label: 'Consumo', valor: temDados ? `${m.pct.toFixed(0)}%` : 's/ dados', forte: true, sep: true },
               ])}>
-              <div className={`w-2/3 rounded-t-sm ${cor} transition-all duration-500 hover:brightness-110`} style={{ height: `${alt}%`, minHeight: temDados && m.pct > 0 ? '3px' : '0' }}></div>
+              <div className="w-2/3 rounded-t-sm transition-all duration-500 hover:brightness-110" style={{ height: `${alt}%`, minHeight: temDados && m.pct > 0 ? '3px' : '0', backgroundColor: cor }}></div>
             </div>
           );
         })}

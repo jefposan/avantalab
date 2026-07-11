@@ -13,6 +13,30 @@
   },
   "versoes": [
     {
+      "versao": "1.4.0.30",
+      "titulo": "Matriz anual mais compacta",
+      "data": "Julho/2026",
+      "itens": [
+        "Relatórios: reduz a altura das linhas da Matriz Anual de Despesas para melhorar a densidade visual."
+      ]
+    },
+    {
+      "versao": "1.4.0.29",
+      "titulo": "Tom fixo nas barras positivas",
+      "data": "Julho/2026",
+      "itens": [
+        "Gráficos: barras positivas e barras verdes passam a usar o tom fixo do EBITDA, sem depender da cor primária do perfil."
+      ]
+    },
+    {
+      "versao": "1.4.0.28",
+      "titulo": "Cor do Resultado Mensal",
+      "data": "Julho/2026",
+      "itens": [
+        "Gráficos: barra positiva de Resultado Mensal passa a usar a mesma cor primária aplicada no gráfico de EBITDA."
+      ]
+    },
+    {
       "versao": "1.4.0.27",
       "titulo": "Calendário de dias não úteis no ponto",
       "data": "Julho/2026",

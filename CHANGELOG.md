@@ -1,5 +1,17 @@
 # Changelog
 
+## 1.4.0.30 - 2026-07-10
+
+- Relatórios: reduz a altura das linhas da Matriz Anual de Despesas para melhorar a densidade visual.
+
+## 1.4.0.29 - 2026-07-10
+
+- Gráficos: barras positivas e barras verdes passam a usar o tom fixo do EBITDA, sem depender da cor primária do perfil.
+
+## 1.4.0.28 - 2026-07-10
+
+- Gráficos: barra positiva de "Resultado Mensal" passa a usar a mesma cor primária aplicada no gráfico de EBITDA.
+
 ## 1.4.0.27 - 2026-07-10
 
 - Ponto: adiciona calendário de dias não úteis da empresa para feriados, recesso, folga coletiva e dias fechados, evitando que essas datas contem como falta no web, mobile e relatórios.

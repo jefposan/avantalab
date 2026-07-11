@@ -255,13 +255,13 @@ const getValorMensal = (despesa: string, mes: string) => {
           <table className="w-full text-left border-collapse min-w-[1120px]">
             <thead>
               <tr className={`${bgHead} ${textMuted} uppercase text-xs tracking-wider border-b-2 ${borderSoft}`}>
-                <th className="p-3 w-52 font-bold border-r border-slate-200/30 dark:border-slate-700/30">Tipo de Despesa</th>
+                <th className="px-3 py-2 w-52 font-bold border-r border-slate-200/30 dark:border-slate-700/30">Tipo de Despesa</th>
                 {meses.map(mes => (
-                  <th key={mes} className="p-2 text-center font-bold">
+                  <th key={mes} className="px-2 py-2 text-center font-bold">
                     {mes.substring(0, 3)}
                   </th>
                 ))}
-                <th className="p-3 text-right font-black border-l border-slate-200/30 dark:border-slate-700/30">
+                <th className="px-3 py-2 text-right font-black border-l border-slate-200/30 dark:border-slate-700/30">
                   Total
                 </th>
               </tr>
@@ -272,18 +272,18 @@ const getValorMensal = (despesa: string, mes: string) => {
 
                 return (
                   <tr key={despesa} className={`border-b ${borderSoft} transition-all duration-150 ${darkMode ? 'hover:bg-slate-700/90 hover:shadow-[inset_4px_0_0_#38bdf8]' : 'hover:bg-cyan-100/80 hover:shadow-[inset_4px_0_0_#0891b2]'} ${idx % 2 === 0 ? '' : (darkMode ? 'bg-slate-800/50' : 'bg-slate-50/50')}`}>
-                    <td className={`p-2.5 px-4 font-bold uppercase text-[11px] truncate max-w-[170px] ${textStrong} border-r border-slate-200/30 dark:border-slate-700/30`}>
+                    <td className={`px-3 py-1.5 font-bold uppercase text-[10px] leading-tight truncate max-w-[170px] ${textStrong} border-r border-slate-200/30 dark:border-slate-700/30`}>
                       {despesa}
                     </td>
                     {meses.map(mes => {
                       const valorMensal = getValorMensal(despesa, mes);
                       return (
-                        <td key={`${despesa}-${mes}`} className={`p-2.5 text-right text-[11px] ${valorMensal > 0 ? 'font-semibold text-red-500' : textMuted}`}>
+                        <td key={`${despesa}-${mes}`} className={`px-2 py-1.5 text-right text-[10px] leading-tight ${valorMensal > 0 ? 'font-semibold text-red-500' : textMuted}`}>
                           {valorMensal > 0 ? formatarMoeda(valorMensal).replace('R$', '').trim() : '-'}
                         </td>
                       );
                     })}
-                    <td className={`p-2.5 text-right text-[11px] font-black border-l border-slate-200/30 dark:border-slate-700/30 ${totalDespesa > 0 ? 'text-red-500' : textMuted}`}>
+                    <td className={`px-3 py-1.5 text-right text-[10px] font-black leading-tight border-l border-slate-200/30 dark:border-slate-700/30 ${totalDespesa > 0 ? 'text-red-500' : textMuted}`}>
                       {totalDespesa > 0 ? formatarMoeda(totalDespesa) : 'R$ 0,00'}
                     </td>
                   </tr>
@@ -292,17 +292,17 @@ const getValorMensal = (despesa: string, mes: string) => {
             </tbody>
             <tfoot>
               <tr className={`${darkMode ? 'bg-slate-700/70 text-white' : 'bg-slate-100 text-slate-800'} border-t-2 ${borderSoft}`}>
-                <td className="p-3 px-4 text-xs font-black uppercase border-r border-slate-200/30 dark:border-slate-700/30">
+                <td className="px-3 py-2 text-[11px] font-black uppercase border-r border-slate-200/30 dark:border-slate-700/30">
                   Total mensal
                 </td>
                 {meses.map((mes) => (
-                  <td key={`total-${mes}`} className="p-3 text-right text-[11px] font-black text-red-500">
+                  <td key={`total-${mes}`} className="px-2 py-2 text-right text-[10px] font-black text-red-500">
                     {totaisPorMes[mes] > 0
                       ? formatarMoeda(totaisPorMes[mes]).replace('R$', '').trim()
                       : '-'}
                   </td>
                 ))}
-                <td className="p-3 text-right text-xs font-black text-red-500 border-l border-slate-200/30 dark:border-slate-700/30">
+                <td className="px-3 py-2 text-right text-[11px] font-black text-red-500 border-l border-slate-200/30 dark:border-slate-700/30">
                   {formatarMoeda(totalGeral)}
                 </td>
               </tr>
