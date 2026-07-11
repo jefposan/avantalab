@@ -3,6 +3,7 @@
 ## 1.4.0.34 - 2026-07-10
 
 - Web: compacta, reposiciona acima do logo do background e refina a transparência dos cards principais de carregamento.
+- Web: no modo reduzido, o card Meus perfis passa a exibir o título curto "Perfis".
 
 ## 1.4.0.33 - 2026-07-10
 

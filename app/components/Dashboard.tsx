@@ -1304,7 +1304,7 @@ const mostrarComparativoResumoDash =
     meusPerfis: (
       <div className={`${bgCard} card-radius-avantalab w-full overflow-hidden rounded-2xl border-2 shadow-lg transition-colors`} style={{ borderColor: corPrimaria }}>
         <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-3 px-6 py-3 text-sm font-bold uppercase tracking-wider" style={{ backgroundColor: corPrimaria, color: textoSobreCorPrimaria }}>
-          <span className="truncate">Meus perfis</span>
+          <span className="truncate">{cols.full.includes('meusPerfis') ? 'Meus perfis' : 'Perfis'}</span>
           <span className="rounded-full bg-white/15 px-3 py-1 text-[10px] font-black leading-none text-white/90">
             {nomeMesPerfis}
           </span>

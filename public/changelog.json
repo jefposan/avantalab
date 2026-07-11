@@ -17,7 +17,8 @@
       "titulo": "Carregamentos com vidro translúcido",
       "data": "Julho/2026",
       "itens": [
-        "Web: compacta, reposiciona acima do logo do background e refina a transparência dos cards principais de carregamento."
+        "Web: compacta, reposiciona acima do logo do background e refina a transparência dos cards principais de carregamento.",
+        "Web: no modo reduzido, o card Meus perfis passa a exibir o título curto \"Perfis\"."
       ]
     },
     {
