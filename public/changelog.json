@@ -13,6 +13,17 @@
   },
   "versoes": [
     {
+      "versao": "1.4.0.39",
+      "titulo": "Menu web responsivo completo",
+      "data": "Julho/2026",
+      "itens": [
+        "Web responsivo: transforma os controles ocultos do header em menu sanduíche acessível até 1279px.",
+        "Web responsivo: menu reduzido passa a reunir ano, navegação, agenda, avisos, calculadora, perfil, ajustes e sair.",
+        "Web responsivo: em telas intermediárias, o menu abre abaixo do botão; no celular, mantém a gaveta lateral.",
+        "Web responsivo: Ajustes abre em um card vertical à esquerda do menu sanduíche, usando o mesmo breakpoint max-xl para manter todas as opções acessíveis."
+      ]
+    },
+    {
       "versao": "1.4.0.38",
       "titulo": "PWA abre o dashboard mobile",
       "data": "Julho/2026",

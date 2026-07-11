@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.4.0.39 - 2026-07-11
+
+- Web responsivo: transforma os controles ocultos do header em menu sanduíche acessível até `1279px`.
+- Web responsivo: menu reduzido passa a reunir ano, navegação, agenda, avisos, calculadora, perfil, ajustes e sair.
+- Web responsivo: em telas intermediárias, o menu abre abaixo do botão; no celular, mantém a gaveta lateral.
+- Web responsivo: Ajustes abre em um card vertical à esquerda do menu sanduíche, usando o mesmo breakpoint `max-xl` para manter todas as opções acessíveis.
+
 ## 1.4.0.38 - 2026-07-11
 
 - PWA: passa a iniciar no dashboard mobile em `/mobile`, mantendo landing e autenticação na rota principal.

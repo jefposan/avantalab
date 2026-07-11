@@ -105,17 +105,22 @@ export default function AppHeader({
     return () => window.removeEventListener('resize', calcular);
   }, [abaAtiva]);
 
+  const fecharMenuResponsivo = () => {
+    setMenuResponsivoAberto(false);
+    setAjustesAberto(false);
+  };
+
   return (
     <>
       {/* ── MENU RESPONSIVO (gaveta lateral mobile) ── */}
       {menuResponsivoAberto && (
         <div
-          className="fixed inset-0 z-[1200] bg-black/50 lg:hidden"
-          onClick={() => setMenuResponsivoAberto(false)}
+          className="fixed inset-0 z-[1200] bg-black/40 xl:hidden"
+          onClick={fecharMenuResponsivo}
         >
           <aside
             onClick={(e) => e.stopPropagation()}
-            className={`flex h-full w-80 max-w-[85vw] flex-col overflow-y-auto border-r p-4 shadow-2xl ${
+            className={`flex h-full w-80 max-w-[85vw] flex-col overflow-y-auto border-r p-4 shadow-2xl sm:absolute sm:right-4 sm:top-[88px] sm:h-auto sm:max-h-[calc(100dvh-104px)] sm:w-80 sm:rounded-2xl sm:border sm:p-3 ${
               darkMode
                 ? 'border-slate-700 bg-slate-900 text-slate-100'
                 : 'border-slate-200 bg-white text-slate-800'
@@ -130,7 +135,7 @@ export default function AppHeader({
               </div>
               <button
                 type="button"
-                onClick={() => setMenuResponsivoAberto(false)}
+                onClick={fecharMenuResponsivo}
                 className={`flex h-10 w-10 items-center justify-center rounded-xl border text-xl font-black transition cursor-pointer ${
                   darkMode
                     ? 'border-slate-700 text-slate-100 hover:bg-slate-800'
@@ -142,6 +147,24 @@ export default function AppHeader({
               </button>
             </div>
 
+            <div className={`mb-3 flex items-center justify-between gap-3 rounded-xl border px-3 py-2 ${
+              darkMode ? 'border-slate-700 bg-slate-800' : 'border-slate-200 bg-slate-50'
+            }`}>
+              <span className={`text-xs font-black uppercase tracking-wide ${textMuted}`}>Ano</span>
+              <select
+                value={anoSelecionado}
+                onChange={(e) => setAnoSelecionado(e.target.value)}
+                className={`bg-transparent text-sm font-black outline-none cursor-pointer ${textStrong}`}
+              >
+                {Array.from(
+                  { length: new Date().getFullYear() + 5 - 2024 + 1 },
+                  (_, i) => (2024 + i).toString(),
+                ).map((ano) => (
+                  <option key={ano} value={ano} className="bg-white text-slate-800">{ano}</option>
+                ))}
+              </select>
+            </div>
+
             <div className="space-y-1">
               {itensMenu.map((item) => (
                 <button
@@ -149,7 +172,7 @@ export default function AppHeader({
                   type="button"
                   onClick={() => {
                     setAbaAtiva(item.aba);
-                    setMenuResponsivoAberto(false);
+                    fecharMenuResponsivo();
                     if (item.aba === 'Dashboard') setMesAtivo(null);
                   }}
                   className={`w-full rounded-xl px-3 py-2 text-left text-sm font-black transition cursor-pointer ${
@@ -172,7 +195,41 @@ export default function AppHeader({
             <div className="space-y-1">
               <button
                 type="button"
-                onClick={() => { setCalcAberta(true); setMenuResponsivoAberto(false); }}
+                onClick={() => { fecharMenuResponsivo(); onAbrirAgenda(); }}
+                className={`flex w-full items-center justify-between rounded-xl px-3 py-2 text-left text-sm font-black transition cursor-pointer ${
+                  darkMode ? 'hover:bg-slate-800 text-slate-300' : 'hover:bg-slate-100 text-slate-600'
+                }`}
+              >
+                <span>Agenda</span>
+                {agendaHojeCount > 0 && (
+                  <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-cyan-500 px-1 text-[10px] font-black text-white">
+                    {agendaHojeCount > 9 ? '9+' : agendaHojeCount}
+                  </span>
+                )}
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  fecharMenuResponsivo();
+                  setAjustesAberto(false);
+                  setPainelAvisosAberto(true);
+                }}
+                className={`flex w-full items-center justify-between rounded-xl px-3 py-2 text-left text-sm font-black transition cursor-pointer ${
+                  darkMode ? 'hover:bg-slate-800 text-slate-300' : 'hover:bg-slate-100 text-slate-600'
+                }`}
+              >
+                <span>Avisos</span>
+                {alertasSistema.some((aviso) => aviso.naoLida) && (
+                  <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-black text-white">
+                    {alertasSistema.filter((aviso) => aviso.naoLida).length > 9
+                      ? '9+'
+                      : alertasSistema.filter((aviso) => aviso.naoLida).length}
+                  </span>
+                )}
+              </button>
+              <button
+                type="button"
+                onClick={() => { setCalcAberta(true); fecharMenuResponsivo(); }}
                 className={`w-full rounded-xl px-3 py-2 text-left text-sm font-black transition cursor-pointer ${
                   darkMode ? 'hover:bg-slate-800 text-slate-300' : 'hover:bg-slate-100 text-slate-600'
                 }`}
@@ -181,7 +238,7 @@ export default function AppHeader({
               </button>
               <button
                 type="button"
-                onClick={() => { setMenuResponsivoAberto(false); setModalEmpresasAberto(true); }}
+                onClick={() => { fecharMenuResponsivo(); setModalEmpresasAberto(true); }}
                 className={`w-full rounded-xl px-3 py-2 text-left text-sm font-black transition cursor-pointer ${
                   darkMode ? 'hover:bg-slate-800 text-slate-300' : 'hover:bg-slate-100 text-slate-600'
                 }`}
@@ -190,7 +247,24 @@ export default function AppHeader({
               </button>
               <button
                 type="button"
-                onClick={() => { setMenuResponsivoAberto(false); confirmarLogout(); }}
+                onClick={() => {
+                  setPainelAvisosAberto(false);
+                  if (window.innerWidth < 640) setMenuResponsivoAberto(false);
+                  setAjustesAberto((aberto) => !aberto);
+                }}
+                className={`flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-sm font-black transition cursor-pointer ${
+                  darkMode ? 'hover:bg-slate-800 text-slate-300' : 'hover:bg-slate-100 text-slate-600'
+                }`}
+              >
+                <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10.325 4.317a1.724 1.724 0 013.35 0 1.724 1.724 0 002.573 1.066 1.724 1.724 0 012.451 2.451 1.724 1.724 0 001.066 2.573 1.724 1.724 0 010 3.35 1.724 1.724 0 00-1.066 2.573 1.724 1.724 0 01-2.451 2.451 1.724 1.724 0 00-2.573 1.066 1.724 1.724 0 01-3.35 0 1.724 1.724 0 00-2.573-1.066 1.724 1.724 0 01-2.451-2.451 1.724 1.724 0 00-1.066-2.573 1.724 1.724 0 010-3.35 1.724 1.724 0 001.066-2.573 1.724 1.724 0 012.451-2.451 1.724 1.724 0 002.573-1.066z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 15.5A3.5 3.5 0 1012 8.5a3.5 3.5 0 000 7z" />
+                </svg>
+                Ajustes
+              </button>
+              <button
+                type="button"
+                onClick={() => { fecharMenuResponsivo(); confirmarLogout(); }}
                 className="w-full rounded-xl px-3 py-2 text-left text-sm font-black text-red-600 transition hover:bg-red-50 cursor-pointer"
               >
                 Sair
@@ -270,18 +344,21 @@ export default function AppHeader({
           <button
             type="button"
             onClick={() => setMenuResponsivoAberto(true)}
-            className={`xl:hidden flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border text-2xl font-black transition cursor-pointer ${
+            className={`order-3 ml-auto flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border transition cursor-pointer xl:hidden ${
               darkMode
                 ? 'border-slate-700 text-slate-100 hover:bg-slate-800'
                 : 'border-slate-200 text-slate-700 hover:bg-slate-100'
             }`}
+            aria-label="Abrir menu"
             title="Abrir menu"
           >
-            ☰
+            <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.2" d="M4 7h16M4 12h16M4 17h16" />
+            </svg>
           </button>
 
           {/* Área direita */}
-          <div className="flex-1 flex flex-col gap-3 xl:gap-5 min-w-0">
+          <div className="order-2 flex min-w-0 flex-1 flex-col gap-3 xl:gap-5">
             <div className="relative hidden min-w-0 items-center gap-3 xl:flex">
               {/* Nav principal (centralizado no espaco entre logo e controles) */}
               <div className="flex min-w-0 flex-1 justify-center">

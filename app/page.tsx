@@ -8695,7 +8695,7 @@ name="novo-usuario-login"
     />
 
     <div
-      className="print-ocultar fixed left-0 right-0 top-[92px] z-[1200] bg-slate-900 text-white p-4 shadow-xl border-t border-slate-700 transition-all xl:top-[108px]"
+      className="print-ocultar fixed left-0 right-0 top-[92px] z-[1200] border-t border-slate-700 bg-slate-900 p-4 text-white shadow-xl transition-all max-xl:top-[88px] max-xl:max-h-[calc(100dvh-104px)] max-xl:overflow-y-auto max-xl:rounded-2xl max-xl:border max-sm:left-3 max-sm:right-3 sm:max-xl:left-auto sm:max-xl:right-[344px] sm:max-xl:w-[calc(100vw-360px)] sm:max-xl:max-w-[352px] xl:top-[108px]"
     style={{ borderTopColor: corPrimaria, borderTopWidth: '2px' }}
     onMouseMove={reiniciarTimerAjustes}
     onMouseDown={reiniciarTimerAjustes}
@@ -8703,7 +8703,7 @@ name="novo-usuario-login"
     onFocus={reiniciarTimerAjustes}
   >
     {/* Bloco único de botões, alinhado ao limite do sistema (max-w-7xl + px-8) */}
-    <div className="mx-auto flex w-full max-w-7xl items-center gap-3 overflow-x-auto px-3 pb-1 sm:px-5 lg:px-6 xl:px-8 custom-scroll">
+    <div className="custom-scroll mx-auto flex w-full max-w-7xl items-center gap-3 overflow-x-auto px-3 pb-1 max-xl:flex-col max-xl:items-start max-xl:overflow-x-visible max-xl:px-0 sm:px-5 lg:px-6 xl:px-8">
 
         {/* 1. Cadastrar Despesas + 2. Instrucoes (icone ?) */}
         <div className="flex items-center gap-1.5">
@@ -8816,7 +8816,7 @@ name="novo-usuario-login"
         </Tooltip>
 
         {/* 8. Sobre + Tutorial (colados à direita) */}
-        <div className="ml-auto flex shrink-0 items-center gap-2">
+        <div className="ml-auto flex shrink-0 items-center gap-2 max-xl:ml-0 max-xl:flex-col max-xl:items-start">
           <Tooltip texto="Sobre o AvantaLab e novidades das versões." posicao="bottom">
             <button
               type="button"
