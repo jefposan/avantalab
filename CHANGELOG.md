@@ -4,6 +4,15 @@
 
 - Web: reorganiza a hero da landing no mobile em tela cheia, exibe o menu compacto e adiciona seta para a área de demonstração do produto.
 - Web: ajusta o ponto de rolagem dos botões Benefícios e Dúvidas no menu mobile da landing.
+- Web: deixa a seta da hero mobile flutuante, translúcida e compacta a área de demonstração do produto.
+- Web: mantém a seta mobile até o fim da página, suaviza sua transparência e remove sombras da segunda parte da hero.
+- Web: seta mobile passa a avançar etapa por etapa pelos cards da landing.
+- Web: ajusta as paradas da seta mobile da landing e compacta a faixa de confiança abaixo da hero.
+- Web: suaviza as pílulas do menu mobile e distribui melhor o conteúdo da primeira tela da hero.
+- Web: adiciona uma etapa final da seta mobile para rolar até o fim real da landing.
+- Web: reduz e anima a seta mobile da landing, mantendo-a disponível até o fim real do scroll.
+- Web: compacta os subcards de benefícios no mobile.
+- Web: garante uma última etapa independente para a seta mobile alcançar o fim real da página e reorganiza os benefícios com ícone e título na mesma linha.
 
 ## 1.4.0.34 - 2026-07-10
 

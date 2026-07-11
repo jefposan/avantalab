@@ -22,13 +22,52 @@ const PRECOS = {
   mensal: { pessoal: '9,90', empresa: '34,90', nota: 'Cobrança mensal · sem fidelidade' },
 } as const;
 
+type EtapaScroll = {
+  el: HTMLElement;
+  top: number;
+  final?: boolean;
+};
+
+const obterFimDaPagina = () => {
+  const doc = document.documentElement;
+  const body = document.body;
+  return Math.max(0, Math.max(doc.scrollHeight, body.scrollHeight) - window.innerHeight);
+};
+
+const obterScrollAtual = () => window.scrollY || document.documentElement.scrollTop || document.body.scrollTop || 0;
+
 export default function LandingPage({ onCriarConta, onEntrar }: LandingPageProps) {
   const [scrolled, setScrolled] = useState(false);
+  const [mostrarSetaHero, setMostrarSetaHero] = useState(true);
   const [periodo, setPeriodo] = useState<'anual' | 'mensal'>('anual');
   const rootRef = useRef<HTMLDivElement>(null);
 
+  const proximaEtapaScroll = () => {
+    const root = rootRef.current;
+    if (!root) return null;
+    const atual = obterScrollAtual();
+    const ehMobile = window.matchMedia('(max-width: 760px)').matches;
+    const offsetRolagem = ehMobile ? 118 : 0;
+    const etapas: EtapaScroll[] = Array.from(root.querySelectorAll<HTMLElement>('[data-scroll-step]:not([data-scroll-final])'))
+      .map((el) => ({ el, top: el.getBoundingClientRect().top + window.scrollY }))
+      .sort((a, b) => a.top - b.top);
+
+    const proxima = etapas.find((etapa) => etapa.top > atual + offsetRolagem + 24);
+    if (proxima) return proxima;
+
+    const fimDaPagina = obterFimDaPagina();
+    return atual < fimDaPagina - 1
+      ? { el: document.documentElement, top: fimDaPagina, final: true }
+      : null;
+  };
+
   useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 24);
+    const onScroll = () => {
+      const scrollAtual = obterScrollAtual();
+      setScrolled(scrollAtual > 24);
+      const fimDaPagina = obterFimDaPagina();
+      setMostrarSetaHero(fimDaPagina - scrollAtual > 1);
+    };
     onScroll();
     window.addEventListener('scroll', onScroll, { passive: true });
     return () => window.removeEventListener('scroll', onScroll);
@@ -56,7 +95,36 @@ export default function LandingPage({ onCriarConta, onEntrar }: LandingPageProps
   };
 
   const irParaProdutoMobile = () => {
-    document.getElementById('produto-mobile')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    const proxima = proximaEtapaScroll();
+    const ehMobile = window.matchMedia('(max-width: 760px)').matches;
+    const rolarAteOFim = () => {
+      const aplicarFimReal = (behavior: ScrollBehavior) => {
+        window.scrollTo({
+          top: obterFimDaPagina(),
+          left: 0,
+          behavior,
+        });
+      };
+
+      aplicarFimReal('smooth');
+      window.setTimeout(() => aplicarFimReal('auto'), 520);
+      window.setTimeout(() => aplicarFimReal('auto'), 900);
+    };
+
+    if (!proxima) {
+      rolarAteOFim();
+      return;
+    }
+
+    if (proxima.final || proxima.el.dataset.scrollFinal === 'true') {
+      rolarAteOFim();
+      return;
+    }
+
+    window.scrollTo({
+      top: Math.max(0, proxima.top - (ehMobile ? 118 : 0)),
+      behavior: 'smooth',
+    });
   };
 
   const precos = PRECOS[periodo];
@@ -106,7 +174,12 @@ export default function LandingPage({ onCriarConta, onEntrar }: LandingPageProps
               <span><Check size={15} />Sem cartão de crédito</span>
               <span><Check size={15} />Cancele quando quiser</span>
             </div>
-            <button type="button" className="hero-scroll" onClick={irParaProdutoMobile} aria-label="Ver demonstração do produto">
+            <button
+              type="button"
+              className={`hero-scroll ${mostrarSetaHero ? 'is-visible' : ''}`}
+              onClick={irParaProdutoMobile}
+              aria-label="Ver demonstração do produto"
+            >
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.25" d="M12 5v14m0 0l-6-6m6 6l6-6" />
               </svg>
@@ -114,7 +187,7 @@ export default function LandingPage({ onCriarConta, onEntrar }: LandingPageProps
           </div>
 
           {/* mockup do produto */}
-          <div className="mock-stage" id="produto-mobile">
+          <div className="mock-stage" id="produto-mobile" data-scroll-step>
             <div className="mock">
               <div className="mock-bar">
                 <i /><i /><i />
@@ -207,7 +280,7 @@ export default function LandingPage({ onCriarConta, onEntrar }: LandingPageProps
       {/* ======================= BENEFÍCIOS ======================= */}
       <section className="benefits" id="beneficios" style={{ scrollMarginTop: 'var(--lp-edge-anchor-offset, 22px)' }}>
         <div className="wrap">
-          <div className="sec-head center reveal">
+          <div className="sec-head center reveal" data-scroll-step>
             <span className="kicker">Por que AvantaLab</span>
             <h2>Tudo o que a sua operação precisa, sem planilhas espalhadas</h2>
             <p className="sec-sub">Centralize o financeiro e a rotina do time em uma ferramenta leve, feita para o dia a dia de quem administra.</p>
@@ -222,7 +295,7 @@ export default function LandingPage({ onCriarConta, onEntrar }: LandingPageProps
               <p>Receitas, despesas e pagamentos programados organizados em um só painel. Você sabe exatamente o que entra, o que sai e o que vence.</p>
             </div>
 
-            <div className="ben reveal">
+            <div className="ben reveal" data-scroll-step>
               <div className="ben-ic">
                 <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><path d="M3 3v16a2 2 0 0 0 2 2h16" /><path d="M7 13l3-3 4 4 5-6" /></svg>
               </div>
@@ -238,7 +311,7 @@ export default function LandingPage({ onCriarConta, onEntrar }: LandingPageProps
               <p>Notificações sobre compromissos financeiros e vencimentos. Nada passa despercebido, nem multas por atraso.</p>
             </div>
 
-            <div className="ben reveal">
+            <div className="ben reveal" data-scroll-step>
               <div className="ben-ic">
                 <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3a6 6 0 0 1 6 6c0 2.5-1.5 4-3 5.5V17H9v-2.5C7.5 13 6 11.5 6 9a6 6 0 0 1 6-6z" /><path d="M9 21h6" /></svg>
               </div>
@@ -268,7 +341,7 @@ export default function LandingPage({ onCriarConta, onEntrar }: LandingPageProps
       {/* ======================= IA AVA ======================= */}
       <section className="ava" id="ava" style={{ scrollMarginTop: 72 }}>
         <div className="wrap ava-grid">
-          <div className="reveal">
+          <div className="reveal" data-scroll-step>
             <img className="ava-logo" src="/images/landing/ava-logo-fundo-escuro.png" alt="Ava, assistente de IA do AvantaLab" />
             <span className="kicker">Inteligência artificial</span>
             <h2>Você não precisa de um manual. Precisa da Ava.</h2>
@@ -283,7 +356,7 @@ export default function LandingPage({ onCriarConta, onEntrar }: LandingPageProps
             </ul>
           </div>
 
-          <div className="chat reveal" aria-hidden="true">
+          <div className="chat reveal" aria-hidden="true" data-scroll-step>
             <div className="msg user">Ava, como estão minhas despesas neste mês comparadas ao anterior?</div>
             <div className="msg bot">
               Suas despesas de julho somam <b>R$ 24.660</b>, uma queda de <b>4%</b> em relação a junho.
@@ -302,7 +375,7 @@ export default function LandingPage({ onCriarConta, onEntrar }: LandingPageProps
       {/* ======================= PLANOS ======================= */}
       <section className="plans" id="planos" style={{ scrollMarginTop: 52 }}>
         <div className="wrap">
-          <div className="sec-head center reveal">
+          <div className="sec-head center reveal" data-scroll-step>
             <span className="kicker">Planos e preços</span>
             <h2>Comece grátis. Continue pelo preço de um lanche.</h2>
             <p className="sec-sub">Grátis com limitações no plano Pessoal e 7 dias de teste grátis no plano Empresa, com acesso completo. Sem cartão de crédito, sem fidelidade.</p>
@@ -320,7 +393,7 @@ export default function LandingPage({ onCriarConta, onEntrar }: LandingPageProps
           </div>
 
           <div className="plan-grid">
-            <div className="plan reveal">
+            <div className="plan reveal" data-scroll-step>
               <h3>Pessoal</h3>
               <p className="plan-desc">Para organizar a sua vida financeira com clareza.</p>
               <div className="price">
@@ -343,7 +416,7 @@ export default function LandingPage({ onCriarConta, onEntrar }: LandingPageProps
               <p className="plan-foot">uso gratuito com recursos limitados</p>
             </div>
 
-            <div className="plan feat reveal">
+            <div className="plan feat reveal" data-scroll-step>
               <span className="plan-badge">Mais completo</span>
               <h3>Empresa</h3>
               <p className="plan-desc">Para gerir o financeiro e a equipe do seu negócio.</p>
@@ -372,7 +445,7 @@ export default function LandingPage({ onCriarConta, onEntrar }: LandingPageProps
       {/* ======================= FAQ ======================= */}
       <section className="faq" id="faq" style={{ scrollMarginTop: 'var(--lp-edge-anchor-offset, 22px)' }}>
         <div className="wrap">
-          <div className="sec-head center reveal">
+          <div className="sec-head center reveal" data-scroll-step>
             <span className="kicker">Perguntas frequentes</span>
             <h2>Ficou alguma dúvida?</h2>
           </div>
