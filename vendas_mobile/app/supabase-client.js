@@ -41,6 +41,14 @@
     return data.user;
   }
 
+  async function signInWithGoogle(redirectTo) {
+    const { error } = await requireClient().auth.signInWithOAuth({
+      provider: 'google',
+      options: { redirectTo },
+    });
+    if (error) throw error;
+  }
+
   async function resetPassword(email, redirectTo) {
     const { error } = await requireClient().auth.resetPasswordForEmail(email, { redirectTo });
     if (error) throw error;
@@ -208,5 +216,5 @@
     return { ...pedido, itens: savedItems || [] };
   }
 
-  window.VendasDb = { client, currentUser, hasSession, signIn, signInPhone, resetPassword, signUp, signOut, solicitarAcesso, buscarAcessoVendas, loadAll, saveProduct, deleteProduct, saveClient, deleteClient, saveOrder };
+  window.VendasDb = { client, currentUser, hasSession, signIn, signInPhone, signInWithGoogle, resetPassword, signUp, signOut, solicitarAcesso, buscarAcessoVendas, loadAll, saveProduct, deleteProduct, saveClient, deleteClient, saveOrder };
 })();

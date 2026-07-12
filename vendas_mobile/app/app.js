@@ -236,6 +236,7 @@ function render() {
   }
   if (!state.autenticado) {
     app.innerHTML = state.usuarioSemAcesso ? renderSolicitarAcesso() : renderLogin();
+    if (!state.usuarioSemAcesso) adicionarBotoesGoogle();
     return;
   }
   const cabecalho = `<header class="system-header"><button class="system-brand brand-home" onclick="abrirSalaBotoes()" aria-label="Ir para a sala de botões"><img src="./assets/logo-avantalab.png" alt="AvantaLab" /></button><button class="home-button" onclick="abrirSalaBotoes()" aria-label="Ir para a sala de botões" title="Sala de botões"><img src="./assets/home-button-house.png" alt="" /></button></header>`;
@@ -358,6 +359,24 @@ async function entrarSistema(event) {
   } catch (error) {
     if (erro) erro.textContent = traduzErro(error);
   }
+}
+
+async function entrarComGoogle() {
+  const erro = document.getElementById('loginErro') || document.getElementById('cadastroErro');
+  if (erro) erro.textContent = '';
+  try {
+    await window.VendasDb.signInWithGoogle(`${window.location.origin}/mobile/vendas`);
+  } catch (error) {
+    if (erro) erro.textContent = traduzErro(error);
+  }
+}
+
+function adicionarBotoesGoogle() {
+  const form = app.querySelector('.login-screen form');
+  const rodape = form?.querySelector('.login-register');
+  if (!form || !rodape || form.querySelector('.google-login-button') || cadastroEtapa === 'sms') return;
+  const texto = modoLogin === 'cadastro' ? 'Cadastrar com Google' : 'Continuar com Google';
+  rodape.insertAdjacentHTML('beforebegin', `<button type="button" class="google-login-button" onclick="entrarComGoogle()"><span class="google-login-mark" aria-hidden="true">G</span>${texto}</button>`);
 }
 
 function abrirRecuperacaoSenha() {
@@ -507,18 +526,17 @@ function renderSolicitarAcesso() {
   if (solicitacao?.status === 'pendente') {
     return `<section class="login-screen"><div class="login-brand"><strong>Gestão de vendas</strong><p>Solicitação enviada</p></div><div class="sheet"><div class="sheet-header"><div><h2>Aguardando aprovação</h2><p class="muted small">O gestor do perfil analisará seu acesso. Volte mais tarde e entre novamente.</p></div></div><button class="primary" onclick="sairSistema()">Sair</button></div></section>`;
   }
-  return `<section class="login-screen"><div class="login-brand"><strong>Gestão de vendas</strong><p>Solicite acesso a uma empresa</p></div><div class="sheet"><div class="grid">${campo('solicitacaoNome','Nome completo', state.usuario?.nome || '')}${campo('solicitacaoCodigo','Código da empresa')}${campo('solicitacaoTelefone','Telefone (opcional)','','tel')}<div id="solicitacaoErro" class="login-error"></div><button class="primary" onclick="enviarSolicitacaoAcesso()">Enviar solicitação</button><button class="forgot-link" type="button" onclick="sairSistema()">Sair da conta</button></div></div></section>`;
+  return `<section class="login-screen"><div class="login-brand"><strong>Gestão de vendas</strong></div><div class="sheet access-request-card"><div class="sheet-header"><div><h2>Vincular a um perfil</h2><p class="muted small">Seu login foi identificado, mas ainda não possui acesso às vendas. Informe o código recebido do gestor para solicitar a aprovação.</p></div></div><div class="grid"><label class="access-request-label">Código da empresa<div class="login-field">${svgIcon('folder')}<input id="solicitacaoCodigo" autocomplete="off" autocapitalize="characters" placeholder="AVA-XXXXXXXX" required></div></label><div id="solicitacaoErro" class="login-error"></div><button class="primary" onclick="enviarSolicitacaoAcesso()">Solicitar aprovação</button><button class="forgot-link" type="button" onclick="sairSistema()">Sair da conta</button></div></div></section>`;
 }
 
 async function enviarSolicitacaoAcesso() {
   const erro = document.getElementById('solicitacaoErro');
   if (erro) erro.textContent = '';
-  const nome = valor('solicitacaoNome').trim();
+  const nome = state.usuario?.nome || state.usuario?.email || 'Usuário Vendas';
   const codigo = valor('solicitacaoCodigo').trim().toUpperCase();
-  const telefone = valor('solicitacaoTelefone').replace(/\D/g, '');
-  if (!nome || !codigo) { if (erro) erro.textContent = 'Informe seu nome e o código da empresa.'; return; }
+  if (!codigo) { if (erro) erro.textContent = 'Informe o código da empresa.'; return; }
   try {
-    await window.VendasDb.solicitarAcesso({ codigo, nome, telefone: telefone ? `+55${telefone}` : '' });
+    await window.VendasDb.solicitarAcesso({ codigo, nome, telefone: '' });
     state.solicitacaoAcesso = { status: 'pendente' };
     render();
   } catch (error) {
@@ -555,7 +573,11 @@ async function carregarDadosBackend(mostrarCarregamento = true) {
     }
     state.autenticado = Boolean(dados.user);
     if (dados.user) {
-      state.usuario = { ...state.usuario, nome: dados.user.user_metadata?.nome || dados.user.user_metadata?.name || dados.user.email || state.usuario.nome };
+      state.usuario = {
+        ...state.usuario,
+        nome: dados.user.user_metadata?.nome || dados.user.user_metadata?.full_name || dados.user.user_metadata?.name || dados.user.email || state.usuario.nome,
+        email: dados.user.email || state.usuario.email || '',
+      };
       state.produtos = dados.produtos;
       state.clientes = dados.clientes;
       state.vendas = dados.vendas;
@@ -1390,6 +1412,7 @@ window.abrirSalaBotoes = abrirSalaBotoes;
 window.sairMenuMobile = sairMenuMobile;
 window.sairSistema = sairSistema;
 window.entrarSistema = entrarSistema;
+window.entrarComGoogle = entrarComGoogle;
 window.trocarTipoLogin = trocarTipoLogin;
 window.alternarSenhaLogin = alternarSenhaLogin;
 window.abrirRecuperacaoSenha = abrirRecuperacaoSenha;
