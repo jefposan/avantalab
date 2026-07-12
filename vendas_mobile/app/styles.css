@@ -41,10 +41,11 @@ button {
 }
 
 .app-shell {
-  width: min(100%, 520px);
+  width: 100%;
+  max-width: none;
   min-height: 100dvh;
-  margin: 0 auto;
-  padding: 14px;
+  margin: 0;
+  padding: 0;
 }
 
 .splash-card,
@@ -58,11 +59,12 @@ button {
 
 .splash-card {
   display: grid;
-  min-height: calc(100dvh - 28px);
+  width: 100%;
+  min-height: 100dvh;
   place-items: center;
   align-content: center;
   gap: 12px;
-  border-radius: 28px;
+  border-radius: 0;
   text-align: center;
   color: var(--azul);
   font-weight: 900;

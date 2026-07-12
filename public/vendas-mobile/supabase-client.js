@@ -3,7 +3,12 @@
   const sdk = window.supabase;
   const client = sdk && config.supabaseUrl && config.supabaseAnonKey
     ? sdk.createClient(config.supabaseUrl, config.supabaseAnonKey, {
-        auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true },
+        auth: {
+          storageKey: 'avantalab-vendas-mobile-auth',
+          persistSession: true,
+          autoRefreshToken: true,
+          detectSessionInUrl: true,
+        },
       })
     : null;
 
