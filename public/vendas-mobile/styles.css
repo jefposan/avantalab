@@ -902,6 +902,9 @@ body { background: #fff; color: var(--ink); }
 
 .login-screen {
   display: flex;
+  width: 100%;
+  box-sizing: border-box;
+  flex: 1 0 100%;
   min-height: 100dvh;
   flex-direction: column;
   align-items: center;
@@ -911,6 +914,21 @@ body { background: #fff; color: var(--ink); }
 .login-brand { margin: 0 0 22px; color: #0A1F44; }
 .login-brand strong { color: #0A1F44; font-size: 21px; font-weight: 850; letter-spacing: -.02em; }
 .login-brand p { margin-top: 4px; color: #1F8A9E; font-size: 13px; font-weight: 700; }
+.login-screen form.login-register-form { gap: 5px; padding: 12px 24px; }
+.login-register-form > label { display: grid; gap: 2px; color: #3d454d; font-size: 10px; font-weight: 800; }
+.login-register-form > label > span { color: #7d8790; font-weight: 600; }
+.password-requirements { display: block; color: #7d8790; font-size: 9px; font-weight: 600; line-height: 1.2; }
+.password-requirements.valid { color: #1F8A9E; font-weight: 800; }
+.phone-register-field { display: flex; gap: 6px; }
+.phone-register-field select { width: 82px; height: 31px; flex: 0 0 82px; border: 1px solid #d9e0e4; border-radius: 8px; padding: 0 4px; color: #2d353b; background: #fff; font-size: 11px; outline-color: #1687D9; }
+.phone-register-field .login-field { min-width: 0; flex: 1; }
+.login-register-form .login-field > .svg-icon { left: 10px; width: 14px; height: 14px; }
+.login-register-form .login-field input { height: 31px; border-radius: 8px; padding: 0 10px 0 31px; font-size: 11px; }
+.login-register-form .login-submit { min-height: 36px; margin-top: 1px; font-size: 13px; }
+.login-register-form .login-register { margin: 0; font-size: 12px; }
+.sms-confirm-form { min-height: 206px; justify-content: center; }
+.sms-confirm-form .login-card-help { margin: 0 0 4px; color: #5d6872; font-size: 11px; line-height: 1.4; text-align: center; }
+.sms-confirm-form .sms-resend { margin: 1px auto 0; font-size: 11px; }
 .primary,
 .content-area .primary,
 .date-filter .filter-button,

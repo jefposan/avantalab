@@ -28,12 +28,39 @@ const estadoInicial = {
   compromissos: [],
   metaMensal: 0,
   temaEscuro: false,
+  acessoVendas: null,
+  solicitacaoAcesso: null,
+  usuarioSemAcesso: false,
 };
 
 let state = carregarEstado();
 let backendAtivo = Boolean(window.VendasDb?.client);
 let carregandoBackend = backendAtivo;
 let loginTipo = 'email';
+let modoLogin = 'entrar';
+let cadastroEtapa = 'dados';
+let cadastroPendente = null;
+let segundosReenvioSmsCadastro = 0;
+let timerReenvioSmsCadastro = null;
+
+const PAISES_DDI = [
+  ['Brasil', '55', '🇧🇷'], ['Portugal', '351', '🇵🇹'], ['Estados Unidos / Canadá', '1', '🇺🇸'],
+  ['Argentina', '54', '🇦🇷'], ['Uruguai', '598', '🇺🇾'], ['Paraguai', '595', '🇵🇾'],
+  ['Chile', '56', '🇨🇱'], ['Bolívia', '591', '🇧🇴'], ['Peru', '51', '🇵🇪'], ['Colômbia', '57', '🇨🇴'],
+  ['Equador', '593', '🇪🇨'], ['Venezuela', '58', '🇻🇪'], ['México', '52', '🇲🇽'], ['Panamá', '507', '🇵🇦'],
+  ['Costa Rica', '506', '🇨🇷'], ['Guatemala', '502', '🇬🇹'], ['Honduras', '504', '🇭🇳'], ['El Salvador', '503', '🇸🇻'],
+  ['Nicarágua', '505', '🇳🇮'], ['Cuba', '53', '🇨🇺'], ['Angola', '244', '🇦🇴'], ['Moçambique', '258', '🇲🇿'],
+  ['Cabo Verde', '238', '🇨🇻'], ['Espanha', '34', '🇪🇸'], ['França', '33', '🇫🇷'], ['Itália', '39', '🇮🇹'],
+  ['Alemanha', '49', '🇩🇪'], ['Reino Unido', '44', '🇬🇧'], ['Irlanda', '353', '🇮🇪'], ['Países Baixos', '31', '🇳🇱'],
+  ['Bélgica', '32', '🇧🇪'], ['Suíça', '41', '🇨🇭'], ['Áustria', '43', '🇦🇹'], ['Suécia', '46', '🇸🇪'],
+  ['Noruega', '47', '🇳🇴'], ['Dinamarca', '45', '🇩🇰'], ['Finlândia', '358', '🇫🇮'], ['Polônia', '48', '🇵🇱'],
+  ['Rússia', '7', '🇷🇺'], ['Ucrânia', '380', '🇺🇦'], ['Grécia', '30', '🇬🇷'], ['Turquia', '90', '🇹🇷'],
+  ['Israel', '972', '🇮🇱'], ['Emirados Árabes Unidos', '971', '🇦🇪'], ['Arábia Saudita', '966', '🇸🇦'], ['Catar', '974', '🇶🇦'],
+  ['Índia', '91', '🇮🇳'], ['China', '86', '🇨🇳'], ['Japão', '81', '🇯🇵'], ['Coreia do Sul', '82', '🇰🇷'],
+  ['Singapura', '65', '🇸🇬'], ['Malásia', '60', '🇲🇾'], ['Tailândia', '66', '🇹🇭'], ['Indonésia', '62', '🇮🇩'],
+  ['Filipinas', '63', '🇵🇭'], ['Vietnã', '84', '🇻🇳'], ['Austrália', '61', '🇦🇺'], ['Nova Zelândia', '64', '🇳🇿'],
+  ['África do Sul', '27', '🇿🇦'], ['Nigéria', '234', '🇳🇬'], ['Egito', '20', '🇪🇬'], ['Marrocos', '212', '🇲🇦'],
+];
 
 const app = document.getElementById('app');
 
@@ -181,7 +208,7 @@ function render() {
     return;
   }
   if (!state.autenticado) {
-    app.innerHTML = renderLogin();
+    app.innerHTML = state.usuarioSemAcesso ? renderSolicitarAcesso() : renderLogin();
     return;
   }
   const cabecalho = `<header class="system-header"><button class="system-brand brand-home" onclick="abrirSalaBotoes()" aria-label="Ir para a sala de botões"><img src="./assets/logo-avantalab.png" alt="AvantaLab" /></button><button class="home-button" onclick="abrirSalaBotoes()" aria-label="Ir para a sala de botões" title="Sala de botões"><img src="./assets/home-button-house.png" alt="" /></button></header>`;
@@ -213,8 +240,32 @@ function render() {
 }
 
 function renderLogin() {
+  if (modoLogin === 'cadastro') return renderCadastroConta();
   const emailAtivo = loginTipo === 'email';
   return `<section class="login-screen"><div class="login-brand"><strong>Gestão de vendas</strong><p>Entre na sua conta</p></div><form onsubmit="entrarSistema(event)"><div class="login-methods"><button type="button" class="${emailAtivo ? 'active' : ''}" onclick="trocarTipoLogin('email')">${svgIcon('mail')} E-mail</button><button type="button" class="${!emailAtivo ? 'active' : ''}" onclick="trocarTipoLogin('telefone')">${svgIcon('phone')} Telefone</button></div><label>${emailAtivo ? 'E-mail' : 'Telefone'}<div class="login-field">${svgIcon(emailAtivo ? 'mail' : 'phone')}<input id="loginContato" type="${emailAtivo ? 'email' : 'tel'}" inputmode="${emailAtivo ? 'email' : 'tel'}" autocomplete="${emailAtivo ? 'email' : 'tel'}" placeholder="${emailAtivo ? 'Digite seu e-mail' : 'Digite seu telefone'}" required></div></label><label>Senha<div class="login-field password-field">${svgIcon('lock')}<input id="loginSenha" type="password" autocomplete="current-password" placeholder="Digite sua senha" required><button type="button" class="password-toggle" onclick="alternarSenhaLogin()" aria-label="Exibir senha">${svgIcon('eye')}</button></div></label><div class="login-options"><label class="remember-option"><input id="loginLembrar" type="checkbox" checked><span></span>Lembrar-me</label><button type="button" class="forgot-link" onclick="abrirRecuperacaoSenha()">Esqueceu a senha?</button></div><div id="loginErro" class="login-error"></div><button class="primary login-submit" type="submit">Entrar</button><p class="login-register">Não tem conta? <button type="button" onclick="abrirCadastroConta()">Cadastre-se</button></p></form></section>`;
+}
+
+function renderCadastroConta() {
+  if (cadastroEtapa === 'sms') return renderValidacaoSmsCadastro();
+  const paises = PAISES_DDI.map(([nome, ddi, flag]) => `<option value="${ddi}" ${ddi === '55' ? 'selected' : ''}>${flag} +${ddi}</option>`).join('');
+  return `<section class="login-screen"><div class="login-brand"><strong>Gestão de vendas</strong><p>Crie sua conta</p></div><form class="login-register-form" onsubmit="criarConta(event)"><label>Nome completo<div class="login-field">${svgIcon('user')}<input id="cadastroNome" autocomplete="name" placeholder="Digite seu nome" required></div></label><label>E-mail<div class="login-field">${svgIcon('mail')}<input id="cadastroEmail" type="email" autocomplete="email" placeholder="Digite seu e-mail" required></div></label><label>Celular<div class="phone-register-field"><select id="cadastroDdi" aria-label="País (DDI)">${paises}</select><div class="login-field">${svgIcon('phone')}<input id="cadastroTelefone" type="tel" inputmode="numeric" autocomplete="tel-national" placeholder="DDD + número" required></div></div></label><label>Código da empresa<div class="login-field">${svgIcon('folder')}<input id="cadastroCodigo" autocomplete="off" autocapitalize="characters" placeholder="AVA-XXXXXXXX" required></div></label><label>Senha<div class="login-field">${svgIcon('lock')}<input id="cadastroSenha" type="password" autocomplete="new-password" placeholder="Crie sua senha" oninput="atualizarRequisitosSenhaCadastro(this.value)" required></div><small id="requisitosSenhaCadastro" class="password-requirements">8+ caracteres, maiúscula, minúscula e número.</small></label><label>Confirmar senha<div class="login-field">${svgIcon('lock')}<input id="cadastroConfirmarSenha" type="password" autocomplete="new-password" placeholder="Digite a senha novamente" required></div></label><div id="cadastroErro" class="login-error"></div><button class="primary login-submit" type="submit">Continuar</button><p class="login-register">Já tem conta? <button type="button" onclick="voltarParaLogin()">Entrar</button></p></form></section>`;
+}
+
+function senhaCadastroValida(senha) {
+  return senha.length >= 8 && /[A-Z]/.test(senha) && /[a-z]/.test(senha) && /\d/.test(senha);
+}
+
+function atualizarRequisitosSenhaCadastro(senha) {
+  const aviso = document.getElementById('requisitosSenhaCadastro');
+  if (!aviso) return;
+  const valida = senhaCadastroValida(senha);
+  aviso.classList.toggle('valid', valida);
+  aviso.textContent = valida ? '✓ Requisitos de senha atendidos.' : '8+ caracteres, maiúscula, minúscula e número.';
+}
+
+function renderValidacaoSmsCadastro() {
+  const telefone = cadastroPendente?.telefone || '';
+  return `<section class="login-screen"><div class="login-brand"><strong>Gestão de vendas</strong><p>Confirme seu celular</p></div><form class="login-register-form sms-confirm-form" onsubmit="confirmarCadastroSms(event)"><p class="login-card-help">Enviamos um código por SMS para <b>${escapeHtml(telefone)}</b>.</p><label>Código de validação<div class="login-field">${svgIcon('lock')}<input id="cadastroCodigoSms" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="8" placeholder="Digite o código recebido" autofocus required></div></label><div id="cadastroErro" class="login-error"></div><button class="primary login-submit" type="submit">Validar e criar conta</button><button id="reenviarSmsCadastro" class="forgot-link sms-resend" type="button" onclick="reenviarSmsCadastro()" disabled>Reenviar código em <span id="smsContador">60</span>s</button><p class="login-register"><button type="button" onclick="voltarDadosCadastro()">Alterar dados</button></p></form></section>`;
 }
 
 function trocarTipoLogin(tipo) {
@@ -260,6 +311,9 @@ async function sairSistema() {
   state.produtos = [];
   state.clientes = [];
   state.vendas = [];
+  state.acessoVendas = null;
+  state.solicitacaoAcesso = null;
+  state.usuarioSemAcesso = false;
   render();
 }
 
@@ -293,18 +347,156 @@ async function enviarRecuperacaoSenha() {
 }
 
 function abrirCadastroConta() {
-  sheet(`<div class="sheet-header"><div><h2>Crie sua conta</h2><p class="muted small">Seu acesso será criado no AvantaLab.</p></div><button class="close" onclick="fecharSheet()">×</button></div><div class="grid">${campo('cadastroNome','Nome completo')}${campo('cadastroEmail','E-mail','','email')}${campo('cadastroTelefone','Telefone (opcional)','','tel')}${campo('cadastroSenha','Senha','','password')}<button class="primary" onclick="criarConta()">Criar conta</button></div>`);
+  modoLogin = 'cadastro';
+  cadastroEtapa = 'dados';
+  render();
 }
 
-async function criarConta() {
+function voltarParaLogin() {
+  modoLogin = 'entrar';
+  cadastroEtapa = 'dados';
+  cadastroPendente = null;
+  pararContadorSmsCadastro();
+  render();
+}
+
+function voltarDadosCadastro() {
+  cadastroEtapa = 'dados';
+  pararContadorSmsCadastro();
+  render();
+}
+
+async function criarConta(event) {
+  event?.preventDefault();
+  const erro = document.getElementById('cadastroErro');
+  if (erro) erro.textContent = '';
   const nome = valor('cadastroNome').trim();
   const email = valor('cadastroEmail').trim();
   const senha = valor('cadastroSenha');
-  if (!nome || !email || senha.length < 6) { toast('Informe nome, e-mail e uma senha com ao menos 6 caracteres.'); return; }
+  const confirmarSenha = valor('cadastroConfirmarSenha');
+  const telefone = valor('cadastroTelefone').replace(/\D/g, '');
+  const ddi = valor('cadastroDdi').replace(/\D/g, '') || '55';
+  const codigo = valor('cadastroCodigo').trim().toUpperCase();
+  const telefoneCompleto = `+${ddi}${telefone}`;
+  const ehBrasil = ddi === '55';
+  if (!nome || !email || !codigo || !telefone || !senhaCadastroValida(senha)) {
+    if (erro) erro.textContent = 'A senha deve ter 8 caracteres, ao menos uma letra maiúscula, uma minúscula e um número.';
+    return;
+  }
+  if (ehBrasil ? (telefone.length < 10 || telefone.length > 11) : (telefone.length < 6 || telefone.length > 15)) {
+    if (erro) erro.textContent = ehBrasil ? 'Informe um celular válido com DDD.' : 'Informe um número de celular válido para o país selecionado.';
+    return;
+  }
+  if (senha !== confirmarSenha) {
+    if (erro) erro.textContent = 'As senhas não coincidem.';
+    return;
+  }
   try {
-    await window.VendasDb.signUp({ nome, email, password: senha, telefone: valor('cadastroTelefone').replace(/\D/g, '') ? `+55${valor('cadastroTelefone').replace(/\D/g, '')}` : '' });
-    fecharSheet(); toast('Conta criada. Verifique seu e-mail para confirmar o acesso.');
-  } catch (error) { toast(traduzErro(error)); }
+    cadastroPendente = { nome, email, senha, codigo, telefone: telefoneCompleto };
+    await enviarSmsCadastro(telefoneCompleto);
+    cadastroEtapa = 'sms';
+    render();
+    iniciarContadorSmsCadastro();
+  } catch (error) {
+    if (erro) erro.textContent = traduzErro(error);
+  }
+}
+
+async function enviarSmsCadastro(telefone) {
+  const resposta = await fetch('/api/sms/enviar-codigo', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ telefone }),
+  });
+  const resultado = await resposta.json().catch(() => ({}));
+  if (!resposta.ok || resultado.erro) throw new Error(resultado.mensagem || 'Não foi possível enviar o código por SMS.');
+}
+
+function atualizarContadorSmsCadastro() {
+  const botao = document.getElementById('reenviarSmsCadastro');
+  const contador = document.getElementById('smsContador');
+  if (!botao || !contador) return;
+  contador.textContent = String(segundosReenvioSmsCadastro);
+  botao.disabled = segundosReenvioSmsCadastro > 0;
+  botao.textContent = segundosReenvioSmsCadastro > 0 ? `Reenviar código em ${segundosReenvioSmsCadastro}s` : 'Reenviar código';
+}
+
+function pararContadorSmsCadastro() {
+  if (timerReenvioSmsCadastro) window.clearInterval(timerReenvioSmsCadastro);
+  timerReenvioSmsCadastro = null;
+}
+
+function iniciarContadorSmsCadastro() {
+  pararContadorSmsCadastro();
+  segundosReenvioSmsCadastro = 60;
+  atualizarContadorSmsCadastro();
+  timerReenvioSmsCadastro = window.setInterval(() => {
+    segundosReenvioSmsCadastro = Math.max(0, segundosReenvioSmsCadastro - 1);
+    atualizarContadorSmsCadastro();
+    if (segundosReenvioSmsCadastro === 0) pararContadorSmsCadastro();
+  }, 1000);
+}
+
+async function reenviarSmsCadastro() {
+  if (!cadastroPendente || segundosReenvioSmsCadastro > 0) return;
+  const erro = document.getElementById('cadastroErro');
+  if (erro) erro.textContent = '';
+  try {
+    await enviarSmsCadastro(cadastroPendente.telefone);
+    iniciarContadorSmsCadastro();
+    toast('Enviamos um novo código por SMS.');
+  } catch (error) {
+    if (erro) erro.textContent = traduzErro(error);
+  }
+}
+
+async function confirmarCadastroSms(event) {
+  event?.preventDefault();
+  const erro = document.getElementById('cadastroErro');
+  if (erro) erro.textContent = '';
+  const codigoSms = valor('cadastroCodigoSms').trim();
+  if (!cadastroPendente || !codigoSms) { if (erro) erro.textContent = 'Digite o código recebido por SMS.'; return; }
+  try {
+    const resposta = await fetch('/api/sms/verificar-codigo', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ telefone: cadastroPendente.telefone, codigo: codigoSms }),
+    });
+    const resultado = await resposta.json().catch(() => ({}));
+    if (!resposta.ok || resultado.erro) throw new Error(resultado.mensagem || 'Código inválido ou expirado.');
+    const dados = cadastroPendente;
+    localStorage.setItem('avantalab.vendas_mobile.solicitacao_pendente', JSON.stringify({ nome: dados.nome, codigo: dados.codigo, telefone: dados.telefone }));
+    await window.VendasDb.signUp({ nome: dados.nome, email: dados.email, password: dados.senha, telefone: dados.telefone });
+    pararContadorSmsCadastro();
+    cadastroPendente = null;
+    cadastroEtapa = 'dados';
+    modoLogin = 'entrar';
+    render();
+    toast('Conta criada. Confirme seu e-mail e entre para enviar a solicitação ao gestor.');
+  } catch (error) {
+    if (erro) erro.textContent = traduzErro(error);
+  }
+}
+
+function renderSolicitarAcesso() {
+  const solicitacao = state.solicitacaoAcesso;
+  if (solicitacao?.status === 'pendente') {
+    return `<section class="login-screen"><div class="login-brand"><strong>Gestão de vendas</strong><p>Solicitação enviada</p></div><div class="sheet"><div class="sheet-header"><div><h2>Aguardando aprovação</h2><p class="muted small">O gestor do perfil analisará seu acesso. Volte mais tarde e entre novamente.</p></div></div><button class="primary" onclick="sairSistema()">Sair</button></div></section>`;
+  }
+  return `<section class="login-screen"><div class="login-brand"><strong>Gestão de vendas</strong><p>Solicite acesso a uma empresa</p></div><div class="sheet"><div class="grid">${campo('solicitacaoNome','Nome completo', state.usuario?.nome || '')}${campo('solicitacaoCodigo','Código da empresa')}${campo('solicitacaoTelefone','Telefone (opcional)','','tel')}<div id="solicitacaoErro" class="login-error"></div><button class="primary" onclick="enviarSolicitacaoAcesso()">Enviar solicitação</button><button class="forgot-link" type="button" onclick="sairSistema()">Sair da conta</button></div></div></section>`;
+}
+
+async function enviarSolicitacaoAcesso() {
+  const erro = document.getElementById('solicitacaoErro');
+  if (erro) erro.textContent = '';
+  const nome = valor('solicitacaoNome').trim();
+  const codigo = valor('solicitacaoCodigo').trim().toUpperCase();
+  const telefone = valor('solicitacaoTelefone').replace(/\D/g, '');
+  if (!nome || !codigo) { if (erro) erro.textContent = 'Informe seu nome e o código da empresa.'; return; }
+  try {
+    await window.VendasDb.solicitarAcesso({ codigo, nome, telefone: telefone ? `+55${telefone}` : '' });
+    state.solicitacaoAcesso = { status: 'pendente' };
+    render();
+  } catch (error) {
+    if (erro) erro.textContent = traduzErro(error);
+  }
 }
 
 function traduzErro(error) {
@@ -318,7 +510,15 @@ async function carregarDadosBackend() {
   carregandoBackend = true;
   render();
   try {
-    const dados = await window.VendasDb.loadAll();
+    let dados = await window.VendasDb.loadAll();
+    if (dados.user && !dados.acesso) {
+      const pendente = JSON.parse(localStorage.getItem('avantalab.vendas_mobile.solicitacao_pendente') || 'null');
+      if (pendente?.codigo && pendente?.nome) {
+        await window.VendasDb.solicitarAcesso(pendente);
+        localStorage.removeItem('avantalab.vendas_mobile.solicitacao_pendente');
+        dados = await window.VendasDb.loadAll();
+      }
+    }
     state.autenticado = Boolean(dados.user);
     if (dados.user) {
       state.usuario = { ...state.usuario, nome: dados.user.user_metadata?.nome || dados.user.user_metadata?.name || dados.user.email || state.usuario.nome };
@@ -326,6 +526,10 @@ async function carregarDadosBackend() {
       state.clientes = dados.clientes;
       state.vendas = dados.vendas;
       state.menuAberto = true;
+      state.acessoVendas = dados.acesso || null;
+      state.solicitacaoAcesso = dados.solicitacao || null;
+      state.usuarioSemAcesso = !dados.acesso;
+      if (!dados.acesso) state.autenticado = false;
     }
   } catch (error) {
     console.error(error);
@@ -1152,7 +1356,13 @@ window.alternarSenhaLogin = alternarSenhaLogin;
 window.abrirRecuperacaoSenha = abrirRecuperacaoSenha;
 window.enviarRecuperacaoSenha = enviarRecuperacaoSenha;
 window.abrirCadastroConta = abrirCadastroConta;
+window.voltarParaLogin = voltarParaLogin;
+window.voltarDadosCadastro = voltarDadosCadastro;
 window.criarConta = criarConta;
+window.confirmarCadastroSms = confirmarCadastroSms;
+window.reenviarSmsCadastro = reenviarSmsCadastro;
+window.atualizarRequisitosSenhaCadastro = atualizarRequisitosSenhaCadastro;
+window.enviarSolicitacaoAcesso = enviarSolicitacaoAcesso;
 window.aplicarFiltroDashboard = aplicarFiltroDashboard;
 window.mudarMes = mudarMes;
 window.irMesAtual = irMesAtual;

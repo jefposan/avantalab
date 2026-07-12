@@ -51,9 +51,39 @@
     if (error) throw error;
   }
 
+  async function solicitarAcesso({ codigo, nome, telefone }) {
+    const { data, error } = await requireClient().rpc('solicitar_acesso_vendas_mobile_rpc', {
+      p_codigo_empresa: codigo,
+      p_nome: nome,
+      p_telefone: telefone || null,
+    });
+    if (error) throw error;
+    return data;
+  }
+
+  async function buscarAcessoVendas() {
+    const user = await currentUser();
+    if (!user) return { acesso: null, solicitacao: null };
+    const [acessosRes, solicitacaoRes] = await Promise.all([
+      requireClient().rpc('meus_acessos_vendas_mobile_rpc'),
+      requireClient().from('vendas_mobile_solicitacoes_acesso').select('*').eq('user_id', user.id).order('atualizado_em', { ascending: false }).limit(1).maybeSingle(),
+    ]);
+    if (acessosRes.error) throw acessosRes.error;
+    if (solicitacaoRes.error) throw solicitacaoRes.error;
+    return {
+      acesso: (acessosRes.data || []).find((item) => item.status === 'ativo') || null,
+      solicitacao: solicitacaoRes.data || null,
+    };
+  }
+
   async function loadAll() {
     const user = await currentUser();
     if (!user) return { user: null, produtos: [], clientes: [], vendas: [] };
+
+    const acessoVendas = await buscarAcessoVendas();
+    if (!acessoVendas.acesso) {
+      return { user, produtos: [], clientes: [], vendas: [], ...acessoVendas };
+    }
 
     const [produtosRes, clientesRes, pedidosRes] = await Promise.all([
       client.from('vendas_mobile_produtos').select('*').order('criado_em', { ascending: false }),
@@ -71,6 +101,7 @@
         ...(c.endereco || {}),
       })),
       vendas: (pedidosRes.data || []).map((p) => ({ ...p, itens: p.itens || [] })),
+      ...acessoVendas,
     };
   }
 
@@ -166,5 +197,5 @@
     return { ...pedido, itens: savedItems || [] };
   }
 
-  window.VendasDb = { client, currentUser, signIn, signInPhone, resetPassword, signUp, signOut, loadAll, saveProduct, deleteProduct, saveClient, deleteClient, saveOrder };
+  window.VendasDb = { client, currentUser, signIn, signInPhone, resetPassword, signUp, signOut, solicitarAcesso, buscarAcessoVendas, loadAll, saveProduct, deleteProduct, saveClient, deleteClient, saveOrder };
 })();
