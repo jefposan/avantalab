@@ -1454,6 +1454,40 @@ export async function criarEmpresaInicial(nomeEmpresa: string) {
   };
 }
 
+export async function criarPrimeiroPerfilCadastro(nomeEmpresa: string, tipoPerfil: 'empresa' | 'pessoal') {
+  const { data, error } = await supabase.rpc('criar_primeiro_perfil_cadastro_rpc', {
+    p_nome_empresa: nomeEmpresa,
+    p_tipo_perfil: tipoPerfil,
+  });
+
+  if (error) {
+    console.error('Erro ao criar primeiro perfil do cadastro:', error);
+    return {
+      erro: true,
+      mensagem: tratarErroSupabase(error),
+      data: null,
+      criado: false,
+    };
+  }
+
+  const retorno = data as { empresa?: Record<string, unknown>; criado?: boolean } | null;
+  if (!retorno?.empresa) {
+    return {
+      erro: true,
+      mensagem: 'O servidor não retornou os dados do primeiro perfil.',
+      data: null,
+      criado: false,
+    };
+  }
+
+  return {
+    erro: false,
+    mensagem: '',
+    data: retorno.empresa,
+    criado: retorno.criado === true,
+  };
+}
+
 export async function buscarEmailPorLogin(login: string) {
   const { data, error } = await supabase.rpc('buscar_email_por_login_rpc', {
     p_login: login.trim(),

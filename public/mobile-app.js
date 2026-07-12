@@ -152,6 +152,7 @@
     validandoTelefoneObrigatorio: false,
     cadastro: {
       nome: '',
+      nomeEmpresa: '',
       email: '',
       telefone: '',
       senha: '',
@@ -332,11 +333,11 @@
   }
 
   function rotuloNomePerfil(tipoPerfil) {
-    return normalizarTipoPerfil(tipoPerfil) === 'pessoal' ? 'Nome do perfil' : 'Nome da empresa';
+    return normalizarTipoPerfil(tipoPerfil) === 'pessoal' ? 'Nome do perfil' : 'Nome fantasia';
   }
 
   function placeholderNomePerfil(tipoPerfil) {
-    return normalizarTipoPerfil(tipoPerfil) === 'pessoal' ? 'Ex: Minha vida financeira' : 'Ex: Minha Empresa';
+    return normalizarTipoPerfil(tipoPerfil) === 'pessoal' ? 'Ex: Minha vida financeira' : 'Ex: Avanta Comercio';
   }
   // --- Fim helpers de tipo de perfil ---
 
@@ -3879,6 +3880,10 @@
     if (!state.empresa) {
       state.carregando = false;
       state.loginAcao = '';
+      var perfilCriadoNoCadastro = await criarPerfilInicialDoCadastroMobile(mdLogin);
+      if (perfilCriadoNoCadastro) return;
+      state.criarPerfilNome = String(mdLogin.nome_perfil_inicial || '');
+      state.criarPerfilTipo = normalizarTipoPerfil(mdLogin.tipo_perfil_inicial || state.cadastroTipoPerfil);
       state.modoCriarPerfil = true;
       render();
       return;
@@ -4018,8 +4023,12 @@
   }
 
   function lerCadastroDaTela() {
+    var campoEmpresaCadastro = document.getElementById('cadastro-empresa');
     state.cadastro = {
       nome: campo('cadastro-nome').trim(),
+      nomeEmpresa: campoEmpresaCadastro
+        ? String(campoEmpresaCadastro.value || '').trim()
+        : String(state.cadastro.nomeEmpresa || '').trim(),
       email: campo('cadastro-email').trim().toLowerCase(),
       telefone: campo('cadastro-telefone').replace(/\D/g, ''),
       senha: campo('cadastro-senha'),
@@ -4033,6 +4042,21 @@
   }
 
   // Número do cadastro no formato internacional E.164 (+DDI + nacional).
+  function formatarTelefoneCadastroMobile(valor, ddi) {
+    var digitos = String(valor || '').replace(/\D/g, '');
+    if (String(ddi || '55') !== '55') return digitos.slice(0, 15);
+
+    var telefone = digitos.slice(0, 11);
+    if (telefone.length <= 2) return telefone ? '(' + telefone : '';
+
+    var ddd = telefone.slice(0, 2);
+    var numero = telefone.slice(2);
+    if (numero.length <= 4) return '(' + ddd + ') ' + numero;
+
+    var tamanhoPrefixo = numero.length <= 8 ? 4 : 5;
+    return '(' + ddd + ') ' + numero.slice(0, tamanhoPrefixo) + '-' + numero.slice(tamanhoPrefixo);
+  }
+
   function telefoneCadastroE164() {
     var ddi = (state.cadastroDdi || '55').replace(/\D/g, '') || '55';
     return '+' + ddi + (state.cadastro.telefone || '');
@@ -4139,6 +4163,12 @@
         data: {
           nome: state.cadastro.nome,
           telefone: telefoneCadastroE164(),
+          nome_perfil_inicial: normalizarTipoPerfil(state.cadastroTipoPerfil) === 'empresa'
+            ? state.cadastro.nomeEmpresa
+            : state.cadastro.nome,
+          tipo_perfil_inicial: normalizarTipoPerfil(state.cadastroTipoPerfil),
+          cupom_perfil_inicial: (state.cadastroCupom || '').trim().toUpperCase() || null,
+          inicio_empresa_modo: state.inicioEmpresaModo,
           // Prova de consentimento (LGPD): versao, data/hora e origem do aceite.
           aceite_termos_versao: termosVersao,
           aceite_termos_em: aceiteLegalEm,
@@ -4167,6 +4197,7 @@
     state.criarPerfilTipo = normalizarTipoPerfil(state.cadastroTipoPerfil);
     state.cadastro = {
       nome: '',
+      nomeEmpresa: '',
       email: '',
       telefone: '',
       senha: '',
@@ -4240,39 +4271,61 @@
     }
   }
 
-  async function criarPerfilInicial() {
-    if (state.carregando) return;
-    var nome = campo('criar-perfil-inicial-nome').trim();
-    var tipo = normalizarTipoPerfil(state.criarPerfilTipo);
+  async function criarPerfilInicial(dadosCadastro) {
+    var criacaoAutomatica = dadosCadastro && typeof dadosCadastro.nome === 'string';
+    if (state.carregando && !criacaoAutomatica) return false;
+    var nome = criacaoAutomatica ? dadosCadastro.nome.trim() : campo('criar-perfil-inicial-nome').trim();
+    var tipo = normalizarTipoPerfil(criacaoAutomatica ? dadosCadastro.tipoPerfil : state.criarPerfilTipo);
+    var cupomCriacao = criacaoAutomatica
+      ? String(dadosCadastro.cupom || '').trim().toUpperCase()
+      : String(state.cadastroCupom || '').trim().toUpperCase();
+    var modoInicioEmpresa = criacaoAutomatica
+      ? (dadosCadastro.inicioEmpresaModo === 'assinar' ? 'assinar' : 'trial')
+      : state.inicioEmpresaModo;
 
     if (!nome) {
       setErroCriarPerfil(rotuloNomePerfil(tipo) + ' e obrigatorio.');
-      return;
+      return false;
     }
 
     // Premium Pessoal: 2º perfil pessoal é pago (o primeiro e o empresa são livres).
     if (tipo === 'pessoal' && criarPerfilPessoalBloqueadoMobile()) {
       state.modoCriarPerfil = false;
       abrirPremiumMobile('multiplos_perfis');
-      return;
+      return false;
     }
 
     state.carregando = true;
     state.criarPerfilErro = '';
     render();
 
-    var resposta = await db.rpc('criar_empresa_inicial_rpc', { p_nome_empresa: nome });
+    var resposta = criacaoAutomatica
+      ? await db.rpc('criar_primeiro_perfil_cadastro_rpc', {
+          p_nome_empresa: nome,
+          p_tipo_perfil: tipo,
+        })
+      : await db.rpc('criar_empresa_inicial_rpc', { p_nome_empresa: nome });
 
     if (resposta.error || !resposta.data) {
       state.carregando = false;
       setErroCriarPerfil(mensagemErro(resposta.error, 'Nao foi possivel criar o perfil financeiro.'));
-      return;
+      return false;
     }
 
-    var criada = Array.isArray(resposta.data) ? resposta.data[0] : resposta.data;
+    var retornoPrimeiroPerfil = criacaoAutomatica ? resposta.data : null;
+    var criada = criacaoAutomatica
+      ? retornoPrimeiroPerfil && retornoPrimeiroPerfil.empresa
+      : (Array.isArray(resposta.data) ? resposta.data[0] : resposta.data);
+    var perfilCriadoAgora = !criacaoAutomatica || !!(retornoPrimeiroPerfil && retornoPrimeiroPerfil.criado);
     var criadaId = criada && (criada.id || criada.empresa_id);
 
-    if (criadaId) {
+    if (!criadaId) {
+      state.carregando = false;
+      setErroCriarPerfil('O perfil foi criado sem um identificador válido. Recarregue a página antes de tentar novamente.');
+      return false;
+    }
+
+    if (criadaId && perfilCriadoAgora) {
       var telefoneConfirmado = telefoneConfirmadoDoUsuarioMobile();
       if (telefoneConfirmado) {
         var agoraTelefone = new Date().toISOString();
@@ -4302,25 +4355,25 @@
       }
     }
 
-    if (criadaId) {
+    if (criadaId && perfilCriadoAgora) {
       await inserirDespesasPadraoMobile(criadaId, tipo);
     }
 
     // Cupom informado no cadastro: concede cortesia ao novo perfil (opcional).
     // Falha silenciosa — se o cupom for inválido, segue no trial normal.
-    if (criadaId && state.cadastroCupom && state.cadastroCupom.trim()) {
+    if (criadaId && perfilCriadoAgora && cupomCriacao) {
       try {
         var tokCupom = await tokenSessao();
         if (tokCupom) {
           await fetch('/api/cobranca/resgatar-cupom', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + tokCupom },
-            body: JSON.stringify({ empresaId: criadaId, codigo: state.cadastroCupom.trim() }),
+            body: JSON.stringify({ empresaId: criadaId, codigo: cupomCriacao }),
           });
         }
       } catch (e) { /* silencioso */ }
       state.cadastroCupom = '';
-    } else if (criadaId && COBRANCA_ATIVA_MOBILE && tipo === 'empresa') {
+    } else if (criadaId && perfilCriadoAgora && COBRANCA_ATIVA_MOBILE && tipo === 'empresa') {
       // Sem cupom: define o início do perfil empresa (7 dias grátis x assinar agora).
       try {
         var tokInicio = await tokenSessao();
@@ -4328,7 +4381,7 @@
           await fetch('/api/cobranca/definir-inicio', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + tokInicio },
-            body: JSON.stringify({ empresaId: criadaId, modo: state.inicioEmpresaModo }),
+            body: JSON.stringify({ empresaId: criadaId, modo: modoInicioEmpresa }),
           });
         }
       } catch (e) { /* silencioso */ }
@@ -4336,8 +4389,42 @@
 
     state.modoCriarPerfil = false;
     state.criarPerfilNome = '';
+    state.cadastroCupom = '';
+    if (criacaoAutomatica) {
+      var limpezaMetadata = await db.auth.updateUser({
+        data: {
+          nome_perfil_inicial: null,
+          tipo_perfil_inicial: null,
+          cupom_perfil_inicial: null,
+          inicio_empresa_modo: null,
+        },
+      });
+      if (limpezaMetadata.error) {
+        console.error('Erro ao limpar dados temporarios do primeiro perfil:', limpezaMetadata.error);
+      }
+    }
     await carregarEmpresas(state.usuario.id);
     await carregarDados();
+    return true;
+  }
+
+  async function criarPerfilInicialDoCadastroMobile(metadata) {
+    var nome = String(metadata && metadata.nome_perfil_inicial || '').trim();
+    if (!nome) return false;
+
+    var tipo = normalizarTipoPerfil(metadata.tipo_perfil_inicial || 'empresa');
+    var modo = metadata.inicio_empresa_modo === 'assinar' ? 'assinar' : 'trial';
+    state.criarPerfilNome = nome;
+    state.criarPerfilTipo = tipo;
+    state.inicioEmpresaModo = modo;
+    state.carregando = false;
+
+    return criarPerfilInicial({
+      nome: nome,
+      tipoPerfil: tipo,
+      cupom: metadata.cupom_perfil_inicial || '',
+      inicioEmpresaModo: modo,
+    });
   }
 
   function telaCriarPerfilInicial() {
@@ -4505,8 +4592,13 @@
   }
 
   function validarCadastroBase() {
+    if (normalizarTipoPerfil(state.cadastroTipoPerfil) === 'empresa' && !state.cadastro.nomeEmpresa) {
+      setErro('Informe o nome fantasia da empresa.');
+      return false;
+    }
+
     if (!state.cadastro.nome) {
-      setErro('Informe seu nome completo.');
+      setErro('Informe o nome completo do responsavel.');
       return false;
     }
 
@@ -6307,11 +6399,14 @@
           '<p class="mb-1 text-[10px] font-black uppercase tracking-wide text-slate-600">Tipo do primeiro perfil</p>' +
           seletorTipoPerfilHtml('cadastro-tipo', tipoCadastro) +
         '</div>' +
-        inputHtml('cadastro-nome', 'Nome', 'text', 'Seu nome completo', state.cadastro.nome) +
+        (tipoCadastro === 'empresa'
+          ? inputHtml('cadastro-empresa', 'Empresa', 'text', 'Nome fantasia', state.cadastro.nomeEmpresa)
+          : '') +
+        inputHtml('cadastro-nome', tipoCadastro === 'empresa' ? 'Responsável' : 'Nome completo', 'text', 'Nome completo', state.cadastro.nome) +
         inputHtml('cadastro-email', 'Email', 'email', 'seuemail@exemplo.com', state.cadastro.email) +
         '<div class="grid grid-cols-[7rem_1fr] gap-2">' +
           '<div><p class="mb-1 text-[10px] font-black uppercase tracking-wide text-slate-600">País</p><select id="cadastro-ddi" class="h-[38px] w-full rounded-xl border border-slate-300 bg-white/90 px-2 text-sm text-slate-800 outline-none">' + opcoesDdiHtml(state.cadastroDdi) + '</select></div>' +
-          '<div>' + inputHtml('cadastro-telefone', 'Celular', 'tel', '(xx) xxxxx-xxxx', state.cadastro.telefone) + '</div>' +
+          '<div>' + inputHtml('cadastro-telefone', 'Celular', 'tel', '(11) 99999-9999', formatarTelefoneCadastroMobile(state.cadastro.telefone, state.cadastroDdi)) + '</div>' +
         '</div>' +
         '<div class="grid grid-cols-2 gap-2">' +
           '<div>' + senhaInputHtml('cadastro-senha', 'Senha', 'Crie uma senha', 'mostrarSenhaCadastro', 'toggle-senha-cadastro', state.cadastro.senha) + '</div>' +
@@ -6325,10 +6420,10 @@
           '</div>'
         : '') +
         (!state.smsCadastroEnviado ?
-          '<p class="rounded-xl border border-slate-200 bg-white/70 px-3 py-2 text-[11px] leading-snug text-slate-600 shadow-sm">' +
-            'Ao se cadastrar, declara estar aceitando nossos termos: ' +
-            '<button id="cadastro-termos-link" type="button" class="font-bold text-sky-700 underline">Termos de Uso</button> e ' +
-            '<button id="cadastro-privacidade-link" type="button" class="font-bold text-sky-700 underline">Pol&iacute;tica de Privacidade</button>.' +
+          '<p class="rounded-xl border border-slate-200 bg-white/70 px-3 py-1.5 text-center leading-tight text-slate-600 shadow-sm">' +
+            '<span class="block whitespace-nowrap text-[10px]">Ao se cadastrar, voc&ecirc; declara aceitar nossos termos.</span>' +
+            '<span class="mt-0.5 block text-[11px]"><button id="cadastro-termos-link" type="button" class="mr-2 font-bold text-sky-700 underline">Termos de Uso</button>' +
+            '<button id="cadastro-privacidade-link" type="button" class="font-bold text-sky-700 underline">Pol&iacute;tica de Privacidade</button></span>' +
           '</p>'
         : '') +
         alertaHtml() +
@@ -9745,7 +9840,17 @@
     });
     bind('reenviar-cadastro', enviarCodigoCadastro);
     bindChange('cadastro-aceite', function (e) { state.aceitouTermos = !!(e.target && e.target.checked); });
-    bindChange('cadastro-ddi', function (e) { state.cadastroDdi = (e.target && e.target.value ? e.target.value : '55').replace(/\D/g, ''); });
+    bindChange('cadastro-ddi', function (e) {
+      state.cadastroDdi = (e.target && e.target.value ? e.target.value : '55').replace(/\D/g, '');
+      var telefoneCadastro = document.getElementById('cadastro-telefone');
+      if (telefoneCadastro) {
+        telefoneCadastro.value = formatarTelefoneCadastroMobile(telefoneCadastro.value, state.cadastroDdi);
+      }
+    });
+    bindInput('cadastro-telefone', function () {
+      this.value = formatarTelefoneCadastroMobile(this.value, state.cadastroDdi);
+      state.cadastro.telefone = this.value.replace(/\D/g, '');
+    });
     bind('cadastro-termos-link', function () {
       lerCadastroDaTela();
       var chk = document.getElementById('cadastro-aceite');
@@ -9758,8 +9863,8 @@
       if (chk) state.aceitouTermos = chk.checked;
       abrirModalMenu('privacidade');
     });
-    bind('cadastro-tipo-empresa', function () { state.cadastroTipoPerfil = 'empresa'; render(); });
-    bind('cadastro-tipo-pessoal', function () { state.cadastroTipoPerfil = 'pessoal'; render(); });
+    bind('cadastro-tipo-empresa', function () { lerCadastroDaTela(); state.cadastroTipoPerfil = 'empresa'; render(); });
+    bind('cadastro-tipo-pessoal', function () { lerCadastroDaTela(); state.cadastroTipoPerfil = 'pessoal'; render(); });
     bind('criar-perfil-inicial-submit', criarPerfilInicial);
     bind('sair-criar-perfil', function () { state.modoCriarPerfil = false; sair(); });
     bind('criar-perfil-empresa', function () { state.criarPerfilTipo = 'empresa'; render(); });
@@ -11520,7 +11625,16 @@
         state.usuario = sessao.data.session.user;
         state.autenticado = true;
         await carregarEmpresas(state.usuario.id);
-        await carregarDados();
+        if (!state.empresa) {
+          var perfilCriadoNaInicializacao = await criarPerfilInicialDoCadastroMobile(mdSessao);
+          if (!perfilCriadoNaInicializacao) {
+            state.criarPerfilNome = String(mdSessao.nome_perfil_inicial || '');
+            state.criarPerfilTipo = normalizarTipoPerfil(mdSessao.tipo_perfil_inicial || 'empresa');
+            state.modoCriarPerfil = true;
+          }
+        } else {
+          await carregarDados();
+        }
       } else {
         window.location.replace('/?entrar=1');
         return;

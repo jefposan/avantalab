@@ -51,6 +51,8 @@ interface AuthCardProps {
   setMostrarConfirmarSenhaCadastro: React.Dispatch<React.SetStateAction<boolean>>;
   cadastroNome: string;
   setCadastroNome: React.Dispatch<React.SetStateAction<string>>;
+  cadastroNomeEmpresa: string;
+  setCadastroNomeEmpresa: React.Dispatch<React.SetStateAction<string>>;
   cadastroEmail: string;
   setCadastroEmail: React.Dispatch<React.SetStateAction<string>>;
   cadastroTelefone: string;
@@ -111,6 +113,7 @@ export default function AuthCard({
   mostrarSenhaCadastro, setMostrarSenhaCadastro,
   mostrarConfirmarSenhaCadastro, setMostrarConfirmarSenhaCadastro,
   cadastroNome, setCadastroNome,
+  cadastroNomeEmpresa, setCadastroNomeEmpresa,
   cadastroEmail, setCadastroEmail,
   cadastroTelefone, setCadastroTelefone,
   cadastroSenha, setCadastroSenha,
@@ -692,14 +695,33 @@ export default function AuthCard({
                   })}
                 </div>
 
-                <input
-  type="text"
-  autoComplete="name"
-  placeholder="Nome completo"
-  value={cadastroNome}
-  onChange={(e) => setCadastroNome(e.target.value)}
-  className="w-full rounded-xl border border-slate-300 bg-white/90 px-3 py-1.5 text-sm text-slate-800 outline-none transition focus:border-sky-600 focus:ring-2 focus:ring-sky-600/20"
-/>
+                {tipoPerfilInicialNormalizado === 'empresa' && (
+                  <label className="block">
+                    <span className="mb-0.5 block text-[10px] font-black uppercase text-slate-600">Empresa</span>
+                    <input
+                      type="text"
+                      autoComplete="organization"
+                      placeholder="Nome fantasia"
+                      value={cadastroNomeEmpresa}
+                      onChange={(e) => setCadastroNomeEmpresa(e.target.value)}
+                      className="w-full rounded-xl border border-slate-300 bg-white/90 px-3 py-1.5 text-sm text-slate-800 outline-none transition focus:border-sky-600 focus:ring-2 focus:ring-sky-600/20"
+                    />
+                  </label>
+                )}
+
+                <label className="block">
+                  <span className="mb-0.5 block text-[10px] font-black uppercase text-slate-600">
+                    {tipoPerfilInicialNormalizado === 'empresa' ? 'Responsável' : 'Nome completo'}
+                  </span>
+                  <input
+                    type="text"
+                    autoComplete="name"
+                    placeholder="Nome completo"
+                    value={cadastroNome}
+                    onChange={(e) => setCadastroNome(e.target.value)}
+                    className="w-full rounded-xl border border-slate-300 bg-white/90 px-3 py-1.5 text-sm text-slate-800 outline-none transition focus:border-sky-600 focus:ring-2 focus:ring-sky-600/20"
+                  />
+                </label>
 
                 <input
   type="email"

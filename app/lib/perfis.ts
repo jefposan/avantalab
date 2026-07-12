@@ -152,9 +152,9 @@ export function rotuloTipoPerfil(tipoPerfil: unknown): string {
 }
 
 export function rotuloNomePerfil(tipoPerfil: unknown): string {
-  return normalizarTipoPerfil(tipoPerfil) === 'pessoal' ? 'Nome do perfil' : 'Nome da empresa';
+  return normalizarTipoPerfil(tipoPerfil) === 'pessoal' ? 'Nome do perfil' : 'Nome fantasia';
 }
 
 export function placeholderNomePerfil(tipoPerfil: unknown): string {
-  return normalizarTipoPerfil(tipoPerfil) === 'pessoal' ? 'Ex: Minha vida financeira' : 'Ex: Minha Empresa';
+  return normalizarTipoPerfil(tipoPerfil) === 'pessoal' ? 'Ex: Minha vida financeira' : 'Ex: Avanta Comércio';
 }

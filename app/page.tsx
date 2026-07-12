@@ -381,6 +381,7 @@ export default function AppGestao() {
     mostrarSenhaCadastro, setMostrarSenhaCadastro,
     mostrarConfirmarSenhaCadastro, setMostrarConfirmarSenhaCadastro,
     cadastroNome, setCadastroNome,
+    cadastroNomeEmpresa, setCadastroNomeEmpresa,
     cadastroEmail, setCadastroEmail,
     cadastroTelefone, setCadastroTelefone,
     cadastroSenha, setCadastroSenha,
@@ -417,6 +418,7 @@ export default function AppGestao() {
     handleCadastroTeste,
     reenviarCodigoSmsCadastro,
     handleCriarEmpresaInicial,
+    handleCriarPerfilInicialDoCadastro,
     handleRecuperarSenha,
     reenviarCodigoRedefinirSenha,
     handleAtualizarSenha,
@@ -1248,13 +1250,16 @@ setMensagemCarregamentoSistema('Carregando empresa...');
 
       if (!empresasEncontradas || empresasEncontradas.length === 0) {
   setCriandoNovaEmpresaLogada(false);
-  setAcessoNaoConfigurado(true);
   setAcessoLiberado(false);
   const empresaFallback = await buscarEmpresaDoUsuario(
     sessaoAtual.session.user.id
   );
 
   if (!empresaFallback) {
+    const perfilCriado = await handleCriarPerfilInicialDoCadastro(
+      sessaoAtual.session.user.user_metadata
+    );
+    if (perfilCriado) return;
     setAcessoNaoConfigurado(true);
     setAcessoLiberado(false);
   } else {
@@ -5448,6 +5453,7 @@ setAnoSelecionado(new Date().getFullYear().toString());
 setLoginEmail('');
 setLoginSenha('');
 setCadastroNome('');
+setCadastroNomeEmpresa('');
 setCadastroEmail('');
 setCadastroTelefone('');
 setCadastroSenha('');
@@ -6397,6 +6403,8 @@ if (validacaoTelefoneObrigatoria) {
         setMostrarConfirmarSenhaCadastro={setMostrarConfirmarSenhaCadastro}
         cadastroNome={cadastroNome}
         setCadastroNome={setCadastroNome}
+        cadastroNomeEmpresa={cadastroNomeEmpresa}
+        setCadastroNomeEmpresa={setCadastroNomeEmpresa}
         cadastroEmail={cadastroEmail}
         setCadastroEmail={setCadastroEmail}
         cadastroTelefone={cadastroTelefone}

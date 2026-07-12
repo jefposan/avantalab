@@ -7,6 +7,7 @@ import {
   buscarEmpresaDoUsuario,
   buscarEmailPorLogin,
   criarEmpresaInicial,
+  criarPrimeiroPerfilCadastro,
   atualizarEmpresa,
   inserirDespesasPadraoPerfil,
 } from '../lib/database';
@@ -32,6 +33,15 @@ export type UseAuthDeps = {
   /** Seters de estados não-auth necessários em handleCriarEmpresaInicial */
   setTipoPerfilAtual: React.Dispatch<React.SetStateAction<TipoPerfil>>;
   setDuplicadosAtivo: React.Dispatch<React.SetStateAction<boolean>>;
+};
+
+type OpcoesCriacaoPerfilInicial = {
+  nome?: string;
+  tipoPerfil?: TipoPerfil;
+  cupom?: string;
+  inicioEmpresaModo?: 'trial' | 'assinar';
+  limparMetadataCadastro?: boolean;
+  somentePrimeiroCadastro?: boolean;
 };
 
 function telefoneCadastroConfirmado(metadata: Record<string, unknown> | null | undefined) {
@@ -83,6 +93,7 @@ export function useAuth(deps: UseAuthDeps) {
 
   // --- Estados de cadastro ---
   const [cadastroNome, setCadastroNome] = useState('');
+  const [cadastroNomeEmpresa, setCadastroNomeEmpresa] = useState('');
   const [cadastroEmail, setCadastroEmail] = useState('');
   const [cadastroTelefone, setCadastroTelefone] = useState('');
   const [cadastroSenha, setCadastroSenha] = useState('');
@@ -329,11 +340,15 @@ export function useAuth(deps: UseAuthDeps) {
       const empresasEncontradas = await buscarEmpresasDoUsuario(usuarioId);
 
       if (!empresasEncontradas || empresasEncontradas.length === 0) {
-        onSemEmpresa();
-
         const empresaFallback = await buscarEmpresaDoUsuario(usuarioId);
         if (empresaFallback) {
           await carregarEmpresaSelecionada(empresaFallback);
+        } else {
+          const perfilCriado = await handleCriarPerfilInicialDoCadastro(
+            dadosLogin.user?.user_metadata
+          );
+          if (perfilCriado) return;
+          onSemEmpresa();
         }
       } else if (empresasEncontradas.length === 1) {
         await carregarEmpresaSelecionada(empresasEncontradas[0]);
@@ -402,6 +417,11 @@ export function useAuth(deps: UseAuthDeps) {
     setAuthLoading(true);
 
     const nomeLimpo = cadastroNome.trim();
+    const tipoPerfilCadastro = normalizarTipoPerfil(tipoPerfilInicial);
+    const nomeEmpresaCadastro = cadastroNomeEmpresa.trim();
+    const nomePerfilInicialCadastro = tipoPerfilCadastro === 'empresa'
+      ? nomeEmpresaCadastro
+      : nomeLimpo;
     const emailLimpo = cadastroEmail.trim().toLowerCase();
     const telefoneLimpo = cadastroTelefone.replace(/\D/g, '');
     const ddiLimpo = cadastroDdi.replace(/\D/g, '') || DDI_PADRAO;
@@ -409,7 +429,10 @@ export function useAuth(deps: UseAuthDeps) {
     const telefoneCompleto = `+${ddiLimpo}${telefoneLimpo}`;
     const ehBrasil = ddiLimpo === '55';
 
-    if (!nomeLimpo) { setAuthErro('Informe seu nome completo.'); setAuthLoading(false); return; }
+    if (tipoPerfilCadastro === 'empresa' && !nomeEmpresaCadastro) {
+      setAuthErro('Informe o nome fantasia da empresa.'); setAuthLoading(false); return;
+    }
+    if (!nomeLimpo) { setAuthErro('Informe o nome completo do responsável.'); setAuthLoading(false); return; }
     if (!emailLimpo) { setAuthErro('Informe seu email.'); setAuthLoading(false); return; }
     if (!emailLimpo.includes('@') || !emailLimpo.includes('.')) {
       setAuthErro('Informe um email válido.'); setAuthLoading(false); return;
@@ -492,6 +515,10 @@ export function useAuth(deps: UseAuthDeps) {
         data: {
           nome: nomeLimpo,
           telefone: telefoneCompleto,
+          nome_perfil_inicial: nomePerfilInicialCadastro,
+          tipo_perfil_inicial: tipoPerfilCadastro,
+          cupom_perfil_inicial: cadastroCupom.trim().toUpperCase() || null,
+          inicio_empresa_modo: inicioEmpresaModo,
           // Prova de consentimento (LGPD): versao, data/hora e origem do aceite.
           aceite_termos_versao: TERMOS_VERSAO,
           aceite_termos_em: aceiteLegalEm,
@@ -519,6 +546,7 @@ export function useAuth(deps: UseAuthDeps) {
       'Cadastro criado e celular confirmado com sucesso. Faça login para acessar o sistema.'
     );
     setCadastroNome('');
+    setCadastroNomeEmpresa('');
     setCadastroEmail('');
     setCadastroTelefone('');
     setCadastroSenha('');
@@ -688,15 +716,17 @@ export function useAuth(deps: UseAuthDeps) {
   // Funções — Criar empresa inicial (onboarding)
   // ---------------------------------------------------------------------------
 
-  const handleCriarEmpresaInicial = async () => {
-    if (criandoEmpresaInicialRef.current) return;
+  async function handleCriarEmpresaInicial(opcoes?: OpcoesCriacaoPerfilInicial) {
+    if (criandoEmpresaInicialRef.current) return false;
 
-    const nomeLimpo = nomeEmpresaInicial.trim();
-    const tipoPerfil = normalizarTipoPerfil(tipoPerfilInicial);
+    const nomeLimpo = (opcoes?.nome ?? nomeEmpresaInicial).trim();
+    const tipoPerfil = normalizarTipoPerfil(opcoes?.tipoPerfil ?? tipoPerfilInicial);
+    const cupomCriacao = (opcoes?.cupom ?? cadastroCupom).trim().toUpperCase();
+    const modoInicioEmpresa = opcoes?.inicioEmpresaModo ?? inicioEmpresaModo;
 
     if (!nomeLimpo) {
       setAuthErro('Informe o nome do perfil financeiro para criar o ambiente.');
-      return;
+      return false;
     }
 
     criandoEmpresaInicialRef.current = true;
@@ -709,25 +739,27 @@ export function useAuth(deps: UseAuthDeps) {
       criandoEmpresaInicialRef.current = false;
       setCriandoEmpresaInicial(false);
       setAuthErro('Sua sessão expirou. Faça login novamente para continuar.');
-      return;
+      return false;
     }
 
     let resultado;
     try {
-      resultado = await criarEmpresaInicial(nomeLimpo);
+      resultado = opcoes?.somentePrimeiroCadastro
+        ? await criarPrimeiroPerfilCadastro(nomeLimpo, tipoPerfil)
+        : await criarEmpresaInicial(nomeLimpo);
     } catch (e: any) {
       criandoEmpresaInicialRef.current = false;
       setCriandoEmpresaInicial(false);
       console.error('Erro inesperado ao criar empresa inicial:', e);
       setAuthErro(e?.message || 'Erro inesperado ao criar o perfil. Tente novamente.');
-      return;
+      return false;
     }
 
     if (resultado.erro || !resultado.data) {
       criandoEmpresaInicialRef.current = false;
       setCriandoEmpresaInicial(false);
       setAuthErro(resultado.mensagem || 'Não foi possível criar o perfil financeiro. Tente novamente.');
-      return;
+      return false;
     }
 
     const empresaCriada = Array.isArray(resultado.data)
@@ -735,8 +767,18 @@ export function useAuth(deps: UseAuthDeps) {
       : resultado.data;
 
     const empresaCriadaId = empresaCriada?.id || empresaCriada?.empresa_id;
+    const perfilCriadoAgora = !opcoes?.somentePrimeiroCadastro || (
+      'criado' in resultado && resultado.criado === true
+    );
 
-    if (empresaCriadaId) {
+    if (!empresaCriadaId) {
+      criandoEmpresaInicialRef.current = false;
+      setCriandoEmpresaInicial(false);
+      setAuthErro('O perfil foi criado sem um identificador válido. Recarregue a página antes de tentar novamente.');
+      return false;
+    }
+
+    if (empresaCriadaId && perfilCriadoAgora) {
       const telefoneConfirmado = telefoneCadastroConfirmado(sessaoAtual.session.user.user_metadata);
       if (telefoneConfirmado) {
         const agoraTelefone = new Date().toISOString();
@@ -785,14 +827,14 @@ export function useAuth(deps: UseAuthDeps) {
 
     // Cupom informado no cadastro: concede cortesia ao novo perfil (opcional).
     // Falha silenciosa — se o cupom for inválido, o cadastro segue no trial normal.
-    if (empresaCriadaId && cadastroCupom.trim()) {
+    if (empresaCriadaId && perfilCriadoAgora && cupomCriacao) {
       try {
         const tokenSessao = sessaoAtual.session?.access_token;
         if (tokenSessao) {
           await fetch('/api/cobranca/resgatar-cupom', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${tokenSessao}` },
-            body: JSON.stringify({ empresaId: empresaCriadaId, codigo: cadastroCupom.trim() }),
+            body: JSON.stringify({ empresaId: empresaCriadaId, codigo: cupomCriacao }),
           });
         }
       } catch { /* silencioso */ }
@@ -800,14 +842,14 @@ export function useAuth(deps: UseAuthDeps) {
 
     // Cobrança: define o início do perfil EMPRESA (7 dias grátis x assinar agora).
     // Só quando a flag está ligada e não houve cupom (o cupom já concede cortesia).
-    if (empresaCriadaId && COBRANCA_ATIVA && tipoPerfil === 'empresa' && !cadastroCupom.trim()) {
+    if (empresaCriadaId && perfilCriadoAgora && COBRANCA_ATIVA && tipoPerfil === 'empresa' && !cupomCriacao) {
       try {
         const tokenSessao = sessaoAtual.session?.access_token;
         if (tokenSessao) {
           await fetch('/api/cobranca/definir-inicio', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${tokenSessao}` },
-            body: JSON.stringify({ empresaId: empresaCriadaId, modo: inicioEmpresaModo }),
+            body: JSON.stringify({ empresaId: empresaCriadaId, modo: modoInicioEmpresa }),
           });
         }
       } catch { /* silencioso */ }
@@ -815,12 +857,61 @@ export function useAuth(deps: UseAuthDeps) {
 
     setDuplicadosAtivo(true);
     setTipoPerfilAtual(tipoPerfil);
+    setCadastroCupom('');
+
+    if (opcoes?.limparMetadataCadastro) {
+      const { error: erroLimparMetadata } = await supabase.auth.updateUser({
+        data: {
+          nome_perfil_inicial: null,
+          tipo_perfil_inicial: null,
+          cupom_perfil_inicial: null,
+          inicio_empresa_modo: null,
+        },
+      });
+      if (erroLimparMetadata) {
+        console.error('Erro ao limpar dados temporários do primeiro perfil:', erroLimparMetadata);
+      }
+    }
+
     setAuthMensagem('Perfil financeiro criado com sucesso. Carregando o sistema...');
 
     setTimeout(() => {
       window.location.href = window.location.origin + window.location.pathname;
     }, 700);
-  };
+    return true;
+  }
+
+  async function handleCriarPerfilInicialDoCadastro(
+    metadata: Record<string, unknown> | null | undefined
+  ) {
+    const nome = String(metadata?.nome_perfil_inicial || '').trim();
+    if (!nome) return false;
+
+    const telaPequena = typeof window !== 'undefined' && window.innerWidth < 1024;
+    const dispositivoMobile = typeof navigator !== 'undefined' && (
+      window.matchMedia('(display-mode: standalone)').matches ||
+      Boolean((navigator as Navigator & { standalone?: boolean }).standalone) ||
+      /Android|iPhone|iPad|iPod|Opera Mini|IEMobile|Mobile/i.test(navigator.userAgent)
+    );
+    if (telaPequena && dispositivoMobile) return false;
+
+    const tipoPerfil = normalizarTipoPerfil(String(metadata?.tipo_perfil_inicial || 'empresa'));
+    const cupom = String(metadata?.cupom_perfil_inicial || '');
+    const modo = metadata?.inicio_empresa_modo === 'assinar' ? 'assinar' : 'trial';
+
+    setNomeEmpresaInicial(nome);
+    setTipoPerfilInicial(tipoPerfil);
+    setInicioEmpresaModo(modo);
+
+    return handleCriarEmpresaInicial({
+      nome,
+      tipoPerfil,
+      cupom,
+      inicioEmpresaModo: modo,
+      limparMetadataCadastro: true,
+      somentePrimeiroCadastro: true,
+    });
+  }
 
   // ---------------------------------------------------------------------------
   // Retorno
@@ -840,6 +931,7 @@ export function useAuth(deps: UseAuthDeps) {
     mostrarSenhaCadastro, setMostrarSenhaCadastro,
     mostrarConfirmarSenhaCadastro, setMostrarConfirmarSenhaCadastro,
     cadastroNome, setCadastroNome,
+    cadastroNomeEmpresa, setCadastroNomeEmpresa,
     cadastroEmail, setCadastroEmail,
     cadastroTelefone, setCadastroTelefone,
     cadastroSenha, setCadastroSenha,
@@ -890,6 +982,7 @@ export function useAuth(deps: UseAuthDeps) {
     handleAtualizarSenha,
     handleGoogleLogin,
     handleCriarEmpresaInicial,
+    handleCriarPerfilInicialDoCadastro,
 
     // Helpers (usados em componentes e page.tsx)
     lerRespostaApi,

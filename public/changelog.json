@@ -13,6 +13,17 @@
   },
   "versoes": [
     {
+      "versao": "2.0.0",
+      "titulo": "Primeiro perfil criado no cadastro",
+      "data": "Julho/2026",
+      "itens": [
+        "Cadastro Web/Mobile: quando Empresa é selecionada, solicita Nome Fantasia e Responsável separadamente; email e senha permanecem vinculados exclusivamente ao usuário.",
+        "Primeiro acesso Web/Mobile: cria automaticamente o primeiro perfil com o Nome Fantasia informado e vincula o usuário autenticado, eliminando a repetição do nome após o cadastro.",
+        "Perfis: mantém o mesmo usuário apto a criar outros perfis ou ser vinculado a perfis existentes, sem criar credenciais próprias para a empresa.",
+        "Banco: serializa a criação do primeiro perfil por usuário para impedir duplicidade entre Web e Mobile e mantém perfis existentes inalterados."
+      ]
+    },
+    {
       "versao": "1.4.0.40",
       "titulo": "Acesso mobile sem sobreposição",
       "data": "Julho/2026",
