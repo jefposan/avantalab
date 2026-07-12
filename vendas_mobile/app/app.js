@@ -1054,7 +1054,7 @@ function escapeAttr(v) {
   return escapeHtml(v).replace(/`/g, '&#096;');
 }
 
-if ('serviceWorker' in navigator) {
+if (!window.__VENDAS_MOBILE_EMBEDDED__ && 'serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('./sw.js').catch(() => {});
   });

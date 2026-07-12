@@ -2,8 +2,8 @@
   "name": "AvantaLab Vendas Mobile",
   "short_name": "Vendas",
   "description": "PWA de vendas para vendedores autônomos, porta a porta e revendedores.",
-  "start_url": "./index.html",
-  "scope": "./",
+  "start_url": "/mobile/vendas",
+  "scope": "/",
   "display": "standalone",
   "background_color": "#001827",
   "theme_color": "#003E73",
@@ -23,4 +23,3 @@
     }
   ]
 }
-
