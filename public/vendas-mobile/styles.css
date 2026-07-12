@@ -942,6 +942,11 @@ body { background: #fff; color: var(--ink); }
 .sms-confirm-form { min-height: 206px; justify-content: center; }
 .sms-confirm-form .login-card-help { margin: 0 0 4px; color: #5d6872; font-size: 11px; line-height: 1.4; text-align: center; }
 .sms-confirm-form .sms-resend { margin: 1px auto 0; font-size: 11px; }
+@media (max-width: 850px) {
+  .login-screen input,
+  .login-screen select,
+  .login-screen textarea { font-size: 16px; }
+}
 .primary,
 .content-area .primary,
 .date-filter .filter-button,
