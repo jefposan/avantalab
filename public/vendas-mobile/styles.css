@@ -945,7 +945,7 @@ body { background: #fff; color: var(--ink); }
 @media (max-width: 850px) {
   .login-screen input,
   .login-screen select,
-  .login-screen textarea { font-size: 16px; }
+  .login-screen textarea { font-size: 16px !important; }
 }
 .primary,
 .content-area .primary,

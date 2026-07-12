@@ -339,3 +339,12 @@ button:disabled {
 .select-despesa-compacto option[value=""] {
   font-size: 0.75rem;
 }
+
+/* Impede o zoom automático do Safari ao focar campos em telas móveis. */
+@media (max-width: 767px) {
+  input,
+  select,
+  textarea {
+    font-size: 16px !important;
+  }
+}
