@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.4.0.43 - 2026-07-12
+
+- Ava Mobile: elimina o flicker da logomarca ao estabilizar o elemento do header e reutilizar a imagem já decodificada durante as ações do chat.
+- Mobile: pré-carrega as variantes clara e escura da Ava no layout, reduzindo o atraso da primeira exibição.
+- Admin: adiciona o saldo disponível da conta Asaas vinculada ao sistema no resumo de consumo.
+
 ## 1.4.0.42 - 2026-07-12
 
 - Ava Mobile: header do chat passa a usar a logomarca específica para fundos claros ou escuros conforme o tema ativo.

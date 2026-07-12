@@ -68,12 +68,6 @@ export default function MobilePage() {
         as="image"
         type="image/webp"
       />
-      <link
-        rel="preload"
-        href="/images/ava-logo-principal.png"
-        as="image"
-        type="image/png"
-      />
       <style
         dangerouslySetInnerHTML={{
           __html: `
@@ -250,7 +244,7 @@ export default function MobilePage() {
       <BackupMobileBridge />
 
       <script src="/mobile-supabase.js" defer />
-      <script src="/mobile-app.js?v=271" defer />
+      <script src="/mobile-app.js?v=272" defer />
     </main>
   );
 }

@@ -1,11 +1,12 @@
 import { NextResponse } from 'next/server';
 import { exigirAdmin } from '../../lib/admin-server';
+import { obterSaldoAsaas } from '../../lib/asaas';
 
 export const runtime = 'nodejs';
 
 // ─────────────────────────────────────────────────────────────
 // /api/admin-consumo — uso x limite das plataformas (Supabase,
-// Vercel, GitHub e OpenAI) para o painel /admin.
+// Vercel, GitHub, OpenAI e Asaas) para o painel /admin.
 //
 // Tokens (variáveis de ambiente, todas opcionais — sem elas o
 // painel mostra o que dá e instruções do que falta):
@@ -14,6 +15,7 @@ export const runtime = 'nodejs';
 //   GITHUB_TOKEN   → PAT clássico (escopos: repo + user)
 //   GITHUB_REPO    → ex.: jefposan/avantalab
 //   OPENAI_ADMIN_KEY → chave administrativa da organização OpenAI
+//   ASAAS_API_KEY  → mesma chave já usada pela integração de pagamentos
 //
 // O Supabase não precisa de token novo: usa a service role + a
 // função SQL admin_metricas_uso() (SQL devolvido no aviso caso
@@ -54,7 +56,7 @@ type Item = {
   nome: string;
   usado: number | null;   // null = não medível via API
   limite: number | null;  // null = sem teto conhecido
-  formato: 'bytes' | 'numero' | 'minutos' | 'reais';
+  formato: 'bytes' | 'numero' | 'minutos' | 'reais' | 'brl';
   detalhe?: string;
 };
 
@@ -314,18 +316,54 @@ async function consumoOpenAI(): Promise<Plataforma> {
   return plataforma;
 }
 
+async function consumoAsaas(): Promise<Plataforma> {
+  const configurado = Boolean(process.env.ASAAS_API_KEY?.trim());
+  const plataforma: Plataforma = {
+    nome: 'Asaas',
+    configurado,
+    itens: [],
+    avisos: [],
+    link: 'https://www.asaas.com/',
+  };
+
+  if (!configurado) {
+    plataforma.itens.push({ nome: 'Saldo disponível', usado: null, limite: null, formato: 'brl' });
+    plataforma.avisos.push('Defina ASAAS_API_KEY para consultar o saldo da conta vinculada ao sistema.');
+    return plataforma;
+  }
+
+  const resposta = await obterSaldoAsaas();
+  const saldo = Number(resposta.data?.balance);
+  if (!resposta.ok || !Number.isFinite(saldo)) {
+    plataforma.configurado = false;
+    plataforma.itens.push({ nome: 'Saldo disponível', usado: null, limite: null, formato: 'brl' });
+    plataforma.avisos.push(`Asaas: não foi possível consultar o saldo (${resposta.erro || 'resposta inválida'}).`);
+    return plataforma;
+  }
+
+  plataforma.itens.push({
+    nome: 'Saldo disponível',
+    usado: saldo,
+    limite: null,
+    formato: 'brl',
+    detalhe: 'Valor disponível na conta Asaas vinculada ao sistema.',
+  });
+  return plataforma;
+}
+
 export async function GET(request: Request) {
   try {
     const { autorizado, db } = await exigirAdmin(request);
     if (!autorizado) return NextResponse.json({ erro: true, mensagem: 'Acesso não autorizado.' }, { status: 401 });
 
-    const [supabase, vercel, github, openai] = await Promise.all([
+    const [supabase, vercel, github, openai, asaas] = await Promise.all([
       consumoSupabase(db),
       consumoVercel(),
       consumoGithub(),
       consumoOpenAI(),
+      consumoAsaas(),
     ]);
-    return NextResponse.json({ erro: false, plataformas: [supabase, vercel, github, openai], geradoEm: new Date().toISOString() });
+    return NextResponse.json({ erro: false, plataformas: [supabase, vercel, github, openai, asaas], geradoEm: new Date().toISOString() });
   } catch (error) {
     console.error('Erro no consumo de plataformas:', error);
     return NextResponse.json({ erro: true, mensagem: 'Não foi possível consultar o consumo.' }, { status: 500 });

@@ -2,7 +2,7 @@
 
 import type { SupabaseClient } from '@supabase/supabase-js';
 import Image from 'next/image';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { supabase } from '../../lib/supabase';
 import styles from './ava-chat.module.css';
 
@@ -34,6 +34,19 @@ type AvaChatClientProps = {
   initialMonth?: string;
   onClose?: () => void;
 };
+
+const AvaHeaderLogo = memo(function AvaHeaderLogo({ darkMode }: { darkMode: boolean }) {
+  return (
+    <Image
+      src={darkMode ? '/images/ava-logo-fundo-escuro.png' : '/images/ava-logo-fundo-claro.png'}
+      alt="Ava"
+      width={96}
+      height={52}
+      priority
+      className={styles.logo}
+    />
+  );
+});
 
 const MONTHS = [
   'JANEIRO',
@@ -550,14 +563,7 @@ export default function AvaChatClient({ initialYear, initialMonth, onClose }: Av
         <button type="button" className={styles.headerButton} onClick={goBack} aria-label="Voltar">
           <BackIcon />
         </button>
-        <Image
-          src={darkMode ? '/images/ava-logo-fundo-escuro.png' : '/images/ava-logo-fundo-claro.png'}
-          alt="Ava"
-          width={96}
-          height={52}
-          priority
-          className={styles.logo}
-        />
+        <AvaHeaderLogo darkMode={darkMode} />
         <span className={styles.headerSpacer} />
         <button type="button" className={`${styles.headerButton} ${styles.headerActionButton}`} onClick={startNewConversation} disabled={sending || transcribing || recording} aria-label="Nova conversa" title="Nova conversa">
           <NewConversationIcon />

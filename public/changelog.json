@@ -13,6 +13,16 @@
   },
   "versoes": [
     {
+      "versao": "1.4.0.43",
+      "titulo": "Ava estável e saldo Asaas",
+      "data": "Julho/2026",
+      "itens": [
+        "Ava Mobile: elimina o flicker da logomarca ao estabilizar o elemento do header e reutilizar a imagem já decodificada durante as ações do chat.",
+        "Mobile: pré-carrega as variantes clara e escura da Ava no layout, reduzindo o atraso da primeira exibição.",
+        "Admin: adiciona o saldo disponível da conta Asaas vinculada ao sistema no resumo de consumo."
+      ]
+    },
+    {
       "versao": "1.4.0.42",
       "titulo": "Acesso mobile e consumo OpenAI",
       "data": "Julho/2026",

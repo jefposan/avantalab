@@ -142,3 +142,11 @@ export function listarCobrancasAssinaturaAsaas(id: string) {
     { method: 'GET' }
   );
 }
+
+// Consulta o saldo disponível da conta vinculada à chave da integração.
+export function obterSaldoAsaas() {
+  return asaasFetch<{ balance: number }>('/finance/balance', {
+    method: 'GET',
+    cache: 'no-store',
+  });
+}

@@ -2694,7 +2694,9 @@
   }
 
   function avaLogoArquivoHtml(width, height, src) {
-    return '<img src="' + escapeHtml(src) + '" alt="Ava" width="' + width + '" height="' + height + '" style="display:block;width:' + width + 'px;height:' + height + 'px;object-fit:contain;flex-shrink:0;" onerror="this.onerror=null;this.src=&quot;/images/ava-logo-principal.png&quot;">';
+    // O root mobile é reconstruído a cada ação. Backgrounds reutilizam a
+    // imagem já decodificada e evitam o flicker causado pela recriação de <img>.
+    return '<span role="img" aria-label="Ava" style="display:block;width:' + width + 'px;height:' + height + 'px;background-image:url(' + escapeHtml(src) + ');background-size:contain;background-position:center;background-repeat:no-repeat;flex-shrink:0;transform:translateZ(0);backface-visibility:hidden;-webkit-backface-visibility:hidden;contain:paint;"></span>';
   }
 
   function pararGravacaoIA() {
@@ -11754,10 +11756,16 @@
     } catch (error) {}
 
     try {
-      window._avaLogoPrincipalPreload = window._avaLogoPrincipalPreload || new Image();
-      window._avaLogoPrincipalPreload.decoding = 'async';
-      window._avaLogoPrincipalPreload.src = '/images/ava-logo-principal.png';
-      if (window._avaLogoPrincipalPreload.decode) window._avaLogoPrincipalPreload.decode().catch(function () {});
+      window._avaLogosTemaPreload = window._avaLogosTemaPreload || [
+        '/images/ava-logo-fundo-claro.png',
+        '/images/ava-logo-fundo-escuro.png'
+      ].map(function (src) {
+        var imagem = new Image();
+        imagem.decoding = 'async';
+        imagem.src = src;
+        if (imagem.decode) imagem.decode().catch(function () {});
+        return imagem;
+      });
     } catch (error) {}
 
     try {

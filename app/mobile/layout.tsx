@@ -15,5 +15,11 @@ export default function MobileLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  return children;
+  return (
+    <>
+      <link rel="preload" href="/images/ava-logo-fundo-claro.png" as="image" type="image/png" />
+      <link rel="preload" href="/images/ava-logo-fundo-escuro.png" as="image" type="image/png" />
+      {children}
+    </>
+  );
 }
