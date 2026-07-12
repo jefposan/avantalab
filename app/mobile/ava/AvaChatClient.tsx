@@ -550,7 +550,14 @@ export default function AvaChatClient({ initialYear, initialMonth, onClose }: Av
         <button type="button" className={styles.headerButton} onClick={goBack} aria-label="Voltar">
           <BackIcon />
         </button>
-        <Image src="/images/ava-logo-principal.png" alt="Ava" width={96} height={52} priority className={styles.logo} />
+        <Image
+          src={darkMode ? '/images/ava-logo-fundo-escuro.png' : '/images/ava-logo-fundo-claro.png'}
+          alt="Ava"
+          width={96}
+          height={52}
+          priority
+          className={styles.logo}
+        />
         <span className={styles.headerSpacer} />
         <button type="button" className={`${styles.headerButton} ${styles.headerActionButton}`} onClick={startNewConversation} disabled={sending || transcribing || recording} aria-label="Nova conversa" title="Nova conversa">
           <NewConversationIcon />

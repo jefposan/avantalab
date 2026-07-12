@@ -1,5 +1,7 @@
 'use client';
 import React from 'react';
+import Image from 'next/image';
+import QRCode from 'qrcode';
 import { normalizarTipoPerfil, rotuloTipoPerfil, type TipoPerfil } from '../lib/perfis';
 import { PAISES } from '../lib/paises';
 import DraggableModalCard from './DraggableModalCard';
@@ -139,6 +141,10 @@ export default function AuthCard({
   const [promptInstalacao, setPromptInstalacao] = React.useState<BeforeInstallPromptEvent | null>(null);
   const [instaladoComoApp, setInstaladoComoApp] = React.useState(false);
   const [mostrarInstrucaoInstalacao, setMostrarInstrucaoInstalacao] = React.useState(false);
+  const [qrMobileAberto, setQrMobileAberto] = React.useState(false);
+  const [qrMobileDataUrl, setQrMobileDataUrl] = React.useState('');
+  const [qrMobileLink, setQrMobileLink] = React.useState('');
+  const [qrMobileErro, setQrMobileErro] = React.useState('');
 
   React.useEffect(() => {
     const navegadorStandalone = navigator as Navigator & { standalone?: boolean };
@@ -182,6 +188,25 @@ export default function AuthCard({
     if (escolha.outcome === 'accepted') setInstaladoComoApp(true);
   };
 
+  const abrirQrMobile = async () => {
+    const link = `${window.location.origin}/mobile`;
+    setQrMobileAberto(true);
+    setQrMobileLink(link);
+    setQrMobileDataUrl('');
+    setQrMobileErro('');
+    try {
+      const dataUrl = await QRCode.toDataURL(link, {
+        width: 288,
+        margin: 2,
+        errorCorrectionLevel: 'M',
+        color: { dark: '#003E73', light: '#FFFFFF' },
+      });
+      setQrMobileDataUrl(dataUrl);
+    } catch {
+      setQrMobileErro('Não foi possível gerar o QR Code agora.');
+    }
+  };
+
   const mostrarLandingPreLoginAtiva =
     mostrarLandingPreLogin &&
     !modoRedefinirSenha &&
@@ -208,6 +233,37 @@ export default function AuthCard({
 
   return (
     <main className="relative min-h-screen overflow-x-hidden font-sans">
+      {qrMobileAberto && (
+        <div className="fixed inset-0 z-[8100] flex items-center justify-center bg-black/60 px-4" onClick={() => setQrMobileAberto(false)}>
+          <DraggableModalCard
+            className="w-full max-w-sm overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div data-modal-drag-handle className="flex cursor-grab items-center justify-between bg-cyan-600 px-5 py-4 text-white active:cursor-grabbing">
+              <div>
+                <p className="text-[10px] font-black uppercase tracking-[0.18em] text-cyan-100">AvantaLab Mobile</p>
+                <h2 className="mt-0.5 text-base font-black">Acessar pelo celular</h2>
+              </div>
+              <button type="button" onClick={() => setQrMobileAberto(false)} className="flex h-8 w-8 items-center justify-center rounded-full bg-white/15 text-lg font-black hover:bg-white/25" aria-label="Fechar">×</button>
+            </div>
+            <div className="p-5 text-center">
+              {qrMobileDataUrl ? (
+                <div className="mx-auto w-fit rounded-xl border border-slate-200 bg-white p-2 shadow-sm">
+                  <Image src={qrMobileDataUrl} alt="QR Code para acessar o AvantaLab Mobile" width={240} height={240} unoptimized className="h-60 w-60" />
+                </div>
+              ) : qrMobileErro ? (
+                <p className="rounded-lg bg-red-50 px-3 py-4 text-sm font-bold text-red-700">{qrMobileErro}</p>
+              ) : (
+                <div className="mx-auto flex h-60 w-60 items-center justify-center rounded-xl bg-slate-50">
+                  <span className="h-8 w-8 animate-spin rounded-full border-2 border-slate-200 border-t-cyan-700" />
+                </div>
+              )}
+              <p className="mt-3 text-xs font-semibold leading-relaxed text-slate-600">Aponte a câmera do celular para abrir a versão mobile.</p>
+              <p className="mt-1 truncate text-[10px] font-medium text-slate-400" title={qrMobileLink}>{qrMobileLink}</p>
+            </div>
+          </DraggableModalCard>
+        </div>
+      )}
       {modalAvisoAberto && (
   <div
     className="fixed inset-0 z-[8000] flex items-center justify-center bg-black/60 px-4"
@@ -669,6 +725,18 @@ export default function AuthCard({
     )}
   </div>
 )}
+
+<button
+  type="button"
+  onClick={() => void abrirQrMobile()}
+  className="hidden h-9 w-full items-center justify-center gap-2 rounded-full border border-cyan-400 bg-cyan-600 px-4 text-xs font-black text-white shadow-sm transition hover:bg-cyan-700 lg:flex"
+>
+  <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <rect x="3" y="3" width="6" height="6" rx="1" /><rect x="15" y="3" width="6" height="6" rx="1" /><rect x="3" y="15" width="6" height="6" rx="1" />
+    <path d="M15 15h2v2h-2zM19 15h2v2M15 19v2h2M19 19h2v2" />
+  </svg>
+  Acessar pelo celular
+</button>
 
 {/* ================= FIM DO FORMULÁRIO DE CADASTRO ================= */}
 

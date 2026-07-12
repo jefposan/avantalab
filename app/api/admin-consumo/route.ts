@@ -5,7 +5,7 @@ export const runtime = 'nodejs';
 
 // ─────────────────────────────────────────────────────────────
 // /api/admin-consumo — uso x limite das plataformas (Supabase,
-// Vercel e GitHub) para o painel /admin.
+// Vercel, GitHub e OpenAI) para o painel /admin.
 //
 // Tokens (variáveis de ambiente, todas opcionais — sem elas o
 // painel mostra o que dá e instruções do que falta):
@@ -13,6 +13,7 @@ export const runtime = 'nodejs';
 //   VERCEL_TEAM_ID → id do time (opcional; conta pessoal = vazio)
 //   GITHUB_TOKEN   → PAT clássico (escopos: repo + user)
 //   GITHUB_REPO    → ex.: jefposan/avantalab
+//   OPENAI_ADMIN_KEY → chave administrativa da organização OpenAI
 //
 // O Supabase não precisa de token novo: usa a service role + a
 // função SQL admin_metricas_uso() (SQL devolvido no aviso caso
@@ -248,17 +249,83 @@ async function consumoGithub(): Promise<Plataforma> {
   return plataforma;
 }
 
+async function consumoOpenAI(): Promise<Plataforma> {
+  const adminKey = process.env.OPENAI_ADMIN_KEY || '';
+  const plataforma: Plataforma = {
+    nome: 'OpenAI API',
+    configurado: Boolean(adminKey),
+    itens: [],
+    avisos: [],
+    link: 'https://platform.openai.com/settings/organization/billing/overview',
+  };
+
+  plataforma.itens.push({
+    nome: 'Crédito disponível',
+    usado: null,
+    limite: null,
+    formato: 'reais',
+    detalhe: 'O saldo pré-pago não é exposto pela API oficial. Use “Abrir painel” para conferir o valor atual.',
+  });
+
+  if (!adminKey) {
+    plataforma.avisos.push('Defina OPENAI_ADMIN_KEY para consultar o custo oficial da organização no mês. A chave comum OPENAI_API_KEY não possui acesso administrativo ao billing.');
+    plataforma.itens.unshift({ nome: 'Custo no mês (US$)', usado: null, limite: null, formato: 'reais' });
+    return plataforma;
+  }
+
+  try {
+    const agora = new Date();
+    const inicioMes = Math.floor(Date.UTC(agora.getUTCFullYear(), agora.getUTCMonth(), 1) / 1000);
+    const fim = Math.floor(agora.getTime() / 1000);
+    const parametros = new URLSearchParams({
+      start_time: String(inicioMes),
+      end_time: String(fim),
+      bucket_width: '1d',
+      limit: '31',
+    });
+    const resp = await fetch(`https://api.openai.com/v1/organization/costs?${parametros.toString()}`, {
+      headers: {
+        Authorization: `Bearer ${adminKey}`,
+        'Content-Type': 'application/json',
+      },
+      cache: 'no-store',
+    });
+    const json = await resp.json().catch(() => ({}));
+    if (!resp.ok) {
+      const mensagem = json?.error?.message || `HTTP ${resp.status}`;
+      throw new Error(mensagem);
+    }
+    const custo = (json.data || []).reduce((totalBucket: number, bucket: { results?: Array<{ amount?: { value?: number } }> }) => (
+      totalBucket + (bucket.results || []).reduce((total: number, item) => total + (Number(item.amount?.value) || 0), 0)
+    ), 0);
+    plataforma.itens.unshift({
+      nome: 'Custo no mês (US$)',
+      usado: Math.round(custo * 10000) / 10000,
+      limite: null,
+      formato: 'reais',
+      detalhe: 'Valor oficial acumulado desde o primeiro dia do mês, consultado pela API administrativa da organização.',
+    });
+  } catch (error) {
+    plataforma.configurado = false;
+    plataforma.itens.unshift({ nome: 'Custo no mês (US$)', usado: null, limite: null, formato: 'reais' });
+    plataforma.avisos.push(`OpenAI: não foi possível consultar os custos (${error instanceof Error ? error.message : 'falha inesperada'}).`);
+  }
+
+  return plataforma;
+}
+
 export async function GET(request: Request) {
   try {
     const { autorizado, db } = await exigirAdmin(request);
     if (!autorizado) return NextResponse.json({ erro: true, mensagem: 'Acesso não autorizado.' }, { status: 401 });
 
-    const [supabase, vercel, github] = await Promise.all([
+    const [supabase, vercel, github, openai] = await Promise.all([
       consumoSupabase(db),
       consumoVercel(),
       consumoGithub(),
+      consumoOpenAI(),
     ]);
-    return NextResponse.json({ erro: false, plataformas: [supabase, vercel, github], geradoEm: new Date().toISOString() });
+    return NextResponse.json({ erro: false, plataformas: [supabase, vercel, github, openai], geradoEm: new Date().toISOString() });
   } catch (error) {
     console.error('Erro no consumo de plataformas:', error);
     return NextResponse.json({ erro: true, mensagem: 'Não foi possível consultar o consumo.' }, { status: 500 });

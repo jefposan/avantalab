@@ -13,6 +13,16 @@
   },
   "versoes": [
     {
+      "versao": "1.4.0.42",
+      "titulo": "Acesso mobile e consumo OpenAI",
+      "data": "Julho/2026",
+      "itens": [
+        "Ava Mobile: header do chat passa a usar a logomarca específica para fundos claros ou escuros conforme o tema ativo.",
+        "Login Web: adiciona o botão Acessar pelo celular e gera localmente um QR Code para abrir a versão mobile.",
+        "Admin: adiciona a OpenAI API ao resumo de consumo, com custo oficial do mês via chave administrativa e acesso direto ao saldo no painel de Billing."
+      ]
+    },
+    {
       "versao": "1.4.0.41",
       "titulo": "Cadastro completo dos perfis",
       "data": "Julho/2026",

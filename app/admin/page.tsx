@@ -130,7 +130,7 @@ function formatConsumo(valor: number | null, formato: ConsumoItem['formato']) {
   if (valor === null) return '—';
   if (formato === 'bytes') return formatBytes(valor);
   if (formato === 'minutos') return `${valor.toLocaleString('pt-BR')} min`;
-  if (formato === 'reais') return `US$ ${valor.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
+  if (formato === 'reais') return `US$ ${valor.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 4 })}`;
   return valor.toLocaleString('pt-BR');
 }
 
@@ -720,7 +720,7 @@ export default function AdminPage() {
               <div className="rounded-lg border border-dashed border-slate-300 bg-white px-4 py-10 text-center text-sm text-slate-500">Clique em &quot;Consultar consumo&quot; para carregar os dados.</div>
             )}
 
-            <div className="grid gap-4 lg:grid-cols-3">
+            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
               {consumo.map((plataforma) => (
                 <section key={plataforma.nome} className="flex flex-col rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
                   <div className="flex items-center justify-between gap-2">

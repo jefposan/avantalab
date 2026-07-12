@@ -8397,6 +8397,7 @@
 
   function chatIAModalHtml() {
     var dark = !!state.darkMode;
+    var logoChatSrc = dark ? '/images/ava-logo-fundo-escuro.png' : '/images/ava-logo-fundo-claro.png';
     var temTexto = state.chatIAInput.trim().length > 0;
     var gravando = state.chatIAGravando;
     var enviando = state.chatIADigitando;
@@ -8494,7 +8495,7 @@
         '<button id="chat-ia-fechar" type="button" aria-label="Voltar" style="background:transparent;border:none;width:36px;height:36px;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;">' +
           '<svg width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="' + C.text + '" stroke-width="2.2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>' +
         '</button>' +
-        avaLogoPrincipalHtml(96, 52) +
+        avaLogoArquivoHtml(96, 52, logoChatSrc) +
         '<span style="flex:1;min-width:0;"></span>' +
         '<button id="chat-ia-home" type="button" aria-label="Voltar para o início" style="background:' + C.pill + ';border:1px solid ' + C.pillBorder + ';width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;">' +
           '<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="' + C.text + '" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5v9a1.5 1.5 0 0 1-1.5 1.5h-15A1.5 1.5 0 0 1 3 19.5v-9Z"/><path d="M9 21v-7h6v7"/></svg>' +
