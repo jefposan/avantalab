@@ -165,67 +165,64 @@ export default function ModalDespesasBase({
           </button>
         </div>
 
-        <div className="p-4 space-y-4 overflow-y-auto">
+        <div className="overflow-y-auto px-4 pb-4">
           <div
-  className={`p-3 rounded-xl border shadow-sm ${
-    darkMode
-      ? 'bg-slate-800 border-slate-700'
-      : 'bg-slate-50 border-slate-200'
-  }`}
->
-  <h3 className={`text-sm font-bold mb-2 ${textStrong}`}>
-    {nomeEmEdicao ? 'Editar despesa' : 'Nova despesa'}
-  </h3>
+            className={`sticky top-0 z-20 -mx-4 mb-3 border-b px-4 py-3 shadow-sm ${
+              darkMode ? 'bg-slate-900/98 border-slate-700' : 'bg-white/98 border-slate-200'
+            }`}
+          >
+            <div
+              className={`rounded-xl border p-2.5 transition-all ${
+                nomeEmEdicao
+                  ? darkMode ? 'border-cyan-400 bg-cyan-500/10 shadow-lg shadow-cyan-500/10' : 'border-cyan-500 bg-cyan-50 shadow-md shadow-cyan-500/10'
+                  : darkMode ? 'border-slate-700 bg-slate-800' : 'border-slate-200 bg-slate-50'
+              }`}
+              style={nomeEmEdicao ? { borderColor: corPrimaria } : undefined}
+            >
+              <div className="mb-2 flex items-center justify-between gap-3">
+                <h3 className={`text-xs font-black uppercase tracking-wide ${textStrong}`}>
+                  {nomeEmEdicao ? 'Editando despesa' : 'Nova despesa'}
+                </h3>
+                {nomeEmEdicao && <span className="rounded-full px-2 py-0.5 text-[9px] font-black uppercase tracking-wide" style={{ color: corPrimaria, backgroundColor: `${corPrimaria}18` }}>Edição ativa</span>}
+              </div>
 
-  <div className="flex flex-wrap gap-2">
-              <input
-                type="text"
-                placeholder="Nome (Ex: Aluguel)"
-                value={novaBaseNome}
-                onChange={(e) => setNovaBaseNome(e.target.value)}
-                className={`w-full min-w-0 flex-1 p-2 rounded-lg border text-sm focus:outline-none focus:ring-2 sm:min-w-[200px] ${
-                  darkMode
-                    ? 'bg-slate-700 border-slate-600 text-white'
-                    : 'bg-white border-slate-300'
-                }`}
-                style={{ outlineColor: corPrimaria }}
-              />
+              <div className="flex flex-wrap items-center gap-2">
+                <input
+                  type="text"
+                  placeholder="Nome da despesa"
+                  value={novaBaseNome}
+                  onChange={(e) => setNovaBaseNome(e.target.value)}
+                  className={`min-w-0 flex-1 rounded-lg border px-3 py-1.5 text-sm outline-none transition focus:ring-2 sm:w-52 sm:flex-none ${
+                    darkMode ? 'border-slate-600 bg-slate-700 text-white' : 'border-slate-300 bg-white'
+                  }`}
+                  style={{ outlineColor: corPrimaria }}
+                />
 
-              <select
-                value={novaBaseCat}
-                onChange={(e) => setNovaBaseCat(e.target.value)}
-                className={`w-full min-w-0 flex-1 p-2 rounded-lg border text-sm focus:outline-none focus:ring-2 sm:min-w-[200px] ${
-                  darkMode
-                    ? 'bg-slate-700 border-slate-600 text-white'
-                    : 'bg-white border-slate-300'
-                }`}
-                style={{ outlineColor: corPrimaria }}
-              >
-                <option value="">Categoria (Obrigatória)</option>
-                {categoriasPerfil.map((categoria) => (
-                  <option key={categoria.nome} value={categoria.nome}>
-                    {categoria.nome}
-                  </option>
-                ))}
-              </select>
-
-              <button
-                type="button"
-                onClick={salvar}
-                style={estiloTemaPrimario}
-                className="w-full rounded-lg px-4 py-2 text-sm font-bold shadow hover:brightness-110 sm:w-auto cursor-pointer"
-              >
-                {nomeEmEdicao ? 'Salvar alterações' : 'Salvar'}
-              </button>
-              {nomeEmEdicao && (
-                <button
-                  type="button"
-                  onClick={cancelarEdicao}
-                  className="w-full rounded-lg border border-slate-300 px-4 py-2 text-sm font-bold sm:w-auto cursor-pointer"
+                <select
+                  value={novaBaseCat}
+                  onChange={(e) => setNovaBaseCat(e.target.value)}
+                  className={`min-w-0 flex-1 rounded-lg border px-3 py-1.5 text-sm outline-none transition focus:ring-2 sm:w-56 sm:flex-none ${
+                    darkMode ? 'border-slate-600 bg-slate-700 text-white' : 'border-slate-300 bg-white'
+                  }`}
+                  style={{ outlineColor: corPrimaria }}
                 >
-                  Cancelar
-                </button>
-              )}
+                  <option value="">Categoria</option>
+                  {categoriasPerfil.map((categoria) => (
+                    <option key={categoria.nome} value={categoria.nome}>{categoria.nome}</option>
+                  ))}
+                </select>
+
+                <div className="ml-auto flex shrink-0 items-center gap-2">
+                  <button type="button" onClick={salvar} style={estiloTemaPrimario} className="rounded-lg px-3 py-1.5 text-xs font-black shadow-sm transition hover:brightness-110 cursor-pointer">
+                    {nomeEmEdicao ? 'Salvar' : 'Adicionar'}
+                  </button>
+                  {nomeEmEdicao && (
+                    <button type="button" onClick={cancelarEdicao} className={`rounded-lg border px-3 py-1.5 text-xs font-black transition cursor-pointer ${darkMode ? 'border-slate-600 text-slate-200 hover:bg-slate-700' : 'border-slate-300 text-slate-600 hover:bg-slate-100'}`}>
+                      Cancelar
+                    </button>
+                  )}
+                </div>
+              </div>
             </div>
           </div>
 
