@@ -506,17 +506,24 @@ function traduzErro(error) {
   return texto;
 }
 
+function comLimiteDeTempo(promessa, mensagem = 'A conexão com o AvantaLab demorou mais que o esperado. Tente novamente.') {
+  return Promise.race([
+    promessa,
+    new Promise((_, rejeitar) => window.setTimeout(() => rejeitar(new Error(mensagem)), 15000)),
+  ]);
+}
+
 async function carregarDadosBackend() {
   carregandoBackend = true;
   render();
   try {
-    let dados = await window.VendasDb.loadAll();
+    let dados = await comLimiteDeTempo(window.VendasDb.loadAll());
     if (dados.user && !dados.acesso) {
       const pendente = JSON.parse(localStorage.getItem('avantalab.vendas_mobile.solicitacao_pendente') || 'null');
       if (pendente?.codigo && pendente?.nome) {
-        await window.VendasDb.solicitarAcesso(pendente);
+        await comLimiteDeTempo(window.VendasDb.solicitarAcesso(pendente));
         localStorage.removeItem('avantalab.vendas_mobile.solicitacao_pendente');
-        dados = await window.VendasDb.loadAll();
+        dados = await comLimiteDeTempo(window.VendasDb.loadAll());
       }
     }
     state.autenticado = Boolean(dados.user);
