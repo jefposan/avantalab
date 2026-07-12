@@ -29,26 +29,13 @@ export async function POST(request: Request) {
   const plano = String(corpo.plano || '') as PlanoPago;
   const ciclo = String(corpo.ciclo || '') as Ciclo;
   const dadosCobranca = corpo.cobranca && typeof corpo.cobranca === 'object' ? corpo.cobranca : {};
-  const nomeCobranca = limparTexto(dadosCobranca.nome || corpo.nomeCobranca);
-  const emailCobranca = limparTexto(dadosCobranca.email || corpo.emailCobranca).toLowerCase();
-  const telefoneCobranca = String(dadosCobranca.telefone || corpo.telefoneCobranca || '').replace(/\D/g, '');
-  const cpfCnpj = String(dadosCobranca.cpfCnpj || corpo.cpfCnpj || '').replace(/\D/g, ''); // só dígitos
+  let nomeCobranca = limparTexto(dadosCobranca.nome || corpo.nomeCobranca);
+  let emailCobranca = limparTexto(dadosCobranca.email || corpo.emailCobranca).toLowerCase();
+  let telefoneCobranca = String(dadosCobranca.telefone || corpo.telefoneCobranca || '').replace(/\D/g, '');
+  let cpfCnpj = String(dadosCobranca.cpfCnpj || corpo.cpfCnpj || '').replace(/\D/g, ''); // só dígitos
   if (!empresaId || !(plano in PRECOS) || (ciclo !== 'mensal' && ciclo !== 'anual')) {
     return NextResponse.json({ erro: true, mensagem: 'dados inválidos' }, { status: 400 });
   }
-  if (nomeCobranca.length < 3) {
-    return NextResponse.json({ erro: true, mensagem: 'Informe o nome ou razão social para a cobrança.' }, { status: 400 });
-  }
-  if (cpfCnpj.length !== 11 && cpfCnpj.length !== 14) {
-    return NextResponse.json({ erro: true, mensagem: 'Informe um CPF (11 dígitos) ou CNPJ (14 dígitos) válido.' }, { status: 400 });
-  }
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailCobranca)) {
-    return NextResponse.json({ erro: true, mensagem: 'Informe um e-mail de cobrança válido.' }, { status: 400 });
-  }
-  if (telefoneCobranca.length < 10 || telefoneCobranca.length > 13) {
-    return NextResponse.json({ erro: true, mensagem: 'Informe um telefone de cobrança válido.' }, { status: 400 });
-  }
-
   // 1) Autentica o usuário e pega o e-mail.
   const token = (request.headers.get('authorization') || '').replace(/^Bearer\s+/i, '').trim();
   if (!token) return NextResponse.json({ erro: true }, { status: 401 });
@@ -79,6 +66,47 @@ export async function POST(request: Request) {
   if (!['gestor_master', 'administrador'].includes(vinculo.perfil || '')) {
     return NextResponse.json({ erro: true, mensagem: 'Somente gestores e administradores podem contratar um plano.' }, { status: 403 });
   }
+
+  const { data: cadastroPerfil } = await admin
+    .from('cadastros_perfil')
+    .select('nome_fantasia, nome_responsavel, razao_social, documento, email_empresa, telefone, whatsapp, cep, rua, numero, complemento, bairro, inscricao_estadual, inscricao_estadual_isento, inscricao_municipal, inscricao_municipal_isento, concluido_em')
+    .eq('empresa_id', empresaId)
+    .maybeSingle();
+  if (!cadastroPerfil?.concluido_em) {
+    return NextResponse.json({ erro: true, mensagem: 'Complete o cadastro do perfil antes de iniciar a assinatura.' }, { status: 409 });
+  }
+  nomeCobranca = limparTexto(cadastroPerfil.razao_social || cadastroPerfil.nome_responsavel || cadastroPerfil.nome_fantasia);
+  cpfCnpj = String(cadastroPerfil.documento || '').replace(/\D/g, '');
+  emailCobranca = limparTexto(cadastroPerfil.email_empresa).toLowerCase();
+  telefoneCobranca = String(cadastroPerfil.whatsapp || cadastroPerfil.telefone || '').replace(/\D/g, '');
+  if (nomeCobranca.length < 3) {
+    return NextResponse.json({ erro: true, mensagem: 'O cadastro não possui nome ou razão social válido.' }, { status: 400 });
+  }
+  if (cpfCnpj.length !== 11 && cpfCnpj.length !== 14) {
+    return NextResponse.json({ erro: true, mensagem: 'O cadastro não possui CPF ou CNPJ válido.' }, { status: 400 });
+  }
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailCobranca)) {
+    return NextResponse.json({ erro: true, mensagem: 'O cadastro não possui e-mail de cobrança válido.' }, { status: 400 });
+  }
+  if (telefoneCobranca.length < 10 || telefoneCobranca.length > 13) {
+    return NextResponse.json({ erro: true, mensagem: 'O cadastro não possui telefone de cobrança válido.' }, { status: 400 });
+  }
+
+  const dadosCliente = {
+    name: nomeCobranca,
+    email: emailCobranca || userEmail || undefined,
+    cpfCnpj,
+    phone: String(cadastroPerfil.telefone || '').replace(/\D/g, '') || undefined,
+    mobilePhone: telefoneCobranca,
+    address: limparTexto(cadastroPerfil.rua) || undefined,
+    addressNumber: limparTexto(cadastroPerfil.numero) || undefined,
+    complement: limparTexto(cadastroPerfil.complemento) || undefined,
+    province: limparTexto(cadastroPerfil.bairro) || undefined,
+    postalCode: String(cadastroPerfil.cep || '').replace(/\D/g, '') || undefined,
+    stateInscription: cadastroPerfil.inscricao_estadual_isento ? undefined : limparTexto(cadastroPerfil.inscricao_estadual) || undefined,
+    municipalInscription: cadastroPerfil.inscricao_municipal_isento ? undefined : limparTexto(cadastroPerfil.inscricao_municipal) || undefined,
+    externalReference: empresaId,
+  };
 
   const { data: emp } = await admin
     .from('empresas').select('nome, tipo_perfil').eq('id', empresaId).maybeSingle();
@@ -130,23 +158,11 @@ export async function POST(request: Request) {
 
   let clienteId = assinExistente?.gateway_customer_id || '';
   if (!clienteId) {
-    const c = await criarClienteAsaas({
-      name: nomeCobranca || nomePerfil,
-      email: emailCobranca || userEmail || undefined,
-      cpfCnpj,
-      mobilePhone: telefoneCobranca,
-      externalReference: empresaId,
-    });
+    const c = await criarClienteAsaas(dadosCliente);
     if (!c.ok || !c.data?.id) return NextResponse.json({ erro: true, mensagem: c.erro || 'falha ao criar cliente' }, { status: 502 });
     clienteId = c.data.id;
   } else {
-    const c = await atualizarClienteAsaas(clienteId, {
-      name: nomeCobranca || nomePerfil,
-      email: emailCobranca || userEmail || undefined,
-      cpfCnpj,
-      mobilePhone: telefoneCobranca,
-      externalReference: empresaId,
-    });
+    const c = await atualizarClienteAsaas(clienteId, dadosCliente);
     if (!c.ok) return NextResponse.json({ erro: true, mensagem: c.erro || 'falha ao atualizar cliente' }, { status: 502 });
   }
 

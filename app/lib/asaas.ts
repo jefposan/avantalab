@@ -20,6 +20,22 @@ function baseUrl(): string {
 
 type AsaasResposta<T> = { ok: boolean; status: number; data: T | null; erro?: string };
 
+type DadosClienteAsaas = {
+  name: string;
+  cpfCnpj?: string;
+  email?: string;
+  phone?: string;
+  mobilePhone?: string;
+  address?: string;
+  addressNumber?: string;
+  complement?: string;
+  province?: string;
+  postalCode?: string;
+  stateInscription?: string;
+  municipalInscription?: string;
+  externalReference?: string;
+};
+
 function normalizarSecret(valor: string | undefined) {
   return (valor || '')
     .trim()
@@ -53,25 +69,11 @@ async function asaasFetch<T = unknown>(caminho: string, init?: RequestInit): Pro
 }
 
 // Cria um cliente na Asaas (guardamos o empresa_id em externalReference).
-export function criarClienteAsaas(dados: {
-  name: string;
-  cpfCnpj?: string;
-  email?: string;
-  phone?: string;
-  mobilePhone?: string;
-  externalReference?: string;
-}) {
+export function criarClienteAsaas(dados: DadosClienteAsaas) {
   return asaasFetch<{ id: string }>('/customers', { method: 'POST', body: JSON.stringify(dados) });
 }
 
-export function atualizarClienteAsaas(id: string, dados: {
-  name?: string;
-  cpfCnpj?: string;
-  email?: string;
-  phone?: string;
-  mobilePhone?: string;
-  externalReference?: string;
-}) {
+export function atualizarClienteAsaas(id: string, dados: Partial<DadosClienteAsaas>) {
   return asaasFetch<{ id: string }>(`/customers/${id}`, { method: 'PUT', body: JSON.stringify(dados) });
 }
 

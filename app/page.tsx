@@ -22,9 +22,11 @@ import type { EntradaFaturamento as TabelaEntradaFaturamento } from './component
 import TabelaLancamentosDespesa, { type LancamentoDespesa as TabelaLancamentoDespesa } from './components/TabelaLancamentosDespesa';
 import TourPrimeiroAcesso from './components/TourPrimeiroAcesso';
 import PaywallEmpresa from './components/PaywallEmpresa';
+import CadastroPerfilModal from './components/CadastroPerfilModal';
 import AssinaturaModal from './components/AssinaturaModal';
 import PremiumPessoalModal from './components/PremiumPessoalModal';
 import { COBRANCA_ATIVA, assinaturaVigente, emCarencia, precisaPaywallEmpresa, precisaUpgradePessoal, type DadosCobrancaAssinatura, type EstadoAcesso, type Recurso } from './lib/cobranca';
+import type { StatusCadastroPerfil } from './lib/cadastro-perfil';
 import { PAISES } from './lib/paises';
 import {
   formatarMoeda,
@@ -459,6 +461,12 @@ const [validandoTelefoneObrigatorio, setValidandoTelefoneObrigatorio] = useState
   // Cobrança: estado de acesso do perfil (só é buscado quando COBRANCA_ATIVA=true).
   const [estadoAcesso, setEstadoAcesso] = useState<EstadoAcesso | null>(null);
   const [faturaPendenteUrl, setFaturaPendenteUrl] = useState<string | null>(null);
+  const [cadastroPerfilStatus, setCadastroPerfilStatus] = useState<StatusCadastroPerfil | null>(null);
+  const [cadastroPerfilCarregado, setCadastroPerfilCarregado] = useState(false);
+  const [cadastroPerfilErro, setCadastroPerfilErro] = useState('');
+  const [cadastroPerfilTentativa, setCadastroPerfilTentativa] = useState(0);
+  const [cadastroPerfilAdiado, setCadastroPerfilAdiado] = useState(false);
+  const [cicloCadastroPaywall, setCicloCadastroPaywall] = useState<'mensal' | 'anual' | null>(null);
   // Só liberamos a renderização do app depois de conhecer o estado de acesso,
   // evitando o "flash" do conteúdo antes de o paywall bloquear.
   const [estadoCarregado, setEstadoCarregado] = useState(false);
@@ -547,10 +555,52 @@ const [validandoTelefoneObrigatorio, setValidandoTelefoneObrigatorio] = useState
       window.removeEventListener('focus', aoFocar);
     };
   }, [acessoLiberado, empresaId, atualizarEstadoCobranca]);
+
+  useEffect(() => {
+    let ativo = true;
+    const carregar = async () => {
+      setCadastroPerfilAdiado(false);
+      setCicloCadastroPaywall(null);
+      setCadastroPerfilErro('');
+      if (!acessoLiberado || !empresaId) {
+        setCadastroPerfilStatus(null);
+        setCadastroPerfilCarregado(true);
+        return;
+      }
+      setCadastroPerfilCarregado(false);
+      try {
+        const { data: sessao } = await supabase.auth.getSession();
+        const token = sessao.session?.access_token;
+        if (!token) throw new Error('Sessão indisponível. Entre novamente.');
+        const resposta = await fetch(`/api/perfil-cadastro?empresaId=${encodeURIComponent(empresaId)}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        const json = await resposta.json();
+        if (!resposta.ok) throw new Error(json.mensagem || 'Não foi possível verificar o cadastro deste perfil.');
+        if (ativo) setCadastroPerfilStatus(json);
+      } catch (e) {
+        if (ativo) {
+          setCadastroPerfilStatus(null);
+          setCadastroPerfilErro(e instanceof Error ? e.message : 'Não foi possível verificar o cadastro deste perfil.');
+        }
+      } finally {
+        if (ativo) setCadastroPerfilCarregado(true);
+      }
+    };
+    void carregar();
+    return () => { ativo = false; };
+  }, [acessoLiberado, empresaId, cadastroPerfilTentativa]);
+
   const iniciarAssinatura = async (
     ciclo: 'mensal' | 'anual',
     dadosCobranca: DadosCobrancaAssinatura,
+    cadastroConfirmado = false,
   ): Promise<{ ok: boolean; url?: string; mensagem?: string }> => {
+    if (!cadastroConfirmado && cadastroPerfilStatus && !cadastroPerfilStatus.completo) {
+      setModalAssinatura(false);
+      setCicloCadastroPaywall(ciclo);
+      return { ok: false, mensagem: 'Conclua os dados cadastrais para continuar com a assinatura.' };
+    }
     try {
       const { data: sessao } = await supabase.auth.getSession();
       const token = sessao.session?.access_token;
@@ -619,6 +669,7 @@ const painelAvisosAbertoAnterior = useRef(false);
 const financeiroRealtimeChannelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
 const [menuResponsivoAberto, setMenuResponsivoAberto] = useState(false);
 const [subAcaoGerenciar, setSubAcaoGerenciar] = useState<null | 'editar' | 'criar'>(null);
+const [perfilCadastroEdicaoId, setPerfilCadastroEdicaoId] = useState<string | null>(null);
   const [ultimoBackupEm, setUltimoBackupEm] = useState<string | null>(null);
   const [corPrimaria, setCorPrimaria] = useState('#003E73');
   const [corTemporaria, setCorTemporaria] = useState('#003E73');
@@ -6457,7 +6508,7 @@ if (validacaoTelefoneObrigatoria) {
 
   // Cobrança: enquanto o estado de acesso não for conhecido, não renderiza o app
   // (evita o flash do conteúdo antes de o paywall bloquear).
-  if (COBRANCA_ATIVA && acessoLiberado && empresaId && !estadoCarregado) {
+  if (acessoLiberado && empresaId && (!cadastroPerfilCarregado || (COBRANCA_ATIVA && !estadoCarregado))) {
     return (
       <main className="avanta-loading-stage relative overflow-hidden font-sans">
         <FundoCarregamentoResponsivo />
@@ -6477,24 +6528,93 @@ if (validacaoTelefoneObrigatoria) {
   // esta tela nunca aparece até ligarmos a flag.)
   if (precisaPaywallEmpresa(estadoAcesso)) {
     return (
-      <PaywallEmpresa
-        nomePerfil={nomeEmpresaAtual}
-        emailPadrao={emailUsuarioAtual}
-        telefonePadrao={telefoneCobrancaPadrao}
-        estadoAcesso={estadoAcesso}
-        faturaPendenteUrl={faturaPendenteUrl}
-        onAssinar={iniciarAssinatura}
-        onAtualizarPagamento={atualizarEstadoCobranca}
-        onResgatarCupom={resgatarCupom}
-        onTrocarPerfil={empresasDoUsuario.length > 1 ? abrirTrocaEmpresa : undefined}
-        onCriarPerfil={abrirCriacaoNovaEmpresa}
-        onSair={handleLogout}
-      />
+      <>
+        <PaywallEmpresa
+          nomePerfil={nomeEmpresaAtual}
+          emailPadrao={emailUsuarioAtual}
+          telefonePadrao={telefoneCobrancaPadrao}
+          estadoAcesso={estadoAcesso}
+          faturaPendenteUrl={faturaPendenteUrl}
+          onAssinar={iniciarAssinatura}
+          onEscolherPlano={faturaPendenteUrl ? undefined : setCicloCadastroPaywall}
+          onAtualizarPagamento={atualizarEstadoCobranca}
+          onResgatarCupom={resgatarCupom}
+          onTrocarPerfil={empresasDoUsuario.length > 1 ? abrirTrocaEmpresa : undefined}
+          onCriarPerfil={abrirCriacaoNovaEmpresa}
+          onSair={handleLogout}
+        />
+        {cicloCadastroPaywall && empresaId && (
+          <CadastroPerfilModal
+            aberto
+            empresaId={empresaId}
+            statusInicial={cadastroPerfilStatus}
+            contexto="paywall"
+            ciclo={cicloCadastroPaywall}
+            onCancelar={() => setCicloCadastroPaywall(null)}
+            onConcluido={async (status, cobranca) => {
+              setCadastroPerfilStatus(status);
+              const resultado = await iniciarAssinatura(cicloCadastroPaywall, cobranca, true);
+              if (!resultado.ok || !resultado.url) throw new Error(resultado.mensagem || 'Não foi possível iniciar a assinatura.');
+              window.location.href = resultado.url;
+            }}
+          />
+        )}
+      </>
+    );
+  }
+
+  if (acessoLiberado && empresaId && cadastroPerfilErro) {
+    return (
+      <main className="avanta-loading-stage relative overflow-hidden font-sans">
+        <FundoCarregamentoResponsivo />
+        <section className="relative z-10 mx-4 w-full max-w-sm rounded-xl border border-white/50 bg-white/90 p-5 text-center shadow-xl backdrop-blur-xl">
+          <h1 className="text-base font-black text-slate-900">Não foi possível verificar o cadastro</h1>
+          <p className="mt-2 text-sm text-slate-600">{cadastroPerfilErro}</p>
+          <button
+            type="button"
+            onClick={() => setCadastroPerfilTentativa((atual) => atual + 1)}
+            className="mt-4 h-9 rounded-lg bg-[#003E73] px-5 text-xs font-black text-white"
+          >
+            Tentar novamente
+          </button>
+        </section>
+      </main>
     );
   }
 
   return (
     <div className={`min-h-screen flex flex-col transition-colors duration-300 ${bgMain}`}>
+
+      {empresaId && cadastroPerfilStatus && !cadastroPerfilStatus.completo && !cadastroPerfilAdiado && (
+        <CadastroPerfilModal
+          aberto
+          empresaId={empresaId}
+          statusInicial={cadastroPerfilStatus}
+          contexto={cadastroPerfilStatus.obrigatorio ? 'bloqueio' : 'lembrete'}
+          onLembrarDepois={cadastroPerfilStatus.obrigatorio ? undefined : () => setCadastroPerfilAdiado(true)}
+          onConcluido={(status) => {
+            setCadastroPerfilStatus(status);
+            setNomeEmpresaAtual(status.cadastro.nome_fantasia);
+          }}
+        />
+      )}
+
+      {empresaId && cicloCadastroPaywall && !precisaPaywallEmpresa(estadoAcesso) && (
+        <CadastroPerfilModal
+          aberto
+          empresaId={empresaId}
+          statusInicial={cadastroPerfilStatus}
+          contexto="paywall"
+          ciclo={cicloCadastroPaywall}
+          onCancelar={() => setCicloCadastroPaywall(null)}
+          onConcluido={async (status, cobranca) => {
+            setCadastroPerfilStatus(status);
+            const resultado = await iniciarAssinatura(cicloCadastroPaywall, cobranca, true);
+            if (!resultado.ok || !resultado.url) throw new Error(resultado.mensagem || 'Não foi possível iniciar a assinatura.');
+            window.location.href = resultado.url;
+          }}
+        />
+      )}
 
       {/* ================= MODAIS ================= */}
 
@@ -7457,6 +7577,33 @@ if (validacaoTelefoneObrigatoria) {
   </div>
 )}
 
+{perfilCadastroEdicaoId && (
+  <CadastroPerfilModal
+    key={perfilCadastroEdicaoId}
+    aberto
+    empresaId={perfilCadastroEdicaoId}
+    contexto="edicao"
+    onCancelar={() => {
+      setPerfilCadastroEdicaoId(null);
+      setModalEmpresasAberto(true);
+    }}
+    onConcluido={(status) => {
+      const nomeAtualizado = status.cadastro.nome_fantasia;
+      setEmpresasDoUsuario((perfis) => perfis.map((perfil) => (
+        perfil.id === perfilCadastroEdicaoId
+          ? { ...perfil, nome: nomeAtualizado, empresa_nome: nomeAtualizado }
+          : perfil
+      )));
+      if (perfilCadastroEdicaoId === empresaId) {
+        setNomeEmpresaAtual(nomeAtualizado);
+        setCadastroPerfilStatus(status);
+      }
+      setPerfilCadastroEdicaoId(null);
+      abrirAviso('Cadastro atualizado', 'Os dados do perfil foram salvos com sucesso.', undefined, 'sucesso');
+    }}
+  />
+)}
+
 {modalEmpresasAberto && (
   <div
     className="fixed inset-0 z-[5500] flex items-center justify-center bg-black/60 px-4"
@@ -7528,6 +7675,52 @@ if (validacaoTelefoneObrigatoria) {
         {/* ── VISTA: menu de ações ── */}
         {!subAcaoGerenciar && (
           <div className="space-y-2.5">
+            <div>
+              <p className={`mb-2 text-[10px] font-black uppercase tracking-[0.18em] ${textMuted}`}>
+                Selecione o perfil para editar
+              </p>
+              <div className="max-h-52 space-y-2 overflow-y-auto pr-1">
+                {empresasDoUsuario.map((perfil) => {
+                  const podeEditarPerfil = perfil.perfil === 'gestor_master' || perfil.perfil === 'administrador';
+                  const perfilAtivo = perfil.id === empresaId;
+                  return (
+                    <button
+                      key={perfil.id}
+                      type="button"
+                      disabled={!podeEditarPerfil}
+                      onClick={() => {
+                        setModalEmpresasAberto(false);
+                        setPerfilCadastroEdicaoId(perfil.id);
+                      }}
+                      className={`flex w-full items-center justify-between gap-3 rounded-xl border px-3 py-2.5 text-left transition ${
+                        podeEditarPerfil
+                          ? darkMode
+                            ? 'cursor-pointer border-slate-700 bg-slate-800/70 hover:bg-slate-800'
+                            : 'cursor-pointer border-slate-200 bg-slate-50 hover:border-sky-300 hover:bg-sky-50'
+                          : darkMode
+                            ? 'cursor-not-allowed border-slate-700 bg-slate-800/40 opacity-55'
+                            : 'cursor-not-allowed border-slate-200 bg-slate-100 opacity-60'
+                      }`}
+                    >
+                      <span className="min-w-0">
+                        <strong className={`block truncate text-sm font-black ${textStrong}`}>
+                          {String(perfil.nome || perfil.empresa_nome || 'Perfil')}
+                        </strong>
+                        <span className={`mt-0.5 block text-[10px] font-bold ${textMuted}`}>
+                          {rotuloTipoPerfil(perfil.tipo_perfil)}{perfilAtivo ? ' · Perfil ativo' : ''}
+                        </span>
+                      </span>
+                      <span className={`shrink-0 text-[10px] font-black uppercase ${podeEditarPerfil ? 'text-sky-600' : textMuted}`}>
+                        {podeEditarPerfil ? 'Editar' : 'Sem permissão'}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            <div className={`my-3 border-t ${darkMode ? 'border-slate-700' : 'border-slate-200'}`} />
+
             {podeAcessarAjustes && (
               <button
                 type="button"
@@ -7544,7 +7737,7 @@ if (validacaoTelefoneObrigatoria) {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" />
                   </svg>
                 </span>
-                <span>Editar perfil atual</span>
+                <span>Editar dados básicos e acesso</span>
               </button>
             )}
 

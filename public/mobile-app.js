@@ -85,6 +85,14 @@
     paywallProcessando: false,
     paywallCupomProcessando: false,
     paywallSelecionando: false,
+    paywallCadastroCiclo: '',
+    cadastroPerfilStatus: null,
+    cadastroPerfilDados: null,
+    cadastroPerfilAdiado: false,
+    cadastroPerfilEmpresaId: '',
+    cadastroPerfilSalvando: false,
+    cadastroPerfilVerificado: false,
+    cadastroPerfilErro: '',
     // Perfil já verificado pelo paywall (evita a tela cheia de carregamento
     // nas recargas de dados) e dia da última carga (só recarrega ao voltar
     // ao app quando o dia virou).
@@ -715,13 +723,13 @@
           '<div class="rounded-xl border border-slate-200 bg-white/80 p-2.5">' +
             '<p class="text-[10px] font-black uppercase tracking-wide text-slate-500">Mensal</p>' +
             '<p class="mt-0.5 text-base font-black">' + brl(mensal) + '<span class="text-[10px] font-bold text-slate-500">/mês</span></p>' +
-            '<button type="button" onclick="window._avaPaywallAssinar(\'mensal\')" class="mt-1.5 h-8 w-full rounded-lg border border-slate-300 bg-white text-[9px] font-black uppercase tracking-wide text-slate-700 active:scale-[0.98] active:bg-sky-700 active:text-white">Gerar mensal</button>' +
+            '<button type="button" onclick="window._avaPaywallEscolherPlano(\'mensal\')" class="mt-1.5 h-8 w-full rounded-lg border border-slate-300 bg-white text-[9px] font-black uppercase tracking-wide text-slate-700 active:scale-[0.98] active:bg-sky-700 active:text-white">Continuar mensal</button>' +
           '</div>' +
           '<div class="rounded-xl border-2 border-sky-600 bg-white/85 p-2.5">' +
             '<p class="text-[10px] font-black uppercase tracking-wide text-slate-500">Anual</p>' +
             '<p class="mt-0.5 text-base font-black">' + brl(anualMes) + '<span class="text-[10px] font-bold text-slate-500">/mês</span></p>' +
             '<p class="text-[9px] font-semibold text-slate-500">' + brl(anualAno) + '/ano</p>' +
-            '<button type="button" onclick="window._avaPaywallAssinar(\'anual\')" class="mt-1.5 h-8 w-full rounded-lg bg-sky-700 text-[9px] font-black uppercase tracking-wide text-white active:scale-[0.98]">Gerar anual</button>' +
+            '<button type="button" onclick="window._avaPaywallEscolherPlano(\'anual\')" class="mt-1.5 h-8 w-full rounded-lg bg-sky-700 text-[9px] font-black uppercase tracking-wide text-white active:scale-[0.98]">Continuar anual</button>' +
           '</div>' +
         '</div>';
     return (
@@ -757,27 +765,195 @@
     );
   }
 
+  function deveExibirCadastroPerfilMobile() {
+    var status = state.cadastroPerfilStatus;
+    return !!(status && !status.completo && (status.obrigatorio || !state.cadastroPerfilAdiado));
+  }
+
+  function telaErroCadastroPerfilMobile() {
+    return telaLoginWrapper(
+      '<div class="px-5 py-6 text-center">' +
+        '<h2 class="text-base font-black text-slate-900">Não foi possível verificar o cadastro</h2>' +
+        '<p class="mt-2 text-sm font-semibold leading-relaxed text-slate-600">' + escapeHtml(state.cadastroPerfilErro || 'Confira sua conexão e tente novamente.') + '</p>' +
+        '<button id="cp-tentar-novamente" type="button" class="mt-4 h-10 rounded-xl bg-[#003E73] px-5 text-xs font-black uppercase tracking-wide text-white">Tentar novamente</button>' +
+      '</div>',
+      'AvantaLab Gestão',
+      ''
+    );
+  }
+
+  function opcoesCadastroMobile(opcoes, atual) {
+    return '<option value="">Selecione</option>' + opcoes.map(function (item) {
+      return '<option value="' + item[0] + '"' + (item[0] === atual ? ' selected' : '') + '>' + item[1] + '</option>';
+    }).join('');
+  }
+
+  function telaCadastroPerfilMobile(contexto) {
+    var status = state.cadastroPerfilStatus || {};
+    var d = state.cadastroPerfilDados || {};
+    var pessoal = status.tipoPerfil === 'pessoal';
+    var autonomo = d.tipo_empresa === 'autonomo';
+    var podeEditar = status.podeEditar === true;
+    var titulo = contexto === 'lembrete'
+      ? 'Complete o cadastro do perfil'
+      : contexto === 'paywall'
+        ? 'Dados para cadastro e assinatura'
+        : 'Complete seu cadastro para continuar o uso do sistema AvantaLab Gest&atilde;o';
+    var tipos = [['autonomo','Aut&ocirc;nomo'],['mei','MEI'],['me','ME'],['epp','EPP'],['ltda','LTDA'],['sa','S/A'],['associacao','Associa&ccedil;&atilde;o'],['cooperativa','Cooperativa'],['outro','Outro Segmento']];
+    var regimes = [['mei_simei','MEI / SIMEI'],['simples_nacional','Simples Nacional'],['lucro_presumido','Lucro Presumido'],['lucro_real','Lucro Real'],['lucro_arbitrado','Lucro Arbitrado'],['imune','Imune'],['isenta','Isenta'],['nao_aplicavel','N&atilde;o se aplica'],['outro','Outro']];
+    var ufs = ['AC','AL','AP','AM','BA','CE','DF','ES','GO','MA','MT','MS','MG','PA','PB','PR','PE','PI','RJ','RN','RS','RO','RR','SC','SP','SE','TO'];
+    var campo = function (id, rotulo, valor, tipo, extra) {
+      return '<label class="grid gap-1 text-[10px] font-black text-slate-600">' + rotulo + '<input id="' + id + '" type="' + (tipo || 'text') + '" value="' + escapeHtml(valor || '') + '" ' + (extra || '') + ' style="font-size:16px" class="h-9 rounded-lg border border-slate-300 bg-white px-3 text-sm font-semibold text-slate-800 outline-none focus:border-sky-600" /></label>';
+    };
+    var formulario = !podeEditar
+      ? '<div class="py-10 text-center"><p class="font-black">Cadastro pendente</p><p class="mt-2 text-sm text-slate-600">O cadastro deste perfil precisa ser conclu&iacute;do por um Gestor Master ou Administrador para continuar.</p></div>'
+      : '<div class="grid gap-4">' +
+          '<div><h3 class="mb-2 border-b border-slate-200 pb-1 text-[11px] font-black uppercase text-sky-800">Dados Gerais</h3><div class="grid gap-2">' +
+            campo('cp-nome-fantasia', pessoal ? 'Nome do perfil' : 'Nome Fantasia', d.nome_fantasia) +
+            campo('cp-responsavel', pessoal ? 'Nome completo' : 'Respons&aacute;vel', d.nome_responsavel) +
+            (!pessoal ? campo('cp-razao-social', 'Raz&atilde;o Social', d.razao_social) + '<label class="grid gap-1 text-[10px] font-black text-slate-600">Tipo de Empresa<select id="cp-tipo-empresa" class="h-9 rounded-lg border border-slate-300 bg-white px-3 text-sm text-slate-800">' + opcoesCadastroMobile(tipos, d.tipo_empresa) + '</select></label>' : '') +
+            campo('cp-documento', pessoal || autonomo ? 'CPF' : 'CNPJ', d.documento, 'text', 'inputmode="numeric"') +
+          '</div></div>' +
+          '<div><h3 class="mb-2 border-b border-slate-200 pb-1 text-[11px] font-black uppercase text-sky-800">Endere&ccedil;o</h3><div class="grid gap-2">' +
+            '<label class="grid gap-1 text-[10px] font-black text-slate-600">CEP<span class="flex gap-1"><input id="cp-cep" inputmode="numeric" value="' + escapeHtml(d.cep || '') + '" style="font-size:16px" class="h-9 min-w-0 flex-1 rounded-lg border border-slate-300 px-3 text-sm"/><button id="cp-buscar-cep" type="button" class="h-9 rounded-lg bg-sky-700 px-3 text-[10px] font-black text-white">Buscar</button></span></label>' +
+            campo('cp-rua', 'Rua', d.rua) + campo('cp-numero', 'N&uacute;mero', d.numero) + campo('cp-complemento', 'Complemento (opcional)', d.complemento) + campo('cp-bairro', 'Bairro', d.bairro) + campo('cp-cidade', 'Cidade', d.cidade) +
+            '<label class="grid gap-1 text-[10px] font-black text-slate-600">Estado<select id="cp-estado" class="h-9 rounded-lg border border-slate-300 bg-white px-3 text-sm"><option value="">UF</option>' + ufs.map(function (uf) { return '<option' + (uf === d.estado ? ' selected' : '') + '>' + uf + '</option>'; }).join('') + '</select></label>' +
+          '</div></div>' +
+          '<div><h3 class="mb-2 border-b border-slate-200 pb-1 text-[11px] font-black uppercase text-sky-800">Contato</h3><div class="grid gap-2">' +
+            campo('cp-telefone', 'Telefone', d.telefone, 'tel', 'inputmode="tel"') + campo('cp-whatsapp', 'WhatsApp', d.whatsapp, 'tel', 'inputmode="tel"') + campo('cp-email', pessoal ? 'E-mail' : 'E-mail da empresa', d.email_empresa, 'email') + campo('cp-site', 'Site (opcional)', d.site) + campo('cp-instagram', 'Instagram (opcional)', d.instagram) +
+          '</div></div>' +
+          (!pessoal ? '<div><h3 class="mb-2 border-b border-slate-200 pb-1 text-[11px] font-black uppercase text-sky-800">Dados Fiscais</h3><div class="grid gap-2">' +
+            campo('cp-ie', 'Inscri&ccedil;&atilde;o Estadual', d.inscricao_estadual, 'text', d.inscricao_estadual_isento ? 'disabled' : '') + '<label class="flex items-center gap-2 text-xs font-bold text-slate-600"><input id="cp-ie-isento" type="checkbox"' + (d.inscricao_estadual_isento ? ' checked' : '') + '/> Isento</label>' +
+            campo('cp-im', 'Inscri&ccedil;&atilde;o Municipal', d.inscricao_municipal, 'text', d.inscricao_municipal_isento ? 'disabled' : '') + '<label class="flex items-center gap-2 text-xs font-bold text-slate-600"><input id="cp-im-isento" type="checkbox"' + (d.inscricao_municipal_isento ? ' checked' : '') + '/> Isento</label>' +
+            '<label class="grid gap-1 text-[10px] font-black text-slate-600">Regime Tribut&aacute;rio<select id="cp-regime" class="h-9 rounded-lg border border-slate-300 bg-white px-3 text-sm">' + opcoesCadastroMobile(regimes, d.regime_tributario) + '</select></label>' +
+          '</div></div>' : '') +
+        '</div>';
+    return '<section class="avantalab-mobile-bg fixed inset-0 z-[12000] flex items-start justify-center overflow-y-auto bg-black/70 px-3 py-4">' +
+      '<div class="flex max-h-[calc(100dvh-2rem)] w-full max-w-md flex-col overflow-hidden rounded-xl bg-white text-slate-900 shadow-2xl">' +
+        '<header class="shrink-0 bg-[#003E73] px-4 py-3 text-white"><p class="text-[9px] font-black uppercase tracking-[.2em] text-cyan-200">Cadastro do perfil</p><h2 class="mt-0.5 text-base font-black leading-tight">' + titulo + '</h2>' + (contexto === 'lembrete' ? '<p class="mt-1 text-[11px] text-white/80">Faltam ' + Number(status.diasRestantes || 0) + ' dias para se tornar obrigat&oacute;rio.</p>' : '') + '</header>' +
+        '<div class="min-h-0 flex-1 overflow-y-auto px-4 py-3">' + formulario + '<p id="cp-erro" class="mt-3 text-xs font-bold text-red-600"></p></div>' +
+        '<footer class="flex shrink-0 justify-end gap-2 border-t border-slate-200 bg-slate-50 px-4 py-3">' +
+          (contexto === 'lembrete' ? '<button id="cp-depois" type="button" class="h-9 rounded-lg border border-slate-300 bg-white px-4 text-xs font-bold text-slate-600">Lembrar depois</button>' : '') +
+          (contexto === 'paywall' ? '<button id="cp-voltar" type="button" class="h-9 rounded-lg border border-slate-300 bg-white px-4 text-xs font-bold text-slate-600">Voltar aos planos</button>' : '') +
+          (podeEditar ? '<button id="cp-salvar" type="button" class="h-9 rounded-lg bg-[#003E73] px-5 text-xs font-black text-white">' + (contexto === 'paywall' ? 'Salvar e continuar' : 'Concluir cadastro') + '</button>' : '') +
+        '</footer>' +
+      '</div></section>';
+  }
+
   async function _avaPaywallToken() {
     var sessao = await db.auth.getSession();
     return sessao && sessao.data && sessao.data.session ? sessao.data.session.access_token : '';
   }
 
-  window._avaPaywallAssinar = async function (ciclo) {
+  window._avaPaywallEscolherPlano = function (ciclo) {
+    state.paywallCadastroCiclo = ciclo === 'anual' ? 'anual' : 'mensal';
+    render();
+  };
+
+  function capturarCadastroPerfilMobile() {
+    var d = Object.assign({}, state.cadastroPerfilDados || {});
+    var valor = function (id) { var el = document.getElementById(id); return el ? el.value : ''; };
+    var marcado = function (id) { var el = document.getElementById(id); return !!(el && el.checked); };
+    d.nome_fantasia = valor('cp-nome-fantasia');
+    d.nome_responsavel = valor('cp-responsavel');
+    d.razao_social = valor('cp-razao-social');
+    d.tipo_empresa = valor('cp-tipo-empresa');
+    d.documento = valor('cp-documento').replace(/\D/g, '');
+    d.cep = valor('cp-cep').replace(/\D/g, '');
+    d.rua = valor('cp-rua'); d.numero = valor('cp-numero'); d.complemento = valor('cp-complemento');
+    d.bairro = valor('cp-bairro'); d.cidade = valor('cp-cidade'); d.estado = valor('cp-estado');
+    d.telefone = valor('cp-telefone'); d.whatsapp = valor('cp-whatsapp'); d.email_empresa = valor('cp-email');
+    d.site = valor('cp-site'); d.instagram = valor('cp-instagram');
+    d.inscricao_estadual = valor('cp-ie'); d.inscricao_estadual_isento = marcado('cp-ie-isento');
+    d.inscricao_municipal = valor('cp-im'); d.inscricao_municipal_isento = marcado('cp-im-isento');
+    d.regime_tributario = valor('cp-regime');
+    state.cadastroPerfilDados = d;
+    return d;
+  }
+
+  async function buscarCepCadastroPerfilMobile() {
+    var erroEl = document.getElementById('cp-erro');
+    var cep = (document.getElementById('cp-cep') && document.getElementById('cp-cep').value || '').replace(/\D/g, '');
+    if (cep.length !== 8) { if (erroEl) erroEl.textContent = 'Informe um CEP com 8 dígitos.'; return; }
+    try {
+      var resposta = await fetch('/api/cep?cep=' + cep);
+      var json = await resposta.json();
+      if (!resposta.ok) throw new Error(json.mensagem);
+      var mapa = { 'cp-rua': json.rua, 'cp-bairro': json.bairro, 'cp-cidade': json.cidade, 'cp-estado': json.estado };
+      Object.keys(mapa).forEach(function (id) { var el = document.getElementById(id); if (el) el.value = mapa[id] || ''; });
+      if (erroEl) erroEl.textContent = '';
+      capturarCadastroPerfilMobile();
+    } catch (e) {
+      if (erroEl) erroEl.textContent = e.message || 'CEP não encontrado. Preencha manualmente.';
+    }
+  }
+
+  async function salvarCadastroPerfilMobile() {
+    if (state.cadastroPerfilSalvando || !state.empresa) return;
+    var contextoPaywall = !!state.paywallCadastroCiclo;
+    var janelaPagamento = contextoPaywall ? window.open('', '_blank') : null;
+    var erroEl = document.getElementById('cp-erro');
+    state.cadastroPerfilSalvando = true;
+    if (erroEl) erroEl.textContent = 'Salvando...';
+    try {
+      var token = await tokenSessao();
+      var resposta = await fetch('/api/perfil-cadastro', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
+        body: JSON.stringify({ empresaId: state.empresa.id, dados: capturarCadastroPerfilMobile(), concluir: true }),
+      });
+      var json = await resposta.json();
+      if (!resposta.ok) throw new Error(json.mensagem || 'Não foi possível concluir o cadastro.');
+      state.cadastroPerfilStatus = json;
+      state.cadastroPerfilDados = json.cadastro;
+      state.empresa.nome = json.cadastro.nome_fantasia || state.empresa.nome;
+      state.empresas = (state.empresas || []).map(function (empresa) {
+        return empresa.id === state.empresa.id ? Object.assign({}, empresa, { nome: state.empresa.nome, empresa_nome: state.empresa.nome }) : empresa;
+      });
+      if (contextoPaywall) {
+        await window._avaPaywallAssinar(state.paywallCadastroCiclo, json.cobranca, janelaPagamento);
+      } else {
+        state.cadastroPerfilAdiado = true;
+        render();
+      }
+    } catch (e) {
+      if (janelaPagamento) janelaPagamento.close();
+      if (erroEl) erroEl.textContent = e.message || 'Não foi possível concluir o cadastro.';
+    } finally {
+      state.cadastroPerfilSalvando = false;
+    }
+  }
+
+  async function adiarCadastroPerfilMobile() {
+    if (!state.empresa) return;
+    try {
+      var token = await tokenSessao();
+      await fetch('/api/perfil-cadastro', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
+        body: JSON.stringify({ empresaId: state.empresa.id, dados: capturarCadastroPerfilMobile(), concluir: false }),
+      });
+    } catch (e) {}
+    state.cadastroPerfilAdiado = true;
+    render();
+  }
+
+  window._avaPaywallAssinar = async function (ciclo, dadosInformados, janelaInformada) {
     if (state.paywallProcessando) return;
     var msgEl = document.getElementById('paywall-msg');
     var nomeEl = document.getElementById('paywall-nome');
     var cpfEl = document.getElementById('paywall-cpf');
     var emailEl = document.getElementById('paywall-email');
     var telefoneEl = document.getElementById('paywall-telefone');
-    var nome = (nomeEl ? nomeEl.value : '').trim().replace(/\s+/g, ' ');
-    var cpf = (cpfEl ? cpfEl.value : '').replace(/\D/g, '');
-    var email = (emailEl ? emailEl.value : '').trim().toLowerCase();
-    var telefone = (telefoneEl ? telefoneEl.value : '').replace(/\D/g, '');
+    var nome = String(dadosInformados && dadosInformados.nome || (nomeEl ? nomeEl.value : '')).trim().replace(/\s+/g, ' ');
+    var cpf = String(dadosInformados && dadosInformados.cpfCnpj || (cpfEl ? cpfEl.value : '')).replace(/\D/g, '');
+    var email = String(dadosInformados && dadosInformados.email || (emailEl ? emailEl.value : '')).trim().toLowerCase();
+    var telefone = String(dadosInformados && dadosInformados.telefone || (telefoneEl ? telefoneEl.value : '')).replace(/\D/g, '');
     if (nome.length < 3) { if (msgEl) { msgEl.className = 'mt-3 text-sm font-bold text-red-600'; msgEl.textContent = 'Informe nome ou razão social.'; } return; }
     if (cpf.length !== 11 && cpf.length !== 14) { if (msgEl) { msgEl.className = 'mt-3 text-sm font-bold text-red-600'; msgEl.textContent = 'Informe um CPF (11 dígitos) ou CNPJ (14 dígitos).'; } return; }
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { if (msgEl) { msgEl.className = 'mt-3 text-sm font-bold text-red-600'; msgEl.textContent = 'Informe um e-mail de cobrança válido.'; } return; }
     if (telefone.length < 10 || telefone.length > 13) { if (msgEl) { msgEl.className = 'mt-3 text-sm font-bold text-red-600'; msgEl.textContent = 'Informe um telefone válido.'; } return; }
-    var janelaPagamento = window.open('', '_blank');
+    var janelaPagamento = janelaInformada || window.open('', '_blank');
     state.paywallProcessando = true;
     if (msgEl) { msgEl.className = 'mt-3 text-sm font-bold text-slate-600'; msgEl.textContent = 'Processando...'; }
     try {
@@ -1111,6 +1287,12 @@
 
   async function assinarPeloPainelMobile(ciclo) {
     if (!state.empresa || state.assinaturaAcao) return;
+    if (state.cadastroPerfilStatus && !state.cadastroPerfilStatus.completo) {
+      state.modalMenu = '';
+      state.paywallCadastroCiclo = ciclo === 'anual' ? 'anual' : 'mensal';
+      render();
+      return;
+    }
     state.assinaturaNome = campo('assinatura-nome').trim().replace(/\s+/g, ' ');
     state.assinaturaCpf = campo('assinatura-cpf');
     state.assinaturaEmail = campo('assinatura-email').trim().toLowerCase();
@@ -3616,8 +3798,8 @@
 
   // Cobrança: verifica no servidor se o perfil empresa vencido precisa de paywall.
   // Fail-open: qualquer falha não bloqueia o acesso.
-  async function verificarPaywallMobile() {
-    if (!state.empresa || !state.empresa.id) { state.paywallAtivo = false; state.paywallVerificado = true; render(); return; }
+  async function verificarPaywallMobile(silencioso) {
+    if (!state.empresa || !state.empresa.id) { state.paywallAtivo = false; state.paywallVerificado = true; if (!silencioso) render(); return; }
     try {
       var sessao = await db.auth.getSession();
       var token = sessao && sessao.data && sessao.data.session ? sessao.data.session.access_token : '';
@@ -3644,7 +3826,37 @@
     // Marca o perfil como verificado: próximas chamadas de carregarDados
     // reconferem em silêncio, sem a tela cheia de carregamento.
     state.paywallPerfilVerificado = state.empresa && state.empresa.id;
-    render();
+    if (!silencioso) render();
+  }
+
+  async function carregarCadastroPerfilMobile() {
+    if (!state.empresa || !state.empresa.id) return false;
+    if (state.cadastroPerfilEmpresaId !== state.empresa.id) {
+      state.cadastroPerfilEmpresaId = state.empresa.id;
+      state.cadastroPerfilAdiado = false;
+      state.paywallCadastroCiclo = '';
+      state.cadastroPerfilStatus = null;
+      state.cadastroPerfilDados = null;
+    }
+    state.cadastroPerfilVerificado = false;
+    state.cadastroPerfilErro = '';
+    try {
+      var token = await tokenSessao();
+      if (!token) throw new Error('Sessão indisponível. Entre novamente.');
+      var resposta = await fetch('/api/perfil-cadastro?empresaId=' + encodeURIComponent(state.empresa.id), {
+        headers: { Authorization: 'Bearer ' + token },
+      });
+      var json = await resposta.json();
+      if (!resposta.ok) throw new Error(json.mensagem || 'Não foi possível verificar o cadastro deste perfil.');
+      state.cadastroPerfilStatus = json;
+      state.cadastroPerfilDados = json.cadastro;
+      state.cadastroPerfilVerificado = true;
+      return true;
+    } catch (e) {
+      console.error('Erro ao carregar cadastro do perfil:', e);
+      state.cadastroPerfilErro = e && e.message ? e.message : 'Não foi possível verificar o cadastro deste perfil.';
+      return false;
+    }
   }
 
   async function buscarLancamentosAnoMobile(empresaId, ano) {
@@ -3707,7 +3919,13 @@
     if (state.paywallPerfilVerificado !== state.empresa.id) {
       state.paywallVerificado = false;
     }
-    verificarPaywallMobile();
+    await verificarPaywallMobile(true);
+    var cadastroPerfilOk = await carregarCadastroPerfilMobile();
+    if (!cadastroPerfilOk && !state.paywallAtivo) {
+      state.carregando = false;
+      render();
+      return;
+    }
 
     // Guarda o dia da carga (São Paulo) — usado para só recarregar ao voltar
     // ao app quando o dia virou (despesas previstas do novo dia).
@@ -9734,11 +9952,18 @@
     root.setAttribute('data-avantalab-mobile-ready', '1');
     if (!state.chatIAAberto) configurarCamadaFundoChatIA(false);
     removerChatIAOverlay();
-    var telaAtual = !state.pronto
-      ? telaCarregandoMobile()
-      : (state.autenticado
-        ? (ehFuncionarioPontoMobile() ? telaRedirecionandoPonto() : (state.validacaoTelefoneObrigatoria ? telaTelefoneObrigatorioMobile() : (state.paywallAtivo ? telaPaywallMobile() : (state.modoCriarPerfil ? telaLoginWrapper(telaCriarPerfilInicial(), 'Criar perfil financeiro', 'Informe os dados do seu primeiro perfil.') : (!state.paywallVerificado ? telaCarregandoMobile() : telaApp())))))
-        : (state.modoCriarPerfil ? telaLoginWrapper(telaCriarPerfilInicial(), 'Criar perfil financeiro', 'Informe os dados do seu primeiro perfil.') : telaLogin()));
+    var telaAtual;
+    if (!state.pronto) telaAtual = telaCarregandoMobile();
+    else if (!state.autenticado) telaAtual = state.modoCriarPerfil ? telaLoginWrapper(telaCriarPerfilInicial(), 'Criar perfil financeiro', 'Informe os dados do seu primeiro perfil.') : telaLogin();
+    else if (ehFuncionarioPontoMobile()) telaAtual = telaRedirecionandoPonto();
+    else if (state.validacaoTelefoneObrigatoria) telaAtual = telaTelefoneObrigatorioMobile();
+    else if (state.paywallCadastroCiclo) telaAtual = telaCadastroPerfilMobile('paywall');
+    else if (state.paywallAtivo) telaAtual = telaPaywallMobile();
+    else if (state.cadastroPerfilErro) telaAtual = telaErroCadastroPerfilMobile();
+    else if (deveExibirCadastroPerfilMobile()) telaAtual = telaCadastroPerfilMobile(state.cadastroPerfilStatus.obrigatorio ? 'bloqueio' : 'lembrete');
+    else if (state.modoCriarPerfil) telaAtual = telaLoginWrapper(telaCriarPerfilInicial(), 'Criar perfil financeiro', 'Informe os dados do seu primeiro perfil.');
+    else if (!state.paywallVerificado) telaAtual = telaCarregandoMobile();
+    else telaAtual = telaApp();
     root.innerHTML = telaAtual + (state.chatIAAberto ? chatIAModalHtml() : '') + (state.mostrarPromptNotificacoes ? promptNotificacoesHtml() : '') + (state.tourAberto ? tourHtml() : '');
     sincronizarGradienteHeaderPerfil();
     configurarRecolhimentoPerfilHeader();
@@ -9780,6 +10005,14 @@
     bind('reenviar-telefone-obrigatorio', enviarCodigoTelefoneObrigatorioMobile);
     bindChange('ddi-telefone-obrigatorio', function (e) { state.ddiTelefoneObrigatorio = (e.target && e.target.value ? e.target.value : '55').replace(/\D/g, ''); });
     bind('sair-telefone-obrigatorio', sair);
+    bind('cp-depois', adiarCadastroPerfilMobile);
+    bind('cp-voltar', function () { state.paywallCadastroCiclo = ''; render(); });
+    bind('cp-buscar-cep', buscarCepCadastroPerfilMobile);
+    bind('cp-salvar', salvarCadastroPerfilMobile);
+    bind('cp-tentar-novamente', carregarDados);
+    bindChange('cp-tipo-empresa', function () { capturarCadastroPerfilMobile(); state.cadastroPerfilDados.documento = ''; render(); });
+    bindChange('cp-ie-isento', function () { var el = document.getElementById('cp-ie'); if (el) { el.disabled = this.checked; if (this.checked) el.value = ''; } });
+    bindChange('cp-im-isento', function () { var el = document.getElementById('cp-im'); if (el) { el.disabled = this.checked; if (this.checked) el.value = ''; } });
 
     bind('entrar', entrar);
     bind('entrar-google', entrarGoogle);

@@ -25,6 +25,7 @@ interface PaywallEmpresaProps {
   faturaPendenteUrl?: string | null;
   // Retorna { ok, url } em caso de sucesso, ou { ok:false, mensagem } em caso de falha.
   onAssinar?: (ciclo: 'mensal' | 'anual', dados: DadosCobrancaAssinatura) => Promise<{ ok: boolean; url?: string; mensagem?: string } | void>;
+  onEscolherPlano?: (ciclo: 'mensal' | 'anual') => void;
   onAtualizarPagamento?: () => Promise<{ ok: boolean; liberado: boolean; mensagem?: string }>;
   // Resgate de cupom: retorna mensagem de erro (string) ou nada em caso de sucesso.
   onResgatarCupom?: (codigo: string) => Promise<string | null | void>;
@@ -37,7 +38,7 @@ const GRADIENTE = 'linear-gradient(135deg,#003E73,#00A6C8)';
 
 // Tela mostrada quando o perfil empresa precisa regularizar ou iniciar a
 // assinatura, com a identidade visual da tela de login.
-export default function PaywallEmpresa({ nomePerfil, emailPadrao, telefonePadrao, estadoAcesso, faturaPendenteUrl, onAssinar, onAtualizarPagamento, onResgatarCupom, onTrocarPerfil, onCriarPerfil, onSair }: PaywallEmpresaProps) {
+export default function PaywallEmpresa({ nomePerfil, emailPadrao, telefonePadrao, estadoAcesso, faturaPendenteUrl, onAssinar, onEscolherPlano, onAtualizarPagamento, onResgatarCupom, onTrocarPerfil, onCriarPerfil, onSair }: PaywallEmpresaProps) {
   const [carregando, setCarregando] = useState<'mensal' | 'anual' | null>(null);
   const [erro, setErro] = useState('');
   const [nomeCobranca, setNomeCobranca] = useState(nomePerfil || '');
@@ -92,6 +93,10 @@ export default function PaywallEmpresa({ nomePerfil, emailPadrao, telefonePadrao
 
   const clicar = async (ciclo: 'mensal' | 'anual') => {
     if (assinaturaEmCursoRef.current) return;
+    if (onEscolherPlano) {
+      onEscolherPlano(ciclo);
+      return;
+    }
     const digitos = cpfCnpj.replace(/\D/g, '');
     const telefone = telefoneCobranca.replace(/\D/g, '');
     const nome = nomeCobranca.trim().replace(/\s+/g, ' ');
@@ -241,7 +246,7 @@ export default function PaywallEmpresa({ nomePerfil, emailPadrao, telefonePadrao
             </div>
           ) : (
             <>
-              <div className="mt-3 grid gap-2 sm:grid-cols-2">
+              {!onEscolherPlano && <div className="mt-3 grid gap-2 sm:grid-cols-2">
                 <label className="block text-xs font-semibold text-slate-700">
                   Nome ou razão social
                   <input
@@ -285,7 +290,7 @@ export default function PaywallEmpresa({ nomePerfil, emailPadrao, telefonePadrao
                     className={`${inputCls} mt-1`}
                   />
                 </label>
-              </div>
+              </div>}
 
               {/* Planos */}
               <div className="mt-3 grid gap-2 sm:grid-cols-2">
