@@ -670,6 +670,8 @@ const financeiroRealtimeChannelRef = useRef<ReturnType<typeof supabase.channel> 
 const [menuResponsivoAberto, setMenuResponsivoAberto] = useState(false);
 const [subAcaoGerenciar, setSubAcaoGerenciar] = useState<null | 'editar' | 'criar'>(null);
 const [perfilCadastroEdicaoId, setPerfilCadastroEdicaoId] = useState<string | null>(null);
+const [codigoVinculoEmpresa, setCodigoVinculoEmpresa] = useState<string | null>(null);
+const [codigoVinculoCarregando, setCodigoVinculoCarregando] = useState(false);
   const [ultimoBackupEm, setUltimoBackupEm] = useState<string | null>(null);
   const [corPrimaria, setCorPrimaria] = useState('#003E73');
   const [corTemporaria, setCorTemporaria] = useState('#003E73');
@@ -846,6 +848,73 @@ const podeCriarNovaEmpresa =
   perfilUsuario === 'operador_simples';
 
 const podeTrocarEmpresa = empresasDoUsuario.length > 1;
+
+useEffect(() => {
+  if (!modalEmpresasAberto || !empresaId || !podeAcessarAjustes) {
+    setCodigoVinculoEmpresa(null);
+    return;
+  }
+
+  let ativo = true;
+  setCodigoVinculoCarregando(true);
+
+  const carregarCodigo = async () => {
+    const { data, error } = await supabase
+      .from('codigos_vinculo_empresa')
+      .select('codigo')
+      .eq('empresa_id', empresaId)
+      .eq('ativo', true)
+      .maybeSingle();
+
+    if (!ativo) return;
+    if (error) {
+      // A tabela chega junto da migration do modulo Vendas. Enquanto ela
+      // nao tiver sido aplicada, o card simplesmente nao exibe o codigo.
+      setCodigoVinculoEmpresa(null);
+    } else {
+      setCodigoVinculoEmpresa(data?.codigo ? String(data.codigo) : null);
+    }
+    setCodigoVinculoCarregando(false);
+  };
+
+  carregarCodigo();
+
+  return () => { ativo = false; };
+}, [empresaId, modalEmpresasAberto, podeAcessarAjustes]);
+
+const copiarCodigoVinculoEmpresa = async () => {
+  if (!codigoVinculoEmpresa) return;
+
+  try {
+    await navigator.clipboard.writeText(codigoVinculoEmpresa);
+    abrirAviso('Código copiado', 'Envie este código ao vendedor para que ele solicite acesso ao perfil.', undefined, 'sucesso');
+  } catch {
+    abrirAviso('Não foi possível copiar', `Copie manualmente o código: ${codigoVinculoEmpresa}`);
+  }
+};
+
+const confirmarRegeneracaoCodigoVinculo = () => {
+  if (!empresaId) return;
+
+  abrirConfirmacao({
+    titulo: 'Gerar novo código?',
+    mensagem: 'O código atual deixará de funcionar imediatamente. Solicitações já enviadas para aprovação não serão afetadas.',
+    textoConfirmar: 'Gerar novo código',
+    acao: async () => {
+      const { data, error } = await supabase.rpc('regenerar_codigo_vinculo_empresa_rpc', {
+        p_empresa_id: empresaId,
+      });
+
+      if (error || !data?.codigo) {
+        abrirAviso('Não foi possível gerar o código', error?.message || 'Tente novamente em instantes.');
+        return;
+      }
+
+      setCodigoVinculoEmpresa(String(data.codigo));
+      abrirAviso('Novo código gerado', 'O código anterior foi invalidado.', undefined, 'sucesso');
+    },
+  });
+};
 
 const perfilUsuarioFormatado =
   perfilUsuario === 'gestor_master'
@@ -7645,27 +7714,56 @@ if (validacaoTelefoneObrigatoria) {
           </button>
         </div>
         {!subAcaoGerenciar && (
-          <div className="mt-5 rounded-2xl border bg-white/10 p-3" style={{ borderColor: bordaSobreCorPrimaria }}>
-            <div className="mb-3 flex items-center gap-2">
-              <span className="h-4 w-1 rounded-full bg-current opacity-90" aria-hidden="true" />
-              <p className="text-[11px] font-black uppercase tracking-[0.2em] opacity-80">
+          <div className="mt-3 rounded-xl border bg-white/10 p-2.5" style={{ borderColor: bordaSobreCorPrimaria }}>
+            <div className="mb-2 flex items-center gap-2">
+              <span className="h-3 w-1 rounded-full bg-current opacity-90" aria-hidden="true" />
+              <p className="text-[10px] font-black uppercase tracking-[0.18em] opacity-80">
                 Perfil ativo
               </p>
             </div>
-            <div className="grid gap-3 text-sm sm:grid-cols-[minmax(0,2fr)_minmax(110px,1fr)_minmax(90px,1fr)] sm:gap-5">
+            <div className="grid grid-cols-[minmax(0,2fr)_minmax(72px,1fr)_minmax(64px,1fr)] gap-2 text-xs">
               <div className="min-w-0">
-                <span className="block text-[9px] font-black uppercase tracking-wide opacity-65">Nome</span>
-                <strong className="mt-0.5 block break-words text-sm font-black">{nomeEmpresaAtual || 'Não carregado'}</strong>
+                <span className="block text-[8px] font-black uppercase tracking-wide opacity-65">Nome</span>
+                <strong className="mt-0.5 block truncate text-xs font-black">{nomeEmpresaAtual || 'Não carregado'}</strong>
               </div>
               <div className="min-w-0">
-                <span className="block text-[9px] font-black uppercase tracking-wide opacity-65">Acesso</span>
-                <strong className="mt-0.5 block truncate text-sm font-black">{perfilUsuarioFormatado}</strong>
+                <span className="block text-[8px] font-black uppercase tracking-wide opacity-65">Acesso</span>
+                <strong className="mt-0.5 block truncate text-xs font-black">{perfilUsuarioFormatado}</strong>
               </div>
               <div className="min-w-0">
-                <span className="block text-[9px] font-black uppercase tracking-wide opacity-65">Tipo</span>
-                <strong className="mt-0.5 block truncate text-sm font-black">{rotuloTipoPerfilAtual}</strong>
+                <span className="block text-[8px] font-black uppercase tracking-wide opacity-65">Tipo</span>
+                <strong className="mt-0.5 block truncate text-xs font-black">{rotuloTipoPerfilAtual}</strong>
               </div>
             </div>
+            {podeAcessarAjustes && (
+              <div className="mt-2 border-t border-white/20 pt-2">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <div className="flex min-w-0 items-center gap-2">
+                    <span className="shrink-0 text-[8px] font-black uppercase tracking-wide opacity-65">Código Vendas</span>
+                    <strong className="truncate font-mono text-xs font-black tracking-[0.1em]">
+                      {codigoVinculoCarregando ? 'Carregando...' : codigoVinculoEmpresa || 'Indisponível'}
+                    </strong>
+                  </div>
+                  <div className="flex shrink-0 gap-2">
+                    <button
+                      type="button"
+                      onClick={copiarCodigoVinculoEmpresa}
+                      disabled={!codigoVinculoEmpresa}
+                      className="rounded-md border border-white/30 bg-white/10 px-2 py-1.5 text-[9px] font-black uppercase tracking-wide transition hover:bg-white/20 disabled:cursor-not-allowed disabled:opacity-45"
+                    >
+                      Copiar
+                    </button>
+                    <button
+                      type="button"
+                      onClick={confirmarRegeneracaoCodigoVinculo}
+                      className="rounded-md border border-white/30 bg-white/10 px-2 py-1.5 text-[9px] font-black uppercase tracking-wide transition hover:bg-white/20"
+                    >
+                      Gerar novo
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         )}
       </div>
@@ -7721,6 +7819,7 @@ if (validacaoTelefoneObrigatoria) {
 
             <div className={`my-3 border-t ${darkMode ? 'border-slate-700' : 'border-slate-200'}`} />
 
+            <div className="grid grid-cols-2 gap-2">
             {podeAcessarAjustes && (
               <button
                 type="button"
@@ -7728,11 +7827,11 @@ if (validacaoTelefoneObrigatoria) {
                   await abrirEdicaoEmpresaAtual(podeAcessarAjustes, tipoPerfilAtualNormalizado, true);
                   setSubAcaoGerenciar('editar');
                 }}
-                className={`flex min-h-12 w-full cursor-pointer items-center gap-3 rounded-2xl border px-4 py-3 text-left text-sm font-black shadow-sm transition hover:-translate-y-0.5 hover:shadow-md ${
+                className={`flex min-h-0 w-full cursor-pointer flex-col items-center justify-center gap-1 rounded-xl border px-2 py-2.5 text-center text-[11px] font-black leading-tight shadow-sm transition hover:-translate-y-0.5 hover:shadow-md ${
                   darkMode ? 'border-slate-700 bg-slate-800/70 text-slate-100 hover:bg-slate-800' : 'border-slate-200 bg-white text-slate-800 hover:bg-slate-50'
                 }`}
               >
-                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl" style={{ backgroundColor: `${corPrimaria}14`, color: corPrimaria }}>
+                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg" style={{ backgroundColor: `${corPrimaria}14`, color: corPrimaria }}>
                   <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" />
                   </svg>
@@ -7750,11 +7849,11 @@ if (validacaoTelefoneObrigatoria) {
                   setAuthErro('');
                   setSubAcaoGerenciar('criar');
                 }}
-                className={`flex min-h-12 w-full cursor-pointer items-center gap-3 rounded-2xl border px-4 py-3 text-left text-sm font-black shadow-sm transition hover:-translate-y-0.5 hover:shadow-md ${
+                className={`flex min-h-0 w-full cursor-pointer flex-col items-center justify-center gap-1 rounded-xl border px-2 py-2.5 text-center text-[11px] font-black leading-tight shadow-sm transition hover:-translate-y-0.5 hover:shadow-md ${
                   darkMode ? 'border-slate-700 bg-slate-800/70 text-slate-100 hover:bg-slate-800' : 'border-slate-200 bg-white text-slate-800 hover:bg-slate-50'
                 }`}
               >
-                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl" style={{ backgroundColor: `${corPrimaria}14`, color: corPrimaria }}>
+                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg" style={{ backgroundColor: `${corPrimaria}14`, color: corPrimaria }}>
                   <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.4" d="M12 5v14M5 12h14" />
                   </svg>
@@ -7767,7 +7866,7 @@ if (validacaoTelefoneObrigatoria) {
               type="button"
               onClick={() => { setModalEmpresasAberto(false); abrirTrocaEmpresa(); }}
               disabled={!podeTrocarEmpresa}
-              className={`flex min-h-12 w-full items-center gap-3 rounded-2xl border px-4 py-3 text-left text-sm font-black shadow-sm transition ${
+              className={`flex min-h-0 w-full flex-col items-center justify-center gap-1 rounded-xl border px-2 py-2.5 text-center text-[11px] font-black leading-tight shadow-sm transition ${
                 podeTrocarEmpresa
                   ? darkMode
                     ? 'cursor-pointer border-slate-700 bg-slate-800/70 text-slate-100 hover:-translate-y-0.5 hover:bg-slate-800 hover:shadow-md'
@@ -7775,7 +7874,7 @@ if (validacaoTelefoneObrigatoria) {
                   : 'cursor-not-allowed border-slate-200 bg-slate-100 text-slate-400'
               }`}
             >
-              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl" style={{ backgroundColor: `${corPrimaria}14`, color: corPrimaria }}>
+              <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg" style={{ backgroundColor: `${corPrimaria}14`, color: corPrimaria }}>
                 <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.2" d="M7 7h11m0 0l-3-3m3 3l-3 3M17 17H6m0 0l3 3m-3-3l3-3" />
                 </svg>
@@ -7788,7 +7887,7 @@ if (validacaoTelefoneObrigatoria) {
               onClick={() => { setModalEmpresasAberto(false); confirmarExclusaoEmpresaAtual(); }}
               disabled={perfilUsuario !== 'gestor_master'}
               title={perfilUsuario === 'gestor_master' ? 'Excluir o perfil atual' : 'Somente o Gestor Master pode excluir o perfil'}
-              className={`flex min-h-12 w-full items-center gap-3 rounded-2xl border px-4 py-3 text-left text-sm font-black shadow-sm transition ${
+              className={`flex min-h-0 w-full flex-col items-center justify-center gap-1 rounded-xl border px-2 py-2.5 text-center text-[11px] font-black leading-tight shadow-sm transition ${
                 perfilUsuario === 'gestor_master'
                   ? darkMode
                     ? 'cursor-pointer border-red-900/60 bg-red-950/30 text-red-200 hover:-translate-y-0.5 hover:bg-red-950/50 hover:shadow-md'
@@ -7798,7 +7897,7 @@ if (validacaoTelefoneObrigatoria) {
                     : 'cursor-not-allowed border-slate-300 bg-slate-100 text-slate-400 opacity-80'
               }`}
             >
-              <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-xl ${
+              <span className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-lg ${
                 perfilUsuario === 'gestor_master' ? 'bg-red-100 text-red-700' : darkMode ? 'bg-slate-700 text-slate-500' : 'bg-slate-200 text-slate-400'
               }`}>
                 <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -7807,6 +7906,7 @@ if (validacaoTelefoneObrigatoria) {
               </span>
               <span>Excluir perfil</span>
             </button>
+            </div>
           </div>
         )}
 

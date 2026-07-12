@@ -863,9 +863,8 @@ body { background: #fff; color: var(--ink); }
 .logout-screen h1 { margin: 16px 0 7px; }
 .logout-screen p { margin: 0 0 20px; color: #727980; }
 .logout-screen button { min-height: 43px; }
-.login-screen { display: grid; min-height: 100dvh; place-items: center; padding: 32px 24px; background: linear-gradient(155deg,#123d72 0%,#1a6c94 43%,#61bdb4 100%); }
+.login-screen { display: grid; min-height: 100dvh; place-items: center; padding: 32px 24px; background: #eef6fb url('./assets/bg-avantalab-mobile.png') center bottom / cover no-repeat; }
 .login-brand { margin-bottom: 22px; color: #fff; text-align: center; }
-.login-brand img { display: block; width: min(230px,72vw); margin: 0 auto 3px; filter: brightness(0) invert(1); }
 .login-brand strong { display: block; font-size: 27px; letter-spacing: -.03em; }
 .login-brand p { margin: 5px 0 0; color: rgba(255,255,255,.84); font-size: 14px; }
 .login-screen form { display: grid; width: min(100%,420px); gap: 18px; border-radius: 18px; padding: 28px; background: #fff; box-shadow: 0 18px 45px rgba(0,31,60,.28); }
@@ -886,6 +885,60 @@ body { background: #fff; color: var(--ink); }
 .login-error { min-height: 0; color: #dc2626; font-size: 13px; text-align: center; }
 .login-submit { min-height: 48px; border-radius: 12px; font-size: 15px; }
 .login-register { margin: -4px 0 0; color: #737b83; font-size: 14px; text-align: center; }
+
+/* Paleta oficial AvantaLab — prevalece sobre a referência visual do Tridium. */
+:root {
+  --azul: #0A1F44;
+  --azul-escuro: #0A1F44;
+  --ciano: #1F8A9E;
+  --primary-hover: #1687D9;
+  --primary-light: #e8f4f6;
+  --hero-b: #1687D9;
+  --texto: #0A1F44;
+  --fundo: #F7FAFC;
+  --tridium: #0A1F44;
+  --tridium-dark: #06162f;
+}
+
+.login-screen {
+  display: flex;
+  min-height: 100dvh;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  padding: clamp(145px, 20vh, 185px) 24px 36px;
+}
+.login-brand { margin: 0 0 22px; color: #0A1F44; }
+.login-brand strong { color: #0A1F44; font-size: 21px; font-weight: 850; letter-spacing: -.02em; }
+.login-brand p { margin-top: 4px; color: #1F8A9E; font-size: 13px; font-weight: 700; }
+.primary,
+.content-area .primary,
+.date-filter .filter-button,
+.login-submit,
+.agenda-new,
+.client-details,
+.client-payment,
+.client-order,
+.password-button,
+.install-button,
+.debt-actions button {
+  color: #fff;
+  background: #0A1F44;
+}
+.primary:hover,
+.content-area .primary:hover,
+.date-filter .filter-button:hover,
+.login-submit:hover,
+.agenda-new:hover,
+.client-details:hover,
+.client-payment:hover,
+.client-order:hover,
+.password-button:hover,
+.install-button:hover,
+.debt-actions button:hover { background: #1687D9; }
+.forgot-link, .login-register button, .login-methods button.active { color: #1F8A9E; }
+.remember-option input:checked + span { border-color: #1F8A9E; background: #1F8A9E; }
+.login-field input { outline-color: #1687D9; }
 .client-card-grid { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 24px; }
 .client-card { position: relative; overflow: hidden; border: 1px solid #e2e3e6; border-radius: 12px; padding: 20px; background: #fff; box-shadow: 0 2px 5px rgba(0,0,0,.06); transition: box-shadow .2s ease, transform .2s ease; }
 .client-card:hover { transform: translateY(-1px); box-shadow: 0 7px 18px rgba(0,0,0,.1); }
