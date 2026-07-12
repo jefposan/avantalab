@@ -24,6 +24,28 @@
     return data.user;
   }
 
+  async function signInPhone(phone, password) {
+    const { data, error } = await requireClient().auth.signInWithPassword({ phone, password });
+    if (error) throw error;
+    return data.user;
+  }
+
+  async function resetPassword(email, redirectTo) {
+    const { error } = await requireClient().auth.resetPasswordForEmail(email, { redirectTo });
+    if (error) throw error;
+  }
+
+  async function signUp({ email, password, nome, telefone }) {
+    const { data, error } = await requireClient().auth.signUp({
+      email,
+      password,
+      phone: telefone || undefined,
+      options: { data: { nome } },
+    });
+    if (error) throw error;
+    return data.user;
+  }
+
   async function signOut() {
     const { error } = await requireClient().auth.signOut();
     if (error) throw error;
@@ -144,5 +166,5 @@
     return { ...pedido, itens: savedItems || [] };
   }
 
-  window.VendasDb = { client, currentUser, signIn, signOut, loadAll, saveProduct, deleteProduct, saveClient, deleteClient, saveOrder };
+  window.VendasDb = { client, currentUser, signIn, signInPhone, resetPassword, signUp, signOut, loadAll, saveProduct, deleteProduct, saveClient, deleteClient, saveOrder };
 })();

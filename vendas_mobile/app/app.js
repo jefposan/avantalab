@@ -33,8 +33,16 @@ const estadoInicial = {
 let state = carregarEstado();
 let backendAtivo = Boolean(window.VendasDb?.client);
 let carregandoBackend = backendAtivo;
+let loginTipo = 'email';
 
 const app = document.getElementById('app');
+
+if (window.__VENDAS_MOBILE_EMBEDDED__ && !document.querySelector('base[data-vendas-mobile]')) {
+  const base = document.createElement('base');
+  base.href = '/vendas-mobile/';
+  base.dataset.vendasMobile = 'true';
+  document.head.prepend(base);
+}
 
 function carregarEstado() {
   try {
@@ -173,7 +181,7 @@ function render() {
     return;
   }
   if (!state.autenticado) {
-    app.innerHTML = `<section class="login-screen"><img src="./assets/logo-avantalab.png" alt="AvantaLab"><form onsubmit="entrarSistema(event)">${svgIcon('lock')}<h1>Vendas Mobile</h1><p>Use o mesmo login da sua conta AvantaLab.</p><label>E-mail<input id="loginEmail" type="email" autocomplete="email" required></label><label>Senha<input id="loginSenha" type="password" autocomplete="current-password" required></label><button class="primary" type="submit">Entrar</button><small id="loginErro"></small></form></section>`;
+    app.innerHTML = renderLogin();
     return;
   }
   const cabecalho = `<header class="system-header"><button class="system-brand brand-home" onclick="abrirSalaBotoes()" aria-label="Ir para a sala de botões"><img src="./assets/logo-avantalab.png" alt="AvantaLab" /></button><button class="home-button" onclick="abrirSalaBotoes()" aria-label="Ir para a sala de botões" title="Sala de botões"><img src="./assets/home-button-house.png" alt="" /></button></header>`;
@@ -202,6 +210,26 @@ function render() {
     ${state.menuAberto ? renderMenuMobile() : ''}
     ${state.aba === 'novo-pedido' ? `<button class="fab" onclick="abrirCarrinho()">${svgIcon('shopping-cart')}</button>` : ''}
   `;
+}
+
+function renderLogin() {
+  const emailAtivo = loginTipo === 'email';
+  return `<section class="login-screen"><div class="login-brand"><img src="./assets/logo-avantalab.png" alt="AvantaLab"><strong>Vendas</strong><p>Entre na sua conta</p></div><form onsubmit="entrarSistema(event)"><div class="login-methods"><button type="button" class="${emailAtivo ? 'active' : ''}" onclick="trocarTipoLogin('email')">${svgIcon('mail')} E-mail</button><button type="button" class="${!emailAtivo ? 'active' : ''}" onclick="trocarTipoLogin('telefone')">${svgIcon('phone')} Telefone</button></div><label>${emailAtivo ? 'E-mail' : 'Telefone'}<div class="login-field">${svgIcon(emailAtivo ? 'mail' : 'phone')}<input id="loginContato" type="${emailAtivo ? 'email' : 'tel'}" inputmode="${emailAtivo ? 'email' : 'tel'}" autocomplete="${emailAtivo ? 'email' : 'tel'}" placeholder="${emailAtivo ? 'Digite seu e-mail' : 'Digite seu telefone'}" required></div></label><label>Senha<div class="login-field password-field">${svgIcon('lock')}<input id="loginSenha" type="password" autocomplete="current-password" placeholder="Digite sua senha" required><button type="button" class="password-toggle" onclick="alternarSenhaLogin()" aria-label="Exibir senha">${svgIcon('eye')}</button></div></label><div class="login-options"><label class="remember-option"><input id="loginLembrar" type="checkbox" checked><span></span>Lembrar-me</label><button type="button" class="forgot-link" onclick="abrirRecuperacaoSenha()">Esqueceu a senha?</button></div><div id="loginErro" class="login-error"></div><button class="primary login-submit" type="submit">Entrar</button><p class="login-register">Não tem conta? <button type="button" onclick="abrirCadastroConta()">Cadastre-se</button></p></form></section>`;
+}
+
+function trocarTipoLogin(tipo) {
+  loginTipo = tipo;
+  render();
+}
+
+function alternarSenhaLogin() {
+  const input = document.getElementById('loginSenha');
+  const botao = document.querySelector('.password-toggle');
+  if (!input || !botao) return;
+  const mostrar = input.type === 'password';
+  input.type = mostrar ? 'text' : 'password';
+  botao.innerHTML = svgIcon(mostrar ? 'eye-off' : 'eye');
+  botao.setAttribute('aria-label', mostrar ? 'Ocultar senha' : 'Exibir senha');
 }
 
 function tab(idAba, icon, label) {
@@ -240,11 +268,43 @@ async function entrarSistema(event) {
   const erro = document.getElementById('loginErro');
   if (erro) erro.textContent = '';
   try {
-    await window.VendasDb.signIn(valor('loginEmail').trim(), valor('loginSenha'));
+    const contato = valor('loginContato').trim();
+    const senha = valor('loginSenha');
+    if (loginTipo === 'email') await window.VendasDb.signIn(contato, senha);
+    else await window.VendasDb.signInPhone(`+55${contato.replace(/\D/g, '')}`, senha);
+    localStorage.setItem('avantalab.vendas_mobile.lembrar', document.getElementById('loginLembrar')?.checked ? '1' : '0');
     await carregarDadosBackend();
   } catch (error) {
     if (erro) erro.textContent = traduzErro(error);
   }
+}
+
+function abrirRecuperacaoSenha() {
+  sheet(`<div class="sheet-header"><div><h2>Recuperar senha</h2><p class="muted small">Informe o e-mail cadastrado para receber o link.</p></div><button class="close" onclick="fecharSheet()">×</button></div><div class="grid">${campo('recuperarEmail','E-mail','','email')}<button class="primary" onclick="enviarRecuperacaoSenha()">Enviar link de recuperação</button></div>`);
+}
+
+async function enviarRecuperacaoSenha() {
+  const email = valor('recuperarEmail').trim();
+  if (!email) { toast('Informe seu e-mail.'); return; }
+  try {
+    await window.VendasDb.resetPassword(email, `${window.location.origin}/mobile/vendas`);
+    fecharSheet(); toast('Verifique sua caixa de entrada.');
+  } catch (error) { toast(traduzErro(error)); }
+}
+
+function abrirCadastroConta() {
+  sheet(`<div class="sheet-header"><div><h2>Crie sua conta</h2><p class="muted small">Seu acesso será criado no AvantaLab.</p></div><button class="close" onclick="fecharSheet()">×</button></div><div class="grid">${campo('cadastroNome','Nome completo')}${campo('cadastroEmail','E-mail','','email')}${campo('cadastroTelefone','Telefone (opcional)','','tel')}${campo('cadastroSenha','Senha','','password')}<button class="primary" onclick="criarConta()">Criar conta</button></div>`);
+}
+
+async function criarConta() {
+  const nome = valor('cadastroNome').trim();
+  const email = valor('cadastroEmail').trim();
+  const senha = valor('cadastroSenha');
+  if (!nome || !email || senha.length < 6) { toast('Informe nome, e-mail e uma senha com ao menos 6 caracteres.'); return; }
+  try {
+    await window.VendasDb.signUp({ nome, email, password: senha, telefone: valor('cadastroTelefone').replace(/\D/g, '') ? `+55${valor('cadastroTelefone').replace(/\D/g, '')}` : '' });
+    fecharSheet(); toast('Conta criada. Verifique seu e-mail para confirmar o acesso.');
+  } catch (error) { toast(traduzErro(error)); }
 }
 
 function traduzErro(error) {
@@ -1087,6 +1147,12 @@ window.abrirSalaBotoes = abrirSalaBotoes;
 window.sairMenuMobile = sairMenuMobile;
 window.sairSistema = sairSistema;
 window.entrarSistema = entrarSistema;
+window.trocarTipoLogin = trocarTipoLogin;
+window.alternarSenhaLogin = alternarSenhaLogin;
+window.abrirRecuperacaoSenha = abrirRecuperacaoSenha;
+window.enviarRecuperacaoSenha = enviarRecuperacaoSenha;
+window.abrirCadastroConta = abrirCadastroConta;
+window.criarConta = criarConta;
 window.aplicarFiltroDashboard = aplicarFiltroDashboard;
 window.mudarMes = mudarMes;
 window.irMesAtual = irMesAtual;
