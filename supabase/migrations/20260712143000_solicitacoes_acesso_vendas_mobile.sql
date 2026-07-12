@@ -42,6 +42,8 @@ alter table public.vendas_mobile_acessos enable row level security;
 
 -- O solicitante acompanha somente a propria solicitacao. Gestores do perfil
 -- veem as solicitacoes e os acessos vinculados a sua empresa.
+drop policy if exists "vendas_solicitacoes_select_proprio_ou_gestor"
+  on public.vendas_mobile_solicitacoes_acesso;
 create policy "vendas_solicitacoes_select_proprio_ou_gestor"
   on public.vendas_mobile_solicitacoes_acesso for select
   using (
@@ -54,6 +56,8 @@ create policy "vendas_solicitacoes_select_proprio_ou_gestor"
     )
   );
 
+drop policy if exists "vendas_acessos_select_proprio_ou_gestor"
+  on public.vendas_mobile_acessos;
 create policy "vendas_acessos_select_proprio_ou_gestor"
   on public.vendas_mobile_acessos for select
   using (
