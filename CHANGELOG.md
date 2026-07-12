@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.4.0.40 - 2026-07-12
+
+- Login mobile: restaura o enquadramento vertical do background e garante distância responsiva mínima entre o logo e o card de acesso ou cadastro.
+- Cadastro: substitui o checkbox pelo aviso de aceite implícito, preservando os links dos Termos de Uso e da Política de Privacidade e o registro do consentimento.
+- Cadastro: posiciona a escolha Empresa/Pessoal antes do nome, formata automaticamente celulares brasileiros e compacta a altura do formulário.
+- Login: mantém intactos o posicionamento e as dimensões atuais dos botões Entrar e Conectar com Google.
+
 ## 1.4.0.39 - 2026-07-11
 
 - Web responsivo: transforma os controles ocultos do header em menu sanduíche acessível até `1279px`.

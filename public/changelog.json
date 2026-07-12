@@ -13,6 +13,17 @@
   },
   "versoes": [
     {
+      "versao": "1.4.0.40",
+      "titulo": "Acesso mobile sem sobreposição",
+      "data": "Julho/2026",
+      "itens": [
+        "Login mobile: restaura o enquadramento vertical do background e garante distância responsiva mínima entre o logo e o card de acesso ou cadastro.",
+        "Cadastro: substitui o checkbox pelo aviso de aceite implícito, preservando os links dos Termos de Uso e da Política de Privacidade e o registro do consentimento.",
+        "Cadastro: posiciona a escolha Empresa/Pessoal antes do nome, formata automaticamente celulares brasileiros e compacta a altura do formulário.",
+        "Login: mantém intactos o posicionamento e as dimensões atuais dos botões Entrar e Conectar com Google."
+      ]
+    },
+    {
       "versao": "1.4.0.39",
       "titulo": "Menu web responsivo completo",
       "data": "Julho/2026",

@@ -88,8 +88,6 @@ export function useAuth(deps: UseAuthDeps) {
   const [cadastroSenha, setCadastroSenha] = useState('');
   const [cadastroCupom, setCadastroCupom] = useState('');
   const [cadastroConfirmarSenha, setCadastroConfirmarSenha] = useState('');
-  // Aceite obrigatório dos Termos/Privacidade no cadastro.
-  const [aceitouTermos, setAceitouTermos] = useState(false);
   // DDI (código do país) do celular do cadastro. Padrão: Brasil.
   const [cadastroDdi, setCadastroDdi] = useState(DDI_PADRAO);
   // Início do perfil empresa: '7 dias grátis' (trial) ou 'assinar agora'.
@@ -429,11 +427,6 @@ export function useAuth(deps: UseAuthDeps) {
     if (cadastroSenha !== cadastroConfirmarSenha) {
       setAuthErro('As senhas não coincidem.'); setAuthLoading(false); return;
     }
-    if (!aceitouTermos) {
-      setAuthErro('Para criar sua conta, é necessário aceitar os Termos de Uso e a Política de Privacidade.');
-      setAuthLoading(false); return;
-    }
-
     if (!smsCadastroEnviado) {
       const respostaSms = await fetch('/api/sms/enviar-codigo', {
         method: 'POST',
@@ -535,7 +528,6 @@ export function useAuth(deps: UseAuthDeps) {
     setTelefoneSmsCadastroConfirmado('');
     setSegundosReenvioSms(0);
     setReenviandoSmsCadastro(false);
-    setAceitouTermos(false);
     setCadastroDdi(DDI_PADRAO);
     setModoAuth('login');
   };
@@ -853,7 +845,6 @@ export function useAuth(deps: UseAuthDeps) {
     cadastroSenha, setCadastroSenha,
     cadastroConfirmarSenha, setCadastroConfirmarSenha,
     cadastroCupom, setCadastroCupom,
-    aceitouTermos, setAceitouTermos,
     cadastroDdi, setCadastroDdi,
 
     // SMS cadastro

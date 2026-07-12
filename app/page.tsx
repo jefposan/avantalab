@@ -386,7 +386,6 @@ export default function AppGestao() {
     cadastroSenha, setCadastroSenha,
     cadastroConfirmarSenha, setCadastroConfirmarSenha,
     cadastroCupom, setCadastroCupom,
-    aceitouTermos, setAceitouTermos,
     cadastroDdi, setCadastroDdi,
     codigoSmsCadastro, setCodigoSmsCadastro,
     smsCadastroEnviado, setSmsCadastroEnviado,
@@ -6408,8 +6407,6 @@ if (validacaoTelefoneObrigatoria) {
         setCadastroConfirmarSenha={setCadastroConfirmarSenha}
         cadastroCupom={cadastroCupom}
         setCadastroCupom={setCadastroCupom}
-        aceitouTermos={aceitouTermos}
-        setAceitouTermos={setAceitouTermos}
         onAbrirTermos={() => setModalTermos(true)}
         onAbrirPrivacidade={() => setModalPrivacidade(true)}
         cadastroDdi={cadastroDdi}

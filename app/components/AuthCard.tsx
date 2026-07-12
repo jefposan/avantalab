@@ -10,6 +10,22 @@ interface BeforeInstallPromptEvent extends Event {
   userChoice: Promise<{ outcome: 'accepted' | 'dismissed'; platform: string }>;
 }
 
+function formatarTelefoneCadastro(valor: string, ddi: string) {
+  const digitos = valor.replace(/\D/g, '');
+
+  if (ddi !== '55') return digitos.slice(0, 15);
+
+  const telefone = digitos.slice(0, 11);
+  if (telefone.length <= 2) return telefone ? `(${telefone}` : '';
+
+  const ddd = telefone.slice(0, 2);
+  const numero = telefone.slice(2);
+  if (numero.length <= 4) return `(${ddd}) ${numero}`;
+
+  const tamanhoPrefixo = numero.length <= 8 ? 4 : 5;
+  return `(${ddd}) ${numero.slice(0, tamanhoPrefixo)}-${numero.slice(tamanhoPrefixo)}`;
+}
+
 interface AuthCardProps {
   // Modal Aviso
   modalAvisoAberto: boolean;
@@ -70,8 +86,6 @@ interface AuthCardProps {
   reenviandoSmsRedefinirSenha: boolean;
   tipoPerfilInicial: TipoPerfil;
   setTipoPerfilInicial: React.Dispatch<React.SetStateAction<TipoPerfil>>;
-  aceitouTermos: boolean;
-  setAceitouTermos: React.Dispatch<React.SetStateAction<boolean>>;
   onAbrirTermos: () => void;
   onAbrirPrivacidade: () => void;
   cadastroDdi: string;
@@ -113,7 +127,6 @@ export default function AuthCard({
   codigoSmsRedefinirSenha, setCodigoSmsRedefinirSenha,
   smsRedefinirSenhaEnviado, segundosReenvioRedefinirSenha, reenviandoSmsRedefinirSenha,
   tipoPerfilInicial, setTipoPerfilInicial,
-  aceitouTermos, setAceitouTermos,
   onAbrirTermos, onAbrirPrivacidade,
   cadastroDdi, setCadastroDdi,
   handleLogin, handleCadastroTeste, handleGoogleLogin,
@@ -249,15 +262,15 @@ export default function AuthCard({
       <div
         className="absolute inset-0 bg-no-repeat lg:hidden"
         style={{
-          backgroundImage: "image-set(url('/images/bg-avantalab-mobile.webp') type('image/webp'), url('/images/bg-avantalab-mobile.png') type('image/png'))",
-          backgroundSize: 'cover',
+          backgroundImage: "image-set(url('/images/bg-avantalab-mobile-1080x1920.webp') type('image/webp'), url('/images/bg-avantalab-mobile-1080x1920.png') type('image/png'))",
+          backgroundSize: 'auto 108%',
           backgroundPosition: 'center bottom',
         }}
       />
 
       <div className="pointer-events-none absolute inset-0 hidden bg-white/10 lg:block" />
 
-      <section className="relative z-10 flex min-h-screen items-start px-4 pb-8 pt-24 sm:pt-28 lg:items-center lg:px-20 lg:py-10">
+      <section className="relative z-10 flex min-h-[100dvh] items-start px-4 pb-8 pt-[clamp(8.25rem,18dvh,10rem)] lg:min-h-screen lg:items-center lg:px-20 lg:py-10">
         <div className="w-full lg:max-w-7xl">
           <div className={`relative z-20 w-full rounded-3xl border border-white/20 bg-white/10 p-4 shadow-2xl lg:border-white/30 lg:bg-white/70 lg:p-8 lg:backdrop-blur-xl ${
             mostrarLandingPreLoginAtiva ? 'lg:max-w-2xl' : 'lg:max-w-md'
@@ -658,16 +671,7 @@ export default function AuthCard({
 
               </div>
             ) : (
-              <div className="space-y-1.5">
-                <input
-  type="text"
-  autoComplete="off"
-  placeholder="Nome completo"
-  value={cadastroNome}
-  onChange={(e) => setCadastroNome(e.target.value)}
-  className="w-full rounded-xl border border-slate-300 bg-white/90 px-3 py-2 text-sm text-slate-800 outline-none transition focus:border-sky-600 focus:ring-2 focus:ring-sky-600/20"
-/>
-
+              <div className="space-y-1">
                 <div className="grid grid-cols-2 gap-1.5 rounded-xl border border-slate-200 bg-slate-50 p-1">
                   {(['empresa', 'pessoal'] as TipoPerfil[]).map((tipo) => {
                     const ativo = tipoPerfilInicialNormalizado === tipo;
@@ -676,7 +680,7 @@ export default function AuthCard({
                         key={tipo}
                         type="button"
                         onClick={() => setTipoPerfilInicial(tipo)}
-                        className={`rounded-lg px-3 py-1.5 text-xs font-black uppercase tracking-wide transition ${
+                        className={`rounded-lg px-3 py-1 text-xs font-black uppercase tracking-wide transition ${
                           ativo
                             ? 'bg-slate-900 text-white shadow'
                             : 'text-slate-500 hover:bg-white hover:text-slate-800'
@@ -689,20 +693,33 @@ export default function AuthCard({
                 </div>
 
                 <input
+  type="text"
+  autoComplete="name"
+  placeholder="Nome completo"
+  value={cadastroNome}
+  onChange={(e) => setCadastroNome(e.target.value)}
+  className="w-full rounded-xl border border-slate-300 bg-white/90 px-3 py-1.5 text-sm text-slate-800 outline-none transition focus:border-sky-600 focus:ring-2 focus:ring-sky-600/20"
+/>
+
+                <input
   type="email"
   autoComplete="off"
   placeholder="Email"
   value={cadastroEmail}
   onChange={(e) => setCadastroEmail(e.target.value)}
-  className="w-full rounded-xl border border-slate-300 bg-white/90 px-3 py-2 text-sm text-slate-800 outline-none transition focus:border-sky-600 focus:ring-2 focus:ring-sky-600/20"
+  className="w-full rounded-xl border border-slate-300 bg-white/90 px-3 py-1.5 text-sm text-slate-800 outline-none transition focus:border-sky-600 focus:ring-2 focus:ring-sky-600/20"
 />
 
                 <div className="flex gap-2">
   <select
     value={cadastroDdi}
-    onChange={(e) => setCadastroDdi(e.target.value)}
+    onChange={(e) => {
+      const novoDdi = e.target.value;
+      setCadastroDdi(novoDdi);
+      setCadastroTelefone((telefone) => formatarTelefoneCadastro(telefone, novoDdi));
+    }}
     aria-label="País (DDI)"
-    className="w-28 shrink-0 rounded-xl border border-slate-300 bg-white/90 px-2 py-2 text-sm text-slate-800 outline-none transition focus:border-sky-600 focus:ring-2 focus:ring-sky-600/20"
+    className="w-28 shrink-0 rounded-xl border border-slate-300 bg-white/90 px-2 py-1.5 text-sm text-slate-800 outline-none transition focus:border-sky-600 focus:ring-2 focus:ring-sky-600/20"
   >
     {PAISES.map((p) => (
       <option key={`${p.ddi}-${p.nome}`} value={p.ddi}>{p.flag} +{p.ddi}</option>
@@ -710,11 +727,12 @@ export default function AuthCard({
   </select>
   <input
     type="tel"
-    autoComplete="off"
+    autoComplete="tel-national"
+    inputMode="numeric"
     placeholder="Celular (DDD + número)"
     value={cadastroTelefone}
-    onChange={(e) => setCadastroTelefone(e.target.value)}
-    className="w-full min-w-0 rounded-xl border border-slate-300 bg-white/90 px-3 py-2 text-sm text-slate-800 outline-none transition focus:border-sky-600 focus:ring-2 focus:ring-sky-600/20"
+    onChange={(e) => setCadastroTelefone(formatarTelefoneCadastro(e.target.value, cadastroDdi))}
+    className="w-full min-w-0 rounded-xl border border-slate-300 bg-white/90 px-3 py-1.5 text-sm text-slate-800 outline-none transition focus:border-sky-600 focus:ring-2 focus:ring-sky-600/20"
   />
 </div>
 
@@ -725,7 +743,7 @@ export default function AuthCard({
       placeholder="Crie uma senha"
       value={cadastroSenha}
       onChange={(e) => setCadastroSenha(e.target.value)}
-      className="w-full rounded-xl border border-slate-300 bg-white/90 px-3 py-2 pr-10 text-sm text-slate-800 outline-none transition focus:border-sky-600 focus:ring-2 focus:ring-sky-600/20"
+      className="w-full rounded-xl border border-slate-300 bg-white/90 px-3 py-1.5 pr-10 text-sm text-slate-800 outline-none transition focus:border-sky-600 focus:ring-2 focus:ring-sky-600/20"
     />
 
     <button
@@ -792,7 +810,7 @@ export default function AuthCard({
       placeholder="Confirmar senha"
       value={cadastroConfirmarSenha}
       onChange={(e) => setCadastroConfirmarSenha(e.target.value)}
-      className="w-full rounded-xl border border-slate-300 bg-white/90 px-3 py-2 pr-10 text-sm text-slate-800 outline-none transition focus:border-sky-600 focus:ring-2 focus:ring-sky-600/20"
+      className="w-full rounded-xl border border-slate-300 bg-white/90 px-3 py-1.5 pr-10 text-sm text-slate-800 outline-none transition focus:border-sky-600 focus:ring-2 focus:ring-sky-600/20"
     />
 
     <button
@@ -897,21 +915,16 @@ export default function AuthCard({
   </div>
 )}
 
-                {!smsCadastroEnviado && (
-  <label className="flex cursor-pointer items-start gap-2 rounded-xl border border-slate-200 bg-white/70 px-3 py-2 text-xs leading-snug text-slate-600">
-    <input
-      type="checkbox"
-      checked={aceitouTermos}
-      onChange={(e) => setAceitouTermos(e.target.checked)}
-      className="mt-0.5 h-4 w-4 shrink-0 accent-sky-700"
-    />
-    <span>
-      Li e concordo com os{' '}
-      <button type="button" onClick={onAbrirTermos} className="font-bold text-sky-700 underline">Termos de Uso</button>
-      {' '}e a{' '}
-      <button type="button" onClick={onAbrirPrivacidade} className="font-bold text-sky-700 underline">Política de Privacidade</button>.
-    </span>
-  </label>
+{!smsCadastroEnviado && (
+  <p className="rounded-xl border border-slate-200 bg-white/70 px-3 py-1.5 text-center leading-tight text-slate-600">
+      <span className="block whitespace-nowrap text-[10px] sm:text-[11px]">
+        Ao se cadastrar, você declara aceitar nossos termos.
+      </span>
+      <span className="mt-0.5 block text-[11px]">
+        <button type="button" onClick={onAbrirTermos} className="mr-2 font-bold text-sky-700 underline">Termos de Uso</button>
+        <button type="button" onClick={onAbrirPrivacidade} className="font-bold text-sky-700 underline">Política de Privacidade</button>
+      </span>
+  </p>
 )}
 
                 <input
@@ -920,14 +933,14 @@ export default function AuthCard({
   placeholder="Cupom (opcional)"
   value={cadastroCupom}
   onChange={(e) => setCadastroCupom(e.target.value.toUpperCase())}
-  className="w-full rounded-xl border border-slate-300 bg-white/90 px-3 py-2 text-sm uppercase tracking-wide text-slate-800 outline-none transition focus:border-sky-600 focus:ring-2 focus:ring-sky-600/20"
+  className="w-full rounded-xl border border-slate-300 bg-white/90 px-3 py-1.5 text-sm uppercase tracking-wide text-slate-800 outline-none transition focus:border-sky-600 focus:ring-2 focus:ring-sky-600/20"
 />
 
                 <button
   type="button"
   onClick={handleCadastroTeste}
-  disabled={authLoading || (!smsCadastroEnviado && !aceitouTermos)}
-  className="w-full rounded-xl bg-slate-900 px-4 py-2 font-bold text-white shadow-lg transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
+  disabled={authLoading}
+  className="w-full rounded-xl bg-slate-900 px-4 py-1.5 font-bold text-white shadow-lg transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
 >
   {authLoading
   ? smsCadastroEnviado
