@@ -64,6 +64,33 @@ const PAISES_DDI = [
 
 const app = document.getElementById('app');
 
+function formatarTelefoneCadastro(input) {
+  const ddi = document.getElementById('cadastroDdi')?.value || '55';
+  const numeros = String(input.value || '').replace(/\D/g, '');
+  if (ddi !== '55') {
+    input.value = numeros.slice(0, 15);
+    return;
+  }
+
+  const telefone = numeros.slice(0, 11);
+  if (telefone.length <= 2) input.value = telefone ? `(${telefone}` : '';
+  else if (telefone.length <= 6) input.value = `(${telefone.slice(0, 2)}) ${telefone.slice(2)}`;
+  else if (telefone.length <= 10) input.value = `(${telefone.slice(0, 2)}) ${telefone.slice(2, 6)}-${telefone.slice(6)}`;
+  else input.value = `(${telefone.slice(0, 2)}) ${telefone.slice(2, 7)}-${telefone.slice(7)}`;
+}
+
+document.addEventListener('input', (event) => {
+  const campo = event.target;
+  if (campo?.id === 'cadastroTelefone') formatarTelefoneCadastro(campo);
+});
+
+document.addEventListener('change', (event) => {
+  if (event.target?.id === 'cadastroDdi') {
+    const telefone = document.getElementById('cadastroTelefone');
+    if (telefone) formatarTelefoneCadastro(telefone);
+  }
+});
+
 if (window.__VENDAS_MOBILE_EMBEDDED__ && !document.querySelector('base[data-vendas-mobile]')) {
   const base = document.createElement('base');
   base.href = '/vendas-mobile/';

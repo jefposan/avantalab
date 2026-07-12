@@ -25,6 +25,7 @@ import PaywallEmpresa from './components/PaywallEmpresa';
 import CadastroPerfilModal from './components/CadastroPerfilModal';
 import AssinaturaModal from './components/AssinaturaModal';
 import PremiumPessoalModal from './components/PremiumPessoalModal';
+import ModalAprovacoes, { type SolicitacaoAprovacao } from './components/ModalAprovacoes';
 import { COBRANCA_ATIVA, assinaturaVigente, emCarencia, precisaPaywallEmpresa, precisaUpgradePessoal, type DadosCobrancaAssinatura, type EstadoAcesso, type Recurso } from './lib/cobranca';
 import type { StatusCadastroPerfil } from './lib/cadastro-perfil';
 import { PAISES } from './lib/paises';
@@ -664,6 +665,10 @@ const [agendaRepetir, setAgendaRepetir] = useState(false);
 const [agendaRepeticao, setAgendaRepeticao] = useState<'diaria'|'semanal'|'quinzenal'|'mensal'|'anual'>('mensal');
 const [agendaItemParaExcluir, setAgendaItemParaExcluir] = useState<AgendaItem | null>(null);
 const [notificacoesWeb, setNotificacoesWeb] = useState<{ id: string; titulo: string; corpo: string; lida: boolean }[]>([]);
+const [modalAprovacoesAberto, setModalAprovacoesAberto] = useState(false);
+const [solicitacoesAprovacao, setSolicitacoesAprovacao] = useState<SolicitacaoAprovacao[]>([]);
+const [aprovacoesCarregando, setAprovacoesCarregando] = useState(false);
+const [aprovacaoProcessandoId, setAprovacaoProcessandoId] = useState<string | null>(null);
 const ajustesAutoFecharTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 const painelAvisosAbertoAnterior = useRef(false);
 const financeiroRealtimeChannelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
@@ -848,6 +853,100 @@ const podeCriarNovaEmpresa =
   perfilUsuario === 'operador_simples';
 
 const podeTrocarEmpresa = empresasDoUsuario.length > 1;
+
+const carregarSolicitacoesAprovacao = useCallback(async () => {
+  if (!empresaId || !podeAcessarAjustes) {
+    setSolicitacoesAprovacao([]);
+    return;
+  }
+
+  setAprovacoesCarregando(true);
+  try {
+    const { data, error } = await supabase
+      .from('vendas_mobile_solicitacoes_acesso')
+      .select('id, nome, email, telefone, solicitado_em')
+      .eq('empresa_id', empresaId)
+      .eq('status', 'pendente')
+      .order('solicitado_em', { ascending: false });
+
+    if (error) {
+      setSolicitacoesAprovacao([]);
+      return;
+    }
+
+    setSolicitacoesAprovacao((data || []).map((solicitacao) => ({
+      id: String(solicitacao.id),
+      nome: String(solicitacao.nome || 'Solicitante'),
+      email: String(solicitacao.email || 'E-mail não informado'),
+      telefone: solicitacao.telefone ? String(solicitacao.telefone) : null,
+      solicitadoEm: String(solicitacao.solicitado_em || new Date().toISOString()),
+      perfilNome: nomeEmpresaAtual || 'Perfil atual',
+      sistema: 'Vendas Mobile',
+    })));
+  } finally {
+    setAprovacoesCarregando(false);
+  }
+}, [empresaId, nomeEmpresaAtual, podeAcessarAjustes]);
+
+const abrirAprovacoes = useCallback(async () => {
+  if (!podeAcessarAjustes) {
+    abrirAviso('Acesso não permitido', 'Somente gestor master ou administrador pode analisar aprovações.');
+    return;
+  }
+  setModalAprovacoesAberto(true);
+  await carregarSolicitacoesAprovacao();
+}, [abrirAviso, carregarSolicitacoesAprovacao, podeAcessarAjustes]);
+
+const analisarSolicitacaoAprovacao = async (solicitacao: SolicitacaoAprovacao, aprovar: boolean) => {
+  setAprovacaoProcessandoId(solicitacao.id);
+  try {
+    const { error } = await supabase.rpc('analisar_solicitacao_vendas_mobile_rpc', {
+      p_solicitacao_id: solicitacao.id,
+      p_aprovar: aprovar,
+      p_observacao: null,
+    });
+    if (error) {
+      abrirAviso('Não foi possível concluir', error.message || 'Tente novamente em instantes.');
+      return;
+    }
+    setSolicitacoesAprovacao((atuais) => atuais.filter((item) => item.id !== solicitacao.id));
+    abrirAviso(aprovar ? 'Acesso aprovado' : 'Solicitação rejeitada', aprovar
+      ? `${solicitacao.nome} já pode acessar o Vendas Mobile deste perfil.`
+      : `A solicitação de ${solicitacao.nome} foi rejeitada.`, undefined, 'sucesso');
+  } finally {
+    setAprovacaoProcessandoId(null);
+  }
+};
+
+const confirmarAnaliseSolicitacao = (solicitacao: SolicitacaoAprovacao, aprovar: boolean) => {
+  abrirConfirmacao({
+    titulo: aprovar ? 'Aprovar acesso?' : 'Rejeitar solicitação?',
+    mensagem: aprovar
+      ? `${solicitacao.nome} terá acesso ao Vendas Mobile no perfil ${solicitacao.perfilNome}.`
+      : `${solicitacao.nome} não terá acesso ao Vendas Mobile neste perfil.`,
+    textoConfirmar: aprovar ? 'Aprovar acesso' : 'Rejeitar',
+    acao: async () => { await analisarSolicitacaoAprovacao(solicitacao, aprovar); },
+  });
+};
+
+useEffect(() => {
+  if (!mounted || !empresaId || !podeAcessarAjustes) {
+    setSolicitacoesAprovacao([]);
+    return;
+  }
+
+  carregarSolicitacoesAprovacao();
+  const intervalo = window.setInterval(carregarSolicitacoesAprovacao, 30000);
+  const canal = supabase
+    .channel(`vendas_mobile_aprovacoes_${empresaId}`)
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'vendas_mobile_solicitacoes_acesso', filter: `empresa_id=eq.${empresaId}` }, carregarSolicitacoesAprovacao)
+    .subscribe();
+
+  return () => {
+    window.clearInterval(intervalo);
+    supabase.removeChannel(canal);
+  };
+}, [carregarSolicitacoesAprovacao, empresaId, mounted, podeAcessarAjustes]);
 
 useEffect(() => {
   if (!modalEmpresasAberto || !empresaId || !podeAcessarAjustes) {
@@ -5151,6 +5250,18 @@ const alertasSistema = useMemo(() => {
     alertas.push({ id: 'notif-' + n.id, titulo: n.titulo, mensagem: n.corpo, naoLida: !n.lida });
   });
 
+  if (podeAcessarAjustes && solicitacoesAprovacao.length > 0) {
+    const quantidade = solicitacoesAprovacao.length;
+    alertas.unshift({
+      id: 'aprovacoes-vendas-pendentes',
+      titulo: `${quantidade} aprovação${quantidade > 1 ? 'ões' : ''} pendente${quantidade > 1 ? 's' : ''}`,
+      mensagem: `${quantidade === 1 ? 'Há uma solicitação' : 'Há solicitações'} aguardando acesso ao Vendas Mobile deste perfil.`,
+      acaoTexto: 'Ver aprovações',
+      acao: abrirAprovacoes,
+      naoLida: true,
+    });
+  }
+
   if (backupPendente && !recursoBloqueado('exportacao')) {
     alertas.push({
       id: 'backup-pendente',
@@ -5175,7 +5286,7 @@ const alertasSistema = useMemo(() => {
   }
 
   return alertas;
-}, [backupPendente, notificacoesWeb, estadoAcesso]);
+}, [abrirAprovacoes, backupPendente, estadoAcesso, notificacoesWeb, podeAcessarAjustes, solicitacoesAprovacao.length]);
 
   const analiseDespesas = (() => {
   const totais: Record<string, { nome: string; valor: number }> = {};
@@ -9203,6 +9314,16 @@ name="novo-usuario-login"
             </button>
           </Tooltip>
 
+          {podeAcessarAjustes && (
+            <Tooltip texto="Analise solicitações de acesso aos módulos deste perfil." posicao="right" wrapperClassName="w-full">
+              <button type="button" onClick={() => { setAjustesAberto(false); setMenuAjuste(null); abrirAprovacoes(); }} className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-xs font-bold text-white transition-colors hover:bg-slate-700">
+                <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 21v-2a4 4 0 00-4-4H6a4 4 0 00-4 4v2M9 11a4 4 0 100-8 4 4 0 000 8zm11 10v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75" /></svg>
+                Aprovações
+                {solicitacoesAprovacao.length > 0 && <span className="ml-auto rounded-full bg-amber-400 px-1.5 py-0.5 text-[9px] font-black text-slate-950">{solicitacoesAprovacao.length}</span>}
+              </button>
+            </Tooltip>
+          )}
+
           <div className="my-1 border-t border-slate-700" />
 
           <Tooltip texto="Exporte os dados do perfil atual para um arquivo Excel." posicao="right" wrapperClassName="w-full">
@@ -9910,6 +10031,18 @@ name="novo-usuario-login"
           </DraggableModalCard>
         </div>
       )}
+
+      <ModalAprovacoes
+  aberto={modalAprovacoesAberto}
+  darkMode={darkMode}
+  corPrimaria={corPrimaria}
+  solicitacoes={solicitacoesAprovacao}
+  carregando={aprovacoesCarregando}
+  processandoId={aprovacaoProcessandoId}
+  onFechar={() => setModalAprovacoesAberto(false)}
+  onAprovar={(solicitacao) => confirmarAnaliseSolicitacao(solicitacao, true)}
+  onRejeitar={(solicitacao) => confirmarAnaliseSolicitacao(solicitacao, false)}
+/>
 
       <ModalTermos
   aberto={modalTermos}
