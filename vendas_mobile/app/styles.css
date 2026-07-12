@@ -903,6 +903,8 @@ body { background: #fff; color: var(--ink); }
 }
 
 .login-screen {
+  position: relative;
+  isolation: isolate;
   display: flex;
   width: 100%;
   box-sizing: border-box;
@@ -912,8 +914,17 @@ body { background: #fff; color: var(--ink); }
   align-items: center;
   justify-content: flex-start;
   padding: clamp(145px, 20vh, 185px) 24px 36px;
+  background: none;
 }
-.login-brand { margin: 0 0 22px; color: #0A1F44; }
+.login-screen::before {
+  position: fixed;
+  z-index: 0;
+  inset: 0;
+  background: #eef6fb url('./assets/bg-avantalab-mobile.png') center bottom / cover no-repeat;
+  content: '';
+}
+.login-screen > * { position: relative; z-index: 1; }
+.login-brand { margin: 0 0 16px; color: #0A1F44; }
 .login-brand strong { color: #0A1F44; font-size: 21px; font-weight: 850; letter-spacing: -.02em; }
 .login-brand p { margin-top: 4px; color: #1F8A9E; font-size: 13px; font-weight: 700; }
 .login-screen form.login-register-form { gap: 5px; padding: 12px 24px; }

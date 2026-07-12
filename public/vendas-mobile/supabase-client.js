@@ -23,6 +23,12 @@
     return data.user || null;
   }
 
+  async function hasSession() {
+    const { data, error } = await requireClient().auth.getSession();
+    if (error) return false;
+    return Boolean(data.session);
+  }
+
   async function signIn(email, password) {
     const { data, error } = await requireClient().auth.signInWithPassword({ email, password });
     if (error) throw error;
@@ -202,5 +208,5 @@
     return { ...pedido, itens: savedItems || [] };
   }
 
-  window.VendasDb = { client, currentUser, signIn, signInPhone, resetPassword, signUp, signOut, solicitarAcesso, buscarAcessoVendas, loadAll, saveProduct, deleteProduct, saveClient, deleteClient, saveOrder };
+  window.VendasDb = { client, currentUser, hasSession, signIn, signInPhone, resetPassword, signUp, signOut, solicitarAcesso, buscarAcessoVendas, loadAll, saveProduct, deleteProduct, saveClient, deleteClient, saveOrder };
 })();
