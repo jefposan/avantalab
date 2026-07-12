@@ -17,7 +17,41 @@ export const viewport: Viewport = {
 export default function VendasMobilePage() {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
-  const assetVersion = '20260712-1';
+  const assetVersion = '20260712-2';
+  const bootstrap = `
+    (function () {
+      window.__VENDAS_MOBILE_EMBEDDED__ = true;
+      window.VENDAS_MOBILE_CONFIG = {
+        supabaseUrl: ${JSON.stringify(supabaseUrl)},
+        supabaseAnonKey: ${JSON.stringify(supabaseAnonKey)}
+      };
+
+      var arquivos = [
+        '/vendas-mobile/vendor/supabase.min.js',
+        '/vendas-mobile/config.js',
+        '/vendas-mobile/supabase-client.js',
+        '/vendas-mobile/app.js'
+      ];
+
+      function falhar(arquivo) {
+        var app = document.getElementById('app');
+        if (!app) return;
+        app.innerHTML = '<section class="splash-card"><p>Não foi possível carregar o Vendas Mobile.</p><button class="primary" type="button" onclick="window.location.reload()">Tentar novamente</button></section>';
+        console.error('Falha ao carregar ' + arquivo);
+      }
+
+      function carregar(indice) {
+        if (indice >= arquivos.length) return;
+        var script = document.createElement('script');
+        script.src = arquivos[indice] + '?v=${assetVersion}';
+        script.onload = function () { carregar(indice + 1); };
+        script.onerror = function () { falhar(arquivos[indice]); };
+        document.body.appendChild(script);
+      }
+
+      carregar(0);
+    })();
+  `;
 
   return (
     <main id="vendas-mobile-shell">
@@ -42,14 +76,8 @@ export default function VendasMobilePage() {
         <section className="splash-card"><span className="loader" /><p>Carregando Vendas Mobile...</p></section>
       </div>
       <script
-        dangerouslySetInnerHTML={{
-          __html: `window.__VENDAS_MOBILE_EMBEDDED__=true;window.VENDAS_MOBILE_CONFIG={supabaseUrl:${JSON.stringify(supabaseUrl)},supabaseAnonKey:${JSON.stringify(supabaseAnonKey)}};`,
-        }}
+        dangerouslySetInnerHTML={{ __html: bootstrap }}
       />
-      <script src={`/vendas-mobile/vendor/supabase.min.js?v=${assetVersion}`} defer />
-      <script src={`/vendas-mobile/config.js?v=${assetVersion}`} defer />
-      <script src={`/vendas-mobile/supabase-client.js?v=${assetVersion}`} defer />
-      <script src={`/vendas-mobile/app.js?v=${assetVersion}`} defer />
     </main>
   );
 }
