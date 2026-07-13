@@ -3361,6 +3361,14 @@
       '</section></div>';
   }
 
+  function processandoNotaHtml() {
+    if (!state.notaLendo) return '';
+    return '<div class="fixed inset-0 z-[140] flex items-center justify-center bg-slate-950/75 px-4" role="status" aria-live="polite">' +
+      '<section class="w-full max-w-xs overflow-hidden rounded-3xl bg-white shadow-2xl">' +
+      '<div class="flex items-center gap-3 px-4 py-3 text-white" style="background:#003E73"><span class="flex h-8 w-8 items-center justify-center rounded-full bg-white/15"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" aria-hidden="true" style="animation:avaSpin 1s linear infinite"><path d="M12 3a9 9 0 1 1-6.36 2.64" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg></span><div><p class="text-sm font-black">Processando imagem</p><p class="text-[11px] font-semibold text-cyan-100/80">Aguarde um instante.</p></div></div>' +
+      '</section></div>';
+  }
+
   function salvarNotaVisualizadaMobile() {
     var link = document.createElement('a');
     link.href = state.notaVisualizandoUrl;
@@ -7008,6 +7016,7 @@
           (state.exclusaoRecorrencia ? confirmacaoExclusaoRecorrenciaHtml() : '') +
           (state.caixinhaResetConfirmacao ? confirmacaoResetCaixinhaHtml() : '') +
           notaVisualizacaoHtml() +
+          processandoNotaHtml() +
           navegacaoInferiorHtml() +
           toastHtml() +
         '</div>'
@@ -7068,6 +7077,7 @@
         (state.exclusaoRecorrencia ? confirmacaoExclusaoRecorrenciaHtml() : '') +
         (state.caixinhaResetConfirmacao ? confirmacaoResetCaixinhaHtml() : '') +
         notaVisualizacaoHtml() +
+        processandoNotaHtml() +
         navegacaoInferiorHtml() +
         toastHtml() +
       '</div>'

@@ -21,6 +21,7 @@ import CardEntradaFaturamento from './components/CardEntradaFaturamento';
 import type { EntradaFaturamento as TabelaEntradaFaturamento } from './components/TabelaEntradasFaturamento';
 import TabelaLancamentosDespesa, { type LancamentoDespesa as TabelaLancamentoDespesa } from './components/TabelaLancamentosDespesa';
 import ModalNotaLancamento from './components/ModalNotaLancamento';
+import ProcessandoImagemModal from './components/ProcessandoImagemModal';
 import TourPrimeiroAcesso from './components/TourPrimeiroAcesso';
 import PaywallEmpresa from './components/PaywallEmpresa';
 import CadastroPerfilModal from './components/CadastroPerfilModal';
@@ -10207,6 +10208,8 @@ name="novo-usuario-login"
   darkMode={darkMode}
   onFechar={() => setNotaAbertaUrl('')}
 />
+
+<ProcessandoImagemModal aberto={lendoNota} darkMode={darkMode} />
 
 {/* ================= TOUR PRIMEIRO ACESSO ================= */}
 <TourPrimeiroAcesso

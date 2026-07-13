@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.4.0.47 - 2026-07-12
+
+- Lançamentos por foto: exibe um card de processamento acima de toda a interface durante a leitura da imagem no Web e Mobile.
+
 ## 1.4.0.46 - 2026-07-12
 
 - Lançamentos Web/Mobile: adiciona leitura de notas por foto ou arquivo, preenchendo data, valor e sugestão de despesa.

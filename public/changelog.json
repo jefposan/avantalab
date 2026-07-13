@@ -13,6 +13,14 @@
   },
   "versoes": [
     {
+      "versao": "1.4.0.47",
+      "titulo": "Processamento de imagem",
+      "data": "Julho/2026",
+      "itens": [
+        "Lançamentos por foto: mostra um card de processamento até a leitura da imagem terminar no Web e Mobile."
+      ]
+    },
+    {
       "versao": "1.4.0.46",
       "titulo": "Lançamentos por foto",
       "data": "Julho/2026",
