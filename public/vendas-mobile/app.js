@@ -1458,7 +1458,7 @@ function mostrarCardPedidoCliente() {
       <div class="order-transaction-fixed">
         ${rascunho.permitirSelecaoCliente ? `<label class="transaction-field transaction-client-select"><span>Cliente</span><select id="pedidoClienteSelecionado" onchange="selecionarClientePedido(this.value)">${clientes.map((item) => `<option value="${item.id}" ${item.id === rascunho.clienteId ? 'selected' : ''}>${escapeHtml(item.nome)}</option>`).join('')}</select></label>` : ''}
         <div class="transaction-type-switch"><button type="button" class="${rascunho.tipo === 'venda' ? 'active' : ''}" onclick="selecionarTipoPedidoCliente('venda')">Venda</button><button type="button" class="${rascunho.tipo === 'consignado' ? 'active' : ''}" onclick="selecionarTipoPedidoCliente('consignado')">Consignado</button></div>
-        <label class="transaction-field order-date-field"><span>Data do pedido</span><input id="pedidoClienteData" type="date" value="${escapeAttr(rascunho.data)}" onchange="pedidoClienteRascunho.data=this.value"></label>
+        <label class="transaction-field transaction-date-field"><span>Data do pedido</span><input id="pedidoClienteData" type="date" value="${escapeAttr(rascunho.data)}" onchange="pedidoClienteRascunho.data=this.value"></label>
       <article class="order-product-entry">
         <h3>Inserir produto</h3>
         ${produtos.length ? `<label class="transaction-field"><span>Produto</span><select id="pedidoClienteProduto" onchange="selecionarProdutoPedidoCliente(this.value)"><option value="" ${rascunho.produtoId ? '' : 'selected'} disabled>Selecione o produto</option>${produtos.map((produto) => `<option value="${produto.id}" ${produto.id === rascunho.produtoId ? 'selected' : ''}>${escapeHtml(produto.nome)}</option>`).join('')}</select></label>
@@ -1604,7 +1604,7 @@ function abrirPagamentoCliente(clienteId) {
       <label class="transaction-field"><span>Valor total da dívida</span><input value="${escapeAttr(moeda(saldo.debito))}" readonly></label>
       <label class="transaction-field"><span>Desconto</span><input id="pagamentoClienteDesconto" type="number" min="0" step="0.01" inputmode="decimal" value="0.00" oninput="atualizarResumoPagamentoCliente()"></label>
       <section class="payment-balance-summary"><div><span>Saldo anterior</span><b>${moeda(saldo.debito)}</b></div><div><span>Valor pago + desconto</span><b id="pagamentoClienteAbatimento">${moeda(0)}</b></div><div class="final"><span>Saldo final</span><b id="pagamentoClienteSaldoFinal">${moeda(saldo.debito)}</b></div></section>
-      <label class="transaction-field payment-date-field"><span>Data do pagamento</span><input id="pagamentoClienteData" type="date" value="${isoData(new Date())}"></label>
+      <label class="transaction-field transaction-date-field"><span>Data do pagamento</span><input id="pagamentoClienteData" type="date" value="${isoData(new Date())}"></label>
       <label class="transaction-field"><span>Forma de pagamento</span><select id="pagamentoClienteForma"><option selected>Pix</option><option>Dinheiro</option><option>Cartão de crédito</option><option>Cartão de débito</option><option>Cheque</option><option>Boleto</option></select></label>
     </div>
     <footer class="client-transaction-footer"><button type="button" class="primary" onclick="confirmarPagamentoCliente()">Confirmar recebimento</button></footer>

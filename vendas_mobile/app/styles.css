@@ -1259,14 +1259,10 @@ body { background: #fff; color: var(--ink); }
 .transaction-field input, .transaction-field select { width: 100%; min-width: 0; height: 40px; border: 1px solid #d7e2eb; border-radius: 10px; padding: 0 10px; color: #172033; background: #fff; font: inherit; font-size: 12px; }
 .order-transaction-layout .transaction-field input, .order-transaction-layout .transaction-field select { height: 34px; border-radius: 9px; padding: 0 9px; font-size: 11px; }
 .transaction-field input[readonly] { color: #0A1F44; background: #f1f6fa; font-weight: 900; }
-.order-date-field { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; gap: 10px; }
-.order-date-field > span { font-size: 12px; line-height: 1.2; }
-.order-date-field input { justify-self: end; width: min(190px, 58vw); max-width: 100%; text-align: center; }
-.order-date-field input::-webkit-date-and-time-value { min-width: 100%; text-align: center; }
-.payment-date-field { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; gap: 10px; }
-.payment-date-field > span { font-size: 12px; line-height: 1.2; }
-.payment-date-field input { justify-self: end; width: min(190px, 58vw); max-width: 100%; text-align: center; }
-.payment-date-field input::-webkit-date-and-time-value { min-width: 100%; text-align: center; }
+.transaction-date-field { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; gap: 10px; }
+.transaction-date-field > span { display: inline-flex; height: 34px; align-items: center; justify-content: flex-start; white-space: nowrap; font-size: 14px; line-height: 1; }
+.transaction-date-field input { justify-self: end; width: min(190px, 58vw); max-width: 100%; text-align: center; }
+.transaction-date-field input::-webkit-date-and-time-value { min-width: 100%; text-align: center; }
 .order-product-entry { display: grid; gap: 7px; border: 1px solid #cfe0ec; border-radius: 13px; padding: 9px; background: #f7fbfe; box-shadow: 0 4px 12px rgba(15,42,80,.06); }
 .order-product-entry h3, .order-draft-items h3 { margin: 0; color: #0A1F44; font-size: 12px; font-weight: 900; }
 .order-item-fields { display: grid; grid-template-columns: 1.25fr .75fr; gap: 9px; }
