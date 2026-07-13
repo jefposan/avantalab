@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.5.0 - 2026-07-12
+
+- Lançamentos Web/Mobile: adiciona leitura de notas por foto ou arquivo, preenchendo data, valor e sugestão de despesa.
+- Notas: armazena comprovantes em bucket privado do Supabase, permite visualizar, compartilhar ou salvar e remove o arquivo junto com o lançamento.
+
 ## 1.4.0.45 - 2026-07-12
 
 - Laboratório de lançamento por foto: faz a leitura em uma Edge Function isolada do Supabase, reutilizando a chave da IA já protegida no projeto.

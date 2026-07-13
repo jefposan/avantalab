@@ -733,6 +733,9 @@ export async function salvarSaldoInicialCaixinha({
 }
 
 export async function apagarLancamento(id: string) {
+  const notaRemovida = await removerNotaLancamento(id);
+  if (!notaRemovida) return false;
+
   const { error } = await supabase
     .from('lancamentos')
     .delete()
@@ -744,6 +747,58 @@ export async function apagarLancamento(id: string) {
   }
 
   return true;
+}
+
+async function tokenAutenticacaoAtual() {
+  const { data } = await supabase.auth.getSession();
+  return data.session?.access_token || '';
+}
+
+export async function arquivarNotaLancamento(lancamentoId: string | number, arquivo: File) {
+  const token = await tokenAutenticacaoAtual();
+  if (!token) return { erro: true, mensagem: 'Sua sessão expirou. Entre novamente.' };
+
+  const form = new FormData();
+  form.append('lancamentoId', String(lancamentoId));
+  form.append('arquivo', arquivo, arquivo.name || 'nota.jpg');
+  const resposta = await fetch('/api/lancamentos/nota', {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${token}` },
+    body: form,
+  });
+  const json = await resposta.json().catch(() => null);
+  return resposta.ok && json && !json.erro
+    ? { erro: false, caminho: String(json.caminho || '') }
+    : { erro: true, mensagem: json?.mensagem || 'Não foi possível arquivar a nota.' };
+}
+
+export async function obterUrlNotaLancamento(lancamentoId: string | number) {
+  const token = await tokenAutenticacaoAtual();
+  if (!token) return { erro: true, mensagem: 'Sua sessão expirou. Entre novamente.', url: '' };
+
+  const resposta = await fetch(`/api/lancamentos/nota?lancamentoId=${encodeURIComponent(String(lancamentoId))}`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  const json = await resposta.json().catch(() => null);
+  return resposta.ok && json && !json.erro
+    ? { erro: false, url: String(json.url || '') }
+    : { erro: true, mensagem: json?.mensagem || 'Não foi possível abrir a nota.', url: '' };
+}
+
+export async function removerNotaLancamento(lancamentoId: string | number) {
+  const token = await tokenAutenticacaoAtual();
+  if (!token) return false;
+
+  const resposta = await fetch('/api/lancamentos/nota', {
+    method: 'DELETE',
+    headers: {
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ lancamentoId: String(lancamentoId) }),
+  });
+  const json = await resposta.json().catch(() => null);
+  return Boolean(resposta.ok && json && !json.erro);
 }
 
 export async function definirStatusLancamento(

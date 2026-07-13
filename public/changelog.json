@@ -13,6 +13,15 @@
   },
   "versoes": [
     {
+      "versao": "1.5.0",
+      "titulo": "Lançamentos por foto",
+      "data": "Julho/2026",
+      "itens": [
+        "Lançamentos Web/Mobile: lê notas por foto ou arquivo e sugere a data, o valor e o tipo de despesa.",
+        "Notas ficam em bucket privado, podem ser abertas, compartilhadas ou salvas e são removidas junto com o lançamento."
+      ]
+    },
+    {
       "versao": "1.4.0.45",
       "titulo": "Leitura por foto via Supabase",
       "data": "Julho/2026",

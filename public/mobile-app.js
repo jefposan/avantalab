@@ -114,6 +114,9 @@
     ano: String(new Date().getFullYear()),
     faturamentos: {},
     lancamentos: [],
+    notaArquivoPendente: null,
+    notaLendo: false,
+    notaVisualizandoUrl: '',
     caixinhaMovimentos: [],
     entradas: [],
     despesas: [],
@@ -3263,6 +3266,125 @@
     return sessao.data && sessao.data.session ? sessao.data.session.access_token : '';
   }
 
+  async function lerNotaPorFotoMobile(arquivo) {
+    if (!arquivo || !state.empresa || state.notaLendo) return;
+    var dia = campo('despesa-dia');
+    var nome = campo('despesa-nome');
+    var descricao = campo('despesa-descricao');
+    var valor = campo('despesa-valor');
+    state.notaLendo = true;
+    state.erro = '';
+    render();
+    try {
+      var token = await tokenSessao();
+      if (!token) throw new Error('Sua sessao expirou. Entre novamente.');
+      var form = new FormData();
+      form.append('empresaId', state.empresa.id);
+      form.append('arquivo', arquivo, arquivo.name || 'nota.jpg');
+      var resposta = await fetch('/api/lancamentos/ler-foto', {
+        method: 'POST',
+        headers: { Authorization: 'Bearer ' + token },
+        body: form,
+      });
+      var json = await resposta.json().catch(function () { return null; });
+      if (!resposta.ok || (json && json.erro)) throw new Error((json && json.mensagem) || 'Nao foi possivel ler a nota.');
+      var leitura = json && json.leitura;
+      state.despesaDia = dia;
+      state.despesaNome = nome;
+      state.despesaDescricao = descricao;
+      state.despesaValor = valor;
+      if (leitura && leitura.data_documento) {
+        var partes = String(leitura.data_documento).split('-').map(Number);
+        if (partes.length === 3 && partes[0] && partes[1] && partes[2]) {
+          state.ano = String(partes[0]);
+          state.mes = meses[partes[1] - 1] || state.mes;
+          state.despesaDia = String(partes[2]);
+          state.despesaDiaAutoHoje = false;
+        }
+      }
+      if (leitura && leitura.valor_total) {
+        state.despesaValor = Number(leitura.valor_total).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      }
+      if (leitura && leitura.despesa_sugerida) state.despesaNome = String(leitura.despesa_sugerida);
+      state.notaArquivoPendente = arquivo;
+    } catch (e) {
+      state.erro = e && e.message ? e.message : 'Nao foi possivel ler a nota.';
+    }
+    state.notaLendo = false;
+    render();
+  }
+
+  async function arquivarNotaLancamentoMobile(lancamentoId, arquivo) {
+    var token = await tokenSessao();
+    if (!token) return { erro: true, mensagem: 'Sua sessao expirou. Entre novamente.' };
+    var form = new FormData();
+    form.append('lancamentoId', String(lancamentoId));
+    form.append('arquivo', arquivo, arquivo.name || 'nota.jpg');
+    var resposta = await fetch('/api/lancamentos/nota', { method: 'POST', headers: { Authorization: 'Bearer ' + token }, body: form });
+    var json = await resposta.json().catch(function () { return null; });
+    return resposta.ok && json && !json.erro ? { erro: false, caminho: json.caminho || '' } : { erro: true, mensagem: (json && json.mensagem) || 'Nao foi possivel arquivar a nota.' };
+  }
+
+  async function removerNotaLancamentoMobile(lancamentoId) {
+    var token = await tokenSessao();
+    if (!token) return false;
+    var resposta = await fetch('/api/lancamentos/nota', {
+      method: 'DELETE',
+      headers: { Authorization: 'Bearer ' + token, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ lancamentoId: String(lancamentoId) }),
+    });
+    var json = await resposta.json().catch(function () { return null; });
+    return Boolean(resposta.ok && json && !json.erro);
+  }
+
+  async function abrirNotaLancamentoMobile(lancamentoId) {
+    try {
+      var token = await tokenSessao();
+      if (!token) throw new Error('Sua sessao expirou. Entre novamente.');
+      var resposta = await fetch('/api/lancamentos/nota?lancamentoId=' + encodeURIComponent(String(lancamentoId)), { headers: { Authorization: 'Bearer ' + token } });
+      var json = await resposta.json().catch(function () { return null; });
+      if (!resposta.ok || !json || json.erro || !json.url) throw new Error((json && json.mensagem) || 'Nao foi possivel abrir a nota.');
+      state.notaVisualizandoUrl = json.url;
+      render();
+    } catch (e) {
+      setErro(e && e.message ? e.message : 'Nao foi possivel abrir a nota.');
+    }
+  }
+
+  function notaVisualizacaoHtml() {
+    if (!state.notaVisualizandoUrl) return '';
+    return '<div id="nota-visualizacao-overlay" class="fixed inset-0 z-[130] flex items-center justify-center bg-slate-950/80 px-3 py-5">' +
+      '<section class="flex max-h-full w-full max-w-md flex-col overflow-hidden rounded-3xl bg-white shadow-2xl">' +
+      '<header class="flex items-center justify-between px-4 py-3 text-white" style="background:#003E73"><h2 class="text-sm font-black">Nota do lancamento</h2><button id="fechar-nota-lancamento" type="button" class="flex h-8 w-8 items-center justify-center rounded-full bg-white/15 text-lg">&times;</button></header>' +
+      '<div class="min-h-0 flex-1 overflow-auto bg-slate-100 p-3"><img src="' + escapeHtml(state.notaVisualizandoUrl) + '" alt="Nota do lancamento" class="mx-auto max-h-[68vh] max-w-full rounded-xl object-contain shadow-lg" /></div>' +
+      '<footer class="grid grid-cols-2 gap-2 border-t border-slate-200 p-3"><button id="compartilhar-nota-lancamento" type="button" class="h-10 rounded-xl border border-slate-300 text-xs font-black uppercase text-slate-700">Compartilhar</button><button id="salvar-nota-lancamento" type="button" class="h-10 rounded-xl bg-slate-950 text-xs font-black uppercase text-white">Salvar</button></footer>' +
+      '</section></div>';
+  }
+
+  function salvarNotaVisualizadaMobile() {
+    var link = document.createElement('a');
+    link.href = state.notaVisualizandoUrl;
+    link.download = 'nota-lancamento';
+    link.target = '_blank';
+    link.rel = 'noopener';
+    link.click();
+  }
+
+  async function compartilharNotaVisualizadaMobile() {
+    try {
+      var resposta = await fetch(state.notaVisualizandoUrl);
+      var blob = await resposta.blob();
+      var arquivo = new File([blob], 'nota-lancamento.jpg', { type: blob.type || 'image/jpeg' });
+      if (navigator.share && navigator.canShare && navigator.canShare({ files: [arquivo] })) {
+        await navigator.share({ files: [arquivo], title: 'Nota do lancamento' });
+      } else {
+        salvarNotaVisualizadaMobile();
+      }
+    } catch (e) {
+      salvarNotaVisualizadaMobile();
+    }
+  }
+
   async function abrirUsuariosMobile() {
     state.menuAberto = false;
     state.modalMenu = 'usuario';
@@ -3962,6 +4084,7 @@
         status: item.status || null,
         tipo: item.tipo_obs || null,
         recorrenciaId: item.recorrencia_id || null,
+        notaArquivoPath: item.nota_arquivo_path || null,
       };
     });
 
@@ -5165,6 +5288,7 @@
     var totalParcelas = (state.formParcelar && state.formParcelas >= 2) ? state.formParcelas : 1;
     var mesIndex = indiceMes(state.mes);
     var ok = true;
+    var primeiroLancamentoId = null;
 
     for (var p = 0; p < totalParcelas; p++) {
       var idxMes = (mesIndex + p) % 12;
@@ -5206,11 +5330,18 @@
         setErro('Nao foi possivel salvar a despesa.');
         return;
       }
+      if (!primeiroLancamentoId && resposta.data) primeiroLancamentoId = resposta.data.id;
+    }
+
+    if (primeiroLancamentoId && state.notaArquivoPendente) {
+      var nota = await arquivarNotaLancamentoMobile(primeiroLancamentoId, state.notaArquivoPendente);
+      if (nota.erro) mostrarToast('Despesa salva, mas a nota nao foi arquivada.');
     }
 
     state.lancandoDespesa = false;
     state.formParcelar = false;
     state.formParcelas = 2;
+    state.notaArquivoPendente = null;
     limparRascunhoLancamentoMobile();
     state.modalLancamento = false;
     state.tipoLancamento = 'despesa';
@@ -6267,7 +6398,9 @@
         }
       }
       var removida = ehFixa
-        ? await db.from('lancamentos').update({ status: 'cancelada' }).eq('id', item.id).eq('empresa_id', state.empresa.id)
+        ? (await removerNotaLancamentoMobile(item.id)
+          ? await db.from('lancamentos').update({ status: 'cancelada' }).eq('id', item.id).eq('empresa_id', state.empresa.id)
+          : { error: { message: 'Nao foi possivel remover a nota.' } })
         : await db.from('lancamentos').delete().eq('id', item.id).eq('empresa_id', state.empresa.id);
       if (removida.error) {
         state.carregando = false;
@@ -6420,7 +6553,9 @@
     state.carregando = true;
     render();
     var resp = ehFixaPrevista
-      ? await db.from('lancamentos').update({ status: 'cancelada' }).eq('id', id).eq('empresa_id', state.empresa.id)
+      ? (await removerNotaLancamentoMobile(id)
+        ? await db.from('lancamentos').update({ status: 'cancelada' }).eq('id', id).eq('empresa_id', state.empresa.id)
+        : { error: { message: 'Nao foi possivel remover a nota.' } })
       : await db.from('lancamentos').delete().eq('id', id).eq('empresa_id', state.empresa.id);
     if (resp.error) {
       state.carregando = false;
@@ -6872,6 +7007,7 @@
           (state.modalMenu ? modalMenuHtml() : '') +
           (state.exclusaoRecorrencia ? confirmacaoExclusaoRecorrenciaHtml() : '') +
           (state.caixinhaResetConfirmacao ? confirmacaoResetCaixinhaHtml() : '') +
+          notaVisualizacaoHtml() +
           navegacaoInferiorHtml() +
           toastHtml() +
         '</div>'
@@ -6931,6 +7067,7 @@
         (state.modalMenu ? modalMenuHtml() : '') +
         (state.exclusaoRecorrencia ? confirmacaoExclusaoRecorrenciaHtml() : '') +
         (state.caixinhaResetConfirmacao ? confirmacaoResetCaixinhaHtml() : '') +
+        notaVisualizacaoHtml() +
         navegacaoInferiorHtml() +
         toastHtml() +
       '</div>'
@@ -8109,6 +8246,7 @@
         '<button id="abrir-nova-despesa" type="button" class="flex w-full items-center gap-2 rounded-xl border border-dashed border-slate-300 px-3 py-2.5 text-xs font-black text-slate-500 transition hover:border-slate-400 hover:text-slate-700">+ Cadastrar despesa</button>' +
         campoClaro('despesa-descricao', 'Descricao', '', state.despesaDescricao) +
         campoValor('despesa-valor', 'Valor', state.despesaValor) +
+        '<input id="nota-camera" type="file" accept="image/jpeg,image/png,image/webp" capture="environment" class="hidden" /><input id="nota-arquivo" type="file" accept="image/jpeg,image/png,image/webp" class="hidden" />' +
         // Linha parcelamento
         '<div class="flex items-center gap-2 flex-wrap">' +
           '<button id="toggle-parcelar-despesa" type="button" class="flex h-8 items-center gap-1.5 rounded-full border px-3 text-[11px] font-black uppercase tracking-wide transition-all ' +
@@ -8127,7 +8265,9 @@
             '</div>' +
             '<span class="text-[10px] font-semibold italic text-slate-400">nos meses seguintes</span>'
           ) : '') +
+          '<span class="ml-auto flex items-center gap-1.5"><button id="abrir-nota-camera" type="button" class="flex h-8 items-center gap-1 rounded-full border border-slate-300 bg-white px-2 text-[10px] font-black uppercase text-slate-600 active:scale-95"' + (state.notaLendo ? ' disabled' : '') + '><svg width="13" height="13" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 8h3l1.3-2h7.4L17 8h3v11H4V8Z" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"/><circle cx="12" cy="13" r="3.2" stroke="currentColor" stroke-width="2.2"/></svg>Foto</button><button id="abrir-nota-arquivo" type="button" class="flex h-8 items-center gap-1 rounded-full border border-slate-300 bg-white px-2 text-[10px] font-black uppercase text-slate-600 active:scale-95"' + (state.notaLendo ? ' disabled' : '') + '><svg width="13" height="13" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9l-6-6Z" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"/><path d="M14 3v6h6M8 14h8" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>Arquivo</button></span>' +
         '</div>' +
+        (state.notaLendo ? '<p class="text-[10px] font-bold text-slate-500">Lendo a nota...</p>' : (state.notaArquivoPendente ? '<p class="text-[10px] font-bold text-emerald-600">Nota pronta para salvar <button id="limpar-nota-pendente" type="button" class="ml-1 text-slate-400">&times;</button></p>' : '')) +
         '<button id="salvar-despesa" type="button" ' + (state.lancandoDespesa ? 'disabled ' : '') + 'class="h-11 rounded-xl bg-slate-950 px-4 text-sm font-black uppercase tracking-wide text-white disabled:opacity-60">' + (state.lancandoDespesa ? 'Salvando...' : 'Salvar despesa') + '</button>' +
       '</div>'
     );
@@ -8190,9 +8330,11 @@
 	  }
 
   function modalOpcoesLancamentoHtml(acao) {
+    var receita = acao.tipo === 'receita';
     return (
       '<div class="grid gap-2">' +
         '<div class="rounded-2xl bg-slate-50 p-4"><p class="text-xs font-semibold text-slate-500">Dia ' + escapeHtml(acao.item.dia) + '</p><strong class="mt-1 block text-lg font-black">' + dinheiro(acao.item.valor) + '</strong></div>' +
+        ((!receita && acao.item.notaArquivoPath) ? '<button id="ver-nota-lancamento" type="button" class="h-10 rounded-xl border border-cyan-200 bg-cyan-50 px-4 text-xs font-black uppercase text-cyan-800">Ver nota</button>' : '') +
         '<button id="editar-lancamento" type="button" class="h-11 rounded-xl bg-slate-950 px-4 text-sm font-black uppercase tracking-wide text-white">Editar</button>' +
         '<button id="excluir-lancamento" type="button" class="h-11 rounded-xl bg-red-600 px-4 text-sm font-black uppercase tracking-wide text-white">' + (state.carregando ? 'Excluindo...' : 'Excluir') + '</button>' +
       '</div>'
@@ -10519,6 +10661,13 @@
       }
     }
     bind('salvar-despesa', salvarDespesa);
+    bind('abrir-nota-camera', function () { var input = document.getElementById('nota-camera'); if (input) input.click(); });
+    bind('abrir-nota-arquivo', function () { var input = document.getElementById('nota-arquivo'); if (input) input.click(); });
+    bind('limpar-nota-pendente', function () { state.notaArquivoPendente = null; render(); });
+    var notaCamera = document.getElementById('nota-camera');
+    if (notaCamera) notaCamera.addEventListener('change', function () { var arquivo = this.files && this.files[0]; this.value = ''; if (arquivo) lerNotaPorFotoMobile(arquivo); });
+    var notaArquivo = document.getElementById('nota-arquivo');
+    if (notaArquivo) notaArquivo.addEventListener('change', function () { var arquivo = this.files && this.files[0]; this.value = ''; if (arquivo) lerNotaPorFotoMobile(arquivo); });
     var diaInputEl = document.getElementById('despesa-dia');
     if (diaInputEl) {
       diaInputEl.addEventListener('focus', function() {
@@ -10792,6 +10941,10 @@
       render();
     });
     bind('fechar-acao-lancamento', fecharAcaoLancamento);
+    bind('ver-nota-lancamento', function () { if (state.modalAcao && state.modalAcao.item) abrirNotaLancamentoMobile(state.modalAcao.item.id); });
+    bind('fechar-nota-lancamento', function () { state.notaVisualizandoUrl = ''; render(); });
+    bind('salvar-nota-lancamento', salvarNotaVisualizadaMobile);
+    bind('compartilhar-nota-lancamento', compartilharNotaVisualizadaMobile);
     bind('cancelar-exclusao-recorrencia', cancelarExclusaoRecorrenciaMobile);
     bind('cancelar-exclusao-recorrencia-topo', cancelarExclusaoRecorrenciaMobile);
     bind('confirmar-exclusao-recorrencia', confirmarExclusaoRecorrenciaMobile);

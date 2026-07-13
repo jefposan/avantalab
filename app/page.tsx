@@ -20,6 +20,7 @@ import DraggableModalCard from './components/DraggableModalCard';
 import CardEntradaFaturamento from './components/CardEntradaFaturamento';
 import type { EntradaFaturamento as TabelaEntradaFaturamento } from './components/TabelaEntradasFaturamento';
 import TabelaLancamentosDespesa, { type LancamentoDespesa as TabelaLancamentoDespesa } from './components/TabelaLancamentosDespesa';
+import ModalNotaLancamento from './components/ModalNotaLancamento';
 import TourPrimeiroAcesso from './components/TourPrimeiroAcesso';
 import PaywallEmpresa from './components/PaywallEmpresa';
 import CadastroPerfilModal from './components/CadastroPerfilModal';
@@ -61,6 +62,9 @@ import {
   salvarCaixinhaMovimento,
   salvarSaldoInicialCaixinha,
   apagarLancamento,
+  arquivarNotaLancamento,
+  obterUrlNotaLancamento,
+  removerNotaLancamento,
   atualizarLancamento,
   definirStatusLancamento,
   salvarDashboardOrdemWeb,
@@ -171,6 +175,7 @@ type LancamentoFinanceiro = {
   status: string | null;
   tipo: string | null;
   recorrenciaId?: string | null;
+  notaArquivoPath?: string | null;
 };
 
 type EntradaFaturamento = {
@@ -810,6 +815,9 @@ const [editEntradaFaturamentoValorNumerico, setEditEntradaFaturamentoValorNumeri
   const [salvandoDespesa, setSalvandoDespesa] = useState(false);
   const [formParcelar, setFormParcelar] = useState(false);
   const [formParcelas, setFormParcelas] = useState(2);
+  const [notaPendente, setNotaPendente] = useState<File | null>(null);
+  const [lendoNota, setLendoNota] = useState(false);
+  const [notaAbertaUrl, setNotaAbertaUrl] = useState('');
   const [lancamentoEditandoId, setLancamentoEditandoId] = useState<string | number | null>(null);
 const [editDia, setEditDia] = useState('');
 const [editDespesa, setEditDespesa] = useState('');
@@ -1621,6 +1629,7 @@ useEffect(() => {
         status: l.status ? textoRegistro(l.status) : null,
         tipo: l.tipo_obs ? textoRegistro(l.tipo_obs) : null,
         recorrenciaId: l.recorrencia_id ? textoRegistro(l.recorrencia_id) : null,
+        notaArquivoPath: l.nota_arquivo_path ? textoRegistro(l.nota_arquivo_path) : null,
       }))
     );
 
@@ -3850,6 +3859,60 @@ const adicionarDespesa = async () => {
   }
 };
 
+const lerNotaPorFoto = async (arquivo: File) => {
+  if (!empresaId) {
+    abrirAviso('Empresa não carregada', 'Tente atualizar a página e acessar novamente.');
+    return;
+  }
+  setLendoNota(true);
+  try {
+    const { data: sessao } = await supabase.auth.getSession();
+    const token = sessao.session?.access_token;
+    if (!token) throw new Error('Sua sessão expirou. Entre novamente.');
+
+    const form = new FormData();
+    form.append('empresaId', empresaId);
+    form.append('arquivo', arquivo, arquivo.name || 'nota.jpg');
+    const resposta = await fetch('/api/lancamentos/ler-foto', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}` },
+      body: form,
+    });
+    const json = await resposta.json().catch(() => null);
+    if (!resposta.ok || json?.erro) throw new Error(json?.mensagem || 'Não foi possível ler a nota.');
+
+    const leitura = json?.leitura;
+    if (leitura?.data_documento) {
+      const [ano, mes, dia] = String(leitura.data_documento).split('-').map(Number);
+      if (ano && mes && dia) {
+        setAnoSelecionado(String(ano));
+        setMesAtivo(meses[mes - 1] || mesAtivo);
+        setFormDia(String(dia));
+      }
+    }
+    if (leitura?.valor_total) {
+      const valor = Number(leitura.valor_total);
+      setValorNumericoRaw(valor);
+      setFormValor(formatarValorCampo(valor));
+    }
+    if (leitura?.despesa_sugerida) setFormDespesa(String(leitura.despesa_sugerida));
+    setNotaPendente(arquivo);
+  } catch (error) {
+    abrirAviso('Não foi possível ler a nota', error instanceof Error ? error.message : 'Tente outra imagem.');
+  } finally {
+    setLendoNota(false);
+  }
+};
+
+const abrirNotaLancamento = async (lancamento: TabelaLancamentoDespesa) => {
+  const resposta = await obterUrlNotaLancamento(lancamento.id);
+  if (resposta.erro || !resposta.url) {
+    abrirAviso('Não foi possível abrir a nota', resposta.mensagem || 'Tente novamente.');
+    return;
+  }
+  setNotaAbertaUrl(resposta.url);
+};
+
 const executarParcelamento = async () => {
   const totalParcelas = formParcelar && formParcelas >= 2 ? formParcelas : 1;
   const mesIndex = meses.indexOf(mesAtivo ?? '');
@@ -3905,6 +3968,18 @@ const executarParcelamento = async () => {
   }
 
   if (novosLancamentos.length > 0) {
+    let notaCaminho = '';
+    if (notaPendente) {
+      const nota = await arquivarNotaLancamento(novosLancamentos[0].id, notaPendente);
+      if (nota.erro) {
+        abrirAviso('Despesa salva, mas sem a nota', nota.mensagem || 'Tente anexar novamente.');
+      } else {
+        notaCaminho = nota.caminho || '';
+      }
+    }
+    if (notaCaminho) {
+      novosLancamentos[0].notaArquivoPath = notaCaminho;
+    }
     setLancamentos((prev) => [...novosLancamentos, ...prev]);
     notificarFinanceiroAtualizado();
     setFormDia('');
@@ -3914,6 +3989,7 @@ const executarParcelamento = async () => {
     setValorNumericoRaw(0);
     setFormParcelar(false);
     setFormParcelas(2);
+    setNotaPendente(null);
   }
 };
 
@@ -3933,6 +4009,11 @@ const apagarDespesa = async (id: string) => {
 
 const cancelarDespesaFixaDoMes = async (lanc: LancamentoFinanceiro | TabelaLancamentoDespesa) => {
   if (!empresaId) return;
+
+  if (!(await removerNotaLancamento(lanc.id))) {
+    abrirAviso('Erro ao apagar nota', 'Não foi possível remover a nota deste lançamento.');
+    return;
+  }
 
   const { error } = await supabase
     .from('lancamentos')
@@ -9638,6 +9719,11 @@ name="novo-usuario-login"
               setFormParcelar={setFormParcelar}
               formParcelas={formParcelas}
               setFormParcelas={setFormParcelas}
+              lerNotaPorFoto={lerNotaPorFoto}
+              lendoNota={lendoNota}
+              notaPendente={Boolean(notaPendente)}
+              limparNotaPendente={() => setNotaPendente(null)}
+              onVerNota={abrirNotaLancamento}
               salvandoDespesa={salvandoDespesa}
             />
               </div>
@@ -10113,6 +10199,13 @@ name="novo-usuario-login"
   bordaSobreCorPrimaria={bordaSobreCorPrimaria}
   textMuted={textMuted}
   estiloTemaPrimario={estiloTemaPrimario}
+/>
+
+<ModalNotaLancamento
+  aberto={Boolean(notaAbertaUrl)}
+  url={notaAbertaUrl}
+  darkMode={darkMode}
+  onFechar={() => setNotaAbertaUrl('')}
 />
 
 {/* ================= TOUR PRIMEIRO ACESSO ================= */}

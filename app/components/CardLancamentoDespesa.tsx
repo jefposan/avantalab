@@ -1,5 +1,6 @@
 'use client';
 
+import { useRef } from 'react';
 import type { ChangeEvent, CSSProperties, Dispatch, SetStateAction } from 'react';
 
 export type DespesaCadastrada = {
@@ -35,6 +36,10 @@ type CardLancamentoDespesaProps = {
   formParcelas: number;
   setFormParcelas: (v: number) => void;
   salvandoDespesa?: boolean;
+  lerNotaPorFoto: (arquivo: File) => void | Promise<void>;
+  lendoNota?: boolean;
+  notaPendente?: boolean;
+  limparNotaPendente: () => void;
 };
 
 export default function CardLancamentoDespesa({
@@ -63,7 +68,13 @@ export default function CardLancamentoDespesa({
   formParcelas,
   setFormParcelas,
   salvandoDespesa = false,
+  lerNotaPorFoto,
+  lendoNota = false,
+  notaPendente = false,
+  limparNotaPendente,
 }: CardLancamentoDespesaProps) {
+  const cameraRef = useRef<HTMLInputElement>(null);
+  const arquivoRef = useRef<HTMLInputElement>(null);
   const inputBase = `h-9 w-full rounded-md border px-2.5 text-xs font-semibold shadow-sm outline-none transition focus:ring-1 ${
     darkMode
       ? 'border-slate-600 bg-slate-700 text-white placeholder:text-slate-400'
@@ -208,7 +219,7 @@ export default function CardLancamentoDespesa({
         {/* Linha de parcelamento */}
         <div
           className="overflow-hidden transition-all duration-300"
-          style={{ maxHeight: expandido ? '56px' : '0px', opacity: expandido ? 1 : 0 }}
+          style={{ maxHeight: expandido ? '88px' : '0px', opacity: expandido ? 1 : 0 }}
         >
           <div className="mt-2 flex items-center gap-2 flex-wrap">
             {/* Toggle pill */}
@@ -269,7 +280,58 @@ export default function CardLancamentoDespesa({
                 </span>
               </>
             )}
+
+            <div className="ml-auto flex items-center gap-1.5">
+              <input
+                ref={cameraRef}
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                capture="environment"
+                className="hidden"
+                onChange={(event) => {
+                  const arquivo = event.target.files?.[0];
+                  event.target.value = '';
+                  if (arquivo) lerNotaPorFoto(arquivo);
+                }}
+              />
+              <input
+                ref={arquivoRef}
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                className="hidden"
+                onChange={(event) => {
+                  const arquivo = event.target.files?.[0];
+                  event.target.value = '';
+                  if (arquivo) lerNotaPorFoto(arquivo);
+                }}
+              />
+              <button
+                type="button"
+                onClick={() => cameraRef.current?.click()}
+                disabled={lendoNota || salvandoDespesa}
+                title="Fotografar nota"
+                className="flex h-7 items-center gap-1 rounded-full border border-slate-300 bg-white px-2 text-[10px] font-black uppercase text-slate-600 transition hover:border-slate-400 hover:text-slate-900 active:scale-95 disabled:opacity-60"
+              >
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" className="h-3.5 w-3.5"><path strokeLinecap="round" strokeLinejoin="round" d="M4 8h3l1.3-2h7.4L17 8h3v11H4V8Z"/><circle cx="12" cy="13" r="3.2"/></svg>
+                Foto
+              </button>
+              <button
+                type="button"
+                onClick={() => arquivoRef.current?.click()}
+                disabled={lendoNota || salvandoDespesa}
+                title="Enviar arquivo da nota"
+                className="flex h-7 items-center gap-1 rounded-full border border-slate-300 bg-white px-2 text-[10px] font-black uppercase text-slate-600 transition hover:border-slate-400 hover:text-slate-900 active:scale-95 disabled:opacity-60"
+              >
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" className="h-3.5 w-3.5"><path strokeLinecap="round" strokeLinejoin="round" d="M14 3H6a2 2 0 00-2 2v14a2 2 0 002 2h12a2 2 0 002-2V9l-6-6Z"/><path strokeLinecap="round" strokeLinejoin="round" d="M14 3v6h6M8 14h8M8 17h5"/></svg>
+                Arquivo
+              </button>
+            </div>
           </div>
+          {(lendoNota || notaPendente) && (
+            <div className={`mt-1.5 flex items-center gap-1.5 text-[10px] font-bold ${darkMode ? 'text-slate-300' : 'text-slate-500'}`}>
+              {lendoNota ? <span>Lendo a nota...</span> : <><span className="text-emerald-600">Nota pronta para salvar</span><button type="button" onClick={limparNotaPendente} className="text-slate-400 hover:text-red-500" title="Remover nota">×</button></>}
+            </div>
+          )}
         </div>
       </div>
     </>

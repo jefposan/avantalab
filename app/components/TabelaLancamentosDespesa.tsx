@@ -14,6 +14,7 @@ export type LancamentoDespesa = {
   valor: number;
   status?: string | null;
   tipo?: string | null;
+  notaArquivoPath?: string | null;
 };
 
 const MESES_TAB = ['JANEIRO', 'FEVEREIRO', 'MARÇO', 'ABRIL', 'MAIO', 'JUNHO', 'JULHO', 'AGOSTO', 'SETEMBRO', 'OUTUBRO', 'NOVEMBRO', 'DEZEMBRO'];
@@ -107,6 +108,11 @@ type TabelaLancamentosDespesaProps = {
   formParcelas: number;
   setFormParcelas: (v: number) => void;
   salvandoDespesa?: boolean;
+  lerNotaPorFoto: (arquivo: File) => void | Promise<void>;
+  lendoNota?: boolean;
+  notaPendente?: boolean;
+  limparNotaPendente: () => void;
+  onVerNota: (lancamento: LancamentoDespesa) => void;
 };
 
 export default function TabelaLancamentosDespesa({
@@ -164,6 +170,11 @@ export default function TabelaLancamentosDespesa({
   formParcelas,
   setFormParcelas,
   salvandoDespesa = false,
+  lerNotaPorFoto,
+  lendoNota = false,
+  notaPendente = false,
+  limparNotaPendente,
+  onVerNota,
 }: TabelaLancamentosDespesaProps) {
   return (
     <div
@@ -213,6 +224,10 @@ export default function TabelaLancamentosDespesa({
           formParcelas={formParcelas}
           setFormParcelas={setFormParcelas}
           salvandoDespesa={salvandoDespesa}
+          lerNotaPorFoto={lerNotaPorFoto}
+          lendoNota={lendoNota}
+          notaPendente={notaPendente}
+          limparNotaPendente={limparNotaPendente}
         />
         <div className="mb-3">
           <div className="flex-1">
@@ -377,10 +392,19 @@ export default function TabelaLancamentosDespesa({
                           />
                         </td>
 
-                        <td className={`sticky right-0 z-10 w-20 border-l py-1.5 px-1.5 text-center ${
+                        <td className={`sticky right-0 z-10 w-28 border-l py-1.5 px-1.5 text-center ${
                           darkMode ? 'border-slate-600 bg-slate-800' : 'border-slate-200 bg-white'
                         }`}>
                           <div className="flex items-center justify-center gap-1">
+                            {lanc.notaArquivoPath && (
+                              <button
+                                onClick={() => onVerNota(lanc)}
+                                className="text-slate-400 hover:text-cyan-600 hover:bg-cyan-500/10 p-1.5 rounded transition-all cursor-pointer"
+                                title="Ver nota"
+                              >
+                                <svg className="w-4 h-4 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2" strokeWidth="2"/><circle cx="8.5" cy="9" r="1.5" strokeWidth="2"/><path d="m4 18 5-5 3.5 3.5 2.5-2.5 5 4" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                              </button>
+                            )}
                             <button
                               onClick={salvarEdicaoLancamento}
                               className="text-green-500 hover:bg-green-500/10 p-1.5 rounded transition-all cursor-pointer"
@@ -418,7 +442,7 @@ export default function TabelaLancamentosDespesa({
                           -{formatarMoeda(lanc.valor)}
                         </td>
 
-                        <td className={`sticky right-0 z-10 w-20 border-l py-1.5 px-1 text-center ${
+                        <td className={`sticky right-0 z-10 w-28 border-l py-1.5 px-1 text-center ${
                           buscaLancamento.trim()
                             ? 'border-sky-200 bg-sky-50'
                             : 'border-slate-200 bg-white'
