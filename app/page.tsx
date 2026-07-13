@@ -25,7 +25,7 @@ import PaywallEmpresa from './components/PaywallEmpresa';
 import CadastroPerfilModal from './components/CadastroPerfilModal';
 import AssinaturaModal from './components/AssinaturaModal';
 import PremiumPessoalModal from './components/PremiumPessoalModal';
-import ModalAprovacoes, { type SolicitacaoAprovacao } from './components/ModalAprovacoes';
+import ModalAprovacoes, { type AcessoVendasAprovado, type SolicitacaoAprovacao } from './components/ModalAprovacoes';
 import { COBRANCA_ATIVA, assinaturaVigente, emCarencia, precisaPaywallEmpresa, precisaUpgradePessoal, type DadosCobrancaAssinatura, type EstadoAcesso, type Recurso } from './lib/cobranca';
 import type { StatusCadastroPerfil } from './lib/cadastro-perfil';
 import { PAISES } from './lib/paises';
@@ -667,6 +667,7 @@ const [agendaItemParaExcluir, setAgendaItemParaExcluir] = useState<AgendaItem | 
 const [notificacoesWeb, setNotificacoesWeb] = useState<{ id: string; titulo: string; corpo: string; lida: boolean }[]>([]);
 const [modalAprovacoesAberto, setModalAprovacoesAberto] = useState(false);
 const [solicitacoesAprovacao, setSolicitacoesAprovacao] = useState<SolicitacaoAprovacao[]>([]);
+const [acessosVendasAprovados, setAcessosVendasAprovados] = useState<AcessoVendasAprovado[]>([]);
 const [aprovacoesCarregando, setAprovacoesCarregando] = useState(false);
 const [aprovacaoProcessandoId, setAprovacaoProcessandoId] = useState<string | null>(null);
 const ajustesAutoFecharTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -857,24 +858,25 @@ const podeTrocarEmpresa = empresasDoUsuario.length > 1;
 const carregarSolicitacoesAprovacao = useCallback(async () => {
   if (!empresaId || !podeAcessarAjustes) {
     setSolicitacoesAprovacao([]);
+    setAcessosVendasAprovados([]);
     return;
   }
 
   setAprovacoesCarregando(true);
   try {
-    const { data, error } = await supabase
-      .from('vendas_mobile_solicitacoes_acesso')
-      .select('id, nome, email, telefone, solicitado_em')
-      .eq('empresa_id', empresaId)
-      .eq('status', 'pendente')
-      .order('solicitado_em', { ascending: false });
+    const [solicitacoesRes, acessosRes] = await Promise.all([
+      supabase.from('vendas_mobile_solicitacoes_acesso').select('id, user_id, nome, email, telefone, solicitado_em, status').eq('empresa_id', empresaId).order('solicitado_em', { ascending: false }),
+      supabase.from('vendas_mobile_acessos').select('id, user_id, papel, status, aprovado_em').eq('empresa_id', empresaId).order('aprovado_em', { ascending: false }),
+    ]);
 
-    if (error) {
+    if (solicitacoesRes.error || acessosRes.error) {
       setSolicitacoesAprovacao([]);
+      setAcessosVendasAprovados([]);
       return;
     }
 
-    setSolicitacoesAprovacao((data || []).map((solicitacao) => ({
+    const solicitacoes = solicitacoesRes.data || [];
+    setSolicitacoesAprovacao(solicitacoes.filter((item) => item.status === 'pendente').map((solicitacao) => ({
       id: String(solicitacao.id),
       nome: String(solicitacao.nome || 'Solicitante'),
       email: String(solicitacao.email || 'E-mail não informado'),
@@ -883,6 +885,20 @@ const carregarSolicitacoesAprovacao = useCallback(async () => {
       perfilNome: nomeEmpresaAtual || 'Perfil atual',
       sistema: 'Vendas Mobile',
     })));
+    setAcessosVendasAprovados((acessosRes.data || []).map((acesso) => {
+      const solicitacao = solicitacoes.find((item) => item.user_id === acesso.user_id);
+      return {
+        id: String(acesso.id),
+        nome: String(solicitacao?.nome || 'Usuário aprovado'),
+        email: String(solicitacao?.email || 'E-mail não informado'),
+        telefone: solicitacao?.telefone ? String(solicitacao.telefone) : null,
+        aprovadoEm: String(acesso.aprovado_em || new Date().toISOString()),
+        perfilNome: nomeEmpresaAtual || 'Perfil atual',
+        sistema: 'Vendas Mobile',
+        papel: String(acesso.papel || 'vendedor'),
+        status: acesso.status === 'bloqueado' ? 'bloqueado' : 'ativo',
+      };
+    }));
   } finally {
     setAprovacoesCarregando(false);
   }
@@ -909,13 +925,40 @@ const analisarSolicitacaoAprovacao = async (solicitacao: SolicitacaoAprovacao, a
       abrirAviso('Não foi possível concluir', error.message || 'Tente novamente em instantes.');
       return;
     }
-    setSolicitacoesAprovacao((atuais) => atuais.filter((item) => item.id !== solicitacao.id));
+    await carregarSolicitacoesAprovacao();
     abrirAviso(aprovar ? 'Acesso aprovado' : 'Solicitação rejeitada', aprovar
       ? `${solicitacao.nome} já pode acessar o Vendas Mobile deste perfil.`
       : `A solicitação de ${solicitacao.nome} foi rejeitada.`, undefined, 'sucesso');
   } finally {
     setAprovacaoProcessandoId(null);
   }
+};
+
+const gerenciarAcessoVendas = async (acesso: AcessoVendasAprovado, acao: 'revogar' | 'reativar' | 'excluir') => {
+  setAprovacaoProcessandoId(acesso.id);
+  try {
+    const { error } = await supabase.rpc('gerenciar_acesso_vendas_mobile_rpc', { p_acesso_id: acesso.id, p_acao: acao });
+    if (error) {
+      abrirAviso('Não foi possível concluir', error.message || 'Tente novamente em instantes.');
+      return;
+    }
+    await carregarSolicitacoesAprovacao();
+    abrirAviso(acao === 'revogar' ? 'Acesso revogado' : acao === 'reativar' ? 'Acesso reativado' : 'Acesso excluído', acao === 'revogar'
+      ? `${acesso.nome} não poderá mais entrar no Vendas Mobile.`
+      : acao === 'reativar' ? `${acesso.nome} voltou a ter acesso ao Vendas Mobile.` : `O vínculo de ${acesso.nome} foi excluído.`, undefined, 'sucesso');
+  } finally {
+    setAprovacaoProcessandoId(null);
+  }
+};
+
+const confirmarGerenciamentoAcesso = (acesso: AcessoVendasAprovado, acao: 'revogar' | 'reativar' | 'excluir') => {
+  abrirConfirmacao({
+    titulo: acao === 'revogar' ? 'Revogar acesso?' : acao === 'reativar' ? 'Reativar acesso?' : 'Excluir vínculo?',
+    mensagem: acao === 'revogar' ? `${acesso.nome} perderá o acesso ao Vendas Mobile deste perfil.` : acao === 'reativar'
+      ? `${acesso.nome} voltará a acessar o Vendas Mobile deste perfil.` : `O vínculo de ${acesso.nome} será apagado. Para voltar, o usuário precisará informar o código e solicitar uma nova aprovação.`,
+    textoConfirmar: acao === 'revogar' ? 'Revogar acesso' : acao === 'reativar' ? 'Reativar acesso' : 'Excluir vínculo',
+    acao: async () => { await gerenciarAcessoVendas(acesso, acao); },
+  });
 };
 
 const confirmarAnaliseSolicitacao = (solicitacao: SolicitacaoAprovacao, aprovar: boolean) => {
@@ -932,6 +975,7 @@ const confirmarAnaliseSolicitacao = (solicitacao: SolicitacaoAprovacao, aprovar:
 useEffect(() => {
   if (!mounted || !empresaId || !podeAcessarAjustes) {
     setSolicitacoesAprovacao([]);
+    setAcessosVendasAprovados([]);
     return;
   }
 
@@ -940,6 +984,7 @@ useEffect(() => {
   const canal = supabase
     .channel(`vendas_mobile_aprovacoes_${empresaId}`)
     .on('postgres_changes', { event: '*', schema: 'public', table: 'vendas_mobile_solicitacoes_acesso', filter: `empresa_id=eq.${empresaId}` }, carregarSolicitacoesAprovacao)
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'vendas_mobile_acessos', filter: `empresa_id=eq.${empresaId}` }, carregarSolicitacoesAprovacao)
     .subscribe();
 
   return () => {
@@ -10037,11 +10082,15 @@ name="novo-usuario-login"
   darkMode={darkMode}
   corPrimaria={corPrimaria}
   solicitacoes={solicitacoesAprovacao}
+  acessosAprovados={acessosVendasAprovados}
   carregando={aprovacoesCarregando}
   processandoId={aprovacaoProcessandoId}
   onFechar={() => setModalAprovacoesAberto(false)}
   onAprovar={(solicitacao) => confirmarAnaliseSolicitacao(solicitacao, true)}
   onRejeitar={(solicitacao) => confirmarAnaliseSolicitacao(solicitacao, false)}
+  onRevogar={(acesso) => confirmarGerenciamentoAcesso(acesso, 'revogar')}
+  onReativar={(acesso) => confirmarGerenciamentoAcesso(acesso, 'reativar')}
+  onExcluir={(acesso) => confirmarGerenciamentoAcesso(acesso, 'excluir')}
 />
 
       <ModalTermos

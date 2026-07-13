@@ -626,6 +626,10 @@ async function inicializarApp() {
   state.autenticado = false;
   state.usuarioSemAcesso = false;
   render();
+  window.requestAnimationFrame(() => {
+    const campoAtivo = document.activeElement;
+    if (campoAtivo instanceof HTMLElement && campoAtivo.closest('.login-screen')) campoAtivo.blur();
+  });
   if (!(await window.VendasDb.hasSession())) {
     conectandoGoogle = false;
     sessionStorage.removeItem(GOOGLE_CONNECTING_KEY);

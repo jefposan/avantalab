@@ -29,7 +29,7 @@ export default function ModalConfirmacao({
 
   return (
     <div
-      className="fixed inset-0 z-[6000] flex items-center justify-center bg-black/60 px-4"
+      className="fixed inset-0 z-[20000] flex items-center justify-center bg-black/60 px-4"
       onClick={() => {
         if (!carregando) aoCancelar();
       }}
