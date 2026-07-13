@@ -1321,14 +1321,15 @@ body { background: #fff; color: var(--ink); }
   .vendas-nav-item > span { position: relative; z-index: 1; display: flex; height: 28px; align-items: center; justify-content: center; }
   .vendas-nav-item .svg-icon { width: 22px; height: 22px; }
   .vendas-nav-item b, .vendas-nav-add b { position: relative; z-index: 1; max-width: 100%; overflow: hidden; font-size: 10px; line-height: 1; text-overflow: ellipsis; white-space: nowrap; }
-  .vendas-nav-ripple { position: absolute; z-index: 0; top: 18px; left: 50%; width: 12px; height: 12px; border-radius: 999px; background: rgba(22,135,217,.35); pointer-events: none; transform: translate(-50%, -50%) scale(.2); animation: vendas-nav-ripple .58s ease-out forwards; }
+  .vendas-nav-ripple { position: absolute; z-index: 2; top: 18px; left: 50%; width: 18px; height: 18px; box-sizing: border-box; border: 2px solid rgba(22,135,217,.86); border-radius: 999px; background: transparent; pointer-events: none; transform: translate(-50%, -50%) scale(.02); animation: vendas-nav-ripple 1.15s cubic-bezier(.16,.78,.25,1) forwards; }
   .vendas-nav-add { position: relative; justify-content: flex-end; padding-bottom: 5px; color: #0e7490; }
   .vendas-nav-add > span { position: absolute; z-index: 1; bottom: 22px; display: flex; width: 58px; height: 58px; align-items: center; justify-content: center; border: 4px solid #fff; border-radius: 999px; color: #fff; background: #00A6C8; box-shadow: 0 8px 18px rgba(15,23,42,.25); font-size: 34px; font-weight: 300; line-height: 1; }
+  .vendas-nav-add > span > .vendas-nav-ripple { top: 50%; left: 50%; }
   .dark-theme .vendas-bottom-nav { border-color: #334155; background: rgba(15,23,42,.95); }
   .dark-theme .vendas-nav-item { color: #94a3b8; }
   .dark-theme .vendas-nav-add > span { border-color: #0f172a; }
 }
-@keyframes vendas-nav-ripple { to { opacity: 0; transform: translate(-50%, -50%) scale(10); } }
+@keyframes vendas-nav-ripple { 0% { opacity: .9; transform: translate(-50%, -50%) scale(.02); } 68% { opacity: .32; } 100% { opacity: 0; transform: translate(-50%, -50%) scale(16); } }
 @media (max-width: 460px) {
   .dashboard-kpis { grid-template-columns: 1fr; }
   .goal-card, .dashboard-panel { padding: 18px; }

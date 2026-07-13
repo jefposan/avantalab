@@ -440,7 +440,8 @@ function acionarNavegacaoInferior(event, destino) {
   if (!botao) return;
   const anel = document.createElement('i');
   anel.className = 'vendas-nav-ripple';
-  botao.appendChild(anel);
+  const origem = botao.classList.contains('vendas-nav-add') ? botao.querySelector(':scope > span') : botao;
+  origem?.appendChild(anel);
   anel.addEventListener('animationend', () => anel.remove(), { once: true });
   window.setTimeout(() => {
     if (destino === 'configuracoes') setAba('configuracoes');
