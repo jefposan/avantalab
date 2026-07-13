@@ -129,6 +129,9 @@ create table if not exists public.vendas_mobile_pagamentos (
   tipo text not null default 'pagamento' check (tipo in ('pagamento','credito','debito','estorno')),
   forma_pagamento text,
   valor numeric(12,2) not null check (valor >= 0),
+  desconto numeric(12,2) not null default 0 check (desconto >= 0),
+  saldo_anterior numeric(12,2) not null default 0,
+  saldo_final numeric(12,2) not null default 0,
   observacoes text,
   data_pagamento date not null default current_date,
   criado_em timestamptz not null default now()

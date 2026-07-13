@@ -107,17 +107,18 @@
 
   async function loadAll() {
     const user = await currentUser();
-    if (!user) return { user: null, produtos: [], pacotes: [], clientes: [], vendas: [] };
+    if (!user) return { user: null, produtos: [], pacotes: [], clientes: [], vendas: [], pagamentos: [] };
 
     const acessoVendas = await buscarAcessoVendas();
     if (!acessoVendas.acesso) {
-      return { user, produtos: [], pacotes: [], clientes: [], vendas: [], ...acessoVendas };
+      return { user, produtos: [], pacotes: [], clientes: [], vendas: [], pagamentos: [], ...acessoVendas };
     }
 
-    const [produtosRes, clientesRes, pedidosRes] = await Promise.all([
+    const [produtosRes, clientesRes, pedidosRes, pagamentosRes] = await Promise.all([
       client.from('vendas_mobile_produtos').select('*').order('criado_em', { ascending: false }),
       client.from('vendas_mobile_clientes').select('*').order('nome'),
       client.from('vendas_mobile_pedidos').select('*, itens:vendas_mobile_pedido_itens(*)').order('criado_em', { ascending: false }),
+      client.from('vendas_mobile_pagamentos').select('*').order('data_pagamento', { ascending: false }).order('criado_em', { ascending: false }),
     ]);
     const error = produtosRes.error || clientesRes.error || pedidosRes.error;
     if (error) throw error;
@@ -142,6 +143,19 @@
         ...(c.endereco || {}),
       })),
       vendas: (pedidosRes.data || []).map((p) => ({ ...p, itens: p.itens || [] })),
+      pagamentos: (pagamentosRes.data || []).map((pagamento) => {
+        let legado = {};
+        try {
+          const observacoes = JSON.parse(pagamento.observacoes || '{}');
+          if (observacoes?.avantalab_pagamento) legado = observacoes;
+        } catch { /* observação comum, sem metadados financeiros */ }
+        return {
+          ...pagamento,
+          desconto: Number(pagamento.desconto ?? legado.desconto ?? 0),
+          saldo_anterior: Number(pagamento.saldo_anterior ?? legado.saldo_anterior ?? 0),
+          saldo_final: Number(pagamento.saldo_final ?? legado.saldo_final ?? 0),
+        };
+      }),
       ...acessoVendas,
     };
   }
@@ -258,6 +272,7 @@
       total: Number(order.total || 0),
       forma_pagamento: order.forma_pagamento || null,
       observacoes: order.observacoes || null,
+      criado_em: order.criado_em || new Date().toISOString(),
     }).select().single();
     if (error) throw error;
     const items = order.itens.map((item) => ({
@@ -278,5 +293,37 @@
     return { ...pedido, itens: savedItems || [] };
   }
 
-  window.VendasDb = { client, currentUser, hasSession, signIn, signInPhone, signInWithGoogle, resetPassword, updatePassword, updateUserMetadata, signUp, signOut, solicitarAcesso, buscarAcessoVendas, loadAll, saveProduct, deleteProduct, createPackage, saveProductsBulk, deletePackage, saveClient, deleteClient, saveOrder };
+  async function savePayment(payment) {
+    const user = await currentUser();
+    if (!user) throw new Error('Sessão expirada.');
+    const payload = {
+      user_id: user.id,
+      cliente_id: payment.cliente_id || null,
+      tipo: 'pagamento',
+      forma_pagamento: payment.forma_pagamento || 'Pix',
+      valor: Number(payment.valor || 0),
+      desconto: Number(payment.desconto || 0),
+      saldo_anterior: Number(payment.saldo_anterior || 0),
+      saldo_final: Number(payment.saldo_final || 0),
+      observacoes: payment.observacoes || null,
+      data_pagamento: payment.data_pagamento,
+    };
+    let { data, error } = await client.from('vendas_mobile_pagamentos').insert(payload).select().single();
+    if (error && /desconto|saldo_anterior|saldo_final|schema cache/i.test(String(error.message || ''))) {
+      const legado = {
+        user_id: payload.user_id,
+        cliente_id: payload.cliente_id,
+        tipo: payload.tipo,
+        forma_pagamento: payload.forma_pagamento,
+        valor: payload.valor,
+        data_pagamento: payload.data_pagamento,
+        observacoes: JSON.stringify({ avantalab_pagamento: true, desconto: payload.desconto, saldo_anterior: payload.saldo_anterior, saldo_final: payload.saldo_final }),
+      };
+      ({ data, error } = await client.from('vendas_mobile_pagamentos').insert(legado).select().single());
+    }
+    if (error) throw error;
+    return { ...data, desconto: payload.desconto, saldo_anterior: payload.saldo_anterior, saldo_final: payload.saldo_final };
+  }
+
+  window.VendasDb = { client, currentUser, hasSession, signIn, signInPhone, signInWithGoogle, resetPassword, updatePassword, updateUserMetadata, signUp, signOut, solicitarAcesso, buscarAcessoVendas, loadAll, saveProduct, deleteProduct, createPackage, saveProductsBulk, deletePackage, saveClient, deleteClient, saveOrder, savePayment };
 })();

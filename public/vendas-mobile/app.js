@@ -18,6 +18,7 @@ const estadoInicial = {
   pacotesProdutos: [],
   clientes: [],
   vendas: [],
+  pagamentos: [],
   carrinho: [],
   aba: 'dashboard',
   menuAberto: true,
@@ -65,6 +66,8 @@ let botaoFeedbackAtivo = null;
 let atualizacaoPwaPendente = false;
 let filtroPedidos = 'todos';
 let limitePedidos = 10;
+let pedidoClienteRascunho = null;
+let pagamentoClienteRascunho = null;
 
 const PAISES_DDI = [
   ['Brasil', '55', '🇧🇷'], ['Portugal', '351', '🇵🇹'], ['Estados Unidos / Canadá', '1', '🇺🇸'],
@@ -518,6 +521,7 @@ async function sairSistema() {
   state.pacotesProdutos = [];
   state.clientes = [];
   state.vendas = [];
+  state.pagamentos = [];
   state.acessoVendas = null;
   state.solicitacaoAcesso = null;
   state.usuarioSemAcesso = false;
@@ -871,6 +875,7 @@ async function carregarDadosBackend(mostrarCarregamento = true) {
       state.pacotesProdutos = dados.pacotes || [];
       state.clientes = dados.clientes;
       state.vendas = dados.vendas;
+      state.pagamentos = dados.pagamentos || [];
       state.menuAberto = true;
       state.acessoVendas = dados.acesso || null;
       state.solicitacaoAcesso = dados.solicitacao || null;
@@ -945,6 +950,12 @@ function renderConteudo() {
 
 function renderDashboard() {
   const t = totaisPeriodo();
+  const pagamentosPeriodo = (state.pagamentos || []).filter((pagamento) => {
+    const dataPagamento = new Date(`${pagamento.data_pagamento || String(pagamento.criado_em || '').slice(0, 10)}T12:00:00`);
+    return dataPagamento >= new Date(`${state.filtroInicio}T00:00:00`) && dataPagamento <= new Date(`${state.filtroFim}T23:59:59`);
+  });
+  const totalRecebido = pagamentosPeriodo.reduce((soma, pagamento) => soma + Number(pagamento.valor || 0), 0);
+  const totalAReceber = state.clientes.reduce((soma, cliente) => soma + saldoFinanceiroCliente(cliente.id).debito, 0);
   const produtoTop = produtoMaisVendido();
   const clienteTop = clienteMaisCompra();
   return `
@@ -956,8 +967,8 @@ function renderDashboard() {
     </section>
     <section class="dashboard-kpis">
       ${kpi('Total Vendido', moeda(t.total), '$')}
-      ${kpi('Total Recebido', moeda(t.total), '⌁')}
-      ${kpi('A Receber', moeda(0), '◷')}
+      ${kpi('Total Recebido', moeda(totalRecebido), '⌁')}
+      ${kpi('A Receber', moeda(totalAReceber), '◷')}
       ${kpi('Clientes Ativos', state.clientes.length, '♧')}
     </section>
     <section class="dashboard-tables">
@@ -1315,12 +1326,38 @@ function renderClientes() {
   `;
 }
 
+function pedidoGeraDebito(venda) {
+  const forma = normalizar(venda.forma_pagamento);
+  return !pedidoEhConsignado(venda) && (forma === '' || forma === 'venda' || forma.includes('a prazo'));
+}
+
+function pagamentosDoCliente(clienteId) {
+  return (state.pagamentos || [])
+    .filter((pagamento) => pagamento.cliente_id === clienteId)
+    .sort((a, b) => String(b.data_pagamento || b.criado_em || '').localeCompare(String(a.data_pagamento || a.criado_em || '')));
+}
+
+function saldoFinanceiroCliente(clienteId) {
+  const pedidos = pedidosDoCliente(clienteId).filter((venda) => venda.status !== 'cancelada');
+  const totalDebitos = pedidos.filter(pedidoGeraDebito).reduce((soma, venda) => soma + Number(venda.total || 0), 0);
+  const consignado = pedidos.filter(pedidoEhConsignado).reduce((soma, venda) => soma + Number(venda.total || 0), 0);
+  const abatimentos = pagamentosDoCliente(clienteId).reduce((soma, pagamento) => soma + Number(pagamento.valor || 0) + Number(pagamento.desconto || 0), 0);
+  return {
+    totalDebitos,
+    consignado,
+    abatimentos,
+    debito: Math.max(0, totalDebitos - abatimentos),
+    credito: Math.max(0, abatimentos - totalDebitos),
+  };
+}
+
 function renderCliente(c) {
   const vendasCliente = state.vendas.filter((v) => v.cliente_id === c.id && v.status !== 'cancelada');
   const ultimaVenda = [...vendasCliente].sort((a, b) => new Date(b.criado_em) - new Date(a.criado_em))[0];
-  const debito = Number(c.debito_atual || c.saldo_pendente || 0);
-  const consignado = Number(c.valor_consignado || c.saldo_consignado || 0);
-  const credito = Number(c.credito_livre || 0);
+  const saldo = saldoFinanceiroCliente(c.id);
+  const debito = saldo.debito;
+  const consignado = saldo.consignado;
+  const credito = saldo.credito;
   const iniciais = String(c.nome || 'C').split(/\s+/).slice(0, 2).map((parte) => parte[0] || '').join('').toUpperCase();
   const local = [c.endereco, c.cidade, c.estado].filter(Boolean).join(' - ') || 'Não informado';
   const temTelefone = Boolean(String(c.telefone || '').replace(/\D/g, ''));
@@ -1344,10 +1381,226 @@ function renderCliente(c) {
       </div>
       <div class="client-actions">
         <button class="client-details" onclick="abrirDetalhesCliente('${c.id}')">Ver Detalhes</button>
-        <div><button class="client-payment" onclick="setAba('vender')">${svgIcon('dollar')} Pagamento</button><button class="client-order" onclick="setAba('novo-pedido')">${svgIcon('shopping-bag')} Pedido</button></div>
+        <div><button class="client-payment" onclick="abrirPagamentoCliente('${c.id}')">${svgIcon('dollar')} Pagamento</button><button class="client-order" onclick="abrirNovoPedidoCliente('${c.id}')">${svgIcon('shopping-bag')} Pedido</button></div>
       </div>
     </article>
   `;
+}
+
+function produtosDisponiveisPedido() {
+  return state.produtos
+    .filter((produto) => produto.ativo !== false)
+    .sort((a, b) => String(a.nome || '').localeCompare(String(b.nome || ''), 'pt-BR', { sensitivity: 'base' }));
+}
+
+function totaisPedidoClienteRascunho() {
+  const subtotal = (pedidoClienteRascunho?.itens || []).reduce((soma, item) => soma + Number(item.quantidade || 0) * Number(item.preco || 0), 0);
+  const desconto = Math.max(0, Number(pedidoClienteRascunho?.desconto || 0));
+  return { subtotal, desconto, total: Math.max(0, subtotal - desconto) };
+}
+
+function abrirNovoPedidoCliente(clienteId) {
+  const cliente = state.clientes.find((item) => item.id === clienteId);
+  if (!cliente) return;
+  const produtos = produtosDisponiveisPedido();
+  const primeiroProduto = produtos[0] || null;
+  pedidoClienteRascunho = {
+    clienteId,
+    tipo: 'venda',
+    data: isoData(new Date()),
+    produtoId: primeiroProduto?.id || '',
+    quantidade: 1,
+    preco: Number(primeiroProduto?.preco || 0),
+    desconto: 0,
+    itens: [],
+  };
+  mostrarCardPedidoCliente();
+}
+
+function mostrarCardPedidoCliente() {
+  const rascunho = pedidoClienteRascunho;
+  const cliente = state.clientes.find((item) => item.id === rascunho?.clienteId);
+  if (!rascunho || !cliente) return;
+  const produtos = produtosDisponiveisPedido();
+  const totais = totaisPedidoClienteRascunho();
+  const itensHtml = rascunho.itens.length
+    ? rascunho.itens.map((item, indice) => `<article><div><b>${escapeHtml(item.produto_nome)}</b><small>${item.quantidade} × ${moeda(item.preco)}</small></div><strong>${moeda(item.quantidade * item.preco)}</strong><button type="button" onclick="removerItemPedidoCliente(${indice})" aria-label="Excluir ${escapeAttr(item.produto_nome)}">×</button></article>`).join('')
+    : '<p class="transaction-empty">Nenhum item inserido.</p>';
+  sheet(`
+    <div class="sheet-header"><div><h2>Novo pedido</h2><p class="muted small">${escapeHtml(cliente.nome)}</p></div><button class="close" onclick="fecharSheet()">×</button></div>
+    <div class="client-transaction-scroll">
+      <div class="transaction-type-switch"><button type="button" class="${rascunho.tipo === 'venda' ? 'active' : ''}" onclick="selecionarTipoPedidoCliente('venda')">Venda</button><button type="button" class="${rascunho.tipo === 'consignado' ? 'active' : ''}" onclick="selecionarTipoPedidoCliente('consignado')">Consignado</button></div>
+      <label class="transaction-field"><span>Data do pedido</span><input id="pedidoClienteData" type="date" value="${escapeAttr(rascunho.data)}" onchange="pedidoClienteRascunho.data=this.value"></label>
+      <article class="order-product-entry">
+        <h3>Inserir produto</h3>
+        ${produtos.length ? `<label class="transaction-field"><span>Produto</span><select id="pedidoClienteProduto" onchange="selecionarProdutoPedidoCliente(this.value)">${produtos.map((produto) => `<option value="${produto.id}" ${produto.id === rascunho.produtoId ? 'selected' : ''}>${escapeHtml(produto.nome)}</option>`).join('')}</select></label>
+        <div class="order-item-fields"><label class="transaction-field"><span>Quantidade</span><div class="quantity-stepper"><button type="button" onclick="ajustarQuantidadePedidoCliente(-1)">−</button><input id="pedidoClienteQuantidade" type="number" min="1" step="1" inputmode="numeric" value="${escapeAttr(rascunho.quantidade)}" onfocus="if(this.value==='1')this.value=''" oninput="sincronizarQuantidadePedidoCliente(this.value)" onblur="normalizarQuantidadePedidoCliente()"><button type="button" onclick="ajustarQuantidadePedidoCliente(1)">+</button></div></label><label class="transaction-field"><span>Preço</span><input id="pedidoClientePreco" type="number" min="0" step="0.01" inputmode="decimal" value="${Number(rascunho.preco || 0).toFixed(2)}" oninput="pedidoClienteRascunho.preco=Number(this.value||0)"></label></div>
+        <button type="button" class="primary order-insert-item" onclick="inserirItemPedidoCliente()">Inserir item</button>` : '<p class="transaction-empty">Cadastre produtos antes de criar um pedido.</p>'}
+      </article>
+      <section class="order-draft-items"><h3>Itens do pedido</h3>${itensHtml}</section>
+      <section class="transaction-totals">
+        <div><span>Subtotal</span><b id="pedidoClienteSubtotal">${moeda(totais.subtotal)}</b></div>
+        <label><span>Desconto</span><input id="pedidoClienteDesconto" type="number" min="0" step="0.01" inputmode="decimal" value="${Number(totais.desconto).toFixed(2)}" oninput="atualizarDescontoPedidoCliente(this.value)"></label>
+        <div class="total"><span>Total final</span><b id="pedidoClienteTotal">${moeda(totais.total)}</b></div>
+      </section>
+    </div>
+    <footer class="client-transaction-footer"><button type="button" class="primary" onclick="finalizarPedidoCliente()">Finalizar pedido <b id="pedidoClienteBotaoTotal">(${moeda(totais.total)})</b></button></footer>
+  `, 'sheet-backdrop-centered client-transaction-backdrop');
+}
+
+function selecionarTipoPedidoCliente(tipo) {
+  if (!pedidoClienteRascunho) return;
+  pedidoClienteRascunho.tipo = tipo === 'consignado' ? 'consignado' : 'venda';
+  mostrarCardPedidoCliente();
+}
+
+function selecionarProdutoPedidoCliente(produtoId) {
+  if (!pedidoClienteRascunho) return;
+  const produto = state.produtos.find((item) => item.id === produtoId);
+  pedidoClienteRascunho.produtoId = produtoId;
+  pedidoClienteRascunho.preco = Number(produto?.preco || 0);
+  const campoPreco = document.getElementById('pedidoClientePreco');
+  if (campoPreco) campoPreco.value = pedidoClienteRascunho.preco.toFixed(2);
+}
+
+function sincronizarQuantidadePedidoCliente(valorQuantidade) {
+  const quantidade = Math.floor(Number(valorQuantidade));
+  if (pedidoClienteRascunho && quantidade >= 1) pedidoClienteRascunho.quantidade = quantidade;
+}
+
+function normalizarQuantidadePedidoCliente() {
+  if (!pedidoClienteRascunho) return;
+  const campo = document.getElementById('pedidoClienteQuantidade');
+  const quantidade = Math.max(1, Math.floor(Number(campo?.value || pedidoClienteRascunho.quantidade || 1)));
+  pedidoClienteRascunho.quantidade = quantidade;
+  if (campo) campo.value = String(quantidade);
+}
+
+function ajustarQuantidadePedidoCliente(delta) {
+  if (!pedidoClienteRascunho) return;
+  const campo = document.getElementById('pedidoClienteQuantidade');
+  const atual = Math.max(1, Math.floor(Number(campo?.value || pedidoClienteRascunho.quantidade || 1)));
+  const quantidade = Math.max(1, atual + Number(delta || 0));
+  pedidoClienteRascunho.quantidade = quantidade;
+  if (campo) campo.value = String(quantidade);
+}
+
+function inserirItemPedidoCliente() {
+  if (!pedidoClienteRascunho) return;
+  normalizarQuantidadePedidoCliente();
+  const produto = state.produtos.find((item) => item.id === pedidoClienteRascunho.produtoId);
+  const quantidade = Math.max(1, Number(pedidoClienteRascunho.quantidade || 1));
+  const preco = Number(document.getElementById('pedidoClientePreco')?.value || pedidoClienteRascunho.preco || 0);
+  if (!produto) { toast('Selecione um produto.'); return; }
+  if (preco < 0) { toast('Informe um preço válido.'); return; }
+  pedidoClienteRascunho.itens.push({ produto_id: produto.id, produto_nome: produto.nome, produto_sku: produto.sku || null, quantidade, preco });
+  pedidoClienteRascunho.quantidade = 1;
+  pedidoClienteRascunho.preco = Number(produto.preco || 0);
+  mostrarCardPedidoCliente();
+}
+
+function removerItemPedidoCliente(indice) {
+  if (!pedidoClienteRascunho) return;
+  pedidoClienteRascunho.itens.splice(indice, 1);
+  mostrarCardPedidoCliente();
+}
+
+function atualizarDescontoPedidoCliente(valorDesconto) {
+  if (!pedidoClienteRascunho) return;
+  pedidoClienteRascunho.desconto = Math.max(0, Number(valorDesconto || 0));
+  const totais = totaisPedidoClienteRascunho();
+  const subtotal = document.getElementById('pedidoClienteSubtotal');
+  const total = document.getElementById('pedidoClienteTotal');
+  const totalBotao = document.getElementById('pedidoClienteBotaoTotal');
+  if (subtotal) subtotal.textContent = moeda(totais.subtotal);
+  if (total) total.textContent = moeda(totais.total);
+  if (totalBotao) totalBotao.textContent = `(${moeda(totais.total)})`;
+}
+
+async function finalizarPedidoCliente() {
+  const rascunho = pedidoClienteRascunho;
+  if (!rascunho?.itens.length) { toast('Insira ao menos um item no pedido.'); return; }
+  const totais = totaisPedidoClienteRascunho();
+  const dataPedido = valor('pedidoClienteData') || rascunho.data;
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(dataPedido)) { toast('Informe uma data válida.'); return; }
+  const venda = {
+    id: id('vend'),
+    cliente_id: rascunho.clienteId,
+    status: 'concluida',
+    subtotal: totais.subtotal,
+    desconto: totais.desconto,
+    total: totais.total,
+    forma_pagamento: rascunho.tipo === 'consignado' ? 'Consignado' : 'Venda',
+    observacoes: rascunho.tipo === 'consignado' ? 'Pedido consignado' : 'Pedido de venda',
+    itens: rascunho.itens.map((item) => ({ ...item, total: item.quantidade * item.preco })),
+    criado_em: new Date(`${dataPedido}T12:00:00`).toISOString(),
+  };
+  try {
+    const salvo = backendAtivo ? await window.VendasDb.saveOrder(venda) : venda;
+    state.vendas.unshift(salvo);
+    pedidoClienteRascunho = null;
+    fecharSheet(); render(); toast('Pedido registrado com sucesso.');
+  } catch (error) { toast(traduzErro(error)); }
+}
+
+function abrirPagamentoCliente(clienteId) {
+  const cliente = state.clientes.find((item) => item.id === clienteId);
+  if (!cliente) return;
+  const saldo = saldoFinanceiroCliente(clienteId);
+  pagamentoClienteRascunho = { clienteId, saldoAnterior: saldo.debito };
+  sheet(`
+    <div class="sheet-header"><div><h2>Registrar pagamento</h2><p class="muted small">${escapeHtml(cliente.nome)}</p></div><button class="close" onclick="fecharSheet()">×</button></div>
+    <div class="client-transaction-scroll payment-entry-form">
+      <label class="transaction-field"><span>Valor pago</span><input id="pagamentoClienteValor" type="number" min="0" step="0.01" inputmode="decimal" placeholder="0,00" oninput="atualizarResumoPagamentoCliente()"></label>
+      <label class="transaction-field"><span>Valor total da dívida</span><input value="${escapeAttr(moeda(saldo.debito))}" readonly></label>
+      <label class="transaction-field"><span>Desconto</span><input id="pagamentoClienteDesconto" type="number" min="0" step="0.01" inputmode="decimal" value="0.00" oninput="atualizarResumoPagamentoCliente()"></label>
+      <section class="payment-balance-summary"><div><span>Saldo anterior</span><b>${moeda(saldo.debito)}</b></div><div><span>Valor pago + desconto</span><b id="pagamentoClienteAbatimento">${moeda(0)}</b></div><div class="final"><span>Saldo final</span><b id="pagamentoClienteSaldoFinal">${moeda(saldo.debito)}</b></div></section>
+      <label class="transaction-field"><span>Data do pagamento</span><input id="pagamentoClienteData" type="date" value="${isoData(new Date())}"></label>
+      <label class="transaction-field"><span>Forma de pagamento</span><select id="pagamentoClienteForma"><option selected>Pix</option><option>Dinheiro</option><option>Cartão de crédito</option><option>Cartão de débito</option><option>Cheque</option><option>Boleto</option></select></label>
+    </div>
+    <footer class="client-transaction-footer"><button type="button" class="primary" onclick="confirmarPagamentoCliente()">Confirmar recebimento</button></footer>
+  `, 'sheet-backdrop-centered client-transaction-backdrop payment-transaction-backdrop');
+}
+
+function resumoPagamentoCliente() {
+  const saldoAnterior = Number(pagamentoClienteRascunho?.saldoAnterior || 0);
+  const valorPago = Math.max(0, Number(valor('pagamentoClienteValor') || 0));
+  const desconto = Math.max(0, Number(valor('pagamentoClienteDesconto') || 0));
+  return { saldoAnterior, valorPago, desconto, abatimento: valorPago + desconto, saldoFinal: Math.max(0, saldoAnterior - valorPago - desconto) };
+}
+
+function atualizarResumoPagamentoCliente() {
+  const resumo = resumoPagamentoCliente();
+  const abatimento = document.getElementById('pagamentoClienteAbatimento');
+  const saldoFinal = document.getElementById('pagamentoClienteSaldoFinal');
+  if (abatimento) abatimento.textContent = moeda(resumo.abatimento);
+  if (saldoFinal) saldoFinal.textContent = moeda(resumo.saldoFinal);
+}
+
+async function confirmarPagamentoCliente() {
+  const rascunho = pagamentoClienteRascunho;
+  if (!rascunho) return;
+  const resumo = resumoPagamentoCliente();
+  const dataPagamento = valor('pagamentoClienteData');
+  if (resumo.abatimento <= 0) { toast('Informe o valor pago ou o desconto.'); return; }
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(dataPagamento)) { toast('Informe uma data válida.'); return; }
+  const pagamento = {
+    id: id('pag'),
+    cliente_id: rascunho.clienteId,
+    valor: resumo.valorPago,
+    desconto: resumo.desconto,
+    saldo_anterior: resumo.saldoAnterior,
+    saldo_final: resumo.saldoFinal,
+    data_pagamento: dataPagamento,
+    forma_pagamento: valor('pagamentoClienteForma') || 'Pix',
+    criado_em: new Date().toISOString(),
+  };
+  try {
+    const salvo = backendAtivo ? await window.VendasDb.savePayment(pagamento) : pagamento;
+    state.pagamentos = [salvo, ...(state.pagamentos || [])];
+    pagamentoClienteRascunho = null;
+    fecharSheet(); render(); toast('Recebimento confirmado.');
+  } catch (error) { toast(traduzErro(error)); }
 }
 
 function telefoneCliente(clienteId) {
@@ -1424,10 +1677,17 @@ function pedidoEhConsignado(venda) {
 }
 
 function listaPedidosClienteHtml(pedidos, pagina, vazio) {
-  const inicio = pagina * 10;
-  const itens = pedidos.slice(inicio, inicio + 10);
+  const limite = (pagina + 1) * 10;
+  const itens = pedidos.slice(0, limite);
   if (!itens.length) return `<div class="client-report-empty">${escapeHtml(vazio)}</div>`;
-  return `<div class="client-report-list">${itens.map((venda) => `<button type="button" class="client-report-row" onclick="abrirPedidoCliente('${venda.id}')"><span><b>${dataBR(venda.criado_em)}</b><small>${escapeHtml(venda.forma_pagamento || 'Não informado')} · ${(venda.itens || []).length} itens</small></span><strong>${moeda(venda.total)}</strong></button>`).join('')}</div>${pedidos.length > inicio + 10 ? '<button class="ghost client-load-more" onclick="abrirDetalhesCliente(\'' + pedidos[0].cliente_id + '\', window.currentClientDetailTab, ' + (pagina + 1) + ')">Carregar mais</button>' : ''}`;
+  return `<div class="client-report-list">${itens.map((venda) => `<button type="button" class="client-report-row" onclick="abrirPedidoCliente('${venda.id}')"><span><b>${dataBR(venda.criado_em)}</b><small>${escapeHtml(venda.forma_pagamento || 'Não informado')} · ${(venda.itens || []).length} itens</small></span><strong>${moeda(venda.total)}</strong></button>`).join('')}</div>${pedidos.length > limite ? '<button class="ghost client-load-more" onclick="abrirDetalhesCliente(\'' + pedidos[0].cliente_id + '\', window.currentClientDetailTab, ' + (pagina + 1) + ')">Carregar mais</button>' : ''}`;
+}
+
+function listaPagamentosClienteHtml(pagamentos, pagina) {
+  const limite = (pagina + 1) * 10;
+  const itens = pagamentos.slice(0, limite);
+  if (!itens.length) return '<div class="client-report-empty">Nenhum pagamento registrado.</div>';
+  return `<div class="client-report-list">${itens.map((pagamento) => `<button type="button" class="client-report-row" onclick="abrirPagamentoClienteDetalhe('${pagamento.id}')"><span><b>${dataBR(`${pagamento.data_pagamento}T12:00:00`)}</b><small>${escapeHtml(pagamento.forma_pagamento || 'Não informado')}${Number(pagamento.desconto || 0) > 0 ? ` · desconto ${moeda(pagamento.desconto)}` : ''}</small></span><strong>${moeda(pagamento.valor)}</strong></button>`).join('')}</div>${pagamentos.length > limite ? `<button class="ghost client-load-more" onclick="abrirDetalhesCliente('${pagamentos[0].cliente_id}', 'pagamentos', ${pagina + 1})">Carregar mais</button>` : ''}`;
 }
 
 function abrirDetalhesCliente(clienteId, aba = 'resumo', pagina = 0) {
@@ -1436,16 +1696,24 @@ function abrirDetalhesCliente(clienteId, aba = 'resumo', pagina = 0) {
   window.currentClientDetailTab = aba;
   const pedidos = pedidosDoCliente(clienteId);
   const consignados = pedidos.filter((venda) => venda.status !== 'cancelada' && pedidoEhConsignado(venda));
-  const pagamentos = pedidos.filter((venda) => venda.status !== 'cancelada' && !pedidoEhConsignado(venda) && normalizar(venda.forma_pagamento) !== 'a prazo');
+  const pagamentos = pagamentosDoCliente(clienteId);
+  const saldo = saldoFinanceiroCliente(clienteId);
   const totalComprado = pedidos.filter((venda) => venda.status !== 'cancelada').reduce((soma, venda) => soma + Number(venda.total || 0), 0);
   const conteudo = aba === 'resumo'
-    ? `<div class="client-summary-grid"><div><small>Débito pendente</small><b>${moeda(cliente.debito_atual || cliente.saldo_pendente || 0)}</b></div><div><small>Consignação</small><b>${moeda(cliente.valor_consignado || cliente.saldo_consignado || 0)}</b></div><div><small>Crédito</small><b>${moeda(cliente.credito_livre || 0)}</b></div><div><small>Total comprado</small><b>${moeda(totalComprado)}</b></div></div>`
+    ? `<div class="client-summary-grid"><div><small>Débito pendente</small><b>${moeda(saldo.debito)}</b></div><div><small>Consignação</small><b>${moeda(saldo.consignado)}</b></div><div><small>Crédito</small><b>${moeda(saldo.credito)}</b></div><div><small>Total comprado</small><b>${moeda(totalComprado)}</b></div></div>`
     : aba === 'consignado'
       ? listaPedidosClienteHtml(consignados, pagina, 'Nenhum pedido consignado ativo.')
       : aba === 'pedidos'
         ? listaPedidosClienteHtml(pedidos, pagina, 'Nenhum pedido registrado.')
-        : listaPedidosClienteHtml(pagamentos, pagina, 'Nenhum pagamento registrado.');
+        : listaPagamentosClienteHtml(pagamentos, pagina);
   sheet(`<div class="sheet-header"><div><h2>${escapeHtml(cliente.nome)}</h2><p class="muted small">Histórico do cliente</p></div><button class="close" onclick="fecharSheet()">×</button></div><nav class="client-detail-tabs"><button class="${aba === 'resumo' ? 'active' : ''}" onclick="abrirDetalhesCliente('${clienteId}','resumo')">Resumo</button><button class="${aba === 'consignado' ? 'active' : ''}" onclick="abrirDetalhesCliente('${clienteId}','consignado')">Consignado</button><button class="${aba === 'pedidos' ? 'active' : ''}" onclick="abrirDetalhesCliente('${clienteId}','pedidos')">Pedidos</button><button class="${aba === 'pagamentos' ? 'active' : ''}" onclick="abrirDetalhesCliente('${clienteId}','pagamentos')">Pagamentos</button></nav><div class="client-detail-content">${conteudo}</div>`, 'client-detail-backdrop sheet-backdrop-centered');
+}
+
+function abrirPagamentoClienteDetalhe(pagamentoId) {
+  const pagamento = (state.pagamentos || []).find((item) => item.id === pagamentoId);
+  if (!pagamento) return;
+  const cliente = state.clientes.find((item) => item.id === pagamento.cliente_id);
+  sheet(`<div class="sheet-header"><div><h2>Pagamento</h2><p class="muted small">${escapeHtml(cliente?.nome || 'Cliente não informado')} · ${dataBR(`${pagamento.data_pagamento}T12:00:00`)}</p></div><button class="close" onclick="fecharSheet()">×</button></div><section class="payment-detail-summary"><div><span>Valor pago</span><b>${moeda(pagamento.valor)}</b></div><div><span>Desconto</span><b>${moeda(pagamento.desconto)}</b></div><div><span>Forma</span><b>${escapeHtml(pagamento.forma_pagamento || 'Não informado')}</b></div><div><span>Saldo final</span><b>${moeda(pagamento.saldo_final)}</b></div></section>`, 'sheet-backdrop-centered');
 }
 
 function abrirPedidoCliente(pedidoId) {
@@ -1475,14 +1743,13 @@ async function compartilharPedido(pedidoId) {
 
 function renderPagamentos() {
   const clientes = clientesFiltrados();
-  return `<section class="module-page"><div class="module-title"><div><h2>Controle de Débitos</h2><p>Gerencie pagamentos, débitos e créditos.</p></div></div><article class="payment-search">${svgIcon('search')}<input placeholder="Pesquisar" value="${escapeAttr(state.busca)}" oninput="state.busca=this.value" onkeydown="if(event.key==='Enter') aplicarBusca()"></article>${clientes.length ? `<section class="debt-card-grid">${clientes.map(renderClienteDebito).join('')}</section>` : `<article class="publication-empty"><span>${svgIcon('users')}</span><h3>Nenhum cliente encontrado</h3><p>Cadastre clientes para controlar pagamentos e débitos.</p></article>`}</section>`;
+  const pagamentos = [...(state.pagamentos || [])].sort((a, b) => String(b.data_pagamento || b.criado_em || '').localeCompare(String(a.data_pagamento || a.criado_em || ''))).slice(0, 10);
+  return `<section class="module-page"><div class="module-title"><div><h2>Controle de Débitos</h2><p>Gerencie pagamentos, débitos e créditos.</p></div></div><article class="payment-search">${svgIcon('search')}<input placeholder="Pesquisar" value="${escapeAttr(state.busca)}" oninput="state.busca=this.value" onkeydown="if(event.key==='Enter') aplicarBusca()"></article>${clientes.length ? `<section class="debt-card-grid">${clientes.map(renderClienteDebito).join('')}</section>` : `<article class="publication-empty"><span>${svgIcon('users')}</span><h3>Nenhum cliente encontrado</h3><p>Cadastre clientes para controlar pagamentos e débitos.</p></article>`}<section class="payment-history-panel"><header><div><h3>Últimos pagamentos</h3><p>Os 10 recebimentos mais recentes.</p></div><b>${pagamentos.length}</b></header>${pagamentos.length ? `<div>${pagamentos.map((pagamento) => { const cliente = state.clientes.find((item) => item.id === pagamento.cliente_id); return `<button type="button" onclick="abrirPagamentoClienteDetalhe('${pagamento.id}')"><span><b>${escapeHtml(cliente?.nome || 'Cliente não informado')}</b><small>${dataBR(`${pagamento.data_pagamento}T12:00:00`)} · ${escapeHtml(pagamento.forma_pagamento || 'Não informado')}</small></span><strong>${moeda(pagamento.valor)}</strong></button>`; }).join('')}</div>` : '<p class="transaction-empty">Nenhum pagamento registrado.</p>'}</section></section>`;
 }
 
 function renderClienteDebito(c) {
-  const pendente = Number(c.debito_atual || c.saldo_pendente || 0);
-  const consignado = Number(c.valor_consignado || c.saldo_consignado || 0);
-  const credito = Number(c.credito_livre || 0);
-  return `<article class="debt-card"><header><span>${svgIcon('user')}</span><div><h3>${escapeHtml(c.nome)}</h3><p>${escapeHtml(c.telefone || 'Não informado')}</p></div></header><div class="debt-values"><div class="pending"><small>Pendente</small><b>${moeda(pendente)}</b></div><div class="consigned"><small>Consignado</small><b>${moeda(consignado)}</b></div><div class="credit"><small>Crédito</small><b>${moeda(credito)}</b></div></div><button class="debt-details" onclick="abrirCliente('${c.id}')">${svgIcon('eye')} Detalhes</button></article>`;
+  const saldo = saldoFinanceiroCliente(c.id);
+  return `<article class="debt-card"><header><span>${svgIcon('user')}</span><div><h3>${escapeHtml(c.nome)}</h3><p>${escapeHtml(c.telefone || 'Não informado')}</p></div></header><div class="debt-values"><div class="pending"><small>Pendente</small><b>${moeda(saldo.debito)}</b></div><div class="consigned"><small>Consignado</small><b>${moeda(saldo.consignado)}</b></div><div class="credit"><small>Crédito</small><b>${moeda(saldo.credito)}</b></div></div><button class="debt-details" onclick="abrirPagamentoCliente('${c.id}')">${svgIcon('dollar')} Registrar pagamento</button></article>`;
 }
 
 function renderVender() {
@@ -2325,6 +2592,20 @@ window.acionarNavegacaoInferior = acionarNavegacaoInferior;
 window.buscarCepCliente = buscarCepCliente;
 window.abrirMenuCliente = abrirMenuCliente;
 window.abrirAgendamentoCliente = abrirAgendamentoCliente;
+window.abrirNovoPedidoCliente = abrirNovoPedidoCliente;
+window.selecionarTipoPedidoCliente = selecionarTipoPedidoCliente;
+window.selecionarProdutoPedidoCliente = selecionarProdutoPedidoCliente;
+window.sincronizarQuantidadePedidoCliente = sincronizarQuantidadePedidoCliente;
+window.normalizarQuantidadePedidoCliente = normalizarQuantidadePedidoCliente;
+window.ajustarQuantidadePedidoCliente = ajustarQuantidadePedidoCliente;
+window.inserirItemPedidoCliente = inserirItemPedidoCliente;
+window.removerItemPedidoCliente = removerItemPedidoCliente;
+window.atualizarDescontoPedidoCliente = atualizarDescontoPedidoCliente;
+window.finalizarPedidoCliente = finalizarPedidoCliente;
+window.abrirPagamentoCliente = abrirPagamentoCliente;
+window.atualizarResumoPagamentoCliente = atualizarResumoPagamentoCliente;
+window.confirmarPagamentoCliente = confirmarPagamentoCliente;
+window.abrirPagamentoClienteDetalhe = abrirPagamentoClienteDetalhe;
 window.alterarStatusCliente = alterarStatusCliente;
 window.abrirDetalhesCliente = abrirDetalhesCliente;
 window.abrirPedidoCliente = abrirPedidoCliente;
