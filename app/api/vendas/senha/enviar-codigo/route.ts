@@ -19,6 +19,15 @@ async function localizarAcesso(email: string) {
   return data;
 }
 
+function mascararTelefone(telefone: string) {
+  const numeros = telefone.replace(/\D/g, '');
+  const brasileiro = numeros.startsWith('55') && numeros.length >= 12 ? numeros.slice(2) : numeros;
+  if (brasileiro.length >= 10 && numeros.startsWith('55')) {
+    return `(${brasileiro.slice(0, 2)}) ${brasileiro[2] || ''}****-${brasileiro.slice(-4)}`;
+  }
+  return `${numeros.slice(0, Math.min(3, numeros.length))}••••${numeros.slice(-4)}`;
+}
+
 export async function POST(request: Request) {
   try {
     const { email } = await request.json();
@@ -52,7 +61,7 @@ export async function POST(request: Request) {
       console.error('Erro Twilio recuperação senha Vendas:', await respostaTwilio.text());
       return NextResponse.json({ erro: true, mensagem: 'Não foi possível enviar o código por SMS.' }, { status: 500 });
     }
-    return NextResponse.json({ erro: false, mensagem: 'Código enviado por SMS.' });
+    return NextResponse.json({ erro: false, mensagem: 'Código enviado por SMS.', telefoneMascarado: mascararTelefone(destino) });
   } catch (error) {
     console.error('Erro recuperação senha Vendas:', error);
     return NextResponse.json({ erro: true, mensagem: 'Não foi possível processar a solicitação.' }, { status: 500 });

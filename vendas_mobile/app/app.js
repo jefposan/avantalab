@@ -45,6 +45,7 @@ let segundosReenvioSmsCadastro = 0;
 let timerReenvioSmsCadastro = null;
 let conectandoGoogle = sessionStorage.getItem(GOOGLE_CONNECTING_KEY) === '1';
 let recuperacaoSenhaVendas = null;
+let vinculoTelefonePendente = null;
 let rolagemAnteriorSheet = 0;
 let cardsClientesEmDestaque = [];
 let quadroDestaqueClientes = 0;
@@ -520,7 +521,7 @@ function abrirRecuperacaoSenha() {
 }
 
 async function enviarRecuperacaoSenha() {
-  const email = valor('recuperarEmail').trim().toLowerCase();
+  const email = (valor('recuperarEmail').trim() || recuperacaoSenhaVendas?.email || '').toLowerCase();
   if (!email || !emailValido(email)) { toast('Informe um e-mail válido.'); return; }
   try {
     const resposta = await fetch('/api/vendas/senha/enviar-codigo', {
@@ -528,7 +529,7 @@ async function enviarRecuperacaoSenha() {
     });
     const resultado = await resposta.json().catch(() => ({}));
     if (!resposta.ok || resultado.erro) throw new Error(resultado.mensagem || 'Não foi possível enviar o código por SMS.');
-    recuperacaoSenhaVendas = { email, codigoEnviado: true };
+    recuperacaoSenhaVendas = { email, codigoEnviado: true, telefoneMascarado: resultado.telefoneMascarado || 'seu celular confirmado' };
     renderRecuperacaoSenhaVendas();
     toast('Código enviado por SMS.');
   } catch (error) { toast(traduzErro(error)); }
@@ -537,8 +538,8 @@ async function enviarRecuperacaoSenha() {
 function renderRecuperacaoSenhaVendas() {
   const recuperacao = recuperacaoSenhaVendas || { email: '', codigoEnviado: false };
   const formulario = recuperacao.codigoEnviado
-    ? `<p class="muted small">Digite o código enviado por SMS e defina sua nova senha.</p><div class="grid">${campo('recuperarCodigo','Código recebido','','text')}<label class="field"><span>Nova senha</span><input id="recuperarSenhaNova" type="password" autocomplete="new-password" minlength="8" placeholder="Mínimo de 8 caracteres"></label><label class="field"><span>Confirme a nova senha</span><input id="recuperarSenhaConfirma" type="password" autocomplete="new-password" minlength="8" placeholder="Digite novamente"></label><button class="primary" onclick="redefinirSenhaVendas()">Redefinir senha</button><button class="forgot-link" type="button" onclick="enviarRecuperacaoSenha()">Reenviar código por SMS</button></div>`
-    : `<p class="muted small">Enviaremos um código por SMS para o celular confirmado no seu cadastro.</p><div class="grid">${campo('recuperarEmail','E-mail',recuperacao.email,'email')}<button class="primary" onclick="enviarRecuperacaoSenha()">Enviar código por SMS</button></div>`;
+    ? `<p class="muted small">Código enviado por SMS para <b>${escapeHtml(recuperacao.telefoneMascarado)}</b>. Digite-o abaixo e defina sua nova senha.</p><div class="grid">${campo('recuperarCodigo','Código recebido','','text')}<label class="field"><span>Nova senha</span><input id="recuperarSenhaNova" type="password" autocomplete="new-password" minlength="8" placeholder="Mínimo de 8 caracteres"></label><label class="field"><span>Confirme a nova senha</span><input id="recuperarSenhaConfirma" type="password" autocomplete="new-password" minlength="8" placeholder="Digite novamente"></label><button class="primary" onclick="redefinirSenhaVendas()">Redefinir senha</button><button class="forgot-link" type="button" onclick="enviarRecuperacaoSenha()">Reenviar código por SMS</button></div>`
+    : `<p class="muted small">Informe o e-mail apenas para localizar o celular confirmado que receberá o código por SMS.</p><div class="grid">${campo('recuperarEmail','E-mail de acesso',recuperacao.email,'email')}<button class="primary" onclick="enviarRecuperacaoSenha()">Continuar</button></div>`;
   sheet(`<div class="sheet-header"><div><h2>Recuperar senha</h2><p class="muted small">Recuperação segura por SMS.</p></div><button class="close" onclick="fecharSheet()">×</button></div>${formulario}`);
 }
 
@@ -697,7 +698,13 @@ function renderSolicitarAcesso() {
   if (solicitacao?.status === 'pendente') {
     return `<section class="login-screen approval-wait-screen"><div class="login-brand"><strong>Gestão de vendas</strong><p>Solicitação enviada</p></div><div class="sheet"><div class="sheet-header"><div><h2>Aguardando aprovação</h2><p class="muted small">O gestor do perfil analisará seu acesso. Volte mais tarde e entre novamente.</p></div></div><button class="primary approval-wait-exit" onclick="sairSistema()">Sair</button></div></section>`;
   }
-  return `<section class="login-screen"><div class="login-brand"><strong>Gestão de vendas</strong></div><div class="sheet access-request-card"><div class="sheet-header"><div><h2>Vincular a um perfil</h2><p class="muted small">Seu login foi identificado, mas ainda não possui acesso às vendas. Informe o código recebido do gestor para solicitar a aprovação.</p></div></div><div class="grid"><label class="access-request-label">Código da empresa<div class="login-field">${svgIcon('folder')}<input id="solicitacaoCodigo" autocomplete="off" autocapitalize="characters" placeholder="AVA-XXXXXXXX" required></div></label><div id="solicitacaoErro" class="login-error"></div><button class="primary" onclick="enviarSolicitacaoAcesso()">Solicitar aprovação</button><button class="forgot-link" type="button" onclick="sairSistema()">Sair da conta</button></div></div></section>`;
+  if (vinculoTelefonePendente) {
+    return `<section class="login-screen"><div class="login-brand"><strong>Gestão de vendas</strong></div><div class="sheet access-request-card"><div class="sheet-header"><div><h2>Confirme seu celular</h2><p class="muted small">Enviamos um código SMS para validar seu número antes de solicitar o acesso.</p></div></div><div class="grid"><label class="access-request-label">Código recebido<div class="login-field">${svgIcon('lock')}<input id="vinculoCodigoSms" inputmode="numeric" autocomplete="one-time-code" placeholder="Digite o código" required></div></label><div id="solicitacaoErro" class="login-error"></div><button class="primary" onclick="confirmarTelefoneVinculo()">Confirmar e solicitar aprovação</button><button class="forgot-link" type="button" onclick="cancelarTelefoneVinculo()">Alterar telefone</button></div></div></section>`;
+  }
+  const telefoneAtual = String(state.usuario?.telefone || '');
+  const telefoneObrigatorio = telefoneAtual ? '' : `<label class="access-request-label">Celular<div class="phone-register-field"><select id="solicitacaoDdi" aria-label="País (DDI)">${opcoesDdi()}</select><div class="login-field">${svgIcon('phone')}<input id="solicitacaoTelefone" type="tel" inputmode="numeric" autocomplete="tel-national" placeholder="DDD + número" required></div></div></label>`;
+  const avisoTelefone = telefoneAtual ? `<p class="muted small">Celular confirmado: <b>${escapeHtml(mascararTelefone(telefoneAtual))}</b>.</p>` : '<p class="muted small">Para sua segurança, confirme um celular por SMS antes de solicitar o acesso.</p>';
+  return `<section class="login-screen"><div class="login-brand"><strong>Gestão de vendas</strong></div><div class="sheet access-request-card"><div class="sheet-header"><div><h2>Vincular a um perfil</h2><p class="muted small">Seu login foi identificado, mas ainda não possui acesso às vendas. Informe o código recebido do gestor para solicitar a aprovação.</p></div></div><div class="grid"><label class="access-request-label">Código da empresa<div class="login-field">${svgIcon('folder')}<input id="solicitacaoCodigo" autocomplete="off" autocapitalize="characters" placeholder="AVA-XXXXXXXX" required></div></label>${telefoneObrigatorio}${avisoTelefone}<div id="solicitacaoErro" class="login-error"></div><button class="primary" onclick="enviarSolicitacaoAcesso()">Solicitar aprovação</button><button class="forgot-link" type="button" onclick="sairSistema()">Sair da conta</button></div></div></section>`;
 }
 
 async function enviarSolicitacaoAcesso() {
@@ -706,13 +713,61 @@ async function enviarSolicitacaoAcesso() {
   const nome = state.usuario?.nome || state.usuario?.email || 'Usuário Vendas';
   const codigo = valor('solicitacaoCodigo').trim().toUpperCase();
   if (!codigo) { if (erro) erro.textContent = 'Informe o código da empresa.'; return; }
+  let telefone = String(state.usuario?.telefone || '');
+  if (!telefone) {
+    const ddi = valor('solicitacaoDdi').replace(/\D/g, '') || '55';
+    const numero = valor('solicitacaoTelefone').replace(/\D/g, '');
+    const ehBrasil = ddi === '55';
+    if (!numero || (ehBrasil ? numero.length < 10 || numero.length > 11 : numero.length < 6 || numero.length > 15)) {
+      if (erro) erro.textContent = ehBrasil ? 'Informe um celular válido com DDD.' : 'Informe um número de celular válido.';
+      return;
+    }
+    telefone = `+${ddi}${numero}`;
+    try {
+      await enviarSmsCadastro(telefone);
+      vinculoTelefonePendente = { codigo, nome, telefone };
+      render();
+      toast('Código enviado por SMS.');
+    } catch (error) { if (erro) erro.textContent = traduzErro(error); }
+    return;
+  }
+  await enviarSolicitacaoComTelefone({ codigo, nome, telefone, erro });
+}
+
+async function confirmarTelefoneVinculo() {
+  const erro = document.getElementById('solicitacaoErro');
+  const codigoSms = valor('vinculoCodigoSms').trim();
+  if (!vinculoTelefonePendente || !codigoSms) { if (erro) erro.textContent = 'Digite o código recebido por SMS.'; return; }
   try {
-    await window.VendasDb.solicitarAcesso({ codigo, nome, telefone: '' });
+    const resposta = await fetch('/api/sms/verificar-codigo', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ telefone: vinculoTelefonePendente.telefone, codigo: codigoSms }) });
+    const resultado = await resposta.json().catch(() => ({}));
+    if (!resposta.ok || resultado.erro) throw new Error(resultado.mensagem || 'Código inválido ou expirado.');
+    await window.VendasDb.updateUserMetadata({ telefone: vinculoTelefonePendente.telefone });
+    state.usuario.telefone = vinculoTelefonePendente.telefone;
+    const dados = vinculoTelefonePendente;
+    vinculoTelefonePendente = null;
+    await enviarSolicitacaoComTelefone({ ...dados, erro });
+  } catch (error) { if (erro) erro.textContent = traduzErro(error); }
+}
+
+function cancelarTelefoneVinculo() {
+  vinculoTelefonePendente = null;
+  render();
+}
+
+async function enviarSolicitacaoComTelefone({ codigo, nome, telefone, erro }) {
+  try {
+    await window.VendasDb.solicitarAcesso({ codigo, nome, telefone });
     state.solicitacaoAcesso = { status: 'pendente' };
     render();
-  } catch (error) {
-    if (erro) erro.textContent = traduzErro(error);
-  }
+  } catch (error) { if (erro) erro.textContent = traduzErro(error); }
+}
+
+function mascararTelefone(telefone) {
+  const numeros = String(telefone || '').replace(/\D/g, '');
+  const brasileiro = numeros.startsWith('55') && numeros.length >= 12 ? numeros.slice(2) : numeros;
+  if (brasileiro.length >= 10 && numeros.startsWith('55')) return `(${brasileiro.slice(0, 2)}) ${brasileiro[2] || ''}****-${brasileiro.slice(-4)}`;
+  return `${numeros.slice(0, Math.min(3, numeros.length))}••••${numeros.slice(-4)}`;
 }
 
 function traduzErro(error) {
@@ -748,6 +803,7 @@ async function carregarDadosBackend(mostrarCarregamento = true) {
         ...state.usuario,
         nome: dados.user.user_metadata?.nome || dados.user.user_metadata?.full_name || dados.user.user_metadata?.name || dados.user.email || state.usuario.nome,
         email: dados.user.email || state.usuario.email || '',
+        telefone: dados.user.phone || dados.user.user_metadata?.telefone || dados.user.user_metadata?.phone || state.usuario.telefone || '',
       };
       state.produtos = dados.produtos;
       state.clientes = dados.clientes;
@@ -1839,6 +1895,8 @@ window.confirmarCadastroSms = confirmarCadastroSms;
 window.reenviarSmsCadastro = reenviarSmsCadastro;
 window.atualizarRequisitosSenhaCadastro = atualizarRequisitosSenhaCadastro;
 window.enviarSolicitacaoAcesso = enviarSolicitacaoAcesso;
+window.confirmarTelefoneVinculo = confirmarTelefoneVinculo;
+window.cancelarTelefoneVinculo = cancelarTelefoneVinculo;
 window.aplicarFiltroDashboard = aplicarFiltroDashboard;
 window.mudarMes = mudarMes;
 window.irMesAtual = irMesAtual;
