@@ -94,6 +94,7 @@
     cadastroPerfilSalvando: false,
     cadastroPerfilVerificado: false,
     cadastroPerfilErro: '',
+    cadastroPerfilEditando: false,
     // Perfil já verificado pelo paywall (evita a tela cheia de carregamento
     // nas recargas de dados) e dia da última carga (só recarrega ao voltar
     // ao app quando o dia virou).
@@ -220,6 +221,8 @@
     dashboardOpcoesId: '',
     dashboardOpcoesPos: null,
     dashboardValoresVisiveis: {},
+    resumoPerfis: [],
+    resumoPerfisCarregando: false,
     caixinhaDia: String(new Date().getDate()),
     caixinhaDescricao: 'Reserva',
     caixinhaValor: '',
@@ -356,7 +359,7 @@
   var CHAVE_INICIAR_VALORES_OCULTOS = 'avantalab_mobile_iniciar_valores_ocultos';
   var TRINTA_DIAS_MS = 30 * 24 * 60 * 60 * 1000;
   var DEZ_MINUTOS_MS = 10 * 60 * 1000;
-  var CARDS_COM_VALORES = ['saldo', 'caixinha', 'totais', 'categorias', 'tipos'];
+  var CARDS_COM_VALORES = ['saldo', 'caixinha', 'totais', 'categorias', 'tipos', 'meusPerfis'];
 
   // --- Helpers de tipo de perfil ---
   var CATEGORIAS_EMPRESA_MOBILE = [
@@ -842,7 +845,9 @@
     var pessoal = status.tipoPerfil === 'pessoal';
     var autonomo = d.tipo_empresa === 'autonomo';
     var podeEditar = status.podeEditar === true;
-    var titulo = contexto === 'lembrete'
+    var titulo = contexto === 'edicao'
+      ? 'Editar dados cadastrais'
+      : contexto === 'lembrete'
       ? 'Complete o cadastro do perfil'
       : contexto === 'paywall'
         ? 'Dados para cadastro e assinatura'
@@ -878,12 +883,13 @@
         '</div>';
     return '<section class="avantalab-mobile-bg fixed inset-0 z-[12000] flex items-start justify-center overflow-y-auto bg-black/70 px-3 py-4">' +
       '<div class="flex max-h-[calc(100dvh-2rem)] w-full max-w-md flex-col overflow-hidden rounded-xl bg-white text-slate-900 shadow-2xl">' +
-        '<header class="shrink-0 bg-[#003E73] px-4 py-3 text-white"><p class="text-[9px] font-black uppercase tracking-[.2em] text-cyan-200">Cadastro do perfil</p><h2 class="mt-0.5 text-base font-black leading-tight">' + titulo + '</h2>' + (contexto === 'lembrete' ? '<p class="mt-1 text-[11px] text-white/80">Faltam ' + Number(status.diasRestantes || 0) + ' dias para se tornar obrigat&oacute;rio.</p>' : '') + '</header>' +
+        '<header class="flex shrink-0 items-start gap-3 bg-[#003E73] px-4 py-3 text-white"><div class="min-w-0 flex-1"><p class="text-[9px] font-black uppercase tracking-[.2em] text-cyan-200">Cadastro do perfil</p><h2 class="mt-0.5 text-base font-black leading-tight">' + titulo + '</h2>' + (contexto === 'lembrete' ? '<p class="mt-1 text-[11px] text-white/80">Faltam ' + Number(status.diasRestantes || 0) + ' dias para se tornar obrigat&oacute;rio.</p>' : '') + '</div>' + (contexto === 'edicao' ? '<button id="cp-fechar-edicao" type="button" class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-white/20 bg-white/10 text-xl leading-none text-white transition active:scale-95" aria-label="Fechar">&times;</button>' : '') + '</header>' +
         '<div class="min-h-0 flex-1 overflow-y-auto px-4 py-3">' + formulario + '<p id="cp-erro" class="mt-3 text-xs font-bold text-red-600"></p><p id="cp-autosave-status" class="mt-2 text-[10px] font-bold text-slate-500"></p></div>' +
         '<footer class="' + (contexto === 'lembrete' ? 'grid grid-cols-3' : 'flex justify-end') + ' shrink-0 gap-1.5 border-t border-slate-200 bg-slate-50 px-4 py-3">' +
           (contexto === 'lembrete' ? '<button id="cp-depois" type="button" class="h-9 min-w-0 rounded-lg border border-slate-300 bg-white px-1 text-[10px] font-bold text-slate-600 transition active:scale-95">Lembrar depois</button><button id="cp-salvar-parcial" type="button" class="h-9 min-w-0 rounded-lg border border-sky-200 bg-sky-50 px-1 text-[10px] font-black text-sky-800 transition active:scale-95">Salvar inclusões</button>' : '') +
           (contexto === 'paywall' ? '<button id="cp-voltar" type="button" class="h-9 rounded-lg border border-slate-300 bg-white px-4 text-xs font-bold text-slate-600">Voltar aos planos</button>' : '') +
-          (podeEditar ? '<button id="cp-salvar" type="button" class="h-9 min-w-0 rounded-lg bg-[#003E73] ' + (contexto === 'lembrete' ? 'px-1 text-[10px]' : 'px-5 text-xs') + ' font-black text-white transition active:scale-95">' + (contexto === 'paywall' ? 'Salvar e continuar' : 'Concluir cadastro') + '</button>' : '') +
+          (contexto === 'edicao' ? '<button id="cp-cancelar-edicao" type="button" class="h-9 rounded-lg border border-slate-300 bg-white px-4 text-xs font-bold text-slate-600 transition active:scale-95">Cancelar</button>' : '') +
+          (podeEditar ? '<button id="cp-salvar" type="button" class="h-9 min-w-0 rounded-lg bg-[#003E73] ' + (contexto === 'lembrete' ? 'px-1 text-[10px]' : 'px-5 text-xs') + ' font-black text-white transition active:scale-95">' + (contexto === 'paywall' ? 'Salvar e continuar' : (contexto === 'edicao' ? 'Salvar alterações' : 'Concluir cadastro')) + '</button>' : '') +
         '</footer>' +
       '</div></section>';
   }
@@ -932,6 +938,7 @@
 
   function agendarAutoSaveCadastroPerfilMobile() {
     capturarCadastroPerfilMobile();
+    if (state.cadastroPerfilEditando) return;
     cadastroPerfilAutoSavePendente = true;
     atualizarStatusAutoSaveCadastroPerfilMobile('Alterações pendentes...');
     if (cadastroPerfilAutoSaveTimer) window.clearTimeout(cadastroPerfilAutoSaveTimer);
@@ -1011,6 +1018,7 @@
         await window._avaPaywallAssinar(state.paywallCadastroCiclo, json.cobranca, janelaPagamento);
       } else {
         state.cadastroPerfilAdiado = true;
+        state.cadastroPerfilEditando = false;
         render();
       }
     } catch (e) {
@@ -1528,6 +1536,7 @@
     return [
       'ia',
       'agenda',
+      'meusPerfis',
       'insightsAva',
       'saldo',
       'caixinha',
@@ -1549,6 +1558,7 @@
       caixinha: 'Caixinha',
       ia: 'Perguntas para IA',
       agenda: 'Agenda',
+      meusPerfis: 'Meus perfis',
       categorias: 'Despesas por categoria',
       tipos: 'Total por tipo de despesa',
       ultimasDespesas: 'Despesas do mês',
@@ -2701,6 +2711,7 @@
   }
 
   function cancelarJanelasMobile() {
+    state.cadastroPerfilEditando = false;
     state.modalMenu = '';
     state.menuAberto = false;
     state.menuConfigAberto = false;
@@ -4142,6 +4153,83 @@
     }
   }
 
+  async function abrirEdicaoCadastroPerfilMobile() {
+    if (!state.empresa || !state.empresa.id) return;
+    state.menuAberto = false;
+    state.modalMenu = '';
+    state.cadastroPerfilErro = '';
+    var carregado = await carregarCadastroPerfilMobile();
+    if (!carregado) {
+      render();
+      return;
+    }
+    if (!state.cadastroPerfilStatus || state.cadastroPerfilStatus.podeEditar !== true) {
+      mostrarToast('Somente Gestor Master ou Administrador pode editar o cadastro.');
+      return;
+    }
+    state.cadastroPerfilEditando = true;
+    render();
+  }
+
+  async function fecharEdicaoCadastroPerfilMobile() {
+    if (state.cadastroPerfilSalvando) return;
+    state.cadastroPerfilEditando = false;
+    cadastroPerfilAutoSavePendente = false;
+    if (cadastroPerfilAutoSaveTimer) window.clearTimeout(cadastroPerfilAutoSaveTimer);
+    cadastroPerfilAutoSaveTimer = null;
+    await carregarCadastroPerfilMobile();
+    render();
+  }
+
+  async function carregarResumoPerfisMobile() {
+    var perfis = state.empresas || [];
+    var ids = perfis.map(function (empresa) { return empresa.id; }).filter(Boolean);
+    if (!ids.length) {
+      state.resumoPerfis = [];
+      state.resumoPerfisCarregando = false;
+      return;
+    }
+
+    state.resumoPerfisCarregando = true;
+    var ano = Number(state.ano);
+    var mes = state.mes;
+    var respostas = await Promise.all([
+      db.from('faturamentos').select('empresa_id, mes, ano, valor').in('empresa_id', ids).eq('ano', ano).eq('mes', mes),
+      db.from('lancamentos').select('empresa_id, mes, ano, dia, valor, status').in('empresa_id', ids).eq('ano', ano).eq('mes', mes),
+    ]);
+
+    if (respostas[0].error || respostas[1].error) {
+      console.error('Erro ao carregar resumo dos perfis mobile:', respostas[0].error || respostas[1].error);
+      state.resumoPerfis = [];
+      state.resumoPerfisCarregando = false;
+      return;
+    }
+
+    var receitas = {};
+    var despesas = {};
+    (respostas[0].data || []).forEach(function (item) {
+      receitas[item.empresa_id] = (receitas[item.empresa_id] || 0) + Number(item.valor || 0);
+    });
+    (respostas[1].data || []).forEach(function (item) {
+      if (item.status === 'cancelada' || dataFutura(Number(item.ano || ano), indiceMes(item.mes), Number(item.dia || 1))) return;
+      despesas[item.empresa_id] = (despesas[item.empresa_id] || 0) + Number(item.valor || 0);
+    });
+
+    state.resumoPerfis = perfis.map(function (perfil) {
+      var totalReceitas = Number(receitas[perfil.id] || 0);
+      var totalDespesas = Number(despesas[perfil.id] || 0);
+      return {
+        id: perfil.id,
+        nome: nomeEmpresa(perfil),
+        tipoPerfil: normalizarTipoPerfil(perfil.tipo_perfil),
+        receitas: totalReceitas,
+        despesas: totalDespesas,
+        resultado: totalReceitas - totalDespesas,
+      };
+    }).sort(function (a, b) { return b.resultado - a.resultado; });
+    state.resumoPerfisCarregando = false;
+  }
+
   async function buscarLancamentosAnoMobile(empresaId, ano) {
     var pageSize = 1000;
     var inicio = 0;
@@ -4298,6 +4386,7 @@
 
     // Materializa as despesas fixas do mes corrente (idempotente).
     await garantirFixasDoMes(empresaId, ano);
+    await carregarResumoPerfisMobile();
 
     state.carregando = false;
     render();
@@ -7412,6 +7501,37 @@
     '</section>';
   }
 
+  function meusPerfisCardHtml() {
+    var perfis = state.resumoPerfis || [];
+    var cardId = 'meusPerfis';
+    var totalReceitas = perfis.reduce(function (total, perfil) { return total + Number(perfil.receitas || 0); }, 0);
+    var totalDespesas = perfis.reduce(function (total, perfil) { return total + Number(perfil.despesas || 0); }, 0);
+    var consolidado = totalReceitas - totalDespesas;
+    var escuro = !!state.darkMode;
+    var fundo = escuro ? 'bg-slate-900 text-slate-100' : 'bg-white text-slate-900';
+    var fundoLinha = escuro ? 'border-slate-700 bg-slate-800/55' : 'border-slate-200 bg-white';
+    var textoSecundario = escuro ? 'text-slate-400' : 'text-slate-500';
+
+    var corpo = state.resumoPerfisCarregando
+      ? '<p class="py-5 text-center text-xs font-semibold ' + textoSecundario + '">Atualizando perfis...</p>'
+      : perfis.length
+        ? '<div class="grid max-h-[190px] gap-2 overflow-y-auto overscroll-contain pr-0.5">' + perfis.map(function (perfil) {
+            var atual = state.empresa && perfil.id === state.empresa.id;
+            var positivo = Number(perfil.resultado || 0) >= 0;
+            return '<button type="button" data-meu-perfil-id="' + escapeHtml(perfil.id) + '" class="w-full rounded-xl border px-3 py-2 text-left shadow-sm transition active:scale-[0.98] ' + fundoLinha + (atual ? ' ring-2 ring-cyan-400/70' : '') + '">' +
+              '<div class="flex items-center justify-between gap-3"><div class="min-w-0 flex-1"><p class="truncate text-xs font-black">' + escapeHtml(perfil.nome) + '</p><p class="mt-0.5 truncate text-[9px] font-semibold ' + textoSecundario + '">' + (atual ? 'Perfil atual · ' : '') + escapeHtml(rotuloTipoPerfil(perfil.tipoPerfil)) + '</p></div>' +
+              '<strong class="shrink-0 text-xs font-black ' + (positivo ? 'text-emerald-500' : 'text-red-500') + '">' + valorFinanceiroCardHtml(perfil.resultado, cardId) + '</strong></div>' +
+              '<div class="mt-1.5 grid grid-cols-2 gap-2 text-[9px] font-bold ' + textoSecundario + '"><span class="truncate">Receitas <b class="text-emerald-500">' + valorFinanceiroCardHtml(perfil.receitas, cardId) + '</b></span><span class="truncate text-right">Despesas <b class="text-red-500">' + valorFinanceiroCardHtml(perfil.despesas, cardId) + '</b></span></div>' +
+            '</button>';
+          }).join('') + '</div>'
+        : '<p class="py-5 text-center text-xs font-semibold ' + textoSecundario + '">Nenhum perfil vinculado.</p>';
+
+    return '<section class="overflow-hidden rounded-2xl border-2 shadow-lg ' + fundo + '" style="border-color:#003E73">' +
+      '<div class="flex items-center justify-between gap-3 px-4 py-3 text-white" style="background:#003E73"><div class="min-w-0"><p class="text-[9px] font-bold uppercase tracking-[0.18em] text-cyan-100/75">' + escapeHtml(nomeMesCompleto(state.mes)) + '</p><h2 class="truncate text-sm font-black">Meus perfis</h2></div><div class="flex items-center gap-2"><span class="rounded-full bg-white/15 px-2 py-1 text-[9px] font-black">' + perfis.length + ' perfil' + (perfis.length === 1 ? '' : 's') + '</span>' + botaoVisibilidadeValoresHtml(cardId, true) + '</div></div>' +
+      '<div class="p-3"><div class="mb-2 grid grid-cols-3 gap-1.5 rounded-xl ' + (escuro ? 'bg-slate-800/55' : 'bg-slate-50') + ' p-1.5"><div class="rounded-lg bg-[#003E73] px-2 py-2 text-white"><span class="block truncate text-[8px] font-black uppercase text-cyan-100/75">Consolidado</span><strong class="mt-0.5 block truncate text-[11px] font-black">' + valorFinanceiroCardHtml(consolidado, cardId) + '</strong></div><div class="rounded-lg px-2 py-2 ' + (escuro ? 'bg-slate-900/60' : 'bg-white') + '"><span class="block truncate text-[8px] font-black uppercase ' + textoSecundario + '">Receitas</span><strong class="mt-0.5 block truncate text-[11px] font-black text-emerald-500">' + valorFinanceiroCardHtml(totalReceitas, cardId) + '</strong></div><div class="rounded-lg px-2 py-2 text-right ' + (escuro ? 'bg-slate-900/60' : 'bg-white') + '"><span class="block truncate text-[8px] font-black uppercase ' + textoSecundario + '">Despesas</span><strong class="mt-0.5 block truncate text-[11px] font-black text-red-500">' + valorFinanceiroCardHtml(totalDespesas, cardId) + '</strong></div></div>' + corpo + '</div>' +
+    '</section>';
+  }
+
   async function abrirRelatorioPontoMobile(userId, nome) {
     if (!podeGerenciarPontoMobile()) return;
     state.pontoRelatorioUsuarioId = userId || '';
@@ -7463,6 +7583,7 @@
     var banner = avisoConfirmarHtml();
     var cards = {
       saldo: saldoTopoHtml(atual, anterior),
+      meusPerfis: meusPerfisCardHtml(),
       insightsAva: insightsAvaHtml(atual),
       caixinha: caixinhaCardHtml(atual),
       ia: perguntaIaHtml(),
@@ -8640,6 +8761,12 @@
             '<span class="min-w-0 flex-1"><span class="block text-[11px] font-black">Gerenciar perfil</span><span class="mt-0.5 block truncate text-[9px] font-semibold text-slate-500">Editar, criar ou excluir perfil</span></span>' +
           '</div>' +
         '</button>' +
+        '<button id="menu-cadastro-perfil" type="button" class="rounded-[12px_24px_24px_24px] border ' + bordaBase + ' px-2.5 py-1.5 text-left shadow-[0_4px_11px_rgba(15,23,42,.05)] active:scale-[0.99]" style="' + (dk ? '' : 'background:linear-gradient(90deg,#E7F7FF 0%,#FFFFFF 78%);border-color:#BFE2F3;') + '">' +
+          '<div class="flex items-center gap-2">' +
+            '<span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg" style="background:#D7F1FC;color:#0878AD">' + iconeMenuLateralSvg('menu-cadastro-perfil') + '</span>' +
+            '<span class="min-w-0 flex-1"><span class="block text-[11px] font-black">Dados cadastrais</span><span class="mt-0.5 block truncate text-[9px] font-semibold text-slate-500">Editar o cadastro completo do perfil</span></span>' +
+          '</div>' +
+        '</button>' +
         '<button id="menu-tema" type="button" class="rounded-[12px_24px_24px_24px] border ' + bordaBase + ' px-2.5 py-1.5 text-left shadow-[0_4px_11px_rgba(15,23,42,.05)]" style="' + (dk ? '' : 'background:linear-gradient(90deg,#EFEEFF 0%,#FFFFFF 78%);border-color:#D5D3FA;') + '">' +
           '<div class="flex items-center gap-2">' +
             '<span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg" style="background:#E4E6FF;color:#2946A8">' + iconeMenuLateralSvg('menu-tema') + '</span>' +
@@ -8908,6 +9035,7 @@
       'menu-config-toggle': '<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.88l.06.06-2.83 2.83-.06-.06A1.7 1.7 0 0 0 15 19.4a1.7 1.7 0 0 0-1 .6 1.7 1.7 0 0 0-.4 1v.1h-4V21a1.7 1.7 0 0 0-1.1-1.6 1.7 1.7 0 0 0-1.88.34l-.06.06-2.83-2.83.06-.06A1.7 1.7 0 0 0 4.6 15a1.7 1.7 0 0 0-.6-1 1.7 1.7 0 0 0-1-.4h-.1v-4H3a1.7 1.7 0 0 0 1.6-1.1 1.7 1.7 0 0 0-.34-1.88l-.06-.06 2.83-2.83.06.06A1.7 1.7 0 0 0 9 4.6a1.7 1.7 0 0 0 1-.6 1.7 1.7 0 0 0 .4-1v-.1h4V3a1.7 1.7 0 0 0 1.1 1.6 1.7 1.7 0 0 0 1.88-.34l.06-.06 2.83 2.83-.06.06A1.7 1.7 0 0 0 19.4 9c.14.37.36.7.6 1 .27.28.62.4 1 .4h.1v4H21a1.7 1.7 0 0 0-1.6.6Z"/>',
       'menu-duplicados': '<rect x="4" y="4" width="12" height="12" rx="2"/><path d="M8 8h12v12H8z"/>',
       'menu-gerenciar': '<circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/>',
+      'menu-cadastro-perfil': '<path d="M4 21v-4a4 4 0 0 1 4-4h4"/><circle cx="10" cy="6" r="4"/><path d="m15 19 5-5 2 2-5 5-3 1 1-3Z"/>',
       'menu-tema': '<path d="M21 12.8A9 9 0 1 1 11.2 3 7 7 0 0 0 21 12.8Z"/>',
       'menu-notificacoes': '<path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4"/>',
       'menu-assinatura': '<rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 10h18M7 15h2M12 15h2"/>',
@@ -9330,6 +9458,7 @@
     // ── Vista: lista de ações (estado neutro) ──────────────────────────────
     if (!algumAberto) {
       var iconeEditarPerfil = '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true"><path d="M11 5H6a2 2 0 0 0-2 2v11a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2v-5M18.5 2.5a2.12 2.12 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+      var iconeCadastroCompleto = '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true"><path d="M4 21v-4a4 4 0 0 1 4-4h4" stroke-width="2.1" stroke-linecap="round"/><circle cx="10" cy="6" r="4" stroke-width="2.1"/><path d="m15 19 5-5 2 2-5 5-3 1 1-3Z" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"/></svg>';
       var iconeCriarPerfil = '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true"><path d="M12 5v14M5 12h14" stroke-width="2.4" stroke-linecap="round"/></svg>';
       var iconeTrocarPerfil = '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true"><path d="M7 7h11m0 0-3-3m3 3-3 3M17 17H6m0 0 3 3m-3-3 3-3" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
       var iconeExcluirPerfil = '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true"><path d="M19 7l-.9 12.1A2 2 0 0 1 16.1 21H7.9a2 2 0 0 1-2-1.9L5 7m5 4v6m4-6v6m1-10V4a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v3M4 7h16" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"/></svg>';
@@ -9339,6 +9468,9 @@
           '<div class="grid gap-2">' +
             (podeEditar
               ? '<button id="abrir-edicao-empresa-mobile" type="button" class="flex h-12 w-full items-center gap-3 rounded-lg border border-[#0A1F44] bg-[#0A1F44] px-4 text-left text-sm font-black text-white shadow-md transition active:scale-[0.98]">' + iconeEditarPerfil + '<span>Editar perfil atual</span></button>'
+              : '') +
+            (podeEditar
+              ? '<button id="abrir-cadastro-completo-mobile" type="button" class="flex h-12 w-full items-center gap-3 rounded-lg border border-sky-700 bg-sky-600 px-4 text-left text-sm font-black text-white shadow-md transition active:scale-[0.98]">' + iconeCadastroCompleto + '<span>Dados cadastrais completos</span></button>'
               : '') +
             '<button id="abrir-criar-empresa-mobile" type="button" class="flex h-12 w-full items-center gap-3 rounded-lg border border-cyan-700 bg-cyan-700 px-4 text-left text-sm font-black text-white shadow-md transition active:scale-[0.98]">' + iconeCriarPerfil + '<span>Criar novo perfil</span></button>' +
             '<button id="trocar-empresa-gerenciar" type="button" class="flex h-12 w-full items-center gap-3 rounded-lg border px-4 text-left text-sm font-black shadow-md transition ' + (podeTrocar ? 'border-blue-700 bg-blue-600 text-white active:scale-[0.98]' : 'border-slate-200 bg-slate-100 text-slate-400 cursor-not-allowed opacity-80') + '"' + (podeTrocar ? '' : ' disabled') + '>' + iconeTrocarPerfil + '<span>Trocar perfil</span></button>' +
@@ -10299,6 +10431,7 @@
     else if (state.paywallAtivo) telaAtual = telaPaywallMobile();
     else if (state.cadastroPerfilErro) telaAtual = telaErroCadastroPerfilMobile();
     else if (deveExibirCadastroPerfilMobile()) telaAtual = telaCadastroPerfilMobile(state.cadastroPerfilStatus.obrigatorio ? 'bloqueio' : 'lembrete');
+    else if (state.cadastroPerfilEditando) telaAtual = telaCadastroPerfilMobile('edicao');
     else if (state.modoCriarPerfil) telaAtual = telaLoginWrapper(telaCriarPerfilInicial(), 'Criar perfil financeiro', 'Informe os dados do seu primeiro perfil.');
     else if (!state.paywallVerificado) telaAtual = telaCarregandoMobile();
     else telaAtual = telaApp();
@@ -10348,6 +10481,8 @@
     bind('cp-voltar', function () { state.paywallCadastroCiclo = ''; render(); });
     bind('cp-buscar-cep', buscarCepCadastroPerfilMobile);
     bind('cp-salvar', salvarCadastroPerfilMobile);
+    bind('cp-fechar-edicao', fecharEdicaoCadastroPerfilMobile);
+    bind('cp-cancelar-edicao', fecharEdicaoCadastroPerfilMobile);
     bind('cp-tentar-novamente', carregarDados);
     bindChange('cp-tipo-empresa', function () { capturarCadastroPerfilMobile(); state.cadastroPerfilDados.documento = ''; render(); });
     bindChange('cp-ie-isento', function () { var el = document.getElementById('cp-ie'); if (el) { el.disabled = this.checked; if (this.checked) el.value = ''; } });
@@ -10495,6 +10630,7 @@
     bind('menu-configurar-resumo', function () { fecharMenuLateralAnimado(function () { if (premiumPessoalBloqueadoMobile()) { abrirPremiumMobile('organizar_dashboard'); return; } abrirModalMenu('configurarResumo'); }); });
     bind('menu-usuario', function () { fecharMenuLateralAnimado(abrirUsuariosMobile); });
     bind('menu-gerenciar', function () { fecharMenuLateralAnimado(function () { abrirModalMenu('gerenciar'); }); });
+    bind('menu-cadastro-perfil', function () { fecharMenuLateralAnimado(abrirEdicaoCadastroPerfilMobile); });
     bind('menu-assinatura', function () { fecharMenuLateralAnimado(abrirAssinaturaMobile); });
     bind('menu-organizar-dashboard', function () { fecharMenuLateralAnimado(function () { if (premiumPessoalBloqueadoMobile()) { abrirPremiumMobile('organizar_dashboard'); return; } abrirModalMenu('organizarDashboard'); }); });
     bind('menu-organizar-atalhos', function () { fecharMenuLateralAnimado(function () { if (premiumPessoalBloqueadoMobile()) { abrirPremiumMobile('organizar_atalhos'); return; } abrirModalMenu('organizarAtalhos'); }); });
@@ -10736,6 +10872,7 @@
     bind('privacidade-mobile', function () { abrirModalMenu('privacidade'); });
     bind('sobre-mobile', function () { abrirSobreMobile(); });
     bind('abrir-edicao-empresa-mobile', abrirEdicaoEmpresaMobile);
+    bind('abrir-cadastro-completo-mobile', abrirEdicaoCadastroPerfilMobile);
     bind('abrir-criar-empresa-mobile', abrirCriarEmpresaMobile);
     bind('cancelar-criar-empresa-mobile', cancelarCriarEmpresaMobile);
     bind('cancelar-edicao-empresa-mobile', cancelarEdicaoEmpresaMobile);
@@ -11034,6 +11171,7 @@
     bind('toggle-valores-totais', function () { alternarVisibilidadeValoresCard('totais'); });
     bind('toggle-valores-categorias', function () { alternarVisibilidadeValoresCard('categorias'); });
     bind('toggle-valores-tipos', function () { alternarVisibilidadeValoresCard('tipos'); });
+    bind('toggle-valores-meusPerfis', function () { alternarVisibilidadeValoresCard('meusPerfis'); });
     bind('salvar-caixinha-saldo-inicial', salvarSaldoInicialCaixinhaMobile);
     bind('salvar-caixinha-aporte', salvarAporteCaixinhaMobile);
     var caixinhaSaldoInicialEl = document.getElementById('caixinha-saldo-inicial');
@@ -11321,6 +11459,22 @@
         render();
         selecionarEmpresaMobile(id, true);
         state.modalMenu = '';
+        state.visao = 'home';
+        carregarDados().finally(function () {
+          state.perfilSelecionandoId = '';
+        });
+      });
+    });
+    Array.prototype.forEach.call(document.querySelectorAll('[data-meu-perfil-id]'), function (botao) {
+      botao.addEventListener('click', function () {
+        if (state.perfilSelecionandoId) return;
+        var id = botao.getAttribute('data-meu-perfil-id');
+        if (!id || (state.empresa && id === state.empresa.id)) return;
+        state.perfilSelecionandoId = id;
+        if (!selecionarEmpresaMobile(id, true)) {
+          state.perfilSelecionandoId = '';
+          return;
+        }
         state.visao = 'home';
         carregarDados().finally(function () {
           state.perfilSelecionandoId = '';
