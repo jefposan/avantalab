@@ -1269,7 +1269,7 @@ function renderProdutos() {
   const temBusca = Boolean(String(state.busca || '').trim());
   return `
     <section class="module-page produtos-page${temBusca ? ' is-searching' : ''}">
-      <div class="module-sticky-head"><div class="module-title"><div><h2>Produtos</h2><p>Catálogo, custos e preços de venda.</p></div><button class="primary" onclick="this.blur();abrirProduto()">＋ Novo produto</button></div><div class="produtos-actions"><button class="ghost" onclick="baixarModeloProdutosExcel()">${svgIcon('save')} Modelo Excel</button><button class="secondary" onclick="abrirImportacaoPacote()">${svgIcon('package')} Pacote de produtos</button><button class="primary" onclick="exportarProdutosExcel()">${svgIcon('save')} Exportar</button></div>${renderBarraBusca('Pesquisar produtos', 'Ordem alfabética')}</div>
+      <div class="module-sticky-head"><div class="module-title"><div><h2>Produtos</h2><p>Catálogo, custos e preços de venda.</p></div><button class="primary" onclick="this.blur();abrirProduto()">＋ Novo produto</button></div><div class="produtos-actions"><button class="ghost" onclick="baixarModeloProdutosExcel()" aria-label="Baixar modelo Excel">${svgIcon('save')} Modelo</button><button class="secondary" onclick="abrirImportacaoPacote()" aria-label="Importar pacote de produtos">${svgIcon('package')} Pacote</button><button class="primary" onclick="exportarProdutosExcel()" aria-label="Exportar produtos para Excel">${svgIcon('save')} Exportar</button></div>${renderBarraBusca('Pesquisar produtos', 'Ordem alfabética')}</div>
       <div class="module-stats"><span><b>${state.produtos.length}</b> produtos cadastrados</span><span><b>${state.pacotesProdutos.length}</b> pacotes ativos</span><button class="package-manage-link" onclick="abrirGerenciarPacotes()">Gerenciar pacotes</button></div>
       <section class="product-grid module-product-grid">
       ${produtos.length ? produtos.map(renderProduto).join('') : empty('Nenhum produto cadastrado.')}
@@ -1573,11 +1573,14 @@ function carregarBibliotecaExcel() {
   return window.__vendasXlsxPromise;
 }
 
-function baixarModeloProdutosExcel() {
-  const link = document.createElement('a');
-  link.href = '/vendas-mobile/data/modelo-importacao-produtos-avantalab.xlsx';
-  link.download = 'modelo-importacao-produtos-avantalab.xlsx';
-  link.click();
+async function baixarModeloProdutosExcel() {
+  try {
+    await carregarBibliotecaExcel();
+    const resposta = await fetch('/vendas-mobile/data/modelo-importacao-produtos-avantalab.xlsx');
+    if (!resposta.ok) throw new Error('Modelo Excel indisponível.');
+    const livro = window.XLSX.read(await resposta.arrayBuffer(), { type: 'array' });
+    window.XLSX.writeFile(livro, 'modelo-importacao-produtos-avantalab.xlsx');
+  } catch (error) { toast(traduzErro(error)); }
 }
 
 function abrirImportacaoPacote() {
