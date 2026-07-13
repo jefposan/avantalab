@@ -829,6 +829,7 @@ function renderConfiguracoes() {
     <article class="settings-card"><h3>${svgIcon('lock')} Segurança e Senha</h3><div class="password-form"><label>Senha Atual<input id="senhaAtual" type="password"></label><label>Nova Senha (mín. 6 caracteres)<input id="senhaNova" type="password" minlength="6"></label><label>Confirme Nova Senha<input id="senhaConfirma" type="password" minlength="6"></label><button class="password-button" onclick="alterarSenha()">${svgIcon('lock')} Alterar Senha</button></div></article>
     <article class="settings-card"><h3>${svgIcon('package')} Catálogo de Produtos</h3><p>Importe uma planilha própria ou carregue o pacote de produtos disponível.</p><div class="actions"><button class="secondary" onclick="setAba('importar')">Importar produtos</button><button class="primary" onclick="carregarPacoteTridium()">${svgIcon('package')} Pacote de produtos</button></div></article>
     <article class="settings-card"><h3>${svgIcon('save')} Aplicativo Web (PWA)</h3><p>Instale o aplicativo na tela inicial para acesso rápido, como um app nativo.</p><button class="install-button" onclick="instalarPWA()">Adicionar à Área de Trabalho</button><small>Se o botão não aparecer, use “Adicionar à tela inicial” no menu do navegador.</small></article>
+    <article class="settings-card settings-exit-card"><h3>${svgIcon('log-out')} Sair</h3><p>Encerre sua sessão neste aparelho.</p><button class="danger" onclick="abrirConfirmacaoSair()">Sair do Vendas</button></article>
   </section>`;
 }
 
@@ -878,7 +879,13 @@ function renderBusca(placeholder) {
 }
 
 function renderBarraBusca(placeholder, filtro = 'Ordem Alfabética') {
-  return `<article class="tridium-search-card"><div class="search-input-wrap">${svgIcon('search')}<input value="${escapeAttr(state.busca)}" placeholder="${escapeAttr(placeholder)}" oninput="state.busca=this.value" onkeydown="if(event.key==='Enter') aplicarBusca()"></div><button class="search-filter">${svgIcon('filter')}${escapeHtml(filtro)}${svgIcon('chevron-down')}</button><button class="primary search-submit" onclick="aplicarBusca()">${svgIcon('search')} Buscar</button></article>`;
+  const limpar = state.busca ? '<button type="button" class="search-clear" onclick="limparBusca()" aria-label="Limpar pesquisa">×</button>' : '';
+  return `<article class="tridium-search-card"><div class="search-input-wrap">${svgIcon('search')}<input value="${escapeAttr(state.busca)}" placeholder="${escapeAttr(placeholder)}" oninput="state.busca=this.value" onkeydown="if(event.key==='Enter') aplicarBusca()">${limpar}</div><button class="search-filter">${svgIcon('filter')}${escapeHtml(filtro)}${svgIcon('chevron-down')}</button><button class="primary search-submit" onclick="aplicarBusca()">${svgIcon('search')} Buscar</button></article>`;
+}
+
+function limparBusca() {
+  state.busca = '';
+  render();
 }
 
 function opcoesDdi(selected = '55') {
@@ -1023,13 +1030,13 @@ function ligarCliente(clienteId) {
 function abrirWhatsappCliente(clienteId) {
   const telefone = telefoneCliente(clienteId);
   if (!telefone) { toast('Este cliente não possui telefone cadastrado.'); return; }
-  const link = document.createElement('a');
-  link.href = `https://wa.me/${telefone}`;
-  link.target = '_blank';
-  link.rel = 'noopener noreferrer';
-  document.body.appendChild(link);
-  link.click();
-  link.remove();
+  salvarEstado();
+  const emCelular = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+  if (emCelular) {
+    window.location.href = `whatsapp://send?phone=${telefone}`;
+    return;
+  }
+  window.open(`https://web.whatsapp.com/send?phone=${telefone}`, '_blank', 'noopener,noreferrer');
 }
 
 function abrirMapasCliente(clienteId) {
@@ -1703,6 +1710,7 @@ window.compartilharPedido = compartilharPedido;
 window.ligarCliente = ligarCliente;
 window.abrirWhatsappCliente = abrirWhatsappCliente;
 window.abrirMapasCliente = abrirMapasCliente;
+window.limparBusca = limparBusca;
 window.sairSistema = sairSistema;
 window.entrarSistema = entrarSistema;
 window.entrarComGoogle = entrarComGoogle;
