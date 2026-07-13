@@ -1,5 +1,20 @@
 # Changelog
 
+## 1.4.0.59 - 2026-07-13
+
+- Web: corrige a trava dos popups fixando a página na posição atual enquanto o overlay estiver aberto.
+- Web: mantém a rolagem interna do popup e restaura a posição original da página ao fechar.
+
+## 1.4.0.58 - 2026-07-13
+
+- Web: refinado o puxador do card Meus perfis, com cursor de pegar/segurar, rótulo Arraste e resposta imediata.
+- Web: limita a expansão do card ao conteúdo final da lista de perfis.
+
+## 1.4.0.57 - 2026-07-13
+
+- Web: bloqueia a rolagem da página de fundo sempre que um popup estiver aberto.
+- Web: adiciona rodapé fino com puxador ao card Meus perfis, permitindo ampliar sua altura e a lista de perfis.
+
 ## 1.4.0.56 - 2026-07-13
 
 - Web: mantém o tamanho da fonte da despesa selecionada e de sua lista no lançamento.

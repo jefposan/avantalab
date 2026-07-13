@@ -113,6 +113,11 @@ body {
   overflow-x: clip;
 }
 
+html.av-popup-scroll-lock,
+html.av-popup-scroll-lock body {
+  overscroll-behavior: none;
+}
+
 main,
 section,
 article,

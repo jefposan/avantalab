@@ -215,6 +215,7 @@ export default function Dashboard({
   const [graficosPerfisVisiveis, setGraficosPerfisVisiveis] = useState(false);
   const [perfilDetalhado, setPerfilDetalhado] = useState<ResumoPerfilFinanceiro | null>(null);
   const [listaPerfisPodeDescer, setListaPerfisPodeDescer] = useState(false);
+  const [alturaCardPerfis, setAlturaCardPerfis] = useState<number | null>(null);
   const [menuCardAberto, setMenuCardAberto] = useState<string | null>(null);
   const [gerenciadorAberto, setGerenciadorAberto] = useState(false);
   const [evolucaoAno, setEvolucaoAno] = useState(anoSelecionado);
@@ -257,6 +258,7 @@ export default function Dashboard({
   const listaPerfisInicioYRef = useRef(0);
   const listaPerfisVelocidadeRef = useRef(0);
   const listaPerfisAutoScrollRef = useRef<number | null>(null);
+  const redimensionamentoPerfisRef = useRef({ ativo: false, pointerId: 0, inicioY: 0, alturaInicial: 0, alturaMaxima: 0 });
   const pararAutoScrollPerfis = useCallback(() => {
     listaPerfisArrastandoRef.current = false;
     listaPerfisVelocidadeRef.current = 0;
@@ -307,6 +309,38 @@ export default function Dashboard({
     lista.scrollBy({ top: Math.max(90, lista.clientHeight - 24), behavior: 'smooth' });
     window.setTimeout(atualizarEstadoScrollPerfis, 320);
   }, [atualizarEstadoScrollPerfis]);
+  const iniciarRedimensionamentoPerfis = useCallback((event: React.PointerEvent<HTMLButtonElement>) => {
+    if (event.button !== 0) return;
+    const card = event.currentTarget.closest('[data-card-perfis]');
+    if (!card) return;
+    const alturaInicial = card.getBoundingClientRect().height;
+    const lista = listaPerfisRef.current;
+    const alturaMaxima = lista
+      ? Math.max(alturaInicial, alturaInicial - lista.clientHeight + lista.scrollHeight)
+      : alturaInicial;
+    redimensionamentoPerfisRef.current = {
+      ativo: true,
+      pointerId: event.pointerId,
+      inicioY: event.clientY,
+      alturaInicial,
+      alturaMaxima,
+    };
+    event.currentTarget.setPointerCapture(event.pointerId);
+    event.stopPropagation();
+    event.preventDefault();
+  }, []);
+  const moverRedimensionamentoPerfis = useCallback((event: React.PointerEvent<HTMLButtonElement>) => {
+    const redimensionamento = redimensionamentoPerfisRef.current;
+    if (!redimensionamento.ativo || redimensionamento.pointerId !== event.pointerId) return;
+    const proximaAltura = redimensionamento.alturaInicial + event.clientY - redimensionamento.inicioY;
+    setAlturaCardPerfis(Math.min(redimensionamento.alturaMaxima, Math.max(300, proximaAltura)));
+  }, []);
+  const encerrarRedimensionamentoPerfis = useCallback((event: React.PointerEvent<HTMLButtonElement>) => {
+    const redimensionamento = redimensionamentoPerfisRef.current;
+    if (!redimensionamento.ativo) return;
+    redimensionamentoPerfisRef.current.ativo = false;
+    if (event.currentTarget.hasPointerCapture(event.pointerId)) event.currentTarget.releasePointerCapture(event.pointerId);
+  }, []);
   const abrirDetalhePerfil = useCallback((perfil: ResumoPerfilFinanceiro) => {
     if (listaPerfisArrastouRef.current) {
       listaPerfisArrastouRef.current = false;
@@ -1302,7 +1336,11 @@ const mostrarComparativoResumoDash =
     ),
 
     meusPerfis: (
-      <div className={`${bgCard} card-radius-avantalab w-full overflow-hidden rounded-2xl border-2 shadow-lg transition-colors`} style={{ borderColor: corPrimaria }}>
+      <div
+        data-card-perfis
+        className={`${bgCard} card-radius-avantalab flex w-full flex-col overflow-hidden rounded-2xl border-2 shadow-lg transition-colors`}
+        style={{ borderColor: corPrimaria, height: alturaCardPerfis ? `${alturaCardPerfis}px` : undefined }}
+      >
         <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-3 px-6 py-3 text-sm font-bold uppercase tracking-wider" style={{ backgroundColor: corPrimaria, color: textoSobreCorPrimaria }}>
           <span className="truncate">{cols.full.includes('meusPerfis') ? 'Meus perfis' : 'Perfis'}</span>
           <span className="rounded-full bg-white/15 px-3 py-1 text-[10px] font-black leading-none text-white/90">
@@ -1334,8 +1372,8 @@ const mostrarComparativoResumoDash =
             <BotaoOpcoesCard id="meusPerfis" tone="light" />
           </div>
         </div>
-        <div className="space-y-2 p-3">
-          <div className={`grid grid-cols-3 gap-1.5 rounded-xl border p-1.5 ${darkMode ? 'border-slate-700 bg-slate-800/50' : 'border-slate-200 bg-slate-50'}`}>
+        <div className="flex min-h-0 flex-1 flex-col gap-2 p-3">
+          <div className={`shrink-0 grid grid-cols-3 gap-1.5 rounded-xl border p-1.5 ${darkMode ? 'border-slate-700 bg-slate-800/50' : 'border-slate-200 bg-slate-50'}`}>
             <div className="min-w-0 rounded-lg px-2.5 py-2 shadow-sm" style={{ backgroundColor: corPrimaria, color: textoSobreCorPrimaria }}>
               <span className="block truncate text-[9px] font-black uppercase tracking-wide opacity-75">
                 {cols.full.includes('meusPerfis') ? 'Resultado consolidado' : 'Consolidado'}
@@ -1354,12 +1392,12 @@ const mostrarComparativoResumoDash =
             </div>
           </div>
 
-          <div className="space-y-2">
+          <div className="min-h-0 flex-1">
             {perfisDashboard.length > 0 ? (
-              <div className="relative">
+              <div className="relative h-full">
                 <div
                   ref={listaPerfisRef}
-                  className="max-h-[160px] space-y-2 overflow-y-auto overscroll-contain pr-1"
+                  className={`${alturaCardPerfis ? 'h-full' : 'max-h-[160px]'} space-y-2 overflow-y-auto overscroll-contain pr-1`}
                   onScroll={atualizarEstadoScrollPerfis}
                   onMouseDown={(event) => {
                     listaPerfisArrastandoRef.current = true;
@@ -1499,6 +1537,21 @@ const mostrarComparativoResumoDash =
               )}
             </div>
           )}
+        </div>
+        <div className={`flex h-7 shrink-0 flex-col items-center justify-center border-t ${darkMode ? 'border-slate-700 bg-slate-900/60' : 'border-slate-200 bg-slate-50'}`}>
+          <span className={`text-[7px] font-black uppercase leading-none tracking-[0.16em] ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>Arraste</span>
+          <button
+            type="button"
+            onPointerDown={iniciarRedimensionamentoPerfis}
+            onPointerMove={moverRedimensionamentoPerfis}
+            onPointerUp={encerrarRedimensionamentoPerfis}
+            onPointerCancel={encerrarRedimensionamentoPerfis}
+            className={`flex h-3 w-16 items-center justify-center touch-none cursor-grab active:cursor-grabbing ${darkMode ? 'hover:bg-slate-800' : 'hover:bg-slate-100'}`}
+            aria-label="Redimensionar card de perfis"
+            title="Arraste para aumentar o card"
+          >
+            <span className={`h-1 w-9 rounded-full ${darkMode ? 'bg-slate-500' : 'bg-slate-400'}`} />
+          </button>
         </div>
       </div>
     ),

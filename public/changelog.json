@@ -13,6 +13,33 @@
   },
   "versoes": [
     {
+      "versao": "1.4.0.59",
+      "titulo": "Correção da trava dos popups",
+      "data": "Julho/2026",
+      "itens": [
+        "Web: congela de forma efetiva a página ao fundo enquanto um popup estiver aberto.",
+        "Web: preserva a rolagem interna do popup e a posição da página após o fechamento."
+      ]
+    },
+    {
+      "versao": "1.4.0.58",
+      "titulo": "Refino do puxador de perfis",
+      "data": "Julho/2026",
+      "itens": [
+        "Web: puxador mostra Arraste e usa cursor de pegar/segurar durante o uso.",
+        "Web: expansão do card Meus perfis termina no último perfil da lista, sem espaço vazio."
+      ]
+    },
+    {
+      "versao": "1.4.0.57",
+      "titulo": "Foco nos popups e card de perfis",
+      "data": "Julho/2026",
+      "itens": [
+        "Web: a página de fundo fica bloqueada enquanto houver um popup aberto.",
+        "Web: o card Meus perfis ganhou um puxador no rodapé para ampliar a área da lista."
+      ]
+    },
+    {
       "versao": "1.4.0.56",
       "titulo": "Ajustes no lançamento web",
       "data": "Julho/2026",

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { inter } from "./lib/fonts";
+import WebPopupScrollLock from "./components/WebPopupScrollLock";
 
 const shareImage = 'https://avantalab.com.br/images/avantalab-share-meta-safe-center-v2.jpg';
 
@@ -59,7 +60,10 @@ export default function RootLayout({
           media="(max-width: 1023px)"
         />
       </head>
-      <body className="typography-system min-h-full flex flex-col">{children}</body>
+      <body className="typography-system min-h-full flex flex-col">
+        <WebPopupScrollLock />
+        {children}
+      </body>
     </html>
   );
 }
