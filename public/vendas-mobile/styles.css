@@ -38,6 +38,12 @@ textarea {
 
 button {
   cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+button.button-pressed {
+  transform: scale(0.965) !important;
+  transition: transform 110ms ease-out !important;
 }
 
 html.sheet-open,

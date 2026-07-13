@@ -49,6 +49,7 @@ let vinculoTelefonePendente = null;
 let rolagemAnteriorSheet = 0;
 let cardsClientesEmDestaque = [];
 let quadroDestaqueClientes = 0;
+let botaoFeedbackAtivo = null;
 
 const PAISES_DDI = [
   ['Brasil', '55', '🇧🇷'], ['Portugal', '351', '🇵🇹'], ['Estados Unidos / Canadá', '1', '🇺🇸'],
@@ -1835,6 +1836,29 @@ function escapeAttr(v) {
   return escapeHtml(v).replace(/`/g, '&#096;');
 }
 
+function botaoTemAcaoVisual(botao) {
+  if (!(botao instanceof HTMLButtonElement) || botao.disabled) return false;
+  if (botao.matches('.icon-button, .close, .password-toggle, .search-clear, .client-more, .home-button, .system-brand, .menu-toggle, .vendas-nav-item, .vendas-nav-add, .mobile-menu-header button')) return false;
+  const texto = (botao.textContent || '').replace(/[×⋮+＋]/g, '').trim();
+  return Boolean(texto);
+}
+
+function ativarFeedbackBotao(botao) {
+  if (!botaoTemAcaoVisual(botao)) return;
+  if (botaoFeedbackAtivo && botaoFeedbackAtivo !== botao) botaoFeedbackAtivo.classList.remove('button-pressed');
+  window.clearTimeout(botao.__tempoFeedbackAtivo);
+  botao.classList.add('button-pressed');
+  botaoFeedbackAtivo = botao;
+}
+
+function removerFeedbackBotao(botao) {
+  const alvo = botaoFeedbackAtivo || botao;
+  if (!(alvo instanceof HTMLButtonElement)) return;
+  botaoFeedbackAtivo = null;
+  window.clearTimeout(alvo.__tempoFeedbackAtivo);
+  alvo.__tempoFeedbackAtivo = window.setTimeout(() => alvo.classList.remove('button-pressed'), 110);
+}
+
 if (!window.__VENDAS_MOBILE_EMBEDDED__ && 'serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('./sw.js').catch(() => {});
@@ -1913,5 +1937,14 @@ window.instalarPWA = instalarPWA;
 window.addEventListener('pageshow', () => requestAnimationFrame(limparFocoInicialLogin));
 window.addEventListener('scroll', agendarDestaqueClientes, { passive: true });
 window.addEventListener('resize', agendarDestaqueClientes);
+document.addEventListener('pointerdown', (event) => ativarFeedbackBotao(event.target instanceof Element ? event.target.closest('button') : null));
+document.addEventListener('pointerup', (event) => removerFeedbackBotao(event.target instanceof Element ? event.target.closest('button') : null));
+document.addEventListener('pointercancel', (event) => removerFeedbackBotao(event.target instanceof Element ? event.target.closest('button') : null));
+document.addEventListener('keydown', (event) => {
+  if (event.key === 'Enter' || event.key === ' ') ativarFeedbackBotao(document.activeElement);
+});
+document.addEventListener('keyup', (event) => {
+  if (event.key === 'Enter' || event.key === ' ') removerFeedbackBotao(document.activeElement);
+});
 
 inicializarApp();
