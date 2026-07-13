@@ -13,6 +13,26 @@
   },
   "versoes": [
     {
+      "versao": "1.4.0.53",
+      "titulo": "Lançamentos e recursos exclusivos",
+      "data": "Julho/2026",
+      "itens": [
+        "Mobile: Novo lançamento mostra o mês selecionado no cabeçalho para despesas e receitas.",
+        "Mobile: foto/arquivo de nota, Ava IA e Insights da Ava exibem aviso de recurso exclusivo para assinantes.",
+        "Mobile: tutorial atualizado com os fluxos atuais do sistema."
+      ]
+    },
+    {
+      "versao": "1.4.0.52",
+      "titulo": "Cadastro protegido e perfis destacados",
+      "data": "Julho/2026",
+      "itens": [
+        "Mobile: perfil atual e perfil tocado recebem borda azul durante a troca.",
+        "Cadastro Web/Mobile: preserva o preenchimento e salva automaticamente os dados do perfil ao sair dos campos.",
+        "Mobile: card da Caixinha ganha topo colorido no padrão dos demais cards."
+      ]
+    },
+    {
       "versao": "1.4.0.51",
       "titulo": "Ações e avisos em azul",
       "data": "Julho/2026",

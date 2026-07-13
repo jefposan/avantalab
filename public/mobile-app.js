@@ -52,6 +52,7 @@
     },
   });
   var CHAVE_ULTIMO_PERFIL_MOBILE = 'avantalab_mobile_ultimo_perfil_id';
+  var CHAVE_RASCUNHO_CADASTRO_MOBILE = 'avantalab_mobile_rascunho_cadastro';
   var meses = [
     'JANEIRO',
     'FEVEREIRO',
@@ -137,6 +138,7 @@
     carregando: false,
     loginAcao: '',
     empresaAcao: '',
+    perfilSelecionandoId: '',
     loginValor: '',
     telaAcesso: 'boasVindas',
     modoSenha: false,
@@ -296,12 +298,54 @@
     mostrarPromptNotificacoes: false,
     tourAberto: false,
     tourPasso: 0,
+    avisoAssinanteAberto: false,
+    avisoAssinanteTitulo: '',
+    avisoAssinanteMensagem: '',
     agendaTipoItem: 'lembrete',
     agendaTitulo: '',
     agendaDescricao: '',
     agendaRepetir: false,
     agendaRepeticao: 'mensal',
   };
+
+  function restaurarRascunhoCadastroMobile() {
+    try {
+      var rascunho = JSON.parse(sessionStorage.getItem(CHAVE_RASCUNHO_CADASTRO_MOBILE) || 'null');
+      if (!rascunho || typeof rascunho !== 'object') return;
+      var dadosCadastro = rascunho.cadastro || {};
+      state.cadastro.nome = String(dadosCadastro.nome || '');
+      state.cadastro.nomeEmpresa = String(dadosCadastro.nomeEmpresa || '');
+      state.cadastro.email = String(dadosCadastro.email || '');
+      state.cadastro.telefone = String(dadosCadastro.telefone || '');
+      state.cadastroDdi = String(rascunho.ddi || state.cadastroDdi).replace(/\D/g, '') || '55';
+      state.cadastroCupom = String(rascunho.cupom || '');
+      state.cadastroTipoPerfil = normalizarTipoPerfil(rascunho.tipoPerfil);
+      state.aceitouTermos = !!rascunho.aceitouTermos;
+    } catch (error) {}
+  }
+
+  function salvarRascunhoCadastroMobile() {
+    try {
+      sessionStorage.setItem(CHAVE_RASCUNHO_CADASTRO_MOBILE, JSON.stringify({
+        cadastro: {
+          nome: state.cadastro.nome,
+          nomeEmpresa: state.cadastro.nomeEmpresa,
+          email: state.cadastro.email,
+          telefone: state.cadastro.telefone,
+        },
+        ddi: state.cadastroDdi,
+        cupom: state.cadastroCupom,
+        tipoPerfil: state.cadastroTipoPerfil,
+        aceitouTermos: state.aceitouTermos,
+      }));
+    } catch (error) {}
+  }
+
+  function limparRascunhoCadastroMobile() {
+    try { sessionStorage.removeItem(CHAVE_RASCUNHO_CADASTRO_MOBILE); } catch (error) {}
+  }
+
+  restaurarRascunhoCadastroMobile();
 
   var CHAVE_MANTER_CONECTADO_ATE = 'avantalab_mobile_manter_conectado_ate';
   var CHAVE_SESSAO_TEMPORARIA = 'avantalab_mobile_sessao_temporaria';
@@ -835,7 +879,7 @@
     return '<section class="avantalab-mobile-bg fixed inset-0 z-[12000] flex items-start justify-center overflow-y-auto bg-black/70 px-3 py-4">' +
       '<div class="flex max-h-[calc(100dvh-2rem)] w-full max-w-md flex-col overflow-hidden rounded-xl bg-white text-slate-900 shadow-2xl">' +
         '<header class="shrink-0 bg-[#003E73] px-4 py-3 text-white"><p class="text-[9px] font-black uppercase tracking-[.2em] text-cyan-200">Cadastro do perfil</p><h2 class="mt-0.5 text-base font-black leading-tight">' + titulo + '</h2>' + (contexto === 'lembrete' ? '<p class="mt-1 text-[11px] text-white/80">Faltam ' + Number(status.diasRestantes || 0) + ' dias para se tornar obrigat&oacute;rio.</p>' : '') + '</header>' +
-        '<div class="min-h-0 flex-1 overflow-y-auto px-4 py-3">' + formulario + '<p id="cp-erro" class="mt-3 text-xs font-bold text-red-600"></p></div>' +
+        '<div class="min-h-0 flex-1 overflow-y-auto px-4 py-3">' + formulario + '<p id="cp-erro" class="mt-3 text-xs font-bold text-red-600"></p><p id="cp-autosave-status" class="mt-2 text-[10px] font-bold text-slate-500"></p></div>' +
         '<footer class="' + (contexto === 'lembrete' ? 'grid grid-cols-3' : 'flex justify-end') + ' shrink-0 gap-1.5 border-t border-slate-200 bg-slate-50 px-4 py-3">' +
           (contexto === 'lembrete' ? '<button id="cp-depois" type="button" class="h-9 min-w-0 rounded-lg border border-slate-300 bg-white px-1 text-[10px] font-bold text-slate-600 transition active:scale-95">Lembrar depois</button><button id="cp-salvar-parcial" type="button" class="h-9 min-w-0 rounded-lg border border-sky-200 bg-sky-50 px-1 text-[10px] font-black text-sky-800 transition active:scale-95">Salvar inclusões</button>' : '') +
           (contexto === 'paywall' ? '<button id="cp-voltar" type="button" class="h-9 rounded-lg border border-slate-300 bg-white px-4 text-xs font-bold text-slate-600">Voltar aos planos</button>' : '') +
@@ -875,6 +919,49 @@
     return d;
   }
 
+  var cadastroPerfilAutoSaveTimer = null;
+  var cadastroPerfilAutoSaveEmAndamento = false;
+  var cadastroPerfilAutoSavePendente = false;
+
+  function atualizarStatusAutoSaveCadastroPerfilMobile(texto, erro) {
+    var statusEl = document.getElementById('cp-autosave-status');
+    if (!statusEl) return;
+    statusEl.textContent = texto || '';
+    statusEl.className = 'mt-2 text-[10px] font-bold ' + (erro ? 'text-red-600' : 'text-slate-500');
+  }
+
+  function agendarAutoSaveCadastroPerfilMobile() {
+    capturarCadastroPerfilMobile();
+    cadastroPerfilAutoSavePendente = true;
+    atualizarStatusAutoSaveCadastroPerfilMobile('Alterações pendentes...');
+    if (cadastroPerfilAutoSaveTimer) window.clearTimeout(cadastroPerfilAutoSaveTimer);
+    cadastroPerfilAutoSaveTimer = window.setTimeout(salvarAutomaticamenteCadastroPerfilMobile, 350);
+  }
+
+  async function salvarAutomaticamenteCadastroPerfilMobile() {
+    if (!state.empresa || !cadastroPerfilAutoSavePendente || cadastroPerfilAutoSaveEmAndamento) return;
+    cadastroPerfilAutoSavePendente = false;
+    cadastroPerfilAutoSaveEmAndamento = true;
+    atualizarStatusAutoSaveCadastroPerfilMobile('Salvando alterações...');
+    try {
+      var token = await tokenSessao();
+      var resposta = await fetch('/api/perfil-cadastro', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
+        body: JSON.stringify({ empresaId: state.empresa.id, dados: capturarCadastroPerfilMobile(), concluir: false }),
+      });
+      var json = await resposta.json();
+      if (!resposta.ok) throw new Error(json.mensagem || 'Não foi possível salvar o rascunho.');
+      state.cadastroPerfilStatus = json;
+      atualizarStatusAutoSaveCadastroPerfilMobile('Alterações salvas automaticamente.');
+    } catch (e) {
+      atualizarStatusAutoSaveCadastroPerfilMobile(e && e.message ? e.message : 'Não foi possível salvar automaticamente.', true);
+    } finally {
+      cadastroPerfilAutoSaveEmAndamento = false;
+      if (cadastroPerfilAutoSavePendente) salvarAutomaticamenteCadastroPerfilMobile();
+    }
+  }
+
   async function buscarCepCadastroPerfilMobile() {
     var erroEl = document.getElementById('cp-erro');
     var cep = (document.getElementById('cp-cep') && document.getElementById('cp-cep').value || '').replace(/\D/g, '');
@@ -894,6 +981,12 @@
 
   async function salvarCadastroPerfilMobile() {
     if (state.cadastroPerfilSalvando || !state.empresa) return;
+    if (cadastroPerfilAutoSaveTimer) window.clearTimeout(cadastroPerfilAutoSaveTimer);
+    cadastroPerfilAutoSaveTimer = null;
+    cadastroPerfilAutoSavePendente = false;
+    while (cadastroPerfilAutoSaveEmAndamento) {
+      await new Promise(function (resolve) { window.setTimeout(resolve, 50); });
+    }
     var contextoPaywall = !!state.paywallCadastroCiclo;
     var janelaPagamento = contextoPaywall ? window.open('', '_blank') : null;
     var erroEl = document.getElementById('cp-erro');
@@ -1124,6 +1217,35 @@
     var estado = state.paywallEstado;
     if (!estado) return false; // sem info → fail-open
     return estado.tipoPerfil === 'pessoal' && !assinaturaVigenteMobile(estado);
+  }
+
+  function recursoExclusivoAssinanteMobile() {
+    return COBRANCA_ATIVA_MOBILE && !assinaturaVigenteMobile(state.paywallEstado);
+  }
+
+  function mostrarAvisoAssinanteMobile(titulo, mensagem) {
+    state.avisoAssinanteTitulo = titulo;
+    state.avisoAssinanteMensagem = mensagem;
+    state.avisoAssinanteAberto = true;
+    render();
+  }
+
+  function avisoAssinanteMobileHtml() {
+    if (!state.avisoAssinanteAberto) return '';
+    return (
+      '<div class="fixed inset-0 z-[13000] flex items-center justify-center bg-slate-950/70 px-4" role="dialog" aria-modal="true">' +
+        '<section class="w-full max-w-sm overflow-hidden rounded-3xl border border-sky-300 bg-white shadow-2xl">' +
+          '<div class="bg-[#003E73] px-5 py-4 text-white">' +
+            '<p class="text-[10px] font-black uppercase tracking-[0.18em] text-cyan-200">Recurso exclusivo</p>' +
+            '<h2 class="mt-1 text-base font-black">' + escapeHtml(state.avisoAssinanteTitulo) + '</h2>' +
+          '</div>' +
+          '<div class="p-5">' +
+            '<div class="rounded-2xl border border-sky-200 bg-sky-50 px-4 py-3 text-sm font-semibold leading-relaxed text-sky-950">' + escapeHtml(state.avisoAssinanteMensagem) + '</div>' +
+            '<button id="fechar-aviso-assinante" type="button" class="mt-4 h-11 w-full rounded-xl bg-[#003E73] text-xs font-black uppercase tracking-wide text-white">Entendi</button>' +
+          '</div>' +
+        '</section>' +
+      '</div>'
+    );
   }
 
   // Criar mais um perfil PESSOAL é premium (grátis = 1). Perfil empresa é livre.
@@ -2736,8 +2858,10 @@
   }
 
   function abrirChatIA() {
-    // Premium Pessoal: a Ava é recurso pago no plano grátis.
-    if (premiumPessoalBloqueadoMobile()) { abrirPremiumMobile('ava'); return; }
+    if (recursoExclusivoAssinanteMobile()) {
+      mostrarAvisoAssinanteMobile('Ava IA', 'A Ava IA é uma função exclusiva para assinantes. Assine um plano para conversar com a assistente.');
+      return;
+    }
     var parametros = new URLSearchParams();
     parametros.set('ano', String(state.ano || new Date().getFullYear()));
     parametros.set('mes', String(state.mes || ''));
@@ -3034,18 +3158,18 @@
 
   // ─── Tutorial (tour de primeiro acesso) ─────────────────────
   var PASSOS_TOUR = [
-    { icone: '👋', local: '', titulo: 'Bem-vindo ao AvantaLab!', descricao: 'Este tour apresenta os recursos atuais do app. Você pode pular agora e rever quando quiser em Menu → Tutorial.' },
-    { icone: '🤖', local: 'Ava no dashboard', titulo: 'Converse com a Ava', descricao: 'A Ava explica o app e analisa os dados financeiros disponíveis. O chat abre em tela cheia; use Nova conversa quando quiser começar novamente.', destaque: true },
-    { icone: '🏢', local: 'Atalho Perfil / Menu → Configurações', titulo: 'Perfis financeiros', descricao: 'Alterne entre perfis Empresa ou Pessoal vinculados ao seu login. Você também pode editar o perfil atual ou criar outro perfil.' },
-    { icone: '✅', local: 'Menu → Cadastrar despesas', titulo: 'Cadastre suas despesas', descricao: 'Revise a lista inicial e adicione os tipos de despesa que utiliza, sempre vinculando cada item à categoria correta.' },
-    { icone: '➕', local: 'Botão Lançar, no centro da barra inferior', titulo: 'Faça lançamentos', descricao: 'Registre despesas, receitas, previsões e parcelamentos. Os mesmos dados ficam disponíveis na web.' },
-    { icone: '🔁', local: 'Menu → Despesas fixas', titulo: 'Despesas fixas', descricao: 'Crie recorrências e projete os próximos meses. Edite pela linha para alterar apenas o mês ou use Despesas fixas para administrar toda a recorrência.' },
-    { icone: '🧩', local: 'Menu → Mostrar/ocultar cards', titulo: 'Organize os cards', descricao: 'Escolha quais cards aparecem e altere a ordem em Ordenar cards. Valores financeiros iniciam ocultos e podem ser revelados pelo ícone de olho.' },
-    { icone: '↔️', local: 'Menu → Organizar atalhos', titulo: 'Personalize a barra inferior', descricao: 'Início, Lançar e Menu são fixos. Personalize os dois atalhos laterais com Perfil, Agenda, Modo escuro ou Despesas fixas.' },
-    { icone: '📅', local: 'Agenda e sininho', titulo: 'Agenda e notificações', descricao: 'A agenda reúne lembretes e despesas futuras. Ative as notificações para receber lembretes e avisos de pagamentos agendados.' },
-    { icone: '💾', local: 'Menu → Configurações', titulo: 'Backup e restauração', descricao: 'Gere um backup do perfil ou restaure um arquivo compatível diretamente pelo celular.' },
-    { icone: '🔐', local: 'Tela de acesso', titulo: 'Mantenha sua sessão', descricao: 'Marque Manter conectado para conservar e renovar a sessão neste aparelho por até 30 dias.' },
-    { icone: '🚀', local: '', titulo: 'Tudo pronto!', descricao: 'Você já conhece os recursos principais. Chame a Ava quando precisar. Este tutorial fica sempre em Menu → Tutorial.' },
+    { icone: '👋', local: '', titulo: 'Bem-vindo ao AvantaLab!', descricao: 'Este tour mostra como o app funciona hoje. Você pode pular e rever quando quiser em Menu → Tutorial.' },
+    { icone: '🏢', local: 'Atalho Perfil / Menu → Gerenciar perfil', titulo: 'Perfis financeiros', descricao: 'Alterne entre os perfis Empresa ou Pessoal ligados ao seu login. Pelo mesmo local você cria outro perfil e completa ou edita seus dados cadastrais.' },
+    { icone: '➕', local: 'Botão Lançar, no centro da barra inferior', titulo: 'Novo lançamento', descricao: 'O cabeçalho mostra o mês selecionado. Escolha Despesa ou Receita, informe os dados e salve: tudo fica sincronizado com a versão web.' },
+    { icone: '📷', local: 'Novo lançamento → Despesa', titulo: 'Foto e arquivo da nota', descricao: 'Assinantes podem enviar uma foto ou arquivo da nota para preencher o lançamento com ajuda da leitura inteligente.' },
+    { icone: '✅', local: 'Menu → Cadastrar despesas', titulo: 'Tipos de despesa', descricao: 'Cadastre os tipos de despesa que você usa e vincule cada um à categoria correta. Assim os totais e gráficos ficam organizados.' },
+    { icone: '🔁', local: 'Menu → Despesas fixas', titulo: 'Despesas recorrentes', descricao: 'Crie despesas fixas para projetar os próximos meses. Use a edição do lançamento para um mês específico e Despesas fixas para administrar toda a recorrência.' },
+    { icone: '💰', local: 'Card Caixinha', titulo: 'Construa sua reserva', descricao: 'Defina um aporte inicial e registre novos aportes. Cada aporte também cria a despesa correspondente no mês selecionado.' },
+    { icone: '🤖', local: 'Cards Ava e Insights da Ava', titulo: 'Ava e Insights', descricao: 'A Ava IA e os Insights analisam seus resultados e ajudam a interpretar o mês. Esses recursos são exclusivos para assinantes.', destaque: true },
+    { icone: '🧩', local: 'Menu → Mostrar/ocultar cards', titulo: 'Organize o dashboard', descricao: 'Escolha os cards exibidos, altere sua ordem e revele valores pelo ícone de olho. Os dois atalhos laterais também podem ser personalizados.' },
+    { icone: '📅', local: 'Agenda e sininho', titulo: 'Agenda e notificações', descricao: 'A agenda reúne lembretes, compromissos e lançamentos futuros. Ative as notificações para receber os avisos no celular.' },
+    { icone: '💾', local: 'Menu → Configurações', titulo: 'Backup e configurações', descricao: 'Em Configurações você encontra backup, restauração, tema, segurança e outras opções do perfil.' },
+    { icone: '🚀', local: '', titulo: 'Tudo pronto!', descricao: 'Comece pelos lançamentos do mês e acompanhe os cards do dashboard. Este tutorial continua disponível em Menu → Tutorial.' },
   ];
 
   function abrirTourMobile() {
@@ -3285,6 +3409,10 @@
   }
 
   async function lerNotaPorFotoMobile(arquivo) {
+    if (recursoExclusivoAssinanteMobile()) {
+      mostrarAvisoAssinanteMobile('Leitura de nota', 'O envio de foto ou arquivo para leitura da nota é uma função exclusiva para assinantes.');
+      return;
+    }
     if (!arquivo || !state.empresa || state.notaLendo) return;
     var dia = campo('despesa-dia');
     var nome = campo('despesa-nome');
@@ -4577,6 +4705,7 @@
       senha: '',
       confirmarSenha: '',
     };
+    limparRascunhoCadastroMobile();
     setMensagem('Cadastro criado e celular confirmado. Faca login para acessar.');
   }
 
@@ -7401,6 +7530,12 @@
   }
 
   function insightsAvaHtml(atual) {
+    if (recursoExclusivoAssinanteMobile()) {
+      return '<section class="w-full overflow-hidden rounded-2xl border border-sky-200 bg-white shadow-sm">' +
+        '<div class="flex items-center justify-between gap-3 bg-[#003E73] px-4 py-3 text-white"><h2 class="text-sm font-black tracking-wide">Insights da Ava</h2><span class="rounded-full bg-white/15 px-2 py-1 text-[9px] font-black uppercase tracking-wide text-cyan-100">Assinantes</span></div>' +
+        '<div class="p-4"><div class="rounded-2xl border border-sky-200 bg-sky-50 px-4 py-3 text-xs font-semibold leading-relaxed text-sky-950">Os Insights da Ava analisam receitas, despesas e sua reserva. Este recurso é exclusivo para assinantes.</div><button id="abrir-insights-ava" type="button" class="mt-3 h-10 w-full rounded-xl bg-[#003E73] text-xs font-black uppercase tracking-wide text-white">Saiba mais</button></div>' +
+      '</section>';
+    }
     var receitas = Number(atual.receitas || 0);
     var despesas = Number(atual.despesasTotais || atual.despesas || 0);
     var resultado = receitas - despesas;
@@ -7552,14 +7687,15 @@
       : '<p class="rounded-xl bg-slate-50 px-3 py-2 text-center text-xs font-semibold text-slate-500">Nenhum aporte registrado.</p>';
 
     return (
-      '<section class="w-full overflow-hidden rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">' +
-        '<div class="mb-3 flex items-center justify-between gap-3">' +
+      '<section class="w-full overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">' +
+        '<div class="flex items-center justify-between gap-3 bg-cyan-700 px-4 py-3 text-white">' +
           '<div class="min-w-0">' +
-            '<h2 class="text-sm font-black tracking-wide text-slate-900">Caixinha</h2>' +
-            '<p class="mt-0.5 truncate text-[11px] font-semibold text-slate-500">Reserva e investimentos do perfil</p>' +
+            '<h2 class="text-sm font-black tracking-wide text-white">Caixinha</h2>' +
+            '<p class="mt-0.5 truncate text-[11px] font-semibold text-cyan-100">Reserva e investimentos do perfil</p>' +
           '</div>' +
-          botaoVisibilidadeValoresHtml(cardId, false) +
+          botaoVisibilidadeValoresHtml(cardId, true) +
         '</div>' +
+        '<div class="p-4">' +
         '<div class="grid grid-cols-2 gap-2">' +
           '<div class="rounded-2xl border border-slate-100 bg-slate-50 p-3">' +
             '<p class="text-[10px] font-black uppercase tracking-wide text-slate-500">Saldo</p>' +
@@ -7586,7 +7722,7 @@
         '</div>' +
         '<input id="caixinha-valor" inputmode="decimal" value="' + escapeHtml(state.caixinhaValor || '') + '" placeholder="0,00" style="font-size:16px" class="mt-2 h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-right text-base font-black text-slate-900 outline-none">' +
         '<button id="salvar-caixinha-aporte" type="button" class="mt-2 h-10 w-full rounded-xl bg-cyan-700 text-xs font-black uppercase tracking-wide text-white shadow-sm active:scale-[0.99]">' + (state.caixinhaSalvando ? 'Adicionando...' : 'Adicionar aporte') + '</button>' +
-        '<div class="mt-3 space-y-2">' + ultimosHtml + '</div>' +
+        '<div class="mt-3 space-y-2">' + ultimosHtml + '</div></div>' +
       '</section>'
     );
   }
@@ -8233,9 +8369,10 @@
               '<div class="bg-white p-4">' +
               novaDespesaFormHtml() +
               '</div>'
-            : '<div class="flex items-center justify-between px-4 py-3 text-white" style="background-color:#003E73">' +
-                '<h2 class="text-base font-black">Novo lancamento</h2>' +
-                '<button id="fechar-lancamento" type="button" class="flex h-9 w-9 items-center justify-center rounded-full border border-white/20 bg-white/10 text-xl text-white">&times;</button>' +
+            : '<div class="grid grid-cols-[1fr_auto_1fr] items-center gap-2 px-4 py-3 text-white" style="background-color:#003E73">' +
+                '<h2 class="min-w-0 text-base font-black">Novo lan&ccedil;amento</h2>' +
+                '<span class="text-center text-[11px] font-black tracking-wide text-cyan-100">' + escapeHtml(String(state.mes || '').toUpperCase()) + '</span>' +
+                '<button id="fechar-lancamento" type="button" class="justify-self-end flex h-9 w-9 items-center justify-center rounded-full border border-white/20 bg-white/10 text-xl text-white">&times;</button>' +
               '</div>' +
               '<div class="bg-white p-4">' +
               '<div class="mb-3 grid grid-cols-2 gap-2 rounded-xl bg-slate-100 p-1">' +
@@ -9151,7 +9288,8 @@
       '<div class="grid gap-2">' +
         state.empresas.map(function (empresa) {
           var tipo = rotuloTipoPerfil(empresa.tipo_perfil);
-          return '<button type="button" data-empresa-id="' + escapeHtml(empresa.id) + '" class="empresa-opcao rounded-2xl border border-slate-200 px-4 py-3 text-left transition active:scale-[0.98] active:translate-y-px ' + (state.empresa && empresa.id === state.empresa.id ? 'bg-cyan-50 text-cyan-800' : 'bg-white text-slate-800') + '"><span class="block text-sm font-black">' + escapeHtml(nomeEmpresa(empresa)) + '</span><span class="text-xs font-semibold text-slate-500">' + escapeHtml(tipo) + ' &middot; ' + escapeHtml(perfilFormatado(empresa.perfil)) + '</span></button>';
+          var selecionado = (state.empresa && empresa.id === state.empresa.id) || state.perfilSelecionandoId === empresa.id;
+          return '<button type="button" data-empresa-id="' + escapeHtml(empresa.id) + '" aria-pressed="' + (selecionado ? 'true' : 'false') + '" class="empresa-opcao rounded-2xl border-2 px-4 py-3 text-left transition active:scale-[0.98] active:translate-y-px ' + (selecionado ? 'border-blue-600 bg-cyan-50 text-cyan-800 shadow-sm' : 'border-slate-200 bg-white text-slate-800') + '"><span class="block text-sm font-black">' + escapeHtml(nomeEmpresa(empresa)) + '</span><span class="text-xs font-semibold text-slate-500">' + escapeHtml(tipo) + ' &middot; ' + escapeHtml(perfilFormatado(empresa.perfil)) + '</span></button>';
         }).join('') +
       '</div>'
     );
@@ -10163,7 +10301,7 @@
     else if (state.modoCriarPerfil) telaAtual = telaLoginWrapper(telaCriarPerfilInicial(), 'Criar perfil financeiro', 'Informe os dados do seu primeiro perfil.');
     else if (!state.paywallVerificado) telaAtual = telaCarregandoMobile();
     else telaAtual = telaApp();
-    root.innerHTML = telaAtual + (state.chatIAAberto ? chatIAModalHtml() : '') + (state.mostrarPromptNotificacoes ? promptNotificacoesHtml() : '') + (state.tourAberto ? tourHtml() : '');
+    root.innerHTML = telaAtual + (state.chatIAAberto ? chatIAModalHtml() : '') + (state.mostrarPromptNotificacoes ? promptNotificacoesHtml() : '') + (state.tourAberto ? tourHtml() : '') + avisoAssinanteMobileHtml();
     sincronizarGradienteHeaderPerfil();
     configurarRecolhimentoPerfilHeader();
     var indicadorNav = document.querySelector('[data-nav-indicador]');
@@ -10213,6 +10351,12 @@
     bindChange('cp-tipo-empresa', function () { capturarCadastroPerfilMobile(); state.cadastroPerfilDados.documento = ''; render(); });
     bindChange('cp-ie-isento', function () { var el = document.getElementById('cp-ie'); if (el) { el.disabled = this.checked; if (this.checked) el.value = ''; } });
     bindChange('cp-im-isento', function () { var el = document.getElementById('cp-im'); if (el) { el.disabled = this.checked; if (this.checked) el.value = ''; } });
+    Array.prototype.forEach.call(document.querySelectorAll('[id^="cp-"]'), function (elementoCadastro) {
+      if (!/^(INPUT|SELECT)$/.test(elementoCadastro.tagName)) return;
+      elementoCadastro.addEventListener('input', capturarCadastroPerfilMobile);
+      elementoCadastro.addEventListener('change', capturarCadastroPerfilMobile);
+      elementoCadastro.addEventListener('blur', agendarAutoSaveCadastroPerfilMobile);
+    });
 
     bind('entrar', entrar);
     bind('entrar-google', entrarGoogle);
@@ -10272,18 +10416,25 @@
       }
     });
     bind('reenviar-cadastro', enviarCodigoCadastro);
-    bindChange('cadastro-aceite', function (e) { state.aceitouTermos = !!(e.target && e.target.checked); });
+    bindChange('cadastro-aceite', function (e) { state.aceitouTermos = !!(e.target && e.target.checked); salvarRascunhoCadastroMobile(); });
     bindChange('cadastro-ddi', function (e) {
       state.cadastroDdi = (e.target && e.target.value ? e.target.value : '55').replace(/\D/g, '');
       var telefoneCadastro = document.getElementById('cadastro-telefone');
       if (telefoneCadastro) {
         telefoneCadastro.value = formatarTelefoneCadastroMobile(telefoneCadastro.value, state.cadastroDdi);
       }
+      lerCadastroDaTela();
+      salvarRascunhoCadastroMobile();
     });
     bindInput('cadastro-telefone', function () {
       this.value = formatarTelefoneCadastroMobile(this.value, state.cadastroDdi);
       state.cadastro.telefone = this.value.replace(/\D/g, '');
+      salvarRascunhoCadastroMobile();
     });
+    ['cadastro-empresa', 'cadastro-nome', 'cadastro-email', 'cadastro-senha', 'cadastro-confirmar-senha'].forEach(function (idCadastro) {
+      bindInput(idCadastro, function () { lerCadastroDaTela(); salvarRascunhoCadastroMobile(); });
+    });
+    bindInput('cadastro-cupom', function () { lerCadastroDaTela(); salvarRascunhoCadastroMobile(); });
     bind('cadastro-termos-link', function () {
       lerCadastroDaTela();
       var chk = document.getElementById('cadastro-aceite');
@@ -10296,8 +10447,8 @@
       if (chk) state.aceitouTermos = chk.checked;
       abrirModalMenu('privacidade');
     });
-    bind('cadastro-tipo-empresa', function () { lerCadastroDaTela(); state.cadastroTipoPerfil = 'empresa'; render(); });
-    bind('cadastro-tipo-pessoal', function () { lerCadastroDaTela(); state.cadastroTipoPerfil = 'pessoal'; render(); });
+    bind('cadastro-tipo-empresa', function () { lerCadastroDaTela(); state.cadastroTipoPerfil = 'empresa'; salvarRascunhoCadastroMobile(); render(); });
+    bind('cadastro-tipo-pessoal', function () { lerCadastroDaTela(); state.cadastroTipoPerfil = 'pessoal'; salvarRascunhoCadastroMobile(); render(); });
     bind('criar-perfil-inicial-submit', criarPerfilInicial);
     bind('sair-criar-perfil', function () { state.modoCriarPerfil = false; sair(); });
     bind('criar-perfil-empresa', function () { state.criarPerfilTipo = 'empresa'; render(); });
@@ -10670,7 +10821,17 @@
     bind('salvar-categoria', salvarCategoriaDespesa);
     bind('chat-ia-btn', abrirChatIA);
     bind('chat-ia-card', abrirChatIA);
-    bind('abrir-insights-ava', abrirChatIA);
+    bind('abrir-insights-ava', function () {
+      if (recursoExclusivoAssinanteMobile()) {
+        mostrarAvisoAssinanteMobile('Insights da Ava', 'Os Insights da Ava são exclusivos para assinantes. Assine um plano para receber análises dos seus resultados.');
+        return;
+      }
+      abrirChatIA();
+    });
+    bind('fechar-aviso-assinante', function () {
+      state.avisoAssinanteAberto = false;
+      render();
+    });
     bind('chat-ia-fechar', fecharChatIA);
     bind('chat-ia-home', fecharChatIAParaHome);
     bind('chat-ia-mic', function() { gravarVoz(); });
@@ -10716,8 +10877,20 @@
       }
     }
     bind('salvar-despesa', salvarDespesa);
-    bind('abrir-nota-camera', function () { var input = document.getElementById('nota-camera'); if (input) input.click(); });
-    bind('abrir-nota-arquivo', function () { var input = document.getElementById('nota-arquivo'); if (input) input.click(); });
+    bind('abrir-nota-camera', function () {
+      if (recursoExclusivoAssinanteMobile()) {
+        mostrarAvisoAssinanteMobile('Leitura de nota', 'O envio de foto para leitura da nota é uma função exclusiva para assinantes.');
+        return;
+      }
+      var input = document.getElementById('nota-camera'); if (input) input.click();
+    });
+    bind('abrir-nota-arquivo', function () {
+      if (recursoExclusivoAssinanteMobile()) {
+        mostrarAvisoAssinanteMobile('Leitura de nota', 'O envio de arquivo para leitura da nota é uma função exclusiva para assinantes.');
+        return;
+      }
+      var input = document.getElementById('nota-arquivo'); if (input) input.click();
+    });
     bind('limpar-nota-pendente', function () { state.notaArquivoPendente = null; render(); });
     var notaCamera = document.getElementById('nota-camera');
     if (notaCamera) notaCamera.addEventListener('change', function () { var arquivo = this.files && this.files[0]; this.value = ''; if (arquivo) lerNotaPorFotoMobile(arquivo); });
@@ -11142,6 +11315,15 @@
     Array.prototype.forEach.call(document.querySelectorAll('.empresa-opcao'), function (botao) {
       botao.addEventListener('click', function () {
         var id = botao.getAttribute('data-empresa-id');
+        state.perfilSelecionandoId = id || '';
+        Array.prototype.forEach.call(document.querySelectorAll('.empresa-opcao'), function (opcao) {
+          var ativa = opcao === botao;
+          opcao.setAttribute('aria-pressed', ativa ? 'true' : 'false');
+          opcao.classList.toggle('border-blue-600', ativa);
+          opcao.classList.toggle('border-slate-200', !ativa);
+          opcao.classList.toggle('bg-cyan-50', ativa);
+          opcao.classList.toggle('bg-white', !ativa);
+        });
         selecionarEmpresaMobile(id, true);
         state.modalMenu = '';
         state.visao = 'home';

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   ESTADOS_BRASIL,
   REGIMES_TRIBUTARIOS,
@@ -36,6 +36,9 @@ export default function CadastroPerfilModal({ aberto, empresaId, statusInicial, 
   const [salvando, setSalvando] = useState(false);
   const [buscandoCep, setBuscandoCep] = useState(false);
   const [erro, setErro] = useState('');
+  const [statusAutoSave, setStatusAutoSave] = useState('');
+  const autoSaveEmAndamento = useRef(false);
+  const autoSavePendente = useRef<CadastroPerfil | null>(null);
 
   useEffect(() => {
     if (!aberto || !empresaId) return;
@@ -85,9 +88,42 @@ export default function CadastroPerfilModal({ aberto, empresaId, statusInicial, 
     } finally { setBuscandoCep(false); }
   };
 
+  const salvarRascunhoAutomatico = async (rascunho: CadastroPerfil) => {
+    if (autoSaveEmAndamento.current) {
+      autoSavePendente.current = rascunho;
+      return;
+    }
+
+    autoSaveEmAndamento.current = true;
+    setStatusAutoSave('Salvando alterações...');
+    try {
+      const { data: sessao } = await (await import('../lib/supabase')).supabase.auth.getSession();
+      const token = sessao.session?.access_token;
+      const resposta = await fetch('/api/perfil-cadastro', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+        body: JSON.stringify({ empresaId, dados: rascunho, concluir: false }),
+      });
+      const json = await resposta.json();
+      if (!resposta.ok) throw new Error(json.mensagem || 'Não foi possível salvar automaticamente.');
+      setStatus(json);
+      setStatusAutoSave('Alterações salvas automaticamente.');
+    } catch (e) {
+      setStatusAutoSave(e instanceof Error ? e.message : 'Não foi possível salvar automaticamente.');
+    } finally {
+      autoSaveEmAndamento.current = false;
+      const pendente = autoSavePendente.current;
+      autoSavePendente.current = null;
+      if (pendente) void salvarRascunhoAutomatico(pendente);
+    }
+  };
+
   const salvar = async () => {
     setSalvando(true); setErro('');
     try {
+      while (autoSaveEmAndamento.current) {
+        await new Promise((resolve) => window.setTimeout(resolve, 50));
+      }
       const { data: sessao } = await (await import('../lib/supabase')).supabase.auth.getSession();
       const token = sessao.session?.access_token;
       const resposta = await fetch('/api/perfil-cadastro', {
@@ -151,7 +187,13 @@ export default function CadastroPerfilModal({ aberto, empresaId, statusInicial, 
               <p className="mx-auto mt-2 max-w-lg text-sm text-slate-600">O cadastro deste perfil precisa ser concluído por um Gestor Master ou Administrador para continuar.</p>
             </div>
           ) : (
-            <div className="grid gap-4">
+            <div
+              className="grid gap-4"
+              onBlur={(evento) => {
+                if (!(evento.target instanceof HTMLInputElement || evento.target instanceof HTMLSelectElement)) return;
+                void salvarRascunhoAutomatico(dados);
+              }}
+            >
               <div>
                 <h3 className="mb-2 border-b border-slate-200 pb-1 text-xs font-black uppercase text-sky-800">Dados Gerais</h3>
                 <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
@@ -198,6 +240,7 @@ export default function CadastroPerfilModal({ aberto, empresaId, statusInicial, 
             </div>
           )}
           {erro && <p className="mt-3 rounded-lg bg-red-50 px-3 py-2 text-xs font-bold text-red-700">{erro}</p>}
+          {statusAutoSave && <p className="mt-2 text-[11px] font-bold text-slate-500">{statusAutoSave}</p>}
         </div>
 
         <footer className={`shrink-0 border-t border-slate-200 bg-slate-50 px-4 py-3 ${contexto === 'lembrete' ? 'grid grid-cols-3 gap-1.5' : 'flex justify-end gap-2'}`}>

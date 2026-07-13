@@ -56,6 +56,8 @@ function telefoneCadastroConfirmado(metadata: Record<string, unknown> | null | u
   return digitos;
 }
 
+const CHAVE_RASCUNHO_CADASTRO_WEB = 'avantalab_web_rascunho_cadastro';
+
 // ---------------------------------------------------------------------------
 // Hook
 // ---------------------------------------------------------------------------
@@ -139,6 +141,59 @@ export function useAuth(deps: UseAuthDeps) {
   const [criandoEmpresaInicial, setCriandoEmpresaInicial] = useState(false);
   const criandoEmpresaInicialRef = useRef(false);
   const [criandoNovaEmpresaLogada, setCriandoNovaEmpresaLogada] = useState(false);
+  const [rascunhoCadastroCarregado, setRascunhoCadastroCarregado] = useState(false);
+
+  // Mantém o formulário resiliente a remontagens/recargas da tela durante o cadastro.
+  // O rascunho fica restrito à aba atual e é removido assim que o cadastro termina.
+  useEffect(() => {
+    try {
+      const rascunho = JSON.parse(sessionStorage.getItem(CHAVE_RASCUNHO_CADASTRO_WEB) || 'null') as {
+        nome?: string;
+        nomeEmpresa?: string;
+        email?: string;
+        telefone?: string;
+        cupom?: string;
+        ddi?: string;
+        tipoPerfil?: TipoPerfil;
+      } | null;
+      if (rascunho) {
+        // Restauração única de estado externo da própria aba.
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        setCadastroNome(rascunho.nome || '');
+        setCadastroNomeEmpresa(rascunho.nomeEmpresa || '');
+        setCadastroEmail(rascunho.email || '');
+        setCadastroTelefone(rascunho.telefone || '');
+        setCadastroCupom(rascunho.cupom || '');
+        setCadastroDdi(rascunho.ddi || DDI_PADRAO);
+        setTipoPerfilInicial(normalizarTipoPerfil(rascunho.tipoPerfil));
+      }
+    } catch {}
+    setRascunhoCadastroCarregado(true);
+  }, []);
+
+  useEffect(() => {
+    if (!rascunhoCadastroCarregado) return;
+    try {
+      sessionStorage.setItem(CHAVE_RASCUNHO_CADASTRO_WEB, JSON.stringify({
+        nome: cadastroNome,
+        nomeEmpresa: cadastroNomeEmpresa,
+        email: cadastroEmail,
+        telefone: cadastroTelefone,
+        cupom: cadastroCupom,
+        ddi: cadastroDdi,
+        tipoPerfil: tipoPerfilInicial,
+      }));
+    } catch {}
+  }, [
+    rascunhoCadastroCarregado,
+    cadastroNome,
+    cadastroNomeEmpresa,
+    cadastroEmail,
+    cadastroTelefone,
+    cadastroCupom,
+    cadastroDdi,
+    tipoPerfilInicial,
+  ]);
 
   // ---------------------------------------------------------------------------
   // Efeitos — contagem regressiva para reenvio de SMS
@@ -557,6 +612,7 @@ export function useAuth(deps: UseAuthDeps) {
     setSegundosReenvioSms(0);
     setReenviandoSmsCadastro(false);
     setCadastroDdi(DDI_PADRAO);
+    try { sessionStorage.removeItem(CHAVE_RASCUNHO_CADASTRO_WEB); } catch {}
     setModoAuth('login');
   };
 

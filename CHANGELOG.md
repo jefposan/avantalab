@@ -1,5 +1,17 @@
 # Changelog
 
+## 1.4.0.53 - 2026-07-13
+
+- Mobile: o cabeçalho de Novo lançamento exibe o mês selecionado e corrige a acentuação do título para despesas e receitas.
+- Mobile: foto e arquivo de nota, Ava IA e Insights da Ava ficam exclusivos para assinantes, com aviso azul explicativo no app.
+- Mobile: atualiza o tutorial para os fluxos atuais de perfis, lançamentos, Caixinha, recursos de assinatura e configurações.
+
+## 1.4.0.52 - 2026-07-13
+
+- Mobile: destaca com borda azul o perfil atual e o perfil tocado durante a troca.
+- Cadastro Web/Mobile: preserva o preenchimento durante reconstruções da tela e salva automaticamente o cadastro do perfil ao sair de cada campo.
+- Mobile: adiciona topo colorido ao card da Caixinha, alinhado ao padrão visual dos demais cards.
+
 ## 1.4.0.51 - 2026-07-13
 
 - Lançamentos por foto: destaca Arquivo e Foto com as cores do sistema no Web e Mobile.
