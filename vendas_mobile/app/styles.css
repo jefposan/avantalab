@@ -799,7 +799,7 @@ body { background: #fff; color: var(--ink); }
 .sidebar footer { margin-top: auto; border-top: 1px solid var(--line); padding: 27px 12px 15px; color: #b1b5bc; font-size: 12px; text-align: center; }
 .sidebar footer b { color: var(--tridium-dark); }
 .main-area { width: calc(100% - 255px); min-height: 100dvh; margin-left: 255px; background: #fff; }
-.system-header { position: sticky; top: 0; z-index: 20; display: flex; height: 59px; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--line); padding: 0 26px; background: rgba(255,255,255,.96); }
+.system-header { position: fixed; top: 0; right: 0; left: 255px; z-index: 50; display: flex; height: 59px; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--line); padding: 0 26px; background: rgba(255,255,255,.96); }
 .system-header h1 { margin: 0; font-size: 19px; font-weight: 760; }
 .system-brand { display: flex; align-items: center; margin-right: auto; }
 .system-brand img { width: 140px; height: 42px; object-fit: contain; }
@@ -860,6 +860,7 @@ body { background: #fff; color: var(--ink); }
 .module-title { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; }
 .module-title h2 { margin: 0; color: #303036; font-size: 25px; letter-spacing: -.03em; }
 .module-title p { margin: 5px 0 0; color: #777b83; font-size: 14px; }
+.module-sticky-head { position: sticky; top: 59px; z-index: 20; display: grid; gap: 12px; margin: -16px -16px 0; padding: 16px 16px 12px; background: #fff; box-shadow: 0 8px 12px -14px rgba(15,23,42,.35); }
 .module-toolbar { display: flex; align-items: center; gap: 10px; min-height: 60px; padding: 10px 12px; border: 1px solid #e2e3e6; border-radius: 12px; background: #fff; box-shadow: 0 2px 5px rgba(0,0,0,.04); }
 .module-toolbar .search-box { flex: 1 1 260px; margin: 0; }
 .module-toolbar .search-box input { min-height: 38px; border: 1px solid #e1e4e8; border-radius: 8px; background: #fafbfc; }
@@ -1136,22 +1137,22 @@ body { background: #fff; color: var(--ink); }
 .remember-option input:checked + span { border-color: #1F8A9E; background: #1F8A9E; }
 .login-field input { outline-color: #1687D9; }
 .client-card-grid { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 24px; }
-.client-card { position: relative; overflow: hidden; border: 1px solid #e2e3e6; border-radius: 12px; padding: 20px; background: #fff; box-shadow: 0 2px 5px rgba(0,0,0,.06); transition: box-shadow .2s ease, transform .2s ease; }
+.client-card { position: relative; overflow: hidden; border: 1px solid #e2e3e6; border-radius: 12px; padding: 0; background: #fff; box-shadow: 0 2px 5px rgba(0,0,0,.06); transition: box-shadow .2s ease, transform .2s ease; }
 .client-card:hover { transform: translateY(-1px); box-shadow: 0 7px 18px rgba(0,0,0,.1); }
 .client-card.inactive { opacity: .7; filter: grayscale(.8); }
 .client-disabled { position: absolute; top: 0; right: 0; border-radius: 0 0 0 8px; padding: 4px 8px; color: #fff; background: #ef4444; font-size: 10px; font-weight: 800; }
-.client-card-header { display: flex; align-items: flex-start; gap: 12px; }
-.client-avatar { display: grid; width: 48px; height: 48px; flex: 0 0 48px; place-items: center; border-radius: 999px; color: #7c3fc5; background: #f1e9fb; font-size: 16px; font-weight: 800; }
+.client-card-header { display: flex; align-items: center; gap: 9px; padding: 12px 14px; color: #fff; background: linear-gradient(135deg, #0A1F44, #1687D9); }
+.client-avatar { display: grid; width: 34px; height: 34px; flex: 0 0 34px; place-items: center; border-radius: 999px; color: #0A1F44; background: #fff; font-size: 12px; font-weight: 900; }
 .client-identity { min-width: 0; flex: 1; }
-.client-identity h3 { overflow: hidden; margin: 2px 0 3px; color: #292c31; font-size: 17px; white-space: nowrap; text-overflow: ellipsis; }
+.client-identity h3 { overflow: hidden; margin: 0; color: #fff; font-size: 15px; white-space: nowrap; text-overflow: ellipsis; }
 .client-identity p { margin: 0; color: #80858d; font-size: 13px; }
-.client-more { width: 32px; height: 32px; border: 0; border-radius: 7px; color: #6c7178; background: transparent; font-size: 24px; line-height: 1; }
-.client-more:hover { background: #f2f4f5; }
-.client-inactive { margin: 7px 0 0 auto; border-radius: 999px; padding: 4px 8px; color: #b42318; background: #fee4e2; font-size: 10px; font-weight: 900; text-transform: uppercase; }
+.client-more { width: 30px; height: 30px; border: 0; border-radius: 7px; color: #fff; background: rgba(255,255,255,.12); font-size: 22px; line-height: 1; }
+.client-more:hover { background: rgba(255,255,255,.24); }
+.client-inactive { margin: 0 0 0 auto; border-radius: 999px; padding: 4px 8px; color: #fff; background: rgba(190,24,93,.82); font-size: 10px; font-weight: 900; text-transform: uppercase; }
 .client-card-header .client-inactive + .client-more { margin-left: 0; }
 .client-status-row { margin: 13px 0 18px 60px; }
 .client-status { display: inline-flex; border-radius: 999px; padding: 4px 9px; color: #24846d; background: #e7f7ef; font-size: 11px; font-weight: 800; }
-.client-contact-list { display: grid; gap: 9px; margin-bottom: 14px; }
+.client-contact-list { display: grid; gap: 9px; margin: 0 14px 14px; padding-top: 14px; }
 .client-contact-list p { display: flex; min-width: 0; align-items: flex-start; gap: 9px; margin: 0; color: #747a82; font-size: 13px; line-height: 1.35; }
 .client-contact-list p span { width: 18px; flex: 0 0 18px; color: #8b9097; text-align: center; }
 .client-contact-list .client-whatsapp { color: #596068; font-size: 15px; font-weight: 700; }
@@ -1164,7 +1165,7 @@ body { background: #fff; color: var(--ink); }
 .client-address-link { display: flex; min-width: 0; align-items: flex-start; gap: 8px; border: 0; padding: 0; color: #526477; background: transparent; font-size: 12px; font-weight: 650; text-align: left; }
 .client-address-link .svg-icon { width: 16px; height: 16px; flex: 0 0 16px; color: #1687D9; }
 .client-address-link span { overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
-.client-values { display: grid; grid-template-columns: 1fr 1fr; gap: 7px; }
+.client-values { display: grid; grid-template-columns: 1fr 1fr; gap: 7px; margin: 0 14px; }
 .client-values > div { display: flex; min-height: 42px; flex-direction: column; align-items: flex-start; justify-content: center; gap: 3px; border-radius: 8px; padding: 8px 9px; color: #747a82; background: #f5f6f7; font-size: 10px; }
 .client-values b { color: #248b85; font-size: 13px; }
 .client-debt-highlight { border: 1px solid #1687D9; background: #edf6ff !important; box-shadow: inset 3px 0 0 #1687D9; }
@@ -1176,7 +1177,7 @@ body { background: #fff; color: var(--ink); }
 .client-values .credit b { color: #15803d; }
 .client-values strong { display: flex; flex-direction: column; align-items: flex-end; }
 .client-values strong small { margin-top: 2px; color: #858b93; font-size: 10px; font-weight: 600; }
-.client-actions { display: grid; gap: 8px; margin-top: 13px; }
+.client-actions { display: grid; gap: 8px; margin: 13px 14px 14px; }
 .client-actions button { min-height: 38px; border: 0; border-radius: 8px; color: #fff; font-size: 12px; font-weight: 800; }
 .client-details { width: 100%; background: #0A1F44; }
 .client-actions > div { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
@@ -1216,7 +1217,7 @@ body { background: #fff; color: var(--ink); }
   .menu-backdrop { position: fixed; inset: 0; z-index: 40; border: 0; background: rgba(0,0,0,.35); }
   .main-area { width: 100%; margin-left: 0; }
   .menu-toggle { display: inline-block; }
-  .system-header { padding: 0 16px; }
+  .system-header { left: 0; padding: 0 16px; }
   .system-brand img { width: 126px; height: 40px; }
   .content-area { padding: 28px 16px calc(env(safe-area-inset-bottom) + 92px); }
   .module-title { flex-wrap: wrap; }
@@ -1247,7 +1248,7 @@ body { background: #fff; color: var(--ink); }
   .settings-page > h2 { font-size: 21px; }
   .settings-form { flex-direction: column; }
   .client-card-grid { grid-template-columns: 1fr; gap: 16px; }
-  .client-card { padding: 18px; }
+  .client-card { padding: 0; }
   .client-contact-list p { font-size: 15px; }
   .client-contact-list .client-whatsapp { font-size: 17px; }
   .client-values > div { min-height: 50px; font-size: 15px; }

@@ -256,7 +256,7 @@ function render() {
     requestAnimationFrame(limparFocoInicialLogin);
     return;
   }
-  const cabecalho = `<header class="system-header"><button class="system-brand brand-home" onclick="abrirSalaBotoes()" aria-label="Ir para a sala de botões"><img src="./assets/logo-avantalab.png" alt="AvantaLab" /></button><button class="home-button" onclick="abrirSalaBotoes()" aria-label="Ir para a sala de botões" title="Sala de botões"><img src="./assets/home-button-house.png" alt="" /></button></header>`;
+  const cabecalho = `<header class="system-header"><button class="system-brand brand-home" onclick="abrirSalaBotoes()" aria-label="Ir para a sala de botões"><img src="./assets/logo-avantalab.png" alt="AvantaLab" /></button></header>`;
   app.innerHTML = `
     <aside class="sidebar ${state.menuAberto ? 'open' : ''}">
       <button class="sidebar-brand brand-home" onclick="abrirSalaBotoes()" aria-label="Ir para a sala de botões"><img src="./assets/logo-avantalab.png" alt="AvantaLab" /></button>
@@ -376,7 +376,7 @@ function renderNavegacaoInferior() {
     ${itemNavegacaoInferior('nav-tema', 'tema', 'Tema', 'tema')}
     <button id="nav-novo" type="button" class="vendas-nav-add" onclick="acionarNavegacaoInferior(event, 'novo')" aria-label="Lançar pedido ou pagamento"><span>+</span><b>Lançar</b></button>
     ${itemNavegacaoInferior('nav-agenda', 'calendar', 'Agenda', 'agenda')}
-    ${itemNavegacaoInferior('nav-sair', 'log-out', 'Sair', 'sair')}
+    ${itemNavegacaoInferior('nav-inicio', 'home', 'Início', 'inicio')}
   </div></nav>`;
 }
 
@@ -392,7 +392,7 @@ function acionarNavegacaoInferior(event, destino) {
     else if (destino === 'tema') alternarTema(!state.temaEscuro);
     else if (destino === 'novo') abrirAcoesRapidas();
     else if (destino === 'agenda') setAba('agenda');
-    else if (destino === 'sair') sairSistema();
+    else if (destino === 'inicio') abrirSalaBotoes();
   }, 130);
 }
 
@@ -969,8 +969,7 @@ function renderClientes() {
   const clientes = clientesFiltrados();
   return `
     <section class="module-page">
-      <div class="module-title"><div><h2>Clientes</h2><p>Gerencie seus clientes</p></div><button class="primary" onclick="abrirCliente()">＋ Novo cliente</button></div>
-      ${renderBarraBusca('Pesquisar', 'Ordem Alfabética')}
+      <div class="module-sticky-head"><div class="module-title"><div><h2>Clientes</h2><p>Gerencie seus clientes</p></div><button class="primary" onclick="abrirCliente()">＋ Novo cliente</button></div>${renderBarraBusca('Pesquisar', 'Ordem Alfabética')}</div>
       ${clientes.length ? `<section class="client-card-grid">${clientes.map(renderCliente).join('')}</section>` : `<article class="empty-module"><h3>Nenhum cliente cadastrado</h3><p>Cadastre o primeiro cliente para iniciar suas vendas.</p></article>`}
     </section>
   `;
@@ -989,7 +988,7 @@ function renderCliente(c) {
     <article class="client-card ${c.ativo === false ? 'inactive' : ''}">
       <header class="client-card-header">
         <div class="client-avatar">${escapeHtml(iniciais)}</div>
-        <div class="client-identity"><h3>${escapeHtml(c.nome)}</h3><p>Cliente</p></div>
+        <div class="client-identity"><h3>${escapeHtml(c.nome)}</h3></div>
         ${c.ativo === false ? '<span class="client-inactive">Inativo</span>' : ''}
         <button class="client-more" aria-label="Opções do cliente" onclick="abrirMenuCliente('${c.id}')">⋮</button>
       </header>
@@ -1561,8 +1560,13 @@ function abrirConfiguracoes() {
       ${campo('cfgNome', 'Nome do vendedor', state.usuario.nome || '')}
       <button class="primary" onclick="salvarConfiguracoes()">Salvar</button>
       <button class="danger" onclick="resetarDados()">Apagar dados locais</button>
+      <button class="danger settings-exit" onclick="abrirConfirmacaoSair()">${svgIcon('log-out')} Sair do Vendas</button>
     </div>
   `);
+}
+
+function abrirConfirmacaoSair() {
+  sheet(`<div class="sheet-header"><div><h2>Sair do Vendas</h2><p class="muted small">Você precisará entrar novamente para acessar seus dados.</p></div><button class="close" onclick="fecharSheet()">×</button></div><div class="grid"><button class="danger" onclick="fecharSheet();sairSistema()">Confirmar saída</button><button class="ghost" onclick="fecharSheet()">Cancelar</button></div>`, 'sheet-backdrop-centered');
 }
 
 function salvarConfiguracoes() {
@@ -1660,6 +1664,7 @@ window.setAba = setAba;
 window.state = state;
 window.abrirGestao = abrirGestao;
 window.abrirConfiguracoes = abrirConfiguracoes;
+window.abrirConfirmacaoSair = abrirConfirmacaoSair;
 window.salvarConfiguracoes = salvarConfiguracoes;
 window.resetarDados = resetarDados;
 window.carregarPacoteTridium = carregarPacoteTridium;
