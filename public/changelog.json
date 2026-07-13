@@ -13,6 +13,16 @@
   },
   "versoes": [
     {
+      "versao": "1.4.0.56",
+      "titulo": "Ajustes no lançamento web",
+      "data": "Julho/2026",
+      "itens": [
+        "Web: mantém a fonte da despesa selecionada e da lista no mesmo tamanho do seletor.",
+        "Web: remove o lançamento por foto e mantém somente o envio por arquivo.",
+        "Web: avança o foco automaticamente após dois dígitos válidos no dia e após selecionar a despesa."
+      ]
+    },
+    {
       "versao": "1.4.0.55",
       "titulo": "Troca de perfil e mês do lançamento",
       "data": "Julho/2026",

@@ -73,7 +73,8 @@ export default function CardLancamentoDespesa({
   notaPendente = false,
   limparNotaPendente,
 }: CardLancamentoDespesaProps) {
-  const cameraRef = useRef<HTMLInputElement>(null);
+  const despesaRef = useRef<HTMLSelectElement>(null);
+  const descricaoRef = useRef<HTMLInputElement>(null);
   const arquivoRef = useRef<HTMLInputElement>(null);
   const inputBase = `h-9 w-full rounded-md border px-2.5 text-xs font-semibold shadow-sm outline-none transition focus:ring-1 ${
     darkMode
@@ -135,11 +136,18 @@ export default function CardLancamentoDespesa({
             max={getMaxDias(mesAtivo, anoSelecionado)}
             value={formDia}
             onChange={(e) => {
-              const val = parseInt(e.target.value);
-              if (val > getMaxDias(mesAtivo, anoSelecionado)) {
-                setFormDia(getMaxDias(mesAtivo, anoSelecionado).toString());
-              } else {
-                setFormDia(e.target.value);
+              const valorDigitado = e.target.value;
+              const maxDias = getMaxDias(mesAtivo, anoSelecionado);
+              const val = parseInt(valorDigitado, 10);
+
+              if (val > maxDias) {
+                setFormDia(maxDias.toString());
+                return;
+              }
+
+              setFormDia(valorDigitado);
+              if (/^\d{2}$/.test(valorDigitado) && val >= 1 && val <= maxDias) {
+                despesaRef.current?.focus();
               }
             }}
             onFocus={onFoco}
@@ -149,10 +157,14 @@ export default function CardLancamentoDespesa({
           />
 
           <select
+            ref={despesaRef}
             value={formDespesa}
-            onChange={(e) => setFormDespesa(e.target.value)}
+            onChange={(e) => {
+              setFormDespesa(e.target.value);
+              if (e.target.value) descricaoRef.current?.focus();
+            }}
             onFocus={onFoco}
-            className={`${inputBase} select-despesa-compacto truncate pr-1 ${formDespesa ? 'text-[9px]' : 'text-xs'}`}
+            className={`${inputBase} select-despesa-compacto truncate pr-1`}
             style={{
               outlineColor: corPrimaria,
               color: formDespesa
@@ -171,7 +183,7 @@ export default function CardLancamentoDespesa({
               <option
                 key={d.nome}
                 value={d.nome}
-                className={darkMode ? 'bg-slate-700 text-[9px] text-white' : 'bg-white text-[9px] text-slate-800'}
+                className={darkMode ? 'bg-slate-700 text-xs text-white' : 'bg-white text-xs text-slate-800'}
               >
                 {d.nome}
               </option>
@@ -179,6 +191,7 @@ export default function CardLancamentoDespesa({
           </select>
 
           <input
+            ref={descricaoRef}
             type="text"
             value={formDescricao}
             onChange={(e) => setFormDescricao(e.target.value)}
@@ -283,18 +296,6 @@ export default function CardLancamentoDespesa({
 
             <div className="ml-auto flex items-center gap-1.5">
               <input
-                ref={cameraRef}
-                type="file"
-                accept="image/jpeg,image/png,image/webp"
-                capture="environment"
-                className="hidden"
-                onChange={(event) => {
-                  const arquivo = event.target.files?.[0];
-                  event.target.value = '';
-                  if (arquivo) lerNotaPorFoto(arquivo);
-                }}
-              />
-              <input
                 ref={arquivoRef}
                 type="file"
                 accept="image/jpeg,image/png,image/webp"
@@ -314,16 +315,6 @@ export default function CardLancamentoDespesa({
               >
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" className="h-3.5 w-3.5"><path strokeLinecap="round" strokeLinejoin="round" d="M14 3H6a2 2 0 00-2 2v14a2 2 0 002 2h12a2 2 0 002-2V9l-6-6Z"/><path strokeLinecap="round" strokeLinejoin="round" d="M14 3v6h6M8 14h8M8 17h5"/></svg>
                 Arquivo
-              </button>
-              <button
-                type="button"
-                onClick={() => cameraRef.current?.click()}
-                disabled={lendoNota || salvandoDespesa}
-                title="Fotografar nota"
-                className="flex h-7 items-center gap-1 rounded-full border border-[#0878ad] bg-[#0b80bd] px-2 text-[10px] font-black uppercase text-white shadow-sm transition hover:bg-[#096fa6] active:scale-95 disabled:opacity-60"
-              >
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" className="h-3.5 w-3.5"><path strokeLinecap="round" strokeLinejoin="round" d="M4 8h3l1.3-2h7.4L17 8h3v11H4V8Z"/><circle cx="12" cy="13" r="3.2"/></svg>
-                Foto
               </button>
             </div>
           </div>

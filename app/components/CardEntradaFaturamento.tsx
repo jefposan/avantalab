@@ -1,6 +1,6 @@
 'use client';
 
-import type { ChangeEvent, Dispatch, SetStateAction } from 'react';
+import { useRef, type ChangeEvent, type Dispatch, type SetStateAction } from 'react';
 import TabelaEntradasFaturamento, {
   type EntradaFaturamento,
 } from './TabelaEntradasFaturamento';
@@ -83,6 +83,7 @@ export default function CardEntradaFaturamento({
   onFocoReceita,
   ativo = false,
 }: CardEntradaFaturamentoProps) {
+  const origemRef = useRef<HTMLInputElement>(null);
   const inputBase = `h-9 w-full rounded-md border px-2.5 text-xs font-semibold shadow-sm outline-none transition focus:ring-1 ${
     darkMode
       ? 'border-slate-600 bg-slate-700 text-white placeholder:text-slate-400'
@@ -192,13 +193,17 @@ export default function CardEntradaFaturamento({
             value={entradaFaturamentoDia}
             onFocus={onFocoReceita}
             onChange={(e) => {
-              const valor = parseInt(e.target.value, 10);
+              const valorDigitado = e.target.value;
+              const valor = parseInt(valorDigitado, 10);
               const maxDias = mesAtivo ? getMaxDias(mesAtivo, anoSelecionado) : 31;
 
               if (valor > maxDias) {
                 setEntradaFaturamentoDia(String(maxDias));
               } else {
-                setEntradaFaturamentoDia(e.target.value);
+                setEntradaFaturamentoDia(valorDigitado);
+                if (/^\d{2}$/.test(valorDigitado) && valor >= 1 && valor <= maxDias) {
+                  origemRef.current?.focus();
+                }
               }
             }}
             placeholder="Dia"
@@ -207,6 +212,7 @@ export default function CardEntradaFaturamento({
           />
 
           <input
+            ref={origemRef}
             type="text"
             value={entradaFaturamentoOrigem}
             onFocus={onFocoReceita}

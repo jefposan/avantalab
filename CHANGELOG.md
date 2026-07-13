@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.4.0.56 - 2026-07-13
+
+- Web: mantém o tamanho da fonte da despesa selecionada e de sua lista no lançamento.
+- Web: remove o lançamento de nota por foto e mantém somente o envio por arquivo.
+- Web: avança automaticamente o foco entre dia, despesa, descrição e origem durante o lançamento.
+
 ## 1.4.0.55 - 2026-07-13
 
 - Mobile: mostra "Carregando perfil..." ao lado do perfil selecionado durante a troca.
