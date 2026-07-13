@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.5.0.01 - 2026-07-12
+
+- Mobile: atualiza o identificador do script para carregar imediatamente os controles de lançamento por foto em navegadores e PWA.
+
 ## 1.5.0 - 2026-07-12
 
 - Lançamentos Web/Mobile: adiciona leitura de notas por foto ou arquivo, preenchendo data, valor e sugestão de despesa.

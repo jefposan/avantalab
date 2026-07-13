@@ -13,6 +13,14 @@
   },
   "versoes": [
     {
+      "versao": "1.5.0.01",
+      "titulo": "Atualização do lançamento por foto",
+      "data": "Julho/2026",
+      "itens": [
+        "Mobile: força o carregamento da nova interface de lançamento por foto também no PWA."
+      ]
+    },
+    {
       "versao": "1.5.0",
       "titulo": "Lançamentos por foto",
       "data": "Julho/2026",
