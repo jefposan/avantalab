@@ -1426,16 +1426,14 @@ function abrirNovoPedidoGeral() {
 function abrirNovoPedidoCliente(clienteId, permitirSelecao = false) {
   const cliente = state.clientes.find((item) => item.id === clienteId);
   if (!cliente) return;
-  const produtos = produtosDisponiveisPedido();
-  const primeiroProduto = produtos[0] || null;
   pedidoClienteRascunho = {
     clienteId,
     permitirSelecaoCliente: Boolean(permitirSelecao),
     tipo: 'venda',
     data: isoData(new Date()),
-    produtoId: primeiroProduto?.id || '',
+    produtoId: '',
     quantidade: 1,
-    preco: Number(primeiroProduto?.preco || 0),
+    preco: 0,
     desconto: 0,
     itens: [],
   };
@@ -1454,17 +1452,19 @@ function mostrarCardPedidoCliente() {
     : '<p class="transaction-empty">Nenhum item inserido.</p>';
   sheet(`
     <div class="sheet-header"><div><h2>Novo pedido</h2><p class="muted small">${rascunho.permitirSelecaoCliente ? 'Selecione o cliente' : escapeHtml(cliente.nome)}</p></div><button class="close" onclick="fecharSheet()">×</button></div>
-    <div class="client-transaction-scroll">
-      ${rascunho.permitirSelecaoCliente ? `<label class="transaction-field transaction-client-select"><span>Cliente</span><select id="pedidoClienteSelecionado" onchange="selecionarClientePedido(this.value)">${clientes.map((item) => `<option value="${item.id}" ${item.id === rascunho.clienteId ? 'selected' : ''}>${escapeHtml(item.nome)}</option>`).join('')}</select></label>` : ''}
-      <div class="transaction-type-switch"><button type="button" class="${rascunho.tipo === 'venda' ? 'active' : ''}" onclick="selecionarTipoPedidoCliente('venda')">Venda</button><button type="button" class="${rascunho.tipo === 'consignado' ? 'active' : ''}" onclick="selecionarTipoPedidoCliente('consignado')">Consignado</button></div>
-      <label class="transaction-field"><span>Data do pedido</span><input id="pedidoClienteData" type="date" value="${escapeAttr(rascunho.data)}" onchange="pedidoClienteRascunho.data=this.value"></label>
+    <div class="order-transaction-layout">
+      <div class="order-transaction-fixed">
+        ${rascunho.permitirSelecaoCliente ? `<label class="transaction-field transaction-client-select"><span>Cliente</span><select id="pedidoClienteSelecionado" onchange="selecionarClientePedido(this.value)">${clientes.map((item) => `<option value="${item.id}" ${item.id === rascunho.clienteId ? 'selected' : ''}>${escapeHtml(item.nome)}</option>`).join('')}</select></label>` : ''}
+        <div class="transaction-type-switch"><button type="button" class="${rascunho.tipo === 'venda' ? 'active' : ''}" onclick="selecionarTipoPedidoCliente('venda')">Venda</button><button type="button" class="${rascunho.tipo === 'consignado' ? 'active' : ''}" onclick="selecionarTipoPedidoCliente('consignado')">Consignado</button></div>
+        <label class="transaction-field order-date-field"><span>Data do pedido</span><input id="pedidoClienteData" type="date" value="${escapeAttr(rascunho.data)}" onchange="pedidoClienteRascunho.data=this.value"></label>
       <article class="order-product-entry">
         <h3>Inserir produto</h3>
-        ${produtos.length ? `<label class="transaction-field"><span>Produto</span><select id="pedidoClienteProduto" onchange="selecionarProdutoPedidoCliente(this.value)">${produtos.map((produto) => `<option value="${produto.id}" ${produto.id === rascunho.produtoId ? 'selected' : ''}>${escapeHtml(produto.nome)}</option>`).join('')}</select></label>
+        ${produtos.length ? `<label class="transaction-field"><span>Produto</span><select id="pedidoClienteProduto" onchange="selecionarProdutoPedidoCliente(this.value)"><option value="" ${rascunho.produtoId ? '' : 'selected'} disabled>Selecione o produto</option>${produtos.map((produto) => `<option value="${produto.id}" ${produto.id === rascunho.produtoId ? 'selected' : ''}>${escapeHtml(produto.nome)}</option>`).join('')}</select></label>
         <div class="order-item-fields"><label class="transaction-field"><span>Quantidade</span><div class="quantity-stepper"><button type="button" onclick="ajustarQuantidadePedidoCliente(-1)">−</button><input id="pedidoClienteQuantidade" type="number" min="1" step="1" inputmode="numeric" value="${escapeAttr(rascunho.quantidade)}" onfocus="if(this.value==='1')this.value=''" oninput="sincronizarQuantidadePedidoCliente(this.value)" onblur="normalizarQuantidadePedidoCliente()"><button type="button" onclick="ajustarQuantidadePedidoCliente(1)">+</button></div></label><label class="transaction-field"><span>Preço</span><input id="pedidoClientePreco" type="number" min="0" step="0.01" inputmode="decimal" value="${Number(rascunho.preco || 0).toFixed(2)}" oninput="pedidoClienteRascunho.preco=Number(this.value||0)"></label></div>
         <button type="button" class="primary order-insert-item" onclick="inserirItemPedidoCliente()">Inserir item</button>` : '<p class="transaction-empty">Cadastre produtos antes de criar um pedido.</p>'}
       </article>
-      <section class="order-draft-items"><h3>Itens do pedido</h3>${itensHtml}</section>
+      </div>
+      <section class="order-draft-scroll"><div class="order-draft-items"><h3>Itens do pedido</h3>${itensHtml}</div></section>
       <section class="transaction-totals">
         <div><span>Subtotal</span><b id="pedidoClienteSubtotal">${moeda(totais.subtotal)}</b></div>
         <label><span>Desconto</span><input id="pedidoClienteDesconto" type="number" min="0" step="0.01" inputmode="decimal" value="${Number(totais.desconto).toFixed(2)}" oninput="atualizarDescontoPedidoCliente(this.value)"></label>
@@ -1472,7 +1472,7 @@ function mostrarCardPedidoCliente() {
       </section>
     </div>
     <footer class="client-transaction-footer"><button type="button" class="primary" onclick="finalizarPedidoCliente()">Finalizar pedido <b id="pedidoClienteBotaoTotal">(${moeda(totais.total)})</b></button></footer>
-  `, 'sheet-backdrop-centered client-transaction-backdrop');
+  `, 'sheet-backdrop-centered client-transaction-backdrop order-transaction-backdrop');
 }
 
 function selecionarTipoPedidoCliente(tipo) {
@@ -1526,8 +1526,9 @@ function inserirItemPedidoCliente() {
   if (!produto) { toast('Selecione um produto.'); return; }
   if (preco < 0) { toast('Informe um preço válido.'); return; }
   pedidoClienteRascunho.itens.push({ produto_id: produto.id, produto_nome: produto.nome, produto_sku: produto.sku || null, quantidade, preco });
+  pedidoClienteRascunho.produtoId = '';
   pedidoClienteRascunho.quantidade = 1;
-  pedidoClienteRascunho.preco = Number(produto.preco || 0);
+  pedidoClienteRascunho.preco = 0;
   mostrarCardPedidoCliente();
 }
 

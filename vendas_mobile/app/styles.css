@@ -1239,19 +1239,27 @@ body { background: #fff; color: var(--ink); }
 .client-transaction-backdrop .sheet { display: flex; width: min(94vw, 470px); max-height: calc(100dvh - env(safe-area-inset-bottom) - 108px); flex-direction: column; overflow: hidden; }
 .client-transaction-backdrop .sheet > .sheet-header { flex: 0 0 auto; }
 .client-transaction-scroll { display: grid; min-height: 0; gap: 12px; overflow-y: auto; overscroll-behavior: contain; padding: 1px 1px 12px; }
+.order-transaction-backdrop .sheet { position: relative; height: min(720px, calc(100dvh - env(safe-area-inset-bottom) - 108px)); touch-action: none; }
+.order-transaction-layout { display: flex; min-height: 0; flex: 1 1 auto; flex-direction: column; gap: 8px; padding: 0 1px 40px; overflow: hidden; }
+.order-transaction-fixed { display: grid; flex: 0 0 auto; gap: 7px; }
 .transaction-type-switch { display: grid; grid-template-columns: 1fr 1fr; gap: 7px; border-radius: 12px; padding: 4px; background: #edf3f7; }
 .transaction-type-switch button { min-height: 38px; border: 0; border-radius: 9px; color: #64748b; background: transparent; font-size: 12px; font-weight: 850; }
+.order-transaction-layout .transaction-type-switch button { min-height: 30px; border-radius: 8px; font-size: 11px; }
 .transaction-type-switch button.active { color: #fff; background: #1687D9; box-shadow: 0 5px 12px rgba(22,135,217,.22); }
 .transaction-field { display: grid; min-width: 0; gap: 5px; color: #526477; font-size: 10px; font-weight: 850; }
 .transaction-field input, .transaction-field select { width: 100%; min-width: 0; height: 40px; border: 1px solid #d7e2eb; border-radius: 10px; padding: 0 10px; color: #172033; background: #fff; font: inherit; font-size: 12px; }
+.order-transaction-layout .transaction-field input, .order-transaction-layout .transaction-field select { height: 34px; border-radius: 9px; padding: 0 9px; font-size: 11px; }
 .transaction-field input[readonly] { color: #0A1F44; background: #f1f6fa; font-weight: 900; }
-.order-product-entry { display: grid; gap: 10px; border: 1px solid #cfe0ec; border-radius: 15px; padding: 12px; background: #f7fbfe; box-shadow: 0 4px 12px rgba(15,42,80,.06); }
+.order-date-field { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; gap: 10px; }
+.order-date-field input { justify-self: end; width: min(190px, 58vw); max-width: 100%; }
+.order-product-entry { display: grid; gap: 7px; border: 1px solid #cfe0ec; border-radius: 13px; padding: 9px; background: #f7fbfe; box-shadow: 0 4px 12px rgba(15,42,80,.06); }
 .order-product-entry h3, .order-draft-items h3 { margin: 0; color: #0A1F44; font-size: 12px; font-weight: 900; }
 .order-item-fields { display: grid; grid-template-columns: 1.25fr .75fr; gap: 9px; }
-.quantity-stepper { display: grid; grid-template-columns: 40px minmax(0,1fr) 40px; gap: 5px; }
+.quantity-stepper { display: grid; grid-template-columns: 34px minmax(0,1fr) 34px; gap: 4px; }
 .quantity-stepper button { border: 1px solid #bdd6e8; border-radius: 9px; color: #1687D9; background: #fff; font-size: 20px; font-weight: 850; }
 .quantity-stepper input { padding: 0 4px; text-align: center; }
-.order-insert-item { min-height: 40px; border-radius: 10px; }
+.order-insert-item { min-height: 30px; border-radius: 9px; font-size: 11px; }
+.order-draft-scroll { min-height: 54px; flex: 1 1 auto; overflow-x: hidden; overflow-y: auto; overscroll-behavior: contain; touch-action: pan-y; scrollbar-gutter: stable; }
 .order-draft-items { display: grid; gap: 7px; }
 .order-draft-items article { display: grid; grid-template-columns: minmax(0,1fr) auto 30px; align-items: center; gap: 8px; border: 1px solid #dbe5ed; border-radius: 11px; padding: 9px; background: #fff; }
 .order-draft-items article > div { display: grid; min-width: 0; gap: 3px; }
@@ -1266,8 +1274,16 @@ body { background: #fff; color: var(--ink); }
 .transaction-totals b, .payment-balance-summary b { color: #0A1F44; font-size: 13px; }
 .transaction-totals .total, .payment-balance-summary .final { border-top: 1px solid #d7e2eb; padding-top: 9px; color: #0A1F44; }
 .transaction-totals .total b, .payment-balance-summary .final b { color: #1687D9; font-size: 17px; }
+.order-transaction-layout > .transaction-totals { flex: 0 0 auto; gap: 2px; border-radius: 11px; padding: 4px 10px; }
+.order-transaction-layout > .transaction-totals > div, .order-transaction-layout > .transaction-totals > label { gap: 7px; font-size: 10px; }
+.order-transaction-layout > .transaction-totals input { width: 96px; height: 24px; }
+.order-transaction-layout > .transaction-totals b { font-size: 12px; }
+.order-transaction-layout > .transaction-totals .total { padding-top: 3px; }
+.order-transaction-layout > .transaction-totals .total b { font-size: 14px; }
 .client-transaction-footer { flex: 0 0 auto; margin: 12px -16px -16px; border-top: 1px solid #dbe5ed; padding: 12px 16px calc(12px + env(safe-area-inset-bottom)); background: rgba(255,255,255,.97); box-shadow: 0 -8px 18px rgba(15,23,42,.08); }
 .client-transaction-footer button { width: 100%; min-height: 44px; border-radius: 999px; font-size: 12px; }
+.order-transaction-backdrop .client-transaction-footer { position: absolute; right: 16px; bottom: 4px; left: 16px; z-index: 2; margin: 0; border: 0; padding: 0; background: transparent; box-shadow: none; pointer-events: none; }
+.order-transaction-backdrop .client-transaction-footer button { min-height: 30px; font-size: 11px; box-shadow: 0 8px 18px rgba(15,42,80,.22); pointer-events: auto; }
 .client-transaction-footer button b { margin-left: 4px; }
 .payment-entry-form { gap: 10px; }
 .payment-balance-summary { margin: 2px 0; }
@@ -1476,6 +1492,7 @@ body { background: #fff; color: var(--ink); }
 .dark-theme .order-draft-items article small, .dark-theme .payment-history-panel > div > button small { color: #94a3b8; }
 .dark-theme .transaction-totals .total, .dark-theme .payment-balance-summary .final { border-color: #334155; color: #f8fafc; }
 .dark-theme .client-transaction-footer { border-color: #334155; background: rgba(15,23,42,.98); }
+.dark-theme .order-transaction-backdrop .client-transaction-footer { border: 0; background: transparent; box-shadow: none; }
 .dark-theme .payment-detail-summary div { background: #111d2f; }
 /* Ajustes de agenda: card de dia com topo padronizado e lista rolável. */
 .agenda-mobile-detail { display: flex; max-height: min(420px, calc(100svh - 330px)); flex-direction: column; gap: 0; overflow: hidden; padding: 0; }
