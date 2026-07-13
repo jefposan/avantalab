@@ -581,7 +581,7 @@ body.sheet-open {
   display: flex;
   align-items: flex-end;
   justify-content: center;
-  background: rgba(0, 24, 39, 0.52);
+  background: rgba(0, 24, 39, 0.62);
   padding: 12px;
   overscroll-behavior: contain;
   touch-action: none;
