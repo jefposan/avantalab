@@ -1316,6 +1316,7 @@ body { background: #fff; color: var(--ink); }
   .mobile-menu::before { top: 112px; right: -28vw; width: 72vw; height: 72vw; border: 1px solid rgba(22,135,217,.10); border-radius: 50%; box-shadow: 0 0 0 30px rgba(22,135,217,.025), 0 0 0 64px rgba(0,166,200,.018); }
   .mobile-menu::after { bottom: 94px; left: -18vw; width: 52vw; height: 32vw; border: 1px solid rgba(0,166,200,.11); border-radius: 50%; transform: rotate(-18deg); }
   .mobile-menu-header { display: flex; min-height: 92px; align-items: center; justify-content: space-between; border-bottom: 3px solid #e8ebf2; padding: 16px 30px; background: #fff; }
+  .dark-theme .mobile-menu-header { border-bottom-color: #263449; background: #0f172a; }
   .mobile-menu-brand { display: flex; align-items: center; }
   .mobile-menu-brand .vendas-brand-logo { width: 230px; }
   .mobile-menu-header button { border: 0; color: #202124; background: transparent; font-size: 42px; font-weight: 300; line-height: 1; }
