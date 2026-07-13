@@ -35,6 +35,7 @@ const estadoInicial = {
 };
 
 let state = carregarEstado();
+let buscaAplicada = state.busca || '';
 let backendAtivo = Boolean(window.VendasDb?.client);
 let carregandoBackend = backendAtivo;
 let loginTipo = 'email';
@@ -238,13 +239,13 @@ function nomeMesReferencia() {
 }
 
 function produtosFiltrados() {
-  const q = normalizar(state.busca);
+  const q = normalizar(buscaAplicada);
   if (!q) return state.produtos;
   return state.produtos.filter((p) => [p.nome, p.marca, p.categoria, p.sku].some((v) => normalizar(v).includes(q)));
 }
 
 function clientesFiltrados() {
-  const q = normalizar(state.busca);
+  const q = normalizar(buscaAplicada);
   if (!q) return state.clientes;
   return state.clientes.filter((c) => [c.nome, c.telefone, c.email].some((v) => normalizar(v).includes(q)));
 }
@@ -1035,24 +1036,24 @@ function renderBusca(placeholder) {
 
 function renderBarraBusca(placeholder, filtro = 'Ordem Alfabética') {
   const temBusca = Boolean(String(state.busca || '').trim());
-  const limpar = temBusca ? '<button type="button" class="search-clear" onclick="limparBusca()" aria-label="Limpar pesquisa">×</button>' : '';
-  const acoes = temBusca ? `<button class="search-filter">${svgIcon('filter')}${escapeHtml(filtro)}${svgIcon('chevron-down')}</button><button class="primary search-submit" onclick="aplicarBusca()">${svgIcon('search')} Buscar</button>` : '';
-  return `<article class="tridium-search-card"><div class="search-input-wrap">${svgIcon('search')}<input value="${escapeAttr(state.busca)}" placeholder="${escapeAttr(placeholder)}" oninput="atualizarBusca(this.value)" onkeydown="if(event.key==='Enter') aplicarBusca()">${limpar}</div>${acoes}</article>`;
+  return `<article class="tridium-search-card"><div class="search-input-wrap">${svgIcon('search')}<input value="${escapeAttr(state.busca)}" placeholder="${escapeAttr(placeholder)}" oninput="atualizarBusca(this.value)" onkeydown="if(event.key==='Enter') aplicarBusca()"><button type="button" class="search-clear${temBusca ? '' : ' is-hidden'}" onclick="limparBusca()" aria-label="Limpar pesquisa">×</button></div><div class="search-actions${temBusca ? '' : ' is-hidden'}"><button class="search-filter">${svgIcon('filter')}${escapeHtml(filtro)}${svgIcon('chevron-down')}</button><button class="primary search-submit" onclick="aplicarBusca()">${svgIcon('search')} Buscar</button></div></article>`;
 }
 
 function atualizarBusca(valor) {
   state.busca = valor;
-  render();
-  requestAnimationFrame(() => {
-    const campo = document.querySelector('.tridium-search-card .search-input-wrap input');
-    if (!campo) return;
-    campo.focus({ preventScroll: true });
-    campo.setSelectionRange(valor.length, valor.length);
-  });
+  const temBusca = Boolean(String(valor || '').trim());
+  app.querySelectorAll('.search-clear').forEach((botao) => botao.classList.toggle('is-hidden', !temBusca));
+  app.querySelectorAll('.search-actions').forEach((acoes) => acoes.classList.toggle('is-hidden', !temBusca));
+  app.querySelector('.clientes-page')?.classList.toggle('is-searching', temBusca);
+  if (!temBusca && buscaAplicada) {
+    buscaAplicada = '';
+    render();
+  }
 }
 
 function limparBusca() {
   state.busca = '';
+  buscaAplicada = '';
   render();
 }
 
@@ -1101,6 +1102,7 @@ async function buscarCepCliente() {
 }
 
 function aplicarBusca() {
+  buscaAplicada = state.busca;
   render();
 }
 
