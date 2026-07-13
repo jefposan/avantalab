@@ -1005,7 +1005,7 @@ body { background: #fff; color: var(--ink); }
 .password-button { background: #ca8a04; }
 .install-button { background: #16a34a; }
 .settings-card > small { display: block; margin-top: 12px; color: #838a91; }
-.settings-exit-card { border-color: #fecaca; }
+.settings-exit-card { border-color: #fecaca; background: linear-gradient(135deg, #fff 0%, #fff7f7 100%); }
 .settings-exit-card .danger { width: 100%; }
 .logout-screen { display: grid; min-height: 100dvh; place-items: center; padding: 24px; background: #f7f9fb; text-align: center; }
 .logout-screen > img { position: fixed; top: 22px; left: 24px; width: 180px; }
@@ -1224,7 +1224,8 @@ body { background: #fff; color: var(--ink); }
   .main-area { width: 100%; margin-left: 0; }
   .menu-toggle { display: inline-block; }
   .system-header { left: 0; padding: 0 16px; }
-  .clientes-page { padding-top: 138px; }
+  .clientes-page { padding-top: 190px; }
+  .clientes-page.is-searching { padding-top: 244px; }
   .clientes-page .module-sticky-head { left: 0; padding: 14px 16px 12px; }
   .system-brand img { width: 126px; height: 40px; }
   .content-area { padding: 28px 16px calc(env(safe-area-inset-bottom) + 92px); }

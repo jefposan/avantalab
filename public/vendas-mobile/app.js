@@ -879,8 +879,21 @@ function renderBusca(placeholder) {
 }
 
 function renderBarraBusca(placeholder, filtro = 'Ordem Alfabética') {
-  const limpar = state.busca ? '<button type="button" class="search-clear" onclick="limparBusca()" aria-label="Limpar pesquisa">×</button>' : '';
-  return `<article class="tridium-search-card"><div class="search-input-wrap">${svgIcon('search')}<input value="${escapeAttr(state.busca)}" placeholder="${escapeAttr(placeholder)}" oninput="state.busca=this.value" onkeydown="if(event.key==='Enter') aplicarBusca()">${limpar}</div><button class="search-filter">${svgIcon('filter')}${escapeHtml(filtro)}${svgIcon('chevron-down')}</button><button class="primary search-submit" onclick="aplicarBusca()">${svgIcon('search')} Buscar</button></article>`;
+  const temBusca = Boolean(String(state.busca || '').trim());
+  const limpar = temBusca ? '<button type="button" class="search-clear" onclick="limparBusca()" aria-label="Limpar pesquisa">×</button>' : '';
+  const acoes = temBusca ? `<button class="search-filter">${svgIcon('filter')}${escapeHtml(filtro)}${svgIcon('chevron-down')}</button><button class="primary search-submit" onclick="aplicarBusca()">${svgIcon('search')} Buscar</button>` : '';
+  return `<article class="tridium-search-card"><div class="search-input-wrap">${svgIcon('search')}<input value="${escapeAttr(state.busca)}" placeholder="${escapeAttr(placeholder)}" oninput="atualizarBusca(this.value)" onkeydown="if(event.key==='Enter') aplicarBusca()">${limpar}</div>${acoes}</article>`;
+}
+
+function atualizarBusca(valor) {
+  state.busca = valor;
+  render();
+  requestAnimationFrame(() => {
+    const campo = document.querySelector('.tridium-search-card .search-input-wrap input');
+    if (!campo) return;
+    campo.focus({ preventScroll: true });
+    campo.setSelectionRange(valor.length, valor.length);
+  });
 }
 
 function limparBusca() {
@@ -974,8 +987,9 @@ function renderProduto(p) {
 
 function renderClientes() {
   const clientes = clientesFiltrados();
+  const temBusca = Boolean(String(state.busca || '').trim());
   return `
-    <section class="module-page clientes-page">
+    <section class="module-page clientes-page${temBusca ? ' is-searching' : ''}">
       <div class="module-sticky-head"><div class="module-title"><div><h2>Clientes</h2><p>Gerencie seus clientes</p></div><button class="primary" onclick="abrirCliente()">＋ Novo cliente</button></div>${renderBarraBusca('Pesquisar', 'Ordem Alfabética')}</div>
       ${clientes.length ? `<section class="client-card-grid">${clientes.map(renderCliente).join('')}</section>` : `<article class="empty-module"><h3>Nenhum cliente cadastrado</h3><p>Cadastre o primeiro cliente para iniciar suas vendas.</p></article>`}
     </section>
