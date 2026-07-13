@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.4.0.54 - 2026-07-13
+
+- Leitura por foto: remove o laboratório temporário e consolida a API e a Edge Function definitivas.
+- Histórico público: remove as entradas referentes aos testes isolados.
+
 ## 1.4.0.53 - 2026-07-13
 
 - Mobile: o cabeçalho de Novo lançamento exibe o mês selecionado e corrige a acentuação do título para despesas e receitas.
@@ -43,14 +48,6 @@
 - Lançamentos Web/Mobile: adiciona leitura de notas por foto ou arquivo, preenchendo data, valor e sugestão de despesa.
 - Notas: armazena comprovantes em bucket privado do Supabase, permite visualizar, compartilhar ou salvar e remove o arquivo junto com o lançamento.
 - Mobile: atualiza o identificador do script para carregar imediatamente os controles em navegadores e PWA.
-
-## 1.4.0.45 - 2026-07-12
-
-- Laboratório de lançamento por foto: faz a leitura em uma Edge Function isolada do Supabase, reutilizando a chave da IA já protegida no projeto.
-
-## 1.4.0.44 - 2026-07-12
-
-- Laboratório isolado: adiciona teste autenticado de lançamento por foto, com leitura por IA de data, valor total e sugestão de tipo de despesa, sem salvar imagem ou lançamento.
 
 ## 1.4.0.43 - 2026-07-12
 

@@ -13,6 +13,15 @@
   },
   "versoes": [
     {
+      "versao": "1.4.0.54",
+      "titulo": "Limpeza da leitura por foto",
+      "data": "Julho/2026",
+      "itens": [
+        "Remove o laboratório temporário e consolida a leitura por foto em serviços definitivos.",
+        "Histórico público: remove entradas dos testes isolados."
+      ]
+    },
+    {
       "versao": "1.4.0.53",
       "titulo": "Lançamentos e recursos exclusivos",
       "data": "Julho/2026",
@@ -85,22 +94,6 @@
         "Lançamentos Web/Mobile: lê notas por foto ou arquivo e sugere a data, o valor e o tipo de despesa.",
         "Notas ficam em bucket privado, podem ser abertas, compartilhadas ou salvas e são removidas junto com o lançamento.",
         "Mobile: força o carregamento da nova interface também no PWA."
-      ]
-    },
-    {
-      "versao": "1.4.0.45",
-      "titulo": "Leitura por foto via Supabase",
-      "data": "Julho/2026",
-      "itens": [
-        "O laboratório de lançamento por foto passa a usar uma Edge Function isolada do Supabase e reutiliza a chave da IA já protegida no projeto."
-      ]
-    },
-    {
-      "versao": "1.4.0.44",
-      "titulo": "Teste de lançamento por foto",
-      "data": "Julho/2026",
-      "itens": [
-        "Laboratório isolado: adiciona teste autenticado de lançamento por foto, com leitura por IA de data, valor total e sugestão de tipo de despesa, sem salvar imagem ou lançamento."
       ]
     },
     {

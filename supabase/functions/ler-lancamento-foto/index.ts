@@ -103,7 +103,7 @@ Deno.serve(async (req: Request) => {
     });
     const { data: autenticacao, error: erroAutenticacao } = await supabaseUsuario.auth.getUser();
     if (erroAutenticacao || !autenticacao.user) {
-      return jsonResponse({ erro: true, mensagem: 'Entre no sistema para usar este teste.' }, 401);
+      return jsonResponse({ erro: true, mensagem: 'Entre no sistema para continuar.' }, 401);
     }
 
     const form = await req.formData();
@@ -144,7 +144,7 @@ Deno.serve(async (req: Request) => {
     const resposta = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
-        Authorization: `Bearer ${OPENAI_API_KEY}`,
+        Authorization: 'Bearer ' + OPENAI_API_KEY,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
@@ -160,8 +160,8 @@ Deno.serve(async (req: Request) => {
           {
             role: 'user',
             content: [
-              { type: 'text', text: `Tipos de despesa disponíveis: ${tiposDespesa.join(' | ')}.` },
-              { type: 'image_url', image_url: { url: `data:${arquivo.type};base64,${imagemBase64}`, detail: 'high' } },
+              { type: 'text', text: 'Tipos de despesa disponíveis: ' + tiposDespesa.join(' | ') + '.' },
+              { type: 'image_url', image_url: { url: 'data:' + arquivo.type + ';base64,' + imagemBase64, detail: 'high' } },
             ],
           },
         ],
