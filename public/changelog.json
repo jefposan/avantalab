@@ -13,6 +13,15 @@
   },
   "versoes": [
     {
+      "versao": "1.4.0.51",
+      "titulo": "Ações e avisos em azul",
+      "data": "Julho/2026",
+      "itens": [
+        "Lançamentos por foto: Arquivo e Foto ganham destaque visual no Web e Mobile.",
+        "Avisos rápidos: cards de confirmação agora usam azul médio AvantaLab."
+      ]
+    },
+    {
       "versao": "1.4.0.50",
       "titulo": "Exclusão de despesas corrigida",
       "data": "Julho/2026",

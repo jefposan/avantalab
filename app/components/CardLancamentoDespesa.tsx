@@ -310,7 +310,7 @@ export default function CardLancamentoDespesa({
                 onClick={() => arquivoRef.current?.click()}
                 disabled={lendoNota || salvandoDespesa}
                 title="Enviar arquivo da nota"
-                className="flex h-7 items-center gap-1 rounded-full border border-slate-300 bg-white px-2 text-[10px] font-black uppercase text-slate-600 transition hover:border-slate-400 hover:text-slate-900 active:scale-95 disabled:opacity-60"
+                className="flex h-7 items-center gap-1 rounded-full border border-sky-300 bg-sky-50 px-2 text-[10px] font-black uppercase text-sky-800 shadow-sm transition hover:border-sky-400 hover:bg-sky-100 active:scale-95 disabled:opacity-60"
               >
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" className="h-3.5 w-3.5"><path strokeLinecap="round" strokeLinejoin="round" d="M14 3H6a2 2 0 00-2 2v14a2 2 0 002 2h12a2 2 0 002-2V9l-6-6Z"/><path strokeLinecap="round" strokeLinejoin="round" d="M14 3v6h6M8 14h8M8 17h5"/></svg>
                 Arquivo
@@ -320,7 +320,7 @@ export default function CardLancamentoDespesa({
                 onClick={() => cameraRef.current?.click()}
                 disabled={lendoNota || salvandoDespesa}
                 title="Fotografar nota"
-                className="flex h-7 items-center gap-1 rounded-full border border-slate-300 bg-white px-2 text-[10px] font-black uppercase text-slate-600 transition hover:border-slate-400 hover:text-slate-900 active:scale-95 disabled:opacity-60"
+                className="flex h-7 items-center gap-1 rounded-full border border-[#0878ad] bg-[#0b80bd] px-2 text-[10px] font-black uppercase text-white shadow-sm transition hover:bg-[#096fa6] active:scale-95 disabled:opacity-60"
               >
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" className="h-3.5 w-3.5"><path strokeLinecap="round" strokeLinejoin="round" d="M4 8h3l1.3-2h7.4L17 8h3v11H4V8Z"/><circle cx="12" cy="13" r="3.2"/></svg>
                 Foto

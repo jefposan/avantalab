@@ -803,7 +803,7 @@
 
   function toastHtml() {
     if (!state.toast) return '';
-    return '<div class="no-print fixed inset-x-0 bottom-6 z-50 flex justify-center px-5"><div class="max-w-sm rounded-xl bg-slate-900 px-4 py-3 text-center text-sm font-bold text-white shadow-2xl">' + escapeHtml(state.toast) + '</div></div>';
+    return '<div class="no-print fixed inset-x-0 bottom-6 z-50 flex justify-center px-5"><div class="max-w-sm rounded-xl border border-cyan-200/50 bg-[#0b80bd] px-4 py-3 text-center text-sm font-bold text-white shadow-2xl">' + escapeHtml(state.toast) + '</div></div>';
   }
 
   function render() {

@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.4.0.51 - 2026-07-13
+
+- Lançamentos por foto: destaca Arquivo e Foto com as cores do sistema no Web e Mobile.
+- Avisos rápidos: substitui os cards pretos por azul médio AvantaLab no Mobile e Controle de Ponto.
+
 ## 1.4.0.50 - 2026-07-13
 
 - Lançamentos: torna a remoção de notas resiliente para não impedir a exclusão da despesa.
