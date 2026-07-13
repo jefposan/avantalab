@@ -984,9 +984,9 @@ function renderCliente(c) {
   const credito = Number(c.credito_livre || 0);
   const iniciais = String(c.nome || 'C').split(/\s+/).slice(0, 2).map((parte) => parte[0] || '').join('').toUpperCase();
   const local = [c.endereco, c.cidade, c.estado].filter(Boolean).join(' - ') || 'Não informado';
+  const temTelefone = Boolean(String(c.telefone || '').replace(/\D/g, ''));
   return `
     <article class="client-card ${c.ativo === false ? 'inactive' : ''}">
-      ${c.ativo === false ? '<span class="client-disabled">DESATIVADO</span>' : ''}
       <header class="client-card-header">
         <div class="client-avatar">${escapeHtml(iniciais)}</div>
         <div class="client-identity"><h3>${escapeHtml(c.nome)}</h3><p>Cliente</p></div>
@@ -994,11 +994,11 @@ function renderCliente(c) {
         <button class="client-more" aria-label="Opções do cliente" onclick="abrirMenuCliente('${c.id}')">⋮</button>
       </header>
       <div class="client-contact-list">
-        <p class="client-whatsapp"><span>◉</span>${escapeHtml(c.telefone || 'Não informado')}</p>
-        <p><span>⌖</span>${escapeHtml(local)}</p>
+        <div class="client-contact-actions">${temTelefone ? `<button type="button" onclick="ligarCliente('${c.id}')" aria-label="Ligar para ${escapeAttr(c.nome)}">${svgIcon('phone')} Ligar</button><button type="button" onclick="abrirWhatsappCliente('${c.id}')" aria-label="Chamar ${escapeAttr(c.nome)} no WhatsApp"><span class="whatsapp-mark">◉</span> WhatsApp</button>` : '<span class="client-contact-empty">Telefone não informado</span>'}</div>
+        <button type="button" class="client-address-link" onclick="abrirMapasCliente('${c.id}')">${svgIcon('map-pin')}<span>${escapeHtml(local)}</span></button>
       </div>
       <div class="client-values">
-        <div><span>Débito Atual</span><b class="${debito > 0 ? 'negative' : 'positive'}">${moeda(debito)}</b></div>
+        <div class="client-debt-highlight"><span>Débito Atual</span><b class="${debito > 0 ? 'negative' : 'positive'}">${moeda(debito)}</b></div>
         <div class="consigned"><span>Consignado</span><b>${moeda(consignado)}</b></div>
         <div class="credit"><span>Crédito</span><b>${moeda(credito)}</b></div>
         <div><span>Última Compra</span><strong><b>${moeda(ultimaVenda?.total || 0)}</b><small>${ultimaVenda ? dataBR(ultimaVenda.criado_em) : 'Sem compras'}</small></strong></div>
@@ -1009,6 +1009,31 @@ function renderCliente(c) {
       </div>
     </article>
   `;
+}
+
+function telefoneCliente(clienteId) {
+  return String(state.clientes.find((cliente) => cliente.id === clienteId)?.telefone || '').replace(/\D/g, '');
+}
+
+function ligarCliente(clienteId) {
+  const telefone = telefoneCliente(clienteId);
+  if (!telefone) { toast('Este cliente não possui telefone cadastrado.'); return; }
+  window.location.href = `tel:+${telefone}`;
+}
+
+function abrirWhatsappCliente(clienteId) {
+  const telefone = telefoneCliente(clienteId);
+  if (!telefone) { toast('Este cliente não possui telefone cadastrado.'); return; }
+  window.open(`https://wa.me/${telefone}`, '_blank', 'noopener');
+}
+
+function abrirMapasCliente(clienteId) {
+  const cliente = state.clientes.find((item) => item.id === clienteId);
+  if (!cliente) return;
+  const endereco = [cliente.endereco, cliente.numero, cliente.complemento, cliente.cidade, cliente.estado, cliente.cep].filter(Boolean).join(', ');
+  if (!endereco) { toast('Este cliente não possui endereço cadastrado.'); return; }
+  const destino = encodeURIComponent(endereco);
+  sheet(`<div class="sheet-header"><div><h2>Abrir endereço</h2><p class="muted small">Escolha o aplicativo de mapas.</p></div><button class="close" onclick="fecharSheet()">×</button></div><div class="maps-option-list"><a href="https://www.google.com/maps/search/?api=1&query=${destino}" target="_blank" rel="noopener">Google Maps</a><a href="https://maps.apple.com/?q=${destino}" target="_blank" rel="noopener">Mapas Apple</a><a href="https://waze.com/ul?q=${destino}&navigate=yes" target="_blank" rel="noopener">Waze</a></div>`, 'sheet-backdrop-centered');
 }
 
 function iconeAcaoCliente(tipo) {
@@ -1664,6 +1689,9 @@ window.alterarStatusCliente = alterarStatusCliente;
 window.abrirDetalhesCliente = abrirDetalhesCliente;
 window.abrirPedidoCliente = abrirPedidoCliente;
 window.compartilharPedido = compartilharPedido;
+window.ligarCliente = ligarCliente;
+window.abrirWhatsappCliente = abrirWhatsappCliente;
+window.abrirMapasCliente = abrirMapasCliente;
 window.sairSistema = sairSistema;
 window.entrarSistema = entrarSistema;
 window.entrarComGoogle = entrarComGoogle;
