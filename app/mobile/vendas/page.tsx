@@ -18,7 +18,7 @@ export const viewport: Viewport = {
 export default function VendasMobilePage() {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
-  const assetVersion = '20260713-21';
+  const assetVersion = '20260713-22';
   const bootstrap = `
     (function () {
       window.__VENDAS_MOBILE_EMBEDDED__ = true;
@@ -58,17 +58,17 @@ export default function VendasMobilePage() {
     <main id="vendas-mobile-shell">
       <style>{`
         html, body, #vendas-mobile-shell { width: 100%; min-height: 100%; margin: 0; }
-        #vendas-mobile-shell { min-height: 100dvh; overflow-x: hidden; }
+        #vendas-mobile-shell { min-height: 100svh; overflow-x: hidden; }
         #vendas-mobile-shell > #app.app-shell {
           width: 100%;
           max-width: none;
-          min-height: 100dvh;
+          min-height: 100svh;
           margin: 0;
           padding: 0;
         }
         #vendas-mobile-shell .splash-card {
           width: 100%;
-          min-height: 100dvh;
+          min-height: 100svh;
           border-radius: 0;
         }
       `}</style>
