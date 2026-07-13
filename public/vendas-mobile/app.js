@@ -68,6 +68,7 @@ let filtroPedidos = 'todos';
 let limitePedidos = 10;
 let pedidoClienteRascunho = null;
 let pagamentoClienteRascunho = null;
+let ordemAlfabetica = 'asc';
 
 const PAISES_DDI = [
   ['Brasil', '55', '🇧🇷'], ['Portugal', '351', '🇵🇹'], ['Estados Unidos / Canadá', '1', '🇺🇸'],
@@ -276,14 +277,18 @@ function nomeMesReferencia() {
 
 function produtosFiltrados() {
   const q = normalizar(buscaAplicada);
-  if (!q) return state.produtos;
-  return state.produtos.filter((p) => [p.nome, p.marca, p.categoria, p.sku].some((v) => normalizar(v).includes(q)));
+  const produtos = q ? state.produtos.filter((p) => [p.nome, p.marca, p.categoria, p.sku].some((v) => normalizar(v).includes(q))) : [...state.produtos];
+  return produtos.sort((a, b) => ordemAlfabetica === 'asc'
+    ? String(a.nome || '').localeCompare(String(b.nome || ''), 'pt-BR', { sensitivity: 'base' })
+    : String(b.nome || '').localeCompare(String(a.nome || ''), 'pt-BR', { sensitivity: 'base' }));
 }
 
 function clientesFiltrados() {
   const q = normalizar(buscaAplicada);
-  if (!q) return state.clientes;
-  return state.clientes.filter((c) => [c.nome, c.telefone, c.email].some((v) => normalizar(v).includes(q)));
+  const clientes = q ? state.clientes.filter((c) => [c.nome, c.telefone, c.email].some((v) => normalizar(v).includes(q))) : [...state.clientes];
+  return clientes.sort((a, b) => ordemAlfabetica === 'asc'
+    ? String(a.nome || '').localeCompare(String(b.nome || ''), 'pt-BR', { sensitivity: 'base' })
+    : String(b.nome || '').localeCompare(String(a.nome || ''), 'pt-BR', { sensitivity: 'base' }));
 }
 
 function render() {
@@ -510,7 +515,7 @@ function fecharCamadasNavegacao() {
 }
 
 function abrirAcoesRapidas() {
-  sheet(`<div class="sheet-header"><div><h2>Novo lançamento</h2><p class="muted small">Escolha o que deseja registrar.</p></div><button class="close" onclick="fecharSheet()">×</button></div><div class="quick-actions-grid"><button class="primary quick-action-button" onclick="fecharSheet();setAba('novo-pedido')">${svgIcon('shopping-bag')}<span>Lançar pedido</span></button><button class="secondary quick-action-button" onclick="fecharSheet();setAba('vender')">${svgIcon('credit-card')}<span>Lançar pagamento</span></button></div>`, 'sheet-backdrop-centered');
+  sheet(`<div class="sheet-header"><div><h2>Novo lançamento</h2><p class="muted small">Escolha o que deseja registrar.</p></div><button class="close" onclick="fecharSheet()">×</button></div><div class="quick-actions-grid"><button class="primary quick-action-button" onclick="abrirNovoPedidoGeral()">${svgIcon('shopping-bag')}<span>Lançar pedido</span></button><button class="secondary quick-action-button" onclick="fecharSheet();setAba('vender')">${svgIcon('credit-card')}<span>Lançar pagamento</span></button></div>`, 'sheet-backdrop-centered');
 }
 
 async function sairSistema() {
@@ -1208,7 +1213,14 @@ function renderBusca(placeholder) {
 
 function renderBarraBusca(placeholder, filtro = 'Ordem Alfabética') {
   const temBusca = Boolean(String(state.busca || '').trim());
-  return `<article class="tridium-search-card"><div class="search-input-wrap">${svgIcon('search')}<input value="${escapeAttr(state.busca)}" placeholder="${escapeAttr(placeholder)}" oninput="atualizarBusca(this.value)" onkeydown="if(event.key==='Enter') aplicarBusca()"><button type="button" class="search-clear${temBusca ? '' : ' is-hidden'}" onclick="limparBusca()" aria-label="Limpar pesquisa">×</button></div><div class="search-actions${temBusca ? '' : ' is-hidden'}"><button class="search-filter">${svgIcon('filter')}${escapeHtml(filtro)}${svgIcon('chevron-down')}</button><button class="primary search-submit" onclick="aplicarBusca()">${svgIcon('search')} Buscar</button></div></article>`;
+  const filtroAlfabetico = normalizar(filtro).includes('ordem alfabetica');
+  const rotuloFiltro = filtroAlfabetico ? `Ordem ${ordemAlfabetica === 'asc' ? 'A/Z' : 'Z/A'}` : filtro;
+  return `<article class="tridium-search-card"><div class="search-input-wrap">${svgIcon('search')}<input value="${escapeAttr(state.busca)}" placeholder="${escapeAttr(placeholder)}" oninput="atualizarBusca(this.value)" onkeydown="if(event.key==='Enter') aplicarBusca()"><button type="button" class="search-clear${temBusca ? '' : ' is-hidden'}" onclick="limparBusca()" aria-label="Limpar pesquisa">×</button></div><div class="search-actions${temBusca ? '' : ' is-hidden'}"><button type="button" class="search-filter" ${filtroAlfabetico ? 'onclick="alternarOrdemAlfabetica()"' : ''}>${svgIcon('filter')}${escapeHtml(rotuloFiltro)}${filtroAlfabetico ? svgIcon('chevron-down') : ''}</button><button class="primary search-submit" onclick="aplicarBusca()">${svgIcon('search')} Buscar</button></div></article>`;
+}
+
+function alternarOrdemAlfabetica() {
+  ordemAlfabetica = ordemAlfabetica === 'asc' ? 'desc' : 'asc';
+  render();
 }
 
 function atualizarBusca(valor) {
@@ -1393,19 +1405,32 @@ function produtosDisponiveisPedido() {
     .sort((a, b) => String(a.nome || '').localeCompare(String(b.nome || ''), 'pt-BR', { sensitivity: 'base' }));
 }
 
+function clientesDisponiveisPedido() {
+  return state.clientes
+    .filter((cliente) => cliente.ativo !== false)
+    .sort((a, b) => String(a.nome || '').localeCompare(String(b.nome || ''), 'pt-BR', { sensitivity: 'base' }));
+}
+
 function totaisPedidoClienteRascunho() {
   const subtotal = (pedidoClienteRascunho?.itens || []).reduce((soma, item) => soma + Number(item.quantidade || 0) * Number(item.preco || 0), 0);
   const desconto = Math.max(0, Number(pedidoClienteRascunho?.desconto || 0));
   return { subtotal, desconto, total: Math.max(0, subtotal - desconto) };
 }
 
-function abrirNovoPedidoCliente(clienteId) {
+function abrirNovoPedidoGeral() {
+  const cliente = clientesDisponiveisPedido()[0];
+  if (!cliente) { fecharSheet(); toast('Cadastre um cliente antes de criar o pedido.'); return; }
+  abrirNovoPedidoCliente(cliente.id, true);
+}
+
+function abrirNovoPedidoCliente(clienteId, permitirSelecao = false) {
   const cliente = state.clientes.find((item) => item.id === clienteId);
   if (!cliente) return;
   const produtos = produtosDisponiveisPedido();
   const primeiroProduto = produtos[0] || null;
   pedidoClienteRascunho = {
     clienteId,
+    permitirSelecaoCliente: Boolean(permitirSelecao),
     tipo: 'venda',
     data: isoData(new Date()),
     produtoId: primeiroProduto?.id || '',
@@ -1422,13 +1447,15 @@ function mostrarCardPedidoCliente() {
   const cliente = state.clientes.find((item) => item.id === rascunho?.clienteId);
   if (!rascunho || !cliente) return;
   const produtos = produtosDisponiveisPedido();
+  const clientes = clientesDisponiveisPedido();
   const totais = totaisPedidoClienteRascunho();
   const itensHtml = rascunho.itens.length
     ? rascunho.itens.map((item, indice) => `<article><div><b>${escapeHtml(item.produto_nome)}</b><small>${item.quantidade} × ${moeda(item.preco)}</small></div><strong>${moeda(item.quantidade * item.preco)}</strong><button type="button" onclick="removerItemPedidoCliente(${indice})" aria-label="Excluir ${escapeAttr(item.produto_nome)}">×</button></article>`).join('')
     : '<p class="transaction-empty">Nenhum item inserido.</p>';
   sheet(`
-    <div class="sheet-header"><div><h2>Novo pedido</h2><p class="muted small">${escapeHtml(cliente.nome)}</p></div><button class="close" onclick="fecharSheet()">×</button></div>
+    <div class="sheet-header"><div><h2>Novo pedido</h2><p class="muted small">${rascunho.permitirSelecaoCliente ? 'Selecione o cliente' : escapeHtml(cliente.nome)}</p></div><button class="close" onclick="fecharSheet()">×</button></div>
     <div class="client-transaction-scroll">
+      ${rascunho.permitirSelecaoCliente ? `<label class="transaction-field transaction-client-select"><span>Cliente</span><select id="pedidoClienteSelecionado" onchange="selecionarClientePedido(this.value)">${clientes.map((item) => `<option value="${item.id}" ${item.id === rascunho.clienteId ? 'selected' : ''}>${escapeHtml(item.nome)}</option>`).join('')}</select></label>` : ''}
       <div class="transaction-type-switch"><button type="button" class="${rascunho.tipo === 'venda' ? 'active' : ''}" onclick="selecionarTipoPedidoCliente('venda')">Venda</button><button type="button" class="${rascunho.tipo === 'consignado' ? 'active' : ''}" onclick="selecionarTipoPedidoCliente('consignado')">Consignado</button></div>
       <label class="transaction-field"><span>Data do pedido</span><input id="pedidoClienteData" type="date" value="${escapeAttr(rascunho.data)}" onchange="pedidoClienteRascunho.data=this.value"></label>
       <article class="order-product-entry">
@@ -1452,6 +1479,11 @@ function selecionarTipoPedidoCliente(tipo) {
   if (!pedidoClienteRascunho) return;
   pedidoClienteRascunho.tipo = tipo === 'consignado' ? 'consignado' : 'venda';
   mostrarCardPedidoCliente();
+}
+
+function selecionarClientePedido(clienteId) {
+  if (!pedidoClienteRascunho || !clientesDisponiveisPedido().some((cliente) => cliente.id === clienteId)) return;
+  pedidoClienteRascunho.clienteId = clienteId;
 }
 
 function selecionarProdutoPedidoCliente(produtoId) {
@@ -1519,6 +1551,7 @@ function atualizarDescontoPedidoCliente(valorDesconto) {
 
 async function finalizarPedidoCliente() {
   const rascunho = pedidoClienteRascunho;
+  if (!state.clientes.some((cliente) => cliente.id === rascunho?.clienteId)) { toast('Selecione o cliente do pedido.'); return; }
   if (!rascunho?.itens.length) { toast('Insira ao menos um item no pedido.'); return; }
   const totais = totaisPedidoClienteRascunho();
   const dataPedido = valor('pedidoClienteData') || rascunho.data;
@@ -1792,21 +1825,16 @@ function renderVendas() {
   const vendas = pedidosFiltrados();
   const exibidas = vendas.slice(0, limitePedidos);
   const temBusca = Boolean(String(state.busca || '').trim());
-  const contagens = state.vendas.reduce((resultado, venda) => {
-    resultado.todos += 1;
-    resultado[tipoPedido(venda)] += 1;
-    return resultado;
-  }, { todos: 0, pedidos: 0, bonificacoes: 0, consignados: 0 });
   return `
     <section class="module-page pedidos-page${temBusca ? ' is-searching' : ''}">
       <div class="module-sticky-head">
-        <div class="module-title"><div><h2>Pedidos</h2><p>Acompanhe todos os pedidos registrados.</p></div><button class="primary" onclick="setAba('novo-pedido')">${svgIcon('plus')} Novo pedido</button></div>
+        <div class="module-title"><div><h2>Pedidos</h2><p>Acompanhe todos os pedidos registrados.</p></div><button class="primary" onclick="abrirNovoPedidoGeral()">${svgIcon('plus')} Novo pedido</button></div>
         ${renderBarraBusca('Pesquisar pedidos', 'Mais recentes')}
         <nav class="order-type-filters" aria-label="Filtrar pedidos por tipo">
-          ${botaoFiltroPedidos('todos', 'Todos', contagens.todos)}
-          ${botaoFiltroPedidos('pedidos', 'Pedidos', contagens.pedidos)}
-          ${botaoFiltroPedidos('bonificacoes', 'Bonificações', contagens.bonificacoes)}
-          ${botaoFiltroPedidos('consignados', 'Consignados', contagens.consignados)}
+          ${botaoFiltroPedidos('todos', 'Todos')}
+          ${botaoFiltroPedidos('pedidos', 'Pedidos')}
+          ${botaoFiltroPedidos('bonificacoes', 'Bonificações')}
+          ${botaoFiltroPedidos('consignados', 'Consignados')}
         </nav>
       </div>
       <div class="module-stats order-results-stats"><span>Exibindo <b>${Math.min(exibidas.length, vendas.length)}</b> de <b>${vendas.length}</b></span></div>
@@ -1841,8 +1869,8 @@ function pedidosFiltrados() {
     .filter((venda) => !pesquisa || textoPesquisaPedido(venda).includes(pesquisa));
 }
 
-function botaoFiltroPedidos(tipo, rotulo, quantidade) {
-  return `<button type="button" class="${filtroPedidos === tipo ? 'active' : ''}" onclick="selecionarFiltroPedidos('${tipo}')">${escapeHtml(rotulo)} <small>${quantidade}</small></button>`;
+function botaoFiltroPedidos(tipo, rotulo) {
+  return `<button type="button" class="${filtroPedidos === tipo ? 'active' : ''}" onclick="selecionarFiltroPedidos('${tipo}')">${escapeHtml(rotulo)}</button>`;
 }
 
 function selecionarFiltroPedidos(tipo) {
@@ -2593,7 +2621,9 @@ window.buscarCepCliente = buscarCepCliente;
 window.abrirMenuCliente = abrirMenuCliente;
 window.abrirAgendamentoCliente = abrirAgendamentoCliente;
 window.abrirNovoPedidoCliente = abrirNovoPedidoCliente;
+window.abrirNovoPedidoGeral = abrirNovoPedidoGeral;
 window.selecionarTipoPedidoCliente = selecionarTipoPedidoCliente;
+window.selecionarClientePedido = selecionarClientePedido;
 window.selecionarProdutoPedidoCliente = selecionarProdutoPedidoCliente;
 window.sincronizarQuantidadePedidoCliente = sincronizarQuantidadePedidoCliente;
 window.normalizarQuantidadePedidoCliente = normalizarQuantidadePedidoCliente;
@@ -2636,6 +2666,7 @@ window.aplicarFiltroDashboard = aplicarFiltroDashboard;
 window.mudarMes = mudarMes;
 window.irMesAtual = irMesAtual;
 window.aplicarBusca = aplicarBusca;
+window.alternarOrdemAlfabetica = alternarOrdemAlfabetica;
 window.selecionarFiltroPedidos = selecionarFiltroPedidos;
 window.carregarMaisPedidos = carregarMaisPedidos;
 window.selecionarDiaAgenda = selecionarDiaAgenda;
