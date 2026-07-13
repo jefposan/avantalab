@@ -1242,6 +1242,7 @@ body { background: #fff; color: var(--ink); }
 .client-transaction-backdrop .sheet > .sheet-header { flex: 0 0 auto; }
 .client-transaction-scroll { display: grid; min-height: 0; gap: 12px; overflow-y: auto; overscroll-behavior: contain; padding: 1px 1px 12px; }
 .order-transaction-backdrop .sheet { position: relative; height: min(720px, calc(100dvh - env(safe-area-inset-bottom) - 108px)); touch-action: none; }
+.payment-transaction-backdrop .sheet { position: relative; }
 .order-transaction-layout { display: flex; min-height: 0; flex: 1 1 auto; flex-direction: column; gap: 8px; padding: 0 1px 40px; overflow: hidden; }
 .order-transaction-fixed { display: grid; flex: 0 0 auto; gap: 7px; }
 .transaction-type-switch { display: grid; grid-template-columns: 1fr 1fr; gap: 7px; border-radius: 12px; padding: 4px; background: #edf3f7; }
@@ -1253,7 +1254,9 @@ body { background: #fff; color: var(--ink); }
 .order-transaction-layout .transaction-field input, .order-transaction-layout .transaction-field select { height: 34px; border-radius: 9px; padding: 0 9px; font-size: 11px; }
 .transaction-field input[readonly] { color: #0A1F44; background: #f1f6fa; font-weight: 900; }
 .order-date-field { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; gap: 10px; }
-.order-date-field input { justify-self: end; width: min(190px, 58vw); max-width: 100%; }
+.order-date-field > span { font-size: 12px; line-height: 1.2; }
+.order-date-field input { justify-self: end; width: min(190px, 58vw); max-width: 100%; text-align: center; }
+.order-date-field input::-webkit-date-and-time-value { min-width: 100%; text-align: center; }
 .order-product-entry { display: grid; gap: 7px; border: 1px solid #cfe0ec; border-radius: 13px; padding: 9px; background: #f7fbfe; box-shadow: 0 4px 12px rgba(15,42,80,.06); }
 .order-product-entry h3, .order-draft-items h3 { margin: 0; color: #0A1F44; font-size: 12px; font-weight: 900; }
 .order-item-fields { display: grid; grid-template-columns: 1.25fr .75fr; gap: 9px; }
@@ -1284,11 +1287,11 @@ body { background: #fff; color: var(--ink); }
 .order-transaction-layout > .transaction-totals .total b { font-size: 14px; }
 .client-transaction-footer { flex: 0 0 auto; margin: 12px -16px -16px; border-top: 1px solid #dbe5ed; padding: 12px 16px calc(12px + env(safe-area-inset-bottom)); background: rgba(255,255,255,.97); box-shadow: 0 -8px 18px rgba(15,23,42,.08); }
 .client-transaction-footer button { width: 100%; min-height: 44px; border-radius: 999px; font-size: 12px; }
-.order-transaction-backdrop .client-transaction-footer { position: absolute; right: 16px; bottom: 4px; left: 16px; z-index: 2; margin: 0; border: 0; padding: 0; background: transparent; box-shadow: none; pointer-events: none; }
-.order-transaction-backdrop .client-transaction-footer button { min-height: 30px; font-size: 11px; box-shadow: 0 8px 18px rgba(15,42,80,.22); pointer-events: auto; }
+.order-transaction-backdrop .client-transaction-footer, .payment-transaction-backdrop .client-transaction-footer { position: absolute; right: 16px; bottom: 4px; left: 16px; z-index: 2; margin: 0; border: 0; padding: 0; background: transparent; box-shadow: none; pointer-events: none; }
+.order-transaction-backdrop .client-transaction-footer button, .payment-transaction-backdrop .client-transaction-footer button { min-height: 30px; font-size: 11px; box-shadow: 0 8px 18px rgba(15,42,80,.22); pointer-events: auto; }
 .client-transaction-footer button b { margin-left: 4px; }
 .payment-entry-form { gap: 10px; }
-.payment-entry-form { width: 100%; min-width: 0; overflow-x: hidden; padding: 1px; }
+.payment-entry-form { width: 100%; min-width: 0; overflow-x: hidden; padding: 1px 1px 40px; }
 .payment-entry-form .transaction-field { width: 100%; min-width: 0; }
 .payment-entry-form .transaction-field input, .payment-entry-form .transaction-field select { display: block; max-width: 100%; outline: 0; }
 .payment-entry-form .transaction-field input:focus, .payment-entry-form .transaction-field select:focus { border-color: #1687D9; box-shadow: inset 0 0 0 1px #1687D9; }
@@ -1329,6 +1332,14 @@ body { background: #fff; color: var(--ink); }
 .order-view-items > div, .order-view-total { display: flex; justify-content: space-between; gap: 10px; border-bottom: 1px solid #e5edf4; padding: 8px 0; }
 .order-view-total { margin-top: 8px; border-bottom: 0; color: #0A1F44; font-size: 16px; }
 .order-share { width: 100%; margin-top: 14px; }
+.receipt-view-backdrop .sheet { width: min(94vw, 520px); max-height: calc(100dvh - env(safe-area-inset-bottom) - 108px); overflow-y: auto; }
+.receipt-balance-summary { display: grid; gap: 7px; margin-top: 10px; border: 1px solid #cfe0ec; border-radius: 14px; padding: 10px; background: #f5f9fc; }
+.receipt-balance-summary > div { display: flex; align-items: center; justify-content: space-between; gap: 10px; color: #526477; font-size: 11px; font-weight: 800; }
+.receipt-balance-summary b { color: #0A1F44; font-size: 13px; }
+.receipt-current-balance { grid-column: 1 / -1; border-top: 1px solid #c7dce9; padding-top: 8px !important; color: #0A1F44 !important; background: #e5f4ff !important; }
+.receipt-current-balance b { color: #075985 !important; font-size: 16px !important; }
+.receipt-detail-summary .receipt-current-balance { display: flex; align-items: center; justify-content: space-between; }
+.receipt-view-backdrop .order-share { display: flex; min-height: 38px; align-items: center; justify-content: center; gap: 7px; border-radius: 999px; }
 
 @media (max-width: 850px) {
   .sidebar { width: 255px; transform: translateX(-105%); transition: transform .2s ease; box-shadow: 8px 0 24px rgba(0,0,0,.12); }
@@ -1500,8 +1511,13 @@ body { background: #fff; color: var(--ink); }
 .dark-theme .order-draft-items article small, .dark-theme .payment-history-panel > div > button small { color: #94a3b8; }
 .dark-theme .transaction-totals .total, .dark-theme .payment-balance-summary .final { border-color: #334155; color: #f8fafc; }
 .dark-theme .client-transaction-footer { border-color: #334155; background: rgba(15,23,42,.98); }
-.dark-theme .order-transaction-backdrop .client-transaction-footer { border: 0; background: transparent; box-shadow: none; }
+.dark-theme .order-transaction-backdrop .client-transaction-footer, .dark-theme .payment-transaction-backdrop .client-transaction-footer { border: 0; background: transparent; box-shadow: none; }
 .dark-theme .payment-detail-summary div { background: #111d2f; }
+.dark-theme .receipt-balance-summary, .dark-theme .receipt-detail-summary div { border-color: #334155; background: #111d2f; }
+.dark-theme .receipt-balance-summary > div, .dark-theme .receipt-detail-summary span { color: #cbd5e1; }
+.dark-theme .receipt-balance-summary b, .dark-theme .receipt-detail-summary b { color: #f8fafc; }
+.dark-theme .receipt-current-balance { border-color: #155e75; color: #f8fafc !important; background: #102838 !important; }
+.dark-theme .receipt-current-balance b { color: #67e8f9 !important; }
 /* Ajustes de agenda: card de dia com topo padronizado e lista rolável. */
 .agenda-mobile-detail { display: flex; max-height: min(420px, calc(100svh - 330px)); flex-direction: column; gap: 0; overflow: hidden; padding: 0; }
 .agenda-mobile-detail > header { min-height: 54px; flex: 0 0 auto; border: 0; padding: 12px 14px; color: #fff; background: linear-gradient(135deg,#0A1F44,#1687D9); }

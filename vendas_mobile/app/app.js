@@ -222,7 +222,7 @@ function totaisPeriodo() {
   const fim = new Date(`${state.filtroFim}T23:59:59`);
   const vendasMes = state.vendas.filter((v) => {
     const d = new Date(v.criado_em);
-    return d >= inicio && d <= fim && v.status !== 'cancelada';
+    return d >= inicio && d <= fim && v.status !== 'cancelada' && !pedidoEhConsignado(v);
   });
   const total = vendasMes.reduce((s, v) => s + Number(v.total || 0), 0);
   const itens = vendasMes.reduce((s, v) => s + v.itens.reduce((x, i) => x + Number(i.quantidade || 0), 0), 0);
@@ -1364,7 +1364,7 @@ function saldoFinanceiroCliente(clienteId) {
 }
 
 function renderCliente(c) {
-  const vendasCliente = state.vendas.filter((v) => v.cliente_id === c.id && v.status !== 'cancelada');
+  const vendasCliente = state.vendas.filter((v) => v.cliente_id === c.id && v.status !== 'cancelada' && !pedidoEhConsignado(v));
   const ultimaVenda = [...vendasCliente].sort((a, b) => new Date(b.criado_em) - new Date(a.criado_em))[0];
   const saldo = saldoFinanceiroCliente(c.id);
   const debito = saldo.debito;
@@ -1557,6 +1557,11 @@ async function finalizarPedidoCliente() {
   const totais = totaisPedidoClienteRascunho();
   const dataPedido = valor('pedidoClienteData') || rascunho.data;
   if (!/^\d{4}-\d{2}-\d{2}$/.test(dataPedido)) { toast('Informe uma data válida.'); return; }
+  const financeiroAnterior = saldoFinanceiroCliente(rascunho.clienteId);
+  const saldoLiquidoAnterior = financeiroAnterior.debito - financeiroAnterior.credito;
+  const saldoAtual = rascunho.tipo === 'consignado'
+    ? financeiroAnterior.debito
+    : Math.max(0, saldoLiquidoAnterior + totais.total);
   const venda = {
     id: id('vend'),
     cliente_id: rascunho.clienteId,
@@ -1565,7 +1570,13 @@ async function finalizarPedidoCliente() {
     desconto: totais.desconto,
     total: totais.total,
     forma_pagamento: rascunho.tipo === 'consignado' ? 'Consignado' : 'Venda',
-    observacoes: rascunho.tipo === 'consignado' ? 'Pedido consignado' : 'Pedido de venda',
+    observacoes: JSON.stringify({
+      avantalab_pedido: true,
+      tipo: rascunho.tipo,
+      descricao: rascunho.tipo === 'consignado' ? 'Pedido consignado' : 'Pedido de venda',
+      saldo_anterior: financeiroAnterior.debito,
+      saldo_final: saldoAtual,
+    }),
     itens: rascunho.itens.map((item) => ({ ...item, total: item.quantidade * item.preco })),
     criado_em: new Date(`${dataPedido}T12:00:00`).toISOString(),
   };
@@ -1573,7 +1584,9 @@ async function finalizarPedidoCliente() {
     const salvo = backendAtivo ? await window.VendasDb.saveOrder(venda) : venda;
     state.vendas.unshift(salvo);
     pedidoClienteRascunho = null;
-    fecharSheet(); render(); toast('Pedido registrado com sucesso.');
+    render();
+    abrirPedidoCliente(salvo.id);
+    toast('Pedido registrado. O comprovante está pronto para compartilhar.');
   } catch (error) { toast(traduzErro(error)); }
 }
 
@@ -1633,7 +1646,9 @@ async function confirmarPagamentoCliente() {
     const salvo = backendAtivo ? await window.VendasDb.savePayment(pagamento) : pagamento;
     state.pagamentos = [salvo, ...(state.pagamentos || [])];
     pagamentoClienteRascunho = null;
-    fecharSheet(); render(); toast('Recebimento confirmado.');
+    render();
+    abrirPagamentoClienteDetalhe(salvo.id);
+    toast('Recebimento confirmado. O comprovante está pronto para compartilhar.');
   } catch (error) { toast(traduzErro(error)); }
 }
 
@@ -1732,7 +1747,7 @@ function abrirDetalhesCliente(clienteId, aba = 'resumo', pagina = 0) {
   const consignados = pedidos.filter((venda) => venda.status !== 'cancelada' && pedidoEhConsignado(venda));
   const pagamentos = pagamentosDoCliente(clienteId);
   const saldo = saldoFinanceiroCliente(clienteId);
-  const totalComprado = pedidos.filter((venda) => venda.status !== 'cancelada').reduce((soma, venda) => soma + Number(venda.total || 0), 0);
+  const totalComprado = pedidos.filter((venda) => venda.status !== 'cancelada' && !pedidoEhConsignado(venda)).reduce((soma, venda) => soma + Number(venda.total || 0), 0);
   const conteudo = aba === 'resumo'
     ? `<div class="client-summary-grid"><div><small>Débito pendente</small><b>${moeda(saldo.debito)}</b></div><div><small>Consignação</small><b>${moeda(saldo.consignado)}</b></div><div><small>Crédito</small><b>${moeda(saldo.credito)}</b></div><div><small>Total comprado</small><b>${moeda(totalComprado)}</b></div></div>`
     : aba === 'consignado'
@@ -1747,32 +1762,209 @@ function abrirPagamentoClienteDetalhe(pagamentoId) {
   const pagamento = (state.pagamentos || []).find((item) => item.id === pagamentoId);
   if (!pagamento) return;
   const cliente = state.clientes.find((item) => item.id === pagamento.cliente_id);
-  sheet(`<div class="sheet-header"><div><h2>Pagamento</h2><p class="muted small">${escapeHtml(cliente?.nome || 'Cliente não informado')} · ${dataBR(`${pagamento.data_pagamento}T12:00:00`)}</p></div><button class="close" onclick="fecharSheet()">×</button></div><section class="payment-detail-summary"><div><span>Valor pago</span><b>${moeda(pagamento.valor)}</b></div><div><span>Desconto</span><b>${moeda(pagamento.desconto)}</b></div><div><span>Forma</span><b>${escapeHtml(pagamento.forma_pagamento || 'Não informado')}</b></div><div><span>Saldo final</span><b>${moeda(pagamento.saldo_final)}</b></div></section>`, 'sheet-backdrop-centered');
+  const resumo = resumoComprovantePagamento(pagamento);
+  sheet(`<div class="sheet-header"><div><h2>Comprovante de pagamento</h2><p class="muted small">${escapeHtml(cliente?.nome || 'Cliente não informado')} · ${dataComprovante(pagamento.data_pagamento)}</p></div><button class="close" onclick="fecharSheet()">×</button></div><section class="payment-detail-summary receipt-detail-summary"><div><span>Valor pago</span><b>${moeda(pagamento.valor)}</b></div><div><span>Desconto</span><b>${moeda(pagamento.desconto)}</b></div><div><span>Forma</span><b>${escapeHtml(pagamento.forma_pagamento || 'Não informado')}</b></div><div><span>Saldo anterior</span><b>${moeda(resumo.saldoAnterior)}</b></div><div class="receipt-current-balance"><span>Saldo atual</span><b>${moeda(resumo.saldoAtual)}</b></div></section><button class="primary order-share" onclick="compartilharPagamento('${pagamentoId}')">${svgIcon('save')} Compartilhar comprovante</button>`, 'sheet-backdrop-centered receipt-view-backdrop');
 }
 
 function abrirPedidoCliente(pedidoId) {
   const venda = state.vendas.find((item) => item.id === pedidoId);
   if (!venda) return;
   const cliente = state.clientes.find((item) => item.id === venda.cliente_id);
-  sheet(`<div class="sheet-header"><div><h2>Pedido</h2><p class="muted small">${escapeHtml(cliente?.nome || 'Cliente não informado')} · ${dataBR(venda.criado_em)}</p></div><button class="close" onclick="fecharSheet()">×</button></div><div class="order-view-items">${(venda.itens || []).map((item) => `<div><span>${escapeHtml(item.produto_nome)}</span><b>${item.quantidade} × ${moeda(item.preco || item.preco_unitario)}</b></div>`).join('') || '<p class="muted">Sem itens registrados.</p>'}</div><div class="order-view-total"><span>Total</span><b>${moeda(venda.total)}</b></div><button class="primary order-share" onclick="compartilharPedido('${pedidoId}')"><svg class="svg-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 16V4m0 0L8 8m4-4 4 4M5 14v5h14v-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg> Compartilhar</button>`, 'sheet-backdrop-centered');
+  const resumo = resumoComprovantePedido(venda);
+  const tipo = pedidoEhConsignado(venda) ? 'Pedido consignado' : 'Comprovante de pedido';
+  sheet(`<div class="sheet-header"><div><h2>${tipo}</h2><p class="muted small">${escapeHtml(cliente?.nome || 'Cliente não informado')} · ${dataComprovante(venda.criado_em)}</p></div><button class="close" onclick="fecharSheet()">×</button></div><div class="order-view-items">${(venda.itens || []).map((item) => `<div><span>${escapeHtml(item.produto_nome)}</span><b>${item.quantidade} × ${moeda(item.preco || item.preco_unitario)} · ${moeda(Number(item.quantidade || 0) * Number(item.preco || item.preco_unitario || 0))}</b></div>`).join('') || '<p class="muted">Sem itens registrados.</p>'}</div><section class="receipt-balance-summary"><div><span>Total dos itens</span><b>${moeda(venda.subtotal || venda.total)}</b></div><div><span>Saldo anterior</span><b>${moeda(resumo.saldoAnterior)}</b></div><div><span>Valor do pedido</span><b>${moeda(venda.total)}</b></div><div class="receipt-current-balance"><span>Saldo atual</span><b>${moeda(resumo.saldoAtual)}</b></div></section><button class="primary order-share" onclick="compartilharPedido('${pedidoId}')">${svgIcon('save')} Compartilhar comprovante</button>`, 'sheet-backdrop-centered receipt-view-backdrop');
+}
+
+function dataComprovante(valorData) {
+  const texto = String(valorData || '');
+  const data = /^\d{4}-\d{2}-\d{2}$/.test(texto) ? new Date(`${texto}T12:00:00`) : new Date(texto);
+  if (Number.isNaN(data.getTime())) return 'Data não informada';
+  return new Intl.DateTimeFormat('pt-BR').format(data);
+}
+
+function timestampPedido(venda) {
+  const tempo = new Date(venda?.criado_em || 0).getTime();
+  return Number.isFinite(tempo) ? tempo : 0;
+}
+
+function timestampPagamento(pagamento) {
+  const data = pagamento?.data_pagamento ? `${pagamento.data_pagamento}T12:00:00` : pagamento?.criado_em;
+  const tempo = new Date(data || 0).getTime();
+  return Number.isFinite(tempo) ? tempo : 0;
+}
+
+function metadadosPedido(venda) {
+  try {
+    const dados = JSON.parse(String(venda?.observacoes || ''));
+    return dados && typeof dados === 'object' ? dados : {};
+  } catch { return {}; }
+}
+
+function resumoComprovantePedido(venda) {
+  const metadados = metadadosPedido(venda);
+  if (Object.prototype.hasOwnProperty.call(metadados, 'saldo_anterior') && Object.prototype.hasOwnProperty.call(metadados, 'saldo_final')) {
+    return { saldoAnterior: Number(metadados.saldo_anterior || 0), saldoAtual: Number(metadados.saldo_final || 0) };
+  }
+  const limite = timestampPedido(venda);
+  const debitosAnteriores = state.vendas
+    .filter((item) => item.id !== venda.id && item.cliente_id === venda.cliente_id && item.status !== 'cancelada' && pedidoGeraDebito(item) && timestampPedido(item) < limite)
+    .reduce((soma, item) => soma + Number(item.total || 0), 0);
+  const abatimentosAnteriores = (state.pagamentos || [])
+    .filter((item) => item.cliente_id === venda.cliente_id && timestampPagamento(item) < limite)
+    .reduce((soma, item) => soma + Number(item.valor || 0) + Number(item.desconto || 0), 0);
+  const saldoAnterior = Math.max(0, debitosAnteriores - abatimentosAnteriores);
+  const saldoAtual = Math.max(0, debitosAnteriores + (pedidoGeraDebito(venda) ? Number(venda.total || 0) : 0) - abatimentosAnteriores);
+  return { saldoAnterior, saldoAtual };
+}
+
+function resumoComprovantePagamento(pagamento) {
+  const temSaldos = pagamento?.saldo_anterior !== undefined && pagamento?.saldo_anterior !== null
+    && pagamento?.saldo_final !== undefined && pagamento?.saldo_final !== null;
+  if (temSaldos) return { saldoAnterior: Number(pagamento.saldo_anterior || 0), saldoAtual: Number(pagamento.saldo_final || 0) };
+  const limite = timestampPagamento(pagamento);
+  const debitosAnteriores = state.vendas
+    .filter((item) => item.cliente_id === pagamento.cliente_id && item.status !== 'cancelada' && pedidoGeraDebito(item) && timestampPedido(item) < limite)
+    .reduce((soma, item) => soma + Number(item.total || 0), 0);
+  const abatimentosAnteriores = (state.pagamentos || [])
+    .filter((item) => item.id !== pagamento.id && item.cliente_id === pagamento.cliente_id && timestampPagamento(item) < limite)
+    .reduce((soma, item) => soma + Number(item.valor || 0) + Number(item.desconto || 0), 0);
+  const saldoAnterior = Math.max(0, debitosAnteriores - abatimentosAnteriores);
+  return { saldoAnterior, saldoAtual: Math.max(0, saldoAnterior - Number(pagamento.valor || 0) - Number(pagamento.desconto || 0)) };
+}
+
+function caminhoRetanguloArredondado(ctx, x, y, largura, altura, raio) {
+  const r = Math.min(raio, largura / 2, altura / 2);
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.arcTo(x + largura, y, x + largura, y + altura, r);
+  ctx.arcTo(x + largura, y + altura, x, y + altura, r);
+  ctx.arcTo(x, y + altura, x, y, r);
+  ctx.arcTo(x, y, x + largura, y, r);
+  ctx.closePath();
+}
+
+function textoCanvasLimitado(ctx, texto, larguraMaxima) {
+  const original = String(texto || '');
+  if (ctx.measureText(original).width <= larguraMaxima) return original;
+  let reduzido = original;
+  while (reduzido.length > 1 && ctx.measureText(`${reduzido}…`).width > larguraMaxima) reduzido = reduzido.slice(0, -1);
+  return `${reduzido}…`;
+}
+
+function criarCanvasComprovante({ titulo, cliente, data, etiqueta = '', linhas = [], resumo = [] }) {
+  const linhasExibidas = linhas.slice(0, 44);
+  if (linhas.length > linhasExibidas.length) linhasExibidas.push({ principal: `+ ${linhas.length - linhasExibidas.length} itens adicionais`, secundario: '', valor: '' });
+  const largura = 1080;
+  const altura = Math.min(4000, Math.max(1350, 720 + linhasExibidas.length * 66 + resumo.length * 76));
+  const canvas = document.createElement('canvas');
+  canvas.width = largura; canvas.height = altura;
+  const ctx = canvas.getContext('2d');
+  if (!ctx) throw new Error('Não foi possível gerar o comprovante.');
+  ctx.fillStyle = '#f3f7fb'; ctx.fillRect(0, 0, largura, altura);
+  const gradiente = ctx.createLinearGradient(0, 0, largura, 230);
+  gradiente.addColorStop(0, '#0A1F44'); gradiente.addColorStop(1, '#1687D9');
+  ctx.fillStyle = gradiente; ctx.fillRect(0, 0, largura, 230);
+  ctx.fillStyle = '#fff'; ctx.font = '900 48px Arial, sans-serif'; ctx.fillText('AVANTALAB', 64, 82);
+  ctx.font = '800 32px Arial, sans-serif'; ctx.fillText(titulo, 64, 142);
+  ctx.font = '600 24px Arial, sans-serif'; ctx.fillStyle = 'rgba(255,255,255,.9)'; ctx.fillText(textoCanvasLimitado(ctx, cliente, 680), 64, 188);
+  ctx.textAlign = 'right'; ctx.fillText(data, 1016, 188); ctx.textAlign = 'left';
+  let y = 278;
+  if (etiqueta) {
+    ctx.font = '800 22px Arial, sans-serif';
+    const larguraEtiqueta = ctx.measureText(etiqueta).width + 44;
+    caminhoRetanguloArredondado(ctx, 64, y - 28, larguraEtiqueta, 46, 23);
+    ctx.fillStyle = '#dff4ff'; ctx.fill(); ctx.fillStyle = '#075985'; ctx.fillText(etiqueta, 86, y + 3); y += 58;
+  }
+  caminhoRetanguloArredondado(ctx, 48, y, 984, Math.max(120, 78 + linhasExibidas.length * 66), 26);
+  ctx.fillStyle = '#fff'; ctx.fill();
+  ctx.fillStyle = '#0A1F44'; ctx.font = '900 27px Arial, sans-serif'; ctx.fillText(linhasExibidas.length ? 'Detalhes' : 'Informações', 78, y + 48);
+  y += 82;
+  ctx.font = '700 23px Arial, sans-serif';
+  linhasExibidas.forEach((linha, indice) => {
+    if (indice) { ctx.strokeStyle = '#e1e9f0'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(78, y - 18); ctx.lineTo(1002, y - 18); ctx.stroke(); }
+    ctx.fillStyle = '#172033'; ctx.fillText(textoCanvasLimitado(ctx, linha.principal, 600), 78, y + 5);
+    if (linha.secundario) { ctx.fillStyle = '#64748b'; ctx.font = '600 19px Arial, sans-serif'; ctx.fillText(textoCanvasLimitado(ctx, linha.secundario, 600), 78, y + 33); ctx.font = '700 23px Arial, sans-serif'; }
+    ctx.fillStyle = '#1687D9'; ctx.textAlign = 'right'; ctx.fillText(linha.valor || '', 1002, y + 8); ctx.textAlign = 'left';
+    y += 66;
+  });
+  y += 34;
+  caminhoRetanguloArredondado(ctx, 48, y, 984, 74 + resumo.length * 76, 26);
+  ctx.fillStyle = '#fff'; ctx.fill();
+  ctx.fillStyle = '#0A1F44'; ctx.font = '900 27px Arial, sans-serif'; ctx.fillText('Resumo financeiro', 78, y + 48);
+  y += 82;
+  resumo.forEach((linha, indice) => {
+    const destaque = indice === resumo.length - 1;
+    if (destaque) { caminhoRetanguloArredondado(ctx, 68, y - 22, 944, 62, 18); ctx.fillStyle = '#e5f4ff'; ctx.fill(); }
+    ctx.fillStyle = '#526477'; ctx.font = `${destaque ? '900' : '700'} 23px Arial, sans-serif`; ctx.fillText(linha.rotulo, 88, y + 15);
+    ctx.fillStyle = destaque ? '#075985' : '#0A1F44'; ctx.textAlign = 'right'; ctx.font = `${destaque ? '900' : '800'} ${destaque ? 30 : 25}px Arial, sans-serif`; ctx.fillText(linha.valor, 992, y + 17); ctx.textAlign = 'left';
+    y += 76;
+  });
+  ctx.fillStyle = '#64748b'; ctx.font = '600 20px Arial, sans-serif'; ctx.textAlign = 'center'; ctx.fillText('Comprovante gerado pelo Vendas AvantaLab', largura / 2, altura - 54); ctx.textAlign = 'left';
+  return canvas;
+}
+
+async function compartilharCanvasComprovante(canvas, nomeArquivo, titulo) {
+  const blob = await new Promise((resolve) => canvas.toBlob(resolve, 'image/png'));
+  if (!blob) throw new Error('Não foi possível gerar a imagem do comprovante.');
+  const arquivo = new File([blob], nomeArquivo, { type: 'image/png' });
+  if (navigator.share && (!navigator.canShare || navigator.canShare({ files: [arquivo] }))) {
+    try { await navigator.share({ title: titulo, text: 'Comprovante gerado pelo Vendas AvantaLab.', files: [arquivo] }); return; }
+    catch (error) { if (error?.name === 'AbortError') return; }
+  }
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a'); link.href = url; link.download = nomeArquivo; link.click();
+  window.setTimeout(() => URL.revokeObjectURL(url), 1500);
+  toast('Imagem do comprovante gerada.');
 }
 
 async function compartilharPedido(pedidoId) {
   const venda = state.vendas.find((item) => item.id === pedidoId);
   if (!venda) return;
   const cliente = state.clientes.find((item) => item.id === venda.cliente_id);
-  const canvas = document.createElement('canvas'); canvas.width = 1080; canvas.height = 720;
-  const ctx = canvas.getContext('2d');
-  ctx.fillStyle = '#F7FAFC'; ctx.fillRect(0, 0, canvas.width, canvas.height);
-  ctx.fillStyle = '#0A1F44'; ctx.fillRect(0, 0, canvas.width, 170);
-  ctx.fillStyle = '#fff'; ctx.font = '900 44px Arial'; ctx.fillText('AvantaLab · Pedido', 70, 86);
-  ctx.font = '600 29px Arial'; ctx.fillText(cliente?.nome || 'Cliente não informado', 70, 132);
-  ctx.fillStyle = '#0A1F44'; ctx.font = '800 34px Arial'; ctx.fillText(`Total: ${moeda(venda.total)}`, 70, 240);
-  ctx.font = '600 27px Arial'; (venda.itens || []).slice(0, 9).forEach((item, indice) => ctx.fillText(`${item.quantidade} × ${item.produto_nome}`, 70, 310 + indice * 42));
-  const blob = await new Promise((resolve) => canvas.toBlob(resolve, 'image/png'));
-  const arquivo = new File([blob], 'pedido-avantalab.png', { type: 'image/png' });
-  if (navigator.share && (!navigator.canShare || navigator.canShare({ files: [arquivo] }))) await navigator.share({ title: 'Pedido AvantaLab', files: [arquivo] });
-  else { const link = document.createElement('a'); link.href = URL.createObjectURL(blob); link.download = arquivo.name; link.click(); URL.revokeObjectURL(link.href); }
+  const resumo = resumoComprovantePedido(venda);
+  const linhas = (venda.itens || []).map((item) => ({
+    principal: item.produto_nome || 'Produto',
+    secundario: `${Number(item.quantidade || 0)} × ${moeda(item.preco || item.preco_unitario)}`,
+    valor: moeda(Number(item.quantidade || 0) * Number(item.preco || item.preco_unitario || 0)),
+  }));
+  const canvas = criarCanvasComprovante({
+    titulo: pedidoEhConsignado(venda) ? 'Pedido consignado' : 'Comprovante de pedido',
+    cliente: cliente?.nome || 'Cliente não informado',
+    data: dataComprovante(venda.criado_em),
+    etiqueta: pedidoEhConsignado(venda) ? 'CONSIGNADO' : 'VENDA',
+    linhas,
+    resumo: [
+      { rotulo: 'Total dos itens', valor: moeda(venda.subtotal || venda.total) },
+      { rotulo: 'Saldo anterior', valor: moeda(resumo.saldoAnterior) },
+      { rotulo: 'Valor total do pedido', valor: moeda(venda.total) },
+      { rotulo: 'Saldo atual', valor: moeda(resumo.saldoAtual) },
+    ],
+  });
+  await compartilharCanvasComprovante(canvas, `pedido-${String(venda.id).slice(0, 8)}.png`, 'Comprovante de pedido AvantaLab');
+}
+
+async function compartilharPagamento(pagamentoId) {
+  const pagamento = (state.pagamentos || []).find((item) => item.id === pagamentoId);
+  if (!pagamento) return;
+  const cliente = state.clientes.find((item) => item.id === pagamento.cliente_id);
+  const resumo = resumoComprovantePagamento(pagamento);
+  const abatimento = Number(pagamento.valor || 0) + Number(pagamento.desconto || 0);
+  const canvas = criarCanvasComprovante({
+    titulo: 'Comprovante de pagamento',
+    cliente: cliente?.nome || 'Cliente não informado',
+    data: dataComprovante(pagamento.data_pagamento),
+    etiqueta: String(pagamento.forma_pagamento || 'PAGAMENTO').toUpperCase(),
+    linhas: [
+      { principal: 'Valor pago', secundario: pagamento.forma_pagamento || 'Não informado', valor: moeda(pagamento.valor) },
+      { principal: 'Desconto', secundario: 'Abatimento concedido', valor: moeda(pagamento.desconto) },
+    ],
+    resumo: [
+      { rotulo: 'Saldo anterior', valor: moeda(resumo.saldoAnterior) },
+      { rotulo: 'Valor pago + desconto', valor: moeda(abatimento) },
+      { rotulo: 'Saldo atual', valor: moeda(resumo.saldoAtual) },
+    ],
+  });
+  await compartilharCanvasComprovante(canvas, `pagamento-${String(pagamento.id).slice(0, 8)}.png`, 'Comprovante de pagamento AvantaLab');
 }
 
 function renderPagamentos() {
@@ -2454,7 +2646,7 @@ function resetarDados() {
 
 function produtoMaisVendido() {
   const mapa = new Map();
-  state.vendas.filter((v) => v.status !== 'cancelada').forEach((v) => {
+  state.vendas.filter((v) => v.status !== 'cancelada' && !pedidoEhConsignado(v)).forEach((v) => {
     v.itens.forEach((i) => {
       const atual = mapa.get(i.produto_id) || { nome: i.produto_nome, qtd: 0 };
       atual.qtd += Number(i.quantidade || 0);
@@ -2466,7 +2658,7 @@ function produtoMaisVendido() {
 
 function clienteMaisCompra() {
   const mapa = new Map();
-  state.vendas.filter((v) => v.status !== 'cancelada' && v.cliente_id).forEach((v) => {
+  state.vendas.filter((v) => v.status !== 'cancelada' && !pedidoEhConsignado(v) && v.cliente_id).forEach((v) => {
     const cliente = state.clientes.find((c) => c.id === v.cliente_id);
     const atual = mapa.get(v.cliente_id) || { nome: cliente?.nome || 'Cliente', total: 0 };
     atual.total += Number(v.total || 0);
@@ -2642,6 +2834,7 @@ window.alterarStatusCliente = alterarStatusCliente;
 window.abrirDetalhesCliente = abrirDetalhesCliente;
 window.abrirPedidoCliente = abrirPedidoCliente;
 window.compartilharPedido = compartilharPedido;
+window.compartilharPagamento = compartilharPagamento;
 window.ligarCliente = ligarCliente;
 window.abrirWhatsappCliente = abrirWhatsappCliente;
 window.abrirMapasCliente = abrirMapasCliente;
