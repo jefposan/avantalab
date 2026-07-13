@@ -1098,7 +1098,12 @@ body { background: #fff; color: var(--ink); }
   content: '';
 }
 .login-screen > * { position: relative; z-index: 1; }
-.login-screen.preparing-access-screen { min-height: 100svh; }
+.login-screen.preparing-access-screen {
+  min-height: 100svh;
+  padding: 24px;
+  background: #f7fafc;
+}
+.login-screen.preparing-access-screen::before { display: none; }
 .login-brand { margin: 0 0 16px; color: #0A1F44; }
 .login-brand strong { color: #0A1F44; font-size: 21px; font-weight: 850; letter-spacing: -.02em; }
 .login-brand p { margin-top: 4px; color: #1F8A9E; font-size: 13px; font-weight: 700; }
@@ -1329,7 +1334,7 @@ body { background: #fff; color: var(--ink); }
   .dark-theme .vendas-nav-item { color: #94a3b8; }
   .dark-theme .vendas-nav-add > span { border-color: #0f172a; }
 }
-@keyframes vendas-nav-ripple { 0% { opacity: .9; transform: translate(-50%, -50%) scale(.02); } 68% { opacity: .32; } 100% { opacity: 0; transform: translate(-50%, -50%) scale(16); } }
+@keyframes vendas-nav-ripple { 0% { opacity: .9; transform: translate(-50%, -50%) scale(.02); } 68% { opacity: .32; } 100% { opacity: 0; transform: translate(-50%, -50%) scale(11); } }
 @media (max-width: 460px) {
   .dashboard-kpis { grid-template-columns: 1fr; }
   .goal-card, .dashboard-panel { padding: 18px; }
