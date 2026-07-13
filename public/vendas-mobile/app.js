@@ -30,6 +30,7 @@ const estadoInicial = {
   agendaDiaSelecionado: null,
   agendaFormAberto: false,
   agendaExpandida: false,
+  agendaItemMovendo: null,
   agendaAnimar: '',
   agendaItens: [],
   metaMensal: 0,
@@ -971,7 +972,7 @@ function renderAgenda() {
   const itensDia = selecionado ? itensAgendaDoDiaVendas(ano, mes, selecionado) : [];
   const titulo = new Intl.DateTimeFormat('pt-BR', { month: 'long', year: 'numeric' }).format(new Date(ano, mes, 1));
   const detalheDia = selecionado ? `<section class="agenda-mobile-detail ${state.agendaExpandida ? 'expanded' : ''}"><header><h3>Agenda de ${String(selecionado).padStart(2, '0')} de ${new Intl.DateTimeFormat('pt-BR', { month: 'long' }).format(new Date(ano, mes, 1))}</h3><div><button type="button" class="agenda-expand" onclick="alternarExpansaoAgenda()" aria-label="${state.agendaExpandida ? 'Recolher agenda' : 'Expandir agenda'}">${state.agendaExpandida ? '↙' : '↗'}</button><button type="button" class="close" onclick="fecharDiaAgenda()">×</button></div></header><div class="agenda-mobile-reminders"><div><h4>Clientes agendados</h4><button type="button" class="primary" onclick="abrirFormularioAgendaVendas()">Adicionar</button></div>${itensDia.length ? itensDia.map(renderItemAgendaVendas).join('') : '<p class="agenda-mobile-none">Nenhum cliente agendado neste dia.</p>'}</div></section>` : '';
-  return `<section class="agenda-mobile-page ${state.agendaExpandida ? 'agenda-expanded' : ''}"><div class="agenda-mobile-month"><button type="button" onclick="moverMesAgendaVendas(-1)" aria-label="Mês anterior">‹</button><h2>${escapeHtml(titulo)}</h2><button type="button" onclick="moverMesAgendaVendas(1)" aria-label="Próximo mês">›</button></div><section class="agenda-mobile-screen ${selecionado ? 'agenda-has-selection' : ''} ${animacao ? `agenda-anim-${animacao}` : ''}"><h2>AGENDA</h2><div class="agenda-mobile-week"><b>D</b><b>S</b><b>T</b><b>Q</b><b>Q</b><b>S</b><b>S</b></div><div class="agenda-mobile-grid">${dias.join('')}</div>${detalheDia}</section>${state.agendaFormAberto ? renderFormularioAgendaVendas() : ''}</section>`;
+  return `<section class="agenda-mobile-page ${state.agendaExpandida ? 'agenda-expanded' : ''}"><div class="agenda-mobile-month"><button type="button" onclick="moverMesAgendaVendas(-1)" aria-label="Mês anterior">‹</button><h2>${escapeHtml(titulo)}</h2><button type="button" onclick="moverMesAgendaVendas(1)" aria-label="Próximo mês">›</button></div><section class="agenda-mobile-screen ${selecionado ? 'agenda-has-selection' : ''} ${animacao ? `agenda-anim-${animacao}` : ''}"><h2>AGENDA</h2><div class="agenda-mobile-week"><b>D</b><b>S</b><b>T</b><b>Q</b><b>Q</b><b>S</b><b>S</b></div><div class="agenda-mobile-grid">${dias.join('')}</div>${detalheDia}</section>${state.agendaFormAberto ? renderFormularioAgendaVendas() : ''}${state.agendaItemMovendo ? renderMoverAgendaVendas() : ''}</section>`;
 }
 
 function itensAgendaVendas() {
@@ -999,7 +1000,7 @@ function itensAgendaDoDiaVendas(ano, mes, dia) {
 
 function renderItemAgendaVendas(item) {
   const etiqueta = item.tipo || 'Visita';
-  return `<article class="agenda-mobile-item"><div><b>${escapeHtml(item.titulo)}</b><small class="agenda-tag ${String(etiqueta).toLowerCase()}">${escapeHtml(etiqueta)}</small>${item.descricao ? `<p>${escapeHtml(item.descricao)}</p>` : ''}</div><button type="button" class="agenda-mobile-delete" onclick="excluirItemAgendaVendas('${escapeAttr(item.id)}')" aria-label="Excluir agendamento">×</button></article>`;
+  return `<article class="agenda-mobile-item"><div><b>${escapeHtml(item.titulo)}</b><small class="agenda-tag ${String(etiqueta).toLowerCase()}">${escapeHtml(etiqueta)}</small>${state.agendaExpandida && item.descricao ? `<p>${escapeHtml(item.descricao)}</p>` : ''}</div><div class="agenda-mobile-item-actions"><button type="button" class="agenda-mobile-move" onclick="abrirMoverAgendaVendas('${escapeAttr(item.id)}')" aria-label="Alterar data">↗</button><button type="button" class="agenda-mobile-delete" onclick="excluirItemAgendaVendas('${escapeAttr(item.id)}')" aria-label="Excluir agendamento">×</button></div></article>`;
 }
 
 function selecionarDiaAgenda(dia) { state.agendaDiaSelecionado = dia; state.agendaFormAberto = false; state.agendaExpandida = false; render(); }
@@ -1011,6 +1012,10 @@ function cancelarFormularioAgendaVendas() { state.agendaFormAberto = false; rend
 function renderFormularioAgendaVendas() { return `<div class="agenda-form-overlay" onclick="if(event.target===this)cancelarFormularioAgendaVendas()"><section class="agenda-form-card"><header><div><small>Novo agendamento</small><h3>${String(state.agendaDiaSelecionado).padStart(2, '0')} de ${new Intl.DateTimeFormat('pt-BR', { month: 'long' }).format(new Date(state.agendaAno, state.agendaMes, 1))}</h3></div><button type="button" class="close" onclick="cancelarFormularioAgendaVendas()">×</button></header><div class="agenda-form-fields"><input id="agendaClienteVendas" placeholder="Nome do cliente" autocomplete="off"><select id="agendaEtiquetaVendas"><option value="Visita">Visita</option><option value="Entrega">Entrega</option><option value="Recebimento">Recebimento</option></select><textarea id="agendaDescricaoVendas" placeholder="Notas"></textarea><div><button type="button" class="ghost" onclick="cancelarFormularioAgendaVendas()">Cancelar</button><button type="button" class="primary" onclick="salvarItemAgendaVendas()">Salvar</button></div></div></section></div>`; }
 function salvarItemAgendaVendas() { const titulo = valor('agendaClienteVendas').trim(); if (!titulo) { toast('Informe o nome do cliente.'); return; } state.agendaItens = [...itensAgendaVendas(), { id: id('agenda'), titulo, tipo: valor('agendaEtiquetaVendas') || 'Visita', descricao: valor('agendaDescricaoVendas').trim(), ano: Number(state.agendaAno), mes: Number(state.agendaMes), dia: Number(state.agendaDiaSelecionado), repetir: false, repeticao: '', criadoEm: new Date().toISOString() }]; state.agendaFormAberto = false; salvarEstado(); render(); toast('Cliente agendado.'); }
 function excluirItemAgendaVendas(itemId) { state.agendaItens = itensAgendaVendas().filter((item) => String(item.id) !== String(itemId)); salvarEstado(); render(); toast('Lembrete excluído.'); }
+function abrirMoverAgendaVendas(itemId) { state.agendaItemMovendo = itensAgendaVendas().find((item) => String(item.id) === String(itemId)) || null; render(); }
+function cancelarMoverAgendaVendas() { state.agendaItemMovendo = null; render(); }
+function renderMoverAgendaVendas() { const item = state.agendaItemMovendo; if (!item) return ''; const data = `${String(item.ano).padStart(4, '0')}-${String(Number(item.mes) + 1).padStart(2, '0')}-${String(item.dia).padStart(2, '0')}`; return `<div class="agenda-form-overlay" onclick="if(event.target===this)cancelarMoverAgendaVendas()"><section class="agenda-form-card"><header><div><small>Reagendar cliente</small><h3>${escapeHtml(item.titulo)}</h3></div><button type="button" class="close" onclick="cancelarMoverAgendaVendas()">×</button></header><div class="agenda-form-fields"><input id="agendaNovaDataVendas" type="date" value="${data}"><div><button type="button" class="ghost" onclick="cancelarMoverAgendaVendas()">Cancelar</button><button type="button" class="primary" onclick="salvarNovaDataAgendaVendas()">Reagendar</button></div></div></section></div>`; }
+function salvarNovaDataAgendaVendas() { const data = valor('agendaNovaDataVendas'); if (!/^\d{4}-\d{2}-\d{2}$/.test(data)) { toast('Informe uma data válida.'); return; } const [ano, mes, dia] = data.split('-').map(Number); const idItem = state.agendaItemMovendo?.id; state.agendaItens = itensAgendaVendas().map((item) => String(item.id) === String(idItem) ? { ...item, ano, mes: mes - 1, dia } : item); state.agendaAno = ano; state.agendaMes = mes - 1; state.agendaDiaSelecionado = dia; state.agendaItemMovendo = null; salvarEstado(); render(); toast('Agendamento reagendado.'); }
 
 function renderPublicacoes(tipo) {
   const informacao = tipo === 'informacoes';
@@ -2034,6 +2039,9 @@ window.abrirFormularioAgendaVendas = abrirFormularioAgendaVendas;
 window.cancelarFormularioAgendaVendas = cancelarFormularioAgendaVendas;
 window.salvarItemAgendaVendas = salvarItemAgendaVendas;
 window.excluirItemAgendaVendas = excluirItemAgendaVendas;
+window.abrirMoverAgendaVendas = abrirMoverAgendaVendas;
+window.cancelarMoverAgendaVendas = cancelarMoverAgendaVendas;
+window.salvarNovaDataAgendaVendas = salvarNovaDataAgendaVendas;
 window.salvarMeta = salvarMeta;
 window.alternarTema = alternarTema;
 window.alterarSenha = alterarSenha;

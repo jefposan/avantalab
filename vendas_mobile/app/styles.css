@@ -1387,6 +1387,11 @@ html.agenda-open, body.agenda-open { overflow: hidden; overscroll-behavior: none
   .agenda-mobile-page.agenda-expanded .agenda-mobile-detail { position: fixed; z-index: 80; top: 59px; right: 0; bottom: calc(env(safe-area-inset-bottom) + 72px); left: 0; max-height: none; border-radius: 0; }
   .dark-theme .agenda-mobile-page { background: #0f172a; }
 }
+.agenda-mobile-month { min-height: 48px; padding: 5px 8px; }.agenda-mobile-month button { width: 34px; height: 34px; font-size: 23px; }.agenda-mobile-month h2 { font-size: 14px; }
+.agenda-mobile-detail > header { min-height: 46px; padding: 8px 12px; }.agenda-mobile-detail h3 { font-size: 13px; }.agenda-mobile-reminders > div { min-height: 40px; padding: 8px 12px; }.agenda-mobile-reminders { padding: 10px; }.agenda-mobile-reminders > div { top: -10px; margin: -10px -10px 6px; }.agenda-mobile-reminders .primary { min-height: 28px; padding: 5px 9px; font-size: 10px; }
+.agenda-mobile-screen.agenda-has-selection .agenda-mobile-day, .agenda-mobile-screen.agenda-has-selection .agenda-mobile-empty { min-height: 29px; }.agenda-mobile-screen.agenda-has-selection .agenda-mobile-day b { font-size: 10px; }.agenda-mobile-screen.agenda-has-selection .agenda-mobile-day.today::after { bottom: 2px; width: 9px; height: 2px; }
+.agenda-mobile-item { padding: 8px 9px; }.agenda-mobile-item b { font-size: 12px; }.agenda-mobile-item small.agenda-tag { margin-top: 4px; padding: 2px 6px; font-size: 8px; }.agenda-mobile-item-actions { display: flex; align-items: center; gap: 5px; }.agenda-mobile-move { display: grid; width: 26px; height: 26px; place-items: center; border: 1px solid #bae6fd; border-radius: 999px; color: #0369a1; background: #f0f9ff; font-size: 15px; font-weight: 800; line-height: 1; }
+@media (max-width: 850px) { .agenda-mobile-page.agenda-expanded .agenda-mobile-detail { top: 67px; right: 12px; bottom: calc(env(safe-area-inset-bottom) + 84px); left: 12px; border-radius: 24px; box-shadow: 0 18px 42px rgba(15,23,42,.28); } }
 @media (max-width: 460px) {
   .dashboard-kpis { grid-template-columns: 1fr; }
   .goal-card, .dashboard-panel { padding: 18px; }
