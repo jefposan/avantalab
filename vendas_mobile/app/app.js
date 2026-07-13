@@ -44,6 +44,7 @@ let cadastroPendente = null;
 let segundosReenvioSmsCadastro = 0;
 let timerReenvioSmsCadastro = null;
 let conectandoGoogle = sessionStorage.getItem(GOOGLE_CONNECTING_KEY) === '1';
+let recuperacaoSenhaVendas = null;
 let rolagemAnteriorSheet = 0;
 
 const PAISES_DDI = [
@@ -468,15 +469,52 @@ function adicionarBotoesGoogle() {
 }
 
 function abrirRecuperacaoSenha() {
-  sheet(`<div class="sheet-header"><div><h2>Recuperar senha</h2><p class="muted small">Informe o e-mail cadastrado para receber o link.</p></div><button class="close" onclick="fecharSheet()">×</button></div><div class="grid">${campo('recuperarEmail','E-mail','','email')}<button class="primary" onclick="enviarRecuperacaoSenha()">Enviar link de recuperação</button></div>`);
+  const email = loginTipo === 'email' ? valor('loginContato').trim().toLowerCase() : '';
+  recuperacaoSenhaVendas = { email, codigoEnviado: false };
+  renderRecuperacaoSenhaVendas();
 }
 
 async function enviarRecuperacaoSenha() {
-  const email = valor('recuperarEmail').trim();
-  if (!email) { toast('Informe seu e-mail.'); return; }
+  const email = valor('recuperarEmail').trim().toLowerCase();
+  if (!email || !emailValido(email)) { toast('Informe um e-mail válido.'); return; }
   try {
-    await window.VendasDb.resetPassword(email, `${window.location.origin}/mobile/vendas`);
-    fecharSheet(); toast('Verifique sua caixa de entrada.');
+    const resposta = await fetch('/api/vendas/senha/enviar-codigo', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email }),
+    });
+    const resultado = await resposta.json().catch(() => ({}));
+    if (!resposta.ok || resultado.erro) throw new Error(resultado.mensagem || 'Não foi possível enviar o código por SMS.');
+    recuperacaoSenhaVendas = { email, codigoEnviado: true };
+    renderRecuperacaoSenhaVendas();
+    toast('Código enviado por SMS.');
+  } catch (error) { toast(traduzErro(error)); }
+}
+
+function renderRecuperacaoSenhaVendas() {
+  const recuperacao = recuperacaoSenhaVendas || { email: '', codigoEnviado: false };
+  const formulario = recuperacao.codigoEnviado
+    ? `<p class="muted small">Digite o código enviado por SMS e defina sua nova senha.</p><div class="grid">${campo('recuperarCodigo','Código recebido','','text')}<label class="field"><span>Nova senha</span><input id="recuperarSenhaNova" type="password" autocomplete="new-password" minlength="8" placeholder="Mínimo de 8 caracteres"></label><label class="field"><span>Confirme a nova senha</span><input id="recuperarSenhaConfirma" type="password" autocomplete="new-password" minlength="8" placeholder="Digite novamente"></label><button class="primary" onclick="redefinirSenhaVendas()">Redefinir senha</button><button class="forgot-link" type="button" onclick="enviarRecuperacaoSenha()">Reenviar código por SMS</button></div>`
+    : `<p class="muted small">Enviaremos um código por SMS para o celular confirmado no seu cadastro.</p><div class="grid">${campo('recuperarEmail','E-mail',recuperacao.email,'email')}<button class="primary" onclick="enviarRecuperacaoSenha()">Enviar código por SMS</button></div>`;
+  sheet(`<div class="sheet-header"><div><h2>Recuperar senha</h2><p class="muted small">Recuperação segura por SMS.</p></div><button class="close" onclick="fecharSheet()">×</button></div>${formulario}`);
+}
+
+async function redefinirSenhaVendas() {
+  const codigo = valor('recuperarCodigo').trim();
+  const novaSenha = valor('recuperarSenhaNova');
+  const confirma = valor('recuperarSenhaConfirma');
+  if (!codigo || novaSenha.length < 8 || novaSenha !== confirma) {
+    toast('Informe o código e confirme uma senha com pelo menos 8 caracteres.');
+    return;
+  }
+  try {
+    const resposta = await fetch('/api/vendas/senha/redefinir', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: recuperacaoSenhaVendas?.email, codigo, novaSenha }),
+    });
+    const resultado = await resposta.json().catch(() => ({}));
+    if (!resposta.ok || resultado.erro) throw new Error(resultado.mensagem || 'Não foi possível redefinir a senha.');
+    recuperacaoSenhaVendas = null;
+    fecharSheet();
+    toast('Senha redefinida. Você já pode entrar com e-mail e senha.');
   } catch (error) { toast(traduzErro(error)); }
 }
 
@@ -836,7 +874,7 @@ function renderConfiguracoes() {
       <article class="settings-card"><h3>${svgIcon('settings')} Aparência</h3><label class="switch-line"><span>Modo Escuro (Dark Mode)</span><input type="checkbox" ${state.temaEscuro ? 'checked' : ''} onchange="alternarTema(this.checked)"><i></i></label><p>Alterne o tema da aplicação para maior conforto visual.</p></article>
     </div>
     <article class="settings-card settings-goal"><h3>${svgIcon('target')} Medidor de Meta Mensal</h3><div class="goal-values"><b>Vendas Atuais: <em>${moeda(t.total)}</em></b><b>Meta: ${moeda(state.metaMensal)}</b></div><div class="progress"><i style="width:${Math.max(2, progresso)}%"></i></div><p>Faltam <b>${moeda(Math.max(0, state.metaMensal - t.total))}</b> para atingir sua meta! Vamos lá! 🚀</p><div class="settings-form"><input id="metaConfig" type="number" step="0.01" min="0" value="${state.metaMensal || ''}" placeholder="Definir nova Meta (R$)"><button class="primary" onclick="salvarMeta()">${svgIcon('save')} Salvar</button></div></article>
-    <article class="settings-card"><h3>${svgIcon('lock')} Segurança e Senha</h3><div class="password-form"><label>Senha Atual<input id="senhaAtual" type="password"></label><label>Nova Senha (mín. 6 caracteres)<input id="senhaNova" type="password" minlength="6"></label><label>Confirme Nova Senha<input id="senhaConfirma" type="password" minlength="6"></label><button class="password-button" onclick="alterarSenha()">${svgIcon('lock')} Alterar Senha</button></div></article>
+    <article class="settings-card"><h3>${svgIcon('lock')} Segurança e Senha</h3><p>Defina uma senha para entrar também por e-mail. Se você acessa pelo Google, esta é a sua primeira senha.</p><div class="password-form"><label>Nova Senha (mín. 8 caracteres)<input id="senhaNova" type="password" autocomplete="new-password" minlength="8"></label><label>Confirme Nova Senha<input id="senhaConfirma" type="password" autocomplete="new-password" minlength="8"></label><button class="password-button" onclick="alterarSenha()">${svgIcon('lock')} Salvar senha</button></div></article>
     <article class="settings-card"><h3>${svgIcon('package')} Catálogo de Produtos</h3><p>Importe uma planilha própria ou carregue o pacote de produtos disponível.</p><div class="actions"><button class="secondary" onclick="setAba('importar')">Importar produtos</button><button class="primary" onclick="carregarPacoteTridium()">${svgIcon('package')} Pacote de produtos</button></div></article>
     <article class="settings-card"><h3>${svgIcon('save')} Aplicativo Web (PWA)</h3><p>Instale o aplicativo na tela inicial para acesso rápido, como um app nativo.</p><button class="install-button" onclick="instalarPWA()">Adicionar à Área de Trabalho</button><small>Se o botão não aparecer, use “Adicionar à tela inicial” no menu do navegador.</small></article>
     <article class="settings-card settings-exit-card"><h3>${svgIcon('log-out')} Sair</h3><p>Encerre sua sessão neste aparelho.</p><button class="danger" onclick="abrirConfirmacaoSair()">Sair do Vendas</button></article>
@@ -855,14 +893,19 @@ function alternarTema(ativo) {
   render();
 }
 
-function alterarSenha() {
+async function alterarSenha() {
   const nova = valor('senhaNova');
   const confirma = valor('senhaConfirma');
-  if (!valor('senhaAtual') || nova.length < 6 || nova !== confirma) {
-    toast('Confira a senha atual e a confirmação da nova senha.');
+  if (nova.length < 8 || nova !== confirma) {
+    toast('Confirme uma senha com pelo menos 8 caracteres.');
     return;
   }
-  toast('Senha validada. A alteração será conectada à autenticação do AvantaLab.');
+  try {
+    await window.VendasDb.updatePassword(nova);
+    document.getElementById('senhaNova').value = '';
+    document.getElementById('senhaConfirma').value = '';
+    toast('Senha salva. Agora você também pode entrar com e-mail e senha.');
+  } catch (error) { toast(traduzErro(error)); }
 }
 
 function instalarPWA() {
@@ -1742,6 +1785,7 @@ window.trocarTipoLogin = trocarTipoLogin;
 window.alternarSenhaLogin = alternarSenhaLogin;
 window.abrirRecuperacaoSenha = abrirRecuperacaoSenha;
 window.enviarRecuperacaoSenha = enviarRecuperacaoSenha;
+window.redefinirSenhaVendas = redefinirSenhaVendas;
 window.abrirCadastroConta = abrirCadastroConta;
 window.voltarParaLogin = voltarParaLogin;
 window.voltarDadosCadastro = voltarDadosCadastro;

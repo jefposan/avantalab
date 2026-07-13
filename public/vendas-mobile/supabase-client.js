@@ -54,6 +54,11 @@
     if (error) throw error;
   }
 
+  async function updatePassword(password) {
+    const { error } = await requireClient().auth.updateUser({ password });
+    if (error) throw error;
+  }
+
   async function signUp({ email, password, nome, telefone }) {
     const { data, error } = await requireClient().auth.signUp({
       email,
@@ -216,5 +221,5 @@
     return { ...pedido, itens: savedItems || [] };
   }
 
-  window.VendasDb = { client, currentUser, hasSession, signIn, signInPhone, signInWithGoogle, resetPassword, signUp, signOut, solicitarAcesso, buscarAcessoVendas, loadAll, saveProduct, deleteProduct, saveClient, deleteClient, saveOrder };
+  window.VendasDb = { client, currentUser, hasSession, signIn, signInPhone, signInWithGoogle, resetPassword, updatePassword, signUp, signOut, solicitarAcesso, buscarAcessoVendas, loadAll, saveProduct, deleteProduct, saveClient, deleteClient, saveOrder };
 })();
