@@ -13,6 +13,23 @@
   },
   "versoes": [
     {
+      "versao": "1.4.0.63",
+      "titulo": "Privacidade inicial no web",
+      "data": "Julho/2026",
+      "itens": [
+        "Web: Configurações ganhou a opção Iniciar valores ocultos, seguindo o comportamento do mobile.",
+        "Web: as chavinhas de privacidade inicial e duplicados ficam reunidas no mesmo menu."
+      ]
+    },
+    {
+      "versao": "1.4.0.62",
+      "titulo": "Tooltip do card de perfis",
+      "data": "Julho/2026",
+      "itens": [
+        "Web: o rodapé de arraste do card Meus perfis agora explica sua função ao passar o mouse."
+      ]
+    },
+    {
       "versao": "1.4.0.61",
       "titulo": "Folga do card de perfis expandido",
       "data": "Julho/2026",

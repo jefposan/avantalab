@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.4.0.63 - 2026-07-13
+
+- Web: adiciona em Configurações a chavinha Iniciar valores ocultos, com preferência salva no dispositivo.
+- Web: reúne as opções de privacidade inicial e aviso de duplicados no mesmo menu de configurações.
+
+## 1.4.0.62 - 2026-07-13
+
+- Web: adiciona ao puxador do card Meus perfis um tooltip no mesmo padrão dos controles do menu.
+
 ## 1.4.0.61 - 2026-07-13
 
 - Web: aumenta a folga final do card Meus perfis no modo expandido para concluir a rolagem sem cortes.

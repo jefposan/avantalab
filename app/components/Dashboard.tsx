@@ -23,6 +23,7 @@ import { buscarFaturamentos, buscarLancamentos } from '../lib/database';
 import { restringirArrasteAJanela } from '../lib/dnd';
 import { corEhClara } from '../lib/formatters';
 import AvantaCard, { criarAvantaShellPreset } from './AvantaCard';
+import Tooltip from './Tooltip';
 
 const HandleContext = createContext<Record<string, any> | null>(null);
 
@@ -123,6 +124,7 @@ interface DashboardProps {
   textStrong: string;
   textMuted: string;
   darkMode: boolean;
+  iniciarValoresOcultos: boolean;
   mesResumoDash: string;
   setMesResumoDash: (mes: string) => void;
   totalDespesasMes: number;
@@ -186,7 +188,7 @@ interface DashboardProps {
 }
 
 export default function Dashboard({
-  meses, lancamentos, faturamentos, anoSelecionado, empresaId, nomePerfilAtual, resumoPerfis = [], mesPerfis, setMesAtivo, bgCard, corPrimaria, textStrong, textMuted, darkMode,
+  meses, lancamentos, faturamentos, anoSelecionado, empresaId, nomePerfilAtual, resumoPerfis = [], mesPerfis, setMesAtivo, bgCard, corPrimaria, textStrong, textMuted, darkMode, iniciarValoresOcultos,
   mesResumoDash, setMesResumoDash, totalDespesasMes, maiorGasto, lucroOperacional,
   inputFaturamento, setInputFaturamento, placeholderFaturamento,
   solicitarFaturamentoDashboard,
@@ -210,8 +212,8 @@ export default function Dashboard({
   pontoFuncionariosHoje, onAbrirControlePonto
 }: DashboardProps) {
 
-  const [ocultarValores, setOcultarValores] = useState(true);
-  const [ocultarValoresPerfis, setOcultarValoresPerfis] = useState(true);
+  const [ocultarValores, setOcultarValores] = useState(iniciarValoresOcultos);
+  const [ocultarValoresPerfis, setOcultarValoresPerfis] = useState(iniciarValoresOcultos);
   const [graficosPerfisVisiveis, setGraficosPerfisVisiveis] = useState(false);
   const [perfilDetalhado, setPerfilDetalhado] = useState<ResumoPerfilFinanceiro | null>(null);
   const [listaPerfisPodeDescer, setListaPerfisPodeDescer] = useState(false);
@@ -252,6 +254,10 @@ export default function Dashboard({
   const [caixinhaSalvando, setCaixinhaSalvando] = useState(false);
   const [caixinhaSaldoInicialSalvando, setCaixinhaSaldoInicialSalvando] = useState(false);
   const [caixinhaMensagem, setCaixinhaMensagem] = useState('');
+  useEffect(() => {
+    setOcultarValores(iniciarValoresOcultos);
+    setOcultarValoresPerfis(iniciarValoresOcultos);
+  }, [iniciarValoresOcultos]);
   const listaPerfisRef = useRef<HTMLDivElement | null>(null);
   const listaPerfisArrastandoRef = useRef(false);
   const listaPerfisArrastouRef = useRef(false);
@@ -1542,19 +1548,20 @@ const mostrarComparativoResumoDash =
             </div>
           )}
         </div>
-        <button
-          type="button"
-          onPointerDown={iniciarRedimensionamentoPerfis}
-          onPointerMove={moverRedimensionamentoPerfis}
-          onPointerUp={encerrarRedimensionamentoPerfis}
-          onPointerCancel={encerrarRedimensionamentoPerfis}
-          className={`perfil-resize-handle flex h-7 w-full shrink-0 touch-none flex-col items-center justify-center border-t ${darkMode ? 'border-slate-700 bg-slate-900/60 hover:bg-slate-800' : 'border-slate-200 bg-slate-50 hover:bg-slate-100'}`}
-          aria-label="Redimensionar card de perfis"
-          title="Arraste para aumentar o card"
-        >
-          <span className={`text-[7px] font-black uppercase leading-none tracking-[0.16em] ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>Arraste</span>
-          <span className={`mt-0.5 h-1 w-9 rounded-full ${darkMode ? 'bg-slate-500' : 'bg-slate-400'}`} />
-        </button>
+        <Tooltip texto="Arraste para ajustar a altura do card Meus perfis." posicao="top" wrapperClassName="w-full shrink-0">
+          <button
+            type="button"
+            onPointerDown={iniciarRedimensionamentoPerfis}
+            onPointerMove={moverRedimensionamentoPerfis}
+            onPointerUp={encerrarRedimensionamentoPerfis}
+            onPointerCancel={encerrarRedimensionamentoPerfis}
+            className={`perfil-resize-handle flex h-7 w-full touch-none flex-col items-center justify-center border-t ${darkMode ? 'border-slate-700 bg-slate-900/60 hover:bg-slate-800' : 'border-slate-200 bg-slate-50 hover:bg-slate-100'}`}
+            aria-label="Redimensionar card de perfis"
+          >
+            <span className={`text-[7px] font-black uppercase leading-none tracking-[0.16em] ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>Arraste</span>
+            <span className={`mt-0.5 h-1 w-9 rounded-full ${darkMode ? 'bg-slate-500' : 'bg-slate-400'}`} />
+          </button>
+        </Tooltip>
       </div>
     ),
 

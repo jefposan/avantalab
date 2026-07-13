@@ -132,6 +132,7 @@ type AgendaItem = {
 
 type RegistroSupabase = Record<string, unknown>;
 type PerfilAcessoUsuario = 'gestor_master' | 'administrador' | 'operador_completo' | 'operador_simples';
+const CHAVE_INICIAR_VALORES_OCULTOS_WEB = 'avantalab_web_iniciar_valores_ocultos';
 
 type EmpresaUsuarioResumo = RegistroSupabase & {
   id: string;
@@ -372,6 +373,23 @@ export default function AppGestao() {
   } = empresas;
 
   const [duplicadosAtivo, setDuplicadosAtivo] = useState(true);
+  const [iniciarValoresOcultos, setIniciarValoresOcultos] = useState(true);
+
+  useEffect(() => {
+    try {
+      setIniciarValoresOcultos(localStorage.getItem(CHAVE_INICIAR_VALORES_OCULTOS_WEB) !== '0');
+    } catch {}
+  }, []);
+
+  const alternarInicioValoresOcultos = () => {
+    setIniciarValoresOcultos((atual) => {
+      const proximo = !atual;
+      try {
+        localStorage.setItem(CHAVE_INICIAR_VALORES_OCULTOS_WEB, proximo ? '1' : '0');
+      } catch {}
+      return proximo;
+    });
+  };
 
   const auth = useAuth({
     abrirAviso,
@@ -9431,6 +9449,20 @@ name="novo-usuario-login"
             </button>
           </Tooltip>
 
+          <Tooltip texto="Define se os valores financeiros começam ocultos ao abrir o sistema neste dispositivo." posicao="right" wrapperClassName="w-full">
+            <button type="button" className="flex w-full items-center justify-between gap-2 rounded-lg px-3 py-2 text-xs font-bold text-white hover:bg-slate-700 cursor-pointer" onClick={alternarInicioValoresOcultos}>
+              <span className="min-w-0 text-left">
+                <span className="block truncate">Iniciar valores ocultos</span>
+                <span className="mt-0.5 block truncate text-[9px] font-semibold text-slate-400">
+                  {iniciarValoresOcultos ? 'Privacidade ativa ao abrir' : 'Valores visíveis ao abrir'}
+                </span>
+              </span>
+              <div className={`relative h-3.5 w-7 shrink-0 rounded-full transition-colors ${iniciarValoresOcultos ? '' : 'bg-slate-600'}`} style={{ backgroundColor: iniciarValoresOcultos ? corPrimaria : '', border: iniciarValoresOcultos && corEhClara(corPrimaria) ? '1px solid rgba(15, 23, 42, 0.35)' : '' }}>
+                <span className={`absolute left-0.5 top-0.5 h-2.5 w-2.5 rounded-full transition-transform ${iniciarValoresOcultos ? 'translate-x-3.5' : ''}`} style={{ backgroundColor: iniciarValoresOcultos && corEhClara(corPrimaria) ? '#0f172a' : '#ffffff' }} />
+              </div>
+            </button>
+          </Tooltip>
+
           {podeGerenciarUsuarios && (
             <Tooltip texto="Cadastre usuários e gerencie suas permissões de acesso ao perfil." posicao="right" wrapperClassName="w-full">
               <button type="button" onClick={() => { setAjustesAberto(false); abrirModalUsuarios(); }} className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-xs font-bold text-white transition-colors hover:bg-slate-700">
@@ -10041,6 +10073,7 @@ name="novo-usuario-login"
         textStrong={textStrong}
         textMuted={textMuted}
         darkMode={darkMode}
+        iniciarValoresOcultos={iniciarValoresOcultos}
         mesResumoDash={mesResumoDash}
         setMesResumoDash={setMesResumoDash}
         totalDespesasMes={totalDespesasMes}
