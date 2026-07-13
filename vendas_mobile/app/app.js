@@ -188,6 +188,10 @@ function svgIcon(nome, classe = '') {
   return `<svg class="svg-icon ${classe}" aria-hidden="true"><use href="./assets/icons.svg#${nome}"></use></svg>`;
 }
 
+function logoVendas() {
+  return `<span class="vendas-brand-logo"><img class="vendas-logo-claro" src="/vendas-mobile/assets/logo-vendas-claro.png" alt="AvantaLab — Cada venda, um avanço"><img class="vendas-logo-escuro" src="/vendas-mobile/assets/logo-vendas-escuro.png" alt="" aria-hidden="true"></span>`;
+}
+
 function setAba(aba) {
   if (aba !== 'agenda') fecharCamadasAgenda();
   state.aba = aba;
@@ -296,10 +300,10 @@ function render() {
     requestAnimationFrame(limparFocoInicialLogin);
     return;
   }
-  const cabecalho = `<header class="system-header"><button class="system-brand brand-home" onclick="abrirSalaBotoes()" aria-label="Ir para a sala de botões"><img src="./assets/logo-avantalab.png" alt="AvantaLab" /></button></header>`;
+  const cabecalho = `<header class="system-header"><button class="system-brand brand-home" onclick="abrirSalaBotoes()" aria-label="Ir para a sala de botões">${logoVendas()}</button></header>`;
   app.innerHTML = `
     <aside class="sidebar ${state.menuAberto ? 'open' : ''}">
-      <button class="sidebar-brand brand-home" onclick="abrirSalaBotoes()" aria-label="Ir para a sala de botões"><img src="./assets/logo-avantalab.png" alt="AvantaLab" /></button>
+      <button class="sidebar-brand brand-home" onclick="abrirSalaBotoes()" aria-label="Ir para a sala de botões">${logoVendas()}</button>
       <nav class="side-nav">
         ${tab('dashboard', 'home', 'Dashboard')}
         ${tab('clientes', 'users', 'Clientes')}
@@ -438,7 +442,7 @@ function renderMenuMobile() {
     ['novidades', '8_Novidades.png', 'Novidades'], ['divulgacao', '7_Divulgação.png', 'Divulgação'], ['informacoes', '9_Informações.png', 'Informações']
   ];
   return `<section class="mobile-menu" aria-label="Menu principal">
-    <header class="mobile-menu-header"><div class="mobile-menu-brand"><img src="./assets/logo-avantalab.png" alt="AvantaLab" /></div></header>
+    <header class="mobile-menu-header"><div class="mobile-menu-brand">${logoVendas()}</div></header>
     <div class="mobile-menu-grid">${itens.map(([idAba, arquivo, label]) => `<button class="mobile-menu-card" onclick="setAba('${idAba}')"><img src="./assets/menu/${arquivo}" alt="${label}" /></button>`).join('')}</div>
     <div class="mobile-menu-bottom"><button class="mobile-menu-wide" onclick="setAba('configuracoes')"><img src="./assets/menu/13_Configurações.png" alt="Configurações" /></button><button class="mobile-menu-wide" onclick="sairMenuMobile()"><img src="./assets/menu/14_Sair.png" alt="Sair" /></button></div>
   </section>`;
