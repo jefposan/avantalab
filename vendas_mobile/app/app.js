@@ -1,4 +1,5 @@
 const STORAGE_KEY = 'avantalab.vendas_mobile.v1';
+const GOOGLE_CONNECTING_KEY = 'avantalab.vendas_mobile.google_connecting';
 const HOJE = new Date();
 const INICIO_MES = new Date(HOJE.getFullYear(), HOJE.getMonth(), 1);
 
@@ -42,6 +43,7 @@ let cadastroEtapa = 'dados';
 let cadastroPendente = null;
 let segundosReenvioSmsCadastro = 0;
 let timerReenvioSmsCadastro = null;
+let conectandoGoogle = sessionStorage.getItem(GOOGLE_CONNECTING_KEY) === '1';
 
 const PAISES_DDI = [
   ['Brasil', '55', '🇧🇷'], ['Portugal', '351', '🇵🇹'], ['Estados Unidos / Canadá', '1', '🇺🇸'],
@@ -362,11 +364,18 @@ async function entrarSistema(event) {
 }
 
 async function entrarComGoogle() {
-  const erro = document.getElementById('loginErro') || document.getElementById('cadastroErro');
-  if (erro) erro.textContent = '';
+  if (conectandoGoogle) return;
+  document.activeElement?.blur();
+  conectandoGoogle = true;
+  sessionStorage.setItem(GOOGLE_CONNECTING_KEY, '1');
+  render();
   try {
     await window.VendasDb.signInWithGoogle(`${window.location.origin}/mobile/vendas`);
   } catch (error) {
+    conectandoGoogle = false;
+    sessionStorage.removeItem(GOOGLE_CONNECTING_KEY);
+    render();
+    const erro = document.getElementById('loginErro') || document.getElementById('cadastroErro');
     if (erro) erro.textContent = traduzErro(error);
   }
 }
@@ -375,8 +384,12 @@ function adicionarBotoesGoogle() {
   const form = app.querySelector('.login-screen form');
   const rodape = form?.querySelector('.login-register');
   if (!form || !rodape || form.querySelector('.google-login-button') || cadastroEtapa === 'sms') return;
-  const texto = modoLogin === 'cadastro' ? 'Cadastrar com Google' : 'Continuar com Google';
+  const texto = conectandoGoogle ? 'Conectando...' : (modoLogin === 'cadastro' ? 'Cadastrar com Google' : 'Continuar com Google');
   rodape.insertAdjacentHTML('beforebegin', `<button type="button" class="google-login-button" onclick="entrarComGoogle()"><span class="google-login-mark" aria-hidden="true">G</span>${texto}</button>`);
+  if (conectandoGoogle) {
+    form.classList.add('google-connecting');
+    form.querySelectorAll('input, select, button').forEach((controle) => { controle.disabled = true; });
+  }
 }
 
 function abrirRecuperacaoSenha() {
@@ -593,6 +606,8 @@ async function carregarDadosBackend(mostrarCarregamento = true) {
     state.erroBackend = traduzErro(error);
   } finally {
     carregandoBackend = false;
+    conectandoGoogle = false;
+    sessionStorage.removeItem(GOOGLE_CONNECTING_KEY);
     render();
     if (state.erroBackend) { toast(state.erroBackend); state.erroBackend = '';
     }
@@ -611,7 +626,12 @@ async function inicializarApp() {
   state.autenticado = false;
   state.usuarioSemAcesso = false;
   render();
-  if (!(await window.VendasDb.hasSession())) return;
+  if (!(await window.VendasDb.hasSession())) {
+    conectandoGoogle = false;
+    sessionStorage.removeItem(GOOGLE_CONNECTING_KEY);
+    render();
+    return;
+  }
   await carregarDadosBackend(false);
 }
 

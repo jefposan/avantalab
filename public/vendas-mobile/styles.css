@@ -889,6 +889,13 @@ body { background: #fff; color: var(--ink); }
 .login-register { margin: -4px 0 0; color: #737b83; font-size: 14px; text-align: center; }
 .google-login-button { display: inline-flex; min-height: 38px; align-items: center; justify-content: center; gap: 10px; border: 1px solid #d9e0e4; border-radius: 10px; color: #334155; background: #fff; font-size: 13px; font-weight: 800; transition: border-color .2s ease, background .2s ease; }
 .google-login-button:hover { border-color: #1F8A9E; background: #f7fafc; }
+.login-screen form.google-connecting input,
+.login-screen form.google-connecting select,
+.login-screen form.google-connecting button { cursor: wait; }
+.login-screen form.google-connecting input,
+.login-screen form.google-connecting select,
+.login-screen form.google-connecting button:not(.google-login-button) { opacity: .52; }
+.login-screen form.google-connecting .google-login-button { border-color: #b8cfd6; color: #1F8A9E; background: #eef8f9; opacity: 1; }
 .google-login-mark { display: inline-grid; width: 21px; height: 21px; place-items: center; border-radius: 999px; color: #fff; background: conic-gradient(from -45deg, #4285f4 0 25%, #34a853 0 45%, #fbbc05 0 68%, #ea4335 0 100%); font-size: 14px; font-weight: 950; line-height: 1; }
 .access-request-card { width: min(100%, 420px); border-radius: 18px; padding: 24px; background: #fff; box-shadow: 0 18px 45px rgba(0,31,60,.28); }
 .access-request-card .sheet-header { margin-bottom: 18px; }
