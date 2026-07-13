@@ -1279,7 +1279,7 @@ function renderProdutos() {
 }
 
 function renderProduto(p) {
-  const preco = p.preco_promocional || p.preco;
+  const preco = p.preco;
   const pacote = state.pacotesProdutos.find((item) => item.id === p.pacote_origem_id);
   return `
     <article class="product-card">
@@ -1496,7 +1496,7 @@ function renderVender() {
 }
 
 function renderProdutoVenda(p) {
-  const preco = Number(p.preco_promocional || p.preco || 0);
+  const preco = Number(p.preco || 0);
   return `
     <article class="product-card">
       <div class="product-image-wrap" onclick="adicionarCarrinho('${p.id}')">
@@ -1544,7 +1544,7 @@ function renderImportar() {
     <article class="data-panel" style="padding:18px">
       <div class="field">
         <label>CSV de produtos</label>
-        <textarea id="csvInput" placeholder="marca,categoria,sku,nome,descricao,preco,preco_promocional,estoque,unidade,ativo"></textarea>
+        <textarea id="csvInput" placeholder="marca,categoria,sku,nome,descricao,preco,estoque,unidade,ativo"></textarea>
       </div>
       <button class="primary" style="width:100%;margin-top:10px" onclick="importarCsv()">Importar CSV</button>
     </article>
@@ -1754,7 +1754,6 @@ function abrirProduto(produtoId = '') {
         ${campo('prodCusto', 'Preço de custo', p.preco_custo || '', 'number', '0.01')}
         ${campo('prodPreco', 'Preço de venda', p.preco || '', 'number', '0.01')}
       </div>
-      ${campo('prodPromo', 'Preço promocional (opcional)', p.preco_promocional || '', 'number', '0.01')}
       ${campo('prodEstoque', 'Estoque', p.estoque ?? '', 'number', '0.001')}
       ${campo('prodImagem', 'Link da imagem (opcional)', p.imagem_url || '', 'url')}
       <div class="field"><label>Descrição</label><textarea id="prodDescricao">${escapeHtml(p.descricao || '')}</textarea></div>
@@ -1775,7 +1774,6 @@ async function salvarProduto(produtoId) {
     unidade: valor('prodUnidade').trim() || 'un',
     preco: Number(valor('prodPreco') || 0),
     preco_custo: Number(valor('prodCusto') || 0),
-    preco_promocional: valor('prodPromo') ? Number(valor('prodPromo')) : null,
     estoque: valor('prodEstoque') ? Number(valor('prodEstoque')) : null,
     imagem_url: valor('prodImagem').trim(),
     descricao: valor('prodDescricao').trim(),
@@ -1882,7 +1880,7 @@ function adicionarCarrinho(produtoId) {
   const p = state.produtos.find((item) => item.id === produtoId);
   if (!p) return;
   const existente = state.carrinho.find((item) => item.produto_id === produtoId);
-  const preco = Number(p.preco_promocional || p.preco || 0);
+  const preco = Number(p.preco || 0);
   if (existente) existente.quantidade += 1;
   else state.carrinho.push({ produto_id: p.id, produto_nome: p.nome, produto_sku: p.sku, quantidade: 1, preco });
   toast(`${p.nome} adicionado.`);
@@ -2022,7 +2020,6 @@ function importarCsv() {
       nome,
       descricao: cols[idx('descricao')] || '',
       preco,
-      preco_promocional: cols[idx('preco_promocional')] ? Number(String(cols[idx('preco_promocional')]).replace(',', '.')) : null,
       estoque: cols[idx('estoque')] ? Number(String(cols[idx('estoque')]).replace(',', '.')) : null,
       unidade: cols[idx('unidade')] || 'un',
       ativo: normalizar(cols[idx('ativo')]) !== 'nao',
@@ -2036,7 +2033,7 @@ function importarCsv() {
 }
 
 function baixarModeloCsv() {
-  const conteudo = 'marca,categoria,sku,nome,descricao,preco,preco_promocional,estoque,unidade,ativo\nMinha Marca,Categoria,SKU-001,Produto Exemplo,Descricao do produto,49.90,,10,un,sim\n';
+  const conteudo = 'marca,categoria,sku,nome,descricao,preco,estoque,unidade,ativo\nMinha Marca,Categoria,SKU-001,Produto Exemplo,Descricao do produto,49.90,10,un,sim\n';
   const blob = new Blob([conteudo], { type: 'text/csv;charset=utf-8' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
