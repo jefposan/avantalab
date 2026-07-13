@@ -449,6 +449,18 @@ button {
   box-shadow: 0 8px 18px rgba(0, 179, 169, 0.22);
 }
 
+.approval-wait-exit {
+  display: flex;
+  width: min(200px, 70%);
+  min-height: 32px;
+  align-items: center;
+  justify-content: center;
+  margin: 14px auto 0;
+  padding: 5px 24px;
+  border-radius: 999px;
+  font-size: 12px;
+}
+
 .secondary {
   color: var(--primary-hover);
   background: var(--primary-light);
