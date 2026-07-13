@@ -258,6 +258,7 @@ export default function Dashboard({
   const listaPerfisInicioYRef = useRef(0);
   const listaPerfisVelocidadeRef = useRef(0);
   const listaPerfisAutoScrollRef = useRef<number | null>(null);
+  const alturaMaximaCardPerfisRef = useRef<number | null>(null);
   const redimensionamentoPerfisRef = useRef({ ativo: false, pointerId: 0, inicioY: 0, alturaInicial: 0, alturaMaxima: 0 });
   const pararAutoScrollPerfis = useCallback(() => {
     listaPerfisArrastandoRef.current = false;
@@ -315,9 +316,11 @@ export default function Dashboard({
     if (!card) return;
     const alturaInicial = card.getBoundingClientRect().height;
     const lista = listaPerfisRef.current;
-    const alturaMaxima = lista
-      ? Math.max(alturaInicial, alturaInicial - lista.clientHeight + lista.scrollHeight)
+    const alturaMaximaCalculada = lista
+      ? Math.max(alturaInicial, alturaInicial - lista.clientHeight + lista.scrollHeight + 32)
       : alturaInicial;
+    const alturaMaxima = alturaMaximaCardPerfisRef.current ?? alturaMaximaCalculada;
+    alturaMaximaCardPerfisRef.current = alturaMaxima;
     redimensionamentoPerfisRef.current = {
       ativo: true,
       pointerId: event.pointerId,
@@ -818,7 +821,7 @@ const mostrarComparativoResumoDash =
   useEffect(() => {
     const timer = window.setTimeout(atualizarEstadoScrollPerfis, 0);
     return () => window.clearTimeout(timer);
-  }, [atualizarEstadoScrollPerfis, perfisDashboard.length, cols.full.includes('meusPerfis')]);
+  }, [atualizarEstadoScrollPerfis, alturaCardPerfis, perfisDashboard.length, cols.full.includes('meusPerfis')]);
   const catalogoCardsKanban = [
     { id: 'lancamentosMensais', titulo: 'Lançamentos mensais', descricao: 'Atalho anual para abrir os lançamentos de cada mês.' },
     { id: 'aConfirmar', titulo: 'Lançamentos a confirmar', descricao: 'Banner de despesas e receitas previstas que chegaram na data.' },
@@ -1538,21 +1541,19 @@ const mostrarComparativoResumoDash =
             </div>
           )}
         </div>
-        <div className={`flex h-7 shrink-0 flex-col items-center justify-center border-t ${darkMode ? 'border-slate-700 bg-slate-900/60' : 'border-slate-200 bg-slate-50'}`}>
+        <button
+          type="button"
+          onPointerDown={iniciarRedimensionamentoPerfis}
+          onPointerMove={moverRedimensionamentoPerfis}
+          onPointerUp={encerrarRedimensionamentoPerfis}
+          onPointerCancel={encerrarRedimensionamentoPerfis}
+          className={`perfil-resize-handle flex h-7 w-full shrink-0 touch-none flex-col items-center justify-center border-t ${darkMode ? 'border-slate-700 bg-slate-900/60 hover:bg-slate-800' : 'border-slate-200 bg-slate-50 hover:bg-slate-100'}`}
+          aria-label="Redimensionar card de perfis"
+          title="Arraste para aumentar o card"
+        >
           <span className={`text-[7px] font-black uppercase leading-none tracking-[0.16em] ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>Arraste</span>
-          <button
-            type="button"
-            onPointerDown={iniciarRedimensionamentoPerfis}
-            onPointerMove={moverRedimensionamentoPerfis}
-            onPointerUp={encerrarRedimensionamentoPerfis}
-            onPointerCancel={encerrarRedimensionamentoPerfis}
-            className={`flex h-3 w-16 items-center justify-center touch-none cursor-grab active:cursor-grabbing ${darkMode ? 'hover:bg-slate-800' : 'hover:bg-slate-100'}`}
-            aria-label="Redimensionar card de perfis"
-            title="Arraste para aumentar o card"
-          >
-            <span className={`h-1 w-9 rounded-full ${darkMode ? 'bg-slate-500' : 'bg-slate-400'}`} />
-          </button>
-        </div>
+          <span className={`mt-0.5 h-1 w-9 rounded-full ${darkMode ? 'bg-slate-500' : 'bg-slate-400'}`} />
+        </button>
       </div>
     ),
 

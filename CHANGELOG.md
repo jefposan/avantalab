@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.4.0.60 - 2026-07-13
+
+- Web: corrige o cursor do puxador para alternar entre mão aberta e mão fechada durante o arraste.
+- Web: amplia a área de captura para todo o rodapé e adiciona folga para exibir integralmente o último perfil.
+
 ## 1.4.0.59 - 2026-07-13
 
 - Web: corrige a trava dos popups fixando a página na posição atual enquanto o overlay estiver aberto.

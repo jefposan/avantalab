@@ -285,6 +285,14 @@ button:disabled {
   cursor: not-allowed !important;
 }
 
+button.perfil-resize-handle {
+  cursor: grab !important;
+}
+
+button.perfil-resize-handle:active {
+  cursor: grabbing !important;
+}
+
 @media (min-width: 768px) and (pointer: fine) {
   .draggable-modal-card [data-modal-drag-handle],
   .draggable-modal-card [data-modal-drag-handle] * {

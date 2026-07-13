@@ -13,6 +13,15 @@
   },
   "versoes": [
     {
+      "versao": "1.4.0.60",
+      "titulo": "Área de arraste do card de perfis",
+      "data": "Julho/2026",
+      "itens": [
+        "Web: cursor do puxador mostra mão aberta e mão fechada ao segurar.",
+        "Web: todo o rodapé responde ao arraste e o último perfil fica totalmente visível."
+      ]
+    },
+    {
       "versao": "1.4.0.59",
       "titulo": "Correção da trava dos popups",
       "data": "Julho/2026",
