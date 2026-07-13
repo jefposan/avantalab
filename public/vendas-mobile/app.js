@@ -25,9 +25,12 @@ const estadoInicial = {
   filtroInicio: isoData(INICIO_MES),
   filtroFim: isoData(HOJE),
   mesReferencia: isoData(INICIO_MES),
-  agendaModo: 'semana',
-  agendaOffset: 0,
-  compromissos: [],
+  agendaAno: new Date().getFullYear(),
+  agendaMes: new Date().getMonth(),
+  agendaDiaSelecionado: null,
+  agendaFormAberto: false,
+  agendaAnimar: '',
+  agendaItens: [],
   metaMensal: 0,
   temaEscuro: false,
   acessoVendas: null,
@@ -36,6 +39,7 @@ const estadoInicial = {
 };
 
 let state = carregarEstado();
+document.documentElement.classList.toggle('dark-theme', Boolean(state.temaEscuro));
 let buscaAplicada = state.busca || '';
 let backendAtivo = Boolean(window.VendasDb?.client);
 let carregandoBackend = backendAtivo;
@@ -938,45 +942,70 @@ function renderModuloEmBreve() {
 }
 
 function renderAgenda() {
-  const base = new Date();
-  if (state.agendaModo === 'semana') base.setDate(base.getDate() + Number(state.agendaOffset || 0) * 7);
-  else base.setMonth(base.getMonth() + Number(state.agendaOffset || 0));
-  const dias = diasAgenda(base, state.agendaModo);
-  const titulo = new Intl.DateTimeFormat('pt-BR', { month: 'long', year: 'numeric' }).format(base);
-  return `<section class="agenda-page"><div class="module-title"><div><h2>Agenda</h2><p>Gestão de Visitas e Cobranças</p></div><div class="agenda-header-actions"><div class="view-toggle"><button class="${state.agendaModo === 'semana' ? 'active' : ''}" onclick="mudarModoAgenda('semana')">Semana</button><button class="${state.agendaModo === 'mes' ? 'active' : ''}" onclick="mudarModoAgenda('mes')">Mês</button></div><button class="agenda-new" onclick="abrirCompromisso()">${svgIcon('plus')} Novo</button></div></div><div class="agenda-navigation"><button onclick="moverAgenda(-1)">${svgIcon('chevron-left')}</button><div><h3>${escapeHtml(titulo)}</h3><p>Visualização ${state.agendaModo === 'semana' ? 'Semanal' : 'Mensal'}</p></div><button onclick="moverAgenda(1)">${svgIcon('chevron-right')}</button></div><div class="agenda-grid"><b>Seg</b><b>Ter</b><b>Qua</b><b>Qui</b><b>Sex</b><b>Sáb</b><b>Dom</b>${dias.map((dia) => renderDiaAgenda(dia)).join('')}</div><section class="agenda-tabs"><button class="active">Pendentes</button><button>Concluídos</button><button>Cancelados</button></section>${state.compromissos.length ? `<div class="appointment-list">${state.compromissos.map((item) => `<article><span>${svgIcon('calendar')}</span><div><b>${escapeHtml(item.cliente)}</b><p>${dataBR(`${item.data}T${item.hora || '12:00'}`)} · ${escapeHtml(item.tipo)}</p></div></article>`).join('')}</div>` : `<article class="empty-module"><h3>Nenhum agendamento pendente</h3><p>Use o botão Novo para incluir uma visita ou cobrança.</p></article>`}</section>`;
-}
-
-function diasAgenda(base, modo) {
-  if (modo === 'semana') {
-    const inicio = new Date(base);
-    const dia = inicio.getDay() || 7;
-    inicio.setDate(inicio.getDate() - dia + 1);
-    return Array.from({ length: 7 }, (_, i) => { const d = new Date(inicio); d.setDate(inicio.getDate() + i); return d; });
+  const animacao = state.agendaAnimar;
+  state.agendaAnimar = '';
+  const ano = Number(state.agendaAno) || new Date().getFullYear();
+  const mes = Number(state.agendaMes) || 0;
+  const primeiroDia = new Date(ano, mes, 1).getDay();
+  const totalDias = new Date(ano, mes + 1, 0).getDate();
+  const hoje = new Date();
+  const selecionado = Number(state.agendaDiaSelecionado) || 0;
+  const dias = Array.from({ length: primeiroDia }, () => '<span class="agenda-mobile-empty"></span>');
+  for (let dia = 1; dia <= totalDias; dia += 1) {
+    const data = new Date(ano, mes, dia);
+    const domingo = data.getDay() === 0;
+    const sabado = data.getDay() === 6;
+    const itens = itensAgendaDoDiaVendas(ano, mes, dia);
+    const classes = [
+      'agenda-mobile-day',
+      domingo ? 'sunday' : '', sabado ? 'saturday' : '',
+      dia === selecionado ? 'selected' : '',
+      dia === hoje.getDate() && mes === hoje.getMonth() && ano === hoje.getFullYear() ? 'today' : '',
+    ].filter(Boolean).join(' ');
+    dias.push(`<button type="button" class="${classes}" onclick="selecionarDiaAgenda(${dia})"><b>${String(dia).padStart(2, '0')}</b>${itens.length ? '<i></i>' : ''}</button>`);
   }
-  const primeiro = new Date(base.getFullYear(), base.getMonth(), 1);
-  const deslocamento = (primeiro.getDay() + 6) % 7;
-  const inicio = new Date(primeiro); inicio.setDate(1 - deslocamento);
-  return Array.from({ length: 42 }, (_, i) => { const d = new Date(inicio); d.setDate(inicio.getDate() + i); return d; });
+  const itensDia = selecionado ? itensAgendaDoDiaVendas(ano, mes, selecionado) : [];
+  const titulo = new Intl.DateTimeFormat('pt-BR', { month: 'long', year: 'numeric' }).format(new Date(ano, mes, 1));
+  const detalheDia = selecionado ? `<section class="agenda-mobile-detail"><header><div><small>Dia selecionado</small><h3>${String(selecionado).padStart(2, '0')} de ${new Intl.DateTimeFormat('pt-BR', { month: 'long' }).format(new Date(ano, mes, 1))}</h3></div><button type="button" class="close" onclick="fecharDiaAgenda()">×</button></header><div class="agenda-mobile-reminders"><div><h4>Lembretes</h4><button type="button" class="primary" onclick="abrirFormularioAgendaVendas()">Adicionar</button></div>${itensDia.length ? itensDia.map(renderItemAgendaVendas).join('') : '<p class="agenda-mobile-none">Nenhum lembrete neste dia.</p>'}</div></section>` : '';
+  return `<section class="agenda-mobile-page"><div class="agenda-mobile-month"><button type="button" onclick="moverMesAgendaVendas(-1)" aria-label="Mês anterior">‹</button><h2>${escapeHtml(titulo)}</h2><button type="button" onclick="moverMesAgendaVendas(1)" aria-label="Próximo mês">›</button></div><section class="agenda-mobile-screen ${animacao ? `agenda-anim-${animacao}` : ''}"><h2>AGENDA</h2><div class="agenda-mobile-week"><b>D</b><b>S</b><b>T</b><b>Q</b><b>Q</b><b>S</b><b>S</b></div><div class="agenda-mobile-grid">${dias.join('')}</div>${detalheDia}</section>${state.agendaFormAberto ? renderFormularioAgendaVendas() : ''}</section>`;
 }
 
-function renderDiaAgenda(dia) {
-  const hoje = isoData(dia) === isoData(new Date());
-  const itens = state.compromissos.filter((item) => item.data === isoData(dia));
-  return `<button class="agenda-day ${hoje ? 'today' : ''}"><span>${dia.getDate()}</span>${itens.slice(0,3).map((item) => `<i>${escapeHtml(item.cliente)}</i>`).join('')}</button>`;
+function itensAgendaVendas() {
+  if (Array.isArray(state.agendaItens) && state.agendaItens.length) return state.agendaItens;
+  return (state.compromissos || []).map((item) => {
+    const data = new Date(`${item.data || isoData(new Date())}T12:00:00`);
+    return { id: item.id, titulo: item.cliente || 'Compromisso', descricao: item.observacao || item.tipo || '', ano: data.getFullYear(), mes: data.getMonth(), dia: data.getDate(), repetir: false, repeticao: '' };
+  });
 }
 
-function mudarModoAgenda(modo) { state.agendaModo = modo; state.agendaOffset = 0; render(); }
-function moverAgenda(direcao) { state.agendaOffset = Number(state.agendaOffset || 0) + direcao; render(); }
-
-function abrirCompromisso() {
-  sheet(`<div class="sheet-header"><div><h2>Agendar Ação</h2><p class="muted small">Preencha os dados abaixo.</p></div><button class="close" onclick="fecharSheet()">×</button></div><div class="grid">${campo('agendaCliente','Cliente','')}<div class="field"><label>Tipo</label><select id="agendaTipo"><option>Visita</option><option>Cobrança</option><option>Entrega</option><option>Pós-venda</option></select></div><div class="grid-2">${campo('agendaData','Data',isoData(new Date()),'date')}${campo('agendaHora','Horário','09:00','time')}</div><div class="field"><label>Observação</label><textarea id="agendaObs"></textarea></div><button class="primary" onclick="salvarCompromisso()">Salvar Agendamento</button></div>`);
+function itensAgendaDoDiaVendas(ano, mes, dia) {
+  const alvo = new Date(ano, mes, dia); alvo.setHours(0, 0, 0, 0);
+  return itensAgendaVendas().filter((item) => {
+    const inicio = new Date(Number(item.ano), Number(item.mes), Number(item.dia)); inicio.setHours(0, 0, 0, 0);
+    const diferenca = Math.floor((alvo - inicio) / 86400000);
+    if (diferenca < 0) return false;
+    if (!item.repetir) return inicio.getTime() === alvo.getTime();
+    if (item.repeticao === 'diaria') return true;
+    if (item.repeticao === 'semanal') return diferenca % 7 === 0;
+    if (item.repeticao === 'quinzenal') return diferenca % 14 === 0;
+    if (item.repeticao === 'anual') return inicio.getMonth() === alvo.getMonth() && inicio.getDate() === alvo.getDate();
+    return inicio.getDate() === alvo.getDate();
+  });
 }
 
-function salvarCompromisso() {
-  if (!valor('agendaCliente') || !valor('agendaData')) { toast('Informe cliente e data.'); return; }
-  state.compromissos.push({ id: id('age'), cliente: valor('agendaCliente'), tipo: valor('agendaTipo'), data: valor('agendaData'), hora: valor('agendaHora'), observacao: valor('agendaObs'), status: 'pendente' });
-  fecharSheet(); render(); toast('Agendamento salvo.');
+function renderItemAgendaVendas(item) {
+  const repeticao = item.repetir ? ({ diaria: 'Diária', semanal: 'Semanal', quinzenal: 'Quinzenal', mensal: 'Mensal', anual: 'Anual' }[item.repeticao] || 'Mensal') : '';
+  return `<article class="agenda-mobile-item"><div><b>${escapeHtml(item.titulo)}</b>${item.descricao ? `<p>${escapeHtml(item.descricao)}</p>` : ''}${repeticao ? `<small>${repeticao}</small>` : ''}</div><button type="button" class="agenda-mobile-delete" onclick="excluirItemAgendaVendas('${escapeAttr(item.id)}')" aria-label="Excluir lembrete">×</button></article>`;
 }
+
+function selecionarDiaAgenda(dia) { state.agendaDiaSelecionado = dia; state.agendaFormAberto = false; render(); }
+function fecharDiaAgenda() { state.agendaDiaSelecionado = null; state.agendaFormAberto = false; render(); }
+function moverMesAgendaVendas(direcao) { const data = new Date(Number(state.agendaAno), Number(state.agendaMes) + direcao, 1); state.agendaAno = data.getFullYear(); state.agendaMes = data.getMonth(); state.agendaDiaSelecionado = null; state.agendaFormAberto = false; state.agendaAnimar = direcao > 0 ? 'prox' : 'prev'; render(); }
+function abrirFormularioAgendaVendas() { state.agendaFormAberto = true; render(); }
+function cancelarFormularioAgendaVendas() { state.agendaFormAberto = false; render(); }
+function renderFormularioAgendaVendas() { return `<div class="agenda-form-overlay" onclick="if(event.target===this)cancelarFormularioAgendaVendas()"><section class="agenda-form-card"><header><div><small>Novo item</small><h3>${String(state.agendaDiaSelecionado).padStart(2, '0')} de ${new Intl.DateTimeFormat('pt-BR', { month: 'long' }).format(new Date(state.agendaAno, state.agendaMes, 1))}</h3></div><button type="button" class="close" onclick="cancelarFormularioAgendaVendas()">×</button></header><div class="agenda-form-fields"><input id="agendaTituloVendas" placeholder="Título" autocomplete="off"><textarea id="agendaDescricaoVendas" placeholder="Descrição opcional"></textarea><label><input id="agendaRepetirVendas" type="checkbox"> <span>Repetir</span></label><select id="agendaRepeticaoVendas"><option value="mensal">Mensal</option><option value="diaria">Diária</option><option value="semanal">Semanal</option><option value="quinzenal">Quinzenal</option><option value="anual">Anual</option></select><div><button type="button" class="ghost" onclick="cancelarFormularioAgendaVendas()">Cancelar</button><button type="button" class="primary" onclick="salvarItemAgendaVendas()">Salvar</button></div></div></section></div>`; }
+function salvarItemAgendaVendas() { const titulo = valor('agendaTituloVendas').trim(); if (!titulo) { toast('Informe um título.'); return; } const repetir = Boolean(document.getElementById('agendaRepetirVendas')?.checked); state.agendaItens = [...itensAgendaVendas(), { id: id('agenda'), titulo, descricao: valor('agendaDescricaoVendas').trim(), ano: Number(state.agendaAno), mes: Number(state.agendaMes), dia: Number(state.agendaDiaSelecionado), repetir, repeticao: repetir ? valor('agendaRepeticaoVendas') : '', criadoEm: new Date().toISOString() }]; state.agendaFormAberto = false; salvarEstado(); render(); toast('Lembrete salvo.'); }
+function excluirItemAgendaVendas(itemId) { state.agendaItens = itensAgendaVendas().filter((item) => String(item.id) !== String(itemId)); salvarEstado(); render(); toast('Lembrete excluído.'); }
 
 function renderPublicacoes(tipo) {
   const informacao = tipo === 'informacoes';
@@ -1992,10 +2021,13 @@ window.aplicarFiltroDashboard = aplicarFiltroDashboard;
 window.mudarMes = mudarMes;
 window.irMesAtual = irMesAtual;
 window.aplicarBusca = aplicarBusca;
-window.mudarModoAgenda = mudarModoAgenda;
-window.moverAgenda = moverAgenda;
-window.abrirCompromisso = abrirCompromisso;
-window.salvarCompromisso = salvarCompromisso;
+window.selecionarDiaAgenda = selecionarDiaAgenda;
+window.fecharDiaAgenda = fecharDiaAgenda;
+window.moverMesAgendaVendas = moverMesAgendaVendas;
+window.abrirFormularioAgendaVendas = abrirFormularioAgendaVendas;
+window.cancelarFormularioAgendaVendas = cancelarFormularioAgendaVendas;
+window.salvarItemAgendaVendas = salvarItemAgendaVendas;
+window.excluirItemAgendaVendas = excluirItemAgendaVendas;
 window.salvarMeta = salvarMeta;
 window.alternarTema = alternarTema;
 window.alterarSenha = alterarSenha;
