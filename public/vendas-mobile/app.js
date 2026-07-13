@@ -59,6 +59,7 @@ let rolagemAnteriorSheet = 0;
 let cardsClientesEmDestaque = [];
 let quadroDestaqueClientes = 0;
 let botaoFeedbackAtivo = null;
+let atualizacaoPwaPendente = false;
 
 const PAISES_DDI = [
   ['Brasil', '55', '🇧🇷'], ['Portugal', '351', '🇵🇹'], ['Estados Unidos / Canadá', '1', '🇺🇸'],
@@ -185,6 +186,7 @@ function svgIcon(nome, classe = '') {
 }
 
 function setAba(aba) {
+  if (aba !== 'agenda') fecharCamadasAgenda();
   state.aba = aba;
   state.menuAberto = false;
   render();
@@ -196,6 +198,7 @@ function alternarMenu() {
 }
 
 function abrirSalaBotoes() {
+  fecharCamadasAgenda();
   state.menuAberto = true;
   render();
 }
@@ -466,12 +469,25 @@ function acionarNavegacaoInferior(event, destino) {
   origem?.appendChild(anel);
   anel.addEventListener('animationend', () => anel.remove(), { once: true });
   window.setTimeout(() => {
+    fecharCamadasNavegacao();
     if (destino === 'configuracoes') setAba('configuracoes');
     else if (destino === 'tema') alternarTema(!state.temaEscuro);
-    else if (destino === 'novo') abrirAcoesRapidas();
+    else if (destino === 'novo') { render(); abrirAcoesRapidas(); }
     else if (destino === 'agenda') setAba('agenda');
     else if (destino === 'inicio') abrirSalaBotoes();
   }, 130);
+}
+
+function fecharCamadasAgenda() {
+  state.agendaDiaSelecionado = null;
+  state.agendaFormAberto = false;
+  state.agendaExpandida = false;
+  state.agendaItemMovendo = null;
+}
+
+function fecharCamadasNavegacao() {
+  fecharSheet();
+  fecharCamadasAgenda();
 }
 
 function abrirAcoesRapidas() {
@@ -1965,10 +1981,42 @@ function removerFeedbackBotao(botao) {
   alvo.__tempoFeedbackAtivo = window.setTimeout(() => alvo.classList.remove('button-pressed'), 110);
 }
 
+function podeRecarregarAtualizacaoPwa() {
+  const campoAtivo = document.activeElement;
+  const editando = campoAtivo instanceof HTMLElement && campoAtivo.matches('input, textarea, select, [contenteditable="true"]');
+  return !editando && !document.getElementById('sheetBackdrop') && !state.agendaFormAberto && !state.agendaItemMovendo;
+}
+
+async function verificarAtualizacaoPwa() {
+  const versaoAtual = String(window.__VENDAS_MOBILE_VERSION__ || '');
+  if (!versaoAtual) return;
+  try {
+    const resposta = await fetch(`/mobile/vendas?update=${Date.now()}`, { cache: 'no-store' });
+    if (!resposta.ok) return;
+    const pagina = await resposta.text();
+    const encontrada = pagina.match(/vendas-mobile\/app\.js\?v=([^"'&\s<]+)/)?.[1] || '';
+    if (!encontrada || encontrada === versaoAtual) return;
+    if (podeRecarregarAtualizacaoPwa()) window.location.reload();
+    else atualizacaoPwaPendente = true;
+  } catch { /* sem conexão: mantém a versão offline atual */ }
+}
+
+function aplicarAtualizacaoPwaPendente() {
+  if (!atualizacaoPwaPendente || !podeRecarregarAtualizacaoPwa()) return;
+  window.location.reload();
+}
+
 if (!window.__VENDAS_MOBILE_EMBEDDED__ && 'serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('./sw.js').catch(() => {});
   });
+}
+
+if (window.__VENDAS_MOBILE_EMBEDDED__) {
+  window.setTimeout(verificarAtualizacaoPwa, 12000);
+  window.setInterval(verificarAtualizacaoPwa, 120000);
+  document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') verificarAtualizacaoPwa(); });
+  document.addEventListener('focusout', () => window.setTimeout(aplicarAtualizacaoPwaPendente, 0));
 }
 
 window.setAba = setAba;
