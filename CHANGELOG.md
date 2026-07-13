@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.4.0.49 - 2026-07-13
+
+- Cadastro: mantém as três ações em uma única linha.
+- Notas e despesas mobile: reorganiza as ações, melhora o contraste de Ver nota e remove o botão Salvar redundante.
+- Lançamentos: corrige a exclusão de despesas comuns e melhora a legibilidade da confirmação no modo noturno.
+- Lançamentos por foto: inverte a ordem dos botões Arquivo e Foto.
+
 ## 1.4.0.48 - 2026-07-13
 
 - Notas: informa “Baixando imagem” enquanto prepara a visualização do comprovante.

@@ -45,8 +45,7 @@ export default function ModalNotaLancamento({ aberto, url, darkMode, onFechar }:
           <img src={url} alt="Nota vinculada ao lançamento" className="mx-auto max-h-[68vh] max-w-full rounded-lg object-contain shadow-lg" />
         </div>
         <footer className={`flex justify-end gap-2 px-4 py-3 ${darkMode ? 'border-t border-slate-700' : 'border-t border-slate-200'}`}>
-          <button type="button" onClick={compartilhar} className="h-9 rounded-lg border border-slate-300 px-3 text-xs font-black uppercase transition hover:bg-slate-100 active:scale-95 dark:border-slate-600 dark:hover:bg-slate-800">Compartilhar</button>
-          <button type="button" onClick={baixar} className="h-9 rounded-lg bg-slate-950 px-3 text-xs font-black uppercase text-white transition hover:bg-slate-800 active:scale-95">Salvar</button>
+          <button type="button" onClick={compartilhar} className="h-9 rounded-lg bg-[#003E73] px-4 text-xs font-black uppercase text-white transition hover:brightness-110 active:scale-95">Compartilhar</button>
         </footer>
       </section>
     </div>

@@ -836,10 +836,10 @@
       '<div class="flex max-h-[calc(100dvh-2rem)] w-full max-w-md flex-col overflow-hidden rounded-xl bg-white text-slate-900 shadow-2xl">' +
         '<header class="shrink-0 bg-[#003E73] px-4 py-3 text-white"><p class="text-[9px] font-black uppercase tracking-[.2em] text-cyan-200">Cadastro do perfil</p><h2 class="mt-0.5 text-base font-black leading-tight">' + titulo + '</h2>' + (contexto === 'lembrete' ? '<p class="mt-1 text-[11px] text-white/80">Faltam ' + Number(status.diasRestantes || 0) + ' dias para se tornar obrigat&oacute;rio.</p>' : '') + '</header>' +
         '<div class="min-h-0 flex-1 overflow-y-auto px-4 py-3">' + formulario + '<p id="cp-erro" class="mt-3 text-xs font-bold text-red-600"></p></div>' +
-        '<footer class="flex shrink-0 flex-wrap justify-end gap-2 border-t border-slate-200 bg-slate-50 px-4 py-3">' +
-          (contexto === 'lembrete' ? '<button id="cp-depois" type="button" class="h-9 rounded-lg border border-slate-300 bg-white px-4 text-xs font-bold text-slate-600 transition active:scale-95">Lembrar depois</button><button id="cp-salvar-parcial" type="button" class="h-9 rounded-lg border border-sky-200 bg-sky-50 px-4 text-xs font-black text-sky-800 transition active:scale-95">Salvar inclusões</button>' : '') +
+        '<footer class="' + (contexto === 'lembrete' ? 'grid grid-cols-3' : 'flex justify-end') + ' shrink-0 gap-1.5 border-t border-slate-200 bg-slate-50 px-4 py-3">' +
+          (contexto === 'lembrete' ? '<button id="cp-depois" type="button" class="h-9 min-w-0 rounded-lg border border-slate-300 bg-white px-1 text-[10px] font-bold text-slate-600 transition active:scale-95">Lembrar depois</button><button id="cp-salvar-parcial" type="button" class="h-9 min-w-0 rounded-lg border border-sky-200 bg-sky-50 px-1 text-[10px] font-black text-sky-800 transition active:scale-95">Salvar inclusões</button>' : '') +
           (contexto === 'paywall' ? '<button id="cp-voltar" type="button" class="h-9 rounded-lg border border-slate-300 bg-white px-4 text-xs font-bold text-slate-600">Voltar aos planos</button>' : '') +
-          (podeEditar ? '<button id="cp-salvar" type="button" class="h-9 rounded-lg bg-[#003E73] px-5 text-xs font-black text-white transition active:scale-95">' + (contexto === 'paywall' ? 'Salvar e continuar' : 'Concluir cadastro') + '</button>' : '') +
+          (podeEditar ? '<button id="cp-salvar" type="button" class="h-9 min-w-0 rounded-lg bg-[#003E73] ' + (contexto === 'lembrete' ? 'px-1 text-[10px]' : 'px-5 text-xs') + ' font-black text-white transition active:scale-95">' + (contexto === 'paywall' ? 'Salvar e continuar' : 'Concluir cadastro') + '</button>' : '') +
         '</footer>' +
       '</div></section>';
   }
@@ -3380,7 +3380,7 @@
       '<section class="flex max-h-full w-full max-w-md flex-col overflow-hidden rounded-3xl bg-white shadow-2xl">' +
       '<header class="flex items-center justify-between px-4 py-3 text-white" style="background:#003E73"><h2 class="text-sm font-black">Nota do lancamento</h2><button id="fechar-nota-lancamento" type="button" class="flex h-8 w-8 items-center justify-center rounded-full bg-white/15 text-lg">&times;</button></header>' +
       '<div class="min-h-0 flex-1 overflow-auto bg-slate-100 p-3"><img src="' + escapeHtml(state.notaVisualizandoUrl) + '" alt="Nota do lancamento" class="mx-auto max-h-[68vh] max-w-full rounded-xl object-contain shadow-lg" /></div>' +
-      '<footer class="grid grid-cols-2 gap-2 border-t border-slate-200 p-3"><button id="compartilhar-nota-lancamento" type="button" class="h-10 rounded-xl border border-slate-300 text-xs font-black uppercase text-slate-700">Compartilhar</button><button id="salvar-nota-lancamento" type="button" class="h-10 rounded-xl bg-slate-950 text-xs font-black uppercase text-white">Salvar</button></footer>' +
+      '<footer class="border-t border-slate-200 p-3"><button id="compartilhar-nota-lancamento" type="button" class="h-10 w-full rounded-xl bg-[#003E73] text-xs font-black uppercase text-white transition active:scale-[0.98]">Compartilhar</button></footer>' +
       '</section></div>';
   }
 
@@ -8298,7 +8298,7 @@
             '</div>' +
             '<span class="text-[10px] font-semibold italic text-slate-400">nos meses seguintes</span>'
           ) : '') +
-          '<span class="ml-auto flex items-center gap-1.5"><button id="abrir-nota-camera" type="button" class="flex h-8 items-center gap-1 rounded-full border border-slate-300 bg-white px-2 text-[10px] font-black uppercase text-slate-600 active:scale-95"' + (state.notaLendo ? ' disabled' : '') + '><svg width="13" height="13" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 8h3l1.3-2h7.4L17 8h3v11H4V8Z" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"/><circle cx="12" cy="13" r="3.2" stroke="currentColor" stroke-width="2.2"/></svg>Foto</button><button id="abrir-nota-arquivo" type="button" class="flex h-8 items-center gap-1 rounded-full border border-slate-300 bg-white px-2 text-[10px] font-black uppercase text-slate-600 active:scale-95"' + (state.notaLendo ? ' disabled' : '') + '><svg width="13" height="13" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9l-6-6Z" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"/><path d="M14 3v6h6M8 14h8" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>Arquivo</button></span>' +
+          '<span class="ml-auto flex items-center gap-1.5"><button id="abrir-nota-arquivo" type="button" class="flex h-8 items-center gap-1 rounded-full border border-slate-300 bg-white px-2 text-[10px] font-black uppercase text-slate-600 active:scale-95"' + (state.notaLendo ? ' disabled' : '') + '><svg width="13" height="13" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9l-6-6Z" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"/><path d="M14 3v6h6M8 14h8" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>Arquivo</button><button id="abrir-nota-camera" type="button" class="flex h-8 items-center gap-1 rounded-full border border-slate-300 bg-white px-2 text-[10px] font-black uppercase text-slate-600 active:scale-95"' + (state.notaLendo ? ' disabled' : '') + '><svg width="13" height="13" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 8h3l1.3-2h7.4L17 8h3v11H4V8Z" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"/><circle cx="12" cy="13" r="3.2" stroke="currentColor" stroke-width="2.2"/></svg>Foto</button></span>' +
         '</div>' +
         (state.notaLendo ? '<p class="text-[10px] font-bold text-slate-500">Lendo a nota...</p>' : (state.notaArquivoPendente ? '<p class="text-[10px] font-bold text-emerald-600">Nota pronta para salvar <button id="limpar-nota-pendente" type="button" class="ml-1 text-slate-400">&times;</button></p>' : '')) +
         '<button id="salvar-despesa" type="button" ' + (state.lancandoDespesa ? 'disabled ' : '') + 'class="h-11 rounded-xl bg-slate-950 px-4 text-sm font-black uppercase tracking-wide text-white disabled:opacity-60">' + (state.lancandoDespesa ? 'Salvando...' : 'Salvar despesa') + '</button>' +
@@ -8364,12 +8364,15 @@
 
   function modalOpcoesLancamentoHtml(acao) {
     var receita = acao.tipo === 'receita';
+    var temNota = !receita && acao.item.notaArquivoPath;
     return (
       '<div class="grid gap-2">' +
         '<div class="rounded-2xl bg-slate-50 p-4"><p class="text-xs font-semibold text-slate-500">Dia ' + escapeHtml(acao.item.dia) + '</p><strong class="mt-1 block text-lg font-black">' + dinheiro(acao.item.valor) + '</strong></div>' +
-        ((!receita && acao.item.notaArquivoPath) ? '<button id="ver-nota-lancamento" type="button" class="h-10 rounded-xl border border-cyan-200 bg-cyan-50 px-4 text-xs font-black uppercase text-cyan-800">Ver nota</button>' : '') +
-        '<button id="editar-lancamento" type="button" class="h-11 rounded-xl bg-slate-950 px-4 text-sm font-black uppercase tracking-wide text-white">Editar</button>' +
-        '<button id="excluir-lancamento" type="button" class="h-11 rounded-xl bg-red-600 px-4 text-sm font-black uppercase tracking-wide text-white">' + (state.carregando ? 'Excluindo...' : 'Excluir') + '</button>' +
+        '<div class="grid ' + (temNota ? 'grid-cols-3' : 'grid-cols-2') + ' gap-2">' +
+        (temNota ? '<button id="ver-nota-lancamento" type="button" class="h-11 rounded-xl bg-cyan-600 px-2 text-xs font-black uppercase text-white shadow-sm transition active:scale-[0.98]">Ver nota</button>' : '') +
+        '<button id="editar-lancamento" type="button" class="h-11 rounded-xl bg-[#003E73] px-2 text-xs font-black uppercase text-white shadow-sm transition active:scale-[0.98]">Editar</button>' +
+        '<button id="excluir-lancamento" type="button" class="h-11 rounded-xl border border-red-200 bg-red-50 px-2 text-xs font-black uppercase text-red-700 shadow-sm transition active:scale-[0.98]">' + (state.carregando ? 'Excluindo...' : 'Excluir') + '</button>' +
+        '</div>' +
       '</div>'
 	    );
 	  }
@@ -8394,8 +8397,8 @@
 	            '</span>' +
 	            '<div class="min-w-0 flex-1">' +
 	              '<p class="text-[10px] font-black uppercase tracking-[0.16em] text-red-500">Confirmar exclusao</p>' +
-	              '<h3 class="mt-1 text-base font-black leading-tight text-slate-950">Excluir este lancamento?</h3>' +
-	              '<p class="mt-1 text-xs font-semibold leading-relaxed text-slate-500">' + aviso + '</p>' +
+	              '<h3 class="mt-1 text-base font-black leading-tight" style="color:' + (state.darkMode ? '#f8fafc' : '#0f172a') + '">Excluir este lancamento?</h3>' +
+	              '<p class="mt-1 text-xs font-semibold leading-relaxed" style="color:' + (state.darkMode ? '#cbd5e1' : '#64748b') + '">' + aviso + '</p>' +
 	            '</div>' +
 	          '</div>' +
 	          '<div class="mx-4 mb-4 rounded-2xl border border-slate-200 bg-white p-3 shadow-sm">' +
@@ -10977,7 +10980,6 @@
     bind('fechar-acao-lancamento', fecharAcaoLancamento);
     bind('ver-nota-lancamento', function () { if (state.modalAcao && state.modalAcao.item) abrirNotaLancamentoMobile(state.modalAcao.item.id); });
     bind('fechar-nota-lancamento', function () { state.notaVisualizandoUrl = ''; render(); });
-    bind('salvar-nota-lancamento', salvarNotaVisualizadaMobile);
     bind('compartilhar-nota-lancamento', compartilharNotaVisualizadaMobile);
     bind('cancelar-exclusao-recorrencia', cancelarExclusaoRecorrenciaMobile);
     bind('cancelar-exclusao-recorrencia-topo', cancelarExclusaoRecorrenciaMobile);

@@ -200,12 +200,12 @@ export default function CadastroPerfilModal({ aberto, empresaId, statusInicial, 
           {erro && <p className="mt-3 rounded-lg bg-red-50 px-3 py-2 text-xs font-bold text-red-700">{erro}</p>}
         </div>
 
-        <footer className="flex shrink-0 flex-wrap justify-end gap-2 border-t border-slate-200 bg-slate-50 px-4 py-3">
-          {contexto === 'lembrete' && <button type="button" onClick={lembrarDepois} disabled={salvando} className="h-9 rounded-lg border border-slate-300 bg-white px-4 text-xs font-bold text-slate-600 transition active:scale-95 disabled:opacity-60">Lembrar depois</button>}
-          {contexto === 'lembrete' && status?.podeEditar && <button type="button" onClick={salvarParcial} disabled={salvando || carregando} className="h-9 rounded-lg border border-sky-200 bg-sky-50 px-4 text-xs font-black text-sky-800 transition active:scale-95 disabled:opacity-60">{salvando ? 'Salvando...' : 'Salvar inclusões'}</button>}
+        <footer className={`shrink-0 border-t border-slate-200 bg-slate-50 px-4 py-3 ${contexto === 'lembrete' ? 'grid grid-cols-3 gap-1.5' : 'flex justify-end gap-2'}`}>
+          {contexto === 'lembrete' && <button type="button" onClick={lembrarDepois} disabled={salvando} className="h-9 min-w-0 rounded-lg border border-slate-300 bg-white px-1 text-[10px] font-bold text-slate-600 transition active:scale-95 disabled:opacity-60">Lembrar depois</button>}
+          {contexto === 'lembrete' && status?.podeEditar && <button type="button" onClick={salvarParcial} disabled={salvando || carregando} className="h-9 min-w-0 rounded-lg border border-sky-200 bg-sky-50 px-1 text-[10px] font-black text-sky-800 transition active:scale-95 disabled:opacity-60">{salvando ? 'Salvando...' : 'Salvar inclusões'}</button>}
           {contexto === 'paywall' && <button type="button" onClick={onCancelar} className="h-9 rounded-lg border border-slate-300 bg-white px-4 text-xs font-bold text-slate-600">Voltar aos planos</button>}
           {contexto === 'edicao' && <button type="button" onClick={onCancelar} disabled={salvando} className="h-9 rounded-lg border border-slate-300 bg-white px-4 text-xs font-bold text-slate-600 disabled:opacity-60">Cancelar</button>}
-          {status?.podeEditar && <button type="button" onClick={salvar} disabled={salvando || carregando} className="h-9 rounded-lg bg-[#003E73] px-5 text-xs font-black text-white transition active:scale-95 disabled:opacity-60">{salvando ? 'Salvando...' : contexto === 'paywall' ? 'Salvar e continuar' : contexto === 'edicao' ? 'Salvar alterações' : 'Concluir cadastro'}</button>}
+          {status?.podeEditar && <button type="button" onClick={salvar} disabled={salvando || carregando} className={`h-9 min-w-0 rounded-lg bg-[#003E73] text-xs font-black text-white transition active:scale-95 disabled:opacity-60 ${contexto === 'lembrete' ? 'px-1 text-[10px]' : 'px-5'}`}>{salvando ? 'Salvando...' : contexto === 'paywall' ? 'Salvar e continuar' : contexto === 'edicao' ? 'Salvar alterações' : 'Concluir cadastro'}</button>}
         </footer>
       </section>
     </div>

@@ -307,16 +307,6 @@ export default function CardLancamentoDespesa({
               />
               <button
                 type="button"
-                onClick={() => cameraRef.current?.click()}
-                disabled={lendoNota || salvandoDespesa}
-                title="Fotografar nota"
-                className="flex h-7 items-center gap-1 rounded-full border border-slate-300 bg-white px-2 text-[10px] font-black uppercase text-slate-600 transition hover:border-slate-400 hover:text-slate-900 active:scale-95 disabled:opacity-60"
-              >
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" className="h-3.5 w-3.5"><path strokeLinecap="round" strokeLinejoin="round" d="M4 8h3l1.3-2h7.4L17 8h3v11H4V8Z"/><circle cx="12" cy="13" r="3.2"/></svg>
-                Foto
-              </button>
-              <button
-                type="button"
                 onClick={() => arquivoRef.current?.click()}
                 disabled={lendoNota || salvandoDespesa}
                 title="Enviar arquivo da nota"
@@ -324,6 +314,16 @@ export default function CardLancamentoDespesa({
               >
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" className="h-3.5 w-3.5"><path strokeLinecap="round" strokeLinejoin="round" d="M14 3H6a2 2 0 00-2 2v14a2 2 0 002 2h12a2 2 0 002-2V9l-6-6Z"/><path strokeLinecap="round" strokeLinejoin="round" d="M14 3v6h6M8 14h8M8 17h5"/></svg>
                 Arquivo
+              </button>
+              <button
+                type="button"
+                onClick={() => cameraRef.current?.click()}
+                disabled={lendoNota || salvandoDespesa}
+                title="Fotografar nota"
+                className="flex h-7 items-center gap-1 rounded-full border border-slate-300 bg-white px-2 text-[10px] font-black uppercase text-slate-600 transition hover:border-slate-400 hover:text-slate-900 active:scale-95 disabled:opacity-60"
+              >
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" className="h-3.5 w-3.5"><path strokeLinecap="round" strokeLinejoin="round" d="M4 8h3l1.3-2h7.4L17 8h3v11H4V8Z"/><circle cx="12" cy="13" r="3.2"/></svg>
+                Foto
               </button>
             </div>
           </div>

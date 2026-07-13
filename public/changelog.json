@@ -13,6 +13,16 @@
   },
   "versoes": [
     {
+      "versao": "1.4.0.49",
+      "titulo": "Ações de notas e cadastro",
+      "data": "Julho/2026",
+      "itens": [
+        "Cadastro: mantém as três ações em uma única linha.",
+        "Notas e despesas mobile: reorganiza as ações, melhora o contraste de Ver nota e remove o botão Salvar redundante.",
+        "Lançamentos: corrige a exclusão de despesas comuns e melhora a confirmação no modo noturno."
+      ]
+    },
+    {
       "versao": "1.4.0.48",
       "titulo": "Notas e cadastro mais claros",
       "data": "Julho/2026",
