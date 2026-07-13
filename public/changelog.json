@@ -13,6 +13,15 @@
   },
   "versoes": [
     {
+      "versao": "1.4.0.61",
+      "titulo": "Folga do card de perfis expandido",
+      "data": "Julho/2026",
+      "itens": [
+        "Web: amplia o limite final do card Meus perfis quando ele ocupa a largura completa.",
+        "Web: mantém o bloco Receitas x despesas por perfil totalmente visível durante o redimensionamento."
+      ]
+    },
+    {
       "versao": "1.4.0.60",
       "titulo": "Área de arraste do card de perfis",
       "data": "Julho/2026",

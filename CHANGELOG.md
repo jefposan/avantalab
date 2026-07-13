@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.4.0.61 - 2026-07-13
+
+- Web: aumenta a folga final do card Meus perfis no modo expandido para concluir a rolagem sem cortes.
+- Web: impede que o bloco Receitas x despesas por perfil seja comprimido durante o redimensionamento.
+
 ## 1.4.0.60 - 2026-07-13
 
 - Web: corrige o cursor do puxador para alternar entre mão aberta e mão fechada durante o arraste.

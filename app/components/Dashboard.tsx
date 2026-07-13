@@ -258,7 +258,6 @@ export default function Dashboard({
   const listaPerfisInicioYRef = useRef(0);
   const listaPerfisVelocidadeRef = useRef(0);
   const listaPerfisAutoScrollRef = useRef<number | null>(null);
-  const alturaMaximaCardPerfisRef = useRef<number | null>(null);
   const redimensionamentoPerfisRef = useRef({ ativo: false, pointerId: 0, inicioY: 0, alturaInicial: 0, alturaMaxima: 0 });
   const pararAutoScrollPerfis = useCallback(() => {
     listaPerfisArrastandoRef.current = false;
@@ -316,11 +315,12 @@ export default function Dashboard({
     if (!card) return;
     const alturaInicial = card.getBoundingClientRect().height;
     const lista = listaPerfisRef.current;
-    const alturaMaximaCalculada = lista
-      ? Math.max(alturaInicial, alturaInicial - lista.clientHeight + lista.scrollHeight + 32)
+    const restanteLista = lista ? Math.max(0, lista.scrollHeight - lista.clientHeight) : 0;
+    const modoExpandido = card.getAttribute('data-card-perfis-expandido') === 'true';
+    const folgaFinal = modoExpandido ? 112 : 32;
+    const alturaMaxima = restanteLista > 1
+      ? alturaInicial + restanteLista + folgaFinal
       : alturaInicial;
-    const alturaMaxima = alturaMaximaCardPerfisRef.current ?? alturaMaximaCalculada;
-    alturaMaximaCardPerfisRef.current = alturaMaxima;
     redimensionamentoPerfisRef.current = {
       ativo: true,
       pointerId: event.pointerId,
@@ -1341,6 +1341,7 @@ const mostrarComparativoResumoDash =
     meusPerfis: (
       <div
         data-card-perfis
+        data-card-perfis-expandido={cols.full.includes('meusPerfis') ? 'true' : 'false'}
         className={`${bgCard} card-radius-avantalab flex w-full flex-col overflow-hidden rounded-2xl border-2 shadow-lg transition-colors`}
         style={{ borderColor: corPrimaria, height: alturaCardPerfis ? `${alturaCardPerfis}px` : undefined }}
       >
@@ -1480,7 +1481,7 @@ const mostrarComparativoResumoDash =
 
           {cols.full.includes('meusPerfis') && perfisDashboard.length > 0 && (
             <div
-              className={`rounded-xl border-2 p-2.5 shadow-sm ${darkMode ? 'bg-slate-800/45' : 'bg-white'}`}
+              className={`shrink-0 rounded-xl border-2 p-2.5 shadow-sm ${darkMode ? 'bg-slate-800/45' : 'bg-white'}`}
               style={{ borderColor: corPrimaria }}
             >
               <div className="flex items-center justify-between gap-3">
