@@ -59,6 +59,7 @@ let conectandoGoogle = sessionStorage.getItem(GOOGLE_CONNECTING_KEY) === '1';
 let recuperacaoSenhaVendas = null;
 let vinculoTelefonePendente = null;
 let telefonePerfilPendente = null;
+let telefonePerfilSalvando = false;
 let rolagemAnteriorSheet = 0;
 let cardsClientesEmDestaque = [];
 let quadroDestaqueClientes = 0;
@@ -160,8 +161,26 @@ function carregarEstado() {
 }
 
 function salvarEstado() {
-  const persistente = { ...state, carrinho: [] };
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(persistente));
+  const persistente = backendAtivo ? {
+    usuario: state.usuario,
+    aba: state.aba,
+    busca: state.busca,
+    filtroInicio: state.filtroInicio,
+    filtroFim: state.filtroFim,
+    mesReferencia: state.mesReferencia,
+    agendaAno: state.agendaAno,
+    agendaMes: state.agendaMes,
+    agendaDiaSelecionado: state.agendaDiaSelecionado,
+    agendaItens: state.agendaItens,
+    metaMensal: state.metaMensal,
+    temaEscuro: state.temaEscuro,
+  } : { ...state, carrinho: [] };
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(persistente));
+  } catch (error) {
+    console.warn('Não foi possível salvar as preferências locais do Vendas.', error);
+    try { localStorage.removeItem(STORAGE_KEY); } catch { /* armazenamento indisponível */ }
+  }
 }
 
 function moeda(valor) {
@@ -848,10 +867,10 @@ function traduzErro(error) {
   return texto;
 }
 
-function comLimiteDeTempo(promessa, mensagem = 'A conexão com o AvantaLab demorou mais que o esperado. Tente novamente.') {
+function comLimiteDeTempo(promessa, mensagem = 'A conexão com o AvantaLab demorou mais que o esperado. Tente novamente.', limiteMs = 15000) {
   return Promise.race([
     promessa,
-    new Promise((_, rejeitar) => window.setTimeout(() => rejeitar(new Error(mensagem)), 15000)),
+    new Promise((_, rejeitar) => window.setTimeout(() => rejeitar(new Error(mensagem)), limiteMs)),
   ]);
 }
 
@@ -918,18 +937,30 @@ async function inicializarApp() {
     const campoAtivo = document.activeElement;
     if (campoAtivo instanceof HTMLElement && campoAtivo.closest('.login-screen')) campoAtivo.blur();
   });
-  const sessaoAtiva = conectandoGoogle
-    ? await aguardarSessaoGoogle()
-    : await window.VendasDb.hasSession();
-  if (!sessaoAtiva) {
+  try {
+    const sessaoAtiva = conectandoGoogle
+      ? await comLimiteDeTempo(aguardarSessaoGoogle(), 'Não foi possível concluir o acesso com o Google.', 12000)
+      : await comLimiteDeTempo(window.VendasDb.hasSession(), 'Não foi possível restaurar sua sessão.', 10000);
+    if (!sessaoAtiva) {
+      carregandoBackend = false;
+      conectandoGoogle = false;
+      sessionStorage.removeItem(GOOGLE_CONNECTING_KEY);
+      render();
+      liberarAlturaPreparacao();
+      return;
+    }
+    await carregarDadosBackend(false);
+  } catch (error) {
+    console.error('Falha ao inicializar o Vendas Mobile.', error);
     carregandoBackend = false;
     conectandoGoogle = false;
+    state.autenticado = false;
+    state.usuarioSemAcesso = false;
     sessionStorage.removeItem(GOOGLE_CONNECTING_KEY);
     render();
     liberarAlturaPreparacao();
-    return;
+    toast(`${traduzErro(error)} Atualize a página e tente novamente.`);
   }
-  await carregarDadosBackend(false);
 }
 
 async function aguardarSessaoGoogle() {
@@ -1148,12 +1179,13 @@ async function alterarSenha() {
 
 function abrirAtualizarTelefone() {
   telefonePerfilPendente = null;
+  telefonePerfilSalvando = false;
   renderAtualizarTelefone();
 }
 
 function renderAtualizarTelefone() {
   const conteudo = telefonePerfilPendente
-    ? `<p class="muted small">Enviamos um código para <b>${escapeHtml(mascararTelefone(telefonePerfilPendente))}</b>. Confirme-o para salvar seu celular.</p><div class="grid">${campo('perfilTelefoneCodigo', 'Código recebido', '', 'text')}<button class="primary" onclick="confirmarAtualizarTelefone()">Confirmar celular</button><button class="forgot-link" type="button" onclick="abrirAtualizarTelefone()">Alterar número</button></div>`
+    ? `<p class="muted small">Enviamos um código para <b>${escapeHtml(mascararTelefone(telefonePerfilPendente))}</b>. Confirme-o para salvar seu celular.</p><div class="grid">${campo('perfilTelefoneCodigo', 'Código recebido', '', 'text')}<button class="primary" onclick="confirmarAtualizarTelefone()" ${telefonePerfilSalvando ? 'disabled' : ''}>${telefonePerfilSalvando ? 'Validando e salvando...' : 'Confirmar celular'}</button><button class="forgot-link" type="button" onclick="abrirAtualizarTelefone()" ${telefonePerfilSalvando ? 'disabled' : ''}>Alterar número</button></div>`
     : `<p class="muted small">Seu número será vinculado à conta atual e validado por SMS. Seus acessos permanecem os mesmos.</p><div class="grid">${campoTelefone('perfilTelefone', 'Celular', state.usuario?.telefone || '')}<button class="primary" onclick="enviarCodigoAtualizarTelefone()">Enviar código por SMS</button></div>`;
   sheet(`<div class="sheet-header"><div><h2>Celular da conta</h2><p class="muted small">Confirmação segura por SMS.</p></div><button class="close" onclick="fecharSheet()">×</button></div>${conteudo}`);
 }
@@ -1176,18 +1208,31 @@ async function enviarCodigoAtualizarTelefone() {
 
 async function confirmarAtualizarTelefone() {
   const codigo = valor('perfilTelefoneCodigo').trim();
-  if (!telefonePerfilPendente || !codigo) { toast('Digite o código recebido por SMS.'); return; }
+  if (!telefonePerfilPendente || !codigo || telefonePerfilSalvando) { if (!codigo) toast('Digite o código recebido por SMS.'); return; }
+  const telefoneConfirmado = telefonePerfilPendente;
+  telefonePerfilSalvando = true;
+  renderAtualizarTelefone();
   try {
-    const resposta = await fetch('/api/sms/verificar-codigo', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ telefone: telefonePerfilPendente, codigo }) });
+    const token = await comLimiteDeTempo(window.VendasDb.getAccessToken(), 'Sua sessão demorou para responder. Atualize a página e tente novamente.', 10000);
+    if (!token) throw new Error('Sua sessão expirou. Entre novamente para confirmar o celular.');
+    const resposta = await comLimiteDeTempo(fetch('/api/vendas/telefone/confirmar', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ telefone: telefoneConfirmado, codigo }),
+    }), 'A confirmação do celular demorou mais que o esperado.', 20000);
     const resultado = await resposta.json().catch(() => ({}));
     if (!resposta.ok || resultado.erro) throw new Error(resultado.mensagem || 'Código inválido ou expirado.');
-    await window.VendasDb.updateUserMetadata({ telefone: telefonePerfilPendente });
-    state.usuario.telefone = telefonePerfilPendente;
+    state.usuario.telefone = resultado.telefone || telefoneConfirmado;
     telefonePerfilPendente = null;
+    telefonePerfilSalvando = false;
     fecharSheet();
     render();
     toast('Celular confirmado com sucesso.');
-  } catch (error) { toast(traduzErro(error)); }
+  } catch (error) {
+    telefonePerfilSalvando = false;
+    renderAtualizarTelefone();
+    toast(traduzErro(error));
+  }
 }
 
 function instalarPWA() {

@@ -29,6 +29,12 @@
     return Boolean(data.session);
   }
 
+  async function getAccessToken() {
+    const { data, error } = await requireClient().auth.getSession();
+    if (error) throw error;
+    return data.session?.access_token || '';
+  }
+
   async function signIn(email, password) {
     const { data, error } = await requireClient().auth.signInWithPassword({ email, password });
     if (error) throw error;
@@ -325,5 +331,5 @@
     return { ...data, desconto: payload.desconto, saldo_anterior: payload.saldo_anterior, saldo_final: payload.saldo_final };
   }
 
-  window.VendasDb = { client, currentUser, hasSession, signIn, signInPhone, signInWithGoogle, resetPassword, updatePassword, updateUserMetadata, signUp, signOut, solicitarAcesso, buscarAcessoVendas, loadAll, saveProduct, deleteProduct, createPackage, saveProductsBulk, deletePackage, saveClient, deleteClient, saveOrder, savePayment };
+  window.VendasDb = { client, currentUser, hasSession, getAccessToken, signIn, signInPhone, signInWithGoogle, resetPassword, updatePassword, updateUserMetadata, signUp, signOut, solicitarAcesso, buscarAcessoVendas, loadAll, saveProduct, deleteProduct, createPackage, saveProductsBulk, deletePackage, saveClient, deleteClient, saveOrder, savePayment };
 })();
