@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.4.0.48 - 2026-07-13
+
+- Notas: informa “Baixando imagem” enquanto prepara a visualização do comprovante.
+- Perfis e cadastro: adiciona estado pressionado aos botões de acesso e permite salvar inclusões parciais para concluir depois.
+
 ## 1.4.0.47 - 2026-07-12
 
 - Lançamentos por foto: exibe um card de processamento acima de toda a interface durante a leitura da imagem no Web e Mobile.

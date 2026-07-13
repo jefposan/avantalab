@@ -116,6 +116,7 @@
     lancamentos: [],
     notaArquivoPendente: null,
     notaLendo: false,
+    notaBaixando: false,
     notaVisualizandoUrl: '',
     caixinhaMovimentos: [],
     entradas: [],
@@ -835,10 +836,10 @@
       '<div class="flex max-h-[calc(100dvh-2rem)] w-full max-w-md flex-col overflow-hidden rounded-xl bg-white text-slate-900 shadow-2xl">' +
         '<header class="shrink-0 bg-[#003E73] px-4 py-3 text-white"><p class="text-[9px] font-black uppercase tracking-[.2em] text-cyan-200">Cadastro do perfil</p><h2 class="mt-0.5 text-base font-black leading-tight">' + titulo + '</h2>' + (contexto === 'lembrete' ? '<p class="mt-1 text-[11px] text-white/80">Faltam ' + Number(status.diasRestantes || 0) + ' dias para se tornar obrigat&oacute;rio.</p>' : '') + '</header>' +
         '<div class="min-h-0 flex-1 overflow-y-auto px-4 py-3">' + formulario + '<p id="cp-erro" class="mt-3 text-xs font-bold text-red-600"></p></div>' +
-        '<footer class="flex shrink-0 justify-end gap-2 border-t border-slate-200 bg-slate-50 px-4 py-3">' +
-          (contexto === 'lembrete' ? '<button id="cp-depois" type="button" class="h-9 rounded-lg border border-slate-300 bg-white px-4 text-xs font-bold text-slate-600">Lembrar depois</button>' : '') +
+        '<footer class="flex shrink-0 flex-wrap justify-end gap-2 border-t border-slate-200 bg-slate-50 px-4 py-3">' +
+          (contexto === 'lembrete' ? '<button id="cp-depois" type="button" class="h-9 rounded-lg border border-slate-300 bg-white px-4 text-xs font-bold text-slate-600 transition active:scale-95">Lembrar depois</button><button id="cp-salvar-parcial" type="button" class="h-9 rounded-lg border border-sky-200 bg-sky-50 px-4 text-xs font-black text-sky-800 transition active:scale-95">Salvar inclusões</button>' : '') +
           (contexto === 'paywall' ? '<button id="cp-voltar" type="button" class="h-9 rounded-lg border border-slate-300 bg-white px-4 text-xs font-bold text-slate-600">Voltar aos planos</button>' : '') +
-          (podeEditar ? '<button id="cp-salvar" type="button" class="h-9 rounded-lg bg-[#003E73] px-5 text-xs font-black text-white">' + (contexto === 'paywall' ? 'Salvar e continuar' : 'Concluir cadastro') + '</button>' : '') +
+          (podeEditar ? '<button id="cp-salvar" type="button" class="h-9 rounded-lg bg-[#003E73] px-5 text-xs font-black text-white transition active:scale-95">' + (contexto === 'paywall' ? 'Salvar e continuar' : 'Concluir cadastro') + '</button>' : '') +
         '</footer>' +
       '</div></section>';
   }
@@ -929,16 +930,33 @@
 
   async function adiarCadastroPerfilMobile() {
     if (!state.empresa) return;
+    state.cadastroPerfilAdiado = true;
+    render();
+  }
+
+  async function salvarCadastroPerfilParcialMobile() {
+    if (state.cadastroPerfilSalvando || !state.empresa) return;
+    var erroEl = document.getElementById('cp-erro');
+    state.cadastroPerfilSalvando = true;
+    if (erroEl) erroEl.textContent = 'Salvando...';
     try {
       var token = await tokenSessao();
-      await fetch('/api/perfil-cadastro', {
+      var resposta = await fetch('/api/perfil-cadastro', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
         body: JSON.stringify({ empresaId: state.empresa.id, dados: capturarCadastroPerfilMobile(), concluir: false }),
       });
-    } catch (e) {}
-    state.cadastroPerfilAdiado = true;
-    render();
+      var json = await resposta.json();
+      if (!resposta.ok) throw new Error(json.mensagem || 'Nao foi possivel salvar as informacoes.');
+      state.cadastroPerfilStatus = json;
+      state.cadastroPerfilDados = json.cadastro;
+      state.cadastroPerfilAdiado = true;
+      render();
+    } catch (e) {
+      if (erroEl) erroEl.textContent = e.message || 'Nao foi possivel salvar as informacoes.';
+    } finally {
+      state.cadastroPerfilSalvando = false;
+    }
   }
 
   window._avaPaywallAssinar = async function (ciclo, dadosInformados, janelaInformada) {
@@ -3338,6 +3356,8 @@
   }
 
   async function abrirNotaLancamentoMobile(lancamentoId) {
+    state.notaBaixando = true;
+    render();
     try {
       var token = await tokenSessao();
       if (!token) throw new Error('Sua sessao expirou. Entre novamente.');
@@ -3348,6 +3368,9 @@
       render();
     } catch (e) {
       setErro(e && e.message ? e.message : 'Nao foi possivel abrir a nota.');
+    } finally {
+      state.notaBaixando = false;
+      render();
     }
   }
 
@@ -3362,10 +3385,10 @@
   }
 
   function processandoNotaHtml() {
-    if (!state.notaLendo) return '';
+    if (!state.notaLendo && !state.notaBaixando) return '';
     return '<div class="fixed inset-0 z-[140] flex items-center justify-center bg-slate-950/75 px-4" role="status" aria-live="polite">' +
       '<section class="w-full max-w-xs overflow-hidden rounded-3xl bg-white shadow-2xl">' +
-      '<div class="flex items-center gap-3 px-4 py-3 text-white" style="background:#003E73"><span class="flex h-8 w-8 items-center justify-center rounded-full bg-white/15"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" aria-hidden="true" style="animation:avaSpin 1s linear infinite"><path d="M12 3a9 9 0 1 1-6.36 2.64" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg></span><div><p class="text-sm font-black">Processando imagem</p><p class="text-[11px] font-semibold text-cyan-100/80">Aguarde um instante.</p></div></div>' +
+      '<div class="flex items-center gap-3 px-4 py-3 text-white" style="background:#003E73"><span class="flex h-8 w-8 items-center justify-center rounded-full bg-white/15"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" aria-hidden="true" style="animation:avaSpin 1s linear infinite"><path d="M12 3a9 9 0 1 1-6.36 2.64" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg></span><div><p class="text-sm font-black">' + (state.notaBaixando ? 'Baixando imagem' : 'Processando imagem') + '</p><p class="text-[11px] font-semibold text-cyan-100/80">Aguarde um instante.</p></div></div>' +
       '</section></div>';
   }
 
@@ -9107,7 +9130,7 @@
       '<div class="grid gap-2">' +
         state.empresas.map(function (empresa) {
           var tipo = rotuloTipoPerfil(empresa.tipo_perfil);
-          return '<button type="button" data-empresa-id="' + escapeHtml(empresa.id) + '" class="empresa-opcao rounded-2xl border border-slate-200 px-4 py-3 text-left ' + (state.empresa && empresa.id === state.empresa.id ? 'bg-cyan-50 text-cyan-800' : 'bg-white text-slate-800') + '"><span class="block text-sm font-black">' + escapeHtml(nomeEmpresa(empresa)) + '</span><span class="text-xs font-semibold text-slate-500">' + escapeHtml(tipo) + ' &middot; ' + escapeHtml(perfilFormatado(empresa.perfil)) + '</span></button>';
+          return '<button type="button" data-empresa-id="' + escapeHtml(empresa.id) + '" class="empresa-opcao rounded-2xl border border-slate-200 px-4 py-3 text-left transition active:scale-[0.98] active:translate-y-px ' + (state.empresa && empresa.id === state.empresa.id ? 'bg-cyan-50 text-cyan-800' : 'bg-white text-slate-800') + '"><span class="block text-sm font-black">' + escapeHtml(nomeEmpresa(empresa)) + '</span><span class="text-xs font-semibold text-slate-500">' + escapeHtml(tipo) + ' &middot; ' + escapeHtml(perfilFormatado(empresa.perfil)) + '</span></button>';
         }).join('') +
       '</div>'
     );
@@ -10161,6 +10184,7 @@
     bindChange('ddi-telefone-obrigatorio', function (e) { state.ddiTelefoneObrigatorio = (e.target && e.target.value ? e.target.value : '55').replace(/\D/g, ''); });
     bind('sair-telefone-obrigatorio', sair);
     bind('cp-depois', adiarCadastroPerfilMobile);
+    bind('cp-salvar-parcial', salvarCadastroPerfilParcialMobile);
     bind('cp-voltar', function () { state.paywallCadastroCiclo = ''; render(); });
     bind('cp-buscar-cep', buscarCepCadastroPerfilMobile);
     bind('cp-salvar', salvarCadastroPerfilMobile);

@@ -819,6 +819,7 @@ const [editEntradaFaturamentoValorNumerico, setEditEntradaFaturamentoValorNumeri
   const [notaPendente, setNotaPendente] = useState<File | null>(null);
   const [lendoNota, setLendoNota] = useState(false);
   const [notaAbertaUrl, setNotaAbertaUrl] = useState('');
+  const [baixandoNota, setBaixandoNota] = useState(false);
   const [lancamentoEditandoId, setLancamentoEditandoId] = useState<string | number | null>(null);
 const [editDia, setEditDia] = useState('');
 const [editDespesa, setEditDespesa] = useState('');
@@ -3906,12 +3907,17 @@ const lerNotaPorFoto = async (arquivo: File) => {
 };
 
 const abrirNotaLancamento = async (lancamento: TabelaLancamentoDespesa) => {
-  const resposta = await obterUrlNotaLancamento(lancamento.id);
-  if (resposta.erro || !resposta.url) {
-    abrirAviso('Não foi possível abrir a nota', resposta.mensagem || 'Tente novamente.');
-    return;
+  setBaixandoNota(true);
+  try {
+    const resposta = await obterUrlNotaLancamento(lancamento.id);
+    if (resposta.erro || !resposta.url) {
+      abrirAviso('Não foi possível abrir a nota', resposta.mensagem || 'Tente novamente.');
+      return;
+    }
+    setNotaAbertaUrl(resposta.url);
+  } finally {
+    setBaixandoNota(false);
   }
-  setNotaAbertaUrl(resposta.url);
 };
 
 const executarParcelamento = async () => {
@@ -6470,7 +6476,7 @@ if (modalSelecionarEmpresa) {
                   key={empresa.id}
                   type="button"
                   onClick={() => setEmpresaParaSelecionar(empresa)}
-                  className={`w-full rounded-xl border px-3 py-2.5 text-left transition cursor-pointer ${
+                  className={`w-full rounded-xl border px-3 py-2.5 text-left transition cursor-pointer active:scale-[0.98] active:translate-y-px ${
                     selecionada
                       ? darkMode
                         ? 'border-sky-400 bg-sky-950/40'
@@ -6530,7 +6536,7 @@ if (modalSelecionarEmpresa) {
                 if (!empresaParaSelecionar) return;
                 await carregarEmpresaSelecionada(empresaParaSelecionar);
               }}
-              className="rounded-lg px-4 py-2 text-xs font-black shadow transition hover:brightness-110 cursor-pointer disabled:cursor-not-allowed disabled:opacity-60"
+              className="rounded-lg px-4 py-2 text-xs font-black shadow transition hover:brightness-110 active:scale-95 cursor-pointer disabled:cursor-not-allowed disabled:opacity-60"
               style={estiloTemaPrimario}
             >
               Confirmar acesso
@@ -10209,7 +10215,7 @@ name="novo-usuario-login"
   onFechar={() => setNotaAbertaUrl('')}
 />
 
-<ProcessandoImagemModal aberto={lendoNota} darkMode={darkMode} />
+<ProcessandoImagemModal aberto={lendoNota || baixandoNota} darkMode={darkMode} titulo={baixandoNota ? 'Baixando imagem' : 'Processando imagem'} />
 
 {/* ================= TOUR PRIMEIRO ACESSO ================= */}
 <TourPrimeiroAcesso

@@ -13,6 +13,15 @@
   },
   "versoes": [
     {
+      "versao": "1.4.0.48",
+      "titulo": "Notas e cadastro mais claros",
+      "data": "Julho/2026",
+      "itens": [
+        "Notas: informa Baixando imagem enquanto prepara a visualização do comprovante.",
+        "Perfis e cadastro: adiciona estado pressionado aos botões de acesso e permite salvar inclusões parciais para concluir depois."
+      ]
+    },
+    {
       "versao": "1.4.0.47",
       "titulo": "Processamento de imagem",
       "data": "Julho/2026",
