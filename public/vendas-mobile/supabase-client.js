@@ -107,11 +107,11 @@
 
   async function loadAll() {
     const user = await currentUser();
-    if (!user) return { user: null, produtos: [], clientes: [], vendas: [] };
+    if (!user) return { user: null, produtos: [], pacotes: [], clientes: [], vendas: [] };
 
     const acessoVendas = await buscarAcessoVendas();
     if (!acessoVendas.acesso) {
-      return { user, produtos: [], clientes: [], vendas: [], ...acessoVendas };
+      return { user, produtos: [], pacotes: [], clientes: [], vendas: [], ...acessoVendas };
     }
 
     const [produtosRes, clientesRes, pedidosRes] = await Promise.all([
@@ -122,9 +122,21 @@
     const error = produtosRes.error || clientesRes.error || pedidosRes.error;
     if (error) throw error;
 
+    const produtos = (produtosRes.data || []).map((produto) => ({
+      ...produto,
+      preco_custo: Number(produto.preco_custo ?? produto.metadados?.preco_custo ?? 0),
+      pacote_origem_id: produto.pacote_origem_id ?? produto.metadados?.pacote?.id ?? null,
+    }));
+    const pacotes = [...new Map(produtos
+      .map((produto) => produto.metadados?.pacote)
+      .filter((pacote) => pacote?.id)
+      .map((pacote) => [pacote.id, pacote])).values()]
+      .sort((a, b) => String(b.criado_em || '').localeCompare(String(a.criado_em || '')));
+
     return {
       user,
-      produtos: produtosRes.data || [],
+      produtos,
+      pacotes,
       clientes: (clientesRes.data || []).map((c) => ({
         ...c,
         ...(c.endereco || {}),
@@ -149,6 +161,11 @@
       estoque: product.estoque === '' || product.estoque == null ? null : Number(product.estoque),
       unidade: product.unidade || 'un',
       imagem_url: product.imagem_url || null,
+      metadados: {
+        ...(product.metadados || {}),
+        preco_custo: Number(product.preco_custo || 0),
+        ...(product.pacote ? { pacote: product.pacote } : {}),
+      },
       ativo: product.ativo !== false,
       atualizado_em: new Date().toISOString(),
     };
@@ -162,6 +179,43 @@
 
   async function deleteProduct(id) {
     const { error } = await requireClient().from('vendas_mobile_produtos').delete().eq('id', id);
+    if (error) throw error;
+  }
+
+  async function createPackage({ nome, numero, origem = 'excel', empresaId = null }) {
+    const user = await currentUser();
+    if (!user) throw new Error('Sessão expirada.');
+    return {
+      id: `pacote_${crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}_${Math.random().toString(36).slice(2)}`}`,
+      nome, numero, origem, empresa_id: empresaId || null, criado_em: new Date().toISOString(),
+    };
+  }
+
+  async function saveProductsBulk(products, pacote = null) {
+    const user = await currentUser();
+    if (!user) throw new Error('Sessão expirada.');
+    const payload = products.map((product) => ({
+      user_id: user.id,
+      marca: product.marca || null,
+      categoria: product.categoria || null,
+      sku: product.sku || null,
+      nome: product.nome,
+      descricao: product.descricao || null,
+      preco: Number(product.preco || 0),
+      preco_promocional: product.preco_promocional ? Number(product.preco_promocional) : null,
+      estoque: product.estoque === '' || product.estoque == null ? null : Number(product.estoque),
+      unidade: product.unidade || 'un',
+      imagem_url: product.imagem_url || null,
+      metadados: { ...(product.metadados || {}), preco_custo: Number(product.preco_custo || 0), ...(pacote ? { pacote } : {}) },
+      ativo: product.ativo !== false,
+    }));
+    const { data, error } = await client.from('vendas_mobile_produtos').insert(payload).select();
+    if (error) throw error;
+    return data || [];
+  }
+
+  async function deletePackage(id) {
+    const { error } = await requireClient().from('vendas_mobile_produtos').delete().contains('metadados', { pacote: { id } });
     if (error) throw error;
   }
 
@@ -226,5 +280,5 @@
     return { ...pedido, itens: savedItems || [] };
   }
 
-  window.VendasDb = { client, currentUser, hasSession, signIn, signInPhone, signInWithGoogle, resetPassword, updatePassword, updateUserMetadata, signUp, signOut, solicitarAcesso, buscarAcessoVendas, loadAll, saveProduct, deleteProduct, saveClient, deleteClient, saveOrder };
+  window.VendasDb = { client, currentUser, hasSession, signIn, signInPhone, signInWithGoogle, resetPassword, updatePassword, updateUserMetadata, signUp, signOut, solicitarAcesso, buscarAcessoVendas, loadAll, saveProduct, deleteProduct, createPackage, saveProductsBulk, deletePackage, saveClient, deleteClient, saveOrder };
 })();

@@ -15,6 +15,7 @@ const estadoInicial = {
     perfil: 'porta a porta',
   },
   produtos: [],
+  pacotesProdutos: [],
   clientes: [],
   vendas: [],
   carrinho: [],
@@ -507,6 +508,7 @@ async function sairSistema() {
   state.autenticado = false;
   state.menuAberto = false;
   state.produtos = [];
+  state.pacotesProdutos = [];
   state.clientes = [];
   state.vendas = [];
   state.acessoVendas = null;
@@ -859,6 +861,7 @@ async function carregarDadosBackend(mostrarCarregamento = true) {
         telefone: dados.user.phone || dados.user.user_metadata?.telefone || dados.user.user_metadata?.phone || state.usuario.telefone || '',
       };
       state.produtos = dados.produtos;
+      state.pacotesProdutos = dados.pacotes || [];
       state.clientes = dados.clientes;
       state.vendas = dados.vendas;
       state.menuAberto = true;
@@ -1085,7 +1088,7 @@ function renderConfiguracoes() {
     </div>
     <article class="settings-card settings-goal"><h3>${svgIcon('target')} Medidor de Meta Mensal</h3><div class="goal-values"><b>Vendas Atuais: <em>${moeda(t.total)}</em></b><b>Meta: ${moeda(state.metaMensal)}</b></div><div class="progress"><i style="width:${Math.max(2, progresso)}%"></i></div><p>Faltam <b>${moeda(Math.max(0, state.metaMensal - t.total))}</b> para atingir sua meta! Vamos lá! 🚀</p><div class="settings-form"><input id="metaConfig" type="number" step="0.01" min="0" value="${state.metaMensal || ''}" placeholder="Definir nova Meta (R$)"><button class="primary" onclick="salvarMeta()">${svgIcon('save')} Salvar</button></div></article>
     <article class="settings-card"><h3>${svgIcon('lock')} Segurança e Senha</h3><p>Defina uma senha para entrar também por e-mail. Se você acessa pelo Google, esta é a sua primeira senha.</p><div class="password-form"><label>Nova Senha (mín. 8 caracteres)<input id="senhaNova" type="password" autocomplete="new-password" minlength="8"></label><label>Confirme Nova Senha<input id="senhaConfirma" type="password" autocomplete="new-password" minlength="8"></label><button class="password-button" onclick="alterarSenha()">${svgIcon('lock')} Salvar senha</button></div></article>
-    <article class="settings-card"><h3>${svgIcon('package')} Catálogo de Produtos</h3><p>Importe uma planilha própria ou carregue o pacote de produtos disponível.</p><div class="actions"><button class="secondary" onclick="setAba('importar')">Importar produtos</button><button class="primary" onclick="carregarPacoteTridium()">${svgIcon('package')} Pacote de produtos</button></div></article>
+    <article class="settings-card"><h3>${svgIcon('package')} Catálogo de Produtos</h3><p>Importe um pacote Excel, exporte seu catálogo e gerencie as listas cadastradas.</p><div class="actions"><button class="secondary" onclick="baixarModeloProdutosExcel()">${svgIcon('download')} Modelo Excel</button><button class="primary" onclick="abrirImportacaoPacote()">${svgIcon('package')} Pacote de produtos</button></div></article>
     <article class="settings-card"><h3>${svgIcon('save')} Aplicativo Web (PWA)</h3><p>Instale o aplicativo na tela inicial para acesso rápido, como um app nativo.</p><button class="install-button" onclick="instalarPWA()">Adicionar à Área de Trabalho</button><small>Se o botão não aparecer, use “Adicionar à tela inicial” no menu do navegador.</small></article>
     <article class="settings-card settings-exit-card"><h3>${svgIcon('log-out')} Sair</h3><p>Encerre sua sessão neste aparelho.</p><button class="danger" onclick="abrirConfirmacaoSair()">Sair do Vendas</button></article>
   </section>`;
@@ -1259,13 +1262,12 @@ function aplicarBusca() {
 
 function renderProdutos() {
   const produtos = produtosFiltrados();
+  const temBusca = Boolean(String(state.busca || '').trim());
   return `
-    <section class="module-page">
-      <div class="module-title"><div><h2>Produtos</h2><p>Catálogo e preços para suas vendas.</p></div><button class="primary" onclick="abrirProduto()">＋ Novo produto</button></div>
-      ${renderBarraBusca('Pesquisar', 'Ordem Alfabética')}
-      <div class="module-actions-line"><button class="secondary" onclick="carregarPacoteTridium()">${svgIcon('package')} Pacote de produtos</button></div>
-      <div class="module-stats"><span><b>${state.produtos.length}</b> produtos cadastrados</span><span><b>${state.produtos.filter((p) => p.ativo !== false).length}</b> ativos</span></div>
-    <section class="product-grid module-product-grid">
+    <section class="module-page produtos-page${temBusca ? ' is-searching' : ''}">
+      <div class="module-sticky-head"><div class="module-title"><div><h2>Produtos</h2><p>Catálogo, custos e preços de venda.</p></div><button class="primary" onclick="this.blur();abrirProduto()">＋ Novo produto</button></div><div class="produtos-actions"><button class="ghost" onclick="baixarModeloProdutosExcel()">${svgIcon('save')} Modelo Excel</button><button class="secondary" onclick="abrirImportacaoPacote()">${svgIcon('package')} Pacote de produtos</button><button class="primary" onclick="exportarProdutosExcel()">${svgIcon('save')} Exportar</button></div>${renderBarraBusca('Pesquisar produtos', 'Ordem alfabética')}</div>
+      <div class="module-stats"><span><b>${state.produtos.length}</b> produtos cadastrados</span><span><b>${state.pacotesProdutos.length}</b> pacotes ativos</span><button class="package-manage-link" onclick="abrirGerenciarPacotes()">Gerenciar pacotes</button></div>
+      <section class="product-grid module-product-grid">
       ${produtos.length ? produtos.map(renderProduto).join('') : empty('Nenhum produto cadastrado.')}
     </section>
     </section>
@@ -1274,19 +1276,19 @@ function renderProdutos() {
 
 function renderProduto(p) {
   const preco = p.preco_promocional || p.preco;
+  const pacote = state.pacotesProdutos.find((item) => item.id === p.pacote_origem_id);
   return `
     <article class="product-card">
       <div class="product-image-wrap" onclick="abrirProduto('${p.id}')">
         ${p.imagem_url ? `<img class="product-image" src="${escapeAttr(p.imagem_url)}" alt="${escapeAttr(p.nome)}" />` : '<div class="product-placeholder">🛍️</div>'}
-        <span class="product-badge">${escapeHtml(p.categoria || 'Geral')}</span>
+        <span class="product-badge">${escapeHtml(p.categoria || 'Geral')}</span>${pacote ? `<small class="product-package-badge">${escapeHtml(pacote.numero || pacote.nome)}</small>` : ''}
       </div>
       <div class="product-content">
         <h3>${escapeHtml(p.nome)}</h3>
         <p class="row-sub">${escapeHtml(p.marca || 'Tridium')} · ${escapeHtml(p.sku || 'sem SKU')}</p>
-        <p class="product-price">${moeda(preco)}</p>
+        <div class="product-price-line"><p class="product-price"><small>Venda</small>${moeda(preco)}</p><p class="product-cost"><small>Custo</small>${moeda(p.preco_custo || 0)}</p></div>
         <div class="product-actions">
-          <button class="ghost" onclick="abrirProduto('${p.id}')">Ver</button>
-          <button class="primary" onclick="adicionarCarrinho('${p.id}')">Comprar</button>
+          <button class="ghost" onclick="abrirProduto('${p.id}')">Ver / editar</button>
         </div>
       </div>
     </article>
@@ -1550,30 +1552,178 @@ function empty(texto) {
   return `<div class="empty">${escapeHtml(texto)}</div>`;
 }
 
-async function carregarPacoteTridium() {
+function numeroPacoteSugerido() {
+  return `PAC-${new Date().toISOString().slice(0, 10).replace(/-/g, '')}`;
+}
+
+function carregarBibliotecaExcel() {
+  if (window.XLSX) return Promise.resolve(window.XLSX);
+  if (window.__vendasXlsxPromise) return window.__vendasXlsxPromise;
+  window.__vendasXlsxPromise = new Promise((resolve, reject) => {
+    const script = document.createElement('script');
+    script.src = `/vendas-mobile/vendor/xlsx.full.min.js?v=${window.__VENDAS_MOBILE_VERSION__ || ''}`;
+    script.onload = () => window.XLSX ? resolve(window.XLSX) : reject(new Error('Biblioteca de planilhas indisponível.'));
+    script.onerror = () => reject(new Error('Não foi possível carregar a biblioteca de planilhas.'));
+    document.head.appendChild(script);
+  });
+  return window.__vendasXlsxPromise;
+}
+
+function baixarModeloProdutosExcel() {
+  const link = document.createElement('a');
+  link.href = '/vendas-mobile/data/modelo-importacao-produtos-avantalab.xlsx';
+  link.download = 'modelo-importacao-produtos-avantalab.xlsx';
+  link.click();
+}
+
+function abrirImportacaoPacote() {
+  sheet(`<div class="sheet-header"><div><h2>Pacote de produtos</h2><p class="muted small">Dê um nome e número ao pacote antes de importar.</p></div><button class="close" onclick="fecharSheet()">×</button></div><div class="grid package-import-form">${campo('pacoteNome', 'Nome do pacote', '')}${campo('pacoteNumero', 'Número do pacote', numeroPacoteSugerido())}<input id="pacoteArquivoExcel" type="file" accept=".xlsx,.xls" hidden onchange="importarArquivoPacote(this)"><button class="primary" onclick="document.getElementById('pacoteArquivoExcel').click()">${svgIcon('folder')} Buscar arquivo Excel</button><button class="secondary" onclick="abrirImportacaoPacoteLink()">${svgIcon('save')} Inserir link do arquivo</button><button class="ghost" onclick="importarCatalogoTridiumPersistente()">${svgIcon('package')} Importar catálogo Tridium disponível</button><p class="muted small package-import-note">O link deve apontar diretamente para um arquivo Excel e permitir acesso público (CORS).</p></div>`, 'sheet-backdrop-centered');
+}
+
+function dadosNovoPacote() {
+  const nome = valor('pacoteNome').trim();
+  const numero = valor('pacoteNumero').trim();
+  if (!nome || !numero) { toast('Informe o nome e o número do pacote.'); return null; }
+  return { nome, numero };
+}
+
+function abrirImportacaoPacoteLink() {
+  const dados = dadosNovoPacote();
+  if (!dados) return;
+  const nomeCodificado = encodeURIComponent(dados.nome).replace(/'/g, '%27');
+  const numeroCodificado = encodeURIComponent(dados.numero).replace(/'/g, '%27');
+  sheet(`<div class="sheet-header"><div><h2>Arquivo hospedado</h2><p class="muted small">${escapeHtml(dados.nome)} · ${escapeHtml(dados.numero)}</p></div><button class="close" onclick="fecharSheet()">×</button></div><div class="grid"><div class="field"><label>Link direto do Excel</label><input id="pacoteArquivoLink" type="url" inputmode="url" placeholder="https://exemplo.com/produtos.xlsx"></div><button class="primary" onclick="importarLinkPacote('${nomeCodificado}', '${numeroCodificado}')">Importar arquivo</button></div>`, 'sheet-backdrop-centered');
+}
+
+function numeroProduto(valorProduto) {
+  if (typeof valorProduto === 'number') return Number.isFinite(valorProduto) ? valorProduto : 0;
+  const bruto = String(valorProduto || '').trim().replace(/R\$\s?/gi, '').replace(/\s/g, '');
+  const texto = bruto.includes(',') ? bruto.replace(/\./g, '').replace(',', '.') : bruto;
+  const numero = Number(texto);
+  return Number.isFinite(numero) ? numero : 0;
+}
+
+function produtosDaPlanilha(arrayBuffer) {
+  const wb = window.XLSX.read(arrayBuffer, { type: 'array' });
+  const primeiraAba = wb.SheetNames[0];
+  if (!primeiraAba) throw new Error('A planilha não possui uma aba de produtos.');
+  const aba = wb.Sheets[primeiraAba];
+  const grade = window.XLSX.utils.sheet_to_json(aba, { header: 1, defval: '', raw: false });
+  const linhaCabecalho = grade.findIndex((linha) => linha.some((campo) => normalizar(campo).replace(/\s/g, '_') === 'nome'));
+  if (linhaCabecalho < 0) throw new Error('Não encontramos a coluna “nome” na planilha. Baixe e use o modelo Excel.');
+  const linhas = window.XLSX.utils.sheet_to_json(aba, { defval: '', raw: false, range: linhaCabecalho });
+  const chave = (linha, ...nomes) => {
+    const mapa = Object.fromEntries(Object.entries(linha).map(([campo, valorCampo]) => [normalizar(campo).replace(/\s/g, '_'), valorCampo]));
+    return nomes.map((nome) => mapa[nome]).find((valorCampo) => valorCampo !== undefined && valorCampo !== '');
+  };
+  const invalidos = [];
+  const produtos = linhas.map((linha, indice) => {
+    const nome = String(chave(linha, 'nome') || '').trim();
+    const preco = numeroProduto(chave(linha, 'preco_venda', 'preco', 'preco_de_venda'));
+    if (!nome || preco <= 0) { invalidos.push(indice + 2); return null; }
+    return {
+      marca: String(chave(linha, 'marca') || '').trim(), categoria: String(chave(linha, 'categoria') || '').trim(), sku: String(chave(linha, 'sku', 'codigo') || '').trim(), nome,
+      descricao: String(chave(linha, 'descricao') || '').trim(), preco, preco_custo: numeroProduto(chave(linha, 'preco_custo', 'custo', 'preco_de_custo')),
+      estoque: chave(linha, 'estoque') === '' ? null : numeroProduto(chave(linha, 'estoque')), unidade: String(chave(linha, 'unidade') || 'un').trim(),
+      imagem_url: String(chave(linha, 'imagem_url', 'imagem', 'url_imagem') || '').trim(), ativo: true,
+    };
+  }).filter(Boolean);
+  if (!produtos.length) throw new Error('Nenhum produto válido foi encontrado. Nome e preço de venda são obrigatórios.');
+  return { produtos, invalidos };
+}
+
+async function importarArquivoPacote(input) {
+  const arquivo = input.files?.[0];
+  input.value = '';
+  if (!arquivo) return;
+  const dados = dadosNovoPacote();
+  if (!dados) return;
   try {
-    const res = await fetch('./data/tridium-package.json');
-    const pacote = await res.json();
-    let novos = 0;
-    pacote.produtos.forEach((p) => {
-      const existe = state.produtos.some((item) => item.sku && item.sku === p.sku);
-      if (!existe) {
-        state.produtos.push({
-          id: id('prod'),
-          pacote_origem: pacote.id,
-          ...p,
-          ativo: true,
-          criado_em: new Date().toISOString(),
-        });
-        novos++;
-      }
-    });
-    toast(novos ? `${novos} produtos Tridium carregados.` : 'Pacote Tridium já estava carregado.');
-    state.aba = 'produtos';
-    render();
-  } catch {
-    toast('Não foi possível carregar o pacote Tridium.');
+    await carregarBibliotecaExcel();
+    const resultado = produtosDaPlanilha(await arquivo.arrayBuffer());
+    await salvarPacoteImportado({ ...dados, origem: 'excel', ...resultado });
+  } catch (error) { toast(traduzErro(error)); }
+}
+
+async function importarLinkPacote(nomeCodificado, numeroCodificado) {
+  const nome = decodeURIComponent(nomeCodificado);
+  const numero = decodeURIComponent(numeroCodificado);
+  const link = valor('pacoteArquivoLink').trim();
+  if (!/^https:\/\//i.test(link)) { toast('Informe um link HTTPS direto para a planilha.'); return; }
+  try {
+    await carregarBibliotecaExcel();
+    const resposta = await fetch(link);
+    if (!resposta.ok) throw new Error('Não foi possível baixar o arquivo informado.');
+    const resultado = produtosDaPlanilha(await resposta.arrayBuffer());
+    await salvarPacoteImportado({ nome, numero, origem: 'link', ...resultado });
+  } catch (error) { toast(`${traduzErro(error)} Verifique se o link é público e permite acesso ao arquivo.`); }
+}
+
+async function salvarPacoteImportado({ nome, numero, origem, produtos, invalidos = [] }) {
+  let pacote;
+  try {
+    if (backendAtivo) {
+      pacote = await window.VendasDb.createPackage({ nome, numero, origem, empresaId: state.acessoVendas?.empresa_id || null });
+      const salvos = await window.VendasDb.saveProductsBulk(produtos, pacote);
+      state.produtos = [...salvos.map((produto) => ({ ...produto, preco_custo: Number(produto.metadados?.preco_custo || 0), pacote_origem_id: produto.metadados?.pacote?.id || null })), ...state.produtos];
+    } else {
+      pacote = { id: id('pacote'), nome, numero, origem, criado_em: new Date().toISOString() };
+      const salvos = produtos.map((produto) => ({ id: id('prod'), ...produto, pacote_origem_id: pacote.id, criado_em: new Date().toISOString() }));
+      state.produtos = [...salvos, ...state.produtos];
+    }
+    state.pacotesProdutos = [pacote, ...state.pacotesProdutos];
+    fecharSheet(); state.aba = 'produtos'; salvarEstado(); render();
+    toast(`${produtos.length} produtos importados${invalidos.length ? `; ${invalidos.length} linhas ignoradas` : ''}.`);
+  } catch (error) {
+    if (backendAtivo && pacote?.id) await window.VendasDb.deletePackage(pacote.id).catch(() => undefined);
+    throw error;
   }
+}
+
+async function importarCatalogoTridiumPersistente() {
+  const dados = dadosNovoPacote();
+  if (!dados) return;
+  try {
+    const resposta = await fetch('/vendas-mobile/data/tridium-package.json');
+    if (!resposta.ok) throw new Error('Catálogo Tridium indisponível.');
+    const catalogo = await resposta.json();
+    const produtos = (catalogo.produtos || []).map((produto) => ({ ...produto, imagem_url: String(produto.imagem_url || '').replace(/^\.\//, '/vendas-mobile/'), preco: Number(produto.preco || 0), preco_custo: Number(produto.preco_custo || 0), ativo: produto.status !== 'inativo' }));
+    await salvarPacoteImportado({ nome: dados.nome || catalogo.nome, numero: dados.numero, origem: 'catalogo', produtos });
+  } catch (error) { toast(traduzErro(error)); }
+}
+
+function carregarPacoteTridium() { abrirImportacaoPacote(); }
+
+function abrirGerenciarPacotes() {
+  const pacotes = state.pacotesProdutos;
+  sheet(`<div class="sheet-header"><div><h2>Pacotes de produtos</h2><p class="muted small">Excluir um pacote remove todos os produtos que vieram dele.</p></div><button class="close" onclick="fecharSheet()">×</button></div><div class="package-list">${pacotes.length ? pacotes.map((pacote) => { const quantidade = state.produtos.filter((produto) => produto.pacote_origem_id === pacote.id).length; return `<article><div><b>${escapeHtml(pacote.nome)}</b><small>Nº ${escapeHtml(pacote.numero || 'sem número')} · ${quantidade} produtos</small></div><button class="danger" onclick="excluirPacoteProdutos('${pacote.id}')">Excluir</button></article>`; }).join('') : '<p class="muted">Nenhum pacote importado.</p>'}</div>`, 'sheet-backdrop-centered');
+}
+
+async function excluirPacoteProdutos(pacoteId) {
+  const pacote = state.pacotesProdutos.find((item) => item.id === pacoteId);
+  if (!pacote) return;
+  const quantidade = state.produtos.filter((produto) => produto.pacote_origem_id === pacoteId).length;
+  if (!confirm(`Excluir o pacote “${pacote.nome}” e seus ${quantidade} produtos?`)) return;
+  try {
+    if (backendAtivo) await window.VendasDb.deletePackage(pacoteId);
+    state.produtos = state.produtos.filter((produto) => produto.pacote_origem_id !== pacoteId);
+    state.pacotesProdutos = state.pacotesProdutos.filter((item) => item.id !== pacoteId);
+    fecharSheet(); salvarEstado(); render(); toast('Pacote e produtos excluídos.');
+  } catch (error) { toast(traduzErro(error)); }
+}
+
+async function exportarProdutosExcel() {
+  try {
+    await carregarBibliotecaExcel();
+    const linhas = state.produtos.map((produto) => ({
+      marca: produto.marca || '', categoria: produto.categoria || '', sku: produto.sku || '', nome: produto.nome || '', descricao: produto.descricao || '',
+      preco_custo: Number(produto.preco_custo || 0), preco_venda: Number(produto.preco || 0), estoque: produto.estoque ?? '', unidade: produto.unidade || 'un', imagem_url: produto.imagem_url || '',
+    }));
+    const aba = window.XLSX.utils.json_to_sheet(linhas.length ? linhas : [{ marca: '', categoria: '', sku: '', nome: '', descricao: '', preco_custo: '', preco_venda: '', estoque: '', unidade: 'un', imagem_url: '' }]);
+    aba['!cols'] = [18, 18, 16, 28, 36, 16, 16, 12, 12, 42].map((wch) => ({ wch }));
+    const livro = window.XLSX.utils.book_new(); window.XLSX.utils.book_append_sheet(livro, aba, 'Produtos');
+    window.XLSX.writeFile(livro, `produtos-avantalab-${isoData(new Date())}.xlsx`);
+  } catch (error) { toast(traduzErro(error)); }
 }
 
 function abrirProduto(produtoId = '') {
@@ -1597,10 +1747,12 @@ function abrirProduto(produtoId = '') {
         ${campo('prodUnidade', 'Unidade', p.unidade || 'un')}
       </div>
       <div class="grid-2">
-        ${campo('prodPreco', 'Preço', p.preco || '', 'number', '0.01')}
-        ${campo('prodPromo', 'Preço promocional', p.preco_promocional || '', 'number', '0.01')}
+        ${campo('prodCusto', 'Preço de custo', p.preco_custo || '', 'number', '0.01')}
+        ${campo('prodPreco', 'Preço de venda', p.preco || '', 'number', '0.01')}
       </div>
+      ${campo('prodPromo', 'Preço promocional (opcional)', p.preco_promocional || '', 'number', '0.01')}
       ${campo('prodEstoque', 'Estoque', p.estoque ?? '', 'number', '0.001')}
+      ${campo('prodImagem', 'Link da imagem (opcional)', p.imagem_url || '', 'url')}
       <div class="field"><label>Descrição</label><textarea id="prodDescricao">${escapeHtml(p.descricao || '')}</textarea></div>
       <div class="actions">
         <button class="primary" onclick="salvarProduto('${produtoId}')">Salvar</button>
@@ -1618,8 +1770,10 @@ async function salvarProduto(produtoId) {
     sku: valor('prodSku').trim(),
     unidade: valor('prodUnidade').trim() || 'un',
     preco: Number(valor('prodPreco') || 0),
+    preco_custo: Number(valor('prodCusto') || 0),
     preco_promocional: valor('prodPromo') ? Number(valor('prodPromo')) : null,
     estoque: valor('prodEstoque') ? Number(valor('prodEstoque')) : null,
+    imagem_url: valor('prodImagem').trim(),
     descricao: valor('prodDescricao').trim(),
     ativo: true,
   };
@@ -1629,7 +1783,8 @@ async function salvarProduto(produtoId) {
   }
   try {
     if (backendAtivo) {
-      const salvo = await window.VendasDb.saveProduct({ id: produtoId || null, ...dados });
+      const salvoBruto = await window.VendasDb.saveProduct({ id: produtoId || null, ...dados, metadados: state.produtos.find((produto) => produto.id === produtoId)?.metadados || {} });
+      const salvo = { ...salvoBruto, preco_custo: Number(salvoBruto.metadados?.preco_custo || 0), pacote_origem_id: salvoBruto.metadados?.pacote?.id || null };
       state.produtos = produtoId ? state.produtos.map((p) => p.id === produtoId ? salvo : p) : [salvo, ...state.produtos];
     } else if (produtoId) state.produtos = state.produtos.map((p) => p.id === produtoId ? { ...p, ...dados, atualizado_em: new Date().toISOString() } : p);
     else state.produtos.unshift({ id: id('prod'), ...dados, criado_em: new Date().toISOString() });
@@ -2068,6 +2223,15 @@ window.abrirConfirmacaoSair = abrirConfirmacaoSair;
 window.salvarConfiguracoes = salvarConfiguracoes;
 window.resetarDados = resetarDados;
 window.carregarPacoteTridium = carregarPacoteTridium;
+window.baixarModeloProdutosExcel = baixarModeloProdutosExcel;
+window.abrirImportacaoPacote = abrirImportacaoPacote;
+window.abrirImportacaoPacoteLink = abrirImportacaoPacoteLink;
+window.importarArquivoPacote = importarArquivoPacote;
+window.importarLinkPacote = importarLinkPacote;
+window.importarCatalogoTridiumPersistente = importarCatalogoTridiumPersistente;
+window.abrirGerenciarPacotes = abrirGerenciarPacotes;
+window.excluirPacoteProdutos = excluirPacoteProdutos;
+window.exportarProdutosExcel = exportarProdutosExcel;
 window.abrirProduto = abrirProduto;
 window.salvarProduto = salvarProduto;
 window.removerProduto = removerProduto;
