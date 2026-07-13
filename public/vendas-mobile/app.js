@@ -232,8 +232,8 @@ function clientesFiltrados() {
 
 function render() {
   salvarEstado();
-  if (carregandoBackend) {
-    app.innerHTML = `<section class="splash-card"><span class="loader"></span><p>Conectando ao AvantaLab...</p></section>`;
+  if (carregandoBackend || conectandoGoogle) {
+    app.innerHTML = renderPreparandoAcesso();
     return;
   }
   if (!state.autenticado) {
@@ -269,6 +269,10 @@ function render() {
     ${renderNavegacaoInferior()}
     ${state.aba === 'novo-pedido' ? `<button class="fab" onclick="abrirCarrinho()">${svgIcon('shopping-cart')}</button>` : ''}
   `;
+}
+
+function renderPreparandoAcesso() {
+  return `<section class="login-screen preparing-access-screen"><div class="preparing-access-card"><p>AvantaLab</p><span class="loader"></span><h1>Preparando acesso</h1><small>Estamos validando seu login e preparando seus dados com segurança.</small></div></section>`;
 }
 
 function limparFocoInicialLogin() {
