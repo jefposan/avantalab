@@ -95,6 +95,7 @@
     cadastroPerfilVerificado: false,
     cadastroPerfilErro: '',
     cadastroPerfilEditando: false,
+    cadastroPerfilRetornoGerenciar: false,
     // Perfil já verificado pelo paywall (evita a tela cheia de carregamento
     // nas recargas de dados) e dia da última carga (só recarrega ao voltar
     // ao app quando o dia virou).
@@ -223,6 +224,8 @@
     dashboardValoresVisiveis: {},
     resumoPerfis: [],
     resumoPerfisCarregando: false,
+    resumoPerfilDestaqueId: '',
+    meusPerfisExpandido: false,
     caixinhaDia: String(new Date().getDate()),
     caixinhaDescricao: 'Reserva',
     caixinhaValor: '',
@@ -1018,7 +1021,7 @@
         await window._avaPaywallAssinar(state.paywallCadastroCiclo, json.cobranca, janelaPagamento);
       } else {
         state.cadastroPerfilAdiado = true;
-        state.cadastroPerfilEditando = false;
+        concluirNavegacaoCadastroPerfilMobile();
         render();
       }
     } catch (e) {
@@ -1765,6 +1768,7 @@
     if (!empresaSelecionada) return false;
 
     state.empresa = empresaSelecionada;
+    state.resumoPerfilDestaqueId = empresaSelecionada.id;
     window._avaProfilePillHidden = false;
     state.pontoModuloAtivo = false;
     state.pontoResumo = [];
@@ -2712,6 +2716,7 @@
 
   function cancelarJanelasMobile() {
     state.cadastroPerfilEditando = false;
+    state.cadastroPerfilRetornoGerenciar = false;
     state.modalMenu = '';
     state.menuAberto = false;
     state.menuConfigAberto = false;
@@ -4153,8 +4158,9 @@
     }
   }
 
-  async function abrirEdicaoCadastroPerfilMobile() {
+  async function abrirEdicaoCadastroPerfilMobile(retornarGerenciar) {
     if (!state.empresa || !state.empresa.id) return;
+    state.cadastroPerfilRetornoGerenciar = retornarGerenciar === true;
     state.menuAberto = false;
     state.modalMenu = '';
     state.cadastroPerfilErro = '';
@@ -4171,9 +4177,21 @@
     render();
   }
 
+  function concluirNavegacaoCadastroPerfilMobile() {
+    var retornarGerenciar = state.cadastroPerfilRetornoGerenciar;
+    state.cadastroPerfilEditando = false;
+    state.cadastroPerfilRetornoGerenciar = false;
+    if (retornarGerenciar) {
+      state.empresaEdicaoAberta = false;
+      state.empresaCriarAberta = false;
+      state.empresaExclusaoAberta = false;
+      state.modalMenu = 'gerenciar';
+    }
+  }
+
   async function fecharEdicaoCadastroPerfilMobile() {
     if (state.cadastroPerfilSalvando) return;
-    state.cadastroPerfilEditando = false;
+    concluirNavegacaoCadastroPerfilMobile();
     cadastroPerfilAutoSavePendente = false;
     if (cadastroPerfilAutoSaveTimer) window.clearTimeout(cadastroPerfilAutoSaveTimer);
     cadastroPerfilAutoSaveTimer = null;
@@ -7509,16 +7527,19 @@
     var consolidado = totalReceitas - totalDespesas;
     var escuro = !!state.darkMode;
     var fundo = escuro ? 'bg-slate-900 text-slate-100' : 'bg-white text-slate-900';
-    var fundoLinha = escuro ? 'border-slate-700 bg-slate-800/55' : 'border-slate-200 bg-white';
+    var fundoLinha = escuro ? 'bg-slate-800/55' : 'bg-white';
     var textoSecundario = escuro ? 'text-slate-400' : 'text-slate-500';
+    var expandido = !!state.meusPerfisExpandido;
+    var destaqueId = state.resumoPerfilDestaqueId || (state.empresa && state.empresa.id) || '';
 
     var corpo = state.resumoPerfisCarregando
       ? '<p class="py-5 text-center text-xs font-semibold ' + textoSecundario + '">Atualizando perfis...</p>'
       : perfis.length
-        ? '<div class="grid max-h-[190px] gap-2 overflow-y-auto overscroll-contain pr-0.5">' + perfis.map(function (perfil) {
+        ? '<div class="grid ' + (expandido ? 'max-h-[52dvh]' : 'max-h-[190px]') + ' gap-2 overflow-y-auto overscroll-contain p-0.5">' + perfis.map(function (perfil) {
             var atual = state.empresa && perfil.id === state.empresa.id;
+            var destacado = perfil.id === destaqueId;
             var positivo = Number(perfil.resultado || 0) >= 0;
-            return '<button type="button" data-meu-perfil-id="' + escapeHtml(perfil.id) + '" class="w-full rounded-xl border px-3 py-2 text-left shadow-sm transition active:scale-[0.98] ' + fundoLinha + (atual ? ' ring-2 ring-cyan-400/70' : '') + '">' +
+            return '<button type="button" data-meu-perfil-id="' + escapeHtml(perfil.id) + '" aria-pressed="' + (destacado ? 'true' : 'false') + '" class="w-full rounded-xl border-2 px-3 py-2 text-left shadow-sm transition active:scale-[0.98] ' + fundoLinha + ' ' + (destacado ? 'border-cyan-500 shadow-[inset_0_0_0_1px_rgba(6,182,212,.18)]' : (escuro ? 'border-slate-700' : 'border-slate-200')) + '">' +
               '<div class="flex items-center justify-between gap-3"><div class="min-w-0 flex-1"><p class="truncate text-xs font-black">' + escapeHtml(perfil.nome) + '</p><p class="mt-0.5 truncate text-[9px] font-semibold ' + textoSecundario + '">' + (atual ? 'Perfil atual · ' : '') + escapeHtml(rotuloTipoPerfil(perfil.tipoPerfil)) + '</p></div>' +
               '<strong class="shrink-0 text-xs font-black ' + (positivo ? 'text-emerald-500' : 'text-red-500') + '">' + valorFinanceiroCardHtml(perfil.resultado, cardId) + '</strong></div>' +
               '<div class="mt-1.5 grid grid-cols-2 gap-2 text-[9px] font-bold ' + textoSecundario + '"><span class="truncate">Receitas <b class="text-emerald-500">' + valorFinanceiroCardHtml(perfil.receitas, cardId) + '</b></span><span class="truncate text-right">Despesas <b class="text-red-500">' + valorFinanceiroCardHtml(perfil.despesas, cardId) + '</b></span></div>' +
@@ -7526,9 +7547,10 @@
           }).join('') + '</div>'
         : '<p class="py-5 text-center text-xs font-semibold ' + textoSecundario + '">Nenhum perfil vinculado.</p>';
 
-    return '<section class="overflow-hidden rounded-2xl border-2 shadow-lg ' + fundo + '" style="border-color:#003E73">' +
+    return '<section class="flex flex-col overflow-hidden rounded-2xl border-2 shadow-lg ' + fundo + '" style="border-color:#003E73;' + (expandido ? 'min-height:min(68dvh,560px);' : '') + '">' +
       '<div class="flex items-center justify-between gap-3 px-4 py-3 text-white" style="background:#003E73"><div class="min-w-0"><p class="text-[9px] font-bold uppercase tracking-[0.18em] text-cyan-100/75">' + escapeHtml(nomeMesCompleto(state.mes)) + '</p><h2 class="truncate text-sm font-black">Meus perfis</h2></div><div class="flex items-center gap-2"><span class="rounded-full bg-white/15 px-2 py-1 text-[9px] font-black">' + perfis.length + ' perfil' + (perfis.length === 1 ? '' : 's') + '</span>' + botaoVisibilidadeValoresHtml(cardId, true) + '</div></div>' +
-      '<div class="p-3"><div class="mb-2 grid grid-cols-3 gap-1.5 rounded-xl ' + (escuro ? 'bg-slate-800/55' : 'bg-slate-50') + ' p-1.5"><div class="rounded-lg bg-[#003E73] px-2 py-2 text-white"><span class="block truncate text-[8px] font-black uppercase text-cyan-100/75">Consolidado</span><strong class="mt-0.5 block truncate text-[11px] font-black">' + valorFinanceiroCardHtml(consolidado, cardId) + '</strong></div><div class="rounded-lg px-2 py-2 ' + (escuro ? 'bg-slate-900/60' : 'bg-white') + '"><span class="block truncate text-[8px] font-black uppercase ' + textoSecundario + '">Receitas</span><strong class="mt-0.5 block truncate text-[11px] font-black text-emerald-500">' + valorFinanceiroCardHtml(totalReceitas, cardId) + '</strong></div><div class="rounded-lg px-2 py-2 text-right ' + (escuro ? 'bg-slate-900/60' : 'bg-white') + '"><span class="block truncate text-[8px] font-black uppercase ' + textoSecundario + '">Despesas</span><strong class="mt-0.5 block truncate text-[11px] font-black text-red-500">' + valorFinanceiroCardHtml(totalDespesas, cardId) + '</strong></div></div>' + corpo + '</div>' +
+      '<div class="min-h-0 flex-1 p-3"><div class="mb-2 grid grid-cols-3 gap-1.5 rounded-xl ' + (escuro ? 'bg-slate-800/55' : 'bg-slate-50') + ' p-1.5"><div class="rounded-lg bg-[#003E73] px-2 py-2 text-white"><span class="block truncate text-[8px] font-black uppercase text-cyan-100/75">Consolidado</span><strong class="mt-0.5 block truncate text-[11px] font-black">' + valorFinanceiroCardHtml(consolidado, cardId) + '</strong></div><div class="rounded-lg px-2 py-2 ' + (escuro ? 'bg-slate-900/60' : 'bg-white') + '"><span class="block truncate text-[8px] font-black uppercase ' + textoSecundario + '">Receitas</span><strong class="mt-0.5 block truncate text-[11px] font-black text-emerald-500">' + valorFinanceiroCardHtml(totalReceitas, cardId) + '</strong></div><div class="rounded-lg px-2 py-2 text-right ' + (escuro ? 'bg-slate-900/60' : 'bg-white') + '"><span class="block truncate text-[8px] font-black uppercase ' + textoSecundario + '">Despesas</span><strong class="mt-0.5 block truncate text-[11px] font-black text-red-500">' + valorFinanceiroCardHtml(totalDespesas, cardId) + '</strong></div></div>' + corpo + '</div>' +
+      '<button id="toggle-esticar-meus-perfis" type="button" class="flex h-8 w-full items-center justify-center gap-2 border-t ' + (escuro ? 'border-slate-700 bg-slate-800/60 text-slate-300' : 'border-slate-200 bg-slate-50 text-slate-500') + ' text-[9px] font-black uppercase tracking-[0.14em] transition active:brightness-95"><span>' + (expandido ? 'Recolher' : 'Esticar') + '</span><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="' + (expandido ? 'm7 14 5-5 5 5' : 'm7 10 5 5 5-5') + '" stroke-linecap="round" stroke-linejoin="round"/></svg></button>' +
     '</section>';
   }
 
@@ -8764,7 +8786,7 @@
         '<button id="menu-cadastro-perfil" type="button" class="rounded-[12px_24px_24px_24px] border ' + bordaBase + ' px-2.5 py-1.5 text-left shadow-[0_4px_11px_rgba(15,23,42,.05)] active:scale-[0.99]" style="' + (dk ? '' : 'background:linear-gradient(90deg,#E7F7FF 0%,#FFFFFF 78%);border-color:#BFE2F3;') + '">' +
           '<div class="flex items-center gap-2">' +
             '<span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg" style="background:#D7F1FC;color:#0878AD">' + iconeMenuLateralSvg('menu-cadastro-perfil') + '</span>' +
-            '<span class="min-w-0 flex-1"><span class="block text-[11px] font-black">Dados cadastrais</span><span class="mt-0.5 block truncate text-[9px] font-semibold text-slate-500">Editar o cadastro completo do perfil</span></span>' +
+            '<span class="min-w-0 flex-1"><span class="block text-[11px] font-black">Editar dados cadastrais</span><span class="mt-0.5 block truncate text-[9px] font-semibold text-slate-500">Cadastro completo do perfil</span></span>' +
           '</div>' +
         '</button>' +
         '<button id="menu-tema" type="button" class="rounded-[12px_24px_24px_24px] border ' + bordaBase + ' px-2.5 py-1.5 text-left shadow-[0_4px_11px_rgba(15,23,42,.05)]" style="' + (dk ? '' : 'background:linear-gradient(90deg,#EFEEFF 0%,#FFFFFF 78%);border-color:#D5D3FA;') + '">' +
@@ -9470,7 +9492,7 @@
               ? '<button id="abrir-edicao-empresa-mobile" type="button" class="flex h-12 w-full items-center gap-3 rounded-lg border border-[#0A1F44] bg-[#0A1F44] px-4 text-left text-sm font-black text-white shadow-md transition active:scale-[0.98]">' + iconeEditarPerfil + '<span>Editar perfil atual</span></button>'
               : '') +
             (podeEditar
-              ? '<button id="abrir-cadastro-completo-mobile" type="button" class="flex h-12 w-full items-center gap-3 rounded-lg border border-sky-700 bg-sky-600 px-4 text-left text-sm font-black text-white shadow-md transition active:scale-[0.98]">' + iconeCadastroCompleto + '<span>Dados cadastrais completos</span></button>'
+              ? '<button id="abrir-cadastro-completo-mobile" type="button" class="flex h-12 w-full items-center gap-3 rounded-lg border border-sky-700 bg-sky-600 px-4 text-left text-sm font-black text-white shadow-md transition active:scale-[0.98]">' + iconeCadastroCompleto + '<span>Editar dados cadastrais</span></button>'
               : '') +
             '<button id="abrir-criar-empresa-mobile" type="button" class="flex h-12 w-full items-center gap-3 rounded-lg border border-cyan-700 bg-cyan-700 px-4 text-left text-sm font-black text-white shadow-md transition active:scale-[0.98]">' + iconeCriarPerfil + '<span>Criar novo perfil</span></button>' +
             '<button id="trocar-empresa-gerenciar" type="button" class="flex h-12 w-full items-center gap-3 rounded-lg border px-4 text-left text-sm font-black shadow-md transition ' + (podeTrocar ? 'border-blue-700 bg-blue-600 text-white active:scale-[0.98]' : 'border-slate-200 bg-slate-100 text-slate-400 cursor-not-allowed opacity-80') + '"' + (podeTrocar ? '' : ' disabled') + '>' + iconeTrocarPerfil + '<span>Trocar perfil</span></button>' +
@@ -10630,7 +10652,7 @@
     bind('menu-configurar-resumo', function () { fecharMenuLateralAnimado(function () { if (premiumPessoalBloqueadoMobile()) { abrirPremiumMobile('organizar_dashboard'); return; } abrirModalMenu('configurarResumo'); }); });
     bind('menu-usuario', function () { fecharMenuLateralAnimado(abrirUsuariosMobile); });
     bind('menu-gerenciar', function () { fecharMenuLateralAnimado(function () { abrirModalMenu('gerenciar'); }); });
-    bind('menu-cadastro-perfil', function () { fecharMenuLateralAnimado(abrirEdicaoCadastroPerfilMobile); });
+    bind('menu-cadastro-perfil', function () { fecharMenuLateralAnimado(function () { abrirEdicaoCadastroPerfilMobile(false); }); });
     bind('menu-assinatura', function () { fecharMenuLateralAnimado(abrirAssinaturaMobile); });
     bind('menu-organizar-dashboard', function () { fecharMenuLateralAnimado(function () { if (premiumPessoalBloqueadoMobile()) { abrirPremiumMobile('organizar_dashboard'); return; } abrirModalMenu('organizarDashboard'); }); });
     bind('menu-organizar-atalhos', function () { fecharMenuLateralAnimado(function () { if (premiumPessoalBloqueadoMobile()) { abrirPremiumMobile('organizar_atalhos'); return; } abrirModalMenu('organizarAtalhos'); }); });
@@ -10872,7 +10894,7 @@
     bind('privacidade-mobile', function () { abrirModalMenu('privacidade'); });
     bind('sobre-mobile', function () { abrirSobreMobile(); });
     bind('abrir-edicao-empresa-mobile', abrirEdicaoEmpresaMobile);
-    bind('abrir-cadastro-completo-mobile', abrirEdicaoCadastroPerfilMobile);
+    bind('abrir-cadastro-completo-mobile', function () { abrirEdicaoCadastroPerfilMobile(true); });
     bind('abrir-criar-empresa-mobile', abrirCriarEmpresaMobile);
     bind('cancelar-criar-empresa-mobile', cancelarCriarEmpresaMobile);
     bind('cancelar-edicao-empresa-mobile', cancelarEdicaoEmpresaMobile);
@@ -11172,6 +11194,7 @@
     bind('toggle-valores-categorias', function () { alternarVisibilidadeValoresCard('categorias'); });
     bind('toggle-valores-tipos', function () { alternarVisibilidadeValoresCard('tipos'); });
     bind('toggle-valores-meusPerfis', function () { alternarVisibilidadeValoresCard('meusPerfis'); });
+    bind('toggle-esticar-meus-perfis', function () { state.meusPerfisExpandido = !state.meusPerfisExpandido; render(); });
     bind('salvar-caixinha-saldo-inicial', salvarSaldoInicialCaixinhaMobile);
     bind('salvar-caixinha-aporte', salvarAporteCaixinhaMobile);
     var caixinhaSaldoInicialEl = document.getElementById('caixinha-saldo-inicial');
@@ -11467,18 +11490,10 @@
     });
     Array.prototype.forEach.call(document.querySelectorAll('[data-meu-perfil-id]'), function (botao) {
       botao.addEventListener('click', function () {
-        if (state.perfilSelecionandoId) return;
         var id = botao.getAttribute('data-meu-perfil-id');
-        if (!id || (state.empresa && id === state.empresa.id)) return;
-        state.perfilSelecionandoId = id;
-        if (!selecionarEmpresaMobile(id, true)) {
-          state.perfilSelecionandoId = '';
-          return;
-        }
-        state.visao = 'home';
-        carregarDados().finally(function () {
-          state.perfilSelecionandoId = '';
-        });
+        if (!id) return;
+        state.resumoPerfilDestaqueId = id;
+        render();
       });
     });
     Array.prototype.forEach.call(document.querySelectorAll('[data-lancamento-id]'), function (botao) {
