@@ -990,14 +990,12 @@ function renderCliente(c) {
       <header class="client-card-header">
         <div class="client-avatar">${escapeHtml(iniciais)}</div>
         <div class="client-identity"><h3>${escapeHtml(c.nome)}</h3><p>Cliente</p></div>
-        <button class="client-more" aria-label="Editar cliente" onclick="abrirCliente('${c.id}')">⋮</button>
+        ${c.ativo === false ? '<span class="client-inactive">Inativo</span>' : ''}
+        <button class="client-more" aria-label="Opções do cliente" onclick="abrirMenuCliente('${c.id}')">⋮</button>
       </header>
-      <div class="client-status-row"><span class="client-status">${c.ativo === false ? 'Inativo' : 'Ativo'}</span></div>
       <div class="client-contact-list">
-        <p><span>✉</span>${escapeHtml(c.email || 'Não informado')}</p>
         <p class="client-whatsapp"><span>◉</span>${escapeHtml(c.telefone || 'Não informado')}</p>
         <p><span>⌖</span>${escapeHtml(local)}</p>
-        <p><span>⌖</span>CEP: ${escapeHtml(c.cep || 'Não informado')}</p>
       </div>
       <div class="client-values">
         <div><span>Débito Atual</span><b class="${debito > 0 ? 'negative' : 'positive'}">${moeda(debito)}</b></div>
@@ -1006,11 +1004,93 @@ function renderCliente(c) {
         <div><span>Última Compra</span><strong><b>${moeda(ultimaVenda?.total || 0)}</b><small>${ultimaVenda ? dataBR(ultimaVenda.criado_em) : 'Sem compras'}</small></strong></div>
       </div>
       <div class="client-actions">
-        <button class="client-details" onclick="abrirCliente('${c.id}')">Ver Detalhes</button>
+        <button class="client-details" onclick="abrirDetalhesCliente('${c.id}')">Ver Detalhes</button>
         <div><button class="client-payment" onclick="setAba('vender')">${svgIcon('dollar')} Pagamento</button><button class="client-order" onclick="setAba('novo-pedido')">${svgIcon('shopping-bag')} Pedido</button></div>
       </div>
     </article>
   `;
+}
+
+function iconeAcaoCliente(tipo) {
+  const base = 'class="svg-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true"';
+  if (tipo === 'editar') return `<svg ${base}><path d="m4 20 4.2-1 9.7-9.7a2.1 2.1 0 0 0-3-3L5.2 16 4 20Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="m13.5 7.5 3 3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>`;
+  return `<svg ${base}><circle cx="12" cy="12" r="8.5" stroke="currentColor" stroke-width="2"/><path d="M6 6l12 12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>`;
+}
+
+function abrirMenuCliente(clienteId) {
+  const cliente = state.clientes.find((item) => item.id === clienteId);
+  if (!cliente) return;
+  const acaoStatus = cliente.ativo === false ? 'Ativar cliente' : 'Desativar cliente';
+  sheet(`<div class="sheet-header"><div><h2>${escapeHtml(cliente.nome)}</h2><p class="muted small">Opções do cliente</p></div><button class="close" onclick="fecharSheet()">×</button></div><div class="client-option-list"><button class="secondary" onclick="fecharSheet();abrirCliente('${clienteId}')">${iconeAcaoCliente('editar')} Editar</button><button class="danger" onclick="alterarStatusCliente('${clienteId}', ${cliente.ativo === false})">${iconeAcaoCliente('desativar')} ${acaoStatus}</button></div>`, 'sheet-backdrop-centered');
+}
+
+async function alterarStatusCliente(clienteId, ativar) {
+  const cliente = state.clientes.find((item) => item.id === clienteId);
+  if (!cliente) return;
+  try {
+    const dados = { ...cliente, ativo: Boolean(ativar) };
+    const salvo = backendAtivo ? await window.VendasDb.saveClient(dados) : dados;
+    state.clientes = state.clientes.map((item) => item.id === clienteId ? salvo : item);
+    fecharSheet(); render(); toast(ativar ? 'Cliente ativado.' : 'Cliente desativado.');
+  } catch (error) { toast(traduzErro(error)); }
+}
+
+function pedidosDoCliente(clienteId) {
+  return state.vendas.filter((venda) => venda.cliente_id === clienteId).sort((a, b) => new Date(b.criado_em) - new Date(a.criado_em));
+}
+
+function pedidoEhConsignado(venda) {
+  return normalizar(venda.forma_pagamento).includes('consign');
+}
+
+function listaPedidosClienteHtml(pedidos, pagina, vazio) {
+  const inicio = pagina * 10;
+  const itens = pedidos.slice(inicio, inicio + 10);
+  if (!itens.length) return `<div class="client-report-empty">${escapeHtml(vazio)}</div>`;
+  return `<div class="client-report-list">${itens.map((venda) => `<button type="button" class="client-report-row" onclick="abrirPedidoCliente('${venda.id}')"><span><b>${dataBR(venda.criado_em)}</b><small>${escapeHtml(venda.forma_pagamento || 'Não informado')} · ${(venda.itens || []).length} itens</small></span><strong>${moeda(venda.total)}</strong></button>`).join('')}</div>${pedidos.length > inicio + 10 ? '<button class="ghost client-load-more" onclick="abrirDetalhesCliente(\'' + pedidos[0].cliente_id + '\', window.currentClientDetailTab, ' + (pagina + 1) + ')">Carregar mais</button>' : ''}`;
+}
+
+function abrirDetalhesCliente(clienteId, aba = 'resumo', pagina = 0) {
+  const cliente = state.clientes.find((item) => item.id === clienteId);
+  if (!cliente) return;
+  window.currentClientDetailTab = aba;
+  const pedidos = pedidosDoCliente(clienteId);
+  const consignados = pedidos.filter((venda) => venda.status !== 'cancelada' && pedidoEhConsignado(venda));
+  const pagamentos = pedidos.filter((venda) => venda.status !== 'cancelada' && !pedidoEhConsignado(venda) && normalizar(venda.forma_pagamento) !== 'a prazo');
+  const totalComprado = pedidos.filter((venda) => venda.status !== 'cancelada').reduce((soma, venda) => soma + Number(venda.total || 0), 0);
+  const conteudo = aba === 'resumo'
+    ? `<div class="client-summary-grid"><div><small>Débito pendente</small><b>${moeda(cliente.debito_atual || cliente.saldo_pendente || 0)}</b></div><div><small>Consignação</small><b>${moeda(cliente.valor_consignado || cliente.saldo_consignado || 0)}</b></div><div><small>Crédito</small><b>${moeda(cliente.credito_livre || 0)}</b></div><div><small>Total comprado</small><b>${moeda(totalComprado)}</b></div></div>`
+    : aba === 'consignado'
+      ? listaPedidosClienteHtml(consignados, pagina, 'Nenhum pedido consignado ativo.')
+      : aba === 'pedidos'
+        ? listaPedidosClienteHtml(pedidos, pagina, 'Nenhum pedido registrado.')
+        : listaPedidosClienteHtml(pagamentos, pagina, 'Nenhum pagamento registrado.');
+  sheet(`<div class="sheet-header"><div><h2>${escapeHtml(cliente.nome)}</h2><p class="muted small">Histórico do cliente</p></div><button class="close" onclick="fecharSheet()">×</button></div><nav class="client-detail-tabs"><button class="${aba === 'resumo' ? 'active' : ''}" onclick="abrirDetalhesCliente('${clienteId}','resumo')">Resumo</button><button class="${aba === 'consignado' ? 'active' : ''}" onclick="abrirDetalhesCliente('${clienteId}','consignado')">Consignado</button><button class="${aba === 'pedidos' ? 'active' : ''}" onclick="abrirDetalhesCliente('${clienteId}','pedidos')">Pedidos</button><button class="${aba === 'pagamentos' ? 'active' : ''}" onclick="abrirDetalhesCliente('${clienteId}','pagamentos')">Pagamentos</button></nav><div class="client-detail-content">${conteudo}</div>`, 'client-detail-backdrop sheet-backdrop-centered');
+}
+
+function abrirPedidoCliente(pedidoId) {
+  const venda = state.vendas.find((item) => item.id === pedidoId);
+  if (!venda) return;
+  const cliente = state.clientes.find((item) => item.id === venda.cliente_id);
+  sheet(`<div class="sheet-header"><div><h2>Pedido</h2><p class="muted small">${escapeHtml(cliente?.nome || 'Cliente não informado')} · ${dataBR(venda.criado_em)}</p></div><button class="close" onclick="fecharSheet()">×</button></div><div class="order-view-items">${(venda.itens || []).map((item) => `<div><span>${escapeHtml(item.produto_nome)}</span><b>${item.quantidade} × ${moeda(item.preco || item.preco_unitario)}</b></div>`).join('') || '<p class="muted">Sem itens registrados.</p>'}</div><div class="order-view-total"><span>Total</span><b>${moeda(venda.total)}</b></div><button class="primary order-share" onclick="compartilharPedido('${pedidoId}')"><svg class="svg-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 16V4m0 0L8 8m4-4 4 4M5 14v5h14v-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg> Compartilhar</button>`, 'sheet-backdrop-centered');
+}
+
+async function compartilharPedido(pedidoId) {
+  const venda = state.vendas.find((item) => item.id === pedidoId);
+  if (!venda) return;
+  const cliente = state.clientes.find((item) => item.id === venda.cliente_id);
+  const canvas = document.createElement('canvas'); canvas.width = 1080; canvas.height = 720;
+  const ctx = canvas.getContext('2d');
+  ctx.fillStyle = '#F7FAFC'; ctx.fillRect(0, 0, canvas.width, canvas.height);
+  ctx.fillStyle = '#0A1F44'; ctx.fillRect(0, 0, canvas.width, 170);
+  ctx.fillStyle = '#fff'; ctx.font = '900 44px Arial'; ctx.fillText('AvantaLab · Pedido', 70, 86);
+  ctx.font = '600 29px Arial'; ctx.fillText(cliente?.nome || 'Cliente não informado', 70, 132);
+  ctx.fillStyle = '#0A1F44'; ctx.font = '800 34px Arial'; ctx.fillText(`Total: ${moeda(venda.total)}`, 70, 240);
+  ctx.font = '600 27px Arial'; (venda.itens || []).slice(0, 9).forEach((item, indice) => ctx.fillText(`${item.quantidade} × ${item.produto_nome}`, 70, 310 + indice * 42));
+  const blob = await new Promise((resolve) => canvas.toBlob(resolve, 'image/png'));
+  const arquivo = new File([blob], 'pedido-avantalab.png', { type: 'image/png' });
+  if (navigator.share && (!navigator.canShare || navigator.canShare({ files: [arquivo] }))) await navigator.share({ title: 'Pedido AvantaLab', files: [arquivo] });
+  else { const link = document.createElement('a'); link.href = URL.createObjectURL(blob); link.download = arquivo.name; link.click(); URL.revokeObjectURL(link.href); }
 }
 
 function renderPagamentos() {
@@ -1219,7 +1299,7 @@ function abrirCliente(clienteId = '') {
       </div>
       <div class="grid-2 client-city-state">
         ${campo('cliCidade', 'Cidade', c.cidade || '')}
-        <div class="field"><label>Estado</label><select id="cliEstado"><option value="">UF</option>${UFS_BRASIL.map(([uf, nome]) => `<option value="${uf}" ${c.estado === uf ? 'selected' : ''}>${uf} — ${nome}</option>`).join('')}</select></div>
+        <div class="field"><label>Estado</label><select id="cliEstado"><option value="">UF</option>${UFS_BRASIL.map(([uf]) => `<option value="${uf}" ${c.estado === uf ? 'selected' : ''}>${uf}</option>`).join('')}</select></div>
       </div>
       <div class="field"><label>Observações</label><textarea id="cliObs">${escapeHtml(c.observacoes || '')}</textarea></div>
       <div class="actions">
@@ -1323,6 +1403,7 @@ function abrirCarrinho() {
             <option>Pix</option>
             <option>Cartão</option>
             <option>A prazo</option>
+            <option>Consignado</option>
             <option>Não informado</option>
           </select>
         </div>
@@ -1578,6 +1659,11 @@ window.sairMenuMobile = sairMenuMobile;
 window.abrirAcoesRapidas = abrirAcoesRapidas;
 window.acionarNavegacaoInferior = acionarNavegacaoInferior;
 window.buscarCepCliente = buscarCepCliente;
+window.abrirMenuCliente = abrirMenuCliente;
+window.alterarStatusCliente = alterarStatusCliente;
+window.abrirDetalhesCliente = abrirDetalhesCliente;
+window.abrirPedidoCliente = abrirPedidoCliente;
+window.compartilharPedido = compartilharPedido;
 window.sairSistema = sairSistema;
 window.entrarSistema = entrarSistema;
 window.entrarComGoogle = entrarComGoogle;
