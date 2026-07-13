@@ -353,17 +353,33 @@ function iconeNavegacaoInferior(tipo) {
 }
 
 function itemNavegacaoInferior(id, tipo, rotulo, acao) {
-  return `<button id="${id}" type="button" class="vendas-nav-item" onclick="${acao}" aria-label="${rotulo}"><span>${iconeNavegacaoInferior(tipo)}</span><b>${rotulo}</b></button>`;
+  return `<button id="${id}" type="button" class="vendas-nav-item" onclick="acionarNavegacaoInferior(event, '${acao}')" aria-label="${rotulo}"><span>${iconeNavegacaoInferior(tipo)}</span><b>${rotulo}</b></button>`;
 }
 
 function renderNavegacaoInferior() {
   return `<nav class="vendas-bottom-nav" aria-label="Navegação principal"><div class="vendas-bottom-nav-inner">
-    ${itemNavegacaoInferior('nav-configuracoes', 'settings', 'Configurações', "setAba('configuracoes')")}
-    ${itemNavegacaoInferior('nav-tema', 'tema', 'Tema', 'alternarTema(!state.temaEscuro)')}
-    <button id="nav-novo" type="button" class="vendas-nav-add" onclick="abrirAcoesRapidas()" aria-label="Lançar pedido ou pagamento"><span>+</span><b>Lançar</b></button>
-    ${itemNavegacaoInferior('nav-agenda', 'calendar', 'Agenda', "setAba('agenda')")}
-    ${itemNavegacaoInferior('nav-sair', 'log-out', 'Sair', 'sairSistema()')}
+    ${itemNavegacaoInferior('nav-configuracoes', 'settings', 'Configurações', 'configuracoes')}
+    ${itemNavegacaoInferior('nav-tema', 'tema', 'Tema', 'tema')}
+    <button id="nav-novo" type="button" class="vendas-nav-add" onclick="acionarNavegacaoInferior(event, 'novo')" aria-label="Lançar pedido ou pagamento"><span>+</span><b>Lançar</b></button>
+    ${itemNavegacaoInferior('nav-agenda', 'calendar', 'Agenda', 'agenda')}
+    ${itemNavegacaoInferior('nav-sair', 'log-out', 'Sair', 'sair')}
   </div></nav>`;
+}
+
+function acionarNavegacaoInferior(event, destino) {
+  const botao = event.currentTarget || event.target.closest('button');
+  if (!botao) return;
+  const anel = document.createElement('i');
+  anel.className = 'vendas-nav-ripple';
+  botao.appendChild(anel);
+  anel.addEventListener('animationend', () => anel.remove(), { once: true });
+  window.setTimeout(() => {
+    if (destino === 'configuracoes') setAba('configuracoes');
+    else if (destino === 'tema') alternarTema(!state.temaEscuro);
+    else if (destino === 'novo') abrirAcoesRapidas();
+    else if (destino === 'agenda') setAba('agenda');
+    else if (destino === 'sair') sairSistema();
+  }, 130);
 }
 
 function abrirAcoesRapidas() {
@@ -848,7 +864,7 @@ function renderBusca(placeholder) {
 }
 
 function renderBarraBusca(placeholder, filtro = 'Ordem Alfabética') {
-  return `<article class="tridium-search-card"><div class="search-input-wrap">${svgIcon('search')}<input value="${escapeAttr(state.busca)}" placeholder="${escapeAttr(placeholder)}" oninput="state.busca=this.value" onkeydown="if(event.key==='Enter') aplicarBusca()"></div><button class="primary search-submit" onclick="aplicarBusca()">${svgIcon('search')} Buscar</button><button class="search-filter">${svgIcon('filter')}${escapeHtml(filtro)}${svgIcon('chevron-down')}</button></article>`;
+  return `<article class="tridium-search-card"><div class="search-input-wrap">${svgIcon('search')}<input value="${escapeAttr(state.busca)}" placeholder="${escapeAttr(placeholder)}" oninput="state.busca=this.value" onkeydown="if(event.key==='Enter') aplicarBusca()"></div><button class="search-filter">${svgIcon('filter')}${escapeHtml(filtro)}${svgIcon('chevron-down')}</button><button class="primary search-submit" onclick="aplicarBusca()">${svgIcon('search')} Buscar</button></article>`;
 }
 
 function aplicarBusca() {
@@ -1063,7 +1079,7 @@ function abrirProduto(produtoId = '') {
       </div>
       <button class="close" onclick="fecharSheet()">×</button>
     </div>
-    <div class="grid">
+    <div class="grid client-form">
       ${campo('prodNome', 'Nome', p.nome || '')}
       <div class="grid-2">
         ${campo('prodMarca', 'Marca', p.marca || '')}
@@ -1084,7 +1100,7 @@ function abrirProduto(produtoId = '') {
         ${produtoId ? `<button class="danger" onclick="removerProduto('${produtoId}')">Remover</button>` : ''}
       </div>
     </div>
-  `);
+  `, 'cliente-sheet-backdrop');
 }
 
 async function salvarProduto(produtoId) {
@@ -1437,10 +1453,12 @@ function sheet(html, backdropClass = '') {
     if (event.target === wrap) fecharSheet();
   });
   document.body.appendChild(wrap);
+  document.body.classList.add('sheet-open');
 }
 
 function fecharSheet() {
   document.getElementById('sheetBackdrop')?.remove();
+  document.body.classList.remove('sheet-open');
 }
 
 function escapeHtml(v) {
@@ -1483,6 +1501,7 @@ window.alternarMenu = alternarMenu;
 window.abrirSalaBotoes = abrirSalaBotoes;
 window.sairMenuMobile = sairMenuMobile;
 window.abrirAcoesRapidas = abrirAcoesRapidas;
+window.acionarNavegacaoInferior = acionarNavegacaoInferior;
 window.sairSistema = sairSistema;
 window.entrarSistema = entrarSistema;
 window.entrarComGoogle = entrarComGoogle;
