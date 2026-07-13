@@ -29,6 +29,7 @@ const estadoInicial = {
   agendaMes: new Date().getMonth(),
   agendaDiaSelecionado: null,
   agendaFormAberto: false,
+  agendaExpandida: false,
   agendaAnimar: '',
   agendaItens: [],
   metaMensal: 0,
@@ -269,6 +270,9 @@ function clientesFiltrados() {
 }
 
 function render() {
+  const agendaAtiva = Boolean(state.autenticado && state.aba === 'agenda' && !carregandoBackend && !conectandoGoogle);
+  document.documentElement.classList.toggle('agenda-open', agendaAtiva);
+  document.body.classList.toggle('agenda-open', agendaAtiva);
   salvarEstado();
   if (carregandoBackend || conectandoGoogle) {
     limparDestaqueClientes();
@@ -966,8 +970,8 @@ function renderAgenda() {
   }
   const itensDia = selecionado ? itensAgendaDoDiaVendas(ano, mes, selecionado) : [];
   const titulo = new Intl.DateTimeFormat('pt-BR', { month: 'long', year: 'numeric' }).format(new Date(ano, mes, 1));
-  const detalheDia = selecionado ? `<section class="agenda-mobile-detail"><header><h3>Agenda de ${String(selecionado).padStart(2, '0')} de ${new Intl.DateTimeFormat('pt-BR', { month: 'long' }).format(new Date(ano, mes, 1))}</h3><button type="button" class="close" onclick="fecharDiaAgenda()">×</button></header><div class="agenda-mobile-reminders"><div><h4>Clientes agendados</h4><button type="button" class="primary" onclick="abrirFormularioAgendaVendas()">Adicionar</button></div>${itensDia.length ? itensDia.map(renderItemAgendaVendas).join('') : '<p class="agenda-mobile-none">Nenhum cliente agendado neste dia.</p>'}</div></section>` : '';
-  return `<section class="agenda-mobile-page"><div class="agenda-mobile-month"><button type="button" onclick="moverMesAgendaVendas(-1)" aria-label="Mês anterior">‹</button><h2>${escapeHtml(titulo)}</h2><button type="button" onclick="moverMesAgendaVendas(1)" aria-label="Próximo mês">›</button></div><section class="agenda-mobile-screen ${animacao ? `agenda-anim-${animacao}` : ''}"><h2>AGENDA</h2><div class="agenda-mobile-week"><b>D</b><b>S</b><b>T</b><b>Q</b><b>Q</b><b>S</b><b>S</b></div><div class="agenda-mobile-grid">${dias.join('')}</div>${detalheDia}</section>${state.agendaFormAberto ? renderFormularioAgendaVendas() : ''}</section>`;
+  const detalheDia = selecionado ? `<section class="agenda-mobile-detail ${state.agendaExpandida ? 'expanded' : ''}"><header><h3>Agenda de ${String(selecionado).padStart(2, '0')} de ${new Intl.DateTimeFormat('pt-BR', { month: 'long' }).format(new Date(ano, mes, 1))}</h3><div><button type="button" class="agenda-expand" onclick="alternarExpansaoAgenda()" aria-label="${state.agendaExpandida ? 'Recolher agenda' : 'Expandir agenda'}">${state.agendaExpandida ? '↙' : '↗'}</button><button type="button" class="close" onclick="fecharDiaAgenda()">×</button></div></header><div class="agenda-mobile-reminders"><div><h4>Clientes agendados</h4><button type="button" class="primary" onclick="abrirFormularioAgendaVendas()">Adicionar</button></div>${itensDia.length ? itensDia.map(renderItemAgendaVendas).join('') : '<p class="agenda-mobile-none">Nenhum cliente agendado neste dia.</p>'}</div></section>` : '';
+  return `<section class="agenda-mobile-page ${state.agendaExpandida ? 'agenda-expanded' : ''}"><div class="agenda-mobile-month"><button type="button" onclick="moverMesAgendaVendas(-1)" aria-label="Mês anterior">‹</button><h2>${escapeHtml(titulo)}</h2><button type="button" onclick="moverMesAgendaVendas(1)" aria-label="Próximo mês">›</button></div><section class="agenda-mobile-screen ${selecionado ? 'agenda-has-selection' : ''} ${animacao ? `agenda-anim-${animacao}` : ''}"><h2>AGENDA</h2><div class="agenda-mobile-week"><b>D</b><b>S</b><b>T</b><b>Q</b><b>Q</b><b>S</b><b>S</b></div><div class="agenda-mobile-grid">${dias.join('')}</div>${detalheDia}</section>${state.agendaFormAberto ? renderFormularioAgendaVendas() : ''}</section>`;
 }
 
 function itensAgendaVendas() {
@@ -998,9 +1002,10 @@ function renderItemAgendaVendas(item) {
   return `<article class="agenda-mobile-item"><div><b>${escapeHtml(item.titulo)}</b><small class="agenda-tag ${String(etiqueta).toLowerCase()}">${escapeHtml(etiqueta)}</small>${item.descricao ? `<p>${escapeHtml(item.descricao)}</p>` : ''}</div><button type="button" class="agenda-mobile-delete" onclick="excluirItemAgendaVendas('${escapeAttr(item.id)}')" aria-label="Excluir agendamento">×</button></article>`;
 }
 
-function selecionarDiaAgenda(dia) { state.agendaDiaSelecionado = dia; state.agendaFormAberto = false; render(); }
-function fecharDiaAgenda() { state.agendaDiaSelecionado = null; state.agendaFormAberto = false; render(); }
-function moverMesAgendaVendas(direcao) { const data = new Date(Number(state.agendaAno), Number(state.agendaMes) + direcao, 1); state.agendaAno = data.getFullYear(); state.agendaMes = data.getMonth(); state.agendaDiaSelecionado = null; state.agendaFormAberto = false; state.agendaAnimar = direcao > 0 ? 'prox' : 'prev'; render(); }
+function selecionarDiaAgenda(dia) { state.agendaDiaSelecionado = dia; state.agendaFormAberto = false; state.agendaExpandida = false; render(); }
+function fecharDiaAgenda() { state.agendaDiaSelecionado = null; state.agendaFormAberto = false; state.agendaExpandida = false; render(); }
+function alternarExpansaoAgenda() { state.agendaExpandida = !state.agendaExpandida; render(); }
+function moverMesAgendaVendas(direcao) { const data = new Date(Number(state.agendaAno), Number(state.agendaMes) + direcao, 1); state.agendaAno = data.getFullYear(); state.agendaMes = data.getMonth(); state.agendaDiaSelecionado = null; state.agendaFormAberto = false; state.agendaExpandida = false; state.agendaAnimar = direcao > 0 ? 'prox' : 'prev'; render(); }
 function abrirFormularioAgendaVendas() { state.agendaFormAberto = true; render(); }
 function cancelarFormularioAgendaVendas() { state.agendaFormAberto = false; render(); }
 function renderFormularioAgendaVendas() { return `<div class="agenda-form-overlay" onclick="if(event.target===this)cancelarFormularioAgendaVendas()"><section class="agenda-form-card"><header><div><small>Novo agendamento</small><h3>${String(state.agendaDiaSelecionado).padStart(2, '0')} de ${new Intl.DateTimeFormat('pt-BR', { month: 'long' }).format(new Date(state.agendaAno, state.agendaMes, 1))}</h3></div><button type="button" class="close" onclick="cancelarFormularioAgendaVendas()">×</button></header><div class="agenda-form-fields"><input id="agendaClienteVendas" placeholder="Nome do cliente" autocomplete="off"><select id="agendaEtiquetaVendas"><option value="Visita">Visita</option><option value="Entrega">Entrega</option><option value="Recebimento">Recebimento</option></select><textarea id="agendaDescricaoVendas" placeholder="Notas"></textarea><div><button type="button" class="ghost" onclick="cancelarFormularioAgendaVendas()">Cancelar</button><button type="button" class="primary" onclick="salvarItemAgendaVendas()">Salvar</button></div></div></section></div>`; }
@@ -2023,6 +2028,7 @@ window.irMesAtual = irMesAtual;
 window.aplicarBusca = aplicarBusca;
 window.selecionarDiaAgenda = selecionarDiaAgenda;
 window.fecharDiaAgenda = fecharDiaAgenda;
+window.alternarExpansaoAgenda = alternarExpansaoAgenda;
 window.moverMesAgendaVendas = moverMesAgendaVendas;
 window.abrirFormularioAgendaVendas = abrirFormularioAgendaVendas;
 window.cancelarFormularioAgendaVendas = cancelarFormularioAgendaVendas;

@@ -1377,6 +1377,16 @@ body { background: #fff; color: var(--ink); }
 .agenda-form-overlay { position: fixed; z-index: 130; padding: max(16px, env(safe-area-inset-top)) 16px calc(env(safe-area-inset-bottom) + 16px); }.agenda-form-card { max-height: calc(100svh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 32px); overflow-y: auto; }
 .dark-theme .agenda-mobile-detail { border-color: #155e75; }.dark-theme .agenda-mobile-detail > header { background: linear-gradient(135deg,#0b1220,#075985); }.dark-theme .agenda-mobile-reminders, .dark-theme .agenda-mobile-reminders > div { background: #102838; }
 @media (max-width: 850px) { .agenda-mobile-page { margin-top: 40px; min-height: calc(100svh - 160px); } }
+html.agenda-open, body.agenda-open { overflow: hidden; overscroll-behavior: none; }
+.agenda-mobile-screen.agenda-has-selection .agenda-mobile-day, .agenda-mobile-screen.agenda-has-selection .agenda-mobile-empty { min-height: 36px; }.agenda-mobile-screen.agenda-has-selection .agenda-mobile-day b { font-size: 12px; }.agenda-mobile-screen.agenda-has-selection .agenda-mobile-week { margin-bottom: 3px; }.agenda-mobile-screen.agenda-has-selection > h2 { margin-bottom: 6px; }
+.agenda-mobile-detail > header > div { display: flex; align-items: center; gap: 8px; }.agenda-expand { display: grid; width: 32px; height: 32px; place-items: center; border: 1px solid rgba(255,255,255,.22); border-radius: 9px; color: #fff; background: rgba(255,255,255,.14); font-size: 19px; font-weight: 800; line-height: 1; }
+@media (max-width: 850px) {
+  .content-area:has(.agenda-mobile-page) { min-height: 100svh; overflow: hidden; padding: 0; }
+  .agenda-mobile-page { position: fixed; z-index: 20; top: 59px; right: 0; bottom: calc(env(safe-area-inset-bottom) + 72px); left: 0; min-height: 0; margin: 0; padding: 12px 16px; overflow: hidden; background: #fff; }
+  .agenda-mobile-screen { min-height: 0; }.agenda-mobile-detail { max-height: none; min-height: 0; }.agenda-mobile-reminders { min-height: 0; }
+  .agenda-mobile-page.agenda-expanded .agenda-mobile-detail { position: fixed; z-index: 80; top: 59px; right: 0; bottom: calc(env(safe-area-inset-bottom) + 72px); left: 0; max-height: none; border-radius: 0; }
+  .dark-theme .agenda-mobile-page { background: #0f172a; }
+}
 @media (max-width: 460px) {
   .dashboard-kpis { grid-template-columns: 1fr; }
   .goal-card, .dashboard-panel { padding: 18px; }
