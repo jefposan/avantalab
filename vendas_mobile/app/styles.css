@@ -40,9 +40,15 @@ button {
   cursor: pointer;
 }
 
+html.sheet-open,
 body.sheet-open {
   overflow: hidden;
   overscroll-behavior: none;
+}
+
+body.sheet-open {
+  position: fixed;
+  width: 100%;
 }
 
 .app-shell {
@@ -577,9 +583,14 @@ body.sheet-open {
 
 .sheet-backdrop .sheet { touch-action: pan-y; overscroll-behavior: contain; }
 
-.cliente-sheet-backdrop .sheet { width: min(100%, 520px); padding: 14px; }
-.cliente-sheet-backdrop .sheet-header { margin-bottom: 10px; }
-.cliente-sheet-backdrop .client-form { gap: 9px; }
+.cliente-sheet-backdrop .sheet { width: min(92vw, 420px); padding: 12px; }
+.cliente-sheet-backdrop .sheet-header { margin-bottom: 8px; }
+.cliente-sheet-backdrop .client-form { gap: 8px; }
+.cliente-sheet-backdrop .field { gap: 3px; }
+.cliente-sheet-backdrop .field input,
+.cliente-sheet-backdrop .field select,
+.cliente-sheet-backdrop .field textarea { min-height: 34px; border-radius: 9px; padding: 6px 9px; font-size: 13px; }
+.cliente-sheet-backdrop .field textarea { min-height: 68px; }
 
 .sheet-backdrop-centered {
   align-items: center;
@@ -1230,14 +1241,14 @@ body { background: #fff; color: var(--ink); }
   .vendas-nav-item > span { position: relative; z-index: 1; display: flex; height: 28px; align-items: center; justify-content: center; }
   .vendas-nav-item .svg-icon { width: 22px; height: 22px; }
   .vendas-nav-item b, .vendas-nav-add b { position: relative; z-index: 1; max-width: 100%; overflow: hidden; font-size: 10px; line-height: 1; text-overflow: ellipsis; white-space: nowrap; }
-  .vendas-nav-ripple { position: absolute; z-index: 0; top: 18px; left: 50%; width: 12px; height: 12px; border-radius: 999px; background: rgba(22,135,217,.35); pointer-events: none; transform: translate(-50%, -50%) scale(.2); animation: vendas-nav-ripple .48s ease-out forwards; }
+  .vendas-nav-ripple { position: absolute; z-index: 0; top: 18px; left: 50%; width: 12px; height: 12px; border-radius: 999px; background: rgba(22,135,217,.35); pointer-events: none; transform: translate(-50%, -50%) scale(.2); animation: vendas-nav-ripple .58s ease-out forwards; }
   .vendas-nav-add { position: relative; justify-content: flex-end; padding-bottom: 5px; color: #0e7490; }
   .vendas-nav-add > span { position: absolute; z-index: 1; bottom: 22px; display: flex; width: 58px; height: 58px; align-items: center; justify-content: center; border: 4px solid #fff; border-radius: 999px; color: #fff; background: #00A6C8; box-shadow: 0 8px 18px rgba(15,23,42,.25); font-size: 34px; font-weight: 300; line-height: 1; }
   .dark-theme .vendas-bottom-nav { border-color: #334155; background: rgba(15,23,42,.95); }
   .dark-theme .vendas-nav-item { color: #94a3b8; }
   .dark-theme .vendas-nav-add > span { border-color: #0f172a; }
 }
-@keyframes vendas-nav-ripple { to { opacity: 0; transform: translate(-50%, -50%) scale(5); } }
+@keyframes vendas-nav-ripple { to { opacity: 0; transform: translate(-50%, -50%) scale(10); } }
 @media (max-width: 460px) {
   .dashboard-kpis { grid-template-columns: 1fr; }
   .goal-card, .dashboard-panel { padding: 18px; }

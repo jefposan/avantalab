@@ -44,6 +44,7 @@ let cadastroPendente = null;
 let segundosReenvioSmsCadastro = 0;
 let timerReenvioSmsCadastro = null;
 let conectandoGoogle = sessionStorage.getItem(GOOGLE_CONNECTING_KEY) === '1';
+let rolagemAnteriorSheet = 0;
 
 const PAISES_DDI = [
   ['Brasil', '55', '🇧🇷'], ['Portugal', '351', '🇵🇹'], ['Estados Unidos / Canadá', '1', '🇺🇸'],
@@ -1445,6 +1446,7 @@ function valor(idCampo) {
 
 function sheet(html, backdropClass = '') {
   fecharSheet();
+  rolagemAnteriorSheet = window.scrollY || document.documentElement.scrollTop || 0;
   const wrap = document.createElement('div');
   wrap.className = `sheet-backdrop ${backdropClass}`;
   wrap.id = 'sheetBackdrop';
@@ -1454,11 +1456,17 @@ function sheet(html, backdropClass = '') {
   });
   document.body.appendChild(wrap);
   document.body.classList.add('sheet-open');
+  document.documentElement.classList.add('sheet-open');
+  document.body.style.top = `-${rolagemAnteriorSheet}px`;
 }
 
 function fecharSheet() {
+  const estavaAberto = Boolean(document.getElementById('sheetBackdrop'));
   document.getElementById('sheetBackdrop')?.remove();
   document.body.classList.remove('sheet-open');
+  document.documentElement.classList.remove('sheet-open');
+  document.body.style.top = '';
+  if (estavaAberto) window.scrollTo(0, rolagemAnteriorSheet);
 }
 
 function escapeHtml(v) {
