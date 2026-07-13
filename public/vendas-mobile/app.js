@@ -247,7 +247,7 @@ function clientesFiltrados() {
 function render() {
   salvarEstado();
   if (carregandoBackend || conectandoGoogle) {
-    app.innerHTML = renderPreparandoAcesso();
+    renderPreparandoAcessoEstavel();
     return;
   }
   if (!state.autenticado) {
@@ -283,6 +283,11 @@ function render() {
     ${renderNavegacaoInferior()}
     ${state.aba === 'novo-pedido' ? `<button class="fab" onclick="abrirCarrinho()">${svgIcon('shopping-cart')}</button>` : ''}
   `;
+}
+
+function renderPreparandoAcessoEstavel() {
+  if (app.firstElementChild?.classList.contains('preparing-access-screen') && app.children.length === 1) return;
+  app.innerHTML = renderPreparandoAcesso();
 }
 
 function renderPreparandoAcesso() {
@@ -415,16 +420,20 @@ async function sairSistema() {
 
 async function entrarSistema(event) {
   event.preventDefault();
-  const erro = document.getElementById('loginErro');
-  if (erro) erro.textContent = '';
+  const contato = valor('loginContato').trim();
+  const senha = valor('loginSenha');
+  const lembrar = document.getElementById('loginLembrar')?.checked ? '1' : '0';
+  carregandoBackend = true;
+  render();
   try {
-    const contato = valor('loginContato').trim();
-    const senha = valor('loginSenha');
     if (loginTipo === 'email') await window.VendasDb.signIn(contato, senha);
     else await window.VendasDb.signInPhone(`+55${contato.replace(/\D/g, '')}`, senha);
-    localStorage.setItem('avantalab.vendas_mobile.lembrar', document.getElementById('loginLembrar')?.checked ? '1' : '0');
-    await carregarDadosBackend();
+    localStorage.setItem('avantalab.vendas_mobile.lembrar', lembrar);
+    await carregarDadosBackend(false);
   } catch (error) {
+    carregandoBackend = false;
+    render();
+    const erro = document.getElementById('loginErro');
     if (erro) erro.textContent = traduzErro(error);
   }
 }
@@ -688,7 +697,7 @@ async function inicializarApp() {
     toast('Modo local: conexão Supabase indisponível.');
     return;
   }
-  carregandoBackend = false;
+  carregandoBackend = true;
   state.autenticado = false;
   state.usuarioSemAcesso = false;
   render();
@@ -700,6 +709,7 @@ async function inicializarApp() {
     ? await aguardarSessaoGoogle()
     : await window.VendasDb.hasSession();
   if (!sessaoAtiva) {
+    carregandoBackend = false;
     conectandoGoogle = false;
     sessionStorage.removeItem(GOOGLE_CONNECTING_KEY);
     render();

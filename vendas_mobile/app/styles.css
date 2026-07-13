@@ -1047,9 +1047,9 @@ body { background: #fff; color: var(--ink); }
 .login-screen form.google-connecting .google-login-button { border-color: #b8cfd6; color: #1F8A9E; background: #eef8f9; opacity: 1; }
 .google-login-mark { display: inline-grid; width: 21px; height: 21px; place-items: center; border-radius: 999px; color: #fff; background: conic-gradient(from -45deg, #4285f4 0 25%, #34a853 0 45%, #fbbc05 0 68%, #ea4335 0 100%); font-size: 14px; font-weight: 950; line-height: 1; }
 .access-request-card { width: min(100%, 420px); border-radius: 18px; padding: 24px; background: #fff; box-shadow: 0 18px 45px rgba(0,31,60,.28); }
-.access-request-card .sheet-header { margin-bottom: 18px; }
-.access-request-card .sheet-header h2 { margin: 0; color: #0A1F44; font-size: 20px; }
-.access-request-card .sheet-header p { margin: 6px 0 0; line-height: 1.45; }
+.access-request-card > .sheet-header { margin: -24px -24px 20px; border-radius: 18px 18px 0 0; padding: 20px 24px 18px; color: #fff; background: linear-gradient(135deg, #0A1F44, #1687D9); box-shadow: none; }
+.access-request-card > .sheet-header h2 { margin: 0; color: #fff; font-size: 20px; }
+.access-request-card > .sheet-header p { margin: 6px 0 0; color: rgba(255,255,255,.86); line-height: 1.45; }
 .access-request-card .grid { display: grid; gap: 14px; }
 .access-request-label { display: grid; gap: 7px; color: #3d454d; font-size: 13px; font-weight: 800; }
 
@@ -1089,6 +1089,7 @@ body { background: #fff; color: var(--ink); }
   content: '';
 }
 .login-screen > * { position: relative; z-index: 1; }
+.login-screen.preparing-access-screen { min-height: 100svh; min-height: 100dvh; }
 .login-brand { margin: 0 0 16px; color: #0A1F44; }
 .login-brand strong { color: #0A1F44; font-size: 21px; font-weight: 850; letter-spacing: -.02em; }
 .login-brand p { margin-top: 4px; color: #1F8A9E; font-size: 13px; font-weight: 700; }

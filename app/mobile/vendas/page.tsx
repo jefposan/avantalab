@@ -18,7 +18,7 @@ export const viewport: Viewport = {
 export default function VendasMobilePage() {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
-  const assetVersion = '20260713-12';
+  const assetVersion = '20260713-13';
   const bootstrap = `
     (function () {
       window.__VENDAS_MOBILE_EMBEDDED__ = true;
@@ -74,19 +74,10 @@ export default function VendasMobilePage() {
       `}</style>
       <link rel="stylesheet" href={`/vendas-mobile/styles.css?v=${assetVersion}`} />
       <div id="app" className="app-shell">
-        <section className="login-screen">
-          <div className="login-brand"><strong>Gestão de vendas</strong></div>
-          <form>
-            <div className="login-methods">
-              <button type="button" className="active"><svg className="svg-icon" aria-hidden="true"><use href="/vendas-mobile/assets/icons.svg#mail" /></svg>E-mail</button>
-              <button type="button"><svg className="svg-icon" aria-hidden="true"><use href="/vendas-mobile/assets/icons.svg#phone" /></svg>Telefone</button>
-            </div>
-            <label>E-mail<div className="login-field"><svg className="svg-icon" aria-hidden="true"><use href="/vendas-mobile/assets/icons.svg#mail" /></svg><input type="email" placeholder="Digite seu e-mail" /></div></label>
-            <label>Senha<div className="login-field password-field"><svg className="svg-icon" aria-hidden="true"><use href="/vendas-mobile/assets/icons.svg#lock" /></svg><input type="password" placeholder="Digite sua senha" /><button type="button" className="password-toggle" aria-label="Exibir senha"><svg className="svg-icon" aria-hidden="true"><use href="/vendas-mobile/assets/icons.svg#eye" /></svg></button></div></label>
-            <div className="login-options"><label className="remember-option"><input type="checkbox" defaultChecked /><span />Lembrar-me</label><button type="button" className="forgot-link">Esqueceu a senha?</button></div>
-            <button className="primary login-submit" type="button">Entrar</button>
-            <p className="login-register">Não tem conta? <button type="button">Cadastre-se</button></p>
-          </form>
+        <section className="login-screen preparing-access-screen">
+          <div className="preparing-access-card">
+            <p>AvantaLab</p><span className="loader" /><h1>Preparando acesso</h1><small>Estamos validando seu login e preparando seus dados com segurança.</small>
+          </div>
         </section>
       </div>
       <script
