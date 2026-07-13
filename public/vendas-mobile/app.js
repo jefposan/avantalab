@@ -46,6 +46,8 @@ let timerReenvioSmsCadastro = null;
 let conectandoGoogle = sessionStorage.getItem(GOOGLE_CONNECTING_KEY) === '1';
 let recuperacaoSenhaVendas = null;
 let rolagemAnteriorSheet = 0;
+let cardsClientesEmDestaque = [];
+let quadroDestaqueClientes = 0;
 
 const PAISES_DDI = [
   ['Brasil', '55', '🇧🇷'], ['Portugal', '351', '🇵🇹'], ['Estados Unidos / Canadá', '1', '🇺🇸'],
@@ -248,10 +250,12 @@ function clientesFiltrados() {
 function render() {
   salvarEstado();
   if (carregandoBackend || conectandoGoogle) {
+    limparDestaqueClientes();
     renderPreparandoAcessoEstavel();
     return;
   }
   if (!state.autenticado) {
+    limparDestaqueClientes();
     app.innerHTML = state.usuarioSemAcesso ? renderSolicitarAcesso() : renderLogin();
     if (!state.usuarioSemAcesso) adicionarBotoesGoogle();
     requestAnimationFrame(limparFocoInicialLogin);
@@ -284,6 +288,47 @@ function render() {
     ${renderNavegacaoInferior()}
     ${state.aba === 'novo-pedido' ? `<button class="fab" onclick="abrirCarrinho()">${svgIcon('shopping-cart')}</button>` : ''}
   `;
+  if (state.aba === 'clientes') requestAnimationFrame(configurarDestaqueClientes);
+  else limparDestaqueClientes();
+}
+
+function configurarDestaqueClientes() {
+  cardsClientesEmDestaque = [...app.querySelectorAll('.clientes-page .client-card')];
+  atualizarDestaqueClientes();
+}
+
+function limparDestaqueClientes() {
+  cardsClientesEmDestaque.forEach((card) => card.classList.remove('client-card-emphasis', 'client-card-deemphasized'));
+  cardsClientesEmDestaque = [];
+}
+
+function atualizarDestaqueClientes() {
+  if (!cardsClientesEmDestaque.length || state.aba !== 'clientes') return;
+  const topoVisivel = Math.max(0, app.querySelector('.module-sticky-head')?.getBoundingClientRect().bottom || 0);
+  const rodapeVisivel = Math.min(window.innerHeight, document.querySelector('.vendas-bottom-nav')?.getBoundingClientRect().top || window.innerHeight);
+  const centroVisivel = topoVisivel + ((rodapeVisivel - topoVisivel) / 2);
+  const visiveis = cardsClientesEmDestaque.filter((card) => {
+    const area = card.getBoundingClientRect();
+    return area.bottom > topoVisivel && area.top < rodapeVisivel;
+  });
+  const cardAtivo = visiveis.reduce((maisProximo, card) => {
+    if (!maisProximo) return card;
+    const centroCard = card.getBoundingClientRect().top + (card.getBoundingClientRect().height / 2);
+    const centroAtual = maisProximo.getBoundingClientRect().top + (maisProximo.getBoundingClientRect().height / 2);
+    return Math.abs(centroCard - centroVisivel) < Math.abs(centroAtual - centroVisivel) ? card : maisProximo;
+  }, null);
+  cardsClientesEmDestaque.forEach((card) => {
+    card.classList.toggle('client-card-emphasis', card === cardAtivo);
+    card.classList.toggle('client-card-deemphasized', Boolean(cardAtivo) && card !== cardAtivo);
+  });
+}
+
+function agendarDestaqueClientes() {
+  if (quadroDestaqueClientes) return;
+  quadroDestaqueClientes = requestAnimationFrame(() => {
+    quadroDestaqueClientes = 0;
+    atualizarDestaqueClientes();
+  });
 }
 
 function renderPreparandoAcessoEstavel() {
@@ -1808,5 +1853,7 @@ window.alterarSenha = alterarSenha;
 window.instalarPWA = instalarPWA;
 
 window.addEventListener('pageshow', () => requestAnimationFrame(limparFocoInicialLogin));
+window.addEventListener('scroll', agendarDestaqueClientes, { passive: true });
+window.addEventListener('resize', agendarDestaqueClientes);
 
 inicializarApp();

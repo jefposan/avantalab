@@ -1130,23 +1130,27 @@ body { background: #fff; color: var(--ink); }
   color: #fff;
   background: #0A1F44;
 }
-.primary:hover,
-.content-area .primary:hover,
-.date-filter .filter-button:hover,
-.login-submit:hover,
-.agenda-new:hover,
-.client-details:hover,
-.client-payment:hover,
-.client-order:hover,
-.password-button:hover,
-.install-button:hover,
-.debt-actions button:hover { background: #1687D9; }
+@media (hover: hover) and (pointer: fine) {
+  .primary:hover,
+  .content-area .primary:hover,
+  .date-filter .filter-button:hover,
+  .login-submit:hover,
+  .agenda-new:hover,
+  .client-details:hover,
+  .client-payment:hover,
+  .client-order:hover,
+  .password-button:hover,
+  .install-button:hover,
+  .debt-actions button:hover { background: #1687D9; }
+}
 .forgot-link, .login-register button, .login-methods button.active { color: #1F8A9E; }
 .remember-option input:checked + span { border-color: #1F8A9E; background: #1F8A9E; }
 .login-field input { outline-color: #1687D9; }
 .client-card-grid { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 24px; }
-.client-card { position: relative; overflow: hidden; border: 1px solid #e2e3e6; border-radius: 12px; padding: 0; background: #fff; box-shadow: 0 2px 5px rgba(0,0,0,.06); transition: box-shadow .2s ease, transform .2s ease; }
-.client-card:hover { transform: translateY(-1px); box-shadow: 0 7px 18px rgba(0,0,0,.1); }
+.client-card { position: relative; overflow: hidden; border: 1px solid #e2e3e6; border-radius: 12px; padding: 0; background: #fff; box-shadow: 0 2px 5px rgba(0,0,0,.06); transition: opacity .22s ease, border-color .22s ease, box-shadow .22s ease, transform .22s ease; }
+@media (hover: hover) and (pointer: fine) { .client-card:hover { transform: translateY(-1px); box-shadow: 0 7px 18px rgba(0,0,0,.1); } }
+.client-card.client-card-emphasis { border-color: #1687D9; box-shadow: 0 0 0 2px rgba(22,135,217,.22), 0 10px 24px rgba(10,31,68,.16); transform: translateY(-1px); }
+.client-card.client-card-deemphasized { opacity: .44; }
 .client-card.inactive { opacity: .7; filter: grayscale(.8); }
 .client-disabled { position: absolute; top: 0; right: 0; border-radius: 0 0 0 8px; padding: 4px 8px; color: #fff; background: #ef4444; font-size: 10px; font-weight: 800; }
 .client-card-header { display: flex; align-items: center; gap: 9px; padding: 12px 14px; color: #fff; background: linear-gradient(135deg, #0A1F44, #1687D9); }
