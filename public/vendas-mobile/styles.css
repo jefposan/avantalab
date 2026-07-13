@@ -1099,7 +1099,9 @@ body { background: #fff; color: var(--ink); }
 }
 .login-screen > * { position: relative; z-index: 1; }
 .login-screen.preparing-access-screen {
-  min-height: 100svh;
+  height: var(--vendas-preparing-height, 100svh);
+  min-height: var(--vendas-preparing-height, 100svh);
+  flex: 0 0 var(--vendas-preparing-height, 100svh);
   padding: 24px;
   background: #f7fafc;
 }
@@ -1334,7 +1336,7 @@ body { background: #fff; color: var(--ink); }
   .dark-theme .vendas-nav-item { color: #94a3b8; }
   .dark-theme .vendas-nav-add > span { border-color: #0f172a; }
 }
-@keyframes vendas-nav-ripple { 0% { opacity: .9; transform: translate(-50%, -50%) scale(.02); } 68% { opacity: .32; } 100% { opacity: 0; transform: translate(-50%, -50%) scale(11); } }
+@keyframes vendas-nav-ripple { 0% { opacity: .9; transform: translate(-50%, -50%) scale(.02); } 68% { opacity: .32; } 100% { opacity: 0; transform: translate(-50%, -50%) scale(9); } }
 @media (max-width: 460px) {
   .dashboard-kpis { grid-template-columns: 1fr; }
   .goal-card, .dashboard-panel { padding: 18px; }

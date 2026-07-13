@@ -1,5 +1,6 @@
 const STORAGE_KEY = 'avantalab.vendas_mobile.v1';
 const GOOGLE_CONNECTING_KEY = 'avantalab.vendas_mobile.google_connecting';
+const PREPARING_VIEWPORT_HEIGHT_KEY = 'avantalab.vendas_mobile.preparing_viewport_height';
 const HOJE = new Date();
 const INICIO_MES = new Date(HOJE.getFullYear(), HOJE.getMonth(), 1);
 
@@ -77,6 +78,18 @@ const UFS_BRASIL = [
 ];
 
 const app = document.getElementById('app');
+
+function fixarAlturaPreparacao() {
+  const altura = Math.round(window.visualViewport?.height || window.innerHeight);
+  if (!Number.isFinite(altura) || altura < 1) return;
+  document.documentElement.style.setProperty('--vendas-preparing-height', `${altura}px`);
+  try { sessionStorage.setItem(PREPARING_VIEWPORT_HEIGHT_KEY, String(altura)); } catch { /* armazenamento indisponível */ }
+}
+
+function liberarAlturaPreparacao() {
+  document.documentElement.style.removeProperty('--vendas-preparing-height');
+  try { sessionStorage.removeItem(PREPARING_VIEWPORT_HEIGHT_KEY); } catch { /* armazenamento indisponível */ }
+}
 
 function formatarTelefoneCadastro(input) {
   formatarTelefoneCampo(input, 'cadastroDdi');
@@ -474,6 +487,7 @@ async function entrarSistema(event) {
   const contato = valor('loginContato').trim();
   const senha = valor('loginSenha');
   const lembrar = document.getElementById('loginLembrar')?.checked ? '1' : '0';
+  fixarAlturaPreparacao();
   carregandoBackend = true;
   render();
   try {
@@ -492,6 +506,7 @@ async function entrarSistema(event) {
 async function entrarComGoogle() {
   if (conectandoGoogle) return;
   document.activeElement?.blur();
+  fixarAlturaPreparacao();
   conectandoGoogle = true;
   sessionStorage.setItem(GOOGLE_CONNECTING_KEY, '1');
   render();
@@ -500,6 +515,7 @@ async function entrarComGoogle() {
   } catch (error) {
     conectandoGoogle = false;
     sessionStorage.removeItem(GOOGLE_CONNECTING_KEY);
+    liberarAlturaPreparacao();
     render();
     const erro = document.getElementById('loginErro') || document.getElementById('cadastroErro');
     if (erro) erro.textContent = traduzErro(error);
@@ -827,6 +843,7 @@ async function carregarDadosBackend(mostrarCarregamento = true) {
     conectandoGoogle = false;
     sessionStorage.removeItem(GOOGLE_CONNECTING_KEY);
     render();
+    liberarAlturaPreparacao();
     if (state.erroBackend) { toast(state.erroBackend); state.erroBackend = '';
     }
   }
@@ -856,6 +873,7 @@ async function inicializarApp() {
     conectandoGoogle = false;
     sessionStorage.removeItem(GOOGLE_CONNECTING_KEY);
     render();
+    liberarAlturaPreparacao();
     return;
   }
   await carregarDadosBackend(false);
