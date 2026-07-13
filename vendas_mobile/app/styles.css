@@ -871,12 +871,15 @@ body { background: #fff; color: var(--ink); }
 .module-title { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; }
 .module-title h2 { margin: 0; color: #303036; font-size: 25px; letter-spacing: -.03em; }
 .module-title p { margin: 5px 0 0; color: #777b83; font-size: 14px; }
-.clientes-page, .produtos-page, .pagamentos-page { padding-top: 146px; }
-.clientes-page .module-sticky-head, .produtos-page .module-sticky-head, .pedidos-page .module-sticky-head, .pagamentos-page .module-sticky-head { position: fixed; top: 59px; right: 0; left: 255px; z-index: 40; display: grid; gap: 12px; border-bottom: 1px solid #d6e5f1; padding: 16px max(16px, calc((100% - 1180px) / 2 + 56px)) 14px; background: linear-gradient(135deg, #f2f8fc 0%, #f8fbfe 100%); box-shadow: inset 0 4px 0 #1687D9, 0 8px 14px -14px rgba(15,23,42,.45); }
-.clientes-page .module-sticky-head .module-title h2, .produtos-page .module-sticky-head .module-title h2, .pedidos-page .module-sticky-head .module-title h2, .pagamentos-page .module-sticky-head .module-title h2 { color: #0A1F44; }
+.clientes-page, .produtos-page, .pagamentos-page, .publicacoes-page, .divulgacao-page { padding-top: 146px; }
+.clientes-page .module-sticky-head, .produtos-page .module-sticky-head, .pedidos-page .module-sticky-head, .pagamentos-page .module-sticky-head, .settings-page .module-sticky-head, .publicacoes-page .module-sticky-head, .divulgacao-page .module-sticky-head { position: fixed; top: 59px; right: 0; left: 255px; z-index: 40; display: grid; gap: 12px; border-bottom: 1px solid #d6e5f1; padding: 16px max(16px, calc((100% - 1180px) / 2 + 56px)) 14px; background: linear-gradient(135deg, #f2f8fc 0%, #f8fbfe 100%); box-shadow: inset 0 4px 0 #1687D9, 0 8px 14px -14px rgba(15,23,42,.45); }
+.clientes-page .module-sticky-head .module-title h2, .produtos-page .module-sticky-head .module-title h2, .pedidos-page .module-sticky-head .module-title h2, .pagamentos-page .module-sticky-head .module-title h2, .settings-page .module-sticky-head .module-title h2, .publicacoes-page .module-sticky-head .module-title h2, .divulgacao-page .module-sticky-head .module-title h2 { color: #0A1F44; }
 .clientes-page .client-card-grid, .clientes-page .empty-module, .produtos-page .module-product-grid, .produtos-page .empty-module { margin-top: 18px; }
 .pagamentos-page.is-searching { padding-top: 200px; }
 .pagamentos-page .debt-card-grid, .pagamentos-page .publication-empty { margin-top: 18px; }
+.publicacoes-page.is-searching, .divulgacao-page.is-searching { padding-top: 200px; }
+.publicacoes-page .publication-empty, .divulgacao-page .materials-grid { margin-top: 18px; }
+.clientes-page .module-title > button.primary, .produtos-page .module-title > button.primary, .pedidos-page .module-title > button.primary { border-color: #1687D9; color: #fff; background: #1687D9; }
 .produtos-page { padding-top: 212px; }
 .produtos-page.is-searching { padding-top: 266px; }
 .produtos-actions { display: grid; grid-template-columns: repeat(3, max-content); align-items: center; justify-content: start; gap: 10px; }
@@ -894,14 +897,17 @@ body { background: #fff; color: var(--ink); }
 .module-stats { display: flex; flex-wrap: wrap; gap: 10px; }
 .module-stats span { padding: 8px 12px; border-radius: 999px; color: #5e6671; background: #eff8f7; font-size: 13px; }
 .module-stats b { color: #248b85; }
-.pedidos-page { padding-top: 216px; }
-.order-type-filters { display: flex; min-width: 0; gap: 7px; overflow-x: auto; scrollbar-width: none; }
+.pedidos-page { padding-top: 224px; }
+.pedidos-page .module-title { flex-wrap: nowrap; align-items: center; }
+.pedidos-page .module-title > div { min-width: 0; }
+.pedidos-page .module-title > button { flex: 0 0 auto; margin-left: auto; }
+.order-type-filters { display: flex; width: 100%; min-width: 0; justify-content: center; gap: 7px; overflow: visible; scrollbar-width: none; }
 .order-type-filters::-webkit-scrollbar { display: none; }
-.order-type-filters button { display: inline-flex; min-height: 34px; flex: 0 0 auto; align-items: center; justify-content: center; gap: 6px; border: 1px solid #d6e1ea; border-radius: 999px; padding: 0 12px; color: #536273; background: rgba(255,255,255,.86); font-size: 11px; font-weight: 800; }
+.order-type-filters button { display: inline-flex; min-width: 0; min-height: 34px; flex: 1 1 0; align-items: center; justify-content: center; gap: 6px; border: 1px solid #d6e1ea; border-radius: 999px; padding: 0 8px; color: #536273; background: rgba(255,255,255,.86); font-size: 11px; font-weight: 800; white-space: nowrap; }
 .order-type-filters button small { display: grid; min-width: 20px; height: 20px; place-items: center; border-radius: 999px; color: #64748b; background: #edf3f7; font-size: 9px; }
 .order-type-filters button.active { border-color: #1687D9; color: #fff; background: #1687D9; box-shadow: 0 4px 10px rgba(22,135,217,.18); }
 .order-type-filters button.active small { color: #0A1F44; background: #fff; }
-.order-results-stats { justify-content: flex-end; }
+.order-results-stats { justify-content: flex-end; margin-top: 18px; }
 .orders-load-more { width: min(100%,320px); min-height: 40px; justify-self: center; border-radius: 999px; font-weight: 850; }
 .module-product-grid { margin: 0; }
 .data-panel { overflow: hidden; border: 1px solid #e2e3e6; border-radius: 12px; background: #fff; box-shadow: 0 2px 5px rgba(0,0,0,.04); }
@@ -1013,7 +1019,7 @@ body { background: #fff; color: var(--ink); }
 .debt-values .credit { border-color: #d1fae5; background: #f3fdf8; }
 .debt-values .credit b { color: #059669; }
 .debt-details { display: flex; width: calc(100% - 32px); min-height: 40px; align-items: center; justify-content: center; gap: 7px; margin: 0 16px 16px; border: 1px solid #d8dde2; border-radius: 8px; color: #4b535b; background: #fff; font-weight: 700; }
-.settings-page { display: grid; max-width: 900px; gap: 24px; margin: 0 auto; }
+.settings-page { display: grid; max-width: 900px; gap: 24px; margin: 0 auto; padding-top: 110px; }
 .settings-page > h2 { display: flex; align-items: center; gap: 10px; margin: 0; border-bottom: 1px solid #e2e5e8; padding-bottom: 10px; font-size: 25px; }
 .settings-page > h2 .svg-icon { width: 27px; height: 27px; color: var(--tridium); }
 .settings-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 22px; }
@@ -1257,6 +1263,10 @@ body { background: #fff; color: var(--ink); }
 .order-date-field > span { font-size: 12px; line-height: 1.2; }
 .order-date-field input { justify-self: end; width: min(190px, 58vw); max-width: 100%; text-align: center; }
 .order-date-field input::-webkit-date-and-time-value { min-width: 100%; text-align: center; }
+.payment-date-field { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; gap: 10px; }
+.payment-date-field > span { font-size: 12px; line-height: 1.2; }
+.payment-date-field input { justify-self: end; width: min(190px, 58vw); max-width: 100%; text-align: center; }
+.payment-date-field input::-webkit-date-and-time-value { min-width: 100%; text-align: center; }
 .order-product-entry { display: grid; gap: 7px; border: 1px solid #cfe0ec; border-radius: 13px; padding: 9px; background: #f7fbfe; box-shadow: 0 4px 12px rgba(15,42,80,.06); }
 .order-product-entry h3, .order-draft-items h3 { margin: 0; color: #0A1F44; font-size: 12px; font-weight: 900; }
 .order-item-fields { display: grid; grid-template-columns: 1.25fr .75fr; gap: 9px; }
@@ -1354,10 +1364,18 @@ body { background: #fff; color: var(--ink); }
   .produtos-page { padding-top: 244px; }
   .produtos-page.is-searching { padding-top: 298px; }
   .pedidos-page { padding-top: 236px; }
-  .pedidos-page.is-searching { padding-top: 282px; }
+  .pedidos-page.is-searching { padding-top: 290px; }
   .pagamentos-page { padding-top: 190px; }
   .pagamentos-page.is-searching { padding-top: 244px; }
-  .clientes-page .module-sticky-head, .produtos-page .module-sticky-head, .pedidos-page .module-sticky-head, .pagamentos-page .module-sticky-head { left: 0; padding: 14px 16px 12px; }
+  .publicacoes-page, .divulgacao-page { padding-top: 190px; }
+  .publicacoes-page.is-searching, .divulgacao-page.is-searching { padding-top: 244px; }
+  .settings-page { padding-top: 110px; }
+  .clientes-page .module-sticky-head, .produtos-page .module-sticky-head, .pedidos-page .module-sticky-head, .pagamentos-page .module-sticky-head, .settings-page .module-sticky-head, .publicacoes-page .module-sticky-head, .divulgacao-page .module-sticky-head { left: 0; padding: 14px 16px 12px; }
+  .pedidos-page .module-title > div { flex: 1 1 auto; }
+  .pedidos-page .module-title p { font-size: 12px; }
+  .pedidos-page .module-title > button { min-height: 34px; padding: 0 10px; font-size: 10px; }
+  .order-type-filters { gap: 5px; }
+  .order-type-filters button { min-height: 32px; padding: 0 4px; font-size: 9.5px; }
   .produtos-actions { width: 100%; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 9px; }.produtos-actions button { min-width: 0; width: 100%; padding: 0 7px; font-size: 8.5px; }.produtos-actions button .svg-icon { width: 14px; height: 14px; }
   .product-package-stats { gap: 6px; }.product-package-stats span, .package-manage-link { min-height: 36px; padding: 6px 5px; font-size: 9.5px; }.package-manage-link { gap: 4px; }
   .system-brand .vendas-brand-logo { width: 126px; }
@@ -1402,7 +1420,7 @@ body { background: #fff; color: var(--ink); }
   .date-filter { width: 100%; overflow-x: auto; }
   .month-switcher { width: 100%; gap: 8px; }
   .month-switcher strong { min-width: 0; flex: 1; font-size: 14px; }
-  .mobile-menu { position: fixed; z-index: 100; inset: 0; display: flex; min-height: 100dvh; isolation: isolate; flex-direction: column; overflow-y: auto; padding-bottom: calc(env(safe-area-inset-bottom) + 82px); background:
+  .mobile-menu { position: fixed; z-index: 100; inset: 0; display: flex; width: 100%; height: 100dvh; min-height: 0; isolation: isolate; flex-direction: column; overflow: hidden; overscroll-behavior: none; touch-action: none; padding-bottom: calc(env(safe-area-inset-bottom) + 82px); background:
     radial-gradient(ellipse 70% 38% at -8% 15%, rgba(0,166,200,.18) 0%, rgba(0,166,200,.06) 42%, transparent 72%),
     radial-gradient(ellipse 58% 34% at 108% 38%, rgba(22,135,217,.15) 0%, rgba(22,135,217,.045) 45%, transparent 74%),
     radial-gradient(circle at 16% 82%, rgba(0,166,200,.13) 0 2px, transparent 3px),
@@ -1492,9 +1510,9 @@ body { background: #fff; color: var(--ink); }
 
 /* Padrão escuro do Vendas, alinhado ao Gestão Mobile. */
 .dark-theme body, .dark-theme { color: #f8fafc; background: #0f172a; }.dark-theme .main-area, .dark-theme .content-area, .dark-theme .agenda-mobile-screen { color: #f8fafc; background: #0f172a; }.dark-theme .system-header { border-color: #263449; background: rgba(15,23,42,.96); }.dark-theme .module-title h2, .dark-theme .page-heading h2, .dark-theme .settings-card h3, .dark-theme .settings-card dd { color: #f8fafc; }.dark-theme .module-title p, .dark-theme .settings-card p, .dark-theme .settings-card dt { color: #cbd5e1; }.dark-theme .card, .dark-theme .settings-card, .dark-theme .goal-card, .dark-theme .dashboard-panel, .dark-theme .data-panel, .dark-theme .empty-module, .dark-theme .module-toolbar, .dark-theme .client-card, .dark-theme .sheet, .dark-theme .agenda-mobile-day, .dark-theme .agenda-mobile-item, .dark-theme .agenda-form-card { border-color: #334155; color: #f8fafc; background: #172033; }.dark-theme input, .dark-theme select, .dark-theme textarea, .dark-theme .agenda-form-fields input:not([type="checkbox"]), .dark-theme .agenda-form-fields textarea, .dark-theme .agenda-form-fields select { border-color: #3b4b63; color: #f8fafc; background: #0f172a; }.dark-theme .secondary, .dark-theme .content-area .secondary { color: #67e8f9; background: #164e63; }.dark-theme .ghost { border-color: #475569; color: #cbd5e1; background: #172033; }.dark-theme .agenda-mobile-month { background: linear-gradient(135deg,#0b1220,#075985,#0e7490); }.dark-theme .agenda-mobile-screen > h2, .dark-theme .agenda-mobile-day, .dark-theme .agenda-mobile-item b, .dark-theme .agenda-mobile-detail h3 { color: #f8fafc; }.dark-theme .agenda-mobile-day { border-color: #334155; background: #172033; }.dark-theme .agenda-mobile-day.sunday { border-color: #5b2335; color: #fda4af; background: #2b1722; }.dark-theme .agenda-mobile-day.saturday { border-color: #164e63; color: #7dd3fc; background: #102838; }.dark-theme .agenda-mobile-day.selected, .dark-theme .agenda-mobile-detail { border-color: #155e75; background: #102838; }.dark-theme .agenda-mobile-detail > header { border-color: #155e75; }.dark-theme .agenda-mobile-reminders h4, .dark-theme .agenda-mobile-detail small { color: #67e8f9; }.dark-theme .agenda-mobile-none, .dark-theme .agenda-mobile-item { border-color: #155e75; color: #cbd5e1; background: #172033; }.dark-theme .agenda-mobile-item p { color: #94a3b8; }.dark-theme .agenda-form-fields label { border-color: #3b4b63; color: #e2e8f0; background: #172033; }
-.dark-theme .pedidos-page .module-sticky-head, .dark-theme .pagamentos-page .module-sticky-head { border-color: #263449; background: linear-gradient(135deg,#17283b,#111d2f); }
-.dark-theme .pedidos-page .module-sticky-head .module-title h2, .dark-theme .pagamentos-page .module-sticky-head .module-title h2 { color: #f8fafc; }
-.dark-theme .pedidos-page .tridium-search-card, .dark-theme .pagamentos-page .tridium-search-card { border-color: #334155; background: #172033; }
+.dark-theme .clientes-page .module-sticky-head, .dark-theme .produtos-page .module-sticky-head, .dark-theme .pedidos-page .module-sticky-head, .dark-theme .pagamentos-page .module-sticky-head, .dark-theme .settings-page .module-sticky-head, .dark-theme .publicacoes-page .module-sticky-head, .dark-theme .divulgacao-page .module-sticky-head { border-color: #263449; background: linear-gradient(135deg,#17283b,#111d2f); }
+.dark-theme .clientes-page .module-sticky-head .module-title h2, .dark-theme .produtos-page .module-sticky-head .module-title h2, .dark-theme .pedidos-page .module-sticky-head .module-title h2, .dark-theme .pagamentos-page .module-sticky-head .module-title h2, .dark-theme .settings-page .module-sticky-head .module-title h2, .dark-theme .publicacoes-page .module-sticky-head .module-title h2, .dark-theme .divulgacao-page .module-sticky-head .module-title h2 { color: #f8fafc; }
+.dark-theme .clientes-page .tridium-search-card, .dark-theme .produtos-page .tridium-search-card, .dark-theme .pedidos-page .tridium-search-card, .dark-theme .pagamentos-page .tridium-search-card, .dark-theme .publicacoes-page .tridium-search-card, .dark-theme .divulgacao-page .tridium-search-card { border-color: #334155; background: #172033; }
 .dark-theme .order-type-filters button { border-color: #3b4b63; color: #cbd5e1; background: #172033; }
 .dark-theme .order-type-filters button small { color: #cbd5e1; background: #263449; }
 .dark-theme .order-type-filters button.active { border-color: #1687D9; color: #fff; background: #1687D9; }

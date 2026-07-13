@@ -1092,19 +1092,21 @@ function salvarNovaDataAgendaVendas() { const data = valor('agendaNovaDataVendas
 
 function renderPublicacoes(tipo) {
   const informacao = tipo === 'informacoes';
-  return `<section class="module-page"><div class="module-title"><div><h2>${informacao ? `${svgIcon('info')} Informações do Sistema` : 'Novidades e Avisos'}</h2><p>${informacao ? 'Acesse tutoriais, comunicados técnicos e atualizações da plataforma.' : 'Acompanhe as atualizações, promoções e comunicados da empresa.'}</p></div></div>${renderBarraBusca('Buscar por título ou conteúdo...', 'Filtros')}<article class="publication-empty"><span>${svgIcon(informacao ? 'info' : 'bell')}</span><h3>${informacao ? 'Nenhuma informação encontrada' : 'Nenhuma novidade encontrada'}</h3><p>${informacao ? 'Tente ajustar seus filtros de busca.' : 'Aguarde por novas publicações.'}</p></article></section>`;
+  const temBusca = Boolean(String(state.busca || '').trim());
+  return `<section class="module-page publicacoes-page${temBusca ? ' is-searching' : ''}"><div class="module-sticky-head"><div class="module-title"><div><h2>${informacao ? 'Informações' : 'Novidades'}</h2><p>${informacao ? 'Tutoriais, comunicados técnicos e atualizações.' : 'Atualizações, promoções e comunicados da empresa.'}</p></div></div>${renderBarraBusca('Buscar por título ou conteúdo...', 'Filtros')}</div><article class="publication-empty"><span>${svgIcon(informacao ? 'info' : 'bell')}</span><h3>${informacao ? 'Nenhuma informação encontrada' : 'Nenhuma novidade encontrada'}</h3><p>${informacao ? 'Tente ajustar seus filtros de busca.' : 'Aguarde por novas publicações.'}</p></article></section>`;
 }
 
 function renderDivulgacao() {
-  return `<section class="materials-page"><div class="module-title"><div><h2>${svgIcon('folder')} Materiais AvantaLab</h2><p>Abra as pastas para compartilhar artes e vídeos com seus clientes.</p></div></div><div class="materials-search"><input placeholder="Pesquisar pastas..." value="${escapeAttr(state.busca)}" oninput="state.busca=this.value"><button onclick="aplicarBusca()">${svgIcon('search')}</button></div><div class="materials-grid"><button><span>${svgIcon('folder')}</span><h3>Catálogos</h3><p>Materiais de produtos</p></button><button><span>${svgIcon('folder')}</span><h3>Campanhas</h3><p>Artes para divulgação</p></button><button><span>${svgIcon('folder')}</span><h3>Vídeos</h3><p>Conteúdo para compartilhar</p></button></div></section>`;
+  const temBusca = Boolean(String(state.busca || '').trim());
+  return `<section class="module-page materials-page divulgacao-page${temBusca ? ' is-searching' : ''}"><div class="module-sticky-head"><div class="module-title"><div><h2>Divulgação</h2><p>Artes, catálogos e vídeos para compartilhar.</p></div></div>${renderBarraBusca('Pesquisar materiais', 'Filtros')}</div><div class="materials-grid"><button><span>${svgIcon('folder')}</span><h3>Catálogos</h3><p>Materiais de produtos</p></button><button><span>${svgIcon('folder')}</span><h3>Campanhas</h3><p>Artes para divulgação</p></button><button><span>${svgIcon('folder')}</span><h3>Vídeos</h3><p>Conteúdo para compartilhar</p></button></div></section>`;
 }
 
 function renderConfiguracoes() {
   const t = totaisPeriodo();
   const progresso = state.metaMensal > 0 ? Math.min(100, t.total / state.metaMensal * 100) : 0;
   const telefone = String(state.usuario?.telefone || '');
-  return `<section class="settings-page">
-    <h2>${svgIcon('settings')} Configurações do Representante</h2>
+  return `<section class="module-page settings-page">
+    <div class="module-sticky-head"><div class="module-title"><div><h2>Configurações</h2><p>Preferências, segurança e recursos do Vendas.</p></div></div></div>
     <div class="settings-grid">
       <article class="settings-card"><h3>${svgIcon('user')} Dados do Usuário</h3><dl><dt>Nome Completo:</dt><dd>${escapeHtml(state.usuario.nome)}</dd><dt>Celular confirmado:</dt><dd>${telefone ? escapeHtml(mascararTelefone(telefone)) : 'Não informado'}</dd><dt>Representação/Empresa:</dt><dd>AvantaLab</dd></dl><div class="actions"><button class="secondary" onclick="abrirAtualizarTelefone()">${svgIcon('phone')} ${telefone ? 'Alterar celular' : 'Cadastrar celular'}</button></div></article>
       <article class="settings-card"><h3>${svgIcon('settings')} Aparência</h3><label class="switch-line"><span>Modo Escuro (Dark Mode)</span><input type="checkbox" ${state.temaEscuro ? 'checked' : ''} onchange="alternarTema(this.checked)"><i></i></label><p>Alterne o tema da aplicação para maior conforto visual.</p></article>
@@ -1228,7 +1230,7 @@ function atualizarBusca(valor) {
   const temBusca = Boolean(String(valor || '').trim());
   app.querySelectorAll('.search-clear').forEach((botao) => botao.classList.toggle('is-hidden', !temBusca));
   app.querySelectorAll('.search-actions').forEach((acoes) => acoes.classList.toggle('is-hidden', !temBusca));
-  app.querySelector('.clientes-page, .produtos-page, .pedidos-page, .pagamentos-page')?.classList.toggle('is-searching', temBusca);
+  app.querySelector('.clientes-page, .produtos-page, .pedidos-page, .pagamentos-page, .publicacoes-page, .divulgacao-page')?.classList.toggle('is-searching', temBusca);
   if (!temBusca && buscaAplicada) {
     buscaAplicada = '';
     render();
@@ -1602,7 +1604,7 @@ function abrirPagamentoCliente(clienteId) {
       <label class="transaction-field"><span>Valor total da dívida</span><input value="${escapeAttr(moeda(saldo.debito))}" readonly></label>
       <label class="transaction-field"><span>Desconto</span><input id="pagamentoClienteDesconto" type="number" min="0" step="0.01" inputmode="decimal" value="0.00" oninput="atualizarResumoPagamentoCliente()"></label>
       <section class="payment-balance-summary"><div><span>Saldo anterior</span><b>${moeda(saldo.debito)}</b></div><div><span>Valor pago + desconto</span><b id="pagamentoClienteAbatimento">${moeda(0)}</b></div><div class="final"><span>Saldo final</span><b id="pagamentoClienteSaldoFinal">${moeda(saldo.debito)}</b></div></section>
-      <label class="transaction-field"><span>Data do pagamento</span><input id="pagamentoClienteData" type="date" value="${isoData(new Date())}"></label>
+      <label class="transaction-field payment-date-field"><span>Data do pagamento</span><input id="pagamentoClienteData" type="date" value="${isoData(new Date())}"></label>
       <label class="transaction-field"><span>Forma de pagamento</span><select id="pagamentoClienteForma"><option selected>Pix</option><option>Dinheiro</option><option>Cartão de crédito</option><option>Cartão de débito</option><option>Cheque</option><option>Boleto</option></select></label>
     </div>
     <footer class="client-transaction-footer"><button type="button" class="primary" onclick="confirmarPagamentoCliente()">Confirmar recebimento</button></footer>
@@ -2023,7 +2025,7 @@ function renderVendas() {
     <section class="module-page pedidos-page${temBusca ? ' is-searching' : ''}">
       <div class="module-sticky-head">
         <div class="module-title"><div><h2>Pedidos</h2><p>Acompanhe todos os pedidos registrados.</p></div><button class="primary" onclick="abrirNovoPedidoGeral()">${svgIcon('plus')} Novo pedido</button></div>
-        ${renderBarraBusca('Pesquisar pedidos', 'Mais recentes')}
+        ${renderBarraBusca('Pesquisar pedidos', 'Ordem Alfabética')}
         <nav class="order-type-filters" aria-label="Filtrar pedidos por tipo">
           ${botaoFiltroPedidos('todos', 'Todos')}
           ${botaoFiltroPedidos('pedidos', 'Pedidos')}
@@ -2058,9 +2060,15 @@ function textoPesquisaPedido(venda) {
 function pedidosFiltrados() {
   const pesquisa = normalizar(buscaAplicada);
   return [...state.vendas]
-    .sort((a, b) => new Date(b.criado_em) - new Date(a.criado_em))
     .filter((venda) => filtroPedidos === 'todos' || tipoPedido(venda) === filtroPedidos)
-    .filter((venda) => !pesquisa || textoPesquisaPedido(venda).includes(pesquisa));
+    .filter((venda) => !pesquisa || textoPesquisaPedido(venda).includes(pesquisa))
+    .sort((a, b) => {
+      const clienteA = state.clientes.find((item) => item.id === a.cliente_id)?.nome || '';
+      const clienteB = state.clientes.find((item) => item.id === b.cliente_id)?.nome || '';
+      const comparacao = String(clienteA).localeCompare(String(clienteB), 'pt-BR', { sensitivity: 'base' });
+      if (comparacao) return ordemAlfabetica === 'asc' ? comparacao : -comparacao;
+      return new Date(b.criado_em) - new Date(a.criado_em);
+    });
 }
 
 function botaoFiltroPedidos(tipo, rotulo) {
