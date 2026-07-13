@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.4.0.45 - 2026-07-12
+
+- Laboratório de lançamento por foto: faz a leitura em uma Edge Function isolada do Supabase, reutilizando a chave da IA já protegida no projeto.
+
 ## 1.4.0.44 - 2026-07-12
 
 - Laboratório isolado: adiciona teste autenticado de lançamento por foto, com leitura por IA de data, valor total e sugestão de tipo de despesa, sem salvar imagem ou lançamento.

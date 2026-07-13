@@ -13,6 +13,14 @@
   },
   "versoes": [
     {
+      "versao": "1.4.0.45",
+      "titulo": "Leitura por foto via Supabase",
+      "data": "Julho/2026",
+      "itens": [
+        "O laboratório de lançamento por foto passa a usar uma Edge Function isolada do Supabase e reutiliza a chave da IA já protegida no projeto."
+      ]
+    },
+    {
       "versao": "1.4.0.44",
       "titulo": "Teste de lançamento por foto",
       "data": "Julho/2026",
