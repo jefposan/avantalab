@@ -461,6 +461,10 @@ button {
   font-size: 12px;
 }
 
+.login-screen.approval-wait-screen {
+  padding-top: clamp(170px, 24vh, 215px);
+}
+
 .secondary {
   color: var(--primary-hover);
   background: var(--primary-light);
@@ -723,7 +727,7 @@ body { background: #fff; color: var(--ink); }
 .content-area .ghost { border-color: #e2e3e6; }
 .sheet { width: min(100%, 670px); border-radius: 12px; }
 .fab { right: 35px; background: var(--tridium); box-shadow: 0 8px 24px rgba(46,143,137,.35); }
-.mobile-menu { display: none; }
+.mobile-menu, .vendas-bottom-nav { display: none; }
 
 /* Páginas internas: estrutura inspirada nas telas administrativas do Tridium. */
 .module-page { display: grid; gap: 16px; }
@@ -1051,7 +1055,7 @@ body { background: #fff; color: var(--ink); }
   .menu-toggle { display: inline-block; }
   .system-header { padding: 0 16px; }
   .system-brand img { width: 126px; height: 40px; }
-  .content-area { padding: 28px 16px; }
+  .content-area { padding: 28px 16px calc(env(safe-area-inset-bottom) + 92px); }
   .module-title { flex-wrap: wrap; }
   .module-title > div { min-width: 0; }
   .module-toolbar { flex-wrap: wrap; }
@@ -1100,7 +1104,7 @@ body { background: #fff; color: var(--ink); }
   .mobile-menu-brand { display: flex; align-items: center; }
   .mobile-menu-brand img { width: 230px; height: 72px; object-fit: contain; }
   .mobile-menu-header button { border: 0; color: #202124; background: transparent; font-size: 42px; font-weight: 300; line-height: 1; }
-  .mobile-menu-grid { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 28px 48px; max-width: 760px; margin: 34px auto 0; padding: 0 48px; }
+  .mobile-menu-grid { display: grid; width: 90%; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 28px 48px; max-width: 684px; margin: 34px auto 0; padding: 0; }
   .mobile-menu-card, .mobile-menu-wide { display: flex; align-items: center; justify-content: center; border: 4px solid rgba(255,255,255,.75); color: #fff; box-shadow: inset 0 0 0 3px rgba(255,255,255,.16), 0 8px 12px rgba(42,72,111,.26); text-shadow: 0 3px 4px rgba(0,0,0,.25); }
   .mobile-menu-card { min-height: 196px; flex-direction: column; gap: 12px; border-radius: 42px; padding: 16px 8px; }
   .mobile-menu-card b { font-size: 71px; font-weight: 500; line-height: .82; }
@@ -1111,7 +1115,7 @@ body { background: #fff; color: var(--ink); }
   .mobile-menu-card.pink { background: linear-gradient(145deg,#fb79a0,#ec467b); }
   .mobile-menu-card.purple { background: linear-gradient(145deg,#ab65ea,#713cc9); }
   .mobile-menu-card.black { background: linear-gradient(145deg,#aaa,#2d2d2d); }
-  .mobile-menu-bottom { display: grid; grid-template-columns: 1fr 1fr; gap: 48px; max-width: 760px; margin: auto auto 45px; padding: 55px 48px 0; }
+  .mobile-menu-bottom { display: none; }
   .mobile-menu-wide { min-height: 115px; flex-direction: column; gap: 5px; border-radius: 27px; }
   .mobile-menu-wide b { font-size: 55px; line-height: 1; }
   .mobile-menu-wide span { font-size: 18px; font-weight: 800; }
@@ -1123,6 +1127,17 @@ body { background: #fff; color: var(--ink); }
   .mobile-menu-card { min-height: 0; aspect-ratio: 1 / 1; }
   .mobile-menu-wide { min-height: 0; aspect-ratio: 685 / 300; }
   .mobile-menu-card img, .mobile-menu-wide img { display: block; width: 100%; height: 100%; object-fit: fill; }
+  .vendas-bottom-nav { position: fixed; z-index: 90; right: 0; bottom: 0; left: 0; display: block; border-top: 1px solid #e2e8f0; background: rgba(255,255,255,.95); box-shadow: 0 -8px 24px rgba(15,23,42,.10); backdrop-filter: blur(20px); padding-bottom: env(safe-area-inset-bottom); }
+  .vendas-bottom-nav-inner { position: relative; display: grid; height: 66px; max-width: 448px; grid-template-columns: repeat(5,minmax(0,1fr)); align-items: end; margin: 0 auto; padding: 0 8px; }
+  .vendas-nav-item, .vendas-nav-add { display: flex; min-width: 0; flex-direction: column; align-items: center; justify-content: center; gap: 2px; border: 0; padding: 4px; color: #94a3b8; background: transparent; font-size: 10px; font-weight: 900; }
+  .vendas-nav-item > span { display: flex; height: 28px; align-items: center; justify-content: center; }
+  .vendas-nav-item .svg-icon { width: 22px; height: 22px; }
+  .vendas-nav-item b, .vendas-nav-add b { max-width: 100%; overflow: hidden; font-size: 10px; line-height: 1; text-overflow: ellipsis; white-space: nowrap; }
+  .vendas-nav-add { position: relative; justify-content: flex-end; padding-bottom: 5px; color: #0e7490; }
+  .vendas-nav-add > span { position: absolute; bottom: 22px; display: flex; width: 58px; height: 58px; align-items: center; justify-content: center; border: 4px solid #fff; border-radius: 999px; color: #fff; background: #00A6C8; box-shadow: 0 8px 18px rgba(15,23,42,.25); font-size: 34px; font-weight: 300; line-height: 1; }
+  .dark-theme .vendas-bottom-nav { border-color: #334155; background: rgba(15,23,42,.95); }
+  .dark-theme .vendas-nav-item { color: #94a3b8; }
+  .dark-theme .vendas-nav-add > span { border-color: #0f172a; }
 }
 @media (max-width: 460px) {
   .dashboard-kpis { grid-template-columns: 1fr; }
@@ -1135,7 +1150,7 @@ body { background: #fff; color: var(--ink); }
   .mobile-menu-header { min-height: 72px; padding: 12px 22px; }
   .mobile-menu-brand img { width: 184px; height: 54px; }
   .mobile-menu-header button { font-size: 34px; }
-  .mobile-menu-grid { gap: 18px; margin-top: 24px; padding: 0 24px; }
+  .mobile-menu-grid { gap: 18px; margin-top: 24px; padding: 0; }
   .mobile-menu-card { min-height: 123px; border-radius: 28px; gap: 8px; border-width: 3px; }
   .mobile-menu-card b { font-size: 45px; }
   .mobile-menu-card span { font-size: 15px; }

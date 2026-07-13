@@ -265,6 +265,7 @@ function render() {
       <main class="content-area">${renderConteudo()}</main>
     </div>
     ${state.menuAberto ? renderMenuMobile() : ''}
+    ${renderNavegacaoInferior()}
     ${state.aba === 'novo-pedido' ? `<button class="fab" onclick="abrirCarrinho()">${svgIcon('shopping-cart')}</button>` : ''}
   `;
 }
@@ -332,6 +333,29 @@ function renderMenuMobile() {
 
 function sairMenuMobile() {
   sairSistema();
+}
+
+function iconeNavegacaoInferior(tipo) {
+  if (tipo === 'tema') return '<svg class="svg-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M20.2 15.1A8.5 8.5 0 0 1 8.9 3.8 8.5 8.5 0 1 0 20.2 15Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>';
+  return svgIcon(tipo);
+}
+
+function itemNavegacaoInferior(id, tipo, rotulo, acao) {
+  return `<button id="${id}" type="button" class="vendas-nav-item" onclick="${acao}" aria-label="${rotulo}"><span>${iconeNavegacaoInferior(tipo)}</span><b>${rotulo}</b></button>`;
+}
+
+function renderNavegacaoInferior() {
+  return `<nav class="vendas-bottom-nav" aria-label="Navegação principal"><div class="vendas-bottom-nav-inner">
+    ${itemNavegacaoInferior('nav-configuracoes', 'settings', 'Configurações', "setAba('configuracoes')")}
+    ${itemNavegacaoInferior('nav-tema', 'tema', 'Tema', 'alternarTema(!state.temaEscuro)')}
+    <button id="nav-novo" type="button" class="vendas-nav-add" onclick="abrirAcoesRapidas()" aria-label="Lançar pedido ou pagamento"><span>+</span><b>Lançar</b></button>
+    ${itemNavegacaoInferior('nav-agenda', 'calendar', 'Agenda', "setAba('agenda')")}
+    ${itemNavegacaoInferior('nav-sair', 'log-out', 'Sair', 'sairSistema()')}
+  </div></nav>`;
+}
+
+function abrirAcoesRapidas() {
+  sheet(`<div class="sheet-header"><div><h2>Novo lançamento</h2><p class="muted small">Escolha o que deseja registrar.</p></div><button class="close" onclick="fecharSheet()">×</button></div><div class="grid"><button class="primary" onclick="fecharSheet();setAba('novo-pedido')">${svgIcon('shopping-bag')} Lançar pedido</button><button class="secondary" onclick="fecharSheet();setAba('vender')">${svgIcon('dollar')} Lançar pagamento</button></div>`);
 }
 
 async function sairSistema() {
@@ -537,7 +561,7 @@ async function confirmarCadastroSms(event) {
 function renderSolicitarAcesso() {
   const solicitacao = state.solicitacaoAcesso;
   if (solicitacao?.status === 'pendente') {
-    return `<section class="login-screen"><div class="login-brand"><strong>Gestão de vendas</strong><p>Solicitação enviada</p></div><div class="sheet"><div class="sheet-header"><div><h2>Aguardando aprovação</h2><p class="muted small">O gestor do perfil analisará seu acesso. Volte mais tarde e entre novamente.</p></div></div><button class="primary approval-wait-exit" onclick="sairSistema()">Sair</button></div></section>`;
+    return `<section class="login-screen approval-wait-screen"><div class="login-brand"><strong>Gestão de vendas</strong><p>Solicitação enviada</p></div><div class="sheet"><div class="sheet-header"><div><h2>Aguardando aprovação</h2><p class="muted small">O gestor do perfil analisará seu acesso. Volte mais tarde e entre novamente.</p></div></div><button class="primary approval-wait-exit" onclick="sairSistema()">Sair</button></div></section>`;
   }
   return `<section class="login-screen"><div class="login-brand"><strong>Gestão de vendas</strong></div><div class="sheet access-request-card"><div class="sheet-header"><div><h2>Vincular a um perfil</h2><p class="muted small">Seu login foi identificado, mas ainda não possui acesso às vendas. Informe o código recebido do gestor para solicitar a aprovação.</p></div></div><div class="grid"><label class="access-request-label">Código da empresa<div class="login-field">${svgIcon('folder')}<input id="solicitacaoCodigo" autocomplete="off" autocapitalize="characters" placeholder="AVA-XXXXXXXX" required></div></label><div id="solicitacaoErro" class="login-error"></div><button class="primary" onclick="enviarSolicitacaoAcesso()">Solicitar aprovação</button><button class="forgot-link" type="button" onclick="sairSistema()">Sair da conta</button></div></div></section>`;
 }
@@ -1434,6 +1458,7 @@ window.fecharSheet = fecharSheet;
 window.alternarMenu = alternarMenu;
 window.abrirSalaBotoes = abrirSalaBotoes;
 window.sairMenuMobile = sairMenuMobile;
+window.abrirAcoesRapidas = abrirAcoesRapidas;
 window.sairSistema = sairSistema;
 window.entrarSistema = entrarSistema;
 window.entrarComGoogle = entrarComGoogle;
