@@ -8369,9 +8369,9 @@
               '<div class="bg-white p-4">' +
               novaDespesaFormHtml() +
               '</div>'
-            : '<div class="grid grid-cols-[1fr_auto_1fr] items-center gap-2 px-4 py-3 text-white" style="background-color:#003E73">' +
-                '<h2 class="min-w-0 text-base font-black">Novo lan&ccedil;amento</h2>' +
-                '<span class="text-center text-[11px] font-black tracking-wide text-cyan-100">' + escapeHtml(String(state.mes || '').toUpperCase()) + '</span>' +
+            : '<div class="grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-2 px-4 py-3 text-white" style="background-color:#003E73">' +
+                '<h2 class="text-base font-black">Novo lan&ccedil;amento</h2>' +
+                '<span class="justify-self-center rounded-full border border-white/25 bg-white/15 px-3 py-1 text-center text-base font-black leading-none tracking-wide text-white shadow-sm">' + escapeHtml(String(state.mes || '').toUpperCase()) + '</span>' +
                 '<button id="fechar-lancamento" type="button" class="justify-self-end flex h-9 w-9 items-center justify-center rounded-full border border-white/20 bg-white/10 text-xl text-white">&times;</button>' +
               '</div>' +
               '<div class="bg-white p-4">' +
@@ -9288,8 +9288,9 @@
       '<div class="grid gap-2">' +
         state.empresas.map(function (empresa) {
           var tipo = rotuloTipoPerfil(empresa.tipo_perfil);
-          var selecionado = (state.empresa && empresa.id === state.empresa.id) || state.perfilSelecionandoId === empresa.id;
-          return '<button type="button" data-empresa-id="' + escapeHtml(empresa.id) + '" aria-pressed="' + (selecionado ? 'true' : 'false') + '" class="empresa-opcao rounded-2xl border-2 px-4 py-3 text-left transition active:scale-[0.98] active:translate-y-px ' + (selecionado ? 'border-blue-600 bg-cyan-50 text-cyan-800 shadow-sm' : 'border-slate-200 bg-white text-slate-800') + '"><span class="block text-sm font-black">' + escapeHtml(nomeEmpresa(empresa)) + '</span><span class="text-xs font-semibold text-slate-500">' + escapeHtml(tipo) + ' &middot; ' + escapeHtml(perfilFormatado(empresa.perfil)) + '</span></button>';
+          var carregando = state.perfilSelecionandoId === empresa.id;
+          var selecionado = state.perfilSelecionandoId ? carregando : (state.empresa && empresa.id === state.empresa.id);
+          return '<button type="button" data-empresa-id="' + escapeHtml(empresa.id) + '" aria-pressed="' + (selecionado ? 'true' : 'false') + '" class="empresa-opcao rounded-2xl border-2 px-4 py-3 text-left transition active:scale-[0.98] active:translate-y-px ' + (selecionado ? 'border-blue-600 bg-cyan-50 text-cyan-800 shadow-sm' : 'border-slate-200 bg-white text-slate-800') + '"><span class="flex items-center justify-between gap-3"><span class="min-w-0 truncate text-sm font-black">' + escapeHtml(nomeEmpresa(empresa)) + '</span>' + (carregando ? '<span class="shrink-0 text-[10px] font-black uppercase tracking-wide text-blue-700">Carregando perfil...</span>' : '') + '</span><span class="mt-0.5 block text-xs font-semibold text-slate-500">' + escapeHtml(tipo) + ' &middot; ' + escapeHtml(perfilFormatado(empresa.perfil)) + '</span></button>';
         }).join('') +
       '</div>'
     );
@@ -11314,20 +11315,16 @@
 
     Array.prototype.forEach.call(document.querySelectorAll('.empresa-opcao'), function (botao) {
       botao.addEventListener('click', function () {
+        if (state.perfilSelecionandoId) return;
         var id = botao.getAttribute('data-empresa-id');
         state.perfilSelecionandoId = id || '';
-        Array.prototype.forEach.call(document.querySelectorAll('.empresa-opcao'), function (opcao) {
-          var ativa = opcao === botao;
-          opcao.setAttribute('aria-pressed', ativa ? 'true' : 'false');
-          opcao.classList.toggle('border-blue-600', ativa);
-          opcao.classList.toggle('border-slate-200', !ativa);
-          opcao.classList.toggle('bg-cyan-50', ativa);
-          opcao.classList.toggle('bg-white', !ativa);
-        });
+        render();
         selecionarEmpresaMobile(id, true);
         state.modalMenu = '';
         state.visao = 'home';
-        carregarDados();
+        carregarDados().finally(function () {
+          state.perfilSelecionandoId = '';
+        });
       });
     });
     Array.prototype.forEach.call(document.querySelectorAll('[data-lancamento-id]'), function (botao) {

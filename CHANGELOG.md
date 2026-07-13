@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.4.0.55 - 2026-07-13
+
+- Mobile: mostra "Carregando perfil..." ao lado do perfil selecionado durante a troca.
+- Mobile: mês do Novo lançamento aparece em uma pílula maior, centralizada entre o título e o botão de fechar.
+
 ## 1.4.0.54 - 2026-07-13
 
 - Leitura por foto: remove o laboratório temporário e consolida a API e a Edge Function definitivas.

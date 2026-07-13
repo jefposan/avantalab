@@ -13,6 +13,15 @@
   },
   "versoes": [
     {
+      "versao": "1.4.0.55",
+      "titulo": "Troca de perfil e mês do lançamento",
+      "data": "Julho/2026",
+      "itens": [
+        "Mobile: informa Carregando perfil ao selecionar outro perfil.",
+        "Mobile: mês do Novo lançamento aparece em uma pílula maior, centralizada entre o título e o botão fechar."
+      ]
+    },
+    {
       "versao": "1.4.0.54",
       "titulo": "Limpeza da leitura por foto",
       "data": "Julho/2026",
