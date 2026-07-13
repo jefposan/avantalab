@@ -13,6 +13,14 @@
   },
   "versoes": [
     {
+      "versao": "1.4.0.44",
+      "titulo": "Teste de lançamento por foto",
+      "data": "Julho/2026",
+      "itens": [
+        "Laboratório isolado: adiciona teste autenticado de lançamento por foto, com leitura por IA de data, valor total e sugestão de tipo de despesa, sem salvar imagem ou lançamento."
+      ]
+    },
+    {
       "versao": "1.4.0.43",
       "titulo": "Ava estável e saldo Asaas",
       "data": "Julho/2026",

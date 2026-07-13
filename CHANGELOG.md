@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.4.0.44 - 2026-07-12
+
+- Laboratório isolado: adiciona teste autenticado de lançamento por foto, com leitura por IA de data, valor total e sugestão de tipo de despesa, sem salvar imagem ou lançamento.
+
 ## 1.4.0.43 - 2026-07-12
 
 - Ava Mobile: elimina o flicker da logomarca ao estabilizar o elemento do header e reutilizar a imagem já decodificada durante as ações do chat.
