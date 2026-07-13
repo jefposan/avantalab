@@ -1,13 +1,10 @@
 # Changelog
 
-## 1.5.0.01 - 2026-07-12
-
-- Mobile: atualiza o identificador do script para carregar imediatamente os controles de lançamento por foto em navegadores e PWA.
-
-## 1.5.0 - 2026-07-12
+## 1.4.0.46 - 2026-07-12
 
 - Lançamentos Web/Mobile: adiciona leitura de notas por foto ou arquivo, preenchendo data, valor e sugestão de despesa.
 - Notas: armazena comprovantes em bucket privado do Supabase, permite visualizar, compartilhar ou salvar e remove o arquivo junto com o lançamento.
+- Mobile: atualiza o identificador do script para carregar imediatamente os controles em navegadores e PWA.
 
 ## 1.4.0.45 - 2026-07-12
 

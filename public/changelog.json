@@ -13,20 +13,13 @@
   },
   "versoes": [
     {
-      "versao": "1.5.0.01",
-      "titulo": "Atualização do lançamento por foto",
-      "data": "Julho/2026",
-      "itens": [
-        "Mobile: força o carregamento da nova interface de lançamento por foto também no PWA."
-      ]
-    },
-    {
-      "versao": "1.5.0",
+      "versao": "1.4.0.46",
       "titulo": "Lançamentos por foto",
       "data": "Julho/2026",
       "itens": [
         "Lançamentos Web/Mobile: lê notas por foto ou arquivo e sugere a data, o valor e o tipo de despesa.",
-        "Notas ficam em bucket privado, podem ser abertas, compartilhadas ou salvas e são removidas junto com o lançamento."
+        "Notas ficam em bucket privado, podem ser abertas, compartilhadas ou salvas e são removidas junto com o lançamento.",
+        "Mobile: força o carregamento da nova interface também no PWA."
       ]
     },
     {
