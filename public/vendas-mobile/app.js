@@ -367,7 +367,7 @@ function renderNavegacaoInferior() {
 }
 
 function abrirAcoesRapidas() {
-  sheet(`<div class="sheet-header"><div><h2>Novo lançamento</h2><p class="muted small">Escolha o que deseja registrar.</p></div><button class="close" onclick="fecharSheet()">×</button></div><div class="grid"><button class="primary" onclick="fecharSheet();setAba('novo-pedido')">${svgIcon('shopping-bag')} Lançar pedido</button><button class="secondary" onclick="fecharSheet();setAba('vender')">${svgIcon('dollar')} Lançar pagamento</button></div>`, 'sheet-backdrop-centered');
+  sheet(`<div class="sheet-header"><div><h2>Novo lançamento</h2><p class="muted small">Escolha o que deseja registrar.</p></div><button class="close" onclick="fecharSheet()">×</button></div><div class="quick-actions-grid"><button class="primary quick-action-button" onclick="fecharSheet();setAba('novo-pedido')">${svgIcon('shopping-bag')}<span>Lançar pedido</span></button><button class="secondary quick-action-button" onclick="fecharSheet();setAba('vender')">${svgIcon('credit-card')}<span>Lançar pagamento</span></button></div>`, 'sheet-backdrop-centered');
 }
 
 async function sairSistema() {
@@ -666,13 +666,25 @@ async function inicializarApp() {
     const campoAtivo = document.activeElement;
     if (campoAtivo instanceof HTMLElement && campoAtivo.closest('.login-screen')) campoAtivo.blur();
   });
-  if (!(await window.VendasDb.hasSession())) {
+  const sessaoAtiva = conectandoGoogle
+    ? await aguardarSessaoGoogle()
+    : await window.VendasDb.hasSession();
+  if (!sessaoAtiva) {
     conectandoGoogle = false;
     sessionStorage.removeItem(GOOGLE_CONNECTING_KEY);
     render();
     return;
   }
   await carregarDadosBackend(false);
+}
+
+async function aguardarSessaoGoogle() {
+  const limite = Date.now() + 10000;
+  while (Date.now() < limite) {
+    if (await window.VendasDb.hasSession()) return true;
+    await new Promise((resolve) => setTimeout(resolve, 200));
+  }
+  return false;
 }
 
 function renderConteudo() {
