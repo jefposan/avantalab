@@ -239,6 +239,7 @@ function render() {
   if (!state.autenticado) {
     app.innerHTML = state.usuarioSemAcesso ? renderSolicitarAcesso() : renderLogin();
     if (!state.usuarioSemAcesso) adicionarBotoesGoogle();
+    requestAnimationFrame(limparFocoInicialLogin);
     return;
   }
   const cabecalho = `<header class="system-header"><button class="system-brand brand-home" onclick="abrirSalaBotoes()" aria-label="Ir para a sala de botões"><img src="./assets/logo-avantalab.png" alt="AvantaLab" /></button><button class="home-button" onclick="abrirSalaBotoes()" aria-label="Ir para a sala de botões" title="Sala de botões"><img src="./assets/home-button-house.png" alt="" /></button></header>`;
@@ -268,6 +269,13 @@ function render() {
     ${renderNavegacaoInferior()}
     ${state.aba === 'novo-pedido' ? `<button class="fab" onclick="abrirCarrinho()">${svgIcon('shopping-cart')}</button>` : ''}
   `;
+}
+
+function limparFocoInicialLogin() {
+  const campoAtivo = document.activeElement;
+  if (campoAtivo instanceof HTMLElement && campoAtivo.matches('.login-screen input, .login-screen select, .login-screen textarea')) {
+    campoAtivo.blur();
+  }
 }
 
 function renderLogin() {
@@ -355,7 +363,7 @@ function renderNavegacaoInferior() {
 }
 
 function abrirAcoesRapidas() {
-  sheet(`<div class="sheet-header"><div><h2>Novo lançamento</h2><p class="muted small">Escolha o que deseja registrar.</p></div><button class="close" onclick="fecharSheet()">×</button></div><div class="grid"><button class="primary" onclick="fecharSheet();setAba('novo-pedido')">${svgIcon('shopping-bag')} Lançar pedido</button><button class="secondary" onclick="fecharSheet();setAba('vender')">${svgIcon('dollar')} Lançar pagamento</button></div>`);
+  sheet(`<div class="sheet-header"><div><h2>Novo lançamento</h2><p class="muted small">Escolha o que deseja registrar.</p></div><button class="close" onclick="fecharSheet()">×</button></div><div class="grid"><button class="primary" onclick="fecharSheet();setAba('novo-pedido')">${svgIcon('shopping-bag')} Lançar pedido</button><button class="secondary" onclick="fecharSheet();setAba('vender')">${svgIcon('dollar')} Lançar pagamento</button></div>`, 'sheet-backdrop-centered');
 }
 
 async function sairSistema() {
@@ -1403,10 +1411,10 @@ function valor(idCampo) {
   return document.getElementById(idCampo)?.value || '';
 }
 
-function sheet(html) {
+function sheet(html, backdropClass = '') {
   fecharSheet();
   const wrap = document.createElement('div');
-  wrap.className = 'sheet-backdrop';
+  wrap.className = `sheet-backdrop ${backdropClass}`;
   wrap.id = 'sheetBackdrop';
   wrap.innerHTML = `<section class="sheet">${html}</section>`;
   wrap.addEventListener('click', (event) => {
@@ -1486,5 +1494,7 @@ window.salvarMeta = salvarMeta;
 window.alternarTema = alternarTema;
 window.alterarSenha = alterarSenha;
 window.instalarPWA = instalarPWA;
+
+window.addEventListener('pageshow', () => requestAnimationFrame(limparFocoInicialLogin));
 
 inicializarApp();
