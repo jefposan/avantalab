@@ -1000,7 +1000,7 @@ function renderClientes() {
   const temBusca = Boolean(String(state.busca || '').trim());
   return `
     <section class="module-page clientes-page${temBusca ? ' is-searching' : ''}">
-      <div class="module-sticky-head"><div class="module-title"><div><h2>Clientes</h2><p>Gerencie seus clientes</p></div><button class="primary" onclick="abrirCliente()">＋ Novo cliente</button></div>${renderBarraBusca('Pesquisar', 'Ordem Alfabética')}</div>
+      <div class="module-sticky-head"><div class="module-title"><div><h2>Clientes</h2><p>Gerencie seus clientes</p></div><button class="primary" onclick="this.blur();abrirCliente()">＋ Novo cliente</button></div>${renderBarraBusca('Pesquisar', 'Ordem Alfabética')}</div>
       ${clientes.length ? `<section class="client-card-grid">${clientes.map(renderCliente).join('')}</section>` : `<article class="empty-module"><h3>Nenhum cliente cadastrado</h3><p>Cadastre o primeiro cliente para iniciar suas vendas.</p></article>`}
     </section>
   `;
