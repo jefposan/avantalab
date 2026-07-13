@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.4.0.64 - 2026-07-13
+
+- Web: o tooltip do puxador de Meus perfis fecha ao iniciar o arraste e permanece oculto até soltar.
+
 ## 1.4.0.63 - 2026-07-13
 
 - Web: adiciona em Configurações a chavinha Iniciar valores ocultos, com preferência salva no dispositivo.

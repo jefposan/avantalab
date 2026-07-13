@@ -13,6 +13,14 @@
   },
   "versoes": [
     {
+      "versao": "1.4.0.64",
+      "titulo": "Tooltip durante o arraste",
+      "data": "Julho/2026",
+      "itens": [
+        "Web: o tooltip do card Meus perfis aparece no hover e desaparece durante o redimensionamento."
+      ]
+    },
+    {
       "versao": "1.4.0.63",
       "titulo": "Privacidade inicial no web",
       "data": "Julho/2026",

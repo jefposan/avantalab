@@ -218,6 +218,7 @@ export default function Dashboard({
   const [perfilDetalhado, setPerfilDetalhado] = useState<ResumoPerfilFinanceiro | null>(null);
   const [listaPerfisPodeDescer, setListaPerfisPodeDescer] = useState(false);
   const [alturaCardPerfis, setAlturaCardPerfis] = useState<number | null>(null);
+  const [redimensionandoPerfis, setRedimensionandoPerfis] = useState(false);
   const [menuCardAberto, setMenuCardAberto] = useState<string | null>(null);
   const [gerenciadorAberto, setGerenciadorAberto] = useState(false);
   const [evolucaoAno, setEvolucaoAno] = useState(anoSelecionado);
@@ -334,6 +335,7 @@ export default function Dashboard({
       alturaInicial,
       alturaMaxima,
     };
+    setRedimensionandoPerfis(true);
     event.currentTarget.setPointerCapture(event.pointerId);
     event.stopPropagation();
     event.preventDefault();
@@ -348,6 +350,7 @@ export default function Dashboard({
     const redimensionamento = redimensionamentoPerfisRef.current;
     if (!redimensionamento.ativo) return;
     redimensionamentoPerfisRef.current.ativo = false;
+    setRedimensionandoPerfis(false);
     if (event.currentTarget.hasPointerCapture(event.pointerId)) event.currentTarget.releasePointerCapture(event.pointerId);
   }, []);
   const abrirDetalhePerfil = useCallback((perfil: ResumoPerfilFinanceiro) => {
@@ -1548,7 +1551,7 @@ const mostrarComparativoResumoDash =
             </div>
           )}
         </div>
-        <Tooltip texto="Arraste para ajustar a altura do card Meus perfis." posicao="top" wrapperClassName="w-full shrink-0">
+        <Tooltip texto="Arraste para ajustar a altura do card Meus perfis." posicao="top" wrapperClassName="w-full shrink-0" desativado={redimensionandoPerfis}>
           <button
             type="button"
             onPointerDown={iniciarRedimensionamentoPerfis}

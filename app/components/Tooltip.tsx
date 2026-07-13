@@ -8,6 +8,7 @@ interface TooltipProps {
   children: ReactNode;
   posicao?: 'top' | 'bottom' | 'left' | 'right';
   wrapperClassName?: string;
+  desativado?: boolean;
 }
 
 export default function Tooltip({
@@ -15,6 +16,7 @@ export default function Tooltip({
   children,
   posicao = 'top',
   wrapperClassName = '',
+  desativado = false,
 }: TooltipProps) {
   const ref = useRef<HTMLSpanElement | null>(null);
   const [visivel, setVisivel] = useState(false);
@@ -53,6 +55,7 @@ export default function Tooltip({
   };
 
   const abrirTooltip = () => {
+    if (desativado) return;
     atualizarPosicao();
     setVisivel(true);
   };
@@ -77,11 +80,12 @@ export default function Tooltip({
         onMouseLeave={fecharTooltip}
         onFocus={abrirTooltip}
         onBlur={fecharTooltip}
+        onPointerDown={fecharTooltip}
       >
         {children}
       </span>
 
-      {visivel &&
+      {visivel && !desativado &&
         typeof document !== 'undefined' &&
         createPortal(
           <div
