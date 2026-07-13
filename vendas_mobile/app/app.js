@@ -65,10 +65,18 @@ const PAISES_DDI = [
   ['África do Sul', '27', '🇿🇦'], ['Nigéria', '234', '🇳🇬'], ['Egito', '20', '🇪🇬'], ['Marrocos', '212', '🇲🇦'],
 ];
 
+const UFS_BRASIL = [
+  ['AC', 'Acre'], ['AL', 'Alagoas'], ['AP', 'Amapá'], ['AM', 'Amazonas'], ['BA', 'Bahia'], ['CE', 'Ceará'], ['DF', 'Distrito Federal'], ['ES', 'Espírito Santo'], ['GO', 'Goiás'], ['MA', 'Maranhão'], ['MT', 'Mato Grosso'], ['MS', 'Mato Grosso do Sul'], ['MG', 'Minas Gerais'], ['PA', 'Pará'], ['PB', 'Paraíba'], ['PR', 'Paraná'], ['PE', 'Pernambuco'], ['PI', 'Piauí'], ['RJ', 'Rio de Janeiro'], ['RN', 'Rio Grande do Norte'], ['RS', 'Rio Grande do Sul'], ['RO', 'Rondônia'], ['RR', 'Roraima'], ['SC', 'Santa Catarina'], ['SP', 'São Paulo'], ['SE', 'Sergipe'], ['TO', 'Tocantins'],
+];
+
 const app = document.getElementById('app');
 
 function formatarTelefoneCadastro(input) {
-  const ddi = document.getElementById('cadastroDdi')?.value || '55';
+  formatarTelefoneCampo(input, 'cadastroDdi');
+}
+
+function formatarTelefoneCampo(input, ddiId) {
+  const ddi = document.getElementById(ddiId)?.value || '55';
   const numeros = String(input.value || '').replace(/\D/g, '');
   if (ddi !== '55') {
     input.value = numeros.slice(0, 15);
@@ -85,12 +93,17 @@ function formatarTelefoneCadastro(input) {
 document.addEventListener('input', (event) => {
   const campo = event.target;
   if (campo?.id === 'cadastroTelefone') formatarTelefoneCadastro(campo);
+  if (campo?.dataset.phoneField) formatarTelefoneCampo(campo, campo.dataset.ddiTarget);
 });
 
 document.addEventListener('change', (event) => {
   if (event.target?.id === 'cadastroDdi') {
     const telefone = document.getElementById('cadastroTelefone');
     if (telefone) formatarTelefoneCadastro(telefone);
+  }
+  if (event.target?.dataset.phoneDdi) {
+    const telefone = document.getElementById(event.target.dataset.phoneTarget);
+    if (telefone) formatarTelefoneCampo(telefone, event.target.id);
   }
 });
 
@@ -868,6 +881,50 @@ function renderBarraBusca(placeholder, filtro = 'Ordem Alfabética') {
   return `<article class="tridium-search-card"><div class="search-input-wrap">${svgIcon('search')}<input value="${escapeAttr(state.busca)}" placeholder="${escapeAttr(placeholder)}" oninput="state.busca=this.value" onkeydown="if(event.key==='Enter') aplicarBusca()"></div><button class="search-filter">${svgIcon('filter')}${escapeHtml(filtro)}${svgIcon('chevron-down')}</button><button class="primary search-submit" onclick="aplicarBusca()">${svgIcon('search')} Buscar</button></article>`;
 }
 
+function opcoesDdi(selected = '55') {
+  return PAISES_DDI.map(([nome, ddi, flag]) => `<option value="${ddi}" ${ddi === selected ? 'selected' : ''}>${flag} +${ddi}</option>`).join('');
+}
+
+function separarTelefone(telefone = '') {
+  const valorTelefone = String(telefone || '').trim();
+  const numeros = valorTelefone.replace(/\D/g, '');
+  if (!valorTelefone.startsWith('+')) return { ddi: '55', numero: numeros };
+  const pais = [...PAISES_DDI].sort((a, b) => b[1].length - a[1].length).find(([, ddi]) => numeros.startsWith(ddi));
+  return pais ? { ddi: pais[1], numero: numeros.slice(pais[1].length) } : { ddi: '55', numero: numeros };
+}
+
+function campoTelefone(idCampo, label, telefone = '') {
+  const dados = separarTelefone(telefone);
+  const numero = dados.numero;
+  const formatado = dados.ddi === '55' && numero ? `(${numero.slice(0, 2)}) ${numero.slice(2, 7)}${numero.length > 6 ? `-${numero.slice(7, 11)}` : ''}`.trim() : numero;
+  return `<div class="field"><label>${label}</label><div class="phone-system-field"><select id="${idCampo}Ddi" data-phone-ddi data-phone-target="${idCampo}" aria-label="DDI">${opcoesDdi(dados.ddi)}</select><input id="${idCampo}" data-phone-field data-ddi-target="${idCampo}Ddi" type="tel" inputmode="tel" autocomplete="tel-national" value="${escapeAttr(formatado)}" placeholder="(11) 99999-9999" /></div></div>`;
+}
+
+function campoCepCliente(cep = '') {
+  const numeros = String(cep || '').replace(/\D/g, '').slice(0, 8);
+  const formatado = numeros.length > 5 ? `${numeros.slice(0, 5)}-${numeros.slice(5)}` : numeros;
+  return `<div class="field"><label>CEP</label><div class="cep-system-field"><input id="cliCep" inputmode="numeric" autocomplete="postal-code" value="${escapeAttr(formatado)}" maxlength="9" placeholder="00000-000" oninput="this.value=this.value.replace(/\\D/g,'').replace(/(\\d{5})(\\d)/,'$1-$2')"><button type="button" class="secondary" onclick="buscarCepCliente()">${svgIcon('search')} Buscar</button></div></div>`;
+}
+
+function emailValido(email) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email);
+}
+
+async function buscarCepCliente() {
+  const cep = valor('cliCep').replace(/\D/g, '');
+  if (cep.length !== 8) { toast('Informe um CEP com 8 dígitos.'); return; }
+  try {
+    const resposta = await fetch(`https://viacep.com.br/ws/${cep}/json/`);
+    const dados = await resposta.json();
+    if (!resposta.ok || dados.erro) throw new Error('CEP não encontrado.');
+    document.getElementById('cliEndereco').value = [dados.logradouro, dados.bairro].filter(Boolean).join(' - ');
+    document.getElementById('cliCidade').value = dados.localidade || '';
+    document.getElementById('cliEstado').value = dados.uf || '';
+    document.getElementById('cliCep').value = `${cep.slice(0, 5)}-${cep.slice(5)}`;
+    document.getElementById('cliNumero')?.focus();
+  } catch (error) { toast('Não foi possível localizar esse CEP.'); }
+}
+
 function aplicarBusca() {
   render();
 }
@@ -1150,31 +1207,37 @@ function abrirCliente(clienteId = '') {
       </div>
       <button class="close" onclick="fecharSheet()">×</button>
     </div>
-    <div class="grid">
+    <div class="grid client-form">
       ${campo('cliNome', 'Nome', c.nome || '')}
-      ${campo('cliTelefone', 'Telefone / WhatsApp', c.telefone || '')}
+      ${campoTelefone('cliTelefone', 'Telefone / WhatsApp', c.telefone || '')}
       ${campo('cliEmail', 'E-mail', c.email || '', 'email')}
+      ${campoCepCliente(c.cep || '')}
       ${campo('cliEndereco', 'Endereço', c.endereco || '')}
-      <div class="grid-2">
-        ${campo('cliCidade', 'Cidade', c.cidade || '')}
-        ${campo('cliEstado', 'Estado', c.estado || '')}
+      <div class="grid-2 client-address-extra">
+        ${campo('cliNumero', 'Número', c.numero || '')}
+        ${campo('cliComplemento', 'Complemento', c.complemento || '')}
       </div>
-      ${campo('cliCep', 'CEP', c.cep || '')}
+      <div class="grid-2 client-city-state">
+        ${campo('cliCidade', 'Cidade', c.cidade || '')}
+        <div class="field"><label>Estado</label><select id="cliEstado"><option value="">UF</option>${UFS_BRASIL.map(([uf, nome]) => `<option value="${uf}" ${c.estado === uf ? 'selected' : ''}>${uf} — ${nome}</option>`).join('')}</select></div>
+      </div>
       <div class="field"><label>Observações</label><textarea id="cliObs">${escapeHtml(c.observacoes || '')}</textarea></div>
       <div class="actions">
         <button class="primary" onclick="salvarCliente('${clienteId}')">Salvar</button>
         ${clienteId ? `<button class="danger" onclick="removerCliente('${clienteId}')">Remover</button>` : ''}
       </div>
     </div>
-  `);
+  `, 'cliente-sheet-backdrop sheet-backdrop-centered');
 }
 
 async function salvarCliente(clienteId) {
   const dados = {
     nome: valor('cliNome').trim(),
-    telefone: valor('cliTelefone').trim(),
+    telefone: valor('cliTelefone').trim() ? `+${valor('cliTelefoneDdi')}${valor('cliTelefone').replace(/\D/g, '')}` : '',
     email: valor('cliEmail').trim(),
     endereco: valor('cliEndereco').trim(),
+    numero: valor('cliNumero').trim(),
+    complemento: valor('cliComplemento').trim(),
     cidade: valor('cliCidade').trim(),
     estado: valor('cliEstado').trim(),
     cep: valor('cliCep').trim(),
@@ -1182,6 +1245,10 @@ async function salvarCliente(clienteId) {
   };
   if (!dados.nome) {
     toast('Informe o nome do cliente.');
+    return;
+  }
+  if (dados.email && !emailValido(dados.email)) {
+    toast('Informe um e-mail válido ou deixe o campo em branco.');
     return;
   }
   try {
@@ -1510,6 +1577,7 @@ window.abrirSalaBotoes = abrirSalaBotoes;
 window.sairMenuMobile = sairMenuMobile;
 window.abrirAcoesRapidas = abrirAcoesRapidas;
 window.acionarNavegacaoInferior = acionarNavegacaoInferior;
+window.buscarCepCliente = buscarCepCliente;
 window.sairSistema = sairSistema;
 window.entrarSistema = entrarSistema;
 window.entrarComGoogle = entrarComGoogle;

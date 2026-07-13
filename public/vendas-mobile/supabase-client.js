@@ -165,7 +165,7 @@
       email: customer.email || null,
       endereco: {
         endereco: customer.endereco || '', cidade: customer.cidade || '',
-        estado: customer.estado || '', cep: customer.cep || '',
+        estado: customer.estado || '', cep: customer.cep || '', numero: customer.numero || '', complemento: customer.complemento || '',
       },
       observacoes: customer.observacoes || null,
       ativo: customer.ativo !== false,
