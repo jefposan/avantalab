@@ -63,6 +63,8 @@ let cardsClientesEmDestaque = [];
 let quadroDestaqueClientes = 0;
 let botaoFeedbackAtivo = null;
 let atualizacaoPwaPendente = false;
+let filtroPedidos = 'todos';
+let limitePedidos = 10;
 
 const PAISES_DDI = [
   ['Brasil', '55', '🇧🇷'], ['Portugal', '351', '🇵🇹'], ['Estados Unidos / Canadá', '1', '🇺🇸'],
@@ -194,6 +196,7 @@ function logoVendas() {
 
 function setAba(aba) {
   if (aba !== 'agenda') fecharCamadasAgenda();
+  if (aba === 'vendas' && state.aba !== 'vendas') limitePedidos = 10;
   state.aba = aba;
   state.menuAberto = false;
   render();
@@ -1212,6 +1215,7 @@ function atualizarBusca(valor) {
 function limparBusca() {
   state.busca = '';
   buscaAplicada = '';
+  if (state.aba === 'vendas') limitePedidos = 10;
   render();
 }
 
@@ -1261,6 +1265,7 @@ async function buscarCepCliente() {
 
 function aplicarBusca() {
   buscaAplicada = state.busca;
+  if (state.aba === 'vendas') limitePedidos = 10;
   render();
 }
 
@@ -1270,7 +1275,7 @@ function renderProdutos() {
   return `
     <section class="module-page produtos-page${temBusca ? ' is-searching' : ''}">
       <div class="module-sticky-head"><div class="module-title"><div><h2>Produtos</h2><p>Catálogo, custos e preços de venda.</p></div><button class="primary" onclick="this.blur();abrirProduto()">＋ Novo produto</button></div><div class="produtos-actions"><button class="ghost" onclick="baixarModeloProdutosExcel()" aria-label="Baixar modelo Excel">${svgIcon('save')} Modelo</button><button class="secondary" onclick="abrirImportacaoPacote()" aria-label="Importar pacote de produtos">${svgIcon('package')} Pacote</button><button class="primary" onclick="exportarProdutosExcel()" aria-label="Exportar produtos para Excel">${svgIcon('save')} Exportar</button></div>${renderBarraBusca('Pesquisar produtos', 'Ordem alfabética')}</div>
-      <div class="module-stats"><span><b>${state.produtos.length}</b> produtos cadastrados</span><span><b>${state.pacotesProdutos.length}</b> pacotes ativos</span><button class="package-manage-link" onclick="abrirGerenciarPacotes()">Gerenciar pacotes</button></div>
+      <div class="module-stats product-package-stats"><span><b>${state.produtos.length}</b> produtos cadastrados</span><span><b>${state.pacotesProdutos.length}</b> pacotes ativos</span><button class="package-manage-link" onclick="abrirGerenciarPacotes()">${svgIcon('package')} Gerenciar</button></div>
       <section class="product-grid module-product-grid">
       ${produtos.length ? produtos.map(renderProduto).join('') : empty('Nenhum produto cadastrado.')}
     </section>
@@ -1517,16 +1522,77 @@ function renderProdutoVenda(p) {
 }
 
 function renderVendas() {
-  const vendas = [...state.vendas].sort((a, b) => new Date(b.criado_em) - new Date(a.criado_em));
+  const vendas = pedidosFiltrados();
+  const exibidas = vendas.slice(0, limitePedidos);
+  const temBusca = Boolean(String(state.busca || '').trim());
+  const contagens = state.vendas.reduce((resultado, venda) => {
+    resultado.todos += 1;
+    resultado[tipoPedido(venda)] += 1;
+    return resultado;
+  }, { todos: 0, pedidos: 0, bonificacoes: 0, consignados: 0 });
   return `
-    <section class="module-page"><div class="module-title"><div><h2>Meus Pedidos</h2><p>Gerencie todos os pedidos registrados.</p></div><button class="primary" onclick="setAba('novo-pedido')">${svgIcon('plus')} Novo Pedido</button></div>${renderBarraBusca('Pesquisar', 'Mais Recente')}<article class="data-panel"><table><thead><tr><th>Cliente</th><th>Data</th><th>Itens</th><th>Pagamento</th><th>Total</th><th>Status</th></tr></thead><tbody>${vendas.length ? vendas.map(renderVenda).join('') : `<tr><td colspan="6" class="table-empty">Nenhum pedido registrado.</td></tr>`}</tbody></table></article></section>
+    <section class="module-page pedidos-page${temBusca ? ' is-searching' : ''}">
+      <div class="module-sticky-head">
+        <div class="module-title"><div><h2>Pedidos</h2><p>Acompanhe todos os pedidos registrados.</p></div><button class="primary" onclick="setAba('novo-pedido')">${svgIcon('plus')} Novo pedido</button></div>
+        ${renderBarraBusca('Pesquisar pedidos', 'Mais recentes')}
+        <nav class="order-type-filters" aria-label="Filtrar pedidos por tipo">
+          ${botaoFiltroPedidos('todos', 'Todos', contagens.todos)}
+          ${botaoFiltroPedidos('pedidos', 'Pedidos', contagens.pedidos)}
+          ${botaoFiltroPedidos('bonificacoes', 'Bonificações', contagens.bonificacoes)}
+          ${botaoFiltroPedidos('consignados', 'Consignados', contagens.consignados)}
+        </nav>
+      </div>
+      <div class="module-stats order-results-stats"><span>Exibindo <b>${Math.min(exibidas.length, vendas.length)}</b> de <b>${vendas.length}</b></span></div>
+      <article class="data-panel orders-panel"><table><thead><tr><th>Cliente</th><th>Data</th><th>Itens</th><th>Pagamento</th><th>Total</th><th>Status</th></tr></thead><tbody>${exibidas.length ? exibidas.map(renderVenda).join('') : `<tr><td colspan="6" class="table-empty">Nenhum pedido encontrado.</td></tr>`}</tbody></table></article>
+      ${vendas.length > exibidas.length ? `<button class="ghost orders-load-more" onclick="carregarMaisPedidos()">Carregar mais 10</button>` : ''}
+    </section>
   `;
+}
+
+function tipoPedido(venda) {
+  const identificadores = [venda.tipo, venda.tipo_pedido, venda.categoria, venda.natureza, venda.forma_pagamento, venda.status, venda.observacoes]
+    .map((valorItem) => normalizar(valorItem))
+    .join(' ');
+  if (identificadores.includes('bonific')) return 'bonificacoes';
+  if (identificadores.includes('consign')) return 'consignados';
+  return 'pedidos';
+}
+
+function textoPesquisaPedido(venda) {
+  const cliente = state.clientes.find((item) => item.id === venda.cliente_id);
+  const itens = (venda.itens || []).flatMap((item) => [item.produto_nome, item.produto_sku, item.quantidade, item.preco_unitario, item.total]);
+  return [JSON.stringify(venda), JSON.stringify(cliente || {}), venda.id, cliente?.nome, venda.criado_em, dataBR(venda.criado_em), venda.forma_pagamento, venda.status, venda.observacoes, venda.subtotal, moeda(venda.subtotal), venda.desconto, moeda(venda.desconto), venda.total, moeda(venda.total), ...itens]
+    .map((valorItem) => normalizar(valorItem))
+    .join(' ');
+}
+
+function pedidosFiltrados() {
+  const pesquisa = normalizar(buscaAplicada);
+  return [...state.vendas]
+    .sort((a, b) => new Date(b.criado_em) - new Date(a.criado_em))
+    .filter((venda) => filtroPedidos === 'todos' || tipoPedido(venda) === filtroPedidos)
+    .filter((venda) => !pesquisa || textoPesquisaPedido(venda).includes(pesquisa));
+}
+
+function botaoFiltroPedidos(tipo, rotulo, quantidade) {
+  return `<button type="button" class="${filtroPedidos === tipo ? 'active' : ''}" onclick="selecionarFiltroPedidos('${tipo}')">${escapeHtml(rotulo)} <small>${quantidade}</small></button>`;
+}
+
+function selecionarFiltroPedidos(tipo) {
+  filtroPedidos = ['todos', 'pedidos', 'bonificacoes', 'consignados'].includes(tipo) ? tipo : 'todos';
+  limitePedidos = 10;
+  render();
+}
+
+function carregarMaisPedidos() {
+  limitePedidos += 10;
+  render();
 }
 
 function renderVenda(v) {
   const cliente = state.clientes.find((c) => c.id === v.cliente_id);
   return `
-    <tr><td><b>${escapeHtml(cliente?.nome || 'Cliente não informado')}</b></td><td>${dataBR(v.criado_em)}</td><td>${v.itens.length}</td><td>${escapeHtml(v.forma_pagamento || 'Não informado')}</td><td><b>${moeda(v.total)}</b></td><td><span class="status-pill ${v.status === 'cancelada' ? 'warn' : 'ok'}">${escapeHtml(v.status)}</span></td></tr>
+    <tr><td><b>${escapeHtml(cliente?.nome || 'Cliente não informado')}</b></td><td>${dataBR(v.criado_em)}</td><td>${(v.itens || []).length}</td><td>${escapeHtml(v.forma_pagamento || 'Não informado')}</td><td><b>${moeda(v.total)}</b></td><td><span class="status-pill ${v.status === 'cancelada' ? 'warn' : 'ok'}">${escapeHtml(v.status || 'registrado')}</span></td></tr>
   `;
 }
 
@@ -2289,6 +2355,8 @@ window.aplicarFiltroDashboard = aplicarFiltroDashboard;
 window.mudarMes = mudarMes;
 window.irMesAtual = irMesAtual;
 window.aplicarBusca = aplicarBusca;
+window.selecionarFiltroPedidos = selecionarFiltroPedidos;
+window.carregarMaisPedidos = carregarMaisPedidos;
 window.selecionarDiaAgenda = selecionarDiaAgenda;
 window.fecharDiaAgenda = fecharDiaAgenda;
 window.alternarExpansaoAgenda = alternarExpansaoAgenda;
