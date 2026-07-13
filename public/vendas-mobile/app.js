@@ -1023,7 +1023,13 @@ function ligarCliente(clienteId) {
 function abrirWhatsappCliente(clienteId) {
   const telefone = telefoneCliente(clienteId);
   if (!telefone) { toast('Este cliente não possui telefone cadastrado.'); return; }
-  window.open(`https://wa.me/${telefone}`, '_blank', 'noopener');
+  const link = document.createElement('a');
+  link.href = `https://wa.me/${telefone}`;
+  link.target = '_blank';
+  link.rel = 'noopener noreferrer';
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
 }
 
 function abrirMapasCliente(clienteId) {
