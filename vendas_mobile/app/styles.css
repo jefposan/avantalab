@@ -1099,9 +1099,10 @@ body { background: #fff; color: var(--ink); }
 }
 .login-screen > * { position: relative; z-index: 1; }
 .login-screen.preparing-access-screen {
+  width: 100%;
   height: var(--vendas-preparing-height, 100svh);
   min-height: var(--vendas-preparing-height, 100svh);
-  flex: 0 0 var(--vendas-preparing-height, 100svh);
+  flex: 1 0 100%;
   padding: 24px;
   background: #f7fafc;
 }
