@@ -28,6 +28,13 @@ function mascararTelefone(telefone: string) {
   return `${numeros.slice(0, Math.min(3, numeros.length))}••••${numeros.slice(-4)}`;
 }
 
+async function telefoneDoAcesso(acesso: { user_id: string; telefone: string | null }) {
+  if (acesso.telefone) return acesso.telefone;
+  const { data, error } = await supabaseAdmin.auth.admin.getUserById(acesso.user_id);
+  if (error) throw error;
+  return String(data.user?.user_metadata?.telefone || data.user?.phone || '');
+}
+
 export async function POST(request: Request) {
   try {
     const { email } = await request.json();
@@ -40,7 +47,7 @@ export async function POST(request: Request) {
     if (!acesso?.user_id) {
       return NextResponse.json({ erro: true, mensagem: 'Não encontramos um acesso do Vendas com este e-mail.' }, { status: 404 });
     }
-    const telefone = String(acesso.telefone || '').trim();
+    const telefone = (await telefoneDoAcesso(acesso)).trim();
     if (!telefone) {
       return NextResponse.json({ erro: true, mensagem: 'Este acesso não possui celular confirmado. Entre com Google e crie uma senha em Configurações.' }, { status: 400 });
     }

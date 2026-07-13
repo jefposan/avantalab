@@ -19,6 +19,13 @@ async function localizarAcesso(email: string) {
   return data;
 }
 
+async function telefoneDoAcesso(acesso: { user_id: string; telefone: string | null }) {
+  if (acesso.telefone) return acesso.telefone;
+  const { data, error } = await supabaseAdmin.auth.admin.getUserById(acesso.user_id);
+  if (error) throw error;
+  return String(data.user?.user_metadata?.telefone || data.user?.phone || '');
+}
+
 export async function POST(request: Request) {
   try {
     const { email, codigo, novaSenha } = await request.json();
@@ -30,10 +37,11 @@ export async function POST(request: Request) {
     }
 
     const acesso = await localizarAcesso(emailLimpo);
-    const telefone = String(acesso?.telefone || '').trim();
-    if (!acesso?.user_id || !telefone) {
+    if (!acesso?.user_id) {
       return NextResponse.json({ erro: true, mensagem: 'Não encontramos um celular confirmado para este acesso.' }, { status: 404 });
     }
+    const telefone = (await telefoneDoAcesso(acesso)).trim();
+    if (!telefone) return NextResponse.json({ erro: true, mensagem: 'Não encontramos um celular confirmado para este acesso.' }, { status: 404 });
     const destino = telefone.startsWith('+') ? telefone : `+55${telefone.replace(/\D/g, '')}`;
     const respostaTwilio = await fetch(
       `https://verify.twilio.com/v2/Services/${process.env.TWILIO_VERIFY_SERVICE_SID}/VerificationCheck`,

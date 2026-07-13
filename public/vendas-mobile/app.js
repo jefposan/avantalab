@@ -47,6 +47,7 @@ let timerReenvioSmsCadastro = null;
 let conectandoGoogle = sessionStorage.getItem(GOOGLE_CONNECTING_KEY) === '1';
 let recuperacaoSenhaVendas = null;
 let vinculoTelefonePendente = null;
+let telefonePerfilPendente = null;
 let rolagemAnteriorSheet = 0;
 let cardsClientesEmDestaque = [];
 let quadroDestaqueClientes = 0;
@@ -970,10 +971,11 @@ function renderDivulgacao() {
 function renderConfiguracoes() {
   const t = totaisPeriodo();
   const progresso = state.metaMensal > 0 ? Math.min(100, t.total / state.metaMensal * 100) : 0;
+  const telefone = String(state.usuario?.telefone || '');
   return `<section class="settings-page">
     <h2>${svgIcon('settings')} Configurações do Representante</h2>
     <div class="settings-grid">
-      <article class="settings-card"><h3>${svgIcon('user')} Dados do Usuário</h3><dl><dt>Nome Completo:</dt><dd>${escapeHtml(state.usuario.nome)}</dd><dt>Representação/Empresa:</dt><dd>AvantaLab</dd></dl></article>
+      <article class="settings-card"><h3>${svgIcon('user')} Dados do Usuário</h3><dl><dt>Nome Completo:</dt><dd>${escapeHtml(state.usuario.nome)}</dd><dt>Celular confirmado:</dt><dd>${telefone ? escapeHtml(mascararTelefone(telefone)) : 'Não informado'}</dd><dt>Representação/Empresa:</dt><dd>AvantaLab</dd></dl><div class="actions"><button class="secondary" onclick="abrirAtualizarTelefone()">${svgIcon('phone')} ${telefone ? 'Alterar celular' : 'Cadastrar celular'}</button></div></article>
       <article class="settings-card"><h3>${svgIcon('settings')} Aparência</h3><label class="switch-line"><span>Modo Escuro (Dark Mode)</span><input type="checkbox" ${state.temaEscuro ? 'checked' : ''} onchange="alternarTema(this.checked)"><i></i></label><p>Alterne o tema da aplicação para maior conforto visual.</p></article>
     </div>
     <article class="settings-card settings-goal"><h3>${svgIcon('target')} Medidor de Meta Mensal</h3><div class="goal-values"><b>Vendas Atuais: <em>${moeda(t.total)}</em></b><b>Meta: ${moeda(state.metaMensal)}</b></div><div class="progress"><i style="width:${Math.max(2, progresso)}%"></i></div><p>Faltam <b>${moeda(Math.max(0, state.metaMensal - t.total))}</b> para atingir sua meta! Vamos lá! 🚀</p><div class="settings-form"><input id="metaConfig" type="number" step="0.01" min="0" value="${state.metaMensal || ''}" placeholder="Definir nova Meta (R$)"><button class="primary" onclick="salvarMeta()">${svgIcon('save')} Salvar</button></div></article>
@@ -1008,6 +1010,50 @@ async function alterarSenha() {
     document.getElementById('senhaNova').value = '';
     document.getElementById('senhaConfirma').value = '';
     toast('Senha salva. Agora você também pode entrar com e-mail e senha.');
+  } catch (error) { toast(traduzErro(error)); }
+}
+
+function abrirAtualizarTelefone() {
+  telefonePerfilPendente = null;
+  renderAtualizarTelefone();
+}
+
+function renderAtualizarTelefone() {
+  const conteudo = telefonePerfilPendente
+    ? `<p class="muted small">Enviamos um código para <b>${escapeHtml(mascararTelefone(telefonePerfilPendente))}</b>. Confirme-o para salvar seu celular.</p><div class="grid">${campo('perfilTelefoneCodigo', 'Código recebido', '', 'text')}<button class="primary" onclick="confirmarAtualizarTelefone()">Confirmar celular</button><button class="forgot-link" type="button" onclick="abrirAtualizarTelefone()">Alterar número</button></div>`
+    : `<p class="muted small">Seu número será vinculado à conta atual e validado por SMS. Seus acessos permanecem os mesmos.</p><div class="grid">${campoTelefone('perfilTelefone', 'Celular', state.usuario?.telefone || '')}<button class="primary" onclick="enviarCodigoAtualizarTelefone()">Enviar código por SMS</button></div>`;
+  sheet(`<div class="sheet-header"><div><h2>Celular da conta</h2><p class="muted small">Confirmação segura por SMS.</p></div><button class="close" onclick="fecharSheet()">×</button></div>${conteudo}`);
+}
+
+async function enviarCodigoAtualizarTelefone() {
+  const ddi = valor('perfilTelefoneDdi').replace(/\D/g, '') || '55';
+  const numero = valor('perfilTelefone').replace(/\D/g, '');
+  const ehBrasil = ddi === '55';
+  if (!numero || (ehBrasil ? numero.length < 10 || numero.length > 11 : numero.length < 6 || numero.length > 15)) {
+    toast(ehBrasil ? 'Informe um celular válido com DDD.' : 'Informe um número de celular válido.');
+    return;
+  }
+  try {
+    telefonePerfilPendente = `+${ddi}${numero}`;
+    await enviarSmsCadastro(telefonePerfilPendente);
+    renderAtualizarTelefone();
+    toast('Código enviado por SMS.');
+  } catch (error) { telefonePerfilPendente = null; toast(traduzErro(error)); }
+}
+
+async function confirmarAtualizarTelefone() {
+  const codigo = valor('perfilTelefoneCodigo').trim();
+  if (!telefonePerfilPendente || !codigo) { toast('Digite o código recebido por SMS.'); return; }
+  try {
+    const resposta = await fetch('/api/sms/verificar-codigo', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ telefone: telefonePerfilPendente, codigo }) });
+    const resultado = await resposta.json().catch(() => ({}));
+    if (!resposta.ok || resultado.erro) throw new Error(resultado.mensagem || 'Código inválido ou expirado.');
+    await window.VendasDb.updateUserMetadata({ telefone: telefonePerfilPendente });
+    state.usuario.telefone = telefonePerfilPendente;
+    telefonePerfilPendente = null;
+    fecharSheet();
+    render();
+    toast('Celular confirmado com sucesso.');
   } catch (error) { toast(traduzErro(error)); }
 }
 
@@ -1934,6 +1980,9 @@ window.salvarCompromisso = salvarCompromisso;
 window.salvarMeta = salvarMeta;
 window.alternarTema = alternarTema;
 window.alterarSenha = alterarSenha;
+window.abrirAtualizarTelefone = abrirAtualizarTelefone;
+window.enviarCodigoAtualizarTelefone = enviarCodigoAtualizarTelefone;
+window.confirmarAtualizarTelefone = confirmarAtualizarTelefone;
 window.instalarPWA = instalarPWA;
 
 window.addEventListener('pageshow', () => requestAnimationFrame(limparFocoInicialLogin));
