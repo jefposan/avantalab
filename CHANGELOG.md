@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.4.0.50 - 2026-07-13
+
+- Lançamentos: torna a remoção de notas resiliente para não impedir a exclusão da despesa.
+- Mobile: corrige a confirmação de exclusão no modo noturno e padroniza os botões Voltar e Excluir.
+
 ## 1.4.0.49 - 2026-07-13
 
 - Cadastro: mantém as três ações em uma única linha.

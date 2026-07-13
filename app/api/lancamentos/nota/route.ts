@@ -120,12 +120,19 @@ export async function DELETE(request: Request) {
     }
     if (!acesso.lancamento.nota_arquivo_path) return NextResponse.json({ erro: false });
 
-    const { error } = await acesso.admin
+    const caminho = acesso.lancamento.nota_arquivo_path;
+    const { error: erroArquivo } = await acesso.admin.storage.from(BUCKET).remove([caminho]);
+    if (erroArquivo) {
+      console.error('Erro ao remover arquivo da nota:', erroArquivo);
+      return NextResponse.json({ erro: true, mensagem: 'Não foi possível remover a nota.' }, { status: 502 });
+    }
+
+    const { error: erroAtualizar } = await acesso.admin
       .from('lancamentos')
       .update({ nota_arquivo_path: null })
       .eq('id', acesso.lancamento.id)
       .eq('empresa_id', acesso.empresaId);
-    if (error) {
+    if (erroAtualizar) {
       return NextResponse.json({ erro: true, mensagem: 'Não foi possível remover a nota.' }, { status: 502 });
     }
     return NextResponse.json({ erro: false });

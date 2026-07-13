@@ -733,6 +733,12 @@ export async function salvarSaldoInicialCaixinha({
 }
 
 export async function apagarLancamento(id: string) {
+  const notaRemovida = await removerNotaLancamento(id);
+  if (!notaRemovida) {
+    console.error('Erro ao remover a nota do lançamento:', id);
+    return false;
+  }
+
   const { error } = await supabase
     .from('lancamentos')
     .delete()

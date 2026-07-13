@@ -13,6 +13,15 @@
   },
   "versoes": [
     {
+      "versao": "1.4.0.50",
+      "titulo": "Exclusão de despesas corrigida",
+      "data": "Julho/2026",
+      "itens": [
+        "Lançamentos com nota: a limpeza do arquivo não impede mais a exclusão da despesa.",
+        "Mobile: confirmação de exclusão legível no modo noturno e botões padronizados."
+      ]
+    },
+    {
       "versao": "1.4.0.49",
       "titulo": "Ações de notas e cadastro",
       "data": "Julho/2026",

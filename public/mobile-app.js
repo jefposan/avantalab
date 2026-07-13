@@ -6367,14 +6367,20 @@
           state.carregando = true;
           state.erro = '';
           render();
-          if (resp) {
-            // Excluir todas
-            for (var i = 0; i < parcelasGrupo.length; i++) {
-              await db.from('lancamentos').delete().eq('id', parcelasGrupo[i].id).eq('empresa_id', state.empresa.id);
+          var parcelasParaExcluir = resp ? parcelasGrupo : [item];
+          for (var i = 0; i < parcelasParaExcluir.length; i++) {
+            var parcela = parcelasParaExcluir[i];
+            if (!(await removerNotaLancamentoMobile(parcela.id))) {
+              state.carregando = false;
+              setErro('Nao foi possivel remover a nota da despesa.');
+              return;
             }
-          } else {
-            // Excluir somente esta
-            await db.from('lancamentos').delete().eq('id', item.id).eq('empresa_id', state.empresa.id);
+            var exclusaoParcela = await db.from('lancamentos').delete().eq('id', parcela.id).eq('empresa_id', state.empresa.id);
+            if (exclusaoParcela.error) {
+              state.carregando = false;
+              setErro('Nao foi possivel excluir a despesa.');
+              return;
+            }
           }
           state.modalAcao = null;
           await carregarDados();
@@ -6432,7 +6438,9 @@
         ? (await removerNotaLancamentoMobile(item.id)
           ? await db.from('lancamentos').update({ status: 'cancelada' }).eq('id', item.id).eq('empresa_id', state.empresa.id)
           : { error: { message: 'Nao foi possivel remover a nota.' } })
-        : await db.from('lancamentos').delete().eq('id', item.id).eq('empresa_id', state.empresa.id);
+        : (await removerNotaLancamentoMobile(item.id)
+          ? await db.from('lancamentos').delete().eq('id', item.id).eq('empresa_id', state.empresa.id)
+          : { error: { message: 'Nao foi possivel remover a nota.' } });
       if (removida.error) {
         state.carregando = false;
         setErro('Nao foi possivel excluir a despesa.');
@@ -6587,7 +6595,9 @@
       ? (await removerNotaLancamentoMobile(id)
         ? await db.from('lancamentos').update({ status: 'cancelada' }).eq('id', id).eq('empresa_id', state.empresa.id)
         : { error: { message: 'Nao foi possivel remover a nota.' } })
-      : await db.from('lancamentos').delete().eq('id', id).eq('empresa_id', state.empresa.id);
+      : (await removerNotaLancamentoMobile(id)
+        ? await db.from('lancamentos').delete().eq('id', id).eq('empresa_id', state.empresa.id)
+        : { error: { message: 'Nao foi possivel remover a nota.' } });
     if (resp.error) {
       state.carregando = false;
       setErro('Nao foi possivel excluir a despesa.');
@@ -8382,6 +8392,14 @@
 	    var receita = acao.tipo === 'receita';
 	    var titulo = receita ? item.origem : item.despesa;
 	    var subtitulo = receita ? 'Receita do mes' : 'Despesa do mes';
+	    var temaEscuro = state.darkMode;
+	    var fundoAlerta = temaEscuro ? '#172033' : '#fff';
+	    var bordaAlerta = temaEscuro ? 'rgba(248, 113, 113, 0.38)' : '#fee2e2';
+	    var fundoResumo = temaEscuro ? '#0f172a' : '#fff';
+	    var bordaResumo = temaEscuro ? 'rgba(148, 163, 184, 0.26)' : '#e2e8f0';
+	    var textoPrincipal = temaEscuro ? '#f8fafc' : '#0f172a';
+	    var textoSecundario = temaEscuro ? '#cbd5e1' : '#64748b';
+	    var textoDiscreto = temaEscuro ? '#94a3b8' : '#94a3b8';
 	    var detalhe = 'Dia ' + escapeHtml(item.dia);
 	    if (!receita && item.descricao) detalhe += ' - ' + escapeHtml(item.descricao);
 	    var aviso = receita
@@ -8390,31 +8408,31 @@
 
 	    return (
 	      '<div class="grid gap-4">' +
-	        '<div class="overflow-hidden rounded-3xl border border-red-100 bg-gradient-to-b from-red-50 to-white shadow-sm">' +
+	        '<div class="overflow-hidden rounded-3xl border shadow-sm" style="background:' + fundoAlerta + ';border-color:' + bordaAlerta + '">' +
 	          '<div class="flex items-start gap-3 p-4">' +
 	            '<span class="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-red-100 text-red-600 shadow-inner">' +
 	              '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 9v4M12 17h.01M10.3 4.2 2.8 17.2A2 2 0 0 0 4.5 20h15a2 2 0 0 0 1.7-2.8L13.7 4.2a2 2 0 0 0-3.4 0Z" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>' +
 	            '</span>' +
 	            '<div class="min-w-0 flex-1">' +
-	              '<p class="text-[10px] font-black uppercase tracking-[0.16em] text-red-500">Confirmar exclusao</p>' +
-	              '<h3 class="mt-1 text-base font-black leading-tight" style="color:' + (state.darkMode ? '#f8fafc' : '#0f172a') + '">Excluir este lancamento?</h3>' +
-	              '<p class="mt-1 text-xs font-semibold leading-relaxed" style="color:' + (state.darkMode ? '#cbd5e1' : '#64748b') + '">' + aviso + '</p>' +
+	              '<p class="text-[10px] font-black uppercase tracking-[0.16em]" style="color:' + (temaEscuro ? '#fda4af' : '#ef4444') + '">Confirmar exclusao</p>' +
+	              '<h3 class="mt-1 text-base font-black leading-tight" style="color:' + textoPrincipal + '">Excluir este lancamento?</h3>' +
+	              '<p class="mt-1 text-xs font-semibold leading-relaxed" style="color:' + textoSecundario + '">' + aviso + '</p>' +
 	            '</div>' +
 	          '</div>' +
-	          '<div class="mx-4 mb-4 rounded-2xl border border-slate-200 bg-white p-3 shadow-sm">' +
+	          '<div class="mx-4 mb-4 rounded-2xl border p-3 shadow-sm" style="background:' + fundoResumo + ';border-color:' + bordaResumo + '">' +
 	            '<div class="flex items-start justify-between gap-3">' +
 	              '<div class="min-w-0">' +
-	                '<p class="text-[10px] font-black uppercase tracking-wide text-slate-400">' + subtitulo + '</p>' +
-	                '<h4 class="mt-1 truncate text-sm font-black text-slate-900">' + escapeHtml(titulo) + '</h4>' +
-	                '<p class="mt-1 truncate text-xs font-semibold text-slate-500">' + detalhe + '</p>' +
+	                '<p class="text-[10px] font-black uppercase tracking-wide" style="color:' + textoDiscreto + '">' + subtitulo + '</p>' +
+	                '<h4 class="mt-1 truncate text-sm font-black" style="color:' + textoPrincipal + '">' + escapeHtml(titulo) + '</h4>' +
+	                '<p class="mt-1 truncate text-xs font-semibold" style="color:' + textoSecundario + '">' + detalhe + '</p>' +
 	              '</div>' +
 	              '<strong class="shrink-0 text-sm font-black ' + (receita ? 'text-emerald-600' : 'text-red-600') + '">' + dinheiro(item.valor) + '</strong>' +
 	            '</div>' +
 	          '</div>' +
 	        '</div>' +
 	        '<div class="grid grid-cols-2 gap-2">' +
-	          '<button id="cancelar-exclusao-lancamento" type="button" class="h-11 rounded-xl border border-slate-200 bg-white px-3 text-xs font-black uppercase tracking-wide text-slate-600 shadow-sm active:scale-[0.98]">Voltar</button>' +
-	          '<button id="confirmar-exclusao-lancamento" type="button" class="h-11 rounded-xl bg-red-600 px-3 text-xs font-black uppercase tracking-wide text-white shadow-lg shadow-red-600/20 active:scale-[0.98]">' + (state.carregando ? 'Excluindo...' : 'Excluir') + '</button>' +
+	          '<button id="cancelar-exclusao-lancamento" type="button" class="h-11 rounded-xl bg-[#003E73] px-3 text-xs font-black uppercase tracking-wide text-white shadow-sm transition active:scale-[0.98]">Voltar</button>' +
+	          '<button id="confirmar-exclusao-lancamento" type="button" class="h-11 rounded-xl border border-red-200 bg-red-50 px-3 text-xs font-black uppercase tracking-wide text-red-700 shadow-sm transition active:scale-[0.98]">' + (state.carregando ? 'Excluindo...' : 'Excluir') + '</button>' +
 	        '</div>' +
 	      '</div>'
 	    );
