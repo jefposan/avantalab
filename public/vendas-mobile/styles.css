@@ -1318,7 +1318,7 @@ body { background: #fff; color: var(--ink); }
   .mobile-menu-header .mobile-menu-brand { min-height: 0; border: 0; padding: 0; background: transparent; }
   .mobile-menu-header .mobile-menu-brand img { background: transparent; }
   .mobile-menu-card, .mobile-menu-wide { overflow: hidden; border: 0; padding: 0; background: transparent; box-shadow: none; text-shadow: none; transition: transform .16s ease; }
-  .mobile-menu-card { width: 90%; min-height: 0; justify-self: center; aspect-ratio: 1 / 1; }
+  .mobile-menu-card { width: 90%; min-height: 0; justify-self: center; aspect-ratio: 1 / 1; box-shadow: 0 14px 24px rgba(15,42,80,.18); }
   .mobile-menu-card:active, .mobile-menu-wide:active { transform: scale(.94); }
   .mobile-menu-wide { min-height: 0; aspect-ratio: 685 / 300; }
   .mobile-menu-card img, .mobile-menu-wide img { display: block; width: 100%; height: 100%; object-fit: fill; }
