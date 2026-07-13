@@ -38,6 +38,7 @@ const estadoInicial = {
   agendaAnimar: '',
   agendaItens: [],
   metaMensal: 0,
+  metaPedidos: 0,
   temaEscuro: false,
   acessoVendas: null,
   solicitacaoAcesso: null,
@@ -173,6 +174,7 @@ function salvarEstado() {
     agendaDiaSelecionado: state.agendaDiaSelecionado,
     agendaItens: state.agendaItens,
     metaMensal: state.metaMensal,
+    metaPedidos: state.metaPedidos,
     temaEscuro: state.temaEscuro,
   } : { ...state, carrinho: [] };
   try {
@@ -187,8 +189,36 @@ function moeda(valor) {
   return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(Number(valor || 0));
 }
 
+function numeroParaCampoMoeda(valor) {
+  return Number(valor || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+function numeroCampoMoeda(valorCampo) {
+  const texto = String(valorCampo || '').trim().replace(/R\$|\s/g, '');
+  if (!texto) return 0;
+  const normalizado = texto.includes(',') ? texto.replace(/\./g, '').replace(',', '.') : texto;
+  const numero = Number(normalizado);
+  return Number.isFinite(numero) ? numero : 0;
+}
+
+function formatarCampoMoeda(input) {
+  if (!(input instanceof HTMLInputElement)) return 0;
+  const digitos = input.value.replace(/\D/g, '');
+  const numero = digitos ? Number(digitos) / 100 : 0;
+  input.value = numeroParaCampoMoeda(numero);
+  return numero;
+}
+
+function lerCampoMoeda(idCampo) {
+  return numeroCampoMoeda(valor(idCampo));
+}
+
 function dataBR(value) {
   return new Intl.DateTimeFormat('pt-BR', { dateStyle: 'short', timeStyle: 'short' }).format(new Date(value));
+}
+
+function dataCurtaBR(value) {
+  return new Intl.DateTimeFormat('pt-BR').format(new Date(value));
 }
 
 function id(prefixo) {
@@ -241,13 +271,23 @@ function totaisPeriodo() {
   const fim = new Date(`${state.filtroFim}T23:59:59`);
   const vendasMes = state.vendas.filter((v) => {
     const d = new Date(v.criado_em);
-    return d >= inicio && d <= fim && v.status !== 'cancelada' && !pedidoEhConsignado(v);
+    return d >= inicio && d <= fim && v.status !== 'cancelada' && !pedidoEhConsignado(v) && tipoPedido(v) !== 'bonificacoes';
   });
   const total = vendasMes.reduce((s, v) => s + Number(v.total || 0), 0);
-  const itens = vendasMes.reduce((s, v) => s + v.itens.reduce((x, i) => x + Number(i.quantidade || 0), 0), 0);
+  const itens = vendasMes.reduce((s, v) => s + (v.itens || []).reduce((x, i) => x + Number(i.quantidade || 0), 0), 0);
+  const custo = vendasMes.reduce((soma, venda) => {
+    const custoRegistrado = Number(metadadosPedido(venda).custo_total);
+    if (Number.isFinite(custoRegistrado)) return soma + custoRegistrado;
+    return soma + (venda.itens || []).reduce((subtotal, item) => {
+      const produto = state.produtos.find((registro) => registro.id === item.produto_id);
+      return subtotal + Number(item.quantidade || 0) * Number(item.preco_custo ?? produto?.preco_custo ?? produto?.metadados?.preco_custo ?? 0);
+    }, 0);
+  }, 0);
   return {
     vendasMes,
     total,
+    custo,
+    margem: total - custo,
     pedidos: vendasMes.length,
     ticket: vendasMes.length ? total / vendasMes.length : 0,
     itens,
@@ -984,6 +1024,43 @@ function renderConteudo() {
   return renderModuloEmBreve();
 }
 
+function rankingClientesDashboard(vendas) {
+  const mapa = new Map();
+  vendas.filter((venda) => venda.cliente_id).forEach((venda) => {
+    const cliente = state.clientes.find((item) => item.id === venda.cliente_id);
+    const atual = mapa.get(venda.cliente_id) || { nome: cliente?.nome || 'Cliente', total: 0, pedidos: 0 };
+    atual.total += Number(venda.total || 0);
+    atual.pedidos += 1;
+    mapa.set(venda.cliente_id, atual);
+  });
+  return [...mapa.values()].sort((a, b) => b.total - a.total).slice(0, 10);
+}
+
+function rankingProdutosDashboard(vendas) {
+  const mapa = new Map();
+  vendas.forEach((venda) => (venda.itens || []).forEach((item) => {
+    const chaveProduto = item.produto_id || item.produto_sku || item.produto_nome;
+    const atual = mapa.get(chaveProduto) || { nome: item.produto_nome || 'Produto', qtd: 0, total: 0 };
+    atual.qtd += Number(item.quantidade || 0);
+    atual.total += Number(item.total ?? Number(item.quantidade || 0) * Number(item.preco || item.preco_unitario || 0));
+    mapa.set(chaveProduto, atual);
+  }));
+  return [...mapa.values()].sort((a, b) => b.qtd - a.qtd).slice(0, 10);
+}
+
+function clientesInativosDashboard() {
+  const agora = new Date();
+  return state.clientes.map((cliente) => {
+    const ultima = state.vendas
+      .filter((venda) => venda.cliente_id === cliente.id && venda.status !== 'cancelada' && !pedidoEhConsignado(venda) && tipoPedido(venda) !== 'bonificacoes')
+      .sort((a, b) => new Date(b.criado_em) - new Date(a.criado_em))[0];
+    const dias = ultima ? Math.floor((agora.getTime() - new Date(ultima.criado_em).getTime()) / 86400000) : null;
+    return { nome: cliente.nome, ultima, dias };
+  }).filter((item) => item.dias === null || item.dias > 30)
+    .sort((a, b) => (b.dias ?? Number.MAX_SAFE_INTEGER) - (a.dias ?? Number.MAX_SAFE_INTEGER))
+    .slice(0, 10);
+}
+
 function renderDashboard() {
   const t = totaisPeriodo();
   const pagamentosPeriodo = (state.pagamentos || []).filter((pagamento) => {
@@ -992,26 +1069,39 @@ function renderDashboard() {
   });
   const totalRecebido = pagamentosPeriodo.reduce((soma, pagamento) => soma + Number(pagamento.valor || 0), 0);
   const totalAReceber = state.clientes.reduce((soma, cliente) => soma + saldoFinanceiroCliente(cliente.id).debito, 0);
-  const produtoTop = produtoMaisVendido();
-  const clienteTop = clienteMaisCompra();
+  const clientesTop = rankingClientesDashboard(t.vendasMes);
+  const produtosTop = rankingProdutosDashboard(t.vendasMes);
+  const clientesInativos = clientesInativosDashboard();
+  const maiorMovimento = Math.max(t.total, totalRecebido, 1);
+  const margemPercentual = t.total > 0 ? (t.margem / t.total) * 100 : 0;
+  const progressoPedidos = state.metaPedidos > 0 ? Math.min(100, t.pedidos / state.metaPedidos * 100) : 0;
+  const progressoMensal = state.metaMensal > 0 ? Math.min(100, t.total / state.metaMensal * 100) : 0;
+  const tabelaClientes = clientesTop.length ? clientesTop.map((item) => `<tr><td><b>${escapeHtml(item.nome)}</b><small>${item.pedidos} ${item.pedidos === 1 ? 'pedido' : 'pedidos'}</small></td><td>${moeda(item.total)}</td></tr>`).join('') : '<tr><td colspan="2">Nenhuma venda no período.</td></tr>';
+  const tabelaInativos = clientesInativos.length ? clientesInativos.map((item) => `<tr><td>${escapeHtml(item.nome)}</td><td>${item.ultima ? dataCurtaBR(item.ultima.criado_em) : 'Sem compra'}</td><td>${item.dias ?? '—'}</td></tr>`).join('') : '<tr><td colspan="3">Nenhum cliente inativo.</td></tr>';
+  const graficoProdutos = produtosTop.length ? produtosTop.map((item) => `<div class="dashboard-bar-row"><span><b>${escapeHtml(item.nome)}</b><small>${item.qtd} un. · ${moeda(item.total)}</small></span><i><em style="width:${Math.max(4, item.qtd / produtosTop[0].qtd * 100)}%"></em></i></div>`).join('') : '<p>Sem vendas de produtos no período.</p>';
   return `
-    <section class="page-heading"><h2>Dashboard</h2><div class="date-filter"><label><span>Início</span><input type="date" value="${state.filtroInicio}" onchange="state.filtroInicio=this.value"></label><label><span>Fim</span><input type="date" value="${state.filtroFim}" onchange="state.filtroFim=this.value"></label><button class="filter-button" onclick="aplicarFiltroDashboard()">${svgIcon('filter')}<span>Filtrar</span></button></div></section>
-    <section class="month-switcher"><div><button aria-label="Mês anterior" onclick="mudarMes(-1)">${svgIcon('chevron-left')}</button><strong>${nomeMesReferencia()}</strong><button aria-label="Próximo mês" onclick="mudarMes(1)">${svgIcon('chevron-right')}</button></div><button class="current-month" onclick="irMesAtual()">${svgIcon('calendar')} &nbsp; ${mesReferenciaAtual() ? 'Mês Atual' : 'Voltar para o Mês Atual'}</button></section>
-    <section class="goal-grid">
-      <article class="goal-card orders-goal"><h3>${svgIcon('target')} <span>Meta de Pedidos</span><small>Empresa</small></h3><div><b>Realizado: <em>${moeda(t.total)}</em></b><span>(${t.pedidos} pedidos)</span><b>Meta: ${moeda(state.metaMensal)}</b></div><div class="progress"><i style="width:${state.metaMensal ? Math.max(2, Math.min(100, t.total / state.metaMensal * 100)) : 2}%"></i></div><p>Faltam <b>${moeda(Math.max(0, state.metaMensal - t.total))}</b> para atingir a meta.</p></article>
-      <article class="goal-card sales-goal"><h3>${svgIcon('target')} <span>Medidor de Meta Mensal</span></h3><div class="goal-values"><b>Vendas Atuais: <em>${moeda(t.total)}</em></b><b>Meta: ${moeda(state.metaMensal)}</b></div><div class="progress"><i style="width:${state.metaMensal ? Math.max(2, Math.min(100, t.total / state.metaMensal * 100)) : 2}%"></i></div><p>Faltam <b>${moeda(Math.max(0, state.metaMensal - t.total))}</b> para atingir sua meta! Vamos lá! 🚀</p><hr /><button class="outline-button" onclick="setAba('configuracoes')">${svgIcon('settings')} Configurar Meta</button></article>
-    </section>
-    <section class="dashboard-kpis">
-      ${kpi('Total Vendido', moeda(t.total), '$')}
-      ${kpi('Total Recebido', moeda(totalRecebido), '⌁')}
-      ${kpi('A Receber', moeda(totalAReceber), '◷')}
-      ${kpi('Clientes Ativos', state.clientes.length, '♧')}
-    </section>
-    <section class="dashboard-tables">
-      <article class="dashboard-panel"><h3>♧ &nbsp; Top 10 Clientes</h3><table><thead><tr><th>Cliente</th><th>Total Comprado</th></tr></thead><tbody><tr><td>${clienteTop ? escapeHtml(clienteTop.nome) : 'Nenhum cliente.'}</td><td>${clienteTop ? moeda(clienteTop.total) : ''}</td></tr></tbody></table></article>
-      <article class="dashboard-panel"><h3>◷ &nbsp; Clientes Inativos (+30 dias)</h3><table><thead><tr><th>Cliente</th><th>Última Compra</th><th>Dias</th></tr></thead><tbody><tr><td colspan="3">Nenhum inativo.</td></tr></tbody></table></article>
-      <article class="dashboard-panel"><h3>◇ &nbsp; Top 10 Produtos</h3><p>${produtoTop ? `${escapeHtml(produtoTop.nome)} · ${produtoTop.qtd} unidades` : 'Sem dados.'}</p></article>
-      <article class="dashboard-panel"><h3>↗ &nbsp; Rentabilidade</h3><p>Sem dados.</p></article>
+    <section class="dashboard-page">
+      <div class="dashboard-sticky-head">
+        <section class="page-heading"><div><h2>Dashboard</h2><p>Resultados do período selecionado</p></div><div class="date-filter"><label><span>Início</span><input type="date" value="${state.filtroInicio}" onchange="state.filtroInicio=this.value"></label><label><span>Fim</span><input type="date" value="${state.filtroFim}" onchange="state.filtroFim=this.value"></label><button class="filter-button" onclick="aplicarFiltroDashboard()">${svgIcon('filter')}<span>Filtrar</span></button></div></section>
+        <section class="month-switcher"><div><button aria-label="Mês anterior" onclick="mudarMes(-1)">${svgIcon('chevron-left')}</button><strong>${nomeMesReferencia()}</strong><button aria-label="Próximo mês" onclick="mudarMes(1)">${svgIcon('chevron-right')}</button></div><button class="current-month" onclick="irMesAtual()">${svgIcon('calendar')}<span>${mesReferenciaAtual() ? 'Mês atual' : 'Ir para o mês atual'}</span></button></section>
+      </div>
+      <section class="goal-grid">
+        <article class="goal-card orders-goal"><h3>${svgIcon('target')}<span>Meta de Pedidos</span><small>Empresa</small></h3><div class="goal-card-body"><div class="goal-values"><b>Realizado <em>${t.pedidos}</em></b><b>Meta <em>${state.metaPedidos || 0}</em></b></div><div class="progress"><i style="width:${Math.max(2, progressoPedidos)}%"></i></div><p>Faltam <b>${Math.max(0, Number(state.metaPedidos || 0) - t.pedidos)}</b> pedidos para atingir a meta.</p></div></article>
+        <article class="goal-card sales-goal"><h3>${svgIcon('target')}<span>Meta Mensal</span><button type="button" onclick="setAba('configuracoes')" aria-label="Configurar metas">${svgIcon('settings')}</button></h3><div class="goal-card-body"><div class="goal-values"><b>Vendas <em>${moeda(t.total)}</em></b><b>Meta <em>${moeda(state.metaMensal)}</em></b></div><div class="progress"><i style="width:${Math.max(2, progressoMensal)}%"></i></div><p>Faltam <b>${moeda(Math.max(0, state.metaMensal - t.total))}</b> para atingir a meta.</p></div></article>
+      </section>
+      <section class="dashboard-kpis">
+        ${kpi('Total Vendido', moeda(t.total), '$')}
+        ${kpi('Total Recebido', moeda(totalRecebido), '⌁')}
+        ${kpi('Saldo a Receber', moeda(totalAReceber), '◷')}
+        ${kpi('Clientes Ativos', state.clientes.filter((cliente) => cliente.ativo !== false).length, '♧')}
+      </section>
+      <section class="dashboard-movement-card"><header><h3>${svgIcon('dollar')} Movimento financeiro</h3><small>${escapeHtml(nomeMesReferencia())}</small></header><div class="dashboard-finance-bars"><div><span>Vendas <b>${moeda(t.total)}</b></span><i><em style="width:${t.total / maiorMovimento * 100}%"></em></i></div><div><span>Recebimentos <b>${moeda(totalRecebido)}</b></span><i><em style="width:${totalRecebido / maiorMovimento * 100}%"></em></i></div></div></section>
+      <section class="dashboard-tables">
+        <article class="dashboard-panel"><h3>${svgIcon('users')} Top 10 Clientes</h3><div class="dashboard-panel-body"><table><thead><tr><th>Cliente</th><th>Total comprado</th></tr></thead><tbody>${tabelaClientes}</tbody></table></div></article>
+        <article class="dashboard-panel"><h3>${svgIcon('calendar')} Clientes Inativos (+30 dias)</h3><div class="dashboard-panel-body"><table><thead><tr><th>Cliente</th><th>Última compra</th><th>Dias</th></tr></thead><tbody>${tabelaInativos}</tbody></table></div></article>
+        <article class="dashboard-panel"><h3>${svgIcon('package')} Top 10 Produtos</h3><div class="dashboard-panel-body dashboard-product-chart">${graficoProdutos}</div></article>
+        <article class="dashboard-panel"><h3>${svgIcon('target')} Rentabilidade</h3><div class="dashboard-panel-body profitability-report"><div><span>Receita de vendas</span><b>${moeda(t.total)}</b></div><div><span>Custo dos produtos</span><b>${moeda(t.custo)}</b></div><div class="highlight"><span>Margem de contribuição</span><b>${moeda(t.margem)}</b></div><div><span>Margem sobre vendas</span><b>${margemPercentual.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}%</b></div></div></article>
+      </section>
     </section>
   `;
 }
@@ -1142,7 +1232,7 @@ function renderConfiguracoes() {
       <article class="settings-card"><h3>${svgIcon('user')} Dados do Usuário</h3><dl><dt>Nome Completo:</dt><dd>${escapeHtml(state.usuario.nome)}</dd><dt>Celular confirmado:</dt><dd>${telefone ? escapeHtml(mascararTelefone(telefone)) : 'Não informado'}</dd><dt>Representação/Empresa:</dt><dd>AvantaLab</dd></dl><div class="actions"><button class="secondary" onclick="abrirAtualizarTelefone()">${svgIcon('phone')} ${telefone ? 'Alterar celular' : 'Cadastrar celular'}</button></div></article>
       <article class="settings-card"><h3>${svgIcon('settings')} Aparência</h3><label class="switch-line"><span>Modo Escuro (Dark Mode)</span><input type="checkbox" ${state.temaEscuro ? 'checked' : ''} onchange="alternarTema(this.checked)"><i></i></label><p>Alterne o tema da aplicação para maior conforto visual.</p></article>
     </div>
-    <article class="settings-card settings-goal"><h3>${svgIcon('target')} Medidor de Meta Mensal</h3><div class="goal-values"><b>Vendas Atuais: <em>${moeda(t.total)}</em></b><b>Meta: ${moeda(state.metaMensal)}</b></div><div class="progress"><i style="width:${Math.max(2, progresso)}%"></i></div><p>Faltam <b>${moeda(Math.max(0, state.metaMensal - t.total))}</b> para atingir sua meta! Vamos lá! 🚀</p><div class="settings-form"><input id="metaConfig" type="number" step="0.01" min="0" value="${state.metaMensal || ''}" placeholder="Definir nova Meta (R$)"><button class="primary" onclick="salvarMeta()">${svgIcon('save')} Salvar</button></div></article>
+    <article class="settings-card settings-goal"><h3>${svgIcon('target')} Metas do período</h3><div class="goal-values"><b>Vendas Atuais: <em>${moeda(t.total)}</em></b><b>Meta: ${moeda(state.metaMensal)}</b></div><div class="progress"><i style="width:${Math.max(2, progresso)}%"></i></div><p>Faltam <b>${moeda(Math.max(0, state.metaMensal - t.total))}</b> para atingir sua meta.</p><div class="settings-form settings-goals-form"><label><span>Meta mensal</span><input id="metaConfig" type="text" inputmode="numeric" value="${numeroParaCampoMoeda(state.metaMensal)}" onfocus="this.select()" oninput="formatarCampoMoeda(this)" placeholder="0,00"></label><label><span>Meta de pedidos</span><input id="metaPedidosConfig" type="number" inputmode="numeric" min="0" step="1" value="${Math.max(0, Number(state.metaPedidos || 0))}"></label><button class="primary" onclick="salvarMeta()">${svgIcon('save')} Salvar</button></div></article>
     <article class="settings-card"><h3>${svgIcon('lock')} Segurança e Senha</h3><p>Defina uma senha para entrar também por e-mail. Se você acessa pelo Google, esta é a sua primeira senha.</p><div class="password-form"><label>Nova Senha (mín. 8 caracteres)<input id="senhaNova" type="password" autocomplete="new-password" minlength="8"></label><label>Confirme Nova Senha<input id="senhaConfirma" type="password" autocomplete="new-password" minlength="8"></label><button class="password-button" onclick="alterarSenha()">${svgIcon('lock')} Salvar senha</button></div></article>
     <article class="settings-card"><h3>${svgIcon('package')} Catálogo de Produtos</h3><p>Importe um pacote Excel, exporte seu catálogo e gerencie as listas cadastradas.</p><div class="actions"><button class="secondary" onclick="baixarModeloProdutosExcel()">${svgIcon('download')} Modelo Excel</button><button class="primary" onclick="abrirImportacaoPacote()">${svgIcon('package')} Pacote de produtos</button></div></article>
     <article class="settings-card"><h3>${svgIcon('save')} Aplicativo Web (PWA)</h3><p>Instale o aplicativo na tela inicial para acesso rápido, como um app nativo.</p><button class="install-button" onclick="instalarPWA()">Adicionar à Área de Trabalho</button><small>Se o botão não aparecer, use “Adicionar à tela inicial” no menu do navegador.</small></article>
@@ -1151,9 +1241,10 @@ function renderConfiguracoes() {
 }
 
 function salvarMeta() {
-  state.metaMensal = Math.max(0, Number(valor('metaConfig') || 0));
+  state.metaMensal = Math.max(0, lerCampoMoeda('metaConfig'));
+  state.metaPedidos = Math.max(0, Math.floor(Number(valor('metaPedidosConfig') || 0)));
   render();
-  toast('Meta mensal salva.');
+  toast('Metas salvas.');
 }
 
 function alternarTema(ativo) {
@@ -1411,7 +1502,7 @@ function saldoFinanceiroCliente(clienteId) {
 }
 
 function renderCliente(c) {
-  const vendasCliente = state.vendas.filter((v) => v.cliente_id === c.id && v.status !== 'cancelada' && !pedidoEhConsignado(v));
+  const vendasCliente = state.vendas.filter((v) => v.cliente_id === c.id && v.status !== 'cancelada' && !pedidoEhConsignado(v) && tipoPedido(v) !== 'bonificacoes');
   const ultimaVenda = [...vendasCliente].sort((a, b) => new Date(b.criado_em) - new Date(a.criado_em))[0];
   const saldo = saldoFinanceiroCliente(c.id);
   const debito = saldo.debito;
@@ -1507,14 +1598,14 @@ function mostrarCardPedidoCliente() {
       <article class="order-product-entry">
         <h3>Inserir produto</h3>
         ${produtos.length ? `<label class="transaction-field"><span>Produto</span><select id="pedidoClienteProduto" onchange="selecionarProdutoPedidoCliente(this.value)"><option value="" ${rascunho.produtoId ? '' : 'selected'} disabled>Selecione o produto</option>${produtos.map((produto) => `<option value="${produto.id}" ${produto.id === rascunho.produtoId ? 'selected' : ''}>${escapeHtml(produto.nome)}</option>`).join('')}</select></label>
-        <div class="order-item-fields"><label class="transaction-field"><span>Quantidade</span><div class="quantity-stepper"><button type="button" onclick="ajustarQuantidadePedidoCliente(-1)">−</button><input id="pedidoClienteQuantidade" type="number" min="1" step="1" inputmode="numeric" value="${escapeAttr(rascunho.quantidade)}" onfocus="if(this.value==='1')this.value=''" oninput="sincronizarQuantidadePedidoCliente(this.value)" onblur="normalizarQuantidadePedidoCliente()"><button type="button" onclick="ajustarQuantidadePedidoCliente(1)">+</button></div></label><label class="transaction-field"><span>Preço</span><input id="pedidoClientePreco" type="number" min="0" step="0.01" inputmode="decimal" value="${Number(rascunho.preco || 0).toFixed(2)}" oninput="pedidoClienteRascunho.preco=Number(this.value||0)"></label></div>
+        <div class="order-item-fields"><label class="transaction-field"><span>Quantidade</span><div class="quantity-stepper"><button type="button" onclick="ajustarQuantidadePedidoCliente(-1)">−</button><input id="pedidoClienteQuantidade" type="number" min="1" step="1" inputmode="numeric" value="${escapeAttr(rascunho.quantidade)}" onfocus="if(this.value==='1')this.value=''" oninput="sincronizarQuantidadePedidoCliente(this.value)" onblur="normalizarQuantidadePedidoCliente()"><button type="button" onclick="ajustarQuantidadePedidoCliente(1)">+</button></div></label><label class="transaction-field"><span>Preço</span><input id="pedidoClientePreco" type="text" inputmode="numeric" value="${numeroParaCampoMoeda(rascunho.preco)}" onfocus="this.select()" oninput="pedidoClienteRascunho.preco=formatarCampoMoeda(this)"></label></div>
         <button type="button" class="primary order-insert-item" onclick="inserirItemPedidoCliente()">Inserir item</button>` : '<p class="transaction-empty">Cadastre produtos antes de criar um pedido.</p>'}
       </article>
       </div>
       <section class="order-draft-scroll"><div class="order-draft-items"><h3>Itens do pedido</h3>${itensHtml}</div></section>
       <section class="transaction-totals">
         <div><span>Subtotal</span><b id="pedidoClienteSubtotal">${moeda(totais.subtotal)}</b></div>
-        <label><span>Desconto</span><input id="pedidoClienteDesconto" type="number" min="0" step="0.01" inputmode="decimal" value="${Number(totais.desconto).toFixed(2)}" oninput="atualizarDescontoPedidoCliente(this.value)"></label>
+        <label><span>Desconto</span><input id="pedidoClienteDesconto" type="text" inputmode="numeric" value="${numeroParaCampoMoeda(totais.desconto)}" onfocus="this.select()" oninput="atualizarDescontoPedidoCliente(this)"></label>
         <div class="total"><span>Total final</span><b id="pedidoClienteTotal">${moeda(totais.total)}</b></div>
       </section>
     </div>
@@ -1539,7 +1630,7 @@ function selecionarProdutoPedidoCliente(produtoId) {
   pedidoClienteRascunho.produtoId = produtoId;
   pedidoClienteRascunho.preco = Number(produto?.preco || 0);
   const campoPreco = document.getElementById('pedidoClientePreco');
-  if (campoPreco) campoPreco.value = pedidoClienteRascunho.preco.toFixed(2);
+  if (campoPreco) campoPreco.value = numeroParaCampoMoeda(pedidoClienteRascunho.preco);
 }
 
 function sincronizarQuantidadePedidoCliente(valorQuantidade) {
@@ -1569,7 +1660,7 @@ function inserirItemPedidoCliente() {
   normalizarQuantidadePedidoCliente();
   const produto = state.produtos.find((item) => item.id === pedidoClienteRascunho.produtoId);
   const quantidade = Math.max(1, Number(pedidoClienteRascunho.quantidade || 1));
-  const preco = Number(document.getElementById('pedidoClientePreco')?.value || pedidoClienteRascunho.preco || 0);
+  const preco = lerCampoMoeda('pedidoClientePreco');
   if (!produto) { toast('Selecione um produto.'); return; }
   if (preco < 0) { toast('Informe um preço válido.'); return; }
   pedidoClienteRascunho.itens.push({ produto_id: produto.id, produto_nome: produto.nome, produto_sku: produto.sku || null, quantidade, preco });
@@ -1585,9 +1676,9 @@ function removerItemPedidoCliente(indice) {
   mostrarCardPedidoCliente();
 }
 
-function atualizarDescontoPedidoCliente(valorDesconto) {
+function atualizarDescontoPedidoCliente(inputDesconto) {
   if (!pedidoClienteRascunho) return;
-  pedidoClienteRascunho.desconto = Math.max(0, Number(valorDesconto || 0));
+  pedidoClienteRascunho.desconto = Math.max(0, formatarCampoMoeda(inputDesconto));
   const totais = totaisPedidoClienteRascunho();
   const subtotal = document.getElementById('pedidoClienteSubtotal');
   const total = document.getElementById('pedidoClienteTotal');
@@ -1609,6 +1700,10 @@ async function finalizarPedidoCliente() {
   const saldoAtual = rascunho.tipo === 'consignado'
     ? financeiroAnterior.debito
     : Math.max(0, saldoLiquidoAnterior + totais.total);
+  const custoTotalPedido = rascunho.itens.reduce((soma, item) => {
+    const produto = state.produtos.find((registro) => registro.id === item.produto_id);
+    return soma + Number(item.quantidade || 0) * Number(produto?.preco_custo ?? produto?.metadados?.preco_custo ?? 0);
+  }, 0);
   const venda = {
     id: id('vend'),
     cliente_id: rascunho.clienteId,
@@ -1621,6 +1716,7 @@ async function finalizarPedidoCliente() {
       avantalab_pedido: true,
       tipo: rascunho.tipo,
       descricao: rascunho.tipo === 'consignado' ? 'Pedido consignado' : 'Pedido de venda',
+      custo_total: custoTotalPedido,
       saldo_anterior: financeiroAnterior.debito,
       saldo_final: saldoAtual,
     }),
@@ -1645,9 +1741,9 @@ function abrirPagamentoCliente(clienteId) {
   sheet(`
     <div class="sheet-header"><div><h2>Registrar pagamento</h2><p class="muted small">${escapeHtml(cliente.nome)}</p></div><button class="close" onclick="fecharSheet()">×</button></div>
     <div class="client-transaction-scroll payment-entry-form">
-      <label class="transaction-field"><span>Valor pago</span><input id="pagamentoClienteValor" type="number" min="0" step="0.01" inputmode="decimal" placeholder="0,00" oninput="atualizarResumoPagamentoCliente()"></label>
+      <label class="transaction-field"><span>Valor pago</span><input id="pagamentoClienteValor" type="text" inputmode="numeric" value="0,00" onfocus="this.select()" oninput="formatarCampoMoeda(this);atualizarResumoPagamentoCliente()"></label>
       <label class="transaction-field"><span>Valor total da dívida</span><input value="${escapeAttr(moeda(saldo.debito))}" readonly></label>
-      <label class="transaction-field"><span>Desconto</span><input id="pagamentoClienteDesconto" type="number" min="0" step="0.01" inputmode="decimal" value="0.00" oninput="atualizarResumoPagamentoCliente()"></label>
+      <label class="transaction-field"><span>Desconto</span><input id="pagamentoClienteDesconto" type="text" inputmode="numeric" value="0,00" onfocus="this.select()" oninput="formatarCampoMoeda(this);atualizarResumoPagamentoCliente()"></label>
       <section class="payment-balance-summary"><div><span>Saldo anterior</span><b>${moeda(saldo.debito)}</b></div><div><span>Valor pago + desconto</span><b id="pagamentoClienteAbatimento">${moeda(0)}</b></div><div class="final"><span>Saldo final</span><b id="pagamentoClienteSaldoFinal">${moeda(saldo.debito)}</b></div></section>
       <label class="transaction-field transaction-date-field"><span>Data do pagamento</span><input id="pagamentoClienteData" type="date" value="${isoData(new Date())}"></label>
       <label class="transaction-field"><span>Forma de pagamento</span><select id="pagamentoClienteForma"><option selected>Pix</option><option>Dinheiro</option><option>Cartão de crédito</option><option>Cartão de débito</option><option>Cheque</option><option>Boleto</option></select></label>
@@ -1658,8 +1754,8 @@ function abrirPagamentoCliente(clienteId) {
 
 function resumoPagamentoCliente() {
   const saldoAnterior = Number(pagamentoClienteRascunho?.saldoAnterior || 0);
-  const valorPago = Math.max(0, Number(valor('pagamentoClienteValor') || 0));
-  const desconto = Math.max(0, Number(valor('pagamentoClienteDesconto') || 0));
+  const valorPago = Math.max(0, lerCampoMoeda('pagamentoClienteValor'));
+  const desconto = Math.max(0, lerCampoMoeda('pagamentoClienteDesconto'));
   return { saldoAnterior, valorPago, desconto, abatimento: valorPago + desconto, saldoFinal: Math.max(0, saldoAnterior - valorPago - desconto) };
 }
 
@@ -1794,7 +1890,7 @@ function abrirDetalhesCliente(clienteId, aba = 'resumo', pagina = 0) {
   const consignados = pedidos.filter((venda) => venda.status !== 'cancelada' && pedidoEhConsignado(venda));
   const pagamentos = pagamentosDoCliente(clienteId);
   const saldo = saldoFinanceiroCliente(clienteId);
-  const totalComprado = pedidos.filter((venda) => venda.status !== 'cancelada' && !pedidoEhConsignado(venda)).reduce((soma, venda) => soma + Number(venda.total || 0), 0);
+  const totalComprado = pedidos.filter((venda) => venda.status !== 'cancelada' && !pedidoEhConsignado(venda) && tipoPedido(venda) !== 'bonificacoes').reduce((soma, venda) => soma + Number(venda.total || 0), 0);
   const conteudo = aba === 'resumo'
     ? `<div class="client-summary-grid"><div><small>Débito pendente</small><b>${moeda(saldo.debito)}</b></div><div><small>Consignação</small><b>${moeda(saldo.consignado)}</b></div><div><small>Crédito</small><b>${moeda(saldo.credito)}</b></div><div><small>Total comprado</small><b>${moeda(totalComprado)}</b></div></div>`
     : aba === 'consignado'
@@ -2362,8 +2458,8 @@ function abrirProduto(produtoId = '') {
         ${campo('prodUnidade', 'Unidade', p.unidade || 'un')}
       </div>
       <div class="grid-2">
-        ${campo('prodCusto', 'Preço de custo', p.preco_custo || '', 'number', '0.01')}
-        ${campo('prodPreco', 'Preço de venda', p.preco || '', 'number', '0.01')}
+        ${campoMoeda('prodCusto', 'Preço de custo', p.preco_custo || 0)}
+        ${campoMoeda('prodPreco', 'Preço de venda', p.preco || 0)}
       </div>
       ${campo('prodEstoque', 'Estoque', p.estoque ?? '', 'number', '0.001')}
       ${campo('prodImagem', 'Link da imagem (opcional)', p.imagem_url || '', 'url')}
@@ -2383,8 +2479,8 @@ async function salvarProduto(produtoId) {
     categoria: valor('prodCategoria').trim(),
     sku: valor('prodSku').trim(),
     unidade: valor('prodUnidade').trim() || 'un',
-    preco: Number(valor('prodPreco') || 0),
-    preco_custo: Number(valor('prodCusto') || 0),
+    preco: lerCampoMoeda('prodPreco'),
+    preco_custo: lerCampoMoeda('prodCusto'),
     estoque: valor('prodEstoque') ? Number(valor('prodEstoque')) : null,
     imagem_url: valor('prodImagem').trim(),
     descricao: valor('prodDescricao').trim(),
@@ -2531,7 +2627,7 @@ function abrirCarrinho() {
       <div class="grid-2">
         <div class="field">
           <label>Desconto</label>
-          <input id="vendaDesconto" type="number" step="0.01" value="0" oninput="atualizarTotalCarrinho()" />
+          <input id="vendaDesconto" type="text" inputmode="numeric" value="0,00" onfocus="this.select()" oninput="formatarCampoMoeda(this);atualizarTotalCarrinho()" />
         </div>
         <div class="field">
           <label>Pagamento</label>
@@ -2571,7 +2667,7 @@ function renderItemCarrinho(item) {
 
 function atualizarTotalCarrinho() {
   const subtotal = state.carrinho.reduce((s, item) => s + item.quantidade * item.preco, 0);
-  const desconto = Number(valor('vendaDesconto') || 0);
+  const desconto = lerCampoMoeda('vendaDesconto');
   const total = Math.max(0, subtotal - desconto);
   const el = document.getElementById('carrinhoTotal');
   if (el) el.textContent = moeda(total);
@@ -2583,7 +2679,7 @@ async function finalizarVenda() {
     return;
   }
   const subtotal = state.carrinho.reduce((s, item) => s + item.quantidade * item.preco, 0);
-  const desconto = Number(valor('vendaDesconto') || 0);
+  const desconto = lerCampoMoeda('vendaDesconto');
   const total = Math.max(0, subtotal - desconto);
   const venda = {
     id: id('vend'),
@@ -2699,7 +2795,7 @@ function resetarDados() {
 
 function produtoMaisVendido() {
   const mapa = new Map();
-  state.vendas.filter((v) => v.status !== 'cancelada' && !pedidoEhConsignado(v)).forEach((v) => {
+  state.vendas.filter((v) => v.status !== 'cancelada' && !pedidoEhConsignado(v) && tipoPedido(v) !== 'bonificacoes').forEach((v) => {
     v.itens.forEach((i) => {
       const atual = mapa.get(i.produto_id) || { nome: i.produto_nome, qtd: 0 };
       atual.qtd += Number(i.quantidade || 0);
@@ -2711,7 +2807,7 @@ function produtoMaisVendido() {
 
 function clienteMaisCompra() {
   const mapa = new Map();
-  state.vendas.filter((v) => v.status !== 'cancelada' && !pedidoEhConsignado(v) && v.cliente_id).forEach((v) => {
+  state.vendas.filter((v) => v.status !== 'cancelada' && !pedidoEhConsignado(v) && tipoPedido(v) !== 'bonificacoes' && v.cliente_id).forEach((v) => {
     const cliente = state.clientes.find((c) => c.id === v.cliente_id);
     const atual = mapa.get(v.cliente_id) || { nome: cliente?.nome || 'Cliente', total: 0 };
     atual.total += Number(v.total || 0);
@@ -2725,6 +2821,15 @@ function campo(idCampo, label, value = '', type = 'text', step = '') {
     <div class="field">
       <label>${label}</label>
       <input id="${idCampo}" type="${type}" ${step ? `step="${step}"` : ''} value="${escapeAttr(value)}" />
+    </div>
+  `;
+}
+
+function campoMoeda(idCampo, label, value = 0) {
+  return `
+    <div class="field">
+      <label>${label}</label>
+      <input id="${idCampo}" type="text" inputmode="numeric" value="${escapeAttr(numeroParaCampoMoeda(value))}" onfocus="this.select()" oninput="formatarCampoMoeda(this)" />
     </div>
   `;
 }
@@ -2929,6 +3034,7 @@ window.abrirMoverAgendaVendas = abrirMoverAgendaVendas;
 window.cancelarMoverAgendaVendas = cancelarMoverAgendaVendas;
 window.salvarNovaDataAgendaVendas = salvarNovaDataAgendaVendas;
 window.salvarMeta = salvarMeta;
+window.formatarCampoMoeda = formatarCampoMoeda;
 window.alternarTema = alternarTema;
 window.alterarSenha = alterarSenha;
 window.abrirAtualizarTelefone = abrirAtualizarTelefone;
