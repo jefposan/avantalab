@@ -29,6 +29,8 @@ const estadoInicial = {
   agendaMes: new Date().getMonth(),
   agendaDiaSelecionado: null,
   agendaFormAberto: false,
+  agendaClientePreselecionado: '',
+  agendaDataFormulario: '',
   agendaExpandida: false,
   agendaItemMovendo: null,
   agendaAnimar: '',
@@ -275,8 +277,11 @@ function clientesFiltrados() {
 
 function render() {
   const agendaAtiva = Boolean(state.autenticado && state.aba === 'agenda' && !carregandoBackend && !conectandoGoogle);
+  const formularioAgendaAberto = Boolean(state.autenticado && state.agendaFormAberto && !carregandoBackend && !conectandoGoogle);
   document.documentElement.classList.toggle('agenda-open', agendaAtiva);
   document.body.classList.toggle('agenda-open', agendaAtiva);
+  document.documentElement.classList.toggle('agenda-form-open', formularioAgendaAberto);
+  document.body.classList.toggle('agenda-form-open', formularioAgendaAberto);
   salvarEstado();
   if (carregandoBackend || conectandoGoogle) {
     limparDestaqueClientes();
@@ -316,6 +321,7 @@ function render() {
     ${state.menuAberto ? renderMenuMobile() : ''}
     ${renderNavegacaoInferior()}
     ${state.aba === 'novo-pedido' ? `<button class="fab" onclick="abrirCarrinho()">${svgIcon('shopping-cart')}</button>` : ''}
+    ${state.agendaFormAberto && state.aba !== 'agenda' ? renderFormularioAgendaVendas() : ''}
   `;
   if (state.aba === 'clientes') requestAnimationFrame(configurarDestaqueClientes);
   else limparDestaqueClientes();
@@ -481,6 +487,8 @@ function acionarNavegacaoInferior(event, destino) {
 function fecharCamadasAgenda() {
   state.agendaDiaSelecionado = null;
   state.agendaFormAberto = false;
+  state.agendaClientePreselecionado = '';
+  state.agendaDataFormulario = '';
   state.agendaExpandida = false;
   state.agendaItemMovendo = null;
 }
@@ -1019,14 +1027,37 @@ function renderItemAgendaVendas(item) {
   return `<article class="agenda-mobile-item"><div><b>${escapeHtml(item.titulo)}</b><small class="agenda-tag ${String(etiqueta).toLowerCase()}">${escapeHtml(etiqueta)}</small>${state.agendaExpandida && item.descricao ? `<p>${escapeHtml(item.descricao)}</p>` : ''}</div><div class="agenda-mobile-item-actions"><button type="button" class="agenda-mobile-move" onclick="abrirMoverAgendaVendas('${escapeAttr(item.id)}')" aria-label="Alterar data">↗</button><button type="button" class="agenda-mobile-delete" onclick="excluirItemAgendaVendas('${escapeAttr(item.id)}')" aria-label="Excluir agendamento">×</button></div></article>`;
 }
 
-function selecionarDiaAgenda(dia) { state.agendaDiaSelecionado = dia; state.agendaFormAberto = false; state.agendaExpandida = false; render(); }
-function fecharDiaAgenda() { state.agendaDiaSelecionado = null; state.agendaFormAberto = false; state.agendaExpandida = false; render(); }
+function selecionarDiaAgenda(dia) { state.agendaDiaSelecionado = dia; state.agendaFormAberto = false; state.agendaClientePreselecionado = ''; state.agendaDataFormulario = ''; state.agendaExpandida = false; render(); }
+function fecharDiaAgenda() { state.agendaDiaSelecionado = null; state.agendaFormAberto = false; state.agendaClientePreselecionado = ''; state.agendaDataFormulario = ''; state.agendaExpandida = false; render(); }
 function alternarExpansaoAgenda() { state.agendaExpandida = !state.agendaExpandida; render(); }
-function moverMesAgendaVendas(direcao) { const data = new Date(Number(state.agendaAno), Number(state.agendaMes) + direcao, 1); state.agendaAno = data.getFullYear(); state.agendaMes = data.getMonth(); state.agendaDiaSelecionado = null; state.agendaFormAberto = false; state.agendaExpandida = false; state.agendaAnimar = direcao > 0 ? 'prox' : 'prev'; render(); }
-function abrirFormularioAgendaVendas() { state.agendaFormAberto = true; render(); }
-function cancelarFormularioAgendaVendas() { state.agendaFormAberto = false; render(); }
-function renderFormularioAgendaVendas() { return `<div class="agenda-form-overlay" onclick="if(event.target===this)cancelarFormularioAgendaVendas()"><section class="agenda-form-card"><header><div><small>Novo agendamento</small><h3>${String(state.agendaDiaSelecionado).padStart(2, '0')} de ${new Intl.DateTimeFormat('pt-BR', { month: 'long' }).format(new Date(state.agendaAno, state.agendaMes, 1))}</h3></div><button type="button" class="close" onclick="cancelarFormularioAgendaVendas()">×</button></header><div class="agenda-form-fields"><input id="agendaClienteVendas" placeholder="Nome do cliente" autocomplete="off"><select id="agendaEtiquetaVendas"><option value="Visita">Visita</option><option value="Entrega">Entrega</option><option value="Recebimento">Recebimento</option></select><textarea id="agendaDescricaoVendas" placeholder="Notas"></textarea><div><button type="button" class="ghost" onclick="cancelarFormularioAgendaVendas()">Cancelar</button><button type="button" class="primary" onclick="salvarItemAgendaVendas()">Salvar</button></div></div></section></div>`; }
-function salvarItemAgendaVendas() { const titulo = valor('agendaClienteVendas').trim(); if (!titulo) { toast('Informe o nome do cliente.'); return; } state.agendaItens = [...itensAgendaVendas(), { id: id('agenda'), titulo, tipo: valor('agendaEtiquetaVendas') || 'Visita', descricao: valor('agendaDescricaoVendas').trim(), ano: Number(state.agendaAno), mes: Number(state.agendaMes), dia: Number(state.agendaDiaSelecionado), repetir: false, repeticao: '', criadoEm: new Date().toISOString() }]; state.agendaFormAberto = false; salvarEstado(); render(); toast('Cliente agendado.'); }
+function moverMesAgendaVendas(direcao) { const data = new Date(Number(state.agendaAno), Number(state.agendaMes) + direcao, 1); state.agendaAno = data.getFullYear(); state.agendaMes = data.getMonth(); state.agendaDiaSelecionado = null; state.agendaFormAberto = false; state.agendaClientePreselecionado = ''; state.agendaDataFormulario = ''; state.agendaExpandida = false; state.agendaAnimar = direcao > 0 ? 'prox' : 'prev'; render(); }
+function dataFormularioAgenda() {
+  if (/^\d{4}-\d{2}-\d{2}$/.test(String(state.agendaDataFormulario || ''))) return state.agendaDataFormulario;
+  const dia = Number(state.agendaDiaSelecionado) || new Date().getDate();
+  return `${String(state.agendaAno).padStart(4, '0')}-${String(Number(state.agendaMes) + 1).padStart(2, '0')}-${String(dia).padStart(2, '0')}`;
+}
+function dataAgendaPorExtenso(data) {
+  const [ano, mes, dia] = data.split('-').map(Number);
+  return `${String(dia).padStart(2, '0')} de ${new Intl.DateTimeFormat('pt-BR', { month: 'long' }).format(new Date(ano, mes - 1, 1))}`;
+}
+function abrirFormularioAgendaVendas() { state.agendaClientePreselecionado = ''; state.agendaDataFormulario = dataFormularioAgenda(); state.agendaFormAberto = true; render(); }
+function cancelarFormularioAgendaVendas() { state.agendaFormAberto = false; state.agendaClientePreselecionado = ''; state.agendaDataFormulario = ''; render(); }
+function renderFormularioAgendaVendas() {
+  const data = dataFormularioAgenda();
+  const vemDoCliente = Boolean(state.agendaClientePreselecionado);
+  return `<div class="agenda-form-overlay" onclick="if(event.target===this)cancelarFormularioAgendaVendas()"><section class="agenda-form-card"><header><div><small>Novo agendamento</small><h3>${vemDoCliente ? 'Agende para a data desejada' : dataAgendaPorExtenso(data)}</h3></div><button type="button" class="close" onclick="cancelarFormularioAgendaVendas()">×</button></header><div class="agenda-form-fields"><input id="agendaClienteVendas" placeholder="Nome do cliente" autocomplete="off" value="${escapeAttr(state.agendaClientePreselecionado)}">${vemDoCliente ? `<label class="agenda-date-field"><span>Dia do agendamento</span><input id="agendaDataVendas" type="date" value="${escapeAttr(data)}"></label>` : ''}<select id="agendaEtiquetaVendas"><option value="Visita">Visita</option><option value="Entrega">Entrega</option><option value="Recebimento">Recebimento</option></select><textarea id="agendaDescricaoVendas" placeholder="Notas"></textarea><div><button type="button" class="ghost" onclick="cancelarFormularioAgendaVendas()">Cancelar</button><button type="button" class="primary" onclick="salvarItemAgendaVendas()">Salvar</button></div></div></section></div>`;
+}
+function salvarItemAgendaVendas() {
+  const titulo = valor('agendaClienteVendas').trim();
+  if (!titulo) { toast('Informe o nome do cliente.'); return; }
+  const data = state.agendaClientePreselecionado ? valor('agendaDataVendas') : dataFormularioAgenda();
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(data)) { toast('Selecione um dia válido.'); return; }
+  const [ano, mes, dia] = data.split('-').map(Number);
+  state.agendaItens = [...itensAgendaVendas(), { id: id('agenda'), titulo, tipo: valor('agendaEtiquetaVendas') || 'Visita', descricao: valor('agendaDescricaoVendas').trim(), ano, mes: mes - 1, dia, repetir: false, repeticao: '', criadoEm: new Date().toISOString() }];
+  state.agendaAno = ano; state.agendaMes = mes - 1; state.agendaDiaSelecionado = dia;
+  state.agendaFormAberto = false; state.agendaClientePreselecionado = ''; state.agendaDataFormulario = '';
+  salvarEstado(); render(); toast('Cliente agendado.');
+}
 function excluirItemAgendaVendas(itemId) { state.agendaItens = itensAgendaVendas().filter((item) => String(item.id) !== String(itemId)); salvarEstado(); render(); toast('Lembrete excluído.'); }
 function abrirMoverAgendaVendas(itemId) { state.agendaItemMovendo = itensAgendaVendas().find((item) => String(item.id) === String(itemId)) || null; render(); }
 function cancelarMoverAgendaVendas() { state.agendaItemMovendo = null; render(); }
@@ -1349,7 +1380,17 @@ function abrirMenuCliente(clienteId) {
   const cliente = state.clientes.find((item) => item.id === clienteId);
   if (!cliente) return;
   const acaoStatus = cliente.ativo === false ? 'Ativar cliente' : 'Desativar cliente';
-  sheet(`<div class="sheet-header"><div><h2>${escapeHtml(cliente.nome)}</h2><p class="muted small">Opções do cliente</p></div><button class="close" onclick="fecharSheet()">×</button></div><div class="client-option-list"><button class="secondary" onclick="fecharSheet();abrirCliente('${clienteId}')">${iconeAcaoCliente('editar')} Editar</button><button class="danger" onclick="alterarStatusCliente('${clienteId}', ${cliente.ativo === false})">${iconeAcaoCliente('desativar')} ${acaoStatus}</button></div>`, 'sheet-backdrop-centered');
+  sheet(`<div class="sheet-header"><div><h2>${escapeHtml(cliente.nome)}</h2><p class="muted small">Opções do cliente</p></div><button class="close" onclick="fecharSheet()">×</button></div><div class="client-option-list"><button class="primary" onclick="abrirAgendamentoCliente('${clienteId}')">${svgIcon('calendar')} Agendar</button><button class="secondary" onclick="fecharSheet();abrirCliente('${clienteId}')">${iconeAcaoCliente('editar')} Editar</button><button class="danger" onclick="alterarStatusCliente('${clienteId}', ${cliente.ativo === false})">${iconeAcaoCliente('desativar')} ${acaoStatus}</button></div>`, 'sheet-backdrop-centered');
+}
+
+function abrirAgendamentoCliente(clienteId) {
+  const cliente = state.clientes.find((item) => item.id === clienteId);
+  if (!cliente) return;
+  fecharSheet();
+  state.agendaClientePreselecionado = cliente.nome || '';
+  state.agendaDataFormulario = isoData(new Date());
+  state.agendaFormAberto = true;
+  render();
 }
 
 async function alterarStatusCliente(clienteId, ativar) {
@@ -2049,6 +2090,7 @@ window.abrirAcoesRapidas = abrirAcoesRapidas;
 window.acionarNavegacaoInferior = acionarNavegacaoInferior;
 window.buscarCepCliente = buscarCepCliente;
 window.abrirMenuCliente = abrirMenuCliente;
+window.abrirAgendamentoCliente = abrirAgendamentoCliente;
 window.alterarStatusCliente = alterarStatusCliente;
 window.abrirDetalhesCliente = abrirDetalhesCliente;
 window.abrirPedidoCliente = abrirPedidoCliente;
