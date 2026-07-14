@@ -2205,7 +2205,8 @@ function abrirPagamentoClienteDetalhe(pagamentoId) {
   if (!pagamento) return;
   const cliente = state.clientes.find((item) => item.id === pagamento.cliente_id);
   const resumo = resumoComprovantePagamento(pagamento);
-  sheet(`<div class="sheet-header"><div><h2>Comprovante de pagamento</h2><p class="muted small">${escapeHtml(cliente?.nome || 'Cliente não informado')} · ${dataComprovante(pagamento.data_pagamento)}</p></div><button class="close" onclick="fecharSheet()">×</button></div><section class="payment-detail-summary receipt-detail-summary"><div><span>Valor pago</span><b>${moeda(pagamento.valor)}</b></div><div><span>Desconto</span><b>${moeda(pagamento.desconto)}</b></div><div><span>Forma</span><b>${escapeHtml(pagamento.forma_pagamento || 'Não informado')}</b></div><div><span>Saldo anterior</span><b>${moeda(resumo.saldoAnterior)}</b></div><div class="receipt-current-balance"><span>Saldo atual</span><b>${moeda(resumo.saldoAtual)}</b></div></section><button class="primary order-share" onclick="compartilharPagamento('${pagamentoId}')">${svgIcon('save')} Compartilhar comprovante</button>`, 'sheet-backdrop-centered receipt-view-backdrop');
+  const descontoHtml = Number(pagamento.desconto || 0) > 0 ? `<div><span>Desconto</span><b>${moeda(pagamento.desconto)}</b></div>` : '';
+  sheet(`<div class="sheet-header"><div><h2>Comprovante de pagamento</h2><p class="muted small">Cliente: ${escapeHtml(cliente?.nome || 'não informado')} · ${dataComprovante(pagamento.data_pagamento)}</p></div><button class="close" onclick="fecharSheet()">×</button></div><section class="payment-detail-summary receipt-detail-summary"><div><span>Valor pago</span><b>${moeda(pagamento.valor)}</b></div>${descontoHtml}<div><span>Forma</span><b>${escapeHtml(pagamento.forma_pagamento || 'Não informado')}</b></div><div><span>Saldo anterior</span><b>${moeda(resumo.saldoAnterior)}</b></div><div class="receipt-current-balance"><span>Saldo atual</span><b>${moeda(resumo.saldoAtual)}</b></div></section><button class="primary order-share" onclick="compartilharPagamento('${pagamentoId}')">${svgIcon('save')} Compartilhar comprovante</button>`, 'sheet-backdrop-centered receipt-view-backdrop');
 }
 
 function abrirPedidoCliente(pedidoId) {
@@ -2226,7 +2227,7 @@ function abrirPedidoCliente(pedidoId) {
   const converter = pedidoEhConsignado(venda) && venda.status !== 'cancelada'
     ? `<section class="consignment-convert"><h3>Enviar itens para pedido</h3><p>Selecione a quantidade de cada item que foi vendida.</p><button type="button" class="primary" onclick="gerarPedidoDoConsignado('${pedidoId}')">Gerar pedido</button></section>`
     : '';
-  sheet(`<div class="sheet-header"><div><h2>${tipo}</h2><p class="muted small">${escapeHtml(cliente?.nome || 'Cliente não informado')} · ${dataComprovante(venda.criado_em)}</p></div><button class="close" onclick="fecharSheet()">×</button></div><div class="order-view-items">${itensHtml}</div>${converter}<section class="receipt-balance-summary"><div><span>Total dos itens</span><b>${moeda(venda.subtotal || venda.total)}</b></div><div><span>Saldo anterior</span><b>${moeda(resumo.saldoAnterior)}</b></div><div><span>Valor do pedido</span><b>${moeda(venda.total)}</b></div><div class="receipt-current-balance"><span>Saldo atual</span><b>${moeda(resumo.saldoAtual)}</b></div></section><button class="primary order-share" onclick="compartilharPedido('${pedidoId}')">${svgIcon('save')} Compartilhar comprovante</button><footer class="order-view-actions"><button type="button" class="ghost" onclick="fecharSheet()">Cancelar</button><button type="button" class="danger" onclick="confirmarExclusaoPedido('${pedidoId}')">Excluir</button><button type="button" class="secondary" onclick="abrirEditarPedido('${pedidoId}')">Editar</button>${venda.status !== 'cancelada' ? `<button type="button" class="warning" onclick="confirmarCancelamentoPedido('${pedidoId}')">Cancelar pedido</button>` : ''}</footer>`, 'sheet-backdrop-centered receipt-view-backdrop order-view-backdrop');
+  sheet(`<div class="sheet-header"><div><h2>${tipo}</h2><p class="muted small">Cliente: ${escapeHtml(cliente?.nome || 'não informado')} · ${dataComprovante(venda.criado_em)}</p></div><button class="close" onclick="fecharSheet()">×</button></div><div class="order-view-items">${itensHtml}</div>${converter}<section class="receipt-balance-summary"><div><span>Saldo anterior</span><b>${moeda(resumo.saldoAnterior)}</b></div><div><span>Pedido</span><b>${moeda(venda.total)}</b></div><div class="receipt-current-balance"><span>Saldo atual</span><b>${moeda(resumo.saldoAtual)}</b></div></section><button class="primary order-share" onclick="compartilharPedido('${pedidoId}')">${svgIcon('save')} Compartilhar comprovante</button><footer class="order-view-actions"><button type="button" class="ghost" onclick="fecharSheet()">Cancelar</button><button type="button" class="danger" onclick="confirmarExclusaoPedido('${pedidoId}')">Excluir</button><button type="button" class="secondary" onclick="abrirEditarPedido('${pedidoId}')">Editar</button>${venda.status !== 'cancelada' ? `<button type="button" class="warning" onclick="confirmarCancelamentoPedido('${pedidoId}')">Cancelar pedido</button>` : ''}</footer>`, 'sheet-backdrop-centered receipt-view-backdrop order-view-backdrop');
 }
 
 function confirmarCancelamentoPedido(pedidoId) {
@@ -2377,7 +2378,7 @@ function criarCanvasComprovante({ empresa = '', titulo, cliente, data, etiqueta 
   const linhasExibidas = linhas.slice(0, 44);
   if (linhas.length > linhasExibidas.length) linhasExibidas.push({ principal: `+ ${linhas.length - linhasExibidas.length} itens adicionais`, secundario: '', valor: '' });
   const largura = 1080;
-  const altura = Math.min(5400, Math.max(1450, 890 + linhasExibidas.length * 82 + resumo.length * 86));
+  const altura = Math.min(5400, Math.max(1450, 930 + linhasExibidas.length * 82 + resumo.length * 86));
   const canvas = document.createElement('canvas');
   canvas.width = largura; canvas.height = altura;
   const ctx = canvas.getContext('2d');
@@ -2389,7 +2390,7 @@ function criarCanvasComprovante({ empresa = '', titulo, cliente, data, etiqueta 
   const nomeEmpresa = String(empresa || state.acessoVendas?.empresa_nome || 'AvantaLab').trim();
   ctx.fillStyle = '#fff'; ctx.font = `900 ${nomeEmpresa.length > 28 ? 34 : nomeEmpresa.length > 20 ? 40 : 48}px Arial, sans-serif`; ctx.fillText(textoCanvasLimitado(ctx, nomeEmpresa.toUpperCase(), 880), 64, 82);
   ctx.font = '800 32px Arial, sans-serif'; ctx.fillText(titulo, 64, 142);
-  ctx.font = '600 24px Arial, sans-serif'; ctx.fillStyle = 'rgba(255,255,255,.9)'; ctx.fillText(textoCanvasLimitado(ctx, cliente, 680), 64, 188);
+  ctx.font = '600 24px Arial, sans-serif'; ctx.fillStyle = 'rgba(255,255,255,.9)'; ctx.fillText(textoCanvasLimitado(ctx, `Cliente: ${cliente}`, 680), 64, 188);
   ctx.textAlign = 'right'; ctx.fillText(data, 1016, 188); ctx.textAlign = 'left';
   let y = 284;
   if (etiqueta) {
@@ -2415,7 +2416,7 @@ function criarCanvasComprovante({ empresa = '', titulo, cliente, data, etiqueta 
     y += 86;
   });
 
-  y = y - 54 + Math.max(0, alturaResumo - (34 + resumo.length * 86)) + 64;
+  y = y - 54 + Math.max(0, alturaResumo - (34 + resumo.length * 86)) + 104;
   ctx.fillStyle = '#0A1F44'; ctx.font = '900 32px Arial, sans-serif'; ctx.fillText(linhasExibidas.length ? 'Detalhes' : 'Informações', 64, y);
   y += 24;
   const alturaDetalhes = Math.max(120, 34 + linhasExibidas.length * 82);
@@ -2425,7 +2426,15 @@ function criarCanvasComprovante({ empresa = '', titulo, cliente, data, etiqueta 
   ctx.font = '750 27px Arial, sans-serif';
   linhasExibidas.forEach((linha, indice) => {
     if (indice) { ctx.strokeStyle = '#e1e9f0'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(78, y - 25); ctx.lineTo(1002, y - 25); ctx.stroke(); }
-    ctx.fillStyle = '#172033'; ctx.fillText(textoCanvasLimitado(ctx, linha.principal, 600), 78, y + 5);
+    ctx.font = '750 27px Arial, sans-serif';
+    const principal = textoCanvasLimitado(ctx, linha.principal, linha.bonificado ? 380 : 600);
+    ctx.fillStyle = '#172033'; ctx.fillText(principal, 78, y + 5);
+    if (linha.bonificado) {
+      const xBonificado = Math.min(78 + ctx.measureText(principal).width + 18, 488);
+      caminhoRetanguloArredondado(ctx, xBonificado, y - 25, 178, 38, 19);
+      ctx.fillStyle = '#ffedd5'; ctx.fill();
+      ctx.fillStyle = '#9a3412'; ctx.font = '900 18px Arial, sans-serif'; ctx.textAlign = 'center'; ctx.fillText('BONIFICADO', xBonificado + 89, y + 1); ctx.textAlign = 'left';
+    }
     if (linha.secundario) { ctx.fillStyle = '#64748b'; ctx.font = '650 22px Arial, sans-serif'; ctx.fillText(textoCanvasLimitado(ctx, linha.secundario, 600), 78, y + 37); ctx.font = '750 27px Arial, sans-serif'; }
     ctx.fillStyle = '#1687D9'; ctx.textAlign = 'right'; ctx.font = '850 28px Arial, sans-serif'; ctx.fillText(linha.valor || '', 1002, y + 9); ctx.textAlign = 'left'; ctx.font = '750 27px Arial, sans-serif';
     y += 82;
@@ -2454,7 +2463,8 @@ async function compartilharPedido(pedidoId) {
   const cliente = state.clientes.find((item) => item.id === venda.cliente_id);
   const resumo = resumoComprovantePedido(venda);
   const linhas = (venda.itens || []).map((item) => ({
-    principal: `${item.produto_nome || 'Produto'}${itemPedidoBonificado(item) ? ' · BONIFICADO' : ''}`,
+    principal: item.produto_nome || 'Produto',
+    bonificado: itemPedidoBonificado(item),
     secundario: `${Number(item.quantidade || 0)} × ${moeda(item.preco || item.preco_unitario)}`,
     valor: moeda(itemPedidoBonificado(item) ? 0 : Number(item.total ?? Number(item.quantidade || 0) * Number(item.preco || item.preco_unitario || 0))),
   }));
@@ -2466,9 +2476,8 @@ async function compartilharPedido(pedidoId) {
     etiqueta: pedidoEhConsignado(venda) ? 'CONSIGNADO' : 'VENDA',
     linhas,
     resumo: [
-      { rotulo: 'Total dos itens', valor: moeda(venda.subtotal || venda.total) },
       { rotulo: 'Saldo anterior', valor: moeda(resumo.saldoAnterior) },
-      { rotulo: 'Valor total do pedido', valor: moeda(venda.total) },
+      { rotulo: 'Pedido', valor: moeda(venda.total) },
       { rotulo: 'Saldo atual', valor: moeda(resumo.saldoAtual) },
     ],
   });
