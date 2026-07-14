@@ -154,7 +154,7 @@
 
     const produtos = (produtosRes.data || []).map((produto) => ({
       ...produto,
-      preco_custo: Number(produto.preco_custo ?? produto.metadados?.preco_custo ?? 0),
+      preco_custo: Number(Number(produto.preco_custo || 0) > 0 ? produto.preco_custo : produto.metadados?.preco_custo ?? 0),
       pacote_origem_id: produto.pacote_origem_id ?? produto.metadados?.pacote?.id ?? null,
     }));
     const pacotes = [...new Map(produtos
@@ -204,6 +204,7 @@
       nome: product.nome,
       descricao: product.descricao || null,
       preco: Number(product.preco || 0),
+      preco_custo: Number(product.preco_custo || 0),
       estoque: product.estoque === '' || product.estoque == null ? null : Number(product.estoque),
       unidade: product.unidade || 'un',
       imagem_url: product.imagem_url || null,
@@ -248,6 +249,7 @@
       nome: product.nome,
       descricao: product.descricao || null,
       preco: Number(product.preco || 0),
+      preco_custo: Number(product.preco_custo || 0),
       estoque: product.estoque === '' || product.estoque == null ? null : Number(product.estoque),
       unidade: product.unidade || 'un',
       imagem_url: product.imagem_url || null,
@@ -272,6 +274,7 @@
       nome: customer.nome,
       telefone: customer.telefone || null,
       email: customer.email || null,
+      data_nascimento: customer.data_nascimento || null,
       endereco: {
         endereco: customer.endereco || '', cidade: customer.cidade || '',
         estado: customer.estado || '', cep: customer.cep || '', numero: customer.numero || '', complemento: customer.complemento || '',
@@ -329,6 +332,7 @@
       produto_sku: item.produto_sku || null,
       quantidade,
       preco_unitario: preco,
+      preco_custo: item.preco_custo == null ? null : Number(item.preco_custo),
       desconto: bonificado ? quantidade * preco : Number(item.desconto || 0),
       total: bonificado ? 0 : quantidade * preco - Number(item.desconto || 0),
     }; });
@@ -368,6 +372,7 @@
         produto_sku: item.produto_sku || null,
         quantidade,
         preco_unitario: preco,
+        preco_custo: item.preco_custo == null ? null : Number(item.preco_custo),
         desconto: bonificado ? quantidade * preco : Number(item.desconto || 0),
         total: bonificado ? 0 : quantidade * preco - Number(item.desconto || 0),
       };

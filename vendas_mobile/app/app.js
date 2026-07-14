@@ -40,7 +40,10 @@ const estadoInicial = {
   agendaItemMovendo: null,
   agendaAnimar: '',
   agendaItens: [],
+  agendaAlertaAniversarioDias: 7,
   metaMensal: 0,
+  dashboardDiasInativos: 30,
+  dashboardConsignadosExpandido: false,
   temaEscuro: false,
   acessoVendas: null,
   solicitacaoAcesso: null,
@@ -183,7 +186,10 @@ function salvarEstado() {
     agendaMes: state.agendaMes,
     agendaDiaSelecionado: state.agendaDiaSelecionado,
     agendaItens: state.agendaItens,
+    agendaAlertaAniversarioDias: state.agendaAlertaAniversarioDias,
     metaMensal: state.metaMensal,
+    dashboardDiasInativos: state.dashboardDiasInativos,
+    dashboardConsignadosExpandido: state.dashboardConsignadosExpandido,
     temaEscuro: state.temaEscuro,
   } : { ...state, carrinho: [] };
   try {
@@ -306,11 +312,23 @@ function totaisPeriodo() {
     return d >= inicio && d <= fim && v.status !== 'cancelada' && !pedidoEhConsignado(v) && !pedidoSomenteBonificado(v);
   });
   const total = vendasMes.reduce((s, v) => s + Number(v.total || 0), 0);
-  const itens = vendasMes.reduce((s, v) => s + (v.itens || []).reduce((x, i) => x + Number(i.quantidade || 0), 0), 0);
+  const itens = vendasMes.reduce((s, v) => s + (v.itens || []).reduce(
+    (x, i) => x + (itemPedidoBonificado(i) ? 0 : Number(i.quantidade || 0)),
+    0,
+  ), 0);
+  const produtosSemCusto = new Set();
+  vendasMes.forEach((venda) => (venda.itens || []).forEach((item) => {
+    const produto = state.produtos.find((registro) => registro.id === item.produto_id);
+    const custoItem = Number(item.preco_custo ?? produto?.preco_custo ?? produto?.metadados?.preco_custo ?? 0);
+    if (Number(item.quantidade || 0) > 0 && custoItem <= 0) produtosSemCusto.add(item.produto_id || item.produto_nome || 'produto');
+  }));
   const custo = vendasMes.reduce((soma, venda) => {
+    const itensVenda = venda.itens || [];
+    const todosComCustoHistorico = itensVenda.length > 0 && itensVenda.every((item) => item.preco_custo !== null && item.preco_custo !== undefined && Number.isFinite(Number(item.preco_custo)));
+    if (todosComCustoHistorico) return soma + itensVenda.reduce((subtotal, item) => subtotal + Number(item.quantidade || 0) * Number(item.preco_custo || 0), 0);
     const custoRegistrado = Number(metadadosPedido(venda).custo_total);
-    if (Number.isFinite(custoRegistrado)) return soma + custoRegistrado;
-    return soma + (venda.itens || []).reduce((subtotal, item) => {
+    if (Number.isFinite(custoRegistrado) && custoRegistrado > 0) return soma + custoRegistrado;
+    return soma + itensVenda.reduce((subtotal, item) => {
       const produto = state.produtos.find((registro) => registro.id === item.produto_id);
       return subtotal + Number(item.quantidade || 0) * Number(item.preco_custo ?? produto?.preco_custo ?? produto?.metadados?.preco_custo ?? 0);
     }, 0);
@@ -323,6 +341,7 @@ function totaisPeriodo() {
     pedidos: vendasMes.length,
     ticket: vendasMes.length ? total / vendasMes.length : 0,
     itens,
+    produtosSemCusto: produtosSemCusto.size,
   };
 }
 
@@ -1189,6 +1208,7 @@ function rankingClientesDashboard(vendas) {
 function rankingProdutosDashboard(vendas) {
   const mapa = new Map();
   vendas.forEach((venda) => (venda.itens || []).forEach((item) => {
+    if (itemPedidoBonificado(item)) return;
     const chaveProduto = item.produto_id || item.produto_sku || item.produto_nome;
     const atual = mapa.get(chaveProduto) || { nome: item.produto_nome || 'Produto', qtd: 0, total: 0 };
     atual.qtd += Number(item.quantidade || 0);
@@ -1198,15 +1218,51 @@ function rankingProdutosDashboard(vendas) {
   return [...mapa.values()].sort((a, b) => b.qtd - a.qtd).slice(0, 10);
 }
 
+function resumoConsignadosDashboard() {
+  const pedidos = state.vendas.filter((venda) => pedidoEhConsignado(venda) && !['cancelada', 'convertida'].includes(String(venda.status || '').toLowerCase()));
+  const produtos = new Map();
+  pedidos.forEach((pedido) => (pedido.itens || []).forEach((item) => {
+    if (itemPedidoBonificado(item)) return;
+    const chave = item.produto_id || item.produto_sku || item.produto_nome;
+    const atual = produtos.get(chave) || { nome: item.produto_nome || 'Produto', quantidade: 0 };
+    atual.quantidade += Number(item.quantidade || 0);
+    produtos.set(chave, atual);
+  }));
+  const listaProdutos = [...produtos.values()].sort((a, b) => b.quantidade - a.quantidade || a.nome.localeCompare(b.nome, 'pt-BR'));
+  return {
+    pedidos,
+    total: pedidos.reduce((soma, pedido) => soma + Number(pedido.total || 0), 0),
+    quantidade: listaProdutos.reduce((soma, item) => soma + item.quantidade, 0),
+    produtos: listaProdutos,
+  };
+}
+
+function alternarConsignadosDashboard() {
+  state.dashboardConsignadosExpandido = !state.dashboardConsignadosExpandido;
+  render();
+}
+
+function ajustarDiasInativosDashboard(delta) {
+  state.dashboardDiasInativos = Math.max(1, Math.min(365, Number(state.dashboardDiasInativos || 30) + Number(delta || 0)));
+  render();
+}
+
+function abrirClienteDashboard(clienteId) {
+  const cliente = state.clientes.find((item) => item.id === clienteId);
+  if (!cliente) return;
+  sheet(`<div class="sheet-header"><div><h2>${escapeHtml(cliente.nome)}</h2><p class="muted small">Ficha do cliente</p></div><button class="close" onclick="fecharSheet()">×</button></div><div class="dashboard-client-preview">${renderCliente(cliente)}</div>`, 'sheet-backdrop-centered dashboard-client-backdrop');
+}
+
 function clientesInativosDashboard() {
   const agora = new Date();
-  return state.clientes.map((cliente) => {
+  const limiteDias = Math.max(1, Number(state.dashboardDiasInativos || 30));
+  return state.clientes.filter((cliente) => cliente.ativo !== false).map((cliente) => {
     const ultima = state.vendas
       .filter((venda) => venda.cliente_id === cliente.id && venda.status !== 'cancelada' && !pedidoEhConsignado(venda) && !pedidoSomenteBonificado(venda))
       .sort((a, b) => new Date(b.criado_em) - new Date(a.criado_em))[0];
     const dias = ultima ? Math.floor((agora.getTime() - new Date(ultima.criado_em).getTime()) / 86400000) : null;
-    return { nome: cliente.nome, ultima, dias };
-  }).filter((item) => item.dias === null || item.dias > 30)
+    return { id: cliente.id, nome: cliente.nome, ultima, dias };
+  }).filter((item) => item.dias === null || item.dias > limiteDias)
     .sort((a, b) => (b.dias ?? Number.MAX_SAFE_INTEGER) - (a.dias ?? Number.MAX_SAFE_INTEGER))
     .slice(0, 10);
 }
@@ -1221,13 +1277,16 @@ function renderDashboard() {
   const totalAReceber = state.clientes.reduce((soma, cliente) => soma + saldoFinanceiroCliente(cliente.id).debito, 0);
   const clientesTop = rankingClientesDashboard(t.vendasMes);
   const produtosTop = rankingProdutosDashboard(t.vendasMes);
+  const consignados = resumoConsignadosDashboard();
   const clientesInativos = clientesInativosDashboard();
   const maiorMovimento = Math.max(t.total, totalRecebido, 1);
   const margemPercentual = t.total > 0 ? (t.margem / t.total) * 100 : 0;
   const progressoMensal = state.metaMensal > 0 ? Math.min(100, t.total / state.metaMensal * 100) : 0;
   const tabelaClientes = clientesTop.length ? clientesTop.map((item) => `<tr><td><b>${escapeHtml(item.nome)}</b><small>${item.pedidos} ${item.pedidos === 1 ? 'pedido' : 'pedidos'}</small></td><td>${moeda(item.total)}</td></tr>`).join('') : '<tr><td colspan="2">Nenhuma venda no período.</td></tr>';
-  const tabelaInativos = clientesInativos.length ? clientesInativos.map((item) => `<tr><td>${escapeHtml(item.nome)}</td><td>${item.ultima ? dataCurtaBR(item.ultima.criado_em) : 'Sem compra'}</td><td>${item.dias ?? '—'}</td></tr>`).join('') : '<tr><td colspan="3">Nenhum cliente inativo.</td></tr>';
+  const tabelaInativos = clientesInativos.length ? clientesInativos.map((item) => `<tr><td><button type="button" class="dashboard-client-link" onclick="abrirClienteDashboard('${item.id}')">${escapeHtml(item.nome)}</button></td><td>${item.ultima ? dataCurtaBR(item.ultima.criado_em) : 'Sem compra'}</td><td>${item.dias ?? '—'}</td></tr>`).join('') : '<tr><td colspan="3">Nenhum cliente inativo.</td></tr>';
   const graficoProdutos = produtosTop.length ? produtosTop.map((item) => `<div class="dashboard-bar-row"><span><b>${escapeHtml(item.nome)}</b><small>${item.qtd} un. · ${moeda(item.total)}</small></span><i><em style="width:${Math.max(4, item.qtd / produtosTop[0].qtd * 100)}%"></em></i></div>`).join('') : '<p>Sem vendas de produtos no período.</p>';
+  const listaConsignados = consignados.produtos.length ? consignados.produtos.map((item) => `<div><span>${escapeHtml(item.nome)}</span><b>${item.quantidade.toLocaleString('pt-BR')} un.</b></div>`).join('') : '<p>Nenhum produto consignado ativo.</p>';
+  const limiteInativos = Math.max(1, Number(state.dashboardDiasInativos || 30));
   return `
     <section class="dashboard-page">
       <div class="dashboard-sticky-head">
@@ -1242,13 +1301,18 @@ function renderDashboard() {
         ${kpi('Total Recebido', moeda(totalRecebido), '⌁')}
         ${kpi('Saldo a Receber', moeda(totalAReceber), '◷')}
         ${kpi('Clientes Ativos', state.clientes.filter((cliente) => cliente.ativo !== false).length, '♧')}
+        ${kpi('Pedidos', t.pedidos.toLocaleString('pt-BR'), '▤')}
+        ${kpi('Ticket Médio', moeda(t.ticket), '◈')}
+        ${kpi('Itens Vendidos', t.itens.toLocaleString('pt-BR'), '◇')}
+        ${kpi('Total Consignado', moeda(consignados.total), '◎')}
       </section>
       <section class="dashboard-movement-card"><header><h3>${svgIcon('dollar')} Movimento financeiro</h3><small>${escapeHtml(nomeMesReferencia())}</small></header><div class="dashboard-finance-bars"><div><span>Vendas <b>${moeda(t.total)}</b></span><i><em style="width:${t.total / maiorMovimento * 100}%"></em></i></div><div><span>Recebimentos <b>${moeda(totalRecebido)}</b></span><i><em style="width:${totalRecebido / maiorMovimento * 100}%"></em></i></div></div></section>
+      <section class="dashboard-consignment-card ${state.dashboardConsignadosExpandido ? 'expanded' : ''}"><header><div><h3>${svgIcon('package')} Estoque consignado</h3><small>${consignados.pedidos.length} ${consignados.pedidos.length === 1 ? 'consignado ativo' : 'consignados ativos'} · ${consignados.quantidade.toLocaleString('pt-BR')} unidades · ${moeda(consignados.total)}</small></div><button type="button" onclick="alternarConsignadosDashboard()" aria-expanded="${state.dashboardConsignadosExpandido}">${state.dashboardConsignadosExpandido ? 'Recolher' : 'Ver produtos'} ${state.dashboardConsignadosExpandido ? '⌃' : '⌄'}</button></header>${state.dashboardConsignadosExpandido ? `<div class="dashboard-consignment-products">${listaConsignados}</div>` : ''}</section>
       <section class="dashboard-tables">
         <article class="dashboard-panel"><h3>${svgIcon('users')} Top 10 Clientes</h3><div class="dashboard-panel-body"><table><thead><tr><th>Cliente</th><th>Total comprado</th></tr></thead><tbody>${tabelaClientes}</tbody></table></div></article>
-        <article class="dashboard-panel"><h3>${svgIcon('calendar')} Clientes Inativos (+30 dias)</h3><div class="dashboard-panel-body"><table><thead><tr><th>Cliente</th><th>Última compra</th><th>Dias</th></tr></thead><tbody>${tabelaInativos}</tbody></table></div></article>
+        <article class="dashboard-panel dashboard-inactive-panel"><h3>${svgIcon('calendar')}<span>Clientes Inativos</span><span class="dashboard-days-control"><button type="button" onclick="ajustarDiasInativosDashboard(-5)" aria-label="Diminuir dias">−</button><b>+${limiteInativos} dias</b><button type="button" onclick="ajustarDiasInativosDashboard(5)" aria-label="Aumentar dias">+</button></span></h3><div class="dashboard-panel-body"><table><thead><tr><th>Cliente</th><th>Última compra</th><th>Dias</th></tr></thead><tbody>${tabelaInativos}</tbody></table></div></article>
         <article class="dashboard-panel"><h3>${svgIcon('package')} Top 10 Produtos</h3><div class="dashboard-panel-body dashboard-product-chart">${graficoProdutos}</div></article>
-        <article class="dashboard-panel"><h3>${svgIcon('target')} Rentabilidade</h3><div class="dashboard-panel-body profitability-report"><div><span>Receita de vendas</span><b>${moeda(t.total)}</b></div><div><span>Custo dos produtos</span><b>${moeda(t.custo)}</b></div><div class="highlight"><span>Margem de contribuição</span><b>${moeda(t.margem)}</b></div><div><span>Margem sobre vendas</span><b>${margemPercentual.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}%</b></div></div></article>
+        <article class="dashboard-panel"><h3>${svgIcon('target')} Rentabilidade</h3><div class="dashboard-panel-body profitability-report"><div><span>Receita de vendas</span><b>${moeda(t.total)}</b></div><div><span>Custo dos produtos</span><b>${moeda(t.custo)}</b></div><div class="highlight"><span>Margem de contribuição</span><b>${moeda(t.margem)}</b></div><div><span>Margem sobre vendas</span><b>${margemPercentual.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}%</b></div><div class="${t.produtosSemCusto ? 'cost-warning' : 'cost-complete'}"><span>Cadastro de custos</span><b>${t.produtosSemCusto ? `${t.produtosSemCusto} ${t.produtosSemCusto === 1 ? 'produto sem custo' : 'produtos sem custo'}` : 'Completo no período'}</b></div></div></article>
       </section>
     </section>
   `;
@@ -1290,16 +1354,38 @@ function renderAgenda() {
   }
   const itensDia = selecionado ? itensAgendaDoDiaVendas(ano, mes, selecionado) : [];
   const titulo = new Intl.DateTimeFormat('pt-BR', { month: 'long', year: 'numeric' }).format(new Date(ano, mes, 1));
+  const proximosAniversarios = aniversariosProximosAgenda();
+  const alertaAniversarios = `<section class="agenda-birthday-alert"><header><div><small>Alertas de aniversário</small><b>${Number(state.agendaAlertaAniversarioDias || 0) === 0 ? 'Somente no dia' : `${Number(state.agendaAlertaAniversarioDias || 0)} dias antes`}</b></div><span><button type="button" onclick="ajustarAlertaAniversario(-1)" aria-label="Reduzir antecedência">−</button><button type="button" onclick="ajustarAlertaAniversario(1)" aria-label="Aumentar antecedência">+</button></span></header>${proximosAniversarios.length ? `<div>${proximosAniversarios.slice(0, 3).map((item) => `<button type="button" onclick="abrirClienteDashboard('${item.cliente.id}')"><b>${escapeHtml(item.cliente.nome)}</b><small>${item.dias === 0 ? 'Hoje' : item.dias === 1 ? 'Amanhã' : `Em ${item.dias} dias`} · ${dataCurtaBR(item.data.toISOString())}</small></button>`).join('')}${proximosAniversarios.length > 3 ? `<em>+${proximosAniversarios.length - 3}</em>` : ''}</div>` : '<p>Nenhum aniversário neste intervalo.</p>'}</section>`;
   const detalheDia = selecionado ? `<section class="agenda-mobile-detail ${state.agendaExpandida ? 'expanded' : ''}"><header><h3>Agenda de ${String(selecionado).padStart(2, '0')} de ${new Intl.DateTimeFormat('pt-BR', { month: 'long' }).format(new Date(ano, mes, 1))}</h3><div><button type="button" class="agenda-expand" onclick="alternarExpansaoAgenda()" aria-label="${state.agendaExpandida ? 'Recolher agenda' : 'Expandir agenda'}">${state.agendaExpandida ? '↙' : '↗'}</button><button type="button" class="close" onclick="fecharDiaAgenda()">×</button></div></header><div class="agenda-mobile-reminders"><div><h4>Clientes agendados</h4><button type="button" class="primary" onclick="abrirFormularioAgendaVendas()">Adicionar</button></div>${itensDia.length ? itensDia.map(renderItemAgendaVendas).join('') : '<p class="agenda-mobile-none">Nenhum cliente agendado neste dia.</p>'}</div></section>` : '';
-  return `<section class="agenda-mobile-page ${state.agendaExpandida ? 'agenda-expanded' : ''}"><div class="agenda-mobile-month"><button type="button" onclick="moverMesAgendaVendas(-1)" aria-label="Mês anterior">‹</button><h2>${escapeHtml(titulo)}</h2><button type="button" onclick="moverMesAgendaVendas(1)" aria-label="Próximo mês">›</button></div><section class="agenda-mobile-screen ${selecionado ? 'agenda-has-selection' : ''} ${animacao ? `agenda-anim-${animacao}` : ''}"><h2>AGENDA</h2><div class="agenda-mobile-week"><b>D</b><b>S</b><b>T</b><b>Q</b><b>Q</b><b>S</b><b>S</b></div><div class="agenda-mobile-grid">${dias.join('')}</div>${detalheDia}</section>${state.agendaFormAberto ? renderFormularioAgendaVendas() : ''}${state.agendaItemMovendo ? renderMoverAgendaVendas() : ''}</section>`;
+  return `<section class="agenda-mobile-page ${state.agendaExpandida ? 'agenda-expanded' : ''}"><div class="agenda-mobile-month"><button type="button" onclick="moverMesAgendaVendas(-1)" aria-label="Mês anterior">‹</button><h2>${escapeHtml(titulo)}</h2><button type="button" onclick="moverMesAgendaVendas(1)" aria-label="Próximo mês">›</button></div>${alertaAniversarios}<section class="agenda-mobile-screen ${selecionado ? 'agenda-has-selection' : ''} ${animacao ? `agenda-anim-${animacao}` : ''}"><h2>AGENDA</h2><div class="agenda-mobile-week"><b>D</b><b>S</b><b>T</b><b>Q</b><b>Q</b><b>S</b><b>S</b></div><div class="agenda-mobile-grid">${dias.join('')}</div>${detalheDia}</section>${state.agendaFormAberto ? renderFormularioAgendaVendas() : ''}${state.agendaItemMovendo ? renderMoverAgendaVendas() : ''}</section>`;
+}
+
+function aniversariosProximosAgenda() {
+  const hoje = new Date(); hoje.setHours(0, 0, 0, 0);
+  const limite = Math.max(0, Math.min(30, Number(state.agendaAlertaAniversarioDias || 0)));
+  return state.clientes.filter((cliente) => cliente.ativo !== false && /^\d{4}-\d{2}-\d{2}$/.test(String(cliente.data_nascimento || ''))).map((cliente) => {
+    const [, mes, dia] = cliente.data_nascimento.split('-').map(Number);
+    let data = new Date(hoje.getFullYear(), mes - 1, dia);
+    if (data < hoje) data = new Date(hoje.getFullYear() + 1, mes - 1, dia);
+    return { cliente, data, dias: Math.round((data - hoje) / 86400000) };
+  }).filter((item) => item.dias <= limite).sort((a, b) => a.dias - b.dias || a.cliente.nome.localeCompare(b.cliente.nome, 'pt-BR'));
+}
+
+function ajustarAlertaAniversario(delta) {
+  state.agendaAlertaAniversarioDias = Math.max(0, Math.min(30, Number(state.agendaAlertaAniversarioDias || 0) + Number(delta || 0)));
+  render();
 }
 
 function itensAgendaVendas() {
-  if (Array.isArray(state.agendaItens) && state.agendaItens.length) return state.agendaItens;
-  return (state.compromissos || []).map((item) => {
+  const itensManuais = Array.isArray(state.agendaItens) && state.agendaItens.length ? state.agendaItens : (state.compromissos || []).map((item) => {
     const data = new Date(`${item.data || isoData(new Date())}T12:00:00`);
     return { id: item.id, titulo: item.cliente || 'Compromisso', tipo: item.tipo || 'Visita', descricao: item.observacao || '', ano: data.getFullYear(), mes: data.getMonth(), dia: data.getDate(), repetir: false, repeticao: '' };
   });
+  const aniversarios = state.clientes.filter((cliente) => cliente.ativo !== false && /^\d{4}-\d{2}-\d{2}$/.test(String(cliente.data_nascimento || ''))).map((cliente) => {
+    const [ano, mes, dia] = cliente.data_nascimento.split('-').map(Number);
+    return { id: `aniversario_${cliente.id}`, clienteId: cliente.id, titulo: cliente.nome, tipo: 'Aniversário', descricao: `Aniversário de ${cliente.nome}`, ano, mes: mes - 1, dia, repetir: true, repeticao: 'anual', automatico: true };
+  });
+  return [...itensManuais, ...aniversarios];
 }
 
 function itensAgendaDoDiaVendas(ano, mes, dia) {
@@ -1319,7 +1405,10 @@ function itensAgendaDoDiaVendas(ano, mes, dia) {
 
 function renderItemAgendaVendas(item) {
   const etiqueta = item.tipo || 'Visita';
-  return `<article class="agenda-mobile-item"><div><b>${escapeHtml(item.titulo)}</b><small class="agenda-tag ${String(etiqueta).toLowerCase()}">${escapeHtml(etiqueta)}</small>${state.agendaExpandida && item.descricao ? `<p>${escapeHtml(item.descricao)}</p>` : ''}</div><div class="agenda-mobile-item-actions"><button type="button" class="agenda-mobile-move" onclick="abrirMoverAgendaVendas('${escapeAttr(item.id)}')" aria-label="Alterar data">↗</button><button type="button" class="agenda-mobile-delete" onclick="excluirItemAgendaVendas('${escapeAttr(item.id)}')" aria-label="Excluir agendamento">×</button></div></article>`;
+  const acoes = item.automatico
+    ? `<button type="button" class="agenda-birthday-client" onclick="abrirClienteDashboard('${escapeAttr(item.clienteId)}')">Ver cliente</button>`
+    : `<button type="button" class="agenda-mobile-move" onclick="abrirMoverAgendaVendas('${escapeAttr(item.id)}')" aria-label="Alterar data">↗</button><button type="button" class="agenda-mobile-delete" onclick="excluirItemAgendaVendas('${escapeAttr(item.id)}')" aria-label="Excluir agendamento">×</button>`;
+  return `<article class="agenda-mobile-item ${item.automatico ? 'agenda-birthday-item' : ''}"><div><b>${escapeHtml(item.titulo)}</b><small class="agenda-tag ${String(etiqueta).toLowerCase()}">${escapeHtml(etiqueta)}</small>${state.agendaExpandida && item.descricao ? `<p>${escapeHtml(item.descricao)}</p>` : ''}</div><div class="agenda-mobile-item-actions">${acoes}</div></article>`;
 }
 
 function selecionarDiaAgenda(dia) { state.agendaDiaSelecionado = dia; state.agendaFormAberto = false; state.agendaClientePreselecionado = ''; state.agendaDataFormulario = ''; state.agendaExpandida = false; render(); }
@@ -1848,7 +1937,9 @@ function clientesDisponiveisPedido() {
 
 function totaisPedidoClienteRascunho() {
   const subtotal = (pedidoClienteRascunho?.itens || []).reduce((soma, item) => soma + (item.bonificado ? 0 : Number(item.quantidade || 0) * Number(item.preco || 0)), 0);
-  const desconto = Math.max(0, Number(pedidoClienteRascunho?.desconto || 0));
+  const percentual = Math.max(0, Math.min(100, Number(pedidoClienteRascunho?.descontoPercentual || 0)));
+  const descontoCalculado = pedidoClienteRascunho?.descontoTipo === 'percentual' ? subtotal * percentual / 100 : Number(pedidoClienteRascunho?.desconto || 0);
+  const desconto = Math.min(subtotal, Math.max(0, Math.round(descontoCalculado * 100) / 100));
   return { subtotal, desconto, total: Math.max(0, subtotal - desconto) };
 }
 
@@ -1871,6 +1962,8 @@ function abrirNovoPedidoCliente(clienteId, permitirSelecao = false) {
     preco: 0,
     bonificado: false,
     desconto: 0,
+    descontoTipo: 'valor',
+    descontoPercentual: 0,
     itens: [],
   };
   mostrarCardPedidoCliente();
@@ -1904,7 +1997,7 @@ function mostrarCardPedidoCliente() {
       <section class="order-draft-scroll"><div class="order-draft-items"><h3>Itens do pedido</h3>${itensHtml}</div></section>
       <section class="transaction-totals">
         <div><span>Subtotal</span><b id="pedidoClienteSubtotal">${moeda(totais.subtotal)}</b></div>
-        <label><span>Desconto</span><input id="pedidoClienteDesconto" type="text" inputmode="numeric" value="${numeroParaCampoMoeda(totais.desconto)}" onfocus="this.select()" oninput="atualizarDescontoPedidoCliente(this)"></label>
+        <label class="transaction-discount"><span>Desconto <span class="discount-mode"><button type="button" class="${rascunho.descontoTipo !== 'percentual' ? 'active' : ''}" onclick="selecionarTipoDescontoPedido('valor')">R$</button><button type="button" class="${rascunho.descontoTipo === 'percentual' ? 'active' : ''}" onclick="selecionarTipoDescontoPedido('percentual')">%</button></span></span><input id="pedidoClienteDesconto" type="text" inputmode="decimal" value="${rascunho.descontoTipo === 'percentual' ? Number(rascunho.descontoPercentual || 0).toLocaleString('pt-BR', { maximumFractionDigits: 2 }) : numeroParaCampoMoeda(totais.desconto)}" onfocus="this.select()" oninput="atualizarDescontoPedidoCliente(this)"><small id="pedidoClienteDescontoCalculado">${rascunho.descontoTipo === 'percentual' ? `${Number(rascunho.descontoPercentual || 0).toLocaleString('pt-BR', { maximumFractionDigits: 2 })}% = ${moeda(totais.desconto)}` : 'Informe o valor que será abatido.'}</small></label>
         <div class="total"><span>Total final</span><b id="pedidoClienteTotal">${moeda(totais.total)}</b></div>
       </section>
     </div>
@@ -1962,7 +2055,7 @@ function inserirItemPedidoCliente() {
   const preco = lerCampoMoeda('pedidoClientePreco');
   if (!produto) { toast('Selecione um produto.'); return; }
   if (preco < 0) { toast('Informe um preço válido.'); return; }
-  pedidoClienteRascunho.itens.push({ produto_id: produto.id, produto_nome: produto.nome, produto_sku: produto.sku || null, quantidade, preco, bonificado: Boolean(pedidoClienteRascunho.bonificado) });
+  pedidoClienteRascunho.itens.push({ produto_id: produto.id, produto_nome: produto.nome, produto_sku: produto.sku || null, quantidade, preco, preco_custo: Number(produto.preco_custo ?? produto.metadados?.preco_custo ?? 0), bonificado: Boolean(pedidoClienteRascunho.bonificado) });
   pedidoClienteRascunho.produtoId = '';
   pedidoClienteRascunho.quantidade = 1;
   pedidoClienteRascunho.preco = 0;
@@ -1983,16 +2076,38 @@ function ajustarItemPedidoCliente(indice, delta) {
   mostrarCardPedidoCliente();
 }
 
+function selecionarTipoDescontoPedido(tipo) {
+  if (!pedidoClienteRascunho) return;
+  const totaisAtuais = totaisPedidoClienteRascunho();
+  if (tipo === 'percentual') {
+    pedidoClienteRascunho.descontoTipo = 'percentual';
+    pedidoClienteRascunho.descontoPercentual = totaisAtuais.subtotal > 0 ? Math.min(100, totaisAtuais.desconto / totaisAtuais.subtotal * 100) : 0;
+  } else {
+    pedidoClienteRascunho.descontoTipo = 'valor';
+    pedidoClienteRascunho.desconto = totaisAtuais.desconto;
+    pedidoClienteRascunho.descontoPercentual = 0;
+  }
+  mostrarCardPedidoCliente();
+}
+
 function atualizarDescontoPedidoCliente(inputDesconto) {
   if (!pedidoClienteRascunho) return;
-  pedidoClienteRascunho.desconto = Math.max(0, formatarCampoMoeda(inputDesconto));
+  if (pedidoClienteRascunho.descontoTipo === 'percentual') {
+    const percentual = Math.max(0, Math.min(100, numeroCampoMoeda(inputDesconto.value)));
+    pedidoClienteRascunho.descontoPercentual = percentual;
+  } else {
+    pedidoClienteRascunho.descontoPercentual = 0;
+    pedidoClienteRascunho.desconto = Math.max(0, formatarCampoMoeda(inputDesconto));
+  }
   const totais = totaisPedidoClienteRascunho();
   const subtotal = document.getElementById('pedidoClienteSubtotal');
   const total = document.getElementById('pedidoClienteTotal');
   const totalBotao = document.getElementById('pedidoClienteBotaoTotal');
+  const descontoCalculado = document.getElementById('pedidoClienteDescontoCalculado');
   if (subtotal) subtotal.textContent = moeda(totais.subtotal);
   if (total) total.textContent = moeda(totais.total);
   if (totalBotao) totalBotao.textContent = `(${moeda(totais.total)})`;
+  if (descontoCalculado) descontoCalculado.textContent = pedidoClienteRascunho.descontoTipo === 'percentual' ? `${Number(pedidoClienteRascunho.descontoPercentual || 0).toLocaleString('pt-BR', { maximumFractionDigits: 2 })}% = ${moeda(totais.desconto)}` : 'Informe o valor que será abatido.';
 }
 
 async function finalizarPedidoCliente() {
@@ -2009,7 +2124,7 @@ async function finalizarPedidoCliente() {
     : Math.max(0, saldoLiquidoAnterior + totais.total);
   const custoTotalPedido = rascunho.itens.reduce((soma, item) => {
     const produto = state.produtos.find((registro) => registro.id === item.produto_id);
-    return soma + Number(item.quantidade || 0) * Number(produto?.preco_custo ?? produto?.metadados?.preco_custo ?? 0);
+    return soma + Number(item.quantidade || 0) * Number(item.preco_custo ?? produto?.preco_custo ?? produto?.metadados?.preco_custo ?? 0);
   }, 0);
   const venda = {
     id: rascunho.editandoId || id('vend'),
@@ -2025,10 +2140,15 @@ async function finalizarPedidoCliente() {
       descricao: rascunho.tipo === 'consignado' ? 'Pedido consignado' : 'Pedido de venda',
       tem_bonificacao: rascunho.itens.some((item) => item.bonificado),
       custo_total: custoTotalPedido,
+      desconto_tipo: rascunho.descontoTipo || 'valor',
+      desconto_percentual: rascunho.descontoTipo === 'percentual' ? Number(rascunho.descontoPercentual || 0) : 0,
       saldo_anterior: financeiroAnterior.debito,
       saldo_final: saldoAtual,
     }),
-    itens: rascunho.itens.map((item) => ({ ...item, desconto: item.bonificado ? item.quantidade * item.preco : 0, total: item.bonificado ? 0 : item.quantidade * item.preco })),
+    itens: rascunho.itens.map((item) => {
+      const produto = state.produtos.find((registro) => registro.id === item.produto_id);
+      return { ...item, preco_custo: Number(item.preco_custo ?? produto?.preco_custo ?? produto?.metadados?.preco_custo ?? 0), desconto: item.bonificado ? item.quantidade * item.preco : 0, total: item.bonificado ? 0 : item.quantidade * item.preco };
+    }),
     criado_em: new Date(`${dataPedido}T12:00:00`).toISOString(),
   };
   try {
@@ -2052,6 +2172,7 @@ async function finalizarPedidoCliente() {
 function abrirEditarPedido(pedidoId) {
   const venda = state.vendas.find((item) => item.id === pedidoId);
   if (!venda) return;
+  const metadados = metadadosPedido(venda);
   pedidoClienteRascunho = {
     editandoId: venda.id,
     clienteId: venda.cliente_id,
@@ -2064,12 +2185,15 @@ function abrirEditarPedido(pedidoId) {
     preco: 0,
     bonificado: false,
     desconto: Number(venda.desconto || 0),
+    descontoTipo: metadados.desconto_tipo === 'percentual' ? 'percentual' : 'valor',
+    descontoPercentual: Number(metadados.desconto_percentual || 0),
     itens: (venda.itens || []).map((item) => ({
       produto_id: item.produto_id,
       produto_nome: item.produto_nome,
       produto_sku: item.produto_sku || null,
       quantidade: Number(item.quantidade || 1),
       preco: Number(item.preco ?? item.preco_unitario ?? 0),
+      preco_custo: item.preco_custo == null ? null : Number(item.preco_custo),
       bonificado: itemPedidoBonificado(item),
     })),
   };
@@ -2978,7 +3102,7 @@ async function salvarPacoteImportado({ nome, numero, origem, produtos, invalidos
     if (backendAtivo) {
       pacote = await window.VendasDb.createPackage({ nome, numero, origem, empresaId: state.acessoVendas?.empresa_id || null });
       const salvos = await window.VendasDb.saveProductsBulk(produtos, pacote);
-      state.produtos = [...salvos.map((produto) => ({ ...produto, preco_custo: Number(produto.metadados?.preco_custo || 0), pacote_origem_id: produto.metadados?.pacote?.id || null })), ...state.produtos];
+      state.produtos = [...salvos.map((produto) => ({ ...produto, preco_custo: Number(produto.preco_custo ?? produto.metadados?.preco_custo ?? 0), pacote_origem_id: produto.pacote_origem_id ?? produto.metadados?.pacote?.id ?? null })), ...state.produtos];
     } else {
       pacote = { id: id('pacote'), nome, numero, origem, criado_em: new Date().toISOString() };
       const salvos = produtos.map((produto) => ({ id: id('prod'), ...produto, pacote_origem_id: pacote.id, criado_em: new Date().toISOString() }));
@@ -3235,7 +3359,7 @@ async function salvarProduto(produtoId) {
     }
     if (backendAtivo) {
       const salvoBruto = await window.VendasDb.saveProduct({ id: produtoId || null, ...dados, metadados: state.produtos.find((produto) => produto.id === produtoId)?.metadados || {} });
-      const salvo = { ...salvoBruto, preco_custo: Number(salvoBruto.metadados?.preco_custo || 0), pacote_origem_id: salvoBruto.metadados?.pacote?.id || null };
+      const salvo = { ...salvoBruto, preco_custo: Number(salvoBruto.preco_custo ?? salvoBruto.metadados?.preco_custo ?? 0), pacote_origem_id: salvoBruto.pacote_origem_id ?? salvoBruto.metadados?.pacote?.id ?? null };
       state.produtos = produtoId ? state.produtos.map((p) => p.id === produtoId ? salvo : p) : [salvo, ...state.produtos];
     } else if (produtoId) state.produtos = state.produtos.map((p) => p.id === produtoId ? { ...p, ...dados, atualizado_em: new Date().toISOString() } : p);
     else state.produtos.unshift({ id: id('prod'), ...dados, criado_em: new Date().toISOString() });
@@ -3268,6 +3392,7 @@ function abrirCliente(clienteId = '') {
       ${campo('cliNome', 'Nome', c.nome || '')}
       ${campoTelefone('cliTelefone', 'Telefone / WhatsApp', c.telefone || '')}
       ${campo('cliEmail', 'E-mail', c.email || '', 'email')}
+      ${campo('cliNascimento', 'Data de nascimento', c.data_nascimento || '', 'date')}
       ${campoCepCliente(c.cep || '')}
       ${campo('cliEndereco', 'Endereço', c.endereco || '')}
       <div class="grid-2 client-address-extra">
@@ -3310,6 +3435,7 @@ async function salvarCliente(clienteId, ignorarAviso = false) {
     nome: valor('cliNome').trim(),
     telefone: valor('cliTelefone').trim() ? `+${valor('cliTelefoneDdi')}${valor('cliTelefone').replace(/\D/g, '')}` : '',
     email: valor('cliEmail').trim(),
+    data_nascimento: valor('cliNascimento') || null,
     endereco: valor('cliEndereco').trim(),
     numero: valor('cliNumero').trim(),
     complemento: valor('cliComplemento').trim(),

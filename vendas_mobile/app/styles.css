@@ -1306,6 +1306,69 @@ body { background: #fff; color: var(--ink); }
   .login-screen textarea { font-size: 16px !important; }
 }
 
+/* Dashboard financeiro, consignados e controles de desconto. */
+.dashboard-consignment-card { overflow: hidden; border: 1px solid #d8e4ec; border-radius: 13px; background: #fff; box-shadow: 0 3px 9px rgba(15,42,80,.06); }
+.dashboard-consignment-card > header { display: flex; min-height: 50px; align-items: center; justify-content: space-between; gap: 12px; padding: 8px 12px; background: linear-gradient(135deg,#f0f8fd,#e8f6f5); }
+.dashboard-consignment-card header > div { min-width: 0; }
+.dashboard-consignment-card h3 { display: flex; align-items: center; gap: 7px; margin: 0; color: #0A1F44; font-size: 13px; }
+.dashboard-consignment-card h3 .svg-icon { width: 16px; height: 16px; color: #1687D9; }
+.dashboard-consignment-card small { display: block; margin-top: 3px; color: #64748b; font-size: 9px; }
+.dashboard-consignment-card header button { min-height: 30px; flex: 0 0 auto; border: 1px solid #b9d9ee; border-radius: 999px; padding: 0 11px; color: #0874a8; background: #fff; font-size: 9px; font-weight: 850; }
+.dashboard-consignment-products { display: grid; max-height: 300px; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 1px 14px; overflow-y: auto; padding: 8px 12px 12px; }
+.dashboard-consignment-products > div { display: flex; min-width: 0; align-items: center; justify-content: space-between; gap: 10px; border-bottom: 1px solid #edf0f3; padding: 8px 2px; }
+.dashboard-consignment-products span { overflow: hidden; color: #526477; font-size: 10px; text-overflow: ellipsis; white-space: nowrap; }
+.dashboard-consignment-products b { flex: 0 0 auto; color: #0A1F44; font-size: 10px; }
+.dashboard-consignment-products p { grid-column: 1 / -1; margin: 8px 0; text-align: center; }
+.profitability-report .cost-warning, .profitability-report .cost-complete { grid-column: 1 / -1; }
+.profitability-report .cost-warning { border: 1px solid #fed7aa; background: #fff7ed; }
+.profitability-report .cost-warning b { color: #c2410c; }
+.profitability-report .cost-complete { border: 1px solid #bbf7d0; background: #f0fdf4; }
+.profitability-report .cost-complete b { color: #15803d; }
+.dashboard-days-control { display: inline-flex; align-items: center; gap: 5px; margin-left: auto; }
+.dashboard-days-control button { display: grid; width: 24px; height: 24px; place-items: center; border: 1px solid rgba(255,255,255,.28); border-radius: 999px; padding: 0; color: #fff; background: rgba(255,255,255,.14); font-size: 15px; font-weight: 900; }
+.dashboard-days-control b { min-width: 54px; color: #fff; font-size: 9px; text-align: center; }
+.dashboard-client-link { border: 0; padding: 0; color: #0874a8; background: transparent; font: inherit; font-weight: 850; text-align: left; text-decoration: underline; text-decoration-color: rgba(8,116,168,.25); text-underline-offset: 2px; }
+.dashboard-client-backdrop .sheet { width: min(94vw,480px); }
+.dashboard-client-preview .client-card { margin: 0; box-shadow: none; }
+.transaction-discount { flex-wrap: wrap; }
+.transaction-discount > span { display: flex; flex: 1 1 auto; align-items: center; justify-content: space-between; gap: 8px; }
+.discount-mode { display: inline-flex; overflow: hidden; border: 1px solid #cfe0ec; border-radius: 999px; background: #fff; }
+.discount-mode button { min-width: 30px; height: 22px; border: 0; padding: 0 7px; color: #64748b; background: transparent; font-size: 9px; font-weight: 900; }
+.discount-mode button.active { color: #fff; background: #1687D9; }
+.transaction-discount > small { flex: 1 0 100%; color: #789; font-size: 8px; font-weight: 700; text-align: right; }
+.agenda-birthday-item { border-color: #f5d0fe; background: linear-gradient(135deg,#fff,#fdf4ff); }
+.agenda-birthday-item .agenda-tag { color: #a21caf; background: #fae8ff; }
+.agenda-birthday-client { min-height: 28px; border: 1px solid #e9d5ff; border-radius: 999px; padding: 0 9px; color: #9333ea; background: #faf5ff; font-size: 9px; font-weight: 850; }
+.agenda-birthday-alert { overflow: hidden; border: 1px solid #f0d7f5; border-radius: 16px; background: #fff; box-shadow: 0 3px 10px rgba(88,28,135,.06); }
+.agenda-birthday-alert > header { display: flex; min-height: 40px; align-items: center; justify-content: space-between; gap: 10px; padding: 7px 11px; background: linear-gradient(135deg,#fdf4ff,#f5f3ff); }
+.agenda-birthday-alert header small, .agenda-birthday-alert header b { display: block; }.agenda-birthday-alert header small { color: #a21caf; font-size: 8px; font-weight: 900; letter-spacing: .08em; text-transform: uppercase; }.agenda-birthday-alert header b { margin-top: 2px; color: #581c87; font-size: 10px; }
+.agenda-birthday-alert header span { display: flex; gap: 5px; }.agenda-birthday-alert header button { display: grid; width: 26px; height: 26px; place-items: center; border: 1px solid #e9d5ff; border-radius: 999px; color: #9333ea; background: #fff; font-size: 16px; font-weight: 900; }
+.agenda-birthday-alert > div { display: flex; align-items: stretch; gap: 6px; overflow-x: auto; padding: 7px 9px; }.agenda-birthday-alert > div > button { min-width: 120px; flex: 1 0 120px; border: 1px solid #f3e8ff; border-radius: 10px; padding: 7px 9px; color: #581c87; background: #fdfaff; text-align: left; }.agenda-birthday-alert > div > button b, .agenda-birthday-alert > div > button small { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }.agenda-birthday-alert > div > button b { font-size: 10px; }.agenda-birthday-alert > div > button small { margin-top: 2px; color: #a855f7; font-size: 8px; }.agenda-birthday-alert > div em { align-self: center; color: #9333ea; font-size: 10px; font-style: normal; font-weight: 900; }.agenda-birthday-alert > p { margin: 0; padding: 8px 11px; color: #94a3b8; font-size: 9px; }
+.dark-theme .dashboard-consignment-card { border-color: #334155; background: #172033; }
+.dark-theme .dashboard-consignment-card > header { background: linear-gradient(135deg,#17283b,#102838); }
+.dark-theme .dashboard-consignment-card h3, .dark-theme .dashboard-consignment-products b { color: #f8fafc; }
+.dark-theme .dashboard-consignment-card small, .dark-theme .dashboard-consignment-products span { color: #94a3b8; }
+.dark-theme .dashboard-consignment-card header button { border-color: #155e75; color: #67e8f9; background: #102838; }
+.dark-theme .dashboard-consignment-products > div { border-color: #334155; }
+.dark-theme .profitability-report .cost-warning { border-color: #7c2d12; background: #2c1a14; }
+.dark-theme .profitability-report .cost-warning b { color: #fdba74; }
+.dark-theme .profitability-report .cost-complete { border-color: #14532d; background: #13251d; }
+.dark-theme .profitability-report .cost-complete b { color: #86efac; }
+.dark-theme .dashboard-client-link { color: #7dd3fc; }
+.dark-theme .discount-mode { border-color: #3b4b63; background: #172033; }
+.dark-theme .discount-mode button { color: #cbd5e1; }
+.dark-theme .discount-mode button.active { color: #fff; background: #1687D9; }
+.dark-theme .agenda-birthday-item { border-color: #6b217a; background: linear-gradient(135deg,#172033,#29172e); }
+.dark-theme .agenda-birthday-item .agenda-tag { color: #f0abfc; background: #4a1d50; }
+.dark-theme .agenda-birthday-client { border-color: #6b21a8; color: #e9d5ff; background: #35154b; }
+.dark-theme .agenda-birthday-alert { border-color: #563067; background: #21152b; }.dark-theme .agenda-birthday-alert > header { background: linear-gradient(135deg,#29172e,#211b38); }.dark-theme .agenda-birthday-alert header small { color: #f0abfc; }.dark-theme .agenda-birthday-alert header b { color: #f5d0fe; }.dark-theme .agenda-birthday-alert header button { border-color: #6b217a; color: #f0abfc; background: #35154b; }.dark-theme .agenda-birthday-alert > div > button { border-color: #4a2758; color: #f5d0fe; background: #29172e; }.dark-theme .agenda-birthday-alert > div > button small { color: #d8b4fe; }
+
+@media (max-width: 700px) {
+  .dashboard-consignment-products { grid-template-columns: 1fr; }
+  .dashboard-consignment-card > header { align-items: flex-start; }
+  .dashboard-consignment-card header button { margin-top: 2px; }
+}
+
 @media (max-width: 700px) {
   .divulgacao-page .materials-grid { grid-template-columns: repeat(2,minmax(0,1fr)); gap: 10px; }
   .material-folder-card { min-height: 166px; }
