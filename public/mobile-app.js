@@ -11568,6 +11568,21 @@
         centralizarPerfilDestacadoNoCard(id);
       });
     });
+    var scrollPrincipalPerfis = document.getElementById('mobile-main-scroll');
+    if (scrollPrincipalPerfis) {
+      scrollPrincipalPerfis.addEventListener('pointerdown', function (event) {
+        if (!state.resumoPerfilExibidoId) return;
+        var alvo = event.target && event.target.closest ? event.target.closest('[data-meu-perfil-id]') : null;
+        if (alvo) return;
+        var perfilExibidoAoTocar = state.resumoPerfilExibidoId;
+        window.setTimeout(function () {
+          if (state.resumoPerfilExibidoId !== perfilExibidoAoTocar) return;
+          state.resumoPerfilExibidoId = '';
+          state.resumoPerfilDestaqueId = (state.empresa && state.empresa.id) || '';
+          render();
+        }, 0);
+      });
+    }
     Array.prototype.forEach.call(document.querySelectorAll('[data-lancamento-id]'), function (botao) {
       botao.addEventListener('click', function () {
         abrirAcaoLancamento(botao.getAttribute('data-tipo-lancamento'), botao.getAttribute('data-lancamento-id'));
