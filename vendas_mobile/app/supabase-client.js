@@ -282,6 +282,16 @@
     if (error) throw error;
   }
 
+  function itemBonificado(orderItem) {
+    if (Object.prototype.hasOwnProperty.call(orderItem || {}, 'bonificado')) {
+      const marcado = orderItem.bonificado;
+      return marcado === true || marcado === 1 || ['true', '1', 'sim'].includes(String(marcado || '').trim().toLowerCase());
+    }
+    const quantidade = Number(orderItem?.quantidade || 1);
+    const preco = Number(orderItem?.preco ?? orderItem?.preco_unitario ?? 0);
+    return preco > 0 && Number(orderItem?.total || 0) === 0 && Number(orderItem?.desconto || 0) >= quantidade * preco;
+  }
+
   async function saveOrder(order) {
     const user = await currentUser();
     if (!user) throw new Error('Sessão expirada.');
@@ -300,7 +310,7 @@
     const items = order.itens.map((item) => {
       const quantidade = Number(item.quantidade || 1);
       const preco = Number(item.preco ?? item.preco_unitario ?? 0);
-      const bonificado = Boolean(item.bonificado) || (Number(item.total) === 0 && Number(item.desconto) >= quantidade * preco && preco > 0);
+      const bonificado = itemBonificado(item);
       return {
       pedido_id: pedido.id,
       produto_id: String(item.produto_id || '').startsWith('prod_') ? null : item.produto_id || null,
@@ -339,7 +349,7 @@
     const items = order.itens.map((item) => {
       const quantidade = Number(item.quantidade || 1);
       const preco = Number(item.preco ?? item.preco_unitario ?? 0);
-      const bonificado = Boolean(item.bonificado) || (Number(item.total) === 0 && Number(item.desconto) >= quantidade * preco && preco > 0);
+      const bonificado = itemBonificado(item);
       return {
         pedido_id: order.id,
         produto_id: String(item.produto_id || '').startsWith('prod_') ? null : item.produto_id || null,

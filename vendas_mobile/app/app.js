@@ -2448,13 +2448,14 @@ async function compartilharCanvasComprovante(canvas, nomeArquivo, titulo) {
   if (!blob) throw new Error('Não foi possível gerar a imagem do comprovante.');
   const arquivo = new File([blob], nomeArquivo, { type: 'image/png' });
   if (navigator.share && (!navigator.canShare || navigator.canShare({ files: [arquivo] }))) {
-    try { await navigator.share({ title: titulo, text: 'Comprovante gerado pelo Vendas AvantaLab.', files: [arquivo] }); return; }
-    catch (error) { if (error?.name === 'AbortError') return; }
+    try { await navigator.share({ title: titulo, text: 'Comprovante gerado pelo Vendas AvantaLab.', files: [arquivo] }); return true; }
+    catch (error) { if (error?.name === 'AbortError') return false; }
   }
   const url = URL.createObjectURL(blob);
   const link = document.createElement('a'); link.href = url; link.download = nomeArquivo; link.click();
   window.setTimeout(() => URL.revokeObjectURL(url), 1500);
   toast('Imagem do comprovante gerada.');
+  return true;
 }
 
 async function compartilharPedido(pedidoId) {
@@ -2481,7 +2482,8 @@ async function compartilharPedido(pedidoId) {
       { rotulo: 'Saldo atual', valor: moeda(resumo.saldoAtual) },
     ],
   });
-  await compartilharCanvasComprovante(canvas, `pedido-${String(venda.id).slice(0, 8)}.png`, 'Comprovante de pedido AvantaLab');
+  const compartilhado = await compartilharCanvasComprovante(canvas, `pedido-${String(venda.id).slice(0, 8)}.png`, 'Comprovante de pedido AvantaLab');
+  if (compartilhado) fecharSheet();
 }
 
 async function compartilharPagamento(pagamentoId) {
@@ -2508,7 +2510,8 @@ async function compartilharPagamento(pagamentoId) {
       { rotulo: 'Saldo atual', valor: moeda(resumo.saldoAtual) },
     ],
   });
-  await compartilharCanvasComprovante(canvas, `pagamento-${String(pagamento.id).slice(0, 8)}.png`, 'Comprovante de pagamento AvantaLab');
+  const compartilhado = await compartilharCanvasComprovante(canvas, `pagamento-${String(pagamento.id).slice(0, 8)}.png`, 'Comprovante de pagamento AvantaLab');
+  if (compartilhado) fecharSheet();
 }
 
 function clientesOrdenadosPorUltimoPagamento() {
@@ -2608,19 +2611,28 @@ function renderVendas() {
 }
 
 function tipoPedido(venda) {
+  if (pedidoEhConsignado(venda)) return 'consignados';
   if ((venda.itens || []).some(itemPedidoBonificado)) return 'bonificacoes';
-  const identificadores = [venda.tipo, venda.tipo_pedido, venda.categoria, venda.natureza, venda.forma_pagamento, venda.status, venda.observacoes]
+  const metadados = metadadosPedido(venda);
+  const temBonificacaoMarcada = metadados.tem_bonificacao === true
+    || ['true', '1', 'sim'].includes(normalizar(metadados.tem_bonificacao))
+    || [metadados.tipo, metadados.descricao].some((valorItem) => normalizar(valorItem).includes('bonific'));
+  if (temBonificacaoMarcada) return 'bonificacoes';
+  const identificadores = [venda.tipo, venda.tipo_pedido, venda.categoria, venda.natureza, venda.forma_pagamento, venda.status]
     .map((valorItem) => normalizar(valorItem))
     .join(' ');
   if (identificadores.includes('bonific')) return 'bonificacoes';
-  if (identificadores.includes('consign')) return 'consignados';
   return 'pedidos';
 }
 
 function itemPedidoBonificado(item) {
+  if (Object.prototype.hasOwnProperty.call(item || {}, 'bonificado')) {
+    const valorMarcado = item.bonificado;
+    return valorMarcado === true || valorMarcado === 1 || ['true', '1', 'sim'].includes(normalizar(valorMarcado));
+  }
   const quantidade = Number(item?.quantidade || 0);
   const preco = Number(item?.preco ?? item?.preco_unitario ?? 0);
-  return Boolean(item?.bonificado) || (preco > 0 && Number(item?.total || 0) === 0 && Number(item?.desconto || 0) >= quantidade * preco);
+  return preco > 0 && Number(item?.total || 0) === 0 && Number(item?.desconto || 0) >= quantidade * preco;
 }
 
 function pedidoSomenteBonificado(venda) {
