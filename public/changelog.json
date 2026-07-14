@@ -13,6 +13,15 @@
   },
   "versoes": [
     {
+      "versao": "1.4.0.65",
+      "titulo": "Relatório e layout do dashboard",
+      "data": "Julho/2026",
+      "itens": [
+        "Web: o comparativo Receitas x despesas do Relatório do perfil ganhou linhas-guia suaves.",
+        "Web: cards do Kanban podem ser posicionados abaixo de Lançamentos mensais, que permanece fixo no topo."
+      ]
+    },
+    {
       "versao": "1.4.0.64",
       "titulo": "Tooltip durante o arraste",
       "data": "Julho/2026",

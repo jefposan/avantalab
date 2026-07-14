@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.4.0.65 - 2026-07-13
+
+- Web: adiciona linhas-guia suaves ao gráfico Receitas x despesas do Relatório do perfil.
+- Web: permite posicionar cards do Kanban abaixo de Lançamentos mensais, mantendo esse card fixo no topo.
+
 ## 1.4.0.64 - 2026-07-13
 
 - Web: o tooltip do puxador de Meus perfis fecha ao iniciar o arraste e permanece oculto até soltar.

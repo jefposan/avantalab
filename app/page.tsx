@@ -669,8 +669,8 @@ const [validandoTelefoneObrigatorio, setValidandoTelefoneObrigatorio] = useState
   };
   const [saldoCardMesIdx, setSaldoCardMesIdx] = useState<number>(new Date().getMonth());
   const dashboardCardsKanban = ['aConfirmar', 'saldo', 'insightsAva', 'caixinha', 'meusPerfis', 'resumoFinanceiro', 'evolucaoMensal', 'registrarEntradas', 'controlePonto'];
-  const ordemDashboardPadrao = { a: ['aConfirmar', 'saldo', 'insightsAva', 'caixinha', 'controlePonto'], b: ['meusPerfis', 'resumoFinanceiro', 'evolucaoMensal', 'registrarEntradas'] };
-  const [dashboardOrdem, setDashboardOrdem] = useState<{ a: string[]; b: string[] }>(ordemDashboardPadrao);
+  const ordemDashboardPadrao = { left: [], a: ['aConfirmar', 'saldo', 'insightsAva', 'caixinha', 'controlePonto'], b: ['meusPerfis', 'resumoFinanceiro', 'evolucaoMensal', 'registrarEntradas'] };
+  const [dashboardOrdem, setDashboardOrdem] = useState<{ left: string[]; a: string[]; b: string[] }>(ordemDashboardPadrao);
   const [dashboardOcultos, setDashboardOcultos] = useState<string[]>([]);
   const [dashboardExpandidos, setDashboardExpandidos] = useState<string[]>([]);
 const [ajustesAberto, setAjustesAberto] = useState(false);
@@ -1399,11 +1399,14 @@ if (empresa.telefone_confirmado !== true) {
 
     const rawOrdem = config.dashboard_ordem_web;
     if (rawOrdem && Array.isArray(rawOrdem.a) && Array.isArray(rawOrdem.b)) {
-      const a = rawOrdem.a.filter((id: string) => dashboardCardsKanban.includes(id));
-      const b = rawOrdem.b.filter((id: string) => dashboardCardsKanban.includes(id) && !a.includes(id));
-      const usados = [...a, ...b];
+      const left = Array.isArray(rawOrdem.left)
+        ? rawOrdem.left.filter((id: string, index: number) => dashboardCardsKanban.includes(id) && rawOrdem.left.indexOf(id) === index)
+        : [];
+      const a = rawOrdem.a.filter((id: string) => dashboardCardsKanban.includes(id) && !left.includes(id));
+      const b = rawOrdem.b.filter((id: string) => dashboardCardsKanban.includes(id) && !left.includes(id) && !a.includes(id));
+      const usados = [...left, ...a, ...b];
       const faltantes = dashboardCardsKanban.filter((id) => !usados.includes(id));
-      setDashboardOrdem({ a: [...a, ...faltantes], b });
+      setDashboardOrdem({ left, a: [...a, ...faltantes], b });
       setDashboardExpandidos(
         Array.isArray(rawOrdem.expandidos)
           ? rawOrdem.expandidos.filter((id: string, index: number) => dashboardCardsKanban.includes(id) && rawOrdem.expandidos.indexOf(id) === index)
@@ -4151,7 +4154,7 @@ const editarReceitaPrevista = (id: string | number) => {
   iniciarEdicaoEntradaFaturamento(entrada);
 };
 
-const atualizarLayoutDashboard = (novaOrdem: { a: string[]; b: string[] }, novosExpandidos: string[]) => {
+const atualizarLayoutDashboard = (novaOrdem: { left: string[]; a: string[]; b: string[] }, novosExpandidos: string[]) => {
   // Premium Pessoal: organizar o dashboard (kanban) é pago — avisa e mantém o padrão.
   if (recursoBloqueado('organizar_dashboard')) {
     setDashboardOrdem(ordemDashboardPadrao);

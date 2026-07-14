@@ -90,7 +90,7 @@ function ColunaKanban({ id, items, arrastando, className, children }: { id: keyo
   );
 }
 
-type DashboardCols = { full: string[]; a: string[]; b: string[] };
+type DashboardCols = { full: string[]; left: string[]; a: string[]; b: string[] };
 
 type HistoricoPerfilFinanceiro = {
   mes: string;
@@ -174,10 +174,10 @@ interface DashboardProps {
   }>;
   onAdicionarAporteCaixinha: (dados: { dia: string; descricao: string; valorTexto: string }) => Promise<{ ok: boolean; mensagem?: string }>;
   onDefinirSaldoInicialCaixinha: (valorTexto: string) => Promise<{ ok: boolean; mensagem?: string }>;
-  dashboardOrdem: { a: string[]; b: string[] };
+  dashboardOrdem: { left: string[]; a: string[]; b: string[] };
   dashboardOcultos: string[];
   dashboardExpandidos: string[];
-  onAtualizarLayoutDashboard: (ordem: { a: string[]; b: string[] }, expandidos: string[]) => void;
+  onAtualizarLayoutDashboard: (ordem: { left: string[]; a: string[]; b: string[] }, expandidos: string[]) => void;
   onOcultarCardDashboard: (id: string) => void;
   onDefinirOcultosDashboard: (ids: string[]) => void;
   pontoDisponivel: boolean;
@@ -368,10 +368,11 @@ export default function Dashboard({
       pararAutoScrollPerfis();
     };
   }, [pararAutoScrollPerfis]);
-  const criarCols = (ordem: { a: string[]; b: string[] }, expandidos: string[]): DashboardCols => {
+  const criarCols = (ordem: { left: string[]; a: string[]; b: string[] }, expandidos: string[]): DashboardCols => {
     const full = [...new Set(expandidos)];
     return {
       full,
+      left: ordem.left.filter((id) => !full.includes(id)),
       a: ordem.a.filter((id) => !full.includes(id)),
       b: ordem.b.filter((id) => !full.includes(id)),
     };
@@ -870,7 +871,7 @@ const mostrarComparativoResumoDash =
         [destino]: [id, ...cols[destino]],
       };
       setCols(proximos);
-      onAtualizarLayoutDashboard({ a: proximos.a, b: proximos.b }, proximos.full);
+      onAtualizarLayoutDashboard({ left: proximos.left, a: proximos.a, b: proximos.b }, proximos.full);
       setMenuCardAberto(null);
     };
 
@@ -993,8 +994,8 @@ const mostrarComparativoResumoDash =
     && (id !== 'controlePonto' || pontoDisponivel)
   );
   const containerDe = (ordem: DashboardCols, id: string): keyof DashboardCols | null => {
-    if (id === 'full' || id === 'a' || id === 'b') return id;
-    return (['full', 'a', 'b'] as (keyof DashboardCols)[]).find((coluna) => ordem[coluna].includes(id)) || null;
+    if (id === 'full' || id === 'left' || id === 'a' || id === 'b') return id;
+    return (['full', 'left', 'a', 'b'] as (keyof DashboardCols)[]).find((coluna) => ordem[coluna].includes(id)) || null;
   };
 
   const handleDragStart = (e: DragStartEvent) => setActiveId(String(e.active.id));
@@ -1025,7 +1026,7 @@ const mostrarComparativoResumoDash =
     pararAutoScrollKanban();
     setActiveId(null);
     if (!over) {
-      onAtualizarLayoutDashboard({ a: cols.a, b: cols.b }, cols.full);
+      onAtualizarLayoutDashboard({ left: cols.left, a: cols.a, b: cols.b }, cols.full);
       return;
     }
     const activeKey = String(active.id);
@@ -1038,7 +1039,7 @@ const mostrarComparativoResumoDash =
       ? { ...cols, [coluna]: arrayMove(cols[coluna], oldIndex, newIndex) }
       : cols;
     setCols(novo);
-    onAtualizarLayoutDashboard({ a: novo.a, b: novo.b }, novo.full);
+    onAtualizarLayoutDashboard({ left: novo.left, a: novo.a, b: novo.b }, novo.full);
   };
 
   const cardsById: Record<string, React.ReactNode> = {
@@ -1954,6 +1955,16 @@ const mostrarComparativoResumoDash =
         </div>
       </AvantaCard>
       )}
+
+      {(filtraItens(cols.left).length > 0 || activeId) && (
+        <div className="mt-6">
+          <ColunaKanban id="left" items={filtraItens(cols.left)} arrastando={!!activeId}>
+            {filtraItens(cols.left).map((id) => (
+              <SortableItem key={id} id={id}>{cardsById[id]}</SortableItem>
+            ))}
+          </ColunaKanban>
+        </div>
+      )}
       </div>
 
       <div className="xl:col-span-2 relative pt-7">
@@ -2140,37 +2151,48 @@ const mostrarComparativoResumoDash =
                     Últimos 6 meses · margem {percentualPerfil(margemPerfil)}
                   </span>
                 </div>
-                <div className="mt-3 grid grid-cols-6 items-end gap-2" onMouseLeave={() => setTooltipHistoricoPerfil(null)}>
-                  {historicoPerfil.map((item) => {
-                    const receitasItem = Number(item.receitas || 0);
-                    const despesasItem = Number(item.despesas || 0);
-                    return (
-                      <div
-                        key={`${item.ano}-${item.mes}`}
-                        className="flex min-w-0 flex-col items-center"
-                        onMouseMove={(event) => setTooltipHistoricoPerfil({
-                          x: event.clientX,
-                          y: event.clientY,
-                          mes: item.mes,
-                          ano: item.ano,
-                          receitas: receitasItem,
-                          despesas: despesasItem,
-                        })}
-                      >
-                        <div className="flex h-28 items-end justify-center gap-1">
-                          <span
-                            className="w-2 rounded-t bg-emerald-500 shadow-sm"
-                            style={{ height: `${receitasItem > 0 ? Math.max(7, (receitasItem / maximoHistoricoPerfil) * 100) : 2}%` }}
-                          />
-                          <span
-                            className="w-2 rounded-t bg-red-500 shadow-sm"
-                            style={{ height: `${despesasItem > 0 ? Math.max(7, (despesasItem / maximoHistoricoPerfil) * 100) : 2}%` }}
-                          />
+                <div className="relative mt-3" onMouseLeave={() => setTooltipHistoricoPerfil(null)}>
+                  <div className="pointer-events-none absolute inset-x-0 top-0 h-28" aria-hidden="true">
+                    {[0, 25, 50, 75, 100].map((posicao) => (
+                      <span
+                        key={posicao}
+                        className={`absolute inset-x-0 border-t ${darkMode ? 'border-white/10' : 'border-slate-200/80'}`}
+                        style={{ top: `${posicao}%` }}
+                      />
+                    ))}
+                  </div>
+                  <div className="relative z-10 grid grid-cols-6 items-end gap-2">
+                    {historicoPerfil.map((item) => {
+                      const receitasItem = Number(item.receitas || 0);
+                      const despesasItem = Number(item.despesas || 0);
+                      return (
+                        <div
+                          key={`${item.ano}-${item.mes}`}
+                          className="flex min-w-0 flex-col items-center"
+                          onMouseMove={(event) => setTooltipHistoricoPerfil({
+                            x: event.clientX,
+                            y: event.clientY,
+                            mes: item.mes,
+                            ano: item.ano,
+                            receitas: receitasItem,
+                            despesas: despesasItem,
+                          })}
+                        >
+                          <div className="flex h-28 items-end justify-center gap-1">
+                            <span
+                              className="w-2 rounded-t bg-emerald-500 shadow-sm"
+                              style={{ height: `${receitasItem > 0 ? Math.max(7, (receitasItem / maximoHistoricoPerfil) * 100) : 2}%` }}
+                            />
+                            <span
+                              className="w-2 rounded-t bg-red-500 shadow-sm"
+                              style={{ height: `${despesasItem > 0 ? Math.max(7, (despesasItem / maximoHistoricoPerfil) * 100) : 2}%` }}
+                            />
+                          </div>
+                          <span className={`mt-1 truncate text-[9px] font-black uppercase ${textMuted}`}>{item.mes.slice(0, 3)}</span>
                         </div>
-                        <span className={`mt-1 truncate text-[9px] font-black uppercase ${textMuted}`}>{item.mes.slice(0, 3)}</span>
-                      </div>
-                    );
-                  })}
+                      );
+                    })}
+                  </div>
                 </div>
                 <div className="mt-2 flex justify-center gap-5 text-[10px] font-black uppercase tracking-wide">
                   <span className="text-emerald-500">Receitas</span>
