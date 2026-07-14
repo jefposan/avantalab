@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.4.0.66 - 2026-07-13
+
+- Web: corrige o recorte dos cards durante o arraste do Kanban para preservar o raio AvantaLab em todos os cantos.
+- Web: mantém o header principal visível ao abrir Ajustes depois de rolar a página.
+
 ## 1.4.0.65 - 2026-07-13
 
 - Web: adiciona linhas-guia suaves ao gráfico Receitas x despesas do Relatório do perfil.

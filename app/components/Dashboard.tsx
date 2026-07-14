@@ -2074,7 +2074,9 @@ const mostrarComparativoResumoDash =
     </main>
     <DragOverlay dropAnimation={null} modifiers={[restringirArrasteAJanela]}>
       {activeId && cardsById[activeId] ? (
-        <div className="cursor-grabbing shadow-2xl rounded-2xl">{cardsById[activeId]}</div>
+        <div className="card-radius-avantalab cursor-grabbing overflow-hidden shadow-2xl">
+          {cardsById[activeId]}
+        </div>
       ) : null}
     </DragOverlay>
     </DndContext>

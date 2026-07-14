@@ -9188,6 +9188,7 @@ name="novo-usuario-login"
 
       {/* ================= HEADER GLOBAL ================= */}
 
+      <div className={ajustesAberto ? 'fixed inset-x-0 top-0 z-[900]' : 'contents'}>
       <AppHeader
         darkMode={darkMode}
         textMuted={textMuted}
@@ -9230,6 +9231,8 @@ name="novo-usuario-login"
           setAgendaAberta(true);
         }}
       />
+      </div>
+      {ajustesAberto && <div className="h-[85px] xl:h-[113px]" aria-hidden="true" />}
 
       {emCarencia(estadoAcesso) && (
         <button
