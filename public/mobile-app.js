@@ -236,6 +236,7 @@
     caixinhaSaldoInicialSalvando: false,
     iniciarValoresOcultos: true,
     pontoModuloAtivo: false,
+    vendasMobileModuloAtivo: false,
     pontoResumo: [],
     pontoFuncionariosHoje: 0,
     pontoResumoCarregando: false,
@@ -1774,6 +1775,7 @@
     state.resumoPerfilExibidoId = '';
     window._avaProfilePillHidden = false;
     state.pontoModuloAtivo = false;
+    state.vendasMobileModuloAtivo = false;
     state.pontoResumo = [];
     state.pontoFuncionariosHoje = 0;
     state.pontoResumoCarregando = false;
@@ -4353,7 +4355,7 @@
       db.from('faturamentos_entradas').select('*').eq('empresa_id', empresaId).eq('ano', ano).order('dia', { ascending: true }),
       db.from('despesas_cadastradas').select('*').eq('empresa_id', empresaId).order('nome', { ascending: true }),
       db.from('configuracoes').select('duplicados_ativo').eq('empresa_id', empresaId).maybeSingle(),
-      db.from('empresa_modulos').select('modulo_id').eq('empresa_id', empresaId).eq('modulo_id', 'ponto').eq('ativo', true).maybeSingle(),
+      db.from('empresa_modulos').select('modulo_id').eq('empresa_id', empresaId).eq('ativo', true),
       db.from('caixinhas_movimentos').select('*').eq('empresa_id', empresaId).order('data_movimento', { ascending: false }).order('criado_em', { ascending: false }),
     ]);
 
@@ -4405,7 +4407,9 @@
       state.duplicadosAtivo = true;
     }
 
-    state.pontoModuloAtivo = !!(resultados[5] && resultados[5].data && resultados[5].data.modulo_id === 'ponto');
+    var modulosAtivosMobile = (resultados[5] && resultados[5].data) || [];
+    state.pontoModuloAtivo = modulosAtivosMobile.some(function (item) { return item.modulo_id === 'ponto'; });
+    state.vendasMobileModuloAtivo = modulosAtivosMobile.some(function (item) { return item.modulo_id === 'vendas_mobile'; });
     state.caixinhaMovimentos = ((resultados[6] && resultados[6].data) || []).map(function (item) {
       return {
         id: item.id,
@@ -8944,6 +8948,7 @@
             menuBotaoHtml('menu-despesas-fixas', 'Despesas fixas', 'Lancamentos automaticos mensais', '&#10227;') +
             menuBotaoHtml('menu-ajuda-categorias', 'Instrucoes sobre categorias', 'Como organizar seus gastos', '?') +
             menuBotaoHtml('menu-tutorial', 'Tutorial', 'Como usar o AvantaLab', '&#127891;') +
+            ((state.vendasMobileModuloAtivo && podeGerenciarUsuarios()) ? menuBotaoHtml('menu-vendas-mobile', 'Vendas Mobile', 'Novidades e divulgacao') : '') +
             '<button id="menu-config-toggle" type="button" class="mobile-config-main-btn rounded-[14px_26px_26px_26px] border border-slate-300 px-2.5 py-2.5 text-left text-slate-800 shadow-[0_5px_13px_rgba(15,23,42,.09)] transition active:scale-[0.99]" style="background:' + (configAberto ? 'linear-gradient(90deg,#B8C3D0 0%,#A5B2C1 100%)' : 'linear-gradient(90deg,#CBD5E1 0%,#B4C0CE 100%)') + '">' +
               '<div class="flex items-center gap-2">' +
                 '<span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border border-white/15 bg-slate-800 text-white shadow-sm">' + iconeMenuLateralSvg('menu-config-toggle') + '</span>' +
@@ -9135,6 +9140,7 @@
       'menu-despesas-fixas': '<path d="M20 6v5h-5M4 18v-5h5M18 9a7 7 0 0 0-12-2l-2 4M6 15a7 7 0 0 0 12 2l2-4"/>',
       'menu-ajuda-categorias': '<circle cx="12" cy="12" r="9"/><path d="M9.6 9a2.5 2.5 0 1 1 3.3 2.37c-.9.36-.9 1.13-.9 1.63M12 17h.01"/>',
       'menu-tutorial': '<path d="m3 10 9-5 9 5-9 5-9-5Z"/><path d="M7 12.5V17c3 2 7 2 10 0v-4.5M21 10v6"/>',
+      'menu-vendas-mobile': '<path d="m3 11 18-5v12L3 14zM11.5 16.5 13 21H8l-1.5-6"/><path d="M7 8.8v6.4"/>',
       'menu-config-toggle': '<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.88l.06.06-2.83 2.83-.06-.06A1.7 1.7 0 0 0 15 19.4a1.7 1.7 0 0 0-1 .6 1.7 1.7 0 0 0-.4 1v.1h-4V21a1.7 1.7 0 0 0-1.1-1.6 1.7 1.7 0 0 0-1.88.34l-.06.06-2.83-2.83.06-.06A1.7 1.7 0 0 0 4.6 15a1.7 1.7 0 0 0-.6-1 1.7 1.7 0 0 0-1-.4h-.1v-4H3a1.7 1.7 0 0 0 1.6-1.1 1.7 1.7 0 0 0-.34-1.88l-.06-.06 2.83-2.83.06.06A1.7 1.7 0 0 0 9 4.6a1.7 1.7 0 0 0 1-.6 1.7 1.7 0 0 0 .4-1v-.1h4V3a1.7 1.7 0 0 0 1.1 1.6 1.7 1.7 0 0 0 1.88-.34l.06-.06 2.83 2.83-.06.06A1.7 1.7 0 0 0 19.4 9c.14.37.36.7.6 1 .27.28.62.4 1 .4h.1v4H21a1.7 1.7 0 0 0-1.6.6Z"/>',
       'menu-duplicados': '<rect x="4" y="4" width="12" height="12" rx="2"/><path d="M8 8h12v12H8z"/>',
       'menu-gerenciar': '<circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/>',
@@ -9162,6 +9168,7 @@
       'menu-despesas-fixas': ['linear-gradient(90deg,#E7F1FF 0%,#FAFCFF 100%)', '#C6DCF7', 'linear-gradient(135deg,#38BDF8,#1D4ED8)', '#FFFFFF'],
       'menu-ajuda-categorias': ['linear-gradient(90deg,#ECEBFF 0%,#FCFBFF 100%)', '#D4D5FA', 'linear-gradient(135deg,#818CF8,#4F46E5)', '#FFFFFF'],
       'menu-tutorial': ['linear-gradient(90deg,#F0EAFE 0%,#FCFAFF 100%)', '#DED4FA', 'linear-gradient(135deg,#A78BFA,#7C3AED)', '#FFFFFF'],
+      'menu-vendas-mobile': ['linear-gradient(90deg,#E1F7FC 0%,#F8FDFF 100%)', '#B9E8F2', 'linear-gradient(135deg,#22D3EE,#0369A1)', '#FFFFFF'],
     };
     var visual = estilos[id] || ['#FFFFFF', '#E2E8F0', '#ECFEFF', '#0E7490'];
     var cardStyle = state.darkMode ? 'background:#0F172A;border-color:#334155;' : 'background:' + visual[0] + ';border-color:' + visual[1] + ';';
@@ -10792,6 +10799,12 @@
     bind('menu-categorias', function () { fecharMenuLateralAnimado(function () { abrirModalMenu('categorias'); }); });
     bind('menu-despesas-fixas', function () { fecharMenuLateralAnimado(abrirModalMenuDespesasFixas); });
     bind('menu-ajuda-categorias', function () { fecharMenuLateralAnimado(function () { abrirModalMenu('ajudaCategorias'); }); });
+    bind('menu-vendas-mobile', function () {
+      fecharMenuLateralAnimado(function () {
+        if (!state.empresa || !state.empresa.id) return;
+        window.location.assign('/mobile/conteudo-vendas?empresaId=' + encodeURIComponent(state.empresa.id));
+      });
+    });
     bind('menu-instalar', function () { fecharMenuLateralAnimado(instalarApp); });
     bind('menu-duplicados', function () {
       executarChaveMenuSemMover('menu-duplicados', alternarDuplicados);
