@@ -543,7 +543,13 @@ function renderMenuMobile() {
 function contextoAvaVendas() {
   const totais = totaisPeriodo();
   const recebido = state.pagamentos.reduce((soma, pagamento) => soma + Number(pagamento.valor || 0), 0);
+  const debitosPendentes = state.clientes.reduce((soma, cliente) => soma + Math.max(0, saldoFinanceiroCliente(cliente)), 0);
+  const consignadosAtivos = state.vendas.filter((pedido) => pedidoEhConsignado(pedido) && pedido.status !== 'cancelada');
+  const totalConsignado = consignadosAtivos.reduce((soma, pedido) => soma + Number(pedido.total || 0), 0);
   return [
+    'Ambiente atual: Vendas AvantaLab',
+    'O usuário já está autenticado no Vendas e pode trabalhar com dashboard, clientes, produtos, pacotes, pedidos de venda, consignados, itens bonificados, pagamentos, agenda, metas e relatórios comerciais.',
+    'Ao responder, considere as funções e os dados deste ambiente de vendas, sem redirecionar para o sistema Gestão quando a ação existir aqui.',
     `Empresa: ${state.acessoVendas?.empresa_nome || 'Perfil atual'}`,
     `Período: ${state.filtroInicio} a ${state.filtroFim}`,
     `Vendas: ${moeda(totais.total)}`,
@@ -551,6 +557,8 @@ function contextoAvaVendas() {
     `Margem: ${moeda(totais.margem)}`,
     `Pedidos: ${totais.pedidos}`,
     `Recebimentos registrados: ${moeda(recebido)}`,
+    `Débitos pendentes dos clientes: ${moeda(debitosPendentes)}`,
+    `Consignados ativos: ${consignadosAtivos.length} (${moeda(totalConsignado)})`,
     `Clientes cadastrados: ${state.clientes.length}`,
     `Produtos cadastrados: ${state.produtos.length}`,
   ].join('\n');
@@ -580,6 +588,7 @@ async function abrirChatIAVendas() {
       accessToken,
       userName: state.usuario?.nome || '',
       userId: state.usuario?.id || '',
+      environment: 'vendas',
     },
   });
   const tratado = !window.dispatchEvent(evento);
@@ -1368,11 +1377,12 @@ function renderConfiguracoes() {
   const t = totaisPeriodo();
   const progresso = state.metaMensal > 0 ? Math.min(100, t.total / state.metaMensal * 100) : 0;
   const telefone = String(state.usuario?.telefone || '');
+  const empresa = String(state.acessoVendas?.empresa_nome || 'Não informada');
   return `<section class="module-page settings-page">
     <div class="module-sticky-head"><div class="module-title"><div><h2>Configurações</h2><p>Preferências, segurança e recursos do Vendas.</p></div></div></div>
     <div class="settings-grid">
-      <article class="settings-card"><h3>${svgIcon('user')} Dados do Usuário</h3><dl><dt>Nome Completo:</dt><dd>${escapeHtml(state.usuario.nome)}</dd><dt>Celular confirmado:</dt><dd>${telefone ? escapeHtml(mascararTelefone(telefone)) : 'Não informado'}</dd><dt>Representação/Empresa:</dt><dd>AvantaLab</dd></dl><div class="actions"><button class="secondary" onclick="abrirAtualizarTelefone()">${svgIcon('phone')} ${telefone ? 'Alterar celular' : 'Cadastrar celular'}</button></div></article>
-      <article class="settings-card"><h3>${svgIcon('settings')} Aparência</h3><label class="switch-line"><span>Modo Escuro (Dark Mode)</span><input type="checkbox" ${state.temaEscuro ? 'checked' : ''} onchange="alternarTema(this.checked)"><i></i></label><p>Alterne o tema da aplicação para maior conforto visual.</p></article>
+      <article class="settings-card settings-profile-card"><h3>${svgIcon('user')} Dados do usuário</h3><dl><dt>Nome completo</dt><dd>${escapeHtml(state.usuario.nome)}</dd><dt>Celular confirmado</dt><dd>${telefone ? escapeHtml(mascararTelefone(telefone)) : 'Não informado'}</dd><dt>Empresa vinculada</dt><dd>${escapeHtml(empresa)}</dd></dl><div class="actions"><button class="secondary" onclick="abrirAtualizarTelefone()">${svgIcon('phone')} ${telefone ? 'Alterar celular' : 'Cadastrar celular'}</button></div></article>
+      <article class="settings-card"><h3>${svgIcon('settings')} Aparência</h3><label class="switch-line"><span>Modo escuro</span><input type="checkbox" ${state.temaEscuro ? 'checked' : ''} onchange="alternarTema(this.checked)"><i></i></label><p>Alterne o tema da aplicação para maior conforto visual.</p></article>
     </div>
     <article class="settings-card settings-goal"><h3>${svgIcon('target')} Metas do período</h3><div class="goal-values"><b>Vendas Atuais: <em>${moeda(t.total)}</em></b><b>Meta: ${moeda(state.metaMensal)}</b></div><div class="progress"><i style="width:${Math.max(2, progresso)}%"></i></div><p>Faltam <b>${moeda(Math.max(0, state.metaMensal - t.total))}</b> para atingir sua meta.</p><div class="settings-form settings-goals-form"><label><span>Meta mensal</span><input id="metaConfig" type="text" inputmode="numeric" value="${numeroParaCampoMoeda(state.metaMensal)}" onfocus="this.select()" oninput="formatarCampoMoeda(this)" placeholder="0,00"></label><label><span>Meta de pedidos</span><input id="metaPedidosConfig" type="number" inputmode="numeric" min="0" step="1" value="${Math.max(0, Number(state.metaPedidos || 0))}"></label><button class="primary" onclick="salvarMeta()">${svgIcon('save')} Salvar</button></div></article>
     <article class="settings-card"><h3>${svgIcon('lock')} Segurança e Senha</h3><p>Defina uma senha para entrar também por e-mail. Se você acessa pelo Google, esta é a sua primeira senha.</p><div class="password-form"><label>Nova Senha (mín. 8 caracteres)<input id="senhaNova" type="password" autocomplete="new-password" minlength="8"></label><label>Confirme Nova Senha<input id="senhaConfirma" type="password" autocomplete="new-password" minlength="8"></label><button class="password-button" onclick="alterarSenha()">${svgIcon('lock')} Salvar senha</button></div></article>
@@ -2361,7 +2371,7 @@ function textoCanvasLimitado(ctx, texto, larguraMaxima) {
   return `${reduzido}…`;
 }
 
-function criarCanvasComprovante({ titulo, cliente, data, etiqueta = '', linhas = [], resumo = [] }) {
+function criarCanvasComprovante({ empresa = '', titulo, cliente, data, etiqueta = '', linhas = [], resumo = [] }) {
   const linhasExibidas = linhas.slice(0, 44);
   if (linhas.length > linhasExibidas.length) linhasExibidas.push({ principal: `+ ${linhas.length - linhasExibidas.length} itens adicionais`, secundario: '', valor: '' });
   const largura = 1080;
@@ -2374,7 +2384,8 @@ function criarCanvasComprovante({ titulo, cliente, data, etiqueta = '', linhas =
   const gradiente = ctx.createLinearGradient(0, 0, largura, 230);
   gradiente.addColorStop(0, '#0A1F44'); gradiente.addColorStop(1, '#1687D9');
   ctx.fillStyle = gradiente; ctx.fillRect(0, 0, largura, 230);
-  ctx.fillStyle = '#fff'; ctx.font = '900 48px Arial, sans-serif'; ctx.fillText('AVANTALAB', 64, 82);
+  const nomeEmpresa = String(empresa || state.acessoVendas?.empresa_nome || 'AvantaLab').trim();
+  ctx.fillStyle = '#fff'; ctx.font = `900 ${nomeEmpresa.length > 28 ? 34 : nomeEmpresa.length > 20 ? 40 : 48}px Arial, sans-serif`; ctx.fillText(textoCanvasLimitado(ctx, nomeEmpresa.toUpperCase(), 880), 64, 82);
   ctx.font = '800 32px Arial, sans-serif'; ctx.fillText(titulo, 64, 142);
   ctx.font = '600 24px Arial, sans-serif'; ctx.fillStyle = 'rgba(255,255,255,.9)'; ctx.fillText(textoCanvasLimitado(ctx, cliente, 680), 64, 188);
   ctx.textAlign = 'right'; ctx.fillText(data, 1016, 188); ctx.textAlign = 'left';
@@ -2438,6 +2449,7 @@ async function compartilharPedido(pedidoId) {
     valor: moeda(itemPedidoBonificado(item) ? 0 : Number(item.total ?? Number(item.quantidade || 0) * Number(item.preco || item.preco_unitario || 0))),
   }));
   const canvas = criarCanvasComprovante({
+    empresa: state.acessoVendas?.empresa_nome || 'AvantaLab',
     titulo: pedidoEhConsignado(venda) ? 'Pedido consignado' : 'Comprovante de pedido',
     cliente: cliente?.nome || 'Cliente não informado',
     data: dataComprovante(venda.criado_em),
@@ -2460,6 +2472,7 @@ async function compartilharPagamento(pagamentoId) {
   const resumo = resumoComprovantePagamento(pagamento);
   const abatimento = Number(pagamento.valor || 0) + Number(pagamento.desconto || 0);
   const canvas = criarCanvasComprovante({
+    empresa: state.acessoVendas?.empresa_nome || 'AvantaLab',
     titulo: 'Comprovante de pagamento',
     cliente: cliente?.nome || 'Cliente não informado',
     data: dataComprovante(pagamento.data_pagamento),

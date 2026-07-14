@@ -85,13 +85,16 @@ function mensagensValidas(messages: unknown) {
     .slice(-20);
 }
 
-async function responderComOpenAI(messages: Array<{ role: string; content: string }>, contexto: string) {
+async function responderComOpenAI(messages: Array<{ role: string; content: string }>, contexto: string, ambiente: string) {
   const apiKey = chaveOpenAI();
   if (!apiKey) return null;
 
+  const instrucaoAmbiente = ambiente === 'vendas'
+    ? '\n\nVocê está atendendo dentro do Vendas AvantaLab. Priorize respostas sobre clientes, produtos, pedidos, itens bonificados, consignados, pagamentos, recebimentos, saldos, metas e relatórios comerciais. Não oriente o usuário a entrar no app Gestão para executar funções que existem no Vendas.'
+    : '';
   const systemWithContext = contexto
-    ? `${AVA_SYSTEM_PROMPT}\n\n--- DADOS FINANCEIROS ATUAIS DO USUARIO ---\n${contexto}\n---`
-    : AVA_SYSTEM_PROMPT;
+    ? `${AVA_SYSTEM_PROMPT}${instrucaoAmbiente}\n\n--- DADOS ATUAIS DO USUARIO ---\n${contexto}\n---`
+    : `${AVA_SYSTEM_PROMPT}${instrucaoAmbiente}`;
 
   const resposta = await fetch('https://api.openai.com/v1/chat/completions', {
     method: 'POST',
@@ -203,6 +206,7 @@ export async function POST(request: Request) {
     const messages = mensagensValidas(payload?.messages);
     const contexto = String(payload?.contexto || '').trim();
     const empresaId = String(payload?.empresaId || '').trim();
+    const ambiente = String(payload?.ambiente || '').trim().toLowerCase();
 
     if (!(await avaLiberadaParaPerfil(userId, empresaId))) {
       return NextResponse.json(
@@ -221,8 +225,8 @@ export async function POST(request: Request) {
       );
     }
 
-    const body = JSON.stringify({ messages, contexto });
-    const respostaOpenAI = await responderComOpenAI(messages, contexto);
+    const body = JSON.stringify({ messages, contexto, ambiente });
+    const respostaOpenAI = await responderComOpenAI(messages, contexto, ambiente);
     if (respostaOpenAI) return respostaOpenAI;
 
     return responderComSupabase(body);

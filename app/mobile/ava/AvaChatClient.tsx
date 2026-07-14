@@ -39,6 +39,7 @@ type AvaChatClientProps = {
   initialAccessToken?: string;
   initialUserName?: string;
   initialUserId?: string;
+  initialEnvironment?: 'gestao' | 'vendas';
   onClose?: () => void;
 };
 
@@ -94,6 +95,13 @@ const SUGGESTIONS = [
   { icon: 'chart', label: 'Analise meus resultados.', color: '#f59e0b', background: 'rgba(245,158,11,.16)' },
   { icon: 'wallet', label: 'Como reduzir gastos sem afetar o essencial?', color: '#3b82f6', background: 'rgba(59,130,246,.16)' },
   { icon: 'plus', label: 'Como montar uma reserva de emergência?', color: '#ef4444', background: 'rgba(239,68,68,.16)' },
+] as const;
+
+const SALES_SUGGESTIONS = [
+  { icon: 'chart', label: 'Analise minhas vendas e recebimentos deste período.', color: '#0ea5e9', background: 'rgba(14,165,233,.16)' },
+  { icon: 'wallet', label: 'Quais clientes possuem débitos pendentes?', color: '#f59e0b', background: 'rgba(245,158,11,.16)' },
+  { icon: 'doc', label: 'Como estão meus pedidos e consignados?', color: '#22c55e', background: 'rgba(34,197,94,.16)' },
+  { icon: 'plus', label: 'Quais produtos mais vendi e qual é minha margem?', color: '#8b5cf6', background: 'rgba(139,92,246,.16)' },
 ] as const;
 
 const LAST_PROFILE_KEY = 'avantalab_mobile_ultimo_perfil_id';
@@ -218,6 +226,7 @@ export default function AvaChatClient({
   initialAccessToken,
   initialUserName,
   initialUserId,
+  initialEnvironment,
   onClose,
 }: AvaChatClientProps = {}) {
   const db = useMemo(() => supabase, []);
@@ -240,6 +249,7 @@ export default function AvaChatClient({
   const audioStreamRef = useRef<MediaStream | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
   const sentMessage = messages.some((message) => message.role === 'user');
+  const suggestions = initialEnvironment === 'vendas' ? SALES_SUGGESTIONS : SUGGESTIONS;
 
   useEffect(() => {
     const html = document.documentElement;
@@ -332,7 +342,7 @@ export default function AvaChatClient({
 
     async function loadContext() {
       if (initialCompanyId && initialAccessToken) {
-        const chatStorageKey = `${CHAT_STORAGE_PREFIX}:vendas:${initialUserId || 'usuario'}:${initialCompanyId}`;
+        const chatStorageKey = `${CHAT_STORAGE_PREFIX}:${initialEnvironment || 'gestao'}:${initialUserId || 'usuario'}:${initialCompanyId}`;
         try {
           const saved = JSON.parse(sessionStorage.getItem(chatStorageKey) || '[]');
           if (Array.isArray(saved)) {
@@ -440,7 +450,7 @@ export default function AvaChatClient({
     return () => {
       active = false;
     };
-  }, [db, initialAccessToken, initialCompanyId, initialCompanyName, initialContext, initialMonth, initialUserId, initialUserName, initialYear]);
+  }, [db, initialAccessToken, initialCompanyId, initialCompanyName, initialContext, initialEnvironment, initialMonth, initialUserId, initialUserName, initialYear]);
 
   useEffect(() => {
     if (!storageKey) return;
@@ -489,7 +499,7 @@ export default function AvaChatClient({
           'Content-Type': 'application/json',
           ...(sessionToken ? { Authorization: `Bearer ${sessionToken}` } : {}),
         },
-        body: JSON.stringify({ messages: outbound, contexto: context, empresaId: companyId || undefined }),
+        body: JSON.stringify({ messages: outbound, contexto: context, empresaId: companyId || undefined, ambiente: initialEnvironment || 'gestao' }),
       });
 
       if (!response.ok || !response.body) {
@@ -537,7 +547,7 @@ export default function AvaChatClient({
     } finally {
       setSending(false);
     }
-  }, [companyId, context, initialAccessToken, input, messages, ready, sending]);
+  }, [companyId, context, initialAccessToken, initialEnvironment, input, messages, ready, sending]);
 
   const toggleRecording = useCallback(async () => {
     if (transcribing || sending) return;
@@ -632,9 +642,9 @@ export default function AvaChatClient({
         {!sentMessage && (
           <div className={styles.welcome}>
             <h1>Olá{userName ? `, ${userName}` : ''}.</h1>
-            <p>Sou a Ava, sua assistente financeira. Como posso ajudar?</p>
+            <p>{initialEnvironment === 'vendas' ? 'Sou a Ava, sua assistente do Vendas AvantaLab. Como posso ajudar?' : 'Sou a Ava, sua assistente financeira. Como posso ajudar?'}</p>
             <div className={styles.suggestions}>
-              {SUGGESTIONS.map((suggestion) => (
+              {suggestions.map((suggestion) => (
                 <button key={suggestion.label} type="button" onClick={() => sendMessage(suggestion.label)} disabled={!ready || sending}>
                   <span className={styles.suggestionIcon} style={{ color: suggestion.color, background: suggestion.background }}>
                     <SuggestionIcon type={suggestion.icon} color={suggestion.color} />

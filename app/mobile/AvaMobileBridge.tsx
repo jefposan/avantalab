@@ -14,6 +14,7 @@ type AvaOpenRequest = {
   accessToken?: string;
   userName?: string;
   userId?: string;
+  environment?: 'gestao' | 'vendas';
 };
 
 export default function AvaMobileBridge() {
@@ -33,6 +34,7 @@ export default function AvaMobileBridge() {
         accessToken: detail.accessToken,
         userName: detail.userName,
         userId: detail.userId,
+        environment: detail.environment,
       });
     };
 
@@ -57,6 +59,7 @@ export default function AvaMobileBridge() {
       initialAccessToken={request.accessToken}
       initialUserName={request.userName}
       initialUserId={request.userId}
+      initialEnvironment={request.environment}
       onClose={closeChat}
     />,
     document.body,
