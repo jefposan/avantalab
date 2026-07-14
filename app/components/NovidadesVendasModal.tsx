@@ -7,7 +7,8 @@ type Novidade = { id: string; tipo: string; titulo: string; descricao: string; c
 type Pasta = { id: string; pasta_pai_id: string | null; nome: string; descricao: string | null; criado_em: string };
 type Material = {
   id: string; pasta_id: string; titulo: string; tipo: 'imagem' | 'video'; arquivo_path: string;
-  arquivo_url: string; miniatura_path: string | null; miniatura_url: string | null; criado_em: string;
+  arquivo_url: string; miniatura_path: string | null; miniatura_url: string | null;
+  miniatura_status: 'nao_aplicavel' | 'pendente' | 'processando' | 'pronta' | 'erro'; criado_em: string;
 };
 type Props = { aberto: boolean; empresaId: string | null; nomeEmpresa: string; darkMode: boolean; corPrimaria: string; onFechar: () => void };
 
@@ -97,34 +98,6 @@ async function uploadCancelavel(caminho: string, arquivo: Blob, nomeArquivo: str
   });
 }
 
-async function miniaturaVideo(file: File, signal?: AbortSignal): Promise<Blob | null> {
-  return new Promise((resolve) => {
-    const video = document.createElement('video');
-    const url = URL.createObjectURL(file);
-    let finalizado = false;
-    const concluir = (blob: Blob | null) => {
-      if (finalizado) return;
-      finalizado = true;
-      signal?.removeEventListener('abort', cancelar);
-      URL.revokeObjectURL(url);
-      video.remove();
-      resolve(blob);
-    };
-    const cancelar = () => concluir(null);
-    if (signal?.aborted) { concluir(null); return; }
-    signal?.addEventListener('abort', cancelar, { once: true });
-    video.muted = true; video.playsInline = true; video.preload = 'metadata'; video.src = url;
-    video.onloadeddata = () => { video.currentTime = Math.min(0.2, Math.max(0, video.duration / 10)); };
-    video.onseeked = () => {
-      const escala = Math.min(1, 720 / Math.max(video.videoWidth, video.videoHeight));
-      const canvas = document.createElement('canvas'); canvas.width = Math.max(1, Math.round(video.videoWidth * escala)); canvas.height = Math.max(1, Math.round(video.videoHeight * escala));
-      canvas.getContext('2d')?.drawImage(video, 0, 0, canvas.width, canvas.height);
-      canvas.toBlob((blob) => concluir(blob), 'image/jpeg', .82);
-    };
-    video.onerror = () => concluir(null);
-  });
-}
-
 export default function NovidadesVendasModal({ aberto, empresaId, nomeEmpresa, darkMode, corPrimaria, onFechar }: Props) {
   const [aba, setAba] = useState<'novidades' | 'divulgacao'>('divulgacao');
   const [tipo, setTipo] = useState('lancamento'); const [titulo, setTitulo] = useState(''); const [descricao, setDescricao] = useState('');
@@ -133,7 +106,7 @@ export default function NovidadesVendasModal({ aberto, empresaId, nomeEmpresa, d
   const [criacaoPastaAberta, setCriacaoPastaAberta] = useState(false);
   const [pastasExpandidas, setPastasExpandidas] = useState<Set<string>>(new Set());
   const [carregando, setCarregando] = useState(false); const [salvando, setSalvando] = useState(false); const [erro, setErro] = useState('');
-  const [envioAtivo, setEnvioAtivo] = useState<{ nome: string; atual: number; total: number; progresso: number; cancelando: boolean } | null>(null);
+  const [envioAtivo, setEnvioAtivo] = useState<{ nome: string; atual: number; total: number; progresso: number; etapa: string; cancelando: boolean } | null>(null);
   const inputArquivos = useRef<HTMLInputElement>(null);
   const controladorEnvio = useRef<AbortController | null>(null);
 
@@ -143,7 +116,7 @@ export default function NovidadesVendasModal({ aberto, empresaId, nomeEmpresa, d
     const [novidadesRes, pastasRes, materiaisRes] = await Promise.all([
       supabase.from('vendas_mobile_conteudos').select('id, tipo, titulo, descricao, criado_em').eq('empresa_id', empresaId).eq('pagina', 'novidades').order('criado_em', { ascending: false }),
       supabase.from('vendas_mobile_divulgacao_pastas').select('id, pasta_pai_id, nome, descricao, criado_em').eq('empresa_id', empresaId).eq('ativo', true).order('ordem').order('criado_em', { ascending: false }),
-      supabase.from('vendas_mobile_divulgacao_materiais').select('id, pasta_id, titulo, tipo, arquivo_path, arquivo_url, miniatura_path, miniatura_url, criado_em').eq('empresa_id', empresaId).eq('ativo', true).order('ordem').order('criado_em', { ascending: false }),
+      supabase.from('vendas_mobile_divulgacao_materiais').select('id, pasta_id, titulo, tipo, arquivo_path, arquivo_url, miniatura_path, miniatura_url, miniatura_status, criado_em').eq('empresa_id', empresaId).eq('ativo', true).order('ordem').order('criado_em', { ascending: false }),
     ]);
     setCarregando(false);
     if (novidadesRes.error) setErro('Não foi possível carregar as novidades.'); else setNovidades((novidadesRes.data || []) as Novidade[]);
@@ -158,6 +131,20 @@ export default function NovidadesVendasModal({ aberto, empresaId, nomeEmpresa, d
     setPastaPaiNova('');
     setPastasExpandidas(new Set());
     void carregar();
+  }, [aberto, empresaId]);
+
+  useEffect(() => {
+    if (!aberto || !empresaId) return;
+    const canal = supabase
+      .channel(`divulgacao-miniaturas-${empresaId}`)
+      .on('postgres_changes', {
+        event: 'UPDATE', schema: 'public', table: 'vendas_mobile_divulgacao_materiais', filter: `empresa_id=eq.${empresaId}`,
+      }, (evento) => {
+        const atualizado = evento.new as Material;
+        setMateriais((atuais) => atuais.map((item) => item.id === atualizado.id ? { ...item, ...atualizado } : item));
+      })
+      .subscribe();
+    return () => { void supabase.removeChannel(canal); };
   }, [aberto, empresaId]);
   if (!aberto) return null;
 
@@ -190,12 +177,12 @@ export default function NovidadesVendasModal({ aberto, empresaId, nomeEmpresa, d
     let bytesConcluidos = 0;
     controladorEnvio.current = controlador;
     setSalvando(true); setErro('');
-    setEnvioAtivo({ nome: listaArquivos[0].name, atual: 1, total: listaArquivos.length, progresso: 0, cancelando: false });
+    setEnvioAtivo({ nome: listaArquivos[0].name, atual: 1, total: listaArquivos.length, progresso: 0, etapa: 'Enviando arquivo', cancelando: false });
     try {
       for (const [indice, file] of listaArquivos.entries()) {
         if (controlador.signal.aborted) throw new DOMException('Envio cancelado.', 'AbortError');
         const progressoInicial = totalBytes ? bytesConcluidos / totalBytes * 100 : 0;
-        setEnvioAtivo({ nome: file.name, atual: indice + 1, total: listaArquivos.length, progresso: progressoInicial, cancelando: false });
+        setEnvioAtivo({ nome: file.name, atual: indice + 1, total: listaArquivos.length, progresso: progressoInicial, etapa: 'Enviando arquivo', cancelando: false });
         const tipoMaterial = file.type.startsWith('video/') ? 'video' : file.type.startsWith('image/') ? 'imagem' : null;
         if (!tipoMaterial) throw new Error(`${file.name}: formato não aceito.`);
         const chave = `${Date.now()}-${crypto.randomUUID?.() || Math.random().toString(36).slice(2)}`;
@@ -204,11 +191,11 @@ export default function NovidadesVendasModal({ aberto, empresaId, nomeEmpresa, d
         caminhosCriados.push(caminho);
         try {
           await uploadCancelavel(caminho, file, file.name, controlador.signal, (carregado) => {
-            const progresso = totalBytes ? (bytesConcluidos + Math.min(carregado, file.size)) / totalBytes * 100 : 0;
-            setEnvioAtivo((atual) => atual ? { ...atual, progresso: Math.min(99, progresso) } : null);
+            const progresso = totalBytes ? (bytesConcluidos + Math.min(carregado, file.size) * .94) / totalBytes * 100 : 0;
+            setEnvioAtivo((atual) => atual ? { ...atual, progresso: Math.min(99, progresso), etapa: 'Enviando arquivo' } : null);
           });
-          bytesConcluidos += file.size;
-          setEnvioAtivo((atual) => atual ? { ...atual, progresso: totalBytes ? bytesConcluidos / totalBytes * 100 : 100 } : null);
+          const progressoConfirmacao = totalBytes ? (bytesConcluidos + file.size * .96) / totalBytes * 100 : 96;
+          setEnvioAtivo((atual) => atual ? { ...atual, progresso: Math.min(99, progressoConfirmacao), etapa: 'Registrando material' } : null);
         } catch (e) {
           if (!controlador.signal.aborted) {
             await supabase.storage.from(BUCKET).remove([caminho]);
@@ -217,30 +204,15 @@ export default function NovidadesVendasModal({ aberto, empresaId, nomeEmpresa, d
           throw e;
         }
         const arquivoUrl = supabase.storage.from(BUCKET).getPublicUrl(caminho).data.publicUrl;
-        let miniaturaPath: string | null = null; let miniaturaUrl: string | null = tipoMaterial === 'imagem' ? arquivoUrl : null;
-        if (tipoMaterial === 'video') {
-          const miniatura = await miniaturaVideo(file, controlador.signal);
-          if (controlador.signal.aborted) throw new DOMException('Envio cancelado.', 'AbortError');
-          if (miniatura) {
-            miniaturaPath = `${empresaId}/${pastaAtiva}/${chave}-capa.jpg`;
-            caminhosCriados.push(miniaturaPath); caminhosDesteMaterial.push(miniaturaPath);
-            try {
-              await uploadCancelavel(miniaturaPath, miniatura, `${chave}-capa.jpg`, controlador.signal);
-              miniaturaUrl = supabase.storage.from(BUCKET).getPublicUrl(miniaturaPath).data.publicUrl;
-            } catch (e) {
-              if (controlador.signal.aborted) throw e;
-              await supabase.storage.from(BUCKET).remove([miniaturaPath]);
-              caminhosCriados.splice(caminhosCriados.indexOf(miniaturaPath), 1);
-              caminhosDesteMaterial.splice(caminhosDesteMaterial.indexOf(miniaturaPath), 1);
-              miniaturaPath = null;
-            }
-          }
-        }
+        const miniaturaPath: string | null = null;
+        const miniaturaUrl: string | null = tipoMaterial === 'imagem' ? arquivoUrl : null;
         const tituloMaterial = file.name.replace(/\.[^.]+$/, '').replace(/[-_]+/g, ' ');
-        const { data, error } = await supabase.from('vendas_mobile_divulgacao_materiais').insert({ empresa_id: empresaId, pasta_id: pastaAtiva, titulo: tituloMaterial, tipo: tipoMaterial, arquivo_path: caminho, arquivo_url: arquivoUrl, miniatura_path: miniaturaPath, miniatura_url: miniaturaUrl, mime_type: file.type, tamanho_bytes: file.size }).select('id, pasta_id, titulo, tipo, arquivo_path, arquivo_url, miniatura_path, miniatura_url, criado_em').abortSignal(controlador.signal).single();
+        const { data, error } = await supabase.from('vendas_mobile_divulgacao_materiais').insert({ empresa_id: empresaId, pasta_id: pastaAtiva, titulo: tituloMaterial, tipo: tipoMaterial, arquivo_path: caminho, arquivo_url: arquivoUrl, miniatura_path: miniaturaPath, miniatura_url: miniaturaUrl, mime_type: file.type, tamanho_bytes: file.size }).select('id, pasta_id, titulo, tipo, arquivo_path, arquivo_url, miniatura_path, miniatura_url, miniatura_status, criado_em').abortSignal(controlador.signal).single();
         if (error || !data) { await supabase.storage.from(BUCKET).remove(caminhosDesteMaterial); throw error || new Error('Falha ao registrar material.'); }
         registrosCriados.push(data as Material);
         setMateriais((atuais) => [data as Material, ...atuais]);
+        bytesConcluidos += file.size;
+        setEnvioAtivo((atual) => atual ? { ...atual, progresso: totalBytes ? bytesConcluidos / totalBytes * 100 : 100, etapa: tipoMaterial === 'video' ? 'Vídeo enviado · preparando capa' : 'Material concluído' } : null);
       }
     } catch (e) {
       if (controlador.signal.aborted) {
@@ -291,14 +263,14 @@ export default function NovidadesVendasModal({ aberto, empresaId, nomeEmpresa, d
         <div className="p-6">
           <span className="mx-auto grid h-16 w-16 place-items-center rounded-full bg-cyan-500/15 text-cyan-500"><span className="h-9 w-9 animate-spin rounded-full border-4 border-cyan-500/25 border-t-cyan-500" /></span>
           <p className="mt-4 text-[10px] font-black uppercase tracking-[.18em] text-cyan-600">Vendas Mobile</p>
-          <h3 className="mt-1 text-xl font-black">{envioAtivo.cancelando ? 'Cancelando envio' : 'Enviando arquivo'}</h3>
+          <h3 className="mt-1 text-xl font-black">{envioAtivo.cancelando ? 'Cancelando envio' : envioAtivo.etapa}</h3>
           <p className={`mt-2 truncate text-sm font-bold ${suave}`}>{envioAtivo.nome}</p>
           {envioAtivo.total > 1 && <p className={`mt-1 text-xs ${suave}`}>Arquivo {envioAtivo.atual} de {envioAtivo.total}</p>}
           <div className={`mt-5 h-3 w-full overflow-hidden rounded-full ${darkMode ? 'bg-slate-700' : 'bg-slate-200'}`} role="progressbar" aria-label="Progresso do envio" aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(envioAtivo.progresso)}>
             <span className="block h-full rounded-full bg-gradient-to-r from-cyan-500 to-blue-600 transition-[width] duration-200 ease-out" style={{ width: `${Math.max(1, envioAtivo.progresso)}%` }} />
           </div>
           <p className="mt-2 text-sm font-black text-cyan-600">{Math.round(envioAtivo.progresso)}%</p>
-          <p className={`mt-4 text-xs leading-relaxed ${suave}`}>{envioAtivo.cancelando ? 'Interrompendo e removendo os arquivos deste envio.' : 'Mantenha esta tela aberta enquanto o material é enviado com segurança.'}</p>
+          <p className={`mt-4 text-xs leading-relaxed ${suave}`}>{envioAtivo.cancelando ? 'Interrompendo e removendo os arquivos deste envio.' : envioAtivo.etapa.includes('preparando capa') ? 'O envio terminou. A capa será concluída em segundo plano pelo servidor.' : 'Mantenha esta tela aberta enquanto o material é enviado com segurança.'}</p>
           <button type="button" onClick={cancelarEnvio} disabled={envioAtivo.cancelando} className="mt-5 h-11 w-full rounded-full border border-red-300 bg-red-50 text-xs font-black uppercase text-red-700 transition active:scale-[.98] disabled:opacity-60">{envioAtivo.cancelando ? 'Cancelando...' : 'Cancelar envio'}</button>
         </div>
       </section>
@@ -325,7 +297,7 @@ export default function NovidadesVendasModal({ aberto, empresaId, nomeEmpresa, d
             {!listaPastasVisiveis.length && <p className={`py-3 text-center text-xs ${suave}`}>Nenhuma pasta criada.</p>}
           </div>
         </aside>
-        <section className="min-w-0"><div className="flex items-start justify-between gap-3"><div><h3 className="text-base font-black">{pastas.find((p) => p.id === pastaAtiva)?.nome || 'Materiais de divulgação'}</h3><p className={`text-xs ${suave}`}>{pastaAtiva ? 'Envie fotos ou vídeos para esta pasta.' : 'Selecione ou crie uma pasta para começar.'}</p></div>{pastaAtiva && <><input ref={inputArquivos} type="file" accept="image/jpeg,image/png,image/webp,image/gif,video/mp4,video/webm,video/quicktime" multiple className="hidden" onChange={(e) => void enviarArquivos(e.target.files)} /><button type="button" onClick={() => inputArquivos.current?.click()} disabled={salvando} className="flex h-10 shrink-0 items-center gap-2 rounded-lg px-3 text-xs font-black text-white disabled:opacity-60" style={{ backgroundColor: corPrimaria }}><Icone tipo="upload" className="h-4 w-4" />{salvando ? 'Enviando...' : 'Adicionar'}</button></>}</div><div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-4">{materiaisAtivos.map((item) => <article key={item.id} className={`group overflow-hidden rounded-xl border ${darkMode ? 'border-slate-700 bg-slate-800' : 'border-slate-200 bg-white'}`}><div className="relative aspect-square bg-slate-950">{item.miniatura_url ? <img src={item.miniatura_url} alt="" className="h-full w-full object-cover" /> : item.tipo === 'video' ? <video src={item.arquivo_url} preload="metadata" muted className="h-full w-full object-cover" /> : <span className="flex h-full items-center justify-center text-slate-500"><Icone tipo="image" /></span>}<span className="absolute bottom-2 left-2 rounded-full bg-black/70 p-1.5 text-white"><Icone tipo={item.tipo === 'video' ? 'video' : 'image'} className="h-3.5 w-3.5" /></span></div><div className="flex items-center gap-2 p-2"><b className="min-w-0 flex-1 truncate text-[11px]">{item.titulo}</b><button type="button" onClick={() => void excluirMaterial(item)} className="h-7 w-7 shrink-0 rounded-md text-red-500">×</button></div></article>)}{pastaAtiva && !materiaisAtivos.length && <p className={`col-span-full rounded-xl border border-dashed px-4 py-12 text-center text-sm ${suave}`}>Esta pasta ainda está vazia.</p>}</div></section>
+        <section className="min-w-0"><div className="flex items-start justify-between gap-3"><div><h3 className="text-base font-black">{pastas.find((p) => p.id === pastaAtiva)?.nome || 'Materiais de divulgação'}</h3><p className={`text-xs ${suave}`}>{pastaAtiva ? 'Envie fotos ou vídeos para esta pasta.' : 'Selecione ou crie uma pasta para começar.'}</p></div>{pastaAtiva && <><input ref={inputArquivos} type="file" accept="image/jpeg,image/png,image/webp,image/gif,video/mp4,video/webm,video/quicktime" multiple className="hidden" onChange={(e) => void enviarArquivos(e.target.files)} /><button type="button" onClick={() => inputArquivos.current?.click()} disabled={salvando} className="flex h-10 shrink-0 items-center gap-2 rounded-lg px-3 text-xs font-black text-white disabled:opacity-60" style={{ backgroundColor: corPrimaria }}><Icone tipo="upload" className="h-4 w-4" />{salvando ? 'Enviando...' : 'Adicionar'}</button></>}</div><div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-4">{materiaisAtivos.map((item) => <article key={item.id} className={`group overflow-hidden rounded-xl border ${darkMode ? 'border-slate-700 bg-slate-800' : 'border-slate-200 bg-white'}`}><div className="relative aspect-square bg-slate-950">{item.miniatura_url ? <img src={item.miniatura_url} alt="" className="h-full w-full object-cover" /> : item.tipo === 'video' ? <span className="flex h-full flex-col items-center justify-center gap-2 px-3 text-center text-slate-300"><span className={`h-7 w-7 rounded-full border-2 border-cyan-400/25 ${item.miniatura_status === 'erro' ? '' : 'animate-spin border-t-cyan-400'}`} /><b className="text-[10px] uppercase tracking-wide">{item.miniatura_status === 'erro' ? 'Capa indisponível' : 'Preparando capa'}</b></span> : <span className="flex h-full items-center justify-center text-slate-500"><Icone tipo="image" /></span>}<span className="absolute bottom-2 left-2 rounded-full bg-black/70 p-1.5 text-white"><Icone tipo={item.tipo === 'video' ? 'video' : 'image'} className="h-3.5 w-3.5" /></span></div><div className="flex items-center gap-2 p-2"><b className="min-w-0 flex-1 truncate text-[11px]">{item.titulo}</b><button type="button" onClick={() => void excluirMaterial(item)} className="h-7 w-7 shrink-0 rounded-md text-red-500">×</button></div></article>)}{pastaAtiva && !materiaisAtivos.length && <p className={`col-span-full rounded-xl border border-dashed px-4 py-12 text-center text-sm ${suave}`}>Esta pasta ainda está vazia.</p>}</div></section>
       </div>}
     </section>
   </div>;
