@@ -555,8 +555,18 @@ function contextoAvaVendas() {
   ].join('\n');
 }
 
-function abrirChatIAVendas() {
+async function abrirChatIAVendas() {
   const agora = new Date();
+  let accessToken = '';
+  try {
+    accessToken = await window.VendasDb?.getAccessToken?.() || '';
+  } catch (error) {
+    console.error('Não foi possível recuperar a sessão do Vendas para a Ava.', error);
+  }
+  if (!accessToken) {
+    toast('Sua sessão expirou. Entre novamente para conversar com a Ava.');
+    return;
+  }
   const evento = new CustomEvent('avantalab:open-ava', {
     cancelable: true,
     detail: {
@@ -566,18 +576,22 @@ function abrirChatIAVendas() {
       empresaNome: state.acessoVendas?.empresa_nome || '',
       contexto: contextoAvaVendas(),
       darkMode: Boolean(state.temaEscuro),
+      accessToken,
+      userName: state.usuario?.nome || '',
+      userId: state.usuario?.id || '',
     },
   });
   const tratado = !window.dispatchEvent(evento);
-  if (!tratado) window.location.assign('/mobile/ava');
+  if (!tratado) toast('Não foi possível abrir a Ava neste momento. Atualize o aplicativo e tente novamente.');
 }
 
 function abrirSugestoesVendas() {
-  setAba('informacoes');
-  window.setTimeout(() => {
-    const card = document.querySelector('.feedback-sales-card');
-    card?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-  }, 80);
+  const conteudos = conteudosPaginaVendas('informacoes');
+  const participe = conteudos.find((item) => item.tipo === 'participe');
+  const conteudo = feedbackVendasEnviado
+    ? `<div class="feedback-success"><span>${svgIcon('message-circle')}</span><h3>Sugestão enviada</h3><p>Obrigado por colaborar com a evolução do Vendas AvantaLab.</p><button type="button" class="ghost" onclick="novaSugestaoVendas()">Enviar outra sugestão</button></div>`
+    : `<form class="feedback-sales-form" onsubmit="enviarSugestaoVendas(event)"><label for="sugestaoVendasMensagem">Conte sua ideia, dificuldade ou sugestão</label><textarea id="sugestaoVendasMensagem" rows="5" maxlength="2000" placeholder="Escreva sua sugestão..." required></textarea><div><small>Sua mensagem será enviada à equipe AvantaLab e identificada como originada no App Vendas.</small><button id="sugestaoVendasEnviar" type="submit" class="primary" ${feedbackVendasEnviando ? 'disabled' : ''}>${svgIcon('message-circle')} ${feedbackVendasEnviando ? 'Enviando...' : 'Enviar sugestão'}</button></div></form>`;
+  sheet(`<div class="sheet-header"><div><h2>${escapeHtml(participe?.titulo || 'Dicas e sugestões')}</h2><p class="muted small">${escapeHtml(participe?.descricao || 'Ajude a melhorar o aplicativo compartilhando sua experiência com nossa equipe.')}</p></div><button class="close" onclick="fecharSheet()">×</button></div>${conteudo}`, 'sheet-backdrop-centered suggestions-sales-backdrop');
 }
 
 function sairMenuMobile() {
@@ -993,6 +1007,7 @@ async function carregarDadosBackend(mostrarCarregamento = true) {
     if (dados.user) {
       state.usuario = {
         ...state.usuario,
+        id: dados.user.id,
         nome: dados.user.user_metadata?.nome || dados.user.user_metadata?.full_name || dados.user.user_metadata?.name || dados.user.email || state.usuario.nome,
         email: dados.user.email || state.usuario.email || '',
         telefone: dados.user.phone || dados.user.user_metadata?.telefone || dados.user.user_metadata?.phone || state.usuario.telefone || '',
@@ -1306,12 +1321,9 @@ function renderPublicacoes(tipo) {
 
 function renderInformacoesVendas() {
   const conteudos = conteudosPaginaVendas('informacoes');
-  const participe = conteudos.find((item) => item.tipo === 'participe');
   const cards = conteudos.filter((item) => item.tipo !== 'participe').map((item) => { const apresentacao = apresentacaoTipoConteudoVendas(item.tipo); return `<article class="information-card"><header><span>${svgIcon(apresentacao.icon)}</span><div><small>${escapeHtml(apresentacao.label)}</small><h3>${escapeHtml(item.titulo)}</h3></div></header><p>${escapeHtml(item.descricao)}</p></article>`; }).join('');
-  const formulario = feedbackVendasEnviado
-    ? `<div class="feedback-success"><span>${svgIcon('message-circle')}</span><h3>Sugestão enviada</h3><p>Obrigado por colaborar com a evolução do Vendas AvantaLab.</p><button type="button" class="ghost" onclick="novaSugestaoVendas()">Enviar outra sugestão</button></div>`
-    : `<form class="feedback-sales-form" onsubmit="enviarSugestaoVendas(event)"><label for="sugestaoVendasMensagem">Conte sua ideia, dificuldade ou sugestão</label><textarea id="sugestaoVendasMensagem" rows="5" maxlength="2000" placeholder="Escreva sua sugestão..." required></textarea><div><small>Sua mensagem será enviada à equipe AvantaLab e identificada como originada no App Vendas.</small><button id="sugestaoVendasEnviar" type="submit" class="primary" ${feedbackVendasEnviando ? 'disabled' : ''}>${svgIcon('message-circle')} ${feedbackVendasEnviando ? 'Enviando...' : 'Enviar sugestão'}</button></div></form>`;
-  return `<section class="module-page publicacoes-page informacoes-page"><div class="module-sticky-head"><div class="module-title"><div><h2>Informações</h2><p>Versões, melhorias e orientações do aplicativo.</p></div></div></div><div class="information-grid">${cards}<article class="feedback-sales-card"><header><span>${svgIcon('message-circle')}</span><div><small>Participe</small><h3>${escapeHtml(participe?.titulo || 'Dicas e sugestões')}</h3></div></header><p>${escapeHtml(participe?.descricao || 'Ajude a melhorar o aplicativo compartilhando sua experiência com nossa equipe.')}</p>${formulario}</article></div></section>`;
+  const vazio = '<article class="publication-empty"><span>' + svgIcon('info') + '</span><h3>Nenhuma informação publicada</h3><p>As próximas informações do sistema aparecerão aqui.</p></article>';
+  return `<section class="module-page publicacoes-page informacoes-page"><div class="module-sticky-head"><div class="module-title"><div><h2>Informações</h2><p>Versões, melhorias e orientações do aplicativo.</p></div></div></div><div class="information-grid">${cards || vazio}</div></section>`;
 }
 
 async function enviarSugestaoVendas(event) {
@@ -1331,7 +1343,7 @@ async function enviarSugestaoVendas(event) {
       mensagem,
     });
     feedbackVendasEnviado = true;
-    render();
+    abrirSugestoesVendas();
     toast('Sugestão enviada com sucesso.');
   } catch (error) {
     toast(traduzErro(error) || 'Não foi possível registrar sua mensagem neste momento.');
@@ -1343,7 +1355,7 @@ async function enviarSugestaoVendas(event) {
 
 function novaSugestaoVendas() {
   feedbackVendasEnviado = false;
-  render();
+  abrirSugestoesVendas();
 }
 
 function renderDivulgacao() {

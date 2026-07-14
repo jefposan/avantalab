@@ -11,6 +11,9 @@ type AvaOpenRequest = {
   empresaNome?: string;
   contexto?: string;
   darkMode?: boolean;
+  accessToken?: string;
+  userName?: string;
+  userId?: string;
 };
 
 export default function AvaMobileBridge() {
@@ -27,6 +30,9 @@ export default function AvaMobileBridge() {
         empresaNome: detail.empresaNome,
         contexto: detail.contexto,
         darkMode: detail.darkMode,
+        accessToken: detail.accessToken,
+        userName: detail.userName,
+        userId: detail.userId,
       });
     };
 
@@ -48,6 +54,9 @@ export default function AvaMobileBridge() {
       initialCompanyName={request.empresaNome}
       initialContext={request.contexto}
       initialDarkMode={request.darkMode}
+      initialAccessToken={request.accessToken}
+      initialUserName={request.userName}
+      initialUserId={request.userId}
       onClose={closeChat}
     />,
     document.body,
