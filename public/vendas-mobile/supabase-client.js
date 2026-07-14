@@ -385,5 +385,32 @@
     if (error) throw error;
   }
 
-  window.VendasDb = { client, currentUser, hasSession, getAccessToken, signIn, signInPhone, signInWithGoogle, resetPassword, updatePassword, updateUserMetadata, signUp, signOut, solicitarAcesso, buscarAcessoVendas, loadAll, saveProduct, deleteProduct, createPackage, saveProductsBulk, deletePackage, saveClient, deleteClient, saveOrder, savePayment, updatePayment, deletePayment };
+  async function saveFeedback({ empresaId, nomeEmpresa, mensagem }) {
+    const user = await currentUser();
+    if (!user) throw new Error('Sessão expirada.');
+    const nomeUsuario = user.user_metadata?.nome
+      || user.user_metadata?.full_name
+      || user.user_metadata?.name
+      || user.email
+      || null;
+    const { data, error } = await client
+      .from('feedbacks')
+      .insert({
+        empresa_id: empresaId,
+        usuario_id: user.id,
+        acesso_id: null,
+        nome_empresa: nomeEmpresa || null,
+        nome_usuario: nomeUsuario,
+        email_usuario: user.email || null,
+        tipo: 'sugestao',
+        mensagem: `[App Vendas]\n${mensagem}`,
+        status: 'novo',
+      })
+      .select()
+      .single();
+    if (error) throw error;
+    return data;
+  }
+
+  window.VendasDb = { client, currentUser, hasSession, getAccessToken, signIn, signInPhone, signInWithGoogle, resetPassword, updatePassword, updateUserMetadata, signUp, signOut, solicitarAcesso, buscarAcessoVendas, loadAll, saveProduct, deleteProduct, createPackage, saveProductsBulk, deletePackage, saveClient, deleteClient, saveOrder, savePayment, updatePayment, deletePayment, saveFeedback };
 })();

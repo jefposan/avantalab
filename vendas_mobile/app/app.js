@@ -72,6 +72,8 @@ let limiteClientesPagamentos = 10;
 let pedidoClienteRascunho = null;
 let pagamentoClienteRascunho = null;
 let ordemAlfabetica = 'asc';
+let feedbackVendasEnviando = false;
+let feedbackVendasEnviado = false;
 
 const PAISES_DDI = [
   ['Brasil', '55', '🇧🇷'], ['Portugal', '351', '🇵🇹'], ['Estados Unidos / Canadá', '1', '🇺🇸'],
@@ -252,6 +254,10 @@ function setAba(aba) {
   if (aba !== 'agenda') fecharCamadasAgenda();
   if (aba === 'vendas' && state.aba !== 'vendas') limitePedidos = 10;
   if (aba === 'vender' && state.aba !== 'vender') limiteClientesPagamentos = 10;
+  if (aba === 'informacoes' && state.aba !== 'informacoes') {
+    feedbackVendasEnviando = false;
+    feedbackVendasEnviado = false;
+  }
   state.aba = aba;
   state.menuAberto = false;
   render();
@@ -1215,8 +1221,47 @@ function salvarNovaDataAgendaVendas() { const data = valor('agendaNovaDataVendas
 
 function renderPublicacoes(tipo) {
   const informacao = tipo === 'informacoes';
-  const temBusca = Boolean(String(state.busca || '').trim());
-  return `<section class="module-page publicacoes-page${temBusca ? ' is-searching' : ''}"><div class="module-sticky-head"><div class="module-title"><div><h2>${informacao ? 'Informações' : 'Novidades'}</h2><p>${informacao ? 'Tutoriais, comunicados técnicos e atualizações.' : 'Atualizações, promoções e comunicados da empresa.'}</p></div></div>${renderBarraBusca('Buscar por título ou conteúdo...', 'Filtros')}</div><article class="publication-empty"><span>${svgIcon(informacao ? 'info' : 'bell')}</span><h3>${informacao ? 'Nenhuma informação encontrada' : 'Nenhuma novidade encontrada'}</h3><p>${informacao ? 'Tente ajustar seus filtros de busca.' : 'Aguarde por novas publicações.'}</p></article></section>`;
+  if (informacao) return renderInformacoesVendas();
+  return `<section class="module-page publicacoes-page novidades-page"><div class="module-sticky-head"><div class="module-title"><div><h2>Novidades</h2><p>Inclusões, melhorias e correções do Vendas AvantaLab.</p></div></div></div><div class="updates-feed"><article class="update-card featured"><header><span>${svgIcon('credit-card')}</span><div><small>Inclusão</small><h3>Pagamentos por cliente</h3></div><time>Atualização recente</time></header><p>Agora é possível consultar o histórico de cada cliente, editar valor e data ou excluir um pagamento com confirmação. Os saldos são recalculados automaticamente.</p></article><article class="update-card"><header><span>${svgIcon('users')}</span><div><small>Ajuste</small><h3>Lista de clientes em Pagamentos</h3></div></header><p>A página passou a exibir primeiro os dez clientes com recebimentos mais recentes, com carregamento de mais clientes em blocos de dez.</p></article><article class="update-card"><header><span>${svgIcon('info')}</span><div><small>Melhoria</small><h3>Experiência mais consistente</h3></div></header><p>Cabeçalhos, cards, modo escuro e campos internos estão sendo padronizados para manter a navegação mais clara em todas as áreas do aplicativo.</p></article><aside class="updates-future-note">${svgIcon('bell')}<p><b>Em breve:</b> este espaço também poderá receber avisos e comunicados enviados pela empresa aos vendedores.</p></aside></div></section>`;
+}
+
+function renderInformacoesVendas() {
+  const formulario = feedbackVendasEnviado
+    ? `<div class="feedback-success"><span>${svgIcon('message-circle')}</span><h3>Sugestão enviada</h3><p>Obrigado por colaborar com a evolução do Vendas AvantaLab.</p><button type="button" class="ghost" onclick="novaSugestaoVendas()">Enviar outra sugestão</button></div>`
+    : `<form class="feedback-sales-form" onsubmit="enviarSugestaoVendas(event)"><label for="sugestaoVendasMensagem">Conte sua ideia, dificuldade ou sugestão</label><textarea id="sugestaoVendasMensagem" rows="5" maxlength="2000" placeholder="Escreva sua sugestão..." required></textarea><div><small>Sua mensagem será enviada à equipe AvantaLab e identificada como originada no App Vendas.</small><button id="sugestaoVendasEnviar" type="submit" class="primary" ${feedbackVendasEnviando ? 'disabled' : ''}>${svgIcon('message-circle')} ${feedbackVendasEnviando ? 'Enviando...' : 'Enviar sugestão'}</button></div></form>`;
+  return `<section class="module-page publicacoes-page informacoes-page"><div class="module-sticky-head"><div class="module-title"><div><h2>Informações</h2><p>Versões, melhorias e orientações do aplicativo.</p></div></div></div><div class="information-grid"><article class="information-card"><header><span>${svgIcon('info')}</span><div><small>Versão</small><h3>Vendas AvantaLab</h3></div></header><p>Aplicativo web progressivo com atualização contínua. As novas versões são disponibilizadas sem necessidade de reinstalar o aplicativo.</p></article><article class="information-card"><header><span>${svgIcon('settings')}</span><div><small>Melhorias</small><h3>Evolução permanente</h3></div></header><p>Os módulos de clientes, produtos, pedidos, pagamentos, agenda e dashboard recebem ajustes graduais de desempenho, segurança e experiência de uso.</p></article><article class="information-card wide"><header><span>${svgIcon('bell')}</span><div><small>Atualizações</small><h3>Como acompanhar mudanças</h3></div></header><p>Consulte a página Novidades para ver inclusões, ajustes e correções relevantes que já chegaram ao sistema.</p></article><article class="feedback-sales-card"><header><span>${svgIcon('message-circle')}</span><div><small>Participe</small><h3>Dicas e sugestões</h3></div></header><p>Ajude a melhorar o aplicativo compartilhando sua experiência com nossa equipe.</p>${formulario}</article></div></section>`;
+}
+
+async function enviarSugestaoVendas(event) {
+  event?.preventDefault();
+  if (feedbackVendasEnviando) return;
+  const mensagem = valor('sugestaoVendasMensagem').trim();
+  if (!mensagem) { toast('Escreva sua mensagem antes de enviar.'); return; }
+  if (!state.acessoVendas?.empresa_id) { toast('Não foi possível identificar a empresa para registrar sua mensagem.'); return; }
+  if (!backendAtivo || !window.VendasDb?.saveFeedback) { toast('Não foi possível registrar sua mensagem neste momento.'); return; }
+  feedbackVendasEnviando = true;
+  const botao = document.getElementById('sugestaoVendasEnviar');
+  if (botao) { botao.disabled = true; botao.textContent = 'Enviando...'; }
+  try {
+    await window.VendasDb.saveFeedback({
+      empresaId: state.acessoVendas.empresa_id,
+      nomeEmpresa: state.acessoVendas.empresa_nome || 'Empresa não informada',
+      mensagem,
+    });
+    feedbackVendasEnviado = true;
+    render();
+    toast('Sugestão enviada com sucesso.');
+  } catch (error) {
+    toast(traduzErro(error) || 'Não foi possível registrar sua mensagem neste momento.');
+    if (botao) { botao.disabled = false; botao.innerHTML = `${svgIcon('message-circle')} Enviar sugestão`; }
+  } finally {
+    feedbackVendasEnviando = false;
+  }
+}
+
+function novaSugestaoVendas() {
+  feedbackVendasEnviado = false;
+  render();
 }
 
 function renderDivulgacao() {
@@ -3161,6 +3206,8 @@ window.abrirAtualizarTelefone = abrirAtualizarTelefone;
 window.enviarCodigoAtualizarTelefone = enviarCodigoAtualizarTelefone;
 window.confirmarAtualizarTelefone = confirmarAtualizarTelefone;
 window.instalarPWA = instalarPWA;
+window.enviarSugestaoVendas = enviarSugestaoVendas;
+window.novaSugestaoVendas = novaSugestaoVendas;
 
 window.addEventListener('pageshow', () => requestAnimationFrame(limparFocoInicialLogin));
 window.addEventListener('scroll', agendarDestaqueClientes, { passive: true });
