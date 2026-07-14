@@ -38,7 +38,7 @@ function Icone({ tipo, className = 'h-5 w-5' }: { tipo: string; className?: stri
   return <svg {...props}><path d="M12 3v18M3 12h18" /><circle cx="12" cy="12" r="9" /></svg>;
 }
 
-async function uploadCancelavel(caminho: string, arquivo: Blob, nomeArquivo: string, signal: AbortSignal) {
+async function uploadCancelavel(caminho: string, arquivo: Blob, nomeArquivo: string, signal: AbortSignal, onProgresso?: (carregado: number, total: number) => void) {
   const sessao = await supabase.auth.getSession();
   const token = sessao.data.session?.access_token;
   if (!token) throw new Error('Sua sessão expirou. Entre novamente para enviar materiais.');
@@ -46,16 +46,41 @@ async function uploadCancelavel(caminho: string, arquivo: Blob, nomeArquivo: str
   formulario.append('cacheControl', '31536000');
   formulario.append('', arquivo, nomeArquivo);
   const caminhoSeguro = caminho.split('/').map(encodeURIComponent).join('/');
-  const resposta = await fetch(`${SUPABASE_URL}/storage/v1/object/${BUCKET}/${caminhoSeguro}`, {
-    method: 'POST',
-    headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${token}`, 'x-upsert': 'false' },
-    body: formulario,
-    signal,
+  await new Promise<void>((resolve, reject) => {
+    const requisicao = new XMLHttpRequest();
+    let finalizado = false;
+    const concluir = (acao: () => void) => {
+      if (finalizado) return;
+      finalizado = true;
+      signal.removeEventListener('abort', cancelar);
+      acao();
+    };
+    const cancelar = () => requisicao.abort();
+    requisicao.open('POST', `${SUPABASE_URL}/storage/v1/object/${BUCKET}/${caminhoSeguro}`);
+    requisicao.setRequestHeader('apikey', SUPABASE_ANON_KEY);
+    requisicao.setRequestHeader('Authorization', `Bearer ${token}`);
+    requisicao.setRequestHeader('x-upsert', 'false');
+    requisicao.upload.onprogress = (evento) => {
+      if (evento.lengthComputable) onProgresso?.(evento.loaded, evento.total);
+    };
+    requisicao.onload = () => concluir(() => {
+      if (requisicao.status >= 200 && requisicao.status < 300) { resolve(); return; }
+      let mensagem = 'Não foi possível enviar o arquivo.';
+      try {
+        const detalhe = JSON.parse(requisicao.responseText);
+        mensagem = String(detalhe?.message || detalhe?.error || mensagem);
+      } catch { /* resposta sem JSON */ }
+      reject(new Error(mensagem));
+    });
+    requisicao.onerror = () => concluir(() => reject(new Error('Falha de conexão durante o envio.')));
+    requisicao.onabort = () => concluir(() => reject(new DOMException('Envio cancelado.', 'AbortError')));
+    if (signal.aborted) {
+      concluir(() => reject(new DOMException('Envio cancelado.', 'AbortError')));
+      return;
+    }
+    signal.addEventListener('abort', cancelar, { once: true });
+    requisicao.send(formulario);
   });
-  if (!resposta.ok) {
-    const detalhe = await resposta.json().catch(() => null);
-    throw new Error(String(detalhe?.message || detalhe?.error || 'Não foi possível enviar o arquivo.'));
-  }
 }
 
 async function miniaturaVideo(file: File, signal?: AbortSignal): Promise<Blob | null> {
@@ -92,7 +117,7 @@ export default function NovidadesVendasModal({ aberto, empresaId, nomeEmpresa, d
   const [novidades, setNovidades] = useState<Novidade[]>([]); const [pastas, setPastas] = useState<Pasta[]>([]); const [materiais, setMateriais] = useState<Material[]>([]);
   const [pastaAtiva, setPastaAtiva] = useState<string | null>(null); const [pastaPaiNova, setPastaPaiNova] = useState(''); const [novaPasta, setNovaPasta] = useState(''); const [novaDescricao, setNovaDescricao] = useState('');
   const [carregando, setCarregando] = useState(false); const [salvando, setSalvando] = useState(false); const [erro, setErro] = useState('');
-  const [envioAtivo, setEnvioAtivo] = useState<{ nome: string; atual: number; total: number; cancelando: boolean } | null>(null);
+  const [envioAtivo, setEnvioAtivo] = useState<{ nome: string; atual: number; total: number; progresso: number; cancelando: boolean } | null>(null);
   const inputArquivos = useRef<HTMLInputElement>(null);
   const controladorEnvio = useRef<AbortController | null>(null);
 
@@ -135,13 +160,16 @@ export default function NovidadesVendasModal({ aberto, empresaId, nomeEmpresa, d
     const controlador = new AbortController();
     const registrosCriados: Material[] = [];
     const caminhosCriados: string[] = [];
+    const totalBytes = listaArquivos.reduce((soma, arquivo) => soma + arquivo.size, 0);
+    let bytesConcluidos = 0;
     controladorEnvio.current = controlador;
     setSalvando(true); setErro('');
-    setEnvioAtivo({ nome: listaArquivos[0].name, atual: 1, total: listaArquivos.length, cancelando: false });
+    setEnvioAtivo({ nome: listaArquivos[0].name, atual: 1, total: listaArquivos.length, progresso: 0, cancelando: false });
     try {
       for (const [indice, file] of listaArquivos.entries()) {
         if (controlador.signal.aborted) throw new DOMException('Envio cancelado.', 'AbortError');
-        setEnvioAtivo({ nome: file.name, atual: indice + 1, total: listaArquivos.length, cancelando: false });
+        const progressoInicial = totalBytes ? bytesConcluidos / totalBytes * 100 : 0;
+        setEnvioAtivo({ nome: file.name, atual: indice + 1, total: listaArquivos.length, progresso: progressoInicial, cancelando: false });
         const tipoMaterial = file.type.startsWith('video/') ? 'video' : file.type.startsWith('image/') ? 'imagem' : null;
         if (!tipoMaterial) throw new Error(`${file.name}: formato não aceito.`);
         const chave = `${Date.now()}-${crypto.randomUUID?.() || Math.random().toString(36).slice(2)}`;
@@ -149,7 +177,12 @@ export default function NovidadesVendasModal({ aberto, empresaId, nomeEmpresa, d
         const caminhosDesteMaterial = [caminho];
         caminhosCriados.push(caminho);
         try {
-          await uploadCancelavel(caminho, file, file.name, controlador.signal);
+          await uploadCancelavel(caminho, file, file.name, controlador.signal, (carregado) => {
+            const progresso = totalBytes ? (bytesConcluidos + Math.min(carregado, file.size)) / totalBytes * 100 : 0;
+            setEnvioAtivo((atual) => atual ? { ...atual, progresso: Math.min(99, progresso) } : null);
+          });
+          bytesConcluidos += file.size;
+          setEnvioAtivo((atual) => atual ? { ...atual, progresso: totalBytes ? bytesConcluidos / totalBytes * 100 : 100 } : null);
         } catch (e) {
           if (!controlador.signal.aborted) {
             await supabase.storage.from(BUCKET).remove([caminho]);
@@ -215,13 +248,16 @@ export default function NovidadesVendasModal({ aberto, empresaId, nomeEmpresa, d
   return <div className="fixed inset-0 z-[6000] flex items-center justify-center bg-black/65 px-3 py-5" onClick={onFechar}>
     {envioAtivo && <div className="fixed inset-0 z-[6200] flex items-center justify-center bg-slate-950/80 p-5 backdrop-blur-sm" onClick={(e) => e.stopPropagation()} role="alert" aria-live="assertive">
       <section className={`w-full max-w-sm overflow-hidden rounded-3xl border text-center shadow-2xl ${darkMode ? 'border-slate-600 bg-slate-900 text-white' : 'border-white/80 bg-white text-slate-900'}`}>
-        <div className="h-1.5 w-full overflow-hidden bg-slate-200 dark:bg-slate-700"><span className="block h-full animate-pulse bg-cyan-500" style={{ width: `${Math.max(12, envioAtivo.atual / envioAtivo.total * 100)}%` }} /></div>
         <div className="p-6">
           <span className="mx-auto grid h-16 w-16 place-items-center rounded-full bg-cyan-500/15 text-cyan-500"><span className="h-9 w-9 animate-spin rounded-full border-4 border-cyan-500/25 border-t-cyan-500" /></span>
           <p className="mt-4 text-[10px] font-black uppercase tracking-[.18em] text-cyan-600">Vendas Mobile</p>
           <h3 className="mt-1 text-xl font-black">{envioAtivo.cancelando ? 'Cancelando envio' : 'Enviando arquivo'}</h3>
           <p className={`mt-2 truncate text-sm font-bold ${suave}`}>{envioAtivo.nome}</p>
           {envioAtivo.total > 1 && <p className={`mt-1 text-xs ${suave}`}>Arquivo {envioAtivo.atual} de {envioAtivo.total}</p>}
+          <div className={`mt-5 h-3 w-full overflow-hidden rounded-full ${darkMode ? 'bg-slate-700' : 'bg-slate-200'}`} role="progressbar" aria-label="Progresso do envio" aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(envioAtivo.progresso)}>
+            <span className="block h-full rounded-full bg-gradient-to-r from-cyan-500 to-blue-600 transition-[width] duration-200 ease-out" style={{ width: `${Math.max(1, envioAtivo.progresso)}%` }} />
+          </div>
+          <p className="mt-2 text-sm font-black text-cyan-600">{Math.round(envioAtivo.progresso)}%</p>
           <p className={`mt-4 text-xs leading-relaxed ${suave}`}>{envioAtivo.cancelando ? 'Interrompendo e removendo os arquivos deste envio.' : 'Mantenha esta tela aberta enquanto o material é enviado com segurança.'}</p>
           <button type="button" onClick={cancelarEnvio} disabled={envioAtivo.cancelando} className="mt-5 h-11 w-full rounded-full border border-red-300 bg-red-50 text-xs font-black uppercase text-red-700 transition active:scale-[.98] disabled:opacity-60">{envioAtivo.cancelando ? 'Cancelando...' : 'Cancelar envio'}</button>
         </div>
