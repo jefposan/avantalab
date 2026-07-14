@@ -10802,7 +10802,14 @@
     bind('menu-vendas-mobile', function () {
       fecharMenuLateralAnimado(function () {
         if (!state.empresa || !state.empresa.id) return;
-        window.location.assign('/mobile/conteudo-vendas?empresaId=' + encodeURIComponent(state.empresa.id));
+        window.dispatchEvent(new CustomEvent('avantalab:open-vendas-conteudo', {
+          detail: {
+            empresaId: state.empresa.id,
+            nomeEmpresa: nomeEmpresa(state.empresa),
+            darkMode: !!state.darkMode,
+            corPrimaria: '#003E73'
+          }
+        }));
       });
     });
     bind('menu-instalar', function () { fecharMenuLateralAnimado(instalarApp); });

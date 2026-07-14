@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from 'next';
 import AvaMobileBridge from './AvaMobileBridge';
 import BackupMobileBridge from './BackupMobileBridge';
+import VendasMobileConteudoBridge from './VendasMobileConteudoBridge';
 import { APP_VERSION } from '../lib/version';
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL
@@ -242,9 +243,10 @@ export default function MobilePage() {
       </div>
       <AvaMobileBridge />
       <BackupMobileBridge />
+      <VendasMobileConteudoBridge />
 
       <script src="/mobile-supabase.js" defer />
-      <script src="/mobile-app.js?v=285" defer />
+      <script src="/mobile-app.js?v=286" defer />
     </main>
   );
 }
