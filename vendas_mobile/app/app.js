@@ -247,6 +247,18 @@ function svgIcon(nome, classe = '') {
   return `<svg class="svg-icon ${classe}" aria-hidden="true"><use href="./assets/icons.svg#${nome}"></use></svg>`;
 }
 
+const ICONES_SVG_ESTAVEIS = {
+  settings: '<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06-2.83 2.83-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21h-4v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06-2.83-2.83.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-1.51-1H3v-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06 2.83-2.83.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3h4v.09A1.65 1.65 0 0 0 15 4.6a1.65 1.65 0 0 0 1.82-.33l.06-.06 2.83 2.83-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21v4h-.09A1.65 1.65 0 0 0 19.4 15Z"/>',
+  calendar: '<path d="M8 2v4M16 2v4M3 10h18"/><rect x="3" y="4" width="18" height="18" rx="2"/>',
+  home: '<path d="m3 11 9-8 9 8"/><path d="M5 10v11h14V10M9 21v-7h6v7"/>',
+  'message-circle': '<path d="M21 15a4 4 0 0 1-4 4H8l-5 3 1.7-5.1A8 8 0 1 1 21 15Z"/>',
+};
+
+function svgIconEstavel(nome, classe = '') {
+  const conteudo = ICONES_SVG_ESTAVEIS[nome];
+  return conteudo ? `<svg class="svg-icon ${classe}" viewBox="0 0 24 24" aria-hidden="true">${conteudo}</svg>` : svgIcon(nome, classe);
+}
+
 function logoVendas() {
   return `<span class="vendas-brand-logo"><img class="vendas-logo-claro" src="/vendas-mobile/assets/logo-vendas-claro.png" alt="AvantaLab — Cada venda, um avanço"><img class="vendas-logo-escuro" src="/vendas-mobile/assets/logo-vendas-escuro.png" alt="" aria-hidden="true"></span>`;
 }
@@ -379,6 +391,7 @@ function render() {
     requestAnimationFrame(limparFocoInicialLogin);
     return;
   }
+  const navegacaoInferiorEstavel = app.querySelector('.vendas-bottom-nav');
   const cabecalho = `<header class="system-header"><button class="system-brand brand-home" onclick="abrirSalaBotoes()" aria-label="Ir para a sala de botões">${logoVendas()}</button></header>`;
   app.innerHTML = `
     <aside class="sidebar ${state.menuAberto ? 'open' : ''}">
@@ -407,6 +420,8 @@ function render() {
     ${state.aba === 'novo-pedido' ? `<button class="fab" onclick="abrirCarrinho()">${svgIcon('shopping-cart')}</button>` : ''}
     ${state.agendaFormAberto && state.aba !== 'agenda' ? renderFormularioAgendaVendas() : ''}
   `;
+  const navegacaoInferiorNova = app.querySelector('.vendas-bottom-nav');
+  if (navegacaoInferiorEstavel && navegacaoInferiorNova) navegacaoInferiorNova.replaceWith(navegacaoInferiorEstavel);
   if (state.aba === 'clientes') requestAnimationFrame(configurarDestaqueClientes);
   else limparDestaqueClientes();
 }
@@ -530,7 +545,7 @@ function renderMenuMobile() {
         <i aria-hidden="true">↑</i>
       </button>
       <button type="button" class="mobile-suggestions-card" onclick="abrirSugestoesVendas()">
-        <span class="mobile-suggestions-icon">${svgIcon('message-circle')}</span>
+        <span class="mobile-suggestions-icon">${svgIconEstavel('message-circle')}</span>
         <span><b>Dúvidas e Sugestões</b><small>Ajude a melhorar o AvantaLab</small></span>
         <i aria-hidden="true">›</i>
       </button>
@@ -598,8 +613,8 @@ function abrirSugestoesVendas() {
   const conteudos = conteudosPaginaVendas('informacoes');
   const participe = conteudos.find((item) => item.tipo === 'participe');
   const conteudo = feedbackVendasEnviado
-    ? `<div class="feedback-success"><span>${svgIcon('message-circle')}</span><h3>Sugestão enviada</h3><p>Obrigado por colaborar com a evolução do Vendas AvantaLab.</p><button type="button" class="ghost" onclick="novaSugestaoVendas()">Enviar outra sugestão</button></div>`
-    : `<form class="feedback-sales-form" onsubmit="enviarSugestaoVendas(event)"><label for="sugestaoVendasMensagem">Conte sua ideia, dificuldade ou sugestão</label><textarea id="sugestaoVendasMensagem" rows="5" maxlength="2000" placeholder="Escreva sua sugestão..." required></textarea><div><small>Sua mensagem será enviada à equipe AvantaLab e identificada como originada no App Vendas.</small><button id="sugestaoVendasEnviar" type="submit" class="primary" ${feedbackVendasEnviando ? 'disabled' : ''}>${svgIcon('message-circle')} ${feedbackVendasEnviando ? 'Enviando...' : 'Enviar sugestão'}</button></div></form>`;
+    ? `<div class="feedback-success"><span>${svgIconEstavel('message-circle')}</span><h3>Sugestão enviada</h3><p>Obrigado por colaborar com a evolução do Vendas AvantaLab.</p><button type="button" class="ghost" onclick="novaSugestaoVendas()">Enviar outra sugestão</button></div>`
+    : `<form class="feedback-sales-form" onsubmit="enviarSugestaoVendas(event)"><label for="sugestaoVendasMensagem">Conte sua ideia, dificuldade ou sugestão</label><textarea id="sugestaoVendasMensagem" rows="5" maxlength="2000" placeholder="Escreva sua sugestão..." required></textarea><div><small>Sua mensagem será enviada à equipe AvantaLab e identificada como originada no App Vendas.</small><button id="sugestaoVendasEnviar" type="submit" class="primary" ${feedbackVendasEnviando ? 'disabled' : ''}>${svgIconEstavel('message-circle')} ${feedbackVendasEnviando ? 'Enviando...' : 'Enviar sugestão'}</button></div></form>`;
   sheet(`<div class="sheet-header"><div><h2>${escapeHtml(participe?.titulo || 'Dicas e sugestões')}</h2><p class="muted small">${escapeHtml(participe?.descricao || 'Ajude a melhorar o aplicativo compartilhando sua experiência com nossa equipe.')}</p></div><button class="close" onclick="fecharSheet()">×</button></div>${conteudo}`, 'sheet-backdrop-centered suggestions-sales-backdrop');
 }
 
@@ -609,7 +624,7 @@ function sairMenuMobile() {
 
 function iconeNavegacaoInferior(tipo) {
   if (tipo === 'tema') return '<svg class="svg-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M20.2 15.1A8.5 8.5 0 0 1 8.9 3.8 8.5 8.5 0 1 0 20.2 15Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>';
-  return svgIcon(tipo);
+  return svgIconEstavel(tipo);
 }
 
 function itemNavegacaoInferior(id, tipo, rotulo, acao) {
@@ -1354,7 +1369,7 @@ async function enviarSugestaoVendas(event) {
     toast('Sugestão enviada com sucesso.');
   } catch (error) {
     toast(traduzErro(error) || 'Não foi possível registrar sua mensagem neste momento.');
-    if (botao) { botao.disabled = false; botao.innerHTML = `${svgIcon('message-circle')} Enviar sugestão`; }
+    if (botao) { botao.disabled = false; botao.innerHTML = `${svgIconEstavel('message-circle')} Enviar sugestão`; }
   } finally {
     feedbackVendasEnviando = false;
   }
