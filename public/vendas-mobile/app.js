@@ -2375,7 +2375,7 @@ function criarCanvasComprovante({ empresa = '', titulo, cliente, data, etiqueta 
   const linhasExibidas = linhas.slice(0, 44);
   if (linhas.length > linhasExibidas.length) linhasExibidas.push({ principal: `+ ${linhas.length - linhasExibidas.length} itens adicionais`, secundario: '', valor: '' });
   const largura = 1080;
-  const altura = Math.min(4000, Math.max(1350, 720 + linhasExibidas.length * 66 + resumo.length * 76));
+  const altura = Math.min(5400, Math.max(1450, 890 + linhasExibidas.length * 82 + resumo.length * 86));
   const canvas = document.createElement('canvas');
   canvas.width = largura; canvas.height = altura;
   const ctx = canvas.getContext('2d');
@@ -2389,36 +2389,44 @@ function criarCanvasComprovante({ empresa = '', titulo, cliente, data, etiqueta 
   ctx.font = '800 32px Arial, sans-serif'; ctx.fillText(titulo, 64, 142);
   ctx.font = '600 24px Arial, sans-serif'; ctx.fillStyle = 'rgba(255,255,255,.9)'; ctx.fillText(textoCanvasLimitado(ctx, cliente, 680), 64, 188);
   ctx.textAlign = 'right'; ctx.fillText(data, 1016, 188); ctx.textAlign = 'left';
-  let y = 278;
+  let y = 284;
   if (etiqueta) {
-    ctx.font = '800 22px Arial, sans-serif';
-    const larguraEtiqueta = ctx.measureText(etiqueta).width + 44;
-    caminhoRetanguloArredondado(ctx, 64, y - 28, larguraEtiqueta, 46, 23);
-    ctx.fillStyle = '#dff4ff'; ctx.fill(); ctx.fillStyle = '#075985'; ctx.fillText(etiqueta, 86, y + 3); y += 58;
+    ctx.font = '900 25px Arial, sans-serif';
+    const larguraEtiqueta = ctx.measureText(etiqueta).width + 56;
+    const xEtiqueta = (largura - larguraEtiqueta) / 2;
+    caminhoRetanguloArredondado(ctx, xEtiqueta, y - 31, larguraEtiqueta, 52, 26);
+    ctx.fillStyle = '#dff4ff'; ctx.fill(); ctx.fillStyle = '#075985'; ctx.textAlign = 'center'; ctx.fillText(etiqueta, largura / 2, y + 4); ctx.textAlign = 'left'; y += 76;
   }
-  caminhoRetanguloArredondado(ctx, 48, y, 984, Math.max(120, 78 + linhasExibidas.length * 66), 26);
+
+  ctx.fillStyle = '#0A1F44'; ctx.font = '900 32px Arial, sans-serif'; ctx.fillText('Resumo financeiro', 64, y);
+  y += 24;
+  const alturaResumo = Math.max(120, 34 + resumo.length * 86);
+  caminhoRetanguloArredondado(ctx, 48, y, 984, alturaResumo, 26);
   ctx.fillStyle = '#fff'; ctx.fill();
-  ctx.fillStyle = '#0A1F44'; ctx.font = '900 27px Arial, sans-serif'; ctx.fillText(linhasExibidas.length ? 'Detalhes' : 'Informações', 78, y + 48);
-  y += 82;
-  ctx.font = '700 23px Arial, sans-serif';
-  linhasExibidas.forEach((linha, indice) => {
-    if (indice) { ctx.strokeStyle = '#e1e9f0'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(78, y - 18); ctx.lineTo(1002, y - 18); ctx.stroke(); }
-    ctx.fillStyle = '#172033'; ctx.fillText(textoCanvasLimitado(ctx, linha.principal, 600), 78, y + 5);
-    if (linha.secundario) { ctx.fillStyle = '#64748b'; ctx.font = '600 19px Arial, sans-serif'; ctx.fillText(textoCanvasLimitado(ctx, linha.secundario, 600), 78, y + 33); ctx.font = '700 23px Arial, sans-serif'; }
-    ctx.fillStyle = '#1687D9'; ctx.textAlign = 'right'; ctx.fillText(linha.valor || '', 1002, y + 8); ctx.textAlign = 'left';
-    y += 66;
-  });
-  y += 34;
-  caminhoRetanguloArredondado(ctx, 48, y, 984, 74 + resumo.length * 76, 26);
-  ctx.fillStyle = '#fff'; ctx.fill();
-  ctx.fillStyle = '#0A1F44'; ctx.font = '900 27px Arial, sans-serif'; ctx.fillText('Resumo financeiro', 78, y + 48);
-  y += 82;
+  y += 54;
   resumo.forEach((linha, indice) => {
     const destaque = indice === resumo.length - 1;
-    if (destaque) { caminhoRetanguloArredondado(ctx, 68, y - 22, 944, 62, 18); ctx.fillStyle = '#e5f4ff'; ctx.fill(); }
-    ctx.fillStyle = '#526477'; ctx.font = `${destaque ? '900' : '700'} 23px Arial, sans-serif`; ctx.fillText(linha.rotulo, 88, y + 15);
-    ctx.fillStyle = destaque ? '#075985' : '#0A1F44'; ctx.textAlign = 'right'; ctx.font = `${destaque ? '900' : '800'} ${destaque ? 30 : 25}px Arial, sans-serif`; ctx.fillText(linha.valor, 992, y + 17); ctx.textAlign = 'left';
-    y += 76;
+    if (indice) { ctx.strokeStyle = '#e1e9f0'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(78, y - 27); ctx.lineTo(1002, y - 27); ctx.stroke(); }
+    if (destaque) { caminhoRetanguloArredondado(ctx, 68, y - 28, 944, 68, 18); ctx.fillStyle = '#e5f4ff'; ctx.fill(); }
+    ctx.fillStyle = '#526477'; ctx.font = `${destaque ? '900' : '750'} 27px Arial, sans-serif`; ctx.fillText(linha.rotulo, 88, y + 15);
+    ctx.fillStyle = destaque ? '#075985' : '#0A1F44'; ctx.textAlign = 'right'; ctx.font = `${destaque ? '900' : '800'} ${destaque ? 36 : 30}px Arial, sans-serif`; ctx.fillText(linha.valor, 992, y + 17); ctx.textAlign = 'left';
+    y += 86;
+  });
+
+  y = y - 54 + Math.max(0, alturaResumo - (34 + resumo.length * 86)) + 64;
+  ctx.fillStyle = '#0A1F44'; ctx.font = '900 32px Arial, sans-serif'; ctx.fillText(linhasExibidas.length ? 'Detalhes' : 'Informações', 64, y);
+  y += 24;
+  const alturaDetalhes = Math.max(120, 34 + linhasExibidas.length * 82);
+  caminhoRetanguloArredondado(ctx, 48, y, 984, alturaDetalhes, 26);
+  ctx.fillStyle = '#fff'; ctx.fill();
+  y += 54;
+  ctx.font = '750 27px Arial, sans-serif';
+  linhasExibidas.forEach((linha, indice) => {
+    if (indice) { ctx.strokeStyle = '#e1e9f0'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(78, y - 25); ctx.lineTo(1002, y - 25); ctx.stroke(); }
+    ctx.fillStyle = '#172033'; ctx.fillText(textoCanvasLimitado(ctx, linha.principal, 600), 78, y + 5);
+    if (linha.secundario) { ctx.fillStyle = '#64748b'; ctx.font = '650 22px Arial, sans-serif'; ctx.fillText(textoCanvasLimitado(ctx, linha.secundario, 600), 78, y + 37); ctx.font = '750 27px Arial, sans-serif'; }
+    ctx.fillStyle = '#1687D9'; ctx.textAlign = 'right'; ctx.font = '850 28px Arial, sans-serif'; ctx.fillText(linha.valor || '', 1002, y + 9); ctx.textAlign = 'left'; ctx.font = '750 27px Arial, sans-serif';
+    y += 82;
   });
   ctx.fillStyle = '#64748b'; ctx.font = '600 20px Arial, sans-serif'; ctx.textAlign = 'center'; ctx.fillText('Comprovante gerado pelo Vendas AvantaLab', largura / 2, altura - 54); ctx.textAlign = 'left';
   return canvas;
@@ -2470,20 +2478,22 @@ async function compartilharPagamento(pagamentoId) {
   if (!pagamento) return;
   const cliente = state.clientes.find((item) => item.id === pagamento.cliente_id);
   const resumo = resumoComprovantePagamento(pagamento);
-  const abatimento = Number(pagamento.valor || 0) + Number(pagamento.desconto || 0);
+  const desconto = Number(pagamento.desconto || 0);
+  const abatimento = Number(pagamento.valor || 0) + desconto;
+  const linhas = [
+    { principal: 'Valor pago', secundario: pagamento.forma_pagamento || 'Não informado', valor: moeda(pagamento.valor) },
+  ];
+  if (desconto > 0) linhas.push({ principal: 'Desconto', secundario: 'Abatimento concedido', valor: moeda(desconto) });
   const canvas = criarCanvasComprovante({
     empresa: state.acessoVendas?.empresa_nome || 'AvantaLab',
     titulo: 'Comprovante de pagamento',
     cliente: cliente?.nome || 'Cliente não informado',
     data: dataComprovante(pagamento.data_pagamento),
     etiqueta: String(pagamento.forma_pagamento || 'PAGAMENTO').toUpperCase(),
-    linhas: [
-      { principal: 'Valor pago', secundario: pagamento.forma_pagamento || 'Não informado', valor: moeda(pagamento.valor) },
-      { principal: 'Desconto', secundario: 'Abatimento concedido', valor: moeda(pagamento.desconto) },
-    ],
+    linhas,
     resumo: [
       { rotulo: 'Saldo anterior', valor: moeda(resumo.saldoAnterior) },
-      { rotulo: 'Valor pago + desconto', valor: moeda(abatimento) },
+      { rotulo: desconto > 0 ? 'Valor pago + desconto' : 'Valor pago', valor: moeda(abatimento) },
       { rotulo: 'Saldo atual', valor: moeda(resumo.saldoAtual) },
     ],
   });
