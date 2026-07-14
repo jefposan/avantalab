@@ -11555,6 +11555,7 @@
         var id = botao.getAttribute('data-meu-perfil-id');
         if (!id) return;
         state.resumoPerfilDestaqueId = id;
+        state.dashboardValoresVisiveis.meusPerfis = true;
         render();
         centralizarPerfilDestacadoNoCard(id);
       });
