@@ -25,6 +25,20 @@ function pastasEmArvore(pastas: Pasta[], pai: string | null = null, nivel = 0): 
     .flatMap((pasta) => [{ pasta, nivel }, ...pastasEmArvore(pastas, pasta.id, nivel + 1)]);
 }
 
+function pastasVisiveis(pastas: Pasta[], expandidas: Set<string>, pai: string | null = null, nivel = 0): Array<{ pasta: Pasta; nivel: number; temFilhos: boolean; expandida: boolean }> {
+  return pastas
+    .filter((pasta) => (pasta.pasta_pai_id || null) === pai)
+    .sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR'))
+    .flatMap((pasta) => {
+      const temFilhos = pastas.some((item) => item.pasta_pai_id === pasta.id);
+      const expandida = temFilhos && expandidas.has(pasta.id);
+      return [
+        { pasta, nivel, temFilhos, expandida },
+        ...(expandida ? pastasVisiveis(pastas, expandidas, pasta.id, nivel + 1) : []),
+      ];
+    });
+}
+
 function Icone({ tipo, className = 'h-5 w-5' }: { tipo: string; className?: string }) {
   const props = { className, fill: 'none', stroke: 'currentColor', viewBox: '0 0 24 24', strokeWidth: 2, strokeLinecap: 'round' as const, strokeLinejoin: 'round' as const };
   if (tipo === 'folder') return <svg {...props}><path d="M3 7a2 2 0 0 1 2-2h5l2 2h7a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z" /></svg>;
@@ -112,10 +126,12 @@ async function miniaturaVideo(file: File, signal?: AbortSignal): Promise<Blob | 
 }
 
 export default function NovidadesVendasModal({ aberto, empresaId, nomeEmpresa, darkMode, corPrimaria, onFechar }: Props) {
-  const [aba, setAba] = useState<'novidades' | 'divulgacao'>('novidades');
+  const [aba, setAba] = useState<'novidades' | 'divulgacao'>('divulgacao');
   const [tipo, setTipo] = useState('lancamento'); const [titulo, setTitulo] = useState(''); const [descricao, setDescricao] = useState('');
   const [novidades, setNovidades] = useState<Novidade[]>([]); const [pastas, setPastas] = useState<Pasta[]>([]); const [materiais, setMateriais] = useState<Material[]>([]);
   const [pastaAtiva, setPastaAtiva] = useState<string | null>(null); const [pastaPaiNova, setPastaPaiNova] = useState(''); const [novaPasta, setNovaPasta] = useState(''); const [novaDescricao, setNovaDescricao] = useState('');
+  const [criacaoPastaAberta, setCriacaoPastaAberta] = useState(false);
+  const [pastasExpandidas, setPastasExpandidas] = useState<Set<string>>(new Set());
   const [carregando, setCarregando] = useState(false); const [salvando, setSalvando] = useState(false); const [erro, setErro] = useState('');
   const [envioAtivo, setEnvioAtivo] = useState<{ nome: string; atual: number; total: number; progresso: number; cancelando: boolean } | null>(null);
   const inputArquivos = useRef<HTMLInputElement>(null);
@@ -135,7 +151,14 @@ export default function NovidadesVendasModal({ aberto, empresaId, nomeEmpresa, d
     else { setPastas((pastasRes.data || []) as Pasta[]); setMateriais((materiaisRes.data || []) as Material[]); }
   };
 
-  useEffect(() => { if (aberto && empresaId) void carregar(); }, [aberto, empresaId]);
+  useEffect(() => {
+    if (!aberto || !empresaId) return;
+    setAba('divulgacao');
+    setCriacaoPastaAberta(false);
+    setPastaPaiNova('');
+    setPastasExpandidas(new Set());
+    void carregar();
+  }, [aberto, empresaId]);
   if (!aberto) return null;
 
   const publicar = async () => {
@@ -148,10 +171,13 @@ export default function NovidadesVendasModal({ aberto, empresaId, nomeEmpresa, d
 
   const criarPasta = async () => {
     if (!empresaId || !novaPasta.trim()) { setErro('Informe o nome da pasta.'); return; }
+    const pastaPaiId = pastaPaiNova || null;
     setSalvando(true); setErro('');
-    const { data, error } = await supabase.from('vendas_mobile_divulgacao_pastas').insert({ empresa_id: empresaId, pasta_pai_id: pastaPaiNova || null, nome: novaPasta.trim(), descricao: novaDescricao.trim() || null }).select('id, pasta_pai_id, nome, descricao, criado_em').single();
+    const { data, error } = await supabase.from('vendas_mobile_divulgacao_pastas').insert({ empresa_id: empresaId, pasta_pai_id: pastaPaiId, nome: novaPasta.trim(), descricao: novaDescricao.trim() || null }).select('id, pasta_pai_id, nome, descricao, criado_em').single();
     setSalvando(false); if (error || !data) { setErro('Não foi possível criar a pasta.'); return; }
-    setPastas((atuais) => [data as Pasta, ...atuais]); setPastaAtiva(data.id); setPastaPaiNova(data.id); setNovaPasta(''); setNovaDescricao('');
+    setPastas((atuais) => [data as Pasta, ...atuais]); setPastaAtiva(data.id);
+    if (pastaPaiId) setPastasExpandidas((atuais) => new Set([...atuais, pastaPaiId]));
+    setPastaPaiNova(''); setNovaPasta(''); setNovaDescricao(''); setCriacaoPastaAberta(false);
   };
 
   const enviarArquivos = async (files: FileList | null) => {
@@ -244,6 +270,20 @@ export default function NovidadesVendasModal({ aberto, empresaId, nomeEmpresa, d
   const fundo = darkMode ? 'border-slate-700 bg-slate-900 text-slate-100' : 'border-slate-200 bg-white text-slate-900'; const campo = darkMode ? 'border-slate-600 bg-slate-950 text-white' : 'border-slate-300 bg-white text-slate-900'; const suave = darkMode ? 'text-slate-400' : 'text-slate-500';
   const materiaisAtivos = materiais.filter((item) => item.pasta_id === pastaAtiva);
   const pastasOrdenadas = pastasEmArvore(pastas);
+  const listaPastasVisiveis = pastasVisiveis(pastas, pastasExpandidas);
+  const alternarCriacaoPasta = () => {
+    if (criacaoPastaAberta) { setCriacaoPastaAberta(false); return; }
+    setPastaPaiNova(''); setNovaPasta(''); setNovaDescricao(''); setCriacaoPastaAberta(true);
+  };
+  const selecionarPasta = (pasta: Pasta, temFilhos: boolean) => {
+    setPastaAtiva(pasta.id);
+    if (!temFilhos) return;
+    setPastasExpandidas((atuais) => {
+      const proximas = new Set(atuais);
+      if (proximas.has(pasta.id)) proximas.delete(pasta.id); else proximas.add(pasta.id);
+      return proximas;
+    });
+  };
 
   return <div className="fixed inset-0 z-[6000] flex items-center justify-center bg-black/65 px-3 py-5" onClick={onFechar}>
     {envioAtivo && <div className="fixed inset-0 z-[6200] flex items-center justify-center bg-slate-950/80 p-5 backdrop-blur-sm" onClick={(e) => e.stopPropagation()} role="alert" aria-live="assertive">
@@ -263,15 +303,28 @@ export default function NovidadesVendasModal({ aberto, empresaId, nomeEmpresa, d
         </div>
       </section>
     </div>}
-    <section className={`flex max-h-[92dvh] w-full max-w-6xl flex-col overflow-hidden rounded-2xl border shadow-2xl ${fundo}`} onClick={(e) => e.stopPropagation()}>
-      <header className="flex shrink-0 items-center justify-between gap-4 px-5 py-4 text-white" style={{ background: `linear-gradient(135deg, ${corPrimaria}, #1687D9)` }}><div><p className="text-[9px] font-black uppercase tracking-[.2em] text-white/70">Vendas Mobile</p><h2 className="mt-1 text-xl font-black">Conteúdo para a equipe</h2><p className="mt-1 text-xs text-white/80">Gerencie novidades e divulgação de {nomeEmpresa || 'este perfil'}.</p></div><button type="button" onClick={onFechar} className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white/15 text-lg font-black hover:bg-white/25">×</button></header>
-      <nav className={`grid shrink-0 grid-cols-2 border-b ${darkMode ? 'border-slate-700' : 'border-slate-200'}`}><button type="button" onClick={() => setAba('novidades')} className={`h-11 text-xs font-black uppercase ${aba === 'novidades' ? 'text-white' : suave}`} style={aba === 'novidades' ? { backgroundColor: corPrimaria } : undefined}>Novidades</button><button type="button" onClick={() => setAba('divulgacao')} className={`h-11 text-xs font-black uppercase ${aba === 'divulgacao' ? 'text-white' : suave}`} style={aba === 'divulgacao' ? { backgroundColor: corPrimaria } : undefined}>Divulgação</button></nav>
+    <section className={`flex max-h-[88dvh] w-full max-w-6xl flex-col overflow-hidden rounded-2xl border shadow-2xl ${fundo}`} onClick={(e) => e.stopPropagation()}>
+      <header className="flex shrink-0 items-center justify-between gap-3 px-4 py-2.5 text-white" style={{ background: `linear-gradient(135deg, ${corPrimaria}, #1687D9)` }}><div className="min-w-0"><p className="text-[8px] font-black uppercase tracking-[.18em] text-white/70">Vendas Mobile</p><h2 className="mt-0.5 whitespace-nowrap text-base font-black leading-tight">Conteúdo para a equipe</h2><p className="mt-0.5 truncate whitespace-nowrap text-[10px] leading-tight text-white/80">Novidades e divulgação de {nomeEmpresa || 'este perfil'}.</p></div><button type="button" onClick={onFechar} className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white/15 text-base font-black hover:bg-white/25">×</button></header>
+      <nav className={`grid shrink-0 grid-cols-2 border-b ${darkMode ? 'border-slate-700' : 'border-slate-200'}`}><button type="button" onClick={() => setAba('novidades')} className={`h-9 text-[11px] font-black uppercase ${aba === 'novidades' ? 'text-white' : suave}`} style={aba === 'novidades' ? { backgroundColor: corPrimaria } : undefined}>Novidades</button><button type="button" onClick={() => setAba('divulgacao')} className={`h-9 text-[11px] font-black uppercase ${aba === 'divulgacao' ? 'text-white' : suave}`} style={aba === 'divulgacao' ? { backgroundColor: corPrimaria } : undefined}>Divulgação</button></nav>
       {erro && <p className="mx-4 mt-3 rounded-lg border border-red-300 bg-red-50 px-3 py-2 text-xs font-bold text-red-700">{erro}</p>}
       {aba === 'novidades' ? <div className="grid min-h-0 flex-1 gap-4 overflow-y-auto p-4 lg:grid-cols-[minmax(0,.85fr)_minmax(0,1.15fr)]">
         <div className={`self-start rounded-xl border p-4 ${darkMode ? 'border-slate-700 bg-slate-800' : 'border-slate-200 bg-slate-50'}`}><h3 className="text-base font-black">Nova publicação</h3><p className={`mt-1 text-xs ${suave}`}>Aparece somente para vendedores vinculados a este perfil.</p><label className="mt-4 block text-[10px] font-black uppercase opacity-60">Tipo</label><select value={tipo} onChange={(e) => setTipo(e.target.value)} className={`mt-1 h-10 w-full rounded-lg border px-3 text-sm font-bold ${campo}`}>{TIPOS.map(([v, n]) => <option key={v} value={v}>{n}</option>)}</select><label className="mt-3 block text-[10px] font-black uppercase opacity-60">Título</label><input value={titulo} onChange={(e) => setTitulo(e.target.value)} className={`mt-1 h-10 w-full rounded-lg border px-3 text-sm font-bold ${campo}`} /><label className="mt-3 block text-[10px] font-black uppercase opacity-60">Descrição</label><textarea value={descricao} onChange={(e) => setDescricao(e.target.value)} rows={5} className={`mt-1 w-full rounded-lg border p-3 text-sm ${campo}`} /><button type="button" onClick={() => void publicar()} disabled={salvando} className="mt-3 h-11 w-full rounded-xl text-xs font-black uppercase text-white disabled:opacity-60" style={{ backgroundColor: corPrimaria }}>{salvando ? 'Publicando...' : 'Publicar novidade'}</button></div>
         <div><h3 className="text-base font-black">Histórico</h3><p className={`text-xs ${suave}`}>Publicações mais recentes primeiro.</p><div className="mt-3 grid gap-2">{carregando ? <p className="py-8 text-center text-sm opacity-60">Carregando...</p> : novidades.length ? novidades.map((item) => <article key={item.id} className={`rounded-xl border p-3 ${darkMode ? 'border-slate-700 bg-slate-800' : 'border-slate-200'}`}><div className="flex gap-3"><span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-white" style={{ backgroundColor: corPrimaria }}><Icone tipo={item.tipo} className="h-4 w-4" /></span><div className="min-w-0 flex-1"><div className="flex justify-between gap-2"><div><span className="text-[8px] font-black uppercase" style={{ color: corPrimaria }}>{rotuloTipo(item.tipo)}</span><h4 className="text-sm font-black">{item.titulo}</h4></div><button type="button" onClick={() => void excluirNovidade(item)} className="h-8 w-8 shrink-0 rounded-lg border border-red-300 text-red-600">×</button></div><p className={`mt-1 whitespace-pre-wrap text-xs ${suave}`}>{item.descricao}</p></div></div></article>) : <p className="py-8 text-center text-sm opacity-60">Nenhuma novidade publicada.</p>}</div></div>
       </div> : <div className="grid min-h-0 flex-1 gap-4 overflow-y-auto p-4 lg:grid-cols-[280px_minmax(0,1fr)]">
-        <aside className={`self-start rounded-xl border p-3 ${darkMode ? 'border-slate-700 bg-slate-800' : 'border-slate-200 bg-slate-50'}`}><h3 className="text-sm font-black">Nova pasta ou subpasta</h3><label className={`mt-2 block text-[9px] font-black uppercase ${suave}`}>Criar dentro de</label><select value={pastaPaiNova} onChange={(e) => setPastaPaiNova(e.target.value)} className={`mt-1 h-10 w-full rounded-lg border px-3 text-sm font-bold ${campo}`}><option value="">Pastas principais</option>{pastasOrdenadas.map(({ pasta, nivel }) => <option key={pasta.id} value={pasta.id}>{`${'— '.repeat(nivel + 1)}${pasta.nome}`}</option>)}</select><input value={novaPasta} onChange={(e) => setNovaPasta(e.target.value)} placeholder="Nome da pasta" className={`mt-2 h-10 w-full rounded-lg border px-3 text-sm font-bold ${campo}`} /><input value={novaDescricao} onChange={(e) => setNovaDescricao(e.target.value)} placeholder="Descrição breve (opcional)" className={`mt-2 h-10 w-full rounded-lg border px-3 text-sm ${campo}`} /><button type="button" onClick={() => void criarPasta()} disabled={salvando} className="mt-2 h-10 w-full rounded-lg text-xs font-black uppercase text-white disabled:opacity-60" style={{ backgroundColor: corPrimaria }}>Criar {pastaPaiNova ? 'subpasta' : 'pasta'}</button><div className="mt-4 grid gap-2">{pastasOrdenadas.map(({ pasta, nivel }) => <div key={pasta.id} style={{ marginLeft: `${Math.min(nivel, 4) * 12}px` }} className={`flex items-center gap-2 rounded-lg border p-2 ${pastaAtiva === pasta.id ? 'border-cyan-500 bg-cyan-500/10' : darkMode ? 'border-slate-700' : 'border-slate-200'}`}><button type="button" onClick={() => { setPastaAtiva(pasta.id); setPastaPaiNova(pasta.id); }} className="flex min-w-0 flex-1 items-center gap-2 text-left"><Icone tipo="folder" className="h-5 w-5 shrink-0 text-amber-500" /><span className="min-w-0"><b className="block truncate text-xs">{pasta.nome}</b><small className={`block text-[9px] ${suave}`}>{materiais.filter((i) => i.pasta_id === pasta.id).length} materiais · {pastas.filter((i) => i.pasta_pai_id === pasta.id).length} subpastas</small></span></button><button type="button" onClick={() => void excluirPasta(pasta)} className="h-7 w-7 shrink-0 rounded-md text-red-500">×</button></div>)}</div></aside>
+        <aside className={`self-start rounded-xl border p-3 ${darkMode ? 'border-slate-700 bg-slate-800' : 'border-slate-200 bg-slate-50'}`}>
+          <button type="button" onClick={alternarCriacaoPasta} className="flex h-9 w-full items-center justify-between rounded-lg px-3 text-xs font-black uppercase text-white" style={{ backgroundColor: corPrimaria }}><span>{criacaoPastaAberta ? 'Recolher criação' : 'Criar pasta'}</span><span className={`text-lg leading-none transition-transform ${criacaoPastaAberta ? 'rotate-45' : ''}`}>+</span></button>
+          {criacaoPastaAberta && <div className={`mt-2 rounded-lg border p-2.5 ${darkMode ? 'border-slate-700 bg-slate-900/50' : 'border-slate-200 bg-white'}`}>
+            <label className={`block text-[9px] font-black uppercase ${suave}`}>Criar dentro de</label>
+            <select value={pastaPaiNova} onChange={(e) => setPastaPaiNova(e.target.value)} className={`mt-1 h-9 w-full rounded-lg border px-2.5 text-xs font-bold ${campo}`}><option value="">Pastas principais</option>{pastasOrdenadas.map(({ pasta, nivel }) => <option key={pasta.id} value={pasta.id}>{`${'— '.repeat(nivel + 1)}${pasta.nome}`}</option>)}</select>
+            <input value={novaPasta} onChange={(e) => setNovaPasta(e.target.value)} placeholder="Nome da pasta" className={`mt-2 h-9 w-full rounded-lg border px-2.5 text-xs font-bold ${campo}`} />
+            <input value={novaDescricao} onChange={(e) => setNovaDescricao(e.target.value)} placeholder="Descrição breve (opcional)" className={`mt-2 h-9 w-full rounded-lg border px-2.5 text-xs ${campo}`} />
+            <button type="button" onClick={() => void criarPasta()} disabled={salvando} className="mt-2 h-9 w-full rounded-lg text-[11px] font-black uppercase text-white disabled:opacity-60" style={{ backgroundColor: corPrimaria }}>Criar {pastaPaiNova ? 'subpasta' : 'pasta'}</button>
+          </div>}
+          <div className="mt-3 grid gap-2">
+            {listaPastasVisiveis.map(({ pasta, nivel, temFilhos, expandida }) => <div key={pasta.id} style={{ marginLeft: `${Math.min(nivel, 4) * 12}px` }} className={`flex items-center gap-1.5 rounded-lg border p-2 ${pastaAtiva === pasta.id ? 'border-cyan-500 bg-cyan-500/10' : darkMode ? 'border-slate-700' : 'border-slate-200'}`}><button type="button" onClick={() => selecionarPasta(pasta, temFilhos)} aria-expanded={temFilhos ? expandida : undefined} className="flex min-w-0 flex-1 items-center gap-2 text-left"><Icone tipo="folder" className="h-5 w-5 shrink-0 text-amber-500" /><span className="min-w-0 flex-1"><b className="block truncate text-xs">{pasta.nome}</b><small className={`block text-[9px] ${suave}`}>{materiais.filter((i) => i.pasta_id === pasta.id).length} materiais · {pastas.filter((i) => i.pasta_pai_id === pasta.id).length} subpastas</small></span>{temFilhos && <span className={`shrink-0 text-base transition-transform ${expandida ? 'rotate-90' : ''}`} aria-hidden="true">›</span>}</button><button type="button" onClick={() => void excluirPasta(pasta)} className="h-7 w-7 shrink-0 rounded-md text-red-500">×</button></div>)}
+            {!listaPastasVisiveis.length && <p className={`py-3 text-center text-xs ${suave}`}>Nenhuma pasta criada.</p>}
+          </div>
+        </aside>
         <section className="min-w-0"><div className="flex items-start justify-between gap-3"><div><h3 className="text-base font-black">{pastas.find((p) => p.id === pastaAtiva)?.nome || 'Materiais de divulgação'}</h3><p className={`text-xs ${suave}`}>{pastaAtiva ? 'Envie fotos ou vídeos para esta pasta.' : 'Selecione ou crie uma pasta para começar.'}</p></div>{pastaAtiva && <><input ref={inputArquivos} type="file" accept="image/jpeg,image/png,image/webp,image/gif,video/mp4,video/webm,video/quicktime" multiple className="hidden" onChange={(e) => void enviarArquivos(e.target.files)} /><button type="button" onClick={() => inputArquivos.current?.click()} disabled={salvando} className="flex h-10 shrink-0 items-center gap-2 rounded-lg px-3 text-xs font-black text-white disabled:opacity-60" style={{ backgroundColor: corPrimaria }}><Icone tipo="upload" className="h-4 w-4" />{salvando ? 'Enviando...' : 'Adicionar'}</button></>}</div><div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-4">{materiaisAtivos.map((item) => <article key={item.id} className={`group overflow-hidden rounded-xl border ${darkMode ? 'border-slate-700 bg-slate-800' : 'border-slate-200 bg-white'}`}><div className="relative aspect-square bg-slate-950">{item.miniatura_url ? <img src={item.miniatura_url} alt="" className="h-full w-full object-cover" /> : item.tipo === 'video' ? <video src={item.arquivo_url} preload="metadata" muted className="h-full w-full object-cover" /> : <span className="flex h-full items-center justify-center text-slate-500"><Icone tipo="image" /></span>}<span className="absolute bottom-2 left-2 rounded-full bg-black/70 p-1.5 text-white"><Icone tipo={item.tipo === 'video' ? 'video' : 'image'} className="h-3.5 w-3.5" /></span></div><div className="flex items-center gap-2 p-2"><b className="min-w-0 flex-1 truncate text-[11px]">{item.titulo}</b><button type="button" onClick={() => void excluirMaterial(item)} className="h-7 w-7 shrink-0 rounded-md text-red-500">×</button></div></article>)}{pastaAtiva && !materiaisAtivos.length && <p className={`col-span-full rounded-xl border border-dashed px-4 py-12 text-center text-sm ${suave}`}>Esta pasta ainda está vazia.</p>}</div></section>
       </div>}
     </section>
