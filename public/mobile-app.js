@@ -11261,6 +11261,8 @@
     bind('toggle-valores-meusPerfis', function () { alternarVisibilidadeValoresCard('meusPerfis'); });
     bind('toggle-esticar-meus-perfis', function () {
       state.meusPerfisExpandido = !state.meusPerfisExpandido;
+      state.resumoPerfilExibidoId = '';
+      state.resumoPerfilDestaqueId = (state.empresa && state.empresa.id) || '';
       render();
       if (state.meusPerfisExpandido) rolarCardMeusPerfisAoTopo();
     });
@@ -11570,17 +11572,13 @@
     });
     var scrollPrincipalPerfis = document.getElementById('mobile-main-scroll');
     if (scrollPrincipalPerfis) {
-      scrollPrincipalPerfis.addEventListener('pointerdown', function (event) {
+      scrollPrincipalPerfis.addEventListener('click', function (event) {
         if (!state.resumoPerfilExibidoId) return;
         var alvo = event.target && event.target.closest ? event.target.closest('[data-meu-perfil-id]') : null;
         if (alvo) return;
-        var perfilExibidoAoTocar = state.resumoPerfilExibidoId;
-        window.setTimeout(function () {
-          if (state.resumoPerfilExibidoId !== perfilExibidoAoTocar) return;
-          state.resumoPerfilExibidoId = '';
-          state.resumoPerfilDestaqueId = (state.empresa && state.empresa.id) || '';
-          render();
-        }, 0);
+        state.resumoPerfilExibidoId = '';
+        state.resumoPerfilDestaqueId = (state.empresa && state.empresa.id) || '';
+        render();
       });
     }
     Array.prototype.forEach.call(document.querySelectorAll('[data-lancamento-id]'), function (botao) {
