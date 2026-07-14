@@ -331,5 +331,48 @@
     return { ...data, desconto: payload.desconto, saldo_anterior: payload.saldo_anterior, saldo_final: payload.saldo_final };
   }
 
-  window.VendasDb = { client, currentUser, hasSession, getAccessToken, signIn, signInPhone, signInWithGoogle, resetPassword, updatePassword, updateUserMetadata, signUp, signOut, solicitarAcesso, buscarAcessoVendas, loadAll, saveProduct, deleteProduct, createPackage, saveProductsBulk, deletePackage, saveClient, deleteClient, saveOrder, savePayment };
+  async function updatePayment(payment) {
+    const user = await currentUser();
+    if (!user) throw new Error('Sessão expirada.');
+    const payload = {
+      forma_pagamento: payment.forma_pagamento || 'Pix',
+      valor: Number(payment.valor || 0),
+      desconto: Number(payment.desconto || 0),
+      saldo_anterior: Number(payment.saldo_anterior || 0),
+      saldo_final: Number(payment.saldo_final || 0),
+      observacoes: payment.observacoes || null,
+      data_pagamento: payment.data_pagamento,
+    };
+    let { data, error } = await client
+      .from('vendas_mobile_pagamentos')
+      .update(payload)
+      .eq('id', payment.id)
+      .eq('user_id', user.id)
+      .select()
+      .single();
+    if (error && /desconto|saldo_anterior|saldo_final|schema cache/i.test(String(error.message || ''))) {
+      const legado = {
+        forma_pagamento: payload.forma_pagamento,
+        valor: payload.valor,
+        data_pagamento: payload.data_pagamento,
+        observacoes: JSON.stringify({
+          avantalab_pagamento: true,
+          desconto: payload.desconto,
+          saldo_anterior: payload.saldo_anterior,
+          saldo_final: payload.saldo_final,
+        }),
+      };
+      ({ data, error } = await client
+        .from('vendas_mobile_pagamentos')
+        .update(legado)
+        .eq('id', payment.id)
+        .eq('user_id', user.id)
+        .select()
+        .single());
+    }
+    if (error) throw error;
+    return { ...payment, ...data, desconto: payload.desconto, saldo_anterior: payload.saldo_anterior, saldo_final: payload.saldo_final };
+  }
+
+  window.VendasDb = { client, currentUser, hasSession, getAccessToken, signIn, signInPhone, signInWithGoogle, resetPassword, updatePassword, updateUserMetadata, signUp, signOut, solicitarAcesso, buscarAcessoVendas, loadAll, saveProduct, deleteProduct, createPackage, saveProductsBulk, deletePackage, saveClient, deleteClient, saveOrder, savePayment, updatePayment };
 })();

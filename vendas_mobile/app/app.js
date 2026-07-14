@@ -68,6 +68,7 @@ let botaoFeedbackAtivo = null;
 let atualizacaoPwaPendente = false;
 let filtroPedidos = 'todos';
 let limitePedidos = 10;
+let limiteClientesPagamentos = 10;
 let pedidoClienteRascunho = null;
 let pagamentoClienteRascunho = null;
 let ordemAlfabetica = 'asc';
@@ -250,6 +251,7 @@ function logoVendas() {
 function setAba(aba) {
   if (aba !== 'agenda') fecharCamadasAgenda();
   if (aba === 'vendas' && state.aba !== 'vendas') limitePedidos = 10;
+  if (aba === 'vender' && state.aba !== 'vender') limiteClientesPagamentos = 10;
   state.aba = aba;
   state.menuAberto = false;
   render();
@@ -1377,6 +1379,7 @@ function limparBusca() {
   state.busca = '';
   buscaAplicada = '';
   if (state.aba === 'vendas') limitePedidos = 10;
+  if (state.aba === 'vender') limiteClientesPagamentos = 10;
   render();
 }
 
@@ -1427,6 +1430,7 @@ async function buscarCepCliente() {
 function aplicarBusca() {
   buscaAplicada = state.busca;
   if (state.aba === 'vendas') limitePedidos = 10;
+  if (state.aba === 'vender') limiteClientesPagamentos = 10;
   render();
 }
 
@@ -1795,6 +1799,74 @@ async function confirmarPagamentoCliente() {
   } catch (error) { toast(traduzErro(error)); }
 }
 
+function listaPagamentosPaginaHtml(clienteId, pagina = 0) {
+  const pagamentos = pagamentosDoCliente(clienteId);
+  const limite = (pagina + 1) * 10;
+  const itens = pagamentos.slice(0, limite);
+  if (!itens.length) return '<div class="payment-client-empty">Nenhum pagamento registrado para este cliente.</div>';
+  return `<div class="payment-client-list">${itens.map((pagamento) => `<button type="button" onclick="abrirEditarPagamentoCliente('${pagamento.id}', ${pagina})"><span><b>${dataBR(`${pagamento.data_pagamento}T12:00:00`)}</b><small>${escapeHtml(pagamento.forma_pagamento || 'Não informado')}${Number(pagamento.desconto || 0) > 0 ? ` · desconto ${moeda(pagamento.desconto)}` : ''}</small></span><strong>${moeda(pagamento.valor)}</strong>${svgIcon('chevron-right')}</button>`).join('')}</div>${pagamentos.length > limite ? `<button type="button" class="ghost payment-client-more" onclick="abrirPagamentosCliente('${clienteId}', ${pagina + 1})">Ver mais pagamentos</button>` : ''}`;
+}
+
+function abrirPagamentosCliente(clienteId, pagina = 0) {
+  const cliente = state.clientes.find((item) => item.id === clienteId);
+  if (!cliente) return;
+  const pagamentos = pagamentosDoCliente(clienteId);
+  sheet(`<div class="sheet-header"><div><h2>Pagamentos</h2><p class="muted small">${escapeHtml(cliente.nome)} · ${pagamentos.length} registro${pagamentos.length === 1 ? '' : 's'}</p></div><button class="close" onclick="fecharSheet()">×</button></div><div class="payment-client-history">${listaPagamentosPaginaHtml(clienteId, pagina)}</div>`, 'sheet-backdrop-centered payment-history-backdrop');
+}
+
+function saldoClienteComPagamentoAlterado(pagamento, novoValor) {
+  const totalDebitos = pedidosDoCliente(pagamento.cliente_id)
+    .filter((venda) => venda.status !== 'cancelada' && pedidoGeraDebito(venda))
+    .reduce((soma, venda) => soma + Number(venda.total || 0), 0);
+  const abatimentos = (state.pagamentos || [])
+    .filter((item) => item.cliente_id === pagamento.cliente_id && item.id !== pagamento.id)
+    .reduce((soma, item) => soma + Number(item.valor || 0) + Number(item.desconto || 0), 0);
+  const totalAtualizado = abatimentos + Number(novoValor || 0) + Number(pagamento.desconto || 0);
+  return {
+    debito: Math.max(0, totalDebitos - totalAtualizado),
+    credito: Math.max(0, totalAtualizado - totalDebitos),
+  };
+}
+
+function abrirEditarPagamentoCliente(pagamentoId, pagina = 0) {
+  const pagamento = (state.pagamentos || []).find((item) => item.id === pagamentoId);
+  if (!pagamento) return;
+  const cliente = state.clientes.find((item) => item.id === pagamento.cliente_id);
+  const saldoAtual = saldoFinanceiroCliente(pagamento.cliente_id);
+  const valorFormatado = Number(pagamento.valor || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  sheet(`<div class="sheet-header"><div><h2>Editar pagamento</h2><p class="muted small">${escapeHtml(cliente?.nome || 'Cliente não informado')}</p></div><button class="close" onclick="abrirPagamentosCliente('${pagamento.cliente_id}', ${pagina})">×</button></div><div class="payment-edit-form"><label class="transaction-field"><span>Valor pago</span><input id="editarPagamentoValor" type="text" inputmode="numeric" value="${escapeAttr(valorFormatado)}" onfocus="this.select()" oninput="formatarCampoMoeda(this);atualizarResumoEdicaoPagamento('${pagamentoId}')"></label><label class="transaction-field transaction-date-field"><span>Data do pagamento</span><input id="editarPagamentoData" type="date" value="${escapeAttr(pagamento.data_pagamento || isoData(new Date()))}"></label><section class="payment-edit-summary"><div><span>Saldo atual</span><b>${moeda(saldoAtual.debito)}</b></div><div><span>Crédito atual</span><b>${moeda(saldoAtual.credito)}</b></div><div class="final"><span>Novo saldo</span><b id="editarPagamentoNovoSaldo">${moeda(saldoAtual.debito)}</b></div><div><span>Novo crédito</span><b id="editarPagamentoNovoCredito">${moeda(saldoAtual.credito)}</b></div></section><p class="payment-edit-note">O desconto e a forma de pagamento permanecem inalterados.</p></div><footer class="payment-edit-footer"><button type="button" class="ghost" onclick="abrirPagamentosCliente('${pagamento.cliente_id}', ${pagina})">Cancelar</button><button type="button" class="primary" onclick="salvarEdicaoPagamentoCliente('${pagamentoId}', ${pagina})">Salvar alterações</button></footer>`, 'sheet-backdrop-centered payment-edit-backdrop');
+}
+
+function atualizarResumoEdicaoPagamento(pagamentoId) {
+  const pagamento = (state.pagamentos || []).find((item) => item.id === pagamentoId);
+  if (!pagamento) return;
+  const saldo = saldoClienteComPagamentoAlterado(pagamento, Math.max(0, lerCampoMoeda('editarPagamentoValor')));
+  const saldoEl = document.getElementById('editarPagamentoNovoSaldo');
+  const creditoEl = document.getElementById('editarPagamentoNovoCredito');
+  if (saldoEl) saldoEl.textContent = moeda(saldo.debito);
+  if (creditoEl) creditoEl.textContent = moeda(saldo.credito);
+}
+
+async function salvarEdicaoPagamentoCliente(pagamentoId, pagina = 0) {
+  const pagamentoAtual = (state.pagamentos || []).find((item) => item.id === pagamentoId);
+  if (!pagamentoAtual) return;
+  const valorAtualizado = Math.max(0, lerCampoMoeda('editarPagamentoValor'));
+  const dataAtualizada = valor('editarPagamentoData');
+  if (valorAtualizado <= 0) { toast('Informe um valor de pagamento maior que zero.'); return; }
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(dataAtualizada)) { toast('Informe uma data válida.'); return; }
+  const candidato = { ...pagamentoAtual, valor: valorAtualizado, data_pagamento: dataAtualizada };
+  const resumo = resumoComprovantePagamento(candidato);
+  candidato.saldo_anterior = resumo.saldoAnterior;
+  candidato.saldo_final = resumo.saldoAtual;
+  try {
+    const salvo = backendAtivo ? await window.VendasDb.updatePayment(candidato) : candidato;
+    state.pagamentos = (state.pagamentos || []).map((item) => item.id === pagamentoId ? { ...item, ...salvo } : item);
+    render();
+    abrirPagamentosCliente(pagamentoAtual.cliente_id, pagina);
+    toast('Pagamento atualizado e saldos recalculados.');
+  } catch (error) { toast(traduzErro(error)); }
+}
+
 function telefoneCliente(clienteId) {
   return String(state.clientes.find((cliente) => cliente.id === clienteId)?.telefone || '').replace(/\D/g, '');
 }
@@ -1961,9 +2033,6 @@ function resumoComprovantePedido(venda) {
 }
 
 function resumoComprovantePagamento(pagamento) {
-  const temSaldos = pagamento?.saldo_anterior !== undefined && pagamento?.saldo_anterior !== null
-    && pagamento?.saldo_final !== undefined && pagamento?.saldo_final !== null;
-  if (temSaldos) return { saldoAnterior: Number(pagamento.saldo_anterior || 0), saldoAtual: Number(pagamento.saldo_final || 0) };
   const limite = timestampPagamento(pagamento);
   const debitosAnteriores = state.vendas
     .filter((item) => item.cliente_id === pagamento.cliente_id && item.status !== 'cancelada' && pedidoGeraDebito(item) && timestampPedido(item) < limite)
@@ -2110,16 +2179,41 @@ async function compartilharPagamento(pagamentoId) {
   await compartilharCanvasComprovante(canvas, `pagamento-${String(pagamento.id).slice(0, 8)}.png`, 'Comprovante de pagamento AvantaLab');
 }
 
+function clientesOrdenadosPorUltimoPagamento() {
+  const pesquisa = normalizar(buscaAplicada);
+  if (pesquisa) return clientesFiltrados();
+  const ultimaDataPorCliente = new Map();
+  (state.pagamentos || []).forEach((pagamento) => {
+    if (!pagamento.cliente_id) return;
+    const referencia = `${pagamento.data_pagamento || ''}|${pagamento.criado_em || ''}`;
+    const atual = ultimaDataPorCliente.get(pagamento.cliente_id) || '';
+    if (referencia > atual) ultimaDataPorCliente.set(pagamento.cliente_id, referencia);
+  });
+  return state.clientes
+    .filter((cliente) => ultimaDataPorCliente.has(cliente.id))
+    .sort((a, b) => String(ultimaDataPorCliente.get(b.id)).localeCompare(String(ultimaDataPorCliente.get(a.id))));
+}
+
+function carregarMaisClientesPagamentos() {
+  limiteClientesPagamentos += 10;
+  render();
+}
+
 function renderPagamentos() {
-  const clientes = clientesFiltrados();
-  const pagamentos = [...(state.pagamentos || [])].sort((a, b) => String(b.data_pagamento || b.criado_em || '').localeCompare(String(a.data_pagamento || a.criado_em || ''))).slice(0, 10);
+  const todosClientes = clientesOrdenadosPorUltimoPagamento();
+  const clientes = todosClientes.slice(0, limiteClientesPagamentos);
   const temBusca = Boolean(String(state.busca || '').trim());
-  return `<section class="module-page pagamentos-page${temBusca ? ' is-searching' : ''}"><div class="module-sticky-head"><div class="module-title"><div><h2>Pagamentos</h2><p>Gerencie pagamentos, débitos e créditos.</p></div></div>${renderBarraBusca('Pesquisar clientes', 'Ordem Alfabética')}</div>${clientes.length ? `<section class="debt-card-grid">${clientes.map(renderClienteDebito).join('')}</section>` : `<article class="publication-empty"><span>${svgIcon('users')}</span><h3>Nenhum cliente encontrado</h3><p>Cadastre clientes para controlar pagamentos e débitos.</p></article>`}<section class="payment-history-panel"><header><div><h3>Últimos pagamentos</h3><p>Os 10 recebimentos mais recentes.</p></div><b>${pagamentos.length}</b></header>${pagamentos.length ? `<div>${pagamentos.map((pagamento) => { const cliente = state.clientes.find((item) => item.id === pagamento.cliente_id); return `<button type="button" onclick="abrirPagamentoClienteDetalhe('${pagamento.id}')"><span><b>${escapeHtml(cliente?.nome || 'Cliente não informado')}</b><small>${dataBR(`${pagamento.data_pagamento}T12:00:00`)} · ${escapeHtml(pagamento.forma_pagamento || 'Não informado')}</small></span><strong>${moeda(pagamento.valor)}</strong></button>`; }).join('')}</div>` : '<p class="transaction-empty">Nenhum pagamento registrado.</p>'}</section></section>`;
+  const mensagemVazia = buscaAplicada
+    ? '<h3>Nenhum cliente encontrado</h3><p>Revise o texto pesquisado e tente novamente.</p>'
+    : '<h3>Nenhum pagamento registrado</h3><p>Pesquise um cliente para registrar o primeiro recebimento.</p>';
+  return `<section class="module-page pagamentos-page${temBusca ? ' is-searching' : ''}"><div class="module-sticky-head"><div class="module-title"><div><h2>Pagamentos</h2><p>Gerencie pagamentos, débitos e créditos.</p></div></div>${renderBarraBusca('Pesquisar clientes', 'Ordem Alfabética')}</div>${clientes.length ? `<section class="debt-card-grid">${clientes.map(renderClienteDebito).join('')}</section>${todosClientes.length > clientes.length ? `<button type="button" class="ghost payment-clients-more" onclick="carregarMaisClientesPagamentos()">Ver mais clientes</button>` : ''}` : `<article class="publication-empty"><span>${svgIcon('users')}</span>${mensagemVazia}</article>`}</section>`;
 }
 
 function renderClienteDebito(c) {
   const saldo = saldoFinanceiroCliente(c.id);
-  return `<article class="debt-card"><header><span>${svgIcon('user')}</span><div><h3>${escapeHtml(c.nome)}</h3><p>${escapeHtml(c.telefone || 'Não informado')}</p></div></header><div class="debt-values"><div class="pending"><small>Pendente</small><b>${moeda(saldo.debito)}</b></div><div class="consigned"><small>Consignado</small><b>${moeda(saldo.consignado)}</b></div><div class="credit"><small>Crédito</small><b>${moeda(saldo.credito)}</b></div></div><button class="debt-details" onclick="abrirPagamentoCliente('${c.id}')">${svgIcon('dollar')} Registrar pagamento</button></article>`;
+  const ultimoPagamento = pagamentosDoCliente(c.id)[0];
+  const detalhe = ultimoPagamento ? `Último pagamento em ${dataBR(`${ultimoPagamento.data_pagamento}T12:00:00`)}` : 'Sem pagamentos registrados';
+  return `<article class="debt-card"><header><span>${svgIcon('user')}</span><div><h3>${escapeHtml(c.nome)}</h3><p>${detalhe}</p></div></header><div class="debt-values"><div class="pending"><small>Pendente</small><b>${moeda(saldo.debito)}</b></div><div class="consigned"><small>Consignado</small><b>${moeda(saldo.consignado)}</b></div><div class="credit"><small>Crédito</small><b>${moeda(saldo.credito)}</b></div></div><div class="debt-actions"><button class="debt-details primary" onclick="abrirPagamentoCliente('${c.id}')">${svgIcon('dollar')}<span>Registrar pagamento</span></button><button class="debt-details ghost" onclick="abrirPagamentosCliente('${c.id}')">${svgIcon('credit-card')}<span>Ver pagamentos</span></button></div></article>`;
 }
 
 function renderVender() {
