@@ -140,7 +140,7 @@
       client.from('vendas_mobile_pedidos').select('*, itens:vendas_mobile_pedido_itens(*)').order('criado_em', { ascending: false }),
       client.from('vendas_mobile_pagamentos').select('*').order('data_pagamento', { ascending: false }).order('criado_em', { ascending: false }),
       client.from('vendas_mobile_conteudos').select('id, pagina, tipo, titulo, descricao, criado_em').eq('ativo', true).order('criado_em', { ascending: false }),
-      client.from('vendas_mobile_divulgacao_pastas').select('id, nome, descricao, ordem, criado_em').eq('empresa_id', acessoVendas.acesso.empresa_id).eq('ativo', true).order('ordem').order('criado_em', { ascending: false }),
+      client.from('vendas_mobile_divulgacao_pastas').select('id, pasta_pai_id, nome, descricao, ordem, criado_em').eq('empresa_id', acessoVendas.acesso.empresa_id).eq('ativo', true).order('ordem').order('criado_em', { ascending: false }),
       client.from('vendas_mobile_divulgacao_materiais').select('id, pasta_id, titulo, tipo, arquivo_url, miniatura_url, mime_type, tamanho_bytes, ordem, criado_em').eq('empresa_id', acessoVendas.acesso.empresa_id).eq('ativo', true).order('ordem').order('criado_em', { ascending: false }),
     ]);
     const error = produtosRes.error || clientesRes.error || pedidosRes.error;

@@ -1391,11 +1391,12 @@ function novaSugestaoVendas() {
 function renderDivulgacao() {
   const temBusca = Boolean(String(state.busca || '').trim());
   const pesquisa = normalizar(buscaAplicada);
-  const pastas = (state.divulgacaoPastas || []).filter((pasta) => {
+  const pastasEncontradas = (state.divulgacaoPastas || []).filter((pasta) => {
     if (!pesquisa) return true;
     if ([pasta.nome, pasta.descricao].some((valor) => normalizar(valor).includes(pesquisa))) return true;
     return (state.divulgacaoMateriais || []).some((material) => material.pasta_id === pasta.id && normalizar(material.titulo).includes(pesquisa));
   });
+  const pastas = pesquisa ? pastasEncontradas : pastasEncontradas.filter((pasta) => !pasta.pasta_pai_id);
   const cards = pastas.map((pasta) => {
     const materiais = (state.divulgacaoMateriais || []).filter((item) => item.pasta_id === pasta.id);
     const capa = materiais.find((item) => item.miniatura_url) || materiais[0];
@@ -1407,9 +1408,16 @@ function renderDivulgacao() {
 function abrirPastaDivulgacao(pastaId) {
   const pasta = (state.divulgacaoPastas || []).find((item) => item.id === pastaId);
   if (!pasta) return;
+  const subpastas = (state.divulgacaoPastas || []).filter((item) => item.pasta_pai_id === pastaId);
   const materiais = (state.divulgacaoMateriais || []).filter((item) => item.pasta_id === pastaId);
+  const subpastasHtml = subpastas.map((subpasta) => {
+    const itens = (state.divulgacaoMateriais || []).filter((item) => item.pasta_id === subpasta.id);
+    const capa = itens.find((item) => item.miniatura_url) || itens[0];
+    return `<button type="button" class="material-subfolder" onclick="abrirPastaDivulgacao('${subpasta.id}')"><span>${capa?.miniatura_url ? `<img src="${escapeAttr(capa.miniatura_url)}" alt="">` : svgIcon('folder')}</span><div><b>${escapeHtml(subpasta.nome)}</b><small>${itens.length} ${itens.length === 1 ? 'material' : 'materiais'} · ${(state.divulgacaoPastas || []).filter((item) => item.pasta_pai_id === subpasta.id).length} subpastas</small></div><i>›</i></button>`;
+  }).join('');
   const grade = materiais.map((item) => `<button type="button" class="material-thumb" onclick="abrirMaterialDivulgacao('${item.id}')"><span>${item.miniatura_url ? `<img src="${escapeAttr(item.miniatura_url)}" alt="${escapeAttr(item.titulo)}">` : item.tipo === 'video' ? `<video src="${escapeAttr(item.arquivo_url)}" muted preload="metadata"></video>` : svgIcon('package')}</span><b>${escapeHtml(item.titulo)}</b><small>${item.tipo === 'video' ? 'Vídeo' : 'Imagem'}</small></button>`).join('');
-  sheet(`<div class="sheet-header"><div><h2>${escapeHtml(pasta.nome)}</h2><p class="muted small">${escapeHtml(pasta.descricao || `${materiais.length} materiais para divulgação`)}</p></div><button class="close" onclick="fecharSheet()">×</button></div>${grade ? `<div class="material-sheet-grid">${grade}</div>` : `<div class="material-sheet-empty">Esta pasta ainda está vazia.</div>`}`, 'sheet-backdrop-centered material-folder-backdrop');
+  const voltar = pasta.pasta_pai_id ? `abrirPastaDivulgacao('${pasta.pasta_pai_id}')` : 'fecharSheet()';
+  sheet(`<div class="sheet-header material-folder-header"><button type="button" class="material-folder-back" onclick="${voltar}" aria-label="Voltar">‹</button><div><h2>${escapeHtml(pasta.nome)}</h2><p class="muted small">${escapeHtml(pasta.descricao || `${subpastas.length} subpastas · ${materiais.length} materiais`)}</p></div><button class="close" onclick="fecharSheet()">×</button></div><div class="material-folder-content">${subpastasHtml ? `<section class="material-subfolders"><h3>Subpastas</h3>${subpastasHtml}</section>` : ''}${grade ? `<section class="material-files"><h3>Materiais</h3><div class="material-sheet-grid">${grade}</div></section>` : ''}${!subpastasHtml && !grade ? `<div class="material-sheet-empty">Esta pasta ainda está vazia.</div>` : ''}</div>`, 'sheet-backdrop-centered material-folder-backdrop');
 }
 
 function abrirMaterialDivulgacao(materialId) {

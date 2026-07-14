@@ -1070,7 +1070,17 @@ body { background: #fff; color: var(--ink); }
 .material-folder-info small { overflow: hidden; margin-top: 3px; color: #718096; font-size: 10px; text-overflow: ellipsis; white-space: nowrap; }
 .material-folder-info em { position: absolute; top: 50%; right: 14px; display: grid; width: 26px; height: 26px; place-items: center; transform: translateY(-50%); border-radius: 999px; color: #0874a8; background: #e4f5fb; font-size: 10px; font-style: normal; font-weight: 900; }
 .material-folder-backdrop .sheet { width: min(94vw,680px); max-height: calc(100dvh - 112px); overflow: hidden; }
-.material-sheet-grid { display: grid; max-height: calc(100dvh - 220px); grid-template-columns: repeat(2,minmax(0,1fr)); gap: 10px; overflow-y: auto; }
+.material-folder-header { align-items: center; }
+.material-folder-header > div { min-width: 0; flex: 1; }
+.material-folder-back { display: grid; width: 34px; height: 34px; flex: 0 0 34px; place-items: center; border: 1px solid rgba(255,255,255,.24); border-radius: 999px; color: #fff; background: rgba(255,255,255,.12); font-size: 28px; line-height: 1; }
+.material-folder-content { display: grid; max-height: calc(100dvh - 220px); gap: 16px; overflow-y: auto; overscroll-behavior: contain; }
+.material-subfolders,.material-files { display: grid; gap: 8px; }
+.material-subfolders > h3,.material-files > h3 { margin: 0; color: #526477; font-size: 10px; font-weight: 900; letter-spacing: .12em; text-transform: uppercase; }
+.material-subfolder { display: grid; min-width: 0; grid-template-columns: 48px minmax(0,1fr) 20px; align-items: center; gap: 10px; border: 1px solid #d9e3eb; border-radius: 12px; padding: 8px 10px; color: #253344; background: #fff; text-align: left; }
+.material-subfolder > span { display: grid; width: 48px; height: 42px; place-items: center; overflow: hidden; border-radius: 9px; color: #f59e0b; background: #fff7df; }
+.material-subfolder > span img { width: 100%; height: 100%; object-fit: cover; }.material-subfolder > span .svg-icon { width: 24px; height: 24px; }
+.material-subfolder div { min-width: 0; }.material-subfolder b,.material-subfolder small { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }.material-subfolder b { font-size: 12px; }.material-subfolder small { margin-top: 3px; color: #718096; font-size: 9px; }.material-subfolder i { color: #1687D9; font-size: 23px; font-style: normal; }
+.material-sheet-grid { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 10px; }
 .material-thumb { overflow: hidden; border: 1px solid #d9e3eb; border-radius: 12px; padding: 0 0 9px; color: #253344; background: #fff; text-align: left; }
 .material-thumb > span { display: grid; width: 100%; aspect-ratio: 1; place-items: center; overflow: hidden; color: #789; background: #e9eef3; }
 .material-thumb img,.material-thumb video { width: 100%; height: 100%; object-fit: cover; }
@@ -1088,6 +1098,7 @@ body { background: #fff; color: var(--ink); }
 .material-preview-backdrop.material-expanded .material-preview img,.material-preview-backdrop.material-expanded .material-preview video { width: 100%; height: 100%; max-height: none; object-fit: contain; }
 .dark-theme .material-folder-card,.dark-theme .material-thumb { border-color: #334155; color: #f8fafc; background: #172033; }
 .dark-theme .material-folder-cover { background: linear-gradient(145deg,#1e293b,#102838); }.dark-theme .material-folder-info small,.dark-theme .material-thumb small { color: #94a3b8; }
+.dark-theme .material-subfolder { border-color: #334155; color: #f8fafc; background: #172033; }.dark-theme .material-subfolder > span { background: #102838; }.dark-theme .material-subfolder small,.dark-theme .material-subfolders > h3,.dark-theme .material-files > h3 { color: #94a3b8; }
 .payment-search { display: flex; align-items: center; gap: 12px; border: 1px solid #e2e3e6; border-radius: 12px; padding: 16px; background: #fff; box-shadow: 0 2px 5px rgba(0,0,0,.05); }
 .payment-search > .svg-icon { color: #858c94; }
 .payment-search input { height: 40px; flex: 1; border: 0; outline: 0; font: inherit; font-size: 17px; }
