@@ -13,6 +13,8 @@ type Props = { aberto: boolean; empresaId: string | null; nomeEmpresa: string; d
 
 const TIPOS = [['lancamento', 'Lançamento'], ['evento', 'Evento'], ['campanha', 'Campanha'], ['promocao', 'Promoção'], ['comunicado', 'Comunicado'], ['aviso', 'Aviso']] as const;
 const BUCKET = 'vendas-divulgacao';
+const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
+const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
 
 function rotuloTipo(tipo: string) { return TIPOS.find(([valor]) => valor === tipo)?.[1] || tipo; }
 function nomeSeguro(nome: string) { return nome.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-zA-Z0-9._-]+/g, '-').replace(/-+/g, '-'); }
@@ -36,20 +38,51 @@ function Icone({ tipo, className = 'h-5 w-5' }: { tipo: string; className?: stri
   return <svg {...props}><path d="M12 3v18M3 12h18" /><circle cx="12" cy="12" r="9" /></svg>;
 }
 
-async function miniaturaVideo(file: File): Promise<Blob | null> {
+async function uploadCancelavel(caminho: string, arquivo: Blob, nomeArquivo: string, signal: AbortSignal) {
+  const sessao = await supabase.auth.getSession();
+  const token = sessao.data.session?.access_token;
+  if (!token) throw new Error('Sua sessão expirou. Entre novamente para enviar materiais.');
+  const formulario = new FormData();
+  formulario.append('cacheControl', '31536000');
+  formulario.append('', arquivo, nomeArquivo);
+  const caminhoSeguro = caminho.split('/').map(encodeURIComponent).join('/');
+  const resposta = await fetch(`${SUPABASE_URL}/storage/v1/object/${BUCKET}/${caminhoSeguro}`, {
+    method: 'POST',
+    headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${token}`, 'x-upsert': 'false' },
+    body: formulario,
+    signal,
+  });
+  if (!resposta.ok) {
+    const detalhe = await resposta.json().catch(() => null);
+    throw new Error(String(detalhe?.message || detalhe?.error || 'Não foi possível enviar o arquivo.'));
+  }
+}
+
+async function miniaturaVideo(file: File, signal?: AbortSignal): Promise<Blob | null> {
   return new Promise((resolve) => {
     const video = document.createElement('video');
     const url = URL.createObjectURL(file);
-    const limpar = () => { URL.revokeObjectURL(url); video.remove(); };
+    let finalizado = false;
+    const concluir = (blob: Blob | null) => {
+      if (finalizado) return;
+      finalizado = true;
+      signal?.removeEventListener('abort', cancelar);
+      URL.revokeObjectURL(url);
+      video.remove();
+      resolve(blob);
+    };
+    const cancelar = () => concluir(null);
+    if (signal?.aborted) { concluir(null); return; }
+    signal?.addEventListener('abort', cancelar, { once: true });
     video.muted = true; video.playsInline = true; video.preload = 'metadata'; video.src = url;
     video.onloadeddata = () => { video.currentTime = Math.min(0.2, Math.max(0, video.duration / 10)); };
     video.onseeked = () => {
       const escala = Math.min(1, 720 / Math.max(video.videoWidth, video.videoHeight));
       const canvas = document.createElement('canvas'); canvas.width = Math.max(1, Math.round(video.videoWidth * escala)); canvas.height = Math.max(1, Math.round(video.videoHeight * escala));
       canvas.getContext('2d')?.drawImage(video, 0, 0, canvas.width, canvas.height);
-      canvas.toBlob((blob) => { limpar(); resolve(blob); }, 'image/jpeg', .82);
+      canvas.toBlob((blob) => concluir(blob), 'image/jpeg', .82);
     };
-    video.onerror = () => { limpar(); resolve(null); };
+    video.onerror = () => concluir(null);
   });
 }
 
@@ -59,7 +92,9 @@ export default function NovidadesVendasModal({ aberto, empresaId, nomeEmpresa, d
   const [novidades, setNovidades] = useState<Novidade[]>([]); const [pastas, setPastas] = useState<Pasta[]>([]); const [materiais, setMateriais] = useState<Material[]>([]);
   const [pastaAtiva, setPastaAtiva] = useState<string | null>(null); const [pastaPaiNova, setPastaPaiNova] = useState(''); const [novaPasta, setNovaPasta] = useState(''); const [novaDescricao, setNovaDescricao] = useState('');
   const [carregando, setCarregando] = useState(false); const [salvando, setSalvando] = useState(false); const [erro, setErro] = useState('');
+  const [envioAtivo, setEnvioAtivo] = useState<{ nome: string; atual: number; total: number; cancelando: boolean } | null>(null);
   const inputArquivos = useRef<HTMLInputElement>(null);
+  const controladorEnvio = useRef<AbortController | null>(null);
 
   const carregar = async () => {
     if (!empresaId) return;
@@ -96,32 +131,77 @@ export default function NovidadesVendasModal({ aberto, empresaId, nomeEmpresa, d
 
   const enviarArquivos = async (files: FileList | null) => {
     if (!empresaId || !pastaAtiva || !files?.length) return;
+    const listaArquivos = Array.from(files);
+    const controlador = new AbortController();
+    const registrosCriados: Material[] = [];
+    const caminhosCriados: string[] = [];
+    controladorEnvio.current = controlador;
     setSalvando(true); setErro('');
+    setEnvioAtivo({ nome: listaArquivos[0].name, atual: 1, total: listaArquivos.length, cancelando: false });
     try {
-      for (const file of Array.from(files)) {
+      for (const [indice, file] of listaArquivos.entries()) {
+        if (controlador.signal.aborted) throw new DOMException('Envio cancelado.', 'AbortError');
+        setEnvioAtivo({ nome: file.name, atual: indice + 1, total: listaArquivos.length, cancelando: false });
         const tipoMaterial = file.type.startsWith('video/') ? 'video' : file.type.startsWith('image/') ? 'imagem' : null;
         if (!tipoMaterial) throw new Error(`${file.name}: formato não aceito.`);
         const chave = `${Date.now()}-${crypto.randomUUID?.() || Math.random().toString(36).slice(2)}`;
         const caminho = `${empresaId}/${pastaAtiva}/${chave}-${nomeSeguro(file.name)}`;
-        const envio = await supabase.storage.from(BUCKET).upload(caminho, file, { contentType: file.type, cacheControl: '31536000' });
-        if (envio.error) throw envio.error;
+        const caminhosDesteMaterial = [caminho];
+        caminhosCriados.push(caminho);
+        try {
+          await uploadCancelavel(caminho, file, file.name, controlador.signal);
+        } catch (e) {
+          if (!controlador.signal.aborted) {
+            await supabase.storage.from(BUCKET).remove([caminho]);
+            caminhosCriados.splice(caminhosCriados.indexOf(caminho), 1);
+          }
+          throw e;
+        }
         const arquivoUrl = supabase.storage.from(BUCKET).getPublicUrl(caminho).data.publicUrl;
         let miniaturaPath: string | null = null; let miniaturaUrl: string | null = tipoMaterial === 'imagem' ? arquivoUrl : null;
         if (tipoMaterial === 'video') {
-          const miniatura = await miniaturaVideo(file);
+          const miniatura = await miniaturaVideo(file, controlador.signal);
+          if (controlador.signal.aborted) throw new DOMException('Envio cancelado.', 'AbortError');
           if (miniatura) {
             miniaturaPath = `${empresaId}/${pastaAtiva}/${chave}-capa.jpg`;
-            const capa = await supabase.storage.from(BUCKET).upload(miniaturaPath, miniatura, { contentType: 'image/jpeg', cacheControl: '31536000' });
-            if (!capa.error) miniaturaUrl = supabase.storage.from(BUCKET).getPublicUrl(miniaturaPath).data.publicUrl;
+            caminhosCriados.push(miniaturaPath); caminhosDesteMaterial.push(miniaturaPath);
+            try {
+              await uploadCancelavel(miniaturaPath, miniatura, `${chave}-capa.jpg`, controlador.signal);
+              miniaturaUrl = supabase.storage.from(BUCKET).getPublicUrl(miniaturaPath).data.publicUrl;
+            } catch (e) {
+              if (controlador.signal.aborted) throw e;
+              await supabase.storage.from(BUCKET).remove([miniaturaPath]);
+              caminhosCriados.splice(caminhosCriados.indexOf(miniaturaPath), 1);
+              caminhosDesteMaterial.splice(caminhosDesteMaterial.indexOf(miniaturaPath), 1);
+              miniaturaPath = null;
+            }
           }
         }
         const tituloMaterial = file.name.replace(/\.[^.]+$/, '').replace(/[-_]+/g, ' ');
-        const { data, error } = await supabase.from('vendas_mobile_divulgacao_materiais').insert({ empresa_id: empresaId, pasta_id: pastaAtiva, titulo: tituloMaterial, tipo: tipoMaterial, arquivo_path: caminho, arquivo_url: arquivoUrl, miniatura_path: miniaturaPath, miniatura_url: miniaturaUrl, mime_type: file.type, tamanho_bytes: file.size }).select('id, pasta_id, titulo, tipo, arquivo_path, arquivo_url, miniatura_path, miniatura_url, criado_em').single();
-        if (error || !data) { await supabase.storage.from(BUCKET).remove([caminho, ...(miniaturaPath ? [miniaturaPath] : [])]); throw error || new Error('Falha ao registrar material.'); }
+        const { data, error } = await supabase.from('vendas_mobile_divulgacao_materiais').insert({ empresa_id: empresaId, pasta_id: pastaAtiva, titulo: tituloMaterial, tipo: tipoMaterial, arquivo_path: caminho, arquivo_url: arquivoUrl, miniatura_path: miniaturaPath, miniatura_url: miniaturaUrl, mime_type: file.type, tamanho_bytes: file.size }).select('id, pasta_id, titulo, tipo, arquivo_path, arquivo_url, miniatura_path, miniatura_url, criado_em').abortSignal(controlador.signal).single();
+        if (error || !data) { await supabase.storage.from(BUCKET).remove(caminhosDesteMaterial); throw error || new Error('Falha ao registrar material.'); }
+        registrosCriados.push(data as Material);
         setMateriais((atuais) => [data as Material, ...atuais]);
       }
-    } catch (e) { setErro(e instanceof Error ? e.message : 'Não foi possível enviar os materiais.'); }
-    finally { setSalvando(false); if (inputArquivos.current) inputArquivos.current.value = ''; }
+    } catch (e) {
+      if (controlador.signal.aborted) {
+        const ids = registrosCriados.map((item) => item.id);
+        if (ids.length) await supabase.from('vendas_mobile_divulgacao_materiais').delete().in('id', ids).eq('empresa_id', empresaId);
+        if (caminhosCriados.length) await supabase.storage.from(BUCKET).remove([...new Set(caminhosCriados)]);
+        if (ids.length) setMateriais((atuais) => atuais.filter((item) => !ids.includes(item.id)));
+        setErro('Envio cancelado. Nenhum arquivo deste envio foi mantido.');
+      } else setErro(e instanceof Error ? e.message : 'Não foi possível enviar os materiais.');
+    } finally {
+      controladorEnvio.current = null;
+      setEnvioAtivo(null); setSalvando(false);
+      if (inputArquivos.current) inputArquivos.current.value = '';
+    }
+  };
+
+  const cancelarEnvio = () => {
+    if (!controladorEnvio.current || !envioAtivo || envioAtivo.cancelando) return;
+    setEnvioAtivo((atual) => atual ? { ...atual, cancelando: true } : null);
+    controladorEnvio.current.abort();
   };
 
   const excluirNovidade = async (item: Novidade) => { if (!window.confirm(`Excluir “${item.titulo}”?`)) return; const { error } = await supabase.from('vendas_mobile_conteudos').delete().eq('id', item.id).eq('empresa_id', empresaId); if (error) setErro('Não foi possível excluir.'); else setNovidades((lista) => lista.filter((i) => i.id !== item.id)); };
@@ -133,6 +213,20 @@ export default function NovidadesVendasModal({ aberto, empresaId, nomeEmpresa, d
   const pastasOrdenadas = pastasEmArvore(pastas);
 
   return <div className="fixed inset-0 z-[6000] flex items-center justify-center bg-black/65 px-3 py-5" onClick={onFechar}>
+    {envioAtivo && <div className="fixed inset-0 z-[6200] flex items-center justify-center bg-slate-950/80 p-5 backdrop-blur-sm" onClick={(e) => e.stopPropagation()} role="alert" aria-live="assertive">
+      <section className={`w-full max-w-sm overflow-hidden rounded-3xl border text-center shadow-2xl ${darkMode ? 'border-slate-600 bg-slate-900 text-white' : 'border-white/80 bg-white text-slate-900'}`}>
+        <div className="h-1.5 w-full overflow-hidden bg-slate-200 dark:bg-slate-700"><span className="block h-full animate-pulse bg-cyan-500" style={{ width: `${Math.max(12, envioAtivo.atual / envioAtivo.total * 100)}%` }} /></div>
+        <div className="p-6">
+          <span className="mx-auto grid h-16 w-16 place-items-center rounded-full bg-cyan-500/15 text-cyan-500"><span className="h-9 w-9 animate-spin rounded-full border-4 border-cyan-500/25 border-t-cyan-500" /></span>
+          <p className="mt-4 text-[10px] font-black uppercase tracking-[.18em] text-cyan-600">Vendas Mobile</p>
+          <h3 className="mt-1 text-xl font-black">{envioAtivo.cancelando ? 'Cancelando envio' : 'Enviando arquivo'}</h3>
+          <p className={`mt-2 truncate text-sm font-bold ${suave}`}>{envioAtivo.nome}</p>
+          {envioAtivo.total > 1 && <p className={`mt-1 text-xs ${suave}`}>Arquivo {envioAtivo.atual} de {envioAtivo.total}</p>}
+          <p className={`mt-4 text-xs leading-relaxed ${suave}`}>{envioAtivo.cancelando ? 'Interrompendo e removendo os arquivos deste envio.' : 'Mantenha esta tela aberta enquanto o material é enviado com segurança.'}</p>
+          <button type="button" onClick={cancelarEnvio} disabled={envioAtivo.cancelando} className="mt-5 h-11 w-full rounded-full border border-red-300 bg-red-50 text-xs font-black uppercase text-red-700 transition active:scale-[.98] disabled:opacity-60">{envioAtivo.cancelando ? 'Cancelando...' : 'Cancelar envio'}</button>
+        </div>
+      </section>
+    </div>}
     <section className={`flex max-h-[92dvh] w-full max-w-6xl flex-col overflow-hidden rounded-2xl border shadow-2xl ${fundo}`} onClick={(e) => e.stopPropagation()}>
       <header className="flex shrink-0 items-center justify-between gap-4 px-5 py-4 text-white" style={{ background: `linear-gradient(135deg, ${corPrimaria}, #1687D9)` }}><div><p className="text-[9px] font-black uppercase tracking-[.2em] text-white/70">Vendas Mobile</p><h2 className="mt-1 text-xl font-black">Conteúdo para a equipe</h2><p className="mt-1 text-xs text-white/80">Gerencie novidades e divulgação de {nomeEmpresa || 'este perfil'}.</p></div><button type="button" onClick={onFechar} className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white/15 text-lg font-black hover:bg-white/25">×</button></header>
       <nav className={`grid shrink-0 grid-cols-2 border-b ${darkMode ? 'border-slate-700' : 'border-slate-200'}`}><button type="button" onClick={() => setAba('novidades')} className={`h-11 text-xs font-black uppercase ${aba === 'novidades' ? 'text-white' : suave}`} style={aba === 'novidades' ? { backgroundColor: corPrimaria } : undefined}>Novidades</button><button type="button" onClick={() => setAba('divulgacao')} className={`h-11 text-xs font-black uppercase ${aba === 'divulgacao' ? 'text-white' : suave}`} style={aba === 'divulgacao' ? { backgroundColor: corPrimaria } : undefined}>Divulgação</button></nav>
