@@ -80,6 +80,7 @@ let feedbackVendasEnviando = false;
 let feedbackVendasEnviado = false;
 let produtoImagemUploadPendente = null;
 let divulgacaoPastaAtualId = null;
+let navegacaoInferiorBloqueadaAte = 0;
 
 const PAISES_DDI = [
   ['Brasil', '55', '🇧🇷'], ['Portugal', '351', '🇵🇹'], ['Estados Unidos / Canadá', '1', '🇺🇸'],
@@ -682,6 +683,12 @@ function renderNavegacaoInferior() {
 function acionarNavegacaoInferior(event, destino) {
   const botao = event.currentTarget || event.target.closest('button');
   if (!botao) return;
+  event.preventDefault();
+  event.stopPropagation();
+  const agora = Date.now();
+  if (agora < navegacaoInferiorBloqueadaAte) return;
+  navegacaoInferiorBloqueadaAte = agora + 420;
+  document.querySelectorAll('.vendas-nav-ripple').forEach((ripple) => ripple.remove());
   const anel = document.createElement('i');
   anel.className = 'vendas-nav-ripple';
   const origem = botao.classList.contains('vendas-nav-add') ? botao.querySelector(':scope > span') : botao;
