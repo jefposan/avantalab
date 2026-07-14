@@ -226,6 +226,7 @@
     resumoPerfis: [],
     resumoPerfisCarregando: false,
     resumoPerfilDestaqueId: '',
+    resumoPerfilExibidoId: '',
     meusPerfisExpandido: false,
     caixinhaDia: String(new Date().getDate()),
     caixinhaDescricao: 'Reserva',
@@ -1770,6 +1771,7 @@
 
     state.empresa = empresaSelecionada;
     state.resumoPerfilDestaqueId = empresaSelecionada.id;
+    state.resumoPerfilExibidoId = '';
     window._avaProfilePillHidden = false;
     state.pontoModuloAtivo = false;
     state.pontoResumo = [];
@@ -7554,6 +7556,12 @@
     var receitasResumo = perfilDestaque ? Number(perfilDestaque.receitas || 0) : totalReceitas;
     var despesasResumo = perfilDestaque ? Number(perfilDestaque.despesas || 0) : totalDespesas;
     var resultadoResumo = perfilDestaque ? Number(perfilDestaque.resultado || 0) : consolidado;
+    var valorPerfilHtml = function (valor, perfilId) {
+      var revelarIndividual = !!(perfilId && state.resumoPerfilExibidoId === perfilId);
+      return valoresCardVisiveis(cardId) || revelarIndividual
+        ? dinheiro(valor)
+        : 'R$ &bull;&bull;&bull;&bull;&bull;&bull;';
+    };
 
     var corpo = state.resumoPerfisCarregando
       ? '<p class="py-5 text-center text-xs font-semibold ' + textoSecundario + '">Atualizando perfis...</p>'
@@ -7564,15 +7572,15 @@
             var positivo = Number(perfil.resultado || 0) >= 0;
             return '<button type="button" data-meu-perfil-id="' + escapeHtml(perfil.id) + '" aria-pressed="' + (destacado ? 'true' : 'false') + '" class="w-full rounded-xl border-2 px-3 py-2 text-left shadow-sm transition active:scale-[0.98] ' + fundoLinha + ' ' + (destacado ? 'border-cyan-500 shadow-[inset_0_0_0_1px_rgba(6,182,212,.18)]' : (escuro ? 'border-slate-700' : 'border-slate-200')) + '">' +
               '<div class="flex items-center justify-between gap-3"><div class="min-w-0 flex-1"><p class="truncate text-xs font-black">' + escapeHtml(perfil.nome) + '</p><p class="mt-0.5 truncate text-[9px] font-semibold ' + textoSecundario + '">' + (atual ? 'Perfil atual · ' : '') + escapeHtml(rotuloTipoPerfil(perfil.tipoPerfil)) + '</p></div>' +
-              '<strong class="shrink-0 text-xs font-black ' + (positivo ? 'text-emerald-500' : 'text-red-500') + '">' + valorFinanceiroCardHtml(perfil.resultado, cardId) + '</strong></div>' +
-              '<div class="mt-1.5 grid grid-cols-2 gap-2 text-[9px] font-bold ' + textoSecundario + '"><span class="truncate">Receitas <b class="text-emerald-500">' + valorFinanceiroCardHtml(perfil.receitas, cardId) + '</b></span><span class="truncate text-right">Despesas <b class="text-red-500">' + valorFinanceiroCardHtml(perfil.despesas, cardId) + '</b></span></div>' +
+              '<strong class="shrink-0 text-xs font-black ' + (positivo ? 'text-emerald-500' : 'text-red-500') + '">' + valorPerfilHtml(perfil.resultado, perfil.id) + '</strong></div>' +
+              '<div class="mt-1.5 grid grid-cols-2 gap-2 text-[9px] font-bold ' + textoSecundario + '"><span class="truncate">Receitas <b class="text-emerald-500">' + valorPerfilHtml(perfil.receitas, perfil.id) + '</b></span><span class="truncate text-right">Despesas <b class="text-red-500">' + valorPerfilHtml(perfil.despesas, perfil.id) + '</b></span></div>' +
             '</button>';
           }).join('') + '</div>'
         : '<p class="py-5 text-center text-xs font-semibold ' + textoSecundario + '">Nenhum perfil vinculado.</p>';
 
     return '<section class="flex flex-col overflow-hidden rounded-2xl border-2 shadow-lg ' + fundo + '" style="border-color:#003E73;' + (expandido ? 'min-height:min(68dvh,560px);' : '') + '">' +
       '<div class="flex items-center justify-between gap-3 px-4 py-3 text-white" style="background:#003E73"><div class="min-w-0"><p class="text-[9px] font-bold uppercase tracking-[0.18em] text-cyan-100/75">' + escapeHtml(nomeMesCompleto(state.mes)) + '</p><h2 class="truncate text-sm font-black">Meus perfis</h2></div><div class="flex items-center gap-2"><span class="rounded-full bg-white/15 px-2 py-1 text-[9px] font-black">' + perfis.length + ' perfil' + (perfis.length === 1 ? '' : 's') + '</span>' + botaoVisibilidadeValoresHtml(cardId, true) + '</div></div>' +
-      '<div class="min-h-0 flex-1 p-3">' + (perfilDestaque ? '<p class="mb-1.5 truncate px-1 text-[9px] font-black uppercase tracking-wide ' + textoSecundario + '">Valores de ' + escapeHtml(perfilDestaque.nome) + '</p>' : '') + '<div class="mb-2 grid grid-cols-3 gap-1.5 rounded-xl ' + (escuro ? 'bg-slate-800/55' : 'bg-slate-50') + ' p-1.5"><div class="rounded-lg bg-[#003E73] px-2 py-2 text-white"><span class="block truncate text-[8px] font-black uppercase text-cyan-100/75">' + (perfilDestaque ? 'Resultado' : 'Consolidado') + '</span><strong class="mt-0.5 block truncate text-[11px] font-black">' + valorFinanceiroCardHtml(resultadoResumo, cardId) + '</strong></div><div class="rounded-lg px-2 py-2 ' + (escuro ? 'bg-slate-900/60' : 'bg-white') + '"><span class="block truncate text-[8px] font-black uppercase ' + textoSecundario + '">Receitas</span><strong class="mt-0.5 block truncate text-[11px] font-black text-emerald-500">' + valorFinanceiroCardHtml(receitasResumo, cardId) + '</strong></div><div class="rounded-lg px-2 py-2 text-right ' + (escuro ? 'bg-slate-900/60' : 'bg-white') + '"><span class="block truncate text-[8px] font-black uppercase ' + textoSecundario + '">Despesas</span><strong class="mt-0.5 block truncate text-[11px] font-black text-red-500">' + valorFinanceiroCardHtml(despesasResumo, cardId) + '</strong></div></div>' + corpo + '</div>' +
+      '<div class="min-h-0 flex-1 p-3">' + (perfilDestaque ? '<p class="mb-1.5 truncate px-1 text-[9px] font-black uppercase tracking-wide ' + textoSecundario + '">Valores de ' + escapeHtml(perfilDestaque.nome) + '</p>' : '') + '<div class="mb-2 grid grid-cols-3 gap-1.5 rounded-xl ' + (escuro ? 'bg-slate-800/55' : 'bg-slate-50') + ' p-1.5"><div class="rounded-lg bg-[#003E73] px-2 py-2 text-white"><span class="block truncate text-[8px] font-black uppercase text-cyan-100/75">' + (perfilDestaque ? 'Resultado' : 'Consolidado') + '</span><strong class="mt-0.5 block truncate text-[11px] font-black">' + valorPerfilHtml(resultadoResumo, perfilDestaque && perfilDestaque.id) + '</strong></div><div class="rounded-lg px-2 py-2 ' + (escuro ? 'bg-slate-900/60' : 'bg-white') + '"><span class="block truncate text-[8px] font-black uppercase ' + textoSecundario + '">Receitas</span><strong class="mt-0.5 block truncate text-[11px] font-black text-emerald-500">' + valorPerfilHtml(receitasResumo, perfilDestaque && perfilDestaque.id) + '</strong></div><div class="rounded-lg px-2 py-2 text-right ' + (escuro ? 'bg-slate-900/60' : 'bg-white') + '"><span class="block truncate text-[8px] font-black uppercase ' + textoSecundario + '">Despesas</span><strong class="mt-0.5 block truncate text-[11px] font-black text-red-500">' + valorPerfilHtml(despesasResumo, perfilDestaque && perfilDestaque.id) + '</strong></div></div>' + corpo + '</div>' +
       '<button id="toggle-esticar-meus-perfis" type="button" class="flex h-8 w-full items-center justify-center gap-2 border-t ' + (escuro ? 'border-slate-700 bg-slate-800/60 text-slate-300' : 'border-slate-200 bg-slate-50 text-slate-500') + ' text-[9px] font-black uppercase tracking-[0.14em] transition active:brightness-95"><span>' + (expandido ? 'Recolher' : 'Esticar') + '</span><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="' + (expandido ? 'm7 14 5-5 5 5' : 'm7 10 5 5 5-5') + '" stroke-linecap="round" stroke-linejoin="round"/></svg></button>' +
     '</section>';
   }
@@ -11555,7 +11563,7 @@
         var id = botao.getAttribute('data-meu-perfil-id');
         if (!id) return;
         state.resumoPerfilDestaqueId = id;
-        state.dashboardValoresVisiveis.meusPerfis = true;
+        state.resumoPerfilExibidoId = id;
         render();
         centralizarPerfilDestacadoNoCard(id);
       });
