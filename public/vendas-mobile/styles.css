@@ -1706,7 +1706,7 @@ body { background: #fff; color: var(--ink); }
   .dark-theme .vendas-nav-item { color: #94a3b8; }
   .dark-theme .vendas-nav-add > span { border-color: #0f172a; }
 }
-@keyframes vendas-nav-ripple { 0% { opacity: .9; transform: translate(-50%, -50%) scale(.02); } 68% { opacity: .32; } 100% { opacity: 0; transform: translate(-50%, -50%) scale(9); } }
+@keyframes vendas-nav-ripple { 0% { opacity: .9; transform: translate(-50%, -50%) scale(.02); } 68% { opacity: .32; } 100% { opacity: 0; transform: translate(-50%, -50%) scale(4.5); } }
 
 /* Agenda do Vendas: mesma estrutura de mês, dia e lembretes do Gestão Mobile. */
 @keyframes agenda-vendas-in-prox { from { opacity: .35; transform: translateX(26px); } to { opacity: 1; transform: none; } }
