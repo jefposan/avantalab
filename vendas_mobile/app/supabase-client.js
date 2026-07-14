@@ -127,12 +127,18 @@
 
   async function loadAll() {
     const user = await currentUser();
-    if (!user) return { user: null, produtos: [], pacotes: [], clientes: [], vendas: [], pagamentos: [], conteudos: null, divulgacaoPastas: [], divulgacaoMateriais: [] };
+    if (!user) return { user: null, produtos: [], pacotes: [], clientes: [], vendas: [], pagamentos: [], conteudos: null, divulgacaoPastas: [], divulgacaoMateriais: [], moduloAtivo: true };
 
     const acessoVendas = await buscarAcessoVendas();
     if (!acessoVendas.acesso) {
-      return { user, produtos: [], pacotes: [], clientes: [], vendas: [], pagamentos: [], conteudos: null, divulgacaoPastas: [], divulgacaoMateriais: [], ...acessoVendas };
+      return { user, produtos: [], pacotes: [], clientes: [], vendas: [], pagamentos: [], conteudos: null, divulgacaoPastas: [], divulgacaoMateriais: [], moduloAtivo: true, ...acessoVendas };
     }
+
+    const moduloRes = await requireClient().rpc('modulo_vendas_mobile_ativo_rpc', {
+      p_empresa_id: acessoVendas.acesso.empresa_id,
+    });
+    if (moduloRes.error) throw moduloRes.error;
+    const moduloAtivo = moduloRes.data === true;
 
     const [produtosRes, clientesRes, pedidosRes, pagamentosRes, conteudosRes, pastasRes, materiaisRes] = await Promise.all([
       client.from('vendas_mobile_produtos').select('*').order('criado_em', { ascending: false }),
@@ -182,6 +188,7 @@
       conteudos: conteudosRes.error ? null : (conteudosRes.data || []),
       divulgacaoPastas: pastasRes.error ? [] : (pastasRes.data || []),
       divulgacaoMateriais: materiaisRes.error ? [] : (materiaisRes.data || []),
+      moduloAtivo,
       ...acessoVendas,
     };
   }

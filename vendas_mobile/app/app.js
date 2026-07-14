@@ -45,6 +45,7 @@ const estadoInicial = {
   acessoVendas: null,
   solicitacaoAcesso: null,
   usuarioSemAcesso: false,
+  moduloVendasAtivo: true,
 };
 
 let state = carregarEstado();
@@ -397,6 +398,11 @@ function render() {
     requestAnimationFrame(limparFocoInicialLogin);
     return;
   }
+  if (!state.moduloVendasAtivo) {
+    limparDestaqueClientes();
+    app.innerHTML = renderModuloVendasDesativado();
+    return;
+  }
   const navegacaoInferiorEstavel = app.querySelector('.vendas-bottom-nav');
   const cabecalho = `<header class="system-header"><button class="system-brand brand-home" onclick="abrirSalaBotoes()" aria-label="Ir para a sala de botões">${logoVendas()}</button></header>`;
   app.innerHTML = `
@@ -430,6 +436,29 @@ function render() {
   if (navegacaoInferiorEstavel && navegacaoInferiorNova) navegacaoInferiorNova.replaceWith(navegacaoInferiorEstavel);
   if (state.aba === 'clientes') requestAnimationFrame(configurarDestaqueClientes);
   else limparDestaqueClientes();
+}
+
+function renderModuloVendasDesativado() {
+  const itens = [
+    ['1_Dashboard.png', 'Dashboard'], ['4_Clientes.png', 'Clientes'], ['2_Produtos.png', 'Produtos'],
+    ['5_Pedidos.png', 'Pedidos'], ['6_Pagamentos.png', 'Pagamentos'], ['3_Agenda.png', 'Agenda'],
+    ['8_Novidades.png', 'Novidades'], ['7_Divulgação.png', 'Divulgação'], ['9_Informações.png', 'Informações'],
+  ];
+  return `<section class="module-suspended-screen">
+    <header class="mobile-menu-header"><div class="mobile-menu-brand">${logoVendas()}</div></header>
+    <div class="module-suspended-preview" aria-hidden="true">
+      <div class="mobile-menu-grid">${itens.map(([arquivo, label]) => `<div class="mobile-menu-card"><img src="./assets/menu/${arquivo}" alt="${label}"></div>`).join('')}</div>
+    </div>
+    <div class="module-suspended-shade"></div>
+    <article class="module-suspended-card" role="alert" aria-live="assertive">
+      <span class="module-suspended-icon">${svgIcon('lock')}</span>
+      <p>Vendas Mobile</p>
+      <h1>Sistema desativado</h1>
+      <div class="module-suspended-message">O acesso foi desativado pelo gestor master. Seus dados permanecem preservados e estarão disponíveis novamente quando o módulo for reinstalado.</div>
+      <button class="primary module-backup-button" type="button" onclick="exportarBackupVendasExcel()">${svgIcon('download')} Fazer backup dos dados</button>
+      <button class="ghost module-logout-button" type="button" onclick="sairSistema()">${svgIcon('log-out')} Sair</button>
+    </article>
+  </section>`;
 }
 
 function configurarDestaqueClientes() {
@@ -1054,6 +1083,7 @@ async function carregarDadosBackend(mostrarCarregamento = true) {
       state.acessoVendas = dados.acesso || null;
       state.solicitacaoAcesso = dados.solicitacao || null;
       state.usuarioSemAcesso = !dados.acesso;
+      state.moduloVendasAtivo = dados.moduloAtivo !== false;
       if (!dados.acesso) state.autenticado = false;
     }
   } catch (error) {
@@ -2982,6 +3012,73 @@ async function exportarProdutosExcel() {
   } catch (error) { toast(traduzErro(error)); }
 }
 
+function dataBackup(valorData) {
+  if (!valorData) return '';
+  const data = new Date(String(valorData).length === 10 ? `${valorData}T12:00:00` : valorData);
+  return Number.isNaN(data.getTime()) ? String(valorData) : data.toLocaleDateString('pt-BR');
+}
+
+async function exportarBackupVendasExcel() {
+  try {
+    await carregarBibliotecaExcel();
+    const clientesPorId = new Map(state.clientes.map((cliente) => [String(cliente.id), cliente]));
+    const nomeCliente = (clienteId) => clientesPorId.get(String(clienteId || ''))?.nome || 'Cliente não identificado';
+    const clientes = [...state.clientes]
+      .sort((a, b) => String(a.nome || '').localeCompare(String(b.nome || ''), 'pt-BR'))
+      .map((cliente) => ({
+        Cliente: cliente.nome || '', Telefone: cliente.telefone || '', Email: cliente.email || '', Documento: cliente.documento || '',
+        CEP: cliente.cep || cliente.endereco?.cep || '', Logradouro: cliente.logradouro || cliente.endereco?.logradouro || '',
+        Número: cliente.numero || cliente.endereco?.numero || '', Complemento: cliente.complemento || cliente.endereco?.complemento || '',
+        Bairro: cliente.bairro || cliente.endereco?.bairro || '', Cidade: cliente.cidade || cliente.endereco?.cidade || '',
+        UF: cliente.uf || cliente.endereco?.uf || '', Observações: cliente.observacoes || '',
+        Situação: cliente.ativo === false ? 'Inativo' : 'Ativo', 'Cadastrado em': dataBackup(cliente.criado_em),
+      }));
+    const ordenarPorClienteEData = (a, b, campoData) => {
+      const comparacaoCliente = nomeCliente(a.cliente_id).localeCompare(nomeCliente(b.cliente_id), 'pt-BR', { sensitivity: 'base' });
+      return comparacaoCliente || String(b[campoData] || b.criado_em || '').localeCompare(String(a[campoData] || a.criado_em || ''));
+    };
+    const pedidosOrdenados = [...state.vendas].sort((a, b) => ordenarPorClienteEData(a, b, 'criado_em'));
+    const pedidos = pedidosOrdenados.map((pedido) => ({
+      Data: dataBackup(pedido.criado_em), Cliente: nomeCliente(pedido.cliente_id),
+      Tipo: pedidoEhConsignado(pedido) ? 'Consignado' : (pedidoSomenteBonificado(pedido) ? 'Bonificação' : ((pedido.itens || []).some(itemPedidoBonificado) ? 'Venda com bonificação' : 'Venda')),
+      Situação: pedido.status || '', Subtotal: Number(pedido.subtotal || 0), Desconto: Number(pedido.desconto || 0), Total: Number(pedido.total || 0),
+      'Forma de pagamento': pedido.forma_pagamento || '', Observações: pedido.observacoes || '', 'Código do pedido': pedido.id || '',
+    }));
+    const itens = pedidosOrdenados.flatMap((pedido) => (pedido.itens || []).map((item) => ({
+      Data: dataBackup(pedido.criado_em), Cliente: nomeCliente(pedido.cliente_id), 'Código do pedido': pedido.id || '',
+      Item: item.produto_nome || '', SKU: item.produto_sku || '', Quantidade: Number(item.quantidade || 0),
+      Bonificado: itemPedidoBonificado(item) ? 'Sim' : 'Não', 'Valor unitário': Number(item.preco_unitario || 0), Desconto: Number(item.desconto || 0), Total: Number(item.total || 0),
+    })));
+    const pagamentos = [...state.pagamentos]
+      .sort((a, b) => ordenarPorClienteEData(a, b, 'data_pagamento'))
+      .map((pagamento) => ({
+        Data: dataBackup(pagamento.data_pagamento || pagamento.criado_em), Cliente: nomeCliente(pagamento.cliente_id),
+        Valor: Number(pagamento.valor || 0), Desconto: Number(pagamento.desconto || 0), 'Forma de pagamento': pagamento.forma_pagamento || '',
+        'Saldo anterior': Number(pagamento.saldo_anterior || 0), 'Saldo final': Number(pagamento.saldo_final || 0),
+        Observações: pagamento.observacoes || '', 'Código do pagamento': pagamento.id || '',
+      }));
+    const agenda = [...(state.agendaItens || [])]
+      .sort((a, b) => `${a.ano}-${String(Number(a.mes) + 1).padStart(2, '0')}-${String(a.dia).padStart(2, '0')}`.localeCompare(`${b.ano}-${String(Number(b.mes) + 1).padStart(2, '0')}-${String(b.dia).padStart(2, '0')}`))
+      .map((item) => ({
+        Data: dataBackup(`${item.ano}-${String(Number(item.mes) + 1).padStart(2, '0')}-${String(item.dia).padStart(2, '0')}`),
+        Cliente: item.titulo || '', Tarefa: item.tipo || '', Notas: item.descricao || '',
+      }));
+    const livro = window.XLSX.utils.book_new();
+    const adicionarAba = (nome, linhas, larguras) => {
+      const aba = window.XLSX.utils.json_to_sheet(linhas.length ? linhas : [{ Informação: 'Nenhum registro encontrado.' }]);
+      aba['!cols'] = larguras.map((wch) => ({ wch }));
+      window.XLSX.utils.book_append_sheet(livro, aba, nome);
+    };
+    adicionarAba('Clientes', clientes, [28, 18, 28, 18, 12, 30, 10, 20, 20, 20, 8, 36, 12, 14]);
+    adicionarAba('Pedidos', pedidos, [12, 28, 16, 14, 14, 14, 14, 20, 36, 38]);
+    adicionarAba('Itens dos pedidos', itens, [12, 28, 38, 30, 16, 12, 12, 16, 14, 14]);
+    adicionarAba('Pagamentos', pagamentos, [12, 28, 14, 14, 20, 16, 16, 36, 38]);
+    adicionarAba('Agenda', agenda, [12, 28, 18, 40]);
+    window.XLSX.writeFile(livro, `backup-vendas-mobile-${isoData(new Date())}.xlsx`);
+    toast('Backup gerado com sucesso.');
+  } catch (error) { toast(traduzErro(error)); }
+}
+
 function abrirProduto(produtoId = '') {
   const p = state.produtos.find((item) => item.id === produtoId) || {};
   if (produtoImagemUploadPendente?.previewUrl) URL.revokeObjectURL(produtoImagemUploadPendente.previewUrl);
@@ -3597,6 +3694,7 @@ window.importarCatalogoTridiumPersistente = importarCatalogoTridiumPersistente;
 window.abrirGerenciarPacotes = abrirGerenciarPacotes;
 window.excluirPacoteProdutos = excluirPacoteProdutos;
 window.exportarProdutosExcel = exportarProdutosExcel;
+window.exportarBackupVendasExcel = exportarBackupVendasExcel;
 window.abrirProduto = abrirProduto;
 window.salvarProduto = salvarProduto;
 window.removerProduto = removerProduto;
