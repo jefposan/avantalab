@@ -283,22 +283,70 @@
       criado_em: order.criado_em || new Date().toISOString(),
     }).select().single();
     if (error) throw error;
-    const items = order.itens.map((item) => ({
+    const items = order.itens.map((item) => {
+      const quantidade = Number(item.quantidade || 1);
+      const preco = Number(item.preco ?? item.preco_unitario ?? 0);
+      const bonificado = Boolean(item.bonificado) || (Number(item.total) === 0 && Number(item.desconto) >= quantidade * preco && preco > 0);
+      return {
       pedido_id: pedido.id,
       produto_id: String(item.produto_id || '').startsWith('prod_') ? null : item.produto_id || null,
       produto_nome: item.produto_nome,
       produto_sku: item.produto_sku || null,
-      quantidade: Number(item.quantidade || 1),
-      preco_unitario: Number(item.preco || item.preco_unitario || 0),
-      desconto: Number(item.desconto || 0),
-      total: Number(item.quantidade || 1) * Number(item.preco || item.preco_unitario || 0),
-    }));
+      quantidade,
+      preco_unitario: preco,
+      desconto: bonificado ? quantidade * preco : Number(item.desconto || 0),
+      total: bonificado ? 0 : quantidade * preco - Number(item.desconto || 0),
+    }; });
     const { data: savedItems, error: itemsError } = await client.from('vendas_mobile_pedido_itens').insert(items).select();
     if (itemsError) {
       await client.from('vendas_mobile_pedidos').delete().eq('id', pedido.id);
       throw itemsError;
     }
     return { ...pedido, itens: savedItems || [] };
+  }
+
+  async function updateOrder(order) {
+    const user = await currentUser();
+    if (!user) throw new Error('Sessão expirada.');
+    const { data: pedido, error } = await client.from('vendas_mobile_pedidos').update({
+      cliente_id: order.cliente_id || null,
+      status: order.status || 'concluida',
+      subtotal: Number(order.subtotal || order.total || 0),
+      desconto: Number(order.desconto || 0),
+      total: Number(order.total || 0),
+      forma_pagamento: order.forma_pagamento || null,
+      observacoes: order.observacoes || null,
+      criado_em: order.criado_em || new Date().toISOString(),
+    }).eq('id', order.id).eq('user_id', user.id).select().single();
+    if (error) throw error;
+    const { error: deleteItemsError } = await client.from('vendas_mobile_pedido_itens').delete().eq('pedido_id', order.id);
+    if (deleteItemsError) throw deleteItemsError;
+    if (!order.itens.length) return { ...pedido, itens: [] };
+    const items = order.itens.map((item) => {
+      const quantidade = Number(item.quantidade || 1);
+      const preco = Number(item.preco ?? item.preco_unitario ?? 0);
+      const bonificado = Boolean(item.bonificado) || (Number(item.total) === 0 && Number(item.desconto) >= quantidade * preco && preco > 0);
+      return {
+        pedido_id: order.id,
+        produto_id: String(item.produto_id || '').startsWith('prod_') ? null : item.produto_id || null,
+        produto_nome: item.produto_nome,
+        produto_sku: item.produto_sku || null,
+        quantidade,
+        preco_unitario: preco,
+        desconto: bonificado ? quantidade * preco : Number(item.desconto || 0),
+        total: bonificado ? 0 : quantidade * preco - Number(item.desconto || 0),
+      };
+    });
+    const { data: savedItems, error: itemsError } = await client.from('vendas_mobile_pedido_itens').insert(items).select();
+    if (itemsError) throw itemsError;
+    return { ...pedido, itens: savedItems || [] };
+  }
+
+  async function deleteOrder(id) {
+    const user = await currentUser();
+    if (!user) throw new Error('Sessão expirada.');
+    const { error } = await client.from('vendas_mobile_pedidos').delete().eq('id', id).eq('user_id', user.id);
+    if (error) throw error;
   }
 
   async function savePayment(payment) {
@@ -414,5 +462,5 @@
     return data;
   }
 
-  window.VendasDb = { client, currentUser, hasSession, getAccessToken, signIn, signInPhone, signInWithGoogle, resetPassword, updatePassword, updateUserMetadata, signUp, signOut, solicitarAcesso, buscarAcessoVendas, loadAll, saveProduct, deleteProduct, createPackage, saveProductsBulk, deletePackage, saveClient, deleteClient, saveOrder, savePayment, updatePayment, deletePayment, saveFeedback };
+  window.VendasDb = { client, currentUser, hasSession, getAccessToken, signIn, signInPhone, signInWithGoogle, resetPassword, updatePassword, updateUserMetadata, signUp, signOut, solicitarAcesso, buscarAcessoVendas, loadAll, saveProduct, deleteProduct, createPackage, saveProductsBulk, deletePackage, saveClient, deleteClient, saveOrder, updateOrder, deleteOrder, savePayment, updatePayment, deletePayment, saveFeedback };
 })();

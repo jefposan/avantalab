@@ -71,6 +71,7 @@ let filtroPedidos = 'todos';
 let limitePedidos = 10;
 let limiteClientesPagamentos = 10;
 let pedidoClienteRascunho = null;
+let conversaoConsignadoRascunho = null;
 let pagamentoClienteRascunho = null;
 let ordemAlfabetica = 'asc';
 let feedbackVendasEnviando = false;
@@ -280,7 +281,7 @@ function totaisPeriodo() {
   const fim = new Date(`${state.filtroFim}T23:59:59`);
   const vendasMes = state.vendas.filter((v) => {
     const d = new Date(v.criado_em);
-    return d >= inicio && d <= fim && v.status !== 'cancelada' && !pedidoEhConsignado(v) && tipoPedido(v) !== 'bonificacoes';
+    return d >= inicio && d <= fim && v.status !== 'cancelada' && !pedidoEhConsignado(v) && !pedidoSomenteBonificado(v);
   });
   const total = vendasMes.reduce((s, v) => s + Number(v.total || 0), 0);
   const itens = vendasMes.reduce((s, v) => s + (v.itens || []).reduce((x, i) => x + Number(i.quantidade || 0), 0), 0);
@@ -1130,7 +1131,7 @@ function clientesInativosDashboard() {
   const agora = new Date();
   return state.clientes.map((cliente) => {
     const ultima = state.vendas
-      .filter((venda) => venda.cliente_id === cliente.id && venda.status !== 'cancelada' && !pedidoEhConsignado(venda) && tipoPedido(venda) !== 'bonificacoes')
+      .filter((venda) => venda.cliente_id === cliente.id && venda.status !== 'cancelada' && !pedidoEhConsignado(venda) && !pedidoSomenteBonificado(venda))
       .sort((a, b) => new Date(b.criado_em) - new Date(a.criado_em))[0];
     const dias = ultima ? Math.floor((agora.getTime() - new Date(ultima.criado_em).getTime()) / 86400000) : null;
     return { nome: cliente.nome, ultima, dias };
@@ -1645,7 +1646,7 @@ function saldoFinanceiroCliente(clienteId) {
 }
 
 function renderCliente(c) {
-  const vendasCliente = state.vendas.filter((v) => v.cliente_id === c.id && v.status !== 'cancelada' && !pedidoEhConsignado(v) && tipoPedido(v) !== 'bonificacoes');
+  const vendasCliente = state.vendas.filter((v) => v.cliente_id === c.id && v.status !== 'cancelada' && !pedidoEhConsignado(v) && !pedidoSomenteBonificado(v));
   const ultimaVenda = [...vendasCliente].sort((a, b) => new Date(b.criado_em) - new Date(a.criado_em))[0];
   const saldo = saldoFinanceiroCliente(c.id);
   const debito = saldo.debito;
@@ -1693,7 +1694,7 @@ function clientesDisponiveisPedido() {
 }
 
 function totaisPedidoClienteRascunho() {
-  const subtotal = (pedidoClienteRascunho?.itens || []).reduce((soma, item) => soma + Number(item.quantidade || 0) * Number(item.preco || 0), 0);
+  const subtotal = (pedidoClienteRascunho?.itens || []).reduce((soma, item) => soma + (item.bonificado ? 0 : Number(item.quantidade || 0) * Number(item.preco || 0)), 0);
   const desconto = Math.max(0, Number(pedidoClienteRascunho?.desconto || 0));
   return { subtotal, desconto, total: Math.max(0, subtotal - desconto) };
 }
@@ -1715,6 +1716,7 @@ function abrirNovoPedidoCliente(clienteId, permitirSelecao = false) {
     produtoId: '',
     quantidade: 1,
     preco: 0,
+    bonificado: false,
     desconto: 0,
     itens: [],
   };
@@ -1729,10 +1731,10 @@ function mostrarCardPedidoCliente() {
   const clientes = clientesDisponiveisPedido();
   const totais = totaisPedidoClienteRascunho();
   const itensHtml = rascunho.itens.length
-    ? rascunho.itens.map((item, indice) => `<article><div><b>${escapeHtml(item.produto_nome)}</b><small>${item.quantidade} × ${moeda(item.preco)}</small></div><strong>${moeda(item.quantidade * item.preco)}</strong><button type="button" onclick="removerItemPedidoCliente(${indice})" aria-label="Excluir ${escapeAttr(item.produto_nome)}">×</button></article>`).join('')
+    ? rascunho.itens.map((item, indice) => `<article class="${item.bonificado ? 'order-draft-bonus' : ''}"><div><b>${escapeHtml(item.produto_nome)}</b><small>${item.quantidade} × ${moeda(item.preco)} ${item.bonificado ? '<em>Bonificado</em>' : ''}</small></div><div class="order-draft-quantity"><button type="button" onclick="ajustarItemPedidoCliente(${indice},-1)">−</button><strong>${item.quantidade}</strong><button type="button" onclick="ajustarItemPedidoCliente(${indice},1)">+</button></div><strong>${item.bonificado ? moeda(0) : moeda(item.quantidade * item.preco)}</strong><button type="button" onclick="removerItemPedidoCliente(${indice})" aria-label="Excluir ${escapeAttr(item.produto_nome)}">×</button></article>`).join('')
     : '<p class="transaction-empty">Nenhum item inserido.</p>';
   sheet(`
-    <div class="sheet-header"><div><h2>Novo pedido</h2><p class="muted small">${rascunho.permitirSelecaoCliente ? 'Selecione o cliente' : escapeHtml(cliente.nome)}</p></div><button class="close" onclick="fecharSheet()">×</button></div>
+    <div class="sheet-header"><div><h2>${rascunho.editandoId ? 'Editar pedido' : 'Novo pedido'}</h2><p class="muted small">${rascunho.permitirSelecaoCliente ? 'Selecione o cliente' : escapeHtml(cliente.nome)}</p></div><button class="close" onclick="${rascunho.editandoId ? `cancelarEdicaoPedido('${rascunho.editandoId}')` : 'fecharSheet()'}">×</button></div>
     <div class="order-transaction-layout">
       <div class="order-transaction-fixed">
         ${rascunho.permitirSelecaoCliente ? `<label class="transaction-field transaction-client-select"><span>Cliente</span><select id="pedidoClienteSelecionado" onchange="selecionarClientePedido(this.value)">${clientes.map((item) => `<option value="${item.id}" ${item.id === rascunho.clienteId ? 'selected' : ''}>${escapeHtml(item.nome)}</option>`).join('')}</select></label>` : ''}
@@ -1742,6 +1744,7 @@ function mostrarCardPedidoCliente() {
         <h3>Inserir produto</h3>
         ${produtos.length ? `<label class="transaction-field"><span>Produto</span><select id="pedidoClienteProduto" onchange="selecionarProdutoPedidoCliente(this.value)"><option value="" ${rascunho.produtoId ? '' : 'selected'} disabled>Selecione o produto</option>${produtos.map((produto) => `<option value="${produto.id}" ${produto.id === rascunho.produtoId ? 'selected' : ''}>${escapeHtml(produto.nome)}</option>`).join('')}</select></label>
         <div class="order-item-fields"><label class="transaction-field"><span>Quantidade</span><div class="quantity-stepper"><button type="button" onclick="ajustarQuantidadePedidoCliente(-1)">−</button><input id="pedidoClienteQuantidade" type="number" min="1" step="1" inputmode="numeric" value="${escapeAttr(rascunho.quantidade)}" onfocus="if(this.value==='1')this.value=''" oninput="sincronizarQuantidadePedidoCliente(this.value)" onblur="normalizarQuantidadePedidoCliente()"><button type="button" onclick="ajustarQuantidadePedidoCliente(1)">+</button></div></label><label class="transaction-field"><span>Preço</span><input id="pedidoClientePreco" type="text" inputmode="numeric" value="${numeroParaCampoMoeda(rascunho.preco)}" onfocus="this.select()" oninput="pedidoClienteRascunho.preco=formatarCampoMoeda(this)"></label></div>
+        <label class="order-bonus-toggle"><input type="checkbox" ${rascunho.bonificado ? 'checked' : ''} onchange="pedidoClienteRascunho.bonificado=this.checked"><span></span><b>Bonificado</b><small>O item entra no pedido sem valor.</small></label>
         <button type="button" class="primary order-insert-item" onclick="inserirItemPedidoCliente()">Inserir item</button>` : '<p class="transaction-empty">Cadastre produtos antes de criar um pedido.</p>'}
       </article>
       </div>
@@ -1752,7 +1755,7 @@ function mostrarCardPedidoCliente() {
         <div class="total"><span>Total final</span><b id="pedidoClienteTotal">${moeda(totais.total)}</b></div>
       </section>
     </div>
-    <footer class="client-transaction-footer"><button type="button" class="primary" onclick="finalizarPedidoCliente()">Finalizar pedido <b id="pedidoClienteBotaoTotal">(${moeda(totais.total)})</b></button></footer>
+    <footer class="client-transaction-footer ${rascunho.editandoId ? 'order-edit-footer' : ''}">${rascunho.editandoId ? `<button type="button" class="ghost" onclick="cancelarEdicaoPedido('${rascunho.editandoId}')">Cancelar</button><button type="button" class="danger" onclick="confirmarExclusaoPedido('${rascunho.editandoId}')">Excluir</button>` : ''}<button type="button" class="primary" onclick="finalizarPedidoCliente()">${rascunho.editandoId ? 'Salvar pedido' : 'Finalizar pedido'} <b id="pedidoClienteBotaoTotal">(${moeda(totais.total)})</b></button></footer>
   `, 'sheet-backdrop-centered client-transaction-backdrop order-transaction-backdrop');
 }
 
@@ -1806,16 +1809,24 @@ function inserirItemPedidoCliente() {
   const preco = lerCampoMoeda('pedidoClientePreco');
   if (!produto) { toast('Selecione um produto.'); return; }
   if (preco < 0) { toast('Informe um preço válido.'); return; }
-  pedidoClienteRascunho.itens.push({ produto_id: produto.id, produto_nome: produto.nome, produto_sku: produto.sku || null, quantidade, preco });
+  pedidoClienteRascunho.itens.push({ produto_id: produto.id, produto_nome: produto.nome, produto_sku: produto.sku || null, quantidade, preco, bonificado: Boolean(pedidoClienteRascunho.bonificado) });
   pedidoClienteRascunho.produtoId = '';
   pedidoClienteRascunho.quantidade = 1;
   pedidoClienteRascunho.preco = 0;
+  pedidoClienteRascunho.bonificado = false;
   mostrarCardPedidoCliente();
 }
 
 function removerItemPedidoCliente(indice) {
   if (!pedidoClienteRascunho) return;
   pedidoClienteRascunho.itens.splice(indice, 1);
+  mostrarCardPedidoCliente();
+}
+
+function ajustarItemPedidoCliente(indice, delta) {
+  const item = pedidoClienteRascunho?.itens?.[indice];
+  if (!item) return;
+  item.quantidade = Math.max(1, Number(item.quantidade || 1) + Number(delta || 0));
   mostrarCardPedidoCliente();
 }
 
@@ -1848,9 +1859,9 @@ async function finalizarPedidoCliente() {
     return soma + Number(item.quantidade || 0) * Number(produto?.preco_custo ?? produto?.metadados?.preco_custo ?? 0);
   }, 0);
   const venda = {
-    id: id('vend'),
+    id: rascunho.editandoId || id('vend'),
     cliente_id: rascunho.clienteId,
-    status: 'concluida',
+    status: rascunho.status || 'concluida',
     subtotal: totais.subtotal,
     desconto: totais.desconto,
     total: totais.total,
@@ -1859,21 +1870,58 @@ async function finalizarPedidoCliente() {
       avantalab_pedido: true,
       tipo: rascunho.tipo,
       descricao: rascunho.tipo === 'consignado' ? 'Pedido consignado' : 'Pedido de venda',
+      tem_bonificacao: rascunho.itens.some((item) => item.bonificado),
       custo_total: custoTotalPedido,
       saldo_anterior: financeiroAnterior.debito,
       saldo_final: saldoAtual,
     }),
-    itens: rascunho.itens.map((item) => ({ ...item, total: item.quantidade * item.preco })),
+    itens: rascunho.itens.map((item) => ({ ...item, desconto: item.bonificado ? item.quantidade * item.preco : 0, total: item.bonificado ? 0 : item.quantidade * item.preco })),
     criado_em: new Date(`${dataPedido}T12:00:00`).toISOString(),
   };
   try {
-    const salvo = backendAtivo ? await window.VendasDb.saveOrder(venda) : venda;
-    state.vendas.unshift(salvo);
+    const salvo = backendAtivo
+      ? (rascunho.editandoId ? await window.VendasDb.updateOrder(venda) : await window.VendasDb.saveOrder(venda))
+      : venda;
+    state.vendas = rascunho.editandoId
+      ? state.vendas.map((item) => item.id === salvo.id ? salvo : item)
+      : [salvo, ...state.vendas];
     pedidoClienteRascunho = null;
     render();
     abrirPedidoCliente(salvo.id);
-    toast('Pedido registrado. O comprovante está pronto para compartilhar.');
+    toast(rascunho.editandoId ? 'Pedido atualizado.' : 'Pedido registrado. O comprovante está pronto para compartilhar.');
   } catch (error) { toast(traduzErro(error)); }
+}
+
+function abrirEditarPedido(pedidoId) {
+  const venda = state.vendas.find((item) => item.id === pedidoId);
+  if (!venda) return;
+  pedidoClienteRascunho = {
+    editandoId: venda.id,
+    clienteId: venda.cliente_id,
+    permitirSelecaoCliente: false,
+    tipo: pedidoEhConsignado(venda) ? 'consignado' : 'venda',
+    status: venda.status || 'concluida',
+    data: String(venda.criado_em || '').slice(0, 10) || isoData(new Date()),
+    produtoId: '',
+    quantidade: 1,
+    preco: 0,
+    bonificado: false,
+    desconto: Number(venda.desconto || 0),
+    itens: (venda.itens || []).map((item) => ({
+      produto_id: item.produto_id,
+      produto_nome: item.produto_nome,
+      produto_sku: item.produto_sku || null,
+      quantidade: Number(item.quantidade || 1),
+      preco: Number(item.preco ?? item.preco_unitario ?? 0),
+      bonificado: itemPedidoBonificado(item),
+    })),
+  };
+  mostrarCardPedidoCliente();
+}
+
+function cancelarEdicaoPedido(pedidoId) {
+  pedidoClienteRascunho = null;
+  abrirPedidoCliente(pedidoId);
 }
 
 function abrirPagamentoCliente(clienteId) {
@@ -1973,7 +2021,16 @@ function abrirEditarPagamentoCliente(pagamentoId, pagina = 0) {
   const cliente = state.clientes.find((item) => item.id === pagamento.cliente_id);
   const saldoAtual = saldoFinanceiroCliente(pagamento.cliente_id);
   const valorFormatado = Number(pagamento.valor || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-  sheet(`<div class="sheet-header"><div><h2>Editar pagamento</h2><p class="muted small">${escapeHtml(cliente?.nome || 'Cliente não informado')}</p></div><button class="close" onclick="abrirPagamentosCliente('${pagamento.cliente_id}', ${pagina})">×</button></div><div class="payment-edit-form"><label class="transaction-field"><span>Valor pago</span><input id="editarPagamentoValor" type="text" inputmode="numeric" value="${escapeAttr(valorFormatado)}" onfocus="this.select()" oninput="formatarCampoMoeda(this);atualizarResumoEdicaoPagamento('${pagamentoId}')"></label><label class="transaction-field transaction-date-field"><span>Data do pagamento</span><input id="editarPagamentoData" type="date" value="${escapeAttr(pagamento.data_pagamento || isoData(new Date()))}"></label><section class="payment-edit-summary"><div><span>Saldo atual</span><b>${moeda(saldoAtual.debito)}</b></div><div><span>Crédito atual</span><b>${moeda(saldoAtual.credito)}</b></div><div class="final"><span>Novo saldo</span><b id="editarPagamentoNovoSaldo">${moeda(saldoAtual.debito)}</b></div><div><span>Novo crédito</span><b id="editarPagamentoNovoCredito">${moeda(saldoAtual.credito)}</b></div></section><p class="payment-edit-note">O desconto e a forma de pagamento permanecem inalterados.</p></div><footer class="payment-edit-footer"><button type="button" class="danger" onclick="abrirConfirmacaoExcluirPagamento('${pagamentoId}', ${pagina})">Excluir pagamento</button><button type="button" class="ghost" onclick="abrirPagamentosCliente('${pagamento.cliente_id}', ${pagina})">Cancelar</button><button type="button" class="primary" onclick="salvarEdicaoPagamentoCliente('${pagamentoId}', ${pagina})">Salvar alterações</button></footer>`, 'sheet-backdrop-centered payment-edit-backdrop');
+  sheet(`
+    <div class="sheet-header"><div><h2>Editar pagamento</h2><p class="muted small">${escapeHtml(cliente?.nome || 'Cliente não informado')}</p></div><button class="close" onclick="abrirPagamentosCliente('${pagamento.cliente_id}', ${pagina})">×</button></div>
+    <div class="payment-edit-form">
+      <label class="transaction-field"><span>Valor pago</span><input id="editarPagamentoValor" type="text" inputmode="numeric" value="${escapeAttr(valorFormatado)}" onfocus="this.select()" oninput="formatarCampoMoeda(this);atualizarResumoEdicaoPagamento('${pagamentoId}')"></label>
+      <label class="transaction-field transaction-date-field"><span>Data do pagamento</span><input id="editarPagamentoData" type="date" value="${escapeAttr(pagamento.data_pagamento || isoData(new Date()))}"></label>
+      <section class="payment-edit-summary"><div><span>Saldo atual</span><b>${moeda(saldoAtual.debito)}</b></div><div><span>Crédito atual</span><b>${moeda(saldoAtual.credito)}</b></div><div class="final"><span>Novo saldo</span><b id="editarPagamentoNovoSaldo">${moeda(saldoAtual.debito)}</b></div><div><span>Novo crédito</span><b id="editarPagamentoNovoCredito">${moeda(saldoAtual.credito)}</b></div></section>
+      <p class="payment-edit-note">O desconto e a forma de pagamento permanecem inalterados.</p>
+    </div>
+    <footer class="payment-edit-footer"><button type="button" class="ghost" onclick="abrirPagamentosCliente('${pagamento.cliente_id}', ${pagina})">Cancelar</button><button type="button" class="danger" onclick="abrirConfirmacaoExcluirPagamento('${pagamentoId}', ${pagina})">Excluir</button><button type="button" class="primary" onclick="salvarEdicaoPagamentoCliente('${pagamentoId}', ${pagina})">Salvar</button></footer>
+  `, 'sheet-backdrop-centered payment-edit-backdrop');
 }
 
 function atualizarResumoEdicaoPagamento(pagamentoId) {
@@ -2117,10 +2174,10 @@ function abrirDetalhesCliente(clienteId, aba = 'resumo', pagina = 0) {
   if (!cliente) return;
   window.currentClientDetailTab = aba;
   const pedidos = pedidosDoCliente(clienteId);
-  const consignados = pedidos.filter((venda) => venda.status !== 'cancelada' && pedidoEhConsignado(venda));
+  const consignados = pedidos.filter((venda) => !['cancelada', 'convertida'].includes(venda.status) && pedidoEhConsignado(venda));
   const pagamentos = pagamentosDoCliente(clienteId);
   const saldo = saldoFinanceiroCliente(clienteId);
-  const totalComprado = pedidos.filter((venda) => venda.status !== 'cancelada' && !pedidoEhConsignado(venda) && tipoPedido(venda) !== 'bonificacoes').reduce((soma, venda) => soma + Number(venda.total || 0), 0);
+  const totalComprado = pedidos.filter((venda) => venda.status !== 'cancelada' && !pedidoEhConsignado(venda) && !pedidoSomenteBonificado(venda)).reduce((soma, venda) => soma + Number(venda.total || 0), 0);
   const conteudo = aba === 'resumo'
     ? `<div class="client-summary-grid"><div><small>Débito pendente</small><b>${moeda(saldo.debito)}</b></div><div><small>Consignação</small><b>${moeda(saldo.consignado)}</b></div><div><small>Crédito</small><b>${moeda(saldo.credito)}</b></div><div><small>Total comprado</small><b>${moeda(totalComprado)}</b></div></div>`
     : aba === 'consignado'
@@ -2145,7 +2202,90 @@ function abrirPedidoCliente(pedidoId) {
   const cliente = state.clientes.find((item) => item.id === venda.cliente_id);
   const resumo = resumoComprovantePedido(venda);
   const tipo = pedidoEhConsignado(venda) ? 'Pedido consignado' : 'Comprovante de pedido';
-  sheet(`<div class="sheet-header"><div><h2>${tipo}</h2><p class="muted small">${escapeHtml(cliente?.nome || 'Cliente não informado')} · ${dataComprovante(venda.criado_em)}</p></div><button class="close" onclick="fecharSheet()">×</button></div><div class="order-view-items">${(venda.itens || []).map((item) => `<div><span>${escapeHtml(item.produto_nome)}</span><b>${item.quantidade} × ${moeda(item.preco || item.preco_unitario)} · ${moeda(Number(item.quantidade || 0) * Number(item.preco || item.preco_unitario || 0))}</b></div>`).join('') || '<p class="muted">Sem itens registrados.</p>'}</div><section class="receipt-balance-summary"><div><span>Total dos itens</span><b>${moeda(venda.subtotal || venda.total)}</b></div><div><span>Saldo anterior</span><b>${moeda(resumo.saldoAnterior)}</b></div><div><span>Valor do pedido</span><b>${moeda(venda.total)}</b></div><div class="receipt-current-balance"><span>Saldo atual</span><b>${moeda(resumo.saldoAtual)}</b></div></section><button class="primary order-share" onclick="compartilharPedido('${pedidoId}')">${svgIcon('save')} Compartilhar comprovante</button>`, 'sheet-backdrop-centered receipt-view-backdrop');
+  if (!conversaoConsignadoRascunho || conversaoConsignadoRascunho.pedidoId !== pedidoId) conversaoConsignadoRascunho = { pedidoId, quantidades: {} };
+  const itensHtml = (venda.itens || []).map((item, indice) => {
+    const preco = Number(item.preco ?? item.preco_unitario ?? 0);
+    const bonificado = itemPedidoBonificado(item);
+    const conversao = pedidoEhConsignado(venda) && venda.status !== 'cancelada'
+      ? `<div class="consignment-convert-stepper"><button type="button" onclick="ajustarConversaoConsignado('${pedidoId}',${indice},-1)">−</button><b id="consignadoQuantidade${indice}">${Number(conversaoConsignadoRascunho.quantidades[indice] || 0)}</b><button type="button" onclick="ajustarConversaoConsignado('${pedidoId}',${indice},1)">+</button><small>de ${Number(item.quantidade || 0)}</small></div>`
+      : '';
+    return `<div class="${bonificado ? 'is-bonus' : ''}"><span>${escapeHtml(item.produto_nome)}${bonificado ? '<em>Bonificado</em>' : ''}</span><b>${item.quantidade} × ${moeda(preco)} · ${moeda(bonificado ? 0 : Number(item.total ?? Number(item.quantidade || 0) * preco))}</b>${conversao}</div>`;
+  }).join('') || '<p class="muted">Sem itens registrados.</p>';
+  const converter = pedidoEhConsignado(venda) && venda.status !== 'cancelada'
+    ? `<section class="consignment-convert"><h3>Enviar itens para pedido</h3><p>Selecione a quantidade de cada item que foi vendida.</p><button type="button" class="primary" onclick="gerarPedidoDoConsignado('${pedidoId}')">Gerar pedido</button></section>`
+    : '';
+  sheet(`<div class="sheet-header"><div><h2>${tipo}</h2><p class="muted small">${escapeHtml(cliente?.nome || 'Cliente não informado')} · ${dataComprovante(venda.criado_em)}</p></div><button class="close" onclick="fecharSheet()">×</button></div><div class="order-view-items">${itensHtml}</div>${converter}<section class="receipt-balance-summary"><div><span>Total dos itens</span><b>${moeda(venda.subtotal || venda.total)}</b></div><div><span>Saldo anterior</span><b>${moeda(resumo.saldoAnterior)}</b></div><div><span>Valor do pedido</span><b>${moeda(venda.total)}</b></div><div class="receipt-current-balance"><span>Saldo atual</span><b>${moeda(resumo.saldoAtual)}</b></div></section><button class="primary order-share" onclick="compartilharPedido('${pedidoId}')">${svgIcon('save')} Compartilhar comprovante</button><footer class="order-view-actions"><button type="button" class="ghost" onclick="fecharSheet()">Cancelar</button><button type="button" class="danger" onclick="confirmarExclusaoPedido('${pedidoId}')">Excluir</button><button type="button" class="secondary" onclick="abrirEditarPedido('${pedidoId}')">Editar</button>${venda.status !== 'cancelada' ? `<button type="button" class="warning" onclick="confirmarCancelamentoPedido('${pedidoId}')">Cancelar pedido</button>` : ''}</footer>`, 'sheet-backdrop-centered receipt-view-backdrop order-view-backdrop');
+}
+
+function confirmarCancelamentoPedido(pedidoId) {
+  sheet(`<div class="sheet-header"><div><h2>Cancelar pedido?</h2><p class="muted small">O pedido será mantido no histórico e deixará de compor os saldos.</p></div><button class="close" onclick="abrirPedidoCliente('${pedidoId}')">×</button></div><div class="order-confirm-actions"><button class="warning" onclick="cancelarPedido('${pedidoId}')">Confirmar cancelamento</button><button class="ghost" onclick="abrirPedidoCliente('${pedidoId}')">Voltar</button></div>`, 'sheet-backdrop-centered order-confirm-backdrop');
+}
+
+async function cancelarPedido(pedidoId) {
+  const venda = state.vendas.find((item) => item.id === pedidoId);
+  if (!venda) return;
+  try {
+    const atualizado = { ...venda, status: 'cancelada' };
+    const salvo = backendAtivo ? await window.VendasDb.updateOrder(atualizado) : atualizado;
+    state.vendas = state.vendas.map((item) => item.id === pedidoId ? salvo : item);
+    render(); abrirPedidoCliente(pedidoId); toast('Pedido cancelado.');
+  } catch (error) { toast(traduzErro(error)); }
+}
+
+function confirmarExclusaoPedido(pedidoId) {
+  sheet(`<div class="sheet-header"><div><h2>Excluir pedido?</h2><p class="muted small">Esta ação é definitiva e atualizará todos os cálculos.</p></div><button class="close" onclick="abrirPedidoCliente('${pedidoId}')">×</button></div><div class="order-confirm-actions"><button class="danger" onclick="excluirPedido('${pedidoId}')">Excluir definitivamente</button><button class="ghost" onclick="abrirPedidoCliente('${pedidoId}')">Voltar</button></div>`, 'sheet-backdrop-centered order-confirm-backdrop');
+}
+
+async function excluirPedido(pedidoId) {
+  try {
+    if (backendAtivo) await window.VendasDb.deleteOrder(pedidoId);
+    state.vendas = state.vendas.filter((item) => item.id !== pedidoId);
+    pedidoClienteRascunho = null; conversaoConsignadoRascunho = null;
+    fecharSheet(); render(); toast('Pedido excluído.');
+  } catch (error) { toast(traduzErro(error)); }
+}
+
+function ajustarConversaoConsignado(pedidoId, indice, delta) {
+  const venda = state.vendas.find((item) => item.id === pedidoId);
+  const item = venda?.itens?.[indice];
+  if (!item) return;
+  const atual = Number(conversaoConsignadoRascunho?.quantidades?.[indice] || 0);
+  conversaoConsignadoRascunho.quantidades[indice] = Math.max(0, Math.min(Number(item.quantidade || 0), atual + Number(delta || 0)));
+  const indicador = document.getElementById(`consignadoQuantidade${indice}`);
+  if (indicador) indicador.textContent = String(conversaoConsignadoRascunho.quantidades[indice]);
+}
+
+async function gerarPedidoDoConsignado(pedidoId) {
+  const consignado = state.vendas.find((item) => item.id === pedidoId);
+  if (!consignado || !pedidoEhConsignado(consignado)) return;
+  const selecionados = (consignado.itens || []).map((item, indice) => ({ item, quantidade: Number(conversaoConsignadoRascunho?.quantidades?.[indice] || 0) })).filter((registro) => registro.quantidade > 0);
+  if (!selecionados.length) { toast('Selecione ao menos uma quantidade para gerar o pedido.'); return; }
+  const itensPedido = selecionados.map(({ item, quantidade }) => ({ ...item, id: undefined, quantidade, preco: Number(item.preco ?? item.preco_unitario ?? 0), bonificado: false, desconto: 0, total: quantidade * Number(item.preco ?? item.preco_unitario ?? 0) }));
+  const restantes = (consignado.itens || []).map((item, indice) => ({ ...item, quantidade: Number(item.quantidade || 0) - Number(conversaoConsignadoRascunho.quantidades[indice] || 0) })).filter((item) => item.quantidade > 0);
+  const subtotalPedido = itensPedido.reduce((soma, item) => soma + item.total, 0);
+  const subtotalRestante = restantes.reduce((soma, item) => soma + Number(item.quantidade || 0) * Number(item.preco ?? item.preco_unitario ?? 0), 0);
+  const agora = new Date().toISOString();
+  const pedido = {
+    id: id('vend'), cliente_id: consignado.cliente_id, status: 'concluida', subtotal: subtotalPedido, desconto: 0, total: subtotalPedido, forma_pagamento: 'Venda', criado_em: agora,
+    observacoes: JSON.stringify({ avantalab_pedido: true, tipo: 'venda', descricao: 'Venda originada de consignado', consignado_origem_id: consignado.id }), itens: itensPedido,
+  };
+  const consignadoAtualizado = { ...consignado, itens: restantes, subtotal: subtotalRestante, total: subtotalRestante, status: restantes.length ? consignado.status : 'convertida', observacoes: JSON.stringify({ ...metadadosPedido(consignado), convertido_parcialmente: true }) };
+  try {
+    let salvoPedido = pedido;
+    let salvoConsignado = consignadoAtualizado;
+    if (backendAtivo) {
+      salvoPedido = await window.VendasDb.saveOrder(pedido);
+      try {
+        salvoConsignado = await window.VendasDb.updateOrder(consignadoAtualizado);
+      } catch (error) {
+        await window.VendasDb.deleteOrder(salvoPedido.id).catch(() => {});
+        throw error;
+      }
+    }
+    state.vendas = [salvoPedido, ...state.vendas.map((item) => item.id === pedidoId ? salvoConsignado : item)];
+    conversaoConsignadoRascunho = null;
+    render(); abrirPedidoCliente(salvoPedido.id); toast('Pedido gerado e consignado atualizado.');
+  } catch (error) { toast(traduzErro(error)); }
 }
 
 function dataComprovante(valorData) {
@@ -2293,9 +2433,9 @@ async function compartilharPedido(pedidoId) {
   const cliente = state.clientes.find((item) => item.id === venda.cliente_id);
   const resumo = resumoComprovantePedido(venda);
   const linhas = (venda.itens || []).map((item) => ({
-    principal: item.produto_nome || 'Produto',
+    principal: `${item.produto_nome || 'Produto'}${itemPedidoBonificado(item) ? ' · BONIFICADO' : ''}`,
     secundario: `${Number(item.quantidade || 0)} × ${moeda(item.preco || item.preco_unitario)}`,
-    valor: moeda(Number(item.quantidade || 0) * Number(item.preco || item.preco_unitario || 0)),
+    valor: moeda(itemPedidoBonificado(item) ? 0 : Number(item.total ?? Number(item.quantidade || 0) * Number(item.preco || item.preco_unitario || 0))),
   }));
   const canvas = criarCanvasComprovante({
     titulo: pedidoEhConsignado(venda) ? 'Pedido consignado' : 'Comprovante de pedido',
@@ -2427,19 +2567,30 @@ function renderVendas() {
         </nav>
       </div>
       <div class="module-stats order-results-stats"><span>Exibindo <b>${Math.min(exibidas.length, vendas.length)}</b> de <b>${vendas.length}</b></span></div>
-      <article class="data-panel orders-panel"><table><thead><tr><th>Cliente</th><th>Data</th><th>Itens</th><th>Pagamento</th><th>Total</th><th>Status</th></tr></thead><tbody>${exibidas.length ? exibidas.map(renderVenda).join('') : `<tr><td colspan="6" class="table-empty">Nenhum pedido encontrado.</td></tr>`}</tbody></table></article>
+      <div class="orders-card-grid">${exibidas.length ? exibidas.map(renderVenda).join('') : '<div class="table-empty orders-empty">Nenhum pedido encontrado.</div>'}</div>
       ${vendas.length > exibidas.length ? `<button class="ghost orders-load-more" onclick="carregarMaisPedidos()">Carregar mais 10</button>` : ''}
     </section>
   `;
 }
 
 function tipoPedido(venda) {
+  if ((venda.itens || []).some(itemPedidoBonificado)) return 'bonificacoes';
   const identificadores = [venda.tipo, venda.tipo_pedido, venda.categoria, venda.natureza, venda.forma_pagamento, venda.status, venda.observacoes]
     .map((valorItem) => normalizar(valorItem))
     .join(' ');
   if (identificadores.includes('bonific')) return 'bonificacoes';
   if (identificadores.includes('consign')) return 'consignados';
   return 'pedidos';
+}
+
+function itemPedidoBonificado(item) {
+  const quantidade = Number(item?.quantidade || 0);
+  const preco = Number(item?.preco ?? item?.preco_unitario ?? 0);
+  return Boolean(item?.bonificado) || (preco > 0 && Number(item?.total || 0) === 0 && Number(item?.desconto || 0) >= quantidade * preco);
+}
+
+function pedidoSomenteBonificado(venda) {
+  return Boolean((venda.itens || []).length) && (venda.itens || []).every(itemPedidoBonificado);
 }
 
 function textoPesquisaPedido(venda) {
@@ -2481,8 +2632,14 @@ function carregarMaisPedidos() {
 
 function renderVenda(v) {
   const cliente = state.clientes.find((c) => c.id === v.cliente_id);
+  const tipo = tipoPedido(v);
+  const rotuloTipo = tipo === 'consignados' ? 'Consignado' : tipo === 'bonificacoes' ? 'Bonificação' : 'Pedido';
   return `
-    <tr><td><b>${escapeHtml(cliente?.nome || 'Cliente não informado')}</b></td><td>${dataBR(v.criado_em)}</td><td>${(v.itens || []).length}</td><td>${escapeHtml(v.forma_pagamento || 'Não informado')}</td><td><b>${moeda(v.total)}</b></td><td><span class="status-pill ${v.status === 'cancelada' ? 'warn' : 'ok'}">${escapeHtml(v.status || 'registrado')}</span></td></tr>
+    <button type="button" class="order-list-card ${v.status === 'cancelada' ? 'is-cancelled' : ''}" onclick="abrirPedidoCliente('${v.id}')">
+      <header><span>${escapeHtml(rotuloTipo)}</span><time>${dataBR(v.criado_em)}</time></header>
+      <div><h3>${escapeHtml(cliente?.nome || 'Cliente não informado')}</h3><span class="status-pill ${v.status === 'cancelada' ? 'warn' : 'ok'}">${escapeHtml(v.status || 'registrado')}</span></div>
+      <footer><span>${(v.itens || []).length} ${(v.itens || []).length === 1 ? 'item' : 'itens'}</span><b>${moeda(v.total)}</b></footer>
+    </button>
   `;
 }
 
@@ -3047,7 +3204,7 @@ function resetarDados() {
 
 function produtoMaisVendido() {
   const mapa = new Map();
-  state.vendas.filter((v) => v.status !== 'cancelada' && !pedidoEhConsignado(v) && tipoPedido(v) !== 'bonificacoes').forEach((v) => {
+  state.vendas.filter((v) => v.status !== 'cancelada' && !pedidoEhConsignado(v) && !pedidoSomenteBonificado(v)).forEach((v) => {
     v.itens.forEach((i) => {
       const atual = mapa.get(i.produto_id) || { nome: i.produto_nome, qtd: 0 };
       atual.qtd += Number(i.quantidade || 0);
@@ -3059,7 +3216,7 @@ function produtoMaisVendido() {
 
 function clienteMaisCompra() {
   const mapa = new Map();
-  state.vendas.filter((v) => v.status !== 'cancelada' && !pedidoEhConsignado(v) && tipoPedido(v) !== 'bonificacoes' && v.cliente_id).forEach((v) => {
+  state.vendas.filter((v) => v.status !== 'cancelada' && !pedidoEhConsignado(v) && !pedidoSomenteBonificado(v) && v.cliente_id).forEach((v) => {
     const cliente = state.clientes.find((c) => c.id === v.cliente_id);
     const atual = mapa.get(v.cliente_id) || { nome: cliente?.nome || 'Cliente', total: 0 };
     atual.total += Number(v.total || 0);
