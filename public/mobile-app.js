@@ -6732,6 +6732,22 @@
     if (tipo === 'receita' && !origem) { setErro('Informe a origem.'); return; }
     if (tipo !== 'receita' && !despesaNome) { setErro('Informe a despesa.'); return; }
 
+    // O render de "Salvando..." reconstrói o formulário. Mantém no modal os
+    // valores recém-digitados para não exibir novamente os dados antigos
+    // enquanto a atualização é enviada ao banco. `item` continua apontando
+    // para o registro original, necessário para calcular diferenças de receita.
+    state.modalAcao.item = Object.assign({}, item, tipo === 'receita'
+      ? {
+          dia: dia,
+          origem: formatarDescricao(origem),
+          valor: valor,
+        }
+      : {
+          dia: dia,
+          despesa: despesaNome,
+          descricao: formatarDescricao(descricao),
+          valor: valor,
+        });
     state.carregando = true;
     state.erro = '';
     render();
@@ -8793,7 +8809,7 @@
             campoClaro('editar-origem', 'Origem', 'value="' + escapeHtml(item.origem) + '"') +
           '</div>' +
           campoValor('editar-valor', 'Valor', dinheiro(item.valor)) +
-          '<button id="salvar-edicao-lancamento" type="button" class="h-11 rounded-xl bg-cyan-500 px-4 text-sm font-black uppercase tracking-wide text-slate-950">' + (state.carregando ? 'Salvando...' : 'Salvar alteracoes') + '</button>' +
+          '<button id="salvar-edicao-lancamento" type="button" ' + (state.carregando ? 'disabled ' : '') + 'class="h-11 rounded-xl bg-cyan-500 px-4 text-sm font-black uppercase tracking-wide text-slate-950 disabled:opacity-60">' + (state.carregando ? 'Salvando...' : 'Salvar alteracoes') + '</button>' +
         '</div>'
       );
     }
@@ -8812,7 +8828,7 @@
         '</div>' +
         campoClaro('editar-descricao', 'Descricao', 'value="' + escapeHtml(item.descricao || '') + '"') +
         campoValor('editar-valor', 'Valor', dinheiro(item.valor)) +
-        '<button id="salvar-edicao-lancamento" type="button" class="h-11 rounded-xl bg-slate-950 px-4 text-sm font-black uppercase tracking-wide text-white">' + (state.carregando ? 'Salvando...' : 'Salvar alteracoes') + '</button>' +
+        '<button id="salvar-edicao-lancamento" type="button" ' + (state.carregando ? 'disabled ' : '') + 'class="h-11 rounded-xl bg-slate-950 px-4 text-sm font-black uppercase tracking-wide text-white disabled:opacity-60">' + (state.carregando ? 'Salvando...' : 'Salvar alteracoes') + '</button>' +
       '</div>'
     );
   }

@@ -13,6 +13,14 @@
   },
   "versoes": [
     {
+      "versao": "1.4.0.68",
+      "titulo": "Edição de lançamentos no mobile",
+      "data": "Julho/2026",
+      "itens": [
+        "Mobile: o campo de valor preserva a alteração na tela durante o salvamento do lançamento."
+      ]
+    },
+    {
       "versao": "1.4.0.67",
       "titulo": "Tema do chat da Ava",
       "data": "Julho/2026",

@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.4.0.68 - 2026-07-13
+
+- Mobile: mantém no formulário o novo valor do lançamento enquanto a edição é salva, sem voltar visualmente ao valor anterior.
+
 ## 1.4.0.67 - 2026-07-13
 
 - Web: aplica o modo escuro ao header do chat da Ava e alterna o logo entre as versões para fundo claro e escuro, seguindo o mobile.
