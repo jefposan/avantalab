@@ -32,6 +32,10 @@ type NavigatorWithVirtualKeyboard = Navigator & {
 type AvaChatClientProps = {
   initialYear?: number;
   initialMonth?: string;
+  initialCompanyId?: string;
+  initialCompanyName?: string;
+  initialContext?: string;
+  initialDarkMode?: boolean;
   onClose?: () => void;
 };
 
@@ -201,9 +205,17 @@ async function buildFinancialContext(db: SupabaseClient, companyId: string, comp
   ].filter(Boolean).join('\n');
 }
 
-export default function AvaChatClient({ initialYear, initialMonth, onClose }: AvaChatClientProps = {}) {
+export default function AvaChatClient({
+  initialYear,
+  initialMonth,
+  initialCompanyId,
+  initialCompanyName,
+  initialContext,
+  initialDarkMode,
+  onClose,
+}: AvaChatClientProps = {}) {
   const db = useMemo(() => supabase, []);
-  const [darkMode] = useState(() => typeof window !== 'undefined' && localStorage.getItem('avantalab_mobile_dark') === '1');
+  const [darkMode] = useState(() => initialDarkMode ?? (typeof window !== 'undefined' && localStorage.getItem('avantalab_mobile_dark') === '1'));
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState('');
   const [sending, setSending] = useState(false);
@@ -320,6 +332,25 @@ export default function AvaChatClient({ initialYear, initialMonth, onClose }: Av
         return;
       }
 
+      if (initialCompanyId) {
+        const metadataName = String(user.user_metadata?.nome || user.user_metadata?.name || '');
+        const chatStorageKey = `${CHAT_STORAGE_PREFIX}:${user.id}:${initialCompanyId}`;
+        try {
+          const saved = JSON.parse(sessionStorage.getItem(chatStorageKey) || '[]');
+          if (Array.isArray(saved)) {
+            setMessages(saved.filter((item) => item && (item.role === 'user' || item.role === 'assistant') && item.content));
+          }
+        } catch {
+          sessionStorage.removeItem(chatStorageKey);
+        }
+        setContext(String(initialContext || `Empresa: ${initialCompanyName || 'Perfil atual'}`));
+        setUserName(firstName(metadataName));
+        setStorageKey(chatStorageKey);
+        setCompanyId(initialCompanyId);
+        setReady(true);
+        return;
+      }
+
       const accessResult = await db
         .from('usuarios_empresa')
         .select('empresa_id, nome')
@@ -385,7 +416,7 @@ export default function AvaChatClient({ initialYear, initialMonth, onClose }: Av
     return () => {
       active = false;
     };
-  }, [db, initialMonth, initialYear]);
+  }, [db, initialCompanyId, initialCompanyName, initialContext, initialMonth, initialYear]);
 
   useEffect(() => {
     if (!storageKey) return;

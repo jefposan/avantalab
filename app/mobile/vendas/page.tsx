@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from 'next';
+import AvaMobileBridge from '../AvaMobileBridge';
 
 export const metadata: Metadata = {
   title: 'Vendas Mobile | AvantaLab',
@@ -18,7 +19,7 @@ export const viewport: Viewport = {
 export default function VendasMobilePage() {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
-  const assetVersion = '20260713-61';
+  const assetVersion = '20260713-62';
   const bootstrap = `
     (function () {
       window.__VENDAS_MOBILE_EMBEDDED__ = true;
@@ -88,6 +89,7 @@ export default function VendasMobilePage() {
       <script
         dangerouslySetInnerHTML={{ __html: bootstrap }}
       />
+      <AvaMobileBridge />
     </main>
   );
 }

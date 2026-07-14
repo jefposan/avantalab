@@ -895,6 +895,7 @@ body { background: #fff; color: var(--ink); }
 .module-title p { margin: 5px 0 0; color: #777b83; font-size: 14px; }
 .clientes-page, .produtos-page, .pagamentos-page, .divulgacao-page { padding-top: 146px; }
 .publicacoes-page { padding-top: 110px; }
+.publicacoes-page .updates-feed, .publicacoes-page .information-grid { margin-top: 10px; }
 .clientes-page .module-sticky-head, .produtos-page .module-sticky-head, .pedidos-page .module-sticky-head, .pagamentos-page .module-sticky-head, .settings-page .module-sticky-head, .publicacoes-page .module-sticky-head, .divulgacao-page .module-sticky-head { position: fixed; top: 59px; right: 0; left: 255px; z-index: 40; display: grid; gap: 12px; border-bottom: 1px solid #d6e5f1; padding: 16px max(16px, calc((100% - 1180px) / 2 + 56px)) 14px; background: linear-gradient(135deg, #f2f8fc 0%, #f8fbfe 100%); box-shadow: inset 0 4px 0 #1687D9, 0 8px 14px -14px rgba(15,23,42,.45); }
 .clientes-page .module-sticky-head .module-title h2, .produtos-page .module-sticky-head .module-title h2, .pedidos-page .module-sticky-head .module-title h2, .pagamentos-page .module-sticky-head .module-title h2, .settings-page .module-sticky-head .module-title h2, .publicacoes-page .module-sticky-head .module-title h2, .divulgacao-page .module-sticky-head .module-title h2 { color: #0A1F44; }
 .clientes-page .client-card-grid, .clientes-page .empty-module, .produtos-page .module-product-grid, .produtos-page .empty-module { margin-top: 18px; }
@@ -1575,6 +1576,24 @@ body { background: #fff; color: var(--ink); }
   .mobile-menu-card img, .mobile-menu-wide img { display: block; width: 100%; height: 100%; object-fit: fill; transform: translateZ(0); transition: transform 110ms ease-out; will-change: transform; }
   .mobile-menu-card:active img, .mobile-menu-wide:active img, .mobile-menu-card.button-pressed img, .mobile-menu-wide.button-pressed img { transform: translateZ(0) scale(.975); }
   .mobile-menu-card img { filter: drop-shadow(10px 16px 22px rgba(15,42,80,.30)); }
+  .mobile-menu-assistance { display: grid; width: min(664px, calc(100% - 96px)); gap: 10px; margin: 24px auto 0; }
+  .mobile-ava-card, .mobile-suggestions-card { width: 100%; transform: translateZ(0); transition: transform 110ms ease-out; }
+  .mobile-ava-card:active, .mobile-suggestions-card:active { transform: translateZ(0) scale(.99); }
+  .mobile-ava-card { display: flex; min-height: 52px; align-items: center; gap: 8px; border: 1px solid #e2e8f0; border-radius: 999px; padding: 8px 12px; color: #94a3b8; background: #fff; box-shadow: 0 1px 3px rgba(15,23,42,.10); text-align: left; }
+  .mobile-ava-logo { display: block; width: 88px; height: 36px; flex: 0 0 88px; background: url('/images/ava-logo-fundo-claro.png') center/contain no-repeat; }
+  .mobile-ava-card > span:nth-child(2) { min-width: 0; flex: 1; overflow: hidden; font-size: 14px; font-weight: 700; text-overflow: ellipsis; white-space: nowrap; }
+  .mobile-ava-card > i { display: grid; width: 32px; height: 32px; flex: 0 0 32px; place-items: center; border-radius: 999px; color: #fff; background: #0891b2; font-size: 18px; font-style: normal; font-weight: 900; }
+  .mobile-suggestions-card { display: flex; min-height: 52px; align-items: center; gap: 9px; border: 1px solid #67e8f9; border-radius: 14px 26px 26px 26px; padding: 9px 10px; color: #075985; background: radial-gradient(circle at 90% 50%,rgba(20,184,166,.18),transparent 28%),linear-gradient(135deg,#e6fffb 0%,#cffafe 100%); box-shadow: 0 6px 15px rgba(8,145,178,.13); text-align: left; }
+  .mobile-suggestions-icon { display: grid; width: 28px; height: 28px; flex: 0 0 28px; place-items: center; border-radius: 999px; color: #fff; background: linear-gradient(135deg,#06b6d4,#0891b2); box-shadow: 0 1px 3px rgba(15,23,42,.14); }
+  .mobile-suggestions-icon .svg-icon { width: 15px; height: 15px; }
+  .mobile-suggestions-card > span:nth-child(2) { display: grid; min-width: 0; flex: 1; gap: 4px; }
+  .mobile-suggestions-card b { font-size: 12px; font-weight: 900; line-height: 1; }
+  .mobile-suggestions-card small { overflow: hidden; color: #0e7490; font-size: 10px; font-weight: 700; line-height: 1; text-overflow: ellipsis; white-space: nowrap; }
+  .mobile-suggestions-card > i { display: grid; width: 24px; height: 24px; flex: 0 0 24px; place-items: center; border-radius: 999px; color: #0e7490; background: rgba(255,255,255,.75); font-size: 21px; font-style: normal; line-height: 1; box-shadow: 0 1px 3px rgba(15,23,42,.10); }
+  .dark-theme .mobile-ava-card { border-color: #334155; color: #f8fafc; background: #071a2b; }
+  .dark-theme .mobile-ava-logo { background-image: url('/images/ava-logo-fundo-escuro.png'); }
+  .dark-theme .mobile-suggestions-card { border-color: #155e75; color: #ecfeff; background: radial-gradient(circle at 90% 50%,rgba(20,184,166,.16),transparent 28%),linear-gradient(135deg,#123042,#0e293a); }
+  .dark-theme .mobile-suggestions-card small { color: #67e8f9; }
   .vendas-bottom-nav { position: fixed; z-index: 110; right: 0; bottom: 0; left: 0; display: block; border-top: 1px solid #e2e8f0; background: rgba(255,255,255,.95); box-shadow: 0 -8px 24px rgba(15,23,42,.10); backdrop-filter: blur(20px); padding-bottom: env(safe-area-inset-bottom); }
   .vendas-bottom-nav-inner { position: relative; display: grid; height: 66px; max-width: 448px; grid-template-columns: repeat(5,minmax(0,1fr)); align-items: end; margin: 0 auto; padding: 0 8px; }
   .vendas-nav-item, .vendas-nav-add { position: relative; display: flex; min-width: 0; isolation: isolate; flex-direction: column; align-items: center; justify-content: center; gap: 2px; overflow: visible; border: 0; padding: 4px; color: #94a3b8; background: transparent; font-size: 10px; font-weight: 900; }
@@ -1716,6 +1735,7 @@ html.agenda-form-open, body.agenda-form-open { overflow: hidden; overscroll-beha
   .mobile-menu-brand .vendas-brand-logo { width: 184px; }
   .mobile-menu-header button { font-size: 34px; }
   .mobile-menu-grid { gap: 18px; margin-top: 40px; padding: 0 24px; }
+  .mobile-menu-assistance { width: calc(100% - 48px); gap: 8px; margin-top: 18px; }
   .mobile-menu-card { min-height: 123px; border-radius: 28px; gap: 8px; border-width: 3px; }
   .mobile-menu-card b { font-size: 45px; }
   .mobile-menu-card span { font-size: 15px; }

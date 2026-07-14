@@ -50,7 +50,18 @@ async function avaLiberadaParaPerfil(userId: string, empresaId: string): Promise
       .eq('empresa_id', empresaId)
       .limit(1)
       .maybeSingle();
-    if (!vinculo) return false; // perfil que não é do usuário → nega
+    if (!vinculo) {
+      const { data: acessoVendas } = await db
+        .from('vendas_mobile_acessos')
+        .select('id')
+        .eq('user_id', userId)
+        .eq('empresa_id', empresaId)
+        .eq('status', 'ativo')
+        .limit(1)
+        .maybeSingle();
+      if (!acessoVendas) return false;
+      return true;
+    }
     const estado = await resolverEstadoAcessoParaUsuario(empresaId, userId);
     return podeUsar('ava', estado);
   } catch {

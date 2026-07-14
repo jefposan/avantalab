@@ -523,8 +523,61 @@ function renderMenuMobile() {
   return `<section class="mobile-menu" aria-label="Menu principal">
     <header class="mobile-menu-header"><div class="mobile-menu-brand">${logoVendas()}</div></header>
     <div class="mobile-menu-grid">${itens.map(([idAba, arquivo, label]) => `<button class="mobile-menu-card" onclick="setAba('${idAba}')"><img src="./assets/menu/${arquivo}" alt="${label}" /></button>`).join('')}</div>
+    <div class="mobile-menu-assistance">
+      <button type="button" class="mobile-ava-card" onclick="abrirChatIAVendas()">
+        <span class="mobile-ava-logo" role="img" aria-label="Ava"></span>
+        <span>Pergunte para a Ava...</span>
+        <i aria-hidden="true">↑</i>
+      </button>
+      <button type="button" class="mobile-suggestions-card" onclick="abrirSugestoesVendas()">
+        <span class="mobile-suggestions-icon">${svgIcon('message-circle')}</span>
+        <span><b>Dúvidas e Sugestões</b><small>Ajude a melhorar o AvantaLab</small></span>
+        <i aria-hidden="true">›</i>
+      </button>
+    </div>
     <div class="mobile-menu-bottom"><button class="mobile-menu-wide" onclick="setAba('configuracoes')"><img src="./assets/menu/13_Configurações.png" alt="Configurações" /></button><button class="mobile-menu-wide" onclick="sairMenuMobile()"><img src="./assets/menu/14_Sair.png" alt="Sair" /></button></div>
   </section>`;
+}
+
+function contextoAvaVendas() {
+  const totais = totaisPeriodo();
+  const recebido = state.pagamentos.reduce((soma, pagamento) => soma + Number(pagamento.valor || 0), 0);
+  return [
+    `Empresa: ${state.acessoVendas?.empresa_nome || 'Perfil atual'}`,
+    `Período: ${state.filtroInicio} a ${state.filtroFim}`,
+    `Vendas: ${moeda(totais.total)}`,
+    `Custo: ${moeda(totais.custo)}`,
+    `Margem: ${moeda(totais.margem)}`,
+    `Pedidos: ${totais.pedidos}`,
+    `Recebimentos registrados: ${moeda(recebido)}`,
+    `Clientes cadastrados: ${state.clientes.length}`,
+    `Produtos cadastrados: ${state.produtos.length}`,
+  ].join('\n');
+}
+
+function abrirChatIAVendas() {
+  const agora = new Date();
+  const evento = new CustomEvent('avantalab:open-ava', {
+    cancelable: true,
+    detail: {
+      ano: agora.getFullYear(),
+      mes: agora.toLocaleDateString('pt-BR', { month: 'long' }).toUpperCase(),
+      empresaId: state.acessoVendas?.empresa_id || '',
+      empresaNome: state.acessoVendas?.empresa_nome || '',
+      contexto: contextoAvaVendas(),
+      darkMode: Boolean(state.temaEscuro),
+    },
+  });
+  const tratado = !window.dispatchEvent(evento);
+  if (!tratado) window.location.assign('/mobile/ava');
+}
+
+function abrirSugestoesVendas() {
+  setAba('informacoes');
+  window.setTimeout(() => {
+    const card = document.querySelector('.feedback-sales-card');
+    card?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }, 80);
 }
 
 function sairMenuMobile() {
