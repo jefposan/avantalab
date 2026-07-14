@@ -79,6 +79,7 @@ let ordemAlfabetica = 'asc';
 let feedbackVendasEnviando = false;
 let feedbackVendasEnviado = false;
 let produtoImagemUploadPendente = null;
+let divulgacaoPastaAtualId = null;
 
 const PAISES_DDI = [
   ['Brasil', '55', '🇧🇷'], ['Portugal', '351', '🇵🇹'], ['Estados Unidos / Canadá', '1', '🇺🇸'],
@@ -272,6 +273,7 @@ function logoVendas() {
 
 function setAba(aba) {
   if (aba !== 'agenda') fecharCamadasAgenda();
+  if (aba !== 'divulgacao') divulgacaoPastaAtualId = null;
   if (aba === 'vendas' && state.aba !== 'vendas') limitePedidos = 10;
   if (aba === 'vender' && state.aba !== 'vender') limiteClientesPagamentos = 10;
   if (aba === 'informacoes' && state.aba !== 'informacoes') {
@@ -290,6 +292,7 @@ function alternarMenu() {
 
 function abrirSalaBotoes() {
   fecharCamadasAgenda();
+  divulgacaoPastaAtualId = null;
   state.menuAberto = true;
   render();
 }
@@ -1419,35 +1422,52 @@ function novaSugestaoVendas() {
 }
 
 function renderDivulgacao() {
-  const temBusca = Boolean(String(state.busca || '').trim());
   const pesquisa = normalizar(buscaAplicada);
-  const pastasEncontradas = (state.divulgacaoPastas || []).filter((pasta) => {
-    if (!pesquisa) return true;
-    if ([pasta.nome, pasta.descricao].some((valor) => normalizar(valor).includes(pesquisa))) return true;
-    return (state.divulgacaoMateriais || []).some((material) => material.pasta_id === pasta.id && normalizar(material.titulo).includes(pesquisa));
-  });
-  const pastas = pesquisa ? pastasEncontradas : pastasEncontradas.filter((pasta) => !pasta.pasta_pai_id);
-  const cards = pastas.map((pasta) => {
+  const pastaAtual = (state.divulgacaoPastas || []).find((pasta) => pasta.id === divulgacaoPastaAtualId) || null;
+  if (divulgacaoPastaAtualId && !pastaAtual) divulgacaoPastaAtualId = null;
+  const pastaPaiId = pastaAtual?.id || null;
+  const ordenarTexto = (a, b) => ordemAlfabetica === 'asc'
+    ? String(a.nome || a.titulo || '').localeCompare(String(b.nome || b.titulo || ''), 'pt-BR', { sensitivity: 'base' })
+    : String(b.nome || b.titulo || '').localeCompare(String(a.nome || a.titulo || ''), 'pt-BR', { sensitivity: 'base' });
+  const pastas = (state.divulgacaoPastas || [])
+    .filter((pasta) => (pasta.pasta_pai_id || null) === pastaPaiId)
+    .filter((pasta) => !pesquisa || [pasta.nome, pasta.descricao].some((valor) => normalizar(valor).includes(pesquisa)))
+    .sort(ordenarTexto);
+  const materiais = pastaAtual ? (state.divulgacaoMateriais || [])
+    .filter((material) => material.pasta_id === pastaAtual.id)
+    .filter((material) => !pesquisa || normalizar(material.titulo).includes(pesquisa))
+    .sort(ordenarTexto) : [];
+  const cardsPastas = pastas.map((pasta) => {
     const materiais = (state.divulgacaoMateriais || []).filter((item) => item.pasta_id === pasta.id);
     const capa = materiais.find((item) => item.miniatura_url) || materiais[0];
-    return `<button type="button" class="material-folder-card" onclick="abrirPastaDivulgacao('${pasta.id}')"><span class="material-folder-cover">${capa?.miniatura_url ? `<img src="${escapeAttr(capa.miniatura_url)}" alt="">` : capa?.tipo === 'video' ? `<video src="${escapeAttr(capa.arquivo_url)}" muted preload="metadata"></video>` : svgIcon('folder')}</span><span class="material-folder-info"><b>${escapeHtml(pasta.nome)}</b><small>${escapeHtml(pasta.descricao || `${materiais.length} ${materiais.length === 1 ? 'material' : 'materiais'}`)}</small><em>${materiais.length}</em></span></button>`;
+    const subpastas = (state.divulgacaoPastas || []).filter((item) => item.pasta_pai_id === pasta.id).length;
+    const resumo = pasta.descricao || `${subpastas ? `${subpastas} ${subpastas === 1 ? 'subpasta' : 'subpastas'} · ` : ''}${materiais.length} ${materiais.length === 1 ? 'material' : 'materiais'}`;
+    return `<button type="button" class="material-folder-card" onclick="abrirPastaDivulgacao('${pasta.id}')"><span class="material-folder-cover">${capa?.miniatura_url ? `<img src="${escapeAttr(capa.miniatura_url)}" alt="">` : capa?.tipo === 'video' ? `<video src="${escapeAttr(capa.arquivo_url)}" muted preload="metadata"></video>` : svgIcon('folder')}</span><span class="material-folder-info"><b>${escapeHtml(pasta.nome)}</b><small>${escapeHtml(resumo)}</small><em>${materiais.length}</em></span></button>`;
   }).join('');
-  return `<section class="module-page materials-page divulgacao-page${temBusca ? ' is-searching' : ''}"><div class="module-sticky-head"><div class="module-title"><div><h2>Divulgação</h2><p>Materiais publicados pela sua empresa para compartilhar.</p></div></div>${renderBarraBusca('Pesquisar pastas ou materiais', 'Ordem Alfabética')}</div>${cards ? `<div class="materials-grid">${cards}</div>` : `<article class="publication-empty"><span>${svgIcon('folder')}</span><h3>${pesquisa ? 'Nenhum material encontrado' : 'Nenhum material publicado'}</h3><p>${pesquisa ? 'Revise a pesquisa e tente novamente.' : 'Quando sua empresa publicar fotos ou vídeos, as pastas aparecerão aqui.'}</p></article>`}</section>`;
+  const cardsMateriais = materiais.map((item) => `<button type="button" class="material-thumb" onclick="abrirMaterialDivulgacao('${item.id}')"><span>${item.miniatura_url ? `<img src="${escapeAttr(item.miniatura_url)}" alt="${escapeAttr(item.titulo)}">` : item.tipo === 'video' ? `<video src="${escapeAttr(item.arquivo_url)}" muted preload="metadata"></video>` : svgIcon('package')}</span><b>${escapeHtml(item.titulo)}</b><small>${item.tipo === 'video' ? 'Vídeo' : 'Imagem'}</small></button>`).join('');
+  const voltarId = pastaAtual?.pasta_pai_id || '';
+  const navegacao = pastaAtual ? `<div class="material-page-location"><button type="button" class="material-page-back" onclick="voltarPastaDivulgacao('${voltarId}')">${svgIcon('chevron-left')} Voltar</button><div><small>Pasta atual</small><b>${escapeHtml(pastaAtual.nome)}</b>${pastaAtual.descricao ? `<span>${escapeHtml(pastaAtual.descricao)}</span>` : ''}</div></div>` : '';
+  const conteudo = cardsPastas || cardsMateriais
+    ? `${cardsPastas ? `<section class="material-page-section"><h3>${pastaAtual ? 'Subpastas' : 'Pastas'}</h3><div class="materials-grid">${cardsPastas}</div></section>` : ''}${cardsMateriais ? `<section class="material-page-section"><h3>Materiais</h3><div class="material-page-files">${cardsMateriais}</div></section>` : ''}`
+    : `<article class="publication-empty"><span>${svgIcon(pastaAtual ? 'package' : 'folder')}</span><h3>${pesquisa ? 'Nenhum material encontrado' : pastaAtual ? 'Esta pasta está vazia' : 'Nenhum material publicado'}</h3><p>${pesquisa ? 'Revise a pesquisa e tente novamente.' : pastaAtual ? 'Não há subpastas, fotos ou vídeos nesta pasta.' : 'Quando sua empresa publicar fotos ou vídeos, as pastas aparecerão aqui.'}</p></article>`;
+  return `<section class="module-page materials-page divulgacao-page"><div class="module-sticky-head"><div class="module-title"><div><h2>Divulgação</h2><p>Materiais publicados pela sua empresa para compartilhar.</p></div></div>${renderBarraBusca('Pesquisar pastas ou materiais', 'Ordem Alfabética', true)}</div>${navegacao}<div class="material-page-content">${conteudo}</div></section>`;
 }
 
 function abrirPastaDivulgacao(pastaId) {
-  const pasta = (state.divulgacaoPastas || []).find((item) => item.id === pastaId);
-  if (!pasta) return;
-  const subpastas = (state.divulgacaoPastas || []).filter((item) => item.pasta_pai_id === pastaId);
-  const materiais = (state.divulgacaoMateriais || []).filter((item) => item.pasta_id === pastaId);
-  const subpastasHtml = subpastas.map((subpasta) => {
-    const itens = (state.divulgacaoMateriais || []).filter((item) => item.pasta_id === subpasta.id);
-    const capa = itens.find((item) => item.miniatura_url) || itens[0];
-    return `<button type="button" class="material-subfolder" onclick="abrirPastaDivulgacao('${subpasta.id}')"><span>${capa?.miniatura_url ? `<img src="${escapeAttr(capa.miniatura_url)}" alt="">` : svgIcon('folder')}</span><div><b>${escapeHtml(subpasta.nome)}</b><small>${itens.length} ${itens.length === 1 ? 'material' : 'materiais'} · ${(state.divulgacaoPastas || []).filter((item) => item.pasta_pai_id === subpasta.id).length} subpastas</small></div><i>›</i></button>`;
-  }).join('');
-  const grade = materiais.map((item) => `<button type="button" class="material-thumb" onclick="abrirMaterialDivulgacao('${item.id}')"><span>${item.miniatura_url ? `<img src="${escapeAttr(item.miniatura_url)}" alt="${escapeAttr(item.titulo)}">` : item.tipo === 'video' ? `<video src="${escapeAttr(item.arquivo_url)}" muted preload="metadata"></video>` : svgIcon('package')}</span><b>${escapeHtml(item.titulo)}</b><small>${item.tipo === 'video' ? 'Vídeo' : 'Imagem'}</small></button>`).join('');
-  const voltar = pasta.pasta_pai_id ? `abrirPastaDivulgacao('${pasta.pasta_pai_id}')` : 'fecharSheet()';
-  sheet(`<div class="sheet-header material-folder-header"><button type="button" class="material-folder-back" onclick="${voltar}" aria-label="Voltar">‹</button><div><h2>${escapeHtml(pasta.nome)}</h2><p class="muted small">${escapeHtml(pasta.descricao || `${subpastas.length} subpastas · ${materiais.length} materiais`)}</p></div><button class="close" onclick="fecharSheet()">×</button></div><div class="material-folder-content">${subpastasHtml ? `<section class="material-subfolders"><h3>Subpastas</h3>${subpastasHtml}</section>` : ''}${grade ? `<section class="material-files"><h3>Materiais</h3><div class="material-sheet-grid">${grade}</div></section>` : ''}${!subpastasHtml && !grade ? `<div class="material-sheet-empty">Esta pasta ainda está vazia.</div>` : ''}</div>`, 'sheet-backdrop-centered material-folder-backdrop');
+  if (!(state.divulgacaoPastas || []).some((item) => item.id === pastaId)) return;
+  divulgacaoPastaAtualId = pastaId;
+  state.busca = '';
+  buscaAplicada = '';
+  render();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function voltarPastaDivulgacao(pastaId = '') {
+  divulgacaoPastaAtualId = pastaId || null;
+  state.busca = '';
+  buscaAplicada = '';
+  render();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
 function abrirMaterialDivulgacao(materialId) {
@@ -1617,11 +1637,11 @@ function renderBusca(placeholder) {
   `;
 }
 
-function renderBarraBusca(placeholder, filtro = 'Ordem Alfabética') {
+function renderBarraBusca(placeholder, filtro = 'Ordem Alfabética', acoesSempreVisiveis = false) {
   const temBusca = Boolean(String(state.busca || '').trim());
   const filtroAlfabetico = normalizar(filtro).includes('ordem alfabetica');
   const rotuloFiltro = filtroAlfabetico ? `Ordem ${ordemAlfabetica === 'asc' ? 'A/Z' : 'Z/A'}` : filtro;
-  return `<article class="tridium-search-card"><div class="search-input-wrap">${svgIcon('search')}<input value="${escapeAttr(state.busca)}" placeholder="${escapeAttr(placeholder)}" oninput="atualizarBusca(this.value)" onkeydown="if(event.key==='Enter') aplicarBusca()"><button type="button" class="search-clear${temBusca ? '' : ' is-hidden'}" onclick="limparBusca()" aria-label="Limpar pesquisa">×</button></div><div class="search-actions${temBusca ? '' : ' is-hidden'}"><button type="button" class="search-filter" ${filtroAlfabetico ? 'onclick="alternarOrdemAlfabetica()"' : ''}>${svgIcon('filter')}${escapeHtml(rotuloFiltro)}${filtroAlfabetico ? svgIcon('chevron-down') : ''}</button><button class="primary search-submit" onclick="aplicarBusca()">${svgIcon('search')} Buscar</button></div></article>`;
+  return `<article class="tridium-search-card${acoesSempreVisiveis ? ' search-compact-always' : ''}"><div class="search-input-wrap">${svgIcon('search')}<input value="${escapeAttr(state.busca)}" placeholder="${escapeAttr(placeholder)}" oninput="atualizarBusca(this.value)" onkeydown="if(event.key==='Enter') aplicarBusca()"><button type="button" class="search-clear${temBusca ? '' : ' is-hidden'}" onclick="limparBusca()" aria-label="Limpar pesquisa">×</button></div><div class="search-actions${acoesSempreVisiveis ? ' always-visible' : temBusca ? '' : ' is-hidden'}"><button type="button" class="search-filter" ${filtroAlfabetico ? 'onclick="alternarOrdemAlfabetica()"' : ''}>${svgIcon('filter')}${escapeHtml(rotuloFiltro)}${filtroAlfabetico ? svgIcon('chevron-down') : ''}</button><button class="primary search-submit" onclick="aplicarBusca()">${svgIcon('search')} Buscar</button></div></article>`;
 }
 
 function alternarOrdemAlfabetica() {
@@ -1633,7 +1653,7 @@ function atualizarBusca(valor) {
   state.busca = valor;
   const temBusca = Boolean(String(valor || '').trim());
   app.querySelectorAll('.search-clear').forEach((botao) => botao.classList.toggle('is-hidden', !temBusca));
-  app.querySelectorAll('.search-actions').forEach((acoes) => acoes.classList.toggle('is-hidden', !temBusca));
+  app.querySelectorAll('.search-actions:not(.always-visible)').forEach((acoes) => acoes.classList.toggle('is-hidden', !temBusca));
   app.querySelector('.clientes-page, .produtos-page, .pedidos-page, .pagamentos-page, .publicacoes-page, .divulgacao-page')?.classList.toggle('is-searching', temBusca);
   if (!temBusca && buscaAplicada) {
     buscaAplicada = '';
@@ -3797,6 +3817,7 @@ window.instalarPWA = instalarPWA;
 window.enviarSugestaoVendas = enviarSugestaoVendas;
 window.novaSugestaoVendas = novaSugestaoVendas;
 window.abrirPastaDivulgacao = abrirPastaDivulgacao;
+window.voltarPastaDivulgacao = voltarPastaDivulgacao;
 window.abrirMaterialDivulgacao = abrirMaterialDivulgacao;
 window.alternarMaterialExpandido = alternarMaterialExpandido;
 window.compartilharMaterialDivulgacao = compartilharMaterialDivulgacao;
