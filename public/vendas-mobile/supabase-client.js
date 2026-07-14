@@ -374,5 +374,16 @@
     return { ...payment, ...data, desconto: payload.desconto, saldo_anterior: payload.saldo_anterior, saldo_final: payload.saldo_final };
   }
 
-  window.VendasDb = { client, currentUser, hasSession, getAccessToken, signIn, signInPhone, signInWithGoogle, resetPassword, updatePassword, updateUserMetadata, signUp, signOut, solicitarAcesso, buscarAcessoVendas, loadAll, saveProduct, deleteProduct, createPackage, saveProductsBulk, deletePackage, saveClient, deleteClient, saveOrder, savePayment, updatePayment };
+  async function deletePayment(id) {
+    const user = await currentUser();
+    if (!user) throw new Error('Sessão expirada.');
+    const { error } = await client
+      .from('vendas_mobile_pagamentos')
+      .delete()
+      .eq('id', id)
+      .eq('user_id', user.id);
+    if (error) throw error;
+  }
+
+  window.VendasDb = { client, currentUser, hasSession, getAccessToken, signIn, signInPhone, signInWithGoogle, resetPassword, updatePassword, updateUserMetadata, signUp, signOut, solicitarAcesso, buscarAcessoVendas, loadAll, saveProduct, deleteProduct, createPackage, saveProductsBulk, deletePackage, saveClient, deleteClient, saveOrder, savePayment, updatePayment, deletePayment };
 })();

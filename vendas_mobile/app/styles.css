@@ -1379,8 +1379,15 @@ body { background: #fff; color: var(--ink); }
 .payment-edit-summary .final { border: 1px solid #b9dff6; background: #eaf6fd; }
 .payment-edit-summary .final b { color: #075985; }
 .payment-edit-note { margin: 0; color: #64748b; font-size: 10px; text-align: center; }
-.payment-edit-footer { display: grid; grid-template-columns: 1fr 1.35fr; gap: 8px; border-top: 1px solid #dbe5ed; padding: 11px 16px calc(11px + env(safe-area-inset-bottom)); background: #fff; }
+.payment-edit-form .transaction-date-field { grid-template-columns: minmax(max-content,1fr) minmax(150px,1.25fr); align-items: center; }
+.payment-edit-form .transaction-date-field > span { justify-content: flex-start; }
+.payment-edit-footer { display: grid; grid-template-columns: 1.15fr .8fr 1.15fr; gap: 8px; border-top: 1px solid #dbe5ed; padding: 11px 16px calc(11px + env(safe-area-inset-bottom)); background: #fff; }
 .payment-edit-footer button { min-height: 36px; border-radius: 999px; font-size: 10px; }
+.payment-delete-backdrop .sheet { width: min(90vw,440px); overflow: hidden; border-radius: 18px; }
+.payment-delete-confirm { display: grid; gap: 10px; padding: 16px; }
+.payment-delete-confirm p { margin: 0 0 4px; color: #526477; font-size: 12px; line-height: 1.5; text-align: center; }
+.payment-delete-confirm p b { color: #0A1F44; }
+.payment-delete-confirm button { min-height: 38px; border-radius: 999px; }
 .order-view-items { display: grid; gap: 8px; }
 .order-view-items > div, .order-view-total { display: flex; justify-content: space-between; gap: 10px; border-bottom: 1px solid #e5edf4; padding: 8px 0; }
 .order-view-total { margin-top: 8px; border-bottom: 0; color: #0A1F44; font-size: 16px; }
@@ -1615,6 +1622,8 @@ body { background: #fff; color: var(--ink); }
 .dark-theme .payment-edit-summary .final { border-color: #155e75; background: #102838; }
 .dark-theme .payment-edit-summary .final b { color: #67e8f9; }
 .dark-theme .payment-edit-footer { border-color: #334155; background: #172033; }
+.dark-theme .payment-delete-confirm p { color: #cbd5e1; }
+.dark-theme .payment-delete-confirm p b { color: #f8fafc; }
 .dark-theme .transaction-totals .total, .dark-theme .payment-balance-summary .final { border-color: #334155; color: #f8fafc; }
 .dark-theme .client-transaction-footer { border-color: #334155; background: rgba(15,23,42,.98); }
 .dark-theme .order-transaction-backdrop .client-transaction-footer, .dark-theme .payment-transaction-backdrop .client-transaction-footer { border: 0; background: transparent; box-shadow: none; }

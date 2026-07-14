@@ -1834,7 +1834,7 @@ function abrirEditarPagamentoCliente(pagamentoId, pagina = 0) {
   const cliente = state.clientes.find((item) => item.id === pagamento.cliente_id);
   const saldoAtual = saldoFinanceiroCliente(pagamento.cliente_id);
   const valorFormatado = Number(pagamento.valor || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-  sheet(`<div class="sheet-header"><div><h2>Editar pagamento</h2><p class="muted small">${escapeHtml(cliente?.nome || 'Cliente não informado')}</p></div><button class="close" onclick="abrirPagamentosCliente('${pagamento.cliente_id}', ${pagina})">×</button></div><div class="payment-edit-form"><label class="transaction-field"><span>Valor pago</span><input id="editarPagamentoValor" type="text" inputmode="numeric" value="${escapeAttr(valorFormatado)}" onfocus="this.select()" oninput="formatarCampoMoeda(this);atualizarResumoEdicaoPagamento('${pagamentoId}')"></label><label class="transaction-field transaction-date-field"><span>Data do pagamento</span><input id="editarPagamentoData" type="date" value="${escapeAttr(pagamento.data_pagamento || isoData(new Date()))}"></label><section class="payment-edit-summary"><div><span>Saldo atual</span><b>${moeda(saldoAtual.debito)}</b></div><div><span>Crédito atual</span><b>${moeda(saldoAtual.credito)}</b></div><div class="final"><span>Novo saldo</span><b id="editarPagamentoNovoSaldo">${moeda(saldoAtual.debito)}</b></div><div><span>Novo crédito</span><b id="editarPagamentoNovoCredito">${moeda(saldoAtual.credito)}</b></div></section><p class="payment-edit-note">O desconto e a forma de pagamento permanecem inalterados.</p></div><footer class="payment-edit-footer"><button type="button" class="ghost" onclick="abrirPagamentosCliente('${pagamento.cliente_id}', ${pagina})">Cancelar</button><button type="button" class="primary" onclick="salvarEdicaoPagamentoCliente('${pagamentoId}', ${pagina})">Salvar alterações</button></footer>`, 'sheet-backdrop-centered payment-edit-backdrop');
+  sheet(`<div class="sheet-header"><div><h2>Editar pagamento</h2><p class="muted small">${escapeHtml(cliente?.nome || 'Cliente não informado')}</p></div><button class="close" onclick="abrirPagamentosCliente('${pagamento.cliente_id}', ${pagina})">×</button></div><div class="payment-edit-form"><label class="transaction-field"><span>Valor pago</span><input id="editarPagamentoValor" type="text" inputmode="numeric" value="${escapeAttr(valorFormatado)}" onfocus="this.select()" oninput="formatarCampoMoeda(this);atualizarResumoEdicaoPagamento('${pagamentoId}')"></label><label class="transaction-field transaction-date-field"><span>Data do pagamento</span><input id="editarPagamentoData" type="date" value="${escapeAttr(pagamento.data_pagamento || isoData(new Date()))}"></label><section class="payment-edit-summary"><div><span>Saldo atual</span><b>${moeda(saldoAtual.debito)}</b></div><div><span>Crédito atual</span><b>${moeda(saldoAtual.credito)}</b></div><div class="final"><span>Novo saldo</span><b id="editarPagamentoNovoSaldo">${moeda(saldoAtual.debito)}</b></div><div><span>Novo crédito</span><b id="editarPagamentoNovoCredito">${moeda(saldoAtual.credito)}</b></div></section><p class="payment-edit-note">O desconto e a forma de pagamento permanecem inalterados.</p></div><footer class="payment-edit-footer"><button type="button" class="danger" onclick="abrirConfirmacaoExcluirPagamento('${pagamentoId}', ${pagina})">Excluir pagamento</button><button type="button" class="ghost" onclick="abrirPagamentosCliente('${pagamento.cliente_id}', ${pagina})">Cancelar</button><button type="button" class="primary" onclick="salvarEdicaoPagamentoCliente('${pagamentoId}', ${pagina})">Salvar alterações</button></footer>`, 'sheet-backdrop-centered payment-edit-backdrop');
 }
 
 function atualizarResumoEdicaoPagamento(pagamentoId) {
@@ -1864,6 +1864,25 @@ async function salvarEdicaoPagamentoCliente(pagamentoId, pagina = 0) {
     render();
     abrirPagamentosCliente(pagamentoAtual.cliente_id, pagina);
     toast('Pagamento atualizado e saldos recalculados.');
+  } catch (error) { toast(traduzErro(error)); }
+}
+
+function abrirConfirmacaoExcluirPagamento(pagamentoId, pagina = 0) {
+  const pagamento = (state.pagamentos || []).find((item) => item.id === pagamentoId);
+  if (!pagamento) return;
+  const cliente = state.clientes.find((item) => item.id === pagamento.cliente_id);
+  sheet(`<div class="sheet-header"><div><h2>Excluir pagamento?</h2><p class="muted small">Esta ação atualizará os saldos do cliente.</p></div><button class="close" onclick="abrirEditarPagamentoCliente('${pagamentoId}', ${pagina})">×</button></div><div class="payment-delete-confirm"><p>Confirma a exclusão do pagamento de <b>${moeda(pagamento.valor)}</b> feito por <b>${escapeHtml(cliente?.nome || 'Cliente não informado')}</b> em ${dataBR(`${pagamento.data_pagamento}T12:00:00`)}?</p><button type="button" class="danger" onclick="excluirPagamentoCliente('${pagamentoId}')">Sim, excluir pagamento</button><button type="button" class="ghost" onclick="abrirEditarPagamentoCliente('${pagamentoId}', ${pagina})">Cancelar</button></div>`, 'sheet-backdrop-centered payment-delete-backdrop');
+}
+
+async function excluirPagamentoCliente(pagamentoId) {
+  const pagamento = (state.pagamentos || []).find((item) => item.id === pagamentoId);
+  if (!pagamento) return;
+  try {
+    if (backendAtivo) await window.VendasDb.deletePayment(pagamentoId);
+    state.pagamentos = (state.pagamentos || []).filter((item) => item.id !== pagamentoId);
+    fecharSheet();
+    render();
+    toast('Pagamento excluído e saldos recalculados.');
   } catch (error) { toast(traduzErro(error)); }
 }
 
@@ -3081,6 +3100,13 @@ window.finalizarPedidoCliente = finalizarPedidoCliente;
 window.abrirPagamentoCliente = abrirPagamentoCliente;
 window.atualizarResumoPagamentoCliente = atualizarResumoPagamentoCliente;
 window.confirmarPagamentoCliente = confirmarPagamentoCliente;
+window.abrirPagamentosCliente = abrirPagamentosCliente;
+window.abrirEditarPagamentoCliente = abrirEditarPagamentoCliente;
+window.atualizarResumoEdicaoPagamento = atualizarResumoEdicaoPagamento;
+window.salvarEdicaoPagamentoCliente = salvarEdicaoPagamentoCliente;
+window.abrirConfirmacaoExcluirPagamento = abrirConfirmacaoExcluirPagamento;
+window.excluirPagamentoCliente = excluirPagamentoCliente;
+window.carregarMaisClientesPagamentos = carregarMaisClientesPagamentos;
 window.abrirPagamentoClienteDetalhe = abrirPagamentoClienteDetalhe;
 window.alterarStatusCliente = alterarStatusCliente;
 window.abrirDetalhesCliente = abrirDetalhesCliente;
