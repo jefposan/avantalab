@@ -28,6 +28,7 @@ import CadastroPerfilModal from './components/CadastroPerfilModal';
 import AssinaturaModal from './components/AssinaturaModal';
 import PremiumPessoalModal from './components/PremiumPessoalModal';
 import ModalAprovacoes, { type AcessoVendasAprovado, type SolicitacaoAprovacao } from './components/ModalAprovacoes';
+import NovidadesVendasModal from './components/NovidadesVendasModal';
 import { COBRANCA_ATIVA, assinaturaVigente, emCarencia, precisaPaywallEmpresa, precisaUpgradePessoal, type DadosCobrancaAssinatura, type EstadoAcesso, type Recurso } from './lib/cobranca';
 import type { StatusCadastroPerfil } from './lib/cadastro-perfil';
 import { PAISES } from './lib/paises';
@@ -677,6 +678,7 @@ const [ajustesAberto, setAjustesAberto] = useState(false);
 const [menuAjuste, setMenuAjuste] = useState<null | 'visual' | 'config'>(null);
 const [menuAjusteRect, setMenuAjusteRect] = useState<{ top: number; left: number } | null>(null);
 const [modalSobre, setModalSobre] = useState(false);
+const [modalNovidadesVendas, setModalNovidadesVendas] = useState(false);
 const [agendaAberta, setAgendaAberta] = useState(false);
 const [agendaItens, setAgendaItens] = useState<AgendaItem[]>([]);
 const [agendaAnoAtivo, setAgendaAnoAtivo] = useState(new Date().getFullYear());
@@ -7339,6 +7341,15 @@ if (validacaoTelefoneObrigatoria) {
   versaoAtual={APP_VERSION}
 />
 
+<NovidadesVendasModal
+  aberto={modalNovidadesVendas}
+  empresaId={empresaId}
+  nomeEmpresa={nomeEmpresaAtual}
+  darkMode={darkMode}
+  corPrimaria={corPrimaria}
+  onFechar={() => setModalNovidadesVendas(false)}
+/>
+
 <AssinaturaModal
   aberto={modalAssinatura}
   onFechar={() => setModalAssinatura(false)}
@@ -9491,6 +9502,15 @@ name="novo-usuario-login"
                 <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 21v-2a4 4 0 00-4-4H6a4 4 0 00-4 4v2M9 11a4 4 0 100-8 4 4 0 000 8zm11 10v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75" /></svg>
                 Aprovações
                 {solicitacoesAprovacao.length > 0 && <span className="ml-auto rounded-full bg-amber-400 px-1.5 py-0.5 text-[9px] font-black text-slate-950">{solicitacoesAprovacao.length}</span>}
+              </button>
+            </Tooltip>
+          )}
+
+          {podeAcessarAjustes && (
+            <Tooltip texto="Publique lançamentos, eventos e comunicados na página Novidades do App Vendas." posicao="right" wrapperClassName="w-full">
+              <button type="button" onClick={() => { setAjustesAberto(false); setMenuAjuste(null); setModalNovidadesVendas(true); }} className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-xs font-bold text-white transition-colors hover:bg-slate-700">
+                <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="m3 11 18-5v12L3 14zM11.6 16.4 13 21H8l-1.5-6" /></svg>
+                Novidades do Vendas
               </button>
             </Tooltip>
           )}

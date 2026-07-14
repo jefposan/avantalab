@@ -3,7 +3,7 @@
 import { useMemo, useState } from 'react';
 
 type FeedbackStatus = 'novo' | 'em_analise' | 'respondido' | 'arquivado';
-type AdminView = 'avaliacoes' | 'disparos' | 'cupons' | 'perfis' | 'consumo' | 'configuracoes';
+type AdminView = 'avaliacoes' | 'disparos' | 'conteudo-vendas' | 'cupons' | 'perfis' | 'consumo' | 'configuracoes';
 
 type ConsumoItem = {
   nome: string;
@@ -100,7 +100,21 @@ type Disparo = {
   created_at?: string;
 };
 
-type IconName = 'inbox' | 'send' | 'settings' | 'refresh' | 'check' | 'archive' | 'trash' | 'reopen' | 'logout' | 'lock' | 'ticket' | 'search' | 'gauge';
+type ConteudoVendasPagina = 'novidades' | 'informacoes';
+type ConteudoVendas = {
+  id: string;
+  pagina: ConteudoVendasPagina;
+  tipo: string;
+  titulo: string;
+  descricao: string;
+  ativo: boolean;
+  criado_em: string;
+  atualizado_em: string;
+};
+
+type ConteudoVendasForm = { tipo: string; titulo: string; descricao: string };
+
+type IconName = 'inbox' | 'send' | 'content' | 'settings' | 'refresh' | 'check' | 'archive' | 'trash' | 'reopen' | 'logout' | 'lock' | 'ticket' | 'search' | 'gauge';
 
 function Icon({ name, size = 17 }: { name: IconName; size?: number }) {
   const common = { width: size, height: size, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: 2, strokeLinecap: 'round' as const, strokeLinejoin: 'round' as const };
@@ -116,6 +130,7 @@ function Icon({ name, size = 17 }: { name: IconName; size?: number }) {
   if (name === 'ticket') return <svg {...common}><path d="M3 9a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2 2 2 0 0 0 0 4 2 2 0 0 1-2 2H5a2 2 0 0 1-2-2 2 2 0 0 0 0-4Z" /><path d="M13 7v10" /></svg>;
   if (name === 'search') return <svg {...common}><circle cx="11" cy="11" r="7" /><path d="m21 21-4.3-4.3" /></svg>;
   if (name === 'gauge') return <svg {...common}><path d="M12 14 8 8" /><path d="M3.3 17a10 10 0 1 1 17.4 0" /></svg>;
+  if (name === 'content') return <svg {...common}><rect x="3" y="4" width="8" height="7" rx="1" /><rect x="13" y="4" width="8" height="7" rx="1" /><path d="M3 15h8M3 19h8M13 15h8M13 19h5" /></svg>;
   return <svg {...common}><path d="M4 4h16v13H7l-3 3Z" /><path d="M8 9h8M8 13h5" /></svg>;
 }
 
@@ -168,12 +183,44 @@ function statusClass(status: FeedbackStatus) {
   return 'border-cyan-200 bg-cyan-50 text-cyan-800';
 }
 
+const tiposConteudoVendas: Record<ConteudoVendasPagina, { value: string; label: string; icon: IconName }[]> = {
+  novidades: [
+    { value: 'inclusao', label: 'Inclusão', icon: 'check' },
+    { value: 'ajuste', label: 'Ajuste', icon: 'settings' },
+    { value: 'correcao', label: 'Correção', icon: 'refresh' },
+    { value: 'melhoria', label: 'Melhoria', icon: 'gauge' },
+    { value: 'aviso', label: 'Aviso', icon: 'inbox' },
+    { value: 'comunicado', label: 'Comunicado', icon: 'send' },
+  ],
+  informacoes: [
+    { value: 'versao', label: 'Versão', icon: 'content' },
+    { value: 'melhorias', label: 'Melhorias', icon: 'gauge' },
+    { value: 'atualizacoes', label: 'Atualizações', icon: 'refresh' },
+    { value: 'participe', label: 'Participe', icon: 'send' },
+    { value: 'orientacao', label: 'Orientação', icon: 'inbox' },
+    { value: 'seguranca', label: 'Segurança', icon: 'lock' },
+    { value: 'dica', label: 'Dica', icon: 'check' },
+  ],
+};
+
+function dadosTipoConteudo(pagina: ConteudoVendasPagina, tipo: string) {
+  return tiposConteudoVendas[pagina].find((item) => item.value === tipo)
+    || { value: tipo, label: tipo, icon: 'content' as IconName };
+}
+
 export default function AdminPage() {
   const [token, setToken] = useState('');
   const [authorized, setAuthorized] = useState(false);
   const [view, setView] = useState<AdminView>('avaliacoes');
   const [feedbacks, setFeedbacks] = useState<Feedback[]>([]);
   const [broadcasts, setBroadcasts] = useState<Disparo[]>([]);
+  const [conteudosVendas, setConteudosVendas] = useState<ConteudoVendas[]>([]);
+  const [conteudosVendasPendente, setConteudosVendasPendente] = useState(false);
+  const [conteudoVendasSalvando, setConteudoVendasSalvando] = useState<ConteudoVendasPagina | null>(null);
+  const [formulariosConteudoVendas, setFormulariosConteudoVendas] = useState<Record<ConteudoVendasPagina, ConteudoVendasForm>>({
+    novidades: { tipo: 'inclusao', titulo: '', descricao: '' },
+    informacoes: { tipo: 'versao', titulo: '', descricao: '' },
+  });
   const [loading, setLoading] = useState(false);
   const [workingId, setWorkingId] = useState<string | null>(null);
   const [error, setError] = useState('');
@@ -376,6 +423,63 @@ export default function AdminPage() {
     }
   };
 
+  const loadConteudosVendas = async (value = token) => {
+    const response = await fetch('/api/admin-conteudos-vendas', { headers: authHeaders(value) });
+    const data = await response.json().catch(() => null);
+    if (response.ok && !data?.erro) {
+      setConteudosVendas(data.conteudos || []);
+      setConteudosVendasPendente(Boolean(data.configuracaoPendente));
+    }
+  };
+
+  const atualizarFormularioConteudo = (pagina: ConteudoVendasPagina, campo: keyof ConteudoVendasForm, valor: string) => {
+    setFormulariosConteudoVendas((atual) => ({ ...atual, [pagina]: { ...atual[pagina], [campo]: valor } }));
+  };
+
+  const publicarConteudoVendas = async (pagina: ConteudoVendasPagina) => {
+    const formulario = formulariosConteudoVendas[pagina];
+    if (!formulario.titulo.trim() || !formulario.descricao.trim()) {
+      setError('Preencha o título e a descrição da publicação.');
+      return;
+    }
+    setConteudoVendasSalvando(pagina);
+    setError('');
+    setNotice('');
+    try {
+      const response = await fetch('/api/admin-conteudos-vendas', {
+        method: 'POST',
+        headers: { ...authHeaders(), 'Content-Type': 'application/json' },
+        body: JSON.stringify({ pagina, ...formulario }),
+      });
+      const data = await response.json().catch(() => null);
+      if (!response.ok || data?.erro) throw new Error(data?.mensagem || 'Não foi possível publicar.');
+      setConteudosVendas((atual) => [data.conteudo, ...atual]);
+      setFormulariosConteudoVendas((atual) => ({ ...atual, [pagina]: { ...atual[pagina], titulo: '', descricao: '' } }));
+      setNotice(`Conteúdo publicado em ${pagina === 'novidades' ? 'Novidades' : 'Informações'}.`);
+    } catch (requestError) {
+      setError(requestError instanceof Error ? requestError.message : 'Não foi possível publicar.');
+    } finally {
+      setConteudoVendasSalvando(null);
+    }
+  };
+
+  const excluirConteudoVendas = async (conteudo: ConteudoVendas) => {
+    if (!window.confirm(`Apagar “${conteudo.titulo}” do App Vendas?`)) return;
+    setWorkingId(conteudo.id);
+    setError('');
+    try {
+      const response = await fetch(`/api/admin-conteudos-vendas?id=${encodeURIComponent(conteudo.id)}`, { method: 'DELETE', headers: authHeaders() });
+      const data = await response.json().catch(() => null);
+      if (!response.ok || data?.erro) throw new Error(data?.mensagem || 'Não foi possível apagar.');
+      setConteudosVendas((atual) => atual.filter((item) => item.id !== conteudo.id));
+      setNotice('Conteúdo apagado.');
+    } catch (requestError) {
+      setError(requestError instanceof Error ? requestError.message : 'Não foi possível apagar.');
+    } finally {
+      setWorkingId(null);
+    }
+  };
+
   const loadSettings = async (value = token) => {
     const response = await fetch('/api/admin-configuracoes', { headers: authHeaders(value) });
     const data = await response.json().catch(() => null);
@@ -402,7 +506,7 @@ export default function AdminPage() {
       }
       setFeedbacks(data.feedbacks || []);
       setAuthorized(true);
-      await Promise.allSettled([loadBroadcasts(cleanToken), loadSettings(cleanToken), loadCupons(cleanToken), carregarUsuariosAtivosSistema()]);
+      await Promise.allSettled([loadBroadcasts(cleanToken), loadConteudosVendas(cleanToken), loadSettings(cleanToken), loadCupons(cleanToken), carregarUsuariosAtivosSistema()]);
     } catch {
       setAuthorized(false);
       setError('Erro inesperado ao acessar o painel.');
@@ -518,6 +622,8 @@ export default function AdminPage() {
     setAuthorized(false);
     setFeedbacks([]);
     setBroadcasts([]);
+    setConteudosVendas([]);
+    setConteudosVendasPendente(false);
     setError('');
     setNotice('');
     setView('avaliacoes');
@@ -527,11 +633,39 @@ export default function AdminPage() {
   const navigation: { id: AdminView; label: string; icon: IconName }[] = [
     { id: 'avaliacoes', label: 'Avaliações', icon: 'inbox' },
     { id: 'disparos', label: 'Disparos', icon: 'send' },
+    { id: 'conteudo-vendas', label: 'Informações Vendas', icon: 'content' },
     { id: 'cupons', label: 'Cupons', icon: 'ticket' },
     { id: 'perfis', label: 'Perfis', icon: 'search' },
     { id: 'consumo', label: 'Consumo', icon: 'gauge' },
     { id: 'configuracoes', label: 'Configurações', icon: 'settings' },
   ];
+
+  const renderColunaConteudoVendas = (pagina: ConteudoVendasPagina) => {
+    const novidades = pagina === 'novidades';
+    const formulario = formulariosConteudoVendas[pagina];
+    const tipoSelecionado = dadosTipoConteudo(pagina, formulario.tipo);
+    const historico = conteudosVendas.filter((item) => item.pagina === pagina);
+    return <section className="min-w-0 space-y-4">
+      <article className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
+        <header className={`p-4 text-white ${novidades ? 'bg-gradient-to-br from-cyan-800 to-sky-600' : 'bg-gradient-to-br from-slate-900 to-cyan-800'}`}>
+          <div className="flex items-center gap-3"><span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white/15"><Icon name={novidades ? 'inbox' : 'content'} /></span><div><p className="text-[9px] font-black uppercase tracking-[0.18em] text-white/70">App Vendas</p><h2 className="text-lg font-black">{novidades ? 'Novidades' : 'Informações'}</h2></div></div>
+          <p className="mt-2 text-xs leading-relaxed text-white/80">{novidades ? 'Publicações sobre inclusões, ajustes e correções exibidas na página Novidades.' : 'Conteúdos sobre versões, melhorias e orientações exibidos na página Informações.'}</p>
+        </header>
+        <div className="p-4">
+          <label className="block text-[10px] font-black uppercase text-slate-500">Subtítulo / tipo</label>
+          <div className="mt-1 flex gap-2"><span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-cyan-50 text-cyan-800"><Icon name={tipoSelecionado.icon} size={16} /></span><select value={formulario.tipo} onChange={(event) => atualizarFormularioConteudo(pagina, 'tipo', event.target.value)} className="h-10 min-w-0 flex-1 rounded-md border border-slate-300 bg-white px-3 text-sm font-bold outline-none focus:border-cyan-700">{tiposConteudoVendas[pagina].map((tipo) => <option key={tipo.value} value={tipo.value}>{tipo.label}</option>)}</select></div>
+          <label className="mt-3 block text-[10px] font-black uppercase text-slate-500">Título</label>
+          <input value={formulario.titulo} onChange={(event) => atualizarFormularioConteudo(pagina, 'titulo', event.target.value)} maxLength={120} placeholder="Título da publicação" className="mt-1 h-10 w-full rounded-md border border-slate-300 px-3 text-sm font-bold outline-none focus:border-cyan-700" />
+          <label className="mt-3 block text-[10px] font-black uppercase text-slate-500">Descrição</label>
+          <textarea value={formulario.descricao} onChange={(event) => atualizarFormularioConteudo(pagina, 'descricao', event.target.value)} maxLength={2000} rows={5} placeholder="Descreva a novidade ou informação..." className="mt-1 w-full resize-y rounded-md border border-slate-300 p-3 text-sm leading-relaxed outline-none focus:border-cyan-700" />
+          <button type="button" onClick={() => void publicarConteudoVendas(pagina)} disabled={conteudoVendasSalvando !== null} className="mt-3 flex h-11 w-full items-center justify-center gap-2 rounded-md bg-cyan-700 text-xs font-black uppercase text-white hover:bg-cyan-800 disabled:opacity-60"><Icon name="send" />{conteudoVendasSalvando === pagina ? 'Publicando...' : `Publicar em ${novidades ? 'Novidades' : 'Informações'}`}</button>
+        </div>
+      </article>
+      <div><div className="mb-2 flex items-center justify-between gap-2"><div><h3 className="text-sm font-black text-slate-950">Histórico de {novidades ? 'novidades' : 'informações'}</h3><p className="text-[11px] text-slate-500">Publicações mais recentes primeiro.</p></div><span className="rounded-full bg-slate-200 px-2 py-1 text-[9px] font-black text-slate-600">{historico.length}</span></div>
+        {historico.length === 0 ? <div className="rounded-lg border border-dashed border-slate-300 bg-white px-4 py-8 text-center text-xs text-slate-500">Nenhuma publicação cadastrada.</div> : <div className="grid gap-2">{historico.map((conteudo) => { const tipo = dadosTipoConteudo(pagina, conteudo.tipo); return <article key={conteudo.id} className="rounded-lg border border-slate-200 bg-white p-3 shadow-sm"><div className="flex items-start gap-2.5"><span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-cyan-50 text-cyan-800"><Icon name={tipo.icon} size={15} /></span><div className="min-w-0 flex-1"><div className="flex items-start justify-between gap-2"><div className="min-w-0"><span className="text-[8px] font-black uppercase tracking-wide text-cyan-700">{tipo.label}</span><h4 className="truncate text-sm font-black text-slate-950">{conteudo.titulo}</h4></div><button type="button" onClick={() => void excluirConteudoVendas(conteudo)} disabled={workingId === conteudo.id} aria-label={`Apagar ${conteudo.titulo}`} className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-red-200 text-red-700 hover:bg-red-50 disabled:opacity-40"><Icon name="trash" size={14} /></button></div><p className="mt-1 whitespace-pre-wrap break-words text-xs leading-relaxed text-slate-600">{conteudo.descricao}</p><time className="mt-2 block border-t border-slate-100 pt-2 text-[9px] font-bold text-slate-400">{formatDate(conteudo.criado_em)}</time></div></div></article>; })}</div>}
+      </div>
+    </section>;
+  };
 
   return (
     <main className="min-h-screen bg-[#f4f7f9] text-slate-800">
@@ -545,8 +679,8 @@ export default function AdminPage() {
             {authorized && <button type="button" onClick={logout} className="flex h-9 items-center gap-2 rounded-md border border-slate-300 px-3 text-xs font-bold text-slate-700 hover:bg-slate-50"><Icon name="logout" />Sair</button>}
           </div>
 
-          {authorized && <nav className="grid grid-cols-6 gap-1 border-t border-slate-100 py-2" aria-label="Áreas administrativas">
-            {navigation.map((item) => <button key={item.id} type="button" onClick={() => { setView(item.id); setError(''); setNotice(''); }} className={`flex h-11 w-full min-w-0 flex-col items-center justify-center gap-0.5 rounded-md px-1 text-[9px] font-black transition sm:h-10 sm:flex-row sm:gap-1.5 sm:px-2 sm:text-xs ${view === item.id ? 'bg-cyan-700 text-white shadow-sm' : 'text-slate-600 hover:bg-slate-100'}`}><Icon name={item.icon} size={14} /><span className="max-w-full truncate">{item.label}</span></button>)}
+          {authorized && <nav className="grid grid-cols-7 gap-0.5 border-t border-slate-100 py-2 sm:gap-1" aria-label="Áreas administrativas">
+            {navigation.map((item) => <button key={item.id} type="button" title={item.label} onClick={() => { setView(item.id); setError(''); setNotice(''); }} className={`flex h-10 w-full min-w-0 flex-col items-center justify-center gap-0.5 rounded-md px-0.5 text-[8px] font-black transition sm:h-9 sm:flex-row sm:gap-1 sm:px-1 sm:text-[10px] ${view === item.id ? 'bg-cyan-700 text-white shadow-sm' : 'text-slate-600 hover:bg-slate-100'}`}><Icon name={item.icon} size={13} /><span className="max-w-full truncate">{item.label}</span></button>)}
           </nav>}
         </div>
       </header>
@@ -613,6 +747,13 @@ export default function AdminPage() {
               {historyPending && <div className="mb-3 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-bold text-amber-800">Execute a migração administrativa no Supabase para ativar o histórico.</div>}
               {broadcasts.length === 0 ? <div className="rounded-lg border border-dashed border-slate-300 bg-white px-4 py-10 text-center text-sm text-slate-500">Nenhum disparo registrado.</div> : <div className="grid gap-2">{broadcasts.map((item, index) => <article key={item.id || `${item.created_at}-${index}`} className="rounded-lg border border-slate-200 bg-white p-3 shadow-sm"><div className="flex items-start justify-between gap-3"><div className="min-w-0"><h3 className="truncate text-sm font-black text-slate-950">{item.titulo}</h3><p className="mt-1 whitespace-pre-wrap break-words text-xs leading-relaxed text-slate-600">{item.mensagem}</p></div><span className={`shrink-0 rounded-full px-2 py-1 text-[9px] font-black uppercase ${item.status === 'enviado' ? 'bg-emerald-50 text-emerald-700' : 'bg-red-50 text-red-700'}`}>{item.status}</span></div><div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 border-t border-slate-100 pt-2 text-[10px] font-bold text-slate-500"><span>{formatDate(item.created_at)}</span><span>{item.usuarios} usuários</span><span>{item.pushes_enviados}/{item.total_inscricoes} pushes</span></div>{item.erro && <p className="mt-2 text-xs font-bold text-red-700">{item.erro}</p>}</article>)}</div>}
             </section>
+          </div>}
+
+          {view === 'conteudo-vendas' && <div className="space-y-4">
+            {conteudosVendasPendente && <div className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-bold text-amber-800">Execute a migração de conteúdos do Vendas no Supabase para ativar publicações e carregar o histórico inicial.</div>}
+            <div className="mx-auto max-w-3xl">
+              {renderColunaConteudoVendas('informacoes')}
+            </div>
           </div>}
 
           {view === 'cupons' && <div className="grid gap-4 lg:grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)]">

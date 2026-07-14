@@ -19,6 +19,7 @@ const estadoInicial = {
   clientes: [],
   vendas: [],
   pagamentos: [],
+  conteudosVendas: null,
   carrinho: [],
   aba: 'dashboard',
   menuAberto: true,
@@ -948,6 +949,7 @@ async function carregarDadosBackend(mostrarCarregamento = true) {
       state.clientes = dados.clientes;
       state.vendas = dados.vendas;
       state.pagamentos = dados.pagamentos || [];
+      state.conteudosVendas = dados.conteudos;
       state.menuAberto = true;
       state.acessoVendas = dados.acesso || null;
       state.solicitacaoAcesso = dados.solicitacao || null;
@@ -1219,17 +1221,44 @@ function cancelarMoverAgendaVendas() { state.agendaItemMovendo = null; render();
 function renderMoverAgendaVendas() { const item = state.agendaItemMovendo; if (!item) return ''; const data = `${String(item.ano).padStart(4, '0')}-${String(Number(item.mes) + 1).padStart(2, '0')}-${String(item.dia).padStart(2, '0')}`; return `<div class="agenda-form-overlay" onclick="if(event.target===this)cancelarMoverAgendaVendas()"><section class="agenda-form-card"><header><div><small>Reagendar cliente</small><h3>${escapeHtml(item.titulo)}</h3></div><button type="button" class="close" onclick="cancelarMoverAgendaVendas()">×</button></header><div class="agenda-form-fields"><input id="agendaNovaDataVendas" type="date" value="${data}"><div><button type="button" class="ghost" onclick="cancelarMoverAgendaVendas()">Cancelar</button><button type="button" class="primary" onclick="salvarNovaDataAgendaVendas()">Reagendar</button></div></div></section></div>`; }
 function salvarNovaDataAgendaVendas() { const data = valor('agendaNovaDataVendas'); if (!/^\d{4}-\d{2}-\d{2}$/.test(data)) { toast('Informe uma data válida.'); return; } const [ano, mes, dia] = data.split('-').map(Number); const idItem = state.agendaItemMovendo?.id; state.agendaItens = itensAgendaVendas().map((item) => String(item.id) === String(idItem) ? { ...item, ano, mes: mes - 1, dia } : item); state.agendaAno = ano; state.agendaMes = mes - 1; state.agendaDiaSelecionado = dia; state.agendaItemMovendo = null; salvarEstado(); render(); toast('Agendamento reagendado.'); }
 
+const CONTEUDOS_INICIAIS_VENDAS = [
+  { id: 'local-i1', pagina: 'informacoes', tipo: 'versao', titulo: 'Vendas AvantaLab', descricao: 'Aplicativo web progressivo com atualização contínua. As novas versões são disponibilizadas sem necessidade de reinstalar o aplicativo.', criado_em: '2026-07-13T17:00:00-03:00' },
+  { id: 'local-i2', pagina: 'informacoes', tipo: 'melhorias', titulo: 'Evolução permanente', descricao: 'Os módulos de clientes, produtos, pedidos, pagamentos, agenda e dashboard recebem ajustes graduais de desempenho, segurança e experiência de uso.', criado_em: '2026-07-13T16:00:00-03:00' },
+  { id: 'local-i3', pagina: 'informacoes', tipo: 'atualizacoes', titulo: 'Como acompanhar mudanças', descricao: 'Consulte a página Novidades para ver lançamentos, eventos e comunicados publicados pela sua empresa.', criado_em: '2026-07-13T15:00:00-03:00' },
+  { id: 'local-i4', pagina: 'informacoes', tipo: 'participe', titulo: 'Dicas e sugestões', descricao: 'Ajude a melhorar o aplicativo compartilhando sua experiência com nossa equipe.', criado_em: '2026-07-13T14:00:00-03:00' },
+];
+
+function apresentacaoTipoConteudoVendas(tipo) {
+  const mapa = {
+    inclusao: ['Inclusão', 'plus'], ajuste: ['Ajuste', 'settings'], correcao: ['Correção', 'settings'], melhoria: ['Melhoria', 'target'], aviso: ['Aviso', 'bell'], comunicado: ['Comunicado', 'megaphone'],
+    versao: ['Versão', 'info'], melhorias: ['Melhorias', 'target'], atualizacoes: ['Atualizações', 'bell'], participe: ['Participe', 'message-circle'], orientacao: ['Orientação', 'info'], seguranca: ['Segurança', 'lock'], dica: ['Dica', 'target'],
+    lancamento: ['Lançamento', 'package'], evento: ['Evento', 'calendar'], campanha: ['Campanha', 'megaphone'], promocao: ['Promoção', 'dollar'],
+  };
+  const dados = mapa[tipo] || [String(tipo || 'Conteúdo'), 'info'];
+  return { label: dados[0], icon: dados[1] };
+}
+
+function conteudosPaginaVendas(pagina) {
+  const fonte = Array.isArray(state.conteudosVendas) ? state.conteudosVendas : CONTEUDOS_INICIAIS_VENDAS;
+  return fonte.filter((item) => item.pagina === pagina);
+}
+
 function renderPublicacoes(tipo) {
-  const informacao = tipo === 'informacoes';
-  if (informacao) return renderInformacoesVendas();
-  return `<section class="module-page publicacoes-page novidades-page"><div class="module-sticky-head"><div class="module-title"><div><h2>Novidades</h2><p>Inclusões, melhorias e correções do Vendas AvantaLab.</p></div></div></div><div class="updates-feed"><article class="update-card featured"><header><span>${svgIcon('credit-card')}</span><div><small>Inclusão</small><h3>Pagamentos por cliente</h3></div><time>Atualização recente</time></header><p>Agora é possível consultar o histórico de cada cliente, editar valor e data ou excluir um pagamento com confirmação. Os saldos são recalculados automaticamente.</p></article><article class="update-card"><header><span>${svgIcon('users')}</span><div><small>Ajuste</small><h3>Lista de clientes em Pagamentos</h3></div></header><p>A página passou a exibir primeiro os dez clientes com recebimentos mais recentes, com carregamento de mais clientes em blocos de dez.</p></article><article class="update-card"><header><span>${svgIcon('info')}</span><div><small>Melhoria</small><h3>Experiência mais consistente</h3></div></header><p>Cabeçalhos, cards, modo escuro e campos internos estão sendo padronizados para manter a navegação mais clara em todas as áreas do aplicativo.</p></article><aside class="updates-future-note">${svgIcon('bell')}<p><b>Em breve:</b> este espaço também poderá receber avisos e comunicados enviados pela empresa aos vendedores.</p></aside></div></section>`;
+  if (tipo === 'informacoes') return renderInformacoesVendas();
+  const novidades = conteudosPaginaVendas('novidades');
+  const cards = novidades.map((item, indice) => { const apresentacao = apresentacaoTipoConteudoVendas(item.tipo); return `<article class="update-card${indice === 0 ? ' featured' : ''}"><header><span>${svgIcon(apresentacao.icon)}</span><div><small>${escapeHtml(apresentacao.label)}</small><h3>${escapeHtml(item.titulo)}</h3></div><time>${dataCurtaBR(item.criado_em)}</time></header><p>${escapeHtml(item.descricao)}</p></article>`; }).join('');
+  const vazio = '<article class="publication-empty"><span>' + svgIcon('bell') + '</span><h3>Nenhuma novidade publicada</h3><p>As próximas atualizações aparecerão aqui.</p></article>';
+  return `<section class="module-page publicacoes-page novidades-page"><div class="module-sticky-head"><div class="module-title"><div><h2>Novidades</h2><p>Lançamentos, eventos e comunicados da sua empresa.</p></div></div></div><div class="updates-feed">${cards || vazio}<aside class="updates-future-note">${svgIcon('bell')}<p>As publicações desta área são cadastradas pela empresa à qual seu acesso está vinculado.</p></aside></div></section>`;
 }
 
 function renderInformacoesVendas() {
+  const conteudos = conteudosPaginaVendas('informacoes');
+  const participe = conteudos.find((item) => item.tipo === 'participe');
+  const cards = conteudos.filter((item) => item.tipo !== 'participe').map((item) => { const apresentacao = apresentacaoTipoConteudoVendas(item.tipo); return `<article class="information-card"><header><span>${svgIcon(apresentacao.icon)}</span><div><small>${escapeHtml(apresentacao.label)}</small><h3>${escapeHtml(item.titulo)}</h3></div></header><p>${escapeHtml(item.descricao)}</p></article>`; }).join('');
   const formulario = feedbackVendasEnviado
     ? `<div class="feedback-success"><span>${svgIcon('message-circle')}</span><h3>Sugestão enviada</h3><p>Obrigado por colaborar com a evolução do Vendas AvantaLab.</p><button type="button" class="ghost" onclick="novaSugestaoVendas()">Enviar outra sugestão</button></div>`
     : `<form class="feedback-sales-form" onsubmit="enviarSugestaoVendas(event)"><label for="sugestaoVendasMensagem">Conte sua ideia, dificuldade ou sugestão</label><textarea id="sugestaoVendasMensagem" rows="5" maxlength="2000" placeholder="Escreva sua sugestão..." required></textarea><div><small>Sua mensagem será enviada à equipe AvantaLab e identificada como originada no App Vendas.</small><button id="sugestaoVendasEnviar" type="submit" class="primary" ${feedbackVendasEnviando ? 'disabled' : ''}>${svgIcon('message-circle')} ${feedbackVendasEnviando ? 'Enviando...' : 'Enviar sugestão'}</button></div></form>`;
-  return `<section class="module-page publicacoes-page informacoes-page"><div class="module-sticky-head"><div class="module-title"><div><h2>Informações</h2><p>Versões, melhorias e orientações do aplicativo.</p></div></div></div><div class="information-grid"><article class="information-card"><header><span>${svgIcon('info')}</span><div><small>Versão</small><h3>Vendas AvantaLab</h3></div></header><p>Aplicativo web progressivo com atualização contínua. As novas versões são disponibilizadas sem necessidade de reinstalar o aplicativo.</p></article><article class="information-card"><header><span>${svgIcon('settings')}</span><div><small>Melhorias</small><h3>Evolução permanente</h3></div></header><p>Os módulos de clientes, produtos, pedidos, pagamentos, agenda e dashboard recebem ajustes graduais de desempenho, segurança e experiência de uso.</p></article><article class="information-card wide"><header><span>${svgIcon('bell')}</span><div><small>Atualizações</small><h3>Como acompanhar mudanças</h3></div></header><p>Consulte a página Novidades para ver inclusões, ajustes e correções relevantes que já chegaram ao sistema.</p></article><article class="feedback-sales-card"><header><span>${svgIcon('message-circle')}</span><div><small>Participe</small><h3>Dicas e sugestões</h3></div></header><p>Ajude a melhorar o aplicativo compartilhando sua experiência com nossa equipe.</p>${formulario}</article></div></section>`;
+  return `<section class="module-page publicacoes-page informacoes-page"><div class="module-sticky-head"><div class="module-title"><div><h2>Informações</h2><p>Versões, melhorias e orientações do aplicativo.</p></div></div></div><div class="information-grid">${cards}<article class="feedback-sales-card"><header><span>${svgIcon('message-circle')}</span><div><small>Participe</small><h3>${escapeHtml(participe?.titulo || 'Dicas e sugestões')}</h3></div></header><p>${escapeHtml(participe?.descricao || 'Ajude a melhorar o aplicativo compartilhando sua experiência com nossa equipe.')}</p>${formulario}</article></div></section>`;
 }
 
 async function enviarSugestaoVendas(event) {

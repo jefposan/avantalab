@@ -113,18 +113,19 @@
 
   async function loadAll() {
     const user = await currentUser();
-    if (!user) return { user: null, produtos: [], pacotes: [], clientes: [], vendas: [], pagamentos: [] };
+    if (!user) return { user: null, produtos: [], pacotes: [], clientes: [], vendas: [], pagamentos: [], conteudos: null };
 
     const acessoVendas = await buscarAcessoVendas();
     if (!acessoVendas.acesso) {
-      return { user, produtos: [], pacotes: [], clientes: [], vendas: [], pagamentos: [], ...acessoVendas };
+      return { user, produtos: [], pacotes: [], clientes: [], vendas: [], pagamentos: [], conteudos: null, ...acessoVendas };
     }
 
-    const [produtosRes, clientesRes, pedidosRes, pagamentosRes] = await Promise.all([
+    const [produtosRes, clientesRes, pedidosRes, pagamentosRes, conteudosRes] = await Promise.all([
       client.from('vendas_mobile_produtos').select('*').order('criado_em', { ascending: false }),
       client.from('vendas_mobile_clientes').select('*').order('nome'),
       client.from('vendas_mobile_pedidos').select('*, itens:vendas_mobile_pedido_itens(*)').order('criado_em', { ascending: false }),
       client.from('vendas_mobile_pagamentos').select('*').order('data_pagamento', { ascending: false }).order('criado_em', { ascending: false }),
+      client.from('vendas_mobile_conteudos').select('id, pagina, tipo, titulo, descricao, criado_em').eq('ativo', true).order('criado_em', { ascending: false }),
     ]);
     const error = produtosRes.error || clientesRes.error || pedidosRes.error;
     if (error) throw error;
@@ -162,6 +163,7 @@
           saldo_final: Number(pagamento.saldo_final ?? legado.saldo_final ?? 0),
         };
       }),
+      conteudos: conteudosRes.error ? null : (conteudosRes.data || []),
       ...acessoVendas,
     };
   }
