@@ -77,12 +77,13 @@ async function lerJson(req) {
   return JSON.parse(Buffer.concat(partes).toString('utf8') || '{}');
 }
 
-async function executarFfmpeg(entrada, saida, instante) {
+async function executarFfmpeg(entrada, saida) {
   const argumentos = [
     '-hide_banner', '-loglevel', 'error', '-y',
-    '-ss', instante, '-i', entrada,
+    '-i', entrada,
+    '-map', '0:v:0',
     '-frames:v', '1',
-    '-vf', "scale=720:720:force_original_aspect_ratio=decrease",
+    '-vf', "select=eq(n\\,0),scale=720:720:force_original_aspect_ratio=decrease",
     '-q:v', '3',
     saida,
   ];
@@ -159,11 +160,7 @@ async function processar(jobId, materialId) {
 
   try {
     await baixarVideo(material, entrada);
-    try {
-      await executarFfmpeg(entrada, saida, '00:00:00.200');
-    } catch {
-      await executarFfmpeg(entrada, saida, '00:00:00.000');
-    }
+    await executarFfmpeg(entrada, saida);
     const capa = await readFile(saida);
     if (!capa.length) throw new Error('O FFmpeg não gerou uma capa válida.');
     await enviarMiniatura(miniaturaPath, saida);

@@ -4,6 +4,9 @@ Serviço do Cloud Run que gera capas JPEG para vídeos publicados em Divulgaçã
 O upload do celular termina antes desta etapa; a fila no Supabase chama este
 serviço em segundo plano.
 
+A capa usa sempre o primeiro frame decodificado do vídeo (`n=0`), permitindo
+que a arte inicial do arquivo seja utilizada como miniatura.
+
 ## Variáveis obrigatórias
 
 - `SUPABASE_URL`
