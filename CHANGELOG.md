@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.4.0.67 - 2026-07-13
+
+- Web: aplica o modo escuro ao header do chat da Ava e alterna o logo entre as versões para fundo claro e escuro, seguindo o mobile.
+
 ## 1.4.0.66 - 2026-07-13
 
 - Web: corrige o recorte dos cards durante o arraste do Kanban para preservar o raio AvantaLab em todos os cantos.

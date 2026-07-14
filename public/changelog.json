@@ -13,6 +13,14 @@
   },
   "versoes": [
     {
+      "versao": "1.4.0.67",
+      "titulo": "Tema do chat da Ava",
+      "data": "Julho/2026",
+      "itens": [
+        "Web: o header do chat da Ava acompanha o modo escuro e usa o logo adequado para cada fundo."
+      ]
+    },
+    {
       "versao": "1.4.0.66",
       "titulo": "Refinamentos do Kanban e Ajustes",
       "data": "Julho/2026",

@@ -1,4 +1,5 @@
 'use client';
+import Image from 'next/image';
 import React, { useState, useRef, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 
@@ -39,11 +40,13 @@ function DotsBounce() {
   );
 }
 
-function AvaLogo({ className = 'h-8 w-24' }: { className?: string }) {
+function AvaLogo({ darkMode, className = 'h-8 w-24' }: { darkMode: boolean; className?: string }) {
   return (
-    <img
-      src="/images/ava-logo-principal.png"
+    <Image
+      src={darkMode ? '/images/ava-logo-fundo-escuro.png' : '/images/ava-logo-fundo-claro.png'}
       alt="Ava"
+      width={96}
+      height={52}
       className={'object-contain ' + className}
       draggable={false}
     />
@@ -250,20 +253,24 @@ export default function ChatFlutuante({
           <div
             className={
               'flex items-start justify-between gap-3 px-5 py-4 ' +
-              (chatFeedbackEtapa === 'ia' ? 'border-b border-slate-200 bg-white text-slate-900' : 'text-white')
+              (chatFeedbackEtapa === 'ia'
+                ? darkMode
+                  ? 'border-b border-[#243349] bg-[#141e30] text-[#e8eef6]'
+                  : 'border-b border-slate-200 bg-white text-slate-900'
+                : 'text-white')
             }
             style={chatFeedbackEtapa === 'ia' ? undefined : { background: 'linear-gradient(135deg, #020617, #003E73)' }}
           >
             <div className="flex min-w-0 items-center gap-3">
               {chatFeedbackEtapa === 'ia' && (
                 <span className="flex h-10 w-28 items-center justify-center">
-                  <AvaLogo className="h-11 w-28" />
+                  <AvaLogo darkMode={darkMode} className="h-11 w-28" />
                 </span>
               )}
               <div className="min-w-0">
                 <p
                   className="text-[11px] font-black uppercase tracking-[0.24em]"
-                  style={{ color: chatFeedbackEtapa === 'ia' ? '#0A1F44' : 'rgba(255,255,255,0.65)' }}
+                  style={{ color: chatFeedbackEtapa === 'ia' ? (darkMode ? '#8896ab' : '#0A1F44') : 'rgba(255,255,255,0.65)' }}
                 >AvantaLab</p>
                 <h3 className="mt-1 truncate text-sm font-black leading-tight">
                   {chatFeedbackEtapa === 'ia' ? 'Ava — Assistente IA' : 'Como podemos ajudar?'}
@@ -276,7 +283,9 @@ export default function ChatFlutuante({
               className={
                 'flex h-8 w-8 items-center justify-center rounded-full text-lg font-black transition cursor-pointer ' +
                 (chatFeedbackEtapa === 'ia'
-                  ? 'bg-slate-100 text-slate-600 hover:bg-slate-200 hover:text-slate-900'
+                  ? darkMode
+                    ? 'border border-[#243349] bg-[#1b293e] text-slate-300 hover:bg-[#243349] hover:text-white'
+                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200 hover:text-slate-900'
                   : 'bg-white/15 text-white hover:bg-white/25')
               }
               aria-label="Fechar chat"
@@ -299,7 +308,7 @@ export default function ChatFlutuante({
                     ' flex w-full items-center gap-3 rounded-full border px-4 py-2.5 text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-md active:scale-[0.99] cursor-pointer'}
                 >
                   <span className="flex h-10 w-24 shrink-0 items-center justify-center">
-                    <AvaLogo className="h-11 w-24" />
+                    <AvaLogo darkMode={darkMode} className="h-11 w-24" />
                   </span>
                   <span className="min-w-0 flex-1 truncate text-sm font-semibold text-slate-400">
                     Pergunte para Ava...
