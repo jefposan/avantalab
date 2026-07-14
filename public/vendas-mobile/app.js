@@ -39,7 +39,6 @@ const estadoInicial = {
   agendaAnimar: '',
   agendaItens: [],
   metaMensal: 0,
-  metaPedidos: 0,
   temaEscuro: false,
   acessoVendas: null,
   solicitacaoAcesso: null,
@@ -76,6 +75,7 @@ let pagamentoClienteRascunho = null;
 let ordemAlfabetica = 'asc';
 let feedbackVendasEnviando = false;
 let feedbackVendasEnviado = false;
+let produtoImagemUploadPendente = null;
 
 const PAISES_DDI = [
   ['Brasil', '55', '🇧🇷'], ['Portugal', '351', '🇵🇹'], ['Estados Unidos / Canadá', '1', '🇺🇸'],
@@ -179,7 +179,6 @@ function salvarEstado() {
     agendaDiaSelecionado: state.agendaDiaSelecionado,
     agendaItens: state.agendaItens,
     metaMensal: state.metaMensal,
-    metaPedidos: state.metaPedidos,
     temaEscuro: state.temaEscuro,
   } : { ...state, carrinho: [] };
   try {
@@ -543,7 +542,7 @@ function renderMenuMobile() {
 function contextoAvaVendas() {
   const totais = totaisPeriodo();
   const recebido = state.pagamentos.reduce((soma, pagamento) => soma + Number(pagamento.valor || 0), 0);
-  const debitosPendentes = state.clientes.reduce((soma, cliente) => soma + Math.max(0, saldoFinanceiroCliente(cliente)), 0);
+  const debitosPendentes = state.clientes.reduce((soma, cliente) => soma + saldoFinanceiroCliente(cliente.id).debito, 0);
   const consignadosAtivos = state.vendas.filter((pedido) => pedidoEhConsignado(pedido) && pedido.status !== 'cancelada');
   const totalConsignado = consignadosAtivos.reduce((soma, pedido) => soma + Number(pedido.total || 0), 0);
   return [
@@ -1162,7 +1161,6 @@ function renderDashboard() {
   const clientesInativos = clientesInativosDashboard();
   const maiorMovimento = Math.max(t.total, totalRecebido, 1);
   const margemPercentual = t.total > 0 ? (t.margem / t.total) * 100 : 0;
-  const progressoPedidos = state.metaPedidos > 0 ? Math.min(100, t.pedidos / state.metaPedidos * 100) : 0;
   const progressoMensal = state.metaMensal > 0 ? Math.min(100, t.total / state.metaMensal * 100) : 0;
   const tabelaClientes = clientesTop.length ? clientesTop.map((item) => `<tr><td><b>${escapeHtml(item.nome)}</b><small>${item.pedidos} ${item.pedidos === 1 ? 'pedido' : 'pedidos'}</small></td><td>${moeda(item.total)}</td></tr>`).join('') : '<tr><td colspan="2">Nenhuma venda no período.</td></tr>';
   const tabelaInativos = clientesInativos.length ? clientesInativos.map((item) => `<tr><td>${escapeHtml(item.nome)}</td><td>${item.ultima ? dataCurtaBR(item.ultima.criado_em) : 'Sem compra'}</td><td>${item.dias ?? '—'}</td></tr>`).join('') : '<tr><td colspan="3">Nenhum cliente inativo.</td></tr>';
@@ -1174,7 +1172,6 @@ function renderDashboard() {
         <section class="month-switcher"><div><button aria-label="Mês anterior" onclick="mudarMes(-1)">${svgIcon('chevron-left')}</button><strong>${nomeMesReferencia()}</strong><button aria-label="Próximo mês" onclick="mudarMes(1)">${svgIcon('chevron-right')}</button></div><button class="current-month" onclick="irMesAtual()">${svgIcon('calendar')}<span>${mesReferenciaAtual() ? 'Mês atual' : 'Ir para o mês atual'}</span></button></section>
       </div>
       <section class="goal-grid">
-        <article class="goal-card orders-goal"><h3>${svgIcon('target')}<span>Meta de Pedidos</span><small>Empresa</small></h3><div class="goal-card-body"><div class="goal-values"><b>Realizado <em>${t.pedidos}</em></b><b>Meta <em>${state.metaPedidos || 0}</em></b></div><div class="progress"><i style="width:${Math.max(2, progressoPedidos)}%"></i></div><p>Faltam <b>${Math.max(0, Number(state.metaPedidos || 0) - t.pedidos)}</b> pedidos para atingir a meta.</p></div></article>
         <article class="goal-card sales-goal"><h3>${svgIcon('target')}<span>Meta Mensal</span><button type="button" onclick="setAba('configuracoes')" aria-label="Configurar metas">${svgIcon('settings')}</button></h3><div class="goal-card-body"><div class="goal-values"><b>Vendas <em>${moeda(t.total)}</em></b><b>Meta <em>${moeda(state.metaMensal)}</em></b></div><div class="progress"><i style="width:${Math.max(2, progressoMensal)}%"></i></div><p>Faltam <b>${moeda(Math.max(0, state.metaMensal - t.total))}</b> para atingir a meta.</p></div></article>
       </section>
       <section class="dashboard-kpis">
@@ -1384,19 +1381,18 @@ function renderConfiguracoes() {
       <article class="settings-card settings-profile-card"><h3>${svgIcon('user')} Dados do usuário</h3><dl><dt>Nome completo</dt><dd>${escapeHtml(state.usuario.nome)}</dd><dt>Celular confirmado</dt><dd>${telefone ? escapeHtml(mascararTelefone(telefone)) : 'Não informado'}</dd><dt>Empresa vinculada</dt><dd>${escapeHtml(empresa)}</dd></dl><div class="actions"><button class="secondary" onclick="abrirAtualizarTelefone()">${svgIcon('phone')} ${telefone ? 'Alterar celular' : 'Cadastrar celular'}</button></div></article>
       <article class="settings-card"><h3>${svgIcon('settings')} Aparência</h3><label class="switch-line"><span>Modo escuro</span><input type="checkbox" ${state.temaEscuro ? 'checked' : ''} onchange="alternarTema(this.checked)"><i></i></label><p>Alterne o tema da aplicação para maior conforto visual.</p></article>
     </div>
-    <article class="settings-card settings-goal"><h3>${svgIcon('target')} Metas do período</h3><div class="goal-values"><b>Vendas Atuais: <em>${moeda(t.total)}</em></b><b>Meta: ${moeda(state.metaMensal)}</b></div><div class="progress"><i style="width:${Math.max(2, progresso)}%"></i></div><p>Faltam <b>${moeda(Math.max(0, state.metaMensal - t.total))}</b> para atingir sua meta.</p><div class="settings-form settings-goals-form"><label><span>Meta mensal</span><input id="metaConfig" type="text" inputmode="numeric" value="${numeroParaCampoMoeda(state.metaMensal)}" onfocus="this.select()" oninput="formatarCampoMoeda(this)" placeholder="0,00"></label><label><span>Meta de pedidos</span><input id="metaPedidosConfig" type="number" inputmode="numeric" min="0" step="1" value="${Math.max(0, Number(state.metaPedidos || 0))}"></label><button class="primary" onclick="salvarMeta()">${svgIcon('save')} Salvar</button></div></article>
-    <article class="settings-card"><h3>${svgIcon('lock')} Segurança e Senha</h3><p>Defina uma senha para entrar também por e-mail. Se você acessa pelo Google, esta é a sua primeira senha.</p><div class="password-form"><label>Nova Senha (mín. 8 caracteres)<input id="senhaNova" type="password" autocomplete="new-password" minlength="8"></label><label>Confirme Nova Senha<input id="senhaConfirma" type="password" autocomplete="new-password" minlength="8"></label><button class="password-button" onclick="alterarSenha()">${svgIcon('lock')} Salvar senha</button></div></article>
-    <article class="settings-card"><h3>${svgIcon('package')} Catálogo de Produtos</h3><p>Importe um pacote Excel, exporte seu catálogo e gerencie as listas cadastradas.</p><div class="actions"><button class="secondary" onclick="baixarModeloProdutosExcel()">${svgIcon('download')} Modelo Excel</button><button class="primary" onclick="abrirImportacaoPacote()">${svgIcon('package')} Pacote de produtos</button></div></article>
-    <article class="settings-card"><h3>${svgIcon('save')} Aplicativo Web (PWA)</h3><p>Instale o aplicativo na tela inicial para acesso rápido, como um app nativo.</p><button class="install-button" onclick="instalarPWA()">Adicionar à Área de Trabalho</button><small>Se o botão não aparecer, use “Adicionar à tela inicial” no menu do navegador.</small></article>
+    <article class="settings-card settings-goal"><h3>${svgIcon('target')} Meta do período</h3><div class="settings-goal-summary"><div><span>Meta mensal</span><b>${moeda(state.metaMensal)}</b></div><div><span>Vendas mensais</span><b>${moeda(t.total)}</b></div></div><div class="progress"><i style="width:${Math.max(2, progresso)}%"></i></div><p>Faltam <b>${moeda(Math.max(0, state.metaMensal - t.total))}</b> para atingir sua meta.</p><div class="settings-form settings-goals-form"><label><span>Definir meta mensal</span><input id="metaConfig" type="text" inputmode="numeric" value="${numeroParaCampoMoeda(state.metaMensal)}" onfocus="this.select()" oninput="formatarCampoMoeda(this)" placeholder="0,00"></label><button class="primary" onclick="salvarMeta()">${svgIcon('save')} Salvar meta</button></div></article>
+    <article class="settings-card"><h3>${svgIcon('lock')} Senha da conta AvantaLab</h3><p>Esta senha pertence à sua conta principal. Ao alterá-la aqui, a nova senha passa a valer para o acesso ao Gestão e ao Vendas.</p><div class="password-form"><label>Nova senha (mín. 8 caracteres)<input id="senhaNova" type="password" autocomplete="new-password" minlength="8"></label><label>Confirme a nova senha<input id="senhaConfirma" type="password" autocomplete="new-password" minlength="8"></label><button class="password-button" onclick="alterarSenha()">${svgIcon('lock')} Atualizar senha da conta</button></div></article>
+    <article class="settings-card settings-catalog-card"><h3>${svgIcon('package')} Catálogo de produtos</h3><p>Baixe o modelo, importe pacotes e exporte seu catálogo em um único local.</p><div class="actions"><button class="secondary" onclick="baixarModeloProdutosExcel()">${svgIcon('download')} Modelo Excel</button><button class="primary" onclick="abrirImportacaoPacote()">${svgIcon('package')} Pacote de produtos</button><button class="secondary" onclick="exportarProdutosExcel()">${svgIcon('save')} Exportar catálogo</button></div></article>
+    <article class="settings-card settings-pwa-card"><h3>${svgIcon('save')} Aplicativo Web (PWA)</h3><p>Instale o aplicativo na tela inicial para acesso rápido, como um app nativo.</p><button class="install-button" onclick="instalarPWA()">Adicionar à Área de Trabalho</button><small>Se o botão não aparecer, use “Adicionar à tela inicial” no menu do navegador.</small></article>
     <article class="settings-card settings-exit-card"><h3>${svgIcon('log-out')} Sair</h3><p>Encerre sua sessão neste aparelho.</p><button class="danger" onclick="abrirConfirmacaoSair()">Sair do Vendas</button></article>
   </section>`;
 }
 
 function salvarMeta() {
   state.metaMensal = Math.max(0, lerCampoMoeda('metaConfig'));
-  state.metaPedidos = Math.max(0, Math.floor(Number(valor('metaPedidosConfig') || 0)));
   render();
-  toast('Metas salvas.');
+  toast('Meta mensal salva.');
 }
 
 function alternarTema(ativo) {
@@ -1416,7 +1412,7 @@ async function alterarSenha() {
     await window.VendasDb.updatePassword(nova);
     document.getElementById('senhaNova').value = '';
     document.getElementById('senhaConfirma').value = '';
-    toast('Senha salva. Agora você também pode entrar com e-mail e senha.');
+    toast('Senha da conta atualizada para o Gestão e o Vendas.');
   } catch (error) { toast(traduzErro(error)); }
 }
 
@@ -1589,7 +1585,7 @@ function renderProdutos() {
   const temBusca = Boolean(String(state.busca || '').trim());
   return `
     <section class="module-page produtos-page${temBusca ? ' is-searching' : ''}">
-      <div class="module-sticky-head"><div class="module-title"><div><h2>Produtos</h2><p>Catálogo, custos e preços de venda.</p></div><button class="primary" onclick="this.blur();abrirProduto()">＋ Novo produto</button></div><div class="produtos-actions"><button class="ghost" onclick="baixarModeloProdutosExcel()" aria-label="Baixar modelo Excel">${svgIcon('save')} Modelo</button><button class="secondary" onclick="abrirImportacaoPacote()" aria-label="Importar pacote de produtos">${svgIcon('package')} Pacote</button><button class="primary" onclick="exportarProdutosExcel()" aria-label="Exportar produtos para Excel">${svgIcon('save')} Exportar</button></div>${renderBarraBusca('Pesquisar produtos', 'Ordem alfabética')}</div>
+      <div class="module-sticky-head"><div class="module-title"><div><h2>Produtos</h2><p>Catálogo, custos e preços de venda.</p></div><button class="primary" onclick="this.blur();abrirProduto()">＋ Novo produto</button></div>${renderBarraBusca('Pesquisar produtos', 'Ordem alfabética')}</div>
       <div class="module-stats product-package-stats"><span><b>${state.produtos.length}</b> produtos cadastrados</span><span><b>${state.pacotesProdutos.length}</b> pacotes ativos</span><button class="package-manage-link" onclick="abrirGerenciarPacotes()">${svgIcon('package')} Gerenciar</button></div>
       <section class="product-grid module-product-grid">
       ${produtos.length ? produtos.map(renderProduto).join('') : empty('Nenhum produto cadastrado.')}
@@ -1896,6 +1892,10 @@ async function finalizarPedidoCliente() {
       ? state.vendas.map((item) => item.id === salvo.id ? salvo : item)
       : [salvo, ...state.vendas];
     pedidoClienteRascunho = null;
+    if (!rascunho.editandoId) {
+      state.aba = 'clientes';
+      state.menuAberto = false;
+    }
     render();
     abrirPedidoCliente(salvo.id);
     toast(rascunho.editandoId ? 'Pedido atualizado.' : 'Pedido registrado. O comprovante está pronto para compartilhar.');
@@ -1990,6 +1990,8 @@ async function confirmarPagamentoCliente() {
     const salvo = backendAtivo ? await window.VendasDb.savePayment(pagamento) : pagamento;
     state.pagamentos = [salvo, ...(state.pagamentos || [])];
     pagamentoClienteRascunho = null;
+    state.aba = 'clientes';
+    state.menuAberto = false;
     render();
     abrirPagamentoClienteDetalhe(salvo.id);
     toast('Recebimento confirmado. O comprovante está pronto para compartilhar.');
@@ -2658,7 +2660,7 @@ function renderVenda(v) {
   const tipo = tipoPedido(v);
   const rotuloTipo = tipo === 'consignados' ? 'Consignado' : tipo === 'bonificacoes' ? 'Bonificação' : 'Pedido';
   return `
-    <button type="button" class="order-list-card ${v.status === 'cancelada' ? 'is-cancelled' : ''}" onclick="abrirPedidoCliente('${v.id}')">
+    <button type="button" class="order-list-card order-type-${tipo} ${v.status === 'cancelada' ? 'is-cancelled' : ''}" onclick="abrirPedidoCliente('${v.id}')">
       <header><span>${escapeHtml(rotuloTipo)}</span><time>${dataBR(v.criado_em)}</time></header>
       <div><h3>${escapeHtml(cliente?.nome || 'Cliente não informado')}</h3><span class="status-pill ${v.status === 'cancelada' ? 'warn' : 'ok'}">${escapeHtml(v.status || 'registrado')}</span></div>
       <footer><span>${(v.itens || []).length} ${(v.itens || []).length === 1 ? 'item' : 'itens'}</span><b>${moeda(v.total)}</b></footer>
@@ -2871,6 +2873,8 @@ async function exportarProdutosExcel() {
 
 function abrirProduto(produtoId = '') {
   const p = state.produtos.find((item) => item.id === produtoId) || {};
+  if (produtoImagemUploadPendente?.previewUrl) URL.revokeObjectURL(produtoImagemUploadPendente.previewUrl);
+  produtoImagemUploadPendente = null;
   sheet(`
     <div class="sheet-header">
       <div>
@@ -2895,13 +2899,79 @@ function abrirProduto(produtoId = '') {
       </div>
       ${campo('prodEstoque', 'Estoque', p.estoque ?? '', 'number', '0.001')}
       ${campo('prodImagem', 'Link da imagem (opcional)', p.imagem_url || '', 'url')}
+      <div class="product-upload-field">
+        <div><b>Enviar imagem</b><small>Use JPG, PNG ou WEBP. Padrão recomendado: 720 × 405 px (16:9), até 5 MB. A imagem será ajustada automaticamente.</small></div>
+        <input id="prodImagemArquivo" type="file" accept="image/jpeg,image/png,image/webp" hidden onchange="prepararImagemProduto(this)">
+        <button type="button" class="secondary" onclick="document.getElementById('prodImagemArquivo').click()">${svgIcon('folder')} Escolher imagem</button>
+        <span id="prodImagemArquivoNome">Nenhum arquivo selecionado</span>
+        <img id="prodImagemPreview" class="product-upload-preview" ${p.imagem_url ? `src="${escapeAttr(p.imagem_url)}"` : 'hidden'} alt="Prévia da imagem do produto">
+      </div>
       <div class="field"><label>Descrição</label><textarea id="prodDescricao">${escapeHtml(p.descricao || '')}</textarea></div>
       <div class="actions">
+        <button class="ghost" onclick="fecharSheet()">Cancelar</button>
         <button class="primary" onclick="salvarProduto('${produtoId}')">Salvar</button>
         ${produtoId ? `<button class="danger" onclick="removerProduto('${produtoId}')">Remover</button>` : ''}
       </div>
     </div>
   `, 'cliente-sheet-backdrop');
+}
+
+function normalizarImagemProduto(arquivo) {
+  return new Promise((resolve, reject) => {
+    const url = URL.createObjectURL(arquivo);
+    const imagem = new Image();
+    imagem.onload = () => {
+      try {
+        const canvas = document.createElement('canvas');
+        canvas.width = 720;
+        canvas.height = 405;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) throw new Error('Não foi possível preparar a imagem.');
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        const escala = Math.min(canvas.width / imagem.naturalWidth, canvas.height / imagem.naturalHeight);
+        const largura = Math.round(imagem.naturalWidth * escala);
+        const altura = Math.round(imagem.naturalHeight * escala);
+        ctx.drawImage(imagem, Math.round((canvas.width - largura) / 2), Math.round((canvas.height - altura) / 2), largura, altura);
+        canvas.toBlob((blob) => {
+          URL.revokeObjectURL(url);
+          if (blob) resolve(blob);
+          else reject(new Error('Não foi possível converter a imagem.'));
+        }, 'image/webp', .84);
+      } catch (error) {
+        URL.revokeObjectURL(url);
+        reject(error);
+      }
+    };
+    imagem.onerror = () => { URL.revokeObjectURL(url); reject(new Error('Arquivo de imagem inválido.')); };
+    imagem.src = url;
+  });
+}
+
+async function prepararImagemProduto(input) {
+  const arquivo = input?.files?.[0];
+  if (!arquivo) return;
+  if (!['image/jpeg', 'image/png', 'image/webp'].includes(arquivo.type)) { input.value = ''; toast('Use uma imagem JPG, PNG ou WEBP.'); return; }
+  if (arquivo.size > 5 * 1024 * 1024) { input.value = ''; toast('A imagem deve ter no máximo 5 MB.'); return; }
+  try {
+    const blob = await normalizarImagemProduto(arquivo);
+    if (produtoImagemUploadPendente?.previewUrl) URL.revokeObjectURL(produtoImagemUploadPendente.previewUrl);
+    const previewUrl = URL.createObjectURL(blob);
+    produtoImagemUploadPendente = { blob, previewUrl, nome: arquivo.name };
+    const nome = document.getElementById('prodImagemArquivoNome');
+    const preview = document.getElementById('prodImagemPreview');
+    if (nome) nome.textContent = `${arquivo.name} · imagem ajustada para 720 × 405 px`;
+    if (preview) { preview.src = previewUrl; preview.hidden = false; }
+  } catch (error) { input.value = ''; toast(traduzErro(error)); }
+}
+
+function blobParaDataUrl(blob) {
+  return new Promise((resolve, reject) => {
+    const leitor = new FileReader();
+    leitor.onload = () => resolve(String(leitor.result || ''));
+    leitor.onerror = () => reject(new Error('Não foi possível ler a imagem.'));
+    leitor.readAsDataURL(blob);
+  });
 }
 
 async function salvarProduto(produtoId) {
@@ -2923,12 +2993,19 @@ async function salvarProduto(produtoId) {
     return;
   }
   try {
+    if (produtoImagemUploadPendente?.blob) {
+      dados.imagem_url = backendAtivo
+        ? await window.VendasDb.uploadProductImage(produtoImagemUploadPendente.blob, produtoId || null)
+        : await blobParaDataUrl(produtoImagemUploadPendente.blob);
+    }
     if (backendAtivo) {
       const salvoBruto = await window.VendasDb.saveProduct({ id: produtoId || null, ...dados, metadados: state.produtos.find((produto) => produto.id === produtoId)?.metadados || {} });
       const salvo = { ...salvoBruto, preco_custo: Number(salvoBruto.metadados?.preco_custo || 0), pacote_origem_id: salvoBruto.metadados?.pacote?.id || null };
       state.produtos = produtoId ? state.produtos.map((p) => p.id === produtoId ? salvo : p) : [salvo, ...state.produtos];
     } else if (produtoId) state.produtos = state.produtos.map((p) => p.id === produtoId ? { ...p, ...dados, atualizado_em: new Date().toISOString() } : p);
     else state.produtos.unshift({ id: id('prod'), ...dados, criado_em: new Date().toISOString() });
+    if (produtoImagemUploadPendente?.previewUrl) URL.revokeObjectURL(produtoImagemUploadPendente.previewUrl);
+    produtoImagemUploadPendente = null;
     fecharSheet(); toast('Produto salvo.'); render();
   } catch (error) { toast(traduzErro(error)); }
 }
@@ -2968,6 +3045,7 @@ function abrirCliente(clienteId = '') {
       </div>
       <div class="field"><label>Observações</label><textarea id="cliObs">${escapeHtml(c.observacoes || '')}</textarea></div>
       <div class="actions">
+        <button class="ghost" onclick="fecharSheet()">Cancelar</button>
         <button class="primary" onclick="salvarCliente('${clienteId}')">Salvar</button>
         ${clienteId ? `<button class="danger" onclick="removerCliente('${clienteId}')">Remover</button>` : ''}
       </div>
@@ -2975,7 +3053,24 @@ function abrirCliente(clienteId = '') {
   `, 'cliente-sheet-backdrop sheet-backdrop-centered');
 }
 
-async function salvarCliente(clienteId) {
+function fecharAvisoClienteIncompleto(campoFoco = '') {
+  document.getElementById('clientIncompleteWarning')?.remove();
+  if (campoFoco) document.getElementById(campoFoco)?.focus();
+}
+
+function mostrarAvisoClienteIncompleto(clienteId, semTelefone, semEndereco) {
+  document.getElementById('clientIncompleteWarning')?.remove();
+  const sheetAtual = document.querySelector('#sheetBackdrop .sheet');
+  if (!sheetAtual) return;
+  const faltas = [semTelefone ? 'o celular permite iniciar conversas pelo WhatsApp' : '', semEndereco ? 'o endereço permite abrir a localização nos aplicativos de mapas' : ''].filter(Boolean);
+  const aviso = document.createElement('div');
+  aviso.id = 'clientIncompleteWarning';
+  aviso.className = 'client-incomplete-warning';
+  aviso.innerHTML = `<section><span>${svgIcon('info')}</span><h3>Completar dados do cliente?</h3><p>Somente o nome é obrigatório, mas ${faltas.join(' e ')} diretamente pela ficha do cliente.</p><div><button type="button" class="ghost" onclick="fecharAvisoClienteIncompleto('${semTelefone ? 'cliTelefone' : 'cliEndereco'}')">Cancelar e completar</button><button type="button" class="primary" onclick="fecharAvisoClienteIncompleto();salvarCliente('${escapeAttr(clienteId)}',true)">Continuar mesmo assim</button></div></section>`;
+  sheetAtual.appendChild(aviso);
+}
+
+async function salvarCliente(clienteId, ignorarAviso = false) {
   const dados = {
     nome: valor('cliNome').trim(),
     telefone: valor('cliTelefone').trim() ? `+${valor('cliTelefoneDdi')}${valor('cliTelefone').replace(/\D/g, '')}` : '',
@@ -2994,6 +3089,12 @@ async function salvarCliente(clienteId) {
   }
   if (dados.email && !emailValido(dados.email)) {
     toast('Informe um e-mail válido ou deixe o campo em branco.');
+    return;
+  }
+  const semTelefone = !dados.telefone;
+  const semEndereco = !dados.endereco;
+  if (!clienteId && !ignorarAviso && (semTelefone || semEndereco)) {
+    mostrarAvisoClienteIncompleto(clienteId, semTelefone, semEndereco);
     return;
   }
   try {
@@ -3288,6 +3389,10 @@ function sheet(html, backdropClass = '') {
 
 function fecharSheet() {
   const estavaAberto = Boolean(document.getElementById('sheetBackdrop'));
+  if (document.getElementById('prodImagemArquivo') && produtoImagemUploadPendente?.previewUrl) {
+    URL.revokeObjectURL(produtoImagemUploadPendente.previewUrl);
+    produtoImagemUploadPendente = null;
+  }
   document.getElementById('sheetBackdrop')?.remove();
   document.body.classList.remove('sheet-open');
   document.documentElement.classList.remove('sheet-open');

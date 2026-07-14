@@ -35,6 +35,20 @@
     return data.session?.access_token || '';
   }
 
+  async function uploadProductImage(file, productId = null) {
+    const user = await currentUser();
+    if (!user) throw new Error('Sessão expirada.');
+    const identificador = String(productId || (crypto.randomUUID ? crypto.randomUUID() : Date.now())).replace(/[^a-zA-Z0-9_-]/g, '');
+    const path = `${user.id}/${identificador}-${Date.now()}.webp`;
+    const { error } = await requireClient().storage
+      .from('vendas-produtos')
+      .upload(path, file, { cacheControl: '31536000', contentType: 'image/webp', upsert: false });
+    if (error) throw error;
+    const { data } = requireClient().storage.from('vendas-produtos').getPublicUrl(path);
+    if (!data?.publicUrl) throw new Error('Não foi possível gerar o link da imagem.');
+    return data.publicUrl;
+  }
+
   async function signIn(email, password) {
     const { data, error } = await requireClient().auth.signInWithPassword({ email, password });
     if (error) throw error;
@@ -462,5 +476,5 @@
     return data;
   }
 
-  window.VendasDb = { client, currentUser, hasSession, getAccessToken, signIn, signInPhone, signInWithGoogle, resetPassword, updatePassword, updateUserMetadata, signUp, signOut, solicitarAcesso, buscarAcessoVendas, loadAll, saveProduct, deleteProduct, createPackage, saveProductsBulk, deletePackage, saveClient, deleteClient, saveOrder, updateOrder, deleteOrder, savePayment, updatePayment, deletePayment, saveFeedback };
+  window.VendasDb = { client, currentUser, hasSession, getAccessToken, uploadProductImage, signIn, signInPhone, signInWithGoogle, resetPassword, updatePassword, updateUserMetadata, signUp, signOut, solicitarAcesso, buscarAcessoVendas, loadAll, saveProduct, deleteProduct, createPackage, saveProductsBulk, deletePackage, saveClient, deleteClient, saveOrder, updateOrder, deleteOrder, savePayment, updatePayment, deletePayment, saveFeedback };
 })();
