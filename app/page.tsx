@@ -9358,6 +9358,20 @@ name="novo-usuario-login"
           </Tooltip>
         )}
 
+        {/* 4b. Vendas Mobile */}
+        {modulosAtivos.includes('vendas_mobile') && podeAcessarAjustes && (
+          <Tooltip texto="Publique novidades e organize fotos e vídeos para a equipe do Vendas Mobile." posicao="bottom">
+            <button
+              onClick={() => { setAjustesAberto(false); setMenuAjuste(null); setModalNovidadesVendas(true); }}
+              className="whitespace-nowrap bg-slate-800 hover:bg-slate-700 px-3 py-1.5 rounded-lg border transition-colors font-bold shadow flex items-center gap-1.5 text-xs"
+              style={{ borderColor: corPrimaria }}
+            >
+              <svg className="h-3.5 w-3.5" fill="none" stroke="#ffffff" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="m3 11 18-5v12L3 14zM11.6 16.4 13 21H8l-1.5-6" /></svg>
+              Vendas Mobile
+            </button>
+          </Tooltip>
+        )}
+
         {/* 5. Visual (dropdown) */}
         <Tooltip texto="Personalize a aparência: logo, cor do tema e modo escuro." posicao="bottom">
           <button
@@ -9502,15 +9516,6 @@ name="novo-usuario-login"
                 <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 21v-2a4 4 0 00-4-4H6a4 4 0 00-4 4v2M9 11a4 4 0 100-8 4 4 0 000 8zm11 10v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75" /></svg>
                 Aprovações
                 {solicitacoesAprovacao.length > 0 && <span className="ml-auto rounded-full bg-amber-400 px-1.5 py-0.5 text-[9px] font-black text-slate-950">{solicitacoesAprovacao.length}</span>}
-              </button>
-            </Tooltip>
-          )}
-
-          {podeAcessarAjustes && (
-            <Tooltip texto="Publique lançamentos, eventos e comunicados na página Novidades do App Vendas." posicao="right" wrapperClassName="w-full">
-              <button type="button" onClick={() => { setAjustesAberto(false); setMenuAjuste(null); setModalNovidadesVendas(true); }} className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-xs font-bold text-white transition-colors hover:bg-slate-700">
-                <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="m3 11 18-5v12L3 14zM11.6 16.4 13 21H8l-1.5-6" /></svg>
-                Novidades do Vendas
               </button>
             </Tooltip>
           )}

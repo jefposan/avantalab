@@ -127,19 +127,21 @@
 
   async function loadAll() {
     const user = await currentUser();
-    if (!user) return { user: null, produtos: [], pacotes: [], clientes: [], vendas: [], pagamentos: [], conteudos: null };
+    if (!user) return { user: null, produtos: [], pacotes: [], clientes: [], vendas: [], pagamentos: [], conteudos: null, divulgacaoPastas: [], divulgacaoMateriais: [] };
 
     const acessoVendas = await buscarAcessoVendas();
     if (!acessoVendas.acesso) {
-      return { user, produtos: [], pacotes: [], clientes: [], vendas: [], pagamentos: [], conteudos: null, ...acessoVendas };
+      return { user, produtos: [], pacotes: [], clientes: [], vendas: [], pagamentos: [], conteudos: null, divulgacaoPastas: [], divulgacaoMateriais: [], ...acessoVendas };
     }
 
-    const [produtosRes, clientesRes, pedidosRes, pagamentosRes, conteudosRes] = await Promise.all([
+    const [produtosRes, clientesRes, pedidosRes, pagamentosRes, conteudosRes, pastasRes, materiaisRes] = await Promise.all([
       client.from('vendas_mobile_produtos').select('*').order('criado_em', { ascending: false }),
       client.from('vendas_mobile_clientes').select('*').order('nome'),
       client.from('vendas_mobile_pedidos').select('*, itens:vendas_mobile_pedido_itens(*)').order('criado_em', { ascending: false }),
       client.from('vendas_mobile_pagamentos').select('*').order('data_pagamento', { ascending: false }).order('criado_em', { ascending: false }),
       client.from('vendas_mobile_conteudos').select('id, pagina, tipo, titulo, descricao, criado_em').eq('ativo', true).order('criado_em', { ascending: false }),
+      client.from('vendas_mobile_divulgacao_pastas').select('id, nome, descricao, ordem, criado_em').eq('empresa_id', acessoVendas.acesso.empresa_id).eq('ativo', true).order('ordem').order('criado_em', { ascending: false }),
+      client.from('vendas_mobile_divulgacao_materiais').select('id, pasta_id, titulo, tipo, arquivo_url, miniatura_url, mime_type, tamanho_bytes, ordem, criado_em').eq('empresa_id', acessoVendas.acesso.empresa_id).eq('ativo', true).order('ordem').order('criado_em', { ascending: false }),
     ]);
     const error = produtosRes.error || clientesRes.error || pedidosRes.error;
     if (error) throw error;
@@ -178,6 +180,8 @@
         };
       }),
       conteudos: conteudosRes.error ? null : (conteudosRes.data || []),
+      divulgacaoPastas: pastasRes.error ? [] : (pastasRes.data || []),
+      divulgacaoMateriais: materiaisRes.error ? [] : (materiaisRes.data || []),
       ...acessoVendas,
     };
   }

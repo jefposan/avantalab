@@ -20,6 +20,8 @@ const estadoInicial = {
   vendas: [],
   pagamentos: [],
   conteudosVendas: null,
+  divulgacaoPastas: [],
+  divulgacaoMateriais: [],
   carrinho: [],
   aba: 'dashboard',
   menuAberto: true,
@@ -1042,6 +1044,8 @@ async function carregarDadosBackend(mostrarCarregamento = true) {
       state.vendas = dados.vendas;
       state.pagamentos = dados.pagamentos || [];
       state.conteudosVendas = dados.conteudos;
+      state.divulgacaoPastas = dados.divulgacaoPastas || [];
+      state.divulgacaoMateriais = dados.divulgacaoMateriais || [];
       state.menuAberto = true;
       state.acessoVendas = dados.acesso || null;
       state.solicitacaoAcesso = dados.solicitacao || null;
@@ -1382,7 +1386,66 @@ function novaSugestaoVendas() {
 
 function renderDivulgacao() {
   const temBusca = Boolean(String(state.busca || '').trim());
-  return `<section class="module-page materials-page divulgacao-page${temBusca ? ' is-searching' : ''}"><div class="module-sticky-head"><div class="module-title"><div><h2>Divulgação</h2><p>Artes, catálogos e vídeos para compartilhar.</p></div></div>${renderBarraBusca('Pesquisar materiais', 'Filtros')}</div><div class="materials-grid"><button><span>${svgIcon('folder')}</span><h3>Catálogos</h3><p>Materiais de produtos</p></button><button><span>${svgIcon('folder')}</span><h3>Campanhas</h3><p>Artes para divulgação</p></button><button><span>${svgIcon('folder')}</span><h3>Vídeos</h3><p>Conteúdo para compartilhar</p></button></div></section>`;
+  const pesquisa = normalizar(buscaAplicada);
+  const pastas = (state.divulgacaoPastas || []).filter((pasta) => {
+    if (!pesquisa) return true;
+    if ([pasta.nome, pasta.descricao].some((valor) => normalizar(valor).includes(pesquisa))) return true;
+    return (state.divulgacaoMateriais || []).some((material) => material.pasta_id === pasta.id && normalizar(material.titulo).includes(pesquisa));
+  });
+  const cards = pastas.map((pasta) => {
+    const materiais = (state.divulgacaoMateriais || []).filter((item) => item.pasta_id === pasta.id);
+    const capa = materiais.find((item) => item.miniatura_url) || materiais[0];
+    return `<button type="button" class="material-folder-card" onclick="abrirPastaDivulgacao('${pasta.id}')"><span class="material-folder-cover">${capa?.miniatura_url ? `<img src="${escapeAttr(capa.miniatura_url)}" alt="">` : capa?.tipo === 'video' ? `<video src="${escapeAttr(capa.arquivo_url)}" muted preload="metadata"></video>` : svgIcon('folder')}</span><span class="material-folder-info"><b>${escapeHtml(pasta.nome)}</b><small>${escapeHtml(pasta.descricao || `${materiais.length} ${materiais.length === 1 ? 'material' : 'materiais'}`)}</small><em>${materiais.length}</em></span></button>`;
+  }).join('');
+  return `<section class="module-page materials-page divulgacao-page${temBusca ? ' is-searching' : ''}"><div class="module-sticky-head"><div class="module-title"><div><h2>Divulgação</h2><p>Materiais publicados pela sua empresa para compartilhar.</p></div></div>${renderBarraBusca('Pesquisar pastas ou materiais', 'Ordem Alfabética')}</div>${cards ? `<div class="materials-grid">${cards}</div>` : `<article class="publication-empty"><span>${svgIcon('folder')}</span><h3>${pesquisa ? 'Nenhum material encontrado' : 'Nenhum material publicado'}</h3><p>${pesquisa ? 'Revise a pesquisa e tente novamente.' : 'Quando sua empresa publicar fotos ou vídeos, as pastas aparecerão aqui.'}</p></article>`}</section>`;
+}
+
+function abrirPastaDivulgacao(pastaId) {
+  const pasta = (state.divulgacaoPastas || []).find((item) => item.id === pastaId);
+  if (!pasta) return;
+  const materiais = (state.divulgacaoMateriais || []).filter((item) => item.pasta_id === pastaId);
+  const grade = materiais.map((item) => `<button type="button" class="material-thumb" onclick="abrirMaterialDivulgacao('${item.id}')"><span>${item.miniatura_url ? `<img src="${escapeAttr(item.miniatura_url)}" alt="${escapeAttr(item.titulo)}">` : item.tipo === 'video' ? `<video src="${escapeAttr(item.arquivo_url)}" muted preload="metadata"></video>` : svgIcon('package')}</span><b>${escapeHtml(item.titulo)}</b><small>${item.tipo === 'video' ? 'Vídeo' : 'Imagem'}</small></button>`).join('');
+  sheet(`<div class="sheet-header"><div><h2>${escapeHtml(pasta.nome)}</h2><p class="muted small">${escapeHtml(pasta.descricao || `${materiais.length} materiais para divulgação`)}</p></div><button class="close" onclick="fecharSheet()">×</button></div>${grade ? `<div class="material-sheet-grid">${grade}</div>` : `<div class="material-sheet-empty">Esta pasta ainda está vazia.</div>`}`, 'sheet-backdrop-centered material-folder-backdrop');
+}
+
+function abrirMaterialDivulgacao(materialId) {
+  const material = (state.divulgacaoMateriais || []).find((item) => item.id === materialId);
+  if (!material) return;
+  const visualizacao = material.tipo === 'video'
+    ? `<video src="${escapeAttr(material.arquivo_url)}" controls playsinline preload="metadata"></video>`
+    : `<img src="${escapeAttr(material.arquivo_url)}" alt="${escapeAttr(material.titulo)}">`;
+  sheet(`<div class="sheet-header"><div><h2>${escapeHtml(material.titulo)}</h2><p class="muted small">Toque na mídia para ampliar.</p></div><button class="close" onclick="fecharSheet()">×</button></div><button type="button" class="material-preview" onclick="alternarMaterialExpandido()" aria-label="Ampliar material">${visualizacao}</button><button type="button" class="primary material-share" onclick="compartilharMaterialDivulgacao('${material.id}')">${svgIcon('save')} Compartilhar material</button>`, 'sheet-backdrop-centered material-preview-backdrop');
+}
+
+function alternarMaterialExpandido() {
+  document.getElementById('sheetBackdrop')?.classList.toggle('material-expanded');
+}
+
+async function compartilharMaterialDivulgacao(materialId) {
+  const material = (state.divulgacaoMateriais || []).find((item) => item.id === materialId);
+  if (!material) return;
+  const botao = document.querySelector('.material-share');
+  if (botao) { botao.disabled = true; botao.textContent = 'Preparando material...'; }
+  try {
+    const resposta = await fetch(material.arquivo_url);
+    if (!resposta.ok) throw new Error('Não foi possível baixar o material.');
+    const blob = await resposta.blob();
+    const extensao = blob.type.split('/')[1]?.replace('quicktime', 'mov') || (material.tipo === 'video' ? 'mp4' : 'jpg');
+    const nome = `${String(material.titulo || 'material').replace(/[^a-zA-Z0-9_-]+/g, '-')}.${extensao}`;
+    const arquivo = new File([blob], nome, { type: blob.type });
+    if (navigator.share && (!navigator.canShare || navigator.canShare({ files: [arquivo] }))) {
+      await navigator.share({ title: material.titulo, text: 'Material de divulgação', files: [arquivo] });
+      return;
+    }
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a'); link.href = url; link.download = nome; link.click();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    toast('Material baixado para compartilhar.');
+  } catch (error) {
+    if (error?.name !== 'AbortError') toast(traduzErro(error));
+  } finally {
+    if (botao) { botao.disabled = false; botao.innerHTML = `${svgIcon('save')} Compartilhar material`; }
+  }
 }
 
 function renderConfiguracoes() {
@@ -2562,7 +2625,7 @@ function renderPagamentos() {
 function renderClienteDebito(c) {
   const saldo = saldoFinanceiroCliente(c.id);
   const ultimoPagamento = pagamentosDoCliente(c.id)[0];
-  const detalhe = ultimoPagamento ? `Último pagamento em ${dataBR(`${ultimoPagamento.data_pagamento}T12:00:00`)}` : 'Sem pagamentos registrados';
+  const detalhe = ultimoPagamento ? `Último pagamento em ${dataCurtaBR(`${ultimoPagamento.data_pagamento}T12:00:00`)}` : 'Sem pagamentos registrados';
   return `<article class="debt-card"><header><span>${svgIcon('user')}</span><div><h3>${escapeHtml(c.nome)}</h3><p>${detalhe}</p></div></header><div class="debt-values"><div class="pending"><small>Pendente</small><b>${moeda(saldo.debito)}</b></div><div class="consigned"><small>Consignado</small><b>${moeda(saldo.consignado)}</b></div><div class="credit"><small>Crédito</small><b>${moeda(saldo.credito)}</b></div></div><div class="debt-actions"><button class="debt-details primary" onclick="abrirPagamentoCliente('${c.id}')">${svgIcon('dollar')}<span>Registrar pagamento</span></button><button class="debt-details ghost" onclick="abrirPagamentosCliente('${c.id}')">${svgIcon('credit-card')}<span>Ver pagamentos</span></button></div></article>`;
 }
 
@@ -3623,6 +3686,10 @@ window.confirmarAtualizarTelefone = confirmarAtualizarTelefone;
 window.instalarPWA = instalarPWA;
 window.enviarSugestaoVendas = enviarSugestaoVendas;
 window.novaSugestaoVendas = novaSugestaoVendas;
+window.abrirPastaDivulgacao = abrirPastaDivulgacao;
+window.abrirMaterialDivulgacao = abrirMaterialDivulgacao;
+window.alternarMaterialExpandido = alternarMaterialExpandido;
+window.compartilharMaterialDivulgacao = compartilharMaterialDivulgacao;
 
 window.addEventListener('pageshow', () => requestAnimationFrame(limparFocoInicialLogin));
 window.addEventListener('scroll', agendarDestaqueClientes, { passive: true });
