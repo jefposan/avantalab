@@ -433,6 +433,7 @@ body.sheet-open {
 .field select,
 .field textarea {
   width: 100%;
+  box-sizing: border-box;
   min-height: 38px;
   border: 1px solid var(--borda);
   border-radius: 12px;
@@ -676,7 +677,8 @@ body.sheet-open {
 .sheet > .sheet-header .muted { opacity: .82; }
 .sheet > .sheet-header .close { color: #fff; background: rgba(255,255,255,.16); }
 .cliente-sheet-backdrop .sheet > .sheet-header { margin: -12px -12px 10px; padding: 12px; }
-.cliente-sheet-backdrop input[type="date"] { width: 100%; min-width: 0; max-width: 100%; box-sizing: border-box; }
+.cliente-sheet-backdrop input[type="date"] { width: 100%; min-width: 0; max-width: 100%; box-sizing: border-box; text-align: center; }
+.cliente-sheet-backdrop input[type="date"]::-webkit-datetime-edit { width: 100%; text-align: center; }
 
 .close {
   display: grid;
