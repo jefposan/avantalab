@@ -1,8 +1,8 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.5.0.10 -->
+<!-- ava-version: 1.5.0.11 -->
 
-> Revisão 1.5.0.10: adiciona seleção e troca de perfil de Vendas.
+> Revisão 1.5.0.11: sem impacto operacional no Vendas Mobile.
 
 ## Escopo e navegação
 

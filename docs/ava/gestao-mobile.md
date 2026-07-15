@@ -1,8 +1,8 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.5.0.10 -->
+<!-- ava-version: 1.5.0.11 -->
 
-> Revisão 1.5.0.10: adiciona a seleção do perfil de Vendas durante a troca.
+> Revisão 1.5.0.11: o Sobre passa a apresentar um histórico consolidado das principais novidades para o usuário.
 
 ## Escopo
 
@@ -16,6 +16,8 @@ deve usar os nomes do menu e da barra inferior do celular.
 - Avisos já recebidos podem ser consultados e apagados em **Menu > Configurações >
   Avisos e notificações**; a ativação das notificações do aparelho fica no item
   **Notificações**, no mesmo submenu.
+- **Sobre** apresenta as principais novidades em marcos consolidados, sem listar
+  ajustes exclusivamente técnicos.
 - Em **Configurações**, **Assinatura** aparece primeiro quando disponível, seguida
   pelos controles com chave. **Gerenciar perfil**, **Usuários** e **Editar dados
   cadastrais** aparecem em sequência.

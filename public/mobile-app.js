@@ -9611,7 +9611,7 @@
 
     var cabVersoes =
       '<div class="mt-4 mb-2 flex items-baseline justify-between">' +
-        '<h3 class="text-[11px] font-black uppercase tracking-wide ' + muted + '">Novidades das vers&otilde;es</h3>' +
+        '<h3 class="text-[11px] font-black uppercase tracking-wide ' + muted + '">Principais novidades</h3>' +
         '<span class="text-[11px] font-bold" style="color:' + corLink + '">Instalada: ' + escapeHtml(APP_VERSION) + '</span>' +
       '</div>';
 
@@ -12795,7 +12795,7 @@
           return Promise.all(
             keys
               .filter(function (key) {
-                return key.indexOf('avantalab-mobile-') === 0 && key !== 'avantalab-mobile-v255';
+                return key.indexOf('avantalab-mobile-') === 0 && key !== 'avantalab-mobile-v256';
               })
               .map(function (key) {
                 return caches.delete(key);
@@ -12812,7 +12812,7 @@
     });
 
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/mobile-sw.js?v=239').then(function (registro) {
+      navigator.serviceWorker.register('/mobile-sw.js?v=240').then(function (registro) {
         if (registro && registro.update) registro.update();
       }).catch(function () {});
     }

@@ -13,833 +13,106 @@
   },
   "versoes": [
     {
-      "versao": "1.5.0.10",
-      "titulo": "Perfis no Vendas Mobile",
+      "versao": "1.5.0.11",
+      "titulo": "Gestão e Vendas Mobile conectados",
       "data": "Julho/2026",
       "itens": [
-        "Um único perfil de Vendas abre diretamente; múltiplos perfis exibem um seletor antes da entrada.",
-        "O header do Vendas ganha um botão próprio para trocar de perfil quando houver mais de um.",
-        "A troca de perfil não altera o destino financeiro definido nas Configurações."
+        "Gestão e Vendas Mobile agora compartilham a mesma sessão, permitindo trocar de sistema sem fazer um novo login.",
+        "Quando há um único perfil de Vendas, o acesso é direto; com vários, o usuário escolhe qual deseja abrir e pode trocá-lo pelo cabeçalho.",
+        "O módulo Vendas pode ser ativado pelo menu Sistemas da Gestão por usuários autorizados.",
+        "A escolha do sistema inicial pode ser memorizada, e uma troca aberta dentro do aplicativo pode ser cancelada sem sair do sistema atual.",
+        "As permissões continuam respeitadas: operadores não podem ativar nem trocar de sistema.",
+        "O menu Configurações da Gestão Mobile foi reorganizado para deixar assinatura, preferências e administração de perfis mais fáceis de encontrar."
       ]
     },
     {
-      "versao": "1.5.0.09",
-      "titulo": "Cancelamento da troca de sistemas",
+      "versao": "1.4",
+      "titulo": "Cadastros, lançamentos e dashboard mais práticos",
       "data": "Julho/2026",
       "itens": [
-        "O seletor de sistemas aberto dentro da Gestão ganha botão X para fechar.",
-        "Tocar fora do card também cancela a troca e mantém o sistema atual."
-      ]
-    },
-    {
-      "versao": "1.5.0.08",
-      "titulo": "Ativação do Vendas Mobile pela Gestão",
-      "data": "Julho/2026",
-      "itens": [
-        "Sistemas permanece visível quando o perfil ainda não possui Vendas Mobile e permite solicitar a ativação.",
-        "Após ativar e validar o módulo, o seletor entre Gestão e Vendas abre automaticamente.",
-        "Operadores continuam bloqueados e perfis pessoais gratuitos precisam do Premium."
-      ]
-    },
-    {
-      "versao": "1.5.0.07",
-      "titulo": "Ordem das Configurações na Gestão Mobile",
-      "data": "Julho/2026",
-      "itens": [
-        "Assinatura aparece primeiro quando disponível e os controles com chave ficam agrupados no topo.",
-        "Gerenciar perfil, Usuários e Editar dados cadastrais passam a aparecer em sequência."
-      ]
-    },
-    {
-      "versao": "1.5.0.06",
-      "titulo": "Organização do menu da Gestão Mobile",
-      "data": "Julho/2026",
-      "itens": [
-        "Avisos e notificações passa a ficar dentro de Configurações.",
-        "Os botões do menu lateral ficam levemente mais compactos."
-      ]
-    },
-    {
-      "versao": "1.5.0.05",
-      "titulo": "Correção do menu da Gestão Mobile",
-      "data": "Julho/2026",
-      "itens": [
-        "As opções do menu sanduíche voltam a responder normalmente em todos os perfis liberados.",
-        "O bloqueio permanece restrito às funções que possuem regra real de permissão."
-      ]
-    },
-    {
-      "versao": "1.5.0.04",
-      "titulo": "Seleção de perfil na troca para Gestão",
-      "data": "Julho/2026",
-      "itens": [
-        "No Vendas, a troca de sistema passa a listar todos os perfis ativos da Gestão vinculados à conta.",
-        "A Gestão abre diretamente no perfil selecionado após a confirmação.",
-        "Na Gestão, a troca permanece oculta quando o perfil atual não possui o módulo Vendas."
-      ]
-    },
-    {
-      "versao": "1.5.0.03",
-      "titulo": "Entrada e navegação do Vendas Mobile",
-      "data": "Julho/2026",
-      "itens": [
-        "A seleção entre Gestão e Vendas passa a acontecer antes do carregamento dos dados também ao entrar pelo Vendas Mobile.",
-        "A troca para Gestão fica no header da sala de botões e exige confirmação.",
-        "Perfis com módulo Vendas ativo passam a ser priorizados, evitando recursos incorretamente desativados."
-      ]
-    },
-    {
-      "versao": "1.5.0.02",
-      "titulo": "Seleção de sistema antes do carregamento",
-      "data": "Julho/2026",
-      "itens": [
-        "A escolha entre Gestão e Vendas passa a ser a primeira tela após o login para gestores habilitados.",
-        "O carregamento do sistema começa somente após a escolha ou usa diretamente a preferência memorizada."
-      ]
-    },
-    {
-      "versao": "1.5.0.01",
-      "titulo": "Correção do acesso integrado",
-      "data": "Julho/2026",
-      "itens": [
-        "Gestor Master e Administrador passam a ter a troca entre Gestão e Vendas liberada automaticamente quando o módulo está instalado.",
-        "Operadores continuam sem permissão para trocar de sistema."
-      ]
-    },
-    {
-      "versao": "1.5.0",
-      "titulo": "Integração Gestão e Vendas Mobile",
-      "data": "Julho/2026",
-      "itens": [
-        "Gestão e Vendas Mobile compartilham a sessão e preservam o perfil ao trocar de sistema.",
-        "Gestores com o módulo Vendas ativo podem escolher e memorizar o sistema inicial.",
-        "A troca de sistema está disponível no menu e nos atalhos configuráveis; no Vendas, também aparece no cabeçalho."
-      ]
-    },
-    {
-      "versao": "1.4.0.68",
-      "titulo": "Edição de lançamentos no mobile",
-      "data": "Julho/2026",
-      "itens": [
-        "Mobile: o campo de valor preserva a alteração na tela durante o salvamento do lançamento."
-      ]
-    },
-    {
-      "versao": "1.4.0.67",
-      "titulo": "Tema do chat da Ava",
-      "data": "Julho/2026",
-      "itens": [
-        "Web: o header do chat da Ava acompanha o modo escuro e usa o logo adequado para cada fundo."
-      ]
-    },
-    {
-      "versao": "1.4.0.66",
-      "titulo": "Refinamentos do Kanban e Ajustes",
-      "data": "Julho/2026",
-      "itens": [
-        "Web: cards arrastados no Kanban mantêm o recorte correto do padrão AvantaLab.",
-        "Web: o header principal permanece visível ao abrir Ajustes com a página rolada."
-      ]
-    },
-    {
-      "versao": "1.4.0.65",
-      "titulo": "Relatório e layout do dashboard",
-      "data": "Julho/2026",
-      "itens": [
-        "Web: o comparativo Receitas x despesas do Relatório do perfil ganhou linhas-guia suaves.",
-        "Web: cards do Kanban podem ser posicionados abaixo de Lançamentos mensais, que permanece fixo no topo."
-      ]
-    },
-    {
-      "versao": "1.4.0.64",
-      "titulo": "Tooltip durante o arraste",
-      "data": "Julho/2026",
-      "itens": [
-        "Web: o tooltip do card Meus perfis aparece no hover e desaparece durante o redimensionamento."
-      ]
-    },
-    {
-      "versao": "1.4.0.63",
-      "titulo": "Privacidade inicial no web",
-      "data": "Julho/2026",
-      "itens": [
-        "Web: Configurações ganhou a opção Iniciar valores ocultos, seguindo o comportamento do mobile.",
-        "Web: as chavinhas de privacidade inicial e duplicados ficam reunidas no mesmo menu."
-      ]
-    },
-    {
-      "versao": "1.4.0.62",
-      "titulo": "Tooltip do card de perfis",
-      "data": "Julho/2026",
-      "itens": [
-        "Web: o rodapé de arraste do card Meus perfis agora explica sua função ao passar o mouse."
-      ]
-    },
-    {
-      "versao": "1.4.0.61",
-      "titulo": "Folga do card de perfis expandido",
-      "data": "Julho/2026",
-      "itens": [
-        "Web: amplia o limite final do card Meus perfis quando ele ocupa a largura completa.",
-        "Web: mantém o bloco Receitas x despesas por perfil totalmente visível durante o redimensionamento."
-      ]
-    },
-    {
-      "versao": "1.4.0.60",
-      "titulo": "Área de arraste do card de perfis",
-      "data": "Julho/2026",
-      "itens": [
-        "Web: cursor do puxador mostra mão aberta e mão fechada ao segurar.",
-        "Web: todo o rodapé responde ao arraste e o último perfil fica totalmente visível."
-      ]
-    },
-    {
-      "versao": "1.4.0.59",
-      "titulo": "Correção da trava dos popups",
-      "data": "Julho/2026",
-      "itens": [
-        "Web: congela de forma efetiva a página ao fundo enquanto um popup estiver aberto.",
-        "Web: preserva a rolagem interna do popup e a posição da página após o fechamento."
-      ]
-    },
-    {
-      "versao": "1.4.0.58",
-      "titulo": "Refino do puxador de perfis",
-      "data": "Julho/2026",
-      "itens": [
-        "Web: puxador mostra Arraste e usa cursor de pegar/segurar durante o uso.",
-        "Web: expansão do card Meus perfis termina no último perfil da lista, sem espaço vazio."
-      ]
-    },
-    {
-      "versao": "1.4.0.57",
-      "titulo": "Foco nos popups e card de perfis",
-      "data": "Julho/2026",
-      "itens": [
-        "Web: a página de fundo fica bloqueada enquanto houver um popup aberto.",
-        "Web: o card Meus perfis ganhou um puxador no rodapé para ampliar a área da lista."
-      ]
-    },
-    {
-      "versao": "1.4.0.56",
-      "titulo": "Ajustes no lançamento web",
-      "data": "Julho/2026",
-      "itens": [
-        "Web: mantém a fonte da despesa selecionada e da lista no mesmo tamanho do seletor.",
-        "Web: remove o lançamento por foto e mantém somente o envio por arquivo.",
-        "Web: avança o foco automaticamente após dois dígitos válidos no dia e após selecionar a despesa."
-      ]
-    },
-    {
-      "versao": "1.4.0.55",
-      "titulo": "Troca de perfil e mês do lançamento",
-      "data": "Julho/2026",
-      "itens": [
-        "Mobile: informa Carregando perfil ao selecionar outro perfil.",
-        "Mobile: mês do Novo lançamento aparece em uma pílula maior, centralizada entre o título e o botão fechar."
-      ]
-    },
-    {
-      "versao": "1.4.0.54",
-      "titulo": "Limpeza da leitura por foto",
-      "data": "Julho/2026",
-      "itens": [
-        "Remove o laboratório temporário e consolida a leitura por foto em serviços definitivos.",
-        "Histórico público: remove entradas dos testes isolados."
-      ]
-    },
-    {
-      "versao": "1.4.0.53",
-      "titulo": "Lançamentos e recursos exclusivos",
-      "data": "Julho/2026",
-      "itens": [
-        "Mobile: Novo lançamento mostra o mês selecionado no cabeçalho para despesas e receitas.",
-        "Mobile: foto/arquivo de nota, Ava IA e Insights da Ava exibem aviso de recurso exclusivo para assinantes.",
-        "Mobile: tutorial atualizado com os fluxos atuais do sistema."
-      ]
-    },
-    {
-      "versao": "1.4.0.52",
-      "titulo": "Cadastro protegido e perfis destacados",
-      "data": "Julho/2026",
-      "itens": [
-        "Mobile: perfil atual e perfil tocado recebem borda azul durante a troca.",
-        "Cadastro Web/Mobile: preserva o preenchimento e salva automaticamente os dados do perfil ao sair dos campos.",
-        "Mobile: card da Caixinha ganha topo colorido no padrão dos demais cards."
-      ]
-    },
-    {
-      "versao": "1.4.0.51",
-      "titulo": "Ações e avisos em azul",
-      "data": "Julho/2026",
-      "itens": [
-        "Lançamentos por foto: Arquivo e Foto ganham destaque visual no Web e Mobile.",
-        "Avisos rápidos: cards de confirmação agora usam azul médio AvantaLab."
-      ]
-    },
-    {
-      "versao": "1.4.0.50",
-      "titulo": "Exclusão de despesas corrigida",
-      "data": "Julho/2026",
-      "itens": [
-        "Lançamentos com nota: a limpeza do arquivo não impede mais a exclusão da despesa.",
-        "Mobile: confirmação de exclusão legível no modo noturno e botões padronizados."
-      ]
-    },
-    {
-      "versao": "1.4.0.49",
-      "titulo": "Ações de notas e cadastro",
-      "data": "Julho/2026",
-      "itens": [
-        "Cadastro: mantém as três ações em uma única linha.",
-        "Notas e despesas mobile: reorganiza as ações, melhora o contraste de Ver nota e remove o botão Salvar redundante.",
-        "Lançamentos: corrige a exclusão de despesas comuns e melhora a confirmação no modo noturno."
-      ]
-    },
-    {
-      "versao": "1.4.0.48",
-      "titulo": "Notas e cadastro mais claros",
-      "data": "Julho/2026",
-      "itens": [
-        "Notas: informa Baixando imagem enquanto prepara a visualização do comprovante.",
-        "Perfis e cadastro: adiciona estado pressionado aos botões de acesso e permite salvar inclusões parciais para concluir depois."
-      ]
-    },
-    {
-      "versao": "1.4.0.47",
-      "titulo": "Processamento de imagem",
-      "data": "Julho/2026",
-      "itens": [
-        "Lançamentos por foto: mostra um card de processamento até a leitura da imagem terminar no Web e Mobile."
-      ]
-    },
-    {
-      "versao": "1.4.0.46",
-      "titulo": "Lançamentos por foto",
-      "data": "Julho/2026",
-      "itens": [
-        "Lançamentos Web/Mobile: lê notas por foto ou arquivo e sugere a data, o valor e o tipo de despesa.",
-        "Notas ficam em bucket privado, podem ser abertas, compartilhadas ou salvas e são removidas junto com o lançamento.",
-        "Mobile: força o carregamento da nova interface também no PWA."
-      ]
-    },
-    {
-      "versao": "1.4.0.43",
-      "titulo": "Ava estável e saldo Asaas",
-      "data": "Julho/2026",
-      "itens": [
-        "Ava Mobile: elimina o flicker da logomarca ao estabilizar o elemento do header e reutilizar a imagem já decodificada durante as ações do chat.",
-        "Mobile: pré-carrega as variantes clara e escura da Ava no layout, reduzindo o atraso da primeira exibição.",
-        "Admin: adiciona o saldo disponível da conta Asaas vinculada ao sistema no resumo de consumo."
-      ]
-    },
-    {
-      "versao": "1.4.0.42",
-      "titulo": "Acesso mobile e consumo OpenAI",
-      "data": "Julho/2026",
-      "itens": [
-        "Ava Mobile: header do chat passa a usar a logomarca específica para fundos claros ou escuros conforme o tema ativo.",
-        "Login Web: adiciona o botão Acessar pelo celular e gera localmente um QR Code para abrir a versão mobile.",
-        "Admin: adiciona a OpenAI API ao resumo de consumo, com custo oficial do mês via chave administrativa e acesso direto ao saldo no painel de Billing."
-      ]
-    },
-    {
-      "versao": "1.4.0.41",
-      "titulo": "Cadastro completo dos perfis",
-      "data": "Julho/2026",
-      "itens": [
-        "Configurações > Perfil: permite selecionar qualquer perfil vinculado em que o usuário seja Gestor Master ou Administrador e editar seu cadastro completo.",
-        "Cadastro do perfil: reúne Dados Gerais, Endereço, Contato e Dados Fiscais em um card amplo, carregando os dados existentes para correção.",
-        "Perfis: mantém credenciais do usuário separadas dos dados cadastrais da empresa e preserva a data original de conclusão ao salvar correções.",
-        "Cadastro Web/Mobile: quando Empresa é selecionada, solicita Nome Fantasia e Responsável separadamente; email e senha permanecem vinculados exclusivamente ao usuário.",
-        "Primeiro acesso Web/Mobile: cria automaticamente o primeiro perfil com o Nome Fantasia informado e vincula o usuário autenticado, eliminando a repetição do nome após o cadastro.",
-        "Perfis: mantém o mesmo usuário apto a criar outros perfis ou ser vinculado a perfis existentes, sem criar credenciais próprias para a empresa.",
-        "Banco: serializa a criação do primeiro perfil por usuário para impedir duplicidade entre Web e Mobile e mantém perfis existentes inalterados.",
-        "Cadastro cadastral Web/Mobile: adiciona dados gerais, documento, endereço com busca por CEP, contato e dados fiscais, com preenchimento reaproveitado pela cobrança.",
-        "Perfis: concede sete dias de tolerância, permite adiar durante o prazo e bloqueia o acesso incompleto somente após o vencimento; perfis antigos recebem sete dias a partir da implantação.",
-        "Paywall: apresenta planos antes do formulário e só solicita o cadastro completo quando o usuário decide contratar; cupom e liberação administrativa mantêm a exigência após o prazo.",
-        "Segurança: CNPJ é único, CPF pode se repetir, Autônomo aceita CPF e somente Gestor Master ou Administrador pode concluir o cadastro."
-      ]
-    },
-    {
-      "versao": "1.4.0.40",
-      "titulo": "Acesso mobile sem sobreposição",
-      "data": "Julho/2026",
-      "itens": [
-        "Login mobile: restaura o enquadramento vertical do background e garante distância responsiva mínima entre o logo e o card de acesso ou cadastro.",
-        "Cadastro: substitui o checkbox pelo aviso de aceite implícito, preservando os links dos Termos de Uso e da Política de Privacidade e o registro do consentimento.",
-        "Cadastro: posiciona a escolha Empresa/Pessoal antes do nome, formata automaticamente celulares brasileiros e compacta a altura do formulário.",
-        "Login: mantém intactos o posicionamento e as dimensões atuais dos botões Entrar e Conectar com Google."
-      ]
-    },
-    {
-      "versao": "1.4.0.39",
-      "titulo": "Menu web responsivo completo",
-      "data": "Julho/2026",
-      "itens": [
-        "Web responsivo: transforma os controles ocultos do header em menu sanduíche acessível até 1279px.",
-        "Web responsivo: menu reduzido passa a reunir ano, navegação, agenda, avisos, calculadora, perfil, ajustes e sair.",
-        "Web responsivo: em telas intermediárias, o menu abre abaixo do botão; no celular, mantém a gaveta lateral.",
-        "Web responsivo: Ajustes abre em um card vertical à esquerda do menu sanduíche, usando o mesmo breakpoint max-xl para manter todas as opções acessíveis."
-      ]
-    },
-    {
-      "versao": "1.4.0.38",
-      "titulo": "PWA abre o dashboard mobile",
-      "data": "Julho/2026",
-      "itens": [
-        "PWA: passa a iniciar no dashboard mobile em /mobile, mantendo landing e autenticação na rota principal.",
-        "Mobile: quando não há sessão, /mobile retorna ao novo login em vez de exibir a tela de acesso legada.",
-        "Mobile: após autenticar pela rota principal, celulares e o PWA seguem automaticamente para o dashboard mobile."
-      ]
-    },
-    {
-      "versao": "1.4.0.37",
-      "titulo": "Header mobile transparente",
-      "data": "Julho/2026",
-      "itens": [
-        "Landing mobile: deixa o header transparente no topo e ativa o fundo translúcido somente após iniciar a rolagem.",
-        "Landing mobile: move a seta flutuante para uma camada global, impedindo que a hero a recorte antes do fim da página."
-      ]
-    },
-    {
-      "versao": "1.4.0.36",
-      "titulo": "Acesso mobile unificado",
-      "data": "Julho/2026",
-      "itens": [
-        "Mobile/Web: desativa a página legada /mobile e mantém landing, login e sistema na rota principal responsiva.",
-        "Login: adiciona a opção de instalar o AvantaLab como aplicativo, com suporte ao prompt do navegador e instruções para instalação manual.",
-        "PWA: substitui o service worker legado por uma versão sem cache de páginas antigas e mantém o suporte a notificações.",
-        "Landing mobile: mantém a seta ativa após Dúvidas e reserva o último clique para alcançar o final real da página.",
-        "Login mobile: reduz a altura do card, mantém seu topo abaixo do logo e posiciona Entrar e Conectar com Google lado a lado.",
-        "Carregamento mobile: utiliza o background vertical mobile por imagem responsiva WebP/PNG desde o primeiro frame, inclusive em navegadores sem suporte completo a image-set().",
-        "Landing mobile: reduz altura, espaçamento e peso visual dos botões Entrar e Teste grátis no topo."
-      ]
-    },
-    {
-      "versao": "1.4.0.35",
-      "titulo": "Landing mobile mais organizada",
-      "data": "Julho/2026",
-      "itens": [
-        "Web: reorganiza a hero da landing no mobile em tela cheia, exibe o menu compacto e adiciona seta para a área de demonstração do produto.",
-        "Web: ajusta o ponto de rolagem dos botões Benefícios e Dúvidas no menu mobile da landing.",
-        "Web: deixa a seta da hero mobile flutuante, translúcida e compacta a área de demonstração do produto.",
-        "Web: mantém a seta mobile até o fim da página, suaviza sua transparência e remove sombras da segunda parte da hero.",
-        "Web: seta mobile passa a avançar etapa por etapa pelos cards da landing.",
-        "Web: ajusta as paradas da seta mobile da landing e compacta a faixa de confiança abaixo da hero.",
-        "Web: suaviza as pílulas do menu mobile e distribui melhor o conteúdo da primeira tela da hero.",
-        "Web: adiciona uma etapa final da seta mobile para rolar até o fim real da landing.",
-        "Web: reduz e anima a seta mobile da landing, mantendo-a disponível até o fim real do scroll.",
-        "Web: compacta os subcards de benefícios no mobile.",
-        "Web: garante uma última etapa independente para a seta mobile alcançar o fim real da página e reorganiza os benefícios com ícone e título na mesma linha."
-      ]
-    },
-    {
-      "versao": "1.4.0.34",
-      "titulo": "Carregamentos com vidro translúcido",
-      "data": "Julho/2026",
-      "itens": [
-        "Web: compacta, reposiciona acima do logo do background e refina a transparência dos cards principais de carregamento.",
-        "Web: no modo reduzido, o card Meus perfis passa a exibir o título curto \"Perfis\"."
-      ]
-    },
-    {
-      "versao": "1.4.0.33",
-      "titulo": "Cancelar troca mantém perfil",
-      "data": "Julho/2026",
-      "itens": [
-        "Web: cancelar a troca de perfil mantém o usuário no perfil atual em vez de voltar para a tela de login."
-      ]
-    },
-    {
-      "versao": "1.4.0.32",
-      "titulo": "Logo clicável quando vazio",
-      "data": "Julho/2026",
-      "itens": [
-        "Web: placeholder de logomarca no header passa a abrir o card de inserção de logo quando ainda não há logo configurada."
-      ]
-    },
-    {
-      "versao": "1.4.0.31",
-      "titulo": "Seleção de perfil mais rápida",
-      "data": "Julho/2026",
-      "itens": [
-        "Web: abertura da seleção de perfil fica imediata ao usar a lista já carregada, atualizando os perfis em segundo plano."
-      ]
-    },
-    {
-      "versao": "1.4.0.30",
-      "titulo": "Matriz anual mais compacta",
-      "data": "Julho/2026",
-      "itens": [
-        "Relatórios: reduz a altura das linhas da Matriz Anual de Despesas para melhorar a densidade visual."
-      ]
-    },
-    {
-      "versao": "1.4.0.29",
-      "titulo": "Tom fixo nas barras positivas",
-      "data": "Julho/2026",
-      "itens": [
-        "Gráficos: barras positivas e barras verdes passam a usar o tom fixo do EBITDA, sem depender da cor primária do perfil."
-      ]
-    },
-    {
-      "versao": "1.4.0.28",
-      "titulo": "Cor do Resultado Mensal",
-      "data": "Julho/2026",
-      "itens": [
-        "Gráficos: barra positiva de Resultado Mensal passa a usar a mesma cor primária aplicada no gráfico de EBITDA."
-      ]
-    },
-    {
-      "versao": "1.4.0.27",
-      "titulo": "Calendário de dias não úteis no ponto",
-      "data": "Julho/2026",
-      "itens": [
-        "Ponto: adiciona calendário de dias não úteis da empresa para feriados, recesso, folga coletiva e dias fechados, evitando que essas datas contem como falta no web, mobile e relatórios."
-      ]
-    },
-    {
-      "versao": "1.4.0.26",
-      "titulo": "Carregamento em liquid glass",
-      "data": "Julho/2026",
-      "itens": [
-        "Web: cards de carregamento passam a usar acabamento translúcido estilo liquid glass, mantendo o restante dos cards do sistema sem alteração."
-      ]
-    },
-    {
-      "versao": "1.4.0.25",
-      "titulo": "Mês no header dos perfis",
-      "data": "Julho/2026",
-      "itens": [
-        "Web: card \"Meus perfis\" remove a tarja da lista e passa a exibir o mês centralizado no header para ganhar espaço."
-      ]
-    },
-    {
-      "versao": "1.4.0.24",
-      "titulo": "Gerenciar perfil mais refinado",
-      "data": "Julho/2026",
-      "itens": [
-        "Web: modal \"Gerenciar perfil financeiro\" recebe acabamento visual mais profissional, com ações suavizadas e acentos no padrão AvantaLab."
-      ]
-    },
-    {
-      "versao": "1.4.0.23",
-      "titulo": "Scroll guiado nos perfis",
-      "data": "Julho/2026",
-      "itens": [
-        "Web: lista de perfis do card \"Meus perfis\" ganha tarja de separação entre cabeçalho e scroll.",
-        "Web: área de scroll dos perfis passa a exibir botão circular para mostrar mais itens quando houver conteúdo abaixo."
-      ]
-    },
-    {
-      "versao": "1.4.0.22",
-      "titulo": "Relatório de perfil com valores visíveis",
-      "data": "Julho/2026",
-      "itens": [
-        "Web: relatório aberto ao clicar em um perfil passa a exibir valores sempre, independente do estado de ocultar valores no card \"Meus perfis\"."
-      ]
-    },
-    {
-      "versao": "1.4.0.21",
-      "titulo": "Histórico no relatório de perfil",
-      "data": "Julho/2026",
-      "itens": [
-        "Web: relatório de perfil passa a exibir gráfico de receitas x despesas dos últimos 6 meses com tooltip.",
-        "Web: bloco \"Receitas x despesas por perfil\" ganha destaque com borda na cor primária.",
-        "Web: card reduzido troca o rótulo \"Resultado consolidado\" por \"Consolidado\" para melhorar o encaixe."
-      ]
-    },
-    {
-      "versao": "1.4.0.20",
-      "titulo": "Card Meus perfis refinado",
-      "data": "Julho/2026",
-      "itens": [
-        "Web: card \"Meus perfis\" recebe contagem e controle de valores no header.",
-        "Web: resumo consolidado passa a destacar resultado, receitas e despesas na mesma linha.",
-        "Web: lista de perfis fica limitada a três empresas visíveis, com scroll e rolagem automática ao arrastar.",
-        "Web: clique em uma empresa volta a abrir o relatório detalhado do perfil."
-      ]
-    },
-    {
-      "versao": "1.4.0.19",
-      "titulo": "Card Meus perfis mais compacto",
-      "data": "Julho/2026",
-      "itens": [
-        "Web: card \"Meus perfis\" fica mais compacto com subcards, barras e área de gráficos reduzidos sem perder legibilidade."
-      ]
-    },
-    {
-      "versao": "1.4.0.18",
-      "titulo": "Tooltip nos gráficos de perfis",
-      "data": "Julho/2026",
-      "itens": [
-        "Web: gráficos do card \"Meus perfis\" passam a usar tooltip flutuante no mesmo padrão dos demais cards.",
-        "Web: tooltip dos perfis respeita o controle independente de exibir ou ocultar valores."
-      ]
-    },
-    {
-      "versao": "1.4.0.17",
-      "titulo": "Refino do card Meus perfis",
-      "data": "Julho/2026",
-      "itens": [
-        "Web: card \"Meus perfis\" ganha controle independente para exibir ou ocultar valores.",
-        "Web: modo expandido do card \"Meus perfis\" fica mais compacto e passa a abrir os gráficos somente ao clicar em \"Exibir gráficos\"."
-      ]
-    },
-    {
-      "versao": "1.4.0.16",
-      "titulo": "Card Meus perfis no dashboard",
-      "data": "Julho/2026",
-      "itens": [
-        "Web: dashboard ganha o card \"Meus perfis\" no kanban, com resumo financeiro dos perfis vinculados ao usuário.",
-        "Web: novo card segue os controles padrão do dashboard para arrastar, expandir/reduzir, ocultar e reexibir pelo organizador."
-      ]
-    },
-    {
-      "versao": "1.4.0.15",
-      "titulo": "Confirmação da Caixinha refinada",
-      "data": "Julho/2026",
-      "itens": [
-        "Mobile: confirmação de reset da Caixinha passa a usar card visual no padrão do sistema, com texto em português corrigido.",
-        "Mobile: cancelar o reset fecha a confirmação e também remove a pílula do menu \"...\"."
-      ]
-    },
-    {
-      "versao": "1.4.0.14",
-      "titulo": "Reset da Caixinha mobile",
-      "data": "Julho/2026",
-      "itens": [
-        "Mobile: menu \"...\" da Caixinha passa a exibir duas pílulas de ação: \"- Ocultar card\" e \"- Resetar total\".",
-        "Mobile: reset da Caixinha pede confirmação, apaga o aporte inicial, remove movimentos da caixinha e exclui as despesas geradas pelos aportes."
-      ]
-    },
-    {
-      "versao": "1.4.0.13",
-      "titulo": "Pílula do menu em destaque",
-      "data": "Julho/2026",
-      "itens": [
-        "Mobile: pílula \"- Ocultar card\" do menu \"...\" passa a ficar acima do escurecimento global, mantendo todo o restante da tela escurecido."
-      ]
-    },
-    {
-      "versao": "1.4.0.12",
-      "titulo": "Menu dos cards mobile refinado",
-      "data": "Julho/2026",
-      "itens": [
-        "Mobile: menu \"...\" dos cards passa a escurecer a tela inteira, incluindo o header principal, deixando somente a pílula de ação em destaque.",
-        "Mobile: card \"Pergunte para a Ava\" deixa de exibir o menu \"...\".",
-        "Mobile: ação do balão passa a aparecer como pílula clicável com o texto \"- Ocultar card\"."
-      ]
-    },
-    {
-      "versao": "1.4.0.11",
-      "titulo": "Foco corrigido nos cards mobile",
-      "data": "Julho/2026",
-      "itens": [
-        "Mobile: ao abrir o balão do menu \"...\" dos cards, todo o restante da tela fica escurecido como nos demais modais; apenas o balão permanece em destaque."
-      ]
-    },
-    {
-      "versao": "1.4.0.10",
-      "titulo": "Ajustes no resumo mobile",
-      "data": "Julho/2026",
-      "itens": [
-        "Mobile: fundo escurecido do menu \"...\" dos cards do resumo passa a ficar acima do header.",
-        "Mobile: card de Insights da Ava informa que as sugestões são atualizadas ao mudar dados ou mês."
-      ]
-    },
-    {
-      "versao": "1.4.0.09",
-      "titulo": "Foco no menu dos cards",
-      "data": "Julho/2026",
-      "itens": [
-        "Mobile: ao abrir o balão do menu \"...\" dos cards, o restante da dashboard escurece.",
-        "Mobile: puxador de arraste dos cards recebeu contraste mais forte, alinhado ao botão \"...\"."
-      ]
-    },
-    {
-      "versao": "1.4.0.08",
-      "titulo": "Refinos no dashboard mobile",
-      "data": "Julho/2026",
-      "itens": [
-        "Mobile: Evolução de despesas e receitas passa a iniciar com o mês ativo selecionado.",
-        "Mobile: fundo escurecido dos cards e modais foi intensificado.",
-        "Mobile: tocar na casinha já estando na dashboard rola a tela para o topo.",
-        "Mobile: menu \"...\" dos cards passa a abrir um balão apontando para o botão, com ação \"Ocultar card\"."
-      ]
-    },
-    {
-      "versao": "1.4.0.07",
-      "titulo": "Refino dos lançamentos e cards",
-      "data": "Julho/2026",
-      "itens": [
-        "Web: campo de dia em lançamentos volta a permanecer vazio/manual ao abrir o card de despesa.",
-        "Mobile: menu \"...\" dos cards do resumo foi reposicionado junto ao puxador de arraste, sem criar espaço fora do card."
-      ]
-    },
-    {
-      "versao": "1.4.0.06",
-      "titulo": "Cadastro com acesso mais direto",
-      "data": "Julho/2026",
-      "itens": [
-        "Web e mobile: telefone confirmado por SMS no cadastro passa a liberar automaticamente o primeiro perfil financeiro.",
-        "Onboarding: primeiro acesso deixa de pedir uma segunda confirmação por SMS após o cadastro.",
-        "Segurança: SMS permanece ativo para redefinição de senha e para acessos antigos sem celular confirmado."
-      ]
-    },
-    {
-      "versao": "1.4.0.05",
-      "titulo": "Lançamentos mais seguros no mobile",
-      "data": "Julho/2026",
-      "itens": [
-        "Web e mobile: novo lançamento abre com o dia atual preenchido e limpa esse valor automaticamente ao focar no campo.",
-        "Mobile: rascunho de despesa passa a ser preservado durante re-renderizações do modal.",
-        "Mobile: modais de lançamento não fecham mais ao tocar fora.",
-        "Mobile: cards do resumo ganham menu \"...\" com opção de remover bloco.",
-        "Mobile: menus de organização dos cards foram renomeados para \"Ordenar cards\" e \"Mostrar/ocultar cards\".",
-        "Web: card de Lançamentos Mensais ganha menu de opções e pode ser removido/restaurado pelo organizador."
-      ]
-    },
-    {
-      "versao": "1.4.0.04",
-      "titulo": "Contagem de usuários no Admin",
-      "data": "Julho/2026",
-      "itens": [
-        "Admin: card de Perfis passa a exibir a quantidade de usuários ativos/cadastrados.",
-        "Admin: contagem mantém a regra do sistema e não inclui funcionários do Controle de Ponto.",
-        "Mobile: contagem de usuários ativos removida do rodapé."
-      ]
-    },
-    {
-      "versao": "1.4.0.03",
-      "titulo": "Landing oficial e ajustes de acesso",
-      "data": "Julho/2026",
-      "itens": [
-        "Web: nova landing page oficial em tela cheia na porta do sistema.",
-        "Landing: hero, benefícios, seção da IA Ava, planos com preços anual/mensal, FAQ e CTAs de cadastro.",
-        "Web e mobile: deep link ?cadastro=1 abre direto a tela de criar cadastro.",
-        "Mobile: acesso sem sessão passa a ver a landing responsiva em /, mantendo o redirect para /mobile apenas com sessão ativa ou ação do usuário.",
-        "Mobile: corrigida a trava visual em \"Abrindo versão mobile...\" ao entrar pela landing.",
-        "Mobile: botão Entrar da landing abre direto a tela de login mobile.",
-        "Mobile: card de cadastro compactado para melhorar o preenchimento em telas menores."
+        "O cadastro de perfil ganhou salvamento automático e preservação do conteúdo preenchido no web e no mobile.",
+        "Assinantes podem lançar despesas por foto ou arquivo no mobile e por arquivo no web, com sugestão automática dos dados.",
+        "Os lançamentos ficaram mais rápidos, com avanço de foco, indicação do mês e preservação do valor durante a edição.",
+        "O dashboard web ganhou Meus perfis, resumo consolidado e relatório com histórico de receitas e despesas.",
+        "Cards do dashboard e do Kanban podem ser reorganizados, ocultados, redimensionados e recuperados com mais facilidade.",
+        "Web e mobile ganharam preferências de privacidade, incluindo iniciar valores ocultos e controlar avisos de duplicidade.",
+        "O acesso pelo celular, a instalação do aplicativo e a navegação responsiva foram simplificados.",
+        "O Controle de Ponto passou a considerar feriados, recessos e outros dias não úteis da empresa.",
+        "A Ava, os tutoriais e os avisos de recursos exclusivos foram atualizados para os fluxos atuais."
       ]
     },
     {
       "versao": "1.3.6",
-      "titulo": "Cabeçalho renovado e ajustes de experiência",
+      "titulo": "Ações mais rápidas e informações mais claras",
       "data": "Julho/2026",
       "itens": [
-        "Web: novo controle radial de ações rápidas no cabeçalho, reunindo agenda, troca de perfil, calculadora e avisos.",
-        "Web: logotipo centralizado e ampliado no cabeçalho.",
-        "Web: menus de opções dos cards agora fecham ao clicar fora ou com a tecla Esc.",
-        "Web: modal de troca de perfil padronizado, com botão de fechar (X) no cabeçalho.",
-        "Web: botão Visual atualizado com ícone de personalização visual.",
-        "Web: avisos visualizados deixam de aparecer no sininho; novidades de versão permanecem disponíveis em Sobre.",
-        "Web e mobile: exclusão de avisos passa a sincronizar imediatamente a lista e o badge entre as versões.",
-        "Cobrança: botão \"Já paguei - atualizar\" consulta a Asaas sem sair da tela e libera o perfil assim que o pagamento for confirmado.",
-        "Legal: Termos de Uso e Política de Privacidade reforçados com LGPD, bases legais, guarda, retenção, suboperadores, incidentes e direitos dos titulares.",
-        "Legal: cadastro web e mobile passam a registrar aceite de Termos e Privacidade com versão, data/hora e origem.",
-        "Landing: primeira abordagem reposicionada com chamada profissional e benefícios de ponto, IA, gráficos, pagamentos programados, avisos e notificações.",
-        "Landing: texto inicial refinado para reforçar gestão empresarial, segurança e facilidade de uso.",
-        "Web e mobile: descrições financeiras passam a usar capitalização inteligente, preservando siglas, conectivos e termos especiais.",
-        "Mobile: header do card de confirmação de exclusão de despesas alinhado ao raio e à faixa colorida do modal.",
-        "Web: AvantaShell recebe contorno inferior no corpo para corrigir a borda do card de Lançamentos Mensais.",
-        "Mobile: confirmação de exclusão de lançamento redesenhada como card visual no padrão do sistema, com resumo do item e ações claras.",
-        "Web e mobile: total mensal de receita passa a substituir apenas a base do total; se houver receitas avulsas, o usuário escolhe entre apagar esses lançamentos ou manter e somar.",
-        "Web e mobile: receita definida como total do mês passa a aparecer nas listas de lançamentos como item somente leitura quando não estiver representada por entradas individuais.",
-        "Mobile: campos de login, cadastro e recuperação de senha com contraste reforçado e card de cadastro mais próximo do topo.",
-        "Mobile: placeholder de telefone padronizado e aceite de políticas reorganizado em duas linhas.",
-        "Web e mobile: Ava com acesso protegido por login.",
-        "Web e mobile: refinamentos de tipografia, cores e cards, alinhados à nova identidade visual."
+        "O cabeçalho ganhou acessos rápidos para agenda, troca de perfil, calculadora e avisos.",
+        "Menus e janelas ficaram mais fáceis de fechar, e a troca de perfil passou a indicar melhor o carregamento.",
+        "Avisos e notificações passaram a permanecer sincronizados entre web e celular.",
+        "A opção Já paguei atualiza despesas previstas diretamente na agenda.",
+        "Receitas mensais passaram a ser calculadas de forma mais segura a partir dos lançamentos individuais.",
+        "Termos, privacidade e consentimentos ficaram mais claros durante o uso e o cadastro."
       ]
     },
     {
       "versao": "1.3.5",
-      "titulo": "Nova identidade visual e melhorias de experiência",
+      "titulo": "Nova identidade visual e experiência mais fluida",
       "data": "Julho/2026",
       "itens": [
-        "Web: novo resumo diário do Controle de Ponto no dashboard.",
-        "Web: Kanban do dashboard e gráficos mais fluido e organizado.",
-        "Mobile: sessão mais estável com Manter conectado.",
-        "Mobile: menu redesenhado, com novos ícones, cores e controles.",
-        "Mobile: modo escuro aprimorado, incluindo a adaptação do card da Ava.",
-        "Mobile: header renovado, com seletor de período mais legível.",
-        "Web e mobile: cards, popups e menus com a nova identidade visual assimétrica.",
-        "Web e mobile: Ava e tutoriais atualizados com os recursos atuais do sistema.",
-        "Web e mobile: diversas correções de navegação, rolagem, animações e responsividade.",
-        "Notificações push separadas entre o aplicativo mobile e os lembretes exclusivos do Controle de Ponto."
+        "Cards, menus e janelas ganharam uma identidade visual mais consistente no web e no celular.",
+        "O menu, o cabeçalho e o modo escuro do mobile ficaram mais organizados e legíveis.",
+        "A opção de permanecer conectado passou a oferecer uma sessão mais estável.",
+        "Dashboard, Kanban e gráficos receberam melhorias de organização e leitura.",
+        "O Controle de Ponto ganhou um resumo diário mais claro para funcionários.",
+        "A Ava e os tutoriais foram atualizados para acompanhar a navegação renovada."
       ]
     },
     {
       "versao": "1.3.4",
-      "titulo": "Correções e melhorias gerais",
+      "titulo": "Receitas previstas e relatórios mais completos",
       "data": "Julho/2026",
       "itens": [
-        "Receitas com data futura entram como Previsto, com selo próprio na lista de entradas.",
-        "Receita prevista não soma como receita efetivada até a confirmação, mas já aparece no saldo Previsto.",
-        "Na data programada, receitas e despesas previstas aparecem no card de confirmação e permanecem pendentes até confirmar, editar ou excluir.",
-        "O sininho web recebe em tempo real os avisos de despesas destinados à empresa.",
-        "Usuários com vários perfis recebem avisos de todos eles, com o nome do perfil identificado no push.",
-        "O carregamento inicial dos perfis ficou mais resistente a oscilações de conexão, evitando retornos indevidos ao login.",
-        "O dashboard web ganhou um card de controle de ponto com atrasos, faltas e registros incompletos atualizados em tempo real.",
-        "No celular, as receitas previstas também aparecem na agenda do dia.",
-        "O botão \"Ajustar valor\" do card de confirmação passou a se chamar \"Editar\", abrindo a edição completa do lançamento.",
-        "Cadastro de despesas com edição na web e nomes de despesas e categorias padronizados no web e mobile.",
-        "Novos perfis de empresa e pessoais recebem despesas iniciais que podem ser editadas ou excluídas.",
-        "No celular, mover um card bloqueia o gesto de puxar para atualizar até o fim do arraste.",
-        "Chat da Ava aprimorado para o teclado do celular, mantendo o cabeçalho fixo e o dashboard totalmente coberto.",
-        "Painel administrativo reorganizado e controle de ponto com lembretes opcionais de entrada e saída.",
-        "No gráfico Total por tipo de despesa, cada tipo pode ser aberto para consultar os lançamentos que formam o total.",
-        "Na web, os blocos de despesas de cada mês também abrem os lançamentos que compõem seus valores e percentuais."
+        "Receitas futuras podem ser registradas como previstas e só entram nos resultados depois da confirmação.",
+        "Agenda e avisos ajudam a confirmar receitas e despesas previstas, fixas ou parceladas no dia correto.",
+        "Os avisos passaram a acompanhar em tempo real os diferentes perfis vinculados ao usuário.",
+        "O Controle de Ponto ganhou dashboard e relatórios mais completos para a gestão.",
+        "Relatórios passaram a detalhar melhor tipos, categorias e lançamentos que formam cada total.",
+        "A troca de perfil e o carregamento das informações ficaram mais estáveis."
       ]
     },
     {
       "versao": "1.3.3",
-      "titulo": "Gráficos, tipos de despesa e melhorias gerais",
+      "titulo": "Gráficos e organização financeira",
       "data": "Julho/2026",
       "itens": [
-        "Despesas identificadas como Previsto, Fixa ou Parcela, cada uma com sua cor.",
-        "Despesas fixas geradas automaticamente a cada mês; previstas e fixas pedem confirmação no dia, com confirmação automática ao fim do dia.",
-        "Aviso das despesas do dia por notificação no celular e no sininho.",
-        "Criação de perfil (empresa ou pessoal) liberada para qualquer usuário.",
-        "Nova página de Gráficos com painel organizável em duas colunas: arraste, expanda/reduza e oculte os blocos.",
-        "Novos gráficos: resultado mensal, evolução acumulada, EBITDA, gastos por categoria, composição por tipo, top 10 despesas e despesa sobre faturamento, com detalhes que seguem o mouse.",
-        "Backup e restauração dos seus dados, também pelo celular.",
-        "Por privacidade, os valores agora começam ocultos ao abrir o app.",
-        "Novo cabeçalho, com saudação por horário.",
-        "Novo menu no rodapé, personalizável.",
-        "Agenda redesenhada — mais fluida e organizada.",
-        "Nova animação ao puxar a tela para atualizar.",
-        "Diversas correções de estabilidade, layout e desempenho."
+        "Despesas fixas, previstas e parceladas ficaram mais fáceis de identificar e administrar.",
+        "Uma nova área de gráficos organizáveis ampliou as formas de acompanhar os resultados.",
+        "O mobile ganhou restauração de backup e preferência para iniciar valores ocultos.",
+        "A barra inferior passou a aceitar atalhos personalizados, e a agenda recebeu uma navegação renovada.",
+        "A criação e a administração de perfis Empresa e Pessoal ficaram mais simples.",
+        "Correções de estabilidade reduziram perdas de sessão e falhas de carregamento."
       ]
     },
     {
       "versao": "1.3",
-      "titulo": "Módulo Controle de Ponto",
+      "titulo": "Controle de Ponto",
       "data": "Junho/2026",
       "itens": [
-        "Controle de Ponto com página exclusiva de acesso por CPF e senha.",
-        "Registro de ponto com geolocalização.",
-        "Relatórios de ponto com pontualidade e faltas, exportação em PDF e Excel.",
-        "App do ponto instalável no celular (\"Avanta Ponto\"), com ícone próprio.",
-        "Agenda em tela cheia, com troca de mês por setas e por arraste.",
-        "Card de despesas previstas redesenhado.",
-        "Despesas identificadas como Previsto, Fixa ou Parcela, cada uma com sua cor.",
-        "Despesas fixas geradas a cada mês e despesas previstas com confirmação no dia.",
-        "Aviso por notificação no celular das despesas do dia.",
-        "Nova tela \"Sobre\" com as novidades de cada versão.",
-        "Mais correções de desempenho e estabilidade."
+        "Funcionários ganharam um acesso exclusivo ao Controle de Ponto com CPF e senha.",
+        "Batidas de entrada, intervalos e saída podem registrar a localização quando autorizada.",
+        "Gestores podem acompanhar registros e gerar relatórios em PDF ou Excel.",
+        "O Ponto pode ser instalado como aplicativo no celular.",
+        "Agenda, avisos e lançamentos previstos receberam melhorias de visualização e confirmação."
       ]
     },
     {
       "versao": "1.2",
-      "titulo": "Agenda e Notificações",
+      "titulo": "Agenda e notificações",
       "data": "2026",
       "itens": [
         "Agenda completa com lembretes e despesas futuras, sincronizada entre celular e web.",
-        "Notificações no celular (PWA), mesmo com o app fechado.",
-        "Aviso de despesas previstas que chegaram na data, para confirmar, ajustar ou excluir."
+        "Notificações no celular, mesmo com o aplicativo fechado.",
+        "Aviso de despesas previstas que chegaram na data para confirmar, ajustar ou excluir."
       ]
     },
     {
@@ -847,9 +120,9 @@
       "titulo": "Experiência no celular",
       "data": "2026",
       "itens": [
-        "App instalável no celular (PWA), com modo escuro.",
+        "Aplicativo instalável no celular, com modo escuro.",
         "Assistente Ava para tirar dúvidas e analisar seus resultados.",
-        "Melhorias de navegação e de visual em todo o aplicativo."
+        "Melhorias de navegação e visual em todo o aplicativo."
       ]
     },
     {
@@ -857,10 +130,10 @@
       "titulo": "Lançamento",
       "data": "2025",
       "itens": [
-        "Gestão financeira: entradas, despesas, despesas fixas e dashboard de resultados.",
+        "Gestão financeira de receitas, despesas, despesas fixas e resultados.",
         "Relatórios por mês e por categoria.",
         "Backup e restauração dos dados em Excel.",
-        "Vários perfis/empresas e múltiplos usuários."
+        "Vários perfis ou empresas e múltiplos usuários."
       ]
     }
   ]

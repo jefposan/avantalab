@@ -1,8 +1,8 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.5.0.10 -->
+<!-- ava-version: 1.5.0.11 -->
 
-> Revisão 1.5.0.10: sem impacto operacional na Gestão Web.
+> Revisão 1.5.0.11: o Sobre passa a apresentar um histórico consolidado das principais novidades para o usuário.
 
 ## Escopo
 
@@ -16,6 +16,8 @@ ou `/ponto`.
   exibidos, ocultados, movidos, expandidos, reduzidos ou removidos da visão.
 - **Ajustes** concentra perfil, usuários, aparência, despesas/categorias,
   despesas fixas, backup/restauração e módulos.
+- **Sobre** apresenta as principais novidades em marcos consolidados, sem listar
+  ajustes exclusivamente técnicos.
 - Um login pode ter perfis Empresa e Pessoal. As permissões dependem do vínculo:
   Gestor Master, Administrador e operadores não enxergam necessariamente as
   mesmas ações.

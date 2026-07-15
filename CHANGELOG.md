@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.5.0.11 - 2026-07-15
+
+- Sobre: consolida as 83 publicações anteriores em 10 marcos de evolução, agrupando microversões da mesma entrega.
+- Sobre: o histórico público passa a destacar apenas novidades, facilidades e correções perceptíveis para o usuário; detalhes de cache, infraestrutura, migrações e validações internas permanecem somente neste changelog técnico.
+- Web e Gestão Mobile: renomeia a seção do histórico para **Principais novidades**, reforçando o caráter resumido da publicação.
+
 ## 1.5.0.10 - 2026-07-15
 
 - Gestão e Vendas Mobile: ao entrar no Vendas pela troca de sistemas, abre diretamente quando há um único perfil de Vendas ativo e solicita a escolha quando há mais de um.

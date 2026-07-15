@@ -65,7 +65,7 @@ export default function SobreModal({ aberto, onFechar, darkMode, versaoAtual }: 
               </section>
 
               <section>
-                <h3 className={`mb-1 text-[11px] font-black uppercase tracking-wide ${muted}`}>Novidades das versões</h3>
+                <h3 className={`mb-1 text-[11px] font-black uppercase tracking-wide ${muted}`}>Principais novidades</h3>
                 <p className="mb-3 text-xs font-bold" style={{ color: darkMode ? '#7dd3fc' : '#003E73' }}>Versão instalada: {versaoAtual}</p>
                 <div className="grid gap-3">
                   {dados.versoes.map((v) => {
