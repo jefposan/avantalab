@@ -110,6 +110,7 @@ export const formatarDescricao = (texto: string) => {
 
       if (SIGLAS_DESCRICAO[chave]) return `${prefixo}${SIGLAS_DESCRICAO[chave]}${sufixo}`;
       if (TERMOS_ESPECIAIS_DESCRICAO[chave]) return `${prefixo}${TERMOS_ESPECIAIS_DESCRICAO[chave]}${sufixo}`;
+      if (originalMaiusculo && miolo.length <= 5) return `${prefixo}${miolo}${sufixo}`;
       if (/[a-zà-öø-ÿ][A-ZÀ-ÖØ-Þ]/.test(miolo)) return palavra;
       if (indice > 0 && CONECTIVOS_DESCRICAO.has(chave)) return `${prefixo}${chave}${sufixo}`;
 
