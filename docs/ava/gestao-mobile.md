@@ -1,8 +1,8 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.5.0.08 -->
+<!-- ava-version: 1.5.0.09 -->
 
-> Revisão 1.5.0.08: adiciona a ativação do Vendas Mobile pelo botão Sistemas.
+> Revisão 1.5.0.09: permite cancelar a troca de sistemas iniciada dentro do app.
 
 ## Escopo
 
@@ -30,6 +30,9 @@ deve usar os nomes do menu e da barra inferior do celular.
 - **Sistemas** também pode ocupar um dos atalhos configuráveis da barra inferior.
   Essa opção de atalho fica disponível depois que o módulo é ativado. Operadores
   veem o botão lateral inativo e não recebem permissão para ativar ou trocar de sistema.
+- No seletor aberto pelo menu ou atalho, o **X** ou um toque fora do card cancela a
+  troca e mantém o sistema atual. A escolha inicial antes do carregamento continua
+  obrigatória.
 - A ordem/visibilidade dos cards do dashboard é ajustada em **Menu > Organizar
   resumo** ou **Organizar dashboard**.
 - Em **Gerenciar perfil**, o usuário pode administrar seus perfis conforme a

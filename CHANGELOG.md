@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.5.0.09 - 2026-07-15
+
+- Gestão Mobile: adiciona **X** ao seletor de sistemas aberto dentro do app e permite cancelá-lo tocando fora do card, mantendo o sistema atual.
+- Gestão Mobile: preserva como obrigatória a escolha inicial exibida antes do carregamento do sistema após o login.
+
 ## 1.5.0.08 - 2026-07-15
 
 - Gestão Mobile: mantém **Sistemas** visível quando o perfil ainda não possui Vendas Mobile e oferece a ativação do módulo em um card de confirmação.

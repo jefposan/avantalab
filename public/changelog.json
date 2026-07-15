@@ -13,6 +13,15 @@
   },
   "versoes": [
     {
+      "versao": "1.5.0.09",
+      "titulo": "Cancelamento da troca de sistemas",
+      "data": "Julho/2026",
+      "itens": [
+        "O seletor de sistemas aberto dentro da Gestão ganha botão X para fechar.",
+        "Tocar fora do card também cancela a troca e mantém o sistema atual."
+      ]
+    },
+    {
       "versao": "1.5.0.08",
       "titulo": "Ativação do Vendas Mobile pela Gestão",
       "data": "Julho/2026",

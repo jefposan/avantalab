@@ -1748,6 +1748,13 @@
     render();
   }
 
+  function fecharSeletorSistemaMobile() {
+    if (state.seletorSistemaInicialBloqueante) return;
+    state.seletorSistemaAberto = false;
+    state.lembrarSistemaInicial = false;
+    render();
+  }
+
   function abrirFluxoSistemasMobile() {
     if (!podeGerenciarUsuarios()) {
       mostrarToast('A troca de sistemas nao esta disponivel para este usuario.');
@@ -1899,9 +1906,11 @@
 
   function seletorSistemaInicialHtml() {
     if (!state.seletorSistemaAberto || !podeTrocarSistemaMobile()) return '';
+    var fechar = state.seletorSistemaInicialBloqueante ? '' : '<button id="fechar-seletor-sistema" type="button" class="absolute right-3 top-3 flex h-9 w-9 items-center justify-center rounded-full border border-white/25 bg-white/15 text-xl font-black text-white backdrop-blur active:scale-95" aria-label="Fechar troca de sistemas">&times;</button>';
     var card = (
       '<section class="w-full max-w-sm overflow-hidden rounded-3xl bg-white text-slate-900 shadow-2xl" role="dialog" aria-modal="true" aria-labelledby="seletor-sistema-titulo">' +
-          '<div class="px-5 py-4 text-white" style="background:linear-gradient(135deg,#003E73,#00A6C8)">' +
+          '<div class="relative px-5 py-4 text-white" style="background:linear-gradient(135deg,#003E73,#00A6C8)">' +
+            fechar +
             '<p class="text-[10px] font-black uppercase tracking-[0.2em] text-cyan-100">AvantaLab</p>' +
             '<h2 id="seletor-sistema-titulo" class="mt-1 text-xl font-black">Por onde deseja começar?</h2>' +
             '<p class="mt-1 text-xs font-semibold text-cyan-50/90">Escolha o sistema para abrir neste acesso.</p>' +
@@ -1925,7 +1934,7 @@
     if (state.seletorSistemaInicialBloqueante) {
       return '<section class="avantalab-mobile-bg fixed inset-0 z-[14000] flex items-center justify-center overflow-hidden px-4" style="height:100dvh;background-position:center bottom;background-size:auto 108%;">' + card + '</section>';
     }
-    return '<div class="fixed inset-0 z-[14000] flex items-center justify-center bg-slate-950/75 px-4">' + card + '</div>';
+    return '<div id="seletor-sistema-overlay" class="fixed inset-0 z-[14000] flex items-center justify-center bg-slate-950/75 px-4">' + card + '</div>';
   }
 
   function normalizarAtalhoInferior(valor, padrao) {
@@ -10890,6 +10899,13 @@
     bind('escolher-sistema-gestao', function () { escolherSistemaInicialMobile('gestao'); });
     bind('escolher-sistema-vendas', function () { escolherSistemaInicialMobile('vendas'); });
     bindChange('lembrar-sistema-inicial', function () { state.lembrarSistemaInicial = this.checked === true; });
+    bind('fechar-seletor-sistema', fecharSeletorSistemaMobile);
+    var seletorSistemaOverlay = document.getElementById('seletor-sistema-overlay');
+    if (seletorSistemaOverlay) {
+      seletorSistemaOverlay.addEventListener('click', function (event) {
+        if (event.target === seletorSistemaOverlay) fecharSeletorSistemaMobile();
+      });
+    }
     bind('cancelar-ativacao-vendas', fecharAtivacaoVendasMobile);
     bind('confirmar-ativacao-vendas', ativarVendasMobileNoPerfil);
     bind('reenviar-telefone-obrigatorio', enviarCodigoTelefoneObrigatorioMobile);
@@ -12777,7 +12793,7 @@
           return Promise.all(
             keys
               .filter(function (key) {
-                return key.indexOf('avantalab-mobile-') === 0 && key !== 'avantalab-mobile-v253';
+                return key.indexOf('avantalab-mobile-') === 0 && key !== 'avantalab-mobile-v254';
               })
               .map(function (key) {
                 return caches.delete(key);
@@ -12794,7 +12810,7 @@
     });
 
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/mobile-sw.js?v=237').then(function (registro) {
+      navigator.serviceWorker.register('/mobile-sw.js?v=238').then(function (registro) {
         if (registro && registro.update) registro.update();
       }).catch(function () {});
     }

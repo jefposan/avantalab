@@ -40,6 +40,7 @@ NAVEGAÇÃO E PERFIS
 - Em Configurações, Assinatura aparece primeiro quando disponível, seguida pelos controles com chave. Gerenciar perfil, Usuários e Editar dados cadastrais aparecem em sequência.
 - Com o módulo Vendas Mobile ativo e permissão de Gestor Master/Administrador, após o login a primeira tela permite escolher entre Gestão e Vendas e memorizar o sistema inicial. Depois da escolha aparece Preparando acesso e o sistema selecionado é carregado. Menu > Sistemas permite refazer a escolha e também pode ser um atalho inferior.
 - Em perfil sem o módulo Vendas, Sistemas aparece inativo no menu lateral. Gestor Master ou Administrador pode tocar, confirmar a ativação e, após a validação, escolher o sistema. Perfil pessoal gratuito precisa do Premium. Operadores veem o botão inativo e não podem ativar nem trocar de sistema.
+- No seletor de sistemas aberto dentro da Gestão, o X ou um toque fora do card cancela a troca e mantém o usuário na Gestão. A seleção inicial mostrada antes de carregar o app continua obrigatória.
 - O dashboard pode organizar ordem e visibilidade dos cards em Menu > Organizar resumo/Organizar dashboard.
 - Em Gerenciar perfil, o usuário pode criar, editar, excluir quando permitido e administrar perfis. Um toque em um perfil pode apenas destacá-lo; a troca real usa o controle de perfil já existente.
 - Valores podem iniciar ocultos pelo ícone de olho conforme a preferência de privacidade.
