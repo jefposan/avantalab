@@ -51,6 +51,8 @@ const estadoInicial = {
   moduloVendasAtivo: true,
   sincronizacaoCatalogo: { adicionados: 0, ja_recebidos: 0 },
   integracaoGestao: { base_receita: 'recebidos', pode_configurar: false },
+  vinculosComerciais: [],
+  vinculoComercialAtivo: null,
   atalhoInferiorEsquerdo: 'tema',
   atalhoInferiorDireito: 'agenda',
   ordemSalaBotoes: [],
@@ -1260,6 +1262,8 @@ async function carregarDadosBackend(mostrarCarregamento = true) {
       state.moduloVendasAtivo = dados.moduloAtivo !== false;
       state.sincronizacaoCatalogo = dados.sincronizacaoCatalogo || { adicionados: 0, ja_recebidos: 0 };
       state.integracaoGestao = dados.integracaoGestao || { base_receita: 'recebidos', pode_configurar: false };
+      state.vinculosComerciais = dados.vinculosComerciais || [];
+      state.vinculoComercialAtivo = dados.vinculoComercialAtivo || null;
       if (!dados.acesso) state.autenticado = false;
     }
   } catch (error) {
@@ -1759,6 +1763,9 @@ function renderConfiguracoes() {
   const telefone = String(state.usuario?.telefone || '');
   const empresa = String(state.acessoVendas?.empresa_nome || 'Não informada');
   const integracao = state.integracaoGestao || { base_receita: 'recebidos', pode_configurar: false };
+  const vinculos = state.vinculosComerciais || [];
+  const renderRecurso = (vinculo, chave, titulo) => `<button type="button" class="${vinculo[`${chave}_ativas`] ? 'is-on' : ''}" onclick="alternarRecursoVinculoComercial('${vinculo.empresa_id}','${chave}',${!vinculo[`${chave}_ativas`]})">${titulo}</button>`;
+  const renderVinculo = (vinculo) => `<div class="commercial-link ${vinculo.ativo ? 'is-current' : ''}"><header><b>${escapeHtml(vinculo.empresa_nome || 'Empresa')}</b><span>${vinculo.ativo ? 'Ativa' : 'Histórico'}</span></header><div class="commercial-link-resources">${renderRecurso(vinculo, 'novidades', 'Notícias')}${renderRecurso(vinculo, 'divulgacao', 'Divulgação')}${renderRecurso(vinculo, 'catalogo', 'Catálogo')}</div></div>`;
   return `<section class="module-page settings-page">
     <div class="module-sticky-head"><div class="module-title"><div><h2>Configurações</h2><p>Preferências, segurança e recursos do Vendas.</p></div></div></div>
     <div class="settings-grid">
@@ -1767,11 +1774,13 @@ function renderConfiguracoes() {
     </div>
     <article class="settings-card settings-goal"><h3>${svgIcon('target')} Meta do período</h3><div class="settings-goal-summary"><div><span>Meta mensal</span><b>${moeda(state.metaMensal)}</b></div><div><span>Vendas mensais</span><b>${moeda(t.total)}</b></div></div><div class="progress"><i style="width:${Math.max(2, progresso)}%"></i></div><p>Faltam <b>${moeda(Math.max(0, state.metaMensal - t.total))}</b> para atingir sua meta.</p><div class="settings-form settings-goals-form"><label><span>Definir meta mensal</span><input id="metaConfig" type="text" inputmode="numeric" value="${numeroParaCampoMoeda(state.metaMensal)}" onfocus="this.select()" oninput="formatarCampoMoeda(this)" placeholder="0,00"></label><button class="primary" onclick="salvarMeta()">${svgIcon('save')} Salvar meta</button></div></article>
     <article class="settings-card"><h3>${svgIcon('settings')} Integração com Gestão</h3><p>Os resultados do Vendas Mobile entram automaticamente como receita no Gestão sempre que um lançamento for alterado.</p><div class="settings-integration"><span>Enviar para o Gestão</span><div class="settings-segmented ${integracao.pode_configurar ? '' : 'is-disabled'}" role="group" aria-label="Base de receita enviada ao Gestão"><button type="button" class="${integracao.base_receita === 'recebidos' ? 'is-selected' : ''}" onclick="salvarIntegracaoGestao('recebidos')" ${integracao.pode_configurar ? '' : 'disabled'}>Recebidos</button><button type="button" class="${integracao.base_receita === 'vendidos' ? 'is-selected' : ''}" onclick="salvarIntegracaoGestao('vendidos')" ${integracao.pode_configurar ? '' : 'disabled'}>Vendidos</button></div></div>${integracao.pode_configurar ? '' : '<small>Somente o gestor pode alterar esta preferência.</small>'}<small>O padrão é valores recebidos. As receitas criadas no Gestão são protegidas contra edição manual.</small></article>
+    <article class="settings-card settings-commercial-links"><h3>${svgIcon('package')} Empresas e conteúdos</h3><p>Uma empresa fica ativa. As anteriores permanecem como histórico, e você decide o que manter.</p><div class="commercial-links-list">${vinculos.length ? vinculos.map(renderVinculo).join('') : '<small>Nenhuma empresa comercial vinculada.</small>'}</div><div class="actions"><button class="secondary" onclick="abrirNovoVinculoComercial()">${svgIcon('plus')} Vincular outra empresa</button></div><small>Desligar Catálogo permite manter os produtos já recebidos ou removê-los sem afetar pedidos e resultados anteriores.</small></article>
     <article class="settings-card"><h3>${svgIcon('lock')} Senha da conta AvantaLab</h3><p>Esta senha pertence à sua conta principal. Ao alterá-la aqui, a nova senha passa a valer para o acesso ao Gestão e ao Vendas.</p><div class="password-form"><label>Nova senha (mín. 8 caracteres)<input id="senhaNova" type="password" autocomplete="new-password" minlength="8"></label><label>Confirme a nova senha<input id="senhaConfirma" type="password" autocomplete="new-password" minlength="8"></label><button class="password-button" onclick="alterarSenha()">${svgIcon('lock')} Atualizar senha da conta</button></div></article>
     <article class="settings-card settings-catalog-card"><h3>${svgIcon('package')} Catálogo de produtos</h3><p>Os novos produtos da empresa chegam automaticamente. Se recebeu um pacote, importe o arquivo ZIP completo.</p><div class="actions"><button class="primary" onclick="abrirImportacaoPacoteZip()">${svgIcon('package')} Importar pacote ZIP</button><button class="secondary" onclick="mostrarSincronizacaoCatalogo()">${svgIcon('save')} Situação da sincronização</button></div></article>
     <article class="settings-card settings-stock-card"><h3>${svgIcon('package')} Controle de estoque</h3><p>${state.produtos.filter((produto) => produto.estoque_controlado).length} produto(s) com estoque acompanhado neste aparelho.</p><div class="actions"><button class="primary" onclick="abrirAtualizarEstoque()">${svgIcon('plus')} Atualizar estoque</button></div><small>Entrada soma ao saldo atual. Ajuste define o saldo físico contado.</small></article>
     <article class="settings-card settings-pwa-card"><h3>${svgIcon('save')} Aplicativo Web (PWA)</h3><p>Instale o aplicativo na tela inicial para acesso rápido, como um app nativo.</p><button class="install-button" onclick="instalarPWA()">Adicionar à Área de Trabalho</button><small>Se o botão não aparecer, use “Adicionar à tela inicial” no menu do navegador.</small></article>
     <article class="settings-card settings-exit-card"><h3>${svgIcon('log-out')} Sair</h3><p>Encerre sua sessão neste aparelho.</p><button class="danger" onclick="abrirConfirmacaoSair()">Sair do Vendas</button></article>
+    <article class="settings-card settings-reset-card"><h3>${svgIcon('warning')} Resetar sistema</h3><p>Gera um backup automático e apaga lançamentos, clientes, agenda, produtos e preferências deste Vendas.</p><button class="danger" onclick="abrirResetSistemaVendas()">${svgIcon('warning')} Resetar Vendas Mobile</button></article>
   </section>`;
 }
 
@@ -1788,6 +1797,59 @@ async function salvarIntegracaoGestao(base) {
     state.integracaoGestao = { ...state.integracaoGestao, ...(resposta || {}), base_receita: base };
     render();
     toast(`Integração atualizada para ${base === 'vendidos' ? 'valores vendidos' : 'valores recebidos'}.`);
+  } catch (error) { toast(traduzErro(error)); }
+}
+
+async function alternarRecursoVinculoComercial(empresaId, recurso, ativar) {
+  const vinculo = (state.vinculosComerciais || []).find((item) => item.empresa_id === empresaId);
+  if (!vinculo) return;
+  if (recurso === 'catalogo' && !ativar) {
+    sheet(`<div class="sheet-header"><div><h2>Desligar catálogo</h2><p class="muted small">Os pedidos e resultados anteriores não serão alterados.</p></div><button class="close" onclick="fecharSheet()">×</button></div><p>O que deseja fazer com os produtos recebidos de <b>${escapeHtml(vinculo.empresa_nome)}</b>?</p><div class="grid"><button class="secondary" onclick="confirmarRecursoVinculoComercial('${empresaId}','catalogo',false,false)">Manter produtos no meu catálogo</button><button class="danger" onclick="confirmarRecursoVinculoComercial('${empresaId}','catalogo',false,true)">Remover produtos recebidos</button></div>`, 'sheet-backdrop-centered');
+    return;
+  }
+  await confirmarRecursoVinculoComercial(empresaId, recurso, ativar, false);
+}
+
+async function confirmarRecursoVinculoComercial(empresaId, recurso, ativar, removerCatalogo) {
+  try {
+    const vinculos = await window.VendasDb.atualizarRecursoVinculoComercial(empresaId, recurso, ativar, removerCatalogo);
+    state.vinculosComerciais = vinculos;
+    state.vinculoComercialAtivo = vinculos.find((item) => item.ativo) || null;
+    fecharSheet();
+    render();
+    toast(`${recurso === 'novidades' ? 'Notícias' : recurso === 'divulgacao' ? 'Divulgação' : 'Catálogo'} ${ativar ? 'mantido' : 'desligado'}.`);
+  } catch (error) { toast(traduzErro(error)); }
+}
+
+function abrirNovoVinculoComercial() {
+  sheet(`<div class="sheet-header"><div><h2>Vincular outra empresa</h2><p class="muted small">Após aprovação, ela passa a ser sua empresa comercial ativa.</p></div><button class="close" onclick="fecharSheet()">×</button></div><div class="grid"><label>Código da empresa<input id="novoCodigoVinculo" autocomplete="off" autocapitalize="characters"></label><label>Digite o código novamente<input id="novoCodigoVinculoConfirma" autocomplete="off" autocapitalize="characters"></label><label>Nome para a solicitação<input id="novoVinculoNome" value="${escapeHtml(state.usuario?.nome || '')}"></label><button class="primary" onclick="solicitarNovoVinculoComercial()">Enviar para aprovação</button></div>`, 'sheet-backdrop-centered');
+}
+
+async function solicitarNovoVinculoComercial() {
+  const codigo = valor('novoCodigoVinculo').trim().toUpperCase();
+  const confirma = valor('novoCodigoVinculoConfirma').trim().toUpperCase();
+  const nome = valor('novoVinculoNome').trim();
+  if (!codigo || codigo !== confirma || !nome) { toast('Confirme o mesmo código da empresa duas vezes e informe seu nome.'); return; }
+  try {
+    await window.VendasDb.solicitarAcesso({ codigo, nome, telefone: state.usuario?.telefone || '' });
+    fecharSheet();
+    toast('Solicitação enviada. Após a aprovação, a nova empresa ficará ativa.');
+  } catch (error) { toast(traduzErro(error)); }
+}
+
+function abrirResetSistemaVendas() {
+  sheet(`<div class="sheet-header"><div><h2>Resetar Vendas Mobile</h2><p class="muted small">Esta ação é permanente.</p></div><button class="close" onclick="fecharSheet()">×</button></div><p>Antes de apagar, o sistema cria um backup automático e também baixa uma cópia Excel. Digite <b>RESETAR</b> para confirmar.</p><label>Confirmação<input id="confirmacaoResetVendas" autocomplete="off" autocapitalize="characters"></label><div class="grid"><button class="secondary" onclick="fecharSheet()">Cancelar</button><button class="danger" onclick="confirmarResetSistemaVendas()">Resetar definitivamente</button></div>`, 'sheet-backdrop-centered');
+}
+
+async function confirmarResetSistemaVendas() {
+  if (valor('confirmacaoResetVendas').trim().toUpperCase() !== 'RESETAR') { toast('Digite RESETAR para confirmar.'); return; }
+  try {
+    await exportarBackupVendasExcel();
+    await window.VendasDb.resetarSistemaVendas();
+    localStorage.removeItem(STORAGE_KEY);
+    fecharSheet();
+    await carregarDadosBackend(false);
+    toast('Sistema resetado. O backup foi gerado antes da limpeza.');
   } catch (error) { toast(traduzErro(error)); }
 }
 
@@ -4219,6 +4281,12 @@ window.cancelarMoverAgendaVendas = cancelarMoverAgendaVendas;
 window.salvarNovaDataAgendaVendas = salvarNovaDataAgendaVendas;
 window.salvarMeta = salvarMeta;
 window.salvarIntegracaoGestao = salvarIntegracaoGestao;
+window.alternarRecursoVinculoComercial = alternarRecursoVinculoComercial;
+window.confirmarRecursoVinculoComercial = confirmarRecursoVinculoComercial;
+window.abrirNovoVinculoComercial = abrirNovoVinculoComercial;
+window.solicitarNovoVinculoComercial = solicitarNovoVinculoComercial;
+window.abrirResetSistemaVendas = abrirResetSistemaVendas;
+window.confirmarResetSistemaVendas = confirmarResetSistemaVendas;
 window.formatarCampoMoeda = formatarCampoMoeda;
 window.alternarTema = alternarTema;
 window.alternarOrganizacaoSalaBotoes = alternarOrganizacaoSalaBotoes;

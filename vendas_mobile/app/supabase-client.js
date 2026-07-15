@@ -139,6 +139,10 @@
     });
     if (moduloRes.error) throw moduloRes.error;
     const moduloAtivo = moduloRes.data === true;
+    const vinculosRes = await requireClient().rpc('meus_vinculos_comerciais_vendas_mobile_rpc');
+    if (vinculosRes.error) throw vinculosRes.error;
+    const vinculosComerciais = vinculosRes.data || [];
+    const vinculoAtivo = vinculosComerciais.find((vinculo) => vinculo.ativo) || null;
     let sincronizacaoCatalogo = { adicionados: 0, ja_recebidos: 0 };
     if (moduloAtivo) {
       const sincronizarRes = await requireClient().rpc('sincronizar_catalogo_vendas_mobile_rpc');
@@ -151,9 +155,9 @@
       client.from('vendas_mobile_clientes').select('*').order('nome'),
       client.from('vendas_mobile_pedidos').select('*, itens:vendas_mobile_pedido_itens(*)').order('criado_em', { ascending: false }),
       client.from('vendas_mobile_pagamentos').select('*').order('data_pagamento', { ascending: false }).order('criado_em', { ascending: false }),
-      client.from('vendas_mobile_conteudos').select('id, pagina, tipo, titulo, descricao, criado_em').eq('ativo', true).order('criado_em', { ascending: false }),
-      client.from('vendas_mobile_divulgacao_pastas').select('id, pasta_pai_id, nome, descricao, ordem, criado_em').eq('empresa_id', acessoVendas.acesso.empresa_id).eq('ativo', true).order('ordem').order('criado_em', { ascending: false }),
-      client.from('vendas_mobile_divulgacao_materiais').select('id, pasta_id, titulo, tipo, arquivo_url, miniatura_url, miniatura_status, mime_type, tamanho_bytes, ordem, criado_em').eq('empresa_id', acessoVendas.acesso.empresa_id).eq('ativo', true).order('ordem').order('criado_em', { ascending: false }),
+      client.from('vendas_mobile_conteudos').select('id, empresa_id, pagina, tipo, titulo, descricao, criado_em').eq('ativo', true).order('criado_em', { ascending: false }),
+      client.from('vendas_mobile_divulgacao_pastas').select('id, empresa_id, pasta_pai_id, nome, descricao, ordem, criado_em').eq('ativo', true).order('ordem').order('criado_em', { ascending: false }),
+      client.from('vendas_mobile_divulgacao_materiais').select('id, pasta_id, titulo, tipo, arquivo_url, miniatura_url, miniatura_status, mime_type, tamanho_bytes, ordem, criado_em').eq('ativo', true).order('ordem').order('criado_em', { ascending: false }),
       client.rpc('obter_integracao_gestao_vendas_mobile_rpc'),
     ]);
     const error = produtosRes.error || clientesRes.error || pedidosRes.error || integracaoRes.error;
@@ -193,11 +197,13 @@
         };
       }),
       integracaoGestao: integracaoRes.data || { base_receita: 'recebidos', pode_configurar: false },
-      conteudos: conteudosRes.error ? null : (conteudosRes.data || []),
-      divulgacaoPastas: pastasRes.error ? [] : (pastasRes.data || []),
+      conteudos: conteudosRes.error ? null : (conteudosRes.data || []).filter((conteudo) => conteudo.pagina === 'informacoes' || vinculosComerciais.some((vinculo) => vinculo.empresa_id === conteudo.empresa_id && vinculo.novidades_ativas)),
+      divulgacaoPastas: pastasRes.error ? [] : (pastasRes.data || []).filter((pasta) => vinculosComerciais.some((vinculo) => vinculo.empresa_id === pasta.empresa_id && vinculo.divulgacao_ativa)),
       divulgacaoMateriais: materiaisRes.error ? [] : (materiaisRes.data || []),
       moduloAtivo,
       sincronizacaoCatalogo,
+      vinculosComerciais,
+      vinculoComercialAtivo: vinculoAtivo,
       ...acessoVendas,
     };
   }
@@ -512,6 +518,20 @@
     return data;
   }
 
+  async function atualizarRecursoVinculoComercial(empresaId, recurso, ativo, removerCatalogo = false) {
+    const { data, error } = await requireClient().rpc('atualizar_recurso_vinculo_comercial_vendas_mobile_rpc', {
+      p_empresa_id: empresaId, p_recurso: recurso, p_ativo: ativo, p_remover_catalogo: removerCatalogo,
+    });
+    if (error) throw error;
+    return data || [];
+  }
+
+  async function resetarSistemaVendas() {
+    const { data, error } = await requireClient().rpc('resetar_vendas_mobile_rpc', { p_confirmacao: 'RESETAR' });
+    if (error) throw error;
+    return data;
+  }
+
   async function saveFeedback({ empresaId, nomeEmpresa, mensagem }) {
     const user = await currentUser();
     if (!user) throw new Error('Sessão expirada.');
@@ -539,5 +559,5 @@
     return data;
   }
 
-  window.VendasDb = { client, currentUser, hasSession, getAccessToken, uploadProductImage, signIn, signInPhone, signInWithGoogle, resetPassword, updatePassword, updateUserMetadata, signUp, signOut, solicitarAcesso, buscarAcessoVendas, loadAll, saveProduct, deleteProduct, movimentarEstoque, listarMovimentosEstoque, createPackage, saveProductsBulk, deletePackage, saveClient, deleteClient, saveOrder, updateOrder, deleteOrder, savePayment, updatePayment, deletePayment, configurarIntegracaoGestao, saveFeedback };
+  window.VendasDb = { client, currentUser, hasSession, getAccessToken, uploadProductImage, signIn, signInPhone, signInWithGoogle, resetPassword, updatePassword, updateUserMetadata, signUp, signOut, solicitarAcesso, buscarAcessoVendas, loadAll, saveProduct, deleteProduct, movimentarEstoque, listarMovimentosEstoque, createPackage, saveProductsBulk, deletePackage, saveClient, deleteClient, saveOrder, updateOrder, deleteOrder, savePayment, updatePayment, deletePayment, configurarIntegracaoGestao, atualizarRecursoVinculoComercial, resetarSistemaVendas, saveFeedback };
 })();
