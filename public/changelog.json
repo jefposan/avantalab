@@ -13,6 +13,16 @@
   },
   "versoes": [
     {
+      "versao": "1.5.0",
+      "titulo": "Integração Gestão e Vendas Mobile",
+      "data": "Julho/2026",
+      "itens": [
+        "Gestão e Vendas Mobile compartilham a sessão e preservam o perfil ao trocar de sistema.",
+        "Gestores com o módulo Vendas ativo podem escolher e memorizar o sistema inicial.",
+        "A troca de sistema está disponível no menu e nos atalhos configuráveis; no Vendas, também aparece no cabeçalho."
+      ]
+    },
+    {
       "versao": "1.4.0.68",
       "titulo": "Edição de lançamentos no mobile",
       "data": "Julho/2026",

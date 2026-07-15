@@ -1,10 +1,20 @@
 (function () {
   const config = window.VENDAS_MOBILE_CONFIG || {};
   const sdk = window.supabase;
+  const legacyStorageKey = 'avantalab-vendas-mobile-auth';
+  const projectRef = (() => {
+    try { return new URL(config.supabaseUrl).hostname.split('.')[0]; } catch { return ''; }
+  })();
+  const sharedStorageKey = projectRef ? `sb-${projectRef}-auth-token` : legacyStorageKey;
+  try {
+    const legacySession = localStorage.getItem(legacyStorageKey);
+    if (legacySession && !localStorage.getItem(sharedStorageKey)) localStorage.setItem(sharedStorageKey, legacySession);
+    if (sharedStorageKey !== legacyStorageKey) localStorage.removeItem(legacyStorageKey);
+  } catch { /* armazenamento indisponível */ }
   const client = sdk && config.supabaseUrl && config.supabaseAnonKey
     ? sdk.createClient(config.supabaseUrl, config.supabaseAnonKey, {
         auth: {
-          storageKey: 'avantalab-vendas-mobile-auth',
+          storageKey: sharedStorageKey,
           persistSession: true,
           autoRefreshToken: true,
           detectSessionInUrl: true,
@@ -119,8 +129,13 @@
     ]);
     if (acessosRes.error) throw acessosRes.error;
     if (solicitacaoRes.error) throw solicitacaoRes.error;
+    const acessosAtivos = (acessosRes.data || []).filter((item) => item.status === 'ativo');
+    let empresaContexto = '';
+    try {
+      empresaContexto = JSON.parse(localStorage.getItem('avantalab_mobile_sistema_contexto') || 'null')?.empresaId || '';
+    } catch { /* preferência inválida */ }
     return {
-      acesso: (acessosRes.data || []).find((item) => item.status === 'ativo') || null,
+      acesso: acessosAtivos.find((item) => item.empresa_id === empresaContexto) || acessosAtivos[0] || null,
       solicitacao: solicitacaoRes.data || null,
     };
   }

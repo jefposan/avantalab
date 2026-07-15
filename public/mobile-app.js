@@ -53,6 +53,9 @@
   });
   var CHAVE_ULTIMO_PERFIL_MOBILE = 'avantalab_mobile_ultimo_perfil_id';
   var CHAVE_RASCUNHO_CADASTRO_MOBILE = 'avantalab_mobile_rascunho_cadastro';
+  var CHAVE_SISTEMA_INICIAL_MOBILE = 'avantalab_mobile_sistema_inicial_';
+  var CHAVE_SISTEMA_SESSAO_MOBILE = 'avantalab_mobile_sistema_sessao_';
+  var CHAVE_CONTEXTO_SISTEMA_MOBILE = 'avantalab_mobile_sistema_contexto';
   var meses = [
     'JANEIRO',
     'FEVEREIRO',
@@ -237,6 +240,9 @@
     iniciarValoresOcultos: true,
     pontoModuloAtivo: false,
     vendasMobileModuloAtivo: false,
+    seletorSistemaAberto: false,
+    lembrarSistemaInicial: false,
+    sistemaInicialAvaliadoPerfilId: '',
     pontoResumo: [],
     pontoFuncionariosHoje: 0,
     pontoResumoCarregando: false,
@@ -1661,7 +1667,120 @@
   }
 
   function atalhosInferioresDisponiveis() {
-    return ['perfil', 'agenda', 'tema', 'despesasFixas'];
+    var atalhos = ['perfil', 'agenda', 'tema', 'despesasFixas'];
+    if (podeTrocarSistemaMobile()) atalhos.push('sistemas');
+    return atalhos;
+  }
+
+  function podeTrocarSistemaMobile() {
+    return !!(state.vendasMobileModuloAtivo && podeGerenciarUsuarios());
+  }
+
+  function chaveSistemaPerfilMobile(prefixo) {
+    return prefixo + (state.empresa && state.empresa.id ? state.empresa.id : 'sem-perfil');
+  }
+
+  function registrarContextoSistemaMobile(sistema) {
+    if (!state.empresa || !state.empresa.id) return;
+    try {
+      localStorage.setItem(CHAVE_CONTEXTO_SISTEMA_MOBILE, JSON.stringify({
+        empresaId: state.empresa.id,
+        sistema: sistema,
+        atualizadoEm: new Date().toISOString(),
+      }));
+    } catch (error) {}
+  }
+
+  function abrirVendasMobile() {
+    if (!podeTrocarSistemaMobile()) {
+      mostrarToast('Vendas Mobile indisponivel para este usuario.');
+      return;
+    }
+    registrarContextoSistemaMobile('vendas');
+    try {
+      sessionStorage.setItem(chaveSistemaPerfilMobile(CHAVE_SISTEMA_SESSAO_MOBILE), 'vendas');
+    } catch (error) {}
+    window.location.assign('/mobile/vendas');
+  }
+
+  function escolherSistemaInicialMobile(sistema) {
+    if (sistema !== 'gestao' && sistema !== 'vendas') return;
+    if (sistema === 'vendas' && !podeTrocarSistemaMobile()) return;
+    state.seletorSistemaAberto = false;
+    state.sistemaInicialAvaliadoPerfilId = state.empresa && state.empresa.id ? state.empresa.id : '';
+    registrarContextoSistemaMobile(sistema);
+    try {
+      sessionStorage.setItem(chaveSistemaPerfilMobile(CHAVE_SISTEMA_SESSAO_MOBILE), sistema);
+      if (state.lembrarSistemaInicial) {
+        localStorage.setItem(chaveSistemaPerfilMobile(CHAVE_SISTEMA_INICIAL_MOBILE), sistema);
+      } else localStorage.removeItem(chaveSistemaPerfilMobile(CHAVE_SISTEMA_INICIAL_MOBILE));
+    } catch (error) {}
+    if (sistema === 'vendas') abrirVendasMobile();
+    else render();
+  }
+
+  function abrirSeletorSistemaMobile() {
+    if (!podeTrocarSistemaMobile()) {
+      mostrarToast('A troca de sistemas nao esta disponivel para este usuario.');
+      return;
+    }
+    state.menuAberto = false;
+    state.seletorSistemaAberto = true;
+    try {
+      state.lembrarSistemaInicial = !!localStorage.getItem(chaveSistemaPerfilMobile(CHAVE_SISTEMA_INICIAL_MOBILE));
+    } catch (error) { state.lembrarSistemaInicial = false; }
+    render();
+  }
+
+  function avaliarSistemaInicialMobile() {
+    if (!state.empresa || !podeTrocarSistemaMobile()) {
+      state.seletorSistemaAberto = false;
+      return false;
+    }
+    if (state.sistemaInicialAvaliadoPerfilId === state.empresa.id) return false;
+    state.sistemaInicialAvaliadoPerfilId = state.empresa.id;
+    var escolha = '';
+    try {
+      escolha = sessionStorage.getItem(chaveSistemaPerfilMobile(CHAVE_SISTEMA_SESSAO_MOBILE)) ||
+        localStorage.getItem(chaveSistemaPerfilMobile(CHAVE_SISTEMA_INICIAL_MOBILE)) || '';
+    } catch (error) {}
+    if (escolha === 'vendas') {
+      abrirVendasMobile();
+      return true;
+    }
+    if (escolha === 'gestao') return false;
+    state.lembrarSistemaInicial = false;
+    state.seletorSistemaAberto = true;
+    return false;
+  }
+
+  function seletorSistemaInicialHtml() {
+    if (!state.seletorSistemaAberto || !podeTrocarSistemaMobile()) return '';
+    return (
+      '<div class="fixed inset-0 z-[14000] flex items-center justify-center bg-slate-950/75 px-4" role="dialog" aria-modal="true" aria-labelledby="seletor-sistema-titulo">' +
+        '<section class="w-full max-w-sm overflow-hidden rounded-3xl bg-white text-slate-900 shadow-2xl">' +
+          '<div class="px-5 py-4 text-white" style="background:linear-gradient(135deg,#003E73,#00A6C8)">' +
+            '<p class="text-[10px] font-black uppercase tracking-[0.2em] text-cyan-100">AvantaLab</p>' +
+            '<h2 id="seletor-sistema-titulo" class="mt-1 text-xl font-black">Por onde deseja começar?</h2>' +
+            '<p class="mt-1 text-xs font-semibold text-cyan-50/90">Escolha o sistema para abrir neste acesso.</p>' +
+          '</div>' +
+          '<div class="grid gap-3 p-4">' +
+            '<button id="escolher-sistema-gestao" type="button" class="flex min-h-[82px] items-center gap-3 rounded-2xl border border-sky-100 bg-sky-50 px-4 text-left active:scale-[0.99]">' +
+              '<span class="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[#003E73] text-white">' + iconeNavegacaoInferior('home') + '</span>' +
+              '<span><strong class="block text-base font-black">Gestão Mobile</strong><small class="mt-1 block text-xs font-semibold text-slate-500">Finanças, indicadores e administração.</small></span>' +
+            '</button>' +
+            '<button id="escolher-sistema-vendas" type="button" class="flex min-h-[82px] items-center gap-3 rounded-2xl border border-cyan-100 bg-cyan-50 px-4 text-left active:scale-[0.99]">' +
+              '<span class="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-cyan-600 text-white">' + iconeNavegacaoInferior('sistemas') + '</span>' +
+              '<span><strong class="block text-base font-black">Vendas Mobile</strong><small class="mt-1 block text-xs font-semibold text-slate-500">Clientes, produtos, pedidos e pagamentos.</small></span>' +
+            '</button>' +
+            '<label class="mt-1 flex items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-bold">' +
+              '<input id="lembrar-sistema-inicial" type="checkbox" class="h-5 w-5 accent-cyan-600"' + (state.lembrarSistemaInicial ? ' checked' : '') + '>' +
+              '<span>Memorizar minha escolha nos próximos acessos</span>' +
+            '</label>' +
+          '</div>' +
+        '</section>' +
+      '</div>'
+    );
   }
 
   function normalizarAtalhoInferior(valor, padrao) {
@@ -2856,7 +2975,9 @@
       state.modalMenu = 'despesasFixas';
       render();
       await carregarRecorrencias();
+      return;
     }
+    if (tipo === 'sistemas') abrirVendasMobile();
   }
 
   function removerChatIAOverlay() {
@@ -4357,6 +4478,7 @@
       db.from('configuracoes').select('duplicados_ativo').eq('empresa_id', empresaId).maybeSingle(),
       db.from('empresa_modulos').select('modulo_id').eq('empresa_id', empresaId).eq('ativo', true),
       db.from('caixinhas_movimentos').select('*').eq('empresa_id', empresaId).order('data_movimento', { ascending: false }).order('criado_em', { ascending: false }),
+      db.rpc('modulo_vendas_mobile_ativo_rpc', { p_empresa_id: empresaId }),
     ]);
 
     state.lancamentos = (resultados[0] || []).filter(function(item) {
@@ -4409,7 +4531,8 @@
 
     var modulosAtivosMobile = (resultados[5] && resultados[5].data) || [];
     state.pontoModuloAtivo = modulosAtivosMobile.some(function (item) { return item.modulo_id === 'ponto'; });
-    state.vendasMobileModuloAtivo = modulosAtivosMobile.some(function (item) { return item.modulo_id === 'vendas_mobile'; });
+    state.vendasMobileModuloAtivo = modulosAtivosMobile.some(function (item) { return item.modulo_id === 'vendas_mobile'; }) &&
+      !resultados[7].error && resultados[7].data === true;
     state.caixinhaMovimentos = ((resultados[6] && resultados[6].data) || []).map(function (item) {
       return {
         id: item.id,
@@ -4430,6 +4553,8 @@
     // Materializa as despesas fixas do mes corrente (idempotente).
     await garantirFixasDoMes(empresaId, ano);
     await carregarResumoPerfisMobile();
+
+    if (avaliarSistemaInicialMobile()) return;
 
     state.carregando = false;
     render();
@@ -5272,6 +5397,11 @@
 
   async function sair() {
     await db.auth.signOut({ scope: 'local' });
+    try {
+      Object.keys(sessionStorage).forEach(function (chave) {
+        if (chave.indexOf(CHAVE_SISTEMA_SESSAO_MOBILE) === 0) sessionStorage.removeItem(chave);
+      });
+    } catch (error) {}
     limparPreferenciaSessaoMobile();
     window.location.replace('/?entrar=1');
   }
@@ -7413,6 +7543,7 @@
     if (tipo === 'agenda') return iconeAgendaSvg().replace('width="18" height="18"', 'width="22" height="22"');
     if (tipo === 'tema') return '<svg ' + base + '><path d="M20.2 15.1A8.5 8.5 0 0 1 8.9 3.8 8.5 8.5 0 1 0 20.2 15Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>';
     if (tipo === 'despesasFixas') return '<svg ' + base + '><path d="M4 7h16M6 3v4m12-4v4M5 5h14a1 1 0 0 1 1 1v14H4V6a1 1 0 0 1 1-1Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M8 12h3m2 0h3m-8 4h3m2 0h3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>';
+    if (tipo === 'sistemas') return '<svg ' + base + '><rect x="3" y="4" width="8" height="7" rx="2"/><rect x="13" y="13" width="8" height="7" rx="2"/><path d="M15 7h4a2 2 0 0 1 2 2v1M9 17H5a2 2 0 0 1-2-2v-1M18 7l-2-2m2 2-2 2M6 17l2-2m-2 2 2 2"/></svg>';
     if (tipo === 'menu') return '<svg ' + base + '><path d="M4 7h16M4 12h16M4 17h16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>';
     return '';
   }
@@ -7423,6 +7554,7 @@
       agenda: 'Agenda',
       tema: 'Tema',
       despesasFixas: 'Fixas',
+      sistemas: 'Sistemas',
     }[tipo] || '';
   }
 
@@ -8948,7 +9080,8 @@
             menuBotaoHtml('menu-despesas-fixas', 'Despesas fixas', 'Lancamentos automaticos mensais', '&#10227;') +
             menuBotaoHtml('menu-ajuda-categorias', 'Instrucoes sobre categorias', 'Como organizar seus gastos', '?') +
             menuBotaoHtml('menu-tutorial', 'Tutorial', 'Como usar o AvantaLab', '&#127891;') +
-            ((state.vendasMobileModuloAtivo && podeGerenciarUsuarios()) ? menuBotaoHtml('menu-vendas-mobile', 'Vendas Mobile', 'Novidades e divulgacao') : '') +
+            (state.vendasMobileModuloAtivo ? menuBotaoHtml('menu-trocar-sistema', 'Sistemas', podeTrocarSistemaMobile() ? 'Escolher Gestão ou Vendas Mobile' : 'Indisponível para operadores', !podeTrocarSistemaMobile()) : '') +
+            ((state.vendasMobileModuloAtivo && podeGerenciarUsuarios()) ? menuBotaoHtml('menu-vendas-mobile', 'Conteúdo do Vendas', 'Novidades e divulgacao') : '') +
             '<button id="menu-config-toggle" type="button" class="mobile-config-main-btn rounded-[14px_26px_26px_26px] border border-slate-300 px-2.5 py-2.5 text-left text-slate-800 shadow-[0_5px_13px_rgba(15,23,42,.09)] transition active:scale-[0.99]" style="background:' + (configAberto ? 'linear-gradient(90deg,#B8C3D0 0%,#A5B2C1 100%)' : 'linear-gradient(90deg,#CBD5E1 0%,#B4C0CE 100%)') + '">' +
               '<div class="flex items-center gap-2">' +
                 '<span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border border-white/15 bg-slate-800 text-white shadow-sm">' + iconeMenuLateralSvg('menu-config-toggle') + '</span>' +
@@ -9141,6 +9274,7 @@
       'menu-ajuda-categorias': '<circle cx="12" cy="12" r="9"/><path d="M9.6 9a2.5 2.5 0 1 1 3.3 2.37c-.9.36-.9 1.13-.9 1.63M12 17h.01"/>',
       'menu-tutorial': '<path d="m3 10 9-5 9 5-9 5-9-5Z"/><path d="M7 12.5V17c3 2 7 2 10 0v-4.5M21 10v6"/>',
       'menu-vendas-mobile': '<path d="m3 11 18-5v12L3 14zM11.5 16.5 13 21H8l-1.5-6"/><path d="M7 8.8v6.4"/>',
+      'menu-trocar-sistema': '<rect x="3" y="4" width="8" height="7" rx="2"/><rect x="13" y="13" width="8" height="7" rx="2"/><path d="M15 7h4a2 2 0 0 1 2 2v1M9 17H5a2 2 0 0 1-2-2v-1M18 7l-2-2m2 2-2 2M6 17l2-2m-2 2 2 2"/>',
       'menu-config-toggle': '<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.88l.06.06-2.83 2.83-.06-.06A1.7 1.7 0 0 0 15 19.4a1.7 1.7 0 0 0-1 .6 1.7 1.7 0 0 0-.4 1v.1h-4V21a1.7 1.7 0 0 0-1.1-1.6 1.7 1.7 0 0 0-1.88.34l-.06.06-2.83-2.83.06-.06A1.7 1.7 0 0 0 4.6 15a1.7 1.7 0 0 0-.6-1 1.7 1.7 0 0 0-1-.4h-.1v-4H3a1.7 1.7 0 0 0 1.6-1.1 1.7 1.7 0 0 0-.34-1.88l-.06-.06 2.83-2.83.06.06A1.7 1.7 0 0 0 9 4.6a1.7 1.7 0 0 0 1-.6 1.7 1.7 0 0 0 .4-1v-.1h4V3a1.7 1.7 0 0 0 1.1 1.6 1.7 1.7 0 0 0 1.88-.34l.06-.06 2.83 2.83-.06.06A1.7 1.7 0 0 0 19.4 9c.14.37.36.7.6 1 .27.28.62.4 1 .4h.1v4H21a1.7 1.7 0 0 0-1.6.6Z"/>',
       'menu-duplicados': '<rect x="4" y="4" width="12" height="12" rx="2"/><path d="M8 8h12v12H8z"/>',
       'menu-gerenciar': '<circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/>',
@@ -9158,7 +9292,7 @@
     return '<svg ' + base + '>' + (caminhos[id] || '<circle cx="12" cy="12" r="2"/>') + '</svg>';
   }
 
-  function menuBotaoHtml(id, titulo, subtitulo) {
+  function menuBotaoHtml(id, titulo, subtitulo, desativado) {
     var estilos = {
       'menu-agenda': ['linear-gradient(90deg,#E5F9FC 0%,#F9FEFF 100%)', '#C4EEF4', '#D5F8FC', '#087B94'],
       'menu-avisos': ['linear-gradient(90deg,#E8F4FF 0%,#FAFCFF 100%)', '#C9E3FA', 'linear-gradient(135deg,#7DD3FC,#2563EB)', '#FFFFFF'],
@@ -9169,10 +9303,11 @@
       'menu-ajuda-categorias': ['linear-gradient(90deg,#ECEBFF 0%,#FCFBFF 100%)', '#D4D5FA', 'linear-gradient(135deg,#818CF8,#4F46E5)', '#FFFFFF'],
       'menu-tutorial': ['linear-gradient(90deg,#F0EAFE 0%,#FCFAFF 100%)', '#DED4FA', 'linear-gradient(135deg,#A78BFA,#7C3AED)', '#FFFFFF'],
       'menu-vendas-mobile': ['linear-gradient(90deg,#E1F7FC 0%,#F8FDFF 100%)', '#B9E8F2', 'linear-gradient(135deg,#22D3EE,#0369A1)', '#FFFFFF'],
+      'menu-trocar-sistema': ['linear-gradient(90deg,#E0F2FE 0%,#F8FDFF 100%)', '#BAE6FD', 'linear-gradient(135deg,#0284C7,#003E73)', '#FFFFFF'],
     };
     var visual = estilos[id] || ['#FFFFFF', '#E2E8F0', '#ECFEFF', '#0E7490'];
     var cardStyle = state.darkMode ? 'background:#0F172A;border-color:#334155;' : 'background:' + visual[0] + ';border-color:' + visual[1] + ';';
-    return '<button id="' + id + '" type="button" class="rounded-[14px_26px_26px_26px] border px-2.5 py-2.5 text-left shadow-[0_5px_13px_rgba(15,23,42,.07)] transition active:scale-[0.99]" style="' + cardStyle + '">' +
+    return '<button id="' + id + '" type="button"' + (desativado ? ' disabled aria-disabled="true"' : '') + ' class="rounded-[14px_26px_26px_26px] border px-2.5 py-2.5 text-left shadow-[0_5px_13px_rgba(15,23,42,.07)] transition active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-50" style="' + cardStyle + '">' +
       '<div class="flex items-center gap-2">' +
         '<span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg shadow-sm" style="background:' + visual[2] + ';color:' + visual[3] + '">' + iconeMenuLateralSvg(id) + '</span>' +
         '<span class="min-w-0 flex-1"><span class="block text-xs font-black leading-none">' + escapeHtml(titulo) + '</span><span class="mt-1 block truncate text-[10px] font-semibold leading-none text-slate-500">' + escapeHtml(subtitulo || '') + '</span></span>' +
@@ -9780,8 +9915,9 @@
       { id: 'agenda', titulo: 'Agenda' },
       { id: 'tema', titulo: 'Modo escuro' },
       { id: 'despesasFixas', titulo: 'Despesas fixas' },
+      { id: 'sistemas', titulo: 'Ir para Vendas Mobile', restrito: true },
       { id: 'nenhum', titulo: 'Nenhum' },
-    ];
+    ].filter(function (opcao) { return !opcao.restrito || podeTrocarSistemaMobile(); });
 
     function grupo(lado, titulo, selecionado) {
       return '<section class="overflow-hidden rounded-xl border border-slate-200 bg-slate-50">' +
@@ -10545,7 +10681,7 @@
     else if (state.modoCriarPerfil) telaAtual = telaLoginWrapper(telaCriarPerfilInicial(), 'Criar perfil financeiro', 'Informe os dados do seu primeiro perfil.');
     else if (!state.paywallVerificado) telaAtual = telaCarregandoMobile();
     else telaAtual = telaApp();
-    root.innerHTML = telaAtual + (state.chatIAAberto ? chatIAModalHtml() : '') + (state.mostrarPromptNotificacoes ? promptNotificacoesHtml() : '') + (state.tourAberto ? tourHtml() : '') + avisoAssinanteMobileHtml();
+    root.innerHTML = telaAtual + (state.chatIAAberto ? chatIAModalHtml() : '') + (state.mostrarPromptNotificacoes ? promptNotificacoesHtml() : '') + (state.tourAberto ? tourHtml() : '') + avisoAssinanteMobileHtml() + seletorSistemaInicialHtml();
     sincronizarGradienteHeaderPerfil();
     configurarRecolhimentoPerfilHeader();
     var indicadorNav = document.querySelector('[data-nav-indicador]');
@@ -10583,6 +10719,9 @@
     }
 
     bind('confirmar-telefone-obrigatorio', confirmarTelefoneObrigatorioMobile);
+    bind('escolher-sistema-gestao', function () { escolherSistemaInicialMobile('gestao'); });
+    bind('escolher-sistema-vendas', function () { escolherSistemaInicialMobile('vendas'); });
+    bindChange('lembrar-sistema-inicial', function () { state.lembrarSistemaInicial = this.checked === true; });
     bind('reenviar-telefone-obrigatorio', enviarCodigoTelefoneObrigatorioMobile);
     bindChange('ddi-telefone-obrigatorio', function (e) { state.ddiTelefoneObrigatorio = (e.target && e.target.value ? e.target.value : '55').replace(/\D/g, ''); });
     bind('sair-telefone-obrigatorio', sair);
@@ -10792,6 +10931,7 @@
       render();
     });
     bind('menu-tutorial', function () { fecharMenuLateralAnimado(abrirTourMobile); });
+    bind('menu-trocar-sistema', function () { fecharMenuLateralAnimado(abrirSeletorSistemaMobile); });
     bind('tour-pular', fecharTourMobile);
     bind('tour-concluir', fecharTourMobile);
     bind('tour-anterior', function () { tourIr(-1); });
@@ -12467,7 +12607,7 @@
           return Promise.all(
             keys
               .filter(function (key) {
-                return key.indexOf('avantalab-mobile-') === 0 && key !== 'avantalab-mobile-v244';
+                return key.indexOf('avantalab-mobile-') === 0 && key !== 'avantalab-mobile-v247';
               })
               .map(function (key) {
                 return caches.delete(key);
@@ -12484,7 +12624,7 @@
     });
 
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/mobile-sw.js?v=230').then(function (registro) {
+      navigator.serviceWorker.register('/mobile-sw.js?v=231').then(function (registro) {
         if (registro && registro.update) registro.update();
       }).catch(function () {});
     }

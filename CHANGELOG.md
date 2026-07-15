@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.5.0 - 2026-07-15
+
+- Gestão Mobile e Vendas Mobile: compartilham a sessão autenticada e preservam o perfil/empresa ao trocar de sistema.
+- Mobile: após a validação, gestores com o módulo Vendas ativo podem escolher o sistema inicial e memorizar a preferência para os próximos acessos.
+- Gestão Mobile: adiciona Sistemas ao menu lateral e aos atalhos personalizáveis do rodapé; operadores permanecem sem permissão para a troca.
+- Vendas Mobile: adiciona acesso à Gestão no header e nos atalhos personalizáveis, acomodando o aviso de aniversário sem sobreposição.
+
 ## 1.4.1.03 - 2026-07-15
 
 - Vendas Mobile: adiciona rolagem ao menu lateral do celular em paisagem, garantindo acesso a todos os botões.

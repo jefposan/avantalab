@@ -58,6 +58,9 @@ const estadoInicial = {
   atalhoInferiorDireito: 'agenda',
   ordemSalaBotoes: [],
   organizandoSalaBotoes: false,
+  seletorSistemaAberto: false,
+  lembrarSistemaInicial: false,
+  sistemaInicialAvaliado: false,
 };
 
 let state = carregarEstado();
@@ -513,7 +516,7 @@ function render() {
     return;
   }
   const aniversariantesHoje = aniversariosHojeVendas();
-  const cabecalho = `<header class="system-header"><button class="system-brand brand-home" onclick="abrirSalaBotoes()" aria-label="Ir para a sala de botões">${logoVendas()}</button>${aniversariantesHoje.length ? `<button class="birthday-header-button" onclick="abrirAgendaAniversariantes()" aria-label="${aniversariantesHoje.length} aniversário${aniversariantesHoje.length === 1 ? '' : 's'} hoje">${svgIconEstavel('cake')}<i>${aniversariantesHoje.length}</i></button>` : ''}</header>`;
+  const cabecalho = `<header class="system-header"><button class="system-brand brand-home" onclick="abrirSalaBotoes()" aria-label="Ir para a sala de botões">${logoVendas()}</button><div class="system-header-actions">${aniversariantesHoje.length ? `<button class="birthday-header-button" onclick="abrirAgendaAniversariantes()" aria-label="${aniversariantesHoje.length} aniversário${aniversariantesHoje.length === 1 ? '' : 's'} hoje">${svgIconEstavel('cake')}<i>${aniversariantesHoje.length}</i></button>` : ''}${podeTrocarParaGestaoVendas() ? `<button class="system-switch-header-button" onclick="abrirGestao()" aria-label="Ir para Gestão Mobile" title="Ir para Gestão Mobile">${iconeTrocaSistemaVendas()}</button>` : ''}</div></header>`;
   app.innerHTML = `
     <aside class="sidebar ${state.menuAberto ? 'open' : ''}">
       <button class="sidebar-brand brand-home" onclick="abrirSalaBotoes()" aria-label="Ir para a sala de botões">${logoVendas()}</button>
@@ -540,6 +543,7 @@ function render() {
     ${renderNavegacaoInferior()}
     ${state.aba === 'novo-pedido' ? `<button class="fab" onclick="abrirCarrinho()">${svgIcon('shopping-cart')}</button>` : ''}
     ${state.agendaFormAberto && state.aba !== 'agenda' ? renderFormularioAgendaVendas() : ''}
+    ${renderSeletorSistemaVendas()}
   `;
   if (state.aba === 'clientes') requestAnimationFrame(configurarDestaqueClientes);
   else limparDestaqueClientes();
@@ -867,10 +871,61 @@ const ATALHOS_INFERIORES_VENDAS = [
   ['tema', 'Modo escuro', 'tema'], ['dashboard', 'Dashboard', 'home'], ['clientes', 'Clientes', 'users'],
   ['produtos', 'Produtos', 'package'], ['vendas', 'Pedidos', 'shopping-cart'], ['vender', 'Pagamentos', 'dollar'],
   ['agenda', 'Agenda', 'calendar'], ['divulgacao', 'Divulgação', 'megaphone'],
+  ['gestao', 'Gestão', 'gestao'],
 ];
 
+function podeTrocarParaGestaoVendas() {
+  return state.acessoVendas?.papel === 'gestor';
+}
+
+function chaveSistemaPerfilVendas(prefixo) {
+  return `${prefixo}${state.acessoVendas?.empresa_id || 'sem-perfil'}`;
+}
+
+function avaliarSistemaInicialVendas() {
+  if (state.sistemaInicialAvaliado || !podeTrocarParaGestaoVendas()) return;
+  state.sistemaInicialAvaliado = true;
+  let escolha = '';
+  try {
+    escolha = sessionStorage.getItem(chaveSistemaPerfilVendas('avantalab_mobile_sistema_sessao_')) ||
+      localStorage.getItem(chaveSistemaPerfilVendas('avantalab_mobile_sistema_inicial_')) || '';
+  } catch { /* armazenamento indisponível */ }
+  if (escolha === 'gestao') {
+    abrirGestao();
+    return;
+  }
+  if (escolha !== 'vendas') state.seletorSistemaAberto = true;
+}
+
+function escolherSistemaInicialVendas(sistema) {
+  if (!['gestao', 'vendas'].includes(sistema) || !podeTrocarParaGestaoVendas()) return;
+  const empresaId = state.acessoVendas?.empresa_id || '';
+  try {
+    sessionStorage.setItem(chaveSistemaPerfilVendas('avantalab_mobile_sistema_sessao_'), sistema);
+    if (state.lembrarSistemaInicial) localStorage.setItem(chaveSistemaPerfilVendas('avantalab_mobile_sistema_inicial_'), sistema);
+    else localStorage.removeItem(chaveSistemaPerfilVendas('avantalab_mobile_sistema_inicial_'));
+    localStorage.setItem('avantalab_mobile_sistema_contexto', JSON.stringify({ empresaId, sistema, atualizadoEm: new Date().toISOString() }));
+  } catch { /* navegação continua sem preferência local */ }
+  state.seletorSistemaAberto = false;
+  if (sistema === 'gestao') abrirGestao();
+  else render();
+}
+
+function definirLembrarSistemaInicialVendas(ativo) {
+  state.lembrarSistemaInicial = ativo === true;
+}
+
+function renderSeletorSistemaVendas() {
+  if (!state.seletorSistemaAberto || !podeTrocarParaGestaoVendas()) return '';
+  return `<div class="system-selector-backdrop" role="dialog" aria-modal="true" aria-labelledby="system-selector-title"><section class="system-selector-card"><header><small>AvantaLab</small><h2 id="system-selector-title">Por onde deseja começar?</h2><p>Escolha o sistema para abrir neste acesso.</p></header><div class="system-selector-options"><button type="button" onclick="escolherSistemaInicialVendas('gestao')"><span>${svgIconEstavel('home')}</span><b>Gestão Mobile<small>Finanças, indicadores e administração.</small></b></button><button type="button" onclick="escolherSistemaInicialVendas('vendas')"><span>${iconeTrocaSistemaVendas()}</span><b>Vendas Mobile<small>Clientes, produtos, pedidos e pagamentos.</small></b></button><label><input type="checkbox" onchange="definirLembrarSistemaInicialVendas(this.checked)" ${state.lembrarSistemaInicial ? 'checked' : ''}><span>Memorizar minha escolha nos próximos acessos</span></label></div></section></div>`;
+}
+
+function atalhosInferioresVendasDisponiveis() {
+  return ATALHOS_INFERIORES_VENDAS.filter(([id]) => id !== 'gestao' || podeTrocarParaGestaoVendas());
+}
+
 function atalhoInferiorVendasValido(valor, padrao) {
-  return ATALHOS_INFERIORES_VENDAS.some(([id]) => id === valor) ? valor : padrao;
+  return atalhosInferioresVendasDisponiveis().some(([id]) => id === valor) ? valor : padrao;
 }
 
 function dadosAtalhoInferiorVendas(id) {
@@ -907,7 +962,7 @@ function restaurarAtalhosInferioresVendas() {
 function abrirOrganizarAtalhosVendas(rolagens = {}) {
   const esquerdo = atalhoInferiorVendasValido(state.atalhoInferiorEsquerdo, 'tema');
   const direito = atalhoInferiorVendasValido(state.atalhoInferiorDireito, 'agenda');
-  const grupo = (lado, titulo, selecionado) => `<section class="shortcut-organizer-group"><h3>${titulo}</h3><div id="atalhos-vendas-${lado}-scroll">${ATALHOS_INFERIORES_VENDAS.map(([id, rotulo, icone]) => `<button type="button" class="${selecionado === id ? 'selected' : ''}" onclick="definirAtalhoInferiorVendas('${lado}','${id}')"><span>${iconeNavegacaoInferior(icone)}</span><b>${rotulo}</b>${selecionado === id ? '<small>Selecionado</small>' : ''}</button>`).join('')}</div></section>`;
+  const grupo = (lado, titulo, selecionado) => `<section class="shortcut-organizer-group"><h3>${titulo}</h3><div id="atalhos-vendas-${lado}-scroll">${atalhosInferioresVendasDisponiveis().map(([id, rotulo, icone]) => `<button type="button" class="${selecionado === id ? 'selected' : ''}" onclick="definirAtalhoInferiorVendas('${lado}','${id}')"><span>${iconeNavegacaoInferior(icone)}</span><b>${rotulo}</b>${selecionado === id ? '<small>Selecionado</small>' : ''}</button>`).join('')}</div></section>`;
   sheet(`<div class="sheet-header"><div><h2>Organizar atalhos</h2><p class="muted small">Configurações, Lançar e Início permanecem fixos. Escolha os atalhos ao lado do +.</p></div><button class="close" onclick="fecharSheet()">×</button></div><div class="shortcut-organizer">${grupo('esquerdo', 'À esquerda do +', esquerdo)}${grupo('direito', 'À direita do +', direito)}<button type="button" class="ghost shortcut-organizer-reset" onclick="restaurarAtalhosInferioresVendas()">Restaurar Modo escuro e Agenda</button></div>`, 'sheet-backdrop-centered');
   requestAnimationFrame(() => {
     const listaEsquerda = document.getElementById('atalhos-vendas-esquerdo-scroll');
@@ -919,7 +974,12 @@ function abrirOrganizarAtalhosVendas(rolagens = {}) {
 
 function iconeNavegacaoInferior(tipo) {
   if (tipo === 'tema') return '<svg class="svg-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M20.2 15.1A8.5 8.5 0 0 1 8.9 3.8 8.5 8.5 0 1 0 20.2 15Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>';
+  if (tipo === 'gestao') return iconeTrocaSistemaVendas();
   return svgIconEstavel(tipo);
+}
+
+function iconeTrocaSistemaVendas() {
+  return '<svg class="svg-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="8" height="7" rx="2"/><rect x="13" y="13" width="8" height="7" rx="2"/><path d="M15 7h4a2 2 0 0 1 2 2v1M9 17H5a2 2 0 0 1-2-2v-1M18 7l-2-2m2 2-2 2M6 17l2-2m-2 2 2 2"/></svg>';
 }
 
 function itemNavegacaoInferior(id, tipo, rotulo, acao) {
@@ -956,6 +1016,7 @@ function acionarNavegacaoInferior(event, destino) {
     fecharCamadasNavegacao();
     if (destino === 'configuracoes') setAba('configuracoes');
     else if (destino === 'tema') alternarTema(!state.temaEscuro);
+    else if (destino === 'gestao') abrirGestao();
     else if (destino === 'novo') { render(); abrirAcoesRapidas(); }
     else if (['dashboard', 'clientes', 'produtos', 'vendas', 'vender', 'agenda', 'divulgacao'].includes(destino)) setAba(destino);
     else if (destino === 'inicio') abrirSalaBotoes();
@@ -982,6 +1043,11 @@ function abrirAcoesRapidas() {
 
 async function sairSistema() {
   try { if (backendAtivo) await window.VendasDb.signOut(); } catch (error) { console.error(error); }
+  try {
+    Object.keys(sessionStorage).forEach((chave) => {
+      if (chave.startsWith('avantalab_mobile_sistema_sessao_')) sessionStorage.removeItem(chave);
+    });
+  } catch { /* armazenamento indisponível */ }
   state.autenticado = false;
   state.menuAberto = false;
   state.produtos = [];
@@ -1358,6 +1424,7 @@ async function carregarDadosBackend(mostrarCarregamento = true, manterPreparacao
       state.vinculoComercialAtivo = dados.vinculoComercialAtivo || null;
       state.perfisFinanceiros = dados.perfisFinanceiros || [];
       if (!dados.acesso) state.autenticado = false;
+      else avaliarSistemaInicialVendas();
     }
   } catch (error) {
     console.error(error);
@@ -4135,8 +4202,17 @@ async function salvarMovimentacaoEstoque() {
 }
 
 function abrirGestao() {
-  const destino = `${window.location.origin}/mobile`;
-  if (confirm(`Abrir gestão AvantaLab?\n${destino}`)) window.location.href = destino;
+  if (!podeTrocarParaGestaoVendas()) {
+    toast('A troca de sistemas não está disponível para este usuário.');
+    return;
+  }
+  const empresaId = state.acessoVendas?.empresa_id || '';
+  try {
+    localStorage.setItem('avantalab_mobile_sistema_contexto', JSON.stringify({ empresaId, sistema: 'gestao', atualizadoEm: new Date().toISOString() }));
+    if (empresaId) sessionStorage.setItem(`avantalab_mobile_sistema_sessao_${empresaId}`, 'gestao');
+    if (empresaId) localStorage.setItem('avantalab_mobile_ultimo_perfil_id', empresaId);
+  } catch { /* navegação continua sem preferência local */ }
+  window.location.assign('/mobile');
 }
 
 function abrirConfiguracoes() {
@@ -4323,6 +4399,8 @@ if (window.__VENDAS_MOBILE_EMBEDDED__) {
 window.setAba = setAba;
 window.state = state;
 window.abrirGestao = abrirGestao;
+window.escolherSistemaInicialVendas = escolherSistemaInicialVendas;
+window.definirLembrarSistemaInicialVendas = definirLembrarSistemaInicialVendas;
 window.abrirConfiguracoes = abrirConfiguracoes;
 window.abrirConfirmacaoSair = abrirConfirmacaoSair;
 window.salvarConfiguracoes = salvarConfiguracoes;

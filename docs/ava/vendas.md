@@ -1,8 +1,8 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.4.1.03 -->
+<!-- ava-version: 1.5.0 -->
 
-> Revisão 1.4.1.03: sem impacto operacional na orientação da Ava.
+> Revisão 1.5.0: inclui escolha inicial e retorno integrado à Gestão Mobile.
 
 ## Escopo e navegação
 
@@ -14,6 +14,11 @@ dúvida dentro do Vendas sempre que a função existir ali.
 - O menu inferior tem Configurações, dois atalhos configuráveis, **+ Novo
   lançamento** e Início. Os atalhos são configurados em **Configurações >
   Organizar atalhos**; o lápis da sala muda a ordem dos cards.
+- Gestores podem abrir a Gestão Mobile pelo botão de sistemas no canto direito
+  do cabeçalho ou adicionar **Gestão** a um atalho configurável. O aviso de
+  aniversário permanece ao lado do botão quando ambos estão visíveis.
+- A sessão e o perfil/empresa são preservados na troca. Usuários sem permissão
+  de gestor não recebem o atalho de retorno à Gestão.
 
 ## Clientes
 
