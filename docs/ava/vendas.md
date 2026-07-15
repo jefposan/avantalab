@@ -1,8 +1,8 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.5.0.12 -->
+<!-- ava-version: 1.5.1 -->
 
-> Revisão 1.5.0.12: sem impacto operacional no Vendas Mobile.
+> Revisão 1.5.1: registros históricos importados podem aparecer normalmente em Clientes, Pedidos, Pagamentos e Agenda; sem novo fluxo de uso para o vendedor.
 
 ## Escopo e navegação
 

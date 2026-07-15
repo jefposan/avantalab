@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.5.1 - 2026-07-15
+
+- Vendas Mobile: adiciona um importador idempotente e auditável para backups MySQL legados da Tridium, com validação prévia, vinculação por conta e prevenção de duplicidades.
+- Migração Tridium: restaura catálogo, clientes, pedidos, itens, recebimentos econômicos e agenda de Jefferson Ferreira, Marcos Soares e William De Lima Raposo no Vendas Mobile.
+- Migração Tridium: cria e confirma a conta do Marcos, libera os acessos de Vendas necessários e vincula os históricos ao perfil financeiro da Tridium Cosméticos, refletindo os recebimentos agregados na Gestão.
+
 ## 1.5.0.12 - 2026-07-15
 
 - Gestão Mobile: separa os fundos das telas de entrada. Login e cadastro mantêm o logo em posição alta para não conflitar com o formulário; carregamento, seletor de sistema e demais telas pós-login usam o fundo de apresentação com o logo mais baixo, alinhado ao padrão do Vendas Mobile.

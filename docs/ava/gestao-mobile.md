@@ -1,8 +1,8 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.5.0.12 -->
+<!-- ava-version: 1.5.1 -->
 
-> Revisão 1.5.0.12: sem impacto operacional; ajusta a apresentação das telas de entrada e carregamento.
+> Revisão 1.5.1: sem novo caminho operacional; registra a importação histórica do Vendas vinculada à Tridium.
 
 ## Escopo
 
