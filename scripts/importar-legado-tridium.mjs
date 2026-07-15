@@ -381,6 +381,18 @@ async function importarRepresentante(db, empresaId, catalogoId, tabelas, plano, 
   if (executar) {
     await emLotes(catalogoProdutos, 100, async (lote) => falharSeErro(await db.from('vendas_mobile_catalogo_produtos').upsert(lote, { onConflict: 'id' }), 'Não foi possível importar o catálogo'));
     await emLotes(produtosPessoais, 100, async (lote) => falharSeErro(await db.from('vendas_mobile_produtos').upsert(lote, { onConflict: 'id' }), 'Não foi possível importar os produtos pessoais'));
+    const produtosRecebidos = await falharSeErro(
+      await db.from('vendas_mobile_produtos').select('id,catalogo_produto_origem_id').eq('user_id', userId).not('catalogo_produto_origem_id', 'is', null),
+      'Não foi possível conferir os produtos pessoais vinculados ao catálogo',
+    );
+    const recebimentosCatalogo = (produtosRecebidos || []).map((produto) => ({
+      user_id: userId,
+      catalogo_produto_id: produto.catalogo_produto_origem_id,
+      produto_id: produto.id,
+      status: 'recebido',
+      atualizado_em: new Date().toISOString(),
+    }));
+    await emLotes(recebimentosCatalogo, 100, async (lote) => falharSeErro(await db.from('vendas_mobile_catalogo_recebimentos').upsert(lote, { onConflict: 'user_id,catalogo_produto_id' }), 'Não foi possível registrar os produtos já recebidos do catálogo'));
   }
 
   const mapaClientes = new Map();

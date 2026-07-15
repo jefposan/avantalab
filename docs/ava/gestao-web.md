@@ -1,8 +1,8 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.5.1.01 -->
+<!-- ava-version: 1.5.1.02 -->
 
-> Revisão 1.5.1.01: sem novo caminho operacional; a substituição técnica de um histórico de Vendas mantém os resultados da Tridium consistentes na Gestão Web.
+> Revisão 1.5.1.02: sem novo caminho operacional; a correção técnica da sincronização de catálogo do Vendas não altera o uso da Gestão Web.
 
 ## Escopo
 

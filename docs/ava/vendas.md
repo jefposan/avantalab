@@ -1,8 +1,8 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.5.1.01 -->
+<!-- ava-version: 1.5.1.02 -->
 
-> Revisão 1.5.1.01: registros históricos importados podem aparecer normalmente em Clientes, Pedidos, Pagamentos e Agenda; uma substituição técnica de histórico não cria novo fluxo de uso para o vendedor.
+> Revisão 1.5.1.02: a sincronização do catálogo reconhece produtos já importados; não há novo fluxo de uso para o vendedor.
 
 ## Escopo e navegação
 

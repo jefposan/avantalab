@@ -1,8 +1,8 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.5.1.01 -->
+<!-- ava-version: 1.5.1.02 -->
 
-> Revisão 1.5.1.01: sem novo caminho operacional; registra a substituição técnica de um histórico importado do Vendas vinculado à Tridium.
+> Revisão 1.5.1.02: sem novo caminho operacional; a correção técnica da sincronização de catálogo do Vendas não altera o uso da Gestão Mobile.
 
 ## Escopo
 

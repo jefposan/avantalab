@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.5.1.02 - 2026-07-15
+
+- Vendas Mobile: corrige a sincronização do catálogo após importação histórica, reconhecendo produtos pessoais já vinculados ao catálogo antes de tentar criar uma nova cópia.
+- Migração Tridium: registra os recebimentos de catálogo dos três históricos restaurados, eliminando o conflito de chave duplicada na abertura do Vendas.
+
 ## 1.5.1.01 - 2026-07-15
 
 - Migração Tridium: permite substituir de forma controlada os dados atuais de um representante pelo respectivo histórico legado, preservando o acesso, o vínculo empresarial e os dados dos demais usuários.
