@@ -1757,31 +1757,31 @@ body { background: #fff; color: var(--ink); }
   .month-switcher { width: 100%; gap: 8px; }
   .month-switcher strong { min-width: 0; flex: 1; font-size: 14px; }
   .mobile-menu { position: fixed; z-index: 100; inset: 0; display: flex; width: 100%; height: 100dvh; min-height: 0; isolation: isolate; flex-direction: column; overflow: hidden; overscroll-behavior: none; touch-action: none; padding-bottom: calc(env(safe-area-inset-bottom) + 82px); background:
-    radial-gradient(ellipse 70% 38% at -8% 15%, rgba(0,166,200,.17) 0%, rgba(0,166,200,.055) 42%, transparent 72%),
-    radial-gradient(ellipse 58% 34% at 108% 38%, rgba(22,135,217,.15) 0%, rgba(22,135,217,.045) 45%, transparent 74%),
-    radial-gradient(circle at 16% 82%, rgba(0,166,200,.15) 0 2px, transparent 3px),
-    radial-gradient(circle at 85% 76%, rgba(22,135,217,.14) 0 3px, transparent 4px),
+    radial-gradient(ellipse 70% 38% at -8% 15%, rgba(0,166,200,.25) 0%, rgba(0,166,200,.075) 42%, transparent 72%),
+    radial-gradient(ellipse 58% 34% at 108% 38%, rgba(22,135,217,.24) 0%, rgba(22,135,217,.07) 45%, transparent 74%),
+    radial-gradient(circle at 16% 82%, rgba(0,166,200,.22) 0 2px, transparent 3px),
+    radial-gradient(circle at 85% 76%, rgba(22,135,217,.22) 0 3px, transparent 4px),
     linear-gradient(154deg, #f4faff 0%, #fbfdff 46%, #edf6ff 100%); }
   /* Ondas vivas da sala: formas e luz são CSS, sem imagem ou custo de download. */
   .mobile-menu::before, .mobile-menu::after { position: absolute; z-index: -1; pointer-events: none; content: ''; will-change: transform, opacity, background-position; }
-  .mobile-menu::before { right: -38vw; bottom: -31vw; width: 152vw; height: 72vw; border: 1px solid rgba(22,135,217,.20); border-radius: 52% 46% 0 0 / 70% 58% 0 0; background:
-    radial-gradient(ellipse 72% 92% at 8% 112%, transparent 60%, rgba(0,166,200,.18) 60.55%, transparent 61.15%),
-    radial-gradient(ellipse 66% 88% at 50% 110%, transparent 62%, rgba(22,135,217,.17) 62.55%, transparent 63.18%),
-    radial-gradient(ellipse 60% 86% at 91% 108%, transparent 64%, rgba(10,31,68,.11) 64.5%, transparent 65.12%),
-    radial-gradient(circle at 20% 32%, rgba(0,166,200,.18) 0 1.5%, transparent 10%),
-    radial-gradient(circle at 74% 28%, rgba(22,135,217,.18) 0 1.2%, transparent 9%);
+  .mobile-menu::before { right: -38vw; bottom: -18vw; width: 152vw; height: 92vw; border: 1px solid rgba(22,135,217,.34); border-radius: 52% 46% 0 0 / 70% 58% 0 0; background:
+    radial-gradient(ellipse 72% 92% at 8% 112%, transparent 60%, rgba(0,166,200,.28) 60.55%, transparent 61.15%),
+    radial-gradient(ellipse 66% 88% at 50% 110%, transparent 62%, rgba(22,135,217,.27) 62.55%, transparent 63.18%),
+    radial-gradient(ellipse 60% 86% at 91% 108%, transparent 64%, rgba(10,31,68,.20) 64.5%, transparent 65.12%),
+    radial-gradient(circle at 20% 32%, rgba(0,166,200,.25) 0 1.5%, transparent 10%),
+    radial-gradient(circle at 74% 28%, rgba(22,135,217,.25) 0 1.2%, transparent 9%);
     background-size: 112% 108%, 106% 112%, 116% 106%, 86% 94%, 92% 88%;
-    box-shadow: 0 -12px 32px rgba(0,166,200,.07), inset 0 18px 44px rgba(22,135,217,.045);
-    animation: vendas-wave-dance-one 13s cubic-bezier(.45,.05,.55,.95) infinite; }
-  .mobile-menu::after { bottom: 18px; left: -38vw; width: 142vw; height: 55vw; border: 1px solid rgba(0,166,200,.20); border-radius: 45% 58% 0 0 / 62% 76% 0 0; background:
-    radial-gradient(ellipse 66% 86% at 4% 112%, transparent 61%, rgba(10,31,68,.10) 61.55%, transparent 62.15%),
-    radial-gradient(ellipse 68% 94% at 52% 111%, transparent 63%, rgba(0,166,200,.19) 63.55%, transparent 64.18%),
-    radial-gradient(ellipse 58% 82% at 96% 106%, transparent 64%, rgba(22,135,217,.18) 64.55%, transparent 65.18%),
-    radial-gradient(circle at 34% 27%, rgba(22,135,217,.20) 0 1.4%, transparent 10%),
-    radial-gradient(circle at 82% 34%, rgba(0,166,200,.18) 0 1.2%, transparent 9%);
+    box-shadow: 0 -15px 38px rgba(0,166,200,.12), inset 0 20px 48px rgba(22,135,217,.07);
+    animation: vendas-wave-dance-one 10.8s cubic-bezier(.45,.05,.55,.95) infinite; }
+  .mobile-menu::after { bottom: -5vw; left: -38vw; width: 142vw; height: 78vw; border: 1px solid rgba(0,166,200,.34); border-radius: 45% 58% 0 0 / 62% 76% 0 0; background:
+    radial-gradient(ellipse 66% 86% at 4% 112%, transparent 61%, rgba(10,31,68,.19) 61.55%, transparent 62.15%),
+    radial-gradient(ellipse 68% 94% at 52% 111%, transparent 63%, rgba(0,166,200,.29) 63.55%, transparent 64.18%),
+    radial-gradient(ellipse 58% 82% at 96% 106%, transparent 64%, rgba(22,135,217,.28) 64.55%, transparent 65.18%),
+    radial-gradient(circle at 34% 27%, rgba(22,135,217,.26) 0 1.4%, transparent 10%),
+    radial-gradient(circle at 82% 34%, rgba(0,166,200,.25) 0 1.2%, transparent 9%);
     background-size: 114% 106%, 108% 114%, 116% 108%, 88% 92%, 94% 86%;
-    box-shadow: 0 -14px 30px rgba(22,135,217,.065), inset 0 14px 40px rgba(0,166,200,.045);
-    animation: vendas-wave-dance-two 16s cubic-bezier(.45,.05,.55,.95) infinite; }
+    box-shadow: 0 -16px 36px rgba(22,135,217,.11), inset 0 16px 44px rgba(0,166,200,.07);
+    animation: vendas-wave-dance-two 13.2s cubic-bezier(.45,.05,.55,.95) infinite; }
   .dark-theme .mobile-menu { background:
     radial-gradient(ellipse 70% 38% at -8% 15%, rgba(0,166,200,.25) 0%, rgba(0,166,200,.08) 42%, transparent 72%),
     radial-gradient(ellipse 58% 34% at 108% 38%, rgba(22,135,217,.22) 0%, rgba(22,135,217,.07) 45%, transparent 74%),
@@ -1791,18 +1791,18 @@ body { background: #fff; color: var(--ink); }
   .dark-theme .mobile-menu::before { border-color: rgba(0,166,200,.38); filter: saturate(1.18); box-shadow: 0 -16px 38px rgba(0,166,200,.16), inset 0 18px 46px rgba(22,135,217,.12); }
   .dark-theme .mobile-menu::after { border-color: rgba(22,135,217,.40); filter: saturate(1.2); box-shadow: 0 -15px 34px rgba(22,135,217,.16), inset 0 14px 42px rgba(0,166,200,.10); }
   @keyframes vendas-wave-dance-one {
-    0% { border-radius: 52% 46% 0 0 / 70% 58% 0 0; background-position: -6% 5%, 4% -2%, -3% 3%, 0 0, 5% -2%; transform: translate3d(-3vw, 1vw, 0) rotate(-2.4deg) scale(1.01,.98); opacity: .72; }
-    24% { border-radius: 44% 59% 0 0 / 58% 76% 0 0; background-position: 5% -4%, -5% 4%, 6% -3%, 8% 4%, -4% 5%; transform: translate3d(2.2vw, -1.8vw, 0) rotate(1.6deg) scale(.98,1.035); opacity: .96; }
-    52% { border-radius: 61% 40% 0 0 / 78% 53% 0 0; background-position: -2% 7%, 7% -5%, -6% 5%, -5% 8%, 7% -4%; transform: translate3d(-1vw, -2.7vw, 0) rotate(-.6deg) scale(1.035,.97); opacity: .82; }
-    76% { border-radius: 47% 56% 0 0 / 62% 72% 0 0; background-position: 7% 0, -7% 7%, 4% -6%, 6% -4%, -6% 7%; transform: translate3d(3vw, -.2vw, 0) rotate(2.2deg) scale(.985,1.025); opacity: 1; }
-    100% { border-radius: 52% 46% 0 0 / 70% 58% 0 0; background-position: -6% 5%, 4% -2%, -3% 3%, 0 0, 5% -2%; transform: translate3d(-3vw, 1vw, 0) rotate(-2.4deg) scale(1.01,.98); opacity: .72; }
+    0% { border-radius: 58% 38% 0 0 / 78% 48% 0 0; background-position: -12% 8%, 8% -5%, -7% 6%, 0 0, 9% -4%; transform: translate3d(-6vw, 3vw, 0) rotate(-4deg) scale(1.04,.94); opacity: .76; }
+    22% { border-radius: 35% 68% 0 0 / 44% 88% 0 0; background-position: 10% -9%, -11% 8%, 12% -7%, 14% 8%, -9% 11%; transform: translate3d(5vw, -9vw, 0) rotate(3.4deg) scale(.94,1.12); opacity: 1; }
+    49% { border-radius: 72% 29% 0 0 / 91% 39% 0 0; background-position: -6% 13%, 14% -10%, -12% 10%, -10% 14%, 13% -9%; transform: translate3d(-3vw, -14vw, 0) rotate(-2deg) scale(1.10,.92); opacity: .84; }
+    75% { border-radius: 40% 65% 0 0 / 50% 84% 0 0; background-position: 13% -3%, -13% 12%, 9% -11%, 12% -9%, -11% 13%; transform: translate3d(6vw, -4vw, 0) rotate(4.2deg) scale(.93,1.10); opacity: 1; }
+    100% { border-radius: 58% 38% 0 0 / 78% 48% 0 0; background-position: -12% 8%, 8% -5%, -7% 6%, 0 0, 9% -4%; transform: translate3d(-6vw, 3vw, 0) rotate(-4deg) scale(1.04,.94); opacity: .76; }
   }
   @keyframes vendas-wave-dance-two {
-    0% { border-radius: 45% 58% 0 0 / 62% 76% 0 0; background-position: 5% -3%, -4% 6%, 3% 0, 0 5%, -5% -2%; transform: translate3d(3vw, .8vw, 0) rotate(2deg) scale(1.02,.98); opacity: .68; }
-    28% { border-radius: 58% 43% 0 0 / 75% 56% 0 0; background-position: -5% 6%, 7% -4%, -6% 5%, -6% -3%, 6% 7%; transform: translate3d(-2.5vw, -2vw, 0) rotate(-1.8deg) scale(.98,1.04); opacity: .98; }
-    55% { border-radius: 41% 63% 0 0 / 55% 81% 0 0; background-position: 8% -5%, -6% 8%, 7% -4%, 7% 7%, -7% -5%; transform: translate3d(1vw, -3vw, 0) rotate(.8deg) scale(1.035,.97); opacity: .80; }
-    79% { border-radius: 55% 47% 0 0 / 74% 61% 0 0; background-position: -7% 4%, 5% -6%, -4% 7%, -4% 3%, 5% 6%; transform: translate3d(-3vw, -.4vw, 0) rotate(-2.3deg) scale(.99,1.025); opacity: 1; }
-    100% { border-radius: 45% 58% 0 0 / 62% 76% 0 0; background-position: 5% -3%, -4% 6%, 3% 0, 0 5%, -5% -2%; transform: translate3d(3vw, .8vw, 0) rotate(2deg) scale(1.02,.98); opacity: .68; }
+    0% { border-radius: 34% 71% 0 0 / 48% 90% 0 0; background-position: 10% -7%, -9% 12%, 8% -2%, 0 10%, -10% -5%; transform: translate3d(7vw, 4vw, 0) rotate(4deg) scale(1.08,.93); opacity: .72; }
+    27% { border-radius: 69% 32% 0 0 / 88% 43% 0 0; background-position: -11% 12%, 14% -9%, -12% 11%, -12% -7%, 13% 14%; transform: translate3d(-6vw, -8vw, 0) rotate(-4.1deg) scale(.92,1.13); opacity: 1; }
+    54% { border-radius: 28% 76% 0 0 / 38% 94% 0 0; background-position: 15% -10%, -12% 15%, 14% -9%, 14% 13%, -13% -10%; transform: translate3d(4vw, -12vw, 0) rotate(2.5deg) scale(1.12,.91); opacity: .82; }
+    80% { border-radius: 65% 37% 0 0 / 86% 49% 0 0; background-position: -14% 9%, 11% -13%, -9% 14%, -9% 7%, 11% 12%; transform: translate3d(-7vw, -3vw, 0) rotate(-4.5deg) scale(.94,1.11); opacity: 1; }
+    100% { border-radius: 34% 71% 0 0 / 48% 90% 0 0; background-position: 10% -7%, -9% 12%, 8% -2%, 0 10%, -10% -5%; transform: translate3d(7vw, 4vw, 0) rotate(4deg) scale(1.08,.93); opacity: .72; }
   }
   @media (prefers-reduced-motion: reduce) { .mobile-menu::before, .mobile-menu::after { animation: none; } }
   .mobile-menu-header { display: flex; min-height: 92px; align-items: center; justify-content: space-between; border-bottom: 3px solid #e8ebf2; padding: 16px 30px; background: #fff; }
