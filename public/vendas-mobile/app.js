@@ -2736,18 +2736,18 @@ function pedidoEhConsignado(venda) {
   return normalizar(venda.forma_pagamento).includes('consign');
 }
 
-function listaPedidosClienteHtml(pedidos, pagina, vazio) {
+function listaPedidosClienteHtml(pedidos, pagina, vazio, aba) {
   const limite = (pagina + 1) * 10;
   const itens = pedidos.slice(0, limite);
   if (!itens.length) return `<div class="client-report-empty">${escapeHtml(vazio)}</div>`;
-  return `<div class="client-report-list">${itens.map((venda) => `<button type="button" class="client-report-row" onclick="abrirPedidoCliente('${venda.id}')"><span><b>${dataBR(venda.criado_em)}</b><small>${escapeHtml(venda.forma_pagamento || 'Não informado')} · ${(venda.itens || []).length} itens</small></span><strong>${moeda(venda.total)}</strong></button>`).join('')}</div>${pedidos.length > limite ? '<button class="ghost client-load-more" onclick="abrirDetalhesCliente(\'' + pedidos[0].cliente_id + '\', window.currentClientDetailTab, ' + (pagina + 1) + ')">Carregar mais</button>' : ''}`;
+  return `<div class="client-report-list">${itens.map((venda) => `<button type="button" class="client-report-row" onclick="abrirPedidoCliente('${venda.id}','${venda.cliente_id}','${aba}',${pagina})"><span><b>${dataBR(venda.criado_em)}</b><small>${escapeHtml(venda.forma_pagamento || 'Não informado')} · ${(venda.itens || []).length} itens</small></span><strong>${moeda(venda.total)}</strong></button>`).join('')}</div>${pedidos.length > limite ? '<button class="ghost client-load-more" onclick="abrirDetalhesCliente(\'' + pedidos[0].cliente_id + '\', window.currentClientDetailTab, ' + (pagina + 1) + ')">Carregar mais</button>' : ''}`;
 }
 
 function listaPagamentosClienteHtml(pagamentos, pagina) {
   const limite = (pagina + 1) * 10;
   const itens = pagamentos.slice(0, limite);
   if (!itens.length) return '<div class="client-report-empty">Nenhum pagamento registrado.</div>';
-  return `<div class="client-report-list">${itens.map((pagamento) => `<button type="button" class="client-report-row" onclick="abrirPagamentoClienteDetalhe('${pagamento.id}')"><span><b>${dataBR(`${pagamento.data_pagamento}T12:00:00`)}</b><small>${escapeHtml(pagamento.forma_pagamento || 'Não informado')}${Number(pagamento.desconto || 0) > 0 ? ` · desconto ${moeda(pagamento.desconto)}` : ''}</small></span><strong>${moeda(pagamento.valor)}</strong></button>`).join('')}</div>${pagamentos.length > limite ? `<button class="ghost client-load-more" onclick="abrirDetalhesCliente('${pagamentos[0].cliente_id}', 'pagamentos', ${pagina + 1})">Carregar mais</button>` : ''}`;
+  return `<div class="client-report-list">${itens.map((pagamento) => `<button type="button" class="client-report-row" onclick="abrirPagamentoClienteDetalhe('${pagamento.id}','${pagamento.cliente_id}','pagamentos',${pagina})"><span><b>${dataBR(`${pagamento.data_pagamento}T12:00:00`)}</b><small>${escapeHtml(pagamento.forma_pagamento || 'Não informado')}${Number(pagamento.desconto || 0) > 0 ? ` · desconto ${moeda(pagamento.desconto)}` : ''}</small></span><strong>${moeda(pagamento.valor)}</strong></button>`).join('')}</div>${pagamentos.length > limite ? `<button class="ghost client-load-more" onclick="abrirDetalhesCliente('${pagamentos[0].cliente_id}', 'pagamentos', ${pagina + 1})">Carregar mais</button>` : ''}`;
 }
 
 function abrirDetalhesCliente(clienteId, aba = 'resumo', pagina = 0) {
@@ -2762,23 +2762,28 @@ function abrirDetalhesCliente(clienteId, aba = 'resumo', pagina = 0) {
   const conteudo = aba === 'resumo'
     ? `<div class="client-summary-grid"><div><small>Débito pendente</small><b>${moeda(saldo.debito)}</b></div><div><small>Consignação</small><b>${moeda(saldo.consignado)}</b></div><div><small>Crédito</small><b>${moeda(saldo.credito)}</b></div><div><small>Total comprado</small><b>${moeda(totalComprado)}</b></div></div>`
     : aba === 'consignado'
-      ? listaPedidosClienteHtml(consignados, pagina, 'Nenhum pedido consignado ativo.')
+      ? listaPedidosClienteHtml(consignados, pagina, 'Nenhum pedido consignado ativo.', 'consignado')
       : aba === 'pedidos'
-        ? listaPedidosClienteHtml(pedidos, pagina, 'Nenhum pedido registrado.')
+        ? listaPedidosClienteHtml(pedidos, pagina, 'Nenhum pedido registrado.', 'pedidos')
         : listaPagamentosClienteHtml(pagamentos, pagina);
   sheet(`<div class="sheet-header"><div><h2>${escapeHtml(cliente.nome)}</h2><p class="muted small">Histórico do cliente</p></div><button class="close" onclick="fecharSheet()">×</button></div><nav class="client-detail-tabs"><button class="${aba === 'resumo' ? 'active' : ''}" onclick="abrirDetalhesCliente('${clienteId}','resumo')">Resumo</button><button class="${aba === 'consignado' ? 'active' : ''}" onclick="abrirDetalhesCliente('${clienteId}','consignado')">Consignado</button><button class="${aba === 'pedidos' ? 'active' : ''}" onclick="abrirDetalhesCliente('${clienteId}','pedidos')">Pedidos</button><button class="${aba === 'pagamentos' ? 'active' : ''}" onclick="abrirDetalhesCliente('${clienteId}','pagamentos')">Pagamentos</button></nav><div class="client-detail-content">${conteudo}</div>`, 'client-detail-backdrop sheet-backdrop-centered');
 }
 
-function abrirPagamentoClienteDetalhe(pagamentoId) {
+function voltarParaDetalhesCliente(clienteId = '', aba = '', pagina = 0) {
+  if (clienteId && aba) { abrirDetalhesCliente(clienteId, aba, Number(pagina) || 0); return; }
+  fecharSheet();
+}
+
+function abrirPagamentoClienteDetalhe(pagamentoId, retornoClienteId = '', retornoAba = '', retornoPagina = 0) {
   const pagamento = (state.pagamentos || []).find((item) => item.id === pagamentoId);
   if (!pagamento) return;
   const cliente = state.clientes.find((item) => item.id === pagamento.cliente_id);
   const resumo = resumoComprovantePagamento(pagamento);
   const descontoHtml = Number(pagamento.desconto || 0) > 0 ? `<div><span>Desconto</span><b>${moeda(pagamento.desconto)}</b></div>` : '';
-  sheet(`<div class="sheet-header"><div><h2>Comprovante de pagamento</h2><p class="muted small">Cliente: ${escapeHtml(cliente?.nome || 'não informado')} · ${dataComprovante(pagamento.data_pagamento)}</p></div><button class="close" onclick="fecharSheet()">×</button></div><section class="payment-detail-summary receipt-detail-summary"><div><span>Valor pago</span><b>${moeda(pagamento.valor)}</b></div>${descontoHtml}<div><span>Forma</span><b>${escapeHtml(pagamento.forma_pagamento || 'Não informado')}</b></div><div><span>Saldo anterior</span><b>${moeda(resumo.saldoAnterior)}</b></div><div class="receipt-current-balance"><span>Saldo atual</span><b>${moeda(resumo.saldoAtual)}</b></div></section><button class="primary order-share" onclick="compartilharPagamento('${pagamentoId}')">${svgIcon('save')} Compartilhar comprovante</button>`, 'sheet-backdrop-centered receipt-view-backdrop');
+  sheet(`<div class="sheet-header"><div><h2>Comprovante de pagamento</h2><p class="muted small">Cliente: ${escapeHtml(cliente?.nome || 'não informado')} · ${dataComprovante(pagamento.data_pagamento)}</p></div><button class="close" onclick="voltarParaDetalhesCliente('${retornoClienteId}','${retornoAba}',${retornoPagina})">×</button></div><section class="payment-detail-summary receipt-detail-summary"><div><span>Valor pago</span><b>${moeda(pagamento.valor)}</b></div>${descontoHtml}<div><span>Forma</span><b>${escapeHtml(pagamento.forma_pagamento || 'Não informado')}</b></div><div><span>Saldo anterior</span><b>${moeda(resumo.saldoAnterior)}</b></div><div class="receipt-current-balance"><span>Saldo atual</span><b>${moeda(resumo.saldoAtual)}</b></div></section><button class="primary order-share" onclick="compartilharPagamento('${pagamentoId}')">${svgIcon('save')} Compartilhar comprovante</button>`, 'sheet-backdrop-centered receipt-view-backdrop');
 }
 
-function abrirPedidoCliente(pedidoId) {
+function abrirPedidoCliente(pedidoId, retornoClienteId = '', retornoAba = '', retornoPagina = 0) {
   const venda = state.vendas.find((item) => item.id === pedidoId);
   if (!venda) return;
   const cliente = state.clientes.find((item) => item.id === venda.cliente_id);
@@ -2797,19 +2802,19 @@ function abrirPedidoCliente(pedidoId) {
   const converter = pedidoEhConsignado(venda) && venda.status !== 'cancelada'
     ? `<section class="consignment-convert"><h3>Enviar itens para pedido</h3><p>Selecione a quantidade de cada item que foi vendida.</p><button type="button" class="primary" onclick="gerarPedidoDoConsignado('${pedidoId}')">Gerar pedido</button></section>`
     : '';
-  sheet(`<div class="sheet-header"><div><h2>${tipo}</h2><p class="muted small">Cliente: ${escapeHtml(cliente?.nome || 'não informado')} · ${dataComprovante(venda.criado_em)}</p></div><button class="close" onclick="fecharSheet()">×</button></div><section class="order-view-items receipt-order-table"><header><span>Produto</span><span>Qtd</span><span>Preço</span><span>Total</span></header>${itensHtml}</section>${converter}<section class="receipt-balance-summary"><div><span>Saldo anterior</span><b>${moeda(resumo.saldoAnterior)}</b></div><div><span>Pedido</span><b>${moeda(venda.total)}</b></div><div class="receipt-current-balance"><span>Saldo atual</span><b>${moeda(resumo.saldoAtual)}</b></div></section><button class="primary order-share" onclick="compartilharPedido('${pedidoId}')">${svgIcon('save')} Compartilhar comprovante</button><footer class="order-view-actions"><button type="button" class="ghost" onclick="fecharSheet()">Fechar</button><button type="button" class="danger" onclick="confirmarExclusaoPedido('${pedidoId}')">Excluir</button><button type="button" class="secondary" onclick="abrirEditarPedido('${pedidoId}')">Editar</button></footer>`, 'sheet-backdrop-centered receipt-view-backdrop order-view-backdrop');
+  sheet(`<div class="sheet-header"><div><h2>${tipo}</h2><p class="muted small">Cliente: ${escapeHtml(cliente?.nome || 'não informado')} · ${dataComprovante(venda.criado_em)}</p></div><button class="close" onclick="voltarParaDetalhesCliente('${retornoClienteId}','${retornoAba}',${retornoPagina})">×</button></div><section class="order-view-items receipt-order-table"><header><span>Produto</span><span>Qtd</span><span>Preço</span><span>Total</span></header>${itensHtml}</section>${converter}<section class="receipt-balance-summary"><div><span>Saldo anterior</span><b>${moeda(resumo.saldoAnterior)}</b></div><div><span>Pedido</span><b>${moeda(venda.total)}</b></div><div class="receipt-current-balance"><span>Saldo atual</span><b>${moeda(resumo.saldoAtual)}</b></div></section><button class="primary order-share" onclick="compartilharPedido('${pedidoId}')">${svgIcon('save')} Compartilhar comprovante</button><footer class="order-view-actions"><button type="button" class="ghost" onclick="voltarParaDetalhesCliente('${retornoClienteId}','${retornoAba}',${retornoPagina})">Fechar</button><button type="button" class="danger" onclick="confirmarExclusaoPedido('${pedidoId}','${retornoClienteId}','${retornoAba}',${retornoPagina})">Excluir</button><button type="button" class="secondary" onclick="abrirEditarPedido('${pedidoId}')">Editar</button></footer>`, 'sheet-backdrop-centered receipt-view-backdrop order-view-backdrop');
 }
 
-function confirmarExclusaoPedido(pedidoId) {
-  sheet(`<div class="sheet-header"><div><h2>Excluir pedido?</h2><p class="muted small">Esta ação é definitiva e atualizará todos os cálculos.</p></div><button class="close" onclick="abrirPedidoCliente('${pedidoId}')">×</button></div><div class="order-confirm-actions"><button class="danger" onclick="excluirPedido('${pedidoId}')">Excluir definitivamente</button><button class="ghost" onclick="abrirPedidoCliente('${pedidoId}')">Voltar</button></div>`, 'sheet-backdrop-centered order-confirm-backdrop');
+function confirmarExclusaoPedido(pedidoId, retornoClienteId = '', retornoAba = '', retornoPagina = 0) {
+  sheet(`<div class="sheet-header"><div><h2>Excluir pedido?</h2><p class="muted small">Esta ação é definitiva e atualizará todos os cálculos.</p></div><button class="close" onclick="abrirPedidoCliente('${pedidoId}','${retornoClienteId}','${retornoAba}',${retornoPagina})">×</button></div><div class="order-confirm-actions"><button class="danger" onclick="excluirPedido('${pedidoId}','${retornoClienteId}','${retornoAba}',${retornoPagina})">Excluir definitivamente</button><button class="ghost" onclick="abrirPedidoCliente('${pedidoId}','${retornoClienteId}','${retornoAba}',${retornoPagina})">Voltar</button></div>`, 'sheet-backdrop-centered order-confirm-backdrop');
 }
 
-async function excluirPedido(pedidoId) {
+async function excluirPedido(pedidoId, retornoClienteId = '', retornoAba = '', retornoPagina = 0) {
   try {
     if (backendAtivo) await window.VendasDb.deleteOrder(pedidoId);
     state.vendas = state.vendas.filter((item) => item.id !== pedidoId);
     pedidoClienteRascunho = null; conversaoConsignadoRascunho = null;
-    fecharSheet(); render(); toast('Pedido excluído.');
+    render(); voltarParaDetalhesCliente(retornoClienteId, retornoAba, retornoPagina); toast('Pedido excluído.');
   } catch (error) { toast(traduzErro(error)); }
 }
 
@@ -4300,6 +4305,7 @@ window.carregarMaisClientesPagamentos = carregarMaisClientesPagamentos;
 window.abrirPagamentoClienteDetalhe = abrirPagamentoClienteDetalhe;
 window.alterarStatusCliente = alterarStatusCliente;
 window.abrirDetalhesCliente = abrirDetalhesCliente;
+window.voltarParaDetalhesCliente = voltarParaDetalhesCliente;
 window.abrirPedidoCliente = abrirPedidoCliente;
 window.compartilharPedido = compartilharPedido;
 window.compartilharPagamento = compartilharPagamento;
