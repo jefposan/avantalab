@@ -4097,6 +4097,10 @@ const confirmarReceitaPrevista = async (id: string | number) => {
     abrirAviso('Erro', 'Não foi possível localizar a receita.');
     return;
   }
+  if (entrada.tipo === 'vendas_mobile_sistema') {
+    abrirAviso('Receita sincronizada', 'Esta receita é atualizada automaticamente pelo Vendas Mobile e não pode ser alterada no Gestão.');
+    return;
+  }
 
   const mesEntrada = entrada.mes;
   const valorEntrada = Number(entrada.valor || 0);
@@ -4259,6 +4263,10 @@ Deseja excluir TODAS as parcelas ou apenas esta?`,
 };
 
 const excluirEntradaFaturamento = async (entrada: TabelaEntradaFaturamento) => {
+  if (entrada.tipo === 'vendas_mobile_sistema') {
+    abrirAviso('Receita sincronizada', 'Esta receita é atualizada automaticamente pelo Vendas Mobile e não pode ser excluída no Gestão.');
+    return;
+  }
   if (!podeExcluirLancamentos) {
     abrirAviso(
       'Acesso não permitido',
@@ -4444,6 +4452,10 @@ const handleEntradaFaturamentoValorChange = (
 };
 
 const iniciarEdicaoEntradaFaturamento = (entrada: TabelaEntradaFaturamento) => {
+  if (entrada.tipo === 'vendas_mobile_sistema') {
+    abrirAviso('Receita sincronizada', 'Esta receita é atualizada automaticamente pelo Vendas Mobile e não pode ser editada no Gestão.');
+    return;
+  }
   if (!podeEditarLancamentos) {
     abrirAviso(
       'Acesso não permitido',

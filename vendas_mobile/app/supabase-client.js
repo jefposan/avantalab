@@ -146,7 +146,7 @@
       sincronizacaoCatalogo = sincronizarRes.data || sincronizacaoCatalogo;
     }
 
-    const [produtosRes, clientesRes, pedidosRes, pagamentosRes, conteudosRes, pastasRes, materiaisRes] = await Promise.all([
+    const [produtosRes, clientesRes, pedidosRes, pagamentosRes, conteudosRes, pastasRes, materiaisRes, integracaoRes] = await Promise.all([
       client.from('vendas_mobile_produtos').select('*').order('criado_em', { ascending: false }),
       client.from('vendas_mobile_clientes').select('*').order('nome'),
       client.from('vendas_mobile_pedidos').select('*, itens:vendas_mobile_pedido_itens(*)').order('criado_em', { ascending: false }),
@@ -154,8 +154,9 @@
       client.from('vendas_mobile_conteudos').select('id, pagina, tipo, titulo, descricao, criado_em').eq('ativo', true).order('criado_em', { ascending: false }),
       client.from('vendas_mobile_divulgacao_pastas').select('id, pasta_pai_id, nome, descricao, ordem, criado_em').eq('empresa_id', acessoVendas.acesso.empresa_id).eq('ativo', true).order('ordem').order('criado_em', { ascending: false }),
       client.from('vendas_mobile_divulgacao_materiais').select('id, pasta_id, titulo, tipo, arquivo_url, miniatura_url, miniatura_status, mime_type, tamanho_bytes, ordem, criado_em').eq('empresa_id', acessoVendas.acesso.empresa_id).eq('ativo', true).order('ordem').order('criado_em', { ascending: false }),
+      client.rpc('obter_integracao_gestao_vendas_mobile_rpc'),
     ]);
-    const error = produtosRes.error || clientesRes.error || pedidosRes.error;
+    const error = produtosRes.error || clientesRes.error || pedidosRes.error || integracaoRes.error;
     if (error) throw error;
 
     const produtos = (produtosRes.data || []).map((produto) => ({
@@ -191,6 +192,7 @@
           saldo_final: Number(pagamento.saldo_final ?? legado.saldo_final ?? 0),
         };
       }),
+      integracaoGestao: integracaoRes.data || { base_receita: 'recebidos', pode_configurar: false },
       conteudos: conteudosRes.error ? null : (conteudosRes.data || []),
       divulgacaoPastas: pastasRes.error ? [] : (pastasRes.data || []),
       divulgacaoMateriais: materiaisRes.error ? [] : (materiaisRes.data || []),
@@ -502,6 +504,14 @@
     if (error) throw error;
   }
 
+  async function configurarIntegracaoGestao(baseReceita) {
+    const { data, error } = await requireClient().rpc('configurar_integracao_gestao_vendas_mobile_rpc', {
+      p_base_receita: baseReceita,
+    });
+    if (error) throw error;
+    return data;
+  }
+
   async function saveFeedback({ empresaId, nomeEmpresa, mensagem }) {
     const user = await currentUser();
     if (!user) throw new Error('Sessão expirada.');
@@ -529,5 +539,5 @@
     return data;
   }
 
-  window.VendasDb = { client, currentUser, hasSession, getAccessToken, uploadProductImage, signIn, signInPhone, signInWithGoogle, resetPassword, updatePassword, updateUserMetadata, signUp, signOut, solicitarAcesso, buscarAcessoVendas, loadAll, saveProduct, deleteProduct, movimentarEstoque, listarMovimentosEstoque, createPackage, saveProductsBulk, deletePackage, saveClient, deleteClient, saveOrder, updateOrder, deleteOrder, savePayment, updatePayment, deletePayment, saveFeedback };
+  window.VendasDb = { client, currentUser, hasSession, getAccessToken, uploadProductImage, signIn, signInPhone, signInWithGoogle, resetPassword, updatePassword, updateUserMetadata, signUp, signOut, solicitarAcesso, buscarAcessoVendas, loadAll, saveProduct, deleteProduct, movimentarEstoque, listarMovimentosEstoque, createPackage, saveProductsBulk, deletePackage, saveClient, deleteClient, saveOrder, updateOrder, deleteOrder, savePayment, updatePayment, deletePayment, configurarIntegracaoGestao, saveFeedback };
 })();

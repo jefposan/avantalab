@@ -50,6 +50,7 @@ const estadoInicial = {
   usuarioSemAcesso: false,
   moduloVendasAtivo: true,
   sincronizacaoCatalogo: { adicionados: 0, ja_recebidos: 0 },
+  integracaoGestao: { base_receita: 'recebidos', pode_configurar: false },
   atalhoInferiorEsquerdo: 'tema',
   atalhoInferiorDireito: 'agenda',
   ordemSalaBotoes: [],
@@ -1258,6 +1259,7 @@ async function carregarDadosBackend(mostrarCarregamento = true) {
       state.usuarioSemAcesso = !dados.acesso;
       state.moduloVendasAtivo = dados.moduloAtivo !== false;
       state.sincronizacaoCatalogo = dados.sincronizacaoCatalogo || { adicionados: 0, ja_recebidos: 0 };
+      state.integracaoGestao = dados.integracaoGestao || { base_receita: 'recebidos', pode_configurar: false };
       if (!dados.acesso) state.autenticado = false;
     }
   } catch (error) {
@@ -1756,6 +1758,7 @@ function renderConfiguracoes() {
   const progresso = state.metaMensal > 0 ? Math.min(100, t.total / state.metaMensal * 100) : 0;
   const telefone = String(state.usuario?.telefone || '');
   const empresa = String(state.acessoVendas?.empresa_nome || 'Não informada');
+  const integracao = state.integracaoGestao || { base_receita: 'recebidos', pode_configurar: false };
   return `<section class="module-page settings-page">
     <div class="module-sticky-head"><div class="module-title"><div><h2>Configurações</h2><p>Preferências, segurança e recursos do Vendas.</p></div></div></div>
     <div class="settings-grid">
@@ -1763,6 +1766,7 @@ function renderConfiguracoes() {
     <article class="settings-card"><h3>${svgIcon('settings')} Aparência</h3><label class="switch-line"><span>Modo escuro</span><input type="checkbox" ${state.temaEscuro ? 'checked' : ''} onchange="alternarTema(this.checked)"><i></i></label><p>Alterne o tema da aplicação para maior conforto visual.</p><div class="actions"><button class="secondary" onclick="abrirOrganizarAtalhosVendas()">${svgIcon('settings')} Organizar atalhos</button></div></article>
     </div>
     <article class="settings-card settings-goal"><h3>${svgIcon('target')} Meta do período</h3><div class="settings-goal-summary"><div><span>Meta mensal</span><b>${moeda(state.metaMensal)}</b></div><div><span>Vendas mensais</span><b>${moeda(t.total)}</b></div></div><div class="progress"><i style="width:${Math.max(2, progresso)}%"></i></div><p>Faltam <b>${moeda(Math.max(0, state.metaMensal - t.total))}</b> para atingir sua meta.</p><div class="settings-form settings-goals-form"><label><span>Definir meta mensal</span><input id="metaConfig" type="text" inputmode="numeric" value="${numeroParaCampoMoeda(state.metaMensal)}" onfocus="this.select()" oninput="formatarCampoMoeda(this)" placeholder="0,00"></label><button class="primary" onclick="salvarMeta()">${svgIcon('save')} Salvar meta</button></div></article>
+    <article class="settings-card"><h3>${svgIcon('settings')} Integração com Gestão</h3><p>Os resultados do Vendas Mobile entram automaticamente como receita no Gestão sempre que um lançamento for alterado.</p><div class="settings-form"><label><span>Enviar para o Gestão</span><select id="baseReceitaGestao" ${integracao.pode_configurar ? '' : 'disabled'}><option value="recebidos" ${integracao.base_receita === 'recebidos' ? 'selected' : ''}>Valores recebidos</option><option value="vendidos" ${integracao.base_receita === 'vendidos' ? 'selected' : ''}>Valores vendidos</option></select></label>${integracao.pode_configurar ? `<button class="primary" onclick="salvarIntegracaoGestao()">${svgIcon('save')} Salvar integração</button>` : '<small>Somente o gestor pode alterar esta preferência.</small>'}</div><small>O padrão é valores recebidos. As receitas criadas no Gestão são protegidas contra edição manual.</small></article>
     <article class="settings-card"><h3>${svgIcon('lock')} Senha da conta AvantaLab</h3><p>Esta senha pertence à sua conta principal. Ao alterá-la aqui, a nova senha passa a valer para o acesso ao Gestão e ao Vendas.</p><div class="password-form"><label>Nova senha (mín. 8 caracteres)<input id="senhaNova" type="password" autocomplete="new-password" minlength="8"></label><label>Confirme a nova senha<input id="senhaConfirma" type="password" autocomplete="new-password" minlength="8"></label><button class="password-button" onclick="alterarSenha()">${svgIcon('lock')} Atualizar senha da conta</button></div></article>
     <article class="settings-card settings-catalog-card"><h3>${svgIcon('package')} Catálogo de produtos</h3><p>Os novos produtos da empresa chegam automaticamente. Se recebeu um pacote, importe o arquivo ZIP completo.</p><div class="actions"><button class="primary" onclick="abrirImportacaoPacoteZip()">${svgIcon('package')} Importar pacote ZIP</button><button class="secondary" onclick="mostrarSincronizacaoCatalogo()">${svgIcon('save')} Situação da sincronização</button></div></article>
     <article class="settings-card settings-stock-card"><h3>${svgIcon('package')} Controle de estoque</h3><p>${state.produtos.filter((produto) => produto.estoque_controlado).length} produto(s) com estoque acompanhado neste aparelho.</p><div class="actions"><button class="primary" onclick="abrirAtualizarEstoque()">${svgIcon('plus')} Atualizar estoque</button></div><small>Entrada soma ao saldo atual. Ajuste define o saldo físico contado.</small></article>
@@ -1775,6 +1779,16 @@ function salvarMeta() {
   state.metaMensal = Math.max(0, lerCampoMoeda('metaConfig'));
   render();
   toast('Meta mensal salva.');
+}
+
+async function salvarIntegracaoGestao() {
+  const base = valor('baseReceitaGestao') || 'recebidos';
+  try {
+    const resposta = await window.VendasDb.configurarIntegracaoGestao(base);
+    state.integracaoGestao = { ...state.integracaoGestao, ...(resposta || {}), base_receita: base };
+    render();
+    toast(`Integração atualizada para ${base === 'vendidos' ? 'valores vendidos' : 'valores recebidos'}.`);
+  } catch (error) { toast(traduzErro(error)); }
 }
 
 function alternarTema(ativo) {
@@ -4204,6 +4218,7 @@ window.abrirMoverAgendaVendas = abrirMoverAgendaVendas;
 window.cancelarMoverAgendaVendas = cancelarMoverAgendaVendas;
 window.salvarNovaDataAgendaVendas = salvarNovaDataAgendaVendas;
 window.salvarMeta = salvarMeta;
+window.salvarIntegracaoGestao = salvarIntegracaoGestao;
 window.formatarCampoMoeda = formatarCampoMoeda;
 window.alternarTema = alternarTema;
 window.alternarOrganizacaoSalaBotoes = alternarOrganizacaoSalaBotoes;
