@@ -53,6 +53,7 @@ const estadoInicial = {
   integracaoGestao: { base_receita: 'recebidos', pode_configurar: false },
   vinculosComerciais: [],
   vinculoComercialAtivo: null,
+  perfisFinanceiros: [],
   atalhoInferiorEsquerdo: 'tema',
   atalhoInferiorDireito: 'agenda',
   ordemSalaBotoes: [],
@@ -1264,6 +1265,7 @@ async function carregarDadosBackend(mostrarCarregamento = true) {
       state.integracaoGestao = dados.integracaoGestao || { base_receita: 'recebidos', pode_configurar: false };
       state.vinculosComerciais = dados.vinculosComerciais || [];
       state.vinculoComercialAtivo = dados.vinculoComercialAtivo || null;
+      state.perfisFinanceiros = dados.perfisFinanceiros || [];
       if (!dados.acesso) state.autenticado = false;
     }
   } catch (error) {
@@ -1773,7 +1775,7 @@ function renderConfiguracoes() {
     <article class="settings-card"><h3>${svgIcon('settings')} Aparência</h3><label class="switch-line"><span>Modo escuro</span><input type="checkbox" ${state.temaEscuro ? 'checked' : ''} onchange="alternarTema(this.checked)"><i></i></label><p>Alterne o tema da aplicação para maior conforto visual.</p><div class="actions settings-shortcuts-actions"><button class="secondary" onclick="abrirOrganizarAtalhosVendas()">${svgIcon('settings')} Organizar atalhos</button></div></article>
     </div>
     <article class="settings-card settings-goal"><h3>${svgIcon('target')} Meta do período</h3><div class="settings-goal-summary"><div><span>Meta mensal</span><b>${moeda(state.metaMensal)}</b></div><div><span>Vendas mensais</span><b>${moeda(t.total)}</b></div></div><div class="progress"><i style="width:${Math.max(2, progresso)}%"></i></div><p>Faltam <b>${moeda(Math.max(0, state.metaMensal - t.total))}</b> para atingir sua meta.</p><div class="settings-form settings-goals-form"><label><span>Definir meta mensal</span><input id="metaConfig" type="text" inputmode="numeric" value="${numeroParaCampoMoeda(state.metaMensal)}" onfocus="this.select()" oninput="formatarCampoMoeda(this)" placeholder="0,00"></label><button class="primary" onclick="salvarMeta()">${svgIcon('save')} Salvar meta</button></div></article>
-    <article class="settings-card"><h3>${svgIcon('settings')} Integração com Gestão</h3><p>Os resultados do Vendas Mobile entram automaticamente como receita no Gestão sempre que um lançamento for alterado.</p><div class="settings-integration"><span>Enviar para o Gestão</span><div class="settings-segmented ${integracao.pode_configurar ? '' : 'is-disabled'}" role="group" aria-label="Base de receita enviada ao Gestão"><button type="button" class="${integracao.base_receita === 'recebidos' ? 'is-selected' : ''}" onclick="salvarIntegracaoGestao('recebidos')" ${integracao.pode_configurar ? '' : 'disabled'}>Recebidos</button><button type="button" class="${integracao.base_receita === 'vendidos' ? 'is-selected' : ''}" onclick="salvarIntegracaoGestao('vendidos')" ${integracao.pode_configurar ? '' : 'disabled'}>Vendidos</button></div></div>${integracao.pode_configurar ? '' : '<small>Somente o gestor pode alterar esta preferência.</small>'}<small>O padrão é valores recebidos. As receitas criadas no Gestão são protegidas contra edição manual.</small></article>
+    <article class="settings-card"><h3>${svgIcon('settings')} Integração com Gestão</h3><p>Os resultados do Vendas Mobile entram automaticamente como receita no Gestão sempre que um lançamento for alterado.</p><div class="settings-integration"><span>Destino financeiro</span><button class="secondary" onclick="abrirPerfilFinanceiroVendas()">${svgIcon('settings')} ${escapeHtml((state.perfisFinanceiros || []).find((perfil) => perfil.empresa_id === integracao.empresa_id)?.empresa_nome || 'Definir perfil financeiro')}</button><span>Enviar para o Gestão</span><div class="settings-segmented ${integracao.pode_configurar ? '' : 'is-disabled'}" role="group" aria-label="Base de receita enviada ao Gestão"><button type="button" class="${integracao.base_receita === 'recebidos' ? 'is-selected' : ''}" onclick="salvarIntegracaoGestao('recebidos')" ${integracao.pode_configurar ? '' : 'disabled'}>Recebidos</button><button type="button" class="${integracao.base_receita === 'vendidos' ? 'is-selected' : ''}" onclick="salvarIntegracaoGestao('vendidos')" ${integracao.pode_configurar ? '' : 'disabled'}>Vendidos</button></div></div>${integracao.pode_configurar ? '' : '<small>Escolha um perfil que você gerencia para alterar o destino ou a base.</small>'}<small>O padrão é valores recebidos. As receitas criadas no Gestão são protegidas contra edição manual.</small></article>
     <article class="settings-card settings-commercial-links"><h3>${svgIcon('package')} Empresas e conteúdos</h3><p>Uma empresa fica ativa. As anteriores permanecem como histórico, e você decide o que manter.</p><div class="commercial-links-list">${vinculos.length ? vinculos.map(renderVinculo).join('') : '<small>Nenhuma empresa comercial vinculada.</small>'}</div><div class="actions"><button class="secondary" onclick="abrirNovoVinculoComercial()">${svgIcon('plus')} Vincular outra empresa</button></div><small>Desligar Catálogo permite manter os produtos já recebidos ou removê-los sem afetar pedidos e resultados anteriores.</small></article>
     <article class="settings-card"><h3>${svgIcon('lock')} Senha da conta AvantaLab</h3><p>Esta senha pertence à sua conta principal. Ao alterá-la aqui, a nova senha passa a valer para o acesso ao Gestão e ao Vendas.</p><div class="password-form"><label>Nova senha (mín. 8 caracteres)<input id="senhaNova" type="password" autocomplete="new-password" minlength="8"></label><label>Confirme a nova senha<input id="senhaConfirma" type="password" autocomplete="new-password" minlength="8"></label><button class="password-button" onclick="alterarSenha()">${svgIcon('lock')} Atualizar senha da conta</button></div></article>
     <article class="settings-card settings-catalog-card"><h3>${svgIcon('package')} Catálogo de produtos</h3><p>Os novos produtos da empresa chegam automaticamente. Se recebeu um pacote, importe o arquivo ZIP completo.</p><div class="actions"><button class="primary" onclick="abrirImportacaoPacoteZip()">${svgIcon('package')} Importar pacote ZIP</button><button class="secondary" onclick="mostrarSincronizacaoCatalogo()">${svgIcon('save')} Situação da sincronização</button></div></article>
@@ -1797,6 +1799,25 @@ async function salvarIntegracaoGestao(base) {
     state.integracaoGestao = { ...state.integracaoGestao, ...(resposta || {}), base_receita: base };
     render();
     toast(`Integração atualizada para ${base === 'vendidos' ? 'valores vendidos' : 'valores recebidos'}.`);
+  } catch (error) { toast(traduzErro(error)); }
+}
+
+function abrirPerfilFinanceiroVendas() {
+  const perfis = state.perfisFinanceiros || [];
+  if (!perfis.length) { toast('Nenhum perfil financeiro disponível. Você precisa ser gestor ou administrador de um perfil no Gestão.'); return; }
+  sheet(`<div class="sheet-header"><div><h2>Destino financeiro</h2><p class="muted small">Catálogo e resultados financeiros permanecem independentes.</p></div><button class="close" onclick="fecharSheet()">×</button></div><p>Escolha o perfil que receberá as próximas receitas do Vendas Mobile.</p><div class="grid">${perfis.map((perfil) => `<button class="secondary" onclick="confirmarPerfilFinanceiroVendas('${perfil.empresa_id}','${escapeHtml(perfil.empresa_nome)}')">${escapeHtml(perfil.empresa_nome)}</button>`).join('')}</div>`, 'sheet-backdrop-centered');
+}
+
+function confirmarPerfilFinanceiroVendas(empresaId, empresaNome) {
+  sheet(`<div class="sheet-header"><div><h2>Confirmar destino</h2><p class="muted small">Confirmação de segurança.</p></div><button class="close" onclick="fecharSheet()">×</button></div><p>As próximas receitas serão enviadas para <b>${escapeHtml(empresaNome)}</b>. Esta mudança não altera catálogos, clientes ou pedidos anteriores.</p><div class="grid"><button class="secondary" onclick="abrirPerfilFinanceiroVendas()">Voltar</button><button class="primary" onclick="salvarPerfilFinanceiroVendas('${empresaId}')">Confirmar destino</button></div>`, 'sheet-backdrop-centered');
+}
+
+async function salvarPerfilFinanceiroVendas(empresaId) {
+  try {
+    await window.VendasDb.definirPerfilFinanceiro(empresaId);
+    fecharSheet();
+    await carregarDadosBackend(false);
+    toast('Destino financeiro atualizado.');
   } catch (error) { toast(traduzErro(error)); }
 }
 
@@ -4281,6 +4302,9 @@ window.cancelarMoverAgendaVendas = cancelarMoverAgendaVendas;
 window.salvarNovaDataAgendaVendas = salvarNovaDataAgendaVendas;
 window.salvarMeta = salvarMeta;
 window.salvarIntegracaoGestao = salvarIntegracaoGestao;
+window.abrirPerfilFinanceiroVendas = abrirPerfilFinanceiroVendas;
+window.confirmarPerfilFinanceiroVendas = confirmarPerfilFinanceiroVendas;
+window.salvarPerfilFinanceiroVendas = salvarPerfilFinanceiroVendas;
 window.alternarRecursoVinculoComercial = alternarRecursoVinculoComercial;
 window.confirmarRecursoVinculoComercial = confirmarRecursoVinculoComercial;
 window.abrirNovoVinculoComercial = abrirNovoVinculoComercial;

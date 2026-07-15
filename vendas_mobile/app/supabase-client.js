@@ -139,8 +139,12 @@
     });
     if (moduloRes.error) throw moduloRes.error;
     const moduloAtivo = moduloRes.data === true;
-    const vinculosRes = await requireClient().rpc('meus_vinculos_comerciais_vendas_mobile_rpc');
+    const [vinculosRes, perfisFinanceirosRes] = await Promise.all([
+      requireClient().rpc('meus_vinculos_comerciais_vendas_mobile_rpc'),
+      requireClient().rpc('meus_perfis_financeiros_vendas_mobile_rpc'),
+    ]);
     if (vinculosRes.error) throw vinculosRes.error;
+    if (perfisFinanceirosRes.error) throw perfisFinanceirosRes.error;
     const vinculosComerciais = vinculosRes.data || [];
     const vinculoAtivo = vinculosComerciais.find((vinculo) => vinculo.ativo) || null;
     let sincronizacaoCatalogo = { adicionados: 0, ja_recebidos: 0 };
@@ -204,6 +208,7 @@
       sincronizacaoCatalogo,
       vinculosComerciais,
       vinculoComercialAtivo: vinculoAtivo,
+      perfisFinanceiros: perfisFinanceirosRes.data || [],
       ...acessoVendas,
     };
   }
@@ -532,6 +537,12 @@
     return data;
   }
 
+  async function definirPerfilFinanceiro(empresaId) {
+    const { data, error } = await requireClient().rpc('definir_perfil_financeiro_vendas_mobile_rpc', { p_empresa_id: empresaId });
+    if (error) throw error;
+    return data;
+  }
+
   async function saveFeedback({ empresaId, nomeEmpresa, mensagem }) {
     const user = await currentUser();
     if (!user) throw new Error('Sessão expirada.');
@@ -559,5 +570,5 @@
     return data;
   }
 
-  window.VendasDb = { client, currentUser, hasSession, getAccessToken, uploadProductImage, signIn, signInPhone, signInWithGoogle, resetPassword, updatePassword, updateUserMetadata, signUp, signOut, solicitarAcesso, buscarAcessoVendas, loadAll, saveProduct, deleteProduct, movimentarEstoque, listarMovimentosEstoque, createPackage, saveProductsBulk, deletePackage, saveClient, deleteClient, saveOrder, updateOrder, deleteOrder, savePayment, updatePayment, deletePayment, configurarIntegracaoGestao, atualizarRecursoVinculoComercial, resetarSistemaVendas, saveFeedback };
+  window.VendasDb = { client, currentUser, hasSession, getAccessToken, uploadProductImage, signIn, signInPhone, signInWithGoogle, resetPassword, updatePassword, updateUserMetadata, signUp, signOut, solicitarAcesso, buscarAcessoVendas, loadAll, saveProduct, deleteProduct, movimentarEstoque, listarMovimentosEstoque, createPackage, saveProductsBulk, deletePackage, saveClient, deleteClient, saveOrder, updateOrder, deleteOrder, savePayment, updatePayment, deletePayment, configurarIntegracaoGestao, atualizarRecursoVinculoComercial, resetarSistemaVendas, definirPerfilFinanceiro, saveFeedback };
 })();
