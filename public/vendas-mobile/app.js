@@ -52,6 +52,8 @@ const estadoInicial = {
   sincronizacaoCatalogo: { adicionados: 0, ja_recebidos: 0 },
   atalhoInferiorEsquerdo: 'tema',
   atalhoInferiorDireito: 'agenda',
+  ordemSalaBotoes: [],
+  organizandoSalaBotoes: false,
 };
 
 let state = carregarEstado();
@@ -89,6 +91,7 @@ let divulgacaoPastaAtualId = null;
 let navegacaoInferiorBloqueadaAte = 0;
 let estoqueProdutoAtualId = '';
 let estoqueMovimentosAtuais = [];
+let arrasteSalaBotoes = null;
 
 const PAISES_DDI = [
   ['Brasil', '55', '🇧🇷'], ['Portugal', '351', '🇵🇹'], ['Estados Unidos / Canadá', '1', '🇺🇸'],
@@ -198,6 +201,7 @@ function salvarEstado() {
     temaEscuro: state.temaEscuro,
     atalhoInferiorEsquerdo: state.atalhoInferiorEsquerdo,
     atalhoInferiorDireito: state.atalhoInferiorDireito,
+    ordemSalaBotoes: state.ordemSalaBotoes,
   } : { ...state, carrinho: [] };
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(persistente));
@@ -614,15 +618,72 @@ function tab(idAba, icon, label) {
   return `<button class="side-link ${state.aba === idAba ? 'active' : ''}" onclick="setAba('${idAba}')">${svgIcon(icon)}${label}</button>`;
 }
 
+const SALA_BOTOES_PADRAO = [
+  ['dashboard', '1_Dashboard.png', 'Dashboard'], ['clientes', '4_Clientes.png', 'Clientes'], ['produtos', '2_Produtos.png', 'Produtos'],
+  ['vendas', '5_Pedidos.png', 'Pedidos'], ['vender', '6_Pagamentos.png', 'Pagamentos'], ['agenda', '3_Agenda.png', 'Agenda'],
+  ['novidades', '8_Novidades.png', 'Novidades'], ['divulgacao', '7_Divulgação.png', 'Divulgação'], ['informacoes', '9_Informações.png', 'Informações'],
+];
+
+function itensSalaBotoesOrdenados() {
+  const ids = new Set(SALA_BOTOES_PADRAO.map(([idAba]) => idAba));
+  const ordemSalva = Array.isArray(state.ordemSalaBotoes) ? state.ordemSalaBotoes.filter((idAba) => ids.has(idAba)) : [];
+  const ordem = [...new Set([...ordemSalva, ...SALA_BOTOES_PADRAO.map(([idAba]) => idAba)])];
+  return ordem.map((idAba) => SALA_BOTOES_PADRAO.find(([id]) => id === idAba)).filter(Boolean);
+}
+
+function iconeOrganizarSala(concluir = false) {
+  return concluir
+    ? '<svg class="svg-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12 4.5 4.5L19 7"/></svg>'
+    : '<svg class="svg-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m4 20 4.2-1 9.7-9.7a2.1 2.1 0 0 0-3-3L5.2 16 4 20Z"/><path d="m13.5 7.5 3 3"/></svg>';
+}
+
+function alternarOrganizacaoSalaBotoes() {
+  state.organizandoSalaBotoes = !state.organizandoSalaBotoes;
+  arrasteSalaBotoes = null;
+  render();
+}
+
+function iniciarArrasteSalaBotoes(event, idAba) {
+  if (!state.organizandoSalaBotoes) return;
+  event.preventDefault();
+  arrasteSalaBotoes = { idAba, destino: idAba };
+  event.currentTarget?.setPointerCapture?.(event.pointerId);
+  event.currentTarget?.classList.add('is-dragging');
+}
+
+function moverArrasteSalaBotoes(event) {
+  if (!arrasteSalaBotoes) return;
+  event.preventDefault();
+  const destino = document.elementFromPoint(event.clientX, event.clientY)?.closest('[data-sala-botao]');
+  document.querySelectorAll('[data-sala-botao]').forEach((item) => item.classList.remove('is-drop-target'));
+  if (!destino || destino.dataset.salaBotao === arrasteSalaBotoes.idAba) return;
+  arrasteSalaBotoes.destino = destino.dataset.salaBotao;
+  destino.classList.add('is-drop-target');
+}
+
+function finalizarArrasteSalaBotoes(event) {
+  if (!arrasteSalaBotoes) return;
+  event.preventDefault();
+  const { idAba, destino } = arrasteSalaBotoes;
+  arrasteSalaBotoes = null;
+  const ordem = itensSalaBotoesOrdenados().map(([id]) => id);
+  const origemIndice = ordem.indexOf(idAba);
+  const destinoIndice = ordem.indexOf(destino);
+  if (origemIndice >= 0 && destinoIndice >= 0 && origemIndice !== destinoIndice) {
+    ordem.splice(origemIndice, 1);
+    ordem.splice(destinoIndice, 0, idAba);
+    state.ordemSalaBotoes = ordem;
+    salvarEstado();
+  }
+  render();
+}
+
 function renderMenuMobile() {
-  const itens = [
-    ['dashboard', '1_Dashboard.png', 'Dashboard'], ['clientes', '4_Clientes.png', 'Clientes'], ['produtos', '2_Produtos.png', 'Produtos'],
-    ['vendas', '5_Pedidos.png', 'Pedidos'], ['vender', '6_Pagamentos.png', 'Pagamentos'], ['agenda', '3_Agenda.png', 'Agenda'],
-    ['novidades', '8_Novidades.png', 'Novidades'], ['divulgacao', '7_Divulgação.png', 'Divulgação'], ['informacoes', '9_Informações.png', 'Informações']
-  ];
+  const itens = itensSalaBotoesOrdenados();
+  const organizando = state.organizandoSalaBotoes;
   return `<section class="mobile-menu" aria-label="Menu principal">
     <header class="mobile-menu-header"><div class="mobile-menu-brand">${logoVendas()}</div></header>
-    <div class="mobile-menu-grid">${itens.map(([idAba, arquivo, label]) => `<button class="mobile-menu-card" onclick="setAba('${idAba}')"><img src="./assets/menu/${arquivo}" alt="${label}" /></button>`).join('')}</div>
+    <div class="mobile-menu-grid-wrap${organizando ? ' is-organizing' : ''}"><button type="button" class="mobile-menu-organize" onclick="alternarOrganizacaoSalaBotoes()" aria-label="${organizando ? 'Concluir organização da sala' : 'Organizar sala de botões'}" title="${organizando ? 'Concluir' : 'Organizar sala'}">${iconeOrganizarSala(organizando)}</button><div class="mobile-menu-grid">${itens.map(([idAba, arquivo, label]) => `<button type="button" data-sala-botao="${idAba}" class="mobile-menu-card${organizando ? ' is-organizable' : ''}" ${organizando ? `onpointerdown="iniciarArrasteSalaBotoes(event,'${idAba}')" onpointermove="moverArrasteSalaBotoes(event)" onpointerup="finalizarArrasteSalaBotoes(event)" onpointercancel="finalizarArrasteSalaBotoes(event)"` : `onclick="setAba('${idAba}')"`}><img src="./assets/menu/${arquivo}" alt="${label}" /></button>`).join('')}</div></div>
     <div class="mobile-menu-assistance">
       <button type="button" class="mobile-ava-card" onclick="abrirChatIAVendas()">
         <span class="mobile-ava-logo" role="img" aria-label="Ava"></span>
@@ -4145,6 +4206,10 @@ window.salvarNovaDataAgendaVendas = salvarNovaDataAgendaVendas;
 window.salvarMeta = salvarMeta;
 window.formatarCampoMoeda = formatarCampoMoeda;
 window.alternarTema = alternarTema;
+window.alternarOrganizacaoSalaBotoes = alternarOrganizacaoSalaBotoes;
+window.iniciarArrasteSalaBotoes = iniciarArrasteSalaBotoes;
+window.moverArrasteSalaBotoes = moverArrasteSalaBotoes;
+window.finalizarArrasteSalaBotoes = finalizarArrasteSalaBotoes;
 window.abrirOrganizarAtalhosVendas = abrirOrganizarAtalhosVendas;
 window.definirAtalhoInferiorVendas = definirAtalhoInferiorVendas;
 window.restaurarAtalhosInferioresVendas = restaurarAtalhosInferioresVendas;
