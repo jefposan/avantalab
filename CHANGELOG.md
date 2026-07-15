@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.5.1.01 - 2026-07-15
+
+- Migração Tridium: permite substituir de forma controlada os dados atuais de um representante pelo respectivo histórico legado, preservando o acesso, o vínculo empresarial e os dados dos demais usuários.
+- Migração Tridium: Jefferson Ferreira passa a utilizar exclusivamente o histórico restaurado do backup legado.
+
 ## 1.5.1 - 2026-07-15
 
 - Vendas Mobile: adiciona um importador idempotente e auditável para backups MySQL legados da Tridium, com validação prévia, vinculação por conta e prevenção de duplicidades.

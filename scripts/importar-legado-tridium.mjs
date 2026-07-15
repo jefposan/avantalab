@@ -6,6 +6,7 @@
  * Uso:
  *   node scripts/importar-legado-tridium.mjs --arquivo /caminho/BancodeDados_tridium.zip
  *   node scripts/importar-legado-tridium.mjs --arquivo /caminho/BancodeDados_tridium.zip --executar
+ *   node scripts/importar-legado-tridium.mjs --arquivo /caminho/BancodeDados_tridium.zip --somente jefferson --limpar-jefferson --executar
  *
  * Sem --executar o script apenas valida e apresenta o plano. A operação usa IDs
  * UUID determinísticos para poder ser retomada com segurança, sem duplicar dados.
@@ -273,6 +274,25 @@ async function garantirAcessos(db, empresaId, userId, executar) {
   );
 }
 
+async function limparDadosVendasDoUsuario(db, userId, executar) {
+  const tabelasPorUsuario = [
+    'vendas_mobile_pagamentos',
+    'vendas_mobile_pedidos',
+    'vendas_mobile_agenda',
+    'vendas_mobile_produtos',
+    'vendas_mobile_clientes',
+    'vendas_mobile_catalogo_recebimentos',
+    'vendas_mobile_importacoes',
+  ];
+  if (!executar) return;
+  for (const tabela of tabelasPorUsuario) {
+    await falharSeErro(
+      await db.from(tabela).delete().eq('user_id', userId),
+      `Não foi possível limpar ${tabela} do usuário`,
+    );
+  }
+}
+
 async function importarRepresentante(db, empresaId, catalogoId, tabelas, plano, userId, executar) {
   const categorias = new Map(tabelas.categories.map((item) => [String(item.id), item.name || null]));
   const produtosPorId = new Map(tabelas.products.map((item) => [String(item.id), item]));
@@ -505,7 +525,15 @@ async function principal() {
   const arquivo = argumento('--arquivo');
   const executar = temArgumento('--executar');
   const redefinirSenhaMarcos = temArgumento('--redefinir-senha-marcos');
+  const somente = normalizarTexto(argumento('--somente'));
+  const limparJefferson = temArgumento('--limpar-jefferson');
   if (!arquivo || !existsSync(arquivo)) throw new Error('Informe um arquivo ZIP válido com --arquivo.');
+  if (somente && !REPRESENTANTES.some((representante) => normalizarTexto(representante.nome).includes(somente))) {
+    throw new Error('O valor de --somente não corresponde a um representante configurado.');
+  }
+  if (limparJefferson && somente !== 'jefferson') {
+    throw new Error('A limpeza do Jefferson exige --somente jefferson para evitar remoções acidentais.');
+  }
   loadEnvConfig(process.cwd());
   if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) throw new Error('Credenciais administrativas do Supabase não estão configuradas.');
 
@@ -519,13 +547,16 @@ async function principal() {
 
     const resumo = [];
     const credenciais = [];
-    for (const representante of REPRESENTANTES) {
+    for (const representante of REPRESENTANTES.filter((item) => !somente || normalizarTexto(item.nome).includes(somente))) {
       const dadosRepresentante = tabelas.client_representatives.find((item) => String(item.id) === representante.legadoId);
       const plano = montarPlano(tabelas, representante);
       const conta = await garantirConta(db, representante, dadosRepresentante, executar, redefinirSenhaMarcos);
       await garantirAcessos(db, empresa.id, conta.userId, executar);
+      if (limparJefferson && representante.legadoId === '5') {
+        await limparDadosVendasDoUsuario(db, conta.userId, executar);
+      }
       const totais = await importarRepresentante(db, empresa.id, catalogo.id, tabelas, plano, conta.userId, executar);
-      resumo.push({ nome: representante.nome, email: representante.email, user_id: conta.userId, ...totais });
+      resumo.push({ nome: representante.nome, email: representante.email, user_id: conta.userId, dados_anteriores_removidos: limparJefferson && representante.legadoId === '5', ...totais });
       if (conta.senha) credenciais.push({ nome: representante.nome, email: representante.email, senha_temporaria: conta.senha });
     }
     console.log(JSON.stringify({ modo: executar ? 'executado' : 'simulacao', empresa: empresa.nome, resumo, credenciais }, null, 2));
