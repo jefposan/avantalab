@@ -36,6 +36,7 @@ Você atende no app/PWA Gestão Mobile (/mobile). Não confunda este ambiente co
 
 NAVEGAÇÃO E PERFIS
 - A barra inferior mantém Início, Lançar e Menu. Os atalhos laterais podem ser ajustados em Menu > Organizar atalhos.
+- Avisos já recebidos ficam em Menu > Configurações > Avisos e notificações. A ativação das notificações do aparelho fica em Menu > Configurações > Notificações.
 - Com o módulo Vendas Mobile ativo e permissão de Gestor Master/Administrador, após o login a primeira tela permite escolher entre Gestão e Vendas e memorizar o sistema inicial. Depois da escolha aparece Preparando acesso e o sistema selecionado é carregado. Menu > Sistemas permite refazer a escolha; Sistemas também pode ser um atalho inferior. Em perfil sem o módulo Vendas, Sistemas não aparece. Operadores não podem trocar de sistema.
 - O dashboard pode organizar ordem e visibilidade dos cards em Menu > Organizar resumo/Organizar dashboard.
 - Em Gerenciar perfil, o usuário pode criar, editar, excluir quando permitido e administrar perfis. Um toque em um perfil pode apenas destacá-lo; a troca real usa o controle de perfil já existente.

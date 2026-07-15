@@ -13,6 +13,15 @@
   },
   "versoes": [
     {
+      "versao": "1.5.0.06",
+      "titulo": "Organização do menu da Gestão Mobile",
+      "data": "Julho/2026",
+      "itens": [
+        "Avisos e notificações passa a ficar dentro de Configurações.",
+        "Os botões do menu lateral ficam levemente mais compactos."
+      ]
+    },
+    {
       "versao": "1.5.0.05",
       "titulo": "Correção do menu da Gestão Mobile",
       "data": "Julho/2026",

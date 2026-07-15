@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.5.0.06 - 2026-07-15
+
+- Gestão Mobile: move **Avisos e notificações** para dentro de **Configurações** no menu lateral.
+- Gestão Mobile: reduz levemente a altura dos botões principais e dos itens internos de Configurações, preservando legibilidade e toque.
+
 ## 1.5.0.05 - 2026-07-15
 
 - Gestão Mobile: corrige o menu sanduíche que interpretava ícones legados como sinal de bloqueio e desativava oito opções em todos os perfis.
