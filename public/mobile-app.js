@@ -4470,6 +4470,16 @@
     var empresaId = state.empresa.id;
     var ano = Number(state.ano);
 
+    // Instalar o módulo já autoriza Gestor Master e Administrador a alternar
+    // entre os sistemas. A RPC valida o papel no servidor e mantém operadores
+    // fora deste fluxo.
+    if (podeGerenciarUsuarios()) {
+      var acessoGestorVendas = await db.rpc('garantir_acessos_gestor_vendas_mobile_rpc');
+      if (acessoGestorVendas.error) {
+        console.warn('Não foi possível preparar o acesso integrado ao Vendas Mobile:', acessoGestorVendas.error);
+      }
+    }
+
     var resultados = await Promise.all([
       buscarLancamentosAnoMobile(empresaId, ano),
       db.from('faturamentos').select('*').eq('empresa_id', empresaId).eq('ano', ano),
@@ -12607,7 +12617,7 @@
           return Promise.all(
             keys
               .filter(function (key) {
-                return key.indexOf('avantalab-mobile-') === 0 && key !== 'avantalab-mobile-v247';
+                return key.indexOf('avantalab-mobile-') === 0 && key !== 'avantalab-mobile-v248';
               })
               .map(function (key) {
                 return caches.delete(key);
@@ -12624,7 +12634,7 @@
     });
 
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/mobile-sw.js?v=231').then(function (registro) {
+      navigator.serviceWorker.register('/mobile-sw.js?v=232').then(function (registro) {
         if (registro && registro.update) registro.update();
       }).catch(function () {});
     }

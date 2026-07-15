@@ -123,6 +123,10 @@
   async function buscarAcessoVendas() {
     const user = await currentUser();
     if (!user) return { acesso: null, solicitacao: null };
+    // Para gestores, o próprio servidor cria/atualiza o acesso integrado das
+    // empresas em que o módulo está instalado. Operadores não são afetados.
+    const acessoGestorRes = await requireClient().rpc('garantir_acessos_gestor_vendas_mobile_rpc');
+    if (acessoGestorRes.error) throw acessoGestorRes.error;
     const [acessosRes, solicitacaoRes] = await Promise.all([
       requireClient().rpc('meus_acessos_vendas_mobile_rpc'),
       requireClient().from('vendas_mobile_solicitacoes_acesso').select('*').eq('user_id', user.id).order('atualizado_em', { ascending: false }).limit(1).maybeSingle(),

@@ -1,8 +1,8 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.5.0 -->
+<!-- ava-version: 1.5.0.01 -->
 
-> Revisão 1.5.0: inclui escolha inicial e troca entre Gestão Mobile e Vendas Mobile.
+> Revisão 1.5.0.01: corrige a autorização integrada de gestores; sem mudança no caminho operacional.
 
 ## Escopo
 

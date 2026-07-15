@@ -13,6 +13,15 @@
   },
   "versoes": [
     {
+      "versao": "1.5.0.01",
+      "titulo": "Correção do acesso integrado",
+      "data": "Julho/2026",
+      "itens": [
+        "Gestor Master e Administrador passam a ter a troca entre Gestão e Vendas liberada automaticamente quando o módulo está instalado.",
+        "Operadores continuam sem permissão para trocar de sistema."
+      ]
+    },
+    {
       "versao": "1.5.0",
       "titulo": "Integração Gestão e Vendas Mobile",
       "data": "Julho/2026",

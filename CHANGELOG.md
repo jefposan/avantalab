@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.5.0.01 - 2026-07-15
+
+- Gestão e Vendas Mobile: corrige a liberação da troca de sistemas para Gestor Master e Administrador quando o módulo Vendas está instalado; operadores permanecem sem acesso.
+- Vendas Mobile: prepara automaticamente o acesso integrado do gestor, evitando botões ausentes ou inativos após a instalação do módulo.
+
 ## 1.5.0 - 2026-07-15
 
 - Gestão Mobile e Vendas Mobile: compartilham a sessão autenticada e preservam o perfil/empresa ao trocar de sistema.
