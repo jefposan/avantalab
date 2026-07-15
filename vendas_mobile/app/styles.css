@@ -679,6 +679,9 @@ body.sheet-open {
 .cliente-sheet-backdrop .sheet > .sheet-header { margin: -12px -12px 10px; padding: 12px; }
 .cliente-sheet-backdrop input[type="date"] { width: 100%; min-width: 0; max-width: 100%; box-sizing: border-box; text-align: center; }
 .cliente-sheet-backdrop input[type="date"]::-webkit-datetime-edit { width: 100%; text-align: center; }
+.cliente-sheet-backdrop .client-birth-field { width: 100%; max-width: 100%; overflow: hidden; }
+.cliente-sheet-backdrop .client-birth-control { width: 100%; max-width: 100%; overflow: hidden; }
+.cliente-sheet-backdrop .client-birth-control input[type="date"] { display: block; width: calc(100% - 2px); max-width: calc(100% - 2px); min-width: 0; margin: 0; }
 
 .close {
   display: grid;

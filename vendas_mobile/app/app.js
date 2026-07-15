@@ -3715,7 +3715,7 @@ function abrirCliente(clienteId = '') {
       ${campo('cliNome', 'Nome', c.nome || '')}
       ${campoTelefone('cliTelefone', 'Telefone / WhatsApp', c.telefone || '')}
       ${campo('cliEmail', 'E-mail', c.email || '', 'email')}
-      ${campo('cliNascimento', 'Data de nascimento', c.data_nascimento || '', 'date')}
+      <div class="field client-birth-field"><label>Data de nascimento</label><div class="client-birth-control"><input id="cliNascimento" type="date" value="${escapeAttr(c.data_nascimento || '')}"></div></div>
       ${campoCepCliente(c.cep || '')}
       ${campo('cliEndereco', 'Endereço', c.endereco || '')}
       <div class="grid-2 client-address-extra">
