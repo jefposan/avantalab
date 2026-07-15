@@ -84,6 +84,8 @@ let feedbackVendasEnviado = false;
 let produtoImagemUploadPendente = null;
 let divulgacaoPastaAtualId = null;
 let navegacaoInferiorBloqueadaAte = 0;
+let estoqueProdutoAtualId = '';
+let estoqueMovimentosAtuais = [];
 
 const PAISES_DDI = [
   ['Brasil', '55', '🇧🇷'], ['Portugal', '351', '🇵🇹'], ['Estados Unidos / Canadá', '1', '🇺🇸'],
@@ -1620,6 +1622,7 @@ function renderConfiguracoes() {
     <article class="settings-card settings-goal"><h3>${svgIcon('target')} Meta do período</h3><div class="settings-goal-summary"><div><span>Meta mensal</span><b>${moeda(state.metaMensal)}</b></div><div><span>Vendas mensais</span><b>${moeda(t.total)}</b></div></div><div class="progress"><i style="width:${Math.max(2, progresso)}%"></i></div><p>Faltam <b>${moeda(Math.max(0, state.metaMensal - t.total))}</b> para atingir sua meta.</p><div class="settings-form settings-goals-form"><label><span>Definir meta mensal</span><input id="metaConfig" type="text" inputmode="numeric" value="${numeroParaCampoMoeda(state.metaMensal)}" onfocus="this.select()" oninput="formatarCampoMoeda(this)" placeholder="0,00"></label><button class="primary" onclick="salvarMeta()">${svgIcon('save')} Salvar meta</button></div></article>
     <article class="settings-card"><h3>${svgIcon('lock')} Senha da conta AvantaLab</h3><p>Esta senha pertence à sua conta principal. Ao alterá-la aqui, a nova senha passa a valer para o acesso ao Gestão e ao Vendas.</p><div class="password-form"><label>Nova senha (mín. 8 caracteres)<input id="senhaNova" type="password" autocomplete="new-password" minlength="8"></label><label>Confirme a nova senha<input id="senhaConfirma" type="password" autocomplete="new-password" minlength="8"></label><button class="password-button" onclick="alterarSenha()">${svgIcon('lock')} Atualizar senha da conta</button></div></article>
     <article class="settings-card settings-catalog-card"><h3>${svgIcon('package')} Catálogo de produtos</h3><p>Baixe o modelo, importe pacotes e exporte seu catálogo em um único local.</p><div class="actions"><button class="secondary" onclick="baixarModeloProdutosExcel()">${svgIcon('download')} Modelo Excel</button><button class="primary" onclick="abrirImportacaoPacote()">${svgIcon('package')} Pacote de produtos</button><button class="secondary" onclick="exportarProdutosExcel()">${svgIcon('save')} Exportar catálogo</button></div></article>
+    <article class="settings-card settings-stock-card"><h3>${svgIcon('package')} Controle de estoque</h3><p>${state.produtos.filter((produto) => produto.estoque_controlado).length} produto(s) com estoque acompanhado neste aparelho.</p><div class="actions"><button class="primary" onclick="abrirAtualizarEstoque()">${svgIcon('plus')} Atualizar estoque</button></div><small>Entrada soma ao saldo atual. Ajuste define o saldo físico contado.</small></article>
     <article class="settings-card settings-pwa-card"><h3>${svgIcon('save')} Aplicativo Web (PWA)</h3><p>Instale o aplicativo na tela inicial para acesso rápido, como um app nativo.</p><button class="install-button" onclick="instalarPWA()">Adicionar à Área de Trabalho</button><small>Se o botão não aparecer, use “Adicionar à tela inicial” no menu do navegador.</small></article>
     <article class="settings-card settings-exit-card"><h3>${svgIcon('log-out')} Sair</h3><p>Encerre sua sessão neste aparelho.</p><button class="danger" onclick="abrirConfirmacaoSair()">Sair do Vendas</button></article>
   </section>`;
@@ -3644,6 +3647,70 @@ function baixarModeloCsv() {
   URL.revokeObjectURL(url);
 }
 
+function abrirAtualizarEstoque() {
+  if (!state.produtos.length) { toast('Cadastre ou importe um produto antes de atualizar o estoque.'); return; }
+  estoqueProdutoAtualId = estoqueProdutoAtualId && state.produtos.some((produto) => produto.id === estoqueProdutoAtualId)
+    ? estoqueProdutoAtualId : state.produtos[0].id;
+  estoqueMovimentosAtuais = [];
+  renderAtualizarEstoque();
+  void carregarMovimentosEstoque();
+}
+
+async function carregarMovimentosEstoque() {
+  if (!backendAtivo || !estoqueProdutoAtualId) return;
+  try {
+    estoqueMovimentosAtuais = await window.VendasDb.listarMovimentosEstoque(estoqueProdutoAtualId);
+    renderAtualizarEstoque();
+  } catch (error) { console.warn('Não foi possível carregar o histórico de estoque.', error); }
+}
+
+function selecionarProdutoEstoque(produtoId) {
+  estoqueProdutoAtualId = produtoId;
+  estoqueMovimentosAtuais = [];
+  renderAtualizarEstoque();
+  void carregarMovimentosEstoque();
+}
+
+function renderAtualizarEstoque() {
+  const produto = state.produtos.find((item) => item.id === estoqueProdutoAtualId) || state.produtos[0];
+  if (!produto) return;
+  const saldo = Number(produto.estoque || 0);
+  const opcoes = [...state.produtos].sort((a, b) => String(a.nome).localeCompare(String(b.nome), 'pt-BR'))
+    .map((item) => `<option value="${escapeAttr(item.id)}" ${item.id === produto.id ? 'selected' : ''}>${escapeHtml(item.nome)} · ${Number(item.estoque || 0).toLocaleString('pt-BR', { maximumFractionDigits: 3 })} ${escapeHtml(item.unidade || 'un')}</option>`).join('');
+  const historico = estoqueMovimentosAtuais.length
+    ? estoqueMovimentosAtuais.map((movimento) => `<li><b>${escapeHtml(String(movimento.tipo || '').replace('_', ' '))}</b><span>${Number(movimento.quantidade || 0) > 0 ? '+' : ''}${Number(movimento.quantidade || 0).toLocaleString('pt-BR', { maximumFractionDigits: 3 })} · saldo ${Number(movimento.saldo_final || 0).toLocaleString('pt-BR', { maximumFractionDigits: 3 })}</span><small>${dataCurtaBR(movimento.criado_em)}</small></li>`).join('')
+    : '<p class="muted small">Nenhuma movimentação registrada para este produto.</p>';
+  sheet(`<div class="sheet-header"><div><h2>Atualizar estoque</h2><p class="muted small">Entrada soma ao saldo. Ajuste informa a contagem física final.</p></div><button class="close" onclick="fecharSheet()">×</button></div><div class="grid stock-update-form"><div class="field"><label>Produto</label><select onchange="selecionarProdutoEstoque(this.value)">${opcoes}</select></div><article class="stock-current"><span>Saldo atual</span><b>${saldo.toLocaleString('pt-BR', { maximumFractionDigits: 3 })} ${escapeHtml(produto.unidade || 'un')}</b></article>${produto.estoque_controlado ? `<div class="field"><label>Operação</label><select id="estoqueTipo"><option value="entrada">Entrada de estoque</option><option value="ajuste">Ajustar saldo físico</option></select></div><div class="field"><label>Quantidade</label><input id="estoqueQuantidade" type="number" min="0" step="0.001" inputmode="decimal" placeholder="0"></div><div class="field"><label>Observação (opcional)</label><input id="estoqueObservacao" maxlength="160" placeholder="Ex.: reposição do fornecedor"></div><button class="primary" onclick="salvarMovimentacaoEstoque()">${svgIcon('save')} Salvar movimentação</button>` : `<article class="stock-control-note"><b>Controle de estoque desativado</b><p>Ative para registrar entradas e ajustes deste produto. O saldo inicial será ${saldo.toLocaleString('pt-BR', { maximumFractionDigits: 3 })}.</p><button class="primary" onclick="ativarControleEstoque('${escapeAttr(produto.id)}')">Ativar controle deste produto</button></article>`}<section class="stock-history"><h3>Últimas movimentações</h3><ul>${historico}</ul></section></div>`, 'sheet-backdrop-centered');
+}
+
+async function ativarControleEstoque(produtoId) {
+  const produto = state.produtos.find((item) => item.id === produtoId);
+  if (!produto) return;
+  try {
+    const salvo = backendAtivo ? await window.VendasDb.saveProduct({ ...produto, estoque_controlado: true, estoque: produto.estoque ?? 0 }) : { ...produto, estoque_controlado: true, estoque: produto.estoque ?? 0 };
+    state.produtos = state.produtos.map((item) => item.id === produtoId ? { ...item, ...salvo, estoque_controlado: true } : item);
+    salvarEstado(); renderAtualizarEstoque(); toast('Controle de estoque ativado.');
+  } catch (error) { toast(traduzErro(error)); }
+}
+
+async function salvarMovimentacaoEstoque() {
+  const produto = state.produtos.find((item) => item.id === estoqueProdutoAtualId);
+  if (!produto || !produto.estoque_controlado) return;
+  const tipo = valor('estoqueTipo');
+  const quantidade = Number(String(valor('estoqueQuantidade')).replace(',', '.'));
+  if (!Number.isFinite(quantidade) || (tipo === 'entrada' ? quantidade <= 0 : quantidade < 0)) { toast(tipo === 'entrada' ? 'Informe uma entrada maior que zero.' : 'Informe o saldo físico final.'); return; }
+  try {
+    const resultado = backendAtivo
+      ? await window.VendasDb.movimentarEstoque({ produtoId: produto.id, tipo, quantidade, observacao: valor('estoqueObservacao').trim() })
+      : { saldo_final: tipo === 'entrada' ? Number(produto.estoque || 0) + quantidade : quantidade };
+    state.produtos = state.produtos.map((item) => item.id === produto.id ? { ...item, estoque: Number(resultado.saldo_final) } : item);
+    salvarEstado(); toast(tipo === 'entrada' ? 'Entrada de estoque registrada.' : 'Saldo de estoque ajustado.');
+    estoqueMovimentosAtuais = [];
+    renderAtualizarEstoque();
+    void carregarMovimentosEstoque();
+  } catch (error) { toast(traduzErro(error)); }
+}
+
 function abrirGestao() {
   const destino = `${window.location.origin}/mobile`;
   if (confirm(`Abrir gestão AvantaLab?\n${destino}`)) window.location.href = destino;
@@ -3862,6 +3929,10 @@ window.atualizarTotalCarrinho = atualizarTotalCarrinho;
 window.finalizarVenda = finalizarVenda;
 window.baixarModeloCsv = baixarModeloCsv;
 window.importarCsv = importarCsv;
+window.abrirAtualizarEstoque = abrirAtualizarEstoque;
+window.selecionarProdutoEstoque = selecionarProdutoEstoque;
+window.ativarControleEstoque = ativarControleEstoque;
+window.salvarMovimentacaoEstoque = salvarMovimentacaoEstoque;
 window.fecharSheet = fecharSheet;
 window.alternarMenu = alternarMenu;
 window.abrirSalaBotoes = abrirSalaBotoes;

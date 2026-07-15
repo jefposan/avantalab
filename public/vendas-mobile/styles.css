@@ -1363,6 +1363,15 @@ body { background: #fff; color: var(--ink); }
 .dark-theme .agenda-birthday-client { border-color: #6b21a8; color: #e9d5ff; background: #35154b; }
 .dark-theme .agenda-birthday-alert { border-color: #563067; background: #21152b; }.dark-theme .agenda-birthday-alert > header { background: linear-gradient(135deg,#29172e,#211b38); }.dark-theme .agenda-birthday-alert header small { color: #f0abfc; }.dark-theme .agenda-birthday-alert header b { color: #f5d0fe; }.dark-theme .agenda-birthday-alert header button { border-color: #6b217a; color: #f0abfc; background: #35154b; }.dark-theme .agenda-birthday-alert > div > button { border-color: #4a2758; color: #f5d0fe; background: #29172e; }.dark-theme .agenda-birthday-alert > div > button small { color: #d8b4fe; }
 
+/* Controle de estoque pessoal do vendedor. */
+.settings-stock-card small { display: block; margin-top: 9px; color: #64748b; font-size: 9px; line-height: 1.45; }
+.stock-update-form { gap: 11px; }
+.stock-current { display: flex; align-items: center; justify-content: space-between; border: 1px solid #b9d9ee; border-radius: 12px; padding: 10px 12px; background: linear-gradient(135deg,#eff9ff,#f5fbff); }
+.stock-current span { color: #547085; font-size: 10px; font-weight: 800; }.stock-current b { color: #0A1F44; font-size: 16px; }
+.stock-control-note { border: 1px solid #bae6fd; border-radius: 12px; padding: 12px; background: #f0f9ff; }.stock-control-note b { color: #075985; font-size: 12px; }.stock-control-note p { margin: 5px 0 10px; color: #4b687d; font-size: 10px; line-height: 1.45; }.stock-control-note button { width: 100%; }
+.stock-history { border-top: 1px solid #e1ebf2; padding-top: 10px; }.stock-history h3 { margin: 0 0 7px; color: #0A1F44; font-size: 12px; }.stock-history ul { display: grid; gap: 6px; margin: 0; padding: 0; list-style: none; }.stock-history li { display: grid; grid-template-columns: 1fr auto; gap: 2px 10px; border-radius: 9px; padding: 8px 9px; background: #f6f9fb; }.stock-history li b { color: #1687D9; font-size: 10px; text-transform: capitalize; }.stock-history li span { color: #526477; font-size: 9px; }.stock-history li small { grid-column: 1 / -1; color: #94a3b8; font-size: 8px; }
+.dark-theme .settings-stock-card small { color: #94a3b8; }.dark-theme .stock-current { border-color: #155e75; background: #102838; }.dark-theme .stock-current span, .dark-theme .stock-history li span { color: #cbd5e1; }.dark-theme .stock-current b, .dark-theme .stock-history h3 { color: #f8fafc; }.dark-theme .stock-control-note { border-color: #155e75; background: #102838; }.dark-theme .stock-control-note b { color: #67e8f9; }.dark-theme .stock-control-note p { color: #cbd5e1; }.dark-theme .stock-history { border-color: #334155; }.dark-theme .stock-history li { background: #111d2f; }
+
 @media (max-width: 700px) {
   .dashboard-consignment-products { grid-template-columns: 1fr; }
   .dashboard-consignment-card > header { align-items: flex-start; }

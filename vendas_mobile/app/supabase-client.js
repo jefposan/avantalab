@@ -139,6 +139,12 @@
     });
     if (moduloRes.error) throw moduloRes.error;
     const moduloAtivo = moduloRes.data === true;
+    let sincronizacaoCatalogo = { adicionados: 0, ja_recebidos: 0 };
+    if (moduloAtivo) {
+      const sincronizarRes = await requireClient().rpc('sincronizar_catalogo_vendas_mobile_rpc');
+      if (sincronizarRes.error) throw sincronizarRes.error;
+      sincronizacaoCatalogo = sincronizarRes.data || sincronizacaoCatalogo;
+    }
 
     const [produtosRes, clientesRes, pedidosRes, pagamentosRes, conteudosRes, pastasRes, materiaisRes] = await Promise.all([
       client.from('vendas_mobile_produtos').select('*').order('criado_em', { ascending: false }),
@@ -189,6 +195,7 @@
       divulgacaoPastas: pastasRes.error ? [] : (pastasRes.data || []),
       divulgacaoMateriais: materiaisRes.error ? [] : (materiaisRes.data || []),
       moduloAtivo,
+      sincronizacaoCatalogo,
       ...acessoVendas,
     };
   }
@@ -208,6 +215,7 @@
       estoque: product.estoque === '' || product.estoque == null ? null : Number(product.estoque),
       unidade: product.unidade || 'un',
       imagem_url: product.imagem_url || null,
+      estoque_controlado: product.estoque_controlado === true,
       metadados: {
         ...(product.metadados || {}),
         preco_custo: Number(product.preco_custo || 0),
@@ -227,6 +235,25 @@
   async function deleteProduct(id) {
     const { error } = await requireClient().from('vendas_mobile_produtos').delete().eq('id', id);
     if (error) throw error;
+  }
+
+  async function movimentarEstoque({ produtoId, tipo, quantidade, observacao = '' }) {
+    const { data, error } = await requireClient().rpc('movimentar_estoque_vendas_mobile_rpc', {
+      p_produto_id: produtoId,
+      p_tipo: tipo,
+      p_quantidade: Number(quantidade),
+      p_observacao: observacao || null,
+    });
+    if (error) throw error;
+    return data;
+  }
+
+  async function listarMovimentosEstoque(produtoId) {
+    const { data, error } = await requireClient().from('vendas_mobile_estoque_movimentos')
+      .select('id,tipo,quantidade,saldo_anterior,saldo_final,observacao,criado_em')
+      .eq('produto_id', produtoId).order('criado_em', { ascending: false }).limit(40);
+    if (error) throw error;
+    return data || [];
   }
 
   async function createPackage({ nome, numero, origem = 'excel', empresaId = null }) {
@@ -502,5 +529,5 @@
     return data;
   }
 
-  window.VendasDb = { client, currentUser, hasSession, getAccessToken, uploadProductImage, signIn, signInPhone, signInWithGoogle, resetPassword, updatePassword, updateUserMetadata, signUp, signOut, solicitarAcesso, buscarAcessoVendas, loadAll, saveProduct, deleteProduct, createPackage, saveProductsBulk, deletePackage, saveClient, deleteClient, saveOrder, updateOrder, deleteOrder, savePayment, updatePayment, deletePayment, saveFeedback };
+  window.VendasDb = { client, currentUser, hasSession, getAccessToken, uploadProductImage, signIn, signInPhone, signInWithGoogle, resetPassword, updatePassword, updateUserMetadata, signUp, signOut, solicitarAcesso, buscarAcessoVendas, loadAll, saveProduct, deleteProduct, movimentarEstoque, listarMovimentosEstoque, createPackage, saveProductsBulk, deletePackage, saveClient, deleteClient, saveOrder, updateOrder, deleteOrder, savePayment, updatePayment, deletePayment, saveFeedback };
 })();
