@@ -1,8 +1,8 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.5.0.01 -->
+<!-- ava-version: 1.5.0.02 -->
 
-> Revisão 1.5.0.01: corrige a autorização integrada de gestores; sem mudança no caminho operacional.
+> Revisão 1.5.0.02: revisa o fluxo de entrada integrado; sem mudança nos caminhos internos do Vendas.
 
 ## Escopo e navegação
 

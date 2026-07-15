@@ -1,8 +1,8 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.5.0.01 -->
+<!-- ava-version: 1.5.0.02 -->
 
-> Revisão 1.5.0.01: corrige a autorização integrada de gestores; sem mudança no caminho operacional.
+> Revisão 1.5.0.02: a seleção do sistema passa a preceder o carregamento da Gestão.
 
 ## Escopo
 
@@ -13,8 +13,9 @@ deve usar os nomes do menu e da barra inferior do celular.
 
 - A barra inferior possui **Início**, **Lançar** e **Menu**; dois atalhos laterais
   podem ser ajustados em **Menu > Organizar atalhos**.
-- Quando o módulo Vendas Mobile está ativo e o usuário tem permissão, o primeiro
-  acesso permite escolher entre Gestão e Vendas e memorizar a preferência. A
+- Quando o módulo Vendas Mobile está ativo e o usuário tem permissão, após o login
+  a primeira tela permite escolher entre Gestão e Vendas e memorizar a preferência. Só
+  depois da escolha aparece **Preparando acesso** e o sistema selecionado é carregado. A
   escolha pode ser refeita em **Menu > Sistemas**.
 - **Sistemas** também pode ocupar um dos atalhos configuráveis da barra inferior.
   Operadores não recebem permissão para trocar de sistema.

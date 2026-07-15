@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.5.0.02 - 2026-07-15
+
+- Gestão Mobile: exibe a escolha entre Gestão e Vendas imediatamente após a autenticação, antes de carregar dados, paywall ou dashboard da Gestão.
+- Mobile: após escolher o sistema, mostra **Preparando acesso** e somente então abre o destino selecionado; escolhas memorizadas continuam pulando o seletor.
+
 ## 1.5.0.01 - 2026-07-15
 
 - Gestão e Vendas Mobile: corrige a liberação da troca de sistemas para Gestor Master e Administrador quando o módulo Vendas está instalado; operadores permanecem sem acesso.

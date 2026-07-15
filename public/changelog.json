@@ -13,6 +13,15 @@
   },
   "versoes": [
     {
+      "versao": "1.5.0.02",
+      "titulo": "Seleção de sistema antes do carregamento",
+      "data": "Julho/2026",
+      "itens": [
+        "A escolha entre Gestão e Vendas passa a ser a primeira tela após o login para gestores habilitados.",
+        "O carregamento do sistema começa somente após a escolha ou usa diretamente a preferência memorizada."
+      ]
+    },
+    {
       "versao": "1.5.0.01",
       "titulo": "Correção do acesso integrado",
       "data": "Julho/2026",

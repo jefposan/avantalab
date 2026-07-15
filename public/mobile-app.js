@@ -241,6 +241,7 @@
     pontoModuloAtivo: false,
     vendasMobileModuloAtivo: false,
     seletorSistemaAberto: false,
+    seletorSistemaInicialBloqueante: false,
     lembrarSistemaInicial: false,
     sistemaInicialAvaliadoPerfilId: '',
     pontoResumo: [],
@@ -1707,6 +1708,7 @@
     if (sistema !== 'gestao' && sistema !== 'vendas') return;
     if (sistema === 'vendas' && !podeTrocarSistemaMobile()) return;
     state.seletorSistemaAberto = false;
+    state.seletorSistemaInicialBloqueante = false;
     state.sistemaInicialAvaliadoPerfilId = state.empresa && state.empresa.id ? state.empresa.id : '';
     registrarContextoSistemaMobile(sistema);
     try {
@@ -1715,8 +1717,17 @@
         localStorage.setItem(chaveSistemaPerfilMobile(CHAVE_SISTEMA_INICIAL_MOBILE), sistema);
       } else localStorage.removeItem(chaveSistemaPerfilMobile(CHAVE_SISTEMA_INICIAL_MOBILE));
     } catch (error) {}
-    if (sistema === 'vendas') abrirVendasMobile();
-    else render();
+    if (sistema === 'vendas') {
+      state.carregando = true;
+      state.paywallVerificado = false;
+      render();
+      window.setTimeout(abrirVendasMobile, 60);
+    } else {
+      state.carregando = true;
+      state.paywallVerificado = false;
+      render();
+      carregarDados();
+    }
   }
 
   function abrirSeletorSistemaMobile() {
@@ -1726,6 +1737,7 @@
     }
     state.menuAberto = false;
     state.seletorSistemaAberto = true;
+    state.seletorSistemaInicialBloqueante = false;
     try {
       state.lembrarSistemaInicial = !!localStorage.getItem(chaveSistemaPerfilMobile(CHAVE_SISTEMA_INICIAL_MOBILE));
     } catch (error) { state.lembrarSistemaInicial = false; }
@@ -1735,6 +1747,7 @@
   function avaliarSistemaInicialMobile() {
     if (!state.empresa || !podeTrocarSistemaMobile()) {
       state.seletorSistemaAberto = false;
+      state.seletorSistemaInicialBloqueante = false;
       return false;
     }
     if (state.sistemaInicialAvaliadoPerfilId === state.empresa.id) return false;
@@ -1751,14 +1764,40 @@
     if (escolha === 'gestao') return false;
     state.lembrarSistemaInicial = false;
     state.seletorSistemaAberto = true;
-    return false;
+    state.seletorSistemaInicialBloqueante = true;
+    return true;
+  }
+
+  async function prepararSistemaInicialAntesDosDadosMobile() {
+    state.vendasMobileModuloAtivo = false;
+    if (!state.empresa || !podeGerenciarUsuarios()) return false;
+
+    var modulo = await db
+      .from('empresa_modulos')
+      .select('modulo_id')
+      .eq('empresa_id', state.empresa.id)
+      .eq('modulo_id', 'vendas_mobile')
+      .eq('ativo', true)
+      .maybeSingle();
+    if (modulo.error || !modulo.data) return false;
+
+    var acessoGestor = await db.rpc('garantir_acessos_gestor_vendas_mobile_rpc');
+    if (acessoGestor.error) {
+      console.warn('Não foi possível preparar o acesso integrado ao Vendas Mobile:', acessoGestor.error);
+      return false;
+    }
+
+    var acessoAtivo = await db.rpc('modulo_vendas_mobile_ativo_rpc', {
+      p_empresa_id: state.empresa.id,
+    });
+    state.vendasMobileModuloAtivo = !acessoAtivo.error && acessoAtivo.data === true;
+    return avaliarSistemaInicialMobile();
   }
 
   function seletorSistemaInicialHtml() {
     if (!state.seletorSistemaAberto || !podeTrocarSistemaMobile()) return '';
-    return (
-      '<div class="fixed inset-0 z-[14000] flex items-center justify-center bg-slate-950/75 px-4" role="dialog" aria-modal="true" aria-labelledby="seletor-sistema-titulo">' +
-        '<section class="w-full max-w-sm overflow-hidden rounded-3xl bg-white text-slate-900 shadow-2xl">' +
+    var card = (
+      '<section class="w-full max-w-sm overflow-hidden rounded-3xl bg-white text-slate-900 shadow-2xl" role="dialog" aria-modal="true" aria-labelledby="seletor-sistema-titulo">' +
           '<div class="px-5 py-4 text-white" style="background:linear-gradient(135deg,#003E73,#00A6C8)">' +
             '<p class="text-[10px] font-black uppercase tracking-[0.2em] text-cyan-100">AvantaLab</p>' +
             '<h2 id="seletor-sistema-titulo" class="mt-1 text-xl font-black">Por onde deseja começar?</h2>' +
@@ -1778,9 +1817,12 @@
               '<span>Memorizar minha escolha nos próximos acessos</span>' +
             '</label>' +
           '</div>' +
-        '</section>' +
-      '</div>'
+      '</section>'
     );
+    if (state.seletorSistemaInicialBloqueante) {
+      return '<section class="avantalab-mobile-bg fixed inset-0 z-[14000] flex items-center justify-center overflow-hidden px-4" style="height:100dvh;background-position:center bottom;background-size:auto 108%;">' + card + '</section>';
+    }
+    return '<div class="fixed inset-0 z-[14000] flex items-center justify-center bg-slate-950/75 px-4">' + card + '</div>';
   }
 
   function normalizarAtalhoInferior(valor, padrao) {
@@ -4564,8 +4606,6 @@
     await garantirFixasDoMes(empresaId, ano);
     await carregarResumoPerfisMobile();
 
-    if (avaliarSistemaInicialMobile()) return;
-
     state.carregando = false;
     render();
 
@@ -4658,6 +4698,14 @@
       return;
     }
 
+    state.carregando = false;
+    state.loginAcao = '';
+    if (await prepararSistemaInicialAntesDosDadosMobile()) {
+      render();
+      return;
+    }
+    state.carregando = true;
+    render();
     await carregarDados();
   }
 
@@ -10682,6 +10730,7 @@
     if (!state.pronto) telaAtual = telaCarregandoMobile();
     else if (!state.autenticado) telaAtual = state.modoCriarPerfil ? telaLoginWrapper(telaCriarPerfilInicial(), 'Criar perfil financeiro', 'Informe os dados do seu primeiro perfil.') : telaLogin();
     else if (ehFuncionarioPontoMobile()) telaAtual = telaRedirecionandoPonto();
+    else if (state.seletorSistemaAberto && state.seletorSistemaInicialBloqueante) telaAtual = seletorSistemaInicialHtml();
     else if (state.validacaoTelefoneObrigatoria) telaAtual = telaTelefoneObrigatorioMobile();
     else if (state.paywallCadastroCiclo) telaAtual = telaCadastroPerfilMobile('paywall');
     else if (state.paywallAtivo) telaAtual = telaPaywallMobile();
@@ -10691,7 +10740,7 @@
     else if (state.modoCriarPerfil) telaAtual = telaLoginWrapper(telaCriarPerfilInicial(), 'Criar perfil financeiro', 'Informe os dados do seu primeiro perfil.');
     else if (!state.paywallVerificado) telaAtual = telaCarregandoMobile();
     else telaAtual = telaApp();
-    root.innerHTML = telaAtual + (state.chatIAAberto ? chatIAModalHtml() : '') + (state.mostrarPromptNotificacoes ? promptNotificacoesHtml() : '') + (state.tourAberto ? tourHtml() : '') + avisoAssinanteMobileHtml() + seletorSistemaInicialHtml();
+    root.innerHTML = telaAtual + (state.chatIAAberto ? chatIAModalHtml() : '') + (state.mostrarPromptNotificacoes ? promptNotificacoesHtml() : '') + (state.tourAberto ? tourHtml() : '') + avisoAssinanteMobileHtml() + (state.seletorSistemaInicialBloqueante ? '' : seletorSistemaInicialHtml());
     sincronizarGradienteHeaderPerfil();
     configurarRecolhimentoPerfilHeader();
     var indicadorNav = document.querySelector('[data-nav-indicador]');
@@ -12617,7 +12666,7 @@
           return Promise.all(
             keys
               .filter(function (key) {
-                return key.indexOf('avantalab-mobile-') === 0 && key !== 'avantalab-mobile-v248';
+                return key.indexOf('avantalab-mobile-') === 0 && key !== 'avantalab-mobile-v249';
               })
               .map(function (key) {
                 return caches.delete(key);
@@ -12634,7 +12683,7 @@
     });
 
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/mobile-sw.js?v=232').then(function (registro) {
+      navigator.serviceWorker.register('/mobile-sw.js?v=233').then(function (registro) {
         if (registro && registro.update) registro.update();
       }).catch(function () {});
     }
@@ -12701,7 +12750,8 @@
             state.modoCriarPerfil = true;
           }
         } else {
-          await carregarDados();
+          var aguardandoEscolhaSistema = await prepararSistemaInicialAntesDosDadosMobile();
+          if (!aguardandoEscolhaSistema) await carregarDados();
         }
       } else {
         window.location.replace('/?entrar=1');
