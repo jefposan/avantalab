@@ -1704,6 +1704,8 @@
     registrarContextoSistemaMobile('vendas');
     try {
       sessionStorage.setItem(chaveSistemaPerfilMobile(CHAVE_SISTEMA_SESSAO_MOBILE), 'vendas');
+      sessionStorage.setItem('avantalab_vendas_entrada_gestao', '1');
+      sessionStorage.removeItem('avantalab_vendas_perfil_ativo');
     } catch (error) {}
     window.location.assign('/mobile/vendas');
   }
@@ -12793,7 +12795,7 @@
           return Promise.all(
             keys
               .filter(function (key) {
-                return key.indexOf('avantalab-mobile-') === 0 && key !== 'avantalab-mobile-v254';
+                return key.indexOf('avantalab-mobile-') === 0 && key !== 'avantalab-mobile-v255';
               })
               .map(function (key) {
                 return caches.delete(key);
@@ -12810,7 +12812,7 @@
     });
 
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/mobile-sw.js?v=238').then(function (registro) {
+      navigator.serviceWorker.register('/mobile-sw.js?v=239').then(function (registro) {
         if (registro && registro.update) registro.update();
       }).catch(function () {});
     }

@@ -1,6 +1,8 @@
 const STORAGE_KEY = 'avantalab.vendas_mobile.v1';
 const GOOGLE_CONNECTING_KEY = 'avantalab.vendas_mobile.google_connecting';
 const PREPARING_VIEWPORT_HEIGHT_KEY = 'avantalab.vendas_mobile.preparing_viewport_height';
+const PERFIL_VENDAS_ATIVO_KEY = 'avantalab_vendas_perfil_ativo';
+const ENTRADA_VENDAS_PELA_GESTAO_KEY = 'avantalab_vendas_entrada_gestao';
 const HOJE = new Date();
 const INICIO_MES = new Date(HOJE.getFullYear(), HOJE.getMonth(), 1);
 
@@ -67,6 +69,10 @@ const estadoInicial = {
   perfisGestaoTrocaCarregando: false,
   perfisGestaoTrocaErro: '',
   perfilGestaoConfirmacao: null,
+  perfisVendas: [],
+  seletorPerfilVendasAberto: false,
+  seletorPerfilVendasInicialBloqueante: false,
+  perfilVendasSelecionandoId: '',
 };
 
 let state = carregarEstado();
@@ -514,6 +520,11 @@ function render() {
     app.innerHTML = renderSeletorSistemaVendas();
     return;
   }
+  if (state.seletorPerfilVendasAberto && state.seletorPerfilVendasInicialBloqueante) {
+    limparDestaqueClientes();
+    app.innerHTML = renderSeletorPerfilVendas();
+    return;
+  }
   if (state.seletorPerfilGestaoAberto) {
     limparDestaqueClientes();
     app.innerHTML = renderSeletorPerfilGestaoVendas();
@@ -560,6 +571,7 @@ function render() {
     ${state.aba === 'novo-pedido' ? `<button class="fab" onclick="abrirCarrinho()">${svgIcon('shopping-cart')}</button>` : ''}
     ${state.agendaFormAberto && state.aba !== 'agenda' ? renderFormularioAgendaVendas() : ''}
     ${renderSeletorSistemaVendas()}
+    ${state.seletorPerfilVendasAberto ? renderSeletorPerfilVendas() : ''}
   `;
   if (state.aba === 'clientes') requestAnimationFrame(configurarDestaqueClientes);
   else limparDestaqueClientes();
@@ -797,8 +809,9 @@ function renderMenuMobile() {
   const itens = itensSalaBotoesOrdenados();
   const organizando = state.organizandoSalaBotoes;
   const aniversariantesHoje = aniversariosHojeVendas();
+  const multiplosPerfisVendas = (state.perfisVendas || []).length > 1;
   return `<section class="mobile-menu" aria-label="Menu principal">
-    <header class="mobile-menu-header"><div class="mobile-menu-brand">${logoVendas()}</div><div class="system-header-actions">${aniversariantesHoje.length ? `<button class="birthday-header-button" onclick="abrirAgendaAniversariantes()" aria-label="${aniversariantesHoje.length} aniversário${aniversariantesHoje.length === 1 ? '' : 's'} hoje">${svgIconEstavel('cake')}<i>${aniversariantesHoje.length}</i></button>` : ''}${podeTrocarParaGestaoVendas() ? `<button class="system-switch-header-button" onclick="abrirSeletorPerfilGestaoVendas()" aria-label="Escolher perfil na Gestão Mobile" title="Trocar para Gestão Mobile">${iconeTrocaSistemaVendas()}</button>` : ''}</div></header>
+    <header class="mobile-menu-header${multiplosPerfisVendas ? ' has-sales-profile-switch' : ''}"><div class="mobile-menu-brand">${logoVendas()}</div><div class="system-header-actions">${aniversariantesHoje.length ? `<button class="birthday-header-button" onclick="abrirAgendaAniversariantes()" aria-label="${aniversariantesHoje.length} aniversário${aniversariantesHoje.length === 1 ? '' : 's'} hoje">${svgIconEstavel('cake')}<i>${aniversariantesHoje.length}</i></button>` : ''}${multiplosPerfisVendas ? `<button class="sales-profile-switch-header-button" onclick="abrirSeletorPerfilVendas()" aria-label="Trocar perfil de Vendas" title="Trocar perfil de Vendas">${iconeTrocaPerfilVendas()}</button>` : ''}${podeTrocarParaGestaoVendas() ? `<button class="system-switch-header-button" onclick="abrirSeletorPerfilGestaoVendas()" aria-label="Escolher perfil na Gestão Mobile" title="Trocar para Gestão Mobile">${iconeTrocaSistemaVendas()}</button>` : ''}</div></header>
     <div class="mobile-menu-grid-wrap${organizando ? ' is-organizing' : ''}"><button type="button" class="mobile-menu-organize" onclick="alternarOrganizacaoSalaBotoes()" aria-label="${organizando ? 'Concluir organização da sala' : 'Organizar sala de botões'}" title="${organizando ? 'Concluir' : 'Organizar sala'}">${iconeOrganizarSala(organizando)}</button><div class="mobile-menu-grid">${itens.map(([idAba, arquivo, label]) => `<button type="button" data-sala-botao="${idAba}" class="mobile-menu-card${organizando ? ' is-organizable' : ''}" ${organizando ? `onpointerdown="iniciarArrasteSalaBotoes(event,'${idAba}')" onpointermove="moverArrasteSalaBotoes(event)" onpointerup="finalizarArrasteSalaBotoes(event)" onpointercancel="finalizarArrasteSalaBotoes(event)"` : `onclick="setAba('${idAba}')"`}><img src="./assets/menu/${arquivo}" alt="${label}" /></button>`).join('')}</div></div>
     <div class="mobile-menu-assistance">
       <button type="button" class="mobile-ava-card" onclick="abrirChatIAVendas()">
@@ -945,6 +958,58 @@ function renderSeletorSistemaVendas() {
   return `<div class="system-selector-backdrop">${card}</div>`;
 }
 
+function abrirSeletorPerfilVendas() {
+  if ((state.perfisVendas || []).length <= 1) return;
+  state.seletorPerfilVendasAberto = true;
+  state.seletorPerfilVendasInicialBloqueante = false;
+  state.perfilVendasSelecionandoId = '';
+  render();
+}
+
+function fecharSeletorPerfilVendas() {
+  if (state.seletorPerfilVendasInicialBloqueante || state.perfilVendasSelecionandoId) return;
+  state.seletorPerfilVendasAberto = false;
+  render();
+}
+
+function rotuloPapelPerfilVendas(papel) {
+  return papel === 'gestor' ? 'Gestor' : 'Vendedor';
+}
+
+async function selecionarPerfilVendas(empresaId) {
+  const perfil = (state.perfisVendas || []).find((item) => item.empresa_id === empresaId);
+  if (!perfil || state.perfilVendasSelecionandoId) return;
+  state.perfilVendasSelecionandoId = empresaId;
+  render();
+  try {
+    sessionStorage.setItem(PERFIL_VENDAS_ATIVO_KEY, empresaId);
+    sessionStorage.setItem(`avantalab_mobile_sistema_sessao_${empresaId}`, 'vendas');
+    sessionStorage.removeItem(ENTRADA_VENDAS_PELA_GESTAO_KEY);
+    localStorage.setItem('avantalab_mobile_sistema_contexto', JSON.stringify({ empresaId, sistema: 'vendas', atualizadoEm: new Date().toISOString() }));
+  } catch { /* a troca continua sem armazenamento local */ }
+  state.seletorPerfilVendasAberto = false;
+  state.seletorPerfilVendasInicialBloqueante = false;
+  state.sistemaInicialAvaliado = true;
+  state.perfilVendasSelecionandoId = '';
+  await carregarSistemaVendasCompleto();
+}
+
+function renderSeletorPerfilVendas() {
+  const perfis = state.perfisVendas || [];
+  const perfilAtualId = state.acessoVendas?.empresa_id || '';
+  const lista = perfis.length
+    ? `<div class="management-profile-list sales-profile-list">${perfis.map((perfil) => {
+        const atual = perfil.empresa_id === perfilAtualId;
+        const carregando = perfil.empresa_id === state.perfilVendasSelecionandoId;
+        return `<button type="button" class="${atual ? 'is-current' : ''}" onclick="selecionarPerfilVendas('${escapeAttr(perfil.empresa_id)}')" ${state.perfilVendasSelecionandoId ? 'disabled' : ''}><span>${iconeTrocaPerfilVendas()}</span><b>${escapeHtml(perfil.empresa_nome || 'Perfil de Vendas')}<small>${escapeHtml(rotuloPapelPerfilVendas(perfil.papel))}${atual ? ' · Em uso' : ''}</small></b><i>${carregando ? '…' : '›'}</i></button>`;
+      }).join('')}</div>`
+    : '<div class="management-profile-empty"><p>Nenhum perfil de Vendas ativo está vinculado a esta conta.</p></div>';
+  const fechar = state.seletorPerfilVendasInicialBloqueante ? '' : '<button type="button" onclick="fecharSeletorPerfilVendas()" aria-label="Fechar seletor de perfis">×</button>';
+  const card = `<article class="management-profile-selector-card sales-profile-selector-card" onclick="event.stopPropagation()"><header><div><small>Vendas Mobile</small><h2>Selecione o perfil</h2><p>Escolha qual perfil de Vendas deseja acessar.</p></div>${fechar}</header>${lista}</article>`;
+  if (state.seletorPerfilVendasInicialBloqueante) return `<section class="login-screen management-profile-selector-screen">${card}</section>`;
+  return `<div class="system-selector-backdrop" onclick="fecharSeletorPerfilVendas()">${card}</div>`;
+}
+
 function atalhosInferioresVendasDisponiveis() {
   return ATALHOS_INFERIORES_VENDAS.filter(([id]) => id !== 'gestao' || podeTrocarParaGestaoVendas());
 }
@@ -1005,6 +1070,10 @@ function iconeNavegacaoInferior(tipo) {
 
 function iconeTrocaSistemaVendas() {
   return '<svg class="svg-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="8" height="7" rx="2"/><rect x="13" y="13" width="8" height="7" rx="2"/><path d="M15 7h4a2 2 0 0 1 2 2v1M9 17H5a2 2 0 0 1-2-2v-1M18 7l-2-2m2 2-2 2M6 17l2-2m-2 2 2 2"/></svg>';
+}
+
+function iconeTrocaPerfilVendas() {
+  return '<svg class="svg-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="8" cy="8" r="3"/><circle cx="17" cy="9" r="2.5"/><path d="M2.5 20a5.5 5.5 0 0 1 11 0M13.5 20a4.5 4.5 0 0 1 8 0"/><path d="m15 3 2-2 2 2M17 1v5"/></svg>';
 }
 
 function itemNavegacaoInferior(id, tipo, rotulo, acao) {
@@ -1072,6 +1141,8 @@ async function sairSistema() {
     Object.keys(sessionStorage).forEach((chave) => {
       if (chave.startsWith('avantalab_mobile_sistema_sessao_')) sessionStorage.removeItem(chave);
     });
+    sessionStorage.removeItem(PERFIL_VENDAS_ATIVO_KEY);
+    sessionStorage.removeItem(ENTRADA_VENDAS_PELA_GESTAO_KEY);
   } catch { /* armazenamento indisponível */ }
   state.autenticado = false;
   state.menuAberto = false;
@@ -1089,6 +1160,10 @@ async function sairSistema() {
   state.seletorPerfilGestaoAberto = false;
   state.perfisGestaoTroca = [];
   state.perfilGestaoConfirmacao = null;
+  state.perfisVendas = [];
+  state.seletorPerfilVendasAberto = false;
+  state.seletorPerfilVendasInicialBloqueante = false;
+  state.perfilVendasSelecionandoId = '';
   render();
 }
 
@@ -1461,6 +1536,7 @@ async function carregarDadosBackend(mostrarCarregamento = true, manterPreparacao
       state.vinculosComerciais = dados.vinculosComerciais || [];
       state.vinculoComercialAtivo = dados.vinculoComercialAtivo || null;
       state.perfisFinanceiros = dados.perfisFinanceiros || [];
+      state.perfisVendas = dados.perfisVendas || [];
       if (!dados.acesso) state.autenticado = false;
     }
   } catch (error) {
@@ -1483,8 +1559,12 @@ async function prepararSelecaoSistemaAntesDosDadosVendas() {
     window.VendasDb.currentUser(),
     window.VendasDb.buscarAcessoVendas(),
   ]);
-  state.autenticado = Boolean(user && acessoVendas.acesso);
-  state.usuarioSemAcesso = Boolean(user && !acessoVendas.acesso);
+  const perfisVendas = acessoVendas.perfisVendas || [];
+  let entradaPelaGestao = false;
+  try { entradaPelaGestao = sessionStorage.getItem(ENTRADA_VENDAS_PELA_GESTAO_KEY) === '1'; } catch { /* armazenamento indisponível */ }
+  state.perfisVendas = perfisVendas;
+  state.autenticado = Boolean(user && (acessoVendas.acesso || perfisVendas.length));
+  state.usuarioSemAcesso = Boolean(user && !acessoVendas.acesso && !perfisVendas.length);
   state.acessoVendas = acessoVendas.acesso || null;
   state.solicitacaoAcesso = acessoVendas.solicitacao || null;
   state.moduloVendasAtivo = acessoVendas.moduloAtivo !== false;
@@ -1496,6 +1576,20 @@ async function prepararSelecaoSistemaAntesDosDadosVendas() {
       email: user.email || state.usuario.email || '',
       telefone: user.phone || user.user_metadata?.telefone || user.user_metadata?.phone || state.usuario.telefone || '',
     };
+  }
+  if (entradaPelaGestao && perfisVendas.length > 1 && !acessoVendas.acesso) {
+    state.seletorPerfilVendasAberto = true;
+    state.seletorPerfilVendasInicialBloqueante = true;
+    state.perfilVendasSelecionandoId = '';
+    return true;
+  }
+  if (entradaPelaGestao && acessoVendas.acesso?.empresa_id) {
+    try {
+      sessionStorage.setItem(PERFIL_VENDAS_ATIVO_KEY, acessoVendas.acesso.empresa_id);
+      sessionStorage.setItem(`avantalab_mobile_sistema_sessao_${acessoVendas.acesso.empresa_id}`, 'vendas');
+      sessionStorage.removeItem(ENTRADA_VENDAS_PELA_GESTAO_KEY);
+    } catch { /* navegação continua sem armazenamento local */ }
+    state.sistemaInicialAvaliado = true;
   }
   if (!state.autenticado || !state.moduloVendasAtivo) return false;
   return avaliarSistemaInicialVendas();
@@ -4535,7 +4629,7 @@ function aplicarAtualizacaoPwaPendente() {
 
 if (!window.__VENDAS_MOBILE_EMBEDDED__ && 'serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('./sw.js').catch(() => {});
+    navigator.serviceWorker.register('./sw.js?v=8').catch(() => {});
   });
 }
 

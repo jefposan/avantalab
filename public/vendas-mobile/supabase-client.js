@@ -142,9 +142,21 @@
     const modulos = await Promise.all(candidatos.map((item) => requireClient().rpc('modulo_vendas_mobile_ativo_rpc', {
       p_empresa_id: item.empresa_id,
     })));
-    const indiceAtivo = modulos.findIndex((resultado) => !resultado.error && resultado.data === true);
-    const acesso = candidatos[indiceAtivo >= 0 ? indiceAtivo : 0] || null;
-    const moduloAtivo = indiceAtivo >= 0;
+    const perfisVendas = candidatos.filter((_, indice) => !modulos[indice].error && modulos[indice].data === true);
+    const moduloAtivo = perfisVendas.length > 0;
+    let vindoDaGestao = false;
+    let perfilSelecionadoId = '';
+    try {
+      vindoDaGestao = sessionStorage.getItem('avantalab_vendas_entrada_gestao') === '1';
+      perfilSelecionadoId = sessionStorage.getItem('avantalab_vendas_perfil_ativo') || '';
+    } catch { /* armazenamento indisponível */ }
+    let acesso = null;
+    if (perfisVendas.length === 1) acesso = perfisVendas[0];
+    else if (perfisVendas.length > 1 && !vindoDaGestao) {
+      acesso = perfisVendas.find((item) => item.empresa_id === perfilSelecionadoId)
+        || perfisVendas.find((item) => item.empresa_id === empresaContexto)
+        || perfisVendas[0];
+    } else if (!perfisVendas.length) acesso = candidatos[0] || null;
     if (acesso && acesso.empresa_id !== empresaContexto) {
       try {
         localStorage.setItem('avantalab_mobile_sistema_contexto', JSON.stringify({
@@ -157,6 +169,7 @@
     return {
       acesso,
       moduloAtivo,
+      perfisVendas,
       solicitacao: solicitacaoRes.data || null,
     };
   }

@@ -41,6 +41,7 @@ NAVEGAÇÃO E PERFIS
 - Com o módulo Vendas Mobile ativo e permissão de Gestor Master/Administrador, após o login a primeira tela permite escolher entre Gestão e Vendas e memorizar o sistema inicial. Depois da escolha aparece Preparando acesso e o sistema selecionado é carregado. Menu > Sistemas permite refazer a escolha e também pode ser um atalho inferior.
 - Em perfil sem o módulo Vendas, Sistemas aparece inativo no menu lateral. Gestor Master ou Administrador pode tocar, confirmar a ativação e, após a validação, escolher o sistema. Perfil pessoal gratuito precisa do Premium. Operadores veem o botão inativo e não podem ativar nem trocar de sistema.
 - No seletor de sistemas aberto dentro da Gestão, o X ou um toque fora do card cancela a troca e mantém o usuário na Gestão. A seleção inicial mostrada antes de carregar o app continua obrigatória.
+- Ao escolher Vendas, um único perfil de Vendas ativo abre diretamente; se houver mais de um, o usuário escolhe qual acessar. Essa seleção não altera o destino financeiro do Vendas.
 - O dashboard pode organizar ordem e visibilidade dos cards em Menu > Organizar resumo/Organizar dashboard.
 - Em Gerenciar perfil, o usuário pode criar, editar, excluir quando permitido e administrar perfis. Um toque em um perfil pode apenas destacá-lo; a troca real usa o controle de perfil já existente.
 - Valores podem iniciar ocultos pelo ícone de olho conforme a preferência de privacidade.
@@ -66,6 +67,7 @@ SALA E NAVEGAÇÃO
 - A sala de botões é a tela inicial: Dashboard, Clientes, Produtos, Pedidos, Pagamentos, Agenda, Novidades, Divulgação e Informações.
 - O menu inferior permite ir a Configurações, atalhos escolhidos pelo usuário, Novo lançamento (+) e Início. Configurações > Organizar atalhos muda os dois atalhos laterais; o lápis da sala organiza a ordem dos cards.
 - Para gestores habilitados, após o login a primeira tela permite escolher Gestão ou Vendas antes de carregar os dados; depois da escolha aparece Preparando acesso. Dentro do Vendas, o botão de sistemas fica no canto direito do header fixo da sala de botões. Ao tocar, ele lista todos os perfis ativos da Gestão vinculados à conta; o usuário escolhe um perfil e confirma antes de abrir a Gestão. Gestão também pode ser configurada como atalho inferior. A troca preserva a sessão e abre o perfil escolhido; vendedores sem papel de gestor não recebem essa opção.
+- Com mais de um perfil de Vendas ativo, um botão próprio de troca de perfil aparece ao lado de Sistemas no header da sala; com apenas um, fica oculto. A troca seleciona o ambiente operacional, mas o destino financeiro só pode ser alterado em Configurações > Integração com Gestão.
 
 CLIENTES
 - Em Clientes, use Novo cliente para cadastrar. Nome é obrigatório; celular e endereço são recomendados para WhatsApp e mapas. A ficha permite ligação, WhatsApp, mapas, pedido, pagamento, agendamento e Ver detalhes.

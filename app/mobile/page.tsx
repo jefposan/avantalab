@@ -246,7 +246,7 @@ export default function MobilePage() {
       <VendasMobileConteudoBridge />
 
       <script src="/mobile-supabase.js" defer />
-      <script src="/mobile-app.js?v=294" defer />
+      <script src="/mobile-app.js?v=295" defer />
     </main>
   );
 }

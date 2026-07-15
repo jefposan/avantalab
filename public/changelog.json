@@ -13,6 +13,16 @@
   },
   "versoes": [
     {
+      "versao": "1.5.0.10",
+      "titulo": "Perfis no Vendas Mobile",
+      "data": "Julho/2026",
+      "itens": [
+        "Um único perfil de Vendas abre diretamente; múltiplos perfis exibem um seletor antes da entrada.",
+        "O header do Vendas ganha um botão próprio para trocar de perfil quando houver mais de um.",
+        "A troca de perfil não altera o destino financeiro definido nas Configurações."
+      ]
+    },
+    {
       "versao": "1.5.0.09",
       "titulo": "Cancelamento da troca de sistemas",
       "data": "Julho/2026",

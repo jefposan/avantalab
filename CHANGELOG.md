@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.5.0.10 - 2026-07-15
+
+- Gestão e Vendas Mobile: ao entrar no Vendas pela troca de sistemas, abre diretamente quando há um único perfil de Vendas ativo e solicita a escolha quando há mais de um.
+- Vendas Mobile: adiciona ao header da sala um botão exclusivo para trocar o perfil de Vendas, visível somente para contas com múltiplos perfis.
+- Vendas Mobile: a troca do perfil operacional não altera o destino financeiro, que continua configurável exclusivamente em **Configurações > Integração com Gestão**.
+
 ## 1.5.0.09 - 2026-07-15
 
 - Gestão Mobile: adiciona **X** ao seletor de sistemas aberto dentro do app e permite cancelá-lo tocando fora do card, mantendo o sistema atual.

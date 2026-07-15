@@ -1,8 +1,8 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.5.0.09 -->
+<!-- ava-version: 1.5.0.10 -->
 
-> Revisão 1.5.0.09: sem impacto operacional no Vendas Mobile.
+> Revisão 1.5.0.10: adiciona seleção e troca de perfil de Vendas.
 
 ## Escopo e navegação
 
@@ -21,6 +21,11 @@ dúvida dentro do Vendas sempre que a função existir ali.
   Ao tocar, o Vendas lista todos os perfis ativos da Gestão vinculados à conta;
   depois de selecionar um perfil, a troca exige confirmação. O aviso de
   aniversário permanece ao lado do botão quando ambos estão visíveis.
+- Quando o usuário possui mais de um perfil de Vendas ativo, um segundo botão com
+  ícone próprio aparece ao lado de Sistemas no header da sala. Ele troca somente o
+  perfil operacional do Vendas; com um único perfil, o botão fica oculto.
+- O destino financeiro não muda ao selecionar outro perfil de Vendas. Ele só pode
+  ser definido ou alterado em **Configurações > Integração com Gestão**.
 - A sessão e o perfil/empresa são preservados na troca. Usuários sem permissão
   de gestor não recebem o atalho de retorno à Gestão.
 
