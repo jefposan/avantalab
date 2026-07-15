@@ -1,8 +1,8 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.5.0.02 -->
+<!-- ava-version: 1.5.0.03 -->
 
-> Revisão 1.5.0.02: a seleção do sistema passa a preceder o carregamento da Gestão.
+> Revisão 1.5.0.03: sem mudança operacional; fluxo equivalente revisado no Vendas Mobile.
 
 ## Escopo
 

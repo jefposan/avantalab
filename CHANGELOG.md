@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.5.0.03 - 2026-07-15
+
+- Vendas Mobile: aplica a seleção de sistema antes da carga dos dados, usando o fundo padrão e exibindo **Preparando acesso** somente após a escolha.
+- Vendas Mobile: posiciona a troca para Gestão no header fixo da sala de botões e exige confirmação antes de navegar.
+- Vendas Mobile: corrige a escolha automática do perfil, priorizando vínculos com módulo Vendas ativo para evitar a exibição incorreta de recursos desativados.
+
 ## 1.5.0.02 - 2026-07-15
 
 - Gestão Mobile: exibe a escolha entre Gestão e Vendas imediatamente após a autenticação, antes de carregar dados, paywall ou dashboard da Gestão.

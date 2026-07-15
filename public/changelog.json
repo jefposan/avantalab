@@ -13,6 +13,16 @@
   },
   "versoes": [
     {
+      "versao": "1.5.0.03",
+      "titulo": "Entrada e navegação do Vendas Mobile",
+      "data": "Julho/2026",
+      "itens": [
+        "A seleção entre Gestão e Vendas passa a acontecer antes do carregamento dos dados também ao entrar pelo Vendas Mobile.",
+        "A troca para Gestão fica no header da sala de botões e exige confirmação.",
+        "Perfis com módulo Vendas ativo passam a ser priorizados, evitando recursos incorretamente desativados."
+      ]
+    },
+    {
       "versao": "1.5.0.02",
       "titulo": "Seleção de sistema antes do carregamento",
       "data": "Julho/2026",

@@ -59,6 +59,7 @@ const estadoInicial = {
   ordemSalaBotoes: [],
   organizandoSalaBotoes: false,
   seletorSistemaAberto: false,
+  seletorSistemaInicialBloqueante: false,
   lembrarSistemaInicial: false,
   sistemaInicialAvaliado: false,
 };
@@ -503,6 +504,11 @@ function render() {
     renderPreparandoAcessoEstavel();
     return;
   }
+  if (state.seletorSistemaAberto && state.seletorSistemaInicialBloqueante) {
+    limparDestaqueClientes();
+    app.innerHTML = renderSeletorSistemaVendas();
+    return;
+  }
   if (!state.autenticado) {
     limparDestaqueClientes();
     app.innerHTML = state.usuarioSemAcesso ? renderSolicitarAcesso() : renderLogin();
@@ -516,7 +522,7 @@ function render() {
     return;
   }
   const aniversariantesHoje = aniversariosHojeVendas();
-  const cabecalho = `<header class="system-header"><button class="system-brand brand-home" onclick="abrirSalaBotoes()" aria-label="Ir para a sala de botões">${logoVendas()}</button><div class="system-header-actions">${aniversariantesHoje.length ? `<button class="birthday-header-button" onclick="abrirAgendaAniversariantes()" aria-label="${aniversariantesHoje.length} aniversário${aniversariantesHoje.length === 1 ? '' : 's'} hoje">${svgIconEstavel('cake')}<i>${aniversariantesHoje.length}</i></button>` : ''}${podeTrocarParaGestaoVendas() ? `<button class="system-switch-header-button" onclick="abrirGestao()" aria-label="Ir para Gestão Mobile" title="Ir para Gestão Mobile">${iconeTrocaSistemaVendas()}</button>` : ''}</div></header>`;
+  const cabecalho = `<header class="system-header"><button class="system-brand brand-home" onclick="abrirSalaBotoes()" aria-label="Ir para a sala de botões">${logoVendas()}</button><div class="system-header-actions">${aniversariantesHoje.length ? `<button class="birthday-header-button" onclick="abrirAgendaAniversariantes()" aria-label="${aniversariantesHoje.length} aniversário${aniversariantesHoje.length === 1 ? '' : 's'} hoje">${svgIconEstavel('cake')}<i>${aniversariantesHoje.length}</i></button>` : ''}</div></header>`;
   app.innerHTML = `
     <aside class="sidebar ${state.menuAberto ? 'open' : ''}">
       <button class="sidebar-brand brand-home" onclick="abrirSalaBotoes()" aria-label="Ir para a sala de botões">${logoVendas()}</button>
@@ -780,8 +786,9 @@ function finalizarArrasteSalaBotoes(event) {
 function renderMenuMobile() {
   const itens = itensSalaBotoesOrdenados();
   const organizando = state.organizandoSalaBotoes;
+  const aniversariantesHoje = aniversariosHojeVendas();
   return `<section class="mobile-menu" aria-label="Menu principal">
-    <header class="mobile-menu-header"><div class="mobile-menu-brand">${logoVendas()}</div></header>
+    <header class="mobile-menu-header"><div class="mobile-menu-brand">${logoVendas()}</div><div class="system-header-actions">${aniversariantesHoje.length ? `<button class="birthday-header-button" onclick="abrirAgendaAniversariantes()" aria-label="${aniversariantesHoje.length} aniversário${aniversariantesHoje.length === 1 ? '' : 's'} hoje">${svgIconEstavel('cake')}<i>${aniversariantesHoje.length}</i></button>` : ''}${podeTrocarParaGestaoVendas() ? `<button class="system-switch-header-button" onclick="abrirConfirmacaoTrocaSistemaVendas()" aria-label="Ir para Gestão Mobile" title="Ir para Gestão Mobile">${iconeTrocaSistemaVendas()}</button>` : ''}</div></header>
     <div class="mobile-menu-grid-wrap${organizando ? ' is-organizing' : ''}"><button type="button" class="mobile-menu-organize" onclick="alternarOrganizacaoSalaBotoes()" aria-label="${organizando ? 'Concluir organização da sala' : 'Organizar sala de botões'}" title="${organizando ? 'Concluir' : 'Organizar sala'}">${iconeOrganizarSala(organizando)}</button><div class="mobile-menu-grid">${itens.map(([idAba, arquivo, label]) => `<button type="button" data-sala-botao="${idAba}" class="mobile-menu-card${organizando ? ' is-organizable' : ''}" ${organizando ? `onpointerdown="iniciarArrasteSalaBotoes(event,'${idAba}')" onpointermove="moverArrasteSalaBotoes(event)" onpointerup="finalizarArrasteSalaBotoes(event)" onpointercancel="finalizarArrasteSalaBotoes(event)"` : `onclick="setAba('${idAba}')"`}><img src="./assets/menu/${arquivo}" alt="${label}" /></button>`).join('')}</div></div>
     <div class="mobile-menu-assistance">
       <button type="button" class="mobile-ava-card" onclick="abrirChatIAVendas()">
@@ -883,7 +890,7 @@ function chaveSistemaPerfilVendas(prefixo) {
 }
 
 function avaliarSistemaInicialVendas() {
-  if (state.sistemaInicialAvaliado || !podeTrocarParaGestaoVendas()) return;
+  if (state.sistemaInicialAvaliado || !podeTrocarParaGestaoVendas()) return false;
   state.sistemaInicialAvaliado = true;
   let escolha = '';
   try {
@@ -892,9 +899,12 @@ function avaliarSistemaInicialVendas() {
   } catch { /* armazenamento indisponível */ }
   if (escolha === 'gestao') {
     abrirGestao();
-    return;
+    return true;
   }
-  if (escolha !== 'vendas') state.seletorSistemaAberto = true;
+  if (escolha === 'vendas') return false;
+  state.seletorSistemaAberto = true;
+  state.seletorSistemaInicialBloqueante = true;
+  return true;
 }
 
 function escolherSistemaInicialVendas(sistema) {
@@ -907,8 +917,11 @@ function escolherSistemaInicialVendas(sistema) {
     localStorage.setItem('avantalab_mobile_sistema_contexto', JSON.stringify({ empresaId, sistema, atualizadoEm: new Date().toISOString() }));
   } catch { /* navegação continua sem preferência local */ }
   state.seletorSistemaAberto = false;
-  if (sistema === 'gestao') abrirGestao();
-  else render();
+  state.seletorSistemaInicialBloqueante = false;
+  carregandoBackend = true;
+  render();
+  if (sistema === 'gestao') window.setTimeout(abrirGestao, 60);
+  else window.setTimeout(carregarSistemaVendasCompleto, 60);
 }
 
 function definirLembrarSistemaInicialVendas(ativo) {
@@ -917,7 +930,9 @@ function definirLembrarSistemaInicialVendas(ativo) {
 
 function renderSeletorSistemaVendas() {
   if (!state.seletorSistemaAberto || !podeTrocarParaGestaoVendas()) return '';
-  return `<div class="system-selector-backdrop" role="dialog" aria-modal="true" aria-labelledby="system-selector-title"><section class="system-selector-card"><header><small>AvantaLab</small><h2 id="system-selector-title">Por onde deseja começar?</h2><p>Escolha o sistema para abrir neste acesso.</p></header><div class="system-selector-options"><button type="button" onclick="escolherSistemaInicialVendas('gestao')"><span>${svgIconEstavel('home')}</span><b>Gestão Mobile<small>Finanças, indicadores e administração.</small></b></button><button type="button" onclick="escolherSistemaInicialVendas('vendas')"><span>${iconeTrocaSistemaVendas()}</span><b>Vendas Mobile<small>Clientes, produtos, pedidos e pagamentos.</small></b></button><label><input type="checkbox" onchange="definirLembrarSistemaInicialVendas(this.checked)" ${state.lembrarSistemaInicial ? 'checked' : ''}><span>Memorizar minha escolha nos próximos acessos</span></label></div></section></div>`;
+  const card = `<section class="system-selector-card" role="dialog" aria-modal="true" aria-labelledby="system-selector-title"><header><small>AvantaLab</small><h2 id="system-selector-title">Por onde deseja começar?</h2><p>Escolha o sistema para abrir neste acesso.</p></header><div class="system-selector-options"><button type="button" onclick="escolherSistemaInicialVendas('gestao')"><span>${svgIconEstavel('home')}</span><b>Gestão Mobile<small>Finanças, indicadores e administração.</small></b></button><button type="button" onclick="escolherSistemaInicialVendas('vendas')"><span>${iconeTrocaSistemaVendas()}</span><b>Vendas Mobile<small>Clientes, produtos, pedidos e pagamentos.</small></b></button><label><input type="checkbox" onchange="definirLembrarSistemaInicialVendas(this.checked)" ${state.lembrarSistemaInicial ? 'checked' : ''}><span>Memorizar minha escolha nos próximos acessos</span></label></div></section>`;
+  if (state.seletorSistemaInicialBloqueante) return `<section class="login-screen system-selector-screen">${card}</section>`;
+  return `<div class="system-selector-backdrop">${card}</div>`;
 }
 
 function atalhosInferioresVendasDisponiveis() {
@@ -1016,7 +1031,7 @@ function acionarNavegacaoInferior(event, destino) {
     fecharCamadasNavegacao();
     if (destino === 'configuracoes') setAba('configuracoes');
     else if (destino === 'tema') alternarTema(!state.temaEscuro);
-    else if (destino === 'gestao') abrirGestao();
+    else if (destino === 'gestao') abrirConfirmacaoTrocaSistemaVendas();
     else if (destino === 'novo') { render(); abrirAcoesRapidas(); }
     else if (['dashboard', 'clientes', 'produtos', 'vendas', 'vender', 'agenda', 'divulgacao'].includes(destino)) setAba(destino);
     else if (destino === 'inicio') abrirSalaBotoes();
@@ -1058,6 +1073,9 @@ async function sairSistema() {
   state.acessoVendas = null;
   state.solicitacaoAcesso = null;
   state.usuarioSemAcesso = false;
+  state.seletorSistemaAberto = false;
+  state.seletorSistemaInicialBloqueante = false;
+  state.sistemaInicialAvaliado = false;
   render();
 }
 
@@ -1073,7 +1091,14 @@ async function entrarSistema(event) {
     if (loginTipo === 'email') await window.VendasDb.signIn(contato, senha);
     else await window.VendasDb.signInPhone(`+55${contato.replace(/\D/g, '')}`, senha);
     localStorage.setItem('avantalab.vendas_mobile.lembrar', lembrar);
-    await carregarDadosBackend(false);
+    const aguardandoEscolha = await prepararSelecaoSistemaAntesDosDadosVendas();
+    carregandoBackend = false;
+    if (aguardandoEscolha) {
+      render();
+      liberarAlturaPreparacao();
+      return;
+    }
+    await carregarSistemaVendasCompleto();
   } catch (error) {
     carregandoBackend = false;
     render();
@@ -1424,7 +1449,6 @@ async function carregarDadosBackend(mostrarCarregamento = true, manterPreparacao
       state.vinculoComercialAtivo = dados.vinculoComercialAtivo || null;
       state.perfisFinanceiros = dados.perfisFinanceiros || [];
       if (!dados.acesso) state.autenticado = false;
-      else avaliarSistemaInicialVendas();
     }
   } catch (error) {
     console.error(error);
@@ -1438,6 +1462,45 @@ async function carregarDadosBackend(mostrarCarregamento = true, manterPreparacao
     if (!manterPreparacaoAteRecursos) liberarAlturaPreparacao();
     if (state.erroBackend) { toast(state.erroBackend); state.erroBackend = '';
     }
+  }
+}
+
+async function prepararSelecaoSistemaAntesDosDadosVendas() {
+  const [user, acessoVendas] = await Promise.all([
+    window.VendasDb.currentUser(),
+    window.VendasDb.buscarAcessoVendas(),
+  ]);
+  state.autenticado = Boolean(user && acessoVendas.acesso);
+  state.usuarioSemAcesso = Boolean(user && !acessoVendas.acesso);
+  state.acessoVendas = acessoVendas.acesso || null;
+  state.solicitacaoAcesso = acessoVendas.solicitacao || null;
+  state.moduloVendasAtivo = acessoVendas.moduloAtivo !== false;
+  if (user) {
+    state.usuario = {
+      ...state.usuario,
+      id: user.id,
+      nome: user.user_metadata?.nome || user.user_metadata?.full_name || user.user_metadata?.name || user.email || state.usuario.nome,
+      email: user.email || state.usuario.email || '',
+      telefone: user.phone || user.user_metadata?.telefone || user.user_metadata?.phone || state.usuario.telefone || '',
+    };
+  }
+  if (!state.autenticado || !state.moduloVendasAtivo) return false;
+  return avaliarSistemaInicialVendas();
+}
+
+async function carregarSistemaVendasCompleto() {
+  carregandoBackend = true;
+  preparandoRecursosSala = true;
+  render();
+  try {
+    const recursosSala = prepararRecursosSalaBotoes();
+    await carregarDadosBackend(false, true);
+    await recursosSala;
+  } finally {
+    carregandoBackend = false;
+    preparandoRecursosSala = false;
+    render();
+    liberarAlturaPreparacao();
   }
 }
 
@@ -1469,13 +1532,14 @@ async function inicializarApp() {
       liberarAlturaPreparacao();
       return;
     }
-    preparandoRecursosSala = true;
-    const recursosSala = prepararRecursosSalaBotoes();
-    await carregarDadosBackend(false, true);
-    await recursosSala;
-    preparandoRecursosSala = false;
-    render();
-    liberarAlturaPreparacao();
+    const aguardandoEscolha = await prepararSelecaoSistemaAntesDosDadosVendas();
+    carregandoBackend = false;
+    if (aguardandoEscolha) {
+      render();
+      liberarAlturaPreparacao();
+      return;
+    }
+    await carregarSistemaVendasCompleto();
   } catch (error) {
     console.error('Falha ao inicializar o Vendas Mobile.', error);
     carregandoBackend = false;
@@ -4215,6 +4279,21 @@ function abrirGestao() {
   window.location.assign('/mobile');
 }
 
+function abrirConfirmacaoTrocaSistemaVendas() {
+  if (!podeTrocarParaGestaoVendas()) {
+    toast('A troca de sistemas não está disponível para este usuário.');
+    return;
+  }
+  sheet(`<div class="sheet-header"><div><h2>Ir para Gestão Mobile?</h2><p class="muted small">Confirme a troca de sistema para evitar uma saída acidental.</p></div><button class="close" onclick="fecharSheet()">×</button></div><p>Você continuará na mesma conta e no mesmo perfil vinculado.</p><div class="grid"><button class="secondary" onclick="fecharSheet()">Continuar no Vendas</button><button class="primary" onclick="confirmarTrocaParaGestaoVendas()">Ir para Gestão Mobile</button></div>`, 'sheet-backdrop-centered');
+}
+
+function confirmarTrocaParaGestaoVendas() {
+  fecharSheet();
+  carregandoBackend = true;
+  render();
+  window.setTimeout(abrirGestao, 60);
+}
+
 function abrirConfiguracoes() {
   sheet(`
     <div class="sheet-header">
@@ -4399,6 +4478,8 @@ if (window.__VENDAS_MOBILE_EMBEDDED__) {
 window.setAba = setAba;
 window.state = state;
 window.abrirGestao = abrirGestao;
+window.abrirConfirmacaoTrocaSistemaVendas = abrirConfirmacaoTrocaSistemaVendas;
+window.confirmarTrocaParaGestaoVendas = confirmarTrocaParaGestaoVendas;
 window.escolherSistemaInicialVendas = escolherSistemaInicialVendas;
 window.definirLembrarSistemaInicialVendas = definirLembrarSistemaInicialVendas;
 window.abrirConfiguracoes = abrirConfiguracoes;

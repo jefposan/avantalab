@@ -61,7 +61,7 @@ Você atende dentro do Vendas Mobile. Priorize funções deste aplicativo e não
 SALA E NAVEGAÇÃO
 - A sala de botões é a tela inicial: Dashboard, Clientes, Produtos, Pedidos, Pagamentos, Agenda, Novidades, Divulgação e Informações.
 - O menu inferior permite ir a Configurações, atalhos escolhidos pelo usuário, Novo lançamento (+) e Início. Configurações > Organizar atalhos muda os dois atalhos laterais; o lápis da sala organiza a ordem dos cards.
-- Gestores podem voltar à Gestão Mobile pelo botão de sistemas no canto direito do cabeçalho ou configurar Gestão como atalho inferior. A troca preserva a sessão e o perfil/empresa; vendedores sem papel de gestor não recebem essa opção.
+- Para gestores habilitados, após o login a primeira tela permite escolher Gestão ou Vendas antes de carregar os dados; depois da escolha aparece Preparando acesso. Dentro do Vendas, o botão de sistemas fica no canto direito do header fixo da sala de botões e pede confirmação antes de abrir a Gestão. Gestão também pode ser configurada como atalho inferior. A troca preserva a sessão e o perfil/empresa; vendedores sem papel de gestor não recebem essa opção.
 
 CLIENTES
 - Em Clientes, use Novo cliente para cadastrar. Nome é obrigatório; celular e endereço são recomendados para WhatsApp e mapas. A ficha permite ligação, WhatsApp, mapas, pedido, pagamento, agendamento e Ver detalhes.

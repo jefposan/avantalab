@@ -138,8 +138,25 @@
     try {
       empresaContexto = JSON.parse(localStorage.getItem('avantalab_mobile_sistema_contexto') || 'null')?.empresaId || '';
     } catch { /* preferência inválida */ }
+    const candidatos = [...acessosAtivos].sort((a, b) => Number(b.empresa_id === empresaContexto) - Number(a.empresa_id === empresaContexto));
+    const modulos = await Promise.all(candidatos.map((item) => requireClient().rpc('modulo_vendas_mobile_ativo_rpc', {
+      p_empresa_id: item.empresa_id,
+    })));
+    const indiceAtivo = modulos.findIndex((resultado) => !resultado.error && resultado.data === true);
+    const acesso = candidatos[indiceAtivo >= 0 ? indiceAtivo : 0] || null;
+    const moduloAtivo = indiceAtivo >= 0;
+    if (acesso && acesso.empresa_id !== empresaContexto) {
+      try {
+        localStorage.setItem('avantalab_mobile_sistema_contexto', JSON.stringify({
+          empresaId: acesso.empresa_id,
+          sistema: 'vendas',
+          atualizadoEm: new Date().toISOString(),
+        }));
+      } catch { /* contexto local indisponível */ }
+    }
     return {
-      acesso: acessosAtivos.find((item) => item.empresa_id === empresaContexto) || acessosAtivos[0] || null,
+      acesso,
+      moduloAtivo,
       solicitacao: solicitacaoRes.data || null,
     };
   }
@@ -153,11 +170,7 @@
       return { user, produtos: [], pacotes: [], clientes: [], vendas: [], pagamentos: [], conteudos: null, divulgacaoPastas: [], divulgacaoMateriais: [], moduloAtivo: true, ...acessoVendas };
     }
 
-    const moduloRes = await requireClient().rpc('modulo_vendas_mobile_ativo_rpc', {
-      p_empresa_id: acessoVendas.acesso.empresa_id,
-    });
-    if (moduloRes.error) throw moduloRes.error;
-    const moduloAtivo = moduloRes.data === true;
+    const moduloAtivo = acessoVendas.moduloAtivo === true;
     const [vinculosRes, perfisFinanceirosRes] = await Promise.all([
       requireClient().rpc('meus_vinculos_comerciais_vendas_mobile_rpc'),
       requireClient().rpc('meus_perfis_financeiros_vendas_mobile_rpc'),
