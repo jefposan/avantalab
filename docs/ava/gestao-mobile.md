@@ -1,8 +1,8 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.5.0.07 -->
+<!-- ava-version: 1.5.0.08 -->
 
-> Revisão 1.5.0.07: reorganiza os itens internos de Configurações.
+> Revisão 1.5.0.08: adiciona a ativação do Vendas Mobile pelo botão Sistemas.
 
 ## Escopo
 
@@ -23,10 +23,13 @@ deve usar os nomes do menu e da barra inferior do celular.
   a primeira tela permite escolher entre Gestão e Vendas e memorizar a preferência. Só
   depois da escolha aparece **Preparando acesso** e o sistema selecionado é carregado. A
   escolha pode ser refeita em **Menu > Sistemas**.
-- Em um perfil que não possui o módulo Vendas instalado, **Sistemas** não é exibido
-  no menu nem fica disponível como atalho inferior.
+- Em um perfil sem o módulo Vendas instalado, **Sistemas** aparece inativo no menu
+  lateral. Gestor Master ou Administrador pode tocar nele, confirmar a ativação e,
+  após a validação, escolher entre Gestão e Vendas. Em perfil pessoal gratuito, a
+  ativação exige primeiro o Premium.
 - **Sistemas** também pode ocupar um dos atalhos configuráveis da barra inferior.
-  Operadores não recebem permissão para trocar de sistema.
+  Essa opção de atalho fica disponível depois que o módulo é ativado. Operadores
+  veem o botão lateral inativo e não recebem permissão para ativar ou trocar de sistema.
 - A ordem/visibilidade dos cards do dashboard é ajustada em **Menu > Organizar
   resumo** ou **Organizar dashboard**.
 - Em **Gerenciar perfil**, o usuário pode administrar seus perfis conforme a

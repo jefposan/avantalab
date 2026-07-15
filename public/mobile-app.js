@@ -242,6 +242,9 @@
     vendasMobileModuloAtivo: false,
     seletorSistemaAberto: false,
     seletorSistemaInicialBloqueante: false,
+    ativacaoVendasMobileAberta: false,
+    ativacaoVendasMobileCarregando: false,
+    ativacaoVendasMobileErro: '',
     lembrarSistemaInicial: false,
     sistemaInicialAvaliadoPerfilId: '',
     pontoResumo: [],
@@ -1294,6 +1297,7 @@
     { recurso: 'organizar_dashboard', icone: '🧩', titulo: 'Ordenar cards', descricao: 'Reordene os cards do seu jeito.' },
     { recurso: 'organizar_atalhos', icone: '↔️', titulo: 'Organizar atalhos', descricao: 'Personalize os atalhos do app.' },
     { recurso: 'usuarios_internos', icone: '🧑‍💼', titulo: 'Usuários internos', descricao: 'Convide outras pessoas para o perfil.' },
+    { recurso: 'vendas_mobile', icone: '🛍️', titulo: 'Vendas Mobile', descricao: 'Clientes, produtos, pedidos e pagamentos integrados à Gestão.' },
   ];
 
   // Abre o modal de upgrade destacando o recurso tocado.
@@ -1742,6 +1746,105 @@
       state.lembrarSistemaInicial = !!localStorage.getItem(chaveSistemaPerfilMobile(CHAVE_SISTEMA_INICIAL_MOBILE));
     } catch (error) { state.lembrarSistemaInicial = false; }
     render();
+  }
+
+  function abrirFluxoSistemasMobile() {
+    if (!podeGerenciarUsuarios()) {
+      mostrarToast('A troca de sistemas nao esta disponivel para este usuario.');
+      return;
+    }
+    if (state.vendasMobileModuloAtivo) {
+      abrirSeletorSistemaMobile();
+      return;
+    }
+    state.menuAberto = false;
+    state.ativacaoVendasMobileAberta = true;
+    state.ativacaoVendasMobileCarregando = false;
+    state.ativacaoVendasMobileErro = '';
+    render();
+  }
+
+  function fecharAtivacaoVendasMobile() {
+    if (state.ativacaoVendasMobileCarregando) return;
+    state.ativacaoVendasMobileAberta = false;
+    state.ativacaoVendasMobileErro = '';
+    render();
+  }
+
+  async function ativarVendasMobileNoPerfil() {
+    if (state.ativacaoVendasMobileCarregando || !state.empresa || !state.empresa.id) return;
+    if (!podeGerenciarUsuarios()) {
+      state.ativacaoVendasMobileErro = 'Voce nao tem permissao para ativar modulos neste perfil.';
+      render();
+      return;
+    }
+    if (premiumPessoalBloqueadoMobile()) {
+      state.ativacaoVendasMobileAberta = false;
+      abrirPremiumMobile('vendas_mobile');
+      return;
+    }
+
+    state.ativacaoVendasMobileCarregando = true;
+    state.ativacaoVendasMobileErro = '';
+    render();
+
+    try {
+      var instalacao = await db.from('empresa_modulos').upsert({
+        empresa_id: state.empresa.id,
+        modulo_id: 'vendas_mobile',
+        ativo: true,
+        origem: 'avulso',
+        atualizado_em: new Date().toISOString(),
+      }, { onConflict: 'empresa_id,modulo_id' });
+      if (instalacao.error) throw instalacao.error;
+
+      var acessoGestor = await db.rpc('garantir_acessos_gestor_vendas_mobile_rpc');
+      if (acessoGestor.error) throw acessoGestor.error;
+
+      var acessoAtivo = await db.rpc('modulo_vendas_mobile_ativo_rpc', {
+        p_empresa_id: state.empresa.id,
+      });
+      if (acessoAtivo.error || acessoAtivo.data !== true) {
+        throw (acessoAtivo.error || new Error('Nao foi possivel validar o acesso ao Vendas Mobile.'));
+      }
+
+      state.vendasMobileModuloAtivo = true;
+      state.ativacaoVendasMobileAberta = false;
+      state.ativacaoVendasMobileCarregando = false;
+      state.ativacaoVendasMobileErro = '';
+      abrirSeletorSistemaMobile();
+    } catch (error) {
+      console.error('Erro ao ativar o módulo Vendas Mobile:', error);
+      state.ativacaoVendasMobileCarregando = false;
+      state.ativacaoVendasMobileErro = (error && error.message) || 'Nao foi possivel ativar o modulo agora. Tente novamente.';
+      render();
+    }
+  }
+
+  function ativacaoVendasMobileHtml() {
+    if (!state.ativacaoVendasMobileAberta) return '';
+    var dk = !!state.darkMode;
+    return (
+      '<div class="fixed inset-0 z-[14100] flex items-center justify-center bg-slate-950/75 px-4" role="dialog" aria-modal="true" aria-labelledby="ativar-vendas-titulo">' +
+        '<section class="w-full max-w-sm overflow-hidden rounded-3xl shadow-2xl ' + (dk ? 'bg-slate-900 text-slate-100' : 'bg-white text-slate-900') + '">' +
+          '<div class="px-5 py-4 text-white" style="background:linear-gradient(135deg,#003E73,#00A6C8)">' +
+            '<p class="text-[10px] font-black uppercase tracking-[0.18em] text-cyan-100">Sistemas AvantaLab</p>' +
+            '<h2 id="ativar-vendas-titulo" class="mt-1 text-lg font-black">Vendas Mobile não instalado</h2>' +
+          '</div>' +
+          '<div class="grid gap-4 p-5">' +
+            '<div class="rounded-2xl border px-4 py-3 text-sm font-semibold leading-relaxed ' + (dk ? 'border-slate-700 bg-slate-800 text-slate-200' : 'border-sky-200 bg-sky-50 text-sky-950') + '">' +
+              'Este perfil ainda não possui o módulo Vendas Mobile. Para acessar clientes, produtos, pedidos e pagamentos, é necessário ativá-lo primeiro.' +
+            '</div>' +
+            '<p class="text-center text-sm font-black">Quer ativar este módulo agora?</p>' +
+            (state.ativacaoVendasMobileErro ? '<p class="rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-xs font-bold text-rose-700">' + escapeHtml(state.ativacaoVendasMobileErro) + '</p>' : '') +
+            '<div class="grid grid-cols-2 gap-2">' +
+              '<button id="cancelar-ativacao-vendas" type="button" ' + (state.ativacaoVendasMobileCarregando ? 'disabled ' : '') + 'class="h-11 rounded-xl border border-slate-300 bg-white text-xs font-black uppercase tracking-wide text-slate-700 disabled:opacity-50">Agora não</button>' +
+              '<button id="confirmar-ativacao-vendas" type="button" ' + (state.ativacaoVendasMobileCarregando ? 'disabled ' : '') + 'class="h-11 rounded-xl bg-cyan-600 text-xs font-black uppercase tracking-wide text-white shadow-lg disabled:opacity-60">' + (state.ativacaoVendasMobileCarregando ? 'Ativando...' : 'Ativar') + '</button>' +
+            '</div>' +
+          '</div>' +
+        '</section>' +
+      '</div>'
+    );
   }
 
   function avaliarSistemaInicialMobile() {
@@ -9144,7 +9247,7 @@
             menuBotaoHtml('menu-despesas-fixas', 'Despesas fixas', 'Lancamentos automaticos mensais') +
             menuBotaoHtml('menu-ajuda-categorias', 'Instrucoes sobre categorias', 'Como organizar seus gastos') +
             menuBotaoHtml('menu-tutorial', 'Tutorial', 'Como usar o AvantaLab') +
-            (state.vendasMobileModuloAtivo ? menuBotaoHtml('menu-trocar-sistema', 'Sistemas', podeTrocarSistemaMobile() ? 'Escolher Gestão ou Vendas Mobile' : 'Indisponível para operadores', !podeTrocarSistemaMobile()) : '') +
+            menuBotaoHtml('menu-trocar-sistema', 'Sistemas', state.vendasMobileModuloAtivo ? (podeTrocarSistemaMobile() ? 'Escolher Gestão ou Vendas Mobile' : 'Indisponível para operadores') : (podeGerenciarUsuarios() ? 'Vendas Mobile não instalado · toque para ativar' : 'Vendas Mobile não instalado'), !podeGerenciarUsuarios(), !state.vendasMobileModuloAtivo) +
             ((state.vendasMobileModuloAtivo && podeGerenciarUsuarios()) ? menuBotaoHtml('menu-vendas-mobile', 'Conteúdo do Vendas', 'Novidades e divulgacao') : '') +
             '<button id="menu-config-toggle" type="button" class="mobile-config-main-btn rounded-[14px_26px_26px_26px] border border-slate-300 px-2.5 py-2 text-left text-slate-800 shadow-[0_5px_13px_rgba(15,23,42,.09)] transition active:scale-[0.99]" style="background:' + (configAberto ? 'linear-gradient(90deg,#B8C3D0 0%,#A5B2C1 100%)' : 'linear-gradient(90deg,#CBD5E1 0%,#B4C0CE 100%)') + '">' +
               '<div class="flex items-center gap-2">' +
@@ -9356,7 +9459,7 @@
     return '<svg ' + base + '>' + (caminhos[id] || '<circle cx="12" cy="12" r="2"/>') + '</svg>';
   }
 
-  function menuBotaoHtml(id, titulo, subtitulo, desativado) {
+  function menuBotaoHtml(id, titulo, subtitulo, desativado, visualInativo) {
     var estilos = {
       'menu-agenda': ['linear-gradient(90deg,#E5F9FC 0%,#F9FEFF 100%)', '#C4EEF4', '#D5F8FC', '#087B94'],
       'menu-avisos': ['linear-gradient(90deg,#E8F4FF 0%,#FAFCFF 100%)', '#C9E3FA', 'linear-gradient(135deg,#7DD3FC,#2563EB)', '#FFFFFF'],
@@ -9371,7 +9474,7 @@
     };
     var visual = estilos[id] || ['#FFFFFF', '#E2E8F0', '#ECFEFF', '#0E7490'];
     var cardStyle = state.darkMode ? 'background:#0F172A;border-color:#334155;' : 'background:' + visual[0] + ';border-color:' + visual[1] + ';';
-    return '<button id="' + id + '" type="button"' + (desativado ? ' disabled aria-disabled="true"' : '') + ' class="rounded-[14px_26px_26px_26px] border px-2.5 py-2 text-left shadow-[0_5px_13px_rgba(15,23,42,.07)] transition active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-50" style="' + cardStyle + '">' +
+    return '<button id="' + id + '" type="button"' + (desativado ? ' disabled aria-disabled="true"' : '') + ' class="rounded-[14px_26px_26px_26px] border px-2.5 py-2 text-left shadow-[0_5px_13px_rgba(15,23,42,.07)] transition active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-50' + (visualInativo ? ' opacity-60 saturate-50' : '') + '" style="' + cardStyle + '">' +
       '<div class="flex items-center gap-2">' +
         '<span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg shadow-sm" style="background:' + visual[2] + ';color:' + visual[3] + '">' + iconeMenuLateralSvg(id) + '</span>' +
         '<span class="min-w-0 flex-1"><span class="block text-xs font-black leading-none">' + escapeHtml(titulo) + '</span><span class="mt-1 block truncate text-[10px] font-semibold leading-none text-slate-500">' + escapeHtml(subtitulo || '') + '</span></span>' +
@@ -10746,7 +10849,7 @@
     else if (state.modoCriarPerfil) telaAtual = telaLoginWrapper(telaCriarPerfilInicial(), 'Criar perfil financeiro', 'Informe os dados do seu primeiro perfil.');
     else if (!state.paywallVerificado) telaAtual = telaCarregandoMobile();
     else telaAtual = telaApp();
-    root.innerHTML = telaAtual + (state.chatIAAberto ? chatIAModalHtml() : '') + (state.mostrarPromptNotificacoes ? promptNotificacoesHtml() : '') + (state.tourAberto ? tourHtml() : '') + avisoAssinanteMobileHtml() + (state.seletorSistemaInicialBloqueante ? '' : seletorSistemaInicialHtml());
+    root.innerHTML = telaAtual + (state.chatIAAberto ? chatIAModalHtml() : '') + (state.mostrarPromptNotificacoes ? promptNotificacoesHtml() : '') + (state.tourAberto ? tourHtml() : '') + avisoAssinanteMobileHtml() + ativacaoVendasMobileHtml() + (state.seletorSistemaInicialBloqueante ? '' : seletorSistemaInicialHtml());
     sincronizarGradienteHeaderPerfil();
     configurarRecolhimentoPerfilHeader();
     var indicadorNav = document.querySelector('[data-nav-indicador]');
@@ -10787,6 +10890,8 @@
     bind('escolher-sistema-gestao', function () { escolherSistemaInicialMobile('gestao'); });
     bind('escolher-sistema-vendas', function () { escolherSistemaInicialMobile('vendas'); });
     bindChange('lembrar-sistema-inicial', function () { state.lembrarSistemaInicial = this.checked === true; });
+    bind('cancelar-ativacao-vendas', fecharAtivacaoVendasMobile);
+    bind('confirmar-ativacao-vendas', ativarVendasMobileNoPerfil);
     bind('reenviar-telefone-obrigatorio', enviarCodigoTelefoneObrigatorioMobile);
     bindChange('ddi-telefone-obrigatorio', function (e) { state.ddiTelefoneObrigatorio = (e.target && e.target.value ? e.target.value : '55').replace(/\D/g, ''); });
     bind('sair-telefone-obrigatorio', sair);
@@ -10996,7 +11101,7 @@
       render();
     });
     bind('menu-tutorial', function () { fecharMenuLateralAnimado(abrirTourMobile); });
-    bind('menu-trocar-sistema', function () { fecharMenuLateralAnimado(abrirSeletorSistemaMobile); });
+    bind('menu-trocar-sistema', function () { fecharMenuLateralAnimado(abrirFluxoSistemasMobile); });
     bind('tour-pular', fecharTourMobile);
     bind('tour-concluir', fecharTourMobile);
     bind('tour-anterior', function () { tourIr(-1); });
@@ -12672,7 +12777,7 @@
           return Promise.all(
             keys
               .filter(function (key) {
-                return key.indexOf('avantalab-mobile-') === 0 && key !== 'avantalab-mobile-v252';
+                return key.indexOf('avantalab-mobile-') === 0 && key !== 'avantalab-mobile-v253';
               })
               .map(function (key) {
                 return caches.delete(key);
@@ -12689,7 +12794,7 @@
     });
 
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/mobile-sw.js?v=236').then(function (registro) {
+      navigator.serviceWorker.register('/mobile-sw.js?v=237').then(function (registro) {
         if (registro && registro.update) registro.update();
       }).catch(function () {});
     }

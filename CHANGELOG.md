@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.5.0.08 - 2026-07-15
+
+- Gestão Mobile: mantém **Sistemas** visível quando o perfil ainda não possui Vendas Mobile e oferece a ativação do módulo em um card de confirmação.
+- Gestão Mobile: após ativar e validar o acesso integrado do gestor, abre automaticamente o seletor entre Gestão e Vendas; operadores permanecem sem permissão.
+- Gestão Mobile: perfis pessoais gratuitos são direcionados ao Premium antes da ativação do Vendas Mobile.
+
 ## 1.5.0.07 - 2026-07-15
 
 - Gestão Mobile: posiciona **Assinatura** como primeiro item de Configurações quando disponível e agrupa no topo os controles com chave.

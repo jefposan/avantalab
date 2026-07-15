@@ -1,8 +1,8 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.5.0.07 -->
+<!-- ava-version: 1.5.0.08 -->
 
-> Revisão 1.5.0.07: sem impacto operacional na Gestão Web.
+> Revisão 1.5.0.08: sem impacto operacional na Gestão Web.
 
 ## Escopo
 
