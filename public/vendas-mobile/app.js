@@ -3731,7 +3731,8 @@ function abrirCliente(clienteId = '') {
   sheet(`
     <div class="sheet-header">
       <div>
-        <h2>${clienteId ? 'Editar cliente' : 'Novo cliente'}</h2>
+        <h2>${clienteId ? 'Editar' : 'Novo cliente'}</h2>
+        ${clienteId ? `<p class="client-editing-name">Cliente: ${escapeHtml(c.nome || 'Sem nome')}</p>` : ''}
       </div>
       <button class="close" onclick="fecharSheet()">×</button>
     </div>
