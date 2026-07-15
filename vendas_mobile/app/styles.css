@@ -593,6 +593,7 @@ body.sheet-open {
 .cliente-sheet-backdrop .sheet { width: min(92vw, 420px); max-height: calc(100dvh - env(safe-area-inset-bottom) - 116px); padding: 12px; }
 .cliente-sheet-backdrop .sheet-header { margin-bottom: 8px; }
 .cliente-sheet-backdrop .client-form { gap: 8px; }
+.cliente-sheet-backdrop .client-form > .field { min-width: 0; max-width: 100%; }
 .cliente-sheet-backdrop .field { gap: 3px; }
 .cliente-sheet-backdrop .field input,
 .cliente-sheet-backdrop .field select,
@@ -1196,6 +1197,8 @@ body { background: #fff; color: var(--ink); }
 .commercial-link-resources button.is-on { border-color: #a8d9f4; color: #075985; background: #e8f6fe; }
 .settings-commercial-links .actions { margin-top: 13px; }
 .settings-reset-card { border-color: #fecaca; background: #fffafb; }.settings-reset-card h3 { color: #991b1b; }.settings-reset-card h3 .svg-icon { color: #b91c1c; background: #fee2e2; }
+.settings-stock-card .actions, .settings-exit-card .danger, .settings-reset-card .danger { margin-top: 15px; }
+.settings-reset-card .danger { width: 100%; }
 .settings-goals-form { display: grid; grid-template-columns: minmax(0,1fr) auto; align-items: end; }
 .settings-goals-form label { display: grid; gap: 5px; color: #64748b; font-size: 10px; font-weight: 800; }
 .settings-goals-form input { width: 100%; }

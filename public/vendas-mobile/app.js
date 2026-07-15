@@ -1788,7 +1788,10 @@ function renderConfiguracoes() {
   const empresa = String(state.acessoVendas?.empresa_nome || 'Não informada');
   const integracao = state.integracaoGestao || { base_receita: 'recebidos', pode_configurar: false };
   const vinculos = state.vinculosComerciais || [];
-  const renderRecurso = (vinculo, chave, titulo) => `<button type="button" class="${vinculo[`${chave}_ativas`] ? 'is-on' : ''}" onclick="alternarRecursoVinculoComercial('${vinculo.empresa_id}','${chave}',${!vinculo[`${chave}_ativas`]})">${titulo}</button>`;
+  const renderRecurso = (vinculo, chave, titulo) => {
+    const ativo = chave === 'novidades' ? vinculo.novidades_ativas : vinculo[`${chave}_ativo`];
+    return `<button type="button" class="${ativo ? 'is-on' : ''}" onclick="alternarRecursoVinculoComercial('${vinculo.empresa_id}','${chave}',${!ativo})">${titulo}</button>`;
+  };
   const renderVinculo = (vinculo) => `<div class="commercial-link ${vinculo.ativo ? 'is-current' : ''}"><header><b>${escapeHtml(vinculo.empresa_nome || 'Empresa')}</b><span>${vinculo.ativo ? 'Ativa' : 'Histórico'}</span></header><div class="commercial-link-resources">${renderRecurso(vinculo, 'novidades', 'Notícias')}${renderRecurso(vinculo, 'divulgacao', 'Divulgação')}${renderRecurso(vinculo, 'catalogo', 'Catálogo')}</div></div>`;
   return `<section class="module-page settings-page">
     <div class="module-sticky-head"><div class="module-title"><div><h2>Configurações</h2><p>Preferências, segurança e recursos do Vendas.</p></div></div></div>
