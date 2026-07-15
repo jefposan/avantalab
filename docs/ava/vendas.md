@@ -1,8 +1,8 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.5.0.04 -->
+<!-- ava-version: 1.5.0.05 -->
 
-> Revisão 1.5.0.04: a troca para Gestão passa pela seleção do perfil vinculado.
+> Revisão 1.5.0.05: sem impacto operacional no Vendas Mobile.
 
 ## Escopo e navegação
 

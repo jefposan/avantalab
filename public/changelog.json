@@ -13,6 +13,15 @@
   },
   "versoes": [
     {
+      "versao": "1.5.0.05",
+      "titulo": "Correção do menu da Gestão Mobile",
+      "data": "Julho/2026",
+      "itens": [
+        "As opções do menu sanduíche voltam a responder normalmente em todos os perfis liberados.",
+        "O bloqueio permanece restrito às funções que possuem regra real de permissão."
+      ]
+    },
+    {
       "versao": "1.5.0.04",
       "titulo": "Seleção de perfil na troca para Gestão",
       "data": "Julho/2026",

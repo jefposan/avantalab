@@ -1,8 +1,8 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.5.0.04 -->
+<!-- ava-version: 1.5.0.05 -->
 
-> Revisão 1.5.0.04: confirma que Sistemas não aparece em perfis sem o módulo Vendas.
+> Revisão 1.5.0.05: corrige o bloqueio indevido das opções do menu sanduíche; sem mudança nos caminhos.
 
 ## Escopo
 

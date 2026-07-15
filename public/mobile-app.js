@@ -9130,14 +9130,14 @@
             '</div>' +
           '</div>' +
           '<div class="grid gap-1.5">' +
-            menuBotaoHtml('menu-agenda', 'Agenda', 'Lembretes e avisos', iconeAgendaSvg()) +
-            menuBotaoHtml('menu-avisos', 'Avisos e notificacoes', 'Ver e apagar seus avisos', sinoAvisoSvg()) +
-            menuBotaoHtml('menu-configurar-resumo', 'Mostrar/ocultar cards', 'Exibir ou remover blocos', '&#9776;') +
-            menuBotaoHtml('menu-organizar-atalhos', 'Organizar atalhos', 'Personalizar a barra inferior', '&#8644;') +
-            menuBotaoHtml('menu-categorias', 'Cadastrar despesas', 'Adicionar tipos de despesa', '+') +
-            menuBotaoHtml('menu-despesas-fixas', 'Despesas fixas', 'Lancamentos automaticos mensais', '&#10227;') +
-            menuBotaoHtml('menu-ajuda-categorias', 'Instrucoes sobre categorias', 'Como organizar seus gastos', '?') +
-            menuBotaoHtml('menu-tutorial', 'Tutorial', 'Como usar o AvantaLab', '&#127891;') +
+            menuBotaoHtml('menu-agenda', 'Agenda', 'Lembretes e avisos') +
+            menuBotaoHtml('menu-avisos', 'Avisos e notificacoes', 'Ver e apagar seus avisos') +
+            menuBotaoHtml('menu-configurar-resumo', 'Mostrar/ocultar cards', 'Exibir ou remover blocos') +
+            menuBotaoHtml('menu-organizar-atalhos', 'Organizar atalhos', 'Personalizar a barra inferior') +
+            menuBotaoHtml('menu-categorias', 'Cadastrar despesas', 'Adicionar tipos de despesa') +
+            menuBotaoHtml('menu-despesas-fixas', 'Despesas fixas', 'Lancamentos automaticos mensais') +
+            menuBotaoHtml('menu-ajuda-categorias', 'Instrucoes sobre categorias', 'Como organizar seus gastos') +
+            menuBotaoHtml('menu-tutorial', 'Tutorial', 'Como usar o AvantaLab') +
             (state.vendasMobileModuloAtivo ? menuBotaoHtml('menu-trocar-sistema', 'Sistemas', podeTrocarSistemaMobile() ? 'Escolher Gestão ou Vendas Mobile' : 'Indisponível para operadores', !podeTrocarSistemaMobile()) : '') +
             ((state.vendasMobileModuloAtivo && podeGerenciarUsuarios()) ? menuBotaoHtml('menu-vendas-mobile', 'Conteúdo do Vendas', 'Novidades e divulgacao') : '') +
             '<button id="menu-config-toggle" type="button" class="mobile-config-main-btn rounded-[14px_26px_26px_26px] border border-slate-300 px-2.5 py-2.5 text-left text-slate-800 shadow-[0_5px_13px_rgba(15,23,42,.09)] transition active:scale-[0.99]" style="background:' + (configAberto ? 'linear-gradient(90deg,#B8C3D0 0%,#A5B2C1 100%)' : 'linear-gradient(90deg,#CBD5E1 0%,#B4C0CE 100%)') + '">' +
@@ -12666,7 +12666,7 @@
           return Promise.all(
             keys
               .filter(function (key) {
-                return key.indexOf('avantalab-mobile-') === 0 && key !== 'avantalab-mobile-v249';
+                return key.indexOf('avantalab-mobile-') === 0 && key !== 'avantalab-mobile-v250';
               })
               .map(function (key) {
                 return caches.delete(key);
@@ -12683,7 +12683,7 @@
     });
 
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/mobile-sw.js?v=233').then(function (registro) {
+      navigator.serviceWorker.register('/mobile-sw.js?v=234').then(function (registro) {
         if (registro && registro.update) registro.update();
       }).catch(function () {});
     }

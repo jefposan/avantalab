@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.5.0.05 - 2026-07-15
+
+- Gestão Mobile: corrige o menu sanduíche que interpretava ícones legados como sinal de bloqueio e desativava oito opções em todos os perfis.
+- Gestão Mobile: mantém `disabled` somente na opção **Sistemas** quando a regra de permissão exigir; os demais botões voltam a responder normalmente.
+
 ## 1.5.0.04 - 2026-07-15
 
 - Gestão Mobile: mantém a troca de sistemas totalmente oculta quando o perfil atual não possui o módulo Vendas instalado.
