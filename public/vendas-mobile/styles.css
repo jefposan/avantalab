@@ -2114,8 +2114,9 @@ html.agenda-form-open, body.agenda-form-open { overflow: hidden; overscroll-beha
   .debt-values > div { padding: 6px; }
   .debt-values small { margin-bottom: 2px; font-size: 8px; }
   .debt-values b { font-size: 12px; }
-  .debt-actions { gap: 6px; padding: 0 10px 10px; }
-  .debt-details { min-height: 31px; padding: 5px 7px; font-size: 9px; }
+  .debt-actions { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 6px; padding: 0 10px 10px; }
+  .debt-details { min-width: 0; min-height: 31px; overflow: hidden; padding: 5px 7px; font-size: 9px; }
+  .debt-details span { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
 
   .dashboard-page { padding-top: 204px; }
   .produtos-page { padding-top: 176px; }

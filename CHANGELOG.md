@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.4.1.02 - 2026-07-15
+
+- Vendas Mobile: em paisagem, impede o recorte das ações nos cards de Pagamentos e desativa o destaque automático concorrente dos cards de Clientes.
+
 ## 1.4.1.01 - 2026-07-15
 
 - Vendas Mobile: ajusta exclusivamente a paisagem do celular, compactando cards de Clientes e Pagamentos e preservando fôlego após os cabeçalhos de Dashboard e Produtos.

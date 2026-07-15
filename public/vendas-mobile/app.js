@@ -569,6 +569,10 @@ function renderModuloVendasDesativado() {
 }
 
 function configurarDestaqueClientes() {
+  if (window.matchMedia('(orientation: landscape) and (max-height: 560px)').matches) {
+    limparDestaqueClientes();
+    return;
+  }
   cardsClientesEmDestaque = [...app.querySelectorAll('.clientes-page .client-card')];
   atualizarDestaqueClientes();
 }
@@ -579,6 +583,10 @@ function limparDestaqueClientes() {
 }
 
 function atualizarDestaqueClientes() {
+  if (window.matchMedia('(orientation: landscape) and (max-height: 560px)').matches) {
+    limparDestaqueClientes();
+    return;
+  }
   if (!cardsClientesEmDestaque.length || state.aba !== 'clientes') return;
   const topoVisivel = Math.max(0, app.querySelector('.module-sticky-head')?.getBoundingClientRect().bottom || 0);
   const rodapeVisivel = Math.min(window.innerHeight, document.querySelector('.vendas-bottom-nav')?.getBoundingClientRect().top || window.innerHeight);
