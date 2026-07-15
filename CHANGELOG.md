@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.4.1.03 - 2026-07-15
+
+- Vendas Mobile: adiciona rolagem ao menu lateral do celular em paisagem, garantindo acesso a todos os botões.
+
 ## 1.4.1.02 - 2026-07-15
 
 - Vendas Mobile: em paisagem, impede o recorte das ações nos cards de Pagamentos e desativa o destaque automático concorrente dos cards de Clientes.

@@ -2081,6 +2081,10 @@ html.agenda-form-open, body.agenda-form-open { overflow: hidden; overscroll-beha
 
 /* Celular em paisagem: não reutiliza o espaçamento do retrato. */
 @media (orientation: landscape) and (max-height: 560px) {
+  .sidebar { overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; }
+  .side-nav { flex: 0 0 auto; }
+  .sidebar footer { margin-top: 18px; }
+
   .clientes-page .client-card-grid,
   .pagamentos-page .debt-card-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
