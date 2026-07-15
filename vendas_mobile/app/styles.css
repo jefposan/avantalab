@@ -644,6 +644,27 @@ body.sheet-open {
   line-height: 1.2;
 }
 
+/* Novo lançamento: duas ações distintas, mas dentro da mesma família AvantaLab. */
+.quick-action-button.primary,
+.quick-action-button.secondary {
+  border: 1px solid rgba(255,255,255,.24);
+  color: #fff;
+}
+
+.quick-action-button.primary {
+  background: linear-gradient(145deg, #0A1F44 0%, #1267B1 100%);
+  box-shadow: 0 10px 20px rgba(10,31,68,.22);
+}
+
+.quick-action-button.secondary {
+  background: linear-gradient(145deg, #1687D9 0%, #00A6C8 100%);
+  box-shadow: 0 10px 20px rgba(0,126,173,.20);
+}
+
+.quick-action-button .svg-icon {
+  filter: drop-shadow(0 2px 3px rgba(0,0,0,.16));
+}
+
 .sheet {
   width: min(100%, 520px);
   max-height: 88dvh;
