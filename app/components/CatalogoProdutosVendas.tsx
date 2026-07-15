@@ -132,9 +132,9 @@ export default function CatalogoProdutosVendas({ empresaId, darkMode, corPrimari
   };
 
   return <div className="min-h-0 flex-1 overflow-y-auto p-4">
-    <div className="mb-3 flex flex-wrap items-start justify-between gap-3">
-      <div><h3 className="text-base font-black">Pacote de produtos</h3><p className={`mt-1 text-xs ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>Os campos abaixo alimentam o Vendas Mobile. Dados fiscais podem ser completados sem afetar o catálogo atual.</p></div>
-      <div className="flex items-center gap-2"><span className="rounded-full bg-cyan-500/10 px-3 py-1 text-[10px] font-black uppercase text-cyan-700">{produtos.length} produtos</span><button type="button" onClick={() => void exportarPacoteZip()} disabled={exportando} className="h-7 rounded-full border border-cyan-300 px-3 text-[9px] font-black uppercase text-cyan-700 disabled:opacity-60">{exportando ? 'Gerando...' : 'Gerar ZIP'}</button></div>
+    <div className="mb-3">
+      <div className="min-w-0"><h3 className="text-base font-black">Pacote de produtos</h3><p className={`mt-1 text-xs ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>Os campos abaixo alimentam o Vendas Mobile. Dados fiscais podem ser completados sem afetar o catálogo atual.</p></div>
+      <div className="mt-2 flex flex-wrap items-center gap-2"><span className="rounded-full bg-cyan-500/10 px-3 py-1 text-[10px] font-black uppercase text-cyan-700">{produtos.length} produtos</span><button type="button" onClick={() => void exportarPacoteZip()} disabled={exportando} className="h-7 rounded-full border border-cyan-300 px-3 text-[9px] font-black uppercase text-cyan-700 disabled:opacity-60">{exportando ? 'Gerando...' : 'Gerar ZIP'}</button></div>
     </div>
     <div className="grid gap-4 xl:grid-cols-[minmax(0,.85fr)_minmax(0,1.15fr)]">
       <section className={`self-start rounded-xl border p-3 ${painel}`}>
