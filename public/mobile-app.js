@@ -9045,47 +9045,47 @@
 
     var configSubItens = configAberto ? (
       '<div class="cfg-sub-group mt-1 grid gap-1 overflow-hidden rounded-[12px_24px_24px_24px] border p-1.5 pl-5 ' + (dk ? 'border-slate-700 bg-slate-800/60' : 'border-cyan-100') + '" style="' + configAnimacao + (dk ? '' : 'background:#FCFFFF;box-shadow:inset 0 1px 0 rgba(255,255,255,.8);') + '">' +
-        '<button id="menu-duplicados" type="button" class="rounded-[12px_24px_24px_24px] border ' + bordaBase + ' px-2.5 py-1 text-left shadow-[0_4px_11px_rgba(15,23,42,.05)]" style="' + (dk ? '' : 'background:linear-gradient(90deg,#EAFBF3 0%,#FFFFFF 78%);border-color:#BFE8D5;') + '">' +
+        '<button id="menu-duplicados" type="button" class="rounded-[12px_24px_24px_24px] border ' + bordaBase + ' px-2.5 py-1 text-left shadow-[0_4px_11px_rgba(15,23,42,.05)]" style="order:2;' + (dk ? '' : 'background:linear-gradient(90deg,#EAFBF3 0%,#FFFFFF 78%);border-color:#BFE8D5;') + '">' +
           '<div class="flex items-center gap-2">' +
             '<span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg" style="background:#DDF7EB;color:#0F8A6A">' + iconeMenuLateralSvg('menu-duplicados') + '</span>' +
             '<span class="min-w-0 flex-1"><span class="block text-[11px] font-black">Duplicados</span><span class="mt-0.5 block truncate text-[9px] font-semibold text-slate-500">' + (state.duplicadosAtivo ? 'Avisar despesas repetidas' : 'Nao avisar repeticoes') + '</span></span>' +
             chaveMenuHtml(state.duplicadosAtivo) +
           '</div>' +
         '</button>' +
-        '<button id="menu-avisos" type="button" class="rounded-[12px_24px_24px_24px] border ' + bordaBase + ' px-2.5 py-1 text-left shadow-[0_4px_11px_rgba(15,23,42,.05)] active:scale-[0.99]" style="' + (dk ? '' : 'background:linear-gradient(90deg,#E8F4FF 0%,#FFFFFF 78%);border-color:#C9E3FA;') + '">' +
+        '<button id="menu-avisos" type="button" class="rounded-[12px_24px_24px_24px] border ' + bordaBase + ' px-2.5 py-1 text-left shadow-[0_4px_11px_rgba(15,23,42,.05)] active:scale-[0.99]" style="order:6;' + (dk ? '' : 'background:linear-gradient(90deg,#E8F4FF 0%,#FFFFFF 78%);border-color:#C9E3FA;') + '">' +
           '<div class="flex items-center gap-2">' +
             '<span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg" style="background:linear-gradient(135deg,#7DD3FC,#2563EB);color:#FFFFFF">' + iconeMenuLateralSvg('menu-avisos') + '</span>' +
             '<span class="min-w-0 flex-1"><span class="block text-[11px] font-black">Avisos e notificacoes</span><span class="mt-0.5 block truncate text-[9px] font-semibold text-slate-500">Ver e apagar seus avisos</span></span>' +
             '<span class="flex h-6 w-6 shrink-0 items-center justify-center text-slate-500">' + chevronMenuSvg() + '</span>' +
           '</div>' +
         '</button>' +
-        '<button id="menu-gerenciar" type="button" class="rounded-[12px_24px_24px_24px] border ' + bordaBase + ' px-2.5 py-1 text-left shadow-[0_4px_11px_rgba(15,23,42,.05)] active:scale-[0.99]" style="' + (dk ? '' : 'background:linear-gradient(90deg,#EAF6FF 0%,#FFFFFF 78%);border-color:#C8E4F6;') + '">' +
+        '<button id="menu-gerenciar" type="button" class="rounded-[12px_24px_24px_24px] border ' + bordaBase + ' px-2.5 py-1 text-left shadow-[0_4px_11px_rgba(15,23,42,.05)] active:scale-[0.99]" style="order:8;' + (dk ? '' : 'background:linear-gradient(90deg,#EAF6FF 0%,#FFFFFF 78%);border-color:#C8E4F6;') + '">' +
           '<div class="flex items-center gap-2">' +
             '<span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg" style="background:#DDF0FF;color:#1783C7">' + iconeMenuLateralSvg('menu-gerenciar') + '</span>' +
             '<span class="min-w-0 flex-1"><span class="block text-[11px] font-black">Gerenciar perfil</span><span class="mt-0.5 block truncate text-[9px] font-semibold text-slate-500">Editar, criar ou excluir perfil</span></span>' +
           '</div>' +
         '</button>' +
-        '<button id="menu-cadastro-perfil" type="button" class="rounded-[12px_24px_24px_24px] border ' + bordaBase + ' px-2.5 py-1 text-left shadow-[0_4px_11px_rgba(15,23,42,.05)] active:scale-[0.99]" style="' + (dk ? '' : 'background:linear-gradient(90deg,#E7F7FF 0%,#FFFFFF 78%);border-color:#BFE2F3;') + '">' +
+        '<button id="menu-cadastro-perfil" type="button" class="rounded-[12px_24px_24px_24px] border ' + bordaBase + ' px-2.5 py-1 text-left shadow-[0_4px_11px_rgba(15,23,42,.05)] active:scale-[0.99]" style="order:10;' + (dk ? '' : 'background:linear-gradient(90deg,#E7F7FF 0%,#FFFFFF 78%);border-color:#BFE2F3;') + '">' +
           '<div class="flex items-center gap-2">' +
             '<span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg" style="background:#D7F1FC;color:#0878AD">' + iconeMenuLateralSvg('menu-cadastro-perfil') + '</span>' +
             '<span class="min-w-0 flex-1"><span class="block text-[11px] font-black">Editar dados cadastrais</span><span class="mt-0.5 block truncate text-[9px] font-semibold text-slate-500">Cadastro completo do perfil</span></span>' +
           '</div>' +
         '</button>' +
-        '<button id="menu-tema" type="button" class="rounded-[12px_24px_24px_24px] border ' + bordaBase + ' px-2.5 py-1 text-left shadow-[0_4px_11px_rgba(15,23,42,.05)]" style="' + (dk ? '' : 'background:linear-gradient(90deg,#EFEEFF 0%,#FFFFFF 78%);border-color:#D5D3FA;') + '">' +
+        '<button id="menu-tema" type="button" class="rounded-[12px_24px_24px_24px] border ' + bordaBase + ' px-2.5 py-1 text-left shadow-[0_4px_11px_rgba(15,23,42,.05)]" style="order:3;' + (dk ? '' : 'background:linear-gradient(90deg,#EFEEFF 0%,#FFFFFF 78%);border-color:#D5D3FA;') + '">' +
           '<div class="flex items-center gap-2">' +
             '<span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg" style="background:#E4E6FF;color:#2946A8">' + iconeMenuLateralSvg('menu-tema') + '</span>' +
             '<span class="min-w-0 flex-1"><span class="block text-[11px] font-black">Modo escuro</span><span class="mt-0.5 block truncate text-[9px] font-semibold text-slate-500">' + (dk ? 'Ativo' : 'Inativo') + '</span></span>' +
             chaveMenuHtml(dk) +
           '</div>' +
         '</button>' +
-        '<button id="menu-inicio-valores-ocultos" type="button" class="rounded-[12px_24px_24px_24px] border ' + bordaBase + ' px-2.5 py-1 text-left shadow-[0_4px_11px_rgba(15,23,42,.05)]" style="' + (dk ? '' : 'background:linear-gradient(90deg,#F0F9FF 0%,#FFFFFF 78%);border-color:#C9E9F7;') + '">' +
+        '<button id="menu-inicio-valores-ocultos" type="button" class="rounded-[12px_24px_24px_24px] border ' + bordaBase + ' px-2.5 py-1 text-left shadow-[0_4px_11px_rgba(15,23,42,.05)]" style="order:4;' + (dk ? '' : 'background:linear-gradient(90deg,#F0F9FF 0%,#FFFFFF 78%);border-color:#C9E9F7;') + '">' +
           '<div class="flex items-center gap-2">' +
             '<span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg" style="background:#DCF4FF;color:#0369A1">' + iconeVisibilidadeValoresHtml(!iniciarValoresOcultosAtivo()) + '</span>' +
             '<span class="min-w-0 flex-1"><span class="block text-[11px] font-black">Iniciar valores ocultos</span><span class="mt-0.5 block truncate text-[9px] font-semibold text-slate-500">' + (iniciarValoresOcultosAtivo() ? 'Privacidade ativa ao abrir' : 'Valores visiveis ao abrir') + '</span></span>' +
             chaveMenuHtml(iniciarValoresOcultosAtivo()) +
           '</div>' +
         '</button>' +
-        '<button id="menu-notificacoes" type="button" class="rounded-[12px_24px_24px_24px] border ' + bordaBase + ' px-2.5 py-1 text-left shadow-[0_4px_11px_rgba(15,23,42,.05)] active:scale-[0.99]" style="' + (dk ? '' : 'background:linear-gradient(90deg,#E8F9FD 0%,#FFFFFF 78%);border-color:#C4EAF4;') + '">' +
+        '<button id="menu-notificacoes" type="button" class="rounded-[12px_24px_24px_24px] border ' + bordaBase + ' px-2.5 py-1 text-left shadow-[0_4px_11px_rgba(15,23,42,.05)] active:scale-[0.99]" style="order:5;' + (dk ? '' : 'background:linear-gradient(90deg,#E8F9FD 0%,#FFFFFF 78%);border-color:#C4EAF4;') + '">' +
           '<div class="flex items-center gap-2">' +
             '<span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg" style="background:#D7F2F8;color:#167FA0">' + iconeMenuLateralSvg('menu-notificacoes') + '</span>' +
             '<span class="min-w-0 flex-1"><span class="block text-[11px] font-black">Notificacoes</span><span class="mt-0.5 block truncate text-[9px] font-semibold text-slate-500">' + (state.notificacoesAtivas ? 'Ativas neste aparelho' : 'Inativas neste aparelho') + '</span></span>' +
@@ -9093,31 +9093,31 @@
           '</div>' +
         '</button>' +
         ((COBRANCA_ATIVA_MOBILE && podeGerenciarUsuarios()) ?
-        '<button id="menu-assinatura" type="button" class="rounded-[12px_24px_24px_24px] border ' + bordaBase + ' px-2.5 py-1 text-left shadow-[0_4px_11px_rgba(15,23,42,.05)] active:scale-[0.99]" style="' + (dk ? '' : 'background:linear-gradient(90deg,#FFF5E8 0%,#FFFFFF 78%);border-color:#F1D7B5;') + '">' +
+        '<button id="menu-assinatura" type="button" class="rounded-[12px_24px_24px_24px] border ' + bordaBase + ' px-2.5 py-1 text-left shadow-[0_4px_11px_rgba(15,23,42,.05)] active:scale-[0.99]" style="order:1;' + (dk ? '' : 'background:linear-gradient(90deg,#FFF5E8 0%,#FFFFFF 78%);border-color:#F1D7B5;') + '">' +
           '<div class="flex items-center gap-2">' +
             '<span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg" style="background:#FDE8C8;color:#9A5A12">' + iconeMenuLateralSvg('menu-assinatura') + '</span>' +
             '<span class="min-w-0 flex-1"><span class="block text-[11px] font-black">Assinatura</span><span class="mt-0.5 block truncate text-[9px] font-semibold text-slate-500">Plano, faturas e renovacao</span></span>' +
           '</div>' +
         '</button>' : '') +
-        '<button id="menu-organizar-dashboard" type="button" class="rounded-[12px_24px_24px_24px] border ' + bordaBase + ' px-2.5 py-1 text-left shadow-[0_4px_11px_rgba(15,23,42,.05)] active:scale-[0.99]" style="' + (dk ? '' : 'background:linear-gradient(90deg,#EAF4FF 0%,#FFFFFF 78%);border-color:#C9DEF6;') + '">' +
+        '<button id="menu-organizar-dashboard" type="button" class="rounded-[12px_24px_24px_24px] border ' + bordaBase + ' px-2.5 py-1 text-left shadow-[0_4px_11px_rgba(15,23,42,.05)] active:scale-[0.99]" style="order:7;' + (dk ? '' : 'background:linear-gradient(90deg,#EAF4FF 0%,#FFFFFF 78%);border-color:#C9DEF6;') + '">' +
           '<div class="flex items-center gap-2">' +
             '<span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg" style="background:#E0EEFF;color:#2383F0">' + iconeMenuLateralSvg('menu-organizar-dashboard') + '</span>' +
             '<span class="min-w-0 flex-1"><span class="block text-[11px] font-black">Organizar Dashboard</span><span class="mt-0.5 block truncate text-[9px] font-semibold text-slate-500">Definir a ordem dos cards</span></span>' +
           '</div>' +
         '</button>' +
-        '<button id="menu-usuario" type="button" class="rounded-[12px_24px_24px_24px] border ' + bordaBase + ' px-2.5 py-1 text-left shadow-[0_4px_11px_rgba(15,23,42,.05)] active:scale-[0.99]" style="' + (dk ? '' : 'background:linear-gradient(90deg,#E8FAF7 0%,#FFFFFF 78%);border-color:#BFE5E0;') + '">' +
+        '<button id="menu-usuario" type="button" class="rounded-[12px_24px_24px_24px] border ' + bordaBase + ' px-2.5 py-1 text-left shadow-[0_4px_11px_rgba(15,23,42,.05)] active:scale-[0.99]" style="order:9;' + (dk ? '' : 'background:linear-gradient(90deg,#E8FAF7 0%,#FFFFFF 78%);border-color:#BFE5E0;') + '">' +
           '<div class="flex items-center gap-2">' +
             '<span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg" style="background:#D5F3EF;color:#0F8A8C">' + iconeMenuLateralSvg('menu-usuario') + '</span>' +
             '<span class="min-w-0 flex-1"><span class="block text-[11px] font-black">Usuarios</span><span class="mt-0.5 block truncate text-[9px] font-semibold text-slate-500">' + escapeHtml(perfilFormatado(state.empresa && state.empresa.perfil)) + '</span></span>' +
           '</div>' +
         '</button>' +
-        '<button id="menu-backup" type="button" class="rounded-[12px_24px_24px_24px] border ' + bordaBase + ' px-2.5 py-1 text-left shadow-[0_4px_11px_rgba(15,23,42,.05)] active:scale-[0.99]" style="' + (dk ? '' : 'background:linear-gradient(90deg,#EAF3FF 0%,#FFFFFF 78%);border-color:#C8DCF5;') + '">' +
+        '<button id="menu-backup" type="button" class="rounded-[12px_24px_24px_24px] border ' + bordaBase + ' px-2.5 py-1 text-left shadow-[0_4px_11px_rgba(15,23,42,.05)] active:scale-[0.99]" style="order:11;' + (dk ? '' : 'background:linear-gradient(90deg,#EAF3FF 0%,#FFFFFF 78%);border-color:#C8DCF5;') + '">' +
           '<div class="flex items-center gap-2">' +
             '<span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg" style="background:#DFECFF;color:#2580E8">' + iconeMenuLateralSvg('menu-backup') + '</span>' +
             '<span class="min-w-0 flex-1"><span class="block text-[11px] font-black">Backup</span><span class="mt-0.5 block truncate text-[9px] font-semibold text-slate-500">Exportar os dados do perfil</span></span>' +
           '</div>' +
         '</button>' +
-        '<button id="menu-restauracao" type="button" class="rounded-[12px_24px_24px_24px] border ' + bordaBase + ' px-2.5 py-1 text-left shadow-[0_4px_11px_rgba(15,23,42,.05)] active:scale-[0.99]" style="' + (dk ? '' : 'background:linear-gradient(90deg,#EEEEFF 0%,#FFFFFF 78%);border-color:#D2D2F1;') + '">' +
+        '<button id="menu-restauracao" type="button" class="rounded-[12px_24px_24px_24px] border ' + bordaBase + ' px-2.5 py-1 text-left shadow-[0_4px_11px_rgba(15,23,42,.05)] active:scale-[0.99]" style="order:12;' + (dk ? '' : 'background:linear-gradient(90deg,#EEEEFF 0%,#FFFFFF 78%);border-color:#D2D2F1;') + '">' +
           '<div class="flex items-center gap-2">' +
             '<span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg" style="background:#E3E7FF;color:#1480A1">' + iconeMenuLateralSvg('menu-restauracao') + '</span>' +
             '<span class="min-w-0 flex-1"><span class="block text-[11px] font-black">Restauracao</span><span class="mt-0.5 block truncate text-[9px] font-semibold text-slate-500">Importar um backup do AvantaLab</span></span>' +
@@ -12672,7 +12672,7 @@
           return Promise.all(
             keys
               .filter(function (key) {
-                return key.indexOf('avantalab-mobile-') === 0 && key !== 'avantalab-mobile-v251';
+                return key.indexOf('avantalab-mobile-') === 0 && key !== 'avantalab-mobile-v252';
               })
               .map(function (key) {
                 return caches.delete(key);
@@ -12689,7 +12689,7 @@
     });
 
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/mobile-sw.js?v=235').then(function (registro) {
+      navigator.serviceWorker.register('/mobile-sw.js?v=236').then(function (registro) {
         if (registro && registro.update) registro.update();
       }).catch(function () {});
     }

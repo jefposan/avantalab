@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.5.0.07 - 2026-07-15
+
+- Gestão Mobile: posiciona **Assinatura** como primeiro item de Configurações quando disponível e agrupa no topo os controles com chave.
+- Gestão Mobile: reorganiza os itens administrativos na sequência **Gerenciar perfil**, **Usuários** e **Editar dados cadastrais**.
+
 ## 1.5.0.06 - 2026-07-15
 
 - Gestão Mobile: move **Avisos e notificações** para dentro de **Configurações** no menu lateral.

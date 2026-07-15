@@ -1,8 +1,8 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.5.0.06 -->
+<!-- ava-version: 1.5.0.07 -->
 
-> Revisão 1.5.0.06: move Avisos e notificações para dentro de Configurações.
+> Revisão 1.5.0.07: reorganiza os itens internos de Configurações.
 
 ## Escopo
 
@@ -16,6 +16,9 @@ deve usar os nomes do menu e da barra inferior do celular.
 - Avisos já recebidos podem ser consultados e apagados em **Menu > Configurações >
   Avisos e notificações**; a ativação das notificações do aparelho fica no item
   **Notificações**, no mesmo submenu.
+- Em **Configurações**, **Assinatura** aparece primeiro quando disponível, seguida
+  pelos controles com chave. **Gerenciar perfil**, **Usuários** e **Editar dados
+  cadastrais** aparecem em sequência.
 - Quando o módulo Vendas Mobile está ativo e o usuário tem permissão, após o login
   a primeira tela permite escolher entre Gestão e Vendas e memorizar a preferência. Só
   depois da escolha aparece **Preparando acesso** e o sistema selecionado é carregado. A
