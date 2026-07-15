@@ -2078,3 +2078,57 @@ html.agenda-form-open, body.agenda-form-open { overflow: hidden; overscroll-beha
   .order-list-card > div { padding: 8px 10px 4px; }
   .order-list-card > footer { padding: 5px 10px 8px; }
 }
+
+/* Celular em paisagem: não reutiliza o espaçamento do retrato. */
+@media (orientation: landscape) and (max-height: 560px) {
+  .clientes-page .client-card-grid,
+  .pagamentos-page .debt-card-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+  }
+
+  .clientes-page .client-card-grid { margin-top: 14px; }
+  .client-card-header { gap: 7px; padding: 8px 10px; }
+  .client-avatar { width: 29px; height: 29px; flex-basis: 29px; font-size: 11px; }
+  .client-identity h3 { font-size: 13px; }
+  .client-more { width: 26px; height: 26px; font-size: 19px; }
+  .client-contact-list { gap: 6px; margin: 0 10px 10px; padding-top: 9px; }
+  .client-contact-list p { gap: 6px; font-size: 11px; }
+  .client-contact-actions { gap: 6px; }
+  .client-contact-actions button { min-height: 28px; font-size: 10px; }
+  .client-address-link { font-size: 10px; }
+  .client-values { gap: 5px; margin: 0 10px; }
+  .client-values > div { min-height: 35px; padding: 6px 7px; font-size: 8px; }
+  .client-values b { font-size: 11px; }
+  .client-actions { gap: 6px; margin: 10px; }
+  .client-actions > div { gap: 6px; }
+  .client-actions button { min-height: 32px; font-size: 10px; }
+
+  .pagamentos-page .debt-card-grid { margin-top: 14px; }
+  .debt-card { border-radius: 13px; }
+  .debt-card header { min-height: 52px; gap: 8px; padding: 8px 10px; }
+  .debt-card header > span { width: 30px; height: 30px; flex-basis: 30px; }
+  .debt-card h3 { font-size: 13px; }
+  .debt-card header p { margin-top: 2px; font-size: 9px; }
+  .debt-values { gap: 6px; padding: 6px 10px 10px; }
+  .debt-values > div { padding: 6px; }
+  .debt-values small { margin-bottom: 2px; font-size: 8px; }
+  .debt-values b { font-size: 12px; }
+  .debt-actions { gap: 6px; padding: 0 10px 10px; }
+  .debt-details { min-height: 31px; padding: 5px 7px; font-size: 9px; }
+
+  .dashboard-page { padding-top: 204px; }
+  .produtos-page { padding-top: 176px; }
+  .produtos-page.is-searching { padding-top: 176px; }
+  .produtos-page .module-sticky-head { gap: 8px; padding-top: 10px; padding-bottom: 9px; }
+  .produtos-page .module-toolbar { min-height: 42px; flex-wrap: nowrap; padding: 6px 8px; }
+  .produtos-page .module-toolbar .search-box { min-width: 0; }
+  .produtos-page .module-product-grid,
+  .produtos-page .empty-module { margin-top: 16px; }
+}
+
+@media (orientation: landscape) and (max-height: 560px) and (min-width: 851px) {
+  .dashboard-page { padding-top: 168px; }
+  .produtos-page,
+  .produtos-page.is-searching { padding-top: 160px; }
+}

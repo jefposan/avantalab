@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.4.1.01 - 2026-07-15
+
+- Vendas Mobile: ajusta exclusivamente a paisagem do celular, compactando cards de Clientes e Pagamentos e preservando fôlego após os cabeçalhos de Dashboard e Produtos.
+
 ## 1.4.1 - 2026-07-15
 
 - Ava: adiciona guias operacionais separados para Gestão Web, Gestão Mobile e Vendas Mobile; o chat passa a receber somente o manual do ambiente ativo.
