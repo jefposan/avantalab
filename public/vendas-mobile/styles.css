@@ -1329,10 +1329,22 @@ body { background: #fff; color: var(--ink); }
   height: var(--vendas-preparing-height, 100svh);
   min-height: var(--vendas-preparing-height, 100svh);
   flex: 1 0 100%;
+  align-items: center;
+  justify-content: center;
   padding: 24px;
-  background: #f7fafc;
+  background: none;
 }
-.login-screen.preparing-access-screen::before { display: none; }
+.login-screen.preparing-access-screen::before {
+  position: fixed;
+  inset: 0;
+  display: block;
+  width: 100vw;
+  height: var(--vendas-preparing-height, 100svh);
+  min-height: var(--vendas-preparing-height, 100svh);
+  background: #eef6fb url('./assets/bg-avantalab-mobile.png') center bottom / cover no-repeat;
+  transform: translateZ(0);
+  will-change: auto;
+}
 .login-brand { margin: 0 0 16px; color: #0A1F44; }
 .login-brand strong { color: #0A1F44; font-size: 21px; font-weight: 850; letter-spacing: -.02em; }
 .login-brand p { margin-top: 4px; color: #1F8A9E; font-size: 13px; font-weight: 700; }

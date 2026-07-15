@@ -98,6 +98,8 @@ let estoqueMovimentosAtuais = [];
 let arrasteSalaBotoes = null;
 let preparandoRecursosSala = false;
 let recursosSalaBotoesPromise = null;
+let temporizadorReconstrucaoSala = 0;
+let salaEmLayoutCompacto = window.matchMedia('(max-width: 850px)').matches;
 
 const PAISES_DDI = [
   ['Brasil', '55', '🇧🇷'], ['Portugal', '351', '🇵🇹'], ['Estados Unidos / Canadá', '1', '🇺🇸'],
@@ -134,6 +136,25 @@ function fixarAlturaPreparacao() {
 function liberarAlturaPreparacao() {
   document.documentElement.style.removeProperty('--vendas-preparing-height');
   try { sessionStorage.removeItem(PREPARING_VIEWPORT_HEIGHT_KEY); } catch { /* armazenamento indisponível */ }
+}
+
+function reconstruirSalaAposRotacao() {
+  window.clearTimeout(temporizadorReconstrucaoSala);
+  temporizadorReconstrucaoSala = window.setTimeout(() => {
+    const novoLayoutCompacto = window.matchMedia('(max-width: 850px)').matches;
+    salaEmLayoutCompacto = novoLayoutCompacto;
+    if (!state.autenticado || !state.menuAberto || carregandoBackend || conectandoGoogle || preparandoRecursosSala) return;
+    arrasteSalaBotoes = null;
+    state.organizandoSalaBotoes = false;
+    render();
+  }, 240);
+}
+
+function sincronizarSalaAoMudarLargura() {
+  const novoLayoutCompacto = window.matchMedia('(max-width: 850px)').matches;
+  if (novoLayoutCompacto === salaEmLayoutCompacto) return;
+  salaEmLayoutCompacto = novoLayoutCompacto;
+  reconstruirSalaAposRotacao();
 }
 
 function formatarTelefoneCadastro(input) {
@@ -4446,7 +4467,11 @@ window.compartilharMaterialDivulgacao = compartilharMaterialDivulgacao;
 
 window.addEventListener('pageshow', () => requestAnimationFrame(limparFocoInicialLogin));
 window.addEventListener('scroll', agendarDestaqueClientes, { passive: true });
-window.addEventListener('resize', agendarDestaqueClientes);
+window.addEventListener('resize', () => {
+  agendarDestaqueClientes();
+  sincronizarSalaAoMudarLargura();
+});
+window.addEventListener('orientationchange', reconstruirSalaAposRotacao);
 document.addEventListener('pointerdown', (event) => ativarFeedbackBotao(event.target instanceof Element ? event.target.closest('button') : null));
 document.addEventListener('pointerup', (event) => removerFeedbackBotao(event.target instanceof Element ? event.target.closest('button') : null));
 document.addEventListener('pointercancel', (event) => removerFeedbackBotao(event.target instanceof Element ? event.target.closest('button') : null));
