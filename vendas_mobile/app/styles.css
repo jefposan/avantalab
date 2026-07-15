@@ -590,16 +590,18 @@ body.sheet-open {
 
 .sheet-backdrop .sheet { touch-action: pan-y; overscroll-behavior: contain; }
 
-.cliente-sheet-backdrop { padding: 12px 12px calc(env(safe-area-inset-bottom) + 94px); }
-.cliente-sheet-backdrop .sheet { width: min(92vw, 420px); max-height: calc(100dvh - env(safe-area-inset-bottom) - 116px); padding: 12px; }
-.cliente-sheet-backdrop .sheet-header { margin-bottom: 8px; }
+.cliente-sheet-backdrop { align-items: center; padding: 12px; }
+.cliente-sheet-backdrop .sheet { width: min(92vw, 420px); max-height: calc(100dvh - 24px); padding: 12px; }
+.cliente-sheet-backdrop .sheet-header { min-height: 0; margin-bottom: 5px; }
+.cliente-sheet-backdrop .sheet-header h2 { font-size: 16px; }
 .cliente-sheet-backdrop .client-form { gap: 8px; }
 .cliente-sheet-backdrop .client-form > .field { min-width: 0; max-width: 100%; }
 .cliente-sheet-backdrop .field { gap: 3px; }
 .cliente-sheet-backdrop .field input,
 .cliente-sheet-backdrop .field select,
-.cliente-sheet-backdrop .field textarea { min-height: 34px; border-radius: 9px; padding: 6px 9px; font-size: 13px; }
-.cliente-sheet-backdrop .field textarea { min-height: 68px; }
+.cliente-sheet-backdrop .field textarea { min-height: 32px; border-radius: 9px; padding: 5px 9px; font-size: 13px; }
+.cliente-sheet-backdrop .field textarea { min-height: 56px; }
+.cliente-sheet-backdrop .actions { gap: 7px; margin-top: 1px; }.cliente-sheet-backdrop .actions button { min-height: 34px; padding: 0 11px; font-size: 11px; }
 .phone-system-field, .cep-system-field { display: flex; gap: 7px; }
 .phone-system-field select { width: 112px; flex: 0 0 112px; }
 .phone-system-field input, .cep-system-field input { min-width: 0; flex: 1; }
@@ -677,11 +679,9 @@ body.sheet-open {
 .sheet > .sheet-header .muted { opacity: .82; }
 .sheet > .sheet-header .close { color: #fff; background: rgba(255,255,255,.16); }
 .cliente-sheet-backdrop .sheet > .sheet-header { margin: -12px -12px 10px; padding: 12px; }
-.cliente-sheet-backdrop input[type="date"] { width: 100%; min-width: 0; max-width: 100%; box-sizing: border-box; text-align: center; }
-.cliente-sheet-backdrop input[type="date"]::-webkit-datetime-edit { width: 100%; text-align: center; }
 .cliente-sheet-backdrop .client-birth-field { width: 100%; max-width: 100%; overflow: hidden; }
 .cliente-sheet-backdrop .client-birth-control { width: 100%; max-width: 100%; overflow: hidden; }
-.cliente-sheet-backdrop .client-birth-control input[type="date"] { display: block; width: calc(100% - 2px); max-width: calc(100% - 2px); min-width: 0; margin: 0; }
+.cliente-sheet-backdrop .client-birth-control input { display: block; width: 100%; max-width: 100%; min-width: 0; margin: 0; text-align: center; letter-spacing: .04em; }
 
 .close {
   display: grid;

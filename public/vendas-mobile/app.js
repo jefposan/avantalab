@@ -153,6 +153,29 @@ function formatarTelefoneCampo(input, ddiId) {
   else input.value = `(${telefone.slice(0, 2)}) ${telefone.slice(2, 7)}-${telefone.slice(7)}`;
 }
 
+function dataNascimentoParaCampo(valorData) {
+  const valor = String(valorData || '');
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(valor)) return '';
+  const [ano, mes, dia] = valor.split('-');
+  return `${dia}/${mes}/${ano}`;
+}
+
+function formatarDataNascimentoCampo(input) {
+  const digitos = String(input.value || '').replace(/\D/g, '').slice(0, 8);
+  input.value = digitos.replace(/(\d{2})(\d)/, '$1/$2').replace(/(\d{2}\/\d{2})(\d)/, '$1/$2');
+}
+
+function dataNascimentoParaIso(valorData) {
+  const valor = String(valorData || '').trim();
+  if (!valor) return null;
+  const partes = valor.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+  if (!partes) return undefined;
+  const [, dia, mes, ano] = partes;
+  const data = new Date(`${ano}-${mes}-${dia}T12:00:00`);
+  if (data.getFullYear() !== Number(ano) || data.getMonth() + 1 !== Number(mes) || data.getDate() !== Number(dia)) return undefined;
+  return `${ano}-${mes}-${dia}`;
+}
+
 document.addEventListener('input', (event) => {
   const campo = event.target;
   if (campo?.id === 'cadastroTelefone') formatarTelefoneCadastro(campo);
@@ -3707,7 +3730,6 @@ function abrirCliente(clienteId = '') {
     <div class="sheet-header">
       <div>
         <h2>${clienteId ? 'Editar cliente' : 'Novo cliente'}</h2>
-        <p class="muted small">Cliente simples para venda direta.</p>
       </div>
       <button class="close" onclick="fecharSheet()">×</button>
     </div>
@@ -3715,7 +3737,7 @@ function abrirCliente(clienteId = '') {
       ${campo('cliNome', 'Nome', c.nome || '')}
       ${campoTelefone('cliTelefone', 'Telefone / WhatsApp', c.telefone || '')}
       ${campo('cliEmail', 'E-mail', c.email || '', 'email')}
-      <div class="field client-birth-field"><label>Data de nascimento</label><div class="client-birth-control"><input id="cliNascimento" type="date" value="${escapeAttr(c.data_nascimento || '')}"></div></div>
+      <div class="field client-birth-field"><label>Data de nascimento</label><div class="client-birth-control"><input id="cliNascimento" type="text" inputmode="numeric" maxlength="10" autocomplete="bday" placeholder="dd/mm/aaaa" value="${escapeAttr(dataNascimentoParaCampo(c.data_nascimento))}" oninput="formatarDataNascimentoCampo(this)"></div></div>
       ${campoCepCliente(c.cep || '')}
       ${campo('cliEndereco', 'Endereço', c.endereco || '')}
       <div class="grid-2 client-address-extra">
@@ -3754,11 +3776,13 @@ function mostrarAvisoClienteIncompleto(clienteId, semTelefone, semEndereco) {
 }
 
 async function salvarCliente(clienteId, ignorarAviso = false) {
+  const dataNascimento = dataNascimentoParaIso(valor('cliNascimento'));
+  if (dataNascimento === undefined) { toast('Informe a data de nascimento no formato dd/mm/aaaa.'); return; }
   const dados = {
     nome: valor('cliNome').trim(),
     telefone: valor('cliTelefone').trim() ? `+${valor('cliTelefoneDdi')}${valor('cliTelefone').replace(/\D/g, '')}` : '',
     email: valor('cliEmail').trim(),
-    data_nascimento: valor('cliNascimento') || null,
+    data_nascimento: dataNascimento,
     endereco: valor('cliEndereco').trim(),
     numero: valor('cliNumero').trim(),
     complemento: valor('cliComplemento').trim(),
@@ -4331,6 +4355,7 @@ window.abrirMoverAgendaVendas = abrirMoverAgendaVendas;
 window.cancelarMoverAgendaVendas = cancelarMoverAgendaVendas;
 window.salvarNovaDataAgendaVendas = salvarNovaDataAgendaVendas;
 window.salvarMeta = salvarMeta;
+window.formatarDataNascimentoCampo = formatarDataNascimentoCampo;
 window.salvarIntegracaoGestao = salvarIntegracaoGestao;
 window.abrirAgendaAniversariantes = abrirAgendaAniversariantes;
 window.abrirPerfilFinanceiroVendas = abrirPerfilFinanceiroVendas;
