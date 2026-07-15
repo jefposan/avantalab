@@ -65,7 +65,7 @@ export default function MobilePage() {
     <main className="min-h-screen bg-slate-950 text-white" style={{overflow:'visible'}}>
       <link
         rel="preload"
-        href="/images/bg-avantalab-mobile-1080x1920.webp"
+        href="/images/bg-avantalab-mobile.webp"
         as="image"
         type="image/webp"
       />
@@ -96,21 +96,26 @@ export default function MobilePage() {
             #chat-ia-msgs { scroll-behavior: smooth; }
             .avantalab-mobile-bg {
               background-color: #eef6fb;
-              background-image: var(--avantalab-mobile-bg-overlay, none), image-set(url('/images/bg-avantalab-mobile-1080x1920.webp') type('image/webp'), url('/images/bg-avantalab-mobile-1080x1920.png') type('image/png'));
+              background-image: var(--avantalab-mobile-bg-overlay, none), image-set(url('/images/bg-avantalab-mobile.webp') type('image/webp'), url('/images/bg-avantalab-mobile.png') type('image/png'));
               background-position: center bottom;
               background-repeat: no-repeat;
-              background-size: 100% auto;
+              background-size: cover;
               background-attachment: fixed;
             }
 
+            .avantalab-mobile-bg-login {
+              background-image: var(--avantalab-mobile-bg-overlay, none), image-set(url('/images/bg-avantalab-mobile-1080x1920.webp') type('image/webp'), url('/images/bg-avantalab-mobile-1080x1920.png') type('image/png'));
+              background-size: 100% auto;
+            }
+
             @media (min-aspect-ratio: 9/16) {
-              .avantalab-mobile-bg {
+              .avantalab-mobile-bg-login {
                 background-size: auto 100%;
               }
             }
 
             @media (max-aspect-ratio: 9/18) {
-              .avantalab-mobile-bg {
+              .avantalab-mobile-bg-login {
                 background-size: auto 100%;
               }
             }
@@ -223,7 +228,7 @@ export default function MobilePage() {
           style={{
             height: '100dvh',
             backgroundPosition: 'center bottom',
-            backgroundSize: 'auto 108%',
+            backgroundSize: 'cover',
           }}
         >
           <div
@@ -246,7 +251,7 @@ export default function MobilePage() {
       <VendasMobileConteudoBridge />
 
       <script src="/mobile-supabase.js" defer />
-      <script src="/mobile-app.js?v=296" defer />
+      <script src="/mobile-app.js?v=297" defer />
     </main>
   );
 }

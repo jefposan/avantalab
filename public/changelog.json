@@ -13,7 +13,7 @@
   },
   "versoes": [
     {
-      "versao": "1.5.0.11",
+      "versao": "1.5.0.12",
       "titulo": "Gestão e Vendas Mobile conectados",
       "data": "Julho/2026",
       "itens": [
@@ -22,7 +22,8 @@
         "O módulo Vendas pode ser ativado pelo menu Sistemas da Gestão por usuários autorizados.",
         "A escolha do sistema inicial pode ser memorizada, e uma troca aberta dentro do aplicativo pode ser cancelada sem sair do sistema atual.",
         "As permissões continuam respeitadas: operadores não podem ativar nem trocar de sistema.",
-        "O menu Configurações da Gestão Mobile foi reorganizado para deixar assinatura, preferências e administração de perfis mais fáceis de encontrar."
+        "O menu Configurações da Gestão Mobile foi reorganizado para deixar assinatura, preferências e administração de perfis mais fáceis de encontrar.",
+        "As telas de entrada da Gestão Mobile receberam um ajuste visual para deixar o carregamento mais consistente."
       ]
     },
     {

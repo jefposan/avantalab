@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.5.0.12 - 2026-07-15
+
+- Gestão Mobile: separa os fundos das telas de entrada. Login e cadastro mantêm o logo em posição alta para não conflitar com o formulário; carregamento, seletor de sistema e demais telas pós-login usam o fundo de apresentação com o logo mais baixo, alinhado ao padrão do Vendas Mobile.
+
 ## 1.5.0.11 - 2026-07-15
 
 - Sobre: consolida as 83 publicações anteriores em 10 marcos de evolução, agrupando microversões da mesma entrega.

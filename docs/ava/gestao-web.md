@@ -1,8 +1,8 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.5.0.11 -->
+<!-- ava-version: 1.5.0.12 -->
 
-> Revisão 1.5.0.11: o Sobre passa a apresentar um histórico consolidado das principais novidades para o usuário.
+> Revisão 1.5.0.12: sem impacto operacional na Gestão Web.
 
 ## Escopo
 

@@ -1934,7 +1934,7 @@
       '</section>'
     );
     if (state.seletorSistemaInicialBloqueante) {
-      return '<section class="avantalab-mobile-bg fixed inset-0 z-[14000] flex items-center justify-center overflow-hidden px-4" style="height:100dvh;background-position:center bottom;background-size:auto 108%;">' + card + '</section>';
+      return '<section class="avantalab-mobile-bg fixed inset-0 z-[14000] flex items-center justify-center overflow-hidden px-4" style="height:100dvh;background-position:center bottom;background-size:cover;">' + card + '</section>';
     }
     return '<div id="seletor-sistema-overlay" class="fixed inset-0 z-[14000] flex items-center justify-center bg-slate-950/75 px-4">' + card + '</div>';
   }
@@ -7240,7 +7240,7 @@
 
   function telaLoginWrapper(conteudo, titulo, subtitulo) {
     return (
-      '<section class="avantalab-mobile-bg fixed inset-0 flex flex-col items-center justify-center overflow-hidden px-4 py-5" style="height:100dvh;--avantalab-mobile-bg-overlay:linear-gradient(rgba(255,255,255,.08),rgba(255,255,255,0));">' +
+      '<section class="avantalab-mobile-bg avantalab-mobile-bg-login fixed inset-0 flex flex-col items-center justify-center overflow-hidden px-4 py-5" style="height:100dvh;--avantalab-mobile-bg-overlay:linear-gradient(rgba(255,255,255,.08),rgba(255,255,255,0));">' +
         '<div class="mx-auto w-full max-w-md overflow-y-auto rounded-3xl border border-white/35 p-5 text-slate-900 shadow-2xl backdrop-blur-xl" style="background-color:rgba(255,255,255,.18);max-height:calc(100dvh - 8rem);overscroll-behavior:contain;">' +
           '<div class="mb-5">' +
             '<h1 class="text-3xl font-black text-slate-900">' + escapeHtml(titulo) + '</h1>' +
@@ -7266,7 +7266,7 @@
       : (state.modoCadastro ? 'clamp(5rem,12dvh,7rem)' : 'clamp(7rem,18dvh,10rem)');
 
     return (
-      '<section class="avantalab-mobile-bg fixed inset-0 flex flex-col items-center overflow-x-hidden overflow-y-auto px-4 pb-4" style="height:100dvh;padding-top:' + topLogin + ';background-position:center bottom;background-size:auto 108%;overscroll-behavior:contain;--avantalab-mobile-bg-overlay:linear-gradient(rgba(255,255,255,.08),rgba(255,255,255,0));">' +
+      '<section class="avantalab-mobile-bg avantalab-mobile-bg-login fixed inset-0 flex flex-col items-center overflow-x-hidden overflow-y-auto px-4 pb-4" style="height:100dvh;padding-top:' + topLogin + ';background-position:center bottom;background-size:auto 108%;overscroll-behavior:contain;--avantalab-mobile-bg-overlay:linear-gradient(rgba(255,255,255,.08),rgba(255,255,255,0));">' +
         '<div class="mx-auto w-full max-w-md shrink-0 overflow-y-auto rounded-3xl border border-white/35 ' + padClass + ' text-slate-900 shadow-2xl backdrop-blur-xl" style="background-color:rgba(255,255,255,.18);max-height:' + maxH + ';overscroll-behavior:contain;">' +
           (boasVindas
             ? telaBoasVindas()
@@ -7310,7 +7310,7 @@
 
   function telaCarregandoMobile() {
     return (
-      '<section class="avantalab-mobile-bg fixed inset-0 flex items-center justify-center overflow-hidden px-4" style="height:100dvh;background-position:center bottom;background-size:auto 108%;">' +
+      '<section class="avantalab-mobile-bg fixed inset-0 flex items-center justify-center overflow-hidden px-4" style="height:100dvh;background-position:center bottom;background-size:cover;">' +
         '<div class="w-full max-w-xs rounded-3xl border border-white/40 bg-white/25 p-5 text-center text-slate-900 shadow-2xl backdrop-blur-xl">' +
           '<p class="text-xs font-black uppercase tracking-[0.24em] text-cyan-700">AvantaLab</p>' +
           '<h1 class="mt-2 text-xl font-black">Preparando acesso</h1>' +
@@ -12795,7 +12795,7 @@
           return Promise.all(
             keys
               .filter(function (key) {
-                return key.indexOf('avantalab-mobile-') === 0 && key !== 'avantalab-mobile-v256';
+                return key.indexOf('avantalab-mobile-') === 0 && key !== 'avantalab-mobile-v257';
               })
               .map(function (key) {
                 return caches.delete(key);
@@ -12812,7 +12812,7 @@
     });
 
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/mobile-sw.js?v=240').then(function (registro) {
+      navigator.serviceWorker.register('/mobile-sw.js?v=241').then(function (registro) {
         if (registro && registro.update) registro.update();
       }).catch(function () {});
     }
