@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.4.1 - 2026-07-15
+
+- Ava: adiciona guias operacionais separados para Gestão Web, Gestão Mobile e Vendas Mobile; o chat passa a receber somente o manual do ambiente ativo.
+- Ava: cria verificação obrigatória dos manuais por versão, para manter o conhecimento revisado junto das entregas do sistema.
+
 ## 1.4.0.68 - 2026-07-13
 
 - Mobile: mantém no formulário o novo valor do lançamento enquanto a edição é salva, sem voltar visualmente ao valor anterior.

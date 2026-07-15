@@ -160,6 +160,7 @@ export default function ChatFlutuante({
           messages: novas.map(m => ({ role: m.role, content: m.content })),
           contexto,
           empresaId: empresaId || undefined,
+          ambiente: 'gestao-web',
         }),
       });
 

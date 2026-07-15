@@ -14,7 +14,7 @@ type AvaOpenRequest = {
   accessToken?: string;
   userName?: string;
   userId?: string;
-  environment?: 'gestao' | 'vendas';
+  environment?: 'gestao-mobile' | 'vendas';
 };
 
 export default function AvaMobileBridge() {

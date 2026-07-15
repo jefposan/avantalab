@@ -39,7 +39,7 @@ type AvaChatClientProps = {
   initialAccessToken?: string;
   initialUserName?: string;
   initialUserId?: string;
-  initialEnvironment?: 'gestao' | 'vendas';
+  initialEnvironment?: 'gestao-mobile' | 'vendas';
   onClose?: () => void;
 };
 
@@ -499,7 +499,7 @@ export default function AvaChatClient({
           'Content-Type': 'application/json',
           ...(sessionToken ? { Authorization: `Bearer ${sessionToken}` } : {}),
         },
-        body: JSON.stringify({ messages: outbound, contexto: context, empresaId: companyId || undefined, ambiente: initialEnvironment || 'gestao' }),
+        body: JSON.stringify({ messages: outbound, contexto: context, empresaId: companyId || undefined, ambiente: initialEnvironment || 'gestao-mobile' }),
       });
 
       if (!response.ok || !response.body) {

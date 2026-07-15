@@ -19,6 +19,13 @@ This version has breaking changes — APIs, conventions, and file structure may 
   micro ajustes subsequentes devem avançar apenas a quarta casa.
 - Atualizar tambem o `CHANGELOG.md` com resumo da alteracao.
 
+## Conhecimento da Ava
+
+- Os manuais operacionais da Ava são parte do produto e ficam em `docs/ava/`: `gestao-web.md`, `gestao-mobile.md` e `vendas.md`.
+- A versão executável resumida, enviada à IA conforme o ambiente, fica em `app/lib/ava-conhecimento.ts`.
+- Sempre que uma alteração criar, remover, mover ou mudar o comportamento de uma funcionalidade, revisar o manual correspondente, o guia executável e o `CHANGELOG.md` no mesmo commit. Se não houver impacto na orientação da Ava, registrar no manual a revisão da versão como “sem impacto operacional”.
+- Antes de concluir, executar `npm run verificar:ava`. O comando confere a existência dos três manuais e se todos foram revisados para a versão atual em `app/lib/version.ts`.
+
 ## Padrão de cards — AvantaShell
 
 - Todo card novo do sistema deve seguir o padrão **AvantaShell**, documentado

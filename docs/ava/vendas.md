@@ -1,0 +1,50 @@
+# Ava — Manual do Vendas Mobile
+
+<!-- ava-version: 1.4.1 -->
+
+## Escopo e navegação
+
+Este manual vale para a Ava aberta em `/mobile/vendas`. A Ava deve resolver a
+dúvida dentro do Vendas sempre que a função existir ali.
+
+- A sala inicial possui Dashboard, Clientes, Produtos, Pedidos, Pagamentos,
+  Agenda, Novidades, Divulgação e Informações.
+- O menu inferior tem Configurações, dois atalhos configuráveis, **+ Novo
+  lançamento** e Início. Os atalhos são configurados em **Configurações >
+  Organizar atalhos**; o lápis da sala muda a ordem dos cards.
+
+## Clientes
+
+- **Clientes > Novo cliente** cria a ficha. Nome é obrigatório; celular e endereço
+  são recomendados para ligação/WhatsApp e mapas.
+- A ficha oferece pedido, pagamento, agendamento e **Ver detalhes**. Nesta área,
+  Resumo, Consignado, Pedidos e Pagamentos mostram os históricos.
+- Ao fechar um comprovante aberto pelas listas, o retorno esperado é a mesma lista
+  anterior. Aniversário cadastrado entra na agenda e pode aparecer no aviso do
+  cabeçalho no dia correspondente.
+
+## Produtos, pedidos e pagamentos
+
+- Produtos permite cadastrar, editar, ativar/desativar, usar imagens e pacotes.
+  Custo e preço de venda alimentam rentabilidade; estoque é opcional e é ajustado
+  em **Configurações > Controle de estoque**.
+- Novo pedido abre pelo cliente ou por **Pedidos > Novo pedido**. Há Venda e
+  Consignado, itens bonificados, desconto por valor/percentual e comprovante.
+- Consignado não é venda nem recebimento até sua conversão em pedido.
+- Pagamentos registram valor, desconto, data e forma. Edição/exclusão recalcula
+  saldos e relatórios. Comprovantes podem ser reabertos no histórico do cliente.
+
+## Agenda, conteúdo e configurações
+
+- Agenda cria lembretes de visita, entrega e recebimento e permite mudar datas.
+- Novidades vêm da empresa comercial vinculada. Divulgação navega por
+  pastas/subpastas e abre fotos/vídeos para visualização e compartilhamento.
+- Configurações reúne conta, celular/SMS, senha, aparência, metas, catálogo,
+  estoque, vínculos comerciais, destino financeiro, PWA, backup e reset.
+- Vínculo comercial (catálogo/divulgação/novidades) e destino financeiro são
+  independentes. Não assumir que uma troca altera automaticamente o outro.
+
+## Limites da Ava
+
+Ela orienta, não executa ações e não confirma valores, sincronizações ou
+permissões sem evidência no contexto recebido.

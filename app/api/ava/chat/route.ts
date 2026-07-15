@@ -3,6 +3,7 @@ import { createClient } from '@supabase/supabase-js';
 import { AVA_SYSTEM_PROMPT } from '../../../../supabase/functions/_shared/ava-system-prompt';
 import { COBRANCA_ATIVA, podeUsar } from '../../../lib/cobranca';
 import { resolverEstadoAcessoParaUsuario } from '../../../lib/cobranca-servidor';
+import { guiaOperacionalAva, normalizarAmbienteAva } from '../../../lib/ava-conhecimento';
 
 export const runtime = 'nodejs';
 
@@ -89,12 +90,9 @@ async function responderComOpenAI(messages: Array<{ role: string; content: strin
   const apiKey = chaveOpenAI();
   if (!apiKey) return null;
 
-  const instrucaoAmbiente = ambiente === 'vendas'
-    ? '\n\nVocê está atendendo dentro do Vendas AvantaLab. Priorize respostas sobre clientes, produtos, pedidos, itens bonificados, consignados, pagamentos, recebimentos, saldos, metas e relatórios comerciais. Não oriente o usuário a entrar no app Gestão para executar funções que existem no Vendas.'
-    : '';
-  const systemWithContext = contexto
-    ? `${AVA_SYSTEM_PROMPT}${instrucaoAmbiente}\n\n--- DADOS ATUAIS DO USUARIO ---\n${contexto}\n---`
-    : `${AVA_SYSTEM_PROMPT}${instrucaoAmbiente}`;
+  const ambienteNormalizado = normalizarAmbienteAva(ambiente);
+  const guiaOperacional = guiaOperacionalAva(ambienteNormalizado);
+  const systemWithContext = `${AVA_SYSTEM_PROMPT}\n\n--- AMBIENTE ATUAL ---\n${ambienteNormalizado}\n\n--- GUIA OPERACIONAL ATUALIZADO ---\n${guiaOperacional}\n---${contexto ? `\n\n--- DADOS ATUAIS DO USUÁRIO ---\n${contexto}\n---` : ''}`;
 
   const resposta = await fetch('https://api.openai.com/v1/chat/completions', {
     method: 'POST',
