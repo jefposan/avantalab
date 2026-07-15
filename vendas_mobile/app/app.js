@@ -2796,22 +2796,7 @@ function abrirPedidoCliente(pedidoId) {
   const converter = pedidoEhConsignado(venda) && venda.status !== 'cancelada'
     ? `<section class="consignment-convert"><h3>Enviar itens para pedido</h3><p>Selecione a quantidade de cada item que foi vendida.</p><button type="button" class="primary" onclick="gerarPedidoDoConsignado('${pedidoId}')">Gerar pedido</button></section>`
     : '';
-  sheet(`<div class="sheet-header"><div><h2>${tipo}</h2><p class="muted small">Cliente: ${escapeHtml(cliente?.nome || 'não informado')} · ${dataComprovante(venda.criado_em)}</p></div><button class="close" onclick="fecharSheet()">×</button></div><div class="order-view-items">${itensHtml}</div>${converter}<section class="receipt-balance-summary"><div><span>Saldo anterior</span><b>${moeda(resumo.saldoAnterior)}</b></div><div><span>Pedido</span><b>${moeda(venda.total)}</b></div><div class="receipt-current-balance"><span>Saldo atual</span><b>${moeda(resumo.saldoAtual)}</b></div></section><button class="primary order-share" onclick="compartilharPedido('${pedidoId}')">${svgIcon('save')} Compartilhar comprovante</button><footer class="order-view-actions"><button type="button" class="ghost" onclick="fecharSheet()">Cancelar</button><button type="button" class="danger" onclick="confirmarExclusaoPedido('${pedidoId}')">Excluir</button><button type="button" class="secondary" onclick="abrirEditarPedido('${pedidoId}')">Editar</button>${venda.status !== 'cancelada' ? `<button type="button" class="warning" onclick="confirmarCancelamentoPedido('${pedidoId}')">Cancelar pedido</button>` : ''}</footer>`, 'sheet-backdrop-centered receipt-view-backdrop order-view-backdrop');
-}
-
-function confirmarCancelamentoPedido(pedidoId) {
-  sheet(`<div class="sheet-header"><div><h2>Cancelar pedido?</h2><p class="muted small">O pedido será mantido no histórico e deixará de compor os saldos.</p></div><button class="close" onclick="abrirPedidoCliente('${pedidoId}')">×</button></div><div class="order-confirm-actions"><button class="warning" onclick="cancelarPedido('${pedidoId}')">Confirmar cancelamento</button><button class="ghost" onclick="abrirPedidoCliente('${pedidoId}')">Voltar</button></div>`, 'sheet-backdrop-centered order-confirm-backdrop');
-}
-
-async function cancelarPedido(pedidoId) {
-  const venda = state.vendas.find((item) => item.id === pedidoId);
-  if (!venda) return;
-  try {
-    const atualizado = { ...venda, status: 'cancelada' };
-    const salvo = backendAtivo ? await window.VendasDb.updateOrder(atualizado) : atualizado;
-    state.vendas = state.vendas.map((item) => item.id === pedidoId ? salvo : item);
-    render(); abrirPedidoCliente(pedidoId); toast('Pedido cancelado.');
-  } catch (error) { toast(traduzErro(error)); }
+  sheet(`<div class="sheet-header"><div><h2>${tipo}</h2><p class="muted small">Cliente: ${escapeHtml(cliente?.nome || 'não informado')} · ${dataComprovante(venda.criado_em)}</p></div><button class="close" onclick="fecharSheet()">×</button></div><div class="order-view-items">${itensHtml}</div>${converter}<section class="receipt-balance-summary"><div><span>Saldo anterior</span><b>${moeda(resumo.saldoAnterior)}</b></div><div><span>Pedido</span><b>${moeda(venda.total)}</b></div><div class="receipt-current-balance"><span>Saldo atual</span><b>${moeda(resumo.saldoAtual)}</b></div></section><button class="primary order-share" onclick="compartilharPedido('${pedidoId}')">${svgIcon('save')} Compartilhar comprovante</button><footer class="order-view-actions"><button type="button" class="ghost" onclick="fecharSheet()">Fechar</button><button type="button" class="danger" onclick="confirmarExclusaoPedido('${pedidoId}')">Excluir</button><button type="button" class="secondary" onclick="abrirEditarPedido('${pedidoId}')">Editar</button></footer>`, 'sheet-backdrop-centered receipt-view-backdrop order-view-backdrop');
 }
 
 function confirmarExclusaoPedido(pedidoId) {
