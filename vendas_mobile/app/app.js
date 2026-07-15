@@ -156,24 +156,25 @@ function formatarTelefoneCampo(input, ddiId) {
 function dataNascimentoParaCampo(valorData) {
   const valor = String(valorData || '');
   if (!/^\d{4}-\d{2}-\d{2}$/.test(valor)) return '';
-  const [ano, mes, dia] = valor.split('-');
-  return `${dia}/${mes}/${ano}`;
+  const [, mes, dia] = valor.split('-');
+  return `${dia}/${mes}`;
 }
 
 function formatarDataNascimentoCampo(input) {
-  const digitos = String(input.value || '').replace(/\D/g, '').slice(0, 8);
-  input.value = digitos.replace(/(\d{2})(\d)/, '$1/$2').replace(/(\d{2}\/\d{2})(\d)/, '$1/$2');
+  const digitos = String(input.value || '').replace(/\D/g, '').slice(0, 4);
+  input.value = digitos.replace(/(\d{2})(\d)/, '$1/$2');
 }
 
 function dataNascimentoParaIso(valorData) {
   const valor = String(valorData || '').trim();
   if (!valor) return null;
-  const partes = valor.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+  const partes = valor.match(/^(\d{2})\/(\d{2})$/);
   if (!partes) return undefined;
-  const [, dia, mes, ano] = partes;
-  const data = new Date(`${ano}-${mes}-${dia}T12:00:00`);
-  if (data.getFullYear() !== Number(ano) || data.getMonth() + 1 !== Number(mes) || data.getDate() !== Number(dia)) return undefined;
-  return `${ano}-${mes}-${dia}`;
+  const [, dia, mes] = partes;
+  // O ano-base é apenas técnico: aniversários são sempre exibidos e repetidos por dia/mês.
+  const data = new Date(`2000-${mes}-${dia}T12:00:00`);
+  if (data.getMonth() + 1 !== Number(mes) || data.getDate() !== Number(dia)) return undefined;
+  return `2000-${mes}-${dia}`;
 }
 
 document.addEventListener('input', (event) => {
@@ -1812,7 +1813,8 @@ function renderConfiguracoes() {
   const integracao = state.integracaoGestao || { base_receita: 'recebidos', pode_configurar: false };
   const vinculos = state.vinculosComerciais || [];
   const renderRecurso = (vinculo, chave, titulo) => {
-    const ativo = chave === 'novidades' ? vinculo.novidades_ativas : vinculo[`${chave}_ativo`];
+    const campoAtivo = { novidades: 'novidades_ativas', divulgacao: 'divulgacao_ativa', catalogo: 'catalogo_ativo' }[chave];
+    const ativo = Boolean(vinculo[campoAtivo]);
     return `<button type="button" class="${ativo ? 'is-on' : ''}" onclick="alternarRecursoVinculoComercial('${vinculo.empresa_id}','${chave}',${!ativo})">${titulo}</button>`;
   };
   const renderVinculo = (vinculo) => `<div class="commercial-link ${vinculo.ativo ? 'is-current' : ''}"><header><b>${escapeHtml(vinculo.empresa_nome || 'Empresa')}</b><span>${vinculo.ativo ? 'Ativa' : 'Histórico'}</span></header><div class="commercial-link-resources">${renderRecurso(vinculo, 'novidades', 'Notícias')}${renderRecurso(vinculo, 'divulgacao', 'Divulgação')}${renderRecurso(vinculo, 'catalogo', 'Catálogo')}</div></div>`;
@@ -3737,7 +3739,7 @@ function abrirCliente(clienteId = '') {
       ${campo('cliNome', 'Nome', c.nome || '')}
       ${campoTelefone('cliTelefone', 'Telefone / WhatsApp', c.telefone || '')}
       ${campo('cliEmail', 'E-mail', c.email || '', 'email')}
-      <div class="field client-birth-field"><label>Data de nascimento</label><div class="client-birth-control"><input id="cliNascimento" type="text" inputmode="numeric" maxlength="10" autocomplete="bday" placeholder="dd/mm/aaaa" value="${escapeAttr(dataNascimentoParaCampo(c.data_nascimento))}" oninput="formatarDataNascimentoCampo(this)"></div></div>
+      <div class="field client-birth-field"><label>Data de nascimento</label><div class="client-birth-control"><input id="cliNascimento" type="text" inputmode="numeric" maxlength="5" autocomplete="bday" placeholder="dd/mm" value="${escapeAttr(dataNascimentoParaCampo(c.data_nascimento))}" oninput="formatarDataNascimentoCampo(this)"></div></div>
       ${campoCepCliente(c.cep || '')}
       ${campo('cliEndereco', 'Endereço', c.endereco || '')}
       <div class="grid-2 client-address-extra">
@@ -3777,7 +3779,7 @@ function mostrarAvisoClienteIncompleto(clienteId, semTelefone, semEndereco) {
 
 async function salvarCliente(clienteId, ignorarAviso = false) {
   const dataNascimento = dataNascimentoParaIso(valor('cliNascimento'));
-  if (dataNascimento === undefined) { toast('Informe a data de nascimento no formato dd/mm/aaaa.'); return; }
+  if (dataNascimento === undefined) { toast('Informe a data de nascimento no formato dd/mm.'); return; }
   const dados = {
     nome: valor('cliNome').trim(),
     telefone: valor('cliTelefone').trim() ? `+${valor('cliTelefoneDdi')}${valor('cliTelefone').replace(/\D/g, '')}` : '',
