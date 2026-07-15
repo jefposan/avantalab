@@ -261,8 +261,31 @@ function toast(msg) {
   setTimeout(() => el.remove(), 2800);
 }
 
+let spriteIconesEstavelPronto = false;
+
+function prepararSpriteIconesEstavel() {
+  fetch('./assets/icons.svg')
+    .then((resposta) => resposta.ok ? resposta.text() : Promise.reject(new Error('Sprite indisponível.')))
+    .then((conteudo) => {
+      const origem = document.createElement('div');
+      origem.innerHTML = conteudo;
+      const defs = origem.querySelector('defs');
+      if (!defs || document.getElementById('vendas-sprite-icones')) return;
+      const sprite = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+      sprite.id = 'vendas-sprite-icones';
+      sprite.setAttribute('aria-hidden', 'true');
+      sprite.setAttribute('focusable', 'false');
+      sprite.style.cssText = 'position:absolute;width:0;height:0;overflow:hidden;pointer-events:none';
+      sprite.appendChild(document.importNode(defs, true));
+      document.body.prepend(sprite);
+      spriteIconesEstavelPronto = true;
+    })
+    .catch(() => undefined);
+}
+
 function svgIcon(nome, classe = '') {
-  return `<svg class="svg-icon ${classe}" aria-hidden="true"><use href="./assets/icons.svg#${nome}"></use></svg>`;
+  const origem = spriteIconesEstavelPronto ? `#${nome}` : `./assets/icons.svg#${nome}`;
+  return `<svg class="svg-icon ${classe}" viewBox="0 0 24 24" aria-hidden="true"><use href="${origem}"></use></svg>`;
 }
 
 const ICONES_SVG_ESTAVEIS = {
@@ -4095,4 +4118,5 @@ document.addEventListener('keyup', (event) => {
   if (event.key === 'Enter' || event.key === ' ') removerFeedbackBotao(document.activeElement);
 });
 
+prepararSpriteIconesEstavel();
 inicializarApp();

@@ -1005,7 +1005,8 @@ body { background: #fff; color: var(--ink); }
 .share-grid b { display: block; margin-bottom: 12px; color: #2a9a95; font-size: 29px; }
 .share-grid h3 { margin: 0; color: #383b40; font-size: 17px; }
 .share-grid p { min-height: 34px; margin: 7px 0 14px; color: #7b8189; font-size: 13px; }
-.svg-icon { display: inline-block; width: 18px; height: 18px; flex: 0 0 auto; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; vertical-align: middle; }
+.svg-icon { display: inline-block; width: 18px; height: 18px; flex: 0 0 auto; overflow: visible; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; vertical-align: middle; pointer-events: none; transform: translateZ(0); backface-visibility: hidden; contain: paint; }
+.svg-icon use { pointer-events: none; }
 .side-link .svg-icon { width: 20px; height: 20px; }
 .tridium-search-card { display: flex; align-items: center; gap: 10px; border: 1px solid #e2e3e6; border-radius: 10px; padding: 14px; background: #fff; box-shadow: 0 2px 5px rgba(0,0,0,.06); }
 .search-input-wrap { position: relative; min-width: 0; flex: 1; }
