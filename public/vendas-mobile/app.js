@@ -50,6 +50,8 @@ const estadoInicial = {
   usuarioSemAcesso: false,
   moduloVendasAtivo: true,
   sincronizacaoCatalogo: { adicionados: 0, ja_recebidos: 0 },
+  atalhoInferiorEsquerdo: 'tema',
+  atalhoInferiorDireito: 'agenda',
 };
 
 let state = carregarEstado();
@@ -194,6 +196,8 @@ function salvarEstado() {
     dashboardDiasInativos: state.dashboardDiasInativos,
     dashboardConsignadosExpandido: state.dashboardConsignadosExpandido,
     temaEscuro: state.temaEscuro,
+    atalhoInferiorEsquerdo: state.atalhoInferiorEsquerdo,
+    atalhoInferiorDireito: state.atalhoInferiorDireito,
   } : { ...state, carrinho: [] };
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(persistente));
@@ -706,6 +710,49 @@ function sairMenuMobile() {
   sairSistema();
 }
 
+const ATALHOS_INFERIORES_VENDAS = [
+  ['tema', 'Modo escuro', 'tema'], ['dashboard', 'Dashboard', 'home'], ['clientes', 'Clientes', 'users'],
+  ['produtos', 'Produtos', 'package'], ['vendas', 'Pedidos', 'shopping-cart'], ['vender', 'Pagamentos', 'dollar'],
+  ['agenda', 'Agenda', 'calendar'], ['divulgacao', 'Divulgação', 'megaphone'],
+];
+
+function atalhoInferiorVendasValido(valor, padrao) {
+  return ATALHOS_INFERIORES_VENDAS.some(([id]) => id === valor) ? valor : padrao;
+}
+
+function dadosAtalhoInferiorVendas(id) {
+  return ATALHOS_INFERIORES_VENDAS.find(([valor]) => valor === id) || ATALHOS_INFERIORES_VENDAS[0];
+}
+
+function definirAtalhoInferiorVendas(lado, valor) {
+  const chave = lado === 'esquerdo' ? 'atalhoInferiorEsquerdo' : 'atalhoInferiorDireito';
+  const outraChave = lado === 'esquerdo' ? 'atalhoInferiorDireito' : 'atalhoInferiorEsquerdo';
+  const padrao = lado === 'esquerdo' ? 'tema' : 'agenda';
+  const anterior = atalhoInferiorVendasValido(state[chave], padrao);
+  const proximo = atalhoInferiorVendasValido(valor, padrao);
+  if (state[outraChave] === proximo) state[outraChave] = anterior;
+  state[chave] = proximo;
+  salvarEstado();
+  fecharSheet();
+  abrirOrganizarAtalhosVendas();
+}
+
+function restaurarAtalhosInferioresVendas() {
+  state.atalhoInferiorEsquerdo = 'tema';
+  state.atalhoInferiorDireito = 'agenda';
+  salvarEstado();
+  fecharSheet();
+  render();
+  toast('Atalhos restaurados.');
+}
+
+function abrirOrganizarAtalhosVendas() {
+  const esquerdo = atalhoInferiorVendasValido(state.atalhoInferiorEsquerdo, 'tema');
+  const direito = atalhoInferiorVendasValido(state.atalhoInferiorDireito, 'agenda');
+  const grupo = (lado, titulo, selecionado) => `<section class="shortcut-organizer-group"><h3>${titulo}</h3><div>${ATALHOS_INFERIORES_VENDAS.map(([id, rotulo, icone]) => `<button type="button" class="${selecionado === id ? 'selected' : ''}" onclick="definirAtalhoInferiorVendas('${lado}','${id}')"><span>${iconeNavegacaoInferior(icone)}</span><b>${rotulo}</b>${selecionado === id ? '<small>Selecionado</small>' : ''}</button>`).join('')}</div></section>`;
+  sheet(`<div class="sheet-header"><div><h2>Organizar atalhos</h2><p class="muted small">Configurações, Lançar e Início permanecem fixos. Escolha os atalhos ao lado do +.</p></div><button class="close" onclick="fecharSheet()">×</button></div><div class="shortcut-organizer">${grupo('esquerdo', 'À esquerda do +', esquerdo)}${grupo('direito', 'À direita do +', direito)}<button type="button" class="ghost shortcut-organizer-reset" onclick="restaurarAtalhosInferioresVendas()">Restaurar Modo escuro e Agenda</button></div>`, 'sheet-backdrop-centered');
+}
+
 function iconeNavegacaoInferior(tipo) {
   if (tipo === 'tema') return '<svg class="svg-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M20.2 15.1A8.5 8.5 0 0 1 8.9 3.8 8.5 8.5 0 1 0 20.2 15Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>';
   return svgIconEstavel(tipo);
@@ -716,11 +763,13 @@ function itemNavegacaoInferior(id, tipo, rotulo, acao) {
 }
 
 function renderNavegacaoInferior() {
+  const [esquerdo, rotuloEsquerdo, iconeEsquerdo] = dadosAtalhoInferiorVendas(atalhoInferiorVendasValido(state.atalhoInferiorEsquerdo, 'tema'));
+  const [direito, rotuloDireito, iconeDireito] = dadosAtalhoInferiorVendas(atalhoInferiorVendasValido(state.atalhoInferiorDireito, 'agenda'));
   return `<nav class="vendas-bottom-nav" aria-label="Navegação principal"><div class="vendas-bottom-nav-inner">
     ${itemNavegacaoInferior('nav-configuracoes', 'settings', 'Configurações', 'configuracoes')}
-    ${itemNavegacaoInferior('nav-tema', 'tema', 'Tema', 'tema')}
+    ${itemNavegacaoInferior('nav-atalho-esquerdo', iconeEsquerdo, rotuloEsquerdo, esquerdo)}
     <button id="nav-novo" type="button" class="vendas-nav-add" onclick="acionarNavegacaoInferior(event, 'novo')" aria-label="Lançar pedido ou pagamento"><span>+</span><b>Lançar</b></button>
-    ${itemNavegacaoInferior('nav-agenda', 'calendar', 'Agenda', 'agenda')}
+    ${itemNavegacaoInferior('nav-atalho-direito', iconeDireito, rotuloDireito, direito)}
     ${itemNavegacaoInferior('nav-inicio', 'home', 'Início', 'inicio')}
   </div></nav>`;
 }
@@ -744,7 +793,7 @@ function acionarNavegacaoInferior(event, destino) {
     if (destino === 'configuracoes') setAba('configuracoes');
     else if (destino === 'tema') alternarTema(!state.temaEscuro);
     else if (destino === 'novo') { render(); abrirAcoesRapidas(); }
-    else if (destino === 'agenda') setAba('agenda');
+    else if (['dashboard', 'clientes', 'produtos', 'vendas', 'vender', 'agenda', 'divulgacao'].includes(destino)) setAba(destino);
     else if (destino === 'inicio') abrirSalaBotoes();
   }, 130);
 }
@@ -1642,7 +1691,7 @@ function renderConfiguracoes() {
     <div class="module-sticky-head"><div class="module-title"><div><h2>Configurações</h2><p>Preferências, segurança e recursos do Vendas.</p></div></div></div>
     <div class="settings-grid">
       <article class="settings-card settings-profile-card"><h3>${svgIcon('user')} Dados do usuário</h3><dl><dt>Nome completo</dt><dd>${escapeHtml(state.usuario.nome)}</dd><dt>Celular confirmado</dt><dd>${telefone ? escapeHtml(mascararTelefone(telefone)) : 'Não informado'}</dd><dt>Empresa vinculada</dt><dd>${escapeHtml(empresa)}</dd></dl><div class="actions"><button class="secondary" onclick="abrirAtualizarTelefone()">${svgIcon('phone')} ${telefone ? 'Alterar celular' : 'Cadastrar celular'}</button></div></article>
-      <article class="settings-card"><h3>${svgIcon('settings')} Aparência</h3><label class="switch-line"><span>Modo escuro</span><input type="checkbox" ${state.temaEscuro ? 'checked' : ''} onchange="alternarTema(this.checked)"><i></i></label><p>Alterne o tema da aplicação para maior conforto visual.</p></article>
+    <article class="settings-card"><h3>${svgIcon('settings')} Aparência</h3><label class="switch-line"><span>Modo escuro</span><input type="checkbox" ${state.temaEscuro ? 'checked' : ''} onchange="alternarTema(this.checked)"><i></i></label><p>Alterne o tema da aplicação para maior conforto visual.</p><div class="actions"><button class="secondary" onclick="abrirOrganizarAtalhosVendas()">${svgIcon('settings')} Organizar atalhos</button></div></article>
     </div>
     <article class="settings-card settings-goal"><h3>${svgIcon('target')} Meta do período</h3><div class="settings-goal-summary"><div><span>Meta mensal</span><b>${moeda(state.metaMensal)}</b></div><div><span>Vendas mensais</span><b>${moeda(t.total)}</b></div></div><div class="progress"><i style="width:${Math.max(2, progresso)}%"></i></div><p>Faltam <b>${moeda(Math.max(0, state.metaMensal - t.total))}</b> para atingir sua meta.</p><div class="settings-form settings-goals-form"><label><span>Definir meta mensal</span><input id="metaConfig" type="text" inputmode="numeric" value="${numeroParaCampoMoeda(state.metaMensal)}" onfocus="this.select()" oninput="formatarCampoMoeda(this)" placeholder="0,00"></label><button class="primary" onclick="salvarMeta()">${svgIcon('save')} Salvar meta</button></div></article>
     <article class="settings-card"><h3>${svgIcon('lock')} Senha da conta AvantaLab</h3><p>Esta senha pertence à sua conta principal. Ao alterá-la aqui, a nova senha passa a valer para o acesso ao Gestão e ao Vendas.</p><div class="password-form"><label>Nova senha (mín. 8 caracteres)<input id="senhaNova" type="password" autocomplete="new-password" minlength="8"></label><label>Confirme a nova senha<input id="senhaConfirma" type="password" autocomplete="new-password" minlength="8"></label><button class="password-button" onclick="alterarSenha()">${svgIcon('lock')} Atualizar senha da conta</button></div></article>
@@ -4088,6 +4137,9 @@ window.salvarNovaDataAgendaVendas = salvarNovaDataAgendaVendas;
 window.salvarMeta = salvarMeta;
 window.formatarCampoMoeda = formatarCampoMoeda;
 window.alternarTema = alternarTema;
+window.abrirOrganizarAtalhosVendas = abrirOrganizarAtalhosVendas;
+window.definirAtalhoInferiorVendas = definirAtalhoInferiorVendas;
+window.restaurarAtalhosInferioresVendas = restaurarAtalhosInferioresVendas;
 window.alterarSenha = alterarSenha;
 window.abrirAtualizarTelefone = abrirAtualizarTelefone;
 window.enviarCodigoAtualizarTelefone = enviarCodigoAtualizarTelefone;
