@@ -49,6 +49,7 @@ const estadoInicial = {
   solicitacaoAcesso: null,
   usuarioSemAcesso: false,
   moduloVendasAtivo: true,
+  sincronizacaoCatalogo: { adicionados: 0, ja_recebidos: 0 },
 };
 
 let state = carregarEstado();
@@ -1115,6 +1116,7 @@ async function carregarDadosBackend(mostrarCarregamento = true) {
       state.solicitacaoAcesso = dados.solicitacao || null;
       state.usuarioSemAcesso = !dados.acesso;
       state.moduloVendasAtivo = dados.moduloAtivo !== false;
+      state.sincronizacaoCatalogo = dados.sincronizacaoCatalogo || { adicionados: 0, ja_recebidos: 0 };
       if (!dados.acesso) state.autenticado = false;
     }
   } catch (error) {
@@ -1621,7 +1623,7 @@ function renderConfiguracoes() {
     </div>
     <article class="settings-card settings-goal"><h3>${svgIcon('target')} Meta do período</h3><div class="settings-goal-summary"><div><span>Meta mensal</span><b>${moeda(state.metaMensal)}</b></div><div><span>Vendas mensais</span><b>${moeda(t.total)}</b></div></div><div class="progress"><i style="width:${Math.max(2, progresso)}%"></i></div><p>Faltam <b>${moeda(Math.max(0, state.metaMensal - t.total))}</b> para atingir sua meta.</p><div class="settings-form settings-goals-form"><label><span>Definir meta mensal</span><input id="metaConfig" type="text" inputmode="numeric" value="${numeroParaCampoMoeda(state.metaMensal)}" onfocus="this.select()" oninput="formatarCampoMoeda(this)" placeholder="0,00"></label><button class="primary" onclick="salvarMeta()">${svgIcon('save')} Salvar meta</button></div></article>
     <article class="settings-card"><h3>${svgIcon('lock')} Senha da conta AvantaLab</h3><p>Esta senha pertence à sua conta principal. Ao alterá-la aqui, a nova senha passa a valer para o acesso ao Gestão e ao Vendas.</p><div class="password-form"><label>Nova senha (mín. 8 caracteres)<input id="senhaNova" type="password" autocomplete="new-password" minlength="8"></label><label>Confirme a nova senha<input id="senhaConfirma" type="password" autocomplete="new-password" minlength="8"></label><button class="password-button" onclick="alterarSenha()">${svgIcon('lock')} Atualizar senha da conta</button></div></article>
-    <article class="settings-card settings-catalog-card"><h3>${svgIcon('package')} Catálogo de produtos</h3><p>Baixe o modelo, importe pacotes e exporte seu catálogo em um único local.</p><div class="actions"><button class="secondary" onclick="baixarModeloProdutosExcel()">${svgIcon('download')} Modelo Excel</button><button class="primary" onclick="abrirImportacaoPacote()">${svgIcon('package')} Pacote de produtos</button><button class="secondary" onclick="exportarProdutosExcel()">${svgIcon('save')} Exportar catálogo</button></div></article>
+    <article class="settings-card settings-catalog-card"><h3>${svgIcon('package')} Catálogo de produtos</h3><p>Os novos produtos da empresa chegam automaticamente. Se recebeu um pacote, importe o arquivo ZIP completo.</p><div class="actions"><button class="primary" onclick="abrirImportacaoPacoteZip()">${svgIcon('package')} Importar pacote ZIP</button><button class="secondary" onclick="mostrarSincronizacaoCatalogo()">${svgIcon('save')} Situação da sincronização</button></div></article>
     <article class="settings-card settings-stock-card"><h3>${svgIcon('package')} Controle de estoque</h3><p>${state.produtos.filter((produto) => produto.estoque_controlado).length} produto(s) com estoque acompanhado neste aparelho.</p><div class="actions"><button class="primary" onclick="abrirAtualizarEstoque()">${svgIcon('plus')} Atualizar estoque</button></div><small>Entrada soma ao saldo atual. Ajuste define o saldo físico contado.</small></article>
     <article class="settings-card settings-pwa-card"><h3>${svgIcon('save')} Aplicativo Web (PWA)</h3><p>Instale o aplicativo na tela inicial para acesso rápido, como um app nativo.</p><button class="install-button" onclick="instalarPWA()">Adicionar à Área de Trabalho</button><small>Se o botão não aparecer, use “Adicionar à tela inicial” no menu do navegador.</small></article>
     <article class="settings-card settings-exit-card"><h3>${svgIcon('log-out')} Sair</h3><p>Encerre sua sessão neste aparelho.</p><button class="danger" onclick="abrirConfirmacaoSair()">Sair do Vendas</button></article>
@@ -3006,6 +3008,56 @@ function carregarBibliotecaExcel() {
   return window.__vendasXlsxPromise;
 }
 
+function mostrarSincronizacaoCatalogo() {
+  const sincronizacao = state.sincronizacaoCatalogo || { adicionados: 0, ja_recebidos: 0 };
+  sheet(`<div class="sheet-header"><div><h2>Sincronização do catálogo</h2><p class="muted small">Os produtos publicados pela empresa são verificados sempre que você entra no Vendas.</p></div><button class="close" onclick="fecharSheet()">×</button></div><div class="grid"><article class="stock-current"><span>Novos produtos recebidos nesta abertura</span><b>${Number(sincronizacao.adicionados || 0)}</b></article><article class="stock-current"><span>Produtos já recebidos anteriormente</span><b>${Number(sincronizacao.ja_recebidos || 0)}</b></article><p class="muted small">Produtos que você já alterou — inclusive preços e custos — não são sobrescritos pela atualização automática.</p><button class="primary" onclick="sincronizarCatalogoAgora()">${svgIcon('save')} Verificar agora</button></div>`, 'sheet-backdrop-centered');
+}
+
+async function sincronizarCatalogoAgora() {
+  try {
+    fecharSheet();
+    await carregarDadosBackend(true);
+    toast('Catálogo atualizado.');
+    mostrarSincronizacaoCatalogo();
+  } catch (error) { toast(traduzErro(error)); }
+}
+
+function abrirImportacaoPacoteZip() {
+  sheet(`<div class="sheet-header"><div><h2>Importar pacote ZIP</h2><p class="muted small">Use o pacote criado pelo catálogo web. Ele inclui produtos e imagens.</p></div><button class="close" onclick="fecharSheet()">×</button></div><div class="grid package-import-form">${campo('pacoteNomeZip', 'Nome do pacote', '')}${campo('pacoteNumeroZip', 'Número do pacote', numeroPacoteSugerido())}<input id="pacoteArquivoZip" type="file" accept=".zip,application/zip" hidden onchange="importarArquivoPacoteZip(this)"><button class="primary" onclick="document.getElementById('pacoteArquivoZip').click()">${svgIcon('folder')} Selecionar arquivo ZIP</button><p class="muted small package-import-note">A importação cria uma cópia dos produtos nesta conta, incluindo as imagens do pacote.</p></div>`, 'sheet-backdrop-centered');
+}
+
+async function importarArquivoPacoteZip(input) {
+  const arquivo = input?.files?.[0];
+  input.value = '';
+  if (!arquivo) return;
+  const nome = valor('pacoteNomeZip').trim();
+  const numero = valor('pacoteNumeroZip').trim();
+  if (!nome || !numero) { toast('Informe o nome e o número do pacote.'); return; }
+  if (!window.JSZip) { toast('O leitor de pacotes não está disponível. Atualize o aplicativo e tente novamente.'); return; }
+  try {
+    const zip = await window.JSZip.loadAsync(arquivo);
+    const manifestoArquivo = zip.file('catalogo-vendas-mobile.json');
+    if (!manifestoArquivo) throw new Error('Este arquivo não é um pacote de produtos AvantaLab válido.');
+    const manifesto = JSON.parse(await manifestoArquivo.async('text'));
+    const produtosBase = Array.isArray(manifesto?.produtos) ? manifesto.produtos : [];
+    if (!produtosBase.length) throw new Error('O pacote não possui produtos.');
+    const produtos = [];
+    for (const produto of produtosBase) {
+      const nomeProduto = String(produto?.nome || '').trim();
+      const preco = Number(produto?.preco_venda ?? produto?.preco ?? 0);
+      if (!nomeProduto || !Number.isFinite(preco) || preco <= 0) continue;
+      let imagem_url = String(produto?.imagem_url || '').trim();
+      const imagemArquivo = String(produto?.imagem_arquivo || '').trim();
+      if (imagemArquivo && zip.file(imagemArquivo) && backendAtivo) {
+        try { imagem_url = await window.VendasDb.uploadProductImage(await zip.file(imagemArquivo).async('blob')); } catch { /* mantém a URL original quando a cópia da imagem falhar */ }
+      }
+      produtos.push({ marca: String(produto?.marca || '').trim(), categoria: String(produto?.categoria || '').trim(), sku: String(produto?.sku || '').trim(), nome: nomeProduto, descricao: String(produto?.descricao || '').trim(), preco, preco_custo: Number(produto?.preco_custo || 0), estoque: produto?.estoque ?? null, unidade: String(produto?.unidade || 'un').trim() || 'un', imagem_url, ativo: produto?.ativo !== false });
+    }
+    if (!produtos.length) throw new Error('Nenhum produto válido foi encontrado no pacote.');
+    await salvarPacoteImportado({ nome, numero, origem: 'zip', produtos });
+  } catch (error) { toast(traduzErro(error)); }
+}
+
 async function baixarModeloProdutosExcel() {
   try {
     await carregarBibliotecaExcel();
@@ -4018,6 +4070,10 @@ window.abrirAtualizarTelefone = abrirAtualizarTelefone;
 window.enviarCodigoAtualizarTelefone = enviarCodigoAtualizarTelefone;
 window.confirmarAtualizarTelefone = confirmarAtualizarTelefone;
 window.instalarPWA = instalarPWA;
+window.abrirImportacaoPacoteZip = abrirImportacaoPacoteZip;
+window.importarArquivoPacoteZip = importarArquivoPacoteZip;
+window.mostrarSincronizacaoCatalogo = mostrarSincronizacaoCatalogo;
+window.sincronizarCatalogoAgora = sincronizarCatalogoAgora;
 window.enviarSugestaoVendas = enviarSugestaoVendas;
 window.novaSugestaoVendas = novaSugestaoVendas;
 window.abrirPastaDivulgacao = abrirPastaDivulgacao;

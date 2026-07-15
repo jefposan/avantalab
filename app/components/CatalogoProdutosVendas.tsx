@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import JSZip from 'jszip';
 import { formatarDescricao } from '../lib/formatters';
 import { supabase } from '../lib/supabase';
 
@@ -24,6 +25,7 @@ export default function CatalogoProdutosVendas({ empresaId, darkMode, corPrimari
   const [formulario, setFormulario] = useState<Record<string, string | boolean>>(vazio);
   const [carregando, setCarregando] = useState(true);
   const [salvando, setSalvando] = useState(false);
+  const [exportando, setExportando] = useState(false);
   const [erro, setErro] = useState('');
   const arquivoRef = useRef<HTMLInputElement>(null);
   const campo = darkMode ? 'border-slate-600 bg-slate-950 text-white' : 'border-slate-300 bg-white text-slate-900';
@@ -97,10 +99,42 @@ export default function CatalogoProdutosVendas({ empresaId, darkMode, corPrimari
     mudar('imagem_url', supabase.storage.from('vendas-produtos').getPublicUrl(caminho).data.publicUrl);
   };
 
+  const exportarPacoteZip = async () => {
+    if (!produtos.length) { setErro('Cadastre ao menos um produto antes de gerar o pacote.'); return; }
+    setExportando(true);
+    setErro('');
+    try {
+      const zip = new JSZip();
+      const itens = await Promise.all(produtos.map(async (produto) => {
+        let imagem_arquivo = '';
+        if (produto.imagem_url) {
+          try {
+            const resposta = await fetch(produto.imagem_url);
+            if (resposta.ok) {
+              const extensao = resposta.headers.get('content-type')?.split('/')[1]?.replace(/[^a-z0-9]/gi, '') || 'webp';
+              imagem_arquivo = `imagens/${produto.id}.${extensao}`;
+              zip.file(imagem_arquivo, await resposta.blob());
+            }
+          } catch { /* o produto ainda é exportado, apenas sem a cópia da imagem */ }
+        }
+        return { ...produto, imagem_arquivo };
+      }));
+      zip.file('catalogo-vendas-mobile.json', JSON.stringify({ versao: 1, criado_em: new Date().toISOString(), produtos: itens }, null, 2));
+      const arquivo = await zip.generateAsync({ type: 'blob', compression: 'DEFLATE' });
+      const url = URL.createObjectURL(arquivo);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `pacote-produtos-vendas-mobile-${new Date().toISOString().slice(0, 10)}.zip`;
+      link.click();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+    } catch { setErro('Não foi possível gerar o pacote ZIP.'); }
+    finally { setExportando(false); }
+  };
+
   return <div className="min-h-0 flex-1 overflow-y-auto p-4">
     <div className="mb-3 flex flex-wrap items-start justify-between gap-3">
       <div><h3 className="text-base font-black">Pacote de produtos</h3><p className={`mt-1 text-xs ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>Os campos abaixo alimentam o Vendas Mobile. Dados fiscais podem ser completados sem afetar o catálogo atual.</p></div>
-      <span className="rounded-full bg-cyan-500/10 px-3 py-1 text-[10px] font-black uppercase text-cyan-700">{produtos.length} produtos</span>
+      <div className="flex items-center gap-2"><span className="rounded-full bg-cyan-500/10 px-3 py-1 text-[10px] font-black uppercase text-cyan-700">{produtos.length} produtos</span><button type="button" onClick={() => void exportarPacoteZip()} disabled={exportando} className="h-7 rounded-full border border-cyan-300 px-3 text-[9px] font-black uppercase text-cyan-700 disabled:opacity-60">{exportando ? 'Gerando...' : 'Gerar ZIP'}</button></div>
     </div>
     <div className="grid gap-4 xl:grid-cols-[minmax(0,.85fr)_minmax(0,1.15fr)]">
       <section className={`self-start rounded-xl border p-3 ${painel}`}>
