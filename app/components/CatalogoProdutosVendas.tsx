@@ -18,11 +18,6 @@ const formatarMoedaDigitada = (valor: string) => {
   if (!digitos) return '';
   return (Number(digitos) / 100).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 };
-const caminhoImagemCatalogo = (url: string) => {
-  const marcador = '/storage/v1/object/public/vendas-produtos/';
-  const indice = url.indexOf(marcador);
-  return indice >= 0 ? decodeURIComponent(url.slice(indice + marcador.length)) : '';
-};
 
 export default function CatalogoProdutosVendas({ empresaId, darkMode, corPrimaria }: Props) {
   const [catalogoId, setCatalogoId] = useState('');
@@ -114,17 +109,12 @@ export default function CatalogoProdutosVendas({ empresaId, darkMode, corPrimari
         let imagem_arquivo = '';
         if (produto.imagem_url) {
           try {
-            const caminho = caminhoImagemCatalogo(produto.imagem_url);
-            const arquivoInterno = caminho ? await supabase.storage.from('vendas-produtos').download(caminho) : null;
-            let blob = arquivoInterno?.data || null;
-            if (!blob) {
-              const resposta = await fetch(produto.imagem_url);
-              if (!resposta.ok) throw new Error('Imagem indisponível.');
-              blob = await resposta.blob();
+            const resposta = await fetch(produto.imagem_url);
+            if (resposta.ok) {
+              const extensao = resposta.headers.get('content-type')?.split('/')[1]?.replace(/[^a-z0-9]/gi, '') || 'webp';
+              imagem_arquivo = `imagens/${produto.id}.${extensao}`;
+              zip.file(imagem_arquivo, await resposta.blob());
             }
-            const extensao = blob.type.split('/')[1]?.replace(/[^a-z0-9]/gi, '') || 'webp';
-            imagem_arquivo = `imagens/${produto.id}.${extensao}`;
-            zip.file(imagem_arquivo, blob);
           } catch { /* o produto ainda é exportado, apenas sem a cópia da imagem */ }
         }
         return { ...produto, imagem_arquivo };
