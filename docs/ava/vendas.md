@@ -1,8 +1,8 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.5.0.03 -->
+<!-- ava-version: 1.5.0.04 -->
 
-> Revisão 1.5.0.03: antecipa a seleção do sistema e move a troca para o header fixo da sala.
+> Revisão 1.5.0.04: a troca para Gestão passa pela seleção do perfil vinculado.
 
 ## Escopo e navegação
 
@@ -18,7 +18,8 @@ dúvida dentro do Vendas sempre que a função existir ali.
   ou Vendas antes de carregar os dados. Depois da escolha aparece **Preparando acesso**.
 - Gestores podem abrir a Gestão Mobile pelo botão de sistemas no canto direito
   do header fixo da sala de botões ou adicionar **Gestão** a um atalho configurável.
-  A troca iniciada dentro do Vendas exige confirmação. O aviso de
+  Ao tocar, o Vendas lista todos os perfis ativos da Gestão vinculados à conta;
+  depois de selecionar um perfil, a troca exige confirmação. O aviso de
   aniversário permanece ao lado do botão quando ambos estão visíveis.
 - A sessão e o perfil/empresa são preservados na troca. Usuários sem permissão
   de gestor não recebem o atalho de retorno à Gestão.

@@ -13,6 +13,16 @@
   },
   "versoes": [
     {
+      "versao": "1.5.0.04",
+      "titulo": "Seleção de perfil na troca para Gestão",
+      "data": "Julho/2026",
+      "itens": [
+        "No Vendas, a troca de sistema passa a listar todos os perfis ativos da Gestão vinculados à conta.",
+        "A Gestão abre diretamente no perfil selecionado após a confirmação.",
+        "Na Gestão, a troca permanece oculta quando o perfil atual não possui o módulo Vendas."
+      ]
+    },
+    {
       "versao": "1.5.0.03",
       "titulo": "Entrada e navegação do Vendas Mobile",
       "data": "Julho/2026",

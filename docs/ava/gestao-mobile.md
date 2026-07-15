@@ -1,8 +1,8 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.5.0.03 -->
+<!-- ava-version: 1.5.0.04 -->
 
-> Revisão 1.5.0.03: sem mudança operacional; fluxo equivalente revisado no Vendas Mobile.
+> Revisão 1.5.0.04: confirma que Sistemas não aparece em perfis sem o módulo Vendas.
 
 ## Escopo
 
@@ -17,6 +17,8 @@ deve usar os nomes do menu e da barra inferior do celular.
   a primeira tela permite escolher entre Gestão e Vendas e memorizar a preferência. Só
   depois da escolha aparece **Preparando acesso** e o sistema selecionado é carregado. A
   escolha pode ser refeita em **Menu > Sistemas**.
+- Em um perfil que não possui o módulo Vendas instalado, **Sistemas** não é exibido
+  no menu nem fica disponível como atalho inferior.
 - **Sistemas** também pode ocupar um dos atalhos configuráveis da barra inferior.
   Operadores não recebem permissão para trocar de sistema.
 - A ordem/visibilidade dos cards do dashboard é ajustada em **Menu > Organizar

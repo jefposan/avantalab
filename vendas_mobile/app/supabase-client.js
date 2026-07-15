@@ -245,6 +245,12 @@
     };
   }
 
+  async function listarPerfisGestaoParaTroca() {
+    const { data, error } = await requireClient().rpc('meus_perfis_gestao_para_troca_rpc');
+    if (error) throw error;
+    return data || [];
+  }
+
   async function saveProduct(product) {
     const user = await currentUser();
     if (!user) throw new Error('Sessão expirada.');
@@ -602,5 +608,5 @@
     return data;
   }
 
-  window.VendasDb = { client, currentUser, hasSession, getAccessToken, uploadProductImage, signIn, signInPhone, signInWithGoogle, resetPassword, updatePassword, updateUserMetadata, signUp, signOut, solicitarAcesso, buscarAcessoVendas, loadAll, saveProduct, deleteProduct, movimentarEstoque, listarMovimentosEstoque, createPackage, saveProductsBulk, deletePackage, saveClient, deleteClient, saveOrder, updateOrder, deleteOrder, savePayment, updatePayment, deletePayment, configurarIntegracaoGestao, atualizarRecursoVinculoComercial, resetarSistemaVendas, definirPerfilFinanceiro, saveFeedback };
+  window.VendasDb = { client, currentUser, hasSession, getAccessToken, uploadProductImage, signIn, signInPhone, signInWithGoogle, resetPassword, updatePassword, updateUserMetadata, signUp, signOut, solicitarAcesso, buscarAcessoVendas, loadAll, listarPerfisGestaoParaTroca, saveProduct, deleteProduct, movimentarEstoque, listarMovimentosEstoque, createPackage, saveProductsBulk, deletePackage, saveClient, deleteClient, saveOrder, updateOrder, deleteOrder, savePayment, updatePayment, deletePayment, configurarIntegracaoGestao, atualizarRecursoVinculoComercial, resetarSistemaVendas, definirPerfilFinanceiro, saveFeedback };
 })();

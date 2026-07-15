@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.5.0.04 - 2026-07-15
+
+- Gestão Mobile: mantém a troca de sistemas totalmente oculta quando o perfil atual não possui o módulo Vendas instalado.
+- Vendas Mobile: o botão de troca abre a seleção de perfil da Gestão, listando todos os perfis ativos vinculados à conta autenticada.
+- Vendas Mobile: após selecionar um perfil, solicita confirmação e abre a Gestão diretamente no perfil escolhido.
+
 ## 1.5.0.03 - 2026-07-15
 
 - Vendas Mobile: aplica a seleção de sistema antes da carga dos dados, usando o fundo padrão e exibindo **Preparando acesso** somente após a escolha.
