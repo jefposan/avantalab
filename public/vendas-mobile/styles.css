@@ -1741,17 +1741,34 @@ body { background: #fff; color: var(--ink); }
     radial-gradient(circle at 16% 82%, rgba(0,166,200,.13) 0 2px, transparent 3px),
     radial-gradient(circle at 85% 76%, rgba(22,135,217,.13) 0 3px, transparent 4px),
     linear-gradient(154deg, #f4faff 0%, #fbfdff 46%, #edf6ff 100%); }
-  .mobile-menu::before, .mobile-menu::after { position: absolute; z-index: -1; pointer-events: none; content: ''; }
-  .mobile-menu::before { top: 112px; right: -28vw; width: 72vw; height: 72vw; border: 1px solid rgba(22,135,217,.10); border-radius: 50%; box-shadow: 0 0 0 30px rgba(22,135,217,.025), 0 0 0 64px rgba(0,166,200,.018); }
-  .mobile-menu::after { bottom: 94px; left: -18vw; width: 52vw; height: 32vw; border: 1px solid rgba(0,166,200,.11); border-radius: 50%; transform: rotate(-18deg); }
+  /* Ondas vivas da sala: formas e luz são CSS, sem imagem ou custo de download. */
+  .mobile-menu::before, .mobile-menu::after { position: absolute; z-index: -1; pointer-events: none; content: ''; will-change: transform, opacity, background-position; }
+  .mobile-menu::before { right: -35vw; bottom: -30vw; width: 148vw; height: 70vw; border: 1px solid rgba(22,135,217,.16); border-radius: 50% 48% 0 0 / 68% 60% 0 0; background:
+    radial-gradient(ellipse 56% 72% at 24% 100%, transparent 63%, rgba(0,166,200,.11) 63.7%, transparent 64.4%),
+    radial-gradient(ellipse 50% 74% at 64% 100%, transparent 65%, rgba(22,135,217,.12) 65.7%, transparent 66.5%),
+    linear-gradient(100deg, transparent 20%, rgba(103,232,249,.03) 42%, rgba(103,232,249,.22) 50%, rgba(22,135,217,.04) 58%, transparent 80%);
+    background-size: 100% 100%, 100% 100%, 240% 100%;
+    box-shadow: 0 -12px 30px rgba(0,166,200,.045), inset 0 16px 42px rgba(22,135,217,.035);
+    animation: vendas-wave-fabric 14s ease-in-out infinite alternate, vendas-wave-glow 8s linear infinite; }
+  .mobile-menu::after { bottom: 28px; left: -34vw; width: 136vw; height: 52vw; border: 1px solid rgba(0,166,200,.15); border-radius: 48% 56% 0 0 / 64% 74% 0 0; background:
+    radial-gradient(ellipse 48% 64% at 20% 100%, transparent 66%, rgba(0,166,200,.12) 66.7%, transparent 67.5%),
+    radial-gradient(ellipse 52% 70% at 73% 100%, transparent 64%, rgba(22,135,217,.11) 64.7%, transparent 65.5%),
+    linear-gradient(105deg, transparent 22%, rgba(255,255,255,.03) 42%, rgba(92,219,232,.26) 50%, rgba(255,255,255,.04) 58%, transparent 78%);
+    background-size: 100% 100%, 100% 100%, 260% 100%;
+    box-shadow: 0 -14px 26px rgba(22,135,217,.045), inset 0 12px 38px rgba(0,166,200,.03);
+    animation: vendas-wave-fabric-reverse 17s ease-in-out infinite alternate, vendas-wave-glow 10s linear infinite reverse; }
   .dark-theme .mobile-menu { background:
     radial-gradient(ellipse 70% 38% at -8% 15%, rgba(0,166,200,.25) 0%, rgba(0,166,200,.08) 42%, transparent 72%),
     radial-gradient(ellipse 58% 34% at 108% 38%, rgba(22,135,217,.22) 0%, rgba(22,135,217,.07) 45%, transparent 74%),
     radial-gradient(circle at 16% 82%, rgba(103,232,249,.18) 0 2px, transparent 3px),
     radial-gradient(circle at 85% 76%, rgba(56,189,248,.17) 0 3px, transparent 4px),
     linear-gradient(154deg, #1b354a 0%, #172b40 46%, #112238 100%); }
-  .dark-theme .mobile-menu::before { border-color: rgba(56,189,248,.18); box-shadow: 0 0 0 30px rgba(22,135,217,.05), 0 0 0 64px rgba(0,166,200,.035); }
-  .dark-theme .mobile-menu::after { border-color: rgba(103,232,249,.16); }
+  .dark-theme .mobile-menu::before { border-color: rgba(103,232,249,.24); box-shadow: 0 -14px 36px rgba(8,145,178,.12), inset 0 16px 42px rgba(22,135,217,.09); }
+  .dark-theme .mobile-menu::after { border-color: rgba(103,232,249,.22); box-shadow: 0 -14px 32px rgba(22,135,217,.11), inset 0 12px 38px rgba(0,166,200,.07); }
+  @keyframes vendas-wave-fabric { from { transform: translate3d(-2vw, 1.4vw, 0) rotate(-2deg) scale(1); } to { transform: translate3d(2vw, -1.2vw, 0) rotate(1deg) scale(1.025); } }
+  @keyframes vendas-wave-fabric-reverse { from { transform: translate3d(2vw, .8vw, 0) rotate(2deg) scale(1.015); } to { transform: translate3d(-2vw, -1.5vw, 0) rotate(-1deg) scale(.99); } }
+  @keyframes vendas-wave-glow { from { background-position: 0 0, 0 0, 105% 0; opacity: .65; } 50% { opacity: 1; } to { background-position: 0 0, 0 0, -105% 0; opacity: .76; } }
+  @media (prefers-reduced-motion: reduce) { .mobile-menu::before, .mobile-menu::after { animation: none; } }
   .mobile-menu-header { display: flex; min-height: 92px; align-items: center; justify-content: space-between; border-bottom: 3px solid #e8ebf2; padding: 16px 30px; background: #fff; }
   .dark-theme .mobile-menu-header { border-bottom-color: #263449; background: #0f172a; }
   .mobile-menu-brand { display: flex; align-items: center; }
