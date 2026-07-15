@@ -456,7 +456,6 @@ function render() {
     app.innerHTML = renderModuloVendasDesativado();
     return;
   }
-  const navegacaoInferiorEstavel = app.querySelector('.vendas-bottom-nav');
   const cabecalho = `<header class="system-header"><button class="system-brand brand-home" onclick="abrirSalaBotoes()" aria-label="Ir para a sala de botões">${logoVendas()}</button></header>`;
   app.innerHTML = `
     <aside class="sidebar ${state.menuAberto ? 'open' : ''}">
@@ -485,8 +484,6 @@ function render() {
     ${state.aba === 'novo-pedido' ? `<button class="fab" onclick="abrirCarrinho()">${svgIcon('shopping-cart')}</button>` : ''}
     ${state.agendaFormAberto && state.aba !== 'agenda' ? renderFormularioAgendaVendas() : ''}
   `;
-  const navegacaoInferiorNova = app.querySelector('.vendas-bottom-nav');
-  if (navegacaoInferiorEstavel && navegacaoInferiorNova) navegacaoInferiorNova.replaceWith(navegacaoInferiorEstavel);
   if (state.aba === 'clientes') requestAnimationFrame(configurarDestaqueClientes);
   else limparDestaqueClientes();
 }
@@ -725,6 +722,10 @@ function dadosAtalhoInferiorVendas(id) {
 }
 
 function definirAtalhoInferiorVendas(lado, valor) {
+  const rolagens = {
+    esquerdo: document.getElementById('atalhos-vendas-esquerdo-scroll')?.scrollTop || 0,
+    direito: document.getElementById('atalhos-vendas-direito-scroll')?.scrollTop || 0,
+  };
   const chave = lado === 'esquerdo' ? 'atalhoInferiorEsquerdo' : 'atalhoInferiorDireito';
   const outraChave = lado === 'esquerdo' ? 'atalhoInferiorDireito' : 'atalhoInferiorEsquerdo';
   const padrao = lado === 'esquerdo' ? 'tema' : 'agenda';
@@ -734,7 +735,8 @@ function definirAtalhoInferiorVendas(lado, valor) {
   state[chave] = proximo;
   salvarEstado();
   fecharSheet();
-  abrirOrganizarAtalhosVendas();
+  render();
+  abrirOrganizarAtalhosVendas(rolagens);
 }
 
 function restaurarAtalhosInferioresVendas() {
@@ -746,11 +748,17 @@ function restaurarAtalhosInferioresVendas() {
   toast('Atalhos restaurados.');
 }
 
-function abrirOrganizarAtalhosVendas() {
+function abrirOrganizarAtalhosVendas(rolagens = {}) {
   const esquerdo = atalhoInferiorVendasValido(state.atalhoInferiorEsquerdo, 'tema');
   const direito = atalhoInferiorVendasValido(state.atalhoInferiorDireito, 'agenda');
-  const grupo = (lado, titulo, selecionado) => `<section class="shortcut-organizer-group"><h3>${titulo}</h3><div>${ATALHOS_INFERIORES_VENDAS.map(([id, rotulo, icone]) => `<button type="button" class="${selecionado === id ? 'selected' : ''}" onclick="definirAtalhoInferiorVendas('${lado}','${id}')"><span>${iconeNavegacaoInferior(icone)}</span><b>${rotulo}</b>${selecionado === id ? '<small>Selecionado</small>' : ''}</button>`).join('')}</div></section>`;
+  const grupo = (lado, titulo, selecionado) => `<section class="shortcut-organizer-group"><h3>${titulo}</h3><div id="atalhos-vendas-${lado}-scroll">${ATALHOS_INFERIORES_VENDAS.map(([id, rotulo, icone]) => `<button type="button" class="${selecionado === id ? 'selected' : ''}" onclick="definirAtalhoInferiorVendas('${lado}','${id}')"><span>${iconeNavegacaoInferior(icone)}</span><b>${rotulo}</b>${selecionado === id ? '<small>Selecionado</small>' : ''}</button>`).join('')}</div></section>`;
   sheet(`<div class="sheet-header"><div><h2>Organizar atalhos</h2><p class="muted small">Configurações, Lançar e Início permanecem fixos. Escolha os atalhos ao lado do +.</p></div><button class="close" onclick="fecharSheet()">×</button></div><div class="shortcut-organizer">${grupo('esquerdo', 'À esquerda do +', esquerdo)}${grupo('direito', 'À direita do +', direito)}<button type="button" class="ghost shortcut-organizer-reset" onclick="restaurarAtalhosInferioresVendas()">Restaurar Modo escuro e Agenda</button></div>`, 'sheet-backdrop-centered');
+  requestAnimationFrame(() => {
+    const listaEsquerda = document.getElementById('atalhos-vendas-esquerdo-scroll');
+    const listaDireita = document.getElementById('atalhos-vendas-direito-scroll');
+    if (listaEsquerda) listaEsquerda.scrollTop = Number(rolagens.esquerdo || 0);
+    if (listaDireita) listaDireita.scrollTop = Number(rolagens.direito || 0);
+  });
 }
 
 function iconeNavegacaoInferior(tipo) {
