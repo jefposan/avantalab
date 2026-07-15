@@ -96,6 +96,8 @@ let navegacaoInferiorBloqueadaAte = 0;
 let estoqueProdutoAtualId = '';
 let estoqueMovimentosAtuais = [];
 let arrasteSalaBotoes = null;
+let preparandoRecursosSala = false;
+let recursosSalaBotoesPromise = null;
 
 const PAISES_DDI = [
   ['Brasil', '55', '🇧🇷'], ['Portugal', '351', '🇵🇹'], ['Estados Unidos / Canadá', '1', '🇺🇸'],
@@ -465,14 +467,14 @@ function clientesFiltrados() {
 }
 
 function render() {
-  const agendaAtiva = Boolean(state.autenticado && state.aba === 'agenda' && !carregandoBackend && !conectandoGoogle);
-  const formularioAgendaAberto = Boolean(state.autenticado && state.agendaFormAberto && !carregandoBackend && !conectandoGoogle);
+  const agendaAtiva = Boolean(state.autenticado && state.aba === 'agenda' && !carregandoBackend && !conectandoGoogle && !preparandoRecursosSala);
+  const formularioAgendaAberto = Boolean(state.autenticado && state.agendaFormAberto && !carregandoBackend && !conectandoGoogle && !preparandoRecursosSala);
   document.documentElement.classList.toggle('agenda-open', agendaAtiva);
   document.body.classList.toggle('agenda-open', agendaAtiva);
   document.documentElement.classList.toggle('agenda-form-open', formularioAgendaAberto);
   document.body.classList.toggle('agenda-form-open', formularioAgendaAberto);
   salvarEstado();
-  if (carregandoBackend || conectandoGoogle) {
+  if (carregandoBackend || conectandoGoogle || preparandoRecursosSala) {
     limparDestaqueClientes();
     renderPreparandoAcessoEstavel();
     return;
@@ -653,6 +655,40 @@ const SALA_BOTOES_PADRAO = [
   ['vendas', '5_Pedidos.png', 'Pedidos'], ['vender', '6_Pagamentos.png', 'Pagamentos'], ['agenda', '3_Agenda.png', 'Agenda'],
   ['novidades', '8_Novidades.png', 'Novidades'], ['divulgacao', '7_Divulgação.png', 'Divulgação'], ['informacoes', '9_Informações.png', 'Informações'],
 ];
+
+const RECURSOS_SALA_BOTOES = [
+  ...SALA_BOTOES_PADRAO.map(([, arquivo]) => `/vendas-mobile/assets/menu/${arquivo}`),
+  '/vendas-mobile/assets/logo-vendas-claro.png',
+  '/vendas-mobile/assets/logo-vendas-escuro.png',
+];
+
+function carregarImagemEssencial(url) {
+  return new Promise((resolver) => {
+    const imagem = new Image();
+    let finalizado = false;
+    const concluir = () => {
+      if (finalizado) return;
+      finalizado = true;
+      resolver();
+    };
+    const decodificar = () => {
+      if (typeof imagem.decode !== 'function') { concluir(); return; }
+      imagem.decode().catch(() => undefined).finally(concluir);
+    };
+    imagem.onload = decodificar;
+    imagem.onerror = concluir;
+    imagem.decoding = 'async';
+    imagem.src = url;
+    window.setTimeout(concluir, 7000);
+  });
+}
+
+function prepararRecursosSalaBotoes() {
+  if (!recursosSalaBotoesPromise) {
+    recursosSalaBotoesPromise = Promise.all(RECURSOS_SALA_BOTOES.map(carregarImagemEssencial)).then(() => undefined);
+  }
+  return recursosSalaBotoesPromise;
+}
 
 function itensSalaBotoesOrdenados() {
   const ids = new Set(SALA_BOTOES_PADRAO.map(([idAba]) => idAba));
@@ -1252,7 +1288,7 @@ function comLimiteDeTempo(promessa, mensagem = 'A conexão com o AvantaLab demor
   ]);
 }
 
-async function carregarDadosBackend(mostrarCarregamento = true) {
+async function carregarDadosBackend(mostrarCarregamento = true, manterPreparacaoAteRecursos = false) {
   carregandoBackend = mostrarCarregamento;
   if (mostrarCarregamento) render();
   try {
@@ -1303,7 +1339,7 @@ async function carregarDadosBackend(mostrarCarregamento = true) {
     conectandoGoogle = false;
     sessionStorage.removeItem(GOOGLE_CONNECTING_KEY);
     render();
-    liberarAlturaPreparacao();
+    if (!manterPreparacaoAteRecursos) liberarAlturaPreparacao();
     if (state.erroBackend) { toast(state.erroBackend); state.erroBackend = '';
     }
   }
@@ -1337,10 +1373,17 @@ async function inicializarApp() {
       liberarAlturaPreparacao();
       return;
     }
-    await carregarDadosBackend(false);
+    preparandoRecursosSala = true;
+    const recursosSala = prepararRecursosSalaBotoes();
+    await carregarDadosBackend(false, true);
+    await recursosSala;
+    preparandoRecursosSala = false;
+    render();
+    liberarAlturaPreparacao();
   } catch (error) {
     console.error('Falha ao inicializar o Vendas Mobile.', error);
     carregandoBackend = false;
+    preparandoRecursosSala = false;
     conectandoGoogle = false;
     state.autenticado = false;
     state.usuarioSemAcesso = false;
@@ -3292,6 +3335,19 @@ function carregarBibliotecaExcel() {
   return window.__vendasXlsxPromise;
 }
 
+function carregarBibliotecaZip() {
+  if (window.JSZip) return Promise.resolve(window.JSZip);
+  if (window.__vendasZipPromise) return window.__vendasZipPromise;
+  window.__vendasZipPromise = new Promise((resolve, reject) => {
+    const script = document.createElement('script');
+    script.src = `/vendas-mobile/vendor/jszip.min.js?v=${window.__VENDAS_MOBILE_VERSION__ || ''}`;
+    script.onload = () => window.JSZip ? resolve(window.JSZip) : reject(new Error('Leitor de pacotes indisponível.'));
+    script.onerror = () => reject(new Error('Não foi possível carregar o leitor de pacotes.'));
+    document.head.appendChild(script);
+  });
+  return window.__vendasZipPromise;
+}
+
 function mostrarSincronizacaoCatalogo() {
   const sincronizacao = state.sincronizacaoCatalogo || { adicionados: 0, ja_recebidos: 0 };
   sheet(`<div class="sheet-header"><div><h2>Sincronização do catálogo</h2><p class="muted small">Os produtos publicados pela empresa são verificados sempre que você entra no Vendas.</p></div><button class="close" onclick="fecharSheet()">×</button></div><div class="grid"><article class="stock-current"><span>Novos produtos recebidos nesta abertura</span><b>${Number(sincronizacao.adicionados || 0)}</b></article><article class="stock-current"><span>Produtos já recebidos anteriormente</span><b>${Number(sincronizacao.ja_recebidos || 0)}</b></article><p class="muted small">Produtos que você já alterou — inclusive preços e custos — não são sobrescritos pela atualização automática.</p><button class="primary" onclick="sincronizarCatalogoAgora()">${svgIcon('save')} Verificar agora</button></div>`, 'sheet-backdrop-centered');
@@ -3317,9 +3373,9 @@ async function importarArquivoPacoteZip(input) {
   const nome = valor('pacoteNomeZip').trim();
   const numero = valor('pacoteNumeroZip').trim();
   if (!nome || !numero) { toast('Informe o nome e o número do pacote.'); return; }
-  if (!window.JSZip) { toast('O leitor de pacotes não está disponível. Atualize o aplicativo e tente novamente.'); return; }
   try {
-    const zip = await window.JSZip.loadAsync(arquivo);
+    const JSZip = await carregarBibliotecaZip();
+    const zip = await JSZip.loadAsync(arquivo);
     const manifestoArquivo = zip.file('catalogo-vendas-mobile.json');
     if (!manifestoArquivo) throw new Error('Este arquivo não é um pacote de produtos AvantaLab válido.');
     const manifesto = JSON.parse(await manifestoArquivo.async('text'));
