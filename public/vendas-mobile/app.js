@@ -303,6 +303,7 @@ function svgIcon(nome, classe = '') {
 const ICONES_SVG_ESTAVEIS = {
   settings: '<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06-2.83 2.83-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21h-4v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06-2.83-2.83.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-1.51-1H3v-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06 2.83-2.83.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3h4v.09A1.65 1.65 0 0 0 15 4.6a1.65 1.65 0 0 0 1.82-.33l.06-.06 2.83 2.83-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21v4h-.09A1.65 1.65 0 0 0 19.4 15Z"/>',
   calendar: '<path d="M8 2v4M16 2v4M3 10h18"/><rect x="3" y="4" width="18" height="18" rx="2"/>',
+  cake: '<path d="M4 11h16v9H4zM3 20h18"/><path d="M7 11V8M12 11V6M17 11V8M7 5h0M12 3h0M17 5h0"/><path d="M4 14h16"/>',
   home: '<path d="m3 11 9-8 9 8"/><path d="M5 10v11h14V10M9 21v-7h6v7"/>',
   'message-circle': '<path d="M21 15a4 4 0 0 1-4 4H8l-5 3 1.7-5.1A8 8 0 1 1 21 15Z"/>',
 };
@@ -464,7 +465,8 @@ function render() {
     app.innerHTML = renderModuloVendasDesativado();
     return;
   }
-  const cabecalho = `<header class="system-header"><button class="system-brand brand-home" onclick="abrirSalaBotoes()" aria-label="Ir para a sala de botões">${logoVendas()}</button></header>`;
+  const aniversariantesHoje = aniversariosHojeVendas();
+  const cabecalho = `<header class="system-header"><button class="system-brand brand-home" onclick="abrirSalaBotoes()" aria-label="Ir para a sala de botões">${logoVendas()}</button>${aniversariantesHoje.length ? `<button class="birthday-header-button" onclick="abrirAgendaAniversariantes()" aria-label="${aniversariantesHoje.length} aniversário${aniversariantesHoje.length === 1 ? '' : 's'} hoje">${svgIconEstavel('cake')}<i>${aniversariantesHoje.length}</i></button>` : ''}</header>`;
   app.innerHTML = `
     <aside class="sidebar ${state.menuAberto ? 'open' : ''}">
       <button class="sidebar-brand brand-home" onclick="abrirSalaBotoes()" aria-label="Ir para a sala de botões">${logoVendas()}</button>
@@ -1508,7 +1510,7 @@ function renderAgenda() {
   const itensDia = selecionado ? itensAgendaDoDiaVendas(ano, mes, selecionado) : [];
   const titulo = new Intl.DateTimeFormat('pt-BR', { month: 'long', year: 'numeric' }).format(new Date(ano, mes, 1));
   const proximosAniversarios = aniversariosProximosAgenda();
-  const alertaAniversarios = `<section class="agenda-birthday-alert"><header><div><small>Alertas de aniversário</small><b>${Number(state.agendaAlertaAniversarioDias || 0) === 0 ? 'Somente no dia' : `${Number(state.agendaAlertaAniversarioDias || 0)} dias antes`}</b></div><span><button type="button" onclick="ajustarAlertaAniversario(-1)" aria-label="Reduzir antecedência">−</button><button type="button" onclick="ajustarAlertaAniversario(1)" aria-label="Aumentar antecedência">+</button></span></header>${proximosAniversarios.length ? `<div>${proximosAniversarios.slice(0, 3).map((item) => `<button type="button" onclick="abrirClienteDashboard('${item.cliente.id}')"><b>${escapeHtml(item.cliente.nome)}</b><small>${item.dias === 0 ? 'Hoje' : item.dias === 1 ? 'Amanhã' : `Em ${item.dias} dias`} · ${dataCurtaBR(item.data.toISOString())}</small></button>`).join('')}${proximosAniversarios.length > 3 ? `<em>+${proximosAniversarios.length - 3}</em>` : ''}</div>` : '<p>Nenhum aniversário neste intervalo.</p>'}</section>`;
+  const alertaAniversarios = !selecionado ? `<section class="agenda-birthday-alert"><header><div><small>Alertas de aniversário</small><b>${Number(state.agendaAlertaAniversarioDias || 0) === 0 ? 'Somente no dia' : `${Number(state.agendaAlertaAniversarioDias || 0)} dias antes`}</b></div><span><button type="button" onclick="ajustarAlertaAniversario(-1)" aria-label="Reduzir antecedência">−</button><button type="button" onclick="ajustarAlertaAniversario(1)" aria-label="Aumentar antecedência">+</button></span></header>${proximosAniversarios.length ? `<div>${proximosAniversarios.slice(0, 3).map((item) => `<button type="button" onclick="abrirClienteDashboard('${item.cliente.id}')"><b>${escapeHtml(item.cliente.nome)}</b><small>${item.dias === 0 ? 'Hoje' : item.dias === 1 ? 'Amanhã' : `Em ${item.dias} dias`} · ${dataCurtaBR(item.data.toISOString())}</small></button>`).join('')}${proximosAniversarios.length > 3 ? `<em>+${proximosAniversarios.length - 3}</em>` : ''}</div>` : '<p>Nenhum aniversário neste intervalo.</p>'}</section>` : '';
   const detalheDia = selecionado ? `<section class="agenda-mobile-detail ${state.agendaExpandida ? 'expanded' : ''}"><header><h3>Agenda de ${String(selecionado).padStart(2, '0')} de ${new Intl.DateTimeFormat('pt-BR', { month: 'long' }).format(new Date(ano, mes, 1))}</h3><div><button type="button" class="agenda-expand" onclick="alternarExpansaoAgenda()" aria-label="${state.agendaExpandida ? 'Recolher agenda' : 'Expandir agenda'}">${state.agendaExpandida ? '↙' : '↗'}</button><button type="button" class="close" onclick="fecharDiaAgenda()">×</button></div></header><div class="agenda-mobile-reminders"><div><h4>Clientes agendados</h4><button type="button" class="primary" onclick="abrirFormularioAgendaVendas()">Adicionar</button></div>${itensDia.length ? itensDia.map(renderItemAgendaVendas).join('') : '<p class="agenda-mobile-none">Nenhum cliente agendado neste dia.</p>'}</div></section>` : '';
   return `<section class="agenda-mobile-page ${state.agendaExpandida ? 'agenda-expanded' : ''}"><div class="agenda-mobile-month"><button type="button" onclick="moverMesAgendaVendas(-1)" aria-label="Mês anterior">‹</button><h2>${escapeHtml(titulo)}</h2><button type="button" onclick="moverMesAgendaVendas(1)" aria-label="Próximo mês">›</button></div>${alertaAniversarios}<section class="agenda-mobile-screen ${selecionado ? 'agenda-has-selection' : ''} ${animacao ? `agenda-anim-${animacao}` : ''}"><h2>AGENDA</h2><div class="agenda-mobile-week"><b>D</b><b>S</b><b>T</b><b>Q</b><b>Q</b><b>S</b><b>S</b></div><div class="agenda-mobile-grid">${dias.join('')}</div>${detalheDia}</section>${state.agendaFormAberto ? renderFormularioAgendaVendas() : ''}${state.agendaItemMovendo ? renderMoverAgendaVendas() : ''}</section>`;
 }
@@ -1522,6 +1524,26 @@ function aniversariosProximosAgenda() {
     if (data < hoje) data = new Date(hoje.getFullYear() + 1, mes - 1, dia);
     return { cliente, data, dias: Math.round((data - hoje) / 86400000) };
   }).filter((item) => item.dias <= limite).sort((a, b) => a.dias - b.dias || a.cliente.nome.localeCompare(b.cliente.nome, 'pt-BR'));
+}
+
+function aniversariosHojeVendas() {
+  const hoje = new Date();
+  const mes = hoje.getMonth() + 1;
+  const dia = hoje.getDate();
+  return state.clientes.filter((cliente) => {
+    if (cliente.ativo === false || !/^\d{4}-\d{2}-\d{2}$/.test(String(cliente.data_nascimento || ''))) return false;
+    const [, mesNascimento, diaNascimento] = cliente.data_nascimento.split('-').map(Number);
+    return mesNascimento === mes && diaNascimento === dia;
+  });
+}
+
+function abrirAgendaAniversariantes() {
+  const hoje = new Date();
+  state.agendaAno = hoje.getFullYear();
+  state.agendaMes = hoje.getMonth();
+  state.agendaDiaSelecionado = null;
+  state.agendaExpandida = false;
+  setAba('agenda');
 }
 
 function ajustarAlertaAniversario(delta) {
@@ -1794,12 +1816,16 @@ function salvarMeta() {
 
 async function salvarIntegracaoGestao(base) {
   base = base === 'vendidos' ? 'vendidos' : 'recebidos';
+  const anterior = state.integracaoGestao?.base_receita || 'recebidos';
+  if (base === anterior) return;
+  state.integracaoGestao = { ...state.integracaoGestao, base_receita: base };
+  render();
   try {
     const resposta = await window.VendasDb.configurarIntegracaoGestao(base);
     state.integracaoGestao = { ...state.integracaoGestao, ...(resposta || {}), base_receita: base };
     render();
     toast(`Integração atualizada para ${base === 'vendidos' ? 'valores vendidos' : 'valores recebidos'}.`);
-  } catch (error) { toast(traduzErro(error)); }
+  } catch (error) { state.integracaoGestao = { ...state.integracaoGestao, base_receita: anterior }; render(); toast(traduzErro(error)); }
 }
 
 function abrirPerfilFinanceiroVendas() {
@@ -2140,8 +2166,9 @@ function renderCliente(c) {
   const iniciais = String(c.nome || 'C').split(/\s+/).slice(0, 2).map((parte) => parte[0] || '').join('').toUpperCase();
   const local = [c.endereco, c.cidade, c.estado].filter(Boolean).join(' - ') || 'Não informado';
   const temTelefone = Boolean(String(c.telefone || '').replace(/\D/g, ''));
+  const aniversarianteHoje = aniversariosHojeVendas().some((cliente) => cliente.id === c.id);
   return `
-    <article class="client-card ${c.ativo === false ? 'inactive' : ''}">
+    <article class="client-card ${c.ativo === false ? 'inactive' : ''} ${aniversarianteHoje ? 'client-birthday-today' : ''}">
       <header class="client-card-header">
         <div class="client-avatar">${escapeHtml(iniciais)}</div>
         <div class="client-identity"><h3>${escapeHtml(c.nome)}</h3></div>
@@ -4302,6 +4329,7 @@ window.cancelarMoverAgendaVendas = cancelarMoverAgendaVendas;
 window.salvarNovaDataAgendaVendas = salvarNovaDataAgendaVendas;
 window.salvarMeta = salvarMeta;
 window.salvarIntegracaoGestao = salvarIntegracaoGestao;
+window.abrirAgendaAniversariantes = abrirAgendaAniversariantes;
 window.abrirPerfilFinanceiroVendas = abrirPerfilFinanceiroVendas;
 window.confirmarPerfilFinanceiroVendas = confirmarPerfilFinanceiroVendas;
 window.salvarPerfilFinanceiroVendas = salvarPerfilFinanceiroVendas;
