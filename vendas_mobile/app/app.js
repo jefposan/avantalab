@@ -126,6 +126,8 @@ let arrasteSalaBotoes = null;
 let preparandoRecursosSala = false;
 let recursosSalaBotoesPromise = null;
 let temporizadorReconstrucaoSala = 0;
+let temporizadorGarantiaSala = 0;
+let tentativasGarantiaSala = 0;
 let salaEmLayoutCompacto = window.matchMedia('(max-width: 850px)').matches;
 let assinaturaSalaRenderizada = '';
 let rolagemPorAba = {};
@@ -636,7 +638,16 @@ function logoVendas() {
 }
 
 function setAba(aba) {
-  if (aba === state.aba && !state.menuAberto && !document.getElementById('sheetBackdrop')) return;
+  const entradaClientes = aba === 'clientes'
+    && (state.aba !== 'clientes' || state.menuAberto || Boolean(state.busca) || Boolean(buscaAplicada));
+  if (aba === state.aba && !state.menuAberto && !document.getElementById('sheetBackdrop')) {
+    if (entradaClientes) {
+      limparPesquisaClientesAoEntrar();
+      render();
+    }
+    return;
+  }
+  if (entradaClientes) limparPesquisaClientesAoEntrar();
   if (!state.menuAberto) {
     rolagemPorAba[state.aba] = window.scrollY || document.documentElement.scrollTop || 0;
     try { sessionStorage.setItem('avantalab.vendas_mobile.rolagem_abas', JSON.stringify(rolagemPorAba)); } catch { /* armazenamento indisponível */ }
@@ -662,9 +673,11 @@ function alternarMenu() {
 }
 
 function abrirSalaBotoes() {
-  if (state.menuAberto && salaEmLayoutCompacto && app.querySelector('.mobile-menu')) return;
+  if (state.menuAberto && salaEmLayoutCompacto && salaBotoesEstaCompleta()) return;
+  fecharSheet();
   fecharCamadasAgenda();
   divulgacaoPastaAtualId = null;
+  assinaturaSalaRenderizada = '';
   state.menuAberto = true;
   render();
 }
@@ -841,11 +854,56 @@ function assinaturaVisualSalaBotoes() {
   });
 }
 
+function salaBotoesEstaCompleta() {
+  if (!salaEmLayoutCompacto || !state.menuAberto) return false;
+  const sala = app.querySelector('.mobile-menu');
+  const grade = sala?.querySelector('.mobile-menu-grid');
+  if (!sala || !grade) return false;
+  const esperados = itensSalaBotoesOrdenados().map(([id]) => id);
+  const cards = [...grade.querySelectorAll(':scope > [data-sala-botao]')];
+  if (cards.length !== esperados.length) return false;
+  const idsRenderizados = cards.map((card) => card.dataset.salaBotao || '');
+  return esperados.every((id, indice) => idsRenderizados[indice] === id)
+    && cards.every((card) => Boolean(card.querySelector('img')));
+}
+
+function cancelarGarantiaSalaBotoes() {
+  window.clearTimeout(temporizadorGarantiaSala);
+  temporizadorGarantiaSala = 0;
+  tentativasGarantiaSala = 0;
+}
+
+function agendarGarantiaSalaBotoes() {
+  window.clearTimeout(temporizadorGarantiaSala);
+  if (!state.autenticado || !state.menuAberto || !salaEmLayoutCompacto || carregandoBackend || conectandoGoogle || preparandoRecursosSala) {
+    tentativasGarantiaSala = 0;
+    return;
+  }
+  temporizadorGarantiaSala = window.setTimeout(() => {
+    temporizadorGarantiaSala = 0;
+    if (!state.autenticado || !state.menuAberto || !salaEmLayoutCompacto || carregandoBackend || conectandoGoogle || preparandoRecursosSala) {
+      tentativasGarantiaSala = 0;
+      return;
+    }
+    if (salaBotoesEstaCompleta()) {
+      tentativasGarantiaSala = 0;
+      return;
+    }
+    if (tentativasGarantiaSala >= 2) {
+      console.error('A sala de botões não ficou completa após a reconstrução automática.');
+      return;
+    }
+    tentativasGarantiaSala += 1;
+    assinaturaSalaRenderizada = '';
+    render();
+  }, 40);
+}
+
 function podePreservarSalaBotoes(assinatura) {
   return Boolean(
     salaEmLayoutCompacto &&
     state.menuAberto &&
-    app.querySelector('.mobile-menu') &&
+    salaBotoesEstaCompleta() &&
     assinaturaSalaRenderizada === assinatura &&
     !state.seletorSistemaAberto &&
     !state.seletorPerfilVendasAberto &&
@@ -861,6 +919,9 @@ function render() {
   document.documentElement.classList.toggle('agenda-form-open', formularioAgendaAberto);
   document.body.classList.toggle('agenda-form-open', formularioAgendaAberto);
   salvarEstado();
+  if (!state.autenticado || !state.menuAberto || !salaEmLayoutCompacto || carregandoBackend || conectandoGoogle || preparandoRecursosSala) {
+    cancelarGarantiaSalaBotoes();
+  }
   if (carregandoBackend || conectandoGoogle || preparandoRecursosSala) {
     limparDestaqueClientes();
     renderPreparandoAcessoEstavel();
@@ -895,7 +956,11 @@ function render() {
     return;
   }
   const assinaturaSalaAtual = state.menuAberto && salaEmLayoutCompacto ? assinaturaVisualSalaBotoes() : '';
-  if (assinaturaSalaAtual && podePreservarSalaBotoes(assinaturaSalaAtual)) return;
+  if (assinaturaSalaAtual && podePreservarSalaBotoes(assinaturaSalaAtual)) {
+    agendarGarantiaSalaBotoes();
+    return;
+  }
+  if (!assinaturaSalaAtual) cancelarGarantiaSalaBotoes();
   const aniversariantesHoje = aniversariosHojeVendas();
   const cabecalho = `<header class="system-header"><button class="system-brand brand-home" onclick="abrirSalaBotoes()" aria-label="Ir para a sala de botões">${logoVendas()}</button><div class="system-header-actions">${aniversariantesHoje.length ? `<button class="birthday-header-button" onclick="abrirAgendaAniversariantes()" aria-label="${aniversariantesHoje.length} aniversário${aniversariantesHoje.length === 1 ? '' : 's'} hoje">${svgIconEstavel('cake')}<i>${aniversariantesHoje.length}</i></button>` : ''}</div></header>`;
   app.innerHTML = `
@@ -928,6 +993,7 @@ function render() {
     ${state.seletorPerfilVendasAberto ? renderSeletorPerfilVendas() : ''}
   `;
   assinaturaSalaRenderizada = assinaturaSalaAtual;
+  if (assinaturaSalaAtual) agendarGarantiaSalaBotoes();
   if (state.aba === 'clientes') requestAnimationFrame(configurarDestaqueClientes);
   else limparDestaqueClientes();
 }
@@ -1247,7 +1313,7 @@ function renderMenuMobile() {
   const multiplosPerfisVendas = (state.perfisVendas || []).length > 1;
   return `<section class="mobile-menu" aria-label="Menu principal">
     <header class="mobile-menu-header${multiplosPerfisVendas ? ' has-sales-profile-switch' : ''}"><div class="mobile-menu-brand">${logoVendas()}</div><div class="system-header-actions">${aniversariantesHoje.length ? `<button class="birthday-header-button" onclick="abrirAgendaAniversariantes()" aria-label="${aniversariantesHoje.length} aniversário${aniversariantesHoje.length === 1 ? '' : 's'} hoje">${svgIconEstavel('cake')}<i>${aniversariantesHoje.length}</i></button>` : ''}${multiplosPerfisVendas ? `<button class="sales-profile-switch-header-button" onclick="abrirSeletorPerfilVendas()" aria-label="Trocar perfil de Vendas" title="Trocar perfil de Vendas">${iconeTrocaPerfilVendas()}</button>` : ''}${podeTrocarParaGestaoVendas() ? `<button class="system-switch-header-button" onclick="abrirSeletorPerfilGestaoVendas()" aria-label="Ir para Gestão" title="Ir para Gestão">${iconeTrocaSistemaVendas()}</button>` : ''}</div></header>
-    <div class="mobile-menu-grid-wrap${organizando ? ' is-organizing' : ''}"><button type="button" class="mobile-menu-organize" onclick="alternarOrganizacaoSalaBotoes()" aria-label="${organizando ? 'Concluir organização da sala' : 'Organizar sala de botões'}" title="${organizando ? 'Concluir' : 'Organizar sala'}">${iconeOrganizarSala(organizando)}</button><div class="mobile-menu-grid">${itens.map(([idAba, arquivo, label]) => `<button type="button" data-sala-botao="${idAba}" class="mobile-menu-card${organizando ? ' is-organizable' : ''}" ${organizando ? `onpointerdown="iniciarArrasteSalaBotoes(event,'${idAba}')" onpointermove="moverArrasteSalaBotoes(event)" onpointerup="finalizarArrasteSalaBotoes(event)" onpointercancel="finalizarArrasteSalaBotoes(event)"` : `onclick="setAba('${idAba}')"`}><img src="./assets/menu/${arquivo}" alt="${label}" /></button>`).join('')}</div></div>
+    <div class="mobile-menu-grid-wrap${organizando ? ' is-organizing' : ''}"><button type="button" class="mobile-menu-organize" onclick="alternarOrganizacaoSalaBotoes()" aria-label="${organizando ? 'Concluir organização da sala' : 'Organizar sala de botões'}" title="${organizando ? 'Concluir' : 'Organizar sala'}">${iconeOrganizarSala(organizando)}</button><div class="mobile-menu-grid">${itens.map(([idAba, arquivo, label]) => `<button type="button" data-sala-botao="${idAba}" class="mobile-menu-card${organizando ? ' is-organizable' : ''}" ${organizando ? `onpointerdown="iniciarArrasteSalaBotoes(event,'${idAba}')" onpointermove="moverArrasteSalaBotoes(event)" onpointerup="finalizarArrasteSalaBotoes(event)" onpointercancel="finalizarArrasteSalaBotoes(event)"` : `onclick="setAba('${idAba}')"`}><img src="./assets/menu/${arquivo}" alt="${label}" onerror="this.closest('.mobile-menu-card')?.classList.add('image-failed')" /><span class="mobile-menu-card-fallback" aria-hidden="true">${escapeHtml(label)}</span></button>`).join('')}</div></div>
     <div class="mobile-menu-assistance">
       <button type="button" class="mobile-ava-card" onclick="abrirChatIAVendas()">
         <span class="mobile-ava-logo" role="img" aria-label="Ava"></span>
@@ -3046,6 +3112,11 @@ function renderClientes() {
   `;
 }
 
+function limparPesquisaClientesAoEntrar() {
+  state.busca = '';
+  buscaAplicada = '';
+}
+
 function renderBarraBuscaClientes() {
   const temBusca = Boolean(String(state.busca || '').trim());
   const rotuloOrdem = `Ordem ${ordemAlfabetica === 'asc' ? 'A/Z' : 'Z/A'}`;
@@ -3379,6 +3450,7 @@ async function finalizarPedidoCliente() {
       : [salvo, ...state.vendas];
     pedidoClienteRascunho = null;
     if (!rascunho.editandoId) {
+      limparPesquisaClientesAoEntrar();
       state.aba = 'clientes';
       state.menuAberto = false;
     }
@@ -3519,6 +3591,7 @@ async function confirmarPagamentoCliente() {
       }
     }
     pagamentoClienteRascunho = null;
+    limparPesquisaClientesAoEntrar();
     state.aba = 'clientes';
     state.menuAberto = false;
     await confirmarMutacaoDadosVendas();
@@ -4044,7 +4117,8 @@ function criarCanvasComprovante({ empresa = '', titulo, cliente, data, etiqueta 
     ctx.fillStyle = '#1687D9'; ctx.textAlign = 'right'; ctx.font = '850 28px Arial, sans-serif'; ctx.fillText(linha.valor || '', 1002, y + 9); ctx.textAlign = 'left'; ctx.font = '750 27px Arial, sans-serif';
     y += 82;
   });
-  ctx.fillStyle = '#64748b'; ctx.font = '600 20px Arial, sans-serif'; ctx.textAlign = 'center'; ctx.fillText('Comprovante gerado pelo Vendas AvantaLab', largura / 2, altura - 54); ctx.textAlign = 'left';
+  const rodape = textoCanvasLimitado(ctx, `${titulo} - ${cliente}`, 900);
+  ctx.fillStyle = '#64748b'; ctx.font = '600 20px Arial, sans-serif'; ctx.textAlign = 'center'; ctx.fillText(rodape, largura / 2, altura - 54); ctx.textAlign = 'left';
   return canvas;
 }
 
@@ -4053,7 +4127,7 @@ async function compartilharCanvasComprovante(canvas, nomeArquivo, titulo) {
   if (!blob) throw new Error('Não foi possível gerar a imagem do comprovante.');
   const arquivo = new File([blob], nomeArquivo, { type: 'image/png' });
   if (navigator.share && (!navigator.canShare || navigator.canShare({ files: [arquivo] }))) {
-    try { await navigator.share({ title: titulo, text: 'Comprovante gerado pelo Vendas AvantaLab.', files: [arquivo] }); return true; }
+    try { await navigator.share({ title: titulo, text: titulo, files: [arquivo] }); return true; }
     catch (error) { if (error?.name === 'AbortError') return false; }
   }
   const url = URL.createObjectURL(blob);
@@ -4087,7 +4161,7 @@ async function compartilharPedido(pedidoId) {
       { rotulo: 'Saldo atual', valor: moeda(resumo.saldoAtual) },
     ],
   });
-  const compartilhado = await compartilharCanvasComprovante(canvas, `pedido-${String(venda.id).slice(0, 8)}.png`, 'Comprovante de pedido AvantaLab');
+  const compartilhado = await compartilharCanvasComprovante(canvas, `pedido-${String(venda.id).slice(0, 8)}.png`, `Comprovante de pedido - ${cliente?.nome || 'Cliente não informado'}`);
   if (compartilhado) fecharSheet();
 }
 
@@ -4115,7 +4189,7 @@ async function compartilharPagamento(pagamentoId) {
       { rotulo: 'Saldo atual', valor: moeda(resumo.saldoAtual) },
     ],
   });
-  const compartilhado = await compartilharCanvasComprovante(canvas, `pagamento-${String(pagamento.id).slice(0, 8)}.png`, 'Comprovante de pagamento AvantaLab');
+  const compartilhado = await compartilharCanvasComprovante(canvas, `pagamento-${String(pagamento.id).slice(0, 8)}.png`, `Comprovante de pagamento - ${cliente?.nome || 'Cliente não informado'}`);
   if (compartilhado) fecharSheet();
 }
 

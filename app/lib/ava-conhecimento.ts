@@ -78,7 +78,7 @@ SALA E NAVEGAÇÃO
 - Com mais de um perfil de Vendas ativo, um botão próprio de troca de perfil aparece ao lado de Ir para Gestão no header da sala; com apenas um, fica oculto. A troca seleciona o ambiente operacional, mas o destino financeiro só pode ser alterado em Configurações > Integração com Gestão.
 
 CLIENTES
-- Em Clientes, a barra compacta mantém Ordenar, o campo de pesquisa e o botão Buscar sempre visíveis e alinhados. A lista centraliza suavemente o card em foco. Use Novo cliente para cadastrar. Nome é obrigatório; celular e endereço são recomendados para WhatsApp e mapas. A ficha permite ligação, WhatsApp, mapas, pedido, pagamento, agendamento e Ver detalhes.
+- Em Clientes, a barra compacta mantém Ordenar, o campo de pesquisa e o botão Buscar sempre visíveis e alinhados. Ao acessar novamente a página, a pesquisa anterior é limpa e a lista completa volta a aparecer. A lista centraliza suavemente o card em foco. Use Novo cliente para cadastrar. Nome é obrigatório; celular e endereço são recomendados para WhatsApp e mapas. A ficha permite ligação, WhatsApp, mapas, pedido, pagamento, agendamento e Ver detalhes.
 - Clientes, pedidos e pagamentos só informam sucesso depois da confirmação do Supabase. O cache local é atualizado imediatamente e uma carga antiga em segundo plano não pode substituir uma alteração mais nova. Históricos com mais de 1.000 registros são carregados em todas as páginas antes do cálculo dos saldos.
 - Se a conexão falhar durante o salvamento, clientes, pedidos e pagamentos ficam em uma fila protegida no aparelho e são reenviados automaticamente com o mesmo identificador, sem duplicidade. Oriente que a mensagem de pendência ainda não significa confirmação no servidor.
 - Durante a preparação de acesso ou conteúdo, o Vendas exibe a etapa atual e um percentual baseado nas tarefas realmente concluídas, como sessão, permissões, catálogo, clientes, pedidos e pagamentos. Aguarde a conclusão antes de orientar uma nova ação.
@@ -94,7 +94,7 @@ CATÁLOGO, PEDIDOS E PAGAMENTOS
 - Novo pedido pode iniciar em Clientes (cliente já definido) ou em Pedidos (selecionar cliente). Há Venda e Consignado, itens bonificados, desconto em valor ou percentual e comprovante após finalizar.
 - Consignado não entra como venda/recebimento até ser convertido em pedido. Não trate consignado como receita realizada.
 - Pagamentos registra recebimentos, desconto, data e forma. Pelo botão +, Lançar pagamento abre a seleção de cliente; o campo Valor pago recebe foco. Editar ou excluir um pagamento recalcula o saldo e relatórios. Os campos de data de pedido e pagamento têm rótulo centralizado e data destacada; toque na data para abrir o calendário. Comprovantes podem ser abertos e editados pelas listas do cliente.
-- Ao confirmar um pagamento, o Vendas bloqueia uma segunda confirmação, confere no servidor todos os pedidos e pagamentos da cliente e só então atualiza o saldo e libera o comprovante. Se qualquer confirmação falhar, o formulário permanece aberto e nenhum comprovante é exibido.
+- Ao confirmar um pagamento, o Vendas bloqueia uma segunda confirmação, confere no servidor todos os pedidos e pagamentos da cliente e só então atualiza o saldo e libera o comprovante. Ao compartilhar a imagem, o rodapé e a mensagem identificam o comprovante e a cliente, sem assinatura do sistema. Se qualquer confirmação falhar, o formulário permanece aberto e nenhum comprovante é exibido.
 
 AGENDA, CONTEÚDO E CONFIGURAÇÕES
 - Agenda cria lembretes de visita, entrega e recebimento; pode expandir a visualização e mover a data de um item.

@@ -1,8 +1,8 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.5.4.06 -->
+<!-- ava-version: 1.5.4.09 -->
 
-> Revisão 1.5.4.06: históricos visuais em lotes de 10 com carregamento progressivo.
+> Revisão 1.5.4.09: rodapé da imagem e mensagem enviada ao compartilhar comprovantes identificam o tipo e a cliente, sem assinatura do sistema.
 
 ## Escopo e navegação
 
@@ -38,7 +38,8 @@ dúvida dentro do Vendas sempre que a função existir ali.
   e é reenviada automaticamente sem criar duplicidade. O app informa claramente
   quando ainda aguarda confirmação; **salvo** significa confirmação do servidor.
 - No cabeçalho de **Clientes**, Ordenar, o campo de pesquisa e **Buscar** ficam
-  sempre visíveis e alinhados na mesma linha.
+  sempre visíveis e alinhados. Ao entrar novamente em **Clientes**, a pesquisa
+  anterior é limpa e a lista completa volta a ser exibida.
 - **Clientes > Novo cliente** cria a ficha. Nome é obrigatório; celular e endereço
   são recomendados para ligação/WhatsApp e mapas.
 - A ficha oferece pedido, pagamento, agendamento e **Ver detalhes**. Nesta área,

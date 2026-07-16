@@ -1,5 +1,19 @@
 # Changelog
 
+## 1.5.4.09 - 2026-07-16
+
+- Vendas Mobile: corrige o rodapé da imagem do comprovante para mostrar apenas o tipo e a cliente, sem “Vendas AvantaLab”.
+
+## 1.5.4.08 - 2026-07-16
+
+- Vendas Mobile: ao compartilhar a imagem de um comprovante, a mensagem passa a identificar apenas o tipo e a cliente, sem a assinatura “Vendas AvantaLab”.
+
+## 1.5.4.07 - 2026-07-16
+
+- Clientes: o campo de pesquisa passa a ser limpo sempre que a página é acessada novamente.
+- Sala de botões: a navegação valida se todos os cards foram montados antes de preservar a tela e reconstrói automaticamente a grade caso detecte uma renderização incompleta.
+- Navegação: o botão **Início** deixa de aceitar uma sala parcial como válida, evitando retornar para uma tela sem os botões.
+
 ## 1.5.4.06 - 2026-07-16
 
 - Vendas Mobile: históricos de pedidos, consignados e pagamentos passam a exibir 10 registros por vez, com botão para carregar o próximo lote até o fim da lista.
