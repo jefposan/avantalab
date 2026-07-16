@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.5.4.02 - 2026-07-16
+
+- Gestão Mobile: o acesso passa a se chamar **Ir para Vendas** e fica disponível para Gestor Master e Administrador mesmo antes da ativação; quando necessário, o próprio fluxo ativa o módulo e segue para o Vendas.
+- Integração: a ativação do Vendas Mobile passa a ser conferida exclusivamente pela validação segura do servidor, evitando que uma leitura protegida marque novamente o módulo como desativado.
+- Navegação: a escolha entre Gestão e Vendas permanece somente na entrada após o login. Depois de acessar um sistema, o comando mostra apenas o outro destino; no Vendas, passa a se chamar **Ir para Gestão**.
+
 ## 1.5.4.01 - 2026-07-16
 
 - Vendas Mobile: clientes, pedidos e pagamentos recebem identificadores únicos criados no aparelho, permitindo repetir uma gravação após queda de conexão sem duplicar registros.

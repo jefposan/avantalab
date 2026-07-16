@@ -1,8 +1,8 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.5.4.01 -->
+<!-- ava-version: 1.5.4.02 -->
 
-> Revisão 1.5.4.01: sem impacto operacional na Gestão Mobile.
+> Revisão 1.5.4.02: troca direta para o Vendas e ativação persistente do módulo.
 
 ## Escopo
 
@@ -23,18 +23,16 @@ deve usar os nomes do menu e da barra inferior do celular.
   cadastrais** aparecem em sequência.
 - Quando o módulo Vendas Mobile está ativo e o usuário tem permissão, após o login
   a primeira tela permite escolher entre Gestão e Vendas e memorizar a preferência. Só
-  depois da escolha aparece **Preparando acesso** e o sistema selecionado é carregado. A
-  escolha pode ser refeita em **Menu > Sistemas**.
-- Em um perfil sem o módulo Vendas instalado, **Sistemas** aparece inativo no menu
-  lateral. Gestor Master ou Administrador pode tocar nele, confirmar a ativação e,
-  após a validação, escolher entre Gestão e Vendas. Em perfil pessoal gratuito, a
+  depois da escolha aparece **Preparando acesso** e o sistema selecionado é carregado.
+- Dentro da Gestão, **Menu > Ir para Vendas** abre diretamente o Vendas Mobile; a
+  tela com as duas opções é exibida somente na entrada após o login.
+- Em um perfil sem o módulo instalado, **Ir para Vendas** continua disponível para
+  Gestor Master ou Administrador. Ao tocar, o sistema solicita a ativação, confirma
+  o salvamento no servidor e segue para o Vendas. Em perfil pessoal gratuito, a
   ativação exige primeiro o Premium.
-- **Sistemas** também pode ocupar um dos atalhos configuráveis da barra inferior.
-  Essa opção de atalho fica disponível depois que o módulo é ativado. Operadores
-  veem o botão lateral inativo e não recebem permissão para ativar ou trocar de sistema.
-- No seletor aberto pelo menu ou atalho, o **X** ou um toque fora do card cancela a
-  troca e mantém o sistema atual. A escolha inicial antes do carregamento continua
-  obrigatória.
+- **Ir para Vendas** também pode ocupar um dos atalhos configuráveis da barra
+  inferior, inclusive antes da ativação. Operadores veem o botão lateral inativo e
+  não recebem permissão para ativar ou trocar de sistema.
 - Ao escolher Vendas, um único perfil de Vendas ativo abre diretamente. Quando a
   conta possui mais de um, o usuário escolhe qual deseja acessar antes do carregamento.
   Essa escolha não modifica o destino financeiro configurado no Vendas.

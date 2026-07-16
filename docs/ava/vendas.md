@@ -1,8 +1,8 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.5.4.01 -->
+<!-- ava-version: 1.5.4.02 -->
 
-> Revisão 1.5.4.01: falhas temporárias de conexão mantêm clientes, pedidos e pagamentos em uma fila protegida até a confirmação do servidor.
+> Revisão 1.5.4.02: o retorno ao Gestão passa a ser identificado como Ir para Gestão.
 
 ## Escopo e navegação
 
@@ -16,13 +16,13 @@ dúvida dentro do Vendas sempre que a função existir ali.
   Organizar atalhos**; o lápis da sala muda a ordem dos cards.
 - Para gestores habilitados, a primeira tela após o login permite escolher Gestão
   ou Vendas antes de carregar os dados. Depois da escolha aparece **Preparando acesso**.
-- Gestores podem abrir a Gestão Mobile pelo botão de sistemas no canto direito
-  do header fixo da sala de botões ou adicionar **Gestão** a um atalho configurável.
+- Gestores podem usar **Ir para Gestão** no canto direito do header fixo da sala
+  de botões ou adicionar **Ir para Gestão** a um atalho configurável.
   Ao tocar, o Vendas lista todos os perfis ativos da Gestão vinculados à conta;
   depois de selecionar um perfil, a troca exige confirmação. O aviso de
   aniversário permanece ao lado do botão quando ambos estão visíveis.
 - Quando o usuário possui mais de um perfil de Vendas ativo, um segundo botão com
-  ícone próprio aparece ao lado de Sistemas no header da sala. Ele troca somente o
+  ícone próprio aparece ao lado de **Ir para Gestão** no header da sala. Ele troca somente o
   perfil operacional do Vendas; com um único perfil, o botão fica oculto.
 - O destino financeiro não muda ao selecionar outro perfil de Vendas. Ele só pode
   ser definido ou alterado em **Configurações > Integração com Gestão**.

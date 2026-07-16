@@ -1678,7 +1678,7 @@
 
   function atalhosInferioresDisponiveis() {
     var atalhos = ['perfil', 'agenda', 'tema', 'despesasFixas'];
-    if (podeTrocarSistemaMobile()) atalhos.push('sistemas');
+    if (podeGerenciarUsuarios()) atalhos.push('sistemas');
     return atalhos;
   }
 
@@ -1741,34 +1741,13 @@
     }
   }
 
-  function abrirSeletorSistemaMobile() {
-    if (!podeTrocarSistemaMobile()) {
-      mostrarToast('A troca de sistemas nao esta disponivel para este usuario.');
-      return;
-    }
-    state.menuAberto = false;
-    state.seletorSistemaAberto = true;
-    state.seletorSistemaInicialBloqueante = false;
-    try {
-      state.lembrarSistemaInicial = !!localStorage.getItem(chaveSistemaPerfilMobile(CHAVE_SISTEMA_INICIAL_MOBILE));
-    } catch (error) { state.lembrarSistemaInicial = false; }
-    render();
-  }
-
-  function fecharSeletorSistemaMobile() {
-    if (state.seletorSistemaInicialBloqueante) return;
-    state.seletorSistemaAberto = false;
-    state.lembrarSistemaInicial = false;
-    render();
-  }
-
   function abrirFluxoSistemasMobile() {
     if (!podeGerenciarUsuarios()) {
       mostrarToast('A troca de sistemas nao esta disponivel para este usuario.');
       return;
     }
     if (state.vendasMobileModuloAtivo) {
-      abrirSeletorSistemaMobile();
+      abrirVendasMobile();
       return;
     }
     state.menuAberto = false;
@@ -1810,16 +1789,6 @@
         throw (ativacao.error || new Error('A ativação do módulo não foi confirmada.'));
       }
 
-      var instalacaoConfirmada = await db
-        .from('empresa_modulos')
-        .select('modulo_id, ativo')
-        .eq('empresa_id', state.empresa.id)
-        .eq('modulo_id', 'vendas_mobile')
-        .maybeSingle();
-      if (instalacaoConfirmada.error || !instalacaoConfirmada.data || instalacaoConfirmada.data.ativo !== true) {
-        throw (instalacaoConfirmada.error || new Error('O módulo foi solicitado, mas a instalação não foi localizada.'));
-      }
-
       var acessoAtivo = await db.rpc('modulo_vendas_mobile_ativo_rpc', {
         p_empresa_id: state.empresa.id,
       });
@@ -1831,7 +1800,7 @@
       state.ativacaoVendasMobileAberta = false;
       state.ativacaoVendasMobileCarregando = false;
       state.ativacaoVendasMobileErro = '';
-      abrirSeletorSistemaMobile();
+      abrirVendasMobile();
     } catch (error) {
       console.error('Erro ao ativar o módulo Vendas Mobile:', error);
       state.ativacaoVendasMobileCarregando = false;
@@ -1898,32 +1867,13 @@
       return false;
     }
 
-    var modulo = await db
-      .from('empresa_modulos')
-      .select('modulo_id')
-      .eq('empresa_id', state.empresa.id)
-      .eq('modulo_id', 'vendas_mobile')
-      .eq('ativo', true)
-      .maybeSingle();
-    atualizarProgressoAcessoMobile('access', 1, 3, 'Verificando módulos do perfil');
-    if (modulo.error || !modulo.data) {
-      state.preparacaoSistemaVendas = {
-        empresaId: state.empresa.id,
-        acessoVendasAtivo: false,
-        integracaoValidada: false,
-      };
-      atualizarProgressoAcessoMobile('access', 3, 3, 'Módulos verificados');
-      return false;
-    }
-
     var acessoGestor = await db.rpc('garantir_acessos_gestor_vendas_mobile_rpc');
-    atualizarProgressoAcessoMobile('access', 2, 3, 'Validando integração com o Vendas');
+    atualizarProgressoAcessoMobile('access', 1, 3, 'Verificando módulo do perfil');
     if (acessoGestor.error) {
       console.warn('Não foi possível preparar o acesso integrado ao Vendas Mobile:', acessoGestor.error);
-      atualizarProgressoAcessoMobile('access', 3, 3, 'Integração verificada');
-      return false;
     }
 
+    atualizarProgressoAcessoMobile('access', 2, 3, 'Validando integração com o Vendas');
     var acessoAtivo = await db.rpc('modulo_vendas_mobile_ativo_rpc', {
       p_empresa_id: state.empresa.id,
     });
@@ -1938,12 +1888,10 @@
   }
 
   function seletorSistemaInicialHtml() {
-    if (!state.seletorSistemaAberto || !podeTrocarSistemaMobile()) return '';
-    var fechar = state.seletorSistemaInicialBloqueante ? '' : '<button id="fechar-seletor-sistema" type="button" class="absolute right-3 top-3 flex h-9 w-9 items-center justify-center rounded-full border border-white/25 bg-white/15 text-xl font-black text-white backdrop-blur active:scale-95" aria-label="Fechar troca de sistemas">&times;</button>';
+    if (!state.seletorSistemaAberto || !state.seletorSistemaInicialBloqueante || !podeTrocarSistemaMobile()) return '';
     var card = (
       '<section class="w-full max-w-sm overflow-hidden rounded-3xl bg-white text-slate-900 shadow-2xl" role="dialog" aria-modal="true" aria-labelledby="seletor-sistema-titulo">' +
           '<div class="relative px-5 py-4 text-white" style="background:linear-gradient(135deg,#003E73,#00A6C8)">' +
-            fechar +
             '<p class="text-[10px] font-black uppercase tracking-[0.2em] text-cyan-100">AvantaLab</p>' +
             '<h2 id="seletor-sistema-titulo" class="mt-1 text-xl font-black">Por onde deseja começar?</h2>' +
             '<p class="mt-1 text-xs font-semibold text-cyan-50/90">Escolha o sistema para abrir neste acesso.</p>' +
@@ -1964,10 +1912,7 @@
           '</div>' +
       '</section>'
     );
-    if (state.seletorSistemaInicialBloqueante) {
-      return '<section class="avantalab-mobile-bg fixed inset-0 z-[14000] flex items-center justify-center overflow-hidden px-4" style="height:100dvh;background-position:center bottom;background-size:cover;">' + card + '</section>';
-    }
-    return '<div id="seletor-sistema-overlay" class="fixed inset-0 z-[14000] flex items-center justify-center bg-slate-950/75 px-4">' + card + '</div>';
+    return '<section class="avantalab-mobile-bg fixed inset-0 z-[14000] flex items-center justify-center overflow-hidden px-4" style="height:100dvh;background-position:center bottom;background-size:cover;">' + card + '</section>';
   }
 
   function normalizarAtalhoInferior(valor, padrao) {
@@ -3165,7 +3110,7 @@
       await carregarRecorrencias();
       return;
     }
-    if (tipo === 'sistemas') abrirVendasMobile();
+    if (tipo === 'sistemas') abrirFluxoSistemasMobile();
   }
 
   function removerChatIAOverlay() {
@@ -4805,8 +4750,7 @@
 
     var modulosAtivosMobile = (resultados[5] && resultados[5].data) || [];
     state.pontoModuloAtivo = modulosAtivosMobile.some(function (item) { return item.modulo_id === 'ponto'; });
-    state.vendasMobileModuloAtivo = modulosAtivosMobile.some(function (item) { return item.modulo_id === 'vendas_mobile'; }) &&
-      !resultados[7].error && resultados[7].data === true;
+    state.vendasMobileModuloAtivo = !resultados[7].error && resultados[7].data === true;
     state.caixinhaMovimentos = ((resultados[6] && resultados[6].data) || []).map(function (item) {
       return {
         id: item.id,
@@ -7879,7 +7823,7 @@
       agenda: 'Agenda',
       tema: 'Tema',
       despesasFixas: 'Fixas',
-      sistemas: 'Sistemas',
+      sistemas: 'Ir para Vendas',
     }[tipo] || '';
   }
 
@@ -9411,7 +9355,7 @@
             menuBotaoHtml('menu-despesas-fixas', 'Despesas fixas', 'Lancamentos automaticos mensais') +
             menuBotaoHtml('menu-ajuda-categorias', 'Instrucoes sobre categorias', 'Como organizar seus gastos') +
             menuBotaoHtml('menu-tutorial', 'Tutorial', 'Como usar o AvantaLab') +
-            menuBotaoHtml('menu-trocar-sistema', 'Sistemas', state.vendasMobileModuloAtivo ? (podeTrocarSistemaMobile() ? 'Escolher Gestão ou Vendas Mobile' : 'Indisponível para operadores') : (podeGerenciarUsuarios() ? 'Vendas Mobile não instalado · toque para ativar' : 'Vendas Mobile não instalado'), !podeGerenciarUsuarios(), !state.vendasMobileModuloAtivo) +
+            menuBotaoHtml('menu-trocar-sistema', 'Ir para Vendas', state.vendasMobileModuloAtivo ? (podeTrocarSistemaMobile() ? 'Abrir o Vendas Mobile' : 'Indisponível para operadores') : (podeGerenciarUsuarios() ? 'Ativar e abrir o Vendas Mobile' : 'Indisponível para operadores'), !podeGerenciarUsuarios(), false) +
             ((state.vendasMobileModuloAtivo && podeGerenciarUsuarios()) ? menuBotaoHtml('menu-vendas-mobile', 'Conteúdo do Vendas', 'Novidades e divulgacao') : '') +
             '<button id="menu-config-toggle" type="button" class="mobile-config-main-btn rounded-[14px_26px_26px_26px] border border-slate-300 px-2.5 py-2 text-left text-slate-800 shadow-[0_5px_13px_rgba(15,23,42,.09)] transition active:scale-[0.99]" style="background:' + (configAberto ? 'linear-gradient(90deg,#B8C3D0 0%,#A5B2C1 100%)' : 'linear-gradient(90deg,#CBD5E1 0%,#B4C0CE 100%)') + '">' +
               '<div class="flex items-center gap-2">' +
@@ -11070,13 +11014,6 @@
     bind('escolher-sistema-gestao', function () { escolherSistemaInicialMobile('gestao'); });
     bind('escolher-sistema-vendas', function () { escolherSistemaInicialMobile('vendas'); });
     bindChange('lembrar-sistema-inicial', function () { state.lembrarSistemaInicial = this.checked === true; });
-    bind('fechar-seletor-sistema', fecharSeletorSistemaMobile);
-    var seletorSistemaOverlay = document.getElementById('seletor-sistema-overlay');
-    if (seletorSistemaOverlay) {
-      seletorSistemaOverlay.addEventListener('click', function (event) {
-        if (event.target === seletorSistemaOverlay) fecharSeletorSistemaMobile();
-      });
-    }
     bind('cancelar-ativacao-vendas', fecharAtivacaoVendasMobile);
     bind('confirmar-ativacao-vendas', ativarVendasMobileNoPerfil);
     bind('reenviar-telefone-obrigatorio', enviarCodigoTelefoneObrigatorioMobile);

@@ -12,6 +12,7 @@
     "instagramUrl": "https://www.instagram.com/avanta.lab"
   },
   "versoes": [
+    {"versao":"1.5.4.02","titulo":"Troca direta entre Gestão e Vendas","data":"Julho/2026","itens":["Na Gestão, o comando Ir para Vendas ativa o módulo quando necessário e abre diretamente o outro sistema.","No Vendas, o comando aparece como Ir para Gestão; a tela com os dois sistemas fica reservada ao primeiro acesso após o login.","A validação do servidor impede que um módulo já ativado volte a aparecer como desativado."]},
     {"versao":"1.5.4.01","titulo":"Salvamento protegido contra queda de conexão","data":"Julho/2026","itens":["Alterações de clientes, pedidos e pagamentos ficam protegidas no aparelho até a confirmação do servidor.","Se a conexão cair durante o salvamento, o Vendas tenta novamente automaticamente sem duplicar registros.","A mensagem de sucesso só aparece depois que o Supabase confirma a gravação."]},
     {"versao":"1.5.4","titulo":"Proteção reforçada dos dados do Vendas","data":"Julho/2026","itens":["Clientes, pedidos e pagamentos salvos não são mais substituídos por uma atualização antiga em segundo plano.","A edição de um pedido e seus itens agora é confirmada integralmente pelo servidor antes de informar sucesso.","O cache local é atualizado imediatamente e na mesma ordem das alterações realizadas."]},
     {"versao":"1.5.3.16","titulo":"Busca mais rápida nos lançamentos","data":"Julho/2026","itens":["Ao tocar na lupa de despesas ou receitas, o campo de busca já fica pronto para digitação."]},
