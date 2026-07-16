@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.5.4.22 - 2026-07-16
+
+- Gestão Mobile: corrige a espera indefinida em 60% ao limitar e repetir automaticamente as verificações de assinatura, cadastro e sessão.
+- Preparação de acesso: se nenhuma etapa responder por tempo anormal, o aplicativo faz uma única reconexão automática; uma segunda falha mostra a opção de tentar novamente, sem criar ciclo de recargas.
+
 ## 1.5.4.21 - 2026-07-16
 
 - Vendas Mobile: o imã dos cards de clientes reage mais rapidamente assim que a rolagem termina.

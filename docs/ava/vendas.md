@@ -1,8 +1,8 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.5.4.21 -->
+<!-- ava-version: 1.5.4.22 -->
 
-> Revisão 1.5.4.21: encaixe mais rápido e endereço clicável somente com logradouro.
+> Revisão 1.5.4.22: sem impacto operacional no Vendas Mobile.
 
 ## Escopo e navegação
 

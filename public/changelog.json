@@ -12,6 +12,7 @@
     "instagramUrl": "https://www.instagram.com/avanta.lab"
   },
   "versoes": [
+    {"versao":"1.5.4.22","titulo":"Acesso Mobile mais confiável","data":"Julho/2026","itens":["As verificações de sessão, assinatura e cadastro não ficam mais aguardando indefinidamente.","Se a preparação parar por tempo anormal, o aplicativo tenta se reconectar automaticamente uma única vez.","Se a conexão continuar indisponível, aparece a opção Tentar novamente sem recargas repetidas."]},
     {"versao":"1.5.4.06","titulo":"Históricos mais leves","data":"Julho/2026","itens":["Pedidos, consignados e pagamentos são exibidos em grupos de 10 registros.","O botão Carregar mais adiciona o próximo grupo até o fim do histórico.","A posição da lista é mantida ao carregar novos registros."]},
     {"versao":"1.5.4.05","titulo":"Histórico financeiro completo","data":"Julho/2026","itens":["O Vendas agora carrega todos os pagamentos, pedidos e clientes mesmo quando o histórico ultrapassa 1.000 registros.","Saldos não são mais calculados com uma lista parcial de pagamentos.","O cache financeiro anterior é renovado automaticamente no próximo acesso."]},
     {"versao":"1.5.4.04","titulo":"Pesquisa direta e comprovante confirmado","data":"Julho/2026","itens":["O comprovante de pagamento só abre depois que o lançamento e o saldo são confirmados pelo servidor.","Em caso de falha, o formulário permanece aberto e nenhum comprovante é gerado.","A pesquisa de Clientes fica sempre visível, com campo e botão Buscar alinhados."]},

@@ -1,8 +1,8 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.5.4.21 -->
+<!-- ava-version: 1.5.4.22 -->
 
-> Revisão 1.5.4.21: sem impacto operacional na Gestão Mobile.
+> Revisão 1.5.4.22: preparação de acesso com repetição e reconexão automática controlada.
 
 ## Escopo
 
@@ -26,8 +26,10 @@ deve usar os nomes do menu e da barra inferior do celular.
   depois da escolha aparece **Preparando acesso** e o sistema selecionado é carregado.
 - Em **Preparando acesso**, 100% significa que os dados necessários para abrir o
   perfil foram concluídos. A Gestão libera a tela principal imediatamente e continua
-  sincronizações complementares em segundo plano. Se a tela não avançar, o aplicativo
-  tenta novamente de forma automática e pode exibir **Continuar**.
+  sincronizações complementares em segundo plano. Verificações lentas são repetidas;
+  se a preparação ficar sem progresso por tempo anormal, o aplicativo faz uma única
+  reconexão automática. Persistindo a falha, exibe **Tentar novamente** sem entrar em
+  ciclo de recargas.
 - Dentro da Gestão, **Menu > Ir para Vendas** abre diretamente o Vendas Mobile; a
   tela com as duas opções é exibida somente na entrada após o login. Ao tocar, a
   Gestão consulta o estado atual do módulo no servidor para não solicitar uma

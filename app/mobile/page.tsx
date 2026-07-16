@@ -60,13 +60,18 @@ export default function MobilePage() {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
   const cobrancaAtiva = process.env.NEXT_PUBLIC_COBRANCA_ATIVA === 'true' ? 'true' : 'false';
-  const mobileAssetVersion = '309';
+  const mobileAssetVersion = '311';
   const bootstrapCarregamento = `
     (function () {
       var pesos = { shell: 5, scripts: 15, auth: 10, profiles: 20, access: 10, data: 40 };
       var progresso = window.__AVANTALAB_MOBILE_PROGRESSO__ || { grupos: {}, valor: 0, rotulo: 'Iniciando a Gestão Mobile' };
+      var chaveRecuperacao = 'avantalab.mobile.ultima_recuperacao_acesso';
+      var limiteSemProgresso = 28000;
       window.__AVANTALAB_MOBILE_PROGRESSO__ = progresso;
+      progresso.atualizadoEm = Date.now();
       window.__avantalabAtualizarProgressoMobile = function (grupo, concluido, total, rotulo) {
+        var valorAnterior = Number(progresso.valor || 0);
+        var rotuloAnterior = String(progresso.rotulo || '');
         var fracao = total > 0 ? Math.max(0, Math.min(1, Number(concluido || 0) / Number(total))) : 0;
         progresso.grupos[grupo] = Math.max(Number(progresso.grupos[grupo] || 0), fracao);
         var calculado = Object.keys(pesos).reduce(function (soma, chave) {
@@ -74,6 +79,12 @@ export default function MobilePage() {
         }, 0);
         progresso.valor = Math.max(progresso.valor, Math.min(100, Math.round(calculado)));
         if (rotulo) progresso.rotulo = rotulo;
+        if (progresso.valor !== valorAnterior || progresso.rotulo !== rotuloAnterior) {
+          progresso.atualizadoEm = Date.now();
+        }
+        if (progresso.valor >= 100) {
+          try { sessionStorage.removeItem(chaveRecuperacao); } catch (error) {}
+        }
         var barra = document.getElementById('mobileAccessProgressBar');
         var texto = document.getElementById('mobileAccessProgressValue');
         var etapa = document.getElementById('mobileAccessProgressLabel');
@@ -91,8 +102,42 @@ export default function MobilePage() {
           pesos.scripts * progresso.grupos.scripts
         );
         progresso.rotulo = rotulo || 'Validando sua sessão';
+        progresso.atualizadoEm = Date.now();
         window.__avantalabAtualizarProgressoMobile('auth', 0, 1, progresso.rotulo);
       };
+      window.__avantalabRecuperarAcessoMobile = function () {
+        var agora = Date.now();
+        var ultimaRecuperacao = 0;
+        try { ultimaRecuperacao = Number(sessionStorage.getItem(chaveRecuperacao) || 0); } catch (error) {}
+        if (ultimaRecuperacao && agora - ultimaRecuperacao < 120000) return false;
+        try { sessionStorage.setItem(chaveRecuperacao, String(agora)); } catch (error) {}
+        progresso.atualizadoEm = agora;
+        progresso.rotulo = 'Reconectando automaticamente';
+        var etapa = document.getElementById('mobileAccessProgressLabel');
+        if (etapa) etapa.textContent = progresso.rotulo;
+        window.setTimeout(function () { window.location.reload(); }, 700);
+        return true;
+      };
+      window.setInterval(function () {
+        if (document.hidden || Number(progresso.valor || 0) >= 100) return;
+        var root = document.getElementById('mobile-root');
+        if (!root || String(root.textContent || '').indexOf('Preparando acesso') < 0) return;
+        if (Date.now() - Number(progresso.atualizadoEm || Date.now()) < limiteSemProgresso) return;
+        progresso.atualizadoEm = Date.now();
+        if (window.__avantalabRecuperarAcessoMobile()) return;
+        var etapa = document.getElementById('mobileAccessProgressLabel');
+        if (etapa) etapa.textContent = 'A conexão demorou. Tente novamente.';
+        if (!document.getElementById('mobileAccessRetryButton')) {
+          var card = etapa && etapa.parentElement;
+          var botao = document.createElement('button');
+          botao.id = 'mobileAccessRetryButton';
+          botao.type = 'button';
+          botao.className = 'mt-3 h-10 w-full rounded-xl bg-cyan-700 px-4 text-xs font-black uppercase tracking-wide text-white';
+          botao.textContent = 'Tentar novamente';
+          botao.onclick = function () { window.location.reload(); };
+          if (card) card.appendChild(botao);
+        }
+      }, 2000);
       window.__avantalabAtualizarProgressoMobile('shell', 1, 1, 'Preparando recursos do aplicativo');
 
       var arquivos = ['/mobile-supabase.js', '/mobile-app.js'];
