@@ -1,8 +1,8 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.5.4.29 -->
+<!-- ava-version: 1.5.4.30 -->
 
-> Revisão 1.5.4.29: sem impacto operacional no Vendas Mobile.
+> Revisão 1.5.4.30: o encaixe de Clientes posiciona o card em foco logo abaixo do cabeçalho.
 
 ## Escopo e navegação
 
@@ -52,7 +52,7 @@ dúvida dentro do Vendas sempre que a função existir ali.
   Resumo, Consignado, Pedidos e Pagamentos mostram os históricos.
 - Na lista, o card próximo ao centro recebe destaque e os vizinhos imediatos ficam
   levemente desfocados. Depois que a rolagem termina, o encaixe posiciona o card no
-  centro vertical da área entre o cabeçalho principal e o menu inferior; um gesto
+  início da área útil, logo abaixo do cabeçalho, sem exibir o card anterior acima; um gesto
   forte continua podendo avançar por vários cards.
 - Pedidos, consignados e pagamentos exibem 10 registros por vez. O botão
   **Carregar mais** acrescenta o próximo lote de até 10 registros sem perder a

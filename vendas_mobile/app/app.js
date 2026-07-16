@@ -1045,6 +1045,9 @@ function areaUtilVerticalClientes() {
     topo,
     rodape,
     centro: topo + ((rodape - topo) / 2),
+    // O foco fica logo abaixo do cabeçalho: o card anterior não disputa a
+    // área visível acima do card selecionado.
+    encaixe: topo + 8,
   };
 }
 
@@ -1060,7 +1063,7 @@ function atualizarDestaqueClientes() {
   if (!cardsClientesEmDestaque.length || state.aba !== 'clientes') return;
   const areaUtil = areaUtilVerticalClientes();
   const centroHorizontal = window.innerWidth / 2;
-  const pontosBusca = [areaUtil.centro, areaUtil.centro - 24, areaUtil.centro + 24, areaUtil.centro - 56, areaUtil.centro + 56];
+  const pontosBusca = [areaUtil.encaixe, areaUtil.encaixe + 24, areaUtil.encaixe + 56, areaUtil.encaixe + 88];
   let cardAtivo = null;
   for (const y of pontosBusca) {
     const elementos = document.elementsFromPoint(centroHorizontal, Math.max(areaUtil.topo + 1, Math.min(areaUtil.rodape - 1, y)));
@@ -1092,7 +1095,7 @@ function agendarEncaixeCliente() {
     if (!card?.isConnected || state.aba !== 'clientes') return;
     const areaUtil = areaUtilVerticalClientes();
     const areaCard = card.getBoundingClientRect();
-    const deslocamento = (areaCard.top + areaCard.height / 2) - areaUtil.centro;
+    const deslocamento = areaCard.top - areaUtil.encaixe;
     if (Math.abs(deslocamento) < 8) return;
     encaixeClientesEmAndamento = true;
     window.scrollBy({ top: deslocamento, behavior: 'smooth' });

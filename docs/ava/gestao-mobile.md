@@ -1,8 +1,8 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.5.4.29 -->
+<!-- ava-version: 1.5.4.30 -->
 
-> Revisão 1.5.4.29: sem impacto operacional na Gestão Mobile.
+> Revisão 1.5.4.30: sem impacto operacional na Gestão Mobile.
 
 ## Escopo
 

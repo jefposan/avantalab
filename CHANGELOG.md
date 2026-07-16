@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.5.4.30 - 2026-07-16
+
+- Vendas Mobile: o encaixe da lista de Clientes passa a posicionar o card em foco logo abaixo do cabeçalho, sem deixar parte do card anterior visível acima dele.
+
 ## 1.5.4.29 - 2026-07-16
 
 - Gestão Mobile: corrigida a interrupção que podia deixar o preparo de acesso parado em **60%**. As verificações anteriores à carga de dados agora têm prazo e a integração com Vendas não bloqueia a abertura financeira.
