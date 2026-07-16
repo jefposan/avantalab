@@ -1,8 +1,8 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.5.4.15 -->
+<!-- ava-version: 1.5.4.16 -->
 
-> Revisão 1.5.4.15: a lista de clientes foi otimizada; destaque e encaixe central preservam a rolagem fluida.
+> Revisão 1.5.4.16: vários perfis de Vendas podem permanecer acessíveis sem que a ativação de um bloqueie os demais.
 
 ## Escopo e navegação
 
@@ -24,6 +24,8 @@ dúvida dentro do Vendas sempre que a função existir ali.
 - Quando o usuário possui mais de um perfil de Vendas ativo, um segundo botão com
   ícone próprio aparece ao lado de **Ir para Gestão** no header da sala. Ele troca somente o
   perfil operacional do Vendas; com um único perfil, o botão fica oculto.
+- A ativação de um perfil de Vendas não bloqueia outros perfis vinculados ao mesmo
+  usuário. O vínculo comercial permanece único e separado da permissão de acesso.
 - O destino financeiro não muda ao selecionar outro perfil de Vendas. Ele só pode
   ser definido ou alterado em **Configurações > Integração com Gestão**.
 - A sessão e o perfil/empresa são preservados na troca. Usuários sem permissão

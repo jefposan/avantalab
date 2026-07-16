@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.5.4.16 - 2026-07-16
+
+- Gestão e Vendas Mobile: corrige a ativação do módulo para usuários vinculados a mais de um perfil. Ativar um perfil não bloqueia mais o acesso aos demais.
+- **Ir para Vendas** passa a considerar a instalação salva no perfil como fonte de verdade e repara o acesso do gestor antes de exibir uma nova solicitação de ativação.
+
 ## 1.5.4.15 - 2026-07-16
 
 - Vendas Mobile: a página **Clientes** passa a calcular saldos, consignados, créditos e última compra em uma única leitura dos lançamentos, reduzindo o tempo de abertura.

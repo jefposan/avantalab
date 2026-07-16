@@ -1743,6 +1743,29 @@
     }
   }
 
+  async function confirmarModuloVendasMobileNoPerfil(empresaId, repararAcesso) {
+    if (!empresaId) return { data: false, error: new Error('Perfil não identificado.') };
+    if (repararAcesso && podeGerenciarUsuarios()) {
+      var reparo = await db.rpc('garantir_acessos_gestor_vendas_mobile_rpc');
+      if (reparo.error) {
+        console.warn('Não foi possível reparar os acessos do Vendas Mobile:', reparo.error);
+      }
+    }
+    var confirmacao = await db.rpc('modulo_vendas_mobile_ativo_rpc', {
+      p_empresa_id: empresaId,
+    });
+    if (
+      (!confirmacao.error && confirmacao.data === true) ||
+      !repararAcesso ||
+      !podeGerenciarUsuarios()
+    ) return confirmacao;
+
+    await new Promise(function (resolve) { window.setTimeout(resolve, 120); });
+    return db.rpc('modulo_vendas_mobile_ativo_rpc', {
+      p_empresa_id: empresaId,
+    });
+  }
+
   async function abrirFluxoSistemasMobile() {
     if (!podeGerenciarUsuarios()) {
       mostrarToast('A troca de sistemas nao esta disponivel para este usuario.');
@@ -1759,9 +1782,7 @@
       // O estado carregado na entrada pode ficar desatualizado se a primeira
       // consulta sofrer uma falha temporária. Confirma novamente no servidor
       // antes de oferecer uma ativação que talvez já exista.
-      var acessoAtivo = await db.rpc('modulo_vendas_mobile_ativo_rpc', {
-        p_empresa_id: empresaIdVerificada,
-      });
+      var acessoAtivo = await confirmarModuloVendasMobileNoPerfil(empresaIdVerificada, true);
       if (acessoAtivo.error) throw acessoAtivo.error;
       if (!state.empresa || state.empresa.id !== empresaIdVerificada) return;
 
@@ -1808,20 +1829,20 @@
     state.ativacaoVendasMobileErro = '';
     render();
 
+    var empresaIdAtivacao = state.empresa.id;
     try {
       var ativacao = await db.rpc('ativar_modulo_vendas_mobile_rpc', {
-        p_empresa_id: state.empresa.id,
+        p_empresa_id: empresaIdAtivacao,
       });
       if (ativacao.error || ativacao.data !== true) {
         throw (ativacao.error || new Error('A ativação do módulo não foi confirmada.'));
       }
 
-      var acessoAtivo = await db.rpc('modulo_vendas_mobile_ativo_rpc', {
-        p_empresa_id: state.empresa.id,
-      });
+      var acessoAtivo = await confirmarModuloVendasMobileNoPerfil(empresaIdAtivacao, true);
       if (acessoAtivo.error || acessoAtivo.data !== true) {
         throw (acessoAtivo.error || new Error('Nao foi possivel validar o acesso ao Vendas Mobile.'));
       }
+      if (!state.empresa || state.empresa.id !== empresaIdAtivacao) return;
 
       state.vendasMobileModuloAtivo = true;
       state.ativacaoVendasMobileAberta = false;
@@ -1901,9 +1922,7 @@
     }
 
     atualizarProgressoAcessoMobile('access', 2, 3, 'Validando integração com o Vendas');
-    var acessoAtivo = await db.rpc('modulo_vendas_mobile_ativo_rpc', {
-      p_empresa_id: state.empresa.id,
-    });
+    var acessoAtivo = await confirmarModuloVendasMobileNoPerfil(state.empresa.id, false);
     state.vendasMobileModuloAtivo = !acessoAtivo.error && acessoAtivo.data === true;
     state.preparacaoSistemaVendas = {
       empresaId: state.empresa.id,
@@ -4722,7 +4741,7 @@
       acompanharEtapaDados(
         podeReaproveitarPreparacaoVendas
           ? Promise.resolve({ data: preparacaoSistemaVendas.acessoVendasAtivo, error: null })
-          : db.rpc('modulo_vendas_mobile_ativo_rpc', { p_empresa_id: empresaId }),
+          : confirmarModuloVendasMobileNoPerfil(empresaId, false),
         'Confirmando acesso ao Vendas'
       ),
     ]);

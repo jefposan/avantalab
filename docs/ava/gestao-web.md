@@ -1,8 +1,8 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.5.4.15 -->
+<!-- ava-version: 1.5.4.16 -->
 
-> Revisão 1.5.4.15: sem impacto operacional na Gestão Web.
+> Revisão 1.5.4.16: a instalação do Vendas permanece ativa em cada perfil, mesmo quando o usuário administra outros perfis.
 
 ## Escopo
 

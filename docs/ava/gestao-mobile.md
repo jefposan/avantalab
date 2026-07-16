@@ -1,8 +1,8 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.5.4.15 -->
+<!-- ava-version: 1.5.4.16 -->
 
-> Revisão 1.5.4.15: sem impacto operacional na Gestão Mobile.
+> Revisão 1.5.4.16: a ativação do Vendas permanece salva e não bloqueia outros perfis vinculados ao mesmo usuário.
 
 ## Escopo
 
@@ -36,6 +36,9 @@ deve usar os nomes do menu e da barra inferior do celular.
   Gestor Master ou Administrador. Ao tocar, o sistema solicita a ativação, confirma
   o salvamento no servidor e segue para o Vendas. Em perfil pessoal gratuito, a
   ativação exige primeiro o Premium.
+- Um usuário pode manter o Vendas instalado e acessível em vários perfis. Ativar
+  um deles não bloqueia os demais; o vínculo comercial continua sendo único e
+  configurado separadamente no Vendas.
 - **Ir para Vendas** também pode ocupar um dos atalhos configuráveis da barra
   inferior, inclusive antes da ativação. Operadores veem o botão lateral inativo e
   não recebem permissão para ativar ou trocar de sistema.
