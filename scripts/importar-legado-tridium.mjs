@@ -250,7 +250,7 @@ async function garantirConta(db, representante, dadosRepresentante, executar, re
 async function garantirAcessos(db, empresaId, userId, executar) {
   if (!executar) return;
   const acessoAtual = await falharSeErro(
-    await db.from('vendas_mobile_acessos').select('papel').eq('empresa_id', empresaId).eq('user_id', userId).maybeSingle(),
+    await db.from('vendas_mobile_acessos').select('papel,status,aprovado_em').eq('empresa_id', empresaId).eq('user_id', userId).maybeSingle(),
     'Não foi possível consultar o acesso do Vendas',
   );
   await falharSeErro(
@@ -262,16 +262,30 @@ async function garantirAcessos(db, empresaId, userId, executar) {
       empresa_id: empresaId,
       user_id: userId,
       papel: acessoAtual?.papel || 'vendedor',
-      status: 'ativo',
-      aprovado_em: new Date().toISOString(),
+      status: acessoAtual?.status || 'ativo',
+      aprovado_em: acessoAtual?.aprovado_em || new Date().toISOString(),
       atualizado_em: new Date().toISOString(),
     }, { onConflict: 'empresa_id,user_id' }),
     'Não foi possível liberar o acesso do Vendas',
   );
-  await falharSeErro(
-    await db.from('vendas_mobile_perfis_financeiros').upsert({ user_id: userId, empresa_id: empresaId, atualizado_em: new Date().toISOString() }, { onConflict: 'user_id' }),
-    'Não foi possível definir o perfil financeiro da Tridium',
+  const perfilFinanceiroAtual = await falharSeErro(
+    await db.from('vendas_mobile_perfis_financeiros').select('empresa_id').eq('user_id', userId).maybeSingle(),
+    'Não foi possível consultar o perfil financeiro atual',
   );
+  if (!perfilFinanceiroAtual) {
+    await falharSeErro(
+      await db.from('vendas_mobile_perfis_financeiros').insert({ user_id: userId, empresa_id: empresaId, atualizado_em: new Date().toISOString() }),
+      'Não foi possível definir o perfil financeiro inicial da Tridium',
+    );
+  }
+}
+
+async function obterEmpresaFinanceira(db, userId, empresaPadrao) {
+  const perfil = await falharSeErro(
+    await db.from('vendas_mobile_perfis_financeiros').select('empresa_id').eq('user_id', userId).maybeSingle(),
+    'Não foi possível consultar o perfil financeiro do Vendas',
+  );
+  return perfil?.empresa_id || empresaPadrao;
 }
 
 async function limparDadosVendasDoUsuario(db, userId, executar) {
@@ -293,7 +307,7 @@ async function limparDadosVendasDoUsuario(db, userId, executar) {
   }
 }
 
-async function importarRepresentante(db, empresaId, catalogoId, tabelas, plano, userId, executar) {
+async function importarRepresentante(db, empresaId, empresaFinanceiraId, catalogoId, tabelas, plano, userId, executar) {
   const categorias = new Map(tabelas.categories.map((item) => [String(item.id), item.name || null]));
   const produtosPorId = new Map(tabelas.products.map((item) => [String(item.id), item]));
   const produtosPorNome = new Map();
@@ -426,7 +440,7 @@ async function importarRepresentante(db, empresaId, catalogoId, tabelas, plano, 
     return {
       id,
       user_id: userId,
-      empresa_id: empresaId,
+      empresa_id: empresaFinanceiraId,
       cliente_id: mapaClientes.get(String(pedido.id_cliente)) || null,
       status: consignado ? 'consignado' : 'concluida',
       subtotal: numero(pedido.valor_total) + numero(pedido.valor_desconto),
@@ -473,7 +487,7 @@ async function importarRepresentante(db, empresaId, catalogoId, tabelas, plano, 
     pagamentos.push({
       id: uuidDeterministico(`${ORIGEM}:pagamento:${plano.legadoId}:${pagamento.id}`),
       user_id: userId,
-      empresa_id: empresaId,
+      empresa_id: empresaFinanceiraId,
       cliente_id: mapaClientes.get(clienteLegadoId) || null,
       pedido_id: mapaPedidos.get(String(pagamento.id_pedido)) || null,
       tipo: 'pagamento',
@@ -564,11 +578,12 @@ async function principal() {
       const plano = montarPlano(tabelas, representante);
       const conta = await garantirConta(db, representante, dadosRepresentante, executar, redefinirSenhaMarcos);
       await garantirAcessos(db, empresa.id, conta.userId, executar);
+      const empresaFinanceiraId = await obterEmpresaFinanceira(db, conta.userId, empresa.id);
       if (limparJefferson && representante.legadoId === '5') {
         await limparDadosVendasDoUsuario(db, conta.userId, executar);
       }
-      const totais = await importarRepresentante(db, empresa.id, catalogo.id, tabelas, plano, conta.userId, executar);
-      resumo.push({ nome: representante.nome, email: representante.email, user_id: conta.userId, dados_anteriores_removidos: limparJefferson && representante.legadoId === '5', ...totais });
+      const totais = await importarRepresentante(db, empresa.id, empresaFinanceiraId, catalogo.id, tabelas, plano, conta.userId, executar);
+      resumo.push({ nome: representante.nome, email: representante.email, user_id: conta.userId, empresa_financeira_id: empresaFinanceiraId, dados_anteriores_removidos: limparJefferson && representante.legadoId === '5', ...totais });
       if (conta.senha) credenciais.push({ nome: representante.nome, email: representante.email, senha_temporaria: conta.senha });
     }
     console.log(JSON.stringify({ modo: executar ? 'executado' : 'simulacao', empresa: empresa.nome, resumo, credenciais }, null, 2));

@@ -1,8 +1,8 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.5.1.02 -->
+<!-- ava-version: 1.5.1.03 -->
 
-> Revisão 1.5.1.02: a sincronização do catálogo reconhece produtos já importados; não há novo fluxo de uso para o vendedor.
+> Revisão 1.5.1.03: o destino financeiro definido em Configurações é preservado em uma migração histórica; não há novo fluxo de uso para o vendedor.
 
 ## Escopo e navegação
 

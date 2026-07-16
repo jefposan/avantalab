@@ -1,8 +1,8 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.5.1.02 -->
+<!-- ava-version: 1.5.1.03 -->
 
-> Revisão 1.5.1.02: sem novo caminho operacional; a correção técnica da sincronização de catálogo do Vendas não altera o uso da Gestão Mobile.
+> Revisão 1.5.1.03: sem novo caminho operacional; a migração histórica do Vendas respeita o perfil financeiro já definido para refletir resultados na Gestão Mobile correta.
 
 ## Escopo
 

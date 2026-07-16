@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.5.1.03 - 2026-07-15
+
+- Migração Tridium: o importador passa a respeitar o perfil financeiro já escolhido pelo usuário, direcionando pedidos e recebimentos históricos à Gestão correta.
+- Migração Tridium: preserva o status de acesso comercial existente e não reativa nem bloqueia perfis durante uma reimportação técnica.
+
 ## 1.5.1.02 - 2026-07-15
 
 - Vendas Mobile: corrige a sincronização do catálogo após importação histórica, reconhecendo produtos pessoais já vinculados ao catálogo antes de tentar criar uma nova cópia.
