@@ -94,6 +94,11 @@ let telefonePerfilSalvando = false;
 let rolagemAnteriorSheet = 0;
 let cardsClientesEmDestaque = [];
 let quadroDestaqueClientes = 0;
+let clienteDestaqueId = '';
+let temporizadorEncaixeClientes = 0;
+let encaixeClientesEmAndamento = false;
+let buscaClientesAberta = false;
+let calendarioCentralizado = null;
 let botaoFeedbackAtivo = null;
 let atualizacaoPwaPendente = false;
 let filtroPedidos = 'todos';
@@ -455,6 +460,69 @@ function aplicarFiltroDashboard() {
   toast('Filtro aplicado!');
 }
 
+function campoDataCentralizado(idCampo, data, rotulo) {
+  const valorData = /^\d{4}-\d{2}-\d{2}$/.test(String(data || '')) ? data : isoData(new Date());
+  return `<label class="transaction-field transaction-date-field"><span>${escapeHtml(rotulo)}</span><button id="${idCampo}" type="button" class="date-picker-button" value="${valorData}" onclick="abrirCalendarioCentralizado('${idCampo}')">${dataBR(`${valorData}T12:00:00`)}</button></label>`;
+}
+
+function abrirCalendarioCentralizado(idCampo) {
+  const campo = document.getElementById(idCampo);
+  if (!campo) return;
+  const data = String(campo.value || isoData(new Date()));
+  const referencia = new Date(`${data}T12:00:00`);
+  calendarioCentralizado = { idCampo, data: Number.isNaN(referencia.getTime()) ? new Date() : referencia };
+  renderCalendarioCentralizado();
+}
+
+function renderCalendarioCentralizado() {
+  if (!calendarioCentralizado) return;
+  document.getElementById('calendarPickerBackdrop')?.remove();
+  const atual = calendarioCentralizado.data;
+  const ano = atual.getFullYear();
+  const mes = atual.getMonth();
+  const inicio = new Date(ano, mes, 1);
+  const primeiroDia = inicio.getDay();
+  const ultimoDia = new Date(ano, mes + 1, 0).getDate();
+  const valorSelecionado = String(document.getElementById(calendarioCentralizado.idCampo)?.value || '');
+  const semanas = [];
+  for (let indice = 0; indice < 42; indice += 1) {
+    const dia = indice - primeiroDia + 1;
+    if (dia < 1 || dia > ultimoDia) semanas.push('<i aria-hidden="true"></i>');
+    else {
+      const iso = `${ano}-${String(mes + 1).padStart(2, '0')}-${String(dia).padStart(2, '0')}`;
+      semanas.push(`<button type="button" class="${iso === valorSelecionado ? 'selected' : ''}" onclick="selecionarDataCalendario('${iso}')">${dia}</button>`);
+    }
+  }
+  const nomesMeses = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+  const wrap = document.createElement('div');
+  wrap.id = 'calendarPickerBackdrop';
+  wrap.className = 'calendar-picker-backdrop';
+  wrap.innerHTML = `<section class="calendar-picker-card" role="dialog" aria-modal="true" aria-label="Selecionar data"><header><button type="button" onclick="mudarMesCalendario(-1)" aria-label="Mês anterior">${svgIcon('chevron-left')}</button><b>${nomesMeses[mes]} de ${ano}</b><button type="button" onclick="mudarMesCalendario(1)" aria-label="Próximo mês">${svgIcon('chevron-right')}</button></header><div class="calendar-picker-weekdays"><span>Dom</span><span>Seg</span><span>Ter</span><span>Qua</span><span>Qui</span><span>Sex</span><span>Sáb</span></div><div class="calendar-picker-days">${semanas.join('')}</div><footer><button type="button" onclick="fecharCalendarioCentralizado()">Cancelar</button><button type="button" onclick="selecionarDataCalendario('${isoData(new Date())}')">Hoje</button></footer></section>`;
+  wrap.addEventListener('click', (event) => { if (event.target === wrap) fecharCalendarioCentralizado(); });
+  document.body.appendChild(wrap);
+}
+
+function mudarMesCalendario(delta) {
+  if (!calendarioCentralizado) return;
+  calendarioCentralizado.data = new Date(calendarioCentralizado.data.getFullYear(), calendarioCentralizado.data.getMonth() + Number(delta || 0), 1);
+  renderCalendarioCentralizado();
+}
+
+function selecionarDataCalendario(data) {
+  if (!calendarioCentralizado) return;
+  const campo = document.getElementById(calendarioCentralizado.idCampo);
+  if (campo) { campo.value = data; campo.textContent = dataBR(`${data}T12:00:00`); }
+  if (calendarioCentralizado.idCampo === 'pedidoClienteData' && pedidoClienteRascunho) pedidoClienteRascunho.data = data;
+  if (calendarioCentralizado.idCampo === 'filtroInicio') state.filtroInicio = data;
+  if (calendarioCentralizado.idCampo === 'filtroFim') state.filtroFim = data;
+  fecharCalendarioCentralizado();
+}
+
+function fecharCalendarioCentralizado() {
+  calendarioCentralizado = null;
+  document.getElementById('calendarPickerBackdrop')?.remove();
+}
+
 function mudarMes(direcao) {
   const atual = new Date(`${state.mesReferencia}T12:00:00`);
   const novo = new Date(atual.getFullYear(), atual.getMonth() + direcao, 1);
@@ -612,6 +680,8 @@ function configurarDestaqueClientes() {
 function limparDestaqueClientes() {
   cardsClientesEmDestaque.forEach((card) => card.classList.remove('client-card-emphasis', 'client-card-deemphasized'));
   cardsClientesEmDestaque = [];
+  clienteDestaqueId = '';
+  window.clearTimeout(temporizadorEncaixeClientes);
 }
 
 function atualizarDestaqueClientes() {
@@ -637,6 +707,26 @@ function atualizarDestaqueClientes() {
     card.classList.toggle('client-card-emphasis', card === cardAtivo);
     card.classList.toggle('client-card-deemphasized', Boolean(cardAtivo) && card !== cardAtivo);
   });
+  const novoId = cardAtivo?.dataset.clienteId || '';
+  if (novoId && novoId !== clienteDestaqueId) {
+    clienteDestaqueId = novoId;
+    agendarEncaixeCliente(cardAtivo);
+  }
+}
+
+function agendarEncaixeCliente(card) {
+  if (!card || encaixeClientesEmAndamento || state.aba !== 'clientes') return;
+  window.clearTimeout(temporizadorEncaixeClientes);
+  temporizadorEncaixeClientes = window.setTimeout(() => {
+    if (!card.isConnected || state.aba !== 'clientes') return;
+    const topo = Math.max(0, app.querySelector('.module-sticky-head')?.getBoundingClientRect().bottom || 0);
+    const rodape = Math.min(window.innerHeight, document.querySelector('.vendas-bottom-nav')?.getBoundingClientRect().top || window.innerHeight);
+    const deslocamento = (card.getBoundingClientRect().top + card.getBoundingClientRect().height / 2) - (topo + (rodape - topo) / 2);
+    if (Math.abs(deslocamento) < 18) return;
+    encaixeClientesEmAndamento = true;
+    window.scrollBy({ top: deslocamento, behavior: 'smooth' });
+    window.setTimeout(() => { encaixeClientesEmAndamento = false; }, 360);
+  }, 110);
 }
 
 function agendarDestaqueClientes() {
@@ -648,12 +738,26 @@ function agendarDestaqueClientes() {
 }
 
 function renderPreparandoAcessoEstavel() {
-  if (app.firstElementChild?.classList.contains('preparing-access-screen') && app.children.length === 1) return;
+  if (app.firstElementChild?.classList.contains('preparing-access-screen') && app.children.length === 1) { iniciarProgressoPreparacao(); return; }
   app.innerHTML = renderPreparandoAcesso();
+  iniciarProgressoPreparacao();
 }
 
 function renderPreparandoAcesso() {
-  return `<section class="login-screen preparing-access-screen"><div class="preparing-access-card"><p>AvantaLab</p><span class="loader"></span><h1>Preparando acesso</h1><small>Estamos validando seu login e preparando seus dados com segurança.</small></div></section>`;
+  return `<section class="login-screen preparing-access-screen"><div class="preparing-access-card"><p>AvantaLab</p><span class="loader"></span><h1>Preparando acesso</h1><small>Estamos validando seu login e preparando seus dados com segurança.</small><div class="access-progress" aria-label="Carregando acesso"><i id="accessProgressBar" style="width:8%"></i></div><b id="accessProgressValue" class="access-progress-value">8%</b></div></section>`;
+}
+
+function iniciarProgressoPreparacao() {
+  window.clearInterval(window.__progressoPreparacao);
+  let progresso = 8;
+  window.__progressoPreparacao = window.setInterval(() => {
+    const barra = document.getElementById('accessProgressBar');
+    const texto = document.getElementById('accessProgressValue');
+    if (!barra || !texto) { window.clearInterval(window.__progressoPreparacao); return; }
+    progresso = Math.min(92, progresso + Math.max(1, Math.round((94 - progresso) / 7)));
+    barra.style.width = `${progresso}%`;
+    texto.textContent = `${progresso}%`;
+  }, 260);
 }
 
 function limparFocoInicialLogin() {
@@ -1132,7 +1236,7 @@ function fecharCamadasNavegacao() {
 }
 
 function abrirAcoesRapidas() {
-  sheet(`<div class="sheet-header"><div><h2>Novo lançamento</h2><p class="muted small">Escolha o que deseja registrar.</p></div><button class="close" onclick="fecharSheet()">×</button></div><div class="quick-actions-grid"><button class="primary quick-action-button" onclick="abrirNovoPedidoGeral()">${svgIcon('shopping-bag')}<span>Lançar pedido</span></button><button class="secondary quick-action-button" onclick="fecharSheet();setAba('vender')">${svgIcon('credit-card')}<span>Lançar pagamento</span></button></div>`, 'sheet-backdrop-centered');
+  sheet(`<div class="sheet-header"><div><h2>Novo lançamento</h2><p class="muted small">Escolha o que deseja registrar.</p></div><button class="close" onclick="fecharSheet()">×</button></div><div class="quick-actions-grid"><button class="primary quick-action-button" onclick="abrirNovoPedidoGeral()">${svgIcon('shopping-bag')}<span>Lançar pedido</span></button><button class="secondary quick-action-button" onclick="abrirNovoPagamentoGeral()">${svgIcon('credit-card')}<span>Lançar pagamento</span></button></div>`, 'sheet-backdrop-centered');
 }
 
 async function sairSistema() {
@@ -1743,15 +1847,22 @@ function abrirClienteDashboard(clienteId) {
 }
 
 function clientesInativosDashboard() {
-  const agora = new Date();
   const limiteDias = Math.max(1, Number(state.dashboardDiasInativos || 30));
+  const fim = new Date(`${state.filtroFim || isoData(new Date())}T23:59:59`);
+  const inicio = new Date(fim);
+  inicio.setDate(inicio.getDate() - limiteDias);
   return state.clientes.filter((cliente) => cliente.ativo !== false).map((cliente) => {
-    const ultima = state.vendas
+    const compras = state.vendas
       .filter((venda) => venda.cliente_id === cliente.id && venda.status !== 'cancelada' && !pedidoEhConsignado(venda) && !pedidoSomenteBonificado(venda))
-      .sort((a, b) => new Date(b.criado_em) - new Date(a.criado_em))[0];
-    const dias = ultima ? Math.floor((agora.getTime() - new Date(ultima.criado_em).getTime()) / 86400000) : null;
-    return { id: cliente.id, nome: cliente.nome, ultima, dias };
-  }).filter((item) => item.dias === null || item.dias > limiteDias)
+      .sort((a, b) => new Date(b.criado_em) - new Date(a.criado_em));
+    const ultima = compras[0];
+    const houveCompraNoPeriodo = compras.some((venda) => {
+      const data = new Date(venda.criado_em);
+      return data >= inicio && data <= fim;
+    });
+    const dias = ultima ? Math.floor((fim.getTime() - new Date(ultima.criado_em).getTime()) / 86400000) : null;
+    return { id: cliente.id, nome: cliente.nome, ultima, dias, houveCompraNoPeriodo };
+  }).filter((item) => !item.houveCompraNoPeriodo)
     .sort((a, b) => (b.dias ?? Number.MAX_SAFE_INTEGER) - (a.dias ?? Number.MAX_SAFE_INTEGER))
     .slice(0, 10);
 }
@@ -1772,14 +1883,14 @@ function renderDashboard() {
   const margemPercentual = t.total > 0 ? (t.margem / t.total) * 100 : 0;
   const progressoMensal = state.metaMensal > 0 ? Math.min(100, t.total / state.metaMensal * 100) : 0;
   const tabelaClientes = clientesTop.length ? clientesTop.map((item) => `<tr><td><b>${escapeHtml(item.nome)}</b><small>${item.pedidos} ${item.pedidos === 1 ? 'pedido' : 'pedidos'}</small></td><td>${moeda(item.total)}</td></tr>`).join('') : '<tr><td colspan="2">Nenhuma venda no período.</td></tr>';
-  const tabelaInativos = clientesInativos.length ? clientesInativos.map((item) => `<tr><td><button type="button" class="dashboard-client-link" onclick="abrirClienteDashboard('${item.id}')">${escapeHtml(item.nome)}</button></td><td>${item.ultima ? dataCurtaBR(item.ultima.criado_em) : 'Sem compra'}</td><td>${item.dias ?? '—'}</td></tr>`).join('') : '<tr><td colspan="3">Nenhum cliente inativo.</td></tr>';
+  const tabelaInativos = clientesInativos.length ? clientesInativos.map((item) => `<tr class="dashboard-inactive-row" tabindex="0" role="button" onclick="abrirClienteDashboard('${item.id}')" onkeydown="if(event.key==='Enter'||event.key===' ')abrirClienteDashboard('${item.id}')"><td>${escapeHtml(item.nome)}</td><td>${item.ultima ? dataCurtaBR(item.ultima.criado_em) : 'Sem compra'}</td><td>${item.dias ?? '—'}</td></tr>`).join('') : '<tr><td colspan="3">Nenhum cliente sem pedido no período selecionado.</td></tr>';
   const graficoProdutos = produtosTop.length ? produtosTop.map((item) => `<div class="dashboard-bar-row"><span><b>${escapeHtml(item.nome)}</b><small>${item.qtd} un. · ${moeda(item.total)}</small></span><i><em style="width:${Math.max(4, item.qtd / produtosTop[0].qtd * 100)}%"></em></i></div>`).join('') : '<p>Sem vendas de produtos no período.</p>';
   const listaConsignados = consignados.produtos.length ? consignados.produtos.map((item) => `<div><span>${escapeHtml(item.nome)}</span><b>${item.quantidade.toLocaleString('pt-BR')} un.</b></div>`).join('') : '<p>Nenhum produto consignado ativo.</p>';
   const limiteInativos = Math.max(1, Number(state.dashboardDiasInativos || 30));
   return `
     <section class="dashboard-page">
       <div class="dashboard-sticky-head">
-        <section class="page-heading"><div><h2>Dashboard</h2><p>Resultados do período selecionado</p></div><div class="date-filter"><label><span>Início</span><input type="date" value="${state.filtroInicio}" onchange="state.filtroInicio=this.value"></label><label><span>Fim</span><input type="date" value="${state.filtroFim}" onchange="state.filtroFim=this.value"></label><button class="filter-button" onclick="aplicarFiltroDashboard()">${svgIcon('filter')}<span>Filtrar</span></button></div></section>
+        <section class="page-heading"><div><h2>Dashboard</h2><p>Resultados do período selecionado</p></div><div class="date-filter">${campoDataCentralizado('filtroInicio', state.filtroInicio, 'Início')}${campoDataCentralizado('filtroFim', state.filtroFim, 'Fim')}<button class="filter-button" onclick="aplicarFiltroDashboard()">${svgIcon('filter')}<span>Filtrar</span></button></div></section>
         <section class="month-switcher"><div><button aria-label="Mês anterior" onclick="mudarMes(-1)">${svgIcon('chevron-left')}</button><strong>${nomeMesReferencia()}</strong><button aria-label="Próximo mês" onclick="mudarMes(1)">${svgIcon('chevron-right')}</button></div><button class="current-month" onclick="irMesAtual()">${svgIcon('calendar')}<span>${mesReferenciaAtual() ? 'Mês atual' : 'Ir para o mês atual'}</span></button></section>
       </div>
       <section class="goal-grid">
@@ -1799,7 +1910,7 @@ function renderDashboard() {
       <section class="dashboard-consignment-card ${state.dashboardConsignadosExpandido ? 'expanded' : ''}"><header><div><h3>${svgIcon('package')} Estoque consignado</h3><small>${consignados.pedidos.length} ${consignados.pedidos.length === 1 ? 'consignado ativo' : 'consignados ativos'} · ${consignados.quantidade.toLocaleString('pt-BR')} unidades · ${moeda(consignados.total)}</small></div><button type="button" onclick="alternarConsignadosDashboard()" aria-expanded="${state.dashboardConsignadosExpandido}">${state.dashboardConsignadosExpandido ? 'Recolher' : 'Ver produtos'} ${state.dashboardConsignadosExpandido ? '⌃' : '⌄'}</button></header>${state.dashboardConsignadosExpandido ? `<div class="dashboard-consignment-products">${listaConsignados}</div>` : ''}</section>
       <section class="dashboard-tables">
         <article class="dashboard-panel"><h3>${svgIcon('users')} Top 10 Clientes</h3><div class="dashboard-panel-body"><table><thead><tr><th>Cliente</th><th>Total comprado</th></tr></thead><tbody>${tabelaClientes}</tbody></table></div></article>
-        <article class="dashboard-panel dashboard-inactive-panel"><h3>${svgIcon('calendar')}<span>Clientes Inativos</span><span class="dashboard-days-control"><button type="button" onclick="ajustarDiasInativosDashboard(-5)" aria-label="Diminuir dias">−</button><b>+${limiteInativos} dias</b><button type="button" onclick="ajustarDiasInativosDashboard(5)" aria-label="Aumentar dias">+</button></span></h3><div class="dashboard-panel-body"><table><thead><tr><th>Cliente</th><th>Última compra</th><th>Dias</th></tr></thead><tbody>${tabelaInativos}</tbody></table></div></article>
+        <article class="dashboard-panel dashboard-inactive-panel"><h3>${svgIcon('calendar')}<span>Clientes sem compra</span><span class="dashboard-days-control"><button type="button" onclick="ajustarDiasInativosDashboard(-5)" aria-label="Diminuir dias">−</button><b>${limiteInativos} dias</b><button type="button" onclick="ajustarDiasInativosDashboard(5)" aria-label="Aumentar dias">+</button></span></h3><p class="dashboard-inactive-help">Sem pedidos no intervalo dos últimos ${limiteInativos} dias, até a data final do filtro.</p><div class="dashboard-panel-body"><table><thead><tr><th>Cliente</th><th>Última compra</th><th>Dias</th></tr></thead><tbody>${tabelaInativos}</tbody></table></div></article>
         <article class="dashboard-panel"><h3>${svgIcon('package')} Top 10 Produtos</h3><div class="dashboard-panel-body dashboard-product-chart">${graficoProdutos}</div></article>
         <article class="dashboard-panel"><h3>${svgIcon('target')} Rentabilidade</h3><div class="dashboard-panel-body profitability-report"><div><span>Receita de vendas</span><b>${moeda(t.total)}</b></div><div><span>Custo dos produtos</span><b>${moeda(t.custo)}</b></div><div class="highlight"><span>Margem de contribuição</span><b>${moeda(t.margem)}</b></div><div><span>Margem sobre vendas</span><b>${margemPercentual.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}%</b></div><div class="${t.produtosSemCusto ? 'cost-warning' : 'cost-complete'}"><span>Cadastro de custos</span><b>${t.produtosSemCusto ? `${t.produtosSemCusto} ${t.produtosSemCusto === 1 ? 'produto sem custo' : 'produtos sem custo'}` : 'Completo no período'}</b></div></div></article>
       </section>
@@ -2460,13 +2571,55 @@ function renderProduto(p) {
 
 function renderClientes() {
   const clientes = clientesFiltrados();
-  const temBusca = Boolean(String(state.busca || '').trim());
   return `
-    <section class="module-page clientes-page${temBusca ? ' is-searching' : ''}">
-      <div class="module-sticky-head"><div class="module-title"><div><h2>Clientes</h2><p>Gerencie seus clientes</p></div><button class="primary" onclick="this.blur();abrirCliente()">＋ Novo cliente</button></div>${renderBarraBusca('Pesquisar', 'Ordem Alfabética')}</div>
+    <section class="module-page clientes-page">
+      <div class="module-sticky-head"><div class="module-title"><div><h2>Clientes</h2><p>Gerencie seus clientes</p></div><div class="client-title-actions"><button class="primary" onclick="this.blur();abrirCliente()">＋ Novo cliente</button></div></div>${renderBarraBuscaClientes()}</div>
       ${clientes.length ? `<section class="client-card-grid">${clientes.map(renderCliente).join('')}</section>` : `<article class="empty-module"><h3>Nenhum cliente cadastrado</h3><p>Cadastre o primeiro cliente para iniciar suas vendas.</p></article>`}
     </section>
   `;
+}
+
+function renderBarraBuscaClientes() {
+  const temBusca = Boolean(String(state.busca || '').trim());
+  const rotuloOrdem = `Ordem ${ordemAlfabetica === 'asc' ? 'A/Z' : 'Z/A'}`;
+  return `<div class="client-search-toolbar${buscaClientesAberta ? ' is-open' : ''}"><button type="button" class="client-order-button" onclick="alternarOrdemAlfabetica()">${svgIcon('filter')}${rotuloOrdem}${svgIcon('chevron-down')}</button>${buscaClientesAberta ? `<div class="client-search-input-wrap">${svgIcon('search')}<input value="${escapeAttr(state.busca)}" placeholder="Pesquisar clientes" oninput="atualizarBuscaClientes(this.value)" onblur="recolherBuscaClientesSeVazia()" onkeydown="if(event.key==='Enter') aplicarBusca()"><button type="button" class="client-search-clear${temBusca ? '' : ' is-hidden'}" onclick="limparBuscaClientes()" aria-label="Limpar pesquisa">×</button></div><button type="button" class="primary client-search-submit" onclick="aplicarBusca()">Buscar</button>` : `<button type="button" class="client-search-toggle" onclick="alternarBuscaClientes()" aria-label="Pesquisar clientes">${svgIcon('search')}</button>`}</div>`;
+}
+
+function alternarBuscaClientes() {
+  buscaClientesAberta = !buscaClientesAberta;
+  if (!buscaClientesAberta) { state.busca = ''; buscaAplicada = ''; }
+  render();
+  if (buscaClientesAberta) requestAnimationFrame(() => app.querySelector('.clientes-page .client-search-input-wrap input')?.focus());
+}
+
+function atualizarBuscaClientes(valor) {
+  state.busca = valor;
+  const temBusca = Boolean(String(valor || '').trim());
+  app.querySelector('.client-search-clear')?.classList.toggle('is-hidden', !temBusca);
+  if (!temBusca && buscaAplicada) {
+    buscaAplicada = '';
+    render();
+    requestAnimationFrame(() => app.querySelector('.clientes-page .client-search-input-wrap input')?.focus());
+  }
+}
+
+function limparBuscaClientes() {
+  state.busca = '';
+  buscaAplicada = '';
+  render();
+  requestAnimationFrame(() => app.querySelector('.clientes-page .client-search-input-wrap input')?.focus());
+}
+
+function recolherBuscaClientesSeVazia() {
+  window.setTimeout(() => {
+    const buscaVazia = !String(state.busca || '').trim();
+    const toolbar = app.querySelector('.client-search-toolbar');
+    if (buscaVazia && !toolbar?.contains(document.activeElement)) {
+      buscaAplicada = '';
+      buscaClientesAberta = false;
+      render();
+    }
+  }, 120);
 }
 
 function pedidoGeraDebito(venda) {
@@ -2506,7 +2659,7 @@ function renderCliente(c) {
   const temTelefone = Boolean(String(c.telefone || '').replace(/\D/g, ''));
   const aniversarianteHoje = aniversariosHojeVendas().some((cliente) => cliente.id === c.id);
   return `
-    <article class="client-card ${c.ativo === false ? 'inactive' : ''} ${aniversarianteHoje ? 'client-birthday-today' : ''}">
+    <article class="client-card ${c.ativo === false ? 'inactive' : ''} ${aniversarianteHoje ? 'client-birthday-today' : ''}" data-cliente-id="${escapeAttr(c.id)}">
       <header class="client-card-header">
         <div class="client-avatar">${escapeHtml(iniciais)}</div>
         <div class="client-identity"><h3>${escapeHtml(c.nome)}</h3></div>
@@ -2593,7 +2746,7 @@ function mostrarCardPedidoCliente() {
       <div class="order-transaction-fixed">
         ${rascunho.permitirSelecaoCliente ? `<label class="transaction-field transaction-client-select"><span>Cliente</span><select id="pedidoClienteSelecionado" onchange="selecionarClientePedido(this.value)">${clientes.map((item) => `<option value="${item.id}" ${item.id === rascunho.clienteId ? 'selected' : ''}>${escapeHtml(item.nome)}</option>`).join('')}</select></label>` : ''}
         <div class="transaction-type-switch"><button type="button" class="${rascunho.tipo === 'venda' ? 'active' : ''}" onclick="selecionarTipoPedidoCliente('venda')">Venda</button><button type="button" class="${rascunho.tipo === 'consignado' ? 'active' : ''}" onclick="selecionarTipoPedidoCliente('consignado')">Consignado</button></div>
-        <label class="transaction-field transaction-date-field"><span>Data do pedido</span><input id="pedidoClienteData" type="date" value="${escapeAttr(rascunho.data)}" onchange="pedidoClienteRascunho.data=this.value"></label>
+        ${campoDataCentralizado('pedidoClienteData', rascunho.data, 'Data do pedido')}
       <article class="order-product-entry">
         <h3>Inserir produto</h3>
         ${produtos.length ? `<label class="transaction-field"><span>Produto</span><select id="pedidoClienteProduto" onchange="selecionarProdutoPedidoCliente(this.value)"><option value="" ${rascunho.produtoId ? '' : 'selected'} disabled>Selecione o produto</option>${produtos.map((produto) => `<option value="${produto.id}" ${produto.id === rascunho.produtoId ? 'selected' : ''}>${escapeHtml(produto.nome)}</option>`).join('')}</select></label>
@@ -2814,22 +2967,40 @@ function cancelarEdicaoPedido(pedidoId) {
 }
 
 function abrirPagamentoCliente(clienteId) {
+  abrirPagamentoClienteComSelecao(clienteId, false);
+}
+
+function abrirNovoPagamentoGeral() {
+  const cliente = clientesDisponiveisPedido()[0];
+  if (!cliente) { fecharSheet(); toast('Cadastre um cliente antes de registrar um pagamento.'); return; }
+  abrirPagamentoClienteComSelecao(cliente.id, true);
+}
+
+function abrirPagamentoClienteComSelecao(clienteId, permitirSelecao = false) {
   const cliente = state.clientes.find((item) => item.id === clienteId);
   if (!cliente) return;
   const saldo = saldoFinanceiroCliente(clienteId);
-  pagamentoClienteRascunho = { clienteId, saldoAnterior: saldo.debito };
+  const clientes = clientesDisponiveisPedido();
+  pagamentoClienteRascunho = { clienteId, saldoAnterior: saldo.debito, permitirSelecaoCliente: Boolean(permitirSelecao) };
   sheet(`
-    <div class="sheet-header"><div><h2>Registrar pagamento</h2><p class="muted small">${escapeHtml(cliente.nome)}</p></div><button class="close" onclick="fecharSheet()">×</button></div>
+    <div class="sheet-header"><div><h2>Registrar pagamento</h2><p class="muted small">${permitirSelecao ? 'Selecione o cliente' : escapeHtml(cliente.nome)}</p></div><button class="close" onclick="fecharSheet()">×</button></div>
     <div class="client-transaction-scroll payment-entry-form">
+      ${permitirSelecao ? `<label class="transaction-field transaction-client-select"><span>Cliente</span><select id="pagamentoClienteSelecionado" onchange="selecionarClientePagamento(this.value)">${clientes.map((item) => `<option value="${item.id}" ${item.id === clienteId ? 'selected' : ''}>${escapeHtml(item.nome)}</option>`).join('')}</select></label>` : ''}
       <label class="transaction-field"><span>Valor pago</span><input id="pagamentoClienteValor" type="text" inputmode="numeric" value="0,00" onfocus="this.select()" oninput="formatarCampoMoeda(this);atualizarResumoPagamentoCliente()"></label>
       <label class="transaction-field"><span>Valor total da dívida</span><input value="${escapeAttr(moeda(saldo.debito))}" readonly></label>
       <label class="transaction-field"><span>Desconto</span><input id="pagamentoClienteDesconto" type="text" inputmode="numeric" value="0,00" onfocus="this.select()" oninput="formatarCampoMoeda(this);atualizarResumoPagamentoCliente()"></label>
       <section class="payment-balance-summary"><div><span>Saldo anterior</span><b>${moeda(saldo.debito)}</b></div><div><span>Valor pago + desconto</span><b id="pagamentoClienteAbatimento">${moeda(0)}</b></div><div class="final"><span>Saldo final</span><b id="pagamentoClienteSaldoFinal">${moeda(saldo.debito)}</b></div></section>
-      <label class="transaction-field transaction-date-field"><span>Data do pagamento</span><input id="pagamentoClienteData" type="date" value="${isoData(new Date())}"></label>
+      ${campoDataCentralizado('pagamentoClienteData', isoData(new Date()), 'Data do pagamento')}
       <label class="transaction-field"><span>Forma de pagamento</span><select id="pagamentoClienteForma"><option selected>Pix</option><option>Dinheiro</option><option>Cartão de crédito</option><option>Cartão de débito</option><option>Cheque</option><option>Boleto</option></select></label>
     </div>
     <footer class="client-transaction-footer"><button type="button" class="primary" onclick="confirmarPagamentoCliente()">Confirmar recebimento</button></footer>
   `, 'sheet-backdrop-centered client-transaction-backdrop payment-transaction-backdrop');
+  requestAnimationFrame(() => { const campo = document.getElementById('pagamentoClienteValor'); campo?.focus(); campo?.select(); });
+}
+
+function selecionarClientePagamento(clienteId) {
+  const manterSelecao = Boolean(pagamentoClienteRascunho?.permitirSelecaoCliente);
+  abrirPagamentoClienteComSelecao(clienteId, manterSelecao);
 }
 
 function resumoPagamentoCliente() {
@@ -2906,22 +3077,27 @@ function saldoClienteComPagamentoAlterado(pagamento, novoValor) {
   };
 }
 
-function abrirEditarPagamentoCliente(pagamentoId, pagina = 0) {
+function abrirEditarPagamentoCliente(pagamentoId, pagina = 0, retornoClienteId = '', retornoAba = '') {
   const pagamento = (state.pagamentos || []).find((item) => item.id === pagamentoId);
   if (!pagamento) return;
   const cliente = state.clientes.find((item) => item.id === pagamento.cliente_id);
   const saldoAtual = saldoFinanceiroCliente(pagamento.cliente_id);
   const valorFormatado = Number(pagamento.valor || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   sheet(`
-    <div class="sheet-header"><div><h2>Editar pagamento</h2><p class="muted small">${escapeHtml(cliente?.nome || 'Cliente não informado')}</p></div><button class="close" onclick="abrirPagamentosCliente('${pagamento.cliente_id}', ${pagina})">×</button></div>
+    <div class="sheet-header"><div><h2>Editar pagamento</h2><p class="muted small">${escapeHtml(cliente?.nome || 'Cliente não informado')}</p></div><button class="close" onclick="voltarEdicaoPagamento('${pagamento.cliente_id}', ${pagina}, '${retornoClienteId}', '${retornoAba}')">×</button></div>
     <div class="payment-edit-form">
       <label class="transaction-field"><span>Valor pago</span><input id="editarPagamentoValor" type="text" inputmode="numeric" value="${escapeAttr(valorFormatado)}" onfocus="this.select()" oninput="formatarCampoMoeda(this);atualizarResumoEdicaoPagamento('${pagamentoId}')"></label>
-      <label class="transaction-field transaction-date-field"><span>Data do pagamento</span><input id="editarPagamentoData" type="date" value="${escapeAttr(pagamento.data_pagamento || isoData(new Date()))}"></label>
+      ${campoDataCentralizado('editarPagamentoData', pagamento.data_pagamento || isoData(new Date()), 'Data do pagamento')}
       <section class="payment-edit-summary"><div><span>Saldo atual</span><b>${moeda(saldoAtual.debito)}</b></div><div><span>Crédito atual</span><b>${moeda(saldoAtual.credito)}</b></div><div class="final"><span>Novo saldo</span><b id="editarPagamentoNovoSaldo">${moeda(saldoAtual.debito)}</b></div><div><span>Novo crédito</span><b id="editarPagamentoNovoCredito">${moeda(saldoAtual.credito)}</b></div></section>
       <p class="payment-edit-note">O desconto e a forma de pagamento permanecem inalterados.</p>
     </div>
-    <footer class="payment-edit-footer"><button type="button" class="ghost" onclick="abrirPagamentosCliente('${pagamento.cliente_id}', ${pagina})">Cancelar</button><button type="button" class="danger" onclick="abrirConfirmacaoExcluirPagamento('${pagamentoId}', ${pagina})">Excluir</button><button type="button" class="primary" onclick="salvarEdicaoPagamentoCliente('${pagamentoId}', ${pagina})">Salvar</button></footer>
+    <footer class="payment-edit-footer"><button type="button" class="ghost" onclick="voltarEdicaoPagamento('${pagamento.cliente_id}', ${pagina}, '${retornoClienteId}', '${retornoAba}')">Cancelar</button><button type="button" class="danger" onclick="abrirConfirmacaoExcluirPagamento('${pagamentoId}', ${pagina}, '${retornoClienteId}', '${retornoAba}')">Excluir</button><button type="button" class="primary" onclick="salvarEdicaoPagamentoCliente('${pagamentoId}', ${pagina}, '${retornoClienteId}', '${retornoAba}')">Salvar</button></footer>
   `, 'sheet-backdrop-centered payment-edit-backdrop');
+}
+
+function voltarEdicaoPagamento(clienteId, pagina, retornoClienteId = '', retornoAba = '') {
+  if (retornoClienteId && retornoAba) { abrirDetalhesCliente(retornoClienteId, retornoAba, pagina); return; }
+  abrirPagamentosCliente(clienteId, pagina);
 }
 
 function atualizarResumoEdicaoPagamento(pagamentoId) {
@@ -2934,7 +3110,7 @@ function atualizarResumoEdicaoPagamento(pagamentoId) {
   if (creditoEl) creditoEl.textContent = moeda(saldo.credito);
 }
 
-async function salvarEdicaoPagamentoCliente(pagamentoId, pagina = 0) {
+async function salvarEdicaoPagamentoCliente(pagamentoId, pagina = 0, retornoClienteId = '', retornoAba = '') {
   const pagamentoAtual = (state.pagamentos || []).find((item) => item.id === pagamentoId);
   if (!pagamentoAtual) return;
   const valorAtualizado = Math.max(0, lerCampoMoeda('editarPagamentoValor'));
@@ -2949,16 +3125,16 @@ async function salvarEdicaoPagamentoCliente(pagamentoId, pagina = 0) {
     const salvo = backendAtivo ? await window.VendasDb.updatePayment(candidato) : candidato;
     state.pagamentos = (state.pagamentos || []).map((item) => item.id === pagamentoId ? { ...item, ...salvo } : item);
     render();
-    abrirPagamentosCliente(pagamentoAtual.cliente_id, pagina);
+    voltarEdicaoPagamento(pagamentoAtual.cliente_id, pagina, retornoClienteId, retornoAba);
     toast('Pagamento atualizado e saldos recalculados.');
   } catch (error) { toast(traduzErro(error)); }
 }
 
-function abrirConfirmacaoExcluirPagamento(pagamentoId, pagina = 0) {
+function abrirConfirmacaoExcluirPagamento(pagamentoId, pagina = 0, retornoClienteId = '', retornoAba = '') {
   const pagamento = (state.pagamentos || []).find((item) => item.id === pagamentoId);
   if (!pagamento) return;
   const cliente = state.clientes.find((item) => item.id === pagamento.cliente_id);
-  sheet(`<div class="sheet-header"><div><h2>Excluir pagamento?</h2><p class="muted small">Esta ação atualizará os saldos do cliente.</p></div><button class="close" onclick="abrirEditarPagamentoCliente('${pagamentoId}', ${pagina})">×</button></div><div class="payment-delete-confirm"><p>Confirma a exclusão do pagamento de <b>${moeda(pagamento.valor)}</b> feito por <b>${escapeHtml(cliente?.nome || 'Cliente não informado')}</b> em ${dataBR(`${pagamento.data_pagamento}T12:00:00`)}?</p><button type="button" class="danger" onclick="excluirPagamentoCliente('${pagamentoId}')">Sim, excluir pagamento</button><button type="button" class="ghost" onclick="abrirEditarPagamentoCliente('${pagamentoId}', ${pagina})">Cancelar</button></div>`, 'sheet-backdrop-centered payment-delete-backdrop');
+  sheet(`<div class="sheet-header"><div><h2>Excluir pagamento?</h2><p class="muted small">Esta ação atualizará os saldos do cliente.</p></div><button class="close" onclick="abrirEditarPagamentoCliente('${pagamentoId}', ${pagina}, '${retornoClienteId}', '${retornoAba}')">×</button></div><div class="payment-delete-confirm"><p>Confirma a exclusão do pagamento de <b>${moeda(pagamento.valor)}</b> feito por <b>${escapeHtml(cliente?.nome || 'Cliente não informado')}</b> em ${dataBR(`${pagamento.data_pagamento}T12:00:00`)}?</p><button type="button" class="danger" onclick="excluirPagamentoCliente('${pagamentoId}')">Sim, excluir pagamento</button><button type="button" class="ghost" onclick="abrirEditarPagamentoCliente('${pagamentoId}', ${pagina}, '${retornoClienteId}', '${retornoAba}')">Cancelar</button></div>`, 'sheet-backdrop-centered payment-delete-backdrop');
 }
 
 async function excluirPagamentoCliente(pagamentoId) {
@@ -3064,11 +3240,12 @@ function abrirDetalhesCliente(clienteId, aba = 'resumo', pagina = 0) {
   const cliente = state.clientes.find((item) => item.id === clienteId);
   if (!cliente) return;
   window.currentClientDetailTab = aba;
-  const pedidos = pedidosDoCliente(clienteId);
-  const consignados = pedidos.filter((venda) => !['cancelada', 'convertida'].includes(venda.status) && pedidoEhConsignado(venda));
+  const todosPedidos = pedidosDoCliente(clienteId);
+  const consignados = todosPedidos.filter((venda) => venda.status !== 'cancelada' && pedidoEhConsignado(venda));
+  const pedidos = todosPedidos.filter((venda) => !pedidoEhConsignado(venda));
   const pagamentos = pagamentosDoCliente(clienteId);
   const saldo = saldoFinanceiroCliente(clienteId);
-  const totalComprado = pedidos.filter((venda) => venda.status !== 'cancelada' && !pedidoEhConsignado(venda) && !pedidoSomenteBonificado(venda)).reduce((soma, venda) => soma + Number(venda.total || 0), 0);
+  const totalComprado = pedidos.filter((venda) => venda.status !== 'cancelada' && !pedidoSomenteBonificado(venda)).reduce((soma, venda) => soma + Number(venda.total || 0), 0);
   const conteudo = aba === 'resumo'
     ? `<div class="client-summary-grid"><div><small>Débito pendente</small><b>${moeda(saldo.debito)}</b></div><div><small>Consignação</small><b>${moeda(saldo.consignado)}</b></div><div><small>Crédito</small><b>${moeda(saldo.credito)}</b></div><div><small>Total comprado</small><b>${moeda(totalComprado)}</b></div></div>`
     : aba === 'consignado'
@@ -3090,7 +3267,7 @@ function abrirPagamentoClienteDetalhe(pagamentoId, retornoClienteId = '', retorn
   const cliente = state.clientes.find((item) => item.id === pagamento.cliente_id);
   const resumo = resumoComprovantePagamento(pagamento);
   const descontoHtml = Number(pagamento.desconto || 0) > 0 ? `<div><span>Desconto</span><b>${moeda(pagamento.desconto)}</b></div>` : '';
-  sheet(`<div class="sheet-header"><div><h2>Comprovante de pagamento</h2><p class="muted small">Cliente: ${escapeHtml(cliente?.nome || 'não informado')} · ${dataComprovante(pagamento.data_pagamento)}</p></div><button class="close" onclick="voltarParaDetalhesCliente('${retornoClienteId}','${retornoAba}',${retornoPagina})">×</button></div><section class="payment-detail-summary receipt-detail-summary"><div><span>Valor pago</span><b>${moeda(pagamento.valor)}</b></div>${descontoHtml}<div><span>Forma</span><b>${escapeHtml(pagamento.forma_pagamento || 'Não informado')}</b></div><div><span>Saldo anterior</span><b>${moeda(resumo.saldoAnterior)}</b></div><div class="receipt-current-balance"><span>Saldo atual</span><b>${moeda(resumo.saldoAtual)}</b></div></section><button class="primary order-share" onclick="compartilharPagamento('${pagamentoId}')">${svgIcon('save')} Compartilhar comprovante</button>`, 'sheet-backdrop-centered receipt-view-backdrop');
+  sheet(`<div class="sheet-header"><div><h2>Comprovante de pagamento</h2><p class="muted small">Cliente: ${escapeHtml(cliente?.nome || 'não informado')} · ${dataComprovante(pagamento.data_pagamento)}</p></div><button class="close" onclick="voltarParaDetalhesCliente('${retornoClienteId}','${retornoAba}',${retornoPagina})">×</button></div><section class="payment-detail-summary receipt-detail-summary"><div><span>Saldo anterior</span><b>${moeda(resumo.saldoAnterior)}</b></div><div><span>Forma de pagamento</span><b>${escapeHtml(pagamento.forma_pagamento || 'Não informado')}</b></div>${descontoHtml}<div class="payment-paid-highlight"><span>Valor pago</span><b>${moeda(pagamento.valor)}</b></div><div class="receipt-current-balance"><span>Saldo atual</span><b>${moeda(resumo.saldoAtual)}</b></div></section><button class="primary order-share" onclick="compartilharPagamento('${pagamentoId}')">${svgIcon('save')} Compartilhar comprovante</button><footer class="order-view-actions"><button type="button" class="ghost" onclick="voltarParaDetalhesCliente('${retornoClienteId}','${retornoAba}',${retornoPagina})">Fechar</button><button type="button" class="secondary" onclick="abrirEditarPagamentoCliente('${pagamentoId}',${retornoPagina},'${retornoClienteId}','${retornoAba}')">Editar pagamento</button></footer>`, 'sheet-backdrop-centered receipt-view-backdrop');
 }
 
 function abrirPedidoCliente(pedidoId, retornoClienteId = '', retornoAba = '', retornoPagina = 0) {
@@ -4617,8 +4794,9 @@ async function verificarAtualizacaoPwa() {
     const pagina = await resposta.text();
     const encontrada = pagina.match(/vendas-mobile\/app\.js\?v=([^"'&\s<]+)/)?.[1] || '';
     if (!encontrada || encontrada === versaoAtual) return;
-    if (podeRecarregarAtualizacaoPwa()) window.location.reload();
-    else atualizacaoPwaPendente = true;
+    // Nunca recarrega o app enquanto a pessoa está usando a tela: uma atualização
+    // de PWA deve entrar somente numa abertura/recarga consciente posterior.
+    atualizacaoPwaPendente = true;
   } catch { /* sem conexão: mantém a versão offline atual */ }
 }
 
@@ -4637,7 +4815,6 @@ if (window.__VENDAS_MOBILE_EMBEDDED__) {
   window.setTimeout(verificarAtualizacaoPwa, 12000);
   window.setInterval(verificarAtualizacaoPwa, 120000);
   document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') verificarAtualizacaoPwa(); });
-  document.addEventListener('focusout', () => window.setTimeout(aplicarAtualizacaoPwaPendente, 0));
 }
 
 window.setAba = setAba;
@@ -4691,11 +4868,17 @@ window.abrirAcoesRapidas = abrirAcoesRapidas;
 window.acionarNavegacaoInferior = acionarNavegacaoInferior;
 window.buscarCepCliente = buscarCepCliente;
 window.abrirMenuCliente = abrirMenuCliente;
+window.alternarBuscaClientes = alternarBuscaClientes;
+window.atualizarBuscaClientes = atualizarBuscaClientes;
+window.limparBuscaClientes = limparBuscaClientes;
+window.recolherBuscaClientesSeVazia = recolherBuscaClientesSeVazia;
 window.abrirAgendamentoCliente = abrirAgendamentoCliente;
 window.abrirNovoPedidoCliente = abrirNovoPedidoCliente;
 window.abrirNovoPedidoGeral = abrirNovoPedidoGeral;
+window.abrirNovoPagamentoGeral = abrirNovoPagamentoGeral;
 window.selecionarTipoPedidoCliente = selecionarTipoPedidoCliente;
 window.selecionarClientePedido = selecionarClientePedido;
+window.selecionarClientePagamento = selecionarClientePagamento;
 window.selecionarProdutoPedidoCliente = selecionarProdutoPedidoCliente;
 window.sincronizarQuantidadePedidoCliente = sincronizarQuantidadePedidoCliente;
 window.normalizarQuantidadePedidoCliente = normalizarQuantidadePedidoCliente;
@@ -4709,6 +4892,7 @@ window.atualizarResumoPagamentoCliente = atualizarResumoPagamentoCliente;
 window.confirmarPagamentoCliente = confirmarPagamentoCliente;
 window.abrirPagamentosCliente = abrirPagamentosCliente;
 window.abrirEditarPagamentoCliente = abrirEditarPagamentoCliente;
+window.voltarEdicaoPagamento = voltarEdicaoPagamento;
 window.atualizarResumoEdicaoPagamento = atualizarResumoEdicaoPagamento;
 window.salvarEdicaoPagamentoCliente = salvarEdicaoPagamentoCliente;
 window.abrirConfirmacaoExcluirPagamento = abrirConfirmacaoExcluirPagamento;
@@ -4744,6 +4928,10 @@ window.enviarSolicitacaoAcesso = enviarSolicitacaoAcesso;
 window.confirmarTelefoneVinculo = confirmarTelefoneVinculo;
 window.cancelarTelefoneVinculo = cancelarTelefoneVinculo;
 window.aplicarFiltroDashboard = aplicarFiltroDashboard;
+window.abrirCalendarioCentralizado = abrirCalendarioCentralizado;
+window.mudarMesCalendario = mudarMesCalendario;
+window.selecionarDataCalendario = selecionarDataCalendario;
+window.fecharCalendarioCentralizado = fecharCalendarioCentralizado;
 window.mudarMes = mudarMes;
 window.irMesAtual = irMesAtual;
 window.aplicarBusca = aplicarBusca;
@@ -4802,6 +4990,8 @@ window.compartilharMaterialDivulgacao = compartilharMaterialDivulgacao;
 
 window.addEventListener('pageshow', () => requestAnimationFrame(limparFocoInicialLogin));
 window.addEventListener('scroll', agendarDestaqueClientes, { passive: true });
+window.addEventListener('touchstart', () => { encaixeClientesEmAndamento = false; }, { passive: true });
+window.addEventListener('wheel', () => { encaixeClientesEmAndamento = false; }, { passive: true });
 window.addEventListener('resize', () => {
   agendarDestaqueClientes();
   sincronizarSalaAoMudarLargura();

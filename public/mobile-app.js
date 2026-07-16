@@ -7315,9 +7315,30 @@
           '<p class="text-xs font-black uppercase tracking-[0.24em] text-cyan-700">AvantaLab</p>' +
           '<h1 class="mt-2 text-xl font-black">Preparando acesso</h1>' +
           '<p class="mt-2 text-sm font-semibold text-slate-600">Carregando seus dados com seguranca.</p>' +
+          '<div class="mt-4 h-2 w-full overflow-hidden rounded-full bg-slate-900/10" aria-label="Carregando acesso"><i id="accessProgressBarMobile" class="block h-full rounded-full bg-gradient-to-r from-sky-600 to-cyan-500" style="width:8%"></i></div>' +
+          '<b id="accessProgressValueMobile" class="mt-1 block text-[11px] font-black text-cyan-700">8%</b>' +
         '</div>' +
       '</section>'
     );
+  }
+
+  function iniciarProgressoAcessoMobile() {
+    window.clearInterval(window.__progressoAcessoMobile);
+    var barra = document.getElementById('accessProgressBarMobile');
+    var texto = document.getElementById('accessProgressValueMobile');
+    if (!barra || !texto) return;
+    var progresso = 8;
+    window.__progressoAcessoMobile = window.setInterval(function () {
+      barra = document.getElementById('accessProgressBarMobile');
+      texto = document.getElementById('accessProgressValueMobile');
+      if (!barra || !texto) {
+        window.clearInterval(window.__progressoAcessoMobile);
+        return;
+      }
+      progresso = Math.min(92, progresso + Math.max(1, Math.round((94 - progresso) / 7)));
+      barra.style.width = progresso + '%';
+      texto.textContent = progresso + '%';
+    }, 260);
   }
 
   function cardInstalarLoginHtml() {
@@ -10861,6 +10882,7 @@
     else if (!state.paywallVerificado) telaAtual = telaCarregandoMobile();
     else telaAtual = telaApp();
     root.innerHTML = telaAtual + (state.chatIAAberto ? chatIAModalHtml() : '') + (state.mostrarPromptNotificacoes ? promptNotificacoesHtml() : '') + (state.tourAberto ? tourHtml() : '') + avisoAssinanteMobileHtml() + ativacaoVendasMobileHtml() + (state.seletorSistemaInicialBloqueante ? '' : seletorSistemaInicialHtml());
+    iniciarProgressoAcessoMobile();
     sincronizarGradienteHeaderPerfil();
     configurarRecolhimentoPerfilHeader();
     var indicadorNav = document.querySelector('[data-nav-indicador]');

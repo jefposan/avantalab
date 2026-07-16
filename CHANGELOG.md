@@ -1,5 +1,20 @@
 # Changelog
 
+## 1.5.3.03 - 2026-07-16
+
+- Gestão Mobile e Vendas Mobile: os cards de preparação de acesso e de conteúdo agora exibem barra de progresso percentual durante o carregamento.
+
+## 1.5.3.02 - 2026-07-16
+
+- Vendas Mobile: em Clientes, Ordenar e a lupa passam a ocupar uma barra compacta; a lupa abre o campo com botão Buscar na mesma linha e se recolhe ao ficar vazia fora de foco.
+
+## 1.5.3.01 - 2026-07-16
+
+- Vendas Mobile: Clientes ganha encaixe central ao rolar, pesquisa recolhida em uma lupa, cabeçalho fixo nos detalhes e calendário centralizado para alterar datas.
+- Vendas Mobile: separa definitivamente pedidos e consignados nas fichas dos clientes, amplia a lista de clientes sem compras e faz o recorte respeitar o período/dias selecionados.
+- Vendas Mobile: agiliza pagamentos com seleção de cliente pelo botão **+**, foco imediato no valor, comprovante reorganizado e opção de editar diretamente no detalhe.
+- Vendas Mobile: adiciona percentual de progresso durante a preparação do acesso e impede recargas automáticas inesperadas durante o uso.
+
 ## 1.5.3 - 2026-07-16
 
 - Migração Tridium: cada histórico restaurado passa a usar o perfil pessoal da própria conta, com módulo Vendas ativo e acesso de gestor, sem vincular movimentações financeiras individuais à Tridium Cosméticos.

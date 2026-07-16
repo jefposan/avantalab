@@ -19,7 +19,7 @@ export const viewport: Viewport = {
 export default function VendasMobilePage() {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
-  const assetVersion = '20260715-10';
+  const assetVersion = '20260716-02';
   const bootstrap = `
     (function () {
       window.__VENDAS_MOBILE_EMBEDDED__ = true;
@@ -82,7 +82,7 @@ export default function VendasMobilePage() {
       <div id="app" className="app-shell">
         <section className="login-screen preparing-access-screen">
           <div className="preparing-access-card">
-            <p>AvantaLab</p><span className="loader" /><h1>Preparando acesso</h1><small>Estamos validando seu login e preparando seus dados com segurança.</small>
+            <p>AvantaLab</p><span className="loader" /><h1>Preparando acesso</h1><small>Estamos validando seu login e preparando seus dados com segurança.</small><div className="access-progress" aria-label="Carregando acesso"><i style={{ width: '8%' }} /></div><b className="access-progress-value">8%</b>
           </div>
         </section>
       </div>

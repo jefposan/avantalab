@@ -1,8 +1,8 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.5.3 -->
+<!-- ava-version: 1.5.3.03 -->
 
-> Revisão 1.5.3: sem impacto operacional adicional na Gestão Web. Históricos importados do Vendas respeitam o perfil financeiro pessoal de cada conta.
+> Revisão 1.5.3.03: sem impacto operacional na Gestão Web. O indicador de carregamento ocorreu somente nos ambientes mobile.
 
 ## Escopo
 

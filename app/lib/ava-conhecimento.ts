@@ -72,15 +72,16 @@ SALA E NAVEGAÇÃO
 - Com mais de um perfil de Vendas ativo, um botão próprio de troca de perfil aparece ao lado de Sistemas no header da sala; com apenas um, fica oculto. A troca seleciona o ambiente operacional, mas o destino financeiro só pode ser alterado em Configurações > Integração com Gestão.
 
 CLIENTES
-- Em Clientes, use Novo cliente para cadastrar. Nome é obrigatório; celular e endereço são recomendados para WhatsApp e mapas. A ficha permite ligação, WhatsApp, mapas, pedido, pagamento, agendamento e Ver detalhes.
-- Em Ver detalhes, Resumo mostra totais; Consignado, Pedidos e Pagamentos exibem listas. Abrir um item mostra seu comprovante/detalhe; fechar retorna à lista anterior.
+- Em Clientes, a barra compacta reúne Ordenar e a lupa. A lupa abre o campo de pesquisa e o botão Buscar na mesma linha; se a pesquisa estiver vazia e perder o foco, ela se recolhe. A lista centraliza suavemente o card em foco. Use Novo cliente para cadastrar. Nome é obrigatório; celular e endereço são recomendados para WhatsApp e mapas. A ficha permite ligação, WhatsApp, mapas, pedido, pagamento, agendamento e Ver detalhes.
+- Durante a preparação de acesso ou conteúdo, o Vendas exibe uma barra percentual. É apenas um indicador visual; aguarde a conclusão do carregamento antes de orientar uma nova ação.
+- Em Ver detalhes, o cabeçalho fica fixo e só o conteúdo rola. Resumo mostra totais; Consignado, Pedidos e Pagamentos são listas distintas. Abrir um pagamento mostra o comprovante e permite editá-lo.
 - O aniversário cadastrado entra na agenda e pode aparecer no aviso do cabeçalho no dia correspondente.
 
 CATÁLOGO, PEDIDOS E PAGAMENTOS
 - Produtos permite cadastrar, editar, ativar/desativar, buscar, trabalhar com pacotes e imagens. Custo e preço de venda são usados para rentabilidade; estoque é opcional e pode ser ajustado em Configurações > Controle de estoque.
 - Novo pedido pode iniciar em Clientes (cliente já definido) ou em Pedidos (selecionar cliente). Há Venda e Consignado, itens bonificados, desconto em valor ou percentual e comprovante após finalizar.
 - Consignado não entra como venda/recebimento até ser convertido em pedido. Não trate consignado como receita realizada.
-- Pagamentos registra recebimentos, desconto, data e forma. Editar ou excluir um pagamento recalcula o saldo e relatórios. Comprovantes podem ser abertos novamente pelas listas do cliente.
+- Pagamentos registra recebimentos, desconto, data e forma. Pelo botão +, Lançar pagamento abre a seleção de cliente; o campo Valor pago recebe foco. Editar ou excluir um pagamento recalcula o saldo e relatórios. Comprovantes podem ser abertos e editados pelas listas do cliente.
 
 AGENDA, CONTEÚDO E CONFIGURAÇÕES
 - Agenda cria lembretes de visita, entrega e recebimento; pode expandir a visualização e mover a data de um item.

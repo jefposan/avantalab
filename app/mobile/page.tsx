@@ -243,6 +243,10 @@ export default function MobilePage() {
             <p className="mt-2 text-sm font-semibold text-slate-600">
               Carregando seus dados com seguranca.
             </p>
+            <div className="mt-4 h-2 w-full overflow-hidden rounded-full bg-slate-900/10" aria-label="Carregando acesso">
+              <i className="block h-full rounded-full bg-gradient-to-r from-sky-600 to-cyan-500" style={{ width: '8%' }} />
+            </div>
+            <b className="mt-1 block text-[11px] font-black text-cyan-700">8%</b>
           </div>
         </section>
       </div>
@@ -251,7 +255,7 @@ export default function MobilePage() {
       <VendasMobileConteudoBridge />
 
       <script src="/mobile-supabase.js" defer />
-      <script src="/mobile-app.js?v=297" defer />
+      <script src="/mobile-app.js?v=298" defer />
     </main>
   );
 }

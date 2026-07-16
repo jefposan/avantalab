@@ -13,6 +13,34 @@
   },
   "versoes": [
     {
+      "versao": "1.5.3.03",
+      "titulo": "Carregamento mais transparente no Mobile",
+      "data": "Julho/2026",
+      "itens": [
+        "Gestão Mobile e Vendas Mobile agora mostram uma barra com percentual enquanto o acesso e conteúdos são preparados."
+      ]
+    },
+    {
+      "versao": "1.5.3.02",
+      "titulo": "Busca de clientes mais compacta",
+      "data": "Julho/2026",
+      "itens": [
+        "Em Clientes, Ordenar e a lupa agora ficam em uma única barra compacta.",
+        "A lupa abre o campo e o botão Buscar na mesma linha e se recolhe quando a pesquisa vazia perde o foco."
+      ]
+    },
+    {
+      "versao": "1.5.3.01",
+      "titulo": "Clientes e pagamentos mais rápidos no Vendas",
+      "data": "Julho/2026",
+      "itens": [
+        "A lista de Clientes ganhou foco central durante a rolagem, pesquisa por lupa e detalhes com cabeçalho fixo.",
+        "Pedidos e consignados agora aparecem em listas separadas na ficha do cliente.",
+        "O botão + permite registrar pagamento escolhendo o cliente, com foco imediato no valor; comprovantes também podem ser editados.",
+        "O acesso mostra percentual de carregamento e as datas usam um calendário centralizado."
+      ]
+    },
+    {
       "versao": "1.5.2.01",
       "titulo": "Resultado do Vendas mais simples na Gestão",
       "data": "Julho/2026",

@@ -1,8 +1,8 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.5.3 -->
+<!-- ava-version: 1.5.3.03 -->
 
-> Revisão 1.5.3: históricos importados ficam no perfil pessoal da própria conta; vínculo comercial e destino financeiro continuam independentes.
+> Revisão 1.5.3.03: os cards de preparação de acesso e conteúdo do Vendas Mobile exibem barra percentual enquanto os dados são carregados. Sem mudança nas rotinas operacionais.
 
 ## Escopo e navegação
 
