@@ -1,8 +1,8 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.5.3.12 -->
+<!-- ava-version: 1.5.3.13 -->
 
-> Revisão 1.5.3.12: sem impacto operacional dentro do Vendas Mobile. A instalação do módulo é confirmada na Gestão antes de liberar a entrada.
+> Revisão 1.5.3.13: sem impacto operacional no Vendas Mobile.
 
 ## Escopo e navegação
 

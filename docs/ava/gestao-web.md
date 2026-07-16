@@ -1,8 +1,8 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.5.3.12 -->
+<!-- ava-version: 1.5.3.13 -->
 
-> Revisão 1.5.3.12: a instalação do Vendas Mobile confirma a gravação no perfil e a liberação do gestor antes de exibir sucesso; falhas são mostradas.
+> Revisão 1.5.3.13: Usuários permite alterar e-mail e senha conforme a hierarquia de permissões; login e e-mail passam a acessar a mesma conta.
 
 ## Escopo
 

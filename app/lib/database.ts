@@ -1351,11 +1351,13 @@ export async function atualizarUsuarioEmpresa({
   nome,
   email,
   perfil,
+  novaSenha,
 }: {
   acessoId: string;
   nome: string;
   email: string;
   perfil: 'gestor_master' | 'administrador' | 'operador_completo' | 'operador_simples';
+  novaSenha?: string;
 }) {
   const { data: sessao } = await supabase.auth.getSession();
 
@@ -1380,6 +1382,7 @@ export async function atualizarUsuarioEmpresa({
       nome: nome.trim(),
       email: email.trim().toLowerCase(),
       perfil,
+      novaSenha: novaSenha?.trim() || undefined,
     }),
   });
 

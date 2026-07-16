@@ -72,6 +72,7 @@ export async function POST(request: Request) {
     const nome = String(corpo.nome || '').trim();
     const loginOuEmail = String(corpo.email || '').trim().toLowerCase();
     const perfil = String(corpo.perfil || '') as PerfilUsuario;
+    const novaSenha = String(corpo.novaSenha || '').trim();
 
     if (!acessoId) {
       return respostaErro('Usuario nao informado.');
@@ -112,7 +113,6 @@ export async function POST(request: Request) {
       .eq('empresa_id', usuarioAlvo.empresa_id)
       .eq('user_id', user.id)
       .eq('status', 'ativo')
-      .in('perfil', ['gestor_master', 'administrador'])
       .maybeSingle();
 
     if (erroPermissao) {
@@ -120,17 +120,36 @@ export async function POST(request: Request) {
       return respostaErro('Nao foi possivel validar sua permissao.', 500);
     }
 
-    if (!permissao) {
+    if (!permissao || permissao.perfil === 'operador_simples') {
       return respostaErro('Voce nao tem permissao para atualizar usuarios.', 403);
     }
 
     const solicitanteEhGestorMaster = permissao.perfil === 'gestor_master';
+    const solicitanteEhAdministrador = permissao.perfil === 'administrador';
+    const solicitanteEhOperadorCompleto = permissao.perfil === 'operador_completo';
+    const editandoProprioUsuario = usuarioAlvo.user_id === user.id;
+    const alvoEhOperador = ['operador_completo', 'operador_simples'].includes(usuarioAlvo.perfil);
+
+    if (!solicitanteEhGestorMaster && !(
+      (solicitanteEhAdministrador && (editandoProprioUsuario || alvoEhOperador)) ||
+      (solicitanteEhOperadorCompleto && editandoProprioUsuario)
+    )) {
+      return respostaErro('Voce nao tem permissao para editar este usuario.', 403);
+    }
+
+    if (!solicitanteEhGestorMaster && perfil !== usuarioAlvo.perfil) {
+      return respostaErro('Somente o Gestor Master pode alterar o perfil de acesso.', 403);
+    }
 
     if (perfil === 'gestor_master' && !solicitanteEhGestorMaster) {
       return respostaErro(
         'Somente o gestor master pode transformar outro usuario em gestor master.',
         403
       );
+    }
+
+    if (novaSenha && novaSenha.length < 8) {
+      return respostaErro('A nova senha deve ter pelo menos 8 caracteres.');
     }
 
     if (usuarioAlvo.perfil === 'gestor_master' && perfil !== 'gestor_master') {
@@ -165,10 +184,10 @@ export async function POST(request: Request) {
     };
 
     if (loginOuEmail.includes('@')) {
+      const { data: conflito } = await supabaseAdmin.auth.admin.listUsers({ page: 1, perPage: 1000 });
+      const emailEmUso = (conflito?.users || []).some((item) => item.id !== usuarioAlvo.user_id && String(item.email || '').toLowerCase() === loginOuEmail);
+      if (emailEmUso) return respostaErro('Este e-mail ja esta em uso por outra conta.');
       atualizacao.email = loginOuEmail;
-      if (!usuarioAlvo.login) {
-        atualizacao.login = null;
-      }
     } else {
       const login = normalizarLogin(loginOuEmail);
 
@@ -207,6 +226,21 @@ export async function POST(request: Request) {
         erroAtualizar.message || 'Nao foi possivel atualizar o usuario.',
         500
       );
+    }
+
+    if (loginOuEmail.includes('@') && usuarioAlvo.user_id) {
+      const { error: erroAuth } = await supabaseAdmin.auth.admin.updateUserById(usuarioAlvo.user_id, {
+        email: loginOuEmail,
+        email_confirm: true,
+      });
+      if (erroAuth) return respostaErro(erroAuth.message || 'Nao foi possivel atualizar o e-mail da conta.', 500);
+      const { error: erroVinculos } = await supabaseAdmin.from('usuarios_empresa').update({ email: loginOuEmail }).eq('user_id', usuarioAlvo.user_id);
+      if (erroVinculos) return respostaErro('O e-mail da conta foi atualizado, mas alguns vinculos nao puderam ser sincronizados.', 500);
+    }
+
+    if (novaSenha && usuarioAlvo.user_id) {
+      const { error: erroSenha } = await supabaseAdmin.auth.admin.updateUserById(usuarioAlvo.user_id, { password: novaSenha });
+      if (erroSenha) return respostaErro('Os dados foram salvos, mas a senha nao pode ser atualizada.', 500);
     }
 
     return NextResponse.json({

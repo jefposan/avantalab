@@ -4124,16 +4124,18 @@
   }
 
   async function salvarUsuarioMobile() {
-    if (!state.usuarioEditandoId || !podeGerenciarUsuarios()) return;
+    if (!state.usuarioEditandoId) return;
 
     var nome = campo('edit-usuario-nome').trim();
     var login = campo('edit-usuario-login').trim().toLowerCase();
     var perfil = campo('edit-usuario-perfil');
+    var senha = campo('edit-usuario-senha').trim();
 
     if (!nome || !login || !perfil) {
       setErro('Informe nome, login/email e perfil.');
       return;
     }
+    if (senha && senha.length < 8) { setErro('A nova senha deve ter pelo menos 8 caracteres.'); return; }
 
     state.carregando = true;
     state.erro = '';
@@ -4157,6 +4159,7 @@
         nome: nome,
         email: login,
         perfil: perfil,
+        novaSenha: senha,
       }),
     });
     var resposta = await lerResposta(respostaHttp);
@@ -9838,11 +9841,14 @@
 
   function usuarioHtml() {
     if (!podeGerenciarUsuarios()) {
+      var podeEditarProprio = state.empresa && state.empresa.perfil === 'operador_completo' && state.empresa.acessoId;
+      var proprio = podeEditarProprio ? { id: state.empresa.acessoId, nome: state.empresa.usuario_nome || '', email: state.empresa.email || '', login: state.empresa.login || '', perfil: state.empresa.perfil } : null;
+      var editandoProprio = proprio && String(state.usuarioEditandoId) === String(proprio.id);
       return (
         '<div class="grid gap-3 text-sm">' +
           '<div class="rounded-2xl bg-slate-50 p-4"><p class="text-[10px] font-black uppercase tracking-wide text-slate-400">Email</p><p class="mt-1 font-bold">' + escapeHtml(state.usuario && state.usuario.email ? state.usuario.email : '-') + '</p></div>' +
           '<div class="rounded-2xl bg-slate-50 p-4"><p class="text-[10px] font-black uppercase tracking-wide text-slate-400">Perfil</p><p class="mt-1 font-bold">' + escapeHtml(perfilFormatado(state.empresa && state.empresa.perfil)) + '</p></div>' +
-          '<p class="rounded-2xl bg-cyan-50 p-4 text-xs font-semibold text-cyan-900">Somente Gestor Master e Administrador podem criar, editar ou excluir usuarios.</p>' +
+          (editandoProprio ? editarUsuarioHtml(proprio) : (podeEditarProprio ? '<button type="button" data-editar-usuario="' + escapeHtml(proprio.id) + '" class="h-11 rounded-xl bg-cyan-600 text-xs font-black uppercase tracking-wide text-white">Editar meus dados</button>' : '<p class="rounded-2xl bg-cyan-50 p-4 text-xs font-semibold text-cyan-900">Seu perfil não possui permissão para editar usuários.</p>')) +
         '</div>'
       );
     }
@@ -9957,6 +9963,7 @@
         '<input id="edit-usuario-nome" value="' + escapeHtml(usuario.nome || '') + '" placeholder="Nome" style="font-size:16px" class="h-10 w-full min-w-0 rounded-lg border border-cyan-100 bg-white px-3 text-base font-bold outline-none" />' +
         '<input id="edit-usuario-login" value="' + escapeHtml(usuario.login || usuario.email || '') + '" placeholder="Login ou email" style="font-size:16px" class="h-10 w-full min-w-0 rounded-lg border border-cyan-100 bg-white px-3 text-base font-bold outline-none" />' +
         '<select id="edit-usuario-perfil" style="font-size:16px" class="h-10 w-full min-w-0 rounded-lg border border-cyan-100 bg-white px-3 text-base font-bold outline-none">' + opcoesPerfilHtml(usuario.perfil || 'operador_simples', usuario.perfil === 'gestor_master' || (state.empresa && state.empresa.perfil === 'gestor_master')) + '</select>' +
+        '<input id="edit-usuario-senha" type="password" placeholder="Nova senha (opcional)" style="font-size:16px" class="h-10 w-full min-w-0 rounded-lg border border-cyan-100 bg-white px-3 text-base font-bold outline-none" />' +
         '<button id="salvar-usuario-mobile" type="button" class="h-10 rounded-xl bg-cyan-600 px-4 text-xs font-black uppercase tracking-wide text-white">' + (state.carregando ? 'Salvando...' : 'Salvar usuario') + '</button>' +
       '</div>'
     );
@@ -12958,7 +12965,7 @@
     });
 
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/mobile-sw.js?v=245').then(function (registro) {
+      navigator.serviceWorker.register('/mobile-sw.js?v=246').then(function (registro) {
         if (registro && registro.update) registro.update();
       }).catch(function () {});
     }

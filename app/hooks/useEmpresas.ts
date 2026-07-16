@@ -336,7 +336,8 @@ export function useEmpresas(deps: UseEmpresasDeps) {
     const houveAlteracao =
       nomeLimpo !== nomeOriginal ||
       emailLimpo !== loginOriginal ||
-      editUsuarioPerfil !== perfilOriginal;
+      editUsuarioPerfil !== perfilOriginal ||
+      Boolean(editUsuarioNovaSenha.trim());
 
     if (!houveAlteracao) {
       abrirAviso('Nenhuma alteração', 'Altere algum dado do usuário antes de salvar.');
@@ -348,11 +349,14 @@ export function useEmpresas(deps: UseEmpresasDeps) {
       nome: nomeLimpo,
       email: emailLimpo,
       perfil: editUsuarioPerfil,
+      novaSenha: editUsuarioNovaSenha,
     });
 
     if (resultado.erro) { abrirAviso('Erro ao atualizar usuário', resultado.mensagem); return; }
 
     await carregarUsuariosEmpresa();
+    setEditUsuarioNovaSenha('');
+    setMostrarEditUsuarioNovaSenha(false);
     abrirAviso('Usuário atualizado', 'Os dados do usuário foram salvos com sucesso.');
   };
 

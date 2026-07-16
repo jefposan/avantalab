@@ -1,8 +1,8 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.5.3.12 -->
+<!-- ava-version: 1.5.3.13 -->
 
-> Revisão 1.5.3.12: a ativação do Vendas Mobile só conclui após confirmar a instalação no perfil e a liberação do gestor; uma falha é informada ao usuário.
+> Revisão 1.5.3.13: Usuários permite alterar e-mail e senha conforme a hierarquia de permissões; login e e-mail passam a acessar a mesma conta.
 
 ## Escopo
 

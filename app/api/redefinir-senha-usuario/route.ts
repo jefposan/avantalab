@@ -74,10 +74,6 @@ export async function POST(request: Request) {
       return respostaErro('Usuário não encontrado.');
     }
 
-    if (usuarioAlvo.perfil === 'gestor_master') {
-      return respostaErro('A senha do gestor master deve ser redefinida pelo email de recuperação.', 403);
-    }
-
     if (!usuarioAlvo.user_id) {
       return respostaErro('Este usuário ainda não possui login ativo.', 400);
     }
@@ -88,7 +84,6 @@ export async function POST(request: Request) {
       .eq('empresa_id', usuarioAlvo.empresa_id)
       .eq('user_id', user.id)
       .eq('status', 'ativo')
-      .in('perfil', ['gestor_master', 'administrador'])
       .maybeSingle();
 
     if (erroPermissao) {
@@ -96,7 +91,14 @@ export async function POST(request: Request) {
       return respostaErro('Não foi possível validar sua permissão.', 500);
     }
 
-    if (!permissao) {
+    const proprio = usuarioAlvo.user_id === user.id;
+    const alvoOperador = ['operador_completo', 'operador_simples'].includes(usuarioAlvo.perfil);
+    const permitido = permissao && (
+      permissao.perfil === 'gestor_master' ||
+      (permissao.perfil === 'administrador' && (proprio || alvoOperador)) ||
+      (permissao.perfil === 'operador_completo' && proprio)
+    );
+    if (!permitido) {
       return respostaErro('Você não tem permissão para redefinir senhas.', 403);
     }
 

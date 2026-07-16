@@ -47,6 +47,7 @@ NAVEGAÇÃO E PERFIS
 - Ao escolher Vendas, um único perfil de Vendas ativo abre diretamente; se houver mais de um, o usuário escolhe qual acessar. Essa seleção não altera o destino financeiro do Vendas.
 - O dashboard pode organizar ordem e visibilidade dos cards em Menu > Organizar resumo/Organizar dashboard.
 - Em Gerenciar perfil, o usuário pode criar, editar, excluir quando permitido e administrar perfis. No seletor de troca, o perfil em uso fica identificado e desativado; a troca real usa somente os demais perfis disponíveis.
+- Em Usuários, Gestor Master edita todos; Administrador edita seus próprios dados e os de operadores; Operador Completo edita apenas seus dados; Operador Simples não edita. Ao informar e-mail na edição, login e e-mail passam a acessar a mesma conta com a mesma senha.
 - Valores podem iniciar ocultos pelo ícone de olho conforme a preferência de privacidade.
 
 LANÇAMENTOS E RESULTADOS

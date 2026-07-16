@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.5.3.13 - 2026-07-16
+
+- Usuários: o e-mail informado na edição passa a atualizar a conta de acesso e todos os vínculos, mantendo o login e a mesma senha. A senha também pode ser alterada no mesmo formulário.
+- Permissões: Gestor Master edita todos; Administrador edita a si e operadores; Operador Completo edita apenas os próprios dados; Operador Simples não possui edição.
+
 ## 1.5.3.12 - 2026-07-16
 
 - Gestão Web e Mobile: a ativação do **Vendas Mobile** agora confirma a instalação no perfil e a liberação do gestor antes de informar sucesso. Falhas de salvamento passam a ser exibidas em vez de marcar o módulo como ativo apenas na tela.
