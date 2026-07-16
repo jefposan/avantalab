@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.5.4.20 - 2026-07-16
+
+- Vendas Mobile: o encaixe dos cards de clientes fica um pouco mais presente após a rolagem, sem impedir gestos fortes de avançarem por vários cards; somente os vizinhos imediatos do card em foco recebem um desfoque leve.
+- Novos pedidos e pagamentos exibem somente o nome do cliente, com fonte maior, na lista de seleção.
+- Integração: cada usuário mantém uma única conta operacional no Vendas. Ativações feitas em perfis da Gestão autorizam a troca de sistema, mas não criam contas ou perfis adicionais no Vendas.
+- Gestão Mobile: a instalação salva em cada perfil passa a ser a fonte de verdade da ativação, evitando que um módulo já instalado volte a ser solicitado.
+
 ## 1.5.4.19 - 2026-07-16
 
 - Vendas Mobile: a linha de endereço no card do cliente passa a ter aparência de botão e abre a escolha entre Waze e mapas.

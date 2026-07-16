@@ -1,8 +1,8 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.5.4.19 -->
+<!-- ava-version: 1.5.4.20 -->
 
-> Revisão 1.5.4.19: o endereço do card do cliente identifica quando pode abrir Waze ou mapas.
+> Revisão 1.5.4.20: conta única por usuário, encaixe refinado dos clientes e seleção nominal.
 
 ## Escopo e navegação
 
@@ -23,13 +23,11 @@ dúvida dentro do Vendas sempre que a função existir ali.
   Ao tocar, o Vendas lista todos os perfis ativos da Gestão vinculados à conta;
   depois de selecionar um perfil, a troca exige confirmação. O aviso de
   aniversário permanece ao lado do botão quando ambos estão visíveis.
-- Quando o usuário possui mais de um perfil de Vendas ativo, um segundo botão com
-  ícone próprio aparece ao lado de **Ir para Gestão** no header da sala. Ele troca somente o
-  perfil operacional do Vendas; com um único perfil, o botão fica oculto.
-- A ativação de um perfil de Vendas não bloqueia outros perfis vinculados ao mesmo
-  usuário. O vínculo comercial permanece único e separado da permissão de acesso.
-- O destino financeiro não muda ao selecionar outro perfil de Vendas. Ele só pode
-  ser definido ou alterado em **Configurações > Integração com Gestão**.
+- Cada login possui uma única conta operacional no Vendas. Instalações e
+  permissões em perfis da Gestão apenas autorizam a troca entre os sistemas e não
+  criam contas adicionais ou um seletor de perfis dentro do Vendas.
+- O destino financeiro só pode ser definido ou alterado em **Configurações >
+  Integração com Gestão**.
 - A sessão e o perfil/empresa são preservados na troca. Usuários sem permissão
   de gestor não recebem o atalho de retorno à Gestão.
 
@@ -51,8 +49,9 @@ dúvida dentro do Vendas sempre que a função existir ali.
   o cadastro antes de usar os mapas.
 - A ficha oferece pedido, pagamento, agendamento e **Ver detalhes**. Nesta área,
   Resumo, Consignado, Pedidos e Pagamentos mostram os históricos.
-- Na lista, o card próximo ao centro recebe destaque. Depois que a rolagem termina,
-  o encaixe central é concluído suavemente sem disputar o movimento do usuário.
+- Na lista, o card próximo ao centro recebe destaque e os vizinhos imediatos ficam
+  levemente desfocados. Depois que a rolagem termina, o encaixe central é concluído
+  suavemente; um gesto forte continua podendo avançar por vários cards.
 - Pedidos, consignados e pagamentos exibem 10 registros por vez. O botão
   **Carregar mais** acrescenta o próximo lote de até 10 registros sem perder a
   posição da rolagem, até chegar ao fim do histórico.
@@ -80,7 +79,8 @@ dúvida dentro do Vendas sempre que a função existir ali.
 - Novo pedido abre pelo cliente ou por **Pedidos > Novo pedido**. Há Venda e
   Consignado, itens bonificados, desconto por valor/percentual e comprovante.
 - Ao iniciar um pedido ou pagamento sem cliente predefinido, o foco abre na busca
-  de cliente. Digite nome, telefone ou e-mail e toque em um resultado válido.
+  de cliente. A lista mostra somente os nomes, em fonte maior; a pesquisa ainda
+  pode localizar pelo nome, telefone ou e-mail.
 - Em **Inserir produto**, digite nome, código, marca ou categoria para filtrar
   imediatamente as opções; toque no resultado para selecionar e preencher o preço.
 - Ao cancelar ou fechar um novo pedido ou pagamento, o Vendas mantém a página e

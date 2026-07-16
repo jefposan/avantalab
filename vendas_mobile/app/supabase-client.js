@@ -152,9 +152,10 @@
     const acessoGestorRes = await requireClient().rpc('garantir_acessos_gestor_vendas_mobile_rpc');
     if (acessoGestorRes.error) throw acessoGestorRes.error;
     atualizarProgresso('access', 2, 4, 'Conferindo permissões');
-    const [acessosRes, solicitacaoRes] = await Promise.all([
+    const [acessosRes, solicitacaoRes, vinculosRes] = await Promise.all([
       requireClient().rpc('meus_acessos_vendas_mobile_rpc'),
       requireClient().from('vendas_mobile_solicitacoes_acesso').select('*').eq('user_id', user.id).order('atualizado_em', { ascending: false }).limit(1).maybeSingle(),
+      requireClient().rpc('meus_vinculos_comerciais_vendas_mobile_rpc'),
     ]);
     if (acessosRes.error) throw acessosRes.error;
     if (solicitacaoRes.error) throw solicitacaoRes.error;
@@ -168,35 +169,26 @@
     const modulos = await Promise.all(candidatos.map((item) => requireClient().rpc('modulo_vendas_mobile_ativo_rpc', {
       p_empresa_id: item.empresa_id,
     })));
-    const perfisVendas = candidatos.filter((_, indice) => !modulos[indice].error && modulos[indice].data === true);
+    const acessosComModulo = candidatos.filter((_, indice) => !modulos[indice].error && modulos[indice].data === true);
     atualizarProgresso('access', 4, 4, 'Acesso ao Vendas confirmado');
-    const moduloAtivo = perfisVendas.length > 0;
-    let vindoDaGestao = false;
-    let perfilSelecionadoId = '';
-    try {
-      vindoDaGestao = sessionStorage.getItem('avantalab_vendas_entrada_gestao') === '1';
-      perfilSelecionadoId = sessionStorage.getItem('avantalab_vendas_perfil_ativo') || '';
-    } catch { /* armazenamento indisponível */ }
-    let acesso = null;
-    if (perfisVendas.length === 1) acesso = perfisVendas[0];
-    else if (perfisVendas.length > 1 && !vindoDaGestao) {
-      acesso = perfisVendas.find((item) => item.empresa_id === perfilSelecionadoId)
-        || perfisVendas.find((item) => item.empresa_id === empresaContexto)
-        || perfisVendas[0];
-    } else if (!perfisVendas.length) acesso = candidatos[0] || null;
-    if (acesso && acesso.empresa_id !== empresaContexto) {
-      try {
-        localStorage.setItem('avantalab_mobile_sistema_contexto', JSON.stringify({
-          empresaId: acesso.empresa_id,
-          sistema: 'vendas',
-          atualizadoEm: new Date().toISOString(),
-        }));
-      } catch { /* contexto local indisponível */ }
-    }
+    const moduloAtivo = acessosComModulo.length > 0;
+    const vinculoComercialAtivoId = (vinculosRes.data || []).find((item) => item.ativo)?.empresa_id || '';
+    // Os dados do Vendas pertencem ao usuário, não a perfis operacionais
+    // separados. Havendo mais de uma permissão empresarial, escolhemos apenas
+    // o contexto da conta única, sem apresentar ou criar múltiplas contas.
+    const acessoBase = acessosComModulo.find((item) => item.empresa_id === vinculoComercialAtivoId)
+      || acessosComModulo.find((item) => item.empresa_id === empresaContexto)
+      || acessosComModulo[0]
+      || candidatos.find((item) => item.empresa_id === vinculoComercialAtivoId)
+      || candidatos.find((item) => item.empresa_id === empresaContexto)
+      || candidatos[0]
+      || null;
+    const acesso = acessoBase
+      ? { ...acessoBase, papel: candidatos.some((item) => item.papel === 'gestor') ? 'gestor' : acessoBase.papel }
+      : null;
     return {
       acesso,
       moduloAtivo,
-      perfisVendas,
       solicitacao: solicitacaoRes.data || null,
     };
   }
@@ -247,7 +239,7 @@
 
     const acessoVendas = contextoPreparado?.acessoVendas || await buscarAcessoVendas();
     if (!acessoVendas.acesso) {
-      atualizarProgresso('data', 1, 1, 'Aguardando escolha do perfil');
+      atualizarProgresso('data', 1, 1, 'Conta do Vendas não liberada');
       return { user, produtos: [], pacotes: [], clientes: [], vendas: [], pagamentos: [], conteudos: null, divulgacaoPastas: [], divulgacaoMateriais: [], moduloAtivo: true, ...acessoVendas };
     }
 

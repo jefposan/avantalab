@@ -1,8 +1,8 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.5.4.19 -->
+<!-- ava-version: 1.5.4.20 -->
 
-> Revisão 1.5.4.19: sem impacto operacional na Gestão Mobile.
+> Revisão 1.5.4.20: a ativação do Vendas é persistente por perfil e abre a conta única do usuário.
 
 ## Escopo
 
@@ -36,15 +36,16 @@ deve usar os nomes do menu e da barra inferior do celular.
   Gestor Master ou Administrador. Ao tocar, o sistema solicita a ativação, confirma
   o salvamento no servidor e segue para o Vendas. Em perfil pessoal gratuito, a
   ativação exige primeiro o Premium.
-- Um usuário pode manter o Vendas instalado e acessível em vários perfis. Ativar
-  um deles não bloqueia os demais; o vínculo comercial continua sendo único e
-  configurado separadamente no Vendas.
+- A instalação é salva separadamente em cada perfil da Gestão. Depois de ativada,
+  não volta a ser solicitada enquanto o módulo permanecer instalado. Essas
+  permissões não criam outras contas no Vendas: cada usuário possui uma única
+  conta operacional.
 - **Ir para Vendas** também pode ocupar um dos atalhos configuráveis da barra
   inferior, inclusive antes da ativação. Operadores veem o botão lateral inativo e
   não recebem permissão para ativar ou trocar de sistema.
-- Ao escolher Vendas, um único perfil de Vendas ativo abre diretamente. Quando a
-  conta possui mais de um, o usuário escolhe qual deseja acessar antes do carregamento.
-  Essa escolha não modifica o destino financeiro configurado no Vendas.
+- Ao escolher Vendas, a conta única do usuário abre diretamente. O destino
+  financeiro continua sendo definido somente em **Configurações > Integração com
+  Gestão**, dentro do Vendas.
 - A ordem/visibilidade dos cards do dashboard é ajustada em **Menu > Organizar
   resumo** ou **Organizar dashboard**.
 - Em **Gerenciar perfil**, o usuário pode administrar seus perfis conforme a

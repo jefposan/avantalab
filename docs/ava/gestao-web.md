@@ -1,8 +1,8 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.5.4.19 -->
+<!-- ava-version: 1.5.4.20 -->
 
-> Revisão 1.5.4.19: sem impacto operacional na Gestão Web.
+> Revisão 1.5.4.20: a ativação do módulo continua salva por perfil e não cria contas adicionais no Vendas.
 
 ## Escopo
 

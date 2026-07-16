@@ -1745,25 +1745,26 @@
 
   async function confirmarModuloVendasMobileNoPerfil(empresaId, repararAcesso) {
     if (!empresaId) return { data: false, error: new Error('Perfil não identificado.') };
-    if (repararAcesso && podeGerenciarUsuarios()) {
+    // A instalação salva em empresa_modulos é a fonte de verdade. A permissão
+    // operacional do gestor é reparada separadamente e nunca pode fazer um
+    // módulo já instalado voltar a aparecer como desativado.
+    var instalacao = await db
+      .from('empresa_modulos')
+      .select('ativo')
+      .eq('empresa_id', empresaId)
+      .eq('modulo_id', 'vendas_mobile')
+      .maybeSingle();
+    var confirmacao = instalacao.error || !instalacao.data
+      ? await db.rpc('modulo_vendas_mobile_ativo_rpc', { p_empresa_id: empresaId })
+      : { data: instalacao.data.ativo === true, error: null };
+
+    if (!confirmacao.error && confirmacao.data === true && repararAcesso && podeGerenciarUsuarios()) {
       var reparo = await db.rpc('garantir_acessos_gestor_vendas_mobile_rpc');
       if (reparo.error) {
-        console.warn('Não foi possível reparar os acessos do Vendas Mobile:', reparo.error);
+        console.warn('Não foi possível reparar o acesso do gestor ao Vendas Mobile:', reparo.error);
       }
     }
-    var confirmacao = await db.rpc('modulo_vendas_mobile_ativo_rpc', {
-      p_empresa_id: empresaId,
-    });
-    if (
-      (!confirmacao.error && confirmacao.data === true) ||
-      !repararAcesso ||
-      !podeGerenciarUsuarios()
-    ) return confirmacao;
-
-    await new Promise(function (resolve) { window.setTimeout(resolve, 120); });
-    return db.rpc('modulo_vendas_mobile_ativo_rpc', {
-      p_empresa_id: empresaId,
-    });
+    return confirmacao;
   }
 
   async function abrirFluxoSistemasMobile() {
@@ -13052,7 +13053,7 @@
     });
 
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/mobile-sw.js?v=251').then(function (registro) {
+      navigator.serviceWorker.register('/mobile-sw.js?v=252').then(function (registro) {
         if (registro && registro.update) registro.update();
       }).catch(function () {});
     }
