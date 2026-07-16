@@ -1,8 +1,8 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.5.4.37 -->
+<!-- ava-version: 1.5.4.38 -->
 
-> Revisão 1.5.4.37: sem impacto operacional no Vendas Mobile.
+> Revisão 1.5.4.38: o cabeçalho de **Clientes** foi reorganizado e a lista passou a ter rolagem livre, sem encaixe automático dos cards.
 
 ## Escopo e navegação
 
@@ -39,9 +39,9 @@ dúvida dentro do Vendas sempre que a função existir ali.
 - Se a internet cair durante a gravação, a alteração fica protegida no aparelho
   e é reenviada automaticamente sem criar duplicidade. O app informa claramente
   quando ainda aguarda confirmação; **salvo** significa confirmação do servidor.
-- No cabeçalho de **Clientes**, Ordenar, o campo de pesquisa e **Buscar** ficam
-  sempre visíveis e alinhados. Ao entrar novamente em **Clientes**, a pesquisa
-  anterior é limpa e a lista completa volta a ser exibida.
+- No cabeçalho de **Clientes**, o campo de pesquisa fica à esquerda, **Ordem**
+  aparece em seguida e **Buscar** ocupa o canto direito. Ao entrar novamente em
+  **Clientes**, a pesquisa anterior é limpa e a lista completa volta a ser exibida.
 - **Clientes > Novo cliente** cria a ficha. Nome é obrigatório; celular e endereço
   são recomendados para ligação/WhatsApp e mapas.
 - Quando existe endereço, toda a linha destacada no card abre a escolha entre
@@ -50,10 +50,9 @@ dúvida dentro do Vendas sempre que a função existir ali.
   ativam o clique.
 - A ficha oferece pedido, pagamento, agendamento e **Ver detalhes**. Nesta área,
   Resumo, Consignado, Pedidos e Pagamentos mostram os históricos.
-- Na lista, o card próximo ao centro recebe destaque e os vizinhos imediatos ficam
-  levemente desfocados. Depois que a rolagem termina, o encaixe posiciona o card no
-  início da área útil, logo abaixo do cabeçalho, sem exibir o card anterior acima; um gesto
-  forte continua podendo avançar por vários cards.
+- Na lista, o card próximo ao foco recebe destaque e os vizinhos imediatos ficam
+  levemente desfocados. A rolagem é livre e nenhum card move ou encaixa a página
+  automaticamente.
 - Pedidos, consignados e pagamentos exibem 10 registros por vez. O botão
   **Carregar mais** acrescenta o próximo lote de até 10 registros sem perder a
   posição da rolagem, até chegar ao fim do histórico.
@@ -89,9 +88,7 @@ dúvida dentro do Vendas sempre que a função existir ali.
 - No campo **Produto**, digite nome, código, marca ou categoria para filtrar
   imediatamente as opções; toque no resultado para selecionar e preencher o preço.
 - Ao cancelar ou fechar um novo pedido ou pagamento, o Vendas mantém a página e
-  a posição anteriores, sem reconstruir a tela nem acionar o encaixe dos clientes.
-- O encaixe automático e o destaque dos cards de Clientes ficam pausados durante
-  qualquer popup ou card aberto; só voltam após o fechamento, sem mover a tela.
+  a posição anteriores, sem reconstruir ou mover a tela.
 - Consignado não é venda nem recebimento até sua conversão em pedido. Ao abrir
   um consignado, o card mostra somente produtos e quantidades, com rolagem apenas
   nessa lista. Cabeçalho, total e ações permanecem fixos.

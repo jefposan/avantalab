@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.5.4.38 - 2026-07-16
+
+- Vendas Mobile: o cabeçalho de **Clientes** foi reorganizado com o campo de pesquisa à esquerda, **Ordem** em seguida e **Buscar** no canto direito.
+- Removido o encaixe automático dos cards de clientes. A lista agora acompanha livremente o gesto de rolagem, preservando apenas o destaque visual do card em foco.
+
 ## 1.5.4.37 - 2026-07-16
 
 - Gestão Mobile: corrigida a causa estrutural da demora aparente em **60%**. Assinatura, cadastro e dados financeiros passam a carregar em paralelo, e cada conclusão real atualiza a barra.

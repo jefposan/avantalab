@@ -95,12 +95,6 @@ let rolagemAnteriorSheet = 0;
 let cardsClientesEmDestaque = [];
 let cardClienteEmDestaque = null;
 let quadroDestaqueClientes = 0;
-let temporizadorEncaixeClientes = 0;
-let encaixeClientesEmAndamento = false;
-let interacaoRolagemClientesAtiva = false;
-let rolagemClientesInicioToque = 0;
-let suspenderEncaixeClientesAte = 0;
-let encaixeClientesPausadoPorPopup = false;
 let calendarioCentralizado = null;
 let botaoFeedbackAtivo = null;
 let atualizacaoPwaPendente = false;
@@ -1036,10 +1030,6 @@ function limparDestaqueClientes() {
   cardsClientesEmDestaque = [];
   cardClienteEmDestaque = null;
   quadroDestaqueClientes = 0;
-  window.clearTimeout(temporizadorEncaixeClientes);
-  temporizadorEncaixeClientes = 0;
-  encaixeClientesEmAndamento = false;
-  interacaoRolagemClientesAtiva = false;
 }
 
 function areaUtilVerticalClientes() {
@@ -1051,15 +1041,12 @@ function areaUtilVerticalClientes() {
     topo,
     rodape,
     centro: topo + ((rodape - topo) / 2),
-    // O foco fica logo abaixo do cabeçalho: o card anterior não disputa a
-    // área visível acima do card selecionado.
-    encaixe: topo + 8,
+    foco: topo + 8,
   };
 }
 
 function atualizarDestaqueClientes() {
   if (
-    encaixeClientesPausadoPorPopup ||
     !window.matchMedia('(max-width: 850px)').matches ||
     window.matchMedia('(orientation: landscape) and (max-height: 560px)').matches
   ) {
@@ -1069,7 +1056,7 @@ function atualizarDestaqueClientes() {
   if (!cardsClientesEmDestaque.length || state.aba !== 'clientes') return;
   const areaUtil = areaUtilVerticalClientes();
   const centroHorizontal = window.innerWidth / 2;
-  const pontosBusca = [areaUtil.encaixe, areaUtil.encaixe + 24, areaUtil.encaixe + 56, areaUtil.encaixe + 88];
+  const pontosBusca = [areaUtil.foco, areaUtil.foco + 24, areaUtil.foco + 56, areaUtil.foco + 88];
   let cardAtivo = null;
   for (const y of pontosBusca) {
     const elementos = document.elementsFromPoint(centroHorizontal, Math.max(areaUtil.topo + 1, Math.min(areaUtil.rodape - 1, y)));
@@ -1086,36 +1073,12 @@ function atualizarDestaqueClientes() {
   cardClienteEmDestaque = cardAtivo;
 }
 
-function agendarEncaixeCliente() {
-  if (
-    encaixeClientesPausadoPorPopup ||
-    encaixeClientesEmAndamento ||
-    interacaoRolagemClientesAtiva ||
-    state.aba !== 'clientes' ||
-    Date.now() < suspenderEncaixeClientesAte
-  ) return;
-  window.clearTimeout(temporizadorEncaixeClientes);
-  temporizadorEncaixeClientes = window.setTimeout(() => {
-    temporizadorEncaixeClientes = 0;
-    const card = cardClienteEmDestaque;
-    if (!card?.isConnected || state.aba !== 'clientes') return;
-    const areaUtil = areaUtilVerticalClientes();
-    const areaCard = card.getBoundingClientRect();
-    const deslocamento = areaCard.top - areaUtil.encaixe;
-    if (Math.abs(deslocamento) < 8) return;
-    encaixeClientesEmAndamento = true;
-    window.scrollBy({ top: deslocamento, behavior: 'smooth' });
-    window.setTimeout(() => { encaixeClientesEmAndamento = false; }, 240);
-  }, 60);
-}
-
 function agendarDestaqueClientes() {
   if (state.aba !== 'clientes' || !cardsClientesEmDestaque.length) return;
   if (quadroDestaqueClientes) return;
   quadroDestaqueClientes = requestAnimationFrame(() => {
     quadroDestaqueClientes = 0;
     atualizarDestaqueClientes();
-    agendarEncaixeCliente();
   });
 }
 
@@ -3134,7 +3097,7 @@ function limparPesquisaClientesAoEntrar() {
 function renderBarraBuscaClientes() {
   const temBusca = Boolean(String(state.busca || '').trim());
   const rotuloOrdem = `Ordem ${ordemAlfabetica === 'asc' ? 'A/Z' : 'Z/A'}`;
-  return `<div class="client-search-toolbar is-open"><button type="button" class="client-order-button" onclick="alternarOrdemAlfabetica()">${svgIcon('filter')}${rotuloOrdem}${svgIcon('chevron-down')}</button><div class="client-search-input-wrap">${svgIcon('search')}<input value="${escapeAttr(state.busca)}" placeholder="Pesquisar clientes" oninput="atualizarBuscaClientes(this.value)" onkeydown="if(event.key==='Enter') aplicarBusca()"><button type="button" class="client-search-clear${temBusca ? '' : ' is-hidden'}" onclick="limparBuscaClientes()" aria-label="Limpar pesquisa">×</button></div><button type="button" class="primary client-search-submit" onclick="aplicarBusca()">Buscar</button></div>`;
+  return `<div class="client-search-toolbar is-open"><div class="client-search-input-wrap">${svgIcon('search')}<input value="${escapeAttr(state.busca)}" placeholder="Pesquisar clientes" oninput="atualizarBuscaClientes(this.value)" onkeydown="if(event.key==='Enter') aplicarBusca()"><button type="button" class="client-search-clear${temBusca ? '' : ' is-hidden'}" onclick="limparBuscaClientes()" aria-label="Limpar pesquisa">×</button></div><button type="button" class="client-order-button" onclick="alternarOrdemAlfabetica()">${svgIcon('filter')}${rotuloOrdem}${svgIcon('chevron-down')}</button><button type="button" class="primary client-search-submit" onclick="aplicarBusca()">Buscar</button></div>`;
 }
 
 function atualizarBuscaClientes(valor) {
@@ -5728,10 +5691,6 @@ function valor(idCampo) {
 
 function sheet(html, backdropClass = '') {
   fecharSheet();
-  encaixeClientesPausadoPorPopup = true;
-  suspenderEncaixeClientesAte = Number.POSITIVE_INFINITY;
-  window.clearTimeout(temporizadorEncaixeClientes);
-  temporizadorEncaixeClientes = 0;
   rolagemAnteriorSheet = window.scrollY || document.documentElement.scrollTop || 0;
   const wrap = document.createElement('div');
   wrap.className = `sheet-backdrop ${backdropClass}`;
@@ -5761,10 +5720,6 @@ function fecharSheet(evento = null) {
   const sheetAtual = document.getElementById('sheetBackdrop');
   const estavaAberto = Boolean(sheetAtual);
   if (!estavaAberto) return;
-  encaixeClientesPausadoPorPopup = false;
-  suspenderEncaixeClientesAte = Date.now() + 500;
-  window.clearTimeout(temporizadorEncaixeClientes);
-  temporizadorEncaixeClientes = 0;
   const campoAtivo = document.activeElement;
   if (campoAtivo instanceof HTMLElement && sheetAtual.contains(campoAtivo)) {
     campoAtivo.blur();
@@ -6037,29 +5992,6 @@ window.compartilharMaterialDivulgacao = compartilharMaterialDivulgacao;
 
 window.addEventListener('pageshow', () => requestAnimationFrame(limparFocoInicialLogin));
 window.addEventListener('scroll', agendarDestaqueClientes, { passive: true });
-window.addEventListener('touchstart', () => {
-  if (state.aba !== 'clientes') return;
-  interacaoRolagemClientesAtiva = true;
-  rolagemClientesInicioToque = window.scrollY || document.documentElement.scrollTop || 0;
-  encaixeClientesEmAndamento = false;
-  window.clearTimeout(temporizadorEncaixeClientes);
-  temporizadorEncaixeClientes = 0;
-}, { passive: true });
-window.addEventListener('touchend', () => {
-  if (state.aba !== 'clientes') return;
-  interacaoRolagemClientesAtiva = false;
-  const rolagemAtual = window.scrollY || document.documentElement.scrollTop || 0;
-  if (Math.abs(rolagemAtual - rolagemClientesInicioToque) > 2) agendarEncaixeCliente();
-}, { passive: true });
-window.addEventListener('touchcancel', () => {
-  interacaoRolagemClientesAtiva = false;
-}, { passive: true });
-window.addEventListener('wheel', () => {
-  if (state.aba !== 'clientes') return;
-  encaixeClientesEmAndamento = false;
-  window.clearTimeout(temporizadorEncaixeClientes);
-  temporizadorEncaixeClientes = 0;
-}, { passive: true });
 window.addEventListener('resize', () => {
   agendarDestaqueClientes();
   sincronizarSalaAoMudarLargura();
