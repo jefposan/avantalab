@@ -3306,7 +3306,7 @@ function mostrarCardPedidoCliente() {
   const produtoSelecionado = produtos.find((produto) => produto.id === rascunho.produtoId);
   const produtoBusca = produtoSelecionado?.nome || rascunho.produtoBusca || '';
   const itensHtml = rascunho.itens.length
-    ? rascunho.itens.map((item, indice) => `<article class="${item.bonificado ? 'order-draft-bonus' : ''}"><div><b>${escapeHtml(item.produto_nome)}</b><small>${item.quantidade} × ${moeda(item.preco)} ${item.bonificado ? '<em>Bonificado</em>' : ''}</small></div><div class="order-draft-quantity"><button type="button" onclick="ajustarItemPedidoCliente(${indice},-1)">−</button><strong>${item.quantidade}</strong><button type="button" onclick="ajustarItemPedidoCliente(${indice},1)">+</button></div><strong>${item.bonificado ? moeda(0) : moeda(item.quantidade * item.preco)}</strong><button type="button" onclick="removerItemPedidoCliente(${indice})" aria-label="Excluir ${escapeAttr(item.produto_nome)}">×</button></article>`).join('')
+    ? rascunho.itens.map((item, indice) => `<article id="pedidoItemRascunho${indice}" class="${item.bonificado ? 'order-draft-bonus' : ''}"><div><b>${escapeHtml(item.produto_nome)}</b><small><span id="pedidoItemResumo${indice}">${item.quantidade} × ${moeda(item.preco)}</span> ${item.bonificado ? '<em>Bonificado</em>' : ''}</small></div><div class="order-draft-quantity"><button type="button" onclick="ajustarItemPedidoCliente(${indice},-1)" aria-label="Diminuir quantidade de ${escapeAttr(item.produto_nome)}">−</button><strong id="pedidoItemQuantidade${indice}">${item.quantidade}</strong><button type="button" onclick="ajustarItemPedidoCliente(${indice},1)" aria-label="Aumentar quantidade de ${escapeAttr(item.produto_nome)}">+</button></div><strong id="pedidoItemTotal${indice}">${item.bonificado ? moeda(0) : moeda(item.quantidade * item.preco)}</strong><button type="button" onclick="removerItemPedidoCliente(${indice})" aria-label="Excluir ${escapeAttr(item.produto_nome)}">×</button></article>`).join('')
     : '<p class="transaction-empty">Nenhum item inserido.</p>';
   sheet(`
     <div class="sheet-header"><div><h2>${rascunho.editandoId ? 'Editar pedido' : 'Novo pedido'}</h2><p class="muted small">${rascunho.permitirSelecaoCliente ? 'Selecione o cliente' : escapeHtml(cliente.nome)}</p></div><button type="button" class="close" onclick="${rascunho.editandoId ? `cancelarEdicaoPedido('${rascunho.editandoId}')` : 'fecharSheet(event)'}">×</button></div>
@@ -3316,11 +3316,12 @@ function mostrarCardPedidoCliente() {
         <div class="transaction-type-switch"><button type="button" class="${rascunho.tipo === 'venda' ? 'active' : ''}" onclick="selecionarTipoPedidoCliente('venda')">Venda</button><button type="button" class="${rascunho.tipo === 'consignado' ? 'active' : ''}" onclick="selecionarTipoPedidoCliente('consignado')">Consignado</button></div>
         ${campoDataCentralizado('pedidoClienteData', rascunho.data, 'Data do pedido')}
       <article class="order-product-entry">
-        <h3>Inserir produto</h3>
         ${produtos.length ? `<div class="transaction-field order-product-search-field"><span>Produto</span><div class="order-product-combobox"><input id="pedidoClienteProdutoBusca" type="text" value="${escapeAttr(produtoBusca)}" placeholder="Digite o nome ou código do produto" autocomplete="off" autocapitalize="none" spellcheck="false" aria-label="Buscar produto" aria-autocomplete="list" aria-controls="pedidoClienteProdutoOpcoes" aria-expanded="false" onfocus="abrirBuscaProdutoPedidoCliente()" oninput="filtrarProdutosPedidoCliente(this.value)" onkeydown="if(event.key==='Escape'){fecharBuscaProdutoPedidoCliente();this.blur();}"><div id="pedidoClienteProdutoOpcoes" class="order-product-options" role="listbox" hidden></div></div></div>
         <div class="order-item-fields"><label class="transaction-field"><span>Quantidade</span><div class="quantity-stepper"><button type="button" onclick="ajustarQuantidadePedidoCliente(-1)">−</button><input id="pedidoClienteQuantidade" type="number" min="1" step="1" inputmode="numeric" value="${escapeAttr(rascunho.quantidade)}" onfocus="if(this.value==='1')this.value=''" oninput="sincronizarQuantidadePedidoCliente(this.value)" onblur="normalizarQuantidadePedidoCliente()"><button type="button" onclick="ajustarQuantidadePedidoCliente(1)">+</button></div></label><label class="transaction-field"><span>Preço</span><input id="pedidoClientePreco" type="text" inputmode="numeric" value="${numeroParaCampoMoeda(rascunho.preco)}" onfocus="this.select()" oninput="pedidoClienteRascunho.preco=formatarCampoMoeda(this)"></label></div>
-        <label class="order-bonus-toggle"><input type="checkbox" ${rascunho.bonificado ? 'checked' : ''} onchange="pedidoClienteRascunho.bonificado=this.checked"><span></span><b>Bonificado</b><small>O item entra no pedido sem valor.</small></label>
-        <button type="button" class="primary order-insert-item" onclick="inserirItemPedidoCliente()">Inserir item</button>` : '<p class="transaction-empty">Cadastre produtos antes de criar um pedido.</p>'}
+        <div class="order-product-action-row">
+          <label class="order-bonus-toggle"><input type="checkbox" ${rascunho.bonificado ? 'checked' : ''} onchange="pedidoClienteRascunho.bonificado=this.checked"><span></span><span class="order-bonus-copy"><b>Bonificado</b><small>O item entra no pedido sem valor.</small></span></label>
+          <button type="button" class="primary order-insert-item" onclick="inserirItemPedidoCliente()">Inserir item</button>
+        </div>` : '<p class="transaction-empty">Cadastre produtos antes de criar um pedido.</p>'}
       </article>
       </div>
       <section class="order-draft-scroll"><div class="order-draft-items"><h3>Itens do pedido</h3>${itensHtml}</div></section>
@@ -3331,7 +3332,7 @@ function mostrarCardPedidoCliente() {
       </section>
     </div>
     <footer class="client-transaction-footer ${rascunho.editandoId ? 'order-edit-footer' : ''}">${rascunho.editandoId ? `<button type="button" class="ghost" onclick="cancelarEdicaoPedido('${rascunho.editandoId}')">Cancelar</button><button type="button" class="danger" onclick="confirmarExclusaoPedido('${rascunho.editandoId}')">Excluir</button>` : ''}<button type="button" class="primary" onclick="finalizarPedidoCliente()">${rascunho.editandoId ? 'Salvar pedido' : 'Finalizar pedido'} <b id="pedidoClienteBotaoTotal">(${moeda(totais.total)})</b></button></footer>
-  `, 'sheet-backdrop-centered client-transaction-backdrop order-transaction-backdrop');
+  `, `sheet-backdrop-centered client-transaction-backdrop order-transaction-backdrop${rascunho.editandoId ? ' order-editing-backdrop' : ''}`);
   if (rascunho.permitirSelecaoCliente && !rascunho.clienteId) focarBuscaClienteLancamento('pedido');
 }
 
@@ -3558,7 +3559,13 @@ function ajustarItemPedidoCliente(indice, delta) {
   const item = pedidoClienteRascunho?.itens?.[indice];
   if (!item) return;
   item.quantidade = Math.max(1, Number(item.quantidade || 1) + Number(delta || 0));
-  mostrarCardPedidoCliente();
+  const quantidade = document.getElementById(`pedidoItemQuantidade${indice}`);
+  const resumo = document.getElementById(`pedidoItemResumo${indice}`);
+  const totalItem = document.getElementById(`pedidoItemTotal${indice}`);
+  if (quantidade) quantidade.textContent = String(item.quantidade);
+  if (resumo) resumo.textContent = `${item.quantidade} × ${moeda(item.preco)}`;
+  if (totalItem) totalItem.textContent = item.bonificado ? moeda(0) : moeda(item.quantidade * item.preco);
+  atualizarTotaisPedidoClienteNoDom();
 }
 
 function selecionarTipoDescontoPedido(tipo) {
@@ -3584,6 +3591,11 @@ function atualizarDescontoPedidoCliente(inputDesconto) {
     pedidoClienteRascunho.descontoPercentual = 0;
     pedidoClienteRascunho.desconto = Math.max(0, formatarCampoMoeda(inputDesconto));
   }
+  atualizarTotaisPedidoClienteNoDom();
+}
+
+function atualizarTotaisPedidoClienteNoDom() {
+  if (!pedidoClienteRascunho) return;
   const totais = totaisPedidoClienteRascunho();
   const subtotal = document.getElementById('pedidoClienteSubtotal');
   const total = document.getElementById('pedidoClienteTotal');
@@ -4115,23 +4127,91 @@ function abrirPagamentoClienteDetalhe(pagamentoId, retornoClienteId = '', retorn
 function abrirPedidoCliente(pedidoId, retornoClienteId = '', retornoAba = '', retornoPagina = 0) {
   const venda = state.vendas.find((item) => item.id === pedidoId);
   if (!venda) return;
+  if (pedidoEhConsignado(venda)) {
+    abrirConsignadoCliente(venda, retornoClienteId, retornoAba, retornoPagina);
+    return;
+  }
   const cliente = state.clientes.find((item) => item.id === venda.cliente_id);
   const resumo = resumoComprovantePedido(venda);
-  const tipo = pedidoEhConsignado(venda) ? 'Pedido consignado' : 'Comprovante de pedido';
-  if (!conversaoConsignadoRascunho || conversaoConsignadoRascunho.pedidoId !== pedidoId) conversaoConsignadoRascunho = { pedidoId, quantidades: {} };
   const itensHtml = (venda.itens || []).map((item, indice) => {
     const preco = Number(item.preco ?? item.preco_unitario ?? 0);
     const bonificado = itemPedidoBonificado(item);
     const totalItem = bonificado ? 0 : Number(item.total ?? Number(item.quantidade || 0) * preco);
-    const conversao = pedidoEhConsignado(venda) && venda.status !== 'cancelada'
-      ? `<div class="consignment-convert-stepper"><button type="button" onclick="ajustarConversaoConsignado('${pedidoId}',${indice},-1)">−</button><b id="consignadoQuantidade${indice}">${Number(conversaoConsignadoRascunho.quantidades[indice] || 0)}</b><button type="button" onclick="ajustarConversaoConsignado('${pedidoId}',${indice},1)">+</button><small>de ${Number(item.quantidade || 0)}</small></div>`
-      : '';
-    return `<div class="receipt-order-row ${bonificado ? 'is-bonus' : ''}"><div class="receipt-order-product"><b>${escapeHtml(item.produto_nome)}</b>${bonificado ? '<em>Bonificado</em>' : ''}</div><span class="receipt-order-quantity">${Number(item.quantidade || 0)}</span><span class="receipt-order-price">${bonificado ? '—' : moeda(preco)}</span><strong class="receipt-order-total">${moeda(totalItem)}</strong>${conversao}</div>`;
+    return `<div class="receipt-order-row ${bonificado ? 'is-bonus' : ''}"><div class="receipt-order-product"><b>${escapeHtml(item.produto_nome)}</b>${bonificado ? '<em>Bonificado</em>' : ''}</div><span class="receipt-order-quantity">${Number(item.quantidade || 0)}</span><span class="receipt-order-price">${bonificado ? '—' : moeda(preco)}</span><strong class="receipt-order-total">${moeda(totalItem)}</strong></div>`;
   }).join('') || '<p class="muted">Sem itens registrados.</p>';
-  const converter = pedidoEhConsignado(venda) && venda.status !== 'cancelada'
-    ? `<section class="consignment-convert"><h3>Enviar itens para pedido</h3><p>Selecione a quantidade de cada item que foi vendida.</p><button type="button" class="primary" onclick="gerarPedidoDoConsignado('${pedidoId}')">Gerar pedido</button></section>`
-    : '';
-  sheet(`<div class="sheet-header"><div><h2>${tipo}</h2><p class="muted small">Cliente: ${escapeHtml(cliente?.nome || 'não informado')} · ${dataComprovante(venda.criado_em)}</p></div><button class="close" onclick="voltarParaDetalhesCliente('${retornoClienteId}','${retornoAba}',${retornoPagina})">×</button></div><section class="order-view-items receipt-order-table"><header><span>Produto</span><span>Qtd</span><span>Preço</span><span>Total</span></header>${itensHtml}</section>${converter}<section class="receipt-balance-summary"><div><span>Saldo anterior</span><b>${moeda(resumo.saldoAnterior)}</b></div><div><span>Pedido</span><b>${moeda(venda.total)}</b></div><div class="receipt-current-balance"><span>Saldo atual</span><b>${moeda(resumo.saldoAtual)}</b></div></section><button class="primary order-share" onclick="compartilharPedido('${pedidoId}')">${svgIcon('save')} Compartilhar comprovante</button><footer class="order-view-actions"><button type="button" class="ghost" onclick="voltarParaDetalhesCliente('${retornoClienteId}','${retornoAba}',${retornoPagina})">Fechar</button><button type="button" class="danger" onclick="confirmarExclusaoPedido('${pedidoId}','${retornoClienteId}','${retornoAba}',${retornoPagina})">Excluir</button><button type="button" class="secondary" onclick="abrirEditarPedido('${pedidoId}')">Editar</button></footer>`, 'sheet-backdrop-centered receipt-view-backdrop order-view-backdrop');
+  sheet(`<div class="sheet-header"><div><h2>Comprovante de pedido</h2><p class="muted small">Cliente: ${escapeHtml(cliente?.nome || 'não informado')} · ${dataComprovante(venda.criado_em)}</p></div><button class="close" onclick="voltarParaDetalhesCliente('${retornoClienteId}','${retornoAba}',${retornoPagina})">×</button></div><section class="order-view-items receipt-order-table"><header><span>Produto</span><span>Qtd</span><span>Preço</span><span>Total</span></header>${itensHtml}</section><section class="receipt-balance-summary"><div><span>Saldo anterior</span><b>${moeda(resumo.saldoAnterior)}</b></div><div><span>Pedido</span><b>${moeda(venda.total)}</b></div><div class="receipt-current-balance"><span>Saldo atual</span><b>${moeda(resumo.saldoAtual)}</b></div></section><button class="primary order-share" onclick="compartilharPedido('${pedidoId}')">${svgIcon('save')} Compartilhar comprovante</button><footer class="order-view-actions"><button type="button" class="ghost" onclick="voltarParaDetalhesCliente('${retornoClienteId}','${retornoAba}',${retornoPagina})">Fechar</button><button type="button" class="danger" onclick="confirmarExclusaoPedido('${pedidoId}','${retornoClienteId}','${retornoAba}',${retornoPagina})">Excluir</button><button type="button" class="secondary" onclick="abrirEditarPedido('${pedidoId}')">Editar</button></footer>`, 'sheet-backdrop-centered receipt-view-backdrop order-view-backdrop');
+}
+
+function abrirConsignadoCliente(venda, retornoClienteId = '', retornoAba = '', retornoPagina = 0) {
+  const cliente = state.clientes.find((item) => item.id === venda.cliente_id);
+  const itensHtml = (venda.itens || []).map((item) => `
+    <div class="consignment-product-row">
+      <b>${escapeHtml(item.produto_nome)}</b>
+      <strong>${Number(item.quantidade || 0)}</strong>
+    </div>
+  `).join('') || '<p class="transaction-empty">Nenhum produto em consignação.</p>';
+  const podeGerarPedido = venda.status !== 'cancelada' && venda.status !== 'convertida' && (venda.itens || []).some((item) => Number(item.quantidade || 0) > 0);
+  sheet(`
+    <div class="sheet-header">
+      <div><h2>Pedido Consignado</h2><p class="muted small">Cliente: ${escapeHtml(cliente?.nome || 'não informado')} · ${dataComprovante(venda.criado_em)}</p></div>
+      <button class="close" onclick="voltarParaDetalhesCliente('${retornoClienteId}','${retornoAba}',${retornoPagina})">×</button>
+    </div>
+    <div class="consignment-view-layout">
+      <section class="consignment-product-table">
+        <header><span>Produto</span><span>Quantidade</span></header>
+        <div class="consignment-product-scroll">${itensHtml}</div>
+      </section>
+      <section class="consignment-fixed-summary">
+        <div><span>Total em consignação</span><b>${moeda(venda.total)}</b></div>
+        ${podeGerarPedido ? `<button type="button" class="primary consignment-generate-button" onclick="abrirConversaoConsignado('${venda.id}','${retornoClienteId}','${retornoAba}',${retornoPagina})">Gerar pedido</button>` : '<p>Este consignado não possui itens disponíveis para gerar pedido.</p>'}
+        <button class="primary order-share" onclick="compartilharPedido('${venda.id}')">${svgIcon('save')} Compartilhar comprovante</button>
+      </section>
+      <footer class="order-view-actions consignment-view-actions">
+        <button type="button" class="ghost" onclick="voltarParaDetalhesCliente('${retornoClienteId}','${retornoAba}',${retornoPagina})">Fechar</button>
+        <button type="button" class="danger" onclick="confirmarExclusaoPedido('${venda.id}','${retornoClienteId}','${retornoAba}',${retornoPagina})">Excluir</button>
+        <button type="button" class="secondary" onclick="abrirEditarPedido('${venda.id}')">Editar</button>
+      </footer>
+    </div>
+  `, 'sheet-backdrop-centered consignment-view-backdrop');
+}
+
+function abrirConversaoConsignado(pedidoId, retornoClienteId = '', retornoAba = '', retornoPagina = 0) {
+  const venda = state.vendas.find((item) => item.id === pedidoId);
+  if (!venda || !pedidoEhConsignado(venda)) return;
+  const cliente = state.clientes.find((item) => item.id === venda.cliente_id);
+  conversaoConsignadoRascunho = {
+    pedidoId,
+    quantidades: {},
+    retornoClienteId,
+    retornoAba,
+    retornoPagina: Number(retornoPagina) || 0,
+  };
+  const itensHtml = (venda.itens || []).map((item, indice) => `
+    <article class="consignment-conversion-row">
+      <div><b>${escapeHtml(item.produto_nome)}</b><small>Disponível: ${Number(item.quantidade || 0)}</small></div>
+      <div class="consignment-convert-stepper">
+        <button type="button" onclick="ajustarConversaoConsignado('${pedidoId}',${indice},-1)" aria-label="Diminuir quantidade de ${escapeAttr(item.produto_nome)}">−</button>
+        <b id="consignadoQuantidade${indice}">0</b>
+        <button type="button" onclick="ajustarConversaoConsignado('${pedidoId}',${indice},1)" aria-label="Aumentar quantidade de ${escapeAttr(item.produto_nome)}">+</button>
+        <small>máx. ${Number(item.quantidade || 0)}</small>
+      </div>
+    </article>
+  `).join('');
+  sheet(`
+    <div class="sheet-header">
+      <div><h2>Gerar pedido</h2><p class="muted small">${escapeHtml(cliente?.nome || 'Cliente não informado')}</p></div>
+      <button class="close" onclick="abrirPedidoCliente('${pedidoId}','${retornoClienteId}','${retornoAba}',${Number(retornoPagina) || 0})">×</button>
+    </div>
+    <div class="consignment-conversion-layout">
+      <p class="consignment-conversion-help">Informe quanto foi vendido de cada produto. A quantidade não pode ultrapassar o saldo consignado.</p>
+      <section class="consignment-conversion-scroll">${itensHtml}</section>
+      <div class="consignment-conversion-total"><span>Itens selecionados</span><b id="consignadoTotalSelecionado">0</b></div>
+      <footer class="consignment-conversion-actions">
+        <button type="button" class="ghost" onclick="abrirPedidoCliente('${pedidoId}','${retornoClienteId}','${retornoAba}',${Number(retornoPagina) || 0})">Cancelar</button>
+        <button type="button" class="primary" id="consignadoConfirmarPedido" onclick="gerarPedidoDoConsignado('${pedidoId}')" disabled>Confirmar pedido</button>
+      </footer>
+    </div>
+  `, 'sheet-backdrop-centered consignment-conversion-backdrop');
 }
 
 function confirmarExclusaoPedido(pedidoId, retornoClienteId = '', retornoAba = '', retornoPagina = 0) {
@@ -4158,16 +4238,21 @@ async function excluirPedido(pedidoId, retornoClienteId = '', retornoAba = '', r
 function ajustarConversaoConsignado(pedidoId, indice, delta) {
   const venda = state.vendas.find((item) => item.id === pedidoId);
   const item = venda?.itens?.[indice];
-  if (!item) return;
+  if (!item || conversaoConsignadoRascunho?.pedidoId !== pedidoId) return;
   const atual = Number(conversaoConsignadoRascunho?.quantidades?.[indice] || 0);
   conversaoConsignadoRascunho.quantidades[indice] = Math.max(0, Math.min(Number(item.quantidade || 0), atual + Number(delta || 0)));
   const indicador = document.getElementById(`consignadoQuantidade${indice}`);
   if (indicador) indicador.textContent = String(conversaoConsignadoRascunho.quantidades[indice]);
+  const totalSelecionado = Object.values(conversaoConsignadoRascunho.quantidades).reduce((soma, quantidade) => soma + Number(quantidade || 0), 0);
+  const total = document.getElementById('consignadoTotalSelecionado');
+  const confirmar = document.getElementById('consignadoConfirmarPedido');
+  if (total) total.textContent = String(totalSelecionado);
+  if (confirmar) confirmar.disabled = totalSelecionado <= 0;
 }
 
 async function gerarPedidoDoConsignado(pedidoId) {
   const consignado = state.vendas.find((item) => item.id === pedidoId);
-  if (!consignado || !pedidoEhConsignado(consignado)) return;
+  if (!consignado || !pedidoEhConsignado(consignado) || conversaoConsignadoRascunho?.pedidoId !== pedidoId) return;
   const selecionados = (consignado.itens || []).map((item, indice) => ({ item, quantidade: Number(conversaoConsignadoRascunho?.quantidades?.[indice] || 0) })).filter((registro) => registro.quantidade > 0);
   if (!selecionados.length) { toast('Selecione ao menos uma quantidade para gerar o pedido.'); return; }
   const itensPedido = selecionados.map(({ item, quantidade }) => ({ ...item, id: undefined, quantidade, preco: Number(item.preco ?? item.preco_unitario ?? 0), bonificado: false, desconto: 0, total: quantidade * Number(item.preco ?? item.preco_unitario ?? 0) }));
@@ -4182,6 +4267,11 @@ async function gerarPedidoDoConsignado(pedidoId) {
   const consignadoAtualizado = { ...consignado, itens: restantes, subtotal: subtotalRestante, total: subtotalRestante, status: restantes.length ? consignado.status : 'convertida', observacoes: JSON.stringify({ ...metadadosPedido(consignado), convertido_parcialmente: true }) };
   iniciarMutacaoDadosVendas();
   try {
+    const botaoConfirmar = document.getElementById('consignadoConfirmarPedido');
+    if (botaoConfirmar) {
+      botaoConfirmar.disabled = true;
+      botaoConfirmar.textContent = 'Salvando pedido...';
+    }
     let salvoPedido = pedido;
     let salvoConsignado = consignadoAtualizado;
     if (backendAtivo) {
@@ -4198,6 +4288,11 @@ async function gerarPedidoDoConsignado(pedidoId) {
     await confirmarMutacaoDadosVendas();
     render(); abrirPedidoCliente(salvoPedido.id); toast('Pedido gerado e consignado atualizado.');
   } catch (error) {
+    const botaoConfirmar = document.getElementById('consignadoConfirmarPedido');
+    if (botaoConfirmar) {
+      botaoConfirmar.disabled = false;
+      botaoConfirmar.textContent = 'Confirmar pedido';
+    }
     toast(traduzErro(error));
   } finally {
     finalizarMutacaoDadosVendas();
@@ -5614,7 +5709,7 @@ function sheet(html, backdropClass = '') {
   const wrap = document.createElement('div');
   wrap.className = `sheet-backdrop ${backdropClass}`;
   wrap.id = 'sheetBackdrop';
-  if (backdropClass.includes('client-transaction-backdrop')) {
+  if (backdropClass.includes('client-transaction-backdrop') || backdropClass.includes('consignment-')) {
     const alturaViewport = Math.round(window.visualViewport?.height || window.innerHeight);
     if (Number.isFinite(alturaViewport) && alturaViewport > 0) {
       wrap.style.setProperty('--transaction-viewport-height', `${alturaViewport}px`);

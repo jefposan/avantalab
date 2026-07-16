@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.5.4.24 - 2026-07-16
+
+- Vendas Mobile: o pedido consignado passa a exibir somente os produtos e as quantidades em consignação, com rolagem restrita à lista e cabeçalho, resumo e ações fixos.
+- **Gerar pedido** abre uma etapa separada para escolher as quantidades vendidas, limitada ao saldo de cada produto; a confirmação cria o pedido da cliente e abate os itens do consignado.
+- Edição de pedidos: os controles de quantidade mantêm o foco e a posição da lista, o card recebeu mais espaço e a linha de bonificação foi reorganizada com o botão **Inserir item**.
+
 ## 1.5.4.23 - 2026-07-16
 
 - Vendas Mobile: o imã posiciona o card do cliente mais acima, no centro vertical da área entre o cabeçalho principal e o menu inferior.

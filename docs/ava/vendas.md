@@ -1,8 +1,8 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.5.4.23 -->
+<!-- ava-version: 1.5.4.24 -->
 
-> Revisão 1.5.4.23: posição do imã e estabilidade do card de pagamento.
+> Revisão 1.5.4.24: visualização, edição e conversão de pedidos consignados.
 
 ## Escopo e navegação
 
@@ -85,11 +85,19 @@ dúvida dentro do Vendas sempre que a função existir ali.
   pode localizar pelo nome, telefone ou e-mail.
 - Ao tocar em **Pagamento** no card de um cliente, o formulário permanece fixo
   enquanto o teclado abre e o campo **Valor pago** recebe um único foco automático.
-- Em **Inserir produto**, digite nome, código, marca ou categoria para filtrar
+- No campo **Produto**, digite nome, código, marca ou categoria para filtrar
   imediatamente as opções; toque no resultado para selecionar e preencher o preço.
 - Ao cancelar ou fechar um novo pedido ou pagamento, o Vendas mantém a página e
   a posição anteriores, sem reconstruir a tela nem acionar o encaixe dos clientes.
-- Consignado não é venda nem recebimento até sua conversão em pedido.
+- Consignado não é venda nem recebimento até sua conversão em pedido. Ao abrir
+  um consignado, o card mostra somente produtos e quantidades, com rolagem apenas
+  nessa lista. Cabeçalho, total e ações permanecem fixos.
+- **Gerar pedido** abre outro card com todos os itens disponíveis. Use **+** e
+  **−** para informar a quantidade vendida, limitada ao saldo consignado, e
+  confirme. O novo pedido entra no histórico da cliente e as quantidades são
+  abatidas do consignado.
+- Ao editar um pedido, **+** e **−** atualizam a quantidade sem mover a lista,
+  mantendo o produto tocado em foco.
 - Pagamentos registram valor, desconto, data e forma. Edição/exclusão recalcula
   saldos e relatórios. Comprovantes podem ser reabertos, editados ou excluídos no
   histórico do cliente.
