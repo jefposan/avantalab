@@ -1,8 +1,8 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.5.4.10 -->
+<!-- ava-version: 1.5.4.11 -->
 
-> Revisão 1.5.4.10: sem impacto operacional no Vendas Mobile.
+> Revisão 1.5.4.11: ao abrir **Pagamento** pelo card da cliente, o campo **Valor pago** já abre selecionado com o teclado numérico disponível.
 
 ## Escopo e navegação
 

@@ -1,8 +1,8 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.5.4.10 -->
+<!-- ava-version: 1.5.4.11 -->
 
-> Revisão 1.5.4.10: o acesso é liberado assim que os dados essenciais chegam a 100%; rotinas complementares seguem em segundo plano e há recuperação automática caso a tela de preparação permaneça visível.
+> Revisão 1.5.4.11: sem impacto operacional na Gestão Mobile.
 
 ## Escopo
 

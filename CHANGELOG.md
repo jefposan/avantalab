@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.5.4.11 - 2026-07-16
+
+- Vendas Mobile: ao tocar em **Pagamento** no card da cliente, o campo **Valor pago** recebe foco durante o próprio toque e abre imediatamente o teclado numérico.
+
 ## 1.5.4.10 - 2026-07-16
 
 - Gestão Mobile: corrige a situação em que a preparação chegava a 100%, mas a tela principal permanecia bloqueada.

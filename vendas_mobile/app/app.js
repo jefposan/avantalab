@@ -3521,7 +3521,7 @@ function abrirPagamentoClienteComSelecao(clienteId, permitirSelecao = false) {
     <div class="sheet-header"><div><h2>Registrar pagamento</h2><p class="muted small">${permitirSelecao ? 'Selecione o cliente' : escapeHtml(cliente.nome)}</p></div><button class="close" onclick="fecharSheet()">×</button></div>
     <div class="client-transaction-scroll payment-entry-form">
       ${permitirSelecao ? `<label class="transaction-field transaction-client-select"><span>Cliente</span><select id="pagamentoClienteSelecionado" onchange="selecionarClientePagamento(this.value)">${clientes.map((item) => `<option value="${item.id}" ${item.id === clienteId ? 'selected' : ''}>${escapeHtml(item.nome)}</option>`).join('')}</select></label>` : ''}
-      <label class="transaction-field"><span>Valor pago</span><input id="pagamentoClienteValor" type="text" inputmode="numeric" value="0,00" onfocus="this.select()" oninput="formatarCampoMoeda(this);atualizarResumoPagamentoCliente()"></label>
+      <label class="transaction-field"><span>Valor pago</span><input id="pagamentoClienteValor" type="text" inputmode="numeric" value="0,00" autofocus onfocus="this.select()" oninput="formatarCampoMoeda(this);atualizarResumoPagamentoCliente()"></label>
       <label class="transaction-field"><span>Valor total da dívida</span><input value="${escapeAttr(moeda(saldo.debito))}" readonly></label>
       <label class="transaction-field"><span>Desconto</span><input id="pagamentoClienteDesconto" type="text" inputmode="numeric" value="0,00" onfocus="this.select()" oninput="formatarCampoMoeda(this);atualizarResumoPagamentoCliente()"></label>
       <section class="payment-balance-summary"><div><span>Saldo anterior</span><b>${moeda(saldo.debito)}</b></div><div><span>Valor pago + desconto</span><b id="pagamentoClienteAbatimento">${moeda(0)}</b></div><div class="final"><span>Saldo final</span><b id="pagamentoClienteSaldoFinal">${moeda(saldo.debito)}</b></div></section>
@@ -3530,7 +3530,9 @@ function abrirPagamentoClienteComSelecao(clienteId, permitirSelecao = false) {
     </div>
     <footer class="client-transaction-footer"><button id="confirmarPagamentoClienteBotao" type="button" class="primary" onclick="confirmarPagamentoCliente()">Confirmar recebimento</button></footer>
   `, 'sheet-backdrop-centered client-transaction-backdrop payment-transaction-backdrop');
-  requestAnimationFrame(() => { const campo = document.getElementById('pagamentoClienteValor'); campo?.focus(); campo?.select(); });
+  const campoValorPago = document.getElementById('pagamentoClienteValor');
+  campoValorPago?.focus({ preventScroll: true });
+  campoValorPago?.select();
 }
 
 function selecionarClientePagamento(clienteId) {
@@ -5471,7 +5473,7 @@ function aplicarAtualizacaoPwaPendente() {
 
 if (!window.__VENDAS_MOBILE_EMBEDDED__ && 'serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('./sw.js?v=16').catch(() => {});
+    navigator.serviceWorker.register('./sw.js?v=17').catch(() => {});
   });
 }
 
