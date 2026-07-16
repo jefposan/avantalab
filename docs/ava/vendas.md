@@ -1,8 +1,8 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.5.4.16 -->
+<!-- ava-version: 1.5.4.17 -->
 
-> Revisão 1.5.4.16: vários perfis de Vendas podem permanecer acessíveis sem que a ativação de um bloqueie os demais.
+> Revisão 1.5.4.17: novos pedidos e pagamentos permitem buscar o cliente durante a digitação.
 
 ## Escopo e navegação
 
@@ -74,6 +74,8 @@ dúvida dentro do Vendas sempre que a função existir ali.
   anterior permanece intacto.
 - Novo pedido abre pelo cliente ou por **Pedidos > Novo pedido**. Há Venda e
   Consignado, itens bonificados, desconto por valor/percentual e comprovante.
+- Ao iniciar um pedido ou pagamento sem cliente predefinido, o foco abre na busca
+  de cliente. Digite nome, telefone ou e-mail e toque em um resultado válido.
 - Em **Inserir produto**, digite nome, código, marca ou categoria para filtrar
   imediatamente as opções; toque no resultado para selecionar e preencher o preço.
 - Ao cancelar ou fechar um novo pedido ou pagamento, o Vendas mantém a página e

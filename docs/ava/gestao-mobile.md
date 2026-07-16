@@ -1,8 +1,8 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.5.4.16 -->
+<!-- ava-version: 1.5.4.17 -->
 
-> Revisão 1.5.4.16: a ativação do Vendas permanece salva e não bloqueia outros perfis vinculados ao mesmo usuário.
+> Revisão 1.5.4.17: sem impacto operacional na Gestão Mobile.
 
 ## Escopo
 

@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.5.4.17 - 2026-07-16
+
+- Vendas Mobile: novos pedidos e pagamentos permitem localizar o cliente digitando nome, telefone ou e-mail, com filtragem imediata das opções.
+- Lançamentos gerais: ao abrir o card, o foco e o teclado vão diretamente para a busca de cliente; nenhuma pessoa é escolhida implicitamente antes do toque em um resultado.
+
 ## 1.5.4.16 - 2026-07-16
 
 - Gestão e Vendas Mobile: corrige a ativação do módulo para usuários vinculados a mais de um perfil. Ativar um perfil não bloqueia mais o acesso aos demais.
