@@ -1041,7 +1041,7 @@ function areaUtilVerticalClientes() {
     topo,
     rodape,
     centro: topo + ((rodape - topo) / 2),
-    foco: topo + 8,
+    foco: topo + ((rodape - topo) / 2),
   };
 }
 
@@ -1056,7 +1056,7 @@ function atualizarDestaqueClientes() {
   if (!cardsClientesEmDestaque.length || state.aba !== 'clientes') return;
   const areaUtil = areaUtilVerticalClientes();
   const centroHorizontal = window.innerWidth / 2;
-  const pontosBusca = [areaUtil.foco, areaUtil.foco + 24, areaUtil.foco + 56, areaUtil.foco + 88];
+  const pontosBusca = [areaUtil.foco, areaUtil.foco - 28, areaUtil.foco + 28, areaUtil.foco - 56, areaUtil.foco + 56];
   let cardAtivo = null;
   for (const y of pontosBusca) {
     const elementos = document.elementsFromPoint(centroHorizontal, Math.max(areaUtil.topo + 1, Math.min(areaUtil.rodape - 1, y)));

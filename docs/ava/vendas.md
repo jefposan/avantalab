@@ -1,8 +1,8 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.5.4.38 -->
+<!-- ava-version: 1.5.4.39 -->
 
-> Revisão 1.5.4.38: o cabeçalho de **Clientes** foi reorganizado e a lista passou a ter rolagem livre, sem encaixe automático dos cards.
+> Revisão 1.5.4.39: na lista de **Clientes**, o foco visual acompanha o centro útil da tela e desfoca de forma mais visível apenas os cards imediatamente vizinhos.
 
 ## Escopo e navegação
 
@@ -50,9 +50,9 @@ dúvida dentro do Vendas sempre que a função existir ali.
   ativam o clique.
 - A ficha oferece pedido, pagamento, agendamento e **Ver detalhes**. Nesta área,
   Resumo, Consignado, Pedidos e Pagamentos mostram os históricos.
-- Na lista, o card próximo ao foco recebe destaque e os vizinhos imediatos ficam
-  levemente desfocados. A rolagem é livre e nenhum card move ou encaixa a página
-  automaticamente.
+- Na lista, o card que chega ao centro útil da tela recebe destaque e somente os
+  vizinhos imediatamente acima e abaixo ficam desfocados. A rolagem é livre e nenhum
+  card move ou encaixa a página automaticamente.
 - Pedidos, consignados e pagamentos exibem 10 registros por vez. O botão
   **Carregar mais** acrescenta o próximo lote de até 10 registros sem perder a
   posição da rolagem, até chegar ao fim do histórico.

@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.5.4.39 - 2026-07-16
+
+- Vendas Mobile: o destaque da lista de Clientes voltou ao centro útil da tela; somente os cards imediatamente acima e abaixo ficam desfocados, agora com mais intensidade.
+- Gestão Mobile: o fundo em gradiente do cabeçalho passa a preencher também a área superior, sem alterar a posição dos conteúdos do header.
+
 ## 1.5.4.38 - 2026-07-16
 
 - Vendas Mobile: o cabeçalho de **Clientes** foi reorganizado com o campo de pesquisa à esquerda, **Ordem** em seguida e **Buscar** no canto direito.

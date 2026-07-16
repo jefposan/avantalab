@@ -7968,6 +7968,10 @@
     header.style.backgroundSize = tamanho;
     header.style.backgroundPosition = '0 0';
     header.style.backgroundRepeat = 'no-repeat';
+    wrapper.style.backgroundImage = gradiente;
+    wrapper.style.backgroundSize = largura + 'px ' + Math.max(wrapperRect.height, headerRect.height) + 'px';
+    wrapper.style.backgroundPosition = '0 0';
+    wrapper.style.backgroundRepeat = 'no-repeat';
     pill.style.backgroundImage = gradiente;
     pill.style.backgroundSize = tamanho;
     pill.style.backgroundPosition = (-pillX) + 'px ' + (-pillY) + 'px';
@@ -8029,7 +8033,7 @@
 
     return (
       '<div class="mobile-app-shell fixed inset-0 flex min-w-0 flex-col overflow-hidden ' + (state.darkMode ? 'mobile-dark bg-slate-950 text-slate-100' : 'mobile-light bg-slate-100 text-slate-900') + '" style="overscroll-behavior:none;">' +
-        '<div id="mobile-header-wrap" class="relative z-40 shrink-0 bg-transparent" style="background:transparent;isolation:isolate;">' +
+        '<div id="mobile-header-wrap" class="relative z-40 shrink-0" style="background:linear-gradient(135deg,#003E73 0%,#075985 54%,#00A6C8 100%);isolation:isolate;">' +
         '<header id="mobile-main-header" class="relative z-10 overflow-hidden rounded-[0_0_28px_28px] px-3 pb-3 text-white sm:px-4" style="padding-top:calc(env(safe-area-inset-top) + 10px);background:linear-gradient(135deg,#003E73 0%,#075985 54%,#00A6C8 100%);border-radius:0 0 28px 28px;clip-path:inset(0 round 0 0 28px 28px);-webkit-mask-image:-webkit-radial-gradient(white, black);box-shadow:0 10px 10px rgba(8,47,73,0.18);contain:paint;">' +
           '<div class="mx-auto max-w-md">' +
             '<div class="flex items-center gap-3">' +
