@@ -1882,7 +1882,10 @@
 
   async function prepararSistemaInicialAntesDosDadosMobile() {
     state.vendasMobileModuloAtivo = false;
-    if (!state.empresa || !podeGerenciarUsuarios()) return false;
+    if (!state.empresa || !podeGerenciarUsuarios()) {
+      atualizarProgressoAcessoMobile('access', 3, 3, 'Permissões confirmadas');
+      return false;
+    }
 
     var modulo = await db
       .from('empresa_modulos')
@@ -1891,11 +1894,17 @@
       .eq('modulo_id', 'vendas_mobile')
       .eq('ativo', true)
       .maybeSingle();
-    if (modulo.error || !modulo.data) return false;
+    atualizarProgressoAcessoMobile('access', 1, 3, 'Verificando módulos do perfil');
+    if (modulo.error || !modulo.data) {
+      atualizarProgressoAcessoMobile('access', 3, 3, 'Módulos verificados');
+      return false;
+    }
 
     var acessoGestor = await db.rpc('garantir_acessos_gestor_vendas_mobile_rpc');
+    atualizarProgressoAcessoMobile('access', 2, 3, 'Validando integração com o Vendas');
     if (acessoGestor.error) {
       console.warn('Não foi possível preparar o acesso integrado ao Vendas Mobile:', acessoGestor.error);
+      atualizarProgressoAcessoMobile('access', 3, 3, 'Integração verificada');
       return false;
     }
 
@@ -1903,6 +1912,7 @@
       p_empresa_id: state.empresa.id,
     });
     state.vendasMobileModuloAtivo = !acessoAtivo.error && acessoAtivo.data === true;
+    atualizarProgressoAcessoMobile('access', 3, 3, 'Acesso aos sistemas confirmado');
     return avaliarSistemaInicialMobile();
   }
 
@@ -4200,6 +4210,7 @@
 
   async function carregarEmpresas(usuarioId) {
     var usuarioAtual = await consultaMobileComRetry(function () { return db.auth.getUser(); });
+    atualizarProgressoAcessoMobile('profiles', 1, 5, 'Identificando seus perfis');
     var emailUsuario = (usuarioAtual.data.user && usuarioAtual.data.user.email || '').toLowerCase();
 
     if (emailUsuario) {
@@ -4221,6 +4232,7 @@
           .in('id', convites.data.map(function (convite) { return convite.id; }));
       }
     }
+    atualizarProgressoAcessoMobile('profiles', 2, 5, 'Conferindo convites e vínculos');
 
     var vinculos = await consultaMobileComRetry(function () {
       return db
@@ -4235,10 +4247,12 @@
       console.error('Falha ao carregar perfis apos novas tentativas:', vinculos && vinculos.error);
       return false;
     }
+    atualizarProgressoAcessoMobile('profiles', 3, 5, 'Carregando perfis ativos');
 
     if (!vinculos.data || !vinculos.data.length) {
       state.empresas = [];
       state.empresa = null;
+      atualizarProgressoAcessoMobile('profiles', 5, 5, 'Nenhum perfil encontrado');
       return true;
     }
 
@@ -4274,6 +4288,7 @@
       console.error('Falha ao carregar dados dos perfis apos novas tentativas:', empresas && empresas.error);
       return false;
     }
+    atualizarProgressoAcessoMobile('profiles', 4, 5, 'Carregando dados dos perfis');
 
     state.empresas = vinculos.data
       .map(function (vinculo) {
@@ -4305,6 +4320,7 @@
     if (state.empresa) {
       salvarUltimoPerfilMobile(state.empresa.id);
     }
+    atualizarProgressoAcessoMobile('profiles', 5, 5, 'Perfil selecionado');
     return true;
   }
 
@@ -4579,6 +4595,29 @@
 
   async function carregarDados() {
     if (!state.empresa) return;
+    var exibeTelaPreparacao = !state.pronto || state.paywallPerfilVerificado !== state.empresa.id;
+    var totalEtapasDados = 14;
+    var etapasDadosConcluidas = 0;
+    var avancarEtapaDados = function (rotulo) {
+      etapasDadosConcluidas += 1;
+      atualizarProgressoAcessoMobile('data', etapasDadosConcluidas, totalEtapasDados, rotulo);
+    };
+    var acompanharEtapaDados = function (promessa, rotulo) {
+      return Promise.resolve(promessa).then(function (resultado) {
+        avancarEtapaDados(rotulo);
+        return resultado;
+      }, function (erro) {
+        avancarEtapaDados(rotulo);
+        throw erro;
+      });
+    };
+
+    if (state.pronto && exibeTelaPreparacao && typeof window.__avantalabReiniciarProgressoMobile === 'function') {
+      window.__avantalabReiniciarProgressoMobile('Atualizando o perfil selecionado');
+      atualizarProgressoAcessoMobile('auth', 1, 1, 'Sessão confirmada');
+      atualizarProgressoAcessoMobile('profiles', 1, 1, 'Perfil selecionado');
+      atualizarProgressoAcessoMobile('access', 1, 1, 'Permissões confirmadas');
+    }
 
     // Funcionário de ponto usa somente o fluxo oficial em /ponto.
     if (ehFuncionarioPontoMobile()) {
@@ -4609,7 +4648,9 @@
       state.paywallVerificado = false;
     }
     await verificarPaywallMobile(true);
+    avancarEtapaDados('Assinatura e acesso verificados');
     var cadastroPerfilOk = await carregarCadastroPerfilMobile();
+    avancarEtapaDados('Cadastro do perfil verificado');
     if (!cadastroPerfilOk && !state.paywallAtivo) {
       state.carregando = false;
       render();
@@ -4635,16 +4676,17 @@
         console.warn('Não foi possível preparar o acesso integrado ao Vendas Mobile:', acessoGestorVendas.error);
       }
     }
+    avancarEtapaDados('Integração entre sistemas verificada');
 
     var resultados = await Promise.all([
-      buscarLancamentosAnoMobile(empresaId, ano),
-      db.from('faturamentos').select('*').eq('empresa_id', empresaId).eq('ano', ano),
-      db.from('faturamentos_entradas').select('*').eq('empresa_id', empresaId).eq('ano', ano).order('dia', { ascending: true }),
-      db.from('despesas_cadastradas').select('*').eq('empresa_id', empresaId).order('nome', { ascending: true }),
-      db.from('configuracoes').select('duplicados_ativo').eq('empresa_id', empresaId).maybeSingle(),
-      db.from('empresa_modulos').select('modulo_id').eq('empresa_id', empresaId).eq('ativo', true),
-      db.from('caixinhas_movimentos').select('*').eq('empresa_id', empresaId).order('data_movimento', { ascending: false }).order('criado_em', { ascending: false }),
-      db.rpc('modulo_vendas_mobile_ativo_rpc', { p_empresa_id: empresaId }),
+      acompanharEtapaDados(buscarLancamentosAnoMobile(empresaId, ano), 'Carregando despesas e lançamentos'),
+      acompanharEtapaDados(db.from('faturamentos').select('*').eq('empresa_id', empresaId).eq('ano', ano), 'Carregando faturamentos'),
+      acompanharEtapaDados(db.from('faturamentos_entradas').select('*').eq('empresa_id', empresaId).eq('ano', ano).order('dia', { ascending: true }), 'Carregando receitas'),
+      acompanharEtapaDados(db.from('despesas_cadastradas').select('*').eq('empresa_id', empresaId).order('nome', { ascending: true }), 'Carregando categorias de despesas'),
+      acompanharEtapaDados(db.from('configuracoes').select('duplicados_ativo').eq('empresa_id', empresaId).maybeSingle(), 'Carregando preferências'),
+      acompanharEtapaDados(db.from('empresa_modulos').select('modulo_id').eq('empresa_id', empresaId).eq('ativo', true), 'Carregando módulos'),
+      acompanharEtapaDados(db.from('caixinhas_movimentos').select('*').eq('empresa_id', empresaId).order('data_movimento', { ascending: false }).order('criado_em', { ascending: false }), 'Carregando caixinhas'),
+      acompanharEtapaDados(db.rpc('modulo_vendas_mobile_ativo_rpc', { p_empresa_id: empresaId }), 'Confirmando acesso ao Vendas'),
     ]);
 
     state.lancamentos = (resultados[0] || []).filter(function(item) {
@@ -4718,7 +4760,13 @@
 
     // Materializa as despesas fixas do mes corrente (idempotente).
     await garantirFixasDoMes(empresaId, ano);
+    avancarEtapaDados('Atualizando despesas fixas');
     await carregarResumoPerfisMobile();
+    avancarEtapaDados('Atualizando resumo dos perfis');
+    avancarEtapaDados('Acesso pronto');
+    if (exibeTelaPreparacao) {
+      await new Promise(function (resolver) { window.setTimeout(resolver, 120); });
+    }
 
     state.carregando = false;
     render();
@@ -7309,36 +7357,38 @@
   }
 
   function telaCarregandoMobile() {
+    var progresso = window.__AVANTALAB_MOBILE_PROGRESSO__ || {
+      valor: 5,
+      rotulo: 'Preparando recursos do aplicativo',
+    };
     return (
       '<section class="avantalab-mobile-bg fixed inset-0 flex items-center justify-center overflow-hidden px-4" style="height:100dvh;background-position:center bottom;background-size:cover;">' +
         '<div class="w-full max-w-xs rounded-3xl border border-white/40 bg-white/25 p-5 text-center text-slate-900 shadow-2xl backdrop-blur-xl">' +
           '<p class="text-xs font-black uppercase tracking-[0.24em] text-cyan-700">AvantaLab</p>' +
           '<h1 class="mt-2 text-xl font-black">Preparando acesso</h1>' +
-          '<p class="mt-2 text-sm font-semibold text-slate-600">Carregando seus dados com seguranca.</p>' +
-          '<div class="mt-4 h-2 w-full overflow-hidden rounded-full bg-slate-900/10" aria-label="Carregando acesso"><i id="accessProgressBarMobile" class="block h-full rounded-full bg-gradient-to-r from-sky-600 to-cyan-500" style="width:8%"></i></div>' +
-          '<b id="accessProgressValueMobile" class="mt-1 block text-[11px] font-black text-cyan-700">8%</b>' +
+          '<p id="mobileAccessProgressLabel" class="mt-2 text-sm font-semibold text-slate-600">' + escapeHtml(progresso.rotulo || 'Preparando recursos do aplicativo') + '</p>' +
+          '<div class="mt-4 h-2 w-full overflow-hidden rounded-full bg-slate-900/10" aria-label="Carregando acesso"><i id="mobileAccessProgressBar" class="block h-full rounded-full bg-gradient-to-r from-sky-600 to-cyan-500 transition-[width] duration-200" style="width:' + Number(progresso.valor || 5) + '%"></i></div>' +
+          '<b id="mobileAccessProgressValue" class="mt-1 block text-[11px] font-black text-cyan-700">' + Number(progresso.valor || 5) + '%</b>' +
         '</div>' +
       '</section>'
     );
   }
 
-  function iniciarProgressoAcessoMobile() {
-    window.clearInterval(window.__progressoAcessoMobile);
-    var barra = document.getElementById('accessProgressBarMobile');
-    var texto = document.getElementById('accessProgressValueMobile');
-    if (!barra || !texto) return;
-    var progresso = 8;
-    window.__progressoAcessoMobile = window.setInterval(function () {
-      barra = document.getElementById('accessProgressBarMobile');
-      texto = document.getElementById('accessProgressValueMobile');
-      if (!barra || !texto) {
-        window.clearInterval(window.__progressoAcessoMobile);
-        return;
-      }
-      progresso = Math.min(92, progresso + Math.max(1, Math.round((94 - progresso) / 7)));
-      barra.style.width = progresso + '%';
-      texto.textContent = progresso + '%';
-    }, 260);
+  function atualizarProgressoAcessoMobile(grupo, concluido, total, rotulo) {
+    if (typeof window.__avantalabAtualizarProgressoMobile === 'function') {
+      window.__avantalabAtualizarProgressoMobile(grupo, concluido, total, rotulo);
+    }
+  }
+
+  function sincronizarProgressoAcessoMobile() {
+    var progresso = window.__AVANTALAB_MOBILE_PROGRESSO__;
+    if (!progresso) return;
+    var barra = document.getElementById('mobileAccessProgressBar');
+    var texto = document.getElementById('mobileAccessProgressValue');
+    var etapa = document.getElementById('mobileAccessProgressLabel');
+    if (barra) barra.style.width = progresso.valor + '%';
+    if (texto) texto.textContent = progresso.valor + '%';
+    if (etapa) etapa.textContent = progresso.rotulo;
   }
 
   function cardInstalarLoginHtml() {
@@ -10882,7 +10932,7 @@
     else if (!state.paywallVerificado) telaAtual = telaCarregandoMobile();
     else telaAtual = telaApp();
     root.innerHTML = telaAtual + (state.chatIAAberto ? chatIAModalHtml() : '') + (state.mostrarPromptNotificacoes ? promptNotificacoesHtml() : '') + (state.tourAberto ? tourHtml() : '') + avisoAssinanteMobileHtml() + ativacaoVendasMobileHtml() + (state.seletorSistemaInicialBloqueante ? '' : seletorSistemaInicialHtml());
-    iniciarProgressoAcessoMobile();
+    sincronizarProgressoAcessoMobile();
     sincronizarGradienteHeaderPerfil();
     configurarRecolhimentoPerfilHeader();
     var indicadorNav = document.querySelector('[data-nav-indicador]');
@@ -12764,6 +12814,9 @@
   }
   async function iniciar() {
     window._avaProfilePillHidden = false;
+    if (typeof window.__avantalabReiniciarProgressoMobile === 'function') {
+      window.__avantalabReiniciarProgressoMobile('Validando sua sessão');
+    }
 
     // Deep links da landing: /mobile?cadastro=1 abre direto a tela de criar
     // cadastro; /mobile?entrar=1 abre direto o card de login (pula boas-vindas).
@@ -12834,7 +12887,7 @@
     });
 
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/mobile-sw.js?v=241').then(function (registro) {
+      navigator.serviceWorker.register('/mobile-sw.js?v=242').then(function (registro) {
         if (registro && registro.update) registro.update();
       }).catch(function () {});
     }
@@ -12881,6 +12934,12 @@
 
     try {
       var sessao = await db.auth.getSession();
+      atualizarProgressoAcessoMobile(
+        'auth',
+        1,
+        1,
+        sessao.data.session && sessao.data.session.user ? 'Sessão restaurada' : 'Sessão não encontrada'
+      );
       if (sessao.data.session && sessao.data.session.user) {
         renovarSessaoPersistenteMobile();
         var mdSessao = sessao.data.session.user.user_metadata || {};
@@ -12931,17 +12990,17 @@
   }
 
   function iniciarQuandoPaginaEstiverPronta() {
-    var iniciarComAtraso = function () {
-      window.setTimeout(function () {
+    var iniciarAposRenderInicial = function () {
+      window.requestAnimationFrame(function () {
         iniciar();
         garantirRenderDepoisDaHidratacao();
-      }, 650);
+      });
     };
 
     if (document.readyState === 'complete') {
-      iniciarComAtraso();
+      iniciarAposRenderInicial();
     } else {
-      window.addEventListener('load', iniciarComAtraso, { once: true });
+      window.addEventListener('load', iniciarAposRenderInicial, { once: true });
     }
   }
 

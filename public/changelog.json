@@ -13,6 +13,15 @@
   },
   "versoes": [
     {
+      "versao": "1.5.3.04",
+      "titulo": "Carregamento preciso no Mobile",
+      "data": "Julho/2026",
+      "itens": [
+        "Gestão Mobile e Vendas Mobile agora mostram a etapa atual e avançam o percentual conforme cada parte do acesso é realmente concluída.",
+        "A Gestão inicia a validação da sessão sem a espera artificial anterior."
+      ]
+    },
+    {
       "versao": "1.5.3.03",
       "titulo": "Carregamento mais transparente no Mobile",
       "data": "Julho/2026",

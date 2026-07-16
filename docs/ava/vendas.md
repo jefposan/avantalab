@@ -1,8 +1,8 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.5.3.03 -->
+<!-- ava-version: 1.5.3.04 -->
 
-> Revisão 1.5.3.03: os cards de preparação de acesso e conteúdo do Vendas Mobile exibem barra percentual enquanto os dados são carregados. Sem mudança nas rotinas operacionais.
+> Revisão 1.5.3.04: a preparação do Vendas mostra percentual e etapa real, acompanhando scripts, sessão, permissões, catálogo, clientes, pedidos, pagamentos e imagens do menu. Sem mudança nas rotinas operacionais.
 
 ## Escopo e navegação
 

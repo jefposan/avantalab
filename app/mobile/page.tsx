@@ -60,6 +60,66 @@ export default function MobilePage() {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
   const cobrancaAtiva = process.env.NEXT_PUBLIC_COBRANCA_ATIVA === 'true' ? 'true' : 'false';
+  const mobileAssetVersion = '299';
+  const bootstrapCarregamento = `
+    (function () {
+      var pesos = { shell: 5, scripts: 15, auth: 10, profiles: 20, access: 10, data: 40 };
+      var progresso = window.__AVANTALAB_MOBILE_PROGRESSO__ || { grupos: {}, valor: 0, rotulo: 'Iniciando a Gestão Mobile' };
+      window.__AVANTALAB_MOBILE_PROGRESSO__ = progresso;
+      window.__avantalabAtualizarProgressoMobile = function (grupo, concluido, total, rotulo) {
+        var fracao = total > 0 ? Math.max(0, Math.min(1, Number(concluido || 0) / Number(total))) : 0;
+        progresso.grupos[grupo] = Math.max(Number(progresso.grupos[grupo] || 0), fracao);
+        var calculado = Object.keys(pesos).reduce(function (soma, chave) {
+          return soma + pesos[chave] * Number(progresso.grupos[chave] || 0);
+        }, 0);
+        progresso.valor = Math.max(progresso.valor, Math.min(100, Math.round(calculado)));
+        if (rotulo) progresso.rotulo = rotulo;
+        var barra = document.getElementById('mobileAccessProgressBar');
+        var texto = document.getElementById('mobileAccessProgressValue');
+        var etapa = document.getElementById('mobileAccessProgressLabel');
+        if (barra) barra.style.width = progresso.valor + '%';
+        if (texto) texto.textContent = progresso.valor + '%';
+        if (etapa) etapa.textContent = progresso.rotulo;
+      };
+      window.__avantalabReiniciarProgressoMobile = function (rotulo) {
+        progresso.grupos = {
+          shell: Number(progresso.grupos.shell || 0),
+          scripts: Number(progresso.grupos.scripts || 0),
+        };
+        progresso.valor = Math.round(
+          pesos.shell * progresso.grupos.shell +
+          pesos.scripts * progresso.grupos.scripts
+        );
+        progresso.rotulo = rotulo || 'Validando sua sessão';
+        window.__avantalabAtualizarProgressoMobile('auth', 0, 1, progresso.rotulo);
+      };
+      window.__avantalabAtualizarProgressoMobile('shell', 1, 1, 'Preparando recursos do aplicativo');
+
+      var arquivos = ['/mobile-supabase.js', '/mobile-app.js'];
+      function falhar(arquivo) {
+        var root = document.getElementById('mobile-root');
+        if (root) root.innerHTML = '<section class="fixed inset-0 grid place-items-center bg-slate-100 px-5 text-slate-900"><div class="w-full max-w-xs rounded-3xl bg-white p-6 text-center shadow-xl"><h1 class="text-lg font-black">Não foi possível carregar a Gestão Mobile.</h1><button class="mt-4 rounded-full bg-cyan-700 px-5 py-3 text-xs font-black uppercase text-white" onclick="window.location.reload()">Tentar novamente</button></div></section>';
+        console.error('Falha ao carregar ' + arquivo);
+      }
+      function carregar(indice) {
+        if (indice >= arquivos.length) return;
+        var script = document.createElement('script');
+        script.src = arquivos[indice] + '?v=${mobileAssetVersion}';
+        script.onload = function () {
+          window.__avantalabAtualizarProgressoMobile(
+            'scripts',
+            indice + 1,
+            arquivos.length,
+            indice + 1 === arquivos.length ? 'Aplicativo carregado' : 'Carregando conexão segura'
+          );
+          carregar(indice + 1);
+        };
+        script.onerror = function () { falhar(arquivos[indice]); };
+        document.body.appendChild(script);
+      }
+      carregar(0);
+    })();
+  `;
 
   return (
     <main className="min-h-screen bg-slate-950 text-white" style={{overflow:'visible'}}>
@@ -241,12 +301,12 @@ export default function MobilePage() {
               Preparando acesso
             </h1>
             <p className="mt-2 text-sm font-semibold text-slate-600">
-              Carregando seus dados com seguranca.
+              <span id="mobileAccessProgressLabel">Iniciando a Gestão Mobile</span>
             </p>
             <div className="mt-4 h-2 w-full overflow-hidden rounded-full bg-slate-900/10" aria-label="Carregando acesso">
-              <i className="block h-full rounded-full bg-gradient-to-r from-sky-600 to-cyan-500" style={{ width: '8%' }} />
+              <i id="mobileAccessProgressBar" className="block h-full rounded-full bg-gradient-to-r from-sky-600 to-cyan-500 transition-[width] duration-200" style={{ width: '5%' }} />
             </div>
-            <b className="mt-1 block text-[11px] font-black text-cyan-700">8%</b>
+            <b id="mobileAccessProgressValue" className="mt-1 block text-[11px] font-black text-cyan-700">5%</b>
           </div>
         </section>
       </div>
@@ -254,8 +314,7 @@ export default function MobilePage() {
       <BackupMobileBridge />
       <VendasMobileConteudoBridge />
 
-      <script src="/mobile-supabase.js" defer />
-      <script src="/mobile-app.js?v=298" defer />
+      <script dangerouslySetInnerHTML={{ __html: bootstrapCarregamento }} />
     </main>
   );
 }

@@ -41,6 +41,7 @@ NAVEGAÇÃO E PERFIS
 - Sobre apresenta as principais novidades em marcos consolidados e omite alterações exclusivamente técnicas.
 - Em Configurações, Assinatura aparece primeiro quando disponível, seguida pelos controles com chave. Gerenciar perfil, Usuários e Editar dados cadastrais aparecem em sequência.
 - Com o módulo Vendas Mobile ativo e permissão de Gestor Master/Administrador, após o login a primeira tela permite escolher entre Gestão e Vendas e memorizar o sistema inicial. Depois da escolha aparece Preparando acesso e o sistema selecionado é carregado. Menu > Sistemas permite refazer a escolha e também pode ser um atalho inferior.
+- Em Preparando acesso, a Gestão mostra a etapa atual e um percentual baseado em tarefas realmente concluídas, incluindo sessão, perfis, permissões e dados financeiros.
 - Em perfil sem o módulo Vendas, Sistemas aparece inativo no menu lateral. Gestor Master ou Administrador pode tocar, confirmar a ativação e, após a validação, escolher o sistema. Perfil pessoal gratuito precisa do Premium. Operadores veem o botão inativo e não podem ativar nem trocar de sistema.
 - No seletor de sistemas aberto dentro da Gestão, o X ou um toque fora do card cancela a troca e mantém o usuário na Gestão. A seleção inicial mostrada antes de carregar o app continua obrigatória.
 - Ao escolher Vendas, um único perfil de Vendas ativo abre diretamente; se houver mais de um, o usuário escolhe qual acessar. Essa seleção não altera o destino financeiro do Vendas.
@@ -73,7 +74,7 @@ SALA E NAVEGAÇÃO
 
 CLIENTES
 - Em Clientes, a barra compacta reúne Ordenar e a lupa. A lupa abre o campo de pesquisa e o botão Buscar na mesma linha; se a pesquisa estiver vazia e perder o foco, ela se recolhe. A lista centraliza suavemente o card em foco. Use Novo cliente para cadastrar. Nome é obrigatório; celular e endereço são recomendados para WhatsApp e mapas. A ficha permite ligação, WhatsApp, mapas, pedido, pagamento, agendamento e Ver detalhes.
-- Durante a preparação de acesso ou conteúdo, o Vendas exibe uma barra percentual. É apenas um indicador visual; aguarde a conclusão do carregamento antes de orientar uma nova ação.
+- Durante a preparação de acesso ou conteúdo, o Vendas exibe a etapa atual e um percentual baseado nas tarefas realmente concluídas, como sessão, permissões, catálogo, clientes, pedidos e pagamentos. Aguarde a conclusão antes de orientar uma nova ação.
 - Em Ver detalhes, o cabeçalho fica fixo e só o conteúdo rola. Resumo mostra totais; Consignado, Pedidos e Pagamentos são listas distintas. Abrir um pagamento mostra o comprovante e permite editá-lo.
 - O aniversário cadastrado entra na agenda e pode aparecer no aviso do cabeçalho no dia correspondente.
 

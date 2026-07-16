@@ -738,26 +738,32 @@ function agendarDestaqueClientes() {
 }
 
 function renderPreparandoAcessoEstavel() {
-  if (app.firstElementChild?.classList.contains('preparing-access-screen') && app.children.length === 1) { iniciarProgressoPreparacao(); return; }
+  if (app.firstElementChild?.classList.contains('preparing-access-screen') && app.children.length === 1) {
+    sincronizarProgressoPreparacao();
+    return;
+  }
   app.innerHTML = renderPreparandoAcesso();
-  iniciarProgressoPreparacao();
+  sincronizarProgressoPreparacao();
 }
 
 function renderPreparandoAcesso() {
-  return `<section class="login-screen preparing-access-screen"><div class="preparing-access-card"><p>AvantaLab</p><span class="loader"></span><h1>Preparando acesso</h1><small>Estamos validando seu login e preparando seus dados com segurança.</small><div class="access-progress" aria-label="Carregando acesso"><i id="accessProgressBar" style="width:8%"></i></div><b id="accessProgressValue" class="access-progress-value">8%</b></div></section>`;
+  const progresso = window.__AVANTALAB_VENDAS_PROGRESSO__ || { valor: 5, rotulo: 'Preparando recursos do aplicativo' };
+  return `<section class="login-screen preparing-access-screen"><div class="preparing-access-card"><p>AvantaLab</p><span class="loader"></span><h1>Preparando acesso</h1><small id="accessProgressLabel">${escapeHtml(progresso.rotulo || 'Preparando recursos do aplicativo')}</small><div class="access-progress" aria-label="Carregando acesso"><i id="accessProgressBar" style="width:${Number(progresso.valor || 5)}%"></i></div><b id="accessProgressValue" class="access-progress-value">${Number(progresso.valor || 5)}%</b></div></section>`;
 }
 
-function iniciarProgressoPreparacao() {
-  window.clearInterval(window.__progressoPreparacao);
-  let progresso = 8;
-  window.__progressoPreparacao = window.setInterval(() => {
-    const barra = document.getElementById('accessProgressBar');
-    const texto = document.getElementById('accessProgressValue');
-    if (!barra || !texto) { window.clearInterval(window.__progressoPreparacao); return; }
-    progresso = Math.min(92, progresso + Math.max(1, Math.round((94 - progresso) / 7)));
-    barra.style.width = `${progresso}%`;
-    texto.textContent = `${progresso}%`;
-  }, 260);
+function atualizarProgressoPreparacao(grupo, concluido, total, rotulo) {
+  window.__avantalabAtualizarProgressoVendas?.(grupo, concluido, total, rotulo);
+}
+
+function sincronizarProgressoPreparacao() {
+  const progresso = window.__AVANTALAB_VENDAS_PROGRESSO__;
+  if (!progresso) return;
+  const barra = document.getElementById('accessProgressBar');
+  const texto = document.getElementById('accessProgressValue');
+  const etapa = document.getElementById('accessProgressLabel');
+  if (barra) barra.style.width = `${progresso.valor}%`;
+  if (texto) texto.textContent = `${progresso.valor}%`;
+  if (etapa) etapa.textContent = progresso.rotulo;
 }
 
 function limparFocoInicialLogin() {
@@ -850,7 +856,12 @@ function carregarImagemEssencial(url) {
 
 function prepararRecursosSalaBotoes() {
   if (!recursosSalaBotoesPromise) {
-    recursosSalaBotoesPromise = Promise.all(RECURSOS_SALA_BOTOES.map(carregarImagemEssencial)).then(() => undefined);
+    let concluidos = 0;
+    atualizarProgressoPreparacao('resources', 0, RECURSOS_SALA_BOTOES.length, 'Preparando imagens do menu');
+    recursosSalaBotoesPromise = Promise.all(RECURSOS_SALA_BOTOES.map((url) => carregarImagemEssencial(url).then(() => {
+      concluidos += 1;
+      atualizarProgressoPreparacao('resources', concluidos, RECURSOS_SALA_BOTOES.length, 'Preparando imagens do menu');
+    }))).then(() => undefined);
   }
   return recursosSalaBotoesPromise;
 }
@@ -1277,11 +1288,13 @@ async function entrarSistema(event) {
   const senha = valor('loginSenha');
   const lembrar = document.getElementById('loginLembrar')?.checked ? '1' : '0';
   fixarAlturaPreparacao();
+  window.__avantalabReiniciarProgressoVendas?.('Autenticando seu acesso');
   carregandoBackend = true;
   render();
   try {
     if (loginTipo === 'email') await window.VendasDb.signIn(contato, senha);
     else await window.VendasDb.signInPhone(`+55${contato.replace(/\D/g, '')}`, senha);
+    atualizarProgressoPreparacao('auth', 1, 1, 'Sessão autenticada');
     localStorage.setItem('avantalab.vendas_mobile.lembrar', lembrar);
     const aguardandoEscolha = await prepararSelecaoSistemaAntesDosDadosVendas();
     carregandoBackend = false;
@@ -1703,11 +1716,18 @@ async function carregarSistemaVendasCompleto() {
   carregandoBackend = true;
   preparandoRecursosSala = true;
   render();
+  let carregamentoConcluido = false;
   try {
     const recursosSala = prepararRecursosSalaBotoes();
     await carregarDadosBackend(false, true);
     await recursosSala;
+    carregamentoConcluido = true;
   } finally {
+    if (carregamentoConcluido) {
+      atualizarProgressoPreparacao('data', 1, 1, 'Acesso pronto');
+      atualizarProgressoPreparacao('resources', 1, 1, 'Acesso pronto');
+      await new Promise((resolver) => window.setTimeout(resolver, 120));
+    }
     carregandoBackend = false;
     preparandoRecursosSala = false;
     render();
@@ -1723,6 +1743,7 @@ async function inicializarApp() {
     toast('Modo local: conexão Supabase indisponível.');
     return;
   }
+  window.__avantalabReiniciarProgressoVendas?.('Validando sua sessão');
   carregandoBackend = true;
   state.autenticado = false;
   state.usuarioSemAcesso = false;
@@ -1735,6 +1756,7 @@ async function inicializarApp() {
     const sessaoAtiva = conectandoGoogle
       ? await comLimiteDeTempo(aguardarSessaoGoogle(), 'Não foi possível concluir o acesso com o Google.', 12000)
       : await comLimiteDeTempo(window.VendasDb.hasSession(), 'Não foi possível restaurar sua sessão.', 10000);
+    atualizarProgressoPreparacao('auth', 1, 1, sessaoAtiva ? 'Sessão restaurada' : 'Sessão não encontrada');
     if (!sessaoAtiva) {
       carregandoBackend = false;
       conectandoGoogle = false;
@@ -4807,7 +4829,7 @@ function aplicarAtualizacaoPwaPendente() {
 
 if (!window.__VENDAS_MOBILE_EMBEDDED__ && 'serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('./sw.js?v=8').catch(() => {});
+    navigator.serviceWorker.register('./sw.js?v=9').catch(() => {});
   });
 }
 

@@ -1,8 +1,8 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.5.3.03 -->
+<!-- ava-version: 1.5.3.04 -->
 
-> Revisão 1.5.3.03: durante a preparação de acesso, a Gestão Mobile exibe uma barra percentual de carregamento. Sem impacto operacional nas orientações da Ava.
+> Revisão 1.5.3.04: durante a preparação de acesso, a Gestão Mobile mostra o percentual e a etapa real em execução, avançando conforme sessão, perfis, permissões e dados são concluídos. Sem impacto operacional adicional.
 
 ## Escopo
 

@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.5.3.04 - 2026-07-16
+
+- Gestão Mobile e Vendas Mobile: o percentual de preparação passa a avançar conforme scripts, sessão, permissões, consultas e recursos realmente são concluídos, exibindo também a etapa atual.
+- Gestão Mobile: remove a espera artificial antes da validação da sessão e atualiza o cache do PWA para entregar o novo carregamento imediatamente.
+
 ## 1.5.3.03 - 2026-07-16
 
 - Gestão Mobile e Vendas Mobile: os cards de preparação de acesso e de conteúdo agora exibem barra de progresso percentual durante o carregamento.

@@ -1,8 +1,8 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.5.3.03 -->
+<!-- ava-version: 1.5.3.04 -->
 
-> Revisão 1.5.3.03: sem impacto operacional na Gestão Web. O indicador de carregamento ocorreu somente nos ambientes mobile.
+> Revisão 1.5.3.04: sem impacto operacional na Gestão Web. O refinamento do progresso de acesso ocorreu somente nos ambientes mobile.
 
 ## Escopo
 

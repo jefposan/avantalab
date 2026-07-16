@@ -22,6 +22,12 @@
       })
     : null;
 
+  function atualizarProgresso(grupo, concluido, total, rotulo) {
+    if (typeof window.__avantalabAtualizarProgressoVendas === 'function') {
+      window.__avantalabAtualizarProgressoVendas(grupo, concluido, total, rotulo);
+    }
+  }
+
   function requireClient() {
     if (!client) throw new Error('Supabase não configurado.');
     return client;
@@ -122,17 +128,23 @@
 
   async function buscarAcessoVendas() {
     const user = await currentUser();
-    if (!user) return { acesso: null, solicitacao: null };
+    atualizarProgresso('access', 1, 4, 'Identificando seu acesso');
+    if (!user) {
+      atualizarProgresso('access', 4, 4, 'Sessão não encontrada');
+      return { acesso: null, solicitacao: null };
+    }
     // Para gestores, o próprio servidor cria/atualiza o acesso integrado das
     // empresas em que o módulo está instalado. Operadores não são afetados.
     const acessoGestorRes = await requireClient().rpc('garantir_acessos_gestor_vendas_mobile_rpc');
     if (acessoGestorRes.error) throw acessoGestorRes.error;
+    atualizarProgresso('access', 2, 4, 'Conferindo permissões');
     const [acessosRes, solicitacaoRes] = await Promise.all([
       requireClient().rpc('meus_acessos_vendas_mobile_rpc'),
       requireClient().from('vendas_mobile_solicitacoes_acesso').select('*').eq('user_id', user.id).order('atualizado_em', { ascending: false }).limit(1).maybeSingle(),
     ]);
     if (acessosRes.error) throw acessosRes.error;
     if (solicitacaoRes.error) throw solicitacaoRes.error;
+    atualizarProgresso('access', 3, 4, 'Validando módulos disponíveis');
     const acessosAtivos = (acessosRes.data || []).filter((item) => item.status === 'ativo');
     let empresaContexto = '';
     try {
@@ -143,6 +155,7 @@
       p_empresa_id: item.empresa_id,
     })));
     const perfisVendas = candidatos.filter((_, indice) => !modulos[indice].error && modulos[indice].data === true);
+    atualizarProgresso('access', 4, 4, 'Acesso ao Vendas confirmado');
     const moduloAtivo = perfisVendas.length > 0;
     let vindoDaGestao = false;
     let perfilSelecionadoId = '';
@@ -180,13 +193,29 @@
 
     const acessoVendas = await buscarAcessoVendas();
     if (!acessoVendas.acesso) {
+      atualizarProgresso('data', 1, 1, 'Aguardando escolha do perfil');
       return { user, produtos: [], pacotes: [], clientes: [], vendas: [], pagamentos: [], conteudos: null, divulgacaoPastas: [], divulgacaoMateriais: [], moduloAtivo: true, ...acessoVendas };
     }
 
+    const totalEtapasDados = 12;
+    let etapasDadosConcluidas = 0;
+    const acompanharEtapaDados = (promessa, rotulo) => Promise.resolve(promessa).then(
+      (resultado) => {
+        etapasDadosConcluidas += 1;
+        atualizarProgresso('data', etapasDadosConcluidas, totalEtapasDados, rotulo);
+        return resultado;
+      },
+      (erro) => {
+        etapasDadosConcluidas += 1;
+        atualizarProgresso('data', etapasDadosConcluidas, totalEtapasDados, rotulo);
+        throw erro;
+      },
+    );
+
     const moduloAtivo = acessoVendas.moduloAtivo === true;
     const [vinculosRes, perfisFinanceirosRes] = await Promise.all([
-      requireClient().rpc('meus_vinculos_comerciais_vendas_mobile_rpc'),
-      requireClient().rpc('meus_perfis_financeiros_vendas_mobile_rpc'),
+      acompanharEtapaDados(requireClient().rpc('meus_vinculos_comerciais_vendas_mobile_rpc'), 'Carregando vínculos comerciais'),
+      acompanharEtapaDados(requireClient().rpc('meus_perfis_financeiros_vendas_mobile_rpc'), 'Carregando perfis financeiros'),
     ]);
     if (vinculosRes.error) throw vinculosRes.error;
     if (perfisFinanceirosRes.error) throw perfisFinanceirosRes.error;
@@ -194,20 +223,26 @@
     const vinculoAtivo = vinculosComerciais.find((vinculo) => vinculo.ativo) || null;
     let sincronizacaoCatalogo = { adicionados: 0, ja_recebidos: 0 };
     if (moduloAtivo) {
-      const sincronizarRes = await requireClient().rpc('sincronizar_catalogo_vendas_mobile_rpc');
+      const sincronizarRes = await acompanharEtapaDados(
+        requireClient().rpc('sincronizar_catalogo_vendas_mobile_rpc'),
+        'Sincronizando o catálogo',
+      );
       if (sincronizarRes.error) throw sincronizarRes.error;
       sincronizacaoCatalogo = sincronizarRes.data || sincronizacaoCatalogo;
+    } else {
+      etapasDadosConcluidas += 1;
+      atualizarProgresso('data', etapasDadosConcluidas, totalEtapasDados, 'Catálogo verificado');
     }
 
     const [produtosRes, clientesRes, pedidosRes, pagamentosRes, conteudosRes, pastasRes, materiaisRes, integracaoRes] = await Promise.all([
-      client.from('vendas_mobile_produtos').select('*').order('criado_em', { ascending: false }),
-      client.from('vendas_mobile_clientes').select('*').order('nome'),
-      client.from('vendas_mobile_pedidos').select('*, itens:vendas_mobile_pedido_itens(*)').order('criado_em', { ascending: false }),
-      client.from('vendas_mobile_pagamentos').select('*').order('data_pagamento', { ascending: false }).order('criado_em', { ascending: false }),
-      client.from('vendas_mobile_conteudos').select('id, empresa_id, pagina, tipo, titulo, descricao, criado_em').eq('ativo', true).order('criado_em', { ascending: false }),
-      client.from('vendas_mobile_divulgacao_pastas').select('id, empresa_id, pasta_pai_id, nome, descricao, ordem, criado_em').eq('ativo', true).order('ordem').order('criado_em', { ascending: false }),
-      client.from('vendas_mobile_divulgacao_materiais').select('id, pasta_id, titulo, tipo, arquivo_url, miniatura_url, miniatura_status, mime_type, tamanho_bytes, ordem, criado_em').eq('ativo', true).order('ordem').order('criado_em', { ascending: false }),
-      client.rpc('obter_integracao_gestao_vendas_mobile_rpc'),
+      acompanharEtapaDados(client.from('vendas_mobile_produtos').select('*').order('criado_em', { ascending: false }), 'Carregando produtos'),
+      acompanharEtapaDados(client.from('vendas_mobile_clientes').select('*').order('nome'), 'Carregando clientes'),
+      acompanharEtapaDados(client.from('vendas_mobile_pedidos').select('*, itens:vendas_mobile_pedido_itens(*)').order('criado_em', { ascending: false }), 'Carregando pedidos'),
+      acompanharEtapaDados(client.from('vendas_mobile_pagamentos').select('*').order('data_pagamento', { ascending: false }).order('criado_em', { ascending: false }), 'Carregando pagamentos'),
+      acompanharEtapaDados(client.from('vendas_mobile_conteudos').select('id, empresa_id, pagina, tipo, titulo, descricao, criado_em').eq('ativo', true).order('criado_em', { ascending: false }), 'Carregando novidades'),
+      acompanharEtapaDados(client.from('vendas_mobile_divulgacao_pastas').select('id, empresa_id, pasta_pai_id, nome, descricao, ordem, criado_em').eq('ativo', true).order('ordem').order('criado_em', { ascending: false }), 'Carregando pastas de divulgação'),
+      acompanharEtapaDados(client.from('vendas_mobile_divulgacao_materiais').select('id, pasta_id, titulo, tipo, arquivo_url, miniatura_url, miniatura_status, mime_type, tamanho_bytes, ordem, criado_em').eq('ativo', true).order('ordem').order('criado_em', { ascending: false }), 'Carregando materiais'),
+      acompanharEtapaDados(client.rpc('obter_integracao_gestao_vendas_mobile_rpc'), 'Carregando integração financeira'),
     ]);
     const error = produtosRes.error || clientesRes.error || pedidosRes.error || integracaoRes.error;
     if (error) throw error;
@@ -222,6 +257,8 @@
       .filter((pacote) => pacote?.id)
       .map((pacote) => [pacote.id, pacote])).values()]
       .sort((a, b) => String(b.criado_em || '').localeCompare(String(a.criado_em || '')));
+    etapasDadosConcluidas += 1;
+    atualizarProgresso('data', etapasDadosConcluidas, totalEtapasDados, 'Organizando seus dados');
 
     return {
       user,
