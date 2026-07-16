@@ -187,17 +187,39 @@
     };
   }
 
-  async function loadAll() {
-    const user = await currentUser();
+  async function listarCatalogoVendas() {
+    const { data, error } = await requireClient().from('vendas_mobile_produtos').select('*').order('criado_em', { ascending: false });
+    if (error) throw error;
+    const produtos = (data || []).map((produto) => ({
+      ...produto,
+      preco_custo: Number(Number(produto.preco_custo || 0) > 0 ? produto.preco_custo : produto.metadados?.preco_custo ?? 0),
+      pacote_origem_id: produto.pacote_origem_id ?? produto.metadados?.pacote?.id ?? null,
+    }));
+    const pacotes = [...new Map(produtos
+      .map((produto) => produto.metadados?.pacote)
+      .filter((pacote) => pacote?.id)
+      .map((pacote) => [pacote.id, pacote])).values()]
+      .sort((a, b) => String(b.criado_em || '').localeCompare(String(a.criado_em || '')));
+    return { produtos, pacotes };
+  }
+
+  async function sincronizarCatalogoVendas() {
+    const { data, error } = await requireClient().rpc('sincronizar_catalogo_vendas_mobile_rpc');
+    if (error) throw error;
+    return data || { adicionados: 0, ja_recebidos: 0 };
+  }
+
+  async function loadAll(contextoPreparado = null) {
+    const user = contextoPreparado?.user || await currentUser();
     if (!user) return { user: null, produtos: [], pacotes: [], clientes: [], vendas: [], pagamentos: [], conteudos: null, divulgacaoPastas: [], divulgacaoMateriais: [], moduloAtivo: true };
 
-    const acessoVendas = await buscarAcessoVendas();
+    const acessoVendas = contextoPreparado?.acessoVendas || await buscarAcessoVendas();
     if (!acessoVendas.acesso) {
       atualizarProgresso('data', 1, 1, 'Aguardando escolha do perfil');
       return { user, produtos: [], pacotes: [], clientes: [], vendas: [], pagamentos: [], conteudos: null, divulgacaoPastas: [], divulgacaoMateriais: [], moduloAtivo: true, ...acessoVendas };
     }
 
-    const totalEtapasDados = 12;
+    const totalEtapasDados = 11;
     let etapasDadosConcluidas = 0;
     const acompanharEtapaDados = (promessa, rotulo) => Promise.resolve(promessa).then(
       (resultado) => {
@@ -221,21 +243,8 @@
     if (perfisFinanceirosRes.error) throw perfisFinanceirosRes.error;
     const vinculosComerciais = vinculosRes.data || [];
     const vinculoAtivo = vinculosComerciais.find((vinculo) => vinculo.ativo) || null;
-    let sincronizacaoCatalogo = { adicionados: 0, ja_recebidos: 0 };
-    if (moduloAtivo) {
-      const sincronizarRes = await acompanharEtapaDados(
-        requireClient().rpc('sincronizar_catalogo_vendas_mobile_rpc'),
-        'Sincronizando o catálogo',
-      );
-      if (sincronizarRes.error) throw sincronizarRes.error;
-      sincronizacaoCatalogo = sincronizarRes.data || sincronizacaoCatalogo;
-    } else {
-      etapasDadosConcluidas += 1;
-      atualizarProgresso('data', etapasDadosConcluidas, totalEtapasDados, 'Catálogo verificado');
-    }
-
-    const [produtosRes, clientesRes, pedidosRes, pagamentosRes, conteudosRes, pastasRes, materiaisRes, integracaoRes] = await Promise.all([
-      acompanharEtapaDados(client.from('vendas_mobile_produtos').select('*').order('criado_em', { ascending: false }), 'Carregando produtos'),
+    const [catalogoRes, clientesRes, pedidosRes, pagamentosRes, conteudosRes, pastasRes, materiaisRes, integracaoRes] = await Promise.all([
+      acompanharEtapaDados(listarCatalogoVendas(), 'Carregando produtos'),
       acompanharEtapaDados(client.from('vendas_mobile_clientes').select('*').order('nome'), 'Carregando clientes'),
       acompanharEtapaDados(client.from('vendas_mobile_pedidos').select('*, itens:vendas_mobile_pedido_itens(*)').order('criado_em', { ascending: false }), 'Carregando pedidos'),
       acompanharEtapaDados(client.from('vendas_mobile_pagamentos').select('*').order('data_pagamento', { ascending: false }).order('criado_em', { ascending: false }), 'Carregando pagamentos'),
@@ -244,19 +253,11 @@
       acompanharEtapaDados(client.from('vendas_mobile_divulgacao_materiais').select('id, pasta_id, titulo, tipo, arquivo_url, miniatura_url, miniatura_status, mime_type, tamanho_bytes, ordem, criado_em').eq('ativo', true).order('ordem').order('criado_em', { ascending: false }), 'Carregando materiais'),
       acompanharEtapaDados(client.rpc('obter_integracao_gestao_vendas_mobile_rpc'), 'Carregando integração financeira'),
     ]);
-    const error = produtosRes.error || clientesRes.error || pedidosRes.error || integracaoRes.error;
+    const error = clientesRes.error || pedidosRes.error || integracaoRes.error;
     if (error) throw error;
 
-    const produtos = (produtosRes.data || []).map((produto) => ({
-      ...produto,
-      preco_custo: Number(Number(produto.preco_custo || 0) > 0 ? produto.preco_custo : produto.metadados?.preco_custo ?? 0),
-      pacote_origem_id: produto.pacote_origem_id ?? produto.metadados?.pacote?.id ?? null,
-    }));
-    const pacotes = [...new Map(produtos
-      .map((produto) => produto.metadados?.pacote)
-      .filter((pacote) => pacote?.id)
-      .map((pacote) => [pacote.id, pacote])).values()]
-      .sort((a, b) => String(b.criado_em || '').localeCompare(String(a.criado_em || '')));
+    const produtos = catalogoRes.produtos;
+    const pacotes = catalogoRes.pacotes;
     etapasDadosConcluidas += 1;
     atualizarProgresso('data', etapasDadosConcluidas, totalEtapasDados, 'Organizando seus dados');
 
@@ -287,7 +288,7 @@
       divulgacaoPastas: pastasRes.error ? [] : (pastasRes.data || []).filter((pasta) => vinculosComerciais.some((vinculo) => vinculo.empresa_id === pasta.empresa_id && vinculo.divulgacao_ativa)),
       divulgacaoMateriais: materiaisRes.error ? [] : (materiaisRes.data || []),
       moduloAtivo,
-      sincronizacaoCatalogo,
+      sincronizacaoCatalogo: { adicionados: 0, ja_recebidos: 0 },
       vinculosComerciais,
       vinculoComercialAtivo: vinculoAtivo,
       perfisFinanceiros: perfisFinanceirosRes.data || [],
@@ -658,5 +659,5 @@
     return data;
   }
 
-  window.VendasDb = { client, currentUser, hasSession, getAccessToken, uploadProductImage, signIn, signInPhone, signInWithGoogle, resetPassword, updatePassword, updateUserMetadata, signUp, signOut, solicitarAcesso, buscarAcessoVendas, loadAll, listarPerfisGestaoParaTroca, saveProduct, deleteProduct, movimentarEstoque, listarMovimentosEstoque, createPackage, saveProductsBulk, deletePackage, saveClient, deleteClient, saveOrder, updateOrder, deleteOrder, savePayment, updatePayment, deletePayment, configurarIntegracaoGestao, atualizarRecursoVinculoComercial, resetarSistemaVendas, definirPerfilFinanceiro, saveFeedback };
+  window.VendasDb = { client, currentUser, hasSession, getAccessToken, uploadProductImage, signIn, signInPhone, signInWithGoogle, resetPassword, updatePassword, updateUserMetadata, signUp, signOut, solicitarAcesso, buscarAcessoVendas, loadAll, listarCatalogoVendas, sincronizarCatalogoVendas, listarPerfisGestaoParaTroca, saveProduct, deleteProduct, movimentarEstoque, listarMovimentosEstoque, createPackage, saveProductsBulk, deletePackage, saveClient, deleteClient, saveOrder, updateOrder, deleteOrder, savePayment, updatePayment, deletePayment, configurarIntegracaoGestao, atualizarRecursoVinculoComercial, resetarSistemaVendas, definirPerfilFinanceiro, saveFeedback };
 })();

@@ -126,6 +126,8 @@ let temporizadorReconstrucaoSala = 0;
 let salaEmLayoutCompacto = window.matchMedia('(max-width: 850px)').matches;
 let assinaturaSalaRenderizada = '';
 let rolagemPorAba = {};
+let contextoAberturaVendas = null;
+let sincronizacaoCatalogoEmAndamento = false;
 
 try {
   rolagemPorAba = JSON.parse(sessionStorage.getItem('avantalab.vendas_mobile.rolagem_abas') || '{}') || {};
@@ -1289,6 +1291,7 @@ async function selecionarPerfilVendas(empresaId) {
   state.seletorPerfilVendasInicialBloqueante = false;
   state.sistemaInicialAvaliado = true;
   state.perfilVendasSelecionandoId = '';
+  contextoAberturaVendas = null;
   await carregarSistemaVendasCompleto();
 }
 
@@ -1801,7 +1804,9 @@ async function carregarDadosBackend(mostrarCarregamento = true, manterPreparacao
   carregandoBackend = mostrarCarregamento;
   if (mostrarCarregamento) render();
   try {
-    let dados = await comLimiteDeTempo(window.VendasDb.loadAll());
+    const contextoPreparado = contextoAberturaVendas;
+    contextoAberturaVendas = null;
+    let dados = await comLimiteDeTempo(window.VendasDb.loadAll(contextoPreparado));
     if (dados.user && !dados.acesso) {
       const pendente = JSON.parse(localStorage.getItem('avantalab.vendas_mobile.solicitacao_pendente') || 'null');
       if (pendente?.codigo && pendente?.nome) {
@@ -1858,6 +1863,27 @@ async function carregarDadosBackend(mostrarCarregamento = true, manterPreparacao
   }
 }
 
+async function sincronizarCatalogoAutomaticamente(atualizarTela = false) {
+  if (sincronizacaoCatalogoEmAndamento || !backendAtivo || state.moduloVendasAtivo === false || !state.acessoVendas) return state.sincronizacaoCatalogo;
+  sincronizacaoCatalogoEmAndamento = true;
+  try {
+    const sincronizacao = await window.VendasDb.sincronizarCatalogoVendas();
+    state.sincronizacaoCatalogo = sincronizacao || { adicionados: 0, ja_recebidos: 0 };
+    if (Number(state.sincronizacaoCatalogo.adicionados || 0) > 0) {
+      const catalogo = await window.VendasDb.listarCatalogoVendas();
+      state.produtos = catalogo.produtos;
+      state.pacotesProdutos = catalogo.pacotes;
+      const campoAtivo = document.activeElement;
+      const editando = campoAtivo instanceof HTMLElement && campoAtivo.matches('input, textarea, select, [contenteditable="true"]');
+      if (atualizarTela || (state.aba === 'produtos' && !editando)) render();
+    }
+    void salvarCacheVendas();
+    return state.sincronizacaoCatalogo;
+  } finally {
+    sincronizacaoCatalogoEmAndamento = false;
+  }
+}
+
 async function prepararSelecaoSistemaAntesDosDadosVendas() {
   const [user, acessoVendas] = await Promise.all([
     window.VendasDb.currentUser(),
@@ -1881,6 +1907,7 @@ async function prepararSelecaoSistemaAntesDosDadosVendas() {
       telefone: user.phone || user.user_metadata?.telefone || user.user_metadata?.phone || state.usuario.telefone || '',
     };
   }
+  contextoAberturaVendas = user ? { user, acessoVendas } : null;
   if (entradaPelaGestao && perfisVendas.length > 1 && !acessoVendas.acesso) {
     state.seletorPerfilVendasAberto = true;
     state.seletorPerfilVendasInicialBloqueante = true;
@@ -1929,6 +1956,9 @@ async function carregarSistemaVendasCompleto() {
     preparandoRecursosSala = false;
     render();
     liberarAlturaPreparacao();
+    window.setTimeout(() => {
+      sincronizarCatalogoAutomaticamente().catch((error) => console.warn('Não foi possível sincronizar o catálogo em segundo plano.', error));
+    }, 160);
   }
 }
 
@@ -4017,13 +4047,13 @@ function carregarBibliotecaZip() {
 
 function mostrarSincronizacaoCatalogo() {
   const sincronizacao = state.sincronizacaoCatalogo || { adicionados: 0, ja_recebidos: 0 };
-  sheet(`<div class="sheet-header"><div><h2>Sincronização do catálogo</h2><p class="muted small">Os produtos publicados pela empresa são verificados sempre que você entra no Vendas.</p></div><button class="close" onclick="fecharSheet()">×</button></div><div class="grid"><article class="stock-current"><span>Novos produtos recebidos nesta abertura</span><b>${Number(sincronizacao.adicionados || 0)}</b></article><article class="stock-current"><span>Produtos já recebidos anteriormente</span><b>${Number(sincronizacao.ja_recebidos || 0)}</b></article><p class="muted small">Produtos que você já alterou — inclusive preços e custos — não são sobrescritos pela atualização automática.</p><button class="primary" onclick="sincronizarCatalogoAgora()">${svgIcon('save')} Verificar agora</button></div>`, 'sheet-backdrop-centered');
+  sheet(`<div class="sheet-header"><div><h2>Sincronização do catálogo</h2><p class="muted small">Os produtos publicados pela empresa são verificados em segundo plano após a abertura.</p></div><button class="close" onclick="fecharSheet()">×</button></div><div class="grid"><article class="stock-current"><span>Novos produtos recebidos nesta abertura</span><b>${Number(sincronizacao.adicionados || 0)}</b></article><article class="stock-current"><span>Produtos já recebidos anteriormente</span><b>${Number(sincronizacao.ja_recebidos || 0)}</b></article><p class="muted small">Produtos que você já alterou — inclusive preços e custos — não são sobrescritos pela atualização automática.</p><button class="primary" onclick="sincronizarCatalogoAgora()">${svgIcon('save')} Verificar agora</button></div>`, 'sheet-backdrop-centered');
 }
 
 async function sincronizarCatalogoAgora() {
   try {
     fecharSheet();
-    await carregarDadosBackend(true);
+    await sincronizarCatalogoAutomaticamente(true);
     toast('Catálogo atualizado.');
     mostrarSincronizacaoCatalogo();
   } catch (error) { toast(traduzErro(error)); }
@@ -5031,7 +5061,7 @@ function aplicarAtualizacaoPwaPendente() {
 
 if (!window.__VENDAS_MOBILE_EMBEDDED__ && 'serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('./sw.js?v=13').catch(() => {});
+    navigator.serviceWorker.register('./sw.js?v=14').catch(() => {});
   });
 }
 

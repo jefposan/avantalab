@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.5.3.09 - 2026-07-16
+
+- Vendas Mobile: reaproveita a validação de sessão e perfil na carga inicial, eliminando uma segunda consulta de acesso.
+- Vendas Mobile: libera a tela antes da sincronização automática do catálogo; a atualização continua em segundo plano e a verificação manual não recarrega mais todo o sistema.
+
 ## 1.5.3.08 - 2026-07-16
 
 - Vendas Mobile: restaura rapidamente os dados já validados do usuário e perfil ao reabrir o PWA, atualizando o Supabase em segundo plano sem retornar ao carregamento completo.

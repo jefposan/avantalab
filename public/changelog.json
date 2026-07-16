@@ -13,6 +13,15 @@
   },
   "versoes": [
     {
+      "versao": "1.5.3.09",
+      "titulo": "Abertura mais rápida no Vendas",
+      "data": "Julho/2026",
+      "itens": [
+        "O Vendas reaproveita a validação já feita na abertura, evitando uma consulta repetida.",
+        "A tela é liberada antes da sincronização automática do catálogo, que continua em segundo plano."
+      ]
+    },
+    {
       "versao": "1.5.3.08",
       "titulo": "Retomada mais rápida no Vendas",
       "data": "Julho/2026",
