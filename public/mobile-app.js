@@ -4129,12 +4129,16 @@
     var nome = campo('edit-usuario-nome').trim();
     var login = campo('edit-usuario-login').trim().toLowerCase();
     var email = campo('edit-usuario-email').trim().toLowerCase();
-    var perfil = campo('edit-usuario-perfil');
+    var usuarioEmEdicao = state.usuariosEmpresa.find(function (usuario) { return String(usuario.id) === String(state.usuarioEditandoId); });
+    if (!usuarioEmEdicao && state.empresa && String(state.empresa.acessoId) === String(state.usuarioEditandoId)) {
+      usuarioEmEdicao = { perfil: state.empresa.perfil || 'operador_simples' };
+    }
+    var perfil = campo('edit-usuario-perfil') || (usuarioEmEdicao && usuarioEmEdicao.perfil) || 'operador_simples';
     var senha = campo('edit-usuario-senha').trim();
     var confirmarSenha = campo('edit-usuario-confirmar-senha').trim();
 
-    if (!nome || !login || !perfil) {
-      setErro('Informe nome, login e perfil.');
+    if (!nome || !login) {
+      setErro('Informe nome e login. O perfil atual será mantido.');
       return;
     }
     if (senha && senha.length < 8) { setErro('A nova senha deve ter pelo menos 8 caracteres.'); return; }
