@@ -1,8 +1,8 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.5.4.17 -->
+<!-- ava-version: 1.5.4.18 -->
 
-> Revisão 1.5.4.17: novos pedidos e pagamentos permitem buscar o cliente durante a digitação.
+> Revisão 1.5.4.18: o modo de organizar a sala exibe uma instrução de arraste ao lado do lápis.
 
 ## Escopo e navegação
 
@@ -13,7 +13,9 @@ dúvida dentro do Vendas sempre que a função existir ali.
   Agenda, Novidades, Divulgação e Informações.
 - O menu inferior tem Configurações, dois atalhos configuráveis, **+ Novo
   lançamento** e Início. Os atalhos são configurados em **Configurações >
-  Organizar atalhos**; o lápis da sala muda a ordem dos cards.
+  Organizar atalhos**; o lápis da sala muda a ordem dos cards. Enquanto a
+  organização está ativa, a instrução **Clique no botão e arraste para a nova
+  posição** aparece ao lado do lápis.
 - Para gestores habilitados, a primeira tela após o login permite escolher Gestão
   ou Vendas antes de carregar os dados. Depois da escolha aparece **Preparando acesso**.
 - Gestores podem usar **Ir para Gestão** no canto direito do header fixo da sala

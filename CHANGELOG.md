@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.5.4.18 - 2026-07-16
+
+- Vendas Mobile: ao ativar o lápis para reorganizar a sala de botões, uma instrução ao lado do controle orienta a clicar e arrastar o card para a nova posição.
+
 ## 1.5.4.17 - 2026-07-16
 
 - Vendas Mobile: novos pedidos e pagamentos permitem localizar o cliente digitando nome, telefone ou e-mail, com filtragem imediata das opções.
