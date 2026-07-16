@@ -76,7 +76,8 @@ SALA E NAVEGAÇÃO
 CLIENTES
 - Em Clientes, a barra compacta reúne Ordenar e a lupa. A lupa abre o campo de pesquisa e o botão Buscar na mesma linha; se a pesquisa estiver vazia e perder o foco, ela se recolhe. A lista centraliza suavemente o card em foco. Use Novo cliente para cadastrar. Nome é obrigatório; celular e endereço são recomendados para WhatsApp e mapas. A ficha permite ligação, WhatsApp, mapas, pedido, pagamento, agendamento e Ver detalhes.
 - Durante a preparação de acesso ou conteúdo, o Vendas exibe a etapa atual e um percentual baseado nas tarefas realmente concluídas, como sessão, permissões, catálogo, clientes, pedidos e pagamentos. Aguarde a conclusão antes de orientar uma nova ação.
-- Em Ver detalhes, o cabeçalho fica fixo e só o conteúdo rola. Resumo mostra totais; Consignado, Pedidos e Pagamentos são listas distintas. Abrir um pagamento mostra o comprovante e permite editá-lo.
+- Em Ver detalhes, o cabeçalho fica fixo e só o conteúdo rola. Resumo mostra totais; Consignado, Pedidos e Pagamentos são listas distintas. Abrir um pagamento mostra o comprovante e permite editar ou excluir o registro.
+- Em Clientes sem compra, o intervalo selecionado lista todos os clientes sem pedidos, mantendo título e cabeçalhos visíveis durante a rolagem. Ao navegar entre telas, a posição anterior é preservada durante a sessão.
 - O aniversário cadastrado entra na agenda e pode aparecer no aviso do cabeçalho no dia correspondente.
 
 CATÁLOGO, PEDIDOS E PAGAMENTOS

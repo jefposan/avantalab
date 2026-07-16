@@ -1,8 +1,8 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.5.3.05 -->
+<!-- ava-version: 1.5.3.06 -->
 
-> Revisão 1.5.3.05: sem impacto operacional na Gestão Mobile. A estabilização visual ocorreu exclusivamente na sala do Vendas Mobile.
+> Revisão 1.5.3.06: sem impacto operacional na Gestão Mobile. Os ajustes desta versão são exclusivos do Vendas Mobile.
 
 ## Escopo
 

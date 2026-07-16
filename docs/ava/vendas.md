@@ -1,8 +1,8 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.5.3.05 -->
+<!-- ava-version: 1.5.3.06 -->
 
-> Revisão 1.5.3.05: a sala de botões permanece visualmente estável depois de carregada, inclusive ao tocar em Início e ao organizar os cards. Sem mudança no caminho das funcionalidades.
+> Revisão 1.5.3.06: os detalhes do cliente e os pagamentos receberam refinamentos; a lista de clientes sem compra agora é completa e mantém seus cabeçalhos visíveis.
 
 ## Escopo e navegação
 
@@ -35,9 +35,13 @@ dúvida dentro do Vendas sempre que a função existir ali.
   são recomendados para ligação/WhatsApp e mapas.
 - A ficha oferece pedido, pagamento, agendamento e **Ver detalhes**. Nesta área,
   Resumo, Consignado, Pedidos e Pagamentos mostram os históricos.
+- Em **Clientes sem compra**, o seletor define o intervalo sem pedidos e todos os
+  clientes enquadrados são exibidos; o cabeçalho permanece visível durante a rolagem.
 - Ao fechar um comprovante aberto pelas listas, o retorno esperado é a mesma lista
   anterior. Aniversário cadastrado entra na agenda e pode aparecer no aviso do
   cabeçalho no dia correspondente.
+- A navegação preserva a posição de cada tela durante a sessão, evitando retornar
+  ao topo ao sair e voltar.
 
 ## Produtos, pedidos e pagamentos
 
@@ -48,7 +52,8 @@ dúvida dentro do Vendas sempre que a função existir ali.
   Consignado, itens bonificados, desconto por valor/percentual e comprovante.
 - Consignado não é venda nem recebimento até sua conversão em pedido.
 - Pagamentos registram valor, desconto, data e forma. Edição/exclusão recalcula
-  saldos e relatórios. Comprovantes podem ser reabertos no histórico do cliente.
+  saldos e relatórios. Comprovantes podem ser reabertos, editados ou excluídos no
+  histórico do cliente.
 
 ## Agenda, conteúdo e configurações
 

@@ -121,6 +121,13 @@ let recursosSalaBotoesPromise = null;
 let temporizadorReconstrucaoSala = 0;
 let salaEmLayoutCompacto = window.matchMedia('(max-width: 850px)').matches;
 let assinaturaSalaRenderizada = '';
+let rolagemPorAba = {};
+
+try {
+  rolagemPorAba = JSON.parse(sessionStorage.getItem('avantalab.vendas_mobile.rolagem_abas') || '{}') || {};
+} catch {
+  rolagemPorAba = {};
+}
 
 const PAISES_DDI = [
   ['Brasil', '55', '🇧🇷'], ['Portugal', '351', '🇵🇹'], ['Estados Unidos / Canadá', '1', '🇺🇸'],
@@ -386,6 +393,11 @@ function logoVendas() {
 }
 
 function setAba(aba) {
+  if (aba === state.aba && !state.menuAberto && !document.getElementById('sheetBackdrop')) return;
+  if (!state.menuAberto) {
+    rolagemPorAba[state.aba] = window.scrollY || document.documentElement.scrollTop || 0;
+    try { sessionStorage.setItem('avantalab.vendas_mobile.rolagem_abas', JSON.stringify(rolagemPorAba)); } catch { /* armazenamento indisponível */ }
+  }
   if (aba !== 'agenda') fecharCamadasAgenda();
   if (aba !== 'divulgacao') divulgacaoPastaAtualId = null;
   if (aba === 'vendas' && state.aba !== 'vendas') limitePedidos = 10;
@@ -397,6 +409,8 @@ function setAba(aba) {
   state.aba = aba;
   state.menuAberto = false;
   render();
+  const rolagemSalva = Math.max(0, Number(rolagemPorAba[aba] || 0));
+  requestAnimationFrame(() => window.scrollTo(0, rolagemSalva));
 }
 
 function alternarMenu() {
@@ -1948,8 +1962,7 @@ function clientesInativosDashboard() {
     const dias = ultima ? Math.floor((fim.getTime() - new Date(ultima.criado_em).getTime()) / 86400000) : null;
     return { id: cliente.id, nome: cliente.nome, ultima, dias, houveCompraNoPeriodo };
   }).filter((item) => !item.houveCompraNoPeriodo)
-    .sort((a, b) => (b.dias ?? Number.MAX_SAFE_INTEGER) - (a.dias ?? Number.MAX_SAFE_INTEGER))
-    .slice(0, 10);
+    .sort((a, b) => (b.dias ?? Number.MAX_SAFE_INTEGER) - (a.dias ?? Number.MAX_SAFE_INTEGER));
 }
 
 function renderDashboard() {
@@ -1995,7 +2008,7 @@ function renderDashboard() {
       <section class="dashboard-consignment-card ${state.dashboardConsignadosExpandido ? 'expanded' : ''}"><header><div><h3>${svgIcon('package')} Estoque consignado</h3><small>${consignados.pedidos.length} ${consignados.pedidos.length === 1 ? 'consignado ativo' : 'consignados ativos'} · ${consignados.quantidade.toLocaleString('pt-BR')} unidades · ${moeda(consignados.total)}</small></div><button type="button" onclick="alternarConsignadosDashboard()" aria-expanded="${state.dashboardConsignadosExpandido}">${state.dashboardConsignadosExpandido ? 'Recolher' : 'Ver produtos'} ${state.dashboardConsignadosExpandido ? '⌃' : '⌄'}</button></header>${state.dashboardConsignadosExpandido ? `<div class="dashboard-consignment-products">${listaConsignados}</div>` : ''}</section>
       <section class="dashboard-tables">
         <article class="dashboard-panel"><h3>${svgIcon('users')} Top 10 Clientes</h3><div class="dashboard-panel-body"><table><thead><tr><th>Cliente</th><th>Total comprado</th></tr></thead><tbody>${tabelaClientes}</tbody></table></div></article>
-        <article class="dashboard-panel dashboard-inactive-panel"><h3>${svgIcon('calendar')}<span>Clientes sem compra</span><span class="dashboard-days-control"><button type="button" onclick="ajustarDiasInativosDashboard(-5)" aria-label="Diminuir dias">−</button><b>${limiteInativos} dias</b><button type="button" onclick="ajustarDiasInativosDashboard(5)" aria-label="Aumentar dias">+</button></span></h3><p class="dashboard-inactive-help">Sem pedidos no intervalo dos últimos ${limiteInativos} dias, até a data final do filtro.</p><div class="dashboard-panel-body"><table><thead><tr><th>Cliente</th><th>Última compra</th><th>Dias</th></tr></thead><tbody>${tabelaInativos}</tbody></table></div></article>
+        <article class="dashboard-panel dashboard-inactive-panel"><h3>${svgIcon('calendar')}<span>Clientes sem compra</span><span class="dashboard-days-control"><button type="button" onclick="ajustarDiasInativosDashboard(-5)" aria-label="Diminuir dias">−</button><b>${limiteInativos} dias</b><button type="button" onclick="ajustarDiasInativosDashboard(5)" aria-label="Aumentar dias">+</button></span></h3><p class="dashboard-inactive-help">Sem pedidos nos últimos ${limiteInativos} dias.</p><div class="dashboard-panel-body"><table><thead><tr><th>Cliente</th><th>Última compra</th><th>Dias</th></tr></thead><tbody>${tabelaInativos}</tbody></table></div></article>
         <article class="dashboard-panel"><h3>${svgIcon('package')} Top 10 Produtos</h3><div class="dashboard-panel-body dashboard-product-chart">${graficoProdutos}</div></article>
         <article class="dashboard-panel"><h3>${svgIcon('target')} Rentabilidade</h3><div class="dashboard-panel-body profitability-report"><div><span>Receita de vendas</span><b>${moeda(t.total)}</b></div><div><span>Custo dos produtos</span><b>${moeda(t.custo)}</b></div><div class="highlight"><span>Margem de contribuição</span><b>${moeda(t.margem)}</b></div><div><span>Margem sobre vendas</span><b>${margemPercentual.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}%</b></div><div class="${t.produtosSemCusto ? 'cost-warning' : 'cost-complete'}"><span>Cadastro de custos</span><b>${t.produtosSemCusto ? `${t.produtosSemCusto} ${t.produtosSemCusto === 1 ? 'produto sem custo' : 'produtos sem custo'}` : 'Completo no período'}</b></div></div></article>
       </section>
@@ -3215,14 +3228,17 @@ async function salvarEdicaoPagamentoCliente(pagamentoId, pagina = 0, retornoClie
   } catch (error) { toast(traduzErro(error)); }
 }
 
-function abrirConfirmacaoExcluirPagamento(pagamentoId, pagina = 0, retornoClienteId = '', retornoAba = '') {
+function abrirConfirmacaoExcluirPagamento(pagamentoId, pagina = 0, retornoClienteId = '', retornoAba = '', origem = 'edicao') {
   const pagamento = (state.pagamentos || []).find((item) => item.id === pagamentoId);
   if (!pagamento) return;
   const cliente = state.clientes.find((item) => item.id === pagamento.cliente_id);
-  sheet(`<div class="sheet-header"><div><h2>Excluir pagamento?</h2><p class="muted small">Esta ação atualizará os saldos do cliente.</p></div><button class="close" onclick="abrirEditarPagamentoCliente('${pagamentoId}', ${pagina}, '${retornoClienteId}', '${retornoAba}')">×</button></div><div class="payment-delete-confirm"><p>Confirma a exclusão do pagamento de <b>${moeda(pagamento.valor)}</b> feito por <b>${escapeHtml(cliente?.nome || 'Cliente não informado')}</b> em ${dataBR(`${pagamento.data_pagamento}T12:00:00`)}?</p><button type="button" class="danger" onclick="excluirPagamentoCliente('${pagamentoId}')">Sim, excluir pagamento</button><button type="button" class="ghost" onclick="abrirEditarPagamentoCliente('${pagamentoId}', ${pagina}, '${retornoClienteId}', '${retornoAba}')">Cancelar</button></div>`, 'sheet-backdrop-centered payment-delete-backdrop');
+  const acaoVoltar = origem === 'detalhe'
+    ? `abrirPagamentoClienteDetalhe('${pagamentoId}','${retornoClienteId}','${retornoAba}',${pagina})`
+    : `abrirEditarPagamentoCliente('${pagamentoId}',${pagina},'${retornoClienteId}','${retornoAba}')`;
+  sheet(`<div class="sheet-header"><div><h2>Excluir pagamento?</h2><p class="muted small">Esta ação atualizará os saldos do cliente.</p></div><button class="close" onclick="${acaoVoltar}">×</button></div><div class="payment-delete-confirm"><p>Confirma a exclusão do pagamento de <b>${moeda(pagamento.valor)}</b> feito por <b>${escapeHtml(cliente?.nome || 'Cliente não informado')}</b> em ${dataBR(`${pagamento.data_pagamento}T12:00:00`)}?</p><button type="button" class="danger" onclick="excluirPagamentoCliente('${pagamentoId}','${retornoClienteId}','${retornoAba}',${pagina})">Sim, excluir pagamento</button><button type="button" class="ghost" onclick="${acaoVoltar}">Cancelar</button></div>`, 'sheet-backdrop-centered payment-delete-backdrop');
 }
 
-async function excluirPagamentoCliente(pagamentoId) {
+async function excluirPagamentoCliente(pagamentoId, retornoClienteId = '', retornoAba = '', retornoPagina = 0) {
   const pagamento = (state.pagamentos || []).find((item) => item.id === pagamentoId);
   if (!pagamento) return;
   try {
@@ -3230,6 +3246,7 @@ async function excluirPagamentoCliente(pagamentoId) {
     state.pagamentos = (state.pagamentos || []).filter((item) => item.id !== pagamentoId);
     fecharSheet();
     render();
+    if (retornoClienteId && retornoAba) abrirDetalhesCliente(retornoClienteId, retornoAba, Number(retornoPagina) || 0);
     toast('Pagamento excluído e saldos recalculados.');
   } catch (error) { toast(traduzErro(error)); }
 }
@@ -3352,7 +3369,7 @@ function abrirPagamentoClienteDetalhe(pagamentoId, retornoClienteId = '', retorn
   const cliente = state.clientes.find((item) => item.id === pagamento.cliente_id);
   const resumo = resumoComprovantePagamento(pagamento);
   const descontoHtml = Number(pagamento.desconto || 0) > 0 ? `<div><span>Desconto</span><b>${moeda(pagamento.desconto)}</b></div>` : '';
-  sheet(`<div class="sheet-header"><div><h2>Comprovante de pagamento</h2><p class="muted small">Cliente: ${escapeHtml(cliente?.nome || 'não informado')} · ${dataComprovante(pagamento.data_pagamento)}</p></div><button class="close" onclick="voltarParaDetalhesCliente('${retornoClienteId}','${retornoAba}',${retornoPagina})">×</button></div><section class="payment-detail-summary receipt-detail-summary"><div><span>Saldo anterior</span><b>${moeda(resumo.saldoAnterior)}</b></div><div><span>Forma de pagamento</span><b>${escapeHtml(pagamento.forma_pagamento || 'Não informado')}</b></div>${descontoHtml}<div class="payment-paid-highlight"><span>Valor pago</span><b>${moeda(pagamento.valor)}</b></div><div class="receipt-current-balance"><span>Saldo atual</span><b>${moeda(resumo.saldoAtual)}</b></div></section><button class="primary order-share" onclick="compartilharPagamento('${pagamentoId}')">${svgIcon('save')} Compartilhar comprovante</button><footer class="order-view-actions"><button type="button" class="ghost" onclick="voltarParaDetalhesCliente('${retornoClienteId}','${retornoAba}',${retornoPagina})">Fechar</button><button type="button" class="secondary" onclick="abrirEditarPagamentoCliente('${pagamentoId}',${retornoPagina},'${retornoClienteId}','${retornoAba}')">Editar pagamento</button></footer>`, 'sheet-backdrop-centered receipt-view-backdrop');
+  sheet(`<div class="sheet-header"><div><h2>Comprovante de pagamento</h2><p class="muted small">Cliente: ${escapeHtml(cliente?.nome || 'não informado')} · ${dataComprovante(pagamento.data_pagamento)}</p></div><button class="close" onclick="voltarParaDetalhesCliente('${retornoClienteId}','${retornoAba}',${retornoPagina})">×</button></div><section class="payment-detail-summary receipt-detail-summary"><div><span>Saldo anterior</span><b>${moeda(resumo.saldoAnterior)}</b></div><div><span>Forma de pagamento</span><b>${escapeHtml(pagamento.forma_pagamento || 'Não informado')}</b></div>${descontoHtml}<div class="payment-paid-highlight"><span>Valor pago</span><b>${moeda(pagamento.valor)}</b></div><div class="receipt-current-balance"><span>Saldo atual</span><b>${moeda(resumo.saldoAtual)}</b></div></section><button class="primary order-share" onclick="compartilharPagamento('${pagamentoId}')">${svgIcon('save')} Compartilhar comprovante</button><footer class="order-view-actions"><button type="button" class="ghost" onclick="voltarParaDetalhesCliente('${retornoClienteId}','${retornoAba}',${retornoPagina})">Fechar</button><button type="button" class="danger" onclick="abrirConfirmacaoExcluirPagamento('${pagamentoId}',${retornoPagina},'${retornoClienteId}','${retornoAba}','detalhe')">Excluir</button><button type="button" class="secondary" onclick="abrirEditarPagamentoCliente('${pagamentoId}',${retornoPagina},'${retornoClienteId}','${retornoAba}')">Editar</button></footer>`, 'sheet-backdrop-centered receipt-view-backdrop');
 }
 
 function abrirPedidoCliente(pedidoId, retornoClienteId = '', retornoAba = '', retornoPagina = 0) {
@@ -4892,14 +4909,15 @@ function aplicarAtualizacaoPwaPendente() {
 
 if (!window.__VENDAS_MOBILE_EMBEDDED__ && 'serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('./sw.js?v=10').catch(() => {});
+    navigator.serviceWorker.register('./sw.js?v=11').catch(() => {});
   });
 }
 
 if (window.__VENDAS_MOBILE_EMBEDDED__) {
   window.setTimeout(verificarAtualizacaoPwa, 12000);
-  window.setInterval(verificarAtualizacaoPwa, 120000);
-  document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') verificarAtualizacaoPwa(); });
+  window.setInterval(() => {
+    if (document.visibilityState === 'visible') verificarAtualizacaoPwa();
+  }, 120000);
 }
 
 window.setAba = setAba;

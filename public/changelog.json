@@ -13,6 +13,16 @@
   },
   "versoes": [
     {
+      "versao": "1.5.3.06",
+      "titulo": "Históricos e clientes sem compra aprimorados",
+      "data": "Julho/2026",
+      "itens": [
+        "O comprovante de pagamento agora permite excluir o registro diretamente, assim como nos pedidos.",
+        "Clientes sem compra mostra toda a lista do intervalo, com cabeçalhos fixos e leitura mais equilibrada.",
+        "Ao navegar e voltar, o Vendas preserva a posição anterior da tela durante a sessão."
+      ]
+    },
+    {
       "versao": "1.5.3.05",
       "titulo": "Sala do Vendas mais estável",
       "data": "Julho/2026",

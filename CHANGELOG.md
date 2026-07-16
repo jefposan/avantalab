@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.5.3.06 - 2026-07-16
+
+- Vendas Mobile: melhora o espaçamento no cabeçalho de **Ver detalhes** e adiciona exclusão diretamente ao comprovante de pagamento, seguindo o fluxo dos pedidos.
+- Vendas Mobile: **Clientes sem compra** passa a exibir todos os clientes do intervalo, com cabeçalhos fixos, tipografia refinada e descrição compacta.
+- Vendas Mobile: preserva a posição das telas ao navegar, evita reconstrução ao tocar novamente na tela atual e não verifica atualizações no simples retorno do aplicativo ao primeiro plano.
+- Vendas Mobile: reduz o rótulo e amplia a data no formulário de edição de pagamento.
+
 ## 1.5.3.05 - 2026-07-16
 
 - Vendas Mobile: estabiliza a sala de botões após o carregamento, evitando reconstruções redundantes, escalas de toque e recarregamento visual dos cards.
