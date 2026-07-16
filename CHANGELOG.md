@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.5.4.10 - 2026-07-16
+
+- Gestão Mobile: corrige a situação em que a preparação chegava a 100%, mas a tela principal permanecia bloqueada.
+- Carregamento: a interface é liberada assim que os dados essenciais terminam; agenda, notificações, tempo real, ponto e tutorial passam a iniciar em segundo plano sem prender o acesso.
+- Recuperação: se o navegador mantiver indevidamente a tela de preparação após a conclusão, o sistema tenta abri-la novamente e disponibiliza uma ação de continuidade.
+
 ## 1.5.4.09 - 2026-07-16
 
 - Vendas Mobile: corrige o rodapé da imagem do comprovante para mostrar apenas o tipo e a cliente, sem “Vendas AvantaLab”.

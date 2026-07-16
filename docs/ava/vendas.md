@@ -1,8 +1,8 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.5.4.09 -->
+<!-- ava-version: 1.5.4.10 -->
 
-> Revisão 1.5.4.09: rodapé da imagem e mensagem enviada ao compartilhar comprovantes identificam o tipo e a cliente, sem assinatura do sistema.
+> Revisão 1.5.4.10: sem impacto operacional no Vendas Mobile.
 
 ## Escopo e navegação
 

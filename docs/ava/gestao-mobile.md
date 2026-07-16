@@ -1,8 +1,8 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.5.4.09 -->
+<!-- ava-version: 1.5.4.10 -->
 
-> Revisão 1.5.4.09: sem impacto operacional na Gestão Mobile.
+> Revisão 1.5.4.10: o acesso é liberado assim que os dados essenciais chegam a 100%; rotinas complementares seguem em segundo plano e há recuperação automática caso a tela de preparação permaneça visível.
 
 ## Escopo
 
@@ -24,6 +24,10 @@ deve usar os nomes do menu e da barra inferior do celular.
 - Quando o módulo Vendas Mobile está ativo e o usuário tem permissão, após o login
   a primeira tela permite escolher entre Gestão e Vendas e memorizar a preferência. Só
   depois da escolha aparece **Preparando acesso** e o sistema selecionado é carregado.
+- Em **Preparando acesso**, 100% significa que os dados necessários para abrir o
+  perfil foram concluídos. A Gestão libera a tela principal imediatamente e continua
+  sincronizações complementares em segundo plano. Se a tela não avançar, o aplicativo
+  tenta novamente de forma automática e pode exibir **Continuar**.
 - Dentro da Gestão, **Menu > Ir para Vendas** abre diretamente o Vendas Mobile; a
   tela com as duas opções é exibida somente na entrada após o login.
 - Em um perfil sem o módulo instalado, **Ir para Vendas** continua disponível para

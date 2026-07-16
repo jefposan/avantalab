@@ -331,6 +331,7 @@
     agendaRepetir: false,
     agendaRepeticao: 'mensal',
   };
+  var temporizadorLiberacaoAcessoMobile = null;
 
   function restaurarRascunhoCadastroMobile() {
     try {
@@ -4776,10 +4777,10 @@
     // card recebe o resumo logo em seguida, sem bloquear o acesso.
     state.resumoPerfisCarregando = true;
     avancarEtapaDados('Acesso pronto');
-    if (exibeTelaPreparacao) {
-      await new Promise(function (resolver) { window.setTimeout(resolver, 120); });
-    }
-
+    // Tudo que bloqueia o primeiro acesso já terminou. Libera a interface
+    // antes das sincronizações complementares para que nenhuma delas consiga
+    // manter a tela parada em 100%.
+    state.pronto = true;
     state.carregando = false;
     render();
 
@@ -4797,18 +4798,28 @@
       });
     }, 80);
 
-    // Sincroniza a agenda com o servidor (em segundo plano) + tempo real
-    sincronizarAgendaSupabase();
-    configurarRealtimeAgendaMobile();
-    configurarRealtimeFinanceiroMobile();
-    configurarRealtimeNotificacoesMobile();
-    configurarRealtimePontoMobile();
-    carregarResumoPontoMobile();
-    // Atualiza a contagem de notificacoes nao lidas (sino + badge do icone)
-    carregarNotificacoesNaoLidas();
-    // Primeiro acesso: tutorial (e, ao concluir, oferece notificacoes)
-    avaliarTourMobile();
-    avaliarPromptNotificacoes();
+    // Sincronizações complementares começam somente depois de a tela principal
+    // estar disponível. Uma falha isolada aqui não interrompe o acesso.
+    window.setTimeout(function () {
+      var executarSegundoPlano = function (descricao, tarefa) {
+        try {
+          Promise.resolve(tarefa()).catch(function (erro) {
+            console.warn(descricao + ':', erro);
+          });
+        } catch (erro) {
+          console.warn(descricao + ':', erro);
+        }
+      };
+      executarSegundoPlano('Falha ao sincronizar agenda em segundo plano', sincronizarAgendaSupabase);
+      executarSegundoPlano('Falha ao iniciar agenda em tempo real', configurarRealtimeAgendaMobile);
+      executarSegundoPlano('Falha ao iniciar financeiro em tempo real', configurarRealtimeFinanceiroMobile);
+      executarSegundoPlano('Falha ao iniciar notificações em tempo real', configurarRealtimeNotificacoesMobile);
+      executarSegundoPlano('Falha ao iniciar ponto em tempo real', configurarRealtimePontoMobile);
+      executarSegundoPlano('Falha ao carregar resumo do ponto', carregarResumoPontoMobile);
+      executarSegundoPlano('Falha ao carregar notificações', carregarNotificacoesNaoLidas);
+      executarSegundoPlano('Falha ao avaliar tutorial', avaliarTourMobile);
+      executarSegundoPlano('Falha ao avaliar permissão de notificações', avaliarPromptNotificacoes);
+    }, 0);
   }
 
   async function entrar() {
@@ -7395,15 +7406,67 @@
           '<p id="mobileAccessProgressLabel" class="mt-2 text-sm font-semibold text-slate-600">' + escapeHtml(progresso.rotulo || 'Preparando recursos do aplicativo') + '</p>' +
           '<div class="mt-4 h-2 w-full overflow-hidden rounded-full bg-slate-900/10" aria-label="Carregando acesso"><i id="mobileAccessProgressBar" class="block h-full rounded-full bg-gradient-to-r from-sky-600 to-cyan-500 transition-[width] duration-200" style="width:' + Number(progresso.valor || 5) + '%"></i></div>' +
           '<b id="mobileAccessProgressValue" class="mt-1 block text-[11px] font-black text-cyan-700">' + Number(progresso.valor || 5) + '%</b>' +
+          '<button id="mobileAccessContinueButton" type="button" onclick="window.__avantalabConcluirAcessoMobile && window.__avantalabConcluirAcessoMobile()" class="mt-3 hidden h-10 w-full rounded-xl bg-cyan-700 px-4 text-xs font-black uppercase tracking-wide text-white">Continuar</button>' +
         '</div>' +
       '</section>'
     );
   }
 
+  function telaPreparacaoAcessoMobileVisivel() {
+    return String(root.textContent || '').indexOf('Preparando acesso') >= 0;
+  }
+
+  function concluirAcessoMobile() {
+    var progresso = window.__AVANTALAB_MOBILE_PROGRESSO__ || {};
+    if (
+      Number(progresso.valor || 0) < 100 ||
+      !state.autenticado ||
+      !state.empresa ||
+      !state.paywallVerificado
+    ) {
+      return false;
+    }
+
+    state.pronto = true;
+    state.carregando = false;
+
+    try {
+      render();
+    } catch (erro) {
+      console.error('Não foi possível abrir a Gestão após concluir o acesso:', erro);
+      root.innerHTML = telaAvisoMobile(
+        'Acesso concluído',
+        'Seus dados foram carregados, mas a tela não conseguiu abrir. Toque abaixo para tentar novamente.'
+      );
+      return false;
+    }
+
+    return !telaPreparacaoAcessoMobileVisivel();
+  }
+
+  function garantirLiberacaoAcessoMobile() {
+    if (temporizadorLiberacaoAcessoMobile) {
+      window.clearTimeout(temporizadorLiberacaoAcessoMobile);
+    }
+
+    temporizadorLiberacaoAcessoMobile = window.setTimeout(function () {
+      temporizadorLiberacaoAcessoMobile = null;
+      if (!telaPreparacaoAcessoMobileVisivel()) return;
+      if (concluirAcessoMobile()) return;
+
+      var botaoContinuar = document.getElementById('mobileAccessContinueButton');
+      if (botaoContinuar) botaoContinuar.classList.remove('hidden');
+    }, 900);
+  }
+
+  window.__avantalabConcluirAcessoMobile = concluirAcessoMobile;
+
   function atualizarProgressoAcessoMobile(grupo, concluido, total, rotulo) {
     if (typeof window.__avantalabAtualizarProgressoMobile === 'function') {
       window.__avantalabAtualizarProgressoMobile(grupo, concluido, total, rotulo);
     }
+    var progresso = window.__AVANTALAB_MOBILE_PROGRESSO__ || {};
+    if (Number(progresso.valor || 0) >= 100) garantirLiberacaoAcessoMobile();
   }
 
   function sincronizarProgressoAcessoMobile() {
@@ -12927,7 +12990,7 @@
           return Promise.all(
             keys
               .filter(function (key) {
-                return key.indexOf('avantalab-mobile-') === 0 && key !== 'avantalab-mobile-v257';
+                return key.indexOf('avantalab-mobile-') === 0 && key !== 'avantalab-mobile-v265';
               })
               .map(function (key) {
                 return caches.delete(key);
@@ -12944,7 +13007,7 @@
     });
 
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/mobile-sw.js?v=248').then(function (registro) {
+      navigator.serviceWorker.register('/mobile-sw.js?v=249').then(function (registro) {
         if (registro && registro.update) registro.update();
       }).catch(function () {});
     }
