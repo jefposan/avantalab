@@ -1,8 +1,8 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.5.4.04 -->
+<!-- ava-version: 1.5.4.05 -->
 
-> Revisão 1.5.4.04: pesquisa de clientes sempre visível e comprovante condicionado à confirmação do servidor.
+> Revisão 1.5.4.05: históricos operacionais paginados integralmente para manter os saldos corretos acima de 1.000 registros.
 
 ## Escopo e navegação
 
@@ -74,6 +74,9 @@ dúvida dentro do Vendas sempre que a função existir ali.
   de liberar o comprovante, o Vendas relê no servidor os pedidos e pagamentos da
   cliente e atualiza o saldo; caches financeiros de versões anteriores são
   descartados automaticamente.
+- Clientes, pedidos e pagamentos são carregados em todas as páginas do servidor.
+  O saldo nunca deve ser calculado com apenas os primeiros 1.000 registros do
+  histórico da conta.
 - Se o lançamento ou a conferência financeira falhar, o formulário permanece
   aberto e nenhum comprovante é exibido ou gerado.
 - Os campos de data em pedidos e pagamentos apresentam rótulo centralizado e a

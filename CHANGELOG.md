@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.5.4.05 - 2026-07-16
+
+- Vendas Mobile: clientes, pedidos e pagamentos passam a ser carregados em todas as páginas do Supabase, sem perder registros quando o histórico ultrapassa 1.000 linhas.
+- Financeiro: corrige saldos falsos causados por histórico truncado quando pagamentos antigos ficavam fora da primeira página retornada pelo servidor.
+- Cache: a versão financeira local é renovada para descartar imediatamente os saldos calculados com respostas incompletas.
+
 ## 1.5.4.04 - 2026-07-16
 
 - Pagamentos: o comprovante só é exibido depois que o Supabase confirma o lançamento e a conferência financeira da cliente termina; qualquer falha mantém o formulário aberto sem gerar comprovante.

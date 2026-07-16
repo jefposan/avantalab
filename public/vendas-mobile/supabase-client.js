@@ -33,6 +33,20 @@
     return client;
   }
 
+  const TAMANHO_PAGINA_SUPABASE = 1000;
+
+  async function carregarTodasPaginas(criarConsulta) {
+    const registros = [];
+    for (let inicio = 0; ; inicio += TAMANHO_PAGINA_SUPABASE) {
+      const { data, error } = await criarConsulta().range(inicio, inicio + TAMANHO_PAGINA_SUPABASE - 1);
+      if (error) return { data: null, error };
+      const pagina = data || [];
+      registros.push(...pagina);
+      if (pagina.length < TAMANHO_PAGINA_SUPABASE) break;
+    }
+    return { data: registros, error: null };
+  }
+
   async function currentUser() {
     const { data, error } = await requireClient().auth.getUser();
     if (error) return null;
@@ -188,7 +202,11 @@
   }
 
   async function listarCatalogoVendas() {
-    const { data, error } = await requireClient().from('vendas_mobile_produtos').select('*').order('criado_em', { ascending: false });
+    const { data, error } = await carregarTodasPaginas(() => requireClient()
+      .from('vendas_mobile_produtos')
+      .select('*')
+      .order('criado_em', { ascending: false })
+      .order('id', { ascending: false }));
     if (error) throw error;
     const produtos = (data || []).map((produto) => ({
       ...produto,
@@ -259,9 +277,25 @@
     const vinculoAtivo = vinculosComerciais.find((vinculo) => vinculo.ativo) || null;
     const [catalogoRes, clientesRes, pedidosRes, pagamentosRes, conteudosRes, pastasRes, materiaisRes, integracaoRes] = await Promise.all([
       acompanharEtapaDados(listarCatalogoVendas(), 'Carregando produtos'),
-      acompanharEtapaDados(client.from('vendas_mobile_clientes').select('*').order('nome'), 'Carregando clientes'),
-      acompanharEtapaDados(client.from('vendas_mobile_pedidos').select('*, itens:vendas_mobile_pedido_itens(*)').order('criado_em', { ascending: false }), 'Carregando pedidos'),
-      acompanharEtapaDados(client.from('vendas_mobile_pagamentos').select('*').order('data_pagamento', { ascending: false }).order('criado_em', { ascending: false }), 'Carregando pagamentos'),
+      acompanharEtapaDados(carregarTodasPaginas(() => client
+        .from('vendas_mobile_clientes')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('nome')
+        .order('id')), 'Carregando clientes'),
+      acompanharEtapaDados(carregarTodasPaginas(() => client
+        .from('vendas_mobile_pedidos')
+        .select('*, itens:vendas_mobile_pedido_itens(*)')
+        .eq('user_id', user.id)
+        .order('criado_em', { ascending: false })
+        .order('id', { ascending: false })), 'Carregando pedidos'),
+      acompanharEtapaDados(carregarTodasPaginas(() => client
+        .from('vendas_mobile_pagamentos')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('data_pagamento', { ascending: false })
+        .order('criado_em', { ascending: false })
+        .order('id', { ascending: false })), 'Carregando pagamentos'),
       acompanharEtapaDados(client.from('vendas_mobile_conteudos').select('id, empresa_id, pagina, tipo, titulo, descricao, criado_em').eq('ativo', true).order('criado_em', { ascending: false }), 'Carregando novidades'),
       acompanharEtapaDados(client.from('vendas_mobile_divulgacao_pastas').select('id, empresa_id, pasta_pai_id, nome, descricao, ordem, criado_em').eq('ativo', true).order('ordem').order('criado_em', { ascending: false }), 'Carregando pastas de divulgação'),
       acompanharEtapaDados(client.from('vendas_mobile_divulgacao_materiais').select('id, pasta_id, titulo, tipo, arquivo_url, miniatura_url, miniatura_status, mime_type, tamanho_bytes, ordem, criado_em').eq('ativo', true).order('ordem').order('criado_em', { ascending: false }), 'Carregando materiais'),
@@ -303,19 +337,21 @@
     if (!user) throw new Error('Sessão expirada.');
     if (!clienteId) throw new Error('Cliente não informado.');
     const [pedidosRes, pagamentosRes] = await Promise.all([
-      requireClient()
+      carregarTodasPaginas(() => requireClient()
         .from('vendas_mobile_pedidos')
         .select('*, itens:vendas_mobile_pedido_itens(*)')
         .eq('user_id', user.id)
         .eq('cliente_id', clienteId)
-        .order('criado_em', { ascending: false }),
-      requireClient()
+        .order('criado_em', { ascending: false })
+        .order('id', { ascending: false })),
+      carregarTodasPaginas(() => requireClient()
         .from('vendas_mobile_pagamentos')
         .select('*')
         .eq('user_id', user.id)
         .eq('cliente_id', clienteId)
         .order('data_pagamento', { ascending: false })
-        .order('criado_em', { ascending: false }),
+        .order('criado_em', { ascending: false })
+        .order('id', { ascending: false })),
     ]);
     if (pedidosRes.error) throw pedidosRes.error;
     if (pagamentosRes.error) throw pagamentosRes.error;
