@@ -90,7 +90,7 @@ CLIENTES
 - Ao tocar em Pagamento no card da cliente, o foco ocorre no mesmo toque: o formulário permanece fixo, o campo Valor pago fica selecionado e o teclado numérico abre pronto para digitação.
 - Em novos pedidos e pagamentos, a lista de clientes mostra somente os nomes em fonte maior, embora a pesquisa também aceite telefone e e-mail.
 - Datas de pedidos, pagamentos e demais registros são exibidas apenas com dia, mês e ano, sem horário.
-- Ao fechar ou cancelar um novo pedido ou pagamento, o Vendas preserva a tela e a posição anteriores sem recarregar a página. Cards e confirmações usam fundo escuro reforçado para separar o conteúdo da tela atrás.
+- Ao fechar ou cancelar um novo pedido ou pagamento, o Vendas preserva a tela e a posição anteriores sem recarregar a página. Enquanto qualquer popup estiver aberto, o encaixe e o destaque automático dos cards de Clientes ficam pausados; após o fechamento, a tela não é movida. Cards e confirmações usam fundo escuro reforçado para separar o conteúdo da tela atrás.
 - Em Clientes sem compra, o intervalo selecionado lista todos os clientes sem pedidos, mantendo título e cabeçalhos visíveis durante a rolagem. Ao navegar entre telas, a posição anterior é preservada durante a sessão.
 - O aniversário cadastrado entra na agenda e pode aparecer no aviso do cabeçalho no dia correspondente.
 

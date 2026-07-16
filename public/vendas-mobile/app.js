@@ -100,6 +100,7 @@ let encaixeClientesEmAndamento = false;
 let interacaoRolagemClientesAtiva = false;
 let rolagemClientesInicioToque = 0;
 let suspenderEncaixeClientesAte = 0;
+let encaixeClientesPausadoPorPopup = false;
 let calendarioCentralizado = null;
 let botaoFeedbackAtivo = null;
 let atualizacaoPwaPendente = false;
@@ -1049,6 +1050,7 @@ function areaUtilVerticalClientes() {
 
 function atualizarDestaqueClientes() {
   if (
+    encaixeClientesPausadoPorPopup ||
     !window.matchMedia('(max-width: 850px)').matches ||
     window.matchMedia('(orientation: landscape) and (max-height: 560px)').matches
   ) {
@@ -1077,6 +1079,7 @@ function atualizarDestaqueClientes() {
 
 function agendarEncaixeCliente() {
   if (
+    encaixeClientesPausadoPorPopup ||
     encaixeClientesEmAndamento ||
     interacaoRolagemClientesAtiva ||
     state.aba !== 'clientes' ||
@@ -5708,6 +5711,10 @@ function valor(idCampo) {
 
 function sheet(html, backdropClass = '') {
   fecharSheet();
+  encaixeClientesPausadoPorPopup = true;
+  suspenderEncaixeClientesAte = Number.POSITIVE_INFINITY;
+  window.clearTimeout(temporizadorEncaixeClientes);
+  temporizadorEncaixeClientes = 0;
   rolagemAnteriorSheet = window.scrollY || document.documentElement.scrollTop || 0;
   const wrap = document.createElement('div');
   wrap.className = `sheet-backdrop ${backdropClass}`;
@@ -5737,6 +5744,7 @@ function fecharSheet(evento = null) {
   const sheetAtual = document.getElementById('sheetBackdrop');
   const estavaAberto = Boolean(sheetAtual);
   if (!estavaAberto) return;
+  encaixeClientesPausadoPorPopup = false;
   suspenderEncaixeClientesAte = Date.now() + 500;
   window.clearTimeout(temporizadorEncaixeClientes);
   temporizadorEncaixeClientes = 0;

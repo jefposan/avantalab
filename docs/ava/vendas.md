@@ -1,8 +1,8 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.5.4.26 -->
+<!-- ava-version: 1.5.4.27 -->
 
-> Revisão 1.5.4.26: disponibilidade do botão Gerar pedido no consignado.
+> Revisão 1.5.4.27: pausa do encaixe de Clientes durante popups.
 
 ## Escopo e navegação
 
@@ -90,6 +90,8 @@ dúvida dentro do Vendas sempre que a função existir ali.
   imediatamente as opções; toque no resultado para selecionar e preencher o preço.
 - Ao cancelar ou fechar um novo pedido ou pagamento, o Vendas mantém a página e
   a posição anteriores, sem reconstruir a tela nem acionar o encaixe dos clientes.
+- O encaixe automático e o destaque dos cards de Clientes ficam pausados durante
+  qualquer popup ou card aberto; só voltam após o fechamento, sem mover a tela.
 - Consignado não é venda nem recebimento até sua conversão em pedido. Ao abrir
   um consignado, o card mostra somente produtos e quantidades, com rolagem apenas
   nessa lista. Cabeçalho, total e ações permanecem fixos.

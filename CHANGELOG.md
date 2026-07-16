@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.5.4.27 - 2026-07-16
+
+- Vendas Mobile: o encaixe automático dos cards de Clientes é pausado integralmente enquanto qualquer popup estiver aberto e só é retomado após o fechamento.
+
 ## 1.5.4.26 - 2026-07-16
 
 - Vendas Mobile: o botão **Gerar pedido** permanece sempre visível no card de consignado ativo; ao tocar, abre a etapa separada de quantidades e confirmação.
