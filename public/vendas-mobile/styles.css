@@ -2290,8 +2290,8 @@ html.agenda-form-open, body.agenda-form-open { overflow: hidden; overscroll-beha
   .debt-details span { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
 
   .dashboard-page { padding-top: 204px; }
-  .produtos-page { padding-top: 176px; }
-  .produtos-page.is-searching { padding-top: 176px; }
+  .produtos-page { padding-top: 240px; }
+  .produtos-page.is-searching { padding-top: 294px; }
   .produtos-page .module-sticky-head { gap: 8px; padding-top: 10px; padding-bottom: 9px; }
   .produtos-page .module-toolbar { min-height: 42px; flex-wrap: nowrap; padding: 6px 8px; }
   .produtos-page .module-toolbar .search-box { min-width: 0; }
@@ -2303,4 +2303,12 @@ html.agenda-form-open, body.agenda-form-open { overflow: hidden; overscroll-beha
   .dashboard-page { padding-top: 168px; }
   .produtos-page,
   .produtos-page.is-searching { padding-top: 160px; }
+}
+
+/* No tema escuro, todo botão de ação azul ganha contorno claro suficiente
+   para permanecer separado dos cards escuros. */
+.dark-theme .primary:not(.danger),
+.dark-theme .client-details,
+.dark-theme .client-detail-tabs button.active {
+  border: 1px solid #7dd3fc;
 }

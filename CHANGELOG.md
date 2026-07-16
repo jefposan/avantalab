@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.5.4.33 - 2026-07-16
+
+- Gestão Mobile: a carga dos dados passa a indicar imediatamente que saiu da validação de sistemas, evitando a aparência de travamento em 60% enquanto assinatura e cadastro são verificados.
+- Vendas Mobile: cada abertura começa na sala de botões. No modo escuro, botões azuis escuros recebem borda clara para manter contraste, incluindo **Ver detalhes** e a aba **Resumo** da ficha de cliente.
+
 ## 1.5.4.32 - 2026-07-16
 
 - Gestão Web: Operador Completo passa a acessar o botão **Vendas Mobile** quando o módulo já estiver instalado no perfil. Instalar ou remover módulos continua restrito a Gestor Master e Administrador.

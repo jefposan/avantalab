@@ -1,8 +1,8 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.5.4.32 -->
+<!-- ava-version: 1.5.4.33 -->
 
-> Revisão 1.5.4.32: sem impacto operacional no Vendas Mobile.
+> Revisão 1.5.4.33: cada abertura começa na sala de botões; botões azuis escuros têm borda clara no modo escuro.
 
 ## Escopo e navegação
 

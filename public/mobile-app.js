@@ -4749,8 +4749,10 @@
     var exibeTelaPreparacao = !state.pronto || state.paywallPerfilVerificado !== state.empresa.id;
     // O resumo comparativo roda após a entrada e não integra a preparação
     // bloqueante; o percentual representa somente o que libera o perfil.
-    var totalEtapasDados = 12;
-    var etapasDadosConcluidas = 0;
+    var totalEtapasDados = 13;
+    // O início da carga é uma etapa real: as verificações foram disparadas.
+    // Isso impede que a barra pareça presa nos 60% enquanto elas respondem.
+    var etapasDadosConcluidas = 1;
     var avancarEtapaDados = function (rotulo) {
       etapasDadosConcluidas += 1;
       atualizarProgressoAcessoMobile('data', etapasDadosConcluidas, totalEtapasDados, rotulo);
@@ -4804,13 +4806,19 @@
     if (state.paywallPerfilVerificado !== state.empresa.id) {
       state.paywallVerificado = false;
     }
-    atualizarProgressoAcessoMobile('data', 0, totalEtapasDados, 'Verificando assinatura e cadastro');
+    atualizarProgressoAcessoMobile('data', etapasDadosConcluidas, totalEtapasDados, 'Verificando assinatura e cadastro');
     var verificacoesPerfil;
     try {
       verificacoesPerfil = await promessaMobileComPrazo(
         Promise.all([
-          verificarPaywallMobile(true),
-          carregarCadastroPerfilMobile(),
+          verificarPaywallMobile(true).then(function (resultado) {
+            avancarEtapaDados('Assinatura e acesso verificados');
+            return resultado;
+          }),
+          carregarCadastroPerfilMobile().then(function (resultado) {
+            avancarEtapaDados('Cadastro do perfil verificado');
+            return resultado;
+          }),
         ]),
         18000,
         'A verificação de assinatura e cadastro demorou mais que o esperado.'
@@ -4830,9 +4838,7 @@
       );
       return;
     }
-    avancarEtapaDados('Assinatura e acesso verificados');
     var cadastroPerfilOk = verificacoesPerfil[1];
-    avancarEtapaDados('Cadastro do perfil verificado');
     if (!cadastroPerfilOk && !state.paywallAtivo) {
       state.carregando = false;
       render();
@@ -13209,7 +13215,7 @@
           return Promise.all(
             keys
               .filter(function (key) {
-                return key.indexOf('avantalab-mobile-') === 0 && key !== 'avantalab-mobile-v271';
+                return key.indexOf('avantalab-mobile-') === 0 && key !== 'avantalab-mobile-v272';
               })
               .map(function (key) {
                 return caches.delete(key);
@@ -13226,7 +13232,7 @@
     });
 
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/mobile-sw.js?v=254').then(function (registro) {
+      navigator.serviceWorker.register('/mobile-sw.js?v=255').then(function (registro) {
         if (registro && registro.update) registro.update();
       }).catch(function () {});
     }

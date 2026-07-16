@@ -2199,6 +2199,12 @@ async function carregarSistemaVendasCompleto() {
 }
 
 async function inicializarApp() {
+  // A abertura sempre começa na sala de botões. A aba anterior vale somente
+  // durante a navegação da sessão e não é restaurada numa nova entrada.
+  state.aba = 'dashboard';
+  state.menuAberto = true;
+  state.busca = '';
+  buscaAplicada = '';
   if (!backendAtivo) {
     carregandoBackend = false;
     state.autenticado = true;

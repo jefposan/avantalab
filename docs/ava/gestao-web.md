@@ -1,8 +1,8 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.5.4.32 -->
+<!-- ava-version: 1.5.4.33 -->
 
-> Revisão 1.5.4.32: Operador Completo acessa Vendas Mobile no Web quando o módulo já está instalado; a instalação permanece administrativa.
+> Revisão 1.5.4.33: sem impacto operacional na Gestão Web.
 
 ## Escopo
 
