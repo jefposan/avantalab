@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.5.3.10 - 2026-07-16
+
+- Gestão Mobile: abertura mais ágil ao reaproveitar a validação inicial da integração com Vendas, conferir assinatura e cadastro em paralelo e evitar nova consulta de sessão.
+- Gestão Mobile: o resumo comparativo de todos os perfis passa a atualizar logo após a tela principal, sem atrasar o acesso aos lançamentos do perfil aberto.
+
 ## 1.5.3.09 - 2026-07-16
 
 - Vendas Mobile: reaproveita a validação de sessão e perfil na carga inicial, eliminando uma segunda consulta de acesso.

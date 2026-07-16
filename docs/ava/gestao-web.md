@@ -1,8 +1,8 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.5.3.09 -->
+<!-- ava-version: 1.5.3.10 -->
 
-> Revisão 1.5.3.09: sem impacto operacional na Gestão Web. Os ajustes desta versão são exclusivos do Vendas Mobile.
+> Revisão 1.5.3.10: sem impacto operacional na Gestão Web. Os ajustes desta versão são exclusivos da abertura da Gestão Mobile.
 
 ## Escopo
 

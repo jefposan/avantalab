@@ -1,8 +1,8 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.5.3.09 -->
+<!-- ava-version: 1.5.3.10 -->
 
-> Revisão 1.5.3.09: a abertura reaproveita a validação já concluída e libera a tela antes da sincronização automática do catálogo.
+> Revisão 1.5.3.10: sem impacto operacional no Vendas Mobile. Os ajustes desta versão são exclusivos da abertura da Gestão Mobile.
 
 ## Escopo e navegação
 

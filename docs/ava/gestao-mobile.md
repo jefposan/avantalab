@@ -1,8 +1,8 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.5.3.09 -->
+<!-- ava-version: 1.5.3.10 -->
 
-> Revisão 1.5.3.09: sem impacto operacional na Gestão Mobile. Os ajustes desta versão são exclusivos do Vendas Mobile.
+> Revisão 1.5.3.10: a Gestão Mobile abre os dados essenciais antes do resumo comparativo dos perfis, que continua sendo atualizado logo após a entrada.
 
 ## Escopo
 

@@ -13,6 +13,15 @@
   },
   "versoes": [
     {
+      "versao": "1.5.3.10",
+      "titulo": "Gestão Mobile mais ágil",
+      "data": "Julho/2026",
+      "itens": [
+        "A Gestão Mobile libera o perfil aberto antes do resumo comparativo dos demais perfis, que é atualizado logo em seguida.",
+        "A validação de assinatura, cadastro e integração foi otimizada para reduzir a espera de entrada."
+      ]
+    },
+    {
       "versao": "1.5.3.09",
       "titulo": "Abertura mais rápida no Vendas",
       "data": "Julho/2026",

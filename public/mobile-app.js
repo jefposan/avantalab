@@ -228,6 +228,7 @@
     dashboardValoresVisiveis: {},
     resumoPerfis: [],
     resumoPerfisCarregando: false,
+    resumoPerfisSolicitacao: 0,
     resumoPerfilDestaqueId: '',
     resumoPerfilExibidoId: '',
     meusPerfisExpandido: false,
@@ -240,6 +241,9 @@
     iniciarValoresOcultos: true,
     pontoModuloAtivo: false,
     vendasMobileModuloAtivo: false,
+    // Resultado da validação feita antes do seletor de sistemas. É consumido
+    // pela primeira carga do Gestão para não repetir as mesmas RPCs.
+    preparacaoSistemaVendas: null,
     seletorSistemaAberto: false,
     seletorSistemaInicialBloqueante: false,
     ativacaoVendasMobileAberta: false,
@@ -1882,6 +1886,7 @@
 
   async function prepararSistemaInicialAntesDosDadosMobile() {
     state.vendasMobileModuloAtivo = false;
+    state.preparacaoSistemaVendas = null;
     if (!state.empresa || !podeGerenciarUsuarios()) {
       atualizarProgressoAcessoMobile('access', 3, 3, 'Permissões confirmadas');
       return false;
@@ -1896,6 +1901,11 @@
       .maybeSingle();
     atualizarProgressoAcessoMobile('access', 1, 3, 'Verificando módulos do perfil');
     if (modulo.error || !modulo.data) {
+      state.preparacaoSistemaVendas = {
+        empresaId: state.empresa.id,
+        acessoVendasAtivo: false,
+        integracaoValidada: false,
+      };
       atualizarProgressoAcessoMobile('access', 3, 3, 'Módulos verificados');
       return false;
     }
@@ -1912,6 +1922,11 @@
       p_empresa_id: state.empresa.id,
     });
     state.vendasMobileModuloAtivo = !acessoAtivo.error && acessoAtivo.data === true;
+    state.preparacaoSistemaVendas = {
+      empresaId: state.empresa.id,
+      acessoVendasAtivo: state.vendasMobileModuloAtivo,
+      integracaoValidada: true,
+    };
     atualizarProgressoAcessoMobile('access', 3, 3, 'Acesso aos sistemas confirmado');
     return avaliarSistemaInicialMobile();
   }
@@ -2061,6 +2076,7 @@
     window._avaProfilePillHidden = false;
     state.pontoModuloAtivo = false;
     state.vendasMobileModuloAtivo = false;
+    state.preparacaoSistemaVendas = null;
     state.pontoResumo = [];
     state.pontoFuncionariosHoje = 0;
     state.pontoResumoCarregando = false;
@@ -4208,8 +4224,10 @@
     return resposta.error ? null : resposta.data;
   }
 
-  async function carregarEmpresas(usuarioId) {
-    var usuarioAtual = await consultaMobileComRetry(function () { return db.auth.getUser(); });
+  async function carregarEmpresas(usuarioId, usuarioAutenticado) {
+    var usuarioAtual = usuarioAutenticado
+      ? { data: { user: usuarioAutenticado } }
+      : await consultaMobileComRetry(function () { return db.auth.getUser(); });
     atualizarProgressoAcessoMobile('profiles', 1, 5, 'Identificando seus perfis');
     var emailUsuario = (usuarioAtual.data.user && usuarioAtual.data.user.email || '').toLowerCase();
 
@@ -4516,12 +4534,14 @@
   }
 
   async function carregarResumoPerfisMobile() {
+    var solicitacao = ++state.resumoPerfisSolicitacao;
     var perfis = state.empresas || [];
     var ids = perfis.map(function (empresa) { return empresa.id; }).filter(Boolean);
     if (!ids.length) {
+      if (solicitacao !== state.resumoPerfisSolicitacao) return false;
       state.resumoPerfis = [];
       state.resumoPerfisCarregando = false;
-      return;
+      return true;
     }
 
     state.resumoPerfisCarregando = true;
@@ -4534,9 +4554,10 @@
 
     if (respostas[0].error || respostas[1].error) {
       console.error('Erro ao carregar resumo dos perfis mobile:', respostas[0].error || respostas[1].error);
+      if (solicitacao !== state.resumoPerfisSolicitacao) return false;
       state.resumoPerfis = [];
       state.resumoPerfisCarregando = false;
-      return;
+      return false;
     }
 
     var receitas = {};
@@ -4549,6 +4570,7 @@
       despesas[item.empresa_id] = (despesas[item.empresa_id] || 0) + Number(item.valor || 0);
     });
 
+    if (solicitacao !== state.resumoPerfisSolicitacao) return false;
     state.resumoPerfis = perfis.map(function (perfil) {
       var totalReceitas = Number(receitas[perfil.id] || 0);
       var totalDespesas = Number(despesas[perfil.id] || 0);
@@ -4562,6 +4584,7 @@
       };
     }).sort(function (a, b) { return b.resultado - a.resultado; });
     state.resumoPerfisCarregando = false;
+    return true;
   }
 
   async function buscarLancamentosAnoMobile(empresaId, ano) {
@@ -4596,7 +4619,9 @@
   async function carregarDados() {
     if (!state.empresa) return;
     var exibeTelaPreparacao = !state.pronto || state.paywallPerfilVerificado !== state.empresa.id;
-    var totalEtapasDados = 14;
+    // O resumo comparativo roda após a entrada e não integra a preparação
+    // bloqueante; o percentual representa somente o que libera o perfil.
+    var totalEtapasDados = 13;
     var etapasDadosConcluidas = 0;
     var avancarEtapaDados = function (rotulo) {
       etapasDadosConcluidas += 1;
@@ -4647,9 +4672,12 @@
     if (state.paywallPerfilVerificado !== state.empresa.id) {
       state.paywallVerificado = false;
     }
-    await verificarPaywallMobile(true);
+    var verificacoesPerfil = await Promise.all([
+      verificarPaywallMobile(true),
+      carregarCadastroPerfilMobile(),
+    ]);
     avancarEtapaDados('Assinatura e acesso verificados');
-    var cadastroPerfilOk = await carregarCadastroPerfilMobile();
+    var cadastroPerfilOk = verificacoesPerfil[1];
     avancarEtapaDados('Cadastro do perfil verificado');
     if (!cadastroPerfilOk && !state.paywallAtivo) {
       state.carregando = false;
@@ -4666,11 +4694,18 @@
 
     var empresaId = state.empresa.id;
     var ano = Number(state.ano);
+    var preparacaoSistemaVendas = state.preparacaoSistemaVendas;
+    var podeReaproveitarPreparacaoVendas = !!(
+      preparacaoSistemaVendas &&
+      preparacaoSistemaVendas.empresaId === empresaId
+    );
+    // O contexto só é válido para a primeira carga do perfil já validado.
+    state.preparacaoSistemaVendas = null;
 
     // Instalar o módulo já autoriza Gestor Master e Administrador a alternar
     // entre os sistemas. A RPC valida o papel no servidor e mantém operadores
     // fora deste fluxo.
-    if (podeGerenciarUsuarios()) {
+    if (podeGerenciarUsuarios() && !podeReaproveitarPreparacaoVendas) {
       var acessoGestorVendas = await db.rpc('garantir_acessos_gestor_vendas_mobile_rpc');
       if (acessoGestorVendas.error) {
         console.warn('Não foi possível preparar o acesso integrado ao Vendas Mobile:', acessoGestorVendas.error);
@@ -4686,7 +4721,12 @@
       acompanharEtapaDados(db.from('configuracoes').select('duplicados_ativo').eq('empresa_id', empresaId).maybeSingle(), 'Carregando preferências'),
       acompanharEtapaDados(db.from('empresa_modulos').select('modulo_id').eq('empresa_id', empresaId).eq('ativo', true), 'Carregando módulos'),
       acompanharEtapaDados(db.from('caixinhas_movimentos').select('*').eq('empresa_id', empresaId).order('data_movimento', { ascending: false }).order('criado_em', { ascending: false }), 'Carregando caixinhas'),
-      acompanharEtapaDados(db.rpc('modulo_vendas_mobile_ativo_rpc', { p_empresa_id: empresaId }), 'Confirmando acesso ao Vendas'),
+      acompanharEtapaDados(
+        podeReaproveitarPreparacaoVendas
+          ? Promise.resolve({ data: preparacaoSistemaVendas.acessoVendasAtivo, error: null })
+          : db.rpc('modulo_vendas_mobile_ativo_rpc', { p_empresa_id: empresaId }),
+        'Confirmando acesso ao Vendas'
+      ),
     ]);
 
     state.lancamentos = (resultados[0] || []).filter(function(item) {
@@ -4761,8 +4801,10 @@
     // Materializa as despesas fixas do mes corrente (idempotente).
     await garantirFixasDoMes(empresaId, ano);
     avancarEtapaDados('Atualizando despesas fixas');
-    await carregarResumoPerfisMobile();
-    avancarEtapaDados('Atualizando resumo dos perfis');
+    // O resumo compara todos os perfis do usuário e pode ser bem maior que
+    // os dados do perfil aberto. A tela principal é liberada primeiro; o
+    // card recebe o resumo logo em seguida, sem bloquear o acesso.
+    state.resumoPerfisCarregando = true;
     avancarEtapaDados('Acesso pronto');
     if (exibeTelaPreparacao) {
       await new Promise(function (resolver) { window.setTimeout(resolver, 120); });
@@ -4770,6 +4812,20 @@
 
     state.carregando = false;
     render();
+
+    var empresaIdResumo = empresaId;
+    var anoResumo = String(state.ano);
+    var mesResumo = state.mes;
+    window.setTimeout(function () {
+      carregarResumoPerfisMobile().then(function () {
+        if (
+          state.empresa && state.empresa.id === empresaIdResumo &&
+          String(state.ano) === anoResumo && state.mes === mesResumo
+        ) render();
+      }).catch(function (erro) {
+        console.warn('Não foi possível atualizar o resumo dos perfis em segundo plano:', erro);
+      });
+    }, 80);
 
     // Sincroniza a agenda com o servidor (em segundo plano) + tempo real
     sincronizarAgendaSupabase();
@@ -4839,7 +4895,7 @@
     registrarPreferenciaSessaoMobile(state.manterConectado, false);
     state.usuario = resposta.data.user;
     state.autenticado = true;
-    var perfisCarregados = await carregarEmpresas(resposta.data.user.id);
+    var perfisCarregados = await carregarEmpresas(resposta.data.user.id, resposta.data.user);
 
     if (perfisCarregados === false) {
       state.carregando = false;
@@ -6868,7 +6924,7 @@
         state.carregando = false;
         state.empresaAcao = '';
         setErro(respostaSenha.mensagem || 'Perfil e login foram salvos, mas a senha nao foi alterada.');
-        await carregarEmpresas(state.usuario.id);
+        await carregarEmpresas(state.usuario.id, state.usuario);
         render();
         return;
       }
@@ -12887,7 +12943,7 @@
     });
 
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/mobile-sw.js?v=242').then(function (registro) {
+      navigator.serviceWorker.register('/mobile-sw.js?v=243').then(function (registro) {
         if (registro && registro.update) registro.update();
       }).catch(function () {});
     }
@@ -12951,7 +13007,7 @@
         }
         state.usuario = sessao.data.session.user;
         state.autenticado = true;
-        await carregarEmpresas(state.usuario.id);
+        await carregarEmpresas(state.usuario.id, state.usuario);
         if (!state.empresa) {
           var perfilCriadoNaInicializacao = await criarPerfilInicialDoCadastroMobile(mdSessao);
           if (!perfilCriadoNaInicializacao) {
