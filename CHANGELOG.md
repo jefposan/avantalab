@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.5.2 - 2026-07-16
+
+- Gestão e Vendas Mobile: consolida o resultado do Vendas em uma única entrada de receita por perfil financeiro, em vez de uma entrada para cada dia.
+- Gestão e Vendas Mobile: o total consolidado é recalculado ao acessar o perfil ou o Vendas e recebe a data atual, refletindo a base escolhida entre vendas e recebimentos.
+
 ## 1.5.1.03 - 2026-07-15
 
 - Migração Tridium: o importador passa a respeitar o perfil financeiro já escolhido pelo usuário, direcionando pedidos e recebimentos históricos à Gestão correta.

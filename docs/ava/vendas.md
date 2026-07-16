@@ -1,8 +1,8 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.5.1.03 -->
+<!-- ava-version: 1.5.2 -->
 
-> Revisão 1.5.1.03: o destino financeiro definido em Configurações é preservado em uma migração histórica; não há novo fluxo de uso para o vendedor.
+> Revisão 1.5.2: a integração com Gestão consolida o resultado do Vendas em uma única receita atualizada no acesso, conforme a base configurada (vendas ou recebimentos).
 
 ## Escopo e navegação
 

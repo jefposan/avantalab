@@ -1634,6 +1634,9 @@ useEffect(() => {
   const carregarDadosFinanceiros = async () => {
     const ano = Number(anoSelecionado);
 
+    // Mantém a receita consolidada do Vendas Mobile atualizada a cada acesso
+    // ao perfil, sem bloquear o restante do carregamento caso o módulo não exista.
+    await supabase.rpc('atualizar_receita_vendas_mobile_gestao_rpc', { p_empresa_id: empresaId });
     await garantirFixasDoMesAtual(empresaId);
     const lancamentosBanco = await buscarLancamentos(empresaId, ano);
     const caixinhaBanco = await buscarCaixinhaMovimentos(empresaId, ano);

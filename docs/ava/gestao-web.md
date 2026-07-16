@@ -1,8 +1,8 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.5.1.03 -->
+<!-- ava-version: 1.5.2 -->
 
-> Revisão 1.5.1.03: sem novo caminho operacional; a migração histórica do Vendas respeita o perfil financeiro já definido para refletir resultados na Gestão Web correta.
+> Revisão 1.5.2: o resultado do Vendas Mobile aparece como uma única receita consolidada no dia do acesso, atualizada pelo total da base financeira configurada.
 
 ## Escopo
 

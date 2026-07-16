@@ -13,6 +13,15 @@
   },
   "versoes": [
     {
+      "versao": "1.5.2",
+      "titulo": "Resultado do Vendas mais simples na Gestão",
+      "data": "Julho/2026",
+      "itens": [
+        "O Vendas Mobile agora aparece como uma única receita consolidada no perfil financeiro escolhido.",
+        "Ao acessar a Gestão ou o Vendas, o valor é recalculado e a entrada é atualizada para o dia atual."
+      ]
+    },
+    {
       "versao": "1.5.0.12",
       "titulo": "Gestão e Vendas Mobile conectados",
       "data": "Julho/2026",
