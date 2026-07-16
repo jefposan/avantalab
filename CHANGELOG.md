@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.5.2.01 - 2026-07-16
+
+- Gestão e Vendas Mobile: corrige a consolidação do Vendas para manter uma receita por mês, com o total correspondente a cada competência, em vez de concentrar o ano no mês atual.
+- Gestão e Vendas Mobile: ao atualizar, cada competência é recalculada e registrada no dia corrente daquele mês.
+
 ## 1.5.2 - 2026-07-16
 
 - Gestão e Vendas Mobile: consolida o resultado do Vendas em uma única entrada de receita por perfil financeiro, em vez de uma entrada para cada dia.

@@ -1,8 +1,8 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.5.2 -->
+<!-- ava-version: 1.5.2.01 -->
 
-> Revisão 1.5.2: o resultado do Vendas Mobile aparece como uma única receita consolidada no dia do acesso, atualizada pelo total da base financeira configurada.
+> Revisão 1.5.2.01: o resultado do Vendas Mobile aparece como uma receita consolidada por mês, atualizada no dia corrente de cada competência pelo total da base financeira configurada.
 
 ## Escopo
 
