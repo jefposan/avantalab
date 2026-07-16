@@ -70,7 +70,8 @@ export async function POST(request: Request) {
     const corpo = await request.json();
     const acessoId = String(corpo.acessoId || '').trim();
     const nome = String(corpo.nome || '').trim();
-    const loginOuEmail = String(corpo.email || '').trim().toLowerCase();
+    const loginEnviado = corpo.login === undefined ? '' : String(corpo.login || '').trim().toLowerCase();
+    const emailEnviado = corpo.login === undefined ? String(corpo.email || '').trim().toLowerCase() : String(corpo.email || '').trim().toLowerCase();
     const perfil = String(corpo.perfil || '') as PerfilUsuario;
     const novaSenha = String(corpo.novaSenha || '').trim();
 
@@ -82,8 +83,8 @@ export async function POST(request: Request) {
       return respostaErro('Informe o nome do usuario.');
     }
 
-    if (!loginOuEmail) {
-      return respostaErro('Informe o login/email deste usuario.');
+    if (!loginEnviado && corpo.login !== undefined) {
+      return respostaErro('Informe um login valido.');
     }
 
     if (!perfisValidos.includes(perfil)) {
@@ -183,19 +184,26 @@ export async function POST(request: Request) {
       perfil,
     };
 
-    if (loginOuEmail.includes('@')) {
+    if (corpo.login === undefined && emailEnviado.includes('@')) {
       const { data: conflito } = await supabaseAdmin.auth.admin.listUsers({ page: 1, perPage: 1000 });
-      const emailEmUso = (conflito?.users || []).some((item) => item.id !== usuarioAlvo.user_id && String(item.email || '').toLowerCase() === loginOuEmail);
+      const emailEmUso = (conflito?.users || []).some((item) => item.id !== usuarioAlvo.user_id && String(item.email || '').toLowerCase() === emailEnviado);
       if (emailEmUso) return respostaErro('Este e-mail ja esta em uso por outra conta.');
-      atualizacao.email = loginOuEmail;
+      atualizacao.email = emailEnviado;
     } else {
-      const login = normalizarLogin(loginOuEmail);
+      const login = normalizarLogin(corpo.login === undefined ? emailEnviado : loginEnviado);
 
       if (!login) {
         return respostaErro('Informe um login valido.');
       }
 
       atualizacao.login = login;
+    }
+
+    if (corpo.login !== undefined && emailEnviado) {
+      if (!emailEnviado.includes('@')) return respostaErro('Informe um e-mail valido.');
+      const { data: conflito } = await supabaseAdmin.auth.admin.listUsers({ page: 1, perPage: 1000 });
+      if ((conflito?.users || []).some((item) => item.id !== usuarioAlvo.user_id && String(item.email || '').toLowerCase() === emailEnviado)) return respostaErro('Este e-mail ja esta em uso por outra conta.');
+      atualizacao.email = emailEnviado;
     }
 
     const { data: usuarioAtualizado, error: erroAtualizar } = await supabaseAdmin
@@ -228,13 +236,13 @@ export async function POST(request: Request) {
       );
     }
 
-    if (loginOuEmail.includes('@') && usuarioAlvo.user_id) {
+    if (emailEnviado && emailEnviado.includes('@') && usuarioAlvo.user_id && emailEnviado !== String(usuarioAlvo.email || '').toLowerCase()) {
       const { error: erroAuth } = await supabaseAdmin.auth.admin.updateUserById(usuarioAlvo.user_id, {
-        email: loginOuEmail,
+        email: emailEnviado,
         email_confirm: true,
       });
       if (erroAuth) return respostaErro(erroAuth.message || 'Nao foi possivel atualizar o e-mail da conta.', 500);
-      const { error: erroVinculos } = await supabaseAdmin.from('usuarios_empresa').update({ email: loginOuEmail }).eq('user_id', usuarioAlvo.user_id);
+      const { error: erroVinculos } = await supabaseAdmin.from('usuarios_empresa').update({ email: emailEnviado }).eq('user_id', usuarioAlvo.user_id);
       if (erroVinculos) return respostaErro('O e-mail da conta foi atualizado, mas alguns vinculos nao puderam ser sincronizados.', 500);
     }
 

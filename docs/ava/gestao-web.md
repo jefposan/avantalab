@@ -1,8 +1,8 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.5.3.13 -->
+<!-- ava-version: 1.5.3.14 -->
 
-> Revisão 1.5.3.13: Usuários permite alterar e-mail e senha conforme a hierarquia de permissões; login e e-mail passam a acessar a mesma conta.
+> Revisão 1.5.3.14: edição de Usuários separa nome, login e e-mail e exige confirmação da nova senha.
 
 ## Escopo
 

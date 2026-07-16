@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.5.3.14 - 2026-07-16
+
+- Usuários: formulário de edição separa Nome, Login e E-mail e exige confirmação ao alterar senha.
+
 ## 1.5.3.13 - 2026-07-16
 
 - Usuários: o e-mail informado na edição passa a atualizar a conta de acesso e todos os vínculos, mantendo o login e a mesma senha. A senha também pode ser alterada no mesmo formulário.

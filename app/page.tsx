@@ -348,8 +348,10 @@ export default function AppGestao() {
     vinculandoUsuarioExistente, setVinculandoUsuarioExistente,
     usuarioEditandoId, setUsuarioEditandoId,
     editUsuarioNome, setEditUsuarioNome,
+    editUsuarioLogin, setEditUsuarioLogin,
     editUsuarioEmail, setEditUsuarioEmail,
     editUsuarioNovaSenha, setEditUsuarioNovaSenha,
+    editUsuarioConfirmarSenha, setEditUsuarioConfirmarSenha,
     mostrarEditUsuarioNovaSenha, setMostrarEditUsuarioNovaSenha,
     editUsuarioPerfil, setEditUsuarioPerfil,
     modalUsuarios, setModalUsuarios,
@@ -6197,12 +6199,8 @@ const usuarioOriginalEditando = usuariosEmpresa.find(
 
 const dadosUsuarioAlterados = usuarioOriginalEditando
   ? editUsuarioNome.trim() !== (usuarioOriginalEditando.nome || '').trim() ||
-    editUsuarioEmail.trim().toLowerCase() !==
-      (
-        usuarioOriginalEditando.login ||
-        usuarioOriginalEditando.email ||
-        ''
-      ).toLowerCase() ||
+    editUsuarioLogin.trim().toLowerCase() !== (usuarioOriginalEditando.login || '').toLowerCase() ||
+    editUsuarioEmail.trim().toLowerCase() !== (String(usuarioOriginalEditando.email || '').includes('@usuarios.avantalab.local') ? '' : usuarioOriginalEditando.email || '').toLowerCase() ||
     editUsuarioPerfil !== usuarioOriginalEditando.perfil
   : false;
 
@@ -8550,15 +8548,17 @@ if (validacaoTelefoneObrigatoria) {
 
         <input
           type="text"
-          value={editUsuarioEmail}
-          onChange={(e) => setEditUsuarioEmail(e.target.value)}
-          placeholder="Login ou email"
+          value={editUsuarioLogin}
+          onChange={(e) => setEditUsuarioLogin(e.target.value)}
+          placeholder="Login"
           className={`w-full rounded-xl border px-3 py-2.5 text-sm font-semibold outline-none ${
             darkMode
               ? 'bg-slate-900 border-slate-600 text-white'
               : 'bg-white border-slate-300 text-slate-700'
           }`}
         />
+
+        <input type="email" value={editUsuarioEmail} onChange={(e) => setEditUsuarioEmail(e.target.value)} placeholder="E-mail (opcional)" className={`w-full rounded-xl border px-3 py-2.5 text-sm font-semibold outline-none ${darkMode ? 'bg-slate-900 border-slate-600 text-white' : 'bg-white border-slate-300 text-slate-700'}`} />
 
         <select
           value={editUsuarioPerfil}
@@ -8608,6 +8608,7 @@ if (validacaoTelefoneObrigatoria) {
                     : 'bg-white border-slate-300 text-slate-700 placeholder:text-slate-400'
                 }`}
               />
+              <input type={mostrarEditUsuarioNovaSenha ? 'text' : 'password'} value={editUsuarioConfirmarSenha} onChange={(e) => setEditUsuarioConfirmarSenha(e.target.value)} placeholder="Confirmar nova senha" className={`mt-2 w-full rounded-xl border px-3 py-2.5 text-sm font-semibold outline-none ${darkMode ? 'bg-slate-800 border-slate-600 text-white' : 'bg-white border-slate-300 text-slate-700'}`} />
 
               <button
   type="button"

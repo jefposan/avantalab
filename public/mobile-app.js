@@ -4128,14 +4128,17 @@
 
     var nome = campo('edit-usuario-nome').trim();
     var login = campo('edit-usuario-login').trim().toLowerCase();
+    var email = campo('edit-usuario-email').trim().toLowerCase();
     var perfil = campo('edit-usuario-perfil');
     var senha = campo('edit-usuario-senha').trim();
+    var confirmarSenha = campo('edit-usuario-confirmar-senha').trim();
 
     if (!nome || !login || !perfil) {
-      setErro('Informe nome, login/email e perfil.');
+      setErro('Informe nome, login e perfil.');
       return;
     }
     if (senha && senha.length < 8) { setErro('A nova senha deve ter pelo menos 8 caracteres.'); return; }
+    if (senha !== confirmarSenha) { setErro('A confirmação da nova senha não confere.'); return; }
 
     state.carregando = true;
     state.erro = '';
@@ -4157,7 +4160,8 @@
       body: JSON.stringify({
         acessoId: state.usuarioEditandoId,
         nome: nome,
-        email: login,
+        login: login,
+        email: email,
         perfil: perfil,
         novaSenha: senha,
       }),
@@ -9961,9 +9965,11 @@
       '<div class="grid gap-2 rounded-2xl bg-cyan-50 p-3">' +
         '<div class="flex items-center justify-between gap-2"><p class="text-[10px] font-black uppercase tracking-wide text-cyan-900">Editar usuario</p><button id="cancelar-edicao-usuario" type="button" class="text-[10px] font-black text-slate-500">Cancelar</button></div>' +
         '<input id="edit-usuario-nome" value="' + escapeHtml(usuario.nome || '') + '" placeholder="Nome" style="font-size:16px" class="h-10 w-full min-w-0 rounded-lg border border-cyan-100 bg-white px-3 text-base font-bold outline-none" />' +
-        '<input id="edit-usuario-login" value="' + escapeHtml(usuario.login || usuario.email || '') + '" placeholder="Login ou email" style="font-size:16px" class="h-10 w-full min-w-0 rounded-lg border border-cyan-100 bg-white px-3 text-base font-bold outline-none" />' +
+        '<input id="edit-usuario-login" value="' + escapeHtml(usuario.login || loginVisivelUsuario(usuario)) + '" placeholder="Login" style="font-size:16px" class="h-10 w-full min-w-0 rounded-lg border border-cyan-100 bg-white px-3 text-base font-bold outline-none" />' +
+        '<input id="edit-usuario-email" type="email" value="' + escapeHtml(emailRealUsuario(usuario)) + '" placeholder="E-mail (opcional)" style="font-size:16px" class="h-10 w-full min-w-0 rounded-lg border border-cyan-100 bg-white px-3 text-base font-bold outline-none" />' +
         '<select id="edit-usuario-perfil" style="font-size:16px" class="h-10 w-full min-w-0 rounded-lg border border-cyan-100 bg-white px-3 text-base font-bold outline-none">' + opcoesPerfilHtml(usuario.perfil || 'operador_simples', usuario.perfil === 'gestor_master' || (state.empresa && state.empresa.perfil === 'gestor_master')) + '</select>' +
         '<input id="edit-usuario-senha" type="password" placeholder="Nova senha (opcional)" style="font-size:16px" class="h-10 w-full min-w-0 rounded-lg border border-cyan-100 bg-white px-3 text-base font-bold outline-none" />' +
+        '<input id="edit-usuario-confirmar-senha" type="password" placeholder="Confirmar nova senha" style="font-size:16px" class="h-10 w-full min-w-0 rounded-lg border border-cyan-100 bg-white px-3 text-base font-bold outline-none" />' +
         '<button id="salvar-usuario-mobile" type="button" class="h-10 rounded-xl bg-cyan-600 px-4 text-xs font-black uppercase tracking-wide text-white">' + (state.carregando ? 'Salvando...' : 'Salvar usuario') + '</button>' +
       '</div>'
     );

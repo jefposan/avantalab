@@ -1349,12 +1349,14 @@ export async function atualizarEmpresa({
 export async function atualizarUsuarioEmpresa({
   acessoId,
   nome,
+  login,
   email,
   perfil,
   novaSenha,
 }: {
   acessoId: string;
   nome: string;
+  login?: string;
   email: string;
   perfil: 'gestor_master' | 'administrador' | 'operador_completo' | 'operador_simples';
   novaSenha?: string;
@@ -1380,6 +1382,7 @@ export async function atualizarUsuarioEmpresa({
     body: JSON.stringify({
       acessoId,
       nome: nome.trim(),
+      login: login?.trim().toLowerCase(),
       email: email.trim().toLowerCase(),
       perfil,
       novaSenha: novaSenha?.trim() || undefined,

@@ -88,8 +88,10 @@ export function useEmpresas(deps: UseEmpresasDeps) {
   const [vinculandoUsuarioExistente, setVinculandoUsuarioExistente] = useState(false);
   const [usuarioEditandoId, setUsuarioEditandoId] = useState<string | null>(null);
   const [editUsuarioNome, setEditUsuarioNome] = useState('');
+  const [editUsuarioLogin, setEditUsuarioLogin] = useState('');
   const [editUsuarioEmail, setEditUsuarioEmail] = useState('');
   const [editUsuarioNovaSenha, setEditUsuarioNovaSenha] = useState('');
+  const [editUsuarioConfirmarSenha, setEditUsuarioConfirmarSenha] = useState('');
   const [mostrarEditUsuarioNovaSenha, setMostrarEditUsuarioNovaSenha] = useState(false);
   const [editUsuarioPerfil, setEditUsuarioPerfil] = useState<
     'gestor_master' | 'administrador' | 'operador_completo' | 'operador_simples'
@@ -296,8 +298,10 @@ export function useEmpresas(deps: UseEmpresasDeps) {
 
     setUsuarioEditandoId(usuario.id);
     setEditUsuarioNome(usuario.nome || '');
-    setEditUsuarioEmail(usuario.login || usuario.email || '');
+    setEditUsuarioLogin(usuario.login || (String(usuario.email || '').split('+')[0] || ''));
+    setEditUsuarioEmail(String(usuario.email || '').includes('@usuarios.avantalab.local') ? '' : (usuario.email || ''));
     setEditUsuarioNovaSenha('');
+    setEditUsuarioConfirmarSenha('');
     setMostrarEditUsuarioNovaSenha(false);
     setEditUsuarioPerfil(
       usuario.perfil as
@@ -311,9 +315,11 @@ export function useEmpresas(deps: UseEmpresasDeps) {
   const cancelarEdicaoUsuario = () => {
     setUsuarioEditandoId(null);
     setEditUsuarioNome('');
+    setEditUsuarioLogin('');
     setEditUsuarioEmail('');
     setEditUsuarioPerfil('operador_simples');
     setEditUsuarioNovaSenha('');
+    setEditUsuarioConfirmarSenha('');
     setMostrarEditUsuarioNovaSenha(false);
   };
 
@@ -325,9 +331,11 @@ export function useEmpresas(deps: UseEmpresasDeps) {
 
     const nomeLimpo = editUsuarioNome.trim();
     const emailLimpo = editUsuarioEmail.trim().toLowerCase();
+    const loginLimpo = editUsuarioLogin.trim().toLowerCase();
 
     if (!nomeLimpo) { abrirAviso('Campo obrigatório', 'Informe o nome do usuário.'); return; }
-    if (!emailLimpo) { abrirAviso('Campo obrigatório', 'Informe o login/email deste usuário.'); return; }
+    if (!loginLimpo) { abrirAviso('Campo obrigatório', 'Informe o login deste usuário.'); return; }
+    if (editUsuarioNovaSenha.trim() !== editUsuarioConfirmarSenha.trim()) { abrirAviso('Senha não confere', 'Repita a nova senha exatamente igual.'); return; }
 
     const nomeOriginal = (usuarioOriginal.nome || '').trim();
     const loginOriginal = (usuarioOriginal.login || usuarioOriginal.email || '').toLowerCase();
@@ -335,7 +343,8 @@ export function useEmpresas(deps: UseEmpresasDeps) {
 
     const houveAlteracao =
       nomeLimpo !== nomeOriginal ||
-      emailLimpo !== loginOriginal ||
+      loginLimpo !== loginOriginal ||
+      emailLimpo !== String(usuarioOriginal.email || '').toLowerCase() ||
       editUsuarioPerfil !== perfilOriginal ||
       Boolean(editUsuarioNovaSenha.trim());
 
@@ -347,6 +356,7 @@ export function useEmpresas(deps: UseEmpresasDeps) {
     const resultado = await atualizarUsuarioEmpresa({
       acessoId: usuarioEditandoId,
       nome: nomeLimpo,
+      login: loginLimpo,
       email: emailLimpo,
       perfil: editUsuarioPerfil,
       novaSenha: editUsuarioNovaSenha,
@@ -356,6 +366,7 @@ export function useEmpresas(deps: UseEmpresasDeps) {
 
     await carregarUsuariosEmpresa();
     setEditUsuarioNovaSenha('');
+    setEditUsuarioConfirmarSenha('');
     setMostrarEditUsuarioNovaSenha(false);
     abrirAviso('Usuário atualizado', 'Os dados do usuário foram salvos com sucesso.');
   };
@@ -663,8 +674,10 @@ export function useEmpresas(deps: UseEmpresasDeps) {
     vinculandoUsuarioExistente, setVinculandoUsuarioExistente,
     usuarioEditandoId, setUsuarioEditandoId,
     editUsuarioNome, setEditUsuarioNome,
+    editUsuarioLogin, setEditUsuarioLogin,
     editUsuarioEmail, setEditUsuarioEmail,
     editUsuarioNovaSenha, setEditUsuarioNovaSenha,
+    editUsuarioConfirmarSenha, setEditUsuarioConfirmarSenha,
     mostrarEditUsuarioNovaSenha, setMostrarEditUsuarioNovaSenha,
     editUsuarioPerfil, setEditUsuarioPerfil,
     modalUsuarios, setModalUsuarios,
