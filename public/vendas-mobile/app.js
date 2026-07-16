@@ -6,7 +6,7 @@ const ENTRADA_VENDAS_PELA_GESTAO_KEY = 'avantalab_vendas_entrada_gestao';
 const CACHE_VENDAS_DB = 'avantalab.vendas_mobile.cache';
 const CACHE_VENDAS_STORE = 'sessoes';
 const CACHE_VENDAS_PENDENCIAS_STORE = 'pendencias';
-const CACHE_VENDAS_VERSAO = 3;
+const CACHE_VENDAS_VERSAO = 4;
 const CACHE_VENDAS_VALIDADE_MS = 1000 * 60 * 60 * 24 * 7;
 const HOJE = new Date();
 const INICIO_MES = new Date(HOJE.getFullYear(), HOJE.getMonth(), 1);
@@ -112,6 +112,7 @@ let limiteClientesPagamentos = 10;
 let pedidoClienteRascunho = null;
 let conversaoConsignadoRascunho = null;
 let pagamentoClienteRascunho = null;
+let pagamentoClienteSalvando = false;
 let clientePersistenciaIdAtual = '';
 let ordemAlfabetica = 'asc';
 let feedbackVendasEnviando = false;
@@ -1936,6 +1937,20 @@ function atualizarRegistroPersistido(lista, salvo) {
     : [salvo, ...atual];
 }
 
+async function reconciliarFinanceiroCliente(clienteId) {
+  if (!backendAtivo || !clienteId) return;
+  const dados = await window.VendasDb.loadClientFinancial(clienteId);
+  state.vendas = [
+    ...(dados.vendas || []),
+    ...(state.vendas || []).filter((item) => item.cliente_id !== clienteId),
+  ];
+  state.pagamentos = [
+    ...(dados.pagamentos || []),
+    ...(state.pagamentos || []).filter((item) => item.cliente_id !== clienteId),
+  ];
+  revisaoDadosOperacionais += 1;
+}
+
 async function reenviarPendenciasVendas() {
   if (reenviandoPendenciasVendas || !backendAtivo || !navigator.onLine || !state.autenticado || !state.acessoVendas) return;
   reenviandoPendenciasVendas = true;
@@ -3080,8 +3095,11 @@ function pedidoGeraDebito(venda) {
 }
 
 function pagamentosDoCliente(clienteId) {
-  return (state.pagamentos || [])
-    .filter((pagamento) => pagamento.cliente_id === clienteId)
+  const unicos = new Map();
+  (state.pagamentos || []).forEach((pagamento) => {
+    if (pagamento.cliente_id === clienteId && pagamento.id) unicos.set(pagamento.id, pagamento);
+  });
+  return [...unicos.values()]
     .sort((a, b) => String(b.data_pagamento || b.criado_em || '').localeCompare(String(a.data_pagamento || a.criado_em || '')));
 }
 
@@ -3457,7 +3475,7 @@ function abrirPagamentoClienteComSelecao(clienteId, permitirSelecao = false) {
       ${campoDataCentralizado('pagamentoClienteData', isoData(new Date()), 'Data do pagamento')}
       <label class="transaction-field"><span>Forma de pagamento</span><select id="pagamentoClienteForma"><option selected>Pix</option><option>Dinheiro</option><option>Cartão de crédito</option><option>Cartão de débito</option><option>Cheque</option><option>Boleto</option></select></label>
     </div>
-    <footer class="client-transaction-footer"><button type="button" class="primary" onclick="confirmarPagamentoCliente()">Confirmar recebimento</button></footer>
+    <footer class="client-transaction-footer"><button id="confirmarPagamentoClienteBotao" type="button" class="primary" onclick="confirmarPagamentoCliente()">Confirmar recebimento</button></footer>
   `, 'sheet-backdrop-centered client-transaction-backdrop payment-transaction-backdrop');
   requestAnimationFrame(() => { const campo = document.getElementById('pagamentoClienteValor'); campo?.focus(); campo?.select(); });
 }
@@ -3484,7 +3502,7 @@ function atualizarResumoPagamentoCliente() {
 
 async function confirmarPagamentoCliente() {
   const rascunho = pagamentoClienteRascunho;
-  if (!rascunho) return;
+  if (!rascunho || pagamentoClienteSalvando) return;
   const resumo = resumoPagamentoCliente();
   const dataPagamento = valor('pagamentoClienteData');
   if (resumo.abatimento <= 0) { toast('Informe o valor pago ou o desconto.'); return; }
@@ -3500,22 +3518,41 @@ async function confirmarPagamentoCliente() {
     forma_pagamento: valor('pagamentoClienteForma') || 'Pix',
     criado_em: new Date().toISOString(),
   };
+  pagamentoClienteSalvando = true;
+  const botaoConfirmar = document.getElementById('confirmarPagamentoClienteBotao');
+  if (botaoConfirmar) {
+    botaoConfirmar.disabled = true;
+    botaoConfirmar.textContent = 'Salvando e conferindo...';
+  }
   iniciarMutacaoDadosVendas();
   try {
     const salvo = backendAtivo
       ? await executarMutacaoGarantidaVendas('pagamento_salvar', pagamento.id, pagamento, () => window.VendasDb.savePayment(pagamento))
       : pagamento;
-    state.pagamentos = [salvo, ...(state.pagamentos || [])];
+    state.pagamentos = atualizarRegistroPersistido(state.pagamentos, salvo);
+    if (backendAtivo) {
+      await reconciliarFinanceiroCliente(pagamento.cliente_id);
+      const confirmado = (state.pagamentos || []).find((item) => item.id === salvo.id);
+      if (!confirmado || Number(confirmado.valor || 0) !== Number(pagamento.valor || 0)) {
+        throw new Error('O pagamento foi enviado, mas a conferência do saldo não foi concluída.');
+      }
+    }
     pagamentoClienteRascunho = null;
     state.aba = 'clientes';
     state.menuAberto = false;
     await confirmarMutacaoDadosVendas();
     render();
     abrirPagamentoClienteDetalhe(salvo.id);
-    toast('Recebimento confirmado. O comprovante está pronto para compartilhar.');
+    toast('Recebimento confirmado. Saldo conferido com o servidor.');
   } catch (error) {
     toast(traduzErro(error));
   } finally {
+    pagamentoClienteSalvando = false;
+    const botaoAtual = document.getElementById('confirmarPagamentoClienteBotao');
+    if (botaoAtual) {
+      botaoAtual.disabled = false;
+      botaoAtual.textContent = 'Confirmar recebimento';
+    }
     finalizarMutacaoDadosVendas();
   }
 }

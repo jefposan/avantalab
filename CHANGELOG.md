@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.5.4.03 - 2026-07-16
+
+- Vendas Mobile: após salvar um pagamento, o sistema relê no Supabase todos os pedidos e pagamentos da cliente antes de liberar o comprovante e atualizar o saldo exibido.
+- Pagamentos: o botão de confirmação fica bloqueado durante o salvamento e o estado local elimina repetições com o mesmo identificador.
+- Cache: dados financeiros antigos armazenados no PWA são invalidados para que o próximo acesso restaure os valores atuais do servidor.
+
 ## 1.5.4.02 - 2026-07-16
 
 - Gestão Mobile: o acesso passa a se chamar **Ir para Vendas** e fica disponível para Gestor Master e Administrador mesmo antes da ativação; quando necessário, o próprio fluxo ativa o módulo e segue para o Vendas.

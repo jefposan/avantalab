@@ -1,8 +1,8 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.5.4.02 -->
+<!-- ava-version: 1.5.4.03 -->
 
-> Revisão 1.5.4.02: troca direta para o Vendas e ativação persistente do módulo.
+> Revisão 1.5.4.03: sem impacto operacional na Gestão Mobile.
 
 ## Escopo
 

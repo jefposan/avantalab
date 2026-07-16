@@ -1,8 +1,8 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.5.4.02 -->
+<!-- ava-version: 1.5.4.03 -->
 
-> Revisão 1.5.4.02: o retorno ao Gestão passa a ser identificado como Ir para Gestão.
+> Revisão 1.5.4.03: pagamentos passam a atualizar o saldo somente após conferência dos dados da cliente no servidor.
 
 ## Escopo e navegação
 
@@ -68,6 +68,10 @@ dúvida dentro do Vendas sempre que a função existir ali.
 - Pagamentos registram valor, desconto, data e forma. Edição/exclusão recalcula
   saldos e relatórios. Comprovantes podem ser reabertos, editados ou excluídos no
   histórico do cliente.
+- Ao confirmar um pagamento, o botão permanece bloqueado durante o envio. Antes
+  de liberar o comprovante, o Vendas relê no servidor os pedidos e pagamentos da
+  cliente e atualiza o saldo; caches financeiros de versões anteriores são
+  descartados automaticamente.
 - Os campos de data em pedidos e pagamentos apresentam rótulo centralizado e a
   data em destaque; toque na data para abrir o calendário.
 

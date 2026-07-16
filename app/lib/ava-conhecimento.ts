@@ -94,6 +94,7 @@ CATÁLOGO, PEDIDOS E PAGAMENTOS
 - Novo pedido pode iniciar em Clientes (cliente já definido) ou em Pedidos (selecionar cliente). Há Venda e Consignado, itens bonificados, desconto em valor ou percentual e comprovante após finalizar.
 - Consignado não entra como venda/recebimento até ser convertido em pedido. Não trate consignado como receita realizada.
 - Pagamentos registra recebimentos, desconto, data e forma. Pelo botão +, Lançar pagamento abre a seleção de cliente; o campo Valor pago recebe foco. Editar ou excluir um pagamento recalcula o saldo e relatórios. Os campos de data de pedido e pagamento têm rótulo centralizado e data destacada; toque na data para abrir o calendário. Comprovantes podem ser abertos e editados pelas listas do cliente.
+- Ao confirmar um pagamento, o Vendas bloqueia uma segunda confirmação, confere no servidor todos os pedidos e pagamentos da cliente e só então atualiza o saldo e libera o comprovante.
 
 AGENDA, CONTEÚDO E CONFIGURAÇÕES
 - Agenda cria lembretes de visita, entrega e recebimento; pode expandir a visualização e mover a data de um item.

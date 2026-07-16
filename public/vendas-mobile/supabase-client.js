@@ -209,6 +209,20 @@
     return data || { adicionados: 0, ja_recebidos: 0 };
   }
 
+  function normalizarPagamentoServidor(pagamento) {
+    let legado = {};
+    try {
+      const observacoes = JSON.parse(pagamento.observacoes || '{}');
+      if (observacoes?.avantalab_pagamento) legado = observacoes;
+    } catch { /* observação comum, sem metadados financeiros */ }
+    return {
+      ...pagamento,
+      desconto: Number(pagamento.desconto ?? legado.desconto ?? 0),
+      saldo_anterior: Number(pagamento.saldo_anterior ?? legado.saldo_anterior ?? 0),
+      saldo_final: Number(pagamento.saldo_final ?? legado.saldo_final ?? 0),
+    };
+  }
+
   async function loadAll(contextoPreparado = null) {
     const user = contextoPreparado?.user || await currentUser();
     if (!user) return { user: null, produtos: [], pacotes: [], clientes: [], vendas: [], pagamentos: [], conteudos: null, divulgacaoPastas: [], divulgacaoMateriais: [], moduloAtivo: true };
@@ -270,19 +284,7 @@
         ...(c.endereco || {}),
       })),
       vendas: (pedidosRes.data || []).map((p) => ({ ...p, itens: p.itens || [] })),
-      pagamentos: (pagamentosRes.data || []).map((pagamento) => {
-        let legado = {};
-        try {
-          const observacoes = JSON.parse(pagamento.observacoes || '{}');
-          if (observacoes?.avantalab_pagamento) legado = observacoes;
-        } catch { /* observação comum, sem metadados financeiros */ }
-        return {
-          ...pagamento,
-          desconto: Number(pagamento.desconto ?? legado.desconto ?? 0),
-          saldo_anterior: Number(pagamento.saldo_anterior ?? legado.saldo_anterior ?? 0),
-          saldo_final: Number(pagamento.saldo_final ?? legado.saldo_final ?? 0),
-        };
-      }),
+      pagamentos: (pagamentosRes.data || []).map(normalizarPagamentoServidor),
       integracaoGestao: integracaoRes.data || { base_receita: 'recebidos', pode_configurar: false },
       conteudos: conteudosRes.error ? null : (conteudosRes.data || []).filter((conteudo) => conteudo.pagina === 'informacoes' || vinculosComerciais.some((vinculo) => vinculo.empresa_id === conteudo.empresa_id && vinculo.novidades_ativas)),
       divulgacaoPastas: pastasRes.error ? [] : (pastasRes.data || []).filter((pasta) => vinculosComerciais.some((vinculo) => vinculo.empresa_id === pasta.empresa_id && vinculo.divulgacao_ativa)),
@@ -293,6 +295,33 @@
       vinculoComercialAtivo: vinculoAtivo,
       perfisFinanceiros: perfisFinanceirosRes.data || [],
       ...acessoVendas,
+    };
+  }
+
+  async function loadClientFinancial(clienteId) {
+    const user = await currentUser();
+    if (!user) throw new Error('Sessão expirada.');
+    if (!clienteId) throw new Error('Cliente não informado.');
+    const [pedidosRes, pagamentosRes] = await Promise.all([
+      requireClient()
+        .from('vendas_mobile_pedidos')
+        .select('*, itens:vendas_mobile_pedido_itens(*)')
+        .eq('user_id', user.id)
+        .eq('cliente_id', clienteId)
+        .order('criado_em', { ascending: false }),
+      requireClient()
+        .from('vendas_mobile_pagamentos')
+        .select('*')
+        .eq('user_id', user.id)
+        .eq('cliente_id', clienteId)
+        .order('data_pagamento', { ascending: false })
+        .order('criado_em', { ascending: false }),
+    ]);
+    if (pedidosRes.error) throw pedidosRes.error;
+    if (pagamentosRes.error) throw pagamentosRes.error;
+    return {
+      vendas: (pedidosRes.data || []).map((pedido) => ({ ...pedido, itens: pedido.itens || [] })),
+      pagamentos: (pagamentosRes.data || []).map(normalizarPagamentoServidor),
     };
   }
 
@@ -531,6 +560,11 @@
     }
     if (error) throw error;
     if (!data?.id) throw new Error('O pagamento não foi confirmado pelo servidor.');
+    if (
+      data.cliente_id !== payload.cliente_id
+      || Number(data.valor || 0) !== payload.valor
+      || String(data.data_pagamento || '') !== String(payload.data_pagamento || '')
+    ) throw new Error('O pagamento retornado pelo servidor não corresponde ao lançamento enviado.');
     return { ...data, desconto: payload.desconto, saldo_anterior: payload.saldo_anterior, saldo_final: payload.saldo_final };
   }
 
@@ -644,5 +678,5 @@
     return data;
   }
 
-  window.VendasDb = { client, currentUser, hasSession, getAccessToken, uploadProductImage, signIn, signInPhone, signInWithGoogle, resetPassword, updatePassword, updateUserMetadata, signUp, signOut, solicitarAcesso, buscarAcessoVendas, loadAll, listarCatalogoVendas, sincronizarCatalogoVendas, listarPerfisGestaoParaTroca, saveProduct, deleteProduct, movimentarEstoque, listarMovimentosEstoque, createPackage, saveProductsBulk, deletePackage, saveClient, deleteClient, saveOrder, updateOrder, deleteOrder, savePayment, updatePayment, deletePayment, configurarIntegracaoGestao, atualizarRecursoVinculoComercial, resetarSistemaVendas, definirPerfilFinanceiro, saveFeedback };
+  window.VendasDb = { client, currentUser, hasSession, getAccessToken, uploadProductImage, signIn, signInPhone, signInWithGoogle, resetPassword, updatePassword, updateUserMetadata, signUp, signOut, solicitarAcesso, buscarAcessoVendas, loadAll, loadClientFinancial, listarCatalogoVendas, sincronizarCatalogoVendas, listarPerfisGestaoParaTroca, saveProduct, deleteProduct, movimentarEstoque, listarMovimentosEstoque, createPackage, saveProductsBulk, deletePackage, saveClient, deleteClient, saveOrder, updateOrder, deleteOrder, savePayment, updatePayment, deletePayment, configurarIntegracaoGestao, atualizarRecursoVinculoComercial, resetarSistemaVendas, definirPerfilFinanceiro, saveFeedback };
 })();
