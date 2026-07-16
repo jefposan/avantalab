@@ -1,8 +1,8 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.5.4.11 -->
+<!-- ava-version: 1.5.4.12 -->
 
-> Revisão 1.5.4.11: sem impacto operacional na Gestão Mobile.
+> Revisão 1.5.4.12: **Ir para Vendas** confirma no servidor se o módulo está ativo antes de abrir o aviso de ativação.
 
 ## Escopo
 
@@ -29,7 +29,9 @@ deve usar os nomes do menu e da barra inferior do celular.
   sincronizações complementares em segundo plano. Se a tela não avançar, o aplicativo
   tenta novamente de forma automática e pode exibir **Continuar**.
 - Dentro da Gestão, **Menu > Ir para Vendas** abre diretamente o Vendas Mobile; a
-  tela com as duas opções é exibida somente na entrada após o login.
+  tela com as duas opções é exibida somente na entrada após o login. Ao tocar, a
+  Gestão consulta o estado atual do módulo no servidor para não solicitar uma
+  ativação que já tenha sido concluída.
 - Em um perfil sem o módulo instalado, **Ir para Vendas** continua disponível para
   Gestor Master ou Administrador. Ao tocar, o sistema solicita a ativação, confirma
   o salvamento no servidor e segue para o Vendas. Em perfil pessoal gratuito, a

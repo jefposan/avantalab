@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.5.4.12 - 2026-07-16
+
+- Gestão Mobile: **Ir para Vendas** passa a confirmar o módulo diretamente no servidor antes de decidir pela ativação, evitando avisos incorretos causados por um estado temporariamente desatualizado.
+- Vendas Mobile: datas de pedidos, pagamentos e demais registros passam a ser exibidas somente como data, sem horário.
+
 ## 1.5.4.11 - 2026-07-16
 
 - Vendas Mobile: ao tocar em **Pagamento** no card da cliente, o campo **Valor pago** recebe foco durante o próprio toque e abre imediatamente o teclado numérico.

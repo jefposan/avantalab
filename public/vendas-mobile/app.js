@@ -564,7 +564,7 @@ function lerCampoMoeda(idCampo) {
 }
 
 function dataBR(value) {
-  return new Intl.DateTimeFormat('pt-BR', { dateStyle: 'short', timeStyle: 'short' }).format(new Date(value));
+  return new Intl.DateTimeFormat('pt-BR').format(new Date(value));
 }
 
 function dataCurtaBR(value) {
@@ -5473,7 +5473,7 @@ function aplicarAtualizacaoPwaPendente() {
 
 if (!window.__VENDAS_MOBILE_EMBEDDED__ && 'serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('./sw.js?v=17').catch(() => {});
+    navigator.serviceWorker.register('./sw.js?v=18').catch(() => {});
   });
 }
 

@@ -1,8 +1,8 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.5.4.11 -->
+<!-- ava-version: 1.5.4.12 -->
 
-> Revisão 1.5.4.11: ao abrir **Pagamento** pelo card da cliente, o campo **Valor pago** já abre selecionado com o teclado numérico disponível.
+> Revisão 1.5.4.12: datas de pedidos, pagamentos e demais registros são exibidas sem horário.
 
 ## Escopo e navegação
 
@@ -84,7 +84,7 @@ dúvida dentro do Vendas sempre que a função existir ali.
 - Se o lançamento ou a conferência financeira falhar, o formulário permanece
   aberto e nenhum comprovante é exibido ou gerado.
 - Os campos de data em pedidos e pagamentos apresentam rótulo centralizado e a
-  data em destaque; toque na data para abrir o calendário.
+  data em destaque, sem horário; toque na data para abrir o calendário.
 
 ## Agenda, conteúdo e configurações
 

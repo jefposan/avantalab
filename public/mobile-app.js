@@ -242,6 +242,7 @@
     iniciarValoresOcultos: true,
     pontoModuloAtivo: false,
     vendasMobileModuloAtivo: false,
+    vendasMobileModuloVerificando: false,
     // Resultado da validação feita antes do seletor de sistemas. É consumido
     // pela primeira carga do Gestão para não repetir as mesmas RPCs.
     preparacaoSistemaVendas: null,
@@ -1742,20 +1743,45 @@
     }
   }
 
-  function abrirFluxoSistemasMobile() {
+  async function abrirFluxoSistemasMobile() {
     if (!podeGerenciarUsuarios()) {
       mostrarToast('A troca de sistemas nao esta disponivel para este usuario.');
       return;
     }
-    if (state.vendasMobileModuloAtivo) {
-      abrirVendasMobile();
+    if (state.vendasMobileModuloVerificando || !state.empresa || !state.empresa.id) {
       return;
     }
-    state.menuAberto = false;
-    state.ativacaoVendasMobileAberta = true;
-    state.ativacaoVendasMobileCarregando = false;
-    state.ativacaoVendasMobileErro = '';
-    render();
+
+    var empresaIdVerificada = state.empresa.id;
+    state.vendasMobileModuloVerificando = true;
+
+    try {
+      // O estado carregado na entrada pode ficar desatualizado se a primeira
+      // consulta sofrer uma falha temporária. Confirma novamente no servidor
+      // antes de oferecer uma ativação que talvez já exista.
+      var acessoAtivo = await db.rpc('modulo_vendas_mobile_ativo_rpc', {
+        p_empresa_id: empresaIdVerificada,
+      });
+      if (acessoAtivo.error) throw acessoAtivo.error;
+      if (!state.empresa || state.empresa.id !== empresaIdVerificada) return;
+
+      state.vendasMobileModuloAtivo = acessoAtivo.data === true;
+      if (state.vendasMobileModuloAtivo) {
+        abrirVendasMobile();
+        return;
+      }
+
+      state.menuAberto = false;
+      state.ativacaoVendasMobileAberta = true;
+      state.ativacaoVendasMobileCarregando = false;
+      state.ativacaoVendasMobileErro = '';
+      render();
+    } catch (error) {
+      console.warn('Não foi possível confirmar o módulo Vendas Mobile:', error);
+      mostrarToast('Nao foi possivel verificar o Vendas agora. Tente novamente.');
+    } finally {
+      state.vendasMobileModuloVerificando = false;
+    }
   }
 
   function fecharAtivacaoVendasMobile() {
@@ -12990,7 +13016,7 @@
           return Promise.all(
             keys
               .filter(function (key) {
-                return key.indexOf('avantalab-mobile-') === 0 && key !== 'avantalab-mobile-v265';
+                return key.indexOf('avantalab-mobile-') === 0 && key !== 'avantalab-mobile-v266';
               })
               .map(function (key) {
                 return caches.delete(key);
@@ -13007,7 +13033,7 @@
     });
 
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/mobile-sw.js?v=249').then(function (registro) {
+      navigator.serviceWorker.register('/mobile-sw.js?v=250').then(function (registro) {
         if (registro && registro.update) registro.update();
       }).catch(function () {});
     }

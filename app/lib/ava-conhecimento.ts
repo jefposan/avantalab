@@ -42,7 +42,7 @@ NAVEGAÇÃO E PERFIS
 - Em Configurações, Assinatura aparece primeiro quando disponível, seguida pelos controles com chave. Gerenciar perfil, Usuários e Editar dados cadastrais aparecem em sequência.
 - Com o módulo Vendas Mobile ativo e permissão de Gestor Master/Administrador, após o login a primeira tela permite escolher entre Gestão e Vendas e memorizar o sistema inicial. Depois da escolha aparece Preparando acesso e o sistema selecionado é carregado. Dentro da Gestão, Menu > Ir para Vendas e o atalho de mesmo nome abrem diretamente o outro sistema.
 - Em Preparando acesso, a Gestão mostra a etapa atual e um percentual baseado em tarefas realmente concluídas, incluindo sessão, perfis, permissões e dados financeiros. Ao chegar a 100%, libera imediatamente a tela principal e inicia sincronizações complementares em segundo plano. Se o navegador mantiver a preparação visível, tenta concluir novamente e pode mostrar Continuar. O resumo comparativo dos demais perfis é atualizado logo após a entrada, sem atrasar os dados do perfil aberto.
-- Em perfil sem o módulo Vendas, Ir para Vendas continua ativo para Gestor Master ou Administrador: ao tocar, solicita a ativação, confirma o salvamento no servidor e segue diretamente para o Vendas. Perfil pessoal gratuito precisa do Premium. Operadores veem o botão inativo e não podem ativar nem trocar de sistema.
+- Em perfil sem o módulo Vendas, Ir para Vendas continua ativo para Gestor Master ou Administrador. Ao tocar, a Gestão confirma no servidor se o módulo já está ativo; somente quando a resposta atual informa que não está, solicita a ativação. Depois confirma o salvamento e segue diretamente para o Vendas. Perfil pessoal gratuito precisa do Premium. Operadores veem o botão inativo e não podem ativar nem trocar de sistema.
 - A tela que oferece Gestão e Vendas aparece somente na entrada após o login. Depois que um sistema foi aberto, a navegação exibe apenas o outro destino.
 - Ao escolher Vendas, um único perfil de Vendas ativo abre diretamente; se houver mais de um, o usuário escolhe qual acessar. Essa seleção não altera o destino financeiro do Vendas.
 - O dashboard pode organizar ordem e visibilidade dos cards em Menu > Organizar resumo/Organizar dashboard.
@@ -86,6 +86,7 @@ CLIENTES
 - A abertura do Vendas reaproveita a validação já concluída do perfil e libera a tela antes da sincronização automática do catálogo. A opção Verificar agora atualiza apenas o catálogo, sem recarregar todo o sistema.
 - Em Ver detalhes, o cabeçalho fica fixo e só o conteúdo rola. Resumo mostra totais; Consignado, Pedidos e Pagamentos são listas distintas e exibem 10 registros por vez; Carregar mais acrescenta o próximo lote sem perder a posição. Abrir um pagamento mostra o comprovante e permite editar ou excluir o registro.
 - Ao tocar em Pagamento no card da cliente, o formulário abre com Valor pago selecionado e o teclado numérico pronto para digitação.
+- Datas de pedidos, pagamentos e demais registros são exibidas apenas com dia, mês e ano, sem horário.
 - Em Clientes sem compra, o intervalo selecionado lista todos os clientes sem pedidos, mantendo título e cabeçalhos visíveis durante a rolagem. Ao navegar entre telas, a posição anterior é preservada durante a sessão.
 - O aniversário cadastrado entra na agenda e pode aparecer no aviso do cabeçalho no dia correspondente.
 
