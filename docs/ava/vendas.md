@@ -1,8 +1,8 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.5.3.06 -->
+<!-- ava-version: 1.5.3.07 -->
 
-> Revisão 1.5.3.06: os detalhes do cliente e os pagamentos receberam refinamentos; a lista de clientes sem compra agora é completa e mantém seus cabeçalhos visíveis.
+> Revisão 1.5.3.07: campos de data de pedidos e pagamentos receberam padronização visual, sem mudança no fluxo operacional.
 
 ## Escopo e navegação
 
@@ -54,6 +54,8 @@ dúvida dentro do Vendas sempre que a função existir ali.
 - Pagamentos registram valor, desconto, data e forma. Edição/exclusão recalcula
   saldos e relatórios. Comprovantes podem ser reabertos, editados ou excluídos no
   histórico do cliente.
+- Os campos de data em pedidos e pagamentos apresentam rótulo centralizado e a
+  data em destaque; toque na data para abrir o calendário.
 
 ## Agenda, conteúdo e configurações
 

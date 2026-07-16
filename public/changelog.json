@@ -13,6 +13,14 @@
   },
   "versoes": [
     {
+      "versao": "1.5.3.07",
+      "titulo": "Datas mais claras no Vendas",
+      "data": "Julho/2026",
+      "itens": [
+        "Os campos de data de pedidos e pagamentos agora têm rótulos centralizados e datas em maior destaque."
+      ]
+    },
+    {
       "versao": "1.5.3.06",
       "titulo": "Históricos e clientes sem compra aprimorados",
       "data": "Julho/2026",

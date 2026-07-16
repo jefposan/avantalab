@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.5.3.07 - 2026-07-16
+
+- Vendas Mobile: padroniza os campos de data de pedido e pagamento, com rótulo centralizado e mais legível e data em maior destaque.
+
 ## 1.5.3.06 - 2026-07-16
 
 - Vendas Mobile: melhora o espaçamento no cabeçalho de **Ver detalhes** e adiciona exclusão diretamente ao comprovante de pagamento, seguindo o fluxo dos pedidos.
