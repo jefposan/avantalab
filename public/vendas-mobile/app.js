@@ -102,7 +102,6 @@ let quadroDestaqueClientes = 0;
 let clienteDestaqueId = '';
 let temporizadorEncaixeClientes = 0;
 let encaixeClientesEmAndamento = false;
-let buscaClientesAberta = false;
 let calendarioCentralizado = null;
 let botaoFeedbackAtivo = null;
 let atualizacaoPwaPendente = false;
@@ -3049,14 +3048,7 @@ function renderClientes() {
 function renderBarraBuscaClientes() {
   const temBusca = Boolean(String(state.busca || '').trim());
   const rotuloOrdem = `Ordem ${ordemAlfabetica === 'asc' ? 'A/Z' : 'Z/A'}`;
-  return `<div class="client-search-toolbar${buscaClientesAberta ? ' is-open' : ''}"><button type="button" class="client-order-button" onclick="alternarOrdemAlfabetica()">${svgIcon('filter')}${rotuloOrdem}${svgIcon('chevron-down')}</button>${buscaClientesAberta ? `<div class="client-search-input-wrap">${svgIcon('search')}<input value="${escapeAttr(state.busca)}" placeholder="Pesquisar clientes" oninput="atualizarBuscaClientes(this.value)" onblur="recolherBuscaClientesSeVazia()" onkeydown="if(event.key==='Enter') aplicarBusca()"><button type="button" class="client-search-clear${temBusca ? '' : ' is-hidden'}" onclick="limparBuscaClientes()" aria-label="Limpar pesquisa">×</button></div><button type="button" class="primary client-search-submit" onclick="aplicarBusca()">Buscar</button>` : `<button type="button" class="client-search-toggle" onclick="alternarBuscaClientes()" aria-label="Pesquisar clientes">${svgIcon('search')}</button>`}</div>`;
-}
-
-function alternarBuscaClientes() {
-  buscaClientesAberta = !buscaClientesAberta;
-  if (!buscaClientesAberta) { state.busca = ''; buscaAplicada = ''; }
-  render();
-  if (buscaClientesAberta) requestAnimationFrame(() => app.querySelector('.clientes-page .client-search-input-wrap input')?.focus());
+  return `<div class="client-search-toolbar is-open"><button type="button" class="client-order-button" onclick="alternarOrdemAlfabetica()">${svgIcon('filter')}${rotuloOrdem}${svgIcon('chevron-down')}</button><div class="client-search-input-wrap">${svgIcon('search')}<input value="${escapeAttr(state.busca)}" placeholder="Pesquisar clientes" oninput="atualizarBuscaClientes(this.value)" onkeydown="if(event.key==='Enter') aplicarBusca()"><button type="button" class="client-search-clear${temBusca ? '' : ' is-hidden'}" onclick="limparBuscaClientes()" aria-label="Limpar pesquisa">×</button></div><button type="button" class="primary client-search-submit" onclick="aplicarBusca()">Buscar</button></div>`;
 }
 
 function atualizarBuscaClientes(valor) {
@@ -3075,18 +3067,6 @@ function limparBuscaClientes() {
   buscaAplicada = '';
   render();
   requestAnimationFrame(() => app.querySelector('.clientes-page .client-search-input-wrap input')?.focus());
-}
-
-function recolherBuscaClientesSeVazia() {
-  window.setTimeout(() => {
-    const buscaVazia = !String(state.busca || '').trim();
-    const toolbar = app.querySelector('.client-search-toolbar');
-    if (buscaVazia && !toolbar?.contains(document.activeElement)) {
-      buscaAplicada = '';
-      buscaClientesAberta = false;
-      render();
-    }
-  }, 120);
 }
 
 function pedidoGeraDebito(venda) {
@@ -5449,10 +5429,8 @@ window.abrirAcoesRapidas = abrirAcoesRapidas;
 window.acionarNavegacaoInferior = acionarNavegacaoInferior;
 window.buscarCepCliente = buscarCepCliente;
 window.abrirMenuCliente = abrirMenuCliente;
-window.alternarBuscaClientes = alternarBuscaClientes;
 window.atualizarBuscaClientes = atualizarBuscaClientes;
 window.limparBuscaClientes = limparBuscaClientes;
-window.recolherBuscaClientesSeVazia = recolherBuscaClientesSeVazia;
 window.abrirAgendamentoCliente = abrirAgendamentoCliente;
 window.abrirNovoPedidoCliente = abrirNovoPedidoCliente;
 window.abrirNovoPedidoGeral = abrirNovoPedidoGeral;

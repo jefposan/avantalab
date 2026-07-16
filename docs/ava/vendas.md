@@ -1,8 +1,8 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.5.4.03 -->
+<!-- ava-version: 1.5.4.04 -->
 
-> Revisão 1.5.4.03: pagamentos passam a atualizar o saldo somente após conferência dos dados da cliente no servidor.
+> Revisão 1.5.4.04: pesquisa de clientes sempre visível e comprovante condicionado à confirmação do servidor.
 
 ## Escopo e navegação
 
@@ -37,6 +37,8 @@ dúvida dentro do Vendas sempre que a função existir ali.
 - Se a internet cair durante a gravação, a alteração fica protegida no aparelho
   e é reenviada automaticamente sem criar duplicidade. O app informa claramente
   quando ainda aguarda confirmação; **salvo** significa confirmação do servidor.
+- No cabeçalho de **Clientes**, Ordenar, o campo de pesquisa e **Buscar** ficam
+  sempre visíveis e alinhados na mesma linha.
 - **Clientes > Novo cliente** cria a ficha. Nome é obrigatório; celular e endereço
   são recomendados para ligação/WhatsApp e mapas.
 - A ficha oferece pedido, pagamento, agendamento e **Ver detalhes**. Nesta área,
@@ -72,6 +74,8 @@ dúvida dentro do Vendas sempre que a função existir ali.
   de liberar o comprovante, o Vendas relê no servidor os pedidos e pagamentos da
   cliente e atualiza o saldo; caches financeiros de versões anteriores são
   descartados automaticamente.
+- Se o lançamento ou a conferência financeira falhar, o formulário permanece
+  aberto e nenhum comprovante é exibido ou gerado.
 - Os campos de data em pedidos e pagamentos apresentam rótulo centralizado e a
   data em destaque; toque na data para abrir o calendário.
 

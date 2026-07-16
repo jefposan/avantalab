@@ -1516,12 +1516,10 @@ body { background: #fff; color: var(--ink); }
 .client-card.client-card-deemphasized { opacity: .44; }
 .client-title-actions { display: inline-flex; align-items: center; gap: 8px; }
 .client-search-toolbar { display: flex; min-height: 38px; align-items: center; gap: 8px; }
-.client-order-button, .client-search-toggle, .client-search-submit { display: inline-flex; height: 34px; align-items: center; justify-content: center; gap: 5px; border-radius: 9px; font-size: 11px; font-weight: 750; white-space: nowrap; }
+.client-order-button, .client-search-submit { display: inline-flex; box-sizing: border-box; height: 34px; min-height: 34px; align-items: center; justify-content: center; gap: 5px; border-radius: 9px; font-size: 11px; font-weight: 750; line-height: 1; white-space: nowrap; }
 .client-order-button { border: 1px solid #c8ddea; padding: 0 10px; color: #31556d; background: #fff; }
 .client-order-button .svg-icon { width: 15px; height: 15px; }
 .client-order-button .svg-icon:last-child { width: 13px; }
-.client-search-toggle { display: grid; width: 34px; height: 34px; place-items: center; border: 1px solid #b9d9ee; border-radius: 999px; color: #0874a8; background: #eef8ff; }
-.client-search-toggle .svg-icon { width: 18px; height: 18px; }
 .client-search-input-wrap { position: relative; min-width: 0; flex: 1; }
 .client-search-input-wrap > .svg-icon { position: absolute; top: 50%; left: 10px; width: 16px; height: 16px; color: #7c8b98; transform: translateY(-50%); }
 .client-search-input-wrap input { width: 100%; height: 34px; border: 1px solid #b9d9ee; border-radius: 9px; padding: 0 32px 0 32px; color: #1f2937; background: #fff; font: inherit; font-size: 12px; }
@@ -2005,7 +2003,6 @@ body { background: #fff; color: var(--ink); }
 .dark-theme .clientes-page .module-sticky-head .module-title h2, .dark-theme .produtos-page .module-sticky-head .module-title h2, .dark-theme .pedidos-page .module-sticky-head .module-title h2, .dark-theme .pagamentos-page .module-sticky-head .module-title h2, .dark-theme .settings-page .module-sticky-head .module-title h2, .dark-theme .publicacoes-page .module-sticky-head .module-title h2, .dark-theme .divulgacao-page .module-sticky-head .module-title h2 { color: #f8fafc; }
 .dark-theme .clientes-page .tridium-search-card, .dark-theme .produtos-page .tridium-search-card, .dark-theme .pedidos-page .tridium-search-card, .dark-theme .pagamentos-page .tridium-search-card, .dark-theme .publicacoes-page .tridium-search-card, .dark-theme .divulgacao-page .tridium-search-card { border-color: #334155; background: #172033; }
 .dark-theme .client-order-button { border-color: #3b4b63; color: #cbd5e1; background: #172033; }
-.dark-theme .client-search-toggle { border-color: #24516a; color: #7dd3fc; background: #102838; }
 .dark-theme .client-search-input-wrap input { border-color: #3b4b63; color: #e2e8f0; background: #111b2d; }
 .dark-theme .client-search-input-wrap > .svg-icon, .dark-theme .client-search-clear { color: #94a3b8; }
 .dark-theme .client-search-clear:hover { color: #e2e8f0; background: #263449; }

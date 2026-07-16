@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.5.4.04 - 2026-07-16
+
+- Pagamentos: o comprovante só é exibido depois que o Supabase confirma o lançamento e a conferência financeira da cliente termina; qualquer falha mantém o formulário aberto sem gerar comprovante.
+- Clientes: o campo de pesquisa e o botão **Buscar** ficam permanentemente visíveis no cabeçalho, substituindo a lupa de expansão.
+- Interface: campo de pesquisa e botão **Buscar** passam a ter a mesma altura.
+
 ## 1.5.4.03 - 2026-07-16
 
 - Vendas Mobile: após salvar um pagamento, o sistema relê no Supabase todos os pedidos e pagamentos da cliente antes de liberar o comprovante e atualizar o saldo exibido.
