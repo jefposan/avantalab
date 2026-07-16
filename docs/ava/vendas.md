@@ -1,8 +1,8 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.5.4.30 -->
+<!-- ava-version: 1.5.4.31 -->
 
-> Revisão 1.5.4.30: o encaixe de Clientes posiciona o card em foco logo abaixo do cabeçalho.
+> Revisão 1.5.4.31: Produtos mantém seus indicadores e o gerenciamento fixos acima da lista; o limite do consignado aparece destacado na conversão em pedido.
 
 ## Escopo e navegação
 

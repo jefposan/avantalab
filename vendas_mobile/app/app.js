@@ -3024,8 +3024,7 @@ function renderProdutos() {
   const temBusca = Boolean(String(state.busca || '').trim());
   return `
     <section class="module-page produtos-page${temBusca ? ' is-searching' : ''}">
-      <div class="module-sticky-head"><div class="module-title"><div><h2>Produtos</h2><p>Catálogo, custos e preços de venda.</p></div><button class="primary" onclick="this.blur();abrirProduto()">＋ Novo produto</button></div>${renderBarraBusca('Pesquisar produtos', 'Ordem alfabética')}</div>
-      <div class="module-stats product-package-stats"><span><b>${state.produtos.length}</b> produtos cadastrados</span><span><b>${state.pacotesProdutos.length}</b> pacotes ativos</span><button class="package-manage-link" onclick="abrirGerenciarPacotes()">${svgIcon('package')} Gerenciar</button></div>
+      <div class="module-sticky-head"><div class="module-title"><div><h2>Produtos</h2><p>Catálogo, custos e preços de venda.</p></div><button class="primary product-new-button" onclick="this.blur();abrirProduto()">＋ Novo produto</button></div>${renderBarraBusca('Pesquisar produtos', 'Ordem alfabética')}<div class="module-stats product-package-stats"><span><b>${state.produtos.length}</b> produtos cadastrados</span><span><b>${state.pacotesProdutos.length}</b> pacotes ativos</span><button class="package-manage-link" onclick="abrirGerenciarPacotes()">${svgIcon('package')} Gerenciar</button></div></div>
       <section class="product-grid module-product-grid">
       ${produtos.length ? produtos.map(renderProduto).join('') : empty('Nenhum produto cadastrado.')}
     </section>
@@ -4200,7 +4199,7 @@ function abrirConversaoConsignado(pedidoId, retornoClienteId = '', retornoAba = 
         <button type="button" onclick="ajustarConversaoConsignado('${pedidoId}',${indice},-1)" aria-label="Diminuir quantidade de ${escapeAttr(item.produto_nome)}">−</button>
         <b id="consignadoQuantidade${indice}">0</b>
         <button type="button" onclick="ajustarConversaoConsignado('${pedidoId}',${indice},1)" aria-label="Aumentar quantidade de ${escapeAttr(item.produto_nome)}">+</button>
-        <small>máx. ${Number(item.quantidade || 0)}</small>
+        <small class="consignment-conversion-max">máx. ${Number(item.quantidade || 0)}</small>
       </div>
     </article>
   `).join('');

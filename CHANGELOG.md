@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.5.4.31 - 2026-07-16
+
+- Vendas Mobile: o limite disponível de cada produto ganhou mais destaque ao gerar pedido a partir de um consignado.
+- Produtos: os indicadores de produtos, pacotes e gerenciamento acompanham o cabeçalho fixo; a lista rola abaixo deles. Os botões de novo produto e novo cliente foram padronizados.
+
 ## 1.5.4.30 - 2026-07-16
 
 - Vendas Mobile: o encaixe da lista de Clientes passa a posicionar o card em foco logo abaixo do cabeçalho, sem deixar parte do card anterior visível acima dele.
