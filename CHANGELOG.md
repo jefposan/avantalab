@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.5.4.25 - 2026-07-16
+
+- Vendas Mobile: ao tocar em **Pagamento**, o foco do campo **Valor pago** acontece durante o próprio toque, fazendo o teclado numérico abrir sem permitir que o card suba.
+- Clientes: removido o texto auxiliar do cabeçalho, reduzida a altura de **Novo cliente** e compactado o espaço ocupado pelo cabeçalho fixo.
+
 ## 1.5.4.24 - 2026-07-16
 
 - Vendas Mobile: o pedido consignado passa a exibir somente os produtos e as quantidades em consignação, com rolagem restrita à lista e cabeçalho, resumo e ações fixos.

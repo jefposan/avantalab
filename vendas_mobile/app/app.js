@@ -3098,7 +3098,7 @@ function renderClientes() {
   const aniversariantesHoje = new Set(aniversariosHojeVendas().map((cliente) => cliente.id));
   return `
     <section class="module-page clientes-page">
-      <div class="module-sticky-head"><div class="module-title"><div><h2>Clientes</h2><p>Gerencie seus clientes</p></div><div class="client-title-actions"><button class="primary" onclick="this.blur();abrirCliente()">＋ Novo cliente</button></div></div>${renderBarraBuscaClientes()}</div>
+      <div class="module-sticky-head"><div class="module-title"><div><h2>Clientes</h2></div><div class="client-title-actions"><button class="primary" onclick="this.blur();abrirCliente()">＋ Novo cliente</button></div></div>${renderBarraBuscaClientes()}</div>
       ${clientes.length ? `<section class="client-card-grid">${clientes.map((cliente) => renderCliente(cliente, resumos.get(cliente.id), aniversariantesHoje.has(cliente.id))).join('')}</section>` : `<article class="empty-module"><h3>Nenhum cliente cadastrado</h3><p>Cadastre o primeiro cliente para iniciar suas vendas.</p></article>`}
     </section>
   `;
@@ -3719,6 +3719,13 @@ function abrirPagamentoCliente(clienteId) {
   abrirPagamentoClienteComSelecao(clienteId, false);
 }
 
+function focarValorPagamentoCliente() {
+  const campoValorPago = document.getElementById('pagamentoClienteValor');
+  if (!campoValorPago || !document.getElementById('sheetBackdrop')?.contains(campoValorPago)) return;
+  campoValorPago.focus({ preventScroll: true });
+  campoValorPago.select();
+}
+
 function abrirNovoPagamentoGeral() {
   if (!clientesDisponiveisPedido().length) { fecharSheet(); toast('Cadastre um cliente antes de registrar um pagamento.'); return; }
   abrirPagamentoClienteComSelecao('', true);
@@ -3746,12 +3753,7 @@ function abrirPagamentoClienteComSelecao(clienteId, permitirSelecao = false) {
   if (permitirSelecao) {
     focarBuscaClienteLancamento('pagamento');
   } else {
-    window.requestAnimationFrame(() => {
-      const campoValorPago = document.getElementById('pagamentoClienteValor');
-      if (!campoValorPago || !document.getElementById('sheetBackdrop')?.contains(campoValorPago)) return;
-      campoValorPago.focus({ preventScroll: true });
-      campoValorPago.select();
-    });
+    focarValorPagamentoCliente();
   }
 }
 
@@ -3768,9 +3770,7 @@ function selecionarClientePagamento(clienteId) {
   if (divida) divida.value = moeda(saldo.debito);
   if (saldoAnterior) saldoAnterior.textContent = moeda(saldo.debito);
   atualizarResumoPagamentoCliente();
-  const campoValorPago = document.getElementById('pagamentoClienteValor');
-  campoValorPago?.focus({ preventScroll: true });
-  campoValorPago?.select();
+  focarValorPagamentoCliente();
 }
 
 function resumoPagamentoCliente() {

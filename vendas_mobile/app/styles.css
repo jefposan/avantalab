@@ -941,11 +941,16 @@ body { background: #fff; color: var(--ink); }
 .module-title h2 { margin: 0; color: #303036; font-size: 25px; letter-spacing: -.03em; }
 .module-title p { margin: 5px 0 0; color: #777b83; font-size: 14px; }
 .clientes-page, .produtos-page, .pagamentos-page { padding-top: 146px; }
-.clientes-page { padding-top: 200px; }
+.clientes-page { padding-top: 158px; }
 .divulgacao-page { padding-top: 200px; }
 .publicacoes-page { padding-top: 110px; }
 .publicacoes-page .updates-feed, .publicacoes-page .information-grid { margin-top: 10px; }
 .clientes-page .module-sticky-head, .produtos-page .module-sticky-head, .pedidos-page .module-sticky-head, .pagamentos-page .module-sticky-head, .settings-page .module-sticky-head, .publicacoes-page .module-sticky-head, .divulgacao-page .module-sticky-head { position: fixed; top: 59px; right: 0; left: 255px; z-index: 40; display: grid; gap: 12px; border-bottom: 1px solid #d6e5f1; padding: 16px max(16px, calc((100% - 1180px) / 2 + 56px)) 14px; background: linear-gradient(135deg, #f2f8fc 0%, #f8fbfe 100%); box-shadow: inset 0 4px 0 #1687D9, 0 8px 14px -14px rgba(15,23,42,.45); }
+.clientes-page .module-sticky-head { gap: 8px; padding-top: 11px; padding-bottom: 9px; }
+.clientes-page .module-title { flex-wrap: nowrap; align-items: center; }
+.clientes-page .module-title > div:first-child { min-width: 0; }
+.clientes-page .client-title-actions { flex: 0 0 auto; }
+.clientes-page .client-title-actions button { min-height: 30px; height: 30px; border-radius: 9px; padding: 0 10px; font-size: 10px; }
 .clientes-page .module-sticky-head .module-title h2, .produtos-page .module-sticky-head .module-title h2, .pedidos-page .module-sticky-head .module-title h2, .pagamentos-page .module-sticky-head .module-title h2, .settings-page .module-sticky-head .module-title h2, .publicacoes-page .module-sticky-head .module-title h2, .divulgacao-page .module-sticky-head .module-title h2 { color: #0A1F44; }
 .clientes-page .client-card-grid, .clientes-page .empty-module, .produtos-page .module-product-grid, .produtos-page .empty-module { margin-top: 18px; }
 .pagamentos-page.is-searching { padding-top: 200px; }
@@ -1804,7 +1809,7 @@ body { background: #fff; color: var(--ink); }
   .main-area { width: 100%; margin-left: 0; }
   .menu-toggle { display: inline-block; }
   .system-header { left: 0; padding: 0 16px; }
-  .clientes-page, .clientes-page.is-searching { padding-top: 236px; }
+  .clientes-page, .clientes-page.is-searching { padding-top: 184px; }
   .produtos-page { padding-top: 190px; }
   .produtos-page.is-searching { padding-top: 244px; }
   .pedidos-page { padding-top: 236px; }
@@ -1819,6 +1824,7 @@ body { background: #fff; color: var(--ink); }
   .divulgacao-page { padding-top: 244px; }
   .settings-page { padding-top: 122px; }
   .clientes-page .module-sticky-head, .produtos-page .module-sticky-head, .pedidos-page .module-sticky-head, .pagamentos-page .module-sticky-head, .settings-page .module-sticky-head, .publicacoes-page .module-sticky-head, .divulgacao-page .module-sticky-head { left: 0; padding: 14px 16px 12px; }
+  .clientes-page .module-sticky-head { gap: 8px; padding-top: 10px; padding-bottom: 9px; }
   .divulgacao-page .search-compact-always { padding: 9px 10px; }
   .divulgacao-page .search-compact-always .search-actions { display: flex; width: 100%; gap: 8px; }
   .divulgacao-page .search-compact-always .search-actions button { height: 29px; min-height: 29px; }

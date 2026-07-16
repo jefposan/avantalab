@@ -1,8 +1,8 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.5.4.24 -->
+<!-- ava-version: 1.5.4.25 -->
 
-> Revisão 1.5.4.24: visualização, edição e conversão de pedidos consignados.
+> Revisão 1.5.4.25: foco do pagamento e cabeçalho compacto de Clientes.
 
 ## Escopo e navegação
 
@@ -84,7 +84,8 @@ dúvida dentro do Vendas sempre que a função existir ali.
   de cliente. A lista mostra somente os nomes, em fonte maior; a pesquisa ainda
   pode localizar pelo nome, telefone ou e-mail.
 - Ao tocar em **Pagamento** no card de um cliente, o formulário permanece fixo
-  enquanto o teclado abre e o campo **Valor pago** recebe um único foco automático.
+  enquanto o teclado numérico abre no mesmo toque e o campo **Valor pago** recebe
+  um único foco automático.
 - No campo **Produto**, digite nome, código, marca ou categoria para filtrar
   imediatamente as opções; toque no resultado para selecionar e preencher o preço.
 - Ao cancelar ou fechar um novo pedido ou pagamento, o Vendas mantém a página e
