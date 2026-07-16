@@ -108,6 +108,7 @@ let atualizacaoPwaPendente = false;
 let filtroPedidos = 'todos';
 let limitePedidos = 10;
 let limiteClientesPagamentos = 10;
+const ITENS_POR_LOTE_HISTORICO = 10;
 let pedidoClienteRascunho = null;
 let conversaoConsignadoRascunho = null;
 let pagamentoClienteRascunho = null;
@@ -3539,17 +3540,29 @@ async function confirmarPagamentoCliente() {
 
 function listaPagamentosPaginaHtml(clienteId, pagina = 0) {
   const pagamentos = pagamentosDoCliente(clienteId);
-  const limite = (pagina + 1) * 10;
+  const limite = (pagina + 1) * ITENS_POR_LOTE_HISTORICO;
   const itens = pagamentos.slice(0, limite);
   if (!itens.length) return '<div class="payment-client-empty">Nenhum pagamento registrado para este cliente.</div>';
-  return `<div class="payment-client-list">${itens.map((pagamento) => `<button type="button" onclick="abrirEditarPagamentoCliente('${pagamento.id}', ${pagina})"><span><b>${dataBR(`${pagamento.data_pagamento}T12:00:00`)}</b><small>${escapeHtml(pagamento.forma_pagamento || 'Não informado')}${Number(pagamento.desconto || 0) > 0 ? ` · desconto ${moeda(pagamento.desconto)}` : ''}</small></span><strong>${moeda(pagamento.valor)}</strong>${svgIcon('chevron-right')}</button>`).join('')}</div>${pagamentos.length > limite ? `<button type="button" class="ghost payment-client-more" onclick="abrirPagamentosCliente('${clienteId}', ${pagina + 1})">Ver mais pagamentos</button>` : ''}`;
+  const quantidadeProximoLote = Math.min(ITENS_POR_LOTE_HISTORICO, pagamentos.length - limite);
+  return `<p class="history-visible-count">Exibindo ${itens.length} de ${pagamentos.length} pagamentos</p><div class="payment-client-list">${itens.map((pagamento) => `<button type="button" onclick="abrirEditarPagamentoCliente('${pagamento.id}', ${pagina})"><span><b>${dataBR(`${pagamento.data_pagamento}T12:00:00`)}</b><small>${escapeHtml(pagamento.forma_pagamento || 'Não informado')}${Number(pagamento.desconto || 0) > 0 ? ` · desconto ${moeda(pagamento.desconto)}` : ''}</small></span><strong>${moeda(pagamento.valor)}</strong>${svgIcon('chevron-right')}</button>`).join('')}</div>${pagamentos.length > limite ? `<button type="button" class="ghost payment-client-more" onclick="carregarMaisPagamentosCliente('${clienteId}', ${pagina})">Carregar mais ${quantidadeProximoLote} pagamentos</button>` : ''}`;
 }
 
-function abrirPagamentosCliente(clienteId, pagina = 0) {
+function abrirPagamentosCliente(clienteId, pagina = 0, rolagemConteudo = null) {
   const cliente = state.clientes.find((item) => item.id === clienteId);
   if (!cliente) return;
   const pagamentos = pagamentosDoCliente(clienteId);
   sheet(`<div class="sheet-header"><div><h2>Pagamentos</h2><p class="muted small">${escapeHtml(cliente.nome)} · ${pagamentos.length} registro${pagamentos.length === 1 ? '' : 's'}</p></div><button class="close" onclick="fecharSheet()">×</button></div><div class="payment-client-history">${listaPagamentosPaginaHtml(clienteId, pagina)}</div>`, 'sheet-backdrop-centered payment-history-backdrop');
+  if (Number.isFinite(rolagemConteudo)) {
+    requestAnimationFrame(() => {
+      const painel = document.querySelector('.payment-client-history');
+      if (painel) painel.scrollTop = Number(rolagemConteudo);
+    });
+  }
+}
+
+function carregarMaisPagamentosCliente(clienteId, paginaAtual = 0) {
+  const painel = document.querySelector('.payment-client-history');
+  abrirPagamentosCliente(clienteId, Number(paginaAtual) + 1, painel?.scrollTop || 0);
 }
 
 function saldoClienteComPagamentoAlterado(pagamento, novoValor) {
@@ -3740,20 +3753,23 @@ function pedidoEhConsignado(venda) {
 }
 
 function listaPedidosClienteHtml(pedidos, pagina, vazio, aba) {
-  const limite = (pagina + 1) * 10;
+  const limite = (pagina + 1) * ITENS_POR_LOTE_HISTORICO;
   const itens = pedidos.slice(0, limite);
   if (!itens.length) return `<div class="client-report-empty">${escapeHtml(vazio)}</div>`;
-  return `<div class="client-report-list">${itens.map((venda) => `<button type="button" class="client-report-row" onclick="abrirPedidoCliente('${venda.id}','${venda.cliente_id}','${aba}',${pagina})"><span><b>${dataBR(venda.criado_em)}</b><small>${escapeHtml(venda.forma_pagamento || 'Não informado')} · ${(venda.itens || []).length} itens</small></span><strong>${moeda(venda.total)}</strong></button>`).join('')}</div>${pedidos.length > limite ? '<button class="ghost client-load-more" onclick="abrirDetalhesCliente(\'' + pedidos[0].cliente_id + '\', window.currentClientDetailTab, ' + (pagina + 1) + ')">Carregar mais</button>' : ''}`;
+  const tipo = aba === 'consignado' ? 'consignados' : 'pedidos';
+  const quantidadeProximoLote = Math.min(ITENS_POR_LOTE_HISTORICO, pedidos.length - limite);
+  return `<p class="history-visible-count">Exibindo ${itens.length} de ${pedidos.length} ${tipo}</p><div class="client-report-list">${itens.map((venda) => `<button type="button" class="client-report-row" onclick="abrirPedidoCliente('${venda.id}','${venda.cliente_id}','${aba}',${pagina})"><span><b>${dataBR(venda.criado_em)}</b><small>${escapeHtml(venda.forma_pagamento || 'Não informado')} · ${(venda.itens || []).length} itens</small></span><strong>${moeda(venda.total)}</strong></button>`).join('')}</div>${pedidos.length > limite ? `<button class="ghost client-load-more" onclick="carregarMaisDetalhesCliente('${pedidos[0].cliente_id}', '${aba}', ${pagina})">Carregar mais ${quantidadeProximoLote} ${tipo}</button>` : ''}`;
 }
 
 function listaPagamentosClienteHtml(pagamentos, pagina) {
-  const limite = (pagina + 1) * 10;
+  const limite = (pagina + 1) * ITENS_POR_LOTE_HISTORICO;
   const itens = pagamentos.slice(0, limite);
   if (!itens.length) return '<div class="client-report-empty">Nenhum pagamento registrado.</div>';
-  return `<div class="client-report-list">${itens.map((pagamento) => `<button type="button" class="client-report-row" onclick="abrirPagamentoClienteDetalhe('${pagamento.id}','${pagamento.cliente_id}','pagamentos',${pagina})"><span><b>${dataBR(`${pagamento.data_pagamento}T12:00:00`)}</b><small>${escapeHtml(pagamento.forma_pagamento || 'Não informado')}${Number(pagamento.desconto || 0) > 0 ? ` · desconto ${moeda(pagamento.desconto)}` : ''}</small></span><strong>${moeda(pagamento.valor)}</strong></button>`).join('')}</div>${pagamentos.length > limite ? `<button class="ghost client-load-more" onclick="abrirDetalhesCliente('${pagamentos[0].cliente_id}', 'pagamentos', ${pagina + 1})">Carregar mais</button>` : ''}`;
+  const quantidadeProximoLote = Math.min(ITENS_POR_LOTE_HISTORICO, pagamentos.length - limite);
+  return `<p class="history-visible-count">Exibindo ${itens.length} de ${pagamentos.length} pagamentos</p><div class="client-report-list">${itens.map((pagamento) => `<button type="button" class="client-report-row" onclick="abrirPagamentoClienteDetalhe('${pagamento.id}','${pagamento.cliente_id}','pagamentos',${pagina})"><span><b>${dataBR(`${pagamento.data_pagamento}T12:00:00`)}</b><small>${escapeHtml(pagamento.forma_pagamento || 'Não informado')}${Number(pagamento.desconto || 0) > 0 ? ` · desconto ${moeda(pagamento.desconto)}` : ''}</small></span><strong>${moeda(pagamento.valor)}</strong></button>`).join('')}</div>${pagamentos.length > limite ? `<button class="ghost client-load-more" onclick="carregarMaisDetalhesCliente('${pagamentos[0].cliente_id}', 'pagamentos', ${pagina})">Carregar mais ${quantidadeProximoLote} pagamentos</button>` : ''}`;
 }
 
-function abrirDetalhesCliente(clienteId, aba = 'resumo', pagina = 0) {
+function abrirDetalhesCliente(clienteId, aba = 'resumo', pagina = 0, rolagemConteudo = null) {
   const cliente = state.clientes.find((item) => item.id === clienteId);
   if (!cliente) return;
   window.currentClientDetailTab = aba;
@@ -3771,6 +3787,17 @@ function abrirDetalhesCliente(clienteId, aba = 'resumo', pagina = 0) {
         ? listaPedidosClienteHtml(pedidos, pagina, 'Nenhum pedido registrado.', 'pedidos')
         : listaPagamentosClienteHtml(pagamentos, pagina);
   sheet(`<div class="sheet-header"><div><h2>${escapeHtml(cliente.nome)}</h2><p class="muted small">Histórico do cliente</p></div><button class="close" onclick="fecharSheet()">×</button></div><nav class="client-detail-tabs"><button class="${aba === 'resumo' ? 'active' : ''}" onclick="abrirDetalhesCliente('${clienteId}','resumo')">Resumo</button><button class="${aba === 'consignado' ? 'active' : ''}" onclick="abrirDetalhesCliente('${clienteId}','consignado')">Consignado</button><button class="${aba === 'pedidos' ? 'active' : ''}" onclick="abrirDetalhesCliente('${clienteId}','pedidos')">Pedidos</button><button class="${aba === 'pagamentos' ? 'active' : ''}" onclick="abrirDetalhesCliente('${clienteId}','pagamentos')">Pagamentos</button></nav><div class="client-detail-content">${conteudo}</div>`, 'client-detail-backdrop sheet-backdrop-centered');
+  if (Number.isFinite(rolagemConteudo)) {
+    requestAnimationFrame(() => {
+      const painel = document.querySelector('.client-detail-content');
+      if (painel) painel.scrollTop = Number(rolagemConteudo);
+    });
+  }
+}
+
+function carregarMaisDetalhesCliente(clienteId, aba, paginaAtual = 0) {
+  const painel = document.querySelector('.client-detail-content');
+  abrirDetalhesCliente(clienteId, aba, Number(paginaAtual) + 1, painel?.scrollTop || 0);
 }
 
 function voltarParaDetalhesCliente(clienteId = '', aba = '', pagina = 0) {
@@ -4116,10 +4143,11 @@ function renderPagamentos() {
   const todosClientes = clientesOrdenadosPorUltimoPagamento();
   const clientes = todosClientes.slice(0, limiteClientesPagamentos);
   const temBusca = Boolean(String(state.busca || '').trim());
+  const quantidadeProximoLote = Math.min(ITENS_POR_LOTE_HISTORICO, todosClientes.length - clientes.length);
   const mensagemVazia = buscaAplicada
     ? '<h3>Nenhum cliente encontrado</h3><p>Revise o texto pesquisado e tente novamente.</p>'
     : '<h3>Nenhum pagamento registrado</h3><p>Pesquise um cliente para registrar o primeiro recebimento.</p>';
-  return `<section class="module-page pagamentos-page${temBusca ? ' is-searching' : ''}"><div class="module-sticky-head"><div class="module-title"><div><h2>Pagamentos</h2><p>Gerencie pagamentos, débitos e créditos.</p></div></div>${renderBarraBusca('Pesquisar clientes', 'Ordem Alfabética')}</div>${clientes.length ? `<section class="debt-card-grid">${clientes.map(renderClienteDebito).join('')}</section>${todosClientes.length > clientes.length ? `<button type="button" class="ghost payment-clients-more" onclick="carregarMaisClientesPagamentos()">Ver mais clientes</button>` : ''}` : `<article class="publication-empty"><span>${svgIcon('users')}</span>${mensagemVazia}</article>`}</section>`;
+  return `<section class="module-page pagamentos-page${temBusca ? ' is-searching' : ''}"><div class="module-sticky-head"><div class="module-title"><div><h2>Pagamentos</h2><p>Gerencie pagamentos, débitos e créditos.</p></div></div>${renderBarraBusca('Pesquisar clientes', 'Ordem Alfabética')}</div>${clientes.length ? `<div class="module-stats order-results-stats"><span>Exibindo <b>${clientes.length}</b> de <b>${todosClientes.length}</b> clientes</span></div><section class="debt-card-grid">${clientes.map(renderClienteDebito).join('')}</section>${todosClientes.length > clientes.length ? `<button type="button" class="ghost payment-clients-more" onclick="carregarMaisClientesPagamentos()">Carregar mais ${quantidadeProximoLote} clientes</button>` : ''}` : `<article class="publication-empty"><span>${svgIcon('users')}</span>${mensagemVazia}</article>`}</section>`;
 }
 
 function renderClienteDebito(c) {
@@ -4169,6 +4197,12 @@ function renderVendas() {
   const vendas = pedidosFiltrados();
   const exibidas = vendas.slice(0, limitePedidos);
   const temBusca = Boolean(String(state.busca || '').trim());
+  const quantidadeProximoLote = Math.min(ITENS_POR_LOTE_HISTORICO, vendas.length - exibidas.length);
+  const rotuloProximoLote = filtroPedidos === 'consignados'
+    ? 'consignados'
+    : filtroPedidos === 'bonificacoes'
+      ? 'bonificações'
+      : 'pedidos';
   return `
     <section class="module-page pedidos-page${temBusca ? ' is-searching' : ''}">
       <div class="module-sticky-head">
@@ -4183,7 +4217,7 @@ function renderVendas() {
       </div>
       <div class="module-stats order-results-stats"><span>Exibindo <b>${Math.min(exibidas.length, vendas.length)}</b> de <b>${vendas.length}</b></span></div>
       <div class="orders-card-grid">${exibidas.length ? exibidas.map(renderVenda).join('') : '<div class="table-empty orders-empty">Nenhum pedido encontrado.</div>'}</div>
-      ${vendas.length > exibidas.length ? `<button class="ghost orders-load-more" onclick="carregarMaisPedidos()">Carregar mais 10</button>` : ''}
+      ${vendas.length > exibidas.length ? `<button class="ghost orders-load-more" onclick="carregarMaisPedidos()">Carregar mais ${quantidadeProximoLote} ${rotuloProximoLote}</button>` : ''}
     </section>
   `;
 }
@@ -5450,6 +5484,7 @@ window.abrirPagamentoCliente = abrirPagamentoCliente;
 window.atualizarResumoPagamentoCliente = atualizarResumoPagamentoCliente;
 window.confirmarPagamentoCliente = confirmarPagamentoCliente;
 window.abrirPagamentosCliente = abrirPagamentosCliente;
+window.carregarMaisPagamentosCliente = carregarMaisPagamentosCliente;
 window.abrirEditarPagamentoCliente = abrirEditarPagamentoCliente;
 window.voltarEdicaoPagamento = voltarEdicaoPagamento;
 window.atualizarResumoEdicaoPagamento = atualizarResumoEdicaoPagamento;
@@ -5460,6 +5495,7 @@ window.carregarMaisClientesPagamentos = carregarMaisClientesPagamentos;
 window.abrirPagamentoClienteDetalhe = abrirPagamentoClienteDetalhe;
 window.alterarStatusCliente = alterarStatusCliente;
 window.abrirDetalhesCliente = abrirDetalhesCliente;
+window.carregarMaisDetalhesCliente = carregarMaisDetalhesCliente;
 window.voltarParaDetalhesCliente = voltarParaDetalhesCliente;
 window.abrirPedidoCliente = abrirPedidoCliente;
 window.compartilharPedido = compartilharPedido;

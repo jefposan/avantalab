@@ -1,8 +1,8 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.5.4.05 -->
+<!-- ava-version: 1.5.4.06 -->
 
-> Revisão 1.5.4.05: históricos operacionais paginados integralmente para manter os saldos corretos acima de 1.000 registros.
+> Revisão 1.5.4.06: históricos visuais em lotes de 10 com carregamento progressivo.
 
 ## Escopo e navegação
 
@@ -43,6 +43,9 @@ dúvida dentro do Vendas sempre que a função existir ali.
   são recomendados para ligação/WhatsApp e mapas.
 - A ficha oferece pedido, pagamento, agendamento e **Ver detalhes**. Nesta área,
   Resumo, Consignado, Pedidos e Pagamentos mostram os históricos.
+- Pedidos, consignados e pagamentos exibem 10 registros por vez. O botão
+  **Carregar mais** acrescenta o próximo lote de até 10 registros sem perder a
+  posição da rolagem, até chegar ao fim do histórico.
 - Em **Clientes sem compra**, o seletor define o intervalo sem pedidos e todos os
   clientes enquadrados são exibidos; o cabeçalho permanece visível durante a rolagem.
 - Ao fechar um comprovante aberto pelas listas, o retorno esperado é a mesma lista

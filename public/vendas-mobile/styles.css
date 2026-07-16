@@ -1669,6 +1669,7 @@ body { background: #fff; color: var(--ink); }
 .client-summary-grid small { color: #64748b; font-size: 10px; font-weight: 800; }
 .client-summary-grid b { color: #0A1F44; font-size: 15px; }
 .client-report-list { display: grid; gap: 8px; }
+.history-visible-count { margin: 0 0 9px; color: #64748b; font-size: 10px; font-weight: 800; text-align: center; }
 .client-report-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; border: 1px solid #dbe5ef; border-radius: 10px; padding: 10px; color: #0A1F44; background: #fff; text-align: left; }
 .client-report-row span { display: grid; gap: 3px; min-width: 0; }
 .client-report-row small { overflow: hidden; color: #64748b; text-overflow: ellipsis; white-space: nowrap; }

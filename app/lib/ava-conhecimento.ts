@@ -84,7 +84,7 @@ CLIENTES
 - Durante a preparação de acesso ou conteúdo, o Vendas exibe a etapa atual e um percentual baseado nas tarefas realmente concluídas, como sessão, permissões, catálogo, clientes, pedidos e pagamentos. Aguarde a conclusão antes de orientar uma nova ação.
 - Ao reabrir o PWA com sessão e perfil já validados, o Vendas pode restaurar dados recentes daquele perfil e atualizar em segundo plano. O cache é local, temporário e removido ao sair ou resetar o sistema.
 - A abertura do Vendas reaproveita a validação já concluída do perfil e libera a tela antes da sincronização automática do catálogo. A opção Verificar agora atualiza apenas o catálogo, sem recarregar todo o sistema.
-- Em Ver detalhes, o cabeçalho fica fixo e só o conteúdo rola. Resumo mostra totais; Consignado, Pedidos e Pagamentos são listas distintas. Abrir um pagamento mostra o comprovante e permite editar ou excluir o registro.
+- Em Ver detalhes, o cabeçalho fica fixo e só o conteúdo rola. Resumo mostra totais; Consignado, Pedidos e Pagamentos são listas distintas e exibem 10 registros por vez; Carregar mais acrescenta o próximo lote sem perder a posição. Abrir um pagamento mostra o comprovante e permite editar ou excluir o registro.
 - Em Clientes sem compra, o intervalo selecionado lista todos os clientes sem pedidos, mantendo título e cabeçalhos visíveis durante a rolagem. Ao navegar entre telas, a posição anterior é preservada durante a sessão.
 - O aniversário cadastrado entra na agenda e pode aparecer no aviso do cabeçalho no dia correspondente.
 

@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.5.4.06 - 2026-07-16
+
+- Vendas Mobile: históricos de pedidos, consignados e pagamentos passam a exibir 10 registros por vez, com botão para carregar o próximo lote até o fim da lista.
+- Navegação: ao carregar mais registros dentro de **Ver detalhes**, a posição da rolagem é preservada.
+- Listas principais: Pedidos e clientes da área de Pagamentos seguem o mesmo padrão de lotes de 10, com contador do total exibido.
+
 ## 1.5.4.05 - 2026-07-16
 
 - Vendas Mobile: clientes, pedidos e pagamentos passam a ser carregados em todas as páginas do Supabase, sem perder registros quando o histórico ultrapassa 1.000 linhas.
