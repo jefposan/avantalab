@@ -4153,8 +4153,6 @@ function abrirConsignadoCliente(venda, retornoClienteId = '', retornoAba = '', r
       <strong>${Number(item.quantidade || 0)}</strong>
     </div>
   `).join('') || '<p class="transaction-empty">Nenhum produto em consignação.</p>';
-  const statusConsignado = normalizar(venda.status);
-  const consignadoAtivo = !['cancelada', 'convertida'].includes(statusConsignado);
   const possuiItensDisponiveis = (venda.itens || []).some((item) => Number(item.quantidade || 0) > 0);
   sheet(`
     <div class="sheet-header">
@@ -4168,8 +4166,8 @@ function abrirConsignadoCliente(venda, retornoClienteId = '', retornoAba = '', r
       </section>
       <section class="consignment-fixed-summary">
         <div><span>Total em consignação</span><b>${moeda(venda.total)}</b></div>
-        <button type="button" class="primary consignment-generate-button" ${consignadoAtivo && possuiItensDisponiveis ? `onclick="abrirConversaoConsignado('${venda.id}','${retornoClienteId}','${retornoAba}',${retornoPagina})"` : 'disabled'}>${consignadoAtivo ? 'Gerar pedido' : 'Pedido já gerado'}</button>
-        ${consignadoAtivo && !possuiItensDisponiveis ? '<p>Não há itens disponíveis para gerar um novo pedido.</p>' : ''}
+        <button type="button" class="primary consignment-generate-button" ${possuiItensDisponiveis ? `onclick="abrirConversaoConsignado('${venda.id}','${retornoClienteId}','${retornoAba}',${retornoPagina})"` : 'disabled'}>Gerar pedido</button>
+        ${!possuiItensDisponiveis ? '<p>Não há itens disponíveis para gerar um novo pedido.</p>' : ''}
         <button class="primary order-share" onclick="compartilharPedido('${venda.id}')">${svgIcon('save')} Compartilhar comprovante</button>
       </section>
       <footer class="order-view-actions consignment-view-actions">
@@ -4270,7 +4268,7 @@ async function gerarPedidoDoConsignado(pedidoId) {
     id: uuidPersistenciaVendas(), cliente_id: consignado.cliente_id, status: 'concluida', subtotal: subtotalPedido, desconto: 0, total: subtotalPedido, forma_pagamento: 'Venda', criado_em: agora,
     observacoes: JSON.stringify({ avantalab_pedido: true, tipo: 'venda', descricao: 'Venda originada de consignado', consignado_origem_id: consignado.id }), itens: itensPedido,
   };
-  const consignadoAtualizado = { ...consignado, itens: restantes, subtotal: subtotalRestante, total: subtotalRestante, status: restantes.length ? consignado.status : 'convertida', observacoes: JSON.stringify({ ...metadadosPedido(consignado), convertido_parcialmente: true }) };
+  const consignadoAtualizado = { ...consignado, itens: restantes, subtotal: subtotalRestante, total: subtotalRestante, status: restantes.length ? 'concluida' : 'convertida', observacoes: JSON.stringify({ ...metadadosPedido(consignado), convertido_parcialmente: true }) };
   iniciarMutacaoDadosVendas();
   try {
     const botaoConfirmar = document.getElementById('consignadoConfirmarPedido');

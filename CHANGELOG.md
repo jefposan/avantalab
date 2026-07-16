@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.5.4.28 - 2026-07-16
+
+- Vendas Mobile: **Gerar pedido** depende exclusivamente da existência de produtos restantes no consignado. Conversões parciais mantêm o consignado disponível para novos pedidos até zerar todos os itens.
+
 ## 1.5.4.27 - 2026-07-16
 
 - Vendas Mobile: o encaixe automático dos cards de Clientes é pausado integralmente enquanto qualquer popup estiver aberto e só é retomado após o fechamento.

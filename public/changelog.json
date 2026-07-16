@@ -12,6 +12,7 @@
     "instagramUrl": "https://www.instagram.com/avanta.lab"
   },
   "versoes": [
+    {"versao":"1.5.4.28","titulo":"Consignado pronto para novas vendas","data":"Julho/2026","itens":["Enquanto houver produtos consignados, Gerar pedido fica disponível.","Cada pedido abate somente as quantidades escolhidas e permite novas vendas parciais até o saldo zerar."]},
     {"versao":"1.5.4.27","titulo":"Cards estáveis ao abrir um popup","data":"Julho/2026","itens":["O encaixe automático da lista de Clientes pausa enquanto um card ou popup está aberto.","Ao fechar, a lista permanece parada antes de retomar o comportamento normal."]},
     {"versao":"1.5.4.26","titulo":"Gerar pedido sempre disponível","data":"Julho/2026","itens":["O botão Gerar pedido permanece visível no card de consignado enquanto houver itens disponíveis.","Ao tocar, abre a etapa própria para informar as quantidades vendidas e confirmar o pedido."]},
     {"versao":"1.5.4.25","titulo":"Pagamento pronto para digitar","data":"Julho/2026","itens":["Ao tocar em Pagamento, o teclado numérico volta a abrir diretamente no campo Valor pago.","O card permanece estável enquanto o teclado é exibido.","O cabeçalho de Clientes ficou mais compacto e libera mais espaço para a lista."]},
