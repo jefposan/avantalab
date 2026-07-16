@@ -399,6 +399,7 @@
     const user = await currentUser();
     if (!user) throw new Error('Sessão expirada.');
     const payload = {
+      id: customer.id,
       user_id: user.id,
       nome: customer.nome,
       telefone: customer.telefone || null,
@@ -412,10 +413,11 @@
       ativo: customer.ativo !== false,
       atualizado_em: new Date().toISOString(),
     };
-    const query = customer.id && !String(customer.id).startsWith('cli_')
-      ? client.from('vendas_mobile_clientes').update(payload).eq('id', customer.id).eq('user_id', user.id)
-      : client.from('vendas_mobile_clientes').insert(payload);
-    const { data, error } = await query.select().single();
+    const { data, error } = await client
+      .from('vendas_mobile_clientes')
+      .upsert(payload, { onConflict: 'id' })
+      .select()
+      .single();
     if (error) throw error;
     if (!data?.id) throw new Error('Os dados do cliente não foram confirmados pelo servidor.');
     return { ...data, ...(data.endereco || {}) };
@@ -449,7 +451,7 @@
       observacoes: order.observacoes || null,
       criado_em: order.criado_em || new Date().toISOString(),
     };
-    if (incluirId) pedido.id = order.id;
+    if (order.id) pedido.id = order.id;
     const itens = order.itens.map((item) => {
       const quantidade = Number(item.quantidade || 1);
       const preco = Number(item.preco ?? item.preco_unitario ?? 0);
@@ -475,6 +477,7 @@
     const { data, error } = await client.rpc('salvar_pedido_vendas_mobile_rpc', {
       p_pedido: payload.pedido,
       p_itens: payload.itens,
+      p_novo: !incluirId,
     });
     if (error) throw error;
     if (!data?.id || !Array.isArray(data.itens)) throw new Error('O pedido não foi confirmado integralmente pelo servidor.');
@@ -500,6 +503,7 @@
     const user = await currentUser();
     if (!user) throw new Error('Sessão expirada.');
     const payload = {
+      id: payment.id,
       user_id: user.id,
       cliente_id: payment.cliente_id || null,
       tipo: 'pagamento',
@@ -511,9 +515,10 @@
       observacoes: payment.observacoes || null,
       data_pagamento: payment.data_pagamento,
     };
-    let { data, error } = await client.from('vendas_mobile_pagamentos').insert(payload).select().single();
+    let { data, error } = await client.from('vendas_mobile_pagamentos').upsert(payload, { onConflict: 'id' }).select().single();
     if (error && /desconto|saldo_anterior|saldo_final|schema cache/i.test(String(error.message || ''))) {
       const legado = {
+        id: payload.id,
         user_id: payload.user_id,
         cliente_id: payload.cliente_id,
         tipo: payload.tipo,
@@ -522,7 +527,7 @@
         data_pagamento: payload.data_pagamento,
         observacoes: JSON.stringify({ avantalab_pagamento: true, desconto: payload.desconto, saldo_anterior: payload.saldo_anterior, saldo_final: payload.saldo_final }),
       };
-      ({ data, error } = await client.from('vendas_mobile_pagamentos').insert(legado).select().single());
+      ({ data, error } = await client.from('vendas_mobile_pagamentos').upsert(legado, { onConflict: 'id' }).select().single());
     }
     if (error) throw error;
     if (!data?.id) throw new Error('O pagamento não foi confirmado pelo servidor.');

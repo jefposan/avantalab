@@ -12,6 +12,7 @@
     "instagramUrl": "https://www.instagram.com/avanta.lab"
   },
   "versoes": [
+    {"versao":"1.5.4.01","titulo":"Salvamento protegido contra queda de conexão","data":"Julho/2026","itens":["Alterações de clientes, pedidos e pagamentos ficam protegidas no aparelho até a confirmação do servidor.","Se a conexão cair durante o salvamento, o Vendas tenta novamente automaticamente sem duplicar registros.","A mensagem de sucesso só aparece depois que o Supabase confirma a gravação."]},
     {"versao":"1.5.4","titulo":"Proteção reforçada dos dados do Vendas","data":"Julho/2026","itens":["Clientes, pedidos e pagamentos salvos não são mais substituídos por uma atualização antiga em segundo plano.","A edição de um pedido e seus itens agora é confirmada integralmente pelo servidor antes de informar sucesso.","O cache local é atualizado imediatamente e na mesma ordem das alterações realizadas."]},
     {"versao":"1.5.3.16","titulo":"Busca mais rápida nos lançamentos","data":"Julho/2026","itens":["Ao tocar na lupa de despesas ou receitas, o campo de busca já fica pronto para digitação."]},
     {"versao":"1.5.3.15","titulo":"Login consistente em todos os perfis","data":"Julho/2026","itens":["O login da conta agora aparece e permanece salvo ao editar o usuário em qualquer perfil vinculado."]},

@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.5.4.01 - 2026-07-16
+
+- Vendas Mobile: clientes, pedidos e pagamentos recebem identificadores únicos criados no aparelho, permitindo repetir uma gravação após queda de conexão sem duplicar registros.
+- Persistência: se o Supabase não confirmar uma alteração por falha temporária de rede, ela permanece em uma fila protegida no IndexedDB e é reenviada automaticamente na abertura ou quando a internet retorna.
+- Interface: o sistema diferencia uma alteração confirmada, uma alteração protegida aguardando sincronização e uma falha sem armazenamento local; sucesso só é informado após a confirmação do servidor.
+
 ## 1.5.4 - 2026-07-16
 
 - Vendas Mobile: protege clientes, pedidos e pagamentos contra uma atualização antiga em segundo plano que poderia substituir na tela e no cache dados recém-salvos.

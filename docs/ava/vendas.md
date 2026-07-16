@@ -1,8 +1,8 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.5.4 -->
+<!-- ava-version: 1.5.4.01 -->
 
-> Revisão 1.5.4: clientes, pedidos e pagamentos são confirmados no servidor e protegidos contra restaurações antigas do cache.
+> Revisão 1.5.4.01: falhas temporárias de conexão mantêm clientes, pedidos e pagamentos em uma fila protegida até a confirmação do servidor.
 
 ## Escopo e navegação
 
@@ -34,6 +34,9 @@ dúvida dentro do Vendas sempre que a função existir ali.
 - Ao salvar ou editar cliente, pedido ou pagamento, o Vendas confirma a gravação
   no servidor e atualiza imediatamente o cache local. Uma atualização iniciada
   antes da alteração não pode substituir o dado mais novo.
+- Se a internet cair durante a gravação, a alteração fica protegida no aparelho
+  e é reenviada automaticamente sem criar duplicidade. O app informa claramente
+  quando ainda aguarda confirmação; **salvo** significa confirmação do servidor.
 - **Clientes > Novo cliente** cria a ficha. Nome é obrigatório; celular e endereço
   são recomendados para ligação/WhatsApp e mapas.
 - A ficha oferece pedido, pagamento, agendamento e **Ver detalhes**. Nesta área,

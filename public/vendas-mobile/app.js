@@ -5,7 +5,8 @@ const PERFIL_VENDAS_ATIVO_KEY = 'avantalab_vendas_perfil_ativo';
 const ENTRADA_VENDAS_PELA_GESTAO_KEY = 'avantalab_vendas_entrada_gestao';
 const CACHE_VENDAS_DB = 'avantalab.vendas_mobile.cache';
 const CACHE_VENDAS_STORE = 'sessoes';
-const CACHE_VENDAS_VERSAO = 2;
+const CACHE_VENDAS_PENDENCIAS_STORE = 'pendencias';
+const CACHE_VENDAS_VERSAO = 3;
 const CACHE_VENDAS_VALIDADE_MS = 1000 * 60 * 60 * 24 * 7;
 const HOJE = new Date();
 const INICIO_MES = new Date(HOJE.getFullYear(), HOJE.getMonth(), 1);
@@ -111,6 +112,7 @@ let limiteClientesPagamentos = 10;
 let pedidoClienteRascunho = null;
 let conversaoConsignadoRascunho = null;
 let pagamentoClienteRascunho = null;
+let clientePersistenciaIdAtual = '';
 let ordemAlfabetica = 'asc';
 let feedbackVendasEnviando = false;
 let feedbackVendasEnviado = false;
@@ -131,6 +133,7 @@ let sincronizacaoCatalogoEmAndamento = false;
 let revisaoDadosOperacionais = 0;
 let mutacoesDadosEmAndamento = 0;
 let filaCacheVendas = Promise.resolve();
+let reenviandoPendenciasVendas = false;
 
 try {
   rolagemPorAba = JSON.parse(sessionStorage.getItem('avantalab.vendas_mobile.rolagem_abas') || '{}') || {};
@@ -305,6 +308,7 @@ function abrirBancoCacheVendas() {
     const pedido = window.indexedDB.open(CACHE_VENDAS_DB, CACHE_VENDAS_VERSAO);
     pedido.onupgradeneeded = () => {
       if (!pedido.result.objectStoreNames.contains(CACHE_VENDAS_STORE)) pedido.result.createObjectStore(CACHE_VENDAS_STORE);
+      if (!pedido.result.objectStoreNames.contains(CACHE_VENDAS_PENDENCIAS_STORE)) pedido.result.createObjectStore(CACHE_VENDAS_PENDENCIAS_STORE);
     };
     pedido.onsuccess = () => resolver(pedido.result);
     pedido.onerror = () => rejeitar(pedido.error || new Error('Não foi possível abrir o cache local.'));
@@ -393,7 +397,94 @@ function finalizarMutacaoDadosVendas() {
   mutacoesDadosEmAndamento = Math.max(0, mutacoesDadosEmAndamento - 1);
 }
 
-async function limparCacheVendas(usuarioId = state.usuario?.id, empresaId = state.acessoVendas?.empresa_id) {
+function uuidPersistenciaVendas() {
+  if (typeof crypto?.randomUUID === 'function') return crypto.randomUUID();
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (caractere) => {
+    const aleatorio = Math.floor(Math.random() * 16);
+    const valor = caractere === 'x' ? aleatorio : (aleatorio & 0x3) | 0x8;
+    return valor.toString(16);
+  });
+}
+
+function chavePendenciaVendas(tipo, identificador) {
+  const contexto = chaveCacheVendas();
+  return contexto && identificador ? `${contexto}:${tipo}:${identificador}` : '';
+}
+
+async function registrarPendenciaVendas(tipo, identificador, payload) {
+  const contexto = chaveCacheVendas();
+  const chave = chavePendenciaVendas(tipo, identificador);
+  if (!chave) return '';
+  try {
+    const banco = await abrirBancoCacheVendas();
+    await new Promise((resolver, rejeitar) => {
+      const pedido = banco.transaction(CACHE_VENDAS_PENDENCIAS_STORE, 'readwrite')
+        .objectStore(CACHE_VENDAS_PENDENCIAS_STORE)
+        .put({ contexto, tipo, identificador, payload, atualizadoEm: Date.now() }, chave);
+      pedido.onsuccess = () => resolver();
+      pedido.onerror = () => rejeitar(pedido.error);
+    });
+    banco.close();
+    return chave;
+  } catch {
+    return '';
+  }
+}
+
+async function removerPendenciaVendas(chave) {
+  if (!chave) return;
+  try {
+    const banco = await abrirBancoCacheVendas();
+    await new Promise((resolver, rejeitar) => {
+      const pedido = banco.transaction(CACHE_VENDAS_PENDENCIAS_STORE, 'readwrite')
+        .objectStore(CACHE_VENDAS_PENDENCIAS_STORE)
+        .delete(chave);
+      pedido.onsuccess = () => resolver();
+      pedido.onerror = () => rejeitar(pedido.error);
+    });
+    banco.close();
+  } catch { /* a operação idempotente será conferida novamente */ }
+}
+
+async function listarPendenciasVendas() {
+  const contexto = chaveCacheVendas();
+  if (!contexto) return [];
+  try {
+    const banco = await abrirBancoCacheVendas();
+    const registros = await new Promise((resolver, rejeitar) => {
+      const pedido = banco.transaction(CACHE_VENDAS_PENDENCIAS_STORE, 'readonly')
+        .objectStore(CACHE_VENDAS_PENDENCIAS_STORE)
+        .getAll();
+      pedido.onsuccess = () => resolver(pedido.result || []);
+      pedido.onerror = () => rejeitar(pedido.error);
+    });
+    banco.close();
+    return registros.filter((registro) => registro.contexto === contexto);
+  } catch {
+    return [];
+  }
+}
+
+function erroTemporarioPersistencia(error) {
+  const texto = String(error?.message || error || '');
+  return !navigator.onLine || /fetch|network|conex|offline|timeout|tempo limite|failed to fetch|load failed/i.test(texto);
+}
+
+async function executarMutacaoGarantidaVendas(tipo, identificador, payload, executar) {
+  const chave = await registrarPendenciaVendas(tipo, identificador, payload);
+  try {
+    const resultado = await executar();
+    await removerPendenciaVendas(chave);
+    return resultado;
+  } catch (error) {
+    if (!erroTemporarioPersistencia(error)) await removerPendenciaVendas(chave);
+    else if (chave) error.persistenciaPendente = true;
+    else error.persistenciaLocalIndisponivel = true;
+    throw error;
+  }
+}
+
+async function limparCacheVendas(usuarioId = state.usuario?.id, empresaId = state.acessoVendas?.empresa_id, limparPendencias = false) {
   const chave = chaveCacheVendas(usuarioId, empresaId);
   if (!chave) return;
   try {
@@ -403,6 +494,20 @@ async function limparCacheVendas(usuarioId = state.usuario?.id, empresaId = stat
       pedido.onsuccess = () => resolver();
       pedido.onerror = () => rejeitar(pedido.error);
     });
+    if (limparPendencias) {
+      await new Promise((resolver, rejeitar) => {
+        const pedido = banco.transaction(CACHE_VENDAS_PENDENCIAS_STORE, 'readwrite')
+          .objectStore(CACHE_VENDAS_PENDENCIAS_STORE)
+          .openCursor();
+        pedido.onsuccess = () => {
+          const cursor = pedido.result;
+          if (!cursor) { resolver(); return; }
+          if (cursor.value?.contexto === chave) cursor.delete();
+          cursor.continue();
+        };
+        pedido.onerror = () => rejeitar(pedido.error);
+      });
+    }
     banco.close();
   } catch { /* o logout continua mesmo sem acesso ao cache */ }
 }
@@ -1816,10 +1921,74 @@ function mascararTelefone(telefone) {
 }
 
 function traduzErro(error) {
+  if (error?.persistenciaPendente) return 'Sem confirmação do servidor. A alteração ficou protegida neste aparelho e será reenviada automaticamente quando a conexão estabilizar.';
+  if (error?.persistenciaLocalIndisponivel) return 'Não foi possível confirmar no servidor nem proteger a alteração no aparelho. Mantenha esta tela aberta e tente novamente.';
   const texto = String(error?.message || error || 'Erro inesperado.');
   if (/invalid login credentials/i.test(texto)) return 'E-mail ou senha incorretos.';
   if (/relation .* does not exist/i.test(texto)) return 'O banco do Vendas Mobile ainda não foi instalado.';
   return texto;
+}
+
+function atualizarRegistroPersistido(lista, salvo) {
+  const atual = Array.isArray(lista) ? lista : [];
+  return atual.some((item) => item.id === salvo.id)
+    ? atual.map((item) => item.id === salvo.id ? { ...item, ...salvo } : item)
+    : [salvo, ...atual];
+}
+
+async function reenviarPendenciasVendas() {
+  if (reenviandoPendenciasVendas || !backendAtivo || !navigator.onLine || !state.autenticado || !state.acessoVendas) return;
+  reenviandoPendenciasVendas = true;
+  let houveAtualizacao = false;
+  try {
+    const pendencias = await listarPendenciasVendas();
+    for (const pendencia of pendencias) {
+      const chave = chavePendenciaVendas(pendencia.tipo, pendencia.identificador);
+      try {
+        if (pendencia.tipo === 'cliente_salvar') {
+          const salvo = await window.VendasDb.saveClient(pendencia.payload);
+          state.clientes = atualizarRegistroPersistido(state.clientes, salvo);
+        } else if (pendencia.tipo === 'cliente_excluir') {
+          await window.VendasDb.deleteClient(pendencia.payload.id);
+          state.clientes = state.clientes.filter((item) => item.id !== pendencia.payload.id);
+        } else if (pendencia.tipo === 'pedido_salvar') {
+          const salvo = pendencia.payload.novo
+            ? await window.VendasDb.saveOrder(pendencia.payload.pedido)
+            : await window.VendasDb.updateOrder(pendencia.payload.pedido);
+          state.vendas = atualizarRegistroPersistido(state.vendas, salvo);
+        } else if (pendencia.tipo === 'pedido_excluir') {
+          await window.VendasDb.deleteOrder(pendencia.payload.id);
+          state.vendas = state.vendas.filter((item) => item.id !== pendencia.payload.id);
+        } else if (pendencia.tipo === 'pagamento_salvar') {
+          const salvo = await window.VendasDb.savePayment(pendencia.payload);
+          state.pagamentos = atualizarRegistroPersistido(state.pagamentos, salvo);
+        } else if (pendencia.tipo === 'pagamento_atualizar') {
+          const salvo = await window.VendasDb.updatePayment(pendencia.payload);
+          state.pagamentos = atualizarRegistroPersistido(state.pagamentos, salvo);
+        } else if (pendencia.tipo === 'pagamento_excluir') {
+          await window.VendasDb.deletePayment(pendencia.payload.id);
+          state.pagamentos = state.pagamentos.filter((item) => item.id !== pendencia.payload.id);
+        }
+        await removerPendenciaVendas(chave);
+        houveAtualizacao = true;
+      } catch (error) {
+        if (!erroTemporarioPersistencia(error)) {
+          await removerPendenciaVendas(chave);
+          console.error('Pendência operacional rejeitada pelo servidor.', error);
+          continue;
+        }
+        break;
+      }
+    }
+    if (houveAtualizacao) {
+      revisaoDadosOperacionais += 1;
+      await salvarCacheVendas();
+      render();
+      toast('Alterações pendentes confirmadas pelo servidor.');
+    }
+  } finally {
+    reenviandoPendenciasVendas = false;
+  }
 }
 
 function comLimiteDeTempo(promessa, mensagem = 'A conexão com o AvantaLab demorou mais que o esperado. Tente novamente.', limiteMs = 15000) {
@@ -1991,6 +2160,7 @@ async function carregarSistemaVendasCompleto() {
     liberarAlturaPreparacao();
     window.setTimeout(() => {
       sincronizarCatalogoAutomaticamente().catch((error) => console.warn('Não foi possível sincronizar o catálogo em segundo plano.', error));
+      reenviarPendenciasVendas().catch((error) => console.warn('Não foi possível reenviar alterações pendentes.', error));
     }, 160);
   }
 }
@@ -2623,7 +2793,7 @@ async function confirmarResetSistemaVendas() {
   try {
     await exportarBackupVendasExcel();
     await window.VendasDb.resetarSistemaVendas();
-    await limparCacheVendas();
+    await limparCacheVendas(undefined, undefined, true);
     localStorage.removeItem(STORAGE_KEY);
     fecharSheet();
     await carregarDadosBackend(false);
@@ -2996,6 +3166,7 @@ function abrirNovoPedidoCliente(clienteId, permitirSelecao = false) {
   const cliente = state.clientes.find((item) => item.id === clienteId);
   if (!cliente) return;
   pedidoClienteRascunho = {
+    idPersistencia: uuidPersistenciaVendas(),
     clienteId,
     permitirSelecaoCliente: Boolean(permitirSelecao),
     tipo: 'venda',
@@ -3170,7 +3341,7 @@ async function finalizarPedidoCliente() {
     return soma + Number(item.quantidade || 0) * Number(item.preco_custo ?? produto?.preco_custo ?? produto?.metadados?.preco_custo ?? 0);
   }, 0);
   const venda = {
-    id: rascunho.editandoId || id('vend'),
+    id: rascunho.editandoId || rascunho.idPersistencia || uuidPersistenciaVendas(),
     cliente_id: rascunho.clienteId,
     status: rascunho.status || 'concluida',
     subtotal: totais.subtotal,
@@ -3197,7 +3368,12 @@ async function finalizarPedidoCliente() {
   iniciarMutacaoDadosVendas();
   try {
     const salvo = backendAtivo
-      ? (rascunho.editandoId ? await window.VendasDb.updateOrder(venda) : await window.VendasDb.saveOrder(venda))
+      ? await executarMutacaoGarantidaVendas(
+          'pedido_salvar',
+          venda.id,
+          { novo: !rascunho.editandoId, pedido: venda },
+          () => rascunho.editandoId ? window.VendasDb.updateOrder(venda) : window.VendasDb.saveOrder(venda),
+        )
       : venda;
     state.vendas = rascunho.editandoId
       ? state.vendas.map((item) => item.id === salvo.id ? salvo : item)
@@ -3269,7 +3445,7 @@ function abrirPagamentoClienteComSelecao(clienteId, permitirSelecao = false) {
   if (!cliente) return;
   const saldo = saldoFinanceiroCliente(clienteId);
   const clientes = clientesDisponiveisPedido();
-  pagamentoClienteRascunho = { clienteId, saldoAnterior: saldo.debito, permitirSelecaoCliente: Boolean(permitirSelecao) };
+  pagamentoClienteRascunho = { idPersistencia: uuidPersistenciaVendas(), clienteId, saldoAnterior: saldo.debito, permitirSelecaoCliente: Boolean(permitirSelecao) };
   sheet(`
     <div class="sheet-header"><div><h2>Registrar pagamento</h2><p class="muted small">${permitirSelecao ? 'Selecione o cliente' : escapeHtml(cliente.nome)}</p></div><button class="close" onclick="fecharSheet()">×</button></div>
     <div class="client-transaction-scroll payment-entry-form">
@@ -3314,7 +3490,7 @@ async function confirmarPagamentoCliente() {
   if (resumo.abatimento <= 0) { toast('Informe o valor pago ou o desconto.'); return; }
   if (!/^\d{4}-\d{2}-\d{2}$/.test(dataPagamento)) { toast('Informe uma data válida.'); return; }
   const pagamento = {
-    id: id('pag'),
+    id: rascunho.idPersistencia || uuidPersistenciaVendas(),
     cliente_id: rascunho.clienteId,
     valor: resumo.valorPago,
     desconto: resumo.desconto,
@@ -3326,7 +3502,9 @@ async function confirmarPagamentoCliente() {
   };
   iniciarMutacaoDadosVendas();
   try {
-    const salvo = backendAtivo ? await window.VendasDb.savePayment(pagamento) : pagamento;
+    const salvo = backendAtivo
+      ? await executarMutacaoGarantidaVendas('pagamento_salvar', pagamento.id, pagamento, () => window.VendasDb.savePayment(pagamento))
+      : pagamento;
     state.pagamentos = [salvo, ...(state.pagamentos || [])];
     pagamentoClienteRascunho = null;
     state.aba = 'clientes';
@@ -3417,7 +3595,9 @@ async function salvarEdicaoPagamentoCliente(pagamentoId, pagina = 0, retornoClie
   candidato.saldo_final = resumo.saldoAtual;
   iniciarMutacaoDadosVendas();
   try {
-    const salvo = backendAtivo ? await window.VendasDb.updatePayment(candidato) : candidato;
+    const salvo = backendAtivo
+      ? await executarMutacaoGarantidaVendas('pagamento_atualizar', candidato.id, candidato, () => window.VendasDb.updatePayment(candidato))
+      : candidato;
     state.pagamentos = (state.pagamentos || []).map((item) => item.id === pagamentoId ? { ...item, ...salvo } : item);
     await confirmarMutacaoDadosVendas();
     render();
@@ -3445,7 +3625,9 @@ async function excluirPagamentoCliente(pagamentoId, retornoClienteId = '', retor
   if (!pagamento) return;
   iniciarMutacaoDadosVendas();
   try {
-    if (backendAtivo) await window.VendasDb.deletePayment(pagamentoId);
+    if (backendAtivo) {
+      await executarMutacaoGarantidaVendas('pagamento_excluir', pagamentoId, { id: pagamentoId }, () => window.VendasDb.deletePayment(pagamentoId));
+    }
     state.pagamentos = (state.pagamentos || []).filter((item) => item.id !== pagamentoId);
     await confirmarMutacaoDadosVendas();
     fecharSheet();
@@ -3519,7 +3701,9 @@ async function alterarStatusCliente(clienteId, ativar) {
   iniciarMutacaoDadosVendas();
   try {
     const dados = { ...cliente, ativo: Boolean(ativar) };
-    const salvo = backendAtivo ? await window.VendasDb.saveClient(dados) : dados;
+    const salvo = backendAtivo
+      ? await executarMutacaoGarantidaVendas('cliente_salvar', dados.id, dados, () => window.VendasDb.saveClient(dados))
+      : dados;
     state.clientes = state.clientes.map((item) => item.id === clienteId ? salvo : item);
     await confirmarMutacaoDadosVendas();
     fecharSheet(); render(); toast(ativar ? 'Cliente ativado.' : 'Cliente desativado.');
@@ -3615,7 +3799,9 @@ function confirmarExclusaoPedido(pedidoId, retornoClienteId = '', retornoAba = '
 async function excluirPedido(pedidoId, retornoClienteId = '', retornoAba = '', retornoPagina = 0) {
   iniciarMutacaoDadosVendas();
   try {
-    if (backendAtivo) await window.VendasDb.deleteOrder(pedidoId);
+    if (backendAtivo) {
+      await executarMutacaoGarantidaVendas('pedido_excluir', pedidoId, { id: pedidoId }, () => window.VendasDb.deleteOrder(pedidoId));
+    }
     state.vendas = state.vendas.filter((item) => item.id !== pedidoId);
     pedidoClienteRascunho = null; conversaoConsignadoRascunho = null;
     await confirmarMutacaoDadosVendas();
@@ -3648,7 +3834,7 @@ async function gerarPedidoDoConsignado(pedidoId) {
   const subtotalRestante = restantes.reduce((soma, item) => soma + Number(item.quantidade || 0) * Number(item.preco ?? item.preco_unitario ?? 0), 0);
   const agora = new Date().toISOString();
   const pedido = {
-    id: id('vend'), cliente_id: consignado.cliente_id, status: 'concluida', subtotal: subtotalPedido, desconto: 0, total: subtotalPedido, forma_pagamento: 'Venda', criado_em: agora,
+    id: uuidPersistenciaVendas(), cliente_id: consignado.cliente_id, status: 'concluida', subtotal: subtotalPedido, desconto: 0, total: subtotalPedido, forma_pagamento: 'Venda', criado_em: agora,
     observacoes: JSON.stringify({ avantalab_pedido: true, tipo: 'venda', descricao: 'Venda originada de consignado', consignado_origem_id: consignado.id }), itens: itensPedido,
   };
   const consignadoAtualizado = { ...consignado, itens: restantes, subtotal: subtotalRestante, total: subtotalRestante, status: restantes.length ? consignado.status : 'convertida', observacoes: JSON.stringify({ ...metadadosPedido(consignado), convertido_parcialmente: true }) };
@@ -4547,6 +4733,7 @@ async function removerProduto(produtoId) {
 
 function abrirCliente(clienteId = '') {
   const c = state.clientes.find((item) => item.id === clienteId) || {};
+  clientePersistenciaIdAtual = clienteId || uuidPersistenciaVendas();
   sheet(`
     <div class="sheet-header">
       <div>
@@ -4601,6 +4788,7 @@ async function salvarCliente(clienteId, ignorarAviso = false) {
   const dataNascimento = dataNascimentoParaIso(valor('cliNascimento'));
   if (dataNascimento === undefined) { toast('Informe a data de nascimento no formato dd/mm.'); return; }
   const dados = {
+    id: clienteId || clientePersistenciaIdAtual || uuidPersistenciaVendas(),
     nome: valor('cliNome').trim(),
     telefone: valor('cliTelefone').trim() ? `+${valor('cliTelefoneDdi')}${valor('cliTelefone').replace(/\D/g, '')}` : '',
     email: valor('cliEmail').trim(),
@@ -4630,7 +4818,7 @@ async function salvarCliente(clienteId, ignorarAviso = false) {
   iniciarMutacaoDadosVendas();
   try {
     if (backendAtivo) {
-      const salvo = await window.VendasDb.saveClient({ id: clienteId || null, ...dados });
+      const salvo = await executarMutacaoGarantidaVendas('cliente_salvar', dados.id, dados, () => window.VendasDb.saveClient(dados));
       state.clientes = clienteId ? state.clientes.map((c) => c.id === clienteId ? salvo : c) : [salvo, ...state.clientes];
     } else if (clienteId) state.clientes = state.clientes.map((c) => c.id === clienteId ? { ...c, ...dados, atualizado_em: new Date().toISOString() } : c);
     else state.clientes.unshift({ id: id('cli'), ...dados, criado_em: new Date().toISOString() });
@@ -4647,7 +4835,9 @@ async function removerCliente(clienteId) {
   if (!confirm('Remover este cliente? As vendas antigas continuarão registradas.')) return;
   iniciarMutacaoDadosVendas();
   try {
-    if (backendAtivo) await window.VendasDb.deleteClient(clienteId);
+    if (backendAtivo) {
+      await executarMutacaoGarantidaVendas('cliente_excluir', clienteId, { id: clienteId }, () => window.VendasDb.deleteClient(clienteId));
+    }
     state.clientes = state.clientes.filter((c) => c.id !== clienteId);
     await confirmarMutacaoDadosVendas();
     fecharSheet(); toast('Cliente removido.'); render();
@@ -4757,7 +4947,7 @@ async function finalizarVenda() {
   const desconto = lerCampoMoeda('vendaDesconto');
   const total = Math.max(0, subtotal - desconto);
   const venda = {
-    id: id('vend'),
+    id: uuidPersistenciaVendas(),
     cliente_id: valor('vendaCliente') || null,
     status: 'concluida',
     subtotal,
@@ -4769,7 +4959,9 @@ async function finalizarVenda() {
   };
   iniciarMutacaoDadosVendas();
   try {
-    const salva = backendAtivo ? await window.VendasDb.saveOrder(venda) : venda;
+    const salva = backendAtivo
+      ? await executarMutacaoGarantidaVendas('pedido_salvar', venda.id, { novo: true, pedido: venda }, () => window.VendasDb.saveOrder(venda))
+      : venda;
     state.vendas.unshift(salva);
     state.carrinho = [];
     await confirmarMutacaoDadosVendas();
@@ -5013,7 +5205,7 @@ function salvarConfiguracoes() {
 
 function resetarDados() {
   if (!confirm('Apagar todos os dados locais deste protótipo?')) return;
-  void limparCacheVendas();
+  void limparCacheVendas(undefined, undefined, true);
   localStorage.removeItem(STORAGE_KEY);
   state = { ...estadoInicial };
   fecharSheet();
@@ -5154,7 +5346,7 @@ function aplicarAtualizacaoPwaPendente() {
 
 if (!window.__VENDAS_MOBILE_EMBEDDED__ && 'serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('./sw.js?v=15').catch(() => {});
+    navigator.serviceWorker.register('./sw.js?v=16').catch(() => {});
   });
 }
 
@@ -5164,6 +5356,10 @@ if (window.__VENDAS_MOBILE_EMBEDDED__) {
     if (document.visibilityState === 'visible') verificarAtualizacaoPwa();
   }, 120000);
 }
+
+window.addEventListener('online', () => {
+  reenviarPendenciasVendas().catch((error) => console.warn('Não foi possível reenviar alterações pendentes.', error));
+});
 
 window.setAba = setAba;
 window.state = state;
