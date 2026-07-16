@@ -75,6 +75,7 @@
     pronto: false,
     autenticado: false,
     usuario: null,
+    loginConta: '',
     empresas: [],
     empresa: null,
     // Cobrança (paywall do perfil empresa sem acesso vigente)
@@ -4179,7 +4180,14 @@
       return;
     }
 
+    var acessoEditadoId = state.usuarioEditandoId;
     state.usuarioEditandoId = '';
+    state.loginConta = login;
+    if (state.empresa && String(state.empresa.acessoId) === String(acessoEditadoId)) {
+      state.empresa.login = login;
+      state.empresa.email = email;
+      state.empresa.usuario_nome = nome;
+    }
     await carregarUsuariosMobile();
     mostrarToast('Usuario atualizado.');
   }
@@ -4289,6 +4297,8 @@
       atualizarProgressoAcessoMobile('profiles', 5, 5, 'Nenhum perfil encontrado');
       return true;
     }
+
+    state.loginConta = String((vinculos.data.find(function (vinculo) { return vinculo.login; }) || {}).login || '');
 
     var acessoComTelefone = vinculos.data.find(function (vinculo) {
       return vinculo.telefone_confirmado === true && vinculo.telefone;
@@ -9850,7 +9860,7 @@
   function usuarioHtml() {
     if (!podeGerenciarUsuarios()) {
       var podeEditarProprio = state.empresa && state.empresa.perfil === 'operador_completo' && state.empresa.acessoId;
-      var proprio = podeEditarProprio ? { id: state.empresa.acessoId, nome: state.empresa.usuario_nome || '', email: state.empresa.email || '', login: state.empresa.login || '', perfil: state.empresa.perfil } : null;
+      var proprio = podeEditarProprio ? { id: state.empresa.acessoId, nome: state.empresa.usuario_nome || '', email: state.empresa.email || '', login: state.loginConta || state.empresa.login || '', perfil: state.empresa.perfil } : null;
       var editandoProprio = proprio && String(state.usuarioEditandoId) === String(proprio.id);
       return (
         '<div class="grid gap-3 text-sm">' +
@@ -9969,7 +9979,7 @@
       '<div class="grid gap-2 rounded-2xl bg-cyan-50 p-3">' +
         '<div class="flex items-center justify-between gap-2"><p class="text-[10px] font-black uppercase tracking-wide text-cyan-900">Editar usuario</p><button id="cancelar-edicao-usuario" type="button" class="text-[10px] font-black text-slate-500">Cancelar</button></div>' +
         '<input id="edit-usuario-nome" value="' + escapeHtml(usuario.nome || '') + '" placeholder="Nome" style="font-size:16px" class="h-10 w-full min-w-0 rounded-lg border border-cyan-100 bg-white px-3 text-base font-bold outline-none" />' +
-        '<input id="edit-usuario-login" value="' + escapeHtml(usuario.login || '') + '" placeholder="Login" style="font-size:16px" class="h-10 w-full min-w-0 rounded-lg border border-cyan-100 bg-white px-3 text-base font-bold outline-none" />' +
+        '<input id="edit-usuario-login" value="' + escapeHtml(usuario.login || (state.empresa && String(state.empresa.acessoId) === String(usuario.id) ? state.loginConta : '')) + '" placeholder="Login" style="font-size:16px" class="h-10 w-full min-w-0 rounded-lg border border-cyan-100 bg-white px-3 text-base font-bold outline-none" />' +
         '<input id="edit-usuario-email" type="email" value="' + escapeHtml(emailRealUsuario(usuario)) + '" placeholder="E-mail (opcional)" style="font-size:16px" class="h-10 w-full min-w-0 rounded-lg border border-cyan-100 bg-white px-3 text-base font-bold outline-none" />' +
         '<select id="edit-usuario-perfil" style="font-size:16px" class="h-10 w-full min-w-0 rounded-lg border border-cyan-100 bg-white px-3 text-base font-bold outline-none">' + opcoesPerfilHtml(usuario.perfil || 'operador_simples', usuario.perfil === 'gestor_master' || (state.empresa && state.empresa.perfil === 'gestor_master')) + '</select>' +
         '<input id="edit-usuario-senha" type="password" placeholder="Nova senha (opcional)" style="font-size:16px" class="h-10 w-full min-w-0 rounded-lg border border-cyan-100 bg-white px-3 text-base font-bold outline-none" />' +
