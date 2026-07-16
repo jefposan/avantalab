@@ -13,6 +13,15 @@
   },
   "versoes": [
     {
+      "versao": "1.5.3.05",
+      "titulo": "Sala do Vendas mais estável",
+      "data": "Julho/2026",
+      "itens": [
+        "Os botões da sala do Vendas permanecem estáveis depois de carregados, sem piscar ao tocar ou voltar ao Início.",
+        "Organizar a sala reposiciona os cards sem recarregar suas imagens."
+      ]
+    },
+    {
       "versao": "1.5.3.04",
       "titulo": "Carregamento preciso no Mobile",
       "data": "Julho/2026",

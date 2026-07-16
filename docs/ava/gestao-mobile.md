@@ -1,8 +1,8 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.5.3.04 -->
+<!-- ava-version: 1.5.3.05 -->
 
-> Revisão 1.5.3.04: durante a preparação de acesso, a Gestão Mobile mostra o percentual e a etapa real em execução, avançando conforme sessão, perfis, permissões e dados são concluídos. Sem impacto operacional adicional.
+> Revisão 1.5.3.05: sem impacto operacional na Gestão Mobile. A estabilização visual ocorreu exclusivamente na sala do Vendas Mobile.
 
 ## Escopo
 

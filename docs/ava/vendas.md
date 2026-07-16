@@ -1,8 +1,8 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.5.3.04 -->
+<!-- ava-version: 1.5.3.05 -->
 
-> Revisão 1.5.3.04: a preparação do Vendas mostra percentual e etapa real, acompanhando scripts, sessão, permissões, catálogo, clientes, pedidos, pagamentos e imagens do menu. Sem mudança nas rotinas operacionais.
+> Revisão 1.5.3.05: a sala de botões permanece visualmente estável depois de carregada, inclusive ao tocar em Início e ao organizar os cards. Sem mudança no caminho das funcionalidades.
 
 ## Escopo e navegação
 

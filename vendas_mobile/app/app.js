@@ -120,6 +120,7 @@ let preparandoRecursosSala = false;
 let recursosSalaBotoesPromise = null;
 let temporizadorReconstrucaoSala = 0;
 let salaEmLayoutCompacto = window.matchMedia('(max-width: 850px)').matches;
+let assinaturaSalaRenderizada = '';
 
 const PAISES_DDI = [
   ['Brasil', '55', '🇧🇷'], ['Portugal', '351', '🇵🇹'], ['Estados Unidos / Canadá', '1', '🇺🇸'],
@@ -404,6 +405,7 @@ function alternarMenu() {
 }
 
 function abrirSalaBotoes() {
+  if (state.menuAberto && salaEmLayoutCompacto && app.querySelector('.mobile-menu')) return;
   fecharCamadasAgenda();
   divulgacaoPastaAtualId = null;
   state.menuAberto = true;
@@ -570,6 +572,30 @@ function clientesFiltrados() {
     : String(b.nome || '').localeCompare(String(a.nome || ''), 'pt-BR', { sensitivity: 'base' }));
 }
 
+function assinaturaVisualSalaBotoes() {
+  return JSON.stringify({
+    temaEscuro: Boolean(state.temaEscuro),
+    ordem: itensSalaBotoesOrdenados().map(([id]) => id),
+    organizando: Boolean(state.organizandoSalaBotoes),
+    aniversarios: aniversariosHojeVendas().map((cliente) => cliente.id).sort(),
+    perfis: (state.perfisVendas || []).map((perfil) => `${perfil.empresa_id}:${perfil.status || ''}`).sort(),
+    acesso: `${state.acessoVendas?.empresa_id || ''}:${state.acessoVendas?.papel || ''}`,
+    atalhos: [state.atalhoInferiorEsquerdo, state.atalhoInferiorDireito],
+  });
+}
+
+function podePreservarSalaBotoes(assinatura) {
+  return Boolean(
+    salaEmLayoutCompacto &&
+    state.menuAberto &&
+    app.querySelector('.mobile-menu') &&
+    assinaturaSalaRenderizada === assinatura &&
+    !state.seletorSistemaAberto &&
+    !state.seletorPerfilVendasAberto &&
+    !state.seletorPerfilGestaoAberto
+  );
+}
+
 function render() {
   const agendaAtiva = Boolean(state.autenticado && state.aba === 'agenda' && !carregandoBackend && !conectandoGoogle && !preparandoRecursosSala);
   const formularioAgendaAberto = Boolean(state.autenticado && state.agendaFormAberto && !carregandoBackend && !conectandoGoogle && !preparandoRecursosSala);
@@ -608,8 +634,11 @@ function render() {
   if (!state.moduloVendasAtivo) {
     limparDestaqueClientes();
     app.innerHTML = renderModuloVendasDesativado();
+    assinaturaSalaRenderizada = '';
     return;
   }
+  const assinaturaSalaAtual = state.menuAberto && salaEmLayoutCompacto ? assinaturaVisualSalaBotoes() : '';
+  if (assinaturaSalaAtual && podePreservarSalaBotoes(assinaturaSalaAtual)) return;
   const aniversariantesHoje = aniversariosHojeVendas();
   const cabecalho = `<header class="system-header"><button class="system-brand brand-home" onclick="abrirSalaBotoes()" aria-label="Ir para a sala de botões">${logoVendas()}</button><div class="system-header-actions">${aniversariantesHoje.length ? `<button class="birthday-header-button" onclick="abrirAgendaAniversariantes()" aria-label="${aniversariantesHoje.length} aniversário${aniversariantesHoje.length === 1 ? '' : 's'} hoje">${svgIconEstavel('cake')}<i>${aniversariantesHoje.length}</i></button>` : ''}</div></header>`;
   app.innerHTML = `
@@ -641,6 +670,7 @@ function render() {
     ${renderSeletorSistemaVendas()}
     ${state.seletorPerfilVendasAberto ? renderSeletorPerfilVendas() : ''}
   `;
+  assinaturaSalaRenderizada = assinaturaSalaAtual;
   if (state.aba === 'clientes') requestAnimationFrame(configurarDestaqueClientes);
   else limparDestaqueClientes();
 }
@@ -879,10 +909,35 @@ function iconeOrganizarSala(concluir = false) {
     : '<svg class="svg-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m4 20 4.2-1 9.7-9.7a2.1 2.1 0 0 0-3-3L5.2 16 4 20Z"/><path d="m13.5 7.5 3 3"/></svg>';
 }
 
+function atualizarOrganizacaoSalaNoDom() {
+  const wrap = app.querySelector('.mobile-menu-grid-wrap');
+  const botaoOrganizar = app.querySelector('.mobile-menu-organize');
+  if (!wrap || !botaoOrganizar) return false;
+  const organizando = Boolean(state.organizandoSalaBotoes);
+  wrap.classList.toggle('is-organizing', organizando);
+  botaoOrganizar.innerHTML = iconeOrganizarSala(organizando);
+  botaoOrganizar.setAttribute('aria-label', organizando ? 'Concluir organização da sala' : 'Organizar sala de botões');
+  botaoOrganizar.setAttribute('title', organizando ? 'Concluir' : 'Organizar sala');
+  app.querySelectorAll('[data-sala-botao]').forEach((card) => {
+    const idAba = card.dataset.salaBotao;
+    card.classList.toggle('is-organizable', organizando);
+    card.classList.remove('is-dragging', 'is-drop-target', 'button-pressed');
+    card.removeAttribute('onclick');
+    card.onpointerdown = organizando ? (event) => iniciarArrasteSalaBotoes(event, idAba) : null;
+    card.onpointermove = organizando ? moverArrasteSalaBotoes : null;
+    card.onpointerup = organizando ? finalizarArrasteSalaBotoes : null;
+    card.onpointercancel = organizando ? finalizarArrasteSalaBotoes : null;
+    if (!organizando) card.onclick = () => setAba(idAba);
+  });
+  assinaturaSalaRenderizada = assinaturaVisualSalaBotoes();
+  return true;
+}
+
 function alternarOrganizacaoSalaBotoes() {
   state.organizandoSalaBotoes = !state.organizandoSalaBotoes;
   arrasteSalaBotoes = null;
-  render();
+  salvarEstado();
+  if (!atualizarOrganizacaoSalaNoDom()) render();
 }
 
 function iniciarArrasteSalaBotoes(event, idAba) {
@@ -916,8 +971,16 @@ function finalizarArrasteSalaBotoes(event) {
     ordem.splice(destinoIndice, 0, idAba);
     state.ordemSalaBotoes = ordem;
     salvarEstado();
+    const grid = app.querySelector('.mobile-menu-grid');
+    if (grid) {
+      ordem.forEach((id) => {
+        const card = grid.querySelector(`[data-sala-botao="${id}"]`);
+        if (card) grid.appendChild(card);
+      });
+    }
   }
-  render();
+  app.querySelectorAll('[data-sala-botao]').forEach((item) => item.classList.remove('is-dragging', 'is-drop-target'));
+  assinaturaSalaRenderizada = assinaturaVisualSalaBotoes();
 }
 
 function renderMenuMobile() {
@@ -4780,7 +4843,7 @@ function escapeAttr(v) {
 
 function botaoTemAcaoVisual(botao) {
   if (!(botao instanceof HTMLButtonElement) || botao.disabled) return false;
-  if (botao.matches('.icon-button, .close, .password-toggle, .search-clear, .client-more, .home-button, .system-brand, .menu-toggle, .vendas-nav-item, .vendas-nav-add, .mobile-menu-header button')) return false;
+  if (botao.matches('.icon-button, .close, .password-toggle, .search-clear, .client-more, .home-button, .system-brand, .menu-toggle, .vendas-nav-item, .vendas-nav-add, .mobile-menu button')) return false;
   const texto = (botao.textContent || '').replace(/[×⋮+＋]/g, '').trim();
   return Boolean(texto);
 }
@@ -4829,7 +4892,7 @@ function aplicarAtualizacaoPwaPendente() {
 
 if (!window.__VENDAS_MOBILE_EMBEDDED__ && 'serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('./sw.js?v=9').catch(() => {});
+    navigator.serviceWorker.register('./sw.js?v=10').catch(() => {});
   });
 }
 

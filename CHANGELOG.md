@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.5.3.05 - 2026-07-16
+
+- Vendas Mobile: estabiliza a sala de botões após o carregamento, evitando reconstruções redundantes, escalas de toque e recarregamento visual dos cards.
+- Vendas Mobile: a organização dos botões passa a atualizar a própria grade, sem desmontar e recriar as imagens.
+
 ## 1.5.3.04 - 2026-07-16
 
 - Gestão Mobile e Vendas Mobile: o percentual de preparação passa a avançar conforme scripts, sessão, permissões, consultas e recursos realmente são concluídos, exibindo também a etapa atual.
