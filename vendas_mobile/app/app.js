@@ -102,6 +102,7 @@ let quadroDestaqueClientes = 0;
 let clienteDestaqueId = '';
 let temporizadorEncaixeClientes = 0;
 let encaixeClientesEmAndamento = false;
+let suspenderEncaixeClientesAte = 0;
 let calendarioCentralizado = null;
 let botaoFeedbackAtivo = null;
 let atualizacaoPwaPendente = false;
@@ -1068,7 +1069,12 @@ function atualizarDestaqueClientes() {
 }
 
 function agendarEncaixeCliente(card) {
-  if (!card || encaixeClientesEmAndamento || state.aba !== 'clientes') return;
+  if (
+    !card ||
+    encaixeClientesEmAndamento ||
+    state.aba !== 'clientes' ||
+    Date.now() < suspenderEncaixeClientesAte
+  ) return;
   window.clearTimeout(temporizadorEncaixeClientes);
   temporizadorEncaixeClientes = window.setTimeout(() => {
     if (!card.isConnected || state.aba !== 'clientes') return;
@@ -3264,7 +3270,7 @@ function mostrarCardPedidoCliente() {
     ? rascunho.itens.map((item, indice) => `<article class="${item.bonificado ? 'order-draft-bonus' : ''}"><div><b>${escapeHtml(item.produto_nome)}</b><small>${item.quantidade} × ${moeda(item.preco)} ${item.bonificado ? '<em>Bonificado</em>' : ''}</small></div><div class="order-draft-quantity"><button type="button" onclick="ajustarItemPedidoCliente(${indice},-1)">−</button><strong>${item.quantidade}</strong><button type="button" onclick="ajustarItemPedidoCliente(${indice},1)">+</button></div><strong>${item.bonificado ? moeda(0) : moeda(item.quantidade * item.preco)}</strong><button type="button" onclick="removerItemPedidoCliente(${indice})" aria-label="Excluir ${escapeAttr(item.produto_nome)}">×</button></article>`).join('')
     : '<p class="transaction-empty">Nenhum item inserido.</p>';
   sheet(`
-    <div class="sheet-header"><div><h2>${rascunho.editandoId ? 'Editar pedido' : 'Novo pedido'}</h2><p class="muted small">${rascunho.permitirSelecaoCliente ? 'Selecione o cliente' : escapeHtml(cliente.nome)}</p></div><button class="close" onclick="${rascunho.editandoId ? `cancelarEdicaoPedido('${rascunho.editandoId}')` : 'fecharSheet()'}">×</button></div>
+    <div class="sheet-header"><div><h2>${rascunho.editandoId ? 'Editar pedido' : 'Novo pedido'}</h2><p class="muted small">${rascunho.permitirSelecaoCliente ? 'Selecione o cliente' : escapeHtml(cliente.nome)}</p></div><button type="button" class="close" onclick="${rascunho.editandoId ? `cancelarEdicaoPedido('${rascunho.editandoId}')` : 'fecharSheet(event)'}">×</button></div>
     <div class="order-transaction-layout">
       <div class="order-transaction-fixed">
         ${rascunho.permitirSelecaoCliente ? `<label class="transaction-field transaction-client-select"><span>Cliente</span><select id="pedidoClienteSelecionado" onchange="selecionarClientePedido(this.value)">${clientes.map((item) => `<option value="${item.id}" ${item.id === rascunho.clienteId ? 'selected' : ''}>${escapeHtml(item.nome)}</option>`).join('')}</select></label>` : ''}
@@ -3518,7 +3524,7 @@ function abrirPagamentoClienteComSelecao(clienteId, permitirSelecao = false) {
   const clientes = clientesDisponiveisPedido();
   pagamentoClienteRascunho = { idPersistencia: uuidPersistenciaVendas(), clienteId, saldoAnterior: saldo.debito, permitirSelecaoCliente: Boolean(permitirSelecao) };
   sheet(`
-    <div class="sheet-header"><div><h2>Registrar pagamento</h2><p class="muted small">${permitirSelecao ? 'Selecione o cliente' : escapeHtml(cliente.nome)}</p></div><button class="close" onclick="fecharSheet()">×</button></div>
+    <div class="sheet-header"><div><h2>Registrar pagamento</h2><p class="muted small">${permitirSelecao ? 'Selecione o cliente' : escapeHtml(cliente.nome)}</p></div><button type="button" class="close" onclick="fecharSheet(event)">×</button></div>
     <div class="client-transaction-scroll payment-entry-form">
       ${permitirSelecao ? `<label class="transaction-field transaction-client-select"><span>Cliente</span><select id="pagamentoClienteSelecionado" onchange="selecionarClientePagamento(this.value)">${clientes.map((item) => `<option value="${item.id}" ${item.id === clienteId ? 'selected' : ''}>${escapeHtml(item.nome)}</option>`).join('')}</select></label>` : ''}
       <label class="transaction-field"><span>Valor pago</span><input id="pagamentoClienteValor" type="text" inputmode="numeric" value="0,00" autofocus onfocus="this.select()" oninput="formatarCampoMoeda(this);atualizarResumoPagamentoCliente()"></label>
@@ -5392,8 +5398,11 @@ function sheet(html, backdropClass = '') {
   wrap.className = `sheet-backdrop ${backdropClass}`;
   wrap.id = 'sheetBackdrop';
   wrap.innerHTML = `<section class="sheet">${html}</section>`;
+  wrap.querySelectorAll('button:not([type])').forEach((botao) => {
+    botao.type = 'button';
+  });
   wrap.addEventListener('click', (event) => {
-    if (event.target === wrap) fecharSheet();
+    if (event.target === wrap) fecharSheet(event);
   });
   document.body.appendChild(wrap);
   document.body.classList.add('sheet-open');
@@ -5401,17 +5410,31 @@ function sheet(html, backdropClass = '') {
   document.body.style.top = `-${rolagemAnteriorSheet}px`;
 }
 
-function fecharSheet() {
-  const estavaAberto = Boolean(document.getElementById('sheetBackdrop'));
+function fecharSheet(evento = null) {
+  evento?.preventDefault?.();
+  evento?.stopPropagation?.();
+  const sheetAtual = document.getElementById('sheetBackdrop');
+  const estavaAberto = Boolean(sheetAtual);
+  if (!estavaAberto) return;
+  suspenderEncaixeClientesAte = Date.now() + 500;
+  window.clearTimeout(temporizadorEncaixeClientes);
+  temporizadorEncaixeClientes = 0;
+  const campoAtivo = document.activeElement;
+  if (campoAtivo instanceof HTMLElement && sheetAtual.contains(campoAtivo)) {
+    campoAtivo.blur();
+  }
   if (document.getElementById('prodImagemArquivo') && produtoImagemUploadPendente?.previewUrl) {
     URL.revokeObjectURL(produtoImagemUploadPendente.previewUrl);
     produtoImagemUploadPendente = null;
   }
-  document.getElementById('sheetBackdrop')?.remove();
+  sheetAtual.remove();
   document.body.classList.remove('sheet-open');
   document.documentElement.classList.remove('sheet-open');
   document.body.style.top = '';
-  if (estavaAberto) window.scrollTo(0, rolagemAnteriorSheet);
+  const rolagemAtual = window.scrollY || document.documentElement.scrollTop || 0;
+  if (Math.abs(rolagemAtual - rolagemAnteriorSheet) > 1) {
+    window.scrollTo({ top: rolagemAnteriorSheet, left: 0, behavior: 'auto' });
+  }
 }
 
 function escapeHtml(v) {
@@ -5473,7 +5496,7 @@ function aplicarAtualizacaoPwaPendente() {
 
 if (!window.__VENDAS_MOBILE_EMBEDDED__ && 'serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('./sw.js?v=18').catch(() => {});
+    navigator.serviceWorker.register('./sw.js?v=19').catch(() => {});
   });
 }
 

@@ -87,6 +87,7 @@ CLIENTES
 - Em Ver detalhes, o cabeçalho fica fixo e só o conteúdo rola. Resumo mostra totais; Consignado, Pedidos e Pagamentos são listas distintas e exibem 10 registros por vez; Carregar mais acrescenta o próximo lote sem perder a posição. Abrir um pagamento mostra o comprovante e permite editar ou excluir o registro.
 - Ao tocar em Pagamento no card da cliente, o formulário abre com Valor pago selecionado e o teclado numérico pronto para digitação.
 - Datas de pedidos, pagamentos e demais registros são exibidas apenas com dia, mês e ano, sem horário.
+- Ao fechar ou cancelar um novo pedido ou pagamento, o Vendas preserva a tela e a posição anteriores sem recarregar a página. Cards e confirmações usam fundo escuro reforçado para separar o conteúdo da tela atrás.
 - Em Clientes sem compra, o intervalo selecionado lista todos os clientes sem pedidos, mantendo título e cabeçalhos visíveis durante a rolagem. Ao navegar entre telas, a posição anterior é preservada durante a sessão.
 - O aniversário cadastrado entra na agenda e pode aparecer no aviso do cabeçalho no dia correspondente.
 

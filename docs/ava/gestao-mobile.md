@@ -1,8 +1,8 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.5.4.12 -->
+<!-- ava-version: 1.5.4.13 -->
 
-> Revisão 1.5.4.12: **Ir para Vendas** confirma no servidor se o módulo está ativo antes de abrir o aviso de ativação.
+> Revisão 1.5.4.13: cards e confirmações usam um fundo mais escuro para destacar o conteúdo em primeiro plano.
 
 ## Escopo
 

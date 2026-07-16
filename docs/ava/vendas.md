@@ -1,8 +1,8 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.5.4.12 -->
+<!-- ava-version: 1.5.4.13 -->
 
-> Revisão 1.5.4.12: datas de pedidos, pagamentos e demais registros são exibidas sem horário.
+> Revisão 1.5.4.13: o fechamento de pedidos e pagamentos mantém a tela de origem estável; fundos de cards ficam mais escuros.
 
 ## Escopo e navegação
 
@@ -70,6 +70,8 @@ dúvida dentro do Vendas sempre que a função existir ali.
   anterior permanece intacto.
 - Novo pedido abre pelo cliente ou por **Pedidos > Novo pedido**. Há Venda e
   Consignado, itens bonificados, desconto por valor/percentual e comprovante.
+- Ao cancelar ou fechar um novo pedido ou pagamento, o Vendas mantém a página e
+  a posição anteriores, sem reconstruir a tela nem acionar o encaixe dos clientes.
 - Consignado não é venda nem recebimento até sua conversão em pedido.
 - Pagamentos registram valor, desconto, data e forma. Edição/exclusão recalcula
   saldos e relatórios. Comprovantes podem ser reabertos, editados ou excluídos no

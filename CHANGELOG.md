@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.5.4.13 - 2026-07-16
+
+- Vendas Mobile: fechar os cards de novo pedido ou pagamento não força mais a restauração da página quando a rolagem já está correta, bloqueia ações padrão do botão e suspende temporariamente o encaixe automático dos clientes.
+- Mobile: o fundo atrás de cards, confirmações, calendários e menus foi intensificado para separar visualmente o conteúdo aberto da tela principal.
+
 ## 1.5.4.12 - 2026-07-16
 
 - Gestão Mobile: **Ir para Vendas** passa a confirmar o módulo diretamente no servidor antes de decidir pela ativação, evitando avisos incorretos causados por um estado temporariamente desatualizado.
