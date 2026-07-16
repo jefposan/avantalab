@@ -46,7 +46,7 @@ NAVEGAÇÃO E PERFIS
 - No seletor de sistemas aberto dentro da Gestão, o X ou um toque fora do card cancela a troca e mantém o usuário na Gestão. A seleção inicial mostrada antes de carregar o app continua obrigatória.
 - Ao escolher Vendas, um único perfil de Vendas ativo abre diretamente; se houver mais de um, o usuário escolhe qual acessar. Essa seleção não altera o destino financeiro do Vendas.
 - O dashboard pode organizar ordem e visibilidade dos cards em Menu > Organizar resumo/Organizar dashboard.
-- Em Gerenciar perfil, o usuário pode criar, editar, excluir quando permitido e administrar perfis. Um toque em um perfil pode apenas destacá-lo; a troca real usa o controle de perfil já existente.
+- Em Gerenciar perfil, o usuário pode criar, editar, excluir quando permitido e administrar perfis. No seletor de troca, o perfil em uso fica identificado e desativado; a troca real usa somente os demais perfis disponíveis.
 - Valores podem iniciar ocultos pelo ícone de olho conforme a preferência de privacidade.
 
 LANÇAMENTOS E RESULTADOS

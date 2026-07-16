@@ -9967,8 +9967,17 @@
         state.empresas.map(function (empresa) {
           var tipo = rotuloTipoPerfil(empresa.tipo_perfil);
           var carregando = state.perfilSelecionandoId === empresa.id;
-          var selecionado = state.perfilSelecionandoId ? carregando : (state.empresa && empresa.id === state.empresa.id);
-          return '<button type="button" data-empresa-id="' + escapeHtml(empresa.id) + '" aria-pressed="' + (selecionado ? 'true' : 'false') + '" class="empresa-opcao rounded-2xl border-2 px-4 py-3 text-left transition active:scale-[0.98] active:translate-y-px ' + (selecionado ? 'border-blue-600 bg-cyan-50 text-cyan-800 shadow-sm' : 'border-slate-200 bg-white text-slate-800') + '"><span class="flex items-center justify-between gap-3"><span class="min-w-0 truncate text-sm font-black">' + escapeHtml(nomeEmpresa(empresa)) + '</span>' + (carregando ? '<span class="shrink-0 text-[10px] font-black uppercase tracking-wide text-blue-700">Carregando perfil...</span>' : '') + '</span><span class="mt-0.5 block text-xs font-semibold text-slate-500">' + escapeHtml(tipo) + ' &middot; ' + escapeHtml(perfilFormatado(empresa.perfil)) + '</span></button>';
+          var perfilAtual = !carregando && !!(state.empresa && empresa.id === state.empresa.id);
+          var bloqueado = perfilAtual || !!state.perfilSelecionandoId;
+          var classeVisual = carregando
+            ? 'border-blue-600 bg-cyan-50 text-cyan-800 shadow-sm'
+            : (perfilAtual
+              ? 'cursor-not-allowed border-slate-200 bg-slate-100 text-slate-400 opacity-80'
+              : 'border-slate-200 bg-white text-slate-800');
+          var status = carregando
+            ? '<span class="shrink-0 text-[10px] font-black uppercase tracking-wide text-blue-700">Carregando perfil...</span>'
+            : (perfilAtual ? '<span class="shrink-0 text-[10px] font-black uppercase tracking-wide text-slate-400">Perfil em uso</span>' : '');
+          return '<button type="button" data-empresa-id="' + escapeHtml(empresa.id) + '" aria-pressed="' + (carregando ? 'true' : 'false') + '" aria-current="' + (perfilAtual ? 'page' : 'false') + '"' + (bloqueado ? ' disabled' : '') + ' class="empresa-opcao rounded-2xl border-2 px-4 py-3 text-left transition active:scale-[0.98] active:translate-y-px disabled:active:translate-y-0 disabled:active:scale-100 ' + classeVisual + '"><span class="flex items-center justify-between gap-3"><span class="min-w-0 truncate text-sm font-black">' + escapeHtml(nomeEmpresa(empresa)) + '</span>' + status + '</span><span class="mt-0.5 block text-xs font-semibold text-slate-500">' + escapeHtml(tipo) + ' &middot; ' + escapeHtml(perfilFormatado(empresa.perfil)) + '</span></button>';
         }).join('') +
       '</div>'
     );
@@ -12039,8 +12048,9 @@
 
     Array.prototype.forEach.call(document.querySelectorAll('.empresa-opcao'), function (botao) {
       botao.addEventListener('click', function () {
-        if (state.perfilSelecionandoId) return;
+        if (botao.disabled || state.perfilSelecionandoId) return;
         var id = botao.getAttribute('data-empresa-id');
+        if (!id || (state.empresa && id === state.empresa.id)) return;
         state.perfilSelecionandoId = id || '';
         render();
         selecionarEmpresaMobile(id, true);
@@ -12943,7 +12953,7 @@
     });
 
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/mobile-sw.js?v=243').then(function (registro) {
+      navigator.serviceWorker.register('/mobile-sw.js?v=244').then(function (registro) {
         if (registro && registro.update) registro.update();
       }).catch(function () {});
     }

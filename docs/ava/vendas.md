@@ -1,8 +1,8 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.5.3.10 -->
+<!-- ava-version: 1.5.3.11 -->
 
-> Revisão 1.5.3.10: sem impacto operacional no Vendas Mobile. Os ajustes desta versão são exclusivos da abertura da Gestão Mobile.
+> Revisão 1.5.3.11: sem impacto operacional no Vendas Mobile. Os ajustes desta versão são exclusivos do seletor de perfis da Gestão Mobile.
 
 ## Escopo e navegação
 

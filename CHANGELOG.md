@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.5.3.11 - 2026-07-16
+
+- Gestão Mobile: no seletor de troca de perfil, o perfil já aberto fica identificado como **Perfil em uso** e desativado; somente os demais podem ser selecionados.
+
 ## 1.5.3.10 - 2026-07-16
 
 - Gestão Mobile: abertura mais ágil ao reaproveitar a validação inicial da integração com Vendas, conferir assinatura e cadastro em paralelo e evitar nova consulta de sessão.

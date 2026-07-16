@@ -1,8 +1,8 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.5.3.10 -->
+<!-- ava-version: 1.5.3.11 -->
 
-> Revisão 1.5.3.10: a Gestão Mobile abre os dados essenciais antes do resumo comparativo dos perfis, que continua sendo atualizado logo após a entrada.
+> Revisão 1.5.3.11: na troca de perfil, o perfil em uso aparece identificado e desativado; apenas os demais podem ser escolhidos.
 
 ## Escopo
 

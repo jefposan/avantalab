@@ -13,6 +13,14 @@
   },
   "versoes": [
     {
+      "versao": "1.5.3.11",
+      "titulo": "Troca de perfil mais clara",
+      "data": "Julho/2026",
+      "itens": [
+        "O perfil que já está aberto aparece como Perfil em uso e não pode mais ser selecionado novamente na lista de troca."
+      ]
+    },
+    {
       "versao": "1.5.3.10",
       "titulo": "Gestão Mobile mais ágil",
       "data": "Julho/2026",
