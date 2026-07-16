@@ -5,7 +5,7 @@ const PERFIL_VENDAS_ATIVO_KEY = 'avantalab_vendas_perfil_ativo';
 const ENTRADA_VENDAS_PELA_GESTAO_KEY = 'avantalab_vendas_entrada_gestao';
 const CACHE_VENDAS_DB = 'avantalab.vendas_mobile.cache';
 const CACHE_VENDAS_STORE = 'sessoes';
-const CACHE_VENDAS_VERSAO = 1;
+const CACHE_VENDAS_VERSAO = 2;
 const CACHE_VENDAS_VALIDADE_MS = 1000 * 60 * 60 * 24 * 7;
 const HOJE = new Date();
 const INICIO_MES = new Date(HOJE.getFullYear(), HOJE.getMonth(), 1);
@@ -128,6 +128,9 @@ let assinaturaSalaRenderizada = '';
 let rolagemPorAba = {};
 let contextoAberturaVendas = null;
 let sincronizacaoCatalogoEmAndamento = false;
+let revisaoDadosOperacionais = 0;
+let mutacoesDadosEmAndamento = 0;
+let filaCacheVendas = Promise.resolve();
 
 try {
   rolagemPorAba = JSON.parse(sessionStorage.getItem('avantalab.vendas_mobile.rolagem_abas') || '{}') || {};
@@ -334,7 +337,7 @@ async function lerCacheVendas() {
 async function salvarCacheVendas() {
   const chave = chaveCacheVendas();
   if (!chave || !state.autenticado || !state.acessoVendas || state.moduloVendasAtivo === false) return;
-  const cache = {
+  const cacheAtual = {
     versao: CACHE_VENDAS_VERSAO,
     atualizadoEm: Date.now(),
     dados: {
@@ -353,15 +356,41 @@ async function salvarCacheVendas() {
       perfisFinanceiros: state.perfisFinanceiros,
     },
   };
+  let cache;
   try {
-    const banco = await abrirBancoCacheVendas();
-    await new Promise((resolver, rejeitar) => {
-      const pedido = banco.transaction(CACHE_VENDAS_STORE, 'readwrite').objectStore(CACHE_VENDAS_STORE).put(cache, chave);
-      pedido.onsuccess = () => resolver();
-      pedido.onerror = () => rejeitar(pedido.error);
-    });
-    banco.close();
-  } catch { /* o cache é opcional e não interfere no uso online */ }
+    cache = typeof structuredClone === 'function'
+      ? structuredClone(cacheAtual)
+      : JSON.parse(JSON.stringify(cacheAtual));
+  } catch {
+    return;
+  }
+  filaCacheVendas = filaCacheVendas.catch(() => undefined).then(async () => {
+    try {
+      const banco = await abrirBancoCacheVendas();
+      await new Promise((resolver, rejeitar) => {
+        const pedido = banco.transaction(CACHE_VENDAS_STORE, 'readwrite').objectStore(CACHE_VENDAS_STORE).put(cache, chave);
+        pedido.onsuccess = () => resolver();
+        pedido.onerror = () => rejeitar(pedido.error);
+      });
+      banco.close();
+    } catch { /* o Supabase continua sendo a fonte oficial dos dados */ }
+  });
+  await filaCacheVendas;
+}
+
+function iniciarMutacaoDadosVendas() {
+  revisaoDadosOperacionais += 1;
+  mutacoesDadosEmAndamento += 1;
+}
+
+async function confirmarMutacaoDadosVendas() {
+  revisaoDadosOperacionais += 1;
+  salvarEstado();
+  await salvarCacheVendas();
+}
+
+function finalizarMutacaoDadosVendas() {
+  mutacoesDadosEmAndamento = Math.max(0, mutacoesDadosEmAndamento - 1);
 }
 
 async function limparCacheVendas(usuarioId = state.usuario?.id, empresaId = state.acessoVendas?.empresa_id) {
@@ -1801,6 +1830,7 @@ function comLimiteDeTempo(promessa, mensagem = 'A conexão com o AvantaLab demor
 }
 
 async function carregarDadosBackend(mostrarCarregamento = true, manterPreparacaoAteRecursos = false, preservarTelaAtual = false) {
+  const revisaoAoIniciar = revisaoDadosOperacionais;
   carregandoBackend = mostrarCarregamento;
   if (mostrarCarregamento) render();
   try {
@@ -1826,9 +1856,12 @@ async function carregarDadosBackend(mostrarCarregamento = true, manterPreparacao
       };
       state.produtos = dados.produtos;
       state.pacotesProdutos = dados.pacotes || [];
-      state.clientes = dados.clientes;
-      state.vendas = dados.vendas;
-      state.pagamentos = dados.pagamentos || [];
+      const houveAlteracaoDuranteCarga = revisaoDadosOperacionais !== revisaoAoIniciar;
+      if (!houveAlteracaoDuranteCarga) {
+        state.clientes = dados.clientes;
+        state.vendas = dados.vendas;
+        state.pagamentos = dados.pagamentos || [];
+      }
       state.conteudosVendas = dados.conteudos;
       state.divulgacaoPastas = dados.divulgacaoPastas || [];
       state.divulgacaoMateriais = dados.divulgacaoMateriais || [];
@@ -1844,7 +1877,7 @@ async function carregarDadosBackend(mostrarCarregamento = true, manterPreparacao
       state.perfisFinanceiros = dados.perfisFinanceiros || [];
       state.perfisVendas = dados.perfisVendas || [];
       if (!dados.acesso) state.autenticado = false;
-      else void salvarCacheVendas();
+      else await salvarCacheVendas();
     }
   } catch (error) {
     console.error(error);
@@ -3161,6 +3194,7 @@ async function finalizarPedidoCliente() {
     }),
     criado_em: new Date(`${dataPedido}T12:00:00`).toISOString(),
   };
+  iniciarMutacaoDadosVendas();
   try {
     const salvo = backendAtivo
       ? (rascunho.editandoId ? await window.VendasDb.updateOrder(venda) : await window.VendasDb.saveOrder(venda))
@@ -3173,10 +3207,15 @@ async function finalizarPedidoCliente() {
       state.aba = 'clientes';
       state.menuAberto = false;
     }
+    await confirmarMutacaoDadosVendas();
     render();
     abrirPedidoCliente(salvo.id);
     toast(rascunho.editandoId ? 'Pedido atualizado.' : 'Pedido registrado. O comprovante está pronto para compartilhar.');
-  } catch (error) { toast(traduzErro(error)); }
+  } catch (error) {
+    toast(traduzErro(error));
+  } finally {
+    finalizarMutacaoDadosVendas();
+  }
 }
 
 function abrirEditarPedido(pedidoId) {
@@ -3285,16 +3324,22 @@ async function confirmarPagamentoCliente() {
     forma_pagamento: valor('pagamentoClienteForma') || 'Pix',
     criado_em: new Date().toISOString(),
   };
+  iniciarMutacaoDadosVendas();
   try {
     const salvo = backendAtivo ? await window.VendasDb.savePayment(pagamento) : pagamento;
     state.pagamentos = [salvo, ...(state.pagamentos || [])];
     pagamentoClienteRascunho = null;
     state.aba = 'clientes';
     state.menuAberto = false;
+    await confirmarMutacaoDadosVendas();
     render();
     abrirPagamentoClienteDetalhe(salvo.id);
     toast('Recebimento confirmado. O comprovante está pronto para compartilhar.');
-  } catch (error) { toast(traduzErro(error)); }
+  } catch (error) {
+    toast(traduzErro(error));
+  } finally {
+    finalizarMutacaoDadosVendas();
+  }
 }
 
 function listaPagamentosPaginaHtml(clienteId, pagina = 0) {
@@ -3370,13 +3415,19 @@ async function salvarEdicaoPagamentoCliente(pagamentoId, pagina = 0, retornoClie
   const resumo = resumoComprovantePagamento(candidato);
   candidato.saldo_anterior = resumo.saldoAnterior;
   candidato.saldo_final = resumo.saldoAtual;
+  iniciarMutacaoDadosVendas();
   try {
     const salvo = backendAtivo ? await window.VendasDb.updatePayment(candidato) : candidato;
     state.pagamentos = (state.pagamentos || []).map((item) => item.id === pagamentoId ? { ...item, ...salvo } : item);
+    await confirmarMutacaoDadosVendas();
     render();
     voltarEdicaoPagamento(pagamentoAtual.cliente_id, pagina, retornoClienteId, retornoAba);
     toast('Pagamento atualizado e saldos recalculados.');
-  } catch (error) { toast(traduzErro(error)); }
+  } catch (error) {
+    toast(traduzErro(error));
+  } finally {
+    finalizarMutacaoDadosVendas();
+  }
 }
 
 function abrirConfirmacaoExcluirPagamento(pagamentoId, pagina = 0, retornoClienteId = '', retornoAba = '', origem = 'edicao') {
@@ -3392,14 +3443,20 @@ function abrirConfirmacaoExcluirPagamento(pagamentoId, pagina = 0, retornoClient
 async function excluirPagamentoCliente(pagamentoId, retornoClienteId = '', retornoAba = '', retornoPagina = 0) {
   const pagamento = (state.pagamentos || []).find((item) => item.id === pagamentoId);
   if (!pagamento) return;
+  iniciarMutacaoDadosVendas();
   try {
     if (backendAtivo) await window.VendasDb.deletePayment(pagamentoId);
     state.pagamentos = (state.pagamentos || []).filter((item) => item.id !== pagamentoId);
+    await confirmarMutacaoDadosVendas();
     fecharSheet();
     render();
     if (retornoClienteId && retornoAba) abrirDetalhesCliente(retornoClienteId, retornoAba, Number(retornoPagina) || 0);
     toast('Pagamento excluído e saldos recalculados.');
-  } catch (error) { toast(traduzErro(error)); }
+  } catch (error) {
+    toast(traduzErro(error));
+  } finally {
+    finalizarMutacaoDadosVendas();
+  }
 }
 
 function telefoneCliente(clienteId) {
@@ -3459,12 +3516,18 @@ function abrirAgendamentoCliente(clienteId) {
 async function alterarStatusCliente(clienteId, ativar) {
   const cliente = state.clientes.find((item) => item.id === clienteId);
   if (!cliente) return;
+  iniciarMutacaoDadosVendas();
   try {
     const dados = { ...cliente, ativo: Boolean(ativar) };
     const salvo = backendAtivo ? await window.VendasDb.saveClient(dados) : dados;
     state.clientes = state.clientes.map((item) => item.id === clienteId ? salvo : item);
+    await confirmarMutacaoDadosVendas();
     fecharSheet(); render(); toast(ativar ? 'Cliente ativado.' : 'Cliente desativado.');
-  } catch (error) { toast(traduzErro(error)); }
+  } catch (error) {
+    toast(traduzErro(error));
+  } finally {
+    finalizarMutacaoDadosVendas();
+  }
 }
 
 function pedidosDoCliente(clienteId) {
@@ -3550,12 +3613,18 @@ function confirmarExclusaoPedido(pedidoId, retornoClienteId = '', retornoAba = '
 }
 
 async function excluirPedido(pedidoId, retornoClienteId = '', retornoAba = '', retornoPagina = 0) {
+  iniciarMutacaoDadosVendas();
   try {
     if (backendAtivo) await window.VendasDb.deleteOrder(pedidoId);
     state.vendas = state.vendas.filter((item) => item.id !== pedidoId);
     pedidoClienteRascunho = null; conversaoConsignadoRascunho = null;
+    await confirmarMutacaoDadosVendas();
     render(); voltarParaDetalhesCliente(retornoClienteId, retornoAba, retornoPagina); toast('Pedido excluído.');
-  } catch (error) { toast(traduzErro(error)); }
+  } catch (error) {
+    toast(traduzErro(error));
+  } finally {
+    finalizarMutacaoDadosVendas();
+  }
 }
 
 function ajustarConversaoConsignado(pedidoId, indice, delta) {
@@ -3583,6 +3652,7 @@ async function gerarPedidoDoConsignado(pedidoId) {
     observacoes: JSON.stringify({ avantalab_pedido: true, tipo: 'venda', descricao: 'Venda originada de consignado', consignado_origem_id: consignado.id }), itens: itensPedido,
   };
   const consignadoAtualizado = { ...consignado, itens: restantes, subtotal: subtotalRestante, total: subtotalRestante, status: restantes.length ? consignado.status : 'convertida', observacoes: JSON.stringify({ ...metadadosPedido(consignado), convertido_parcialmente: true }) };
+  iniciarMutacaoDadosVendas();
   try {
     let salvoPedido = pedido;
     let salvoConsignado = consignadoAtualizado;
@@ -3597,8 +3667,13 @@ async function gerarPedidoDoConsignado(pedidoId) {
     }
     state.vendas = [salvoPedido, ...state.vendas.map((item) => item.id === pedidoId ? salvoConsignado : item)];
     conversaoConsignadoRascunho = null;
+    await confirmarMutacaoDadosVendas();
     render(); abrirPedidoCliente(salvoPedido.id); toast('Pedido gerado e consignado atualizado.');
-  } catch (error) { toast(traduzErro(error)); }
+  } catch (error) {
+    toast(traduzErro(error));
+  } finally {
+    finalizarMutacaoDadosVendas();
+  }
 }
 
 function dataComprovante(valorData) {
@@ -4552,23 +4627,35 @@ async function salvarCliente(clienteId, ignorarAviso = false) {
     mostrarAvisoClienteIncompleto(clienteId, semTelefone, semEndereco);
     return;
   }
+  iniciarMutacaoDadosVendas();
   try {
     if (backendAtivo) {
       const salvo = await window.VendasDb.saveClient({ id: clienteId || null, ...dados });
       state.clientes = clienteId ? state.clientes.map((c) => c.id === clienteId ? salvo : c) : [salvo, ...state.clientes];
     } else if (clienteId) state.clientes = state.clientes.map((c) => c.id === clienteId ? { ...c, ...dados, atualizado_em: new Date().toISOString() } : c);
     else state.clientes.unshift({ id: id('cli'), ...dados, criado_em: new Date().toISOString() });
+    await confirmarMutacaoDadosVendas();
     fecharSheet(); toast('Cliente salvo.'); render();
-  } catch (error) { toast(traduzErro(error)); }
+  } catch (error) {
+    toast(traduzErro(error));
+  } finally {
+    finalizarMutacaoDadosVendas();
+  }
 }
 
 async function removerCliente(clienteId) {
   if (!confirm('Remover este cliente? As vendas antigas continuarão registradas.')) return;
+  iniciarMutacaoDadosVendas();
   try {
     if (backendAtivo) await window.VendasDb.deleteClient(clienteId);
     state.clientes = state.clientes.filter((c) => c.id !== clienteId);
+    await confirmarMutacaoDadosVendas();
     fecharSheet(); toast('Cliente removido.'); render();
-  } catch (error) { toast(traduzErro(error)); }
+  } catch (error) {
+    toast(traduzErro(error));
+  } finally {
+    finalizarMutacaoDadosVendas();
+  }
 }
 
 function adicionarCarrinho(produtoId) {
@@ -4680,12 +4767,18 @@ async function finalizarVenda() {
     itens: state.carrinho.map((item) => ({ ...item, total: item.quantidade * item.preco })),
     criado_em: new Date().toISOString(),
   };
+  iniciarMutacaoDadosVendas();
   try {
     const salva = backendAtivo ? await window.VendasDb.saveOrder(venda) : venda;
     state.vendas.unshift(salva);
     state.carrinho = [];
+    await confirmarMutacaoDadosVendas();
     fecharSheet(); state.aba = 'vendas'; toast('Venda registrada com sucesso.'); render();
-  } catch (error) { toast(traduzErro(error)); }
+  } catch (error) {
+    toast(traduzErro(error));
+  } finally {
+    finalizarMutacaoDadosVendas();
+  }
 }
 
 function importarCsv() {
@@ -5036,7 +5129,7 @@ function removerFeedbackBotao(botao) {
 function podeRecarregarAtualizacaoPwa() {
   const campoAtivo = document.activeElement;
   const editando = campoAtivo instanceof HTMLElement && campoAtivo.matches('input, textarea, select, [contenteditable="true"]');
-  return !editando && !document.getElementById('sheetBackdrop') && !state.agendaFormAberto && !state.agendaItemMovendo;
+  return mutacoesDadosEmAndamento === 0 && !editando && !document.getElementById('sheetBackdrop') && !state.agendaFormAberto && !state.agendaItemMovendo;
 }
 
 async function verificarAtualizacaoPwa() {
@@ -5061,7 +5154,7 @@ function aplicarAtualizacaoPwaPendente() {
 
 if (!window.__VENDAS_MOBILE_EMBEDDED__ && 'serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('./sw.js?v=14').catch(() => {});
+    navigator.serviceWorker.register('./sw.js?v=15').catch(() => {});
   });
 }
 

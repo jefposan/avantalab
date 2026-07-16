@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.5.4 - 2026-07-16
+
+- Vendas Mobile: protege clientes, pedidos e pagamentos contra uma atualização antiga em segundo plano que poderia substituir na tela e no cache dados recém-salvos.
+- Vendas Mobile: toda alteração operacional confirmada pelo Supabase atualiza imediatamente o estado e o cache local, em uma fila ordenada que impede uma gravação antiga de vencer a mais recente.
+- Pedidos: o pedido e todos os seus itens passam a ser criados ou editados em uma única transação no banco; se qualquer etapa falhar, nenhuma parte é alterada.
+- Banco de dados: clientes, pedidos e pagamentos passam a registrar automaticamente a data da última alteração.
+
 ## 1.5.3.16 - 2026-07-16
 
 - Gestão Mobile: ao abrir a busca nas listas de despesas ou receitas, o campo recebe foco automaticamente e o teclado fica pronto para digitação.

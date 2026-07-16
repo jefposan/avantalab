@@ -1,8 +1,8 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.5.3.16 -->
+<!-- ava-version: 1.5.4 -->
 
-> Revisão 1.5.3.16: a busca de despesas e receitas recebe foco automaticamente ao tocar na lupa.
+> Revisão 1.5.4: sem impacto operacional na Gestão Mobile.
 
 ## Escopo
 

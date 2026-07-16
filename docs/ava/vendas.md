@@ -1,8 +1,8 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.5.3.16 -->
+<!-- ava-version: 1.5.4 -->
 
-> Revisão 1.5.3.16: sem impacto operacional no Vendas Mobile.
+> Revisão 1.5.4: clientes, pedidos e pagamentos são confirmados no servidor e protegidos contra restaurações antigas do cache.
 
 ## Escopo e navegação
 
@@ -31,6 +31,9 @@ dúvida dentro do Vendas sempre que a função existir ali.
 
 ## Clientes
 
+- Ao salvar ou editar cliente, pedido ou pagamento, o Vendas confirma a gravação
+  no servidor e atualiza imediatamente o cache local. Uma atualização iniciada
+  antes da alteração não pode substituir o dado mais novo.
 - **Clientes > Novo cliente** cria a ficha. Nome é obrigatório; celular e endereço
   são recomendados para ligação/WhatsApp e mapas.
 - A ficha oferece pedido, pagamento, agendamento e **Ver detalhes**. Nesta área,
@@ -54,6 +57,8 @@ dúvida dentro do Vendas sempre que a função existir ali.
 - Produtos permite cadastrar, editar, ativar/desativar, usar imagens e pacotes.
   Custo e preço de venda alimentam rentabilidade; estoque é opcional e é ajustado
   em **Configurações > Controle de estoque**.
+- Pedido e itens são salvos na mesma transação; se alguma parte falhar, o pedido
+  anterior permanece intacto.
 - Novo pedido abre pelo cliente ou por **Pedidos > Novo pedido**. Há Venda e
   Consignado, itens bonificados, desconto por valor/percentual e comprovante.
 - Consignado não é venda nem recebimento até sua conversão em pedido.

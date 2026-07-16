@@ -253,7 +253,7 @@
       acompanharEtapaDados(client.from('vendas_mobile_divulgacao_materiais').select('id, pasta_id, titulo, tipo, arquivo_url, miniatura_url, miniatura_status, mime_type, tamanho_bytes, ordem, criado_em').eq('ativo', true).order('ordem').order('criado_em', { ascending: false }), 'Carregando materiais'),
       acompanharEtapaDados(client.rpc('obter_integracao_gestao_vendas_mobile_rpc'), 'Carregando integração financeira'),
     ]);
-    const error = clientesRes.error || pedidosRes.error || integracaoRes.error;
+    const error = clientesRes.error || pedidosRes.error || pagamentosRes.error || integracaoRes.error;
     if (error) throw error;
 
     const produtos = catalogoRes.produtos;
@@ -413,15 +413,18 @@
       atualizado_em: new Date().toISOString(),
     };
     const query = customer.id && !String(customer.id).startsWith('cli_')
-      ? client.from('vendas_mobile_clientes').update(payload).eq('id', customer.id)
+      ? client.from('vendas_mobile_clientes').update(payload).eq('id', customer.id).eq('user_id', user.id)
       : client.from('vendas_mobile_clientes').insert(payload);
     const { data, error } = await query.select().single();
     if (error) throw error;
+    if (!data?.id) throw new Error('Os dados do cliente não foram confirmados pelo servidor.');
     return { ...data, ...(data.endereco || {}) };
   }
 
   async function deleteClient(id) {
-    const { error } = await requireClient().from('vendas_mobile_clientes').delete().eq('id', id);
+    const user = await currentUser();
+    if (!user) throw new Error('Sessão expirada.');
+    const { error } = await requireClient().from('vendas_mobile_clientes').delete().eq('id', id).eq('user_id', user.id);
     if (error) throw error;
   }
 
@@ -435,11 +438,8 @@
     return preco > 0 && Number(orderItem?.total || 0) === 0 && Number(orderItem?.desconto || 0) >= quantidade * preco;
   }
 
-  async function saveOrder(order) {
-    const user = await currentUser();
-    if (!user) throw new Error('Sessão expirada.');
-    const { data: pedido, error } = await client.from('vendas_mobile_pedidos').insert({
-      user_id: user.id,
+  function pedidoParaPersistencia(order, incluirId = false) {
+    const pedido = {
       cliente_id: order.cliente_id || null,
       status: order.status || 'concluida',
       subtotal: Number(order.subtotal || order.total || 0),
@@ -448,54 +448,13 @@
       forma_pagamento: order.forma_pagamento || null,
       observacoes: order.observacoes || null,
       criado_em: order.criado_em || new Date().toISOString(),
-    }).select().single();
-    if (error) throw error;
-    const items = order.itens.map((item) => {
+    };
+    if (incluirId) pedido.id = order.id;
+    const itens = order.itens.map((item) => {
       const quantidade = Number(item.quantidade || 1);
       const preco = Number(item.preco ?? item.preco_unitario ?? 0);
       const bonificado = itemBonificado(item);
       return {
-      pedido_id: pedido.id,
-      produto_id: String(item.produto_id || '').startsWith('prod_') ? null : item.produto_id || null,
-      produto_nome: item.produto_nome,
-      produto_sku: item.produto_sku || null,
-      quantidade,
-      preco_unitario: preco,
-      preco_custo: item.preco_custo == null ? null : Number(item.preco_custo),
-      desconto: bonificado ? quantidade * preco : Number(item.desconto || 0),
-      total: bonificado ? 0 : quantidade * preco - Number(item.desconto || 0),
-    }; });
-    const { data: savedItems, error: itemsError } = await client.from('vendas_mobile_pedido_itens').insert(items).select();
-    if (itemsError) {
-      await client.from('vendas_mobile_pedidos').delete().eq('id', pedido.id);
-      throw itemsError;
-    }
-    return { ...pedido, itens: savedItems || [] };
-  }
-
-  async function updateOrder(order) {
-    const user = await currentUser();
-    if (!user) throw new Error('Sessão expirada.');
-    const { data: pedido, error } = await client.from('vendas_mobile_pedidos').update({
-      cliente_id: order.cliente_id || null,
-      status: order.status || 'concluida',
-      subtotal: Number(order.subtotal || order.total || 0),
-      desconto: Number(order.desconto || 0),
-      total: Number(order.total || 0),
-      forma_pagamento: order.forma_pagamento || null,
-      observacoes: order.observacoes || null,
-      criado_em: order.criado_em || new Date().toISOString(),
-    }).eq('id', order.id).eq('user_id', user.id).select().single();
-    if (error) throw error;
-    const { error: deleteItemsError } = await client.from('vendas_mobile_pedido_itens').delete().eq('pedido_id', order.id);
-    if (deleteItemsError) throw deleteItemsError;
-    if (!order.itens.length) return { ...pedido, itens: [] };
-    const items = order.itens.map((item) => {
-      const quantidade = Number(item.quantidade || 1);
-      const preco = Number(item.preco ?? item.preco_unitario ?? 0);
-      const bonificado = itemBonificado(item);
-      return {
-        pedido_id: order.id,
         produto_id: String(item.produto_id || '').startsWith('prod_') ? null : item.produto_id || null,
         produto_nome: item.produto_nome,
         produto_sku: item.produto_sku || null,
@@ -506,9 +465,28 @@
         total: bonificado ? 0 : quantidade * preco - Number(item.desconto || 0),
       };
     });
-    const { data: savedItems, error: itemsError } = await client.from('vendas_mobile_pedido_itens').insert(items).select();
-    if (itemsError) throw itemsError;
-    return { ...pedido, itens: savedItems || [] };
+    return { pedido, itens };
+  }
+
+  async function persistOrder(order, incluirId = false) {
+    const user = await currentUser();
+    if (!user) throw new Error('Sessão expirada.');
+    const payload = pedidoParaPersistencia(order, incluirId);
+    const { data, error } = await client.rpc('salvar_pedido_vendas_mobile_rpc', {
+      p_pedido: payload.pedido,
+      p_itens: payload.itens,
+    });
+    if (error) throw error;
+    if (!data?.id || !Array.isArray(data.itens)) throw new Error('O pedido não foi confirmado integralmente pelo servidor.');
+    return data;
+  }
+
+  async function saveOrder(order) {
+    return persistOrder(order, false);
+  }
+
+  async function updateOrder(order) {
+    return persistOrder(order, true);
   }
 
   async function deleteOrder(id) {
@@ -547,6 +525,7 @@
       ({ data, error } = await client.from('vendas_mobile_pagamentos').insert(legado).select().single());
     }
     if (error) throw error;
+    if (!data?.id) throw new Error('O pagamento não foi confirmado pelo servidor.');
     return { ...data, desconto: payload.desconto, saldo_anterior: payload.saldo_anterior, saldo_final: payload.saldo_final };
   }
 
@@ -590,6 +569,7 @@
         .single());
     }
     if (error) throw error;
+    if (!data?.id) throw new Error('A alteração do pagamento não foi confirmada pelo servidor.');
     return { ...payment, ...data, desconto: payload.desconto, saldo_anterior: payload.saldo_anterior, saldo_final: payload.saldo_final };
   }
 

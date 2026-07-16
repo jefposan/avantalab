@@ -79,6 +79,7 @@ SALA E NAVEGAÇÃO
 
 CLIENTES
 - Em Clientes, a barra compacta reúne Ordenar e a lupa. A lupa abre o campo de pesquisa e o botão Buscar na mesma linha; se a pesquisa estiver vazia e perder o foco, ela se recolhe. A lista centraliza suavemente o card em foco. Use Novo cliente para cadastrar. Nome é obrigatório; celular e endereço são recomendados para WhatsApp e mapas. A ficha permite ligação, WhatsApp, mapas, pedido, pagamento, agendamento e Ver detalhes.
+- Clientes, pedidos e pagamentos só informam sucesso depois da confirmação do Supabase. O cache local é atualizado imediatamente e uma carga antiga em segundo plano não pode substituir uma alteração mais nova.
 - Durante a preparação de acesso ou conteúdo, o Vendas exibe a etapa atual e um percentual baseado nas tarefas realmente concluídas, como sessão, permissões, catálogo, clientes, pedidos e pagamentos. Aguarde a conclusão antes de orientar uma nova ação.
 - Ao reabrir o PWA com sessão e perfil já validados, o Vendas pode restaurar dados recentes daquele perfil e atualizar em segundo plano. O cache é local, temporário e removido ao sair ou resetar o sistema.
 - A abertura do Vendas reaproveita a validação já concluída do perfil e libera a tela antes da sincronização automática do catálogo. A opção Verificar agora atualiza apenas o catálogo, sem recarregar todo o sistema.
@@ -88,6 +89,7 @@ CLIENTES
 
 CATÁLOGO, PEDIDOS E PAGAMENTOS
 - Produtos permite cadastrar, editar, ativar/desativar, buscar, trabalhar com pacotes e imagens. Custo e preço de venda são usados para rentabilidade; estoque é opcional e pode ser ajustado em Configurações > Controle de estoque.
+- Pedido e itens são salvos na mesma transação: se alguma parte falhar, o pedido anterior permanece intacto.
 - Novo pedido pode iniciar em Clientes (cliente já definido) ou em Pedidos (selecionar cliente). Há Venda e Consignado, itens bonificados, desconto em valor ou percentual e comprovante após finalizar.
 - Consignado não entra como venda/recebimento até ser convertido em pedido. Não trate consignado como receita realizada.
 - Pagamentos registra recebimentos, desconto, data e forma. Pelo botão +, Lançar pagamento abre a seleção de cliente; o campo Valor pago recebe foco. Editar ou excluir um pagamento recalcula o saldo e relatórios. Os campos de data de pedido e pagamento têm rótulo centralizado e data destacada; toque na data para abrir o calendário. Comprovantes podem ser abertos e editados pelas listas do cliente.
