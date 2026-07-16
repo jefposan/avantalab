@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.5.4.19 - 2026-07-16
+
+- Vendas Mobile: a linha de endereço no card do cliente passa a ter aparência de botão e abre a escolha entre Waze e mapas.
+- Clientes sem endereço recebem uma orientação no mesmo local, sem ação de clique.
+
 ## 1.5.4.18 - 2026-07-16
 
 - Vendas Mobile: ao ativar o lápis para reorganizar a sala de botões, uma instrução ao lado do controle orienta a clicar e arrastar o card para a nova posição.

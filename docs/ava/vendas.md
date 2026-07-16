@@ -1,8 +1,8 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.5.4.18 -->
+<!-- ava-version: 1.5.4.19 -->
 
-> Revisão 1.5.4.18: o modo de organizar a sala exibe uma instrução de arraste ao lado do lápis.
+> Revisão 1.5.4.19: o endereço do card do cliente identifica quando pode abrir Waze ou mapas.
 
 ## Escopo e navegação
 
@@ -46,6 +46,9 @@ dúvida dentro do Vendas sempre que a função existir ali.
   anterior é limpa e a lista completa volta a ser exibida.
 - **Clientes > Novo cliente** cria a ficha. Nome é obrigatório; celular e endereço
   são recomendados para ligação/WhatsApp e mapas.
+- Quando existe endereço, toda a linha destacada no card abre a escolha entre
+  Google Maps, Mapas Apple e Waze. Sem endereço, a linha fica inativa e orienta
+  o cadastro antes de usar os mapas.
 - A ficha oferece pedido, pagamento, agendamento e **Ver detalhes**. Nesta área,
   Resumo, Consignado, Pedidos e Pagamentos mostram os históricos.
 - Na lista, o card próximo ao centro recebe destaque. Depois que a rolagem termina,

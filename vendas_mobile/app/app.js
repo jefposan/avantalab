@@ -3242,7 +3242,11 @@ function renderCliente(c, resumoFinanceiro = null, aniversarianteHoje = false) {
   const consignado = Number(resumo.consignado || 0);
   const credito = Number(resumo.credito || 0);
   const iniciais = String(c.nome || 'C').split(/\s+/).slice(0, 2).map((parte) => parte[0] || '').join('').toUpperCase();
-  const local = [c.endereco, c.cidade, c.estado].filter(Boolean).join(' - ') || 'Não informado';
+  const partesEndereco = [c.endereco, c.numero, c.complemento, c.bairro, c.cidade, c.estado, c.cep]
+    .map((parte) => String(parte || '').trim())
+    .filter(Boolean);
+  const temEndereco = partesEndereco.length > 0;
+  const local = partesEndereco.join(', ');
   const temTelefone = Boolean(String(c.telefone || '').replace(/\D/g, ''));
   return `
     <article class="client-card ${c.ativo === false ? 'inactive' : ''} ${aniversarianteHoje ? 'client-birthday-today' : ''}" data-cliente-id="${escapeAttr(c.id)}">
@@ -3254,7 +3258,9 @@ function renderCliente(c, resumoFinanceiro = null, aniversarianteHoje = false) {
       </header>
       <div class="client-contact-list">
         <div class="client-contact-actions">${temTelefone ? `<button type="button" onclick="ligarCliente('${c.id}')" aria-label="Ligar para ${escapeAttr(c.nome)}">${svgIcon('phone')} Ligar</button><button type="button" onclick="abrirWhatsappCliente('${c.id}')" aria-label="Chamar ${escapeAttr(c.nome)} no WhatsApp"><span class="whatsapp-mark">◉</span> WhatsApp</button>` : '<span class="client-contact-empty">Telefone não informado</span>'}</div>
-        <button type="button" class="client-address-link" onclick="abrirMapasCliente('${c.id}')">${svgIcon('map-pin')}<span>${escapeHtml(local)}</span></button>
+        ${temEndereco
+          ? `<button type="button" class="client-address-link" onclick="abrirMapasCliente('${c.id}')" aria-label="Abrir endereço de ${escapeAttr(c.nome)} no Waze ou mapas">${svgIcon('map-pin')}<span>${escapeHtml(local)}</span><span class="client-address-arrow" aria-hidden="true">›</span></button>`
+          : `<div class="client-address-link client-address-empty">${svgIcon('map-pin')}<span>Adicione o endereço para abrir no waze ou mapas.</span></div>`}
       </div>
       <div class="client-values">
         <div class="client-debt-highlight"><span>Débito Atual</span><b class="${debito > 0 ? 'negative' : 'positive'}">${moeda(debito)}</b></div>
@@ -4052,7 +4058,7 @@ function abrirWhatsappCliente(clienteId) {
 function abrirMapasCliente(clienteId) {
   const cliente = state.clientes.find((item) => item.id === clienteId);
   if (!cliente) return;
-  const endereco = [cliente.endereco, cliente.numero, cliente.complemento, cliente.cidade, cliente.estado, cliente.cep].filter(Boolean).join(', ');
+  const endereco = [cliente.endereco, cliente.numero, cliente.complemento, cliente.bairro, cliente.cidade, cliente.estado, cliente.cep].filter(Boolean).join(', ');
   if (!endereco) { toast('Este cliente não possui endereço cadastrado.'); return; }
   const destino = encodeURIComponent(endereco);
   sheet(`<div class="sheet-header"><div><h2>Abrir endereço</h2><p class="muted small">Escolha o aplicativo de mapas.</p></div><button class="close" onclick="fecharSheet()">×</button></div><div class="maps-option-list"><a href="https://www.google.com/maps/search/?api=1&query=${destino}" target="_blank" rel="noopener">Google Maps</a><a href="https://maps.apple.com/?q=${destino}" target="_blank" rel="noopener">Mapas Apple</a><a href="https://waze.com/ul?q=${destino}&navigate=yes" target="_blank" rel="noopener">Waze</a></div>`, 'sheet-backdrop-centered');
@@ -5771,7 +5777,7 @@ function aplicarAtualizacaoPwaPendente() {
 
 if (!window.__VENDAS_MOBILE_EMBEDDED__ && 'serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('./sw.js?v=23').catch(() => {});
+    navigator.serviceWorker.register('./sw.js?v=24').catch(() => {});
   });
 }
 
