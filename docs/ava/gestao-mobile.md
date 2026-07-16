@@ -1,8 +1,8 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.5.3.11 -->
+<!-- ava-version: 1.5.3.12 -->
 
-> Revisão 1.5.3.11: na troca de perfil, o perfil em uso aparece identificado e desativado; apenas os demais podem ser escolhidos.
+> Revisão 1.5.3.12: a ativação do Vendas Mobile só conclui após confirmar a instalação no perfil e a liberação do gestor; uma falha é informada ao usuário.
 
 ## Escopo
 

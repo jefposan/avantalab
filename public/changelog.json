@@ -13,6 +13,15 @@
   },
   "versoes": [
     {
+      "versao": "1.5.3.12",
+      "titulo": "Ativação confiável do Vendas",
+      "data": "Julho/2026",
+      "itens": [
+        "Ao ativar o Vendas Mobile, o sistema confirma a instalação no perfil e a liberação do acesso antes de informar sucesso.",
+        "Se houver falha para salvar, o módulo não fica marcado como instalado apenas na tela."
+      ]
+    },
+    {
       "versao": "1.5.3.11",
       "titulo": "Troca de perfil mais clara",
       "data": "Julho/2026",

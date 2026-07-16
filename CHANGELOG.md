@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.5.3.12 - 2026-07-16
+
+- Gestão Web e Mobile: a ativação do **Vendas Mobile** agora confirma a instalação no perfil e a liberação do gestor antes de informar sucesso. Falhas de salvamento passam a ser exibidas em vez de marcar o módulo como ativo apenas na tela.
+
 ## 1.5.3.11 - 2026-07-16
 
 - Gestão Mobile: no seletor de troca de perfil, o perfil já aberto fica identificado como **Perfil em uso** e desativado; somente os demais podem ser selecionados.

@@ -1802,17 +1802,22 @@
     render();
 
     try {
-      var instalacao = await db.from('empresa_modulos').upsert({
-        empresa_id: state.empresa.id,
-        modulo_id: 'vendas_mobile',
-        ativo: true,
-        origem: 'avulso',
-        atualizado_em: new Date().toISOString(),
-      }, { onConflict: 'empresa_id,modulo_id' });
-      if (instalacao.error) throw instalacao.error;
+      var ativacao = await db.rpc('ativar_modulo_vendas_mobile_rpc', {
+        p_empresa_id: state.empresa.id,
+      });
+      if (ativacao.error || ativacao.data !== true) {
+        throw (ativacao.error || new Error('A ativação do módulo não foi confirmada.'));
+      }
 
-      var acessoGestor = await db.rpc('garantir_acessos_gestor_vendas_mobile_rpc');
-      if (acessoGestor.error) throw acessoGestor.error;
+      var instalacaoConfirmada = await db
+        .from('empresa_modulos')
+        .select('modulo_id, ativo')
+        .eq('empresa_id', state.empresa.id)
+        .eq('modulo_id', 'vendas_mobile')
+        .maybeSingle();
+      if (instalacaoConfirmada.error || !instalacaoConfirmada.data || instalacaoConfirmada.data.ativo !== true) {
+        throw (instalacaoConfirmada.error || new Error('O módulo foi solicitado, mas a instalação não foi localizada.'));
+      }
 
       var acessoAtivo = await db.rpc('modulo_vendas_mobile_ativo_rpc', {
         p_empresa_id: state.empresa.id,
@@ -12953,7 +12958,7 @@
     });
 
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/mobile-sw.js?v=244').then(function (registro) {
+      navigator.serviceWorker.register('/mobile-sw.js?v=245').then(function (registro) {
         if (registro && registro.update) registro.update();
       }).catch(function () {});
     }

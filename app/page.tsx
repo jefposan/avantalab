@@ -2233,13 +2233,43 @@ useEffect(() => {
     if (!empresaId) return;
     setModuloAcaoId(moduloId);
     try {
-      await supabase.from('empresa_modulos').upsert(
-        { empresa_id: empresaId, modulo_id: moduloId, ativo: true, origem: 'avulso', atualizado_em: new Date().toISOString() },
-        { onConflict: 'empresa_id,modulo_id' }
-      );
+      if (moduloId === 'vendas_mobile') {
+        const { data, error } = await supabase.rpc('ativar_modulo_vendas_mobile_rpc', {
+          p_empresa_id: empresaId,
+        });
+        if (error) throw error;
+        if (data !== true) throw new Error('A ativação do Vendas Mobile não foi confirmada.');
+      } else {
+        const { error } = await supabase.from('empresa_modulos').upsert(
+          { empresa_id: empresaId, modulo_id: moduloId, ativo: true, origem: 'avulso', atualizado_em: new Date().toISOString() },
+          { onConflict: 'empresa_id,modulo_id' }
+        );
+        if (error) throw error;
+      }
+
+      const { data: instalacao, error: erroConfirmacao } = await supabase
+        .from('empresa_modulos')
+        .select('modulo_id, ativo')
+        .eq('empresa_id', empresaId)
+        .eq('modulo_id', moduloId)
+        .maybeSingle();
+      if (erroConfirmacao) throw erroConfirmacao;
+      if (!instalacao || instalacao.ativo !== true) {
+        throw new Error('A instalação não foi localizada após a confirmação.');
+      }
+
       setModulosAtivos((prev) => (prev.includes(moduloId) ? prev : [...prev, moduloId]));
-    } catch {}
-    setModuloAcaoId(null);
+      if (moduloId === 'vendas_mobile') {
+        abrirAviso('Vendas Mobile ativado', 'O módulo foi instalado neste perfil e o acesso do gestor foi liberado.', undefined, 'sucesso');
+      }
+    } catch (error) {
+      const mensagem = error instanceof Error
+        ? error.message
+        : (error && typeof error === 'object' && 'message' in error ? String(error.message) : 'Tente novamente em instantes.');
+      abrirAviso('Não foi possível instalar o módulo', mensagem, undefined, 'erro');
+    } finally {
+      setModuloAcaoId(null);
+    }
   }
 
   async function desinstalarModulo(moduloId: string) {
