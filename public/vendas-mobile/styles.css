@@ -1511,10 +1511,9 @@ body { background: #fff; color: var(--ink); }
 .remember-option input:checked + span { border-color: #1F8A9E; background: #1F8A9E; }
 .login-field input { outline-color: #1687D9; }
 .client-card-grid { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 24px; }
-.client-card { position: relative; overflow: hidden; border: 1px solid #e2e3e6; border-radius: 12px; padding: 0; background: #fff; box-shadow: 0 2px 5px rgba(0,0,0,.06); transition: opacity .22s ease, border-color .22s ease, box-shadow .22s ease, transform .22s ease; }
+.client-card { position: relative; overflow: hidden; contain: layout paint; border: 1px solid #e2e3e6; border-radius: 12px; padding: 0; background: #fff; box-shadow: 0 2px 5px rgba(0,0,0,.06); transition: border-color .16s ease, box-shadow .16s ease; }
 @media (hover: hover) and (pointer: fine) { .client-card:hover { transform: translateY(-1px); box-shadow: 0 7px 18px rgba(0,0,0,.1); } }
-.client-card.client-card-emphasis { border-color: #1687D9; box-shadow: 0 0 0 2px rgba(22,135,217,.22), 0 10px 24px rgba(10,31,68,.16); transform: translateY(-1px); }
-.client-card.client-card-deemphasized { opacity: .44; }
+.client-card.client-card-emphasis { border-color: #1687D9; box-shadow: 0 0 0 2px rgba(22,135,217,.2), 0 8px 18px rgba(10,31,68,.13); }
 .client-title-actions { display: inline-flex; align-items: center; gap: 8px; }
 .client-search-toolbar { display: flex; min-height: 38px; align-items: center; gap: 8px; }
 .client-order-button, .client-search-submit { display: inline-flex; box-sizing: border-box; height: 34px; min-height: 34px; align-items: center; justify-content: center; gap: 5px; border-radius: 9px; font-size: 11px; font-weight: 750; line-height: 1; white-space: nowrap; }

@@ -79,6 +79,7 @@ SALA E NAVEGAÇÃO
 
 CLIENTES
 - Em Clientes, a barra compacta mantém Ordenar, o campo de pesquisa e o botão Buscar sempre visíveis e alinhados. Ao acessar novamente a página, a pesquisa anterior é limpa e a lista completa volta a aparecer. A lista centraliza suavemente o card em foco. Use Novo cliente para cadastrar. Nome é obrigatório; celular e endereço são recomendados para WhatsApp e mapas. A ficha permite ligação, WhatsApp, mapas, pedido, pagamento, agendamento e Ver detalhes.
+- O card próximo ao centro recebe destaque durante a navegação; o encaixe central só é concluído depois que a rolagem termina, sem interromper o movimento do usuário.
 - Clientes, pedidos e pagamentos só informam sucesso depois da confirmação do Supabase. O cache local é atualizado imediatamente e uma carga antiga em segundo plano não pode substituir uma alteração mais nova. Históricos com mais de 1.000 registros são carregados em todas as páginas antes do cálculo dos saldos.
 - Se a conexão falhar durante o salvamento, clientes, pedidos e pagamentos ficam em uma fila protegida no aparelho e são reenviados automaticamente com o mesmo identificador, sem duplicidade. Oriente que a mensagem de pendência ainda não significa confirmação no servidor.
 - Durante a preparação de acesso ou conteúdo, o Vendas exibe a etapa atual e um percentual baseado nas tarefas realmente concluídas, como sessão, permissões, catálogo, clientes, pedidos e pagamentos. Aguarde a conclusão antes de orientar uma nova ação.

@@ -98,10 +98,12 @@ let telefonePerfilPendente = null;
 let telefonePerfilSalvando = false;
 let rolagemAnteriorSheet = 0;
 let cardsClientesEmDestaque = [];
+let cardClienteEmDestaque = null;
 let quadroDestaqueClientes = 0;
-let clienteDestaqueId = '';
 let temporizadorEncaixeClientes = 0;
 let encaixeClientesEmAndamento = false;
+let interacaoRolagemClientesAtiva = false;
+let rolagemClientesInicioToque = 0;
 let suspenderEncaixeClientesAte = 0;
 let calendarioCentralizado = null;
 let botaoFeedbackAtivo = null;
@@ -1023,7 +1025,10 @@ function renderModuloVendasDesativado() {
 }
 
 function configurarDestaqueClientes() {
-  if (window.matchMedia('(orientation: landscape) and (max-height: 560px)').matches) {
+  if (
+    !window.matchMedia('(max-width: 850px)').matches ||
+    window.matchMedia('(orientation: landscape) and (max-height: 560px)').matches
+  ) {
     limparDestaqueClientes();
     return;
   }
@@ -1032,14 +1037,22 @@ function configurarDestaqueClientes() {
 }
 
 function limparDestaqueClientes() {
-  cardsClientesEmDestaque.forEach((card) => card.classList.remove('client-card-emphasis', 'client-card-deemphasized'));
+  if (quadroDestaqueClientes) cancelAnimationFrame(quadroDestaqueClientes);
+  cardsClientesEmDestaque.forEach((card) => card.classList.remove('client-card-emphasis'));
   cardsClientesEmDestaque = [];
-  clienteDestaqueId = '';
+  cardClienteEmDestaque = null;
+  quadroDestaqueClientes = 0;
   window.clearTimeout(temporizadorEncaixeClientes);
+  temporizadorEncaixeClientes = 0;
+  encaixeClientesEmAndamento = false;
+  interacaoRolagemClientesAtiva = false;
 }
 
 function atualizarDestaqueClientes() {
-  if (window.matchMedia('(orientation: landscape) and (max-height: 560px)').matches) {
+  if (
+    !window.matchMedia('(max-width: 850px)').matches ||
+    window.matchMedia('(orientation: landscape) and (max-height: 560px)').matches
+  ) {
     limparDestaqueClientes();
     return;
   }
@@ -1047,52 +1060,51 @@ function atualizarDestaqueClientes() {
   const topoVisivel = Math.max(0, app.querySelector('.module-sticky-head')?.getBoundingClientRect().bottom || 0);
   const rodapeVisivel = Math.min(window.innerHeight, document.querySelector('.vendas-bottom-nav')?.getBoundingClientRect().top || window.innerHeight);
   const centroVisivel = topoVisivel + ((rodapeVisivel - topoVisivel) / 2);
-  const visiveis = cardsClientesEmDestaque.filter((card) => {
-    const area = card.getBoundingClientRect();
-    return area.bottom > topoVisivel && area.top < rodapeVisivel;
-  });
-  const cardAtivo = visiveis.reduce((maisProximo, card) => {
-    if (!maisProximo) return card;
-    const centroCard = card.getBoundingClientRect().top + (card.getBoundingClientRect().height / 2);
-    const centroAtual = maisProximo.getBoundingClientRect().top + (maisProximo.getBoundingClientRect().height / 2);
-    return Math.abs(centroCard - centroVisivel) < Math.abs(centroAtual - centroVisivel) ? card : maisProximo;
-  }, null);
-  cardsClientesEmDestaque.forEach((card) => {
-    card.classList.toggle('client-card-emphasis', card === cardAtivo);
-    card.classList.toggle('client-card-deemphasized', Boolean(cardAtivo) && card !== cardAtivo);
-  });
-  const novoId = cardAtivo?.dataset.clienteId || '';
-  if (novoId && novoId !== clienteDestaqueId) {
-    clienteDestaqueId = novoId;
-    agendarEncaixeCliente(cardAtivo);
+  const centroHorizontal = window.innerWidth / 2;
+  const pontosBusca = [centroVisivel, centroVisivel - 24, centroVisivel + 24, centroVisivel - 56, centroVisivel + 56];
+  let cardAtivo = null;
+  for (const y of pontosBusca) {
+    const elementos = document.elementsFromPoint(centroHorizontal, Math.max(topoVisivel + 1, Math.min(rodapeVisivel - 1, y)));
+    cardAtivo = elementos.map((elemento) => elemento.closest?.('.clientes-page .client-card')).find(Boolean) || null;
+    if (cardAtivo) break;
   }
+  cardAtivo ||= cardClienteEmDestaque;
+  if (!cardAtivo?.isConnected || cardAtivo === cardClienteEmDestaque) return;
+  cardClienteEmDestaque?.classList.remove('client-card-emphasis');
+  cardAtivo.classList.add('client-card-emphasis');
+  cardClienteEmDestaque = cardAtivo;
 }
 
-function agendarEncaixeCliente(card) {
+function agendarEncaixeCliente() {
   if (
-    !card ||
     encaixeClientesEmAndamento ||
+    interacaoRolagemClientesAtiva ||
     state.aba !== 'clientes' ||
     Date.now() < suspenderEncaixeClientesAte
   ) return;
   window.clearTimeout(temporizadorEncaixeClientes);
   temporizadorEncaixeClientes = window.setTimeout(() => {
-    if (!card.isConnected || state.aba !== 'clientes') return;
+    temporizadorEncaixeClientes = 0;
+    const card = cardClienteEmDestaque;
+    if (!card?.isConnected || state.aba !== 'clientes') return;
     const topo = Math.max(0, app.querySelector('.module-sticky-head')?.getBoundingClientRect().bottom || 0);
     const rodape = Math.min(window.innerHeight, document.querySelector('.vendas-bottom-nav')?.getBoundingClientRect().top || window.innerHeight);
-    const deslocamento = (card.getBoundingClientRect().top + card.getBoundingClientRect().height / 2) - (topo + (rodape - topo) / 2);
-    if (Math.abs(deslocamento) < 18) return;
+    const areaCard = card.getBoundingClientRect();
+    const deslocamento = (areaCard.top + areaCard.height / 2) - (topo + (rodape - topo) / 2);
+    if (Math.abs(deslocamento) < 14) return;
     encaixeClientesEmAndamento = true;
     window.scrollBy({ top: deslocamento, behavior: 'smooth' });
-    window.setTimeout(() => { encaixeClientesEmAndamento = false; }, 360);
-  }, 110);
+    window.setTimeout(() => { encaixeClientesEmAndamento = false; }, 420);
+  }, 220);
 }
 
 function agendarDestaqueClientes() {
+  if (state.aba !== 'clientes' || !cardsClientesEmDestaque.length) return;
   if (quadroDestaqueClientes) return;
   quadroDestaqueClientes = requestAnimationFrame(() => {
     quadroDestaqueClientes = 0;
     atualizarDestaqueClientes();
+    agendarEncaixeCliente();
   });
 }
 
@@ -3108,12 +3120,58 @@ function renderProduto(p) {
   `;
 }
 
+function resumosFinanceirosListaClientes() {
+  const resumos = new Map();
+  const obterResumo = (clienteId) => {
+    if (!resumos.has(clienteId)) {
+      resumos.set(clienteId, {
+        totalDebitos: 0,
+        consignado: 0,
+        abatimentos: 0,
+        ultimaVenda: null,
+        ultimaVendaTempo: 0,
+      });
+    }
+    return resumos.get(clienteId);
+  };
+  (state.vendas || []).forEach((venda) => {
+    if (!venda.cliente_id || venda.status === 'cancelada') return;
+    const resumo = obterResumo(venda.cliente_id);
+    if (pedidoEhConsignado(venda)) {
+      resumo.consignado += Number(venda.total || 0);
+      return;
+    }
+    if (pedidoGeraDebito(venda)) resumo.totalDebitos += Number(venda.total || 0);
+    if (pedidoSomenteBonificado(venda)) return;
+    const tempoVenda = Date.parse(venda.criado_em || '') || 0;
+    if (!resumo.ultimaVenda || tempoVenda >= resumo.ultimaVendaTempo) {
+      resumo.ultimaVenda = venda;
+      resumo.ultimaVendaTempo = tempoVenda;
+    }
+  });
+  const pagamentosUnicos = new Map();
+  (state.pagamentos || []).forEach((pagamento) => {
+    if (pagamento.cliente_id && pagamento.id) pagamentosUnicos.set(`${pagamento.cliente_id}:${pagamento.id}`, pagamento);
+  });
+  pagamentosUnicos.forEach((pagamento) => {
+    const resumo = obterResumo(pagamento.cliente_id);
+    resumo.abatimentos += Number(pagamento.valor || 0) + Number(pagamento.desconto || 0);
+  });
+  resumos.forEach((resumo) => {
+    resumo.debito = Math.max(0, resumo.totalDebitos - resumo.abatimentos);
+    resumo.credito = Math.max(0, resumo.abatimentos - resumo.totalDebitos);
+  });
+  return resumos;
+}
+
 function renderClientes() {
   const clientes = clientesFiltrados();
+  const resumos = resumosFinanceirosListaClientes();
+  const aniversariantesHoje = new Set(aniversariosHojeVendas().map((cliente) => cliente.id));
   return `
     <section class="module-page clientes-page">
       <div class="module-sticky-head"><div class="module-title"><div><h2>Clientes</h2><p>Gerencie seus clientes</p></div><div class="client-title-actions"><button class="primary" onclick="this.blur();abrirCliente()">＋ Novo cliente</button></div></div>${renderBarraBuscaClientes()}</div>
-      ${clientes.length ? `<section class="client-card-grid">${clientes.map(renderCliente).join('')}</section>` : `<article class="empty-module"><h3>Nenhum cliente cadastrado</h3><p>Cadastre o primeiro cliente para iniciar suas vendas.</p></article>`}
+      ${clientes.length ? `<section class="client-card-grid">${clientes.map((cliente) => renderCliente(cliente, resumos.get(cliente.id), aniversariantesHoje.has(cliente.id))).join('')}</section>` : `<article class="empty-module"><h3>Nenhum cliente cadastrado</h3><p>Cadastre o primeiro cliente para iniciar suas vendas.</p></article>`}
     </section>
   `;
 }
@@ -3175,17 +3233,15 @@ function saldoFinanceiroCliente(clienteId) {
   };
 }
 
-function renderCliente(c) {
-  const vendasCliente = state.vendas.filter((v) => v.cliente_id === c.id && v.status !== 'cancelada' && !pedidoEhConsignado(v) && !pedidoSomenteBonificado(v));
-  const ultimaVenda = [...vendasCliente].sort((a, b) => new Date(b.criado_em) - new Date(a.criado_em))[0];
-  const saldo = saldoFinanceiroCliente(c.id);
-  const debito = saldo.debito;
-  const consignado = saldo.consignado;
-  const credito = saldo.credito;
+function renderCliente(c, resumoFinanceiro = null, aniversarianteHoje = false) {
+  const resumo = resumoFinanceiro || {};
+  const ultimaVenda = resumo.ultimaVenda || null;
+  const debito = Number(resumo.debito || 0);
+  const consignado = Number(resumo.consignado || 0);
+  const credito = Number(resumo.credito || 0);
   const iniciais = String(c.nome || 'C').split(/\s+/).slice(0, 2).map((parte) => parte[0] || '').join('').toUpperCase();
   const local = [c.endereco, c.cidade, c.estado].filter(Boolean).join(' - ') || 'Não informado';
   const temTelefone = Boolean(String(c.telefone || '').replace(/\D/g, ''));
-  const aniversarianteHoje = aniversariosHojeVendas().some((cliente) => cliente.id === c.id);
   return `
     <article class="client-card ${c.ativo === false ? 'inactive' : ''} ${aniversarianteHoje ? 'client-birthday-today' : ''}" data-cliente-id="${escapeAttr(c.id)}">
       <header class="client-card-header">
@@ -5571,7 +5627,7 @@ function aplicarAtualizacaoPwaPendente() {
 
 if (!window.__VENDAS_MOBILE_EMBEDDED__ && 'serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('./sw.js?v=20').catch(() => {});
+    navigator.serviceWorker.register('./sw.js?v=21').catch(() => {});
   });
 }
 
@@ -5762,8 +5818,29 @@ window.compartilharMaterialDivulgacao = compartilharMaterialDivulgacao;
 
 window.addEventListener('pageshow', () => requestAnimationFrame(limparFocoInicialLogin));
 window.addEventListener('scroll', agendarDestaqueClientes, { passive: true });
-window.addEventListener('touchstart', () => { encaixeClientesEmAndamento = false; }, { passive: true });
-window.addEventListener('wheel', () => { encaixeClientesEmAndamento = false; }, { passive: true });
+window.addEventListener('touchstart', () => {
+  if (state.aba !== 'clientes') return;
+  interacaoRolagemClientesAtiva = true;
+  rolagemClientesInicioToque = window.scrollY || document.documentElement.scrollTop || 0;
+  encaixeClientesEmAndamento = false;
+  window.clearTimeout(temporizadorEncaixeClientes);
+  temporizadorEncaixeClientes = 0;
+}, { passive: true });
+window.addEventListener('touchend', () => {
+  if (state.aba !== 'clientes') return;
+  interacaoRolagemClientesAtiva = false;
+  const rolagemAtual = window.scrollY || document.documentElement.scrollTop || 0;
+  if (Math.abs(rolagemAtual - rolagemClientesInicioToque) > 2) agendarEncaixeCliente();
+}, { passive: true });
+window.addEventListener('touchcancel', () => {
+  interacaoRolagemClientesAtiva = false;
+}, { passive: true });
+window.addEventListener('wheel', () => {
+  if (state.aba !== 'clientes') return;
+  encaixeClientesEmAndamento = false;
+  window.clearTimeout(temporizadorEncaixeClientes);
+  temporizadorEncaixeClientes = 0;
+}, { passive: true });
 window.addEventListener('resize', () => {
   agendarDestaqueClientes();
   sincronizarSalaAoMudarLargura();

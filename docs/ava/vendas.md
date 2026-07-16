@@ -1,8 +1,8 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.5.4.14 -->
+<!-- ava-version: 1.5.4.15 -->
 
-> Revisão 1.5.4.14: a inclusão de itens no pedido permite pesquisar produtos enquanto o nome ou código é digitado.
+> Revisão 1.5.4.15: a lista de clientes foi otimizada; destaque e encaixe central preservam a rolagem fluida.
 
 ## Escopo e navegação
 
@@ -44,6 +44,8 @@ dúvida dentro do Vendas sempre que a função existir ali.
   são recomendados para ligação/WhatsApp e mapas.
 - A ficha oferece pedido, pagamento, agendamento e **Ver detalhes**. Nesta área,
   Resumo, Consignado, Pedidos e Pagamentos mostram os históricos.
+- Na lista, o card próximo ao centro recebe destaque. Depois que a rolagem termina,
+  o encaixe central é concluído suavemente sem disputar o movimento do usuário.
 - Pedidos, consignados e pagamentos exibem 10 registros por vez. O botão
   **Carregar mais** acrescenta o próximo lote de até 10 registros sem perder a
   posição da rolagem, até chegar ao fim do histórico.

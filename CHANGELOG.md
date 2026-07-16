@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.5.4.15 - 2026-07-16
+
+- Vendas Mobile: a página **Clientes** passa a calcular saldos, consignados, créditos e última compra em uma única leitura dos lançamentos, reduzindo o tempo de abertura.
+- Clientes: o destaque central deixa de recalcular e alterar todos os cards durante a rolagem; o efeito de encaixe acontece somente depois que o movimento termina, melhorando fluidez e estabilidade.
+
 ## 1.5.4.14 - 2026-07-16
 
 - Vendas Mobile: ao inserir um item no pedido, o produto pode ser localizado digitando nome, código, marca ou categoria; as opções são filtradas imediatamente e a escolha mantém o preço sincronizado.
