@@ -298,7 +298,7 @@ export function useEmpresas(deps: UseEmpresasDeps) {
 
     setUsuarioEditandoId(usuario.id);
     setEditUsuarioNome(usuario.nome || '');
-    setEditUsuarioLogin(usuario.login || (String(usuario.email || '').split('+')[0] || ''));
+    setEditUsuarioLogin(usuario.login || '');
     setEditUsuarioEmail(String(usuario.email || '').includes('@usuarios.avantalab.local') ? '' : (usuario.email || ''));
     setEditUsuarioNovaSenha('');
     setEditUsuarioConfirmarSenha('');

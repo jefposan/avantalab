@@ -206,6 +206,17 @@ export async function POST(request: Request) {
       atualizacao.email = emailEnviado;
     }
 
+    // O login é da conta, não do perfil financeiro. Ao editar outro vínculo
+    // da mesma conta, move o login para o acesso editado sem duplicá-lo.
+    if (corpo.login !== undefined && usuarioAlvo.user_id) {
+      const { error: erroLimparLogin } = await supabaseAdmin
+        .from('usuarios_empresa')
+        .update({ login: null })
+        .eq('user_id', usuarioAlvo.user_id)
+        .neq('id', usuarioAlvo.id);
+      if (erroLimparLogin) return respostaErro('Não foi possível preparar a alteração do login.', 500);
+    }
+
     const { data: usuarioAtualizado, error: erroAtualizar } = await supabaseAdmin
       .from('usuarios_empresa')
       .update(atualizacao)
