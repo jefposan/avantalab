@@ -270,7 +270,9 @@ if (window.__VENDAS_MOBILE_EMBEDDED__ && !document.querySelector('base[data-vend
 function carregarEstado() {
   try {
     const salvo = JSON.parse(localStorage.getItem(STORAGE_KEY) || 'null');
-    return salvo ? { ...estadoInicial, ...salvo, carrinho: [], menuAberto: true } : { ...estadoInicial };
+    // Pesquisas são contexto temporário: jamais são restauradas junto com a
+    // sala de botões em uma nova abertura.
+    return salvo ? { ...estadoInicial, ...salvo, carrinho: [], busca: '', menuAberto: true } : { ...estadoInicial };
   } catch {
     return { ...estadoInicial };
   }
@@ -280,7 +282,6 @@ function salvarEstado() {
   const persistente = backendAtivo ? {
     usuario: state.usuario,
     aba: state.aba,
-    busca: state.busca,
     filtroInicio: state.filtroInicio,
     filtroFim: state.filtroFim,
     mesReferencia: state.mesReferencia,

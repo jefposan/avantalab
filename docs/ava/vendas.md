@@ -1,8 +1,8 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.5.4.35 -->
+<!-- ava-version: 1.5.4.36 -->
 
-> Revisão 1.5.4.35: imagens da sala de botões são preservadas em memória para retorno mais rápido ao Início.
+> Revisão 1.5.4.36: pesquisas de Clientes, Produtos, Pedidos e Pagamentos são limpas em toda nova abertura na sala de botões.
 
 ## Escopo e navegação
 

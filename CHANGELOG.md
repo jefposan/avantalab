@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.5.4.36 - 2026-07-16
+
+- Vendas Mobile: pesquisas e filtros de lista não são mais persistidos entre aberturas; a sala de botões sempre inicia com os campos de busca limpos.
+
 ## 1.5.4.35 - 2026-07-16
 
 - Vendas Mobile: as imagens dos nove botões da sala são mantidas pré-carregadas e decodificadas, deixando o retorno para **Início** mais imediato.
