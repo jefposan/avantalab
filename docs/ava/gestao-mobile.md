@@ -1,8 +1,8 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.5.4.20 -->
+<!-- ava-version: 1.5.4.21 -->
 
-> Revisão 1.5.4.20: a ativação do Vendas é persistente por perfil e abre a conta única do usuário.
+> Revisão 1.5.4.21: sem impacto operacional na Gestão Mobile.
 
 ## Escopo
 

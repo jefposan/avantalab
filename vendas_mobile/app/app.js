@@ -1084,8 +1084,8 @@ function agendarEncaixeCliente() {
     if (Math.abs(deslocamento) < 8) return;
     encaixeClientesEmAndamento = true;
     window.scrollBy({ top: deslocamento, behavior: 'smooth' });
-    window.setTimeout(() => { encaixeClientesEmAndamento = false; }, 340);
-  }, 170);
+    window.setTimeout(() => { encaixeClientesEmAndamento = false; }, 240);
+  }, 60);
 }
 
 function agendarDestaqueClientes() {
@@ -3152,6 +3152,14 @@ function saldoFinanceiroCliente(clienteId) {
   };
 }
 
+function enderecoPrincipalCliente(cliente) {
+  const endereco = cliente?.endereco;
+  if (endereco && typeof endereco === 'object') {
+    return String(endereco.endereco || endereco.logradouro || '').trim();
+  }
+  return String(endereco || cliente?.logradouro || '').trim();
+}
+
 function renderCliente(c, resumoFinanceiro = null, aniversarianteHoje = false) {
   const resumo = resumoFinanceiro || {};
   const ultimaVenda = resumo.ultimaVenda || null;
@@ -3159,10 +3167,11 @@ function renderCliente(c, resumoFinanceiro = null, aniversarianteHoje = false) {
   const consignado = Number(resumo.consignado || 0);
   const credito = Number(resumo.credito || 0);
   const iniciais = String(c.nome || 'C').split(/\s+/).slice(0, 2).map((parte) => parte[0] || '').join('').toUpperCase();
-  const partesEndereco = [c.endereco, c.numero, c.complemento, c.bairro, c.cidade, c.estado, c.cep]
+  const enderecoPrincipal = enderecoPrincipalCliente(c);
+  const partesEndereco = [enderecoPrincipal, c.numero, c.complemento, c.bairro, c.cidade, c.estado, c.cep]
     .map((parte) => String(parte || '').trim())
     .filter(Boolean);
-  const temEndereco = partesEndereco.length > 0;
+  const temEndereco = Boolean(enderecoPrincipal);
   const local = partesEndereco.join(', ');
   const temTelefone = Boolean(String(c.telefone || '').replace(/\D/g, ''));
   return `
@@ -3972,8 +3981,9 @@ function abrirWhatsappCliente(clienteId) {
 function abrirMapasCliente(clienteId) {
   const cliente = state.clientes.find((item) => item.id === clienteId);
   if (!cliente) return;
-  const endereco = [cliente.endereco, cliente.numero, cliente.complemento, cliente.bairro, cliente.cidade, cliente.estado, cliente.cep].filter(Boolean).join(', ');
-  if (!endereco) { toast('Este cliente não possui endereço cadastrado.'); return; }
+  const enderecoPrincipal = enderecoPrincipalCliente(cliente);
+  if (!enderecoPrincipal) return;
+  const endereco = [enderecoPrincipal, cliente.numero, cliente.complemento, cliente.bairro, cliente.cidade, cliente.estado, cliente.cep].filter(Boolean).join(', ');
   const destino = encodeURIComponent(endereco);
   sheet(`<div class="sheet-header"><div><h2>Abrir endereço</h2><p class="muted small">Escolha o aplicativo de mapas.</p></div><button class="close" onclick="fecharSheet()">×</button></div><div class="maps-option-list"><a href="https://www.google.com/maps/search/?api=1&query=${destino}" target="_blank" rel="noopener">Google Maps</a><a href="https://maps.apple.com/?q=${destino}" target="_blank" rel="noopener">Mapas Apple</a><a href="https://waze.com/ul?q=${destino}&navigate=yes" target="_blank" rel="noopener">Waze</a></div>`, 'sheet-backdrop-centered');
 }
@@ -5691,7 +5701,7 @@ function aplicarAtualizacaoPwaPendente() {
 
 if (!window.__VENDAS_MOBILE_EMBEDDED__ && 'serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('./sw.js?v=25').catch(() => {});
+    navigator.serviceWorker.register('./sw.js?v=26').catch(() => {});
   });
 }
 

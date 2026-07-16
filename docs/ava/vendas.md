@@ -1,8 +1,8 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.5.4.20 -->
+<!-- ava-version: 1.5.4.21 -->
 
-> Revisão 1.5.4.20: conta única por usuário, encaixe refinado dos clientes e seleção nominal.
+> Revisão 1.5.4.21: encaixe mais rápido e endereço clicável somente com logradouro.
 
 ## Escopo e navegação
 
@@ -46,12 +46,14 @@ dúvida dentro do Vendas sempre que a função existir ali.
   são recomendados para ligação/WhatsApp e mapas.
 - Quando existe endereço, toda a linha destacada no card abre a escolha entre
   Google Maps, Mapas Apple e Waze. Sem endereço, a linha fica inativa e orienta
-  o cadastro antes de usar os mapas.
+  o cadastro antes de usar os mapas. Cidade, estado ou CEP sem logradouro não
+  ativam o clique.
 - A ficha oferece pedido, pagamento, agendamento e **Ver detalhes**. Nesta área,
   Resumo, Consignado, Pedidos e Pagamentos mostram os históricos.
 - Na lista, o card próximo ao centro recebe destaque e os vizinhos imediatos ficam
   levemente desfocados. Depois que a rolagem termina, o encaixe central é concluído
-  suavemente; um gesto forte continua podendo avançar por vários cards.
+  rapidamente e de forma suave; um gesto forte continua podendo avançar por vários
+  cards.
 - Pedidos, consignados e pagamentos exibem 10 registros por vez. O botão
   **Carregar mais** acrescenta o próximo lote de até 10 registros sem perder a
   posição da rolagem, até chegar ao fim do histórico.

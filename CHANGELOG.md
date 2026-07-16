@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.5.4.21 - 2026-07-16
+
+- Vendas Mobile: o imã dos cards de clientes reage mais rapidamente assim que a rolagem termina.
+- Endereço do cliente: cidade, estado ou CEP isolados não tornam mais a linha clicável; sem logradouro, o card exibe a orientação para adicionar o endereço.
+
 ## 1.5.4.20 - 2026-07-16
 
 - Vendas Mobile: o encaixe dos cards de clientes fica um pouco mais presente após a rolagem, sem impedir gestos fortes de avançarem por vários cards; somente os vizinhos imediatos do card em foco recebem um desfoque leve.
