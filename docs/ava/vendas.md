@@ -1,8 +1,8 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.5.4.33 -->
+<!-- ava-version: 1.5.4.34 -->
 
-> Revisão 1.5.4.33: cada abertura começa na sala de botões; botões azuis escuros têm borda clara no modo escuro.
+> Revisão 1.5.4.34: o cache de dados não restaura mais o Dashboard; toda abertura termina na sala de botões.
 
 ## Escopo e navegação
 

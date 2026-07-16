@@ -530,7 +530,9 @@ function restaurarCacheVendas(cache) {
   state.vinculosComerciais = dados.vinculosComerciais || [];
   state.vinculoComercialAtivo = dados.vinculoComercialAtivo || null;
   state.perfisFinanceiros = dados.perfisFinanceiros || [];
-  state.menuAberto = false;
+  // O cache restaura dados, não a tela anterior: a nova abertura continua
+  // obrigatoriamente na sala de botões.
+  state.menuAberto = true;
   return true;
 }
 
@@ -2189,6 +2191,10 @@ async function carregarSistemaVendasCompleto() {
     }
     carregandoBackend = false;
     preparandoRecursosSala = false;
+    // carregar dados e cache nunca podem trazer a última página de volta na
+    // abertura. A sala é o destino final de qualquer inicialização do Vendas.
+    state.aba = 'dashboard';
+    state.menuAberto = true;
     render();
     liberarAlturaPreparacao();
     window.setTimeout(() => {

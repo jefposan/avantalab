@@ -1,8 +1,8 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.5.4.33 -->
+<!-- ava-version: 1.5.4.34 -->
 
-> Revisão 1.5.4.33: a preparação passa a informar a carga de dados logo após a validação de sistemas.
+> Revisão 1.5.4.34: sem impacto operacional na Gestão Mobile.
 
 ## Escopo
 

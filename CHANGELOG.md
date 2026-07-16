@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.5.4.34 - 2026-07-16
+
+- Vendas Mobile: corrigida a restauração do cache que fechava a sala de botões e mostrava o Dashboard. Toda abertura volta agora obrigatoriamente para a sala de botões.
+
 ## 1.5.4.33 - 2026-07-16
 
 - Gestão Mobile: a carga dos dados passa a indicar imediatamente que saiu da validação de sistemas, evitando a aparência de travamento em 60% enquanto assinatura e cadastro são verificados.
