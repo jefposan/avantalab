@@ -49,6 +49,7 @@ NAVEGAÇÃO E PERFIS
 - Em Gerenciar perfil, o usuário pode criar, editar, excluir quando permitido e administrar perfis. No seletor de troca, o perfil em uso fica identificado e desativado; a troca real usa somente os demais perfis disponíveis.
 - Em Usuários, Gestor Master edita todos; Administrador edita seus próprios dados e os de operadores; Operador Completo edita apenas seus dados; Operador Simples não edita. Ao informar e-mail na edição, login e e-mail passam a acessar a mesma conta com a mesma senha.
 - A edição separa Nome, Login e E-mail; ao trocar senha, é obrigatório repetir a confirmação antes de salvar.
+- O login pertence à conta e aparece na edição em qualquer perfil financeiro vinculado ao mesmo usuário.
 - Valores podem iniciar ocultos pelo ícone de olho conforme a preferência de privacidade.
 
 LANÇAMENTOS E RESULTADOS

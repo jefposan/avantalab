@@ -178,11 +178,11 @@ export async function POST(request: Request) {
       nome: string;
       perfil: PerfilUsuario;
       email?: string;
-      login?: string | null;
     } = {
       nome,
       perfil,
     };
+    let loginNormalizado = '';
 
     if (corpo.login === undefined && emailEnviado.includes('@')) {
       const { data: conflito } = await supabaseAdmin.auth.admin.listUsers({ page: 1, perPage: 1000 });
@@ -196,7 +196,7 @@ export async function POST(request: Request) {
         return respostaErro('Informe um login valido.');
       }
 
-      atualizacao.login = login;
+      loginNormalizado = login;
     }
 
     if (corpo.login !== undefined && emailEnviado) {
@@ -204,17 +204,6 @@ export async function POST(request: Request) {
       const { data: conflito } = await supabaseAdmin.auth.admin.listUsers({ page: 1, perPage: 1000 });
       if ((conflito?.users || []).some((item) => item.id !== usuarioAlvo.user_id && String(item.email || '').toLowerCase() === emailEnviado)) return respostaErro('Este e-mail ja esta em uso por outra conta.');
       atualizacao.email = emailEnviado;
-    }
-
-    // O login é da conta, não do perfil financeiro. Ao editar outro vínculo
-    // da mesma conta, move o login para o acesso editado sem duplicá-lo.
-    if (corpo.login !== undefined && usuarioAlvo.user_id) {
-      const { error: erroLimparLogin } = await supabaseAdmin
-        .from('usuarios_empresa')
-        .update({ login: null })
-        .eq('user_id', usuarioAlvo.user_id)
-        .neq('id', usuarioAlvo.id);
-      if (erroLimparLogin) return respostaErro('Não foi possível preparar a alteração do login.', 500);
     }
 
     const { data: usuarioAtualizado, error: erroAtualizar } = await supabaseAdmin
@@ -245,6 +234,24 @@ export async function POST(request: Request) {
         erroAtualizar.message || 'Nao foi possivel atualizar o usuario.',
         500
       );
+    }
+
+    if (loginNormalizado && usuarioAlvo.user_id) {
+      const { data: loginSalvo, error: erroLogin } = await supabaseAdmin.rpc(
+        'definir_login_conta_rpc',
+        {
+          p_user_id: usuarioAlvo.user_id,
+          p_acesso_id: usuarioAlvo.id,
+          p_login: loginNormalizado,
+        }
+      );
+      if (erroLogin || loginSalvo !== true) {
+        return respostaErro(
+          erroLogin?.message || 'Não foi possível salvar o login da conta.',
+          500
+        );
+      }
+      usuarioAtualizado.login = loginNormalizado;
     }
 
     if (emailEnviado && emailEnviado.includes('@') && usuarioAlvo.user_id && emailEnviado !== String(usuarioAlvo.email || '').toLowerCase()) {

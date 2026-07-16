@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.5.3.15 - 2026-07-16
+
+- Usuários: corrige o login vazio ao editar uma conta vinculada a vários perfis. A lista passa a exibir o login único da conta em qualquer perfil, e a alteração é salva de forma atômica.
+
 ## 1.5.3.14 - 2026-07-16
 
 - Usuários: formulário de edição separa Nome, Login e E-mail e exige confirmação ao alterar senha.

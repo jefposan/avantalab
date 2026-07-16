@@ -1107,7 +1107,7 @@ export async function buscarMeuAcessoEmpresa(empresaId: string, usuarioId: strin
 }
 
 export async function buscarUsuariosEmpresa(empresaId: string) {
-  const { data, error } = await supabase.rpc('listar_usuarios_empresa_rpc', {
+  const { data, error } = await supabase.rpc('listar_usuarios_empresa_contas_rpc', {
     p_empresa_id: empresaId,
   });
 

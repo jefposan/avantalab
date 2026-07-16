@@ -1,8 +1,8 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.5.3.14 -->
+<!-- ava-version: 1.5.3.15 -->
 
-> Revisão 1.5.3.14: edição de Usuários separa nome, login e e-mail e exige confirmação da nova senha.
+> Revisão 1.5.3.15: o login único da conta aparece e permanece salvo em qualquer perfil vinculado ao usuário.
 
 ## Escopo
 

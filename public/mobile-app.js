@@ -3915,7 +3915,7 @@
     state.usuariosCarregando = true;
     render();
 
-    var resposta = await db.rpc('listar_usuarios_empresa_rpc', {
+    var resposta = await db.rpc('listar_usuarios_empresa_contas_rpc', {
       p_empresa_id: state.empresa.id,
     });
 
@@ -12985,7 +12985,7 @@
     });
 
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/mobile-sw.js?v=246').then(function (registro) {
+      navigator.serviceWorker.register('/mobile-sw.js?v=247').then(function (registro) {
         if (registro && registro.update) registro.update();
       }).catch(function () {});
     }
