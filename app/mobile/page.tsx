@@ -60,13 +60,13 @@ export default function MobilePage() {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
   const cobrancaAtiva = process.env.NEXT_PUBLIC_COBRANCA_ATIVA === 'true' ? 'true' : 'false';
-  const mobileAssetVersion = '313';
+  const mobileAssetVersion = '314';
   const bootstrapCarregamento = `
     (function () {
       var pesos = { shell: 5, scripts: 15, auth: 10, profiles: 20, access: 10, data: 40 };
       var progresso = window.__AVANTALAB_MOBILE_PROGRESSO__ || { grupos: {}, valor: 0, rotulo: 'Iniciando a Gestão Mobile' };
       var chaveRecuperacao = 'avantalab.mobile.ultima_recuperacao_acesso';
-      var limiteSemProgresso = 28000;
+      var limiteSemProgresso = 32000;
       window.__AVANTALAB_MOBILE_PROGRESSO__ = progresso;
       progresso.atualizadoEm = Date.now();
       window.__avantalabAtualizarProgressoMobile = function (grupo, concluido, total, rotulo) {

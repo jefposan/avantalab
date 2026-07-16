@@ -1,7 +1,5 @@
-const CACHE_NAME = 'avantalab-mobile-v272';
+const CACHE_NAME = 'avantalab-mobile-v273';
 const APP_SHELL = [
-  '/mobile-app.js?v=313',
-  '/mobile-supabase.js',
   '/mobile-manifest.json',
   '/images/ava-logo-principal.png',
   '/images/bg-avantalab-mobile-1080x1920.webp',
@@ -14,7 +12,11 @@ const APP_SHELL = [
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => cache.addAll(APP_SHELL)).catch(() => undefined)
+    caches
+      .open(CACHE_NAME)
+      .then((cache) => cache.addAll(APP_SHELL))
+      .catch(() => undefined)
+      .then(() => self.skipWaiting())
   );
 });
 
@@ -26,6 +28,7 @@ self.addEventListener('activate', (event) => {
         Promise.all(keys.filter((key) => key !== CACHE_NAME).map((key) => caches.delete(key)))
       )
       .catch(() => undefined)
+      .then(() => self.clients.claim())
   );
 });
 
@@ -38,6 +41,14 @@ self.addEventListener('fetch', (event) => {
     url.pathname === '/mobile' ||
     event.request.mode === 'navigate'
   ) {
+    return;
+  }
+
+  // O código que governa autenticação e dados financeiros nunca pode voltar
+  // de um cache antigo. Se a rede falhar, o carregador mostra a reconexão em
+  // vez de executar uma versão incompatível do aplicativo.
+  if (url.pathname === '/mobile-app.js' || url.pathname === '/mobile-supabase.js') {
+    event.respondWith(fetch(new Request(event.request, { cache: 'no-store' })));
     return;
   }
 

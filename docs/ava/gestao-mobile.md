@@ -1,8 +1,8 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.5.4.36 -->
+<!-- ava-version: 1.5.4.37 -->
 
-> Revisão 1.5.4.36: sem impacto operacional na Gestão Mobile.
+> Revisão 1.5.4.37: em **Preparando acesso**, as validações independentes são executadas em paralelo e alimentam a barra conforme terminam. A Gestão só abre depois de exibir 100%; a recuperação automática ocorre apenas quando não existe progresso real.
 
 ## Escopo
 

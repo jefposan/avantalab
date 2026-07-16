@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.5.4.37 - 2026-07-16
+
+- Gestão Mobile: corrigida a causa estrutural da demora aparente em **60%**. Assinatura, cadastro e dados financeiros passam a carregar em paralelo, e cada conclusão real atualiza a barra.
+- A tela principal continua sendo liberada somente após a carga indispensável terminar e os **100%** serem exibidos.
+- Removido o reinício por tempo total que podia interromper uma carga ainda saudável. A recuperação automática agora reage somente à ausência real de progresso.
+- O PWA deixa de reutilizar versões antigas do código de autenticação e dados financeiros, evitando que uma correção anterior desapareça após novas publicações.
+
 ## 1.5.4.36 - 2026-07-16
 
 - Vendas Mobile: pesquisas e filtros de lista não são mais persistidos entre aberturas; a sala de botões sempre inicia com os campos de busca limpos.

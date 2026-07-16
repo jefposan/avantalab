@@ -709,42 +709,11 @@
     });
   }
 
-  var temporizadorProtecaoAcessoMobile = null;
-
-  function limparProtecaoAcessoMobile() {
-    if (temporizadorProtecaoAcessoMobile) {
-      window.clearTimeout(temporizadorProtecaoAcessoMobile);
-      temporizadorProtecaoAcessoMobile = null;
-    }
-  }
-
   function exibirFalhaDeAcessoMobile(texto) {
-    limparProtecaoAcessoMobile();
     state.carregando = false;
     state.pronto = true;
     state.falhaAcesso = texto || 'Não foi possível concluir a preparação do acesso. Confira sua internet e tente novamente.';
     render();
-  }
-
-  // Esta proteção fica no próprio aplicativo, sem depender somente do script
-  // de bootstrap. Assim, qualquer promessa que deixe de responder durante a
-  // preparação (inclusive antes da fase de dados) sempre termina em uma
-  // reconexão ou em uma ação explícita para o usuário.
-  function iniciarProtecaoAcessoMobile() {
-    limparProtecaoAcessoMobile();
-    temporizadorProtecaoAcessoMobile = window.setTimeout(function () {
-      if (state.pronto) return;
-      console.warn('A preparação do acesso móvel excedeu o tempo seguro.');
-      if (
-        typeof window.__avantalabRecuperarAcessoMobile === 'function' &&
-        window.__avantalabRecuperarAcessoMobile()
-      ) {
-        return;
-      }
-      exibirFalhaDeAcessoMobile(
-        'O acesso demorou mais que o normal para responder. Tente novamente para reconectar com segurança.'
-      );
-    }, 35000);
   }
 
   async function requisitarJsonMobile(url, opcoes, limiteMs) {
@@ -4558,10 +4527,12 @@
 
   // Cobrança: verifica no servidor se o perfil empresa vencido precisa de paywall.
   // Fail-open: qualquer falha não bloqueia o acesso.
-  async function verificarPaywallMobile(silencioso) {
+  async function verificarPaywallMobile(silencioso, tokenCompartilhado) {
     if (!state.empresa || !state.empresa.id) { state.paywallAtivo = false; state.paywallVerificado = true; if (!silencioso) render(); return; }
     try {
-      var token = await tokenSessao();
+      var token = tokenCompartilhado
+        ? await Promise.resolve(tokenCompartilhado)
+        : await tokenSessao();
       if (!token) { state.paywallAtivo = false; state.paywallVerificado = true; render(); return; }
       var retorno = await requisitarJsonMobileComRetry('/api/cobranca/estado?empresaId=' + encodeURIComponent(state.empresa.id), {
         headers: { Authorization: 'Bearer ' + token },
@@ -4589,7 +4560,7 @@
     if (!silencioso) render();
   }
 
-  async function carregarCadastroPerfilMobile() {
+  async function carregarCadastroPerfilMobile(tokenCompartilhado) {
     if (!state.empresa || !state.empresa.id) return false;
     if (state.cadastroPerfilEmpresaId !== state.empresa.id) {
       state.cadastroPerfilEmpresaId = state.empresa.id;
@@ -4601,7 +4572,9 @@
     state.cadastroPerfilVerificado = false;
     state.cadastroPerfilErro = '';
     try {
-      var token = await tokenSessao();
+      var token = tokenCompartilhado
+        ? await Promise.resolve(tokenCompartilhado)
+        : await tokenSessao();
       if (!token) throw new Error('Sessão indisponível. Entre novamente.');
       var retorno = await requisitarJsonMobileComRetry('/api/perfil-cadastro?empresaId=' + encodeURIComponent(state.empresa.id), {
         headers: { Authorization: 'Bearer ' + token },
@@ -4806,22 +4779,96 @@
     if (state.paywallPerfilVerificado !== state.empresa.id) {
       state.paywallVerificado = false;
     }
-    atualizarProgressoAcessoMobile('data', etapasDadosConcluidas, totalEtapasDados, 'Verificando assinatura e cadastro');
-    var verificacoesPerfil;
+    var empresaId = state.empresa.id;
+    var ano = Number(state.ano);
+    var preparacaoSistemaVendas = state.preparacaoSistemaVendas;
+    var podeReaproveitarPreparacaoVendas = !!(
+      preparacaoSistemaVendas &&
+      preparacaoSistemaVendas.empresaId === empresaId
+    );
+    // O contexto só é válido para a primeira carga do perfil já validado.
+    state.preparacaoSistemaVendas = null;
+
+    atualizarProgressoAcessoMobile(
+      'data',
+      etapasDadosConcluidas,
+      totalEtapasDados,
+      'Carregando informações financeiras'
+    );
+    // Garante que a passagem dos 60% seja realmente pintada antes de disparar
+    // a fase mais pesada. Não é progresso artificial: esta etapa representa
+    // a preparação e o envio das consultas indispensáveis.
+    await aguardarPinturaProgressoMobile(0);
+
+    state.carregando = true;
+    render();
+
+    // Assinatura, cadastro, integração e dados financeiros são independentes.
+    // Dispará-los juntos reduz o tempo total para o da consulta mais lenta,
+    // em vez de somar blocos sequenciais atrás do marco visual de 60%.
+    var tokenPerfilCompartilhado = tokenSessao();
+    var verificacoesPerfilPromise = promessaMobileComPrazo(
+      Promise.all([
+        verificarPaywallMobile(true, tokenPerfilCompartilhado).then(function (resultado) {
+          avancarEtapaDados('Assinatura e acesso verificados');
+          return resultado;
+        }),
+        carregarCadastroPerfilMobile(tokenPerfilCompartilhado).then(function (resultado) {
+          avancarEtapaDados('Cadastro do perfil verificado');
+          return resultado;
+        }),
+      ]),
+      18000,
+      'A verificação de assinatura e cadastro demorou mais que o esperado.'
+    );
+
+    var integracaoVendasPromise = Promise.resolve().then(async function () {
+      // Instalar o módulo já autoriza Gestor Master e Administrador a alternar
+      // entre os sistemas. Uma falha desta reparação nunca bloqueia a Gestão.
+      if (podeGerenciarUsuarios() && !podeReaproveitarPreparacaoVendas) {
+        try {
+          var acessoGestorVendas = await promessaMobileComPrazo(
+            db.rpc('garantir_acessos_gestor_vendas_mobile_rpc'),
+            10000,
+            'A preparação da integração com o Vendas demorou mais que o esperado.'
+          );
+          if (acessoGestorVendas.error) {
+            console.warn('Não foi possível preparar o acesso integrado ao Vendas Mobile:', acessoGestorVendas.error);
+          }
+        } catch (error) {
+          console.warn('A integração com o Vendas não respondeu durante a carga:', error);
+        }
+      }
+      avancarEtapaDados('Integração entre sistemas verificada');
+      return true;
+    });
+
+    var resultadosPromise = Promise.all([
+      acompanharEtapaDados(buscarLancamentosAnoMobile(empresaId, ano), 'Carregando despesas e lançamentos'),
+      acompanharEtapaDados(db.from('faturamentos').select('*').eq('empresa_id', empresaId).eq('ano', ano), 'Carregando faturamentos'),
+      acompanharEtapaDados(db.from('faturamentos_entradas').select('*').eq('empresa_id', empresaId).eq('ano', ano).order('dia', { ascending: true }), 'Carregando receitas'),
+      acompanharEtapaDados(db.from('despesas_cadastradas').select('*').eq('empresa_id', empresaId).order('nome', { ascending: true }), 'Carregando categorias de despesas'),
+      acompanharEtapaDados(db.from('configuracoes').select('duplicados_ativo').eq('empresa_id', empresaId).maybeSingle(), 'Carregando preferências'),
+      acompanharEtapaDados(db.from('empresa_modulos').select('modulo_id').eq('empresa_id', empresaId).eq('ativo', true), 'Carregando módulos'),
+      acompanharEtapaDados(db.from('caixinhas_movimentos').select('*').eq('empresa_id', empresaId).order('data_movimento', { ascending: false }).order('criado_em', { ascending: false }), 'Carregando caixinhas'),
+      acompanharEtapaDados(
+        podeReaproveitarPreparacaoVendas
+          ? Promise.resolve({ data: preparacaoSistemaVendas.acessoVendasAtivo, error: null })
+          : confirmarModuloVendasMobileNoPerfil(empresaId, false),
+        'Confirmando acesso ao Vendas'
+      ),
+    ]);
+
+    var cargaCritica;
     try {
-      verificacoesPerfil = await promessaMobileComPrazo(
+      cargaCritica = await promessaMobileComPrazo(
         Promise.all([
-          verificarPaywallMobile(true).then(function (resultado) {
-            avancarEtapaDados('Assinatura e acesso verificados');
-            return resultado;
-          }),
-          carregarCadastroPerfilMobile().then(function (resultado) {
-            avancarEtapaDados('Cadastro do perfil verificado');
-            return resultado;
-          }),
+          verificacoesPerfilPromise,
+          integracaoVendasPromise,
+          resultadosPromise,
         ]),
-        18000,
-        'A verificação de assinatura e cadastro demorou mais que o esperado.'
+        28000,
+        'A carga das informações do perfil demorou mais que o esperado.'
       );
     } catch (error) {
       state.carregando = false;
@@ -4834,88 +4881,23 @@
         return;
       }
       exibirFalhaDeAcessoMobile(
-        'Não foi possível verificar a assinatura e o cadastro do perfil. Tente novamente para reconectar.'
+        'A conexão não respondeu no tempo esperado. Confira sua internet e tente novamente.'
       );
       return;
     }
+
+    var verificacoesPerfil = cargaCritica[0];
     var cadastroPerfilOk = verificacoesPerfil[1];
     if (!cadastroPerfilOk && !state.paywallAtivo) {
       state.carregando = false;
       render();
       return;
     }
+    var resultados = cargaCritica[2];
 
     // Guarda o dia da carga (São Paulo) — usado para só recarregar ao voltar
     // ao app quando o dia virou (despesas previstas do novo dia).
     try { state.diaUltimoCarregamento = dataHoraPontoMobile().data; } catch (e) {}
-
-    state.carregando = true;
-    render();
-
-    var empresaId = state.empresa.id;
-    var ano = Number(state.ano);
-    var preparacaoSistemaVendas = state.preparacaoSistemaVendas;
-    var podeReaproveitarPreparacaoVendas = !!(
-      preparacaoSistemaVendas &&
-      preparacaoSistemaVendas.empresaId === empresaId
-    );
-    // O contexto só é válido para a primeira carga do perfil já validado.
-    state.preparacaoSistemaVendas = null;
-
-    // Instalar o módulo já autoriza Gestor Master e Administrador a alternar
-    // entre os sistemas. A RPC valida o papel no servidor e mantém operadores
-    // fora deste fluxo.
-    if (podeGerenciarUsuarios() && !podeReaproveitarPreparacaoVendas) {
-      try {
-        var acessoGestorVendas = await promessaMobileComPrazo(
-          db.rpc('garantir_acessos_gestor_vendas_mobile_rpc'),
-          10000,
-          'A preparação da integração com o Vendas demorou mais que o esperado.'
-        );
-        if (acessoGestorVendas.error) {
-          console.warn('Não foi possível preparar o acesso integrado ao Vendas Mobile:', acessoGestorVendas.error);
-        }
-      } catch (error) {
-        // A integração será conferida novamente no próximo acesso; ela nunca
-        // pode impedir o perfil financeiro de abrir.
-        console.warn('A integração com o Vendas não respondeu durante a carga:', error);
-      }
-    }
-    avancarEtapaDados('Integração entre sistemas verificada');
-
-    var resultados;
-    try {
-      resultados = await Promise.all([
-        acompanharEtapaDados(buscarLancamentosAnoMobile(empresaId, ano), 'Carregando despesas e lançamentos'),
-        acompanharEtapaDados(db.from('faturamentos').select('*').eq('empresa_id', empresaId).eq('ano', ano), 'Carregando faturamentos'),
-        acompanharEtapaDados(db.from('faturamentos_entradas').select('*').eq('empresa_id', empresaId).eq('ano', ano).order('dia', { ascending: true }), 'Carregando receitas'),
-        acompanharEtapaDados(db.from('despesas_cadastradas').select('*').eq('empresa_id', empresaId).order('nome', { ascending: true }), 'Carregando categorias de despesas'),
-        acompanharEtapaDados(db.from('configuracoes').select('duplicados_ativo').eq('empresa_id', empresaId).maybeSingle(), 'Carregando preferências'),
-        acompanharEtapaDados(db.from('empresa_modulos').select('modulo_id').eq('empresa_id', empresaId).eq('ativo', true), 'Carregando módulos'),
-        acompanharEtapaDados(db.from('caixinhas_movimentos').select('*').eq('empresa_id', empresaId).order('data_movimento', { ascending: false }).order('criado_em', { ascending: false }), 'Carregando caixinhas'),
-        acompanharEtapaDados(
-          podeReaproveitarPreparacaoVendas
-            ? Promise.resolve({ data: preparacaoSistemaVendas.acessoVendasAtivo, error: null })
-            : confirmarModuloVendasMobileNoPerfil(empresaId, false),
-          'Confirmando acesso ao Vendas'
-        ),
-      ]);
-    } catch (error) {
-      state.carregando = false;
-      if (
-        error && error.codigo === 'AVANTALAB_TIMEOUT' &&
-        typeof window.__avantalabRecuperarAcessoMobile === 'function' &&
-        window.__avantalabRecuperarAcessoMobile()
-      ) {
-        return;
-      }
-      state.pronto = true;
-      root.innerHTML = telaAvisoMobile(
-        'Não foi possível concluir o acesso',
-        'A conexão não respondeu no tempo esperado. Confira sua internet e tente novamente.'
-      );
-      return;
-    }
 
     state.lancamentos = (resultados[0] || []).filter(function(item) {
       return item.status !== 'cancelada';
@@ -4990,9 +4972,9 @@
     // card recebe o resumo logo em seguida, sem bloquear o acesso.
     state.resumoPerfisCarregando = true;
     avancarEtapaDados('Acesso pronto');
-    // Tudo que bloqueia o primeiro acesso já terminou. Libera a interface
-    // antes das sincronizações complementares para que nenhuma delas consiga
-    // manter a tela parada em 100%.
+    // Tudo que bloqueia o primeiro acesso já terminou. Mantém os 100% visíveis
+    // por um instante curto e real antes de liberar a interface.
+    await aguardarPinturaProgressoMobile(180);
     state.pronto = true;
     state.carregando = false;
     render();
@@ -7699,6 +7681,35 @@
     if (barra) barra.style.width = progresso.valor + '%';
     if (texto) texto.textContent = progresso.valor + '%';
     if (etapa) etapa.textContent = progresso.rotulo;
+  }
+
+  function aguardarPinturaProgressoMobile(tempoVisivelMs) {
+    var espera = Math.max(0, Number(tempoVisivelMs || 0));
+    return new Promise(function (resolver) {
+      var concluido = false;
+      var fallback = null;
+      var finalizar = function () {
+        if (concluido) return;
+        concluido = true;
+        if (fallback) window.clearTimeout(fallback);
+        resolver();
+      };
+      var aposPintura = function () {
+        window.setTimeout(finalizar, espera);
+      };
+
+      // Em segundo plano o requestAnimationFrame pode ficar suspenso. O
+      // fallback mantém a inicialização finita sem pular a espera visual
+      // quando a página está realmente visível.
+      fallback = window.setTimeout(finalizar, Math.max(600, espera + 400));
+      if (document.hidden || typeof window.requestAnimationFrame !== 'function') {
+        aposPintura();
+        return;
+      }
+      window.requestAnimationFrame(function () {
+        window.requestAnimationFrame(aposPintura);
+      });
+    });
   }
 
   function cardInstalarLoginHtml() {
@@ -13157,7 +13168,6 @@
   async function iniciar() {
     state.falhaAcesso = '';
     state.preparacaoAcessoInterrompida = false;
-    iniciarProtecaoAcessoMobile();
     window._avaProfilePillHidden = false;
     if (typeof window.__avantalabReiniciarProgressoMobile === 'function') {
       window.__avantalabReiniciarProgressoMobile('Validando sua sessão');
@@ -13215,7 +13225,7 @@
           return Promise.all(
             keys
               .filter(function (key) {
-                return key.indexOf('avantalab-mobile-') === 0 && key !== 'avantalab-mobile-v272';
+                return key.indexOf('avantalab-mobile-') === 0 && key !== 'avantalab-mobile-v273';
               })
               .map(function (key) {
                 return caches.delete(key);
@@ -13232,7 +13242,7 @@
     });
 
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/mobile-sw.js?v=255').then(function (registro) {
+      navigator.serviceWorker.register('/mobile-sw.js?v=256', { updateViaCache: 'none' }).then(function (registro) {
         if (registro && registro.update) registro.update();
       }).catch(function () {});
     }
@@ -13323,7 +13333,6 @@
         return;
       }
       state.pronto = true;
-      limparProtecaoAcessoMobile();
       render();
     } catch (error) {
       if (

@@ -1,8 +1,8 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.5.4.36 -->
+<!-- ava-version: 1.5.4.37 -->
 
-> Revisão 1.5.4.36: pesquisas de Clientes, Produtos, Pedidos e Pagamentos são limpas em toda nova abertura na sala de botões.
+> Revisão 1.5.4.37: sem impacto operacional no Vendas Mobile.
 
 ## Escopo e navegação
 
