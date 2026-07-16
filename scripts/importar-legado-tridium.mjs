@@ -247,6 +247,64 @@ async function garantirConta(db, representante, dadosRepresentante, executar, re
   return { userId: usuario.id, senha };
 }
 
+async function garantirPerfilPessoal(db, representante, userId, executar) {
+  const vinculos = await falharSeErro(
+    await db.from('usuarios_empresa').select('empresa_id,status').eq('user_id', userId).eq('status', 'ativo'),
+    'Não foi possível consultar os perfis da conta',
+  );
+  const ids = (vinculos || []).map((vinculo) => vinculo.empresa_id).filter(Boolean);
+  if (ids.length) {
+    const empresas = await falharSeErro(
+      await db.from('empresas').select('id,nome,tipo_perfil').in('id', ids),
+      'Não foi possível consultar os perfis existentes',
+    );
+    const pessoal = (empresas || []).find((empresa) => empresa.tipo_perfil === 'pessoal');
+    if (pessoal) return pessoal;
+  }
+
+  const nomePessoal = `${String(representante.nome || 'Meu perfil').trim().split(/\s+/)[0]} - pessoal`;
+  if (!executar) return { id: uuidDeterministico(`${ORIGEM}:perfil-pessoal:${userId}`), nome: nomePessoal, tipo_perfil: 'pessoal' };
+
+  const empresa = await falharSeErro(
+    await db.from('empresas').insert({ nome: nomePessoal, tipo_perfil: 'pessoal' }).select('id,nome,tipo_perfil').single(),
+    'Não foi possível criar o perfil pessoal',
+  );
+  await falharSeErro(
+    await db.from('usuarios_empresa').insert({
+      empresa_id: empresa.id,
+      user_id: userId,
+      nome: representante.nome,
+      email: representante.email,
+      perfil: 'gestor_master',
+      status: 'ativo',
+    }),
+    'Não foi possível vincular a conta ao perfil pessoal',
+  );
+  await falharSeErro(
+    await db.from('configuracoes').upsert({
+      empresa_id: empresa.id,
+      cor_primaria: '#003E73',
+      dark_mode: false,
+      duplicados_ativo: true,
+      logo_url: '',
+      logo_settings: { scale: 100, x: 0, y: 0 },
+    }, { onConflict: 'empresa_id' }),
+    'Não foi possível iniciar as configurações do perfil pessoal',
+  );
+  await falharSeErro(
+    await db.from('assinaturas').upsert({
+      empresa_id: empresa.id,
+      tipo_perfil: 'pessoal',
+      status: 'cortesia',
+      plano: null,
+      ciclo: null,
+      atualizado_em: new Date().toISOString(),
+    }, { onConflict: 'empresa_id' }),
+    'Não foi possível liberar o acesso do perfil pessoal',
+  );
+  return empresa;
+}
+
 async function garantirAcessos(db, empresaId, userId, executar) {
   if (!executar) return;
   const acessoAtual = await falharSeErro(
@@ -261,7 +319,7 @@ async function garantirAcessos(db, empresaId, userId, executar) {
     await db.from('vendas_mobile_acessos').upsert({
       empresa_id: empresaId,
       user_id: userId,
-      papel: acessoAtual?.papel || 'vendedor',
+      papel: acessoAtual?.papel || 'gestor',
       status: acessoAtual?.status || 'ativo',
       aprovado_em: acessoAtual?.aprovado_em || new Date().toISOString(),
       atualizado_em: new Date().toISOString(),
@@ -275,17 +333,9 @@ async function garantirAcessos(db, empresaId, userId, executar) {
   if (!perfilFinanceiroAtual) {
     await falharSeErro(
       await db.from('vendas_mobile_perfis_financeiros').insert({ user_id: userId, empresa_id: empresaId, atualizado_em: new Date().toISOString() }),
-      'Não foi possível definir o perfil financeiro inicial da Tridium',
+      'Não foi possível definir o perfil financeiro inicial pessoal',
     );
   }
-}
-
-async function obterEmpresaFinanceira(db, userId, empresaPadrao) {
-  const perfil = await falharSeErro(
-    await db.from('vendas_mobile_perfis_financeiros').select('empresa_id').eq('user_id', userId).maybeSingle(),
-    'Não foi possível consultar o perfil financeiro do Vendas',
-  );
-  return perfil?.empresa_id || empresaPadrao;
 }
 
 async function limparDadosVendasDoUsuario(db, userId, executar) {
@@ -577,13 +627,20 @@ async function principal() {
       const dadosRepresentante = tabelas.client_representatives.find((item) => String(item.id) === representante.legadoId);
       const plano = montarPlano(tabelas, representante);
       const conta = await garantirConta(db, representante, dadosRepresentante, executar, redefinirSenhaMarcos);
-      await garantirAcessos(db, empresa.id, conta.userId, executar);
-      const empresaFinanceiraId = await obterEmpresaFinanceira(db, conta.userId, empresa.id);
+      const perfilPessoal = await garantirPerfilPessoal(db, representante, conta.userId, executar);
+      await garantirAcessos(db, perfilPessoal.id, conta.userId, executar);
+      const empresaFinanceiraId = perfilPessoal.id;
+      if (executar) {
+        await falharSeErro(
+          await db.from('vendas_mobile_perfis_financeiros').upsert({ user_id: conta.userId, empresa_id: empresaFinanceiraId, atualizado_em: new Date().toISOString() }, { onConflict: 'user_id' }),
+          'Não foi possível definir o perfil financeiro pessoal',
+        );
+      }
       if (limparJefferson && representante.legadoId === '5') {
         await limparDadosVendasDoUsuario(db, conta.userId, executar);
       }
       const totais = await importarRepresentante(db, empresa.id, empresaFinanceiraId, catalogo.id, tabelas, plano, conta.userId, executar);
-      resumo.push({ nome: representante.nome, email: representante.email, user_id: conta.userId, empresa_financeira_id: empresaFinanceiraId, dados_anteriores_removidos: limparJefferson && representante.legadoId === '5', ...totais });
+      resumo.push({ nome: representante.nome, email: representante.email, user_id: conta.userId, perfil_pessoal_id: perfilPessoal.id, empresa_financeira_id: empresaFinanceiraId, dados_anteriores_removidos: limparJefferson && representante.legadoId === '5', ...totais });
       if (conta.senha) credenciais.push({ nome: representante.nome, email: representante.email, senha_temporaria: conta.senha });
     }
     console.log(JSON.stringify({ modo: executar ? 'executado' : 'simulacao', empresa: empresa.nome, resumo, credenciais }, null, 2));

@@ -1,8 +1,8 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.5.2.01 -->
+<!-- ava-version: 1.5.3 -->
 
-> Revisão 1.5.2.01: a integração com Gestão consolida o resultado do Vendas em uma receita por mês, atualizada no acesso conforme a base configurada (vendas ou recebimentos).
+> Revisão 1.5.3: históricos importados ficam no perfil pessoal da própria conta; vínculo comercial e destino financeiro continuam independentes.
 
 ## Escopo e navegação
 

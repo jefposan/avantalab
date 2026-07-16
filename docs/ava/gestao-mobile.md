@@ -1,8 +1,8 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.5.2.01 -->
+<!-- ava-version: 1.5.3 -->
 
-> Revisão 1.5.2.01: o resultado do Vendas Mobile aparece como uma receita consolidada por mês, atualizada no dia corrente de cada competência pelo total da base financeira configurada.
+> Revisão 1.5.3: sem impacto operacional adicional na Gestão Mobile. Históricos importados do Vendas respeitam o perfil financeiro pessoal de cada conta.
 
 ## Escopo
 

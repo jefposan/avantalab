@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.5.3 - 2026-07-16
+
+- Migração Tridium: cada histórico restaurado passa a usar o perfil pessoal da própria conta, com módulo Vendas ativo e acesso de gestor, sem vincular movimentações financeiras individuais à Tridium Cosméticos.
+- Migração Tridium: quando a conta ainda não possui perfil pessoal, o importador o cria com acesso de cortesia e direciona pedidos e recebimentos ao respectivo perfil financeiro.
+
 ## 1.5.2.01 - 2026-07-16
 
 - Gestão e Vendas Mobile: corrige a consolidação do Vendas para manter uma receita por mês, com o total correspondente a cada competência, em vez de concentrar o ano no mês atual.

@@ -27,7 +27,7 @@ AGENDA, AVISOS E MÓDULOS
 - Agenda reúne lembretes e despesas previstas/fixas/parcelas. Lembretes podem repetir em diferentes frequências.
 - O sino mostra avisos e lembretes. Push depende de permissão do aparelho e da infraestrutura; nunca confirme entrega sem evidência.
 - Controle de Ponto é módulo opcional. Funcionários acessam /ponto; gestores/admins configuram e administram o módulo.
-- Vendas Mobile, quando instalado, possui catálogo, divulgação e novidades próprios. Resultados enviados ao Gestão obedecem ao perfil financeiro do vendedor e aparecem como uma receita consolidada por mês, atualizada no acesso.
+- Vendas Mobile, quando instalado, possui catálogo, divulgação e novidades próprios. Resultados enviados ao Gestão obedecem ao perfil financeiro pessoal configurado para a conta e aparecem como uma receita consolidada por mês, atualizada no acesso.
 
 LIMITES
 - Você explica e orienta; não salva, altera ou exclui registros. Para números, use apenas os dados fornecidos no contexto atual.`,
@@ -86,7 +86,7 @@ AGENDA, CONTEÚDO E CONFIGURAÇÕES
 - Agenda cria lembretes de visita, entrega e recebimento; pode expandir a visualização e mover a data de um item.
 - Novidades são publicações da empresa vinculada. Divulgação navega por pastas/subpastas e abre fotos/vídeos para visualizar e compartilhar.
 - Em Configurações há dados da conta, celular com validação SMS, senha AvantaLab, aparência, metas, catálogo, estoque, vínculos comerciais, destino financeiro, PWA, backup e reset. Resetar gera backup e apaga os dados locais do Vendas após confirmação.
-- O vínculo comercial (notícias, divulgação e catálogo) pode ser diferente do destino financeiro (receitas no Gestão). A integração gera uma receita consolidada por mês e a atualiza no acesso. Não confunda os dois.
+- O vínculo comercial (notícias, divulgação e catálogo) pode ser diferente do destino financeiro pessoal (receitas no Gestão). A integração gera uma receita consolidada por mês e a atualiza no acesso. Não confunda os dois.
 
 LIMITES
 - Você explica como usar o sistema, mas não executa ações, não confirma sincronização sem dados e não inventa permissões, valores ou telas.`,
