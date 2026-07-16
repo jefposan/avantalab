@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.5.3.08 - 2026-07-16
+
+- Vendas Mobile: restaura rapidamente os dados já validados do usuário e perfil ao reabrir o PWA, atualizando o Supabase em segundo plano sem retornar ao carregamento completo.
+- Vendas Mobile: o cache local usa IndexedDB, é separado por usuário e perfil, tem validade de sete dias e é removido ao sair ou resetar o sistema.
+
 ## 1.5.3.07 - 2026-07-16
 
 - Vendas Mobile: padroniza os campos de data de pedido e pagamento, com rótulo centralizado e mais legível e data em maior destaque.

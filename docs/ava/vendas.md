@@ -1,8 +1,8 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.5.3.07 -->
+<!-- ava-version: 1.5.3.08 -->
 
-> Revisão 1.5.3.07: campos de data de pedidos e pagamentos receberam padronização visual, sem mudança no fluxo operacional.
+> Revisão 1.5.3.08: ao reabrir com sessão e perfil validados, o Vendas restaura dados recentes localmente e atualiza em segundo plano.
 
 ## Escopo e navegação
 
@@ -42,6 +42,9 @@ dúvida dentro do Vendas sempre que a função existir ali.
   cabeçalho no dia correspondente.
 - A navegação preserva a posição de cada tela durante a sessão, evitando retornar
   ao topo ao sair e voltar.
+- Ao reabrir o PWA após pouco tempo, dados recentes do mesmo perfil podem ser
+  restaurados antes da atualização em segundo plano. Se não houver cache válido,
+  o carregamento normal é exibido.
 
 ## Produtos, pedidos e pagamentos
 

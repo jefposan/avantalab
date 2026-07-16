@@ -13,6 +13,15 @@
   },
   "versoes": [
     {
+      "versao": "1.5.3.08",
+      "titulo": "Retomada mais rápida no Vendas",
+      "data": "Julho/2026",
+      "itens": [
+        "Ao reabrir o aplicativo, os dados recentes do mesmo perfil podem aparecer imediatamente enquanto a atualização ocorre em segundo plano.",
+        "O cache é separado por usuário e perfil, tem validade limitada e é removido ao sair ou resetar o sistema."
+      ]
+    },
+    {
       "versao": "1.5.3.07",
       "titulo": "Datas mais claras no Vendas",
       "data": "Julho/2026",

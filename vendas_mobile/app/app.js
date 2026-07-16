@@ -3,6 +3,10 @@ const GOOGLE_CONNECTING_KEY = 'avantalab.vendas_mobile.google_connecting';
 const PREPARING_VIEWPORT_HEIGHT_KEY = 'avantalab.vendas_mobile.preparing_viewport_height';
 const PERFIL_VENDAS_ATIVO_KEY = 'avantalab_vendas_perfil_ativo';
 const ENTRADA_VENDAS_PELA_GESTAO_KEY = 'avantalab_vendas_entrada_gestao';
+const CACHE_VENDAS_DB = 'avantalab.vendas_mobile.cache';
+const CACHE_VENDAS_STORE = 'sessoes';
+const CACHE_VENDAS_VERSAO = 1;
+const CACHE_VENDAS_VALIDADE_MS = 1000 * 60 * 60 * 24 * 7;
 const HOJE = new Date();
 const INICIO_MES = new Date(HOJE.getFullYear(), HOJE.getMonth(), 1);
 
@@ -288,6 +292,108 @@ function salvarEstado() {
     console.warn('Não foi possível salvar as preferências locais do Vendas.', error);
     try { localStorage.removeItem(STORAGE_KEY); } catch { /* armazenamento indisponível */ }
   }
+}
+
+function abrirBancoCacheVendas() {
+  return new Promise((resolver, rejeitar) => {
+    if (!('indexedDB' in window)) { rejeitar(new Error('Cache local indisponível.')); return; }
+    const pedido = window.indexedDB.open(CACHE_VENDAS_DB, CACHE_VENDAS_VERSAO);
+    pedido.onupgradeneeded = () => {
+      if (!pedido.result.objectStoreNames.contains(CACHE_VENDAS_STORE)) pedido.result.createObjectStore(CACHE_VENDAS_STORE);
+    };
+    pedido.onsuccess = () => resolver(pedido.result);
+    pedido.onerror = () => rejeitar(pedido.error || new Error('Não foi possível abrir o cache local.'));
+  });
+}
+
+function chaveCacheVendas(usuarioId = state.usuario?.id, empresaId = state.acessoVendas?.empresa_id) {
+  if (!usuarioId || !empresaId) return '';
+  return `${usuarioId}:${empresaId}`;
+}
+
+async function lerCacheVendas() {
+  const chave = chaveCacheVendas();
+  if (!chave) return null;
+  try {
+    const banco = await abrirBancoCacheVendas();
+    const cache = await new Promise((resolver, rejeitar) => {
+      const pedido = banco.transaction(CACHE_VENDAS_STORE, 'readonly').objectStore(CACHE_VENDAS_STORE).get(chave);
+      pedido.onsuccess = () => resolver(pedido.result || null);
+      pedido.onerror = () => rejeitar(pedido.error);
+    });
+    banco.close();
+    if (!cache || cache.versao !== CACHE_VENDAS_VERSAO || Date.now() - Number(cache.atualizadoEm || 0) > CACHE_VENDAS_VALIDADE_MS) return null;
+    return cache;
+  } catch {
+    return null;
+  }
+}
+
+async function salvarCacheVendas() {
+  const chave = chaveCacheVendas();
+  if (!chave || !state.autenticado || !state.acessoVendas || state.moduloVendasAtivo === false) return;
+  const cache = {
+    versao: CACHE_VENDAS_VERSAO,
+    atualizadoEm: Date.now(),
+    dados: {
+      produtos: state.produtos,
+      pacotesProdutos: state.pacotesProdutos,
+      clientes: state.clientes,
+      vendas: state.vendas,
+      pagamentos: state.pagamentos,
+      conteudosVendas: state.conteudosVendas,
+      divulgacaoPastas: state.divulgacaoPastas,
+      divulgacaoMateriais: state.divulgacaoMateriais,
+      sincronizacaoCatalogo: state.sincronizacaoCatalogo,
+      integracaoGestao: state.integracaoGestao,
+      vinculosComerciais: state.vinculosComerciais,
+      vinculoComercialAtivo: state.vinculoComercialAtivo,
+      perfisFinanceiros: state.perfisFinanceiros,
+    },
+  };
+  try {
+    const banco = await abrirBancoCacheVendas();
+    await new Promise((resolver, rejeitar) => {
+      const pedido = banco.transaction(CACHE_VENDAS_STORE, 'readwrite').objectStore(CACHE_VENDAS_STORE).put(cache, chave);
+      pedido.onsuccess = () => resolver();
+      pedido.onerror = () => rejeitar(pedido.error);
+    });
+    banco.close();
+  } catch { /* o cache é opcional e não interfere no uso online */ }
+}
+
+async function limparCacheVendas(usuarioId = state.usuario?.id, empresaId = state.acessoVendas?.empresa_id) {
+  const chave = chaveCacheVendas(usuarioId, empresaId);
+  if (!chave) return;
+  try {
+    const banco = await abrirBancoCacheVendas();
+    await new Promise((resolver, rejeitar) => {
+      const pedido = banco.transaction(CACHE_VENDAS_STORE, 'readwrite').objectStore(CACHE_VENDAS_STORE).delete(chave);
+      pedido.onsuccess = () => resolver();
+      pedido.onerror = () => rejeitar(pedido.error);
+    });
+    banco.close();
+  } catch { /* o logout continua mesmo sem acesso ao cache */ }
+}
+
+function restaurarCacheVendas(cache) {
+  const dados = cache?.dados;
+  if (!dados || !Array.isArray(dados.produtos) || !Array.isArray(dados.clientes) || !Array.isArray(dados.vendas) || !Array.isArray(dados.pagamentos)) return false;
+  state.produtos = dados.produtos;
+  state.pacotesProdutos = dados.pacotesProdutos || [];
+  state.clientes = dados.clientes;
+  state.vendas = dados.vendas;
+  state.pagamentos = dados.pagamentos;
+  state.conteudosVendas = dados.conteudosVendas || null;
+  state.divulgacaoPastas = dados.divulgacaoPastas || [];
+  state.divulgacaoMateriais = dados.divulgacaoMateriais || [];
+  state.sincronizacaoCatalogo = dados.sincronizacaoCatalogo || { adicionados: 0, ja_recebidos: 0 };
+  state.integracaoGestao = dados.integracaoGestao || { base_receita: 'recebidos', pode_configurar: false };
+  state.vinculosComerciais = dados.vinculosComerciais || [];
+  state.vinculoComercialAtivo = dados.vinculoComercialAtivo || null;
+  state.perfisFinanceiros = dados.perfisFinanceiros || [];
+  state.menuAberto = false;
+  return true;
 }
 
 function moeda(valor) {
@@ -1328,6 +1434,7 @@ function abrirAcoesRapidas() {
 }
 
 async function sairSistema() {
+  void limparCacheVendas();
   try { if (backendAtivo) await window.VendasDb.signOut(); } catch (error) { console.error(error); }
   try {
     Object.keys(sessionStorage).forEach((chave) => {
@@ -1690,7 +1797,7 @@ function comLimiteDeTempo(promessa, mensagem = 'A conexão com o AvantaLab demor
   ]);
 }
 
-async function carregarDadosBackend(mostrarCarregamento = true, manterPreparacaoAteRecursos = false) {
+async function carregarDadosBackend(mostrarCarregamento = true, manterPreparacaoAteRecursos = false, preservarTelaAtual = false) {
   carregandoBackend = mostrarCarregamento;
   if (mostrarCarregamento) render();
   try {
@@ -1720,7 +1827,7 @@ async function carregarDadosBackend(mostrarCarregamento = true, manterPreparacao
       state.conteudosVendas = dados.conteudos;
       state.divulgacaoPastas = dados.divulgacaoPastas || [];
       state.divulgacaoMateriais = dados.divulgacaoMateriais || [];
-      state.menuAberto = true;
+      if (!preservarTelaAtual) state.menuAberto = true;
       state.acessoVendas = dados.acesso || null;
       state.solicitacaoAcesso = dados.solicitacao || null;
       state.usuarioSemAcesso = !dados.acesso;
@@ -1732,11 +1839,14 @@ async function carregarDadosBackend(mostrarCarregamento = true, manterPreparacao
       state.perfisFinanceiros = dados.perfisFinanceiros || [];
       state.perfisVendas = dados.perfisVendas || [];
       if (!dados.acesso) state.autenticado = false;
+      else void salvarCacheVendas();
     }
   } catch (error) {
     console.error(error);
-    state.autenticado = false;
-    state.erroBackend = traduzErro(error);
+    if (!preservarTelaAtual) {
+      state.autenticado = false;
+      state.erroBackend = traduzErro(error);
+    }
   } finally {
     carregandoBackend = false;
     conectandoGoogle = false;
@@ -1796,8 +1906,18 @@ async function carregarSistemaVendasCompleto() {
   let carregamentoConcluido = false;
   try {
     const recursosSala = prepararRecursosSalaBotoes();
-    await carregarDadosBackend(false, true);
-    await recursosSala;
+    const cache = await lerCacheVendas();
+    const restauradoDoCache = restaurarCacheVendas(cache);
+    if (restauradoDoCache) {
+      carregandoBackend = false;
+      preparandoRecursosSala = false;
+      render();
+      liberarAlturaPreparacao();
+      await Promise.all([carregarDadosBackend(false, true, true), recursosSala]);
+    } else {
+      await carregarDadosBackend(false, true);
+      await recursosSala;
+    }
     carregamentoConcluido = true;
   } finally {
     if (carregamentoConcluido) {
@@ -2440,6 +2560,7 @@ async function confirmarResetSistemaVendas() {
   try {
     await exportarBackupVendasExcel();
     await window.VendasDb.resetarSistemaVendas();
+    await limparCacheVendas();
     localStorage.removeItem(STORAGE_KEY);
     fecharSheet();
     await carregarDadosBackend(false);
@@ -4769,6 +4890,7 @@ function salvarConfiguracoes() {
 
 function resetarDados() {
   if (!confirm('Apagar todos os dados locais deste protótipo?')) return;
+  void limparCacheVendas();
   localStorage.removeItem(STORAGE_KEY);
   state = { ...estadoInicial };
   fecharSheet();
@@ -4909,7 +5031,7 @@ function aplicarAtualizacaoPwaPendente() {
 
 if (!window.__VENDAS_MOBILE_EMBEDDED__ && 'serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('./sw.js?v=12').catch(() => {});
+    navigator.serviceWorker.register('./sw.js?v=13').catch(() => {});
   });
 }
 
