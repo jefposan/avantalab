@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.5.4.35 - 2026-07-16
+
+- Vendas Mobile: as imagens dos nove botões da sala são mantidas pré-carregadas e decodificadas, deixando o retorno para **Início** mais imediato.
+
 ## 1.5.4.34 - 2026-07-16
 
 - Vendas Mobile: corrigida a restauração do cache que fechava a sala de botões e mostrava o Dashboard. Toda abertura volta agora obrigatoriamente para a sala de botões.

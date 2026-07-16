@@ -124,6 +124,7 @@ let estoqueMovimentosAtuais = [];
 let arrasteSalaBotoes = null;
 let preparandoRecursosSala = false;
 let recursosSalaBotoesPromise = null;
+const imagensSalaBotoesPrecarregadas = new Map();
 let temporizadorReconstrucaoSala = 0;
 let temporizadorGarantiaSala = 0;
 let tentativasGarantiaSala = 0;
@@ -675,6 +676,8 @@ function alternarMenu() {
 
 function abrirSalaBotoes() {
   if (state.menuAberto && salaEmLayoutCompacto && salaBotoesEstaCompleta()) return;
+  // Garante que a volta à sala reutilize imagens já carregadas e decodificadas.
+  void prepararRecursosSalaBotoes();
   fecharSheet();
   fecharCamadasAgenda();
   divulgacaoPastaAtualId = null;
@@ -1213,7 +1216,8 @@ const RECURSOS_SALA_BOTOES = [
 
 function carregarImagemEssencial(url) {
   return new Promise((resolver) => {
-    const imagem = new Image();
+    const imagem = imagensSalaBotoesPrecarregadas.get(url) || new Image();
+    imagensSalaBotoesPrecarregadas.set(url, imagem);
     let finalizado = false;
     const concluir = () => {
       if (finalizado) return;
@@ -1226,7 +1230,7 @@ function carregarImagemEssencial(url) {
     };
     imagem.onload = decodificar;
     imagem.onerror = concluir;
-    imagem.decoding = 'async';
+    imagem.decoding = 'sync';
     imagem.src = url;
     window.setTimeout(concluir, 7000);
   });
@@ -1339,7 +1343,7 @@ function renderMenuMobile() {
   const aniversariantesHoje = aniversariosHojeVendas();
   return `<section class="mobile-menu" aria-label="Menu principal">
     <header class="mobile-menu-header"><div class="mobile-menu-brand">${logoVendas()}</div><div class="system-header-actions">${aniversariantesHoje.length ? `<button class="birthday-header-button" onclick="abrirAgendaAniversariantes()" aria-label="${aniversariantesHoje.length} aniversário${aniversariantesHoje.length === 1 ? '' : 's'} hoje">${svgIconEstavel('cake')}<i>${aniversariantesHoje.length}</i></button>` : ''}${podeTrocarParaGestaoVendas() ? `<button class="system-switch-header-button" onclick="abrirSeletorPerfilGestaoVendas()" aria-label="Ir para Gestão" title="Ir para Gestão">${iconeTrocaSistemaVendas()}</button>` : ''}</div></header>
-    <div class="mobile-menu-grid-wrap${organizando ? ' is-organizing' : ''}"><div class="mobile-menu-organize-row"><span class="mobile-menu-organize-instruction" ${organizando ? '' : 'hidden'}>Clique no botão e arraste para a nova posição</span><button type="button" class="mobile-menu-organize" onclick="alternarOrganizacaoSalaBotoes()" aria-label="${organizando ? 'Concluir organização da sala' : 'Organizar sala de botões'}" title="${organizando ? 'Concluir' : 'Organizar sala'}">${iconeOrganizarSala(organizando)}</button></div><div class="mobile-menu-grid">${itens.map(([idAba, arquivo, label]) => `<button type="button" data-sala-botao="${idAba}" class="mobile-menu-card${organizando ? ' is-organizable' : ''}" ${organizando ? `onpointerdown="iniciarArrasteSalaBotoes(event,'${idAba}')" onpointermove="moverArrasteSalaBotoes(event)" onpointerup="finalizarArrasteSalaBotoes(event)" onpointercancel="finalizarArrasteSalaBotoes(event)"` : `onclick="setAba('${idAba}')"`}><img src="./assets/menu/${arquivo}" alt="${label}" onerror="this.closest('.mobile-menu-card')?.classList.add('image-failed')" /><span class="mobile-menu-card-fallback" aria-hidden="true">${escapeHtml(label)}</span></button>`).join('')}</div></div>
+    <div class="mobile-menu-grid-wrap${organizando ? ' is-organizing' : ''}"><div class="mobile-menu-organize-row"><span class="mobile-menu-organize-instruction" ${organizando ? '' : 'hidden'}>Clique no botão e arraste para a nova posição</span><button type="button" class="mobile-menu-organize" onclick="alternarOrganizacaoSalaBotoes()" aria-label="${organizando ? 'Concluir organização da sala' : 'Organizar sala'}" title="${organizando ? 'Concluir' : 'Organizar sala'}">${iconeOrganizarSala(organizando)}</button></div><div class="mobile-menu-grid">${itens.map(([idAba, arquivo, label]) => `<button type="button" data-sala-botao="${idAba}" class="mobile-menu-card${organizando ? ' is-organizable' : ''}" ${organizando ? `onpointerdown="iniciarArrasteSalaBotoes(event,'${idAba}')" onpointermove="moverArrasteSalaBotoes(event)" onpointerup="finalizarArrasteSalaBotoes(event)" onpointercancel="finalizarArrasteSalaBotoes(event)"` : `onclick="setAba('${idAba}')"`}><img src="./assets/menu/${arquivo}" alt="${label}" decoding="sync" fetchpriority="high" onerror="this.closest('.mobile-menu-card')?.classList.add('image-failed')" /><span class="mobile-menu-card-fallback" aria-hidden="true">${escapeHtml(label)}</span></button>`).join('')}</div></div>
     <div class="mobile-menu-assistance">
       <button type="button" class="mobile-ava-card" onclick="abrirChatIAVendas()">
         <span class="mobile-ava-logo" role="img" aria-label="Ava"></span>

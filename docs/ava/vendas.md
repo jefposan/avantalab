@@ -1,8 +1,8 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.5.4.34 -->
+<!-- ava-version: 1.5.4.35 -->
 
-> Revisão 1.5.4.34: o cache de dados não restaura mais o Dashboard; toda abertura termina na sala de botões.
+> Revisão 1.5.4.35: imagens da sala de botões são preservadas em memória para retorno mais rápido ao Início.
 
 ## Escopo e navegação
 
