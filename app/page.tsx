@@ -877,6 +877,13 @@ const podeGerenciarPonto =
 const podeAcessarAjustes =
   perfilUsuario === 'gestor_master' || perfilUsuario === 'administrador';
 
+// O Operador Completo pode trabalhar com os conteúdos do Vendas já instalado,
+// mas não ganha permissões administrativas nem de instalação de módulos.
+const podeAcessarVendasMobileWeb =
+  perfilUsuario === 'gestor_master' ||
+  perfilUsuario === 'administrador' ||
+  perfilUsuario === 'operador_completo';
+
 // Qualquer usuario autenticado pode criar seu proprio perfil (empresa ou pessoal),
 // independente do papel (gestor_master, administrador, operador_completo, operador_simples).
 const podeCriarNovaEmpresa =
@@ -9405,7 +9412,7 @@ name="novo-usuario-login"
         )}
 
         {/* 4b. Vendas Mobile */}
-        {modulosAtivos.includes('vendas_mobile') && podeAcessarAjustes && (
+        {modulosAtivos.includes('vendas_mobile') && podeAcessarVendasMobileWeb && (
           <Tooltip texto="Publique novidades e organize fotos e vídeos para a equipe do Vendas Mobile." posicao="bottom">
             <button
               onClick={() => { setAjustesAberto(false); setMenuAjuste(null); setModalNovidadesVendas(true); }}

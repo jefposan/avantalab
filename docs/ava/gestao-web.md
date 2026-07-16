@@ -1,8 +1,8 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.5.4.31 -->
+<!-- ava-version: 1.5.4.32 -->
 
-> Revisão 1.5.4.31: sem impacto operacional na Gestão Web.
+> Revisão 1.5.4.32: Operador Completo acessa Vendas Mobile no Web quando o módulo já está instalado; a instalação permanece administrativa.
 
 ## Escopo
 
@@ -44,6 +44,9 @@ ou `/ponto`.
 - Vendas Mobile é módulo complementar: catálogo, divulgação e novidades têm
   regras próprias e resultados podem ser enviados ao Gestão conforme o destino
   financeiro do vendedor.
+- Com o módulo instalado, Gestor Master, Administrador e Operador Completo
+  podem acessar o botão **Vendas Mobile** no Web. Somente Gestor Master e
+  Administrador instalam ou removem o módulo.
 
 ## Limites da Ava
 

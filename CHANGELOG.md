@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.5.4.32 - 2026-07-16
+
+- Gestão Web: Operador Completo passa a acessar o botão **Vendas Mobile** quando o módulo já estiver instalado no perfil. Instalar ou remover módulos continua restrito a Gestor Master e Administrador.
+
 ## 1.5.4.31 - 2026-07-16
 
 - Vendas Mobile: o limite disponível de cada produto ganhou mais destaque ao gerar pedido a partir de um consignado.

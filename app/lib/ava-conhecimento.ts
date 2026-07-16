@@ -27,7 +27,7 @@ AGENDA, AVISOS E MÓDULOS
 - Agenda reúne lembretes e despesas previstas/fixas/parcelas. Lembretes podem repetir em diferentes frequências.
 - O sino mostra avisos e lembretes. Push depende de permissão do aparelho e da infraestrutura; nunca confirme entrega sem evidência.
 - Controle de Ponto é módulo opcional. Funcionários acessam /ponto; gestores/admins configuram e administram o módulo.
-- Vendas Mobile, quando instalado, possui catálogo, divulgação e novidades próprios. Resultados enviados ao Gestão obedecem ao perfil financeiro pessoal configurado para a conta e aparecem como uma receita consolidada por mês, atualizada no acesso.
+- Vendas Mobile, quando instalado, possui catálogo, divulgação e novidades próprios. No Web, Gestor Master, Administrador e Operador Completo acessam esse botão; somente Gestor Master e Administrador instalam ou removem o módulo. Resultados enviados ao Gestão obedecem ao perfil financeiro pessoal configurado para a conta e aparecem como uma receita consolidada por mês, atualizada no acesso.
 
 LIMITES
 - Você explica e orienta; não salva, altera ou exclui registros. Para números, use apenas os dados fornecidos no contexto atual.`,
