@@ -4150,7 +4150,9 @@ function abrirConsignadoCliente(venda, retornoClienteId = '', retornoAba = '', r
       <strong>${Number(item.quantidade || 0)}</strong>
     </div>
   `).join('') || '<p class="transaction-empty">Nenhum produto em consignação.</p>';
-  const podeGerarPedido = venda.status !== 'cancelada' && venda.status !== 'convertida' && (venda.itens || []).some((item) => Number(item.quantidade || 0) > 0);
+  const statusConsignado = normalizar(venda.status);
+  const consignadoAtivo = !['cancelada', 'convertida'].includes(statusConsignado);
+  const possuiItensDisponiveis = (venda.itens || []).some((item) => Number(item.quantidade || 0) > 0);
   sheet(`
     <div class="sheet-header">
       <div><h2>Pedido Consignado</h2><p class="muted small">Cliente: ${escapeHtml(cliente?.nome || 'não informado')} · ${dataComprovante(venda.criado_em)}</p></div>
@@ -4163,7 +4165,8 @@ function abrirConsignadoCliente(venda, retornoClienteId = '', retornoAba = '', r
       </section>
       <section class="consignment-fixed-summary">
         <div><span>Total em consignação</span><b>${moeda(venda.total)}</b></div>
-        ${podeGerarPedido ? `<button type="button" class="primary consignment-generate-button" onclick="abrirConversaoConsignado('${venda.id}','${retornoClienteId}','${retornoAba}',${retornoPagina})">Gerar pedido</button>` : '<p>Este consignado não possui itens disponíveis para gerar pedido.</p>'}
+        <button type="button" class="primary consignment-generate-button" ${consignadoAtivo && possuiItensDisponiveis ? `onclick="abrirConversaoConsignado('${venda.id}','${retornoClienteId}','${retornoAba}',${retornoPagina})"` : 'disabled'}>${consignadoAtivo ? 'Gerar pedido' : 'Pedido já gerado'}</button>
+        ${consignadoAtivo && !possuiItensDisponiveis ? '<p>Não há itens disponíveis para gerar um novo pedido.</p>' : ''}
         <button class="primary order-share" onclick="compartilharPedido('${venda.id}')">${svgIcon('save')} Compartilhar comprovante</button>
       </section>
       <footer class="order-view-actions consignment-view-actions">

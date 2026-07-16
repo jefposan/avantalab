@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.5.4.26 - 2026-07-16
+
+- Vendas Mobile: o botão **Gerar pedido** permanece sempre visível no card de consignado ativo; ao tocar, abre a etapa separada de quantidades e confirmação.
+
 ## 1.5.4.25 - 2026-07-16
 
 - Vendas Mobile: ao tocar em **Pagamento**, o foco do campo **Valor pago** acontece durante o próprio toque, fazendo o teclado numérico abrir sem permitir que o card suba.

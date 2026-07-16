@@ -12,6 +12,7 @@
     "instagramUrl": "https://www.instagram.com/avanta.lab"
   },
   "versoes": [
+    {"versao":"1.5.4.26","titulo":"Gerar pedido sempre disponível","data":"Julho/2026","itens":["O botão Gerar pedido permanece visível no card de consignado enquanto houver itens disponíveis.","Ao tocar, abre a etapa própria para informar as quantidades vendidas e confirmar o pedido."]},
     {"versao":"1.5.4.25","titulo":"Pagamento pronto para digitar","data":"Julho/2026","itens":["Ao tocar em Pagamento, o teclado numérico volta a abrir diretamente no campo Valor pago.","O card permanece estável enquanto o teclado é exibido.","O cabeçalho de Clientes ficou mais compacto e libera mais espaço para a lista."]},
     {"versao":"1.5.4.24","titulo":"Consignados mais claros e seguros","data":"Julho/2026","itens":["O pedido consignado mostra somente os produtos e as quantidades que permanecem com a cliente.","Gerar pedido abre uma etapa própria para informar as quantidades vendidas, sem ultrapassar o saldo consignado.","Ao confirmar, o pedido entra no histórico da cliente e as quantidades são abatidas do consignado."]},
     {"versao":"1.5.4.23","titulo":"Clientes e pagamentos mais estáveis","data":"Julho/2026","itens":["O imã centraliza o card do cliente entre o cabeçalho principal e o menu inferior.","O formulário de pagamento não sobe gradualmente durante a abertura do teclado.","O campo Valor pago continua pronto para digitação ao abrir o formulário."]},

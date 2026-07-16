@@ -1773,6 +1773,7 @@ body { background: #fff; color: var(--ink); }
 .consignment-fixed-summary > div b { color: #0A1F44; font-size: 15px; }
 .consignment-fixed-summary > p { margin: 0; color: #718096; font-size: 10px; text-align: center; }
 .consignment-generate-button, .consignment-fixed-summary .order-share { min-height: 38px; margin-top: 0; border-radius: 999px; }
+.consignment-generate-button:disabled { border-color: #cbd5e1; color: #64748b; background: #e9eef3; box-shadow: none; cursor: not-allowed; }
 .consignment-view-actions { flex: 0 0 auto; margin-top: 0; }
 .consignment-conversion-help { flex: 0 0 auto; margin: 0; border-radius: 11px; padding: 9px 11px; color: #526477; background: #eef8ff; font-size: 10px; line-height: 1.4; }
 .consignment-conversion-scroll { display: grid; min-height: 0; flex: 1 1 auto; align-content: start; gap: 8px; overflow-x: hidden; overflow-y: auto; overscroll-behavior: contain; touch-action: pan-y; }

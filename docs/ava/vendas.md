@@ -1,8 +1,8 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.5.4.25 -->
+<!-- ava-version: 1.5.4.26 -->
 
-> Revisão 1.5.4.25: foco do pagamento e cabeçalho compacto de Clientes.
+> Revisão 1.5.4.26: disponibilidade do botão Gerar pedido no consignado.
 
 ## Escopo e navegação
 
@@ -93,7 +93,7 @@ dúvida dentro do Vendas sempre que a função existir ali.
 - Consignado não é venda nem recebimento até sua conversão em pedido. Ao abrir
   um consignado, o card mostra somente produtos e quantidades, com rolagem apenas
   nessa lista. Cabeçalho, total e ações permanecem fixos.
-- **Gerar pedido** abre outro card com todos os itens disponíveis. Use **+** e
+- O botão **Gerar pedido** fica sempre visível no consignado ativo e abre outro card com todos os itens disponíveis. Use **+** e
   **−** para informar a quantidade vendida, limitada ao saldo consignado, e
   confirme. O novo pedido entra no histórico da cliente e as quantidades são
   abatidas do consignado.
