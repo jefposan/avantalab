@@ -1035,6 +1035,18 @@ function limparDestaqueClientes() {
   interacaoRolagemClientesAtiva = false;
 }
 
+function areaUtilVerticalClientes() {
+  const cabecalhoPagina = app.querySelector('.system-header');
+  const rodapePagina = document.querySelector('.vendas-bottom-nav');
+  const topo = Math.max(0, cabecalhoPagina?.getBoundingClientRect().bottom || 0);
+  const rodape = Math.min(window.innerHeight, rodapePagina?.getBoundingClientRect().top || window.innerHeight);
+  return {
+    topo,
+    rodape,
+    centro: topo + ((rodape - topo) / 2),
+  };
+}
+
 function atualizarDestaqueClientes() {
   if (
     !window.matchMedia('(max-width: 850px)').matches ||
@@ -1044,14 +1056,12 @@ function atualizarDestaqueClientes() {
     return;
   }
   if (!cardsClientesEmDestaque.length || state.aba !== 'clientes') return;
-  const topoVisivel = Math.max(0, app.querySelector('.module-sticky-head')?.getBoundingClientRect().bottom || 0);
-  const rodapeVisivel = Math.min(window.innerHeight, document.querySelector('.vendas-bottom-nav')?.getBoundingClientRect().top || window.innerHeight);
-  const centroVisivel = topoVisivel + ((rodapeVisivel - topoVisivel) / 2);
+  const areaUtil = areaUtilVerticalClientes();
   const centroHorizontal = window.innerWidth / 2;
-  const pontosBusca = [centroVisivel, centroVisivel - 24, centroVisivel + 24, centroVisivel - 56, centroVisivel + 56];
+  const pontosBusca = [areaUtil.centro, areaUtil.centro - 24, areaUtil.centro + 24, areaUtil.centro - 56, areaUtil.centro + 56];
   let cardAtivo = null;
   for (const y of pontosBusca) {
-    const elementos = document.elementsFromPoint(centroHorizontal, Math.max(topoVisivel + 1, Math.min(rodapeVisivel - 1, y)));
+    const elementos = document.elementsFromPoint(centroHorizontal, Math.max(areaUtil.topo + 1, Math.min(areaUtil.rodape - 1, y)));
     cardAtivo = elementos.map((elemento) => elemento.closest?.('.clientes-page .client-card')).find(Boolean) || null;
     if (cardAtivo) break;
   }
@@ -1077,10 +1087,9 @@ function agendarEncaixeCliente() {
     temporizadorEncaixeClientes = 0;
     const card = cardClienteEmDestaque;
     if (!card?.isConnected || state.aba !== 'clientes') return;
-    const topo = Math.max(0, app.querySelector('.module-sticky-head')?.getBoundingClientRect().bottom || 0);
-    const rodape = Math.min(window.innerHeight, document.querySelector('.vendas-bottom-nav')?.getBoundingClientRect().top || window.innerHeight);
+    const areaUtil = areaUtilVerticalClientes();
     const areaCard = card.getBoundingClientRect();
-    const deslocamento = (areaCard.top + areaCard.height / 2) - (topo + (rodape - topo) / 2);
+    const deslocamento = (areaCard.top + areaCard.height / 2) - areaUtil.centro;
     if (Math.abs(deslocamento) < 8) return;
     encaixeClientesEmAndamento = true;
     window.scrollBy({ top: deslocamento, behavior: 'smooth' });
@@ -3713,7 +3722,7 @@ function abrirPagamentoClienteComSelecao(clienteId, permitirSelecao = false) {
     <div class="sheet-header"><div><h2>Registrar pagamento</h2><p class="muted small">${permitirSelecao ? 'Selecione o cliente' : escapeHtml(cliente.nome)}</p></div><button type="button" class="close" onclick="fecharSheet(event)">×</button></div>
     <div class="client-transaction-scroll payment-entry-form">
       ${permitirSelecao ? campoBuscaClienteLancamento('pagamento', '', '') : ''}
-      <label class="transaction-field"><span>Valor pago</span><input id="pagamentoClienteValor" type="text" inputmode="numeric" value="0,00" ${permitirSelecao ? '' : 'autofocus'} onfocus="this.select()" oninput="formatarCampoMoeda(this);atualizarResumoPagamentoCliente()"></label>
+      <label class="transaction-field"><span>Valor pago</span><input id="pagamentoClienteValor" type="text" inputmode="numeric" value="0,00" onfocus="this.select()" oninput="formatarCampoMoeda(this);atualizarResumoPagamentoCliente()"></label>
       <label class="transaction-field"><span>Valor total da dívida</span><input id="pagamentoClienteDivida" value="${escapeAttr(moeda(saldo.debito))}" readonly></label>
       <label class="transaction-field"><span>Desconto</span><input id="pagamentoClienteDesconto" type="text" inputmode="numeric" value="0,00" onfocus="this.select()" oninput="formatarCampoMoeda(this);atualizarResumoPagamentoCliente()"></label>
       <section class="payment-balance-summary"><div><span>Saldo anterior</span><b id="pagamentoClienteSaldoAnterior">${moeda(saldo.debito)}</b></div><div><span>Valor pago + desconto</span><b id="pagamentoClienteAbatimento">${moeda(0)}</b></div><div class="final"><span>Saldo final</span><b id="pagamentoClienteSaldoFinal">${moeda(saldo.debito)}</b></div></section>
@@ -3725,9 +3734,12 @@ function abrirPagamentoClienteComSelecao(clienteId, permitirSelecao = false) {
   if (permitirSelecao) {
     focarBuscaClienteLancamento('pagamento');
   } else {
-    const campoValorPago = document.getElementById('pagamentoClienteValor');
-    campoValorPago?.focus({ preventScroll: true });
-    campoValorPago?.select();
+    window.requestAnimationFrame(() => {
+      const campoValorPago = document.getElementById('pagamentoClienteValor');
+      if (!campoValorPago || !document.getElementById('sheetBackdrop')?.contains(campoValorPago)) return;
+      campoValorPago.focus({ preventScroll: true });
+      campoValorPago.select();
+    });
   }
 }
 
@@ -5602,6 +5614,12 @@ function sheet(html, backdropClass = '') {
   const wrap = document.createElement('div');
   wrap.className = `sheet-backdrop ${backdropClass}`;
   wrap.id = 'sheetBackdrop';
+  if (backdropClass.includes('client-transaction-backdrop')) {
+    const alturaViewport = Math.round(window.visualViewport?.height || window.innerHeight);
+    if (Number.isFinite(alturaViewport) && alturaViewport > 0) {
+      wrap.style.setProperty('--transaction-viewport-height', `${alturaViewport}px`);
+    }
+  }
   wrap.innerHTML = `<section class="sheet">${html}</section>`;
   wrap.querySelectorAll('button:not([type])').forEach((botao) => {
     botao.type = 'button';

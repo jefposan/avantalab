@@ -1577,11 +1577,11 @@ body { background: #fff; color: var(--ink); }
 .client-actions > div { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
 .client-payment { background: #1F8A9E; }
 .client-order { background: #1687D9; }
-.client-transaction-backdrop { padding: 12px 12px calc(env(safe-area-inset-bottom) + 86px); }
-.client-transaction-backdrop .sheet { display: flex; width: min(94vw, 470px); max-height: calc(100dvh - env(safe-area-inset-bottom) - 108px); flex-direction: column; overflow: hidden; }
+.client-transaction-backdrop { top: 0; bottom: auto; height: var(--transaction-viewport-height, 100dvh); padding: 12px 12px calc(env(safe-area-inset-bottom) + 86px); }
+.client-transaction-backdrop .sheet { display: flex; width: min(94vw, 470px); max-height: calc(var(--transaction-viewport-height, 100dvh) - env(safe-area-inset-bottom) - 108px); flex-direction: column; overflow: hidden; }
 .client-transaction-backdrop .sheet > .sheet-header { flex: 0 0 auto; }
 .client-transaction-scroll { display: grid; min-height: 0; gap: 12px; overflow-y: auto; overscroll-behavior: contain; padding: 1px 1px 12px; }
-.order-transaction-backdrop .sheet { position: relative; height: min(720px, calc(100dvh - env(safe-area-inset-bottom) - 108px)); touch-action: none; }
+.order-transaction-backdrop .sheet { position: relative; height: min(720px, calc(var(--transaction-viewport-height, 100dvh) - env(safe-area-inset-bottom) - 108px)); touch-action: none; }
 .payment-transaction-backdrop .sheet { position: relative; }
 .order-transaction-layout { display: flex; min-height: 0; flex: 1 1 auto; flex-direction: column; gap: 8px; padding: 0 1px 40px; overflow: hidden; }
 .order-transaction-fixed { display: grid; flex: 0 0 auto; gap: 7px; }

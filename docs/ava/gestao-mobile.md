@@ -1,8 +1,8 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.5.4.22 -->
+<!-- ava-version: 1.5.4.23 -->
 
-> Revisão 1.5.4.22: preparação de acesso com repetição e reconexão automática controlada.
+> Revisão 1.5.4.23: sem impacto operacional na Gestão Mobile.
 
 ## Escopo
 

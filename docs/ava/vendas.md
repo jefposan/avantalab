@@ -1,8 +1,8 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.5.4.22 -->
+<!-- ava-version: 1.5.4.23 -->
 
-> Revisão 1.5.4.22: sem impacto operacional no Vendas Mobile.
+> Revisão 1.5.4.23: posição do imã e estabilidade do card de pagamento.
 
 ## Escopo e navegação
 
@@ -51,9 +51,9 @@ dúvida dentro do Vendas sempre que a função existir ali.
 - A ficha oferece pedido, pagamento, agendamento e **Ver detalhes**. Nesta área,
   Resumo, Consignado, Pedidos e Pagamentos mostram os históricos.
 - Na lista, o card próximo ao centro recebe destaque e os vizinhos imediatos ficam
-  levemente desfocados. Depois que a rolagem termina, o encaixe central é concluído
-  rapidamente e de forma suave; um gesto forte continua podendo avançar por vários
-  cards.
+  levemente desfocados. Depois que a rolagem termina, o encaixe posiciona o card no
+  centro vertical da área entre o cabeçalho principal e o menu inferior; um gesto
+  forte continua podendo avançar por vários cards.
 - Pedidos, consignados e pagamentos exibem 10 registros por vez. O botão
   **Carregar mais** acrescenta o próximo lote de até 10 registros sem perder a
   posição da rolagem, até chegar ao fim do histórico.
@@ -83,6 +83,8 @@ dúvida dentro do Vendas sempre que a função existir ali.
 - Ao iniciar um pedido ou pagamento sem cliente predefinido, o foco abre na busca
   de cliente. A lista mostra somente os nomes, em fonte maior; a pesquisa ainda
   pode localizar pelo nome, telefone ou e-mail.
+- Ao tocar em **Pagamento** no card de um cliente, o formulário permanece fixo
+  enquanto o teclado abre e o campo **Valor pago** recebe um único foco automático.
 - Em **Inserir produto**, digite nome, código, marca ou categoria para filtrar
   imediatamente as opções; toque no resultado para selecionar e preencher o preço.
 - Ao cancelar ou fechar um novo pedido ou pagamento, o Vendas mantém a página e

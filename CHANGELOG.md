@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.5.4.23 - 2026-07-16
+
+- Vendas Mobile: o imã posiciona o card do cliente mais acima, no centro vertical da área entre o cabeçalho principal e o menu inferior.
+- Lançar pagamento: o card permanece estável durante a abertura do teclado, sem subir gradualmente; o campo de valor continua recebendo foco automaticamente.
+
 ## 1.5.4.22 - 2026-07-16
 
 - Gestão Mobile: corrige a espera indefinida em 60% ao limitar e repetir automaticamente as verificações de assinatura, cadastro e sessão.
