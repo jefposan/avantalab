@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.5.4.29 - 2026-07-16
+
+- Gestão Mobile: corrigida a interrupção que podia deixar o preparo de acesso parado em **60%**. As verificações anteriores à carga de dados agora têm prazo e a integração com Vendas não bloqueia a abertura financeira.
+- Se uma conexão excepcionalmente demorar, o app tenta uma reconexão controlada; se ainda não responder, mostra imediatamente **Tentar novamente**, sem manter o usuário preso na tela de carregamento.
+
 ## 1.5.4.28 - 2026-07-16
 
 - Vendas Mobile: **Gerar pedido** depende exclusivamente da existência de produtos restantes no consignado. Conversões parciais mantêm o consignado disponível para novos pedidos até zerar todos os itens.

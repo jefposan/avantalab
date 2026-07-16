@@ -1,8 +1,8 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.5.4.28 -->
+<!-- ava-version: 1.5.4.29 -->
 
-> Revisão 1.5.4.28: conversões parciais de consignado baseadas no saldo restante.
+> Revisão 1.5.4.29: sem impacto operacional no Vendas Mobile.
 
 ## Escopo e navegação
 

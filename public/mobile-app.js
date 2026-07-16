@@ -140,6 +140,10 @@
     categoriaEditandoId: '',
     categoriaAcoesId: '',
     erro: '',
+    // Falha bloqueante durante a preparação inicial. Mantém uma saída clara
+    // para o usuário em vez de deixar a tela de progresso parada.
+    falhaAcesso: '',
+    preparacaoAcessoInterrompida: false,
     mensagem: '',
     carregando: false,
     loginAcao: '',
@@ -703,6 +707,44 @@
     ]).finally(function () {
       if (temporizador) window.clearTimeout(temporizador);
     });
+  }
+
+  var temporizadorProtecaoAcessoMobile = null;
+
+  function limparProtecaoAcessoMobile() {
+    if (temporizadorProtecaoAcessoMobile) {
+      window.clearTimeout(temporizadorProtecaoAcessoMobile);
+      temporizadorProtecaoAcessoMobile = null;
+    }
+  }
+
+  function exibirFalhaDeAcessoMobile(texto) {
+    limparProtecaoAcessoMobile();
+    state.carregando = false;
+    state.pronto = true;
+    state.falhaAcesso = texto || 'Não foi possível concluir a preparação do acesso. Confira sua internet e tente novamente.';
+    render();
+  }
+
+  // Esta proteção fica no próprio aplicativo, sem depender somente do script
+  // de bootstrap. Assim, qualquer promessa que deixe de responder durante a
+  // preparação (inclusive antes da fase de dados) sempre termina em uma
+  // reconexão ou em uma ação explícita para o usuário.
+  function iniciarProtecaoAcessoMobile() {
+    limparProtecaoAcessoMobile();
+    temporizadorProtecaoAcessoMobile = window.setTimeout(function () {
+      if (state.pronto) return;
+      console.warn('A preparação do acesso móvel excedeu o tempo seguro.');
+      if (
+        typeof window.__avantalabRecuperarAcessoMobile === 'function' &&
+        window.__avantalabRecuperarAcessoMobile()
+      ) {
+        return;
+      }
+      exibirFalhaDeAcessoMobile(
+        'O acesso demorou mais que o normal para responder. Tente novamente para reconectar com segurança.'
+      );
+    }, 35000);
   }
 
   async function requisitarJsonMobile(url, opcoes, limiteMs) {
@@ -4763,10 +4805,31 @@
       state.paywallVerificado = false;
     }
     atualizarProgressoAcessoMobile('data', 0, totalEtapasDados, 'Verificando assinatura e cadastro');
-    var verificacoesPerfil = await Promise.all([
-      verificarPaywallMobile(true),
-      carregarCadastroPerfilMobile(),
-    ]);
+    var verificacoesPerfil;
+    try {
+      verificacoesPerfil = await promessaMobileComPrazo(
+        Promise.all([
+          verificarPaywallMobile(true),
+          carregarCadastroPerfilMobile(),
+        ]),
+        18000,
+        'A verificação de assinatura e cadastro demorou mais que o esperado.'
+      );
+    } catch (error) {
+      state.carregando = false;
+      if (
+        error && error.codigo === 'AVANTALAB_TIMEOUT' &&
+        typeof window.__avantalabRecuperarAcessoMobile === 'function' &&
+        window.__avantalabRecuperarAcessoMobile()
+      ) {
+        state.preparacaoAcessoInterrompida = true;
+        return;
+      }
+      exibirFalhaDeAcessoMobile(
+        'Não foi possível verificar a assinatura e o cadastro do perfil. Tente novamente para reconectar.'
+      );
+      return;
+    }
     avancarEtapaDados('Assinatura e acesso verificados');
     var cadastroPerfilOk = verificacoesPerfil[1];
     avancarEtapaDados('Cadastro do perfil verificado');
@@ -4797,9 +4860,19 @@
     // entre os sistemas. A RPC valida o papel no servidor e mantém operadores
     // fora deste fluxo.
     if (podeGerenciarUsuarios() && !podeReaproveitarPreparacaoVendas) {
-      var acessoGestorVendas = await db.rpc('garantir_acessos_gestor_vendas_mobile_rpc');
-      if (acessoGestorVendas.error) {
-        console.warn('Não foi possível preparar o acesso integrado ao Vendas Mobile:', acessoGestorVendas.error);
+      try {
+        var acessoGestorVendas = await promessaMobileComPrazo(
+          db.rpc('garantir_acessos_gestor_vendas_mobile_rpc'),
+          10000,
+          'A preparação da integração com o Vendas demorou mais que o esperado.'
+        );
+        if (acessoGestorVendas.error) {
+          console.warn('Não foi possível preparar o acesso integrado ao Vendas Mobile:', acessoGestorVendas.error);
+        }
+      } catch (error) {
+        // A integração será conferida novamente no próximo acesso; ela nunca
+        // pode impedir o perfil financeiro de abrir.
+        console.warn('A integração com o Vendas não respondeu durante a carga:', error);
       }
     }
     avancarEtapaDados('Integração entre sistemas verificada');
@@ -11165,6 +11238,7 @@
     removerChatIAOverlay();
     var telaAtual;
     if (!state.pronto) telaAtual = telaCarregandoMobile();
+    else if (state.falhaAcesso) telaAtual = telaAvisoMobile('Não foi possível concluir o acesso', state.falhaAcesso);
     else if (!state.autenticado) telaAtual = state.modoCriarPerfil ? telaLoginWrapper(telaCriarPerfilInicial(), 'Criar perfil financeiro', 'Informe os dados do seu primeiro perfil.') : telaLogin();
     else if (ehFuncionarioPontoMobile()) telaAtual = telaRedirecionandoPonto();
     else if (state.seletorSistemaAberto && state.seletorSistemaInicialBloqueante) telaAtual = seletorSistemaInicialHtml();
@@ -13075,6 +13149,9 @@
     });
   }
   async function iniciar() {
+    state.falhaAcesso = '';
+    state.preparacaoAcessoInterrompida = false;
+    iniciarProtecaoAcessoMobile();
     window._avaProfilePillHidden = false;
     if (typeof window.__avantalabReiniciarProgressoMobile === 'function') {
       window.__avantalabReiniciarProgressoMobile('Validando sua sessão');
@@ -13132,7 +13209,7 @@
           return Promise.all(
             keys
               .filter(function (key) {
-                return key.indexOf('avantalab-mobile-') === 0 && key !== 'avantalab-mobile-v270';
+                return key.indexOf('avantalab-mobile-') === 0 && key !== 'avantalab-mobile-v271';
               })
               .map(function (key) {
                 return caches.delete(key);
@@ -13149,7 +13226,7 @@
     });
 
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/mobile-sw.js?v=253').then(function (registro) {
+      navigator.serviceWorker.register('/mobile-sw.js?v=254').then(function (registro) {
         if (registro && registro.update) registro.update();
       }).catch(function () {});
     }
@@ -13233,12 +13310,14 @@
         } else {
           var aguardandoEscolhaSistema = await prepararSistemaInicialAntesDosDadosMobile();
           if (!aguardandoEscolhaSistema) await carregarDados();
+          if (state.preparacaoAcessoInterrompida) return;
         }
       } else {
         window.location.replace('/?entrar=1');
         return;
       }
       state.pronto = true;
+      limparProtecaoAcessoMobile();
       render();
     } catch (error) {
       if (
@@ -13248,9 +13327,7 @@
       ) {
         return;
       }
-      state.pronto = true;
-      state.erro = 'Nao foi possivel recuperar a sessao. Entre novamente.';
-      render();
+      exibirFalhaDeAcessoMobile('Não foi possível recuperar a sessão. Tente novamente para reconectar.');
     }
   }
 
