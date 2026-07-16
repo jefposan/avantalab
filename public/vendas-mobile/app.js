@@ -3218,6 +3218,21 @@ function produtosDisponiveisPedido() {
     .sort((a, b) => String(a.nome || '').localeCompare(String(b.nome || ''), 'pt-BR', { sensitivity: 'base' }));
 }
 
+function produtosFiltradosPedido(termo = '') {
+  const palavras = normalizar(termo).trim().split(/\s+/).filter(Boolean);
+  const produtos = produtosDisponiveisPedido();
+  if (!palavras.length) return produtos;
+  return produtos.filter((produto) => {
+    const textoProduto = normalizar([
+      produto.nome,
+      produto.sku,
+      produto.marca,
+      produto.categoria,
+    ].filter(Boolean).join(' '));
+    return palavras.every((palavra) => textoProduto.includes(palavra));
+  });
+}
+
 function clientesDisponiveisPedido() {
   return state.clientes
     .filter((cliente) => cliente.ativo !== false)
@@ -3248,6 +3263,7 @@ function abrirNovoPedidoCliente(clienteId, permitirSelecao = false) {
     tipo: 'venda',
     data: isoData(new Date()),
     produtoId: '',
+    produtoBusca: '',
     quantidade: 1,
     preco: 0,
     bonificado: false,
@@ -3266,6 +3282,8 @@ function mostrarCardPedidoCliente() {
   const produtos = produtosDisponiveisPedido();
   const clientes = clientesDisponiveisPedido();
   const totais = totaisPedidoClienteRascunho();
+  const produtoSelecionado = produtos.find((produto) => produto.id === rascunho.produtoId);
+  const produtoBusca = produtoSelecionado?.nome || rascunho.produtoBusca || '';
   const itensHtml = rascunho.itens.length
     ? rascunho.itens.map((item, indice) => `<article class="${item.bonificado ? 'order-draft-bonus' : ''}"><div><b>${escapeHtml(item.produto_nome)}</b><small>${item.quantidade} × ${moeda(item.preco)} ${item.bonificado ? '<em>Bonificado</em>' : ''}</small></div><div class="order-draft-quantity"><button type="button" onclick="ajustarItemPedidoCliente(${indice},-1)">−</button><strong>${item.quantidade}</strong><button type="button" onclick="ajustarItemPedidoCliente(${indice},1)">+</button></div><strong>${item.bonificado ? moeda(0) : moeda(item.quantidade * item.preco)}</strong><button type="button" onclick="removerItemPedidoCliente(${indice})" aria-label="Excluir ${escapeAttr(item.produto_nome)}">×</button></article>`).join('')
     : '<p class="transaction-empty">Nenhum item inserido.</p>';
@@ -3278,7 +3296,7 @@ function mostrarCardPedidoCliente() {
         ${campoDataCentralizado('pedidoClienteData', rascunho.data, 'Data do pedido')}
       <article class="order-product-entry">
         <h3>Inserir produto</h3>
-        ${produtos.length ? `<label class="transaction-field"><span>Produto</span><select id="pedidoClienteProduto" onchange="selecionarProdutoPedidoCliente(this.value)"><option value="" ${rascunho.produtoId ? '' : 'selected'} disabled>Selecione o produto</option>${produtos.map((produto) => `<option value="${produto.id}" ${produto.id === rascunho.produtoId ? 'selected' : ''}>${escapeHtml(produto.nome)}</option>`).join('')}</select></label>
+        ${produtos.length ? `<div class="transaction-field order-product-search-field"><span>Produto</span><div class="order-product-combobox"><input id="pedidoClienteProdutoBusca" type="text" value="${escapeAttr(produtoBusca)}" placeholder="Digite o nome ou código do produto" autocomplete="off" autocapitalize="none" spellcheck="false" aria-label="Buscar produto" aria-autocomplete="list" aria-controls="pedidoClienteProdutoOpcoes" aria-expanded="false" onfocus="abrirBuscaProdutoPedidoCliente()" oninput="filtrarProdutosPedidoCliente(this.value)" onkeydown="if(event.key==='Escape'){fecharBuscaProdutoPedidoCliente();this.blur();}"><div id="pedidoClienteProdutoOpcoes" class="order-product-options" role="listbox" hidden></div></div></div>
         <div class="order-item-fields"><label class="transaction-field"><span>Quantidade</span><div class="quantity-stepper"><button type="button" onclick="ajustarQuantidadePedidoCliente(-1)">−</button><input id="pedidoClienteQuantidade" type="number" min="1" step="1" inputmode="numeric" value="${escapeAttr(rascunho.quantidade)}" onfocus="if(this.value==='1')this.value=''" oninput="sincronizarQuantidadePedidoCliente(this.value)" onblur="normalizarQuantidadePedidoCliente()"><button type="button" onclick="ajustarQuantidadePedidoCliente(1)">+</button></div></label><label class="transaction-field"><span>Preço</span><input id="pedidoClientePreco" type="text" inputmode="numeric" value="${numeroParaCampoMoeda(rascunho.preco)}" onfocus="this.select()" oninput="pedidoClienteRascunho.preco=formatarCampoMoeda(this)"></label></div>
         <label class="order-bonus-toggle"><input type="checkbox" ${rascunho.bonificado ? 'checked' : ''} onchange="pedidoClienteRascunho.bonificado=this.checked"><span></span><b>Bonificado</b><small>O item entra no pedido sem valor.</small></label>
         <button type="button" class="primary order-insert-item" onclick="inserirItemPedidoCliente()">Inserir item</button>` : '<p class="transaction-empty">Cadastre produtos antes de criar um pedido.</p>'}
@@ -3306,13 +3324,68 @@ function selecionarClientePedido(clienteId) {
   pedidoClienteRascunho.clienteId = clienteId;
 }
 
+function renderizarOpcoesProdutoPedidoCliente() {
+  const campo = document.getElementById('pedidoClienteProdutoBusca');
+  const lista = document.getElementById('pedidoClienteProdutoOpcoes');
+  if (!pedidoClienteRascunho || !campo || !lista) return;
+  const produtos = produtosFiltradosPedido(campo.value);
+  const limite = 30;
+  const produtosVisiveis = produtos.slice(0, limite);
+  lista.innerHTML = produtosVisiveis.length
+    ? `${produtosVisiveis.map((produto) => {
+      const detalhes = [produto.sku, produto.marca, produto.categoria].filter(Boolean).join(' · ');
+      return `<button type="button" role="option" data-produto-id="${escapeAttr(produto.id)}" class="${produto.id === pedidoClienteRascunho.produtoId ? 'selected' : ''}" onclick="selecionarProdutoPedidoCliente(this.dataset.produtoId)"><span><b>${escapeHtml(produto.nome)}</b>${detalhes ? `<small>${escapeHtml(detalhes)}</small>` : ''}</span><strong>${moeda(produto.preco || 0)}</strong></button>`;
+    }).join('')}${produtos.length > limite ? `<p class="order-product-options-status">Mostrando os primeiros ${limite} produtos. Continue digitando para refinar.</p>` : ''}`
+    : '<p class="order-product-options-empty">Nenhum produto encontrado.</p>';
+}
+
+function abrirBuscaProdutoPedidoCliente() {
+  const campo = document.getElementById('pedidoClienteProdutoBusca');
+  const lista = document.getElementById('pedidoClienteProdutoOpcoes');
+  if (!campo || !lista) return;
+  renderizarOpcoesProdutoPedidoCliente();
+  lista.hidden = false;
+  campo.setAttribute('aria-expanded', 'true');
+  campo.select();
+}
+
+function fecharBuscaProdutoPedidoCliente() {
+  const campo = document.getElementById('pedidoClienteProdutoBusca');
+  const lista = document.getElementById('pedidoClienteProdutoOpcoes');
+  if (lista) lista.hidden = true;
+  if (campo) campo.setAttribute('aria-expanded', 'false');
+}
+
+function filtrarProdutosPedidoCliente(termo) {
+  if (!pedidoClienteRascunho) return;
+  const produtoSelecionado = state.produtos.find((produto) => produto.id === pedidoClienteRascunho.produtoId);
+  pedidoClienteRascunho.produtoBusca = termo;
+  if (produtoSelecionado && normalizar(termo).trim() !== normalizar(produtoSelecionado.nome).trim()) {
+    pedidoClienteRascunho.produtoId = '';
+    pedidoClienteRascunho.preco = 0;
+    const campoPreco = document.getElementById('pedidoClientePreco');
+    if (campoPreco) campoPreco.value = numeroParaCampoMoeda(0);
+  }
+  renderizarOpcoesProdutoPedidoCliente();
+  const lista = document.getElementById('pedidoClienteProdutoOpcoes');
+  const campo = document.getElementById('pedidoClienteProdutoBusca');
+  if (lista) lista.hidden = false;
+  if (campo) campo.setAttribute('aria-expanded', 'true');
+}
+
 function selecionarProdutoPedidoCliente(produtoId) {
   if (!pedidoClienteRascunho) return;
   const produto = state.produtos.find((item) => item.id === produtoId);
-  pedidoClienteRascunho.produtoId = produtoId;
+  if (!produto) return;
+  pedidoClienteRascunho.produtoId = produto.id;
+  pedidoClienteRascunho.produtoBusca = produto.nome || '';
   pedidoClienteRascunho.preco = Number(produto?.preco || 0);
+  const campoProduto = document.getElementById('pedidoClienteProdutoBusca');
   const campoPreco = document.getElementById('pedidoClientePreco');
+  if (campoProduto) campoProduto.value = produto.nome || '';
   if (campoPreco) campoPreco.value = numeroParaCampoMoeda(pedidoClienteRascunho.preco);
+  fecharBuscaProdutoPedidoCliente();
+  campoProduto?.blur();
 }
 
 function sincronizarQuantidadePedidoCliente(valorQuantidade) {
@@ -3347,6 +3420,7 @@ function inserirItemPedidoCliente() {
   if (preco < 0) { toast('Informe um preço válido.'); return; }
   pedidoClienteRascunho.itens.push({ produto_id: produto.id, produto_nome: produto.nome, produto_sku: produto.sku || null, quantidade, preco, preco_custo: Number(produto.preco_custo ?? produto.metadados?.preco_custo ?? 0), bonificado: Boolean(pedidoClienteRascunho.bonificado) });
   pedidoClienteRascunho.produtoId = '';
+  pedidoClienteRascunho.produtoBusca = '';
   pedidoClienteRascunho.quantidade = 1;
   pedidoClienteRascunho.preco = 0;
   pedidoClienteRascunho.bonificado = false;
@@ -3483,6 +3557,7 @@ function abrirEditarPedido(pedidoId) {
     status: venda.status || 'concluida',
     data: String(venda.criado_em || '').slice(0, 10) || isoData(new Date()),
     produtoId: '',
+    produtoBusca: '',
     quantidade: 1,
     preco: 0,
     bonificado: false,
@@ -5496,7 +5571,7 @@ function aplicarAtualizacaoPwaPendente() {
 
 if (!window.__VENDAS_MOBILE_EMBEDDED__ && 'serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('./sw.js?v=19').catch(() => {});
+    navigator.serviceWorker.register('./sw.js?v=20').catch(() => {});
   });
 }
 
@@ -5571,6 +5646,9 @@ window.abrirNovoPagamentoGeral = abrirNovoPagamentoGeral;
 window.selecionarTipoPedidoCliente = selecionarTipoPedidoCliente;
 window.selecionarClientePedido = selecionarClientePedido;
 window.selecionarClientePagamento = selecionarClientePagamento;
+window.abrirBuscaProdutoPedidoCliente = abrirBuscaProdutoPedidoCliente;
+window.fecharBuscaProdutoPedidoCliente = fecharBuscaProdutoPedidoCliente;
+window.filtrarProdutosPedidoCliente = filtrarProdutosPedidoCliente;
 window.selecionarProdutoPedidoCliente = selecionarProdutoPedidoCliente;
 window.sincronizarQuantidadePedidoCliente = sincronizarQuantidadePedidoCliente;
 window.normalizarQuantidadePedidoCliente = normalizarQuantidadePedidoCliente;
@@ -5691,7 +5769,10 @@ window.addEventListener('resize', () => {
   sincronizarSalaAoMudarLargura();
 });
 window.addEventListener('orientationchange', reconstruirSalaAposRotacao);
-document.addEventListener('pointerdown', (event) => ativarFeedbackBotao(event.target instanceof Element ? event.target.closest('button') : null));
+document.addEventListener('pointerdown', (event) => {
+  if (event.target instanceof Element && !event.target.closest('.order-product-combobox')) fecharBuscaProdutoPedidoCliente();
+  ativarFeedbackBotao(event.target instanceof Element ? event.target.closest('button') : null);
+});
 document.addEventListener('pointerup', (event) => removerFeedbackBotao(event.target instanceof Element ? event.target.closest('button') : null));
 document.addEventListener('pointercancel', (event) => removerFeedbackBotao(event.target instanceof Element ? event.target.closest('button') : null));
 document.addEventListener('keydown', (event) => {

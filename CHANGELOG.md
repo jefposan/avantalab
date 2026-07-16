@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.5.4.14 - 2026-07-16
+
+- Vendas Mobile: ao inserir um item no pedido, o produto pode ser localizado digitando nome, código, marca ou categoria; as opções são filtradas imediatamente e a escolha mantém o preço sincronizado.
+
 ## 1.5.4.13 - 2026-07-16
 
 - Vendas Mobile: fechar os cards de novo pedido ou pagamento não força mais a restauração da página quando a rolagem já está correta, bloqueia ações padrão do botão e suspende temporariamente o encaixe automático dos clientes.

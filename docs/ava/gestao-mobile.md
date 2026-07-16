@@ -1,8 +1,8 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.5.4.13 -->
+<!-- ava-version: 1.5.4.14 -->
 
-> Revisão 1.5.4.13: cards e confirmações usam um fundo mais escuro para destacar o conteúdo em primeiro plano.
+> Revisão 1.5.4.14: sem impacto operacional na Gestão Mobile.
 
 ## Escopo
 

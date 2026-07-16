@@ -1,8 +1,8 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.5.4.13 -->
+<!-- ava-version: 1.5.4.14 -->
 
-> Revisão 1.5.4.13: o fechamento de pedidos e pagamentos mantém a tela de origem estável; fundos de cards ficam mais escuros.
+> Revisão 1.5.4.14: a inclusão de itens no pedido permite pesquisar produtos enquanto o nome ou código é digitado.
 
 ## Escopo e navegação
 
@@ -70,6 +70,8 @@ dúvida dentro do Vendas sempre que a função existir ali.
   anterior permanece intacto.
 - Novo pedido abre pelo cliente ou por **Pedidos > Novo pedido**. Há Venda e
   Consignado, itens bonificados, desconto por valor/percentual e comprovante.
+- Em **Inserir produto**, digite nome, código, marca ou categoria para filtrar
+  imediatamente as opções; toque no resultado para selecionar e preencher o preço.
 - Ao cancelar ou fechar um novo pedido ou pagamento, o Vendas mantém a página e
   a posição anteriores, sem reconstruir a tela nem acionar o encaixe dos clientes.
 - Consignado não é venda nem recebimento até sua conversão em pedido.
