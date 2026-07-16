@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.5.3.16 - 2026-07-16
+
+- Gestão Mobile: ao abrir a busca nas listas de despesas ou receitas, o campo recebe foco automaticamente e o teclado fica pronto para digitação.
+
 ## 1.5.3.15 - 2026-07-16
 
 - Usuários: corrige o login vazio ao editar uma conta vinculada a vários perfis. A lista passa a exibir o login único da conta em qualquer perfil, e a alteração é salva de forma atômica.

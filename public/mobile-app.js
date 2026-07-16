@@ -11839,13 +11839,35 @@
       if (premiumPessoalBloqueadoMobile()) { abrirPremiumMobile('busca_lancamentos'); return; }
       state.ultimasDespesasBuscaAberta = !state.ultimasDespesasBuscaAberta;
       if (!state.ultimasDespesasBuscaAberta) state.ultimasDespesasBusca = '';
+      var deveFocarBusca = state.ultimasDespesasBuscaAberta;
       render();
+      if (deveFocarBusca) {
+        var campoBuscaDespesas = document.getElementById('busca-ultimas-despesas');
+        if (campoBuscaDespesas) {
+          campoBuscaDespesas.focus();
+          var fimBuscaDespesas = campoBuscaDespesas.value.length;
+          if (typeof campoBuscaDespesas.setSelectionRange === 'function') {
+            campoBuscaDespesas.setSelectionRange(fimBuscaDespesas, fimBuscaDespesas);
+          }
+        }
+      }
     });
     bind('buscar-ultimas-receitas', function () {
       if (premiumPessoalBloqueadoMobile()) { abrirPremiumMobile('busca_lancamentos'); return; }
       state.ultimasReceitasBuscaAberta = !state.ultimasReceitasBuscaAberta;
       if (!state.ultimasReceitasBuscaAberta) state.ultimasReceitasBusca = '';
+      var deveFocarBusca = state.ultimasReceitasBuscaAberta;
       render();
+      if (deveFocarBusca) {
+        var campoBuscaReceitas = document.getElementById('busca-ultimas-receitas');
+        if (campoBuscaReceitas) {
+          campoBuscaReceitas.focus();
+          var fimBuscaReceitas = campoBuscaReceitas.value.length;
+          if (typeof campoBuscaReceitas.setSelectionRange === 'function') {
+            campoBuscaReceitas.setSelectionRange(fimBuscaReceitas, fimBuscaReceitas);
+          }
+        }
+      }
     });
     bind('reset-dashboard', function () {
       state.dashboardOrdem = ordemDashboardPadrao();
@@ -12985,7 +13007,7 @@
     });
 
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/mobile-sw.js?v=247').then(function (registro) {
+      navigator.serviceWorker.register('/mobile-sw.js?v=248').then(function (registro) {
         if (registro && registro.update) registro.update();
       }).catch(function () {});
     }

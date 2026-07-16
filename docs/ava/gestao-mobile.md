@@ -1,8 +1,8 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.5.3.15 -->
+<!-- ava-version: 1.5.3.16 -->
 
-> Revisão 1.5.3.15: o login único da conta aparece e permanece salvo em qualquer perfil vinculado ao usuário.
+> Revisão 1.5.3.16: a busca de despesas e receitas recebe foco automaticamente ao tocar na lupa.
 
 ## Escopo
 
@@ -48,6 +48,8 @@ deve usar os nomes do menu e da barra inferior do celular.
 ## Lançamentos e agenda
 
 - Para cadastrar ou revisar despesas e categorias: **Menu > Cadastrar despesas**.
+- Nos cards **Despesas do mês** e **Receitas do mês**, tocar na lupa abre a busca
+  já focada e pronta para digitação.
 - O app registra receitas, despesas, despesas futuras, parcelamentos e despesas
   fixas. Previsto só se torna lançamento confirmado após a ação do usuário.
 - Recorrências inteiras são alteradas em **Despesas fixas**; uma edição direta da

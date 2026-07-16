@@ -54,6 +54,7 @@ NAVEGAÇÃO E PERFIS
 
 LANÇAMENTOS E RESULTADOS
 - O app registra receitas, despesas, despesas futuras, parcelamentos e despesas fixas. Despesas futuras aparecem como Previsto até confirmação.
+- Nos cards Despesas do mês e Receitas do mês, tocar na lupa abre o campo de busca já focado e pronto para digitação.
 - Para cadastrar ou revisar despesas e categorias: Menu > Cadastrar despesas. Despesas fixas devem ser gerenciadas na área própria para afetar a recorrência completa.
 - Agenda mostra lembretes e compromissos financeiros. Puxar para atualizar exige um gesto longo e conexão ativa.
 - A Caixinha, os relatórios e os gráficos usam o perfil e período selecionados; o resultado do Vendas aparece como uma receita consolidada por mês atualizada no acesso. Não estime resultados sem dados no contexto.
