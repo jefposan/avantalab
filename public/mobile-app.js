@@ -330,6 +330,7 @@
     avisoAssinanteAberto: false,
     avisoAssinanteTitulo: '',
     avisoAssinanteMensagem: '',
+    duplicadoConfirmacaoAberta: false,
     agendaTipoItem: 'lembrete',
     agendaTitulo: '',
     agendaDescricao: '',
@@ -1340,6 +1341,31 @@
             '<div class="rounded-2xl border border-sky-200 bg-sky-50 px-4 py-3 text-sm font-semibold leading-relaxed text-sky-950">' + escapeHtml(state.avisoAssinanteMensagem) + '</div>' +
             '<button id="fechar-aviso-assinante" type="button" class="mt-4 h-11 w-full rounded-xl bg-[#003E73] text-xs font-black uppercase tracking-wide text-white">Entendi</button>' +
           '</div>' +
+        '</section>' +
+      '</div>'
+    );
+  }
+
+  function avisoDuplicadoMobileHtml() {
+    if (!state.duplicadoConfirmacaoAberta) return '';
+    var card = state.darkMode ? 'bg-slate-900 text-slate-100' : 'bg-white text-slate-900';
+    var detalhe = state.darkMode
+      ? 'border-amber-400/35 bg-amber-400/10 text-amber-50'
+      : 'border-amber-200 bg-amber-50 text-amber-950';
+    return (
+      '<div id="aviso-duplicado-overlay" class="fixed inset-0 z-[110] flex items-center justify-center bg-slate-950/90 px-4" role="dialog" aria-modal="true" aria-labelledby="aviso-duplicado-titulo">' +
+        '<section class="w-full max-w-sm overflow-hidden rounded-3xl shadow-2xl ' + card + '">' +
+          '<header class="flex items-center gap-3 bg-[#003E73] px-4 py-3 text-white">' +
+            '<span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-white/20 bg-white/10 text-lg font-black">!</span>' +
+            '<div><p class="text-[10px] font-black uppercase tracking-[0.16em] text-cyan-100">Conferência de lançamento</p><h2 id="aviso-duplicado-titulo" class="text-base font-black">Valor já existente</h2></div>' +
+          '</header>' +
+          '<div class="p-4">' +
+            '<div class="rounded-2xl border px-4 py-3 text-sm font-semibold leading-relaxed ' + detalhe + '">Já existe uma despesa com o mesmo nome e valor neste mês. Deseja adicioná-la mesmo assim?</div>' +
+          '</div>' +
+          '<footer class="grid grid-cols-2 gap-2 border-t border-slate-200 p-3 ' + (state.darkMode ? 'border-slate-700' : '') + '">' +
+            '<button id="cancelar-aviso-duplicado" type="button" class="h-11 rounded-xl border border-slate-300 bg-white text-xs font-black uppercase tracking-wide text-slate-700 active:bg-slate-50">Revisar</button>' +
+            '<button id="confirmar-aviso-duplicado" type="button" class="h-11 rounded-xl bg-[#003E73] text-xs font-black uppercase tracking-wide text-white active:bg-[#002e56]">Adicionar</button>' +
+          '</footer>' +
         '</section>' +
       '</div>'
     );
@@ -6118,7 +6144,7 @@
     setTimeout(function() { var msgsEl3 = document.getElementById('chat-ia-msgs'); if (msgsEl3) msgsEl3.scrollTop = msgsEl3.scrollHeight; }, 50);
   }
 
-  async function salvarDespesa() {
+  async function salvarDespesa(ignorarAvisoDuplicado) {
     if (!state.empresa || state.lancandoDespesa) return;
 
     var dia = Number(campo('despesa-dia'));
@@ -6156,9 +6182,10 @@
         return item.mes === state.mes && item.despesa === nome && Number(item.valor) === Number(valor);
       });
 
-      if (existeIgual) {
-        var confirmar = window.confirm('Ja existe uma despesa com o mesmo nome e valor neste mes.\n\nDeseja adicionar mesmo assim?');
-        if (!confirmar) return;
+      if (existeIgual && !ignorarAvisoDuplicado) {
+        state.duplicadoConfirmacaoAberta = true;
+        render();
+        return;
       }
     }
 
@@ -11283,7 +11310,7 @@
     else if (state.modoCriarPerfil) telaAtual = telaLoginWrapper(telaCriarPerfilInicial(), 'Criar perfil financeiro', 'Informe os dados do seu primeiro perfil.');
     else if (!state.paywallVerificado) telaAtual = telaCarregandoMobile();
     else telaAtual = telaApp();
-    root.innerHTML = telaAtual + (state.chatIAAberto ? chatIAModalHtml() : '') + (state.mostrarPromptNotificacoes ? promptNotificacoesHtml() : '') + (state.tourAberto ? tourHtml() : '') + avisoAssinanteMobileHtml() + ativacaoVendasMobileHtml() + (state.seletorSistemaInicialBloqueante ? '' : seletorSistemaInicialHtml());
+    root.innerHTML = telaAtual + (state.chatIAAberto ? chatIAModalHtml() : '') + (state.mostrarPromptNotificacoes ? promptNotificacoesHtml() : '') + (state.tourAberto ? tourHtml() : '') + avisoAssinanteMobileHtml() + avisoDuplicadoMobileHtml() + ativacaoVendasMobileHtml() + (state.seletorSistemaInicialBloqueante ? '' : seletorSistemaInicialHtml());
     sincronizarProgressoAcessoMobile();
     sincronizarGradienteHeaderPerfil();
     configurarRecolhimentoPerfilHeader();
@@ -11837,6 +11864,14 @@
     bind('fechar-aviso-assinante', function () {
       state.avisoAssinanteAberto = false;
       render();
+    });
+    bind('cancelar-aviso-duplicado', function () {
+      state.duplicadoConfirmacaoAberta = false;
+      render();
+    });
+    bind('confirmar-aviso-duplicado', function () {
+      state.duplicadoConfirmacaoAberta = false;
+      salvarDespesa(true);
     });
     bind('chat-ia-fechar', fecharChatIA);
     bind('chat-ia-home', fecharChatIAParaHome);
@@ -13257,7 +13292,7 @@
     });
 
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/mobile-sw.js?v=260', { updateViaCache: 'none' }).then(function (registro) {
+      navigator.serviceWorker.register('/mobile-sw.js?v=261', { updateViaCache: 'none' }).then(function (registro) {
         if (registro && registro.update) registro.update();
       }).catch(function () {});
     }

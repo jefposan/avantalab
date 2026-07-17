@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.5.4.49 - 2026-07-17
+
+- Gestão Mobile: o aviso de despesa com valor já existente agora usa o card de confirmação padrão do sistema, em vez do alerta simples do navegador.
+
 ## 1.5.4.48 - 2026-07-17
 
 - Gestão Mobile: a faixa de mês e total ao detalhar lançamentos agora mantém contraste alto no modo escuro, evitando texto apagado em despesas e receitas.

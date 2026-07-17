@@ -1,8 +1,8 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.5.4.48 -->
+<!-- ava-version: 1.5.4.49 -->
 
-> Revisão 1.5.4.48: sem impacto operacional; contraste reforçado nos totais de detalhes de lançamentos no modo escuro.
+> Revisão 1.5.4.49: sem impacto operacional; o aviso de possível despesa duplicada passou a usar o card visual padrão.
 
 ## Escopo
 
