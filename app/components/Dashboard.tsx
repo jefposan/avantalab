@@ -23,6 +23,7 @@ import { buscarFaturamentos, buscarLancamentos } from '../lib/database';
 import { restringirArrasteAJanela } from '../lib/dnd';
 import { corEhClara } from '../lib/formatters';
 import AvantaCard, { criarAvantaShellPreset } from './AvantaCard';
+import DraggableModalCard from './DraggableModalCard';
 import Tooltip from './Tooltip';
 
 const HandleContext = createContext<Record<string, any> | null>(null);
@@ -221,7 +222,6 @@ export default function Dashboard({
   const [redimensionandoPerfis, setRedimensionandoPerfis] = useState(false);
   const [menuCardAberto, setMenuCardAberto] = useState<string | null>(null);
   const [gerenciadorAberto, setGerenciadorAberto] = useState(false);
-  const [gerenciadorPosicao, setGerenciadorPosicao] = useState<{ x: number; y: number } | null>(null);
   const [evolucaoAno, setEvolucaoAno] = useState(anoSelecionado);
   const [evolucaoLancamentos, setEvolucaoLancamentos] = useState<any[]>(lancamentos);
   const [evolucaoFaturamentos, setEvolucaoFaturamentos] = useState<Record<string, number>>(faturamentos);
@@ -263,8 +263,7 @@ export default function Dashboard({
   const listaPerfisRef = useRef<HTMLDivElement | null>(null);
   const cardPerfisRef = useRef<HTMLDivElement | null>(null);
   const graficosPerfisRef = useRef<HTMLDivElement | null>(null);
-  const painelGerenciadorRef = useRef<HTMLDivElement | null>(null);
-  const arrasteGerenciadorRef = useRef({ ativo: false, pointerId: 0, inicioX: 0, inicioY: 0, x: 0, y: 0 });
+  const alturaAnteriorGraficosRef = useRef<number | null>(null);
   const listaPerfisArrastandoRef = useRef(false);
   const listaPerfisArrastouRef = useRef(false);
   const listaPerfisInicioYRef = useRef(0);
@@ -366,8 +365,14 @@ export default function Dashboard({
     setPerfilDetalhado(perfil);
   }, []);
   const alternarGraficosPerfis = useCallback(() => {
-    setGraficosPerfisVisiveis((visiveis) => !visiveis);
-  }, []);
+    if (graficosPerfisVisiveis) {
+      setGraficosPerfisVisiveis(false);
+      setAlturaCardPerfis(alturaAnteriorGraficosRef.current);
+      return;
+    }
+    alturaAnteriorGraficosRef.current = alturaCardPerfis;
+    setGraficosPerfisVisiveis(true);
+  }, [graficosPerfisVisiveis, alturaCardPerfis]);
   useEffect(() => {
     if (!graficosPerfisVisiveis) return;
     const quadro = window.requestAnimationFrame(() => {
@@ -383,48 +388,9 @@ export default function Dashboard({
     });
     return () => window.cancelAnimationFrame(quadro);
   }, [graficosPerfisVisiveis]);
-  const abrirGerenciador = useCallback(() => {
-    if (gerenciadorAberto) {
-      setGerenciadorAberto(false);
-      setGerenciadorPosicao(null);
-      return;
-    }
-    setGerenciadorPosicao({ x: Math.max(8, window.innerWidth - Math.min(760, window.innerWidth - 16)), y: 96 });
-    setGerenciadorAberto(true);
-  }, [gerenciadorAberto]);
+  const abrirGerenciador = useCallback(() => setGerenciadorAberto((aberto) => !aberto), []);
   const fecharGerenciador = useCallback(() => {
     setGerenciadorAberto(false);
-    setGerenciadorPosicao(null);
-  }, []);
-  const iniciarArrasteGerenciador = useCallback((event: React.PointerEvent<HTMLButtonElement>) => {
-    if (event.button !== 0 || !gerenciadorPosicao) return;
-    arrasteGerenciadorRef.current = {
-      ativo: true,
-      pointerId: event.pointerId,
-      inicioX: event.clientX,
-      inicioY: event.clientY,
-      x: gerenciadorPosicao.x,
-      y: gerenciadorPosicao.y,
-    };
-    event.currentTarget.setPointerCapture(event.pointerId);
-    event.preventDefault();
-  }, [gerenciadorPosicao]);
-  const moverArrasteGerenciador = useCallback((event: React.PointerEvent<HTMLButtonElement>) => {
-    const arraste = arrasteGerenciadorRef.current;
-    if (!arraste.ativo || arraste.pointerId !== event.pointerId) return;
-    const painel = painelGerenciadorRef.current;
-    const largura = painel?.offsetWidth || 320;
-    const altura = painel?.offsetHeight || 240;
-    setGerenciadorPosicao({
-      x: Math.min(Math.max(8, arraste.x + event.clientX - arraste.inicioX), Math.max(8, window.innerWidth - largura - 8)),
-      y: Math.min(Math.max(8, arraste.y + event.clientY - arraste.inicioY), Math.max(8, window.innerHeight - altura - 8)),
-    });
-  }, []);
-  const encerrarArrasteGerenciador = useCallback((event: React.PointerEvent<HTMLButtonElement>) => {
-    const arraste = arrasteGerenciadorRef.current;
-    if (!arraste.ativo || arraste.pointerId !== event.pointerId) return;
-    arrasteGerenciadorRef.current.ativo = false;
-    if (event.currentTarget.hasPointerCapture(event.pointerId)) event.currentTarget.releasePointerCapture(event.pointerId);
   }, []);
   useEffect(() => {
     const soltarMouse = () => pararAutoScrollPerfis();
@@ -2054,49 +2020,29 @@ const mostrarComparativoResumoDash =
         </button>
 
         {gerenciadorAberto && (
-          <>
-          <button
-            type="button"
-            className="fixed inset-0 z-30 cursor-default bg-black/60 backdrop-blur-sm"
-            onClick={fecharGerenciador}
-            aria-label="Fechar organização de blocos"
-          />
-          <div
-            ref={painelGerenciadorRef}
-            className={`card-radius-avantalab-lg fixed z-40 box-border w-[min(48rem,calc(100vw-1.5rem))] max-w-full overflow-hidden rounded-2xl border p-3 shadow-2xl ${
-            darkMode ? 'border-slate-700 bg-slate-900 text-slate-100' : 'border-slate-200 bg-white text-slate-900'
-            }`}
-            style={gerenciadorPosicao ? { left: gerenciadorPosicao.x, top: gerenciadorPosicao.y } : undefined}
-          >
-            <div className="mb-2 flex min-w-0 items-center justify-between gap-3">
-              <button
-                type="button"
-                onPointerDown={iniciarArrasteGerenciador}
-                onPointerMove={moverArrasteGerenciador}
-                onPointerUp={encerrarArrasteGerenciador}
-                onPointerCancel={encerrarArrasteGerenciador}
-                className={`flex h-8 w-6 shrink-0 touch-none cursor-grab items-center justify-center rounded active:cursor-grabbing ${darkMode ? 'text-slate-400 hover:bg-slate-800' : 'text-slate-400 hover:bg-slate-100'}`}
-                aria-label="Arrastar painel Organizar blocos"
-                title="Arraste para mover"
-              >
-                <svg width="14" height="18" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><circle cx="7" cy="4" r="1.5" /><circle cx="13" cy="4" r="1.5" /><circle cx="7" cy="10" r="1.5" /><circle cx="13" cy="10" r="1.5" /><circle cx="7" cy="16" r="1.5" /><circle cx="13" cy="16" r="1.5" /></svg>
-              </button>
-              <div className="min-w-0 flex-1">
-                <h3 className="text-[13px] font-black leading-tight">Organizar blocos</h3>
-                <p className={`mt-0.5 text-[10px] font-semibold leading-tight ${textMuted}`}>Arraste pela mãozinha para mover este painel; use a de cada card para reordená-lo.</p>
-              </div>
+          <div className="fixed inset-0 z-30 flex items-center justify-center px-4 py-6" onClick={fecharGerenciador}>
+            <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
+            <DraggableModalCard
+              className={`relative z-10 box-border flex max-h-[calc(100dvh-3rem)] w-[min(48rem,calc(100vw-1.5rem))] max-w-full flex-col overflow-hidden rounded-2xl border shadow-2xl ${
+                darkMode ? 'border-slate-700 bg-slate-900 text-slate-100' : 'border-slate-200 bg-white text-slate-900'
+              }`}
+              onClick={(event) => event.stopPropagation()}
+            >
+              <div data-modal-drag-handle className="flex shrink-0 cursor-grab items-center justify-between gap-3 px-4 py-3 active:cursor-grabbing" style={{ backgroundColor: corPrimaria, color: textoSobreCorPrimaria }}>
+                <div className="min-w-0">
+                  <h3 className="text-[13px] font-black leading-tight">Organizar blocos</h3>
+                  <p className="mt-0.5 text-[10px] font-semibold leading-tight opacity-85">Arraste este cabeçalho para mover o painel.</p>
+                </div>
               <button
                 type="button"
                 onClick={fecharGerenciador}
-                className={`flex h-7 w-7 items-center justify-center rounded-lg text-base font-black ${
-                  darkMode ? 'hover:bg-slate-800' : 'hover:bg-slate-100'
-                }`}
+                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white/15 text-lg font-black transition hover:bg-white/25"
                 aria-label="Fechar"
               >
                 ×
               </button>
-            </div>
-            <div className="flex min-w-0 flex-wrap gap-1.5">
+              </div>
+            <div className="flex min-w-0 flex-wrap gap-1.5 overflow-y-auto p-3">
               {catalogoCardsKanban.map((card) => {
                 const visivel = !ocultosSet.has(card.id);
                 const indisponivelAgora = card.id === 'aConfirmar' && !temAConfirmar;
@@ -2129,8 +2075,8 @@ const mostrarComparativoResumoDash =
                 );
               })}
             </div>
+            </DraggableModalCard>
           </div>
-          </>
         )}
 
         <div className="flex flex-col gap-6">

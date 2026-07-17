@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.5.4.45 - 2026-07-17
+
+- Gestão Web: o card **Organizar blocos** abre centralizado, recebeu cabeçalho na cor do perfil e pode ser arrastado pelo próprio cabeçalho, como a Agenda.
+- Gestão Web: ao ocultar os gráficos de **Meus perfis**, o card retorna à altura que tinha antes da expansão.
+
 ## 1.5.4.44 - 2026-07-17
 
 - Gestão Web: a exclusão de despesa remove a linha imediatamente da lista, inclusive quando o identificador chega em formato numérico.

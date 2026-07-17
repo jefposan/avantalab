@@ -1,8 +1,8 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.5.4.44 -->
+<!-- ava-version: 1.5.4.45 -->
 
-> Revisão 1.5.4.44: exclusões de despesas somem imediatamente da lista; sem mudança de orientação operacional.
+> Revisão 1.5.4.45: sem impacto operacional; o painel Organizar blocos pode ser reposicionado pela barra de título.
 
 ## Escopo
 

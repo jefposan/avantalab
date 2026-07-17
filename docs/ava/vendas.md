@@ -1,8 +1,8 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.5.4.44 -->
+<!-- ava-version: 1.5.4.45 -->
 
-> Revisão 1.5.4.44: os atalhos Divulgação e Informações voltaram a exibir suas imagens na sala de botões.
+> Revisão 1.5.4.45: sem impacto operacional no Vendas Mobile.
 
 ## Escopo e navegação
 
