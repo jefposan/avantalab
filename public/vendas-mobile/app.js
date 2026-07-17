@@ -1949,6 +1949,13 @@ async function reconciliarFinanceiroCliente(clienteId) {
   revisaoDadosOperacionais += 1;
 }
 
+// O cache acelera a abertura, mas nunca é a fonte para gravar saldo financeiro.
+// Antes de confirmar pedido ou recebimento, recarregamos apenas aquela cliente.
+async function saldoFinanceiroConfirmadoCliente(clienteId, pedidoIgnoradoId = '') {
+  if (backendAtivo) await reconciliarFinanceiroCliente(clienteId);
+  return saldoFinanceiroCliente(clienteId, pedidoIgnoradoId);
+}
+
 async function reenviarPendenciasVendas() {
   if (reenviandoPendenciasVendas || !backendAtivo || !navigator.onLine || !state.autenticado || !state.acessoVendas) return;
   reenviandoPendenciasVendas = true;
@@ -3132,8 +3139,8 @@ function pagamentosDoCliente(clienteId) {
     .sort((a, b) => String(b.data_pagamento || b.criado_em || '').localeCompare(String(a.data_pagamento || a.criado_em || '')));
 }
 
-function saldoFinanceiroCliente(clienteId) {
-  const pedidos = pedidosDoCliente(clienteId).filter((venda) => venda.status !== 'cancelada');
+function saldoFinanceiroCliente(clienteId, pedidoIgnoradoId = '') {
+  const pedidos = pedidosDoCliente(clienteId).filter((venda) => venda.status !== 'cancelada' && venda.id !== pedidoIgnoradoId);
   const totalDebitos = pedidos.filter(pedidoGeraDebito).reduce((soma, venda) => soma + Number(venda.total || 0), 0);
   const consignado = pedidos.filter(pedidoEhConsignado).reduce((soma, venda) => soma + Number(venda.total || 0), 0);
   const abatimentos = pagamentosDoCliente(clienteId).reduce((soma, pagamento) => soma + Number(pagamento.valor || 0) + Number(pagamento.desconto || 0), 0);
@@ -3599,7 +3606,13 @@ async function finalizarPedidoCliente() {
   const totais = totaisPedidoClienteRascunho();
   const dataPedido = valor('pedidoClienteData') || rascunho.data;
   if (!/^\d{4}-\d{2}-\d{2}$/.test(dataPedido)) { toast('Informe uma data válida.'); return; }
-  const financeiroAnterior = saldoFinanceiroCliente(rascunho.clienteId);
+  let financeiroAnterior;
+  try {
+    financeiroAnterior = await saldoFinanceiroConfirmadoCliente(rascunho.clienteId, rascunho.editandoId || '');
+  } catch (error) {
+    toast('Não foi possível confirmar o saldo atual da cliente no servidor. Verifique a conexão e tente novamente.');
+    return;
+  }
   const saldoLiquidoAnterior = financeiroAnterior.debito - financeiroAnterior.credito;
   const saldoAtual = rascunho.tipo === 'consignado'
     ? financeiroAnterior.debito
@@ -3646,6 +3659,13 @@ async function finalizarPedidoCliente() {
     state.vendas = rascunho.editandoId
       ? state.vendas.map((item) => item.id === salvo.id ? salvo : item)
       : [salvo, ...state.vendas];
+    if (backendAtivo) {
+      await reconciliarFinanceiroCliente(salvo.cliente_id);
+      const confirmado = (state.vendas || []).find((item) => item.id === salvo.id);
+      if (!confirmado || Number(confirmado.total || 0) !== Number(venda.total || 0)) {
+        throw new Error('O pedido foi enviado, mas a conferência financeira não foi concluída.');
+      }
+    }
     pedidoClienteRascunho = null;
     if (!rascunho.editandoId) {
       limparPesquisaClientesAoEntrar();
@@ -3777,10 +3797,18 @@ async function confirmarPagamentoCliente() {
   const rascunho = pagamentoClienteRascunho;
   if (!rascunho || pagamentoClienteSalvando) return;
   if (!state.clientes.some((cliente) => cliente.id === rascunho.clienteId)) { toast('Selecione o cliente do pagamento.'); return; }
-  const resumo = resumoPagamentoCliente();
+  let resumo = resumoPagamentoCliente();
   const dataPagamento = valor('pagamentoClienteData');
   if (resumo.abatimento <= 0) { toast('Informe o valor pago ou o desconto.'); return; }
   if (!/^\d{4}-\d{2}-\d{2}$/.test(dataPagamento)) { toast('Informe uma data válida.'); return; }
+  try {
+    const saldoConfirmado = await saldoFinanceiroConfirmadoCliente(rascunho.clienteId);
+    rascunho.saldoAnterior = saldoConfirmado.debito;
+    resumo = resumoPagamentoCliente();
+  } catch (error) {
+    toast('Não foi possível confirmar o saldo atual da cliente no servidor. Verifique a conexão e tente novamente.');
+    return;
+  }
   const pagamento = {
     id: rascunho.idPersistencia || uuidPersistenciaVendas(),
     cliente_id: rascunho.clienteId,
@@ -5797,7 +5825,7 @@ function aplicarAtualizacaoPwaPendente() {
 
 if (!window.__VENDAS_MOBILE_EMBEDDED__ && 'serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('./sw.js?v=26').catch(() => {});
+    navigator.serviceWorker.register('./sw.js?v=27').catch(() => {});
   });
 }
 

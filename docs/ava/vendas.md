@@ -1,8 +1,8 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.5.4.40 -->
+<!-- ava-version: 1.5.4.41 -->
 
-> Revisão 1.5.4.40: sem impacto operacional no Vendas Mobile.
+> Revisão 1.5.4.41: antes de confirmar pedido ou pagamento, o Vendas atualiza no servidor os registros financeiros daquela cliente; sem essa confirmação, o lançamento não é concluído.
 
 ## Escopo e navegação
 

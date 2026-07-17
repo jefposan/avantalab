@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.5.4.41 - 2026-07-16
+
+- Vendas Mobile: pedidos e pagamentos passam a confirmar os débitos e recebimentos da cliente diretamente no servidor antes de gravar o saldo. O cache continua acelerando a abertura, mas não pode mais compor comprovantes ou saldos financeiros.
+- Corrigido o comprovante do pedido da cliente Valda no perfil Jefferson: os pagamentos legados de R$ 1.653,00 já quitavam integralmente o pedido anterior; o novo pedido de R$ 2.129,00 passa a registrar saldo anterior de R$ 0,00 e saldo atual de R$ 2.129,00.
+
 ## 1.5.4.40 - 2026-07-16
 
 - Gestão Mobile: no PWA instalado, o gradiente do cabeçalho agora se estende até o topo físico da tela, atrás da área da ilha, hora e bateria. Os controles do cabeçalho permanecem na mesma posição segura.

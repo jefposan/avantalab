@@ -1,8 +1,8 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.5.4.40 -->
+<!-- ava-version: 1.5.4.41 -->
 
-> Revisão 1.5.4.40: o fundo do cabeçalho ocupa a área superior física da Gestão Mobile no PWA, sem alterar os controles ou a navegação.
+> Revisão 1.5.4.41: sem impacto operacional na Gestão Mobile.
 
 ## Escopo
 
