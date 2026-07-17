@@ -2,6 +2,7 @@
   var root = document.getElementById('mobile-root');
   var config = window.AVANTALAB_MOBILE_CONFIG || {};
   var supabaseGlobal = window.supabase;
+  var previaConfirmacaoCelular = new URLSearchParams(window.location.search).get('preview') === 'confirmar-celular';
 
   if (!root) return;
 
@@ -7856,7 +7857,7 @@
     );
   }
 
-  function telaTelefoneObrigatorioMobile() {
+  function telaTelefoneObrigatorioMobile(modoPrevia) {
     return (
       '<section class="avantalab-mobile-bg fixed inset-0 flex flex-col items-center justify-center overflow-hidden px-4 py-5" style="height:100dvh;--avantalab-mobile-bg-overlay:linear-gradient(rgba(255,255,255,.08),rgba(255,255,255,0));">' +
         '<div class="mx-auto w-full max-w-md overflow-y-auto rounded-3xl border border-white/35 p-3 text-slate-900 shadow-2xl backdrop-blur-xl" style="background-color:rgba(255,255,255,.18);max-height:calc(100dvh - 2.5rem);overscroll-behavior:contain;">' +
@@ -7874,7 +7875,7 @@
                 '<p class="-mt-1 text-[11px] font-semibold text-slate-500">Enviamos o codigo para o celular informado.</p>'
               : '') +
             alertaHtml() +
-            '<button id="confirmar-telefone-obrigatorio" type="button" class="h-10 rounded-xl bg-slate-900 px-4 text-xs font-black uppercase tracking-wide text-white shadow-lg">' +
+            '<button id="confirmar-telefone-obrigatorio" type="button"' + (modoPrevia ? ' disabled aria-disabled="true"' : '') + ' class="h-10 rounded-xl bg-slate-900 px-4 text-xs font-black uppercase tracking-wide text-white shadow-lg disabled:cursor-not-allowed disabled:opacity-70">' +
               (state.validandoTelefoneObrigatorio
                 ? (state.smsTelefoneObrigatorioEnviado ? 'Validando...' : 'Enviando...')
                 : (state.smsTelefoneObrigatorioEnviado ? 'Confirmar celular' : 'Enviar codigo por SMS')) +
@@ -7882,7 +7883,9 @@
             (state.smsTelefoneObrigatorioEnviado
               ? '<button id="reenviar-telefone-obrigatorio" type="button" class="text-xs font-bold text-sky-700 underline">Reenviar codigo</button>'
               : '') +
-            '<button id="sair-telefone-obrigatorio" type="button" class="text-xs font-bold text-slate-600 underline">Sair</button>' +
+            (modoPrevia
+              ? '<a href="/mobile" class="text-center text-xs font-bold text-slate-600 underline">Fechar prévia</a>'
+              : '<button id="sair-telefone-obrigatorio" type="button" class="text-xs font-bold text-slate-600 underline">Sair</button>') +
           '</div>' +
         '</div>' +
       '</section>'
@@ -11298,12 +11301,13 @@
     if (!state.chatIAAberto) configurarCamadaFundoChatIA(false);
     removerChatIAOverlay();
     var telaAtual;
-    if (!state.pronto) telaAtual = telaCarregandoMobile();
+    if (previaConfirmacaoCelular) telaAtual = telaTelefoneObrigatorioMobile(true);
+    else if (!state.pronto) telaAtual = telaCarregandoMobile();
     else if (state.falhaAcesso) telaAtual = telaAvisoMobile('Não foi possível concluir o acesso', state.falhaAcesso);
     else if (!state.autenticado) telaAtual = state.modoCriarPerfil ? telaLoginWrapper(telaCriarPerfilInicial(), 'Criar perfil financeiro', 'Informe os dados do seu primeiro perfil.') : telaLogin();
     else if (ehFuncionarioPontoMobile()) telaAtual = telaRedirecionandoPonto();
     else if (state.seletorSistemaAberto && state.seletorSistemaInicialBloqueante) telaAtual = seletorSistemaInicialHtml();
-    else if (state.validacaoTelefoneObrigatoria) telaAtual = telaTelefoneObrigatorioMobile();
+    else if (state.validacaoTelefoneObrigatoria) telaAtual = telaTelefoneObrigatorioMobile(false);
     else if (state.paywallCadastroCiclo) telaAtual = telaCadastroPerfilMobile('paywall');
     else if (state.paywallAtivo) telaAtual = telaPaywallMobile();
     else if (state.cadastroPerfilErro) telaAtual = telaErroCadastroPerfilMobile();
