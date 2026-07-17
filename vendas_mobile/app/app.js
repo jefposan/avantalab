@@ -4398,7 +4398,7 @@ function textoCanvasLimitado(ctx, texto, larguraMaxima) {
   return `${reduzido}…`;
 }
 
-function criarCanvasComprovante({ empresa = '', titulo, cliente, data, etiqueta = '', linhas = [], resumo = [] }) {
+function criarCanvasComprovante({ empresa = '', titulo, tituloDetalhes = 'Detalhes', cliente, data, etiqueta = '', linhas = [], resumo = [] }) {
   const linhasExibidas = linhas.slice(0, 44);
   if (linhas.length > linhasExibidas.length) linhasExibidas.push({ principal: `+ ${linhas.length - linhasExibidas.length} itens adicionais`, secundario: '', valor: '' });
   const linhasRegulares = resumo.filter((linha) => !linha.destaque);
@@ -4407,7 +4407,7 @@ function criarCanvasComprovante({ empresa = '', titulo, cliente, data, etiqueta 
   const largura = 1080;
   const alturaResumoRegular = linhasRegulares.length ? 38 + linhasRegulares.length * 82 : 0;
   const alturaResumo = alturaResumoRegular + (linhaPrincipal ? 162 : 0) + (linhaSaldo ? 176 : 0);
-  const altura = Math.min(5400, Math.max(1640, 860 + alturaResumo + linhasExibidas.length * 90));
+  const altura = Math.min(5400, Math.max(1700, 960 + alturaResumo + linhasExibidas.length * 90));
   const canvas = document.createElement('canvas');
   canvas.width = largura; canvas.height = altura;
   const ctx = canvas.getContext('2d');
@@ -4417,17 +4417,16 @@ function criarCanvasComprovante({ empresa = '', titulo, cliente, data, etiqueta 
   gradiente.addColorStop(0, '#0A1F44'); gradiente.addColorStop(1, '#1687D9');
   ctx.fillStyle = gradiente; ctx.fillRect(0, 0, largura, 260);
   const nomeEmpresa = String(empresa || state.acessoVendas?.empresa_nome || 'AvantaLab').trim();
-  ctx.fillStyle = '#fff'; ctx.font = `900 ${nomeEmpresa.length > 28 ? 36 : nomeEmpresa.length > 20 ? 42 : 50}px Arial, sans-serif`; ctx.fillText(textoCanvasLimitado(ctx, nomeEmpresa.toUpperCase(), 900), 64, 82);
-  ctx.font = '800 35px Arial, sans-serif'; ctx.fillText(titulo, 64, 148);
-  ctx.font = '650 25px Arial, sans-serif'; ctx.fillStyle = 'rgba(255,255,255,.92)'; ctx.fillText(textoCanvasLimitado(ctx, `Cliente: ${cliente}`, 690), 64, 202);
-  ctx.textAlign = 'right'; ctx.fillText(data, 1016, 202); ctx.textAlign = 'left';
+  ctx.fillStyle = '#fff'; ctx.font = `900 ${nomeEmpresa.length > 28 ? 36 : nomeEmpresa.length > 20 ? 42 : 50}px Arial, sans-serif`; ctx.textAlign = 'center'; ctx.fillText(textoCanvasLimitado(ctx, nomeEmpresa.toUpperCase(), 900), largura / 2, 92); ctx.textAlign = 'left';
+  ctx.font = '700 30px Arial, sans-serif'; ctx.fillStyle = 'rgba(255,255,255,.94)'; ctx.fillText(textoCanvasLimitado(ctx, `Cliente: ${cliente}`, 690), 64, 190);
+  ctx.textAlign = 'right'; ctx.fillText(data, 1016, 190); ctx.textAlign = 'left';
   let y = 318;
   if (etiqueta) {
     ctx.font = '900 24px Arial, sans-serif';
     const larguraEtiqueta = ctx.measureText(etiqueta).width + 60;
     const xEtiqueta = (largura - larguraEtiqueta) / 2;
     caminhoRetanguloArredondado(ctx, xEtiqueta, y - 30, larguraEtiqueta, 54, 27);
-    ctx.fillStyle = '#dff4ff'; ctx.fill(); ctx.fillStyle = '#075985'; ctx.textAlign = 'center'; ctx.fillText(etiqueta, largura / 2, y + 5); ctx.textAlign = 'left'; y += 84;
+    ctx.fillStyle = '#dff4ff'; ctx.fill(); ctx.fillStyle = '#075985'; ctx.textAlign = 'center'; ctx.fillText(etiqueta, largura / 2, y + 5); ctx.textAlign = 'left'; y += 124;
   }
 
   if (linhasRegulares.length) {
@@ -4438,11 +4437,11 @@ function criarCanvasComprovante({ empresa = '', titulo, cliente, data, etiqueta 
     y += 53;
     linhasRegulares.forEach((linha, indice) => {
       if (indice) { ctx.strokeStyle = '#e1e9f0'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(78, y - 27); ctx.lineTo(1002, y - 27); ctx.stroke(); }
-      ctx.fillStyle = '#526477'; ctx.font = '750 27px Arial, sans-serif'; ctx.fillText(linha.rotulo, 88, y + 13);
-      ctx.fillStyle = '#0A1F44'; ctx.textAlign = 'right'; ctx.font = '850 31px Arial, sans-serif'; ctx.fillText(linha.valor, 992, y + 15); ctx.textAlign = 'left';
+      ctx.fillStyle = '#526477'; ctx.font = '750 30px Arial, sans-serif'; ctx.fillText(linha.rotulo, 88, y + 14);
+      ctx.fillStyle = '#0A1F44'; ctx.textAlign = 'right'; ctx.font = '850 36px Arial, sans-serif'; ctx.fillText(linha.valor, 992, y + 15); ctx.textAlign = 'left';
       y += 82;
     });
-    y += 38;
+    y += 52;
   }
   if (linhaPrincipal) {
     ctx.fillStyle = '#0A1F44'; ctx.font = '900 27px Arial, sans-serif'; ctx.fillText(linhaPrincipal.tituloDestaque || 'Lançamento registrado', 64, y);
@@ -4454,7 +4453,7 @@ function criarCanvasComprovante({ empresa = '', titulo, cliente, data, etiqueta 
     ctx.fillStyle = '#dff5ff'; ctx.font = '800 29px Arial, sans-serif'; ctx.fillText(linhaPrincipal.rotulo, 84, y + 52);
     if (linhaPrincipal.subtitulo) { ctx.fillStyle = '#bae6fd'; ctx.font = '650 21px Arial, sans-serif'; ctx.fillText(textoCanvasLimitado(ctx, linhaPrincipal.subtitulo, 470), 84, y + 95); }
     ctx.fillStyle = '#fff'; ctx.textAlign = 'right'; ctx.font = '900 48px Arial, sans-serif'; ctx.fillText(linhaPrincipal.valor, 996, y + 81); ctx.textAlign = 'left';
-    y += 176;
+    y += 202;
   }
   if (linhaSaldo) {
     ctx.fillStyle = '#0A1F44'; ctx.font = '900 27px Arial, sans-serif'; ctx.fillText('Situação após o lançamento', 64, y);
@@ -4464,10 +4463,10 @@ function criarCanvasComprovante({ empresa = '', titulo, cliente, data, etiqueta 
     ctx.fillStyle = '#e4f7ff'; ctx.font = '850 33px Arial, sans-serif'; ctx.fillText(linhaSaldo.rotulo, 84, y + 57);
     ctx.fillStyle = '#bdeaff'; ctx.font = '650 21px Arial, sans-serif'; ctx.fillText(linhaSaldo.subtitulo || 'Valor que permanece em aberto', 84, y + 101);
     ctx.fillStyle = '#fff'; ctx.textAlign = 'right'; ctx.font = '900 48px Arial, sans-serif'; ctx.fillText(linhaSaldo.valor, 996, y + 84); ctx.textAlign = 'left';
-    y += 188;
+    y += 222;
   }
 
-  ctx.fillStyle = '#0A1F44'; ctx.font = '900 32px Arial, sans-serif'; ctx.fillText(linhasExibidas.length ? 'Detalhes' : 'Informações', 64, y);
+  ctx.fillStyle = '#0A1F44'; ctx.font = '900 32px Arial, sans-serif'; ctx.fillText(linhasExibidas.length ? tituloDetalhes : 'Informações', 64, y);
   y += 24;
   const alturaDetalhes = Math.max(120, 34 + linhasExibidas.length * 90);
   caminhoRetanguloArredondado(ctx, 48, y, 984, alturaDetalhes, 26);
@@ -4523,9 +4522,10 @@ async function compartilharPedido(pedidoId) {
   const canvas = criarCanvasComprovante({
     empresa: state.acessoVendas?.empresa_nome || 'AvantaLab',
     titulo: pedidoEhConsignado(venda) ? 'Pedido consignado' : 'Comprovante de pedido',
+    tituloDetalhes: pedidoEhConsignado(venda) ? 'Detalhes do consignado' : 'Detalhes do pedido',
     cliente: cliente?.nome || 'Cliente não informado',
     data: dataComprovante(venda.criado_em),
-    etiqueta: pedidoEhConsignado(venda) ? 'CONSIGNADO' : 'VENDA',
+    etiqueta: pedidoEhConsignado(venda) ? 'Pedido consignado' : 'Comprovante de pedido',
     linhas,
     resumo: [
       { rotulo: 'Saldo anterior', valor: moeda(resumo.saldoAnterior) },
@@ -4549,9 +4549,10 @@ async function compartilharPagamento(pagamentoId) {
   const canvas = criarCanvasComprovante({
     empresa: state.acessoVendas?.empresa_nome || 'AvantaLab',
     titulo: 'Comprovante de pagamento',
+    tituloDetalhes: 'Detalhes do pagamento',
     cliente: cliente?.nome || 'Cliente não informado',
     data: dataComprovante(pagamento.data_pagamento),
-    etiqueta: String(pagamento.forma_pagamento || 'PAGAMENTO').toUpperCase(),
+    etiqueta: 'Comprovante de pagamento',
     linhas,
     resumo: [
       { rotulo: 'Saldo anterior', valor: moeda(resumo.saldoAnterior) },
@@ -5861,7 +5862,7 @@ function aplicarAtualizacaoPwaPendente() {
 
 if (!window.__VENDAS_MOBILE_EMBEDDED__ && 'serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('./sw.js?v=32').catch(() => {});
+    navigator.serviceWorker.register('./sw.js?v=33').catch(() => {});
   });
 }
 
