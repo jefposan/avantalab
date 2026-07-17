@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.5.4.55 - 2026-07-17
+
+- Vendas Mobile: correção aplicada no arquivo-fonte do aplicativo para que a data de pedido e pagamento adote a mesma cor clara do rótulo no modo noturno; atualizada a versão de arquivos para substituir o CSS anterior.
+
 ## 1.5.4.54 - 2026-07-17
 
 - Vendas Mobile: a data exibida nos campos de pedido e pagamento agora usa exatamente a mesma cor clara do respectivo rótulo no modo noturno; atualizada a versão dos arquivos para a correção chegar ao PWA.

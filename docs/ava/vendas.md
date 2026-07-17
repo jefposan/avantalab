@@ -1,8 +1,8 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.5.4.54 -->
+<!-- ava-version: 1.5.4.55 -->
 
-> Revisão 1.5.4.54: sem impacto operacional; data e rótulo dos campos de pedido e pagamento usam a mesma cor clara no modo noturno.
+> Revisão 1.5.4.55: sem impacto operacional; a correção de cor dos campos de data foi aplicada no arquivo-fonte do Vendas Mobile.
 
 ## Escopo e navegação
 
