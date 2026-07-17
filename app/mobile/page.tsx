@@ -43,7 +43,9 @@ export const metadata: Metadata = {
   },
   appleWebApp: {
     capable: true,
-    statusBarStyle: 'default',
+    // Mantém a barra de status sobre o gradiente do header no PWA instalado.
+    // O header já reserva env(safe-area-inset-top), portanto os controles não se movem.
+    statusBarStyle: 'black-translucent',
     title: 'AvantaLab',
   },
 };
@@ -60,7 +62,7 @@ export default function MobilePage() {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
   const cobrancaAtiva = process.env.NEXT_PUBLIC_COBRANCA_ATIVA === 'true' ? 'true' : 'false';
-  const mobileAssetVersion = '315';
+  const mobileAssetVersion = '316';
   const bootstrapCarregamento = `
     (function () {
       var pesos = { shell: 5, scripts: 15, auth: 10, profiles: 20, access: 10, data: 40 };

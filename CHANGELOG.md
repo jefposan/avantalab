@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.5.4.40 - 2026-07-16
+
+- Gestão Mobile: no PWA instalado, o gradiente do cabeçalho agora se estende até o topo físico da tela, atrás da área da ilha, hora e bateria. Os controles do cabeçalho permanecem na mesma posição segura.
+
 ## 1.5.4.39 - 2026-07-16
 
 - Vendas Mobile: o destaque da lista de Clientes voltou ao centro útil da tela; somente os cards imediatamente acima e abaixo ficam desfocados, agora com mais intensidade.

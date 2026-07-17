@@ -1,8 +1,8 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.5.4.39 -->
+<!-- ava-version: 1.5.4.40 -->
 
-> Revisão 1.5.4.39: na lista de **Clientes**, o foco visual acompanha o centro útil da tela e desfoca de forma mais visível apenas os cards imediatamente vizinhos.
+> Revisão 1.5.4.40: sem impacto operacional no Vendas Mobile.
 
 ## Escopo e navegação
 
