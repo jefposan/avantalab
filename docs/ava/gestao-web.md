@@ -1,8 +1,8 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.5.4.45 -->
+<!-- ava-version: 1.5.4.46 -->
 
-> Revisão 1.5.4.45: sem impacto operacional; o painel Organizar blocos pode ser reposicionado pela barra de título.
+> Revisão 1.5.4.46: sem impacto operacional na Gestão Web.
 
 ## Escopo
 

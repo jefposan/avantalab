@@ -2019,11 +2019,11 @@
           '</div>' +
           '<div class="grid gap-3 p-4">' +
             '<button id="escolher-sistema-gestao" type="button" class="flex min-h-[82px] items-center gap-3 rounded-2xl border border-sky-100 bg-sky-50 px-4 text-left active:scale-[0.99]">' +
-              '<span class="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[#003E73] text-white">' + iconeNavegacaoInferior('home') + '</span>' +
+              '<span class="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[#003E73] text-white">' + iconeSeletorSistema('gestao') + '</span>' +
               '<span><strong class="block text-base font-black">Gestão Mobile</strong><small class="mt-1 block text-xs font-semibold text-slate-500">Finanças, indicadores e administração.</small></span>' +
             '</button>' +
             '<button id="escolher-sistema-vendas" type="button" class="flex min-h-[82px] items-center gap-3 rounded-2xl border border-cyan-100 bg-cyan-50 px-4 text-left active:scale-[0.99]">' +
-              '<span class="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-cyan-600 text-white">' + iconeNavegacaoInferior('sistemas') + '</span>' +
+              '<span class="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-cyan-600 text-white">' + iconeSeletorSistema('vendas') + '</span>' +
               '<span><strong class="block text-base font-black">Vendas Mobile</strong><small class="mt-1 block text-xs font-semibold text-slate-500">Clientes, produtos, pedidos e pagamentos.</small></span>' +
             '</button>' +
             '<label class="mt-1 flex items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-bold">' +
@@ -8116,6 +8116,14 @@
     return '';
   }
 
+  function iconeSeletorSistema(tipo) {
+    var base = 'width="26" height="26" viewBox="0 0 24 24" fill="none" aria-hidden="true"';
+    if (tipo === 'gestao') {
+      return '<svg ' + base + '><path d="M4 19V5m0 14h16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><rect x="7" y="12" width="2.8" height="5" rx=".7" stroke="currentColor" stroke-width="1.8"/><rect x="11.2" y="9" width="2.8" height="8" rx=".7" stroke="currentColor" stroke-width="1.8"/><rect x="15.4" y="6" width="2.8" height="11" rx=".7" stroke="currentColor" stroke-width="1.8"/><path d="m7.5 9 3-2.5 3 1.2 4-3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+    }
+    return '<svg ' + base + '><path d="M5 9h14l-1.1 10H6.1L5 9Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M8.5 9V7a3.5 3.5 0 0 1 7 0v2" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="m15.5 14 1.2 1.2 2.3-2.5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+  }
+
   function rotuloAtalhoInferior(tipo) {
     return {
       perfil: 'Perfil',
@@ -13246,7 +13254,7 @@
     });
 
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/mobile-sw.js?v=257', { updateViaCache: 'none' }).then(function (registro) {
+      navigator.serviceWorker.register('/mobile-sw.js?v=258', { updateViaCache: 'none' }).then(function (registro) {
         if (registro && registro.update) registro.update();
       }).catch(function () {});
     }

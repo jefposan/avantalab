@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.5.4.46 - 2026-07-17
+
+- Gestão Mobile: o seletor inicial ganhou ícones próprios para os dois sistemas — gráfico de desempenho para Gestão e sacola com confirmação para Vendas.
+
 ## 1.5.4.45 - 2026-07-17
 
 - Gestão Web: o card **Organizar blocos** abre centralizado, recebeu cabeçalho na cor do perfil e pode ser arrastado pelo próprio cabeçalho, como a Agenda.
