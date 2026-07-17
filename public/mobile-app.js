@@ -3843,6 +3843,10 @@
     return state.empresa && (state.empresa.perfil === 'gestor_master' || state.empresa.perfil === 'administrador');
   }
 
+  function podeGerenciarConteudoVendas() {
+    return state.empresa && ['gestor_master', 'administrador', 'operador_completo'].includes(state.empresa.perfil);
+  }
+
   async function tokenSessao() {
     var sessao = await promessaMobileComPrazo(
       db.auth.getSession(),
@@ -9688,7 +9692,7 @@
             menuBotaoHtml('menu-ajuda-categorias', 'Instrucoes sobre categorias', 'Como organizar seus gastos') +
             menuBotaoHtml('menu-tutorial', 'Tutorial', 'Como usar o AvantaLab') +
             menuBotaoHtml('menu-trocar-sistema', 'Ir para Vendas', state.vendasMobileModuloAtivo ? (podeTrocarSistemaMobile() ? 'Abrir o Vendas Mobile' : 'Indisponível para operadores') : (podeGerenciarUsuarios() ? 'Ativar e abrir o Vendas Mobile' : 'Indisponível para operadores'), !podeGerenciarUsuarios(), false) +
-            ((state.vendasMobileModuloAtivo && podeGerenciarUsuarios()) ? menuBotaoHtml('menu-vendas-mobile', 'Conteúdo do Vendas', 'Novidades e divulgacao') : '') +
+            ((state.vendasMobileModuloAtivo && podeGerenciarConteudoVendas()) ? menuBotaoHtml('menu-vendas-mobile', 'Conteúdo do Vendas', 'Novidades e divulgacao') : '') +
             '<button id="menu-config-toggle" type="button" class="mobile-config-main-btn rounded-[14px_26px_26px_26px] border border-slate-300 px-2.5 py-2 text-left text-slate-800 shadow-[0_5px_13px_rgba(15,23,42,.09)] transition active:scale-[0.99]" style="background:' + (configAberto ? 'linear-gradient(90deg,#B8C3D0 0%,#A5B2C1 100%)' : 'linear-gradient(90deg,#CBD5E1 0%,#B4C0CE 100%)') + '">' +
               '<div class="flex items-center gap-2">' +
                 '<span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border border-white/15 bg-slate-800 text-white shadow-sm">' + iconeMenuLateralSvg('menu-config-toggle') + '</span>' +
@@ -11571,7 +11575,7 @@
     bind('menu-ajuda-categorias', function () { fecharMenuLateralAnimado(function () { abrirModalMenu('ajudaCategorias'); }); });
     bind('menu-vendas-mobile', function () {
       fecharMenuLateralAnimado(function () {
-        if (!state.empresa || !state.empresa.id) return;
+        if (!state.empresa || !state.empresa.id || !podeGerenciarConteudoVendas()) return;
         window.dispatchEvent(new CustomEvent('avantalab:open-vendas-conteudo', {
           detail: {
             empresaId: state.empresa.id,

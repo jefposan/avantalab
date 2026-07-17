@@ -108,6 +108,7 @@ CATÁLOGO, PEDIDOS E PAGAMENTOS
 
 AGENDA, CONTEÚDO E CONFIGURAÇÕES
 - Agenda cria lembretes de visita, entrega e recebimento; pode expandir a visualização e mover a data de um item.
+- Gestor Master, Administrador e Operador Completo podem publicar, editar ou excluir novidades, pastas, subpastas, imagens e vídeos da Divulgação quando o módulo estiver ativo. Operador Completo não instala módulos nem aprova acessos.
 - Novidades são publicações da empresa vinculada. Divulgação navega por pastas/subpastas e abre fotos/vídeos para visualizar e compartilhar.
 - Em Configurações há dados da conta, celular com validação SMS, senha AvantaLab, aparência, metas, catálogo, estoque, vínculos comerciais, destino financeiro, PWA, backup e reset. Resetar gera backup e apaga os dados locais do Vendas após confirmação.
 - O vínculo comercial (notícias, divulgação e catálogo) pode ser diferente do destino financeiro pessoal (receitas no Gestão). A integração gera uma receita consolidada por mês e a atualiza no acesso. Não confunda os dois.

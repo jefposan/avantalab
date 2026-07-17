@@ -45,7 +45,7 @@ export default function VendasMobileConteudoClient({ empresaId }: { empresaId: s
       ]);
       if (!ativo) return;
       const perfil = String(acesso.data?.perfil || '');
-      const temPermissao = Boolean(modulo.data && ['gestor_master', 'administrador'].includes(perfil));
+      const temPermissao = Boolean(modulo.data && ['gestor_master', 'administrador', 'operador_completo'].includes(perfil));
       setNomeEmpresa(String(empresa.data?.nome_empresa || empresa.data?.nome || 'Perfil atual'));
       setPermitido(temPermissao);
       if (!temPermissao) setErro('O módulo Vendas Mobile não está instalado neste perfil ou seu acesso não permite publicar conteúdos.');
