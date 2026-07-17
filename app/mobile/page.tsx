@@ -48,6 +48,11 @@ export const metadata: Metadata = {
     statusBarStyle: 'black-translucent',
     title: 'AvantaLab',
   },
+  // Safari/iOS ainda consulta esta meta legada ao definir se a área da ilha
+  // pode ser ocupada pelo conteúdo do PWA instalado.
+  other: {
+    'apple-mobile-web-app-capable': 'yes',
+  },
 };
 
 export const viewport: Viewport = {
@@ -62,7 +67,7 @@ export default function MobilePage() {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
   const cobrancaAtiva = process.env.NEXT_PUBLIC_COBRANCA_ATIVA === 'true' ? 'true' : 'false';
-  const mobileAssetVersion = '316';
+  const mobileAssetVersion = '317';
   const bootstrapCarregamento = `
     (function () {
       var pesos = { shell: 5, scripts: 15, auth: 10, profiles: 20, access: 10, data: 40 };

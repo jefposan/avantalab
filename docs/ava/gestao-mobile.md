@@ -1,8 +1,8 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.5.4.41 -->
+<!-- ava-version: 1.5.4.42 -->
 
-> Revisão 1.5.4.41: sem impacto operacional na Gestão Mobile.
+> Revisão 1.5.4.42: sem impacto operacional na Gestão Mobile; o PWA recebeu somente ajuste visual da área segura superior.
 
 ## Escopo
 

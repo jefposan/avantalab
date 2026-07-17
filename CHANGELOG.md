@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.5.4.42 - 2026-07-16
+
+- Gestão Mobile: reforçada a configuração nativa do PWA no iPhone para o gradiente do header ocupar a área atrás da ilha, hora e bateria. A atualização do shell é forçada para não manter o comportamento antigo em cache.
+
 ## 1.5.4.41 - 2026-07-16
 
 - Vendas Mobile: pedidos e pagamentos passam a confirmar os débitos e recebimentos da cliente diretamente no servidor antes de gravar o saldo. O cache continua acelerando a abertura, mas não pode mais compor comprovantes ou saldos financeiros.
