@@ -7864,10 +7864,10 @@
             '<h1 class="text-2xl font-black text-slate-900">Confirme seu celular</h1>' +
             '<p class="mt-1 text-xs leading-snug text-slate-600">Para manter seu acesso seguro, confirme um celular com DDD por SMS.</p>' +
           '</div>' +
-          '<div class="grid gap-1">' +
-            '<div class="grid grid-cols-[7rem_1fr] gap-2">' +
-              '<div><p class="mb-1 text-[10px] font-black uppercase tracking-wide text-slate-600">País</p><select id="ddi-telefone-obrigatorio" class="h-[38px] w-full rounded-xl border border-slate-300 bg-white/90 px-2 text-sm text-slate-800 outline-none">' + opcoesDdiHtml(state.ddiTelefoneObrigatorio) + '</select></div>' +
-              '<div>' + inputHtml('telefone-obrigatorio', 'Celular', 'tel', '(xx) xxxxx-xxxx', state.telefoneObrigatorio) + '</div>' +
+          '<div class="grid min-w-0 gap-1">' +
+            '<div class="grid min-w-0 grid-cols-[7rem_minmax(0,1fr)] gap-2">' +
+              '<div class="min-w-0"><p class="mb-1 text-[10px] font-black uppercase tracking-wide text-slate-600">País</p><select id="ddi-telefone-obrigatorio" class="h-[38px] w-full min-w-0 rounded-xl border border-slate-300 bg-white/90 px-2 text-sm text-slate-800 outline-none">' + opcoesDdiHtml(state.ddiTelefoneObrigatorio) + '</select></div>' +
+              '<div class="min-w-0">' + inputHtml('telefone-obrigatorio', 'Celular', 'tel', '(xx) xxxxx-xxxx', state.telefoneObrigatorio) + '</div>' +
             '</div>' +
             (state.smsTelefoneObrigatorioEnviado
               ? inputHtml('codigo-telefone-obrigatorio', 'Codigo recebido por SMS', 'text', 'Digite o codigo recebido', state.codigoTelefoneObrigatorio) +
@@ -7913,7 +7913,7 @@
     return (
       '<label class="grid gap-1 text-xs font-semibold text-slate-700">' +
         escapeHtml(label) +
-        '<input id="' + id + '" type="' + type + '" placeholder="' + escapeHtml(placeholder || '') + '" value="' + escapeHtml(value || '') + '" style="font-size:16px;background-color:rgba(255,255,255,.94)" class="h-10 rounded-xl border border-slate-300 px-3 text-sm font-semibold text-slate-900 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-sky-600 focus:bg-white focus:ring-2 focus:ring-sky-600/20" />' +
+        '<input id="' + id + '" type="' + type + '" placeholder="' + escapeHtml(placeholder || '') + '" value="' + escapeHtml(value || '') + '" style="font-size:16px;background-color:rgba(255,255,255,.94)" class="h-10 w-full min-w-0 rounded-xl border border-slate-300 px-3 text-sm font-semibold text-slate-900 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-sky-600 focus:bg-white focus:ring-2 focus:ring-sky-600/20" />' +
       '</label>'
     );
   }
