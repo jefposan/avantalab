@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.5.4.56 - 2026-07-17
+
+- Gestão Mobile: o seletor de sistemas agora usa os ícones finais de Gestão e Vendas fornecidos para seus respectivos botões.
+
 ## 1.5.4.55 - 2026-07-17
 
 - Vendas Mobile: correção aplicada no arquivo-fonte do aplicativo para que a data de pedido e pagamento adote a mesma cor clara do rótulo no modo noturno; atualizada a versão de arquivos para substituir o CSS anterior.

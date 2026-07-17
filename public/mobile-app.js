@@ -2045,11 +2045,11 @@
           '</div>' +
           '<div class="grid gap-3 p-4">' +
             '<button id="escolher-sistema-gestao" type="button" class="flex min-h-[82px] items-center gap-3 rounded-2xl border border-sky-100 bg-sky-50 px-4 text-left active:scale-[0.99]">' +
-              '<span class="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[#003E73] text-white">' + iconeSeletorSistema('gestao') + '</span>' +
+              iconeSeletorSistema('gestao') +
               '<span><strong class="block text-base font-black">Gestão Mobile</strong><small class="mt-1 block text-xs font-semibold text-slate-500">Finanças, indicadores e administração.</small></span>' +
             '</button>' +
             '<button id="escolher-sistema-vendas" type="button" class="flex min-h-[82px] items-center gap-3 rounded-2xl border border-cyan-100 bg-cyan-50 px-4 text-left active:scale-[0.99]">' +
-              '<span class="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-cyan-600 text-white">' + iconeSeletorSistema('vendas') + '</span>' +
+              iconeSeletorSistema('vendas') +
               '<span><strong class="block text-base font-black">Vendas Mobile</strong><small class="mt-1 block text-xs font-semibold text-slate-500">Clientes, produtos, pedidos e pagamentos.</small></span>' +
             '</button>' +
             '<label class="mt-1 flex items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-bold">' +
@@ -8144,11 +8144,9 @@
   }
 
   function iconeSeletorSistema(tipo) {
-    var base = 'width="26" height="26" viewBox="0 0 24 24" fill="none" aria-hidden="true"';
-    if (tipo === 'gestao') {
-      return '<svg ' + base + '><path d="M5 18.5h14" stroke="currentColor" stroke-width="1.55" stroke-linecap="round"/><path d="M7.5 16v-3.5m4.5 3.5V9.5m4.5 6.5V6.5" stroke="currentColor" stroke-width="1.55" stroke-linecap="round"/><path d="m6.8 10.8 3.2-3 2.6 1.9L17.2 5" stroke="currentColor" stroke-width="1.55" stroke-linecap="round" stroke-linejoin="round"/><path d="M14.5 5h2.7v2.7" stroke="currentColor" stroke-width="1.55" stroke-linecap="round" stroke-linejoin="round"/></svg>';
-    }
-    return '<svg ' + base + '><path d="M6.2 9.2h11.6l-1 9.3H7.2l-1-9.3Z" stroke="currentColor" stroke-width="1.55" stroke-linejoin="round"/><path d="M8.8 9.2V7.4a3.2 3.2 0 0 1 6.4 0v1.8" stroke="currentColor" stroke-width="1.55" stroke-linecap="round"/><path d="m13.6 13.2 2.3 2.2 3-3.1" stroke="currentColor" stroke-width="1.55" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+    var arquivo = tipo === 'gestao' ? '/images/icone-gestao-mobile-44.png' : '/images/icone-vendas-mobile-44.png';
+    var rotulo = tipo === 'gestao' ? 'Ícone Gestão Mobile' : 'Ícone Vendas Mobile';
+    return '<img src="' + arquivo + '" width="44" height="44" alt="' + rotulo + '" class="h-11 w-11 shrink-0 rounded-[14px] object-contain" draggable="false">';
   }
 
   function rotuloAtalhoInferior(tipo) {
@@ -13292,7 +13290,7 @@
     });
 
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/mobile-sw.js?v=264', { updateViaCache: 'none' }).then(function (registro) {
+      navigator.serviceWorker.register('/mobile-sw.js?v=265', { updateViaCache: 'none' }).then(function (registro) {
         if (registro && registro.update) registro.update();
       }).catch(function () {});
     }

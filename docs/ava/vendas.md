@@ -1,8 +1,8 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.5.4.55 -->
+<!-- ava-version: 1.5.4.56 -->
 
-> Revisão 1.5.4.55: sem impacto operacional; a correção de cor dos campos de data foi aplicada no arquivo-fonte do Vendas Mobile.
+> Revisão 1.5.4.56: sem impacto operacional no Vendas Mobile.
 
 ## Escopo e navegação
 
