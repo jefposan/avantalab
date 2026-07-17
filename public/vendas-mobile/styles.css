@@ -2136,7 +2136,8 @@ body { background: #fff; color: var(--ink); }
 .dark-theme .order-product-options > button:active, .dark-theme .order-product-options > button.selected { color: #7dd3fc; background: #102838; }
 .dark-theme .order-product-options > button small, .dark-theme .order-product-options-empty, .dark-theme .order-product-options-status { color: #94a3b8; }
 .dark-theme .transaction-date-field { border-color: #31536d; color: #7dd3fc; background: #102838; }
-.dark-theme .transaction-date-field input { border-left-color: #31536d !important; }
+.dark-theme .transaction-date-field > span { color: #bae6fd; }
+.dark-theme .transaction-date-field input, .dark-theme .transaction-date-field .date-picker-button { border-left-color: #31536d !important; color: #e0f2fe; }
 .dark-theme .quantity-stepper button, .dark-theme .order-draft-items article, .dark-theme .payment-client-list > button, .dark-theme .payment-client-empty, .dark-theme .payment-edit-summary, .dark-theme .payment-edit-summary > div { border-color: #334155; color: #e2e8f0; background: #172033; }
 .dark-theme .order-product-entry h3, .dark-theme .order-draft-items h3, .dark-theme .order-draft-items article b, .dark-theme .transaction-totals b, .dark-theme .payment-balance-summary b, .dark-theme .payment-detail-summary b { color: #f8fafc; }
 .dark-theme .order-draft-items article small, .dark-theme .payment-client-list > button small, .dark-theme .payment-edit-summary span, .dark-theme .payment-edit-note { color: #94a3b8; }

@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.5.4.53 - 2026-07-17
+
+- Vendas Mobile: reforçado o contraste do rótulo e da data nos campos de pedido e pagamento durante o modo noturno.
+
 ## 1.5.4.52 - 2026-07-17
 
 - Gestão Mobile: restaurado o disparo do aviso de valor repetido; o clique em salvar não interpreta mais o evento do navegador como confirmação.

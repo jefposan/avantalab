@@ -1,8 +1,8 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.5.4.52 -->
+<!-- ava-version: 1.5.4.53 -->
 
-> Revisão 1.5.4.52: sem impacto operacional no Vendas Mobile.
+> Revisão 1.5.4.53: sem impacto operacional; contraste dos campos de data de pedido e pagamento reforçado no modo noturno.
 
 ## Escopo e navegação
 
