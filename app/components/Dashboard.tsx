@@ -221,6 +221,7 @@ export default function Dashboard({
   const [redimensionandoPerfis, setRedimensionandoPerfis] = useState(false);
   const [menuCardAberto, setMenuCardAberto] = useState<string | null>(null);
   const [gerenciadorAberto, setGerenciadorAberto] = useState(false);
+  const [gerenciadorPosicao, setGerenciadorPosicao] = useState<{ x: number; y: number } | null>(null);
   const [evolucaoAno, setEvolucaoAno] = useState(anoSelecionado);
   const [evolucaoLancamentos, setEvolucaoLancamentos] = useState<any[]>(lancamentos);
   const [evolucaoFaturamentos, setEvolucaoFaturamentos] = useState<Record<string, number>>(faturamentos);
@@ -261,6 +262,9 @@ export default function Dashboard({
   }, [iniciarValoresOcultos]);
   const listaPerfisRef = useRef<HTMLDivElement | null>(null);
   const cardPerfisRef = useRef<HTMLDivElement | null>(null);
+  const graficosPerfisRef = useRef<HTMLDivElement | null>(null);
+  const painelGerenciadorRef = useRef<HTMLDivElement | null>(null);
+  const arrasteGerenciadorRef = useRef({ ativo: false, pointerId: 0, inicioX: 0, inicioY: 0, x: 0, y: 0 });
   const listaPerfisArrastandoRef = useRef(false);
   const listaPerfisArrastouRef = useRef(false);
   const listaPerfisInicioYRef = useRef(0);
@@ -371,11 +375,57 @@ export default function Dashboard({
       if (!card) return;
       // Quando os gráficos surgem, o card deixa de depender da altura que o
       // usuário havia definido para a lista e passa a acomodar o subcard todo.
-      const alturaNecessaria = Math.ceil(card.scrollHeight + 2);
+      const grafico = graficosPerfisRef.current;
+      const limiteCard = card.getBoundingClientRect().bottom;
+      const excessoVisivel = grafico ? Math.max(0, grafico.getBoundingClientRect().bottom - limiteCard) : 0;
+      const alturaNecessaria = Math.ceil(Math.max(card.scrollHeight + 20, card.clientHeight + excessoVisivel + 32));
       setAlturaCardPerfis((alturaAtual) => Math.max(alturaAtual || card.clientHeight, alturaNecessaria));
     });
     return () => window.cancelAnimationFrame(quadro);
   }, [graficosPerfisVisiveis]);
+  const abrirGerenciador = useCallback(() => {
+    if (gerenciadorAberto) {
+      setGerenciadorAberto(false);
+      setGerenciadorPosicao(null);
+      return;
+    }
+    setGerenciadorPosicao({ x: Math.max(8, window.innerWidth - Math.min(760, window.innerWidth - 16)), y: 96 });
+    setGerenciadorAberto(true);
+  }, [gerenciadorAberto]);
+  const fecharGerenciador = useCallback(() => {
+    setGerenciadorAberto(false);
+    setGerenciadorPosicao(null);
+  }, []);
+  const iniciarArrasteGerenciador = useCallback((event: React.PointerEvent<HTMLButtonElement>) => {
+    if (event.button !== 0 || !gerenciadorPosicao) return;
+    arrasteGerenciadorRef.current = {
+      ativo: true,
+      pointerId: event.pointerId,
+      inicioX: event.clientX,
+      inicioY: event.clientY,
+      x: gerenciadorPosicao.x,
+      y: gerenciadorPosicao.y,
+    };
+    event.currentTarget.setPointerCapture(event.pointerId);
+    event.preventDefault();
+  }, [gerenciadorPosicao]);
+  const moverArrasteGerenciador = useCallback((event: React.PointerEvent<HTMLButtonElement>) => {
+    const arraste = arrasteGerenciadorRef.current;
+    if (!arraste.ativo || arraste.pointerId !== event.pointerId) return;
+    const painel = painelGerenciadorRef.current;
+    const largura = painel?.offsetWidth || 320;
+    const altura = painel?.offsetHeight || 240;
+    setGerenciadorPosicao({
+      x: Math.min(Math.max(8, arraste.x + event.clientX - arraste.inicioX), Math.max(8, window.innerWidth - largura - 8)),
+      y: Math.min(Math.max(8, arraste.y + event.clientY - arraste.inicioY), Math.max(8, window.innerHeight - altura - 8)),
+    });
+  }, []);
+  const encerrarArrasteGerenciador = useCallback((event: React.PointerEvent<HTMLButtonElement>) => {
+    const arraste = arrasteGerenciadorRef.current;
+    if (!arraste.ativo || arraste.pointerId !== event.pointerId) return;
+    arrasteGerenciadorRef.current.ativo = false;
+    if (event.currentTarget.hasPointerCapture(event.pointerId)) event.currentTarget.releasePointerCapture(event.pointerId);
+  }, []);
   useEffect(() => {
     const soltarMouse = () => pararAutoScrollPerfis();
     window.addEventListener('mouseup', soltarMouse);
@@ -1508,6 +1558,7 @@ const mostrarComparativoResumoDash =
 
           {cols.full.includes('meusPerfis') && perfisDashboard.length > 0 && (
             <div
+              ref={graficosPerfisRef}
               className={`shrink-0 rounded-xl border-2 p-2.5 shadow-sm ${darkMode ? 'bg-slate-800/45' : 'bg-white'}`}
               style={{ borderColor: corPrimaria }}
             >
@@ -1987,7 +2038,7 @@ const mostrarComparativoResumoDash =
       <div className="xl:col-span-2 relative pt-7">
         <button
           type="button"
-          onClick={() => setGerenciadorAberto(!gerenciadorAberto)}
+          onClick={abrirGerenciador}
           className={`absolute right-1 top-0 flex h-5 w-5 items-center justify-center transition hover:scale-110 active:scale-95 ${
             darkMode
               ? 'text-slate-300 hover:text-white'
@@ -2007,20 +2058,36 @@ const mostrarComparativoResumoDash =
           <button
             type="button"
             className="fixed inset-0 z-30 cursor-default bg-black/60 backdrop-blur-sm"
-            onClick={() => setGerenciadorAberto(false)}
+            onClick={fecharGerenciador}
             aria-label="Fechar organização de blocos"
           />
-          <div className={`card-radius-avantalab-lg absolute right-0 top-7 z-40 box-border w-[min(48rem,calc(100vw-1.5rem))] max-w-full overflow-hidden rounded-2xl border p-3 shadow-2xl ${
+          <div
+            ref={painelGerenciadorRef}
+            className={`card-radius-avantalab-lg fixed z-40 box-border w-[min(48rem,calc(100vw-1.5rem))] max-w-full overflow-hidden rounded-2xl border p-3 shadow-2xl ${
             darkMode ? 'border-slate-700 bg-slate-900 text-slate-100' : 'border-slate-200 bg-white text-slate-900'
-          }`}>
+            }`}
+            style={gerenciadorPosicao ? { left: gerenciadorPosicao.x, top: gerenciadorPosicao.y } : undefined}
+          >
             <div className="mb-2 flex min-w-0 items-center justify-between gap-3">
-              <div className="min-w-0">
+              <button
+                type="button"
+                onPointerDown={iniciarArrasteGerenciador}
+                onPointerMove={moverArrasteGerenciador}
+                onPointerUp={encerrarArrasteGerenciador}
+                onPointerCancel={encerrarArrasteGerenciador}
+                className={`flex h-8 w-6 shrink-0 touch-none cursor-grab items-center justify-center rounded active:cursor-grabbing ${darkMode ? 'text-slate-400 hover:bg-slate-800' : 'text-slate-400 hover:bg-slate-100'}`}
+                aria-label="Arrastar painel Organizar blocos"
+                title="Arraste para mover"
+              >
+                <svg width="14" height="18" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><circle cx="7" cy="4" r="1.5" /><circle cx="13" cy="4" r="1.5" /><circle cx="7" cy="10" r="1.5" /><circle cx="13" cy="10" r="1.5" /><circle cx="7" cy="16" r="1.5" /><circle cx="13" cy="16" r="1.5" /></svg>
+              </button>
+              <div className="min-w-0 flex-1">
                 <h3 className="text-[13px] font-black leading-tight">Organizar blocos</h3>
-                <p className={`mt-0.5 text-[10px] font-semibold leading-tight ${textMuted}`}>Use a mãozinha de cada card para arrastá-lo; aqui você controla a exibição.</p>
+                <p className={`mt-0.5 text-[10px] font-semibold leading-tight ${textMuted}`}>Arraste pela mãozinha para mover este painel; use a de cada card para reordená-lo.</p>
               </div>
               <button
                 type="button"
-                onClick={() => setGerenciadorAberto(false)}
+                onClick={fecharGerenciador}
                 className={`flex h-7 w-7 items-center justify-center rounded-lg text-base font-black ${
                   darkMode ? 'hover:bg-slate-800' : 'hover:bg-slate-100'
                 }`}

@@ -1,8 +1,8 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.5.4.43 -->
+<!-- ava-version: 1.5.4.44 -->
 
-> Revisão 1.5.4.43: no comprovante de pedido, a lista de produtos pode rolar sem mover o cabeçalho ou as ações finais.
+> Revisão 1.5.4.44: os atalhos Divulgação e Informações voltaram a exibir suas imagens na sala de botões.
 
 ## Escopo e navegação
 

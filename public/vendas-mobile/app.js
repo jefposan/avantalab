@@ -993,7 +993,7 @@ function renderModuloVendasDesativado() {
   const itens = [
     ['1_Dashboard.png', 'Dashboard'], ['4_Clientes.png', 'Clientes'], ['2_Produtos.png', 'Produtos'],
     ['5_Pedidos.png', 'Pedidos'], ['6_Pagamentos.png', 'Pagamentos'], ['3_Agenda.png', 'Agenda'],
-    ['8_Novidades.png', 'Novidades'], ['7_Divulgação.png', 'Divulgação'], ['9_Informações.png', 'Informações'],
+    ['8_Novidades.png', 'Novidades'], ['7_Divulgacao.png', 'Divulgação'], ['9_Informacoes.png', 'Informações'],
   ];
   return `<section class="module-suspended-screen">
     <header class="mobile-menu-header"><div class="mobile-menu-brand">${logoVendas()}</div></header>
@@ -1169,7 +1169,7 @@ function tab(idAba, icon, label) {
 const SALA_BOTOES_PADRAO = [
   ['dashboard', '1_Dashboard.png', 'Dashboard'], ['clientes', '4_Clientes.png', 'Clientes'], ['produtos', '2_Produtos.png', 'Produtos'],
   ['vendas', '5_Pedidos.png', 'Pedidos'], ['vender', '6_Pagamentos.png', 'Pagamentos'], ['agenda', '3_Agenda.png', 'Agenda'],
-  ['novidades', '8_Novidades.png', 'Novidades'], ['divulgacao', '7_Divulgação.png', 'Divulgação'], ['informacoes', '9_Informações.png', 'Informações'],
+  ['novidades', '8_Novidades.png', 'Novidades'], ['divulgacao', '7_Divulgacao.png', 'Divulgação'], ['informacoes', '9_Informacoes.png', 'Informações'],
 ];
 
 const RECURSOS_SALA_BOTOES = [
@@ -5825,7 +5825,7 @@ function aplicarAtualizacaoPwaPendente() {
 
 if (!window.__VENDAS_MOBILE_EMBEDDED__ && 'serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('./sw.js?v=28').catch(() => {});
+    navigator.serviceWorker.register('./sw.js?v=29').catch(() => {});
   });
 }
 

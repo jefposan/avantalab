@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.5.4.44 - 2026-07-17
+
+- Gestão Web: a exclusão de despesa remove a linha imediatamente da lista, inclusive quando o identificador chega em formato numérico.
+- Gestão Web: o painel **Organizar blocos** pode ser reposicionado na tela pela mãozinha do cabeçalho; o comparativo de **Meus perfis** ganhou folga adicional para nunca cortar o gráfico.
+- Vendas Mobile: restauradas as imagens dos botões **Divulgação** e **Informações**, com nomes de arquivos compatíveis com a publicação web.
+
 ## 1.5.4.43 - 2026-07-17
 
 - Gestão Web: a Agenda agora sinaliza e detalha no dia correto despesas futuras previstas, parceladas e fixas, junto dos lembretes.

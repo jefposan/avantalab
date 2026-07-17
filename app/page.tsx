@@ -4084,7 +4084,9 @@ const apagarDespesa = async (id: string) => {
   const apagou = await apagarLancamento(id);
 
   if (apagou) {
-    setLancamentos((prev) => prev.filter((l) => l.id !== id));
+    // O Supabase pode entregar o ID como número e a ação o recebe como texto.
+    // Normalizar a comparação remove a linha no mesmo instante da confirmação.
+    setLancamentos((prev) => prev.filter((l) => String(l.id) !== String(id)));
     notificarFinanceiroAtualizado();
   } else {
     abrirAviso(
@@ -4113,7 +4115,7 @@ const cancelarDespesaFixaDoMes = async (lanc: LancamentoFinanceiro | TabelaLanca
     return;
   }
 
-  setLancamentos((prev) => prev.filter((l) => l.id !== lanc.id));
+  setLancamentos((prev) => prev.filter((l) => String(l.id) !== String(lanc.id)));
   notificarFinanceiroAtualizado();
 };
 
