@@ -11917,7 +11917,7 @@
         });
       }
     }
-    bind('salvar-despesa', salvarDespesa);
+    bind('salvar-despesa', function () { salvarDespesa(false); });
     bind('abrir-nota-camera', function () {
       if (recursoExclusivoAssinanteMobile()) {
         mostrarAvisoAssinanteMobile('Leitura de nota', 'O envio de foto para leitura da nota é uma função exclusiva para assinantes.');
@@ -13292,7 +13292,7 @@
     });
 
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/mobile-sw.js?v=263', { updateViaCache: 'none' }).then(function (registro) {
+      navigator.serviceWorker.register('/mobile-sw.js?v=264', { updateViaCache: 'none' }).then(function (registro) {
         if (registro && registro.update) registro.update();
       }).catch(function () {});
     }

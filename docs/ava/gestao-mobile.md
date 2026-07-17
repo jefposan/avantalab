@@ -1,8 +1,8 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.5.4.51 -->
+<!-- ava-version: 1.5.4.52 -->
 
-> Revisão 1.5.4.51: sem impacto operacional; o aviso de possível despesa duplicada compara qualquer valor repetido no mesmo mês.
+> Revisão 1.5.4.52: sem impacto operacional; corrigido o disparo do aviso de valor repetido ao salvar despesa.
 
 ## Escopo
 
