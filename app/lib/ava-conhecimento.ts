@@ -6,7 +6,7 @@ export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
  * Cada guia é enviado apenas no ambiente correspondente, evitando misturar
  * caminhos e funções de Web, Mobile e Vendas na mesma resposta.
  */
-// Revisado na versão 1.5.4.49: aviso de despesa duplicada passou a usar a confirmação visual padrão do sistema, sem impacto operacional.
+// Revisado na versão 1.5.4.50: camada do aviso de possível despesa duplicada corrigida para ficar acima do formulário, sem impacto operacional.
 const GUIAS: Record<AmbienteAva, string> = {
   'gestao-web': `GUIA OPERACIONAL — AVANTALAB GESTÃO WEB
 Você atende no sistema Gestão Web. Oriente por nomes visíveis na interface; não invente telas.

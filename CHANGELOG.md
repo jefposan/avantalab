@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.5.4.50 - 2026-07-17
+
+- Gestão Mobile: corrigida a camada do aviso de possível despesa duplicada para que ele sempre apareça acima do formulário de lançamento.
+
 ## 1.5.4.49 - 2026-07-17
 
 - Gestão Mobile: o aviso de despesa com valor já existente agora usa o card de confirmação padrão do sistema, em vez do alerta simples do navegador.

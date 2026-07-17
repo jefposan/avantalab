@@ -1353,7 +1353,7 @@
       ? 'border-amber-400/35 bg-amber-400/10 text-amber-50'
       : 'border-amber-200 bg-amber-50 text-amber-950';
     return (
-      '<div id="aviso-duplicado-overlay" class="fixed inset-0 z-[110] flex items-center justify-center bg-slate-950/90 px-4" role="dialog" aria-modal="true" aria-labelledby="aviso-duplicado-titulo">' +
+      '<div id="aviso-duplicado-overlay" class="fixed inset-0 flex items-center justify-center bg-slate-950/90 px-4" style="z-index:13010" role="dialog" aria-modal="true" aria-labelledby="aviso-duplicado-titulo">' +
         '<section class="w-full max-w-sm overflow-hidden rounded-3xl shadow-2xl ' + card + '">' +
           '<header class="flex items-center gap-3 bg-[#003E73] px-4 py-3 text-white">' +
             '<span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-white/20 bg-white/10 text-lg font-black">!</span>' +
@@ -13292,7 +13292,7 @@
     });
 
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/mobile-sw.js?v=261', { updateViaCache: 'none' }).then(function (registro) {
+      navigator.serviceWorker.register('/mobile-sw.js?v=262', { updateViaCache: 'none' }).then(function (registro) {
         if (registro && registro.update) registro.update();
       }).catch(function () {});
     }

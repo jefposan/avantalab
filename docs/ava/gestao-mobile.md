@@ -1,8 +1,8 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.5.4.49 -->
+<!-- ava-version: 1.5.4.50 -->
 
-> Revisão 1.5.4.49: sem impacto operacional; o aviso de possível despesa duplicada passou a usar o card visual padrão.
+> Revisão 1.5.4.50: sem impacto operacional; o aviso de possível despesa duplicada agora fica sempre acima do formulário.
 
 ## Escopo
 
