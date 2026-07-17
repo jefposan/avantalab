@@ -1,8 +1,8 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.5.4.42 -->
+<!-- ava-version: 1.5.4.43 -->
 
-> Revisão 1.5.4.42: sem impacto operacional no Vendas Mobile.
+> Revisão 1.5.4.43: no comprovante de pedido, a lista de produtos pode rolar sem mover o cabeçalho ou as ações finais.
 
 ## Escopo e navegação
 

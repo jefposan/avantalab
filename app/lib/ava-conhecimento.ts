@@ -6,7 +6,7 @@ export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
  * Cada guia é enviado apenas no ambiente correspondente, evitando misturar
  * caminhos e funções de Web, Mobile e Vendas na mesma resposta.
  */
-// Revisado na versão 1.5.4.42: ajuste visual de área segura do PWA, sem impacto operacional.
+// Revisado na versão 1.5.4.43: Agenda Web passou a exibir despesas futuras; comprovante de pedido do Vendas ganhou rolagem exclusiva da lista de produtos.
 const GUIAS: Record<AmbienteAva, string> = {
   'gestao-web': `GUIA OPERACIONAL — AVANTALAB GESTÃO WEB
 Você atende no sistema Gestão Web. Oriente por nomes visíveis na interface; não invente telas.

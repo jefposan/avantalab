@@ -587,17 +587,17 @@ export default function Graficos({ meses, lancamentos, faturamentos, despesasCad
         </button>
 
         {gerenciadorAberto && (
-          <div className={`card-radius-avantalab-lg absolute right-0 top-10 z-40 w-[min(22rem,calc(100vw-1.5rem))] rounded-2xl border p-4 shadow-2xl ${darkMode ? 'border-slate-700 bg-slate-900 text-slate-100' : 'border-slate-200 bg-white text-slate-900'}`}>
+          <div className={`card-radius-avantalab-lg absolute right-0 top-10 z-40 w-[min(48rem,calc(100vw-1.5rem))] rounded-2xl border p-4 shadow-2xl ${darkMode ? 'border-slate-700 bg-slate-900 text-slate-100' : 'border-slate-200 bg-white text-slate-900'}`}>
             <div className="mb-3 flex items-center justify-between gap-3">
-              <div><h3 className="text-sm font-black">Organizar blocos</h3><p className={`mt-0.5 text-xs font-semibold ${textMuted}`}>Exiba, oculte, arraste e redimensione os gráficos.</p></div>
+              <div><h3 className="text-sm font-black">Organizar blocos</h3><p className={`mt-0.5 text-xs font-semibold ${textMuted}`}>Use a mãozinha de cada gráfico para arrastá-lo; aqui você controla a exibição.</p></div>
               <button type="button" onClick={() => setGerenciadorAberto(false)} className={`flex h-8 w-8 items-center justify-center rounded-lg text-lg font-black ${darkMode ? 'hover:bg-slate-800' : 'hover:bg-slate-100'}`} aria-label="Fechar">×</button>
             </div>
-            <div className="grid gap-1">
+            <div className="flex flex-wrap gap-1.5">
               {catalogo.map((card) => {
                 const visivel = !ocultos.includes(card.id);
                 return (
                   <button key={card.id} type="button" onClick={() => alternarVisibilidade(card.id)}
-                    className={`flex items-center gap-3 rounded-lg border px-3 py-1.5 text-left transition ${darkMode ? 'border-slate-700 bg-slate-800/70 hover:bg-slate-800' : 'border-slate-200 bg-slate-50 hover:bg-white'}`}>
+                    className={`flex min-h-11 min-w-[142px] flex-1 items-center gap-3 rounded-lg border px-3 py-1.5 text-left transition ${darkMode ? 'border-slate-700 bg-slate-800/70 hover:bg-slate-800' : 'border-slate-200 bg-slate-50 hover:bg-white'}`}>
                     <span className={`flex h-4 w-8 shrink-0 items-center rounded-full p-0.5 transition ${visivel ? 'justify-end' : 'justify-start bg-slate-300'}`} style={{ backgroundColor: visivel ? corPrimaria : undefined }}><span className="h-3 w-3 rounded-full bg-white shadow" /></span>
                     <span className={`min-w-0 flex-1 truncate text-xs font-black ${textStrong}`}>{card.titulo}</span>
                   </button>

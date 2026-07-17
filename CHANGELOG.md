@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.5.4.43 - 2026-07-17
+
+- Gestão Web: a Agenda agora sinaliza e detalha no dia correto despesas futuras previstas, parceladas e fixas, junto dos lembretes.
+- Gestão Web: **Organizar blocos** passou a distribuir os controles horizontalmente; os cards mantêm a mãozinha para reordenação.
+- Gestão Web: ao exibir o comparativo em **Meus perfis**, o card se expande para mostrar todo o gráfico.
+- Gestão Web: abrir **Ajustes** não desloca mais o conteúdo abaixo do cabeçalho.
+- Vendas Mobile: no comprovante de pedido, cabeçalho e ações finais ficam fixos; apenas a lista de produtos rola.
+
 ## 1.5.4.42 - 2026-07-16
 
 - Gestão Mobile: reforçada a configuração nativa do PWA no iPhone para o gradiente do header ocupar a área atrás da ilha, hora e bateria. A atualização do shell é forçada para não manter o comportamento antigo em cache.

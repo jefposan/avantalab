@@ -2717,6 +2717,21 @@ useEffect(() => {
     return agendaItens.filter(item => itemAgendaApareceNoDiaWeb(item, ano, mes, dia));
   }
 
+  // Mantém a agenda web alinhada à mobile: despesas programadas futuras também
+  // são compromissos do calendário, sem misturá-las aos lembretes manuais.
+  function despesasFuturasDoDiaWeb(ano: number, mes: number, dia: number) {
+    const nomeMes = MESES_AGENDA_UP[mes] || '';
+    return lancamentos.filter((lancamento) => {
+      const tipo = String(lancamento.tipo || '');
+      return (
+        String(lancamento.mes || '').toUpperCase() === nomeMes &&
+        Number(lancamento.dia) === Number(dia) &&
+        dataFutura(ano, mes, dia) &&
+        (tipo === 'previsto' || tipo === 'parcela' || tipo === 'fixa' || Boolean(lancamento.recorrenciaId))
+      );
+    });
+  }
+
   function navAgenda(delta: number) {
     let novoMes = agendaMesAtivo + delta;
     let novoAno = agendaAnoAtivo;
@@ -7061,7 +7076,8 @@ if (validacaoTelefoneObrigatoria) {
                     const hoje = new Date();
                     const ehHoje = dia === hoje.getDate() && agendaMesAtivo === hoje.getMonth() && agendaAnoAtivo === hoje.getFullYear();
                     const ehSelecionado = dia === agendaDiaSelecionado;
-                    const temItens = itensAgendaDoDiaWeb(agendaAnoAtivo, agendaMesAtivo, dia).length > 0;
+                    const temLembretes = itensAgendaDoDiaWeb(agendaAnoAtivo, agendaMesAtivo, dia).length > 0;
+                    const temDespesasFuturas = despesasFuturasDoDiaWeb(agendaAnoAtivo, agendaMesAtivo, dia).length > 0;
                     return (
                       <button
                         key={dia}
@@ -7077,8 +7093,11 @@ if (validacaoTelefoneObrigatoria) {
                         style={ehSelecionado ? { background: corPrimaria } : {}}
                       >
                         <span className="text-xs leading-none">{String(dia).padStart(2, '0')}</span>
-                        {temItens && (
-                          <span className={`mt-0.5 h-1 w-1 rounded-full ${ehSelecionado ? 'bg-white' : 'bg-cyan-500'}`} />
+                        {(temLembretes || temDespesasFuturas) && (
+                          <span className="mt-0.5 flex items-center gap-0.5">
+                            {temLembretes && <span className={`h-1 w-1 rounded-full ${ehSelecionado ? 'bg-white' : 'bg-cyan-500'}`} />}
+                            {temDespesasFuturas && <span className={`h-1 w-1 rounded-full ${ehSelecionado ? 'bg-white/90' : 'bg-rose-500'}`} />}
+                          </span>
                         )}
                       </button>
                     );
@@ -7167,7 +7186,7 @@ if (validacaoTelefoneObrigatoria) {
                     )}
 
                     {/* Items list */}
-                    {itensAgendaDoDiaWeb(agendaAnoAtivo, agendaMesAtivo, agendaDiaSelecionado).length === 0 && !agendaFormAberto ? (
+                    {itensAgendaDoDiaWeb(agendaAnoAtivo, agendaMesAtivo, agendaDiaSelecionado).length === 0 && despesasFuturasDoDiaWeb(agendaAnoAtivo, agendaMesAtivo, agendaDiaSelecionado).length === 0 && !agendaFormAberto ? (
                       <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-4 py-8 text-center">
                         <p className="text-sm font-black text-slate-500">Nenhum lembrete neste dia.</p>
                         <p className="mt-1 text-xs text-slate-400">Clique em Adicionar para criar um lembrete.</p>
@@ -7204,6 +7223,25 @@ if (validacaoTelefoneObrigatoria) {
                             )}
                           </div>
                         ))}
+                        {despesasFuturasDoDiaWeb(agendaAnoAtivo, agendaMesAtivo, agendaDiaSelecionado).map((lancamento) => {
+                          const tipo = lancamento.tipo === 'fixa' || lancamento.recorrenciaId
+                            ? 'Fixa'
+                            : lancamento.tipo === 'parcela'
+                              ? 'Parcela'
+                              : 'Previsto';
+                          return (
+                            <div key={`despesa-${lancamento.id}`} className="rounded-2xl border border-rose-100 bg-rose-50/60 p-4">
+                              <div className="flex items-start justify-between gap-3">
+                                <div className="min-w-0">
+                                  <p className="truncate text-sm font-black text-slate-900">{lancamento.despesa || 'Despesa'}</p>
+                                  <p className="mt-0.5 text-[10px] font-black uppercase tracking-[0.16em] text-rose-600">Despesa futura · {tipo}</p>
+                                </div>
+                                <strong className="shrink-0 text-sm font-black tabular-nums text-rose-600">{formatarMoeda(Number(lancamento.valor || 0))}</strong>
+                              </div>
+                              {lancamento.descricao && <p className="mt-2 text-xs font-semibold leading-relaxed text-slate-500">{lancamento.descricao}</p>}
+                            </div>
+                          );
+                        })}
                       </div>
                     )}
                   </div>
@@ -9252,7 +9290,7 @@ name="novo-usuario-login"
 
       {/* ================= HEADER GLOBAL ================= */}
 
-      <div className={ajustesAberto ? 'fixed inset-x-0 top-0 z-[900]' : 'contents'}>
+      <div className="contents">
       <AppHeader
         darkMode={darkMode}
         textMuted={textMuted}
@@ -9296,8 +9334,6 @@ name="novo-usuario-login"
         }}
       />
       </div>
-      {ajustesAberto && <div className="h-[85px] xl:h-[113px]" aria-hidden="true" />}
-
       {emCarencia(estadoAcesso) && (
         <button
           type="button"

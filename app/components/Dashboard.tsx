@@ -260,6 +260,7 @@ export default function Dashboard({
     setOcultarValoresPerfis(iniciarValoresOcultos);
   }, [iniciarValoresOcultos]);
   const listaPerfisRef = useRef<HTMLDivElement | null>(null);
+  const cardPerfisRef = useRef<HTMLDivElement | null>(null);
   const listaPerfisArrastandoRef = useRef(false);
   const listaPerfisArrastouRef = useRef(false);
   const listaPerfisInicioYRef = useRef(0);
@@ -360,6 +361,21 @@ export default function Dashboard({
     }
     setPerfilDetalhado(perfil);
   }, []);
+  const alternarGraficosPerfis = useCallback(() => {
+    setGraficosPerfisVisiveis((visiveis) => !visiveis);
+  }, []);
+  useEffect(() => {
+    if (!graficosPerfisVisiveis) return;
+    const quadro = window.requestAnimationFrame(() => {
+      const card = cardPerfisRef.current;
+      if (!card) return;
+      // Quando os gráficos surgem, o card deixa de depender da altura que o
+      // usuário havia definido para a lista e passa a acomodar o subcard todo.
+      const alturaNecessaria = Math.ceil(card.scrollHeight + 2);
+      setAlturaCardPerfis((alturaAtual) => Math.max(alturaAtual || card.clientHeight, alturaNecessaria));
+    });
+    return () => window.cancelAnimationFrame(quadro);
+  }, [graficosPerfisVisiveis]);
   useEffect(() => {
     const soltarMouse = () => pararAutoScrollPerfis();
     window.addEventListener('mouseup', soltarMouse);
@@ -1350,6 +1366,7 @@ const mostrarComparativoResumoDash =
 
     meusPerfis: (
       <div
+        ref={cardPerfisRef}
         data-card-perfis
         data-card-perfis-expandido={cols.full.includes('meusPerfis') ? 'true' : 'false'}
         className={`${bgCard} card-radius-avantalab flex w-full flex-col overflow-hidden rounded-2xl border-2 shadow-lg transition-colors`}
@@ -1501,7 +1518,7 @@ const mostrarComparativoResumoDash =
                 </div>
                 <button
                   type="button"
-                  onClick={() => setGraficosPerfisVisiveis(!graficosPerfisVisiveis)}
+                  onClick={alternarGraficosPerfis}
                   className={`h-7 shrink-0 rounded-lg border px-2.5 text-[10px] font-black uppercase tracking-wide transition ${
                     darkMode
                       ? 'border-slate-600 bg-slate-900 text-slate-100 hover:bg-slate-800'
@@ -1993,13 +2010,13 @@ const mostrarComparativoResumoDash =
             onClick={() => setGerenciadorAberto(false)}
             aria-label="Fechar organização de blocos"
           />
-          <div className={`card-radius-avantalab-lg absolute right-0 top-7 z-40 box-border w-[min(20rem,calc(100vw-1.5rem))] max-w-full overflow-hidden rounded-2xl border p-3 shadow-2xl ${
+          <div className={`card-radius-avantalab-lg absolute right-0 top-7 z-40 box-border w-[min(48rem,calc(100vw-1.5rem))] max-w-full overflow-hidden rounded-2xl border p-3 shadow-2xl ${
             darkMode ? 'border-slate-700 bg-slate-900 text-slate-100' : 'border-slate-200 bg-white text-slate-900'
           }`}>
             <div className="mb-2 flex min-w-0 items-center justify-between gap-3">
               <div className="min-w-0">
                 <h3 className="text-[13px] font-black leading-tight">Organizar blocos</h3>
-                <p className={`mt-0.5 text-[10px] font-semibold leading-tight ${textMuted}`}>Exiba ou oculte cards do kanban.</p>
+                <p className={`mt-0.5 text-[10px] font-semibold leading-tight ${textMuted}`}>Use a mãozinha de cada card para arrastá-lo; aqui você controla a exibição.</p>
               </div>
               <button
                 type="button"
@@ -2012,7 +2029,7 @@ const mostrarComparativoResumoDash =
                 ×
               </button>
             </div>
-            <div className="flex min-w-0 flex-col gap-1.5 overflow-hidden">
+            <div className="flex min-w-0 flex-wrap gap-1.5">
               {catalogoCardsKanban.map((card) => {
                 const visivel = !ocultosSet.has(card.id);
                 const indisponivelAgora = card.id === 'aConfirmar' && !temAConfirmar;
@@ -2021,7 +2038,7 @@ const mostrarComparativoResumoDash =
                     key={card.id}
                     type="button"
                     onClick={() => alternarVisibilidadeCard(card.id)}
-                    className={`box-border flex min-h-11 w-full max-w-full items-center gap-2 overflow-hidden rounded-lg border px-2 py-1.5 text-left transition ${
+                    className={`box-border flex min-h-11 min-w-[142px] flex-1 items-center gap-2 overflow-hidden rounded-lg border px-2 py-1.5 text-left transition ${
                       darkMode
                         ? 'border-slate-700 bg-slate-800/70 hover:bg-slate-800'
                         : 'border-slate-200 bg-slate-50 hover:bg-white'

@@ -1,8 +1,8 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.5.4.42 -->
+<!-- ava-version: 1.5.4.43 -->
 
-> Revisão 1.5.4.42: sem impacto operacional na Gestão Web.
+> Revisão 1.5.4.43: a Agenda Web também mostra despesas futuras previstas, parceladas e fixas na data programada.
 
 ## Escopo
 

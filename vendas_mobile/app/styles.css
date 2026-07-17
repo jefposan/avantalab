@@ -1751,13 +1751,14 @@ body { background: #fff; color: var(--ink); }
 .payment-delete-confirm p b { color: #0A1F44; }
 .payment-delete-confirm button { min-height: 38px; border-radius: 999px; }
 .receipt-order-table { display: grid; overflow: hidden; gap: 0; border: 1px solid #d8e3eb; border-radius: 18px; background: #fff; }
+.receipt-order-scroll { display: grid; min-height: 0; overflow-y: auto; overscroll-behavior: contain; -webkit-overflow-scrolling: touch; }
 .receipt-order-table > header, .receipt-order-row { display: grid; grid-template-columns: minmax(0,1.36fr) minmax(25px,.38fr) minmax(58px,.82fr) minmax(60px,.84fr); align-items: center; gap: 6px; }
 .receipt-order-table > header { min-height: 42px; padding: 8px 12px; color: #526477; background: #f5f8fb; font-size: 10px; font-weight: 850; }
 .receipt-order-table > header span:not(:first-child), .receipt-order-quantity { text-align: center; }.receipt-order-table > header span:nth-child(3), .receipt-order-table > header span:nth-child(4), .receipt-order-price, .receipt-order-total { text-align: right; }
 .receipt-order-row { min-height: 68px; border-top: 1px solid #e2eaf0; padding: 11px 12px; color: #526477; font-size: 11px; }
 .receipt-order-product { min-width: 0; }.receipt-order-product b { display: block; overflow-wrap: anywhere; color: #334155; font-size: 12px; font-weight: 750; line-height: 1.28; }.receipt-order-product em { display: inline-flex; margin: 5px 0 0; }
 .receipt-order-quantity, .receipt-order-price { color: #526477; font-size: 11px; white-space: nowrap; }.receipt-order-total { color: #0A1F44; font-size: 12px; font-weight: 900; white-space: nowrap; }
-.receipt-order-row.is-bonus { background: #fffaf3; }.receipt-order-row.is-bonus .receipt-order-total { color: #9a3412; }.receipt-order-table > .muted { margin: 0; padding: 18px 12px; font-size: 11px; text-align: center; }
+.receipt-order-row.is-bonus { background: #fffaf3; }.receipt-order-row.is-bonus .receipt-order-total { color: #9a3412; }.receipt-order-table > .muted, .receipt-order-scroll > .muted { margin: 0; padding: 18px 12px; font-size: 11px; text-align: center; }
 @media (max-width: 390px) { .receipt-order-table > header, .receipt-order-row { grid-template-columns: minmax(0,1.28fr) minmax(22px,.34fr) minmax(53px,.76fr) minmax(56px,.78fr); gap: 4px; padding-right: 9px; padding-left: 9px; }.receipt-order-table > header { font-size: 9px; }.receipt-order-product b { font-size: 11px; }.receipt-order-quantity, .receipt-order-price { font-size: 10px; }.receipt-order-total { font-size: 11px; } }
 .consignment-view-backdrop .sheet, .consignment-conversion-backdrop .sheet { display: flex; width: min(94vw, 520px); height: min(720px, calc(var(--transaction-viewport-height, 100dvh) - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 72px)); max-height: calc(var(--transaction-viewport-height, 100dvh) - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 72px); flex-direction: column; overflow: hidden; }
 .consignment-view-backdrop .sheet > .sheet-header, .consignment-conversion-backdrop .sheet > .sheet-header { flex: 0 0 auto; }
@@ -1795,6 +1796,10 @@ body { background: #fff; color: var(--ink); }
 .order-view-total { margin-top: 8px; border-bottom: 0; color: #0A1F44; font-size: 16px; }
 .order-share { width: 100%; margin-top: 14px; border: 1px solid rgba(255,255,255,.34); color: #fff; background: linear-gradient(135deg,#1687D9,#36a5ed); box-shadow: 0 8px 18px rgba(22,135,217,.25); }
 .receipt-view-backdrop .sheet { width: min(94vw, 520px); max-height: calc(100dvh - env(safe-area-inset-bottom) - 108px); overflow-y: auto; }
+.order-view-backdrop .sheet { display: flex; min-height: 0; flex-direction: column; overflow: hidden; }
+.order-view-backdrop .sheet-header, .order-view-backdrop .receipt-order-footer { flex: 0 0 auto; }
+.order-view-backdrop .receipt-order-table { min-height: 0; flex: 1 1 auto; grid-template-rows: auto minmax(0, 1fr); }
+.order-view-backdrop .receipt-order-footer { padding-bottom: 1px; }
 .receipt-balance-summary { display: grid; gap: 7px; margin-top: 10px; border: 1px solid #cfe0ec; border-radius: 14px; padding: 10px; background: #f5f9fc; }
 .receipt-balance-summary > div { display: flex; align-items: center; justify-content: space-between; gap: 10px; color: #526477; font-size: 11px; font-weight: 800; }
 .receipt-balance-summary b { color: #0A1F44; font-size: 13px; }
