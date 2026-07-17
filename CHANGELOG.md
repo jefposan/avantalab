@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.5.4.47 - 2026-07-17
+
+- Gestão Mobile: refinados os ícones do seletor de sistemas, com traços mais finos e minimalistas para Gestão e Vendas.
+
 ## 1.5.4.46 - 2026-07-17
 
 - Gestão Mobile: o seletor inicial ganhou ícones próprios para os dois sistemas — gráfico de desempenho para Gestão e sacola com confirmação para Vendas.

@@ -8119,9 +8119,9 @@
   function iconeSeletorSistema(tipo) {
     var base = 'width="26" height="26" viewBox="0 0 24 24" fill="none" aria-hidden="true"';
     if (tipo === 'gestao') {
-      return '<svg ' + base + '><path d="M4 19V5m0 14h16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><rect x="7" y="12" width="2.8" height="5" rx=".7" stroke="currentColor" stroke-width="1.8"/><rect x="11.2" y="9" width="2.8" height="8" rx=".7" stroke="currentColor" stroke-width="1.8"/><rect x="15.4" y="6" width="2.8" height="11" rx=".7" stroke="currentColor" stroke-width="1.8"/><path d="m7.5 9 3-2.5 3 1.2 4-3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+      return '<svg ' + base + '><path d="M5 18.5h14" stroke="currentColor" stroke-width="1.55" stroke-linecap="round"/><path d="M7.5 16v-3.5m4.5 3.5V9.5m4.5 6.5V6.5" stroke="currentColor" stroke-width="1.55" stroke-linecap="round"/><path d="m6.8 10.8 3.2-3 2.6 1.9L17.2 5" stroke="currentColor" stroke-width="1.55" stroke-linecap="round" stroke-linejoin="round"/><path d="M14.5 5h2.7v2.7" stroke="currentColor" stroke-width="1.55" stroke-linecap="round" stroke-linejoin="round"/></svg>';
     }
-    return '<svg ' + base + '><path d="M5 9h14l-1.1 10H6.1L5 9Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M8.5 9V7a3.5 3.5 0 0 1 7 0v2" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="m15.5 14 1.2 1.2 2.3-2.5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+    return '<svg ' + base + '><path d="M6.2 9.2h11.6l-1 9.3H7.2l-1-9.3Z" stroke="currentColor" stroke-width="1.55" stroke-linejoin="round"/><path d="M8.8 9.2V7.4a3.2 3.2 0 0 1 6.4 0v1.8" stroke="currentColor" stroke-width="1.55" stroke-linecap="round"/><path d="m13.6 13.2 2.3 2.2 3-3.1" stroke="currentColor" stroke-width="1.55" stroke-linecap="round" stroke-linejoin="round"/></svg>';
   }
 
   function rotuloAtalhoInferior(tipo) {
@@ -13254,7 +13254,7 @@
     });
 
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/mobile-sw.js?v=258', { updateViaCache: 'none' }).then(function (registro) {
+      navigator.serviceWorker.register('/mobile-sw.js?v=259', { updateViaCache: 'none' }).then(function (registro) {
         if (registro && registro.update) registro.update();
       }).catch(function () {});
     }
