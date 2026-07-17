@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.5.4.57 - 2026-07-17
+
+- Compartilhamento: substituída a imagem de prévia dos links pela nova arte AvantaLab em 1200×628, otimizada em JPEG; atualizada a URL da metatag para evitar reaproveitamento da imagem anterior em cache.
+
 ## 1.5.4.56 - 2026-07-17
 
 - Gestão Mobile: o seletor de sistemas agora usa os ícones finais de Gestão e Vendas fornecidos para seus respectivos botões.

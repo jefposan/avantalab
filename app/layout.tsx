@@ -3,7 +3,7 @@ import "./globals.css";
 import { inter } from "./lib/fonts";
 import WebPopupScrollLock from "./components/WebPopupScrollLock";
 
-const shareImage = 'https://avantalab.com.br/images/avantalab-share-meta-safe-center-v2.jpg';
+const shareImage = 'https://avantalab.com.br/images/avantalab-share-meta-safe-center-v2.jpg?v=20260717-01';
 
 export const metadata: Metadata = {
   metadataBase: new URL('https://avantalab.com.br'),

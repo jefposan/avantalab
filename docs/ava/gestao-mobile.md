@@ -1,8 +1,8 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.5.4.56 -->
+<!-- ava-version: 1.5.4.57 -->
 
-> Revisão 1.5.4.56: sem impacto operacional; ícones finais do seletor de sistemas aplicados.
+> Revisão 1.5.4.57: sem impacto operacional; imagem de prévia de compartilhamento atualizada.
 
 ## Escopo
 
