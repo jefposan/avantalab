@@ -4398,7 +4398,7 @@ function textoCanvasLimitado(ctx, texto, larguraMaxima) {
   return `${reduzido}…`;
 }
 
-function criarCanvasComprovante({ empresa = '', titulo, tituloDetalhes = 'Detalhes', cliente, data, etiqueta = '', linhas = [], resumo = [] }) {
+function criarCanvasComprovante({ empresa = '', titulo, tituloDetalhes = 'Detalhes', cliente, data, etiqueta = '', temaEtiqueta = 'azul', linhas = [], resumo = [] }) {
   const linhasExibidas = linhas.slice(0, 44);
   if (linhas.length > linhasExibidas.length) linhasExibidas.push({ principal: `+ ${linhas.length - linhasExibidas.length} itens adicionais`, secundario: '', valor: '' });
   const linhasRegulares = resumo.filter((linha) => !linha.destaque);
@@ -4418,15 +4418,16 @@ function criarCanvasComprovante({ empresa = '', titulo, tituloDetalhes = 'Detalh
   ctx.fillStyle = gradiente; ctx.fillRect(0, 0, largura, 260);
   const nomeEmpresa = String(empresa || state.acessoVendas?.empresa_nome || 'AvantaLab').trim();
   ctx.fillStyle = '#fff'; ctx.font = `900 ${nomeEmpresa.length > 28 ? 36 : nomeEmpresa.length > 20 ? 42 : 50}px Arial, sans-serif`; ctx.textAlign = 'center'; ctx.fillText(textoCanvasLimitado(ctx, nomeEmpresa.toUpperCase(), 900), largura / 2, 92); ctx.textAlign = 'left';
-  ctx.font = '700 30px Arial, sans-serif'; ctx.fillStyle = 'rgba(255,255,255,.94)'; ctx.fillText(textoCanvasLimitado(ctx, `Cliente: ${cliente}`, 690), 64, 190);
-  ctx.textAlign = 'right'; ctx.fillText(data, 1016, 190); ctx.textAlign = 'left';
+  ctx.font = '700 34px Arial, sans-serif'; ctx.fillStyle = 'rgba(255,255,255,.94)'; ctx.fillText(textoCanvasLimitado(ctx, `Cliente: ${cliente}`, 640), 64, 198);
+  ctx.textAlign = 'right'; ctx.fillText(data, 1016, 198); ctx.textAlign = 'left';
   let y = 318;
   if (etiqueta) {
-    ctx.font = '900 24px Arial, sans-serif';
-    const larguraEtiqueta = ctx.measureText(etiqueta).width + 60;
+    ctx.font = '900 33px Arial, sans-serif';
+    const larguraEtiqueta = ctx.measureText(etiqueta).width + 82;
     const xEtiqueta = (largura - larguraEtiqueta) / 2;
-    caminhoRetanguloArredondado(ctx, xEtiqueta, y - 30, larguraEtiqueta, 54, 27);
-    ctx.fillStyle = '#dff4ff'; ctx.fill(); ctx.fillStyle = '#075985'; ctx.textAlign = 'center'; ctx.fillText(etiqueta, largura / 2, y + 5); ctx.textAlign = 'left'; y += 124;
+    caminhoRetanguloArredondado(ctx, xEtiqueta, y - 39, larguraEtiqueta, 72, 36);
+    ctx.fillStyle = temaEtiqueta === 'verde' ? '#dcfce7' : '#dff4ff'; ctx.fill();
+    ctx.fillStyle = temaEtiqueta === 'verde' ? '#166534' : '#075985'; ctx.textAlign = 'center'; ctx.fillText(etiqueta, largura / 2, y + 11); ctx.textAlign = 'left'; y += 142;
   }
 
   if (linhasRegulares.length) {
@@ -4553,6 +4554,7 @@ async function compartilharPagamento(pagamentoId) {
     cliente: cliente?.nome || 'Cliente não informado',
     data: dataComprovante(pagamento.data_pagamento),
     etiqueta: 'Comprovante de pagamento',
+    temaEtiqueta: 'verde',
     linhas,
     resumo: [
       { rotulo: 'Saldo anterior', valor: moeda(resumo.saldoAnterior) },
@@ -5862,7 +5864,7 @@ function aplicarAtualizacaoPwaPendente() {
 
 if (!window.__VENDAS_MOBILE_EMBEDDED__ && 'serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('./sw.js?v=33').catch(() => {});
+    navigator.serviceWorker.register('./sw.js?v=34').catch(() => {});
   });
 }
 
