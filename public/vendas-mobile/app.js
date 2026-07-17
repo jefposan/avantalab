@@ -1935,6 +1935,16 @@ function atualizarRegistroPersistido(lista, salvo) {
     : [salvo, ...atual];
 }
 
+// O Dashboard não mantém totais próprios: ele sempre é calculado a partir de
+// vendas e pagamentos confirmados. Esta etapa concentra a atualização após um
+// lançamento para que cache e uma eventual tela de Dashboard aberta usem a
+// mesma revisão dos dados já conferidos no servidor.
+async function atualizarDashboardAposLancamento() {
+  revisaoDadosOperacionais += 1;
+  await salvarCacheVendas();
+  if (state.aba === 'dashboard' && !state.menuAberto) render();
+}
+
 async function reconciliarFinanceiroCliente(clienteId) {
   if (!backendAtivo || !clienteId) return;
   const dados = await window.VendasDb.loadClientFinancial(clienteId);
@@ -2380,7 +2390,7 @@ function renderDashboard() {
       <section class="dashboard-movement-card"><header><h3>${svgIcon('dollar')} Movimento financeiro</h3><small>${escapeHtml(nomeMesReferencia())}</small></header><div class="dashboard-finance-bars"><div><span>Vendas <b>${moeda(t.total)}</b></span><i><em style="width:${t.total / maiorMovimento * 100}%"></em></i></div><div><span>Recebimentos <b>${moeda(totalRecebido)}</b></span><i><em style="width:${totalRecebido / maiorMovimento * 100}%"></em></i></div></div></section>
       <section class="dashboard-consignment-card ${state.dashboardConsignadosExpandido ? 'expanded' : ''}"><header><div><h3>${svgIcon('package')} Estoque consignado</h3><small>${consignados.pedidos.length} ${consignados.pedidos.length === 1 ? 'consignado ativo' : 'consignados ativos'} · ${consignados.quantidade.toLocaleString('pt-BR')} unidades · ${moeda(consignados.total)}</small></div><button type="button" onclick="alternarConsignadosDashboard()" aria-expanded="${state.dashboardConsignadosExpandido}">${state.dashboardConsignadosExpandido ? 'Recolher' : 'Ver produtos'} ${state.dashboardConsignadosExpandido ? '⌃' : '⌄'}</button></header>${state.dashboardConsignadosExpandido ? `<div class="dashboard-consignment-products">${listaConsignados}</div>` : ''}</section>
       <section class="dashboard-tables">
-        <article class="dashboard-panel"><h3>${svgIcon('users')} Top 10 Clientes</h3><div class="dashboard-panel-body"><table><thead><tr><th>Cliente</th><th>Total comprado</th></tr></thead><tbody>${tabelaClientes}</tbody></table></div></article>
+        <article class="dashboard-panel dashboard-top-clients"><h3>${svgIcon('users')} Top 10 Clientes</h3><div class="dashboard-panel-body"><table><thead><tr><th>Cliente</th><th>Total comprado</th></tr></thead><tbody>${tabelaClientes}</tbody></table></div></article>
         <article class="dashboard-panel dashboard-inactive-panel"><h3>${svgIcon('calendar')}<span>Clientes sem compra</span><span class="dashboard-days-control"><button type="button" onclick="ajustarDiasInativosDashboard(-5)" aria-label="Diminuir dias">−</button><b>${limiteInativos} dias</b><button type="button" onclick="ajustarDiasInativosDashboard(5)" aria-label="Aumentar dias">+</button></span></h3><p class="dashboard-inactive-help">Sem pedidos nos últimos ${limiteInativos} dias.</p><div class="dashboard-panel-body"><table><thead><tr><th>Cliente</th><th>Última compra</th><th>Dias</th></tr></thead><tbody>${tabelaInativos}</tbody></table></div></article>
         <article class="dashboard-panel"><h3>${svgIcon('package')} Top 10 Produtos</h3><div class="dashboard-panel-body dashboard-product-chart">${graficoProdutos}</div></article>
         <article class="dashboard-panel"><h3>${svgIcon('target')} Rentabilidade</h3><div class="dashboard-panel-body profitability-report"><div><span>Receita de vendas</span><b>${moeda(t.total)}</b></div><div><span>Custo dos produtos</span><b>${moeda(t.custo)}</b></div><div class="highlight"><span>Margem de contribuição</span><b>${moeda(t.margem)}</b></div><div><span>Margem sobre vendas</span><b>${margemPercentual.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}%</b></div><div class="${t.produtosSemCusto ? 'cost-warning' : 'cost-complete'}"><span>Cadastro de custos</span><b>${t.produtosSemCusto ? `${t.produtosSemCusto} ${t.produtosSemCusto === 1 ? 'produto sem custo' : 'produtos sem custo'}` : 'Completo no período'}</b></div></div></article>
@@ -3673,6 +3683,7 @@ async function finalizarPedidoCliente() {
       state.menuAberto = false;
     }
     await confirmarMutacaoDadosVendas();
+    await atualizarDashboardAposLancamento();
     render();
     abrirPedidoCliente(salvo.id);
     toast(rascunho.editandoId ? 'Pedido atualizado.' : 'Pedido registrado. O comprovante está pronto para compartilhar.');
@@ -3844,6 +3855,7 @@ async function confirmarPagamentoCliente() {
     state.aba = 'clientes';
     state.menuAberto = false;
     await confirmarMutacaoDadosVendas();
+    await atualizarDashboardAposLancamento();
     render();
     abrirPagamentoClienteDetalhe(salvo.id);
     toast('Recebimento confirmado. Saldo conferido com o servidor.');
@@ -5825,7 +5837,7 @@ function aplicarAtualizacaoPwaPendente() {
 
 if (!window.__VENDAS_MOBILE_EMBEDDED__ && 'serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('./sw.js?v=30').catch(() => {});
+    navigator.serviceWorker.register('./sw.js?v=31').catch(() => {});
   });
 }
 
