@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.5.4.48 - 2026-07-17
+
+- Gestão Mobile: a faixa de mês e total ao detalhar lançamentos agora mantém contraste alto no modo escuro, evitando texto apagado em despesas e receitas.
+
 ## 1.5.4.47 - 2026-07-17
 
 - Gestão Mobile: refinados os ícones do seletor de sistemas, com traços mais finos e minimalistas para Gestão e Vendas.

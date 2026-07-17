@@ -1,8 +1,8 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.5.4.47 -->
+<!-- ava-version: 1.5.4.48 -->
 
-> Revisão 1.5.4.47: sem impacto operacional; refinamento visual dos ícones do seletor de sistemas.
+> Revisão 1.5.4.48: sem impacto operacional; contraste reforçado nos totais de detalhes de lançamentos no modo escuro.
 
 ## Escopo
 

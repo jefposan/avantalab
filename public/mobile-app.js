@@ -9966,12 +9966,15 @@
       .filter(function (item) { return item.despesa === nome; })
       .sort(function (a, b) { return Number(a.dia || 0) - Number(b.dia || 0); });
     var total = itens.reduce(function (soma, item) { return soma + Number(item.valor || 0); }, 0);
+    var totalFundo = state.darkMode ? 'border border-cyan-400/35 bg-cyan-500/15' : 'bg-cyan-50';
+    var totalRotulo = state.darkMode ? 'text-cyan-100' : 'text-cyan-900';
+    var totalValor = state.darkMode ? 'text-cyan-50' : 'text-cyan-950';
 
     return (
       '<div class="grid gap-3">' +
-        '<div class="flex items-center justify-between gap-3 rounded-xl bg-cyan-50 px-3 py-2">' +
-          '<span class="text-xs font-bold text-cyan-900">' + escapeHtml(nomeMesCompleto(state.mes)) + ' de ' + escapeHtml(state.ano) + '</span>' +
-          '<strong class="text-sm font-black text-cyan-950">' + dinheiro(total) + '</strong>' +
+        '<div class="flex items-center justify-between gap-3 rounded-xl px-3 py-2 ' + totalFundo + '">' +
+          '<span class="text-xs font-bold ' + totalRotulo + '">' + escapeHtml(nomeMesCompleto(state.mes)) + ' de ' + escapeHtml(state.ano) + '</span>' +
+          '<strong class="text-sm font-black ' + totalValor + '">' + dinheiro(total) + '</strong>' +
         '</div>' +
         (itens.length ? itens.map(function (item) {
           return '<div class="flex items-center justify-between gap-3 border-b border-slate-100 px-1 py-2.5 last:border-b-0">' +
@@ -13254,7 +13257,7 @@
     });
 
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/mobile-sw.js?v=259', { updateViaCache: 'none' }).then(function (registro) {
+      navigator.serviceWorker.register('/mobile-sw.js?v=260', { updateViaCache: 'none' }).then(function (registro) {
         if (registro && registro.update) registro.update();
       }).catch(function () {});
     }
