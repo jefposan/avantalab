@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.5.4.51 - 2026-07-17
+
+- Gestão Mobile: o aviso de duplicados agora identifica qualquer despesa com valor já lançado no mesmo mês, sem exigir que o nome também coincida.
+
 ## 1.5.4.50 - 2026-07-17
 
 - Gestão Mobile: corrigida a camada do aviso de possível despesa duplicada para que ele sempre apareça acima do formulário de lançamento.

@@ -1360,7 +1360,7 @@
             '<div><p class="text-[10px] font-black uppercase tracking-[0.16em] text-cyan-100">Conferência de lançamento</p><h2 id="aviso-duplicado-titulo" class="text-base font-black">Valor já existente</h2></div>' +
           '</header>' +
           '<div class="p-4">' +
-            '<div class="rounded-2xl border px-4 py-3 text-sm font-semibold leading-relaxed ' + detalhe + '">Já existe uma despesa com o mesmo nome e valor neste mês. Deseja adicioná-la mesmo assim?</div>' +
+            '<div class="rounded-2xl border px-4 py-3 text-sm font-semibold leading-relaxed ' + detalhe + '">Já existe uma despesa com este valor neste mês. Deseja adicioná-la mesmo assim?</div>' +
           '</div>' +
           '<footer class="grid grid-cols-2 gap-2 border-t border-slate-200 p-3 ' + (state.darkMode ? 'border-slate-700' : '') + '">' +
             '<button id="cancelar-aviso-duplicado" type="button" class="h-11 rounded-xl border border-slate-300 bg-white text-xs font-black uppercase tracking-wide text-slate-700 active:bg-slate-50">Revisar</button>' +
@@ -6179,7 +6179,7 @@
 
     if (state.duplicadosAtivo) {
       var existeIgual = state.lancamentos.some(function (item) {
-        return item.mes === state.mes && item.despesa === nome && Number(item.valor) === Number(valor);
+        return item.mes === state.mes && Number(item.valor) === Number(valor);
       });
 
       if (existeIgual && !ignorarAvisoDuplicado) {
@@ -13292,7 +13292,7 @@
     });
 
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/mobile-sw.js?v=262', { updateViaCache: 'none' }).then(function (registro) {
+      navigator.serviceWorker.register('/mobile-sw.js?v=263', { updateViaCache: 'none' }).then(function (registro) {
         if (registro && registro.update) registro.update();
       }).catch(function () {});
     }
