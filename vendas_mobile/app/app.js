@@ -1308,7 +1308,7 @@ function renderMenuMobile() {
   const organizando = state.organizandoSalaBotoes;
   const aniversariantesHoje = aniversariosHojeVendas();
   return `<section class="mobile-menu" aria-label="Menu principal">
-    <header class="mobile-menu-header"><div class="mobile-menu-brand">${logoVendas()}</div><div class="system-header-actions">${aniversariantesHoje.length ? `<button class="birthday-header-button" onclick="abrirAgendaAniversariantes()" aria-label="${aniversariantesHoje.length} aniversário${aniversariantesHoje.length === 1 ? '' : 's'} hoje">${svgIconEstavel('cake')}<i>${aniversariantesHoje.length}</i></button>` : ''}${podeTrocarParaGestaoVendas() ? `<button class="system-switch-header-button" onclick="abrirSeletorPerfilGestaoVendas()" aria-label="Ir para Gestão" title="Ir para Gestão">${iconeTrocaSistemaVendas()}</button>` : ''}</div></header>
+    <header class="mobile-menu-header"><div class="mobile-menu-brand">${logoVendas()}</div><div class="system-header-actions">${aniversariantesHoje.length ? `<button class="birthday-header-button" onclick="abrirAgendaAniversariantes()" aria-label="${aniversariantesHoje.length} aniversário${aniversariantesHoje.length === 1 ? '' : 's'} hoje">${svgIconEstavel('cake')}<i>${aniversariantesHoje.length}</i></button>` : ''}${podeTrocarParaGestaoVendas() ? `<button class="system-switch-header-button" onclick="abrirSeletorPerfilGestaoVendas()" aria-label="Ir para Gestão" title="Ir para Gestão">${iconeTopoTrocaSistemaVendas()}</button>` : ''}</div></header>
     <div class="mobile-menu-grid-wrap${organizando ? ' is-organizing' : ''}"><div class="mobile-menu-organize-row"><span class="mobile-menu-organize-instruction" ${organizando ? '' : 'hidden'}>Clique no botão e arraste para a nova posição</span><button type="button" class="mobile-menu-organize" onclick="alternarOrganizacaoSalaBotoes()" aria-label="${organizando ? 'Concluir organização da sala' : 'Organizar sala'}" title="${organizando ? 'Concluir' : 'Organizar sala'}">${iconeOrganizarSala(organizando)}</button></div><div class="mobile-menu-grid">${itens.map(([idAba, arquivo, label]) => `<button type="button" data-sala-botao="${idAba}" class="mobile-menu-card${organizando ? ' is-organizable' : ''}" ${organizando ? `onpointerdown="iniciarArrasteSalaBotoes(event,'${idAba}')" onpointermove="moverArrasteSalaBotoes(event)" onpointerup="finalizarArrasteSalaBotoes(event)" onpointercancel="finalizarArrasteSalaBotoes(event)"` : `onclick="setAba('${idAba}')"`}><img src="./assets/menu/${arquivo}" alt="${label}" decoding="sync" fetchpriority="high" onerror="this.closest('.mobile-menu-card')?.classList.add('image-failed')" /><span class="mobile-menu-card-fallback" aria-hidden="true">${escapeHtml(label)}</span></button>`).join('')}</div></div>
     <div class="mobile-menu-assistance">
       <button type="button" class="mobile-ava-card" onclick="abrirChatIAVendas()">
@@ -1515,6 +1515,10 @@ function iconeNavegacaoInferior(tipo) {
 
 function iconeTrocaSistemaVendas() {
   return '<svg class="svg-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="8" height="7" rx="2"/><rect x="13" y="13" width="8" height="7" rx="2"/><path d="M15 7h4a2 2 0 0 1 2 2v1M9 17H5a2 2 0 0 1-2-2v-1M18 7l-2-2m2 2-2 2M6 17l2-2m-2 2 2 2"/></svg>';
+}
+
+function iconeTopoTrocaSistemaVendas() {
+  return '<img src="./assets/icone-troca-gestao.png" alt="" aria-hidden="true" />';
 }
 
 function itemNavegacaoInferior(id, tipo, rotulo, acao) {
@@ -5916,7 +5920,7 @@ function aplicarAtualizacaoPwaPendente() {
 
 if (!window.__VENDAS_MOBILE_EMBEDDED__ && 'serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('./sw.js?v=39').catch(() => {});
+    navigator.serviceWorker.register('./sw.js?v=40').catch(() => {});
   });
 }
 

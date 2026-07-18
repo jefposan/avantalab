@@ -1,4 +1,4 @@
-const CACHE_NAME = 'avantalab-vendas-mobile-v57';
+const CACHE_NAME = 'avantalab-vendas-mobile-v58';
 const ASSETS = [
   './',
   './index.html',
@@ -11,6 +11,7 @@ const ASSETS = [
   './data/tridium-package.json',
   './assets/icon-192.svg',
   './assets/icon-512.svg',
+  './assets/icone-troca-gestao.png',
   './assets/icons.svg'
 ];
 
