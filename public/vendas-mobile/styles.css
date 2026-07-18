@@ -959,7 +959,7 @@ body { background: #fff; color: var(--ink); }
 .clientes-page .module-sticky-head .module-title h2, .produtos-page .module-sticky-head .module-title h2, .pedidos-page .module-sticky-head .module-title h2, .pagamentos-page .module-sticky-head .module-title h2, .settings-page .module-sticky-head .module-title h2, .publicacoes-page .module-sticky-head .module-title h2, .divulgacao-page .module-sticky-head .module-title h2 { color: #0A1F44; }
 .clientes-page .client-card-grid, .clientes-page .empty-module, .produtos-page .module-product-grid, .produtos-page .empty-module { margin-top: 18px; }
 .pagamentos-page.is-searching { padding-top: 208px; }
-.pagamentos-page .debt-card-grid, .pagamentos-page .publication-empty { margin-top: 0; }
+.pagamentos-page .debt-card-grid, .pagamentos-page .publication-empty { margin-top: 12px; }
 .divulgacao-page .materials-grid { margin-top: 18px; }
 .updates-feed { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 14px; }
 .update-card, .information-card, .feedback-sales-card { overflow: hidden; border: 1px solid #d8e5ef; border-radius: 16px; background: #fff; box-shadow: 0 8px 22px rgba(15,42,80,.08); }
@@ -1546,7 +1546,9 @@ body { background: #fff; color: var(--ink); }
 .payment-order-button .svg-icon { width: 14px; height: 14px; }
 .payment-order-button .svg-icon:last-child { width: 12px; }
 .payment-results-stats { justify-content: flex-start; }
-.payment-results-stats span { min-height: 30px; box-sizing: border-box; padding: 7px 12px; }
+.pagamentos-page .module-sticky-head { gap: 8px; padding-top: 12px; padding-bottom: 9px; }
+.payment-results-stats { margin-top: -3px; margin-bottom: -3px; }
+.payment-results-stats span { min-height: 26px; box-sizing: border-box; padding: 4px 10px; font-size: 12px; }
 .client-card.client-birthday-today { border-color: #f0445f; box-shadow: 0 0 0 1px rgba(240,68,95,.28), 0 8px 20px rgba(190,24,93,.12); }
 .client-card.inactive { opacity: .7; filter: grayscale(.8); }
 .client-disabled { position: absolute; top: 0; right: 0; border-radius: 0 0 0 8px; padding: 4px 8px; color: #fff; background: #ef4444; font-size: 10px; font-weight: 800; }

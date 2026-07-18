@@ -636,6 +636,25 @@ function logoVendas() {
   return `<span class="vendas-brand-logo"><img class="vendas-logo-claro" src="/vendas-mobile/assets/logo-vendas-claro.png" alt="AvantaLab — Cada venda, um avanço"><img class="vendas-logo-escuro" src="/vendas-mobile/assets/logo-vendas-escuro.png" alt="" aria-hidden="true"></span>`;
 }
 
+function acoesCabecalhoSistema(aniversariantesHoje) {
+  return aniversariantesHoje.length
+    ? `<button class="birthday-header-button" onclick="abrirAgendaAniversariantes()" aria-label="${aniversariantesHoje.length} aniversário${aniversariantesHoje.length === 1 ? '' : 's'} hoje">${svgIconEstavel('cake')}<i>${aniversariantesHoje.length}</i></button>`
+    : '';
+}
+
+function preservarCabecalhoSistema(cabecalhoAnterior, aniversariantesHoje) {
+  const destino = app.querySelector('[data-system-header-slot]');
+  if (!destino) return;
+  if (!cabecalhoAnterior) {
+    destino.outerHTML = `<header class="system-header"><button class="system-brand brand-home" onclick="abrirSalaBotoes()" aria-label="Ir para a sala de botões">${logoVendas()}</button><div class="system-header-actions">${acoesCabecalhoSistema(aniversariantesHoje)}</div></header>`;
+    return;
+  }
+  const acoes = cabecalhoAnterior.querySelector('.system-header-actions');
+  const proximoConteudoAcoes = acoesCabecalhoSistema(aniversariantesHoje);
+  if (acoes && acoes.innerHTML !== proximoConteudoAcoes) acoes.innerHTML = proximoConteudoAcoes;
+  destino.replaceWith(cabecalhoAnterior);
+}
+
 function setAba(aba) {
   const entradaClientes = aba === 'clientes'
     && (state.aba !== 'clientes' || state.menuAberto || Boolean(state.busca) || Boolean(buscaAplicada));
@@ -976,7 +995,8 @@ function render() {
   }
   if (!assinaturaSalaAtual) cancelarGarantiaSalaBotoes();
   const aniversariantesHoje = aniversariosHojeVendas();
-  const cabecalho = `<header class="system-header"><button class="system-brand brand-home" onclick="abrirSalaBotoes()" aria-label="Ir para a sala de botões">${logoVendas()}</button><div class="system-header-actions">${aniversariantesHoje.length ? `<button class="birthday-header-button" onclick="abrirAgendaAniversariantes()" aria-label="${aniversariantesHoje.length} aniversário${aniversariantesHoje.length === 1 ? '' : 's'} hoje">${svgIconEstavel('cake')}<i>${aniversariantesHoje.length}</i></button>` : ''}</div></header>`;
+  const cabecalhoAnterior = app.querySelector('.system-header');
+  cabecalhoAnterior?.remove();
   app.innerHTML = `
     <aside class="sidebar ${state.menuAberto ? 'open' : ''}">
       <button class="sidebar-brand brand-home" onclick="abrirSalaBotoes()" aria-label="Ir para a sala de botões">${logoVendas()}</button>
@@ -996,7 +1016,7 @@ function render() {
       <footer>Desenvolvido por <b>AvantaLab</b></footer>
     </aside>
     <div class="main-area">
-      ${cabecalho}
+      <div data-system-header-slot></div>
       <main class="content-area">${renderConteudo()}</main>
     </div>
     ${state.menuAberto ? renderMenuMobile() : ''}
@@ -1005,6 +1025,7 @@ function render() {
     ${state.agendaFormAberto && state.aba !== 'agenda' ? renderFormularioAgendaVendas() : ''}
     ${renderSeletorSistemaVendas()}
   `;
+  preservarCabecalhoSistema(cabecalhoAnterior, aniversariantesHoje);
   assinaturaSalaRenderizada = assinaturaSalaAtual;
   if (assinaturaSalaAtual) agendarGarantiaSalaBotoes();
   if (state.aba === 'clientes') requestAnimationFrame(configurarDestaqueClientes);
@@ -5991,7 +6012,7 @@ function aplicarAtualizacaoPwaPendente() {
 
 if (!window.__VENDAS_MOBILE_EMBEDDED__ && 'serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('./sw.js?v=45').catch(() => {});
+    navigator.serviceWorker.register('./sw.js?v=46').catch(() => {});
   });
 }
 
