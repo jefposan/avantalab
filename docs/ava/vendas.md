@@ -1,8 +1,8 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.6.0.46 -->
+<!-- ava-version: 1.6.0.47 -->
 
-> Revisão 1.6.0.46: sem impacto operacional no Vendas Mobile; validação de subempresa foi refinada na Gestão Web.
+> Revisão 1.6.0.47: sem impacto operacional no Vendas Mobile; recorrência foi compatibilizada na Gestão Web.
 
 ## Escopo e navegação
 

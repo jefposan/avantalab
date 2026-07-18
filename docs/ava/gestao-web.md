@@ -1,8 +1,8 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.6.0.46 -->
+<!-- ava-version: 1.6.0.47 -->
 
-> Revisão 1.6.0.46: validações de Empresa e Subempresa usam aviso em popup; endereço de subempresa é opcional.
+> Revisão 1.6.0.47: o dia de vencimento legado não bloqueia mais frequências recorrentes.
 
 ## Escopo
 

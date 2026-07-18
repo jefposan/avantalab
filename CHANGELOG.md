@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.6.0.47 - 2026-07-18
+
+- O campo legado `dia_vencimento` deixou de bloquear frequências recorrentes;
+  o dia-base continua gravado quando aplicável.
+
 ## 1.6.0.46 - 2026-07-18
 
 - Validações de Empresa e Subempresa agora abrem o aviso padrão em popup. Para

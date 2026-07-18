@@ -245,10 +245,11 @@ export function criarRepoSupabase(empresaId: string, cliente: SupabaseClient = s
         shopping_galeria: dados.shoppingGaleria, loja_sala: dados.lojaSala, responsavel: dados.responsavel,
         valor_combinado: dados.valorCombinado, frequencia_recebimento: dados.frequenciaRecebimento,
         dias_semana: dados.configuracaoRecorrencia.diasSemana, dia_mes: dados.configuracaoRecorrencia.diaMes,
-        mes_inicio: dados.configuracaoRecorrencia.mesInicio, ativo: dados.ativo,
+        mes_inicio: dados.configuracaoRecorrencia.mesInicio, dia_vencimento: dados.configuracaoRecorrencia.diaMes,
+        ativo: dados.ativo,
       }).select('id').single(), 'Erro ao cadastrar subempresa.');
     },
-    async editarSubempresa(id, dados) { await exigir(cliente.from('recebimentos_subempresas').update({ nome: dados.nome, endereco: dados.endereco, cep: dados.cep, logradouro: dados.logradouro, bairro: dados.bairro, cidade: dados.cidade, estado: dados.estado, numero: dados.numero, complemento: dados.complemento, responsavel: dados.responsavel, valor_combinado: dados.valorCombinado, frequencia_recebimento: dados.frequenciaRecebimento, dias_semana: dados.configuracaoRecorrencia.diasSemana, dia_mes: dados.configuracaoRecorrencia.diaMes, mes_inicio: dados.configuracaoRecorrencia.mesInicio, atualizado_em: new Date().toISOString() }).eq('empresa_id', empresaId).eq('id', id).select('id'), 'Erro ao editar subempresa.'); },
+    async editarSubempresa(id, dados) { await exigir(cliente.from('recebimentos_subempresas').update({ nome: dados.nome, endereco: dados.endereco, cep: dados.cep, logradouro: dados.logradouro, bairro: dados.bairro, cidade: dados.cidade, estado: dados.estado, numero: dados.numero, complemento: dados.complemento, responsavel: dados.responsavel, valor_combinado: dados.valorCombinado, frequencia_recebimento: dados.frequenciaRecebimento, dias_semana: dados.configuracaoRecorrencia.diasSemana, dia_mes: dados.configuracaoRecorrencia.diaMes, mes_inicio: dados.configuracaoRecorrencia.mesInicio, dia_vencimento: dados.configuracaoRecorrencia.diaMes, atualizado_em: new Date().toISOString() }).eq('empresa_id', empresaId).eq('id', id).select('id'), 'Erro ao editar subempresa.'); },
     async excluirSubempresa(id) { await exigir(cliente.from('recebimentos_subempresas').delete().eq('empresa_id', empresaId).eq('id', id).select('id'), 'Erro ao excluir subempresa.'); },
     async alternarSubempresa(id, ativo) { await exigir(cliente.from('recebimentos_subempresas').update({ ativo, atualizado_em: new Date().toISOString() }).eq('empresa_id', empresaId).eq('id', id).select('id'), 'Erro ao alterar subempresa.'); },
     async criarColaborador(dados) { await chamarApi(cliente, '/api/recebimentos/criar-colaborador', { empresaId, ...dados }); },
