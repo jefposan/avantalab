@@ -14,6 +14,7 @@ import ModalDespesasBase from './components/ModalDespesasBase';
 import ModalLogo from './components/ModalLogo';
 import ModulosModal, { type Modulo } from './components/ModulosModal';
 import PontoAdminModal, { type AbaPontoAdmin, type FuncionarioPonto, type PontoConfig, type PontoDiaNaoUtil } from './components/PontoAdminModal';
+import RecebimentosAdminModal from './components/RecebimentosAdminModal';
 import SobreModal from './components/SobreModal';
 import ModalConfirmacao from "./components/ModalConfirmacao";
 import DraggableModalCard from './components/DraggableModalCard';
@@ -189,6 +190,7 @@ type EntradaFaturamento = {
   valor: number;
   status: string | null;
   tipo: string | null;
+  etiquetaOrigem?: string | null;
 };
 
 type CaixinhaMovimento = {
@@ -745,6 +747,7 @@ const [despesaRelatorioAberta, setDespesaRelatorioAberta] = useState<{
   const [modulosCarregando, setModulosCarregando] = useState(false);
   const [moduloAcaoId, setModuloAcaoId] = useState<string | null>(null);
   const [modalPontoAdmin, setModalPontoAdmin] = useState(false);
+  const [modalRecebimentos, setModalRecebimentos] = useState(false);
   const [abaInicialPontoAdmin, setAbaInicialPontoAdmin] = useState<AbaPontoAdmin>('lista');
   const [instanciaPontoAdmin, setInstanciaPontoAdmin] = useState(0);
   const [relatorioInicialPonto, setRelatorioInicialPonto] = useState<{ funcionarioUserId: string; data: string } | null>(null);
@@ -872,6 +875,9 @@ const podeExcluirLancamentos =
   perfilUsuario === 'gestor_master' || perfilUsuario === 'administrador';
 
 const podeGerenciarPonto =
+  perfilUsuario === 'gestor_master' || perfilUsuario === 'administrador';
+
+const podeGerenciarRecebimentos =
   perfilUsuario === 'gestor_master' || perfilUsuario === 'administrador';
 
 const podeAcessarAjustes =
@@ -1690,6 +1696,7 @@ useEffect(() => {
         valor: Number(entrada.valor),
         status: entrada.status ? textoRegistro(entrada.status) : null,
         tipo: entrada.tipo_obs ? textoRegistro(entrada.tipo_obs) : null,
+        etiquetaOrigem: entrada.origem_etiqueta ? textoRegistro(entrada.origem_etiqueta) : null,
       }))
     );
 
@@ -4156,8 +4163,8 @@ const confirmarReceitaPrevista = async (id: string | number) => {
     abrirAviso('Erro', 'Não foi possível localizar a receita.');
     return;
   }
-  if (entrada.tipo === 'vendas_mobile_sistema') {
-    abrirAviso('Receita sincronizada', 'Esta receita é atualizada automaticamente pelo Vendas Mobile e não pode ser alterada no Gestão.');
+  if (entrada.tipo === 'vendas_mobile_sistema' || entrada.tipo === 'recebimentos_sistema') {
+    abrirAviso('Receita protegida', 'Esta receita é controlada pelo módulo de origem e não pode ser alterada no Gestão.');
     return;
   }
 
@@ -4322,8 +4329,8 @@ Deseja excluir TODAS as parcelas ou apenas esta?`,
 };
 
 const excluirEntradaFaturamento = async (entrada: TabelaEntradaFaturamento) => {
-  if (entrada.tipo === 'vendas_mobile_sistema') {
-    abrirAviso('Receita sincronizada', 'Esta receita é atualizada automaticamente pelo Vendas Mobile e não pode ser excluída no Gestão.');
+  if (entrada.tipo === 'vendas_mobile_sistema' || entrada.tipo === 'recebimentos_sistema') {
+    abrirAviso('Receita protegida', 'Esta receita é controlada pelo módulo de origem e não pode ser excluída no Gestão.');
     return;
   }
   if (!podeExcluirLancamentos) {
@@ -4511,8 +4518,8 @@ const handleEntradaFaturamentoValorChange = (
 };
 
 const iniciarEdicaoEntradaFaturamento = (entrada: TabelaEntradaFaturamento) => {
-  if (entrada.tipo === 'vendas_mobile_sistema') {
-    abrirAviso('Receita sincronizada', 'Esta receita é atualizada automaticamente pelo Vendas Mobile e não pode ser editada no Gestão.');
+  if (entrada.tipo === 'vendas_mobile_sistema' || entrada.tipo === 'recebimentos_sistema') {
+    abrirAviso('Receita protegida', 'Esta receita é controlada pelo módulo de origem e não pode ser editada no Gestão.');
     return;
   }
   if (!podeEditarLancamentos) {
@@ -5004,6 +5011,7 @@ const recarregarDadosFinanceirosAtual = async () => {
       valor: Number(entrada.valor),
       status: entrada.status ? textoRegistro(entrada.status) : null,
       tipo: entrada.tipo_obs ? textoRegistro(entrada.tipo_obs) : null,
+      etiquetaOrigem: entrada.origem_etiqueta ? textoRegistro(entrada.origem_etiqueta) : null,
     }))
   );
 
@@ -5077,6 +5085,16 @@ useEffect(() => {
     .on(
       'postgres_changes',
       { event: '*', schema: 'public', table: 'recorrencias', filter: 'empresa_id=eq.' + empresaId },
+      () => { recarregarDadosFinanceirosAtual(); }
+    )
+    .on(
+      'postgres_changes',
+      { event: '*', schema: 'public', table: 'faturamentos_entradas', filter: 'empresa_id=eq.' + empresaId },
+      () => { recarregarDadosFinanceirosAtual(); }
+    )
+    .on(
+      'postgres_changes',
+      { event: '*', schema: 'public', table: 'faturamentos', filter: 'empresa_id=eq.' + empresaId },
       () => { recarregarDadosFinanceirosAtual(); }
     )
     .on(
@@ -7424,6 +7442,15 @@ if (validacaoTelefoneObrigatoria) {
   darkMode={darkMode}
 />
 
+<RecebimentosAdminModal
+  aberto={modalRecebimentos && podeGerenciarRecebimentos && modulosAtivos.includes('recebimentos_presencial')}
+  empresaId={empresaId || ''}
+  perfil={perfilUsuario === 'administrador' ? 'administrador' : 'gestor'}
+  darkMode={darkMode}
+  onFechar={() => setModalRecebimentos(false)}
+  onFinanceiroAtualizado={notificarFinanceiroAtualizado}
+/>
+
 <SobreModal
   aberto={modalSobre}
   onFechar={() => setModalSobre(false)}
@@ -9445,6 +9472,22 @@ name="novo-usuario-login"
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
               Ponto
+            </button>
+          </Tooltip>
+        )}
+
+        {/* 4a. Recebimentos Presencial */}
+        {modulosAtivos.includes('recebimentos_presencial') && podeGerenciarRecebimentos && (
+          <Tooltip texto="Gerencie empresas, colaboradores e a conferência dos recebimentos em campo." posicao="bottom">
+            <button
+              onClick={() => { setAjustesAberto(false); setModalRecebimentos(true); }}
+              className="whitespace-nowrap bg-slate-800 hover:bg-slate-700 px-3 py-1.5 rounded-lg border transition-colors font-bold shadow flex items-center gap-1.5 text-xs"
+              style={{ borderColor: corPrimaria }}
+            >
+              <svg className="h-3.5 w-3.5" fill="none" stroke="#ffffff" viewBox="0 0 24 24" aria-hidden="true">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 3h12v18l-2.5-1.7L13 21l-2.5-1.7L8 21l-2-1.4V3Zm3 5h6M9 12h6M9 16h3" />
+              </svg>
+              Recebimentos
             </button>
           </Tooltip>
         )}

@@ -89,9 +89,9 @@
   z-index: 0;
   width: 100%;
   height: calc(var(--topo) + var(--raio));
-  border-top-right-radius: var(--raio);
+  /* Um único recorte: dupla suavização (clip-path + overflow/border-radius)
+     enfraquecia a borda drop-shadow no canto arredondado. */
   clip-path: inset(0 0 0 0 round 0 var(--raio) 0 0);
-  overflow: hidden;
   pointer-events: none;
 }
 

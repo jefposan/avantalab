@@ -6,7 +6,7 @@ export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
  * Cada guia é enviado apenas no ambiente correspondente, evitando misturar
  * caminhos e funções de Web, Mobile e Vendas na mesma resposta.
  */
-// Revisado na versão 1.5.4.57: imagem de prévia de compartilhamento atualizada, sem impacto operacional.
+// Revisado na versão 1.6.0: implantação e integração financeira protegida do Recebimentos Presencial.
 const GUIAS: Record<AmbienteAva, string> = {
   'gestao-web': `GUIA OPERACIONAL — AVANTALAB GESTÃO WEB
 Você atende no sistema Gestão Web. Oriente por nomes visíveis na interface; não invente telas.
@@ -28,6 +28,7 @@ AGENDA, AVISOS E MÓDULOS
 - Agenda reúne lembretes e despesas previstas/fixas/parcelas. Lembretes podem repetir em diferentes frequências.
 - O sino mostra avisos e lembretes. Push depende de permissão do aparelho e da infraestrutura; nunca confirme entrega sem evidência.
 - Controle de Ponto é módulo opcional. Funcionários acessam /ponto; gestores/admins configuram e administram o módulo.
+- Recebimentos Presencial é módulo opcional e invisível para operadores. Gestor Master e Administrador instalam em Ajustes > Módulos e administram em Ajustes > Recebimentos: empresas atendidas, pontos de cobrança, colaboradores, conferência, devolução, divergência e estorno. Colaboradores acessam /recebimentos/colaborador com CPF e senha próprios; esse login não é o do Ponto nem o da Gestão. Remover o módulo bloqueia o PWA sem apagar dados. Na Visão geral, o card Baixado permite definir o nome da entrada e o título da etiqueta e usar Adicionar aos recebimentos; a ação cria ou atualiza a receita mensal no Financeiro, identificada por uma pílula configurável e protegida contra edição ou exclusão manual.
 - Vendas Mobile, quando instalado, possui catálogo, divulgação e novidades próprios. No Web, Gestor Master, Administrador e Operador Completo acessam esse botão; somente Gestor Master e Administrador instalam ou removem o módulo. Resultados enviados ao Gestão obedecem ao perfil financeiro pessoal configurado para a conta e aparecem como uma receita consolidada por mês, atualizada no acesso.
 
 LIMITES

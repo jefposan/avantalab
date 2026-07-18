@@ -1,8 +1,8 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.5.4.57 -->
+<!-- ava-version: 1.6.0 -->
 
-> Revisão 1.5.4.57: sem impacto operacional; imagem de prévia de compartilhamento atualizada.
+> Revisão 1.6.0: sem impacto operacional na Gestão Mobile; o Recebimentos Presencial e sua integração financeira são operados pela Gestão Web.
 
 ## Escopo
 

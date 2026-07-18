@@ -1,0 +1,16 @@
+{
+  "name": "Recebimentos em Campo",
+  "short_name": "Recebimentos",
+  "description": "Registro de recebimentos em dinheiro em campo — AvantaLab.",
+  "id": "/recebimentos/colaborador",
+  "start_url": "/recebimentos/colaborador",
+  "scope": "/recebimentos/colaborador",
+  "display": "standalone",
+  "background_color": "#003E73",
+  "theme_color": "#003E73",
+  "orientation": "portrait",
+  "icons": [
+    { "src": "/images/recebimentos-icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/images/recebimentos-icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" }
+  ]
+}

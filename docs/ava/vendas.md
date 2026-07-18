@@ -1,8 +1,8 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.5.4.57 -->
+<!-- ava-version: 1.6.0 -->
 
-> Revisão 1.5.4.57: sem impacto operacional; imagem de prévia de compartilhamento atualizada.
+> Revisão 1.6.0: sem impacto operacional no Vendas Mobile; o Recebimentos Presencial permanece independente do Vendas.
 
 ## Escopo e navegação
 
@@ -101,6 +101,19 @@ dúvida dentro do Vendas sempre que a função existir ali.
 - Pagamentos registram valor, desconto, data e forma. Edição/exclusão recalcula
   saldos e relatórios. Comprovantes podem ser reabertos, editados ou excluídos no
   histórico do cliente.
+- Assim que um pedido ou pagamento é confirmado no servidor, o Dashboard é
+  recalculado com a mesma revisão salva no cache local. Totais, recebimentos,
+  ranking e indicadores do período já incluem o lançamento ao abrir o Dashboard.
+- Os comprovantes priorizam leitura: título, cliente, itens, valores e saldo
+  final usam fonte ampliada. No Dashboard, a tabela **Top 10 Clientes** também
+  usa fonte maior para facilitar a conferência.
+- A imagem compartilhada de pedido ou pagamento usa cabeçalho com empresa,
+  cliente e data; não leva os botões da tela. Ela separa saldo anterior, valor
+  do lançamento e saldo atual, deixando os dois últimos em faixas maiores para
+  leitura imediata. O nome da empresa fica centralizado, e a lista aparece como
+  **Detalhes do pedido** ou **Detalhes do pagamento**. As pílulas de pedido são
+  azuis e as de pagamento verdes; cliente, data e o texto da pílula usam fonte
+  ampliada.
 - Ao confirmar um pagamento, o botão permanece bloqueado durante o envio. Antes
   de liberar o comprovante, o Vendas relê no servidor os pedidos e pagamentos da
   cliente e atualiza o saldo; caches financeiros de versões anteriores são
@@ -116,6 +129,10 @@ dúvida dentro do Vendas sempre que a função existir ali.
 ## Agenda, conteúdo e configurações
 
 - Agenda cria lembretes de visita, entrega e recebimento e permite mudar datas.
+- **Gestor Master**, **Administrador** e **Operador Completo** podem criar,
+  editar e excluir novidades, pastas, subpastas, imagens e vídeos em
+  Divulgação, desde que o módulo Vendas Mobile esteja ativo no perfil.
+  Operador Completo não instala módulos nem administra acessos de usuários.
 - Novidades vêm da empresa comercial vinculada. Divulgação navega por
   pastas/subpastas e abre fotos/vídeos para visualização e compartilhamento.
 - Configurações reúne conta, celular/SMS, senha, aparência, metas, catálogo,

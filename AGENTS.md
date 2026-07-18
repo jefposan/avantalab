@@ -4,6 +4,18 @@
 This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` before writing any code. Heed deprecation notices.
 <!-- END:nextjs-agent-rules -->
 
+## PADRÃO AVANTA — padrão oficial de desenvolvimento
+
+- Identificador oficial: `PADRAO-AVANTA`.
+- Antes de criar ou alterar tela, módulo, sistema, formulário, campo, card,
+  modal, tabela, preferência ou componente visual, ler integralmente
+  `docs/padrao-avanta/README.md` e os documentos que seu índice indicar.
+- No início do trabalho, informar qual versão do PADRÃO AVANTA foi consultada.
+- Não criar componente visual local quando houver componente oficial equivalente.
+- Projetos ou sistemas plugados devem apontar seu próprio `AGENTS.md` para o
+  endereço absoluto do padrão ou invocar a skill pessoal `$padrao-avanta`.
+- Antes de concluir, executar `npm run verificar:padrao-avanta`.
+
 ## Versionamento do AvantaLab
 
 - A versao oficial do sistema fica em `app/lib/version.ts`.

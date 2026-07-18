@@ -27,6 +27,7 @@ function iconeModulo(icone: string): string {
   const mapa: Record<string, string> = {
     relogio: '🕐',
     vendas: '🛒',
+    recebimentos: '💵',
     crm: '👥',
     custos: '🧮',
   };

@@ -16,12 +16,21 @@ import styles from './AvantaCard.module.css';
 // ─────────────────────────────────────────────────────────────
 
 type AvantaCardProps = {
-  title?: string;
+  // Aceita texto simples ou um nó (ex.: título com complemento em fonte menor).
+  title?: React.ReactNode;
   children: React.ReactNode;
+  // ── Modo simples ─────────────────────────────────────────────
+  // Informe `corPrimaria` (e opcionalmente `darkMode`) e o card monta o
+  // visual completo sozinho via criarAvantaShellPreset. Sem necessidade de
+  // style/bodyStyle manuais. `plato` é o conteúdo do canto superior direito.
+  corPrimaria?: string;
+  darkMode?: boolean;
+  plato?: React.ReactNode;
+  // ── Modo avançado (compatibilidade) ──────────────────────────
   onSettingsClick?: () => void;
   // Props do sistema de drag and drop (ex.: listeners/attributes do dnd-kit).
   dragHandleProps?: React.HTMLAttributes<HTMLDivElement>;
-  headerRight?: React.ReactNode;
+  headerRight?: React.ReactNode; // equivalente a `plato`
   className?: string;
   style?: React.CSSProperties;
   bodyClassName?: string;
@@ -52,6 +61,10 @@ export function criarAvantaShellPreset({ corPrimaria, darkMode }: AvantaShellPre
     `radial-gradient(ellipse at 67% 100%, rgba(15, 23, 42, ${darkMode ? '0.34' : '0.18'}) 0%, rgba(15, 23, 42, ${darkMode ? '0.16' : '0.08'}) 42%, transparent 70%)`,
   ].join(', ');
   const textoSecundario = darkMode ? '#94a3b8' : '#64748b';
+  // Contorno ÚNICO do card: drop-shadows sequenciais de 1px seguem a silhueta
+  // inteira (corpo, vale, curva e platô) com espessura uniforme. Não combinar
+  // com bordas inset no corpo — era isso que deixava o platô diferente.
+  const contorno = `drop-shadow(0 -1px 0 ${borda}) drop-shadow(0 1px 0 ${borda}) drop-shadow(-1px 0 0 ${borda}) drop-shadow(1px 0 0 ${borda})`;
 
   return {
     bodyStyle: { background: superficie },
@@ -64,13 +77,12 @@ export function criarAvantaShellPreset({ corPrimaria, darkMode }: AvantaShellPre
       ['--avanta-tras-overlay' as string]: sombraEntreCamadas,
       ['--avanta-front-bg' as string]: superficie,
       ['--avanta-body-bg' as string]: superficie,
-      ['--avanta-body-shadow' as string]: `inset 1px 0 0 ${borda}, inset -1px 0 0 ${borda}, inset 0 -1px 0 ${borda}`,
       ['--avanta-body-top-left-radius' as string]: '0px',
       ['--avanta-title-color' as string]: 'currentColor',
       ['--avanta-accent-bg' as string]: corPrimaria,
       ['--avanta-control-color' as string]: textoSecundario,
       ['--avanta-control-hover-bg' as string]: darkMode ? 'rgba(51, 65, 85, 0.75)' : 'rgba(241, 245, 249, 0.9)',
-      ['--avanta-front-filter' as string]: `drop-shadow(0 -0.5px 0 ${borda}) drop-shadow(0 0.5px 0 ${borda}) drop-shadow(-0.5px 0 0 ${borda}) drop-shadow(0.5px 0 0 ${borda})`,
+      ['--avanta-front-filter' as string]: contorno,
     } as React.CSSProperties,
   };
 }
@@ -78,6 +90,9 @@ export function criarAvantaShellPreset({ corPrimaria, darkMode }: AvantaShellPre
 export function AvantaCard({
   title,
   children,
+  corPrimaria,
+  darkMode = false,
+  plato,
   onSettingsClick,
   dragHandleProps,
   headerRight,
@@ -88,10 +103,20 @@ export function AvantaCard({
   hideDragHandle = false,
   hideMenu = false,
 }: AvantaCardProps) {
+  // Modo simples: com `corPrimaria`, o preset é aplicado internamente.
+  // `style`/`bodyStyle` continuam funcionando como overrides pontuais.
+  const preset = React.useMemo(
+    () => (corPrimaria ? criarAvantaShellPreset({ corPrimaria, darkMode }) : null),
+    [corPrimaria, darkMode],
+  );
+  const cardStyle = preset ? { ...preset.cardStyle, ...style } : style;
+  const corpoStyle = preset ? { ...preset.bodyStyle, ...bodyStyle } : bodyStyle;
+  const conteudoPlato = plato ?? headerRight;
+
   return (
     <section
       className={`${styles.card}${className ? ` ${className}` : ''}`}
-      style={style}
+      style={cardStyle}
     >
       {/* CARD DE TRÁS: título (aparece pelo recorte do card da frente) */}
       <div className={styles.cardTras}>
@@ -120,7 +145,7 @@ export function AvantaCard({
         </svg>
 
         <div className={styles.plato}>
-          {headerRight ? <div className={styles.headerRight}>{headerRight}</div> : null}
+          {conteudoPlato ? <div className={styles.headerRight}>{conteudoPlato}</div> : null}
           {!hideDragHandle && (
             <div className={styles.dragHandle} title="Arrastar card" aria-label="Arrastar card" {...dragHandleProps}>
               <span />
@@ -143,7 +168,7 @@ export function AvantaCard({
           )}
         </div>
 
-        <div className={`${styles.body}${bodyClassName ? ` ${bodyClassName}` : ''}`} style={bodyStyle}>{children}</div>
+        <div className={`${styles.body}${bodyClassName ? ` ${bodyClassName}` : ''}`} style={corpoStyle}>{children}</div>
       </div>
     </section>
   );

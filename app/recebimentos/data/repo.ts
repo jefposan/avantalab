@@ -1,0 +1,293 @@
+import type { SupabaseClient } from '@supabase/supabase-js';
+import { supabase as supabasePrincipal } from '@/app/lib/supabase';
+import type { Colaborador, Empresa, Recebimento, SituacaoRecebimento, Subempresa } from '../components/types';
+import { colaboradoresDemo, empresasDemo, recebimentosDemo, subempresasDemo } from '../components/dadosDemo';
+import { situacaoPorValor } from '../components/helpers';
+
+export type DadosRecebimentos = {
+  empresas: Empresa[];
+  subempresas: Subempresa[];
+  colaboradores: Colaborador[];
+  recebimentos: Recebimento[];
+};
+
+export type DadosNovoColaborador = Omit<Colaborador, 'id'>;
+export type DadosEditarColaborador = Omit<Colaborador, 'id' | 'ativo'>;
+
+export type IntegracaoFinanceiraRecebimentos = {
+  nomeEntrada: string;
+  tituloEtiqueta: string;
+  integrado: boolean;
+  valorSincronizado: number;
+};
+
+export interface RecebimentosRepo {
+  carregar(): Promise<DadosRecebimentos>;
+  salvarEmpresa(dados: Omit<Empresa, 'id'>): Promise<void>;
+  editarEmpresa(id: string, dados: Omit<Empresa, 'id' | 'ativo'>): Promise<void>;
+  excluirEmpresa(id: string): Promise<void>;
+  alternarEmpresa(id: string, ativo: boolean): Promise<void>;
+  salvarSubempresa(dados: Omit<Subempresa, 'id'>): Promise<void>;
+  editarSubempresa(id: string, dados: Pick<Subempresa, 'nome' | 'endereco' | 'responsavel' | 'valorCombinado' | 'diaVencimento'>): Promise<void>;
+  excluirSubempresa(id: string): Promise<void>;
+  alternarSubempresa(id: string, ativo: boolean): Promise<void>;
+  criarColaborador(dados: DadosNovoColaborador): Promise<void>;
+  editarColaborador(id: string, dados: DadosEditarColaborador): Promise<void>;
+  excluirColaborador(id: string): Promise<void>;
+  alternarColaborador(id: string, ativo: boolean): Promise<void>;
+  registrarRecebimento(subempresaId: string, valor: number, observacao: string): Promise<void>;
+  receberCobranca(lancamentoId: string, valor: number, observacao: string): Promise<void>;
+  confirmarBaixa(lancamentoId: string): Promise<void>;
+  devolver(lancamentoId: string, motivo: string): Promise<void>;
+  divergencia(lancamentoId: string, motivo: string): Promise<void>;
+  estornar(lancamentoId: string, motivo: string): Promise<void>;
+  obterIntegracaoFinanceira(ano: number, mes: number): Promise<IntegracaoFinanceiraRecebimentos>;
+  integrarFinanceiro(ano: number, mes: number, nomeEntrada: string, tituloEtiqueta: string): Promise<IntegracaoFinanceiraRecebimentos>;
+  assinarAtualizacoes?(callback: () => void): () => void;
+}
+
+function copia<T>(valor: T): T {
+  return JSON.parse(JSON.stringify(valor)) as T;
+}
+
+function hojeIso() {
+  const agora = new Date();
+  return new Date(agora.getTime() - agora.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
+}
+
+export function criarRepoDemo(): RecebimentosRepo {
+  let dados: DadosRecebimentos = {
+    empresas: copia(empresasDemo),
+    subempresas: copia(subempresasDemo),
+    colaboradores: copia(colaboradoresDemo),
+    recebimentos: copia(recebimentosDemo),
+  };
+  const integracoes = new Map<string, IntegracaoFinanceiraRecebimentos>();
+  const colaboradorAtual = () => dados.colaboradores[0];
+  return {
+    async carregar() { return copia(dados); },
+    async salvarEmpresa(valor) { dados.empresas.push({ ...valor, id: `e-${Date.now()}` }); },
+    async editarEmpresa(id, valor) { dados.empresas = dados.empresas.map((e) => e.id === id ? { ...e, ...valor } : e); },
+    async excluirEmpresa(id) {
+      const subs = new Set(dados.subempresas.filter((s) => s.empresaId === id).map((s) => s.id));
+      dados.recebimentos = dados.recebimentos.filter((r) => !subs.has(r.subempresaId));
+      dados.subempresas = dados.subempresas.filter((s) => s.empresaId !== id);
+      dados.empresas = dados.empresas.filter((e) => e.id !== id);
+    },
+    async alternarEmpresa(id, ativo) { dados.empresas = dados.empresas.map((e) => e.id === id ? { ...e, ativo } : e); },
+    async salvarSubempresa(valor) { dados.subempresas.push({ ...valor, id: `s-${Date.now()}` }); },
+    async editarSubempresa(id, valor) { dados.subempresas = dados.subempresas.map((s) => s.id === id ? { ...s, ...valor } : s); },
+    async excluirSubempresa(id) {
+      dados.recebimentos = dados.recebimentos.filter((r) => r.subempresaId !== id);
+      dados.subempresas = dados.subempresas.filter((s) => s.id !== id);
+    },
+    async alternarSubempresa(id, ativo) { dados.subempresas = dados.subempresas.map((s) => s.id === id ? { ...s, ativo } : s); },
+    async criarColaborador(valor) { dados.colaboradores.push({ ...valor, id: `c-${Date.now()}` }); },
+    async editarColaborador(id, valor) { dados.colaboradores = dados.colaboradores.map((c) => c.id === id ? { ...c, ...valor } : c); },
+    async excluirColaborador(id) {
+      dados.recebimentos = dados.recebimentos.map((r) => r.colaboradorId === id ? { ...r, colaboradorId: null } : r);
+      dados.colaboradores = dados.colaboradores.filter((c) => c.id !== id);
+    },
+    async alternarColaborador(id, ativo) { dados.colaboradores = dados.colaboradores.map((c) => c.id === id ? { ...c, ativo } : c); },
+    async registrarRecebimento(subempresaId, valor, observacao) {
+      const sub = dados.subempresas.find((s) => s.id === subempresaId);
+      const colaborador = colaboradorAtual();
+      if (!sub || !colaborador) throw new Error('Subempresa ou colaborador não encontrado.');
+      const agora = new Date();
+      dados.recebimentos.unshift({
+        id: `r-${Date.now()}`, empresaId: sub.empresaId, subempresaId: sub.id,
+        vencimento: new Date(agora.getFullYear(), agora.getMonth(), sub.diaVencimento).toISOString().slice(0, 10),
+        valorCombinado: sub.valorCombinado, valorRecebido: valor, colaboradorId: colaborador.id,
+        recebidoEm: agora.toISOString(), observacao: observacao.trim() || null,
+        situacao: situacaoPorValor(sub.valorCombinado, valor), baixadoPor: null, baixadoEm: null,
+      });
+    },
+    async receberCobranca(id, valor, observacao) {
+      const colaborador = colaboradorAtual();
+      dados.recebimentos = dados.recebimentos.map((r) => r.id === id ? {
+        ...r, valorRecebido: valor, colaboradorId: colaborador?.id ?? null, recebidoEm: new Date().toISOString(),
+        observacao: observacao.trim() || r.observacao, situacao: situacaoPorValor(r.valorCombinado, valor),
+      } : r);
+    },
+    async confirmarBaixa(id) { dados.recebimentos = dados.recebimentos.map((r) => r.id === id ? { ...r, situacao: 'baixado', baixadoPor: 'Gestor (demo)', baixadoEm: new Date().toISOString() } : r); },
+    async devolver(id, motivo) { dados.recebimentos = dados.recebimentos.map((r) => r.id === id ? { ...r, situacao: 'devolvido_para_correcao', observacao: `${r.observacao ? `${r.observacao} · ` : ''}Devolvido: ${motivo}` } : r); },
+    async divergencia(id, motivo) { dados.recebimentos = dados.recebimentos.map((r) => r.id === id ? { ...r, situacao: 'baixado', baixadoPor: 'Gestor (demo)', baixadoEm: new Date().toISOString(), observacao: `${r.observacao ? `${r.observacao} · ` : ''}Divergência: ${motivo}` } : r); },
+    async estornar(id, motivo) { dados.recebimentos = dados.recebimentos.map((r) => r.id === id ? { ...r, situacao: r.vencimento < hojeIso() ? 'em_atraso' : 'previsto', valorRecebido: null, colaboradorId: null, recebidoEm: null, baixadoPor: null, baixadoEm: null, observacao: `Estornado: ${motivo}` } : r); },
+    async obterIntegracaoFinanceira(ano, mes) {
+      return copia(integracoes.get(`${ano}-${mes}`) ?? { nomeEntrada: 'Recebimentos em campo', tituloEtiqueta: 'Recebimentos', integrado: false, valorSincronizado: 0 });
+    },
+    async integrarFinanceiro(ano, mes, nomeEntrada, tituloEtiqueta) {
+      const chave = `${ano}-${String(mes).padStart(2, '0')}`;
+      const valorSincronizado = dados.recebimentos.reduce((total, recebimento) => {
+        const dataBaixa = recebimento.baixadoEm ?? recebimento.recebidoEm ?? '';
+        return recebimento.situacao === 'baixado' && dataBaixa.slice(0, 7) === chave
+          ? total + (recebimento.valorRecebido ?? 0)
+          : total;
+      }, 0);
+      if (valorSincronizado <= 0) throw new Error('Não há valor baixado neste mês para adicionar.');
+      const integracao = { nomeEntrada: nomeEntrada.trim(), tituloEtiqueta: tituloEtiqueta.trim(), integrado: true, valorSincronizado };
+      integracoes.set(`${ano}-${mes}`, integracao);
+      return copia(integracao);
+    },
+  };
+}
+
+type Linha = Record<string, unknown>;
+const texto = (v: unknown) => String(v ?? '');
+const numero = (v: unknown) => Number(v ?? 0);
+
+function mapIntegracao(row: Linha | null | undefined): IntegracaoFinanceiraRecebimentos {
+  return {
+    nomeEntrada: texto(row?.nome_entrada) || 'Recebimentos em campo',
+    tituloEtiqueta: texto(row?.titulo_etiqueta) || 'Recebimentos',
+    integrado: row?.integrado === true,
+    valorSincronizado: numero(row?.valor_sincronizado),
+  };
+}
+
+function mapEmpresa(row: Linha): Empresa {
+  return { id: texto(row.id), nome: texto(row.nome), responsavel: texto(row.responsavel), telefone: texto(row.telefone), email: texto(row.email), ativo: row.ativo !== false };
+}
+
+function mapSubempresa(row: Linha): Subempresa {
+  return {
+    id: texto(row.id), empresaId: texto(row.recebimento_empresa_id), nome: texto(row.nome), endereco: texto(row.endereco),
+    logradouro: texto(row.logradouro), numero: texto(row.numero), complemento: texto(row.complemento),
+    shoppingGaleria: texto(row.shopping_galeria), lojaSala: texto(row.loja_sala), responsavel: texto(row.responsavel),
+    valorCombinado: numero(row.valor_combinado), diaVencimento: numero(row.dia_vencimento), ativo: row.ativo !== false,
+  };
+}
+
+function mapColaborador(row: Linha): Colaborador {
+  return {
+    id: texto(row.user_id), nome: texto(row.nome), celular: texto(row.celular),
+    email: texto(row.email_contato), cpf: texto(row.cpf), senha: '', ativo: row.ativo !== false,
+  };
+}
+
+function mapRecebimento(row: Linha): Recebimento {
+  return {
+    id: texto(row.id), empresaId: texto(row.recebimento_empresa_id), subempresaId: texto(row.subempresa_id),
+    vencimento: texto(row.vencimento), valorCombinado: numero(row.valor_combinado),
+    valorRecebido: row.valor_recebido == null ? null : numero(row.valor_recebido),
+    colaboradorId: row.colaborador_user_id == null ? null : texto(row.colaborador_user_id),
+    recebidoEm: row.recebido_em == null ? null : texto(row.recebido_em), observacao: row.observacao == null ? null : texto(row.observacao),
+    situacao: texto(row.situacao) as SituacaoRecebimento,
+    baixadoPor: row.baixado_por == null ? null : texto(row.baixado_por), baixadoEm: row.baixado_em == null ? null : texto(row.baixado_em),
+  };
+}
+
+function erroMensagem(error: unknown, fallback: string) {
+  if (error && typeof error === 'object' && 'message' in error) return String(error.message);
+  return fallback;
+}
+
+async function chamarApi(cliente: SupabaseClient, rota: string, corpo: Record<string, unknown>) {
+  const { data } = await cliente.auth.getSession();
+  const token = data.session?.access_token;
+  if (!token) throw new Error('Sessão não encontrada. Entre novamente.');
+  const resposta = await fetch(rota, {
+    method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }, body: JSON.stringify(corpo),
+  });
+  const json = await resposta.json().catch(() => ({}));
+  if (!resposta.ok || json.erro) throw new Error(String(json.mensagem ?? 'Não foi possível concluir a operação.'));
+  return json;
+}
+
+export function criarRepoSupabase(empresaId: string, cliente: SupabaseClient = supabasePrincipal): RecebimentosRepo {
+  async function exigir<T>(promessa: PromiseLike<{ data: T; error: unknown }>, mensagem: string): Promise<T> {
+    const { data, error } = await promessa;
+    if (error) throw new Error(erroMensagem(error, mensagem));
+    return data;
+  }
+  return {
+    async carregar() {
+      const [empresas, subempresas, colaboradores, recebimentos] = await Promise.all([
+        exigir(cliente.from('recebimentos_empresas').select('*').eq('empresa_id', empresaId).order('nome'), 'Erro ao carregar empresas.'),
+        exigir(cliente.from('recebimentos_subempresas').select('*').eq('empresa_id', empresaId).order('nome'), 'Erro ao carregar subempresas.'),
+        exigir(cliente.from('recebimentos_colaboradores').select('*').eq('empresa_id', empresaId).order('nome'), 'Erro ao carregar colaboradores.'),
+        exigir(cliente.from('recebimentos_lancamentos').select('*').eq('empresa_id', empresaId).order('vencimento', { ascending: false }), 'Erro ao carregar recebimentos.'),
+      ]);
+      return {
+        empresas: (empresas as Linha[]).map(mapEmpresa), subempresas: (subempresas as Linha[]).map(mapSubempresa),
+        colaboradores: (colaboradores as Linha[]).map(mapColaborador), recebimentos: (recebimentos as Linha[]).map(mapRecebimento),
+      };
+    },
+    async salvarEmpresa(dados) {
+      await exigir(cliente.from('recebimentos_empresas').insert({ empresa_id: empresaId, nome: dados.nome, responsavel: dados.responsavel, telefone: dados.telefone, email: dados.email, ativo: dados.ativo }).select('id').single(), 'Erro ao cadastrar empresa.');
+    },
+    async editarEmpresa(id, dados) {
+      await exigir(cliente.from('recebimentos_empresas').update({ ...dados, atualizado_em: new Date().toISOString() }).eq('empresa_id', empresaId).eq('id', id).select('id').single(), 'Erro ao editar empresa.');
+    },
+    async excluirEmpresa(id) { await exigir(cliente.from('recebimentos_empresas').delete().eq('empresa_id', empresaId).eq('id', id).select('id'), 'Erro ao excluir empresa.'); },
+    async alternarEmpresa(id, ativo) { await exigir(cliente.from('recebimentos_empresas').update({ ativo, atualizado_em: new Date().toISOString() }).eq('empresa_id', empresaId).eq('id', id).select('id'), 'Erro ao alterar empresa.'); },
+    async salvarSubempresa(dados) {
+      await exigir(cliente.from('recebimentos_subempresas').insert({
+        empresa_id: empresaId, recebimento_empresa_id: dados.empresaId, nome: dados.nome, endereco: dados.endereco,
+        logradouro: dados.logradouro, numero: dados.numero, complemento: dados.complemento,
+        shopping_galeria: dados.shoppingGaleria, loja_sala: dados.lojaSala, responsavel: dados.responsavel,
+        valor_combinado: dados.valorCombinado, dia_vencimento: dados.diaVencimento, ativo: dados.ativo,
+      }).select('id').single(), 'Erro ao cadastrar subempresa.');
+    },
+    async editarSubempresa(id, dados) { await exigir(cliente.from('recebimentos_subempresas').update({ nome: dados.nome, endereco: dados.endereco, responsavel: dados.responsavel, valor_combinado: dados.valorCombinado, dia_vencimento: dados.diaVencimento, atualizado_em: new Date().toISOString() }).eq('empresa_id', empresaId).eq('id', id).select('id'), 'Erro ao editar subempresa.'); },
+    async excluirSubempresa(id) { await exigir(cliente.from('recebimentos_subempresas').delete().eq('empresa_id', empresaId).eq('id', id).select('id'), 'Erro ao excluir subempresa.'); },
+    async alternarSubempresa(id, ativo) { await exigir(cliente.from('recebimentos_subempresas').update({ ativo, atualizado_em: new Date().toISOString() }).eq('empresa_id', empresaId).eq('id', id).select('id'), 'Erro ao alterar subempresa.'); },
+    async criarColaborador(dados) { await chamarApi(cliente, '/api/recebimentos/criar-colaborador', { empresaId, ...dados }); },
+    async editarColaborador(id, dados) {
+      await chamarApi(cliente, '/api/recebimentos/atualizar-colaborador', { empresaId, colaboradorUserId: id, ...dados });
+      if (dados.senha) await chamarApi(cliente, '/api/recebimentos/redefinir-senha-colaborador', { empresaId, colaboradorUserId: id, novaSenha: dados.senha });
+    },
+    async excluirColaborador(id) { await chamarApi(cliente, '/api/recebimentos/excluir-colaborador', { empresaId, colaboradorUserId: id }); },
+    async alternarColaborador(id, ativo) {
+      const { data, error } = await cliente.from('recebimentos_colaboradores').select('nome, cpf, celular, email_contato').eq('empresa_id', empresaId).eq('user_id', id).single();
+      if (error || !data) throw new Error('Colaborador não encontrado.');
+      await chamarApi(cliente, '/api/recebimentos/atualizar-colaborador', { empresaId, colaboradorUserId: id, nome: data.nome, cpf: data.cpf, celular: data.celular, email: data.email_contato, ativo });
+    },
+    async registrarRecebimento(subempresaId, valor, observacao) {
+      const [{ data: sub, error: erroSub }, { data: auth }] = await Promise.all([
+        cliente.from('recebimentos_subempresas').select('recebimento_empresa_id, valor_combinado, dia_vencimento').eq('empresa_id', empresaId).eq('id', subempresaId).single(),
+        cliente.auth.getUser(),
+      ]);
+      if (erroSub || !sub || !auth.user) throw new Error('Não foi possível identificar a cobrança.');
+      const agora = new Date();
+      const dia = Math.min(Number(sub.dia_vencimento), new Date(agora.getFullYear(), agora.getMonth() + 1, 0).getDate());
+      const vencimento = `${agora.getFullYear()}-${String(agora.getMonth() + 1).padStart(2, '0')}-${String(dia).padStart(2, '0')}`;
+      await exigir(cliente.from('recebimentos_lancamentos').insert({
+        empresa_id: empresaId, recebimento_empresa_id: sub.recebimento_empresa_id, subempresa_id: subempresaId,
+        colaborador_user_id: auth.user.id, vencimento, valor_combinado: sub.valor_combinado, valor_recebido: valor,
+        recebido_em: agora.toISOString(), observacao: observacao.trim() || null,
+        situacao: situacaoPorValor(Number(sub.valor_combinado), valor),
+      }).select('id').single(), 'Erro ao registrar recebimento.');
+    },
+    async receberCobranca(id, valor, observacao) {
+      const { data: auth } = await cliente.auth.getUser();
+      if (!auth.user) throw new Error('Sessão não encontrada.');
+      const { data: atual, error } = await cliente.from('recebimentos_lancamentos').select('valor_combinado').eq('empresa_id', empresaId).eq('id', id).single();
+      if (error || !atual) throw new Error('Cobrança não encontrada.');
+      await exigir(cliente.from('recebimentos_lancamentos').update({ colaborador_user_id: auth.user.id, valor_recebido: valor, recebido_em: new Date().toISOString(), observacao: observacao.trim() || null, situacao: situacaoPorValor(Number(atual.valor_combinado), valor), atualizado_em: new Date().toISOString() }).eq('empresa_id', empresaId).eq('id', id).select('id'), 'Erro ao receber cobrança.');
+    },
+    async confirmarBaixa(id) { await exigir(cliente.rpc('recebimentos_baixar', { p_lancamento_id: id, p_motivo: null }), 'Erro ao confirmar baixa.'); },
+    async devolver(id, motivo) { await exigir(cliente.rpc('recebimentos_devolver', { p_lancamento_id: id, p_motivo: motivo }), 'Erro ao devolver recebimento.'); },
+    async divergencia(id, motivo) { await exigir(cliente.rpc('recebimentos_registrar_divergencia', { p_lancamento_id: id, p_motivo: motivo }), 'Erro ao registrar divergência.'); },
+    async estornar(id, motivo) { await exigir(cliente.rpc('recebimentos_estornar', { p_lancamento_id: id, p_motivo: motivo }), 'Erro ao estornar recebimento.'); },
+    async obterIntegracaoFinanceira(ano, mes) {
+      const data = await exigir(cliente.rpc('recebimentos_obter_integracao_financeira', {
+        p_empresa_id: empresaId, p_ano: ano, p_mes: mes,
+      }), 'Erro ao carregar a integração financeira.');
+      return mapIntegracao(data as Linha);
+    },
+    async integrarFinanceiro(ano, mes, nomeEntrada, tituloEtiqueta) {
+      const data = await exigir(cliente.rpc('recebimentos_integrar_financeiro', {
+        p_empresa_id: empresaId, p_ano: ano, p_mes: mes,
+        p_nome_entrada: nomeEntrada, p_titulo_etiqueta: tituloEtiqueta,
+      }), 'Erro ao adicionar o valor aos recebimentos.');
+      return mapIntegracao(data as Linha);
+    },
+    assinarAtualizacoes(callback) {
+      const canal = cliente.channel(`recebimentos-${empresaId}-${Math.random()}`)
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'recebimentos_lancamentos', filter: `empresa_id=eq.${empresaId}` }, callback)
+        .subscribe();
+      return () => { void cliente.removeChannel(canal); };
+    },
+  };
+}

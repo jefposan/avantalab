@@ -1,8 +1,8 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.5.4.57 -->
+<!-- ava-version: 1.6.0 -->
 
-> Revisão 1.5.4.57: sem impacto operacional; imagem de prévia de compartilhamento atualizada.
+> Revisão 1.6.0: implantado o Recebimentos Presencial e documentada sua integração protegida com o Financeiro.
 
 ## Escopo
 
@@ -41,6 +41,22 @@ ou `/ponto`.
   garante entrega sem confirmação.
 - Funcionários do Controle de Ponto usam `/ponto`; configurações e relatórios
   ficam para gestores/autorizados.
+- **Recebimentos Presencial** é instalado em **Ajustes > Módulos**. Depois de
+  instalado, Gestor Master e Administrador usam **Ajustes > Recebimentos** para
+  cadastrar empresas atendidas, pontos de cobrança e colaboradores, além de
+  conferir, devolver, registrar divergências ou estornar recebimentos.
+- O colaborador entra em `/recebimentos/colaborador` com CPF e senha fornecidos
+  pelo gestor. Esse acesso é independente do Controle de Ponto e do login da
+  Gestão. Remover o módulo bloqueia novas entradas sem apagar os dados.
+- Na Visão geral do módulo, o card **Baixado** permite que Gestor Master ou
+  Administrador defina o nome da entrada e o título da etiqueta e use
+  **Adicionar aos recebimentos**. A ação cria ou atualiza uma única receita do
+  mês com o total confirmado; essa linha mostra a etiqueta configurada e não
+  pode ser editada ou excluída diretamente no Financeiro.
+- Operador Completo e Operador Simples não veem nem administram o módulo,
+  mesmo quando ele está instalado no perfil.
+- Recebimentos confirmados ainda não são lançados automaticamente no faturamento
+  central nesta versão.
 - Vendas Mobile é módulo complementar: catálogo, divulgação e novidades têm
   regras próprias e resultados podem ser enviados ao Gestão conforme o destino
   financeiro do vendedor.

@@ -10,6 +10,7 @@ export type EntradaFaturamento = {
   valor: number | string | null;
   status?: string | null;
   tipo?: string | null;
+  etiquetaOrigem?: string | null;
   totalMensal?: boolean;
 };
 
@@ -67,13 +68,15 @@ export default function TabelaEntradasFaturamento({
         <tbody>
           {entradas.map((entrada) => {
             const ehTotalMensal = entrada.totalMensal === true;
+            const ehRecebimentos = entrada.tipo === 'recebimentos_sistema';
+            const ehProtegida = ehRecebimentos || entrada.tipo === 'vendas_mobile_sistema';
 
             return (
             <tr
               key={entrada.id}
               className="border-b border-dotted border-slate-300/40"
             >
-              {entradaEditandoId === entrada.id && !ehTotalMensal ? (
+              {entradaEditandoId === entrada.id && !ehTotalMensal && !ehProtegida ? (
                 <>
                   <td className="py-1.5 px-1.5 w-16 text-center">
                     <input
@@ -161,6 +164,11 @@ export default function TabelaEntradasFaturamento({
                           Previsto
                         </span>
                       )}
+                      {ehRecebimentos && (
+                        <span className="inline-flex items-center rounded-full bg-cyan-100 px-1.5 py-0.5 text-[9px] font-black uppercase tracking-wide text-cyan-700">
+                          {entrada.etiquetaOrigem || 'Recebimentos'}
+                        </span>
+                      )}
                     </span>
                   </td>
 
@@ -172,6 +180,10 @@ export default function TabelaEntradasFaturamento({
                     {ehTotalMensal ? (
                       <span className="text-[10px] font-black uppercase text-slate-400">
                         Total
+                      </span>
+                    ) : ehProtegida ? (
+                      <span className="inline-flex rounded-full bg-slate-100 px-2 py-1 text-[9px] font-black uppercase tracking-wide text-slate-500">
+                        Protegida
                       </span>
                     ) : (
                       <div className="flex items-center justify-center gap-1">

@@ -1,0 +1,905 @@
+/* Estudo isolado "Recebimentos em Campo" — estilos locais.
+   Não altera estilos globais. Cor primária: #003E73. */
+
+.page {
+  --cp: #003E73;
+  min-height: 100dvh;
+  background: #f1f5f9;
+  color: #0f172a;
+  font-family: var(--av-font-family, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif);
+}
+.loginWrap {
+  --cp: #003e73;
+  min-height: 100dvh;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: linear-gradient(145deg, #f8fbff, color-mix(in srgb, var(--cp) 10%, #ffffff));
+}
+.loginCard {
+  width: min(100%, 390px);
+  padding: 28px;
+  border-radius: 22px;
+  background: #ffffff;
+  box-shadow: 0 24px 70px rgba(0, 62, 115, 0.18);
+}
+.loginMarca {
+  color: var(--cp);
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+.loginTitulo {
+  margin: 4px 0 6px;
+  color: #0f172a;
+  font-size: 24px;
+  font-weight: 800;
+  line-height: 1.15;
+}
+
+.container {
+  width: 100%;
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: 16px;
+}
+
+/* Barra superior com seletor de perfil */
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  background: color-mix(in srgb, var(--cp) 96%, #000);
+  color: #fff;
+}
+.topbarInner {
+  width: 100%;
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: 12px 16px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.brand {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.1;
+}
+.brandKicker {
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, #fff 70%, var(--cp));
+}
+.brandTitle {
+  font-size: 16px;
+  font-weight: 800;
+}
+.perfilGroup {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(255, 255, 255, 0.12);
+  padding: 4px;
+  border-radius: 999px;
+}
+.perfilBtn {
+  border: none;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.75);
+  font-size: 12px;
+  font-weight: 700;
+  padding: 6px 14px;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.perfilBtn:hover { color: #fff; }
+.perfilBtnAtivo {
+  background: #fff;
+  color: var(--cp);
+}
+
+/* Abas administrativas */
+.tabs {
+  display: flex;
+  gap: 4px;
+  overflow-x: auto;
+  border-bottom: 1px solid #e2e8f0;
+  margin-bottom: 18px;
+  scrollbar-width: thin;
+}
+.tab {
+  border: none;
+  background: transparent;
+  color: #64748b;
+  font-size: 13px;
+  font-weight: 700;
+  padding: 10px 14px;
+  white-space: nowrap;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  transition: color 0.15s ease;
+}
+.tab:hover { color: var(--cp); }
+.tabAtiva {
+  color: var(--cp);
+  border-bottom-color: var(--cp);
+}
+
+/* Título do AvantaShell: perfil (Gestor/Administrador) em fonte menor. */
+.tituloPerfil {
+  font-size: 0.72em;
+  font-weight: 700;
+  opacity: 0.78;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+/* Seletor de mês no platô do AvantaCard — mesmo padrão da página de
+   lançamentos: setas esquerda/direita em um único bloco visual. */
+.mesSeletor {
+  display: flex;
+  align-items: stretch;
+  height: 32px;
+  overflow: hidden;
+  border-radius: 10px;
+  background: #fff;
+  border: 1px solid #d8e2ec;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.1);
+}
+.mesSeletorBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: transparent;
+  color: var(--cp);
+  padding: 0 9px;
+  cursor: pointer;
+  transition: background 0.15s ease, transform 0.1s ease;
+}
+.mesSeletorBtn:hover { background: #f1f5f9; }
+.mesSeletorBtn:active { transform: scale(0.94); }
+.mesSeletorDiv {
+  width: 1px;
+  background: #e2e8f0;
+}
+.mesSeletorLabel {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0 10px;
+  min-width: 84px;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  color: var(--cp);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.mesSeletorLabel b { font-weight: 700; color: #64748b; }
+
+/* Grid de cards de totais.
+   Cores frias e opacas (sem destaque), título em linha única e valores
+   sempre na mesma altura, com folga de fonte para mais dígitos. */
+.cardsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(196px, 1fr));
+  gap: 12px;
+  align-items: stretch;
+}
+.statCard {
+  --sc-bg: #fff;
+  --sc-border: #e2e8f0;
+  --sc-label: #64748b;
+  --sc-value: var(--cp);
+  display: flex;
+  flex-direction: column;
+  background: var(--sc-bg);
+  border: 1px solid var(--sc-border);
+  border-radius: 16px;
+  padding: 14px 16px;
+  min-height: 84px;
+}
+.statLabel {
+  font-size: 10.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--sc-label);
+  /* Linha única, sem quebra. */
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 14px;
+  height: 14px;
+}
+.statValue {
+  font-size: 17px;
+  font-weight: 800;
+  /* Mesma altura/posição em todos os cards. */
+  margin-top: 8px;
+  line-height: 22px;
+  height: 22px;
+  color: var(--sc-value);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.statSub {
+  font-size: 11px;
+  color: #94a3b8;
+  margin-top: 4px;
+}
+
+/* Variações frias e opacas, dentro da paleta do sistema. */
+.statAzul    { --sc-bg: #eef4f9; --sc-border: #d9e5ef; --sc-label: #51708a; --sc-value: #1e4e79; }
+.statCiano   { --sc-bg: #e9f4f6; --sc-border: #d3e7ea; --sc-label: #4f7680; --sc-value: #0f6b7d; }
+.statArdosia { --sc-bg: #eef1f5; --sc-border: #dde3ea; --sc-label: #64748b; --sc-value: #475569; }
+.statTeal    { --sc-bg: #eaf3f1; --sc-border: #d6e6e2; --sc-label: #4f7a72; --sc-value: #21716a; }
+.statIndigo  { --sc-bg: #eef0f7; --sc-border: #dcdfee; --sc-label: #656f99; --sc-value: #4c5a92; }
+
+.integracaoCard {
+  grid-column: 1 / -1;
+  justify-self: center;
+  width: min(100%, 680px);
+  min-height: 0;
+  padding: 18px;
+  gap: 12px;
+}
+.integracaoResumo {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+.integracaoStatus {
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--sc-value) 12%, white);
+  padding: 5px 10px;
+  color: var(--sc-value);
+  font-size: 10px;
+  font-weight: 800;
+  line-height: 1.2;
+}
+.integracaoCampos {
+  display: grid;
+  grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr);
+  gap: 10px;
+}
+.integracaoCampo {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 5px;
+  color: var(--sc-label);
+  font-size: 11px;
+  font-weight: 700;
+}
+.integracaoCampo .input {
+  height: 44px;
+  background: color-mix(in srgb, white 88%, var(--sc-bg));
+}
+.integracaoBotao {
+  align-self: center;
+  min-height: 44px;
+  padding-inline: 20px;
+}
+.integracaoAjuda,
+.integracaoSucesso,
+.integracaoErro {
+  text-align: center;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1.35;
+}
+.integracaoAjuda { color: #64748b; }
+.integracaoSucesso { color: #166534; }
+.integracaoErro { color: #b91c1c; }
+
+@media (max-width: 640px) {
+  .integracaoResumo { align-items: stretch; flex-direction: column; gap: 8px; }
+  .integracaoStatus { align-self: flex-start; }
+  .integracaoCampos { grid-template-columns: 1fr; }
+  .integracaoBotao { width: 100%; }
+}
+
+/* Gráfico de torres (SVG/CSS) */
+.chartWrap {
+  width: 100%;
+  overflow-x: auto;
+}
+.chart {
+  display: block;
+  min-width: 560px;
+  width: 100%;
+  height: 260px;
+}
+.bar {
+  cursor: pointer;
+  transition: opacity 0.15s ease;
+}
+.bar:hover { opacity: 0.82; }
+.tooltip {
+  position: fixed;
+  z-index: 60;
+  pointer-events: none;
+  background: #0f172a;
+  color: #fff;
+  border-radius: 10px;
+  padding: 8px 10px;
+  font-size: 12px;
+  line-height: 1.4;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.28);
+  transform: translate(-50%, -100%);
+}
+.tooltip b { color: #93c5fd; }
+
+/* Tabelas */
+.tableWrap { width: 100%; overflow-x: auto; }
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+  min-width: 640px;
+}
+.table th {
+  text-align: left;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: #64748b;
+  padding: 8px 10px;
+  border-bottom: 1px solid #e2e8f0;
+  white-space: nowrap;
+}
+.table td {
+  padding: 9px 10px;
+  border-bottom: 1px solid #f1f5f9;
+  vertical-align: middle;
+}
+/* Destaque da linha ao passar o mouse. */
+.table tbody tr {
+  transition: background 0.12s ease;
+}
+.table tbody tr:hover td {
+  background: color-mix(in srgb, var(--cp) 7%, #fff);
+}
+.badge {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
+/* Botões */
+.btn {
+  border: none;
+  border-radius: 12px;
+  font-size: 13px;
+  font-weight: 700;
+  padding: 10px 16px;
+  cursor: pointer;
+  transition: filter 0.15s ease;
+}
+.btn:hover { filter: brightness(1.06); }
+.btn:disabled { opacity: 0.5; cursor: not-allowed; filter: none; }
+.btnPrimary { background: var(--cp); color: #fff; }
+.btnGhost { background: #fff; color: var(--cp); border: 1px solid #cbd5e1; }
+.btnDanger { background: #fee2e2; color: #b91c1c; }
+.btnSuccess { background: #16a34a; color: #fff; }
+
+/* Formulário */
+.field { display: flex; flex-direction: column; gap: 4px; margin-bottom: 12px; }
+.label { font-size: 12px; font-weight: 700; color: #334155; }
+.input, .select {
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  padding: 10px 12px;
+  font-size: 14px;
+  background: #fff;
+  color: #0f172a;
+  width: 100%;
+}
+.input:focus, .select:focus {
+  outline: none;
+  border-color: var(--cp);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--cp) 18%, transparent);
+}
+.readonlyBox {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 12px 14px;
+  font-size: 13px;
+  display: grid;
+  gap: 6px;
+}
+.readonlyRow { display: flex; justify-content: space-between; gap: 12px; }
+.readonlyRow span:first-child { color: #64748b; }
+.readonlyRow span:last-child { font-weight: 700; text-align: right; }
+
+/* Parcelas em atraso (baixa uma a uma pelo colaborador) */
+.atrasoBox {
+  background: #fbfcfe;
+  border: 1px solid #dde3ea;
+  border-radius: 12px;
+  padding: 12px;
+  margin-bottom: 12px;
+}
+.atrasoTitulo {
+  font-size: 12px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #4c5a92;
+}
+.atrasoDica {
+  font-size: 12px;
+  color: #64748b;
+  margin: 4px 0 10px;
+}
+.atrasoItem {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  text-align: left;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 10px 12px;
+  margin-bottom: 8px;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+.atrasoItem:last-child { margin-bottom: 0; }
+.atrasoItem:hover { border-color: color-mix(in srgb, var(--cp) 40%, #e2e8f0); }
+.atrasoItemAtivo {
+  border-color: var(--cp);
+  background: color-mix(in srgb, var(--cp) 5%, #fff);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--cp) 14%, transparent);
+}
+.atrasoItemInfo { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.atrasoItemSub { font-size: 13px; font-weight: 800; color: #0f172a; }
+.atrasoItemMeta { font-size: 11px; color: #64748b; }
+.atrasoItemValor {
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--cp);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.atrasoItemAcao {
+  font-size: 11px;
+  font-weight: 800;
+  color: var(--cp);
+  white-space: nowrap;
+}
+
+/* Diferença */
+.difExato { color: #166534; font-weight: 800; }
+.difMenor { color: #b45309; font-weight: 800; }
+.difMaior { color: #1e40af; font-weight: 800; }
+
+/* Colaborador (mobile-first) */
+.mobileWrap { max-width: 460px; margin: 0 auto; }
+.heroCard {
+  background: linear-gradient(160deg, color-mix(in srgb, var(--cp) 92%, #000), var(--cp));
+  color: #fff;
+  border-radius: 20px;
+  padding: 18px;
+}
+.heroNome { font-size: 13px; font-weight: 700; opacity: 0.85; }
+.heroStatGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  margin-top: 14px;
+}
+.heroStat {
+  background: rgba(255, 255, 255, 0.12);
+  border-radius: 12px;
+  padding: 10px;
+}
+.heroStatLabel {
+  font-size: 10px;
+  opacity: 0.82;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.heroStatValue {
+  font-size: 15px;
+  font-weight: 800;
+  margin-top: 3px;
+  white-space: nowrap;
+}
+
+.histCard {
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  padding: 12px 14px;
+  margin-bottom: 10px;
+}
+.histTop { display: flex; justify-content: space-between; gap: 10px; align-items: flex-start; }
+.histEmpresa { font-weight: 800; font-size: 14px; }
+.histSub { font-size: 12px; color: #64748b; }
+.histValores { display: flex; gap: 16px; margin-top: 8px; font-size: 12px; }
+
+/* Comprovante */
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  background: rgba(15, 23, 42, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+.comprovante {
+  background: #fff;
+  border-radius: 20px;
+  padding: 24px;
+  max-width: 360px;
+  width: 100%;
+  text-align: center;
+}
+.comprovanteCheck {
+  width: 64px;
+  height: 64px;
+  margin: 0 auto 12px;
+  border-radius: 999px;
+  background: #dcfce7;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Corpo rolável do AvantaCard: somente o conteúdo abaixo do header do card
+   (e das abas de páginas) rola; topo permanece fixo. */
+.corpoRolavel {
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  max-height: calc(100dvh - 305px);
+  min-height: 180px;
+  padding-right: 6px;
+}
+
+/* Casca da lista: topo estático + área rolável abaixo. O topo fica FORA do
+   container de scroll, portanto não acompanha o elástico (rubber-band) do
+   navegador no início/fim da rolagem. */
+.listaShell {
+  display: flex;
+  flex-direction: column;
+  max-height: calc(100dvh - 305px);
+  min-height: 180px;
+}
+.listaRolavel {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding-right: 6px;
+}
+
+/* Topo das listas: título + busca + ação principal (estático). */
+.listaTopo {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 10px;
+}
+.listaTopoAcoes {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.linkAcessoBox {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 10px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--cp) 7%, #ffffff);
+}
+.linkAcessoTitulo {
+  color: #0f172a;
+  font-size: 12px;
+  font-weight: 800;
+}
+.linkAcessoUrl {
+  margin-top: 2px;
+  color: var(--cp);
+  font-size: 12px;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+@media (max-width: 640px) {
+  .linkAcessoBox { align-items: stretch; flex-direction: column; }
+}
+/* Busca fixa (sempre visível) com filtro instantâneo. */
+.buscaFixa {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 30px;
+  padding: 0 8px;
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  background: #fff;
+  color: #64748b;
+}
+.buscaFixa:focus-within {
+  border-color: var(--cp);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--cp) 16%, transparent);
+}
+.buscaFixaInput {
+  border: none;
+  outline: none;
+  background: transparent;
+  width: 170px;
+  font-size: 13px;
+  color: #0f172a;
+}
+.buscaFixaInput::placeholder { color: #94a3b8; }
+.buscaLimpar {
+  border: none;
+  background: transparent;
+  color: #94a3b8;
+  font-size: 15px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0 2px;
+}
+.buscaLimpar:hover { color: var(--cp); }
+
+/* Ações ocultas (Editar/Desativar): gatilho SVG sempre visível; os botões
+   surgem deslizando para o lado esquerdo no hover, foco ou toque. */
+.acoesGrupo {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.acoesBotoes {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  opacity: 0;
+  transform: translateX(12px);
+  pointer-events: none;
+  transition: opacity 0.18s ease, transform 0.18s ease;
+}
+.acoesGrupo:hover .acoesBotoes,
+.acoesGrupo:focus-within .acoesBotoes,
+.acoesGrupoAberto .acoesBotoes {
+  opacity: 1;
+  transform: translateX(0);
+  pointer-events: auto;
+}
+.acoesTrigger {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: #94a3b8;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+.acoesTrigger:hover,
+.acoesGrupoAberto .acoesTrigger {
+  background: #eef2f7;
+  color: var(--cp);
+}
+
+/* Fôlego ao rolar o bloco em edição para o topo da área rolável (o topo da
+   lista é estático, fora do scroll, então basta uma folga pequena). */
+.blocoFoco { scroll-margin-top: 14px; }
+
+/* Destaque do bloco em edição (empresa, subempresa ou colaborador):
+   apenas a borda muda para a cor primária. Sem sombra e sem fundo tingido. */
+.blocoEditando {
+  border-color: var(--cp) !important;
+  transition: border-color 0.15s ease;
+}
+
+/* Botões compactos (alturas reduzidas). */
+.btnSm { padding: 6px 12px; font-size: 12px; border-radius: 10px; }
+.btnXs { padding: 4px 9px; font-size: 11px; border-radius: 8px; }
+
+/* Campo de texto compacto (altura reduzida). */
+.inputSm { padding: 6px 10px; font-size: 12px; border-radius: 10px; }
+
+/* Formulários compactos de cadastro/edição. */
+.formCompacto .field { margin-bottom: 8px; }
+.formCompacto .input, .formCompacto .select { padding: 7px 10px; font-size: 13px; }
+.formCompacto .label { font-size: 11px; }
+
+/* Campos de valor/data digitáveis: conteúdo centralizado. */
+.inputCentro { text-align: center; }
+
+/* Campo com sufixo fixo (ex.: dia de vencimento "11 /mm"): o input segura só
+   os dígitos (permite apagar normalmente) e o sufixo é apenas visual. */
+.inputSufixoWrap {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  background: #fff;
+  padding: 0 10px;
+}
+.inputSufixoWrap:focus-within {
+  border-color: var(--cp);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--cp) 18%, transparent);
+}
+.inputSufixoWrap .inputInterno {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  outline: none;
+  background: transparent;
+  padding: 7px 0;
+  font-size: 13px;
+  color: #0f172a;
+  text-align: center;
+}
+.inputSufixo {
+  color: #94a3b8;
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.formTitulo {
+  font-size: 12px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--cp);
+  margin-bottom: 8px;
+}
+
+/* Linha única: telefone + e-mail + ações (Cancelar/Excluir/Salvar). Os campos
+   alinham a base com os botões; em telas estreitas, quebra naturalmente. */
+.linhaTelefoneAcoes {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 8px;
+}
+.acoesForm {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  margin-left: auto;
+}
+.acoesForm .btn { white-space: nowrap; }
+
+/* Estrutura hierárquica de empresas (alturas reduzidas) */
+.empresaBloco {
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  margin-bottom: 8px;
+  overflow: hidden;
+}
+.empresaHeader {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 12px;
+  cursor: pointer;
+  background: color-mix(in srgb, var(--cp) 5%, #fff);
+}
+.empresaNome { font-weight: 800; font-size: 13px; line-height: 1.25; }
+.subLista { padding: 2px 12px 8px; display: grid; gap: 6px; }
+.subItem {
+  border: 1px solid #eef2f7;
+  border-radius: 10px;
+  padding: 7px 10px;
+  background: #fbfdff;
+}
+.subNome { font-weight: 700; font-size: 12.5px; line-height: 1.25; }
+/* Destaque do item (linha) ao passar o mouse. Não aplica ao bloco em edição. */
+.subItem { transition: border-color 0.12s ease, background 0.12s ease; }
+.subItem:not(.blocoEditando):hover {
+  border-color: color-mix(in srgb, var(--cp) 28%, #eef2f7);
+  background: color-mix(in srgb, var(--cp) 4%, #fbfdff);
+}
+.subMeta { font-size: 11.5px; color: #64748b; margin-top: 1px; line-height: 1.3; }
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: #e2e8f0;
+  color: #475569;
+}
+.chipOn { background: #dcfce7; color: #166534; }
+.chipOff { background: #fee2e2; color: #b91c1c; }
+
+.sectionTitle {
+  font-size: 15px;
+  font-weight: 800;
+  color: var(--cp);
+  margin: 4px 0 12px;
+}
+.muted { color: #64748b; font-size: 13px; }
+.filtersRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+.filterSelect {
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  padding: 7px 10px;
+  font-size: 12px;
+  background: #fff;
+  color: #0f172a;
+}
+/* Filtro de data com rótulo (De / Até). */
+.filtroData {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #64748b;
+}
+.filtroData span {
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+/* Campo de data mais estreito e clicável em toda a área. */
+.filtroData .filterSelect {
+  width: 118px;
+  padding: 7px 8px;
+  cursor: pointer;
+}
+/* Aproxima o ícone do calendário do texto da data. */
+.inputData::-webkit-calendar-picker-indicator {
+  margin-left: 0;
+  padding-left: 0;
+  cursor: pointer;
+}
+/* Filtro de situações mais estreito, mantendo tudo na mesma linha. */
+.filtroSituacao {
+  max-width: 150px;
+}
+.aviso {
+  background: #fef3c7;
+  border: 1px solid #fde68a;
+  color: #92600a;
+  border-radius: 12px;
+  padding: 12px 14px;
+  font-size: 13px;
+  font-weight: 600;
+}
