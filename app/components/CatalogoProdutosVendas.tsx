@@ -131,6 +131,21 @@ export default function CatalogoProdutosVendas({ empresaId, darkMode, corPrimari
     finally { setExportando(false); }
   };
 
+  const excluirProduto = async () => {
+    const id = String(formulario.id || '');
+    if (!id || !window.confirm(`Excluir definitivamente o produto “${formulario.nome || 'selecionado'}”?`)) return;
+    setSalvando(true);
+    setErro('');
+    const { error } = await supabase.from('vendas_mobile_catalogo_produtos').delete().eq('id', id);
+    setSalvando(false);
+    if (error) {
+      setErro('Não foi possível excluir o produto.');
+      return;
+    }
+    setProdutos((atuais) => atuais.filter((produto) => produto.id !== id));
+    setFormulario(vazio);
+  };
+
   return <div className="min-h-0 flex-1 overflow-y-auto p-4 xl:flex xl:flex-col xl:overflow-hidden">
     <div className="mb-3 shrink-0">
       <div className="flex items-center justify-between gap-2"><h3 className="min-w-0 text-base font-black">Pacote de produtos</h3><div className="flex shrink-0 items-center gap-1.5"><span className="rounded-full bg-cyan-500/10 px-2 py-1 text-[9px] font-black uppercase text-cyan-700">{produtos.length} produtos</span><button type="button" onClick={() => void exportarPacoteZip()} disabled={exportando} className="h-7 rounded-full border border-cyan-300 px-2.5 text-[9px] font-black uppercase text-cyan-700 disabled:opacity-60">{exportando ? 'Gerando...' : 'Gerar ZIP'}</button></div></div>
@@ -139,7 +154,7 @@ export default function CatalogoProdutosVendas({ empresaId, darkMode, corPrimari
     <div className="grid gap-4 xl:min-h-0 xl:flex-1 xl:grid-cols-[minmax(0,.85fr)_minmax(0,1.15fr)]">
       <div className="xl:flex xl:min-h-0 xl:items-center">
       <section className={`rounded-xl border p-3 xl:max-h-full xl:w-full xl:overflow-y-auto ${painel}`}>
-        <div className="flex flex-wrap items-center gap-2"><h4 className="rounded-full bg-cyan-500/10 px-3 py-1 text-sm font-black text-cyan-700">{formulario.id ? 'Editar produto' : 'Novo produto'}</h4><p className="text-[10px] font-bold text-cyan-600">Obrigatórios: nome, custo e preço de venda.</p></div>
+        <div className="flex flex-wrap items-center gap-2"><h4 className="rounded-full px-3 py-1 text-sm font-black text-white" style={{ backgroundColor: corPrimaria }}>{formulario.id ? 'Editar produto' : 'Novo produto'}</h4><p className="text-[10px] font-bold text-cyan-600">Obrigatórios: nome, custo e preço de venda.</p></div>
         <div className="mt-2 grid gap-1.5 sm:grid-cols-2">
           {campos.map(([chave, rotulo]) => <label key={chave} className="text-[9px] font-black uppercase opacity-70">{rotulo}<input value={String(formulario[chave] || '')} onChange={(e) => mudar(chave, chave.startsWith('preco') ? formatarMoedaDigitada(e.target.value) : e.target.value)} onBlur={chave === 'nome' ? () => mudar('nome', formatarDescricao(String(formulario.nome || ''))) : undefined} inputMode={chave.startsWith('preco') ? 'numeric' : undefined} className={`mt-0.5 h-8 w-full rounded-md border px-2 text-xs font-bold normal-case ${campo}`} /></label>)}
         </div>
@@ -150,7 +165,7 @@ export default function CatalogoProdutosVendas({ empresaId, darkMode, corPrimari
           {formulario.imagem_url && <a href={String(formulario.imagem_url)} target="_blank" rel="noreferrer" title="Abrir pré-visualização"><img src={String(formulario.imagem_url)} alt="Pré-visualização do produto" className="h-8 w-8 shrink-0 rounded-md border border-cyan-300 object-cover" /></a>}
           <button type="button" onClick={() => arquivoRef.current?.click()} disabled={salvando} className="h-8 shrink-0 rounded-md border border-cyan-300 px-3 text-[10px] font-black uppercase text-cyan-700">Enviar imagem</button>
         </div>
-        <div className="mt-2 flex items-center gap-2"><label className="flex flex-1 items-center gap-2 text-xs font-bold"><input type="checkbox" checked={formulario.ativo !== false} onChange={(e) => mudar('ativo', e.target.checked)} /> Produto ativo</label><button type="button" onClick={() => void salvar()} disabled={salvando} className="h-8 w-1/2 rounded-md text-[10px] font-black uppercase text-white disabled:opacity-60" style={{ backgroundColor: corPrimaria }}>{salvando ? 'Salvando...' : 'Salvar produto'}</button>{formulario.id && <button type="button" onClick={() => setFormulario(vazio)} className="h-8 rounded-md border px-2 text-[10px] font-black">Cancelar</button>}</div>
+        <div className="mt-2 flex flex-wrap items-center gap-2"><label className="mr-auto flex items-center gap-2 text-xs font-bold"><input type="checkbox" checked={formulario.ativo !== false} onChange={(e) => mudar('ativo', e.target.checked)} /> Produto ativo</label><div className="flex items-center gap-2">{formulario.id && <button type="button" onClick={() => void excluirProduto()} disabled={salvando} className="h-8 rounded-md border border-red-300 bg-red-50 px-2.5 text-[10px] font-black uppercase text-red-700 disabled:opacity-60">Excluir</button>}<button type="button" onClick={() => void salvar()} disabled={salvando} className="h-8 rounded-md px-3 text-[10px] font-black uppercase text-white disabled:opacity-60" style={{ backgroundColor: corPrimaria }}>{salvando ? 'Salvando...' : 'Salvar produto'}</button>{formulario.id && <button type="button" onClick={() => setFormulario(vazio)} disabled={salvando} className="h-8 rounded-md border px-2.5 text-[10px] font-black disabled:opacity-60">Cancelar</button>}</div></div>
       </section>
       </div>
       <section className="xl:flex xl:min-h-0 xl:flex-col"><h4 className="shrink-0 text-sm font-black">Produtos do pacote</h4><div className="mt-2 overflow-x-auto rounded-xl border xl:min-h-0 xl:flex-1 xl:overflow-auto"><table className="min-w-full text-left text-xs"><thead className={darkMode ? 'bg-slate-800' : 'bg-slate-50'}><tr><th className="px-3 py-2">Produto</th><th className="px-3 py-2">Custo</th><th className="px-3 py-2">Venda</th><th className="px-3 py-2">Imagem</th><th /></tr></thead><tbody>{carregando ? <tr><td colSpan={5} className="px-3 py-10 text-center">Carregando...</td></tr> : produtos.length ? produtos.map((produto) => <tr key={produto.id} className={`border-t ${darkMode ? 'border-slate-700' : 'border-slate-200'}`}><td className="px-3 py-2"><b className="block">{produto.nome}</b><small className="text-slate-500">{produto.marca || 'Sem marca'} · {produto.categoria || 'Sem categoria'}</small></td><td className="px-3 py-2">R$ {Number(produto.preco_custo).toFixed(2)}</td><td className="px-3 py-2">R$ {Number(produto.preco_venda).toFixed(2)}</td><td className="px-3 py-2">{produto.imagem_url ? <a href={produto.imagem_url} target="_blank" rel="noreferrer" title="Abrir imagem"><img src={produto.imagem_url} alt={`Imagem de ${produto.nome}`} className="h-9 w-9 rounded-md border object-cover" /></a> : <span className="text-slate-400">—</span>}</td><td className="px-3 py-2"><button type="button" onClick={() => editar(produto)} className="rounded-md border px-2 py-1 text-[10px] font-black text-cyan-700">Editar</button></td></tr>) : <tr><td colSpan={5} className="px-3 py-10 text-center text-slate-500">Nenhum produto cadastrado.</td></tr>}</tbody></table></div></section>
