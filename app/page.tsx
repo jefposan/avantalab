@@ -7447,6 +7447,7 @@ if (validacaoTelefoneObrigatoria) {
   empresaId={empresaId || ''}
   perfil={perfilUsuario === 'administrador' ? 'administrador' : 'gestor'}
   darkMode={darkMode}
+  corPrimaria={corPrimaria}
   onFechar={() => setModalRecebimentos(false)}
   onFinanceiroAtualizado={notificarFinanceiroAtualizado}
 />

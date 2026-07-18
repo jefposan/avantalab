@@ -44,6 +44,38 @@ Na versão **1.6.0.04**, o nome exibido foi corrigido em todo o projeto para
 **Recebimentos Presenciais**. O slug técnico `recebimentos_presencial` foi
 preservado, e uma migration aditiva atualiza o catálogo já instalado.
 
+Na versão **1.6.0.06**, o card Baixado foi compactado, Empresas e Colaboradores
+receberam comandos padronizados de pesquisa e cadastro, e o gráfico de Resultados
+teve sua altura reduzida para permanecer dentro do AvantaCard pai.
+
+Na versão **1.6.0.07**, a pesquisa foi mantida apenas em Empresas. Em
+Colaboradores, o botão de cópia do acesso PWA foi posicionado junto ao título do
+link. Cabeçalho, comandos principais e o card Baixado passaram a respeitar a
+`corPrimaria` do perfil, inclusive em modo escuro.
+
+Na versão **1.6.0.08**, o card foi renomeado para **Total recebido e
+confirmado**, teve controles e retorno compactados, e a lista de Recebimentos
+passou a associar visualmente seu título ao filtro de período De / Até.
+
+Na versão **1.6.0.09**, subempresas passaram a armazenar a frequência de
+recebimento (de semanal a anual), com migração dos registros existentes para
+mensal. O filtro de período voltou à linha dos demais seletores, destacado por
+um agrupamento próprio.
+
+Na versão **1.6.0.10**, o campo de senha de Novo colaborador passou a iniciar
+vazio, com placeholder explícito e sem preenchimento automático do navegador.
+
+Na versão **1.6.0.11**, o tooltip do gráfico de Resultados passou a ser
+ancorado na própria área do gráfico, precisamente à direita do cursor; a ação
+Adicionar aos recebimentos passou a manter a cor primária também no estado
+desabilitado.
+
+Na versão **1.6.0.12**, a frequência passou a ter configuração operacional: dias
+da semana, ciclo quinzenal de 15 em 15 dias, dia mensal ou mês inicial e dia
+nos ciclos trimestral, semestral e anual. A partir do cadastro da subempresa,
+as cobranças são geradas automaticamente e as abertas tornam-se inadimplentes
+após o vencimento, sem atualização manual.
+
 ---
 
 ## 0. O que já existe (não recriar)
@@ -131,7 +163,7 @@ criado_em timestamptz, atualizado_em timestamptz
 id uuid pk, empresa_id uuid -> empresas, recebimento_empresa_id uuid -> recebimentos_empresas (on delete cascade),
 nome text, endereco text, responsavel text,
 valor_combinado numeric(12,2) check (valor_combinado > 0),
-dia_vencimento smallint check (dia_vencimento between 1 and 31),
+frequencia_recebimento text check (frequencia_recebimento in ('semanal', 'quinzenal', 'mensal', 'trimestral', 'semestral', 'anual')),
 ativo boolean default true, criado_em, atualizado_em
 ```
 

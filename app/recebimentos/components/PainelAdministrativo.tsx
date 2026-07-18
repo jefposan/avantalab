@@ -4,7 +4,6 @@ import { useEffect, useMemo, useState } from 'react';
 import AvantaCard, { criarAvantaShellPreset } from '@/app/components/AvantaCard';
 import styles from '../recebimentos.module.css';
 import type { Colaborador, Empresa, Perfil, Recebimento, Subempresa } from './types';
-import { COR_PRIMARIA } from './dadosDemo';
 import { aguardandoConferencia, formatarMoeda } from './helpers';
 import ListaEmpresas from './ListaEmpresas';
 import ListaColaboradores from './ListaColaboradores';
@@ -19,6 +18,8 @@ type Aba = 'visao' | 'empresas' | 'colaboradores' | 'recebimentos' | 'conferenci
 type Props = {
   perfil: Perfil;
   darkMode: boolean;
+  corPrimaria: string;
+  salvando: boolean;
   podeConfirmar: boolean;
   empresas: Empresa[];
   subempresas: Subempresa[];
@@ -34,7 +35,7 @@ type Props = {
   onExcluirEmpresa: (id: string) => void;
   onAlternarEmpresa: (id: string) => void;
   onAdicionarSubempresa: (dados: Omit<Subempresa, 'id'>) => void;
-  onEditarSubempresa: (id: string, dados: Pick<Subempresa, 'nome' | 'endereco' | 'responsavel' | 'valorCombinado' | 'diaVencimento'>) => void;
+  onEditarSubempresa: (id: string, dados: Pick<Subempresa, 'nome' | 'endereco' | 'cep' | 'logradouro' | 'bairro' | 'cidade' | 'estado' | 'numero' | 'complemento' | 'responsavel' | 'valorCombinado' | 'frequenciaRecebimento' | 'configuracaoRecorrencia'>) => void;
   onExcluirSubempresa: (id: string) => void;
   onAlternarSubempresa: (id: string) => void;
   onAdicionarColaborador: (dados: Omit<Colaborador, 'id'>) => void;
@@ -58,7 +59,7 @@ const ABAS: Array<[Aba, string]> = [
 const MESES_CURTOS = ['JAN', 'FEV', 'MAR', 'ABR', 'MAI', 'JUN', 'JUL', 'AGO', 'SET', 'OUT', 'NOV', 'DEZ'];
 
 export default function PainelAdministrativo(props: Props) {
-  const { perfil, darkMode, podeConfirmar, empresas, subempresas, colaboradores, recebimentos } = props;
+  const { perfil, darkMode, salvando, podeConfirmar, empresas, subempresas, colaboradores, recebimentos } = props;
   const [aba, setAba] = useState<Aba>('visao');
   // Mês de referência da Visão geral (navegado pelo seletor no platô do card).
   const [mesRef, setMesRef] = useState(() => {
@@ -72,9 +73,13 @@ export default function PainelAdministrativo(props: Props) {
   const [integracaoSalvando, setIntegracaoSalvando] = useState(false);
   const [integracaoMensagem, setIntegracaoMensagem] = useState('');
   const [integracaoErro, setIntegracaoErro] = useState('');
-  const avantaShell = criarAvantaShellPreset({ corPrimaria: COR_PRIMARIA, darkMode });
+  const avantaShell = criarAvantaShellPreset({ corPrimaria: props.corPrimaria, darkMode });
 
   const pendentesQtd = useMemo(() => recebimentos.filter((r) => aguardandoConferencia(r.situacao)).length, [recebimentos]);
+  const inadimplentesQtd = useMemo(
+    () => recebimentos.filter((r) => r.situacao === 'em_atraso' && r.valorRecebido == null).length,
+    [recebimentos],
+  );
 
   function mudarMes(delta: number) {
     setMesRef((atual) => {
@@ -166,7 +171,7 @@ export default function PainelAdministrativo(props: Props) {
   );
 
   return (
-    <div>
+    <div className={styles.painelAdministrativo}>
       <div className={styles.tabs} role="tablist">
         {ABAS.map(([a, label]) => (
           <button
@@ -177,9 +182,10 @@ export default function PainelAdministrativo(props: Props) {
             className={`${styles.tab} ${aba === a ? styles.tabAtiva : ''}`}
             onClick={() => setAba(a)}
           >
-            {label}{a === 'conferencia' && pendentesQtd > 0 ? ` (${pendentesQtd})` : ''}
+            {label}{a === 'conferencia' && pendentesQtd > 0 ? ` (${pendentesQtd})` : ''}{a === 'inadimplentes' && inadimplentesQtd > 0 ? ` (${inadimplentesQtd})` : ''}
           </button>
         ))}
+        {salvando && <span className={styles.tabsStatus} role="status">Salvando alterações…</span>}
       </div>
 
       <AvantaCard
@@ -194,6 +200,8 @@ export default function PainelAdministrativo(props: Props) {
         headerRight={seletorMes}
         hideDragHandle
         hideMenu
+        className={styles.painelCardFixo}
+        bodyClassName={styles.painelCardCorpo}
         style={avantaShell.cardStyle}
         bodyStyle={avantaShell.bodyStyle}
       >
@@ -257,7 +265,7 @@ export default function PainelAdministrativo(props: Props) {
               <div className={`${styles.statCard} ${styles.statTeal} ${styles.integracaoCard}`}>
                 <div className={styles.integracaoResumo}>
                   <div>
-                    <div className={styles.statLabel}>Baixado</div>
+                    <div className={styles.statLabel}>Total recebido e confirmado</div>
                     <div className={styles.statValue}>{formatarMoeda(resumo.baixado)}</div>
                   </div>
                   {integracao?.integrado && (
@@ -281,7 +289,7 @@ export default function PainelAdministrativo(props: Props) {
                 </div>
                 <div className={styles.integracaoFeedback} aria-live="polite" aria-atomic="true">
                   {integracaoCarregando ? (
-                    <div className={styles.integracaoAjuda} role="status">Carregando integração…</div>
+                    <div className={styles.integracaoAjuda} role="status">Carregando valores…</div>
                   ) : integracaoErro ? (
                     <div className={styles.integracaoErro} role="alert">{integracaoErro}</div>
                   ) : integracaoMensagem ? (

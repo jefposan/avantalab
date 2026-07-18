@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import styles from '../recebimentos.module.css';
 import type { Recebimento } from './types';
 import { COR_PRIMARIA } from './dadosDemo';
@@ -14,6 +14,7 @@ const MESES_CURTOS = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 's
 
 export default function GraficoResultados({ chaveMes, recebimentos }: Props) {
   const [hover, setHover] = useState<{ i: number; x: number; y: number } | null>(null);
+  const areaGraficoRef = useRef<HTMLDivElement>(null);
 
   // Totais do mês selecionado no platô.
   const totais = useMemo(() => {
@@ -55,10 +56,16 @@ export default function GraficoResultados({ chaveMes, recebimentos }: Props) {
   const maxVal = Math.max(1, ...meses.map((m) => m.baixado + m.atraso));
 
   // Geometria do SVG
-  const W = 720, H = 220, padB = 28, padT = 10, padX = 12;
+  const W = 720, H = 170, padB = 26, padT = 8, padX = 12;
   const areaH = H - padB - padT;
   const slot = (W - padX * 2) / meses.length;
   const barW = Math.min(34, slot * 0.6);
+
+  function posicionarTooltip(i: number, event: React.MouseEvent<SVGGElement>) {
+    const area = areaGraficoRef.current?.getBoundingClientRect();
+    if (!area) return;
+    setHover({ i, x: event.clientX - area.left + 20, y: event.clientY - area.top });
+  }
 
   return (
     <div>
@@ -80,8 +87,9 @@ export default function GraficoResultados({ chaveMes, recebimentos }: Props) {
           </div>
         </div>
 
-        <div className={styles.chartWrap}>
-          <svg className={styles.chart} viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="xMidYMid meet" role="img" aria-label="Gráfico de torres dos últimos 12 meses">
+        <div className={styles.chartTooltipArea} ref={areaGraficoRef}>
+          <div className={styles.chartWrap}>
+            <svg className={styles.chart} viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="xMidYMid meet" role="img" aria-label="Gráfico de torres dos últimos 12 meses">
             <line x1={padX} y1={H - padB} x2={W - padX} y2={H - padB} stroke="#e2e8f0" strokeWidth={1} />
             {meses.map((m, i) => {
               const cx = padX + slot * i + slot / 2;
@@ -95,7 +103,7 @@ export default function GraficoResultados({ chaveMes, recebimentos }: Props) {
                 <g
                   key={m.chave}
                   className={styles.bar}
-                  onMouseMove={(e) => setHover({ i, x: e.clientX, y: e.clientY })}
+                  onMouseMove={(e) => posicionarTooltip(i, e)}
                   onMouseLeave={() => setHover(null)}
                 >
                   {/* área de captura */}
@@ -107,18 +115,18 @@ export default function GraficoResultados({ chaveMes, recebimentos }: Props) {
                 </g>
               );
             })}
-          </svg>
+            </svg>
+          </div>
+          {hover && (
+            <div className={styles.tooltip} style={{ left: hover.x, top: hover.y }}>
+              <div style={{ fontWeight: 800, marginBottom: 2 }}>{meses[hover.i].label}</div>
+              <div>Baixado: <b>{formatarMoeda(meses[hover.i].baixado)}</b></div>
+              <div>Em atraso: <b>{formatarMoeda(meses[hover.i].atraso)}</b></div>
+              <div>Recebimentos: <b>{meses[hover.i].qtd}</b></div>
+            </div>
+          )}
         </div>
       </div>
-
-      {hover && (
-        <div className={styles.tooltip} style={{ left: hover.x, top: hover.y - 12 }}>
-          <div style={{ fontWeight: 800, marginBottom: 2 }}>{meses[hover.i].label}</div>
-          <div>Baixado: <b>{formatarMoeda(meses[hover.i].baixado)}</b></div>
-          <div>Em atraso: <b>{formatarMoeda(meses[hover.i].atraso)}</b></div>
-          <div>Recebimentos: <b>{meses[hover.i].qtd}</b></div>
-        </div>
-      )}
     </div>
   );
 }

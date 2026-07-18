@@ -3,6 +3,17 @@
 
 export type Perfil = 'colaborador' | 'gestor' | 'administrador';
 
+export type FrequenciaRecebimento = 'semanal' | 'quinzenal' | 'mensal' | 'trimestral' | 'semestral' | 'anual';
+
+export type ConfiguracaoRecorrencia = {
+  /** 0 = domingo; usado pela cobrança semanal. */
+  diasSemana: number[];
+  /** Dia-base do mês. Para quinzenal, a segunda cobrança ocorre 15 dias depois. */
+  diaMes: number | null;
+  /** Mês inicial (1–12), usado por trimestral, semestral e anual. */
+  mesInicio: number | null;
+};
+
 export type SituacaoRecebimento =
   | 'previsto'
   | 'aguardando_conferencia'
@@ -27,14 +38,19 @@ export type Subempresa = {
   nome: string;
   // Localização / endereço
   endereco: string;
+  cep: string;
   logradouro: string;
+  bairro: string;
+  cidade: string;
+  estado: string;
   numero: string;
   complemento: string;
   shoppingGaleria: string;
   lojaSala: string;
   responsavel: string;
   valorCombinado: number;
-  diaVencimento: number;
+  frequenciaRecebimento: FrequenciaRecebimento;
+  configuracaoRecorrencia: ConfiguracaoRecorrencia;
   ativo: boolean;
 };
 

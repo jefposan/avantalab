@@ -16,27 +16,27 @@ export const empresasDemo: Empresa[] = [
 export const subempresasDemo: Subempresa[] = [
   {
     id: 's1', empresaId: 'e1', nome: 'Loja Renner',
-    endereco: 'Av. Roque Petroni Jr, 1089 — Piso Térreo, L112', logradouro: 'Av. Roque Petroni Jr', numero: '1089',
+    endereco: 'Av. Roque Petroni Jr, 1089 — Piso Térreo, L112', cep: '04707-900', logradouro: 'Av. Roque Petroni Jr', bairro: 'Jardim das Acácias', cidade: 'São Paulo', estado: 'SP', numero: '1089',
     complemento: 'Piso Térreo', shoppingGaleria: 'Shopping Morumbi', lojaSala: 'Loja 112',
-    responsavel: 'Gerente Renner', valorCombinado: 1200, diaVencimento: 10, ativo: true,
+    responsavel: 'Gerente Renner', valorCombinado: 1200, frequenciaRecebimento: 'mensal', configuracaoRecorrencia: { diasSemana: [], diaMes: 10, mesInicio: null }, ativo: true,
   },
   {
     id: 's2', empresaId: 'e1', nome: 'Loja C&A',
-    endereco: 'Av. Roque Petroni Jr, 1089 — Piso L2, L205', logradouro: 'Av. Roque Petroni Jr', numero: '1089',
+    endereco: 'Av. Roque Petroni Jr, 1089 — Piso L2, L205', cep: '04707-900', logradouro: 'Av. Roque Petroni Jr', bairro: 'Jardim das Acácias', cidade: 'São Paulo', estado: 'SP', numero: '1089',
     complemento: 'Piso Superior', shoppingGaleria: 'Shopping Morumbi', lojaSala: 'Loja 205',
-    responsavel: 'Gerente C&A', valorCombinado: 950, diaVencimento: 5, ativo: true,
+    responsavel: 'Gerente C&A', valorCombinado: 950, frequenciaRecebimento: 'mensal', configuracaoRecorrencia: { diasSemana: [], diaMes: 5, mesInicio: null }, ativo: true,
   },
   {
     id: 's3', empresaId: 'e2', nome: 'Loja Riachuelo',
-    endereco: 'Av. Rebouças, 3970 — Piso 1, L134', logradouro: 'Av. Rebouças', numero: '3970',
+    endereco: 'Av. Rebouças, 3970 — Piso 1, L134', cep: '05402-600', logradouro: 'Av. Rebouças', bairro: 'Pinheiros', cidade: 'São Paulo', estado: 'SP', numero: '3970',
     complemento: 'Piso 1', shoppingGaleria: 'Shopping Eldorado', lojaSala: 'Loja 134',
-    responsavel: 'Gerente Riachuelo', valorCombinado: 1500, diaVencimento: 8, ativo: true,
+    responsavel: 'Gerente Riachuelo', valorCombinado: 1500, frequenciaRecebimento: 'mensal', configuracaoRecorrencia: { diasSemana: [], diaMes: 8, mesInicio: null }, ativo: true,
   },
   {
     id: 's4', empresaId: 'e3', nome: 'Sala 42',
-    endereco: 'Rua 24 de Maio, 250 — Sala 42', logradouro: 'Rua 24 de Maio', numero: '250',
+    endereco: 'Rua 24 de Maio, 250 — Sala 42', cep: '01041-000', logradouro: 'Rua 24 de Maio', bairro: 'República', cidade: 'São Paulo', estado: 'SP', numero: '250',
     complemento: '4º andar', shoppingGaleria: 'Galeria Central', lojaSala: 'Sala 42',
-    responsavel: 'Sr. Antônio', valorCombinado: 600, diaVencimento: 15, ativo: true,
+    responsavel: 'Sr. Antônio', valorCombinado: 600, frequenciaRecebimento: 'mensal', configuracaoRecorrencia: { diasSemana: [], diaMes: 15, mesInicio: null }, ativo: true,
   },
 ];
 

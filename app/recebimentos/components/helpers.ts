@@ -1,5 +1,18 @@
 // Funções utilitárias do estudo "Recebimentos em Campo".
-import type { DiferencaTipo, LabelSituacao, SituacaoRecebimento } from './types';
+import type { DiferencaTipo, FrequenciaRecebimento, LabelSituacao, SituacaoRecebimento } from './types';
+
+export const FREQUENCIAS_RECEBIMENTO: Array<[FrequenciaRecebimento, string]> = [
+  ['semanal', 'Semanal'],
+  ['quinzenal', 'Quinzenal'],
+  ['mensal', 'Mensal'],
+  ['trimestral', 'Trimestral'],
+  ['semestral', 'Semestral'],
+  ['anual', 'Anual'],
+];
+
+export function rotuloFrequenciaRecebimento(frequencia: FrequenciaRecebimento): string {
+  return FREQUENCIAS_RECEBIMENTO.find(([valor]) => valor === frequencia)?.[1] ?? 'Mensal';
+}
 
 export function formatarMoeda(valor: number): string {
   return valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
@@ -57,20 +70,6 @@ export function parseValorBR(texto: string): number {
 // Exibe um número de reais na máscara do input (ex.: 1200 -> "1.200,00").
 export function valorParaInput(valor: number): string {
   return Number(valor || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-}
-
-// Dia de vencimento recorrente: dois dígitos + "/mm" (ex.: "11/mm"), indicando
-// "todo dia 11 de cada mês". Mantém apenas o dia (1–31) ao digitar.
-export function formatarDiaVencimento(valor: string): string {
-  const d = String(valor || '').replace(/\D/g, '').slice(0, 2);
-  if (!d) return '';
-  return `${d}/mm`;
-}
-
-// Extrai o número do dia a partir do texto "11/mm".
-export function parseDiaVencimento(texto: string): number {
-  const d = String(texto || '').replace(/\D/g, '').slice(0, 2);
-  return d ? Number(d) : NaN;
 }
 
 // Formata o telefone no padrão (11) 99999-9999 (ou (11) 9999-9999 p/ fixo),

@@ -3,7 +3,7 @@
 import { useMemo, useState } from 'react';
 import styles from '../recebimentos.module.css';
 import type { Empresa, Recebimento, Subempresa } from './types';
-import { diasEmAtraso, formatarData, formatarMoeda, tipoDiferenca } from './helpers';
+import { diasEmAtraso, formatarData, formatarMoeda, rotuloFrequenciaRecebimento, tipoDiferenca } from './helpers';
 
 type Props = {
   empresas: Empresa[];
@@ -11,7 +11,7 @@ type Props = {
   recebimentos: Recebimento[];
   // Recebimento avulso (sem cobrança vinculada).
   onConfirmar: (subempresaId: string, valorRecebido: number, observacao: string, resumo: ResumoRecebimento) => Promise<void> | void;
-  // Baixa de uma cobrança em atraso específica (uma a uma).
+  // Registro de uma cobrança prevista ou em atraso específica (uma a uma).
   onReceberCobranca: (recebimentoId: string, valorRecebido: number, observacao: string, resumo: ResumoRecebimento) => Promise<void> | void;
   onCancelar: () => void;
 };
@@ -46,23 +46,22 @@ export default function FormularioRecebimento({ empresas, subempresas, recebimen
     [subempresas, empresaId],
   );
 
-  // É muito comum a empresa atrasar: ao selecionar a empresa, todas as
-  // parcelas em atraso vêm listadas para confirmação UMA A UMA — o cliente
-  // pode ter várias parcelas vencidas e pagar somente uma.
-  const atrasadas = useMemo(
+  // As cobranças geradas pela recorrência são sempre recebidas uma a uma.
+  // Assim, uma parcela futura nunca cria um lançamento avulso duplicado.
+  const cobrancasAbertas = useMemo(
     () =>
       recebimentos
         .filter(
           (r) =>
             r.empresaId === empresaId &&
             r.valorRecebido == null &&
-            (r.situacao === 'em_atraso' || (r.situacao === 'previsto' && r.vencimento < hojeIso)),
+            (r.situacao === 'em_atraso' || r.situacao === 'previsto'),
         )
         .sort((a, b) => a.vencimento.localeCompare(b.vencimento)),
-    [recebimentos, empresaId, hojeIso],
+    [recebimentos, empresaId],
   );
 
-  const cobranca = useMemo(() => atrasadas.find((r) => r.id === cobrancaId) ?? null, [atrasadas, cobrancaId]);
+  const cobranca = useMemo(() => cobrancasAbertas.find((r) => r.id === cobrancaId) ?? null, [cobrancasAbertas, cobrancaId]);
   const sub = useMemo(() => {
     const id = cobranca ? cobranca.subempresaId : subempresaId;
     return subempresas.find((s) => s.id === id) ?? null;
@@ -143,14 +142,15 @@ export default function FormularioRecebimento({ empresas, subempresas, recebimen
         </select>
       </div>
 
-      {empresaId && atrasadas.length > 0 && (
+      {empresaId && cobrancasAbertas.length > 0 && (
         <div className={styles.atrasoBox}>
-          <div className={styles.atrasoTitulo}>Pagamentos em atraso ({atrasadas.length})</div>
+          <div className={styles.atrasoTitulo}>Cobranças abertas ({cobrancasAbertas.length})</div>
           <p className={styles.atrasoDica}>
-            Confirme o recebimento parcela por parcela — o cliente pode pagar somente uma, e apenas ela recebe baixa.
+            Escolha a parcela correspondente. As vencidas já aparecem como atraso automaticamente.
           </p>
-          {atrasadas.map((r) => {
+          {cobrancasAbertas.map((r) => {
             const selecionada = r.id === cobrancaId;
+            const atrasada = r.situacao === 'em_atraso' || r.vencimento < hojeIso;
             return (
               <button
                 key={r.id}
@@ -161,7 +161,7 @@ export default function FormularioRecebimento({ empresas, subempresas, recebimen
                 <span className={styles.atrasoItemInfo}>
                   <span className={styles.atrasoItemSub}>{nomeSub(r.subempresaId)}</span>
                   <span className={styles.atrasoItemMeta}>
-                    Venc. {formatarData(r.vencimento)} · {diasEmAtraso(r.vencimento, hoje)} dia(s) em atraso
+                    Venc. {formatarData(r.vencimento)} · {atrasada ? `${diasEmAtraso(r.vencimento, hoje)} dia(s) em atraso` : 'prevista'}
                   </span>
                 </span>
                 <span className={styles.atrasoItemValor}>{formatarMoeda(r.valorCombinado)}</span>
@@ -174,7 +174,7 @@ export default function FormularioRecebimento({ empresas, subempresas, recebimen
 
       {!cobranca && (
         <div className={styles.field}>
-          <label className={styles.label}>Subempresa{atrasadas.length > 0 ? ' (recebimento avulso)' : ''}</label>
+          <label className={styles.label}>Subempresa{cobrancasAbertas.length > 0 ? ' (recebimento avulso)' : ''}</label>
           <select
             className={styles.select}
             value={subempresaId}
@@ -196,7 +196,7 @@ export default function FormularioRecebimento({ empresas, subempresas, recebimen
           {cobranca ? (
             <div className={styles.readonlyRow}><span>Vencimento da parcela</span><span>{formatarData(cobranca.vencimento)}</span></div>
           ) : (
-            <div className={styles.readonlyRow}><span>Vencimento</span><span>Todo dia {sub.diaVencimento}</span></div>
+            <div className={styles.readonlyRow}><span>Recebimento</span><span>{rotuloFrequenciaRecebimento(sub.frequenciaRecebimento)}</span></div>
           )}
           <div className={styles.readonlyRow}><span>Valor combinado</span><span>{formatarMoeda(valorCombinado ?? 0)}</span></div>
         </div>

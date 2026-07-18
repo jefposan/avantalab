@@ -1,7 +1,8 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState, type CSSProperties } from 'react';
 import styles from './recebimentos.module.css';
+import { corEhClara } from '@/app/lib/formatters';
 import type { Colaborador, Empresa, Perfil, Recebimento, Subempresa } from './components/types';
 import PainelAdministrativo from './components/PainelAdministrativo';
 import { criarRepoDemo, type IntegracaoFinanceiraRecebimentos, type RecebimentosRepo } from './data/repo';
@@ -13,6 +14,7 @@ type Props = {
   integrado?: boolean;
   perfilInicial?: Extract<Perfil, 'gestor' | 'administrador'>;
   darkMode?: boolean;
+  corPrimaria?: string;
   mostrarLinkColaboradores?: boolean;
   onFinanceiroAtualizado?: () => void;
 };
@@ -22,6 +24,7 @@ export default function RecebimentosClient({
   integrado = false,
   perfilInicial = 'gestor',
   darkMode = false,
+  corPrimaria = '#003E73',
   mostrarLinkColaboradores = false,
   onFinanceiroAtualizado,
 }: Props) {
@@ -94,16 +97,21 @@ export default function RecebimentosClient({
   );
 
   const podeConfirmar = perfil === 'gestor' || perfil === 'administrador';
+  const escopoVisual = {
+    '--cp': corPrimaria,
+    '--cp-text': corEhClara(corPrimaria) ? '#0f172a' : '#ffffff',
+  } as CSSProperties;
   const painel = (
     <>
       {erro && <div className={styles.aviso} role="alert" style={{ marginBottom: 12 }}>{erro}</div>}
-      {processando && <div className={styles.muted} role="status" style={{ marginBottom: 10 }}>Salvando alterações…</div>}
       {carregando ? (
         <div className={styles.muted} role="status" style={{ padding: 28, textAlign: 'center' }}>Carregando recebimentos…</div>
       ) : (
         <PainelAdministrativo
           perfil={perfil}
           darkMode={darkMode}
+          corPrimaria={corPrimaria}
+          salvando={processando}
           podeConfirmar={podeConfirmar}
           empresas={empresas}
           subempresas={subempresas}
@@ -142,9 +150,9 @@ export default function RecebimentosClient({
     </>
   );
 
-  if (integrado) return <div className={darkMode ? styles.darkScope : undefined}>{painel}</div>;
+  if (integrado) return <div className={`${styles.integradoShell} ${darkMode ? styles.darkScope : ''}`} style={escopoVisual}>{painel}</div>;
   return (
-    <div className={styles.page}>
+    <div className={styles.page} style={escopoVisual}>
       <div className={styles.topbar}>
         <div className={styles.topbarInner}>
           <div className={styles.brand}>

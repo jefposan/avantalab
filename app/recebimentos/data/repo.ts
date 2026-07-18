@@ -21,6 +21,8 @@ export type IntegracaoFinanceiraRecebimentos = {
   valorSincronizado: number;
 };
 
+export type DadosSubempresaEditavel = Pick<Subempresa, 'nome' | 'endereco' | 'cep' | 'logradouro' | 'bairro' | 'cidade' | 'estado' | 'numero' | 'complemento' | 'responsavel' | 'valorCombinado' | 'frequenciaRecebimento' | 'configuracaoRecorrencia'>;
+
 export interface RecebimentosRepo {
   carregar(): Promise<DadosRecebimentos>;
   salvarEmpresa(dados: Omit<Empresa, 'id'>): Promise<void>;
@@ -28,7 +30,7 @@ export interface RecebimentosRepo {
   excluirEmpresa(id: string): Promise<void>;
   alternarEmpresa(id: string, ativo: boolean): Promise<void>;
   salvarSubempresa(dados: Omit<Subempresa, 'id'>): Promise<void>;
-  editarSubempresa(id: string, dados: Pick<Subempresa, 'nome' | 'endereco' | 'responsavel' | 'valorCombinado' | 'diaVencimento'>): Promise<void>;
+  editarSubempresa(id: string, dados: DadosSubempresaEditavel): Promise<void>;
   excluirSubempresa(id: string): Promise<void>;
   alternarSubempresa(id: string, ativo: boolean): Promise<void>;
   criarColaborador(dados: DadosNovoColaborador): Promise<void>;
@@ -96,7 +98,7 @@ export function criarRepoDemo(): RecebimentosRepo {
       const agora = new Date();
       dados.recebimentos.unshift({
         id: `r-${Date.now()}`, empresaId: sub.empresaId, subempresaId: sub.id,
-        vencimento: new Date(agora.getFullYear(), agora.getMonth(), sub.diaVencimento).toISOString().slice(0, 10),
+        vencimento: hojeIso(),
         valorCombinado: sub.valorCombinado, valorRecebido: valor, colaboradorId: colaborador.id,
         recebidoEm: agora.toISOString(), observacao: observacao.trim() || null,
         situacao: situacaoPorValor(sub.valorCombinado, valor), baixadoPor: null, baixadoEm: null,
@@ -152,9 +154,16 @@ function mapEmpresa(row: Linha): Empresa {
 function mapSubempresa(row: Linha): Subempresa {
   return {
     id: texto(row.id), empresaId: texto(row.recebimento_empresa_id), nome: texto(row.nome), endereco: texto(row.endereco),
-    logradouro: texto(row.logradouro), numero: texto(row.numero), complemento: texto(row.complemento),
+    cep: texto(row.cep), logradouro: texto(row.logradouro), bairro: texto(row.bairro), cidade: texto(row.cidade), estado: texto(row.estado), numero: texto(row.numero), complemento: texto(row.complemento),
     shoppingGaleria: texto(row.shopping_galeria), lojaSala: texto(row.loja_sala), responsavel: texto(row.responsavel),
-    valorCombinado: numero(row.valor_combinado), diaVencimento: numero(row.dia_vencimento), ativo: row.ativo !== false,
+    valorCombinado: numero(row.valor_combinado),
+    frequenciaRecebimento: (texto(row.frequencia_recebimento) || 'mensal') as Subempresa['frequenciaRecebimento'],
+    configuracaoRecorrencia: {
+      diasSemana: Array.isArray(row.dias_semana) ? row.dias_semana.map(numero).filter((dia) => dia >= 0 && dia <= 6) : [],
+      diaMes: row.dia_mes == null ? null : numero(row.dia_mes),
+      mesInicio: row.mes_inicio == null ? null : numero(row.mes_inicio),
+    },
+    ativo: row.ativo !== false,
   };
 }
 
@@ -202,6 +211,13 @@ export function criarRepoSupabase(empresaId: string, cliente: SupabaseClient = s
   }
   return {
     async carregar() {
+      // A migration de recorrência pode ainda não ter sido aplicada em um
+      // ambiente já publicado. Nesse intervalo, o módulo continua legível;
+      // assim que a rotina existir, a sincronização volta a ser automática.
+      const { error: erroRecorrencia } = await cliente.rpc('recebimentos_sincronizar_recorrencias', { p_empresa_id: empresaId });
+      if (erroRecorrencia && erroRecorrencia.code !== 'PGRST202') {
+        throw new Error(erroMensagem(erroRecorrencia, 'Erro ao atualizar as cobranças recorrentes.'));
+      }
       const [empresas, subempresas, colaboradores, recebimentos] = await Promise.all([
         exigir(cliente.from('recebimentos_empresas').select('*').eq('empresa_id', empresaId).order('nome'), 'Erro ao carregar empresas.'),
         exigir(cliente.from('recebimentos_subempresas').select('*').eq('empresa_id', empresaId).order('nome'), 'Erro ao carregar subempresas.'),
@@ -225,11 +241,14 @@ export function criarRepoSupabase(empresaId: string, cliente: SupabaseClient = s
       await exigir(cliente.from('recebimentos_subempresas').insert({
         empresa_id: empresaId, recebimento_empresa_id: dados.empresaId, nome: dados.nome, endereco: dados.endereco,
         logradouro: dados.logradouro, numero: dados.numero, complemento: dados.complemento,
+        cep: dados.cep, bairro: dados.bairro, cidade: dados.cidade, estado: dados.estado,
         shopping_galeria: dados.shoppingGaleria, loja_sala: dados.lojaSala, responsavel: dados.responsavel,
-        valor_combinado: dados.valorCombinado, dia_vencimento: dados.diaVencimento, ativo: dados.ativo,
+        valor_combinado: dados.valorCombinado, frequencia_recebimento: dados.frequenciaRecebimento,
+        dias_semana: dados.configuracaoRecorrencia.diasSemana, dia_mes: dados.configuracaoRecorrencia.diaMes,
+        mes_inicio: dados.configuracaoRecorrencia.mesInicio, ativo: dados.ativo,
       }).select('id').single(), 'Erro ao cadastrar subempresa.');
     },
-    async editarSubempresa(id, dados) { await exigir(cliente.from('recebimentos_subempresas').update({ nome: dados.nome, endereco: dados.endereco, responsavel: dados.responsavel, valor_combinado: dados.valorCombinado, dia_vencimento: dados.diaVencimento, atualizado_em: new Date().toISOString() }).eq('empresa_id', empresaId).eq('id', id).select('id'), 'Erro ao editar subempresa.'); },
+    async editarSubempresa(id, dados) { await exigir(cliente.from('recebimentos_subempresas').update({ nome: dados.nome, endereco: dados.endereco, cep: dados.cep, logradouro: dados.logradouro, bairro: dados.bairro, cidade: dados.cidade, estado: dados.estado, numero: dados.numero, complemento: dados.complemento, responsavel: dados.responsavel, valor_combinado: dados.valorCombinado, frequencia_recebimento: dados.frequenciaRecebimento, dias_semana: dados.configuracaoRecorrencia.diasSemana, dia_mes: dados.configuracaoRecorrencia.diaMes, mes_inicio: dados.configuracaoRecorrencia.mesInicio, atualizado_em: new Date().toISOString() }).eq('empresa_id', empresaId).eq('id', id).select('id'), 'Erro ao editar subempresa.'); },
     async excluirSubempresa(id) { await exigir(cliente.from('recebimentos_subempresas').delete().eq('empresa_id', empresaId).eq('id', id).select('id'), 'Erro ao excluir subempresa.'); },
     async alternarSubempresa(id, ativo) { await exigir(cliente.from('recebimentos_subempresas').update({ ativo, atualizado_em: new Date().toISOString() }).eq('empresa_id', empresaId).eq('id', id).select('id'), 'Erro ao alterar subempresa.'); },
     async criarColaborador(dados) { await chamarApi(cliente, '/api/recebimentos/criar-colaborador', { empresaId, ...dados }); },
@@ -245,13 +264,12 @@ export function criarRepoSupabase(empresaId: string, cliente: SupabaseClient = s
     },
     async registrarRecebimento(subempresaId, valor, observacao) {
       const [{ data: sub, error: erroSub }, { data: auth }] = await Promise.all([
-        cliente.from('recebimentos_subempresas').select('recebimento_empresa_id, valor_combinado, dia_vencimento').eq('empresa_id', empresaId).eq('id', subempresaId).single(),
+        cliente.from('recebimentos_subempresas').select('recebimento_empresa_id, valor_combinado').eq('empresa_id', empresaId).eq('id', subempresaId).single(),
         cliente.auth.getUser(),
       ]);
       if (erroSub || !sub || !auth.user) throw new Error('Não foi possível identificar a cobrança.');
       const agora = new Date();
-      const dia = Math.min(Number(sub.dia_vencimento), new Date(agora.getFullYear(), agora.getMonth() + 1, 0).getDate());
-      const vencimento = `${agora.getFullYear()}-${String(agora.getMonth() + 1).padStart(2, '0')}-${String(dia).padStart(2, '0')}`;
+      const vencimento = hojeIso();
       await exigir(cliente.from('recebimentos_lancamentos').insert({
         empresa_id: empresaId, recebimento_empresa_id: sub.recebimento_empresa_id, subempresa_id: subempresaId,
         colaborador_user_id: auth.user.id, vencimento, valor_combinado: sub.valor_combinado, valor_recebido: valor,

@@ -3,6 +3,7 @@
 
 .page {
   --cp: #003E73;
+  --cp-text: #fff;
   min-height: 100dvh;
   background-color: #eef6fb;
   background-image: image-set(url('/images/bg-avantalab-mobile-1080x1920.webp') type('image/webp'), url('/images/bg-avantalab-mobile-1080x1920.png') type('image/png'));
@@ -252,7 +253,7 @@
   gap: 4px;
   overflow-x: auto;
   border-bottom: 1px solid #e2e8f0;
-  margin-bottom: 18px;
+  margin-bottom: 8px;
   scrollbar-width: thin;
 }
 .tab {
@@ -266,6 +267,17 @@
   cursor: pointer;
   border-bottom: 2px solid transparent;
   transition: color 0.15s ease;
+}
+.tabsStatus {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  margin-left: auto;
+  padding: 0 6px 2px;
+  color: #64748b;
+  font-size: 11px;
+  font-weight: 700;
+  white-space: nowrap;
 }
 .tab:hover { color: var(--cp); }
 .tabAtiva {
@@ -388,10 +400,10 @@
 .integracaoCard {
   grid-column: 1 / -1;
   justify-self: center;
-  width: min(100%, 880px);
+  width: min(100%, 440px);
   min-height: 0;
-  padding: 18px;
-  gap: 12px;
+  padding: 14px;
+  gap: 8px;
 }
 .integracaoResumo {
   display: flex;
@@ -414,13 +426,12 @@
 .integracaoCampos {
   display: grid;
   grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr);
-  gap: 10px;
+  gap: 8px;
 }
 .integracaoAcoes {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  align-items: end;
-  gap: 10px;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 6px;
 }
 .integracaoCampo {
   display: flex;
@@ -431,15 +442,24 @@
   font-size: 11px;
   font-weight: 700;
 }
+.integracaoCampo > span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
 .integracaoCampo .input {
-  height: 44px;
+  height: 34px;
+  padding-block: 4px;
   background: color-mix(in srgb, white 88%, var(--sc-bg));
 }
-.integracaoBotao {
-  min-height: 44px;
-  padding-inline: 20px;
-  background: linear-gradient(135deg, #003e73, #007da5);
-  color: #fff;
+.btn.integracaoBotao {
+  width: 100%;
+  min-height: 34px;
+  padding-block: 4px;
+  padding-inline: 10px;
+  background: var(--cp);
+  color: var(--cp-text, #fff);
+  font-size: 10.5px;
   font-weight: 800;
   line-height: 1.25;
   text-align: center;
@@ -447,30 +467,29 @@
 }
 .btn.integracaoBotao:disabled {
   opacity: 1;
-  background: #475569;
-  color: #f8fafc;
+  background: color-mix(in srgb, var(--cp) 62%, #64748b);
+  color: var(--cp-text, #fff);
   text-shadow: none;
 }
 .integracaoFeedback {
   display: flex;
-  height: 32px;
-  min-height: 32px;
-  align-items: flex-start;
+  height: 16px;
+  min-height: 16px;
+  align-items: center;
   justify-content: center;
   overflow: hidden;
 }
 .integracaoAjuda,
 .integracaoSucesso,
 .integracaoErro {
-  display: -webkit-box;
   max-width: 100%;
   overflow: hidden;
   text-align: center;
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 700;
-  line-height: 1.35;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
+  line-height: 1.2;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .integracaoAjuda { color: #64748b; }
 .integracaoSucesso { color: #166534; }
@@ -482,7 +501,9 @@
   .integracaoStatus { align-self: flex-start; }
   .integracaoAcoes { grid-template-columns: 1fr; }
   .integracaoCampos { grid-template-columns: 1fr; }
-  .integracaoBotao { width: 100%; }
+  .integracaoBotao { width: 100%; min-height: 44px; }
+  .integracaoCampo .input { height: 44px; padding-block: 8px; }
+  .recebimentosDatas { flex-wrap: wrap; }
 }
 
 @media (max-width: 420px) {
@@ -490,6 +511,9 @@
 }
 
 /* Gráfico de torres (SVG/CSS) */
+.chartTooltipArea {
+  position: relative;
+}
 .chartWrap {
   width: 100%;
   overflow-x: auto;
@@ -498,7 +522,7 @@
   display: block;
   min-width: 560px;
   width: 100%;
-  height: 260px;
+  height: 180px;
 }
 .bar {
   cursor: pointer;
@@ -506,7 +530,7 @@
 }
 .bar:hover { opacity: 0.82; }
 .tooltip {
-  position: fixed;
+  position: absolute;
   z-index: 60;
   pointer-events: none;
   background: #0f172a;
@@ -516,7 +540,7 @@
   font-size: 12px;
   line-height: 1.4;
   box-shadow: 0 8px 24px rgba(15, 23, 42, 0.28);
-  transform: translate(-50%, -100%);
+  transform: translateY(-50%);
 }
 .tooltip b { color: #93c5fd; }
 
@@ -571,7 +595,7 @@
 }
 .btn:hover { filter: brightness(1.06); }
 .btn:disabled { opacity: 0.5; cursor: not-allowed; filter: none; }
-.btnPrimary { background: var(--cp); color: #fff; }
+.btnPrimary { background: var(--cp); color: var(--cp-text, #fff); }
 .btnGhost { background: #fff; color: var(--cp); border: 1px solid #cbd5e1; }
 .btnDanger { background: #fee2e2; color: #b91c1c; }
 .btnSuccess { background: #16a34a; color: #fff; }
@@ -761,8 +785,9 @@
 .listaShell {
   display: flex;
   flex-direction: column;
-  max-height: calc(100dvh - 305px);
+  max-height: calc(100dvh - 292px);
   min-height: 180px;
+  margin-top: -6px;
 }
 .listaRolavel {
   flex: 1;
@@ -771,6 +796,9 @@
   overscroll-behavior: contain;
   padding-right: 6px;
 }
+.listaRolavelCadastro { display: flex; }
+.listaRolavelCadastro > .cadastroSubShell { display: flex; width: 100%; }
+.listaRolavelCadastro .subListaCadastro { display: flex; flex: 1; }
 
 /* Topo das listas: título + busca + ação principal (estático). */
 .listaTopo {
@@ -786,11 +814,15 @@
   align-items: center;
   gap: 8px;
 }
+.listaAcaoPrincipal {
+  min-height: 34px;
+  padding: 6px 11px;
+  font-size: 12px;
+  white-space: nowrap;
+}
 .linkAcessoBox {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
+  display: grid;
+  gap: 3px;
   margin-bottom: 10px;
   padding: 10px 12px;
   border-radius: 12px;
@@ -801,6 +833,14 @@
   font-size: 12px;
   font-weight: 800;
 }
+.linkAcessoLinhaTitulo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.linkAcessoCopiar {
+  flex: 0 0 auto;
+}
 .linkAcessoUrl {
   margin-top: 2px;
   color: var(--cp);
@@ -809,15 +849,15 @@
   overflow-wrap: anywhere;
 }
 @media (max-width: 640px) {
-  .linkAcessoBox { align-items: stretch; flex-direction: column; }
+  .linkAcessoLinhaTitulo { align-items: flex-start; }
 }
 /* Busca fixa (sempre visível) com filtro instantâneo. */
 .buscaFixa {
   display: flex;
   align-items: center;
   gap: 6px;
-  height: 30px;
-  padding: 0 8px;
+  height: 34px;
+  padding: 0 9px;
   border: 1px solid #cbd5e1;
   border-radius: 10px;
   background: #fff;
@@ -831,8 +871,9 @@
   border: none;
   outline: none;
   background: transparent;
-  width: 170px;
-  font-size: 13px;
+  width: 200px;
+  height: 100%;
+  font-size: 12px;
   color: #0f172a;
 }
 .buscaFixaInput::placeholder { color: #94a3b8; }
@@ -846,6 +887,13 @@
   padding: 0 2px;
 }
 .buscaLimpar:hover { color: var(--cp); }
+
+@media (max-width: 640px) {
+  .listaTopoAcoes { width: 100%; }
+  .buscaFixa { min-width: 0; flex: 1; }
+  .buscaFixaInput { min-width: 0; width: 100%; }
+  .listaAcaoPrincipal { min-height: 36px; padding-inline: 10px; }
+}
 
 /* Ações ocultas (Editar/Desativar): gatilho SVG sempre visível; os botões
    surgem deslizando para o lado esquerdo no hover, foco ou toque. */
@@ -964,6 +1012,31 @@
   align-items: flex-end;
   gap: 8px;
 }
+.linhaEmpresaCampos {
+  display: grid;
+  grid-template-columns: minmax(160px, 1.3fr) minmax(140px, 1fr) minmax(130px, 0.8fr);
+  gap: 8px;
+}
+.linhaEmpresaCampos .field { margin-bottom: 8px; }
+.enderecoEstruturado {
+  display: grid;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+.enderecoAjuda { display: block; margin-top: 3px; color: #64748b; font-size: 10px; line-height: 1.2; white-space: nowrap; }
+.enderecoLinhaPrincipal {
+  display: grid;
+  gap: 8px;
+}
+.enderecoLinhaPrincipal { grid-template-columns: 92px minmax(128px, 1.19fr) 71px minmax(82px, 0.75fr) minmax(82px, 0.75fr) minmax(88px, 0.8fr) 56px; }
+.enderecoLinhaPrincipal .field { margin-bottom: 0; }
+@media (max-width: 680px) {
+  .linhaEmpresaCampos, .enderecoLinhaPrincipal { grid-template-columns: 1fr 1fr; }
+  .enderecoLinhaPrincipal .field:last-child { max-width: 72px; }
+}
+@media (max-width: 440px) {
+  .linhaEmpresaCampos, .enderecoLinhaPrincipal { grid-template-columns: 1fr; }
+}
 .acoesForm {
   display: flex;
   align-items: flex-end;
@@ -971,6 +1044,127 @@
   margin-left: auto;
 }
 .acoesForm .btn { white-space: nowrap; }
+
+/* Vencimento: título e pílulas seguem o mesmo ritmo visual do cadastro. */
+.recorrencia {
+  display: grid;
+  grid-template-rows: auto auto minmax(0, 1fr);
+  align-content: start;
+  gap: 3px;
+  margin-top: 7px;
+  padding-top: 7px;
+  border-top: 1px solid #e2e8f0;
+}
+.recorrencia .formTitulo { margin-bottom: 0; }
+.recorrenciaFrequencias {
+  display: flex;
+  gap: 5px;
+  align-items: center;
+  justify-content: center;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.recorrenciaFrequencias::-webkit-scrollbar { display: none; }
+.recorrenciaTitulo { color: #0f172a; font-size: 11px; font-weight: 800; }
+.recorrenciaOpcao {
+  min-height: 27px;
+  flex: 0 0 auto;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  padding: 4px 9px;
+  background: #f1f5f9;
+  color: #475569;
+  text-align: left;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.recorrenciaOpcao:hover { background: color-mix(in srgb, var(--cp) 10%, #fff); color: var(--cp); }
+.recorrenciaOpcaoAtiva { border-color: var(--cp); background: var(--cp); color: var(--cp-text); }
+.recorrenciaConfig {
+  position: relative;
+  min-width: 0;
+  border-radius: 10px;
+  padding: 6px 8px;
+  background: color-mix(in srgb, var(--cp) 5%, #f8fafc);
+  color: #64748b;
+  font-size: 11px;
+}
+.formCadastroSub { display: flex; min-height: 0; flex: 1; flex-direction: column; }
+.formCadastroSub .recorrencia { min-height: 200px; flex: 1 1 auto; }
+.formCadastroSub .recorrenciaConfig { display: flex; min-height: 0; flex: 1 1 auto; align-items: center; justify-content: center; margin-bottom: 10px; }
+.formCadastroSub .recorrenciaPopupDireto { width: min(560px, 100%); }
+.formCadastroSub .recorrenciaPopupSemMes { width: min(720px, 100%); }
+.formCadastroSub .recorrenciaPopupComMes { width: min(1040px, 100%); }
+.recorrenciaDias { display: flex; flex-wrap: wrap; justify-content: center; gap: 5px; }
+.recorrenciaDia {
+  min-width: 42px;
+  min-height: 28px;
+  border: 1px solid #cbd5e1;
+  border-radius: 7px;
+  padding: 5px 7px;
+  background: #fff;
+  color: #475569;
+  font: inherit;
+  font-size: 11px;
+  font-weight: 800;
+  cursor: pointer;
+}
+.recorrenciaDiaAtivo { border-color: var(--cp); background: var(--cp); color: #fff; }
+.recorrenciaPopup {
+  position: absolute;
+  z-index: 12;
+  top: calc(100% + 7px);
+  left: 50%;
+  width: min(560px, calc(100vw - 52px));
+  max-height: min(200px, calc(100dvh - 110px));
+  transform: translateX(-50%);
+  display: grid;
+  gap: 6px;
+  padding: 8px;
+  border: 1px solid color-mix(in srgb, var(--cp) 35%, #cbd5e1);
+  border-radius: 10px;
+  background: #fff;
+  box-shadow: 0 10px 28px rgba(15, 23, 42, 0.18);
+  overflow-y: auto;
+}
+.recorrenciaPopupDireto {
+  position: relative;
+  top: auto;
+  left: auto;
+  margin: 0 auto;
+  transform: none;
+}
+.recorrenciaPopupTitulo { margin-bottom: 3px; color: #475569; font-size: 10px; font-weight: 800; }
+.recorrenciaMeses { display: grid; grid-template-columns: repeat(6, 1fr); gap: 3px; }
+.recorrenciaDiasMes { display: grid; grid-template-columns: repeat(15, 1fr); gap: 3px; }
+.recorrenciaDiasQuinzenal { grid-template-columns: repeat(15, minmax(0, 1fr)); }
+.recorrenciaDiasQuinzenal .recorrenciaEscolha { white-space: nowrap; }
+.recorrenciaDiasComMes { grid-template-columns: repeat(31, minmax(0, 1fr)); }
+.recorrenciaDiasSemMes .recorrenciaEscolha { min-height: 30px; border-radius: 7px; padding: 4px 2px; font-size: 11px; }
+.recorrenciaEscolha {
+  min-height: 22px;
+  border: 1px solid #e2e8f0;
+  border-radius: 5px;
+  padding: 2px 1px;
+  background: #fff;
+  color: #475569;
+  font: inherit;
+  font-size: 9px;
+  font-weight: 800;
+  cursor: pointer;
+}
+.recorrenciaEscolha:hover { border-color: var(--cp); color: var(--cp); }
+.recorrenciaEscolhaAtiva { border-color: var(--cp); background: color-mix(in srgb, var(--cp) 14%, #fff); color: var(--cp); }
+@media (max-width: 560px) {
+  .recorrenciaMeses { grid-template-columns: repeat(4, 1fr); }
+  .recorrenciaDiasMes { grid-template-columns: repeat(7, 1fr); }
+  .recorrenciaDiasQuinzenal { grid-template-columns: repeat(7, minmax(0, 1fr)); }
+  .recorrenciaDiasComMes { grid-template-columns: repeat(7, minmax(0, 1fr)); }
+}
+.recorrencia + .linhaTelefoneAcoes { margin-top: 2px; }
+.empresaBloco:has(.recorrenciaPopup) { overflow: visible; }
 
 /* Estrutura hierárquica de empresas (alturas reduzidas) */
 .empresaBloco {
@@ -980,6 +1174,7 @@
   margin-bottom: 8px;
   overflow: hidden;
 }
+.cadastroSubShell { margin-bottom: 0; }
 .empresaHeader {
   display: flex;
   align-items: center;
@@ -990,6 +1185,7 @@
 }
 .empresaNome { font-weight: 800; font-size: 13px; line-height: 1.25; }
 .subLista { padding: 2px 12px 8px; display: grid; gap: 6px; }
+.subListaCadastro { padding: 0; }
 .subItem {
   border: 1px solid #eef2f7;
   border-radius: 10px;
@@ -1025,11 +1221,37 @@
   color: var(--cp);
   margin: 4px 0 12px;
 }
+.sectionTitleEmpresaPai {
+  color: #0f172a;
+  font-size: 18px;
+  font-weight: 900;
+}
+.recebimentosPeriodo {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  border: 1px solid color-mix(in srgb, var(--cp) 42%, #cbd5e1);
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--cp) 7%, #ffffff);
+  padding: 6px 8px 8px;
+}
+.recebimentosPeriodoTitulo {
+  color: var(--cp);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.recebimentosDatas {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
 .muted { color: #64748b; font-size: 13px; }
 .filtersRow {
   display: flex;
   flex-wrap: wrap;
-  align-items: center;
+  align-items: flex-end;
   gap: 8px;
   margin-bottom: 14px;
 }
@@ -1085,8 +1307,22 @@
   color: #e2e8f0;
   color-scheme: dark;
 }
+
+/* No popup integrado, o card de administração ocupa uma área estável. As
+   mudanças entre endereço e vencimento passam a redistribuir somente o corpo
+   interno, sem alterar a altura do modal ou do AvantaCard. */
+.integradoShell { height: 100%; min-height: 0; }
+.painelAdministrativo { display: flex; height: 100%; min-height: 0; flex-direction: column; }
+.painelAdministrativo > .tabs { flex: 0 0 auto; }
+.painelCardFixo { display: flex; min-height: 0; flex: 1 1 0; flex-direction: column; }
+.painelCardFixo > div:last-child { display: flex; min-height: 0; flex: 1 1 auto; flex-direction: column; }
+.painelCardCorpo { display: flex; min-height: 0; flex: 1 1 auto; flex-direction: column; overflow: hidden; }
+.painelCardCorpo:has(.formCadastroSub) { padding: 18px 12px 8px; }
+.painelCardCorpo > .listaShell { max-height: none; flex: 1 1 auto; }
+.painelCardCorpo > .corpoRolavel { min-height: 0; flex: 1 1 auto; }
 .darkScope .tabs { border-bottom-color: #334155; }
 .darkScope .tab { color: #94a3b8; }
+.darkScope .tabsStatus { color: #94a3b8; }
 .darkScope .tab:hover,
 .darkScope .tabAtiva,
 .darkScope .sectionTitle,
@@ -1094,6 +1330,7 @@
 .darkScope .linkAcessoUrl,
 .darkScope .atrasoItemAcao,
 .darkScope .atrasoItemValor { color: #67e8f9; }
+.darkScope .sectionTitleEmpresaPai { color: #f8fafc; }
 .darkScope .tabAtiva { border-bottom-color: #22d3ee; }
 .darkScope .tituloPerfil { color: #a5f3fc; }
 .darkScope .mesSeletor {
@@ -1120,6 +1357,11 @@
 .darkScope .statIndigo { --sc-bg: #1d233b; --sc-border: #3b4265; --sc-label: #b5bcec; --sc-value: #c7d2fe; }
 .darkScope .integracaoStatus { background: color-mix(in srgb, var(--sc-value) 18%, #0f172a); }
 .darkScope .integracaoCampo .input { background: #0f172a; }
+.darkScope .recebimentosPeriodo {
+  border-color: color-mix(in srgb, var(--cp) 62%, #475569);
+  background: color-mix(in srgb, var(--cp) 16%, #0f172a);
+}
+.darkScope .recebimentosPeriodoTitulo { color: #a5f3fc; }
 .darkScope :is(.input, .select, .filterSelect, .buscaFixa, .inputSufixoWrap) {
   border-color: #475569;
   background: #0f172a;
@@ -1159,6 +1401,8 @@
 .darkScope .table td { border-bottom-color: #1e293b; color: #e2e8f0; }
 .darkScope .table tbody tr:hover td { background: #17263a; }
 .darkScope .btnGhost { border-color: #475569; background: #0f172a; color: #a5f3fc; }
+.darkScope .btnDanger { background: #4c111a; color: #fecaca; }
+.darkScope .btnSuccess { background: #14532d; color: #bbf7d0; }
 .darkScope .acoesTrigger:hover,
 .darkScope .acoesGrupoAberto .acoesTrigger { background: #1e293b; color: #67e8f9; }
 .darkScope .chip { background: #334155; color: #e2e8f0; }
@@ -1168,3 +1412,18 @@
 .darkScope .integracaoAjuda { color: #cbd5e1; }
 .darkScope .integracaoSucesso { color: #86efac; }
 .darkScope .integracaoErro { color: #fca5a5; }
+.darkScope .recorrencia { border-top-color: #334155; }
+.darkScope .recorrenciaConfig { background: #162334; color: #94a3b8; }
+.darkScope .recorrenciaTitulo { color: #e2e8f0; }
+.darkScope .recorrenciaConfig > strong { color: #e2e8f0; }
+.darkScope .recorrenciaOpcao { color: #94a3b8; }
+.darkScope .recorrenciaOpcao { background: #1e293b; }
+.darkScope .recorrenciaOpcao:hover { background: #1d344a; color: #a5f3fc; }
+.darkScope .recorrenciaOpcaoAtiva { border-color: var(--cp); background: var(--cp); color: var(--cp-text); }
+.darkScope .recorrenciaDia { border-color: #475569; background: #0f172a; color: #cbd5e1; }
+.darkScope .recorrenciaDiaAtivo { border-color: var(--cp); background: var(--cp); color: #fff; }
+.darkScope .recorrenciaPopup, .darkScope .recorrenciaEscolha { border-color: #475569; background: #0f172a; color: #e2e8f0; }
+.darkScope .recorrenciaEscolha:hover { border-color: var(--cp); color: #a5f3fc; }
+.darkScope .recorrenciaPopupTitulo { color: #94a3b8; }
+.darkScope .recorrenciaEscolhaAtiva { border-color: var(--cp); background: color-mix(in srgb, var(--cp) 26%, #0f172a); color: #a5f3fc; }
+.darkScope .enderecoAjuda { color: #94a3b8; }

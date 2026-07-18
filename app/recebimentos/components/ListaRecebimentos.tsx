@@ -53,28 +53,32 @@ export default function ListaRecebimentos({ chaveMes, empresas, subempresas, col
 
   return (
     <div>
-      <h3 className={styles.sectionTitle}>Recebimentos</h3>
       <div className={styles.filtersRow}>
-        <label className={styles.filtroData}>
-          <span>De</span>
-          <input
-            type="date"
-            className={`${styles.filterSelect} ${styles.inputData}`}
-            value={dataInicial}
-            onChange={(e) => setDataInicial(e.target.value)}
-            onClick={(e) => { try { (e.currentTarget as HTMLInputElement).showPicker?.(); } catch { /* ignora */ } }}
-          />
-        </label>
-        <label className={styles.filtroData}>
-          <span>Até</span>
-          <input
-            type="date"
-            className={`${styles.filterSelect} ${styles.inputData}`}
-            value={dataFinal}
-            onChange={(e) => setDataFinal(e.target.value)}
-            onClick={(e) => { try { (e.currentTarget as HTMLInputElement).showPicker?.(); } catch { /* ignora */ } }}
-          />
-        </label>
+        <div className={styles.recebimentosPeriodo} aria-label="Período dos recebimentos">
+          <span className={styles.recebimentosPeriodoTitulo}>Selecione o período</span>
+          <div className={styles.recebimentosDatas}>
+          <label className={styles.filtroData}>
+            <span>De</span>
+            <input
+              type="date"
+              className={`${styles.filterSelect} ${styles.inputData}`}
+              value={dataInicial}
+              onChange={(e) => setDataInicial(e.target.value)}
+              onClick={(e) => { try { (e.currentTarget as HTMLInputElement).showPicker?.(); } catch { /* ignora */ } }}
+            />
+          </label>
+          <label className={styles.filtroData}>
+            <span>Até</span>
+            <input
+              type="date"
+              className={`${styles.filterSelect} ${styles.inputData}`}
+              value={dataFinal}
+              onChange={(e) => setDataFinal(e.target.value)}
+              onClick={(e) => { try { (e.currentTarget as HTMLInputElement).showPicker?.(); } catch { /* ignora */ } }}
+            />
+          </label>
+          </div>
+        </div>
         <select className={styles.filterSelect} value={fEmpresa} onChange={(e) => { setFEmpresa(e.target.value); setFSub(''); }}>
           <option value="">Todas as empresas</option>
           {empresas.map((e) => <option key={e.id} value={e.id}>{e.nome}</option>)}

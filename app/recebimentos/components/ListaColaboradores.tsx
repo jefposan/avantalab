@@ -128,7 +128,7 @@ export default function ListaColaboradores({ colaboradores, recebimentos, onAdic
         {/* 2ª linha: CPF (login), senha e confirmação. */}
         <div style={{ display: 'flex', gap: 8 }}>
           <div className={styles.field} style={{ flex: 1 }}><label className={styles.label}>CPF (login) *</label><input className={`${styles.input} ${styles.inputCentro}`} inputMode="numeric" placeholder="000.000.000-00" value={cpf} onChange={(e) => setCpf(formatarCpf(e.target.value))} /></div>
-          <div className={styles.field} style={{ flex: 1 }}><label className={styles.label}>Senha *</label><input className={styles.input} type="password" placeholder="Senha de acesso" value={senha} onChange={(e) => setSenha(e.target.value)} /></div>
+          <div className={styles.field} style={{ flex: 1 }}><label className={styles.label}>Senha *</label><input className={styles.input} type="password" name="recebimentos-nova-senha" autoComplete={edicao ? 'current-password' : 'new-password'} placeholder="Digite a senha" value={senha} onChange={(e) => setSenha(e.target.value)} /></div>
           <div className={styles.field} style={{ flex: 1 }}><label className={styles.label}>Confirmar senha *</label><input className={styles.input} type="password" placeholder="Repita a senha" value={confirmarSenha} onChange={(e) => setConfirmarSenha(e.target.value)} /></div>
         </div>
         {/* 3ª linha: celular, e-mail e ações. */}
@@ -164,29 +164,37 @@ export default function ListaColaboradores({ colaboradores, recebimentos, onAdic
     <div className={styles.listaShell}>
       <div className={styles.listaTopo}>
         <h3 className={styles.sectionTitle} style={{ margin: 0 }}>Colaboradores</h3>
-        <button type="button" className={`${styles.btn} ${styles.btnPrimary} ${styles.btnSm}`} onClick={() => (formAberto && !editandoId ? limparForm() : abrirNovo())}>
-          + Novo colaborador
-        </button>
+        <div className={styles.listaTopoAcoes}>
+          <button
+            type="button"
+            className={`${styles.btn} ${styles.btnPrimary} ${styles.listaAcaoPrincipal}`}
+            onClick={() => (formAberto && !editandoId ? limparForm() : abrirNovo())}
+          >
+            {formAberto && !editandoId ? 'Fechar cadastro' : '+ Novo colaborador'}
+          </button>
+        </div>
       </div>
 
       {mostrarLinkAcesso && (
         <div className={styles.linkAcessoBox}>
-          <div>
+          <div className={styles.linkAcessoLinhaTitulo}>
             <div className={styles.linkAcessoTitulo}>Link de acesso dos colaboradores</div>
+            <button
+              type="button"
+              className={`${styles.btn} ${styles.btnGhost} ${styles.btnSm} ${styles.linkAcessoCopiar}`}
+              onClick={async () => {
+                await navigator.clipboard.writeText('https://avantalab.com.br/recebimentos/colaborador');
+                setLinkCopiado(true);
+                window.setTimeout(() => setLinkCopiado(false), 1800);
+              }}
+            >
+              {linkCopiado ? 'COPIADO' : 'COPIAR'}
+            </button>
+          </div>
+          <div>
             <div className={styles.linkAcessoUrl}>https://avantalab.com.br/recebimentos/colaborador</div>
             <div className={styles.subMeta}>Entram com CPF e senha · mesmo link para todas as empresas.</div>
           </div>
-          <button
-            type="button"
-            className={`${styles.btn} ${styles.btnGhost} ${styles.btnSm}`}
-            onClick={async () => {
-              await navigator.clipboard.writeText('https://avantalab.com.br/recebimentos/colaborador');
-              setLinkCopiado(true);
-              window.setTimeout(() => setLinkCopiado(false), 1800);
-            }}
-          >
-            {linkCopiado ? 'COPIADO' : 'COPIAR'}
-          </button>
         </div>
       )}
 

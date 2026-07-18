@@ -2,18 +2,20 @@
 
 import { useMemo, useRef, useState } from 'react';
 import styles from '../recebimentos.module.css';
-import type { Empresa, Subempresa } from './types';
+import type { Empresa, FrequenciaRecebimento, Subempresa } from './types';
 import {
+  FREQUENCIAS_RECEBIMENTO,
   formatarMoeda,
   formatarNomeProprio,
   formatarTelefone,
   formatarValorInput,
   parseValorBR,
+  rotuloFrequenciaRecebimento,
   valorParaInput,
 } from './helpers';
 
 type DadosEmpresa = Omit<Empresa, 'id' | 'ativo'>;
-type DadosSubempresa = Pick<Subempresa, 'nome' | 'endereco' | 'responsavel' | 'valorCombinado' | 'diaVencimento'>;
+type DadosSubempresa = Pick<Subempresa, 'nome' | 'endereco' | 'cep' | 'logradouro' | 'bairro' | 'cidade' | 'estado' | 'numero' | 'complemento' | 'responsavel' | 'valorCombinado' | 'frequenciaRecebimento' | 'configuracaoRecorrencia'>;
 
 type Props = {
   empresas: Empresa[];
@@ -77,10 +79,21 @@ export default function ListaEmpresas({
 
   // Form subempresa — todos os campos obrigatórios.
   const [sNome, setSNome] = useState('');
-  const [sEndereco, setSEndereco] = useState('');
+  const [sCep, setSCep] = useState('');
+  const [sLogradouro, setSLogradouro] = useState('');
+  const [sBairro, setSBairro] = useState('');
+  const [sCidade, setSCidade] = useState('');
+  const [sEstado, setSEstado] = useState('');
+  const [sNumero, setSNumero] = useState('');
+  const [sComplemento, setSComplemento] = useState('');
+  const [sBuscandoCep, setSBuscandoCep] = useState(false);
   const [sResp, setSResp] = useState('');
   const [sValor, setSValor] = useState('');
-  const [sVenc, setSVenc] = useState('');
+  const [sFrequencia, setSFrequencia] = useState<Subempresa['frequenciaRecebimento']>('mensal');
+  const [sDiasSemana, setSDiasSemana] = useState<number[]>([]);
+  const [sDiaMes, setSDiaMes] = useState<number | null>(null);
+  const [sMesInicio, setSMesInicio] = useState<number | null>(null);
+  const [popupVencimento, setPopupVencimento] = useState<FrequenciaRecebimento | null>(null);
 
   const termo = busca.trim().toLowerCase();
 
@@ -130,7 +143,9 @@ export default function ListaEmpresas({
   }
 
   function limparFormSub() {
-    setSNome(''); setSEndereco(''); setSResp(''); setSValor(''); setSVenc('');
+    setSNome(''); setSCep(''); setSLogradouro(''); setSBairro(''); setSCidade(''); setSEstado(''); setSNumero(''); setSComplemento(''); setSResp(''); setSValor(''); setSFrequencia('mensal');
+    setSDiasSemana([]); setSDiaMes(null); setSMesInicio(null);
+    setPopupVencimento(null);
     setErroSub('');
     setConfirmandoExclusao(false);
     setSubDe(null);
@@ -160,7 +175,9 @@ export default function ListaEmpresas({
 
   function abrirNovaSub(empresaId: string) {
     limparFormEmpresa();
-    setSNome(''); setSEndereco(''); setSResp(''); setSValor(''); setSVenc('');
+    setSNome(''); setSCep(''); setSLogradouro(''); setSBairro(''); setSCidade(''); setSEstado(''); setSNumero(''); setSComplemento(''); setSResp(''); setSValor(''); setSFrequencia('mensal');
+    setSDiasSemana([]); setSDiaMes(null); setSMesInicio(null);
+    setPopupVencimento(null);
     setErroSub('');
     setConfirmandoExclusao(false);
     setEditandoSubId(null);
@@ -170,10 +187,20 @@ export default function ListaEmpresas({
   function abrirEdicaoSub(s: Subempresa) {
     limparFormEmpresa();
     setSNome(s.nome);
-    setSEndereco(s.endereco);
+    setSCep(s.cep);
+    setSLogradouro(s.logradouro);
+    setSBairro(s.bairro);
+    setSCidade(s.cidade);
+    setSEstado(s.estado);
+    setSNumero(s.numero);
+    setSComplemento(s.complemento);
     setSResp(s.responsavel);
     setSValor(valorParaInput(s.valorCombinado));
-    setSVenc(String(s.diaVencimento));
+    setSFrequencia(s.frequenciaRecebimento);
+    setSDiasSemana(s.configuracaoRecorrencia.diasSemana);
+    setSDiaMes(s.configuracaoRecorrencia.diaMes);
+    setSMesInicio(s.configuracaoRecorrencia.mesInicio);
+    setPopupVencimento(null);
     setErroSub('');
     setConfirmandoExclusao(false);
     setEditandoSubId(s.id);
@@ -216,20 +243,29 @@ export default function ListaEmpresas({
   function salvarSub(empresaId: string) {
     setErroSub('');
     const valor = parseValorBR(sValor);
-    const venc = Number(sVenc.replace(/\D/g, ''));
     // Todos os campos são obrigatórios.
-    if (!sNome.trim() || !sEndereco.trim() || !sResp.trim() || !sValor.trim() || !sVenc.trim()) {
-      return setErroSub('Preencha todos os campos: nome, endereço, responsável, valor e dia de vencimento.');
+    if (!sNome.trim() || !sCep.trim() || !sLogradouro.trim() || !sBairro.trim() || !sCidade.trim() || !sEstado.trim() || !sNumero.trim() || !sResp.trim() || !sValor.trim() || !sFrequencia) {
+      return setErroSub('Preencha todos os campos: nome, endereço, responsável, valor e recebimento.');
     }
     if (Number.isNaN(valor) || valor <= 0) return setErroSub('Informe um valor combinado maior que zero.');
-    if (!Number.isInteger(venc) || venc < 1 || venc > 31) return setErroSub('Informe um dia de vencimento entre 1 e 31.');
+    if (sFrequencia === 'semanal' && sDiasSemana.length === 0) return setErroSub('Selecione ao menos um dia da semana.');
+    if (sFrequencia !== 'semanal' && !sDiaMes) return setErroSub('Selecione o dia do recebimento.');
+    if (['trimestral', 'semestral', 'anual'].includes(sFrequencia) && !sMesInicio) return setErroSub('Selecione o mês inicial do recebimento.');
 
     const dados: DadosSubempresa = {
       nome: sNome.trim(),
-      endereco: sEndereco.trim(),
+      endereco: [sLogradouro.trim(), sNumero.trim(), sComplemento.trim(), sBairro.trim(), `${sCidade.trim()}/${sEstado.trim()}`].filter(Boolean).join(' · '),
+      cep: sCep.trim(),
+      logradouro: sLogradouro.trim(),
+      bairro: sBairro.trim(),
+      cidade: sCidade.trim(),
+      estado: sEstado.trim().toUpperCase(),
+      numero: sNumero.trim(),
+      complemento: sComplemento.trim(),
       responsavel: sResp.trim(),
       valorCombinado: valor,
-      diaVencimento: venc,
+      frequenciaRecebimento: sFrequencia,
+      configuracaoRecorrencia: { diasSemana: sDiasSemana, diaMes: sDiaMes, mesInicio: sMesInicio },
     };
     if (editandoSubId) {
       onEditarSubempresa(editandoSubId, dados);
@@ -237,25 +273,130 @@ export default function ListaEmpresas({
       onAdicionarSubempresa({
         empresaId,
         ...dados,
-        logradouro: '', numero: '', complemento: '', shoppingGaleria: '', lojaSala: '',
+        shoppingGaleria: '', lojaSala: '',
         ativo: true,
       });
     }
     limparFormSub();
   }
 
+  function mudarFrequencia(frequencia: FrequenciaRecebimento) {
+    const mesmaFrequencia = sFrequencia === frequencia;
+    setSFrequencia(frequencia);
+    if (!mesmaFrequencia) {
+      setSDiasSemana([]);
+      setSDiaMes(null);
+      setSMesInicio(null);
+    }
+    setPopupVencimento(frequencia === 'semanal' ? null : frequencia);
+  }
+
+  function alternarDiaSemana(dia: number) {
+    setSDiasSemana((atual) => atual.includes(dia) ? atual.filter((item) => item !== dia) : [...atual, dia].sort());
+  }
+
+  function formatarCep(valor: string) {
+    const digitos = valor.replace(/\D/g, '').slice(0, 8);
+    return digitos.length > 5 ? `${digitos.slice(0, 5)}-${digitos.slice(5)}` : digitos;
+  }
+
+  async function consultarCep(valor: string) {
+    const cep = valor.replace(/\D/g, '');
+    if (cep.length !== 8) return;
+    setSBuscandoCep(true);
+    setErroSub('');
+    try {
+      const resposta = await fetch(`https://viacep.com.br/ws/${cep}/json/`);
+      const endereco = await resposta.json() as { erro?: boolean; logradouro?: string; bairro?: string; localidade?: string; uf?: string };
+      if (!resposta.ok || endereco.erro) throw new Error('CEP não encontrado.');
+      setSLogradouro(endereco.logradouro ?? '');
+      setSBairro(endereco.bairro ?? '');
+      setSCidade(endereco.localidade ?? '');
+      setSEstado(endereco.uf ?? '');
+    } catch (error) {
+      setErroSub(error instanceof Error ? error.message : 'Não foi possível consultar o CEP.');
+    } finally {
+      setSBuscandoCep(false);
+    }
+  }
+
+  function formRecorrencia() {
+    const meses = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
+    const dias = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
+    const precisaMes = ['trimestral', 'semestral', 'anual'].includes(sFrequencia);
+    const popupAberto = popupVencimento === sFrequencia;
+    function selecionarDia(dia: number) {
+      setSDiaMes(dia);
+      setPopupVencimento(null);
+    }
+
+    return (
+      <div className={styles.recorrencia}>
+        <div className={styles.formTitulo}>VENCIMENTO</div>
+        <div className={styles.recorrenciaFrequencias} role="radiogroup" aria-label="Frequência de recebimento">
+          {FREQUENCIAS_RECEBIMENTO.map(([valor, rotulo]) => (
+            <button key={valor} type="button" className={`${styles.recorrenciaOpcao} ${sFrequencia === valor ? styles.recorrenciaOpcaoAtiva : ''}`} onClick={() => mudarFrequencia(valor)} aria-pressed={sFrequencia === valor}>{rotulo}</button>
+          ))}
+        </div>
+        <div className={styles.recorrenciaConfig}>
+          {sFrequencia === 'semanal' ? (
+              <div className={styles.recorrenciaDias}>{dias.map((dia, indice) => <button key={dia} type="button" className={`${styles.recorrenciaDia} ${sDiasSemana.includes(indice) ? styles.recorrenciaDiaAtivo : ''}`} onClick={() => alternarDiaSemana(indice)} aria-pressed={sDiasSemana.includes(indice)}>{dia}</button>)}</div>
+          ) : popupAberto ? (
+              <div className={`${styles.recorrenciaPopup} ${styles.recorrenciaPopupDireto} ${precisaMes ? styles.recorrenciaPopupComMes : styles.recorrenciaPopupSemMes}`} role="dialog" aria-label="Configurar vencimento">
+                {precisaMes && (
+                  <div>
+                    <div className={styles.recorrenciaPopupTitulo}>Mês inicial</div>
+                    <div className={styles.recorrenciaMeses}>{meses.map((mes, indice) => <button key={mes} type="button" className={`${styles.recorrenciaEscolha} ${sMesInicio === indice + 1 ? styles.recorrenciaEscolhaAtiva : ''}`} onClick={() => setSMesInicio(indice + 1)}>{mes}</button>)}</div>
+                  </div>
+                )}
+                <div>
+                  <div className={styles.recorrenciaPopupTitulo}>{sFrequencia === 'quinzenal' ? 'Dia-base (intervalo de 15 dias)' : 'Dia do mês'}</div>
+                  <div className={`${styles.recorrenciaDiasMes} ${sFrequencia === 'quinzenal' ? styles.recorrenciaDiasQuinzenal : ''} ${precisaMes ? styles.recorrenciaDiasComMes : styles.recorrenciaDiasSemMes}`}>{Array.from({ length: sFrequencia === 'quinzenal' ? 15 : 31 }, (_, indice) => indice + 1).map((dia) => <button key={dia} type="button" className={`${styles.recorrenciaEscolha} ${sDiaMes === dia ? styles.recorrenciaEscolhaAtiva : ''}`} onClick={() => selecionarDia(dia)}>{sFrequencia === 'quinzenal' ? `${dia}/${dia + 15}` : dia}</button>)}</div>
+                </div>
+              </div>
+          ) : null}
+        </div>
+      </div>
+    );
+  }
+
+  function camposEndereco() {
+    return (
+      <div className={styles.enderecoEstruturado}>
+        <div className={styles.enderecoLinhaPrincipal}>
+          <div className={`${styles.field} ${styles.enderecoCampoCep}`}><label className={styles.label}>CEP *</label><input className={styles.input} inputMode="numeric" placeholder="00000-000" value={sCep} onChange={(e) => setSCep(formatarCep(e.target.value))} onBlur={() => void consultarCep(sCep)} /><span className={styles.enderecoAjuda}>{sBuscandoCep ? 'Buscando endereço…' : 'Informe o CEP para preencher o endereço.'}</span></div>
+          <div className={styles.field}><label className={styles.label}>Rua *</label><input className={styles.input} placeholder="Nome da rua" value={sLogradouro} onChange={(e) => setSLogradouro(e.target.value)} /></div>
+          <div className={styles.field}><label className={styles.label}>Número *</label><input className={styles.input} placeholder="Número" value={sNumero} onChange={(e) => setSNumero(e.target.value)} /></div>
+          <div className={styles.field}><label className={styles.label}>Complemento</label><input className={styles.input} placeholder="Sala, loja, bloco…" value={sComplemento} onChange={(e) => setSComplemento(e.target.value)} /></div>
+          <div className={styles.field}><label className={styles.label}>Bairro *</label><input className={styles.input} placeholder="Bairro" value={sBairro} onChange={(e) => setSBairro(e.target.value)} /></div>
+          <div className={styles.field}><label className={styles.label}>Cidade *</label><input className={styles.input} placeholder="Cidade" value={sCidade} onChange={(e) => setSCidade(e.target.value)} /></div>
+          <div className={styles.field}><label className={styles.label}>UF *</label><input className={`${styles.input} ${styles.inputCentro}`} maxLength={2} placeholder="UF" value={sEstado} onChange={(e) => setSEstado(e.target.value.replace(/[^a-z]/gi, '').toUpperCase())} /></div>
+        </div>
+      </div>
+    );
+  }
+
+  function camposBasicosSubempresa() {
+    return (
+      <div className={styles.linhaEmpresaCampos}>
+        <div className={styles.field}><label className={styles.label}>Nome da subempresa *</label><input className={styles.input} placeholder="Ex: Loja Renner" value={sNome} onChange={(e) => setSNome(formatarNomeProprio(e.target.value))} /></div>
+        <div className={styles.field}><label className={styles.label}>Responsável *</label><input className={styles.input} placeholder="Ex: Gerente da loja" value={sResp} onChange={(e) => setSResp(formatarNomeProprio(e.target.value))} /></div>
+        <div className={styles.field}><label className={styles.label}>Valor combinado *</label><input className={`${styles.input} ${styles.inputCentro}`} inputMode="decimal" placeholder="0,00" value={sValor} onChange={(e) => setSValor(formatarValorInput(e.target.value))} /></div>
+      </div>
+    );
+  }
+
   function formEmpresa(edicao: boolean) {
     return (
       <div className={`${styles.subItem} ${styles.formCompacto} ${styles.blocoEditando}`} style={{ marginBottom: 10 }}>
         <div className={styles.formTitulo}>{edicao ? 'Editar empresa' : 'Nova empresa'}</div>
-        <div className={styles.field}><label className={styles.label}>Nome *</label><input className={styles.input} placeholder="Ex: Shopping Morumbi" value={eNome} onChange={(e) => setENome(formatarNomeProprio(e.target.value))} /></div>
-        <div className={styles.field}><label className={styles.label}>Responsável *</label><input className={styles.input} placeholder="Ex: Carla Menezes" value={eResp} onChange={(e) => setEResp(formatarNomeProprio(e.target.value))} /></div>
-        {/* Telefone, e-mail e as ações na mesma linha. */}
+        <div className={styles.linhaEmpresaCampos}>
+          <div className={styles.field}><label className={styles.label}>Nome da empresa *</label><input className={styles.input} placeholder="Ex: Shopping Morumbi" value={eNome} onChange={(e) => setENome(formatarNomeProprio(e.target.value))} /></div>
+          <div className={styles.field}><label className={styles.label}>Responsável *</label><input className={styles.input} placeholder="Ex: Carla Menezes" value={eResp} onChange={(e) => setEResp(formatarNomeProprio(e.target.value))} /></div>
+          <div className={styles.field}><label className={styles.label}>Contato *</label><input className={styles.input} inputMode="tel" placeholder="(11) 99999-9999" value={eTel} onChange={(e) => setETel(formatarTelefone(e.target.value))} /></div>
+        </div>
+        {/* E-mail e ações ficam na segunda linha. */}
         <div className={styles.linhaTelefoneAcoes}>
-          <div className={styles.field} style={{ flex: '1 1 130px', marginBottom: 0 }}>
-            <label className={styles.label}>Telefone *</label>
-            <input className={styles.input} inputMode="tel" placeholder="(11) 99999-9999" value={eTel} onChange={(e) => setETel(formatarTelefone(e.target.value))} />
-          </div>
           <div className={styles.field} style={{ flex: '1 1 160px', marginBottom: 0 }}>
             <label className={styles.label}>E-mail *</label>
             <input className={styles.input} placeholder="Ex: financeiro@empresa.com.br" value={eEmail} onChange={(e) => setEEmail(e.target.value)} />
@@ -282,35 +423,38 @@ export default function ListaEmpresas({
   return (
     <div className={styles.listaShell}>
       <div className={styles.listaTopo}>
-        <h3 className={styles.sectionTitle} style={{ margin: 0 }}>Empresas e subempresas</h3>
+        <h3 className={styles.sectionTitle} style={{ margin: 0 }}>
+          Empresas e subempresas{subDe && !editandoSubId && (
+            <span className={styles.sectionTitleEmpresaPai}> — {empresas.find((empresa) => empresa.id === subDe)?.nome ?? ''}</span>
+          )}
+        </h3>
         <div className={styles.listaTopoAcoes}>
-          {/* Busca fixa, sempre visível: filtra a cada letra ou número. */}
-          <div className={styles.buscaFixa}>
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.4} width="13" height="13" aria-hidden="true">
-              <circle cx="11" cy="11" r="7" />
-              <path strokeLinecap="round" d="m20 20-3.4-3.4" />
+          <div className={styles.buscaFixa} role="search">
+            <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+              <circle cx="11" cy="11" r="6" />
+              <path d="m16 16 4 4" />
             </svg>
             <input
               className={styles.buscaFixaInput}
-              placeholder="Pesquisar…"
+              placeholder="Pesquisar empresas…"
               value={busca}
-              onChange={(e) => setBusca(e.target.value)}
+              onChange={(event) => setBusca(event.target.value)}
               aria-label="Pesquisar empresas e subempresas"
             />
-            {busca && (
-              <button type="button" className={styles.buscaLimpar} onClick={() => setBusca('')} aria-label="Limpar pesquisa">
-                ×
-              </button>
-            )}
+            {busca && <button type="button" className={styles.buscaLimpar} onClick={() => setBusca('')} aria-label="Limpar pesquisa">×</button>}
           </div>
-          <button type="button" className={`${styles.btn} ${styles.btnPrimary} ${styles.btnSm}`} onClick={() => (formEmpresaAberto && !editandoEmpresaId ? limparFormEmpresa() : abrirNovaEmpresa())}>
-            + Nova empresa
+          <button
+            type="button"
+            className={`${styles.btn} ${styles.btnPrimary} ${styles.listaAcaoPrincipal}`}
+            onClick={() => (formEmpresaAberto && !editandoEmpresaId ? limparFormEmpresa() : abrirNovaEmpresa())}
+          >
+            {formEmpresaAberto && !editandoEmpresaId ? 'Fechar cadastro' : '+ Nova empresa'}
           </button>
         </div>
       </div>
 
       {/* Apenas esta área rola; o topo acima é estático (imune ao elástico). */}
-      <div className={styles.listaRolavel}>
+      <div className={`${styles.listaRolavel} ${subDe && !editandoSubId ? styles.listaRolavelCadastro : ''}`}>
       {formEmpresaAberto && !editandoEmpresaId && formEmpresa(false)}
 
       {termo && empresasFiltradas.length === 0 && (
@@ -322,13 +466,15 @@ export default function ListaEmpresas({
         const totalSubs = subempresas.filter((s) => s.empresaId === emp.id).length;
         const aberta = termo ? true : (expandidas[emp.id] ?? true);
         const editandoEsta = formEmpresaAberto && editandoEmpresaId === emp.id;
+        const cadastroSubAtivo = subDe === emp.id && !editandoSubId;
+        if (subDe && !editandoSubId && subDe !== emp.id) return null;
         return (
           <div
             key={emp.id}
             ref={(el) => { blocosRef.current[emp.id] = el; }}
-            className={`${styles.empresaBloco} ${styles.blocoFoco} ${editandoEsta ? styles.blocoEditando : ''}`}
+            className={`${cadastroSubAtivo ? styles.cadastroSubShell : styles.empresaBloco} ${styles.blocoFoco} ${editandoEsta ? styles.blocoEditando : ''}`}
           >
-            <div className={styles.empresaHeader} onClick={() => setExpandidas((p) => ({ ...p, [emp.id]: !aberta }))}>
+            {!cadastroSubAtivo && <div className={styles.empresaHeader} onClick={() => setExpandidas((p) => ({ ...p, [emp.id]: !aberta }))}>
               <span style={{ transform: aberta ? 'rotate(90deg)' : 'none', transition: 'transform 0.15s', color: '#64748b', fontSize: 12 }}>▸</span>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div className={styles.empresaNome}>{emp.nome}</div>
@@ -352,32 +498,20 @@ export default function ListaEmpresas({
                   <IconeAcoes />
                 </button>
               </div>
-            </div>
+            </div>}
 
             {editandoEsta && <div style={{ padding: '8px 12px 10px' }}>{formEmpresa(true)}</div>}
 
             {aberta && (
-              <div className={styles.subLista}>
-                {subs.map((s) =>
+              <div className={`${styles.subLista} ${cadastroSubAtivo ? styles.subListaCadastro : ''}`}>
+                {!cadastroSubAtivo && subs.map((s) =>
                   editandoSubId === s.id && subDe === emp.id ? (
                     <div key={s.id} className={`${styles.subItem} ${styles.formCompacto} ${styles.blocoEditando}`}>
                       <div className={styles.formTitulo}>Editar subempresa</div>
-                      <div className={styles.field}><label className={styles.label}>Nome da subempresa *</label><input className={styles.input} placeholder="Ex: Loja Renner" value={sNome} onChange={(e) => setSNome(formatarNomeProprio(e.target.value))} /></div>
-                      <div className={styles.field}><label className={styles.label}>Endereço/localização *</label><input className={styles.input} placeholder="Ex: Av. Roque Petroni Jr, 1089 — L112" value={sEndereco} onChange={(e) => setSEndereco(e.target.value)} /></div>
-                      <div className={styles.field}><label className={styles.label}>Responsável *</label><input className={styles.input} placeholder="Ex: Gerente da loja" value={sResp} onChange={(e) => setSResp(formatarNomeProprio(e.target.value))} /></div>
-                      {/* Valor combinado, dia de vencimento e ações na mesma linha. */}
+                      {camposBasicosSubempresa()}
+                      {camposEndereco()}
+                      {formRecorrencia()}
                       <div className={styles.linhaTelefoneAcoes}>
-                        <div className={styles.field} style={{ flex: '1 1 110px', marginBottom: 0 }}>
-                          <label className={styles.label}>Valor combinado *</label>
-                          <input className={`${styles.input} ${styles.inputCentro}`} inputMode="decimal" placeholder="0,00" value={sValor} onChange={(e) => setSValor(formatarValorInput(e.target.value))} />
-                        </div>
-                        <div className={styles.field} style={{ flex: '1 1 96px', marginBottom: 0 }}>
-                          <label className={styles.label}>Dia de vencimento *</label>
-                          <div className={styles.inputSufixoWrap}>
-                            <input className={styles.inputInterno} inputMode="numeric" placeholder="11" value={sVenc} onChange={(e) => setSVenc(e.target.value.replace(/\D/g, '').slice(0, 2))} />
-                            <span className={styles.inputSufixo}>/mm</span>
-                          </div>
-                        </div>
                         <div className={styles.acoesForm}>
                           <button type="button" className={`${styles.btn} ${styles.btnGhost} ${styles.btnSm}`} onClick={limparFormSub}>Cancelar</button>
                           <button type="button" className={`${styles.btn} ${styles.btnDanger} ${styles.btnSm}`} onClick={excluirSubEmEdicao}>
@@ -394,7 +528,7 @@ export default function ListaEmpresas({
                         <div style={{ minWidth: 0 }}>
                           <div className={styles.subNome}>{s.nome}</div>
                           <div className={styles.subMeta}>{s.endereco}</div>
-                          <div className={styles.subMeta}>Responsável: {s.responsavel} · Venc. dia {s.diaVencimento} · {formatarMoeda(s.valorCombinado)}</div>
+                          <div className={styles.subMeta}>Responsável: {s.responsavel} · Recebimento {rotuloFrequenciaRecebimento(s.frequenciaRecebimento)} · {formatarMoeda(s.valorCombinado)}</div>
                         </div>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
                           <span className={`${styles.chip} ${s.ativo ? styles.chipOn : styles.chipOff}`}>{s.ativo ? 'Ativo' : 'Inativo'}</span>
@@ -418,24 +552,12 @@ export default function ListaEmpresas({
                 )}
 
                 {subDe === emp.id && !editandoSubId ? (
-                  <div className={`${styles.subItem} ${styles.formCompacto}`} style={{ background: '#f8fafc' }}>
+                  <div className={`${styles.subItem} ${styles.formCompacto} ${styles.formCadastroSub}`} style={{ background: '#f8fafc' }}>
                     <div className={styles.formTitulo}>Nova subempresa</div>
-                    <div className={styles.field}><label className={styles.label}>Nome da subempresa *</label><input className={styles.input} placeholder="Ex: Loja Renner" value={sNome} onChange={(e) => setSNome(formatarNomeProprio(e.target.value))} /></div>
-                    <div className={styles.field}><label className={styles.label}>Endereço/localização *</label><input className={styles.input} placeholder="Ex: Av. Roque Petroni Jr, 1089 — L112" value={sEndereco} onChange={(e) => setSEndereco(e.target.value)} /></div>
-                    <div className={styles.field}><label className={styles.label}>Responsável *</label><input className={styles.input} placeholder="Ex: Gerente da loja" value={sResp} onChange={(e) => setSResp(formatarNomeProprio(e.target.value))} /></div>
-                    {/* Valor combinado, dia de vencimento e ações na mesma linha. */}
+                    {camposBasicosSubempresa()}
+                    {camposEndereco()}
+                    {formRecorrencia()}
                     <div className={styles.linhaTelefoneAcoes}>
-                      <div className={styles.field} style={{ flex: '1 1 110px', marginBottom: 0 }}>
-                        <label className={styles.label}>Valor combinado *</label>
-                        <input className={`${styles.input} ${styles.inputCentro}`} inputMode="decimal" placeholder="0,00" value={sValor} onChange={(e) => setSValor(formatarValorInput(e.target.value))} />
-                      </div>
-                      <div className={styles.field} style={{ flex: '1 1 96px', marginBottom: 0 }}>
-                        <label className={styles.label}>Dia de vencimento *</label>
-                        <div className={styles.inputSufixoWrap}>
-                          <input className={styles.inputInterno} inputMode="numeric" placeholder="11" value={sVenc} onChange={(e) => setSVenc(e.target.value.replace(/\D/g, '').slice(0, 2))} />
-                          <span className={styles.inputSufixo}>/mm</span>
-                        </div>
-                      </div>
                       <div className={styles.acoesForm}>
                         <button type="button" className={`${styles.btn} ${styles.btnGhost} ${styles.btnSm}`} onClick={limparFormSub}>Cancelar</button>
                         <button type="button" className={`${styles.btn} ${styles.btnPrimary} ${styles.btnSm}`} onClick={() => salvarSub(emp.id)}>Salvar</button>
@@ -443,7 +565,7 @@ export default function ListaEmpresas({
                     </div>
                     {erroSub && <div className={styles.aviso} style={{ marginTop: 8 }}>{erroSub}</div>}
                   </div>
-                ) : subDe !== emp.id ? (
+                ) : emp.ativo && subDe !== emp.id ? (
                   <button type="button" className={`${styles.btn} ${styles.btnPrimary} ${styles.btnXs}`} style={{ justifySelf: 'end' }} onClick={() => abrirNovaSub(emp.id)}>
                     + Nova subempresa
                   </button>

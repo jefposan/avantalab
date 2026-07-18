@@ -1,5 +1,224 @@
 # Changelog
 
+## 1.6.0.44 - 2026-07-18
+
+- O indicador de salvamento foi alinhado ao canto direito das abas; botões de
+  sucesso e destrutivos receberam tratamento próprio no modo escuro.
+
+## 1.6.0.43 - 2026-07-18
+
+- O indicador de salvamento passou para o fim da linha de abas, após Resultados.
+
+## 1.6.0.42 - 2026-07-18
+
+- Empresas inativas não exibem mais a ação de criar nova subempresa.
+
+## 1.6.0.41 - 2026-07-18
+
+- No cadastro de subempresa, o nome da empresa-pai ganhou maior destaque no
+  cabeçalho de Empresas e subempresas.
+
+## 1.6.0.40 - 2026-07-18
+
+- Os controles de dias semanal, quinzenal e mensal ganharam mais área de toque;
+  o bloco de vencimento foi compactado para manter as ações do cadastro visíveis.
+
+## 1.6.0.39 - 2026-07-18
+
+- A faixa interna acima das abas administrativas foi compactada para ampliar a
+  área útil do conteúdo e evitar colisão visual do cadastro com sua borda.
+
+## 1.6.0.38 - 2026-07-18
+
+- Os quadros trimestral, semestral e anual foram alargados para exibir os 31
+  dias em uma única linha no web, com respiro inferior no cadastro.
+
+## 1.6.0.37 - 2026-07-18
+
+- O popup integrado de **Recebimentos Presenciais** ganhou mais altura útil na viewport.
+
+## 1.6.0.36 - 2026-07-18
+
+- Quadros de configuração de vencimento foram compactados e centralizados;
+  o quinzenal passa a exibir seus quinze intervalos em uma única linha no web.
+
+## 1.6.0.35 - 2026-07-18
+
+- O formulário de nova subempresa passou a usar margens laterais e inferior
+  mais compactas dentro do AvantaCard.
+
+## 1.6.0.34 - 2026-07-18
+
+- As pílulas de vencimento agora ocupam uma linha estável, junto ao cabeçalho
+  da área, e os campos de endereço não possuem mais limite ou ocultação visual.
+
+## 1.6.0.33 - 2026-07-18
+
+- A área **VENCIMENTO** passou a usar o mesmo título visual de **Nova
+  subempresa**; suas pílulas ficam sempre visíveis, junto ao cabeçalho.
+
+## 1.6.0.32 - 2026-07-18
+
+- Endereço permanece visível ao configurar vencimento. A área **VENCIMENTO**
+  passou a ter cabeçalho próprio e altura fixa até o final útil do AvantaCard.
+
+## 1.6.0.31 - 2026-07-18
+
+- O AvantaCard interno de administração passou a preencher uma área fixa do
+  popup, com rolagem restrita ao conteúdo de cada aba.
+
+## 1.6.0.30 - 2026-07-18
+
+- O popup de **Recebimentos Presenciais** passou a manter altura fixa; as áreas
+  internas redistribuem espaço sem redimensionar o card pai.
+
+## 1.6.0.29 - 2026-07-18
+
+- A mesma pílula de vencimento alterna entre **Configure o vencimento** e
+  **Voltar ao endereço**, sem comando duplicado.
+
+## 1.6.0.28 - 2026-07-18
+
+- A configuração de vencimento ganhou o comando explícito **Voltar ao endereço**.
+
+## 1.6.0.27 - 2026-07-18
+
+- A seleção de período inicia oculta. A pílula **Configure o vencimento** abre
+  a configuração e recolhe temporariamente a área de endereço.
+
+## 1.6.0.26 - 2026-07-18
+
+- A pílula de período abre imediatamente o respectivo quadro de configuração,
+  sem o seletor intermediário “Escolher…”.
+
+## 1.6.0.25 - 2026-07-18
+
+- O cadastro de subempresa usa somente o card do formulário, sem moldura
+  externa duplicada.
+
+## 1.6.0.24 - 2026-07-18
+
+- Popups de vencimento ficaram mais largos e usam mais colunas, reduzindo sua
+  altura para caber no cadastro sem recorte.
+
+## 1.6.0.23 - 2026-07-18
+
+- A configuração de vencimento agora usa popups compactos com quadro de dias e
+  meses, evitando listas extensas. Dias semanais ficaram centralizados.
+
+## 1.6.0.22 - 2026-07-18
+
+- Durante o novo cadastro de subempresa, a empresa-pai permanece somente no
+  cabeçalho superior e as demais edições aguardam a conclusão ou o cancelamento.
+- Endereço passou a concentrar CEP, rua, número, complemento, bairro, cidade e
+  UF em uma única linha, com proporções compactas por campo.
+
+## 1.6.0.21 - 2026-07-18
+
+- Número passou a ficar ao lado de Rua no endereço da subempresa.
+- A área de vencimento ganhou o título **Configure o vencimento** e pílulas
+  centralizadas; a empresa-pai aparece no cabeçalho ao cadastrar subempresa.
+
+## 1.6.0.20 - 2026-07-18
+
+- A configuração de vencimento foi compactada: frequências viraram pílulas em
+  uma linha e os controles específicos aparecem logo abaixo.
+
+## 1.6.0.19 - 2026-07-18
+
+- As ações de cancelar e salvar de subempresas agora ficam após a configuração
+  do vencimento/recorrência.
+
+## 1.6.0.18 - 2026-07-18
+
+- A orientação do CEP permanece em uma única linha, mesmo quando ultrapassa a
+  largura visual do campo.
+
+## 1.6.0.17 - 2026-07-18
+
+- O cabeçalho de Empresas foi elevado e a área de listagem ganhou mais espaço.
+- CEP, rua, bairro, cidade e UF agora compartilham a mesma linha; a orientação
+  de consulta fica diretamente abaixo do CEP.
+
+## 1.6.0.16 - 2026-07-18
+
+- No cadastro de subempresa, nome, responsável e valor combinado passaram a
+  compartilhar a mesma linha no Web.
+
+## 1.6.0.15 - 2026-07-18
+
+- O comando **+ Novo colaborador** agora usa exatamente a mesma estrutura e
+  estilo do comando **+ Nova empresa**.
+
+## 1.6.0.14 - 2026-07-18
+
+- O topo de **Empresas** ficou mais compacto. Nome da empresa, responsável e
+  contato passam a ocupar a mesma linha.
+- O endereço de subempresas agora começa pelo CEP: rua, bairro, cidade e UF são
+  preenchidos pela consulta; número e complemento seguem editáveis.
+
+## 1.6.0.13 - 2026-07-18
+
+- O atalho de **RH** foi removido do cabeçalho e do menu responsivo até que o
+  módulo de Recursos Humanos seja instalado e liberado oficialmente.
+
+## 1.6.0.12 - 2026-07-18
+
+- Subempresas agora configuram a regra completa do **Recebimento**: dias da
+  semana no ciclo semanal; dia-base rigoroso de 15 em 15 dias no quinzenal;
+  dia mensal; mês inicial e dia nos ciclos trimestral, semestral e anual.
+- O sistema gera as cobranças previstas desde o cadastro da subempresa e as
+  mantém atualizadas a cada carregamento. Cobranças abertas passam para
+  **Em atraso** automaticamente após o vencimento, sem ação manual.
+- O colaborador recebe a lista de cobranças abertas para apontar a parcela
+  correta, evitando lançamentos avulsos duplicados.
+
+## 1.6.0.11 - 2026-07-18
+
+- O tooltip do gráfico de **Resultados** é ancorado na própria área do gráfico e
+  fica precisamente alinhado, com respiro, ao lado direito do cursor.
+- **Adicionar aos recebimentos** mantém `corPrimaria` também quando desabilitado,
+  com contraste de estado apropriado.
+
+## 1.6.0.10 - 2026-07-18
+
+- O campo de senha de **Novo colaborador** inicia vazio, usa o placeholder
+  **Digite a senha** e não solicita preenchimento automático do navegador.
+
+## 1.6.0.09 - 2026-07-18
+
+- Subempresas passam a definir a frequência de **Recebimento**: semanal,
+  quinzenal, mensal, trimestral, semestral ou anual. Cadastros existentes foram
+  migrados como mensais.
+- Os filtros de Recebimentos voltaram a ocupar uma única linha; o período
+  ganhou o grupo destacado **Selecione o período**.
+
+## 1.6.0.08 - 2026-07-18
+
+- O card de integração passou a se chamar **Total recebido e confirmado** e foi
+  compactado: controles menores e espaço de retorno restrito a uma linha.
+- A mensagem transitória agora informa **Carregando valores…**.
+- Em **Recebimentos**, o título foi alinhado ao período **De / Até**, conectando
+  visualmente a lista ao intervalo filtrado.
+
+## 1.6.0.07 - 2026-07-18
+
+- Em **Colaboradores**, o botão de copiar o link do PWA agora fica junto ao
+  respectivo título; a pesquisa de colaboradores foi removida.
+- O card **Baixado** volta a separar os campos e a ação em duas linhas, com
+  controles mais compactos.
+- Os cabeçalhos e comandos principais de **Recebimentos Presenciais** passam a
+  herdar `corPrimaria`, mantendo leitura adequada também em temas escuros.
+
+## 1.6.0.06 - 2026-07-18
+
+- Reduzido pela metade o card **Baixado**, mantendo os dois campos e o botão de
+  integração alinhados na mesma linha no web.
+- Padronizados os comandos de pesquisa e criação nas abas **Empresas** e
+  **Colaboradores**, com filtro instantâneo também para colaboradores.
+- Reduzida a área do gráfico em **Resultados** para que permaneça integralmente
+  dentro do AvantaCard pai.
+
 ## 1.6.0.05 - 2026-07-18
 
 - Corrigida a distribuição da Visão geral de Recebimentos: os quatro cards de
