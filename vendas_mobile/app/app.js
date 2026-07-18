@@ -3970,7 +3970,7 @@ function abrirEditarPagamentoCliente(pagamentoId, pagina = 0, retornoClienteId =
       <section class="payment-edit-summary"><div><span>Saldo atual</span><b>${moeda(saldoAtual.debito)}</b></div><div><span>Crédito atual</span><b>${moeda(saldoAtual.credito)}</b></div><div class="final"><span>Novo saldo</span><b id="editarPagamentoNovoSaldo">${moeda(saldoAtual.debito)}</b></div><div><span>Novo crédito</span><b id="editarPagamentoNovoCredito">${moeda(saldoAtual.credito)}</b></div></section>
       <p class="payment-edit-note">O desconto e a forma de pagamento permanecem inalterados.</p>
     </div>
-    <footer class="payment-edit-footer"><button type="button" class="ghost" onclick="voltarEdicaoPagamento('${pagamento.cliente_id}', ${pagina}, '${retornoClienteId}', '${retornoAba}')">Cancelar</button><button type="button" class="danger" onclick="abrirConfirmacaoExcluirPagamento('${pagamentoId}', ${pagina}, '${retornoClienteId}', '${retornoAba}')">Excluir</button><button type="button" class="primary" onclick="salvarEdicaoPagamentoCliente('${pagamentoId}', ${pagina}, '${retornoClienteId}', '${retornoAba}')">Salvar</button></footer>
+    <footer class="payment-edit-footer"><button type="button" class="ghost" onclick="voltarEdicaoPagamento('${pagamento.cliente_id}', ${pagina}, '${retornoClienteId}', '${retornoAba}')">Cancelar</button><button type="button" class="danger" onclick="abrirConfirmacaoExcluirPagamento('${pagamentoId}', ${pagina}, '${retornoClienteId}', '${retornoAba}')">Excluir</button><button type="button" class="primary payment-edit-save" onclick="salvarEdicaoPagamentoCliente('${pagamentoId}', ${pagina}, '${retornoClienteId}', '${retornoAba}')">Salvar</button></footer>
   `, 'sheet-backdrop-centered payment-edit-backdrop');
 }
 
@@ -5941,7 +5941,7 @@ function aplicarAtualizacaoPwaPendente() {
 
 if (!window.__VENDAS_MOBILE_EMBEDDED__ && 'serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('./sw.js?v=41').catch(() => {});
+    navigator.serviceWorker.register('./sw.js?v=42').catch(() => {});
   });
 }
 
