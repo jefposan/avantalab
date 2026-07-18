@@ -1,5 +1,19 @@
 # Changelog
 
+## 1.6.0.55 - 2026-07-18
+
+- As tabelas **Próximo a vencer** e **Inadimplentes** deixam de repetir a
+  coluna Situação e redistribuem as cinco informações restantes.
+- O estado **Preparando acesso** do PWA de Recebimentos passa a usar o card de
+  carregamento oficial do sistema.
+- No lançamento do colaborador, a confirmação permanece desabilitada até haver
+  empresa, título ou destino aplicável e valor válido; o valor recebido usa
+  máscara monetária brasileira com duas casas decimais.
+- **Aguardando** mantém o total acumulado de todos os recebimentos do colaborador
+  ainda pendentes de confirmação, enquanto **Recebido hoje** permanece diário.
+- O card **Total recebido e confirmado** deixa de exibir o indicador de valor
+  sincronizado no canto superior direito.
+
 ## 1.6.0.54 - 2026-07-18
 
 - A integração de **Recebimentos Presenciais** com **Receitas** passa a ser

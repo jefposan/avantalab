@@ -1,6 +1,6 @@
 import styles from '../recebimentos.module.css';
 import type { Empresa, Recebimento, Subempresa } from './types';
-import { diferencaDiasIso, diasEmAtraso, formatarData, formatarMoeda, rotuloSituacao } from './helpers';
+import { diferencaDiasIso, diasEmAtraso, formatarData, formatarMoeda } from './helpers';
 
 type Props = {
   titulo: string;
@@ -33,7 +33,14 @@ export default function TabelaVencimentos({
       <p className={styles.muted} style={{ marginBottom: 12 }}>{descricao}</p>
 
       <div className={styles.tableWrap}>
-        <table className={styles.table}>
+        <table className={`${styles.table} ${styles.tabelaVencimentos}`}>
+          <colgroup>
+            <col className={styles.tabelaVencimentosEmpresa} />
+            <col className={styles.tabelaVencimentosSubempresa} />
+            <col className={styles.tabelaVencimentosData} />
+            <col className={styles.tabelaVencimentosValor} />
+            <col className={styles.tabelaVencimentosPrazo} />
+          </colgroup>
           <thead>
             <tr>
               <th>Empresa</th>
@@ -41,19 +48,15 @@ export default function TabelaVencimentos({
               <th>Vencimento</th>
               <th>Valor esperado</th>
               <th>{variante === 'inadimplente' ? 'Dias em atraso' : 'Prazo'}</th>
-              <th>Situação</th>
             </tr>
           </thead>
           <tbody>
             {recebimentos.length === 0 ? (
-              <tr><td colSpan={6} className={styles.muted} style={{ padding: 16 }}>{vazio}</td></tr>
+              <tr><td colSpan={5} className={styles.muted} style={{ padding: 16 }}>{vazio}</td></tr>
             ) : recebimentos.map((recebimento) => {
               const dias = variante === 'inadimplente'
                 ? diasEmAtraso(recebimento.vencimento, hoje)
                 : diferencaDiasIso(hojeIso, recebimento.vencimento);
-              const rotulo = variante === 'inadimplente'
-                ? rotuloSituacao(recebimento.situacao)
-                : { texto: 'Próximo a vencer', fundo: '#dbeafe', cor: '#1e40af' };
               const indicador = variante === 'inadimplente'
                 ? `${dias} dia(s)`
                 : dias === 0 ? 'Vence hoje' : `Em ${dias} dia(s)`;
@@ -63,8 +66,7 @@ export default function TabelaVencimentos({
                   <td>{nomeSubempresa(recebimento.subempresaId)}</td>
                   <td>{formatarData(recebimento.vencimento)}</td>
                   <td>{formatarMoeda(recebimento.valorCombinado)}</td>
-                  <td style={{ fontWeight: 700, color: rotulo.cor }}>{indicador}</td>
-                  <td><span className={styles.badge} style={{ background: rotulo.fundo, color: rotulo.cor }}>{rotulo.texto}</span></td>
+                  <td className={variante === 'inadimplente' ? styles.prazoInadimplente : styles.prazoProximo}>{indicador}</td>
                 </tr>
               );
             })}

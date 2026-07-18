@@ -68,7 +68,7 @@ export default function ColaboradorApp() {
 
   useEffect(() => {
     if (!('serviceWorker' in navigator)) return;
-    navigator.serviceWorker.register('/recebimentos-sw.js?v=5', { scope: '/recebimentos/colaborador' }).catch(() => undefined);
+    navigator.serviceWorker.register('/recebimentos-sw.js?v=6', { scope: '/recebimentos/colaborador' }).catch(() => undefined);
   }, []);
 
   useEffect(() => {
@@ -199,7 +199,20 @@ export default function ColaboradorApp() {
   }
 
   if (estado === 'carregando') {
-    return <div className={styles.loginWrap}><div className={styles.loginCard} role="status">Preparando acesso…</div></div>;
+    return (
+      <main className={`${styles.loginWrap} ${styles.preparandoAcesso}`}>
+        <section className="avanta-loading-stage" role="status" aria-live="polite">
+          <div className="avanta-loading-glass avanta-loading-card rounded-3xl border shadow-2xl">
+            <div className="avanta-loading-glass-icon mx-auto flex h-11 w-11 items-center justify-center rounded-xl">
+              <span className="avanta-loading-spinner animate-spin" aria-hidden="true" />
+            </div>
+            <p className="text-xs font-bold uppercase tracking-[0.28em] text-sky-700">AvantaLab</p>
+            <h1 className="text-xl font-black text-slate-900">Preparando acesso</h1>
+            <p className="text-sm font-semibold text-slate-500">Carregando Recebimentos Presenciais…</p>
+          </div>
+        </section>
+      </main>
+    );
   }
 
   if (estado === 'bloqueado') {

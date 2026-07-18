@@ -320,11 +320,6 @@ export default function PainelAdministrativo(props: Props) {
                         <div className={styles.statLabel}>Total recebido e confirmado</div>
                         <div className={styles.statValue}>{formatarMoeda(resumo.baixado)}</div>
                       </div>
-                      <span className={styles.integracaoStatus}>
-                        {integracao?.integrado
-                          ? `Automático · ${formatarMoeda(integracao.valorSincronizado)}`
-                          : 'Fora das receitas'}
-                      </span>
                     </div>
                     <div className={styles.integracaoAcoes}>
                       <div className={styles.integracaoCampos}>

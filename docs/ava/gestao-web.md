@@ -1,8 +1,8 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.6.0.54 -->
+<!-- ava-version: 1.6.0.55 -->
 
-> Revisão 1.6.0.54: integração automática com Receitas e vencimento único por subempresa.
+> Revisão 1.6.0.55: refinamentos das listas e do lançamento no PWA de Recebimentos.
 
 ## Escopo
 
@@ -66,8 +66,12 @@ ou `/ponto`.
   pelo gestor. Esse acesso é independente do Controle de Ponto e do login da
   Gestão. Ao lançar um pagamento, ele vê todos os vencidos e somente o próximo
   vencimento futuro. Enquanto essa fila tiver cobrança programada, o recebimento
-  deve ser vinculado a um desses itens; a seleção avulsa aparece apenas quando a
-  fila está vazia. O header do PWA exibe como título principal a empresa gestora
+  deve ser vinculado a um desses itens e o botão de confirmação permanece
+  desabilitado até selecionar empresa, título e informar um valor válido. O valor
+  recebido usa moeda brasileira com duas casas decimais; a seleção avulsa aparece
+  apenas quando a fila está vazia. No resumo do colaborador, **Recebido hoje**
+  considera somente o dia atual, enquanto **Aguardando** mantém o total acumulado
+  até a conferência de todos os lançamentos pendentes. O header do PWA exibe como título principal a empresa gestora
   que criou o acesso e, abaixo, **Recebimentos Presenciais**. Remover o módulo
   bloqueia novas entradas sem apagar os dados.
 - As cobranças **Previsto** alimentam o total calculado dos próximos meses, mas
@@ -77,7 +81,7 @@ ou `/ponto`.
   **Inadimplentes** não possuem seletor de mês. **Conferência** mostra todos os
   recebimentos aguardando confirmação, **Inadimplentes** mostra todos os atrasos
   abertos e **Próximo a vencer** reúne as cobranças previstas para os próximos
-  30 dias.
+  30 dias. As duas últimas tabelas não repetem uma coluna de situação.
 - Fora do modo instalado, a tela de login mostra **Instalar**. O botão abre a
   instalação nativa quando disponível; no iPhone ou em navegador sem prompt,
   orienta **Compartilhar > Adicionar à Tela de Início**.

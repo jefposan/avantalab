@@ -3,7 +3,7 @@
 import { useMemo, useState } from 'react';
 import styles from '../recebimentos.module.css';
 import type { Empresa, Recebimento, Subempresa } from './types';
-import { dataLocalIso, diasEmAtraso, formatarData, formatarMoeda, rotuloFrequenciaRecebimento, tipoDiferenca } from './helpers';
+import { dataLocalIso, diasEmAtraso, formatarData, formatarMoeda, formatarValorInput, parseValorBR, rotuloFrequenciaRecebimento, tipoDiferenca } from './helpers';
 
 type Props = {
   empresas: Empresa[];
@@ -80,9 +80,12 @@ export default function FormularioRecebimento({ empresas, subempresas, recebimen
   // Valor de referência: da cobrança selecionada (parcela) ou da subempresa.
   const valorCombinado = cobranca ? cobranca.valorCombinado : sub?.valorCombinado ?? null;
 
-  const valorRecebido = valorTexto === '' ? null : Number(valorTexto.replace(',', '.'));
+  const valorRecebido = valorTexto === '' ? null : parseValorBR(valorTexto);
   const tipo = valorCombinado != null && valorRecebido != null ? tipoDiferenca(valorCombinado, valorRecebido) : null;
   const precisaObs = tipo === 'menor' || tipo === 'maior';
+  const destinoSelecionado = Boolean(cobranca || (cobrancasAbertas.length === 0 && sub));
+  const valorValido = valorRecebido != null && !Number.isNaN(valorRecebido) && valorRecebido >= 0;
+  const podeConfirmar = Boolean(empresa) && destinoSelecionado && valorValido && (!precisaObs || Boolean(observacao.trim()));
 
   function selecionarEmpresa(id: string) {
     setEmpresaId(id);
@@ -210,14 +213,19 @@ export default function FormularioRecebimento({ empresas, subempresas, recebimen
       )}
 
       <div className={styles.field}>
-        <label className={styles.label}>Valor recebido</label>
-        <input
-          className={`${styles.input} ${styles.inputCentro}`}
-          inputMode="decimal"
-          placeholder="0,00"
-          value={valorTexto}
-          onChange={(e) => setValorTexto(e.target.value.replace(/[^0-9.,]/g, ''))}
-        />
+        <label className={styles.label} htmlFor="recebimentos-valor-recebido">Valor recebido</label>
+        <div className={styles.inputSufixoWrap}>
+          <span className={styles.inputSufixo} aria-hidden="true">R$</span>
+          <input
+            id="recebimentos-valor-recebido"
+            className={styles.inputInterno}
+            inputMode="numeric"
+            placeholder="0,00"
+            value={valorTexto}
+            onChange={(e) => setValorTexto(formatarValorInput(e.target.value))}
+            aria-label="Valor recebido em reais"
+          />
+        </div>
         {textoDiferenca() && <div style={{ marginTop: 6, fontSize: 13 }}>{textoDiferenca()}</div>}
       </div>
 
@@ -240,7 +248,7 @@ export default function FormularioRecebimento({ empresas, subempresas, recebimen
         <button type="button" className={`${styles.btn} ${styles.btnGhost}`} onClick={onCancelar} style={{ flex: 1 }}>
           Cancelar
         </button>
-        <button type="button" disabled={salvando} className={`${styles.btn} ${styles.btnPrimary}`} onClick={() => void confirmar()} style={{ flex: 2 }}>
+        <button type="button" disabled={salvando || !podeConfirmar} className={`${styles.btn} ${styles.btnPrimary}`} onClick={() => void confirmar()} style={{ flex: 2 }}>
           {salvando ? 'Registrando…' : 'Confirmar recebimento'}
         </button>
       </div>

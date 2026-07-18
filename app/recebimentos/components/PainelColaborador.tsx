@@ -35,8 +35,13 @@ export default function PainelColaborador({ colaborador, empresas, subempresas, 
     () => meus.filter((r) => mesmoDia(r.recebidoEm, hoje)).reduce((s, r) => s + (r.valorRecebido ?? 0), 0),
     [meus, hoje],
   );
+  // Diferente de "Recebido hoje", este saldo não tem recorte de data: permanece
+  // acumulado enquanto qualquer lançamento do colaborador aguardar conferência.
   const aguardando = useMemo(() => meus.filter((r) => aguardandoConferencia(r.situacao)), [meus]);
-  const totalAguardando = aguardando.reduce((s, r) => s + (r.valorRecebido ?? 0), 0);
+  const totalAguardando = useMemo(
+    () => aguardando.reduce((s, r) => s + (r.valorRecebido ?? 0), 0),
+    [aguardando],
+  );
 
   const nomeEmpresa = (id: string) => empresas.find((e) => e.id === id)?.nome ?? '—';
   const nomeSub = (id: string) => subempresas.find((s) => s.id === id)?.nome ?? '—';
