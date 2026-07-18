@@ -1,8 +1,8 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.6.0.44 -->
+<!-- ava-version: 1.6.0.45 -->
 
-> Revisão 1.6.0.44: sem impacto operacional na Gestão Mobile; contraste de ações foi revisado na Gestão Web.
+> Revisão 1.6.0.45: sem impacto operacional na Gestão Mobile; consulta de CEP por Enter foi adicionada na Gestão Web.
 
 ## Escopo
 

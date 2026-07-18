@@ -1,8 +1,8 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.6.0.44 -->
+<!-- ava-version: 1.6.0.45 -->
 
-> Revisão 1.6.0.44: o indicador de salvamento foi alinhado à direita e o contraste de ações no modo escuro foi revisado.
+> Revisão 1.6.0.45: o CEP também consulta e preenche o endereço ao pressionar Enter.
 
 ## Escopo
 

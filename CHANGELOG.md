@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.6.0.45 - 2026-07-18
+
+- O campo CEP agora consulta e preenche o endereço também ao pressionar Enter.
+
 ## 1.6.0.44 - 2026-07-18
 
 - O indicador de salvamento foi alinhado ao canto direito das abas; botões de
