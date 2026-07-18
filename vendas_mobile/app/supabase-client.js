@@ -225,11 +225,14 @@
       const observacoes = JSON.parse(pagamento.observacoes || '{}');
       if (observacoes?.avantalab_pagamento) legado = observacoes;
     } catch { /* observação comum, sem metadados financeiros */ }
+    const resumoDiretoConfirmado = pagamento.saldo_anterior != null && pagamento.saldo_final != null;
+    const resumoLegadoConfirmado = legado.saldo_anterior != null && legado.saldo_final != null;
     return {
       ...pagamento,
       desconto: Number(pagamento.desconto ?? legado.desconto ?? 0),
       saldo_anterior: Number(pagamento.saldo_anterior ?? legado.saldo_anterior ?? 0),
       saldo_final: Number(pagamento.saldo_final ?? legado.saldo_final ?? 0),
+      comprovante_financeiro_confirmado: resumoDiretoConfirmado || resumoLegadoConfirmado,
     };
   }
 
@@ -569,7 +572,13 @@
       desconto: Number(payment.desconto || 0),
       saldo_anterior: Number(payment.saldo_anterior || 0),
       saldo_final: Number(payment.saldo_final || 0),
-      observacoes: payment.observacoes || null,
+      observacoes: JSON.stringify({
+        avantalab_pagamento: true,
+        comprovante_financeiro_confirmado: true,
+        desconto: Number(payment.desconto || 0),
+        saldo_anterior: Number(payment.saldo_anterior || 0),
+        saldo_final: Number(payment.saldo_final || 0),
+      }),
       data_pagamento: payment.data_pagamento,
     };
     let { data, error } = await client.from('vendas_mobile_pagamentos').upsert(payload, { onConflict: 'id' }).select().single();
@@ -593,7 +602,7 @@
       || Number(data.valor || 0) !== payload.valor
       || String(data.data_pagamento || '') !== String(payload.data_pagamento || '')
     ) throw new Error('O pagamento retornado pelo servidor não corresponde ao lançamento enviado.');
-    return { ...data, desconto: payload.desconto, saldo_anterior: payload.saldo_anterior, saldo_final: payload.saldo_final };
+    return { ...data, desconto: payload.desconto, saldo_anterior: payload.saldo_anterior, saldo_final: payload.saldo_final, comprovante_financeiro_confirmado: true };
   }
 
   async function updatePayment(payment) {
@@ -605,7 +614,13 @@
       desconto: Number(payment.desconto || 0),
       saldo_anterior: Number(payment.saldo_anterior || 0),
       saldo_final: Number(payment.saldo_final || 0),
-      observacoes: payment.observacoes || null,
+      observacoes: JSON.stringify({
+        avantalab_pagamento: true,
+        comprovante_financeiro_confirmado: true,
+        desconto: Number(payment.desconto || 0),
+        saldo_anterior: Number(payment.saldo_anterior || 0),
+        saldo_final: Number(payment.saldo_final || 0),
+      }),
       data_pagamento: payment.data_pagamento,
     };
     let { data, error } = await client
@@ -637,7 +652,7 @@
     }
     if (error) throw error;
     if (!data?.id) throw new Error('A alteração do pagamento não foi confirmada pelo servidor.');
-    return { ...payment, ...data, desconto: payload.desconto, saldo_anterior: payload.saldo_anterior, saldo_final: payload.saldo_final };
+    return { ...payment, ...data, desconto: payload.desconto, saldo_anterior: payload.saldo_anterior, saldo_final: payload.saldo_final, comprovante_financeiro_confirmado: true };
   }
 
   async function deletePayment(id) {

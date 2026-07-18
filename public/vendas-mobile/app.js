@@ -3954,7 +3954,7 @@ async function salvarEdicaoPagamentoCliente(pagamentoId, pagina = 0, retornoClie
   if (valorAtualizado <= 0) { toast('Informe um valor de pagamento maior que zero.'); return; }
   if (!/^\d{4}-\d{2}-\d{2}$/.test(dataAtualizada)) { toast('Informe uma data válida.'); return; }
   const candidato = { ...pagamentoAtual, valor: valorAtualizado, data_pagamento: dataAtualizada };
-  const resumo = resumoComprovantePagamento(candidato);
+  const resumo = resumoFinanceiroParaConfirmarPagamento(candidato);
   candidato.saldo_anterior = resumo.saldoAnterior;
   candidato.saldo_final = resumo.saldoAtual;
   iniciarMutacaoDadosVendas();
@@ -4367,16 +4367,30 @@ function resumoComprovantePedido(venda) {
   return { saldoAnterior, saldoAtual };
 }
 
-function resumoComprovantePagamento(pagamento) {
-  const limite = timestampPagamento(pagamento);
-  const debitosAnteriores = state.vendas
-    .filter((item) => item.cliente_id === pagamento.cliente_id && item.status !== 'cancelada' && pedidoGeraDebito(item) && timestampPedido(item) < limite)
-    .reduce((soma, item) => soma + Number(item.total || 0), 0);
-  const abatimentosAnteriores = (state.pagamentos || [])
-    .filter((item) => item.id !== pagamento.id && item.cliente_id === pagamento.cliente_id && timestampPagamento(item) < limite)
+function resumoFinanceiroParaConfirmarPagamento(pagamento) {
+  const pedidosAtivos = pedidosDoCliente(pagamento.cliente_id)
+    .filter((item) => item.status !== 'cancelada' && pedidoGeraDebito(item));
+  const totalDebitos = pedidosAtivos.reduce((soma, item) => soma + Number(item.total || 0), 0);
+  const abatimentosDosOutrosPagamentos = pagamentosDoCliente(pagamento.cliente_id)
+    .filter((item) => item.id !== pagamento.id)
     .reduce((soma, item) => soma + Number(item.valor || 0) + Number(item.desconto || 0), 0);
-  const saldoAnterior = Math.max(0, debitosAnteriores - abatimentosAnteriores);
-  return { saldoAnterior, saldoAtual: Math.max(0, saldoAnterior - Number(pagamento.valor || 0) - Number(pagamento.desconto || 0)) };
+  const saldoAnterior = Math.max(0, totalDebitos - abatimentosDosOutrosPagamentos);
+  return {
+    saldoAnterior,
+    saldoAtual: Math.max(0, saldoAnterior - Number(pagamento.valor || 0) - Number(pagamento.desconto || 0)),
+  };
+}
+
+function resumoComprovantePagamento(pagamento) {
+  if (pagamento?.comprovante_financeiro_confirmado) {
+    return {
+      saldoAnterior: Number(pagamento.saldo_anterior || 0),
+      saldoAtual: Number(pagamento.saldo_final || 0),
+    };
+  }
+  // Registros antigos sem retrato confirmado usam apenas a soma atual dos
+  // lançamentos ativos. O comprovante nunca depende de data ou horário.
+  return resumoFinanceiroParaConfirmarPagamento(pagamento);
 }
 
 function caminhoRetanguloArredondado(ctx, x, y, largura, altura, raio) {
@@ -5864,7 +5878,7 @@ function aplicarAtualizacaoPwaPendente() {
 
 if (!window.__VENDAS_MOBILE_EMBEDDED__ && 'serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('./sw.js?v=34').catch(() => {});
+    navigator.serviceWorker.register('./sw.js?v=35').catch(() => {});
   });
 }
 
