@@ -128,6 +128,7 @@ let rolagemPorAba = {};
 let contextoAberturaVendas = null;
 let sincronizacaoCatalogoEmAndamento = false;
 let revisaoDadosOperacionais = 0;
+let revisaoNavegacaoManual = 0;
 let mutacoesDadosEmAndamento = 0;
 let filaCacheVendas = Promise.resolve();
 let reenviandoPendenciasVendas = false;
@@ -659,6 +660,7 @@ function setAba(aba) {
   }
   state.aba = aba;
   state.menuAberto = false;
+  revisaoNavegacaoManual += 1;
   render();
   const rolagemSalva = Math.max(0, Number(rolagemPorAba[aba] || 0));
   requestAnimationFrame(() => window.scrollTo(0, rolagemSalva));
@@ -2149,6 +2151,7 @@ async function prepararSelecaoSistemaAntesDosDadosVendas() {
 }
 
 async function carregarSistemaVendasCompleto() {
+  const revisaoNavegacaoAoIniciar = revisaoNavegacaoManual;
   carregandoBackend = true;
   preparandoRecursosSala = true;
   render();
@@ -2176,10 +2179,12 @@ async function carregarSistemaVendasCompleto() {
     }
     carregandoBackend = false;
     preparandoRecursosSala = false;
-    // carregar dados e cache nunca podem trazer a última página de volta na
-    // abertura. A sala é o destino final de qualquer inicialização do Vendas.
-    state.aba = 'dashboard';
-    state.menuAberto = true;
+    // A sala é o destino inicial, mas uma navegação feita enquanto a atualização
+    // em segundo plano termina tem prioridade e não pode ser sobrescrita.
+    if (revisaoNavegacaoManual === revisaoNavegacaoAoIniciar) {
+      state.aba = 'dashboard';
+      state.menuAberto = true;
+    }
     render();
     liberarAlturaPreparacao();
     window.setTimeout(() => {

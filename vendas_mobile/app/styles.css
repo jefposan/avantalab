@@ -1669,7 +1669,7 @@ body { background: #fff; color: var(--ink); }
 .client-transaction-footer button { width: 100%; min-height: 44px; border-radius: 999px; font-size: 12px; }
 .order-transaction-backdrop .client-transaction-footer, .payment-transaction-backdrop .client-transaction-footer { position: absolute; right: 16px; bottom: 4px; left: 16px; z-index: 2; margin: 0; border: 0; padding: 0; background: transparent; box-shadow: none; pointer-events: none; }
 .order-transaction-backdrop .client-transaction-footer button, .payment-transaction-backdrop .client-transaction-footer button { min-height: 30px; font-size: 11px; box-shadow: 0 8px 18px rgba(15,42,80,.22); pointer-events: auto; }
-.order-transaction-backdrop .order-edit-footer { bottom: 12px; display: grid; grid-template-columns: auto auto minmax(0,1fr); gap: 6px; }.order-transaction-backdrop .order-edit-footer button { width: auto; min-width: 0; padding: 0 10px; }
+.order-transaction-backdrop .order-edit-footer { bottom: 18px; display: grid; grid-template-columns: auto auto minmax(0,1fr); gap: 6px; }.order-transaction-backdrop .order-edit-footer button { width: auto; min-width: 0; padding: 0 10px; }
 .client-transaction-footer button b { margin-left: 4px; }
 .calendar-picker-backdrop { position: fixed; z-index: 180; inset: 0; display: grid; place-items: center; padding: 18px; background: rgba(2,8,23,.88); backdrop-filter: blur(2px); }
 .calendar-picker-card { width: min(100%,360px); border: 1px solid #cfe1ed; border-radius: 20px; padding: 14px; color: #0A1F44; background: #fff; box-shadow: 0 24px 58px rgba(2,19,35,.34); }
