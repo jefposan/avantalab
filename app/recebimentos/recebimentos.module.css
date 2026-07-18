@@ -798,6 +798,7 @@
 }
 .listaRolavelCadastro { display: flex; }
 .listaRolavelCadastro > .cadastroSubShell { display: flex; width: 100%; }
+.listaRolavelCadastro > .formCadastroEmpresa { width: 100%; flex: 1 1 auto; }
 .listaRolavelCadastro .subListaCadastro { display: flex; flex: 1; }
 
 /* Topo das listas: título + busca + ação principal (estático). */
@@ -1091,7 +1092,8 @@
   color: #64748b;
   font-size: 11px;
 }
-.formCadastroSub { display: flex; min-height: 0; flex: 1; flex-direction: column; }
+.formCadastroEmpresa,
+.formCadastroSub { display: flex; min-height: 0; flex: 1; flex-direction: column; margin-bottom: 0; background: #f8fafc; }
 .formCadastroSub .recorrencia { min-height: 200px; flex: 1 1 auto; }
 .formCadastroSub .recorrenciaConfig { display: flex; min-height: 0; flex: 1 1 auto; align-items: center; justify-content: center; margin-bottom: 10px; }
 .formCadastroSub .recorrenciaPopupDireto { width: min(560px, 100%); }
@@ -1317,7 +1319,8 @@
 .painelCardFixo { display: flex; min-height: 0; flex: 1 1 0; flex-direction: column; }
 .painelCardFixo > div:last-child { display: flex; min-height: 0; flex: 1 1 auto; flex-direction: column; }
 .painelCardCorpo { display: flex; min-height: 0; flex: 1 1 auto; flex-direction: column; overflow: hidden; }
-.painelCardCorpo:has(.formCadastroSub) { padding: 18px 12px 8px; }
+.painelCardCorpo:has(.formCadastroSub),
+.painelCardCorpo:has(.formCadastroEmpresa) { padding: 18px 12px 8px; }
 .painelCardCorpo > .listaShell { max-height: none; flex: 1 1 auto; }
 .painelCardCorpo > .corpoRolavel { min-height: 0; flex: 1 1 auto; }
 .darkScope .tabs { border-bottom-color: #334155; }

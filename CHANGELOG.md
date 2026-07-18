@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.6.0.48 - 2026-07-18
+
+- Edição e cadastro de empresas/subempresas passaram a compartilhar a mesma
+  área fixa, dimensões e espaçamentos; a empresa-pai permanece no cabeçalho externo.
+
 ## 1.6.0.47 - 2026-07-18
 
 - O campo legado `dia_vencimento` deixou de bloquear frequências recorrentes;

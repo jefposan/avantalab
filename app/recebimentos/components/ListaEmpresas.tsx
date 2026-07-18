@@ -396,7 +396,7 @@ export default function ListaEmpresas({
 
   function formEmpresa(edicao: boolean) {
     return (
-      <div className={`${styles.subItem} ${styles.formCompacto} ${styles.blocoEditando}`} style={{ marginBottom: 10 }}>
+      <div className={`${styles.subItem} ${styles.formCompacto} ${styles.formCadastroEmpresa} ${styles.blocoEditando}`}>
         <div className={styles.formTitulo}>{edicao ? 'Editar empresa' : 'Nova empresa'}</div>
         <div className={styles.linhaEmpresaCampos}>
           <div className={styles.field}><label className={styles.label}>Nome da empresa *</label><input className={styles.input} placeholder="Ex: Shopping Morumbi" value={eNome} onChange={(e) => setENome(formatarNomeProprio(e.target.value))} /></div>
@@ -432,7 +432,7 @@ export default function ListaEmpresas({
     <div className={styles.listaShell}>
       <div className={styles.listaTopo}>
         <h3 className={styles.sectionTitle} style={{ margin: 0 }}>
-          Empresas e subempresas{subDe && !editandoSubId && (
+          Empresas e subempresas{subDe && (
             <span className={styles.sectionTitleEmpresaPai}> — {empresas.find((empresa) => empresa.id === subDe)?.nome ?? ''}</span>
           )}
         </h3>
@@ -454,33 +454,32 @@ export default function ListaEmpresas({
           <button
             type="button"
             className={`${styles.btn} ${styles.btnPrimary} ${styles.listaAcaoPrincipal}`}
-            onClick={() => (formEmpresaAberto && !editandoEmpresaId ? limparFormEmpresa() : abrirNovaEmpresa())}
+            onClick={() => (formEmpresaAberto ? limparFormEmpresa() : abrirNovaEmpresa())}
           >
-            {formEmpresaAberto && !editandoEmpresaId ? 'Fechar cadastro' : '+ Nova empresa'}
+            {formEmpresaAberto ? 'Fechar cadastro' : '+ Nova empresa'}
           </button>
         </div>
       </div>
 
       {/* Apenas esta área rola; o topo acima é estático (imune ao elástico). */}
-      <div className={`${styles.listaRolavel} ${subDe && !editandoSubId ? styles.listaRolavelCadastro : ''}`}>
-      {formEmpresaAberto && !editandoEmpresaId && formEmpresa(false)}
+      <div className={`${styles.listaRolavel} ${subDe || formEmpresaAberto ? styles.listaRolavelCadastro : ''}`}>
+      {formEmpresaAberto && formEmpresa(Boolean(editandoEmpresaId))}
 
-      {termo && empresasFiltradas.length === 0 && (
+      {!formEmpresaAberto && termo && empresasFiltradas.length === 0 && (
         <p className={styles.muted}>Nenhum resultado para “{busca.trim()}”.</p>
       )}
 
-      {empresasFiltradas.map((emp) => {
+      {!formEmpresaAberto && empresasFiltradas.map((emp) => {
         const subs = subsVisiveis(emp.id);
         const totalSubs = subempresas.filter((s) => s.empresaId === emp.id).length;
         const aberta = termo ? true : (expandidas[emp.id] ?? true);
-        const editandoEsta = formEmpresaAberto && editandoEmpresaId === emp.id;
-        const cadastroSubAtivo = subDe === emp.id && !editandoSubId;
-        if (subDe && !editandoSubId && subDe !== emp.id) return null;
+        const cadastroSubAtivo = subDe === emp.id;
+        if (subDe && subDe !== emp.id) return null;
         return (
           <div
             key={emp.id}
             ref={(el) => { blocosRef.current[emp.id] = el; }}
-            className={`${cadastroSubAtivo ? styles.cadastroSubShell : styles.empresaBloco} ${styles.blocoFoco} ${editandoEsta ? styles.blocoEditando : ''}`}
+            className={`${cadastroSubAtivo ? styles.cadastroSubShell : styles.empresaBloco} ${styles.blocoFoco}`}
           >
             {!cadastroSubAtivo && <div className={styles.empresaHeader} onClick={() => setExpandidas((p) => ({ ...p, [emp.id]: !aberta }))}>
               <span style={{ transform: aberta ? 'rotate(90deg)' : 'none', transition: 'transform 0.15s', color: '#64748b', fontSize: 12 }}>▸</span>
@@ -508,29 +507,9 @@ export default function ListaEmpresas({
               </div>
             </div>}
 
-            {editandoEsta && <div style={{ padding: '8px 12px 10px' }}>{formEmpresa(true)}</div>}
-
             {aberta && (
               <div className={`${styles.subLista} ${cadastroSubAtivo ? styles.subListaCadastro : ''}`}>
-                {!cadastroSubAtivo && subs.map((s) =>
-                  editandoSubId === s.id && subDe === emp.id ? (
-                    <div key={s.id} className={`${styles.subItem} ${styles.formCompacto} ${styles.blocoEditando}`}>
-                      <div className={styles.formTitulo}>Editar subempresa</div>
-                      {camposBasicosSubempresa()}
-                      {camposEndereco()}
-                      {formRecorrencia()}
-                      <div className={styles.linhaTelefoneAcoes}>
-                        <div className={styles.acoesForm}>
-                          <button type="button" className={`${styles.btn} ${styles.btnGhost} ${styles.btnSm}`} onClick={limparFormSub}>Cancelar</button>
-                          <button type="button" className={`${styles.btn} ${styles.btnDanger} ${styles.btnSm}`} onClick={excluirSubEmEdicao}>
-                            {confirmandoExclusao ? 'Confirmar' : 'Excluir'}
-                          </button>
-                          <button type="button" className={`${styles.btn} ${styles.btnPrimary} ${styles.btnSm}`} onClick={() => salvarSub(emp.id)}>Salvar</button>
-                        </div>
-                      </div>
-                      {erroSub && <div className={styles.aviso} style={{ marginTop: 8 }}>{erroSub}</div>}
-                    </div>
-                  ) : (
+                {!cadastroSubAtivo && subs.map((s) => (
                     <div key={s.id} className={styles.subItem}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8, alignItems: 'center' }}>
                         <div style={{ minWidth: 0 }}>
@@ -556,18 +535,22 @@ export default function ListaEmpresas({
                         </div>
                       </div>
                     </div>
-                  ),
-                )}
+                ))}
 
-                {subDe === emp.id && !editandoSubId ? (
-                  <div className={`${styles.subItem} ${styles.formCompacto} ${styles.formCadastroSub}`} style={{ background: '#f8fafc' }}>
-                    <div className={styles.formTitulo}>Nova subempresa</div>
+                {cadastroSubAtivo ? (
+                  <div className={`${styles.subItem} ${styles.formCompacto} ${styles.formCadastroSub} ${editandoSubId ? styles.blocoEditando : ''}`}>
+                    <div className={styles.formTitulo}>{editandoSubId ? 'Editar subempresa' : 'Nova subempresa'}</div>
                     {camposBasicosSubempresa()}
                     {camposEndereco()}
                     {formRecorrencia()}
                     <div className={styles.linhaTelefoneAcoes}>
                       <div className={styles.acoesForm}>
                         <button type="button" className={`${styles.btn} ${styles.btnGhost} ${styles.btnSm}`} onClick={limparFormSub}>Cancelar</button>
+                        {editandoSubId && (
+                          <button type="button" className={`${styles.btn} ${styles.btnDanger} ${styles.btnSm}`} onClick={excluirSubEmEdicao}>
+                            {confirmandoExclusao ? 'Confirmar' : 'Excluir'}
+                          </button>
+                        )}
                         <button type="button" className={`${styles.btn} ${styles.btnPrimary} ${styles.btnSm}`} onClick={() => salvarSub(emp.id)}>Salvar</button>
                       </div>
                     </div>

@@ -1,8 +1,8 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.6.0.47 -->
+<!-- ava-version: 1.6.0.48 -->
 
-> Revisão 1.6.0.47: o dia de vencimento legado não bloqueia mais frequências recorrentes.
+> Revisão 1.6.0.48: edição e cadastro de empresas/subempresas usam a mesma área fixa, sem redimensionar o AvantaCard.
 
 ## Escopo
 

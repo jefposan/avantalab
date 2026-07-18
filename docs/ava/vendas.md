@@ -1,8 +1,8 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.6.0.47 -->
+<!-- ava-version: 1.6.0.48 -->
 
-> Revisão 1.6.0.47: sem impacto operacional no Vendas Mobile; recorrência foi compatibilizada na Gestão Web.
+> Revisão 1.6.0.48: sem impacto operacional no Vendas Mobile; edição e cadastro foram estabilizados na Gestão Web.
 
 ## Escopo e navegação
 
