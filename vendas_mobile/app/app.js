@@ -3839,7 +3839,15 @@ function abrirPagamentoClienteComSelecao(clienteId, permitirSelecao = false) {
   if (!cliente) return;
   const clienteSelecionadoId = permitirSelecao ? '' : clienteId;
   const saldo = clienteSelecionadoId ? saldoFinanceiroCliente(clienteSelecionadoId) : { debito: 0 };
-  pagamentoClienteRascunho = { idPersistencia: uuidPersistenciaVendas(), clienteId: clienteSelecionadoId, clienteBusca: '', saldoAnterior: saldo.debito, permitirSelecaoCliente: Boolean(permitirSelecao) };
+  pagamentoClienteRascunho = {
+    idPersistencia: uuidPersistenciaVendas(),
+    clienteId: clienteSelecionadoId,
+    clienteBusca: '',
+    saldoAnterior: saldo.debito,
+    permitirSelecaoCliente: Boolean(permitirSelecao),
+    // O comprovante fecha na tela que abriu o lançamento: Pagamentos ou Clientes.
+    abaOrigem: state.aba === 'vender' ? 'vender' : 'clientes',
+  };
   sheet(`
     <div class="sheet-header"><div><h2>Registrar pagamento</h2><p class="muted small">${permitirSelecao ? 'Selecione o cliente' : escapeHtml(cliente.nome)}</p></div><button type="button" class="close" onclick="fecharSheet(event)">×</button></div>
     <div class="client-transaction-scroll payment-entry-form">
@@ -3940,8 +3948,9 @@ async function confirmarPagamentoCliente() {
       }
     }
     pagamentoClienteRascunho = null;
-    limparPesquisaClientesAoEntrar();
-    state.aba = 'clientes';
+    const abaRetorno = rascunho.abaOrigem === 'vender' ? 'vender' : 'clientes';
+    if (abaRetorno === 'clientes') limparPesquisaClientesAoEntrar();
+    state.aba = abaRetorno;
     state.menuAberto = false;
     await confirmarMutacaoDadosVendas();
     await atualizarDashboardAposLancamento();

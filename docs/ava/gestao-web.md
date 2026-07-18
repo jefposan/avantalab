@@ -1,8 +1,8 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.6.0.58 -->
+<!-- ava-version: 1.6.0.59 -->
 
-> Revisão 1.6.0.58: sem impacto operacional na Gestão Web; filtros restritos ao painel administrativo.
+> Revisão 1.6.0.59: sem impacto operacional na Gestão Web; ajuste restrito ao retorno de comprovante no Vendas Mobile.
 
 ## Escopo
 

@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.6.0.59 - 2026-07-18
+
+- No Vendas Mobile, o comprovante de um pagamento concluído retorna à tela que
+  iniciou o lançamento: **Pagamentos** ou **Clientes**.
+
 ## 1.6.0.58 - 2026-07-18
 
 - O painel administrativo ganhou filtros de perfis por situação de acesso e

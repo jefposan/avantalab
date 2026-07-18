@@ -1,8 +1,8 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.6.0.58 -->
+<!-- ava-version: 1.6.0.59 -->
 
-> Revisão 1.6.0.58: sem impacto operacional no Vendas Mobile; filtros restritos ao painel administrativo.
+> Revisão 1.6.0.59: ao concluir um pagamento, o comprovante retorna à tela que iniciou o lançamento — **Pagamentos** ou **Clientes**.
 
 ## Escopo e navegação
 
@@ -101,6 +101,9 @@ dúvida dentro do Vendas sempre que a função existir ali.
 - Pagamentos registram valor, desconto, data e forma. Edição/exclusão recalcula
   saldos e relatórios. Comprovantes podem ser reabertos, editados ou excluídos no
   histórico do cliente.
+- Ao concluir um pagamento, fechar o comprovante retorna a **Pagamentos** quando
+  o lançamento começou nessa tela; se começou na ficha da cliente, retorna a
+  **Clientes**.
 - Assim que um pedido ou pagamento é confirmado no servidor, o Dashboard é
   recalculado com a mesma revisão salva no cache local. Totais, recebimentos,
   ranking e indicadores do período já incluem o lançamento ao abrir o Dashboard.
