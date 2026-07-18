@@ -1,8 +1,8 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.6.0.59 -->
+<!-- ava-version: 1.6.0.60 -->
 
-> Revisão 1.6.0.59: ao concluir um pagamento, o comprovante retorna à tela que iniciou o lançamento — **Pagamentos** ou **Clientes**.
+> Revisão 1.6.0.60: a pesquisa é limpa ao trocar de página, sem reaproveitar o texto em outra tela.
 
 ## Escopo e navegação
 
@@ -42,6 +42,8 @@ dúvida dentro do Vendas sempre que a função existir ali.
 - No cabeçalho de **Clientes**, o campo de pesquisa fica à esquerda, **Ordem**
   aparece em seguida e **Buscar** ocupa o canto direito. Ao entrar novamente em
   **Clientes**, a pesquisa anterior é limpa e a lista completa volta a ser exibida.
+- Ao trocar de página, a pesquisa da tela anterior é limpa. Um texto pesquisado
+  em **Clientes**, por exemplo, não aparece em **Pagamentos** nem em outra área.
 - **Clientes > Novo cliente** cria a ficha. Nome é obrigatório; celular e endereço
   são recomendados para ligação/WhatsApp e mapas.
 - Quando existe endereço, toda a linha destacada no card abre a escolha entre

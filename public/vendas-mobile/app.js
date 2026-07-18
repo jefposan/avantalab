@@ -670,6 +670,11 @@ function setAba(aba) {
     rolagemPorAba[state.aba] = window.scrollY || document.documentElement.scrollTop || 0;
     try { sessionStorage.setItem('avantalab.vendas_mobile.rolagem_abas', JSON.stringify(rolagemPorAba)); } catch { /* armazenamento indisponível */ }
   }
+  // A busca pertence somente à tela atual; nunca deve aparecer em outra área.
+  if (aba !== state.aba) {
+    state.busca = '';
+    buscaAplicada = '';
+  }
   if (aba !== 'agenda') fecharCamadasAgenda();
   if (aba !== 'divulgacao') divulgacaoPastaAtualId = null;
   if (aba === 'vendas' && state.aba !== 'vendas') limitePedidos = 10;

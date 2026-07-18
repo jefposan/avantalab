@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.6.0.60 - 2026-07-18
+
+- No Vendas Mobile, pesquisas não são mais levadas de uma página para outra:
+  ao mudar de tela, o campo de busca começa limpo.
+
 ## 1.6.0.59 - 2026-07-18
 
 - No Vendas Mobile, o comprovante de um pagamento concluído retorna à tela que
