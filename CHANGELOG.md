@@ -1,5 +1,36 @@
 # Changelog
 
+## 1.5.4.61 - 2026-07-18
+
+- Recebimentos: o PWA do colaborador passa a usar a nova arte fornecida nos
+  ícones de instalação para iOS e demais plataformas.
+- O link exclusivo do colaborador passa a exibir a nova imagem horizontal de
+  Recebimentos nas prévias Open Graph e Twitter.
+
+## 1.5.4.60 - 2026-07-17
+
+- Vendas Mobile: comprovantes compartilháveis de pedido e pagamento agora
+  centralizam a empresa, ampliam cliente/data e saldo anterior, usam a pílula
+  para identificar o comprovante e dão mais respiro antes do conteúdo.
+- Os títulos de detalhes passam a indicar explicitamente “Detalhes do pedido” ou
+  “Detalhes do pagamento”; a identificação genérica “VENDA” foi removida.
+
+## 1.5.4.59 - 2026-07-17
+
+- Criado o PADRÃO AVANTA 1.0.0 como fonte oficial para identidade visual,
+  campos, formatação, layouts, componentes, preferências, módulos e
+  acessibilidade.
+- Integradas instruções para Codex, Claude e GitHub Copilot, com invocação
+  pessoal `$padrao-avanta` para projetos novos ou plugados.
+- Adicionado `npm run verificar:padrao-avanta`; o build agora valida a
+  integridade do padrão antes de compilar.
+
+## 1.5.4.58 - 2026-07-17
+
+- AvantaShell: contorno do card unificado em um único sistema (drop-shadows de 1px seguindo toda a silhueta); eliminada a diferença de borda na região do platô e o recorte duplicado do canto arredondado.
+- AvantaCard: nova API simplificada — basta informar `title`, `corPrimaria` (e opcional `darkMode`) e `plato` (conteúdo do canto superior direito); o preset é aplicado internamente. Modo antigo com `style`/`bodyStyle` segue compatível.
+- Demo `/avanta-card-demo` refeita com o preset de produção, seletor de cor primária e alternância light/dark.
+
 ## 1.5.4.57 - 2026-07-17
 
 - Compartilhamento: substituída a imagem de prévia dos links pela nova arte AvantaLab em 1200×628, otimizada em JPEG; atualizada a URL da metatag para evitar reaproveitamento da imagem anterior em cache.

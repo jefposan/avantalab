@@ -1,5 +1,6 @@
 'use client';
 import React, { useRef, useState, useEffect } from 'react';
+import Link from 'next/link';
 import Tooltip from './Tooltip';
 
 interface Aviso {
@@ -193,6 +194,16 @@ export default function AppHeader({
             <div className={`my-3 border-t ${darkMode ? 'border-slate-700' : 'border-slate-200'}`} />
 
             <div className="space-y-1">
+              <Link
+                href="/rh"
+                onClick={fecharMenuResponsivo}
+                className={`flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-sm font-black transition ${
+                  darkMode ? 'hover:bg-slate-800 text-slate-300' : 'hover:bg-slate-100 text-slate-600'
+                }`}
+              >
+                <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 21v-2a4 4 0 00-4-4H6a4 4 0 00-4 4v2M9 11a4 4 0 100-8 4 4 0 000 8M22 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>
+                Recursos Humanos
+              </Link>
               <button
                 type="button"
                 onClick={() => { fecharMenuResponsivo(); onAbrirAgenda(); }}
@@ -415,6 +426,12 @@ export default function AppHeader({
 
               {/* Controles lado direito */}
               <div className="ml-auto flex shrink-0 items-center gap-2">
+                <Tooltip texto="Acesse o módulo de Recursos Humanos." posicao="bottom">
+                  <Link href="/rh" className={`flex h-9 items-center gap-2 rounded-lg border px-3 text-xs font-black uppercase tracking-wide shadow-sm transition hover:scale-[1.02] ${darkMode ? 'border-slate-700 bg-slate-800 text-slate-200' : 'border-slate-200 bg-white text-slate-700'}`}>
+                    <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 21v-2a4 4 0 00-4-4H6a4 4 0 00-4 4v2M9 11a4 4 0 100-8 4 4 0 000 8M22 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>
+                    RH
+                  </Link>
+                </Tooltip>
                 {/* Seletor de ano */}
                 <Tooltip texto="Ano de referência dos lançamentos e relatórios." posicao="bottom">
                 <div
