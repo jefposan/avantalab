@@ -3333,7 +3333,7 @@ function mostrarCardPedidoCliente() {
         <div class="total"><span>Total final</span><b id="pedidoClienteTotal">${moeda(totais.total)}</b></div>
       </section>
     </div>
-    <footer class="client-transaction-footer ${rascunho.editandoId ? 'order-edit-footer' : ''}">${rascunho.editandoId ? `<button type="button" class="ghost" onclick="cancelarEdicaoPedido('${rascunho.editandoId}')">Cancelar</button><button type="button" class="danger" onclick="confirmarExclusaoPedido('${rascunho.editandoId}')">Excluir</button>` : ''}<button type="button" class="primary" onclick="finalizarPedidoCliente()">${rascunho.editandoId ? 'Salvar pedido' : 'Finalizar pedido'} <b id="pedidoClienteBotaoTotal">(${moeda(totais.total)})</b></button></footer>
+    <footer class="client-transaction-footer ${rascunho.editandoId ? 'order-edit-footer' : ''}">${rascunho.editandoId ? `<button type="button" class="ghost" onclick="cancelarEdicaoPedido('${rascunho.editandoId}')">Cancelar</button><button type="button" class="danger" onclick="confirmarExclusaoPedido('${rascunho.editandoId}')">Excluir</button>` : ''}<button id="finalizarPedidoClienteBotao" type="button" class="primary transaction-confirm-button" onclick="finalizarPedidoCliente()">${rascunho.editandoId ? 'Salvar pedido' : 'Finalizar pedido'} <b id="pedidoClienteBotaoTotal">(${moeda(totais.total)})</b></button></footer>
   `, `sheet-backdrop-centered client-transaction-backdrop order-transaction-backdrop${rascunho.editandoId ? ' order-editing-backdrop' : ''}`);
   if (rascunho.permitirSelecaoCliente && !rascunho.clienteId) focarBuscaClienteLancamento('pedido');
 }
@@ -3656,6 +3656,12 @@ async function finalizarPedidoCliente() {
     }),
     criado_em: new Date(`${dataPedido}T12:00:00`).toISOString(),
   };
+  const botaoFinalizar = document.getElementById('finalizarPedidoClienteBotao');
+  if (botaoFinalizar) {
+    botaoFinalizar.disabled = true;
+    botaoFinalizar.classList.add('is-confirming');
+    botaoFinalizar.textContent = rascunho.editandoId ? 'Salvando pedido...' : 'Finalizando pedido...';
+  }
   iniciarMutacaoDadosVendas();
   try {
     const salvo = backendAtivo
@@ -3690,6 +3696,12 @@ async function finalizarPedidoCliente() {
   } catch (error) {
     toast(traduzErro(error));
   } finally {
+    const botaoAtual = document.getElementById('finalizarPedidoClienteBotao');
+    if (botaoAtual) {
+      botaoAtual.disabled = false;
+      botaoAtual.classList.remove('is-confirming');
+      botaoAtual.innerHTML = `${rascunho.editandoId ? 'Salvar pedido' : 'Finalizar pedido'} <b id="pedidoClienteBotaoTotal">(${moeda(totais.total)})</b>`;
+    }
     finalizarMutacaoDadosVendas();
   }
 }
@@ -3764,7 +3776,7 @@ function abrirPagamentoClienteComSelecao(clienteId, permitirSelecao = false) {
       ${campoDataCentralizado('pagamentoClienteData', isoData(new Date()), 'Data do pagamento')}
       <label class="transaction-field"><span>Forma de pagamento</span><select id="pagamentoClienteForma"><option selected>Pix</option><option>Dinheiro</option><option>Cartão de crédito</option><option>Cartão de débito</option><option>Cheque</option><option>Boleto</option></select></label>
     </div>
-    <footer class="client-transaction-footer"><button id="confirmarPagamentoClienteBotao" type="button" class="primary" onclick="confirmarPagamentoCliente()">Confirmar recebimento</button></footer>
+    <footer class="client-transaction-footer"><button id="confirmarPagamentoClienteBotao" type="button" class="primary transaction-confirm-button" onclick="confirmarPagamentoCliente()">Confirmar recebimento</button></footer>
   `, 'sheet-backdrop-centered client-transaction-backdrop payment-transaction-backdrop');
   if (permitirSelecao) {
     focarBuscaClienteLancamento('pagamento');
@@ -3835,7 +3847,8 @@ async function confirmarPagamentoCliente() {
   const botaoConfirmar = document.getElementById('confirmarPagamentoClienteBotao');
   if (botaoConfirmar) {
     botaoConfirmar.disabled = true;
-    botaoConfirmar.textContent = 'Salvando e conferindo...';
+    botaoConfirmar.classList.add('is-confirming');
+    botaoConfirmar.textContent = 'Confirmando recebimento...';
   }
   iniciarMutacaoDadosVendas();
   try {
@@ -3866,6 +3879,7 @@ async function confirmarPagamentoCliente() {
     const botaoAtual = document.getElementById('confirmarPagamentoClienteBotao');
     if (botaoAtual) {
       botaoAtual.disabled = false;
+      botaoAtual.classList.remove('is-confirming');
       botaoAtual.textContent = 'Confirmar recebimento';
     }
     finalizarMutacaoDadosVendas();
@@ -4146,7 +4160,7 @@ function abrirPagamentoClienteDetalhe(pagamentoId, retornoClienteId = '', retorn
   const cliente = state.clientes.find((item) => item.id === pagamento.cliente_id);
   const resumo = resumoComprovantePagamento(pagamento);
   const descontoHtml = Number(pagamento.desconto || 0) > 0 ? `<div><span>Desconto</span><b>${moeda(pagamento.desconto)}</b></div>` : '';
-  sheet(`<div class="sheet-header"><div><h2>Comprovante de pagamento</h2><p class="muted small">Cliente: ${escapeHtml(cliente?.nome || 'não informado')} · ${dataComprovante(pagamento.data_pagamento)}</p></div><button class="close" onclick="voltarParaDetalhesCliente('${retornoClienteId}','${retornoAba}',${retornoPagina})">×</button></div><section class="payment-detail-summary receipt-detail-summary"><div><span>Saldo anterior</span><b>${moeda(resumo.saldoAnterior)}</b></div><div><span>Forma de pagamento</span><b>${escapeHtml(pagamento.forma_pagamento || 'Não informado')}</b></div>${descontoHtml}<div class="payment-paid-highlight"><span>Valor pago</span><b>${moeda(pagamento.valor)}</b></div><div class="receipt-current-balance"><span>Saldo atual</span><b>${moeda(resumo.saldoAtual)}</b></div></section><button class="primary order-share" onclick="compartilharPagamento('${pagamentoId}')">${svgIcon('save')} Compartilhar comprovante</button><footer class="order-view-actions"><button type="button" class="ghost" onclick="voltarParaDetalhesCliente('${retornoClienteId}','${retornoAba}',${retornoPagina})">Fechar</button><button type="button" class="danger" onclick="abrirConfirmacaoExcluirPagamento('${pagamentoId}',${retornoPagina},'${retornoClienteId}','${retornoAba}','detalhe')">Excluir</button><button type="button" class="secondary" onclick="abrirEditarPagamentoCliente('${pagamentoId}',${retornoPagina},'${retornoClienteId}','${retornoAba}')">Editar</button></footer>`, 'sheet-backdrop-centered receipt-view-backdrop');
+  sheet(`<div class="sheet-header"><div><h2>Comprovante de pagamento</h2><p class="muted small">Cliente: ${escapeHtml(cliente?.nome || 'não informado')} · ${dataComprovante(pagamento.data_pagamento)}</p></div><button class="close" onclick="voltarParaDetalhesCliente('${retornoClienteId}','${retornoAba}',${retornoPagina})">×</button></div><section class="payment-detail-summary receipt-detail-summary"><div><span>Saldo anterior</span><b>${moeda(resumo.saldoAnterior)}</b></div><div><span>Forma de pagamento</span><b>${escapeHtml(pagamento.forma_pagamento || 'Não informado')}</b></div>${descontoHtml}<div class="payment-paid-highlight"><span>Valor pago</span><b>${moeda(pagamento.valor)}</b></div><div class="receipt-current-balance"><span>Saldo atual</span><b>${moeda(resumo.saldoAtual)}</b></div></section><footer class="order-view-actions"><button type="button" class="ghost" onclick="voltarParaDetalhesCliente('${retornoClienteId}','${retornoAba}',${retornoPagina})">Fechar</button><button type="button" class="danger" onclick="abrirConfirmacaoExcluirPagamento('${pagamentoId}',${retornoPagina},'${retornoClienteId}','${retornoAba}','detalhe')">Excluir</button><button type="button" class="secondary" onclick="abrirEditarPagamentoCliente('${pagamentoId}',${retornoPagina},'${retornoClienteId}','${retornoAba}')">Editar</button></footer><button class="primary order-share" onclick="compartilharPagamento('${pagamentoId}')">${svgIcon('save')} Compartilhar comprovante</button>`, 'sheet-backdrop-centered receipt-view-backdrop');
 }
 
 function abrirPedidoCliente(pedidoId, retornoClienteId = '', retornoAba = '', retornoPagina = 0) {
@@ -4164,7 +4178,7 @@ function abrirPedidoCliente(pedidoId, retornoClienteId = '', retornoAba = '', re
     const totalItem = bonificado ? 0 : Number(item.total ?? Number(item.quantidade || 0) * preco);
     return `<div class="receipt-order-row ${bonificado ? 'is-bonus' : ''}"><div class="receipt-order-product"><b>${escapeHtml(item.produto_nome)}</b>${bonificado ? '<em>Bonificado</em>' : ''}</div><span class="receipt-order-quantity">${Number(item.quantidade || 0)}</span><span class="receipt-order-price">${bonificado ? '—' : moeda(preco)}</span><strong class="receipt-order-total">${moeda(totalItem)}</strong></div>`;
   }).join('') || '<p class="muted">Sem itens registrados.</p>';
-  sheet(`<div class="sheet-header"><div><h2>Comprovante de pedido</h2><p class="muted small">Cliente: ${escapeHtml(cliente?.nome || 'não informado')} · ${dataComprovante(venda.criado_em)}</p></div><button class="close" onclick="voltarParaDetalhesCliente('${retornoClienteId}','${retornoAba}',${retornoPagina})">×</button></div><section class="order-view-items receipt-order-table"><header><span>Produto</span><span>Qtd</span><span>Preço</span><span>Total</span></header><div class="receipt-order-scroll">${itensHtml}</div></section><div class="receipt-order-footer"><section class="receipt-balance-summary"><div><span>Saldo anterior</span><b>${moeda(resumo.saldoAnterior)}</b></div><div><span>Pedido</span><b>${moeda(venda.total)}</b></div><div class="receipt-current-balance"><span>Saldo atual</span><b>${moeda(resumo.saldoAtual)}</b></div></section><button class="primary order-share" onclick="compartilharPedido('${pedidoId}')">${svgIcon('save')} Compartilhar comprovante</button><footer class="order-view-actions"><button type="button" class="ghost" onclick="voltarParaDetalhesCliente('${retornoClienteId}','${retornoAba}',${retornoPagina})">Fechar</button><button type="button" class="danger" onclick="confirmarExclusaoPedido('${pedidoId}','${retornoClienteId}','${retornoAba}',${retornoPagina})">Excluir</button><button type="button" class="secondary" onclick="abrirEditarPedido('${pedidoId}')">Editar</button></footer></div>`, 'sheet-backdrop-centered receipt-view-backdrop order-view-backdrop');
+  sheet(`<div class="sheet-header"><div><h2>Comprovante de pedido</h2><p class="muted small">Cliente: ${escapeHtml(cliente?.nome || 'não informado')} · ${dataComprovante(venda.criado_em)}</p></div><button class="close" onclick="voltarParaDetalhesCliente('${retornoClienteId}','${retornoAba}',${retornoPagina})">×</button></div><section class="order-view-items receipt-order-table"><header><span>Produto</span><span>Qtd</span><span>Preço</span><span>Total</span></header><div class="receipt-order-scroll">${itensHtml}</div></section><div class="receipt-order-footer"><section class="receipt-balance-summary"><div><span>Saldo anterior</span><b>${moeda(resumo.saldoAnterior)}</b></div><div><span>Pedido</span><b>${moeda(venda.total)}</b></div><div class="receipt-current-balance"><span>Saldo atual</span><b>${moeda(resumo.saldoAtual)}</b></div></section><footer class="order-view-actions"><button type="button" class="ghost" onclick="voltarParaDetalhesCliente('${retornoClienteId}','${retornoAba}',${retornoPagina})">Fechar</button><button type="button" class="danger" onclick="confirmarExclusaoPedido('${pedidoId}','${retornoClienteId}','${retornoAba}',${retornoPagina})">Excluir</button><button type="button" class="secondary" onclick="abrirEditarPedido('${pedidoId}')">Editar</button></footer><button class="primary order-share" onclick="compartilharPedido('${pedidoId}')">${svgIcon('save')} Compartilhar comprovante</button></div>`, 'sheet-backdrop-centered receipt-view-backdrop order-view-backdrop');
 }
 
 function abrirConsignadoCliente(venda, retornoClienteId = '', retornoAba = '', retornoPagina = 0) {
@@ -5878,7 +5892,7 @@ function aplicarAtualizacaoPwaPendente() {
 
 if (!window.__VENDAS_MOBILE_EMBEDDED__ && 'serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('./sw.js?v=35').catch(() => {});
+    navigator.serviceWorker.register('./sw.js?v=36').catch(() => {});
   });
 }
 
