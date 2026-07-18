@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.6.0.57 - 2026-07-18
+
+- Na Gestão Web, **Ajustes** passa a se chamar **Menu** e abre em uma gaveta
+  lateral esquerda, com cabeçalho fixo, fechamento por clique fora ou inatividade
+  e subbotões expansíveis no próprio fluxo.
+- O destaque de **Módulos** e os demais botões coloridos do menu passam a usar
+  degradê horizontal para reforçar a hierarquia visual.
+
 ## 1.6.0.56 - 2026-07-18
 
 - Todos os rótulos de valor em Recebimentos passam a usar **Valor contratado**.

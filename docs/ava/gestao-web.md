@@ -1,8 +1,8 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.6.0.56 -->
+<!-- ava-version: 1.6.0.57 -->
 
-> Revisão 1.6.0.56: nomenclatura de valor contratado e atualização imediata dos títulos em Receitas.
+> Revisão 1.6.0.57: **Ajustes** passa a se chamar **Menu** na Gestão Web e abre como gaveta lateral.
 
 ## Escopo
 
@@ -14,8 +14,9 @@ ou `/ponto`.
 
 - O dashboard é a página inicial. Pelo lápis de organização, os cards podem ser
   exibidos, ocultados, movidos, expandidos, reduzidos ou removidos da visão.
-- **Ajustes** concentra perfil, usuários, aparência, despesas/categorias,
-  despesas fixas, backup/restauração e módulos.
+- **Menu** concentra perfil, usuários, aparência, despesas/categorias,
+  despesas fixas, backup/restauração e módulos. No Web, ele abre em uma gaveta
+  lateral esquerda; Visual e Configurações expandem seus próprios subbotões.
 - **Sobre** apresenta as principais novidades em marcos consolidados, sem listar
   ajustes exclusivamente técnicos.
 - Um login pode ter perfis Empresa e Pessoal. As permissões dependem do vínculo:
@@ -29,7 +30,7 @@ ou `/ponto`.
 - Despesas futuras ficam marcadas como **Previsto** até confirmação. Alterar a
   data preserva essa natureza.
 - Parcelamentos criam os lançamentos dos meses correspondentes.
-- Para alterar toda uma recorrência, orientar em **Ajustes > Despesas fixas**;
+- Para alterar toda uma recorrência, orientar em **Menu > Despesas fixas**;
   editar uma linha mensal afeta somente aquele mês.
 - Gráficos e relatórios obedecem ao perfil e período selecionados. A análise da
   Ava só pode usar números presentes no contexto do usuário.
@@ -41,8 +42,8 @@ ou `/ponto`.
   garante entrega sem confirmação.
 - Funcionários do Controle de Ponto usam `/ponto`; configurações e relatórios
   ficam para gestores/autorizados.
-- **Recebimentos Presenciais** é instalado em **Ajustes > Módulos**. Depois de
-  instalado, Gestor Master e Administrador usam **Ajustes > Recebimentos** para
+- **Recebimentos Presenciais** é instalado em **Menu > Módulos**. Depois de
+  instalado, Gestor Master e Administrador usam **Menu > Recebimentos** para
   cadastrar empresas atendidas, pontos de cobrança e colaboradores, além de
   conferir, devolver, registrar divergências ou estornar recebimentos.
 - Em **Empresas**, use **Pesquisar empresas…** ou **+ Nova empresa**. Em

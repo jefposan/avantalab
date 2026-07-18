@@ -701,6 +701,7 @@ const [acessosVendasAprovados, setAcessosVendasAprovados] = useState<AcessoVenda
 const [aprovacoesCarregando, setAprovacoesCarregando] = useState(false);
 const [aprovacaoProcessandoId, setAprovacaoProcessandoId] = useState<string | null>(null);
 const ajustesAutoFecharTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+const painelAjustesRef = useRef<HTMLDivElement | null>(null);
 const painelAvisosAbertoAnterior = useRef(false);
 const financeiroRealtimeChannelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
 const [menuResponsivoAberto, setMenuResponsivoAberto] = useState(false);
@@ -1895,10 +1896,11 @@ const reiniciarTimerAjustes = () => {
   limparTimerAjustes();
   ajustesAutoFecharTimerRef.current = setTimeout(() => {
     setAjustesAberto(false);
-  }, 20000);
+    setMenuAjuste(null);
+  }, 10000);
 };
 
-// 5. Auto-fechar o Menu de Ajustes após 20 segundos sem interação
+// 5. Auto-fechar o Menu de Ajustes após 10 segundos sem interação
   useEffect(() => {
     if (!ajustesAberto) {
       limparTimerAjustes();
@@ -1913,6 +1915,25 @@ const reiniciarTimerAjustes = () => {
 
     return limparTimerAjustes;
   }, [ajustesAberto]);
+
+  useEffect(() => {
+    if (!menuAjuste || !painelAjustesRef.current) return;
+
+    const painel = painelAjustesRef.current;
+    const frame = window.requestAnimationFrame(() => {
+      const submenu = painel.querySelector<HTMLElement>(`[data-ajustes-submenu="${menuAjuste}"]`);
+      if (!submenu) return;
+
+      const painelRect = painel.getBoundingClientRect();
+      const submenuRect = submenu.getBoundingClientRect();
+      const centroSubmenu = submenuRect.top - painelRect.top + painel.scrollTop + submenuRect.height / 2;
+      const destino = Math.max(0, centroSubmenu - painel.clientHeight / 2);
+
+      painel.scrollTo({ top: destino, behavior: 'smooth' });
+    });
+
+    return () => window.cancelAnimationFrame(frame);
+  }, [menuAjuste]);
 
   const alternarMenuAjuste = (qual: 'visual' | 'config', e: React.MouseEvent<HTMLButtonElement>) => {
     if (menuAjuste === qual) { setMenuAjuste(null); return; }
@@ -8846,7 +8867,7 @@ if (validacaoTelefoneObrigatoria) {
           <div>
             <strong className={textStrong}>Administrador:</strong>
             <p className={textMuted}>
-              Pode gerenciar usuários, acessar ajustes, inserir, editar e excluir lançamentos.
+              Pode gerenciar usuários, acessar o menu, inserir, editar e excluir lançamentos.
             </p>
           </div>
 
@@ -9387,31 +9408,34 @@ name="novo-usuario-login"
         onChange={selecionarArquivoBackup}
       />
 
-            {/* ================= MENU DE AJUSTES GERAL ================= */}
+            {/* ================= MENU GERAL ================= */}
 {ajustesAberto && (
   <>
     <div
       className="fixed inset-0 z-[1190] bg-transparent"
-      onClick={() => setAjustesAberto(false)}
+      onPointerDown={() => { setAjustesAberto(false); setMenuAjuste(null); }}
     />
 
     <div
-      className="print-ocultar fixed left-0 right-0 top-[92px] z-[1200] border-t border-slate-700 bg-slate-900 p-4 text-white shadow-xl transition-all max-xl:top-[88px] max-xl:max-h-[calc(100dvh-104px)] max-xl:overflow-y-auto max-xl:rounded-2xl max-xl:border max-sm:left-3 max-sm:right-3 sm:max-xl:left-auto sm:max-xl:right-[344px] sm:max-xl:w-[calc(100vw-360px)] sm:max-xl:max-w-[352px] xl:top-[108px]"
-    style={{ borderTopColor: corPrimaria, borderTopWidth: '2px' }}
+      className="print-ocultar fixed bottom-0 left-0 top-[92px] z-[1200] flex w-[296px] max-w-[calc(100vw-18px)] flex-col gap-2 overflow-hidden rounded-r-2xl border border-l-0 border-slate-700 bg-slate-900 p-3 text-white shadow-2xl transition-[transform,opacity] xl:top-[108px]"
+    style={{ borderTopColor: corPrimaria, borderTopWidth: '3px', borderRightColor: corPrimaria }}
     onMouseMove={reiniciarTimerAjustes}
     onMouseDown={reiniciarTimerAjustes}
     onKeyDown={reiniciarTimerAjustes}
     onFocus={reiniciarTimerAjustes}
   >
-    {/* Bloco único de botões, alinhado ao limite do sistema (max-w-7xl + px-8) */}
-    <div className="custom-scroll mx-auto flex w-full max-w-7xl items-center gap-3 overflow-x-auto px-3 pb-1 max-xl:flex-col max-xl:items-start max-xl:overflow-x-visible max-xl:px-0 sm:px-5 lg:px-6 xl:px-8">
+    <div className="mb-2 flex shrink-0 items-center justify-between border-b border-slate-700 pb-3">
+      <div><p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">AvantaLab</p><h2 className="mt-1 text-base font-black">Menu</h2></div>
+      <button type="button" onClick={() => { setAjustesAberto(false); setMenuAjuste(null); }} className="grid h-9 w-9 place-items-center rounded-xl border border-slate-700 text-lg text-slate-300 transition hover:bg-slate-800 hover:text-white" aria-label="Fechar menu">×</button>
+    </div>
+    <div ref={painelAjustesRef} className="custom-scroll flex min-h-0 w-full flex-1 flex-col gap-2 overflow-y-auto pr-1">
 
         {/* 1. Cadastrar Despesas + 2. Instrucoes (icone ?) */}
-        <div className="flex items-center gap-1.5">
-          <Tooltip texto="Cadastre e edite as despesas base (modelos) usadas nos lançamentos." posicao="bottom">
+        <div className="order-10 flex w-full items-center gap-1.5">
+          <Tooltip texto="Cadastre e edite as despesas base (modelos) usadas nos lançamentos." posicao="right" wrapperClassName="flex-1">
             <button
               onClick={() => { setAjustesAberto(false); setModalDespesasBase(true); }}
-              className="whitespace-nowrap bg-slate-800 hover:bg-slate-700 px-3 py-1.5 rounded-lg border transition-colors font-bold shadow flex items-center gap-1.5 text-xs"
+              className="flex min-h-10 flex-1 items-center gap-2 rounded-xl border bg-slate-800 px-3 py-2 text-left text-xs font-bold shadow transition-colors hover:bg-slate-700"
               style={{ borderColor: corPrimaria }}
             >
               <svg className="w-3.5 h-3.5" fill="none" stroke="#ffffff" viewBox="0 0 24 24">
@@ -9421,7 +9445,7 @@ name="novo-usuario-login"
             </button>
           </Tooltip>
 
-          <Tooltip texto="Instruções sobre categoria" posicao="bottom">
+          <Tooltip texto="Instruções sobre categoria" posicao="right">
             <button
               type="button"
               aria-label="Instruções sobre categoria"
@@ -9437,13 +9461,18 @@ name="novo-usuario-login"
         </div>
 
         {/* 3. Modulos */}
-        <Tooltip texto="Ative módulos extras (como o Controle de Ponto) para a sua empresa." posicao="bottom">
+        <Tooltip texto="Ative módulos extras (como o Controle de Ponto) para a sua empresa." posicao="right" wrapperClassName="order-20 w-full">
           <button
             onClick={() => { setAjustesAberto(false); setModalModulos(true); }}
-            className="whitespace-nowrap bg-slate-800 hover:bg-slate-700 px-3 py-1.5 rounded-lg border transition-colors font-bold shadow flex items-center gap-1.5 text-xs"
-            style={{ borderColor: corPrimaria }}
+            className="flex min-h-10 w-full items-center gap-2 rounded-xl border px-3 py-2 text-left text-xs font-black shadow-md transition-all hover:brightness-110 hover:shadow-lg"
+            style={{
+              color: corEhClara(corPrimaria) ? '#0f172a' : '#ffffff',
+              background: `linear-gradient(90deg, ${corPrimaria} 0%, color-mix(in srgb, ${corPrimaria} 72%, #0f172a) 100%)`,
+              borderColor: corPrimaria,
+              boxShadow: `0 7px 18px ${corPrimaria}42`,
+            }}
           >
-            <svg className="w-3.5 h-3.5" fill="none" stroke="#ffffff" viewBox="0 0 24 24">
+            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 5a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM14 5a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1V5zM4 15a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1v-4zM14 15a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1v-4z" />
             </svg>
             Módulos
@@ -9452,10 +9481,10 @@ name="novo-usuario-login"
 
         {/* 3b. Assinatura (só com cobrança ativa, para gestor master / administrador) */}
         {COBRANCA_ATIVA && (perfilUsuario === 'gestor_master' || perfilUsuario === 'administrador') && (
-          <Tooltip texto="Veja a situação da sua assinatura e do plano." posicao="bottom">
+          <Tooltip texto="Veja a situação da sua assinatura e do plano." posicao="right" wrapperClassName="order-25 w-full">
             <button
               onClick={() => { setAjustesAberto(false); setModalAssinatura(true); }}
-              className="whitespace-nowrap bg-slate-800 hover:bg-slate-700 px-3 py-1.5 rounded-lg border transition-colors font-bold shadow flex items-center gap-1.5 text-xs"
+              className="flex min-h-10 w-full items-center gap-2 rounded-xl border bg-slate-800 px-3 py-2 text-left text-xs font-bold shadow transition-colors hover:bg-slate-700"
               style={{ borderColor: corPrimaria }}
             >
               <svg className="w-3.5 h-3.5" fill="none" stroke="#ffffff" viewBox="0 0 24 24">
@@ -9468,10 +9497,10 @@ name="novo-usuario-login"
 
         {/* 4. Ponto */}
         {modulosAtivos.includes('ponto') && podeGerenciarPonto && (
-          <Tooltip texto="Gerencie funcionários, local da empresa e relatórios de ponto." posicao="bottom">
+          <Tooltip texto="Gerencie funcionários, local da empresa e relatórios de ponto." posicao="right" wrapperClassName="order-30 w-full">
             <button
               onClick={() => { setAjustesAberto(false); setAbaInicialPontoAdmin('lista'); setRelatorioInicialPonto(null); setInstanciaPontoAdmin((atual) => atual + 1); setModalPontoAdmin(true); carregarFuncionariosPonto(); carregarPontoConfig(); carregarDiasNaoUteisPonto(); }}
-              className="whitespace-nowrap bg-slate-800 hover:bg-slate-700 px-3 py-1.5 rounded-lg border transition-colors font-bold shadow flex items-center gap-1.5 text-xs"
+              className="flex min-h-10 w-full items-center gap-2 rounded-xl border bg-slate-800 px-3 py-2 text-left text-xs font-bold shadow transition-colors hover:bg-slate-700"
               style={{ borderColor: corPrimaria }}
             >
               <svg className="w-3.5 h-3.5" fill="none" stroke="#ffffff" viewBox="0 0 24 24">
@@ -9484,10 +9513,10 @@ name="novo-usuario-login"
 
         {/* 4a. Recebimentos Presenciais */}
         {modulosAtivos.includes('recebimentos_presencial') && podeGerenciarRecebimentos && (
-          <Tooltip texto="Gerencie empresas, colaboradores e a conferência dos recebimentos em campo." posicao="bottom">
+          <Tooltip texto="Gerencie empresas, colaboradores e a conferência dos recebimentos em campo." posicao="right" wrapperClassName="order-40 w-full">
             <button
               onClick={() => { setAjustesAberto(false); setModalRecebimentos(true); }}
-              className="whitespace-nowrap bg-slate-800 hover:bg-slate-700 px-3 py-1.5 rounded-lg border transition-colors font-bold shadow flex items-center gap-1.5 text-xs"
+              className="flex min-h-10 w-full items-center gap-2 rounded-xl border bg-slate-800 px-3 py-2 text-left text-xs font-bold shadow transition-colors hover:bg-slate-700"
               style={{ borderColor: corPrimaria }}
             >
               <svg className="h-3.5 w-3.5" fill="none" stroke="#ffffff" viewBox="0 0 24 24" aria-hidden="true">
@@ -9500,10 +9529,10 @@ name="novo-usuario-login"
 
         {/* 4b. Vendas Mobile */}
         {modulosAtivos.includes('vendas_mobile') && podeAcessarVendasMobileWeb && (
-          <Tooltip texto="Publique novidades e organize fotos e vídeos para a equipe do Vendas Mobile." posicao="bottom">
+          <Tooltip texto="Publique novidades e organize fotos e vídeos para a equipe do Vendas Mobile." posicao="right" wrapperClassName="order-50 w-full">
             <button
               onClick={() => { setAjustesAberto(false); setMenuAjuste(null); setModalNovidadesVendas(true); }}
-              className="whitespace-nowrap bg-slate-800 hover:bg-slate-700 px-3 py-1.5 rounded-lg border transition-colors font-bold shadow flex items-center gap-1.5 text-xs"
+              className="flex min-h-10 w-full items-center gap-2 rounded-xl border bg-slate-800 px-3 py-2 text-left text-xs font-bold shadow transition-colors hover:bg-slate-700"
               style={{ borderColor: corPrimaria }}
             >
               <svg className="h-3.5 w-3.5" fill="none" stroke="#ffffff" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="m3 11 18-5v12L3 14zM11.6 16.4 13 21H8l-1.5-6" /></svg>
@@ -9513,11 +9542,12 @@ name="novo-usuario-login"
         )}
 
         {/* 5. Visual (dropdown) */}
-        <Tooltip texto="Personalize a aparência: logo, cor do tema e modo escuro." posicao="bottom">
+        <Tooltip texto="Personalize a aparência: logo, cor do tema e modo escuro." posicao="right" wrapperClassName="order-60 w-full">
           <button
             type="button"
             onClick={(e) => alternarMenuAjuste('visual', e)}
-            className="whitespace-nowrap bg-slate-800 hover:bg-slate-700 px-3 py-1.5 rounded-lg border transition-colors font-bold shadow flex items-center gap-1.5 text-xs"
+            aria-expanded={menuAjuste === 'visual'}
+            className="flex min-h-10 w-full items-center gap-2 rounded-xl border bg-slate-800 px-3 py-2 text-left text-xs font-bold shadow transition-colors hover:bg-slate-700"
             style={{ borderColor: corPrimaria }}
           >
             <svg className="w-3.5 h-3.5" fill="none" stroke="#ffffff" viewBox="0 0 24 24">
@@ -9530,11 +9560,12 @@ name="novo-usuario-login"
         </Tooltip>
 
         {/* 7. Configuracoes (dropdown) */}
-        <Tooltip texto="Configurações: duplicados, usuários, perfil, backup e restauração." posicao="bottom">
+        <Tooltip texto="Configurações: duplicados, usuários, perfil, backup e restauração." posicao="right" wrapperClassName="order-80 w-full">
           <button
             type="button"
             onClick={(e) => alternarMenuAjuste('config', e)}
-            className="whitespace-nowrap bg-slate-800 hover:bg-slate-700 px-3 py-1.5 rounded-lg border transition-colors font-bold shadow flex items-center gap-1.5 text-xs text-white cursor-pointer"
+            aria-expanded={menuAjuste === 'config'}
+            className="flex min-h-10 w-full items-center gap-2 rounded-xl border bg-slate-800 px-3 py-2 text-left text-xs font-bold text-white shadow transition-colors hover:bg-slate-700 cursor-pointer"
             style={{ borderColor: corPrimaria }}
           >
             <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -9547,36 +9578,32 @@ name="novo-usuario-login"
         </Tooltip>
 
         {/* 8. Sobre + Tutorial (colados à direita) */}
-        <div className="ml-auto flex shrink-0 items-center gap-2 max-xl:ml-0 max-xl:flex-col max-xl:items-start">
-          <Tooltip texto="Sobre o AvantaLab e novidades das versões." posicao="bottom">
+        <div className="order-100 flex w-full flex-col gap-2 border-t border-slate-700 pt-2">
+          <Tooltip texto="Sobre o AvantaLab e novidades das versões." posicao="right" wrapperClassName="w-full">
             <button
               type="button"
               onClick={() => { setAjustesAberto(false); setModalSobre(true); }}
-              className="whitespace-nowrap bg-slate-800 hover:bg-slate-700 px-3 py-1.5 rounded-lg shadow border transition-colors font-bold flex items-center gap-1.5 text-xs text-white cursor-pointer"
+              className="flex min-h-10 w-full items-center gap-2 rounded-xl border bg-slate-800 px-3 py-2 text-left text-xs font-bold text-white shadow transition-colors hover:bg-slate-700 cursor-pointer"
               style={{ borderColor: corPrimaria }}
             >
               <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
               Sobre
             </button>
           </Tooltip>
-          <Tooltip texto="Reveja o tour guiado de uso do sistema." posicao="bottom">
+          <Tooltip texto="Reveja o tour guiado de uso do sistema." posicao="right" wrapperClassName="w-full">
             <button
               type="button"
               onClick={() => { setAjustesAberto(false); setTourAberto(true); }}
-              className="whitespace-nowrap bg-indigo-600 hover:bg-indigo-500 px-3 py-1.5 rounded-lg shadow border border-indigo-400/50 transition-colors font-bold flex items-center gap-1.5 text-xs text-white cursor-pointer"
+              className="flex min-h-10 w-full items-center gap-2 rounded-xl border border-indigo-400/50 bg-gradient-to-r from-indigo-700 to-indigo-500 px-3 py-2 text-left text-xs font-bold text-white shadow transition-all hover:brightness-110 cursor-pointer"
             >
               <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
               Tutorial
             </button>
           </Tooltip>
         </div>
-    </div>
-
     {/* ===== DROPDOWN: VISUAL ===== */}
     {menuAjuste === 'visual' && menuAjusteRect && (
-      <>
-        <div className="fixed inset-0 z-[1205]" onClick={() => setMenuAjuste(null)} />
-        <div className="fixed z-[1210] w-52 rounded-xl border border-slate-700 bg-slate-900 p-2 shadow-2xl" style={{ top: menuAjusteRect.top, left: menuAjusteRect.left }}>
+        <div data-ajustes-submenu="visual" className="relative z-[1210] order-70 w-full rounded-xl border border-slate-700 bg-slate-950/80 p-2 shadow-xl">
           <button
             type="button"
             onClick={() => { if (!podeAcessarAjustes) { abrirAviso('Acesso não permitido', 'Você não tem permissão para alterar a logomarca da empresa.'); return; } setAjustesAberto(false); setModalLogo(true); }}
@@ -9603,14 +9630,11 @@ name="novo-usuario-login"
             </div>
           </div>
         </div>
-      </>
     )}
 
     {/* ===== DROPDOWN: CONFIGURACOES ===== */}
     {menuAjuste === 'config' && menuAjusteRect && (
-      <>
-        <div className="fixed inset-0 z-[1205]" onClick={() => setMenuAjuste(null)} />
-        <div className="fixed z-[1210] w-56 max-w-[calc(100vw-1.5rem)] rounded-xl border border-slate-700 bg-slate-900 p-2 shadow-2xl" style={{ top: menuAjusteRect.top, left: `min(max(${menuAjusteRect.left}px, 12px), calc(100vw - 236px))` }}>
+        <div data-ajustes-submenu="config" className="relative z-[1210] order-90 w-full rounded-xl border border-slate-700 bg-slate-950/80 p-2 shadow-xl">
           <Tooltip texto="Ativa ou desativa o aviso ao lançar uma despesa duplicada no mesmo mês." posicao="right" wrapperClassName="w-full">
             <button type="button" className="flex w-full items-center justify-between gap-2 rounded-lg px-3 py-2 text-xs font-bold text-white hover:bg-slate-700 cursor-pointer" onClick={() => setDuplicadosAtivo(!duplicadosAtivo)}>
               <span>Duplicados</span>
@@ -9679,12 +9703,11 @@ name="novo-usuario-login"
             </button>
           </Tooltip>
         </div>
-      </>
     )}
 
           {statusConfig !== 'idle' && (
             <div
-              className={`mt-2 rounded-full px-3 py-0.5 text-center text-[10px] font-bold leading-tight ${
+              className={`order-[95] rounded-full px-3 py-0.5 text-center text-[10px] font-bold leading-tight ${
                 statusConfig === 'saving'
                   ? 'bg-sky-50 text-sky-700'
                   : statusConfig === 'saved'
@@ -9698,6 +9721,7 @@ name="novo-usuario-login"
             </div>
           )}
         </div>
+    </div>
       </>
 )}
 

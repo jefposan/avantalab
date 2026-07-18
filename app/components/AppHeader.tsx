@@ -260,7 +260,7 @@ export default function AppHeader({
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10.325 4.317a1.724 1.724 0 013.35 0 1.724 1.724 0 002.573 1.066 1.724 1.724 0 012.451 2.451 1.724 1.724 0 001.066 2.573 1.724 1.724 0 010 3.35 1.724 1.724 0 00-1.066 2.573 1.724 1.724 0 01-2.451 2.451 1.724 1.724 0 00-2.573 1.066 1.724 1.724 0 01-3.35 0 1.724 1.724 0 00-2.573-1.066 1.724 1.724 0 01-2.451-2.451 1.724 1.724 0 00-1.066-2.573 1.724 1.724 0 010-3.35 1.724 1.724 0 001.066-2.573 1.724 1.724 0 012.451-2.451 1.724 1.724 0 002.573-1.066z" />
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 15.5A3.5 3.5 0 1012 8.5a3.5 3.5 0 000 7z" />
                 </svg>
-                Ajustes
+                Menu
               </button>
               <button
                 type="button"
@@ -332,7 +332,7 @@ export default function AppHeader({
                   style={{ inset: '2px', border: `2px dashed ${darkMode ? '#475569' : '#cbd5e1'}` }}
                 />
                 <span className="relative px-3 text-center leading-snug text-slate-500">
-                  <span className="block text-[11px] font-semibold">Acesse os Ajustes e adicione sua</span>
+                  <span className="block text-[11px] font-semibold">Acesse o Menu e adicione sua</span>
                   <span className="mt-1 block text-base font-black tracking-wide">LOGOMARCA</span>
                 </span>
               </>
@@ -520,8 +520,8 @@ export default function AppHeader({
                   />
                 </div>
 
-                {/* Ajustes */}
-                <Tooltip texto="Abra os ajustes do sistema." posicao="bottom">
+                {/* Menu */}
+                <Tooltip texto="Abra o menu do sistema." posicao="bottom">
                 <button
                   type="button"
                   onClick={() => { setPainelAvisosAberto(false); setAjustesAberto(!ajustesAberto); }}
@@ -543,7 +543,7 @@ export default function AppHeader({
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.3"
                       d="M12 15.5A3.5 3.5 0 1012 8.5a3.5 3.5 0 000 7z" />
                   </svg>
-                  Ajustes
+                  Menu
                 </button>
                 </Tooltip>
 

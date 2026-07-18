@@ -52,7 +52,7 @@ export default function AvantaCardDemo() {
           title="Lançamentos Mensais"
           corPrimaria={corPrimaria}
           darkMode={darkMode}
-          onSettingsClick={() => alert('Ajustes do card')}
+          onSettingsClick={() => alert('Menu do card')}
         >
           <div className="grid grid-cols-3 gap-3 sm:grid-cols-4">
             {meses.map((mes) => (
@@ -77,7 +77,7 @@ export default function AvantaCardDemo() {
           corPrimaria={corPrimaria}
           darkMode={darkMode}
           plato={<span style={{ fontSize: 12, fontWeight: 800, color: textoMuted, letterSpacing: '0.08em' }}>2026</span>}
-          onSettingsClick={() => alert('Ajustes do card')}
+          onSettingsClick={() => alert('Menu do card')}
         >
           <div className="grid gap-4 sm:grid-cols-3">
             {[

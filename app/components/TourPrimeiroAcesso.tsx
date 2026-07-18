@@ -23,7 +23,7 @@ const PASSOS: Passo[] = [
     localizacao: '',
     titulo: 'Bem-vindo ao AvantaLab Gestão!',
     descricao:
-      'Este tour apresenta os recursos atuais da versão web. Você pode pular quando quiser e revê-lo em Ajustes → Tutorial. Sempre que surgir uma dúvida, pergunte à Ava.',
+      'Este tour apresenta os recursos atuais da versão web. Você pode pular quando quiser e revê-lo em Menu → Tutorial. Sempre que surgir uma dúvida, pergunte à Ava.',
   },
   {
     icone: '🤖',
@@ -35,14 +35,14 @@ const PASSOS: Passo[] = [
   },
   {
     icone: '🏢',
-    localizacao: 'Ajustes → Perfil',
+    localizacao: 'Menu → Configurações → Perfil',
     titulo: 'Perfis financeiros',
     descricao:
       'Use perfis Empresa ou Pessoal e alterne entre os perfis vinculados ao seu login. No card de Perfil você pode editar o perfil atual, criar outro, trocar e, quando autorizado, excluir.',
   },
   {
     icone: '✅',
-    localizacao: 'Ajustes → Cadastrar despesas',
+    localizacao: 'Menu → Cadastrar despesas',
     titulo: 'Cadastre suas despesas',
     descricao:
       'Revise a lista inicial e cadastre os tipos de despesa que utiliza, vinculando cada item à categoria correta. Esses cadastros alimentam lançamentos, gráficos e relatórios.',
@@ -56,7 +56,7 @@ const PASSOS: Passo[] = [
   },
   {
     icone: '🔁',
-    localizacao: 'Ajustes → Despesas fixas / lançamento mensal',
+    localizacao: 'Menu → Despesas fixas / lançamento mensal',
     titulo: 'Fixas, parcelas e previsões',
     descricao:
       'Crie despesas futuras, parcelamentos e recorrências fixas com projeção para os próximos meses. A edição pela linha altera somente o mês; em Despesas fixas você administra toda a recorrência.',
@@ -84,28 +84,28 @@ const PASSOS: Passo[] = [
   },
   {
     icone: '👥',
-    localizacao: 'Ajustes → Usuários',
+    localizacao: 'Menu → Configurações → Usuários',
     titulo: 'Usuários e permissões',
     descricao:
       'Gestor Master e Administrador podem criar ou vincular usuários. Os níveis Gestor Master, Administrador, Operador Completo e Operador Simples determinam o que cada pessoa pode fazer.',
   },
   {
     icone: '⏱️',
-    localizacao: 'Ajustes → Módulos / Ponto',
+    localizacao: 'Menu → Módulos / Ponto',
     titulo: 'Controle de Ponto',
     descricao:
       'Quando o módulo estiver instalado, gestores podem cadastrar funcionários, horários, local e raio, além de consultar relatórios. Funcionários registram Entrada, Saída almoço, Retorno almoço e Saída em /ponto.',
   },
   {
     icone: '💾',
-    localizacao: 'Ajustes → Configurações → Backup e Restauração',
+    localizacao: 'Menu → Configurações → Backup e Restauração',
     titulo: 'Proteja seus dados',
     descricao:
       'Gere backups do perfil e use Restauração para importar um arquivo compatível. Confira o modo escolhido antes de substituir dados existentes.',
   },
   {
     icone: '🎨',
-    localizacao: 'Ajustes → Visual e Configurações',
+    localizacao: 'Menu → Visual e Configurações',
     titulo: 'Personalização e ferramentas',
     descricao:
       'Personalize logo, cor principal e modo escuro. Em Configurações também ficam usuários, perfil, backup, restauração e outras preferências disponíveis para sua permissão.',
@@ -115,7 +115,7 @@ const PASSOS: Passo[] = [
     localizacao: '',
     titulo: 'Tudo pronto!',
     descricao:
-      'Você já conhece os recursos principais. Explore o sistema e chame a Ava quando precisar. Este tutorial permanece disponível em Ajustes → Tutorial.',
+      'Você já conhece os recursos principais. Explore o sistema e chame a Ava quando precisar. Este tutorial permanece disponível em Menu → Tutorial.',
   },
 ];
 

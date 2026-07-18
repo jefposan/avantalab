@@ -199,7 +199,7 @@ function valorConfiguracaoExcel(chave: string, valor: unknown) {
   const texto = typeof valor === 'string' ? valor : JSON.stringify(valor ?? '');
 
   if (chave === 'logoUrl') {
-    return '[Logo nao incluida no backup. Reenvie a logo pelos Ajustes se precisar restaurar a identidade visual.]';
+    return '[Logo nao incluida no backup. Reenvie a logo pelo Menu se precisar restaurar a identidade visual.]';
   }
 
   if (texto.length <= LIMITE_TEXTO_EXCEL) {

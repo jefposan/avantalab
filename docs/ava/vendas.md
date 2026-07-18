@@ -1,8 +1,8 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.6.0.56 -->
+<!-- ava-version: 1.6.0.57 -->
 
-> Revisão 1.6.0.56: sem impacto operacional no Vendas Mobile; ajuste restrito ao módulo Recebimentos.
+> Revisão 1.6.0.57: sem impacto operacional no Vendas Mobile; nomenclatura alterada somente na Gestão Web.
 
 ## Escopo e navegação
 

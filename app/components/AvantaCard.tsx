@@ -161,7 +161,7 @@ export function AvantaCard({
               type="button"
               className={styles.menu}
               onClick={onSettingsClick}
-              aria-label="Ajustes do card"
+              aria-label="Menu do card"
             >
               ...
             </button>

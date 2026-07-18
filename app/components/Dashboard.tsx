@@ -1834,6 +1834,7 @@ const mostrarComparativoResumoDash =
         </div>
 
       {!ocultosSet.has('lancamentosMensais') && (
+      <div className="pl-px">
       <AvantaCard
         title="Lançamentos Mensais"
         className={textStrong}
@@ -1988,6 +1989,7 @@ const mostrarComparativoResumoDash =
           </div>
         </div>
       </AvantaCard>
+      </div>
       )}
 
       {(filtraItens(cols.left).length > 0 || activeId) && (
