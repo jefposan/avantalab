@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.6.0.05 - 2026-07-18
+
+- Corrigida a distribuição da Visão geral de Recebimentos: os quatro cards de
+  valores agora dividem horizontalmente toda a primeira linha no web.
+- O card **Baixado** permanece centralizado na segunda linha e passa a alinhar
+  os dois campos e o botão de integração em uma única linha no web.
+- Em telas pequenas, indicadores e controles mantêm quebra responsiva sem
+  rolagem horizontal.
+
 ## 1.6.0.04 - 2026-07-18
 
 - Corrigido o nome exibido do módulo em todo o projeto para **Recebimentos

@@ -327,12 +327,11 @@
 }
 .mesSeletorLabel b { font-weight: 700; color: #64748b; }
 
-/* Grid de cards de totais.
-   Cores frias e opacas (sem destaque), título em linha única e valores
-   sempre na mesma altura, com folga de fonte para mais dígitos. */
+/* Os quatro totais ocupam juntos a primeira linha inteira no web.
+   O card de integração usa a segunda linha e permanece centralizado. */
 .cardsGrid {
   display: grid;
-  grid-template-columns: minmax(0, 1fr);
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 12px;
   align-items: stretch;
 }
@@ -389,7 +388,7 @@
 .integracaoCard {
   grid-column: 1 / -1;
   justify-self: center;
-  width: min(100%, 680px);
+  width: min(100%, 880px);
   min-height: 0;
   padding: 18px;
   gap: 12px;
@@ -417,6 +416,12 @@
   grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr);
   gap: 10px;
 }
+.integracaoAcoes {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: end;
+  gap: 10px;
+}
 .integracaoCampo {
   display: flex;
   min-width: 0;
@@ -431,7 +436,6 @@
   background: color-mix(in srgb, white 88%, var(--sc-bg));
 }
 .integracaoBotao {
-  align-self: center;
   min-height: 44px;
   padding-inline: 20px;
   background: linear-gradient(135deg, #003e73, #007da5);
@@ -473,10 +477,16 @@
 .integracaoErro { color: #b91c1c; }
 
 @media (max-width: 640px) {
+  .cardsGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .integracaoResumo { align-items: stretch; flex-direction: column; gap: 8px; }
   .integracaoStatus { align-self: flex-start; }
+  .integracaoAcoes { grid-template-columns: 1fr; }
   .integracaoCampos { grid-template-columns: 1fr; }
   .integracaoBotao { width: 100%; }
+}
+
+@media (max-width: 420px) {
+  .cardsGrid { grid-template-columns: minmax(0, 1fr); }
 }
 
 /* Gráfico de torres (SVG/CSS) */

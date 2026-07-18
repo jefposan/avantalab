@@ -1,8 +1,8 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.6.0.04 -->
+<!-- ava-version: 1.6.0.05 -->
 
-> Revisão 1.6.0.04: corrigido o nome exibido do módulo para Recebimentos Presenciais, sem alteração no fluxo operacional.
+> Revisão 1.6.0.05: os quatro indicadores da Visão geral de Recebimentos passam a ocupar juntos uma linha horizontal no web; sem alteração no fluxo operacional.
 
 ## Escopo
 

@@ -1,8 +1,8 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.6.0.04 -->
+<!-- ava-version: 1.6.0.05 -->
 
-> Revisão 1.6.0.04: sem impacto operacional na Gestão Mobile; corrigido o nome do módulo para Recebimentos Presenciais.
+> Revisão 1.6.0.05: sem impacto operacional na Gestão Mobile; ajuste responsivo dos indicadores do módulo na Gestão Web.
 
 ## Escopo
 

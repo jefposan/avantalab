@@ -264,19 +264,21 @@ export default function PainelAdministrativo(props: Props) {
                     <span className={styles.integracaoStatus}>Adicionado: {formatarMoeda(integracao.valorSincronizado)}</span>
                   )}
                 </div>
-                <div className={styles.integracaoCampos}>
-                  <label className={styles.integracaoCampo} htmlFor="recebimentos-nome-entrada">
-                    <span>Nome da entrada</span>
-                    <input id="recebimentos-nome-entrada" className={styles.input} value={nomeEntrada} onChange={(event) => setNomeEntrada(event.target.value)} maxLength={120} placeholder="Ex.: Recebimentos em campo" disabled={integracaoCarregando || integracaoSalvando} />
-                  </label>
-                  <label className={styles.integracaoCampo} htmlFor="recebimentos-titulo-etiqueta">
-                    <span>Título da etiqueta</span>
-                    <input id="recebimentos-titulo-etiqueta" className={styles.input} value={tituloEtiqueta} onChange={(event) => setTituloEtiqueta(event.target.value)} maxLength={40} placeholder="Recebimentos" disabled={integracaoCarregando || integracaoSalvando} />
-                  </label>
+                <div className={styles.integracaoAcoes}>
+                  <div className={styles.integracaoCampos}>
+                    <label className={styles.integracaoCampo} htmlFor="recebimentos-nome-entrada">
+                      <span>Nome da entrada</span>
+                      <input id="recebimentos-nome-entrada" className={styles.input} value={nomeEntrada} onChange={(event) => setNomeEntrada(event.target.value)} maxLength={120} placeholder="Ex.: Recebimentos em campo" disabled={integracaoCarregando || integracaoSalvando} />
+                    </label>
+                    <label className={styles.integracaoCampo} htmlFor="recebimentos-titulo-etiqueta">
+                      <span>Título da etiqueta</span>
+                      <input id="recebimentos-titulo-etiqueta" className={styles.input} value={tituloEtiqueta} onChange={(event) => setTituloEtiqueta(event.target.value)} maxLength={40} placeholder="Recebimentos" disabled={integracaoCarregando || integracaoSalvando} />
+                    </label>
+                  </div>
+                  <button type="button" className={`${styles.btn} ${styles.btnPrimary} ${styles.integracaoBotao}`} onClick={() => void adicionarAoFinanceiro()} disabled={integracaoCarregando || integracaoSalvando || resumo.baixado <= 0}>
+                    {integracaoSalvando ? 'Adicionando…' : integracao?.integrado ? 'Atualizar nos recebimentos' : 'Adicionar aos recebimentos'}
+                  </button>
                 </div>
-                <button type="button" className={`${styles.btn} ${styles.btnPrimary} ${styles.integracaoBotao}`} onClick={() => void adicionarAoFinanceiro()} disabled={integracaoCarregando || integracaoSalvando || resumo.baixado <= 0}>
-                  {integracaoSalvando ? 'Adicionando…' : integracao?.integrado ? 'Atualizar nos recebimentos' : 'Adicionar aos recebimentos'}
-                </button>
                 <div className={styles.integracaoFeedback} aria-live="polite" aria-atomic="true">
                   {integracaoCarregando ? (
                     <div className={styles.integracaoAjuda} role="status">Carregando integração…</div>
