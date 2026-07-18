@@ -1,6 +1,6 @@
 # PADRÃO AVANTA
 
-Versão oficial: **1.0.0**
+Versão oficial: **1.1.0**
 Identificador: `PADRAO-AVANTA`
 Manifesto: `docs/padrao-avanta/manifest.json`
 
@@ -25,7 +25,8 @@ antes de criar uma convenção isolada. Não duplicar componentes existentes.
 | Qualquer interface | `identidade-visual.md`, `componentes.md`, `acessibilidade.md` |
 | Formulários e dados | `campos-formatacao.md` |
 | Página, dashboard ou responsividade | `layouts.md` |
-| Card | `componentes.md` e `planejamento/padrao-avanta-card.md` |
+| Card geral | `componentes.md`, `identidade-visual.md` e `acessibilidade.md` |
+| AvantaCard/AvantaShell solicitado | documentos de card geral e `planejamento/padrao-avanta-card.md` |
 | Preferências do usuário/empresa | `preferencias.md` |
 | Novo módulo ou sistema plugado | todos os documentos, especialmente `modulos.md` |
 | Revisão de uma tela existente | documentos da área alterada e `checklist.md` |
@@ -33,7 +34,7 @@ antes de criar uma convenção isolada. Não duplicar componentes existentes.
 ## Fundamentos já implementados
 
 - Tipografia: `app/lib/fonts.ts` e tokens em `app/globals.css`.
-- Card oficial: `app/components/AvantaCard.tsx` e
+- Card especial disponível sob solicitação: `app/components/AvantaCard.tsx` e
   `app/components/AvantaCard.module.css`.
 - Especificação AvantaShell: `planejamento/padrao-avanta-card.md`.
 - Formatações compartilhadas: `app/lib/formatters.ts` e `app/lib/telefone.ts`.

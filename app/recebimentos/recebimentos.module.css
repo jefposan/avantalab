@@ -4,7 +4,12 @@
 .page {
   --cp: #003E73;
   min-height: 100dvh;
-  background: #f1f5f9;
+  background-color: #eef6fb;
+  background-image: image-set(url('/images/bg-avantalab-mobile-1080x1920.webp') type('image/webp'), url('/images/bg-avantalab-mobile-1080x1920.png') type('image/png'));
+  background-position: center bottom;
+  background-repeat: no-repeat;
+  background-size: 100% auto;
+  background-attachment: fixed;
   color: #0f172a;
   font-family: var(--av-font-family, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif);
 }
@@ -14,7 +19,22 @@
   display: grid;
   place-items: center;
   padding: 20px;
-  background: linear-gradient(145deg, #f8fbff, color-mix(in srgb, var(--cp) 10%, #ffffff));
+  background-color: #eef6fb;
+  background-image: image-set(url('/images/bg-avantalab-mobile-1080x1920.webp') type('image/webp'), url('/images/bg-avantalab-mobile-1080x1920.png') type('image/png'));
+  background-position: center bottom;
+  background-repeat: no-repeat;
+  background-size: 100% auto;
+  background-attachment: fixed;
+}
+
+@media (min-aspect-ratio: 9/16), (max-aspect-ratio: 9/18) {
+  .page,
+  .loginWrap { background-size: auto 100%; }
+}
+
+@supports (-webkit-touch-callout: none) {
+  .page,
+  .loginWrap { background-attachment: scroll; }
 }
 .loginCard {
   width: min(100%, 390px);
@@ -22,6 +42,127 @@
   border-radius: 22px;
   background: #ffffff;
   box-shadow: 0 24px 70px rgba(0, 62, 115, 0.18);
+}
+.loginContent {
+  width: min(100%, 390px);
+}
+.loginContent .loginCard { width: 100%; }
+.installCard {
+  width: 100%;
+  max-width: 384px;
+  margin: 12px auto 0;
+  padding: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 16px;
+  color: #1e293b;
+  background-color: rgba(255, 255, 255, 0.16);
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.16);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+}
+.installCardInner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.installCopy { min-width: 0; }
+.installNome {
+  margin: 0;
+  color: #003e73;
+  font-size: 12px;
+  font-weight: 900;
+  line-height: 1.2;
+  letter-spacing: 0.025em;
+  text-transform: uppercase;
+}
+.installDescricao {
+  margin: 2px 0 0;
+  color: #475569;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.375;
+}
+.installButton {
+  flex: 0 0 auto;
+  min-height: 36px;
+  padding: 8px 12px;
+  border: 0;
+  border-radius: 12px;
+  color: #fff;
+  background: linear-gradient(135deg, #003e73, #00a6c8);
+  box-shadow: 0 4px 8px rgba(0, 62, 115, 0.22);
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 900;
+  line-height: 1;
+  letter-spacing: 0.025em;
+  text-transform: uppercase;
+}
+.installButton:focus-visible,
+.installClose:focus-visible { outline: 3px solid #38bdf8; outline-offset: 2px; }
+.installOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding: 16px;
+  background: rgba(2, 6, 23, 0.5);
+}
+.installModal {
+  width: 100%;
+  max-width: 384px;
+  padding: 20px;
+  border-radius: 24px;
+  background: #fff;
+  box-shadow: 0 25px 50px rgba(15, 23, 42, 0.28);
+}
+.installModal h2 {
+  margin: 0;
+  color: #0f172a;
+  font-size: 16px;
+  font-weight: 900;
+  line-height: 1.5;
+}
+.installInstructions {
+  display: grid;
+  gap: 12px;
+  margin-top: 12px;
+  color: #475569;
+  font-size: 14px;
+  line-height: 1.625;
+}
+.installInstructions p { margin: 0; }
+.shareIcon {
+  display: inline-flex;
+  width: 20px;
+  height: 20px;
+  align-items: center;
+  justify-content: center;
+  color: #0284c7;
+  vertical-align: middle;
+}
+.shareIcon svg { width: 16px; height: 16px; }
+.installHint {
+  color: #64748b;
+  font-size: 12px;
+  font-weight: 600;
+}
+.installClose {
+  width: 100%;
+  height: 44px;
+  margin-top: 16px;
+  border: 0;
+  border-radius: 12px;
+  color: #fff;
+  background: #020617;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 900;
+  letter-spacing: 0.025em;
+  text-transform: uppercase;
 }
 .loginMarca {
   color: var(--cp);
@@ -191,7 +332,7 @@
    sempre na mesma altura, com folga de fonte para mais dígitos. */
 .cardsGrid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(196px, 1fr));
+  grid-template-columns: minmax(0, 1fr);
   gap: 12px;
   align-items: stretch;
 }
@@ -293,14 +434,39 @@
   align-self: center;
   min-height: 44px;
   padding-inline: 20px;
+  background: linear-gradient(135deg, #003e73, #007da5);
+  color: #fff;
+  font-weight: 800;
+  line-height: 1.25;
+  text-align: center;
+  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.18);
+}
+.btn.integracaoBotao:disabled {
+  opacity: 1;
+  background: #475569;
+  color: #f8fafc;
+  text-shadow: none;
+}
+.integracaoFeedback {
+  display: flex;
+  height: 32px;
+  min-height: 32px;
+  align-items: flex-start;
+  justify-content: center;
+  overflow: hidden;
 }
 .integracaoAjuda,
 .integracaoSucesso,
 .integracaoErro {
+  display: -webkit-box;
+  max-width: 100%;
+  overflow: hidden;
   text-align: center;
   font-size: 11px;
   font-weight: 700;
   line-height: 1.35;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
 }
 .integracaoAjuda { color: #64748b; }
 .integracaoSucesso { color: #166534; }
@@ -903,3 +1069,92 @@
   font-size: 13px;
   font-weight: 600;
 }
+
+/* Tema escuro do módulo integrado: acompanha o modo do shell principal. */
+.darkScope {
+  color: #e2e8f0;
+  color-scheme: dark;
+}
+.darkScope .tabs { border-bottom-color: #334155; }
+.darkScope .tab { color: #94a3b8; }
+.darkScope .tab:hover,
+.darkScope .tabAtiva,
+.darkScope .sectionTitle,
+.darkScope .formTitulo,
+.darkScope .linkAcessoUrl,
+.darkScope .atrasoItemAcao,
+.darkScope .atrasoItemValor { color: #67e8f9; }
+.darkScope .tabAtiva { border-bottom-color: #22d3ee; }
+.darkScope .tituloPerfil { color: #a5f3fc; }
+.darkScope .mesSeletor {
+  border-color: #475569;
+  background: #0f172a;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
+}
+.darkScope .mesSeletorBtn,
+.darkScope .mesSeletorLabel { color: #a5f3fc; }
+.darkScope .mesSeletorBtn:hover { background: #1e293b; }
+.darkScope .mesSeletorDiv { background: #334155; }
+.darkScope .mesSeletorLabel b,
+.darkScope .muted,
+.darkScope .statSub,
+.darkScope .atrasoDica,
+.darkScope .atrasoItemMeta,
+.darkScope .histSub,
+.darkScope .subMeta,
+.darkScope .filtroData { color: #94a3b8; }
+.darkScope .statAzul { --sc-bg: #102338; --sc-border: #28445f; --sc-label: #9ac6e8; --sc-value: #bfdbfe; }
+.darkScope .statCiano { --sc-bg: #0e2b32; --sc-border: #24515a; --sc-label: #99d5dd; --sc-value: #a5f3fc; }
+.darkScope .statArdosia { --sc-bg: #1a2432; --sc-border: #334155; --sc-label: #aebdce; --sc-value: #e2e8f0; }
+.darkScope .statTeal { --sc-bg: #102c2b; --sc-border: #28514d; --sc-label: #9bd3cc; --sc-value: #99f6e4; }
+.darkScope .statIndigo { --sc-bg: #1d233b; --sc-border: #3b4265; --sc-label: #b5bcec; --sc-value: #c7d2fe; }
+.darkScope .integracaoStatus { background: color-mix(in srgb, var(--sc-value) 18%, #0f172a); }
+.darkScope .integracaoCampo .input { background: #0f172a; }
+.darkScope :is(.input, .select, .filterSelect, .buscaFixa, .inputSufixoWrap) {
+  border-color: #475569;
+  background: #0f172a;
+  color: #e2e8f0;
+}
+.darkScope :is(.input, .select, .filterSelect, .buscaFixaInput, .inputSufixoWrap .inputInterno) {
+  color: #e2e8f0;
+}
+.darkScope :is(.input, .buscaFixaInput)::placeholder { color: #64748b; }
+.darkScope .label,
+.darkScope .linkAcessoTitulo,
+.darkScope .atrasoItemSub,
+.darkScope .empresaNome,
+.darkScope .subNome { color: #e2e8f0; }
+.darkScope :is(.readonlyBox, .atrasoBox, .empresaBloco, .histCard, .comprovante) {
+  border-color: #334155;
+  background: #111827;
+  color: #e2e8f0;
+}
+.darkScope :is(.atrasoItem, .subItem) {
+  border-color: #334155;
+  background: #0f172a;
+  color: #e2e8f0;
+}
+.darkScope .atrasoItem:hover { border-color: #22d3ee; }
+.darkScope .atrasoItemAtivo {
+  border-color: #22d3ee;
+  background: #14283a;
+}
+.darkScope .empresaHeader,
+.darkScope .linkAcessoBox { background: #162334; }
+.darkScope .subItem:not(.blocoEditando):hover {
+  border-color: #3b82a0;
+  background: #17263a;
+}
+.darkScope .table th { border-bottom-color: #475569; color: #94a3b8; }
+.darkScope .table td { border-bottom-color: #1e293b; color: #e2e8f0; }
+.darkScope .table tbody tr:hover td { background: #17263a; }
+.darkScope .btnGhost { border-color: #475569; background: #0f172a; color: #a5f3fc; }
+.darkScope .acoesTrigger:hover,
+.darkScope .acoesGrupoAberto .acoesTrigger { background: #1e293b; color: #67e8f9; }
+.darkScope .chip { background: #334155; color: #e2e8f0; }
+.darkScope .chipOn { background: #14532d; color: #bbf7d0; }
+.darkScope .chipOff { background: #7f1d1d; color: #fecaca; }
+.darkScope .aviso { border-color: #854d0e; background: #422006; color: #fde68a; }
+.darkScope .integracaoAjuda { color: #cbd5e1; }
+.darkScope .integracaoSucesso { color: #86efac; }
+.darkScope .integracaoErro { color: #fca5a5; }

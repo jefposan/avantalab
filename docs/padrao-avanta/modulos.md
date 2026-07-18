@@ -36,7 +36,8 @@ para a Ava. Ativação e autorização devem ser validadas no servidor.
 ## Integração visual
 
 - Consumir tipografia, tema, `corPrimaria`, campos e componentes oficiais.
-- Cards usam AvantaShell.
+- Cards seguem o padrão geral do módulo e do PADRÃO AVANTA. Usar AvantaShell
+  somente quando solicitado ou declarado no manifesto/especificação.
 - Não copiar header, menu, autenticação ou preferências do núcleo.
 - Entregar estados responsivos e acessíveis.
 

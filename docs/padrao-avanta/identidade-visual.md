@@ -21,7 +21,9 @@
 ## Superfícies, bordas e raios
 
 - Usar os tokens compartilhados antes de adicionar um valor local.
-- Card principal usa AvantaShell; subcards usam raio visualmente menor.
+- Cards seguem a hierarquia geral de superfícies e raios. Usar AvantaShell apenas
+  quando AvantaCard/AvantaShell for solicitado ou exigido pela especificação.
+- Quando AvantaShell estiver ativo, subcards usam raio visualmente menor.
 - Campos e botões padrão usam raio de 12px.
 - Evitar bordas decorativas internas sem função; preferir superfície, espaço e
   hierarquia tipográfica.

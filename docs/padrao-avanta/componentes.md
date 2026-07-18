@@ -8,12 +8,32 @@ compartilhada e documentá-la aqui; não copiar marcação entre módulos.
 
 ## Cards
 
-- Todo card novo usa `AvantaCard`/AvantaShell.
+### Regra de decisão
+
+- Usar `AvantaCard`/AvantaShell quando o usuário solicitar “AvantaCard” ou
+  “AvantaShell”, ou quando briefing, manifesto ou especificação do módulo exigir
+  expressamente esse componente.
+- Sem essa solicitação, não impor AvantaCard. Manter o padrão geral: tipografia,
+  cores, tokens, espaçamentos, raios, hierarquia, responsividade, tema e
+  acessibilidade do PADRÃO AVANTA.
+- Não converter automaticamente cards existentes para AvantaCard durante uma
+  alteração sem relação com sua estrutura visual.
+
+### Quando AvantaCard for solicitado
+
+- Reutilizar `app/components/AvantaCard.tsx`; não recriar sua geometria.
 - Título fica na CHAPA; controles ou metadado curto ficam no PLATÔ; conteúdo fica
   no CORPO.
 - A curva é o path SVG oficial. Não reconstruir com CSS.
 - A skin deriva de `corPrimaria` e tema; a estrutura não fixa paleta.
-- Ler a especificação completa em `planejamento/padrao-avanta-card.md`.
+- Ler integralmente `planejamento/padrao-avanta-card.md`.
+
+### Quando AvantaCard não for solicitado
+
+- Preservar a linguagem visual e o componente já consolidado no contexto.
+- Usar superfície, contraste, raio e sombra coerentes com a hierarquia da tela.
+- Reutilizar um card geral oficial se existir; não criar variação local
+  equivalente por conveniência.
 
 Não transformar em card: barra simples de filtros, aviso curto, linha de tabela,
 divisor ou agrupamento sem identidade própria.

@@ -26,6 +26,20 @@ Financeiro, definindo o nome da entrada e o título da etiqueta. A linha criada 
 vinculada ao módulo, não duplica no mesmo período e não permite edição ou
 exclusão manual. Operadores permanecem sem visibilidade do módulo.
 
+Na versão **1.6.0.01**, o acesso do colaborador passou a reutilizar o background
+institucional responsivo de `/ponto` em todos os estados da tela. Os arquivos
+WebP e PNG também integram o cache offline versionado do PWA.
+
+Ainda na versão **1.6.0.01**, a tela de login recebeu o mesmo card de instalação do
+Controle de Ponto. Ele fica oculto em modo standalone, aciona o prompt nativo
+quando disponível e apresenta a orientação de instalação manual nos demais
+navegadores, inclusive no iPhone.
+
+Na versão **1.6.0.03**, os cards de valores da Visão geral foram organizados em
+coluna. O card Baixado ganhou contraste reforçado na ação e uma área fixa para
+mensagens da integração, evitando mudança de altura ao navegar entre meses. O
+módulo integrado também passou a consumir o modo escuro do Gestão.
+
 ---
 
 ## 0. O que já existe (não recriar)

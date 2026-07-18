@@ -40,8 +40,11 @@ This version has breaking changes — APIs, conventions, and file structure may 
 
 ## Padrão de cards — AvantaShell
 
-- Todo card novo do sistema deve seguir o padrão **AvantaShell**, documentado
-  em `planejamento/padrao-avanta-card.md`.
+- Usar **AvantaCard/AvantaShell** quando o usuário solicitar esse padrão ou quando
+  briefing, manifesto ou especificação o exigir. Sem essa solicitação, manter o
+  padrão geral do PADRÃO AVANTA; não impor a geometria AvantaShell.
+- Quando AvantaCard/AvantaShell for aplicável, ler integralmente
+  `planejamento/padrao-avanta-card.md`.
 - Componente pronto: `app/components/AvantaCard.tsx` (+ `AvantaCard.module.css`).
   Não recriar a estrutura; usar o componente e as variáveis CSS documentadas.
 - Anatomia resumida: CHAPA (card de trás, largura total, título) + CORPO

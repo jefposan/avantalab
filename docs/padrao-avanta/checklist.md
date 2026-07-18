@@ -10,7 +10,8 @@
 ## Interface
 
 - [ ] Tipografia, cores, espaçamentos e raios seguem o padrão.
-- [ ] Cards novos usam AvantaShell.
+- [ ] Cards seguem o padrão geral; quando AvantaCard/AvantaShell foi solicitado,
+      usam o componente oficial e sua anatomia completa.
 - [ ] Campos usam formato, máscara, validação e mensagens corretos.
 - [ ] Carregamento, vazio, erro, sucesso e desabilitado foram tratados.
 - [ ] Desktop, mobile e tema escuro aplicável foram verificados.

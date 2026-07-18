@@ -12,6 +12,7 @@ type Props = {
   repo?: RecebimentosRepo;
   integrado?: boolean;
   perfilInicial?: Extract<Perfil, 'gestor' | 'administrador'>;
+  darkMode?: boolean;
   mostrarLinkColaboradores?: boolean;
   onFinanceiroAtualizado?: () => void;
 };
@@ -20,6 +21,7 @@ export default function RecebimentosClient({
   repo,
   integrado = false,
   perfilInicial = 'gestor',
+  darkMode = false,
   mostrarLinkColaboradores = false,
   onFinanceiroAtualizado,
 }: Props) {
@@ -101,6 +103,7 @@ export default function RecebimentosClient({
       ) : (
         <PainelAdministrativo
           perfil={perfil}
+          darkMode={darkMode}
           podeConfirmar={podeConfirmar}
           empresas={empresas}
           subempresas={subempresas}
@@ -139,7 +142,7 @@ export default function RecebimentosClient({
     </>
   );
 
-  if (integrado) return painel;
+  if (integrado) return <div className={darkMode ? styles.darkScope : undefined}>{painel}</div>;
   return (
     <div className={styles.page}>
       <div className={styles.topbar}>

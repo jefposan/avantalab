@@ -1,5 +1,13 @@
 # Histórico do PADRÃO AVANTA
 
+## 1.1.0 - 2026-07-18
+
+- Incorporado formalmente o AvantaCard/AvantaShell como padrão especial de card.
+- AvantaCard passa a ser obrigatório quando o usuário, briefing, manifesto ou
+  especificação solicitar explicitamente AvantaCard/AvantaShell.
+- Cards sem essa solicitação seguem o padrão visual geral do PADRÃO AVANTA, sem
+  obrigação de usar a geometria CHAPA + CORPO + PLATÔ.
+
 ## 1.0.0 - 2026-07-17
 
 - Primeira versão oficial do padrão de desenvolvimento AvantaLab.

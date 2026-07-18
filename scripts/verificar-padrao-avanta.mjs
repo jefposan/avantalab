@@ -41,6 +41,11 @@ if (manifesto) {
   for (const documento of manifesto.documentosObrigatorios || []) {
     await ler(`docs/padrao-avanta/${documento}`);
   }
+
+  const componentes = await ler('docs/padrao-avanta/componentes.md');
+  if (!componentes.includes('Sem essa solicitação, não impor AvantaCard')) {
+    falhas.push('A regra condicional de uso do AvantaCard não está documentada.');
+  }
 }
 
 const agents = await ler('AGENTS.md');

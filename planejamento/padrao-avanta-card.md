@@ -9,6 +9,11 @@ Regra central: **AvantaShell não é paleta visual.** Ele fornece somente a
 modelagem estrutural do header/recorte. Fundos, textos, bordas, sombras,
 estados e cores pertencem à tela que usa o componente.
 
+Regra de aplicação: **AvantaShell é um padrão especial, não o formato obrigatório
+de todo card.** Usá-lo quando o usuário solicitar AvantaCard/AvantaShell ou
+quando briefing, manifesto ou especificação o exigir. Sem essa solicitação, o
+card mantém o padrão visual geral do PADRÃO AVANTA.
+
 ---
 
 ## 1. Anatomia (nomes oficiais das partes)
@@ -86,7 +91,7 @@ ajustar o `d` do `<path>` em `AvantaCard.tsx`.
 
 ## 5. Uso do componente
 
-### Modo simples (padrão para cards novos)
+### Modo simples (padrão para novos AvantaCards)
 
 Basta informar título, cor primária e o conteúdo do platô. O card monta o
 visual completo internamente via `criarAvantaShellPreset`:

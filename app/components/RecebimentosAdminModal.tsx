@@ -32,7 +32,7 @@ export default function RecebimentosAdminModal({ aberto, empresaId, perfil, dark
           <button type="button" onClick={onFechar} className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white/15 text-xl font-black text-white transition hover:bg-white/25 focus-visible:outline focus-visible:outline-2 focus-visible:outline-white" aria-label="Fechar">×</button>
         </div>
         <div className="min-h-0 flex-1 overflow-y-auto p-3 sm:p-4">
-          <RecebimentosClient repo={repo} integrado perfilInicial={perfil} mostrarLinkColaboradores onFinanceiroAtualizado={onFinanceiroAtualizado} />
+          <RecebimentosClient repo={repo} integrado perfilInicial={perfil} darkMode={darkMode} mostrarLinkColaboradores onFinanceiroAtualizado={onFinanceiroAtualizado} />
         </div>
       </DraggableModalCard>
     </div>

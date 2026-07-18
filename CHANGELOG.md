@@ -1,5 +1,32 @@
 # Changelog
 
+## 1.6.0.03 - 2026-07-18
+
+- Na Visão geral de Recebimentos, os cards de valores passam a ser distribuídos
+  verticalmente e o card **Baixado** ganha ação com contraste reforçado.
+- O aviso de carregamento da integração ocupa uma área fixa, sem alterar a
+  altura do card durante a troca de mês.
+- O módulo integrado passa a acompanhar o modo escuro do Gestão, com superfícies,
+  campos, tabelas, estados e textos ajustados para contraste adequado.
+
+## 1.6.0.02 - 2026-07-18
+
+- PADRÃO AVANTA atualizado para 1.1.0: AvantaCard/AvantaShell passa a ser usado
+  quando solicitado ou exigido pela especificação; os demais cards preservam o
+  padrão visual geral sem adoção automática dessa geometria.
+
+## 1.6.0.01 - 2026-07-18
+
+- O PWA de Recebimentos Presencial passa a usar o mesmo background institucional
+  responsivo do Controle de Ponto, inclusive nos estados de preparação, login,
+  bloqueio e painel do colaborador.
+- O background foi incluído no cache offline do PWA e sua atualização foi
+  versionada para alcançar instalações existentes.
+- O login recebeu o mesmo card **Instalar** do Controle de Ponto, oculto quando
+  o app já está aberto em modo standalone.
+- A instalação usa o prompt nativo quando disponível e, no iPhone ou em
+  navegadores sem prompt, orienta **Compartilhar > Adicionar à Tela de Início**.
+
 ## 1.6.0 - 2026-07-18
 
 - Implantado o módulo instalável **Recebimentos Presencial**, com catálogo por

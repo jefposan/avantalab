@@ -18,6 +18,7 @@ type Aba = 'visao' | 'empresas' | 'colaboradores' | 'recebimentos' | 'conferenci
 
 type Props = {
   perfil: Perfil;
+  darkMode: boolean;
   podeConfirmar: boolean;
   empresas: Empresa[];
   subempresas: Subempresa[];
@@ -57,7 +58,7 @@ const ABAS: Array<[Aba, string]> = [
 const MESES_CURTOS = ['JAN', 'FEV', 'MAR', 'ABR', 'MAI', 'JUN', 'JUL', 'AGO', 'SET', 'OUT', 'NOV', 'DEZ'];
 
 export default function PainelAdministrativo(props: Props) {
-  const { perfil, podeConfirmar, empresas, subempresas, colaboradores, recebimentos } = props;
+  const { perfil, darkMode, podeConfirmar, empresas, subempresas, colaboradores, recebimentos } = props;
   const [aba, setAba] = useState<Aba>('visao');
   // Mês de referência da Visão geral (navegado pelo seletor no platô do card).
   const [mesRef, setMesRef] = useState(() => {
@@ -71,7 +72,7 @@ export default function PainelAdministrativo(props: Props) {
   const [integracaoSalvando, setIntegracaoSalvando] = useState(false);
   const [integracaoMensagem, setIntegracaoMensagem] = useState('');
   const [integracaoErro, setIntegracaoErro] = useState('');
-  const avantaShell = criarAvantaShellPreset({ corPrimaria: COR_PRIMARIA, darkMode: false });
+  const avantaShell = criarAvantaShellPreset({ corPrimaria: COR_PRIMARIA, darkMode });
 
   const pendentesQtd = useMemo(() => recebimentos.filter((r) => aguardandoConferencia(r.situacao)).length, [recebimentos]);
 
@@ -276,9 +277,15 @@ export default function PainelAdministrativo(props: Props) {
                 <button type="button" className={`${styles.btn} ${styles.btnPrimary} ${styles.integracaoBotao}`} onClick={() => void adicionarAoFinanceiro()} disabled={integracaoCarregando || integracaoSalvando || resumo.baixado <= 0}>
                   {integracaoSalvando ? 'Adicionando…' : integracao?.integrado ? 'Atualizar nos recebimentos' : 'Adicionar aos recebimentos'}
                 </button>
-                {integracaoCarregando && <div className={styles.integracaoAjuda} role="status">Carregando integração…</div>}
-                {integracaoMensagem && <div className={styles.integracaoSucesso} role="status">{integracaoMensagem}</div>}
-                {integracaoErro && <div className={styles.integracaoErro} role="alert">{integracaoErro}</div>}
+                <div className={styles.integracaoFeedback} aria-live="polite" aria-atomic="true">
+                  {integracaoCarregando ? (
+                    <div className={styles.integracaoAjuda} role="status">Carregando integração…</div>
+                  ) : integracaoErro ? (
+                    <div className={styles.integracaoErro} role="alert">{integracaoErro}</div>
+                  ) : integracaoMensagem ? (
+                    <div className={styles.integracaoSucesso} role="status">{integracaoMensagem}</div>
+                  ) : null}
+                </div>
               </div>
             </div>
           </div>

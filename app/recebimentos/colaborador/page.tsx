@@ -49,5 +49,15 @@ export const viewport: Viewport = {
 };
 
 export default function RecebimentosColaboradorPage() {
-  return <ColaboradorApp />;
+  return (
+    <>
+      <link
+        rel="preload"
+        href="/images/bg-avantalab-mobile-1080x1920.webp"
+        as="image"
+        type="image/webp"
+      />
+      <ColaboradorApp />
+    </>
+  );
 }

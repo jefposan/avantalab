@@ -1,8 +1,8 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.6.0 -->
+<!-- ava-version: 1.6.0.03 -->
 
-> Revisão 1.6.0: implantado o Recebimentos Presencial e documentada sua integração protegida com o Financeiro.
+> Revisão 1.6.0.03: Recebimentos recebeu instalação guiada, Visão geral vertical e compatibilidade visual com o modo escuro.
 
 ## Escopo
 
@@ -48,11 +48,17 @@ ou `/ponto`.
 - O colaborador entra em `/recebimentos/colaborador` com CPF e senha fornecidos
   pelo gestor. Esse acesso é independente do Controle de Ponto e do login da
   Gestão. Remover o módulo bloqueia novas entradas sem apagar os dados.
+- Fora do modo instalado, a tela de login mostra **Instalar**. O botão abre a
+  instalação nativa quando disponível; no iPhone ou em navegador sem prompt,
+  orienta **Compartilhar > Adicionar à Tela de Início**.
 - Na Visão geral do módulo, o card **Baixado** permite que Gestor Master ou
   Administrador defina o nome da entrada e o título da etiqueta e use
   **Adicionar aos recebimentos**. A ação cria ou atualiza uma única receita do
   mês com o total confirmado; essa linha mostra a etiqueta configurada e não
   pode ser editada ou excluída diretamente no Financeiro.
+- Os cards de valores da Visão geral são exibidos verticalmente. Ao trocar o
+  mês, o aviso **Carregando integração…** usa uma área reservada e não altera a
+  altura do card **Baixado**. O módulo acompanha o modo claro ou escuro do Gestão.
 - Operador Completo e Operador Simples não veem nem administram o módulo,
   mesmo quando ele está instalado no perfil.
 - Recebimentos confirmados ainda não são lançados automaticamente no faturamento

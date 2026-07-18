@@ -1,8 +1,8 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.6.0 -->
+<!-- ava-version: 1.6.0.03 -->
 
-> Revisão 1.6.0: sem impacto operacional no Vendas Mobile; o Recebimentos Presencial permanece independente do Vendas.
+> Revisão 1.6.0.03: sem impacto operacional no Vendas Mobile; os ajustes ocorreram no PWA e na gestão Web de Recebimentos.
 
 ## Escopo e navegação
 
