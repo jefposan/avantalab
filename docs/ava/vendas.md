@@ -1,8 +1,8 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.6.0.50 -->
+<!-- ava-version: 1.6.0.51 -->
 
-> Revisão 1.6.0.50: sem impacto no Vendas Mobile; navegação e header foram ajustados em Recebimentos.
+> Revisão 1.6.0.51: sem impacto no Vendas Mobile; hierarquia do header foi ajustada em Recebimentos.
 
 ## Escopo e navegação
 

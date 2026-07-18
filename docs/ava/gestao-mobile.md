@@ -1,8 +1,8 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.6.0.50 -->
+<!-- ava-version: 1.6.0.51 -->
 
-> Revisão 1.6.0.50: sem impacto na Gestão Mobile; navegação e header foram ajustados em Recebimentos.
+> Revisão 1.6.0.51: sem impacto na Gestão Mobile; hierarquia do header foi ajustada em Recebimentos.
 
 ## Escopo
 

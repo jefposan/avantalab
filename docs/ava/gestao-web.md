@@ -1,8 +1,8 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.6.0.50 -->
+<!-- ava-version: 1.6.0.51 -->
 
-> Revisão 1.6.0.50: Próximo a vencer ganhou aba própria e o PWA identifica a empresa gestora.
+> Revisão 1.6.0.51: o nome da empresa gestora passou a ser o título principal do PWA de Recebimentos.
 
 ## Escopo
 
@@ -64,8 +64,9 @@ ou `/ponto`.
   Gestão. Ao lançar um pagamento, ele vê todos os vencidos e somente o próximo
   vencimento futuro. Enquanto essa fila tiver cobrança programada, o recebimento
   deve ser vinculado a um desses itens; a seleção avulsa aparece apenas quando a
-  fila está vazia. O header do PWA identifica a empresa gestora que criou o
-  acesso do colaborador. Remover o módulo bloqueia novas entradas sem apagar os dados.
+  fila está vazia. O header do PWA exibe como título principal a empresa gestora
+  que criou o acesso e, abaixo, **Recebimentos Presenciais**. Remover o módulo
+  bloqueia novas entradas sem apagar os dados.
 - As cobranças **Previsto** alimentam o total calculado dos próximos meses, mas
   não aparecem individualmente na listagem detalhada. Ao selecionar um mês
   futuro, **Visão geral** e **Resultados** mostram somente o total previsto.

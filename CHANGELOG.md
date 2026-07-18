@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.6.0.51 - 2026-07-18
+
+- No cabeçalho autenticado do PWA de Recebimentos, o nome da empresa gestora
+  passa a ocupar o título principal; **Recebimentos Presenciais** aparece na
+  linha secundária e a marca AvantaLab deixa de ser exibida nesse local.
+
 ## 1.6.0.50 - 2026-07-18
 
 - Criada a aba **Próximo a vencer**, no mesmo padrão estrutural de

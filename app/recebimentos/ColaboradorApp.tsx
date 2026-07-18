@@ -282,9 +282,8 @@ export default function ColaboradorApp() {
       <div className={`${styles.topbar} ${styles.topbarColaborador}`}>
         <div className={styles.topbarInner}>
           <div className={styles.brand}>
-            <span className={styles.brandKicker}>AvantaLab</span>
-            <span className={styles.brandTitle}>Recebimentos Presenciais</span>
-            {empresaNome && <span className={styles.brandEmpresa}>{empresaNome}</span>}
+            {empresaNome && <span className={styles.brandTitle}>{empresaNome}</span>}
+            <span className={styles.brandEmpresa}>Recebimentos Presenciais</span>
           </div>
           <button type="button" className={`${styles.btn} ${styles.btnGhost} ${styles.btnSm}`} onClick={() => void sair()}>Sair</button>
         </div>
