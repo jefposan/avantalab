@@ -3,7 +3,7 @@
 import { useMemo, useState } from 'react';
 import styles from '../recebimentos.module.css';
 import type { Empresa, Recebimento, Subempresa } from './types';
-import { diasEmAtraso, formatarData, formatarMoeda, rotuloFrequenciaRecebimento, tipoDiferenca } from './helpers';
+import { dataLocalIso, diasEmAtraso, formatarData, formatarMoeda, rotuloFrequenciaRecebimento, tipoDiferenca } from './helpers';
 
 type Props = {
   empresas: Empresa[];
@@ -28,7 +28,7 @@ export default function FormularioRecebimento({ empresas, subempresas, recebimen
   const empresasAtivas = useMemo(() => empresas.filter((e) => e.ativo), [empresas]);
   const [empresaId, setEmpresaId] = useState('');
   const [subempresaId, setSubempresaId] = useState('');
-  // Cobrança em atraso selecionada para baixa individual.
+  // Cobrança selecionada para baixa individual.
   const [cobrancaId, setCobrancaId] = useState('');
   const [valorTexto, setValorTexto] = useState('');
   const [observacao, setObservacao] = useState('');
@@ -36,29 +36,36 @@ export default function FormularioRecebimento({ empresas, subempresas, recebimen
   const [salvando, setSalvando] = useState(false);
 
   const hoje = useMemo(() => new Date(), []);
-  const hojeIso = useMemo(() => {
-    const local = new Date(hoje.getTime() - hoje.getTimezoneOffset() * 60000);
-    return local.toISOString().slice(0, 10);
-  }, [hoje]);
+  const hojeIso = useMemo(() => dataLocalIso(hoje), [hoje]);
 
   const subsDaEmpresa = useMemo(
     () => subempresas.filter((s) => s.empresaId === empresaId && s.ativo),
     [subempresas, empresaId],
   );
 
-  // As cobranças geradas pela recorrência são sempre recebidas uma a uma.
-  // Assim, uma parcela futura nunca cria um lançamento avulso duplicado.
+  // O colaborador recebe uma fila objetiva: todos os vencidos e somente o
+  // primeiro vencimento ainda futuro. As demais parcelas futuras permanecem
+  // ocultas até se tornarem a próxima cobrança disponível.
   const cobrancasAbertas = useMemo(
-    () =>
-      recebimentos
+    () => {
+      const abertas = recebimentos
         .filter(
           (r) =>
             r.empresaId === empresaId &&
             r.valorRecebido == null &&
             (r.situacao === 'em_atraso' || r.situacao === 'previsto'),
         )
-        .sort((a, b) => a.vencimento.localeCompare(b.vencimento)),
-    [recebimentos, empresaId],
+        .sort((a, b) => a.vencimento.localeCompare(b.vencimento) || a.id.localeCompare(b.id));
+
+      // A data é a fonte de verdade da fila e também protege a tela caso o
+      // status persistido ainda não tenha sido atualizado pela sincronização.
+      const vencidas = abertas.filter((r) => r.vencimento < hojeIso);
+      const idsVencidos = new Set(vencidas.map((r) => r.id));
+      const proxima = abertas.find((r) => !idsVencidos.has(r.id));
+
+      return proxima ? [...vencidas, proxima] : vencidas;
+    },
+    [recebimentos, empresaId, hojeIso],
   );
 
   const cobranca = useMemo(() => cobrancasAbertas.find((r) => r.id === cobrancaId) ?? null, [cobrancasAbertas, cobrancaId]);
@@ -102,7 +109,7 @@ export default function FormularioRecebimento({ empresas, subempresas, recebimen
   async function confirmar() {
     setErro('');
     if (!empresa) return setErro('Selecione a empresa.');
-    if (!cobranca && !sub) return setErro('Selecione uma parcela em atraso ou a subempresa.');
+    if (!cobranca && !sub) return setErro('Selecione um vencimento ou a subempresa.');
     if (valorRecebido == null || Number.isNaN(valorRecebido) || valorRecebido < 0)
       return setErro('Informe um valor recebido válido.');
     if (precisaObs && !observacao.trim())
@@ -144,13 +151,13 @@ export default function FormularioRecebimento({ empresas, subempresas, recebimen
 
       {empresaId && cobrancasAbertas.length > 0 && (
         <div className={styles.atrasoBox}>
-          <div className={styles.atrasoTitulo}>Cobranças abertas ({cobrancasAbertas.length})</div>
+          <div className={styles.atrasoTitulo}>Próximo a vencer e vencidos ({cobrancasAbertas.length})</div>
           <p className={styles.atrasoDica}>
-            Escolha a parcela correspondente. As vencidas já aparecem como atraso automaticamente.
+            São exibidos todos os vencidos e somente o próximo vencimento disponível.
           </p>
           {cobrancasAbertas.map((r) => {
             const selecionada = r.id === cobrancaId;
-            const atrasada = r.situacao === 'em_atraso' || r.vencimento < hojeIso;
+            const atrasada = r.vencimento < hojeIso;
             return (
               <button
                 key={r.id}
@@ -161,7 +168,7 @@ export default function FormularioRecebimento({ empresas, subempresas, recebimen
                 <span className={styles.atrasoItemInfo}>
                   <span className={styles.atrasoItemSub}>{nomeSub(r.subempresaId)}</span>
                   <span className={styles.atrasoItemMeta}>
-                    Venc. {formatarData(r.vencimento)} · {atrasada ? `${diasEmAtraso(r.vencimento, hoje)} dia(s) em atraso` : 'prevista'}
+                    Venc. {formatarData(r.vencimento)} · {atrasada ? `${diasEmAtraso(r.vencimento, hoje)} dia(s) em atraso` : 'Próximo a vencer'}
                   </span>
                 </span>
                 <span className={styles.atrasoItemValor}>{formatarMoeda(r.valorCombinado)}</span>
@@ -172,9 +179,9 @@ export default function FormularioRecebimento({ empresas, subempresas, recebimen
         </div>
       )}
 
-      {!cobranca && (
+      {!cobranca && cobrancasAbertas.length === 0 && (
         <div className={styles.field}>
-          <label className={styles.label}>Subempresa{cobrancasAbertas.length > 0 ? ' (recebimento avulso)' : ''}</label>
+          <label className={styles.label}>Subempresa</label>
           <select
             className={styles.select}
             value={subempresaId}

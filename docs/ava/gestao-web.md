@@ -1,8 +1,8 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.6.0.48 -->
+<!-- ava-version: 1.6.0.50 -->
 
-> Revisão 1.6.0.48: edição e cadastro de empresas/subempresas usam a mesma área fixa, sem redimensionar o AvantaCard.
+> Revisão 1.6.0.50: Próximo a vencer ganhou aba própria e o PWA identifica a empresa gestora.
 
 ## Escopo
 
@@ -53,12 +53,22 @@ ou `/ponto`.
   dia mensal; ou mês inicial e dia para os ciclos trimestral, semestral e anual.
   A primeira cobrança nunca antecede o cadastro; daí em diante o sistema cria as
   parcelas previstas e marca automaticamente como **Em atraso** as não recebidas
-  depois do vencimento.
+  depois do vencimento. A aba **Inadimplentes** mostra somente cobranças já
+  vencidas com situação **Em atraso**; uma cobrança **Previsto** nunca aparece ali.
+  A aba **Próximo a vencer** mostra somente a cobrança futura mais próxima de
+  cada empresa atendida, sem listar os demais vencimentos futuros.
 - No cadastro da subempresa, informe primeiro o **CEP**. Rua, bairro, cidade e
   UF são preenchidos para conferência; complete número e complemento antes de salvar.
 - O colaborador entra em `/recebimentos/colaborador` com CPF e senha fornecidos
   pelo gestor. Esse acesso é independente do Controle de Ponto e do login da
-  Gestão. Remover o módulo bloqueia novas entradas sem apagar os dados.
+  Gestão. Ao lançar um pagamento, ele vê todos os vencidos e somente o próximo
+  vencimento futuro. Enquanto essa fila tiver cobrança programada, o recebimento
+  deve ser vinculado a um desses itens; a seleção avulsa aparece apenas quando a
+  fila está vazia. O header do PWA identifica a empresa gestora que criou o
+  acesso do colaborador. Remover o módulo bloqueia novas entradas sem apagar os dados.
+- As cobranças **Previsto** alimentam o total calculado dos próximos meses, mas
+  não aparecem individualmente na listagem detalhada. Ao selecionar um mês
+  futuro, **Visão geral** e **Resultados** mostram somente o total previsto.
 - Fora do modo instalado, a tela de login mostra **Instalar**. O botão abre a
   instalação nativa quando disponível; no iPhone ou em navegador sem prompt,
   orienta **Compartilhar > Adicionar à Tela de Início**.

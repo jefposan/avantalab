@@ -14,7 +14,7 @@ type Props = {
 };
 
 const SITUACOES: SituacaoRecebimento[] = [
-  'previsto', 'aguardando_conferencia', 'baixado', 'recebido_a_menor', 'recebido_a_maior', 'em_atraso', 'devolvido_para_correcao',
+  'aguardando_conferencia', 'baixado', 'recebido_a_menor', 'recebido_a_maior', 'em_atraso', 'devolvido_para_correcao',
 ];
 
 export default function ListaRecebimentos({ chaveMes, empresas, subempresas, colaboradores, recebimentos }: Props) {
@@ -39,6 +39,9 @@ export default function ListaRecebimentos({ chaveMes, empresas, subempresas, col
 
   const filtrados = useMemo(() => {
     return recebimentos.filter((r) => {
+      // Previsões alimentam os totais dos meses futuros, mas sua composição
+      // não é exposta na listagem detalhada de recebimentos.
+      if (r.situacao === 'previsto') return false;
       if (fEmpresa && r.empresaId !== fEmpresa) return false;
       if (fSub && r.subempresaId !== fSub) return false;
       if (fColab && r.colaboradorId !== fColab) return false;

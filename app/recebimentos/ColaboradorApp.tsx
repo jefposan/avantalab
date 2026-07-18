@@ -55,6 +55,7 @@ export default function ColaboradorApp() {
   const [erro, setErro] = useState('');
   const [entrando, setEntrando] = useState(false);
   const [empresaId, setEmpresaId] = useState('');
+  const [empresaNome, setEmpresaNome] = useState('');
   const [repo, setRepo] = useState<RecebimentosRepo | null>(null);
   const [empresas, setEmpresas] = useState<Empresa[]>([]);
   const [subempresas, setSubempresas] = useState<Subempresa[]>([]);
@@ -132,6 +133,7 @@ export default function ColaboradorApp() {
       setEstado('bloqueado');
       return;
     }
+    setEmpresaNome(String(acesso.empresaNome ?? '').trim());
     const repoAtivo = criarRepoSupabase(empresa, cliente);
     await carregarDados(repoAtivo);
     setEmpresaId(empresa);
@@ -186,7 +188,7 @@ export default function ColaboradorApp() {
 
   async function sair() {
     await cliente?.auth.signOut();
-    setRepo(null); setEmpresaId(''); setEmpresas([]); setSubempresas([]); setColaboradores([]); setRecebimentos([]);
+    setRepo(null); setEmpresaId(''); setEmpresaNome(''); setEmpresas([]); setSubempresas([]); setColaboradores([]); setRecebimentos([]);
     setEstado('login'); setErro('');
   }
 
@@ -277,9 +279,13 @@ export default function ColaboradorApp() {
   if (!colaborador || !repo || !empresaId) return null;
   return (
     <div className={styles.page}>
-      <div className={styles.topbar}>
+      <div className={`${styles.topbar} ${styles.topbarColaborador}`}>
         <div className={styles.topbarInner}>
-          <div className={styles.brand}><span className={styles.brandKicker}>AvantaLab</span><span className={styles.brandTitle}>Recebimentos Presenciais</span></div>
+          <div className={styles.brand}>
+            <span className={styles.brandKicker}>AvantaLab</span>
+            <span className={styles.brandTitle}>Recebimentos Presenciais</span>
+            {empresaNome && <span className={styles.brandEmpresa}>{empresaNome}</span>}
+          </div>
           <button type="button" className={`${styles.btn} ${styles.btnGhost} ${styles.btnSm}`} onClick={() => void sair()}>Sair</button>
         </div>
       </div>

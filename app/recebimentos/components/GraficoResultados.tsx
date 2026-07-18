@@ -4,7 +4,7 @@ import { useMemo, useRef, useState } from 'react';
 import styles from '../recebimentos.module.css';
 import type { Recebimento } from './types';
 import { COR_PRIMARIA } from './dadosDemo';
-import { formatarMoeda } from './helpers';
+import { dataLocalIso, formatarMoeda } from './helpers';
 
 type Props = { chaveMes: string; recebimentos: Recebimento[] };
 
@@ -15,6 +15,8 @@ const MESES_CURTOS = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 's
 export default function GraficoResultados({ chaveMes, recebimentos }: Props) {
   const [hover, setHover] = useState<{ i: number; x: number; y: number } | null>(null);
   const areaGraficoRef = useRef<HTMLDivElement>(null);
+  const hojeIso = useMemo(() => dataLocalIso(), []);
+  const mesFuturo = chaveMes > hojeIso.slice(0, 7);
 
   // Totais do mês selecionado no platô.
   const totais = useMemo(() => {
@@ -27,10 +29,10 @@ export default function GraficoResultados({ chaveMes, recebimentos }: Props) {
       if (r.situacao === 'baixado' && mesBaixa === chaveMes) baixado += r.valorRecebido ?? 0;
       else if ((r.situacao === 'aguardando_conferencia' || r.situacao === 'recebido_a_menor' || r.situacao === 'recebido_a_maior') && mesRecebido === chaveMes)
         aguardando += r.valorRecebido ?? 0;
-      if (r.situacao === 'em_atraso' && mesVenc <= chaveMes) atraso += r.valorCombinado;
+      if (r.situacao === 'em_atraso' && r.vencimento < hojeIso && mesVenc <= chaveMes) atraso += r.valorCombinado;
     }
     return { baixado, aguardando, atraso, previsto, totalPrevisto };
-  }, [recebimentos, chaveMes]);
+  }, [recebimentos, chaveMes, hojeIso]);
 
   // Agregação de 12 meses terminando no mês selecionado.
   const meses: MesAgg[] = useMemo(() => {
@@ -48,10 +50,10 @@ export default function GraficoResultados({ chaveMes, recebimentos }: Props) {
       if (i == null) continue;
       arr[i].qtd += 1;
       if (r.situacao === 'baixado') arr[i].baixado += r.valorRecebido ?? 0;
-      else if (r.situacao === 'em_atraso') arr[i].atraso += r.valorCombinado;
+      else if (r.situacao === 'em_atraso' && r.vencimento < hojeIso) arr[i].atraso += r.valorCombinado;
     }
     return arr;
-  }, [recebimentos, chaveMes]);
+  }, [recebimentos, chaveMes, hojeIso]);
 
   const maxVal = Math.max(1, ...meses.map((m) => m.baixado + m.atraso));
 
@@ -71,14 +73,21 @@ export default function GraficoResultados({ chaveMes, recebimentos }: Props) {
     <div>
       <h3 className={styles.sectionTitle}>Resultados</h3>
 
-      <div className={styles.cardsGrid} style={{ marginBottom: 18 }}>
-        <div className={styles.statCard}><div className={styles.statLabel}>Recebido / baixado</div><div className={styles.statValue}>{formatarMoeda(totais.baixado)}</div></div>
-        <div className={styles.statCard}><div className={styles.statLabel}>Aguardando conferência</div><div className={styles.statValue}>{formatarMoeda(totais.aguardando)}</div></div>
-        <div className={styles.statCard}><div className={styles.statLabel}>Em atraso</div><div className={styles.statValue}>{formatarMoeda(totais.atraso)}</div></div>
-        <div className={styles.statCard}><div className={styles.statLabel}>Total previsto</div><div className={styles.statValue}>{formatarMoeda(totais.totalPrevisto)}</div></div>
+      <div className={`${styles.cardsGrid} ${mesFuturo ? styles.cardsGridSomentePrevisto : ''}`} style={{ marginBottom: 18 }}>
+        {mesFuturo ? (
+          <div className={styles.statCard}><div className={styles.statLabel}>Total previsto</div><div className={styles.statValue}>{formatarMoeda(totais.totalPrevisto)}</div></div>
+        ) : (
+          <>
+            <div className={styles.statCard}><div className={styles.statLabel}>Recebido / baixado</div><div className={styles.statValue}>{formatarMoeda(totais.baixado)}</div></div>
+            <div className={styles.statCard}><div className={styles.statLabel}>Aguardando conferência</div><div className={styles.statValue}>{formatarMoeda(totais.aguardando)}</div></div>
+            <div className={styles.statCard}><div className={styles.statLabel}>Em atraso</div><div className={styles.statValue}>{formatarMoeda(totais.atraso)}</div></div>
+            <div className={styles.statCard}><div className={styles.statLabel}>Total previsto</div><div className={styles.statValue}>{formatarMoeda(totais.totalPrevisto)}</div></div>
+          </>
+        )}
       </div>
 
-      <div className={styles.statCard}>
+      {!mesFuturo && (
+        <div className={styles.statCard}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
           <strong style={{ fontSize: 13, color: COR_PRIMARIA }}>Últimos 12 meses</strong>
           <div style={{ display: 'flex', gap: 12, fontSize: 11, color: '#64748b' }}>
@@ -126,7 +135,8 @@ export default function GraficoResultados({ chaveMes, recebimentos }: Props) {
             </div>
           )}
         </div>
-      </div>
+        </div>
+      )}
     </div>
   );
 }

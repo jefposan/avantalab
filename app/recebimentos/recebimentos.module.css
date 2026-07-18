@@ -206,9 +206,14 @@
   justify-content: space-between;
   gap: 12px;
 }
+.topbarColaborador .topbarInner {
+  min-height: 76px;
+  padding-block: 14px;
+}
 .brand {
   display: flex;
   flex-direction: column;
+  gap: 2px;
   line-height: 1.1;
 }
 .brandKicker {
@@ -221,6 +226,16 @@
 .brandTitle {
   font-size: 16px;
   font-weight: 800;
+}
+.brandEmpresa {
+  max-width: min(70vw, 680px);
+  overflow: hidden;
+  color: color-mix(in srgb, #fff 86%, var(--cp));
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.25;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .perfilGroup {
   display: flex;
@@ -347,6 +362,7 @@
   gap: 12px;
   align-items: stretch;
 }
+.cardsGrid.cardsGridSomentePrevisto { grid-template-columns: minmax(0, 1fr); }
 .statCard {
   --sc-bg: #fff;
   --sc-border: #e2e8f0;

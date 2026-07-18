@@ -1,5 +1,39 @@
 // Funções utilitárias do estudo "Recebimentos em Campo".
-import type { DiferencaTipo, FrequenciaRecebimento, LabelSituacao, SituacaoRecebimento } from './types';
+import type { DiferencaTipo, FrequenciaRecebimento, LabelSituacao, Recebimento, SituacaoRecebimento } from './types';
+
+export function dataLocalIso(referencia = new Date()): string {
+  const local = new Date(referencia.getTime() - referencia.getTimezoneOffset() * 60000);
+  return local.toISOString().slice(0, 10);
+}
+
+export function diferencaDiasIso(inicio: string, fim: string): number {
+  const [anoInicio, mesInicio, diaInicio] = inicio.split('-').map(Number);
+  const [anoFim, mesFim, diaFim] = fim.split('-').map(Number);
+  const diferenca = Date.UTC(anoFim, mesFim - 1, diaFim) - Date.UTC(anoInicio, mesInicio - 1, diaInicio);
+  return Math.max(0, Math.round(diferenca / (1000 * 60 * 60 * 24)));
+}
+
+export function proximasCobrancasPorEmpresa(recebimentos: Recebimento[], hojeIso: string): Recebimento[] {
+  const empresasComProximo = new Set<string>();
+  return recebimentos
+    .filter(
+      (recebimento) =>
+        recebimento.valorRecebido == null &&
+        recebimento.situacao === 'previsto' &&
+        recebimento.vencimento >= hojeIso,
+    )
+    .sort(
+      (a, b) =>
+        a.vencimento.localeCompare(b.vencimento) ||
+        a.empresaId.localeCompare(b.empresaId) ||
+        a.id.localeCompare(b.id),
+    )
+    .filter((recebimento) => {
+      if (empresasComProximo.has(recebimento.empresaId)) return false;
+      empresasComProximo.add(recebimento.empresaId);
+      return true;
+    });
+}
 
 export const FREQUENCIAS_RECEBIMENTO: Array<[FrequenciaRecebimento, string]> = [
   ['semanal', 'Semanal'],
@@ -137,9 +171,7 @@ export function aguardandoConferencia(s: SituacaoRecebimento): boolean {
 }
 
 export function diasEmAtraso(vencimento: string, hoje: Date): number {
-  const venc = new Date(vencimento + 'T00:00:00');
-  const diff = Math.floor((hoje.getTime() - venc.getTime()) / (1000 * 60 * 60 * 24));
-  return Math.max(0, diff);
+  return diferencaDiasIso(vencimento, dataLocalIso(hoje));
 }
 
 // Primeiro e último dia (ISO YYYY-MM-DD) de um mês "YYYY-MM".

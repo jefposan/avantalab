@@ -1,5 +1,30 @@
 # Changelog
 
+## 1.6.0.50 - 2026-07-18
+
+- Criada a aba **Próximo a vencer**, no mesmo padrão estrutural de
+  **Inadimplentes**, exibindo somente a cobrança futura mais próxima de cada
+  empresa atendida.
+- A aba **Inadimplentes** permanece exclusiva para clientes realmente em atraso,
+  sem misturar cobranças previstas.
+- O header do acesso do colaborador foi ampliado e agora identifica a empresa
+  gestora que criou seu vínculo, consultada pelo cadastro oficial do sistema.
+
+## 1.6.0.49 - 2026-07-18
+
+- No acesso do colaborador, a fila para lançamento de pagamentos agora exibe
+  todos os vencidos e somente o próximo vencimento futuro.
+- Enquanto houver cobrança programada disponível, o lançamento deve ser feito
+  por essa fila; a seleção avulsa fica reservada à ausência de cobranças.
+- A aba Inadimplentes agora considera a data atual, mostra somente cobranças
+  realmente vencidas com situação Em atraso e calcula os dias sem antecipar o
+  fim do mês selecionado.
+- Lançamentos previstos continuam compondo os totais dos próximos meses, mas
+  sua origem não aparece na listagem detalhada. Em meses futuros, Visão geral e
+  Resultados exibem somente o total Previsto.
+- O banco passa a normalizar cobranças abertas pela data local de São Paulo,
+  impedindo que um vencimento futuro permaneça com situação Em atraso.
+
 ## 1.6.0.48 - 2026-07-18
 
 - Edição e cadastro de empresas/subempresas passaram a compartilhar a mesma

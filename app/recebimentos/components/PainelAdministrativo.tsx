@@ -4,17 +4,18 @@ import { useEffect, useMemo, useState } from 'react';
 import AvantaCard, { criarAvantaShellPreset } from '@/app/components/AvantaCard';
 import styles from '../recebimentos.module.css';
 import type { Colaborador, Empresa, Perfil, Recebimento, Subempresa } from './types';
-import { aguardandoConferencia, formatarMoeda } from './helpers';
+import { aguardandoConferencia, dataLocalIso, formatarMoeda, proximasCobrancasPorEmpresa } from './helpers';
 import ListaEmpresas from './ListaEmpresas';
 import ListaColaboradores from './ListaColaboradores';
 import ListaRecebimentos from './ListaRecebimentos';
 import PainelConferencia from './PainelConferencia';
 import ListaInadimplentes from './ListaInadimplentes';
+import ListaProximosVencimentos from './ListaProximosVencimentos';
 import GraficoResultados from './GraficoResultados';
 import type { IntegracaoFinanceiraRecebimentos } from '../data/repo';
 import type { AbrirAvisoFn } from '@/app/hooks/useUI';
 
-type Aba = 'visao' | 'empresas' | 'colaboradores' | 'recebimentos' | 'conferencia' | 'inadimplentes' | 'resultados';
+type Aba = 'visao' | 'empresas' | 'colaboradores' | 'recebimentos' | 'conferencia' | 'proximo' | 'inadimplentes' | 'resultados';
 
 type Props = {
   perfil: Perfil;
@@ -54,6 +55,7 @@ const ABAS: Array<[Aba, string]> = [
   ['colaboradores', 'Colaboradores'],
   ['recebimentos', 'Recebimentos'],
   ['conferencia', 'Conferência'],
+  ['proximo', 'Próximo a vencer'],
   ['inadimplentes', 'Inadimplentes'],
   ['resultados', 'Resultados'],
 ];
@@ -76,11 +78,16 @@ export default function PainelAdministrativo(props: Props) {
   const [integracaoMensagem, setIntegracaoMensagem] = useState('');
   const [integracaoErro, setIntegracaoErro] = useState('');
   const avantaShell = criarAvantaShellPreset({ corPrimaria: props.corPrimaria, darkMode });
+  const hojeIso = useMemo(() => dataLocalIso(), []);
 
   const pendentesQtd = useMemo(() => recebimentos.filter((r) => aguardandoConferencia(r.situacao)).length, [recebimentos]);
   const inadimplentesQtd = useMemo(
-    () => recebimentos.filter((r) => r.situacao === 'em_atraso' && r.valorRecebido == null).length,
-    [recebimentos],
+    () => recebimentos.filter((r) => r.situacao === 'em_atraso' && r.valorRecebido == null && r.vencimento < hojeIso).length,
+    [recebimentos, hojeIso],
+  );
+  const proximosQtd = useMemo(
+    () => proximasCobrancasPorEmpresa(recebimentos, hojeIso).length,
+    [recebimentos, hojeIso],
   );
 
   function mudarMes(delta: number) {
@@ -91,6 +98,7 @@ export default function PainelAdministrativo(props: Props) {
   }
 
   const chaveMes = `${mesRef.ano}-${String(mesRef.mes + 1).padStart(2, '0')}`;
+  const mesFuturo = chaveMes > hojeIso.slice(0, 7);
 
   const resumo = useMemo(() => {
     let previstoMes = 0, recebidoCampo = 0, aguardando = 0, baixado = 0, atraso = 0, pendentesMes = 0;
@@ -102,11 +110,10 @@ export default function PainelAdministrativo(props: Props) {
         pendentesMes += 1;
       }
       if (r.situacao === 'baixado' && (r.baixadoEm ?? r.recebidoEm ?? '').slice(0, 7) === chaveMes) baixado += r.valorRecebido ?? 0;
-      // Em atraso acumula tudo que venceu até o fim do mês selecionado.
-      if (r.situacao === 'em_atraso' && r.vencimento.slice(0, 7) <= chaveMes) atraso += r.valorCombinado;
+      if (r.situacao === 'em_atraso' && r.vencimento < hojeIso && r.vencimento.slice(0, 7) <= chaveMes) atraso += r.valorCombinado;
     }
     return { previstoMes, recebidoCampo, aguardando, baixado, atraso, pendentesMes };
-  }, [recebimentos, chaveMes]);
+  }, [recebimentos, chaveMes, hojeIso]);
 
   useEffect(() => {
     let ativo = true;
@@ -184,7 +191,7 @@ export default function PainelAdministrativo(props: Props) {
             className={`${styles.tab} ${aba === a ? styles.tabAtiva : ''}`}
             onClick={() => setAba(a)}
           >
-            {label}{a === 'conferencia' && pendentesQtd > 0 ? ` (${pendentesQtd})` : ''}{a === 'inadimplentes' && inadimplentesQtd > 0 ? ` (${inadimplentesQtd})` : ''}
+            {label}{a === 'conferencia' && pendentesQtd > 0 ? ` (${pendentesQtd})` : ''}{a === 'proximo' && proximosQtd > 0 ? ` (${proximosQtd})` : ''}{a === 'inadimplentes' && inadimplentesQtd > 0 ? ` (${inadimplentesQtd})` : ''}
           </button>
         ))}
         {salvando && <span className={styles.tabsStatus} role="status">Salvando alterações…</span>}
@@ -260,46 +267,50 @@ export default function PainelAdministrativo(props: Props) {
         {aba === 'visao' && (
           <div>
             <h3 className={styles.sectionTitle}>Visão geral</h3>
-            <div className={styles.cardsGrid}>
+            <div className={`${styles.cardsGrid} ${mesFuturo ? styles.cardsGridSomentePrevisto : ''}`}>
               <div className={`${styles.statCard} ${styles.statAzul}`}><div className={styles.statLabel}>Total previsto no mês</div><div className={styles.statValue}>{formatarMoeda(resumo.previstoMes)}</div></div>
-              <div className={`${styles.statCard} ${styles.statCiano}`}><div className={styles.statLabel}>Recebido em campo</div><div className={styles.statValue}>{formatarMoeda(resumo.recebidoCampo)}</div></div>
-              <div className={`${styles.statCard} ${styles.statArdosia}`}><div className={styles.statLabel}>Aguardando conferência</div><div className={styles.statValue}>{formatarMoeda(resumo.aguardando)}</div><div className={styles.statSub}>{resumo.pendentesMes} registro(s)</div></div>
-              <div className={`${styles.statCard} ${styles.statIndigo}`}><div className={styles.statLabel}>Em atraso</div><div className={styles.statValue}>{formatarMoeda(resumo.atraso)}</div></div>
-              <div className={`${styles.statCard} ${styles.statTeal} ${styles.integracaoCard}`}>
-                <div className={styles.integracaoResumo}>
-                  <div>
-                    <div className={styles.statLabel}>Total recebido e confirmado</div>
-                    <div className={styles.statValue}>{formatarMoeda(resumo.baixado)}</div>
+              {!mesFuturo && (
+                <>
+                  <div className={`${styles.statCard} ${styles.statCiano}`}><div className={styles.statLabel}>Recebido em campo</div><div className={styles.statValue}>{formatarMoeda(resumo.recebidoCampo)}</div></div>
+                  <div className={`${styles.statCard} ${styles.statArdosia}`}><div className={styles.statLabel}>Aguardando conferência</div><div className={styles.statValue}>{formatarMoeda(resumo.aguardando)}</div><div className={styles.statSub}>{resumo.pendentesMes} registro(s)</div></div>
+                  <div className={`${styles.statCard} ${styles.statIndigo}`}><div className={styles.statLabel}>Em atraso</div><div className={styles.statValue}>{formatarMoeda(resumo.atraso)}</div></div>
+                  <div className={`${styles.statCard} ${styles.statTeal} ${styles.integracaoCard}`}>
+                    <div className={styles.integracaoResumo}>
+                      <div>
+                        <div className={styles.statLabel}>Total recebido e confirmado</div>
+                        <div className={styles.statValue}>{formatarMoeda(resumo.baixado)}</div>
+                      </div>
+                      {integracao?.integrado && (
+                        <span className={styles.integracaoStatus}>Adicionado: {formatarMoeda(integracao.valorSincronizado)}</span>
+                      )}
+                    </div>
+                    <div className={styles.integracaoAcoes}>
+                      <div className={styles.integracaoCampos}>
+                        <label className={styles.integracaoCampo} htmlFor="recebimentos-nome-entrada">
+                          <span>Nome da entrada</span>
+                          <input id="recebimentos-nome-entrada" className={styles.input} value={nomeEntrada} onChange={(event) => setNomeEntrada(event.target.value)} maxLength={120} placeholder="Ex.: Recebimentos em campo" disabled={integracaoCarregando || integracaoSalvando} />
+                        </label>
+                        <label className={styles.integracaoCampo} htmlFor="recebimentos-titulo-etiqueta">
+                          <span>Título da etiqueta</span>
+                          <input id="recebimentos-titulo-etiqueta" className={styles.input} value={tituloEtiqueta} onChange={(event) => setTituloEtiqueta(event.target.value)} maxLength={40} placeholder="Recebimentos" disabled={integracaoCarregando || integracaoSalvando} />
+                        </label>
+                      </div>
+                      <button type="button" className={`${styles.btn} ${styles.btnPrimary} ${styles.integracaoBotao}`} onClick={() => void adicionarAoFinanceiro()} disabled={integracaoCarregando || integracaoSalvando || resumo.baixado <= 0}>
+                        {integracaoSalvando ? 'Adicionando…' : integracao?.integrado ? 'Atualizar nos recebimentos' : 'Adicionar aos recebimentos'}
+                      </button>
+                    </div>
+                    <div className={styles.integracaoFeedback} aria-live="polite" aria-atomic="true">
+                      {integracaoCarregando ? (
+                        <div className={styles.integracaoAjuda} role="status">Carregando valores…</div>
+                      ) : integracaoErro ? (
+                        <div className={styles.integracaoErro} role="alert">{integracaoErro}</div>
+                      ) : integracaoMensagem ? (
+                        <div className={styles.integracaoSucesso} role="status">{integracaoMensagem}</div>
+                      ) : null}
+                    </div>
                   </div>
-                  {integracao?.integrado && (
-                    <span className={styles.integracaoStatus}>Adicionado: {formatarMoeda(integracao.valorSincronizado)}</span>
-                  )}
-                </div>
-                <div className={styles.integracaoAcoes}>
-                  <div className={styles.integracaoCampos}>
-                    <label className={styles.integracaoCampo} htmlFor="recebimentos-nome-entrada">
-                      <span>Nome da entrada</span>
-                      <input id="recebimentos-nome-entrada" className={styles.input} value={nomeEntrada} onChange={(event) => setNomeEntrada(event.target.value)} maxLength={120} placeholder="Ex.: Recebimentos em campo" disabled={integracaoCarregando || integracaoSalvando} />
-                    </label>
-                    <label className={styles.integracaoCampo} htmlFor="recebimentos-titulo-etiqueta">
-                      <span>Título da etiqueta</span>
-                      <input id="recebimentos-titulo-etiqueta" className={styles.input} value={tituloEtiqueta} onChange={(event) => setTituloEtiqueta(event.target.value)} maxLength={40} placeholder="Recebimentos" disabled={integracaoCarregando || integracaoSalvando} />
-                    </label>
-                  </div>
-                  <button type="button" className={`${styles.btn} ${styles.btnPrimary} ${styles.integracaoBotao}`} onClick={() => void adicionarAoFinanceiro()} disabled={integracaoCarregando || integracaoSalvando || resumo.baixado <= 0}>
-                    {integracaoSalvando ? 'Adicionando…' : integracao?.integrado ? 'Atualizar nos recebimentos' : 'Adicionar aos recebimentos'}
-                  </button>
-                </div>
-                <div className={styles.integracaoFeedback} aria-live="polite" aria-atomic="true">
-                  {integracaoCarregando ? (
-                    <div className={styles.integracaoAjuda} role="status">Carregando valores…</div>
-                  ) : integracaoErro ? (
-                    <div className={styles.integracaoErro} role="alert">{integracaoErro}</div>
-                  ) : integracaoMensagem ? (
-                    <div className={styles.integracaoSucesso} role="status">{integracaoMensagem}</div>
-                  ) : null}
-                </div>
-              </div>
+                </>
+              )}
             </div>
           </div>
         )}
@@ -310,6 +321,10 @@ export default function PainelAdministrativo(props: Props) {
 
         {aba === 'inadimplentes' && (
           <ListaInadimplentes chaveMes={chaveMes} empresas={empresas} subempresas={subempresas} recebimentos={recebimentos} />
+        )}
+
+        {aba === 'proximo' && (
+          <ListaProximosVencimentos empresas={empresas} subempresas={subempresas} recebimentos={recebimentos} />
         )}
 
         {aba === 'resultados' && <GraficoResultados chaveMes={chaveMes} recebimentos={recebimentos} />}

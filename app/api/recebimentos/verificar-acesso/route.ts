@@ -22,15 +22,23 @@ export async function POST(request: Request) {
     if (erroColaborador) return NextResponse.json({ ativo: true, indeterminado: true });
     if (!colaborador?.ativo) return NextResponse.json({ ativo: false, motivo: 'colaborador' });
 
-    const { data: modulo, error: erroModulo } = await clientes.admin
-      .from('empresa_modulos')
-      .select('id')
-      .eq('empresa_id', empresaId)
-      .eq('modulo_id', MODULO_RECEBIMENTOS)
-      .eq('ativo', true)
-      .maybeSingle();
-    if (erroModulo) return NextResponse.json({ ativo: true, indeterminado: true });
-    return NextResponse.json({ ativo: Boolean(modulo), motivo: modulo ? undefined : 'modulo' });
+    const [{ data: modulo, error: erroModulo }, { data: empresa, error: erroEmpresa }] = await Promise.all([
+      clientes.admin
+        .from('empresa_modulos')
+        .select('id')
+        .eq('empresa_id', empresaId)
+        .eq('modulo_id', MODULO_RECEBIMENTOS)
+        .eq('ativo', true)
+        .maybeSingle(),
+      clientes.admin
+        .from('empresas')
+        .select('nome')
+        .eq('id', empresaId)
+        .maybeSingle(),
+    ]);
+    const empresaNome = erroEmpresa ? '' : String(empresa?.nome ?? '').trim();
+    if (erroModulo) return NextResponse.json({ ativo: true, indeterminado: true, empresaNome });
+    return NextResponse.json({ ativo: Boolean(modulo), motivo: modulo ? undefined : 'modulo', empresaNome });
   } catch (error) {
     console.error('Erro ao verificar acesso de recebimentos:', error);
     return NextResponse.json({ ativo: true, indeterminado: true });
