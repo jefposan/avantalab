@@ -4710,7 +4710,8 @@ function renderPagamentos() {
     ? '<h3>Nenhum cliente encontrado</h3><p>Revise o texto pesquisado e tente novamente.</p>'
     : '<h3>Nenhum pagamento registrado</h3><p>Pesquise um cliente para registrar o primeiro recebimento.</p>';
   const rotuloOrdem = `Ordem ${ordemAlfabetica === 'asc' ? 'A/Z' : 'Z/A'}`;
-  return `<section class="module-page pagamentos-page"><div class="module-sticky-head"><div class="module-title pagamentos-title"><div><h2>Pagamentos</h2><p>Gerencie pagamentos, débitos e créditos.</p></div><button type="button" class="payment-order-button" onclick="alternarOrdemAlfabetica()">${svgIcon('filter')}${rotuloOrdem}${svgIcon('chevron-down')}</button></div>${renderBarraBuscaPagamentos()}<nav class="order-type-filters payment-type-filters" aria-label="Filtrar pagamentos por situação">${botaoFiltroPagamentos('todos', 'Todos')}${botaoFiltroPagamentos('debito', 'Débito')}${botaoFiltroPagamentos('credito', 'Crédito')}${botaoFiltroPagamentos('ultimo_pagamento', 'Último pagamento')}</nav></div>${clientes.length ? `<div class="module-stats order-results-stats"><span>Exibindo <b>${clientes.length}</b> de <b>${todosClientes.length}</b> clientes</span></div><section class="debt-card-grid">${clientes.map(renderClienteDebito).join('')}</section>${todosClientes.length > clientes.length ? `<button type="button" class="ghost payment-clients-more" onclick="carregarMaisClientesPagamentos()">Carregar mais ${quantidadeProximoLote} clientes</button>` : ''}` : `<article class="publication-empty"><span>${svgIcon('users')}</span>${mensagemVazia}</article>`}</section>`;
+  const indicadorResultados = `<div class="module-stats payment-results-stats" aria-live="polite"><span>Exibindo <b>${clientes.length}</b> de <b>${todosClientes.length}</b> clientes</span></div>`;
+  return `<section class="module-page pagamentos-page"><div class="module-sticky-head"><div class="module-title pagamentos-title"><div><h2>Pagamentos</h2><p>Gerencie pagamentos, débitos e créditos.</p></div><button type="button" class="payment-order-button" onclick="alternarOrdemAlfabetica()">${svgIcon('filter')}${rotuloOrdem}${svgIcon('chevron-down')}</button></div>${renderBarraBuscaPagamentos()}<nav class="order-type-filters payment-type-filters" aria-label="Filtrar pagamentos por situação">${botaoFiltroPagamentos('todos', 'Todos')}${botaoFiltroPagamentos('debito', 'Débito')}${botaoFiltroPagamentos('credito', 'Crédito')}${botaoFiltroPagamentos('ultimo_pagamento', 'Último pagamento')}</nav>${indicadorResultados}</div>${clientes.length ? `<section class="debt-card-grid">${clientes.map(renderClienteDebito).join('')}</section>${todosClientes.length > clientes.length ? `<button type="button" class="ghost payment-clients-more" onclick="carregarMaisClientesPagamentos()">Carregar mais ${quantidadeProximoLote} clientes</button>` : ''}` : `<article class="publication-empty"><span>${svgIcon('users')}</span>${mensagemVazia}</article>`}</section>`;
 }
 
 function botaoFiltroPagamentos(tipo, rotulo) {
@@ -5990,7 +5991,7 @@ function aplicarAtualizacaoPwaPendente() {
 
 if (!window.__VENDAS_MOBILE_EMBEDDED__ && 'serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('./sw.js?v=44').catch(() => {});
+    navigator.serviceWorker.register('./sw.js?v=45').catch(() => {});
   });
 }
 

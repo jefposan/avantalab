@@ -945,7 +945,7 @@ body { background: #fff; color: var(--ink); }
 .module-title h2 { margin: 0; color: #303036; font-size: 25px; letter-spacing: -.03em; }
 .module-title p { margin: 5px 0 0; color: #777b83; font-size: 14px; }
 .clientes-page, .produtos-page { padding-top: 146px; }
-.pagamentos-page { padding-top: 224px; }
+.pagamentos-page { padding-top: 208px; }
 .clientes-page { padding-top: 158px; }
 .divulgacao-page { padding-top: 200px; }
 .publicacoes-page { padding-top: 110px; }
@@ -958,8 +958,8 @@ body { background: #fff; color: var(--ink); }
 .clientes-page .client-title-actions button, .produtos-page .product-new-button { min-height: 30px; height: 30px; border-color: #1687D9; border-radius: 9px; padding: 0 10px; color: #fff; background: #1687D9; font-size: 10px; }
 .clientes-page .module-sticky-head .module-title h2, .produtos-page .module-sticky-head .module-title h2, .pedidos-page .module-sticky-head .module-title h2, .pagamentos-page .module-sticky-head .module-title h2, .settings-page .module-sticky-head .module-title h2, .publicacoes-page .module-sticky-head .module-title h2, .divulgacao-page .module-sticky-head .module-title h2 { color: #0A1F44; }
 .clientes-page .client-card-grid, .clientes-page .empty-module, .produtos-page .module-product-grid, .produtos-page .empty-module { margin-top: 18px; }
-.pagamentos-page.is-searching { padding-top: 224px; }
-.pagamentos-page .debt-card-grid, .pagamentos-page .publication-empty { margin-top: 18px; }
+.pagamentos-page.is-searching { padding-top: 208px; }
+.pagamentos-page .debt-card-grid, .pagamentos-page .publication-empty { margin-top: 0; }
 .divulgacao-page .materials-grid { margin-top: 18px; }
 .updates-feed { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 14px; }
 .update-card, .information-card, .feedback-sales-card { overflow: hidden; border: 1px solid #d8e5ef; border-radius: 16px; background: #fff; box-shadow: 0 8px 22px rgba(15,42,80,.08); }
@@ -1545,6 +1545,8 @@ body { background: #fff; color: var(--ink); }
 .payment-order-button { flex: 0 0 auto; border: 1px solid #c8ddea; padding: 0 9px; color: #31556d; background: #fff; }
 .payment-order-button .svg-icon { width: 14px; height: 14px; }
 .payment-order-button .svg-icon:last-child { width: 12px; }
+.payment-results-stats { justify-content: flex-start; }
+.payment-results-stats span { min-height: 30px; box-sizing: border-box; padding: 7px 12px; }
 .client-card.client-birthday-today { border-color: #f0445f; box-shadow: 0 0 0 1px rgba(240,68,95,.28), 0 8px 20px rgba(190,24,93,.12); }
 .client-card.inactive { opacity: .7; filter: grayscale(.8); }
 .client-disabled { position: absolute; top: 0; right: 0; border-radius: 0 0 0 8px; padding: 4px 8px; color: #fff; background: #ef4444; font-size: 10px; font-weight: 800; }
@@ -2125,6 +2127,8 @@ body { background: #fff; color: var(--ink); }
 .dark-theme .clientes-page .tridium-search-card, .dark-theme .produtos-page .tridium-search-card, .dark-theme .pedidos-page .tridium-search-card, .dark-theme .pagamentos-page .tridium-search-card, .dark-theme .publicacoes-page .tridium-search-card, .dark-theme .divulgacao-page .tridium-search-card { border-color: #334155; background: #172033; }
 .dark-theme .client-order-button { border-color: #3b4b63; color: #cbd5e1; background: #172033; }
 .dark-theme .payment-order-button { border-color: #3b4b63; color: #cbd5e1; background: #172033; }
+.dark-theme .payment-results-stats span { color: #cbd5e1; background: #172f3d; }
+.dark-theme .payment-results-stats b { color: #67e8f9; }
 .dark-theme .client-search-input-wrap input { border-color: #3b4b63; color: #e2e8f0; background: #111b2d; }
 .dark-theme .client-search-input-wrap > .svg-icon, .dark-theme .client-search-clear { color: #94a3b8; }
 .dark-theme .client-search-clear:hover { color: #e2e8f0; background: #263449; }

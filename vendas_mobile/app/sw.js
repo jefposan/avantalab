@@ -1,4 +1,4 @@
-const CACHE_NAME = 'avantalab-vendas-mobile-v62';
+const CACHE_NAME = 'avantalab-vendas-mobile-v63';
 const ASSETS = [
   './',
   './index.html',
