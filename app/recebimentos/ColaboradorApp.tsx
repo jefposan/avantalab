@@ -206,7 +206,7 @@ export default function ColaboradorApp() {
         <div className={styles.loginCard}>
           <div className={styles.loginMarca}>AvantaLab</div>
           <h1 className={styles.loginTitulo}>Acesso indisponível</h1>
-          <p className={styles.muted}>O Recebimentos Presencial está desativado ou seu acesso foi suspenso. Fale com o gestor da empresa.</p>
+          <p className={styles.muted}>O Recebimentos Presenciais está desativado ou seu acesso foi suspenso. Fale com o gestor da empresa.</p>
           <button type="button" className={`${styles.btn} ${styles.btnGhost}`} onClick={() => { setEstado('login'); setErro(''); }} style={{ width: '100%', marginTop: 16 }}>Voltar</button>
         </div>
       </div>
@@ -219,7 +219,7 @@ export default function ColaboradorApp() {
         <div className={styles.loginContent}>
           <form className={styles.loginCard} onSubmit={(event) => { event.preventDefault(); void entrar(); }}>
             <div className={styles.loginMarca}>AvantaLab</div>
-            <h1 className={styles.loginTitulo}>Recebimentos Presencial</h1>
+            <h1 className={styles.loginTitulo}>Recebimentos Presenciais</h1>
             <p className={styles.muted}>Entre com o CPF e a senha fornecidos pelo gestor.</p>
             <div className={styles.field} style={{ marginTop: 18 }}>
               <label className={styles.label} htmlFor="recebimentos-cpf">CPF</label>
@@ -236,7 +236,7 @@ export default function ColaboradorApp() {
             <div className={styles.installCard}>
               <div className={styles.installCardInner}>
                 <div className={styles.installCopy}>
-                  <p className={styles.installNome}>Recebimentos Presencial</p>
+                  <p className={styles.installNome}>Recebimentos Presenciais</p>
                   <p className={styles.installDescricao}>Instale como app no seu celular.</p>
                 </div>
                 <button type="button" className={styles.installButton} onClick={() => void instalarPwa()}>Instalar</button>
@@ -251,7 +251,7 @@ export default function ColaboradorApp() {
             onMouseDown={(evento) => { if (evento.target === evento.currentTarget) setInstrucaoInstalacao(false); }}
           >
             <section className={styles.installModal} role="dialog" aria-modal="true" aria-labelledby="recebimentos-instalar-titulo">
-              <h2 id="recebimentos-instalar-titulo">Instalar o Recebimentos Presencial</h2>
+              <h2 id="recebimentos-instalar-titulo">Instalar o Recebimentos Presenciais</h2>
               <div className={styles.installInstructions}>
                 <p>
                   No seu navegador, toque no botão <strong>Compartilhar</strong>{' '}
@@ -279,7 +279,7 @@ export default function ColaboradorApp() {
     <div className={styles.page}>
       <div className={styles.topbar}>
         <div className={styles.topbarInner}>
-          <div className={styles.brand}><span className={styles.brandKicker}>AvantaLab</span><span className={styles.brandTitle}>Recebimentos Presencial</span></div>
+          <div className={styles.brand}><span className={styles.brandKicker}>AvantaLab</span><span className={styles.brandTitle}>Recebimentos Presenciais</span></div>
           <button type="button" className={`${styles.btn} ${styles.btnGhost} ${styles.btnSm}`} onClick={() => void sair()}>Sair</button>
         </div>
       </div>

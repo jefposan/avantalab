@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.6.0.04 - 2026-07-18
+
+- Corrigido o nome exibido do módulo em todo o projeto para **Recebimentos
+  Presenciais**, incluindo interface,
+  metadados, PWA, APIs, Ava, documentação e mensagens do banco.
+- Adicionada migration para atualizar o nome no catálogo das instalações já
+  existentes, preservando o identificador técnico `recebimentos_presencial`.
+
 ## 1.6.0.03 - 2026-07-18
 
 - Na Visão geral de Recebimentos, os cards de valores passam a ser distribuídos
@@ -17,7 +25,7 @@
 
 ## 1.6.0.01 - 2026-07-18
 
-- O PWA de Recebimentos Presencial passa a usar o mesmo background institucional
+- O PWA de Recebimentos Presenciais passa a usar o mesmo background institucional
   responsivo do Controle de Ponto, inclusive nos estados de preparação, login,
   bloqueio e painel do colaborador.
 - O background foi incluído no cache offline do PWA e sua atualização foi
@@ -29,7 +37,7 @@
 
 ## 1.6.0 - 2026-07-18
 
-- Implantado o módulo instalável **Recebimentos Presencial**, com catálogo por
+- Implantado o módulo instalável **Recebimentos Presenciais**, com catálogo por
   perfil, painel de gestão no Web, empresas, pontos de cobrança, colaboradores,
   conferência, divergência, devolução, estorno, indicadores e realtime.
 - Criados banco, RLS, auditoria e RPCs próprios do módulo. Colaboradores usam

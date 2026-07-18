@@ -1,4 +1,4 @@
-# Implantação — Módulo "Recebimentos Presencial" (brief para Codex)
+# Implantação — Módulo "Recebimentos Presenciais" (brief para Codex)
 
 Objetivo: transformar o estudo isolado em `app/recebimentos/` num **módulo instalável**
 do AvantaLab, espelhando os padrões já existentes de **Controle de Ponto** e
@@ -12,7 +12,7 @@ autorização.
 > o **padrão** (link único, CPF+senha, isolamento do usuário), nunca para compartilhar
 > dados/rotas.
 
-Slug do módulo: **`recebimentos_presencial`**. Nome exibido: **"Recebimentos Presencial"**.
+Slug do módulo: **`recebimentos_presencial`**. Nome exibido: **"Recebimentos Presenciais"**.
 
 ## Estado da implantação
 
@@ -39,6 +39,10 @@ Na versão **1.6.0.03**, os cards de valores da Visão geral foram organizados e
 coluna. O card Baixado ganhou contraste reforçado na ação e uma área fixa para
 mensagens da integração, evitando mudança de altura ao navegar entre meses. O
 módulo integrado também passou a consumir o modo escuro do Gestão.
+
+Na versão **1.6.0.04**, o nome exibido foi corrigido em todo o projeto para
+**Recebimentos Presenciais**. O slug técnico `recebimentos_presencial` foi
+preservado, e uma migration aditiva atualiza o catálogo já instalado.
 
 ---
 
@@ -83,7 +87,7 @@ Cuidado com a ambiguidade: no domínio deste módulo, "empresa" e "subempresa" s
 ### 2.1 Catálogo
 ```sql
 insert into public.modulos (id, nome, descricao, icone, perfis, ordem)
-values ('recebimentos_presencial', 'Recebimentos Presencial',
+values ('recebimentos_presencial', 'Recebimentos Presenciais',
         'Cobrança em dinheiro em campo, com conferência e baixa pelo gestor.',
         'recebimentos', '{empresa}', 3)
 on conflict (id) do update set

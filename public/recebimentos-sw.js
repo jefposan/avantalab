@@ -1,4 +1,4 @@
-// Service worker do PWA "Recebimentos Presencial".
+// Service worker do PWA "Recebimentos Presenciais".
 // Escopo restrito a /recebimentos/colaborador — não interfere no restante do app.
 const RECEB_CACHE = 'avantalab-recebimentos-v4';
 const RECEB_SHELL = [

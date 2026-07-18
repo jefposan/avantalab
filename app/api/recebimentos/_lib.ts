@@ -79,7 +79,7 @@ export async function validarGestor(
 
 export function erroValidacaoGestor(resultado: Exclude<Awaited<ReturnType<typeof validarGestor>>, 'ok'>) {
   if (resultado === 'sem_permissao') return respostaErro('Você não tem permissão para gerenciar colaboradores.', 403);
-  if (resultado === 'modulo_inativo') return respostaErro('O módulo Recebimentos Presencial não está ativo nesta empresa.', 403);
+  if (resultado === 'modulo_inativo') return respostaErro('O módulo Recebimentos Presenciais não está ativo nesta empresa.', 403);
   return respostaErro('Não foi possível validar sua permissão.', 500);
 }
 

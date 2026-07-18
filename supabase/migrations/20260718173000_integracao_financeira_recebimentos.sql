@@ -1,4 +1,4 @@
--- Integra manualmente o total mensal baixado do Recebimentos Presencial ao
+-- Integra manualmente o total mensal baixado do Recebimentos Presenciais ao
 -- faturamento do Gestão. A receita criada é rastreável e protegida contra
 -- edição/exclusão manual no Financeiro.
 
@@ -52,10 +52,10 @@ begin
     return coalesce(new, old);
   end if;
   if tg_op = 'INSERT' and new.tipo_obs = 'recebimentos_sistema' then
-    raise exception 'A receita do Recebimentos Presencial é controlada pelo módulo.';
+    raise exception 'A receita do Recebimentos Presenciais é controlada pelo módulo.';
   end if;
   if tg_op in ('UPDATE', 'DELETE') and old.tipo_obs = 'recebimentos_sistema' then
-    raise exception 'A receita do Recebimentos Presencial é controlada pelo módulo.';
+    raise exception 'A receita do Recebimentos Presenciais é controlada pelo módulo.';
   end if;
   return coalesce(new, old);
 end;

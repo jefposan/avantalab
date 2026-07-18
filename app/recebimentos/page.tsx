@@ -3,8 +3,8 @@ import RecebimentosClient from './RecebimentosClient';
 
 // Preview de desenvolvimento — a entrada oficial de gestão é o modal no Gestão Web.
 export const metadata: Metadata = {
-  title: 'AvantaLab · Preview Recebimentos Presencial',
-  description: 'Preview de desenvolvimento do módulo Recebimentos Presencial.',
+  title: 'AvantaLab · Preview Recebimentos Presenciais',
+  description: 'Preview de desenvolvimento do módulo Recebimentos Presenciais.',
   robots: { index: false, follow: false },
 };
 

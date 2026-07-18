@@ -7,7 +7,7 @@ const shareImage = 'https://avantalab.com.br/images/recebimentos-share-meta.jpg?
 // URL exclusiva do colaborador — alvo do PWA "Recebimentos em Campo".
 export const metadata: Metadata = {
   metadataBase: new URL('https://avantalab.com.br'),
-  title: 'AvantaLab · Recebimentos Presencial',
+  title: 'AvantaLab · Recebimentos Presenciais',
   description: 'Registre recebimentos em campo com CPF e senha.',
   manifest: '/recebimentos-manifest.json',
   alternates: { canonical: colaboradorUrl },
@@ -18,7 +18,7 @@ export const metadata: Metadata = {
     apple: '/images/recebimentos-icon-180.png',
   },
   openGraph: {
-    title: 'AvantaLab · Recebimentos Presencial',
+    title: 'AvantaLab · Recebimentos Presenciais',
     description: 'Sistema de gestão financeira e operacional para recebimentos em campo.',
     url: colaboradorUrl,
     locale: 'pt_BR',
@@ -29,13 +29,13 @@ export const metadata: Metadata = {
       secureUrl: shareImage,
       width: 1200,
       height: 628,
-      alt: 'AvantaLab · Recebimentos Presencial',
+      alt: 'AvantaLab · Recebimentos Presenciais',
       type: 'image/jpeg',
     }],
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'AvantaLab · Recebimentos Presencial',
+    title: 'AvantaLab · Recebimentos Presenciais',
     description: 'Sistema de gestão financeira e operacional para recebimentos em campo.',
     images: [shareImage],
   },

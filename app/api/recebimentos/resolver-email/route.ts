@@ -27,7 +27,7 @@ export async function POST(request: Request) {
       .eq('ativo', true)
       .maybeSingle();
     if (!erroModulo && !modulo) {
-      return respostaErro('O Recebimentos Presencial está indisponível. Fale com o gestor.', 403, { bloqueado: true });
+      return respostaErro('O Recebimentos Presenciais está indisponível. Fale com o gestor.', 403, { bloqueado: true });
     }
     return NextResponse.json({ erro: false, email: data.email, empresaId: data.empresa_id });
   } catch (error) {

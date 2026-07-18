@@ -53,7 +53,7 @@ export async function POST(request: Request) {
         .eq('cpf', cpf)
         .neq('user_id', colaboradorUserId)
         .maybeSingle();
-      if (duplicado) return respostaErro('Este CPF já está cadastrado no Recebimentos Presencial.');
+      if (duplicado) return respostaErro('Este CPF já está cadastrado no Recebimentos Presenciais.');
     }
 
     const { error: erroAuth } = await clientes.admin.auth.admin.updateUserById(colaboradorUserId, {
@@ -61,7 +61,7 @@ export async function POST(request: Request) {
       user_metadata: { nome, cpf, celular, email_contato: emailContato, empresa_id: empresaId, tipo: 'colaborador_recebimentos' },
     });
     if (erroAuth) {
-      if (erroDuplicidade(erroAuth)) return respostaErro('Este CPF já está cadastrado no Recebimentos Presencial.');
+      if (erroDuplicidade(erroAuth)) return respostaErro('Este CPF já está cadastrado no Recebimentos Presenciais.');
       return respostaErro('Não foi possível atualizar o acesso do colaborador.', 500);
     }
 
@@ -71,7 +71,7 @@ export async function POST(request: Request) {
       .eq('empresa_id', empresaId)
       .eq('user_id', colaboradorUserId);
     if (erroAtualizacao) {
-      if (erroDuplicidade(erroAtualizacao)) return respostaErro('Este CPF já está cadastrado no Recebimentos Presencial.');
+      if (erroDuplicidade(erroAtualizacao)) return respostaErro('Este CPF já está cadastrado no Recebimentos Presenciais.');
       return respostaErro('Não foi possível salvar as alterações.', 500);
     }
     return NextResponse.json({ erro: false });

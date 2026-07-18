@@ -1,8 +1,8 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.6.0.03 -->
+<!-- ava-version: 1.6.0.04 -->
 
-> Revisão 1.6.0.03: Recebimentos recebeu instalação guiada, Visão geral vertical e compatibilidade visual com o modo escuro.
+> Revisão 1.6.0.04: corrigido o nome exibido do módulo para Recebimentos Presenciais, sem alteração no fluxo operacional.
 
 ## Escopo
 
@@ -41,7 +41,7 @@ ou `/ponto`.
   garante entrega sem confirmação.
 - Funcionários do Controle de Ponto usam `/ponto`; configurações e relatórios
   ficam para gestores/autorizados.
-- **Recebimentos Presencial** é instalado em **Ajustes > Módulos**. Depois de
+- **Recebimentos Presenciais** é instalado em **Ajustes > Módulos**. Depois de
   instalado, Gestor Master e Administrador usam **Ajustes > Recebimentos** para
   cadastrar empresas atendidas, pontos de cobrança e colaboradores, além de
   conferir, devolver, registrar divergências ou estornar recebimentos.

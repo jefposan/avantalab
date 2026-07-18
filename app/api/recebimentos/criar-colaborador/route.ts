@@ -43,7 +43,7 @@ export async function POST(request: Request) {
       .eq('cpf', cpf)
       .maybeSingle();
     if (erroBusca) return respostaErro('Não foi possível validar o CPF.', 500);
-    if (existente) return respostaErro('Este CPF já está cadastrado no Recebimentos Presencial.');
+    if (existente) return respostaErro('Este CPF já está cadastrado no Recebimentos Presenciais.');
 
     const emailInterno = emailInternoColaborador(cpf);
     const { data: usuarioCriado, error: erroAuth } = await clientes.admin.auth.admin.createUser({
@@ -60,7 +60,7 @@ export async function POST(request: Request) {
       },
     });
     if (erroAuth || !usuarioCriado.user) {
-      if (erroDuplicidade(erroAuth)) return respostaErro('Este CPF já está cadastrado no Recebimentos Presencial.');
+      if (erroDuplicidade(erroAuth)) return respostaErro('Este CPF já está cadastrado no Recebimentos Presenciais.');
       console.error('Erro ao criar auth do colaborador de recebimentos:', erroAuth);
       return respostaErro('Não foi possível criar o acesso do colaborador.', 500);
     }
@@ -77,7 +77,7 @@ export async function POST(request: Request) {
     });
     if (erroCadastro) {
       await clientes.admin.auth.admin.deleteUser(usuarioCriado.user.id);
-      if (erroDuplicidade(erroCadastro)) return respostaErro('Este CPF já está cadastrado no Recebimentos Presencial.');
+      if (erroDuplicidade(erroCadastro)) return respostaErro('Este CPF já está cadastrado no Recebimentos Presenciais.');
       console.error('Erro ao cadastrar colaborador de recebimentos:', erroCadastro);
       return respostaErro('Não foi possível cadastrar o colaborador.', 500);
     }

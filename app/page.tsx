@@ -9476,7 +9476,7 @@ name="novo-usuario-login"
           </Tooltip>
         )}
 
-        {/* 4a. Recebimentos Presencial */}
+        {/* 4a. Recebimentos Presenciais */}
         {modulosAtivos.includes('recebimentos_presencial') && podeGerenciarRecebimentos && (
           <Tooltip texto="Gerencie empresas, colaboradores e a conferência dos recebimentos em campo." posicao="bottom">
             <button

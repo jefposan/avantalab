@@ -1,10 +1,10 @@
--- Módulo Recebimentos Presencial.
+-- Módulo Recebimentos Presenciais.
 -- Independente do Controle de Ponto: tabelas, usuários, sessão e políticas próprias.
 
 insert into public.modulos (id, nome, descricao, icone, perfis, ordem)
 values (
   'recebimentos_presencial',
-  'Recebimentos Presencial',
+  'Recebimentos Presenciais',
   'Cobrança em dinheiro em campo, com conferência e baixa pelo gestor.',
   'recebimentos',
   '{empresa}',
