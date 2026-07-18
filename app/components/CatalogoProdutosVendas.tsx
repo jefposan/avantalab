@@ -137,7 +137,7 @@ export default function CatalogoProdutosVendas({ empresaId, darkMode, corPrimari
       <p className={`mt-1 text-xs ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>Os campos abaixo alimentam o Vendas Mobile. Dados fiscais podem ser completados sem afetar o catálogo atual.</p>
     </div>
     <div className="grid gap-4 xl:grid-cols-[minmax(0,.85fr)_minmax(0,1.15fr)]">
-      <section className={`self-start rounded-xl border p-3 ${painel}`}>
+      <section className={`self-start rounded-xl border p-3 xl:sticky xl:top-[max(1rem,calc(50dvh-14rem))] ${painel}`}>
         <div className="flex flex-wrap items-center gap-2"><h4 className="rounded-full bg-cyan-500/10 px-3 py-1 text-sm font-black text-cyan-700">{formulario.id ? 'Editar produto' : 'Novo produto'}</h4><p className="text-[10px] font-bold text-cyan-600">Obrigatórios: nome, custo e preço de venda.</p></div>
         <div className="mt-2 grid gap-1.5 sm:grid-cols-2">
           {campos.map(([chave, rotulo]) => <label key={chave} className="text-[9px] font-black uppercase opacity-70">{rotulo}<input value={String(formulario[chave] || '')} onChange={(e) => mudar(chave, chave.startsWith('preco') ? formatarMoedaDigitada(e.target.value) : e.target.value)} onBlur={chave === 'nome' ? () => mudar('nome', formatarDescricao(String(formulario.nome || ''))) : undefined} inputMode={chave.startsWith('preco') ? 'numeric' : undefined} className={`mt-0.5 h-8 w-full rounded-md border px-2 text-xs font-bold normal-case ${campo}`} /></label>)}
