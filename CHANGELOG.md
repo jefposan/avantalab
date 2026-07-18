@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.6.0.58 - 2026-07-18
+
+- O painel administrativo ganhou filtros de perfis por situação de acesso e
+  tipo (Empresa ou Pessoal), acionados pelo botão **Filtros**.
+- Trials vencidos passam a ser classificados como **Expirados** no `/admin`,
+  em vez de aparecerem apenas como inativos.
+
 ## 1.6.0.57 - 2026-07-18
 
 - Na Gestão Web, **Ajustes** passa a se chamar **Menu** e abre em uma gaveta

@@ -7,11 +7,20 @@ function naoAutorizado() {
 }
 
 type AssinaturaRow = { empresa_id: string; status: string; plano: string | null; ciclo: string | null; valido_ate: string | null; trial_fim: string | null; cupom_id: string | null };
+type FiltroPerfil = 'todos' | 'com_acesso' | 'sem_acesso' | StatusAssinatura;
+type FiltroTipoPerfil = 'todos' | TipoPerfil;
+
+function trialExpirou(trialFim: string | null) {
+  return !trialFim || new Date(trialFim) <= new Date();
+}
 
 // Reproduz a lógica do resolver para o admin ver a situação real de cada perfil.
 function estadoDoPerfil(tipoPerfil: TipoPerfil, criadoEmISO: string | null, row: AssinaturaRow | undefined): EstadoAcesso & { plano: string | null; ciclo: string | null } {
   if (row) {
-    return { tipoPerfil, status: row.status as StatusAssinatura, validoAte: row.valido_ate, trialFim: row.trial_fim, plano: row.plano, ciclo: row.ciclo };
+    const status = row.status === 'trial' && trialExpirou(row.trial_fim)
+      ? 'expirada'
+      : row.status as StatusAssinatura;
+    return { tipoPerfil, status, validoAte: row.valido_ate, trialFim: row.trial_fim, plano: row.plano, ciclo: row.ciclo };
   }
   const criadoEm = criadoEmISO ? new Date(criadoEmISO) : null;
   const anteriorAoLancamento = !criadoEm || criadoEm < new Date(DATA_LANCAMENTO);
@@ -19,7 +28,7 @@ function estadoDoPerfil(tipoPerfil: TipoPerfil, criadoEmISO: string | null, row:
   if (tipoPerfil === 'empresa') {
     const fim = new Date(criadoEm as Date);
     fim.setDate(fim.getDate() + TRIAL_DIAS);
-    return { tipoPerfil, status: 'trial', validoAte: null, trialFim: fim.toISOString(), plano: null, ciclo: null };
+    return { tipoPerfil, status: fim > new Date() ? 'trial' : 'expirada', validoAte: null, trialFim: fim.toISOString(), plano: null, ciclo: null };
   }
   return { tipoPerfil, status: 'expirada', validoAte: null, trialFim: null, plano: null, ciclo: null };
 }
@@ -32,18 +41,26 @@ export async function GET(request: Request) {
 
     const url = new URL(request.url);
     const q = (url.searchParams.get('q') || '').trim();
+    const filtroRecebido = url.searchParams.get('filtro') || 'todos';
+    const filtro: FiltroPerfil = ['todos', 'com_acesso', 'sem_acesso', 'trial', 'ativa', 'expirada', 'cancelada', 'cortesia', 'inadimplente'].includes(filtroRecebido)
+      ? filtroRecebido as FiltroPerfil
+      : 'todos';
+    const tipoRecebido = url.searchParams.get('tipo') || 'todos';
+    const tipo: FiltroTipoPerfil = ['todos', 'empresa', 'pessoal'].includes(tipoRecebido)
+      ? tipoRecebido as FiltroTipoPerfil
+      : 'todos';
     const pagina = Math.max(1, Number(url.searchParams.get('pagina')) || 1);
     const porPagina = [20, 50, 100].includes(Number(url.searchParams.get('porPagina'))) ? Number(url.searchParams.get('porPagina')) : 20;
     const de = (pagina - 1) * porPagina;
     const ate = de + porPagina - 1;
 
     let query = db.from('empresas')
-      .select('id, nome, tipo_perfil, created_at', { count: 'exact' })
-      .order('nome', { ascending: true })
-      .range(de, ate);
+      .select('id, nome, tipo_perfil, created_at')
+      .order('nome', { ascending: true });
     if (q) query = query.ilike('nome', `%${q}%`);
+    if (tipo !== 'todos') query = query.eq('tipo_perfil', tipo);
 
-    const { data: empresas, error, count } = await query;
+    const { data: empresas, error } = await query;
     if (error) throw error;
 
     const ids = (empresas || []).map((e) => e.id);
@@ -52,7 +69,7 @@ export async function GET(request: Request) {
       : [];
     const mapa = new Map(assinaturas.map((a) => [a.empresa_id, a]));
 
-    const perfis = (empresas || []).map((e) => {
+    const perfisCompletos = (empresas || []).map((e) => {
       const tipoPerfil: TipoPerfil = e.tipo_perfil === 'pessoal' ? 'pessoal' : 'empresa';
       const estado = estadoDoPerfil(tipoPerfil, e.created_at, mapa.get(e.id));
       return {
@@ -69,7 +86,14 @@ export async function GET(request: Request) {
         tem_registro: Boolean(mapa.get(e.id)),
       };
     });
-    return NextResponse.json({ erro: false, perfis, total: count || 0, pagina, porPagina });
+    const perfisFiltrados = perfisCompletos.filter((perfil) => {
+      if (filtro === 'todos') return true;
+      if (filtro === 'com_acesso') return perfil.tem_acesso;
+      if (filtro === 'sem_acesso') return !perfil.tem_acesso;
+      return perfil.status === filtro;
+    });
+    const perfis = perfisFiltrados.slice(de, ate + 1);
+    return NextResponse.json({ erro: false, perfis, total: perfisFiltrados.length, pagina, porPagina });
   } catch (error) {
     console.error('Erro ao buscar perfis:', error);
     return NextResponse.json({ erro: true, mensagem: 'Não foi possível buscar os perfis.' }, { status: 500 });

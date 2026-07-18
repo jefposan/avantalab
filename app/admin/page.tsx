@@ -34,6 +34,32 @@ type Perfil = {
   tem_acesso: boolean;
   tem_registro: boolean;
 };
+type PerfilFiltro = 'todos' | 'com_acesso' | 'sem_acesso' | 'trial' | 'ativa' | 'cortesia' | 'inadimplente' | 'cancelada' | 'expirada';
+type PerfilTipoFiltro = 'todos' | 'empresa' | 'pessoal';
+
+const FILTROS_PERFIL: Array<{ id: PerfilFiltro; label: string }> = [
+  { id: 'todos', label: 'Todos' },
+  { id: 'com_acesso', label: 'Com acesso' },
+  { id: 'sem_acesso', label: 'Sem acesso' },
+  { id: 'ativa', label: 'Assinatura ativa' },
+  { id: 'trial', label: 'Trial' },
+  { id: 'cortesia', label: 'Cortesia / Cupom' },
+  { id: 'inadimplente', label: 'Pagamento pendente' },
+  { id: 'cancelada', label: 'Cancelado / Revogado' },
+  { id: 'expirada', label: 'Expirado / Grátis' },
+];
+
+function situacaoPerfil(perfil: Perfil) {
+  const situacoes: Record<string, string> = {
+    ativa: 'Ativa',
+    trial: 'Em teste',
+    cortesia: 'Cortesia',
+    inadimplente: 'Pagamento pendente',
+    cancelada: 'Cancelada',
+    expirada: perfil.tipo_perfil === 'pessoal' ? 'Grátis' : 'Expirada',
+  };
+  return situacoes[perfil.status] || (perfil.tem_acesso ? 'Ativo' : 'Inativo');
+}
 
 type UsuariosAtivosSistema = {
   total: number | null;
@@ -114,7 +140,7 @@ type ConteudoVendas = {
 
 type ConteudoVendasForm = { tipo: string; titulo: string; descricao: string };
 
-type IconName = 'inbox' | 'send' | 'content' | 'settings' | 'refresh' | 'check' | 'archive' | 'trash' | 'reopen' | 'logout' | 'lock' | 'ticket' | 'search' | 'gauge';
+type IconName = 'inbox' | 'send' | 'content' | 'settings' | 'refresh' | 'check' | 'archive' | 'trash' | 'reopen' | 'logout' | 'lock' | 'ticket' | 'search' | 'filter' | 'gauge';
 
 function Icon({ name, size = 17 }: { name: IconName; size?: number }) {
   const common = { width: size, height: size, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: 2, strokeLinecap: 'round' as const, strokeLinejoin: 'round' as const };
@@ -129,6 +155,7 @@ function Icon({ name, size = 17 }: { name: IconName; size?: number }) {
   if (name === 'lock') return <svg {...common}><rect x="4" y="10" width="16" height="11" rx="2" /><path d="M8 10V7a4 4 0 0 1 8 0v3" /></svg>;
   if (name === 'ticket') return <svg {...common}><path d="M3 9a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2 2 2 0 0 0 0 4 2 2 0 0 1-2 2H5a2 2 0 0 1-2-2 2 2 0 0 0 0-4Z" /><path d="M13 7v10" /></svg>;
   if (name === 'search') return <svg {...common}><circle cx="11" cy="11" r="7" /><path d="m21 21-4.3-4.3" /></svg>;
+  if (name === 'filter') return <svg {...common}><path d="M4 5h16M7 12h10M10 19h4" /></svg>;
   if (name === 'gauge') return <svg {...common}><path d="M12 14 8 8" /><path d="M3.3 17a10 10 0 1 1 17.4 0" /></svg>;
   if (name === 'content') return <svg {...common}><rect x="3" y="4" width="8" height="7" rx="1" /><rect x="13" y="4" width="8" height="7" rx="1" /><path d="M3 15h8M3 19h8M13 15h8M13 19h5" /></svg>;
   return <svg {...common}><path d="M4 4h16v13H7l-3 3Z" /><path d="M8 9h8M8 13h5" /></svg>;
@@ -245,6 +272,9 @@ export default function AdminPage() {
   const [creatingCupom, setCreatingCupom] = useState(false);
   const [perfis, setPerfis] = useState<Perfil[]>([]);
   const [perfilBusca, setPerfilBusca] = useState('');
+  const [perfilFiltro, setPerfilFiltro] = useState<PerfilFiltro>('todos');
+  const [perfilTipoFiltro, setPerfilTipoFiltro] = useState<PerfilTipoFiltro>('todos');
+  const [filtrosPerfilAbertos, setFiltrosPerfilAbertos] = useState(false);
   const [buscandoPerfis, setBuscandoPerfis] = useState(false);
   const [perfilPagina, setPerfilPagina] = useState(1);
   const [perfilPorPagina, setPerfilPorPagina] = useState(20);
@@ -258,6 +288,8 @@ export default function AdminPage() {
   const [liberarTipo, setLiberarTipo] = useState<'indeterminado' | 'periodo'>('indeterminado');
   const [liberarValor, setLiberarValor] = useState('1');
   const [liberarUnidade, setLiberarUnidade] = useState<'dias' | 'semanas' | 'meses'>('meses');
+
+  const totalFiltrosPerfilAtivos = Number(perfilFiltro !== 'todos') + Number(perfilTipoFiltro !== 'todos');
 
   const authHeaders = (value = token) => ({ Authorization: `Bearer ${value.trim()}` });
 
@@ -278,11 +310,13 @@ export default function AdminPage() {
     }
   };
 
-  const buscarPerfis = async (pagina = 1) => {
+  const buscarPerfis = async (pagina = 1, filtros?: { situacao?: PerfilFiltro; tipo?: PerfilTipoFiltro }) => {
     setBuscandoPerfis(true);
     setError('');
     try {
-      const response = await fetch(`/api/admin-perfis?q=${encodeURIComponent(perfilBusca.trim())}&pagina=${pagina}&porPagina=${perfilPorPagina}`, { headers: authHeaders() });
+      const situacao = filtros?.situacao ?? perfilFiltro;
+      const tipo = filtros?.tipo ?? perfilTipoFiltro;
+      const response = await fetch(`/api/admin-perfis?q=${encodeURIComponent(perfilBusca.trim())}&filtro=${situacao}&tipo=${tipo}&pagina=${pagina}&porPagina=${perfilPorPagina}`, { headers: authHeaders() });
       const data = await response.json().catch(() => null);
       if (!response.ok || data?.erro) throw new Error(data?.mensagem || 'Não foi possível buscar.');
       setPerfis(data.perfis || []);
@@ -805,10 +839,24 @@ export default function AdminPage() {
               <div className="mt-3 flex flex-col gap-2 sm:flex-row">
                 <input value={perfilBusca} onChange={(event) => setPerfilBusca(event.target.value)} onKeyDown={(event) => { if (event.key === 'Enter') void buscarPerfis(1); }} placeholder="Nome do perfil (vazio = todos)" className="h-10 flex-1 rounded-md border border-slate-300 px-3 text-sm outline-none focus:border-cyan-700" />
                 <div className="flex gap-2">
+                  <button type="button" onClick={() => setFiltrosPerfilAbertos((aberto) => !aberto)} className={`relative flex h-10 items-center justify-center gap-1.5 rounded-md border px-3 text-xs font-black uppercase ${filtrosPerfilAbertos || totalFiltrosPerfilAtivos ? 'border-cyan-300 bg-cyan-50 text-cyan-800' : 'border-slate-300 text-slate-600 hover:bg-slate-50'}`}><Icon name="filter" size={15} />Filtros{totalFiltrosPerfilAtivos > 0 && <span className="rounded-full bg-cyan-700 px-1.5 py-0.5 text-[9px] text-white">{totalFiltrosPerfilAtivos}</span>}</button>
                   <select value={perfilPorPagina} onChange={(event) => setPerfilPorPagina(Number(event.target.value))} className="h-10 rounded-md border border-slate-300 bg-white px-2 text-xs font-bold outline-none focus:border-cyan-700"><option value={20}>20/pág</option><option value={50}>50/pág</option><option value={100}>100/pág</option></select>
                   <button type="button" onClick={() => void buscarPerfis(1)} disabled={buscandoPerfis} className="flex h-10 flex-1 items-center justify-center gap-2 rounded-md bg-cyan-700 px-4 text-xs font-black uppercase text-white hover:bg-cyan-800 disabled:opacity-60"><Icon name="search" size={15} />{buscandoPerfis ? 'Carregando...' : 'Carregar / Buscar'}</button>
                 </div>
               </div>
+              {filtrosPerfilAbertos && <div className="mt-3 rounded-lg border border-cyan-100 bg-cyan-50/40 p-3">
+                <div className="flex flex-col gap-3">
+                  <div>
+                    <p className="text-[10px] font-black uppercase tracking-wide text-slate-500">Situação de acesso</p>
+                    <div className="mt-2 flex flex-wrap gap-1.5">{FILTROS_PERFIL.map((filtro) => <button key={filtro.id} type="button" onClick={() => setPerfilFiltro(filtro.id)} className={`rounded-full border px-2.5 py-1 text-[10px] font-black transition ${perfilFiltro === filtro.id ? 'border-cyan-700 bg-cyan-700 text-white' : 'border-slate-200 bg-white text-slate-600 hover:border-cyan-300'}`}>{filtro.label}</button>)}</div>
+                  </div>
+                  <div>
+                    <p className="text-[10px] font-black uppercase tracking-wide text-slate-500">Tipo de perfil</p>
+                    <div className="mt-2 flex flex-wrap gap-1.5">{([['todos', 'Todos os tipos'], ['empresa', 'Empresa'], ['pessoal', 'Pessoal']] as Array<[PerfilTipoFiltro, string]>).map(([tipo, label]) => <button key={tipo} type="button" onClick={() => setPerfilTipoFiltro(tipo)} className={`rounded-full border px-2.5 py-1 text-[10px] font-black transition ${perfilTipoFiltro === tipo ? 'border-cyan-700 bg-cyan-700 text-white' : 'border-slate-200 bg-white text-slate-600 hover:border-cyan-300'}`}>{label}</button>)}</div>
+                  </div>
+                  <div className="flex justify-end gap-2 border-t border-cyan-100 pt-3"><button type="button" onClick={() => { setPerfilFiltro('todos'); setPerfilTipoFiltro('todos'); void buscarPerfis(1, { situacao: 'todos', tipo: 'todos' }); }} className="h-9 rounded-md px-3 text-[10px] font-black uppercase text-slate-600 hover:bg-white">Limpar</button><button type="button" onClick={() => { setFiltrosPerfilAbertos(false); void buscarPerfis(1); }} disabled={buscandoPerfis} className="h-9 rounded-md bg-cyan-700 px-3 text-[10px] font-black uppercase text-white hover:bg-cyan-800 disabled:opacity-60">Aplicar filtros</button></div>
+                </div>
+              </div>}
             </section>
             {!perfisCarregados ? <div className="rounded-lg border border-dashed border-slate-300 bg-white px-4 py-10 text-center text-sm text-slate-500">Clique em &quot;Carregar / Buscar&quot; para listar os perfis.</div>
              : perfis.length === 0 ? <div className="rounded-lg border border-dashed border-slate-300 bg-white px-4 py-10 text-center text-sm text-slate-500">Nenhum perfil encontrado.</div>
@@ -822,7 +870,7 @@ export default function AdminPage() {
                     <h3 className="truncate text-sm font-black text-slate-950">{perfil.nome}</h3>
                     <dl className="mt-1 grid gap-0.5 text-[11px] font-bold text-slate-500 sm:grid-cols-3 sm:gap-x-4">
                       <div><dt className="inline text-slate-400">Tipo: </dt><dd className="inline text-slate-700">{tipoTxt}</dd></div>
-                      <div><dt className="inline text-slate-400">Situação: </dt><dd className={`inline ${perfil.tem_acesso ? 'text-emerald-700' : 'text-red-600'}`}>{perfil.tem_acesso ? 'Ativo' : 'Inativo'}</dd></div>
+                      <div><dt className="inline text-slate-400">Situação: </dt><dd className={`inline ${perfil.tem_acesso ? 'text-emerald-700' : 'text-red-600'}`}>{situacaoPerfil(perfil)}</dd></div>
                       <div className="sm:col-span-3"><dt className="inline text-slate-400">Acesso: </dt><dd className="inline text-slate-700">{detalheAcesso(perfil)}</dd></div>
                     </dl>
                   </div>

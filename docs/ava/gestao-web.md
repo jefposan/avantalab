@@ -1,8 +1,8 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.6.0.57 -->
+<!-- ava-version: 1.6.0.58 -->
 
-> Revisão 1.6.0.57: **Ajustes** passa a se chamar **Menu** na Gestão Web e abre como gaveta lateral.
+> Revisão 1.6.0.58: sem impacto operacional na Gestão Web; filtros restritos ao painel administrativo.
 
 ## Escopo
 
