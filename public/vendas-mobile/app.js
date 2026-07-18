@@ -735,7 +735,16 @@ function aplicarFiltroDashboard() {
 
 function campoDataCentralizado(idCampo, data, rotulo) {
   const valorData = /^\d{4}-\d{2}-\d{2}$/.test(String(data || '')) ? data : isoData(new Date());
-  return `<label class="transaction-field transaction-date-field"><span>${escapeHtml(rotulo)}</span><button id="${idCampo}" type="button" class="date-picker-button" value="${valorData}" onclick="abrirCalendarioCentralizado('${idCampo}')">${dataBR(`${valorData}T12:00:00`)}</button></label>`;
+  const pagamento = idCampo === 'pagamentoClienteData' || idCampo === 'editarPagamentoData';
+  return `<label class="transaction-field transaction-date-field"><span>${escapeHtml(rotulo)}</span><button id="${idCampo}" type="button" class="date-picker-button" value="${valorData}" data-bloquear-futuro="${pagamento ? 'true' : 'false'}" onclick="abrirCalendarioCentralizado('${idCampo}')">${dataBR(`${valorData}T12:00:00`)}</button></label>`;
+}
+
+function dataEhFutura(data) {
+  return /^\d{4}-\d{2}-\d{2}$/.test(String(data || '')) && String(data) > isoData(new Date());
+}
+
+function calendarioBloqueiaDatasFuturas() {
+  return calendarioCentralizado?.idCampo === 'pagamentoClienteData' || calendarioCentralizado?.idCampo === 'editarPagamentoData';
 }
 
 function abrirCalendarioCentralizado(idCampo) {
@@ -757,13 +766,16 @@ function renderCalendarioCentralizado() {
   const primeiroDia = inicio.getDay();
   const ultimoDia = new Date(ano, mes + 1, 0).getDate();
   const valorSelecionado = String(document.getElementById(calendarioCentralizado.idCampo)?.value || '');
+  const bloquearFuturo = calendarioBloqueiaDatasFuturas();
+  const hoje = isoData(new Date());
   const semanas = [];
   for (let indice = 0; indice < 42; indice += 1) {
     const dia = indice - primeiroDia + 1;
     if (dia < 1 || dia > ultimoDia) semanas.push('<i aria-hidden="true"></i>');
     else {
       const iso = `${ano}-${String(mes + 1).padStart(2, '0')}-${String(dia).padStart(2, '0')}`;
-      semanas.push(`<button type="button" class="${iso === valorSelecionado ? 'selected' : ''}" onclick="selecionarDataCalendario('${iso}')">${dia}</button>`);
+      const indisponivel = bloquearFuturo && iso > hoje;
+      semanas.push(`<button type="button" class="${iso === valorSelecionado ? 'selected ' : ''}${indisponivel ? 'is-disabled' : ''}" onclick="selecionarDataCalendario('${iso}')" ${indisponivel ? 'disabled aria-label="Data futura indisponível"' : ''}>${dia}</button>`);
     }
   }
   const nomesMeses = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
@@ -777,12 +789,19 @@ function renderCalendarioCentralizado() {
 
 function mudarMesCalendario(delta) {
   if (!calendarioCentralizado) return;
-  calendarioCentralizado.data = new Date(calendarioCentralizado.data.getFullYear(), calendarioCentralizado.data.getMonth() + Number(delta || 0), 1);
+  const proximo = new Date(calendarioCentralizado.data.getFullYear(), calendarioCentralizado.data.getMonth() + Number(delta || 0), 1);
+  const hoje = new Date();
+  if (calendarioBloqueiaDatasFuturas() && proximo > new Date(hoje.getFullYear(), hoje.getMonth(), 1)) return;
+  calendarioCentralizado.data = proximo;
   renderCalendarioCentralizado();
 }
 
 function selecionarDataCalendario(data) {
   if (!calendarioCentralizado) return;
+  if (calendarioBloqueiaDatasFuturas() && dataEhFutura(data)) {
+    toast('Pagamento não pode ter data futura.');
+    return;
+  }
   const campo = document.getElementById(calendarioCentralizado.idCampo);
   if (campo) { campo.value = data; campo.textContent = dataBR(`${data}T12:00:00`); }
   if (calendarioCentralizado.idCampo === 'pedidoClienteData' && pedidoClienteRascunho) pedidoClienteRascunho.data = data;
@@ -3833,6 +3852,7 @@ async function confirmarPagamentoCliente() {
   const dataPagamento = valor('pagamentoClienteData');
   if (resumo.abatimento <= 0) { toast('Informe o valor pago ou o desconto.'); return; }
   if (!/^\d{4}-\d{2}-\d{2}$/.test(dataPagamento)) { toast('Informe uma data válida.'); return; }
+  if (dataEhFutura(dataPagamento)) { toast('Pagamento não pode ter data futura.'); return; }
   try {
     const saldoConfirmado = await saldoFinanceiroConfirmadoCliente(rascunho.clienteId);
     rascunho.saldoAnterior = saldoConfirmado.debito;
@@ -3976,6 +3996,7 @@ async function salvarEdicaoPagamentoCliente(pagamentoId, pagina = 0, retornoClie
   const dataAtualizada = valor('editarPagamentoData');
   if (valorAtualizado <= 0) { toast('Informe um valor de pagamento maior que zero.'); return; }
   if (!/^\d{4}-\d{2}-\d{2}$/.test(dataAtualizada)) { toast('Informe uma data válida.'); return; }
+  if (dataEhFutura(dataAtualizada)) { toast('Pagamento não pode ter data futura.'); return; }
   const candidato = { ...pagamentoAtual, valor: valorAtualizado, data_pagamento: dataAtualizada };
   const resumo = resumoFinanceiroParaConfirmarPagamento(candidato);
   candidato.saldo_anterior = resumo.saldoAnterior;
@@ -5920,7 +5941,7 @@ function aplicarAtualizacaoPwaPendente() {
 
 if (!window.__VENDAS_MOBILE_EMBEDDED__ && 'serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('./sw.js?v=40').catch(() => {});
+    navigator.serviceWorker.register('./sw.js?v=41').catch(() => {});
   });
 }
 
