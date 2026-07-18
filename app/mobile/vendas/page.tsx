@@ -19,7 +19,7 @@ export const viewport: Viewport = {
 export default function VendasMobilePage() {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
-  const assetVersion = '20260718-05';
+  const assetVersion = '20260718-06';
   const bootstrap = `
     (function () {
       window.__VENDAS_MOBILE_EMBEDDED__ = true;
