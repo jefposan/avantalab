@@ -7938,19 +7938,21 @@
   }
 
   function campoClaro(id, label, extra, value) {
+    var escuro = !!state.darkMode;
     return (
-      '<label class="grid gap-1 text-xs font-black uppercase tracking-wide text-slate-600">' +
+      '<label class="grid gap-1 text-xs font-black uppercase tracking-wide ' + (escuro ? 'text-slate-300' : 'text-slate-600') + '">' +
         escapeHtml(label) +
-        '<input id="' + id + '" ' + (extra || '') + ' value="' + escapeHtml(value || '') + '" style="font-size:16px" class="h-11 w-full min-w-0 rounded-md border border-slate-300 bg-white px-3 text-base font-bold normal-case tracking-normal text-slate-900 outline-none focus:border-cyan-500" />' +
+        '<input id="' + id + '" ' + (extra || '') + ' value="' + escapeHtml(value || '') + '" style="font-size:16px" class="h-11 w-full min-w-0 rounded-md border px-3 text-base font-bold normal-case tracking-normal outline-none focus:border-cyan-400 ' + (escuro ? 'border-slate-500 bg-slate-800 text-slate-100' : 'border-slate-300 bg-white text-slate-900') + '" />' +
       '</label>'
     );
   }
 
   function campoValor(id, label, value) {
+    var escuro = !!state.darkMode;
     return (
-      '<label class="grid gap-1 text-xs font-black uppercase tracking-wide text-slate-600">' +
+      '<label class="grid gap-1 text-xs font-black uppercase tracking-wide ' + (escuro ? 'text-slate-300' : 'text-slate-600') + '">' +
         escapeHtml(label) +
-        '<input id="' + id + '" inputmode="decimal" value="' + escapeHtml(value || '') + '" placeholder="R$ 0,00" style="font-size:16px" class="h-11 rounded-md border border-slate-300 bg-white px-3 text-right text-base font-black normal-case tracking-normal text-slate-900 outline-none focus:border-cyan-500" />' +
+        '<input id="' + id + '" inputmode="decimal" value="' + escapeHtml(value || '') + '" placeholder="R$ 0,00" style="font-size:16px" class="h-11 rounded-md border px-3 text-right text-base font-black normal-case tracking-normal outline-none focus:border-cyan-400 ' + (escuro ? 'border-slate-500 bg-slate-800 text-slate-100 placeholder:text-slate-400' : 'border-slate-300 bg-white text-slate-900') + '" />' +
       '</label>'
     );
   }
@@ -9321,6 +9323,12 @@
   function modalLancamentoHtml() {
     var despesaAtiva = state.tipoLancamento === 'despesa';
     var novaAberta = state.novaDespesaAberta;
+    var campoEscuro = !!state.darkMode;
+    var corpoModal = campoEscuro ? 'bg-slate-900 text-slate-100' : 'bg-white';
+    var abas = campoEscuro ? 'border border-slate-700 bg-slate-800/80' : 'bg-slate-100';
+    var abaInativa = campoEscuro ? 'text-slate-300' : 'text-slate-500';
+    var abaDespesaAtiva = campoEscuro ? 'border border-red-400/60 bg-red-600 text-white shadow-sm' : 'bg-red-600 text-white shadow-sm';
+    var abaReceitaAtiva = campoEscuro ? 'border border-emerald-400/60 bg-emerald-600 text-white shadow-sm' : 'bg-emerald-600 text-white shadow-sm';
 
     return (
       '<div id="modal-lancamento-overlay" class="fixed inset-0 z-40 flex items-center justify-center overflow-hidden bg-slate-950/90 px-3 pt-4" style="padding-bottom:calc(env(safe-area-inset-bottom) + 78px)">' +
@@ -9334,7 +9342,7 @@
                   '<h2 class="text-sm font-black">Cadastrar tipo de despesa</h2>' +
                 '</div>' +
               '</div>' +
-              '<div class="bg-white p-4">' +
+              '<div class="' + corpoModal + ' p-4">' +
               novaDespesaFormHtml() +
               '</div>'
             : '<div class="grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-2 px-4 py-3 text-white" style="background-color:#003E73">' +
@@ -9342,10 +9350,10 @@
                 '<span class="justify-self-center rounded-full border border-white/25 bg-white/15 px-3 py-1 text-center text-base font-black leading-none tracking-wide text-white shadow-sm">' + escapeHtml(String(state.mes || '').toUpperCase()) + '</span>' +
                 '<button id="fechar-lancamento" type="button" class="justify-self-end flex h-9 w-9 items-center justify-center rounded-full border border-white/20 bg-white/10 text-xl text-white">&times;</button>' +
               '</div>' +
-              '<div class="bg-white p-4">' +
-              '<div class="mb-3 grid grid-cols-2 gap-2 rounded-xl bg-slate-100 p-1">' +
-                '<button id="tipo-despesa" type="button" class="h-9 rounded-lg text-sm font-black transition ' + (despesaAtiva ? 'bg-red-600 text-white shadow-sm' : 'text-slate-500') + '">Despesa</button>' +
-                '<button id="tipo-receita" type="button" class="h-9 rounded-lg text-sm font-black transition ' + (!despesaAtiva ? 'bg-emerald-600 text-white shadow-sm' : 'text-slate-500') + '">Receita</button>' +
+              '<div class="' + corpoModal + ' p-4">' +
+              '<div class="mb-3 grid grid-cols-2 gap-2 rounded-xl ' + abas + ' p-1">' +
+                '<button id="tipo-despesa" type="button" class="h-9 rounded-lg text-sm font-black transition ' + (despesaAtiva ? abaDespesaAtiva : abaInativa) + '">Despesa</button>' +
+                '<button id="tipo-receita" type="button" class="h-9 rounded-lg text-sm font-black transition ' + (!despesaAtiva ? abaReceitaAtiva : abaInativa) + '">Receita</button>' +
               '</div>' +
               '<p id="lancamento-alerta-dia" class="rounded-lg bg-rose-50 px-3 py-2 text-[11px] font-black text-rose-700 mb-3"' + (state.erro ? '' : ' style="display:none"') + '>' + escapeHtml(state.erro) + '</p>' +
               (despesaAtiva ? modalDespesaCamposHtml() : modalReceitaCamposHtml()) +
@@ -9359,13 +9367,16 @@
 
   function novaDespesaFormHtml() {
     var categorias = categoriasDoPerfil(state.empresa && state.empresa.tipo_perfil);
+    var escuro = !!state.darkMode;
+    var rotuloCampo = escuro ? 'text-slate-300' : 'text-slate-600';
+    var campo = escuro ? 'border-slate-500 bg-slate-800 text-slate-100' : 'border-slate-300 bg-white text-slate-900';
     return (
       '<div class="grid gap-4">' +
-        '<label class="grid gap-1.5 text-xs font-black uppercase tracking-wide text-slate-600">Nome da despesa' +
-          '<input id="nova-despesa-nome" type="text" value="' + escapeHtml(state.novaDespesaNome) + '" placeholder="Ex: Plano de saude" style="font-size:16px" autocomplete="off" class="h-11 w-full rounded-lg border border-slate-300 bg-white px-3 text-base font-bold normal-case tracking-normal outline-none focus:border-sky-400 focus:ring-1 focus:ring-sky-200" />' +
+        '<label class="grid gap-1.5 text-xs font-black uppercase tracking-wide ' + rotuloCampo + '">Nome da despesa' +
+          '<input id="nova-despesa-nome" type="text" value="' + escapeHtml(state.novaDespesaNome) + '" placeholder="Ex: Plano de saude" style="font-size:16px" autocomplete="off" class="h-11 w-full rounded-lg border px-3 text-base font-bold normal-case tracking-normal outline-none focus:border-sky-400 focus:ring-1 focus:ring-sky-200 ' + campo + '" />' +
         '</label>' +
-        '<label class="grid gap-1.5 text-xs font-black uppercase tracking-wide text-slate-600">Categoria' +
-          '<select id="nova-despesa-categoria" style="font-size:16px" class="h-11 w-full rounded-lg border border-slate-300 bg-white px-3 text-base font-bold normal-case tracking-normal">' +
+        '<label class="grid gap-1.5 text-xs font-black uppercase tracking-wide ' + rotuloCampo + '">Categoria' +
+          '<select id="nova-despesa-categoria" style="font-size:16px" class="h-11 w-full rounded-lg border px-3 text-base font-bold normal-case tracking-normal ' + campo + '">' +
             categorias.map(function (cat) {
               return '<option value="' + escapeHtml(cat.nome) + '"' + (cat.nome === state.novaDespesaCategoria ? ' selected' : '') + '>' + escapeHtml(cat.nome) + '</option>';
             }).join('') +
@@ -9378,12 +9389,16 @@
   }
 
   function modalDespesaCamposHtml() {
+    var escuro = !!state.darkMode;
+    var rotuloCampo = escuro ? 'text-slate-300' : 'text-slate-600';
+    var selectCampo = escuro ? 'border-slate-500 bg-slate-800 text-slate-100' : 'border-slate-300 bg-white text-slate-900';
+    var pilulaInativa = escuro ? 'border-slate-500 bg-slate-800 text-slate-200' : 'border-slate-300 bg-white text-slate-500';
     return (
       '<div class="grid gap-3">' +
         '<div class="flex items-end gap-6">' +
           '<div class="w-20 shrink-0">' + campoClaro('despesa-dia', 'Dia', 'type="number" min="1" max="' + maxDias(state.mes, state.ano) + '" inputmode="numeric" style="font-size:16px;text-align:center"', state.despesaDia) + '</div>' +
-          '<label class="grid min-w-0 flex-1 gap-1 text-xs font-black uppercase tracking-wide text-slate-600">Despesa' +
-            '<select id="despesa-nome" style="font-size:16px" class="h-11 w-full rounded-md border border-slate-300 bg-white px-3 text-base font-bold normal-case tracking-normal">' +
+          '<label class="grid min-w-0 flex-1 gap-1 text-xs font-black uppercase tracking-wide ' + rotuloCampo + '">Despesa' +
+            '<select id="despesa-nome" style="font-size:16px" class="h-11 w-full rounded-md border px-3 text-base font-bold normal-case tracking-normal ' + selectCampo + '">' +
               '<option value=""' + (!state.despesaNome ? ' selected' : '') + '>Selecione</option>' +
               state.despesas.map(function (despesa) {
                 return '<option value="' + escapeHtml(despesa.nome) + '"' + (state.despesaNome === despesa.nome ? ' selected' : '') + '>' + escapeHtml(despesa.nome) + '</option>';
@@ -9391,7 +9406,7 @@
             '</select>' +
           '</label>' +
         '</div>' +
-        '<button id="abrir-nova-despesa" type="button" class="flex w-full items-center gap-2 rounded-xl border border-dashed border-slate-300 px-3 py-2.5 text-xs font-black text-slate-500 transition hover:border-slate-400 hover:text-slate-700">+ Cadastrar despesa</button>' +
+        '<button id="abrir-nova-despesa" type="button" class="flex w-full items-center gap-2 rounded-xl border border-dashed px-3 py-2.5 text-xs font-black transition ' + (escuro ? 'border-slate-500 text-slate-300 hover:border-slate-400 hover:text-white' : 'border-slate-300 text-slate-500 hover:border-slate-400 hover:text-slate-700') + '">+ Cadastrar despesa</button>' +
         campoClaro('despesa-descricao', 'Descricao', '', state.despesaDescricao) +
         campoValor('despesa-valor', 'Valor', state.despesaValor) +
         '<input id="nota-camera" type="file" accept="image/jpeg,image/png,image/webp" capture="environment" class="hidden" /><input id="nota-arquivo" type="file" accept="image/jpeg,image/png,image/webp" class="hidden" />' +
@@ -9400,16 +9415,16 @@
           '<button id="toggle-parcelar-despesa" type="button" class="flex h-8 items-center gap-1.5 rounded-full border px-3 text-[11px] font-black uppercase tracking-wide transition-all ' +
             (state.formParcelar
               ? 'border-red-500 bg-red-600 text-white shadow-sm'
-              : 'border-slate-300 bg-white text-slate-500') + '">' +
+              : pilulaInativa) + '">' +
             '<span>' + (state.formParcelar ? '&#10003;' : '&divide;') + '</span>' +
             '<span>Parcelar</span>' +
           '</button>' +
           (state.formParcelar ? (
             '<div class="flex items-center gap-1">' +
-              '<button id="parcelar-menos" type="button" class="flex h-8 w-8 items-center justify-center rounded-md border border-slate-300 bg-white text-sm font-black text-slate-700">&minus;</button>' +
-              '<span class="w-7 text-center text-sm font-black text-slate-900">' + state.formParcelas + '</span>' +
-              '<button id="parcelar-mais" type="button" class="flex h-8 w-8 items-center justify-center rounded-md border border-slate-300 bg-white text-sm font-black text-slate-700">+</button>' +
-              '<span class="text-[10px] font-semibold text-slate-500">x</span>' +
+              '<button id="parcelar-menos" type="button" class="flex h-8 w-8 items-center justify-center rounded-md border text-sm font-black ' + selectCampo + '">&minus;</button>' +
+              '<span class="w-7 text-center text-sm font-black ' + (escuro ? 'text-slate-100' : 'text-slate-900') + '">' + state.formParcelas + '</span>' +
+              '<button id="parcelar-mais" type="button" class="flex h-8 w-8 items-center justify-center rounded-md border text-sm font-black ' + selectCampo + '">+</button>' +
+              '<span class="text-[10px] font-semibold ' + (escuro ? 'text-slate-400' : 'text-slate-500') + '">x</span>' +
             '</div>' +
             '<span class="text-[10px] font-semibold italic text-slate-400">nos meses seguintes</span>'
           ) : '') +
@@ -9423,11 +9438,16 @@
 
   function modalReceitaCamposHtml() {
     var entradaAtiva = state.modoReceita !== 'total';
+    var escuro = !!state.darkMode;
+    var abas = escuro ? 'border border-slate-700 bg-slate-800/80' : 'bg-slate-100';
+    var abaAtiva = escuro ? 'border border-slate-500 bg-slate-700 text-emerald-300 shadow-sm' : 'bg-white text-emerald-600 shadow-sm';
+    var abaTotalAtiva = escuro ? 'border border-cyan-400/60 bg-slate-700 text-cyan-300 shadow-sm' : 'bg-white text-cyan-700 shadow-sm';
+    var abaInativa = escuro ? 'text-slate-300' : 'text-slate-500';
     return (
       '<div class="grid gap-3">' +
-        '<div class="grid grid-cols-2 gap-2 rounded-xl bg-slate-100 p-1">' +
-          '<button id="modo-receita-entrada" type="button" class="h-9 rounded-lg text-xs font-black ' + (entradaAtiva ? 'bg-white text-emerald-600 shadow-sm' : 'text-slate-500') + '">Adicionar entrada</button>' +
-          '<button id="modo-receita-total" type="button" class="h-9 rounded-lg text-xs font-black ' + (!entradaAtiva ? 'bg-white text-cyan-700 shadow-sm' : 'text-slate-500') + '">Definir total</button>' +
+        '<div class="grid grid-cols-2 gap-2 rounded-xl ' + abas + ' p-1">' +
+          '<button id="modo-receita-entrada" type="button" class="h-9 rounded-lg text-xs font-black ' + (entradaAtiva ? abaAtiva : abaInativa) + '">Adicionar entrada</button>' +
+          '<button id="modo-receita-total" type="button" class="h-9 rounded-lg text-xs font-black ' + (!entradaAtiva ? abaTotalAtiva : abaInativa) + '">Definir total</button>' +
         '</div>' +
         (entradaAtiva
           ? '<div class="grid gap-3">' +
@@ -9439,12 +9459,12 @@
               '<button id="salvar-entrada" type="button" class="h-11 rounded-xl bg-cyan-500 px-4 text-sm font-black uppercase tracking-wide text-slate-950">' + (state.carregando ? 'Salvando...' : 'Salvar receita') + '</button>' +
             '</div>'
           : '<div class="grid gap-3">' +
-              '<p class="rounded-xl bg-cyan-50 px-3 py-2 text-xs font-semibold text-cyan-900">Define o faturamento total do mes selecionado, substituindo o valor atual.</p>' +
+              '<p class="rounded-xl border px-3 py-2 text-xs font-semibold ' + (escuro ? 'border-cyan-400/40 bg-cyan-950/35 text-cyan-100' : 'border-cyan-100 bg-cyan-50 text-cyan-900') + '">Define o faturamento total do mes selecionado, substituindo o valor atual.</p>' +
               campoValor('receita-total', 'Total do mes', state.receitaTotal) +
-              '<button id="salvar-total-receita" type="button" class="h-11 rounded-xl bg-slate-950 px-4 text-sm font-black uppercase tracking-wide text-white">' + (state.carregando ? 'Salvando...' : 'Definir total') + '</button>' +
               (Object.prototype.hasOwnProperty.call(state.faturamentos, state.mes)
-                ? '<button id="excluir-total-receita" type="button" class="h-10 rounded-xl border border-red-200 bg-red-50 px-4 text-xs font-black uppercase tracking-wide text-red-600">' + (state.carregando ? 'Excluindo...' : 'Excluir total do mes') + '</button>'
+                ? '<button id="excluir-total-receita" type="button" class="h-10 rounded-xl border px-4 text-xs font-black uppercase tracking-wide ' + (escuro ? 'border-red-400/50 bg-red-950/35 text-red-300' : 'border-red-200 bg-red-50 text-red-600') + '">' + (state.carregando ? 'Excluindo...' : 'Excluir total do mes') + '</button>'
                 : '') +
+              '<button id="salvar-total-receita" type="button" class="h-11 rounded-xl bg-cyan-500 px-4 text-sm font-black uppercase tracking-wide text-slate-950">' + (state.carregando ? 'Salvando...' : 'Definir total') + '</button>' +
             '</div>') +
       '</div>'
     );
@@ -9461,7 +9481,7 @@
 
 	    return (
 	      '<div id="modal-acao-overlay" class="fixed inset-0 z-[55] flex items-center justify-center overflow-hidden bg-slate-950/90 px-3 pt-4" style="padding-bottom:calc(env(safe-area-inset-bottom) + 78px)">' +
-	        '<section class="mx-auto flex w-full max-w-md flex-col overflow-hidden rounded-3xl bg-white shadow-2xl" style="max-height:calc(100dvh - env(safe-area-inset-bottom) - 102px)">' +
+          '<section class="mx-auto flex w-full max-w-md flex-col overflow-hidden rounded-3xl ' + (state.darkMode ? 'bg-slate-900 text-slate-100' : 'bg-white') + ' shadow-2xl" style="max-height:calc(100dvh - env(safe-area-inset-bottom) - 102px)">' +
 	          '<div class="flex shrink-0 items-center justify-between gap-3 px-4 py-3 text-white" style="background-color:#003E73">' +
 	            '<div class="min-w-0"><p class="text-[10px] font-black uppercase tracking-wide text-cyan-100/75">' + detalhe + '</p><h2 class="truncate text-base font-black">' + escapeHtml(titulo) + '</h2></div>' +
 	            '<button id="fechar-acao-lancamento" type="button" class="flex h-9 w-9 items-center justify-center rounded-full border border-white/20 bg-white/10 text-xl text-white">&times;</button>' +
@@ -9543,8 +9563,11 @@
 	    );
 	  }
 
-	  function modalEditarLancamentoHtml(acao) {
+  function modalEditarLancamentoHtml(acao) {
     var item = acao.item;
+    var escuro = !!state.darkMode;
+    var rotuloCampo = escuro ? 'text-slate-300' : 'text-slate-600';
+    var selectCampo = escuro ? 'border-slate-500 bg-slate-800 text-slate-100' : 'border-slate-300 bg-white text-slate-900';
     if (acao.tipo === 'receita') {
       return (
         '<div class="grid gap-3">' +
@@ -9562,8 +9585,8 @@
       '<div class="grid gap-3">' +
         '<div class="grid grid-cols-[72px_minmax(0,1fr)] gap-6">' +
           campoClaro('editar-dia', 'Dia', 'inputmode="numeric" value="' + escapeHtml(item.dia) + '"') +
-          '<label class="grid gap-1 text-xs font-black uppercase tracking-wide text-slate-600">Despesa' +
-            '<select id="editar-despesa" style="font-size:16px" class="h-11 rounded-md border border-slate-300 bg-white px-3 text-base font-bold normal-case tracking-normal">' +
+          '<label class="grid gap-1 text-xs font-black uppercase tracking-wide ' + rotuloCampo + '">Despesa' +
+            '<select id="editar-despesa" style="font-size:16px" class="h-11 rounded-md border px-3 text-base font-bold normal-case tracking-normal ' + selectCampo + '">' +
               state.despesas.map(function (despesa) {
                 return '<option value="' + escapeHtml(despesa.nome) + '"' + (despesa.nome === item.despesa ? ' selected' : '') + '>' + escapeHtml(despesa.nome) + '</option>';
               }).join('') +
@@ -13281,7 +13304,7 @@
           return Promise.all(
             keys
               .filter(function (key) {
-                return key.indexOf('avantalab-mobile-') === 0 && key !== 'avantalab-mobile-v273';
+                return key.indexOf('avantalab-mobile-') === 0 && key !== 'avantalab-mobile-v283';
               })
               .map(function (key) {
                 return caches.delete(key);
@@ -13298,7 +13321,7 @@
     });
 
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/mobile-sw.js?v=265', { updateViaCache: 'none' }).then(function (registro) {
+      navigator.serviceWorker.register('/mobile-sw.js?v=266', { updateViaCache: 'none' }).then(function (registro) {
         if (registro && registro.update) registro.update();
       }).catch(function () {});
     }
