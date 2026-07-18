@@ -1619,7 +1619,7 @@ body { background: #fff; color: var(--ink); }
 .transaction-date-field > span { display: inline-flex; min-height: 38px; align-items: center; justify-content: center; padding: 0 12px; white-space: nowrap; font-size: 11px; font-weight: 900; line-height: 1; text-align: center; }
 .transaction-date-field input, .transaction-date-field .date-picker-button { display: flex !important; width: 100%; max-width: 100%; height: 38px !important; align-items: center; justify-content: center; justify-self: stretch; border: 0 !important; border-left: 1px solid #b9d9ee !important; border-radius: 0 !important; padding: 0 8px !important; color: #075985; background: transparent; font: inherit; font-size: 16px; font-weight: 800; line-height: 38px !important; text-align: center; box-shadow: none !important; }
 .transaction-date-field input::-webkit-date-and-time-value, .transaction-date-field input::-webkit-datetime-edit { display: flex; min-width: 100%; height: 100%; align-items: center; justify-content: center; padding: 0; line-height: normal; text-align: center; }
-.order-product-entry { display: grid; gap: 7px; border: 1px solid #cfe0ec; border-radius: 13px; padding: 9px; background: #f7fbfe; box-shadow: 0 4px 12px rgba(15,42,80,.06); }
+.order-product-entry { display: grid; gap: 7px; border: 2px solid #1687D9; border-radius: 13px; padding: 9px; background: #f7fbfe; box-shadow: 0 4px 12px rgba(22,135,217,.12); }
 .order-product-entry h3, .order-draft-items h3 { margin: 0; color: #0A1F44; font-size: 12px; font-weight: 900; }
 .order-product-search-field { position: relative; z-index: 8; }
 .order-product-combobox { position: relative; min-width: 0; }
@@ -2148,7 +2148,8 @@ body { background: #fff; color: var(--ink); }
 .dark-theme .profitability-report .highlight b { color: #67e8f9; }
 .dark-theme .dashboard-finance-bars i, .dark-theme .dashboard-bar-row i, .dark-theme .goal-card .progress { background: #263449; }
 .dark-theme .settings-goals-form label { color: #cbd5e1; }
-.dark-theme .transaction-type-switch, .dark-theme .order-product-entry, .dark-theme .transaction-totals, .dark-theme .payment-balance-summary { border-color: #334155; background: #111d2f; }
+.dark-theme .transaction-type-switch, .dark-theme .transaction-totals, .dark-theme .payment-balance-summary { border-color: #334155; background: #111d2f; }
+.dark-theme .order-product-entry { border-color: #38bdf8; background: #111d2f; }
 .dark-theme .transaction-type-switch button { color: #94a3b8; }.dark-theme .transaction-type-switch button.active { color: #fff; background: #1687D9; }
 .dark-theme .transaction-field { color: #cbd5e1; }.dark-theme .transaction-field input[readonly] { color: #e2e8f0; background: #263449; }
 .dark-theme .transaction-client-options { border-color: #475569; background: #172033; box-shadow: 0 16px 34px rgba(0,0,0,.36); }
