@@ -4247,7 +4247,10 @@ function abrirConversaoConsignado(pedidoId, retornoClienteId = '', retornoAba = 
       <section class="consignment-conversion-scroll">${itensHtml}</section>
       <div class="consignment-conversion-total"><span>Itens selecionados</span><b id="consignadoTotalSelecionado">0</b></div>
       <footer class="consignment-conversion-actions">
-        <button type="button" class="ghost" onclick="abrirPedidoCliente('${pedidoId}','${retornoClienteId}','${retornoAba}',${Number(retornoPagina) || 0})">Cancelar</button>
+        <div class="consignment-conversion-secondary-actions">
+          <button type="button" class="ghost" onclick="abrirPedidoCliente('${pedidoId}','${retornoClienteId}','${retornoAba}',${Number(retornoPagina) || 0})">Cancelar</button>
+          <button type="button" class="secondary" onclick="adicionarTodosAoPedidoDoConsignado('${pedidoId}')">Adicionar todos</button>
+        </div>
         <button type="button" class="primary" id="consignadoConfirmarPedido" onclick="gerarPedidoDoConsignado('${pedidoId}')" disabled>Confirmar pedido</button>
       </footer>
     </div>
@@ -4283,6 +4286,22 @@ function ajustarConversaoConsignado(pedidoId, indice, delta) {
   conversaoConsignadoRascunho.quantidades[indice] = Math.max(0, Math.min(Number(item.quantidade || 0), atual + Number(delta || 0)));
   const indicador = document.getElementById(`consignadoQuantidade${indice}`);
   if (indicador) indicador.textContent = String(conversaoConsignadoRascunho.quantidades[indice]);
+  atualizarResumoConversaoConsignado();
+}
+
+function adicionarTodosAoPedidoDoConsignado(pedidoId) {
+  const venda = state.vendas.find((item) => item.id === pedidoId);
+  if (!venda || conversaoConsignadoRascunho?.pedidoId !== pedidoId) return;
+  (venda.itens || []).forEach((item, indice) => {
+    const quantidade = Math.max(0, Number(item.quantidade || 0));
+    conversaoConsignadoRascunho.quantidades[indice] = quantidade;
+    const indicador = document.getElementById(`consignadoQuantidade${indice}`);
+    if (indicador) indicador.textContent = String(quantidade);
+  });
+  atualizarResumoConversaoConsignado();
+}
+
+function atualizarResumoConversaoConsignado() {
   const totalSelecionado = Object.values(conversaoConsignadoRascunho.quantidades).reduce((soma, quantidade) => soma + Number(quantidade || 0), 0);
   const total = document.getElementById('consignadoTotalSelecionado');
   const confirmar = document.getElementById('consignadoConfirmarPedido');

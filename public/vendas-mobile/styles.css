@@ -1810,7 +1810,8 @@ body { background: #fff; color: var(--ink); }
 .consignment-convert-stepper .consignment-conversion-max { color: #075985; font-size: 11px; font-weight: 900; letter-spacing: .01em; }
 .consignment-conversion-total { display: flex; min-height: 42px; flex: 0 0 auto; align-items: center; justify-content: space-between; gap: 10px; border: 1px solid #b9dff6; border-radius: 12px; padding: 8px 12px; color: #526477; background: #eef8ff; font-size: 11px; font-weight: 850; }
 .consignment-conversion-total b { color: #075985; font-size: 17px; }
-.consignment-conversion-actions { display: grid; flex: 0 0 auto; grid-template-columns: .8fr 1.2fr; gap: 8px; }
+.consignment-conversion-actions { display: grid; flex: 0 0 auto; gap: 8px; }
+.consignment-conversion-secondary-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
 .consignment-conversion-actions button { min-height: 40px; border-radius: 999px; }
 .consignment-conversion-actions button:disabled { opacity: .48; cursor: not-allowed; }
 .order-view-actions { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 6px; margin-top: 10px; }.order-view-actions button { min-height: 34px; border-radius: 999px; padding: 0 7px; font-size: 9px; font-weight: 850; }.order-view-actions .ghost { border: 1px solid #a9c6d8; color: #31556c; background: #eaf3f8; }.order-view-actions .secondary { border: 1px solid #76c9ee; color: #075985; background: #dff4ff; }.order-view-actions .danger { border: 1px solid #ee9aaa; color: #a61e3c; background: #fff0f2; box-shadow: 0 4px 10px rgba(190,24,60,.10); }.order-confirm-actions { display: grid; gap: 9px; padding: 16px; }.order-confirm-actions button { min-height: 38px; border-radius: 999px; }.order-confirm-actions .danger { border: 1px solid #e58b9d; color: #9f1239; background: #fff1f2; box-shadow: 0 6px 13px rgba(190,24,60,.12); }
