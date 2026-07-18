@@ -4134,11 +4134,12 @@ function iconeAcaoCliente(tipo) {
   return `<svg ${base}><circle cx="12" cy="12" r="8.5" stroke="currentColor" stroke-width="2"/><path d="M6 6l12 12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>`;
 }
 
-function abrirMenuCliente(clienteId) {
+function abrirMenuCliente(clienteId, origem = 'clientes') {
   const cliente = state.clientes.find((item) => item.id === clienteId);
   if (!cliente) return;
+  const somenteAgendar = origem === 'pagamentos';
   const acaoStatus = cliente.ativo === false ? 'Ativar cliente' : 'Desativar cliente';
-  sheet(`<div class="sheet-header"><div><h2>${escapeHtml(cliente.nome)}</h2><p class="muted small">Opções do cliente</p></div><button class="close" onclick="fecharSheet()">×</button></div><div class="client-option-list"><button class="primary" onclick="abrirAgendamentoCliente('${clienteId}')">${svgIcon('calendar')} Agendar</button><button class="secondary" onclick="fecharSheet();abrirCliente('${clienteId}')">${iconeAcaoCliente('editar')} Editar</button><button class="danger" onclick="alterarStatusCliente('${clienteId}', ${cliente.ativo === false})">${iconeAcaoCliente('desativar')} ${acaoStatus}</button></div>`, 'sheet-backdrop-centered');
+  sheet(`<div class="sheet-header"><div><h2>${escapeHtml(cliente.nome)}</h2><p class="muted small">${somenteAgendar ? 'Agendar cliente' : 'Opções do cliente'}</p></div><button class="close" onclick="fecharSheet()">×</button></div><div class="client-option-list"><button class="primary" onclick="abrirAgendamentoCliente('${clienteId}')">${svgIcon('calendar')} Agendar</button>${somenteAgendar ? '' : `<button class="secondary" onclick="fecharSheet();abrirCliente('${clienteId}')">${iconeAcaoCliente('editar')} Editar</button><button class="danger" onclick="alterarStatusCliente('${clienteId}', ${cliente.ativo === false})">${iconeAcaoCliente('desativar')} ${acaoStatus}</button>`}</div>`, 'sheet-backdrop-centered');
 }
 
 function abrirAgendamentoCliente(clienteId) {
@@ -4749,7 +4750,7 @@ function renderClienteDebito(c) {
   const saldo = saldoFinanceiroCliente(c.id);
   const ultimoPagamento = pagamentosDoCliente(c.id)[0];
   const dataUltimoPagamento = ultimoPagamento ? dataCompactaBR(`${ultimoPagamento.data_pagamento}T12:00:00`) : '—';
-  return `<article class="debt-card"><header><span>${svgIcon('user')}</span><div><h3>${escapeHtml(c.nome)}</h3></div><button type="button" class="client-more" aria-label="Opções do cliente" onclick="abrirMenuCliente('${c.id}')">⋮</button></header><div class="debt-values"><div class="pending"><small>Pendente</small><b>${moeda(saldo.debito)}</b></div><div class="consigned"><small>Consignado</small><b>${moeda(saldo.consignado)}</b></div><div class="credit"><small>Crédito</small><b>${moeda(saldo.credito)}</b></div><div class="last-payment"><small>Último pagamento</small><b>${dataUltimoPagamento}</b></div></div><div class="debt-actions"><button class="debt-details primary" onclick="abrirPagamentoCliente('${c.id}')">${svgIcon('dollar')}<span>Registrar pagamento</span></button><button class="debt-details ghost" onclick="abrirPagamentosCliente('${c.id}')">${svgIcon('credit-card')}<span>Ver pagamentos</span></button></div></article>`;
+  return `<article class="debt-card"><header><span>${svgIcon('user')}</span><div><h3>${escapeHtml(c.nome)}</h3></div><button type="button" class="client-more" aria-label="Agendar cliente" onclick="abrirMenuCliente('${c.id}','pagamentos')">⋮</button></header><div class="debt-values"><div class="pending"><small>Pendente</small><b>${moeda(saldo.debito)}</b></div><div class="consigned"><small>Consignado</small><b>${moeda(saldo.consignado)}</b></div><div class="credit"><small>Crédito</small><b>${moeda(saldo.credito)}</b></div><div class="last-payment"><small>Último pagamento</small><b>${dataUltimoPagamento}</b></div></div><div class="debt-actions"><button class="debt-details primary" onclick="abrirPagamentoCliente('${c.id}')">${svgIcon('dollar')}<span>Registrar pagamento</span></button><button class="debt-details ghost" onclick="abrirPagamentosCliente('${c.id}')">${svgIcon('credit-card')}<span>Ver pagamentos</span></button></div></article>`;
 }
 
 function renderVender() {
@@ -6012,7 +6013,7 @@ function aplicarAtualizacaoPwaPendente() {
 
 if (!window.__VENDAS_MOBILE_EMBEDDED__ && 'serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('./sw.js?v=47').catch(() => {});
+    navigator.serviceWorker.register('./sw.js?v=48').catch(() => {});
   });
 }
 
