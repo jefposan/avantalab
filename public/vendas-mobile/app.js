@@ -5737,7 +5737,7 @@ function rotuloPapelPerfilGestaoVendas(perfil) {
 function renderSeletorPerfilGestaoVendas() {
   const confirmacao = state.perfilGestaoConfirmacao;
   if (confirmacao) {
-    return `<section class="login-screen management-profile-selector-screen"><article class="management-profile-selector-card"><header><small>Troca de sistema</small><h2>Confirmar perfil</h2><p>A Gestão será aberta no perfil selecionado.</p></header><div class="management-profile-confirmation"><span>${svgIconEstavel(confirmacao.tipo_perfil === 'pessoal' ? 'user' : 'folder')}</span><h3>${escapeHtml(confirmacao.empresa_nome || 'Perfil')}</h3><p>${escapeHtml(rotuloPapelPerfilGestaoVendas(confirmacao.perfil))}</p><button class="secondary" type="button" onclick="voltarListaPerfisGestaoVendas()">Voltar aos perfis</button><button class="primary" type="button" onclick="confirmarPerfilGestaoVendas()">Abrir Gestão Mobile</button></div></article></section>`;
+    return `<section class="login-screen management-profile-selector-screen"><article class="management-profile-selector-card"><header><small>Troca de sistema</small><h2>Confirmar perfil</h2><p>A Gestão será aberta no perfil selecionado.</p></header><div class="management-profile-confirmation"><span>${svgIconEstavel(confirmacao.tipo_perfil === 'pessoal' ? 'user' : 'folder')}</span><h3>${escapeHtml(confirmacao.empresa_nome || 'Perfil')}</h3><p>${escapeHtml(rotuloPapelPerfilGestaoVendas(confirmacao.perfil))}</p><button class="secondary" type="button" onclick="voltarListaPerfisGestaoVendas()">Voltar aos perfis</button><button class="primary management-profile-confirmation-open" type="button" onclick="confirmarPerfilGestaoVendas()">Abrir Gestão Mobile</button></div></article></section>`;
   }
   const conteudo = state.perfisGestaoTrocaCarregando
     ? `<div class="management-profile-loading"><span class="loader"></span><b>Carregando perfis...</b></div>`
@@ -5941,7 +5941,7 @@ function aplicarAtualizacaoPwaPendente() {
 
 if (!window.__VENDAS_MOBILE_EMBEDDED__ && 'serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('./sw.js?v=42').catch(() => {});
+    navigator.serviceWorker.register('./sw.js?v=43').catch(() => {});
   });
 }
 
