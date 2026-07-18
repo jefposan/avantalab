@@ -13,26 +13,25 @@ export function diferencaDiasIso(inicio: string, fim: string): number {
   return Math.max(0, Math.round(diferenca / (1000 * 60 * 60 * 24)));
 }
 
-export function proximasCobrancasPorEmpresa(recebimentos: Recebimento[], hojeIso: string): Recebimento[] {
-  const empresasComProximo = new Set<string>();
+export function cobrancasNosProximosDias(
+  recebimentos: Recebimento[],
+  hojeIso: string,
+  quantidadeDias: number,
+): Recebimento[] {
   return recebimentos
     .filter(
       (recebimento) =>
         recebimento.valorRecebido == null &&
         recebimento.situacao === 'previsto' &&
-        recebimento.vencimento >= hojeIso,
+        recebimento.vencimento >= hojeIso &&
+        diferencaDiasIso(hojeIso, recebimento.vencimento) <= quantidadeDias,
     )
     .sort(
       (a, b) =>
         a.vencimento.localeCompare(b.vencimento) ||
         a.empresaId.localeCompare(b.empresaId) ||
         a.id.localeCompare(b.id),
-    )
-    .filter((recebimento) => {
-      if (empresasComProximo.has(recebimento.empresaId)) return false;
-      empresasComProximo.add(recebimento.empresaId);
-      return true;
-    });
+    );
 }
 
 export const FREQUENCIAS_RECEBIMENTO: Array<[FrequenciaRecebimento, string]> = [

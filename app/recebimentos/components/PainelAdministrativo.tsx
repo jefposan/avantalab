@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import AvantaCard, { criarAvantaShellPreset } from '@/app/components/AvantaCard';
 import styles from '../recebimentos.module.css';
 import type { Colaborador, Empresa, Perfil, Recebimento, Subempresa } from './types';
-import { aguardandoConferencia, dataLocalIso, formatarMoeda, proximasCobrancasPorEmpresa } from './helpers';
+import { aguardandoConferencia, cobrancasNosProximosDias, dataLocalIso, formatarMoeda } from './helpers';
 import ListaEmpresas from './ListaEmpresas';
 import ListaColaboradores from './ListaColaboradores';
 import ListaRecebimentos from './ListaRecebimentos';
@@ -63,7 +63,10 @@ const ABAS: Array<[Aba, string]> = [
 const MESES_CURTOS = ['JAN', 'FEV', 'MAR', 'ABR', 'MAI', 'JUN', 'JUL', 'AGO', 'SET', 'OUT', 'NOV', 'DEZ'];
 
 export default function PainelAdministrativo(props: Props) {
-  const { perfil, darkMode, salvando, podeConfirmar, empresas, subempresas, colaboradores, recebimentos } = props;
+  const {
+    perfil, darkMode, salvando, podeConfirmar, empresas, subempresas, colaboradores, recebimentos,
+    onObterIntegracaoFinanceira, onIntegrarFinanceiro,
+  } = props;
   const [aba, setAba] = useState<Aba>('visao');
   // Mês de referência da Visão geral (navegado pelo seletor no platô do card).
   const [mesRef, setMesRef] = useState(() => {
@@ -86,7 +89,7 @@ export default function PainelAdministrativo(props: Props) {
     [recebimentos, hojeIso],
   );
   const proximosQtd = useMemo(
-    () => proximasCobrancasPorEmpresa(recebimentos, hojeIso).length,
+    () => cobrancasNosProximosDias(recebimentos, hojeIso, 30).length,
     [recebimentos, hojeIso],
   );
 
@@ -120,7 +123,7 @@ export default function PainelAdministrativo(props: Props) {
     setIntegracaoCarregando(true);
     setIntegracaoMensagem('');
     setIntegracaoErro('');
-    props.onObterIntegracaoFinanceira(mesRef.ano, mesRef.mes + 1)
+    onObterIntegracaoFinanceira(mesRef.ano, mesRef.mes + 1)
       .then((dados) => {
         if (!ativo) return;
         setIntegracao(dados);
@@ -133,7 +136,7 @@ export default function PainelAdministrativo(props: Props) {
       })
       .finally(() => { if (ativo) setIntegracaoCarregando(false); });
     return () => { ativo = false; };
-  }, [mesRef.ano, mesRef.mes, props.onObterIntegracaoFinanceira]);
+  }, [mesRef.ano, mesRef.mes, onObterIntegracaoFinanceira]);
 
   async function adicionarAoFinanceiro() {
     const nome = nomeEntrada.trim();
@@ -145,7 +148,7 @@ export default function PainelAdministrativo(props: Props) {
     if (resumo.baixado <= 0) return setIntegracaoErro('Não há valor baixado neste mês para adicionar.');
     setIntegracaoSalvando(true);
     try {
-      const dados = await props.onIntegrarFinanceiro(mesRef.ano, mesRef.mes + 1, nome, etiqueta);
+      const dados = await onIntegrarFinanceiro(mesRef.ano, mesRef.mes + 1, nome, etiqueta);
       setIntegracao(dados);
       setNomeEntrada(dados.nomeEntrada);
       setTituloEtiqueta(dados.tituloEtiqueta);
@@ -178,6 +181,7 @@ export default function PainelAdministrativo(props: Props) {
       </button>
     </div>
   );
+  const abaUsaCompetencia = aba === 'visao' || aba === 'recebimentos' || aba === 'resultados';
 
   return (
     <div className={styles.painelAdministrativo}>
@@ -206,7 +210,7 @@ export default function PainelAdministrativo(props: Props) {
             </span>
           </>
         }
-        headerRight={seletorMes}
+        headerRight={abaUsaCompetencia ? seletorMes : undefined}
         hideDragHandle
         hideMenu
         className={styles.painelCardFixo}
@@ -248,7 +252,6 @@ export default function PainelAdministrativo(props: Props) {
         {/* Conferência gerencia o próprio scroll: título fixo no topo. */}
         {aba === 'conferencia' && (
           <PainelConferencia
-            chaveMes={chaveMes}
             podeConfirmar={podeConfirmar}
             empresas={empresas}
             subempresas={subempresas}
@@ -320,7 +323,7 @@ export default function PainelAdministrativo(props: Props) {
         )}
 
         {aba === 'inadimplentes' && (
-          <ListaInadimplentes chaveMes={chaveMes} empresas={empresas} subempresas={subempresas} recebimentos={recebimentos} />
+          <ListaInadimplentes empresas={empresas} subempresas={subempresas} recebimentos={recebimentos} />
         )}
 
         {aba === 'proximo' && (

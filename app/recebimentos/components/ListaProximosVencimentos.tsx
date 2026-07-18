@@ -2,7 +2,7 @@
 
 import { useMemo } from 'react';
 import type { Empresa, Recebimento, Subempresa } from './types';
-import { dataLocalIso, proximasCobrancasPorEmpresa } from './helpers';
+import { cobrancasNosProximosDias, dataLocalIso } from './helpers';
 import TabelaVencimentos from './TabelaVencimentos';
 
 type Props = {
@@ -14,15 +14,15 @@ type Props = {
 export default function ListaProximosVencimentos({ empresas, subempresas, recebimentos }: Props) {
   const hojeIso = useMemo(() => dataLocalIso(), []);
   const proximos = useMemo(
-    () => proximasCobrancasPorEmpresa(recebimentos, hojeIso),
+    () => cobrancasNosProximosDias(recebimentos, hojeIso, 30),
     [recebimentos, hojeIso],
   );
 
   return (
     <TabelaVencimentos
       titulo="Próximo a vencer"
-      descricao="Próxima cobrança prevista de cada empresa atendida."
-      vazio="Nenhuma cobrança futura prevista."
+      descricao="Cobranças previstas para os próximos 30 dias."
+      vazio="Nenhuma cobrança prevista para os próximos 30 dias."
       variante="proximo"
       hojeIso={hojeIso}
       empresas={empresas}

@@ -6,7 +6,6 @@ import type { Colaborador, Empresa, Recebimento, Subempresa } from './types';
 import { aguardandoConferencia, formatarDataHora, formatarMoeda, rotuloSituacao } from './helpers';
 
 type Props = {
-  chaveMes: string;
   podeConfirmar: boolean;
   empresas: Empresa[];
   subempresas: Subempresa[];
@@ -19,7 +18,7 @@ type Props = {
 };
 
 export default function PainelConferencia({
-  chaveMes, podeConfirmar, empresas, subempresas, colaboradores, recebimentos,
+  podeConfirmar, empresas, subempresas, colaboradores, recebimentos,
   onConfirmarBaixa, onDevolver, onDivergencia, onEstornar,
 }: Props) {
   const [motivos, setMotivos] = useState<Record<string, string>>({});
@@ -27,10 +26,10 @@ export default function PainelConferencia({
   // A ação só é efetivada ao confirmar.
   const [acaoMotivo, setAcaoMotivo] = useState<Record<string, 'devolver' | 'divergencia' | 'estornar' | null>>({});
 
-  // Pendentes de conferência recebidos no mês selecionado (platô).
+  // A conferência é uma fila operacional única, sem recorte por competência.
   const pendentes = useMemo(
-    () => recebimentos.filter((r) => aguardandoConferencia(r.situacao) && (r.recebidoEm ?? '').slice(0, 7) === chaveMes),
-    [recebimentos, chaveMes],
+    () => recebimentos.filter((r) => aguardandoConferencia(r.situacao)),
+    [recebimentos],
   );
 
   const nomeEmpresa = (id: string) => empresas.find((e) => e.id === id)?.nome ?? '—';

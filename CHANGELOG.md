@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.6.0.52 - 2026-07-18
+
+- O seletor de mês foi removido das abas **Empresas**, **Colaboradores**,
+  **Conferência**, **Próximo a vencer** e **Inadimplentes**.
+- **Conferência** agora reúne todos os recebimentos que aguardam confirmação,
+  sem recorte mensal, e **Inadimplentes** reúne todos os atrasos abertos.
+- **Próximo a vencer** passou a exibir todas as cobranças previstas entre hoje e
+  os próximos 30 dias, em vez de somente a cobrança mais próxima por empresa.
+
 ## 1.6.0.51 - 2026-07-18
 
 - No cabeçalho autenticado do PWA de Recebimentos, o nome da empresa gestora

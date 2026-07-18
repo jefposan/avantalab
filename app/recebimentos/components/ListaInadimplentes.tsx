@@ -2,28 +2,24 @@
 
 import { useMemo } from 'react';
 import type { Empresa, Recebimento, Subempresa } from './types';
-import { dataLocalIso, limitesDoMes } from './helpers';
+import { dataLocalIso } from './helpers';
 import TabelaVencimentos from './TabelaVencimentos';
 
 type Props = {
-  chaveMes: string;
   empresas: Empresa[];
   subempresas: Subempresa[];
   recebimentos: Recebimento[];
 };
 
-export default function ListaInadimplentes({ chaveMes, empresas, subempresas, recebimentos }: Props) {
+export default function ListaInadimplentes({ empresas, subempresas, recebimentos }: Props) {
   const hojeIso = useMemo(() => dataLocalIso(), []);
 
-  const inadimplentes = useMemo(() => {
-    const fim = limitesDoMes(chaveMes).fim;
-    return recebimentos
-      .filter((r) => {
-        const vencido = r.vencimento < hojeIso && r.vencimento <= fim;
-        return vencido && r.situacao === 'em_atraso' && r.valorRecebido == null;
-      })
-      .sort((a, b) => a.vencimento.localeCompare(b.vencimento));
-  }, [recebimentos, chaveMes, hojeIso]);
+  const inadimplentes = useMemo(
+    () => recebimentos
+      .filter((r) => r.vencimento < hojeIso && r.situacao === 'em_atraso' && r.valorRecebido == null)
+      .sort((a, b) => a.vencimento.localeCompare(b.vencimento)),
+    [recebimentos, hojeIso],
+  );
 
   return (
     <TabelaVencimentos

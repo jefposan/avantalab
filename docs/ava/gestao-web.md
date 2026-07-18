@@ -1,8 +1,8 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.6.0.51 -->
+<!-- ava-version: 1.6.0.52 -->
 
-> Revisão 1.6.0.51: o nome da empresa gestora passou a ser o título principal do PWA de Recebimentos.
+> Revisão 1.6.0.52: filas operacionais deixaram de usar competência mensal e Próximo a vencer passou a cobrir 30 dias.
 
 ## Escopo
 
@@ -70,6 +70,11 @@ ou `/ponto`.
 - As cobranças **Previsto** alimentam o total calculado dos próximos meses, mas
   não aparecem individualmente na listagem detalhada. Ao selecionar um mês
   futuro, **Visão geral** e **Resultados** mostram somente o total previsto.
+- **Empresas**, **Colaboradores**, **Conferência**, **Próximo a vencer** e
+  **Inadimplentes** não possuem seletor de mês. **Conferência** mostra todos os
+  recebimentos aguardando confirmação, **Inadimplentes** mostra todos os atrasos
+  abertos e **Próximo a vencer** reúne as cobranças previstas para os próximos
+  30 dias.
 - Fora do modo instalado, a tela de login mostra **Instalar**. O botão abre a
   instalação nativa quando disponível; no iPhone ou em navegador sem prompt,
   orienta **Compartilhar > Adicionar à Tela de Início**.
