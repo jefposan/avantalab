@@ -1,8 +1,8 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.6.0.52 -->
+<!-- ava-version: 1.6.0.53 -->
 
-> Revisão 1.6.0.52: sem impacto na Gestão Mobile; filtros administrativos foram ajustados em Recebimentos.
+> Revisão 1.6.0.53: sem impacto na Gestão Mobile; o fundo autenticado foi ajustado somente em Recebimentos.
 
 ## Escopo
 

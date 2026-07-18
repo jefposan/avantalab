@@ -1,8 +1,8 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.6.0.52 -->
+<!-- ava-version: 1.6.0.53 -->
 
-> Revisão 1.6.0.52: filas operacionais deixaram de usar competência mensal e Próximo a vencer passou a cobrir 30 dias.
+> Revisão 1.6.0.53: a área autenticada do PWA de Recebimentos passou a usar o fundo sem logotipo.
 
 ## Escopo
 
@@ -78,6 +78,8 @@ ou `/ponto`.
 - Fora do modo instalado, a tela de login mostra **Instalar**. O botão abre a
   instalação nativa quando disponível; no iPhone ou em navegador sem prompt,
   orienta **Compartilhar > Adicionar à Tela de Início**.
+- O fundo da tela de login mantém a marca AvantaLab. Após a autenticação, o PWA
+  preserva o mesmo padrão visual usando a variante sem o logotipo.
 - Na Visão geral do módulo, o card **Total recebido e confirmado** permite que Gestor Master ou
   Administrador defina o nome da entrada e o título da etiqueta e use
   **Adicionar aos recebimentos**. A ação cria ou atualiza uma única receita do

@@ -6,7 +6,7 @@
   --cp-text: #fff;
   min-height: 100dvh;
   background-color: #eef6fb;
-  background-image: image-set(url('/images/bg-avantalab-mobile-1080x1920.webp') type('image/webp'), url('/images/bg-avantalab-mobile-1080x1920.png') type('image/png'));
+  background-image: image-set(url('/images/bg-avantalab-mobile-1080x1920-sem-logo.webp') type('image/webp'), url('/images/bg-avantalab-mobile-1080x1920-sem-logo.png') type('image/png'));
   background-position: center bottom;
   background-repeat: no-repeat;
   background-size: 100% auto;

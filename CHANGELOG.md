@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.6.0.53 - 2026-07-18
+
+- Criada uma variante do fundo vertical padrão sem o logotipo AvantaLab,
+  aplicada exclusivamente à área autenticada do PWA de Recebimentos.
+- A tela de login preserva o fundo original com a marca; o cache offline do PWA
+  foi atualizado para disponibilizar as duas versões.
+
 ## 1.6.0.52 - 2026-07-18
 
 - O seletor de mês foi removido das abas **Empresas**, **Colaboradores**,
