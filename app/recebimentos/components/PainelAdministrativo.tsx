@@ -13,7 +13,7 @@ import ListaInadimplentes from './ListaInadimplentes';
 import ListaProximosVencimentos from './ListaProximosVencimentos';
 import GraficoResultados from './GraficoResultados';
 import type { IntegracaoFinanceiraRecebimentos } from '../data/repo';
-import type { AbrirAvisoFn } from '@/app/hooks/useUI';
+import type { AbrirAvisoFn, AbrirConfirmacaoFn } from '@/app/hooks/useUI';
 
 type Aba = 'visao' | 'empresas' | 'colaboradores' | 'recebimentos' | 'conferencia' | 'proximo' | 'inadimplentes' | 'resultados';
 
@@ -23,6 +23,7 @@ type Props = {
   corPrimaria: string;
   salvando: boolean;
   onAviso?: AbrirAvisoFn;
+  onConfirmacao?: AbrirConfirmacaoFn;
   podeConfirmar: boolean;
   empresas: Empresa[];
   subempresas: Subempresa[];
@@ -46,7 +47,8 @@ type Props = {
   onExcluirColaborador: (id: string) => void;
   onAlternarColaborador: (id: string) => void;
   onObterIntegracaoFinanceira: (ano: number, mes: number) => Promise<IntegracaoFinanceiraRecebimentos>;
-  onIntegrarFinanceiro: (ano: number, mes: number, nomeEntrada: string, tituloEtiqueta: string) => Promise<IntegracaoFinanceiraRecebimentos>;
+  onAtualizarTitulosFinanceiro: (ano: number, mes: number, nomeEntrada: string, tituloEtiqueta: string) => Promise<IntegracaoFinanceiraRecebimentos>;
+  onDefinirIntegracaoFinanceira: (ano: number, mes: number, ativa: boolean) => Promise<IntegracaoFinanceiraRecebimentos>;
 };
 
 const ABAS: Array<[Aba, string]> = [
@@ -65,7 +67,7 @@ const MESES_CURTOS = ['JAN', 'FEV', 'MAR', 'ABR', 'MAI', 'JUN', 'JUL', 'AGO', 'S
 export default function PainelAdministrativo(props: Props) {
   const {
     perfil, darkMode, salvando, podeConfirmar, empresas, subempresas, colaboradores, recebimentos,
-    onObterIntegracaoFinanceira, onIntegrarFinanceiro,
+    onObterIntegracaoFinanceira, onAtualizarTitulosFinanceiro, onDefinirIntegracaoFinanceira,
   } = props;
   const [aba, setAba] = useState<Aba>('visao');
   // Mês de referência da Visão geral (navegado pelo seletor no platô do card).
@@ -138,26 +140,61 @@ export default function PainelAdministrativo(props: Props) {
     return () => { ativo = false; };
   }, [mesRef.ano, mesRef.mes, onObterIntegracaoFinanceira]);
 
-  async function adicionarAoFinanceiro() {
+  async function atualizarTitulos() {
     const nome = nomeEntrada.trim();
     const etiqueta = tituloEtiqueta.trim();
     setIntegracaoErro('');
     setIntegracaoMensagem('');
     if (!nome) return setIntegracaoErro('Informe o nome da entrada.');
     if (!etiqueta) return setIntegracaoErro('Informe o título da etiqueta.');
-    if (resumo.baixado <= 0) return setIntegracaoErro('Não há valor baixado neste mês para adicionar.');
     setIntegracaoSalvando(true);
     try {
-      const dados = await onIntegrarFinanceiro(mesRef.ano, mesRef.mes + 1, nome, etiqueta);
+      const dados = await onAtualizarTitulosFinanceiro(mesRef.ano, mesRef.mes + 1, nome, etiqueta);
       setIntegracao(dados);
       setNomeEntrada(dados.nomeEntrada);
       setTituloEtiqueta(dados.tituloEtiqueta);
-      setIntegracaoMensagem(`${formatarMoeda(dados.valorSincronizado)} adicionado aos recebimentos do Financeiro.`);
+      setIntegracaoMensagem('Títulos atualizados em todos os meses integrados.');
     } catch (error) {
-      setIntegracaoErro(error instanceof Error ? error.message : 'Não foi possível adicionar o valor ao Financeiro.');
+      setIntegracaoErro(error instanceof Error ? error.message : 'Não foi possível atualizar os títulos.');
     } finally {
       setIntegracaoSalvando(false);
     }
+  }
+
+  async function definirIntegracao(ativa: boolean) {
+    setIntegracaoErro('');
+    setIntegracaoMensagem('');
+    setIntegracaoSalvando(true);
+    try {
+      const dados = await onDefinirIntegracaoFinanceira(mesRef.ano, mesRef.mes + 1, ativa);
+      setIntegracao(dados);
+      setIntegracaoMensagem(ativa
+        ? 'Sincronização automática com Receitas ativada.'
+        : 'Lançamentos do módulo retirados das Receitas.');
+    } catch (error) {
+      setIntegracaoErro(error instanceof Error ? error.message : 'Não foi possível alterar a integração.');
+    } finally {
+      setIntegracaoSalvando(false);
+    }
+  }
+
+  function alternarIntegracao() {
+    const ativar = !integracao?.integrado;
+    if (ativar) {
+      void definirIntegracao(true);
+      return;
+    }
+    const executar = () => definirIntegracao(false);
+    if (!props.onConfirmacao) {
+      void executar();
+      return;
+    }
+    props.onConfirmacao({
+      titulo: 'Retirar das receitas?',
+      mensagem: 'Todos os lançamentos automáticos deste módulo serão retirados das Receitas. Os recebimentos e seus históricos serão preservados.',
+      textoConfirmar: 'Retirar das receitas',
+      acao: executar,
+    });
   }
 
   // Seletor de mês no padrão da página de lançamentos: bloco único com setas,
@@ -283,9 +320,11 @@ export default function PainelAdministrativo(props: Props) {
                         <div className={styles.statLabel}>Total recebido e confirmado</div>
                         <div className={styles.statValue}>{formatarMoeda(resumo.baixado)}</div>
                       </div>
-                      {integracao?.integrado && (
-                        <span className={styles.integracaoStatus}>Adicionado: {formatarMoeda(integracao.valorSincronizado)}</span>
-                      )}
+                      <span className={styles.integracaoStatus}>
+                        {integracao?.integrado
+                          ? `Automático · ${formatarMoeda(integracao.valorSincronizado)}`
+                          : 'Fora das receitas'}
+                      </span>
                     </div>
                     <div className={styles.integracaoAcoes}>
                       <div className={styles.integracaoCampos}>
@@ -298,9 +337,14 @@ export default function PainelAdministrativo(props: Props) {
                           <input id="recebimentos-titulo-etiqueta" className={styles.input} value={tituloEtiqueta} onChange={(event) => setTituloEtiqueta(event.target.value)} maxLength={40} placeholder="Recebimentos" disabled={integracaoCarregando || integracaoSalvando} />
                         </label>
                       </div>
-                      <button type="button" className={`${styles.btn} ${styles.btnPrimary} ${styles.integracaoBotao}`} onClick={() => void adicionarAoFinanceiro()} disabled={integracaoCarregando || integracaoSalvando || resumo.baixado <= 0}>
-                        {integracaoSalvando ? 'Adicionando…' : integracao?.integrado ? 'Atualizar nos recebimentos' : 'Adicionar aos recebimentos'}
-                      </button>
+                      <div className={styles.integracaoBotoes}>
+                        <button type="button" className={`${styles.btn} ${styles.btnPrimary} ${styles.integracaoBotao}`} onClick={() => void atualizarTitulos()} disabled={integracaoCarregando || integracaoSalvando}>
+                          {integracaoSalvando ? 'Processando…' : 'Atualizar títulos'}
+                        </button>
+                        <button type="button" className={`${styles.btn} ${integracao?.integrado ? styles.integracaoBotaoPerigo : styles.btnPrimary} ${styles.integracaoBotao}`} onClick={alternarIntegracao} disabled={integracaoCarregando || integracaoSalvando}>
+                          {integracao?.integrado ? 'Retirar das receitas' : 'Adicionar às receitas'}
+                        </button>
+                      </div>
                     </div>
                     <div className={styles.integracaoFeedback} aria-live="polite" aria-atomic="true">
                       {integracaoCarregando ? (

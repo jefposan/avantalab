@@ -1,5 +1,17 @@
 # Changelog
 
+## 1.6.0.54 - 2026-07-18
+
+- A integração de **Recebimentos Presenciais** com **Receitas** passa a ser
+  ativada com o módulo e sincroniza automaticamente valor e data de cada mês
+  após confirmação, alteração ou estorno, sem atualização manual.
+- O card **Total recebido e confirmado** agora separa **Atualizar títulos** de
+  **Retirar das receitas**; a retirada preserva os recebimentos e exclui somente
+  as receitas vinculadas, podendo a sincronização ser reativada depois.
+- Cada subempresa passa a manter um único tipo de vencimento. Ao trocar a regra,
+  previsões automáticas futuras e ainda não recebidas são substituídas, enquanto
+  atrasos, pagamentos e histórico permanecem intactos.
+
 ## 1.6.0.53 - 2026-07-18
 
 - Criada uma variante do fundo vertical padrão sem o logotipo AvantaLab,

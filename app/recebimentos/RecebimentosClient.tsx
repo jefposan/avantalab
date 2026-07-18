@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useState, type CSSProperties } from 'react';
 import styles from './recebimentos.module.css';
 import { corEhClara } from '@/app/lib/formatters';
-import type { AbrirAvisoFn } from '@/app/hooks/useUI';
+import type { AbrirAvisoFn, AbrirConfirmacaoFn } from '@/app/hooks/useUI';
 import type { Colaborador, Empresa, Perfil, Recebimento, Subempresa } from './components/types';
 import PainelAdministrativo from './components/PainelAdministrativo';
 import { criarRepoDemo, type IntegracaoFinanceiraRecebimentos, type RecebimentosRepo } from './data/repo';
@@ -18,6 +18,7 @@ type Props = {
   corPrimaria?: string;
   mostrarLinkColaboradores?: boolean;
   onAviso?: AbrirAvisoFn;
+  onConfirmacao?: AbrirConfirmacaoFn;
   onFinanceiroAtualizado?: () => void;
 };
 
@@ -29,6 +30,7 @@ export default function RecebimentosClient({
   corPrimaria = '#003E73',
   mostrarLinkColaboradores = false,
   onAviso,
+  onConfirmacao,
   onFinanceiroAtualizado,
 }: Props) {
   const repoAtual = useMemo(() => repo ?? criarRepoDemo(), [repo]);
@@ -73,7 +75,7 @@ export default function RecebimentosClient({
     }
   }, [carregar]);
 
-  const integrarFinanceiro = useCallback(async (
+  const atualizarTitulosFinanceiro = useCallback(async (
     ano: number,
     mes: number,
     nomeEntrada: string,
@@ -82,12 +84,32 @@ export default function RecebimentosClient({
     setProcessando(true);
     setErro('');
     try {
-      const integracao = await repoAtual.integrarFinanceiro(ano, mes, nomeEntrada, tituloEtiqueta);
+      const integracao = await repoAtual.atualizarTitulosFinanceiro(ano, mes, nomeEntrada, tituloEtiqueta);
       onFinanceiroAtualizado?.();
       await carregar(true);
       return integracao;
     } catch (error) {
-      setErro(error instanceof Error ? error.message : 'Não foi possível integrar o valor ao Financeiro.');
+      setErro(error instanceof Error ? error.message : 'Não foi possível atualizar os títulos da integração.');
+      throw error;
+    } finally {
+      setProcessando(false);
+    }
+  }, [carregar, onFinanceiroAtualizado, repoAtual]);
+
+  const definirIntegracaoFinanceira = useCallback(async (
+    ano: number,
+    mes: number,
+    ativa: boolean,
+  ): Promise<IntegracaoFinanceiraRecebimentos> => {
+    setProcessando(true);
+    setErro('');
+    try {
+      const integracao = await repoAtual.definirIntegracaoFinanceira(ano, mes, ativa);
+      onFinanceiroAtualizado?.();
+      await carregar(true);
+      return integracao;
+    } catch (error) {
+      setErro(error instanceof Error ? error.message : 'Não foi possível alterar a integração financeira.');
       throw error;
     } finally {
       setProcessando(false);
@@ -116,6 +138,7 @@ export default function RecebimentosClient({
           corPrimaria={corPrimaria}
           salvando={processando}
           onAviso={onAviso}
+          onConfirmacao={onConfirmacao}
           podeConfirmar={podeConfirmar}
           empresas={empresas}
           subempresas={subempresas}
@@ -123,7 +146,8 @@ export default function RecebimentosClient({
           recebimentos={recebimentos}
           mostrarLinkColaboradores={mostrarLinkColaboradores}
           onObterIntegracaoFinanceira={obterIntegracaoFinanceira}
-          onIntegrarFinanceiro={integrarFinanceiro}
+          onAtualizarTitulosFinanceiro={atualizarTitulosFinanceiro}
+          onDefinirIntegracaoFinanceira={definirIntegracaoFinanceira}
           onConfirmarBaixa={(id) => void executar(() => repoAtual.confirmarBaixa(id))}
           onDevolver={(id, motivo) => void executar(() => repoAtual.devolver(id, motivo))}
           onDivergencia={(id, motivo) => void executar(() => repoAtual.divergencia(id, motivo))}

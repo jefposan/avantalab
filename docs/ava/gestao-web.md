@@ -1,8 +1,8 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.6.0.53 -->
+<!-- ava-version: 1.6.0.54 -->
 
-> Revisão 1.6.0.53: a área autenticada do PWA de Recebimentos passou a usar o fundo sem logotipo.
+> Revisão 1.6.0.54: integração automática com Receitas e vencimento único por subempresa.
 
 ## Escopo
 
@@ -51,6 +51,9 @@ ou `/ponto`.
   semanal, quinzenal, mensal, trimestral, semestral ou anual. Em seguida configure
   os dias aplicáveis: dias da semana; dia-base com intervalo rigoroso de 15 dias;
   dia mensal; ou mês inicial e dia para os ciclos trimestral, semestral e anual.
+  Cada subempresa mantém somente uma dessas regras. Ao trocar a frequência, o
+  sistema substitui as previsões automáticas futuras ainda não recebidas e
+  preserva atrasos, pagamentos e histórico anteriores.
   A primeira cobrança nunca antecede o cadastro; daí em diante o sistema cria as
   parcelas previstas e marca automaticamente como **Em atraso** as não recebidas
   depois do vencimento. A aba **Inadimplentes** mostra somente cobranças já
@@ -80,18 +83,18 @@ ou `/ponto`.
   orienta **Compartilhar > Adicionar à Tela de Início**.
 - O fundo da tela de login mantém a marca AvantaLab. Após a autenticação, o PWA
   preserva o mesmo padrão visual usando a variante sem o logotipo.
-- Na Visão geral do módulo, o card **Total recebido e confirmado** permite que Gestor Master ou
-  Administrador defina o nome da entrada e o título da etiqueta e use
-  **Adicionar aos recebimentos**. A ação cria ou atualiza uma única receita do
-  mês com o total confirmado; essa linha mostra a etiqueta configurada e não
-  pode ser editada ou excluída diretamente no Financeiro.
+- Ao instalar o módulo, a integração com **Receitas** fica ativa. Cada confirmação,
+  alteração ou estorno atualiza imediatamente a receita do mesmo mês, incluindo
+  valor e data, sem depender de atualização manual. Na Visão geral, o card
+  **Total recebido e confirmado** permite usar **Atualizar títulos** para alterar
+  o nome da entrada e da etiqueta em todos os meses. **Retirar das receitas**
+  remove somente os lançamentos vinculados e interrompe a sincronização; os
+  recebimentos permanecem preservados e **Adicionar às receitas** pode reativá-la.
 - Os quatro cards de valores da Visão geral dividem uma linha horizontal. Ao trocar o
   mês, o aviso **Carregando valores…** usa uma única linha reservada e não altera a
   altura do card **Total recebido e confirmado**. O módulo acompanha o modo claro ou escuro do Gestão.
 - Operador Completo e Operador Simples não veem nem administram o módulo,
   mesmo quando ele está instalado no perfil.
-- Recebimentos confirmados ainda não são lançados automaticamente no faturamento
-  central nesta versão.
 - Vendas Mobile é módulo complementar: catálogo, divulgação e novidades têm
   regras próprias e resultados podem ser enviados ao Gestão conforme o destino
   financeiro do vendedor.

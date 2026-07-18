@@ -449,6 +449,11 @@
   grid-template-columns: minmax(0, 1fr);
   gap: 6px;
 }
+.integracaoBotoes {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
 .integracaoCampo {
   display: flex;
   min-width: 0;
@@ -487,6 +492,10 @@
   color: var(--cp-text, #fff);
   text-shadow: none;
 }
+.btn.integracaoBotaoPerigo {
+  background: #b91c1c;
+  color: #fff;
+}
 .integracaoFeedback {
   display: flex;
   height: 16px;
@@ -517,7 +526,8 @@
   .integracaoStatus { align-self: flex-start; }
   .integracaoAcoes { grid-template-columns: 1fr; }
   .integracaoCampos { grid-template-columns: 1fr; }
-  .integracaoBotao { width: 100%; min-height: 44px; }
+  .integracaoBotoes { gap: 6px; }
+  .integracaoBotao { width: 100%; min-height: 44px; padding-inline: 6px; }
   .integracaoCampo .input { height: 44px; padding-block: 8px; }
   .recebimentosDatas { flex-wrap: wrap; }
 }

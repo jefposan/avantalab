@@ -1,8 +1,8 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.6.0.53 -->
+<!-- ava-version: 1.6.0.54 -->
 
-> Revisão 1.6.0.53: sem impacto no Vendas Mobile; o fundo autenticado foi ajustado somente em Recebimentos.
+> Revisão 1.6.0.54: sem impacto operacional no Vendas Mobile; ajuste restrito ao módulo Recebimentos.
 
 ## Escopo e navegação
 

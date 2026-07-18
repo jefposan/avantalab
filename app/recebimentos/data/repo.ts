@@ -44,7 +44,8 @@ export interface RecebimentosRepo {
   divergencia(lancamentoId: string, motivo: string): Promise<void>;
   estornar(lancamentoId: string, motivo: string): Promise<void>;
   obterIntegracaoFinanceira(ano: number, mes: number): Promise<IntegracaoFinanceiraRecebimentos>;
-  integrarFinanceiro(ano: number, mes: number, nomeEntrada: string, tituloEtiqueta: string): Promise<IntegracaoFinanceiraRecebimentos>;
+  atualizarTitulosFinanceiro(ano: number, mes: number, nomeEntrada: string, tituloEtiqueta: string): Promise<IntegracaoFinanceiraRecebimentos>;
+  definirIntegracaoFinanceira(ano: number, mes: number, ativa: boolean): Promise<IntegracaoFinanceiraRecebimentos>;
   assinarAtualizacoes?(callback: () => void): () => void;
 }
 
@@ -58,13 +59,25 @@ function hojeIso() {
 }
 
 export function criarRepoDemo(): RecebimentosRepo {
-  let dados: DadosRecebimentos = {
+  const dados: DadosRecebimentos = {
     empresas: copia(empresasDemo),
     subempresas: copia(subempresasDemo),
     colaboradores: copia(colaboradoresDemo),
     recebimentos: copia(recebimentosDemo),
   };
-  const integracoes = new Map<string, IntegracaoFinanceiraRecebimentos>();
+  let integracaoAtiva = true;
+  let nomeEntradaIntegracao = 'Recebimentos em campo';
+  let tituloEtiquetaIntegracao = 'Recebimentos';
+  const valorIntegrado = (ano: number, mes: number) => {
+    if (!integracaoAtiva) return 0;
+    const chave = `${ano}-${String(mes).padStart(2, '0')}`;
+    return dados.recebimentos.reduce((total, recebimento) => {
+      const dataBaixa = recebimento.baixadoEm ?? recebimento.recebidoEm ?? '';
+      return recebimento.situacao === 'baixado' && dataBaixa.slice(0, 7) === chave
+        ? total + (recebimento.valorRecebido ?? 0)
+        : total;
+    }, 0);
+  };
   const colaboradorAtual = () => dados.colaboradores[0];
   return {
     async carregar() { return copia(dados); },
@@ -116,20 +129,16 @@ export function criarRepoDemo(): RecebimentosRepo {
     async divergencia(id, motivo) { dados.recebimentos = dados.recebimentos.map((r) => r.id === id ? { ...r, situacao: 'baixado', baixadoPor: 'Gestor (demo)', baixadoEm: new Date().toISOString(), observacao: `${r.observacao ? `${r.observacao} · ` : ''}Divergência: ${motivo}` } : r); },
     async estornar(id, motivo) { dados.recebimentos = dados.recebimentos.map((r) => r.id === id ? { ...r, situacao: r.vencimento < hojeIso() ? 'em_atraso' : 'previsto', valorRecebido: null, colaboradorId: null, recebidoEm: null, baixadoPor: null, baixadoEm: null, observacao: `Estornado: ${motivo}` } : r); },
     async obterIntegracaoFinanceira(ano, mes) {
-      return copia(integracoes.get(`${ano}-${mes}`) ?? { nomeEntrada: 'Recebimentos em campo', tituloEtiqueta: 'Recebimentos', integrado: false, valorSincronizado: 0 });
+      return copia({ nomeEntrada: nomeEntradaIntegracao, tituloEtiqueta: tituloEtiquetaIntegracao, integrado: integracaoAtiva, valorSincronizado: valorIntegrado(ano, mes) });
     },
-    async integrarFinanceiro(ano, mes, nomeEntrada, tituloEtiqueta) {
-      const chave = `${ano}-${String(mes).padStart(2, '0')}`;
-      const valorSincronizado = dados.recebimentos.reduce((total, recebimento) => {
-        const dataBaixa = recebimento.baixadoEm ?? recebimento.recebidoEm ?? '';
-        return recebimento.situacao === 'baixado' && dataBaixa.slice(0, 7) === chave
-          ? total + (recebimento.valorRecebido ?? 0)
-          : total;
-      }, 0);
-      if (valorSincronizado <= 0) throw new Error('Não há valor baixado neste mês para adicionar.');
-      const integracao = { nomeEntrada: nomeEntrada.trim(), tituloEtiqueta: tituloEtiqueta.trim(), integrado: true, valorSincronizado };
-      integracoes.set(`${ano}-${mes}`, integracao);
-      return copia(integracao);
+    async atualizarTitulosFinanceiro(ano, mes, nomeEntrada, tituloEtiqueta) {
+      nomeEntradaIntegracao = nomeEntrada.trim();
+      tituloEtiquetaIntegracao = tituloEtiqueta.trim();
+      return copia({ nomeEntrada: nomeEntradaIntegracao, tituloEtiqueta: tituloEtiquetaIntegracao, integrado: integracaoAtiva, valorSincronizado: valorIntegrado(ano, mes) });
+    },
+    async definirIntegracaoFinanceira(ano, mes, ativa) {
+      integracaoAtiva = ativa;
+      return copia({ nomeEntrada: nomeEntradaIntegracao, tituloEtiqueta: tituloEtiquetaIntegracao, integrado: integracaoAtiva, valorSincronizado: valorIntegrado(ano, mes) });
     },
   };
 }
@@ -295,11 +304,17 @@ export function criarRepoSupabase(empresaId: string, cliente: SupabaseClient = s
       }), 'Erro ao carregar a integração financeira.');
       return mapIntegracao(data as Linha);
     },
-    async integrarFinanceiro(ano, mes, nomeEntrada, tituloEtiqueta) {
-      const data = await exigir(cliente.rpc('recebimentos_integrar_financeiro', {
+    async atualizarTitulosFinanceiro(ano, mes, nomeEntrada, tituloEtiqueta) {
+      const data = await exigir(cliente.rpc('recebimentos_atualizar_titulos_financeiro', {
         p_empresa_id: empresaId, p_ano: ano, p_mes: mes,
         p_nome_entrada: nomeEntrada, p_titulo_etiqueta: tituloEtiqueta,
-      }), 'Erro ao adicionar o valor aos recebimentos.');
+      }), 'Erro ao atualizar os títulos da integração.');
+      return mapIntegracao(data as Linha);
+    },
+    async definirIntegracaoFinanceira(ano, mes, ativa) {
+      const data = await exigir(cliente.rpc('recebimentos_definir_integracao_financeira', {
+        p_empresa_id: empresaId, p_ano: ano, p_mes: mes, p_ativa: ativa,
+      }), ativa ? 'Erro ao adicionar os valores às receitas.' : 'Erro ao retirar os valores das receitas.');
       return mapIntegracao(data as Linha);
     },
     assinarAtualizacoes(callback) {

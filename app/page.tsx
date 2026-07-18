@@ -7449,6 +7449,7 @@ if (validacaoTelefoneObrigatoria) {
   darkMode={darkMode}
   corPrimaria={corPrimaria}
   onAviso={abrirAviso}
+  onConfirmacao={abrirConfirmacao}
   onFechar={() => setModalRecebimentos(false)}
   onFinanceiroAtualizado={notificarFinanceiroAtualizado}
 />
