@@ -7448,6 +7448,7 @@ if (validacaoTelefoneObrigatoria) {
   perfil={perfilUsuario === 'administrador' ? 'administrador' : 'gestor'}
   darkMode={darkMode}
   corPrimaria={corPrimaria}
+  onAviso={abrirAviso}
   onFechar={() => setModalRecebimentos(false)}
   onFinanceiroAtualizado={notificarFinanceiroAtualizado}
 />

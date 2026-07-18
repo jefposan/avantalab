@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useState, type CSSProperties } from 'react';
 import styles from './recebimentos.module.css';
 import { corEhClara } from '@/app/lib/formatters';
+import type { AbrirAvisoFn } from '@/app/hooks/useUI';
 import type { Colaborador, Empresa, Perfil, Recebimento, Subempresa } from './components/types';
 import PainelAdministrativo from './components/PainelAdministrativo';
 import { criarRepoDemo, type IntegracaoFinanceiraRecebimentos, type RecebimentosRepo } from './data/repo';
@@ -16,6 +17,7 @@ type Props = {
   darkMode?: boolean;
   corPrimaria?: string;
   mostrarLinkColaboradores?: boolean;
+  onAviso?: AbrirAvisoFn;
   onFinanceiroAtualizado?: () => void;
 };
 
@@ -26,6 +28,7 @@ export default function RecebimentosClient({
   darkMode = false,
   corPrimaria = '#003E73',
   mostrarLinkColaboradores = false,
+  onAviso,
   onFinanceiroAtualizado,
 }: Props) {
   const repoAtual = useMemo(() => repo ?? criarRepoDemo(), [repo]);
@@ -112,6 +115,7 @@ export default function RecebimentosClient({
           darkMode={darkMode}
           corPrimaria={corPrimaria}
           salvando={processando}
+          onAviso={onAviso}
           podeConfirmar={podeConfirmar}
           empresas={empresas}
           subempresas={subempresas}

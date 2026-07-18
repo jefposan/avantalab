@@ -12,6 +12,7 @@ import PainelConferencia from './PainelConferencia';
 import ListaInadimplentes from './ListaInadimplentes';
 import GraficoResultados from './GraficoResultados';
 import type { IntegracaoFinanceiraRecebimentos } from '../data/repo';
+import type { AbrirAvisoFn } from '@/app/hooks/useUI';
 
 type Aba = 'visao' | 'empresas' | 'colaboradores' | 'recebimentos' | 'conferencia' | 'inadimplentes' | 'resultados';
 
@@ -20,6 +21,7 @@ type Props = {
   darkMode: boolean;
   corPrimaria: string;
   salvando: boolean;
+  onAviso?: AbrirAvisoFn;
   podeConfirmar: boolean;
   empresas: Empresa[];
   subempresas: Subempresa[];
@@ -215,6 +217,7 @@ export default function PainelAdministrativo(props: Props) {
             onEditarEmpresa={props.onEditarEmpresa}
             onExcluirEmpresa={props.onExcluirEmpresa}
             onAlternarEmpresa={props.onAlternarEmpresa}
+            onAviso={props.onAviso}
             onAdicionarSubempresa={props.onAdicionarSubempresa}
             onEditarSubempresa={props.onEditarSubempresa}
             onExcluirSubempresa={props.onExcluirSubempresa}

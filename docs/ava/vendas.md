@@ -1,8 +1,8 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.6.0.45 -->
+<!-- ava-version: 1.6.0.46 -->
 
-> Revisão 1.6.0.45: sem impacto operacional no Vendas Mobile; consulta de CEP por Enter foi adicionada na Gestão Web.
+> Revisão 1.6.0.46: sem impacto operacional no Vendas Mobile; validação de subempresa foi refinada na Gestão Web.
 
 ## Escopo e navegação
 

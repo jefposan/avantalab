@@ -2,6 +2,7 @@
 
 import { useMemo, useRef, useState } from 'react';
 import styles from '../recebimentos.module.css';
+import type { AbrirAvisoFn } from '@/app/hooks/useUI';
 import type { Empresa, FrequenciaRecebimento, Subempresa } from './types';
 import {
   FREQUENCIAS_RECEBIMENTO,
@@ -28,6 +29,7 @@ type Props = {
   onEditarSubempresa: (id: string, dados: DadosSubempresa) => void;
   onExcluirSubempresa: (id: string) => void;
   onAlternarSubempresa: (id: string) => void;
+  onAviso?: AbrirAvisoFn;
 };
 
 function IconeAcoes() {
@@ -51,6 +53,7 @@ export default function ListaEmpresas({
   onEditarSubempresa,
   onExcluirSubempresa,
   onAlternarSubempresa,
+  onAviso,
 }: Props) {
   const [expandidas, setExpandidas] = useState<Record<string, boolean>>({});
   // Formulário de empresa: aberto para cadastro (novo) ou edição (id).
@@ -212,9 +215,10 @@ export default function ListaEmpresas({
 
   function salvarEmpresa() {
     setErroEmpresa('');
-    // Todos os campos são obrigatórios.
     if (!eNome.trim() || !eResp.trim() || !eTel.trim() || !eEmail.trim()) {
-      return setErroEmpresa('Preencha todos os campos: nome, responsável, telefone e e-mail.');
+      if (onAviso) onAviso('Preenchimento pendente', 'Preencha nome, responsável, telefone e e-mail para salvar a empresa.', undefined, 'alerta');
+      else setErroEmpresa('Preencha nome, responsável, telefone e e-mail para salvar a empresa.');
+      return;
     }
     const dados: DadosEmpresa = { nome: eNome.trim(), responsavel: eResp.trim(), telefone: eTel.trim(), email: eEmail.trim() };
     if (editandoEmpresaId) {
@@ -240,21 +244,25 @@ export default function ListaEmpresas({
     limparFormSub();
   }
 
+  function avisarErroSub(mensagem: string, titulo = 'Preenchimento pendente') {
+    if (onAviso) onAviso(titulo, mensagem, undefined, 'alerta');
+    else setErroSub(mensagem);
+  }
+
   function salvarSub(empresaId: string) {
     setErroSub('');
     const valor = parseValorBR(sValor);
-    // Todos os campos são obrigatórios.
-    if (!sNome.trim() || !sCep.trim() || !sLogradouro.trim() || !sBairro.trim() || !sCidade.trim() || !sEstado.trim() || !sNumero.trim() || !sResp.trim() || !sValor.trim() || !sFrequencia) {
-      return setErroSub('Preencha todos os campos: nome, endereço, responsável, valor e recebimento.');
+    if (!sNome.trim() || !sResp.trim() || !sValor.trim()) {
+      return avisarErroSub('Preencha nome, responsável, valor e vencimento para salvar a subempresa.');
     }
-    if (Number.isNaN(valor) || valor <= 0) return setErroSub('Informe um valor combinado maior que zero.');
-    if (sFrequencia === 'semanal' && sDiasSemana.length === 0) return setErroSub('Selecione ao menos um dia da semana.');
-    if (sFrequencia !== 'semanal' && !sDiaMes) return setErroSub('Selecione o dia do recebimento.');
-    if (['trimestral', 'semestral', 'anual'].includes(sFrequencia) && !sMesInicio) return setErroSub('Selecione o mês inicial do recebimento.');
+    if (Number.isNaN(valor) || valor <= 0) return avisarErroSub('Informe um valor combinado maior que zero.');
+    if (sFrequencia === 'semanal' && sDiasSemana.length === 0) return avisarErroSub('Selecione ao menos um dia para configurar o vencimento semanal.');
+    if (sFrequencia !== 'semanal' && !sDiaMes) return avisarErroSub('Selecione o dia para configurar o vencimento.');
+    if (['trimestral', 'semestral', 'anual'].includes(sFrequencia) && !sMesInicio) return avisarErroSub('Selecione o mês inicial para configurar o vencimento.');
 
     const dados: DadosSubempresa = {
       nome: sNome.trim(),
-      endereco: [sLogradouro.trim(), sNumero.trim(), sComplemento.trim(), sBairro.trim(), `${sCidade.trim()}/${sEstado.trim()}`].filter(Boolean).join(' · '),
+      endereco: [sLogradouro.trim(), sNumero.trim(), sComplemento.trim(), sBairro.trim(), [sCidade.trim(), sEstado.trim()].filter(Boolean).join('/')].filter(Boolean).join(' · '),
       cep: sCep.trim(),
       logradouro: sLogradouro.trim(),
       bairro: sBairro.trim(),
@@ -314,7 +322,7 @@ export default function ListaEmpresas({
       setSCidade(endereco.localidade ?? '');
       setSEstado(endereco.uf ?? '');
     } catch (error) {
-      setErroSub(error instanceof Error ? error.message : 'Não foi possível consultar o CEP.');
+      avisarErroSub(error instanceof Error ? error.message : 'Não foi possível consultar o CEP.', 'CEP não encontrado');
     } finally {
       setSBuscandoCep(false);
     }
@@ -364,13 +372,13 @@ export default function ListaEmpresas({
     return (
       <div className={styles.enderecoEstruturado}>
         <div className={styles.enderecoLinhaPrincipal}>
-          <div className={`${styles.field} ${styles.enderecoCampoCep}`}><label className={styles.label}>CEP *</label><input className={styles.input} inputMode="numeric" placeholder="00000-000" value={sCep} onChange={(e) => setSCep(formatarCep(e.target.value))} onBlur={() => void consultarCep(sCep)} onKeyDown={(event) => { if (event.key === 'Enter') { event.preventDefault(); void consultarCep(sCep); } }} /><span className={styles.enderecoAjuda}>{sBuscandoCep ? 'Buscando endereço…' : 'Informe o CEP para preencher o endereço.'}</span></div>
-          <div className={styles.field}><label className={styles.label}>Rua *</label><input className={styles.input} placeholder="Nome da rua" value={sLogradouro} onChange={(e) => setSLogradouro(e.target.value)} /></div>
-          <div className={styles.field}><label className={styles.label}>Número *</label><input className={styles.input} placeholder="Número" value={sNumero} onChange={(e) => setSNumero(e.target.value)} /></div>
+          <div className={`${styles.field} ${styles.enderecoCampoCep}`}><label className={styles.label}>CEP</label><input className={styles.input} inputMode="numeric" placeholder="00000-000" value={sCep} onChange={(e) => setSCep(formatarCep(e.target.value))} onBlur={() => void consultarCep(sCep)} onKeyDown={(event) => { if (event.key === 'Enter') { event.preventDefault(); void consultarCep(sCep); } }} /><span className={styles.enderecoAjuda}>{sBuscandoCep ? 'Buscando endereço…' : 'Informe o CEP para preencher o endereço.'}</span></div>
+          <div className={styles.field}><label className={styles.label}>Rua</label><input className={styles.input} placeholder="Nome da rua" value={sLogradouro} onChange={(e) => setSLogradouro(e.target.value)} /></div>
+          <div className={styles.field}><label className={styles.label}>Número</label><input className={styles.input} placeholder="Número" value={sNumero} onChange={(e) => setSNumero(e.target.value)} /></div>
           <div className={styles.field}><label className={styles.label}>Complemento</label><input className={styles.input} placeholder="Sala, loja, bloco…" value={sComplemento} onChange={(e) => setSComplemento(e.target.value)} /></div>
-          <div className={styles.field}><label className={styles.label}>Bairro *</label><input className={styles.input} placeholder="Bairro" value={sBairro} onChange={(e) => setSBairro(e.target.value)} /></div>
-          <div className={styles.field}><label className={styles.label}>Cidade *</label><input className={styles.input} placeholder="Cidade" value={sCidade} onChange={(e) => setSCidade(e.target.value)} /></div>
-          <div className={styles.field}><label className={styles.label}>UF *</label><input className={`${styles.input} ${styles.inputCentro}`} maxLength={2} placeholder="UF" value={sEstado} onChange={(e) => setSEstado(e.target.value.replace(/[^a-z]/gi, '').toUpperCase())} /></div>
+          <div className={styles.field}><label className={styles.label}>Bairro</label><input className={styles.input} placeholder="Bairro" value={sBairro} onChange={(e) => setSBairro(e.target.value)} /></div>
+          <div className={styles.field}><label className={styles.label}>Cidade</label><input className={styles.input} placeholder="Cidade" value={sCidade} onChange={(e) => setSCidade(e.target.value)} /></div>
+          <div className={styles.field}><label className={styles.label}>UF</label><input className={`${styles.input} ${styles.inputCentro}`} maxLength={2} placeholder="UF" value={sEstado} onChange={(e) => setSEstado(e.target.value.replace(/[^a-z]/gi, '').toUpperCase())} /></div>
         </div>
       </div>
     );
