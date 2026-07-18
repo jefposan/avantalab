@@ -86,16 +86,38 @@ ajustar o `d` do `<path>` em `AvantaCard.tsx`.
 
 ## 5. Uso do componente
 
-```tsx
-import AvantaCard, { criarAvantaShellPreset } from '@/app/components/AvantaCard';
+### Modo simples (padrão para cards novos)
 
+Basta informar título, cor primária e o conteúdo do platô. O card monta o
+visual completo internamente via `criarAvantaShellPreset`:
+
+```tsx
+import AvantaCard from '@/app/components/AvantaCard';
+
+<AvantaCard
+  title="Lançamentos Mensais"
+  corPrimaria={corPrimaria}
+  darkMode={darkMode}
+  plato={<AnoBadge ano={anoSelecionado} />}  // canto superior direito
+  onSettingsClick={abrirAjustes}             // menu "..."
+>
+  {conteudo}
+</AvantaCard>
+```
+
+### Modo avançado (compatibilidade / skin própria)
+
+`criarAvantaShellPreset` continua exportado e `style`/`bodyStyle` funcionam
+como overrides — inclusive combinados com o modo simples:
+
+```tsx
 const avantaShell = criarAvantaShellPreset({ corPrimaria, darkMode });
 
 <AvantaCard
   title="Lançamentos Mensais"
-  onSettingsClick={abrirAjustes}     // menu "..."
+  onSettingsClick={abrirAjustes}
   dragHandleProps={listeners}        // dnd-kit (opcional)
-  headerRight={<AnoBadge ano={anoSelecionado} />}
+  headerRight={<AnoBadge ano={anoSelecionado} />}  // equivalente a `plato`
   className={textStrong}
   bodyClassName={bgCard}
   style={avantaShell.cardStyle}
@@ -104,6 +126,14 @@ const avantaShell = criarAvantaShellPreset({ corPrimaria, darkMode });
   {conteudo}
 </AvantaCard>
 ```
+
+### Contorno do card
+
+O contorno é ÚNICO, desenhado por drop-shadows sequenciais de 1px
+(`--avanta-front-filter`) que seguem a silhueta inteira — corpo, vale, curva
+e platô — com espessura uniforme. **Não combinar com bordas `inset` no corpo**
+(`--avanta-body-shadow`): a mistura dos dois sistemas deixava a borda do
+platô diferente do restante do card.
 
 ## 6. Pendências / evolução
 
