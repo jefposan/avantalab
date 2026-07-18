@@ -5024,6 +5024,9 @@ const recarregarDadosFinanceirosAtual = async () => {
 };
 
 const notificarFinanceiroAtualizado = () => {
+  // Atualiza a própria tela imediatamente; o broadcast abaixo mantém outras
+  // abas e sessões abertas em sincronia.
+  void recarregarDadosFinanceirosAtual();
   try {
     financeiroRealtimeChannelRef.current?.send({
       type: 'broadcast',

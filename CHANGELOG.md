@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.6.0.56 - 2026-07-18
+
+- Todos os rótulos de valor em Recebimentos passam a usar **Valor contratado**.
+- **Atualizar títulos** passa a recarregar imediatamente a própria tela de
+  Receitas, além de atualizar as entradas vinculadas e as demais sessões.
+
 ## 1.6.0.55 - 2026-07-18
 
 - As tabelas **Próximo a vencer** e **Inadimplentes** deixam de repetir a
@@ -234,7 +240,7 @@
 
 ## 1.6.0.16 - 2026-07-18
 
-- No cadastro de subempresa, nome, responsável e valor combinado passaram a
+- No cadastro de subempresa, nome, responsável e valor contratado passaram a
   compartilhar a mesma linha no Web.
 
 ## 1.6.0.15 - 2026-07-18

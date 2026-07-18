@@ -255,7 +255,7 @@ export default function ListaEmpresas({
     if (!sNome.trim() || !sResp.trim() || !sValor.trim()) {
       return avisarErroSub('Preencha nome, responsável, valor e vencimento para salvar a subempresa.');
     }
-    if (Number.isNaN(valor) || valor <= 0) return avisarErroSub('Informe um valor combinado maior que zero.');
+    if (Number.isNaN(valor) || valor <= 0) return avisarErroSub('Informe um valor contratado maior que zero.');
     if (sFrequencia === 'semanal' && sDiasSemana.length === 0) return avisarErroSub('Selecione ao menos um dia para configurar o vencimento semanal.');
     if (sFrequencia !== 'semanal' && !sDiaMes) return avisarErroSub('Selecione o dia para configurar o vencimento.');
     if (['trimestral', 'semestral', 'anual'].includes(sFrequencia) && !sMesInicio) return avisarErroSub('Selecione o mês inicial para configurar o vencimento.');
@@ -389,7 +389,7 @@ export default function ListaEmpresas({
       <div className={styles.linhaEmpresaCampos}>
         <div className={styles.field}><label className={styles.label}>Nome da subempresa *</label><input className={styles.input} placeholder="Ex: Loja Renner" value={sNome} onChange={(e) => setSNome(formatarNomeProprio(e.target.value))} /></div>
         <div className={styles.field}><label className={styles.label}>Responsável *</label><input className={styles.input} placeholder="Ex: Gerente da loja" value={sResp} onChange={(e) => setSResp(formatarNomeProprio(e.target.value))} /></div>
-        <div className={styles.field}><label className={styles.label}>Valor combinado *</label><input className={`${styles.input} ${styles.inputCentro}`} inputMode="decimal" placeholder="0,00" value={sValor} onChange={(e) => setSValor(formatarValorInput(e.target.value))} /></div>
+        <div className={styles.field}><label className={styles.label}>Valor contratado *</label><input className={`${styles.input} ${styles.inputCentro}`} inputMode="decimal" placeholder="0,00" value={sValor} onChange={(e) => setSValor(formatarValorInput(e.target.value))} /></div>
       </div>
     );
   }

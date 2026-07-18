@@ -67,7 +67,7 @@ export default function PainelConferencia({
               </div>
 
               <div className={styles.readonlyBox} style={{ marginTop: 10 }}>
-                <div className={styles.readonlyRow}><span>Valor combinado</span><span>{formatarMoeda(r.valorCombinado)}</span></div>
+                <div className={styles.readonlyRow}><span>Valor contratado</span><span>{formatarMoeda(r.valorCombinado)}</span></div>
                 <div className={styles.readonlyRow}><span>Valor declarado</span><span>{formatarMoeda(r.valorRecebido ?? 0)}</span></div>
                 <div className={styles.readonlyRow}>
                   <span>Diferença</span>

@@ -134,7 +134,7 @@ export function formatarData(iso: string | null): string {
   return `${dia}/${mes}/${ano}`;
 }
 
-// Classifica a diferença entre valor recebido e valor combinado.
+// Classifica a diferença entre valor recebido e valor contratado.
 export function tipoDiferenca(valorCombinado: number, valorRecebido: number | null): DiferencaTipo {
   if (valorRecebido == null) return 'exato';
   const dif = Number((valorRecebido - valorCombinado).toFixed(2));

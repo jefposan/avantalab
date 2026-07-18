@@ -1,8 +1,8 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.6.0.55 -->
+<!-- ava-version: 1.6.0.56 -->
 
-> Revisão 1.6.0.55: refinamentos das listas e do lançamento no PWA de Recebimentos.
+> Revisão 1.6.0.56: nomenclatura de valor contratado e atualização imediata dos títulos em Receitas.
 
 ## Escopo
 
@@ -91,7 +91,8 @@ ou `/ponto`.
   alteração ou estorno atualiza imediatamente a receita do mesmo mês, incluindo
   valor e data, sem depender de atualização manual. Na Visão geral, o card
   **Total recebido e confirmado** permite usar **Atualizar títulos** para alterar
-  o nome da entrada e da etiqueta em todos os meses. **Retirar das receitas**
+  o nome da entrada e da etiqueta em todos os meses, com reflexo imediato na
+  tela de Receitas aberta. **Retirar das receitas**
   remove somente os lançamentos vinculados e interrompe a sincronização; os
   recebimentos permanecem preservados e **Adicionar às receitas** pode reativá-la.
 - Os quatro cards de valores da Visão geral dividem uma linha horizontal. Ao trocar o

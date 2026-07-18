@@ -208,7 +208,7 @@ export default function FormularioRecebimento({ empresas, subempresas, recebimen
           ) : (
             <div className={styles.readonlyRow}><span>Recebimento</span><span>{rotuloFrequenciaRecebimento(sub.frequenciaRecebimento)}</span></div>
           )}
-          <div className={styles.readonlyRow}><span>Valor combinado</span><span>{formatarMoeda(valorCombinado ?? 0)}</span></div>
+          <div className={styles.readonlyRow}><span>Valor contratado</span><span>{formatarMoeda(valorCombinado ?? 0)}</span></div>
         </div>
       )}
 
