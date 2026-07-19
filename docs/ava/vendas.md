@@ -1,8 +1,8 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.6.0.60 -->
+<!-- ava-version: 1.6.0.61 -->
 
-> Revisão 1.6.0.60: a pesquisa é limpa ao trocar de página, sem reaproveitar o texto em outra tela.
+> Revisão 1.6.0.61: o rodapé de navegação permanece ancorado durante a rolagem e a troca de telas.
 
 ## Escopo e navegação
 
@@ -11,6 +11,8 @@ dúvida dentro do Vendas sempre que a função existir ali.
 
 - A sala inicial possui Dashboard, Clientes, Produtos, Pedidos, Pagamentos,
   Agenda, Novidades, Divulgação e Informações.
+- O rodapé de navegação permanece fixo na borda inferior da tela durante a
+  rolagem e não se desloca ao entrar em Configurações ou trocar de página.
 - O menu inferior tem Configurações, dois atalhos configuráveis, **+ Novo
   lançamento** e Início. Os atalhos são configurados em **Configurações >
   Organizar atalhos**; o lápis da sala muda a ordem dos cards. Enquanto a

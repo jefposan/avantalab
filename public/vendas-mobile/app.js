@@ -967,21 +967,25 @@ function render() {
   }
   if (carregandoBackend || conectandoGoogle || preparandoRecursosSala) {
     limparDestaqueClientes();
+    removerNavegacaoInferior();
     renderPreparandoAcessoEstavel();
     return;
   }
   if (state.seletorSistemaAberto && state.seletorSistemaInicialBloqueante) {
     limparDestaqueClientes();
+    removerNavegacaoInferior();
     app.innerHTML = renderSeletorSistemaVendas();
     return;
   }
   if (state.seletorPerfilGestaoAberto) {
     limparDestaqueClientes();
+    removerNavegacaoInferior();
     app.innerHTML = renderSeletorPerfilGestaoVendas();
     return;
   }
   if (!state.autenticado) {
     limparDestaqueClientes();
+    removerNavegacaoInferior();
     app.innerHTML = state.usuarioSemAcesso ? renderSolicitarAcesso() : renderLogin();
     if (!state.usuarioSemAcesso) adicionarBotoesGoogle();
     requestAnimationFrame(limparFocoInicialLogin);
@@ -989,6 +993,7 @@ function render() {
   }
   if (!state.moduloVendasAtivo) {
     limparDestaqueClientes();
+    removerNavegacaoInferior();
     app.innerHTML = renderModuloVendasDesativado();
     assinaturaSalaRenderizada = '';
     return;
@@ -1025,12 +1030,12 @@ function render() {
       <main class="content-area">${renderConteudo()}</main>
     </div>
     ${state.menuAberto ? renderMenuMobile() : ''}
-    ${renderNavegacaoInferior()}
     ${state.aba === 'novo-pedido' ? `<button class="fab" onclick="abrirCarrinho()">${svgIcon('shopping-cart')}</button>` : ''}
     ${state.agendaFormAberto && state.aba !== 'agenda' ? renderFormularioAgendaVendas() : ''}
     ${renderSeletorSistemaVendas()}
   `;
   preservarCabecalhoSistema(cabecalhoAnterior, aniversariantesHoje);
+  sincronizarNavegacaoInferior();
   assinaturaSalaRenderizada = assinaturaSalaAtual;
   if (assinaturaSalaAtual) agendarGarantiaSalaBotoes();
   if (state.aba === 'clientes') requestAnimationFrame(configurarDestaqueClientes);
@@ -1574,13 +1579,33 @@ function itemNavegacaoInferior(id, tipo, rotulo, acao) {
 function renderNavegacaoInferior() {
   const [esquerdo, rotuloEsquerdo, iconeEsquerdo] = dadosAtalhoInferiorVendas(atalhoInferiorVendasValido(state.atalhoInferiorEsquerdo, 'tema'));
   const [direito, rotuloDireito, iconeDireito] = dadosAtalhoInferiorVendas(atalhoInferiorVendasValido(state.atalhoInferiorDireito, 'agenda'));
-  return `<nav class="vendas-bottom-nav" aria-label="Navegação principal"><div class="vendas-bottom-nav-inner">
+  return `<nav id="vendas-bottom-nav" class="vendas-bottom-nav" aria-label="Navegação principal"><div class="vendas-bottom-nav-inner">
     ${itemNavegacaoInferior('nav-configuracoes', 'settings', 'Configurações', 'configuracoes')}
     ${itemNavegacaoInferior('nav-atalho-esquerdo', iconeEsquerdo, rotuloEsquerdo, esquerdo)}
     <button id="nav-novo" type="button" class="vendas-nav-add" onclick="acionarNavegacaoInferior(event, 'novo')" aria-label="Lançar pedido ou pagamento"><span>+</span><b>Lançar</b></button>
     ${itemNavegacaoInferior('nav-atalho-direito', iconeDireito, rotuloDireito, direito)}
     ${itemNavegacaoInferior('nav-inicio', 'home', 'Início', 'inicio')}
   </div></nav>`;
+}
+
+function assinaturaNavegacaoInferior() {
+  return [
+    atalhoInferiorVendasValido(state.atalhoInferiorEsquerdo, 'tema'),
+    atalhoInferiorVendasValido(state.atalhoInferiorDireito, 'agenda'),
+  ].join('|');
+}
+
+function removerNavegacaoInferior() {
+  document.getElementById('vendas-bottom-nav')?.remove();
+}
+
+function sincronizarNavegacaoInferior() {
+  const assinatura = assinaturaNavegacaoInferior();
+  const atual = document.getElementById('vendas-bottom-nav');
+  if (atual?.dataset.assinatura === assinatura) return;
+  if (atual) atual.remove();
+  document.body.insertAdjacentHTML('beforeend', renderNavegacaoInferior());
+  document.getElementById('vendas-bottom-nav')?.setAttribute('data-assinatura', assinatura);
 }
 
 function acionarNavegacaoInferior(event, destino) {
@@ -5948,23 +5973,28 @@ function fecharSheet(evento = null) {
   evento?.preventDefault?.();
   evento?.stopPropagation?.();
   const sheetAtual = document.getElementById('sheetBackdrop');
-  const estavaAberto = Boolean(sheetAtual);
-  if (!estavaAberto) return;
+  const estavaBloqueado = document.body.classList.contains('sheet-open')
+    || document.documentElement.classList.contains('sheet-open');
+  const topBloqueado = Number.parseInt(document.body.style.top || '0', 10);
+  const rolagemParaRestaurar = Number.isFinite(topBloqueado) && topBloqueado < 0
+    ? Math.abs(topBloqueado)
+    : rolagemAnteriorSheet;
+  if (!sheetAtual && !estavaBloqueado) return;
   const campoAtivo = document.activeElement;
-  if (campoAtivo instanceof HTMLElement && sheetAtual.contains(campoAtivo)) {
+  if (campoAtivo instanceof HTMLElement && sheetAtual?.contains(campoAtivo)) {
     campoAtivo.blur();
   }
   if (document.getElementById('prodImagemArquivo') && produtoImagemUploadPendente?.previewUrl) {
     URL.revokeObjectURL(produtoImagemUploadPendente.previewUrl);
     produtoImagemUploadPendente = null;
   }
-  sheetAtual.remove();
+  sheetAtual?.remove();
   document.body.classList.remove('sheet-open');
   document.documentElement.classList.remove('sheet-open');
   document.body.style.top = '';
   const rolagemAtual = window.scrollY || document.documentElement.scrollTop || 0;
-  if (Math.abs(rolagemAtual - rolagemAnteriorSheet) > 1) {
-    window.scrollTo({ top: rolagemAnteriorSheet, left: 0, behavior: 'auto' });
+  if (Math.abs(rolagemAtual - rolagemParaRestaurar) > 1) {
+    window.scrollTo({ top: rolagemParaRestaurar, left: 0, behavior: 'auto' });
   }
 }
 

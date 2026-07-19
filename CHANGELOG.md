@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.6.0.61 - 2026-07-19
+
+- O rodapé do Vendas Mobile passou a ser uma camada persistente, mantendo-se
+  ancorado ao fim da tela durante a rolagem e a navegação por Configurações.
+
 ## 1.6.0.60 - 2026-07-18
 
 - No Vendas Mobile, pesquisas não são mais levadas de uma página para outra:

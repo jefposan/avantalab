@@ -2068,7 +2068,7 @@ body { background: #fff; color: var(--ink); }
   .dark-theme .mobile-ava-logo { background-image: url('/images/ava-logo-fundo-escuro.png'); }
 .dark-theme .mobile-suggestions-card { border-color: #155e75; color: #ecfeff; background: radial-gradient(circle at 90% 50%,rgba(20,184,166,.16),transparent 28%),linear-gradient(135deg,#123042,#0e293a); }
   .dark-theme .mobile-suggestions-card small { color: #67e8f9; }
-  .vendas-bottom-nav { position: fixed; z-index: 110; right: 0; bottom: 0; left: 0; display: block; border-top: 1px solid #e2e8f0; background: rgba(255,255,255,.95); box-shadow: 0 -8px 24px rgba(15,23,42,.10); backdrop-filter: blur(20px); padding-bottom: env(safe-area-inset-bottom); }
+  .vendas-bottom-nav { position: fixed; z-index: 110; right: 0; bottom: 0; left: 0; display: block; border-top: 1px solid #e2e8f0; background: rgba(255,255,255,.95); box-shadow: 0 -8px 24px rgba(15,23,42,.10); -webkit-backdrop-filter: blur(20px); backdrop-filter: blur(20px); padding-bottom: env(safe-area-inset-bottom); transform: translateZ(0); }
   .vendas-bottom-nav-inner { position: relative; display: grid; height: 66px; max-width: 448px; grid-template-columns: repeat(5,minmax(0,1fr)); align-items: end; margin: 0 auto; padding: 0 8px; }
   .vendas-nav-item, .vendas-nav-add { position: relative; display: flex; min-width: 0; isolation: isolate; flex-direction: column; align-items: center; justify-content: center; gap: 2px; overflow: visible; border: 0; padding: 4px; color: #94a3b8; background: transparent; font-size: 10px; font-weight: 900; }
   .vendas-nav-item > span { position: relative; z-index: 1; display: flex; height: 28px; align-items: center; justify-content: center; }

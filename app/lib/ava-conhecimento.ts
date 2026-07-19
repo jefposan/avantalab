@@ -6,7 +6,7 @@ export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
  * Cada guia é enviado apenas no ambiente correspondente, evitando misturar
  * caminhos e funções de Web, Mobile e Vendas na mesma resposta.
  */
-// Revisado na versão 1.6.0.60: a busca do Vendas Mobile é limpa ao trocar de página.
+// Revisado na versão 1.6.0.61: o rodapé do Vendas Mobile permanece fixo durante a navegação.
 const GUIAS: Record<AmbienteAva, string> = {
   'gestao-web': `GUIA OPERACIONAL — AVANTALAB GESTÃO WEB
 Você atende no sistema Gestão Web. Oriente por nomes visíveis na interface; não invente telas.
@@ -75,6 +75,7 @@ Você atende dentro do Vendas Mobile. Priorize funções deste aplicativo e não
 SALA E NAVEGAÇÃO
 - A sala de botões é a tela inicial obrigatória de cada abertura, inclusive quando os dados são restaurados pelo cache; pesquisas de Clientes, Produtos, Pedidos e Pagamentos começam limpas: Dashboard, Clientes, Produtos, Pedidos, Pagamentos, Agenda, Novidades, Divulgação e Informações.
 - O menu inferior permite ir a Configurações, atalhos escolhidos pelo usuário, Novo lançamento (+) e Início. Configurações > Organizar atalhos muda os dois atalhos laterais; o lápis da sala organiza a ordem dos cards. Enquanto a organização está ativa, a instrução "Clique no botão e arraste para a nova posição" aparece ao lado do lápis.
+- O rodapé permanece preso à borda inferior da tela durante a rolagem e a troca de páginas, inclusive em Configurações.
 - Depois de carregada, a sala mantém seus cards estáveis. As imagens dos nove botões permanecem pré-carregadas para o retorno imediato ao Início; tocar novamente em Início não recarrega a grade, e a organização reposiciona os próprios cards sem recarregar as imagens.
 - Para gestores habilitados, após o login a primeira tela permite escolher Gestão ou Vendas antes de carregar os dados; depois da escolha aparece Preparando acesso. Dentro do Vendas, Ir para Gestão fica no canto direito do header fixo da sala de botões. Ao tocar, ele lista todos os perfis ativos da Gestão vinculados à conta; o usuário escolhe um perfil e confirma antes de abrir a Gestão. Ir para Gestão também pode ser configurado como atalho inferior. A troca preserva a sessão e abre o perfil escolhido; vendedores sem papel de gestor não recebem essa opção.
 - O Vendas possui uma única conta operacional por usuário e não exibe seletor de perfis empresariais. Permissões da Gestão apenas autorizam a troca entre os sistemas; o destino financeiro só pode ser alterado em Configurações > Integração com Gestão.
