@@ -1,8 +1,8 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.6.0.66 -->
+<!-- ava-version: 1.6.0.68 -->
 
-> Revisão 1.6.0.66: Controle de Ponto possui trilha de auditoria consultável por gestores.
+> Revisão 1.6.0.68: aba Auditoria do Controle de Ponto fica acomodada no modal administrativo.
 
 ## Escopo
 
@@ -48,6 +48,8 @@ ou `/ponto`.
   login e novas marcações ficam bloqueados, mas relatórios e histórico são
   preservados. A reativação usa o mesmo controle. Na administração do ponto,
   a aba **Auditoria** mostra as marcações e as alterações de acesso registradas.
+  O funcionário recebe um comprovante imediatamente após cada marcação e pode
+  imprimi-lo; o código mostrado identifica o registro salvo no banco.
 - **Recebimentos Presenciais** é instalado em **Menu > Módulos**. Depois de
   instalado, Gestor Master e Administrador usam **Menu > Recebimentos** para
   cadastrar empresas atendidas, pontos de cobrança e colaboradores, além de

@@ -1,8 +1,8 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.6.0.66 -->
+<!-- ava-version: 1.6.0.68 -->
 
-> Revisão 1.6.0.66: trilha de auditoria do Controle de Ponto fica disponível na Gestão Web.
+> Revisão 1.6.0.68: sem impacto operacional no Gestão Mobile; ajuste de largura na Gestão Web.
 
 ## Escopo
 

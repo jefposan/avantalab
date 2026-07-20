@@ -405,11 +405,10 @@
         : 'O controle de ponto foi desativado para a sua empresa. Fale com o gestor.');
       return;
     }
-    var hash = (Date.now().toString(36) + Math.random().toString(36).slice(2, 8)).toUpperCase();
     var registro = {
       empresa_id: empresaId, user_id: state.usuario.id, tipo: tipo,
       latitude: latAtual, longitude: lngAtual,
-      precisao_m: precisao, dispositivo: navigator.userAgent, hash: hash,
+      precisao_m: precisao, dispositivo: navigator.userAgent,
     };
     registro.distancia_m = distancia;
     var resp;
@@ -417,7 +416,7 @@
     catch (e) { state.batendo = false; mostrarToast('Erro ao registrar: ' + ((e && e.message) ? e.message : 'tente novamente')); return; }
     state.batendo = false;
     if (resp.error) { mostrarToast('Nao registrou: ' + (resp.error.message || resp.error.code || 'erro')); return; }
-    state.comprovante = { tipo: tipo, registrado_em: resp.data.registrado_em, hash: hash, lat: latAtual, lng: lngAtual, distancia: distancia };
+    state.comprovante = { tipo: tipo, registrado_em: resp.data.registrado_em, codigo: resp.data.id, lat: latAtual, lng: lngAtual, distancia: distancia };
     await carregarHoje();
     render();
   }
@@ -677,8 +676,9 @@
             '<p>Empresa: ' + escapeHtml(nomeEmpresa()) + '</p>' +
             '<p>Local: ' + Number(c.lat).toFixed(5) + ', ' + Number(c.lng).toFixed(5) + '</p>' +
             (c.distancia != null ? '<p>Distância da empresa: ' + Math.round(c.distancia) + 'm</p>' : '') +
-            '<p>Código: ' + escapeHtml(c.hash) + '</p>' +
+            '<p>Código de confirmação: ' + escapeHtml(c.codigo) + '</p>' +
           '</div>' +
+          '<button id="ponto-comprovante-imprimir" type="button" class="mt-3 h-11 w-full rounded-xl border border-slate-300 bg-white text-xs font-black uppercase tracking-wide text-slate-700">Imprimir comprovante</button>' +
           '<button id="ponto-comprovante-ok" type="button" class="mt-5 h-12 w-full rounded-xl bg-slate-950 text-sm font-black uppercase tracking-wide text-white">Concluir</button>' +
         '</div>' +
       '</div>'
@@ -857,6 +857,7 @@
     var ovConfirmar = document.getElementById('ponto-confirmar-overlay');
     if (ovConfirmar) ovConfirmar.addEventListener('click', function (e) { if (e.target === ovConfirmar) { state.confirmarTipo = null; render(); } });
     bind('ponto-comprovante-ok', function () { state.comprovante = null; render(); });
+    bind('ponto-comprovante-imprimir', function () { try { window.print(); } catch (e) {} });
     bind('ponto-meus-registros', function () { carregarRegistros('dia'); });
     bind('ponto-voltar', function () { state.view = 'bater'; render(); });
     bind('ponto-periodo-dia', function () { carregarRegistros('dia'); });

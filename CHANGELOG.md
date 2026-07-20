@@ -1,5 +1,16 @@
 # Changelog
 
+## 1.6.0.68 - 2026-07-20
+
+- O modal administrativo do Controle de Ponto ganhou largura para acomodar a
+  nova aba **Auditoria** sem cortar sua navegação em telas de desktop.
+
+## 1.6.0.67 - 2026-07-20
+
+- O comprovante de marcação do Controle de Ponto usa o identificador persistido
+  do registro, substitui códigos gerados no aparelho e pode ser impresso logo
+  após a confirmação.
+
 ## 1.6.0.66 - 2026-07-20
 
 - Controle de Ponto passa a manter uma trilha de auditoria imutável para
