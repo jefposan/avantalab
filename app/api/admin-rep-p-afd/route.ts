@@ -1,10 +1,9 @@
 import { NextResponse } from 'next/server';
 import JSZip from 'jszip';
-import { createClient } from '@supabase/supabase-js';
-import { exigirAdmin } from '@/app/lib/admin-server';
 import { descriptografarSegredoRepP } from '@/app/lib/rep-p-cofre';
 import { assinarCadesDestacado, gerarAfdRepP } from '@/app/lib/rep-p-afd';
 import { createHash, randomUUID } from 'node:crypto';
+import { autorizarEmpresa } from '@/app/api/ponto/documentos-rep-p/route';
 
 export const runtime = 'nodejs';
 const erro = (mensagem: string, status = 400) => NextResponse.json({ erro: true, mensagem }, { status });
@@ -13,20 +12,11 @@ const coletor = (dispositivo: unknown) => /android|iphone|ipad|mobile/i.test(Str
 
 export async function GET(request: Request) {
   try {
-    const { autorizado, db } = await exigirAdmin(request);
     const url = new URL(request.url); const empresaId = url.searchParams.get('empresaId'); const inicio = url.searchParams.get('inicio'); const fim = url.searchParams.get('fim');
     if (!empresaId || !dataValida(inicio) || !dataValida(fim) || inicio! > fim!) return erro('Informe a empresa e um intervalo de datas válido.');
-    let solicitante: string | null = null;
-    if (!autorizado) {
-      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL; const anon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY; const auth = request.headers.get('authorization');
-      if (!supabaseUrl || !anon || !auth) return erro('Acesso não autorizado.', 401);
-      const usuario = createClient(supabaseUrl, anon, { global: { headers: { Authorization: auth } } });
-      const { data: { user } } = await usuario.auth.getUser();
-      if (!user) return erro('Acesso não autorizado.', 401);
-      solicitante = user.id;
-      const { data: vinculo } = await db.from('usuarios_empresa').select('user_id').eq('empresa_id', empresaId).eq('user_id', user.id).eq('status', 'ativo').in('perfil', ['gestor_master', 'administrador']).maybeSingle();
-      if (!vinculo) return erro('Acesso não autorizado para esta empresa.', 403);
-    }
+    const contexto = await autorizarEmpresa(request, empresaId);
+    if (!contexto) return erro('Acesso não autorizado para esta empresa.', 403);
+    const { db, solicitante } = contexto;
     const [{ data: empresa }, { data: perfil }, { data: configuracao }, { data: certificado }] = await Promise.all([
       db.from('empresas').select('nome').eq('id', empresaId).maybeSingle(),
       db.from('cadastros_perfil').select('tipo_documento, documento, razao_social, nome_fantasia').eq('empresa_id', empresaId).maybeSingle(),

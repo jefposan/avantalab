@@ -1,14 +1,13 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
-import { exigirAdmin } from '@/app/lib/admin-server';
+import { criarSupabaseAdmin } from '@/app/lib/admin-server';
 
 export const runtime = 'nodejs';
 
 const erro = (mensagem: string, status = 400) => NextResponse.json({ erro: true, mensagem }, { status });
 
 export async function autorizarEmpresa(request: Request, empresaId: string) {
-  const { autorizado, db } = await exigirAdmin(request);
-  if (autorizado) return { db, solicitante: null as string | null };
+  const db = criarSupabaseAdmin();
 
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const anon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;

@@ -1,9 +1,9 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.6.0.79 -->
+<!-- ava-version: 1.6.0.80 -->
 
-> Revisão 1.6.0.79: o AFD é emitido e consultado somente na Conformidade da
-> empresa; o `/admin` mantém a configuração global do INPI e certificado.
+> Revisão 1.6.0.80: somente Gestor Master e Administrador vinculados à empresa
+> acessam o Controle de Ponto e seus documentos REP-P.
 
 ## Escopo
 
