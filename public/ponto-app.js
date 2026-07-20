@@ -867,7 +867,14 @@
         var arquivo = await resposta.blob(); var urlArquivo = URL.createObjectURL(arquivo); var link = document.createElement('a'); link.href = urlArquivo; link.download = 'comprovante-ponto-' + state.comprovante.codigo + '.pdf'; document.body.appendChild(link); link.click(); link.remove(); URL.revokeObjectURL(urlArquivo);
       } catch (erro) { mostrarToast((erro && erro.message) || 'Não foi possível gerar o PDF.'); }
     });
-    bind('ponto-comprovante-imprimir', function () { try { window.print(); } catch (e) {} });
+    bind('ponto-comprovante-imprimir', function () {
+      try {
+        var c = state.comprovante; if (!c) return;
+        var janela = window.open('', '_blank', 'width=720,height=860'); if (!janela) throw new Error('Permita pop-ups para imprimir o comprovante.');
+        janela.document.write('<!doctype html><html><head><title>Comprovante de ponto</title><style>body{font-family:Arial,sans-serif;padding:36px;color:#172033}h1{font-size:20px;color:#003E73}.tag{color:#64748b;font-size:12px}dl{margin-top:28px}dt{font-weight:bold;margin-top:15px}dd{margin:4px 0 0}.codigo{font-family:monospace;word-break:break-all}</style></head><body><h1>Comprovante de registro de ponto</h1><p class="tag">AvantaLab · confirmação de marcação</p><dl><dt>Funcionário</dt><dd>' + escapeHtml(nomeFunc()) + '</dd><dt>Empresa</dt><dd>' + escapeHtml(nomeEmpresa()) + '</dd><dt>Marcação</dt><dd>' + escapeHtml(rotuloAcao(c.tipo)) + '</dd><dt>Data e hora</dt><dd>' + escapeHtml(horaPonto(c.registrado_em)) + ' · ' + escapeHtml(diaPontoHoje().split('-').reverse().join('/')) + '</dd><dt>Código do registro</dt><dd class="codigo">' + escapeHtml(c.codigo) + '</dd></dl></body></html>');
+        janela.document.close(); janela.focus(); janela.print();
+      } catch (e) { mostrarToast((e && e.message) || 'Não foi possível preparar a impressão.'); }
+    });
     bind('ponto-meus-registros', function () { carregarRegistros('dia'); });
     bind('ponto-voltar', function () { state.view = 'bater'; render(); });
     bind('ponto-periodo-dia', function () { carregarRegistros('dia'); });
