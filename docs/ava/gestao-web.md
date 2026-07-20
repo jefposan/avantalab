@@ -1,9 +1,9 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.6.0.83 -->
+<!-- ava-version: 1.6.0.84 -->
 
-> Revisão 1.6.0.83: sem impacto operacional na Gestão Web; o Gestão Mobile
-> reforça a atualização de seus arquivos e a conclusão da abertura.
+> Revisão 1.6.0.84: sem impacto operacional para usuários da Gestão Web; a
+> consulta administrativa de consumo da Cloudflare passou para a API GraphQL.
 
 ## Escopo
 

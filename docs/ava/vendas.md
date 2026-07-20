@@ -1,9 +1,9 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.6.0.83 -->
+<!-- ava-version: 1.6.0.84 -->
 
-> Revisão 1.6.0.83: sem impacto operacional no Vendas Mobile; o Gestão Mobile
-> reforça a atualização de seus arquivos e a conclusão da abertura.
+> Revisão 1.6.0.84: sem impacto operacional no Vendas Mobile; a consulta
+> administrativa de consumo da Cloudflare passou para a API GraphQL.
 
 ## Escopo e navegação
 

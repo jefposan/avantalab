@@ -17,7 +17,7 @@ export const runtime = 'nodejs';
 //   GITHUB_REPO    → ex.: jefposan/avantalab
 //   OPENAI_ADMIN_KEY → chave administrativa da organização OpenAI
 //   ASAAS_API_KEY  → mesma chave já usada pela integração de pagamentos
-//   CLOUDFLARE_API_TOKEN → token com Zone > Analytics > Read
+//   CLOUDFLARE_API_TOKEN → token com Account > Account Analytics > Read
 //   CLOUDFLARE_ZONE_ID   → identificador da zona avantalab.com.br
 //
 // O Supabase não precisa de token novo: usa a service role + a
@@ -79,9 +79,24 @@ type CloudflareTotals = {
   threats?: { all?: number };
 };
 
-type CloudflareDashboardResponse = {
-  success?: boolean;
-  result?: { totals?: CloudflareTotals };
+type CloudflareGraphqlResponse = {
+  data?: {
+    viewer?: {
+      zones?: Array<{
+        totals?: Array<{
+          sum?: {
+            bytes?: number;
+            cachedBytes?: number;
+            cachedRequests?: number;
+            pageViews?: number;
+            requests?: number;
+            threats?: number;
+          };
+          uniq?: { uniques?: number };
+        }>;
+      }>;
+    };
+  };
   errors?: Array<{ message?: string }>;
 };
 
@@ -373,31 +388,84 @@ async function consultarCloudflare30Dias(zoneId: string): Promise<CloudflareTota
   if (!token) throw new Error('token não configurado');
 
   const agora = new Date();
-  const inicio = new Date(agora.getTime() - 30 * 24 * 60 * 60 * 1000);
-  const parametros = new URLSearchParams({
-    since: inicio.toISOString(),
-    until: agora.toISOString(),
-    continuous: 'true',
-  });
-  const resposta = await fetch(
-    `https://api.cloudflare.com/client/v4/zones/${encodeURIComponent(zoneId)}/analytics/dashboard?${parametros.toString()}`,
-    {
-      headers: { Authorization: `Bearer ${token}` },
-      cache: 'no-store',
+  const inicio = new Date(agora);
+  inicio.setUTCDate(inicio.getUTCDate() - 29);
+
+  // Sem dimensão de data, o GraphQL devolve um único total consolidado para
+  // todo o intervalo. Isso também evita somar o mesmo visitante em dias distintos.
+  const query = `
+    query AdminCloudflareUsage($zoneTag: string, $start: Date, $end: Date) {
+      viewer {
+        zones(filter: { zoneTag: $zoneTag }) {
+          totals: httpRequests1dGroups(
+            limit: 1
+            filter: { date_geq: $start, date_leq: $end }
+          ) {
+            sum {
+              bytes
+              cachedBytes
+              cachedRequests
+              pageViews
+              requests
+              threats
+            }
+            uniq {
+              uniques
+            }
+          }
+        }
+      }
+    }
+  `;
+  const resposta = await fetch('https://api.cloudflare.com/client/v4/graphql', {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json',
     },
-  );
-  const dados = await resposta.json().catch(() => ({})) as CloudflareDashboardResponse;
-  if (!resposta.ok || !dados.success) {
-    throw new Error(dados.errors?.[0]?.message || `HTTP ${resposta.status}`);
+    body: JSON.stringify({
+      query,
+      variables: {
+        zoneTag: zoneId,
+        start: inicio.toISOString().slice(0, 10),
+        end: agora.toISOString().slice(0, 10),
+      },
+    }),
+    cache: 'no-store',
+  });
+  const dados = await resposta.json().catch(() => ({})) as CloudflareGraphqlResponse;
+  if (!resposta.ok || dados.errors?.length) {
+    const mensagem = dados.errors?.map((erro) => erro.message).filter(Boolean).join('; ');
+    throw new Error(mensagem || `HTTP ${resposta.status}`);
   }
-  return dados.result?.totals || {};
+
+  const zona = dados.data?.viewer?.zones?.[0];
+  if (!zona) {
+    throw new Error('zona não encontrada ou não autorizada para este token');
+  }
+  const totais = zona.totals?.[0];
+  if (!totais) return {};
+
+  return {
+    requests: {
+      all: Number(totais.sum?.requests) || 0,
+      cached: Number(totais.sum?.cachedRequests) || 0,
+    },
+    bandwidth: {
+      all: Number(totais.sum?.bytes) || 0,
+      cached: Number(totais.sum?.cachedBytes) || 0,
+    },
+    pageviews: { all: Number(totais.sum?.pageViews) || 0 },
+    uniques: { all: Number(totais.uniq?.uniques) || 0 },
+    threats: { all: Number(totais.sum?.threats) || 0 },
+  };
 }
 
 // A consulta é compartilhada entre administradores e revalidada somente a cada hora.
 // O token nunca sai deste módulo de servidor nem é incluído na chave de cache.
 const consultarCloudflareComCache = unstable_cache(
   consultarCloudflare30Dias,
-  ['admin-consumo-cloudflare-30-dias-v1'],
+  ['admin-consumo-cloudflare-30-dias-v2'],
   { revalidate: 3600 },
 );
 
@@ -413,7 +481,7 @@ async function consumoCloudflare(): Promise<Plataforma> {
   };
 
   if (!plataforma.configurado) {
-    plataforma.avisos.push('Defina CLOUDFLARE_API_TOKEN (Zone > Analytics > Read) e CLOUDFLARE_ZONE_ID para acompanhar os dados dos últimos 30 dias.');
+    plataforma.avisos.push('Defina CLOUDFLARE_API_TOKEN (Account > Account Analytics > Read) e CLOUDFLARE_ZONE_ID para acompanhar os dados dos últimos 30 dias.');
     return plataforma;
   }
 
@@ -447,7 +515,11 @@ async function consumoCloudflare(): Promise<Plataforma> {
     );
   } catch (error) {
     plataforma.configurado = false;
-    plataforma.avisos.push(`Cloudflare: não foi possível consultar as métricas (${error instanceof Error ? error.message : 'falha inesperada'}).`);
+    const mensagem = error instanceof Error ? error.message : 'falha inesperada';
+    const parecePermissao = /unauthori[sz]ed|not authorized|access|permission|auth/i.test(mensagem);
+    plataforma.avisos.push(
+      `Cloudflare: não foi possível consultar as métricas (${mensagem}).${parecePermissao ? ' Confirme no token a permissão Account > Account Analytics > Read e o acesso à zona.' : ''}`,
+    );
   }
 
   return plataforma;

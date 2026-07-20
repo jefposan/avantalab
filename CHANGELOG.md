@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.6.0.84 - 2026-07-20
+
+- Administração: a consulta de consumo da Cloudflare foi migrada do endpoint
+  Zone Analytics desativado para a API GraphQL oficial, preservando o resumo dos
+  últimos 30 dias e informando com precisão quando faltar permissão no token.
+
 ## 1.6.0.83 - 2026-07-20
 
 - Gestão Mobile: impede que Cloudflare ou o navegador combinem a página nova

@@ -1,9 +1,9 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.6.0.83 -->
+<!-- ava-version: 1.6.0.84 -->
 
-> Revisão 1.6.0.83: a abertura passa a invalidar automaticamente arquivos antigos
-> do PWA e confirma a exibição da tela principal mesmo depois de alcançar 100%.
+> Revisão 1.6.0.84: sem impacto operacional no Gestão Mobile; a consulta
+> administrativa de consumo da Cloudflare passou para a API GraphQL.
 
 ## Escopo
 
