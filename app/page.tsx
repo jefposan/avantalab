@@ -2677,6 +2677,17 @@ useEffect(() => {
     } catch { return { erro: true, mensagem: 'Não foi possível baixar o documento.' }; }
   }
 
+  async function prepararManualRepP(): Promise<{ erro: boolean; mensagem?: string }> {
+    try {
+      const { data: sessao } = await supabase.auth.getSession();
+      const token = sessao.session?.access_token;
+      if (!token || !empresaId) return { erro: true, mensagem: 'Sessão não encontrada.' };
+      const resposta = await fetch(`/api/ponto/documentos-rep-p/manual?empresaId=${encodeURIComponent(empresaId)}`, { headers: { Authorization: `Bearer ${token}` } });
+      const dados = await resposta.json().catch(() => null);
+      return resposta.ok && !dados?.erro ? { erro: false } : { erro: true, mensagem: dados?.mensagem || 'Não foi possível preparar o manual.' };
+    } catch { return { erro: true, mensagem: 'Não foi possível preparar o manual.' }; }
+  }
+
   async function carregarAssinaturaPonto(): Promise<EstadoAssinaturaPonto | null> {
     if (!empresaId) return null;
     try {
@@ -7506,6 +7517,7 @@ if (validacaoTelefoneObrigatoria) {
   onBaixarAfd={baixarAfdPonto}
   onCarregarDocumentosRepP={carregarDocumentosRepP}
   onBaixarDocumentoRepP={baixarDocumentoRepP}
+  onPrepararManualRepP={prepararManualRepP}
   diasNaoUteis={pontoDiasNaoUteis}
   diasNaoUteisCarregando={pontoDiasNaoUteisCarregando}
   onCriarDiaNaoUtil={criarDiaNaoUtilPonto}

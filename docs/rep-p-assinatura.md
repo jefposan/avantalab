@@ -50,6 +50,11 @@ hash SHA-256, período, modo de emissão e trilha de geração/download. Na aba
 **Conformidade REP-P** do Controle de Ponto, o gestor baixa um documento já
 gerado ou usa **Gerar novo AFD**; uma emissão nova nunca substitui a anterior.
 
+O mesmo histórico também armazena o **Manual do Sistema REP-P** em PDF
+versionado. O manual pode ser disponibilizado durante a homologação, mas deve
+declarar as dependências pendentes e não substitui o Atestado Técnico e Termo
+de Responsabilidade definitivos.
+
 ## Limite atual
 
 Esta entrega valida a leitura, a senha e a vigência temporal do A1. A geração

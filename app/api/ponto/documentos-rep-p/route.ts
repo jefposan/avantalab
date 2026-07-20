@@ -6,7 +6,7 @@ export const runtime = 'nodejs';
 
 const erro = (mensagem: string, status = 400) => NextResponse.json({ erro: true, mensagem }, { status });
 
-async function autorizarEmpresa(request: Request, empresaId: string) {
+export async function autorizarEmpresa(request: Request, empresaId: string) {
   const { autorizado, db } = await exigirAdmin(request);
   if (autorizado) return { db, solicitante: null as string | null };
 
@@ -63,7 +63,7 @@ export async function GET(request: Request) {
     if (erroArquivo || !arquivo) throw erroArquivo || new Error('Arquivo não disponível.');
     const { error: erroAuditoria } = await contexto.db.from('rep_p_documentos_auditoria').insert({ documento_id: documento.id, empresa_id: empresaId, ator_user_id: contexto.solicitante, evento: 'baixado' });
     if (erroAuditoria) throw erroAuditoria;
-    return new NextResponse(arquivo, { headers: { 'Content-Type': 'application/zip', 'Content-Disposition': `attachment; filename="${documento.arquivo_nome}"`, 'Cache-Control': 'private, no-store' } });
+    return new NextResponse(arquivo, { headers: { 'Content-Type': documento.arquivo_nome.endsWith('.pdf') ? 'application/pdf' : 'application/zip', 'Content-Disposition': `attachment; filename="${documento.arquivo_nome}"`, 'Cache-Control': 'private, no-store' } });
   } catch (causa) {
     console.error('Erro ao consultar documento REP-P:', causa instanceof Error ? causa.message : causa);
     return erro('Não foi possível acessar o documento REP-P.', 500);

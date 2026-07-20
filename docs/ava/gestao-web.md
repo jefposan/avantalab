@@ -1,9 +1,9 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.6.0.77 -->
+<!-- ava-version: 1.6.0.79 -->
 
-> Revisão 1.6.0.77: na aba Conformidade REP-P do Controle de Ponto, gestores
-> baixam AFDs já gerados da própria empresa ou emitem outro sem sobrescrever o histórico.
+> Revisão 1.6.0.79: o AFD é emitido e consultado somente na Conformidade da
+> empresa; o `/admin` mantém a configuração global do INPI e certificado.
 
 ## Escopo
 
@@ -55,6 +55,8 @@ ou `/ponto`.
   emitidos para a própria empresa; **Gerar novo AFD** cria outra emissão do
   período e preserva todas as anteriores. Em homologação, os arquivos não têm
   validade legal.
+  O botão **Disponibilizar manual** prepara o Manual do Sistema REP-P em PDF
+  versionado e o inclui no mesmo histórico de documentos da empresa.
 - **Recebimentos Presenciais** é instalado em **Menu > Módulos**. Depois de
   instalado, Gestor Master e Administrador usam **Menu > Recebimentos** para
   cadastrar empresas atendidas, pontos de cobrança e colaboradores, além de

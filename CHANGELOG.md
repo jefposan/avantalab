@@ -1,5 +1,16 @@
 # Changelog
 
+## 1.6.0.79 - 2026-07-20
+
+- O painel global `/admin > REP-P` deixou de emitir AFD; ele mantém somente o
+  registro do software no INPI e a configuração do certificado. A empresa emite
+  e consulta seus documentos na aba Conformidade do Controle de Ponto.
+
+## 1.6.0.78 - 2026-07-20
+
+- A empresa pode disponibilizar e baixar o Manual do Sistema REP-P em PDF
+  versionado, preservado no mesmo histórico privado dos documentos de ponto.
+
 ## 1.6.0.77 - 2026-07-20
 
 - A aba Conformidade REP-P passou a manter, por empresa, o histórico imutável
