@@ -1,9 +1,9 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.6.0.75 -->
+<!-- ava-version: 1.6.0.77 -->
 
-> Revisão 1.6.0.75: sem impacto operacional no Vendas Mobile; a geração de AFD
-> permanece restrita à Central Administrativa REP-P na Gestão Web.
+> Revisão 1.6.0.77: sem impacto operacional no Vendas Mobile; os documentos
+> REP-P permanecem disponíveis somente na Gestão Web.
 
 ## Escopo e navegação
 

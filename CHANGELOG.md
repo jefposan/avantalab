@@ -1,5 +1,16 @@
 # Changelog
 
+## 1.6.0.77 - 2026-07-20
+
+- A aba Conformidade REP-P passou a manter, por empresa, o histórico imutável
+  de AFDs gerados. Gestores podem baixar documentos já emitidos ou gerar um
+  novo, sem sobrescrever arquivos anteriores; emissão e download são auditados.
+
+## 1.6.0.76 - 2026-07-20
+
+- Gestores passaram a acessar a aba Conformidade REP-P no Controle de Ponto e
+  baixar somente o AFD da própria empresa.
+
 ## 1.6.0.75 - 2026-07-20
 
 - O painel REP-P gera o AFD por empresa e período diretamente da ARP, em ZIP

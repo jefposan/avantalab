@@ -36,7 +36,7 @@ function cpfValido(cpf: string) {
 
 export const DIAS_SEMANA: Array<[number, string]> = [[0, 'Dom'], [1, 'Seg'], [2, 'Ter'], [3, 'Qua'], [4, 'Qui'], [5, 'Sex'], [6, 'Sáb']];
 const TODOS_FUNCIONARIOS = '__todos__';
-export type AbaPontoAdmin = 'lista' | 'novo' | 'local' | 'calendario' | 'relatorios' | 'auditoria';
+export type AbaPontoAdmin = 'lista' | 'novo' | 'local' | 'calendario' | 'relatorios' | 'auditoria' | 'conformidade';
 
 export type EventoAuditoriaPonto = {
   id: string;
@@ -57,6 +57,17 @@ export type EstadoAssinaturaPonto = {
   situacao: 'nao_configurado' | 'homologacao' | 'certificado_invalido' | 'certificado_vencido' | 'aguardando_validacao';
   validadeCertificado?: string;
   mensagem: string;
+};
+
+export type DocumentoRepP = {
+  id: string;
+  tipo: 'afd';
+  periodo_inicio: string;
+  periodo_fim: string;
+  arquivo_nome: string;
+  sha256: string;
+  modo: 'homologacao' | 'producao';
+  gerado_em: string;
 };
 
 export type PontoDiaNaoUtil = {
@@ -100,6 +111,9 @@ interface PontoAdminModalProps {
   onCarregarRegistros: (funcionarioUserId: string, dataInicioISO: string) => Promise<RegistroPonto[]>;
   onCarregarAuditoria: () => Promise<EventoAuditoriaPonto[]>;
   onCarregarAssinatura: () => Promise<EstadoAssinaturaPonto | null>;
+  onBaixarAfd: (inicio: string, fim: string) => Promise<{ erro: boolean; mensagem?: string }>;
+  onCarregarDocumentosRepP: () => Promise<DocumentoRepP[]>;
+  onBaixarDocumentoRepP: (documento: DocumentoRepP) => Promise<{ erro: boolean; mensagem?: string }>;
   diasNaoUteis: PontoDiaNaoUtil[];
   diasNaoUteisCarregando: boolean;
   onCriarDiaNaoUtil: (dados: { dataInicio: string; dataFim: string; tipo: string; descricao: string; recorrenteAnual: boolean }) => Promise<{ erro: boolean; mensagem?: string }>;
@@ -122,6 +136,9 @@ export default function PontoAdminModal({
   onCarregarRegistros,
   onCarregarAuditoria,
   onCarregarAssinatura,
+  onBaixarAfd,
+  onCarregarDocumentosRepP,
+  onBaixarDocumentoRepP,
   diasNaoUteis,
   diasNaoUteisCarregando,
   onCriarDiaNaoUtil,
@@ -199,6 +216,13 @@ export default function PontoAdminModal({
   const [relCarregando, setRelCarregando] = useState(false);
   const [auditoria, setAuditoria] = useState<EventoAuditoriaPonto[]>([]);
   const [auditoriaCarregando, setAuditoriaCarregando] = useState(false);
+  const [afdInicio, setAfdInicio] = useState(() => new Date(new Date().setDate(new Date().getDate() - 30)).toISOString().slice(0, 10));
+  const [afdFim, setAfdFim] = useState(() => new Date().toISOString().slice(0, 10));
+  const [baixandoAfd, setBaixandoAfd] = useState(false);
+  const [msgConformidade, setMsgConformidade] = useState<{ tipo: 'ok' | 'erro'; texto: string } | null>(null);
+  const [documentosRepP, setDocumentosRepP] = useState<DocumentoRepP[]>([]);
+  const [documentosRepPCarregando, setDocumentosRepPCarregando] = useState(false);
+  const [baixandoDocumentoId, setBaixandoDocumentoId] = useState<string | null>(null);
   const [assinatura, setAssinatura] = useState<EstadoAssinaturaPonto | null>(null);
   const relatorioInicialCarregadoRef = useRef(false);
 
@@ -629,7 +653,28 @@ export default function PontoAdminModal({
     setAssinatura(estadoAssinatura);
     setAuditoriaCarregando(false);
   };
-  const abas: Array<[AbaPontoAdmin, string]> = [['lista', 'Funcionários'], ['novo', 'Novo'], ['local', 'Local'], ['calendario', 'Calendário'], ['relatorios', 'Relatórios'], ['auditoria', 'Auditoria']];
+  const carregarDocumentosRepP = async () => {
+    setDocumentosRepPCarregando(true);
+    setDocumentosRepP(await onCarregarDocumentosRepP());
+    setDocumentosRepPCarregando(false);
+  };
+  const baixarAfd = async () => {
+    setMsgConformidade(null);
+    if (!afdInicio || !afdFim || afdFim < afdInicio) { setMsgConformidade({ tipo: 'erro', texto: 'Informe um período válido.' }); return; }
+    setBaixandoAfd(true);
+    const resultado = await onBaixarAfd(afdInicio, afdFim);
+    setBaixandoAfd(false);
+    if (!resultado.erro) void carregarDocumentosRepP();
+    setMsgConformidade(resultado.erro ? { tipo: 'erro', texto: resultado.mensagem || 'Não foi possível gerar o AFD.' } : { tipo: 'ok', texto: 'Novo AFD gerado, baixado e preservado no histórico.' });
+  };
+  const baixarDocumentoRepP = async (documento: DocumentoRepP) => {
+    setMsgConformidade(null);
+    setBaixandoDocumentoId(documento.id);
+    const resultado = await onBaixarDocumentoRepP(documento);
+    setBaixandoDocumentoId(null);
+    setMsgConformidade(resultado.erro ? { tipo: 'erro', texto: resultado.mensagem || 'Não foi possível baixar o documento.' } : { tipo: 'ok', texto: 'Documento baixado.' });
+  };
+  const abas: Array<[AbaPontoAdmin, string]> = [['lista', 'Funcionários'], ['novo', 'Novo'], ['local', 'Local'], ['calendario', 'Calendário'], ['relatorios', 'Relatórios'], ['auditoria', 'Auditoria'], ['conformidade', 'Conformidade']];
 
   return (
     <div className="fixed inset-0 z-[2000] flex items-center justify-center p-3 sm:p-4">
@@ -659,6 +704,7 @@ export default function PontoAdminModal({
                 setMsgLocal(null);
                 setMsgCalendario(null);
                 if (a === 'auditoria') void carregarAuditoria();
+                if (a === 'conformidade') void carregarDocumentosRepP();
                 if (listaScrollRef.current) listaScrollRef.current.scrollTop = 0;
               }}
               className="rounded-t-lg px-2.5 py-2 text-[11px] font-black uppercase tracking-wide"
@@ -1116,6 +1162,19 @@ export default function PontoAdminModal({
                 const titulo: Record<string, string> = { marcacao_registrada: 'Marcação registrada', funcionario_inativado: 'Funcionário inativado', funcionario_reativado: 'Funcionário reativado', funcionario_cadastrado: 'Funcionário cadastrado' };
                 return <div key={item.id} className={`rounded-xl border p-3 ${itemBorda}`}><p className="text-xs font-black">{titulo[item.evento] || item.evento}</p><p className={`mt-1 text-[11px] ${textMuted}`}>{funcionario?.nome || 'Funcionário'} · {new Date(item.ocorrido_em).toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' })}</p><p className={`text-[10px] ${textMuted}`}>Origem: {item.origem}{nomeAtor ? ` · Responsável: ${nomeAtor}` : ''}{item.motivo ? ` · ${item.motivo}` : ''}</p></div>;
               })}
+            </div>
+          )}
+          {aba === 'conformidade' && (
+            <div className="space-y-4 p-1">
+              <div><p className="text-sm font-black">Conformidade REP-P</p><p className={`text-[11px] ${textMuted}`}>Documentos e evidências disponíveis para esta empresa.</p></div>
+              <section className={`rounded-xl border p-4 ${darkMode ? 'border-slate-700 bg-slate-900' : 'border-slate-200 bg-slate-50'}`}>
+                <div className="flex items-start justify-between gap-3"><div><p className="text-sm font-black">Documentos gerados</p><p className={`mt-1 text-xs leading-relaxed ${textMuted}`}>Cada emissão fica preservada. Gerar novamente nunca substitui um documento anterior.</p></div><button type="button" onClick={() => void carregarDocumentosRepP()} disabled={documentosRepPCarregando} className="min-h-11 shrink-0 rounded-lg px-3 text-[10px] font-black uppercase" style={{ color: corSistema }} aria-label="Atualizar documentos gerados">Atualizar</button></div>
+                <div className="mt-3 space-y-2">
+                  {documentosRepPCarregando ? <p className={`py-4 text-center text-xs font-semibold ${textMuted}`}>Carregando documentos...</p> : documentosRepP.length === 0 ? <p className={`rounded-lg border border-dashed p-3 text-xs ${textMuted}`}>Nenhum documento REP-P foi gerado para esta empresa.</p> : documentosRepP.map((documento) => <div key={documento.id} className={`flex flex-col gap-2 rounded-lg border p-3 sm:flex-row sm:items-center sm:justify-between ${itemBorda}`}><div className="min-w-0"><p className="text-xs font-black">AFD · {dataCurta(documento.periodo_inicio)} a {dataCurta(documento.periodo_fim)}</p><p className={`mt-1 truncate text-[10px] ${textMuted}`}>{new Date(documento.gerado_em).toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' })} · {documento.modo === 'producao' ? 'Produção' : 'Homologação'} · SHA-256 {documento.sha256.slice(0, 12)}…</p></div><button type="button" onClick={() => void baixarDocumentoRepP(documento)} disabled={baixandoDocumentoId === documento.id} className="min-h-11 rounded-lg px-3 text-[10px] font-black uppercase text-white disabled:opacity-40" style={{ backgroundColor: corSistema }}>{baixandoDocumentoId === documento.id ? 'Baixando...' : 'Baixar'}</button></div>)}
+                </div>
+              </section>
+              <section className={`rounded-xl border p-4 ${darkMode ? 'border-slate-700 bg-slate-900' : 'border-slate-200 bg-slate-50'}`}><p className="text-sm font-black">Gerar novo AFD</p><p className={`mt-1 text-xs leading-relaxed ${textMuted}`}>Inclui as marcações imutáveis do período e a assinatura destacada .p7s. Em homologação, o arquivo não possui validade legal.</p><div className="mt-3 grid gap-3 sm:grid-cols-2"><label className="text-[10px] font-black uppercase tracking-wide">Data inicial<input type="date" value={afdInicio} onChange={(event) => setAfdInicio(event.target.value)} className={`mt-1 h-10 w-full rounded-lg border px-3 text-sm ${darkMode ? 'border-slate-600 bg-slate-800' : 'border-slate-300 bg-white'}`} /></label><label className="text-[10px] font-black uppercase tracking-wide">Data final<input type="date" value={afdFim} onChange={(event) => setAfdFim(event.target.value)} className={`mt-1 h-10 w-full rounded-lg border px-3 text-sm ${darkMode ? 'border-slate-600 bg-slate-800' : 'border-slate-300 bg-white'}`} /></label></div><button type="button" onClick={() => void baixarAfd()} disabled={baixandoAfd} className="mt-3 min-h-11 w-full rounded-lg bg-cyan-700 px-3 text-xs font-black uppercase text-white hover:bg-cyan-800 disabled:opacity-40">{baixandoAfd ? 'Gerando...' : 'Gerar novo AFD'}</button>{msgConformidade && <p role="status" className={`mt-2 text-xs font-bold ${msgConformidade.tipo === 'erro' ? 'text-red-600' : 'text-emerald-700'}`}>{msgConformidade.texto}</p>}</section>
+              <section className={`rounded-xl border p-4 ${darkMode ? 'border-slate-700 bg-slate-900' : 'border-slate-200 bg-white'}`}><p className="text-sm font-black">Demais documentos</p><ul className={`mt-2 space-y-2 text-xs ${textMuted}`}><li><b className="text-amber-700">Pendente:</b> AEJ e Espelho de Ponto Eletrônico.</li><li><b className="text-amber-700">Pendente:</b> Atestado Técnico, Termo de Responsabilidade e manual legal do REP-P.</li><li><b className="text-amber-700">Dependência externa:</b> certificado de registro do software no INPI e certificado ICP-Brasil válido em produção.</li></ul></section>
             </div>
           )}
         </div>

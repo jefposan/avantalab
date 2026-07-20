@@ -45,6 +45,11 @@ ZIP com o AFD texto e o arquivo de assinatura destacada `.p7s` (CAdES).
 O AFD é gerado diretamente da ARP, ordenado por NSR. Em homologação, o arquivo
 recebe o prefixo `HOMOLOGACAO-` e não deve ser usado como documento legal.
 
+Cada emissão fica arquivada de forma privada e imutável para a empresa, com
+hash SHA-256, período, modo de emissão e trilha de geração/download. Na aba
+**Conformidade REP-P** do Controle de Ponto, o gestor baixa um documento já
+gerado ou usa **Gerar novo AFD**; uma emissão nova nunca substitui a anterior.
+
 ## Limite atual
 
 Esta entrega valida a leitura, a senha e a vigência temporal do A1. A geração

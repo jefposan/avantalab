@@ -1,8 +1,10 @@
 import { NextResponse } from 'next/server';
 import JSZip from 'jszip';
+import { createClient } from '@supabase/supabase-js';
 import { exigirAdmin } from '@/app/lib/admin-server';
 import { descriptografarSegredoRepP } from '@/app/lib/rep-p-cofre';
 import { assinarCadesDestacado, gerarAfdRepP } from '@/app/lib/rep-p-afd';
+import { createHash, randomUUID } from 'node:crypto';
 
 export const runtime = 'nodejs';
 const erro = (mensagem: string, status = 400) => NextResponse.json({ erro: true, mensagem }, { status });
@@ -12,9 +14,19 @@ const coletor = (dispositivo: unknown) => /android|iphone|ipad|mobile/i.test(Str
 export async function GET(request: Request) {
   try {
     const { autorizado, db } = await exigirAdmin(request);
-    if (!autorizado) return erro('Acesso não autorizado.', 401);
     const url = new URL(request.url); const empresaId = url.searchParams.get('empresaId'); const inicio = url.searchParams.get('inicio'); const fim = url.searchParams.get('fim');
     if (!empresaId || !dataValida(inicio) || !dataValida(fim) || inicio! > fim!) return erro('Informe a empresa e um intervalo de datas válido.');
+    let solicitante: string | null = null;
+    if (!autorizado) {
+      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL; const anon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY; const auth = request.headers.get('authorization');
+      if (!supabaseUrl || !anon || !auth) return erro('Acesso não autorizado.', 401);
+      const usuario = createClient(supabaseUrl, anon, { global: { headers: { Authorization: auth } } });
+      const { data: { user } } = await usuario.auth.getUser();
+      if (!user) return erro('Acesso não autorizado.', 401);
+      solicitante = user.id;
+      const { data: vinculo } = await db.from('usuarios_empresa').select('user_id').eq('empresa_id', empresaId).eq('user_id', user.id).eq('status', 'ativo').in('perfil', ['gestor_master', 'administrador']).maybeSingle();
+      if (!vinculo) return erro('Acesso não autorizado para esta empresa.', 403);
+    }
     const [{ data: empresa }, { data: perfil }, { data: configuracao }, { data: certificado }] = await Promise.all([
       db.from('empresas').select('nome').eq('id', empresaId).maybeSingle(),
       db.from('cadastros_perfil').select('tipo_documento, documento, razao_social, nome_fantasia').eq('empresa_id', empresaId).maybeSingle(),
@@ -38,6 +50,16 @@ export async function GET(request: Request) {
     const prefixo = certificado.modo === 'homologacao' ? 'HOMOLOGACAO-' : ''; const nome = `${prefixo}AFD${configuracao.registro_inpi.replace(/\D/g, '')}${perfil.documento}REP_P.txt`;
     const zip = new JSZip(); zip.file(nome, arquivo); zip.file(`${nome}.p7s`, p7s);
     const conteudo = await zip.generateAsync({ type: 'nodebuffer', compression: 'DEFLATE' });
-    return new NextResponse(new Uint8Array(conteudo), { headers: { 'Content-Type': 'application/zip', 'Content-Disposition': `attachment; filename="${nome.replace(/\.txt$/, '')}.zip"`, 'Cache-Control': 'no-store', 'X-REP-P-Modo': certificado.modo } });
+    const arquivoNome = `${nome.replace(/\.txt$/, '')}.zip`; const documentoId = randomUUID(); const storagePath = `${empresaId}/${documentoId}/${arquivoNome}`; const sha256 = createHash('sha256').update(conteudo).digest('hex');
+    const { error: erroUpload } = await db.storage.from('rep-p-documentos').upload(storagePath, conteudo, { contentType: 'application/zip', upsert: false });
+    if (erroUpload) throw erroUpload;
+    const { error: erroDocumento } = await db.from('rep_p_documentos_gerados').insert({ id: documentoId, empresa_id: empresaId, tipo: 'afd', periodo_inicio: inicio, periodo_fim: fim, arquivo_nome: arquivoNome, storage_path: storagePath, sha256, modo: certificado.modo, solicitado_por: solicitante });
+    if (erroDocumento) {
+      await db.storage.from('rep-p-documentos').remove([storagePath]);
+      throw erroDocumento;
+    }
+    const { error: erroAuditoria } = await db.from('rep_p_documentos_auditoria').insert({ documento_id: documentoId, empresa_id: empresaId, ator_user_id: solicitante, evento: 'gerado' });
+    if (erroAuditoria) throw erroAuditoria;
+    return new NextResponse(new Uint8Array(conteudo), { headers: { 'Content-Type': 'application/zip', 'Content-Disposition': `attachment; filename="${arquivoNome}"`, 'Cache-Control': 'private, no-store', 'X-REP-P-Modo': certificado.modo, 'X-REP-P-Documento-Id': documentoId } });
   } catch (causa) { console.error('Erro ao gerar AFD REP-P:', causa instanceof Error ? causa.message : causa); return erro(causa instanceof Error ? causa.message : 'Não foi possível gerar o AFD.', 500); }
 }

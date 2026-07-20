@@ -1,9 +1,9 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.6.0.75 -->
+<!-- ava-version: 1.6.0.77 -->
 
-> Revisão 1.6.0.75: a Central Administrativa REP-P permite gerar AFD por
-> empresa e período, junto ao arquivo de assinatura `.p7s`.
+> Revisão 1.6.0.77: na aba Conformidade REP-P do Controle de Ponto, gestores
+> baixam AFDs já gerados da própria empresa ou emitem outro sem sobrescrever o histórico.
 
 ## Escopo
 
@@ -51,6 +51,10 @@ ou `/ponto`.
   a aba **Auditoria** mostra as marcações e as alterações de acesso registradas.
   O funcionário recebe um comprovante imediatamente após cada marcação e pode
   imprimi-lo; o código mostrado identifica o registro salvo no banco.
+  Em **Conformidade REP-P**, gestores consultam e baixam os documentos AFD já
+  emitidos para a própria empresa; **Gerar novo AFD** cria outra emissão do
+  período e preserva todas as anteriores. Em homologação, os arquivos não têm
+  validade legal.
 - **Recebimentos Presenciais** é instalado em **Menu > Módulos**. Depois de
   instalado, Gestor Master e Administrador usam **Menu > Recebimentos** para
   cadastrar empresas atendidas, pontos de cobrança e colaboradores, além de

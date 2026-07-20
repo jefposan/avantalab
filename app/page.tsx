@@ -13,7 +13,7 @@ import ModalInstrucoes from './components/ModalInstrucoes';
 import ModalDespesasBase from './components/ModalDespesasBase';
 import ModalLogo from './components/ModalLogo';
 import ModulosModal, { type Modulo } from './components/ModulosModal';
-import PontoAdminModal, { type AbaPontoAdmin, type EstadoAssinaturaPonto, type EventoAuditoriaPonto, type FuncionarioPonto, type PontoConfig, type PontoDiaNaoUtil } from './components/PontoAdminModal';
+import PontoAdminModal, { type AbaPontoAdmin, type DocumentoRepP, type EstadoAssinaturaPonto, type EventoAuditoriaPonto, type FuncionarioPonto, type PontoConfig, type PontoDiaNaoUtil } from './components/PontoAdminModal';
 import RecebimentosAdminModal from './components/RecebimentosAdminModal';
 import SobreModal from './components/SobreModal';
 import ModalConfirmacao from "./components/ModalConfirmacao";
@@ -2640,6 +2640,41 @@ useEffect(() => {
       if (error) { console.error('carregarAuditoriaPonto', error); return []; }
       return (data || []) as EventoAuditoriaPonto[];
     } catch { return []; }
+  }
+
+  async function baixarAfdPonto(inicio: string, fim: string): Promise<{ erro: boolean; mensagem?: string }> {
+    try {
+      const { data: sessao } = await supabase.auth.getSession();
+      const token = sessao.session?.access_token;
+      if (!token || !empresaId) return { erro: true, mensagem: 'Sessão não encontrada.' };
+      const resposta = await fetch(`/api/admin-rep-p-afd?empresaId=${encodeURIComponent(empresaId)}&inicio=${inicio}&fim=${fim}`, { headers: { Authorization: `Bearer ${token}` } });
+      if (!resposta.ok) { const dados = await resposta.json().catch(() => null); return { erro: true, mensagem: dados?.mensagem || 'Não foi possível gerar o AFD.' }; }
+      const arquivo = await resposta.blob(); const url = URL.createObjectURL(arquivo); const link = document.createElement('a'); link.href = url; link.download = `AFD-${inicio}-${fim}.zip`; document.body.appendChild(link); link.click(); link.remove(); URL.revokeObjectURL(url);
+      return { erro: false };
+    } catch { return { erro: true, mensagem: 'Não foi possível gerar o AFD.' }; }
+  }
+
+  async function carregarDocumentosRepP(): Promise<DocumentoRepP[]> {
+    try {
+      const { data: sessao } = await supabase.auth.getSession();
+      const token = sessao.session?.access_token;
+      if (!token || !empresaId) return [];
+      const resposta = await fetch(`/api/ponto/documentos-rep-p?empresaId=${encodeURIComponent(empresaId)}`, { headers: { Authorization: `Bearer ${token}` } });
+      const dados = await resposta.json().catch(() => null);
+      return resposta.ok && !dados?.erro ? (dados?.documentos || []) as DocumentoRepP[] : [];
+    } catch { return []; }
+  }
+
+  async function baixarDocumentoRepP(documento: DocumentoRepP): Promise<{ erro: boolean; mensagem?: string }> {
+    try {
+      const { data: sessao } = await supabase.auth.getSession();
+      const token = sessao.session?.access_token;
+      if (!token || !empresaId) return { erro: true, mensagem: 'Sessão não encontrada.' };
+      const resposta = await fetch(`/api/ponto/documentos-rep-p?empresaId=${encodeURIComponent(empresaId)}&documentoId=${encodeURIComponent(documento.id)}`, { headers: { Authorization: `Bearer ${token}` } });
+      if (!resposta.ok) { const dados = await resposta.json().catch(() => null); return { erro: true, mensagem: dados?.mensagem || 'Não foi possível baixar o documento.' }; }
+      const arquivo = await resposta.blob(); const url = URL.createObjectURL(arquivo); const link = document.createElement('a'); link.href = url; link.download = documento.arquivo_nome; document.body.appendChild(link); link.click(); link.remove(); URL.revokeObjectURL(url);
+      return { erro: false };
+    } catch { return { erro: true, mensagem: 'Não foi possível baixar o documento.' }; }
   }
 
   async function carregarAssinaturaPonto(): Promise<EstadoAssinaturaPonto | null> {
@@ -7468,6 +7503,9 @@ if (validacaoTelefoneObrigatoria) {
   onCarregarRegistros={carregarRegistrosPonto}
   onCarregarAuditoria={carregarAuditoriaPonto}
   onCarregarAssinatura={carregarAssinaturaPonto}
+  onBaixarAfd={baixarAfdPonto}
+  onCarregarDocumentosRepP={carregarDocumentosRepP}
+  onBaixarDocumentoRepP={baixarDocumentoRepP}
   diasNaoUteis={pontoDiasNaoUteis}
   diasNaoUteisCarregando={pontoDiasNaoUteisCarregando}
   onCriarDiaNaoUtil={criarDiaNaoUtilPonto}
