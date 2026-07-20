@@ -36,9 +36,18 @@ No painel `/admin > REP-P`, envie o novo e-CPF ICP-Brasil válido e selecione
 **Produção**. A troca não exige alteração de código nem migração de banco; o
 certificado anterior é inativado, preservando-se seu histórico técnico.
 
+## AFD
+
+Em **`/admin > REP-P`**, informe o número de registro do REP-P no INPI e o
+CPF/CNPJ do desenvolvedor. Depois selecione empresa e período para baixar o
+ZIP com o AFD texto e o arquivo de assinatura destacada `.p7s` (CAdES).
+
+O AFD é gerado diretamente da ARP, ordenado por NSR. Em homologação, o arquivo
+recebe o prefixo `HOMOLOGACAO-` e não deve ser usado como documento legal.
+
 ## Limite atual
 
 Esta entrega valida a leitura, a senha e a vigência temporal do A1. A geração
-PAdES/CAdES, a validação da cadeia ICP-Brasil e a emissão de AFD/AEJ serão
-implementadas na próxima funcionalidade, mantendo a emissão legal bloqueada
-até lá.
+PAdES e a geração de AFD com `.p7s` estão implementados. A validação completa
+da cadeia ICP-Brasil e o AEJ serão tratados em etapas próprias; a emissão legal
+continua condicionada ao certificado ICP-Brasil válido em produção.

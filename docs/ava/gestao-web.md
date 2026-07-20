@@ -1,9 +1,9 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.6.0.74 -->
+<!-- ava-version: 1.6.0.75 -->
 
-> Revisão 1.6.0.74: em Meus registros, o colaborador pode abrir o Histórico e
-> baixar o PDF de cada marcação.
+> Revisão 1.6.0.75: a Central Administrativa REP-P permite gerar AFD por
+> empresa e período, junto ao arquivo de assinatura `.p7s`.
 
 ## Escopo
 

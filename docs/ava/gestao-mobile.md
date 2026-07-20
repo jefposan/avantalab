@@ -1,8 +1,9 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.6.0.74 -->
+<!-- ava-version: 1.6.0.75 -->
 
-> Revisão 1.6.0.74: comprovantes do Histórico do Ponto podem ser baixados em PDF.
+> Revisão 1.6.0.75: sem impacto operacional no Gestão Mobile; a geração de AFD
+> permanece restrita à Central Administrativa REP-P na Gestão Web.
 
 ## Escopo
 

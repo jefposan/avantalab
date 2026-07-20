@@ -15,13 +15,32 @@ export async function GET(request: Request) {
   try {
     const { autorizado, db } = await exigirAdmin(request);
     if (!autorizado) return erro('Acesso não autorizado.', 401);
-    const { data, error } = await db.from('rep_p_certificados').select('id, modo, validade_inicio, validade_fim, impressao_sha256, criado_em').eq('ativo', true).maybeSingle();
+    const [{ data, error }, { data: configuracao, error: erroConfiguracao }] = await Promise.all([
+      db.from('rep_p_certificados').select('id, modo, validade_inicio, validade_fim, impressao_sha256, criado_em').eq('ativo', true).maybeSingle(),
+      db.from('rep_p_configuracoes').select('registro_inpi, documento_desenvolvedor').eq('id', 'principal').maybeSingle(),
+    ]);
     if (error && error.code !== '42P01' && error.code !== 'PGRST205') throw error;
-    return NextResponse.json({ erro: false, certificado: resumo(data as never) });
+    if (erroConfiguracao && erroConfiguracao.code !== '42P01' && erroConfiguracao.code !== 'PGRST205') throw erroConfiguracao;
+    return NextResponse.json({ erro: false, certificado: resumo(data as never), configuracao: configuracao || { registro_inpi: '', documento_desenvolvedor: '' } });
   } catch (causa) {
     console.error('Erro ao consultar certificado REP-P:', causa);
     return erro('Não foi possível consultar o certificado. Execute a migração do REP-P.', 500);
   }
+}
+
+export async function PATCH(request: Request) {
+  try {
+    const { autorizado, db } = await exigirAdmin(request);
+    if (!autorizado) return erro('Acesso não autorizado.', 401);
+    const corpo = await request.json();
+    const registroInpi = String(corpo?.registroInpi || '').replace(/\D/g, '').slice(0, 17);
+    const documentoDesenvolvedor = String(corpo?.documentoDesenvolvedor || '').replace(/\D/g, '');
+    if (!registroInpi) return erro('Informe o número de registro no INPI.');
+    if (![11, 14].includes(documentoDesenvolvedor.length)) return erro('Informe o CPF ou CNPJ do desenvolvedor do REP-P.');
+    const { error } = await db.from('rep_p_configuracoes').upsert({ id: 'principal', registro_inpi: registroInpi, documento_desenvolvedor: documentoDesenvolvedor, atualizado_em: new Date().toISOString() });
+    if (error) throw error;
+    return NextResponse.json({ erro: false, configuracao: { registro_inpi: registroInpi, documento_desenvolvedor: documentoDesenvolvedor } });
+  } catch (causa) { console.error('Erro ao salvar configuração REP-P:', causa); return erro('Não foi possível guardar a configuração do AFD.', 500); }
 }
 
 export async function POST(request: Request) {

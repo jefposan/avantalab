@@ -1,9 +1,9 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.6.0.74 -->
+<!-- ava-version: 1.6.0.75 -->
 
-> Revisão 1.6.0.74: sem impacto operacional no Vendas Mobile; histórico de
-> comprovantes permanece restrito ao Controle de Ponto.
+> Revisão 1.6.0.75: sem impacto operacional no Vendas Mobile; a geração de AFD
+> permanece restrita à Central Administrativa REP-P na Gestão Web.
 
 ## Escopo e navegação
 

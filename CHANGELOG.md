@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.6.0.75 - 2026-07-20
+
+- O painel REP-P gera o AFD por empresa e período diretamente da ARP, em ZIP
+  com o arquivo texto e sua assinatura destacada `.p7s`.
+
 ## 1.6.0.74 - 2026-07-20
 
 - O colaborador pode consultar todo o histórico de marcações e baixar o PDF do
