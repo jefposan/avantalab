@@ -10380,6 +10380,7 @@ name="novo-usuario-login"
         caixinhaUltimosMovimentos={caixinhaUltimosMovimentos}
         onAdicionarAporteCaixinha={adicionarAporteCaixinha}
         onDefinirSaldoInicialCaixinha={definirSaldoInicialCaixinha}
+        tipoPerfil={tipoPerfilAtualNormalizado}
         dashboardOrdem={recursoBloqueado('organizar_dashboard') ? ordemDashboardPadrao : dashboardOrdem}
         dashboardOcultos={recursoBloqueado('organizar_dashboard') ? ocultosDashboardPadrao : dashboardOcultos}
         dashboardExpandidos={recursoBloqueado('organizar_dashboard') ? [] : dashboardExpandidos}
@@ -10409,7 +10410,6 @@ name="novo-usuario-login"
 
       {carregandoPerfil && (
         <div className="avanta-loading-stage fixed inset-0 z-[9500] bg-slate-950/70 backdrop-blur-sm">
-        tipoPerfil={tipoPerfilAtualNormalizado}
           <div className="avanta-loading-glass avanta-loading-card rounded-3xl border shadow-2xl">
             <div className="avanta-loading-glass-icon mx-auto flex h-11 w-11 items-center justify-center rounded-xl">
               <span className="avanta-loading-spinner animate-spin" />
