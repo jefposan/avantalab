@@ -2757,6 +2757,15 @@
     return item && item.status === 'prevista' && !dataFutura(Number(state.ano), indiceMes(item.mes), item.dia);
   }
 
+  // Receitas criadas por módulos conectados pertencem ao sistema de origem.
+  // No Gestão elas são apenas informativas: não podem abrir o card de ação,
+  // nem ser editadas ou excluídas por esta interface.
+  function ehReceitaSincronizada(item) {
+    if (!item) return false;
+    var tipo = String(item.tipo || '').toLowerCase();
+    return tipo === 'vendas_mobile_sistema' || tipo === 'recebimentos_sistema';
+  }
+
   // Selo colorido por tipo de despesa (previsto/fixa/parcela).
   function seloTipoHtml(item) {
     if (!item || !item.tipo) return '';
@@ -7213,6 +7222,7 @@
     var lista = tipo === 'receita' ? state.entradas : state.lancamentos;
     var item = lista.find(function (registro) { return String(registro.id) === String(id); });
     if (!item) return;
+    if (tipo === 'receita' && ehReceitaSincronizada(item)) return;
 
     state.modalAcao = {
       tipo: tipo,
@@ -7232,6 +7242,12 @@
 
     var tipo = state.modalAcao.tipo;
     var item = state.modalAcao.item;
+
+    if (tipo === 'receita' && ehReceitaSincronizada(item)) {
+      state.modalAcao = null;
+      render();
+      return;
+    }
 
     // Detectar parcelas pendentes (padrao X/N na descricao)
     if (tipo !== 'receita') {
@@ -7346,6 +7362,12 @@
 
     var tipo = state.modalAcao.tipo;
     var item = state.modalAcao.item;
+
+    if (tipo === 'receita' && ehReceitaSincronizada(item)) {
+      state.modalAcao = null;
+      render();
+      return;
+    }
     var limite = maxDias(state.mes, state.ano);
 
     // Lê TODOS os campos ANTES do render() — o render reconstrói o DOM e zera os inputs.
@@ -7521,6 +7543,7 @@
     if (!state.empresa) return;
     var entrada = (state.entradas || []).find(function (e) { return String(e.id) === String(id); });
     if (!entrada) return;
+    if (ehReceitaSincronizada(entrada)) return;
     state.carregando = true;
     render();
     var resp = await db.from('faturamentos_entradas').update({ status: 'confirmada', tipo_obs: null }).eq('id', id).eq('empresa_id', state.empresa.id);
@@ -7542,6 +7565,8 @@
 
   async function excluirReceitaPrevista(id) {
     if (!state.empresa) return;
+    var entrada = (state.entradas || []).find(function (e) { return String(e.id) === String(id); });
+    if (!entrada || ehReceitaSincronizada(entrada)) return;
     if (!window.confirm('Excluir esta receita prevista? Ela nao ocorreu e sera removida.')) return;
     state.carregando = true;
     render();
@@ -7557,6 +7582,8 @@
   }
 
   function editarReceitaPrevista(id) {
+    var entrada = (state.entradas || []).find(function (e) { return String(e.id) === String(id); });
+    if (!entrada || ehReceitaSincronizada(entrada)) return;
     abrirAcaoLancamento('receita', id);
     if (state.modalAcao) state.modalAcao.modo = 'editar';
     render();
@@ -8245,7 +8272,7 @@
 
   function avisoConfirmarHtml() {
     var pDesp = (state.lancamentos || []).filter(ehDespesaAConfirmar).map(function (i) { return { rec: false, item: i }; });
-    var pRec = (state.entradas || []).filter(ehReceitaAConfirmar).map(function (i) { return { rec: true, item: i }; });
+    var pRec = (state.entradas || []).filter(function (i) { return ehReceitaAConfirmar(i) && !ehReceitaSincronizada(i); }).map(function (i) { return { rec: true, item: i }; });
     var pendentes = pDesp.concat(pRec);
     if (!pendentes.length) return '';
     var plural = pendentes.length > 1;
@@ -9192,14 +9219,17 @@
 	          (itens.length ? itens.map(function (item) {
 	            var valor = dinheiro(item.valor);
 	            var totalMensal = item.totalMensal === true;
+	            var receitaSincronizada = ehReceitaSincronizada(item);
 	            var buscaItem = textoBusca([item.origem, item.descricao, totalMensal ? 'total mensal receita total' : '', valor, item.valor].join(' '));
-	            var tag = totalMensal ? 'div' : 'button';
-	            var acao = totalMensal ? '' : ' type="button" data-tipo-lancamento="receita" data-lancamento-id="' + escapeHtml(item.id) + '"';
+	            var tag = totalMensal || receitaSincronizada ? 'div' : 'button';
+	            var acao = totalMensal || receitaSincronizada ? '' : ' type="button" data-tipo-lancamento="receita" data-lancamento-id="' + escapeHtml(item.id) + '"';
 	            var selo = totalMensal
 	              ? ' <span class="ml-1 inline-block rounded-full bg-cyan-100 px-1.5 align-middle text-[10px] font-black text-cyan-700">Total mensal</span>'
-	              : seloTipoHtml(item);
+	              : (receitaSincronizada
+	                ? ' <span class="ml-1 inline-block rounded-full bg-slate-100 px-1.5 align-middle text-[10px] font-black text-slate-500">Sincronizada</span>'
+	                : seloTipoHtml(item));
 	            var detalhe = totalMensal ? 'Total do mes' : 'Dia ' + item.dia;
-	            return '<' + tag + acao + ' data-busca-ultimas-receitas="' + escapeHtml(buscaItem) + '" class="flex w-full items-center justify-between gap-3 border-b border-slate-100 py-2 text-left last:border-b-0">' +
+	            return '<' + tag + acao + ' data-busca-ultimas-receitas="' + escapeHtml(buscaItem) + '"' + (receitaSincronizada ? ' aria-disabled="true"' : '') + ' class="flex w-full items-center justify-between gap-3 border-b border-slate-100 py-2 text-left last:border-b-0' + (receitaSincronizada ? ' cursor-default opacity-80' : '') + '">' +
 	              '<div class="min-w-0"><p class="truncate text-sm font-bold text-slate-800">' + escapeHtml(item.origem) + selo + '</p><p class="truncate text-xs text-slate-500">' + escapeHtml(detalhe) + '</p></div>' +
 	              '<strong class="shrink-0 text-sm font-black text-emerald-600">' + valor + '</strong>' +
 	            '</' + tag + '>';
