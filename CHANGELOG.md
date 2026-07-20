@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.6.0.62 - 2026-07-19
+
+- Os controles circulares de fechar e o botão central **Lançar** do Vendas
+  Mobile passam a usar traços geométricos centralizados, mantendo o alinhamento
+  visual em iPhone, Android e navegadores.
+
 ## 1.6.0.61 - 2026-07-19
 
 - O rodapé do Vendas Mobile passou a ser uma camada persistente, mantendo-se

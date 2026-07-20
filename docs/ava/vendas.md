@@ -1,8 +1,8 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.6.0.61 -->
+<!-- ava-version: 1.6.0.62 -->
 
-> Revisão 1.6.0.61: o rodapé de navegação permanece ancorado durante a rolagem e a troca de telas.
+> Revisão 1.6.0.62: os botões de fechar e Lançar usam ícones geometricamente centralizados em todos os navegadores.
 
 ## Escopo e navegação
 
