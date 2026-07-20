@@ -1,9 +1,9 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.6.0.80 -->
+<!-- ava-version: 1.6.0.81 -->
 
-> Revisão 1.6.0.80: somente Gestor Master e Administrador vinculados à empresa
-> acessam o Controle de Ponto e seus documentos REP-P.
+> Revisão 1.6.0.81: gestores geram o Espelho de Ponto Eletrônico por funcionário
+> e período na aba Conformidade REP-P.
 
 ## Escopo
 

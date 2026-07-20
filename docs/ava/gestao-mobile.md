@@ -1,8 +1,8 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.6.0.80 -->
+<!-- ava-version: 1.6.0.81 -->
 
-> Revisão 1.6.0.80: sem impacto operacional no Gestão Mobile; os documentos
+> Revisão 1.6.0.81: sem impacto operacional no Gestão Mobile; os documentos
 > REP-P permanecem disponíveis somente na Gestão Web.
 
 ## Escopo

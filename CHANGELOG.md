@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.6.0.81 - 2026-07-20
+
+- Gestores podem gerar, assinar e arquivar o Espelho de Ponto Eletrônico por
+  funcionário e período na aba Conformidade REP-P.
+
 ## 1.6.0.80 - 2026-07-20
 
 - A geração e o download de documentos REP-P exigem vínculo ativo de Gestor

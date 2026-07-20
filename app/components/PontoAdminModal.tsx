@@ -61,7 +61,7 @@ export type EstadoAssinaturaPonto = {
 
 export type DocumentoRepP = {
   id: string;
-  tipo: 'afd' | 'manual';
+  tipo: 'afd' | 'manual' | 'espelho';
   periodo_inicio: string;
   periodo_fim: string;
   arquivo_nome: string;
@@ -115,6 +115,7 @@ interface PontoAdminModalProps {
   onCarregarDocumentosRepP: () => Promise<DocumentoRepP[]>;
   onBaixarDocumentoRepP: (documento: DocumentoRepP) => Promise<{ erro: boolean; mensagem?: string }>;
   onPrepararManualRepP: () => Promise<{ erro: boolean; mensagem?: string }>;
+  onGerarEspelhoPonto: (funcionarioId: string, inicio: string, fim: string) => Promise<{ erro: boolean; mensagem?: string }>;
   diasNaoUteis: PontoDiaNaoUtil[];
   diasNaoUteisCarregando: boolean;
   onCriarDiaNaoUtil: (dados: { dataInicio: string; dataFim: string; tipo: string; descricao: string; recorrenteAnual: boolean }) => Promise<{ erro: boolean; mensagem?: string }>;
@@ -141,6 +142,7 @@ export default function PontoAdminModal({
   onCarregarDocumentosRepP,
   onBaixarDocumentoRepP,
   onPrepararManualRepP,
+  onGerarEspelhoPonto,
   diasNaoUteis,
   diasNaoUteisCarregando,
   onCriarDiaNaoUtil,
@@ -226,6 +228,7 @@ export default function PontoAdminModal({
   const [documentosRepPCarregando, setDocumentosRepPCarregando] = useState(false);
   const [baixandoDocumentoId, setBaixandoDocumentoId] = useState<string | null>(null);
   const [preparandoManual, setPreparandoManual] = useState(false);
+  const [gerandoEspelho, setGerandoEspelho] = useState(false);
   const [assinatura, setAssinatura] = useState<EstadoAssinaturaPonto | null>(null);
   const relatorioInicialCarregadoRef = useRef(false);
 
@@ -685,6 +688,7 @@ export default function PontoAdminModal({
     if (!resultado.erro) void carregarDocumentosRepP();
     setMsgConformidade(resultado.erro ? { tipo: 'erro', texto: resultado.mensagem || 'Não foi possível preparar o manual.' } : { tipo: 'ok', texto: 'Manual REP-P disponível em Documentos gerados.' });
   };
+  const gerarEspelhoPonto = async () => { if (!funcSel) { setMsgConformidade({ tipo: 'erro', texto: 'Selecione um funcionário na aba Relatórios antes de gerar o Espelho.' }); return; } setGerandoEspelho(true); const resultado = await onGerarEspelhoPonto(funcSel.user_id, afdInicio, afdFim); setGerandoEspelho(false); if (!resultado.erro) void carregarDocumentosRepP(); setMsgConformidade(resultado.erro ? { tipo: 'erro', texto: resultado.mensagem || 'Não foi possível gerar o Espelho.' } : { tipo: 'ok', texto: 'Espelho gerado, baixado e preservado no histórico.' }); };
   const abas: Array<[AbaPontoAdmin, string]> = [['lista', 'Funcionários'], ['novo', 'Novo'], ['local', 'Local'], ['calendario', 'Calendário'], ['relatorios', 'Relatórios'], ['auditoria', 'Auditoria'], ['conformidade', 'Conformidade']];
 
   return (
@@ -1181,12 +1185,13 @@ export default function PontoAdminModal({
               <section className={`rounded-xl border p-4 ${darkMode ? 'border-slate-700 bg-slate-900' : 'border-slate-200 bg-slate-50'}`}>
                 <div className="flex items-start justify-between gap-3"><div><p className="text-sm font-black">Documentos gerados</p><p className={`mt-1 text-xs leading-relaxed ${textMuted}`}>Cada emissão fica preservada. Gerar novamente nunca substitui um documento anterior.</p></div><button type="button" onClick={() => void carregarDocumentosRepP()} disabled={documentosRepPCarregando} className="min-h-11 shrink-0 rounded-lg px-3 text-[10px] font-black uppercase" style={{ color: corSistema }} aria-label="Atualizar documentos gerados">Atualizar</button></div>
                 <div className="mt-3 space-y-2">
-                  {documentosRepPCarregando ? <p className={`py-4 text-center text-xs font-semibold ${textMuted}`}>Carregando documentos...</p> : documentosRepP.length === 0 ? <p className={`rounded-lg border border-dashed p-3 text-xs ${textMuted}`}>Nenhum documento REP-P foi gerado para esta empresa.</p> : documentosRepP.map((documento) => <div key={documento.id} className={`flex flex-col gap-2 rounded-lg border p-3 sm:flex-row sm:items-center sm:justify-between ${itemBorda}`}><div className="min-w-0"><p className="text-xs font-black">{documento.tipo === 'manual' ? 'Manual do sistema REP-P' : `AFD · ${dataCurta(documento.periodo_inicio)} a ${dataCurta(documento.periodo_fim)}`}</p><p className={`mt-1 truncate text-[10px] ${textMuted}`}>{new Date(documento.gerado_em).toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' })} · {documento.tipo === 'manual' ? 'PDF versionado' : `${documento.modo === 'producao' ? 'Produção' : 'Homologação'} · SHA-256 ${documento.sha256.slice(0, 12)}…`}</p></div><button type="button" onClick={() => void baixarDocumentoRepP(documento)} disabled={baixandoDocumentoId === documento.id} className="min-h-11 rounded-lg px-3 text-[10px] font-black uppercase text-white disabled:opacity-40" style={{ backgroundColor: corSistema }}>{baixandoDocumentoId === documento.id ? 'Baixando...' : 'Baixar'}</button></div>)}
+                  {documentosRepPCarregando ? <p className={`py-4 text-center text-xs font-semibold ${textMuted}`}>Carregando documentos...</p> : documentosRepP.length === 0 ? <p className={`rounded-lg border border-dashed p-3 text-xs ${textMuted}`}>Nenhum documento REP-P foi gerado para esta empresa.</p> : documentosRepP.map((documento) => <div key={documento.id} className={`flex flex-col gap-2 rounded-lg border p-3 sm:flex-row sm:items-center sm:justify-between ${itemBorda}`}><div className="min-w-0"><p className="text-xs font-black">{documento.tipo === 'manual' ? 'Manual do sistema REP-P' : documento.tipo === 'espelho' ? `Espelho de Ponto · ${dataCurta(documento.periodo_inicio)} a ${dataCurta(documento.periodo_fim)}` : `AFD · ${dataCurta(documento.periodo_inicio)} a ${dataCurta(documento.periodo_fim)}`}</p><p className={`mt-1 truncate text-[10px] ${textMuted}`}>{new Date(documento.gerado_em).toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' })} · PDF versionado</p></div><button type="button" onClick={() => void baixarDocumentoRepP(documento)} disabled={baixandoDocumentoId === documento.id} className="min-h-11 rounded-lg px-3 text-[10px] font-black uppercase text-white disabled:opacity-40" style={{ backgroundColor: corSistema }}>{baixandoDocumentoId === documento.id ? 'Baixando...' : 'Baixar'}</button></div>)}
                 </div>
               </section>
               <section className={`rounded-xl border p-4 ${darkMode ? 'border-slate-700 bg-slate-900' : 'border-slate-200 bg-white'}`}><p className="text-sm font-black">Manual do sistema REP-P</p><p className={`mt-1 text-xs leading-relaxed ${textMuted}`}>Manual operacional versionado. Ele informa expressamente o estágio de homologação enquanto o INPI e o certificado de produção estiverem pendentes.</p><button type="button" onClick={() => void prepararManualRepP()} disabled={preparandoManual} className="mt-3 min-h-11 w-full rounded-lg border px-3 text-xs font-black uppercase disabled:opacity-40" style={{ borderColor: corSistema, color: corSistema }}>{preparandoManual ? 'Preparando...' : 'Disponibilizar manual'}</button></section>
+              <section className={`rounded-xl border p-4 ${darkMode ? 'border-slate-700 bg-slate-900' : 'border-slate-200 bg-white'}`}><p className="text-sm font-black">Espelho de Ponto Eletrônico</p><p className={`mt-1 text-xs leading-relaxed ${textMuted}`}>Selecione um funcionário na aba Relatórios e informe o período acima para gerar o Espelho assinado.</p><button type="button" onClick={() => void gerarEspelhoPonto()} disabled={gerandoEspelho || !funcSel} className="mt-3 min-h-11 w-full rounded-lg border px-3 text-xs font-black uppercase disabled:opacity-40" style={{ borderColor: corSistema, color: corSistema }}>{gerandoEspelho ? 'Gerando...' : 'Gerar Espelho'}</button></section>
               <section className={`rounded-xl border p-4 ${darkMode ? 'border-slate-700 bg-slate-900' : 'border-slate-200 bg-slate-50'}`}><p className="text-sm font-black">Gerar novo AFD</p><p className={`mt-1 text-xs leading-relaxed ${textMuted}`}>Inclui as marcações imutáveis do período e a assinatura destacada .p7s. Em homologação, o arquivo não possui validade legal.</p><div className="mt-3 grid gap-3 sm:grid-cols-2"><label className="text-[10px] font-black uppercase tracking-wide">Data inicial<input type="date" value={afdInicio} onChange={(event) => setAfdInicio(event.target.value)} className={`mt-1 h-10 w-full rounded-lg border px-3 text-sm ${darkMode ? 'border-slate-600 bg-slate-800' : 'border-slate-300 bg-white'}`} /></label><label className="text-[10px] font-black uppercase tracking-wide">Data final<input type="date" value={afdFim} onChange={(event) => setAfdFim(event.target.value)} className={`mt-1 h-10 w-full rounded-lg border px-3 text-sm ${darkMode ? 'border-slate-600 bg-slate-800' : 'border-slate-300 bg-white'}`} /></label></div><button type="button" onClick={() => void baixarAfd()} disabled={baixandoAfd} className="mt-3 min-h-11 w-full rounded-lg bg-cyan-700 px-3 text-xs font-black uppercase text-white hover:bg-cyan-800 disabled:opacity-40">{baixandoAfd ? 'Gerando...' : 'Gerar novo AFD'}</button>{msgConformidade && <p role="status" className={`mt-2 text-xs font-bold ${msgConformidade.tipo === 'erro' ? 'text-red-600' : 'text-emerald-700'}`}>{msgConformidade.texto}</p>}</section>
-              <section className={`rounded-xl border p-4 ${darkMode ? 'border-slate-700 bg-slate-900' : 'border-slate-200 bg-white'}`}><p className="text-sm font-black">Demais documentos</p><ul className={`mt-2 space-y-2 text-xs ${textMuted}`}><li><b className="text-amber-700">Pendente:</b> AEJ e Espelho de Ponto Eletrônico.</li><li><b className="text-amber-700">Pendente:</b> Atestado Técnico, Termo de Responsabilidade e manual legal do REP-P.</li><li><b className="text-amber-700">Dependência externa:</b> certificado de registro do software no INPI e certificado ICP-Brasil válido em produção.</li></ul></section>
+              <section className={`rounded-xl border p-4 ${darkMode ? 'border-slate-700 bg-slate-900' : 'border-slate-200 bg-white'}`}><p className="text-sm font-black">Demais documentos</p><ul className={`mt-2 space-y-2 text-xs ${textMuted}`}><li><b className="text-amber-700">Pendente:</b> AEJ.</li><li><b className="text-amber-700">Pendente:</b> Atestado Técnico e Termo de Responsabilidade.</li><li><b className="text-amber-700">Dependência externa:</b> certificado de registro do software no INPI e certificado ICP-Brasil válido em produção.</li></ul></section>
             </div>
           )}
         </div>

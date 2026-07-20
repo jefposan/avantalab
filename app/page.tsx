@@ -2688,6 +2688,10 @@ useEffect(() => {
     } catch { return { erro: true, mensagem: 'Não foi possível preparar o manual.' }; }
   }
 
+  async function gerarEspelhoPonto(funcionarioId: string, inicio: string, fim: string): Promise<{ erro: boolean; mensagem?: string }> {
+    try { const { data: sessao } = await supabase.auth.getSession(); const token = sessao.session?.access_token; if (!token || !empresaId) return { erro: true, mensagem: 'Sessão não encontrada.' }; const resposta = await fetch(`/api/ponto/documentos-rep-p/espelho?empresaId=${encodeURIComponent(empresaId)}&funcionarioId=${encodeURIComponent(funcionarioId)}&inicio=${inicio}&fim=${fim}`, { headers: { Authorization: `Bearer ${token}` } }); if (!resposta.ok) { const dados = await resposta.json().catch(() => null); return { erro: true, mensagem: dados?.mensagem || 'Não foi possível gerar o Espelho.' }; } const arquivo = await resposta.blob(); const url = URL.createObjectURL(arquivo); const link = document.createElement('a'); link.href = url; link.download = `espelho-ponto-${inicio}-${fim}.pdf`; document.body.appendChild(link); link.click(); link.remove(); URL.revokeObjectURL(url); return { erro: false }; } catch { return { erro: true, mensagem: 'Não foi possível gerar o Espelho.' }; }
+  }
+
   async function carregarAssinaturaPonto(): Promise<EstadoAssinaturaPonto | null> {
     if (!empresaId) return null;
     try {
@@ -7518,6 +7522,7 @@ if (validacaoTelefoneObrigatoria) {
   onCarregarDocumentosRepP={carregarDocumentosRepP}
   onBaixarDocumentoRepP={baixarDocumentoRepP}
   onPrepararManualRepP={prepararManualRepP}
+  onGerarEspelhoPonto={gerarEspelhoPonto}
   diasNaoUteis={pontoDiasNaoUteis}
   diasNaoUteisCarregando={pontoDiasNaoUteisCarregando}
   onCriarDiaNaoUtil={criarDiaNaoUtilPonto}
