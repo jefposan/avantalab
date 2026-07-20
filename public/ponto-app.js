@@ -517,10 +517,26 @@
   async function carregarRegistros(periodo) {
     state.periodo = periodo; state.view = 'registros'; state.carregandoReg = true; render();
     try {
-      var resp = await db.from('ponto_registros').select('tipo, registrado_em, dia, distancia_m').eq('user_id', state.usuario.id).gte('dia', inicioPeriodo(periodo)).order('registrado_em', { ascending: true });
+      var consulta = db.from('ponto_registros').select('id, tipo, registrado_em, dia, distancia_m').eq('user_id', state.usuario.id);
+      if (periodo !== 'todo') consulta = consulta.gte('dia', inicioPeriodo(periodo));
+      var resp = await consulta.order('registrado_em', { ascending: true });
       state.registros = (!resp.error && resp.data) ? resp.data : [];
     } catch (e) { state.registros = []; }
     state.carregandoReg = false; render();
+  }
+  async function baixarComprovante(id) {
+    try {
+      var sessao = await db.auth.getSession();
+      var token = sessao && sessao.data && sessao.data.session && sessao.data.session.access_token;
+      if (!token || !id) throw new Error('Sessão não encontrada.');
+      var resposta = await fetch('/api/ponto/comprovante/' + encodeURIComponent(id), { headers: { Authorization: 'Bearer ' + token } });
+      if (!resposta.ok) { var corpo = await resposta.json().catch(function () { return {}; }); throw new Error(corpo.mensagem || 'Não foi possível gerar o PDF.'); }
+      var arquivo = await resposta.blob();
+      var urlArquivo = URL.createObjectURL(arquivo);
+      var link = document.createElement('a');
+      link.href = urlArquivo; link.download = 'comprovante-ponto-' + id + '.pdf';
+      document.body.appendChild(link); link.click(); link.remove(); URL.revokeObjectURL(urlArquivo);
+    } catch (erro) { mostrarToast((erro && erro.message) || 'Não foi possível gerar o PDF.'); }
   }
   function calcHorasDia(regs) {
     function t(tp) { var r = regs.filter(function (x) { return x.tipo === tp; })[0]; return r ? new Date(r.registrado_em).getTime() : null; }
@@ -690,7 +706,7 @@
     var grupos = {};
     state.registros.forEach(function (r) { (grupos[r.dia] = grupos[r.dia] || []).push(r); });
     var dias = Object.keys(grupos).sort().reverse();
-    var periodos = [['dia', 'Dia'], ['semana', 'Semana'], ['mes', 'Mês'], ['ano', 'Ano']];
+    var periodos = [['dia', 'Dia'], ['semana', 'Semana'], ['mes', 'Mês'], ['ano', 'Ano'], ['todo', 'Histórico']];
     var listaHtml = state.carregandoReg
       ? '<p class="py-8 text-center text-sm font-semibold text-slate-400">Carregando...</p>'
       : (dias.length === 0
@@ -698,7 +714,7 @@
         : dias.map(function (dia) {
             var regs = grupos[dia];
             var linhas = regs.map(function (r) {
-              return '<div class="flex items-center justify-between text-xs"><span class="font-bold text-slate-500">' + escapeHtml(rotuloAcao(r.tipo)) + '</span><span class="font-black text-slate-800">' + escapeHtml(horaPonto(r.registrado_em)) + '</span></div>';
+              return '<div class="flex items-center justify-between gap-2 text-xs"><span class="font-bold text-slate-500">' + escapeHtml(rotuloAcao(r.tipo)) + '</span><span class="flex items-center gap-2"><span class="font-black text-slate-800">' + escapeHtml(horaPonto(r.registrado_em)) + '</span><button id="ponto-comprovante-' + escapeHtml(r.id) + '" type="button" class="rounded-md px-2 py-1 text-[10px] font-black text-cyan-800">PDF</button></span></div>';
             }).join('');
             var horas = calcHorasDia(regs);
             return '<div class="rounded-xl border border-slate-200 bg-white p-3"><div class="mb-1 flex items-center justify-between"><p class="text-sm font-black text-slate-900">' + escapeHtml(dia.slice(8, 10) + '/' + dia.slice(5, 7) + '/' + dia.slice(0, 4)) + '</p>' + (horas ? '<span class="text-[11px] font-black text-cyan-700">' + horas + '</span>' : '') + '</div><div class="grid gap-0.5">' + linhas + '</div></div>';
@@ -713,7 +729,7 @@
           '</div>' +
         '</header>' +
         '<div class="flex-1 overflow-y-auto"><div class="mx-auto max-w-md px-5 pt-4" style="padding-bottom:calc(env(safe-area-inset-bottom) + 40px)">' +
-          '<div class="no-print mb-3 grid grid-cols-2 gap-1 min-[380px]:grid-cols-4">' +
+          '<div class="no-print mb-3 grid grid-cols-2 gap-1 min-[380px]:grid-cols-5">' +
             periodos.map(function (p) {
               var ativo = state.periodo === p[0];
               return '<button id="ponto-periodo-' + p[0] + '" type="button" class="rounded-lg px-1 py-2 text-[11px] font-black ' + (ativo ? 'bg-cyan-600 text-white' : 'bg-white text-slate-500 border border-slate-200') + '">' + p[1] + '</button>';
@@ -881,6 +897,10 @@
     bind('ponto-periodo-semana', function () { carregarRegistros('semana'); });
     bind('ponto-periodo-mes', function () { carregarRegistros('mes'); });
     bind('ponto-periodo-ano', function () { carregarRegistros('ano'); });
+    bind('ponto-periodo-todo', function () { carregarRegistros('todo'); });
+    (state.registros || []).forEach(function (registro) {
+      bind('ponto-comprovante-' + registro.id, function () { void baixarComprovante(registro.id); });
+    });
     bind('ponto-gerar-pdf', function () { try { window.print(); } catch (e) {} });
     bind('ponto-sair', sair);
   }

@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.6.0.74 - 2026-07-20
+
+- O colaborador pode consultar todo o histórico de marcações e baixar o PDF do
+  comprovante correspondente a cada registro.
+
+## 1.6.0.73 - 2026-07-20
+
+- O comprovante imediato do Controle de Ponto pode ser baixado em PDF e é
+  preparado para assinatura PAdES pelo certificado ativo do REP-P.
+
 ## 1.6.0.72 - 2026-07-20
 
 - A Central Administrativa ganhou o painel global **REP-P** para cadastrar e

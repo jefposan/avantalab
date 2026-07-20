@@ -1,10 +1,9 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.6.0.72 -->
+<!-- ava-version: 1.6.0.74 -->
 
-> Revisão 1.6.0.72: a configuração do certificado REP-P fica na Central
-> Administrativa global, fora dos perfis de clientes; a Auditoria do Ponto
-> continua exibindo apenas a situação segura da assinatura.
+> Revisão 1.6.0.74: em Meus registros, o colaborador pode abrir o Histórico e
+> baixar o PDF de cada marcação.
 
 ## Escopo
 

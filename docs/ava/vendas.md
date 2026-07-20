@@ -1,9 +1,9 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.6.0.72 -->
+<!-- ava-version: 1.6.0.74 -->
 
-> Revisão 1.6.0.72: sem impacto operacional no Vendas Mobile; o cofre de
-> certificado REP-P fica restrito à Central Administrativa da Gestão Web.
+> Revisão 1.6.0.74: sem impacto operacional no Vendas Mobile; histórico de
+> comprovantes permanece restrito ao Controle de Ponto.
 
 ## Escopo e navegação
 

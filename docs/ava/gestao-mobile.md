@@ -1,9 +1,8 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.6.0.72 -->
+<!-- ava-version: 1.6.0.74 -->
 
-> Revisão 1.6.0.72: sem impacto operacional no Gestão Mobile; o cofre de
-> certificado REP-P fica restrito à Central Administrativa da Gestão Web.
+> Revisão 1.6.0.74: comprovantes do Histórico do Ponto podem ser baixados em PDF.
 
 ## Escopo
 
