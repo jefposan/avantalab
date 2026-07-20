@@ -619,7 +619,7 @@ export default function PontoAdminModal({
     <div className="fixed inset-0 z-[2000] flex items-center justify-center p-3 sm:p-4">
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onFechar} />
 
-      <DraggableModalCard className={`relative flex max-h-[calc(100dvh-1.5rem)] w-full max-w-[calc(100vw-1.5rem)] flex-col overflow-hidden rounded-2xl border shadow-2xl sm:max-h-[88vh] sm:max-w-lg ${card}`}>
+      <DraggableModalCard className={`relative flex max-h-[calc(100dvh-1.5rem)] w-full max-w-[calc(100vw-1.5rem)] flex-col overflow-hidden rounded-2xl border shadow-2xl sm:max-h-[88vh] sm:max-w-2xl ${card}`}>
         <div
           data-modal-drag-handle
           className="flex shrink-0 cursor-grab items-start justify-between gap-3 px-5 py-4 text-white select-none active:cursor-grabbing"
