@@ -1,9 +1,9 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.6.0.81 -->
+<!-- ava-version: 1.6.0.82 -->
 
-> Revisão 1.6.0.81: gestores geram o Espelho de Ponto Eletrônico por funcionário
-> e período na aba Conformidade REP-P.
+> Revisão 1.6.0.82: sem impacto operacional na Gestão Web; o painel global
+> `/admin > Consumo` passa a exibir métricas agregadas do Cloudflare.
 
 ## Escopo
 

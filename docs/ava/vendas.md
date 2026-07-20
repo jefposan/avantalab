@@ -1,9 +1,9 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.6.0.81 -->
+<!-- ava-version: 1.6.0.82 -->
 
-> Revisão 1.6.0.81: sem impacto operacional no Vendas Mobile; os documentos
-> REP-P permanecem disponíveis somente na Gestão Web.
+> Revisão 1.6.0.82: sem impacto operacional no Vendas Mobile; o painel global
+> `/admin > Consumo` passa a exibir métricas agregadas do Cloudflare.
 
 ## Escopo e navegação
 

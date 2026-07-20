@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { unstable_cache } from 'next/cache';
 import { exigirAdmin } from '../../lib/admin-server';
 import { obterSaldoAsaas } from '../../lib/asaas';
 
@@ -16,6 +17,8 @@ export const runtime = 'nodejs';
 //   GITHUB_REPO    → ex.: jefposan/avantalab
 //   OPENAI_ADMIN_KEY → chave administrativa da organização OpenAI
 //   ASAAS_API_KEY  → mesma chave já usada pela integração de pagamentos
+//   CLOUDFLARE_API_TOKEN → token com Zone > Analytics > Read
+//   CLOUDFLARE_ZONE_ID   → identificador da zona avantalab.com.br
 //
 // O Supabase não precisa de token novo: usa a service role + a
 // função SQL admin_metricas_uso() (SQL devolvido no aviso caso
@@ -56,7 +59,7 @@ type Item = {
   nome: string;
   usado: number | null;   // null = não medível via API
   limite: number | null;  // null = sem teto conhecido
-  formato: 'bytes' | 'numero' | 'minutos' | 'reais' | 'brl';
+  formato: 'bytes' | 'numero' | 'minutos' | 'reais' | 'brl' | 'percentual';
   detalhe?: string;
 };
 
@@ -66,6 +69,20 @@ type Plataforma = {
   itens: Item[];
   avisos: string[];
   link: string; // painel oficial para conferência
+};
+
+type CloudflareTotals = {
+  requests?: { all?: number; cached?: number };
+  bandwidth?: { all?: number; cached?: number };
+  pageviews?: { all?: number };
+  uniques?: { all?: number };
+  threats?: { all?: number };
+};
+
+type CloudflareDashboardResponse = {
+  success?: boolean;
+  result?: { totals?: CloudflareTotals };
+  errors?: Array<{ message?: string }>;
 };
 
 async function consumoSupabase(db: Awaited<ReturnType<typeof exigirAdmin>>['db']): Promise<Plataforma> {
@@ -351,19 +368,105 @@ async function consumoAsaas(): Promise<Plataforma> {
   return plataforma;
 }
 
+async function consultarCloudflare30Dias(zoneId: string): Promise<CloudflareTotals> {
+  const token = process.env.CLOUDFLARE_API_TOKEN?.trim() || '';
+  if (!token) throw new Error('token não configurado');
+
+  const agora = new Date();
+  const inicio = new Date(agora.getTime() - 30 * 24 * 60 * 60 * 1000);
+  const parametros = new URLSearchParams({
+    since: inicio.toISOString(),
+    until: agora.toISOString(),
+    continuous: 'true',
+  });
+  const resposta = await fetch(
+    `https://api.cloudflare.com/client/v4/zones/${encodeURIComponent(zoneId)}/analytics/dashboard?${parametros.toString()}`,
+    {
+      headers: { Authorization: `Bearer ${token}` },
+      cache: 'no-store',
+    },
+  );
+  const dados = await resposta.json().catch(() => ({})) as CloudflareDashboardResponse;
+  if (!resposta.ok || !dados.success) {
+    throw new Error(dados.errors?.[0]?.message || `HTTP ${resposta.status}`);
+  }
+  return dados.result?.totals || {};
+}
+
+// A consulta é compartilhada entre administradores e revalidada somente a cada hora.
+// O token nunca sai deste módulo de servidor nem é incluído na chave de cache.
+const consultarCloudflareComCache = unstable_cache(
+  consultarCloudflare30Dias,
+  ['admin-consumo-cloudflare-30-dias-v1'],
+  { revalidate: 3600 },
+);
+
+async function consumoCloudflare(): Promise<Plataforma> {
+  const zoneId = process.env.CLOUDFLARE_ZONE_ID?.trim() || '';
+  const tokenConfigurado = Boolean(process.env.CLOUDFLARE_API_TOKEN?.trim());
+  const plataforma: Plataforma = {
+    nome: 'Cloudflare',
+    configurado: Boolean(zoneId && tokenConfigurado),
+    itens: [],
+    avisos: [],
+    link: 'https://dash.cloudflare.com/',
+  };
+
+  if (!plataforma.configurado) {
+    plataforma.avisos.push('Defina CLOUDFLARE_API_TOKEN (Zone > Analytics > Read) e CLOUDFLARE_ZONE_ID para acompanhar os dados dos últimos 30 dias.');
+    return plataforma;
+  }
+
+  try {
+    const totais = await consultarCloudflareComCache(zoneId);
+    const requisicoes = Number(totais.requests?.all) || 0;
+    const requisicoesCache = Number(totais.requests?.cached) || 0;
+    const trafego = Number(totais.bandwidth?.all) || 0;
+    const trafegoCache = Number(totais.bandwidth?.cached) || 0;
+    const percentualCache = trafego > 0 ? Math.round((trafegoCache / trafego) * 1000) / 10 : null;
+
+    plataforma.itens.push(
+      { nome: 'Requisições (30 dias)', usado: requisicoes, limite: null, formato: 'numero' },
+      { nome: 'Tráfego (30 dias)', usado: trafego, limite: null, formato: 'bytes' },
+      {
+        nome: 'Cache servido',
+        usado: percentualCache,
+        limite: null,
+        formato: 'percentual',
+        detalhe: `${requisicoesCache.toLocaleString('pt-BR')} requisições atendidas pelo cache.`,
+      },
+      { nome: 'Visualizações de página', usado: Number(totais.pageviews?.all) || 0, limite: null, formato: 'numero' },
+      { nome: 'Visitantes únicos', usado: Number(totais.uniques?.all) || 0, limite: null, formato: 'numero' },
+      {
+        nome: 'Ameaças mitigadas',
+        usado: Number(totais.threats?.all) || 0,
+        limite: null,
+        formato: 'numero',
+        detalhe: 'Eventos bloqueados ou mitigados pela proteção da zona.',
+      },
+    );
+  } catch (error) {
+    plataforma.configurado = false;
+    plataforma.avisos.push(`Cloudflare: não foi possível consultar as métricas (${error instanceof Error ? error.message : 'falha inesperada'}).`);
+  }
+
+  return plataforma;
+}
+
 export async function GET(request: Request) {
   try {
     const { autorizado, db } = await exigirAdmin(request);
     if (!autorizado) return NextResponse.json({ erro: true, mensagem: 'Acesso não autorizado.' }, { status: 401 });
 
-    const [supabase, vercel, github, openai, asaas] = await Promise.all([
+    const [supabase, vercel, github, openai, asaas, cloudflare] = await Promise.all([
       consumoSupabase(db),
       consumoVercel(),
       consumoGithub(),
       consumoOpenAI(),
       consumoAsaas(),
+      consumoCloudflare(),
     ]);
-    return NextResponse.json({ erro: false, plataformas: [supabase, vercel, github, openai, asaas], geradoEm: new Date().toISOString() });
+    return NextResponse.json({ erro: false, plataformas: [supabase, vercel, github, openai, asaas, cloudflare], geradoEm: new Date().toISOString() });
   } catch (error) {
     console.error('Erro no consumo de plataformas:', error);
     return NextResponse.json({ erro: true, mensagem: 'Não foi possível consultar o consumo.' }, { status: 500 });

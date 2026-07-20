@@ -18,7 +18,7 @@ type ConsumoItem = {
   nome: string;
   usado: number | null;
   limite: number | null;
-  formato: 'bytes' | 'numero' | 'minutos' | 'reais' | 'brl';
+  formato: 'bytes' | 'numero' | 'minutos' | 'reais' | 'brl' | 'percentual';
   detalhe?: string;
 };
 
@@ -183,6 +183,7 @@ function formatConsumo(valor: number | null, formato: ConsumoItem['formato']) {
   if (formato === 'minutos') return `${valor.toLocaleString('pt-BR')} min`;
   if (formato === 'reais') return `US$ ${valor.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 4 })}`;
   if (formato === 'brl') return valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+  if (formato === 'percentual') return `${valor.toLocaleString('pt-BR', { minimumFractionDigits: 0, maximumFractionDigits: 1 })}%`;
   return valor.toLocaleString('pt-BR');
 }
 

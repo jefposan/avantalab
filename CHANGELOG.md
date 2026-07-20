@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.6.0.82 - 2026-07-20
+
+- Administração: a aba **Consumo** passa a acompanhar métricas do Cloudflare dos
+  últimos 30 dias, incluindo requisições, tráfego, taxa de cache, páginas,
+  visitantes e ameaças mitigadas. A consulta é protegida no servidor e renovada
+  a cada hora.
+
 ## 1.6.0.81 - 2026-07-20
 
 - Gestores podem gerar, assinar e arquivar o Espelho de Ponto Eletrônico por
