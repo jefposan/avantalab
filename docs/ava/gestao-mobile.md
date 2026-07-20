@@ -1,8 +1,8 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.6.0.65 -->
+<!-- ava-version: 1.6.0.66 -->
 
-> Revisão 1.6.0.65: inativação de funcionário de ponto preserva o histórico e bloqueia o acesso.
+> Revisão 1.6.0.66: trilha de auditoria do Controle de Ponto fica disponível na Gestão Web.
 
 ## Escopo
 

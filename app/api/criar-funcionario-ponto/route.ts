@@ -162,6 +162,17 @@ export async function POST(request: Request) {
       return respostaErro('Não foi possível cadastrar o funcionário. Tente novamente.', 500);
     }
 
+    const { error: erroAuditoria } = await supabaseAdmin.from('ponto_auditoria').insert({
+      empresa_id: empresaId,
+      funcionario_user_id: novoUserId,
+      ator_user_id: user.id,
+      evento: 'funcionario_cadastrado',
+      origem: 'gestao_web',
+      motivo: 'Cadastro realizado pelo gestor.',
+      dados: { cargo, dias_trabalho: diasTrabalho },
+    });
+    if (erroAuditoria) console.error('Erro ao registrar auditoria de cadastro:', erroAuditoria);
+
     return NextResponse.json({ erro: false, funcionario: { user_id: novoUserId, nome, login, cargo } });
   } catch (error) {
     console.error('Erro ao criar funcionário de ponto:', error);

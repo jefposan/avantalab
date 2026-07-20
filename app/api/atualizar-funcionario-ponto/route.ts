@@ -178,6 +178,22 @@ export async function POST(request: Request) {
       return respostaErro('Não foi possível atualizar o acesso do funcionário.', 500);
     }
 
+    if (mudouAtivo) {
+      const { error: erroAuditoria } = await supabaseAdmin.from('ponto_auditoria').insert({
+        empresa_id: empresaId,
+        funcionario_user_id: funcionarioUserId,
+        ator_user_id: user.id,
+        evento: ativo ? 'funcionario_reativado' : 'funcionario_inativado',
+        origem: 'gestao_web',
+        motivo: ativo ? 'Acesso reativado pelo gestor.' : 'Acesso inativado pelo gestor.',
+        dados: { ativo_anterior: atual.ativo, ativo_novo: ativo },
+      });
+      if (erroAuditoria) {
+        console.error('Erro ao registrar auditoria do funcionário:', erroAuditoria);
+        return respostaErro('A alteração foi aplicada, mas não foi possível registrar a auditoria.', 500);
+      }
+    }
+
     return NextResponse.json({ erro: false });
   } catch (error) {
     console.error('Erro ao atualizar funcionário de ponto:', error);

@@ -1,8 +1,8 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.6.0.65 -->
+<!-- ava-version: 1.6.0.66 -->
 
-> Revisão 1.6.0.65: funcionários do Controle de Ponto são inativados sem apagar seu histórico.
+> Revisão 1.6.0.66: Controle de Ponto possui trilha de auditoria consultável por gestores.
 
 ## Escopo
 
@@ -46,7 +46,8 @@ ou `/ponto`.
   dia, mas faltas, atrasos e lembretes automáticos dependem de uma escala fixa
   programada. Para encerrar o acesso, desmarque **Funcionário ativo** e salve:
   login e novas marcações ficam bloqueados, mas relatórios e histórico são
-  preservados. A reativação usa o mesmo controle.
+  preservados. A reativação usa o mesmo controle. Na administração do ponto,
+  a aba **Auditoria** mostra as marcações e as alterações de acesso registradas.
 - **Recebimentos Presenciais** é instalado em **Menu > Módulos**. Depois de
   instalado, Gestor Master e Administrador usam **Menu > Recebimentos** para
   cadastrar empresas atendidas, pontos de cobrança e colaboradores, além de

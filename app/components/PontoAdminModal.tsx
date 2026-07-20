@@ -36,7 +36,17 @@ function cpfValido(cpf: string) {
 
 export const DIAS_SEMANA: Array<[number, string]> = [[0, 'Dom'], [1, 'Seg'], [2, 'Ter'], [3, 'Qua'], [4, 'Qui'], [5, 'Sex'], [6, 'Sáb']];
 const TODOS_FUNCIONARIOS = '__todos__';
-export type AbaPontoAdmin = 'lista' | 'novo' | 'local' | 'calendario' | 'relatorios';
+export type AbaPontoAdmin = 'lista' | 'novo' | 'local' | 'calendario' | 'relatorios' | 'auditoria';
+
+export type EventoAuditoriaPonto = {
+  id: string;
+  funcionario_user_id: string | null;
+  ator_user_id: string | null;
+  evento: string;
+  origem: string;
+  motivo: string | null;
+  ocorrido_em: string;
+};
 
 export type PontoDiaNaoUtil = {
   id: string;
@@ -77,6 +87,7 @@ interface PontoAdminModalProps {
   config: PontoConfig;
   onSalvarConfig: (dados: { latitude: number; longitude: number; raio_m: number }) => Promise<{ erro: boolean; mensagem?: string }>;
   onCarregarRegistros: (funcionarioUserId: string, dataInicioISO: string) => Promise<RegistroPonto[]>;
+  onCarregarAuditoria: () => Promise<EventoAuditoriaPonto[]>;
   diasNaoUteis: PontoDiaNaoUtil[];
   diasNaoUteisCarregando: boolean;
   onCriarDiaNaoUtil: (dados: { dataInicio: string; dataFim: string; tipo: string; descricao: string; recorrenteAnual: boolean }) => Promise<{ erro: boolean; mensagem?: string }>;
@@ -97,6 +108,7 @@ export default function PontoAdminModal({
   config,
   onSalvarConfig,
   onCarregarRegistros,
+  onCarregarAuditoria,
   diasNaoUteis,
   diasNaoUteisCarregando,
   onCriarDiaNaoUtil,
@@ -172,6 +184,8 @@ export default function PontoAdminModal({
   const [relRegistros, setRelRegistros] = useState<RegistroPonto[]>([]);
   const [relRegistrosTodos, setRelRegistrosTodos] = useState<Record<string, RegistroPonto[]>>({});
   const [relCarregando, setRelCarregando] = useState(false);
+  const [auditoria, setAuditoria] = useState<EventoAuditoriaPonto[]>([]);
+  const [auditoriaCarregando, setAuditoriaCarregando] = useState(false);
   const relatorioInicialCarregadoRef = useRef(false);
 
   const TOLERANCIA_MIN = 10;
@@ -594,7 +608,12 @@ export default function PontoAdminModal({
     return `${iso.slice(8, 10)}/${iso.slice(5, 7)}/${iso.slice(0, 4)}`;
   };
 
-  const abas: Array<[AbaPontoAdmin, string]> = [['lista', 'Funcionários'], ['novo', 'Novo'], ['local', 'Local'], ['calendario', 'Calendário'], ['relatorios', 'Relatórios']];
+  const carregarAuditoria = async () => {
+    setAuditoriaCarregando(true);
+    setAuditoria(await onCarregarAuditoria());
+    setAuditoriaCarregando(false);
+  };
+  const abas: Array<[AbaPontoAdmin, string]> = [['lista', 'Funcionários'], ['novo', 'Novo'], ['local', 'Local'], ['calendario', 'Calendário'], ['relatorios', 'Relatórios'], ['auditoria', 'Auditoria']];
 
   return (
     <div className="fixed inset-0 z-[2000] flex items-center justify-center p-3 sm:p-4">
@@ -623,6 +642,7 @@ export default function PontoAdminModal({
                 setMsg(null);
                 setMsgLocal(null);
                 setMsgCalendario(null);
+                if (a === 'auditoria') void carregarAuditoria();
                 if (listaScrollRef.current) listaScrollRef.current.scrollTop = 0;
               }}
               className="rounded-t-lg px-2.5 py-2 text-[11px] font-black uppercase tracking-wide"
@@ -1063,6 +1083,21 @@ export default function PontoAdminModal({
                   </div>}
                 </>
               )}
+            </div>
+          )}
+
+          {aba === 'auditoria' && (
+            <div className="grid gap-2">
+              <div className={`flex items-center justify-between rounded-xl border p-3 ${itemBorda}`}>
+                <div><p className="text-sm font-black">Trilha de auditoria</p><p className={`text-[11px] ${textMuted}`}>Eventos imutáveis do Controle de Ponto.</p></div>
+                <button type="button" onClick={() => void carregarAuditoria()} className="rounded-lg px-2 py-1 text-[10px] font-black uppercase" style={{ color: corSistema }}>Atualizar</button>
+              </div>
+              {auditoriaCarregando ? <p className={`py-8 text-center text-sm font-semibold ${textMuted}`}>Carregando...</p> : auditoria.length === 0 ? <p className={`py-8 text-center text-sm font-semibold ${textMuted}`}>Nenhum evento registrado ainda.</p> : auditoria.map((item) => {
+                const funcionario = funcionarios.find((f) => f.user_id === item.funcionario_user_id);
+                const ator = funcionarios.find((f) => f.user_id === item.ator_user_id);
+                const titulo: Record<string, string> = { marcacao_registrada: 'Marcação registrada', funcionario_inativado: 'Funcionário inativado', funcionario_reativado: 'Funcionário reativado', funcionario_cadastrado: 'Funcionário cadastrado' };
+                return <div key={item.id} className={`rounded-xl border p-3 ${itemBorda}`}><p className="text-xs font-black">{titulo[item.evento] || item.evento}</p><p className={`mt-1 text-[11px] ${textMuted}`}>{funcionario?.nome || 'Funcionário'} · {new Date(item.ocorrido_em).toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' })}</p><p className={`text-[10px] ${textMuted}`}>Origem: {item.origem}{ator ? ` · Responsável: ${ator.nome}` : ''}{item.motivo ? ` · ${item.motivo}` : ''}</p></div>;
+              })}
             </div>
           )}
         </div>

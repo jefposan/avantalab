@@ -13,7 +13,7 @@ import ModalInstrucoes from './components/ModalInstrucoes';
 import ModalDespesasBase from './components/ModalDespesasBase';
 import ModalLogo from './components/ModalLogo';
 import ModulosModal, { type Modulo } from './components/ModulosModal';
-import PontoAdminModal, { type AbaPontoAdmin, type FuncionarioPonto, type PontoConfig, type PontoDiaNaoUtil } from './components/PontoAdminModal';
+import PontoAdminModal, { type AbaPontoAdmin, type EventoAuditoriaPonto, type FuncionarioPonto, type PontoConfig, type PontoDiaNaoUtil } from './components/PontoAdminModal';
 import RecebimentosAdminModal from './components/RecebimentosAdminModal';
 import SobreModal from './components/SobreModal';
 import ModalConfirmacao from "./components/ModalConfirmacao";
@@ -2626,6 +2626,20 @@ useEffect(() => {
     } catch {
       return [];
     }
+  }
+
+  async function carregarAuditoriaPonto(): Promise<EventoAuditoriaPonto[]> {
+    if (!empresaId) return [];
+    try {
+      const { data, error } = await supabase
+        .from('ponto_auditoria')
+        .select('id, funcionario_user_id, ator_user_id, evento, origem, motivo, ocorrido_em')
+        .eq('empresa_id', empresaId)
+        .order('ocorrido_em', { ascending: false })
+        .limit(100);
+      if (error) { console.error('carregarAuditoriaPonto', error); return []; }
+      return (data || []) as EventoAuditoriaPonto[];
+    } catch { return []; }
   }
 
   async function atualizarFuncionarioPonto(funcionarioUserId: string, dados: { nome: string; cargo: string; cpf?: string; horaEntrada?: string; horaSaida?: string; ativo: boolean; diasTrabalho?: number[] }) {
@@ -7440,6 +7454,7 @@ if (validacaoTelefoneObrigatoria) {
   config={pontoConfig}
   onSalvarConfig={salvarPontoConfig}
   onCarregarRegistros={carregarRegistrosPonto}
+  onCarregarAuditoria={carregarAuditoriaPonto}
   diasNaoUteis={pontoDiasNaoUteis}
   diasNaoUteisCarregando={pontoDiasNaoUteisCarregando}
   onCriarDiaNaoUtil={criarDiaNaoUtilPonto}

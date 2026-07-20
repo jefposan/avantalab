@@ -1,8 +1,8 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.6.0.65 -->
+<!-- ava-version: 1.6.0.66 -->
 
-> Revisão 1.6.0.65: sem impacto operacional no Vendas Mobile; ajuste restrito ao Controle de Ponto da Gestão.
+> Revisão 1.6.0.66: sem impacto operacional no Vendas Mobile; ajuste restrito ao Controle de Ponto da Gestão.
 
 ## Escopo e navegação
 

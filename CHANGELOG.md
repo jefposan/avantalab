@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.6.0.66 - 2026-07-20
+
+- Controle de Ponto passa a manter uma trilha de auditoria imutável para
+  marcações, cadastros, inativações e reativações, disponível a gestores.
+
 ## 1.6.0.65 - 2026-07-19
 
 - Controle de Ponto substitui a exclusão de funcionários por inativação segura:
