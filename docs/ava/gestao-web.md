@@ -1,9 +1,9 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.6.0.82 -->
+<!-- ava-version: 1.6.0.83 -->
 
-> Revisão 1.6.0.82: sem impacto operacional na Gestão Web; o painel global
-> `/admin > Consumo` passa a exibir métricas agregadas do Cloudflare.
+> Revisão 1.6.0.83: sem impacto operacional na Gestão Web; o Gestão Mobile
+> reforça a atualização de seus arquivos e a conclusão da abertura.
 
 ## Escopo
 

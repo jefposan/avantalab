@@ -1,9 +1,9 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.6.0.82 -->
+<!-- ava-version: 1.6.0.83 -->
 
-> Revisão 1.6.0.82: sem impacto operacional no Gestão Mobile; o painel global
-> `/admin > Consumo` passa a exibir métricas agregadas do Cloudflare.
+> Revisão 1.6.0.83: a abertura passa a invalidar automaticamente arquivos antigos
+> do PWA e confirma a exibição da tela principal mesmo depois de alcançar 100%.
 
 ## Escopo
 
@@ -30,7 +30,8 @@ deve usar os nomes do menu e da barra inferior do celular.
   sincronizações complementares em segundo plano. Verificações lentas são repetidas;
   se a preparação ficar sem progresso por tempo anormal, o aplicativo faz uma única
   reconexão automática. Persistindo a falha, exibe **Tentar novamente** sem entrar em
-  ciclo de recargas.
+  ciclo de recargas. Se chegar a 100% e o card ainda permanecer visível, o aplicativo
+  confirma novamente a abertura antes de oferecer a recuperação.
 - Dentro da Gestão, **Menu > Ir para Vendas** abre diretamente o Vendas Mobile; a
   tela com as duas opções é exibida somente na entrada após o login. Ao tocar, a
   Gestão consulta o estado atual do módulo no servidor para não solicitar uma

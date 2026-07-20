@@ -1,9 +1,9 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.6.0.82 -->
+<!-- ava-version: 1.6.0.83 -->
 
-> Revisão 1.6.0.82: sem impacto operacional no Vendas Mobile; o painel global
-> `/admin > Consumo` passa a exibir métricas agregadas do Cloudflare.
+> Revisão 1.6.0.83: sem impacto operacional no Vendas Mobile; o Gestão Mobile
+> reforça a atualização de seus arquivos e a conclusão da abertura.
 
 ## Escopo e navegação
 

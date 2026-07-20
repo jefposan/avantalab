@@ -67,13 +67,14 @@ export default function MobilePage() {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
   const cobrancaAtiva = process.env.NEXT_PUBLIC_COBRANCA_ATIVA === 'true' ? 'true' : 'false';
-  const mobileAssetVersion = '328';
+  const mobileAssetVersion = APP_VERSION;
   const bootstrapCarregamento = `
     (function () {
       var pesos = { shell: 5, scripts: 15, auth: 10, profiles: 20, access: 10, data: 40 };
       var progresso = window.__AVANTALAB_MOBILE_PROGRESSO__ || { grupos: {}, valor: 0, rotulo: 'Iniciando a Gestão Mobile' };
       var chaveRecuperacao = 'avantalab.mobile.ultima_recuperacao_acesso';
       var limiteSemProgresso = 32000;
+      var limiteAposCemPorCento = 4000;
       window.__AVANTALAB_MOBILE_PROGRESSO__ = progresso;
       progresso.atualizadoEm = Date.now();
       window.__avantalabAtualizarProgressoMobile = function (grupo, concluido, total, rotulo) {
@@ -88,9 +89,6 @@ export default function MobilePage() {
         if (rotulo) progresso.rotulo = rotulo;
         if (progresso.valor !== valorAnterior || progresso.rotulo !== rotuloAnterior) {
           progresso.atualizadoEm = Date.now();
-        }
-        if (progresso.valor >= 100) {
-          try { sessionStorage.removeItem(chaveRecuperacao); } catch (error) {}
         }
         var barra = document.getElementById('mobileAccessProgressBar');
         var texto = document.getElementById('mobileAccessProgressValue');
@@ -112,6 +110,9 @@ export default function MobilePage() {
         progresso.atualizadoEm = Date.now();
         window.__avantalabAtualizarProgressoMobile('auth', 0, 1, progresso.rotulo);
       };
+      window.__avantalabConfirmarAcessoMobile = function () {
+        try { sessionStorage.removeItem(chaveRecuperacao); } catch (error) {}
+      };
       window.__avantalabRecuperarAcessoMobile = function () {
         var agora = Date.now();
         var ultimaRecuperacao = 0;
@@ -126,11 +127,23 @@ export default function MobilePage() {
         return true;
       };
       window.setInterval(function () {
-        if (document.hidden || Number(progresso.valor || 0) >= 100) return;
+        if (document.hidden) return;
         var root = document.getElementById('mobile-root');
         if (!root || String(root.textContent || '').indexOf('Preparando acesso') < 0) return;
-        if (Date.now() - Number(progresso.atualizadoEm || Date.now()) < limiteSemProgresso) return;
+        var valorAtual = Number(progresso.valor || 0);
+        var limiteAtual = valorAtual >= 100 ? limiteAposCemPorCento : limiteSemProgresso;
+        if (Date.now() - Number(progresso.atualizadoEm || Date.now()) < limiteAtual) return;
         progresso.atualizadoEm = Date.now();
+        if (valorAtual >= 100 && typeof window.__avantalabConcluirAcessoMobile === 'function') {
+          try {
+            if (window.__avantalabConcluirAcessoMobile()) {
+              window.__avantalabConfirmarAcessoMobile();
+              return;
+            }
+          } catch (error) {
+            console.error('Não foi possível concluir a abertura da Gestão Mobile:', error);
+          }
+        }
         if (window.__avantalabRecuperarAcessoMobile()) return;
         var etapa = document.getElementById('mobileAccessProgressLabel');
         if (etapa) etapa.textContent = 'A conexão demorou. Tente novamente.';

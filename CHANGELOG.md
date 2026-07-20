@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.6.0.83 - 2026-07-20
+
+- Gestão Mobile: impede que Cloudflare ou o navegador combinem a página nova
+  com arquivos antigos do PWA. Os scripts e o service worker passam a usar a
+  versão oficial do sistema e recebem política explícita de não armazenamento.
+- Gestão Mobile: depois de alcançar 100%, o carregador confirma que a tela
+  principal realmente abriu e recupera o acesso se o card permanecer visível.
+
 ## 1.6.0.82 - 2026-07-20
 
 - Administração: a aba **Consumo** passa a acompanhar métricas do Cloudflare dos

@@ -5010,6 +5010,9 @@
     state.pronto = true;
     state.carregando = false;
     render();
+    if (!telaPreparacaoAcessoMobileVisivel() && typeof window.__avantalabConfirmarAcessoMobile === 'function') {
+      window.__avantalabConfirmarAcessoMobile();
+    }
 
     var empresaIdResumo = empresaId;
     var anoResumo = String(state.ano);
@@ -7677,7 +7680,11 @@
       return false;
     }
 
-    return !telaPreparacaoAcessoMobileVisivel();
+    var acessoAberto = !telaPreparacaoAcessoMobileVisivel();
+    if (acessoAberto && typeof window.__avantalabConfirmarAcessoMobile === 'function') {
+      window.__avantalabConfirmarAcessoMobile();
+    }
+    return acessoAberto;
   }
 
   function garantirLiberacaoAcessoMobile() {
@@ -13332,7 +13339,7 @@
     });
 
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/mobile-sw.js?v=266', { updateViaCache: 'none' }).then(function (registro) {
+      navigator.serviceWorker.register('/mobile-sw.js?v=' + encodeURIComponent(APP_VERSION), { updateViaCache: 'none' }).then(function (registro) {
         if (registro && registro.update) registro.update();
       }).catch(function () {});
     }
