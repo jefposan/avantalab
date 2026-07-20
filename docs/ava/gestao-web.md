@@ -1,10 +1,9 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.6.0.84.01 -->
+<!-- ava-version: 1.6.0.87 -->
 
-> Revisão 1.6.0.84.01: no perfil Pessoal, a Caixinha começa ativa; no perfil
-> Empresa, ela se chama Reserva financeira e começa oculta, disponível em
-> Organizar blocos.
+> Revisão 1.6.0.87: a jornada permanece no cadastro do funcionário e não é
+> repetida em Tratamentos; o AEJ usa esse horário.
 
 ## Escopo
 
@@ -16,7 +15,6 @@ ou `/ponto`.
 
 - O dashboard é a página inicial. Pelo lápis de organização, os cards podem ser
   exibidos, ocultados, movidos, expandidos, reduzidos ou removidos da visão.
-- No perfil Pessoal, **Caixinha** começa visível. No perfil Empresa, **Reserva financeira** começa oculta e pode ser exibida em Organizar blocos; ambas registram aportes como despesa.
 - **Menu** concentra perfil, usuários, aparência, despesas/categorias,
   despesas fixas, backup/restauração e módulos. No Web, ele abre em uma gaveta
   lateral esquerda; Visual e Configurações expandem seus próprios subbotões.
@@ -59,6 +57,16 @@ ou `/ponto`.
   validade legal.
   O botão **Disponibilizar manual** prepara o Manual do Sistema REP-P em PDF
   versionado e o inclui no mesmo histórico de documentos da empresa.
+  Na aba **Tratamentos**, selecione o funcionário. A jornada usada é a já
+  cadastrada no funcionário; então solicite uma inclusão de marcação ou abono e
+  anexar comprovante em PDF, JPG ou PNG; o comprovante é obrigatório para abono. Solicitações pendentes
+  podem ser aprovadas ou recusadas, e uma aprovação pode ser cancelada com motivo;
+  todos esses fatos preservam a marcação original. Antes de lançar crédito ou
+  débito, cadastre regra vigente com instrumento de referência, prazo de
+  compensação e limite de saldo quando aplicável. Em **Conformidade REP-P**, o
+  botão **Gerar AEJ do período** cria e preserva o arquivo v001 com `.p7s` em
+  homologação. A validade legal permanece bloqueada até o INPI e o A1 ICP-Brasil
+  de produção estarem configurados e válidos.
 - **Recebimentos Presenciais** é instalado em **Menu > Módulos**. Depois de
   instalado, Gestor Master e Administrador usam **Menu > Recebimentos** para
   cadastrar empresas atendidas, pontos de cobrança e colaboradores, além de

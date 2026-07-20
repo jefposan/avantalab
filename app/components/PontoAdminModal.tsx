@@ -36,7 +36,7 @@ function cpfValido(cpf: string) {
 
 export const DIAS_SEMANA: Array<[number, string]> = [[0, 'Dom'], [1, 'Seg'], [2, 'Ter'], [3, 'Qua'], [4, 'Qui'], [5, 'Sex'], [6, 'Sáb']];
 const TODOS_FUNCIONARIOS = '__todos__';
-export type AbaPontoAdmin = 'lista' | 'novo' | 'local' | 'calendario' | 'relatorios' | 'auditoria' | 'conformidade';
+export type AbaPontoAdmin = 'lista' | 'novo' | 'local' | 'calendario' | 'relatorios' | 'auditoria' | 'conformidade' | 'tratamentos';
 
 export type EventoAuditoriaPonto = {
   id: string;
@@ -61,13 +61,35 @@ export type EstadoAssinaturaPonto = {
 
 export type DocumentoRepP = {
   id: string;
-  tipo: 'afd' | 'manual' | 'espelho';
+  tipo: 'afd' | 'manual' | 'espelho' | 'aej';
   periodo_inicio: string;
   periodo_fim: string;
   arquivo_nome: string;
   sha256: string;
   modo: 'homologacao' | 'producao';
   gerado_em: string;
+};
+
+export type TratamentoItemPonto = {
+  id: string;
+  funcionario_user_id: string;
+  data_referencia?: string;
+  data_inicio?: string;
+  data_fim?: string;
+  tipo: string;
+  motivo: string;
+  comprovante_path: string | null;
+  situacao: 'pendente' | 'aprovado' | 'recusado' | 'cancelado';
+  solicitado_em: string;
+  decisao?: { motivo: string | null; decidido_em: string } | null;
+};
+
+export type DadosTratamentosPonto = {
+  ajustes: TratamentoItemPonto[];
+  abonos: TratamentoItemPonto[];
+  regras: Array<{ id: string; nome: string; vigencia_inicio: string; vigencia_fim: string | null; acordo_referencia: string; prazo_compensacao_dias: number; limite_minutos: number | null; ativo: boolean }>;
+  lancamentos: Array<{ id: string; funcionario_user_id: string; data_referencia: string; minutos: number; natureza: string; motivo: string }>;
+  saldoPorFuncionario: Record<string, number>;
 };
 
 export type PontoDiaNaoUtil = {
@@ -116,6 +138,13 @@ interface PontoAdminModalProps {
   onBaixarDocumentoRepP: (documento: DocumentoRepP) => Promise<{ erro: boolean; mensagem?: string }>;
   onPrepararManualRepP: () => Promise<{ erro: boolean; mensagem?: string }>;
   onGerarEspelhoPonto: (funcionarioId: string, inicio: string, fim: string) => Promise<{ erro: boolean; mensagem?: string }>;
+  onRegistrarTratamento: (dados: { acao: 'ajuste' | 'abono'; funcionarioId: string; data: string; dataFim?: string; tipo: string; motivo: string; minutosAbonados?: number; horario?: string; tipoMarcacao?: 'entrada' | 'saida'; anexo?: File | null }) => Promise<{ erro: boolean; mensagem?: string }>;
+  onLancarBancoHoras: (dados: { funcionarioId: string; data: string; minutos: number; natureza: string; motivo: string }) => Promise<{ erro: boolean; mensagem?: string }>;
+  onCadastrarBancoRegra: (dados: { nome: string; vigenciaInicio: string; acordoReferencia: string; prazoCompensacaoDias: number; limiteMinutos?: number }) => Promise<{ erro: boolean; mensagem?: string }>;
+  onCarregarTratamentos: () => Promise<DadosTratamentosPonto>;
+  onDecidirTratamento: (tipo: 'ajuste' | 'abono', id: string, decisao: 'aprovado' | 'recusado' | 'cancelado', motivo: string) => Promise<{ erro: boolean; mensagem?: string }>;
+  onBaixarComprovanteTratamento: (tipo: 'ajuste' | 'abono', item: TratamentoItemPonto) => Promise<{ erro: boolean; mensagem?: string }>;
+  onGerarAej: (inicio: string, fim: string) => Promise<{ erro: boolean; mensagem?: string }>;
   diasNaoUteis: PontoDiaNaoUtil[];
   diasNaoUteisCarregando: boolean;
   onCriarDiaNaoUtil: (dados: { dataInicio: string; dataFim: string; tipo: string; descricao: string; recorrenteAnual: boolean }) => Promise<{ erro: boolean; mensagem?: string }>;
@@ -143,6 +172,13 @@ export default function PontoAdminModal({
   onBaixarDocumentoRepP,
   onPrepararManualRepP,
   onGerarEspelhoPonto,
+  onRegistrarTratamento,
+  onLancarBancoHoras,
+  onCadastrarBancoRegra,
+  onCarregarTratamentos,
+  onDecidirTratamento,
+  onBaixarComprovanteTratamento,
+  onGerarAej,
   diasNaoUteis,
   diasNaoUteisCarregando,
   onCriarDiaNaoUtil,
@@ -229,6 +265,24 @@ export default function PontoAdminModal({
   const [baixandoDocumentoId, setBaixandoDocumentoId] = useState<string | null>(null);
   const [preparandoManual, setPreparandoManual] = useState(false);
   const [gerandoEspelho, setGerandoEspelho] = useState(false);
+  const [gerandoAej, setGerandoAej] = useState(false);
+  const [tratamentoFuncionario, setTratamentoFuncionario] = useState('');
+  const [tratamentoTipo, setTratamentoTipo] = useState<'ajuste' | 'abono'>('ajuste');
+  const [tratamentoData, setTratamentoData] = useState(hojeISO);
+  const [tratamentoDataFim, setTratamentoDataFim] = useState(hojeISO);
+  const [tratamentoMotivo, setTratamentoMotivo] = useState('');
+  const [tratamentoHorario, setTratamentoHorario] = useState('');
+  const [tratamentoMarcacao, setTratamentoMarcacao] = useState<'entrada' | 'saida'>('entrada');
+  const [tratamentoMinutos, setTratamentoMinutos] = useState('');
+  const [tratamentoAnexo, setTratamentoAnexo] = useState<File | null>(null);
+  const [salvandoTratamento, setSalvandoTratamento] = useState(false);
+  const [msgTratamento, setMsgTratamento] = useState<{ tipo: 'ok' | 'erro'; texto: string } | null>(null);
+  const [bancoMinutos, setBancoMinutos] = useState(''); const [bancoMotivo, setBancoMotivo] = useState('');
+  const [regraNome, setRegraNome] = useState(''); const [regraAcordo, setRegraAcordo] = useState(''); const [regraPrazo, setRegraPrazo] = useState('180'); const [regraLimite, setRegraLimite] = useState('');
+  const [tratamentos, setTratamentos] = useState<DadosTratamentosPonto>({ ajustes: [], abonos: [], regras: [], lancamentos: [], saldoPorFuncionario: {} });
+  const [tratamentosCarregando, setTratamentosCarregando] = useState(false);
+  const [decidindoId, setDecidindoId] = useState<string | null>(null);
+  const [motivosRecusa, setMotivosRecusa] = useState<Record<string, string>>({});
   const [assinatura, setAssinatura] = useState<EstadoAssinaturaPonto | null>(null);
   const relatorioInicialCarregadoRef = useRef(false);
 
@@ -253,7 +307,7 @@ export default function PontoAdminModal({
   const card = darkMode ? 'bg-slate-900 text-slate-100 border-slate-700' : 'bg-white text-slate-900 border-slate-200';
   const itemBorda = darkMode ? 'border-slate-700' : 'border-slate-200';
   const textMuted = darkMode ? 'text-slate-400' : 'text-slate-500';
-  const inputCls = `h-10 w-full rounded-lg border px-3 text-sm outline-none ${darkMode ? 'border-slate-600 bg-slate-800 text-white' : 'border-slate-300 bg-white text-slate-800'}`;
+  const inputCls = `h-11 w-full rounded-lg border px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-offset-1 ${darkMode ? 'border-slate-600 bg-slate-800 text-white' : 'border-slate-300 bg-white text-slate-800'}`;
   const labelCls = `grid gap-1 text-[11px] font-black uppercase tracking-wide ${darkMode ? 'text-slate-300' : 'text-slate-500'}`;
   const linkPonto = (typeof window !== 'undefined' ? window.location.origin : '') + '/ponto';
   const copiarLinkPonto = () => {
@@ -372,6 +426,12 @@ export default function PontoAdminModal({
     setRelRegistros(regs.filter((r) => r.dia >= relDataInicio && r.dia <= relDataFim));
     setRelRegistrosTodos({});
     setRelCarregando(false);
+  };
+
+  const carregarTratamentos = async () => {
+    setTratamentosCarregando(true);
+    try { setTratamentos(await onCarregarTratamentos()); }
+    finally { setTratamentosCarregando(false); }
   };
 
   useEffect(() => {
@@ -689,13 +749,41 @@ export default function PontoAdminModal({
     setMsgConformidade(resultado.erro ? { tipo: 'erro', texto: resultado.mensagem || 'Não foi possível preparar o manual.' } : { tipo: 'ok', texto: 'Manual REP-P disponível em Documentos gerados.' });
   };
   const gerarEspelhoPonto = async () => { if (!funcSel) { setMsgConformidade({ tipo: 'erro', texto: 'Selecione um funcionário na aba Relatórios antes de gerar o Espelho.' }); return; } setGerandoEspelho(true); const resultado = await onGerarEspelhoPonto(funcSel.user_id, afdInicio, afdFim); setGerandoEspelho(false); if (!resultado.erro) void carregarDocumentosRepP(); setMsgConformidade(resultado.erro ? { tipo: 'erro', texto: resultado.mensagem || 'Não foi possível gerar o Espelho.' } : { tipo: 'ok', texto: 'Espelho gerado, baixado e preservado no histórico.' }); };
-  const abas: Array<[AbaPontoAdmin, string]> = [['lista', 'Funcionários'], ['novo', 'Novo'], ['local', 'Local'], ['calendario', 'Calendário'], ['relatorios', 'Relatórios'], ['auditoria', 'Auditoria'], ['conformidade', 'Conformidade']];
+  const registrarTratamento = async () => {
+    if (!tratamentoFuncionario || !tratamentoMotivo.trim() || (tratamentoTipo === 'ajuste' && !tratamentoHorario) || (tratamentoTipo === 'abono' && (!tratamentoMinutos || !tratamentoAnexo))) { setMsgTratamento({ tipo: 'erro', texto: tratamentoTipo === 'abono' ? 'Para abono, informe os minutos e anexe o comprovante.' : 'Informe funcionário, motivo e os dados obrigatórios.' }); return; }
+    setSalvandoTratamento(true);
+    const r = await onRegistrarTratamento({ acao: tratamentoTipo, funcionarioId: tratamentoFuncionario, data: tratamentoData, dataFim: tratamentoTipo === 'abono' ? tratamentoDataFim : undefined, tipo: tratamentoTipo === 'ajuste' ? 'inclusao' : 'abono_justificado', motivo: tratamentoMotivo.trim(), minutosAbonados: Number(tratamentoMinutos || 0), horario: tratamentoHorario, tipoMarcacao: tratamentoMarcacao, anexo: tratamentoAnexo });
+    setSalvandoTratamento(false);
+    setMsgTratamento({ tipo: r.erro ? 'erro' : 'ok', texto: r.erro ? r.mensagem || 'Não foi possível salvar.' : 'Solicitação registrada para aprovação.' });
+    if (!r.erro) { setTratamentoMotivo(''); setTratamentoAnexo(null); setTratamentoHorario(''); void carregarTratamentos(); }
+  };
+  const cadastrarRegraBanco = async () => {
+    const r = await onCadastrarBancoRegra({ nome: regraNome, vigenciaInicio: tratamentoData, acordoReferencia: regraAcordo, prazoCompensacaoDias: Number(regraPrazo), limiteMinutos: regraLimite ? Number(regraLimite) : undefined });
+    setMsgTratamento({ tipo: r.erro ? 'erro' : 'ok', texto: r.erro ? r.mensagem || 'Não foi possível cadastrar a regra.' : 'Regra de banco de horas cadastrada.' });
+    if (!r.erro) { setRegraNome(''); setRegraAcordo(''); setRegraPrazo('180'); setRegraLimite(''); void carregarTratamentos(); }
+  };
+  const lancarBancoHoras = async () => {
+    const minutos = Number(bancoMinutos);
+    const r = await onLancarBancoHoras({ funcionarioId: tratamentoFuncionario, data: tratamentoData, minutos, natureza: minutos >= 0 ? 'credito' : 'debito', motivo: bancoMotivo });
+    setMsgTratamento({ tipo: r.erro ? 'erro' : 'ok', texto: r.erro ? r.mensagem || 'Não foi possível lançar.' : 'Lançamento de banco de horas registrado.' });
+    if (!r.erro) { setBancoMinutos(''); setBancoMotivo(''); void carregarTratamentos(); }
+  };
+  const decidirTratamento = async (tipo: 'ajuste' | 'abono', item: TratamentoItemPonto, decisao: 'aprovado' | 'recusado' | 'cancelado') => {
+    const motivo = motivosRecusa[item.id]?.trim() || '';
+    if ((decisao === 'recusado' || decisao === 'cancelado') && !motivo) { setMsgTratamento({ tipo: 'erro', texto: 'Informe o motivo antes de concluir esta decisão.' }); return; }
+    setDecidindoId(item.id); const r = await onDecidirTratamento(tipo, item.id, decisao, motivo); setDecidindoId(null);
+    setMsgTratamento({ tipo: r.erro ? 'erro' : 'ok', texto: r.erro ? r.mensagem || 'Não foi possível registrar a decisão.' : decisao === 'aprovado' ? 'Tratamento aprovado.' : decisao === 'cancelado' ? 'Tratamento cancelado com trilha preservada.' : 'Tratamento recusado.' });
+    if (!r.erro) void carregarTratamentos();
+  };
+  const gerarAej = async () => { setGerandoAej(true); const r = await onGerarAej(afdInicio, afdFim); setGerandoAej(false); if (!r.erro) void carregarDocumentosRepP(); setMsgConformidade({ tipo: r.erro ? 'erro' : 'ok', texto: r.erro ? r.mensagem || 'Não foi possível gerar o AEJ.' : 'AEJ de homologação gerado e preservado. A validade legal continua condicionada ao INPI e ao A1 ICP-Brasil.' }); };
+  const formatarSaldo = (minutos: number) => `${minutos < 0 ? '-' : '+'}${String(Math.floor(Math.abs(minutos) / 60)).padStart(2, '0')}:${String(Math.abs(minutos) % 60).padStart(2, '0')}`;
+  const abas: Array<[AbaPontoAdmin, string]> = [['lista', 'Funcionários'], ['novo', 'Novo'], ['local', 'Local'], ['calendario', 'Calendário'], ['relatorios', 'Relatórios'], ['tratamentos', 'Tratamentos'], ['auditoria', 'Auditoria'], ['conformidade', 'Conformidade']];
 
   return (
     <div className="fixed inset-0 z-[2000] flex items-center justify-center p-3 sm:p-4">
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onFechar} />
 
-      <DraggableModalCard className={`relative flex max-h-[calc(100dvh-1.5rem)] w-full max-w-[calc(100vw-1.5rem)] flex-col overflow-hidden rounded-2xl border shadow-2xl sm:max-h-[88vh] sm:max-w-2xl ${card}`}>
+      <DraggableModalCard className={`relative flex max-h-[calc(100dvh-1.5rem)] w-full max-w-[calc(100vw-1.5rem)] flex-col overflow-hidden rounded-2xl border shadow-2xl sm:max-h-[88vh] sm:max-w-4xl ${card}`}>
         <div
           data-modal-drag-handle
           className="flex shrink-0 cursor-grab items-start justify-between gap-3 px-5 py-4 text-white select-none active:cursor-grabbing"
@@ -716,6 +804,7 @@ export default function PontoAdminModal({
               onClick={() => {
                 setAba(a);
                 setMsg(null);
+                if (a === 'tratamentos') void carregarTratamentos();
                 setMsgLocal(null);
                 setMsgCalendario(null);
                 if (a === 'auditoria') void carregarAuditoria();
@@ -1163,6 +1252,54 @@ export default function PontoAdminModal({
             </div>
           )}
 
+          {aba === 'tratamentos' && (
+            <div className="grid gap-4 pb-2">
+              <div className="flex items-start justify-between gap-3">
+                <div><p className="text-sm font-black">Tratamentos de jornada</p><p className={`mt-1 text-xs ${textMuted}`}>A marcação original permanece imutável; solicitações e decisões formam uma trilha separada.</p></div>
+                <button type="button" onClick={() => void carregarTratamentos()} disabled={tratamentosCarregando} className="min-h-11 shrink-0 rounded-lg px-3 text-[10px] font-black uppercase disabled:opacity-40" style={{ color: corSistema }}>{tratamentosCarregando ? 'Carregando...' : 'Atualizar'}</button>
+              </div>
+
+              <label className={labelCls}>Funcionário
+                <select value={tratamentoFuncionario} onChange={(event) => setTratamentoFuncionario(event.target.value)} className={inputCls}><option value="">Selecione o funcionário</option>{funcionarios.filter((item) => item.ativo).map((item) => <option key={item.user_id} value={item.user_id}>{item.nome}</option>)}</select>
+              </label>
+              {tratamentoFuncionario && <p className={`rounded-xl border p-3 text-xs font-black ${itemBorda}`}>Saldo atual do banco: <span style={{ color: corSistema }}>{formatarSaldo(tratamentos.saldoPorFuncionario[tratamentoFuncionario] || 0)}</span></p>}
+
+              <section className={`rounded-xl border p-4 ${itemBorda}`}>
+                <p className="text-xs font-black">Nova solicitação</p>
+                <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                  <label className={labelCls}>Tipo<select value={tratamentoTipo} onChange={(event) => setTratamentoTipo(event.target.value as 'ajuste' | 'abono')} className={inputCls}><option value="ajuste">Inclusão de marcação</option><option value="abono">Abono justificado</option></select></label>
+                  <label className={labelCls}>Data inicial<input type="date" value={tratamentoData} onChange={(event) => { setTratamentoData(event.target.value); if (tratamentoDataFim < event.target.value) setTratamentoDataFim(event.target.value); }} className={inputCls} /></label>
+                  {tratamentoTipo === 'ajuste' ? <><label className={labelCls}>Horário<input type="time" value={tratamentoHorario} onChange={(event) => setTratamentoHorario(event.target.value)} className={inputCls} /></label><label className={labelCls}>Marcação<select value={tratamentoMarcacao} onChange={(event) => setTratamentoMarcacao(event.target.value as 'entrada' | 'saida')} className={inputCls}><option value="entrada">Entrada</option><option value="saida">Saída</option></select></label></> : <><label className={labelCls}>Data final<input type="date" min={tratamentoData} value={tratamentoDataFim} onChange={(event) => setTratamentoDataFim(event.target.value)} className={inputCls} /></label><label className={labelCls}>Minutos abonados<input type="number" min="1" value={tratamentoMinutos} onChange={(event) => setTratamentoMinutos(event.target.value)} className={inputCls} required /></label></>}
+                </div>
+                <label className={`${labelCls} mt-3`}>Motivo e justificativa<textarea value={tratamentoMotivo} onChange={(event) => setTratamentoMotivo(event.target.value)} className={`${inputCls} min-h-24 py-3 normal-case`} maxLength={500} /></label>
+                <label className={`${labelCls} mt-3`}>Comprovante {tratamentoTipo === 'abono' ? '(obrigatório)' : '(opcional)'} — PDF, JPG ou PNG; até 5 MB<input key={tratamentoAnexo?.name || 'sem-anexo'} type="file" accept="application/pdf,image/jpeg,image/png" onChange={(event) => setTratamentoAnexo(event.target.files?.[0] || null)} className={`min-h-12 w-full rounded-lg border p-2 text-xs normal-case ${darkMode ? 'border-slate-600 bg-slate-800' : 'border-slate-300 bg-white'}`} /></label>
+                <button type="button" onClick={() => void registrarTratamento()} disabled={salvandoTratamento || !tratamentoFuncionario || !tratamentoMotivo.trim()} className="mt-3 min-h-11 w-full rounded-xl text-xs font-black uppercase text-white disabled:opacity-40" style={{ backgroundColor: corSistema }}>{salvandoTratamento ? 'Enviando...' : 'Registrar para aprovação'}</button>
+              </section>
+
+              {msgTratamento && <p role="status" aria-live="polite" className={`rounded-lg px-3 py-2 text-xs font-bold ${msgTratamento.tipo === 'ok' ? 'bg-emerald-50 text-emerald-700' : 'bg-red-50 text-red-700'}`}>{msgTratamento.texto}</p>}
+
+              <section className={`rounded-xl border p-4 ${itemBorda}`}>
+                <div className="flex items-center justify-between gap-2"><p className="text-xs font-black">Solicitações e decisões</p><span className={`text-[10px] ${textMuted}`}>{tratamentos.ajustes.length + tratamentos.abonos.length} registro(s)</span></div>
+                <div className="mt-3 grid gap-3">
+                  {tratamentosCarregando ? <p className={`py-6 text-center text-xs ${textMuted}`}>Carregando tratamentos...</p> : tratamentos.ajustes.length + tratamentos.abonos.length === 0 ? <p className={`rounded-lg border border-dashed p-4 text-center text-xs ${itemBorda} ${textMuted}`}>Nenhuma solicitação registrada.</p> : [...tratamentos.ajustes.map((item) => ({ item, tipo: 'ajuste' as const })), ...tratamentos.abonos.map((item) => ({ item, tipo: 'abono' as const }))].sort((a, b) => b.item.solicitado_em.localeCompare(a.item.solicitado_em)).map(({ item, tipo }) => {
+                    const funcionario = funcionarios.find((registro) => registro.user_id === item.funcionario_user_id);
+                    const situacao = item.situacao === 'aprovado' ? 'Aprovado' : item.situacao === 'recusado' ? 'Recusado' : item.situacao === 'cancelado' ? 'Cancelado' : 'Pendente';
+                    return <article key={`${tipo}-${item.id}`} className={`rounded-xl border p-3 ${itemBorda}`}><div className="flex flex-wrap items-start justify-between gap-2"><div><p className="text-xs font-black">{tipo === 'abono' ? 'Abono' : 'Ajuste'} · {funcionario?.nome || 'Funcionário'}</p><p className={`mt-1 text-[10px] ${textMuted}`}>{dataCurta(item.data_referencia || item.data_inicio || '')}{item.data_fim && item.data_fim !== item.data_inicio ? ` a ${dataCurta(item.data_fim)}` : ''} · {item.motivo}</p></div><span className={`rounded-full px-2 py-1 text-[10px] font-black uppercase ${item.situacao === 'aprovado' ? 'bg-emerald-100 text-emerald-800' : item.situacao === 'recusado' || item.situacao === 'cancelado' ? 'bg-red-100 text-red-800' : 'bg-amber-100 text-amber-800'}`}>{situacao}</span></div>{item.comprovante_path && <button type="button" onClick={() => void onBaixarComprovanteTratamento(tipo, item)} className="mt-2 min-h-11 rounded-lg px-2 text-[10px] font-black uppercase" style={{ color: corSistema }}>Baixar comprovante</button>}{item.situacao === 'pendente' && <div className="mt-3 grid gap-2"><label className={labelCls}>Motivo da recusa ou cancelamento<input value={motivosRecusa[item.id] || ''} onChange={(event) => setMotivosRecusa((atual) => ({ ...atual, [item.id]: event.target.value }))} placeholder="Obrigatório para recusar ou cancelar" className={inputCls} maxLength={500} /></label><div className="grid grid-cols-2 gap-2"><button type="button" onClick={() => void decidirTratamento(tipo, item, 'recusado')} disabled={decidindoId === item.id} className="min-h-11 rounded-xl border border-red-300 text-xs font-black uppercase text-red-700 disabled:opacity-40">Recusar</button><button type="button" onClick={() => void decidirTratamento(tipo, item, 'aprovado')} disabled={decidindoId === item.id} className="min-h-11 rounded-xl text-xs font-black uppercase text-white disabled:opacity-40" style={{ backgroundColor: corSistema }}>Aprovar</button></div></div>}{item.situacao === 'aprovado' && <button type="button" onClick={() => void decidirTratamento(tipo, item, 'cancelado')} disabled={decidindoId === item.id} className="mt-3 min-h-11 rounded-xl border border-amber-300 px-3 text-[10px] font-black uppercase text-amber-800 disabled:opacity-40">Cancelar aprovação</button>}{item.decisao?.motivo && <p className={`mt-2 text-[10px] ${textMuted}`}>Decisão: {item.decisao.motivo}</p>}</article>;
+                  })}
+                </div>
+              </section>
+
+              <section className={`rounded-xl border p-4 ${itemBorda}`}>
+                <p className="text-xs font-black">Banco de horas</p><p className={`mt-1 text-[11px] ${textMuted}`}>Créditos são positivos; débitos e compensações são negativos e entram no AEJ.</p>
+                <div className="mt-3 grid gap-3 sm:grid-cols-2"><label className={labelCls}>Nome da regra<input value={regraNome} onChange={(event) => setRegraNome(event.target.value)} placeholder="Ex.: Acordo anual 2026" className={inputCls} /></label><label className={labelCls}>Instrumento / referência<input value={regraAcordo} onChange={(event) => setRegraAcordo(event.target.value)} placeholder="ACT, CCT ou acordo individual" className={inputCls} /></label><label className={labelCls}>Prazo de compensação (dias)<input type="number" min="1" max="365" value={regraPrazo} onChange={(event) => setRegraPrazo(event.target.value)} className={inputCls} /></label><label className={labelCls}>Limite de saldo (min; opcional)<input type="number" min="1" value={regraLimite} onChange={(event) => setRegraLimite(event.target.value)} className={inputCls} /></label></div>
+                <button type="button" onClick={() => void cadastrarRegraBanco()} disabled={!regraNome.trim() || !regraAcordo.trim() || !regraPrazo} className="mt-3 min-h-11 w-full rounded-xl border text-xs font-black uppercase disabled:opacity-40" style={{ borderColor: corSistema, color: corSistema }}>Cadastrar regra com vigência na data selecionada</button>
+                <p className={`mt-3 text-[10px] ${textMuted}`}>{tratamentos.regras.length ? `Regra vigente mais recente: ${tratamentos.regras[0].nome}.` : 'Nenhuma regra cadastrada; lançamentos permanecem bloqueados.'}</p>
+                <div className="mt-3 grid gap-3 sm:grid-cols-2"><label className={labelCls}>Minutos (+ crédito / − débito)<input type="number" value={bancoMinutos} onChange={(event) => setBancoMinutos(event.target.value)} className={inputCls} /></label><label className={labelCls}>Motivo<input value={bancoMotivo} onChange={(event) => setBancoMotivo(event.target.value)} className={inputCls} maxLength={500} /></label></div>
+                <button type="button" onClick={() => void lancarBancoHoras()} disabled={!tratamentoFuncionario || !bancoMinutos || !bancoMotivo.trim() || !tratamentos.regras.length} className="mt-3 min-h-11 w-full rounded-xl text-xs font-black uppercase text-white disabled:opacity-40" style={{ backgroundColor: corSistema }}>Lançar banco de horas</button>
+                {tratamentoFuncionario && <div className="mt-3 grid gap-2">{tratamentos.lancamentos.filter((item) => item.funcionario_user_id === tratamentoFuncionario).slice(0, 5).map((item) => <div key={item.id} className={`flex items-center justify-between rounded-lg border px-3 py-2 text-[11px] ${itemBorda}`}><span>{dataCurta(item.data_referencia)} · {item.motivo}</span><b className={item.minutos >= 0 ? 'text-emerald-700' : 'text-red-700'}>{formatarSaldo(item.minutos)}</b></div>)}</div>}
+              </section>
+            </div>
+          )}
           {aba === 'auditoria' && (
             <div className="grid gap-2">
               <div className={`flex items-center justify-between rounded-xl border p-3 ${itemBorda}`}>
@@ -1185,13 +1322,14 @@ export default function PontoAdminModal({
               <section className={`rounded-xl border p-4 ${darkMode ? 'border-slate-700 bg-slate-900' : 'border-slate-200 bg-slate-50'}`}>
                 <div className="flex items-start justify-between gap-3"><div><p className="text-sm font-black">Documentos gerados</p><p className={`mt-1 text-xs leading-relaxed ${textMuted}`}>Cada emissão fica preservada. Gerar novamente nunca substitui um documento anterior.</p></div><button type="button" onClick={() => void carregarDocumentosRepP()} disabled={documentosRepPCarregando} className="min-h-11 shrink-0 rounded-lg px-3 text-[10px] font-black uppercase" style={{ color: corSistema }} aria-label="Atualizar documentos gerados">Atualizar</button></div>
                 <div className="mt-3 space-y-2">
-                  {documentosRepPCarregando ? <p className={`py-4 text-center text-xs font-semibold ${textMuted}`}>Carregando documentos...</p> : documentosRepP.length === 0 ? <p className={`rounded-lg border border-dashed p-3 text-xs ${textMuted}`}>Nenhum documento REP-P foi gerado para esta empresa.</p> : documentosRepP.map((documento) => <div key={documento.id} className={`flex flex-col gap-2 rounded-lg border p-3 sm:flex-row sm:items-center sm:justify-between ${itemBorda}`}><div className="min-w-0"><p className="text-xs font-black">{documento.tipo === 'manual' ? 'Manual do sistema REP-P' : documento.tipo === 'espelho' ? `Espelho de Ponto · ${dataCurta(documento.periodo_inicio)} a ${dataCurta(documento.periodo_fim)}` : `AFD · ${dataCurta(documento.periodo_inicio)} a ${dataCurta(documento.periodo_fim)}`}</p><p className={`mt-1 truncate text-[10px] ${textMuted}`}>{new Date(documento.gerado_em).toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' })} · PDF versionado</p></div><button type="button" onClick={() => void baixarDocumentoRepP(documento)} disabled={baixandoDocumentoId === documento.id} className="min-h-11 rounded-lg px-3 text-[10px] font-black uppercase text-white disabled:opacity-40" style={{ backgroundColor: corSistema }}>{baixandoDocumentoId === documento.id ? 'Baixando...' : 'Baixar'}</button></div>)}
+                  {documentosRepPCarregando ? <p className={`py-4 text-center text-xs font-semibold ${textMuted}`}>Carregando documentos...</p> : documentosRepP.length === 0 ? <p className={`rounded-lg border border-dashed p-3 text-xs ${textMuted}`}>Nenhum documento REP-P foi gerado para esta empresa.</p> : documentosRepP.map((documento) => <div key={documento.id} className={`flex flex-col gap-2 rounded-lg border p-3 sm:flex-row sm:items-center sm:justify-between ${itemBorda}`}><div className="min-w-0"><p className="text-xs font-black">{documento.tipo === 'manual' ? 'Manual do sistema REP-P' : documento.tipo === 'espelho' ? `Espelho de Ponto · ${dataCurta(documento.periodo_inicio)} a ${dataCurta(documento.periodo_fim)}` : documento.tipo === 'aej' ? `AEJ · ${dataCurta(documento.periodo_inicio)} a ${dataCurta(documento.periodo_fim)}` : `AFD · ${dataCurta(documento.periodo_inicio)} a ${dataCurta(documento.periodo_fim)}`}</p><p className={`mt-1 truncate text-[10px] ${textMuted}`}>{new Date(documento.gerado_em).toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' })} · {documento.arquivo_nome}</p></div><button type="button" onClick={() => void baixarDocumentoRepP(documento)} disabled={baixandoDocumentoId === documento.id} className="min-h-11 rounded-lg px-3 text-[10px] font-black uppercase text-white disabled:opacity-40" style={{ backgroundColor: corSistema }}>{baixandoDocumentoId === documento.id ? 'Baixando...' : 'Baixar'}</button></div>)}
                 </div>
               </section>
               <section className={`rounded-xl border p-4 ${darkMode ? 'border-slate-700 bg-slate-900' : 'border-slate-200 bg-white'}`}><p className="text-sm font-black">Manual do sistema REP-P</p><p className={`mt-1 text-xs leading-relaxed ${textMuted}`}>Manual operacional versionado. Ele informa expressamente o estágio de homologação enquanto o INPI e o certificado de produção estiverem pendentes.</p><button type="button" onClick={() => void prepararManualRepP()} disabled={preparandoManual} className="mt-3 min-h-11 w-full rounded-lg border px-3 text-xs font-black uppercase disabled:opacity-40" style={{ borderColor: corSistema, color: corSistema }}>{preparandoManual ? 'Preparando...' : 'Disponibilizar manual'}</button></section>
               <section className={`rounded-xl border p-4 ${darkMode ? 'border-slate-700 bg-slate-900' : 'border-slate-200 bg-white'}`}><p className="text-sm font-black">Espelho de Ponto Eletrônico</p><p className={`mt-1 text-xs leading-relaxed ${textMuted}`}>Selecione um funcionário na aba Relatórios e informe o período acima para gerar o Espelho assinado.</p><button type="button" onClick={() => void gerarEspelhoPonto()} disabled={gerandoEspelho || !funcSel} className="mt-3 min-h-11 w-full rounded-lg border px-3 text-xs font-black uppercase disabled:opacity-40" style={{ borderColor: corSistema, color: corSistema }}>{gerandoEspelho ? 'Gerando...' : 'Gerar Espelho'}</button></section>
-              <section className={`rounded-xl border p-4 ${darkMode ? 'border-slate-700 bg-slate-900' : 'border-slate-200 bg-slate-50'}`}><p className="text-sm font-black">Gerar novo AFD</p><p className={`mt-1 text-xs leading-relaxed ${textMuted}`}>Inclui as marcações imutáveis do período e a assinatura destacada .p7s. Em homologação, o arquivo não possui validade legal.</p><div className="mt-3 grid gap-3 sm:grid-cols-2"><label className="text-[10px] font-black uppercase tracking-wide">Data inicial<input type="date" value={afdInicio} onChange={(event) => setAfdInicio(event.target.value)} className={`mt-1 h-10 w-full rounded-lg border px-3 text-sm ${darkMode ? 'border-slate-600 bg-slate-800' : 'border-slate-300 bg-white'}`} /></label><label className="text-[10px] font-black uppercase tracking-wide">Data final<input type="date" value={afdFim} onChange={(event) => setAfdFim(event.target.value)} className={`mt-1 h-10 w-full rounded-lg border px-3 text-sm ${darkMode ? 'border-slate-600 bg-slate-800' : 'border-slate-300 bg-white'}`} /></label></div><button type="button" onClick={() => void baixarAfd()} disabled={baixandoAfd} className="mt-3 min-h-11 w-full rounded-lg bg-cyan-700 px-3 text-xs font-black uppercase text-white hover:bg-cyan-800 disabled:opacity-40">{baixandoAfd ? 'Gerando...' : 'Gerar novo AFD'}</button>{msgConformidade && <p role="status" className={`mt-2 text-xs font-bold ${msgConformidade.tipo === 'erro' ? 'text-red-600' : 'text-emerald-700'}`}>{msgConformidade.texto}</p>}</section>
-              <section className={`rounded-xl border p-4 ${darkMode ? 'border-slate-700 bg-slate-900' : 'border-slate-200 bg-white'}`}><p className="text-sm font-black">Demais documentos</p><ul className={`mt-2 space-y-2 text-xs ${textMuted}`}><li><b className="text-amber-700">Pendente:</b> AEJ.</li><li><b className="text-amber-700">Pendente:</b> Atestado Técnico e Termo de Responsabilidade.</li><li><b className="text-amber-700">Dependência externa:</b> certificado de registro do software no INPI e certificado ICP-Brasil válido em produção.</li></ul></section>
+              <section className={`rounded-xl border p-4 ${darkMode ? 'border-slate-700 bg-slate-900' : 'border-slate-200 bg-slate-50'}`}><p className="text-sm font-black">Gerar novo AFD</p><p className={`mt-1 text-xs leading-relaxed ${textMuted}`}>Inclui as marcações imutáveis do período e a assinatura destacada .p7s. Em homologação, o arquivo não possui validade legal.</p><div className="mt-3 grid gap-3 sm:grid-cols-2"><label className="text-[10px] font-black uppercase tracking-wide">Data inicial<input type="date" value={afdInicio} onChange={(event) => setAfdInicio(event.target.value)} className={`mt-1 h-10 w-full rounded-lg border px-3 text-sm ${darkMode ? 'border-slate-600 bg-slate-800' : 'border-slate-300 bg-white'}`} /></label><label className="text-[10px] font-black uppercase tracking-wide">Data final<input type="date" value={afdFim} onChange={(event) => setAfdFim(event.target.value)} className={`mt-1 h-10 w-full rounded-lg border px-3 text-sm ${darkMode ? 'border-slate-600 bg-slate-800' : 'border-slate-300 bg-white'}`} /></label></div><button type="button" onClick={() => void baixarAfd()} disabled={baixandoAfd} className="mt-3 min-h-11 w-full rounded-lg bg-cyan-700 px-3 text-xs font-black uppercase text-white hover:bg-cyan-800 disabled:opacity-40">{baixandoAfd ? 'Gerando...' : 'Gerar novo AFD'}</button></section>
+              <section className={`rounded-xl border p-4 ${darkMode ? 'border-slate-700 bg-slate-900' : 'border-slate-200 bg-white'}`}><p className="text-sm font-black">Arquivo Eletrônico de Jornada (AEJ)</p><p className={`mt-1 text-xs leading-relaxed ${textMuted}`}>Gera o leiaute v001 em ISO-8859-1 com marcações, ajustes aprovados, horários contratuais e banco de horas, acompanhado da assinatura destacada .p7s.</p><button type="button" onClick={() => void gerarAej()} disabled={gerandoAej || !afdInicio || !afdFim || afdFim < afdInicio} className="mt-3 min-h-11 w-full rounded-lg border px-3 text-xs font-black uppercase disabled:opacity-40" style={{ borderColor: corSistema, color: corSistema }}>{gerandoAej ? 'Gerando...' : 'Gerar AEJ do período'}</button>{msgConformidade && <p role="status" aria-live="polite" className={`mt-2 text-xs font-bold ${msgConformidade.tipo === 'erro' ? 'text-red-600' : 'text-emerald-700'}`}>{msgConformidade.texto}</p>}</section>
+              <section className={`rounded-xl border p-4 ${darkMode ? 'border-slate-700 bg-slate-900' : 'border-slate-200 bg-white'}`}><p className="text-sm font-black">Demais documentos</p><ul className={`mt-2 space-y-2 text-xs ${textMuted}`}><li><b className="text-amber-700">Pendente:</b> Atestado Técnico e Termo de Responsabilidade.</li><li><b className="text-amber-700">Dependência externa:</b> certificado de registro do software no INPI e certificado ICP-Brasil válido em produção.</li></ul></section>
             </div>
           )}
         </div>

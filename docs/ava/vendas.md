@@ -1,8 +1,9 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.6.0.84.01 -->
+<!-- ava-version: 1.6.0.87 -->
 
-> Revisão 1.6.0.84.01: sem impacto operacional no Vendas Mobile.
+> Revisão 1.6.0.87: sem impacto operacional no Vendas Mobile; tratamentos de
+> jornada e emissão do AEJ pertencem ao Controle de Ponto na Gestão Web.
 
 ## Escopo e navegação
 
