@@ -45,7 +45,18 @@ export type EventoAuditoriaPonto = {
   evento: string;
   origem: string;
   motivo: string | null;
+  dados: Record<string, unknown> | null;
   ocorrido_em: string;
+};
+
+export type EstadoAssinaturaPonto = {
+  modo: 'homologacao' | 'producao';
+  certificadoConfigurado: boolean;
+  senhaConfigurada: boolean;
+  emissaoLegalPermitida: boolean;
+  situacao: 'nao_configurado' | 'homologacao' | 'certificado_invalido' | 'certificado_vencido' | 'aguardando_validacao';
+  validadeCertificado?: string;
+  mensagem: string;
 };
 
 export type PontoDiaNaoUtil = {
@@ -88,6 +99,7 @@ interface PontoAdminModalProps {
   onSalvarConfig: (dados: { latitude: number; longitude: number; raio_m: number }) => Promise<{ erro: boolean; mensagem?: string }>;
   onCarregarRegistros: (funcionarioUserId: string, dataInicioISO: string) => Promise<RegistroPonto[]>;
   onCarregarAuditoria: () => Promise<EventoAuditoriaPonto[]>;
+  onCarregarAssinatura: () => Promise<EstadoAssinaturaPonto | null>;
   diasNaoUteis: PontoDiaNaoUtil[];
   diasNaoUteisCarregando: boolean;
   onCriarDiaNaoUtil: (dados: { dataInicio: string; dataFim: string; tipo: string; descricao: string; recorrenteAnual: boolean }) => Promise<{ erro: boolean; mensagem?: string }>;
@@ -109,6 +121,7 @@ export default function PontoAdminModal({
   onSalvarConfig,
   onCarregarRegistros,
   onCarregarAuditoria,
+  onCarregarAssinatura,
   diasNaoUteis,
   diasNaoUteisCarregando,
   onCriarDiaNaoUtil,
@@ -186,6 +199,7 @@ export default function PontoAdminModal({
   const [relCarregando, setRelCarregando] = useState(false);
   const [auditoria, setAuditoria] = useState<EventoAuditoriaPonto[]>([]);
   const [auditoriaCarregando, setAuditoriaCarregando] = useState(false);
+  const [assinatura, setAssinatura] = useState<EstadoAssinaturaPonto | null>(null);
   const relatorioInicialCarregadoRef = useRef(false);
 
   const TOLERANCIA_MIN = 10;
@@ -610,7 +624,9 @@ export default function PontoAdminModal({
 
   const carregarAuditoria = async () => {
     setAuditoriaCarregando(true);
-    setAuditoria(await onCarregarAuditoria());
+    const [eventos, estadoAssinatura] = await Promise.all([onCarregarAuditoria(), onCarregarAssinatura()]);
+    setAuditoria(eventos);
+    setAssinatura(estadoAssinatura);
     setAuditoriaCarregando(false);
   };
   const abas: Array<[AbaPontoAdmin, string]> = [['lista', 'Funcionários'], ['novo', 'Novo'], ['local', 'Local'], ['calendario', 'Calendário'], ['relatorios', 'Relatórios'], ['auditoria', 'Auditoria']];
@@ -1092,11 +1108,13 @@ export default function PontoAdminModal({
                 <div><p className="text-sm font-black">Trilha de auditoria</p><p className={`text-[11px] ${textMuted}`}>Eventos imutáveis do Controle de Ponto.</p></div>
                 <button type="button" onClick={() => void carregarAuditoria()} className="rounded-lg px-2 py-1 text-[10px] font-black uppercase" style={{ color: corSistema }}>Atualizar</button>
               </div>
+              {assinatura && <div className={`rounded-xl border p-3 ${itemBorda}`}><p className="text-xs font-black">Assinatura legal: {assinatura.situacao === 'homologacao' ? 'Homologação' : assinatura.situacao === 'aguardando_validacao' ? 'Aguardando validação' : assinatura.situacao === 'certificado_vencido' ? 'Certificado vencido' : assinatura.situacao === 'certificado_invalido' ? 'Certificado inválido' : 'Não configurada'}</p><p className={`mt-1 text-[11px] ${textMuted}`}>{assinatura.mensagem}{assinatura.validadeCertificado ? ` Validade encerrada em ${new Date(assinatura.validadeCertificado).toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' })}.` : ''}</p></div>}
               {auditoriaCarregando ? <p className={`py-8 text-center text-sm font-semibold ${textMuted}`}>Carregando...</p> : auditoria.length === 0 ? <p className={`py-8 text-center text-sm font-semibold ${textMuted}`}>Nenhum evento registrado ainda.</p> : auditoria.map((item) => {
                 const funcionario = funcionarios.find((f) => f.user_id === item.funcionario_user_id);
                 const ator = funcionarios.find((f) => f.user_id === item.ator_user_id);
+                const nomeAtor = typeof item.dados?.ator_nome === 'string' ? item.dados.ator_nome : ator?.nome;
                 const titulo: Record<string, string> = { marcacao_registrada: 'Marcação registrada', funcionario_inativado: 'Funcionário inativado', funcionario_reativado: 'Funcionário reativado', funcionario_cadastrado: 'Funcionário cadastrado' };
-                return <div key={item.id} className={`rounded-xl border p-3 ${itemBorda}`}><p className="text-xs font-black">{titulo[item.evento] || item.evento}</p><p className={`mt-1 text-[11px] ${textMuted}`}>{funcionario?.nome || 'Funcionário'} · {new Date(item.ocorrido_em).toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' })}</p><p className={`text-[10px] ${textMuted}`}>Origem: {item.origem}{ator ? ` · Responsável: ${ator.nome}` : ''}{item.motivo ? ` · ${item.motivo}` : ''}</p></div>;
+                return <div key={item.id} className={`rounded-xl border p-3 ${itemBorda}`}><p className="text-xs font-black">{titulo[item.evento] || item.evento}</p><p className={`mt-1 text-[11px] ${textMuted}`}>{funcionario?.nome || 'Funcionário'} · {new Date(item.ocorrido_em).toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' })}</p><p className={`text-[10px] ${textMuted}`}>Origem: {item.origem}{nomeAtor ? ` · Responsável: ${nomeAtor}` : ''}{item.motivo ? ` · ${item.motivo}` : ''}</p></div>;
               })}
             </div>
           )}

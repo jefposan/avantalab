@@ -169,7 +169,7 @@ export async function POST(request: Request) {
       evento: 'funcionario_cadastrado',
       origem: 'gestao_web',
       motivo: 'Cadastro realizado pelo gestor.',
-      dados: { cargo, dias_trabalho: diasTrabalho },
+      dados: { cargo, dias_trabalho: diasTrabalho, ator_nome: user.user_metadata?.nome || user.email || user.id },
     });
     if (erroAuditoria) console.error('Erro ao registrar auditoria de cadastro:', erroAuditoria);
 

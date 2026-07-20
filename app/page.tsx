@@ -13,7 +13,7 @@ import ModalInstrucoes from './components/ModalInstrucoes';
 import ModalDespesasBase from './components/ModalDespesasBase';
 import ModalLogo from './components/ModalLogo';
 import ModulosModal, { type Modulo } from './components/ModulosModal';
-import PontoAdminModal, { type AbaPontoAdmin, type EventoAuditoriaPonto, type FuncionarioPonto, type PontoConfig, type PontoDiaNaoUtil } from './components/PontoAdminModal';
+import PontoAdminModal, { type AbaPontoAdmin, type EstadoAssinaturaPonto, type EventoAuditoriaPonto, type FuncionarioPonto, type PontoConfig, type PontoDiaNaoUtil } from './components/PontoAdminModal';
 import RecebimentosAdminModal from './components/RecebimentosAdminModal';
 import SobreModal from './components/SobreModal';
 import ModalConfirmacao from "./components/ModalConfirmacao";
@@ -2633,13 +2633,25 @@ useEffect(() => {
     try {
       const { data, error } = await supabase
         .from('ponto_auditoria')
-        .select('id, funcionario_user_id, ator_user_id, evento, origem, motivo, ocorrido_em')
+        .select('id, funcionario_user_id, ator_user_id, evento, origem, motivo, dados, ocorrido_em')
         .eq('empresa_id', empresaId)
         .order('ocorrido_em', { ascending: false })
         .limit(100);
       if (error) { console.error('carregarAuditoriaPonto', error); return []; }
       return (data || []) as EventoAuditoriaPonto[];
     } catch { return []; }
+  }
+
+  async function carregarAssinaturaPonto(): Promise<EstadoAssinaturaPonto | null> {
+    if (!empresaId) return null;
+    try {
+      const { data: sessao } = await supabase.auth.getSession();
+      const token = sessao.session?.access_token;
+      if (!token) return null;
+      const resposta = await fetch(`/api/ponto/assinatura?empresaId=${encodeURIComponent(empresaId)}`, { headers: { Authorization: `Bearer ${token}` } });
+      const dados = await resposta.json();
+      return resposta.ok && !dados.erro ? dados.assinatura as EstadoAssinaturaPonto : null;
+    } catch { return null; }
   }
 
   async function atualizarFuncionarioPonto(funcionarioUserId: string, dados: { nome: string; cargo: string; cpf?: string; horaEntrada?: string; horaSaida?: string; ativo: boolean; diasTrabalho?: number[] }) {
@@ -7455,6 +7467,7 @@ if (validacaoTelefoneObrigatoria) {
   onSalvarConfig={salvarPontoConfig}
   onCarregarRegistros={carregarRegistrosPonto}
   onCarregarAuditoria={carregarAuditoriaPonto}
+  onCarregarAssinatura={carregarAssinaturaPonto}
   diasNaoUteis={pontoDiasNaoUteis}
   diasNaoUteisCarregando={pontoDiasNaoUteisCarregando}
   onCriarDiaNaoUtil={criarDiaNaoUtilPonto}

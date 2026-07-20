@@ -1,8 +1,9 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.6.0.68 -->
+<!-- ava-version: 1.6.0.72 -->
 
-> Revisão 1.6.0.68: sem impacto operacional no Gestão Mobile; ajuste de largura na Gestão Web.
+> Revisão 1.6.0.72: sem impacto operacional no Gestão Mobile; o cofre de
+> certificado REP-P fica restrito à Central Administrativa da Gestão Web.
 
 ## Escopo
 

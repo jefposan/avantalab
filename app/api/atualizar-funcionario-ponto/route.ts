@@ -186,7 +186,7 @@ export async function POST(request: Request) {
         evento: ativo ? 'funcionario_reativado' : 'funcionario_inativado',
         origem: 'gestao_web',
         motivo: ativo ? 'Acesso reativado pelo gestor.' : 'Acesso inativado pelo gestor.',
-        dados: { ativo_anterior: atual.ativo, ativo_novo: ativo },
+        dados: { ativo_anterior: atual.ativo, ativo_novo: ativo, ator_nome: user.user_metadata?.nome || user.email || user.id },
       });
       if (erroAuditoria) {
         console.error('Erro ao registrar auditoria do funcionário:', erroAuditoria);

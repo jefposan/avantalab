@@ -1,8 +1,10 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.6.0.68 -->
+<!-- ava-version: 1.6.0.72 -->
 
-> Revisão 1.6.0.68: aba Auditoria do Controle de Ponto fica acomodada no modal administrativo.
+> Revisão 1.6.0.72: a configuração do certificado REP-P fica na Central
+> Administrativa global, fora dos perfis de clientes; a Auditoria do Ponto
+> continua exibindo apenas a situação segura da assinatura.
 
 ## Escopo
 

@@ -3,7 +3,16 @@
 import { useMemo, useState } from 'react';
 
 type FeedbackStatus = 'novo' | 'em_analise' | 'respondido' | 'arquivado';
-type AdminView = 'avaliacoes' | 'disparos' | 'conteudo-vendas' | 'cupons' | 'perfis' | 'consumo' | 'configuracoes';
+type AdminView = 'avaliacoes' | 'disparos' | 'conteudo-vendas' | 'cupons' | 'perfis' | 'consumo' | 'rep-p' | 'configuracoes';
+
+type CertificadoRepP = {
+  id: string;
+  modo: 'homologacao' | 'producao';
+  validadeInicio: string;
+  validadeFim: string;
+  impressaoSha256: string;
+  criadoEm: string;
+};
 
 type ConsumoItem = {
   nome: string;
@@ -288,6 +297,11 @@ export default function AdminPage() {
   const [liberarTipo, setLiberarTipo] = useState<'indeterminado' | 'periodo'>('indeterminado');
   const [liberarValor, setLiberarValor] = useState('1');
   const [liberarUnidade, setLiberarUnidade] = useState<'dias' | 'semanas' | 'meses'>('meses');
+  const [certificadoRepP, setCertificadoRepP] = useState<CertificadoRepP | null>(null);
+  const [arquivoRepP, setArquivoRepP] = useState<File | null>(null);
+  const [senhaRepP, setSenhaRepP] = useState('');
+  const [modoRepP, setModoRepP] = useState<'homologacao' | 'producao'>('homologacao');
+  const [enviandoCertificadoRepP, setEnviandoCertificadoRepP] = useState(false);
 
   const totalFiltrosPerfilAtivos = Number(perfilFiltro !== 'todos') + Number(perfilTipoFiltro !== 'todos');
 
@@ -520,6 +534,37 @@ export default function AdminPage() {
     if (response.ok && !data?.erro) setCustomPassword(Boolean(data.senhaPersonalizada));
   };
 
+  const carregarCertificadoRepP = async (value = token) => {
+    const response = await fetch('/api/admin-rep-p-certificado', { headers: authHeaders(value) });
+    const data = await response.json().catch(() => null);
+    if (response.ok && !data?.erro) setCertificadoRepP(data.certificado || null);
+  };
+
+  const salvarCertificadoRepP = async () => {
+    if (!arquivoRepP) { setError('Selecione o certificado A1 .pfx ou .p12.'); return; }
+    if (!senhaRepP) { setError('Informe a senha do certificado.'); return; }
+    setEnviandoCertificadoRepP(true);
+    setError('');
+    setNotice('');
+    try {
+      const formulario = new FormData();
+      formulario.set('certificado', arquivoRepP);
+      formulario.set('senha', senhaRepP);
+      formulario.set('modo', modoRepP);
+      const response = await fetch('/api/admin-rep-p-certificado', { method: 'POST', headers: authHeaders(), body: formulario });
+      const data = await response.json().catch(() => null);
+      if (!response.ok || data?.erro) throw new Error(data?.mensagem || 'Não foi possível guardar o certificado.');
+      setCertificadoRepP(data.certificado);
+      setArquivoRepP(null);
+      setSenhaRepP('');
+      setNotice(data.situacao === 'vencido' ? 'Certificado vencido guardado somente para homologação.' : 'Certificado REP-P guardado com segurança.');
+    } catch (requestError) {
+      setError(requestError instanceof Error ? requestError.message : 'Não foi possível guardar o certificado.');
+    } finally {
+      setEnviandoCertificadoRepP(false);
+    }
+  };
+
   const loadPanel = async (value = token) => {
     const cleanToken = value.trim();
     if (!cleanToken) {
@@ -540,7 +585,7 @@ export default function AdminPage() {
       }
       setFeedbacks(data.feedbacks || []);
       setAuthorized(true);
-      await Promise.allSettled([loadBroadcasts(cleanToken), loadConteudosVendas(cleanToken), loadSettings(cleanToken), loadCupons(cleanToken), carregarUsuariosAtivosSistema()]);
+      await Promise.allSettled([loadBroadcasts(cleanToken), loadConteudosVendas(cleanToken), loadSettings(cleanToken), loadCupons(cleanToken), carregarCertificadoRepP(cleanToken), carregarUsuariosAtivosSistema()]);
     } catch {
       setAuthorized(false);
       setError('Erro inesperado ao acessar o painel.');
@@ -658,6 +703,9 @@ export default function AdminPage() {
     setBroadcasts([]);
     setConteudosVendas([]);
     setConteudosVendasPendente(false);
+    setCertificadoRepP(null);
+    setArquivoRepP(null);
+    setSenhaRepP('');
     setError('');
     setNotice('');
     setView('avaliacoes');
@@ -671,6 +719,7 @@ export default function AdminPage() {
     { id: 'cupons', label: 'Cupons', icon: 'ticket' },
     { id: 'perfis', label: 'Perfis', icon: 'search' },
     { id: 'consumo', label: 'Consumo', icon: 'gauge' },
+    { id: 'rep-p', label: 'REP-P', icon: 'lock' },
     { id: 'configuracoes', label: 'Configurações', icon: 'settings' },
   ];
 
@@ -713,7 +762,7 @@ export default function AdminPage() {
             {authorized && <button type="button" onClick={logout} className="flex h-9 items-center gap-2 rounded-md border border-slate-300 px-3 text-xs font-bold text-slate-700 hover:bg-slate-50"><Icon name="logout" />Sair</button>}
           </div>
 
-          {authorized && <nav className="grid grid-cols-7 gap-0.5 border-t border-slate-100 py-2 sm:gap-1" aria-label="Áreas administrativas">
+          {authorized && <nav className="grid grid-cols-4 gap-0.5 border-t border-slate-100 py-2 sm:grid-cols-8 sm:gap-1" aria-label="Áreas administrativas">
             {navigation.map((item) => <button key={item.id} type="button" title={item.label} onClick={() => { setView(item.id); setError(''); setNotice(''); }} className={`flex h-10 w-full min-w-0 flex-col items-center justify-center gap-0.5 rounded-md px-0.5 text-[8px] font-black transition sm:h-9 sm:flex-row sm:gap-1 sm:px-1 sm:text-[10px] ${view === item.id ? 'bg-cyan-700 text-white shadow-sm' : 'text-slate-600 hover:bg-slate-100'}`}><Icon name={item.icon} size={13} /><span className="max-w-full truncate">{item.label}</span></button>)}
           </nav>}
         </div>
@@ -955,6 +1004,27 @@ export default function AdminPage() {
                 </section>
               ))}
             </div>
+          </div>}
+
+          {view === 'rep-p' && <div className="grid gap-4 lg:grid-cols-2">
+            <section className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
+              <span className="flex h-9 w-9 items-center justify-center rounded-md bg-cyan-50 text-cyan-800"><Icon name="lock" /></span>
+              <h2 className="mt-3 text-base font-black text-slate-950">Certificado REP-P</h2>
+              <p className="mt-1 text-xs leading-relaxed text-slate-500">O A1 é criptografado antes de ser armazenado. O arquivo e a senha não podem ser visualizados ou baixados após o envio.</p>
+              <label className="mt-4 block text-[10px] font-black uppercase text-slate-500" htmlFor="rep-p-certificado">Arquivo A1</label>
+              <input id="rep-p-certificado" type="file" accept=".pfx,.p12,application/x-pkcs12" onChange={(event) => setArquivoRepP(event.target.files?.[0] || null)} className="mt-1 block w-full text-xs text-slate-600 file:mr-3 file:h-10 file:rounded-md file:border-0 file:bg-cyan-700 file:px-3 file:text-xs file:font-black file:uppercase file:text-white hover:file:bg-cyan-800" />
+              <label className="mt-3 block text-[10px] font-black uppercase text-slate-500" htmlFor="rep-p-senha">Senha do certificado</label>
+              <input id="rep-p-senha" type="password" autoComplete="new-password" value={senhaRepP} onChange={(event) => setSenhaRepP(event.target.value)} className="mt-1 h-10 w-full rounded-md border border-slate-300 px-3 text-sm outline-none focus:border-cyan-700" placeholder="Senha do A1" />
+              <label className="mt-3 block text-[10px] font-black uppercase text-slate-500" htmlFor="rep-p-modo">Ambiente</label>
+              <select id="rep-p-modo" value={modoRepP} onChange={(event) => setModoRepP(event.target.value as 'homologacao' | 'producao')} className="mt-1 h-10 w-full rounded-md border border-slate-300 bg-white px-3 text-sm font-bold outline-none focus:border-cyan-700"><option value="homologacao">Homologação — emissão legal bloqueada</option><option value="producao">Produção — exige certificado vigente</option></select>
+              <button type="button" onClick={() => void salvarCertificadoRepP()} disabled={enviandoCertificadoRepP || !arquivoRepP || !senhaRepP} className="mt-4 flex h-10 w-full items-center justify-center gap-2 rounded-md bg-cyan-700 text-xs font-black uppercase text-white hover:bg-cyan-800 disabled:opacity-40"><Icon name="lock" size={15} />{enviandoCertificadoRepP ? 'Criptografando...' : 'Guardar certificado'}</button>
+            </section>
+            <section className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
+              <span className="flex h-9 w-9 items-center justify-center rounded-md bg-emerald-50 text-emerald-700"><Icon name="check" /></span>
+              <h2 className="mt-3 text-base font-black text-slate-950">Certificado ativo</h2>
+              {!certificadoRepP ? <p className="mt-3 rounded-md border border-dashed border-slate-300 bg-slate-50 px-3 py-6 text-center text-xs text-slate-500">Nenhum certificado cadastrado.</p> : <dl className="mt-3 divide-y divide-slate-100 rounded-md border border-slate-200 text-xs"><div className="flex justify-between gap-3 p-3"><dt className="font-bold text-slate-500">Ambiente</dt><dd className="font-black text-slate-900">{certificadoRepP.modo === 'homologacao' ? 'Homologação' : 'Produção'}</dd></div><div className="flex justify-between gap-3 p-3"><dt className="font-bold text-slate-500">Vigência</dt><dd className="text-right font-black text-slate-900">até {formatDate(certificadoRepP.validadeFim)}</dd></div><div className="p-3"><dt className="font-bold text-slate-500">Impressão SHA-256</dt><dd className="mt-1 break-all font-mono text-[10px] text-slate-700">{certificadoRepP.impressaoSha256}</dd></div></dl>}
+              <p className="mt-3 text-[11px] leading-relaxed text-slate-500">A substituição preserva o histórico criptografado e torna o novo certificado o único ativo.</p>
+            </section>
           </div>}
 
           {view === 'configuracoes' && <div className="grid gap-4 md:grid-cols-2">

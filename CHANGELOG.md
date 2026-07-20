@@ -1,5 +1,30 @@
 # Changelog
 
+## 1.6.0.72 - 2026-07-20
+
+- A Central Administrativa ganhou o painel global **REP-P** para cadastrar e
+  substituir certificados A1. O arquivo e a senha são criptografados antes de
+  chegar ao banco, e cada substituição preserva o histórico técnico.
+
+## 1.6.0.71 - 2026-07-20
+
+- A homologação do REP-P passa a ler o certificado A1 configurado apenas no
+  servidor, validar sua senha e identificar se ele está vigente ou vencido,
+  mantendo a emissão legal bloqueada em todos os casos desta etapa.
+
+## 1.6.0.70 - 2026-07-20
+
+- O Controle de Ponto recebeu a camada segura de configuração da assinatura
+  digital REP-P: certificado A1 e senha ficam exclusivamente em segredos do
+  servidor, e a emissão legal permanece bloqueada durante a homologação.
+
+## 1.6.0.69 - 2026-07-20
+
+- O Controle de Ponto passou a preservar uma ARP interna: cada marcação recebe
+  um NSR sequencial por empresa e uma cópia imutável dos dados originais.
+- A trilha de auditoria passa a registrar o nome do responsável em novas ações
+  administrativas, além do identificador técnico do usuário.
+
 ## 1.6.0.68 - 2026-07-20
 
 - O modal administrativo do Controle de Ponto ganhou largura para acomodar a
