@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.6.0.84.01 - 2026-07-20
+
+- Gestão Web: a **Caixinha** passa a se adaptar ao perfil — permanece ativa no Pessoal e se apresenta como **Reserva financeira** no perfil Empresa, inicialmente disponível em Organizar blocos.
+
+
 ## 1.6.0.84 - 2026-07-20
 
 - Administração: a consulta de consumo da Cloudflare foi migrada do endpoint

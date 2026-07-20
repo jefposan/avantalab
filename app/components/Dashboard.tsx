@@ -175,6 +175,7 @@ interface DashboardProps {
   }>;
   onAdicionarAporteCaixinha: (dados: { dia: string; descricao: string; valorTexto: string }) => Promise<{ ok: boolean; mensagem?: string }>;
   onDefinirSaldoInicialCaixinha: (valorTexto: string) => Promise<{ ok: boolean; mensagem?: string }>;
+  tipoPerfil: 'empresa' | 'pessoal';
   dashboardOrdem: { left: string[]; a: string[]; b: string[] };
   dashboardOcultos: string[];
   dashboardExpandidos: string[];
@@ -207,11 +208,16 @@ export default function Dashboard({
   receitasAConfirmar, onConfirmarReceita, onEditarReceita, onExcluirReceita,
   saldoCardMesIdx, setSaldoCardMesIdx, saldoInicial, saldoFinal, saldoPrevisto,
   caixinhaSaldo, caixinhaSaldoInicial, caixinhaAportesMes, caixinhaUltimosMovimentos, onAdicionarAporteCaixinha, onDefinirSaldoInicialCaixinha,
+  tipoPerfil,
   dashboardOrdem, dashboardOcultos, onAtualizarLayoutDashboard,
   dashboardExpandidos, onOcultarCardDashboard, onDefinirOcultosDashboard,
   pontoDisponivel, pontoResumo, pontoResumoCarregando,
   pontoFuncionariosHoje, onAbrirControlePonto
 }: DashboardProps) {
+
+  const ehPerfilPessoal = tipoPerfil === 'pessoal';
+  const nomeCaixinha = ehPerfilPessoal ? 'Caixinha' : 'Reserva financeira';
+  const nomeCaixinhaMinusculo = nomeCaixinha.toLocaleLowerCase('pt-BR');
 
   const [ocultarValores, setOcultarValores] = useState(iniciarValoresOcultos);
   const [ocultarValoresPerfis, setOcultarValoresPerfis] = useState(iniciarValoresOcultos);
@@ -624,7 +630,7 @@ export default function Dashboard({
 
     if (resultado.ok) {
       setCaixinhaValor('');
-      setCaixinhaMensagem('Aporte adicionado.');
+      setCaixinhaMensagem(ehPerfilPessoal ? 'Aporte adicionado.' : 'Reserva adicionada.');
     } else {
       setCaixinhaMensagem(resultado.mensagem || 'Não foi possível adicionar o aporte.');
     }
@@ -819,7 +825,7 @@ const mostrarComparativoResumoDash =
       itens.push({
         tom: 'bom',
         titulo: 'Resultado positivo',
-        texto: `Você está com ${formatarMoeda(resultado)} de sobra em ${mes}. Avalie separar parte disso para a Caixinha.`,
+        texto: `Você está com ${formatarMoeda(resultado)} de sobra em ${mes}. Avalie separar parte disso para a ${nomeCaixinha}.`,
       });
     } else {
       itens.push({
@@ -842,13 +848,13 @@ const mostrarComparativoResumoDash =
       itens.push({
         tom: 'bom',
         titulo: 'Reserva em andamento',
-        texto: `Sua Caixinha já soma ${formatarMoeda(caixinhaSaldo)}. Manter aportes recorrentes ajuda a transformar sobra em patrimônio.`,
+        texto: `Sua ${nomeCaixinha} já soma ${formatarMoeda(caixinhaSaldo)}. Manter aportes recorrentes ajuda a transformar sobra em patrimônio.`,
       });
     } else if (resultado > 0) {
       itens.push({
         tom: 'neutro',
         titulo: 'Próximo passo',
-        texto: 'Como houve sobra no mês, este pode ser um bom momento para iniciar uma reserva na Caixinha.',
+        texto: `Como houve sobra no mês, este pode ser um bom momento para iniciar uma ${nomeCaixinhaMinusculo}.`,
       });
     }
 
@@ -869,7 +875,13 @@ const mostrarComparativoResumoDash =
     { id: 'aConfirmar', titulo: 'Lançamentos a confirmar', descricao: 'Banner de despesas e receitas previstas que chegaram na data.' },
     { id: 'saldo', titulo: 'Saldo do mês', descricao: 'Inicial, final e previsto do mês selecionado.' },
     { id: 'insightsAva', titulo: 'Insights da Ava', descricao: 'Sugestões práticas geradas a partir dos dados do mês.' },
-    { id: 'caixinha', titulo: 'Caixinha', descricao: 'Reserva ou investimento com aporte que gera despesa automaticamente.' },
+    {
+      id: 'caixinha',
+      titulo: nomeCaixinha,
+      descricao: ehPerfilPessoal
+        ? 'Reserva ou investimento com aporte que gera despesa automaticamente.'
+        : 'Acompanhe reservas financeiras e capital de giro com aportes registrados como despesa.',
+    },
     { id: 'meusPerfis', titulo: 'Meus perfis', descricao: 'Resumo dos perfis financeiros vinculados ao usuário.' },
     { id: 'resumoFinanceiro', titulo: 'Resumo financeiro', descricao: 'Despesas, maior gasto e lucro operacional.' },
     { id: 'evolucaoMensal', titulo: 'Evolução mensal', descricao: 'Gráfico mensal de receitas e despesas.' },
@@ -1268,7 +1280,7 @@ const mostrarComparativoResumoDash =
     caixinha: (
       <div className={`${bgCard} card-radius-avantalab w-full overflow-hidden rounded-2xl border-2 shadow-lg transition-colors`} style={{ borderColor: corPrimaria }}>
         <div className="flex items-center justify-between gap-3 px-6 py-3 text-sm font-bold uppercase tracking-wider" style={{ backgroundColor: corPrimaria, color: textoSobreCorPrimaria }}>
-          <span>Caixinha</span>
+          <span>{nomeCaixinha}</span>
           <div className="flex items-center gap-2">
             <DragHandle tone="light" />
             <BotaoOpcoesCard id="caixinha" tone="light" />
@@ -1283,7 +1295,7 @@ const mostrarComparativoResumoDash =
               </strong>
             </div>
             <div className={`rounded-xl border p-3 ${darkMode ? 'border-slate-700 bg-slate-800/50' : 'border-slate-200 bg-slate-50'}`}>
-              <span className={`text-[10px] font-black uppercase tracking-wide ${textMuted}`}>Aportes no mês</span>
+              <span className={`text-[10px] font-black uppercase tracking-wide ${textMuted}`}>{ehPerfilPessoal ? 'Aportes no mês' : 'Reservas no mês'}</span>
               <strong className={`mt-1 block text-lg font-black tabular-nums ${textStrong}`}>
                 {ocultarValores ? 'R$ ••••••' : formatarMoeda(caixinhaAportesMes)}
               </strong>
@@ -1293,7 +1305,7 @@ const mostrarComparativoResumoDash =
           <div className={`rounded-xl border p-3 ${darkMode ? 'border-slate-700 bg-slate-800/40' : 'border-slate-200 bg-slate-50/80'}`}>
             <div className="mb-2 flex items-center justify-between gap-3">
               <div className="min-w-0">
-                <p className={`text-[10px] font-black uppercase tracking-wide ${textMuted}`}>Aporte inicial</p>
+                <p className={`text-[10px] font-black uppercase tracking-wide ${textMuted}`}>{ehPerfilPessoal ? 'Aporte inicial' : 'Saldo inicial'}</p>
                 <p className={`mt-0.5 text-[11px] font-semibold ${textMuted}`}>Valor que já existia antes do AvantaLab.</p>
               </div>
               <strong className="shrink-0 text-xs font-black text-emerald-500">
@@ -1329,7 +1341,7 @@ const mostrarComparativoResumoDash =
               value={caixinhaDia}
               onChange={(e) => setCaixinhaDia(e.target.value)}
               className={`h-10 rounded-xl border px-3 text-base font-bold outline-none ${darkMode ? 'border-slate-700 bg-slate-900 text-slate-100' : 'border-slate-200 bg-white text-slate-800'}`}
-              aria-label="Dia do aporte"
+              aria-label={ehPerfilPessoal ? 'Dia do aporte' : 'Dia da reserva'}
               placeholder="Dia"
             />
             <input
@@ -1354,7 +1366,7 @@ const mostrarComparativoResumoDash =
             className="h-10 w-full rounded-xl text-xs font-black uppercase tracking-wide text-white shadow-sm transition hover:brightness-95 disabled:cursor-not-allowed disabled:opacity-60"
             style={{ backgroundColor: corPrimaria }}
           >
-            {caixinhaSalvando ? 'Adicionando...' : 'Adicionar aporte'}
+            {caixinhaSalvando ? 'Adicionando...' : ehPerfilPessoal ? 'Adicionar aporte' : 'Adicionar reserva'}
           </button>
 
           {caixinhaMensagem && (
@@ -1367,12 +1379,12 @@ const mostrarComparativoResumoDash =
             <p className={`text-[10px] font-black uppercase tracking-wide ${textMuted}`}>Últimos movimentos</p>
             {caixinhaUltimosMovimentos.length > 0 ? caixinhaUltimosMovimentos.map((mov) => (
               <div key={mov.id} className={`flex items-center justify-between gap-3 rounded-lg px-3 py-2 ${darkMode ? 'bg-slate-800/50' : 'bg-slate-50'}`}>
-                <span className={`min-w-0 truncate text-xs font-bold ${textStrong}`}>{mov.descricao || 'Aporte na caixinha'}</span>
+                <span className={`min-w-0 truncate text-xs font-bold ${textStrong}`}>{mov.descricao || (ehPerfilPessoal ? 'Aporte na caixinha' : 'Aporte na reserva financeira')}</span>
                 <strong className="shrink-0 text-xs font-black text-emerald-500">{ocultarValores ? 'R$ ••••' : formatarMoeda(mov.valor)}</strong>
               </div>
             )) : (
               <p className={`rounded-lg px-3 py-2 text-center text-xs font-semibold ${darkMode ? 'bg-slate-800/50' : 'bg-slate-50'} ${textMuted}`}>
-                Nenhum aporte registrado.
+                {ehPerfilPessoal ? 'Nenhum aporte registrado.' : 'Nenhuma reserva registrada.'}
               </p>
             )}
           </div>

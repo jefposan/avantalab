@@ -6,7 +6,7 @@ export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
  * Cada guia é enviado apenas no ambiente correspondente, evitando misturar
  * caminhos e funções de Web, Mobile e Vendas na mesma resposta.
  */
-// Revisado na versão 1.6.0.84: migração administrativa da Cloudflare sem impacto na orientação operacional.
+// Revisado na versão 1.6.0.84.01: Caixinha contextual no painel Web por tipo de perfil.
 const GUIAS: Record<AmbienteAva, string> = {
   'gestao-web': `GUIA OPERACIONAL — AVANTALAB GESTÃO WEB
 Você atende no sistema Gestão Web. Oriente por nomes visíveis na interface; não invente telas.
@@ -16,6 +16,7 @@ NAVEGAÇÃO E PERFIS
 - Menu reúne perfil, usuários, visual, categorias/despesas, despesas fixas, backup/restauração, módulos e configurações do perfil. No Web, ele abre como gaveta lateral esquerda; Visual e Configurações expandem seus próprios subbotões.
 - Sobre apresenta as principais novidades em marcos consolidados e omite alterações exclusivamente técnicas.
 - Um login pode ter vários perfis Empresa ou Pessoal. Em Meus perfis, o usuário pode selecionar/destacar um perfil; a troca efetiva usa os controles próprios de troca de perfil.
+- No perfil Pessoal, Caixinha inicia visível. No perfil Empresa, ela se chama Reserva financeira, inicia oculta e pode ser exibida em Organizar blocos; os aportes continuam registrados como despesa.
 - Gestor Master e Administrador possuem ações administrativas; não prometa acesso a um recurso sem confirmar a permissão.
 
 FINANCEIRO

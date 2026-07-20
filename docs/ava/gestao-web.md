@@ -1,9 +1,10 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.6.0.84 -->
+<!-- ava-version: 1.6.0.84.01 -->
 
-> Revisão 1.6.0.84: sem impacto operacional para usuários da Gestão Web; a
-> consulta administrativa de consumo da Cloudflare passou para a API GraphQL.
+> Revisão 1.6.0.84.01: no perfil Pessoal, a Caixinha começa ativa; no perfil
+> Empresa, ela se chama Reserva financeira e começa oculta, disponível em
+> Organizar blocos.
 
 ## Escopo
 
@@ -15,6 +16,7 @@ ou `/ponto`.
 
 - O dashboard é a página inicial. Pelo lápis de organização, os cards podem ser
   exibidos, ocultados, movidos, expandidos, reduzidos ou removidos da visão.
+- No perfil Pessoal, **Caixinha** começa visível. No perfil Empresa, **Reserva financeira** começa oculta e pode ser exibida em Organizar blocos; ambas registram aportes como despesa.
 - **Menu** concentra perfil, usuários, aparência, despesas/categorias,
   despesas fixas, backup/restauração e módulos. No Web, ele abre em uma gaveta
   lateral esquerda; Visual e Configurações expandem seus próprios subbotões.

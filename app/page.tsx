@@ -675,8 +675,9 @@ const [validandoTelefoneObrigatorio, setValidandoTelefoneObrigatorio] = useState
   const [saldoCardMesIdx, setSaldoCardMesIdx] = useState<number>(new Date().getMonth());
   const dashboardCardsKanban = ['aConfirmar', 'saldo', 'insightsAva', 'caixinha', 'meusPerfis', 'resumoFinanceiro', 'evolucaoMensal', 'registrarEntradas', 'controlePonto'];
   const ordemDashboardPadrao = { left: [], a: ['aConfirmar', 'saldo', 'insightsAva', 'caixinha', 'controlePonto'], b: ['meusPerfis', 'resumoFinanceiro', 'evolucaoMensal', 'registrarEntradas'] };
+  const ocultosDashboardPadrao = normalizarTipoPerfil(tipoPerfilAtual) === 'empresa' ? ['caixinha'] : [];
   const [dashboardOrdem, setDashboardOrdem] = useState<{ left: string[]; a: string[]; b: string[] }>(ordemDashboardPadrao);
-  const [dashboardOcultos, setDashboardOcultos] = useState<string[]>([]);
+  const [dashboardOcultos, setDashboardOcultos] = useState<string[]>(ocultosDashboardPadrao);
   const [dashboardExpandidos, setDashboardExpandidos] = useState<string[]>([]);
 const [ajustesAberto, setAjustesAberto] = useState(false);
 const [menuAjuste, setMenuAjuste] = useState<null | 'visual' | 'config'>(null);
@@ -1350,6 +1351,10 @@ setMesAtivo(null);
   setNomeEmpresaAtual(empresa.nome || empresa.empresa_nome || '');
   setTelefoneCobrancaPadrao(String(empresa.telefone || ''));
   setTipoPerfilAtual(normalizarTipoPerfil(empresa.tipo_perfil));
+  const ocultosPadraoDoPerfil = normalizarTipoPerfil(empresa.tipo_perfil) === 'empresa' ? ['caixinha'] : [];
+  setDashboardOrdem(ordemDashboardPadrao);
+  setDashboardOcultos(ocultosPadraoDoPerfil);
+  setDashboardExpandidos([]);
   setPerfilUsuario(empresa.perfil || null);
   setAcessoUsuarioAtualId(empresa.acessoId || empresa.acesso_id || null);
   // Libera o acesso já aqui (com carregandoPerfil ativo, o gate mostra a tela de
@@ -1439,7 +1444,7 @@ if (empresa.telefone_confirmado !== true) {
     setDashboardOcultos(
       Array.isArray(rawOcultos)
         ? rawOcultos.filter((id: string, index: number) => dashboardCardsKanban.includes(id) && rawOcultos.indexOf(id) === index)
-        : []
+        : ocultosPadraoDoPerfil
     );
 
     if (config.ultimo_backup_em) {
@@ -2964,7 +2969,8 @@ const adicionarAporteCaixinha = async ({
   const diaNumerico = Number(dia);
   const limite = getMaxDias(mes, anoSelecionado);
   const valor = parseInt(String(valorTexto || '').replace(/\D/g, '') || '0', 10) / 100;
-  const descricaoFinal = formatarDescricao(descricao) || 'Aporte na caixinha';
+  const rotuloReserva = tipoPerfilAtualNormalizado === 'pessoal' ? 'Caixinha' : 'Reserva financeira';
+  const descricaoFinal = formatarDescricao(descricao) || (tipoPerfilAtualNormalizado === 'pessoal' ? 'Aporte na caixinha' : 'Aporte na reserva financeira');
 
   if (indiceMes < 0 || !diaNumerico || diaNumerico < 1 || diaNumerico > limite) {
     return { ok: false, mensagem: `Informe um dia entre 1 e ${limite}.` };
@@ -2981,7 +2987,7 @@ const adicionarAporteCaixinha = async ({
     ano,
     mes,
     dia: diaNumerico,
-    despesaNome: 'Caixinha',
+    despesaNome: rotuloReserva,
     descricao: descricaoFinal,
     valor,
     status: ehFuturo ? 'prevista' : null,
@@ -2989,7 +2995,7 @@ const adicionarAporteCaixinha = async ({
   });
 
   if (lancamento.erro || !lancamento.data) {
-    return { ok: false, mensagem: lancamento.mensagem || 'Não foi possível salvar a despesa da caixinha.' };
+    return { ok: false, mensagem: lancamento.mensagem || `Não foi possível salvar a despesa da ${rotuloReserva.toLowerCase()}.` };
   }
 
   const movimento = await salvarCaixinhaMovimento({
@@ -4320,15 +4326,15 @@ const atualizarLayoutDashboard = (novaOrdem: { left: string[]; a: string[]; b: s
 
 const restaurarOrdemDashboard = () => {
   setDashboardOrdem(ordemDashboardPadrao);
-  setDashboardOcultos([]);
+  setDashboardOcultos(ocultosDashboardPadrao);
   setDashboardExpandidos([]);
-  if (empresaId) salvarDashboardOrdemWeb(empresaId, ordemDashboardPadrao, [], []);
+  if (empresaId) salvarDashboardOrdemWeb(empresaId, ordemDashboardPadrao, ocultosDashboardPadrao, []);
 };
 
 const definirOcultosDashboard = (novosOcultos: string[]) => {
   // Premium Pessoal: ocultar/exibir cards faz parte de organizar o dashboard.
   if (recursoBloqueado('organizar_dashboard')) {
-    setDashboardOcultos([]);
+    setDashboardOcultos(ocultosDashboardPadrao);
     abrirPremium('organizar_dashboard');
     return;
   }
@@ -10375,7 +10381,7 @@ name="novo-usuario-login"
         onAdicionarAporteCaixinha={adicionarAporteCaixinha}
         onDefinirSaldoInicialCaixinha={definirSaldoInicialCaixinha}
         dashboardOrdem={recursoBloqueado('organizar_dashboard') ? ordemDashboardPadrao : dashboardOrdem}
-        dashboardOcultos={recursoBloqueado('organizar_dashboard') ? [] : dashboardOcultos}
+        dashboardOcultos={recursoBloqueado('organizar_dashboard') ? ocultosDashboardPadrao : dashboardOcultos}
         dashboardExpandidos={recursoBloqueado('organizar_dashboard') ? [] : dashboardExpandidos}
         onAtualizarLayoutDashboard={atualizarLayoutDashboard}
         onOcultarCardDashboard={ocultarCardDashboard}
@@ -10403,6 +10409,7 @@ name="novo-usuario-login"
 
       {carregandoPerfil && (
         <div className="avanta-loading-stage fixed inset-0 z-[9500] bg-slate-950/70 backdrop-blur-sm">
+        tipoPerfil={tipoPerfilAtualNormalizado}
           <div className="avanta-loading-glass avanta-loading-card rounded-3xl border shadow-2xl">
             <div className="avanta-loading-glass-icon mx-auto flex h-11 w-11 items-center justify-center rounded-xl">
               <span className="avanta-loading-spinner animate-spin" />

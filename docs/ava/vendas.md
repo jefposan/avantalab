@@ -1,9 +1,8 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.6.0.84 -->
+<!-- ava-version: 1.6.0.84.01 -->
 
-> Revisão 1.6.0.84: sem impacto operacional no Vendas Mobile; a consulta
-> administrativa de consumo da Cloudflare passou para a API GraphQL.
+> Revisão 1.6.0.84.01: sem impacto operacional no Vendas Mobile.
 
 ## Escopo e navegação
 
