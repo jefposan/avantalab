@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.6.0.63 - 2026-07-19
+
+- Gestão Mobile passa a usar traços geométricos centralizados nos controles de
+  fechar e no botão central **Lançar**, mantendo o alinhamento visual em iPhone,
+  Android e navegadores.
+
 ## 1.6.0.62 - 2026-07-19
 
 - Os controles circulares de fechar e o botão central **Lançar** do Vendas

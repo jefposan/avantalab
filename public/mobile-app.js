@@ -974,7 +974,7 @@
         '</div>';
     return '<section class="avantalab-mobile-bg fixed inset-0 z-[12000] flex items-start justify-center overflow-y-auto bg-black/85 px-3 py-4">' +
       '<div class="flex max-h-[calc(100dvh-2rem)] w-full max-w-md flex-col overflow-hidden rounded-xl bg-white text-slate-900 shadow-2xl">' +
-        '<header class="flex shrink-0 items-start gap-3 bg-[#003E73] px-4 py-3 text-white"><div class="min-w-0 flex-1"><p class="text-[9px] font-black uppercase tracking-[.2em] text-cyan-200">Cadastro do perfil</p><h2 class="mt-0.5 text-base font-black leading-tight">' + titulo + '</h2>' + (contexto === 'lembrete' ? '<p class="mt-1 text-[11px] text-white/80">Faltam ' + Number(status.diasRestantes || 0) + ' dias para se tornar obrigat&oacute;rio.</p>' : '') + '</div>' + (contexto === 'edicao' ? '<button id="cp-fechar-edicao" type="button" class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-white/20 bg-white/10 text-xl leading-none text-white transition active:scale-95" aria-label="Fechar">&times;</button>' : '') + '</header>' +
+        '<header class="flex shrink-0 items-start gap-3 bg-[#003E73] px-4 py-3 text-white"><div class="min-w-0 flex-1"><p class="text-[9px] font-black uppercase tracking-[.2em] text-cyan-200">Cadastro do perfil</p><h2 class="mt-0.5 text-base font-black leading-tight">' + titulo + '</h2>' + (contexto === 'lembrete' ? '<p class="mt-1 text-[11px] text-white/80">Faltam ' + Number(status.diasRestantes || 0) + ' dias para se tornar obrigat&oacute;rio.</p>' : '') + '</div>' + (contexto === 'edicao' ? '<button id="cp-fechar-edicao" type="button" class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-white/20 bg-white/10 text-white transition active:scale-95" aria-label="Fechar">' + iconeFecharGeometricoMobile() + '</button>' : '') + '</header>' +
         '<div class="min-h-0 flex-1 overflow-y-auto px-4 py-3">' + formulario + '<p id="cp-erro" class="mt-3 text-xs font-bold text-red-600"></p><p id="cp-autosave-status" class="mt-2 text-[10px] font-bold text-slate-500"></p></div>' +
         '<footer class="' + (contexto === 'lembrete' ? 'grid grid-cols-3' : 'flex justify-end') + ' shrink-0 gap-1.5 border-t border-slate-200 bg-slate-50 px-4 py-3">' +
           (contexto === 'lembrete' ? '<button id="cp-depois" type="button" class="h-9 min-w-0 rounded-lg border border-slate-300 bg-white px-1 text-[10px] font-bold text-slate-600 transition active:scale-95">Lembrar depois</button><button id="cp-salvar-parcial" type="button" class="h-9 min-w-0 rounded-lg border border-sky-200 bg-sky-50 px-1 text-[10px] font-black text-sky-800 transition active:scale-95">Salvar inclusões</button>' : '') +
@@ -3955,7 +3955,7 @@
     if (!state.notaVisualizandoUrl) return '';
     return '<div id="nota-visualizacao-overlay" class="fixed inset-0 z-[130] flex items-center justify-center bg-slate-950/90 px-3 py-5">' +
       '<section class="flex max-h-full w-full max-w-md flex-col overflow-hidden rounded-3xl bg-white shadow-2xl">' +
-      '<header class="flex items-center justify-between px-4 py-3 text-white" style="background:#003E73"><h2 class="text-sm font-black">Nota do lancamento</h2><button id="fechar-nota-lancamento" type="button" class="flex h-8 w-8 items-center justify-center rounded-full bg-white/15 text-lg">&times;</button></header>' +
+      '<header class="flex items-center justify-between px-4 py-3 text-white" style="background:#003E73"><h2 class="text-sm font-black">Nota do lancamento</h2><button id="fechar-nota-lancamento" type="button" class="flex h-8 w-8 items-center justify-center rounded-full bg-white/15 text-white" aria-label="Fechar nota">' + iconeFecharGeometricoMobile() + '</button></header>' +
       '<div class="min-h-0 flex-1 overflow-auto bg-slate-100 p-3"><img src="' + escapeHtml(state.notaVisualizandoUrl) + '" alt="Nota do lancamento" class="mx-auto max-h-[68vh] max-w-full rounded-xl object-contain shadow-lg" /></div>' +
       '<footer class="border-t border-slate-200 p-3"><button id="compartilhar-nota-lancamento" type="button" class="h-10 w-full rounded-xl bg-[#003E73] text-xs font-black uppercase text-white transition active:scale-[0.98]">Compartilhar</button></footer>' +
       '</section></div>';
@@ -8152,6 +8152,16 @@
     return '';
   }
 
+  // Traços desenhados por CSS: o alinhamento não varia entre fontes, sistemas
+  // ou navegadores. Mantém os controles circulares iguais ao Vendas Mobile.
+  function iconeFecharGeometricoMobile() {
+    return '<span class="avanta-mobile-geometric-x" aria-hidden="true"></span>';
+  }
+
+  function iconeMaisGeometricoMobile() {
+    return '<span class="avanta-mobile-geometric-plus" aria-hidden="true"></span>';
+  }
+
   function iconeSeletorSistema(tipo) {
     var arquivo = tipo === 'gestao' ? '/images/icone-gestao-mobile-44.png' : '/images/icone-vendas-mobile-44.png';
     var rotulo = tipo === 'gestao' ? 'Ícone Gestão Mobile' : 'Ícone Vendas Mobile';
@@ -8200,7 +8210,7 @@
         itemNavegacaoInferiorHtml('nav-home', 'home', 'Início', indiceAtivo === 0) +
         itemNavegacaoInferiorHtml('nav-atalho-esquerdo', esquerdo, rotuloAtalhoInferior(esquerdo), indiceAtivo === 1) +
         '<button id="nav-lancamento" type="button" class="relative flex min-w-0 flex-col items-center justify-end pb-1 text-[10px] font-black text-cyan-700" aria-label="Lançar despesa ou receita">' +
-          '<span class="absolute bottom-[22px] flex h-[58px] w-[58px] items-center justify-center rounded-full border-4 ' + (state.darkMode ? 'border-slate-900' : 'border-white') + ' bg-cyan-600 text-[34px] font-light leading-none text-white shadow-lg shadow-cyan-900/25">+</span>' +
+          '<span class="absolute bottom-[22px] flex h-[58px] w-[58px] items-center justify-center rounded-full border-4 ' + (state.darkMode ? 'border-slate-900' : 'border-white') + ' bg-cyan-600 text-white shadow-lg shadow-cyan-900/25">' + iconeMaisGeometricoMobile() + '</span>' +
           '<span>Lançar</span>' +
         '</button>' +
         itemNavegacaoInferiorHtml('nav-atalho-direito', direito, rotuloAtalhoInferior(direito), indiceAtivo === 3) +
@@ -8843,7 +8853,7 @@
               '<p class="text-[10px] font-black uppercase tracking-[0.2em] text-cyan-100/75">Novo item</p>' +
               '<h3 class="mt-0.5 text-lg font-black">' + String(state.agendaDiaSelecionado || '').padStart(2, '0') + ' de ' + escapeHtml(nomeMesCompleto(state.mes)) + '</h3>' +
             '</div>' +
-            '<button id="cancelar-agenda-item-topo" type="button" class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-white/20 bg-white/10 text-xl font-black text-white">&times;</button>' +
+            '<button id="cancelar-agenda-item-topo" type="button" class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-white/20 bg-white/10 text-white" aria-label="Fechar agenda">' + iconeFecharGeometricoMobile() + '</button>' +
           '</div>' +
           '<div class="grid gap-2 p-4">' +
             '<input type="hidden" id="agenda-tipo" value="lembrete" />' +
@@ -8939,7 +8949,7 @@
         '<div class="mt-3 flex min-h-0 flex-1 flex-col rounded-[24px] border-2 border-cyan-200 bg-cyan-50/85 p-4 shadow-xl shadow-cyan-950/10">' +
           '<div class="sticky top-0 z-10 -mx-1 flex shrink-0 items-center justify-between gap-3 border-b border-cyan-200/70 bg-cyan-50/95 px-1 pb-2 backdrop-blur">' +
             '<h3 class="min-w-0 flex-1 truncate text-sm font-black text-slate-950">Dia selecionado: ' + String(diaSelecionado).padStart(2, '0') + ' de ' + escapeHtml(nomeMesCompleto(state.mes)) + '</h3>' +
-            '<button id="fechar-agenda-dia" type="button" class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-slate-200 bg-white text-xl font-black text-slate-600" aria-label="Fechar dia">&times;</button>' +
+            '<button id="fechar-agenda-dia" type="button" class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-600" aria-label="Fechar dia">' + iconeFecharGeometricoMobile() + '</button>' +
           '</div>' +
           '<div data-agenda-scroll="true" class="mt-3 min-h-0 flex-1 overflow-y-auto overscroll-contain pr-0.5" style="-webkit-overflow-scrolling:touch;">' +
             '<div class="rounded-2xl border border-cyan-200 bg-white/85 p-3 shadow-sm">' +
@@ -9348,7 +9358,7 @@
             : '<div class="grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-2 px-4 py-3 text-white" style="background-color:#003E73">' +
                 '<h2 class="text-base font-black">Novo lan&ccedil;amento</h2>' +
                 '<span class="justify-self-center rounded-full border border-white/25 bg-white/15 px-3 py-1 text-center text-base font-black leading-none tracking-wide text-white shadow-sm">' + escapeHtml(String(state.mes || '').toUpperCase()) + '</span>' +
-                '<button id="fechar-lancamento" type="button" class="justify-self-end flex h-9 w-9 items-center justify-center rounded-full border border-white/20 bg-white/10 text-xl text-white">&times;</button>' +
+                '<button id="fechar-lancamento" type="button" class="justify-self-end flex h-9 w-9 items-center justify-center rounded-full border border-white/20 bg-white/10 text-white" aria-label="Fechar lançamento">' + iconeFecharGeometricoMobile() + '</button>' +
               '</div>' +
               '<div class="' + corpoModal + ' p-4">' +
               '<div class="mb-3 grid grid-cols-2 gap-2 rounded-xl ' + abas + ' p-1">' +
@@ -9484,7 +9494,7 @@
           '<section class="mx-auto flex w-full max-w-md flex-col overflow-hidden rounded-3xl ' + (state.darkMode ? 'bg-slate-900 text-slate-100' : 'bg-white') + ' shadow-2xl" style="max-height:calc(100dvh - env(safe-area-inset-bottom) - 102px)">' +
 	          '<div class="flex shrink-0 items-center justify-between gap-3 px-4 py-3 text-white" style="background-color:#003E73">' +
 	            '<div class="min-w-0"><p class="text-[10px] font-black uppercase tracking-wide text-cyan-100/75">' + detalhe + '</p><h2 class="truncate text-base font-black">' + escapeHtml(titulo) + '</h2></div>' +
-	            '<button id="fechar-acao-lancamento" type="button" class="flex h-9 w-9 items-center justify-center rounded-full border border-white/20 bg-white/10 text-xl text-white">&times;</button>' +
+	            '<button id="fechar-acao-lancamento" type="button" class="flex h-9 w-9 items-center justify-center rounded-full border border-white/20 bg-white/10 text-white" aria-label="Fechar lançamento">' + iconeFecharGeometricoMobile() + '</button>' +
 	          '</div>' +
 	          '<div class="min-h-0 overflow-y-auto p-4 overscroll-contain">' +
 	            alertaHtml().replace('mt-4', 'mb-3') +
@@ -9706,7 +9716,7 @@
             '<div class="pointer-events-none absolute -bottom-8 -right-6 h-24 w-32 rounded-[50%] border border-white/10"></div>' +
             '<div class="flex items-start justify-between gap-3">' +
               '<div class="relative min-w-0"><p class="text-[9px] font-black uppercase tracking-[0.28em] text-cyan-100">AvantaLab</p><h2 class="mt-1 truncate text-lg font-black">' + escapeHtml(nomeEmpresa(state.empresa)) + '</h2><p class="mt-1 truncate text-[11px] font-semibold text-cyan-50/90">' + escapeHtml(state.usuario && state.usuario.email ? state.usuario.email : 'Usuario logado') + '</p></div>' +
-              '<button id="fechar-menu" type="button" class="relative flex h-9 w-9 items-center justify-center rounded-full border border-white/25 bg-white/15 text-xl font-black text-white shadow-sm backdrop-blur active:scale-95">&times;</button>' +
+              '<button id="fechar-menu" type="button" class="relative flex h-9 w-9 items-center justify-center rounded-full border border-white/25 bg-white/15 text-white shadow-sm backdrop-blur active:scale-95" aria-label="Fechar menu">' + iconeFecharGeometricoMobile() + '</button>' +
             '</div>' +
           '</div>' +
           '<div class="grid gap-1.5">' +
@@ -9982,7 +9992,7 @@
         '<section class="mx-auto flex w-full max-w-md flex-col overflow-hidden rounded-3xl ' + (state.darkMode ? 'bg-slate-900 text-slate-100' : 'bg-white text-slate-900') + ' shadow-2xl" style="max-height:calc(100dvh - env(safe-area-inset-bottom) - 102px)">' +
           '<div class="shrink-0 flex items-center justify-between gap-3 px-4 py-3 text-white" style="background-color:#003E73">' +
             '<h2 class="text-base font-black">' + escapeHtml(titulo) + '</h2>' +
-            '<button id="fechar-modal-menu" type="button" class="flex h-9 w-9 items-center justify-center rounded-full border border-white/20 bg-white/10 text-xl text-white">&times;</button>' +
+            '<button id="fechar-modal-menu" type="button" class="flex h-9 w-9 items-center justify-center rounded-full border border-white/20 bg-white/10 text-white" aria-label="Fechar">' + iconeFecharGeometricoMobile() + '</button>' +
           '</div>' +
           '<div id="modal-menu-scroll" data-preserve-scroll class="min-h-0 flex-1 overflow-y-auto p-4 overscroll-contain">' + conteudoModalMenuHtml() + '</div>' +
         '</section>' +
@@ -10975,7 +10985,7 @@
               '<p class="text-[10px] font-black uppercase tracking-wide text-cyan-100/75">Confirmar exclusao</p>' +
               '<h2 class="truncate text-base font-black">Excluir despesa fixa</h2>' +
             '</div>' +
-            '<button id="cancelar-exclusao-recorrencia-topo" type="button" class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-white/20 bg-white/10 text-xl text-white" aria-label="Fechar">&times;</button>' +
+            '<button id="cancelar-exclusao-recorrencia-topo" type="button" class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-white/20 bg-white/10 text-white" aria-label="Fechar">' + iconeFecharGeometricoMobile() + '</button>' +
           '</div>' +
           '<div class="p-4">' +
             '<div class="rounded-2xl border border-red-100 bg-red-50 p-4">' +
@@ -11001,7 +11011,7 @@
               '<p class="text-[10px] font-black uppercase tracking-wide text-cyan-100/75">Confirmar ação</p>' +
               '<h2 class="truncate text-base font-black">Resetar Caixinha</h2>' +
             '</div>' +
-            '<button id="cancelar-reset-caixinha-topo" type="button" class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-white/20 bg-white/10 text-xl text-white" aria-label="Fechar">&times;</button>' +
+            '<button id="cancelar-reset-caixinha-topo" type="button" class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-white/20 bg-white/10 text-white" aria-label="Fechar">' + iconeFecharGeometricoMobile() + '</button>' +
           '</div>' +
           '<div class="p-4">' +
             '<div class="rounded-2xl border border-red-100 bg-red-50 p-4">' +

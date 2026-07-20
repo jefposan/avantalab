@@ -67,7 +67,7 @@ export default function MobilePage() {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
   const cobrancaAtiva = process.env.NEXT_PUBLIC_COBRANCA_ATIVA === 'true' ? 'true' : 'false';
-  const mobileAssetVersion = '327';
+  const mobileAssetVersion = '328';
   const bootstrapCarregamento = `
     (function () {
       var pesos = { shell: 5, scripts: 15, auth: 10, profiles: 20, access: 10, data: 40 };
@@ -306,6 +306,53 @@ export default function MobilePage() {
             .mobile-dark textarea::placeholder {
               color: #94a3b8 !important;
             }
+
+            /* Ícones geométricos: não dependem da métrica da fonte instalada. */
+            .avanta-mobile-geometric-x,
+            .avanta-mobile-geometric-plus {
+              position: relative;
+              display: block;
+              width: 18px;
+              height: 18px;
+              flex: 0 0 18px;
+              color: currentColor;
+            }
+
+            .avanta-mobile-geometric-x::before,
+            .avanta-mobile-geometric-x::after,
+            .avanta-mobile-geometric-plus::before,
+            .avanta-mobile-geometric-plus::after {
+              position: absolute;
+              top: 50%;
+              left: 50%;
+              border-radius: 999px;
+              background: currentColor;
+              content: '';
+              transform: translate(-50%, -50%);
+            }
+
+            .avanta-mobile-geometric-x::before,
+            .avanta-mobile-geometric-x::after {
+              width: 18px;
+              height: 2px;
+            }
+
+            .avanta-mobile-geometric-x::before { transform: translate(-50%, -50%) rotate(45deg); }
+            .avanta-mobile-geometric-x::after { transform: translate(-50%, -50%) rotate(-45deg); }
+
+            .avanta-mobile-geometric-plus {
+              width: 24px;
+              height: 24px;
+              flex-basis: 24px;
+            }
+
+            .avanta-mobile-geometric-plus::before,
+            .avanta-mobile-geometric-plus::after {
+              width: 24px;
+              height: 3px;
+            }
+
+            .avanta-mobile-geometric-plus::after { transform: translate(-50%, -50%) rotate(90deg); }
 
             /* Sub-botoes de Configuracoes: aparencia de sub-itens com bolinha */
             .cfg-sub-group > button {

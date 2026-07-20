@@ -1,8 +1,8 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.6.0.62 -->
+<!-- ava-version: 1.6.0.63 -->
 
-> Revisão 1.6.0.62: os botões de fechar e Lançar usam ícones geometricamente centralizados em todos os navegadores.
+> Revisão 1.6.0.63: sem impacto operacional no Vendas Mobile; o mesmo refinamento visual foi aplicado na Gestão Mobile.
 
 ## Escopo e navegação
 

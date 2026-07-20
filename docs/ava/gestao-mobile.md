@@ -1,8 +1,8 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.6.0.62 -->
+<!-- ava-version: 1.6.0.63 -->
 
-> Revisão 1.6.0.62: sem impacto operacional na Gestão Mobile; ajuste visual restrito aos controles do Vendas Mobile.
+> Revisão 1.6.0.63: sem impacto operacional na Gestão Mobile; controles de fechar e Lançar receberam somente ajuste visual multiplataforma.
 
 ## Escopo
 

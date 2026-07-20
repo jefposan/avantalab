@@ -1,8 +1,8 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.6.0.62 -->
+<!-- ava-version: 1.6.0.63 -->
 
-> Revisão 1.6.0.62: sem impacto operacional na Gestão Web; ajuste visual restrito aos controles do Vendas Mobile.
+> Revisão 1.6.0.63: sem impacto operacional na Gestão Web; ajuste visual restrito aos controles da Gestão Mobile.
 
 ## Escopo
 
