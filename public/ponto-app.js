@@ -366,7 +366,7 @@
     var cfg = state.pontoConfig;
     var latEmpresa = numeroConfig(cfg && cfg.latitude);
     var lngEmpresa = numeroConfig(cfg && cfg.longitude);
-    var raio = Math.min(100, Math.max(1, Math.round(numeroConfig(cfg && cfg.raio_m) || 100)));
+    var raio = Math.min(10000, Math.max(1, Math.round(numeroConfig(cfg && cfg.raio_m) || 100)));
     var latAtual = numeroConfig(pos && pos.coords && pos.coords.latitude);
     var lngAtual = numeroConfig(pos && pos.coords && pos.coords.longitude);
     var precisao = numeroConfig(pos && pos.coords && pos.coords.accuracy);
@@ -678,6 +678,7 @@
             (c.distancia != null ? '<p>Distância da empresa: ' + Math.round(c.distancia) + 'm</p>' : '') +
             '<p>Código de confirmação: ' + escapeHtml(c.codigo) + '</p>' +
           '</div>' +
+          '<button id="ponto-comprovante-pdf" type="button" class="mt-3 h-11 w-full rounded-xl bg-[#003E73] text-xs font-black uppercase tracking-wide text-white">Baixar PDF assinado</button>' +
           '<button id="ponto-comprovante-imprimir" type="button" class="mt-3 h-11 w-full rounded-xl border border-slate-300 bg-white text-xs font-black uppercase tracking-wide text-slate-700">Imprimir comprovante</button>' +
           '<button id="ponto-comprovante-ok" type="button" class="mt-5 h-12 w-full rounded-xl bg-slate-950 text-sm font-black uppercase tracking-wide text-white">Concluir</button>' +
         '</div>' +
@@ -857,6 +858,15 @@
     var ovConfirmar = document.getElementById('ponto-confirmar-overlay');
     if (ovConfirmar) ovConfirmar.addEventListener('click', function (e) { if (e.target === ovConfirmar) { state.confirmarTipo = null; render(); } });
     bind('ponto-comprovante-ok', function () { state.comprovante = null; render(); });
+    bind('ponto-comprovante-pdf', async function () {
+      try {
+        var sessao = await db.auth.getSession(); var token = sessao && sessao.data && sessao.data.session && sessao.data.session.access_token;
+        if (!token || !state.comprovante || !state.comprovante.codigo) throw new Error('Sessão não encontrada.');
+        var resposta = await fetch('/api/ponto/comprovante/' + encodeURIComponent(state.comprovante.codigo), { headers: { Authorization: 'Bearer ' + token } });
+        if (!resposta.ok) { var corpo = await resposta.json().catch(function () { return {}; }); throw new Error(corpo.mensagem || 'Não foi possível gerar o PDF.'); }
+        var arquivo = await resposta.blob(); var urlArquivo = URL.createObjectURL(arquivo); var link = document.createElement('a'); link.href = urlArquivo; link.download = 'comprovante-ponto-' + state.comprovante.codigo + '.pdf'; document.body.appendChild(link); link.click(); link.remove(); URL.revokeObjectURL(urlArquivo);
+      } catch (erro) { mostrarToast((erro && erro.message) || 'Não foi possível gerar o PDF.'); }
+    });
     bind('ponto-comprovante-imprimir', function () { try { window.print(); } catch (e) {} });
     bind('ponto-meus-registros', function () { carregarRegistros('dia'); });
     bind('ponto-voltar', function () { state.view = 'bater'; render(); });

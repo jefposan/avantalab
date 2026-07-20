@@ -2545,7 +2545,7 @@ useEffect(() => {
         .eq('empresa_id', empresaId)
         .maybeSingle();
       if (!error) {
-        const raioConfig = Math.min(100, Math.max(1, Number(data?.raio_m ?? 100) || 100));
+        const raioConfig = Math.min(10000, Math.max(1, Number(data?.raio_m ?? 100) || 100));
         setPontoConfig(data ? { latitude: data.latitude, longitude: data.longitude, raio_m: raioConfig } : { latitude: null, longitude: null, raio_m: 100 });
       }
     } catch {}
@@ -2554,7 +2554,7 @@ useEffect(() => {
   async function salvarPontoConfig(dados: { latitude: number; longitude: number; raio_m: number }) {
     if (!empresaId) return { erro: true, mensagem: 'Perfil não identificado.' };
     try {
-      const raioConfig = Math.min(100, Math.max(1, Number(dados.raio_m) || 100));
+      const raioConfig = Math.min(10000, Math.max(1, Number(dados.raio_m) || 100));
       const { error } = await supabase
         .from('ponto_config')
         .upsert({ empresa_id: empresaId, latitude: dados.latitude, longitude: dados.longitude, raio_m: raioConfig, atualizado_em: new Date().toISOString() }, { onConflict: 'empresa_id' });
