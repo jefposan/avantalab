@@ -77,7 +77,6 @@ interface PontoAdminModalProps {
   config: PontoConfig;
   onSalvarConfig: (dados: { latitude: number; longitude: number; raio_m: number }) => Promise<{ erro: boolean; mensagem?: string }>;
   onCarregarRegistros: (funcionarioUserId: string, dataInicioISO: string) => Promise<RegistroPonto[]>;
-  onExcluir: (funcionarioUserId: string) => Promise<{ erro: boolean; mensagem?: string }>;
   diasNaoUteis: PontoDiaNaoUtil[];
   diasNaoUteisCarregando: boolean;
   onCriarDiaNaoUtil: (dados: { dataInicio: string; dataFim: string; tipo: string; descricao: string; recorrenteAnual: boolean }) => Promise<{ erro: boolean; mensagem?: string }>;
@@ -95,7 +94,6 @@ export default function PontoAdminModal({
   onCriar,
   onAtualizar,
   onRedefinirSenha,
-  onExcluir,
   config,
   onSalvarConfig,
   onCarregarRegistros,
@@ -116,7 +114,7 @@ export default function PontoAdminModal({
   const [cargo, setCargo] = useState('');
   const [horaEntrada, setHoraEntrada] = useState('');
   const [horaSaida, setHoraSaida] = useState('');
-  const [diasNovo, setDiasNovo] = useState<number[]>([1, 2, 3, 4, 5]);
+  const [diasNovo, setDiasNovo] = useState<number[]>([]);
   const [enviando, setEnviando] = useState(false);
   const [msg, setMsg] = useState<{ tipo: 'ok' | 'erro'; texto: string } | null>(null);
   const listaScrollRef = useRef<HTMLDivElement | null>(null);
@@ -154,8 +152,6 @@ export default function PontoAdminModal({
   const [verEditSenha, setVerEditSenha] = useState(false);
   const [salvandoSenha, setSalvandoSenha] = useState(false);
   const [msgSenha, setMsgSenha] = useState<{ tipo: 'ok' | 'erro'; texto: string } | null>(null);
-  const [excluindo, setExcluindo] = useState(false);
-  const [confirmandoExcluir, setConfirmandoExcluir] = useState(false);
   const cardEditRef = useRef<HTMLDivElement | null>(null);
 
   const dataRelatorioInicial = relatorioInicial?.data || '';
@@ -218,7 +214,7 @@ export default function PontoAdminModal({
       setMsg({ tipo: 'erro', texto: r.mensagem || 'Não foi possível cadastrar.' });
     } else {
       setMsg({ tipo: 'ok', texto: 'Funcionário cadastrado!' });
-      setNome(''); setCpf(''); setSenha(''); setVerSenha(false); setCargo(''); setHoraEntrada(''); setHoraSaida(''); setDiasNovo([1, 2, 3, 4, 5]);
+      setNome(''); setCpf(''); setSenha(''); setVerSenha(false); setCargo(''); setHoraEntrada(''); setHoraSaida(''); setDiasNovo([]);
       setAba('lista');
     }
   };
@@ -244,8 +240,10 @@ export default function PontoAdminModal({
     </div>
   );
 
+  const temEscalaFixa = (dias: number[] | null | undefined): dias is number[] => Array.isArray(dias) && dias.length > 0;
+
   const resumoDias = (dias: number[] | null) => {
-    if (!dias || dias.length === 0) return 'Nenhum dia';
+    if (!temEscalaFixa(dias)) return 'Escala variável';
     if (dias.length === 7) return 'Todos os dias';
     return DIAS_SEMANA.filter(([n]) => dias.includes(n)).map(([, l]) => l).join(', ');
   };
@@ -258,9 +256,9 @@ export default function PontoAdminModal({
     setEditEntrada(f.hora_entrada ? f.hora_entrada.slice(0, 5) : '');
     setEditSaida(f.hora_saida ? f.hora_saida.slice(0, 5) : '');
     setEditAtivo(f.ativo);
-    setEditDias(Array.isArray(f.dias_trabalho) ? f.dias_trabalho : [1, 2, 3, 4, 5]);
+    setEditDias(Array.isArray(f.dias_trabalho) ? f.dias_trabalho : []);
     setEditSenha(''); setVerEditSenha(false); setMsgSenha(null);
-    setMsgEdit(null); setConfirmandoExcluir(false);
+    setMsgEdit(null);
     // rola o card em edição para o topo do painel (nome logo abaixo do header)
     setTimeout(() => { if (cardEditRef.current) cardEditRef.current.scrollIntoView({ block: 'start', behavior: 'smooth' }); }, 60);
   };
@@ -282,15 +280,6 @@ export default function PontoAdminModal({
     setSalvandoEdit(false);
     if (r.erro) setMsgEdit(r.mensagem || 'Não foi possível salvar.');
     else setEditId(null);
-  };
-
-  const excluirFuncionario = async (userId: string) => {
-    setMsgEdit(null);
-    setExcluindo(true);
-    const r = await onExcluir(userId);
-    setExcluindo(false);
-    if (r.erro) setMsgEdit(r.mensagem || 'Não foi possível excluir.');
-    else { setConfirmandoExcluir(false); setEditId(null); }
   };
 
   const salvarSenha = async (userId: string) => {
@@ -364,7 +353,7 @@ export default function PontoAdminModal({
       const saidaReg = [...regs].reverse().find((r) => r.tipo === 'saida');
       const distancia = entradaReg?.distancia_m ?? regs[0]?.distancia_m ?? null;
       let statusEntrada: DiaRel['statusEntrada'] = 'sem';
-      if (entradaReg && funcionario?.hora_entrada) {
+      if (entradaReg && funcionario?.hora_entrada && temEscalaFixa(funcionario.dias_trabalho)) {
         const diff = minutosDoDia(horaBrasilia(entradaReg.registrado_em)) - minutosDoDia(funcionario.hora_entrada);
         statusEntrada = diff > TOLERANCIA_MIN ? 'atraso' : diff < -TOLERANCIA_MIN ? 'adiantado' : 'pontual';
       }
@@ -440,7 +429,7 @@ export default function PontoAdminModal({
   const rotuloPeriodo = `${relDataInicio.slice(8, 10)}/${relDataInicio.slice(5, 7)}/${relDataInicio.slice(0, 4)} a ${relDataFim.slice(8, 10)}/${relDataFim.slice(5, 7)}/${relDataFim.slice(0, 4)}`;
   const slugNome = (t: string) => (t || 'funcionario').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
   const dataBr = (dia: string) => `${dia.slice(8, 10)}/${dia.slice(5, 7)}/${dia.slice(0, 4)}`;
-  const resumoPontualidade = funcSel?.hora_entrada ? `${pctPontual}% (${pontuais} pontuais, ${atrasos} atrasos de ${totalComHorario} dias)` : 'Não avaliada';
+  const resumoPontualidade = funcSel?.hora_entrada && temEscalaFixa(funcSel.dias_trabalho) ? `${pctPontual}% (${pontuais} pontuais, ${atrasos} atrasos de ${totalComHorario} dias)` : 'Não avaliada';
   const horarioPrevisto = funcSel?.hora_entrada ? `${funcSel.hora_entrada.slice(0, 5)} às ${funcSel.hora_saida ? funcSel.hora_saida.slice(0, 5) : '-'}` : 'Não definido';
 
   const gerarRelatorioXlsx = async () => {
@@ -706,11 +695,13 @@ export default function PontoAdminModal({
                         <div className="grid gap-1">
                           <span className={`text-[11px] font-black uppercase tracking-wide ${darkMode ? 'text-slate-300' : 'text-slate-500'}`}>Dias de trabalho</span>
                           {renderSeletorDias(editDias, setEditDias)}
+                          {!temEscalaFixa(editDias) && <span className={`text-[10px] ${textMuted}`}>Sem dias marcados: escala variável, sem cálculo automático de faltas ou atrasos.</span>}
                         </div>
                         <label className="flex items-center gap-2 text-xs font-bold">
                           <input type="checkbox" checked={editAtivo} onChange={(e) => setEditAtivo(e.target.checked)} className="h-4 w-4" />
                           Funcionário ativo
                         </label>
+                        {!editAtivo && <p className={`text-[11px] font-semibold ${textMuted}`}>Ao salvar, o acesso e novas marcações serão bloqueados. O histórico será preservado.</p>}
                         <button type="button" onClick={() => salvarEdicao(f.user_id)} disabled={salvandoEdit} className="mt-1 h-10 rounded-xl text-sm font-black text-white shadow transition hover:brightness-110 disabled:opacity-60" style={{ backgroundColor: corSistema }}>{salvandoEdit ? 'Salvando...' : 'Salvar alterações'}</button>
                         {msgEdit && <p className="text-xs font-bold text-red-600">{msgEdit}</p>}
 
@@ -728,20 +719,6 @@ export default function PontoAdminModal({
                           </div>
                           <button type="button" onClick={() => salvarSenha(f.user_id)} disabled={salvandoSenha} className={`h-9 rounded-xl border text-xs font-black uppercase tracking-wide transition disabled:opacity-60 ${darkMode ? 'border-slate-600 text-slate-200 hover:bg-slate-700' : 'border-slate-300 text-slate-600 hover:bg-slate-100'}`}>{salvandoSenha ? 'Salvando...' : 'Salvar nova senha'}</button>
                           {msgSenha && <p className={`text-xs font-bold ${msgSenha.tipo === 'ok' ? 'text-emerald-600' : 'text-red-600'}`}>{msgSenha.texto}</p>}
-                        </div>
-
-                        <div className={`mt-1 border-t pt-3 ${itemBorda}`}>
-                          {!confirmandoExcluir ? (
-                            <button type="button" onClick={() => setConfirmandoExcluir(true)} className={`h-9 w-full rounded-xl border text-xs font-black uppercase tracking-wide transition ${darkMode ? 'border-red-500/40 text-red-300 hover:bg-red-500/10' : 'border-red-200 text-red-600 hover:bg-red-50'}`}>Excluir funcionário</button>
-                          ) : (
-                            <div className="grid gap-2">
-                              <p className={`text-xs font-bold ${darkMode ? 'text-red-300' : 'text-red-600'}`}>Excluir {f.nome}? Esta ação não pode ser desfeita.</p>
-                              <div className="flex gap-2">
-                                <button type="button" onClick={() => setConfirmandoExcluir(false)} disabled={excluindo} className={`h-9 flex-1 rounded-xl border text-xs font-black uppercase tracking-wide transition disabled:opacity-60 ${darkMode ? 'border-slate-600 text-slate-200 hover:bg-slate-700' : 'border-slate-300 text-slate-600 hover:bg-slate-100'}`}>Cancelar</button>
-                                <button type="button" onClick={() => excluirFuncionario(f.user_id)} disabled={excluindo} className="h-9 flex-1 rounded-xl bg-red-600 text-xs font-black uppercase tracking-wide text-white transition hover:bg-red-500 disabled:opacity-60">{excluindo ? 'Excluindo...' : 'Confirmar exclusão'}</button>
-                              </div>
-                            </div>
-                          )}
                         </div>
                       </div>
                     )}
@@ -789,6 +766,7 @@ export default function PontoAdminModal({
               <div className="grid gap-1">
                 <span className={`text-[11px] font-black uppercase tracking-wide ${darkMode ? 'text-slate-300' : 'text-slate-500'}`}>Dias de trabalho</span>
                 {renderSeletorDias(diasNovo, setDiasNovo)}
+                {!temEscalaFixa(diasNovo) && <span className={`text-[10px] ${textMuted}`}>Sem dias marcados: escala variável, sem cálculo automático de faltas ou atrasos.</span>}
               </div>
               <button type="button" onClick={enviar} disabled={enviando} className="mt-1 h-11 rounded-xl text-sm font-black text-white shadow transition hover:brightness-110 disabled:opacity-60" style={{ backgroundColor: corSistema }}>{enviando ? 'Cadastrando...' : 'Cadastrar funcionário'}</button>
               {msg && <p className={`text-xs font-bold ${msg.tipo === 'ok' ? 'text-emerald-600' : 'text-red-600'}`}>{msg.texto}</p>}
@@ -1021,7 +999,7 @@ export default function PontoAdminModal({
                         </div>
                       ))}
                     </div>
-                  ) : funcSel?.hora_entrada ? (
+                  ) : funcSel?.hora_entrada && temEscalaFixa(funcSel.dias_trabalho) ? (
                     <div className={`grid gap-2 rounded-xl border p-3 ${itemBorda}`}>
                       <div className="flex items-center justify-between text-xs font-black">
                         <span>Pontualidade na entrada</span>
@@ -1037,6 +1015,8 @@ export default function PontoAdminModal({
                       </div>
                       <p className={`text-[10px] ${textMuted}`}>Horário previsto: {funcSel.hora_entrada.slice(0, 5)} às {funcSel.hora_saida ? funcSel.hora_saida.slice(0, 5) : '—'} (tolerância {TOLERANCIA_MIN} min)</p>
                     </div>
+                  ) : !temEscalaFixa(funcSel?.dias_trabalho) ? (
+                    <p className={`rounded-xl border p-3 text-[11px] ${itemBorda} ${textMuted}`}>Escala variável — pontualidade, atrasos e faltas não são avaliados automaticamente.</p>
                   ) : (
                     <p className={`rounded-xl border p-3 text-[11px] ${itemBorda} ${textMuted}`}>Sem horário previsto cadastrado — a pontualidade não pode ser avaliada. Edite na lista de funcionários.</p>
                   )}

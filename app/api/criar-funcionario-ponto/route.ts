@@ -52,7 +52,7 @@ export async function POST(request: Request) {
     const horaSaida = /^\d{2}:\d{2}$/.test(String(corpo.horaSaida || '')) ? String(corpo.horaSaida) : null;
     const diasTrabalho = Array.isArray(corpo.diasTrabalho)
       ? Array.from(new Set(corpo.diasTrabalho.filter((n: unknown) => Number.isInteger(n) && (n as number) >= 0 && (n as number) <= 6))).sort()
-      : [1, 2, 3, 4, 5];
+      : [];
     // O login do funcionário de ponto é sempre o CPF (só dígitos).
     const login = cpf;
 

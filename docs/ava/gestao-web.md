@@ -1,8 +1,8 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.6.0.63 -->
+<!-- ava-version: 1.6.0.65 -->
 
-> Revisão 1.6.0.63: sem impacto operacional na Gestão Web; ajuste visual restrito aos controles da Gestão Mobile.
+> Revisão 1.6.0.65: funcionários do Controle de Ponto são inativados sem apagar seu histórico.
 
 ## Escopo
 
@@ -41,7 +41,12 @@ ou `/ponto`.
 - O sino reúne avisos. Push depende da permissão e infraestrutura; a Ava não
   garante entrega sem confirmação.
 - Funcionários do Controle de Ponto usam `/ponto`; configurações e relatórios
-  ficam para gestores/autorizados.
+  ficam para gestores/autorizados. Se o cadastro do funcionário ficar sem dias
+  de trabalho marcados, a escala é variável: ele pode registrar ponto em qualquer
+  dia, mas faltas, atrasos e lembretes automáticos dependem de uma escala fixa
+  programada. Para encerrar o acesso, desmarque **Funcionário ativo** e salve:
+  login e novas marcações ficam bloqueados, mas relatórios e histórico são
+  preservados. A reativação usa o mesmo controle.
 - **Recebimentos Presenciais** é instalado em **Menu > Módulos**. Depois de
   instalado, Gestor Master e Administrador usam **Menu > Recebimentos** para
   cadastrar empresas atendidas, pontos de cobrança e colaboradores, além de

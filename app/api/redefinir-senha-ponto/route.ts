@@ -56,10 +56,11 @@ export async function POST(request: Request) {
       .eq('empresa_id', empresaId)
       .eq('user_id', funcionarioUserId)
       .eq('perfil', 'funcionario_ponto')
+      .eq('status', 'ativo')
       .maybeSingle();
 
     if (erroAlvo) return respostaErro('Não foi possível validar o funcionário.', 500);
-    if (!alvo) return respostaErro('Funcionário não encontrado nesta empresa.', 404);
+    if (!alvo) return respostaErro('Funcionário ativo não encontrado nesta empresa.', 404);
 
     const { error: erroSenha } = await supabaseAdmin.auth.admin.updateUserById(funcionarioUserId, { password: novaSenha });
     if (erroSenha) {

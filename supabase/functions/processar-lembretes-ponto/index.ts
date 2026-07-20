@@ -68,6 +68,7 @@ Deno.serve(async () => {
     const elegiveis = ((funcionarios || []) as Funcionario[]).filter((funcionario) => (
       funcionario.user_id
       && Array.isArray(funcionario.dias_trabalho)
+      && funcionario.dias_trabalho.length > 0
       && funcionario.dias_trabalho.includes(now.weekday)
     ));
     if (!elegiveis.length) return json({ ok: true, processados: 0, enviados: 0 });

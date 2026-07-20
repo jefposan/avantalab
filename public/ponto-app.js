@@ -284,8 +284,12 @@
   async function pontoAcessoAtivo(empresaId) {
     if (!empresaId) return true;
     try {
+      var sessao = await db.auth.getSession();
+      var token = sessao && sessao.data && sessao.data.session && sessao.data.session.access_token;
+      var headers = { 'Content-Type': 'application/json' };
+      if (token) headers.Authorization = 'Bearer ' + token;
       var resp = await fetch('/api/ponto/verificar-acesso', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ empresaId: empresaId }),
+        method: 'POST', headers: headers, body: JSON.stringify({ empresaId: empresaId }),
       });
       if (!resp.ok) return true;
       var r = await resp.json();
@@ -315,18 +319,24 @@
     try {
       // Carrega tudo em paralelo (mais rápido e evita travar em sequência).
       var res = await Promise.all([
-        db.from('ponto_funcionarios').select('nome, cpf, cargo, dias_trabalho, hora_entrada, hora_saida, empresa_id').eq('user_id', uid).maybeSingle(),
+        db.from('ponto_funcionarios').select('nome, cpf, cargo, ativo, dias_trabalho, hora_entrada, hora_saida, empresa_id').eq('user_id', uid).maybeSingle(),
         empresaId ? db.from('empresas').select('id, nome').eq('id', empresaId).maybeSingle() : vazio,
         empresaId ? db.from('ponto_config').select('latitude, longitude, raio_m').eq('empresa_id', empresaId).maybeSingle() : vazio,
         db.from('ponto_registros').select('id, tipo, registrado_em').eq('user_id', uid).eq('dia', diaPontoHoje()).order('registrado_em', { ascending: true }),
       ]);
       var f = res[0], emp = res[1], cfg = res[2], hoje = res[3];
+      if (!f || f.error || !f.data || f.data.ativo !== true) {
+        await bloquearPonto('Seu acesso ao Controle de Ponto está inativo. Fale com o gestor.');
+        return;
+      }
       // Bloqueio de sessão já aberta ("Manter conectado"): se o gestor removeu o
       // módulo, encerra a sessão em vez de carregar a tela de bater ponto.
       var empresaIdCheck = (f && f.data && f.data.empresa_id) || empresaId;
       if (!(await pontoAcessoAtivo(empresaIdCheck))) {
         await bloquearPonto(state.pontoAcessoMotivo === 'assinatura'
           ? 'A assinatura da empresa precisa ser regularizada. Fale com o gestor.'
+          : state.pontoAcessoMotivo === 'funcionario'
+            ? 'Seu acesso ao Controle de Ponto está inativo. Fale com o gestor.'
           : 'O controle de ponto foi desativado para a sua empresa. Fale com o gestor.');
         return;
       }

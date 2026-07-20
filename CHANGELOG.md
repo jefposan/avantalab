@@ -1,5 +1,18 @@
 # Changelog
 
+## 1.6.0.65 - 2026-07-19
+
+- Controle de Ponto substitui a exclusão de funcionários por inativação segura:
+  bloqueia login e novas marcações, preserva relatórios e histórico, e o banco
+  passa a recusar exclusões diretas de registros, vínculos e empresas com ponto.
+
+## 1.6.0.64 - 2026-07-19
+
+- Controle de Ponto passa a tratar funcionário sem dias de trabalho marcados como
+  **Escala variável**: pode registrar ponto em qualquer dia, não entra nos
+  cálculos automáticos de faltas/atrasos e não recebe lembretes de ponto sem
+  escala programada.
+
 ## 1.6.0.63 - 2026-07-19
 
 - Gestão Mobile passa a usar traços geométricos centralizados nos controles de

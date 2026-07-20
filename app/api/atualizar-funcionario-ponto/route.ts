@@ -50,7 +50,7 @@ export async function POST(request: Request) {
     const horaSaida = /^\d{2}:\d{2}$/.test(String(corpo.horaSaida || '')) ? String(corpo.horaSaida) : null;
     const diasTrabalho = Array.isArray(corpo.diasTrabalho)
       ? Array.from(new Set(corpo.diasTrabalho.filter((n: unknown) => Number.isInteger(n) && (n as number) >= 0 && (n as number) <= 6))).sort()
-      : [1, 2, 3, 4, 5];
+      : [];
 
     if (!empresaId) return respostaErro('Empresa não informada.');
     if (!funcionarioUserId) return respostaErro('Funcionário não informado.');
@@ -74,7 +74,7 @@ export async function POST(request: Request) {
     // Funcionário precisa pertencer à empresa
     const { data: atual, error: erroAtual } = await supabaseAdmin
       .from('ponto_funcionarios')
-      .select('id, login, cpf')
+      .select('id, login, cpf, ativo')
       .eq('empresa_id', empresaId)
       .eq('user_id', funcionarioUserId)
       .maybeSingle();
@@ -113,17 +113,6 @@ export async function POST(request: Request) {
         console.error('Erro ao atualizar acesso (CPF) do funcionário:', erroAuth);
         return respostaErro('Não foi possível atualizar o CPF/login do funcionário.', 500);
       }
-      await supabaseAdmin
-        .from('usuarios_empresa')
-        .update({ login: cpf, email: novoEmail, nome, atualizado_em: new Date().toISOString() })
-        .eq('empresa_id', empresaId)
-        .eq('user_id', funcionarioUserId);
-    } else {
-      await supabaseAdmin
-        .from('usuarios_empresa')
-        .update({ nome, atualizado_em: new Date().toISOString() })
-        .eq('empresa_id', empresaId)
-        .eq('user_id', funcionarioUserId);
     }
 
     const atualizacao: Record<string, unknown> = {
@@ -131,18 +120,62 @@ export async function POST(request: Request) {
     };
     if (cpfMudou) { atualizacao.cpf = cpf; atualizacao.login = cpf; }
 
+    // A inativação bloqueia o login no Auth e mantém os vínculos e registros.
+    // A reativação desfaz o bloqueio sem recriar a identidade do funcionário.
+    const mudouAtivo = atual.ativo !== ativo;
+    if (mudouAtivo) {
+      const { error: erroAuth } = await supabaseAdmin.auth.admin.updateUserById(funcionarioUserId, {
+        ban_duration: ativo ? 'none' : '876000h',
+      });
+      if (erroAuth) {
+        console.error('Erro ao atualizar o acesso do funcionário de ponto:', erroAuth);
+        return respostaErro('Não foi possível atualizar o acesso do funcionário.', 500);
+      }
+    }
+
     const { error: erroFunc } = await supabaseAdmin
       .from('ponto_funcionarios')
       .update(atualizacao)
       .eq('empresa_id', empresaId)
       .eq('user_id', funcionarioUserId);
     if (erroFunc) {
+      if (mudouAtivo) {
+        await supabaseAdmin.auth.admin.updateUserById(funcionarioUserId, {
+          ban_duration: atual.ativo ? 'none' : '876000h',
+        });
+      }
       console.error('Erro ao atualizar funcionário de ponto:', erroFunc);
       const m = String(erroFunc.message || erroFunc.code || '').toLowerCase();
       if (erroFunc.code === '23505' || m.includes('duplicate') || m.includes('unique')) {
         return respostaErro('Este CPF já está cadastrado no sistema. Use outro.');
       }
       return respostaErro('Não foi possível salvar as alterações.', 500);
+    }
+
+    const atualizacaoVinculo: Record<string, unknown> = {
+      nome,
+      status: ativo ? 'ativo' : 'inativo',
+      atualizado_em: new Date().toISOString(),
+    };
+    if (cpfMudou) {
+      atualizacaoVinculo.login = cpf;
+      atualizacaoVinculo.email = `${cpf}+${empresaId}@usuarios.avantalab.local`;
+    }
+    const { error: erroVinculo } = await supabaseAdmin
+      .from('usuarios_empresa')
+      .update(atualizacaoVinculo)
+      .eq('empresa_id', empresaId)
+      .eq('user_id', funcionarioUserId)
+      .eq('perfil', 'funcionario_ponto');
+    if (erroVinculo) {
+      await supabaseAdmin.from('ponto_funcionarios').update({ ativo: atual.ativo }).eq('id', atual.id);
+      if (mudouAtivo) {
+        await supabaseAdmin.auth.admin.updateUserById(funcionarioUserId, {
+          ban_duration: atual.ativo ? 'none' : '876000h',
+        });
+      }
+      console.error('Erro ao atualizar o vínculo do funcionário de ponto:', erroVinculo);
+      return respostaErro('Não foi possível atualizar o acesso do funcionário.', 500);
     }
 
     return NextResponse.json({ erro: false });

@@ -1,8 +1,8 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.6.0.63 -->
+<!-- ava-version: 1.6.0.65 -->
 
-> Revisão 1.6.0.63: sem impacto operacional na Gestão Mobile; controles de fechar e Lançar receberam somente ajuste visual multiplataforma.
+> Revisão 1.6.0.65: inativação de funcionário de ponto preserva o histórico e bloqueia o acesso.
 
 ## Escopo
 
@@ -72,6 +72,10 @@ deve usar os nomes do menu e da barra inferior do celular.
 - Perfil, dados cadastrais, backup e restauração ficam nas áreas de perfil/menu.
 - A senha é da conta AvantaLab e pode afetar outros ambientes autenticados com o
   mesmo login.
-- Controle de Ponto para funcionários é em `/ponto`, não no app financeiro.
+- Controle de Ponto para funcionários é em `/ponto`, não no app financeiro. Sem
+  dias de trabalho marcados, o funcionário fica em Escala variável: pode bater
+  ponto em qualquer dia, mas não entra nos cálculos automáticos de faltas,
+  atrasos ou lembretes de ponto. A inativação é feita na Gestão Web e bloqueia
+  login e novas marcações sem apagar o histórico.
 - A Ava explica, mas não altera dados, não revela informações de outros perfis e
   não garante uma sincronização sem confirmação no contexto.

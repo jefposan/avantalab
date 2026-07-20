@@ -2502,6 +2502,7 @@
     var funcionariosHoje = (respostas[0].data || []).filter(function (funcionario) {
       return funcionario.user_id
         && Array.isArray(funcionario.dias_trabalho)
+        && funcionario.dias_trabalho.length > 0
         && funcionario.dias_trabalho.indexOf(periodo.diaSemana) >= 0;
     });
     var registrosPorUsuario = {};

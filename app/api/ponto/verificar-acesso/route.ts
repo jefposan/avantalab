@@ -41,6 +41,25 @@ export async function POST(request: Request) {
 
     if (!data) return NextResponse.json({ ativo: false, motivo: 'modulo' });
 
+    const authHeader = request.headers.get('authorization');
+    if (authHeader) {
+      const supabaseUsuario = createClient(supabaseUrl, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '', {
+        global: { headers: { Authorization: authHeader } },
+      });
+      const { data: sessao } = await supabaseUsuario.auth.getUser();
+      const funcionarioUserId = sessao.user?.id;
+      if (funcionarioUserId) {
+        const { data: funcionario, error: erroFuncionario } = await supabaseAdmin
+          .from('ponto_funcionarios')
+          .select('id')
+          .eq('empresa_id', empresaId)
+          .eq('user_id', funcionarioUserId)
+          .eq('ativo', true)
+          .maybeSingle();
+        if (erroFuncionario || !funcionario) return NextResponse.json({ ativo: false, motivo: 'funcionario' });
+      }
+    }
+
     if (COBRANCA_ATIVA) {
       const estado = await resolverEstadoAcesso(empresaId);
       if (estado?.tipoPerfil === 'empresa' && !assinaturaVigente(estado)) {

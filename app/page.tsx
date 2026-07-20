@@ -2461,7 +2461,8 @@ useEffect(() => {
         saida: 'Saída',
       };
       const resumo = (funcionariosResp.data || []).reduce<ItemResumoPonto[]>((itens, funcionario) => {
-        if (!funcionario.user_id || !Array.isArray(funcionario.dias_trabalho) || !funcionario.dias_trabalho.includes(diaSemana)) return itens;
+        const temEscalaFixa = Array.isArray(funcionario.dias_trabalho) && funcionario.dias_trabalho.length > 0;
+        if (!funcionario.user_id || !temEscalaFixa || !funcionario.dias_trabalho.includes(diaSemana)) return itens;
         const entradaPrevista = minutosHorario(funcionario.hora_entrada);
         const saidaPrevista = minutosHorario(funcionario.hora_saida);
         const registros = registrosPorUsuario.get(funcionario.user_id) || [];
@@ -2504,6 +2505,7 @@ useEffect(() => {
       setPontoFuncionariosHoje((funcionariosResp.data || []).filter((funcionario) => (
         funcionario.user_id
         && Array.isArray(funcionario.dias_trabalho)
+        && funcionario.dias_trabalho.length > 0
         && funcionario.dias_trabalho.includes(diaSemana)
       )).length);
       setPontoResumoDia(resumo);
@@ -2643,26 +2645,6 @@ useEffect(() => {
       return { erro: false };
     } catch {
       return { erro: true, mensagem: 'Erro ao salvar o funcionário.' };
-    }
-  }
-
-  async function excluirFuncionarioPonto(funcionarioUserId: string) {
-    if (!empresaId) return { erro: true, mensagem: 'Perfil não identificado.' };
-    try {
-      const { data: sessao } = await supabase.auth.getSession();
-      const token = sessao.session?.access_token;
-      if (!token) return { erro: true, mensagem: 'Sessão não encontrada. Faça login novamente.' };
-      const resp = await fetch('/api/excluir-funcionario-ponto', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ empresaId, funcionarioUserId }),
-      });
-      const r = await resp.json();
-      if (!resp.ok || r.erro) return { erro: true, mensagem: r.mensagem || 'Não foi possível excluir.' };
-      await carregarFuncionariosPonto();
-      return { erro: false };
-    } catch {
-      return { erro: true, mensagem: 'Erro ao excluir o funcionário.' };
     }
   }
 
@@ -7454,7 +7436,6 @@ if (validacaoTelefoneObrigatoria) {
   carregando={pontoFuncCarregando}
   onCriar={criarFuncionarioPonto}
   onAtualizar={atualizarFuncionarioPonto}
-  onExcluir={excluirFuncionarioPonto}
   onRedefinirSenha={redefinirSenhaPonto}
   config={pontoConfig}
   onSalvarConfig={salvarPontoConfig}

@@ -42,9 +42,10 @@ export async function POST(request: Request) {
       .in('perfil', ['gestor_master', 'administrador'])
       .maybeSingle();
     if (erroPermissao) return respostaErro('Não foi possível validar sua permissão.', 500);
-    if (!permissao) return respostaErro('Você não tem permissão para excluir funcionários.', 403);
+    if (!permissao) return respostaErro('Você não tem permissão para inativar funcionários.', 403);
 
-    // Confirma que o alvo é um funcionário de ponto desta empresa
+    // Mantido apenas como proteção para integrações antigas: a exclusão física
+    // foi descontinuada para preservar o histórico de ponto.
     const { data: alvo, error: erroAlvo } = await supabaseAdmin
       .from('usuarios_empresa')
       .select('id')
@@ -55,20 +56,9 @@ export async function POST(request: Request) {
     if (erroAlvo) return respostaErro('Não foi possível localizar o funcionário.', 500);
     if (!alvo) return respostaErro('Funcionário não encontrado nesta empresa.', 404);
 
-    // Remove dados do funcionário e o vínculo (os registros de ponto são imutáveis e
-    // têm ON DELETE CASCADE pelo user_id, então saem junto ao apagar o usuário auth).
-    await supabaseAdmin.from('ponto_funcionarios').delete().eq('empresa_id', empresaId).eq('user_id', funcionarioUserId);
-    await supabaseAdmin.from('usuarios_empresa').delete().eq('empresa_id', empresaId).eq('user_id', funcionarioUserId);
-
-    const { error: erroAuth } = await supabaseAdmin.auth.admin.deleteUser(funcionarioUserId);
-    if (erroAuth) {
-      console.error('Erro ao excluir acesso do funcionário de ponto:', erroAuth);
-      // vínculo e dados já saíram; o acesso pode ser limpo depois, não bloqueia
-    }
-
-    return NextResponse.json({ erro: false });
+    return respostaErro('A exclusão de funcionários de ponto foi desativada. Use a inativação para preservar o histórico.', 409);
   } catch (error) {
-    console.error('Erro ao excluir funcionário de ponto:', error);
-    return respostaErro('Erro inesperado ao excluir.', 500);
+    console.error('Erro ao proteger exclusão de funcionário de ponto:', error);
+    return respostaErro('Erro inesperado ao proteger o histórico.', 500);
   }
 }
