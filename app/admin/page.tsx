@@ -13,7 +13,6 @@ type CertificadoRepP = {
   impressaoSha256: string;
   criadoEm: string;
 };
-type EmpresaRepP = { id: string; nome: string };
 
 type ConsumoItem = {
   nome: string;
@@ -303,11 +302,6 @@ export default function AdminPage() {
   const [senhaRepP, setSenhaRepP] = useState('');
   const [modoRepP, setModoRepP] = useState<'homologacao' | 'producao'>('homologacao');
   const [enviandoCertificadoRepP, setEnviandoCertificadoRepP] = useState(false);
-  const [empresasRepP, setEmpresasRepP] = useState<EmpresaRepP[]>([]);
-  const [empresaAfd, setEmpresaAfd] = useState('');
-  const [inicioAfd, setInicioAfd] = useState(() => new Date(new Date().setDate(new Date().getDate() - 30)).toISOString().slice(0, 10));
-  const [fimAfd, setFimAfd] = useState(() => new Date().toISOString().slice(0, 10));
-  const [gerandoAfd, setGerandoAfd] = useState(false);
   const [registroInpiRepP, setRegistroInpiRepP] = useState('');
   const [documentoDesenvolvedorRepP, setDocumentoDesenvolvedorRepP] = useState('');
 
@@ -548,9 +542,7 @@ export default function AdminPage() {
     if (response.ok && !data?.erro) { setCertificadoRepP(data.certificado || null); setRegistroInpiRepP(data.configuracao?.registro_inpi || ''); setDocumentoDesenvolvedorRepP(data.configuracao?.documento_desenvolvedor || ''); }
   };
 
-  const carregarEmpresasRepP = async (value = token) => { const resposta = await fetch('/api/admin-rep-p-empresas', { headers: authHeaders(value) }); const dados = await resposta.json().catch(() => null); if (resposta.ok && !dados?.erro) { setEmpresasRepP(dados.empresas || []); if (!empresaAfd && dados.empresas?.[0]) setEmpresaAfd(dados.empresas[0].id); } };
-  const salvarConfiguracaoAfd = async () => { try { const resposta = await fetch('/api/admin-rep-p-certificado', { method: 'PATCH', headers: { ...authHeaders(), 'Content-Type': 'application/json' }, body: JSON.stringify({ registroInpi: registroInpiRepP, documentoDesenvolvedor: documentoDesenvolvedorRepP }) }); const dados = await resposta.json().catch(() => null); if (!resposta.ok || dados?.erro) throw new Error(dados?.mensagem || 'Não foi possível salvar.'); setNotice('Dados do AFD guardados.'); } catch (e) { setError(e instanceof Error ? e.message : 'Não foi possível salvar.'); } };
-  const baixarAfd = async () => { if (!empresaAfd) { setError('Selecione a empresa.'); return; } setGerandoAfd(true); setError(''); try { const resposta = await fetch(`/api/admin-rep-p-afd?empresaId=${encodeURIComponent(empresaAfd)}&inicio=${inicioAfd}&fim=${fimAfd}`, { headers: authHeaders() }); if (!resposta.ok) { const dados = await resposta.json().catch(() => null); throw new Error(dados?.mensagem || 'Não foi possível gerar o AFD.'); } const blob = await resposta.blob(); const url = URL.createObjectURL(blob); const link = document.createElement('a'); link.href = url; link.download = `AFD-${inicioAfd}-${fimAfd}.zip`; document.body.appendChild(link); link.click(); link.remove(); URL.revokeObjectURL(url); setNotice('AFD e assinatura .p7s baixados.'); } catch (e) { setError(e instanceof Error ? e.message : 'Não foi possível gerar o AFD.'); } finally { setGerandoAfd(false); } };
+  const salvarRegistroInpi = async () => { try { const resposta = await fetch('/api/admin-rep-p-certificado', { method: 'PATCH', headers: { ...authHeaders(), 'Content-Type': 'application/json' }, body: JSON.stringify({ registroInpi: registroInpiRepP, documentoDesenvolvedor: documentoDesenvolvedorRepP }) }); const dados = await resposta.json().catch(() => null); if (!resposta.ok || dados?.erro) throw new Error(dados?.mensagem || 'Não foi possível salvar.'); setNotice('Registro INPI guardado.'); } catch (e) { setError(e instanceof Error ? e.message : 'Não foi possível salvar.'); } };
 
   const salvarCertificadoRepP = async () => {
     if (!arquivoRepP) { setError('Selecione o certificado A1 .pfx ou .p12.'); return; }
@@ -597,7 +589,7 @@ export default function AdminPage() {
       }
       setFeedbacks(data.feedbacks || []);
       setAuthorized(true);
-      await Promise.allSettled([loadBroadcasts(cleanToken), loadConteudosVendas(cleanToken), loadSettings(cleanToken), loadCupons(cleanToken), carregarCertificadoRepP(cleanToken), carregarEmpresasRepP(cleanToken), carregarUsuariosAtivosSistema()]);
+      await Promise.allSettled([loadBroadcasts(cleanToken), loadConteudosVendas(cleanToken), loadSettings(cleanToken), loadCupons(cleanToken), carregarCertificadoRepP(cleanToken), carregarUsuariosAtivosSistema()]);
     } catch {
       setAuthorized(false);
       setError('Erro inesperado ao acessar o painel.');
@@ -1039,18 +1031,11 @@ export default function AdminPage() {
             </section>
             <section className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm lg:col-span-2">
               <span className="flex h-9 w-9 items-center justify-center rounded-md bg-cyan-50 text-cyan-800"><Icon name="archive" /></span>
-              <h2 className="mt-3 text-base font-black text-slate-950">Arquivo Fonte de Dados — AFD</h2>
-              <p className="mt-1 text-xs leading-relaxed text-slate-500">Gera o AFD do REP-P a partir da ARP, acompanhado da assinatura CAdES destacada (.p7s). Em homologação, o arquivo é identificado como teste e não possui validade legal.</p>
-              <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+              <h2 className="mt-3 text-base font-black text-slate-950">Registro do software no INPI</h2>
+              <p className="mt-1 text-xs leading-relaxed text-slate-500">Informe o número do certificado de registro do programa de computador. A emissão e o histórico de AFD ficam disponíveis somente para a empresa, em Controle de Ponto &gt; Conformidade.</p>
+              <div className="mt-4 grid gap-3 md:grid-cols-[minmax(0,1fr)_auto]">
                 <label className="block text-[10px] font-black uppercase text-slate-500">Registro INPI<input value={registroInpiRepP} onChange={(event) => setRegistroInpiRepP(event.target.value.replace(/\D/g, '').slice(0, 17))} className="mt-1 h-10 w-full rounded-md border border-slate-300 px-3 text-sm font-bold outline-none focus:border-cyan-700" inputMode="numeric" /></label>
-                <label className="block text-[10px] font-black uppercase text-slate-500">CPF/CNPJ do desenvolvedor<input value={documentoDesenvolvedorRepP} onChange={(event) => setDocumentoDesenvolvedorRepP(event.target.value.replace(/\D/g, '').slice(0, 14))} className="mt-1 h-10 w-full rounded-md border border-slate-300 px-3 text-sm font-bold outline-none focus:border-cyan-700" inputMode="numeric" /></label>
-                <div className="flex items-end"><button type="button" onClick={() => void salvarConfiguracaoAfd()} className="h-10 w-full rounded-md border border-cyan-200 text-xs font-black uppercase text-cyan-800 hover:bg-cyan-50">Guardar dados do AFD</button></div>
-              </div>
-              <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-                <label className="block text-[10px] font-black uppercase text-slate-500">Empresa<select value={empresaAfd} onChange={(event) => setEmpresaAfd(event.target.value)} className="mt-1 h-10 w-full rounded-md border border-slate-300 bg-white px-3 text-sm font-bold outline-none focus:border-cyan-700">{empresasRepP.map((empresa) => <option key={empresa.id} value={empresa.id}>{empresa.nome}</option>)}</select></label>
-                <label className="block text-[10px] font-black uppercase text-slate-500">Data inicial<input type="date" value={inicioAfd} onChange={(event) => setInicioAfd(event.target.value)} className="mt-1 h-10 w-full rounded-md border border-slate-300 px-3 text-sm font-bold outline-none focus:border-cyan-700" /></label>
-                <label className="block text-[10px] font-black uppercase text-slate-500">Data final<input type="date" value={fimAfd} onChange={(event) => setFimAfd(event.target.value)} className="mt-1 h-10 w-full rounded-md border border-slate-300 px-3 text-sm font-bold outline-none focus:border-cyan-700" /></label>
-                <div className="flex items-end"><button type="button" onClick={() => void baixarAfd()} disabled={gerandoAfd || !empresaAfd} className="h-10 w-full rounded-md bg-cyan-700 text-xs font-black uppercase text-white hover:bg-cyan-800 disabled:opacity-40">{gerandoAfd ? 'Gerando...' : 'Baixar AFD + .p7s'}</button></div>
+                <div className="flex items-end"><button type="button" onClick={() => void salvarRegistroInpi()} className="h-10 w-full rounded-md border border-cyan-200 px-4 text-xs font-black uppercase text-cyan-800 hover:bg-cyan-50">Guardar registro INPI</button></div>
               </div>
             </section>
           </div>}
