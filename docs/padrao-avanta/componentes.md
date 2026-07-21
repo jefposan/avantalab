@@ -47,6 +47,23 @@ divisor ou agrupamento sem identidade própria.
 - Tabela fornece cabeçalho, vazio, carregamento e comportamento responsivo.
 - Modal fornece título, fechamento acessível, foco inicial e restauração do foco.
 
+### Botão de próxima rolagem
+
+- Quando o usuário solicitar um botão circular para avançar a rolagem, reutilizar
+  `app/components/BotaoProximoScroll.tsx`; não recriar uma variação local.
+- Padrão visual: círculo translúcido de 40×40 px, com área real de toque de
+  44×44 px, seta SVG geométrica centralizada e posição central no limite
+  inferior da viewport.
+- Enquanto a página ou painel rola, o botão desaparece. Após 180 ms sem novo
+  movimento, retorna com fade-in. Ele some ao chegar ao final e reaparece ao
+  haver conteúdo abaixo.
+- Cada toque avança aproximadamente 84% da área visível e o último toque vai ao
+  fim. Em painéis com rolagem própria, informar `scrollContainerRef`.
+- O círculo realiza um salto leve e espaçado para indicar a ação. A animação e
+  as transições são removidas quando o aparelho solicita redução de movimento.
+- Use `distanciaInferior` somente quando um rodapé fixo exigir afastamento
+  adicional. Preserve o padrão visual e o rótulo acessível.
+
 ## Estados assíncronos
 
 - Desabilitar submissão duplicada e indicar ação em andamento.

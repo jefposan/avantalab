@@ -1,9 +1,17 @@
+import CapacitorAppSetup from './components/CapacitorAppSetup';
 import type { Metadata } from "next";
 import "./globals.css";
 import { inter } from "./lib/fonts";
 import WebPopupScrollLock from "./components/WebPopupScrollLock";
+import type { Viewport } from 'next';
 
 const shareImage = 'https://avantalab.com.br/images/avantalab-share-meta-safe-center-v2.jpg?v=20260717-01';
+
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  viewportFit: 'cover',
+};
 
 export const metadata: Metadata = {
   metadataBase: new URL('https://avantalab.com.br'),
@@ -62,6 +70,7 @@ export default function RootLayout({
       </head>
       <body className="typography-system min-h-full flex flex-col">
         <WebPopupScrollLock />
+        <CapacitorAppSetup />
         {children}
       </body>
     </html>

@@ -21,6 +21,11 @@ export async function POST(request: Request) {
       return NextResponse.json({ erro: true, mensagem: 'Empresa não informada.' }, { status: 400 });
     }
 
+    const authHeader = request.headers.get('authorization');
+    if (!authHeader) return NextResponse.json({ ativo: false, motivo: 'sessao' }, { status: 401 });
+    const supabaseUsuario = createClient(supabaseUrl, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '', { global: { headers: { Authorization: authHeader } } });
+    const { data: sessao } = await supabaseUsuario.auth.getUser();
+    if (!sessao.user) return NextResponse.json({ ativo: false, motivo: 'sessao' }, { status: 401 });
     const supabaseAdmin = createClient(supabaseUrl, supabaseServiceRoleKey);
 
     const { data, error } = await supabaseAdmin
@@ -33,32 +38,15 @@ export async function POST(request: Request) {
       .maybeSingle();
 
     if (error) {
-      // Em caso de erro de leitura, não bloqueia (fail-open) para evitar
-      // travar funcionários por instabilidade momentânea do banco.
       console.error('Erro ao verificar acesso ao ponto:', error);
-      return NextResponse.json({ ativo: true, indeterminado: true });
+      return NextResponse.json({ ativo: false, indeterminado: true }, { status: 503 });
     }
 
     if (!data) return NextResponse.json({ ativo: false, motivo: 'modulo' });
 
-    const authHeader = request.headers.get('authorization');
-    if (authHeader) {
-      const supabaseUsuario = createClient(supabaseUrl, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '', {
-        global: { headers: { Authorization: authHeader } },
-      });
-      const { data: sessao } = await supabaseUsuario.auth.getUser();
-      const funcionarioUserId = sessao.user?.id;
-      if (funcionarioUserId) {
-        const { data: funcionario, error: erroFuncionario } = await supabaseAdmin
-          .from('ponto_funcionarios')
-          .select('id')
-          .eq('empresa_id', empresaId)
-          .eq('user_id', funcionarioUserId)
-          .eq('ativo', true)
-          .maybeSingle();
-        if (erroFuncionario || !funcionario) return NextResponse.json({ ativo: false, motivo: 'funcionario' });
-      }
-    }
+    const { data: funcionario, error: erroFuncionario } = await supabaseAdmin
+      .from('ponto_funcionarios').select('id').eq('empresa_id', empresaId).eq('user_id', sessao.user.id).eq('ativo', true).maybeSingle();
+    if (erroFuncionario || !funcionario) return NextResponse.json({ ativo: false, motivo: 'funcionario' });
 
     if (COBRANCA_ATIVA) {
       const estado = await resolverEstadoAcesso(empresaId);
@@ -70,6 +58,6 @@ export async function POST(request: Request) {
     return NextResponse.json({ ativo: true });
   } catch (error) {
     console.error('Erro inesperado ao verificar acesso ao ponto:', error);
-    return NextResponse.json({ ativo: true, indeterminado: true });
+    return NextResponse.json({ ativo: false, indeterminado: true }, { status: 503 });
   }
 }

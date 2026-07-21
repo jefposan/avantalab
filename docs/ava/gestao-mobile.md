@@ -1,8 +1,9 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.6.0.84.01 -->
+<!-- ava-version: 1.6.0.87 -->
 
-> Revisão 1.6.0.84.01: sem impacto operacional no Gestão Mobile.
+> Revisão 1.6.0.87: sem impacto operacional no Gestão Mobile; tratamentos de
+> jornada e emissão do AEJ ficam na administração do ponto da Gestão Web.
 
 ## Escopo
 

@@ -1,9 +1,30 @@
 # Changelog
 
-## 1.6.0.84.01 - 2026-07-20
+## 1.6.0.87 - 2026-07-20
 
-- Gestão Web: a **Caixinha** passa a se adaptar ao perfil — permanece ativa no Pessoal e se apresenta como **Reserva financeira** no perfil Empresa, inicialmente disponível em Organizar blocos.
+- Controle de Ponto: a aba Tratamentos deixa de repetir o cadastro de jornada.
+  O AEJ usa o horário já definido no funcionário, preservando jornadas históricas
+  quando elas existirem.
 
+## 1.6.0.86 - 2026-07-20
+
+- Controle de Ponto: Tratamentos de jornada passam a usar eventos imutáveis,
+  cancelamento rastreável, validação de vínculo e comprovante obrigatório para abonos.
+- Banco de horas exige instrumento de referência, prazo de compensação, regra
+  vigente e respeita o limite de saldo configurado.
+- REP-P: a verificação de acesso deixa de operar em fail-open; o AFD respeita o
+  período consultado; o AEJ usa a jornada vigente em cada data e permanece em
+  **homologação** até o registro INPI e o certificado A1 ICP-Brasil de produção.
+
+## 1.6.0.85 - 2026-07-20
+
+- Controle de Ponto: a aba **Tratamentos** passa a receber comprovantes privados
+  de abono, registrar inclusões de marcação e preservar aprovação ou recusa com
+  motivo em uma trilha imutável.
+- Banco de horas passa a exigir regra vigente, calcular o saldo por funcionário
+  e registrar créditos e débitos no Espelho e no AEJ.
+- Conformidade REP-P inicia a geração técnica de AEJ v001 em homologação; não
+  representa validação jurídica, INPI ou cadeia ICP-Brasil concluídos.
 
 ## 1.6.0.84 - 2026-07-20
 

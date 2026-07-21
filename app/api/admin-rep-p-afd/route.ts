@@ -27,7 +27,7 @@ export async function GET(request: Request) {
     if (certificado.modo === 'producao' && new Date(certificado.validade_fim) < new Date()) return erro('O certificado de produção está vencido.', 409);
     const registros: Array<{ nsr: number; data_hora: string; criado_em: string; trabalhador_user_id: string; dados_registro: { dispositivo?: string } }> = [];
     for (let inicioPagina = 0; ; inicioPagina += 1000) {
-      const { data, error } = await db.from('ponto_arp').select('nsr, data_hora, criado_em, trabalhador_user_id, dados_registro').eq('empresa_id', empresaId).lte('data_hora', `${fim}T23:59:59.999-03:00`).order('nsr').range(inicioPagina, inicioPagina + 999);
+      const { data, error } = await db.from('ponto_arp').select('nsr, data_hora, criado_em, trabalhador_user_id, dados_registro').eq('empresa_id', empresaId).gte('data_hora', `${inicio}T00:00:00.000-03:00`).lte('data_hora', `${fim}T23:59:59.999-03:00`).order('nsr').range(inicioPagina, inicioPagina + 999);
       if (error) throw error; registros.push(...(data || []) as typeof registros); if (!data || data.length < 1000) break;
     }
     const ids = [...new Set(registros.map((registro) => registro.trabalhador_user_id))];
