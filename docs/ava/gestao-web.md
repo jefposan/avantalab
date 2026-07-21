@@ -1,8 +1,9 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.6.0.84.18 -->
+<!-- ava-version: 1.6.0.84.19 -->
 
-> Revisão 1.6.0.84.18: sem impacto operacional na Gestão Web.
+> Revisão 1.6.0.84.19: no `/admin`, a lista de **Perfis** apresenta a data do
+> último acesso efetivo dos usuários ativos vinculados a cada perfil.
 
 ## Escopo
 

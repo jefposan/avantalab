@@ -115,7 +115,46 @@ export async function GET(request: Request) {
       return compararNomes.compare(a.nome, b.nome);
     });
     const perfis = perfisOrdenados.slice(de, ate + 1);
-    return NextResponse.json({ erro: false, perfis, total: perfisFiltrados.length, pagina, porPagina });
+    const idsPerfisDaPagina = perfis.map((perfil) => perfil.id);
+    const { data: vinculos } = idsPerfisDaPagina.length
+      ? await db
+          .from('usuarios_empresa')
+          .select('empresa_id, user_id')
+          .in('empresa_id', idsPerfisDaPagina)
+          .eq('status', 'ativo')
+          .not('user_id', 'is', null)
+      : { data: [] as Array<{ empresa_id: string; user_id: string | null }> };
+    const idsUsuarios = Array.from(new Set((vinculos || []).map((vinculo) => vinculo.user_id).filter(Boolean))) as string[];
+    const ultimoAcessoPorUsuario = new Map<string, string>();
+
+    for (let inicio = 0; inicio < idsUsuarios.length; inicio += 10) {
+      await Promise.all(idsUsuarios.slice(inicio, inicio + 10).map(async (userId) => {
+        const { data, error: erroUsuario } = await db.auth.admin.getUserById(userId);
+        if (erroUsuario) {
+          console.error('Erro ao consultar último acesso do usuário:', erroUsuario);
+          return;
+        }
+        if (data.user?.last_sign_in_at) ultimoAcessoPorUsuario.set(userId, data.user.last_sign_in_at);
+      }));
+    }
+
+    const ultimoAcessoPorPerfil = new Map<string, string>();
+    (vinculos || []).forEach((vinculo) => {
+      if (!vinculo.user_id) return;
+      const ultimoAcesso = ultimoAcessoPorUsuario.get(vinculo.user_id);
+      const atual = ultimoAcessoPorPerfil.get(vinculo.empresa_id);
+      if (ultimoAcesso && (!atual || new Date(ultimoAcesso).getTime() > new Date(atual).getTime())) {
+        ultimoAcessoPorPerfil.set(vinculo.empresa_id, ultimoAcesso);
+      }
+    });
+
+    return NextResponse.json({
+      erro: false,
+      perfis: perfis.map((perfil) => ({ ...perfil, ultimo_acesso: ultimoAcessoPorPerfil.get(perfil.id) || null })),
+      total: perfisFiltrados.length,
+      pagina,
+      porPagina,
+    });
   } catch (error) {
     console.error('Erro ao buscar perfis:', error);
     return NextResponse.json({ erro: true, mensagem: 'Não foi possível buscar os perfis.' }, { status: 500 });

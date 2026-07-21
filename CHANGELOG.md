@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.6.0.84.19 - 2026-07-21
+
+- Administração: a ficha de cada perfil em **Perfis** passa a exibir a data do
+  último acesso efetivo de seus usuários ativos.
+
 ## 1.6.0.84.18 - 2026-07-21
 
 - Administração: o botão **Carregar / Buscar** em Perfis mantém a mesma largura
