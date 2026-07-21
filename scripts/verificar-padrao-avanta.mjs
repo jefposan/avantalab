@@ -46,6 +46,9 @@ if (manifesto) {
   if (!componentes.includes('Sem essa solicitação, não impor AvantaCard')) {
     falhas.push('A regra condicional de uso do AvantaCard não está documentada.');
   }
+  if (!componentes.includes('BotaoProximoScroll')) {
+    falhas.push('O componente oficial BotaoProximoScroll não está documentado.');
+  }
 }
 
 const agents = await ler('AGENTS.md');
@@ -63,7 +66,13 @@ for (const token of ['--av-font-family', '--av-font-weight-body', '--av-font-wei
   if (!globals.includes(token)) falhas.push(`Token tipográfico obrigatório ausente: ${token}`);
 }
 
-for (const arquivo of ['app/components/AvantaCard.tsx', 'app/components/AvantaCard.module.css', 'planejamento/padrao-avanta-card.md']) {
+for (const arquivo of [
+  'app/components/AvantaCard.tsx',
+  'app/components/AvantaCard.module.css',
+  'app/components/BotaoProximoScroll.tsx',
+  'app/components/BotaoProximoScroll.module.css',
+  'planejamento/padrao-avanta-card.md',
+]) {
   await ler(arquivo);
 }
 

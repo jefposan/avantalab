@@ -1,0 +1,1 @@
+import { trainings } from '../data/mockData'; import { DataTable, StatusBadge } from './RhUi'; export default function TrainingTable(){return <DataTable headers={['Treinamento','Categoria','Carga','Modalidade','Data','Validade','Inscritos','Concluídos','Status']} rows={trainings.map(t=>[...t.slice(0,8),<StatusBadge key="s" value={t[8]}/>])}/>}

@@ -1,5 +1,10 @@
 # Histórico do PADRÃO AVANTA
 
+## 1.2.0 - 2026-07-20
+
+- Adicionado o componente oficial `BotaoProximoScroll` para navegação de
+  rolagem, com especificação visual, acessibilidade e comportamento reutilizável.
+
 ## 1.1.0 - 2026-07-18
 
 - Incorporado formalmente o AvantaCard/AvantaShell como padrão especial de card.
