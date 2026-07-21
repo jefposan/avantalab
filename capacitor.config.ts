@@ -10,6 +10,11 @@ const config: CapacitorConfig = {
     cleartext: false,
   },
 
+  ios: {
+    // Faz o WKWebView respeitar a área segura do iPhone (Dynamic Island/notch).
+    contentInset: 'always',
+  },
+
   plugins: {
     StatusBar: {
       overlaysWebView: false,

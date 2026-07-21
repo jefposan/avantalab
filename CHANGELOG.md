@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.6.0.84.05 - 2026-07-21
+
+- Aplicativo iOS: o WebView passa a respeitar a área segura da tela, mantendo
+  a navegação da landing page abaixo da Dynamic Island e do notch.
+
 ## 1.6.0.84.04 - 2026-07-21
 
 - Aplicativo Android: desativa a camada gráfica acelerada somente na atividade

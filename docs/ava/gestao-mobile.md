@@ -1,8 +1,8 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.6.0.84.04 -->
+<!-- ava-version: 1.6.0.84.05 -->
 
-> Revisão 1.6.0.84.04: estabilização técnica da renderização do aplicativo Android;
+> Revisão 1.6.0.84.05: ajuste técnico da área segura no aplicativo iOS;
 > sem mudança nos caminhos operacionais orientados pela Ava.
 
 ## Escopo
