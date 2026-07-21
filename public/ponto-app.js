@@ -49,6 +49,8 @@
     verSenha: false,
     erro: '',
     entrando: false,
+    etapaEntrada: '',
+    tentativaEntrada: 0,
     carregando: false,
     toast: null,
     instalarInstrucao: false,
@@ -117,6 +119,51 @@
   function nomeEmpresa() { return (state.empresa && state.empresa.nome) || 'Empresa'; }
   function nomeFunc() { var f = state.funcionario || {}; var md = (state.usuario && state.usuario.user_metadata) || {}; return f.nome || md.nome || 'Funcionário'; }
 
+  function erroDePrazo(etapa) {
+    var erro = new Error('A conexão demorou mais que o normal ao ' + etapa + '.');
+    erro.codigo = 'PONTO_TIMEOUT';
+    return erro;
+  }
+
+  // Nenhuma etapa de acesso pode deixar a tela aguardando indefinidamente.
+  // O prazo não concede acesso: apenas devolve o usuário à tela de login para
+  // uma nova tentativa segura.
+  function comPrazo(promessa, ms, etapa) {
+    return new Promise(function (resolver, rejeitar) {
+      var concluido = false;
+      var temporizador = setTimeout(function () {
+        if (concluido) return;
+        concluido = true;
+        rejeitar(erroDePrazo(etapa));
+      }, ms);
+      Promise.resolve(promessa).then(function (resultado) {
+        if (concluido) return;
+        concluido = true;
+        clearTimeout(temporizador);
+        resolver(resultado);
+      }, function (erro) {
+        if (concluido) return;
+        concluido = true;
+        clearTimeout(temporizador);
+        rejeitar(erro);
+      });
+    });
+  }
+
+  async function buscarComPrazo(url, opcoes, ms, etapa) {
+    var controlador = typeof AbortController !== 'undefined' ? new AbortController() : null;
+    var opcoesComSinal = Object.assign({}, opcoes || {});
+    if (controlador) opcoesComSinal.signal = controlador.signal;
+    try {
+      return await comPrazo(fetch(url, opcoesComSinal), ms, etapa);
+    } catch (erro) {
+      // Não aborta após uma resposta válida: o corpo ainda será lido por json().
+      // Interrompe somente a requisição que realmente ultrapassou o prazo.
+      if (controlador) controlador.abort();
+      throw erro;
+    }
+  }
+
   function bind(id, fn) { var el = document.getElementById(id); if (el) el.addEventListener('click', fn); }
   function bindInput(id, fn) { var el = document.getElementById(id); if (el) el.addEventListener('input', fn); }
   function urlBase64ToUint8Array(base64String) {
@@ -130,7 +177,7 @@
 
   async function registroServiceWorkerPonto() {
     if (!('serviceWorker' in navigator)) return null;
-    try { return await navigator.serviceWorker.register('/ponto-sw.js?v=3', { scope: '/ponto' }); }
+    try { return await navigator.serviceWorker.register('/ponto-sw.js?v=4', { scope: '/ponto' }); }
     catch (e) { return null; }
   }
 
@@ -237,16 +284,18 @@
   // ---------- login ----------
   async function entrar() {
     if (state.entrando) return;
+    var tentativa = state.tentativaEntrada + 1;
+    state.tentativaEntrada = tentativa;
     var cpf = String(campo('ponto-cpf') || state.cpf).replace(/\D/g, '');
     var senha = campo('ponto-senha') || state.senha;
     state.cpf = cpf; state.senha = senha;
     if (!cpfValido(cpf)) { state.erro = 'CPF inválido. Confira os dígitos antes de continuar.'; render(); return; }
     if (!senha) { state.erro = 'Informe a senha.'; render(); return; }
-    state.entrando = true; state.erro = ''; render();
+    state.entrando = true; state.etapaEntrada = 'Validando acesso...'; state.erro = ''; render();
     try {
-      var resp = await fetch('/api/ponto/resolver-email', {
+      var resp = await buscarComPrazo('/api/ponto/resolver-email', {
         method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ cpf: cpf }),
-      });
+      }, 10000, 'validar o acesso');
       var r = await resp.json();
       if (r && r.bloqueado) {
         state.entrando = false;
@@ -256,15 +305,25 @@
       if (!resp.ok || r.erro || !r.email) {
         state.entrando = false; state.erro = 'CPF ou senha inválidos.'; render(); return;
       }
-      var login = await db.auth.signInWithPassword({ email: r.email, password: senha });
+      state.etapaEntrada = 'Confirmando senha...'; render();
+      var promessaLogin = db.auth.signInWithPassword({ email: r.email, password: senha });
+      // Se o prazo vencer, uma resposta tardia não pode manter uma sessão parcial.
+      promessaLogin.then(function () {
+        if (state.tentativaEntrada !== tentativa) { try { db.auth.signOut(); } catch (e) {} }
+      }).catch(function () {});
+      var login = await comPrazo(promessaLogin, 12000, 'confirmar a senha');
       if (login.error || !login.data.user) {
         state.entrando = false; state.erro = 'CPF ou senha inválidos.'; render(); return;
       }
       state.usuario = login.data.user; state.autenticado = true;
-      state.entrando = false; state.senha = ''; state.cpf = ''; state.erro = ''; state.verSenha = false;
-      await carregarTudo();
+      state.senha = ''; state.cpf = ''; state.erro = ''; state.verSenha = false;
+      state.etapaEntrada = 'Preparando dados do ponto...'; render();
+      await carregarTudo(tentativa);
     } catch (e) {
-      state.entrando = false; state.erro = 'Não foi possível entrar. Tente novamente.'; render();
+      if (state.tentativaEntrada !== tentativa) return;
+      await bloquearPonto(e && e.codigo === 'PONTO_TIMEOUT'
+        ? 'A conexão demorou mais que o normal. Confira a internet e tente novamente.'
+        : 'Não foi possível entrar. Tente novamente.');
     }
   }
 
@@ -273,7 +332,7 @@
     state.autenticado = false; state.usuario = null; state.empresa = null; state.funcionario = null;
     state.pontoConfig = null; state.pontoHoje = []; state.comprovante = null; state.view = 'bater';
     state.cpf = ''; state.senha = ''; state.verSenha = false; state.erro = '';
-    state.entrando = false; state.batendo = false; state.registros = []; state.periodo = 'dia';
+    state.entrando = false; state.etapaEntrada = ''; state.tentativaEntrada += 1; state.batendo = false; state.registros = []; state.periodo = 'dia';
     state.localizacaoAtual = null; state.localizacaoAtualizadaEm = 0; state.localizacaoAtualizando = false; state.localizacaoMsg = '';
     state.notificacoesAtivas = false; state.notificacoesAtualizando = false;
     render();
@@ -284,13 +343,13 @@
   async function pontoAcessoAtivo(empresaId) {
     if (!empresaId) return true;
     try {
-      var sessao = await db.auth.getSession();
+      var sessao = await comPrazo(db.auth.getSession(), 6000, 'confirmar a sessão');
       var token = sessao && sessao.data && sessao.data.session && sessao.data.session.access_token;
       var headers = { 'Content-Type': 'application/json' };
       if (token) headers.Authorization = 'Bearer ' + token;
-      var resp = await fetch('/api/ponto/verificar-acesso', {
+      var resp = await buscarComPrazo('/api/ponto/verificar-acesso', {
         method: 'POST', headers: headers, body: JSON.stringify({ empresaId: empresaId }),
-      });
+      }, 8000, 'verificar o módulo de ponto');
       if (!resp.ok) return true;
       var r = await resp.json();
       state.pontoAcessoMotivo = r && r.motivo ? r.motivo : '';
@@ -304,25 +363,26 @@
     state.autenticado = false; state.usuario = null; state.empresa = null; state.funcionario = null;
     state.pontoConfig = null; state.pontoHoje = []; state.comprovante = null; state.view = 'bater';
     state.cpf = ''; state.senha = ''; state.verSenha = false;
-    state.entrando = false; state.batendo = false; state.registros = []; state.periodo = 'dia';
+    state.entrando = false; state.etapaEntrada = ''; state.tentativaEntrada += 1; state.batendo = false; state.registros = []; state.periodo = 'dia';
     state.carregando = false; state.pronto = true;
     state.notificacoesAtivas = false; state.notificacoesAtualizando = false;
     state.erro = msg || 'O controle de ponto está indisponível para a sua empresa no momento. Fale com o gestor.';
     render();
   }
 
-  async function carregarTudo() {
+  async function carregarTudo(tentativa) {
     var uid = state.usuario.id;
     var md = state.usuario.user_metadata || {};
     var empresaId = md.empresa_id || null;
     var vazio = Promise.resolve({ data: null, error: null });
+    state.carregando = true;
     try {
       // Carrega tudo em paralelo (mais rápido e evita travar em sequência).
       var res = await Promise.all([
-        db.from('ponto_funcionarios').select('nome, cpf, cargo, ativo, dias_trabalho, hora_entrada, hora_saida, empresa_id').eq('user_id', uid).maybeSingle(),
-        empresaId ? db.from('empresas').select('id, nome').eq('id', empresaId).maybeSingle() : vazio,
-        empresaId ? db.from('ponto_config').select('latitude, longitude, raio_m').eq('empresa_id', empresaId).maybeSingle() : vazio,
-        db.from('ponto_registros').select('id, tipo, registrado_em').eq('user_id', uid).eq('dia', diaPontoHoje()).order('registrado_em', { ascending: true }),
+        comPrazo(db.from('ponto_funcionarios').select('nome, cpf, cargo, ativo, dias_trabalho, hora_entrada, hora_saida, empresa_id').eq('user_id', uid).maybeSingle(), 10000, 'carregar o cadastro do funcionário'),
+        empresaId ? comPrazo(db.from('empresas').select('id, nome').eq('id', empresaId).maybeSingle(), 10000, 'carregar a empresa') : vazio,
+        empresaId ? comPrazo(db.from('ponto_config').select('latitude, longitude, raio_m').eq('empresa_id', empresaId).maybeSingle(), 10000, 'carregar a configuração do ponto') : vazio,
+        comPrazo(db.from('ponto_registros').select('id, tipo, registrado_em').eq('user_id', uid).eq('dia', diaPontoHoje()).order('registrado_em', { ascending: true }), 10000, 'carregar os registros de hoje'),
       ]);
       var f = res[0], emp = res[1], cfg = res[2], hoje = res[3];
       if (!f || f.error || !f.data || f.data.ativo !== true) {
@@ -344,11 +404,21 @@
       if (emp && !emp.error && emp.data) state.empresa = emp.data;
       state.pontoConfig = (cfg && !cfg.error && cfg.data) ? cfg.data : null;
       if (hoje && !hoje.error) state.pontoHoje = hoje.data || [];
-      await verificarNotificacoesPonto();
+      // Notificações não são requisito para abrir o ponto; não podem atrasar o acesso.
+      await comPrazo(verificarNotificacoesPonto(), 5000, 'verificar notificações').catch(function (erro) {
+        console.warn('Notificações do ponto indisponíveis nesta entrada:', erro);
+      });
     } catch (e) {
       console.error('Erro ao carregar dados do ponto:', e);
+      if (tentativa == null || state.tentativaEntrada === tentativa) {
+        await bloquearPonto(e && e.codigo === 'PONTO_TIMEOUT'
+          ? 'Não foi possível preparar o ponto a tempo. Tente novamente.'
+          : 'Não foi possível preparar seu acesso ao ponto. Tente novamente.');
+      }
+      return;
     }
-    state.carregando = false; state.pronto = true; render();
+    if (tentativa != null && state.tentativaEntrada !== tentativa) return;
+    state.carregando = false; state.entrando = false; state.etapaEntrada = ''; state.pronto = true; render();
     autoAtivarLembretes();
   }
 
@@ -671,7 +741,7 @@
               '</div>' +
             '</label>' +
             (state.erro ? '<p class="text-xs font-bold text-red-600">' + escapeHtml(state.erro) + '</p>' : '') +
-            '<button id="ponto-entrar" type="button" ' + (state.entrando ? 'disabled' : '') + ' class="mt-1 h-12 w-full rounded-xl text-base font-black uppercase tracking-wide text-white shadow-lg disabled:opacity-60" style="background:linear-gradient(135deg,#003E73,#00A6C8)">' + (state.entrando ? 'Entrando...' : 'Entrar') + '</button>' +
+            '<button id="ponto-entrar" type="button" ' + (state.entrando ? 'disabled' : '') + ' class="mt-1 h-12 w-full rounded-xl text-base font-black uppercase tracking-wide text-white shadow-lg disabled:opacity-60" style="background:linear-gradient(135deg,#003E73,#00A6C8)">' + (state.entrando ? escapeHtml(state.etapaEntrada || 'Entrando...') : 'Entrar') + '</button>' +
           '</div>' +
         '</div>' +
         cardInstalarHtml() +
@@ -822,7 +892,7 @@
         '<div class="w-full max-w-xs rounded-3xl border border-white/40 bg-white/25 p-5 text-center text-slate-900 shadow-2xl backdrop-blur-xl">' +
           '<p class="text-xs font-black uppercase tracking-[0.24em] text-cyan-700">AvantaLab</p>' +
           '<h1 class="mt-2 text-xl font-black">Controle de Ponto</h1>' +
-          '<p class="mt-2 text-sm font-semibold text-slate-600">Preparando acesso...</p>' +
+          '<p class="mt-2 text-sm font-semibold text-slate-600" aria-live="polite">' + escapeHtml(state.etapaEntrada || 'Preparando acesso...') + '</p>' +
         '</div>' +
       '</section>'
     );
@@ -835,7 +905,7 @@
 
   function render() {
     var tela;
-    if (!state.pronto) tela = telaCarregandoPonto();
+    if (!state.pronto || (state.autenticado && state.entrando)) tela = telaCarregandoPonto();
     else if (!state.autenticado) tela = telaLogin();
     else tela = telaPonto();
     root.innerHTML = tela + toastHtml() + instrucaoInstalarHtml() + confirmacaoPontoHtml() + ajustesPontoHtml();
@@ -907,26 +977,20 @@
 
   // ---------- init ----------
   (async function init() {
-    // Watchdog: se o carregamento travar (rede), libera a tela em vez de ficar preso.
-    var watchdog = setTimeout(function () {
-      if (!state.pronto) { state.pronto = true; render(); }
-    }, 9000);
     try {
-      await registroServiceWorkerPonto();
-      var sess = await db.auth.getSession();
+      await comPrazo(registroServiceWorkerPonto(), 5000, 'preparar o aplicativo').catch(function () { return null; });
+      var sess = await comPrazo(db.auth.getSession(), 10000, 'restaurar a sessão');
       if (sess.data.session && sess.data.session.user) {
         var tipo = sess.data.session.user.user_metadata && sess.data.session.user.user_metadata.tipo;
         if (tipo === 'funcionario_ponto') {
-          state.usuario = sess.data.session.user; state.autenticado = true;
+          state.usuario = sess.data.session.user; state.autenticado = true; state.entrando = true; state.etapaEntrada = 'Restaurando acesso...';
           await carregarTudo();
-          clearTimeout(watchdog);
           return;
         }
         // sessão de outro tipo de usuário: encerra para não misturar
         try { await db.auth.signOut(); } catch (e) {}
       }
     } catch (e) {}
-    clearTimeout(watchdog);
     state.pronto = true; render();
   })();
 })();
