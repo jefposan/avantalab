@@ -1,8 +1,10 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.6.0.84.13 -->
+<!-- ava-version: 1.6.0.84.14 -->
 
-> Revisão 1.6.0.84.13: sem impacto operacional na Gestão Web.
+> Revisão 1.6.0.84.14: no `/admin`, em **Perfis > Filtros > Situação de
+> acesso**, **Data de criação** volta a ordenar a lista pelos perfis mais
+> recentes. O botão de ordem continua alternando apenas A/Z e Z/A.
 
 ## Escopo
 

@@ -46,7 +46,7 @@ type Perfil = {
 };
 type PerfilFiltro = 'todos' | 'com_acesso' | 'sem_acesso' | 'trial' | 'ativa' | 'cortesia' | 'inadimplente' | 'cancelada' | 'expirada';
 type PerfilTipoFiltro = 'todos' | 'empresa' | 'pessoal';
-type PerfilOrdem = 'nome_asc' | 'nome_desc';
+type PerfilOrdem = 'nome_asc' | 'nome_desc' | 'criado_em_desc' | 'criado_em_asc';
 
 const FILTROS_PERFIL: Array<{ id: PerfilFiltro; label: string }> = [
   { id: 'todos', label: 'Todos' },
@@ -903,7 +903,7 @@ export default function AdminPage() {
                 <input value={perfilBusca} onChange={(event) => setPerfilBusca(event.target.value)} onKeyDown={(event) => { if (event.key === 'Enter') void buscarPerfis(1); }} placeholder="Nome do perfil (vazio = todos)" className="h-10 flex-1 rounded-md border border-slate-300 px-3 text-sm outline-none focus:border-cyan-700" />
                 <div className="flex gap-2">
                   <button type="button" onClick={() => setFiltrosPerfilAbertos((aberto) => !aberto)} aria-expanded={filtrosPerfilAbertos} className={`relative flex h-10 items-center justify-center gap-1.5 rounded-md border px-3 text-xs font-black uppercase ${filtrosPerfilAbertos || totalFiltrosPerfilAtivos ? 'border-cyan-300 bg-cyan-50 text-cyan-800' : 'border-slate-300 text-slate-600 hover:bg-slate-50'}`}><Icon name="filter" size={15} />Filtros{totalFiltrosPerfilAtivos > 0 && <span className="rounded-full bg-cyan-700 px-1.5 py-0.5 text-[9px] text-white">{totalFiltrosPerfilAtivos}</span>}</button>
-                  <button type="button" onClick={() => { const ordem = perfilOrdem === 'nome_asc' ? 'nome_desc' : 'nome_asc'; setPerfilOrdem(ordem); void buscarPerfis(1, { ordem }); }} aria-label={`Ordenar perfis de ${perfilOrdem === 'nome_asc' ? 'Z a A' : 'A a Z'}`} className="flex h-10 items-center justify-center gap-1.5 rounded-md border border-slate-300 px-3 text-xs font-black uppercase text-slate-600 hover:bg-slate-50"><Icon name="filter" size={15} />Ordem {perfilOrdem === 'nome_asc' ? 'A/Z' : 'Z/A'}</button>
+                  <button type="button" onClick={() => { const ordem = perfilOrdem === 'nome_asc' ? 'nome_desc' : 'nome_asc'; setPerfilOrdem(ordem); void buscarPerfis(1, { ordem }); }} aria-label={`Ordenar perfis de ${perfilOrdem === 'nome_asc' ? 'Z a A' : 'A a Z'}`} className="flex h-10 items-center justify-center gap-1.5 rounded-md border border-slate-300 px-3 text-xs font-black uppercase text-slate-600 hover:bg-slate-50"><Icon name="filter" size={15} />Ordem {perfilOrdem === 'nome_desc' ? 'Z/A' : 'A/Z'}</button>
                   <select value={perfilPorPagina} onChange={(event) => setPerfilPorPagina(Number(event.target.value))} className="h-10 rounded-md border border-slate-300 bg-white px-2 text-xs font-bold outline-none focus:border-cyan-700"><option value={20}>20/pág</option><option value={50}>50/pág</option><option value={100}>100/pág</option></select>
                   <button type="button" onClick={() => void buscarPerfis(1)} disabled={buscandoPerfis} className="flex h-10 flex-1 items-center justify-center gap-2 rounded-md bg-cyan-700 px-4 text-xs font-black uppercase text-white hover:bg-cyan-800 disabled:opacity-60"><Icon name="search" size={15} />{buscandoPerfis ? 'Carregando...' : 'Carregar / Buscar'}</button>
                 </div>
@@ -912,7 +912,7 @@ export default function AdminPage() {
                 <div className="flex flex-col gap-3">
                   <div>
                     <p className="text-[10px] font-black uppercase tracking-wide text-slate-500">Situação de acesso</p>
-                    <div className="mt-2 flex flex-wrap gap-1.5">{FILTROS_PERFIL.map((filtro) => <button key={filtro.id} type="button" onClick={() => setPerfilFiltro(filtro.id)} className={`rounded-full border px-2.5 py-1 text-[10px] font-black transition ${perfilFiltro === filtro.id ? 'border-cyan-700 bg-cyan-700 text-white' : 'border-slate-200 bg-white text-slate-600 hover:border-cyan-300'}`}>{filtro.label}</button>)}</div>
+                    <div className="mt-2 flex flex-wrap gap-1.5">{FILTROS_PERFIL.map((filtro) => <button key={filtro.id} type="button" onClick={() => setPerfilFiltro(filtro.id)} className={`rounded-full border px-2.5 py-1 text-[10px] font-black transition ${perfilFiltro === filtro.id ? 'border-cyan-700 bg-cyan-700 text-white' : 'border-slate-200 bg-white text-slate-600 hover:border-cyan-300'}`}>{filtro.label}</button>)}<button type="button" onClick={() => setPerfilOrdem('criado_em_desc')} className={`rounded-full border px-2.5 py-1 text-[10px] font-black transition ${perfilOrdem.startsWith('criado_em') ? 'border-cyan-700 bg-cyan-700 text-white' : 'border-slate-200 bg-white text-slate-600 hover:border-cyan-300'}`}>Data de criação</button></div>
                   </div>
                   <div>
                     <p className="text-[10px] font-black uppercase tracking-wide text-slate-500">Tipo de perfil</p>

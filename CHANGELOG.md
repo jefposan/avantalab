@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.6.0.84.14 - 2026-07-21
+
+- Administração: restaura **Data de criação** em **Perfis > Filtros > Situação
+  de acesso**. O botão separado de ordem permanece limitado a A/Z e Z/A.
+
 ## 1.6.0.84.13 - 2026-07-21
 
 - Gestão Web: o perfil selecionado no seletor de troca usa borda interna, sem
