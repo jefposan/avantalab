@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.6.0.84.18 - 2026-07-21
+
+- Administração: o botão **Carregar / Buscar** em Perfis mantém a mesma largura
+  enquanto mostra o estado **Carregando...**.
+
 ## 1.6.0.84.17 - 2026-07-21
 
 - Administração: **Ordem A/Z / Z/A** respeita o critério ativo em Perfis. Com
