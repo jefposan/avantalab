@@ -6,8 +6,15 @@ const config: CapacitorConfig = {
   webDir: 'public',
 
   server: {
-    url: 'https://avantalab.com.br',
+    url: 'https://app.avantalab.com.br',
     cleartext: false,
+  },
+
+  plugins: {
+    StatusBar: {
+      overlaysWebView: false,
+      style: 'DARK',
+    },
   },
 };
 
