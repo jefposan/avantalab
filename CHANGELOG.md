@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.6.0.84.13 - 2026-07-21
+
+- Gestão Web: o perfil selecionado no seletor de troca usa borda interna, sem
+  cortar suas laterais. O degradê dos perfis segue do tom mais escuro à esquerda
+  para a cor primária à direita.
+
 ## 1.6.0.84.12 - 2026-07-21
 
 - Administração: em **Perfis**, o botão de ordem alterna diretamente entre

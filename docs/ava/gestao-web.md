@@ -1,9 +1,8 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.6.0.84.12 -->
+<!-- ava-version: 1.6.0.84.13 -->
 
-> Revisão 1.6.0.84.12: no `/admin`, em **Perfis**, o botão **Ordem A/Z**
-> alterna diretamente a lista entre A/Z e Z/A, sem abrir painel adicional.
+> Revisão 1.6.0.84.13: sem impacto operacional na Gestão Web.
 
 ## Escopo
 

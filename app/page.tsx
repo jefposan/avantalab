@@ -6679,12 +6679,12 @@ if (modalSelecionarEmpresa) {
                   onClick={() => setEmpresaParaSelecionar(empresa)}
                   className={`w-full rounded-xl border px-3 py-2.5 text-left shadow-sm transition cursor-pointer active:scale-[0.98] active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 focus-visible:ring-offset-2 ${
                     selecionada
-                      ? 'ring-2 ring-sky-400 ring-offset-2'
+                      ? 'border-2 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.28)]'
                       : 'hover:brightness-110'
                   }`}
                   style={{
-                    background: `linear-gradient(135deg, ${corPerfil} 0%, color-mix(in srgb, ${corPerfil} 68%, #0f172a) 100%)`,
-                    borderColor: corPerfil,
+                    background: `linear-gradient(90deg, color-mix(in srgb, ${corPerfil} 68%, #0f172a) 0%, ${corPerfil} 100%)`,
+                    borderColor: selecionada ? 'rgba(255, 255, 255, 0.9)' : corPerfil,
                     color: textoPerfil,
                   }}
                 >
