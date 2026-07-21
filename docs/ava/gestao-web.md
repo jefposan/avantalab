@@ -1,10 +1,9 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.6.0.84.11 -->
+<!-- ava-version: 1.6.0.84.12 -->
 
-> Revisão 1.6.0.84.11: no seletor de troca de perfil, cada opção apresenta a
-> cor primária configurada para aquele perfil. Isso é somente visual e não
-> altera os caminhos operacionais orientados pela Ava.
+> Revisão 1.6.0.84.12: no `/admin`, em **Perfis**, o botão **Ordem A/Z**
+> alterna diretamente a lista entre A/Z e Z/A, sem abrir painel adicional.
 
 ## Escopo
 

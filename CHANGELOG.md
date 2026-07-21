@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.6.0.84.12 - 2026-07-21
+
+- Administração: em **Perfis**, o botão de ordem alterna diretamente entre
+  **A/Z** e **Z/A**, sem abrir painel adicional.
+
 ## 1.6.0.84.11 - 2026-07-21
 
 - Gestão Web: os perfis disponíveis no seletor de troca agora usam a cor
