@@ -1,8 +1,9 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.6.0.84.05 -->
+<!-- ava-version: 1.6.0.84.06 -->
 
-> Revisão 1.6.0.84.05: sem impacto operacional na Gestão Web.
+> Revisão 1.6.0.84.06: sem impacto operacional na Gestão Web; o painel
+> administrativo passou a mostrar a data de criação de cada perfil.
 
 ## Escopo
 

@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.6.0.84.06 - 2026-07-21
+
+- Administração: a lista de perfis passa a exibir a data de criação de cada
+  conta junto a tipo, situação e acesso.
+
 ## 1.6.0.84.05 - 2026-07-21
 
 - Aplicativo iOS: o WebView passa a respeitar a área segura da tela, mantendo

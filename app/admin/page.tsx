@@ -34,6 +34,7 @@ type Perfil = {
   id: string;
   nome: string;
   tipo_perfil: string;
+  criado_em: string | null;
   status: string;
   plano: string | null;
   ciclo: string | null;
@@ -196,6 +197,11 @@ function corBarraConsumo(pct: number) {
 function formatDate(value?: string) {
   if (!value) return '-';
   return new Intl.DateTimeFormat('pt-BR', { dateStyle: 'short', timeStyle: 'short' }).format(new Date(value));
+}
+
+function formatDateOnly(value?: string | null) {
+  if (!value) return '-';
+  return new Intl.DateTimeFormat('pt-BR', { dateStyle: 'short' }).format(new Date(value));
 }
 
 function typeLabel(type: Feedback['tipo']) {
@@ -926,6 +932,7 @@ export default function AdminPage() {
                       <div><dt className="inline text-slate-400">Tipo: </dt><dd className="inline text-slate-700">{tipoTxt}</dd></div>
                       <div><dt className="inline text-slate-400">Situação: </dt><dd className={`inline ${perfil.tem_acesso ? 'text-emerald-700' : 'text-red-600'}`}>{situacaoPerfil(perfil)}</dd></div>
                       <div className="sm:col-span-3"><dt className="inline text-slate-400">Acesso: </dt><dd className="inline text-slate-700">{detalheAcesso(perfil)}</dd></div>
+                      <div className="sm:col-span-3"><dt className="inline text-slate-400">Criado em: </dt><dd className="inline text-slate-700">{formatDateOnly(perfil.criado_em)}</dd></div>
                     </dl>
                   </div>
                   <div className="flex shrink-0 flex-wrap gap-2 sm:justify-end">

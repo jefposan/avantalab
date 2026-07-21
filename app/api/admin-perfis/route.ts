@@ -76,6 +76,7 @@ export async function GET(request: Request) {
         id: e.id,
         nome: e.nome,
         tipo_perfil: tipoPerfil,
+        criado_em: e.created_at || null,
         status: estado.status,
         plano: estado.plano,
         ciclo: estado.ciclo,
