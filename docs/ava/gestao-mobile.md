@@ -1,9 +1,9 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.6.0.84.03 -->
+<!-- ava-version: 1.6.0.84.04 -->
 
-> Revisão 1.6.0.84.03: o menu lateral do aplicativo Android/iOS foi estabilizado
-> visualmente; sem mudança nos caminhos operacionais orientados pela Ava.
+> Revisão 1.6.0.84.04: estabilização técnica da renderização do aplicativo Android;
+> sem mudança nos caminhos operacionais orientados pela Ava.
 
 ## Escopo
 

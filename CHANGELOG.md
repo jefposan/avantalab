@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.6.0.84.04 - 2026-07-21
+
+- Aplicativo Android: desativa a camada gráfica acelerada somente na atividade
+  nativa do AvantaLab, evitando resíduos visuais do WebView ao abrir o menu.
+
 ## 1.6.0.84.03 - 2026-07-21
 
 - Gestão Mobile: o menu lateral usa o contêiner do aplicativo no Android, em

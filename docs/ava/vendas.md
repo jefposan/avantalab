@@ -1,8 +1,8 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.6.0.84.03 -->
+<!-- ava-version: 1.6.0.84.04 -->
 
-> Revisão 1.6.0.84.03: sem impacto operacional no Vendas Mobile.
+> Revisão 1.6.0.84.04: sem impacto operacional no Vendas Mobile.
 
 ## Escopo e navegação
 
