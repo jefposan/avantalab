@@ -1,10 +1,9 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.6.0.84.15 -->
+<!-- ava-version: 1.6.0.84.16 -->
 
-> Revisão 1.6.0.84.15: na troca de perfil aberta dentro da Gestão Web, o perfil
-> atual aparece como **Em uso** e não pode ser selecionado. Na entrada após o
-> login, todos os perfis seguem selecionáveis.
+> Revisão 1.6.0.84.16: **Lançamentos mensais** é um card fixo do dashboard e
+> não oferece a ação de removê-lo.
 
 ## Escopo
 

@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.6.0.84.16 - 2026-07-21
+
+- Gestão Web: o card fixo **Lançamentos mensais** deixa de exibir o menu de
+  opções e, portanto, não oferece mais **Remover bloco**.
+
 ## 1.6.0.84.15 - 2026-07-21
 
 - Gestão Web: ao abrir a troca de perfil dentro de um acesso, o perfil em uso

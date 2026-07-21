@@ -1860,7 +1860,6 @@ const mostrarComparativoResumoDash =
           >
             {anoSelecionado}
           </span>
-          <BotaoOpcoesCard id="lancamentosMensais" />
           </div>
         }
         style={avantaShellPreset.cardStyle}
