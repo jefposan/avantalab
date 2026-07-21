@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.6.0.84.17 - 2026-07-21
+
+- Administração: **Ordem A/Z / Z/A** respeita o critério ativo em Perfis. Com
+  **Data de criação** selecionada, alterna entre perfis mais recentes e mais
+  antigos; com os demais filtros, ordena os resultados filtrados pelo nome.
+
 ## 1.6.0.84.16 - 2026-07-21
 
 - Gestão Web: o card fixo **Lançamentos mensais** deixa de exibir o menu de

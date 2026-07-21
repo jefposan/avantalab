@@ -1,9 +1,10 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.6.0.84.16 -->
+<!-- ava-version: 1.6.0.84.17 -->
 
-> Revisão 1.6.0.84.16: **Lançamentos mensais** é um card fixo do dashboard e
-> não oferece a ação de removê-lo.
+> Revisão 1.6.0.84.17: em `/admin > Perfis`, **Ordem A/Z / Z/A** respeita o
+> critério ativo. Com **Data de criação**, alterna entre recentes e antigas;
+> com os demais filtros, organiza os resultados filtrados por nome.
 
 ## Escopo
 
