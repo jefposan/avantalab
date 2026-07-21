@@ -1,9 +1,10 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.6.0.84.06 -->
+<!-- ava-version: 1.6.0.84.07 -->
 
-> Revisão 1.6.0.84.06: sem impacto operacional no Gestão Mobile.
-> sem mudança nos caminhos operacionais orientados pela Ava.
+> Revisão 1.6.0.84.07: receitas automáticas do Vendas são recalculadas pela
+> competência mensal completa, inclusive quando houver recebimento já gravado
+> com data futura dentro daquele mês.
 
 ## Escopo
 

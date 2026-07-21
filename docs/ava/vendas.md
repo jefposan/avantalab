@@ -1,8 +1,9 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.6.0.84.06 -->
+<!-- ava-version: 1.6.0.84.07 -->
 
-> Revisão 1.6.0.84.06: sem impacto operacional no Vendas Mobile.
+> Revisão 1.6.0.84.07: o Dashboard apura o mês-calendário inteiro; a Ava deve
+> considerar todos os dias do mês selecionado ao explicar vendas e recebimentos.
 
 ## Escopo e navegação
 

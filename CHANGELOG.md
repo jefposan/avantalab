@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.6.0.84.07 - 2026-07-21
+
+- Vendas Mobile e Gestão: a apuração mensal passa a considerar sempre todos os
+  dias do mês selecionado. Recebimentos com data futura já existentes no
+  histórico também entram na competência correspondente, mantendo o dashboard
+  e a receita automática da Gestão alinhados.
+
 ## 1.6.0.84.06 - 2026-07-21
 
 - Administração: a lista de perfis passa a exibir a data de criação de cada

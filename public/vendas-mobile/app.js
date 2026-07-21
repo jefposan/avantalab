@@ -9,10 +9,30 @@ const CACHE_VENDAS_VERSAO = 5;
 const CACHE_VENDAS_VALIDADE_MS = 1000 * 60 * 60 * 24 * 7;
 const HOJE = new Date();
 const INICIO_MES = new Date(HOJE.getFullYear(), HOJE.getMonth(), 1);
+const FIM_MES = new Date(HOJE.getFullYear(), HOJE.getMonth() + 1, 0);
 
 function isoData(data) {
   const local = new Date(data.getTime() - data.getTimezoneOffset() * 60000);
   return local.toISOString().slice(0, 10);
+}
+
+function limitesDoMes(dataReferencia) {
+  const referencia = /^\d{4}-\d{2}-\d{2}$/.test(String(dataReferencia || ''))
+    ? new Date(`${dataReferencia}T12:00:00`)
+    : new Date();
+  const ano = Number.isNaN(referencia.getTime()) ? HOJE.getFullYear() : referencia.getFullYear();
+  const mes = Number.isNaN(referencia.getTime()) ? HOJE.getMonth() : referencia.getMonth();
+  return {
+    inicio: new Date(ano, mes, 1),
+    fim: new Date(ano, mes + 1, 0),
+  };
+}
+
+function aplicarPeriodoCompletoMesSelecionado() {
+  const { inicio, fim } = limitesDoMes(state.mesReferencia);
+  state.mesReferencia = isoData(inicio);
+  state.filtroInicio = isoData(inicio);
+  state.filtroFim = isoData(fim);
 }
 
 const estadoInicial = {
@@ -34,7 +54,7 @@ const estadoInicial = {
   busca: '',
   autenticado: true,
   filtroInicio: isoData(INICIO_MES),
-  filtroFim: isoData(HOJE),
+  filtroFim: isoData(FIM_MES),
   mesReferencia: isoData(INICIO_MES),
   agendaAno: new Date().getFullYear(),
   agendaMes: new Date().getMonth(),
@@ -76,6 +96,9 @@ const estadoInicial = {
 };
 
 let state = carregarEstado();
+// O dashboard é mensal: um filtro salvo nunca pode cortar os últimos dias do
+// mês selecionado. Isso mantém vendas e recebimentos alinhados à Gestão.
+aplicarPeriodoCompletoMesSelecionado();
 document.documentElement.classList.toggle('dark-theme', Boolean(state.temaEscuro));
 let buscaAplicada = state.busca || '';
 let backendAtivo = Boolean(window.VendasDb?.client);
@@ -750,12 +773,9 @@ function totaisPeriodo() {
 }
 
 function aplicarFiltroDashboard() {
-  if (!state.filtroInicio || !state.filtroFim || state.filtroInicio > state.filtroFim) {
-    toast('Informe um período válido.');
-    return;
-  }
+  aplicarPeriodoCompletoMesSelecionado();
   render();
-  toast('Filtro aplicado!');
+  toast('Mês completo aplicado.');
 }
 
 function campoDataCentralizado(idCampo, data, rotulo) {
@@ -827,11 +847,18 @@ function selecionarDataCalendario(data) {
     toast('Pagamento não pode ter data futura.');
     return;
   }
-  const campo = document.getElementById(calendarioCentralizado.idCampo);
+  const idCampo = calendarioCentralizado.idCampo;
+  const campo = document.getElementById(idCampo);
   if (campo) { campo.value = data; campo.textContent = dataBR(`${data}T12:00:00`); }
-  if (calendarioCentralizado.idCampo === 'pedidoClienteData' && pedidoClienteRascunho) pedidoClienteRascunho.data = data;
-  if (calendarioCentralizado.idCampo === 'filtroInicio') state.filtroInicio = data;
-  if (calendarioCentralizado.idCampo === 'filtroFim') state.filtroFim = data;
+  if (idCampo === 'pedidoClienteData' && pedidoClienteRascunho) pedidoClienteRascunho.data = data;
+  if (idCampo === 'filtroInicio' || idCampo === 'filtroFim') {
+    const { inicio } = limitesDoMes(data);
+    state.mesReferencia = isoData(inicio);
+    aplicarPeriodoCompletoMesSelecionado();
+    fecharCalendarioCentralizado();
+    render();
+    return;
+  }
   fecharCalendarioCentralizado();
 }
 
@@ -843,12 +870,8 @@ function fecharCalendarioCentralizado() {
 function mudarMes(direcao) {
   const atual = new Date(`${state.mesReferencia}T12:00:00`);
   const novo = new Date(atual.getFullYear(), atual.getMonth() + direcao, 1);
-  const hoje = new Date();
-  const mesmoMes = novo.getFullYear() === hoje.getFullYear() && novo.getMonth() === hoje.getMonth();
-  const fim = mesmoMes ? hoje : new Date(novo.getFullYear(), novo.getMonth() + 1, 0);
   state.mesReferencia = isoData(novo);
-  state.filtroInicio = isoData(novo);
-  state.filtroFim = isoData(fim);
+  aplicarPeriodoCompletoMesSelecionado();
   render();
 }
 
@@ -856,8 +879,7 @@ function irMesAtual() {
   const hoje = new Date();
   const inicio = new Date(hoje.getFullYear(), hoje.getMonth(), 1);
   state.mesReferencia = isoData(inicio);
-  state.filtroInicio = isoData(inicio);
-  state.filtroFim = isoData(hoje);
+  aplicarPeriodoCompletoMesSelecionado();
   render();
 }
 
@@ -6057,7 +6079,7 @@ function aplicarAtualizacaoPwaPendente() {
 
 if (!window.__VENDAS_MOBILE_EMBEDDED__ && 'serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('./sw.js?v=48').catch(() => {});
+    navigator.serviceWorker.register('./sw.js?v=49').catch(() => {});
   });
 }
 

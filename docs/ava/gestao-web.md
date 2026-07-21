@@ -1,9 +1,10 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.6.0.84.06 -->
+<!-- ava-version: 1.6.0.84.07 -->
 
-> Revisão 1.6.0.84.06: sem impacto operacional na Gestão Web; o painel
-> administrativo passou a mostrar a data de criação de cada perfil.
+> Revisão 1.6.0.84.07: receitas automáticas do Vendas são recalculadas pela
+> competência mensal completa, inclusive quando houver recebimento já gravado
+> com data futura dentro daquele mês.
 
 ## Escopo
 
