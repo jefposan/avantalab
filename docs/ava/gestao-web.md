@@ -1,10 +1,10 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.6.0.84.07 -->
+<!-- ava-version: 1.6.0.84.08 -->
 
-> Revisão 1.6.0.84.07: receitas automáticas do Vendas são recalculadas pela
-> competência mensal completa, inclusive quando houver recebimento já gravado
-> com data futura dentro daquele mês.
+> Revisão 1.6.0.84.08: no `/admin`, **Perfis** pode ser filtrado por intervalo
+> de criação e ordenado por nome ou data de criação; isso não altera os caminhos
+> operacionais orientados pela Ava.
 
 ## Escopo
 

@@ -1,10 +1,8 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.6.0.84.07 -->
+<!-- ava-version: 1.6.0.84.08 -->
 
-> Revisão 1.6.0.84.07: receitas automáticas do Vendas são recalculadas pela
-> competência mensal completa, inclusive quando houver recebimento já gravado
-> com data futura dentro daquele mês.
+> Revisão 1.6.0.84.08: sem impacto operacional na Gestão Mobile.
 
 ## Escopo
 

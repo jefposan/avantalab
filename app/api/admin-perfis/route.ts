@@ -9,6 +9,7 @@ function naoAutorizado() {
 type AssinaturaRow = { empresa_id: string; status: string; plano: string | null; ciclo: string | null; valido_ate: string | null; trial_fim: string | null; cupom_id: string | null };
 type FiltroPerfil = 'todos' | 'com_acesso' | 'sem_acesso' | StatusAssinatura;
 type FiltroTipoPerfil = 'todos' | TipoPerfil;
+type OrdemPerfil = 'nome_asc' | 'nome_desc' | 'criado_em_desc' | 'criado_em_asc';
 
 function trialExpirou(trialFim: string | null) {
   return !trialFim || new Date(trialFim) <= new Date();
@@ -49,6 +50,14 @@ export async function GET(request: Request) {
     const tipo: FiltroTipoPerfil = ['todos', 'empresa', 'pessoal'].includes(tipoRecebido)
       ? tipoRecebido as FiltroTipoPerfil
       : 'todos';
+    const ordemRecebida = url.searchParams.get('ordem') || 'nome_asc';
+    const ordem: OrdemPerfil = ['nome_asc', 'nome_desc', 'criado_em_desc', 'criado_em_asc'].includes(ordemRecebida)
+      ? ordemRecebida as OrdemPerfil
+      : 'nome_asc';
+    const criadoDeRecebido = url.searchParams.get('criadoDe') || '';
+    const criadoAteRecebido = url.searchParams.get('criadoAte') || '';
+    const criadoDe = /^\d{4}-\d{2}-\d{2}$/.test(criadoDeRecebido) ? criadoDeRecebido : '';
+    const criadoAte = /^\d{4}-\d{2}-\d{2}$/.test(criadoAteRecebido) ? criadoAteRecebido : '';
     const pagina = Math.max(1, Number(url.searchParams.get('pagina')) || 1);
     const porPagina = [20, 50, 100].includes(Number(url.searchParams.get('porPagina'))) ? Number(url.searchParams.get('porPagina')) : 20;
     const de = (pagina - 1) * porPagina;
@@ -87,13 +96,33 @@ export async function GET(request: Request) {
         tem_registro: Boolean(mapa.get(e.id)),
       };
     });
+    const formatadorDataSaoPaulo = new Intl.DateTimeFormat('sv-SE', { timeZone: 'America/Sao_Paulo' });
     const perfisFiltrados = perfisCompletos.filter((perfil) => {
+      const dataCriacao = perfil.criado_em ? formatadorDataSaoPaulo.format(new Date(perfil.criado_em)) : '';
+      if (criadoDe && (!dataCriacao || dataCriacao < criadoDe)) return false;
+      if (criadoAte && (!dataCriacao || dataCriacao > criadoAte)) return false;
       if (filtro === 'todos') return true;
       if (filtro === 'com_acesso') return perfil.tem_acesso;
       if (filtro === 'sem_acesso') return !perfil.tem_acesso;
       return perfil.status === filtro;
     });
-    const perfis = perfisFiltrados.slice(de, ate + 1);
+    const compararNomes = new Intl.Collator('pt-BR', { sensitivity: 'base', numeric: true });
+    const dataCriacao = (valor: string | null) => {
+      const data = valor ? new Date(valor).getTime() : Number.NaN;
+      return Number.isFinite(data) ? data : null;
+    };
+    const perfisOrdenados = [...perfisFiltrados].sort((a, b) => {
+      if (ordem === 'nome_desc') return compararNomes.compare(b.nome, a.nome);
+      if (ordem === 'criado_em_desc' || ordem === 'criado_em_asc') {
+        const dataA = dataCriacao(a.criado_em);
+        const dataB = dataCriacao(b.criado_em);
+        if (dataA !== null && dataB !== null && dataA !== dataB) return ordem === 'criado_em_desc' ? dataB - dataA : dataA - dataB;
+        if (dataA !== null && dataB === null) return -1;
+        if (dataA === null && dataB !== null) return 1;
+      }
+      return compararNomes.compare(a.nome, b.nome);
+    });
+    const perfis = perfisOrdenados.slice(de, ate + 1);
     return NextResponse.json({ erro: false, perfis, total: perfisFiltrados.length, pagina, porPagina });
   } catch (error) {
     console.error('Erro ao buscar perfis:', error);

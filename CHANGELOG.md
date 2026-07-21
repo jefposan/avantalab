@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.6.0.84.08 - 2026-07-21
+
+- Administração: em **Perfis**, o filtro passa a permitir selecionar o intervalo
+  de data de criação e ordenar por nome (A–Z ou Z–A) ou por criação (mais
+  recentes ou mais antigas).
+
 ## 1.6.0.84.07 - 2026-07-21
 
 - Vendas Mobile e Gestão: a apuração mensal passa a considerar sempre todos os
