@@ -9748,7 +9748,7 @@
     ) : '';
 
     return (
-      '<div id="menu-overlay" class="fixed inset-0 z-50 bg-slate-950/75" style="will-change:opacity;transform:translateZ(0);backface-visibility:hidden;-webkit-backface-visibility:hidden;isolation:isolate;' + animacaoOverlay + '">' +
+      '<div id="menu-overlay" class="absolute inset-0 z-50 bg-slate-950/75" style="will-change:opacity;transform:translateZ(0);backface-visibility:hidden;-webkit-backface-visibility:hidden;isolation:isolate;' + animacaoOverlay + '">' +
         '<aside id="menu-aside" data-preserve-scroll class="h-full w-[84vw] max-w-[348px] overflow-y-auto rounded-r-3xl ' + (dk ? 'bg-slate-950 text-slate-100' : 'text-slate-900') + ' p-3 shadow-2xl" style="background:' + (dk ? '#020617' : 'linear-gradient(180deg,#F8FBFF 0%,#F4F8FC 100%)') + ';padding-bottom:calc(env(safe-area-inset-bottom) + 120px);backface-visibility:hidden;-webkit-backface-visibility:hidden;contain:paint;' + animacaoPainel + '">' +
           '<div class="relative mb-4 overflow-hidden rounded-[16px_32px_32px_32px] border border-white/20 p-4 text-white shadow-xl shadow-sky-950/15" style="background-image:radial-gradient(circle at 86% 18%,rgba(255,255,255,.2),transparent 28%),linear-gradient(135deg,#073B78 0%,#007EA7 55%,#00BFD1 100%);">' +
             '<div class="pointer-events-none absolute -bottom-8 -right-6 h-24 w-32 rounded-[50%] border border-white/10"></div>' +

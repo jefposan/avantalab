@@ -1,9 +1,9 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.6.0.84.02 -->
+<!-- ava-version: 1.6.0.84.03 -->
 
-> Revisão 1.6.0.84.02: no aplicativo Android/iOS, o login com Google abre em
-> navegador seguro e retorna automaticamente ao AvantaLab após a autenticação.
+> Revisão 1.6.0.84.03: o menu lateral do aplicativo Android/iOS foi estabilizado
+> visualmente; sem mudança nos caminhos operacionais orientados pela Ava.
 
 ## Escopo
 

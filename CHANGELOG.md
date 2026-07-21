@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.6.0.84.03 - 2026-07-21
+
+- Gestão Mobile: o menu lateral usa o contêiner do aplicativo no Android, em
+  vez de uma camada fixa aninhada. Isso evita os cards residuais que o WebView
+  podia mostrar após abrir o menu, sem alterar o PWA ou o navegador.
+
 ## 1.6.0.84.02 - 2026-07-21
 
 - Aplicativo Android e iOS: o login com Google abre no navegador seguro do
