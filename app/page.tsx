@@ -5735,11 +5735,9 @@ const abrirTrocaEmpresa = () => {
   );
 
   if (empresasEmCache.length > 1) {
-    setEmpresaParaSelecionar((selecionadaAtual: EmpresaUsuarioResumo | null) => (
-      selecionadaAtual && empresasEmCache.some((empresa) => empresa.id === selecionadaAtual.id)
-        ? selecionadaAtual
-        : empresasEmCache.find((empresa) => empresa.id !== empresaId) || empresasEmCache[0] || null
-    ));
+    setEmpresaParaSelecionar(
+      empresasEmCache.find((empresa) => empresa.id !== empresaId) || null
+    );
     setModalSelecionarEmpresa(true);
   }
 
@@ -5782,11 +5780,9 @@ const abrirTrocaEmpresa = () => {
       return;
     }
 
-    setEmpresaParaSelecionar((selecionadaAtual: EmpresaUsuarioResumo | null) => (
-      selecionadaAtual && empresasAtualizadas.some((empresa) => empresa.id === selecionadaAtual.id)
-        ? selecionadaAtual
-        : empresasAtualizadas.find((empresa) => empresa.id !== empresaId) || empresasAtualizadas[0] || null
-    ));
+    setEmpresaParaSelecionar(
+      empresasAtualizadas.find((empresa) => empresa.id !== empresaId) || null
+    );
     setModalSelecionarEmpresa(true);
   })();
 };
@@ -6666,7 +6662,8 @@ if (modalSelecionarEmpresa) {
         <div className="p-4 space-y-3">
           <div className="space-y-2 max-h-[45vh] overflow-y-auto pr-1">
             {empresasDoUsuario.map((empresa) => {
-              const selecionada = empresaParaSelecionar?.id === empresa.id;
+              const perfilAtualInativo = modoSelecaoPerfil === 'troca' && empresa.id === empresaId;
+              const selecionada = !perfilAtualInativo && empresaParaSelecionar?.id === empresa.id;
               const corPerfil = typeof empresa.cor_primaria === 'string' && empresa.cor_primaria.trim()
                 ? empresa.cor_primaria
                 : '#003E73';
@@ -6676,8 +6673,10 @@ if (modalSelecionarEmpresa) {
                 <button
                   key={empresa.id}
                   type="button"
-                  onClick={() => setEmpresaParaSelecionar(empresa)}
-                  className={`w-full rounded-xl border px-3 py-2.5 text-left shadow-sm transition cursor-pointer active:scale-[0.98] active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 focus-visible:ring-offset-2 ${
+                  disabled={perfilAtualInativo}
+                  onClick={() => { if (!perfilAtualInativo) setEmpresaParaSelecionar(empresa); }}
+                  aria-current={perfilAtualInativo ? 'true' : undefined}
+                  className={`w-full rounded-xl border px-3 py-2.5 text-left shadow-sm transition cursor-pointer active:scale-[0.98] active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-55 disabled:active:scale-100 disabled:active:translate-y-0 ${
                     selecionada
                       ? 'border-2 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.28)]'
                       : 'hover:brightness-110'
@@ -6707,17 +6706,23 @@ if (modalSelecionarEmpresa) {
                       </p>
                     </div>
 
-                    <span
-                      className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-full border ${
-                        selecionada
-                          ? 'border-white bg-white/20'
-                          : 'border-current/70 bg-black/10'
-                      }`}
-                    >
-                      {selecionada && (
-                        <span className="h-1.5 w-1.5 rounded-full bg-white" />
-                      )}
-                    </span>
+                    {perfilAtualInativo ? (
+                      <span className="shrink-0 rounded-full border border-current/60 bg-black/10 px-2 py-1 text-[10px] font-black uppercase tracking-wide">
+                        Em uso
+                      </span>
+                    ) : (
+                      <span
+                        className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-full border ${
+                          selecionada
+                            ? 'border-white bg-white/20'
+                            : 'border-current/70 bg-black/10'
+                        }`}
+                      >
+                        {selecionada && (
+                          <span className="h-1.5 w-1.5 rounded-full bg-white" />
+                        )}
+                      </span>
+                    )}
                   </div>
                 </button>
               );

@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.6.0.84.15 - 2026-07-21
+
+- Gestão Web: ao abrir a troca de perfil dentro de um acesso, o perfil em uso
+  fica identificado como **Em uso** e desativado. No seletor exibido após o
+  login, todos os perfis continuam disponíveis para seleção.
+
 ## 1.6.0.84.14 - 2026-07-21
 
 - Administração: restaura **Data de criação** em **Perfis > Filtros > Situação
