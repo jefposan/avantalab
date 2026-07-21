@@ -1,10 +1,10 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.6.0.84.10 -->
+<!-- ava-version: 1.6.0.84.11 -->
 
-> Revisão 1.6.0.84.10: no `/admin`, em **Perfis**, a ordenação fica no botão
-> **Ordenar**, ao lado de **Filtros**. A opção inclui data de criação e nome,
-> sem misturar a ordenação com os filtros de situação e tipo.
+> Revisão 1.6.0.84.11: no seletor de troca de perfil, cada opção apresenta a
+> cor primária configurada para aquele perfil. Isso é somente visual e não
+> altera os caminhos operacionais orientados pela Ava.
 
 ## Escopo
 

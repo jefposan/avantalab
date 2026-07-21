@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.6.0.84.11 - 2026-07-21
+
+- Gestão Web: os perfis disponíveis no seletor de troca agora usam a cor
+  primária própria em degradê, com contraste preservado para leitura.
+
 ## 1.6.0.84.10 - 2026-07-21
 
 - Administração: em **Perfis**, a ordenação passa a ficar em um único botão

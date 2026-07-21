@@ -143,6 +143,7 @@ type EmpresaUsuarioResumo = RegistroSupabase & {
   telefone?: string;
   telefone_confirmado?: boolean;
   telefone_confirmado_em?: string;
+  cor_primaria?: string | null;
   tipo_perfil?: string;
   perfil?: PerfilAcessoUsuario;
   acessoId?: string;
@@ -6666,33 +6667,34 @@ if (modalSelecionarEmpresa) {
           <div className="space-y-2 max-h-[45vh] overflow-y-auto pr-1">
             {empresasDoUsuario.map((empresa) => {
               const selecionada = empresaParaSelecionar?.id === empresa.id;
+              const corPerfil = typeof empresa.cor_primaria === 'string' && empresa.cor_primaria.trim()
+                ? empresa.cor_primaria
+                : '#003E73';
+              const textoPerfil = corEhClara(corPerfil) ? '#0f172a' : '#ffffff';
 
               return (
                 <button
                   key={empresa.id}
                   type="button"
                   onClick={() => setEmpresaParaSelecionar(empresa)}
-                  className={`w-full rounded-xl border px-3 py-2.5 text-left transition cursor-pointer active:scale-[0.98] active:translate-y-px ${
+                  className={`w-full rounded-xl border px-3 py-2.5 text-left shadow-sm transition cursor-pointer active:scale-[0.98] active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 focus-visible:ring-offset-2 ${
                     selecionada
-                      ? darkMode
-                        ? 'border-sky-400 bg-sky-950/40'
-                        : 'border-sky-400 bg-sky-50'
-                      : darkMode
-                        ? 'border-slate-700 bg-slate-800 hover:bg-slate-700'
-                        : 'border-slate-200 bg-slate-50 hover:bg-slate-100'
+                      ? 'ring-2 ring-sky-400 ring-offset-2'
+                      : 'hover:brightness-110'
                   }`}
+                  style={{
+                    background: `linear-gradient(135deg, ${corPerfil} 0%, color-mix(in srgb, ${corPerfil} 68%, #0f172a) 100%)`,
+                    borderColor: corPerfil,
+                    color: textoPerfil,
+                  }}
                 >
                   <div className="flex items-center justify-between gap-3">
                     <div>
-                      <h3 className={`text-sm font-black ${
-                        darkMode ? 'text-white' : 'text-slate-800'
-                      }`}>
+                      <h3 className="text-sm font-black">
                         {empresa.nome || empresa.empresa_nome}
                       </h3>
 
-                      <p className={`text-xs ${
-                        darkMode ? 'text-slate-400' : 'text-slate-500'
-                      }`}>
+                      <p className="text-xs opacity-85">
                         {rotuloTipoPerfil(empresa.tipo_perfil)} · {empresa.perfil === 'gestor_master'
                           ? 'Gestor Master'
                           : empresa.perfil === 'administrador'
@@ -6708,10 +6710,8 @@ if (modalSelecionarEmpresa) {
                     <span
                       className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-full border ${
                         selecionada
-                          ? 'border-sky-500 bg-sky-500'
-                          : darkMode
-                            ? 'border-slate-500'
-                            : 'border-slate-300'
+                          ? 'border-white bg-white/20'
+                          : 'border-current/70 bg-black/10'
                       }`}
                     >
                       {selecionada && (

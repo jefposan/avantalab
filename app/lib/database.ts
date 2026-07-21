@@ -273,10 +273,20 @@ export async function buscarEmpresasDoUsuario(usuarioId: string) {
     throw new Error('Falha ao carregar os dados das empresas.');
   }
 
+  const { data: configuracoes, error: erroConfiguracoes } = await supabase
+    .from('configuracoes')
+    .select('empresa_id, cor_primaria')
+    .in('empresa_id', empresasIds);
+
+  if (erroConfiguracoes) {
+    console.error('Erro ao buscar as cores dos perfis:', erroConfiguracoes);
+  }
+
   // 4. Une vínculo + dados da empresa
   return vinculosSincronizados
     .map((vinculo) => {
       const empresa = empresas?.find((item) => item.id === vinculo.empresa_id);
+      const configuracao = configuracoes?.find((item) => item.empresa_id === vinculo.empresa_id);
 
       if (!empresa) return null;
 
@@ -295,6 +305,7 @@ export async function buscarEmpresasDoUsuario(usuarioId: string) {
   telefone: vinculo.telefone,
   telefone_confirmado: vinculo.telefone_confirmado,
   telefone_confirmado_em: vinculo.telefone_confirmado_em,
+  cor_primaria: configuracao?.cor_primaria || null,
 };
     })
     .filter(Boolean)
