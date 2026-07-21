@@ -1,10 +1,14 @@
 # Changelog
 
+## 1.6.0.84.09 - 2026-07-21
+
+- Administração: **Data de criação** passa a ser uma opção direta em
+  **Perfis > Filtros > Situação de acesso**, sem exigir intervalo de datas.
+
 ## 1.6.0.84.08 - 2026-07-21
 
-- Administração: em **Perfis**, o filtro passa a permitir selecionar o intervalo
-  de data de criação e ordenar por nome (A–Z ou Z–A) ou por criação (mais
-  recentes ou mais antigas).
+- Administração: em **Perfis**, o filtro passa a permitir ordenar por nome
+  (A–Z ou Z–A) e por data de criação (mais recentes ou mais antigas).
 
 ## 1.6.0.84.07 - 2026-07-21
 

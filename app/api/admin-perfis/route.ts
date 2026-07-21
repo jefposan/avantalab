@@ -54,10 +54,6 @@ export async function GET(request: Request) {
     const ordem: OrdemPerfil = ['nome_asc', 'nome_desc', 'criado_em_desc', 'criado_em_asc'].includes(ordemRecebida)
       ? ordemRecebida as OrdemPerfil
       : 'nome_asc';
-    const criadoDeRecebido = url.searchParams.get('criadoDe') || '';
-    const criadoAteRecebido = url.searchParams.get('criadoAte') || '';
-    const criadoDe = /^\d{4}-\d{2}-\d{2}$/.test(criadoDeRecebido) ? criadoDeRecebido : '';
-    const criadoAte = /^\d{4}-\d{2}-\d{2}$/.test(criadoAteRecebido) ? criadoAteRecebido : '';
     const pagina = Math.max(1, Number(url.searchParams.get('pagina')) || 1);
     const porPagina = [20, 50, 100].includes(Number(url.searchParams.get('porPagina'))) ? Number(url.searchParams.get('porPagina')) : 20;
     const de = (pagina - 1) * porPagina;
@@ -96,11 +92,7 @@ export async function GET(request: Request) {
         tem_registro: Boolean(mapa.get(e.id)),
       };
     });
-    const formatadorDataSaoPaulo = new Intl.DateTimeFormat('sv-SE', { timeZone: 'America/Sao_Paulo' });
     const perfisFiltrados = perfisCompletos.filter((perfil) => {
-      const dataCriacao = perfil.criado_em ? formatadorDataSaoPaulo.format(new Date(perfil.criado_em)) : '';
-      if (criadoDe && (!dataCriacao || dataCriacao < criadoDe)) return false;
-      if (criadoAte && (!dataCriacao || dataCriacao > criadoAte)) return false;
       if (filtro === 'todos') return true;
       if (filtro === 'com_acesso') return perfil.tem_acesso;
       if (filtro === 'sem_acesso') return !perfil.tem_acesso;

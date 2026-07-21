@@ -292,8 +292,6 @@ export default function AdminPage() {
   const [perfilFiltro, setPerfilFiltro] = useState<PerfilFiltro>('todos');
   const [perfilTipoFiltro, setPerfilTipoFiltro] = useState<PerfilTipoFiltro>('todos');
   const [perfilOrdem, setPerfilOrdem] = useState<PerfilOrdem>('nome_asc');
-  const [perfilCriadoDe, setPerfilCriadoDe] = useState('');
-  const [perfilCriadoAte, setPerfilCriadoAte] = useState('');
   const [filtrosPerfilAbertos, setFiltrosPerfilAbertos] = useState(false);
   const [buscandoPerfis, setBuscandoPerfis] = useState(false);
   const [perfilPagina, setPerfilPagina] = useState(1);
@@ -316,7 +314,7 @@ export default function AdminPage() {
   const [registroInpiRepP, setRegistroInpiRepP] = useState('');
   const [documentoDesenvolvedorRepP, setDocumentoDesenvolvedorRepP] = useState('');
 
-  const totalFiltrosPerfilAtivos = Number(perfilFiltro !== 'todos') + Number(perfilTipoFiltro !== 'todos') + Number(Boolean(perfilCriadoDe || perfilCriadoAte));
+  const totalFiltrosPerfilAtivos = Number(perfilFiltro !== 'todos') + Number(perfilTipoFiltro !== 'todos');
 
   const authHeaders = (value = token) => ({ Authorization: `Bearer ${value.trim()}` });
 
@@ -337,16 +335,14 @@ export default function AdminPage() {
     }
   };
 
-  const buscarPerfis = async (pagina = 1, filtros?: { situacao?: PerfilFiltro; tipo?: PerfilTipoFiltro; ordem?: PerfilOrdem; criadoDe?: string; criadoAte?: string }) => {
+  const buscarPerfis = async (pagina = 1, filtros?: { situacao?: PerfilFiltro; tipo?: PerfilTipoFiltro; ordem?: PerfilOrdem }) => {
     setBuscandoPerfis(true);
     setError('');
     try {
       const situacao = filtros?.situacao ?? perfilFiltro;
       const tipo = filtros?.tipo ?? perfilTipoFiltro;
       const ordem = filtros?.ordem ?? perfilOrdem;
-      const criadoDe = filtros?.criadoDe ?? perfilCriadoDe;
-      const criadoAte = filtros?.criadoAte ?? perfilCriadoAte;
-      const response = await fetch(`/api/admin-perfis?q=${encodeURIComponent(perfilBusca.trim())}&filtro=${situacao}&tipo=${tipo}&ordem=${ordem}&criadoDe=${encodeURIComponent(criadoDe)}&criadoAte=${encodeURIComponent(criadoAte)}&pagina=${pagina}&porPagina=${perfilPorPagina}`, { headers: authHeaders() });
+      const response = await fetch(`/api/admin-perfis?q=${encodeURIComponent(perfilBusca.trim())}&filtro=${situacao}&tipo=${tipo}&ordem=${ordem}&pagina=${pagina}&porPagina=${perfilPorPagina}`, { headers: authHeaders() });
       const data = await response.json().catch(() => null);
       if (!response.ok || data?.erro) throw new Error(data?.mensagem || 'Não foi possível buscar.');
       setPerfis(data.perfis || []);
@@ -915,24 +911,17 @@ export default function AdminPage() {
                 <div className="flex flex-col gap-3">
                   <div>
                     <p className="text-[10px] font-black uppercase tracking-wide text-slate-500">Situação de acesso</p>
-                    <div className="mt-2 flex flex-wrap gap-1.5">{FILTROS_PERFIL.map((filtro) => <button key={filtro.id} type="button" onClick={() => setPerfilFiltro(filtro.id)} className={`rounded-full border px-2.5 py-1 text-[10px] font-black transition ${perfilFiltro === filtro.id ? 'border-cyan-700 bg-cyan-700 text-white' : 'border-slate-200 bg-white text-slate-600 hover:border-cyan-300'}`}>{filtro.label}</button>)}</div>
+                    <div className="mt-2 flex flex-wrap gap-1.5">{FILTROS_PERFIL.map((filtro) => <button key={filtro.id} type="button" onClick={() => setPerfilFiltro(filtro.id)} className={`rounded-full border px-2.5 py-1 text-[10px] font-black transition ${perfilFiltro === filtro.id ? 'border-cyan-700 bg-cyan-700 text-white' : 'border-slate-200 bg-white text-slate-600 hover:border-cyan-300'}`}>{filtro.label}</button>)}<button type="button" onClick={() => setPerfilOrdem('criado_em_desc')} className={`rounded-full border px-2.5 py-1 text-[10px] font-black transition ${perfilOrdem.startsWith('criado_em') ? 'border-cyan-700 bg-cyan-700 text-white' : 'border-slate-200 bg-white text-slate-600 hover:border-cyan-300'}`}>Data de criação</button></div>
                   </div>
                   <div>
                     <p className="text-[10px] font-black uppercase tracking-wide text-slate-500">Tipo de perfil</p>
                     <div className="mt-2 flex flex-wrap gap-1.5">{([['todos', 'Todos os tipos'], ['empresa', 'Empresa'], ['pessoal', 'Pessoal']] as Array<[PerfilTipoFiltro, string]>).map(([tipo, label]) => <button key={tipo} type="button" onClick={() => setPerfilTipoFiltro(tipo)} className={`rounded-full border px-2.5 py-1 text-[10px] font-black transition ${perfilTipoFiltro === tipo ? 'border-cyan-700 bg-cyan-700 text-white' : 'border-slate-200 bg-white text-slate-600 hover:border-cyan-300'}`}>{label}</button>)}</div>
                   </div>
                   <div>
-                    <p className="text-[10px] font-black uppercase tracking-wide text-slate-500">Data de criação</p>
-                    <div className="mt-2 grid max-w-md grid-cols-2 gap-2">
-                      <label className="text-[10px] font-bold text-slate-600">De<input type="date" value={perfilCriadoDe} onChange={(event) => setPerfilCriadoDe(event.target.value)} className="mt-1 block h-9 w-full rounded-md border border-slate-300 bg-white px-2 text-xs font-bold text-slate-700 outline-none focus:border-cyan-700" /></label>
-                      <label className="text-[10px] font-bold text-slate-600">Até<input type="date" value={perfilCriadoAte} onChange={(event) => setPerfilCriadoAte(event.target.value)} className="mt-1 block h-9 w-full rounded-md border border-slate-300 bg-white px-2 text-xs font-bold text-slate-700 outline-none focus:border-cyan-700" /></label>
-                    </div>
-                  </div>
-                  <div>
                     <p className="text-[10px] font-black uppercase tracking-wide text-slate-500">Ordenar por</p>
                     <div className="mt-2 flex flex-wrap gap-1.5">{([['nome_asc', 'Nome A–Z'], ['nome_desc', 'Nome Z–A'], ['criado_em_desc', 'Criação: recentes'], ['criado_em_asc', 'Criação: antigas']] as Array<[PerfilOrdem, string]>).map(([ordem, label]) => <button key={ordem} type="button" onClick={() => setPerfilOrdem(ordem)} className={`rounded-full border px-2.5 py-1 text-[10px] font-black transition ${perfilOrdem === ordem ? 'border-cyan-700 bg-cyan-700 text-white' : 'border-slate-200 bg-white text-slate-600 hover:border-cyan-300'}`}>{label}</button>)}</div>
                   </div>
-                  <div className="flex justify-end gap-2 border-t border-cyan-100 pt-3"><button type="button" onClick={() => { setPerfilFiltro('todos'); setPerfilTipoFiltro('todos'); setPerfilOrdem('nome_asc'); setPerfilCriadoDe(''); setPerfilCriadoAte(''); void buscarPerfis(1, { situacao: 'todos', tipo: 'todos', ordem: 'nome_asc', criadoDe: '', criadoAte: '' }); }} className="h-9 rounded-md px-3 text-[10px] font-black uppercase text-slate-600 hover:bg-white">Limpar</button><button type="button" onClick={() => { setFiltrosPerfilAbertos(false); void buscarPerfis(1); }} disabled={buscandoPerfis} className="h-9 rounded-md bg-cyan-700 px-3 text-[10px] font-black uppercase text-white hover:bg-cyan-800 disabled:opacity-60">Aplicar filtros</button></div>
+                  <div className="flex justify-end gap-2 border-t border-cyan-100 pt-3"><button type="button" onClick={() => { setPerfilFiltro('todos'); setPerfilTipoFiltro('todos'); setPerfilOrdem('nome_asc'); void buscarPerfis(1, { situacao: 'todos', tipo: 'todos', ordem: 'nome_asc' }); }} className="h-9 rounded-md px-3 text-[10px] font-black uppercase text-slate-600 hover:bg-white">Limpar</button><button type="button" onClick={() => { setFiltrosPerfilAbertos(false); void buscarPerfis(1); }} disabled={buscandoPerfis} className="h-9 rounded-md bg-cyan-700 px-3 text-[10px] font-black uppercase text-white hover:bg-cyan-800 disabled:opacity-60">Aplicar filtros</button></div>
                 </div>
               </div>}
             </section>

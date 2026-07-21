@@ -1,10 +1,10 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.6.0.84.08 -->
+<!-- ava-version: 1.6.0.84.09 -->
 
-> Revisão 1.6.0.84.08: no `/admin`, **Perfis** pode ser filtrado por intervalo
-> de criação e ordenado por nome ou data de criação; isso não altera os caminhos
-> operacionais orientados pela Ava.
+> Revisão 1.6.0.84.09: no `/admin`, **Data de criação** é uma opção direta
+> dentro de **Perfis > Filtros > Situação de acesso**; isso não altera os
+> caminhos operacionais orientados pela Ava.
 
 ## Escopo
 
