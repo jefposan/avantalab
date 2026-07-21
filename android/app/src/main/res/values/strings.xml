@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">AvantaLab</string>
+    <string name="title_activity_main">AvantaLab</string>
+    <string name="package_name">br.com.avantalab.app</string>
+    <string name="custom_url_scheme">br.com.avantalab.app</string>
+</resources>

@@ -1,8 +1,9 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.6.0.84.01 -->
+<!-- ava-version: 1.6.0.84.02 -->
 
-> Revisão 1.6.0.84.01: sem impacto operacional no Gestão Mobile.
+> Revisão 1.6.0.84.02: no aplicativo Android/iOS, o login com Google abre em
+> navegador seguro e retorna automaticamente ao AvantaLab após a autenticação.
 
 ## Escopo
 
@@ -70,6 +71,9 @@ deve usar os nomes do menu e da barra inferior do celular.
 
 ## Conta e limites
 
+- No aplicativo Android/iOS, **Entrar com Google** abre o navegador seguro do
+  sistema. Ao concluir, o AvantaLab reabre automaticamente; ao cancelar, o
+  usuário pode tentar novamente na tela de login.
 - Perfil, dados cadastrais, backup e restauração ficam nas áreas de perfil/menu.
 - A senha é da conta AvantaLab e pode afetar outros ambientes autenticados com o
   mesmo login.

@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.6.0.84.02 - 2026-07-21
+
+- Aplicativo Android e iOS: o login com Google abre no navegador seguro do
+  sistema, retorna ao AvantaLab por deep link e conclui a sessão sem alterar o
+  fluxo já usado pela Gestão Web e pelo PWA.
+
 ## 1.6.0.84.01 - 2026-07-20
 
 - Gestão Web: a **Caixinha** passa a se adaptar ao perfil — permanece ativa no Pessoal e se apresenta como **Reserva financeira** no perfil Empresa, inicialmente disponível em Organizar blocos.

@@ -16,6 +16,10 @@ import { TERMOS_VERSAO } from '../lib/legal';
 import { DDI_PADRAO } from '../lib/paises';
 import { COBRANCA_ATIVA } from '../lib/cobranca';
 import type { AbrirAvisoFn } from './useUI';
+import { Capacitor } from '@capacitor/core';
+import type { PluginListenerHandle } from '@capacitor/core';
+import { App as CapacitorApp } from '@capacitor/app';
+import { Browser } from '@capacitor/browser';
 
 // ---------------------------------------------------------------------------
 // Tipos
@@ -57,6 +61,7 @@ function telefoneCadastroConfirmado(metadata: Record<string, unknown> | null | u
 }
 
 const CHAVE_RASCUNHO_CADASTRO_WEB = 'avantalab_web_rascunho_cadastro';
+const REDIRECT_GOOGLE_NATIVO = 'br.com.avantalab.app://auth/callback';
 
 // ---------------------------------------------------------------------------
 // Hook
@@ -129,6 +134,131 @@ export function useAuth(deps: UseAuthDeps) {
   const [authMensagem, setAuthMensagem] = useState('');
   const [authLoading, setAuthLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
+  const loginGoogleNativoPendenteRef = useRef(false);
+
+  useEffect(() => {
+    if (!Capacitor.isNativePlatform()) return;
+
+    let desmontado = false;
+    const listeners: PluginListenerHandle[] = [];
+
+    const fecharNavegador = async () => {
+      try {
+        await Browser.close();
+      } catch {
+        // O Android pode encerrar a Custom Tab ao entregar o deep link.
+      }
+    };
+
+    const processarRetornoGoogle = async (url: string) => {
+      let callbackUrl: URL;
+
+      try {
+        callbackUrl = new URL(url);
+      } catch {
+        return;
+      }
+
+      if (
+        callbackUrl.protocol !== 'br.com.avantalab.app:' ||
+        callbackUrl.hostname !== 'auth' ||
+        callbackUrl.pathname !== '/callback'
+      ) {
+        return;
+      }
+
+      loginGoogleNativoPendenteRef.current = false;
+      setGoogleLoading(true);
+      setAuthErro('');
+
+      try {
+        const hashParams = new URLSearchParams(callbackUrl.hash.slice(1));
+        const obterParametro = (nome: string) =>
+          callbackUrl.searchParams.get(nome) ?? hashParams.get(nome);
+        const erroOAuth =
+          obterParametro('error_description') ?? obterParametro('error');
+
+        if (erroOAuth) throw new Error(erroOAuth);
+
+        const codigo = callbackUrl.searchParams.get('code');
+
+        if (codigo) {
+          const { error } = await supabase.auth.exchangeCodeForSession(codigo);
+          if (error) throw error;
+        } else {
+          const accessToken = obterParametro('access_token');
+          const refreshToken = obterParametro('refresh_token');
+
+          if (!accessToken || !refreshToken) {
+            throw new Error(
+              'O Google não retornou os dados necessários para concluir o login.'
+            );
+          }
+
+          const { error } = await supabase.auth.setSession({
+            access_token: accessToken,
+            refresh_token: refreshToken,
+          });
+          if (error) throw error;
+        }
+      } catch (erro) {
+        console.error('Erro no retorno do Google:', erro);
+        setAuthErro(
+          erro instanceof Error
+            ? erro.message
+            : 'Não foi possível concluir o login com Google.'
+        );
+      } finally {
+        setGoogleLoading(false);
+        await fecharNavegador();
+      }
+    };
+
+    const guardarListener = async (listener: Promise<PluginListenerHandle>) => {
+      const handle = await listener;
+      if (desmontado) {
+        await handle.remove();
+      } else {
+        listeners.push(handle);
+      }
+    };
+
+    void (async () => {
+      await guardarListener(
+        CapacitorApp.addListener('appUrlOpen', ({ url }) => {
+          void processarRetornoGoogle(url);
+        })
+      );
+      await guardarListener(
+        Browser.addListener('browserFinished', () => {
+          if (!loginGoogleNativoPendenteRef.current) return;
+          loginGoogleNativoPendenteRef.current = false;
+          setGoogleLoading(false);
+        })
+      );
+      await guardarListener(
+        CapacitorApp.addListener('appStateChange', ({ isActive }) => {
+          if (!isActive || !loginGoogleNativoPendenteRef.current) return;
+          loginGoogleNativoPendenteRef.current = false;
+          setGoogleLoading(false);
+        })
+      );
+
+      const aberturaInicial = await CapacitorApp.getLaunchUrl();
+      if (aberturaInicial?.url) {
+        await processarRetornoGoogle(aberturaInicial.url);
+      }
+    })().catch((erro) => {
+      console.error('Erro ao preparar retorno nativo do Google:', erro);
+      loginGoogleNativoPendenteRef.current = false;
+      setGoogleLoading(false);
+    });
+
+    return () => {
+      desmontado = true;
+      for (const listener of listeners) void listener.remove();
+    };
+  }, []);
   const [carregandoSistema, setCarregandoSistema] = useState(true);
   const [mensagemCarregamentoSistema, setMensagemCarregamentoSistema] = useState(
     'Carregando sistema...'
@@ -756,14 +886,46 @@ export function useAuth(deps: UseAuthDeps) {
     setAuthMensagem('');
     setGoogleLoading(true);
 
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: 'google',
-      options: { redirectTo: `${window.location.origin}/` },
-    });
+    if (!Capacitor.isNativePlatform()) {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: { redirectTo: `${window.location.origin}/` },
+      });
 
-    if (error) {
-      console.error('Erro login Google:', error);
-      setAuthErro(`Erro Google: ${error.message}`);
+      if (error) {
+        console.error('Erro login Google:', error);
+        setAuthErro(`Erro Google: ${error.message}`);
+        setGoogleLoading(false);
+      }
+      return;
+    }
+
+    loginGoogleNativoPendenteRef.current = true;
+
+    try {
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: REDIRECT_GOOGLE_NATIVO,
+          skipBrowserRedirect: true,
+        },
+      });
+
+      if (error) throw error;
+      if (!data.url) throw new Error('Não foi possível abrir o login do Google.');
+
+      await Browser.open({
+        url: data.url,
+        presentationStyle: 'fullscreen',
+      });
+    } catch (erro) {
+      console.error('Erro login Google:', erro);
+      loginGoogleNativoPendenteRef.current = false;
+      setAuthErro(
+        erro instanceof Error
+          ? `Erro Google: ${erro.message}`
+          : 'Não foi possível abrir o login do Google.'
+      );
       setGoogleLoading(false);
     }
   };

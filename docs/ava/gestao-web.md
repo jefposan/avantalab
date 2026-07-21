@@ -1,10 +1,8 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.6.0.84.01 -->
+<!-- ava-version: 1.6.0.84.02 -->
 
-> Revisão 1.6.0.84.01: no perfil Pessoal, a Caixinha começa ativa; no perfil
-> Empresa, ela se chama Reserva financeira e começa oculta, disponível em
-> Organizar blocos.
+> Revisão 1.6.0.84.02: sem impacto operacional na Gestão Web.
 
 ## Escopo
 
