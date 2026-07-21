@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.6.0.84.10 - 2026-07-21
+
+- Administração: em **Perfis**, a ordenação passa a ficar em um único botão
+  **Ordenar**, ao lado de **Filtros**. Os filtros de situação e tipo permanecem
+  separados da escolha de ordenação.
+
 ## 1.6.0.84.09 - 2026-07-21
 
 - Administração: **Data de criação** passa a ser uma opção direta em

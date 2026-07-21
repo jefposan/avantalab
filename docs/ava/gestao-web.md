@@ -1,10 +1,10 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.6.0.84.09 -->
+<!-- ava-version: 1.6.0.84.10 -->
 
-> Revisão 1.6.0.84.09: no `/admin`, **Data de criação** é uma opção direta
-> dentro de **Perfis > Filtros > Situação de acesso**; isso não altera os
-> caminhos operacionais orientados pela Ava.
+> Revisão 1.6.0.84.10: no `/admin`, em **Perfis**, a ordenação fica no botão
+> **Ordenar**, ao lado de **Filtros**. A opção inclui data de criação e nome,
+> sem misturar a ordenação com os filtros de situação e tipo.
 
 ## Escopo
 
