@@ -9,9 +9,20 @@ export function proxy(request: NextRequest) {
     .split(':')[0]
     .toLowerCase();
 
-  if (host === 'admin.avantalab.com.br' && request.nextUrl.pathname === '/') {
+  const pathname = request.nextUrl.pathname;
+
+  const subdominios: Record<string, string> = {
+    'admin.avantalab.com.br': '/admin',
+    'ponto.avantalab.com.br': '/ponto',
+    'recebimentos.avantalab.com.br': '/recebimentos',
+    'vendas.avantalab.com.br': '/mobile/vendas',
+  };
+
+  const destino = subdominios[host];
+
+  if (destino && pathname === '/') {
     const url = request.nextUrl.clone();
-    url.pathname = '/admin';
+    url.pathname = destino;
 
     return NextResponse.rewrite(url);
   }
