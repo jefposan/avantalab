@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.6.0.84.20 - 2026-07-21
+
+- Gestão Web: o perfil Pessoal no plano gratuito passa a abrir a página de
+  assinatura em vez do dashboard. O uso gratuito permanece disponível no
+  Gestão Mobile; assinatura Premium ou cortesia libera também o acesso web.
+
 ## 1.6.0.84.19 - 2026-07-21
 
 - Administração: a ficha de cada perfil em **Perfis** passa a exibir a data do

@@ -1,6 +1,6 @@
 'use client';
 import React, { useRef, useState } from 'react';
-import type { DadosCobrancaAssinatura, EstadoAcesso } from '../lib/cobranca';
+import { PRECOS, type DadosCobrancaAssinatura, type EstadoAcesso } from '../lib/cobranca';
 
 // Formata como CPF (000.000.000-00) até 11 dígitos, ou CNPJ (00.000.000/0000-00) acima.
 function formatarCpfCnpj(valor: string): string {
@@ -32,13 +32,16 @@ interface PaywallEmpresaProps {
   onTrocarPerfil?: () => void; // volta à seleção de perfis (se houver mais de um)
   onCriarPerfil?: () => void;  // cria um novo perfil (empresa/pessoal)
   onSair?: () => void;
+  // O componente também atende o bloqueio do Gestão Web no plano Pessoal
+  // gratuito, preservando o mesmo fluxo de assinatura e cupom.
+  tipoPerfil?: 'empresa' | 'pessoal';
 }
 
 const GRADIENTE = 'linear-gradient(135deg,#003E73,#00A6C8)';
 
 // Tela mostrada quando o perfil empresa precisa regularizar ou iniciar a
 // assinatura, com a identidade visual da tela de login.
-export default function PaywallEmpresa({ nomePerfil, emailPadrao, telefonePadrao, estadoAcesso, faturaPendenteUrl, onAssinar, onEscolherPlano, onAtualizarPagamento, onResgatarCupom, onTrocarPerfil, onCriarPerfil, onSair }: PaywallEmpresaProps) {
+export default function PaywallEmpresa({ nomePerfil, emailPadrao, telefonePadrao, estadoAcesso, faturaPendenteUrl, onAssinar, onEscolherPlano, onAtualizarPagamento, onResgatarCupom, onTrocarPerfil, onCriarPerfil, onSair, tipoPerfil = 'empresa' }: PaywallEmpresaProps) {
   const [carregando, setCarregando] = useState<'mensal' | 'anual' | null>(null);
   const [erro, setErro] = useState('');
   const [nomeCobranca, setNomeCobranca] = useState(nomePerfil || '');
@@ -54,11 +57,17 @@ export default function PaywallEmpresa({ nomePerfil, emailPadrao, telefonePadrao
   const [instanteAbertura] = useState(() => Date.now());
   const assinaturaEmCursoRef = useRef(false);
   const resgateEmCursoRef = useRef(false);
+  const acessoWebPessoal = tipoPerfil === 'pessoal';
+  const precoMensal = PRECOS[acessoWebPessoal ? 'pessoal_premium' : 'empresa'].mensal;
+  const precoAnual = PRECOS[acessoWebPessoal ? 'pessoal_premium' : 'empresa'].anual;
+  const economiaAnual = Math.round((precoMensal * 12 - precoAnual) * 100) / 100;
 
   const trialRealmenteVencido = (estadoAcesso?.status === 'trial' || estadoAcesso?.status === 'expirada')
     && !!estadoAcesso.trialFim
     && new Date(estadoAcesso.trialFim).getTime() <= instanteAbertura;
-  const tituloBloqueio = trialRealmenteVencido
+  const tituloBloqueio = acessoWebPessoal
+    ? 'A Gestão Web é exclusiva para o Premium Pessoal'
+    : trialRealmenteVencido
     ? 'Seu teste de 7 dias terminou'
     : estadoAcesso?.status === 'inadimplente'
       ? 'Há um pagamento pendente'
@@ -67,7 +76,9 @@ export default function PaywallEmpresa({ nomePerfil, emailPadrao, telefonePadrao
         : estadoAcesso?.status === 'expirada'
           ? 'Este perfil aguarda uma assinatura ativa'
           : 'Este perfil precisa de uma assinatura ativa';
-  const textoBloqueio = trialRealmenteVencido
+  const textoBloqueio = acessoWebPessoal
+    ? 'Seu plano gratuito continua disponível no Gestão Mobile. Assine ou aplique um cupom para acessar também a Gestão Web.'
+    : trialRealmenteVencido
     ? 'Assine para continuar. Seus dados permanecem guardados.'
     : estadoAcesso?.status === 'inadimplente'
       ? 'Regularize o pagamento para liberar novamente o acesso ao perfil.'
@@ -194,7 +205,7 @@ export default function PaywallEmpresa({ nomePerfil, emailPadrao, telefonePadrao
 
           {/* Perfil bloqueado — destaque forte */}
           <div className="mt-2.5 rounded-2xl border-2 border-sky-400 px-3 py-2 text-center shadow-md" style={{ background: GRADIENTE }}>
-            <span className="block text-[9px] font-black uppercase tracking-[0.2em] text-white/80">Perfil bloqueado</span>
+            <span className="block text-[9px] font-black uppercase tracking-[0.2em] text-white/80">{acessoWebPessoal ? 'Acesso web' : 'Perfil bloqueado'}</span>
             <span className="mt-0.5 block truncate text-lg font-black text-white">{nomePerfil || 'Este perfil'}</span>
           </div>
 
@@ -297,7 +308,7 @@ export default function PaywallEmpresa({ nomePerfil, emailPadrao, telefonePadrao
                 <div className="group rounded-2xl border-2 border-slate-200 bg-white/80 p-3 transition hover:border-sky-600">
                   <p className="text-[10px] font-black uppercase tracking-wide text-slate-500">Mensal</p>
                   <p className="mt-1 text-xl font-black text-slate-900">
-                    R$ 34,90<span className="text-xs font-bold text-slate-500">/mês</span>
+                    {precoMensal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}<span className="text-xs font-bold text-slate-500">/mês</span>
                   </p>
                   <p className="mt-1 text-xs font-semibold text-slate-500">Cancele quando quiser.</p>
                   <button
@@ -312,13 +323,13 @@ export default function PaywallEmpresa({ nomePerfil, emailPadrao, telefonePadrao
 
                 <div className="relative rounded-2xl border-2 border-sky-600 bg-white/85 p-3">
                   <span className="absolute -top-2.5 left-3 rounded-full px-2.5 py-0.5 text-[9px] font-black uppercase tracking-wide text-white" style={{ background: GRADIENTE }}>
-                    2 meses grátis
+                    {acessoWebPessoal ? 'Melhor valor' : '2 meses grátis'}
                   </span>
                   <p className="text-[10px] font-black uppercase tracking-wide text-slate-500">Anual</p>
                   <p className="mt-1 text-xl font-black text-slate-900">
-                    R$ 29,00<span className="text-xs font-bold text-slate-500">/mês</span>
+                    {(precoAnual / 12).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}<span className="text-xs font-bold text-slate-500">/mês</span>
                   </p>
-                  <p className="mt-1 text-xs font-semibold text-slate-500">R$ 348,00/ano — economize ~R$ 70.</p>
+                  <p className="mt-1 text-xs font-semibold text-slate-500">{precoAnual.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}/ano — economize {economiaAnual.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}.</p>
                   <button
                     type="button"
                     onClick={() => clicar('anual')}

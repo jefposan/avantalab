@@ -1,15 +1,17 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.6.0.84.19 -->
+<!-- ava-version: 1.6.0.84.20 -->
 
-> Revisão 1.6.0.84.19: no `/admin`, a lista de **Perfis** apresenta a data do
-> último acesso efetivo dos usuários ativos vinculados a cada perfil.
+> Revisão 1.6.0.84.20: o plano Pessoal gratuito é atendido no Gestão Mobile.
+> Ao entrar no Gestão Web, ele segue para a assinatura Premium; assinatura
+> vigente ou cortesia libera o acesso web.
 
 ## Escopo
 
 Este manual vale para a Ava aberta na Gestão Web. Ela deve orientar caminhos
 visíveis na interface e nunca confundir esta versão com `/mobile`, `/mobile/vendas`
-ou `/ponto`.
+ou `/ponto`. O perfil Pessoal gratuito não usa a Gestão Web: oriente o uso do
+Gestão Mobile ou a assinatura/cupom do Premium Pessoal.
 
 ## Navegação e perfis
 

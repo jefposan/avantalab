@@ -30,7 +30,7 @@ import AssinaturaModal from './components/AssinaturaModal';
 import PremiumPessoalModal from './components/PremiumPessoalModal';
 import ModalAprovacoes, { type AcessoVendasAprovado, type SolicitacaoAprovacao } from './components/ModalAprovacoes';
 import NovidadesVendasModal from './components/NovidadesVendasModal';
-import { COBRANCA_ATIVA, assinaturaVigente, emCarencia, precisaPaywallEmpresa, precisaUpgradePessoal, type DadosCobrancaAssinatura, type EstadoAcesso, type Recurso } from './lib/cobranca';
+import { COBRANCA_ATIVA, assinaturaVigente, emCarencia, precisaPaywallEmpresa, precisaPaywallWebPessoal, precisaUpgradePessoal, type DadosCobrancaAssinatura, type EstadoAcesso, type Recurso } from './lib/cobranca';
 import type { StatusCadastroPerfil } from './lib/cadastro-perfil';
 import { PAISES } from './lib/paises';
 import {
@@ -7037,10 +7037,11 @@ if (validacaoTelefoneObrigatoria) {
     );
   }
 
-  // Cobrança: perfil empresa com trial vencido / sem assinatura → paywall total.
-  // (precisaPaywallEmpresa retorna false enquanto COBRANCA_ATIVA=false, então
-  // esta tela nunca aparece até ligarmos a flag.)
-  if (precisaPaywallEmpresa(estadoAcesso)) {
+  // Cobrança: Empresa sem assinatura e Pessoal grátis não acessam a Gestão Web.
+  // O plano Pessoal gratuito permanece disponível exclusivamente no Gestão Mobile.
+  // As duas regras ficam inativas enquanto COBRANCA_ATIVA=false.
+  const bloqueioWebPessoal = precisaPaywallWebPessoal(estadoAcesso);
+  if (precisaPaywallEmpresa(estadoAcesso) || bloqueioWebPessoal) {
     return (
       <>
         <PaywallEmpresa
@@ -7056,6 +7057,7 @@ if (validacaoTelefoneObrigatoria) {
           onTrocarPerfil={empresasDoUsuario.length > 1 ? abrirTrocaEmpresa : undefined}
           onCriarPerfil={abrirCriacaoNovaEmpresa}
           onSair={handleLogout}
+          tipoPerfil={bloqueioWebPessoal ? 'pessoal' : 'empresa'}
         />
         {cicloCadastroPaywall && empresaId && (
           <CadastroPerfilModal
@@ -7113,7 +7115,7 @@ if (validacaoTelefoneObrigatoria) {
         />
       )}
 
-      {empresaId && cicloCadastroPaywall && !precisaPaywallEmpresa(estadoAcesso) && (
+      {empresaId && cicloCadastroPaywall && !precisaPaywallEmpresa(estadoAcesso) && !precisaPaywallWebPessoal(estadoAcesso) && (
         <CadastroPerfilModal
           aberto
           empresaId={empresaId}

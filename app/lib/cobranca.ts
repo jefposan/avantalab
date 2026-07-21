@@ -144,6 +144,15 @@ export function precisaPaywallEmpresa(e: EstadoAcesso | null, agora: Date = new 
   return e.tipoPerfil === 'empresa' && !assinaturaVigente(e, agora);
 }
 
+// A Gestão Web é um benefício do Premium Pessoal. O plano gratuito continua
+// disponível no Gestão Mobile; no Web, o perfil pessoal sem assinatura ou
+// cortesia vigente é direcionado para a página de assinatura.
+export function precisaPaywallWebPessoal(e: EstadoAcesso | null, agora: Date = new Date()): boolean {
+  if (!COBRANCA_ATIVA) return false;
+  if (!e) return false; // sem informação confiável, preserva o acesso
+  return e.tipoPerfil === 'pessoal' && !assinaturaVigente(e, agora);
+}
+
 // Perfil PESSOAL grátis tentando usar um recurso premium → mostrar o modal
 // de upgrade "Premium Pessoal" (não bloqueia o núcleo, só o recurso).
 export function precisaUpgradePessoal(
