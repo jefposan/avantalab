@@ -1,10 +1,9 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.6.0.84.20 -->
+<!-- ava-version: 1.6.0.84.21 -->
 
-> Revisão 1.6.0.84.20: o plano Pessoal gratuito é atendido no Gestão Mobile.
-> Ao entrar no Gestão Web, ele segue para a assinatura Premium; assinatura
-> vigente ou cortesia libera o acesso web.
+> Revisão 1.6.0.84.21: proteção técnica do contador interno de NSR do REP-P;
+> sem impacto operacional na Gestão Web.
 
 ## Escopo
 
