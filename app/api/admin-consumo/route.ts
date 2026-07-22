@@ -25,14 +25,15 @@ export const runtime = 'nodejs';
 // ainda não exista no banco).
 // ─────────────────────────────────────────────────────────────
 
-// Limites do PLANO GRATUITO de cada plataforma. Se fizer upgrade,
-// ajuste aqui para o painel comparar com o novo teto.
+// Limites contratados atualmente. O painel não recebe o plano pela API pública
+// do Supabase, por isso estes valores acompanham a assinatura da organização.
 const LIMITES = {
   supabase: {
-    dbBytes: 500 * 1024 * 1024,       // 500 MB
-    storageBytes: 1024 * 1024 * 1024, // 1 GB
-    usuariosMau: 50000,               // 50 mil usuários ativos/mês
-    egressGb: 5,                      // 5 GB/mês (não exposto via API)
+    plano: 'Pro',
+    dbBytes: 8 * 1024 * 1024 * 1024,        // 8 GB
+    storageBytes: 100 * 1024 * 1024 * 1024, // 100 GB
+    usuariosMau: 100000,                    // 100 mil usuários ativos/mês
+    egressGb: 250,                          // 250 GB/mês (não exposto via API)
   },
   vercel: {
     bandwidthGb: 100,     // fast data transfer 100 GB/mês (Hobby)
@@ -102,7 +103,7 @@ type CloudflareGraphqlResponse = {
 
 async function consumoSupabase(db: Awaited<ReturnType<typeof exigirAdmin>>['db']): Promise<Plataforma> {
   const plataforma: Plataforma = {
-    nome: 'Supabase',
+    nome: `Supabase ${LIMITES.supabase.plano}`,
     configurado: true,
     itens: [],
     avisos: [],
@@ -113,8 +114,8 @@ async function consumoSupabase(db: Awaited<ReturnType<typeof exigirAdmin>>['db']
     if (error) throw error;
     const m = (typeof data === 'string' ? JSON.parse(data) : data) || {};
     plataforma.itens.push(
-      { nome: 'Banco de dados', usado: Number(m.db_bytes) || 0, limite: LIMITES.supabase.dbBytes, formato: 'bytes' },
-      { nome: 'Storage (arquivos)', usado: Number(m.storage_bytes) || 0, limite: LIMITES.supabase.storageBytes, formato: 'bytes' },
+      { nome: 'Banco de dados', usado: Number(m.db_bytes) || 0, limite: LIMITES.supabase.dbBytes, formato: 'bytes', detalhe: 'Limite incluído no plano Pro.' },
+      { nome: 'Storage (arquivos)', usado: Number(m.storage_bytes) || 0, limite: LIMITES.supabase.storageBytes, formato: 'bytes', detalhe: '100 GB incluídos no plano Pro.' },
       { nome: 'Usuários (contas)', usado: Number(m.usuarios_auth) || 0, limite: LIMITES.supabase.usuariosMau, formato: 'numero', detalhe: 'Limite do plano é por usuários ATIVOS/mês; aqui mostramos o total de contas.' },
     );
     plataforma.itens.push({ nome: 'Egress (tráfego)', usado: null, limite: LIMITES.supabase.egressGb, formato: 'numero', detalhe: 'Não exposto via API — confira no painel do Supabase.' });

@@ -116,26 +116,31 @@ Para extrato bancário:
 - exclua entradas comuns, saldos, limites e totais de resumo.
 
 Não invente data, descrição ou valor. Informe datas em ISO YYYY-MM-DD, inferindo o ano pelo vencimento/período da própria fatura quando a linha mostrar apenas DD/MM. Informe a página de cada item. Retorne todos os itens do período atual.`;
-    const resposta = await fetch('https://api.openai.com/v1/responses', {
-      method: 'POST',
-      headers: { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
-      signal: AbortSignal.timeout(175_000),
-      body: JSON.stringify({
-        model: process.env.OPENAI_IMPORT_MODEL || 'gpt-5.6-sol',
-        reasoning: { effort: process.env.OPENAI_IMPORT_REASONING || 'high' },
-        max_output_tokens: 30_000,
-        store: false,
-        safety_identifier: createHash('sha256').update(`importador:${usuario.id}`).digest('hex'),
-        input: [{
-          role: 'user',
-          content: [
-            { type: 'input_file', filename: arquivo.name, file_data: `data:application/pdf;base64,${bytes.toString('base64')}`, detail: 'high' },
-            { type: 'input_text', text: instrucao },
-          ],
-        }],
-        text: { format: { type: 'json_schema', name: 'analise_financeira_pdf', strict: true, schema } },
-      }),
-    });
+    let resposta: Response;
+    try {
+      resposta = await fetch('https://api.openai.com/v1/responses', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
+        signal: AbortSignal.timeout(175_000),
+        body: JSON.stringify({
+          model: process.env.OPENAI_IMPORT_MODEL || 'gpt-5.6-sol',
+          reasoning: { effort: process.env.OPENAI_IMPORT_REASONING || 'high' },
+          max_output_tokens: 30_000,
+          store: false,
+          safety_identifier: createHash('sha256').update(`importador:${usuario.id}`).digest('hex'),
+          input: [{
+            role: 'user',
+            content: [
+              { type: 'input_file', filename: arquivo.name, file_data: `data:application/pdf;base64,${bytes.toString('base64')}`, detail: 'high' },
+              { type: 'input_text', text: instrucao },
+            ],
+          }],
+          text: { format: { type: 'json_schema', name: 'analise_financeira_pdf', strict: true, schema } },
+        }),
+      });
+    } finally {
+      bytes.fill(0);
+    }
     const resultado = await resposta.json().catch(() => null);
     if (!resposta.ok) {
       console.error('Erro OpenAI importador:', resultado?.error?.message || resposta.status);

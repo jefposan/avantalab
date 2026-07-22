@@ -23,6 +23,7 @@ import type { EntradaFaturamento as TabelaEntradaFaturamento } from './component
 import TabelaLancamentosDespesa, { type LancamentoDespesa as TabelaLancamentoDespesa } from './components/TabelaLancamentosDespesa';
 import ModalNotaLancamento from './components/ModalNotaLancamento';
 import ProcessandoImagemModal from './components/ProcessandoImagemModal';
+import ImportadorDespesasModal, { existeRascunhoImportador } from './modules/importador-despesas/components/ImportadorDespesasModal';
 import TourPrimeiroAcesso from './components/TourPrimeiroAcesso';
 import PaywallEmpresa from './components/PaywallEmpresa';
 import CadastroPerfilModal from './components/CadastroPerfilModal';
@@ -845,6 +846,9 @@ const [editEntradaFaturamentoValorNumerico, setEditEntradaFaturamentoValorNumeri
   const [formParcelar, setFormParcelar] = useState(false);
   const [formParcelas, setFormParcelas] = useState(2);
   const [notaPendente, setNotaPendente] = useState<File | null>(null);
+  const [arquivoImportador, setArquivoImportador] = useState<File | null>(null);
+  const [retomarRascunhoImportador, setRetomarRascunhoImportador] = useState(false);
+  const [temRascunhoImportador, setTemRascunhoImportador] = useState(false);
   const [lendoNota, setLendoNota] = useState(false);
   const [notaAbertaUrl, setNotaAbertaUrl] = useState('');
   const [baixandoNota, setBaixandoNota] = useState(false);
@@ -862,6 +866,10 @@ const [buscaEntradaFaturamento, setBuscaEntradaFaturamento] = useState('');
   const meses = ['JANEIRO', 'FEVEREIRO', 'MARÇO', 'ABRIL', 'MAIO', 'JUNHO', 'JULHO', 'AGOSTO', 'SETEMBRO', 'OUTUBRO', 'NOVEMBRO', 'DEZEMBRO'];
   const TEMPO_LIMITE_INATIVIDADE = 60 * 60 * 1000; // 60 minutos
 const CHAVE_ULTIMA_ATIVIDADE = 'avantalab_ultima_atividade';
+
+useEffect(() => {
+  setTemRascunhoImportador(existeRascunhoImportador());
+}, []);
 
 const podeInserirLancamentos =
   perfilUsuario === 'gestor_master' ||
@@ -4035,6 +4043,12 @@ const adicionarDespesa = async () => {
 };
 
 const lerNotaPorFoto = async (arquivo: File) => {
+  const extensao = arquivo.name.split('.').pop()?.toLowerCase();
+  const eImagem = arquivo.type.startsWith('image/') || ['jpg', 'jpeg', 'png', 'webp'].includes(extensao || '');
+  if (!eImagem) {
+    setArquivoImportador(arquivo);
+    return;
+  }
   if (!empresaId) {
     abrirAviso('Empresa não carregada', 'Tente atualizar a página e acessar novamente.');
     return;
@@ -9975,6 +9989,7 @@ name="novo-usuario-login"
           <main className={classePaginaInterna}>
             <div className="mt-5 flex flex-col gap-6 xl:flex-row xl:items-start">
               <div onClick={() => setBlocoAtivo('despesa')} className="min-w-0 cursor-pointer transition-[width,opacity] duration-300 ease-in-out" style={{ width: typeof window !== 'undefined' && window.innerWidth >= 1280 ? (blocoAtivo === 'despesa' ? '62%' : blocoAtivo === 'receita' ? '38%' : '50%') : '100%', opacity: blocoAtivo === 'receita' ? 0.5 : 1 }}>
+{temRascunhoImportador && <div className="mb-2 flex justify-end"><button type="button" onClick={() => setRetomarRascunhoImportador(true)} className="h-9 rounded-xl border border-emerald-300 bg-emerald-50 px-3 text-xs font-black text-emerald-800 shadow-sm transition hover:border-emerald-400 hover:bg-emerald-100">Continuar importação salva</button></div>}
 <TabelaLancamentosDespesa
               bgCard={bgCard}
               corPrimaria={corPrimaria}
@@ -10519,6 +10534,19 @@ name="novo-usuario-login"
   url={notaAbertaUrl}
   darkMode={darkMode}
   onFechar={() => setNotaAbertaUrl('')}
+/>
+
+<ImportadorDespesasModal
+  arquivo={arquivoImportador}
+  retomarRascunho={retomarRascunhoImportador}
+  empresaId={empresaId || ''}
+  despesasCadastradas={despesasCadastradas}
+  corPrimaria={corPrimaria}
+  darkMode={darkMode}
+  onFechar={() => { setArquivoImportador(null); setRetomarRascunhoImportador(false); }}
+  onConcluido={notificarFinanceiroAtualizado}
+  onEstadoRascunho={setTemRascunhoImportador}
+  onArquivoDescartado={() => setArquivoImportador(null)}
 />
 
 <ProcessandoImagemModal aberto={lendoNota || baixandoNota} darkMode={darkMode} titulo={baixandoNota ? 'Baixando imagem' : 'Processando imagem'} />

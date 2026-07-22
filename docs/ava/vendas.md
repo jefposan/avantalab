@@ -1,8 +1,9 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.6.0.84.30 -->
+<!-- ava-version: 1.6.0.84.35 -->
 
-> Revisão 1.6.0.84.30: confirmação de despesas no Importador web;
+> Revisão 1.6.0.84.35: resumo de consumo Pro no administrativo web; sem impacto
+> operacional em Vendas.
 > sem impacto operacional no Vendas Mobile.
 
 ## Escopo e navegação

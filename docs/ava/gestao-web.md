@@ -1,10 +1,13 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.6.0.84.30 -->
+<!-- ava-version: 1.6.0.84.35 -->
 
-> Revisão 1.6.0.84.30: o Importador grava as despesas confirmadas no perfil
-> selecionado, sem armazenar o arquivo original; sem impacto no Gestão Mobile e
-> no Vendas Mobile.
+> Revisão 1.6.0.84.35: resumo administrativo considera os limites do Supabase
+> Pro. PDFs de extratos e faturas são descartados após a
+> análise; recibos em imagem continuam anexáveis. O botão Arquivo
+> dos Lançamentos abre a conferência de
+> extratos e faturas com progresso, revisão e foco nas pendências; sem impacto
+> no Gestão Mobile e no Vendas Mobile.
 
 ## Escopo
 
@@ -31,6 +34,12 @@ Gestão Mobile ou a assinatura/cupom do Premium Pessoal.
 
 - O sistema registra receitas, despesas, despesas futuras, parcelamentos e
   despesas fixas.
+- No novo lançamento, o botão **Arquivo** aceita imagens de nota e também PDF,
+  CSV, TXT, XLS e XLSX. Imagens continuam preenchendo o lançamento único como
+  nota; extratos, faturas e planilhas mostram uma barra de progresso e abrem a
+  conferência do Importador em popup. Quando a soma não confere, o usuário pode
+  cancelar ou refazer a análise; se faltar tipo de despesa, o sistema informa e
+  leva o foco até a primeira linha pendente.
 - Na prévia `/importador-despesas`, o usuário envia CSV, TXT, XLS, XLSX ou PDF.
   Para PDF, a IA estruturada analisa visualmente todas as páginas e colunas e separa compras e saídas
   reais dos campos de limite, total, vencimento, pagamento mínimo, saldo,

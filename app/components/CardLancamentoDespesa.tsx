@@ -298,7 +298,7 @@ export default function CardLancamentoDespesa({
               <input
                 ref={arquivoRef}
                 type="file"
-                accept="image/jpeg,image/png,image/webp"
+                accept="image/jpeg,image/png,image/webp,application/pdf,.csv,.txt,.xls,.xlsx"
                 className="hidden"
                 onChange={(event) => {
                   const arquivo = event.target.files?.[0];
@@ -310,7 +310,7 @@ export default function CardLancamentoDespesa({
                 type="button"
                 onClick={() => arquivoRef.current?.click()}
                 disabled={lendoNota || salvandoDespesa}
-                title="Enviar arquivo da nota"
+                title="Enviar nota, extrato, fatura ou planilha"
                 className="flex h-7 items-center gap-1 rounded-full border border-sky-300 bg-sky-50 px-2 text-[10px] font-black uppercase text-sky-800 shadow-sm transition hover:border-sky-400 hover:bg-sky-100 active:scale-95 disabled:opacity-60"
               >
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" className="h-3.5 w-3.5"><path strokeLinecap="round" strokeLinejoin="round" d="M14 3H6a2 2 0 00-2 2v14a2 2 0 002 2h12a2 2 0 002-2V9l-6-6Z"/><path strokeLinecap="round" strokeLinejoin="round" d="M14 3v6h6M8 14h8M8 17h5"/></svg>

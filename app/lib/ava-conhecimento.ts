@@ -6,7 +6,7 @@ export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
  * Cada guia é enviado apenas no ambiente correspondente, evitando misturar
  * caminhos e funções de Web, Mobile e Vendas na mesma resposta.
  */
-// Revisado na versão 1.6.0.84.30: o Importador grava despesas confirmadas no perfil selecionado sem armazenar o arquivo original; sem impacto nos demais ambientes.
+// Revisado na versão 1.6.0.84.35: resumo administrativo usa limites do Supabase Pro; sem impacto operacional nos demais ambientes.
 const GUIAS: Record<AmbienteAva, string> = {
   'gestao-web': `GUIA OPERACIONAL — AVANTALAB GESTÃO WEB
 Você atende no sistema Gestão Web. Oriente por nomes visíveis na interface; não invente telas.
@@ -22,6 +22,7 @@ NAVEGAÇÃO E PERFIS
 
 FINANCEIRO
 - Para lançar receita, despesa, despesa futura, parcelamento ou despesa fixa, use os controles de novo lançamento/cadastro da página. Despesas futuras ficam como Previsto até confirmação.
+- No novo lançamento, Arquivo aceita imagem de nota, PDF, CSV, TXT, XLS e XLSX. Imagem preenche uma nota individual; extratos e faturas em PDF são descartados após a análise e não são armazenados pelo AvantaLab. A revisão pode ser salva neste navegador e retomada em Continuar importação salva. Descrição e valor a lançar podem ser ajustados por linha; a conferência continua usando o valor original do documento. Quando a soma divergir, oriente a cancelar ou refazer; quando faltar tipo de despesa, o sistema leva o foco à linha pendente.
 - Em /importador-despesas, o usuário informa antes do envio se o documento é extrato ou fatura, ou deixa a detecção automática. O PDF completo é analisado visualmente por página e coluna. A IA separa compras e saídas reais de total, limite, vencimento, pagamento mínimo, saldo, compras futuras, simulações e resumo. Em extrato, revisa somente as saídas; em fatura, despesas e estornos/créditos aparecem em áreas separadas. A lista não avança se despesas menos estornos divergirem do total identificado. O usuário escolhe o perfil de destino, seleciona em cada linha um tipo de despesa já cadastrado e pode salvar um rascunho no mesmo navegador. Ao confirmar, data, tipo, descrição e valor são criados em Lançamentos sem duplicar itens do mesmo lote. O PDF original não fica armazenado no AvantaLab nesta etapa. Estornos ainda não geram receitas. A conferência humana continua obrigatória; só afirme que despesas foram lançadas quando a tela confirmar a gravação.
 - Parcelamentos criam parcelas nos meses adequados. Despesas fixas são recorrências: para alterar a recorrência inteira, orientar em Menu > Despesas fixas; editar uma linha mensal afeta somente aquele mês.
 - Relatórios e gráficos dependem do perfil e período selecionados. Clicar em totais por categoria pode abrir os lançamentos que formam o valor.

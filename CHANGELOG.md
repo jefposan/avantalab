@@ -1,5 +1,42 @@
 # Changelog
 
+## 1.6.0.84.35 - 2026-07-22
+
+- Administração: o resumo de consumo passa a usar os limites contratados do
+  Supabase Pro (100 GB de Storage, 8 GB de banco, 100 mil MAUs e 250 GB de
+  egress), em vez dos limites do plano Free.
+
+## 1.6.0.84.34 - 2026-07-22
+
+- Gestão Web: PDFs de extratos e faturas são usados somente durante a análise e
+  descartados da memória do navegador e do servidor em seguida. O documento não
+  é gravado no banco nem no Storage; imagens de recibo continuam no fluxo de
+  nota anexada ao lançamento.
+
+## 1.6.0.84.33 - 2026-07-22
+
+- Gestão Web: a revisão de importações pode ser salva e retomada depois no
+  mesmo navegador, preservando seleção, tipo, descrição, valores ajustados e
+  total de conferência.
+- Gestão Web: o valor a lançar agora é editável por linha. A conferência do
+  documento continua usando o valor original reconhecido, permitindo lançar
+  somente a parte do usuário em uma compra compartilhada.
+
+## 1.6.0.84.32 - 2026-07-22
+
+- Gestão Web: corrigido o progresso da análise de documentos no Importador. A
+  atualização percentual agora ocorre fora da renderização do React e impede
+  análises duplicadas no ambiente de desenvolvimento.
+
+## 1.6.0.84.31 - 2026-07-21
+
+- Gestão Web: o botão **Arquivo** do novo lançamento aceita nota por imagem,
+  extrato, fatura de cartão e planilhas. Documentos financeiros exibem progresso
+  e abrem a conferência do Importador no próprio fluxo de Lançamentos.
+- Gestão Web: a conferência bloqueia a gravação quando a soma divergir, permite
+  cancelar ou refazer a análise e desloca o foco ao primeiro tipo de despesa
+  pendente antes de inserir os lançamentos.
+
 ## 1.6.0.84.30 - 2026-07-21
 
 - Gestão Web: depois da revisão, o Importador cria no perfil selecionado os
