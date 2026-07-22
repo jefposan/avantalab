@@ -233,6 +233,83 @@ export default function MobilePage() {
               background-size: 100% auto;
             }
 
+            /* Login da Gestão Mobile segue a mesma cena de acesso consolidada
+               no Vendas Mobile: marca separada, card central e ações legíveis. */
+            .gestao-login-screen {
+              position: fixed;
+              inset: 0;
+              isolation: isolate;
+              display: grid;
+              grid-template-rows: minmax(0, 1fr) auto minmax(0, 1fr);
+              width: 100%;
+              height: 100dvh;
+              min-height: 100dvh;
+              overflow: hidden;
+              overscroll-behavior: none;
+              padding: 0 max(16px, env(safe-area-inset-right)) 0 max(16px, env(safe-area-inset-left));
+            }
+            .gestao-login-screen::before {
+              position: absolute;
+              z-index: 0;
+              inset: 0;
+              background: #eef6fb url('/images/bg-avantalab-mobile-1080x1920-sem-logo.webp') center / cover no-repeat;
+              content: '';
+            }
+            .gestao-login-screen > * { position: relative; z-index: 1; }
+            .gestao-login-brand {
+              display: grid;
+              grid-row: 1;
+              width: 100%;
+              min-width: 0;
+              min-height: 0;
+              place-items: center;
+              overflow: hidden;
+              padding: env(safe-area-inset-top) 0 0;
+            }
+            .gestao-login-brand img {
+              display: block;
+              width: clamp(170px, 58vw, 310px);
+              max-width: 82%;
+              max-height: 72%;
+              object-fit: contain;
+            }
+            .gestao-login-form {
+              display: grid;
+              grid-row: 2;
+              width: min(100%, 420px);
+              max-height: calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 108px);
+              gap: 14px;
+              overflow-y: auto;
+              border-radius: 18px;
+              padding: 24px;
+              color: #2d353b;
+              background: #fff;
+              box-shadow: 0 18px 45px rgba(0, 31, 60, .28);
+              overscroll-behavior: contain;
+              -webkit-overflow-scrolling: touch;
+            }
+            .gestao-login-methods { display: flex; border-radius: 12px; padding: 4px; background: #eef3f5; }
+            .gestao-login-methods button { display: inline-flex; min-height: 40px; flex: 1; align-items: center; justify-content: center; gap: 8px; border: 0; border-radius: 9px; color: #6d7680; background: transparent; font-size: 14px; font-weight: 700; }
+            .gestao-login-methods svg { width: 18px; height: 18px; }
+            .gestao-login-methods button.active { color: #1F8A9E; background: #fff; box-shadow: 0 2px 5px rgba(0,0,0,.1); }
+            .gestao-login-label { display: grid; gap: 7px; color: #3d454d; font-size: 13px; font-weight: 800; }
+            .gestao-login-field { position: relative; display: flex; align-items: center; }
+            .gestao-login-field > svg { position: absolute; left: 13px; width: 18px; height: 18px; color: #88919a; }
+            .gestao-login-field input { width: 100%; height: 48px; border: 1px solid #d9e0e4; border-radius: 12px; padding: 0 42px; color: #2d353b; background: #fff; font: inherit; outline-color: #1F8A9E; }
+            .gestao-login-password button { position: absolute; right: 5px; display: grid; width: 39px; height: 39px; place-items: center; border: 0; border-radius: 8px; color: #717b84; background: transparent; }
+            .gestao-login-options { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: -3px; }
+            .gestao-remember-option { display: flex; align-items: center; gap: 7px; color: #59616a; font-size: 13px; font-weight: 600; }
+            .gestao-remember-option input { position: absolute; opacity: 0; }
+            .gestao-remember-option span { width: 18px; height: 18px; border: 1px solid #b9c2c8; border-radius: 5px; background: #fff; }
+            .gestao-remember-option input:checked + span { border-color: #1F8A9E; background: #1F8A9E; box-shadow: inset 0 0 0 4px #fff; }
+            .gestao-forgot-link, .gestao-login-register button { border: 0; padding: 0; color: #1F8A9E; background: transparent; font-size: 13px; font-weight: 800; }
+            .gestao-login-submit { min-height: 42px; border: 0; border-radius: 10px; color: #fff; background: #003E73; font-size: 14px; font-weight: 800; }
+            .gestao-google-login-button { display: inline-flex; min-height: 42px; align-items: center; justify-content: center; gap: 10px; border: 1px solid #d9e0e4; border-radius: 10px; color: #334155; background: #fff; font-size: 13px; font-weight: 800; }
+            .gestao-google-login-mark { display: inline-grid; width: 21px; height: 21px; place-items: center; border-radius: 999px; color: #fff; background: conic-gradient(from -45deg, #4285f4 0 25%, #34a853 0 45%, #fbbc05 0 68%, #ea4335 0 100%); font-size: 14px; font-weight: 950; line-height: 1; }
+            .gestao-login-register { margin: -4px 0 0; color: #737b83; font-size: 14px; text-align: center; }
+            @media (max-height: 620px) { .gestao-login-brand img { width: auto; height: 32px; max-width: min(60vw, 220px); max-height: none; } }
+            @media (max-width: 850px) { .gestao-login-screen input { font-size: 16px !important; } }
+
             @media (min-aspect-ratio: 9/16) {
               .avantalab-mobile-bg-login {
                 background-size: auto 100%;

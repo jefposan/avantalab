@@ -151,6 +151,7 @@
     empresaAcao: '',
     perfilSelecionandoId: '',
     loginValor: '',
+    loginTipo: 'email',
     telaAcesso: 'boasVindas',
     modoSenha: false,
     modoCadastro: false,
@@ -5082,7 +5083,7 @@
     state.loginValor = login;
 
     if (!login || !senha) {
-      setErro('Informe login e senha.');
+      setErro(state.loginTipo === 'telefone' ? 'Informe telefone e senha.' : 'Informe e-mail ou login e senha.');
       return;
     }
 
@@ -5091,18 +5092,29 @@
     state.erro = '';
     render();
 
-    var email = login;
-    if (login.indexOf('@') < 0) {
-      email = await buscarEmailPorLogin(login);
-      if (!email) {
+    var resposta;
+    if (state.loginTipo === 'telefone') {
+      var telefone = login.replace(/\D/g, '');
+      if (telefone.length < 10 || telefone.length > 11) {
         state.carregando = false;
         state.loginAcao = '';
-        setErro('Login nao encontrado.');
+        setErro('Informe um telefone brasileiro válido com DDD.');
         return;
       }
+      resposta = await db.auth.signInWithPassword({ phone: '+55' + telefone, password: senha });
+    } else {
+      var email = login;
+      if (login.indexOf('@') < 0) {
+        email = await buscarEmailPorLogin(login);
+        if (!email) {
+          state.carregando = false;
+          state.loginAcao = '';
+          setErro('Login nao encontrado.');
+          return;
+        }
+      }
+      resposta = await db.auth.signInWithPassword({ email: email, password: senha });
     }
-
-    var resposta = await db.auth.signInWithPassword({ email: email, password: senha });
     if (resposta.error || !resposta.data.user) {
       state.carregando = false;
       state.loginAcao = '';
@@ -7605,6 +7617,14 @@
 
   function telaLogin() {
     var boasVindas = state.telaAcesso === 'boasVindas' && !state.modoCadastro && !state.modoSenha;
+    if (!boasVindas && !state.modoCadastro && !state.modoSenha) {
+      return (
+        '<section class="gestao-login-screen">' +
+          '<div class="gestao-login-brand"><img src="/images/logo-avantalab-oficial.png" alt="AvantaLab — Do zero ao operacional" /></div>' +
+          '<form class="gestao-login-form" onsubmit="return false">' + telaLoginCampos() + '</form>' +
+        '</section>'
+      );
+    }
     var maxH = boasVindas
       ? 'none'
       : ((state.modoCadastro || state.modoSenha)
@@ -7798,30 +7818,42 @@
   }
 
   function telaLoginCampos() {
+    var loginPorTelefone = state.loginTipo === 'telefone';
+    var iconeContato = loginPorTelefone
+      ? '<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M6.6 3.8 9.1 3a1.8 1.8 0 0 1 2.1.9l1.2 2.8a1.8 1.8 0 0 1-.4 2l-1.3 1.3a13 13 0 0 0 3.4 3.4l1.3-1.3a1.8 1.8 0 0 1 2-.4l2.8 1.2a1.8 1.8 0 0 1 .9 2.1l-.8 2.5a2 2 0 0 1-2 1.4C10.4 18.4 5.6 13.6 5.2 5.8a2 2 0 0 1 1.4-2Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>'
+      : '<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2" stroke="currentColor" stroke-width="2"/><path d="m4 7 8 6 8-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+    var iconeSenha = '<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="5" y="10" width="14" height="10" rx="2" stroke="currentColor" stroke-width="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M12 14v2" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>';
+    var iconeEmail = '<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2" stroke="currentColor" stroke-width="2"/><path d="m4 7 8 6 8-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+    var iconeTelefone = '<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M6.6 3.8 9.1 3a1.8 1.8 0 0 1 2.1.9l1.2 2.8a1.8 1.8 0 0 1-.4 2l-1.3 1.3a13 13 0 0 0 3.4 3.4l1.3-1.3a1.8 1.8 0 0 1 2-.4l2.8 1.2a1.8 1.8 0 0 1 .9 2.1l-.8 2.5a2 2 0 0 1-2 1.4C10.4 18.4 5.6 13.6 5.2 5.8a2 2 0 0 1 1.4-2Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
     return (
-      '<div class="grid gap-2">' +
-        inputHtml('login', 'Email ou login', 'text', 'seuemail@exemplo.com ou seu login', state.loginValor) +
-        senhaInputHtml('senha', 'Senha', 'Digite sua senha', 'mostrarSenhaLogin', 'toggle-senha-login') +
-        '<label class="flex items-start gap-2 rounded-xl border border-white/35 bg-white/35 px-3 py-2 text-left shadow-sm">' +
-          '<input id="manter-conectado" type="checkbox" class="mt-0.5 h-4 w-4 shrink-0 accent-cyan-700"' + (state.manterConectado ? ' checked' : '') + ' />' +
-          '<span class="min-w-0">' +
-            '<span class="block text-xs font-black text-slate-800">Manter conectado</span>' +
-            '<span class="mt-0.5 block text-xs font-semibold leading-snug text-slate-600">Nao pedir login neste celular por 30 dias.</span>' +
-          '</span>' +
-        '</label>' +
-        '<div class="text-right">' +
-          '<button id="esqueci-senha" type="button" class="text-xs font-bold text-sky-700 underline">Esqueci minha senha</button>' +
-        '</div>' +
+      '<div class="gestao-login-methods">' +
+        '<button id="login-tipo-email" type="button" class="' + (!loginPorTelefone ? 'active' : '') + '">' + iconeEmail + 'E-mail</button>' +
+        '<button id="login-tipo-telefone" type="button" class="' + (loginPorTelefone ? 'active' : '') + '">' + iconeTelefone + 'Telefone</button>' +
+      '</div>' +
+      '<label class="gestao-login-label">' + (loginPorTelefone ? 'Telefone' : 'E-mail ou login') +
+        '<span class="gestao-login-field">' + iconeContato +
+          '<input id="login" type="' + (loginPorTelefone ? 'tel' : 'text') + '" inputmode="' + (loginPorTelefone ? 'tel' : 'email') + '" autocomplete="' + (loginPorTelefone ? 'tel' : 'username') + '" placeholder="' + (loginPorTelefone ? 'Digite seu telefone' : 'Digite seu e-mail ou login') + '" value="' + escapeHtml(state.loginValor || '') + '" />' +
+        '</span>' +
+      '</label>' +
+      '<label class="gestao-login-label">Senha' +
+        '<span class="gestao-login-field gestao-login-password">' + iconeSenha +
+          '<input id="senha" type="' + (state.mostrarSenhaLogin ? 'text' : 'password') + '" autocomplete="current-password" placeholder="Digite sua senha" />' +
+          '<button id="toggle-senha-login" type="button" aria-label="' + (state.mostrarSenhaLogin ? 'Ocultar senha' : 'Exibir senha') + '">' + (state.mostrarSenhaLogin ? '◉' : '◎') + '</button>' +
+        '</span>' +
+      '</label>' +
+      '<div class="gestao-login-options">' +
+        '<label class="gestao-remember-option"><input id="manter-conectado" type="checkbox"' + (state.manterConectado ? ' checked' : '') + ' /><span></span>Lembrar-me</label>' +
+        '<button id="esqueci-senha" type="button" class="gestao-forgot-link">Esqueceu a senha?</button>' +
+      '</div>' +
         alertaHtml() +
-        '<button id="entrar" type="button" class="h-10 rounded-xl bg-slate-900 px-4 text-xs font-black uppercase tracking-wide text-white shadow-lg">' +
+        '<button id="entrar" type="button" class="gestao-login-submit">' +
           (state.loginAcao === 'senha' ? 'Entrando...' : 'Entrar') +
         '</button>' +
-        '<button id="entrar-google" type="button" class="flex h-10 items-center justify-center gap-2 rounded-xl border border-slate-300 bg-white/90 px-4 text-xs font-bold text-slate-700 shadow-sm">' +
-          '<img src="/images/google-logo.svg" alt="Google" class="h-4 w-4" />' +
-          '<span>' + (state.loginAcao === 'google' ? 'Conectando...' : 'Entrar ou cadastrar com Google') + '</span>' +
+        '<button id="entrar-google" type="button" class="gestao-google-login-button">' +
+          '<span class="gestao-google-login-mark" aria-hidden="true">G</span>' +
+          '<span>' + (state.loginAcao === 'google' ? 'Conectando...' : 'Continuar com Google') + '</span>' +
         '</button>' +
-        '<div class="text-center text-xs text-slate-600">Ainda nao tem conta? <button id="abrir-cadastro" type="button" class="font-bold text-sky-700 underline">Criar cadastro</button></div>' +
-      '</div>'
+        '<p class="gestao-login-register">Não tem conta? <button id="abrir-cadastro" type="button">Cadastre-se</button></p>'
     );
   }
 
@@ -11454,6 +11486,22 @@
 
     bind('entrar', entrar);
     bind('entrar-google', entrarGoogle);
+    bind('login-tipo-email', function () {
+      state.loginValor = campo('login').trim();
+      state.loginTipo = 'email';
+      state.erro = '';
+      render();
+    });
+    bind('login-tipo-telefone', function () {
+      state.loginValor = campo('login').trim();
+      state.loginTipo = 'telefone';
+      state.erro = '';
+      render();
+    });
+    bindInput('login', function () {
+      if (state.loginTipo === 'telefone') this.value = formatarTelefoneCadastroMobile(this.value, '55');
+      state.loginValor = this.value;
+    });
     bindChange('manter-conectado', function () {
       state.manterConectado = Boolean(this.checked);
     });
