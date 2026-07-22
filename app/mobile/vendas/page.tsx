@@ -19,7 +19,7 @@ export const viewport: Viewport = {
 export default function VendasMobilePage() {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
-  const assetVersion = '20260722-05';
+  const assetVersion = '20260722-06';
   const bootstrap = `
     (function () {
       var bridgeCapacitor = window.Capacitor;
@@ -128,6 +128,9 @@ export default function VendasMobilePage() {
       <link rel="stylesheet" href={`/vendas-mobile/styles.css?v=${assetVersion}`} />
       <div id="app" className="app-shell">
         <section className="login-screen preparing-access-screen">
+          <div className="access-brand-zone">
+            <img src="/images/logo-avantalab-oficial.png" alt="AvantaLab — Do zero ao operacional" />
+          </div>
           <div className="preparing-access-card">
             <p>AvantaLab</p><span className="loader" /><h1>Preparando acesso</h1><small id="accessProgressLabel">Iniciando o Vendas Mobile</small><div className="access-progress" aria-label="Carregando acesso"><i id="accessProgressBar" style={{ width: '5%' }} /></div><b id="accessProgressValue" className="access-progress-value">5%</b>
           </div>

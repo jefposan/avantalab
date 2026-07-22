@@ -1,7 +1,10 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.6.0.84.47 -->
+<!-- ava-version: 1.6.0.84.48 -->
 
+> Revisão 1.6.0.84.48: padronização visual das cenas de acesso do Vendas; sem
+> impacto operacional na Gestão Web.
+>
 > Revisão 1.6.0.84.47: o Importador pode sugerir o tipo pelo histórico do mesmo
 > perfil. A sugestão é sempre editável antes da confirmação.
 

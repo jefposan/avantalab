@@ -1,6 +1,11 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.6.0.84.47 -->
+<!-- ava-version: 1.6.0.84.48 -->
+
+> Revisão 1.6.0.84.48: login, cadastro, validação, vínculo, aprovação,
+> seletores e preparação usam o fundo e o logo oficiais separados. A marca fica
+> centralizada entre o topo seguro e o card; todos os cards permanecem no centro
+> horizontal e vertical da página e rolam internamente quando necessário.
 >
 > Revisão 1.6.0.84.47: sugestões de tipo no Importador da Gestão Web; sem
 > impacto operacional no Vendas Mobile.

@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.6.0.84.48 - 2026-07-22
+
+- Vendas Mobile: todas as cenas de acesso passam a usar o fundo oficial sem
+  marca embutida e o logo oficial como elemento independente. Logo e cards são
+  centralizados horizontalmente; os cards também ficam no centro vertical da
+  página e a marca ocupa o centro exato entre o topo seguro e o card. Conteúdo
+  extenso rola dentro do card. O mesmo contrato atende PWA e aplicativo iOS.
+
 ## 1.6.0.84.47 - 2026-07-22
 
 - Gestão Web: o Importador agora sugere o tipo de despesa pelo histórico do

@@ -1361,59 +1361,81 @@ body { min-height: 100%; min-height: var(--vendas-viewport-height); overscroll-b
 }
 
 .login-screen {
+  --access-scene-height: var(--vendas-viewport-height);
   position: relative;
   isolation: isolate;
-  display: flex;
+  display: grid;
   width: 100%;
   box-sizing: border-box;
-  height: var(--vendas-viewport-height);
-  min-height: var(--vendas-viewport-height);
-  flex: 1 0 var(--vendas-viewport-height);
-  flex-direction: column;
-  align-items: center;
-  justify-content: flex-start;
-  overflow-y: auto;
-  overscroll-behavior-y: contain;
-  padding: calc(clamp(145px, 20vh, 185px) + var(--vendas-safe-top)) 24px calc(36px + var(--vendas-safe-bottom));
+  height: var(--access-scene-height);
+  min-height: var(--access-scene-height);
+  flex: 0 0 100%;
+  grid-template-rows: minmax(0, 1fr) minmax(0, auto) minmax(0, 1fr);
+  align-items: stretch;
+  justify-items: center;
+  overflow: hidden;
+  overscroll-behavior: none;
+  padding: 0 max(16px, var(--vendas-safe-right)) 0 max(16px, var(--vendas-safe-left));
   background: none;
 }
 .login-screen::before {
-  position: fixed;
+  position: absolute;
   z-index: 0;
   inset: 0;
-  width: 100vw;
-  height: var(--vendas-viewport-height);
-  min-height: var(--vendas-viewport-height);
-  background: #eef6fb url('./assets/bg-avantalab-mobile.png') center center / cover no-repeat;
+  background: #eef6fb url('/images/bg-avantalab-mobile-1080x1920-sem-logo.webp') center center / cover no-repeat;
   content: '';
 }
 .login-screen > * { position: relative; z-index: 1; }
-.login-screen.preparing-access-screen {
+.access-brand-zone {
+  display: grid;
   width: 100%;
-  height: var(--vendas-preparing-height, var(--vendas-viewport-height));
-  min-height: var(--vendas-preparing-height, var(--vendas-viewport-height));
-  flex: 1 0 var(--vendas-viewport-height);
-  align-items: center;
-  justify-content: center;
-  padding: max(24px, var(--vendas-safe-top)) 24px calc(24px + var(--vendas-safe-bottom));
-  background: none;
+  min-width: 0;
+  min-height: 0;
+  grid-row: 1;
+  place-items: center;
+  overflow: hidden;
+  padding: var(--vendas-safe-top) 0 0;
+}
+.access-brand-zone img {
+  display: block;
+  width: clamp(170px, 58vw, 310px);
+  max-width: 82%;
+  max-height: 72%;
+  object-fit: contain;
+}
+.login-screen > :last-child {
+  min-width: 0;
+  max-width: 100%;
+  max-height: calc(var(--access-scene-height) - var(--vendas-safe-top) - var(--vendas-safe-bottom) - 108px);
+  grid-row: 2;
+  align-self: center;
+  justify-self: center;
+  margin-inline: auto;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+}
+@media (max-height: 620px) {
+  .access-brand-zone img {
+    width: auto;
+    height: 32px;
+    max-width: min(60vw, 220px);
+    max-height: none;
+  }
+}
+.login-screen.preparing-access-screen {
+  --access-scene-height: var(--vendas-preparing-height, var(--vendas-viewport-height));
+  width: 100%;
+  justify-content: normal;
+  padding: 0 max(16px, var(--vendas-safe-right)) 0 max(16px, var(--vendas-safe-left));
 }
 .login-screen.preparing-access-screen::before {
-  position: fixed;
-  inset: 0;
-  display: block;
-  width: 100vw;
-  height: var(--vendas-preparing-height, var(--vendas-viewport-height));
-  min-height: var(--vendas-preparing-height, var(--vendas-viewport-height));
-  background: #eef6fb url('./assets/bg-avantalab-mobile.png') center center / cover no-repeat;
-  transform: translateZ(0);
-  will-change: auto;
+  background-image: url('/images/bg-avantalab-mobile-1080x1920-sem-logo.webp');
 }
-.login-screen.approval-wait-screen { padding-top: calc(clamp(170px, 24vh, 215px) + var(--vendas-safe-top)); }
-.login-screen.system-selector-screen, .login-screen.management-profile-selector-screen { padding: calc(24px + var(--vendas-safe-top)) 16px calc(24px + var(--vendas-safe-bottom)); }
-.login-brand { margin: 0 0 16px; color: #0A1F44; }
-.login-brand strong { color: #0A1F44; font-size: 21px; font-weight: 850; letter-spacing: -.02em; }
-.login-brand p { margin-top: 4px; color: #1F8A9E; font-size: 13px; font-weight: 700; }
+.login-screen.approval-wait-screen {
+  padding: 0 max(16px, var(--vendas-safe-right)) 0 max(16px, var(--vendas-safe-left));
+}
+.login-brand { display: none; }
 .login-screen form.login-register-form { gap: 5px; padding: 12px 24px; }
 .login-register-form > label { display: grid; gap: 2px; color: #3d454d; font-size: 10px; font-weight: 800; }
 .login-register-form > label > span { color: #7d8790; font-weight: 600; }
@@ -2421,9 +2443,8 @@ body:has(.login-screen) {
   -webkit-overflow-scrolling: touch;
 }
 
-/* No WKWebView, a cena ocupa uma viewport estável e não é o elemento rolável.
-   O conteúdo parte do rodapé seguro; se não couber, somente o último card ou
-   formulário rola. Assim, qualquer sobra visual permanece acima da cena. */
+/* No WKWebView, a cena usa a viewport estável. A mesma grade do PWA mantém
+   marca e card separados; somente o conteúdo do card pode rolar. */
 .capacitor-ios .login-screen {
   position: fixed;
   inset: 0;
@@ -2431,51 +2452,13 @@ body:has(.login-screen) {
   height: var(--vendas-viewport-height);
   min-height: 0;
   flex: none;
-  justify-content: flex-end;
   overflow: hidden;
   overscroll-behavior: none;
-  padding:
-    max(24px, var(--vendas-safe-top))
-    max(24px, var(--vendas-safe-right))
-    calc(24px + var(--vendas-safe-bottom))
-    max(24px, var(--vendas-safe-left));
-}
-
-.capacitor-ios .login-screen::before {
-  height: var(--vendas-viewport-height);
-  min-height: 0;
-  background-position: center bottom;
-}
-
-.capacitor-ios .login-screen > * {
-  min-width: 0;
-  flex-shrink: 0;
-}
-
-.capacitor-ios .login-screen > :last-child {
-  min-height: 0;
-  max-height: 100%;
-  flex-shrink: 1;
-  overflow-y: auto;
-  overscroll-behavior: contain;
-  -webkit-overflow-scrolling: touch;
+  padding: 0 max(16px, var(--vendas-safe-right)) 0 max(16px, var(--vendas-safe-left));
 }
 
 .capacitor-ios .login-screen.preparing-access-screen {
-  position: fixed;
-  height: var(--vendas-viewport-height);
-  min-height: 0;
-  justify-content: center;
-}
-
-.capacitor-ios .login-screen.approval-wait-screen,
-.capacitor-ios .login-screen.system-selector-screen,
-.capacitor-ios .login-screen.management-profile-selector-screen {
-  padding:
-    max(24px, var(--vendas-safe-top))
-    max(16px, var(--vendas-safe-right))
-    calc(24px + var(--vendas-safe-bottom))
-    max(16px, var(--vendas-safe-left));
+  --access-scene-height: var(--vendas-viewport-height);
 }
 
 .capacitor-ios .logout-screen {
