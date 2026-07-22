@@ -1,6 +1,10 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.6.0.84.50 -->
+<!-- ava-version: 1.6.0.84.51 -->
+
+> Revisão 1.6.0.84.51: durante a importação, o sistema tenta renovar a sessão
+> antes de interromper o processamento. Se ela realmente expirar, abre o login
+> com uma mensagem explicativa, sem retornar à landing page.
 
 > Revisão 1.6.0.84.50: o seletor de perfil recebeu ajuste visual nas cores e
 > ações; sem mudança operacional no acesso.

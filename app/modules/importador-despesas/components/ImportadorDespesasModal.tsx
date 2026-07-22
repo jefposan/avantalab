@@ -190,18 +190,48 @@ export default function ImportadorDespesasModal({ arquivo, retomarRascunho = fal
 
   const atualizar = (itemId: string, alteracao: Partial<DespesaRevisao>) => setItens((atuais) => atuais.map((item) => item.id === itemId ? { ...item, ...alteracao } : item));
 
+  const executarComSessao = async (executar: (token: string) => Promise<Response>) => {
+    const { data: sessaoAtual } = await supabase.auth.getSession();
+    let token = sessaoAtual.session?.access_token || null;
+
+    if (!token) {
+      const { data: sessaoRenovada, error } = await supabase.auth.refreshSession();
+      if (!error) token = sessaoRenovada.session?.access_token || null;
+    }
+
+    if (!token) {
+      onSessaoExpirada?.();
+      return null;
+    }
+
+    let resposta = await executar(token);
+    if (resposta.status !== 401) return resposta;
+
+    const { data: sessaoRenovada, error } = await supabase.auth.refreshSession();
+    const tokenRenovado = error ? null : sessaoRenovada.session?.access_token;
+    if (!tokenRenovado) {
+      onSessaoExpirada?.();
+      return null;
+    }
+
+    resposta = await executar(tokenRenovado);
+    if (resposta.status === 401) {
+      onSessaoExpirada?.();
+      return null;
+    }
+
+    return resposta;
+  };
+
   const sugerirTiposPeloHistorico = async (reconhecidos: DespesaRevisao[]) => {
     const candidatos = reconhecidos.filter((item) => item.natureza === 'despesa' && item.descricao.trim());
     if (!candidatos.length || !empresaId) return reconhecidos;
-    const { data } = await supabase.auth.getSession();
-    const token = data.session?.access_token;
-    if (!token) { onSessaoExpirada?.(); return reconhecidos; }
-    const resposta = await fetch('/api/importador-despesas/sugestoes', {
+    const resposta = await executarComSessao((token) => fetch('/api/importador-despesas/sugestoes', {
       method: 'POST',
       headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({ empresaId, itens: candidatos.map((item) => ({ id: item.id, descricao: item.descricao })) }),
-    });
-    if (resposta.status === 401) { onSessaoExpirada?.(); return reconhecidos; }
+    }));
+    if (!resposta) return reconhecidos;
     const corpo = await resposta.json().catch(() => null);
     if (!resposta.ok || corpo?.erro || !Array.isArray(corpo?.sugestoes)) return reconhecidos;
     const sugestoes = new Map<string, SugestaoHistorico>((corpo.sugestoes as SugestaoHistorico[])
@@ -234,12 +264,9 @@ export default function ImportadorDespesasModal({ arquivo, retomarRascunho = fal
       const extensao = arquivo.name.split('.').pop()?.toLowerCase();
       let encontrados: DespesaRevisao[] = []; let detectado: TipoDetectado | null = null; let total: number | null = null;
       if (extensao === 'pdf') {
-        const { data } = await supabase.auth.getSession();
-        const token = data.session?.access_token;
-        if (!token) { onSessaoExpirada?.(); return; }
         const form = new FormData(); form.append('arquivo', arquivo); form.append('tipoDocumento', tipo);
-        const resposta = await fetch('/api/importador-despesas/analisar', { method: 'POST', headers: { Authorization: `Bearer ${token}` }, body: form });
-        if (resposta.status === 401) { onSessaoExpirada?.(); return; }
+        const resposta = await executarComSessao((token) => fetch('/api/importador-despesas/analisar', { method: 'POST', headers: { Authorization: `Bearer ${token}` }, body: form }));
+        if (!resposta) return;
         const corpo = await resposta.json().catch(() => null);
         if (!resposta.ok || corpo?.erro) throw new Error(corpo?.mensagem || 'Não foi possível analisar este documento.');
         const analise = corpo as AnaliseIA;
@@ -361,15 +388,13 @@ export default function ImportadorDespesasModal({ arquivo, retomarRascunho = fal
     setEtapa('confirmando'); setProgresso(18); setDetalhe('Validando os lançamentos…');
     const cronometro = window.setInterval(() => setProgresso((atual) => Math.min(91, atual + 9)), 500);
     try {
-      const { data } = await supabase.auth.getSession(); const token = data.session?.access_token;
-      if (!token) { onSessaoExpirada?.(); return; }
       const lancamentos = await Promise.all(selecionadas.map(async (item, indice) => ({ data: item.data, tipo_despesa: item.tipo, descricao: item.descricao.trim(), valor: Number(item.valor.toFixed(2)), item_chave: await sha256(`${loteChave}|${indice}|${item.data}|${item.descricaoOriginal}|${item.valor.toFixed(2)}`) })));
-      const resposta = await fetch('/api/importador-despesas/confirmar', { method: 'POST', headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ empresaId, loteChave, lancamentos }) });
-      if (resposta.status === 401) { onSessaoExpirada?.(); return; }
+      const resposta = await executarComSessao((token) => fetch('/api/importador-despesas/confirmar', { method: 'POST', headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ empresaId, loteChave, lancamentos }) }));
+      if (!resposta) return;
       const corpo = await resposta.json().catch(() => null);
       if (!resposta.ok || corpo?.erro) throw new Error(corpo?.mensagem || 'Não foi possível inserir os lançamentos.');
       setProgresso(100); setDetalhe('Lançamentos inseridos com sucesso.');
-      const usuarioId = data.session?.user.id; if (usuarioId) await supabase.from('importador_despesas_rascunhos').delete().eq('empresa_id', empresaId).eq('usuario_id', usuarioId).eq('ano', anoDestino).eq('mes', mesDestino); window.localStorage.removeItem(CHAVE_RASCUNHO); setRascunhoRemoto(null); onEstadoRascunho?.(false);
+      const { data: sessaoAtual } = await supabase.auth.getSession(); const usuarioId = sessaoAtual.session?.user.id; if (usuarioId) await supabase.from('importador_despesas_rascunhos').delete().eq('empresa_id', empresaId).eq('usuario_id', usuarioId).eq('ano', anoDestino).eq('mes', mesDestino); window.localStorage.removeItem(CHAVE_RASCUNHO); setRascunhoRemoto(null); onEstadoRascunho?.(false);
       await onConcluido();
       window.setTimeout(fechar, 450);
     } catch (causa) {

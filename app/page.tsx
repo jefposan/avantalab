@@ -867,6 +867,12 @@ const [buscaEntradaFaturamento, setBuscaEntradaFaturamento] = useState('');
   const TEMPO_LIMITE_INATIVIDADE = 60 * 60 * 1000; // 60 minutos
 const CHAVE_ULTIMA_ATIVIDADE = 'avantalab_ultima_atividade';
 const encerrandoSessaoRef = useRef(false);
+const logoutManualEmCursoRef = useRef(false);
+const acessoLiberadoRef = useRef(false);
+
+useEffect(() => {
+  acessoLiberadoRef.current = acessoLiberado;
+}, [acessoLiberado]);
 
 useEffect(() => {
   setTemRascunhoImportador(existeRascunhoImportador());
@@ -1326,7 +1332,7 @@ useEffect(() => {
 useEffect(() => {
   const { data } = supabase.auth.onAuthStateChange((evento, sessao) => {
     if (!sessao || evento === 'SIGNED_OUT') {
-      if (acessoLiberado && !encerrandoSessaoRef.current) void encerrarSessaoExpirada();
+      if (acessoLiberadoRef.current && !encerrandoSessaoRef.current && !logoutManualEmCursoRef.current) void encerrarSessaoExpirada();
       return;
     }
 
@@ -5976,7 +5982,8 @@ const sairDaSelecaoEmpresa = async () => {
 };
 
 const handleLogout = async () => {
-  await supabase.auth.signOut({ scope: 'local' });
+  logoutManualEmCursoRef.current = true;
+  try { await supabase.auth.signOut({ scope: 'local' }); } catch {}
 
   localStorage.removeItem(CHAVE_ULTIMA_ATIVIDADE);
 
@@ -6073,6 +6080,7 @@ setValidandoTelefoneObrigatorio(false);
 
   setAuthErro('');
   setAuthMensagem('');
+  window.setTimeout(() => { logoutManualEmCursoRef.current = false; }, 0);
 };
 
 const encerrarSessaoExpirada = async () => {
@@ -6080,6 +6088,10 @@ const encerrarSessaoExpirada = async () => {
   encerrandoSessaoRef.current = true;
   try {
     await handleLogout();
+    setMostrarLandingPreLogin(false);
+    setModoAuth('login');
+    setAuthErro('Sua sessão expirou. Entre novamente para continuar.');
+    setAuthMensagem('');
   } finally {
     encerrandoSessaoRef.current = false;
   }

@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.6.0.84.51 - 2026-07-22
+
+- Gestão Web: requisições autenticadas do Importador renovam a sessão e repetem
+  uma vez após resposta 401. Quando a sessão realmente expira, o sistema abre
+  diretamente o login com orientação, sem retornar à landing page.
+
 ## 1.6.0.84.50 - 2026-07-22
 
 - Gestão Web: o seletor de perfis recupera o botão azul intenso de confirmação

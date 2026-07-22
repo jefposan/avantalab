@@ -1,6 +1,9 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.6.0.84.50 -->
+<!-- ava-version: 1.6.0.84.51 -->
+
+> Revisão 1.6.0.84.51: recuperação de sessão no Importador da Gestão Web; sem
+> impacto operacional no Vendas Mobile.
 
 > Revisão 1.6.0.84.50: ajuste visual do seletor de perfil da Gestão Web; sem
 > impacto operacional no Vendas Mobile.
