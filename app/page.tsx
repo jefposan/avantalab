@@ -6709,7 +6709,7 @@ if (modalSelecionarEmpresa) {
                     disabled={perfilAtualInativo}
                     onClick={() => { if (!perfilAtualInativo) setEmpresaParaSelecionar(empresa); }}
                     aria-current={perfilAtualInativo ? 'true' : undefined}
-                    className="w-full rounded-[10px] px-3 py-2.5 text-left transition hover:brightness-105 active:translate-y-px active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-55 disabled:active:translate-y-0 disabled:active:scale-100"
+                    className="group relative w-full overflow-hidden rounded-[10px] px-3 py-2.5 text-left transition active:translate-y-px active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-55 disabled:active:translate-y-0 disabled:active:scale-100"
                     style={{
                       backgroundColor: darkMode ? '#0f172a' : '#ffffff',
                       backgroundImage: `linear-gradient(90deg, color-mix(in srgb, ${corPerfil} 64%, transparent) 0%, color-mix(in srgb, ${corPerfil} 10%, transparent) 100%)`,
@@ -6717,7 +6717,14 @@ if (modalSelecionarEmpresa) {
                       textShadow: textoPerfil === '#ffffff' ? '0 1px 2px rgba(15, 23, 42, 0.38)' : undefined,
                     }}
                   >
-                    <div className="flex items-center justify-between gap-3">
+                    <span
+                      aria-hidden="true"
+                      className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-150 group-hover:opacity-100"
+                      style={{
+                        backgroundImage: `linear-gradient(90deg, color-mix(in srgb, ${corPerfil} 26%, transparent) 0%, color-mix(in srgb, ${corPerfil} 50%, transparent) 100%)`,
+                      }}
+                    />
+                    <div className="relative flex items-center justify-between gap-3">
                       <div>
                         <h3 className="text-sm font-black">
                           {empresa.nome || empresa.empresa_nome}
