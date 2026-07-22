@@ -1,6 +1,9 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.6.0.84.45 -->
+<!-- ava-version: 1.6.0.84.47 -->
+>
+> Revisão 1.6.0.84.47: sugestões de tipo no Importador da Gestão Web; sem
+> impacto operacional no Vendas Mobile.
 
 > Revisão 1.6.0.84.45: no aplicativo iOS, telas integrais ficam ancoradas ao
 > rodapé seguro e somente o card interno rola quando o conteúdo não cabe. O

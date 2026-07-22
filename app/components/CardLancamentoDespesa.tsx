@@ -40,6 +40,8 @@ type CardLancamentoDespesaProps = {
   lendoNota?: boolean;
   notaPendente?: boolean;
   limparNotaPendente: () => void;
+  temRascunhoImportador?: boolean;
+  onRetomarRascunhoImportador?: () => void;
 };
 
 export default function CardLancamentoDespesa({
@@ -72,6 +74,8 @@ export default function CardLancamentoDespesa({
   lendoNota = false,
   notaPendente = false,
   limparNotaPendente,
+  temRascunhoImportador = false,
+  onRetomarRascunhoImportador,
 }: CardLancamentoDespesaProps) {
   const despesaRef = useRef<HTMLSelectElement>(null);
   const descricaoRef = useRef<HTMLInputElement>(null);
@@ -316,6 +320,7 @@ export default function CardLancamentoDespesa({
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" className="h-3.5 w-3.5"><path strokeLinecap="round" strokeLinejoin="round" d="M14 3H6a2 2 0 00-2 2v14a2 2 0 002 2h12a2 2 0 002-2V9l-6-6Z"/><path strokeLinecap="round" strokeLinejoin="round" d="M14 3v6h6M8 14h8M8 17h5"/></svg>
                 Arquivo
               </button>
+              {temRascunhoImportador && <button type="button" onClick={onRetomarRascunhoImportador} title="Retomar a importação salva" className="flex h-7 items-center gap-1 rounded-full border border-emerald-300 bg-emerald-50 px-2 text-[10px] font-black uppercase text-emerald-800 shadow-sm transition hover:border-emerald-400 hover:bg-emerald-100 active:scale-95">Continuar</button>}
             </div>
           </div>
           {(lendoNota || notaPendente) && (

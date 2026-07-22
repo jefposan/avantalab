@@ -1,12 +1,15 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.6.0.84.45 -->
+<!-- ava-version: 1.6.0.84.47 -->
 
-> Revisão 1.6.0.84.45: correção de viewport no aplicativo iOS do Vendas; sem
+> Revisão 1.6.0.84.47: o Importador pode sugerir o tipo pelo histórico do mesmo
+> perfil. A sugestão é sempre editável antes da confirmação.
+
+> Revisão 1.6.0.84.46: alterações no Importador salvam o rascunho automaticamente; sem
 > impacto operacional na Gestão Web.
 >
-> Revisão 1.6.0.84.41: Vendas Mobile unificou a altura de viewport, fundo e
-> áreas seguras; sem impacto operacional na Gestão Web.
+> Revisão 1.6.0.84.44: descarte de rascunho no Importador usa a confirmação
+> confirmação, sem criar lançamentos; sem impacto nos demais ambientes.
 
 ## Escopo
 
@@ -49,7 +52,9 @@ Gestão Mobile ou a assinatura/cupom do Premium Pessoal.
   documento. Antes de enviar, o usuário pode selecionar o tipo do documento para
   substituir a detecção automática. O usuário escolhe o perfil de destino,
   confere cada linha, seleciona um tipo de despesa já cadastrado e pode salvar o
-  rascunho para continuar depois no mesmo navegador. Ao confirmar, data, tipo,
+  rascunho para continuar depois no mesmo navegador. Quando houver correspondência
+  consistente no histórico do mesmo perfil, o tipo pode aparecer sugerido, mas é
+  sempre editável. Ao confirmar, data, tipo,
   descrição e valor são gravados em Lançamentos; uma nova tentativa do mesmo
   lote não duplica os itens. O PDF original não é armazenado no AvantaLab nesta
   etapa. Estornos ficam separados e ainda não são lançados como receitas.

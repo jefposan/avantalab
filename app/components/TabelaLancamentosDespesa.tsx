@@ -112,6 +112,8 @@ type TabelaLancamentosDespesaProps = {
   lendoNota?: boolean;
   notaPendente?: boolean;
   limparNotaPendente: () => void;
+  temRascunhoImportador?: boolean;
+  onRetomarRascunhoImportador?: () => void;
   onVerNota: (lancamento: LancamentoDespesa) => void;
 };
 
@@ -174,6 +176,8 @@ export default function TabelaLancamentosDespesa({
   lendoNota = false,
   notaPendente = false,
   limparNotaPendente,
+  temRascunhoImportador = false,
+  onRetomarRascunhoImportador,
   onVerNota,
 }: TabelaLancamentosDespesaProps) {
   return (
@@ -228,6 +232,8 @@ export default function TabelaLancamentosDespesa({
           lendoNota={lendoNota}
           notaPendente={notaPendente}
           limparNotaPendente={limparNotaPendente}
+          temRascunhoImportador={temRascunhoImportador}
+          onRetomarRascunhoImportador={onRetomarRascunhoImportador}
         />
         <div className="mb-3">
           <div className="flex-1">

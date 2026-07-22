@@ -1,11 +1,36 @@
 # Changelog
 
+## 1.6.0.84.47 - 2026-07-22
+
+- Gestão Web: o Importador agora sugere o tipo de despesa pelo histórico do
+  mesmo perfil, com indicação visual e possibilidade de edição em cada linha.
+
+## 1.6.0.84.46 - 2026-07-22
+
+- Gestão Web: a revisão do Importador salva automaticamente o rascunho após
+  alterações, preservando o botão para salvar e fechar manualmente.
+
 ## 1.6.0.84.45 - 2026-07-22
 
 - Vendas Mobile no aplicativo iOS: telas integrais usam viewport estável e uma
   única aplicação da área segura. Login, cadastro, vínculo, seletores e saída
   permanecem ancorados ao rodapé; quando necessário, somente o card interno
   rola. O fluxo no navegador e no PWA permanece inalterado.
+
+## 1.6.0.84.44 - 2026-07-22
+
+- Gestão Web: a confirmação para descartar importação salva passou a usar o
+  modal padrão do AvantaLab.
+
+## 1.6.0.84.43 - 2026-07-22
+
+- Gestão Web: rascunhos salvos da importação podem ser descartados pela própria
+  conferência, com confirmação, sem criar lançamentos.
+
+## 1.6.0.84.42 - 2026-07-22
+
+- Gestão Web: o acesso à importação salva foi movido para junto do botão
+  Arquivo, no novo lançamento de despesas.
 
 ## 1.6.0.84.41 - 2026-07-22
 

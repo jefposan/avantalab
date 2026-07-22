@@ -14,6 +14,7 @@ type DespesaRevisao = {
   valor: number;
   valorOriginal: number;
   tipo: string;
+  tipoSugeridoHistorico?: boolean;
   incluir: boolean;
   natureza: 'despesa' | 'estorno';
 };
@@ -33,6 +34,8 @@ type AnaliseIA = {
   estornos: ItemIA[];
 };
 
+type SugestaoHistorico = { id: string; tipo: string; ocorrencias: number };
+
 type Props = {
   arquivo: File | null;
   retomarRascunho?: boolean;
@@ -45,6 +48,7 @@ type Props = {
   onEstadoRascunho?: (existe: boolean) => void;
   onArquivoDescartado?: () => void;
   onSessaoExpirada?: () => void;
+  onSolicitarDescarte?: (descartar: () => void) => void;
 };
 
 const CHAVE_RASCUNHO = 'avanta:importador-despesas:inline:v1';
@@ -68,6 +72,9 @@ export function existeRascunhoImportador() {
 
 function moeda(valor: number) {
   return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(valor);
+}
+function valorComDuasCasas(valor: number) {
+  return valor.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
 function id() { return `importacao-${Date.now()}-${Math.random().toString(16).slice(2)}`; }
@@ -141,7 +148,7 @@ function Progresso({ percentual, titulo, detalhe, corPrimaria, darkMode }: { per
   </div>;
 }
 
-export default function ImportadorDespesasModal({ arquivo, retomarRascunho = false, empresaId, despesasCadastradas, corPrimaria, darkMode, onFechar, onConcluido, onEstadoRascunho, onArquivoDescartado, onSessaoExpirada }: Props) {
+export default function ImportadorDespesasModal({ arquivo, retomarRascunho = false, empresaId, despesasCadastradas, corPrimaria, darkMode, onFechar, onConcluido, onEstadoRascunho, onArquivoDescartado, onSessaoExpirada, onSolicitarDescarte }: Props) {
   const [etapa, setEtapa] = useState<'analisando' | 'revisando' | 'confirmando'>('analisando');
   const [progresso, setProgresso] = useState(7);
   const [detalhe, setDetalhe] = useState('Preparando o documento…');
@@ -169,6 +176,29 @@ export default function ImportadorDespesasModal({ arquivo, retomarRascunho = fal
   const confere = diferenca !== null && Math.abs(diferenca) <= 0.02;
 
   const atualizar = (itemId: string, alteracao: Partial<DespesaRevisao>) => setItens((atuais) => atuais.map((item) => item.id === itemId ? { ...item, ...alteracao } : item));
+
+  const sugerirTiposPeloHistorico = async (reconhecidos: DespesaRevisao[]) => {
+    const candidatos = reconhecidos.filter((item) => item.natureza === 'despesa' && item.descricao.trim());
+    if (!candidatos.length || !empresaId) return reconhecidos;
+    const { data } = await supabase.auth.getSession();
+    const token = data.session?.access_token;
+    if (!token) { onSessaoExpirada?.(); return reconhecidos; }
+    const resposta = await fetch('/api/importador-despesas/sugestoes', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ empresaId, itens: candidatos.map((item) => ({ id: item.id, descricao: item.descricao })) }),
+    });
+    if (resposta.status === 401) { onSessaoExpirada?.(); return reconhecidos; }
+    const corpo = await resposta.json().catch(() => null);
+    if (!resposta.ok || corpo?.erro || !Array.isArray(corpo?.sugestoes)) return reconhecidos;
+    const sugestoes = new Map<string, SugestaoHistorico>((corpo.sugestoes as SugestaoHistorico[])
+      .filter((sugestao) => sugestao && typeof sugestao.id === 'string' && typeof sugestao.tipo === 'string' && tipos.includes(sugestao.tipo))
+      .map((sugestao) => [sugestao.id, sugestao]));
+    return reconhecidos.map((item) => {
+      const sugestao = sugestoes.get(item.id);
+      return sugestao && !item.tipo ? { ...item, tipo: sugestao.tipo, tipoSugeridoHistorico: true } : item;
+    });
+  };
 
   const fechar = () => {
     setItens([]); setValoresDigitados({}); setErro(''); setSalvoEm(''); setEtapa('analisando');
@@ -215,6 +245,8 @@ export default function ImportadorDespesasModal({ arquivo, retomarRascunho = fal
         encontrados = matriz.length > 1 ? linhasTabulares((matriz[0] as unknown[]).map(String), matriz.slice(1) as unknown[][]) : []; detectado = 'extrato-bancario';
       } else throw new Error('Envie PDF, CSV, TXT, XLS ou XLSX. Imagens continuam sendo usadas como nota do lançamento.');
       if (!encontrados.length) throw new Error('Nenhuma saída confiável foi encontrada neste documento.');
+      setDetalhe('Consultando sugestões do seu histórico…');
+      encontrados = await sugerirTiposPeloHistorico(encontrados);
       setProgresso(100); setDetalhe('Análise concluída.');
       const chaveLote = await sha256(await arquivo.arrayBuffer());
       setItens(encontrados); setTipoDetectado(detectado); setTotalDocumento(total); setNomeArquivo(arquivo.name); setSalvoEm(''); setLoteChave(chaveLote);
@@ -251,7 +283,26 @@ export default function ImportadorDespesasModal({ arquivo, retomarRascunho = fal
     return true;
   };
 
+  useEffect(() => {
+    if (etapa !== 'revisando' || !itens.length || !empresaId) return;
+    const agendamento = window.setTimeout(() => {
+      const chave = loteChave || crypto.randomUUID();
+      const agora = new Date().toLocaleString('pt-BR');
+      const rascunho: RascunhoImportador = { versao: 1, empresaId, loteChave: chave, nomeArquivo: nomeArquivo || arquivo?.name || 'Documento importado', tipoDocumento, tipoDetectado, totalDocumento, itens, salvoEm: agora };
+      window.localStorage.setItem(CHAVE_RASCUNHO, JSON.stringify(rascunho));
+      if (!loteChave) setLoteChave(chave);
+      setSalvoEm(agora); onEstadoRascunho?.(true);
+    }, 700);
+    return () => window.clearTimeout(agendamento);
+  }, [etapa, itens, empresaId, loteChave, nomeArquivo, arquivo?.name, tipoDocumento, tipoDetectado, totalDocumento, onEstadoRascunho]);
+
   const salvarEFechar = () => { if (salvarRascunho()) fechar(); };
+
+  const descartarRascunho = () => {
+    window.localStorage.removeItem(CHAVE_RASCUNHO);
+    onEstadoRascunho?.(false);
+    fechar();
+  };
 
   const confirmar = async () => {
     if (!confere) { setErro('A soma ainda não confere com o total informado no documento. Revise ou refaça a análise.'); return; }
@@ -287,7 +338,7 @@ export default function ImportadorDespesasModal({ arquivo, retomarRascunho = fal
     <section className={`flex max-h-full w-full max-w-6xl flex-col overflow-hidden rounded-2xl shadow-2xl ${darkMode ? 'bg-slate-900 text-white' : 'bg-white text-slate-900'}`}>
       <header className="flex items-start justify-between gap-4 px-5 py-4 text-white" style={{ backgroundColor: corPrimaria }}>
         <div><p className="text-[11px] font-black uppercase tracking-[0.16em] text-white/75">Importação assistida</p><h2 id="titulo-importador" className="mt-1 text-lg font-black">Confira as despesas antes de lançar</h2><p className="mt-1 text-xs font-semibold text-white/80">{nomeArquivo || arquivo?.name || 'Rascunho salvo'} · {tipoDetectado === 'fatura-cartao' ? 'Fatura de cartão' : 'Extrato ou planilha'}</p></div>
-        <div className="flex shrink-0 flex-wrap justify-end gap-2"><button type="button" onClick={salvarEFechar} className="h-10 rounded-xl bg-white px-3 text-xs font-black shadow-sm" style={{ color: corPrimaria }}>Salvar e continuar depois</button><button type="button" onClick={fechar} className="h-10 rounded-xl border border-white/50 px-3 text-xs font-black text-white hover:bg-white/10">Fechar</button><button type="button" disabled={!arquivo} onClick={() => void analisar(tipoDocumento)} title={arquivo ? 'Analisar novamente este documento' : 'Envie novamente o documento para refazer a análise'} className="h-10 rounded-xl border border-white/50 px-3 text-xs font-black text-white hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-50">Refazer análise</button></div>
+        <div className="flex shrink-0 flex-wrap justify-end gap-2"><button type="button" onClick={salvarEFechar} className="h-10 rounded-xl bg-white px-3 text-xs font-black shadow-sm" style={{ color: corPrimaria }}>Salvar e continuar depois</button>{salvoEm && <button type="button" onClick={() => onSolicitarDescarte?.(descartarRascunho)} className="h-10 rounded-xl border border-red-200 bg-red-50 px-3 text-xs font-black text-red-700 hover:bg-red-100">Descartar</button>}<button type="button" onClick={fechar} className="h-10 rounded-xl border border-white/50 px-3 text-xs font-black text-white hover:bg-white/10">Fechar</button><button type="button" disabled={!arquivo} onClick={() => void analisar(tipoDocumento)} title={arquivo ? 'Analisar novamente este documento' : 'Envie novamente o documento para refazer a análise'} className="h-10 rounded-xl border border-white/50 px-3 text-xs font-black text-white hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-50">Refazer análise</button></div>
       </header>
       <div className="min-h-0 flex-1 overflow-y-auto p-5">
         {erro && <div className="mb-4 rounded-xl border border-red-200 bg-red-50 p-3 text-sm font-semibold text-red-800" role="alert">{erro}</div>}
@@ -295,7 +346,7 @@ export default function ImportadorDespesasModal({ arquivo, retomarRascunho = fal
         <div className="mb-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-5"><Resumo titulo="Despesas reconhecidas" valor={moeda(totalDespesasDocumento)} detalhe={`${despesas.length} lançamentos`} darkMode={darkMode} /><Resumo titulo="Estornos e créditos" valor={`− ${moeda(totalEstornosDocumento)}`} detalhe={`${estornos.length} separados`} darkMode={darkMode} /><Resumo titulo="Total a lançar" valor={moeda(totalParaLancar)} destaque corPrimaria={corPrimaria} detalhe="Após seus ajustes" darkMode={darkMode} /><label className={`rounded-xl border p-3 ${darkMode ? 'border-slate-700 bg-slate-800' : 'border-slate-200 bg-slate-50'}`}><span className="block text-[11px] font-black uppercase tracking-wide text-slate-500">Total no documento</span><input value={totalDocumento === null ? '' : totalDocumento.toLocaleString('pt-BR', { minimumFractionDigits: 2 })} onChange={(event) => setTotalDocumento(Number.isFinite(parseValor(event.target.value)) ? Math.abs(parseValor(event.target.value)) : null)} placeholder="R$ 0,00" className={`mt-1 w-full bg-transparent text-lg font-black outline-none ${darkMode ? 'text-white' : 'text-slate-900'}`} inputMode="decimal" /><small className={`block text-[11px] font-semibold ${confere ? 'text-emerald-700' : 'text-red-700'}`}>{diferenca === null ? 'Informe o total para conferir.' : confere ? '✓ O original confere.' : `Diferença de ${moeda(Math.abs(diferenca))}`}</small></label><label className={`rounded-xl border p-3 ${darkMode ? 'border-slate-700 bg-slate-800' : 'border-slate-200 bg-slate-50'}`}><span className="block text-[11px] font-black uppercase tracking-wide text-slate-500">Tipo de documento</span><select value={tipoDocumento} onChange={(event) => setTipoDocumento(event.target.value as TipoDocumento)} className={`mt-1 w-full bg-transparent text-sm font-bold outline-none ${darkMode ? 'text-white' : 'text-slate-900'}`}><option value="automatico">Detectar automaticamente</option><option value="extrato-bancario">Extrato bancário</option><option value="fatura-cartao">Fatura de cartão</option></select><small className="block pt-2 text-[11px] font-semibold text-slate-500">Use Refazer após alterar.</small></label></div>
         {!tipos.length && <div className="mb-4 rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm font-semibold text-amber-900">Cadastre ao menos um tipo de despesa antes de confirmar esta importação.</div>}
         {!confere && totalDocumento !== null && <div className="mb-4 rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm font-semibold text-amber-900">A confirmação está bloqueada enquanto a soma não conferir. Revise os itens ou use <strong>Refazer análise</strong>.</div>}
-        <div className={`overflow-x-auto rounded-xl border ${darkMode ? 'border-slate-700' : 'border-slate-200'}`}><table className="w-full min-w-[760px] text-left text-sm"><thead className={darkMode ? 'bg-slate-800 text-slate-300' : 'bg-slate-50 text-slate-600'}><tr><th className="p-3">Incluir</th><th className="p-3">Data</th><th className="p-3">Descrição</th><th className="p-3">Valor a lançar</th><th className="p-3">Tipo da despesa</th></tr></thead><tbody>{despesas.map((item) => <tr key={item.id} className={`border-t ${darkMode ? 'border-slate-700' : 'border-slate-200'} ${!item.incluir ? 'opacity-50' : ''}`}><td className="p-3"><input type="checkbox" checked={item.incluir} onChange={(event) => atualizar(item.id, { incluir: event.target.checked })} aria-label={`Incluir ${item.descricao}`} /></td><td className="p-3 whitespace-nowrap">{dataExibida(item.data)}</td><td className="p-3"><input value={item.descricao} onChange={(event) => atualizar(item.id, { descricao: event.target.value })} className={`w-full min-w-[190px] rounded-lg border px-2 py-1.5 text-xs ${darkMode ? 'border-slate-600 bg-slate-800 text-white' : 'border-slate-300 bg-white text-slate-900'}`} /><small className="mt-1 block text-[10px] font-semibold text-slate-500">{item.descricaoOriginal}</small></td><td className="p-3"><label className="sr-only" htmlFor={`valor-${item.id}`}>Valor a lançar de {item.descricao}</label><input id={`valor-${item.id}`} value={valoresDigitados[item.id] ?? item.valor.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} onChange={(event) => { const texto = event.target.value; const valor = parseValor(texto); setValoresDigitados((atuais) => ({ ...atuais, [item.id]: texto })); atualizar(item.id, { valor: texto.trim() && Number.isFinite(valor) ? Math.abs(valor) : 0 }); }} onBlur={() => setValoresDigitados((atuais) => { const { [item.id]: _, ...restante } = atuais; return restante; })} inputMode="decimal" className={`w-28 rounded-lg border px-2 py-1.5 text-right text-xs font-black ${item.valor <= 0 ? 'border-red-300 bg-red-50' : darkMode ? 'border-slate-600 bg-slate-800 text-white' : 'border-slate-300 bg-white text-slate-900'}`} /><small className="mt-1 block text-[10px] font-semibold text-slate-500">Original: {moeda(item.valorOriginal)}</small></td><td className="p-3"><select ref={(element) => { focoLinhas.current[item.id] = element; }} value={item.tipo} onChange={(event) => atualizar(item.id, { tipo: event.target.value })} className={`min-w-[180px] rounded-lg border px-2 py-1.5 text-xs font-bold ${!item.tipo ? 'border-red-300 bg-red-50' : darkMode ? 'border-slate-600 bg-slate-800 text-white' : 'border-slate-300 bg-white text-slate-900'}`}><option value="">Selecionar tipo</option>{tipos.map((tipo) => <option key={tipo}>{tipo}</option>)}</select></td></tr>)}</tbody></table></div>
+        <div className={`overflow-x-auto rounded-xl border ${darkMode ? 'border-slate-700' : 'border-slate-200'}`}><table className="w-full min-w-[760px] text-left text-sm"><thead className={darkMode ? 'bg-slate-800 text-slate-300' : 'bg-slate-50 text-slate-600'}><tr><th className="p-3">Incluir</th><th className="p-3">Data</th><th className="p-3">Descrição</th><th className="p-3">Valor a lançar</th><th className="p-3">Tipo da despesa</th></tr></thead><tbody>{despesas.map((item) => <tr key={item.id} className={`border-t ${darkMode ? 'border-slate-700' : 'border-slate-200'} ${!item.incluir ? 'opacity-50' : ''}`}><td className="p-3"><input type="checkbox" checked={item.incluir} onChange={(event) => atualizar(item.id, { incluir: event.target.checked })} aria-label={`Incluir ${item.descricao}`} /></td><td className="p-3 whitespace-nowrap">{dataExibida(item.data)}</td><td className="p-3"><input value={item.descricao} onChange={(event) => atualizar(item.id, { descricao: event.target.value, tipoSugeridoHistorico: false })} className={`w-full min-w-[190px] rounded-lg border px-2 py-1.5 text-xs ${darkMode ? 'border-slate-600 bg-slate-800 text-white' : 'border-slate-300 bg-white text-slate-900'}`} /><small className="mt-1 block text-[10px] font-semibold text-slate-500">{item.descricaoOriginal}</small></td><td className="p-3"><label className="sr-only" htmlFor={`valor-${item.id}`}>Valor a lançar de {item.descricao}</label><div className={`flex w-28 items-center rounded-lg border px-2 py-1.5 ${item.valor <= 0 ? 'border-red-300 bg-red-50' : darkMode ? 'border-slate-600 bg-slate-800 text-white' : 'border-slate-300 bg-white text-slate-900'}`}><input id={`valor-${item.id}`} value={valoresDigitados[item.id] ?? valorComDuasCasas(item.valor)} onChange={(event) => { const digitos = event.target.value.replace(/\D/g, ''); if (!digitos) { setValoresDigitados((atuais) => ({ ...atuais, [item.id]: '' })); atualizar(item.id, { valor: 0 }); return; } const valor = parseInt(digitos, 10) / 100; setValoresDigitados((atuais) => ({ ...atuais, [item.id]: valorComDuasCasas(valor) })); atualizar(item.id, { valor }); }} inputMode="numeric" className="min-w-0 flex-1 bg-transparent text-right text-xs font-black outline-none" /></div><small className="mt-1 block text-[10px] font-semibold text-slate-500">Original: {moeda(item.valorOriginal)}</small></td><td className="p-3"><select ref={(element) => { focoLinhas.current[item.id] = element; }} value={item.tipo} onChange={(event) => atualizar(item.id, { tipo: event.target.value, tipoSugeridoHistorico: false })} className={`min-w-[180px] rounded-lg border px-2 py-1.5 text-xs font-bold ${!item.tipo ? 'border-red-300 bg-red-50' : darkMode ? 'border-slate-600 bg-slate-800 text-white' : 'border-slate-300 bg-white text-slate-900'}`}><option value="">Selecionar tipo</option>{tipos.map((tipo) => <option key={tipo}>{tipo}</option>)}</select>{item.tipoSugeridoHistorico && <small className="mt-1 block text-[10px] font-bold text-emerald-700">Sugerido pelo seu histórico</small>}</td></tr>)}</tbody></table></div>
         {estornos.length > 0 && <section className={`mt-5 overflow-hidden rounded-xl border ${darkMode ? 'border-emerald-900 bg-emerald-950/20' : 'border-emerald-200 bg-emerald-50/40'}`}><div className="p-4"><h3 className="font-black">Estornos e créditos</h3><p className="mt-1 text-xs font-semibold text-slate-500">Eles não serão lançados como despesas nesta etapa.</p></div><table className="w-full text-left text-sm"><tbody>{estornos.map((item) => <tr key={item.id} className={`border-t ${darkMode ? 'border-emerald-900' : 'border-emerald-100'}`}><td className="p-3">{dataExibida(item.data)}</td><td className="p-3">{item.descricao}</td><td className="p-3 font-black text-emerald-700">{moeda(item.valor)}</td></tr>)}</tbody></table></section>}
       </div>
       <footer className={`flex flex-col-reverse gap-3 border-t px-5 py-4 sm:flex-row sm:items-center sm:justify-between ${darkMode ? 'border-slate-700' : 'border-slate-200'}`}><p className={`text-xs font-semibold ${darkMode ? 'text-slate-300' : 'text-slate-500'}`}>{selecionadas.length} despesa{selecionadas.length === 1 ? '' : 's'} selecionada{selecionadas.length === 1 ? '' : 's'} · {moeda(totalParaLancar)}</p><div className="flex flex-wrap gap-2"><button type="button" onClick={salvarEFechar} className={`h-11 rounded-xl border px-4 text-sm font-black ${darkMode ? 'border-slate-600 text-slate-200' : 'border-slate-300 text-slate-600'}`}>Salvar e continuar depois</button><button type="button" onClick={() => void confirmar()} disabled={!confere || !selecionadas.length || !tipos.length} className="h-11 rounded-xl px-5 text-sm font-black text-white disabled:cursor-not-allowed disabled:opacity-50" style={{ backgroundColor: corPrimaria }}>Confirmar e lançar despesas</button></div></footer>

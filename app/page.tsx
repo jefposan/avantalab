@@ -10003,7 +10003,6 @@ name="novo-usuario-login"
           <main className={classePaginaInterna}>
             <div className="mt-5 flex flex-col gap-6 xl:flex-row xl:items-start">
               <div onClick={() => setBlocoAtivo('despesa')} className="min-w-0 cursor-pointer transition-[width,opacity] duration-300 ease-in-out" style={{ width: typeof window !== 'undefined' && window.innerWidth >= 1280 ? (blocoAtivo === 'despesa' ? '62%' : blocoAtivo === 'receita' ? '38%' : '50%') : '100%', opacity: blocoAtivo === 'receita' ? 0.5 : 1 }}>
-{temRascunhoImportador && <div className="mb-2 flex justify-end"><button type="button" onClick={() => setRetomarRascunhoImportador(true)} className="h-9 rounded-xl border border-emerald-300 bg-emerald-50 px-3 text-xs font-black text-emerald-800 shadow-sm transition hover:border-emerald-400 hover:bg-emerald-100">Continuar importação salva</button></div>}
 <TabelaLancamentosDespesa
               bgCard={bgCard}
               corPrimaria={corPrimaria}
@@ -10063,6 +10062,8 @@ name="novo-usuario-login"
               lendoNota={lendoNota}
               notaPendente={Boolean(notaPendente)}
               limparNotaPendente={() => setNotaPendente(null)}
+              temRascunhoImportador={temRascunhoImportador}
+              onRetomarRascunhoImportador={() => setRetomarRascunhoImportador(true)}
               onVerNota={abrirNotaLancamento}
               salvandoDespesa={salvandoDespesa}
             />
@@ -10562,6 +10563,7 @@ name="novo-usuario-login"
   onEstadoRascunho={setTemRascunhoImportador}
   onArquivoDescartado={() => setArquivoImportador(null)}
   onSessaoExpirada={() => { void encerrarSessaoExpirada(); }}
+  onSolicitarDescarte={(descartar) => abrirConfirmacao({ titulo: 'Descartar importação salva?', mensagem: 'As classificações, descrições e valores ajustados serão perdidos. Nenhum lançamento será criado.', textoConfirmar: 'Descartar', acao: descartar })}
 />
 
 <ProcessandoImagemModal aberto={lendoNota || baixandoNota} darkMode={darkMode} titulo={baixandoNota ? 'Baixando imagem' : 'Processando imagem'} />

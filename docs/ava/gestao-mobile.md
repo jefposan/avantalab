@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.6.0.84.45 -->
+<!-- ava-version: 1.6.0.84.47 -->
+>
+> Revisão 1.6.0.84.47: sugestões de tipo no Importador da Gestão Web; sem
+> impacto operacional na Gestão Mobile.
 
 > Revisão 1.6.0.84.45: correção de viewport no aplicativo iOS do Vendas; sem
 > impacto operacional na Gestão Mobile.
