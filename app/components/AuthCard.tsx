@@ -96,7 +96,7 @@ interface AuthCardProps {
   setCadastroDdi: React.Dispatch<React.SetStateAction<string>>;
 
   // Auth handlers
-  handleLogin: () => Promise<void>;
+  handleLogin: (tipoLogin?: 'email' | 'telefone') => Promise<void>;
   handleCadastroTeste: () => Promise<void>;
   handleGoogleLogin: () => Promise<void>;
   handleRecuperarSenha: () => Promise<void>;
@@ -138,6 +138,7 @@ export default function AuthCard({
   handleRecuperarSenha, handleAtualizarSenha,
   reenviarCodigoSmsCadastro, reenviarCodigoRedefinirSenha,
 }: AuthCardProps) {
+  const [tipoLogin, setTipoLogin] = React.useState<'email' | 'telefone'>('email');
   const [promptInstalacao, setPromptInstalacao] = React.useState<BeforeInstallPromptEvent | null>(null);
   const [instaladoComoApp, setInstaladoComoApp] = React.useState(false);
   const [mostrarInstrucaoInstalacao, setMostrarInstrucaoInstalacao] = React.useState(false);
@@ -215,6 +216,13 @@ export default function AuthCard({
     !authMensagem;
 
   const tipoPerfilInicialNormalizado = normalizarTipoPerfil(tipoPerfilInicial);
+  const loginPorTelefone = tipoLogin === 'telefone';
+  const loginMobilePadrao = modoAuth === 'login' && !modoRedefinirSenha && !mostrarLandingPreLoginAtiva;
+
+  const alterarTipoLogin = (novoTipo: 'email' | 'telefone') => {
+    setTipoLogin(novoTipo);
+    setLoginEmail('');
+  };
 
   if (mostrarLandingPreLoginAtiva && !modalAvisoAberto) {
     return (
@@ -321,17 +329,28 @@ export default function AuthCard({
       <div
         className="absolute inset-0 bg-no-repeat lg:hidden"
         style={{
-          backgroundImage: "image-set(url('/images/bg-avantalab-mobile-1080x1920.webp') type('image/webp'), url('/images/bg-avantalab-mobile-1080x1920.png') type('image/png'))",
-          backgroundSize: 'auto 108%',
+          backgroundImage: loginMobilePadrao
+            ? "url('/images/bg-avantalab-mobile-1080x1920-sem-logo.webp')"
+            : "image-set(url('/images/bg-avantalab-mobile-1080x1920.webp') type('image/webp'), url('/images/bg-avantalab-mobile-1080x1920.png') type('image/png'))",
+          backgroundSize: loginMobilePadrao ? 'cover' : 'auto 108%',
           backgroundPosition: 'center bottom',
         }}
       />
 
       <div className="pointer-events-none absolute inset-0 hidden bg-white/10 lg:block" />
 
-      <section className="relative z-10 flex min-h-[100dvh] items-start px-4 pb-8 pt-[clamp(8.25rem,18dvh,10rem)] lg:min-h-screen lg:items-center lg:px-20 lg:py-10">
+      <section className={`relative z-10 flex min-h-[100dvh] px-4 pb-8 lg:min-h-screen lg:items-center lg:px-20 lg:py-10 ${
+        loginMobilePadrao ? 'items-center pt-[max(env(safe-area-inset-top),1.5rem)]' : 'items-start pt-[clamp(8.25rem,18dvh,10rem)]'
+      }`}>
         <div className="w-full lg:max-w-7xl">
-          <div className={`relative z-20 w-full rounded-3xl border border-white/20 bg-white/10 p-4 shadow-2xl lg:border-white/30 lg:bg-white/70 lg:p-8 lg:backdrop-blur-xl ${
+          {loginMobilePadrao && (
+            <div className="mb-6 flex justify-center lg:hidden">
+              <Image src="/images/logo-avantalab-oficial.png" alt="AvantaLab — Do zero ao operacional" width={310} height={90} priority className="h-auto w-[min(78vw,310px)]" />
+            </div>
+          )}
+          <div className={`relative z-20 w-full rounded-3xl border p-4 shadow-2xl lg:border-white/30 lg:bg-white/70 lg:p-8 lg:backdrop-blur-xl ${
+            loginMobilePadrao ? 'border-white/70 bg-white/95 p-6' : 'border-white/20 bg-white/10'
+          } ${
             mostrarLandingPreLoginAtiva ? 'lg:max-w-2xl' : 'lg:max-w-md'
           }`}>
             {mostrarLandingPreLoginAtiva ? (
@@ -552,20 +571,43 @@ export default function AuthCard({
 <form
   onSubmit={(e) => {
     e.preventDefault();
-    void handleLogin();
+    void handleLogin(tipoLogin);
   }}
   className="space-y-3"
 >
+  <div className="flex rounded-xl bg-slate-100 p-1 lg:hidden">
+    <button
+      type="button"
+      onClick={() => alterarTipoLogin('email')}
+      className={`flex h-10 flex-1 items-center justify-center gap-2 rounded-lg text-sm font-bold transition ${
+        !loginPorTelefone ? 'bg-white text-cyan-700 shadow-sm' : 'text-slate-500'
+      }`}
+    >
+      <span aria-hidden="true">✉</span>E-mail
+    </button>
+    <button
+      type="button"
+      onClick={() => alterarTipoLogin('telefone')}
+      className={`flex h-10 flex-1 items-center justify-center gap-2 rounded-lg text-sm font-bold transition ${
+        loginPorTelefone ? 'bg-white text-cyan-700 shadow-sm' : 'text-slate-500'
+      }`}
+    >
+      <span aria-hidden="true">☎</span>Telefone
+    </button>
+  </div>
+
   <div>
     <label className="mb-1 block text-xs font-semibold text-slate-700">
-      Email ou login
+      {loginPorTelefone ? 'Telefone' : 'Email ou login'}
     </label>
 
     <input
-      type="text"
-      placeholder="seuemail@exemplo.com ou seu login"
+      type={loginPorTelefone ? 'tel' : 'text'}
+      inputMode={loginPorTelefone ? 'tel' : 'email'}
+      autoComplete={loginPorTelefone ? 'tel-national' : 'username'}
+      placeholder={loginPorTelefone ? 'Digite seu telefone com DDD' : 'seuemail@exemplo.com ou seu login'}
       value={loginEmail}
-      onChange={(e) => setLoginEmail(e.target.value)}
+      onChange={(e) => setLoginEmail(loginPorTelefone ? formatarTelefoneCadastro(e.target.value, '55') : e.target.value)}
       className="w-full rounded-xl border border-slate-300 bg-white/90 px-3.5 py-2.5 text-sm text-slate-800 outline-none transition focus:border-sky-600 focus:ring-2 focus:ring-sky-600/20"
     />
   </div>
@@ -666,7 +708,7 @@ export default function AuthCard({
     </div>
   )}
 
-  <div className="grid grid-cols-2 gap-2">
+  <div className="grid gap-2 lg:grid-cols-2">
     <button
       type="submit"
       disabled={authLoading}

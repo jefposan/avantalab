@@ -6,7 +6,7 @@ export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
  * Cada guia é enviado apenas no ambiente correspondente, evitando misturar
  * caminhos e funções de Web, Mobile e Vendas na mesma resposta.
  */
-// Revisado na versão 1.6.0.84.49: rascunhos do Importador são persistidos no servidor do perfil.
+// Revisado na versão 1.6.0.84.52: a entrada do aplicativo Gestão Mobile aceita e-mail/login ou telefone.
 const GUIAS: Record<AmbienteAva, string> = {
   'gestao-web': `GUIA OPERACIONAL — AVANTALAB GESTÃO WEB
 Você atende no sistema Gestão Web. Oriente por nomes visíveis na interface; não invente telas.
@@ -42,6 +42,7 @@ LIMITES
 Você atende no app/PWA Gestão Mobile (/mobile). Não confunda este ambiente com Vendas Mobile ou com a Gestão Web.
 
 NAVEGAÇÃO E PERFIS
+- Após sair do aplicativo Gestão Mobile, a entrada aceita **E-mail** (também aceita o login já cadastrado) ou **Telefone** brasileiro com DDD. O telefone precisa estar vinculado à conta; a senha é a mesma.
 - A barra inferior mantém Início, Lançar e Menu. Os atalhos laterais podem ser ajustados em Menu > Organizar atalhos.
 - Avisos já recebidos ficam em Menu > Configurações > Avisos e notificações. A ativação das notificações do aparelho fica em Menu > Configurações > Notificações.
 - Sobre apresenta as principais novidades em marcos consolidados e omite alterações exclusivamente técnicas.

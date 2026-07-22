@@ -446,15 +446,15 @@ export function useAuth(deps: UseAuthDeps) {
 
   const CHAVE_ULTIMA_ATIVIDADE = 'avantalab_ultima_atividade';
 
-  const handleLogin = async () => {
+  const handleLogin = async (tipoLogin: 'email' | 'telefone' = 'email') => {
     setAuthErro('');
     setAuthMensagem('');
     setAuthLoading(true);
 
-    const loginDigitado = loginEmail.trim().toLowerCase();
+    const loginDigitado = loginEmail.trim();
 
     if (!loginDigitado) {
-      setAuthErro('Informe seu email ou login.');
+      setAuthErro(tipoLogin === 'telefone' ? 'Informe seu telefone.' : 'Informe seu email ou login.');
       setAuthLoading(false);
       return;
     }
@@ -465,22 +465,36 @@ export function useAuth(deps: UseAuthDeps) {
       return;
     }
 
-    let emailParaLogin = loginDigitado;
+    let respostaLogin;
 
-    if (!loginDigitado.includes('@')) {
-      const emailEncontrado = await buscarEmailPorLogin(loginDigitado);
-      if (!emailEncontrado) {
-        setAuthErro('Login não encontrado.');
+    if (tipoLogin === 'telefone') {
+      const telefone = loginDigitado.replace(/\D/g, '');
+      if (telefone.length < 10 || telefone.length > 11) {
+        setAuthErro('Informe um telefone brasileiro válido com DDD.');
         setAuthLoading(false);
         return;
       }
-      emailParaLogin = emailEncontrado;
+      respostaLogin = await supabase.auth.signInWithPassword({
+        phone: `+55${telefone}`,
+        password: loginSenha,
+      });
+    } else {
+      let emailParaLogin = loginDigitado.toLowerCase();
+      if (!loginDigitado.includes('@')) {
+        const emailEncontrado = await buscarEmailPorLogin(loginDigitado);
+        if (!emailEncontrado) {
+          setAuthErro('Login não encontrado.');
+          setAuthLoading(false);
+          return;
+        }
+        emailParaLogin = emailEncontrado;
+      }
+      respostaLogin = await supabase.auth.signInWithPassword({
+        email: emailParaLogin,
+        password: loginSenha,
+      });
     }
-
-    const { data: dadosLogin, error } = await supabase.auth.signInWithPassword({
-      email: emailParaLogin,
-      password: loginSenha,
-    });
+    const { data: dadosLogin, error } = respostaLogin;
 
     if (error) {
       console.error('Erro login:', error);

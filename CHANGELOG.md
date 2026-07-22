@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.6.0.84.52 - 2026-07-22
+
+- Gestão Mobile no aplicativo: a tela apresentada após sair passou a usar o
+  padrão visual do Vendas Mobile e permite entrar por e-mail/login ou telefone
+  brasileiro com DDD.
+
 ## 1.6.0.84.51 - 2026-07-22
 
 - Gestão Web: requisições autenticadas do Importador renovam a sessão e repetem

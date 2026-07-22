@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.6.0.84.51 -->
+<!-- ava-version: 1.6.0.84.52 -->
+
+> Revisão 1.6.0.84.52: ajuste da entrada do aplicativo Gestão Mobile; sem
+> impacto operacional na Gestão Web.
 
 > Revisão 1.6.0.84.51: durante a importação, o sistema tenta renovar a sessão
 > antes de interromper o processamento. Se ela realmente expirar, abre o login

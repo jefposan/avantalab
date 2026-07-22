@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.6.0.84.51 -->
+<!-- ava-version: 1.6.0.84.52 -->
+
+> Revisão 1.6.0.84.52: no aplicativo, após sair, a entrada permite usar
+> e-mail/login ou telefone brasileiro com DDD; a senha é a mesma da conta.
 
 > Revisão 1.6.0.84.51: recuperação de sessão no Importador da Gestão Web; sem
 > impacto operacional na Gestão Mobile.
