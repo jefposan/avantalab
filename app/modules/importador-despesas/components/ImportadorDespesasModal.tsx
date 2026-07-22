@@ -327,7 +327,11 @@ export default function ImportadorDespesasModal({ arquivo, retomarRascunho = fal
   const salvarEFechar = async () => { if (await salvarRascunho()) fechar(); };
 
   const descartarRascunho = () => {
-    void supabase.auth.getSession().then(({ data }) => data.session?.user.id && supabase.from('importador_despesas_rascunhos').delete().eq('empresa_id', empresaId).eq('usuario_id', data.session.user.id));
+    void supabase.auth.getSession().then(async ({ data }) => {
+      const usuarioId = data.session?.user.id;
+      if (!usuarioId) return;
+      await supabase.from('importador_despesas_rascunhos').delete().eq('empresa_id', empresaId).eq('usuario_id', usuarioId);
+    });
     window.localStorage.removeItem(CHAVE_RASCUNHO); setRascunhoRemoto(null);
     onEstadoRascunho?.(false);
     fechar();
