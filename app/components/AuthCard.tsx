@@ -366,7 +366,7 @@ export default function AuthCard({
             </div>
           )}
           <div className={`relative z-20 w-full rounded-3xl border p-4 shadow-2xl lg:border-white/30 lg:bg-white/70 lg:p-8 lg:backdrop-blur-xl ${
-            loginMobilePadrao ? 'row-start-2 mx-auto w-full max-w-[420px] self-center border-0 bg-white p-7 shadow-[0_18px_45px_rgba(0,31,60,0.28)]' : 'border-white/20 bg-white/10'
+            loginMobilePadrao ? 'row-start-2 mx-auto w-full max-w-[420px] self-center border-white/70 bg-white/[.30] p-7 shadow-[0_18px_45px_rgba(0,31,60,0.22),inset_0_1px_0_rgba(255,255,255,0.45)] backdrop-blur-xl backdrop-saturate-[1.35]' : 'border-white/20 bg-white/10'
           } ${
             mostrarLandingPreLoginAtiva ? 'lg:max-w-2xl' : 'lg:max-w-md'
           }`}>

@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.6.0.84.59 -->
+<!-- ava-version: 1.6.0.84.63 -->
+
+> Revisão 1.6.0.84.63: ajuste visual dos cards de acesso para 30% de
+> transparência; sem impacto operacional na Gestão Mobile.
 
 > Revisão 1.6.0.84.59: as telas de acesso exibem **Gestão Financeira** para
 > identificar claramente o aplicativo atual.

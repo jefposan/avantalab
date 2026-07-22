@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.6.0.84.59 -->
+<!-- ava-version: 1.6.0.84.63 -->
+
+> Revisão 1.6.0.84.63: ajuste visual dos cards de acesso mobile para 30% de
+> transparência; sem impacto operacional na Gestão Web.
 
 > Revisão 1.6.0.84.59: identificação visual nas telas de acesso dos PWAs; sem
 > impacto operacional na Gestão Web.

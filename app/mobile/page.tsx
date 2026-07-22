@@ -296,11 +296,14 @@ export default function MobilePage() {
               max-height: calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 108px);
               gap: 14px;
               overflow-y: auto;
+              border: 1px solid rgba(255, 255, 255, .72);
               border-radius: 18px;
               padding: 24px;
               color: #2d353b;
-              background: #fff;
-              box-shadow: 0 18px 45px rgba(0, 31, 60, .28);
+              background: rgba(255, 255, 255, .30);
+              box-shadow: 0 18px 45px rgba(0, 31, 60, .22), inset 0 1px 0 rgba(255, 255, 255, .45);
+              -webkit-backdrop-filter: blur(18px) saturate(135%);
+              backdrop-filter: blur(18px) saturate(135%);
               overscroll-behavior: contain;
               -webkit-overflow-scrolling: touch;
             }

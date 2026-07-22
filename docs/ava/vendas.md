@@ -1,6 +1,9 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.6.0.84.59 -->
+<!-- ava-version: 1.6.0.84.63 -->
+
+> Revisão 1.6.0.84.63: ajuste visual dos cards de acesso para 30% de
+> transparência; sem impacto operacional no Vendas Mobile.
 
 > Revisão 1.6.0.84.59: as telas de acesso exibem **Gestão de Vendas** para
 > identificar claramente o aplicativo atual.

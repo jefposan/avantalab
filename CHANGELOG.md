@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.6.0.84.63 - 2026-07-22
+
+- Gestão Mobile e Vendas Mobile: cards de acesso ajustados para 30% de
+  transparência, preservando o efeito de vidro e a leitura dos formulários.
+
 ## 1.6.0.84.59 - 2026-07-22
 
 - Gestão Mobile e Vendas Mobile: as telas de acesso identificam claramente o
