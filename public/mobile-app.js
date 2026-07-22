@@ -1979,27 +1979,12 @@
   }
 
   function avaliarSistemaInicialMobile() {
-    if (!state.empresa || !podeTrocarSistemaMobile()) {
-      state.seletorSistemaAberto = false;
-      state.seletorSistemaInicialBloqueante = false;
-      return false;
-    }
-    if (state.sistemaInicialAvaliadoPerfilId === state.empresa.id) return false;
-    state.sistemaInicialAvaliadoPerfilId = state.empresa.id;
-    var escolha = '';
-    try {
-      escolha = sessionStorage.getItem(chaveSistemaPerfilMobile(CHAVE_SISTEMA_SESSAO_MOBILE)) ||
-        localStorage.getItem(chaveSistemaPerfilMobile(CHAVE_SISTEMA_INICIAL_MOBILE)) || '';
-    } catch (error) {}
-    if (escolha === 'vendas') {
-      abrirVendasMobile();
-      return true;
-    }
-    if (escolha === 'gestao') return false;
-    state.lembrarSistemaInicial = false;
-    state.seletorSistemaAberto = true;
-    state.seletorSistemaInicialBloqueante = true;
-    return true;
+    // A rota /mobile abre sempre a Gestão. Preferências antigas de sistema
+    // permanecem apenas para contexto de navegação e nunca redirecionam a
+    // entrada automaticamente para o Vendas.
+    state.seletorSistemaAberto = false;
+    state.seletorSistemaInicialBloqueante = false;
+    return false;
   }
 
   async function prepararSistemaInicialAntesDosDadosMobile() {

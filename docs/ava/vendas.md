@@ -1,6 +1,9 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.6.0.84.56 -->
+<!-- ava-version: 1.6.0.84.57 -->
+
+> Revisão 1.6.0.84.57: a rota da Gestão abre sempre a Gestão; o Vendas continua
+> acessível somente pela ação específica dentro de cada aplicativo.
 
 > Revisão 1.6.0.84.56: após entrar, o Vendas Mobile abre sempre no próprio
 > aplicativo. Para ir à Gestão, use a ação específica dentro do Vendas. O

@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.6.0.84.57 - 2026-07-22
+
+- Gestão Mobile: a rota da Gestão deixa de obedecer a preferências antigas de
+  sistema e abre sempre a própria Gestão. O Vendas continua acessível somente
+  por sua ação explícita.
+
 ## 1.6.0.84.56 - 2026-07-22
 
 - Vendas Mobile: após autenticar, abre sempre no próprio Vendas, sem exibir a
