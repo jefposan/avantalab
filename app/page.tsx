@@ -1,5 +1,6 @@
 'use client';
 import { useState, useMemo, useRef, useEffect, useCallback } from 'react';
+import { Capacitor } from '@capacitor/core';
 import Calculadora from './components/Calculadora';
 import Dashboard from './components/Dashboard';
 import BalancoGeral from './components/BalancoGeral'; 
@@ -866,6 +867,19 @@ const [buscaEntradaFaturamento, setBuscaEntradaFaturamento] = useState('');
   const meses = ['JANEIRO', 'FEVEREIRO', 'MARÇO', 'ABRIL', 'MAIO', 'JUNHO', 'JULHO', 'AGOSTO', 'SETEMBRO', 'OUTUBRO', 'NOVEMBRO', 'DEZEMBRO'];
   const TEMPO_LIMITE_INATIVIDADE = 60 * 60 * 1000; // 60 minutos
 const CHAVE_ULTIMA_ATIVIDADE = 'avantalab_ultima_atividade';
+const CHAVE_PORTAL_OAUTH = 'avantalab.auth.portal.oauth_pendente.v1';
+
+function redirecionarRetornoOAuthParaPortal() {
+  if (!Capacitor.isNativePlatform()) return false;
+  try {
+    if (localStorage.getItem(CHAVE_PORTAL_OAUTH) !== '1') return false;
+    localStorage.removeItem(CHAVE_PORTAL_OAUTH);
+    window.location.replace('/acesso?oauth=1');
+    return true;
+  } catch {
+    return false;
+  }
+}
 const encerrandoSessaoRef = useRef(false);
 
 useEffect(() => {
@@ -1310,10 +1324,18 @@ useEffect(() => {
 
     const parametros = new URLSearchParams(window.location.search);
     if (parametros.get('cadastro') === '1') {
+      if (Capacitor.isNativePlatform()) {
+        window.location.replace('/acesso?modo=cadastro&origem=gestao');
+        return;
+      }
       setModoAuth('cadastro');
       setMostrarLandingPreLogin(false);
       window.history.replaceState(null, '', window.location.pathname);
     } else if (parametros.get('entrar') === '1') {
+      if (Capacitor.isNativePlatform()) {
+        window.location.replace('/acesso?modo=login&origem=gestao');
+        return;
+      }
       setModoAuth('login');
       setMostrarLandingPreLogin(false);
       window.history.replaceState(null, '', window.location.pathname);
@@ -1327,6 +1349,17 @@ useEffect(() => {
   const { data } = supabase.auth.onAuthStateChange((evento, sessao) => {
     if (!sessao || evento === 'SIGNED_OUT') {
       if (acessoLiberado && !encerrandoSessaoRef.current) void encerrarSessaoExpirada();
+      return;
+    }
+
+    if (redirecionarRetornoOAuthParaPortal()) return;
+
+    // O aplicativo nunca deve hidratar a Gestão Web na landing. Com uma sessão
+    // já restaurada, encaminha diretamente ao portal nativo para escolher o
+    // destino; isso evita que a tela global de carregamento fique aguardando
+    // consultas próprias da Gestão Web.
+    if (Capacitor.isNativePlatform() && window.location.pathname === '/') {
+      window.location.replace('/acesso?origem=gestao');
       return;
     }
 
@@ -1520,6 +1553,11 @@ if (modoUrl === 'redefinir-senha' || tipoUrl === 'recovery') {
 if (paramsConfirmacao.get('confirmado') === '1') {
       await supabase.auth.signOut({ scope: 'local' });
 
+      if (Capacitor.isNativePlatform()) {
+        window.location.replace('/acesso?modo=login&confirmado=1');
+        return;
+      }
+
       setEmailConfirmado(true);
       setAcessoLiberado(false);
       setAcessoNaoConfigurado(false);
@@ -1530,11 +1568,17 @@ if (paramsConfirmacao.get('confirmado') === '1') {
       setCarregandoSistema(false);
 
       window.history.replaceState({}, document.title, window.location.pathname);
-
       return;
     }
 
     const { data: sessaoAtual } = await supabase.auth.getSession();
+
+    if (sessaoAtual.session && redirecionarRetornoOAuthParaPortal()) return;
+
+    if (sessaoAtual.session && Capacitor.isNativePlatform()) {
+      window.location.replace('/acesso?origem=gestao');
+      return;
+    }
 
     let empresa = null;
 
@@ -2089,7 +2133,11 @@ useEffect(() => {
     setAuthErro('');
     setAuthMensagem('Sessão encerrada por inatividade. Faça login novamente.');
 
-    window.location.href = window.location.origin + window.location.pathname;
+    if (Capacitor.isNativePlatform()) {
+      window.location.replace('/acesso?modo=login&motivo=inatividade');
+    } else {
+      window.location.href = window.location.origin + window.location.pathname;
+    }
   };
 
   const verificarInatividade = () => {
@@ -5976,9 +6024,28 @@ const sairDaSelecaoEmpresa = async () => {
 };
 
 const handleLogout = async () => {
-  await supabase.auth.signOut({ scope: 'local' });
+  if (encerrandoSessaoRef.current) return;
+  encerrandoSessaoRef.current = true;
 
-  localStorage.removeItem(CHAVE_ULTIMA_ATIVIDADE);
+  try {
+    const { error } = await supabase.auth.signOut({ scope: 'local' });
+    const sessaoJaAusente =
+      error?.name === 'AuthSessionMissingError' ||
+      error?.message?.toLowerCase().includes('session missing');
+    if (error && !sessaoJaAusente) console.error('Erro ao encerrar sessão:', error);
+  } catch (erro) {
+    const sessaoJaAusente =
+      erro instanceof Error &&
+      (erro.name === 'AuthSessionMissingError' ||
+        erro.message.toLowerCase().includes('session missing'));
+    if (!sessaoJaAusente) console.error('Erro ao encerrar sessão:', erro);
+  }
+
+  try {
+    localStorage.removeItem(CHAVE_ULTIMA_ATIVIDADE);
+  } catch {
+    // O logout visual continua mesmo se o armazenamento local estiver indisponível.
+  }
 
 setAcessoLiberado(false);
 setAcessoNaoConfigurado(false);
@@ -6073,16 +6140,14 @@ setValidandoTelefoneObrigatorio(false);
 
   setAuthErro('');
   setAuthMensagem('');
+  encerrandoSessaoRef.current = false;
+  if (Capacitor.isNativePlatform()) {
+    window.location.replace('/acesso?modo=login&origem=gestao');
+  }
 };
 
 const encerrarSessaoExpirada = async () => {
-  if (encerrandoSessaoRef.current) return;
-  encerrandoSessaoRef.current = true;
-  try {
-    await handleLogout();
-  } finally {
-    encerrandoSessaoRef.current = false;
-  }
+  await handleLogout();
 };
 
 const quantidadeLancamentosMes = lancamentosFiltradosDoMes.length;
@@ -6760,8 +6825,11 @@ if (modalSelecionarEmpresa) {
             <button
               type="button"
               onClick={abrirCriacaoNovaEmpresa}
-              className="rounded-lg px-4 py-2 text-xs font-black shadow transition hover:brightness-110 active:scale-95 cursor-pointer disabled:cursor-not-allowed disabled:opacity-60"
-              style={estiloTemaPrimario}
+              className={`rounded-lg border px-4 py-2 text-xs font-black transition active:scale-95 cursor-pointer ${
+                darkMode
+                  ? 'border-sky-800/50 bg-sky-950/30 text-sky-300 hover:bg-sky-900/50'
+                  : 'border-sky-200 bg-sky-50 text-sky-700 hover:bg-sky-100'
+              }`}
             >
               Criar novo perfil
             </button>
@@ -6786,8 +6854,7 @@ if (modalSelecionarEmpresa) {
               if (!empresaParaSelecionar) return;
               await carregarEmpresaSelecionada(empresaParaSelecionar);
             }}
-            className="mt-3 w-full rounded-xl px-4 py-2.5 text-xs font-black uppercase tracking-wide text-white shadow-sm transition hover:brightness-110 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60"
-            style={estiloTemaPrimario}
+            className="mt-3 w-full rounded-xl bg-sky-600 px-4 py-2.5 text-xs font-black uppercase tracking-wide text-white shadow-sm transition hover:bg-sky-700 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60"
           >
             Confirmar acesso
           </button>

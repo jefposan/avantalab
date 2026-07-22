@@ -6,6 +6,11 @@
     try { return new URL(config.supabaseUrl).hostname.split('.')[0]; } catch { return ''; }
   })();
   const sharedStorageKey = projectRef ? `sb-${projectRef}-auth-token` : legacyStorageKey;
+  const EVENTO_CALLBACK_GOOGLE_NATIVO = 'avantalab:vendas-oauth-callback';
+  const EVENTO_ERRO_GOOGLE_NATIVO = 'avantalab:vendas-oauth-erro';
+  const CHAVE_CALLBACK_GOOGLE_PENDENTE = 'avantalab.vendas.oauth.callback_pendente';
+  const CHAVE_CALLBACK_GOOGLE_PROCESSADO = 'avantalab.vendas.oauth.callback_processado';
+  const CHAVE_GOOGLE_NATIVO_INICIADO_EM = 'avantalab.vendas.oauth.iniciado_em';
   try {
     const legacySession = localStorage.getItem(legacyStorageKey);
     if (legacySession && !localStorage.getItem(sharedStorageKey)) localStorage.setItem(sharedStorageKey, legacySession);
@@ -31,6 +36,122 @@
   function requireClient() {
     if (!client) throw new Error('Supabase não configurado.');
     return client;
+  }
+
+  function identificadorCallbackGoogle(url) {
+    let hash = 2166136261;
+    for (let indice = 0; indice < url.length; indice += 1) {
+      hash ^= url.charCodeAt(indice);
+      hash = Math.imul(hash, 16777619);
+    }
+    return (hash >>> 0).toString(16);
+  }
+
+  function callbackGoogleNativoValido(url) {
+    try {
+      const callback = new URL(url);
+      return callback.protocol === 'br.com.avantalab.app:'
+        && callback.hostname === 'auth'
+        && callback.pathname === '/callback';
+    } catch {
+      return false;
+    }
+  }
+
+  function mensagemErroGoogle(erro) {
+    const mensagem = erro instanceof Error ? erro.message : '';
+    if (
+      erro?.name === 'AuthSessionMissingError'
+      || mensagem.toLowerCase().includes('session missing')
+    ) {
+      return 'A tentativa de acesso expirou. Inicie novamente o login com Google.';
+    }
+    return mensagem || 'Não foi possível concluir o login com Google.';
+  }
+
+  function marcarInicioGoogleNativo() {
+    try {
+      localStorage.setItem(CHAVE_GOOGLE_NATIVO_INICIADO_EM, String(Date.now()));
+    } catch { /* o fluxo permanece protegido pelo estado da página */ }
+  }
+
+  function limparInicioGoogleNativo() {
+    try {
+      localStorage.removeItem(CHAVE_GOOGLE_NATIVO_INICIADO_EM);
+    } catch { /* armazenamento indisponível */ }
+  }
+
+  async function processarCallbackGoogleNativo(url, identificadorInformado) {
+    if (!callbackGoogleNativoValido(url)) return false;
+
+    const identificador = identificadorInformado || identificadorCallbackGoogle(url);
+    const { data: sessaoAtual } = await requireClient().auth.getSession();
+    if (sessaoAtual.session) {
+      sessionStorage.setItem(CHAVE_CALLBACK_GOOGLE_PROCESSADO, identificador);
+      sessionStorage.removeItem(CHAVE_CALLBACK_GOOGLE_PENDENTE);
+      limparInicioGoogleNativo();
+      return true;
+    }
+    if (sessionStorage.getItem(CHAVE_CALLBACK_GOOGLE_PROCESSADO) === identificador) {
+      sessionStorage.removeItem(CHAVE_CALLBACK_GOOGLE_PENDENTE);
+      limparInicioGoogleNativo();
+      return true;
+    }
+
+    sessionStorage.setItem(CHAVE_CALLBACK_GOOGLE_PROCESSADO, identificador);
+    sessionStorage.removeItem(CHAVE_CALLBACK_GOOGLE_PENDENTE);
+
+    try {
+      const callback = new URL(url);
+      const hashParams = new URLSearchParams(callback.hash.slice(1));
+      const obterParametro = (nome) => callback.searchParams.get(nome) || hashParams.get(nome);
+      const erroOAuth = obterParametro('error_description') || obterParametro('error');
+      if (erroOAuth) throw new Error(erroOAuth);
+
+      const codigo = callback.searchParams.get('code');
+      if (codigo) {
+        const { error } = await requireClient().auth.exchangeCodeForSession(codigo);
+        if (error) throw error;
+      } else {
+        const accessToken = obterParametro('access_token');
+        const refreshToken = obterParametro('refresh_token');
+        if (!accessToken || !refreshToken) {
+          throw new Error('O Google não retornou os dados necessários para concluir o login.');
+        }
+        const { error } = await requireClient().auth.setSession({
+          access_token: accessToken,
+          refresh_token: refreshToken,
+        });
+        if (error) throw error;
+      }
+
+      limparInicioGoogleNativo();
+      window.location.replace('/mobile/vendas');
+      return true;
+    } catch (erro) {
+      sessionStorage.removeItem(CHAVE_CALLBACK_GOOGLE_PROCESSADO);
+      limparInicioGoogleNativo();
+      window.dispatchEvent(new CustomEvent(EVENTO_ERRO_GOOGLE_NATIVO, {
+        detail: {
+          mensagem: mensagemErroGoogle(erro),
+        },
+      }));
+      throw erro;
+    }
+  }
+
+  window.addEventListener(EVENTO_CALLBACK_GOOGLE_NATIVO, (evento) => {
+    const detalhe = evento.detail || {};
+    void processarCallbackGoogleNativo(detalhe.url || '', detalhe.identificador)
+      .catch((erro) => console.error('Erro no retorno nativo do Google no Vendas:', erro));
+  });
+
+  const callbackGooglePendente = sessionStorage.getItem(CHAVE_CALLBACK_GOOGLE_PENDENTE);
+  if (callbackGooglePendente) {
+    queueMicrotask(() => {
+      void processarCallbackGoogleNativo(callbackGooglePendente)
+        .catch((erro) => console.error('Erro ao restaurar retorno nativo do Google no Vendas:', erro));
+    });
   }
 
   const TAMANHO_PAGINA_SUPABASE = 1000;
@@ -92,11 +213,26 @@
   }
 
   async function signInWithGoogle(redirectTo) {
-    const { error } = await requireClient().auth.signInWithOAuth({
-      provider: 'google',
-      options: { redirectTo },
-    });
-    if (error) throw error;
+    const ponteNativa = window.__AVANTALAB_VENDAS_OAUTH_NATIVO__;
+    const opcoes = ponteNativa?.ativo
+      ? { redirectTo: ponteNativa.redirectTo, skipBrowserRedirect: true }
+      : { redirectTo };
+    if (ponteNativa?.ativo) marcarInicioGoogleNativo();
+    try {
+      const { data, error } = await requireClient().auth.signInWithOAuth({
+        provider: 'google',
+        options: opcoes,
+      });
+      if (error) throw error;
+      if (!ponteNativa?.ativo) return;
+      if (!data?.url) throw new Error('Não foi possível abrir o login do Google.');
+
+      sessionStorage.removeItem(CHAVE_CALLBACK_GOOGLE_PENDENTE);
+      await ponteNativa.abrir(data.url);
+    } catch (erro) {
+      if (ponteNativa?.ativo) limparInicioGoogleNativo();
+      throw erro;
+    }
   }
 
   async function resetPassword(email, redirectTo) {

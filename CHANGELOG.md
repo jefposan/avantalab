@@ -1,5 +1,76 @@
 # Changelog
 
+## 1.6.0.84.56 - 2026-07-22
+
+- Corrigido o carregamento infinito da landing no aplicativo Capacitor quando
+  uma sessão já existia: antes de inicializar a Gestão Web, o app segue
+  diretamente para o portal nativo de destinos. Web e PWA mantêm o fluxo atual.
+
+## 1.6.0.84.55 - 2026-07-22
+
+- Aplicativos Capacitor Android/iOS: Gestão e Vendas passam a retornar ao mesmo
+  portal nativo de login e cadastro ao iniciar sem sessão, sair ou expirar a
+  sessão. O logout já concluído é tratado como sucesso, sem exibir
+  `Auth session missing!` nem deixar o usuário em uma segunda tela de acesso.
+- A barra de status nativa acompanha a tela e o tema: fundos claros usam
+  informações escuras e headers escuros usam informações claras. A detecção
+  observa também mudanças de tema no elemento raiz e reaplica o estilo ao
+  retornar ao aplicativo.
+- Navegador e PWA preservam integralmente seus fluxos atuais de entrada,
+  cadastro, logout e redirecionamento web; o portal compartilhado é acionado
+  automaticamente somente quando o Capacitor confirma uma plataforma nativa.
+
+## 1.6.0.84.54 - 2026-07-22
+
+- Cadastro único AvantaLab: a entrada compartilhada por Gestão e Vendas passa a
+  exigir o mesmo conjunto de dados da Gestão, com escolha entre perfil Empresa
+  ou Pessoal, nome fantasia quando aplicável, responsável/nome completo, email,
+  país e celular, senha, confirmação por SMS e cupom opcional.
+- Os dados do perfil inicial também são preservados no cadastro com Google. A
+  conta e a sessão continuam únicas; escolher ou vincular o Vendas não cria um
+  perfil financeiro, que só é configurado quando a pessoa entra na Gestão.
+
+## 1.6.0.84.53 - 2026-07-22
+
+- Acesso nativo AvantaLab: Gestão Mobile e Vendas Mobile no aplicativo passam a
+  usar o portal único `/acesso` para login, cadastro, Google e recuperação de senha.
+  A identidade e a sessão Supabase permanecem únicas e, depois da autenticação,
+  a pessoa escolhe a plataforma e o perfil para os quais possui autorização.
+  Navegador e PWA mantêm suas telas e redirecionamentos atuais.
+- O cadastro deixa de criar implicitamente uma conta específica de Gestão ou
+  Vendas. Na mesma conta, é possível criar o primeiro perfil Gestão ou vincular
+  o Vendas pelo código da empresa; permissões e aprovações existentes são
+  preservadas. A troca interna entre Gestão e Vendas continua sem novo login.
+- Aplicativos Android/iOS: o portal unificado usa o retorno nativo do Google,
+  fecha o navegador seguro quando possível e mantém logo, card, área segura e
+  barra de status estáveis. Em telas baixas, somente o conteúdo do card rola.
+
+## 1.6.0.84.52 - 2026-07-22
+
+- Gestão Mobile: sair da conta agora possui uma única transição para a tela de
+  entrada, trata como sucesso uma sessão que já terminou e limpa somente estados
+  OAuth pendentes, sem reaproveitar callback antigo nem exibir `Auth session missing!`.
+- Aplicativos Android/iOS: a cor das informações da barra de status passa a se
+  adaptar à tela atual. Fundos claros usam ícones escuros; headers escuros usam
+  ícones claros. Navegador e PWA permanecem inalterados.
+
+## 1.6.0.84.51 - 2026-07-22
+
+- Gestão no aplicativo: sair da conta passa a ser uma operação única mesmo
+  quando o Supabase também notifica o encerramento da sessão, eliminando o aviso
+  técnico `Auth session missing!` e retornando corretamente à landing page.
+- A tela nativa de login/cadastro da Gestão adota o fundo mobile oficial sem
+  marca embutida, logo independente e card centralizado; a opção de instalar o
+  PWA não aparece dentro do aplicativo. Web e PWA mantêm o layout existente.
+
+## 1.6.0.84.50 - 2026-07-22
+
+- Aplicativos Android/iOS: o login e o cadastro com Google na área de acesso do
+  Vendas Mobile passam a usar o mesmo retorno nativo da landing page, reabrindo
+  o AvantaLab pelo deep link e concluindo a sessão antes de fechar o navegador.
+  O callback repetido pelo iOS é ignorado com segurança. Navegador e PWA mantêm
+  o redirecionamento HTTPS existente.
+
 ## 1.6.0.84.49 - 2026-07-22
 
 - Gestão Web: rascunhos da importação passam a ser salvos no servidor por perfil

@@ -19,7 +19,10 @@ const config: CapacitorConfig = {
   plugins: {
     StatusBar: {
       overlaysWebView: false,
-      style: 'DARK',
+      // A primeira tela é clara. No enum do plugin, LIGHT significa texto
+      // escuro; o controlador web alterna dinamicamente nas telas seguintes.
+      style: 'LIGHT',
+      backgroundColor: '#FFFFFF',
     },
   },
 };

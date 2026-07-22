@@ -62,6 +62,57 @@ function telefoneCadastroConfirmado(metadata: Record<string, unknown> | null | u
 
 const CHAVE_RASCUNHO_CADASTRO_WEB = 'avantalab_web_rascunho_cadastro';
 const REDIRECT_GOOGLE_NATIVO = 'br.com.avantalab.app://auth/callback';
+const CHAVE_CALLBACK_GOOGLE_PROCESSADO = 'avantalab.auth.google.callback_processado';
+const CHAVE_GOOGLE_NATIVO_INICIADO_EM = 'avantalab.auth.google.iniciado_em';
+const LIMITE_RETORNO_GOOGLE_NATIVO_MS = 15 * 60 * 1000;
+
+function identificadorCallbackGoogle(url: string) {
+  let hash = 2166136261;
+  for (let indice = 0; indice < url.length; indice += 1) {
+    hash ^= url.charCodeAt(indice);
+    hash = Math.imul(hash, 16777619);
+  }
+  return (hash >>> 0).toString(16);
+}
+
+function mensagemErroGoogle(erro: unknown) {
+  if (!(erro instanceof Error)) return 'Não foi possível concluir o login com Google.';
+  const mensagemNormalizada = erro.message.toLowerCase();
+  if (
+    erro.name === 'AuthSessionMissingError' ||
+    mensagemNormalizada.includes('session missing')
+  ) {
+    return 'A tentativa de acesso expirou. Inicie novamente o login com Google.';
+  }
+  return erro.message;
+}
+
+function marcarInicioGoogleNativo() {
+  try {
+    localStorage.setItem(CHAVE_GOOGLE_NATIVO_INICIADO_EM, String(Date.now()));
+  } catch {
+    // A ref em memória ainda protege o fluxo enquanto a WebView permanece ativa.
+  }
+}
+
+function limparInicioGoogleNativo() {
+  try {
+    localStorage.removeItem(CHAVE_GOOGLE_NATIVO_INICIADO_EM);
+  } catch {
+    // O estado em memória também é limpo pelos chamadores.
+  }
+}
+
+function retornoGoogleNativoEsperado() {
+  try {
+    const iniciadoEm = Number(localStorage.getItem(CHAVE_GOOGLE_NATIVO_INICIADO_EM));
+    return Number.isFinite(iniciadoEm)
+      && iniciadoEm > 0
+      && Date.now() - iniciadoEm <= LIMITE_RETORNO_GOOGLE_NATIVO_MS;
+  } catch {
+    return false;
+  }
+}
 
 // ---------------------------------------------------------------------------
 // Hook
@@ -90,6 +141,9 @@ export function useAuth(deps: UseAuthDeps) {
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setMostrarLandingPreLogin(false);
       setModoAuth('cadastro');
+    } else if (parametros.get('entrar') === '1') {
+      setMostrarLandingPreLogin(false);
+      setModoAuth('login');
     }
   }, []);
   const [loginEmail, setLoginEmail] = useState('');
@@ -167,11 +221,33 @@ export function useAuth(deps: UseAuthDeps) {
         return;
       }
 
+      const identificador = identificadorCallbackGoogle(url);
+      const retornoPendenteEmMemoria = loginGoogleNativoPendenteRef.current;
       loginGoogleNativoPendenteRef.current = false;
       setGoogleLoading(true);
       setAuthErro('');
 
+      await fecharNavegador();
+
+      if (sessionStorage.getItem(CHAVE_CALLBACK_GOOGLE_PROCESSADO) === identificador) {
+        limparInicioGoogleNativo();
+        setGoogleLoading(false);
+        return;
+      }
+
       try {
+        const { data: sessaoAtual } = await supabase.auth.getSession();
+        if (sessaoAtual.session) {
+          sessionStorage.setItem(CHAVE_CALLBACK_GOOGLE_PROCESSADO, identificador);
+          limparInicioGoogleNativo();
+          return;
+        }
+
+        if (!retornoPendenteEmMemoria && !retornoGoogleNativoEsperado()) {
+          return;
+        }
+
+        sessionStorage.setItem(CHAVE_CALLBACK_GOOGLE_PROCESSADO, identificador);
         const hashParams = new URLSearchParams(callbackUrl.hash.slice(1));
         const obterParametro = (nome: string) =>
           callbackUrl.searchParams.get(nome) ?? hashParams.get(nome);
@@ -201,16 +277,14 @@ export function useAuth(deps: UseAuthDeps) {
           });
           if (error) throw error;
         }
+        limparInicioGoogleNativo();
       } catch (erro) {
+        sessionStorage.removeItem(CHAVE_CALLBACK_GOOGLE_PROCESSADO);
+        limparInicioGoogleNativo();
         console.error('Erro no retorno do Google:', erro);
-        setAuthErro(
-          erro instanceof Error
-            ? erro.message
-            : 'Não foi possível concluir o login com Google.'
-        );
+        setAuthErro(mensagemErroGoogle(erro));
       } finally {
         setGoogleLoading(false);
-        await fecharNavegador();
       }
     };
 
@@ -233,17 +307,10 @@ export function useAuth(deps: UseAuthDeps) {
         Browser.addListener('browserFinished', () => {
           if (!loginGoogleNativoPendenteRef.current) return;
           loginGoogleNativoPendenteRef.current = false;
+          limparInicioGoogleNativo();
           setGoogleLoading(false);
         })
       );
-      await guardarListener(
-        CapacitorApp.addListener('appStateChange', ({ isActive }) => {
-          if (!isActive || !loginGoogleNativoPendenteRef.current) return;
-          loginGoogleNativoPendenteRef.current = false;
-          setGoogleLoading(false);
-        })
-      );
-
       const aberturaInicial = await CapacitorApp.getLaunchUrl();
       if (aberturaInicial?.url) {
         await processarRetornoGoogle(aberturaInicial.url);
@@ -901,6 +968,7 @@ export function useAuth(deps: UseAuthDeps) {
     }
 
     loginGoogleNativoPendenteRef.current = true;
+    marcarInicioGoogleNativo();
 
     try {
       const { data, error } = await supabase.auth.signInWithOAuth({
@@ -921,6 +989,7 @@ export function useAuth(deps: UseAuthDeps) {
     } catch (erro) {
       console.error('Erro login Google:', erro);
       loginGoogleNativoPendenteRef.current = false;
+      limparInicioGoogleNativo();
       setAuthErro(
         erro instanceof Error
           ? `Erro Google: ${erro.message}`

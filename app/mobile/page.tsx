@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from 'next';
+import Script from 'next/script';
 import AvaMobileBridge from './AvaMobileBridge';
 import BackupMobileBridge from './BackupMobileBridge';
 import VendasMobileConteudoBridge from './VendasMobileConteudoBridge';
@@ -426,7 +427,11 @@ export default function MobilePage() {
       <BackupMobileBridge />
       <VendasMobileConteudoBridge />
 
-      <script dangerouslySetInnerHTML={{ __html: bootstrapCarregamento }} />
+      <Script
+        id="avantalab-mobile-bootstrap"
+        strategy="afterInteractive"
+        dangerouslySetInnerHTML={{ __html: bootstrapCarregamento }}
+      />
     </main>
   );
 }
