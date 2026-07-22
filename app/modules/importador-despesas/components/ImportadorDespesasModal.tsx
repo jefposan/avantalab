@@ -312,7 +312,12 @@ export default function ImportadorDespesasModal({ arquivo, retomarRascunho = fal
       const chave = loteChave || crypto.randomUUID();
       const agora = new Date().toLocaleString('pt-BR');
       const rascunho: RascunhoImportador = { versao: 1, empresaId, loteChave: chave, nomeArquivo: nomeArquivo || arquivo?.name || 'Documento importado', tipoDocumento, tipoDetectado, totalDocumento, itens, salvoEm: agora };
-      void supabase.auth.getSession().then(({ data }) => data.session?.user.id && supabase.from('importador_despesas_rascunhos').upsert({ empresa_id: empresaId, usuario_id: data.session.user.id, dados: rascunho, atualizado_em: new Date().toISOString() }, { onConflict: 'empresa_id,usuario_id' }).then(({ error }) => { if (!error) { window.localStorage.removeItem(CHAVE_RASCUNHO); setRascunhoRemoto(rascunho); } }));
+      void supabase.auth.getSession().then(async ({ data }) => {
+        const usuarioId = data.session?.user.id;
+        if (!usuarioId) return;
+        const { error } = await supabase.from('importador_despesas_rascunhos').upsert({ empresa_id: empresaId, usuario_id: usuarioId, dados: rascunho, atualizado_em: new Date().toISOString() }, { onConflict: 'empresa_id,usuario_id' });
+        if (!error) { window.localStorage.removeItem(CHAVE_RASCUNHO); setRascunhoRemoto(rascunho); }
+      });
       if (!loteChave) setLoteChave(chave);
       setSalvoEm(agora); onEstadoRascunho?.(true);
     }, 700);
