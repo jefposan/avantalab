@@ -1,6 +1,12 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.6.0.84.66 -->
+<!-- ava-version: 1.6.0.84.68 -->
+
+> Revisão 1.6.0.84.68: refinamento visual dos seletores de acesso mobile; sem
+> impacto operacional na Gestão Web.
+
+> Revisão 1.6.0.84.67: alinhamento visual do card de acesso do Vendas Mobile;
+> sem impacto operacional na Gestão Web.
 
 > Revisão 1.6.0.84.66: padronização dimensional dos logins mobile; sem
 > impacto operacional na Gestão Web.

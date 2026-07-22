@@ -308,9 +308,9 @@ export default function MobilePage() {
               -webkit-overflow-scrolling: touch;
             }
             .gestao-login-methods { display: flex; border-radius: 12px; padding: 2px; background: #eef3f5; }
-            .gestao-login-methods button { display: inline-flex; min-height: 40px; flex: 1; align-items: center; justify-content: center; gap: 6px; border: 0; border-radius: 9px; color: #6d7680; background: transparent; font-size: 13px; font-weight: 700; }
+            .gestao-login-methods button { display: inline-flex; min-height: 34px; flex: 1; align-items: center; justify-content: center; gap: 6px; border: 0; border-radius: 9px; color: #6d7680; background: transparent; font-size: 13px; font-weight: 700; }
             .gestao-login-methods svg { width: 16px; height: 16px; }
-            .gestao-login-methods button.active { color: #1F8A9E; background: #fff; box-shadow: 0 2px 5px rgba(0,0,0,.1); }
+            .gestao-login-methods button.active { color: #fff; background: #1687D9; box-shadow: 0 2px 5px rgba(22,135,217,.28); }
             .gestao-login-label { display: grid; gap: 4px; color: #3d454d; font-size: 12px; font-weight: 800; }
             .gestao-login-field { position: relative; display: flex; align-items: center; }
             .gestao-login-field > svg { position: absolute; left: 12px; width: 16px; height: 16px; color: #88919a; }

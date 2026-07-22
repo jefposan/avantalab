@@ -19,7 +19,7 @@ export const viewport: Viewport = {
 export default function VendasMobilePage() {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
-  const assetVersion = '20260722-07';
+  const assetVersion = '20260722-08';
   const bootstrap = `
     (function () {
       var bridgeCapacitor = window.Capacitor;

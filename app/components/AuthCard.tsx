@@ -587,8 +587,8 @@ export default function AuthCard({
     className="grid gap-2 lg:hidden"
   >
     <div className="flex rounded-[12px] bg-[#eef3f5] p-0.5">
-      <button type="button" onClick={() => alterarTipoLogin('email')} className={`inline-flex min-h-10 flex-1 items-center justify-center gap-1.5 rounded-[9px] border-0 text-[13px] font-bold ${!loginPorTelefone ? 'bg-white text-[#248b85] shadow-[0_2px_5px_rgba(0,0,0,.1)]' : 'text-[#6d7680]'}`}><IconeVendas nome="mail" />E-mail</button>
-      <button type="button" onClick={() => alterarTipoLogin('telefone')} className={`inline-flex min-h-10 flex-1 items-center justify-center gap-1.5 rounded-[9px] border-0 text-[13px] font-bold ${loginPorTelefone ? 'bg-white text-[#248b85] shadow-[0_2px_5px_rgba(0,0,0,.1)]' : 'text-[#6d7680]'}`}><IconeVendas nome="phone" />Telefone</button>
+      <button type="button" onClick={() => alterarTipoLogin('email')} className={`inline-flex min-h-[34px] flex-1 items-center justify-center gap-1.5 rounded-[9px] border-0 text-[13px] font-bold ${!loginPorTelefone ? 'bg-[#1687D9] text-white shadow-[0_2px_5px_rgba(22,135,217,.28)]' : 'text-[#6d7680]'}`}><IconeVendas nome="mail" />E-mail</button>
+      <button type="button" onClick={() => alterarTipoLogin('telefone')} className={`inline-flex min-h-[34px] flex-1 items-center justify-center gap-1.5 rounded-[9px] border-0 text-[13px] font-bold ${loginPorTelefone ? 'bg-[#1687D9] text-white shadow-[0_2px_5px_rgba(22,135,217,.28)]' : 'text-[#6d7680]'}`}><IconeVendas nome="phone" />Telefone</button>
     </div>
     <label className="grid gap-1 text-[12px] font-extrabold text-[#3d454d]">
       {loginPorTelefone ? 'Telefone' : 'E-mail'}

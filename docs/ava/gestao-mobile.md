@@ -1,6 +1,12 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.6.0.84.66 -->
+<!-- ava-version: 1.6.0.84.68 -->
+
+> Revisão 1.6.0.84.68: refinamento visual do seletor entre E-mail e Telefone;
+> sem impacto operacional na Gestão Mobile.
+
+> Revisão 1.6.0.84.67: alinhamento do card do Vendas à largura útil do
+> Financeiro; sem impacto operacional na Gestão Mobile.
 
 > Revisão 1.6.0.84.66: padronização dimensional dos logins Financeiro e
 > Vendas; sem impacto operacional na Gestão Mobile.

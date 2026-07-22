@@ -1,5 +1,17 @@
 # Changelog
 
+## 1.6.0.84.68 - 2026-07-22
+
+- Gestão Financeira e Gestão de Vendas: o seletor entre E-mail e Telefone
+  ganhou estado ativo azul e altura mais compacta, preservando a mesma
+  aparência nos dois acessos mobile.
+
+## 1.6.0.84.67 - 2026-07-22
+
+- Vendas Mobile: o card de login passa a ocupar a mesma largura útil máxima
+  do Financeiro, eliminando a quebra antecipada de texto e a diferença de
+  proporção entre as duas telas de acesso.
+
 ## 1.6.0.84.66 - 2026-07-22
 
 - Gestão Financeira e Gestão de Vendas: telas de login passam a compartilhar
