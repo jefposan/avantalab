@@ -1,5 +1,21 @@
 # Changelog
 
+## 1.6.0.84.66 - 2026-07-22
+
+- Gestão Financeira e Gestão de Vendas: telas de login passam a compartilhar
+  as mesmas medidas de logo, card, espaçamentos, campos e ações.
+
+## 1.6.0.84.65 - 2026-07-22
+
+- Gestão Mobile e Vendas Mobile: os cards de login agora usam campos mais
+  compactos, menos espaçamento interno e tipografia auxiliar reduzida, sem
+  comprometer o alvo mínimo de toque das ações principais.
+
+## 1.6.0.84.64 - 2026-07-22
+
+- Gestão Mobile e Vendas Mobile: card e marca das telas de acesso foram
+  reduzidos em aproximadamente 20%, preservando o tamanho dos campos e ações.
+
 ## 1.6.0.84.63 - 2026-07-22
 
 - Gestão Mobile e Vendas Mobile: cards de acesso ajustados para 30% de

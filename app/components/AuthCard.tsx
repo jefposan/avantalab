@@ -362,11 +362,11 @@ export default function AuthCard({
         <div className={loginMobilePadrao ? 'contents lg:block lg:w-full lg:max-w-7xl' : 'w-full lg:max-w-7xl'}>
           {loginMobilePadrao && (
             <div className="row-start-1 grid min-h-0 place-items-center overflow-hidden pt-[env(safe-area-inset-top)] lg:hidden">
-              <Image src="/images/logo-avantalab-oficial.png" alt="AvantaLab — Do zero ao operacional" width={310} height={90} priority className="h-auto w-[min(78vw,310px)]" />
+              <Image src="/images/logo-avantalab-oficial.png" alt="AvantaLab — Do zero ao operacional" width={248} height={72} priority className="h-auto w-[clamp(136px,46.4vw,248px)] max-h-[58%] max-w-[66%] object-contain" />
             </div>
           )}
           <div className={`relative z-20 w-full rounded-3xl border p-4 shadow-2xl lg:border-white/30 lg:bg-white/70 lg:p-8 lg:backdrop-blur-xl ${
-            loginMobilePadrao ? 'row-start-2 mx-auto w-full max-w-[420px] self-center border-white/70 bg-white/[.30] p-7 shadow-[0_18px_45px_rgba(0,31,60,0.22),inset_0_1px_0_rgba(255,255,255,0.45)] backdrop-blur-xl backdrop-saturate-[1.35]' : 'border-white/20 bg-white/10'
+            loginMobilePadrao ? 'row-start-2 mx-auto w-[80%] max-w-[336px] self-center rounded-[18px] border-white/70 bg-white/[.30] p-4 shadow-[0_18px_45px_rgba(0,31,60,0.22),inset_0_1px_0_rgba(255,255,255,0.45)] backdrop-blur-xl backdrop-saturate-[1.35]' : 'border-white/20 bg-white/10'
           } ${
             mostrarLandingPreLoginAtiva ? 'lg:max-w-2xl' : 'lg:max-w-md'
           }`}>
@@ -425,8 +425,8 @@ export default function AuthCard({
               </div>
             ) : (
             <>
-            <div className="mb-3 lg:mb-5">
-              <h1 className="text-2xl font-black leading-tight text-slate-900">
+            <div className="mb-2 lg:mb-5">
+              <h1 className="text-[22px] font-black leading-tight text-slate-900">
   {modoRedefinirSenha
     ? 'Criar nova senha'
     : modoAuth === 'login'
@@ -434,7 +434,7 @@ export default function AuthCard({
       : 'Criar cadastro'}
 </h1>
 
-              <p className="mt-1.5 text-xs leading-relaxed text-slate-600">
+              <p className="mt-1 text-xs leading-[1.45] text-slate-600">
   {modoRedefinirSenha
     ? 'Digite e confirme sua nova senha para recuperar o acesso ao sistema.'
     : modoAuth === 'login'
@@ -584,36 +584,36 @@ export default function AuthCard({
   <>
   <form
     onSubmit={(e) => { e.preventDefault(); void handleLogin(tipoLogin); }}
-    className="grid gap-[18px] lg:hidden"
+    className="grid gap-2 lg:hidden"
   >
-    <div className="flex rounded-[12px] bg-[#eef3f5] p-1">
-      <button type="button" onClick={() => alterarTipoLogin('email')} className={`inline-flex min-h-10 flex-1 items-center justify-center gap-2 rounded-[9px] border-0 text-sm font-bold ${!loginPorTelefone ? 'bg-white text-[#248b85] shadow-[0_2px_5px_rgba(0,0,0,.1)]' : 'text-[#6d7680]'}`}><IconeVendas nome="mail" />E-mail</button>
-      <button type="button" onClick={() => alterarTipoLogin('telefone')} className={`inline-flex min-h-10 flex-1 items-center justify-center gap-2 rounded-[9px] border-0 text-sm font-bold ${loginPorTelefone ? 'bg-white text-[#248b85] shadow-[0_2px_5px_rgba(0,0,0,.1)]' : 'text-[#6d7680]'}`}><IconeVendas nome="phone" />Telefone</button>
+    <div className="flex rounded-[12px] bg-[#eef3f5] p-0.5">
+      <button type="button" onClick={() => alterarTipoLogin('email')} className={`inline-flex min-h-10 flex-1 items-center justify-center gap-1.5 rounded-[9px] border-0 text-[13px] font-bold ${!loginPorTelefone ? 'bg-white text-[#248b85] shadow-[0_2px_5px_rgba(0,0,0,.1)]' : 'text-[#6d7680]'}`}><IconeVendas nome="mail" />E-mail</button>
+      <button type="button" onClick={() => alterarTipoLogin('telefone')} className={`inline-flex min-h-10 flex-1 items-center justify-center gap-1.5 rounded-[9px] border-0 text-[13px] font-bold ${loginPorTelefone ? 'bg-white text-[#248b85] shadow-[0_2px_5px_rgba(0,0,0,.1)]' : 'text-[#6d7680]'}`}><IconeVendas nome="phone" />Telefone</button>
     </div>
-    <label className="grid gap-[7px] text-[13px] font-extrabold text-[#3d454d]">
+    <label className="grid gap-1 text-[12px] font-extrabold text-[#3d454d]">
       {loginPorTelefone ? 'Telefone' : 'E-mail'}
       <span className="relative flex items-center">
-        <span className="absolute left-[13px] text-[#88919a]"><IconeVendas nome={loginPorTelefone ? 'phone' : 'mail'} /></span>
-        <input type={loginPorTelefone ? 'tel' : 'email'} inputMode={loginPorTelefone ? 'tel' : 'email'} autoComplete={loginPorTelefone ? 'tel' : 'email'} placeholder={loginPorTelefone ? 'Digite seu telefone' : 'Digite seu e-mail'} value={loginEmail} onChange={(e) => setLoginEmail(loginPorTelefone ? formatarTelefoneCadastro(e.target.value, '55') : e.target.value)} className="h-12 w-full rounded-xl border border-[#d9e0e4] py-0 pl-[42px] pr-[42px] text-[16px] text-[#2d353b] outline-[#55b9b1]" />
+        <span className="absolute left-3 text-[#88919a]"><IconeVendas nome={loginPorTelefone ? 'phone' : 'mail'} /></span>
+        <input type={loginPorTelefone ? 'tel' : 'email'} inputMode={loginPorTelefone ? 'tel' : 'email'} autoComplete={loginPorTelefone ? 'tel' : 'email'} placeholder={loginPorTelefone ? 'Digite seu telefone' : 'Digite seu e-mail'} value={loginEmail} onChange={(e) => setLoginEmail(loginPorTelefone ? formatarTelefoneCadastro(e.target.value, '55') : e.target.value)} className="h-11 w-full rounded-xl border border-[#d9e0e4] py-0 pl-10 pr-10 text-[16px] text-[#2d353b] outline-[#55b9b1]" />
       </span>
     </label>
-    <label className="grid gap-[7px] text-[13px] font-extrabold text-[#3d454d]">
+    <label className="grid gap-1 text-[12px] font-extrabold text-[#3d454d]">
       Senha
       <span className="relative flex items-center">
-        <span className="absolute left-[13px] text-[#88919a]"><IconeVendas nome="lock" /></span>
-        <input type={mostrarSenhaLogin ? 'text' : 'password'} autoComplete="current-password" placeholder="Digite sua senha" value={loginSenha} onChange={(e) => setLoginSenha(e.target.value)} className="h-12 w-full rounded-xl border border-[#d9e0e4] py-0 pl-[42px] pr-[42px] text-[16px] text-[#2d353b] outline-[#55b9b1]" />
-        <button type="button" onClick={() => setMostrarSenhaLogin((mostrar) => !mostrar)} aria-label={mostrarSenhaLogin ? 'Ocultar senha' : 'Exibir senha'} className="absolute right-[5px] grid size-[39px] place-items-center rounded-lg text-[#717b84]"><IconeVendas nome="eye" /></button>
+        <span className="absolute left-3 text-[#88919a]"><IconeVendas nome="lock" /></span>
+        <input type={mostrarSenhaLogin ? 'text' : 'password'} autoComplete="current-password" placeholder="Digite sua senha" value={loginSenha} onChange={(e) => setLoginSenha(e.target.value)} className="h-11 w-full rounded-xl border border-[#d9e0e4] py-0 pl-10 pr-10 text-[16px] text-[#2d353b] outline-[#55b9b1]" />
+        <button type="button" onClick={() => setMostrarSenhaLogin((mostrar) => !mostrar)} aria-label={mostrarSenhaLogin ? 'Ocultar senha' : 'Exibir senha'} className="absolute right-1 grid size-9 place-items-center rounded-lg text-[#717b84]"><IconeVendas nome="eye" /></button>
       </span>
     </label>
-    <div className="-mt-[3px] flex items-center justify-between gap-3">
-      <label className="flex items-center gap-[7px] text-[13px] font-semibold text-[#59616a]"><input type="checkbox" className="peer sr-only" defaultChecked /><span className="size-[18px] rounded-[5px] border border-[#b9c2c8] bg-white peer-checked:border-[#319d98] peer-checked:bg-[#319d98] peer-checked:shadow-[inset_0_0_0_4px_#fff]" />Lembrar-me</label>
-      <button type="button" onClick={handleRecuperarSenha} className="text-[13px] font-extrabold text-[#248b85]">Esqueceu a senha?</button>
+    <div className="-mt-0.5 flex items-center justify-between gap-2">
+      <label className="flex items-center gap-1.5 text-[12px] font-semibold text-[#59616a]"><input type="checkbox" className="peer sr-only" defaultChecked /><span className="size-4 rounded-[5px] border border-[#b9c2c8] bg-white peer-checked:border-[#319d98] peer-checked:bg-[#319d98] peer-checked:shadow-[inset_0_0_0_4px_#fff]" />Lembrar-me</label>
+      <button type="button" onClick={handleRecuperarSenha} className="text-[12px] font-extrabold text-[#248b85]">Esqueceu a senha?</button>
     </div>
     {authErro && <div className="text-center text-[13px] text-red-600">{authErro}</div>}
     {authMensagem && <div className="text-center text-[13px] text-emerald-700">{authMensagem}</div>}
-    <button type="submit" disabled={authLoading} className="min-h-[38px] rounded-[10px] bg-[#0A1F44] text-sm font-extrabold text-white disabled:opacity-60">{authLoading ? 'Entrando...' : 'Entrar'}</button>
-    <button type="button" onClick={handleGoogleLogin} disabled={googleLoading} className="inline-flex min-h-[38px] items-center justify-center gap-[10px] rounded-[10px] border border-[#d9e0e4] bg-white text-[13px] font-extrabold text-[#334155] disabled:opacity-60"><span className="grid size-[21px] place-items-center rounded-full bg-[conic-gradient(from_-45deg,_#4285f4_0_25%,_#34a853_0_45%,_#fbbc05_0_68%,_#ea4335_0_100%)] text-sm font-black text-white">G</span>{googleLoading ? 'Conectando...' : 'Continuar com Google'}</button>
-    <p className="-mt-1 text-center text-sm text-[#737b83]">Não tem conta? <button type="button" onClick={() => setModoAuth('cadastro')} className="font-extrabold text-[#248b85]">Cadastre-se</button></p>
+    <button type="submit" disabled={authLoading} className="min-h-11 rounded-[10px] bg-[#0A1F44] text-[13px] font-extrabold text-white disabled:opacity-60">{authLoading ? 'Entrando...' : 'Entrar'}</button>
+    <button type="button" onClick={handleGoogleLogin} disabled={googleLoading} className="inline-flex min-h-11 items-center justify-center gap-2 rounded-[10px] border border-[#d9e0e4] bg-white text-[12px] font-extrabold text-[#334155] disabled:opacity-60"><span className="grid size-[18px] place-items-center rounded-full bg-[conic-gradient(from_-45deg,_#4285f4_0_25%,_#34a853_0_45%,_#fbbc05_0_68%,_#ea4335_0_100%)] text-[12px] font-black text-white">G</span>{googleLoading ? 'Conectando...' : 'Continuar com Google'}</button>
+    <p className="-mt-0.5 text-center text-[12px] text-[#737b83]">Não tem conta? <button type="button" onClick={() => setModoAuth('cadastro')} className="font-extrabold text-[#248b85]">Cadastre-se</button></p>
   </form>
   <div className="hidden space-y-3 lg:block">
 

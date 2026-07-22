@@ -270,21 +270,21 @@ export default function MobilePage() {
             }
             .gestao-login-brand img {
               display: block;
-              width: clamp(170px, 58vw, 310px);
-              max-width: 82%;
-              max-height: 72%;
+              width: clamp(136px, 46.4vw, 248px);
+              max-width: 66%;
+              max-height: 58%;
               object-fit: contain;
             }
             .gestao-login-heading h1 {
               margin: 0;
               color: #0f172a;
-              font-size: 24px;
+              font-size: 22px;
               font-weight: 900;
               letter-spacing: -.03em;
               line-height: 1.15;
             }
             .gestao-login-heading p {
-              margin: 8px 0 0;
+              margin: 4px 0 0;
               color: #4b5563;
               font-size: 12px;
               line-height: 1.45;
@@ -292,13 +292,13 @@ export default function MobilePage() {
             .gestao-login-form {
               display: grid;
               grid-row: 2;
-              width: min(100%, 420px);
+              width: min(80%, 336px);
               max-height: calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 108px);
-              gap: 14px;
+              gap: 8px;
               overflow-y: auto;
               border: 1px solid rgba(255, 255, 255, .72);
               border-radius: 18px;
-              padding: 24px;
+              padding: 16px;
               color: #2d353b;
               background: rgba(255, 255, 255, .30);
               box-shadow: 0 18px 45px rgba(0, 31, 60, .22), inset 0 1px 0 rgba(255, 255, 255, .45);
@@ -307,26 +307,26 @@ export default function MobilePage() {
               overscroll-behavior: contain;
               -webkit-overflow-scrolling: touch;
             }
-            .gestao-login-methods { display: flex; border-radius: 12px; padding: 4px; background: #eef3f5; }
-            .gestao-login-methods button { display: inline-flex; min-height: 40px; flex: 1; align-items: center; justify-content: center; gap: 8px; border: 0; border-radius: 9px; color: #6d7680; background: transparent; font-size: 14px; font-weight: 700; }
-            .gestao-login-methods svg { width: 18px; height: 18px; }
+            .gestao-login-methods { display: flex; border-radius: 12px; padding: 2px; background: #eef3f5; }
+            .gestao-login-methods button { display: inline-flex; min-height: 40px; flex: 1; align-items: center; justify-content: center; gap: 6px; border: 0; border-radius: 9px; color: #6d7680; background: transparent; font-size: 13px; font-weight: 700; }
+            .gestao-login-methods svg { width: 16px; height: 16px; }
             .gestao-login-methods button.active { color: #1F8A9E; background: #fff; box-shadow: 0 2px 5px rgba(0,0,0,.1); }
-            .gestao-login-label { display: grid; gap: 7px; color: #3d454d; font-size: 13px; font-weight: 800; }
+            .gestao-login-label { display: grid; gap: 4px; color: #3d454d; font-size: 12px; font-weight: 800; }
             .gestao-login-field { position: relative; display: flex; align-items: center; }
-            .gestao-login-field > svg { position: absolute; left: 13px; width: 18px; height: 18px; color: #88919a; }
-            .gestao-login-field input { width: 100%; height: 48px; border: 1px solid #d9e0e4; border-radius: 12px; padding: 0 42px; color: #2d353b; background: #fff; font: inherit; outline-color: #1F8A9E; }
-            .gestao-login-password button { position: absolute; right: 5px; display: grid; width: 39px; height: 39px; place-items: center; border: 0; border-radius: 8px; color: #717b84; background: transparent; }
-            .gestao-login-options { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: -3px; }
-            .gestao-remember-option { display: flex; align-items: center; gap: 7px; color: #59616a; font-size: 13px; font-weight: 600; }
+            .gestao-login-field > svg { position: absolute; left: 12px; width: 16px; height: 16px; color: #88919a; }
+            .gestao-login-field input { width: 100%; height: 44px; border: 1px solid #d9e0e4; border-radius: 12px; padding: 0 40px; color: #2d353b; background: #fff; font: inherit; outline-color: #1F8A9E; }
+            .gestao-login-password button { position: absolute; right: 4px; display: grid; width: 36px; height: 36px; place-items: center; border: 0; border-radius: 8px; color: #717b84; background: transparent; }
+            .gestao-login-options { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: -2px; }
+            .gestao-remember-option { display: flex; align-items: center; gap: 6px; color: #59616a; font-size: 12px; font-weight: 600; }
             .gestao-remember-option input { position: absolute; opacity: 0; }
-            .gestao-remember-option span { width: 18px; height: 18px; border: 1px solid #b9c2c8; border-radius: 5px; background: #fff; }
+            .gestao-remember-option span { width: 16px; height: 16px; border: 1px solid #b9c2c8; border-radius: 5px; background: #fff; }
             .gestao-remember-option input:checked + span { border-color: #1F8A9E; background: #1F8A9E; box-shadow: inset 0 0 0 4px #fff; }
-            .gestao-forgot-link, .gestao-login-register button { border: 0; padding: 0; color: #1F8A9E; background: transparent; font-size: 13px; font-weight: 800; }
-            .gestao-login-submit { min-height: 42px; border: 0; border-radius: 10px; color: #fff; background: #003E73; font-size: 14px; font-weight: 800; }
-            .gestao-google-login-button { display: inline-flex; min-height: 42px; align-items: center; justify-content: center; gap: 10px; border: 1px solid #d9e0e4; border-radius: 10px; color: #334155; background: #fff; font-size: 13px; font-weight: 800; }
-            .gestao-google-login-mark { display: inline-grid; width: 21px; height: 21px; place-items: center; border-radius: 999px; color: #fff; background: conic-gradient(from -45deg, #4285f4 0 25%, #34a853 0 45%, #fbbc05 0 68%, #ea4335 0 100%); font-size: 14px; font-weight: 950; line-height: 1; }
-            .gestao-login-register { margin: -4px 0 0; color: #737b83; font-size: 14px; text-align: center; }
-            @media (max-height: 620px) { .gestao-login-brand img { width: auto; height: 32px; max-width: min(60vw, 220px); max-height: none; } }
+            .gestao-forgot-link, .gestao-login-register button { border: 0; padding: 0; color: #1F8A9E; background: transparent; font-size: 12px; font-weight: 800; }
+            .gestao-login-submit { min-height: 44px; border: 0; border-radius: 10px; color: #fff; background: #003E73; font-size: 13px; font-weight: 800; }
+            .gestao-google-login-button { display: inline-flex; min-height: 44px; align-items: center; justify-content: center; gap: 8px; border: 1px solid #d9e0e4; border-radius: 10px; color: #334155; background: #fff; font-size: 12px; font-weight: 800; }
+            .gestao-google-login-mark { display: inline-grid; width: 18px; height: 18px; place-items: center; border-radius: 999px; color: #fff; background: conic-gradient(from -45deg, #4285f4 0 25%, #34a853 0 45%, #fbbc05 0 68%, #ea4335 0 100%); font-size: 12px; font-weight: 950; line-height: 1; }
+            .gestao-login-register { margin: -2px 0 0; color: #737b83; font-size: 12px; text-align: center; }
+            @media (max-height: 620px) { .gestao-login-brand img { width: auto; height: 26px; max-width: min(48vw, 176px); max-height: none; } }
             @media (max-width: 850px) { .gestao-login-screen input { font-size: 16px !important; } }
 
             @media (min-aspect-ratio: 9/16) {
