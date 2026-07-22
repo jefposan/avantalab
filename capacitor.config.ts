@@ -11,8 +11,9 @@ const config: CapacitorConfig = {
   },
 
   ios: {
-    // Faz o WKWebView respeitar a área segura do iPhone (Dynamic Island/notch).
-    contentInset: 'always',
+    // O layout web já usa viewport-fit=cover e env(safe-area-inset-*).
+    // Evita somar um segundo inset nativo ao mesmo conteúdo no WKWebView.
+    contentInset: 'never',
   },
 
   plugins: {

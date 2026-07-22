@@ -843,7 +843,11 @@ body.sheet-open {
 }
 
 /* Casca de gestão refeita a partir das telas reais do Tridium. */
-:root { --tridium: #55b9b1; --tridium-dark: #379f9a; --line: #e4e6ea; --ink: #202124; --vendas-safe-top: env(safe-area-inset-top, 0px); --vendas-safe-bottom: env(safe-area-inset-bottom, 0px); --vendas-viewport-height: 100dvh; --vendas-system-header-height: calc(59px + var(--vendas-safe-top)); }
+:root { --tridium: #55b9b1; --tridium-dark: #379f9a; --line: #e4e6ea; --ink: #202124; --vendas-safe-top: env(safe-area-inset-top, 0px); --vendas-safe-right: env(safe-area-inset-right, 0px); --vendas-safe-bottom: env(safe-area-inset-bottom, 0px); --vendas-safe-left: env(safe-area-inset-left, 0px); --vendas-viewport-height: 100dvh; --vendas-system-header-height: calc(59px + var(--vendas-safe-top)); }
+.capacitor-ios { --vendas-viewport-height: 100vh; }
+@supports (height: 100svh) {
+  .capacitor-ios { --vendas-viewport-height: 100svh; }
+}
 html { min-height: 100%; min-height: var(--vendas-viewport-height); overscroll-behavior-y: none; background: #fff; }
 body { min-height: 100%; min-height: var(--vendas-viewport-height); overscroll-behavior-y: none; background: #fff; color: var(--ink); }
 #app { min-height: var(--vendas-viewport-height); overflow-x: clip; }
@@ -2414,5 +2418,85 @@ body:has(.login-screen) {
 }
 
 .login-screen {
+  -webkit-overflow-scrolling: touch;
+}
+
+/* No WKWebView, a cena ocupa uma viewport estável e não é o elemento rolável.
+   O conteúdo parte do rodapé seguro; se não couber, somente o último card ou
+   formulário rola. Assim, qualquer sobra visual permanece acima da cena. */
+.capacitor-ios .login-screen {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: var(--vendas-viewport-height);
+  min-height: 0;
+  flex: none;
+  justify-content: flex-end;
+  overflow: hidden;
+  overscroll-behavior: none;
+  padding:
+    max(24px, var(--vendas-safe-top))
+    max(24px, var(--vendas-safe-right))
+    calc(24px + var(--vendas-safe-bottom))
+    max(24px, var(--vendas-safe-left));
+}
+
+.capacitor-ios .login-screen::before {
+  height: var(--vendas-viewport-height);
+  min-height: 0;
+  background-position: center bottom;
+}
+
+.capacitor-ios .login-screen > * {
+  min-width: 0;
+  flex-shrink: 0;
+}
+
+.capacitor-ios .login-screen > :last-child {
+  min-height: 0;
+  max-height: 100%;
+  flex-shrink: 1;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
+.capacitor-ios .login-screen.preparing-access-screen {
+  position: fixed;
+  height: var(--vendas-viewport-height);
+  min-height: 0;
+  justify-content: center;
+}
+
+.capacitor-ios .login-screen.approval-wait-screen,
+.capacitor-ios .login-screen.system-selector-screen,
+.capacitor-ios .login-screen.management-profile-selector-screen {
+  padding:
+    max(24px, var(--vendas-safe-top))
+    max(16px, var(--vendas-safe-right))
+    calc(24px + var(--vendas-safe-bottom))
+    max(16px, var(--vendas-safe-left));
+}
+
+.capacitor-ios .logout-screen {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: var(--vendas-viewport-height);
+  min-height: 0;
+  align-content: end;
+  overflow: hidden;
+  overscroll-behavior: none;
+  padding:
+    max(24px, var(--vendas-safe-top))
+    max(24px, var(--vendas-safe-right))
+    calc(24px + var(--vendas-safe-bottom))
+    max(24px, var(--vendas-safe-left));
+}
+
+.capacitor-ios .logout-screen > div {
+  max-height: 100%;
+  overflow-y: auto;
+  overscroll-behavior: contain;
   -webkit-overflow-scrolling: touch;
 }

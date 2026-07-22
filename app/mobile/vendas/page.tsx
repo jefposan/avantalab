@@ -19,9 +19,16 @@ export const viewport: Viewport = {
 export default function VendasMobilePage() {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
-  const assetVersion = '20260722-04';
+  const assetVersion = '20260722-05';
   const bootstrap = `
     (function () {
+      var bridgeCapacitor = window.Capacitor;
+      var plataformaIos = !!(
+        bridgeCapacitor &&
+          typeof bridgeCapacitor.getPlatform === 'function' &&
+          bridgeCapacitor.getPlatform() === 'ios'
+      );
+      document.documentElement.classList.toggle('capacitor-ios', plataformaIos);
       window.__VENDAS_MOBILE_EMBEDDED__ = true;
       window.__VENDAS_MOBILE_VERSION__ = ${JSON.stringify(assetVersion)};
       var pesosProgresso = { shell: 5, scripts: 20, auth: 10, access: 15, data: 40, resources: 10 };

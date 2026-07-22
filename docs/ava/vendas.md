@@ -1,7 +1,11 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.6.0.84.41 -->
+<!-- ava-version: 1.6.0.84.45 -->
 
+> Revisão 1.6.0.84.45: no aplicativo iOS, telas integrais ficam ancoradas ao
+> rodapé seguro e somente o card interno rola quando o conteúdo não cabe. O
+> navegador e o PWA conservam o comportamento anterior.
+>
 > Revisão 1.6.0.84.41: telas de autenticação, seletores, menu, logout, agenda,
 > modais e modo suspenso respeitam a área segura e usam uma única altura de
 > viewport. Formulários longos continuam com rolagem interna.

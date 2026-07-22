@@ -1,7 +1,10 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.6.0.84.41 -->
+<!-- ava-version: 1.6.0.84.45 -->
 
+> Revisão 1.6.0.84.45: correção de viewport no aplicativo iOS do Vendas; sem
+> impacto operacional na Gestão Mobile.
+>
 > Revisão 1.6.0.84.41: Vendas Mobile unificou altura de viewport, fundo e áreas
 > seguras; sem impacto operacional na Gestão Mobile.
 

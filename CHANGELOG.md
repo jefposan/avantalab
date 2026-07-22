@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.6.0.84.45 - 2026-07-22
+
+- Vendas Mobile no aplicativo iOS: telas integrais usam viewport estável e uma
+  única aplicação da área segura. Login, cadastro, vínculo, seletores e saída
+  permanecem ancorados ao rodapé; quando necessário, somente o card interno
+  rola. O fluxo no navegador e no PWA permanece inalterado.
+
 ## 1.6.0.84.41 - 2026-07-22
 
 - Vendas Mobile: telas de autenticação, seletores, menu, logout, agenda,
