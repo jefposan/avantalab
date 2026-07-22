@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.6.0.84.53 - 2026-07-22
+
+- Gestão Web: as ações do card de Importação assistida receberam hierarquia de
+  cores, estados de hover e foco, sombra sutil e redução tátil ao clicar. Os
+  avisos da conferência agora podem ser fechados individualmente e voltam a
+  aparecer quando a condição correspondente for disparada novamente.
+
 ## 1.6.0.84.52 - 2026-07-22
 
 - Gestão Mobile no aplicativo: a tela apresentada após sair passou a usar o

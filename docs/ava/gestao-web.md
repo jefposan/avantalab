@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.6.0.84.52 -->
+<!-- ava-version: 1.6.0.84.53 -->
+
+> Revisão 1.6.0.84.53: as ações e os avisos da conferência de Importação
+> assistida foram aprimorados visualmente; sem mudança operacional.
 
 > Revisão 1.6.0.84.52: ajuste da entrada do aplicativo Gestão Mobile; sem
 > impacto operacional na Gestão Web.

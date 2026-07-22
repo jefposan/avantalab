@@ -1,6 +1,9 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.6.0.84.52 -->
+<!-- ava-version: 1.6.0.84.53 -->
+
+> Revisão 1.6.0.84.53: aprimoramento visual das ações de Importação assistida
+> da Gestão Web; sem impacto operacional no Vendas Mobile.
 
 > Revisão 1.6.0.84.52: ajuste da entrada do aplicativo Gestão Mobile; sem
 > impacto operacional no Vendas Mobile.
