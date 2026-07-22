@@ -1,5 +1,16 @@
 # Changelog
 
+## 1.6.0.84.59 - 2026-07-22
+
+- Gestão Mobile e Vendas Mobile: as telas de acesso identificam claramente o
+  aplicativo atual como **Gestão Financeira** ou **Gestão de Vendas**.
+
+## 1.6.0.84.58 - 2026-07-22
+
+- Gestão Mobile e Vendas Mobile: a origem da jornada agora acompanha a troca
+  explícita entre os aplicativos. Ao sair, o usuário retorna ao login do
+  aplicativo pelo qual iniciou o acesso.
+
 ## 1.6.0.84.57 - 2026-07-22
 
 - Gestão Mobile: a rota da Gestão deixa de obedecer a preferências antigas de

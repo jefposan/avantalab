@@ -1382,12 +1382,14 @@ body { min-height: 100%; min-height: var(--vendas-viewport-height); overscroll-b
 }
 .login-screen > * { position: relative; z-index: 1; }
 .access-brand-zone {
-  display: grid;
+  display: flex;
+  flex-direction: column;
   width: 100%;
   min-width: 0;
   min-height: 0;
   grid-row: 1;
-  place-items: center;
+  align-items: center;
+  justify-content: center;
   overflow: hidden;
   padding: var(--vendas-safe-top) 0 0;
 }
@@ -1397,6 +1399,20 @@ body { min-height: 100%; min-height: var(--vendas-viewport-height); overscroll-b
   max-width: 82%;
   max-height: 72%;
   object-fit: contain;
+}
+.access-login-heading h1 {
+  margin: 0;
+  color: #0f172a;
+  font-size: 24px;
+  font-weight: 900;
+  letter-spacing: -.03em;
+  line-height: 1.15;
+}
+.access-login-heading p {
+  margin: 8px 0 0;
+  color: #4b5563;
+  font-size: 12px;
+  line-height: 1.45;
 }
 .login-screen > :last-child {
   min-width: 0;

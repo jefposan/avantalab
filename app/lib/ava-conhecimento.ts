@@ -6,7 +6,7 @@ export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
  * Cada guia é enviado apenas no ambiente correspondente, evitando misturar
  * caminhos e funções de Web, Mobile e Vendas na mesma resposta.
  */
-// Revisado na versão 1.6.0.84.57: cada rota móvel abre seu próprio aplicativo.
+// Revisado na versão 1.6.0.84.59: cada tela de acesso identifica seu aplicativo.
 const GUIAS: Record<AmbienteAva, string> = {
   'gestao-web': `GUIA OPERACIONAL — AVANTALAB GESTÃO WEB
 Você atende no sistema Gestão Web. Oriente por nomes visíveis na interface; não invente telas.
@@ -45,6 +45,10 @@ NAVEGAÇÃO E PERFIS
 - Após sair do aplicativo Gestão Mobile, a entrada aceita **E-mail** (também aceita o login já cadastrado) ou **Telefone** brasileiro com DDD. O telefone precisa estar vinculado à conta; a senha é a mesma.
 - A rota da Gestão abre sempre a própria Gestão. O Vendas só é aberto pelo
   comando específico de troca de sistema.
+- As telas de acesso exibem **Gestão Financeira** para identificar este
+  aplicativo.
+- Ao chegar à Gestão pelo Vendas, sair retorna ao login do Vendas. Quem iniciou
+  pela Gestão retorna à entrada da própria Gestão.
 - Na entrada da Gestão Mobile, **Lembrar-me** mantém a sessão por até 30 dias. Sem marcar, o acesso vale apenas enquanto o app/navegador estiver aberto.
 - A barra inferior mantém Início, Lançar e Menu. Os atalhos laterais podem ser ajustados em Menu > Organizar atalhos.
 - Avisos já recebidos ficam em Menu > Configurações > Avisos e notificações. A ativação das notificações do aparelho fica em Menu > Configurações > Notificações.
@@ -84,6 +88,10 @@ Você atende dentro do Vendas Mobile. Priorize funções deste aplicativo e não
 SALA E NAVEGAÇÃO
 - Após autenticar, o Vendas Mobile abre sempre na própria sala. A ida para a
   Gestão acontece somente pela ação específica dentro do Vendas.
+- As telas de acesso exibem **Gestão de Vendas** para identificar este
+  aplicativo.
+- Ao ir à Gestão pelo Vendas, a saída da Gestão retorna ao login do Vendas. A
+  troca iniciada pela Gestão faz o caminho inverso.
 - Na entrada do Vendas Mobile, **Lembrar-me** mantém a sessão por até 30 dias. Sem marcar, o acesso vale apenas enquanto o app/navegador estiver aberto.
 - A sala de botões é a tela inicial obrigatória de cada abertura, inclusive quando os dados são restaurados pelo cache; pesquisas de Clientes, Produtos, Pedidos e Pagamentos começam limpas: Dashboard, Clientes, Produtos, Pedidos, Pagamentos, Agenda, Novidades, Divulgação e Informações.
 - O menu inferior permite ir a Configurações, atalhos escolhidos pelo usuário, Novo lançamento (+) e Início. Configurações > Organizar atalhos muda os dois atalhos laterais; o lápis da sala organiza a ordem dos cards. Enquanto a organização está ativa, a instrução "Clique no botão e arraste para a nova posição" aparece ao lado do lápis.

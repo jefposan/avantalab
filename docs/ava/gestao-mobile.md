@@ -1,6 +1,12 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.6.0.84.57 -->
+<!-- ava-version: 1.6.0.84.59 -->
+
+> Revisão 1.6.0.84.59: as telas de acesso exibem **Gestão Financeira** para
+> identificar claramente o aplicativo atual.
+
+> Revisão 1.6.0.84.58: ao chegar à Gestão pelo Vendas, sair da conta retorna ao
+> login do Vendas. Quem iniciou pela Gestão continua retornando à entrada dela.
 
 > Revisão 1.6.0.84.57: a rota da Gestão abre sempre a própria Gestão, mesmo
 > quando existir uma preferência antiga do Vendas neste aparelho.

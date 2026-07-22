@@ -7,6 +7,7 @@ const TRINTA_DIAS_MS = 1000 * 60 * 60 * 24 * 30;
 const DEZ_MINUTOS_MS = 1000 * 60 * 10;
 const PREPARING_VIEWPORT_HEIGHT_KEY = 'avantalab.vendas_mobile.preparing_viewport_height';
 const ENTRADA_VENDAS_PELA_GESTAO_KEY = 'avantalab_vendas_entrada_gestao';
+const ORIGEM_ACESSO_VENDAS_KEY = 'avantalab_mobile_origem_acesso';
 const CACHE_VENDAS_DB = 'avantalab.vendas_mobile.cache';
 const CACHE_VENDAS_STORE = 'sessoes';
 const CACHE_VENDAS_PENDENCIAS_STORE = 'pendencias';
@@ -111,6 +112,17 @@ let cadastroPendente = null;
 let segundosReenvioSmsCadastro = 0;
 let timerReenvioSmsCadastro = null;
 let conectandoGoogle = sessionStorage.getItem(GOOGLE_CONNECTING_KEY) === '1';
+
+function prepararOrigemAcessoVendas() {
+  try {
+    const origem = new URLSearchParams(window.location.search).get('origem');
+    sessionStorage.setItem(ORIGEM_ACESSO_VENDAS_KEY, origem === 'gestao' ? 'gestao' : 'vendas');
+  } catch { /* armazenamento indisponível */ }
+}
+
+function origemAcessoVendas() {
+  try { return sessionStorage.getItem(ORIGEM_ACESSO_VENDAS_KEY) || 'vendas'; } catch { return 'vendas'; }
+}
 
 function limparPreferenciaSessaoVendas() {
   try {
@@ -1252,7 +1264,7 @@ function limparFocoInicialLogin() {
 function renderLogin() {
   if (modoLogin === 'cadastro') return renderCadastroConta();
   const emailAtivo = loginTipo === 'email';
-  return `<section class="login-screen">${renderMarcaAcesso()}<form onsubmit="entrarSistema(event)"><div class="login-methods"><button type="button" class="${emailAtivo ? 'active' : ''}" onclick="trocarTipoLogin('email')">${svgIcon('mail')} E-mail</button><button type="button" class="${!emailAtivo ? 'active' : ''}" onclick="trocarTipoLogin('telefone')">${svgIcon('phone')} Telefone</button></div><label>${emailAtivo ? 'E-mail' : 'Telefone'}<div class="login-field">${svgIcon(emailAtivo ? 'mail' : 'phone')}<input id="loginContato" type="${emailAtivo ? 'email' : 'tel'}" inputmode="${emailAtivo ? 'email' : 'tel'}" autocomplete="${emailAtivo ? 'email' : 'tel'}" placeholder="${emailAtivo ? 'Digite seu e-mail' : 'Digite seu telefone'}" required></div></label><label>Senha<div class="login-field password-field">${svgIcon('lock')}<input id="loginSenha" type="password" autocomplete="current-password" placeholder="Digite sua senha" required><button type="button" class="password-toggle" onclick="alternarSenhaLogin()" aria-label="Exibir senha">${svgIcon('eye')}</button></div></label><div class="login-options"><label class="remember-option"><input id="loginLembrar" type="checkbox" checked><span></span>Lembrar-me</label><button type="button" class="forgot-link" onclick="abrirRecuperacaoSenha()">Esqueceu a senha?</button></div><div id="loginErro" class="login-error"></div><button class="primary login-submit" type="submit">Entrar</button><p class="login-register">Não tem conta? <button type="button" onclick="abrirCadastroConta()">Cadastre-se</button></p></form></section>`;
+  return `<section class="login-screen">${renderMarcaAcesso()}<form onsubmit="entrarSistema(event)"><div class="access-login-heading"><h1>Gestão de Vendas</h1><p>Entre para registrar suas vendas, acompanhar clientes e resultados.</p></div><div class="login-methods"><button type="button" class="${emailAtivo ? 'active' : ''}" onclick="trocarTipoLogin('email')">${svgIcon('mail')} E-mail</button><button type="button" class="${!emailAtivo ? 'active' : ''}" onclick="trocarTipoLogin('telefone')">${svgIcon('phone')} Telefone</button></div><label>${emailAtivo ? 'E-mail' : 'Telefone'}<div class="login-field">${svgIcon(emailAtivo ? 'mail' : 'phone')}<input id="loginContato" type="${emailAtivo ? 'email' : 'tel'}" inputmode="${emailAtivo ? 'email' : 'tel'}" autocomplete="${emailAtivo ? 'email' : 'tel'}" placeholder="${emailAtivo ? 'Digite seu e-mail' : 'Digite seu telefone'}" required></div></label><label>Senha<div class="login-field password-field">${svgIcon('lock')}<input id="loginSenha" type="password" autocomplete="current-password" placeholder="Digite sua senha" required><button type="button" class="password-toggle" onclick="alternarSenhaLogin()" aria-label="Exibir senha">${svgIcon('eye')}</button></div></label><div class="login-options"><label class="remember-option"><input id="loginLembrar" type="checkbox" checked><span></span>Lembrar-me</label><button type="button" class="forgot-link" onclick="abrirRecuperacaoSenha()">Esqueceu a senha?</button></div><div id="loginErro" class="login-error"></div><button class="primary login-submit" type="submit">Entrar</button><p class="login-register">Não tem conta? <button type="button" onclick="abrirCadastroConta()">Cadastre-se</button></p></form></section>`;
 }
 
 function renderCadastroConta() {
@@ -1680,6 +1692,7 @@ function abrirAcoesRapidas() {
 }
 
 async function sairSistema() {
+  const destinoLogout = origemAcessoVendas() === 'gestao' ? '/?entrar=1' : '/mobile/vendas?entrar=1';
   void limparCacheVendas();
   try { if (backendAtivo) await window.VendasDb.signOut(); } catch (error) { console.error(error); }
   try {
@@ -1701,7 +1714,9 @@ async function sairSistema() {
   state.seletorPerfilGestaoAberto = false;
   state.perfisGestaoTroca = [];
   state.perfilGestaoConfirmacao = null;
+  try { sessionStorage.removeItem(ORIGEM_ACESSO_VENDAS_KEY); } catch { /* armazenamento indisponível */ }
   render();
+  window.location.replace(destinoLogout);
 }
 
 async function entrarSistema(event) {
@@ -1745,7 +1760,8 @@ async function entrarComGoogle() {
   registrarPreferenciaSessaoVendas(lembrar, true);
   render();
   try {
-    await window.VendasDb.signInWithGoogle(`${window.location.origin}/mobile/vendas`);
+    const origem = origemAcessoVendas();
+    await window.VendasDb.signInWithGoogle(`${window.location.origin}/mobile/vendas${origem === 'gestao' ? '?origem=gestao' : ''}`);
   } catch (error) {
     conectandoGoogle = false;
     sessionStorage.removeItem(GOOGLE_CONNECTING_KEY);
@@ -2221,6 +2237,7 @@ async function sincronizarCatalogoAutomaticamente(atualizarTela = false) {
 }
 
 async function prepararSelecaoSistemaAntesDosDadosVendas() {
+  prepararOrigemAcessoVendas();
   const [user, acessoVendas] = await Promise.all([
     window.VendasDb.currentUser(),
     window.VendasDb.buscarAcessoVendas(),
@@ -5819,7 +5836,7 @@ function abrirGestao(perfilEmpresaId = '') {
     if (empresaId) sessionStorage.setItem(`avantalab_mobile_sistema_sessao_${empresaId}`, 'gestao');
     if (empresaId) localStorage.setItem('avantalab_mobile_ultimo_perfil_id', empresaId);
   } catch { /* navegação continua sem preferência local */ }
-  window.location.assign('/mobile');
+  window.location.assign('/mobile?origem=vendas');
 }
 
 async function abrirSeletorPerfilGestaoVendas() {

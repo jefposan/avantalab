@@ -57,6 +57,7 @@
   var CHAVE_SISTEMA_INICIAL_MOBILE = 'avantalab_mobile_sistema_inicial_';
   var CHAVE_SISTEMA_SESSAO_MOBILE = 'avantalab_mobile_sistema_sessao_';
   var CHAVE_CONTEXTO_SISTEMA_MOBILE = 'avantalab_mobile_sistema_contexto';
+  var CHAVE_ORIGEM_ACESSO_MOBILE = 'avantalab_mobile_origem_acesso';
   var meses = [
     'JANEIRO',
     'FEVEREIRO',
@@ -1797,6 +1798,23 @@
     } catch (error) {}
   }
 
+  function prepararOrigemAcessoMobile() {
+    try {
+      var origem = new URLSearchParams(window.location.search).get('origem');
+      sessionStorage.setItem(CHAVE_ORIGEM_ACESSO_MOBILE, origem === 'vendas' ? 'vendas' : 'gestao');
+    } catch (error) {}
+  }
+
+  function destinoLogoutMobile() {
+    try {
+      return sessionStorage.getItem(CHAVE_ORIGEM_ACESSO_MOBILE) === 'vendas'
+        ? '/mobile/vendas?entrar=1'
+        : '/?entrar=1';
+    } catch (error) {
+      return '/?entrar=1';
+    }
+  }
+
   function abrirVendasMobile() {
     if (!podeTrocarSistemaMobile()) {
       mostrarToast('Vendas Mobile indisponivel para este usuario.');
@@ -1808,7 +1826,7 @@
       sessionStorage.setItem('avantalab_vendas_entrada_gestao', '1');
       sessionStorage.removeItem('avantalab_vendas_perfil_ativo');
     } catch (error) {}
-    window.location.assign('/mobile/vendas');
+    window.location.assign('/mobile/vendas?origem=gestao');
   }
 
   function escolherSistemaInicialMobile(sistema) {
@@ -5897,6 +5915,7 @@
   }
 
   async function sair() {
+    var destinoLogout = destinoLogoutMobile();
     await db.auth.signOut({ scope: 'local' });
     try {
       Object.keys(sessionStorage).forEach(function (chave) {
@@ -5904,7 +5923,7 @@
       });
     } catch (error) {}
     limparPreferenciaSessaoMobile();
-    window.location.replace('/?entrar=1');
+    window.location.replace(destinoLogout);
   }
 
   function montarContextoIA() {
@@ -7606,7 +7625,7 @@
       return (
         '<section class="gestao-login-screen">' +
           '<div class="gestao-login-brand"><img src="/images/logo-avantalab-oficial.png" alt="AvantaLab — Do zero ao operacional" /></div>' +
-          '<form class="gestao-login-form" onsubmit="return false">' + telaLoginCampos() + '</form>' +
+          '<form class="gestao-login-form" onsubmit="return false"><div class="gestao-login-heading"><h1>Gestão Financeira</h1><p>Entre para acompanhar sua gestão financeira, lançamentos, relatórios e evolução operacional.</p></div>' + telaLoginCampos() + '</form>' +
         '</section>'
       );
     }
@@ -7627,9 +7646,10 @@
           (boasVindas
             ? telaBoasVindas()
             : '<div class="' + (state.modoCadastro ? 'mb-2' : 'mb-3') + '">' +
-                '<h1 class="' + (state.modoCadastro ? 'text-xl' : 'text-2xl') + ' font-black text-slate-900">' + (state.modoCadastro ? 'Criar cadastro' : state.modoSenha ? 'Recuperar senha' : 'Acesse sua conta') + '</h1>' +
+                ((state.modoCadastro || state.modoSenha) ? '<p class="mb-1 text-[10px] font-black uppercase tracking-[.18em] text-cyan-800">Gestão Financeira</p>' : '') +
+                '<h1 class="' + (state.modoCadastro ? 'text-xl' : 'text-2xl') + ' font-black text-slate-900">' + (state.modoCadastro ? 'Criar cadastro' : state.modoSenha ? 'Recuperar senha' : 'Gestão Financeira') + '</h1>' +
                 '<p class="mt-1 text-xs leading-snug text-slate-600">' +
-                  (state.modoCadastro ? 'Preencha seus dados e confirme o celular por SMS.' : state.modoSenha ? 'Digite seu login, receba o codigo por SMS e defina uma nova senha.' : 'Entre para acompanhar sua gestao financeira, lancamentos e resultados.') +
+                  (state.modoCadastro ? 'Preencha seus dados e confirme o celular por SMS.' : state.modoSenha ? 'Digite seu login, receba o codigo por SMS e defina uma nova senha.' : 'Entre para acompanhar sua gestão financeira, lançamentos, relatórios e evolução operacional.') +
                 '</p>' +
               '</div>' +
               (state.modoCadastro ? telaCadastro() : state.modoSenha ? telaSenha() : telaLoginCampos())) +
@@ -13328,6 +13348,7 @@
   async function iniciar() {
     state.falhaAcesso = '';
     state.preparacaoAcessoInterrompida = false;
+    prepararOrigemAcessoMobile();
     window._avaProfilePillHidden = false;
     if (typeof window.__avantalabReiniciarProgressoMobile === 'function') {
       window.__avantalabReiniciarProgressoMobile('Validando sua sessão');
@@ -13450,7 +13471,7 @@
     try {
       if (deveEncerrarSessaoSalvaMobile()) {
         await db.auth.signOut({ scope: 'local' });
-        window.location.replace('/?entrar=1');
+        window.location.replace(destinoLogoutMobile());
         return;
       }
       var sessao = await promessaMobileComPrazo(
@@ -13494,7 +13515,7 @@
           if (state.preparacaoAcessoInterrompida) return;
         }
       } else {
-        window.location.replace('/?entrar=1');
+        window.location.replace(destinoLogoutMobile());
         return;
       }
       state.pronto = true;

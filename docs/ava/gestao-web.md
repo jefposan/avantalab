@@ -1,6 +1,12 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.6.0.84.57 -->
+<!-- ava-version: 1.6.0.84.59 -->
+
+> Revisão 1.6.0.84.59: identificação visual nas telas de acesso dos PWAs; sem
+> impacto operacional na Gestão Web.
+
+> Revisão 1.6.0.84.58: retorno de saída entre os PWAs Gestão e Vendas; sem
+> impacto operacional na Gestão Web.
 
 > Revisão 1.6.0.84.57: a rota da Gestão Mobile abre sempre a própria Gestão;
 > sem impacto operacional na Gestão Web.

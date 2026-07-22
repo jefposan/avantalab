@@ -1,6 +1,12 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.6.0.84.57 -->
+<!-- ava-version: 1.6.0.84.59 -->
+
+> Revisão 1.6.0.84.59: as telas de acesso exibem **Gestão de Vendas** para
+> identificar claramente o aplicativo atual.
+
+> Revisão 1.6.0.84.58: ao trocar para a Gestão e sair dela, o login retornará
+> ao Vendas Mobile. O caminho inverso retorna ao login da Gestão.
 
 > Revisão 1.6.0.84.57: a rota da Gestão abre sempre a Gestão; o Vendas continua
 > acessível somente pela ação específica dentro de cada aplicativo.

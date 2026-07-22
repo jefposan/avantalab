@@ -257,12 +257,14 @@ export default function MobilePage() {
             }
             .gestao-login-screen > * { position: relative; z-index: 1; }
             .gestao-login-brand {
-              display: grid;
+              display: flex;
+              flex-direction: column;
               grid-row: 1;
               width: 100%;
               min-width: 0;
               min-height: 0;
-              place-items: center;
+              align-items: center;
+              justify-content: center;
               overflow: hidden;
               padding: env(safe-area-inset-top) 0 0;
             }
@@ -272,6 +274,20 @@ export default function MobilePage() {
               max-width: 82%;
               max-height: 72%;
               object-fit: contain;
+            }
+            .gestao-login-heading h1 {
+              margin: 0;
+              color: #0f172a;
+              font-size: 24px;
+              font-weight: 900;
+              letter-spacing: -.03em;
+              line-height: 1.15;
+            }
+            .gestao-login-heading p {
+              margin: 8px 0 0;
+              color: #4b5563;
+              font-size: 12px;
+              line-height: 1.45;
             }
             .gestao-login-form {
               display: grid;

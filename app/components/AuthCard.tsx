@@ -430,7 +430,7 @@ export default function AuthCard({
   {modoRedefinirSenha
     ? 'Criar nova senha'
     : modoAuth === 'login'
-      ? 'Acesse sua conta'
+      ? 'Gestão Financeira'
       : 'Criar cadastro'}
 </h1>
 
