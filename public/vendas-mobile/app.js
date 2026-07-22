@@ -1,5 +1,10 @@
 const STORAGE_KEY = 'avantalab.vendas_mobile.v1';
 const GOOGLE_CONNECTING_KEY = 'avantalab.vendas_mobile.google_connecting';
+const LEMBRAR_CONECTADO_ATE_KEY = 'avantalab.vendas_mobile.lembrar_conectado_ate';
+const SESSAO_TEMPORARIA_KEY = 'avantalab.vendas_mobile.sessao_temporaria';
+const OAUTH_TEMPORARIO_ATE_KEY = 'avantalab.vendas_mobile.oauth_temporario_ate';
+const TRINTA_DIAS_MS = 1000 * 60 * 60 * 24 * 30;
+const DEZ_MINUTOS_MS = 1000 * 60 * 10;
 const PREPARING_VIEWPORT_HEIGHT_KEY = 'avantalab.vendas_mobile.preparing_viewport_height';
 const ENTRADA_VENDAS_PELA_GESTAO_KEY = 'avantalab_vendas_entrada_gestao';
 const CACHE_VENDAS_DB = 'avantalab.vendas_mobile.cache';
@@ -110,6 +115,65 @@ let cadastroPendente = null;
 let segundosReenvioSmsCadastro = 0;
 let timerReenvioSmsCadastro = null;
 let conectandoGoogle = sessionStorage.getItem(GOOGLE_CONNECTING_KEY) === '1';
+
+function limparPreferenciaSessaoVendas() {
+  try {
+    localStorage.removeItem(LEMBRAR_CONECTADO_ATE_KEY);
+    localStorage.removeItem(SESSAO_TEMPORARIA_KEY);
+    localStorage.removeItem(OAUTH_TEMPORARIO_ATE_KEY);
+    sessionStorage.removeItem(SESSAO_TEMPORARIA_KEY);
+  } catch { /* armazenamento indisponível */ }
+}
+
+function registrarPreferenciaSessaoVendas(manterConectado, aguardandoOAuth = false) {
+  try {
+    if (manterConectado) {
+      localStorage.setItem(LEMBRAR_CONECTADO_ATE_KEY, String(Date.now() + TRINTA_DIAS_MS));
+      localStorage.removeItem(SESSAO_TEMPORARIA_KEY);
+      localStorage.removeItem(OAUTH_TEMPORARIO_ATE_KEY);
+      sessionStorage.removeItem(SESSAO_TEMPORARIA_KEY);
+      return;
+    }
+    localStorage.removeItem(LEMBRAR_CONECTADO_ATE_KEY);
+    localStorage.setItem(SESSAO_TEMPORARIA_KEY, '1');
+    sessionStorage.setItem(SESSAO_TEMPORARIA_KEY, '1');
+    if (aguardandoOAuth) localStorage.setItem(OAUTH_TEMPORARIO_ATE_KEY, String(Date.now() + DEZ_MINUTOS_MS));
+    else localStorage.removeItem(OAUTH_TEMPORARIO_ATE_KEY);
+  } catch { /* armazenamento indisponível */ }
+}
+
+function sessaoPersistenteValidaVendas() {
+  try {
+    const validade = Number(localStorage.getItem(LEMBRAR_CONECTADO_ATE_KEY) || 0);
+    if (!validade) return false;
+    if (validade > Date.now()) return true;
+    limparPreferenciaSessaoVendas();
+  } catch { /* armazenamento indisponível */ }
+  return false;
+}
+
+function renovarSessaoPersistenteVendas() {
+  if (!sessaoPersistenteValidaVendas()) return;
+  try { localStorage.setItem(LEMBRAR_CONECTADO_ATE_KEY, String(Date.now() + TRINTA_DIAS_MS)); } catch { /* armazenamento indisponível */ }
+}
+
+function deveEncerrarSessaoSalvaVendas() {
+  try {
+    if (sessaoPersistenteValidaVendas()) return false;
+    if (localStorage.getItem(SESSAO_TEMPORARIA_KEY) !== '1') return false;
+    if (sessionStorage.getItem(SESSAO_TEMPORARIA_KEY) === '1') return false;
+    const validadeOAuth = Number(localStorage.getItem(OAUTH_TEMPORARIO_ATE_KEY) || 0);
+    if (validadeOAuth > Date.now()) {
+      sessionStorage.setItem(SESSAO_TEMPORARIA_KEY, '1');
+      localStorage.removeItem(OAUTH_TEMPORARIO_ATE_KEY);
+      return false;
+    }
+    limparPreferenciaSessaoVendas();
+    return true;
+  } catch {
+    return false;
+  }
+}
 let recuperacaoSenhaVendas = null;
 let vinculoTelefonePendente = null;
 let telefonePerfilPendente = null;
@@ -1718,6 +1782,7 @@ async function entrarSistema(event) {
     if (loginTipo === 'email') await window.VendasDb.signIn(contato, senha);
     else await window.VendasDb.signInPhone(`+55${contato.replace(/\D/g, '')}`, senha);
     atualizarProgressoPreparacao('auth', 1, 1, 'Sessão autenticada');
+    registrarPreferenciaSessaoVendas(lembrar === '1');
     localStorage.setItem('avantalab.vendas_mobile.lembrar', lembrar);
     const aguardandoEscolha = await prepararSelecaoSistemaAntesDosDadosVendas();
     carregandoBackend = false;
@@ -1737,10 +1802,12 @@ async function entrarSistema(event) {
 
 async function entrarComGoogle() {
   if (conectandoGoogle) return;
+  const lembrar = document.getElementById('loginLembrar')?.checked === true;
   document.activeElement?.blur();
   fixarAlturaPreparacao();
   conectandoGoogle = true;
   sessionStorage.setItem(GOOGLE_CONNECTING_KEY, '1');
+  registrarPreferenciaSessaoVendas(lembrar, true);
   render();
   try {
     await window.VendasDb.signInWithGoogle(`${window.location.origin}/mobile/vendas`);
@@ -2319,6 +2386,13 @@ async function inicializarApp() {
     if (campoAtivo instanceof HTMLElement && campoAtivo.closest('.login-screen')) campoAtivo.blur();
   });
   try {
+    if (deveEncerrarSessaoSalvaVendas()) {
+      await window.VendasDb.signOut();
+      carregandoBackend = false;
+      render();
+      liberarAlturaPreparacao();
+      return;
+    }
     const sessaoAtiva = conectandoGoogle
       ? await comLimiteDeTempo(aguardarSessaoGoogle(), 'Não foi possível concluir o acesso com o Google.', 12000)
       : await comLimiteDeTempo(window.VendasDb.hasSession(), 'Não foi possível restaurar sua sessão.', 10000);
@@ -2331,6 +2405,7 @@ async function inicializarApp() {
       liberarAlturaPreparacao();
       return;
     }
+    renovarSessaoPersistenteVendas();
     const aguardandoEscolha = await prepararSelecaoSistemaAntesDosDadosVendas();
     carregandoBackend = false;
     if (aguardandoEscolha) {

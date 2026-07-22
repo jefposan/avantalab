@@ -13463,6 +13463,11 @@
     render();
 
     try {
+      if (deveEncerrarSessaoSalvaMobile()) {
+        await db.auth.signOut({ scope: 'local' });
+        window.location.replace('/?entrar=1');
+        return;
+      }
       var sessao = await promessaMobileComPrazo(
         db.auth.getSession(),
         8000,

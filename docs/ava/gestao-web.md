@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.6.0.84.53 -->
+<!-- ava-version: 1.6.0.84.54 -->
+
+> Revisão 1.6.0.84.54: ajuste da permanência de sessão nos PWAs móveis; sem
+> impacto operacional na Gestão Web.
 
 > Revisão 1.6.0.84.53: as ações e os avisos da conferência de Importação
 > assistida foram aprimorados visualmente; sem mudança operacional.

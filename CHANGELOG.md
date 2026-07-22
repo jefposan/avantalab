@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.6.0.84.54 - 2026-07-22
+
+- Gestão Mobile e Vendas Mobile: a opção Lembrar-me passou a manter a sessão
+  por 30 dias para entradas por senha, telefone e Google. Sem a opção, o
+  acesso vale apenas enquanto o app/navegador permanecer aberto.
+
 ## 1.6.0.84.53 - 2026-07-22
 
 - Gestão Web: as ações do card de Importação assistida receberam hierarquia de

@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.6.0.84.53 -->
+<!-- ava-version: 1.6.0.84.54 -->
+
+> Revisão 1.6.0.84.54: Lembrar-me mantém a sessão por 30 dias na Gestão
+> Mobile; desmarcado, o acesso vale apenas enquanto o app/navegador estiver aberto.
 
 > Revisão 1.6.0.84.53: aprimoramento visual das ações de Importação assistida
 > da Gestão Web; sem impacto operacional na Gestão Mobile.
