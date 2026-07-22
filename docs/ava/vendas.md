@@ -1,6 +1,10 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.6.0.84.54 -->
+<!-- ava-version: 1.6.0.84.55 -->
+
+> Revisão 1.6.0.84.55: no cadastro, escolha **Empresa** ou **Pessoal**. Para
+> empresa, informe também o nome fantasia. O código da empresa continua sendo
+> necessário para solicitar o vínculo seguro ao Vendas Mobile.
 
 > Revisão 1.6.0.84.54: Lembrar-me mantém a sessão por 30 dias no Vendas Mobile;
 > desmarcado, o acesso vale apenas enquanto o app/navegador estiver aberto.

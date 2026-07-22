@@ -114,12 +114,18 @@
     if (error) throw error;
   }
 
-  async function signUp({ email, password, nome, telefone }) {
+  async function signUp({ email, password, nome, nomeFantasia, tipoPerfil, telefone }) {
     const { data, error } = await requireClient().auth.signUp({
       email,
       password,
       phone: telefone || undefined,
-      options: { data: { nome } },
+      options: {
+        data: {
+          nome,
+          tipo_cadastro_vendas: tipoPerfil === 'pessoal' ? 'pessoal' : 'empresa',
+          nome_fantasia: tipoPerfil === 'empresa' ? (nomeFantasia || null) : null,
+        },
+      },
     });
     if (error) throw error;
     return data.user;

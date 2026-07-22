@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.6.0.84.54 -->
+<!-- ava-version: 1.6.0.84.55 -->
+
+> Revisão 1.6.0.84.55: campos adicionais no cadastro do Vendas Mobile; sem
+> impacto operacional na Gestão Web.
 
 > Revisão 1.6.0.84.54: ajuste da permanência de sessão nos PWAs móveis; sem
 > impacto operacional na Gestão Web.

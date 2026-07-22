@@ -112,6 +112,17 @@ let loginTipo = 'email';
 let modoLogin = 'entrar';
 let cadastroEtapa = 'dados';
 let cadastroPendente = null;
+let cadastroTipoPerfil = 'empresa';
+let cadastroRascunho = {
+  nome: '',
+  nomeFantasia: '',
+  email: '',
+  telefone: '',
+  ddi: '55',
+  codigo: '',
+  senha: '',
+  confirmarSenha: '',
+};
 let segundosReenvioSmsCadastro = 0;
 let timerReenvioSmsCadastro = null;
 let conectandoGoogle = sessionStorage.getItem(GOOGLE_CONNECTING_KEY) === '1';
@@ -1269,8 +1280,30 @@ function renderLogin() {
 
 function renderCadastroConta() {
   if (cadastroEtapa === 'sms') return renderValidacaoSmsCadastro();
-  const paises = PAISES_DDI.map(([nome, ddi, flag]) => `<option value="${ddi}" ${ddi === '55' ? 'selected' : ''}>${flag} +${ddi}</option>`).join('');
-  return `<section class="login-screen">${renderMarcaAcesso()}<form class="login-register-form" onsubmit="criarConta(event)"><label>Nome completo<div class="login-field">${svgIcon('user')}<input id="cadastroNome" autocomplete="name" placeholder="Digite seu nome" required></div></label><label>E-mail<div class="login-field">${svgIcon('mail')}<input id="cadastroEmail" type="email" autocomplete="email" placeholder="Digite seu e-mail" required></div></label><label>Celular<div class="phone-register-field"><select id="cadastroDdi" aria-label="País (DDI)">${paises}</select><div class="login-field">${svgIcon('phone')}<input id="cadastroTelefone" type="tel" inputmode="numeric" autocomplete="tel-national" placeholder="DDD + número" required></div></div></label><label>Código da empresa<div class="login-field">${svgIcon('folder')}<input id="cadastroCodigo" autocomplete="off" autocapitalize="characters" placeholder="AVA-XXXXXXXX" required></div></label><label>Senha<div class="login-field">${svgIcon('lock')}<input id="cadastroSenha" type="password" autocomplete="new-password" placeholder="Crie sua senha" oninput="atualizarRequisitosSenhaCadastro(this.value)" required></div><small id="requisitosSenhaCadastro" class="password-requirements">8+ caracteres, maiúscula, minúscula e número.</small></label><label>Confirmar senha<div class="login-field">${svgIcon('lock')}<input id="cadastroConfirmarSenha" type="password" autocomplete="new-password" placeholder="Digite a senha novamente" required></div></label><div id="cadastroErro" class="login-error"></div><button class="primary login-submit" type="submit">Continuar</button><p class="login-register">Já tem conta? <button type="button" onclick="voltarParaLogin()">Entrar</button></p></form></section>`;
+  const paises = PAISES_DDI.map(([nome, ddi, flag]) => `<option value="${ddi}" ${ddi === cadastroRascunho.ddi ? 'selected' : ''}>${flag} +${ddi}</option>`).join('');
+  const perfilEmpresa = cadastroTipoPerfil === 'empresa';
+  return `<section class="login-screen">${renderMarcaAcesso()}<form class="login-register-form" onsubmit="criarConta(event)"><div class="cadastro-tipo-perfil"><span>Tipo do perfil</span><div class="login-methods"><button type="button" class="${perfilEmpresa ? 'active' : ''}" onclick="trocarTipoPerfilCadastro('empresa')">Empresa</button><button type="button" class="${!perfilEmpresa ? 'active' : ''}" onclick="trocarTipoPerfilCadastro('pessoal')">Pessoal</button></div></div>${perfilEmpresa ? `<label>Nome fantasia<div class="login-field">${svgIcon('folder')}<input id="cadastroNomeFantasia" autocomplete="organization" placeholder="Digite o nome fantasia" value="${escapeAttr(cadastroRascunho.nomeFantasia)}" required></div></label>` : ''}<label>${perfilEmpresa ? 'Responsável' : 'Nome completo'}<div class="login-field">${svgIcon('user')}<input id="cadastroNome" autocomplete="name" placeholder="Digite seu nome" value="${escapeAttr(cadastroRascunho.nome)}" required></div></label><label>E-mail<div class="login-field">${svgIcon('mail')}<input id="cadastroEmail" type="email" autocomplete="email" placeholder="Digite seu e-mail" value="${escapeAttr(cadastroRascunho.email)}" required></div></label><label>Celular<div class="phone-register-field"><select id="cadastroDdi" aria-label="País (DDI)">${paises}</select><div class="login-field">${svgIcon('phone')}<input id="cadastroTelefone" type="tel" inputmode="numeric" autocomplete="tel-national" placeholder="DDD + número" value="${escapeAttr(cadastroRascunho.telefone)}" required></div></div></label><label>Código da empresa<div class="login-field">${svgIcon('folder')}<input id="cadastroCodigo" autocomplete="off" autocapitalize="characters" placeholder="AVA-XXXXXXXX" value="${escapeAttr(cadastroRascunho.codigo)}" required></div></label><label>Senha<div class="login-field">${svgIcon('lock')}<input id="cadastroSenha" type="password" autocomplete="new-password" placeholder="Crie sua senha" value="${escapeAttr(cadastroRascunho.senha)}" oninput="atualizarRequisitosSenhaCadastro(this.value)" required></div><small id="requisitosSenhaCadastro" class="password-requirements">8+ caracteres, maiúscula, minúscula e número.</small></label><label>Confirmar senha<div class="login-field">${svgIcon('lock')}<input id="cadastroConfirmarSenha" type="password" autocomplete="new-password" placeholder="Digite a senha novamente" value="${escapeAttr(cadastroRascunho.confirmarSenha)}" required></div></label><div id="cadastroErro" class="login-error"></div><button class="primary login-submit" type="submit">Continuar</button><p class="login-register">Já tem conta? <button type="button" onclick="voltarParaLogin()">Entrar</button></p></form></section>`;
+}
+
+function lerCadastroRascunho() {
+  cadastroRascunho = {
+    nome: valor('cadastroNome').trim(),
+    nomeFantasia: document.getElementById('cadastroNomeFantasia')
+      ? valor('cadastroNomeFantasia').trim()
+      : cadastroRascunho.nomeFantasia,
+    email: valor('cadastroEmail').trim(),
+    telefone: valor('cadastroTelefone').replace(/\D/g, ''),
+    ddi: valor('cadastroDdi').replace(/\D/g, '') || '55',
+    codigo: valor('cadastroCodigo').trim().toUpperCase(),
+    senha: valor('cadastroSenha'),
+    confirmarSenha: valor('cadastroConfirmarSenha'),
+  };
+}
+
+function trocarTipoPerfilCadastro(tipo) {
+  lerCadastroRascunho();
+  cadastroTipoPerfil = tipo === 'pessoal' ? 'pessoal' : 'empresa';
+  render();
 }
 
 function senhaCadastroValida(senha) {
@@ -1907,16 +1940,19 @@ async function criarConta(event) {
   event?.preventDefault();
   const erro = document.getElementById('cadastroErro');
   if (erro) erro.textContent = '';
-  const nome = valor('cadastroNome').trim();
-  const email = valor('cadastroEmail').trim();
-  const senha = valor('cadastroSenha');
-  const confirmarSenha = valor('cadastroConfirmarSenha');
-  const telefone = valor('cadastroTelefone').replace(/\D/g, '');
-  const ddi = valor('cadastroDdi').replace(/\D/g, '') || '55';
-  const codigo = valor('cadastroCodigo').trim().toUpperCase();
+  lerCadastroRascunho();
+  const { nome, nomeFantasia, email, senha, confirmarSenha, telefone, ddi, codigo } = cadastroRascunho;
   const telefoneCompleto = `+${ddi}${telefone}`;
   const ehBrasil = ddi === '55';
-  if (!nome || !email || !codigo || !telefone || !senhaCadastroValida(senha)) {
+  if (cadastroTipoPerfil === 'empresa' && !nomeFantasia) {
+    if (erro) erro.textContent = 'Informe o nome fantasia da empresa.';
+    return;
+  }
+  if (!nome || !email || !codigo || !telefone) {
+    if (erro) erro.textContent = 'Preencha todos os dados obrigatórios.';
+    return;
+  }
+  if (!senhaCadastroValida(senha)) {
     if (erro) erro.textContent = 'A senha deve ter 8 caracteres, ao menos uma letra maiúscula, uma minúscula e um número.';
     return;
   }
@@ -1929,7 +1965,7 @@ async function criarConta(event) {
     return;
   }
   try {
-    cadastroPendente = { nome, email, senha, codigo, telefone: telefoneCompleto };
+    cadastroPendente = { nome, nomeFantasia, tipoPerfil: cadastroTipoPerfil, email, senha, codigo, telefone: telefoneCompleto };
     await enviarSmsCadastro(telefoneCompleto);
     cadastroEtapa = 'sms';
     render();
@@ -2000,7 +2036,14 @@ async function confirmarCadastroSms(event) {
     if (!resposta.ok || resultado.erro) throw new Error(resultado.mensagem || 'Código inválido ou expirado.');
     const dados = cadastroPendente;
     localStorage.setItem('avantalab.vendas_mobile.solicitacao_pendente', JSON.stringify({ nome: dados.nome, codigo: dados.codigo, telefone: dados.telefone }));
-    await window.VendasDb.signUp({ nome: dados.nome, email: dados.email, password: dados.senha, telefone: dados.telefone });
+    await window.VendasDb.signUp({
+      nome: dados.nome,
+      nomeFantasia: dados.nomeFantasia,
+      tipoPerfil: dados.tipoPerfil,
+      email: dados.email,
+      password: dados.senha,
+      telefone: dados.telefone,
+    });
     pararContadorSmsCadastro();
     cadastroPendente = null;
     cadastroEtapa = 'dados';

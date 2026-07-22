@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.6.0.84.55 - 2026-07-22
+
+- Vendas Mobile: o cadastro agora permite indicar o tipo **Empresa** ou
+  **Pessoal**. Para empresa, solicita também o nome fantasia; a escolha é
+  registrada na conta sem alterar o vínculo seguro pelo código da empresa.
+
 ## 1.6.0.84.54 - 2026-07-22
 
 - Gestão Mobile e Vendas Mobile: a opção Lembrar-me passou a manter a sessão

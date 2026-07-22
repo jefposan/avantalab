@@ -1439,6 +1439,9 @@ body { min-height: 100%; min-height: var(--vendas-viewport-height); overscroll-b
 .login-screen form.login-register-form { gap: 5px; padding: 12px 24px; }
 .login-register-form > label { display: grid; gap: 2px; color: #3d454d; font-size: 10px; font-weight: 800; }
 .login-register-form > label > span { color: #7d8790; font-weight: 600; }
+.cadastro-tipo-perfil { display: grid; gap: 2px; color: #3d454d; font-size: 10px; font-weight: 800; }
+.login-register-form .cadastro-tipo-perfil .login-methods { padding: 2px; border-radius: 8px; }
+.login-register-form .cadastro-tipo-perfil .login-methods button { min-height: 27px; border-radius: 6px; font-size: 10px; }
 .password-requirements { display: block; color: #7d8790; font-size: 9px; font-weight: 600; line-height: 1.2; }
 .password-requirements.valid { color: #1F8A9E; font-weight: 800; }
 .phone-register-field { display: flex; gap: 6px; }
