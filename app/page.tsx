@@ -6759,15 +6759,11 @@ if (modalSelecionarEmpresa) {
           <div className="grid grid-cols-[1fr_100px] gap-2">
             <button
               type="button"
-              disabled={!empresaParaSelecionar}
-              onClick={async () => {
-                if (!empresaParaSelecionar) return;
-                await carregarEmpresaSelecionada(empresaParaSelecionar);
-              }}
+              onClick={abrirCriacaoNovaEmpresa}
               className="rounded-lg px-4 py-2 text-xs font-black shadow transition hover:brightness-110 active:scale-95 cursor-pointer disabled:cursor-not-allowed disabled:opacity-60"
               style={estiloTemaPrimario}
             >
-              Confirmar acesso
+              Criar novo perfil
             </button>
 
             <button
@@ -6785,10 +6781,15 @@ if (modalSelecionarEmpresa) {
 
           <button
             type="button"
-            onClick={abrirCriacaoNovaEmpresa}
-            className="mt-3 w-full rounded-xl border border-sky-300 bg-sky-50 px-4 py-2.5 text-xs font-black uppercase tracking-wide text-sky-700 shadow-sm transition hover:border-sky-600 hover:bg-sky-700 hover:text-white active:scale-[0.98] cursor-pointer"
+            disabled={!empresaParaSelecionar}
+            onClick={async () => {
+              if (!empresaParaSelecionar) return;
+              await carregarEmpresaSelecionada(empresaParaSelecionar);
+            }}
+            className="mt-3 w-full rounded-xl px-4 py-2.5 text-xs font-black uppercase tracking-wide text-white shadow-sm transition hover:brightness-110 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60"
+            style={estiloTemaPrimario}
           >
-            Criar novo perfil
+            Confirmar acesso
           </button>
         </div>
       </section>
