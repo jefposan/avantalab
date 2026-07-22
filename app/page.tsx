@@ -841,7 +841,7 @@ const [editEntradaFaturamentoValorNumerico, setEditEntradaFaturamentoValorNumeri
   const [formDescricao, setFormDescricao] = useState('');
   const [formValor, setFormValor] = useState('');
   const [valorNumericoRaw, setValorNumericoRaw] = useState(0);
-  const [blocoAtivo, setBlocoAtivo] = useState<'despesa' | 'receita' | null>(null);
+  const [blocoAtivo, setBlocoAtivo] = useState<'despesa' | 'receita' | null>('despesa');
   const [salvandoDespesa, setSalvandoDespesa] = useState(false);
   const [formParcelar, setFormParcelar] = useState(false);
   const [formParcelas, setFormParcelas] = useState(2);
@@ -2006,9 +2006,8 @@ useEffect(() => {
 }, [abaAtiva, mesAtivo, mounted, acessoLiberado]);
 
 useEffect(() => {
-  const timerBloco = window.setTimeout(() => setBlocoAtivo(null), 0);
-  return () => window.clearTimeout(timerBloco);
-}, [mesAtivo, empresaId, abaAtiva]);
+  if (mesAtivo) setBlocoAtivo('despesa');
+}, [mesAtivo]);
 
 useEffect(() => {
   if (segundosReenvioTelefoneObrigatorio <= 0) return;
