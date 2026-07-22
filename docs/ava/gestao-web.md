@@ -1,9 +1,9 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.6.0.84.38 -->
+<!-- ava-version: 1.6.0.84.41 -->
 
-> Revisão 1.6.0.84.38: a área segura do iPhone passa a ser reservada no Vendas
-> Mobile desde a abertura inicial; sem impacto operacional na Gestão Web.
+> Revisão 1.6.0.84.41: Vendas Mobile unificou a altura de viewport, fundo e
+> áreas seguras; sem impacto operacional na Gestão Web.
 
 ## Escopo
 

@@ -1,9 +1,10 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.6.0.84.38 -->
+<!-- ava-version: 1.6.0.84.41 -->
 
-> Revisão 1.6.0.84.38: cabeçalho, painéis fixos, login e cadastro reservam a
-> área segura do iPhone; o formulário permanece rolável sem mover o documento.
+> Revisão 1.6.0.84.41: telas de autenticação, seletores, menu, logout, agenda,
+> modais e modo suspenso respeitam a área segura e usam uma única altura de
+> viewport. Formulários longos continuam com rolagem interna.
 
 ## Escopo e navegação
 

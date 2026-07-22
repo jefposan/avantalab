@@ -6,7 +6,7 @@ export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
  * Cada guia é enviado apenas no ambiente correspondente, evitando misturar
  * caminhos e funções de Web, Mobile e Vendas na mesma resposta.
  */
-// Revisado na versão 1.6.0.84.38: Vendas Mobile reserva a área segura do iPhone e contém a rolagem elástica no login e cadastro; sem impacto operacional nos demais ambientes.
+// Revisado na versão 1.6.0.84.41: Vendas Mobile mantém cenários de tela inteira, fundos e áreas seguras consistentes; sem impacto operacional nos demais ambientes.
 const GUIAS: Record<AmbienteAva, string> = {
   'gestao-web': `GUIA OPERACIONAL — AVANTALAB GESTÃO WEB
 Você atende no sistema Gestão Web. Oriente por nomes visíveis na interface; não invente telas.

@@ -866,6 +866,7 @@ const [buscaEntradaFaturamento, setBuscaEntradaFaturamento] = useState('');
   const meses = ['JANEIRO', 'FEVEREIRO', 'MARÇO', 'ABRIL', 'MAIO', 'JUNHO', 'JULHO', 'AGOSTO', 'SETEMBRO', 'OUTUBRO', 'NOVEMBRO', 'DEZEMBRO'];
   const TEMPO_LIMITE_INATIVIDADE = 60 * 60 * 1000; // 60 minutos
 const CHAVE_ULTIMA_ATIVIDADE = 'avantalab_ultima_atividade';
+const encerrandoSessaoRef = useRef(false);
 
 useEffect(() => {
   setTemRascunhoImportador(existeRascunhoImportador());
@@ -1324,7 +1325,10 @@ useEffect(() => {
 
 useEffect(() => {
   const { data } = supabase.auth.onAuthStateChange((evento, sessao) => {
-    if (!sessao || evento === 'SIGNED_OUT') return;
+    if (!sessao || evento === 'SIGNED_OUT') {
+      if (acessoLiberado && !encerrandoSessaoRef.current) void encerrarSessaoExpirada();
+      return;
+    }
 
     const larguraPequena = window.innerWidth < 1024;
     const dispositivoMobile =
@@ -6072,6 +6076,16 @@ setValidandoTelefoneObrigatorio(false);
   setAuthMensagem('');
 };
 
+const encerrarSessaoExpirada = async () => {
+  if (encerrandoSessaoRef.current) return;
+  encerrandoSessaoRef.current = true;
+  try {
+    await handleLogout();
+  } finally {
+    encerrandoSessaoRef.current = false;
+  }
+};
+
 const quantidadeLancamentosMes = lancamentosFiltradosDoMes.length;
 
 const alturaMaximaTabelaLancamentos = Math.max(
@@ -10547,6 +10561,7 @@ name="novo-usuario-login"
   onConcluido={notificarFinanceiroAtualizado}
   onEstadoRascunho={setTemRascunhoImportador}
   onArquivoDescartado={() => setArquivoImportador(null)}
+  onSessaoExpirada={() => { void encerrarSessaoExpirada(); }}
 />
 
 <ProcessandoImagemModal aberto={lendoNota || baixandoNota} darkMode={darkMode} titulo={baixandoNota ? 'Baixando imagem' : 'Processando imagem'} />

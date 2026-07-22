@@ -1,9 +1,9 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.6.0.84.38 -->
+<!-- ava-version: 1.6.0.84.41 -->
 
-> Revisão 1.6.0.84.38: a rolagem elástica do login e cadastro foi contida no
-> Vendas Mobile; sem impacto operacional na Gestão Mobile.
+> Revisão 1.6.0.84.41: Vendas Mobile unificou altura de viewport, fundo e áreas
+> seguras; sem impacto operacional na Gestão Mobile.
 
 ## Escopo
 

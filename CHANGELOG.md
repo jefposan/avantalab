@@ -1,9 +1,34 @@
 # Changelog
 
+## 1.6.0.84.41 - 2026-07-22
+
+- Vendas Mobile: telas de autenticação, seletores, menu, logout, agenda,
+  modais e modo suspenso passam a usar uma única altura de viewport e áreas
+  seguras. O fundo cobre a tela inteira em dispositivos de tamanhos diferentes
+  e o gesto elástico não expõe áreas vazias.
+
+## 1.6.0.84.40 - 2026-07-22
+
+- Gestão Web: corrigido o fechamento do popup de Importação. Salvar e continuar
+  depois agora encerra a revisão após gravar o rascunho, sem perder as linhas.
+
+## 1.6.0.84.39 - 2026-07-22
+
+- Gestão Web: expiração de sessão durante a importação fecha a conferência e
+  retorna automaticamente à tela de login. O observador global de autenticação
+  também encerra a área autenticada quando a sessão deixa de existir.
+
 ## 1.6.0.84.38 - 2026-07-22
 
 - Vendas Mobile: login e cadastro deixam de mover o documento inteiro pelo
   gesto elástico do iPhone; formulários longos mantêm rolagem interna.
+
+## 1.6.0.84.37 - 2026-07-22
+
+- Gestão Web: corrigida a edição do valor a lançar no Importador; o campo agora
+  pode ser apagado integralmente antes de digitar o novo valor. Salvar rascunho
+  fecha a conferência após a gravação e o cabeçalho passou a usar a cor primária
+  do perfil.
 
 ## 1.6.0.84.36 - 2026-07-22
 
