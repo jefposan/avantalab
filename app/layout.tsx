@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import "./globals.css";
 import { inter } from "./lib/fonts";
 import WebPopupScrollLock from "./components/WebPopupScrollLock";
-import NativeStatusBarController from "./components/NativeStatusBarController";
 
 const shareImage = 'https://avantalab.com.br/images/avantalab-share-meta-safe-center-v2.jpg?v=20260717-01';
 
@@ -62,7 +61,6 @@ export default function RootLayout({
         />
       </head>
       <body className="typography-system min-h-full flex flex-col">
-        <NativeStatusBarController />
         <WebPopupScrollLock />
         {children}
       </body>

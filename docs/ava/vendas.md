@@ -1,32 +1,6 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.6.0.84.56 -->
-
-> Revisão 1.6.0.84.56: sem mudança operacional no Vendas; o ajuste impede que
-> a landing do aplicativo inicie a Gestão Web antes de mostrar o portal nativo.
-
-> Revisão 1.6.0.84.55: no aplicativo Capacitor, o Vendas compartilha o mesmo
-> portal nativo da Gestão ao iniciar sem sessão ou sair. A barra de status
-> adapta o contraste ao header e ao tema. O PWA do Vendas permanece inalterado.
-
-> Revisão 1.6.0.84.54: o cadastro compartilhado com a Gestão passa a solicitar
-> perfil Empresa ou Pessoal e os dados correspondentes, inclusive no Google.
-> Entrar ou solicitar vínculo no Vendas não cria um perfil financeiro da Gestão.
-
-> Revisão 1.6.0.84.53: o Vendas compartilha a entrada única e a sessão da conta
-> AvantaLab. Após autenticar, o usuário escolhe a plataforma; quem ainda não tem
-> acesso ao Vendas pode solicitar o vínculo usando o código da empresa.
-
-> Revisão 1.6.0.84.52: a barra de status do aplicativo adapta automaticamente
-> o contraste às telas claras e escuras; o refinamento do logout pertence à
-> Gestão Mobile e não muda a operação do Vendas.
-
-> Revisão 1.6.0.84.51: logout e tela de acesso nativa da Gestão foram
-> estabilizados; sem impacto operacional no Vendas Mobile.
-
-> Revisão 1.6.0.84.50: no aplicativo Android/iOS, continuar ou cadastrar com
-> Google abre o navegador seguro e retorna ao Vendas Mobile pelo AvantaLab após
-> autenticar. No navegador e no PWA, o fluxo continua pela URL web.
+<!-- ava-version: 1.6.0.84.49 -->
 
 > Revisão 1.6.0.84.49: rascunhos no servidor do Importador Web; sem impacto operacional no Vendas Mobile.
 
@@ -60,10 +34,8 @@ dúvida dentro do Vendas sempre que a função existir ali.
   Organizar atalhos**; o lápis da sala muda a ordem dos cards. Enquanto a
   organização está ativa, a instrução **Clique no botão e arraste para a nova
   posição** aparece ao lado do lápis.
-- A entrada única do AvantaLab autentica a conta antes de mostrar os destinos.
-  Gestão e Vendas compartilham a mesma sessão; depois da escolha aparece
-  **Preparando acesso**. Quem ainda não possui acesso ao Vendas pode solicitar o
-  vínculo com o código da empresa, sem criar outra conta.
+- Para gestores habilitados, a primeira tela após o login permite escolher Gestão
+  ou Vendas antes de carregar os dados. Depois da escolha aparece **Preparando acesso**.
 - Gestores podem usar **Ir para Gestão** no canto direito do header fixo da sala
   de botões ou adicionar **Ir para Gestão** a um atalho configurável.
   Ao tocar, o Vendas lista todos os perfis ativos da Gestão vinculados à conta;

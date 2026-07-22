@@ -1,33 +1,6 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.6.0.84.56 -->
-
-> Revisão 1.6.0.84.56: uma sessão já existente no aplicativo não fica mais na
-> tela de carregamento da landing; ela é encaminhada ao portal único para abrir
-> Gestão ou Vendas. O PWA continua com o fluxo anterior.
-
-> Revisão 1.6.0.84.55: no aplicativo Capacitor, iniciar sem sessão, expirar ou
-> usar **Sair** sempre retorna ao portal nativo único, sem mensagem técnica. A
-> barra de status acompanha fundos claros, headers escuros e mudanças de tema.
-> O PWA da Gestão Mobile preserva a entrada e o logout já utilizados.
-
-> Revisão 1.6.0.84.54: o cadastro único coleta o tipo Empresa ou Pessoal e os
-> respectivos dados. Escolher a Gestão inicia a configuração completa do perfil;
-> escolher o Vendas mantém a mesma conta sem criar perfil financeiro.
-
-> Revisão 1.6.0.84.53: login, cadastro, Google e recuperação usam a entrada
-> única do AvantaLab. Após autenticar, o usuário escolhe Gestão ou Vendas e o
-> perfil permitido; sair retorna para essa mesma entrada sem mensagem técnica.
-
-> Revisão 1.6.0.84.52: ao usar **Sair**, o aplicativo encerra a conta uma única
-> vez e retorna à tela normal de entrada, sem mensagem técnica. A barra de status
-> alterna automaticamente entre informações claras e escuras conforme o fundo.
-
-> Revisão 1.6.0.84.51: logout e tela de acesso nativa da Gestão foram
-> estabilizados; sem mudança nos caminhos operacionais da Gestão Mobile.
-
-> Revisão 1.6.0.84.50: correção do retorno do Google no acesso nativo ao Vendas;
-> sem impacto operacional na Gestão Mobile.
+<!-- ava-version: 1.6.0.84.49 -->
 
 > Revisão 1.6.0.84.49: rascunhos no servidor do Importador Web; sem impacto operacional na Gestão Mobile.
 
@@ -60,10 +33,9 @@ deve usar os nomes do menu e da barra inferior do celular.
 - Em **Configurações**, **Assinatura** aparece primeiro quando disponível, seguida
   pelos controles com chave. **Gerenciar perfil**, **Usuários** e **Editar dados
   cadastrais** aparecem em sequência.
-- Login, cadastro, Google e recuperação de senha usam a entrada única do
-  AvantaLab. Depois de autenticar, o usuário escolhe Gestão ou Vendas e o perfil
-  permitido. Criar um perfil Gestão ou vincular o Vendas por código mantém a
-  mesma conta e a mesma senha. Só depois da escolha aparece **Preparando acesso**.
+- Quando o módulo Vendas Mobile está ativo e o usuário tem permissão, após o login
+  a primeira tela permite escolher entre Gestão e Vendas e memorizar a preferência. Só
+  depois da escolha aparece **Preparando acesso** e o sistema selecionado é carregado.
 - Em **Preparando acesso**, 100% significa que os dados necessários para abrir o
   perfil foram concluídos. A Gestão libera a tela principal imediatamente e continua
   sincronizações complementares em segundo plano. Verificações lentas são repetidas;
@@ -71,8 +43,8 @@ deve usar os nomes do menu e da barra inferior do celular.
   reconexão automática. Persistindo a falha, exibe **Tentar novamente** sem entrar em
   ciclo de recargas. Se chegar a 100% e o card ainda permanecer visível, o aplicativo
   confirma novamente a abertura antes de oferecer a recuperação.
-- Dentro da Gestão, **Menu > Ir para Vendas** abre diretamente o Vendas Mobile;
-  a escolha de plataforma é exibida na entrada após o login. Ao tocar, a
+- Dentro da Gestão, **Menu > Ir para Vendas** abre diretamente o Vendas Mobile; a
+  tela com as duas opções é exibida somente na entrada após o login. Ao tocar, a
   Gestão consulta o estado atual do módulo no servidor para não solicitar uma
   ativação que já tenha sido concluída.
 - Em um perfil sem o módulo instalado, **Ir para Vendas** continua disponível para

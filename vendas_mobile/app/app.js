@@ -1,22 +1,8 @@
 const STORAGE_KEY = 'avantalab.vendas_mobile.v1';
 const GOOGLE_CONNECTING_KEY = 'avantalab.vendas_mobile.google_connecting';
-const GOOGLE_CALLBACK_PENDING_KEY = 'avantalab.vendas.oauth.callback_pendente';
-const GOOGLE_NATIVE_ERROR_EVENT = 'avantalab:vendas-oauth-erro';
-const GOOGLE_NATIVE_CANCEL_EVENT = 'avantalab:vendas-oauth-cancelado';
 const PREPARING_VIEWPORT_HEIGHT_KEY = 'avantalab.vendas_mobile.preparing_viewport_height';
 const ENTRADA_VENDAS_PELA_GESTAO_KEY = 'avantalab_vendas_entrada_gestao';
 const CACHE_VENDAS_DB = 'avantalab.vendas_mobile.cache';
-
-function aplicativoCapacitorVendas() {
-  try {
-    const bridge = window.Capacitor;
-    if (!bridge) return false;
-    if (typeof bridge.isNativePlatform === 'function') return bridge.isNativePlatform();
-    return typeof bridge.getPlatform === 'function' && bridge.getPlatform() !== 'web';
-  } catch {
-    return false;
-  }
-}
 const CACHE_VENDAS_STORE = 'sessoes';
 const CACHE_VENDAS_PENDENCIAS_STORE = 'pendencias';
 const CACHE_VENDAS_VERSAO = 5;
@@ -124,23 +110,6 @@ let cadastroPendente = null;
 let segundosReenvioSmsCadastro = 0;
 let timerReenvioSmsCadastro = null;
 let conectandoGoogle = sessionStorage.getItem(GOOGLE_CONNECTING_KEY) === '1';
-
-window.addEventListener(GOOGLE_NATIVE_ERROR_EVENT, (evento) => {
-  conectandoGoogle = false;
-  sessionStorage.removeItem(GOOGLE_CONNECTING_KEY);
-  liberarAlturaPreparacao();
-  render();
-  const erro = document.getElementById('loginErro') || document.getElementById('cadastroErro');
-  if (erro) erro.textContent = traduzErro(evento.detail?.mensagem || 'Não foi possível concluir o login com Google.');
-});
-
-window.addEventListener(GOOGLE_NATIVE_CANCEL_EVENT, () => {
-  if (!conectandoGoogle || sessionStorage.getItem(GOOGLE_CALLBACK_PENDING_KEY)) return;
-  conectandoGoogle = false;
-  sessionStorage.removeItem(GOOGLE_CONNECTING_KEY);
-  liberarAlturaPreparacao();
-  render();
-});
 let recuperacaoSenhaVendas = null;
 let vinculoTelefonePendente = null;
 let telefonePerfilPendente = null;
@@ -1733,11 +1702,7 @@ async function sairSistema() {
   state.seletorPerfilGestaoAberto = false;
   state.perfisGestaoTroca = [];
   state.perfilGestaoConfirmacao = null;
-  if (aplicativoCapacitorVendas()) {
-    window.location.replace('/acesso?modo=login&origem=vendas');
-  } else {
-    render();
-  }
+  render();
 }
 
 async function entrarSistema(event) {
@@ -2275,10 +2240,6 @@ async function prepararSelecaoSistemaAntesDosDadosVendas() {
     };
   }
   contextoAberturaVendas = user ? { user, acessoVendas } : null;
-  if (user && !acessoVendas.acesso && aplicativoCapacitorVendas()) {
-    window.location.replace('/acesso?origem=vendas');
-    return true;
-  }
   if (entradaPelaGestao && acessoVendas.acesso?.empresa_id) {
     try {
       sessionStorage.setItem(`avantalab_mobile_sistema_sessao_${acessoVendas.acesso.empresa_id}`, 'vendas');
@@ -2366,10 +2327,6 @@ async function inicializarApp() {
       carregandoBackend = false;
       conectandoGoogle = false;
       sessionStorage.removeItem(GOOGLE_CONNECTING_KEY);
-      if (aplicativoCapacitorVendas()) {
-        window.location.replace('/acesso?modo=login&origem=vendas');
-        return;
-      }
       render();
       liberarAlturaPreparacao();
       return;

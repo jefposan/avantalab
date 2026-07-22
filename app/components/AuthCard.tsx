@@ -2,7 +2,6 @@
 import React from 'react';
 import Image from 'next/image';
 import QRCode from 'qrcode';
-import { Capacitor } from '@capacitor/core';
 import { normalizarTipoPerfil, rotuloTipoPerfil, type TipoPerfil } from '../lib/perfis';
 import { PAISES } from '../lib/paises';
 import DraggableModalCard from './DraggableModalCard';
@@ -12,10 +11,6 @@ interface BeforeInstallPromptEvent extends Event {
   prompt: () => Promise<void>;
   userChoice: Promise<{ outcome: 'accepted' | 'dismissed'; platform: string }>;
 }
-
-const subscreverPlataformaNativa = () => () => undefined;
-const obterPlataformaNativa = () => Capacitor.isNativePlatform();
-const obterPlataformaNativaNoServidor = () => false;
 
 function formatarTelefoneCadastro(valor: string, ddi: string) {
   const digitos = valor.replace(/\D/g, '');
@@ -145,11 +140,6 @@ export default function AuthCard({
 }: AuthCardProps) {
   const [promptInstalacao, setPromptInstalacao] = React.useState<BeforeInstallPromptEvent | null>(null);
   const [instaladoComoApp, setInstaladoComoApp] = React.useState(false);
-  const aplicativoNativo = React.useSyncExternalStore(
-    subscreverPlataformaNativa,
-    obterPlataformaNativa,
-    obterPlataformaNativaNoServidor,
-  );
   const [mostrarInstrucaoInstalacao, setMostrarInstrucaoInstalacao] = React.useState(false);
   const [qrMobileAberto, setQrMobileAberto] = React.useState(false);
   const [qrMobileDataUrl, setQrMobileDataUrl] = React.useState('');
@@ -158,10 +148,8 @@ export default function AuthCard({
 
   React.useEffect(() => {
     const navegadorStandalone = navigator as Navigator & { standalone?: boolean };
-    const nativo = Capacitor.isNativePlatform();
     const atualizarEstadoInstalacao = () => {
       setInstaladoComoApp(
-        nativo ||
         window.matchMedia('(display-mode: standalone)').matches ||
         Boolean(navegadorStandalone.standalone),
       );
@@ -180,9 +168,7 @@ export default function AuthCard({
     atualizarEstadoInstalacao();
     window.addEventListener('beforeinstallprompt', capturarPrompt);
     window.addEventListener('appinstalled', concluirInstalacao);
-    if (!nativo) {
-      navigator.serviceWorker?.register('/sw.js?v=1', { scope: '/' }).catch(() => undefined);
-    }
+    navigator.serviceWorker?.register('/sw.js?v=1', { scope: '/' }).catch(() => undefined);
 
     return () => {
       window.removeEventListener('beforeinstallprompt', capturarPrompt);
@@ -234,18 +220,10 @@ export default function AuthCard({
     return (
       <LandingPage
         onCriarConta={() => {
-          if (aplicativoNativo) {
-            window.location.assign('/acesso?modo=cadastro&origem=gestao');
-            return;
-          }
           setMostrarLandingPreLogin(false);
           setModoAuth('cadastro');
         }}
         onEntrar={() => {
-          if (aplicativoNativo) {
-            window.location.assign('/acesso?modo=login&origem=gestao');
-            return;
-          }
           setMostrarLandingPreLogin(false);
           setModoAuth('login');
         }}
@@ -254,7 +232,7 @@ export default function AuthCard({
   }
 
   return (
-    <main className={`relative overflow-x-hidden font-sans ${aplicativoNativo ? 'h-[100dvh] min-h-0 overflow-y-hidden' : 'min-h-screen'}`}>
+    <main className="relative min-h-screen overflow-x-hidden font-sans">
       {qrMobileAberto && (
         <div className="fixed inset-0 z-[8100] flex items-center justify-center bg-black/60 px-4" onClick={() => setQrMobileAberto(false)}>
           <DraggableModalCard
@@ -343,37 +321,17 @@ export default function AuthCard({
       <div
         className="absolute inset-0 bg-no-repeat lg:hidden"
         style={{
-          backgroundImage: aplicativoNativo
-            ? "image-set(url('/images/bg-avantalab-mobile-1080x1920-sem-logo.webp') type('image/webp'), url('/images/bg-avantalab-mobile-1080x1920-sem-logo.png') type('image/png'))"
-            : "image-set(url('/images/bg-avantalab-mobile-1080x1920.webp') type('image/webp'), url('/images/bg-avantalab-mobile-1080x1920.png') type('image/png'))",
-          backgroundSize: aplicativoNativo ? 'cover' : 'auto 108%',
+          backgroundImage: "image-set(url('/images/bg-avantalab-mobile-1080x1920.webp') type('image/webp'), url('/images/bg-avantalab-mobile-1080x1920.png') type('image/png'))",
+          backgroundSize: 'auto 108%',
           backgroundPosition: 'center bottom',
         }}
       />
 
       <div className="pointer-events-none absolute inset-0 hidden bg-white/10 lg:block" />
 
-      <section className={aplicativoNativo
-        ? 'relative z-10 grid h-[100dvh] min-h-0 grid-rows-[minmax(0,1fr)_auto_minmax(0,1fr)] px-4 pb-[env(safe-area-inset-bottom)] pt-[env(safe-area-inset-top)]'
-        : 'relative z-10 flex min-h-[100dvh] items-start px-4 pb-8 pt-[clamp(8.25rem,18dvh,10rem)] lg:min-h-screen lg:items-center lg:px-20 lg:py-10'}>
-        {aplicativoNativo && (
-          <div className="row-start-1 flex min-h-0 items-center justify-center overflow-hidden px-4 py-2" aria-hidden="true">
-            <Image
-              src="/images/logo-avantalab-oficial.png"
-              alt=""
-              width={1200}
-              height={298}
-              priority
-              className="h-auto max-h-full w-[min(78vw,23rem)] object-contain"
-            />
-          </div>
-        )}
-        <div className={aplicativoNativo ? 'row-start-2 w-full min-w-0' : 'w-full lg:max-w-7xl'}>
-          <div className={`relative z-20 w-full rounded-3xl border p-4 shadow-2xl ${
-            aplicativoNativo
-              ? 'mx-auto max-h-[calc(100dvh-env(safe-area-inset-top)-env(safe-area-inset-bottom)-1rem)] max-w-md overflow-y-auto overscroll-contain border-white/45 bg-white/[0.82] backdrop-blur-xl'
-              : 'border-white/20 bg-white/10 lg:border-white/30 lg:bg-white/70 lg:p-8 lg:backdrop-blur-xl'
-          } ${
+      <section className="relative z-10 flex min-h-[100dvh] items-start px-4 pb-8 pt-[clamp(8.25rem,18dvh,10rem)] lg:min-h-screen lg:items-center lg:px-20 lg:py-10">
+        <div className="w-full lg:max-w-7xl">
+          <div className={`relative z-20 w-full rounded-3xl border border-white/20 bg-white/10 p-4 shadow-2xl lg:border-white/30 lg:bg-white/70 lg:p-8 lg:backdrop-blur-xl ${
             mostrarLandingPreLoginAtiva ? 'lg:max-w-2xl' : 'lg:max-w-md'
           }`}>
             {mostrarLandingPreLoginAtiva ? (
@@ -1097,9 +1055,8 @@ export default function AuthCard({
             )}
             </>
             )}
+            </div>
           </div>
-        </div>
-        {aplicativoNativo && <div className="row-start-3 min-h-0" aria-hidden="true" />}
       </section>
     </main>
   );

@@ -1,33 +1,6 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.6.0.84.56 -->
-
-> Revisão 1.6.0.84.56: no aplicativo Capacitor, uma sessão restaurada na
-> landing segue diretamente ao portal nativo, sem carregar a Gestão Web. Sem
-> mudança operacional na Gestão Web ou no PWA.
-
-> Revisão 1.6.0.84.55: o portal único foi restrito aos aplicativos Capacitor.
-> A Gestão Web e o PWA preservam suas telas, logout e redirecionamentos atuais;
-> sem mudança operacional neste ambiente.
-
-> Revisão 1.6.0.84.54: o cadastro único solicita o tipo de perfil inicial
-> Empresa ou Pessoal e os respectivos dados. O perfil financeiro só é criado e
-> configurado quando o usuário escolhe entrar na Gestão.
-
-> Revisão 1.6.0.84.53: no aplicativo nativo, a conta AvantaLab passa por uma
-> entrada única. Depois do login ou cadastro, o usuário escolhe Gestão ou Vendas
-> e o perfil autorizado; web e PWA mantêm a entrada existente.
-
-> Revisão 1.6.0.84.52: a saída da Gestão Mobile retorna pela mesma entrada sem
-> mensagem técnica, e a barra de status do aplicativo adapta o contraste à tela;
-> sem mudança operacional na Gestão Web.
-
-> Revisão 1.6.0.84.51: ao sair da Gestão no aplicativo, a sessão é encerrada
-> uma única vez e o usuário retorna à landing, sem mensagem técnica. A tela de
-> acesso nativa usa fundo e logo oficiais separados; web e PWA não mudam.
-
-> Revisão 1.6.0.84.50: correção do retorno do Google no acesso nativo ao Vendas;
-> sem impacto operacional na Gestão Web.
+<!-- ava-version: 1.6.0.84.49 -->
 
 > Revisão 1.6.0.84.49: rascunhos do Importador são salvos no servidor do perfil
 > e podem continuar em outro dispositivo; um rascunho local anterior é migrado na abertura.
@@ -53,10 +26,6 @@ Gestão Mobile ou a assinatura/cupom do Premium Pessoal.
 
 ## Navegação e perfis
 
-- Login, cadastro, Google e recuperação de senha usam a entrada única do
-  AvantaLab. Depois de autenticar, o usuário escolhe a plataforma e o perfil
-  autorizados. Criar um perfil Gestão ou solicitar acesso ao Vendas não cria
-  outra conta nem outra senha.
 - O dashboard é a página inicial. Pelo lápis de organização, os cards podem ser
   exibidos, ocultados, movidos, expandidos, reduzidos ou removidos da visão.
 - No perfil Pessoal, **Caixinha** começa visível. No perfil Empresa, **Reserva financeira** começa oculta e pode ser exibida em Organizar blocos; ambas registram aportes como despesa.

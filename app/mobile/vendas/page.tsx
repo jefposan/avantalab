@@ -1,7 +1,5 @@
 import type { Metadata, Viewport } from 'next';
-import Script from 'next/script';
 import AvaMobileBridge from '../AvaMobileBridge';
-import VendasNativeAuthBridge from './VendasNativeAuthBridge';
 
 export const metadata: Metadata = {
   title: 'Vendas Mobile | AvantaLab',
@@ -21,7 +19,7 @@ export const viewport: Viewport = {
 export default function VendasMobilePage() {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
-  const assetVersion = '20260722-07';
+  const assetVersion = '20260722-06';
   const bootstrap = `
     (function () {
       var bridgeCapacitor = window.Capacitor;
@@ -138,12 +136,9 @@ export default function VendasMobilePage() {
           </div>
         </section>
       </div>
-      <Script
-        id="avantalab-vendas-bootstrap"
-        strategy="afterInteractive"
+      <script
         dangerouslySetInnerHTML={{ __html: bootstrap }}
       />
-      <VendasNativeAuthBridge />
       <AvaMobileBridge />
     </main>
   );

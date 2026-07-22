@@ -57,19 +57,6 @@
   var CHAVE_SISTEMA_INICIAL_MOBILE = 'avantalab_mobile_sistema_inicial_';
   var CHAVE_SISTEMA_SESSAO_MOBILE = 'avantalab_mobile_sistema_sessao_';
   var CHAVE_CONTEXTO_SISTEMA_MOBILE = 'avantalab_mobile_sistema_contexto';
-  var encerrandoSessaoMobile = false;
-  var redirecionandoEntradaMobile = false;
-
-  function aplicativoCapacitorMobile() {
-    try {
-      var bridge = window.Capacitor;
-      if (!bridge) return false;
-      if (typeof bridge.isNativePlatform === 'function') return bridge.isNativePlatform();
-      return typeof bridge.getPlatform === 'function' && bridge.getPlatform() !== 'web';
-    } catch (error) {
-      return false;
-    }
-  }
   var meses = [
     'JANEIRO',
     'FEVEREIRO',
@@ -650,31 +637,11 @@
     } catch (error) {}
   }
 
-  function limparFluxosOAuthPendentesMobile() {
-    try {
-      localStorage.removeItem('avantalab.auth.google.iniciado_em');
-      localStorage.removeItem('avantalab.vendas.oauth.iniciado_em');
-      sessionStorage.removeItem('avantalab.vendas.oauth.callback_pendente');
-    } catch (error) {}
-  }
-
-  function redirecionarParaEntradaMobile() {
-    if (redirecionandoEntradaMobile) return;
-    redirecionandoEntradaMobile = true;
-    window.location.replace(
-      aplicativoCapacitorMobile()
-        ? '/acesso?modo=login&origem=gestao'
-        : '/?entrar=1'
-    );
-  }
-
   db.auth.onAuthStateChange(function (evento, sessao) {
     if (sessao && (evento === 'SIGNED_IN' || evento === 'TOKEN_REFRESHED')) {
       renovarSessaoPersistenteMobile();
-    } else if (evento === 'SIGNED_OUT' && state.pronto && !encerrandoSessaoMobile) {
-      limparFluxosOAuthPendentesMobile();
-      limparPreferenciaSessaoMobile();
-      redirecionarParaEntradaMobile();
+    } else if (evento === 'SIGNED_OUT' && state.pronto) {
+      window.location.replace('/?entrar=1');
     }
   });
 
@@ -5933,34 +5900,14 @@
   }
 
   async function sair() {
-    if (encerrandoSessaoMobile || redirecionandoEntradaMobile) return;
-    encerrandoSessaoMobile = true;
-
+    await db.auth.signOut({ scope: 'local' });
     try {
-      var resultadoSaida = await db.auth.signOut({ scope: 'local' });
-      var erroSaida = resultadoSaida && resultadoSaida.error;
-      var sessaoJaAusente = erroSaida && (
-        erroSaida.name === 'AuthSessionMissingError' ||
-        String(erroSaida.message || '').toLowerCase().indexOf('session missing') >= 0
-      );
-      if (erroSaida && !sessaoJaAusente) console.error('Erro ao encerrar sessao mobile:', erroSaida);
-    } catch (erro) {
-      var mensagemErro = String(erro && erro.message || '').toLowerCase();
-      var sessaoJaAusenteNoCatch = erro && (
-        erro.name === 'AuthSessionMissingError' ||
-        mensagemErro.indexOf('session missing') >= 0
-      );
-      if (!sessaoJaAusenteNoCatch) console.error('Erro ao encerrar sessao mobile:', erro);
-    } finally {
-      try {
-        Object.keys(sessionStorage).forEach(function (chave) {
-          if (chave.indexOf(CHAVE_SISTEMA_SESSAO_MOBILE) === 0) sessionStorage.removeItem(chave);
-        });
-      } catch (error) {}
-      limparFluxosOAuthPendentesMobile();
-      limparPreferenciaSessaoMobile();
-      redirecionarParaEntradaMobile();
-    }
+      Object.keys(sessionStorage).forEach(function (chave) {
+        if (chave.indexOf(CHAVE_SISTEMA_SESSAO_MOBILE) === 0) sessionStorage.removeItem(chave);
+      });
+    } catch (error) {}
+    limparPreferenciaSessaoMobile();
+    window.location.replace('/?entrar=1');
   }
 
   function montarContextoIA() {
@@ -13353,8 +13300,8 @@
       window.__avantalabReiniciarProgressoMobile('Validando sua sessão');
     }
 
-    // Parâmetros antigos continuam reconhecidos enquanto os links externos
-    // passam a usar o portal único de acesso.
+    // Deep links da landing: /mobile?cadastro=1 abre direto a tela de criar
+    // cadastro; /mobile?entrar=1 abre direto o card de login (pula boas-vindas).
     try {
       var parametrosLanding = new URLSearchParams(window.location.search);
       if (parametrosLanding.get('cadastro') === '1') {
@@ -13509,10 +13456,6 @@
           if (state.preparacaoAcessoInterrompida) return;
         }
       } else {
-        if (aplicativoCapacitorMobile()) {
-          window.location.replace('/acesso?modo=login&origem=gestao');
-          return;
-        }
         window.location.replace('/?entrar=1');
         return;
       }
