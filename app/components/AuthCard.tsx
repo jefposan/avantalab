@@ -107,7 +107,16 @@ interface AuthCardProps {
 
 function IconeVendas({ nome }: { nome: string }) {
   return (
-    <svg className="h-[18px] w-[18px]" viewBox="0 0 24 24" aria-hidden="true">
+    <svg
+      className="inline-block h-[18px] w-[18px] shrink-0 overflow-visible align-middle"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
       <use href={`/vendas-mobile/assets/icons.svg#${nome}`} />
     </svg>
   );
