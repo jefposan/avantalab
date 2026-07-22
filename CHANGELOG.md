@@ -1,5 +1,77 @@
 # Changelog
 
+## 1.6.0.84.30 - 2026-07-21
+
+- Gestão Web: depois da revisão, o Importador cria no perfil selecionado os
+  lançamentos confirmados com data, tipo de despesa cadastrado, descrição e
+  valor. A gravação é autenticada, atômica e protegida contra repetição do mesmo
+  item de uma fatura já importada.
+- Gestão Web: o PDF continua sem ser armazenado no AvantaLab nesta etapa. Os
+  estornos permanecem visíveis e separados, mas ainda não geram receitas.
+
+## 1.6.0.84.29 - 2026-07-21
+
+- Gestão Web: o Importador de despesas passa a enviar o PDF completo para uma
+  análise visual isolada com GPT-5.6 Sol. Faturas com múltiplas colunas são
+  percorridas página a página; compras futuras, limites e simulações ficam fora.
+- Gestão Web: despesas e estornos/créditos são apresentados em áreas separadas.
+  O usuário pode preparar um estorno como receita, e nenhuma lista é liberada
+  quando despesas menos estornos divergem do total da fatura.
+
+## 1.6.0.84.28 - 2026-07-21
+
+- Gestão Web: o Importador de despesas passa a analisar páginas posteriores de
+  faturas longas e registra estornos transacionais como valores negativos. O
+  total apresentado é líquido — compras menos estornos — para conferir com o
+  saldo da fatura.
+
+## 1.6.0.84.27 - 2026-07-21
+
+- Segurança: o contador interno de NSR do REP-P deixa de ficar acessível pela
+  API pública do banco. O trigger responsável pela sequência legal continua com
+  acesso interno, sem alterar o registro de ponto ou a geração de documentos.
+
+## 1.6.0.84.26 - 2026-07-21
+
+- Gestão Web: a análise de PDFs do Importador de despesas ficou mais rápida e
+  resiliente. Ela envia somente linhas financeiras candidatas e recebe somente
+  as despesas aprovadas, evitando respostas extensas e incompletas em faturas
+  longas; falhas de resposta agora recebem orientação específica.
+
+## 1.6.0.84.25 - 2026-07-21
+
+- Gestão Web: a leitura de PDFs no Importador de despesas passa por análise
+  estruturada com IA no servidor. Ela separa compras e saídas reais dos campos
+  de limite, total, pagamento mínimo, vencimento, saldo, créditos e resumos;
+  todos os resultados continuam sujeitos à revisão humana antes da confirmação.
+
+## 1.6.0.84.24 - 2026-07-21
+
+- Gestão Web: o Importador de despesas permite informar antes do envio se o
+  documento é extrato bancário ou fatura de cartão. A escolha manual tem
+  prioridade sobre a detecção automática e permanece no rascunho salvo.
+
+## 1.6.0.84.23 - 2026-07-21
+
+- Gestão Web: o Importador de despesas distingue extrato bancário de fatura de
+  cartão. Em faturas, cada compra datada é listada como despesa, enquanto total
+  da fatura, limite, vencimento e pagamento mínimo ficam fora da importação.
+
+## 1.6.0.84.22 - 2026-07-21
+
+- Gestão Web: o **Importador de despesas** passa a ler PDFs com texto
+  selecionável. A prévia extrai saídas, ignora entradas e encaminha PDFs
+  digitalizados para a futura etapa de OCR, sem gerar resultados vazios ou
+  imprecisos.
+
+## 1.6.0.84.21 - 2026-07-21
+
+- Gestão Web: adiciona a prévia **Importador de despesas** em
+  `/importador-despesas`. Ela lê CSV, TXT, XLS e XLSX, separa saídas para
+  revisão, confere o total e permite salvar o rascunho para continuar depois no
+  mesmo navegador. A leitura segura de PDF/OCR e o lançamento definitivo serão
+  conectados ao processamento financeiro do AvantaLab em uma etapa posterior.
+
 ## 1.6.0.84.20 - 2026-07-21
 
 - Gestão Web: o perfil Pessoal no plano gratuito passa a abrir a página de

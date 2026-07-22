@@ -1,10 +1,10 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.6.0.84.20 -->
+<!-- ava-version: 1.6.0.84.30 -->
 
-> Revisão 1.6.0.84.20: o plano Pessoal gratuito é atendido no Gestão Mobile.
-> Ao entrar no Gestão Web, ele segue para a assinatura Premium; assinatura
-> vigente ou cortesia libera o acesso web.
+> Revisão 1.6.0.84.30: o Importador grava as despesas confirmadas no perfil
+> selecionado, sem armazenar o arquivo original; sem impacto no Gestão Mobile e
+> no Vendas Mobile.
 
 ## Escopo
 
@@ -31,6 +31,20 @@ Gestão Mobile ou a assinatura/cupom do Premium Pessoal.
 
 - O sistema registra receitas, despesas, despesas futuras, parcelamentos e
   despesas fixas.
+- Na prévia `/importador-despesas`, o usuário envia CSV, TXT, XLS, XLSX ou PDF.
+  Para PDF, a IA estruturada analisa visualmente todas as páginas e colunas e separa compras e saídas
+  reais dos campos de limite, total, vencimento, pagamento mínimo, saldo,
+  crédito, compras futuras, simulações e resumo. Em extrato, ficam somente
+  saídas; em fatura, despesas e estornos/créditos aparecem em áreas separadas.
+  O estorno só é preparado como receita quando o usuário o selecionar, e a
+  lista não é liberada se despesas menos estornos divergirem do total do
+  documento. Antes de enviar, o usuário pode selecionar o tipo do documento para
+  substituir a detecção automática. O usuário escolhe o perfil de destino,
+  confere cada linha, seleciona um tipo de despesa já cadastrado e pode salvar o
+  rascunho para continuar depois no mesmo navegador. Ao confirmar, data, tipo,
+  descrição e valor são gravados em Lançamentos; uma nova tentativa do mesmo
+  lote não duplica os itens. O PDF original não é armazenado no AvantaLab nesta
+  etapa. Estornos ficam separados e ainda não são lançados como receitas.
 - Despesas futuras ficam marcadas como **Previsto** até confirmação. Alterar a
   data preserva essa natureza.
 - Parcelamentos criam os lançamentos dos meses correspondentes.
