@@ -6687,7 +6687,7 @@ if (modalSelecionarEmpresa) {
         </div>
 
         <div className="p-4 space-y-3">
-          <div className="space-y-2 max-h-[45vh] overflow-y-auto pr-1">
+          <div className="max-h-[45vh] space-y-2 overflow-y-auto px-1 pr-2">
             {empresasDoUsuario.map((empresa) => {
               const perfilAtualInativo = modoSelecaoPerfil === 'troca' && empresa.id === empresaId;
               const selecionada = !perfilAtualInativo && empresaParaSelecionar?.id === empresa.id;
@@ -6697,61 +6697,65 @@ if (modalSelecionarEmpresa) {
               const textoPerfil = corEhClara(corPerfil) ? '#0f172a' : '#ffffff';
 
               return (
-                <button
+                <div
                   key={empresa.id}
-                  type="button"
-                  disabled={perfilAtualInativo}
-                  onClick={() => { if (!perfilAtualInativo) setEmpresaParaSelecionar(empresa); }}
-                  aria-current={perfilAtualInativo ? 'true' : undefined}
-                  className={`w-full rounded-xl border px-3 py-2.5 text-left shadow-sm transition cursor-pointer active:scale-[0.98] active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-55 disabled:active:scale-100 disabled:active:translate-y-0 ${
-                    selecionada
-                      ? 'border-2 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.28)]'
-                      : 'hover:brightness-110'
-                  }`}
+                  className="mr-1 w-[calc(100%-4px)] rounded-xl p-[2px] shadow-sm"
                   style={{
-                    background: `linear-gradient(90deg, color-mix(in srgb, ${corPerfil} 68%, #0f172a) 0%, ${corPerfil} 100%)`,
-                    borderColor: selecionada ? 'rgba(255, 255, 255, 0.9)' : corPerfil,
-                    color: textoPerfil,
+                    background: `linear-gradient(90deg, color-mix(in srgb, ${corPerfil} 14%, transparent) 0%, color-mix(in srgb, ${corPerfil} 78%, transparent) 100%)`,
                   }}
                 >
-                  <div className="flex items-center justify-between gap-3">
-                    <div>
-                      <h3 className="text-sm font-black">
-                        {empresa.nome || empresa.empresa_nome}
-                      </h3>
+                  <button
+                    type="button"
+                    disabled={perfilAtualInativo}
+                    onClick={() => { if (!perfilAtualInativo) setEmpresaParaSelecionar(empresa); }}
+                    aria-current={perfilAtualInativo ? 'true' : undefined}
+                    className="w-full rounded-[10px] px-3 py-2.5 text-left transition hover:brightness-105 active:translate-y-px active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-55 disabled:active:translate-y-0 disabled:active:scale-100"
+                    style={{
+                      backgroundColor: darkMode ? '#0f172a' : '#ffffff',
+                      backgroundImage: `linear-gradient(90deg, color-mix(in srgb, ${corPerfil} 64%, transparent) 0%, color-mix(in srgb, ${corPerfil} 10%, transparent) 100%)`,
+                      color: textoPerfil,
+                      textShadow: textoPerfil === '#ffffff' ? '0 1px 2px rgba(15, 23, 42, 0.38)' : undefined,
+                    }}
+                  >
+                    <div className="flex items-center justify-between gap-3">
+                      <div>
+                        <h3 className="text-sm font-black">
+                          {empresa.nome || empresa.empresa_nome}
+                        </h3>
 
-                      <p className="text-xs opacity-85">
-                        {rotuloTipoPerfil(empresa.tipo_perfil)} · {empresa.perfil === 'gestor_master'
-                          ? 'Gestor Master'
-                          : empresa.perfil === 'administrador'
-                            ? 'Administrador'
-                            : empresa.perfil === 'operador_completo'
-                              ? 'Operador Completo'
-                              : empresa.perfil === 'operador_simples'
-                                ? 'Operador Simples'
-                                : 'Não definido'}
-                      </p>
+                        <p className="text-xs opacity-85">
+                          {rotuloTipoPerfil(empresa.tipo_perfil)} · {empresa.perfil === 'gestor_master'
+                            ? 'Gestor Master'
+                            : empresa.perfil === 'administrador'
+                              ? 'Administrador'
+                              : empresa.perfil === 'operador_completo'
+                                ? 'Operador Completo'
+                                : empresa.perfil === 'operador_simples'
+                                  ? 'Operador Simples'
+                                  : 'Não definido'}
+                        </p>
+                      </div>
+
+                      {perfilAtualInativo ? (
+                        <span className="shrink-0 rounded-full border border-current/60 bg-black/10 px-2 py-1 text-[10px] font-black uppercase tracking-wide">
+                          Em uso
+                        </span>
+                      ) : (
+                        <span
+                          className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-full border ${
+                            selecionada
+                              ? 'border-white bg-white/20'
+                              : 'border-current/70 bg-black/10'
+                          }`}
+                        >
+                          {selecionada && (
+                            <span className="h-1.5 w-1.5 rounded-full bg-white" />
+                          )}
+                        </span>
+                      )}
                     </div>
-
-                    {perfilAtualInativo ? (
-                      <span className="shrink-0 rounded-full border border-current/60 bg-black/10 px-2 py-1 text-[10px] font-black uppercase tracking-wide">
-                        Em uso
-                      </span>
-                    ) : (
-                      <span
-                        className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-full border ${
-                          selecionada
-                            ? 'border-white bg-white/20'
-                            : 'border-current/70 bg-black/10'
-                        }`}
-                      >
-                        {selecionada && (
-                          <span className="h-1.5 w-1.5 rounded-full bg-white" />
-                        )}
-                      </span>
-                    )}
-                  </div>
-                </button>
+                  </button>
+                </div>
               );
             })}
           </div>
@@ -6760,8 +6764,11 @@ if (modalSelecionarEmpresa) {
             <button
               type="button"
               onClick={abrirCriacaoNovaEmpresa}
-              className="rounded-lg px-4 py-2 text-xs font-black shadow transition hover:brightness-110 active:scale-95 cursor-pointer disabled:cursor-not-allowed disabled:opacity-60"
-              style={estiloTemaPrimario}
+              className={`rounded-lg border px-4 py-2 text-xs font-black shadow-sm transition active:scale-95 cursor-pointer disabled:cursor-not-allowed disabled:opacity-60 ${
+                darkMode
+                  ? 'border-sky-800/50 bg-sky-950/30 text-sky-300 hover:bg-sky-900/50'
+                  : 'border-sky-200 bg-sky-50 text-sky-700 hover:bg-sky-100'
+              }`}
             >
               Criar novo perfil
             </button>
@@ -6786,8 +6793,7 @@ if (modalSelecionarEmpresa) {
               if (!empresaParaSelecionar) return;
               await carregarEmpresaSelecionada(empresaParaSelecionar);
             }}
-            className="mt-3 w-full rounded-xl px-4 py-2.5 text-xs font-black uppercase tracking-wide text-white shadow-sm transition hover:brightness-110 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60"
-            style={estiloTemaPrimario}
+            className="mt-3 w-full rounded-xl bg-sky-600 px-4 py-2.5 text-xs font-black uppercase tracking-wide text-white shadow-sm transition hover:bg-sky-700 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60"
           >
             Confirmar acesso
           </button>

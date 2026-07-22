@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.6.0.84.49 -->
+<!-- ava-version: 1.6.0.84.50 -->
+
+> Revisão 1.6.0.84.50: ajuste visual do seletor de perfil da Gestão Web; sem
+> impacto operacional na Gestão Mobile.
 
 > Revisão 1.6.0.84.49: rascunhos no servidor do Importador Web; sem impacto operacional na Gestão Mobile.
 

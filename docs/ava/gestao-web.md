@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.6.0.84.49 -->
+<!-- ava-version: 1.6.0.84.50 -->
+
+> Revisão 1.6.0.84.50: o seletor de perfil recebeu ajuste visual nas cores e
+> ações; sem mudança operacional no acesso.
 
 > Revisão 1.6.0.84.49: rascunhos do Importador são salvos no servidor do perfil
 > e podem continuar em outro dispositivo; um rascunho local anterior é migrado na abertura.

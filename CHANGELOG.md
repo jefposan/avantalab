@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.6.0.84.50 - 2026-07-22
+
+- Gestão Web: o seletor de perfis recupera o botão azul intenso de confirmação
+  e passa a apresentar as cores dos perfis em gradiente translúcido e mais suave.
+
 ## 1.6.0.84.49 - 2026-07-22
 
 - Gestão Web: rascunhos da importação passam a ser salvos no servidor por perfil
