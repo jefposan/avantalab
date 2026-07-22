@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.6.0.84.21 - 2026-07-21
+
+- Segurança: o contador interno de NSR do REP-P deixa de ficar acessível pela
+  API pública do banco. O trigger responsável pela sequência legal continua com
+  acesso interno, sem alterar o registro de ponto ou a geração de documentos.
+
 ## 1.6.0.84.20 - 2026-07-21
 
 - Gestão Web: o perfil Pessoal no plano gratuito passa a abrir a página de

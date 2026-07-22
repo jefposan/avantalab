@@ -1,9 +1,9 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.6.0.84.20 -->
+<!-- ava-version: 1.6.0.84.21 -->
 
-> Revisão 1.6.0.84.20: o plano Pessoal gratuito permanece disponível na Gestão
-> Mobile; o bloqueio de acesso web não altera este aplicativo.
+> Revisão 1.6.0.84.21: proteção técnica do contador interno de NSR do REP-P;
+> sem impacto operacional na Gestão Mobile.
 
 ## Escopo
 
