@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.6.0.84.48 -->
+<!-- ava-version: 1.6.0.84.49 -->
+
+> Revisão 1.6.0.84.49: rascunhos do Importador são salvos no servidor do perfil
+> e podem continuar em outro dispositivo; um rascunho local anterior é migrado na abertura.
 
 > Revisão 1.6.0.84.48: padronização visual das cenas de acesso do Vendas; sem
 > impacto operacional na Gestão Web.

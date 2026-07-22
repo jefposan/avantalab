@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.6.0.84.49 - 2026-07-22
+
+- Gestão Web: rascunhos da importação passam a ser salvos no servidor por perfil
+  e usuário; um rascunho local existente é migrado automaticamente na próxima abertura.
+
 ## 1.6.0.84.48 - 2026-07-22
 
 - Vendas Mobile: todas as cenas de acesso passam a usar o fundo oficial sem

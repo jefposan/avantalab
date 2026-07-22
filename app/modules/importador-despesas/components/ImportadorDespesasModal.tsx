@@ -160,6 +160,7 @@ export default function ImportadorDespesasModal({ arquivo, retomarRascunho = fal
   const [loteChave, setLoteChave] = useState('');
   const [nomeArquivo, setNomeArquivo] = useState('');
   const [salvoEm, setSalvoEm] = useState('');
+  const [rascunhoRemoto, setRascunhoRemoto] = useState<RascunhoImportador | null>(null);
   const [valoresDigitados, setValoresDigitados] = useState<Record<string, string>>({});
   const focoLinhas = useRef<Record<string, HTMLSelectElement | null>>({});
   const progressoAtual = useRef(7);
@@ -261,24 +262,46 @@ export default function ImportadorDespesasModal({ arquivo, retomarRascunho = fal
   useEffect(() => { if (arquivo) void analisar('automatico'); }, [arquivo]);
 
   useEffect(() => {
+    if (!empresaId) return;
+    const sincronizar = async () => {
+      const { data: sessao } = await supabase.auth.getSession(); const usuarioId = sessao.session?.user.id;
+      if (!usuarioId) return;
+      const salvo = window.localStorage.getItem(CHAVE_RASCUNHO);
+      const local = salvo ? JSON.parse(salvo) as RascunhoImportador : null;
+      if (local?.versao === 1 && local.empresaId === empresaId && Array.isArray(local.itens)) {
+        const { error } = await supabase.from('importador_despesas_rascunhos').upsert({ empresa_id: empresaId, usuario_id: usuarioId, dados: local, atualizado_em: new Date().toISOString() }, { onConflict: 'empresa_id,usuario_id' });
+        if (!error) window.localStorage.removeItem(CHAVE_RASCUNHO);
+      }
+      const { data } = await supabase.from('importador_despesas_rascunhos').select('dados').eq('empresa_id', empresaId).eq('usuario_id', usuarioId).maybeSingle();
+      const remoto = data?.dados as RascunhoImportador | null;
+      if (remoto?.versao === 1 && remoto.empresaId === empresaId && Array.isArray(remoto.itens)) { setRascunhoRemoto(remoto); onEstadoRascunho?.(true); }
+    };
+    void sincronizar();
+  }, [empresaId]);
+
+  useEffect(() => {
     if (!retomarRascunho || arquivo) return;
     try {
       const salvo = window.localStorage.getItem(CHAVE_RASCUNHO);
-      const rascunho = salvo ? JSON.parse(salvo) as RascunhoImportador : null;
+      const rascunho = rascunhoRemoto || (salvo ? JSON.parse(salvo) as RascunhoImportador : null);
       if (!rascunho || rascunho.versao !== 1 || rascunho.empresaId !== empresaId || !Array.isArray(rascunho.itens)) throw new Error('O rascunho não pertence a este perfil ou não está mais disponível.');
       setItens(rascunho.itens.map((item) => ({ ...item, valorOriginal: Number.isFinite(item.valorOriginal) ? item.valorOriginal : item.valor })));
       setLoteChave(rascunho.loteChave); setNomeArquivo(rascunho.nomeArquivo); setTipoDocumento(rascunho.tipoDocumento); setTipoDetectado(rascunho.tipoDetectado); setTotalDocumento(rascunho.totalDocumento); setSalvoEm(rascunho.salvoEm); setErro(''); setEtapa('revisando');
     } catch (causa) {
       setErro(causa instanceof Error ? causa.message : 'Não foi possível recuperar o rascunho.'); setEtapa('revisando'); onEstadoRascunho?.(false);
     }
-  }, [retomarRascunho, arquivo, empresaId, onEstadoRascunho]);
+  }, [retomarRascunho, arquivo, empresaId, onEstadoRascunho, rascunhoRemoto]);
 
   const salvarRascunho = () => {
     if (!itens.length) { setErro('Aguarde a análise terminar antes de salvar o rascunho.'); return false; }
     const chave = loteChave || crypto.randomUUID();
     const agora = new Date().toLocaleString('pt-BR');
     const rascunho: RascunhoImportador = { versao: 1, empresaId, loteChave: chave, nomeArquivo: nomeArquivo || arquivo?.name || 'Documento importado', tipoDocumento, tipoDetectado, totalDocumento, itens, salvoEm: agora };
-    window.localStorage.setItem(CHAVE_RASCUNHO, JSON.stringify(rascunho));
+    const { data: sessao } = await supabase.auth.getSession();
+    if (!sessao.session?.user.id) { setErro('Sua sessão expirou. Entre novamente.'); return false; }
+    const { error: erroServidor } = await supabase.from('importador_despesas_rascunhos').upsert({ empresa_id: empresaId, usuario_id: sessao.session.user.id, dados: rascunho, atualizado_em: new Date().toISOString() }, { onConflict: 'empresa_id,usuario_id' });
+    if (erroServidor) { setErro('Não foi possível salvar o rascunho no servidor.'); return false; }
+    window.localStorage.removeItem(CHAVE_RASCUNHO); setRascunhoRemoto(rascunho);
     setLoteChave(chave); setSalvoEm(agora); setErro(''); onEstadoRascunho?.(true);
     return true;
   };
@@ -289,7 +312,7 @@ export default function ImportadorDespesasModal({ arquivo, retomarRascunho = fal
       const chave = loteChave || crypto.randomUUID();
       const agora = new Date().toLocaleString('pt-BR');
       const rascunho: RascunhoImportador = { versao: 1, empresaId, loteChave: chave, nomeArquivo: nomeArquivo || arquivo?.name || 'Documento importado', tipoDocumento, tipoDetectado, totalDocumento, itens, salvoEm: agora };
-      window.localStorage.setItem(CHAVE_RASCUNHO, JSON.stringify(rascunho));
+      void supabase.auth.getSession().then(({ data }) => data.session?.user.id && supabase.from('importador_despesas_rascunhos').upsert({ empresa_id: empresaId, usuario_id: data.session.user.id, dados: rascunho, atualizado_em: new Date().toISOString() }, { onConflict: 'empresa_id,usuario_id' }).then(({ error }) => { if (!error) { window.localStorage.removeItem(CHAVE_RASCUNHO); setRascunhoRemoto(rascunho); } }));
       if (!loteChave) setLoteChave(chave);
       setSalvoEm(agora); onEstadoRascunho?.(true);
     }, 700);
@@ -299,7 +322,8 @@ export default function ImportadorDespesasModal({ arquivo, retomarRascunho = fal
   const salvarEFechar = () => { if (salvarRascunho()) fechar(); };
 
   const descartarRascunho = () => {
-    window.localStorage.removeItem(CHAVE_RASCUNHO);
+    void supabase.auth.getSession().then(({ data }) => data.session?.user.id && supabase.from('importador_despesas_rascunhos').delete().eq('empresa_id', empresaId).eq('usuario_id', data.session.user.id));
+    window.localStorage.removeItem(CHAVE_RASCUNHO); setRascunhoRemoto(null);
     onEstadoRascunho?.(false);
     fechar();
   };
@@ -323,7 +347,7 @@ export default function ImportadorDespesasModal({ arquivo, retomarRascunho = fal
       const corpo = await resposta.json().catch(() => null);
       if (!resposta.ok || corpo?.erro) throw new Error(corpo?.mensagem || 'Não foi possível inserir os lançamentos.');
       setProgresso(100); setDetalhe('Lançamentos inseridos com sucesso.');
-      window.localStorage.removeItem(CHAVE_RASCUNHO); onEstadoRascunho?.(false);
+      const usuarioId = data.session?.user.id; if (usuarioId) await supabase.from('importador_despesas_rascunhos').delete().eq('empresa_id', empresaId).eq('usuario_id', usuarioId); window.localStorage.removeItem(CHAVE_RASCUNHO); setRascunhoRemoto(null); onEstadoRascunho?.(false);
       await onConcluido();
       window.setTimeout(fechar, 450);
     } catch (causa) {

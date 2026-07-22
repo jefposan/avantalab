@@ -1,6 +1,8 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.6.0.84.48 -->
+<!-- ava-version: 1.6.0.84.49 -->
+
+> Revisão 1.6.0.84.49: rascunhos no servidor do Importador Web; sem impacto operacional no Vendas Mobile.
 
 > Revisão 1.6.0.84.48: login, cadastro, validação, vínculo, aprovação,
 > seletores e preparação usam o fundo e o logo oficiais separados. A marca fica
