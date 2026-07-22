@@ -1,10 +1,9 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.6.0.84.35 -->
+<!-- ava-version: 1.6.0.84.38 -->
 
-> Revisão 1.6.0.84.35: resumo de consumo Pro no administrativo web; sem impacto
-> operacional em Vendas.
-> sem impacto operacional no Vendas Mobile.
+> Revisão 1.6.0.84.38: cabeçalho, painéis fixos, login e cadastro reservam a
+> área segura do iPhone; o formulário permanece rolável sem mover o documento.
 
 ## Escopo e navegação
 

@@ -1,5 +1,16 @@
 # Changelog
 
+## 1.6.0.84.38 - 2026-07-22
+
+- Vendas Mobile: login e cadastro deixam de mover o documento inteiro pelo
+  gesto elástico do iPhone; formulários longos mantêm rolagem interna.
+
+## 1.6.0.84.36 - 2026-07-22
+
+- Vendas Mobile: cabeçalho, painéis fixos, sala de botões, login, cadastro,
+  seleção de perfil e modais passam a reservar a área segura do iPhone desde a
+  abertura inicial do aplicativo.
+
 ## 1.6.0.84.35 - 2026-07-22
 
 - Administração: o resumo de consumo passa a usar os limites contratados do

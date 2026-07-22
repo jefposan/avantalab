@@ -1,13 +1,9 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.6.0.84.35 -->
+<!-- ava-version: 1.6.0.84.38 -->
 
-> Revisão 1.6.0.84.35: resumo administrativo considera os limites do Supabase
-> Pro. PDFs de extratos e faturas são descartados após a
-> análise; recibos em imagem continuam anexáveis. O botão Arquivo
-> dos Lançamentos abre a conferência de
-> extratos e faturas com progresso, revisão e foco nas pendências; sem impacto
-> no Gestão Mobile e no Vendas Mobile.
+> Revisão 1.6.0.84.38: a área segura do iPhone passa a ser reservada no Vendas
+> Mobile desde a abertura inicial; sem impacto operacional na Gestão Web.
 
 ## Escopo
 

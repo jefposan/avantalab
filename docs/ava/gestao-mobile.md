@@ -1,10 +1,9 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.6.0.84.35 -->
+<!-- ava-version: 1.6.0.84.38 -->
 
-> Revisão 1.6.0.84.35: resumo de consumo Pro no administrativo web; sem impacto
-> operacional no mobile.
-> sem impacto operacional na Gestão Mobile.
+> Revisão 1.6.0.84.38: a rolagem elástica do login e cadastro foi contida no
+> Vendas Mobile; sem impacto operacional na Gestão Mobile.
 
 ## Escopo
 
