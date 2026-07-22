@@ -105,6 +105,14 @@ interface AuthCardProps {
   reenviarCodigoRedefinirSenha: () => Promise<void>;
 }
 
+function IconeVendas({ nome }: { nome: string }) {
+  return (
+    <svg className="h-[18px] w-[18px]" viewBox="0 0 24 24" aria-hidden="true">
+      <use href={`/vendas-mobile/assets/icons.svg#${nome}`} />
+    </svg>
+  );
+}
+
 export default function AuthCard({
   modalAvisoAberto, tituloAviso, mensagemAviso, tipoAviso, fecharAviso,
   modoAuth, setModoAuth,
@@ -339,17 +347,17 @@ export default function AuthCard({
 
       <div className="pointer-events-none absolute inset-0 hidden bg-white/10 lg:block" />
 
-      <section className={`relative z-10 flex min-h-[100dvh] px-4 pb-8 lg:min-h-screen lg:items-center lg:px-20 lg:py-10 ${
-        loginMobilePadrao ? 'items-center pt-[max(env(safe-area-inset-top),1.5rem)]' : 'items-start pt-[clamp(8.25rem,18dvh,10rem)]'
+      <section className={`relative z-10 min-h-[100dvh] px-4 pb-8 lg:flex lg:min-h-screen lg:items-center lg:px-20 lg:py-10 ${
+        loginMobilePadrao ? 'grid grid-rows-[minmax(0,1fr)_auto_minmax(0,1fr)] items-stretch pt-0' : 'flex items-start pt-[clamp(8.25rem,18dvh,10rem)]'
       }`}>
-        <div className="w-full lg:max-w-7xl">
+        <div className={loginMobilePadrao ? 'contents lg:block lg:w-full lg:max-w-7xl' : 'w-full lg:max-w-7xl'}>
           {loginMobilePadrao && (
-            <div className="mb-6 flex justify-center lg:hidden">
+            <div className="row-start-1 grid min-h-0 place-items-center overflow-hidden pt-[env(safe-area-inset-top)] lg:hidden">
               <Image src="/images/logo-avantalab-oficial.png" alt="AvantaLab — Do zero ao operacional" width={310} height={90} priority className="h-auto w-[min(78vw,310px)]" />
             </div>
           )}
           <div className={`relative z-20 w-full rounded-3xl border p-4 shadow-2xl lg:border-white/30 lg:bg-white/70 lg:p-8 lg:backdrop-blur-xl ${
-            loginMobilePadrao ? 'border-white/70 bg-white/95 p-6' : 'border-white/20 bg-white/10'
+            loginMobilePadrao ? 'row-start-2 mx-auto w-full max-w-[420px] self-center border-0 bg-white p-7 shadow-[0_18px_45px_rgba(0,31,60,0.28)]' : 'border-white/20 bg-white/10'
           } ${
             mostrarLandingPreLoginAtiva ? 'lg:max-w-2xl' : 'lg:max-w-md'
           }`}>
@@ -564,7 +572,41 @@ export default function AuthCard({
     </button>
   </div>
 ) : modoAuth === 'login' ? (
-  <div className="space-y-3">
+  <>
+  <form
+    onSubmit={(e) => { e.preventDefault(); void handleLogin(tipoLogin); }}
+    className="grid gap-[18px] lg:hidden"
+  >
+    <div className="flex rounded-[12px] bg-[#eef3f5] p-1">
+      <button type="button" onClick={() => alterarTipoLogin('email')} className={`inline-flex min-h-10 flex-1 items-center justify-center gap-2 rounded-[9px] border-0 text-sm font-bold ${!loginPorTelefone ? 'bg-white text-[#248b85] shadow-[0_2px_5px_rgba(0,0,0,.1)]' : 'text-[#6d7680]'}`}><IconeVendas nome="mail" />E-mail</button>
+      <button type="button" onClick={() => alterarTipoLogin('telefone')} className={`inline-flex min-h-10 flex-1 items-center justify-center gap-2 rounded-[9px] border-0 text-sm font-bold ${loginPorTelefone ? 'bg-white text-[#248b85] shadow-[0_2px_5px_rgba(0,0,0,.1)]' : 'text-[#6d7680]'}`}><IconeVendas nome="phone" />Telefone</button>
+    </div>
+    <label className="grid gap-[7px] text-[13px] font-extrabold text-[#3d454d]">
+      {loginPorTelefone ? 'Telefone' : 'E-mail'}
+      <span className="relative flex items-center">
+        <span className="absolute left-[13px] text-[#88919a]"><IconeVendas nome={loginPorTelefone ? 'phone' : 'mail'} /></span>
+        <input type={loginPorTelefone ? 'tel' : 'email'} inputMode={loginPorTelefone ? 'tel' : 'email'} autoComplete={loginPorTelefone ? 'tel' : 'email'} placeholder={loginPorTelefone ? 'Digite seu telefone' : 'Digite seu e-mail'} value={loginEmail} onChange={(e) => setLoginEmail(loginPorTelefone ? formatarTelefoneCadastro(e.target.value, '55') : e.target.value)} className="h-12 w-full rounded-xl border border-[#d9e0e4] py-0 pl-[42px] pr-[42px] text-[16px] text-[#2d353b] outline-[#55b9b1]" />
+      </span>
+    </label>
+    <label className="grid gap-[7px] text-[13px] font-extrabold text-[#3d454d]">
+      Senha
+      <span className="relative flex items-center">
+        <span className="absolute left-[13px] text-[#88919a]"><IconeVendas nome="lock" /></span>
+        <input type={mostrarSenhaLogin ? 'text' : 'password'} autoComplete="current-password" placeholder="Digite sua senha" value={loginSenha} onChange={(e) => setLoginSenha(e.target.value)} className="h-12 w-full rounded-xl border border-[#d9e0e4] py-0 pl-[42px] pr-[42px] text-[16px] text-[#2d353b] outline-[#55b9b1]" />
+        <button type="button" onClick={() => setMostrarSenhaLogin((mostrar) => !mostrar)} aria-label={mostrarSenhaLogin ? 'Ocultar senha' : 'Exibir senha'} className="absolute right-[5px] grid size-[39px] place-items-center rounded-lg text-[#717b84]"><IconeVendas nome="eye" /></button>
+      </span>
+    </label>
+    <div className="-mt-[3px] flex items-center justify-between gap-3">
+      <label className="flex items-center gap-[7px] text-[13px] font-semibold text-[#59616a]"><input type="checkbox" className="peer sr-only" defaultChecked /><span className="size-[18px] rounded-[5px] border border-[#b9c2c8] bg-white peer-checked:border-[#319d98] peer-checked:bg-[#319d98] peer-checked:shadow-[inset_0_0_0_4px_#fff]" />Lembrar-me</label>
+      <button type="button" onClick={handleRecuperarSenha} className="text-[13px] font-extrabold text-[#248b85]">Esqueceu a senha?</button>
+    </div>
+    {authErro && <div className="text-center text-[13px] text-red-600">{authErro}</div>}
+    {authMensagem && <div className="text-center text-[13px] text-emerald-700">{authMensagem}</div>}
+    <button type="submit" disabled={authLoading} className="min-h-[38px] rounded-[10px] bg-[#0A1F44] text-sm font-extrabold text-white disabled:opacity-60">{authLoading ? 'Entrando...' : 'Entrar'}</button>
+    <button type="button" onClick={handleGoogleLogin} disabled={googleLoading} className="inline-flex min-h-[38px] items-center justify-center gap-[10px] rounded-[10px] border border-[#d9e0e4] bg-white text-[13px] font-extrabold text-[#334155] disabled:opacity-60"><span className="grid size-[21px] place-items-center rounded-full bg-[conic-gradient(from_-45deg,_#4285f4_0_25%,_#34a853_0_45%,_#fbbc05_0_68%,_#ea4335_0_100%)] text-sm font-black text-white">G</span>{googleLoading ? 'Conectando...' : 'Continuar com Google'}</button>
+    <p className="-mt-1 text-center text-sm text-[#737b83]">Não tem conta? <button type="button" onClick={() => setModoAuth('cadastro')} className="font-extrabold text-[#248b85]">Cadastre-se</button></p>
+  </form>
+  <div className="hidden space-y-3 lg:block">
 
         {/* ================= INÍCIO DO FORMULÁRIO DE LOGIN ================= */}
 
@@ -783,6 +825,7 @@ export default function AuthCard({
 {/* ================= FIM DO FORMULÁRIO DE CADASTRO ================= */}
 
               </div>
+            </>
             ) : (
               <div className="space-y-1">
                 <div className="grid grid-cols-2 gap-1.5 rounded-xl border border-slate-200 bg-slate-50 p-1">
