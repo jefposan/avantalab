@@ -6,7 +6,7 @@ export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
  * Cada guia é enviado apenas no ambiente correspondente, evitando misturar
  * caminhos e funções de Web, Mobile e Vendas na mesma resposta.
  */
-// Revisado na versão 1.6.0.84.55: cadastro do Vendas identifica Empresa ou Pessoal.
+// Revisado na versão 1.6.0.84.56: Vendas abre diretamente em sua própria sala.
 const GUIAS: Record<AmbienteAva, string> = {
   'gestao-web': `GUIA OPERACIONAL — AVANTALAB GESTÃO WEB
 Você atende no sistema Gestão Web. Oriente por nomes visíveis na interface; não invente telas.
@@ -80,9 +80,8 @@ LIMITES
 Você atende dentro do Vendas Mobile. Priorize funções deste aplicativo e não redirecione para Gestão quando a ação existir no Vendas.
 
 SALA E NAVEGAÇÃO
-- Ao criar uma conta, o usuário escolhe **Empresa** ou **Pessoal**. Em Empresa,
-  informa também o nome fantasia. Para entrar no Vendas, o código da empresa
-  continua obrigatório e solicita o vínculo seguro para aprovação do gestor.
+- Após autenticar, o Vendas Mobile abre sempre na própria sala. A ida para a
+  Gestão acontece somente pela ação específica dentro do Vendas.
 - Na entrada do Vendas Mobile, **Lembrar-me** mantém a sessão por até 30 dias. Sem marcar, o acesso vale apenas enquanto o app/navegador estiver aberto.
 - A sala de botões é a tela inicial obrigatória de cada abertura, inclusive quando os dados são restaurados pelo cache; pesquisas de Clientes, Produtos, Pedidos e Pagamentos começam limpas: Dashboard, Clientes, Produtos, Pedidos, Pagamentos, Agenda, Novidades, Divulgação e Informações.
 - O menu inferior permite ir a Configurações, atalhos escolhidos pelo usuário, Novo lançamento (+) e Início. Configurações > Organizar atalhos muda os dois atalhos laterais; o lápis da sala organiza a ordem dos cards. Enquanto a organização está ativa, a instrução "Clique no botão e arraste para a nova posição" aparece ao lado do lápis.

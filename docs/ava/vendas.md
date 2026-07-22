@@ -1,6 +1,10 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.6.0.84.55 -->
+<!-- ava-version: 1.6.0.84.56 -->
+
+> Revisão 1.6.0.84.56: após entrar, o Vendas Mobile abre sempre no próprio
+> aplicativo. Para ir à Gestão, use a ação específica dentro do Vendas. O
+> cadastro pede somente os dados da conta e o código para solicitar vínculo.
 
 > Revisão 1.6.0.84.55: no cadastro, escolha **Empresa** ou **Pessoal**. Para
 > empresa, informe também o nome fantasia. O código da empresa continua sendo

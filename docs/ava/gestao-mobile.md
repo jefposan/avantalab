@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.6.0.84.55 -->
+<!-- ava-version: 1.6.0.84.56 -->
+
+> Revisão 1.6.0.84.56: o Vendas Mobile abre diretamente no próprio aplicativo;
+> sem impacto operacional na Gestão Mobile.
 
 > Revisão 1.6.0.84.55: campos adicionais no cadastro do Vendas Mobile; sem
 > impacto operacional na Gestão Mobile.

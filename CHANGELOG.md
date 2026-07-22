@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.6.0.84.56 - 2026-07-22
+
+- Vendas Mobile: após autenticar, abre sempre no próprio Vendas, sem exibir a
+  escolha de sistema. A Gestão permanece disponível somente pela navegação
+  explícita dentro do aplicativo. O cadastro volta a solicitar somente os dados
+  necessários para criar a conta e pedir vínculo por código da empresa.
+
 ## 1.6.0.84.55 - 2026-07-22
 
 - Vendas Mobile: o cadastro agora permite indicar o tipo **Empresa** ou
