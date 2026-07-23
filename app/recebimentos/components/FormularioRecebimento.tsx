@@ -43,9 +43,9 @@ export default function FormularioRecebimento({ empresas, subempresas, recebimen
     [subempresas, empresaId],
   );
 
-  // O colaborador recebe uma fila objetiva: todos os vencidos e somente o
-  // primeiro vencimento ainda futuro. As demais parcelas futuras permanecem
-  // ocultas até se tornarem a próxima cobrança disponível.
+  // O colaborador recebe uma fila objetiva: todos os vencidos e todos os
+  // clientes cujo vencimento seja na próxima data disponível da empresa.
+  // Assim, ao abrir uma empresa, ninguém com cobrança no mesmo dia fica oculto.
   const cobrancasAbertas = useMemo(
     () => {
       const abertas = recebimentos
@@ -61,9 +61,12 @@ export default function FormularioRecebimento({ empresas, subempresas, recebimen
       // status persistido ainda não tenha sido atualizado pela sincronização.
       const vencidas = abertas.filter((r) => r.vencimento < hojeIso);
       const idsVencidos = new Set(vencidas.map((r) => r.id));
-      const proxima = abertas.find((r) => !idsVencidos.has(r.id));
+      const proximaData = abertas.find((r) => !idsVencidos.has(r.id))?.vencimento;
+      const proximas = proximaData
+        ? abertas.filter((r) => !idsVencidos.has(r.id) && r.vencimento === proximaData)
+        : [];
 
-      return proxima ? [...vencidas, proxima] : vencidas;
+      return [...vencidas, ...proximas];
     },
     [recebimentos, empresaId, hojeIso],
   );
@@ -157,7 +160,7 @@ export default function FormularioRecebimento({ empresas, subempresas, recebimen
         <div className={styles.atrasoBox}>
           <div className={styles.atrasoTitulo}>Próximo a vencer e vencidos ({cobrancasAbertas.length})</div>
           <p className={styles.atrasoDica}>
-            São exibidos todos os vencidos e somente o próximo vencimento disponível.
+            São exibidos todos os vencidos e todos os clientes com vencimento na próxima data disponível.
           </p>
           {cobrancasAbertas.map((r) => {
             const selecionada = r.id === cobrancaId;
