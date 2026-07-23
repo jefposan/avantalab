@@ -96,24 +96,24 @@
   }
   .landing :global(.nav-inner) {
     height: auto;
-    min-height: 62px;
+    min-height: 108px;
     flex-wrap: wrap;
-    gap: .42rem .7rem;
-    padding: .5rem 0 .48rem;
+    gap: .62rem .8rem;
+    padding: calc(.72rem + env(safe-area-inset-top)) 0 .72rem;
   }
   .landing :global(.nav-links) {
     order: 3;
     display: grid;
     grid-template-columns: repeat(4, minmax(0, 1fr));
     width: 100%;
-    gap: .28rem;
-    font-size: .64rem;
+    gap: .36rem;
+    font-size: .68rem;
     font-weight: 700;
     letter-spacing: .01em;
   }
   .landing :global(.nav-links a) {
     display: flex;
-    min-height: 23px;
+    min-height: 30px;
     align-items: center;
     justify-content: center;
     border-radius: 999px;
@@ -450,7 +450,7 @@
 /* ---------- mobile ---------- */
 @media (max-width: 760px) {
   .landing {
-    --lp-edge-anchor-offset: 52px;
+    --lp-edge-anchor-offset: 118px;
   }
   .landing :global(.hero), .landing :global(.final) {
     background-image: image-set(url('/images/landing/bg-hero-mobile.webp') type('image/webp'), url('/images/landing/bg-hero-mobile.png') type('image/png'));
@@ -466,7 +466,7 @@
     min-height: 100svh;
     flex-direction: column;
     justify-content: space-evenly;
-    padding: 106px 0 5.25rem;
+    padding: 134px 0 5.25rem;
   }
   .landing :global(.hero-copy .eyebrow) { margin-bottom: 0; }
   .landing :global(h1) {
@@ -538,19 +538,19 @@
     width: 18px;
     height: 18px;
   }
-  .landing :global(.nav-logo img) { height: 34px; }
-  .landing :global(.nav-actions) { gap: .34rem; }
+  .landing :global(.nav-logo img) { height: 39px; }
+  .landing :global(.nav-actions) { gap: .4rem; }
   .landing :global(.nav-cta) {
-    min-height: 30px;
-    padding: .34rem .72rem;
-    font-size: .7rem;
+    min-height: 44px;
+    padding: .58rem .82rem;
+    font-size: .76rem;
     font-weight: 600;
     box-shadow: 0 7px 16px -10px rgba(29, 111, 217, .52);
   }
   .landing :global(.nav-entrar) {
-    min-height: 30px;
-    padding: .32rem .55rem;
-    font-size: .7rem;
+    min-height: 44px;
+    padding: .56rem .68rem;
+    font-size: .76rem;
     font-weight: 600;
     box-shadow: inset 0 0 0 1px rgba(27, 58, 95, .17);
   }

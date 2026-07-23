@@ -1,6 +1,9 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.6.0.84.89 -->
+<!-- ava-version: 1.6.0.84.90 -->
+
+> Revisão 1.6.0.84.90: ajuste visual da landing pública; sem impacto operacional
+> no AvantaVendas.
 
 > Revisão 1.6.0.84.89: o AvantaVendas passa a ter uma única fonte oficial em
 > `/avantavendas`. A rota antiga `/mobile/vendas` apenas redireciona para o

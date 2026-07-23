@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.6.0.84.89 -->
+<!-- ava-version: 1.6.0.84.90 -->
+
+> Revisão 1.6.0.84.90: ajuste visual da landing pública; sem impacto operacional
+> na Gestão Mobile.
 
 > Revisão 1.6.0.84.89: consolidação técnica do AvantaVendas em uma única fonte;
 > sem mudança operacional na Gestão Mobile.

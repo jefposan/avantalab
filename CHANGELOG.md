@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.6.0.84.90 - 2026-07-23
+
+- Landing mobile: cabeçalho ganhou mais altura e respiro, com marca ampliada,
+  navegação menos comprimida e botões com área de toque de 44 px.
+- Landing mobile: conteúdo inicial e âncoras foram compensados para respeitar o
+  novo cabeçalho fixo sem sobreposição.
+
 ## 1.6.0.84.89 - 2026-07-23
 
 - AvantaVendas: removidas as cópias antigas do aplicativo e dos recursos

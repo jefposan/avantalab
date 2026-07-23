@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.6.0.84.89 -->
+<!-- ava-version: 1.6.0.84.90 -->
+
+> Revisão 1.6.0.84.90: ajuste visual do cabeçalho da landing em telas mobile;
+> sem impacto operacional na Gestão Web.
 
 > Revisão 1.6.0.84.89: consolidação técnica do AvantaVendas em uma única fonte;
 > sem mudança operacional na Gestão Web.
