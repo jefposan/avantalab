@@ -74,14 +74,14 @@ export default function ListaEmpresas({
   // Referências dos blocos para rolar a empresa em edição ao topo do scroll.
   const blocosRef = useRef<Record<string, HTMLDivElement | null>>({});
 
-  // Form empresa — todos os campos obrigatórios.
+  // Form empresa — para cliente direto, apenas nome, valor e vencimento são obrigatórios.
   const [eNome, setENome] = useState('');
   const [eTipo, setETipo] = useState<TipoCadastroEmpresa>('cliente_direto');
   const [eResp, setEResp] = useState('');
   const [eTel, setETel] = useState('');
   const [eEmail, setEEmail] = useState('');
 
-  // Form subempresa — todos os campos obrigatórios.
+  // Form cliente no local — apenas nome, valor e vencimento são obrigatórios.
   const [sNome, setSNome] = useState('');
   const [sCep, setSCep] = useState('');
   const [sLogradouro, setSLogradouro] = useState('');
@@ -227,9 +227,9 @@ export default function ListaEmpresas({
       return;
     }
     if (eTipo === 'cliente_direto') {
-      if (!eResp.trim() || !eTel.trim() || !eEmail.trim() || !sValor.trim()) {
-        if (onAviso) onAviso('Preenchimento pendente', 'Preencha responsável, contato, e-mail, valor contratado e vencimento para salvar o cliente.', undefined, 'alerta');
-        else setErroEmpresa('Preencha responsável, contato, e-mail, valor contratado e vencimento para salvar o cliente.');
+      if (!sValor.trim()) {
+        if (onAviso) onAviso('Preenchimento pendente', 'Informe o valor contratado e configure o vencimento para salvar o cliente.', undefined, 'alerta');
+        else setErroEmpresa('Informe o valor contratado e configure o vencimento para salvar o cliente.');
         return;
       }
       if (Number.isNaN(valor) || valor <= 0) return setErroEmpresa('Informe um valor contratado maior que zero.');
@@ -272,8 +272,8 @@ export default function ListaEmpresas({
   function salvarSub(empresaId: string) {
     setErroSub('');
     const valor = parseValorBR(sValor);
-    if (!sNome.trim() || !sResp.trim() || !sValor.trim()) {
-      return avisarErroSub('Preencha nome, responsável, valor e vencimento para salvar o cliente.');
+    if (!sNome.trim() || !sValor.trim()) {
+      return avisarErroSub('Preencha nome, valor contratado e vencimento para salvar o cliente.');
     }
     if (Number.isNaN(valor) || valor <= 0) return avisarErroSub('Informe um valor contratado maior que zero.');
     if (sFrequencia === 'semanal' && sDiasSemana.length === 0) return avisarErroSub('Selecione ao menos um dia para configurar o vencimento semanal.');
@@ -360,7 +360,7 @@ export default function ListaEmpresas({
 
     return (
       <div className={styles.recorrencia}>
-        <div className={styles.formTitulo}>VENCIMENTO</div>
+        <div className={styles.formTitulo}>VENCIMENTO *</div>
         <div className={styles.recorrenciaFrequencias} role="radiogroup" aria-label="Frequência de recebimento">
           {FREQUENCIAS_RECEBIMENTO.map(([valor, rotulo]) => (
             <button key={valor} type="button" className={`${styles.recorrenciaOpcao} ${sFrequencia === valor ? styles.recorrenciaOpcaoAtiva : ''}`} onClick={() => mudarFrequencia(valor)} aria-pressed={sFrequencia === valor}>{rotulo}</button>
@@ -408,7 +408,7 @@ export default function ListaEmpresas({
     return (
       <div className={styles.linhaEmpresaCampos}>
         <div className={styles.field}><label className={styles.label}>Nome do cliente *</label><input className={styles.input} placeholder="Ex: Loja Renner" value={sNome} onChange={(e) => setSNome(formatarNomeProprio(e.target.value))} /></div>
-        <div className={styles.field}><label className={styles.label}>Responsável *</label><input className={styles.input} placeholder="Ex: Gerente da loja" value={sResp} onChange={(e) => setSResp(formatarNomeProprio(e.target.value))} /></div>
+        <div className={styles.field}><label className={styles.label}>Responsável</label><input className={styles.input} placeholder="Ex: Gerente da loja" value={sResp} onChange={(e) => setSResp(formatarNomeProprio(e.target.value))} /></div>
         <div className={styles.field}><label className={styles.label}>Valor contratado *</label><input className={`${styles.input} ${styles.inputCentro}`} inputMode="decimal" placeholder="0,00" value={sValor} onChange={(e) => setSValor(formatarValorInput(e.target.value))} /></div>
       </div>
     );
@@ -426,14 +426,14 @@ export default function ListaEmpresas({
         <p className={styles.subMeta} style={{ margin: '0 0 10px' }}>{clienteDireto ? 'Cliente com cobrança própria. Não permite clientes abaixo.' : 'Local como shopping, galeria ou condomínio. Não possui cobrança própria.'}</p>
         <div className={styles.linhaEmpresaCampos}>
           <div className={styles.field}><label className={styles.label}>{clienteDireto ? 'Nome da empresa *' : 'Nome do local *'}</label><input className={styles.input} placeholder={clienteDireto ? 'Ex: Clínica Horizonte' : 'Ex: Shopping Morumbi'} value={eNome} onChange={(e) => setENome(formatarNomeProprio(e.target.value))} /></div>
-          {clienteDireto && <><div className={styles.field}><label className={styles.label}>Responsável *</label><input className={styles.input} placeholder="Ex: Carla Menezes" value={eResp} onChange={(e) => setEResp(formatarNomeProprio(e.target.value))} /></div>
-          <div className={styles.field}><label className={styles.label}>Contato *</label><input className={styles.input} inputMode="tel" placeholder="(11) 99999-9999" value={eTel} onChange={(e) => setETel(formatarTelefone(e.target.value))} /></div></>}
+          {clienteDireto && <><div className={styles.field}><label className={styles.label}>Responsável</label><input className={styles.input} placeholder="Ex: Carla Menezes" value={eResp} onChange={(e) => setEResp(formatarNomeProprio(e.target.value))} /></div>
+          <div className={styles.field}><label className={styles.label}>Contato</label><input className={styles.input} inputMode="tel" placeholder="(11) 99999-9999" value={eTel} onChange={(e) => setETel(formatarTelefone(e.target.value))} /></div></>}
         </div>
         {camposEndereco()}
         {clienteDireto && <>
         <div className={styles.linhaTelefoneAcoes}>
           <div className={styles.field} style={{ flex: '1 1 160px', marginBottom: 0 }}>
-            <label className={styles.label}>E-mail *</label>
+            <label className={styles.label}>E-mail</label>
             <input className={styles.input} placeholder="Ex: financeiro@empresa.com.br" value={eEmail} onChange={(e) => setEEmail(e.target.value)} />
           </div>
           <div className={styles.field} style={{ flex: '0 1 180px', marginBottom: 0 }}><label className={styles.label}>Valor contratado *</label><input className={`${styles.input} ${styles.inputCentro}`} inputMode="decimal" placeholder="0,00" value={sValor} onChange={(e) => setSValor(formatarValorInput(e.target.value))} /></div>

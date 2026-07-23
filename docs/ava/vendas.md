@@ -1,6 +1,9 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.6.0.84.69 -->
+<!-- ava-version: 1.6.0.84.70 -->
+
+> Revisão 1.6.0.84.70: ajuste de cadastro em Recebimentos Presenciais, sem
+> impacto operacional no Vendas Mobile.
 
 > Revisão 1.6.0.84.69: mudança de cadastro no Recebimentos Presenciais; sem
 > impacto operacional no Vendas Mobile.

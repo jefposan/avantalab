@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.6.0.84.69 -->
+<!-- ava-version: 1.6.0.84.70 -->
+
+> Revisão 1.6.0.84.70: no cadastro de clientes em Recebimentos Presenciais,
+> somente nome, valor contratado e vencimento são obrigatórios.
 
 > Revisão 1.6.0.84.69: em Recebimentos Presenciais, **Cliente direto** possui
 > contrato e cobrança próprios; **Local agrupador** (shopping, galeria ou
@@ -153,7 +156,9 @@ Gestão Mobile ou a assinatura/cupom do Premium Pessoal.
 - Em **Empresas**, use **Pesquisar empresas e locais…** ou **+ Nova empresa**.
   No início do cadastro, escolha **Cliente direto** ou **Local agrupador**.
   Cliente direto possui responsável, contato, e-mail, endereço, valor contratado
-  e vencimento próprios, sem clientes abaixo. Local agrupador é um shopping,
+  e vencimento próprios, sem clientes abaixo. Para salvar um cliente, somente
+  nome, valor contratado e vencimento são obrigatórios; os demais dados são
+  opcionais. Local agrupador é um shopping,
   galeria ou condomínio: registra somente nome e endereço, não gera cobrança e
   permite **+ Novo cliente no local**. Em **Colaboradores**, use **+ Novo colaborador**.
 - Ao cadastrar ou editar um cliente — direto ou dentro de um local — escolha em **Recebimento** a frequência

@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.6.0.84.70 - 2026-07-22
+
+- Recebimentos Presenciais: no cadastro de clientes, responsável, contato,
+  e-mail e endereço passam a ser opcionais. Permanecem obrigatórios somente
+  nome, valor contratado e a configuração de vencimento.
+
 ## 1.6.0.84.69 - 2026-07-22
 
 - Recebimentos Presenciais: o cadastro passa a distinguir **Cliente direto** de
