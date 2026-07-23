@@ -1,6 +1,6 @@
 {
-  "name": "Vendas AvantaLab",
-  "short_name": "Vendas",
+  "name": "AvantaVendas",
+  "short_name": "AvantaVendas",
   "description": "PWA de vendas para vendedores autônomos, porta a porta e revendedores.",
   "start_url": "/mobile/vendas",
   "scope": "/",
@@ -10,13 +10,13 @@
   "orientation": "portrait",
   "icons": [
     {
-      "src": "/images/vendas-icon-192.png",
+      "src": "/images/avanta-vendas-icon-192.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "/images/vendas-icon-512.png",
+      "src": "/images/avanta-vendas-icon-512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any"

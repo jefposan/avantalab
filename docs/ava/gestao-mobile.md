@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.6.0.84.85 -->
+<!-- ava-version: 1.6.0.84.86 -->
+
+> Revisão 1.6.0.84.86: correção de distribuição no Vendas Mobile; sem impacto
+> operacional adicional na Gestão Mobile.
 
 > Revisão 1.6.0.84.85: Recolher em Despesas e Receitas também fecha e limpa a
 > busca aberta.

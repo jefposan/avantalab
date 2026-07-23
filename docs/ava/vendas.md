@@ -1,6 +1,9 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.6.0.84.85 -->
+<!-- ava-version: 1.6.0.84.86 -->
+
+> Revisão 1.6.0.84.86: as melhorias de Pagamentos, Divulgação, saída e
+> mensagens de acesso são distribuídas pelo código-fonte do Vendas Mobile.
 
 > Revisão 1.6.0.84.85: atualização técnica do cache do PWA para entregar a
 > versão atual; sem mudança operacional adicional.

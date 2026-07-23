@@ -1033,6 +1033,7 @@ body { min-height: 100%; min-height: var(--vendas-viewport-height); overscroll-b
 .module-toolbar .search-box { flex: 1 1 260px; margin: 0; }
 .module-toolbar .search-box input { min-height: 38px; border: 1px solid #e1e4e8; border-radius: 8px; background: #fafbfc; }
 .module-toolbar button, .module-title button { min-height: 38px; white-space: nowrap; }
+.settings-page .settings-header-exit { display: inline-flex; min-height: 34px; align-items: center; justify-content: center; gap: 6px; border: 1px solid #f3a1af; border-radius: 10px; padding: 0 10px; color: #9f1239; background: #fff1f2; font-size: 11px; font-weight: 850; }.settings-page .settings-header-exit .svg-icon { width: 15px; height: 15px; }
 .module-stats { display: flex; flex-wrap: wrap; gap: 10px; }
 .module-stats span { padding: 8px 12px; border-radius: 999px; color: #5e6671; background: #eff8f7; font-size: 13px; }
 .module-stats b { color: #248b85; }

@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.6.0.84.86 - 2026-07-23
+
+- Vendas Mobile: correções de Pagamentos, Divulgação, saída e mensagens de
+  acesso passam a ser mantidas no código-fonte distribuído pelo build.
+- Vendas Mobile: o cache do PWA é renovado para receber esta versão.
+
 ## 1.6.0.84.85 - 2026-07-23
 
 - Vendas Mobile: atualização do cache do PWA passa a entregar imediatamente os
