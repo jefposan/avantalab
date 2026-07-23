@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.6.0.84.82 - 2026-07-23
+
+- Capacitor/mobile: a conta de revisão reassocia o perfil empresarial existente
+  antes de avaliar a necessidade de onboarding.
+
 ## 1.6.0.84.81 - 2026-07-23
 
 - App Store: a conta `teste@teste.com.br` passa a reassociar automaticamente o

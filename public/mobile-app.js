@@ -4418,6 +4418,29 @@
           })
           .in('id', convites.data.map(function (convite) { return convite.id; }));
       }
+
+      // A conta exclusiva de revisão pode ter sido criada manualmente no
+      // Supabase antes do vínculo com o usuário Auth atual.
+      if (emailUsuario === EMAIL_CONTA_REVISAO_APPLE) {
+        var perfilRevisao = await db
+          .from('usuarios_empresa')
+          .select('id, user_id, status')
+          .ilike('email', emailUsuario)
+          .in('status', ['pendente', 'ativo'])
+          .order('id', { ascending: true })
+          .limit(1)
+          .maybeSingle();
+        if (!perfilRevisao.error && perfilRevisao.data && perfilRevisao.data.user_id !== usuarioId) {
+          await db
+            .from('usuarios_empresa')
+            .update({
+              user_id: usuarioId,
+              status: 'ativo',
+              atualizado_em: new Date().toISOString(),
+            })
+            .eq('id', perfilRevisao.data.id);
+        }
+      }
     }
     atualizarProgressoAcessoMobile('profiles', 2, 5, 'Conferindo convites e vínculos');
 

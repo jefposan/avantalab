@@ -1,8 +1,8 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.6.0.84.81 -->
+<!-- ava-version: 1.6.0.84.82 -->
 
-> Revisão 1.6.0.84.81: conta de revisão reassocia o perfil empresarial existente pelo e-mail; sem impacto operacional para os demais usuários.
+> Revisão 1.6.0.84.82: conta de revisão reassocia o perfil empresarial existente também no Capacitor/mobile; sem impacto operacional para os demais usuários.
 > sem impacto operacional na Gestão Web.
 
 > Revisão 1.6.0.84.75: novo nome e ícone de instalação do PWA de Ponto; sem
