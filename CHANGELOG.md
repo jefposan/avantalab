@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.6.0.84.76 - 2026-07-22
+
+- Política de Privacidade: publicada a página pública `/privacidade`, com o
+  mesmo conteúdo legal exibido no aplicativo e pronta para uso no App Store
+  Connect.
+
 ## 1.6.0.84.75 - 2026-07-22
 
 - Controle de Ponto: o PWA passa a instalar como **AvantaPonto**, com novo

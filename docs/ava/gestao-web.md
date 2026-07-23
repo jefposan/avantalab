@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.6.0.84.75 -->
+<!-- ava-version: 1.6.0.84.76 -->
+
+> Revisão 1.6.0.84.76: publicada a página pública da Política de Privacidade;
+> sem impacto operacional na Gestão Web.
 
 > Revisão 1.6.0.84.75: novo nome e ícone de instalação do PWA de Ponto; sem
 > impacto operacional na Gestão Web.
