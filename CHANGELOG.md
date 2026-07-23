@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.6.0.84.81 - 2026-07-23
+
+- App Store: a conta `teste@teste.com.br` passa a reassociar automaticamente o
+  perfil empresarial existente pelo e-mail antes de iniciar o onboarding.
+
+## 1.6.0.84.80 - 2026-07-23
+
+- App Store: reforçado o acesso automático da conta `teste@teste.com.br`, com
+  fallback para projetos Supabase que ainda não possuem a RPC mais recente.
+
 ## 1.6.0.84.79 - 2026-07-23
 
 - App Store: a conta de revisão `teste@teste.com.br` passa a receber dados

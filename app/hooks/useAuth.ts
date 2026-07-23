@@ -998,6 +998,11 @@ export function useAuth(deps: UseAuthDeps) {
       resultado = opcoes?.somentePrimeiroCadastro
         ? await criarPrimeiroPerfilCadastro(nomeLimpo, tipoPerfil)
         : await criarEmpresaInicial(nomeLimpo);
+      // A conta exclusiva de revisão também funciona em projetos Supabase
+      // antigos onde a RPC idempotente ainda não foi aplicada.
+      if (resultado.erro && opcoes?.somentePrimeiroCadastro && ehContaRevisaoAppApple((await supabase.auth.getUser()).data.user?.email)) {
+        resultado = await criarEmpresaInicial(nomeLimpo);
+      }
     } catch (e: any) {
       criandoEmpresaInicialRef.current = false;
       setCriandoEmpresaInicial(false);

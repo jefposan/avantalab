@@ -54,7 +54,7 @@ function tratarErroSupabase(error: any) {
       const { data: convitePendente, error: erroConvite } = await supabase
         .from('usuarios_empresa')
         .select('id, empresa_id, user_id, nome, email, login, perfil, status, telefone, telefone_confirmado, telefone_confirmado_em')
-        .eq('email', emailUsuario)
+        .ilike('email', emailUsuario)
         .is('user_id', null)
         .in('status', ['pendente', 'ativo'])
         .limit(1)
@@ -188,6 +188,27 @@ export async function buscarEmpresasDoUsuario(usuarioId: string) {
 
       if (erroAtualizarConvites) {
         console.error('Erro ao vincular convites ao usuário:', erroAtualizarConvites);
+      }
+    }
+
+    // A conta exclusiva de revisão pode ter sido criada manualmente no
+    // Supabase antes do vínculo com o novo usuário Auth. Reassocia somente
+    // esse e-mail ao perfil empresarial já existente.
+    if (emailUsuario === 'teste@teste.com.br') {
+      const { data: perfilRevisao } = await supabase
+        .from('usuarios_empresa')
+        .select('id, user_id, status')
+        .ilike('email', emailUsuario)
+        .in('status', ['pendente', 'ativo'])
+        .order('id', { ascending: true })
+        .limit(1)
+        .maybeSingle();
+
+      if (perfilRevisao && perfilRevisao.user_id !== usuarioId) {
+        await supabase
+          .from('usuarios_empresa')
+          .update({ user_id: usuarioId, status: 'ativo', atualizado_em: new Date().toISOString() })
+          .eq('id', perfilRevisao.id);
       }
     }
   }

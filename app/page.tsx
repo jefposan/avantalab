@@ -470,6 +470,17 @@ export default function AppGestao() {
 
   const onSemEmpresa = () => {
     setAcessoNaoConfigurado(true);
+    void (async () => {
+      const { data } = await supabase.auth.getUser();
+      if (String(data.user?.email || '').trim().toLowerCase() !== 'teste@teste.com.br') return;
+      setAcessoNaoConfigurado(false);
+      const perfilCriado = await handleCriarEmpresaInicial({
+        nome: 'AvantaLab — Conta de teste',
+        tipoPerfil: 'pessoal',
+        somentePrimeiroCadastro: true,
+      });
+      if (!perfilCriado) setAcessoNaoConfigurado(true);
+    })();
   };
 
 

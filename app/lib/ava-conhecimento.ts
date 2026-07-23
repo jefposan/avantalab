@@ -6,7 +6,7 @@ export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
  * Cada guia é enviado apenas no ambiente correspondente, evitando misturar
  * caminhos e funções de Web, Mobile e Vendas na mesma resposta.
  */
-// Revisado na versão 1.6.0.84.79: conta de revisão da App Store recebe dados demonstrativos idempotentes; sem impacto operacional para os demais usuários.
+// Revisado na versão 1.6.0.84.81: conta de revisão reassocia o perfil empresarial existente pelo e-mail; sem impacto operacional para os demais usuários.
 // sem impacto operacional na orientação da Ava.
 const GUIAS: Record<AmbienteAva, string> = {
   'gestao-web': `GUIA OPERACIONAL — AVANTALAB GESTÃO WEB
