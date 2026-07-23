@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.6.0.84.93 -->
+<!-- ava-version: 1.6.0.84.94 -->
+
+> Revisão 1.6.0.84.94: troca entre os PWAs preservada em modo aplicativo; sem
+> impacto operacional na Gestão Web.
 
 > Revisão 1.6.0.84.93: rótulo estável do botão de ordem no AvantaVendas; sem
 > impacto operacional na Gestão Web.

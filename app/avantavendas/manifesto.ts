@@ -6,7 +6,7 @@ export const manifestoAvantaVendas: MetadataRoute.Manifest = {
   short_name: 'AvantaVendas',
   description: 'Clientes, produtos, pedidos e controle de vendas AvantaLab.',
   start_url: '/avantavendas',
-  scope: '/avantavendas',
+  scope: '/',
   display: 'standalone',
   background_color: '#001827',
   theme_color: '#003E73',

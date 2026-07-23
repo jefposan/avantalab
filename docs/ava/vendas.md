@@ -1,6 +1,9 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.6.0.84.93 -->
+<!-- ava-version: 1.6.0.84.94 -->
+
+> Revisão 1.6.0.84.94: **Ir para Gestão** preserva o modo aplicativo do PWA,
+> sem abrir as barras do navegador.
 
 > Revisão 1.6.0.84.93: em Pagamentos, o botão de classificação mantém o nome
 > “Ordem” em todos os filtros; cada filtro continua ordenando pelo seu próprio
@@ -150,7 +153,9 @@ função existir ali.
   de botões ou adicionar **Ir para Gestão** a um atalho configurável.
   Ao tocar, o Vendas lista todos os perfis ativos da Gestão vinculados à conta;
   depois de selecionar um perfil, a troca exige confirmação. O aviso de
-  aniversário permanece ao lado do botão quando ambos estão visíveis.
+  aniversário permanece ao lado do botão quando ambos estão visíveis. No PWA
+  instalado, a Gestão abre na mesma janela em modo aplicativo, sem barras do
+  navegador.
 - Cada login possui uma única conta operacional no Vendas. Instalações e
   permissões em perfis da Gestão apenas autorizam a troca entre os sistemas e não
   criam contas adicionais ou um seletor de perfis dentro do Vendas.

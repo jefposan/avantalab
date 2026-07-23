@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.6.0.84.94 - 2026-07-23
+
+- AvantaVendas: a troca para a Gestão permanece dentro da janela instalada do
+  PWA, sem abrir barras de endereço e atalhos do Safari.
+- PWA: o escopo do AvantaVendas passa a abranger a rota compartilhada da Gestão,
+  mantendo o início e a identidade do aplicativo em `/avantavendas`.
+
 ## 1.6.0.84.93 - 2026-07-23
 
 - AvantaVendas: o botão de classificação em Pagamentos mantém o título “Ordem”

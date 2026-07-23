@@ -5866,7 +5866,7 @@ function abrirGestao(perfilEmpresaId = '') {
     if (empresaId) sessionStorage.setItem(`avantalab_mobile_sistema_sessao_${empresaId}`, 'gestao');
     if (empresaId) localStorage.setItem('avantalab_mobile_ultimo_perfil_id', empresaId);
   } catch { /* navegação continua sem preferência local */ }
-  window.location.assign('/mobile?origem=vendas');
+  window.location.assign('/avantavendas/gestao?origem=vendas');
 }
 
 async function abrirSeletorPerfilGestaoVendas() {

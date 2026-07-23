@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.6.0.84.93 -->
+<!-- ava-version: 1.6.0.84.94 -->
+
+> Revisão 1.6.0.84.94: ao chegar pelo AvantaVendas, a Gestão permanece na
+> janela instalada do PWA, sem abrir a interface do navegador.
 
 > Revisão 1.6.0.84.93: rótulo estável do botão de ordem no AvantaVendas; sem
 > impacto operacional na Gestão Mobile.
@@ -151,6 +154,9 @@ deve usar os nomes do menu e da barra inferior do celular.
   tela com as duas opções é exibida somente na entrada após o login. Ao tocar, a
   Gestão consulta o estado atual do módulo no servidor para não solicitar uma
   ativação que já tenha sido concluída.
+- Quando a Gestão é aberta pelo AvantaVendas instalado, a troca permanece na
+  mesma janela em modo aplicativo, sem barras de endereço ou atalhos do
+  navegador.
 - Em um perfil sem o módulo instalado, **Ir para Vendas** continua disponível para
   Gestor Master ou Administrador. Ao tocar, o sistema solicita a ativação, confirma
   o salvamento no servidor e segue para o Vendas. Em perfil pessoal gratuito, a

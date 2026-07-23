@@ -29,7 +29,9 @@ As tabelas mantêm o prefixo histórico `vendas_mobile_`; esse nome pertence ao
 banco e não representa uma segunda cópia do aplicativo.
 
 O subdomínio é resolvido pelo `proxy.ts`. As trocas de sistema na Gestão e no
-Vendas apontam para `/avantavendas`.
+Vendas apontam para `/avantavendas`. O retorno à Gestão usa
+`/avantavendas/gestao`, que renderiza a tela oficial de `/mobile` dentro do
+escopo instalado do AvantaVendas e evita a abertura da interface do navegador.
 
 ## Desenvolvimento
 
