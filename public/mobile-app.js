@@ -179,6 +179,7 @@
     mensagem: '',
     carregando: false,
     loginAcao: '',
+    tentativaLogin: 0,
     empresaAcao: '',
     perfilSelecionandoId: '',
     loginValor: '',
@@ -2931,6 +2932,13 @@
     render();
   }
 
+  function limparAlertasAcessoMobile() {
+    state.tentativaLogin = Number(state.tentativaLogin || 0) + 1;
+    state.loginAcao = '';
+    state.erro = '';
+    state.mensagem = '';
+  }
+
   function setMensagem(texto) {
     state.mensagem = texto || '';
     state.erro = '';
@@ -5145,6 +5153,8 @@
       return;
     }
 
+    var tentativaLogin = Number(state.tentativaLogin || 0) + 1;
+    state.tentativaLogin = tentativaLogin;
     state.carregando = true;
     state.loginAcao = 'senha';
     state.erro = '';
@@ -5173,6 +5183,7 @@
       }
       resposta = await db.auth.signInWithPassword({ email: email, password: senha });
     }
+    if (tentativaLogin !== state.tentativaLogin) return;
     if (resposta.error || !resposta.data.user) {
       state.carregando = false;
       state.loginAcao = '';
@@ -5194,6 +5205,7 @@
     state.usuario = resposta.data.user;
     state.autenticado = true;
     var perfisCarregados = await carregarEmpresas(resposta.data.user.id, resposta.data.user);
+    if (tentativaLogin !== state.tentativaLogin) return;
 
     if (perfisCarregados === false) {
       state.carregando = false;
@@ -8177,6 +8189,23 @@
     }, { passive: true });
   }
 
+  function acoesHeaderMobileHtml() {
+    var avisosHtml = '';
+    if (state.visao === 'home' && (agendaTemAvisoHoje() || state.notificacoesNaoLidas > 0)) {
+      avisosHtml = '<button id="avisos-dashboard" type="button" class="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-white/15 bg-white/15 text-white shadow-sm backdrop-blur" aria-label="Notificacoes">' + sinoAvisoSvg() +
+        (state.notificacoesNaoLidas > 0
+          ? '<span class="absolute -right-1 -top-1 flex h-5 min-w-[20px] items-center justify-center rounded-full bg-rose-500 px-1 text-[10px] font-black text-white ring-2 ring-white/60">' + (state.notificacoesNaoLidas > 99 ? '99+' : state.notificacoesNaoLidas) + '</span>'
+          : '<span class="absolute right-1 top-1 h-2.5 w-2.5 rounded-full bg-rose-400 ring-2 ring-white/60"></span>') +
+        '</button>';
+    }
+    var sistemasHtml = podeTrocarSistemaMobile()
+      ? '<button id="ir-vendas-header" type="button" class="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-white/15 bg-white/10 p-0 shadow-sm backdrop-blur active:scale-95" aria-label="Ir para Vendas Mobile" title="Ir para Vendas Mobile"><img src="/vendas-mobile/assets/icone-troca-gestao.png" alt="" aria-hidden="true" class="h-full w-full object-cover"></button>'
+      : '';
+    return avisosHtml || sistemasHtml
+      ? '<div class="flex shrink-0 items-center gap-2">' + avisosHtml + sistemasHtml + '</div>'
+      : '<span class="h-10 w-10 shrink-0" aria-hidden="true"></span>';
+  }
+
   function telaApp() {
     var atual = dadosMes(state.mes);
     var anterior = dadosMesAnterior();
@@ -8211,15 +8240,7 @@
                 '<h1 class="truncate text-lg font-black leading-tight text-white">' + (function(){ var pn = primeiroNomeUsuarioAva(); return 'Ol&aacute;' + (pn ? ', ' + escapeHtml(pn) : '') + '. ' + saudacaoPeriodoMobile(); })() + '</h1>' +
                 '<p class="truncate text-[11px] font-semibold text-cyan-100/75">Bem-vindo ao AvantaLab</p>' +
               '</div>' +
-              (state.visao === 'home'
-                ? ((agendaTemAvisoHoje() || state.notificacoesNaoLidas > 0)
-                  ? '<button id="avisos-dashboard" type="button" class="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-white/15 bg-white/15 text-white shadow-sm backdrop-blur" aria-label="Notificacoes">' + sinoAvisoSvg() +
-                    (state.notificacoesNaoLidas > 0
-                      ? '<span class="absolute -right-1 -top-1 flex h-5 min-w-[20px] items-center justify-center rounded-full bg-rose-500 px-1 text-[10px] font-black text-white ring-2 ring-white/60">' + (state.notificacoesNaoLidas > 99 ? '99+' : state.notificacoesNaoLidas) + '</span>'
-                      : '<span class="absolute right-1 top-1 h-2.5 w-2.5 rounded-full bg-rose-400 ring-2 ring-white/60"></span>') +
-                    '</button>'
-                  : '<span class="h-10 w-10 shrink-0" aria-hidden="true"></span>')
-                : '<span class="h-10 w-10 shrink-0" aria-hidden="true"></span>') +
+              acoesHeaderMobileHtml() +
             '</div>' +
             '<div class="mt-3 flex h-7 items-center overflow-hidden rounded-lg border shadow-[0_8px_18px_rgba(15,23,42,0.16)] backdrop-blur-md" style="background:rgba(255,255,255,0.94);color:#082B57;border-color:rgba(255,255,255,0.75);backdrop-filter:blur(10px);">' +
               anoHeaderHtml() +
@@ -9283,7 +9304,7 @@
 
     return (
       '<section class="overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-slate-200/70" style="background:' + (state.darkMode ? '#0F172A' : '#FFFFFF') + ';">' +
-        '<div class="relative flex items-center justify-between gap-3 overflow-hidden px-4 py-3.5 text-white" style="background:linear-gradient(135deg,#A63D52 0%,#D65F6D 100%)"><div class="relative z-10 flex min-w-0 items-center gap-2.5"><span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-white/15 bg-white/10"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 3h12v18l-3-2-3 2-3-2-3 2V3Z" stroke-linejoin="round"/><path d="M9 8h6M9 12h6" stroke-linecap="round"/></svg></span><div class="min-w-0"><h2 class="truncate text-sm font-black">Despesas do mês</h2><p class="mt-0.5 text-[9px] font-bold uppercase tracking-wide text-white/65">Lançamentos do período</p></div></div><div class="relative z-10 flex -translate-y-1 items-center gap-2">' + (!pesquisando && state.ultimasDespesasExpandido && todos.length > 3 ? '<button id="toggle-ultimas-despesas" type="button" class="flex h-8 items-center justify-center rounded-full border border-white/20 bg-white/10 px-3 text-xs font-bold text-white shadow-sm backdrop-blur">Recolher</button>' : '') + '<button id="buscar-ultimas-despesas" type="button" class="flex h-8 w-8 items-center justify-center rounded-full border border-white/20 bg-white/10 text-sm font-black text-white shadow-sm backdrop-blur active:bg-white/20" aria-label="' + (pesquisando ? 'Fechar busca' : 'Buscar despesas') + '">' + iconeBuscaUltimas(pesquisando) + '</button></div>' + recorteHeaderLancamentosHtml('despesa') + '</div>' +
+        '<div class="relative flex items-center justify-between gap-3 overflow-hidden px-4 py-3.5 text-white" style="background:linear-gradient(135deg,#A63D52 0%,#D65F6D 100%)"><div class="relative z-10 flex min-w-0 items-center gap-2.5"><span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-white/15 bg-white/10"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 3h12v18l-3-2-3 2-3-2-3 2V3Z" stroke-linejoin="round"/><path d="M9 8h6M9 12h6" stroke-linecap="round"/></svg></span><div class="min-w-0"><h2 class="truncate text-sm font-black">Despesas do mês</h2><p class="mt-0.5 text-[9px] font-bold uppercase tracking-wide text-white/65">Lançamentos do período</p></div></div><div class="relative z-10 flex -translate-y-1 items-center gap-2">' + (state.ultimasDespesasExpandido && todos.length > 3 ? '<button id="toggle-ultimas-despesas" type="button" class="flex h-8 items-center justify-center rounded-full border border-white/20 bg-white/10 px-3 text-xs font-bold text-white shadow-sm backdrop-blur">Recolher</button>' : '') + '<button id="buscar-ultimas-despesas" type="button" class="flex h-8 w-8 items-center justify-center rounded-full border border-white/20 bg-white/10 text-sm font-black text-white shadow-sm backdrop-blur active:bg-white/20" aria-label="' + (pesquisando ? 'Fechar busca' : 'Buscar despesas') + '">' + iconeBuscaUltimas(pesquisando) + '</button></div>' + recorteHeaderLancamentosHtml('despesa') + '</div>' +
         (state.ultimasDespesasBuscaAberta ? '<div class="px-4 pt-3"><div class="flex h-10 items-center gap-2 rounded-xl border border-red-100 bg-red-50/60 px-3"><input id="busca-ultimas-despesas" type="search" autocomplete="off" enterkeyhint="search" value="' + escapeHtml(state.ultimasDespesasBusca) + '" placeholder="Buscar descricao ou valor" style="font-size:16px" class="min-w-0 flex-1 bg-transparent text-base font-semibold text-slate-800 outline-none" /><button id="limpar-ultimas-despesas" type="button" class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-white text-sm font-black text-red-600 shadow-sm" aria-label="Limpar busca">&times;</button></div></div>' : '') +
         '<div class="grid gap-1 p-4" id="ultimas-despesas-lista">' +
           (itens.length ? itens.map(function (item) {
@@ -9312,7 +9333,7 @@
 
     return (
       '<section class="overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-slate-200/70" style="background:' + (state.darkMode ? '#0F172A' : '#FFFFFF') + ';">' +
-        '<div class="relative flex items-center justify-between gap-3 overflow-hidden px-4 py-3.5 text-white" style="background:linear-gradient(135deg,#14786F 0%,#2A9D8F 100%)"><div class="relative z-10 flex min-w-0 items-center gap-2.5"><span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-white/15 bg-white/10"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 16 10 10l4 4 6-7" stroke-linecap="round" stroke-linejoin="round"/><path d="M15 7h5v5" stroke-linecap="round" stroke-linejoin="round"/></svg></span><div class="min-w-0"><h2 class="truncate text-sm font-black">Receitas do mês</h2><p class="mt-0.5 text-[9px] font-bold uppercase tracking-wide text-white/65">Lançamentos do período</p></div></div><div class="relative z-10 flex -translate-y-1 items-center gap-2">' + (!pesquisando && state.ultimasReceitasExpandido && todos.length > 3 ? '<button id="toggle-ultimas-receitas" type="button" class="flex h-8 items-center justify-center rounded-full border border-white/20 bg-white/10 px-3 text-xs font-bold text-white shadow-sm backdrop-blur">Recolher</button>' : '') + '<button id="buscar-ultimas-receitas" type="button" class="flex h-8 w-8 items-center justify-center rounded-full border border-white/20 bg-white/10 text-sm font-black text-white shadow-sm backdrop-blur active:bg-white/20" aria-label="' + (pesquisando ? 'Fechar busca' : 'Buscar receitas') + '">' + iconeBuscaUltimas(pesquisando) + '</button></div>' + recorteHeaderLancamentosHtml('receita') + '</div>' +
+        '<div class="relative flex items-center justify-between gap-3 overflow-hidden px-4 py-3.5 text-white" style="background:linear-gradient(135deg,#14786F 0%,#2A9D8F 100%)"><div class="relative z-10 flex min-w-0 items-center gap-2.5"><span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-white/15 bg-white/10"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 16 10 10l4 4 6-7" stroke-linecap="round" stroke-linejoin="round"/><path d="M15 7h5v5" stroke-linecap="round" stroke-linejoin="round"/></svg></span><div class="min-w-0"><h2 class="truncate text-sm font-black">Receitas do mês</h2><p class="mt-0.5 text-[9px] font-bold uppercase tracking-wide text-white/65">Lançamentos do período</p></div></div><div class="relative z-10 flex -translate-y-1 items-center gap-2">' + (state.ultimasReceitasExpandido && todos.length > 3 ? '<button id="toggle-ultimas-receitas" type="button" class="flex h-8 items-center justify-center rounded-full border border-white/20 bg-white/10 px-3 text-xs font-bold text-white shadow-sm backdrop-blur">Recolher</button>' : '') + '<button id="buscar-ultimas-receitas" type="button" class="flex h-8 w-8 items-center justify-center rounded-full border border-white/20 bg-white/10 text-sm font-black text-white shadow-sm backdrop-blur active:bg-white/20" aria-label="' + (pesquisando ? 'Fechar busca' : 'Buscar receitas') + '">' + iconeBuscaUltimas(pesquisando) + '</button></div>' + recorteHeaderLancamentosHtml('receita') + '</div>' +
         (state.ultimasReceitasBuscaAberta ? '<div class="px-4 pt-3"><div class="flex h-10 items-center gap-2 rounded-xl border border-emerald-100 bg-emerald-50/60 px-3"><input id="busca-ultimas-receitas" type="search" autocomplete="off" enterkeyhint="search" value="' + escapeHtml(state.ultimasReceitasBusca) + '" placeholder="Buscar descricao ou valor" style="font-size:16px" class="min-w-0 flex-1 bg-transparent text-base font-semibold text-slate-800 outline-none" /><button id="limpar-ultimas-receitas" type="button" class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-white text-sm font-black text-emerald-600 shadow-sm" aria-label="Limpar busca">&times;</button></div></div>' : '') +
         '<div class="grid gap-1 p-4" id="ultimas-receitas-lista">' +
 	          (itens.length ? itens.map(function (item) {
@@ -11556,13 +11577,13 @@
     bind('login-tipo-email', function () {
       state.loginValor = campo('login').trim();
       state.loginTipo = 'email';
-      state.erro = '';
+      limparAlertasAcessoMobile();
       render();
     });
     bind('login-tipo-telefone', function () {
       state.loginValor = campo('login').trim();
       state.loginTipo = 'telefone';
-      state.erro = '';
+      limparAlertasAcessoMobile();
       render();
     });
     bindInput('login', function () {
@@ -11605,16 +11626,14 @@
       state.modoCadastro = true;
       state.modoSenha = false;
       state.smsCadastroEnviado = false;
-      state.erro = '';
-      state.mensagem = '';
+      limparAlertasAcessoMobile();
       render();
     });
     bind('voltar-login-cadastro', function () {
       state.telaAcesso = 'login';
       state.modoCadastro = false;
       state.smsCadastroEnviado = false;
-      state.erro = '';
-      state.mensagem = '';
+      limparAlertasAcessoMobile();
       render();
     });
     bind('cadastro-submit', function () {
@@ -12003,6 +12022,7 @@
     bind('avisos-dashboard', function () {
       abrirNotificacoesMobile();
     });
+    bind('ir-vendas-header', abrirFluxoSistemasMobile);
     bind('abrir-agenda-item', abrirFormularioAgendaMobile);
     bind('cancelar-agenda-item', cancelarFormularioAgendaMobile);
     bind('cancelar-agenda-item-topo', cancelarFormularioAgendaMobile);
@@ -12313,6 +12333,7 @@
     bind('buscar-ultimas-despesas', function () {
       if (premiumPessoalBloqueadoMobile()) { abrirPremiumMobile('busca_lancamentos'); return; }
       state.ultimasDespesasBuscaAberta = !state.ultimasDespesasBuscaAberta;
+      if (state.ultimasDespesasBuscaAberta) state.ultimasDespesasExpandido = true;
       if (!state.ultimasDespesasBuscaAberta) state.ultimasDespesasBusca = '';
       var deveFocarBusca = state.ultimasDespesasBuscaAberta;
       render();
@@ -12330,6 +12351,7 @@
     bind('buscar-ultimas-receitas', function () {
       if (premiumPessoalBloqueadoMobile()) { abrirPremiumMobile('busca_lancamentos'); return; }
       state.ultimasReceitasBuscaAberta = !state.ultimasReceitasBuscaAberta;
+      if (state.ultimasReceitasBuscaAberta) state.ultimasReceitasExpandido = true;
       if (!state.ultimasReceitasBuscaAberta) state.ultimasReceitasBusca = '';
       var deveFocarBusca = state.ultimasReceitasBuscaAberta;
       render();

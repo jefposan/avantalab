@@ -6,7 +6,7 @@ export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
  * Cada guia é enviado apenas no ambiente correspondente, evitando misturar
  * caminhos e funções de Web, Mobile e Vendas na mesma resposta.
  */
-// Revisado na versão 1.6.0.84.83: conta de revisão não exibe o cadastro detalhado do perfil; sem impacto operacional para os demais usuários.
+// Revisado na versão 1.6.0.84.84: troca Gestão/Vendas e filtros móveis refinados.
 // sem impacto operacional na orientação da Ava.
 const GUIAS: Record<AmbienteAva, string> = {
   'gestao-web': `GUIA OPERACIONAL — AVANTALAB GESTÃO WEB
@@ -69,7 +69,7 @@ NAVEGAÇÃO E PERFIS
 
 LANÇAMENTOS E RESULTADOS
 - O app registra receitas, despesas, despesas futuras, parcelamentos e despesas fixas. Despesas futuras aparecem como Previsto até confirmação.
-- Nos cards Despesas do mês e Receitas do mês, tocar na lupa abre o campo de busca já focado e pronto para digitação.
+- Nos cards Despesas do mês e Receitas do mês, tocar na lupa abre o campo de busca já focado e pronto para digitação; enquanto a busca estiver aberta, a ação Recolher permanece disponível para retornar à lista compacta.
 - Para cadastrar ou revisar despesas e categorias: Menu > Cadastrar despesas. Despesas fixas devem ser gerenciadas na área própria para afetar a recorrência completa.
 - Agenda mostra lembretes e compromissos financeiros. Puxar para atualizar exige um gesto longo e conexão ativa.
 - A Caixinha, os relatórios e os gráficos usam o perfil e período selecionados; o resultado do Vendas aparece como uma receita consolidada por mês atualizada no acesso. Não estime resultados sem dados no contexto.
@@ -126,7 +126,7 @@ CATÁLOGO, PEDIDOS E PAGAMENTOS
 - Ao iniciar um pedido ou pagamento sem cliente predefinido, o foco e o teclado abrem diretamente na busca. Digite nome, telefone ou e-mail e toque em um resultado; o primeiro cliente não é selecionado automaticamente.
 - Em Produtos, os indicadores de produtos cadastrados, pacotes ativos e o botão Gerenciar permanecem fixos com o cabeçalho enquanto a lista rola abaixo. No campo Produto, digite nome, código, marca ou categoria para filtrar imediatamente a lista; toque no resultado para selecionar o produto e preencher seu preço.
 - Consignado não entra como venda/recebimento até ser convertido em pedido. Ao abrir um consignado, são exibidos somente produtos e quantidades; apenas a lista rola, mantendo cabeçalho, resumo e ações fixos. O botão Gerar pedido fica disponível sempre que houver quantidade restante; nele, informe com + e − quanto foi vendido de cada item, respeitando o limite disponível destacado em cada produto, e confirme: o pedido entra no histórico da cliente e as quantidades são abatidas do consignado. Conversões parciais mantêm o consignado disponível para novos pedidos até zerar os produtos. Na edição, os controles de quantidade mantêm o produto tocado e a posição da lista em foco. Não trate consignado como receita realizada.
-- Pagamentos registra recebimentos, desconto, data e forma. Pelo botão +, Lançar pagamento abre a seleção de cliente; o campo Valor pago recebe foco. Editar ou excluir um pagamento recalcula o saldo e relatórios. Os campos de data de pedido e pagamento têm rótulo centralizado e data destacada; toque na data para abrir o calendário. Comprovantes podem ser abertos e editados pelas listas do cliente. Depois de concluir e fechar o comprovante, o Vendas retorna a Pagamentos quando o lançamento começou nessa tela; se começou pela ficha da cliente, retorna a Clientes.
+- Pagamentos registra recebimentos, desconto, data e forma. Pelo botão +, Lançar pagamento abre a seleção de cliente; o campo Valor pago recebe foco. Editar ou excluir um pagamento recalcula o saldo e relatórios. O botão Classificar ordena por valor nos filtros Débito e Crédito e por data em Último pagamento. Os campos de data de pedido e pagamento têm rótulo centralizado e data destacada; toque na data para abrir o calendário. Comprovantes podem ser abertos e editados pelas listas do cliente. Depois de concluir e fechar o comprovante, o Vendas retorna a Pagamentos quando o lançamento começou nessa tela; se começou pela ficha da cliente, retorna a Clientes.
 - Ao confirmar um pagamento, o Vendas bloqueia uma segunda confirmação, confere no servidor todos os pedidos e pagamentos da cliente e só então atualiza o saldo e libera o comprovante. Os comprovantes usam fonte ampliada para título, itens e valores; o Top 10 Clientes do Dashboard também privilegia leitura. Ao compartilhar, a imagem usa cabeçalho com empresa centralizada, cliente e data ampliados, sem os botões da tela, e destaca o valor do lançamento e o saldo atual em faixas próprias; a lista é identificada como Detalhes do pedido ou Detalhes do pagamento. A pílula do pedido é azul e a de pagamento é verde. O rodapé e a mensagem identificam o comprovante e a cliente, sem assinatura do sistema. Se qualquer confirmação falhar, o formulário permanece aberto e nenhum comprovante é exibido.
 
 AGENDA, CONTEÚDO E CONFIGURAÇÕES

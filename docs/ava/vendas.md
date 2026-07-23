@@ -1,6 +1,10 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.6.0.84.83 -->
+<!-- ava-version: 1.6.0.84.84 -->
+
+> Revisão 1.6.0.84.84: em Pagamentos, Classificar ordena por valor nos filtros
+> Débito e Crédito e por data em Último pagamento. Configurações também permite
+> Sair pelo cabeçalho.
 
 > Revisão 1.6.0.84.83: conta de revisão não exibe o cadastro detalhado do perfil; sem impacto operacional para os demais usuários.
 > sem impacto operacional no Vendas Mobile.

@@ -1,6 +1,10 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.6.0.84.83 -->
+<!-- ava-version: 1.6.0.84.84 -->
+
+> Revisão 1.6.0.84.84: com Vendas Mobile instalado e permissão autorizada, o
+> cabeçalho exibe o atalho para ir ao Vendas. Ao buscar lançamentos, Despesas e
+> Receitas mantêm a ação Recolher disponível.
 
 > Revisão 1.6.0.84.83: conta de revisão não exibe o cadastro detalhado do perfil; sem impacto operacional para os demais usuários.
 > sem impacto operacional na Gestão Mobile.

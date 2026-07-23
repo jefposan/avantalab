@@ -195,6 +195,8 @@ let botaoFeedbackAtivo = null;
 let atualizacaoPwaPendente = false;
 let filtroPedidos = 'todos';
 let filtroPagamentos = 'todos';
+let ordemPagamentos = 'asc';
+let erroAcessoVendas = '';
 let limitePedidos = 10;
 let limiteClientesPagamentos = 10;
 const ITENS_POR_LOTE_HISTORICO = 10;
@@ -1264,7 +1266,7 @@ function limparFocoInicialLogin() {
 function renderLogin() {
   if (modoLogin === 'cadastro') return renderCadastroConta();
   const emailAtivo = loginTipo === 'email';
-  return `<section class="login-screen">${renderMarcaAcesso()}<form onsubmit="entrarSistema(event)"><div class="access-login-heading"><h1>Gestão de Vendas</h1><p>Entre para registrar suas vendas, acompanhar clientes e resultados.</p></div><div class="login-methods"><button type="button" class="${emailAtivo ? 'active' : ''}" onclick="trocarTipoLogin('email')">${svgIcon('mail')} E-mail</button><button type="button" class="${!emailAtivo ? 'active' : ''}" onclick="trocarTipoLogin('telefone')">${svgIcon('phone')} Telefone</button></div><label>${emailAtivo ? 'E-mail' : 'Telefone'}<div class="login-field">${svgIcon(emailAtivo ? 'mail' : 'phone')}<input id="loginContato" type="${emailAtivo ? 'email' : 'tel'}" inputmode="${emailAtivo ? 'email' : 'tel'}" autocomplete="${emailAtivo ? 'email' : 'tel'}" placeholder="${emailAtivo ? 'Digite seu e-mail' : 'Digite seu telefone'}" required></div></label><label>Senha<div class="login-field password-field">${svgIcon('lock')}<input id="loginSenha" type="password" autocomplete="current-password" placeholder="Digite sua senha" required><button type="button" class="password-toggle" onclick="alternarSenhaLogin()" aria-label="Exibir senha">${svgIcon('eye')}</button></div></label><div class="login-options"><label class="remember-option"><input id="loginLembrar" type="checkbox" checked><span></span>Lembrar-me</label><button type="button" class="forgot-link" onclick="abrirRecuperacaoSenha()">Esqueceu a senha?</button></div><div id="loginErro" class="login-error"></div><button class="primary login-submit" type="submit">Entrar</button><p class="login-register">Não tem conta? <button type="button" onclick="abrirCadastroConta()">Cadastre-se</button></p></form></section>`;
+  return `<section class="login-screen">${renderMarcaAcesso()}<form onsubmit="entrarSistema(event)"><div class="access-login-heading"><h1>Gestão de Vendas</h1><p>Entre para registrar suas vendas, acompanhar clientes e resultados.</p></div><div class="login-methods"><button type="button" class="${emailAtivo ? 'active' : ''}" onclick="trocarTipoLogin('email')">${svgIcon('mail')} E-mail</button><button type="button" class="${!emailAtivo ? 'active' : ''}" onclick="trocarTipoLogin('telefone')">${svgIcon('phone')} Telefone</button></div><label>${emailAtivo ? 'E-mail' : 'Telefone'}<div class="login-field">${svgIcon(emailAtivo ? 'mail' : 'phone')}<input id="loginContato" type="${emailAtivo ? 'email' : 'tel'}" inputmode="${emailAtivo ? 'email' : 'tel'}" autocomplete="${emailAtivo ? 'email' : 'tel'}" placeholder="${emailAtivo ? 'Digite seu e-mail' : 'Digite seu telefone'}" required></div></label><label>Senha<div class="login-field password-field">${svgIcon('lock')}<input id="loginSenha" type="password" autocomplete="current-password" placeholder="Digite sua senha" required><button type="button" class="password-toggle" onclick="alternarSenhaLogin()" aria-label="Exibir senha">${svgIcon('eye')}</button></div></label><div class="login-options"><label class="remember-option"><input id="loginLembrar" type="checkbox" checked><span></span>Lembrar-me</label><button type="button" class="forgot-link" onclick="abrirRecuperacaoSenha()">Esqueceu a senha?</button></div><div id="loginErro" class="login-error">${escapeHtml(erroAcessoVendas)}</div><button class="primary login-submit" type="submit">Entrar</button><p class="login-register">Não tem conta? <button type="button" onclick="abrirCadastroConta()">Cadastre-se</button></p></form></section>`;
 }
 
 function renderCadastroConta() {
@@ -1292,6 +1294,7 @@ function renderValidacaoSmsCadastro() {
 
 function trocarTipoLogin(tipo) {
   loginTipo = tipo;
+  erroAcessoVendas = '';
   render();
 }
 
@@ -1744,9 +1747,8 @@ async function entrarSistema(event) {
     await carregarSistemaVendasCompleto();
   } catch (error) {
     carregandoBackend = false;
+    erroAcessoVendas = traduzErro(error);
     render();
-    const erro = document.getElementById('loginErro');
-    if (erro) erro.textContent = traduzErro(error);
   }
 }
 
@@ -1767,8 +1769,8 @@ async function entrarComGoogle() {
     sessionStorage.removeItem(GOOGLE_CONNECTING_KEY);
     liberarAlturaPreparacao();
     render();
-    const erro = document.getElementById('loginErro') || document.getElementById('cadastroErro');
-    if (erro) erro.textContent = traduzErro(error);
+    erroAcessoVendas = traduzErro(error);
+    render();
   }
 }
 
@@ -1837,6 +1839,7 @@ async function redefinirSenhaVendas() {
 function abrirCadastroConta() {
   modoLogin = 'cadastro';
   cadastroEtapa = 'dados';
+  erroAcessoVendas = '';
   render();
 }
 
@@ -1844,12 +1847,14 @@ function voltarParaLogin() {
   modoLogin = 'entrar';
   cadastroEtapa = 'dados';
   cadastroPendente = null;
+  erroAcessoVendas = '';
   pararContadorSmsCadastro();
   render();
 }
 
 function voltarDadosCadastro() {
   cadastroEtapa = 'dados';
+  erroAcessoVendas = '';
   pararContadorSmsCadastro();
   render();
 }
@@ -2766,12 +2771,26 @@ function renderDivulgacao() {
     .filter((material) => material.pasta_id === pastaAtual.id)
     .filter((material) => !pesquisa || normalizar(material.titulo).includes(pesquisa))
     .sort(ordenarTexto) : [];
+  const contarMateriaisDaPasta = (pastaId) => {
+    const visitadas = new Set([pastaId]);
+    const pendentes = [pastaId];
+    while (pendentes.length) {
+      const atual = pendentes.pop();
+      (state.divulgacaoPastas || []).forEach((pasta) => {
+        if (pasta.pasta_pai_id !== atual || visitadas.has(pasta.id)) return;
+        visitadas.add(pasta.id);
+        pendentes.push(pasta.id);
+      });
+    }
+    return (state.divulgacaoMateriais || []).filter((item) => visitadas.has(item.pasta_id)).length;
+  };
   const cardsPastas = pastas.map((pasta) => {
     const materiais = (state.divulgacaoMateriais || []).filter((item) => item.pasta_id === pasta.id);
+    const totalMateriais = contarMateriaisDaPasta(pasta.id);
     const capa = materiais.find((item) => item.miniatura_url) || materiais[0];
     const subpastas = (state.divulgacaoPastas || []).filter((item) => item.pasta_pai_id === pasta.id).length;
-    const resumo = pasta.descricao || `${subpastas ? `${subpastas} ${subpastas === 1 ? 'subpasta' : 'subpastas'} · ` : ''}${materiais.length} ${materiais.length === 1 ? 'material' : 'materiais'}`;
-    return `<button type="button" class="material-folder-card" onclick="abrirPastaDivulgacao('${pasta.id}')"><span class="material-folder-cover">${capa?.miniatura_url ? `<img src="${escapeAttr(capa.miniatura_url)}" alt="">` : capa?.tipo === 'video' ? `<span class="material-cover-processing">${svgIcon('video')}<small>${capa.miniatura_status === 'erro' ? 'Capa indisponível' : 'Preparando capa'}</small></span>` : svgIcon('folder')}</span><span class="material-folder-info"><b>${escapeHtml(pasta.nome)}</b><small>${escapeHtml(resumo)}</small><em>${materiais.length}</em></span></button>`;
+    const resumo = pasta.descricao || `${subpastas ? `${subpastas} ${subpastas === 1 ? 'subpasta' : 'subpastas'} · ` : ''}${totalMateriais} ${totalMateriais === 1 ? 'material' : 'materiais'}`;
+    return `<button type="button" class="material-folder-card" onclick="abrirPastaDivulgacao('${pasta.id}')"><span class="material-folder-cover">${capa?.miniatura_url ? `<img src="${escapeAttr(capa.miniatura_url)}" alt="">` : capa?.tipo === 'video' ? `<span class="material-cover-processing">${svgIcon('video')}<small>${capa.miniatura_status === 'erro' ? 'Capa indisponível' : 'Preparando capa'}</small></span>` : svgIcon('folder')}</span><span class="material-folder-info"><b>${escapeHtml(pasta.nome)}</b><small>${escapeHtml(resumo)}</small><em>${totalMateriais}</em></span></button>`;
   }).join('');
   const cardsMateriais = materiais.map((item) => `<button type="button" class="material-thumb" onclick="abrirMaterialDivulgacao('${item.id}')"><span>${item.miniatura_url ? `<img src="${escapeAttr(item.miniatura_url)}" alt="${escapeAttr(item.titulo)}">` : item.tipo === 'video' ? `<span class="material-cover-processing">${svgIcon('video')}<small>${item.miniatura_status === 'erro' ? 'Capa indisponível' : 'Preparando capa'}</small></span>` : svgIcon('package')}</span><b>${escapeHtml(item.titulo)}</b><small>${item.tipo === 'video' ? 'Vídeo' : 'Imagem'}</small></button>`).join('');
   const voltarId = pastaAtual?.pasta_pai_id || '';
@@ -2853,7 +2872,7 @@ function renderConfiguracoes() {
   };
   const renderVinculo = (vinculo) => `<div class="commercial-link ${vinculo.ativo ? 'is-current' : ''}"><header><b>${escapeHtml(vinculo.empresa_nome || 'Empresa')}</b><span>${vinculo.ativo ? 'Ativa' : 'Histórico'}</span></header><div class="commercial-link-resources">${renderRecurso(vinculo, 'novidades', 'Notícias')}${renderRecurso(vinculo, 'divulgacao', 'Divulgação')}${renderRecurso(vinculo, 'catalogo', 'Catálogo')}</div></div>`;
   return `<section class="module-page settings-page">
-    <div class="module-sticky-head"><div class="module-title"><div><h2>Configurações</h2><p>Preferências, segurança e recursos do Vendas.</p></div></div></div>
+    <div class="module-sticky-head"><div class="module-title"><div><h2>Configurações</h2><p>Preferências, segurança e recursos do Vendas.</p></div><button type="button" class="danger settings-header-exit" onclick="abrirConfirmacaoSair()">${svgIcon('log-out')} Sair</button></div></div>
     <div class="settings-grid">
       <article class="settings-card settings-profile-card"><h3>${svgIcon('user')} Dados do usuário</h3><dl><dt>Nome completo</dt><dd>${escapeHtml(state.usuario.nome)}</dd><dt>Celular confirmado</dt><dd>${telefone ? escapeHtml(mascararTelefone(telefone)) : 'Não informado'}</dd><dt>Empresa vinculada</dt><dd>${escapeHtml(empresa)}</dd></dl><div class="actions"><button class="secondary" onclick="abrirAtualizarTelefone()">${svgIcon('phone')} ${telefone ? 'Alterar celular' : 'Cadastrar celular'}</button></div></article>
     <article class="settings-card"><h3>${svgIcon('settings')} Aparência</h3><label class="switch-line"><span>Modo escuro</span><input type="checkbox" ${state.temaEscuro ? 'checked' : ''} onchange="alternarTema(this.checked)"><i></i></label><p>Alterne o tema da aplicação para maior conforto visual.</p><div class="actions settings-shortcuts-actions"><button class="secondary" onclick="abrirOrganizarAtalhosVendas()">${svgIcon('settings')} Organizar atalhos</button></div></article>
@@ -4802,11 +4821,17 @@ function clientesPagamentosFiltrados() {
       return true;
     })
     .sort((a, b) => {
+      if (filtroPagamentos === 'debito' || filtroPagamentos === 'credito') {
+        const campo = filtroPagamentos;
+        const diferenca = Number(saldoFinanceiroCliente(a.id)[campo] || 0) - Number(saldoFinanceiroCliente(b.id)[campo] || 0);
+        return ordemPagamentos === 'asc' ? diferenca : -diferenca;
+      }
       if (filtroPagamentos === 'ultimo_pagamento') {
-        return String(ultimaDataPorCliente.get(b.id) || '').localeCompare(String(ultimaDataPorCliente.get(a.id) || ''));
+        const comparacao = String(ultimaDataPorCliente.get(a.id) || '').localeCompare(String(ultimaDataPorCliente.get(b.id) || ''));
+        return ordemPagamentos === 'asc' ? comparacao : -comparacao;
       }
       const comparacao = String(a.nome || '').localeCompare(String(b.nome || ''), 'pt-BR', { sensitivity: 'base' });
-      return ordemAlfabetica === 'asc' ? comparacao : -comparacao;
+      return ordemPagamentos === 'asc' ? comparacao : -comparacao;
     });
 }
 
@@ -4822,9 +4847,18 @@ function renderPagamentos() {
   const mensagemVazia = buscaAplicada
     ? '<h3>Nenhum cliente encontrado</h3><p>Revise o texto pesquisado e tente novamente.</p>'
     : '<h3>Nenhum pagamento registrado</h3><p>Pesquise um cliente para registrar o primeiro recebimento.</p>';
-  const rotuloOrdem = `Ordem ${ordemAlfabetica === 'asc' ? 'A/Z' : 'Z/A'}`;
+  const rotuloOrdem = filtroPagamentos === 'ultimo_pagamento'
+    ? `Data ${ordemPagamentos === 'asc' ? 'antiga/recente' : 'recente/antiga'}`
+    : (filtroPagamentos === 'debito' || filtroPagamentos === 'credito')
+      ? `Valor ${ordemPagamentos === 'asc' ? 'menor/maior' : 'maior/menor'}`
+      : `Ordem ${ordemPagamentos === 'asc' ? 'A/Z' : 'Z/A'}`;
   const indicadorResultados = `<div class="module-stats payment-results-stats" aria-live="polite"><span>Exibindo <b>${clientes.length}</b> de <b>${todosClientes.length}</b> clientes</span></div>`;
-  return `<section class="module-page pagamentos-page"><div class="module-sticky-head"><div class="module-title pagamentos-title"><div><h2>Pagamentos</h2><p>Gerencie pagamentos, débitos e créditos.</p></div><button type="button" class="payment-order-button" onclick="alternarOrdemAlfabetica()">${svgIcon('filter')}${rotuloOrdem}${svgIcon('chevron-down')}</button></div>${renderBarraBuscaPagamentos()}<nav class="order-type-filters payment-type-filters" aria-label="Filtrar pagamentos por situação">${botaoFiltroPagamentos('todos', 'Todos')}${botaoFiltroPagamentos('debito', 'Débito')}${botaoFiltroPagamentos('credito', 'Crédito')}${botaoFiltroPagamentos('ultimo_pagamento', 'Último pagamento')}</nav>${indicadorResultados}</div>${clientes.length ? `<section class="debt-card-grid">${clientes.map(renderClienteDebito).join('')}</section>${todosClientes.length > clientes.length ? `<button type="button" class="ghost payment-clients-more" onclick="carregarMaisClientesPagamentos()">Carregar mais ${quantidadeProximoLote} clientes</button>` : ''}` : `<article class="publication-empty"><span>${svgIcon('users')}</span>${mensagemVazia}</article>`}</section>`;
+  return `<section class="module-page pagamentos-page"><div class="module-sticky-head"><div class="module-title pagamentos-title"><div><h2>Pagamentos</h2><p>Gerencie pagamentos, débitos e créditos.</p></div><button type="button" class="payment-order-button" onclick="alternarOrdemPagamentos()">${svgIcon('filter')}${rotuloOrdem}${svgIcon('chevron-down')}</button></div>${renderBarraBuscaPagamentos()}<nav class="order-type-filters payment-type-filters" aria-label="Filtrar pagamentos por situação">${botaoFiltroPagamentos('todos', 'Todos')}${botaoFiltroPagamentos('debito', 'Débito')}${botaoFiltroPagamentos('credito', 'Crédito')}${botaoFiltroPagamentos('ultimo_pagamento', 'Último pagamento')}</nav>${indicadorResultados}</div>${clientes.length ? `<section class="debt-card-grid">${clientes.map(renderClienteDebito).join('')}</section>${todosClientes.length > clientes.length ? `<button type="button" class="ghost payment-clients-more" onclick="carregarMaisClientesPagamentos()">Carregar mais ${quantidadeProximoLote} clientes</button>` : ''}` : `<article class="publication-empty"><span>${svgIcon('users')}</span>${mensagemVazia}</article>`}</section>`;
+}
+
+function alternarOrdemPagamentos() {
+  ordemPagamentos = ordemPagamentos === 'asc' ? 'desc' : 'asc';
+  render();
 }
 
 function botaoFiltroPagamentos(tipo, rotulo) {
@@ -6248,6 +6282,7 @@ window.mudarMes = mudarMes;
 window.irMesAtual = irMesAtual;
 window.aplicarBusca = aplicarBusca;
 window.alternarOrdemAlfabetica = alternarOrdemAlfabetica;
+window.alternarOrdemPagamentos = alternarOrdemPagamentos;
 window.selecionarFiltroPedidos = selecionarFiltroPedidos;
 window.carregarMaisPedidos = carregarMaisPedidos;
 window.selecionarDiaAgenda = selecionarDiaAgenda;

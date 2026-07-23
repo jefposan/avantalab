@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.6.0.84.84 - 2026-07-23
+
+- Gestão Mobile: perfis autorizados com Vendas Mobile instalado ganharam o
+  atalho visual de troca no cabeçalho; buscas de despesas e receitas mantêm a
+  ação Recolher disponível.
+- Vendas Mobile: pagamentos classificam por valor ou data conforme o filtro;
+  pastas de Divulgação somam materiais das subpastas; Configurações ganhou
+  saída no cabeçalho; erros de acesso não passam do Entrar ao Cadastro.
+
 ## 1.6.0.84.83 - 2026-07-23
 
 - App Store/Capacitor: a conta de revisão não exibe o modal de preenchimento do

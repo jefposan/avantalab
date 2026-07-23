@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.6.0.84.83 -->
+<!-- ava-version: 1.6.0.84.84 -->
+
+> Revisão 1.6.0.84.84: ajustes de navegação e filtros nos PWAs móveis; sem
+> impacto operacional na Gestão Web.
 
 > Revisão 1.6.0.84.83: conta de revisão não exibe o cadastro detalhado do perfil; sem impacto operacional para os demais usuários.
 > sem impacto operacional na Gestão Web.
