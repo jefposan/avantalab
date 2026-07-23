@@ -12324,10 +12324,18 @@
     });
     bind('toggle-ultimas-despesas', function () {
       state.ultimasDespesasExpandido = !state.ultimasDespesasExpandido;
+      if (!state.ultimasDespesasExpandido) {
+        state.ultimasDespesasBuscaAberta = false;
+        state.ultimasDespesasBusca = '';
+      }
       render();
     });
     bind('toggle-ultimas-receitas', function () {
       state.ultimasReceitasExpandido = !state.ultimasReceitasExpandido;
+      if (!state.ultimasReceitasExpandido) {
+        state.ultimasReceitasBuscaAberta = false;
+        state.ultimasReceitasBusca = '';
+      }
       render();
     });
     bind('buscar-ultimas-despesas', function () {

@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.6.0.84.85 - 2026-07-23
+
+- Vendas Mobile: atualização do cache do PWA passa a entregar imediatamente os
+  ajustes de pagamentos e Divulgação já publicados.
+- Gestão Mobile: Recolher em Despesas e Receitas também fecha e limpa a busca.
+
 ## 1.6.0.84.84 - 2026-07-23
 
 - Gestão Mobile: perfis autorizados com Vendas Mobile instalado ganharam o

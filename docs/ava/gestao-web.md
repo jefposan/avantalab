@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.6.0.84.84 -->
+<!-- ava-version: 1.6.0.84.85 -->
+
+> Revisão 1.6.0.84.85: entrega de cache do PWA e ajuste de busca no mobile; sem
+> impacto operacional na Gestão Web.
 
 > Revisão 1.6.0.84.84: ajustes de navegação e filtros nos PWAs móveis; sem
 > impacto operacional na Gestão Web.

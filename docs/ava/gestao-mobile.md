@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.6.0.84.84 -->
+<!-- ava-version: 1.6.0.84.85 -->
+
+> Revisão 1.6.0.84.85: Recolher em Despesas e Receitas também fecha e limpa a
+> busca aberta.
 
 > Revisão 1.6.0.84.84: com Vendas Mobile instalado e permissão autorizada, o
 > cabeçalho exibe o atalho para ir ao Vendas. Ao buscar lançamentos, Despesas e

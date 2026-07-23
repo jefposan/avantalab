@@ -1,6 +1,9 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.6.0.84.84 -->
+<!-- ava-version: 1.6.0.84.85 -->
+
+> Revisão 1.6.0.84.85: atualização técnica do cache do PWA para entregar a
+> versão atual; sem mudança operacional adicional.
 
 > Revisão 1.6.0.84.84: em Pagamentos, Classificar ordena por valor nos filtros
 > Débito e Crédito e por data em Último pagamento. Configurações também permite
