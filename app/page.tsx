@@ -1404,7 +1404,9 @@ setNomeUsuarioAtual(
     ''
 );
 
-if (empresa.telefone_confirmado !== true) {
+const contaRevisaoAppApple = emailLogado.trim().toLowerCase() === 'teste@teste.com.br';
+
+if (empresa.telefone_confirmado !== true && !contaRevisaoAppApple) {
   setEmpresaAguardandoTelefone(empresa);
   setTelefoneObrigatorio(empresa.telefone || '');
   setCodigoSmsTelefoneObrigatorio('');
@@ -1593,6 +1595,14 @@ setMensagemCarregamentoSistema('Carregando empresa...');
   );
 
   if (!empresaFallback) {
+    if (String(sessaoAtual.session.user.email || '').trim().toLowerCase() === 'teste@teste.com.br') {
+      const perfilCriado = await handleCriarEmpresaInicial({
+        nome: 'AvantaLab — Conta de teste',
+        tipoPerfil: 'pessoal',
+        somentePrimeiroCadastro: true,
+      });
+      if (perfilCriado) return;
+    }
     const perfilCriado = await handleCriarPerfilInicialDoCadastro(
       sessaoAtual.session.user.user_metadata
     );

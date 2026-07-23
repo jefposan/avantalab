@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.6.0.84.78 - 2026-07-22
+
+- App Store: a conta de revisão `teste@teste.com.br` passa a receber
+  automaticamente um perfil pessoal de teste após o primeiro login, sem exigir
+  preenchimento manual do cadastro ou validação de telefone. O fluxo normal dos
+  demais usuários não muda.
+
 ## 1.6.0.84.77 - 2026-07-22
 
 - Suporte: criada a página pública `/suporte` com canais de ajuda, formulário de

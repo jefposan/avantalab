@@ -58,6 +58,11 @@
   var CHAVE_SISTEMA_SESSAO_MOBILE = 'avantalab_mobile_sistema_sessao_';
   var CHAVE_CONTEXTO_SISTEMA_MOBILE = 'avantalab_mobile_sistema_contexto';
   var CHAVE_ORIGEM_ACESSO_MOBILE = 'avantalab_mobile_origem_acesso';
+  var EMAIL_CONTA_REVISAO_APPLE = 'teste@teste.com.br';
+
+  function ehContaRevisaoAppAppleMobile(usuario) {
+    return String(usuario && usuario.email || '').trim().toLowerCase() === EMAIL_CONTA_REVISAO_APPLE;
+  }
   var meses = [
     'JANEIRO',
     'FEVEREIRO',
@@ -4805,7 +4810,7 @@
       return;
     }
 
-    if (state.empresa.telefone_confirmado !== true) {
+    if (state.empresa.telefone_confirmado !== true && !ehContaRevisaoAppAppleMobile(state.usuario)) {
       state.validacaoTelefoneObrigatoria = true;
       state.telefoneObrigatorio = state.empresa.telefone || '';
       state.telefoneObrigatorioConfirmado = '';
@@ -5150,6 +5155,13 @@
     if (!state.empresa) {
       state.carregando = false;
       state.loginAcao = '';
+      if (ehContaRevisaoAppAppleMobile(resposta.data.user)) {
+        var perfilRevisaoCriado = await criarPerfilInicial({
+          nome: 'AvantaLab — Conta de teste',
+          tipoPerfil: 'pessoal',
+        });
+        if (perfilRevisaoCriado) return;
+      }
       var perfilCriadoNoCadastro = await criarPerfilInicialDoCadastroMobile(mdLogin);
       if (perfilCriadoNoCadastro) return;
       state.criarPerfilNome = String(mdLogin.nome_perfil_inicial || '');
@@ -13503,6 +13515,17 @@
           throw erroPerfis;
         }
         if (!state.empresa) {
+          if (ehContaRevisaoAppAppleMobile(state.usuario)) {
+            var perfilRevisaoInicializacao = await criarPerfilInicial({
+              nome: 'AvantaLab — Conta de teste',
+              tipoPerfil: 'pessoal',
+            });
+            if (perfilRevisaoInicializacao) {
+              state.pronto = true;
+              render();
+              return;
+            }
+          }
           var perfilCriadoNaInicializacao = await criarPerfilInicialDoCadastroMobile(mdSessao);
           if (!perfilCriadoNaInicializacao) {
             state.criarPerfilNome = String(mdSessao.nome_perfil_inicial || '');

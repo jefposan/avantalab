@@ -1,8 +1,8 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.6.0.84.77 -->
+<!-- ava-version: 1.6.0.84.78 -->
 
-> Revisão 1.6.0.84.77: publicada a página pública de Suporte (`/suporte`), com canal de sugestões e contato.
+> Revisão 1.6.0.84.78: conta de revisão da App Store recebe perfil pessoal de teste automaticamente; sem impacto operacional para os demais usuários.
 > sem impacto operacional no Vendas Mobile.
 
 > Revisão 1.6.0.84.75: novo nome e ícone de instalação do PWA de Ponto; sem

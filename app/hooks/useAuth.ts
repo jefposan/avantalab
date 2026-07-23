@@ -62,6 +62,21 @@ function telefoneCadastroConfirmado(metadata: Record<string, unknown> | null | u
 
 const CHAVE_RASCUNHO_CADASTRO_WEB = 'avantalab_web_rascunho_cadastro';
 const REDIRECT_GOOGLE_NATIVO = 'br.com.avantalab.app://auth/callback';
+const EMAIL_CONTA_REVISAO_APPLE = 'teste@teste.com.br';
+
+function ehContaRevisaoAppApple(email: unknown) {
+  return String(email || '').trim().toLowerCase() === EMAIL_CONTA_REVISAO_APPLE;
+}
+
+async function criarPerfilAutomaticoContaRevisao(
+  criarPerfil: (opcoes: OpcoesCriacaoPerfilInicial) => Promise<boolean>
+) {
+  return criarPerfil({
+    nome: 'AvantaLab — Conta de teste',
+    tipoPerfil: 'pessoal',
+    somentePrimeiroCadastro: true,
+  });
+}
 
 // ---------------------------------------------------------------------------
 // Hook
@@ -543,6 +558,10 @@ export function useAuth(deps: UseAuthDeps) {
         if (empresaFallback) {
           await carregarEmpresaSelecionada(empresaFallback);
         } else {
+          if (ehContaRevisaoAppApple(dadosLogin.user?.email)) {
+            const perfilCriado = await criarPerfilAutomaticoContaRevisao(handleCriarEmpresaInicial);
+            if (perfilCriado) return;
+          }
           const perfilCriado = await handleCriarPerfilInicialDoCadastro(
             dadosLogin.user?.user_metadata
           );
