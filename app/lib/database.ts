@@ -521,6 +521,58 @@ export async function buscarFaturamentosEntradas(
   return data || [];
 }
 
+/** Popula a conta exclusiva de revisão com dados demonstrativos, uma única vez. */
+export async function prepararDadosContaRevisao(
+  empresaId: string,
+  usuarioId: string,
+  email: string
+) {
+  if (email.trim().toLowerCase() !== 'teste@teste.com.br') return false;
+
+  const { data: marcador, error: erroMarcador } = await supabase
+    .from('lancamentos')
+    .select('id')
+    .eq('empresa_id', empresaId)
+    .eq('tipo_obs', 'demo_app_review')
+    .limit(1)
+    .maybeSingle();
+
+  if (erroMarcador || marcador) return !erroMarcador;
+
+  const agora = new Date();
+  const ano = agora.getFullYear();
+  const mes = MESES_DB[agora.getMonth()];
+  const lancamentos = [
+    { empresa_id: empresaId, ano, mes, dia: 3, despesa_nome: 'Mercado', descricao: 'Compras do mês', valor: 480, status: 'paga', tipo_obs: 'demo_app_review' },
+    { empresa_id: empresaId, ano, mes, dia: 8, despesa_nome: 'Internet', descricao: 'Plano mensal', valor: 120, status: 'paga', tipo_obs: 'demo_app_review' },
+    { empresa_id: empresaId, ano, mes, dia: 15, despesa_nome: 'Transporte', descricao: 'Deslocamentos', valor: 210, status: 'paga', tipo_obs: 'demo_app_review' },
+    { empresa_id: empresaId, ano, mes, dia: 25, despesa_nome: 'Lazer e consumo', descricao: 'Atividades do mês', valor: 160, status: 'prevista', tipo_obs: 'demo_app_review' },
+  ];
+  const { error: erroLancamentos } = await supabase.from('lancamentos').insert(lancamentos);
+  if (erroLancamentos) {
+    console.error('Erro ao criar dados demonstrativos da conta de revisão:', erroLancamentos);
+    return false;
+  }
+
+  const entradas = [
+    { empresa_id: empresaId, ano, mes, dia: 5, origem: 'Serviços', valor: 2400, status: 'recebida', tipo_obs: 'demo_app_review', criado_por: usuarioId },
+    { empresa_id: empresaId, ano, mes, dia: 18, origem: 'Projeto Avanta', valor: 1850, status: 'recebida', tipo_obs: 'demo_app_review', criado_por: usuarioId },
+    { empresa_id: empresaId, ano, mes, dia: 28, origem: 'Contrato mensal', valor: 1200, status: 'prevista', tipo_obs: 'demo_app_review', criado_por: usuarioId },
+  ];
+  const { error: erroEntradas } = await supabase.from('faturamentos_entradas').insert(entradas);
+  if (erroEntradas) {
+    console.error('Erro ao criar receitas demonstrativas da conta de revisão:', erroEntradas);
+    return false;
+  }
+
+  const { error: erroFaturamento } = await supabase.from('faturamentos').upsert(
+    { empresa_id: empresaId, ano, mes, valor: 5450 },
+    { onConflict: 'empresa_id,ano,mes' }
+  );
+  if (erroFaturamento) console.error('Erro ao criar resumo demonstrativo da conta de revisão:', erroFaturamento);
+  return true;
+}
+
 export async function salvarDespesaCadastrada(
   empresaId: string,
   nome: string,

@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.6.0.84.79 - 2026-07-23
+
+- App Store: a conta de revisão `teste@teste.com.br` passa a receber dados
+  demonstrativos idempotentes de receitas e despesas para testes, capturas de
+  tela e demonstrações.
+
 ## 1.6.0.84.78 - 2026-07-22
 
 - App Store: a conta de revisão `teste@teste.com.br` passa a receber

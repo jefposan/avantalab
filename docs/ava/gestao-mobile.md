@@ -1,8 +1,8 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.6.0.84.78 -->
+<!-- ava-version: 1.6.0.84.79 -->
 
-> Revisão 1.6.0.84.78: conta de revisão da App Store recebe perfil pessoal de teste automaticamente; sem impacto operacional para os demais usuários.
+> Revisão 1.6.0.84.79: conta de revisão da App Store recebe dados demonstrativos idempotentes; sem impacto operacional para os demais usuários.
 > sem impacto operacional na Gestão Mobile.
 
 > Revisão 1.6.0.84.75: novo nome e ícone de instalação do PWA de Ponto; sem

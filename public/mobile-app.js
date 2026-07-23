@@ -63,6 +63,31 @@
   function ehContaRevisaoAppAppleMobile(usuario) {
     return String(usuario && usuario.email || '').trim().toLowerCase() === EMAIL_CONTA_REVISAO_APPLE;
   }
+
+  async function prepararDadosContaRevisaoMobile() {
+    if (!ehContaRevisaoAppAppleMobile(state.usuario) || !state.empresa) return;
+    var empresaId = state.empresa.id;
+    var marcador = await db.from('lancamentos').select('id').eq('empresa_id', empresaId).eq('tipo_obs', 'demo_app_review').limit(1).maybeSingle();
+    if (marcador.error || marcador.data) return;
+    var agora = new Date();
+    var ano = agora.getFullYear();
+    var mes = meses[agora.getMonth()];
+    var lancamentos = [
+      { empresa_id: empresaId, ano: ano, mes: mes, dia: 3, despesa_nome: 'Mercado', descricao: 'Compras do mês', valor: 480, status: 'paga', tipo_obs: 'demo_app_review' },
+      { empresa_id: empresaId, ano: ano, mes: mes, dia: 8, despesa_nome: 'Internet', descricao: 'Plano mensal', valor: 120, status: 'paga', tipo_obs: 'demo_app_review' },
+      { empresa_id: empresaId, ano: ano, mes: mes, dia: 15, despesa_nome: 'Transporte', descricao: 'Deslocamentos', valor: 210, status: 'paga', tipo_obs: 'demo_app_review' },
+      { empresa_id: empresaId, ano: ano, mes: mes, dia: 25, despesa_nome: 'Lazer e consumo', descricao: 'Atividades do mês', valor: 160, status: 'prevista', tipo_obs: 'demo_app_review' }
+    ];
+    var erroLancamentos = await db.from('lancamentos').insert(lancamentos);
+    if (erroLancamentos.error) return;
+    var entradas = [
+      { empresa_id: empresaId, ano: ano, mes: mes, dia: 5, origem: 'Serviços', valor: 2400, status: 'recebida', tipo_obs: 'demo_app_review', criado_por: state.usuario.id },
+      { empresa_id: empresaId, ano: ano, mes: mes, dia: 18, origem: 'Projeto Avanta', valor: 1850, status: 'recebida', tipo_obs: 'demo_app_review', criado_por: state.usuario.id },
+      { empresa_id: empresaId, ano: ano, mes: mes, dia: 28, origem: 'Contrato mensal', valor: 1200, status: 'prevista', tipo_obs: 'demo_app_review', criado_por: state.usuario.id }
+    ];
+    await db.from('faturamentos_entradas').insert(entradas);
+    await db.from('faturamentos').upsert({ empresa_id: empresaId, ano: ano, mes: mes, valor: 5450 }, { onConflict: 'empresa_id,ano,mes' });
+  }
   var meses = [
     'JANEIRO',
     'FEVEREIRO',
@@ -4832,6 +4857,7 @@
     var empresaId = state.empresa.id;
     var ano = Number(state.ano);
     var preparacaoSistemaVendas = state.preparacaoSistemaVendas;
+    await prepararDadosContaRevisaoMobile();
     var podeReaproveitarPreparacaoVendas = !!(
       preparacaoSistemaVendas &&
       preparacaoSistemaVendas.empresaId === empresaId

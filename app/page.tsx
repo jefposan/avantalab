@@ -62,6 +62,7 @@ import {
   garantirFixasDoMesAtual,
   buscarFaturamentos,
   buscarFaturamentosEntradas,
+  prepararDadosContaRevisao,
   salvarLancamento,
   salvarCaixinhaMovimento,
   salvarSaldoInicialCaixinha,
@@ -1383,7 +1384,11 @@ setMesAtivo(null);
 
   const { data: usuarioLogado } = await supabase.auth.getUser();
 
-  const emailLogado = usuarioLogado.user?.email || '';
+const emailLogado = usuarioLogado.user?.email || '';
+
+if (emailLogado.trim().toLowerCase() === 'teste@teste.com.br') {
+  await prepararDadosContaRevisao(empresa.id, usuarioLogado.user?.id || '', emailLogado);
+}
 
 setEmailUsuarioAtual(emailLogado);
 
