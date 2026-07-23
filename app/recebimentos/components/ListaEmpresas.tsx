@@ -522,7 +522,7 @@ export default function ListaEmpresas({
                 <div className={styles.empresaNome}>{emp.nome}</div>
                 <div className={styles.subMeta}>{localAgrupador ? `${emp.endereco || 'Endereço não informado'} · ${totalSubs} cliente(s)` : `Cliente direto · ${emp.responsavel} · ${emp.telefone} · ${formatarMoeda(emp.valorCombinado ?? 0)}`}</div>
               </div>
-              <span className={`${styles.chip} ${emp.ativo ? styles.chipOn : styles.chipOff}`}>{emp.ativo ? 'Ativo' : 'Inativo'}</span>
+              {!localAgrupador && <span className={`${styles.chip} ${emp.ativo ? styles.chipOn : styles.chipOff}`}>{emp.ativo ? 'Ativo' : 'Inativo'}</span>}
               {/* Ações ocultas: surgem deslizando para a esquerda no hover/toque. */}
               <div
                 className={`${styles.acoesGrupo} ${acoesAbertas[emp.id] ? styles.acoesGrupoAberto : ''}`}
@@ -532,9 +532,9 @@ export default function ListaEmpresas({
                   <button type="button" className={`${styles.btn} ${styles.btnGhost} ${styles.btnXs}`} onClick={() => abrirEdicaoEmpresa(emp)}>
                     Editar
                   </button>
-                  <button type="button" className={`${styles.btn} ${styles.btnGhost} ${styles.btnXs}`} onClick={() => onAlternarEmpresa(emp.id)}>
+                  {!localAgrupador && <button type="button" className={`${styles.btn} ${styles.btnGhost} ${styles.btnXs}`} onClick={() => onAlternarEmpresa(emp.id)}>
                     {emp.ativo ? 'Desativar' : 'Ativar'}
-                  </button>
+                  </button>}
                 </div>
                 <button type="button" className={styles.acoesTrigger} onClick={(ev) => alternarAcoes(emp.id, ev)} aria-label={`Ações de ${emp.nome}`}>
                   <IconeAcoes />
@@ -598,7 +598,7 @@ export default function ListaEmpresas({
                     </div>
                     {erroSub && <div className={styles.aviso} style={{ marginTop: 8 }}>{erroSub}</div>}
                   </div>
-                ) : localAgrupador && emp.ativo && subDe !== emp.id ? (
+                ) : localAgrupador && subDe !== emp.id ? (
                   <button type="button" className={`${styles.btn} ${styles.btnPrimary} ${styles.btnXs}`} style={{ justifySelf: 'end' }} onClick={() => abrirNovaSub(emp.id)}>
                     + Novo cliente no local
                   </button>

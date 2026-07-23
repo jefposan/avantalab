@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.6.0.84.72 - 2026-07-22
+
+- Recebimentos Presenciais: locais agrupadores não exibem status nem ação de
+  ativar/desativar, pois são somente organizadores de clientes e não possuem
+  cobranças próprias.
+
 ## 1.6.0.84.71 - 2026-07-22
 
 - Recebimentos Presenciais: novos cadastros não pré-selecionam a frequência de

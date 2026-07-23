@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.6.0.84.71 -->
+<!-- ava-version: 1.6.0.84.72 -->
+
+> Revisão 1.6.0.84.72: ajuste de locais agrupadores em Recebimentos
+> Presenciais, sem impacto operacional na Gestão Mobile.
 
 > Revisão 1.6.0.84.71: ajuste de vencimento em Recebimentos Presenciais, sem
 > impacto operacional na Gestão Mobile.
