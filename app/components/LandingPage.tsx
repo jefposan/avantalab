@@ -108,7 +108,7 @@ export default function LandingPage({ onCriarConta, onEntrar }: LandingPageProps
     document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' });
   };
 
-  const irParaProdutoMobile = () => {
+  const irParaProximaEtapa = () => {
     const proxima = proximaEtapaScroll();
     const rolarAteOFim = () => {
       const aplicarFimReal = (behavior: ScrollBehavior) => {
@@ -496,8 +496,8 @@ export default function LandingPage({ onCriarConta, onEntrar }: LandingPageProps
       <button
         type="button"
         className={`${styles.heroScrollPortal} ${mostrarSetaHero ? styles.heroScrollPortalVisible : ''}`}
-        onClick={irParaProdutoMobile}
-        aria-label="Avançar para o próximo conteúdo"
+        onClick={irParaProximaEtapa}
+        aria-label="Avançar para a próxima seção"
       >
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.25" d="M12 5v14m0 0l-6-6m6 6l6-6" />
