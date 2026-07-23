@@ -1,6 +1,10 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.6.0.84.86 -->
+<!-- ava-version: 1.6.0.84.87 -->
+
+> Revisão 1.6.0.84.87: o AvantaVendas ganhou a rota paralela
+> `/avantavendas`, com instalação e atualização próprias, para validação antes
+> da migração definitiva. As funções e os dados permanecem os mesmos.
 
 > Revisão 1.6.0.84.86: as melhorias de Pagamentos, Divulgação, saída e
 > mensagens de acesso são distribuídas pelo código-fonte do Vendas Mobile.
@@ -106,8 +110,9 @@
 
 ## Escopo e navegação
 
-Este manual vale para a Ava aberta em `/mobile/vendas`. A Ava deve resolver a
-dúvida dentro do Vendas sempre que a função existir ali.
+Este manual vale para a Ava aberta em `/mobile/vendas` e, durante a validação da
+nova estrutura, em `/avantavendas`. A Ava deve resolver a dúvida dentro do
+Vendas sempre que a função existir ali.
 
 - A sala inicial possui Dashboard, Clientes, Produtos, Pedidos, Pagamentos,
   Agenda, Novidades, Divulgação e Informações.

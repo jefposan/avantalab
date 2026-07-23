@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.6.0.84.86 -->
+<!-- ava-version: 1.6.0.84.87 -->
+
+> Revisão 1.6.0.84.87: rota paralela de validação do AvantaVendas; sem impacto
+> operacional na Gestão Web.
 
 > Revisão 1.6.0.84.86: correção de distribuição no Vendas Mobile; sem impacto
 > operacional na Gestão Web.

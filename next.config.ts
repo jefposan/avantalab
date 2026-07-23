@@ -17,12 +17,19 @@ const semCachePwa = [
 
 const nextConfig: NextConfig = {
   devIndicators: false,
+  outputFileTracingIncludes: {
+    "/avantavendas/recursos/*": ["./app/avantavendas/sistema/**/*"],
+  },
   async headers() {
     return [
       { source: "/mobile", headers: semCachePwa },
       { source: "/mobile-app.js", headers: semCachePwa },
       { source: "/mobile-supabase.js", headers: semCachePwa },
       { source: "/mobile-sw.js", headers: semCachePwa },
+      { source: "/avantavendas", headers: semCachePwa },
+      { source: "/avantavendas/manifest.webmanifest", headers: semCachePwa },
+      { source: "/avantavendas/sw.js", headers: semCachePwa },
+      { source: "/avantavendas/versao", headers: semCachePwa },
     ];
   },
 };

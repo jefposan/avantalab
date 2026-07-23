@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.6.0.84.87 - 2026-07-23
+
+- AvantaVendas: nova estrutura em `/avantavendas` publicada em paralelo para
+  validação antes da migração definitiva.
+- AvantaVendas: manifesto, atualização, cache e service worker próprios,
+  isolados dos demais PWAs do AvantaLab.
+- AvantaVendas: código, estilos, bibliotecas e recursos passam a ser entregues
+  pela nova pasta do produto, sem alterar ainda o endereço oficial existente.
+
 ## 1.6.0.84.86 - 2026-07-23
 
 - Vendas Mobile: correções de Pagamentos, Divulgação, saída e mensagens de
