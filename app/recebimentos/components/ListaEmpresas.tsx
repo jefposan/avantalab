@@ -3,7 +3,7 @@
 import { useMemo, useRef, useState } from 'react';
 import styles from '../recebimentos.module.css';
 import type { AbrirAvisoFn } from '@/app/hooks/useUI';
-import type { Empresa, FrequenciaRecebimento, Subempresa } from './types';
+import type { Empresa, FrequenciaRecebimento, Subempresa, TipoCadastroEmpresa } from './types';
 import {
   FREQUENCIAS_RECEBIMENTO,
   formatarMoeda,
@@ -76,6 +76,7 @@ export default function ListaEmpresas({
 
   // Form empresa — todos os campos obrigatórios.
   const [eNome, setENome] = useState('');
+  const [eTipo, setETipo] = useState<TipoCadastroEmpresa>('cliente_direto');
   const [eResp, setEResp] = useState('');
   const [eTel, setETel] = useState('');
   const [eEmail, setEEmail] = useState('');
@@ -139,6 +140,8 @@ export default function ListaEmpresas({
 
   function limparFormEmpresa() {
     setENome(''); setEResp(''); setETel(''); setEEmail('');
+    setETipo('cliente_direto');
+    setSCep(''); setSLogradouro(''); setSBairro(''); setSCidade(''); setSEstado(''); setSNumero(''); setSComplemento(''); setSValor(''); setSFrequencia('mensal'); setSDiasSemana([]); setSDiaMes(null); setSMesInicio(null); setPopupVencimento(null);
     setErroEmpresa('');
     setConfirmandoExclusao(false);
     setFormEmpresaAberto(false);
@@ -157,7 +160,8 @@ export default function ListaEmpresas({
 
   function abrirNovaEmpresa() {
     limparFormSub();
-    setENome(''); setEResp(''); setETel(''); setEEmail('');
+    setENome(''); setETipo('cliente_direto'); setEResp(''); setETel(''); setEEmail('');
+    setSCep(''); setSLogradouro(''); setSBairro(''); setSCidade(''); setSEstado(''); setSNumero(''); setSComplemento(''); setSValor(''); setSFrequencia('mensal'); setSDiasSemana([]); setSDiaMes(null); setSMesInicio(null); setPopupVencimento(null);
     setErroEmpresa('');
     setConfirmandoExclusao(false);
     setEditandoEmpresaId(null);
@@ -166,7 +170,8 @@ export default function ListaEmpresas({
 
   function abrirEdicaoEmpresa(emp: Empresa) {
     limparFormSub();
-    setENome(emp.nome); setEResp(emp.responsavel); setETel(emp.telefone); setEEmail(emp.email);
+    setENome(emp.nome); setETipo(emp.tipoCadastro); setEResp(emp.responsavel); setETel(emp.telefone); setEEmail(emp.email);
+    setSCep(emp.cep); setSLogradouro(emp.logradouro); setSBairro(emp.bairro); setSCidade(emp.cidade); setSEstado(emp.estado); setSNumero(emp.numero); setSComplemento(emp.complemento); setSValor(emp.valorCombinado == null ? '' : valorParaInput(emp.valorCombinado)); setSFrequencia(emp.frequenciaRecebimento ?? 'mensal'); setSDiasSemana(emp.configuracaoRecorrencia?.diasSemana ?? []); setSDiaMes(emp.configuracaoRecorrencia?.diaMes ?? null); setSMesInicio(emp.configuracaoRecorrencia?.mesInicio ?? null); setPopupVencimento(null);
     setErroEmpresa('');
     setConfirmandoExclusao(false);
     setEditandoEmpresaId(emp.id);
@@ -215,12 +220,27 @@ export default function ListaEmpresas({
 
   function salvarEmpresa() {
     setErroEmpresa('');
-    if (!eNome.trim() || !eResp.trim() || !eTel.trim() || !eEmail.trim()) {
-      if (onAviso) onAviso('Preenchimento pendente', 'Preencha nome, responsável, telefone e e-mail para salvar a empresa.', undefined, 'alerta');
-      else setErroEmpresa('Preencha nome, responsável, telefone e e-mail para salvar a empresa.');
+    const valor = parseValorBR(sValor);
+    if (!eNome.trim()) {
+      if (onAviso) onAviso('Preenchimento pendente', 'Informe o nome para salvar o cadastro.', undefined, 'alerta');
+      else setErroEmpresa('Informe o nome para salvar o cadastro.');
       return;
     }
-    const dados: DadosEmpresa = { nome: eNome.trim(), responsavel: eResp.trim(), telefone: eTel.trim(), email: eEmail.trim() };
+    if (eTipo === 'cliente_direto') {
+      if (!eResp.trim() || !eTel.trim() || !eEmail.trim() || !sValor.trim()) {
+        if (onAviso) onAviso('Preenchimento pendente', 'Preencha responsável, contato, e-mail, valor contratado e vencimento para salvar o cliente.', undefined, 'alerta');
+        else setErroEmpresa('Preencha responsável, contato, e-mail, valor contratado e vencimento para salvar o cliente.');
+        return;
+      }
+      if (Number.isNaN(valor) || valor <= 0) return setErroEmpresa('Informe um valor contratado maior que zero.');
+      if (sFrequencia === 'semanal' && sDiasSemana.length === 0) return setErroEmpresa('Selecione ao menos um dia para configurar o vencimento semanal.');
+      if (sFrequencia !== 'semanal' && !sDiaMes) return setErroEmpresa('Selecione o dia para configurar o vencimento.');
+      if (['trimestral', 'semestral', 'anual'].includes(sFrequencia) && !sMesInicio) return setErroEmpresa('Selecione o mês inicial para configurar o vencimento.');
+    }
+    const endereco = [sLogradouro.trim(), sNumero.trim(), sComplemento.trim(), sBairro.trim(), [sCidade.trim(), sEstado.trim()].filter(Boolean).join('/')].filter(Boolean).join(' · ');
+    const dados: DadosEmpresa = {
+      tipoCadastro: eTipo, nome: eNome.trim(), endereco, cep: sCep.trim(), logradouro: sLogradouro.trim(), bairro: sBairro.trim(), cidade: sCidade.trim(), estado: sEstado.trim().toUpperCase(), numero: sNumero.trim(), complemento: sComplemento.trim(), responsavel: eTipo === 'cliente_direto' ? eResp.trim() : '', telefone: eTipo === 'cliente_direto' ? eTel.trim() : '', email: eTipo === 'cliente_direto' ? eEmail.trim() : '', valorCombinado: eTipo === 'cliente_direto' ? valor : null, frequenciaRecebimento: eTipo === 'cliente_direto' ? sFrequencia : null, configuracaoRecorrencia: eTipo === 'cliente_direto' ? { diasSemana: sDiasSemana, diaMes: sDiaMes, mesInicio: sMesInicio } : null,
+    };
     if (editandoEmpresaId) {
       onEditarEmpresa(editandoEmpresaId, dados);
     } else {
@@ -253,7 +273,7 @@ export default function ListaEmpresas({
     setErroSub('');
     const valor = parseValorBR(sValor);
     if (!sNome.trim() || !sResp.trim() || !sValor.trim()) {
-      return avisarErroSub('Preencha nome, responsável, valor e vencimento para salvar a subempresa.');
+      return avisarErroSub('Preencha nome, responsável, valor e vencimento para salvar o cliente.');
     }
     if (Number.isNaN(valor) || valor <= 0) return avisarErroSub('Informe um valor contratado maior que zero.');
     if (sFrequencia === 'semanal' && sDiasSemana.length === 0) return avisarErroSub('Selecione ao menos um dia para configurar o vencimento semanal.');
@@ -387,7 +407,7 @@ export default function ListaEmpresas({
   function camposBasicosSubempresa() {
     return (
       <div className={styles.linhaEmpresaCampos}>
-        <div className={styles.field}><label className={styles.label}>Nome da subempresa *</label><input className={styles.input} placeholder="Ex: Loja Renner" value={sNome} onChange={(e) => setSNome(formatarNomeProprio(e.target.value))} /></div>
+        <div className={styles.field}><label className={styles.label}>Nome do cliente *</label><input className={styles.input} placeholder="Ex: Loja Renner" value={sNome} onChange={(e) => setSNome(formatarNomeProprio(e.target.value))} /></div>
         <div className={styles.field}><label className={styles.label}>Responsável *</label><input className={styles.input} placeholder="Ex: Gerente da loja" value={sResp} onChange={(e) => setSResp(formatarNomeProprio(e.target.value))} /></div>
         <div className={styles.field}><label className={styles.label}>Valor contratado *</label><input className={`${styles.input} ${styles.inputCentro}`} inputMode="decimal" placeholder="0,00" value={sValor} onChange={(e) => setSValor(formatarValorInput(e.target.value))} /></div>
       </div>
@@ -395,20 +415,32 @@ export default function ListaEmpresas({
   }
 
   function formEmpresa(edicao: boolean) {
+    const clienteDireto = eTipo === 'cliente_direto';
     return (
       <div className={`${styles.subItem} ${styles.formCompacto} ${styles.formCadastroEmpresa} ${styles.blocoEditando}`}>
-        <div className={styles.formTitulo}>{edicao ? 'Editar empresa' : 'Nova empresa'}</div>
-        <div className={styles.linhaEmpresaCampos}>
-          <div className={styles.field}><label className={styles.label}>Nome da empresa *</label><input className={styles.input} placeholder="Ex: Shopping Morumbi" value={eNome} onChange={(e) => setENome(formatarNomeProprio(e.target.value))} /></div>
-          <div className={styles.field}><label className={styles.label}>Responsável *</label><input className={styles.input} placeholder="Ex: Carla Menezes" value={eResp} onChange={(e) => setEResp(formatarNomeProprio(e.target.value))} /></div>
-          <div className={styles.field}><label className={styles.label}>Contato *</label><input className={styles.input} inputMode="tel" placeholder="(11) 99999-9999" value={eTel} onChange={(e) => setETel(formatarTelefone(e.target.value))} /></div>
+        <div className={styles.formTitulo}>{edicao ? `Editar ${clienteDireto ? 'cliente' : 'local'}` : 'Novo cadastro'}</div>
+        <div className={styles.recorrenciaFrequencias} role="radiogroup" aria-label="Tipo de cadastro">
+          <button type="button" className={`${styles.recorrenciaOpcao} ${clienteDireto ? styles.recorrenciaOpcaoAtiva : ''}`} onClick={() => setETipo('cliente_direto')} disabled={edicao} aria-pressed={clienteDireto}>Cliente direto</button>
+          <button type="button" className={`${styles.recorrenciaOpcao} ${!clienteDireto ? styles.recorrenciaOpcaoAtiva : ''}`} onClick={() => setETipo('local_agrupador')} disabled={edicao} aria-pressed={!clienteDireto}>Local agrupador</button>
         </div>
-        {/* E-mail e ações ficam na segunda linha. */}
+        <p className={styles.subMeta} style={{ margin: '0 0 10px' }}>{clienteDireto ? 'Cliente com cobrança própria. Não permite clientes abaixo.' : 'Local como shopping, galeria ou condomínio. Não possui cobrança própria.'}</p>
+        <div className={styles.linhaEmpresaCampos}>
+          <div className={styles.field}><label className={styles.label}>{clienteDireto ? 'Nome da empresa *' : 'Nome do local *'}</label><input className={styles.input} placeholder={clienteDireto ? 'Ex: Clínica Horizonte' : 'Ex: Shopping Morumbi'} value={eNome} onChange={(e) => setENome(formatarNomeProprio(e.target.value))} /></div>
+          {clienteDireto && <><div className={styles.field}><label className={styles.label}>Responsável *</label><input className={styles.input} placeholder="Ex: Carla Menezes" value={eResp} onChange={(e) => setEResp(formatarNomeProprio(e.target.value))} /></div>
+          <div className={styles.field}><label className={styles.label}>Contato *</label><input className={styles.input} inputMode="tel" placeholder="(11) 99999-9999" value={eTel} onChange={(e) => setETel(formatarTelefone(e.target.value))} /></div></>}
+        </div>
+        {camposEndereco()}
+        {clienteDireto && <>
         <div className={styles.linhaTelefoneAcoes}>
           <div className={styles.field} style={{ flex: '1 1 160px', marginBottom: 0 }}>
             <label className={styles.label}>E-mail *</label>
             <input className={styles.input} placeholder="Ex: financeiro@empresa.com.br" value={eEmail} onChange={(e) => setEEmail(e.target.value)} />
           </div>
+          <div className={styles.field} style={{ flex: '0 1 180px', marginBottom: 0 }}><label className={styles.label}>Valor contratado *</label><input className={`${styles.input} ${styles.inputCentro}`} inputMode="decimal" placeholder="0,00" value={sValor} onChange={(e) => setSValor(formatarValorInput(e.target.value))} /></div>
+        </div>
+        {formRecorrencia()}
+        </>}
+        <div className={styles.linhaTelefoneAcoes}>
           <div className={styles.acoesForm}>
             <button type="button" className={`${styles.btn} ${styles.btnGhost} ${styles.btnSm}`} onClick={limparFormEmpresa}>
               Cancelar
@@ -432,7 +464,7 @@ export default function ListaEmpresas({
     <div className={styles.listaShell}>
       <div className={styles.listaTopo}>
         <h3 className={styles.sectionTitle} style={{ margin: 0 }}>
-          Empresas e subempresas{subDe && (
+          Empresas e locais{subDe && (
             <span className={styles.sectionTitleEmpresaPai}> — {empresas.find((empresa) => empresa.id === subDe)?.nome ?? ''}</span>
           )}
         </h3>
@@ -444,10 +476,10 @@ export default function ListaEmpresas({
             </svg>
             <input
               className={styles.buscaFixaInput}
-              placeholder="Pesquisar empresas…"
+              placeholder="Pesquisar empresas e locais…"
               value={busca}
               onChange={(event) => setBusca(event.target.value)}
-              aria-label="Pesquisar empresas e subempresas"
+              aria-label="Pesquisar empresas e locais"
             />
             {busca && <button type="button" className={styles.buscaLimpar} onClick={() => setBusca('')} aria-label="Limpar pesquisa">×</button>}
           </div>
@@ -471,6 +503,7 @@ export default function ListaEmpresas({
 
       {!formEmpresaAberto && empresasFiltradas.map((emp) => {
         const subs = subsVisiveis(emp.id);
+        const localAgrupador = emp.tipoCadastro === 'local_agrupador';
         const totalSubs = subempresas.filter((s) => s.empresaId === emp.id).length;
         const aberta = termo ? true : (expandidas[emp.id] ?? true);
         const cadastroSubAtivo = subDe === emp.id;
@@ -485,7 +518,7 @@ export default function ListaEmpresas({
               <span style={{ transform: aberta ? 'rotate(90deg)' : 'none', transition: 'transform 0.15s', color: '#64748b', fontSize: 12 }}>▸</span>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div className={styles.empresaNome}>{emp.nome}</div>
-                <div className={styles.subMeta}>{emp.responsavel} · {emp.telefone} · {totalSubs} subempresa(s)</div>
+                <div className={styles.subMeta}>{localAgrupador ? `${emp.endereco || 'Endereço não informado'} · ${totalSubs} cliente(s)` : `Cliente direto · ${emp.responsavel} · ${emp.telefone} · ${formatarMoeda(emp.valorCombinado ?? 0)}`}</div>
               </div>
               <span className={`${styles.chip} ${emp.ativo ? styles.chipOn : styles.chipOff}`}>{emp.ativo ? 'Ativo' : 'Inativo'}</span>
               {/* Ações ocultas: surgem deslizando para a esquerda no hover/toque. */}
@@ -509,7 +542,14 @@ export default function ListaEmpresas({
 
             {aberta && (
               <div className={`${styles.subLista} ${cadastroSubAtivo ? styles.subListaCadastro : ''}`}>
-                {!cadastroSubAtivo && subs.map((s) => (
+                {!cadastroSubAtivo && !localAgrupador && (
+                  <div className={styles.subItem}>
+                    <div className={styles.subNome}>Cliente direto</div>
+                    <div className={styles.subMeta}>{emp.endereco || 'Endereço não informado'}</div>
+                    <div className={styles.subMeta}>Recebimento {emp.frequenciaRecebimento ? rotuloFrequenciaRecebimento(emp.frequenciaRecebimento) : 'não configurado'} · {formatarMoeda(emp.valorCombinado ?? 0)}</div>
+                  </div>
+                )}
+                {!cadastroSubAtivo && localAgrupador && subs.map((s) => (
                     <div key={s.id} className={styles.subItem}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8, alignItems: 'center' }}>
                         <div style={{ minWidth: 0 }}>
@@ -538,8 +578,8 @@ export default function ListaEmpresas({
                 ))}
 
                 {cadastroSubAtivo ? (
-                  <div className={`${styles.subItem} ${styles.formCompacto} ${styles.formCadastroSub} ${editandoSubId ? styles.blocoEditando : ''}`}>
-                    <div className={styles.formTitulo}>{editandoSubId ? 'Editar subempresa' : 'Nova subempresa'}</div>
+                    <div className={`${styles.subItem} ${styles.formCompacto} ${styles.formCadastroSub} ${editandoSubId ? styles.blocoEditando : ''}`}>
+                    <div className={styles.formTitulo}>{editandoSubId ? 'Editar cliente' : 'Novo cliente no local'}</div>
                     {camposBasicosSubempresa()}
                     {camposEndereco()}
                     {formRecorrencia()}
@@ -556,9 +596,9 @@ export default function ListaEmpresas({
                     </div>
                     {erroSub && <div className={styles.aviso} style={{ marginTop: 8 }}>{erroSub}</div>}
                   </div>
-                ) : emp.ativo && subDe !== emp.id ? (
+                ) : localAgrupador && emp.ativo && subDe !== emp.id ? (
                   <button type="button" className={`${styles.btn} ${styles.btnPrimary} ${styles.btnXs}`} style={{ justifySelf: 'end' }} onClick={() => abrirNovaSub(emp.id)}>
-                    + Nova subempresa
+                    + Novo cliente no local
                   </button>
                 ) : null}
               </div>

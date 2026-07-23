@@ -10,7 +10,7 @@ type Props = {
   subempresas: Subempresa[];
   recebimentos: Recebimento[];
   // Recebimento avulso (sem cobrança vinculada).
-  onConfirmar: (subempresaId: string, valorRecebido: number, observacao: string, resumo: ResumoRecebimento) => Promise<void> | void;
+  onConfirmar: (empresaId: string, subempresaId: string | null, valorRecebido: number, observacao: string, resumo: ResumoRecebimento) => Promise<void> | void;
   // Registro de uma cobrança prevista ou em atraso específica (uma a uma).
   onReceberCobranca: (recebimentoId: string, valorRecebido: number, observacao: string, resumo: ResumoRecebimento) => Promise<void> | void;
   onCancelar: () => void;
@@ -75,15 +75,16 @@ export default function FormularioRecebimento({ empresas, subempresas, recebimen
   }, [subempresas, subempresaId, cobranca]);
   const empresa = useMemo(() => empresas.find((e) => e.id === empresaId) ?? null, [empresas, empresaId]);
 
-  const nomeSub = (id: string) => subempresas.find((s) => s.id === id)?.nome ?? '—';
+  const nomeSub = (id: string | null) => id ? subempresas.find((s) => s.id === id)?.nome ?? '—' : 'Cliente direto';
 
-  // Valor de referência: da cobrança selecionada (parcela) ou da subempresa.
-  const valorCombinado = cobranca ? cobranca.valorCombinado : sub?.valorCombinado ?? null;
+  const clienteDireto = empresa?.tipoCadastro === 'cliente_direto';
+  // Valor de referência: da cobrança selecionada (parcela), cliente no local ou cliente direto.
+  const valorCombinado = cobranca ? cobranca.valorCombinado : sub?.valorCombinado ?? empresa?.valorCombinado ?? null;
 
   const valorRecebido = valorTexto === '' ? null : parseValorBR(valorTexto);
   const tipo = valorCombinado != null && valorRecebido != null ? tipoDiferenca(valorCombinado, valorRecebido) : null;
   const precisaObs = tipo === 'menor' || tipo === 'maior';
-  const destinoSelecionado = Boolean(cobranca || (cobrancasAbertas.length === 0 && sub));
+  const destinoSelecionado = Boolean(cobranca || (cobrancasAbertas.length === 0 && (sub || clienteDireto)));
   const valorValido = valorRecebido != null && !Number.isNaN(valorRecebido) && valorRecebido >= 0;
   const podeConfirmar = Boolean(empresa) && destinoSelecionado && valorValido && (!precisaObs || Boolean(observacao.trim()));
 
@@ -112,7 +113,7 @@ export default function FormularioRecebimento({ empresas, subempresas, recebimen
   async function confirmar() {
     setErro('');
     if (!empresa) return setErro('Selecione a empresa.');
-    if (!cobranca && !sub) return setErro('Selecione um vencimento ou a subempresa.');
+    if (!cobranca && !sub && !clienteDireto) return setErro('Selecione um vencimento ou o cliente.');
     if (valorRecebido == null || Number.isNaN(valorRecebido) || valorRecebido < 0)
       return setErro('Informe um valor recebido válido.');
     if (precisaObs && !observacao.trim())
@@ -120,7 +121,7 @@ export default function FormularioRecebimento({ empresas, subempresas, recebimen
 
     const resumo: ResumoRecebimento = {
       empresaNome: empresa.nome,
-      subempresaNome: sub?.nome ?? nomeSub(cobranca?.subempresaId ?? ''),
+      subempresaNome: sub?.nome ?? (clienteDireto ? 'Cliente direto' : nomeSub(cobranca?.subempresaId ?? '')),
       valorCombinado: valorCombinado ?? 0,
       valorRecebido: Number(valorRecebido.toFixed(2)),
       tipo: tipo ?? 'exato',
@@ -130,8 +131,8 @@ export default function FormularioRecebimento({ empresas, subempresas, recebimen
     try {
       if (cobranca) {
         await onReceberCobranca(cobranca.id, Number(valorRecebido.toFixed(2)), observacao, resumo);
-      } else if (sub) {
-        await onConfirmar(sub.id, Number(valorRecebido.toFixed(2)), observacao, resumo);
+      } else if (sub || clienteDireto) {
+        await onConfirmar(empresa.id, sub?.id ?? null, Number(valorRecebido.toFixed(2)), observacao, resumo);
       }
     } catch (error) {
       setErro(error instanceof Error ? error.message : 'Não foi possível registrar o recebimento.');
@@ -182,7 +183,7 @@ export default function FormularioRecebimento({ empresas, subempresas, recebimen
         </div>
       )}
 
-      {!cobranca && cobrancasAbertas.length === 0 && (
+      {!cobranca && cobrancasAbertas.length === 0 && !clienteDireto && (
         <div className={styles.field}>
           <label className={styles.label}>Subempresa</label>
           <select
@@ -199,14 +200,14 @@ export default function FormularioRecebimento({ empresas, subempresas, recebimen
         </div>
       )}
 
-      {sub && (
+      {(sub || clienteDireto) && (
         <div className={styles.readonlyBox} style={{ marginBottom: 12 }}>
-          <div className={styles.readonlyRow}><span>Endereço/local</span><span>{sub.endereco}</span></div>
-          <div className={styles.readonlyRow}><span>Responsável</span><span>{sub.responsavel}</span></div>
+          <div className={styles.readonlyRow}><span>Endereço/local</span><span>{sub?.endereco ?? empresa?.endereco ?? '—'}</span></div>
+          <div className={styles.readonlyRow}><span>Responsável</span><span>{sub?.responsavel ?? empresa?.responsavel ?? '—'}</span></div>
           {cobranca ? (
             <div className={styles.readonlyRow}><span>Vencimento da parcela</span><span>{formatarData(cobranca.vencimento)}</span></div>
           ) : (
-            <div className={styles.readonlyRow}><span>Recebimento</span><span>{rotuloFrequenciaRecebimento(sub.frequenciaRecebimento)}</span></div>
+            <div className={styles.readonlyRow}><span>Recebimento</span><span>{sub ? rotuloFrequenciaRecebimento(sub.frequenciaRecebimento) : empresa?.frequenciaRecebimento ? rotuloFrequenciaRecebimento(empresa.frequenciaRecebimento) : '—'}</span></div>
           )}
           <div className={styles.readonlyRow}><span>Valor contratado</span><span>{formatarMoeda(valorCombinado ?? 0)}</span></div>
         </div>

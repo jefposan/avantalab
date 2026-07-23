@@ -305,7 +305,7 @@ export default function ColaboradorApp() {
         {erro && <div className={styles.aviso} role="alert">{erro}</div>}
         <PainelColaborador
           colaborador={colaborador} empresas={empresas} subempresas={subempresas} recebimentos={recebimentos}
-          onRegistrar={(subId, valor, obs) => executar((r) => r.registrarRecebimento(subId, valor, obs))}
+          onRegistrar={(empresaRecebimentoId, subId, valor, obs) => executar((r) => r.registrarRecebimento(empresaRecebimentoId, subId, valor, obs))}
           onReceberCobranca={(id, valor, obs) => executar((r) => r.receberCobranca(id, valor, obs))}
         />
       </div>

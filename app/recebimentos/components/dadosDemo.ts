@@ -8,9 +8,10 @@ export const COR_PRIMARIA = '#003E73';
 export const EMPRESA_OPERADORA = 'LimpQuality';
 
 export const empresasDemo: Empresa[] = [
-  { id: 'e1', nome: 'Shopping Morumbi', responsavel: 'Carla Menezes', telefone: '(11) 4002-8100', email: 'financeiro@morumbi.com.br', ativo: true },
-  { id: 'e2', nome: 'Shopping Eldorado', responsavel: 'Rafael Lima', telefone: '(11) 4002-8200', email: 'contato@eldorado.com.br', ativo: true },
-  { id: 'e3', nome: 'Galeria Central', responsavel: 'Sônia Prado', telefone: '(11) 3255-0090', email: 'adm@galeriacentral.com.br', ativo: true },
+  { id: 'e1', tipoCadastro: 'local_agrupador', nome: 'Shopping Morumbi', endereco: 'Av. Roque Petroni Jr, 1089 · São Paulo/SP', cep: '04707-900', logradouro: 'Av. Roque Petroni Jr', bairro: 'Jardim das Acácias', cidade: 'São Paulo', estado: 'SP', numero: '1089', complemento: '', responsavel: '', telefone: '', email: '', valorCombinado: null, frequenciaRecebimento: null, configuracaoRecorrencia: null, ativo: true },
+  { id: 'e2', tipoCadastro: 'local_agrupador', nome: 'Shopping Eldorado', endereco: 'Av. Rebouças, 3970 · São Paulo/SP', cep: '05402-600', logradouro: 'Av. Rebouças', bairro: 'Pinheiros', cidade: 'São Paulo', estado: 'SP', numero: '3970', complemento: '', responsavel: '', telefone: '', email: '', valorCombinado: null, frequenciaRecebimento: null, configuracaoRecorrencia: null, ativo: true },
+  { id: 'e3', tipoCadastro: 'local_agrupador', nome: 'Galeria Central', endereco: 'Rua 24 de Maio, 250 · São Paulo/SP', cep: '01041-000', logradouro: 'Rua 24 de Maio', bairro: 'República', cidade: 'São Paulo', estado: 'SP', numero: '250', complemento: '', responsavel: '', telefone: '', email: '', valorCombinado: null, frequenciaRecebimento: null, configuracaoRecorrencia: null, ativo: true },
+  { id: 'e4', tipoCadastro: 'cliente_direto', nome: 'Clínica Horizonte', endereco: 'Rua das Flores, 310 · São Paulo/SP', cep: '01430-001', logradouro: 'Rua das Flores', bairro: 'Jardins', cidade: 'São Paulo', estado: 'SP', numero: '310', complemento: 'Conjunto 42', responsavel: 'Fernanda Alves', telefone: '(11) 98888-7000', email: 'financeiro@clinicahorizonte.com.br', valorCombinado: 880, frequenciaRecebimento: 'mensal', configuracaoRecorrencia: { diasSemana: [], diaMes: 30, mesInicio: null }, ativo: true },
 ];
 
 export const subempresasDemo: Subempresa[] = [
@@ -93,5 +94,10 @@ export const recebimentosDemo: Recebimento[] = [
     id: 'r7', empresaId: 'e1', subempresaId: 's2', vencimento: '2026-05-05', valorCombinado: 950,
     valorRecebido: 950, colaboradorId: 'c2', recebidoEm: '2026-05-05T14:10:00', observacao: null,
     situacao: 'baixado', baixadoPor: 'Administrador (demo)', baixadoEm: '2026-05-06T09:00:00',
+  },
+  {
+    id: 'r8', empresaId: 'e4', subempresaId: null, vencimento: '2026-07-30', valorCombinado: 880,
+    valorRecebido: null, colaboradorId: null, recebidoEm: null, observacao: null,
+    situacao: 'previsto', baixadoPor: null, baixadoEm: null,
   },
 ];

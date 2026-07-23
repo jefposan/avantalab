@@ -2,6 +2,7 @@
 // Estrutura totalmente local, sem integração com o sistema principal.
 
 export type Perfil = 'colaborador' | 'gestor' | 'administrador';
+export type TipoCadastroEmpresa = 'cliente_direto' | 'local_agrupador';
 
 export type FrequenciaRecebimento = 'semanal' | 'quinzenal' | 'mensal' | 'trimestral' | 'semestral' | 'anual';
 
@@ -25,10 +26,23 @@ export type SituacaoRecebimento =
 
 export type Empresa = {
   id: string;
+  /** Cliente direto recebe cobrança própria; local agrupador apenas organiza clientes. */
+  tipoCadastro: TipoCadastroEmpresa;
   nome: string;
+  endereco: string;
+  cep: string;
+  logradouro: string;
+  bairro: string;
+  cidade: string;
+  estado: string;
+  numero: string;
+  complemento: string;
   responsavel: string;
   telefone: string;
   email: string;
+  valorCombinado: number | null;
+  frequenciaRecebimento: FrequenciaRecebimento | null;
+  configuracaoRecorrencia: ConfiguracaoRecorrencia | null;
   ativo: boolean;
 };
 
@@ -69,7 +83,8 @@ export type Colaborador = {
 export type Recebimento = {
   id: string;
   empresaId: string;
-  subempresaId: string;
+  /** Nulo quando a cobrança pertence a um cliente direto. */
+  subempresaId: string | null;
   // Cobrança
   vencimento: string; // ISO date (YYYY-MM-DD)
   valorCombinado: number;

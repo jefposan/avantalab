@@ -13,7 +13,7 @@ type Props = {
   empresas: Empresa[];
   subempresas: Subempresa[];
   recebimentos: Recebimento[];
-  onRegistrar: (subempresaId: string, valorRecebido: number, observacao: string) => Promise<void> | void;
+  onRegistrar: (empresaId: string, subempresaId: string | null, valorRecebido: number, observacao: string) => Promise<void> | void;
   // Baixa individual de uma parcela em atraso já existente.
   onReceberCobranca: (recebimentoId: string, valorRecebido: number, observacao: string) => Promise<void> | void;
 };
@@ -44,10 +44,10 @@ export default function PainelColaborador({ colaborador, empresas, subempresas, 
   );
 
   const nomeEmpresa = (id: string) => empresas.find((e) => e.id === id)?.nome ?? '—';
-  const nomeSub = (id: string) => subempresas.find((s) => s.id === id)?.nome ?? '—';
+  const nomeSub = (id: string | null) => id ? subempresas.find((s) => s.id === id)?.nome ?? '—' : 'Cliente direto';
 
-  async function handleConfirmar(subempresaId: string, valor: number, obs: string, resumo: ResumoRecebimento) {
-    await onRegistrar(subempresaId, valor, obs);
+  async function handleConfirmar(empresaId: string, subempresaId: string | null, valor: number, obs: string, resumo: ResumoRecebimento) {
+    await onRegistrar(empresaId, subempresaId, valor, obs);
     setFormAberto(false);
     setComprovante(resumo);
   }
@@ -160,7 +160,7 @@ export default function PainelColaborador({ colaborador, empresas, subempresas, 
             <p className={styles.muted} style={{ marginTop: 4 }}>Aguardando conferência do gestor.</p>
             <div className={styles.readonlyBox} style={{ marginTop: 14, textAlign: 'left' }}>
               <div className={styles.readonlyRow}><span>Empresa</span><span>{comprovante.empresaNome}</span></div>
-              <div className={styles.readonlyRow}><span>Subempresa</span><span>{comprovante.subempresaNome}</span></div>
+              <div className={styles.readonlyRow}><span>Cliente</span><span>{comprovante.subempresaNome}</span></div>
               <div className={styles.readonlyRow}><span>Combinado</span><span>{formatarMoeda(comprovante.valorCombinado)}</span></div>
               <div className={styles.readonlyRow}><span>Recebido</span><span>{formatarMoeda(comprovante.valorRecebido)}</span></div>
             </div>

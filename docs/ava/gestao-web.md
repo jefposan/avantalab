@@ -1,6 +1,10 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.6.0.84.68 -->
+<!-- ava-version: 1.6.0.84.69 -->
+
+> Revisão 1.6.0.84.69: em Recebimentos Presenciais, **Cliente direto** possui
+> contrato e cobrança próprios; **Local agrupador** (shopping, galeria ou
+> condomínio) apenas organiza clientes abaixo e não gera cobrança própria.
 
 > Revisão 1.6.0.84.68: refinamento visual dos seletores de acesso mobile; sem
 > impacto operacional na Gestão Web.
@@ -146,13 +150,17 @@ Gestão Mobile ou a assinatura/cupom do Premium Pessoal.
   instalado, Gestor Master e Administrador usam **Menu > Recebimentos** para
   cadastrar empresas atendidas, pontos de cobrança e colaboradores, além de
   conferir, devolver, registrar divergências ou estornar recebimentos.
-- Em **Empresas**, use **Pesquisar empresas…** ou **+ Nova empresa**. Em
-  **Colaboradores**, use **+ Novo colaborador**.
-- Ao cadastrar ou editar uma subempresa, escolha em **Recebimento** a frequência
+- Em **Empresas**, use **Pesquisar empresas e locais…** ou **+ Nova empresa**.
+  No início do cadastro, escolha **Cliente direto** ou **Local agrupador**.
+  Cliente direto possui responsável, contato, e-mail, endereço, valor contratado
+  e vencimento próprios, sem clientes abaixo. Local agrupador é um shopping,
+  galeria ou condomínio: registra somente nome e endereço, não gera cobrança e
+  permite **+ Novo cliente no local**. Em **Colaboradores**, use **+ Novo colaborador**.
+- Ao cadastrar ou editar um cliente — direto ou dentro de um local — escolha em **Recebimento** a frequência
   semanal, quinzenal, mensal, trimestral, semestral ou anual. Em seguida configure
   os dias aplicáveis: dias da semana; dia-base com intervalo rigoroso de 15 dias;
   dia mensal; ou mês inicial e dia para os ciclos trimestral, semestral e anual.
-  Cada subempresa mantém somente uma dessas regras. Ao trocar a frequência, o
+  Cada cliente mantém somente uma dessas regras. Ao trocar a frequência, o
   sistema substitui as previsões automáticas futuras ainda não recebidas e
   preserva atrasos, pagamentos e histórico anteriores.
   A primeira cobrança nunca antecede o cadastro; daí em diante o sistema cria as
@@ -161,7 +169,7 @@ Gestão Mobile ou a assinatura/cupom do Premium Pessoal.
   vencidas com situação **Em atraso**; uma cobrança **Previsto** nunca aparece ali.
   A aba **Próximo a vencer** mostra somente a cobrança futura mais próxima de
   cada empresa atendida, sem listar os demais vencimentos futuros.
-- No cadastro da subempresa, informe primeiro o **CEP**. Rua, bairro, cidade e
+- No cadastro do cliente ou local, informe primeiro o **CEP**. Rua, bairro, cidade e
   UF são preenchidos para conferência; complete número e complemento antes de salvar.
 - O colaborador entra em `/recebimentos/colaborador` com CPF e senha fornecidos
   pelo gestor. Esse acesso é independente do Controle de Ponto e do login da

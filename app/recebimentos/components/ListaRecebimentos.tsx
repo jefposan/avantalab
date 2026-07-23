@@ -34,7 +34,7 @@ export default function ListaRecebimentos({ chaveMes, empresas, subempresas, col
   }, [chaveMes]);
 
   const nomeEmpresa = (id: string) => empresas.find((e) => e.id === id)?.nome ?? '—';
-  const nomeSub = (id: string) => subempresas.find((s) => s.id === id)?.nome ?? '—';
+  const nomeSub = (id: string | null) => id ? subempresas.find((s) => s.id === id)?.nome ?? '—' : 'Cliente direto';
   const nomeColab = (id: string | null) => (id ? colaboradores.find((c) => c.id === id)?.nome ?? '—' : '—');
 
   const filtrados = useMemo(() => {
@@ -87,7 +87,7 @@ export default function ListaRecebimentos({ chaveMes, empresas, subempresas, col
           {empresas.map((e) => <option key={e.id} value={e.id}>{e.nome}</option>)}
         </select>
         <select className={styles.filterSelect} value={fSub} onChange={(e) => setFSub(e.target.value)}>
-          <option value="">Todas as subempresas</option>
+          <option value="">Todos os clientes</option>
           {subsFiltro.map((s) => <option key={s.id} value={s.id}>{s.nome}</option>)}
         </select>
         <select className={styles.filterSelect} value={fColab} onChange={(e) => setFColab(e.target.value)}>
@@ -104,7 +104,7 @@ export default function ListaRecebimentos({ chaveMes, empresas, subempresas, col
         <table className={styles.table}>
           <thead>
             <tr>
-              <th>Empresa</th><th>Subempresa</th><th>Vencimento</th><th>Combinado</th><th>Recebido</th>
+              <th>Empresa/local</th><th>Cliente</th><th>Vencimento</th><th>Combinado</th><th>Recebido</th>
               <th>Diferença</th><th>Recebido em</th><th>Recebido por</th><th>Situação</th>
             </tr>
           </thead>

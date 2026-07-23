@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.6.0.84.69 - 2026-07-22
+
+- Recebimentos Presenciais: o cadastro passa a distinguir **Cliente direto** de
+  **Local agrupador**. Clientes diretos concentram dados, contrato e vencimento
+  próprios; locais como shopping e galeria possuem somente identificação e
+  endereço e podem organizar clientes abaixo. A alteração permanece local até
+  a publicação da migração correspondente.
+
 ## 1.6.0.84.68 - 2026-07-22
 
 - Gestão Financeira e Gestão de Vendas: o seletor entre E-mail e Telefone

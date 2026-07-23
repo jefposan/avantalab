@@ -25,7 +25,7 @@ export default function TabelaVencimentos({
 }: Props) {
   const hoje = new Date(`${hojeIso}T00:00:00`);
   const nomeEmpresa = (id: string) => empresas.find((empresa) => empresa.id === id)?.nome ?? '—';
-  const nomeSubempresa = (id: string) => subempresas.find((subempresa) => subempresa.id === id)?.nome ?? '—';
+  const nomeSubempresa = (id: string | null) => id ? subempresas.find((subempresa) => subempresa.id === id)?.nome ?? '—' : 'Cliente direto';
 
   return (
     <div>
@@ -43,8 +43,8 @@ export default function TabelaVencimentos({
           </colgroup>
           <thead>
             <tr>
-              <th>Empresa</th>
-              <th>Subempresa</th>
+              <th>Empresa/local</th>
+              <th>Cliente</th>
               <th>Vencimento</th>
               <th>Valor esperado</th>
               <th>{variante === 'inadimplente' ? 'Dias em atraso' : 'Prazo'}</th>

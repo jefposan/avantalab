@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.6.0.84.68 -->
+<!-- ava-version: 1.6.0.84.69 -->
+
+> Revisão 1.6.0.84.69: mudança de cadastro no Recebimentos Presenciais da
+> Gestão Web; sem impacto operacional na Gestão Mobile.
 
 > Revisão 1.6.0.84.68: refinamento visual do seletor entre E-mail e Telefone;
 > sem impacto operacional na Gestão Mobile.

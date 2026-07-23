@@ -33,7 +33,7 @@ export default function PainelConferencia({
   );
 
   const nomeEmpresa = (id: string) => empresas.find((e) => e.id === id)?.nome ?? '—';
-  const nomeSub = (id: string) => subempresas.find((s) => s.id === id)?.nome ?? '—';
+  const nomeSub = (id: string | null) => id ? subempresas.find((s) => s.id === id)?.nome ?? '—' : 'Cliente direto';
   const nomeColab = (id: string | null) => (id ? colaboradores.find((c) => c.id === id)?.nome ?? '—' : '—');
 
   return (

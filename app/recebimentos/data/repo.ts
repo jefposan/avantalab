@@ -22,11 +22,12 @@ export type IntegracaoFinanceiraRecebimentos = {
 };
 
 export type DadosSubempresaEditavel = Pick<Subempresa, 'nome' | 'endereco' | 'cep' | 'logradouro' | 'bairro' | 'cidade' | 'estado' | 'numero' | 'complemento' | 'responsavel' | 'valorCombinado' | 'frequenciaRecebimento' | 'configuracaoRecorrencia'>;
+export type DadosEmpresaEditavel = Omit<Empresa, 'id' | 'ativo'>;
 
 export interface RecebimentosRepo {
   carregar(): Promise<DadosRecebimentos>;
   salvarEmpresa(dados: Omit<Empresa, 'id'>): Promise<void>;
-  editarEmpresa(id: string, dados: Omit<Empresa, 'id' | 'ativo'>): Promise<void>;
+  editarEmpresa(id: string, dados: DadosEmpresaEditavel): Promise<void>;
   excluirEmpresa(id: string): Promise<void>;
   alternarEmpresa(id: string, ativo: boolean): Promise<void>;
   salvarSubempresa(dados: Omit<Subempresa, 'id'>): Promise<void>;
@@ -37,7 +38,7 @@ export interface RecebimentosRepo {
   editarColaborador(id: string, dados: DadosEditarColaborador): Promise<void>;
   excluirColaborador(id: string): Promise<void>;
   alternarColaborador(id: string, ativo: boolean): Promise<void>;
-  registrarRecebimento(subempresaId: string, valor: number, observacao: string): Promise<void>;
+  registrarRecebimento(empresaRecebimentoId: string, subempresaId: string | null, valor: number, observacao: string): Promise<void>;
   receberCobranca(lancamentoId: string, valor: number, observacao: string): Promise<void>;
   confirmarBaixa(lancamentoId: string): Promise<void>;
   devolver(lancamentoId: string, motivo: string): Promise<void>;
@@ -85,7 +86,7 @@ export function criarRepoDemo(): RecebimentosRepo {
     async editarEmpresa(id, valor) { dados.empresas = dados.empresas.map((e) => e.id === id ? { ...e, ...valor } : e); },
     async excluirEmpresa(id) {
       const subs = new Set(dados.subempresas.filter((s) => s.empresaId === id).map((s) => s.id));
-      dados.recebimentos = dados.recebimentos.filter((r) => !subs.has(r.subempresaId));
+      dados.recebimentos = dados.recebimentos.filter((r) => r.empresaId !== id && (!r.subempresaId || !subs.has(r.subempresaId)));
       dados.subempresas = dados.subempresas.filter((s) => s.empresaId !== id);
       dados.empresas = dados.empresas.filter((e) => e.id !== id);
     },
@@ -104,17 +105,19 @@ export function criarRepoDemo(): RecebimentosRepo {
       dados.colaboradores = dados.colaboradores.filter((c) => c.id !== id);
     },
     async alternarColaborador(id, ativo) { dados.colaboradores = dados.colaboradores.map((c) => c.id === id ? { ...c, ativo } : c); },
-    async registrarRecebimento(subempresaId, valor, observacao) {
-      const sub = dados.subempresas.find((s) => s.id === subempresaId);
+    async registrarRecebimento(empresaRecebimentoId, subempresaId, valor, observacao) {
+      const sub = subempresaId ? dados.subempresas.find((s) => s.id === subempresaId) : null;
+      const empresa = dados.empresas.find((item) => item.id === empresaRecebimentoId);
       const colaborador = colaboradorAtual();
-      if (!sub || !colaborador) throw new Error('Subempresa ou colaborador não encontrado.');
+      if ((!sub && (!empresa || empresa.tipoCadastro !== 'cliente_direto')) || !colaborador) throw new Error('Cliente ou colaborador não encontrado.');
+      const valorCombinado = sub?.valorCombinado ?? empresa?.valorCombinado ?? 0;
       const agora = new Date();
       dados.recebimentos.unshift({
-        id: `r-${Date.now()}`, empresaId: sub.empresaId, subempresaId: sub.id,
+        id: `r-${Date.now()}`, empresaId: sub?.empresaId ?? empresaRecebimentoId, subempresaId: sub?.id ?? null,
         vencimento: hojeIso(),
-        valorCombinado: sub.valorCombinado, valorRecebido: valor, colaboradorId: colaborador.id,
+        valorCombinado, valorRecebido: valor, colaboradorId: colaborador.id,
         recebidoEm: agora.toISOString(), observacao: observacao.trim() || null,
-        situacao: situacaoPorValor(sub.valorCombinado, valor), baixadoPor: null, baixadoEm: null,
+        situacao: situacaoPorValor(valorCombinado, valor), baixadoPor: null, baixadoEm: null,
       });
     },
     async receberCobranca(id, valor, observacao) {
@@ -157,7 +160,16 @@ function mapIntegracao(row: Linha | null | undefined): IntegracaoFinanceiraReceb
 }
 
 function mapEmpresa(row: Linha): Empresa {
-  return { id: texto(row.id), nome: texto(row.nome), responsavel: texto(row.responsavel), telefone: texto(row.telefone), email: texto(row.email), ativo: row.ativo !== false };
+  const tipoCadastro = texto(row.tipo_cadastro) === 'cliente_direto' ? 'cliente_direto' : 'local_agrupador';
+  const diaMes = row.dia_mes == null ? null : numero(row.dia_mes);
+  return {
+    id: texto(row.id), tipoCadastro, nome: texto(row.nome), endereco: texto(row.endereco), cep: texto(row.cep), logradouro: texto(row.logradouro), bairro: texto(row.bairro), cidade: texto(row.cidade), estado: texto(row.estado), numero: texto(row.numero), complemento: texto(row.complemento),
+    responsavel: texto(row.responsavel), telefone: texto(row.telefone), email: texto(row.email),
+    valorCombinado: row.valor_combinado == null ? null : numero(row.valor_combinado),
+    frequenciaRecebimento: row.frequencia_recebimento == null ? null : texto(row.frequencia_recebimento) as Empresa['frequenciaRecebimento'],
+    configuracaoRecorrencia: tipoCadastro === 'cliente_direto' ? { diasSemana: Array.isArray(row.dias_semana) ? row.dias_semana.map(numero) : [], diaMes, mesInicio: row.mes_inicio == null ? null : numero(row.mes_inicio) } : null,
+    ativo: row.ativo !== false,
+  };
 }
 
 function mapSubempresa(row: Linha): Subempresa {
@@ -185,7 +197,7 @@ function mapColaborador(row: Linha): Colaborador {
 
 function mapRecebimento(row: Linha): Recebimento {
   return {
-    id: texto(row.id), empresaId: texto(row.recebimento_empresa_id), subempresaId: texto(row.subempresa_id),
+    id: texto(row.id), empresaId: texto(row.recebimento_empresa_id), subempresaId: row.subempresa_id == null ? null : texto(row.subempresa_id),
     vencimento: texto(row.vencimento), valorCombinado: numero(row.valor_combinado),
     valorRecebido: row.valor_recebido == null ? null : numero(row.valor_recebido),
     colaboradorId: row.colaborador_user_id == null ? null : texto(row.colaborador_user_id),
@@ -239,10 +251,14 @@ export function criarRepoSupabase(empresaId: string, cliente: SupabaseClient = s
       };
     },
     async salvarEmpresa(dados) {
-      await exigir(cliente.from('recebimentos_empresas').insert({ empresa_id: empresaId, nome: dados.nome, responsavel: dados.responsavel, telefone: dados.telefone, email: dados.email, ativo: dados.ativo }).select('id').single(), 'Erro ao cadastrar empresa.');
+      await exigir(cliente.from('recebimentos_empresas').insert({
+        empresa_id: empresaId, nome: dados.nome, tipo_cadastro: dados.tipoCadastro, endereco: dados.endereco, cep: dados.cep, logradouro: dados.logradouro, bairro: dados.bairro, cidade: dados.cidade, estado: dados.estado, numero: dados.numero, complemento: dados.complemento, responsavel: dados.responsavel, telefone: dados.telefone, email: dados.email, valor_combinado: dados.valorCombinado, frequencia_recebimento: dados.frequenciaRecebimento, dias_semana: dados.configuracaoRecorrencia?.diasSemana ?? [], dia_mes: dados.configuracaoRecorrencia?.diaMes ?? null, mes_inicio: dados.configuracaoRecorrencia?.mesInicio ?? null, dia_vencimento: dados.configuracaoRecorrencia?.diaMes ?? null, ativo: dados.ativo,
+      }).select('id').single(), 'Erro ao cadastrar empresa.');
     },
     async editarEmpresa(id, dados) {
-      await exigir(cliente.from('recebimentos_empresas').update({ ...dados, atualizado_em: new Date().toISOString() }).eq('empresa_id', empresaId).eq('id', id).select('id').single(), 'Erro ao editar empresa.');
+      await exigir(cliente.from('recebimentos_empresas').update({
+        nome: dados.nome, tipo_cadastro: dados.tipoCadastro, endereco: dados.endereco, cep: dados.cep, logradouro: dados.logradouro, bairro: dados.bairro, cidade: dados.cidade, estado: dados.estado, numero: dados.numero, complemento: dados.complemento, responsavel: dados.responsavel, telefone: dados.telefone, email: dados.email, valor_combinado: dados.valorCombinado, frequencia_recebimento: dados.frequenciaRecebimento, dias_semana: dados.configuracaoRecorrencia?.diasSemana ?? [], dia_mes: dados.configuracaoRecorrencia?.diaMes ?? null, mes_inicio: dados.configuracaoRecorrencia?.mesInicio ?? null, dia_vencimento: dados.configuracaoRecorrencia?.diaMes ?? null, atualizado_em: new Date().toISOString(),
+      }).eq('empresa_id', empresaId).eq('id', id).select('id').single(), 'Erro ao editar empresa.');
     },
     async excluirEmpresa(id) { await exigir(cliente.from('recebimentos_empresas').delete().eq('empresa_id', empresaId).eq('id', id).select('id'), 'Erro ao excluir empresa.'); },
     async alternarEmpresa(id, ativo) { await exigir(cliente.from('recebimentos_empresas').update({ ativo, atualizado_em: new Date().toISOString() }).eq('empresa_id', empresaId).eq('id', id).select('id'), 'Erro ao alterar empresa.'); },
@@ -272,19 +288,21 @@ export function criarRepoSupabase(empresaId: string, cliente: SupabaseClient = s
       if (error || !data) throw new Error('Colaborador não encontrado.');
       await chamarApi(cliente, '/api/recebimentos/atualizar-colaborador', { empresaId, colaboradorUserId: id, nome: data.nome, cpf: data.cpf, celular: data.celular, email: data.email_contato, ativo });
     },
-    async registrarRecebimento(subempresaId, valor, observacao) {
-      const [{ data: sub, error: erroSub }, { data: auth }] = await Promise.all([
-        cliente.from('recebimentos_subempresas').select('recebimento_empresa_id, valor_combinado').eq('empresa_id', empresaId).eq('id', subempresaId).single(),
+    async registrarRecebimento(empresaRecebimentoId, subempresaId, valor, observacao) {
+      const [{ data: alvo, error: erroAlvo }, { data: auth }] = await Promise.all([
+        subempresaId
+          ? cliente.from('recebimentos_subempresas').select('recebimento_empresa_id, valor_combinado').eq('empresa_id', empresaId).eq('id', subempresaId).single()
+          : cliente.from('recebimentos_empresas').select('id, valor_combinado, tipo_cadastro').eq('empresa_id', empresaId).eq('id', empresaRecebimentoId).eq('tipo_cadastro', 'cliente_direto').single(),
         cliente.auth.getUser(),
       ]);
-      if (erroSub || !sub || !auth.user) throw new Error('Não foi possível identificar a cobrança.');
+      if (erroAlvo || !alvo || !auth.user) throw new Error('Não foi possível identificar a cobrança.');
       const agora = new Date();
       const vencimento = hojeIso();
       await exigir(cliente.from('recebimentos_lancamentos').insert({
-        empresa_id: empresaId, recebimento_empresa_id: sub.recebimento_empresa_id, subempresa_id: subempresaId,
-        colaborador_user_id: auth.user.id, vencimento, valor_combinado: sub.valor_combinado, valor_recebido: valor,
+        empresa_id: empresaId, recebimento_empresa_id: subempresaId ? (alvo as { recebimento_empresa_id: string }).recebimento_empresa_id : empresaRecebimentoId, subempresa_id: subempresaId,
+        colaborador_user_id: auth.user.id, vencimento, valor_combinado: alvo.valor_combinado, valor_recebido: valor,
         recebido_em: agora.toISOString(), observacao: observacao.trim() || null,
-        situacao: situacaoPorValor(Number(sub.valor_combinado), valor),
+        situacao: situacaoPorValor(Number(alvo.valor_combinado), valor),
       }).select('id').single(), 'Erro ao registrar recebimento.');
     },
     async receberCobranca(id, valor, observacao) {
