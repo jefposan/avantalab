@@ -93,7 +93,7 @@ export default function ListaEmpresas({
   const [sBuscandoCep, setSBuscandoCep] = useState(false);
   const [sResp, setSResp] = useState('');
   const [sValor, setSValor] = useState('');
-  const [sFrequencia, setSFrequencia] = useState<Subempresa['frequenciaRecebimento']>('mensal');
+  const [sFrequencia, setSFrequencia] = useState<FrequenciaRecebimento | null>(null);
   const [sDiasSemana, setSDiasSemana] = useState<number[]>([]);
   const [sDiaMes, setSDiaMes] = useState<number | null>(null);
   const [sMesInicio, setSMesInicio] = useState<number | null>(null);
@@ -141,7 +141,7 @@ export default function ListaEmpresas({
   function limparFormEmpresa() {
     setENome(''); setEResp(''); setETel(''); setEEmail('');
     setETipo('cliente_direto');
-    setSCep(''); setSLogradouro(''); setSBairro(''); setSCidade(''); setSEstado(''); setSNumero(''); setSComplemento(''); setSValor(''); setSFrequencia('mensal'); setSDiasSemana([]); setSDiaMes(null); setSMesInicio(null); setPopupVencimento(null);
+    setSCep(''); setSLogradouro(''); setSBairro(''); setSCidade(''); setSEstado(''); setSNumero(''); setSComplemento(''); setSValor(''); setSFrequencia(null); setSDiasSemana([]); setSDiaMes(null); setSMesInicio(null); setPopupVencimento(null);
     setErroEmpresa('');
     setConfirmandoExclusao(false);
     setFormEmpresaAberto(false);
@@ -149,7 +149,7 @@ export default function ListaEmpresas({
   }
 
   function limparFormSub() {
-    setSNome(''); setSCep(''); setSLogradouro(''); setSBairro(''); setSCidade(''); setSEstado(''); setSNumero(''); setSComplemento(''); setSResp(''); setSValor(''); setSFrequencia('mensal');
+    setSNome(''); setSCep(''); setSLogradouro(''); setSBairro(''); setSCidade(''); setSEstado(''); setSNumero(''); setSComplemento(''); setSResp(''); setSValor(''); setSFrequencia(null);
     setSDiasSemana([]); setSDiaMes(null); setSMesInicio(null);
     setPopupVencimento(null);
     setErroSub('');
@@ -161,7 +161,7 @@ export default function ListaEmpresas({
   function abrirNovaEmpresa() {
     limparFormSub();
     setENome(''); setETipo('cliente_direto'); setEResp(''); setETel(''); setEEmail('');
-    setSCep(''); setSLogradouro(''); setSBairro(''); setSCidade(''); setSEstado(''); setSNumero(''); setSComplemento(''); setSValor(''); setSFrequencia('mensal'); setSDiasSemana([]); setSDiaMes(null); setSMesInicio(null); setPopupVencimento(null);
+    setSCep(''); setSLogradouro(''); setSBairro(''); setSCidade(''); setSEstado(''); setSNumero(''); setSComplemento(''); setSValor(''); setSFrequencia(null); setSDiasSemana([]); setSDiaMes(null); setSMesInicio(null); setPopupVencimento(null);
     setErroEmpresa('');
     setConfirmandoExclusao(false);
     setEditandoEmpresaId(null);
@@ -171,7 +171,7 @@ export default function ListaEmpresas({
   function abrirEdicaoEmpresa(emp: Empresa) {
     limparFormSub();
     setENome(emp.nome); setETipo(emp.tipoCadastro); setEResp(emp.responsavel); setETel(emp.telefone); setEEmail(emp.email);
-    setSCep(emp.cep); setSLogradouro(emp.logradouro); setSBairro(emp.bairro); setSCidade(emp.cidade); setSEstado(emp.estado); setSNumero(emp.numero); setSComplemento(emp.complemento); setSValor(emp.valorCombinado == null ? '' : valorParaInput(emp.valorCombinado)); setSFrequencia(emp.frequenciaRecebimento ?? 'mensal'); setSDiasSemana(emp.configuracaoRecorrencia?.diasSemana ?? []); setSDiaMes(emp.configuracaoRecorrencia?.diaMes ?? null); setSMesInicio(emp.configuracaoRecorrencia?.mesInicio ?? null); setPopupVencimento(null);
+    setSCep(emp.cep); setSLogradouro(emp.logradouro); setSBairro(emp.bairro); setSCidade(emp.cidade); setSEstado(emp.estado); setSNumero(emp.numero); setSComplemento(emp.complemento); setSValor(emp.valorCombinado == null ? '' : valorParaInput(emp.valorCombinado)); setSFrequencia(emp.frequenciaRecebimento); setSDiasSemana(emp.configuracaoRecorrencia?.diasSemana ?? []); setSDiaMes(emp.configuracaoRecorrencia?.diaMes ?? null); setSMesInicio(emp.configuracaoRecorrencia?.mesInicio ?? null); setPopupVencimento(null);
     setErroEmpresa('');
     setConfirmandoExclusao(false);
     setEditandoEmpresaId(emp.id);
@@ -183,7 +183,7 @@ export default function ListaEmpresas({
 
   function abrirNovaSub(empresaId: string) {
     limparFormEmpresa();
-    setSNome(''); setSCep(''); setSLogradouro(''); setSBairro(''); setSCidade(''); setSEstado(''); setSNumero(''); setSComplemento(''); setSResp(''); setSValor(''); setSFrequencia('mensal');
+    setSNome(''); setSCep(''); setSLogradouro(''); setSBairro(''); setSCidade(''); setSEstado(''); setSNumero(''); setSComplemento(''); setSResp(''); setSValor(''); setSFrequencia(null);
     setSDiasSemana([]); setSDiaMes(null); setSMesInicio(null);
     setPopupVencimento(null);
     setErroSub('');
@@ -233,6 +233,7 @@ export default function ListaEmpresas({
         return;
       }
       if (Number.isNaN(valor) || valor <= 0) return setErroEmpresa('Informe um valor contratado maior que zero.');
+      if (!sFrequencia) return setErroEmpresa('Selecione a frequência para configurar o vencimento.');
       if (sFrequencia === 'semanal' && sDiasSemana.length === 0) return setErroEmpresa('Selecione ao menos um dia para configurar o vencimento semanal.');
       if (sFrequencia !== 'semanal' && !sDiaMes) return setErroEmpresa('Selecione o dia para configurar o vencimento.');
       if (['trimestral', 'semestral', 'anual'].includes(sFrequencia) && !sMesInicio) return setErroEmpresa('Selecione o mês inicial para configurar o vencimento.');
@@ -276,6 +277,7 @@ export default function ListaEmpresas({
       return avisarErroSub('Preencha nome, valor contratado e vencimento para salvar o cliente.');
     }
     if (Number.isNaN(valor) || valor <= 0) return avisarErroSub('Informe um valor contratado maior que zero.');
+    if (!sFrequencia) return avisarErroSub('Selecione a frequência para configurar o vencimento.');
     if (sFrequencia === 'semanal' && sDiasSemana.length === 0) return avisarErroSub('Selecione ao menos um dia para configurar o vencimento semanal.');
     if (sFrequencia !== 'semanal' && !sDiaMes) return avisarErroSub('Selecione o dia para configurar o vencimento.');
     if (['trimestral', 'semestral', 'anual'].includes(sFrequencia) && !sMesInicio) return avisarErroSub('Selecione o mês inicial para configurar o vencimento.');
@@ -351,7 +353,7 @@ export default function ListaEmpresas({
   function formRecorrencia() {
     const meses = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
     const dias = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
-    const precisaMes = ['trimestral', 'semestral', 'anual'].includes(sFrequencia);
+    const precisaMes = sFrequencia ? ['trimestral', 'semestral', 'anual'].includes(sFrequencia) : false;
     const popupAberto = popupVencimento === sFrequencia;
     function selecionarDia(dia: number) {
       setSDiaMes(dia);

@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.6.0.84.70 -->
+<!-- ava-version: 1.6.0.84.71 -->
+
+> Revisão 1.6.0.84.71: novos clientes não possuem frequência de recebimento
+> pré-selecionada; escolha o período e configure o dia antes de salvar.
 
 > Revisão 1.6.0.84.70: no cadastro de clientes em Recebimentos Presenciais,
 > somente nome, valor contratado e vencimento são obrigatórios.

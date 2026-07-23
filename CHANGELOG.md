@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.6.0.84.71 - 2026-07-22
+
+- Recebimentos Presenciais: novos cadastros não pré-selecionam a frequência de
+  vencimento. A pessoa escolhe o período e define o dia correspondente antes
+  de salvar; cadastros existentes preservam a configuração gravada.
+
 ## 1.6.0.84.70 - 2026-07-22
 
 - Recebimentos Presenciais: no cadastro de clientes, responsável, contato,
