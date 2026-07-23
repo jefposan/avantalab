@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.6.0.84.92 -->
+<!-- ava-version: 1.6.0.84.93 -->
+
+> Revisão 1.6.0.84.93: rótulo estável do botão de ordem no AvantaVendas; sem
+> impacto operacional na Gestão Web.
 
 > Revisão 1.6.0.84.92: identificação persistente do perfil na Gestão Mobile;
 > sem impacto operacional na Gestão Web.

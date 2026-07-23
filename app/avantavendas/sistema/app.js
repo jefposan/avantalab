@@ -4847,11 +4847,7 @@ function renderPagamentos() {
   const mensagemVazia = buscaAplicada
     ? '<h3>Nenhum cliente encontrado</h3><p>Revise o texto pesquisado e tente novamente.</p>'
     : '<h3>Nenhum pagamento registrado</h3><p>Pesquise um cliente para registrar o primeiro recebimento.</p>';
-  const rotuloOrdem = filtroPagamentos === 'ultimo_pagamento'
-    ? `Data ${ordemPagamentos === 'asc' ? 'antiga/recente' : 'recente/antiga'}`
-    : (filtroPagamentos === 'debito' || filtroPagamentos === 'credito')
-      ? `Valor ${ordemPagamentos === 'asc' ? 'menor/maior' : 'maior/menor'}`
-      : `Ordem ${ordemPagamentos === 'asc' ? 'A/Z' : 'Z/A'}`;
+  const rotuloOrdem = 'Ordem';
   const indicadorResultados = `<div class="module-stats payment-results-stats" aria-live="polite"><span>Exibindo <b>${clientes.length}</b> de <b>${todosClientes.length}</b> clientes</span></div>`;
   return `<section class="module-page pagamentos-page"><div class="module-sticky-head"><div class="module-title pagamentos-title"><div><h2>Pagamentos</h2><p>Gerencie pagamentos, débitos e créditos.</p></div><button type="button" class="payment-order-button" onclick="alternarOrdemPagamentos()">${svgIcon('filter')}${rotuloOrdem}${svgIcon('chevron-down')}</button></div>${renderBarraBuscaPagamentos()}<nav class="order-type-filters payment-type-filters" aria-label="Filtrar pagamentos por situação">${botaoFiltroPagamentos('todos', 'Todos')}${botaoFiltroPagamentos('debito', 'Débito')}${botaoFiltroPagamentos('credito', 'Crédito')}${botaoFiltroPagamentos('ultimo_pagamento', 'Último pagamento')}</nav>${indicadorResultados}</div>${clientes.length ? `<section class="debt-card-grid">${clientes.map(renderClienteDebito).join('')}</section>${todosClientes.length > clientes.length ? `<button type="button" class="ghost payment-clients-more" onclick="carregarMaisClientesPagamentos()">Carregar mais ${quantidadeProximoLote} clientes</button>` : ''}` : `<article class="publication-empty"><span>${svgIcon('users')}</span>${mensagemVazia}</article>`}</section>`;
 }

@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.6.0.84.92 -->
+<!-- ava-version: 1.6.0.84.93 -->
+
+> Revisão 1.6.0.84.93: rótulo estável do botão de ordem no AvantaVendas; sem
+> impacto operacional na Gestão Mobile.
 
 > Revisão 1.6.0.84.92: o nome do perfil ativo permanece identificado abaixo do
 > cabeçalho; durante a rolagem, a pílula fica 75% transparente e volta a ficar

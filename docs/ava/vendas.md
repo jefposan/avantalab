@@ -1,6 +1,10 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.6.0.84.92 -->
+<!-- ava-version: 1.6.0.84.93 -->
+
+> Revisão 1.6.0.84.93: em Pagamentos, o botão de classificação mantém o nome
+> “Ordem” em todos os filtros; cada filtro continua ordenando pelo seu próprio
+> critério.
 
 > Revisão 1.6.0.84.92: identificação persistente do perfil na Gestão Mobile;
 > sem impacto operacional no AvantaVendas.

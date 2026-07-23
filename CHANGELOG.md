@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.6.0.84.93 - 2026-07-23
+
+- AvantaVendas: o botão de classificação em Pagamentos mantém o título “Ordem”
+  em Todos, Débito, Crédito e Último pagamento, sem alterar o critério aplicado.
+
 ## 1.6.0.84.92 - 2026-07-23
 
 - Gestão Mobile: a identificação do perfil ativo permanece visível abaixo do
