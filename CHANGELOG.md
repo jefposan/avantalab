@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.6.0.84.83 - 2026-07-23
+
+- App Store/Capacitor: a conta de revisão não exibe o modal de preenchimento do
+  cadastro detalhado do perfil.
+
 ## 1.6.0.84.82 - 2026-07-23
 
 - Capacitor/mobile: a conta de revisão reassocia o perfil empresarial existente

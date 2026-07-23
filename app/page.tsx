@@ -7177,10 +7177,12 @@ if (validacaoTelefoneObrigatoria) {
     );
   }
 
+  const contaRevisaoAppApple = emailUsuarioAtual.trim().toLowerCase() === 'teste@teste.com.br';
+
   return (
     <div className={`min-h-screen flex flex-col transition-colors duration-300 ${bgMain}`}>
 
-      {empresaId && cadastroPerfilStatus && !cadastroPerfilStatus.completo && !cadastroPerfilAdiado && (
+      {empresaId && !contaRevisaoAppApple && cadastroPerfilStatus && !cadastroPerfilStatus.completo && !cadastroPerfilAdiado && (
         <CadastroPerfilModal
           aberto
           empresaId={empresaId}

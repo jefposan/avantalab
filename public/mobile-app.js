@@ -940,6 +940,7 @@
   }
 
   function deveExibirCadastroPerfilMobile() {
+    if (ehContaRevisaoAppAppleMobile(state.usuario)) return false;
     var status = state.cadastroPerfilStatus;
     return !!(status && !status.completo && (status.obrigatorio || !state.cadastroPerfilAdiado));
   }
