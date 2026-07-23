@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.6.0.84.91 - 2026-07-23
+
+- Landing mobile: a bolinha flutuante avança somente entre Benefícios, IA Ava,
+  Planos, Dúvidas e o fim total da página, respeitando as mesmas âncoras do menu.
+- Landing mobile: o cabeçalho da área de planos foi compactado para aproximar os
+  cards de preços e aproveitar melhor a altura disponível.
+
 ## 1.6.0.84.90 - 2026-07-23
 
 - Landing mobile: cabeçalho ganhou mais altura e respiro, com marca ampliada,

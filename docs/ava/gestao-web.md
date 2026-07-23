@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.6.0.84.90 -->
+<!-- ava-version: 1.6.0.84.91 -->
+
+> Revisão 1.6.0.84.91: refinamento da navegação e dos planos na landing mobile;
+> sem impacto operacional na Gestão Web.
 
 > Revisão 1.6.0.84.90: ajuste visual do cabeçalho da landing em telas mobile;
 > sem impacto operacional na Gestão Web.
