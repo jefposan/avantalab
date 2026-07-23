@@ -15,7 +15,7 @@ export function proxy(request: NextRequest) {
     'admin.avantalab.com.br': '/admin',
     'ponto.avantalab.com.br': '/ponto',
     'recebimentos.avantalab.com.br': '/recebimentos',
-    'vendas.avantalab.com.br': '/mobile/vendas',
+    'vendas.avantalab.com.br': '/avantavendas',
   };
 
   const destino = subdominios[host];

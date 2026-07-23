@@ -1840,7 +1840,7 @@
   function destinoLogoutMobile() {
     try {
       return sessionStorage.getItem(CHAVE_ORIGEM_ACESSO_MOBILE) === 'vendas'
-        ? '/mobile/vendas?entrar=1'
+        ? '/avantavendas?entrar=1'
         : '/?entrar=1';
     } catch (error) {
       return '/?entrar=1';
@@ -1858,7 +1858,7 @@
       sessionStorage.setItem('avantalab_vendas_entrada_gestao', '1');
       sessionStorage.removeItem('avantalab_vendas_perfil_ativo');
     } catch (error) {}
-    window.location.assign('/mobile/vendas?origem=gestao');
+    window.location.assign('/avantavendas?origem=gestao');
   }
 
   function escolherSistemaInicialMobile(sistema) {
@@ -8199,7 +8199,7 @@
         '</button>';
     }
     var sistemasHtml = podeTrocarSistemaMobile()
-      ? '<button id="ir-vendas-header" type="button" class="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-white/15 bg-white/10 p-0 shadow-sm backdrop-blur active:scale-95" aria-label="Ir para Vendas Mobile" title="Ir para Vendas Mobile"><img src="/vendas-mobile/assets/icone-troca-gestao.png" alt="" aria-hidden="true" class="h-full w-full object-cover"></button>'
+      ? '<button id="ir-vendas-header" type="button" class="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-white/15 bg-white/10 p-0 shadow-sm backdrop-blur active:scale-95" aria-label="Ir para Vendas Mobile" title="Ir para Vendas Mobile"><img src="/avantavendas/recursos/assets/icone-troca-gestao.png" alt="" aria-hidden="true" class="h-full w-full object-cover"></button>'
       : '';
     return avisosHtml || sistemasHtml
       ? '<div class="flex shrink-0 items-center gap-2">' + avisosHtml + sistemasHtml + '</div>'

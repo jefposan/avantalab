@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.6.0.84.88 - 2026-07-23
+
+- AvantaVendas: `vendas.avantalab.com.br` passa a abrir internamente a nova
+  estrutura `/avantavendas`, preservando o endereço público.
+- Gestão Mobile: seleção inicial, troca de sistema, retorno ao login e ícone do
+  Vendas passam a usar a nova rota e seus próprios recursos.
+- Migração: a antiga rota `/mobile/vendas` permanece temporariamente disponível
+  como contingência até a conclusão dos testes do endereço oficial.
+
 ## 1.6.0.84.87 - 2026-07-23
 
 - AvantaVendas: nova estrutura em `/avantavendas` publicada em paralelo para

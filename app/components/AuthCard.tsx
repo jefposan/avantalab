@@ -117,7 +117,7 @@ function IconeVendas({ nome }: { nome: string }) {
       strokeLinejoin="round"
       aria-hidden="true"
     >
-      <use href={`/vendas-mobile/assets/icons.svg#${nome}`} />
+      <use href={`/avantavendas/recursos/assets/icons.svg#${nome}`} />
     </svg>
   );
 }

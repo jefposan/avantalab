@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.6.0.84.87 -->
+<!-- ava-version: 1.6.0.84.88 -->
+
+> Revisão 1.6.0.84.88: a seleção e a troca para o Vendas passam a abrir a nova
+> estrutura `/avantavendas`, preservando sessão e origem do acesso.
 
 > Revisão 1.6.0.84.87: rota paralela de validação do AvantaVendas; sem impacto
 > operacional na Gestão Mobile.

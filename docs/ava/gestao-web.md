@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.6.0.84.87 -->
+<!-- ava-version: 1.6.0.84.88 -->
+
+> Revisão 1.6.0.84.88: o subdomínio oficial de Vendas passa a abrir a nova
+> estrutura do AvantaVendas; sem mudança operacional na Gestão Web.
 
 > Revisão 1.6.0.84.87: rota paralela de validação do AvantaVendas; sem impacto
 > operacional na Gestão Web.
