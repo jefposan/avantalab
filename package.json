@@ -3,8 +3,8 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "node scripts/sync-vendas-mobile.mjs && next dev",
-    "build": "node scripts/verificar-padrao-avanta.mjs && node scripts/verificar-conhecimento-ava.mjs && node scripts/sync-vendas-mobile.mjs && next build",
+    "dev": "next dev",
+    "build": "node scripts/verificar-padrao-avanta.mjs && node scripts/verificar-conhecimento-ava.mjs && next build",
     "verificar:padrao-avanta": "node scripts/verificar-padrao-avanta.mjs",
     "verificar:ava": "node scripts/verificar-conhecimento-ava.mjs",
     "start": "next start",

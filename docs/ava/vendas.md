@@ -1,10 +1,13 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.6.0.84.88 -->
+<!-- ava-version: 1.6.0.84.89 -->
+
+> Revisão 1.6.0.84.89: o AvantaVendas passa a ter uma única fonte oficial em
+> `/avantavendas`. A rota antiga `/mobile/vendas` apenas redireciona para o
+> endereço atual, preservando instalações e favoritos anteriores.
 
 > Revisão 1.6.0.84.88: o endereço oficial `vendas.avantalab.com.br` e as trocas
-> iniciadas pela Gestão passam a abrir a nova estrutura `/avantavendas`. A rota
-> anterior fica disponível temporariamente somente como contingência.
+> iniciadas pela Gestão passam a abrir a nova estrutura `/avantavendas`.
 
 > Revisão 1.6.0.84.87: o AvantaVendas ganhou a rota paralela
 > `/avantavendas`, com instalação e atualização próprias, para validação antes

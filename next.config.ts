@@ -20,6 +20,15 @@ const nextConfig: NextConfig = {
   outputFileTracingIncludes: {
     "/avantavendas/recursos/*": ["./app/avantavendas/sistema/**/*"],
   },
+  async redirects() {
+    return [
+      {
+        source: "/mobile/vendas",
+        destination: "/avantavendas",
+        permanent: false,
+      },
+    ];
+  },
   async headers() {
     return [
       { source: "/mobile", headers: semCachePwa },

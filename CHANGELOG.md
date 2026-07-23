@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.6.0.84.89 - 2026-07-23
+
+- AvantaVendas: removidas as cópias antigas do aplicativo e dos recursos
+  públicos; o código oficial passa a existir somente em `app/avantavendas`.
+- Compatibilidade: acessos antigos em `/mobile/vendas` são redirecionados para
+  `/avantavendas`, preservando favoritos e instalações anteriores.
+- Manutenção: o build deixa de recriar a pasta pública antiga; documentação e
+  referências históricas foram consolidadas junto ao AvantaVendas.
+
 ## 1.6.0.84.88 - 2026-07-23
 
 - AvantaVendas: `vendas.avantalab.com.br` passa a abrir internamente a nova

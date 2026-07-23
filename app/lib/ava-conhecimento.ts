@@ -6,8 +6,8 @@ export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
  * Cada guia é enviado apenas no ambiente correspondente, evitando misturar
  * caminhos e funções de Web, Mobile e Vendas na mesma resposta.
  */
-// Revisado na versão 1.6.0.84.88: /avantavendas assume o endereço oficial de
-// Vendas; /mobile/vendas permanece temporariamente como contingência.
+// Revisado na versão 1.6.0.84.89: /avantavendas é a fonte oficial do Vendas;
+// /mobile/vendas existe apenas como redirecionamento de compatibilidade.
 const GUIAS: Record<AmbienteAva, string> = {
   'gestao-web': `GUIA OPERACIONAL — AVANTALAB GESTÃO WEB
 Você atende no sistema Gestão Web. Oriente por nomes visíveis na interface; não invente telas.
@@ -85,9 +85,9 @@ LIMITES
 
   vendas: `GUIA OPERACIONAL — VENDAS AVANTALAB
 Você atende dentro do Vendas Mobile em /avantavendas, também aberto pelo endereço
-vendas.avantalab.com.br. /mobile/vendas permanece temporariamente apenas como
-contingência. Priorize funções deste aplicativo e não redirecione para Gestão
-quando a ação existir no Vendas.
+vendas.avantalab.com.br. /mobile/vendas apenas redireciona acessos antigos para
+o AvantaVendas atual. Priorize funções deste aplicativo e não redirecione para
+Gestão quando a ação existir no Vendas.
 
 SALA E NAVEGAÇÃO
 - Após autenticar, o Vendas Mobile abre sempre na própria sala. A ida para a

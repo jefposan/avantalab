@@ -42,3 +42,6 @@ next-env.d.ts
 
 # Supabase temp
 supabase/.temp/
+
+# Referência local preservada da reconstrução do AvantaVendas
+/app/avantavendas/documentacao/referencia_tridium/
