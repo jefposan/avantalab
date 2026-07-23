@@ -8158,7 +8158,7 @@
     pill.style.backgroundSize = tamanho;
     pill.style.backgroundPosition = (-pillX) + 'px ' + (-pillY) + 'px';
     pill.style.backgroundRepeat = 'no-repeat';
-    pill.style.opacity = '1';
+    pill.style.opacity = window._avaProfilePillTranslucent ? '0.25' : '1';
 
     if (!window._avaHeaderGradientResizeBound) {
       window._avaHeaderGradientResizeBound = true;
@@ -8172,21 +8172,19 @@
     var scroll = document.getElementById('mobile-main-scroll');
     var pill = document.getElementById('mobile-profile-pill');
     if (!scroll || !pill) return;
+    window._avaProfilePillHidden = false;
+    pill.style.setProperty('--profile-pill-y', '0%');
 
-    var ultimoScroll = scroll.scrollTop;
-    var aplicarEstado = function (oculto) {
-      window._avaProfilePillHidden = oculto;
-      pill.style.setProperty('--profile-pill-y', oculto ? '-100%' : '0%');
+    var aplicarTransparencia = function () {
+      var pillAtual = document.getElementById('mobile-profile-pill');
+      if (!pillAtual) return;
+      var translucida = scroll.scrollTop > 8;
+      window._avaProfilePillTranslucent = translucida;
+      pillAtual.style.opacity = translucida ? '0.25' : '1';
     };
 
-    aplicarEstado(Boolean(window._avaProfilePillHidden));
-    scroll.addEventListener('scroll', function () {
-      var atual = scroll.scrollTop;
-      var diferenca = atual - ultimoScroll;
-      if (atual <= 4) aplicarEstado(false);
-      else if (diferenca > 3) aplicarEstado(true);
-      ultimoScroll = atual;
-    }, { passive: true });
+    aplicarTransparencia();
+    scroll.addEventListener('scroll', aplicarTransparencia, { passive: true });
   }
 
   function acoesHeaderMobileHtml() {
@@ -8254,15 +8252,17 @@
             insightDespesasHtml(atual, anterior) +
           '</div>' +
         '</header>' +
-        '<div id="mobile-profile-pill" class="absolute left-1/2 z-0 w-max rounded-[0_0_14px_14px] border-0 px-6 py-1.5 text-center text-[13px] font-bold leading-tight text-white" style="top:calc(100% - 6px);max-width:calc(100% - 48px);opacity:1;transform:translate(-50%,var(--profile-pill-y,0%));transition:transform .28s cubic-bezier(.22,1,.36,1);will-change:transform;">' +
-          '<span class="relative z-10 block truncate">' + escapeHtml(nomeEmpresa(state.empresa)) + '</span>' +
+        '<div id="mobile-profile-pill" class="pointer-events-none absolute left-1/2 z-0 flex w-max items-center gap-1.5 rounded-[0_0_14px_14px] border-0 px-5 py-1.5 text-white shadow-[0_8px_18px_rgba(8,47,73,0.24)]" style="top:calc(100% - 6px);max-width:calc(100% - 48px);opacity:1;transform:translate(-50%,var(--profile-pill-y,0%));transition:opacity .24s ease,transform .28s cubic-bezier(.22,1,.36,1);will-change:opacity,transform;">' +
+          '<span class="relative z-10 shrink-0 text-[9px] font-black uppercase tracking-[0.14em] text-cyan-100/80">Perfil ativo</span>' +
+          '<span class="relative z-10 shrink-0 text-white/55" aria-hidden="true">&middot;</span>' +
+          '<strong class="relative z-10 min-w-0 truncate text-[13px] font-black leading-tight">' + escapeHtml(nomeEmpresa(state.empresa)) + '</strong>' +
         '</div>' +
         '</div>' +
         (opcoesDashboardAberta
           ? '<button type="button" data-dashboard-fechar-opcoes="' + escapeHtml(state.dashboardOpcoesId) + '" class="fixed inset-0 cursor-default bg-slate-950/90 backdrop-blur-[1px]" style="z-index:9000;" aria-label="Fechar opcoes do card"></button>'
           : '') +
         '<div id="mobile-main-scroll" data-preserve-scroll class="min-h-0 flex-1 overflow-y-auto overscroll-contain" style="padding-bottom:calc(env(safe-area-inset-bottom) + 82px);-webkit-overflow-scrolling:touch;">' +
-        '<div class="mx-auto grid w-full min-w-0 max-w-md gap-3 px-3 pt-10 sm:px-4">' +
+        '<div class="mx-auto grid w-full min-w-0 max-w-md gap-3 px-3 pt-11 sm:px-4">' +
           avisoCarenciaMobileHtml() +
           alertaHtml().replace('mt-4', '') +
           (state.visao === 'home' ? homeHtml(atual, anterior) : (state.visao === 'agenda' ? agendaMobileHtml(atual) : listaDetalhadaHtml(atual))) +

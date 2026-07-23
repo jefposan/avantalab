@@ -1,6 +1,9 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.6.0.84.91 -->
+<!-- ava-version: 1.6.0.84.92 -->
+
+> Revisão 1.6.0.84.92: identificação persistente do perfil na Gestão Mobile;
+> sem impacto operacional no AvantaVendas.
 
 > Revisão 1.6.0.84.91: refinamento da navegação e dos planos na landing pública;
 > sem impacto operacional no AvantaVendas.

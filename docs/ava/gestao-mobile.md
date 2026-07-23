@@ -1,6 +1,10 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.6.0.84.91 -->
+<!-- ava-version: 1.6.0.84.92 -->
+
+> Revisão 1.6.0.84.92: o nome do perfil ativo permanece identificado abaixo do
+> cabeçalho; durante a rolagem, a pílula fica 75% transparente e volta a ficar
+> totalmente visível ao retornar ao topo.
 
 > Revisão 1.6.0.84.91: refinamento da navegação e dos planos na landing pública;
 > sem impacto operacional na Gestão Mobile.

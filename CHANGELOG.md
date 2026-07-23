@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.6.0.84.92 - 2026-07-23
+
+- Gestão Mobile: a identificação do perfil ativo permanece visível abaixo do
+  cabeçalho e ganha 75% de transparência durante a rolagem, retornando à
+  opacidade total no topo.
+
 ## 1.6.0.84.91 - 2026-07-23
 
 - Landing mobile: a bolinha flutuante avança somente entre Benefícios, IA Ava,
