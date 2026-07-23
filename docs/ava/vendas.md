@@ -1,6 +1,9 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.6.0.84.74 -->
+<!-- ava-version: 1.6.0.84.75 -->
+
+> Revisão 1.6.0.84.75: novo nome e ícone de instalação do PWA de Ponto; sem
+> impacto operacional no Vendas Mobile.
 
 > Revisão 1.6.0.84.74: o nome de instalação **AvantaVendas** é declarado em
 > todas as entradas do PWA, inclusive no Safari/iPhone.

@@ -7,10 +7,10 @@ export const metadata: Metadata = {
   description: 'Registre seu ponto com CPF e senha.',
   manifest: '/ponto-manifest.json',
   robots: { index: false, follow: false },
-  appleWebApp: { capable: true, statusBarStyle: 'default', title: 'Avanta Ponto' },
+  appleWebApp: { capable: true, statusBarStyle: 'default', title: 'AvantaPonto' },
   icons: {
-    icon: '/images/ponto-icon-192.png',
-    apple: '/images/ponto-icon-180.png',
+    icon: '/images/avanta-ponto-icon-192.png',
+    apple: '/images/avanta-ponto-icon-180.png',
   },
   openGraph: {
     title: 'AvantaLab · Controle de Ponto',

@@ -1,11 +1,12 @@
-const PONTO_CACHE = 'avantalab-ponto-v8';
+const PONTO_CACHE = 'avantalab-ponto-v9';
 const PONTO_SHELL = [
   '/ponto',
   '/ponto-app.js?v=20',
   '/mobile-supabase.js',
   '/ponto-manifest.json',
-  '/images/ponto-icon-192.png',
-  '/images/ponto-icon-512.png'
+  '/images/avanta-ponto-icon-180.png',
+  '/images/avanta-ponto-icon-192.png',
+  '/images/avanta-ponto-icon-512.png'
 ];
 
 self.addEventListener('install', (event) => {
@@ -29,8 +30,8 @@ self.addEventListener('push', (event) => {
 
   event.waitUntil(self.registration.showNotification(data.title || data.titulo || 'Avanta Ponto', {
     body: data.body || data.corpo || '',
-    icon: data.icon || '/images/ponto-icon-192.png',
-    badge: data.badge || '/images/ponto-icon-192.png',
+    icon: data.icon || '/images/avanta-ponto-icon-192.png',
+    badge: data.badge || '/images/avanta-ponto-icon-192.png',
     tag: data.tag || undefined,
     renotify: Boolean(data.tag),
     data: { url: data.url || '/ponto' },

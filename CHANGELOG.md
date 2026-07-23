@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.6.0.84.75 - 2026-07-22
+
+- Controle de Ponto: o PWA passa a instalar como **AvantaPonto**, com novo
+  ícone oficial em Android, iPhone e navegadores compatíveis.
+
 ## 1.6.0.84.74 - 2026-07-22
 
 - Vendas Mobile: a entrada estática e o acesso mobile passam a declarar

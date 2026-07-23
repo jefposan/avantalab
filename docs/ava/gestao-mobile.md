@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.6.0.84.74 -->
+<!-- ava-version: 1.6.0.84.75 -->
+
+> Revisão 1.6.0.84.75: novo nome e ícone de instalação do PWA de Ponto; sem
+> impacto operacional na Gestão Mobile.
 
 > Revisão 1.6.0.84.74: reforço do nome de instalação do PWA de Vendas no
 > Safari/iPhone; sem impacto operacional na Gestão Mobile.
