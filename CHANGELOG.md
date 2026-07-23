@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.6.0.84.77 - 2026-07-22
+
+- Suporte: criada a página pública `/suporte` com canais de ajuda, formulário de
+  sugestão e seção de IA para atendimento, para uso do App Store Connect
+  e suporte operacional.
+
 ## 1.6.0.84.76 - 2026-07-22
 
 - Política de Privacidade: publicada a página pública `/privacidade`, com o
