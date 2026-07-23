@@ -2,7 +2,7 @@ import type { Metadata, Viewport } from 'next';
 import AvaMobileBridge from '../AvaMobileBridge';
 
 export const metadata: Metadata = {
-  title: 'Vendas Mobile | AvantaLab',
+  title: 'AvantaVendas',
   description: 'Clientes, produtos, pedidos e controle de vendas mobile.',
   manifest: '/vendas-mobile/manifest.webmanifest',
   icons: { icon: '/images/avanta-vendas-icon-192.png', apple: '/images/avanta-vendas-icon-180.png' },

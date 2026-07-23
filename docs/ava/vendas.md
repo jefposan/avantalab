@@ -1,6 +1,9 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.6.0.84.73 -->
+<!-- ava-version: 1.6.0.84.74 -->
+
+> Revisão 1.6.0.84.74: o nome de instalação **AvantaVendas** é declarado em
+> todas as entradas do PWA, inclusive no Safari/iPhone.
 
 > Revisão 1.6.0.84.73: ao instalar o PWA, o nome exibido é
 > **AvantaVendas** e o atalho usa o novo ícone oficial.

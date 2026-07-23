@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.6.0.84.74 - 2026-07-22
+
+- Vendas Mobile: a entrada estática e o acesso mobile passam a declarar
+  explicitamente **AvantaVendas** como nome do aplicativo instalado.
+
 ## 1.6.0.84.73 - 2026-07-22
 
 - Vendas Mobile: o PWA passa a instalar como **AvantaVendas**, com novo ícone
