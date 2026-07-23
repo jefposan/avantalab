@@ -5,8 +5,8 @@ export const metadata: Metadata = {
   title: 'Vendas Mobile | AvantaLab',
   description: 'Clientes, produtos, pedidos e controle de vendas mobile.',
   manifest: '/vendas-mobile/manifest.webmanifest',
-  icons: { icon: '/images/vendas-icon-192.png', apple: '/images/vendas-icon-180.png' },
-  appleWebApp: { capable: true, statusBarStyle: 'default', title: 'Vendas AvantaLab' },
+  icons: { icon: '/images/avanta-vendas-icon-192.png', apple: '/images/avanta-vendas-icon-180.png' },
+  appleWebApp: { capable: true, statusBarStyle: 'default', title: 'AvantaVendas' },
 };
 
 export const viewport: Viewport = {

@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.6.0.84.73 - 2026-07-22
+
+- Vendas Mobile: o PWA passa a instalar como **AvantaVendas**, com novo ícone
+  oficial em Android, iPhone e navegadores compatíveis.
+
 ## 1.6.0.84.72 - 2026-07-22
 
 - Recebimentos Presenciais: locais agrupadores não exibem status nem ação de

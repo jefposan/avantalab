@@ -1,6 +1,9 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.6.0.84.72 -->
+<!-- ava-version: 1.6.0.84.73 -->
+
+> Revisão 1.6.0.84.73: ao instalar o PWA, o nome exibido é
+> **AvantaVendas** e o atalho usa o novo ícone oficial.
 
 > Revisão 1.6.0.84.72: ajuste de locais agrupadores em Recebimentos
 > Presenciais, sem impacto operacional no Vendas Mobile.

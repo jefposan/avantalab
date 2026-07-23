@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.6.0.84.72 -->
+<!-- ava-version: 1.6.0.84.73 -->
+
+> Revisão 1.6.0.84.73: novo nome e ícone de instalação do PWA de Vendas; sem
+> impacto operacional na Gestão Web.
 
 > Revisão 1.6.0.84.72: locais agrupadores não possuem status ou ação de
 > ativar/desativar, pois somente organizam clientes abaixo.

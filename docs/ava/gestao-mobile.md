@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.6.0.84.72 -->
+<!-- ava-version: 1.6.0.84.73 -->
+
+> Revisão 1.6.0.84.73: novo nome e ícone de instalação do PWA de Vendas; sem
+> impacto operacional na Gestão Mobile.
 
 > Revisão 1.6.0.84.72: ajuste de locais agrupadores em Recebimentos
 > Presenciais, sem impacto operacional na Gestão Mobile.

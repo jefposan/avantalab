@@ -6109,7 +6109,7 @@ function aplicarAtualizacaoPwaPendente() {
 
 if (!window.__VENDAS_MOBILE_EMBEDDED__ && 'serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('./sw.js?v=49').catch(() => {});
+    navigator.serviceWorker.register('./sw.js?v=50').catch(() => {});
   });
 }
 
