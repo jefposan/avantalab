@@ -1,6 +1,9 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.6.0.84.103 -->
+<!-- ava-version: 1.6.0.84.104 -->
+
+> Revisão 1.6.0.84.104: otimização de custo do Importador da Gestão Web; sem
+> impacto operacional no AvantaVendas.
 
 > Revisão 1.6.0.84.103: AvantaVendas passa a ajustar menus, barras fixas,
 > formulários, tabelas e painéis à área útil do Safari/iPhone e Chrome/Android;

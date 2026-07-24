@@ -6,7 +6,45 @@ export const runtime = 'nodejs';
 export const maxDuration = 180;
 
 const LIMITE_ARQUIVO = 10 * 1024 * 1024;
+const LIMITE_TOKENS_SAIDA = 18_000;
 type TipoDocumento = 'automatico' | 'extrato-bancario' | 'fatura-cartao';
+type ConfiguracaoAnalise = {
+  modelo: string;
+  raciocinio: string;
+  timeoutMs: number;
+};
+type ResultadoOpenAI = {
+  error?: { message?: string };
+  output?: Array<{
+    content?: Array<{
+      type?: string;
+      text?: string;
+    }>;
+  }>;
+};
+type ItemFinanceiroReconhecido = Record<string, unknown> & {
+  descricao: string;
+  valor: number;
+};
+type AnaliseBruta = {
+  tipo_documento?: string;
+  total_documento?: unknown;
+  despesas?: unknown;
+  estornos?: unknown;
+  subtotais?: unknown;
+};
+
+const ANALISE_PRIMARIA: ConfiguracaoAnalise = {
+  modelo: process.env.OPENAI_IMPORT_PRIMARY_MODEL || 'gpt-5.6-terra',
+  raciocinio: process.env.OPENAI_IMPORT_PRIMARY_REASONING || 'medium',
+  timeoutMs: 90_000,
+};
+
+const ANALISE_CONTINGENCIA: ConfiguracaoAnalise = {
+  modelo: process.env.OPENAI_IMPORT_FALLBACK_MODEL || 'gpt-5.6-sol',
+  raciocinio: process.env.OPENAI_IMPORT_FALLBACK_REASONING || 'high',
+  timeoutMs: 80_000,
+};
 
 function chaveOpenAI() {
   return process.env.OPENAI_API_KEY || process.env.OPENAI_API_KEY_AVA || '';
@@ -60,7 +98,7 @@ const schema = {
   required: ['tipo_documento', 'total_documento', 'despesas', 'estornos', 'subtotais'],
 };
 
-function textoDaResposta(resultado: any) {
+function textoDaResposta(resultado: ResultadoOpenAI | null) {
   for (const saida of resultado?.output || []) {
     for (const conteudo of saida?.content || []) {
       if (conteudo?.type === 'output_text' && typeof conteudo.text === 'string') return conteudo.text;
@@ -69,11 +107,121 @@ function textoDaResposta(resultado: any) {
   return '';
 }
 
-function itensValidos(valor: unknown) {
+function itensValidos(valor: unknown): ItemFinanceiroReconhecido[] {
   if (!Array.isArray(valor)) return [];
-  return valor.filter((item) => item && typeof item === 'object'
-    && typeof item.descricao === 'string' && item.descricao.trim()
-    && Number.isFinite(item.valor) && item.valor > 0);
+  return valor.filter((item): item is ItemFinanceiroReconhecido =>
+    Boolean(item) && typeof item === 'object'
+    && typeof item.descricao === 'string' && Boolean(item.descricao.trim())
+    && typeof item.valor === 'number' && Number.isFinite(item.valor) && item.valor > 0);
+}
+
+async function consultarOpenAI({
+  apiKey,
+  arquivo,
+  fileData,
+  instrucao,
+  usuarioId,
+  configuracao,
+}: {
+  apiKey: string;
+  arquivo: File;
+  fileData: string;
+  instrucao: string;
+  usuarioId: string;
+  configuracao: ConfiguracaoAnalise;
+}) {
+  const resposta = await fetch('https://api.openai.com/v1/responses', {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
+    signal: AbortSignal.timeout(configuracao.timeoutMs),
+    body: JSON.stringify({
+      model: configuracao.modelo,
+      reasoning: { effort: configuracao.raciocinio },
+      max_output_tokens: LIMITE_TOKENS_SAIDA,
+      store: false,
+      safety_identifier: createHash('sha256').update(`importador:${usuarioId}`).digest('hex'),
+      input: [{
+        role: 'user',
+        content: [
+          { type: 'input_file', filename: arquivo.name, file_data: fileData, detail: 'high' },
+          { type: 'input_text', text: instrucao },
+        ],
+      }],
+      text: { format: { type: 'json_schema', name: 'analise_financeira_pdf', strict: true, schema } },
+    }),
+  });
+  const resultado = await resposta.json().catch(() => null) as ResultadoOpenAI | null;
+  return { resposta, resultado };
+}
+
+function validarAnalise(resultado: ResultadoOpenAI | null) {
+  const conteudo = textoDaResposta(resultado);
+  let analise: AnaliseBruta | null = null;
+  try {
+    analise = conteudo ? JSON.parse(conteudo) as AnaliseBruta : null;
+  } catch {
+    return {
+      ok: false as const,
+      status: 502,
+      motivo: 'resposta_json_incompleta',
+      mensagem: 'A resposta da IA ficou incompleta. Envie o PDF novamente.',
+    };
+  }
+  if (!analise) {
+    return {
+      ok: false as const,
+      status: 502,
+      motivo: 'resposta_vazia',
+      mensagem: 'A resposta da IA ficou incompleta. Envie o PDF novamente.',
+    };
+  }
+
+  const despesas = itensValidos(analise?.despesas);
+  const estornos = itensValidos(analise?.estornos);
+  if (!despesas.length) {
+    return {
+      ok: false as const,
+      status: 422,
+      motivo: 'nenhuma_despesa',
+      mensagem: 'Nenhuma despesa foi identificada com segurança no PDF.',
+    };
+  }
+
+  const totalDespesas = despesas.reduce((soma, item) => soma + item.valor, 0);
+  const totalEstornos = estornos.reduce((soma, item) => soma + item.valor, 0);
+  const totalCalculado = totalDespesas - totalEstornos;
+  const totalDocumentoBruto = analise?.total_documento;
+  const totalDocumento = typeof totalDocumentoBruto === 'number' && Number.isFinite(totalDocumentoBruto)
+    ? totalDocumentoBruto
+    : null;
+  const diferenca = totalDocumento === null ? null : totalCalculado - totalDocumento;
+
+  if (totalDocumento !== null && Math.abs(totalCalculado - totalDocumento) > 0.02) {
+    return {
+      ok: false as const,
+      status: 422,
+      motivo: 'divergencia_total',
+      mensagem: `A análise ficou incompleta: o líquido reconhecido foi R$ ${totalCalculado.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}, mas o documento informa R$ ${totalDocumento.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}. Nenhum lançamento foi preparado.`,
+      diagnostico: {
+        despesas: despesas.length,
+        estornos: estornos.length,
+        totalCalculado: totalCalculado.toFixed(2),
+        totalDocumento: totalDocumento.toFixed(2),
+      },
+    };
+  }
+
+  return {
+    ok: true as const,
+    analise,
+    despesas,
+    estornos,
+    totalDespesas,
+    totalEstornos,
+    totalCalculado,
+    totalDocumento,
+    diferenca,
+  };
 }
 
 export async function POST(request: Request) {
@@ -99,6 +247,7 @@ export async function POST(request: Request) {
     if (!apiKey) return NextResponse.json({ erro: true, mensagem: 'A análise por IA não está configurada no servidor.' }, { status: 503 });
 
     const bytes = Buffer.from(await arquivo.arrayBuffer());
+    const fileData = `data:application/pdf;base64,${bytes.toString('base64')}`;
     const instrucao = `Analise visualmente o PDF inteiro, página por página e coluna por coluna. O tipo informado é ${tipoDocumento}.
 As páginas podem ter duas colunas independentes: nunca combine registros da esquerda com registros da direita.
 
@@ -116,76 +265,66 @@ Para extrato bancário:
 - exclua entradas comuns, saldos, limites e totais de resumo.
 
 Não invente data, descrição ou valor. Informe datas em ISO YYYY-MM-DD, inferindo o ano pelo vencimento/período da própria fatura quando a linha mostrar apenas DD/MM. Informe a página de cada item. Retorne todos os itens do período atual.`;
-    let resposta: Response;
     try {
-      resposta = await fetch('https://api.openai.com/v1/responses', {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
-        signal: AbortSignal.timeout(175_000),
-        body: JSON.stringify({
-          model: process.env.OPENAI_IMPORT_MODEL || 'gpt-5.6-sol',
-          reasoning: { effort: process.env.OPENAI_IMPORT_REASONING || 'high' },
-          max_output_tokens: 30_000,
-          store: false,
-          safety_identifier: createHash('sha256').update(`importador:${usuario.id}`).digest('hex'),
-          input: [{
-            role: 'user',
-            content: [
-              { type: 'input_file', filename: arquivo.name, file_data: `data:application/pdf;base64,${bytes.toString('base64')}`, detail: 'high' },
-              { type: 'input_text', text: instrucao },
-            ],
-          }],
-          text: { format: { type: 'json_schema', name: 'analise_financeira_pdf', strict: true, schema } },
-        }),
-      });
+      const configuracoes = [ANALISE_PRIMARIA, ANALISE_CONTINGENCIA].filter((configuracao, indice, lista) =>
+        indice === 0
+        || configuracao.modelo !== lista[0].modelo
+        || configuracao.raciocinio !== lista[0].raciocinio);
+      let falhaValidacao: ReturnType<typeof validarAnalise> | null = null;
+
+      for (const [indice, configuracao] of configuracoes.entries()) {
+        const { resposta, resultado } = await consultarOpenAI({
+          apiKey,
+          arquivo,
+          fileData,
+          instrucao,
+          usuarioId: usuario.id,
+          configuracao,
+        });
+
+        if (!resposta.ok) {
+          console.error('Erro OpenAI importador:', resultado?.error?.message || resposta.status);
+          return NextResponse.json({ erro: true, mensagem: 'A IA não conseguiu analisar o PDF agora. Tente novamente em alguns minutos.' }, { status: 502 });
+        }
+
+        const validacao = validarAnalise(resultado);
+        if (!validacao.ok) {
+          falhaValidacao = validacao;
+          console.warn('Conferência incompleta no importador:', {
+            modelo: configuracao.modelo,
+            motivo: validacao.motivo,
+            ...('diagnostico' in validacao ? validacao.diagnostico : {}),
+          });
+          if (indice < configuracoes.length - 1) continue;
+          return NextResponse.json(
+            { erro: true, mensagem: validacao.mensagem },
+            { status: validacao.status },
+          );
+        }
+
+        return NextResponse.json({
+          erro: false,
+          tipo_documento: validacao.analise.tipo_documento,
+          despesas: validacao.despesas,
+          estornos: validacao.estornos,
+          subtotais: Array.isArray(validacao.analise.subtotais) ? validacao.analise.subtotais : [],
+          total_documento: validacao.totalDocumento,
+          total_despesas: Number(validacao.totalDespesas.toFixed(2)),
+          total_estornos: Number(validacao.totalEstornos.toFixed(2)),
+          total_calculado: Number(validacao.totalCalculado.toFixed(2)),
+          diferenca: validacao.diferenca === null ? null : Number(validacao.diferenca.toFixed(2)),
+          modelo: configuracao.modelo,
+          contingencia_utilizada: indice > 0,
+        });
+      }
+
+      return NextResponse.json(
+        { erro: true, mensagem: falhaValidacao?.mensagem || 'Não foi possível conferir os valores do documento.' },
+        { status: falhaValidacao?.status || 422 },
+      );
     } finally {
       bytes.fill(0);
     }
-    const resultado = await resposta.json().catch(() => null);
-    if (!resposta.ok) {
-      console.error('Erro OpenAI importador:', resultado?.error?.message || resposta.status);
-      return NextResponse.json({ erro: true, mensagem: 'A IA não conseguiu analisar o PDF agora. Tente novamente em alguns minutos.' }, { status: 502 });
-    }
-
-    const conteudo = textoDaResposta(resultado);
-    let analise: any = null;
-    try { analise = conteudo ? JSON.parse(conteudo) : null; }
-    catch { return NextResponse.json({ erro: true, mensagem: 'A resposta da IA ficou incompleta. Envie o PDF novamente.' }, { status: 502 }); }
-    const despesas = itensValidos(analise?.despesas);
-    const estornos = itensValidos(analise?.estornos);
-    if (!despesas.length) return NextResponse.json({ erro: true, mensagem: 'Nenhuma despesa foi identificada com segurança no PDF.' }, { status: 422 });
-
-    const totalDespesas = despesas.reduce((soma, item) => soma + item.valor, 0);
-    const totalEstornos = estornos.reduce((soma, item) => soma + item.valor, 0);
-    const totalCalculado = totalDespesas - totalEstornos;
-    const totalDocumento = Number.isFinite(analise?.total_documento) ? analise.total_documento : null;
-    const diferenca = totalDocumento === null ? null : totalCalculado - totalDocumento;
-    if (diferenca !== null && Math.abs(diferenca) > 0.02) {
-      console.warn('Conferência incompleta no importador:', {
-        despesas: despesas.length,
-        estornos: estornos.length,
-        totalCalculado: totalCalculado.toFixed(2),
-        totalDocumento: totalDocumento.toFixed(2),
-      });
-      return NextResponse.json({
-        erro: true,
-        mensagem: `A análise ficou incompleta: o líquido reconhecido foi R$ ${totalCalculado.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}, mas o documento informa R$ ${totalDocumento.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}. Nenhum lançamento foi preparado.`,
-      }, { status: 422 });
-    }
-
-    return NextResponse.json({
-      erro: false,
-      tipo_documento: analise.tipo_documento,
-      despesas,
-      estornos,
-      subtotais: Array.isArray(analise.subtotais) ? analise.subtotais : [],
-      total_documento: totalDocumento,
-      total_despesas: Number(totalDespesas.toFixed(2)),
-      total_estornos: Number(totalEstornos.toFixed(2)),
-      total_calculado: Number(totalCalculado.toFixed(2)),
-      diferenca: diferenca === null ? null : Number(diferenca.toFixed(2)),
-      modelo: process.env.OPENAI_IMPORT_MODEL || 'gpt-5.6-sol',
-    });
   } catch (error) {
     console.error('Erro inesperado no importador:', error instanceof Error ? error.message : error);
     const mensagem = error instanceof Error && error.name === 'TimeoutError'

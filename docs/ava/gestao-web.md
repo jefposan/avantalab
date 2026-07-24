@@ -1,6 +1,10 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.6.0.84.103 -->
+<!-- ava-version: 1.6.0.84.104 -->
+
+> Revisão 1.6.0.84.104: o Importador mantém a mesma conferência humana e
+> matemática, usando uma análise econômica por padrão e uma leitura reforçada
+> somente quando a primeira não confere.
 
 > Revisão 1.6.0.84.103: compatibilidade visual e funcional entre Safari no
 > iPhone e Chrome no Android, com viewport dinâmico, áreas seguras, modais

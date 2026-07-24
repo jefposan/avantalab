@@ -10,8 +10,11 @@ em popup antes de qualquer gravação.
 ## Prévia web
 
 - Lê CSV, TXT, XLS, XLSX e PDF.
-- Em PDF, envia o documento completo por uma rota autenticada à Responses API,
-  usando `gpt-5.6-sol` com análise visual e raciocínio alto por padrão.
+- Em PDF, envia o documento completo por uma rota autenticada à Responses API.
+  A primeira análise usa `gpt-5.6-terra` com raciocínio médio. Somente quando a
+  resposta fica incompleta, não identifica despesas ou diverge do total do
+  documento, a rota repete a leitura uma vez com `gpt-5.6-sol` e raciocínio
+  alto.
 - A análise percorre páginas e colunas independentes, distingue extratos de
   faturas e exclui limites, simulações, compras futuras e campos de resumo.
 - Em faturas, apresenta despesas e estornos/créditos em áreas separadas. Um
@@ -47,8 +50,10 @@ auditoria e visualização sem alterar este contrato. Como o PDF é enviado com
 suas páginas visuais, arquivos digitalizados também podem ser analisados; a
 mesma conferência matemática continua obrigatória. Para a análise de PDF,
 configure `OPENAI_API_KEY` (ou `OPENAI_API_KEY_AVA`) no
-ambiente do servidor. `OPENAI_IMPORT_MODEL` e `OPENAI_IMPORT_REASONING` permitem
-alterar somente o modelo e o esforço deste processador. A rota exige sessão
+ambiente do servidor. `OPENAI_IMPORT_PRIMARY_MODEL` e
+`OPENAI_IMPORT_PRIMARY_REASONING` configuram a análise econômica;
+`OPENAI_IMPORT_FALLBACK_MODEL` e `OPENAI_IMPORT_FALLBACK_REASONING` configuram
+a contingência. A rota exige sessão
 autenticada, não armazena a resposta na OpenAI e nunca confirma lançamentos sem
 revisão do usuário.
 

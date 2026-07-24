@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.6.0.84.104 - 2026-07-24
+
+- Gestão Web: a análise de PDFs do Importador passa a usar GPT-5.6 Terra com
+  raciocínio médio como padrão econômico. GPT-5.6 Sol com raciocínio alto é
+  acionado somente quando a primeira leitura não passa pela conferência
+  estrutural e matemática.
+- A qualidade visual do PDF e a tolerância máxima de dois centavos são
+  preservadas; o limite de saída foi reduzido para evitar consumo anormal.
+
 ## 1.6.0.84.103 - 2026-07-24
 
 - Compatibilidade mobile: Gestão Web, Gestão Mobile, AvantaVendas,
