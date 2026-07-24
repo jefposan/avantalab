@@ -35,14 +35,19 @@ export default function ModalNotaLancamento({ aberto, url, darkMode, onFechar }:
   };
 
   return (
-    <div className="fixed inset-0 z-[1200] flex items-center justify-center bg-slate-950/75 px-4 py-6" onClick={onFechar}>
-      <section className={`flex max-h-full w-full max-w-2xl flex-col overflow-hidden rounded-2xl shadow-2xl ${darkMode ? 'bg-slate-900 text-white' : 'bg-white text-slate-900'}`} onClick={(event) => event.stopPropagation()}>
+    <div className="av-modal-backdrop fixed inset-0 z-[1200] flex items-center justify-center bg-slate-950/75 px-4 py-6" onClick={onFechar}>
+      <section className={`av-modal-panel flex w-full max-w-2xl flex-col overflow-hidden rounded-2xl shadow-2xl ${darkMode ? 'bg-slate-900 text-white' : 'bg-white text-slate-900'}`} onClick={(event) => event.stopPropagation()}>
         <header className="flex items-center justify-between gap-3 px-4 py-3 text-white" style={{ backgroundColor: '#003E73' }}>
           <h2 className="text-sm font-black">Nota do lançamento</h2>
           <button type="button" onClick={onFechar} className="flex h-8 w-8 items-center justify-center rounded-full bg-white/15 text-lg hover:bg-white/25" title="Fechar">×</button>
         </header>
         <div className={`min-h-0 flex-1 overflow-auto p-3 ${darkMode ? 'bg-slate-950' : 'bg-slate-100'}`}>
-          <img src={url} alt="Nota vinculada ao lançamento" className="mx-auto max-h-[68vh] max-w-full rounded-lg object-contain shadow-lg" />
+          <img
+            src={url}
+            alt="Nota vinculada ao lançamento"
+            className="mx-auto max-w-full rounded-lg object-contain shadow-lg"
+            style={{ maxHeight: 'calc(var(--av-viewport-height) - 12rem)' }}
+          />
         </div>
         <footer className={`flex justify-end gap-2 px-4 py-3 ${darkMode ? 'border-t border-slate-700' : 'border-t border-slate-200'}`}>
           <button type="button" onClick={compartilhar} className="h-9 rounded-lg bg-[#003E73] px-4 text-xs font-black uppercase text-white transition hover:brightness-110 active:scale-95">Compartilhar</button>

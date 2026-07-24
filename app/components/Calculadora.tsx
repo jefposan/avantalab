@@ -55,18 +55,26 @@ export default function Calculadora({ onClose, corPrimaria, darkMode }: Calculad
   const [calc, setCalc] = useState<CalcState>(INITIAL_STATE);
 
   const limitarPosicao = (x: number, y: number) => {
-    const margem = 8;
+    const margem = 12;
+    const viewport = window.visualViewport;
+    const viewportLeft = viewport?.offsetLeft ?? 0;
+    const viewportTop = viewport?.offsetTop ?? 0;
+    const viewportWidth = viewport?.width ?? window.innerWidth;
+    const viewportHeight = viewport?.height ?? window.innerHeight;
     const largura = calcRef.current?.offsetWidth || 260;
     const altura = calcRef.current?.offsetHeight || 0;
-    const maxX = Math.max(margem, window.innerWidth - largura - margem);
-    const maxY = Math.max(margem, window.innerHeight - altura - margem);
+    const minX = viewportLeft + margem;
+    const minY = viewportTop + margem;
+    const maxX = Math.max(minX, viewportLeft + viewportWidth - largura - margem);
+    const maxY = Math.max(minY, viewportTop + viewportHeight - altura - margem);
     return {
-      x: Math.min(Math.max(x, margem), maxX),
-      y: Math.min(Math.max(y, margem), maxY),
+      x: Math.min(Math.max(x, minX), maxX),
+      y: Math.min(Math.max(y, minY), maxY),
     };
   };
 
   const startDrag = (e: React.PointerEvent) => {
+    if ((e.target as HTMLElement).closest('button')) return;
     dragRef.current = { isDragging: true, startX: e.clientX - calcPos.x, startY: e.clientY - calcPos.y };
     (e.target as HTMLElement).setPointerCapture(e.pointerId);
   };
@@ -196,7 +204,13 @@ export default function Calculadora({ onClose, corPrimaria, darkMode }: Calculad
     const ajustarAoViewport = () => setCalcPos((posicao) => limitarPosicao(posicao.x, posicao.y));
     ajustarAoViewport();
     window.addEventListener('resize', ajustarAoViewport);
-    return () => window.removeEventListener('resize', ajustarAoViewport);
+    window.visualViewport?.addEventListener('resize', ajustarAoViewport);
+    window.visualViewport?.addEventListener('scroll', ajustarAoViewport);
+    return () => {
+      window.removeEventListener('resize', ajustarAoViewport);
+      window.visualViewport?.removeEventListener('resize', ajustarAoViewport);
+      window.visualViewport?.removeEventListener('scroll', ajustarAoViewport);
+    };
   }, []);
 
   const corEhClara = (hex: string) => {
@@ -240,8 +254,10 @@ export default function Calculadora({ onClose, corPrimaria, darkMode }: Calculad
   return (
     <div
       ref={calcRef}
-      className={`fixed shadow-2xl rounded-xl border flex flex-col z-[5000] overflow-hidden select-none ${bg}`}
-      style={{ left: calcPos.x, top: calcPos.y, width: 260 }}
+      className={`fixed shadow-2xl rounded-xl border flex max-h-[calc(var(--av-viewport-height)-var(--av-safe-top)-var(--av-safe-bottom)-24px)] flex-col z-[5000] overflow-y-auto overscroll-contain select-none ${bg}`}
+      style={{ left: calcPos.x, top: calcPos.y, width: 'min(260px, calc(100vw - 24px))' }}
+      role="dialog"
+      aria-label="Calculadora"
     >
       {/* Título / drag */}
       <div
@@ -256,8 +272,9 @@ export default function Calculadora({ onClose, corPrimaria, darkMode }: Calculad
         </span>
         <button
           onClick={onClose}
-          className="rounded px-2 py-0.5 text-sm font-bold hover:bg-black/20 transition-colors cursor-pointer"
+          className="av-touch-target rounded px-2 py-0.5 text-sm font-bold hover:bg-black/20 transition-colors cursor-pointer"
           style={{ color: textoPrimario }}
+          aria-label="Fechar calculadora"
         >
           ✕
         </button>

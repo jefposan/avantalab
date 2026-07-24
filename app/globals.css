@@ -17,6 +17,35 @@
   --av-line-height-body: 1.5;
   --av-line-height-control: 1.2;
   --av-letter-spacing-title: -0.01em;
+
+  /* Viewport e áreas seguras: fallback primeiro, unidades modernas depois. */
+  --av-viewport-height: 100vh;
+  --av-viewport-small: 100vh;
+  --av-viewport-large: 100vh;
+  --av-safe-top: env(safe-area-inset-top, 0px);
+  --av-safe-right: env(safe-area-inset-right, 0px);
+  --av-safe-bottom: env(safe-area-inset-bottom, 0px);
+  --av-safe-left: env(safe-area-inset-left, 0px);
+  --av-page-gutter: clamp(0.75rem, 3vw, 2rem);
+  --av-modal-gap: clamp(0.75rem, 2.5vw, 1.5rem);
+}
+
+@supports (height: 100svh) {
+  :root {
+    --av-viewport-small: 100svh;
+  }
+}
+
+@supports (height: 100lvh) {
+  :root {
+    --av-viewport-large: 100lvh;
+  }
+}
+
+@supports (height: 100dvh) {
+  :root {
+    --av-viewport-height: 100dvh;
+  }
 }
 
 @theme inline {
@@ -34,6 +63,7 @@
 }
 
 body {
+  min-height: var(--av-viewport-height);
   background: var(--background);
   color: var(--foreground);
   font-family: var(--av-font-family);
@@ -113,6 +143,12 @@ body {
   overflow-x: clip;
 }
 
+html {
+  min-height: 100%;
+  text-size-adjust: 100%;
+  -webkit-text-size-adjust: 100%;
+}
+
 html.av-popup-scroll-lock,
 html.av-popup-scroll-lock body {
   overscroll-behavior: none;
@@ -125,6 +161,153 @@ header,
 footer,
 nav {
   min-width: 0;
+}
+
+img,
+svg,
+video,
+canvas {
+  max-width: 100%;
+}
+
+.typography-system :where(h1, h2, h3, h4, p, li, label, td, th) {
+  overflow-wrap: anywhere;
+}
+
+/* Contrato compartilhado para overlays, drawers e painéis de tela cheia. */
+.av-viewport-fill {
+  min-height: 100vh;
+  min-height: var(--av-viewport-height);
+}
+
+.av-fixed-viewport {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100vh;
+  height: var(--av-viewport-height);
+  max-width: 100vw;
+  max-height: var(--av-viewport-height);
+}
+
+.av-modal-backdrop {
+  box-sizing: border-box;
+  width: 100%;
+  height: 100vh;
+  height: var(--av-viewport-height);
+  max-width: 100vw;
+  max-height: var(--av-viewport-height);
+  overflow: hidden;
+  overscroll-behavior: none;
+  padding-top: max(var(--av-modal-gap), var(--av-safe-top));
+  padding-right: max(var(--av-modal-gap), var(--av-safe-right));
+  padding-bottom: max(var(--av-modal-gap), var(--av-safe-bottom));
+  padding-left: max(var(--av-modal-gap), var(--av-safe-left));
+}
+
+/* Compatibilidade progressiva para overlays legados ainda compostos por utilitários. */
+.typography-system :where(.fixed.inset-0.flex.items-center.justify-center) {
+  box-sizing: border-box;
+  width: 100%;
+  height: 100vh;
+  height: var(--av-viewport-height);
+  max-width: 100vw;
+  max-height: var(--av-viewport-height);
+  overflow: hidden;
+  overscroll-behavior: none;
+  padding-top: max(var(--av-modal-gap), var(--av-safe-top));
+  padding-right: max(var(--av-modal-gap), var(--av-safe-right));
+  padding-bottom: max(var(--av-modal-gap), var(--av-safe-bottom));
+  padding-left: max(var(--av-modal-gap), var(--av-safe-left));
+}
+
+.min-h-screen {
+  min-height: 100vh;
+  min-height: var(--av-viewport-height) !important;
+}
+
+.av-modal-panel,
+.draggable-modal-card {
+  box-sizing: border-box;
+  min-width: 0;
+  max-width: min(
+    100%,
+    calc(100vw - var(--av-safe-left) - var(--av-safe-right) - (2 * var(--av-modal-gap)))
+  );
+  max-height: calc(
+    var(--av-viewport-height) - var(--av-safe-top) - var(--av-safe-bottom) - (2 * var(--av-modal-gap))
+  ) !important;
+  overscroll-behavior: contain;
+}
+
+.av-modal-scroll {
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-gutter: stable;
+}
+
+.av-safe-top {
+  padding-top: var(--av-safe-top);
+}
+
+.av-safe-bottom {
+  padding-bottom: var(--av-safe-bottom);
+}
+
+.av-safe-inline {
+  padding-right: max(var(--av-page-gutter), var(--av-safe-right));
+  padding-left: max(var(--av-page-gutter), var(--av-safe-left));
+}
+
+.av-table-scroll {
+  max-width: 100%;
+  overflow-x: auto;
+  overscroll-behavior-inline: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
+.av-app-header {
+  padding-top: max(0.5rem, var(--av-safe-top));
+  padding-right: max(0.75rem, var(--av-safe-right));
+  padding-left: max(0.75rem, var(--av-safe-left));
+}
+
+.av-notifications-panel {
+  top: calc(92px + var(--av-safe-top)) !important;
+  bottom: max(0.75rem, var(--av-safe-bottom));
+  max-height: none !important;
+}
+
+.av-shell-offset-top {
+  top: calc(92px + var(--av-safe-top)) !important;
+}
+
+.av-floating-bottom {
+  bottom: max(0.75rem, var(--av-safe-bottom)) !important;
+  left: max(0.75rem, var(--av-safe-left));
+  right: max(0.75rem, var(--av-safe-right));
+}
+
+@media (min-width: 640px) {
+  .av-floating-bottom {
+    right: max(1.5rem, var(--av-safe-right));
+    bottom: max(1.5rem, var(--av-safe-bottom)) !important;
+    left: auto;
+  }
+}
+
+@media (min-width: 1280px) {
+  .av-shell-offset-top {
+    top: calc(108px + var(--av-safe-top)) !important;
+  }
+
+  .av-notifications-panel {
+    top: calc(135px + var(--av-safe-top)) !important;
+    right: max(2rem, var(--av-safe-right)) !important;
+  }
 }
 
 .card-radius-avantalab {
@@ -153,6 +336,7 @@ nav {
 .avanta-loading-stage {
   display: flex;
   min-height: 100vh;
+  min-height: var(--av-viewport-height);
   align-items: flex-start;
   justify-content: center;
   padding: clamp(6rem, 13vh, 8rem) 1.5rem 2.5rem;
@@ -359,5 +543,40 @@ button.perfil-resize-handle:active {
   select,
   textarea {
     font-size: 16px !important;
+  }
+
+  .av-modal-backdrop {
+    align-items: center;
+  }
+
+  .av-touch-target,
+  .av-modal-backdrop button,
+  .av-modal-backdrop [role="button"] {
+    min-width: 44px;
+    min-height: 44px;
+  }
+
+  .av-modal-panel,
+  .draggable-modal-card {
+    max-width: 100%;
+  }
+}
+
+@media (pointer: coarse) {
+  button,
+  [role="button"],
+  a {
+    touch-action: manipulation;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
   }
 }

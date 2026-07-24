@@ -262,9 +262,9 @@ export default function AssinaturaModal({
   const painel = darkMode ? 'border-slate-700 bg-slate-800' : 'border-slate-200 bg-slate-50';
 
   return (
-    <div className="fixed inset-0 z-[5600] flex items-center justify-center bg-black/60 px-4 py-5" onClick={fechar}>
+    <div className="av-modal-backdrop fixed inset-0 z-[5600] flex items-center justify-center bg-black/60 px-4 py-5" onClick={fechar}>
       <DraggableModalCard
-        className={`flex max-h-[92vh] w-full max-w-2xl flex-col overflow-hidden rounded-[16px_32px_32px_32px] border shadow-2xl ${card}`}
+        className={`av-modal-panel flex w-full max-w-2xl flex-col overflow-hidden rounded-[16px_32px_32px_32px] border shadow-2xl ${card}`}
         onClick={(e) => e.stopPropagation()}
       >
         <div data-modal-drag-handle className="flex shrink-0 cursor-grab items-start justify-between gap-3 px-6 py-4 text-white active:cursor-grabbing" style={{ background: corPrimaria }}>
@@ -275,7 +275,7 @@ export default function AssinaturaModal({
           </div>
         </div>
 
-        <div className="min-h-0 flex-1 overflow-y-auto px-5 py-5 sm:px-6">
+        <div className="av-modal-scroll min-h-0 flex-1 overflow-y-auto px-5 py-5 sm:px-6">
           {erro && <div className="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700">{erro}</div>}
           {carregando && !detalhes ? <div className="py-14 text-center text-sm font-medium text-slate-500">Carregando assinatura...</div> : <>
             {carencia && <div className="mb-4 w-full rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 text-left text-sm text-amber-900"><strong>Pagamento pendente.</strong> Regularize até {formatarData(estadoAtual?.validoAte || null)} para evitar o bloqueio do perfil.</div>}

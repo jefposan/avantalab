@@ -36,11 +36,11 @@ export default function ModalInstrucoes({
 
   return (
     <div
-      className="fixed inset-0 z-[5000] flex items-center justify-center bg-black/60 p-3 sm:p-4"
+      className="av-modal-backdrop fixed inset-0 z-[5000] flex items-center justify-center bg-black/60 p-3 sm:p-4"
       onClick={aoFechar}
     >
       <DraggableModalCard
-        className={`${bgCard} flex max-h-[calc(100dvh-1.5rem)] w-full min-w-0 max-w-2xl flex-col overflow-y-auto rounded-2xl border-2 shadow-2xl sm:max-h-[90vh]`}
+        className={`av-modal-panel ${bgCard} flex w-full min-w-0 max-w-2xl flex-col overflow-hidden rounded-2xl border-2 shadow-2xl`}
         style={{ borderColor: corPrimaria }}
         onClick={(e) => e.stopPropagation()}
       >
@@ -67,7 +67,7 @@ export default function ModalInstrucoes({
           </button>
         </div>
 
-        <div className={`space-y-3 overflow-y-auto p-4 text-xs ${textMuted} leading-snug sm:p-5`}>
+        <div className={`av-modal-scroll space-y-3 overflow-y-auto p-4 text-xs ${textMuted} leading-snug sm:p-5`}>
           {categoriasPerfil.map((categoria) => (
             <div key={categoria.nome}>
               <strong className={textStrong}>{categoria.nome.toUpperCase()}:</strong>

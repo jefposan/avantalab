@@ -62,11 +62,11 @@ export default function ModalLogo({
 
   return (
     <div
-      className="fixed inset-0 bg-black/60 z-[2000] flex items-center justify-center p-3 sm:p-4"
+      className="av-modal-backdrop fixed inset-0 bg-black/60 z-[2000] flex items-center justify-center p-3 sm:p-4"
       onClick={aoFechar}
     >
       <DraggableModalCard
-        className={`${bgCard} max-h-[calc(100dvh-1.5rem)] w-full max-w-md overflow-y-auto rounded-2xl border-2 p-4 shadow-2xl sm:p-5`}
+        className={`av-modal-panel av-modal-scroll ${bgCard} w-full max-w-md overflow-y-auto rounded-2xl border-2 p-4 shadow-2xl sm:p-5`}
         style={{ borderColor: corPrimaria }}
         onClick={(e) => e.stopPropagation()}
       >

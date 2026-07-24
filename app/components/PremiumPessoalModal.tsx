@@ -61,9 +61,9 @@ export default function PremiumPessoalModal({
   const itemDestaque = darkMode ? 'border-sky-500 bg-sky-500/10' : 'border-sky-400 bg-sky-50';
 
   return (
-    <div className="fixed inset-0 z-[5650] flex items-center justify-center bg-black/60 px-4 py-5" onClick={onFechar}>
+    <div className="av-modal-backdrop fixed inset-0 z-[5650] flex items-center justify-center bg-black/60 px-4 py-5" onClick={onFechar}>
       <DraggableModalCard
-        className={`flex max-h-[92vh] w-full max-w-lg flex-col overflow-hidden rounded-[16px_32px_32px_32px] border shadow-2xl ${card}`}
+        className={`av-modal-panel flex w-full max-w-lg flex-col overflow-hidden rounded-[16px_32px_32px_32px] border shadow-2xl ${card}`}
         onClick={(e) => e.stopPropagation()}
       >
         <div data-modal-drag-handle className="flex shrink-0 cursor-grab items-start justify-between gap-3 px-6 py-4 text-white active:cursor-grabbing" style={{ background: corPrimaria || GRADIENTE }}>
@@ -74,7 +74,7 @@ export default function PremiumPessoalModal({
           <button type="button" onClick={onFechar} className="flex h-8 w-8 items-center justify-center rounded-full bg-white/15 text-lg text-white transition hover:bg-white/25" aria-label="Fechar">×</button>
         </div>
 
-        <div className="min-h-0 flex-1 overflow-y-auto px-5 py-4 sm:px-6">
+        <div className="av-modal-scroll min-h-0 flex-1 overflow-y-auto px-5 py-4 sm:px-6">
           <p className={`text-xs font-semibold leading-relaxed ${muted}`}>
             Este recurso faz parte do <b>Premium Pessoal</b>. O essencial continua grátis para sempre — o Premium desbloqueia os recursos avançados:
           </p>

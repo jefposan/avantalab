@@ -100,11 +100,11 @@ export default function ModalDespesasBase({
 
   return (
     <div
-      className="fixed inset-0 bg-black/60 z-[2000] flex items-center justify-center p-4"
+      className="av-modal-backdrop fixed inset-0 bg-black/60 z-[2000] flex items-center justify-center p-4"
       onClick={fecharTudo}
     >
       <DraggableModalCard
-        className={`${bgCard} rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] flex flex-col border-2 overflow-hidden`}
+        className={`av-modal-panel ${bgCard} rounded-2xl shadow-2xl max-w-2xl w-full flex flex-col border-2 overflow-hidden`}
         style={{ borderColor: corPrimaria }}
         onClick={(e) => e.stopPropagation()}
       >
@@ -165,7 +165,7 @@ export default function ModalDespesasBase({
           </button>
         </div>
 
-        <div className="overflow-y-auto px-4 pb-4">
+        <div className="av-modal-scroll overflow-y-auto px-4 pb-4">
           <div
             className={`sticky top-0 z-20 -mx-4 mb-3 border-b px-4 py-3 shadow-sm ${
               darkMode ? 'bg-slate-900/98 border-slate-700' : 'bg-white/98 border-slate-200'
@@ -276,7 +276,8 @@ export default function ModalDespesasBase({
 
       {ajudaCategoriasAberta && (
         <div
-          className="ml-4 hidden lg:block w-80 max-h-[80vh] overflow-y-auto rounded-2xl border border-slate-200 bg-white p-5 text-slate-700 shadow-2xl"
+          className="ml-4 hidden w-80 overflow-y-auto rounded-2xl border border-slate-200 bg-white p-5 text-slate-700 shadow-2xl lg:block"
+          style={{ maxHeight: 'calc(var(--av-viewport-height) - var(--av-safe-top) - var(--av-safe-bottom) - (2 * var(--av-modal-gap)))' }}
           onClick={(e) => e.stopPropagation()}
         >
           <div className="mb-4 flex items-center justify-between">

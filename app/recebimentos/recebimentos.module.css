@@ -4,7 +4,8 @@
 .page {
   --cp: #003E73;
   --cp-text: #fff;
-  min-height: 100dvh;
+  min-height: 100vh;
+  min-height: var(--av-viewport-height, 100dvh);
   background-color: #eef6fb;
   background-image: image-set(url('/images/bg-avantalab-mobile-1080x1920-sem-logo.webp') type('image/webp'), url('/images/bg-avantalab-mobile-1080x1920-sem-logo.png') type('image/png'));
   background-position: center bottom;
@@ -16,10 +17,15 @@
 }
 .loginWrap {
   --cp: #003e73;
-  min-height: 100dvh;
+  min-height: 100vh;
+  min-height: var(--av-viewport-height, 100dvh);
   display: grid;
   place-items: center;
-  padding: 20px;
+  padding:
+    max(20px, var(--av-safe-top, 0px))
+    max(20px, var(--av-safe-right, 0px))
+    max(20px, var(--av-safe-bottom, 0px))
+    max(20px, var(--av-safe-left, 0px));
   background-color: #eef6fb;
   background-image: image-set(url('/images/bg-avantalab-mobile-1080x1920.webp') type('image/webp'), url('/images/bg-avantalab-mobile-1080x1920.png') type('image/png'));
   background-position: center bottom;
@@ -188,7 +194,11 @@
   width: 100%;
   max-width: 1080px;
   margin: 0 auto;
-  padding: 16px;
+  padding:
+    16px
+    max(16px, var(--av-safe-right, 0px))
+    max(16px, var(--av-safe-bottom, 0px))
+    max(16px, var(--av-safe-left, 0px));
 }
 
 /* Barra superior com seletor de perfil */
@@ -203,7 +213,11 @@
   width: 100%;
   max-width: 1080px;
   margin: 0 auto;
-  padding: 12px 16px;
+  padding:
+    max(12px, var(--av-safe-top, 0px))
+    max(16px, var(--av-safe-right, 0px))
+    12px
+    max(16px, var(--av-safe-left, 0px));
   display: flex;
   flex-wrap: wrap;
   align-items: center;
@@ -851,7 +865,14 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 16px;
+  max-height: var(--av-viewport-height, 100dvh);
+  overflow: hidden;
+  overscroll-behavior: none;
+  padding:
+    max(16px, var(--av-safe-top, 0px))
+    max(16px, var(--av-safe-right, 0px))
+    max(16px, var(--av-safe-bottom, 0px))
+    max(16px, var(--av-safe-left, 0px));
 }
 .comprovante {
   background: #fff;
@@ -859,6 +880,9 @@
   padding: 24px;
   max-width: 360px;
   width: 100%;
+  max-height: calc(var(--av-viewport-height, 100dvh) - var(--av-safe-top, 0px) - var(--av-safe-bottom, 0px) - 32px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
   text-align: center;
 }
 .comprovanteCheck {
@@ -877,7 +901,7 @@
 .corpoRolavel {
   overflow-y: auto;
   overscroll-behavior: contain;
-  max-height: calc(100dvh - 305px);
+  max-height: calc(var(--av-viewport-height, 100dvh) - var(--av-safe-top, 0px) - var(--av-safe-bottom, 0px) - 305px);
   min-height: 180px;
   padding-right: 6px;
 }
@@ -888,7 +912,7 @@
 .listaShell {
   display: flex;
   flex-direction: column;
-  max-height: calc(100dvh - 292px);
+  max-height: calc(var(--av-viewport-height, 100dvh) - var(--av-safe-top, 0px) - var(--av-safe-bottom, 0px) - 292px);
   min-height: 180px;
   margin-top: -6px;
 }
@@ -1309,7 +1333,7 @@
   top: calc(100% + 7px);
   left: 50%;
   width: min(560px, calc(100vw - 52px));
-  max-height: min(200px, calc(100dvh - 110px));
+  max-height: min(200px, calc(var(--av-viewport-height, 100dvh) - var(--av-safe-top, 0px) - var(--av-safe-bottom, 0px) - 110px));
   transform: translateX(-50%);
   display: grid;
   gap: 6px;
@@ -1627,3 +1651,43 @@
 .darkScope .recorrenciaPopupTitulo { color: #94a3b8; }
 .darkScope .recorrenciaEscolhaAtiva { border-color: var(--cp); background: color-mix(in srgb, var(--cp) 26%, #0f172a); color: #a5f3fc; }
 .darkScope .enderecoAjuda { color: #94a3b8; }
+
+@media (max-width: 767px) {
+  .page :is(input, select, textarea),
+  .loginWrap :is(input, select, textarea) {
+    min-width: 0;
+    font-size: 16px;
+  }
+
+  .page :is(button, [role="button"]),
+  .loginWrap :is(button, [role="button"]) {
+    min-height: 44px;
+    touch-action: manipulation;
+  }
+
+  .topbarInner {
+    gap: 8px;
+  }
+
+  .heroStatGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .histTop,
+  .histValores {
+    min-width: 0;
+    flex-wrap: wrap;
+  }
+}
+
+@media (max-width: 360px) {
+  .container {
+    padding-right: max(10px, var(--av-safe-right, 0px));
+    padding-left: max(10px, var(--av-safe-left, 0px));
+  }
+
+  .loginCard,
+  .comprovante {
+    padding: 18px;
+  }
+}

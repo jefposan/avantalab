@@ -1088,7 +1088,10 @@ const mostrarComparativoResumoDash =
 
   const cardsById: Record<string, React.ReactNode> = {
     aConfirmar: temAConfirmar ? (
-      <div className="card-radius-avantalab flex max-h-[60vh] w-full flex-col overflow-hidden rounded-2xl border border-amber-200 bg-white shadow-sm">
+      <div
+        className="card-radius-avantalab flex w-full flex-col overflow-hidden rounded-2xl border border-amber-200 bg-white shadow-sm"
+        style={{ maxHeight: 'min(38rem, calc(var(--av-viewport-height) - 8rem))' }}
+      >
         <div className="flex shrink-0 items-center gap-2 border-b border-amber-100 px-4 py-3">
           <svg className="h-5 w-5 shrink-0" style={{ color: '#d97706' }} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6 6 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
@@ -2033,10 +2036,10 @@ const mostrarComparativoResumoDash =
         </button>
 
         {gerenciadorAberto && (
-          <div className="fixed inset-0 z-30 flex items-center justify-center px-4 py-6" onClick={fecharGerenciador}>
+          <div className="av-modal-backdrop fixed inset-0 z-30 flex items-center justify-center px-4 py-6" onClick={fecharGerenciador}>
             <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
             <DraggableModalCard
-              className={`relative z-10 box-border flex max-h-[calc(100dvh-3rem)] w-[min(48rem,calc(100vw-1.5rem))] max-w-full flex-col overflow-hidden rounded-2xl border shadow-2xl ${
+              className={`av-modal-panel relative z-10 box-border flex w-[min(48rem,calc(100vw-1.5rem))] max-w-full flex-col overflow-hidden rounded-2xl border shadow-2xl ${
                 darkMode ? 'border-slate-700 bg-slate-900 text-slate-100' : 'border-slate-200 bg-white text-slate-900'
               }`}
               onClick={(event) => event.stopPropagation()}
@@ -2149,12 +2152,12 @@ const mostrarComparativoResumoDash =
       const valorPerfil = (valor: number) => formatarMoeda(valor);
       const percentualPerfil = (valor: number) => `${valor.toFixed(1)}%`;
       return (
-        <div className="fixed inset-0 z-[9998] flex items-center justify-center bg-slate-950/60 p-4">
+        <div className="av-modal-backdrop fixed inset-0 z-[9998] flex items-center justify-center bg-slate-950/60 p-4">
           <div
             role="dialog"
             aria-modal="true"
             aria-labelledby="relatorio-perfil-titulo"
-            className={`${bgCard} w-full max-w-3xl overflow-hidden rounded-2xl shadow-2xl`}
+            className={`av-modal-panel av-modal-scroll ${bgCard} w-full max-w-3xl overflow-hidden rounded-2xl shadow-2xl`}
           >
             <div className="flex items-center justify-between gap-3 px-5 py-3" style={{ backgroundColor: corPrimaria, color: textoSobreCorPrimaria }}>
               <div className="min-w-0">
@@ -2173,7 +2176,7 @@ const mostrarComparativoResumoDash =
                 ×
               </button>
             </div>
-            <div className="max-h-[75vh] space-y-3 overflow-y-auto p-4">
+            <div className="av-modal-scroll space-y-3 p-4">
               <div className="grid grid-cols-3 gap-2">
                 <div className={`rounded-xl border px-3 py-2.5 ${darkMode ? 'border-slate-700 bg-slate-900/50' : 'border-slate-200 bg-slate-50'}`}>
                   <span className={`block text-[10px] font-black uppercase tracking-wide ${textMuted}`}>Receitas</span>

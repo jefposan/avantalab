@@ -154,7 +154,7 @@ export default function TourPrimeiroAcesso({
   const irPara = (i: number) => setPasso(Math.max(0, Math.min(total - 1, i)));
 
   return (
-    <div className="fixed inset-0 z-[9000] flex items-center justify-center p-4">
+    <div className="av-modal-backdrop fixed inset-0 z-[9000] flex items-center justify-center p-4">
       {/* Overlay */}
       <div
         className="absolute inset-0 bg-black/70 backdrop-blur-sm"
@@ -163,8 +163,7 @@ export default function TourPrimeiroAcesso({
 
       {/* Modal */}
       <div
-        className={`relative w-full max-w-md rounded-2xl shadow-2xl border ${bgCard} ${borderColor} flex flex-col overflow-hidden`}
-        style={{ maxHeight: '90vh' }}
+        className={`av-modal-panel relative w-full max-w-md rounded-2xl shadow-2xl border ${bgCard} ${borderColor} flex flex-col overflow-hidden`}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header colorido */}

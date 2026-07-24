@@ -1,5 +1,17 @@
 # Changelog
 
+## 1.6.0.84.103 - 2026-07-24
+
+- Compatibilidade mobile: Gestão Web, Gestão Mobile, AvantaVendas,
+  Recebimentos e Ponto passam a compartilhar uma estratégia de viewport
+  dinâmico com fallback, suporte a `dvh`/`svh`/`lvh` e áreas seguras.
+- Modais, drawers, menus, avisos, chat e calculadora respeitam a área útil,
+  mantêm rolagem interna e ações acessíveis durante mudanças de viewport e
+  abertura do teclado virtual.
+- Formulários mobile mantêm fonte mínima de 16 px para evitar zoom automático
+  no Safari; alvos de toque, tabelas e conteúdos longos foram reforçados para
+  telas a partir de 320 px sem alterar regras de negócio ou identidade visual.
+
 ## 1.6.0.84.102 - 2026-07-24
 
 - Gestão Mobile: Assinatura passa a ser o primeiro botão do Menu e deixa o

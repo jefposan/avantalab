@@ -1,6 +1,10 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.6.0.84.102 -->
+<!-- ava-version: 1.6.0.84.103 -->
+
+> Revisão 1.6.0.84.103: compatibilidade visual e funcional entre Safari no
+> iPhone e Chrome no Android, com viewport dinâmico, áreas seguras, modais
+> roláveis e campos sem zoom automático; sem mudança nos fluxos operacionais.
 
 > Revisão 1.6.0.84.102: reorganização da Assinatura na Gestão Mobile; sem
 > impacto operacional na Gestão Web.

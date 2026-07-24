@@ -129,8 +129,8 @@ export default function BackupMobileBridge() {
     if (recarregar) window.location.reload();
   };
 
-  const painel = 'fixed inset-0 z-[7000] flex items-center justify-center bg-slate-950/85 px-3';
-  const card = `flex max-h-[calc(100dvh-24px)] w-full max-w-md flex-col overflow-hidden rounded-2xl border shadow-2xl ${dados?.darkMode ? 'border-slate-700 bg-slate-900 text-white' : 'border-slate-200 bg-white text-slate-900'}`;
+  const painel = 'av-modal-backdrop fixed inset-0 z-[7000] flex items-center justify-center bg-slate-950/85 px-3';
+  const card = `av-modal-panel flex w-full max-w-md flex-col overflow-hidden rounded-2xl border shadow-2xl ${dados?.darkMode ? 'border-slate-700 bg-slate-900 text-white' : 'border-slate-200 bg-white text-slate-900'}`;
 
   return <>
     <input ref={inputRef} type="file" accept=".xlsx,.xls" className="hidden" onChange={(e) => { void selecionar(e.target.files?.[0]); e.target.value = ''; }} />

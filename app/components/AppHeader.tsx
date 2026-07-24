@@ -115,12 +115,12 @@ export default function AppHeader({
       {/* ── MENU RESPONSIVO (gaveta lateral mobile) ── */}
       {menuResponsivoAberto && (
         <div
-          className="fixed inset-0 z-[1200] bg-black/40 xl:hidden"
+          className="av-modal-backdrop fixed inset-0 z-[1200] bg-black/40 xl:hidden"
           onClick={fecharMenuResponsivo}
         >
           <aside
             onClick={(e) => e.stopPropagation()}
-            className={`flex h-full w-80 max-w-[85vw] flex-col overflow-y-auto border-r p-4 shadow-2xl sm:absolute sm:right-4 sm:top-[88px] sm:h-auto sm:max-h-[calc(100dvh-104px)] sm:w-80 sm:rounded-2xl sm:border sm:p-3 ${
+            className={`av-modal-scroll flex h-full w-80 max-w-[85vw] flex-col overflow-y-auto border-r p-4 shadow-2xl sm:absolute sm:right-4 sm:top-[88px] sm:h-auto sm:max-h-[calc(var(--av-viewport-height)-104px-var(--av-safe-top)-var(--av-safe-bottom))] sm:w-80 sm:rounded-2xl sm:border sm:p-3 ${
               darkMode
                 ? 'border-slate-700 bg-slate-900 text-slate-100'
                 : 'border-slate-200 bg-white text-slate-800'
@@ -276,7 +276,7 @@ export default function AppHeader({
 
       {/* ── HEADER PRINCIPAL ── */}
       <header
-        className={`print-ocultar ${bgCard} sticky top-0 z-[900] w-full max-w-full overflow-hidden border-b px-3 py-2 shadow-[0_4px_18px_rgba(15,23,42,0.10)] sm:px-4 lg:px-6 xl:px-8 xl:py-3 relative`}
+        className={`av-app-header print-ocultar ${bgCard} sticky top-0 z-[900] w-full max-w-full overflow-hidden border-b px-3 py-2 shadow-[0_4px_18px_rgba(15,23,42,0.10)] sm:px-4 lg:px-6 xl:px-8 xl:py-3 relative`}
         style={{ borderBottomColor: darkMode ? '#334155' : 'transparent', borderBottomWidth: '1px' }}
       >
         <div className="mx-auto flex min-h-[68px] w-full min-w-0 max-w-7xl items-center gap-3 px-0 sm:min-h-[72px] sm:gap-4 xl:min-h-[88px] xl:gap-6 xl:px-8">
@@ -578,7 +578,7 @@ export default function AppHeader({
             onClick={() => setPainelAvisosAberto(false)}
           />
           <div
-            className={`fixed inset-x-3 top-[92px] z-[8500] max-h-[calc(100dvh-108px)] w-auto max-w-sm overflow-hidden rounded-2xl border shadow-2xl sm:left-auto sm:right-4 sm:w-80 xl:right-8 xl:top-[135px] ${
+            className={`av-notifications-panel fixed inset-x-3 top-[92px] z-[8500] w-auto max-w-sm overflow-hidden rounded-2xl border shadow-2xl sm:left-auto sm:right-4 sm:w-80 xl:right-8 xl:top-[135px] ${
               darkMode
                 ? 'bg-slate-900 border-slate-700 text-slate-100'
                 : 'bg-white border-slate-200 text-slate-800'

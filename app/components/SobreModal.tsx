@@ -36,9 +36,9 @@ export default function SobreModal({ aberto, onFechar, darkMode, versaoAtual }: 
   const itemBorda = darkMode ? 'border-slate-700' : 'border-slate-200';
 
   return (
-    <div className="fixed inset-0 z-[2000] flex items-center justify-center p-4">
+    <div className="av-modal-backdrop fixed inset-0 z-[2000] flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onFechar} />
-      <DraggableModalCard className={`relative flex max-h-[88vh] w-full max-w-lg flex-col overflow-hidden rounded-2xl border shadow-2xl ${card}`}>
+      <DraggableModalCard className={`av-modal-panel relative flex w-full max-w-lg flex-col overflow-hidden rounded-2xl border shadow-2xl ${card}`}>
         <div data-modal-drag-handle className="flex cursor-grab items-start justify-between gap-3 px-5 py-4 text-white active:cursor-grabbing" style={{ background: 'linear-gradient(135deg, #020617, #003E73)' }}>
           <div>
             <p className="text-[10px] font-black uppercase tracking-[0.24em]" style={{ color: 'rgba(255,255,255,0.65)' }}>Sobre</p>
@@ -48,7 +48,7 @@ export default function SobreModal({ aberto, onFechar, darkMode, versaoAtual }: 
           <button type="button" onClick={onFechar} className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white/15 text-lg font-black text-white transition hover:bg-white/25" aria-label="Fechar">×</button>
         </div>
 
-        <div className="flex-1 overflow-y-auto p-4">
+        <div className="av-modal-scroll flex-1 overflow-y-auto p-4">
           {carregando && <p className={`py-6 text-center text-sm font-semibold ${muted}`}>Carregando...</p>}
           {dados && (
             <div className="grid gap-4">

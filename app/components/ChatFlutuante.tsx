@@ -247,7 +247,7 @@ export default function ChatFlutuante({
     : 'border-slate-200 bg-slate-50 hover:bg-sky-50';
 
   return (
-    <div className="print-ocultar fixed inset-x-3 bottom-3 z-[7800] sm:inset-x-auto sm:bottom-6 sm:right-6">
+    <div className="av-floating-bottom print-ocultar fixed inset-x-3 bottom-3 z-[7800] sm:inset-x-auto sm:bottom-6 sm:right-6">
       {chatFeedbackAberto && (
         <div className={'mb-3 w-full max-w-full overflow-hidden rounded-2xl border shadow-2xl sm:mb-4 sm:w-[360px] sm:rounded-3xl ' + bg}>
           {/* Header */}

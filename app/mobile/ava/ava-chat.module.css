@@ -13,7 +13,8 @@
   flex-direction: column;
   box-sizing: border-box;
   width: 100vw;
-  height: 100dvh;
+  height: 100vh;
+  height: var(--av-viewport-height, 100dvh);
   min-height: 0;
   padding-top: var(--ava-header-height);
   padding-bottom: var(--ava-keyboard-inset);

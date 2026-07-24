@@ -257,11 +257,11 @@ export default function AuthCard({
   }
 
   return (
-    <main className="relative min-h-screen overflow-x-hidden font-sans">
+    <main className="av-viewport-fill relative min-h-screen overflow-x-hidden font-sans">
       {qrMobileAberto && (
-        <div className="fixed inset-0 z-[8100] flex items-center justify-center bg-black/60 px-4" onClick={() => setQrMobileAberto(false)}>
+        <div className="av-modal-backdrop fixed inset-0 z-[8100] flex items-center justify-center bg-black/60 px-4" onClick={() => setQrMobileAberto(false)}>
           <DraggableModalCard
-            className="w-full max-w-sm overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl"
+            className="av-modal-panel w-full max-w-sm overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl"
             onClick={(e) => e.stopPropagation()}
           >
             <div data-modal-drag-handle className="flex cursor-grab items-center justify-between bg-cyan-600 px-5 py-4 text-white active:cursor-grabbing">
@@ -291,11 +291,11 @@ export default function AuthCard({
       )}
       {modalAvisoAberto && (
   <div
-    className="fixed inset-0 z-[8000] flex items-center justify-center bg-black/60 px-4"
+    className="av-modal-backdrop fixed inset-0 z-[8000] flex items-center justify-center bg-black/60 px-4"
     onClick={fecharAviso}
   >
     <DraggableModalCard
-      className="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-6 shadow-2xl"
+      className="av-modal-panel av-modal-scroll w-full max-w-md rounded-2xl border border-slate-200 bg-white p-6 shadow-2xl"
       onClick={(e) => e.stopPropagation()}
     >
       <div data-modal-drag-handle className="mb-4 flex cursor-grab items-center gap-3 active:cursor-grabbing">

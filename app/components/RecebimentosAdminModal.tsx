@@ -26,9 +26,9 @@ export default function RecebimentosAdminModal({ aberto, empresaId, perfil, dark
   const card = darkMode ? 'border-slate-700 bg-slate-950 text-slate-100' : 'border-slate-200 bg-slate-50 text-slate-900';
   const textoSobrePrimaria = corEhClara(corPrimaria) ? '#0f172a' : '#ffffff';
   return (
-    <div className="fixed inset-0 z-[2000] flex items-center justify-center p-2 sm:p-4" role="dialog" aria-modal="true" aria-labelledby="recebimentos-modal-titulo">
+    <div className="av-modal-backdrop fixed inset-0 z-[2000] flex items-center justify-center p-2 sm:p-4" role="dialog" aria-modal="true" aria-labelledby="recebimentos-modal-titulo">
       <button type="button" className="absolute inset-0 cursor-default bg-black/60 backdrop-blur-sm" onClick={onFechar} aria-label="Fechar Recebimentos" />
-      <DraggableModalCard className={`relative flex h-[92dvh] max-h-[92dvh] w-full max-w-6xl flex-col overflow-hidden rounded-2xl border shadow-2xl ${card}`}>
+      <DraggableModalCard className={`relative flex h-full w-full max-w-6xl flex-col overflow-hidden rounded-2xl border shadow-2xl ${card}`}>
         <div data-modal-drag-handle className="flex cursor-grab items-start justify-between gap-3 px-5 py-2.5 active:cursor-grabbing" style={{ background: corPrimaria, color: textoSobrePrimaria }}>
           <div>
             <p className="text-[10px] font-black uppercase tracking-[0.24em] opacity-70">AvantaLab · Módulo</p>

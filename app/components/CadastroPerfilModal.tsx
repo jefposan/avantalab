@@ -172,15 +172,15 @@ export default function CadastroPerfilModal({ aberto, empresaId, statusInicial, 
         : 'Complete seu cadastro para continuar o uso do sistema AvantaLab Gestão';
 
   return (
-    <div className="fixed inset-0 z-[12000] flex items-center justify-center bg-black/70 px-3 py-4" role="dialog" aria-modal="true">
-      <section className="flex max-h-[calc(100dvh-2rem)] w-full max-w-4xl flex-col overflow-hidden rounded-xl bg-white shadow-2xl">
+    <div className="av-modal-backdrop fixed inset-0 z-[12000] flex items-center justify-center bg-black/70 px-3 py-4" role="dialog" aria-modal="true">
+      <section className="av-modal-panel flex w-full max-w-4xl flex-col overflow-hidden rounded-xl bg-white shadow-2xl">
         <header className="shrink-0 bg-[#003E73] px-4 py-3 text-white">
           <p className="text-[10px] font-black uppercase tracking-[0.2em] text-cyan-200">Cadastro do perfil</p>
           <h2 className="mt-0.5 text-base font-black leading-tight sm:text-lg">{titulo}</h2>
           {contexto === 'lembrete' && <p className="mt-1 text-xs text-white/80">Faltam {status?.diasRestantes ?? 7} dias para este cadastro se tornar obrigatório.</p>}
         </header>
 
-        <div className="min-h-0 flex-1 overflow-y-auto px-4 py-3">
+        <div className="av-modal-scroll min-h-0 flex-1 overflow-y-auto px-4 py-3">
           {carregando ? <p className="py-12 text-center text-sm font-bold text-slate-500">Carregando cadastro...</p> : !status?.podeEditar ? (
             <div className="py-10 text-center">
               <p className="text-base font-black text-slate-900">Cadastro pendente</p>

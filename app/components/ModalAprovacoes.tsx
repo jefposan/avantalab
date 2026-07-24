@@ -61,8 +61,8 @@ export default function ModalAprovacoes({
   const textoSuave = darkMode ? 'text-slate-400' : 'text-slate-500';
 
   return (
-    <div className="fixed inset-0 z-[7600] flex items-center justify-center bg-black/60 px-4 py-6" onClick={onFechar}>
-      <section className={`flex max-h-[90dvh] w-full max-w-xl flex-col overflow-hidden rounded-3xl border shadow-2xl ${superficie}`} onClick={(event) => event.stopPropagation()}>
+    <div className="av-modal-backdrop fixed inset-0 z-[7600] flex items-center justify-center bg-black/60 px-4 py-6" onClick={onFechar}>
+      <section className={`av-modal-panel flex w-full max-w-xl flex-col overflow-hidden rounded-3xl border shadow-2xl ${superficie}`} onClick={(event) => event.stopPropagation()}>
         <header className="flex items-start justify-between gap-4 px-5 py-4 text-white" style={{ backgroundColor: corPrimaria }}>
           <div>
             <p className="text-[10px] font-black uppercase tracking-[0.2em] opacity-75">Configurações</p>
@@ -77,7 +77,7 @@ export default function ModalAprovacoes({
           <button type="button" onClick={() => setAba('aprovados')} className={`rounded-xl px-3 py-2.5 text-xs font-black transition ${aba === 'aprovados' ? 'text-white shadow-sm' : textoSuave}`} style={aba === 'aprovados' ? { backgroundColor: corPrimaria } : undefined}>Aprovados ({acessosAprovados.length})</button>
         </div>
 
-        <div className="overflow-y-auto p-4">
+        <div className="av-modal-scroll overflow-y-auto p-4">
           {carregando ? (
             <div className={`rounded-2xl border p-5 text-center text-sm font-semibold ${darkMode ? 'border-slate-700 bg-slate-800/70' : 'border-slate-200 bg-slate-50'} ${textoSuave}`}>Carregando aprovações…</div>
           ) : aba === 'pendentes' && solicitacoes.length === 0 ? (

@@ -1,6 +1,10 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.6.0.84.102 -->
+<!-- ava-version: 1.6.0.84.103 -->
+
+> Revisão 1.6.0.84.103: telas, menus, barras, formulários e sobreposições passam
+> a respeitar viewport dinâmico e áreas seguras no iPhone e no Android; sem
+> mudança nos nomes, permissões ou fluxos operacionais.
 
 > Revisão 1.6.0.84.102: Assinatura passa a ser o primeiro botão do Menu, fora
 > de Configurações. Sem acesso vigente, abre o card Premium; com assinatura,

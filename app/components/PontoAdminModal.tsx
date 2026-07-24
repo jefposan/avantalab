@@ -692,7 +692,7 @@ export default function PontoAdminModal({
   const abas: Array<[AbaPontoAdmin, string]> = [['lista', 'Funcionários'], ['novo', 'Novo'], ['local', 'Local'], ['calendario', 'Calendário'], ['relatorios', 'Relatórios'], ['auditoria', 'Auditoria'], ['conformidade', 'Conformidade']];
 
   return (
-    <div className="fixed inset-0 z-[2000] flex items-center justify-center p-3 sm:p-4">
+    <div className="av-modal-backdrop fixed inset-0 z-[2000] flex items-center justify-center p-3 sm:p-4">
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onFechar} />
 
       <DraggableModalCard className={`relative flex max-h-[calc(100dvh-1.5rem)] w-full max-w-[calc(100vw-1.5rem)] flex-col overflow-hidden rounded-2xl border shadow-2xl sm:max-h-[88vh] sm:max-w-2xl ${card}`}>
@@ -730,7 +730,7 @@ export default function PontoAdminModal({
           ))}
         </div>
 
-        <div ref={listaScrollRef} className="min-h-0 flex-1 overflow-y-auto p-4">
+        <div ref={listaScrollRef} className="av-modal-scroll min-h-0 flex-1 overflow-y-auto p-4">
           {aba === 'lista' && (
             <div className="grid gap-3">
               <div className={`flex items-start justify-between gap-3 rounded-xl border p-2.5 ${itemBorda}`}>

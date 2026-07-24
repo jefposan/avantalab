@@ -29,13 +29,13 @@ export default function ModalConfirmacao({
 
   return (
     <div
-      className="fixed inset-0 z-[20000] flex items-center justify-center bg-black/60 px-4"
+      className="av-modal-backdrop fixed inset-0 z-[20000] flex items-center justify-center bg-black/60 px-4"
       onClick={() => {
         if (!carregando) aoCancelar();
       }}
     >
       <DraggableModalCard
-        className="w-full max-w-md overflow-hidden rounded-2xl bg-white shadow-2xl border border-slate-200"
+        className="av-modal-panel w-full max-w-md overflow-hidden rounded-2xl bg-white shadow-2xl border border-slate-200"
         onClick={(e) => e.stopPropagation()}
       >
         <div data-modal-drag-handle className="px-5 py-4" style={{ backgroundColor: corPrimaria, color: textoSobreCorPrimaria }}>

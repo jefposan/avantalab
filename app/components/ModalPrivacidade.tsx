@@ -25,11 +25,11 @@ export default function ModalPrivacidade({
 
   return (
     <div
-      className="fixed inset-0 z-[2000] flex items-center justify-center bg-black/60 p-4"
+      className="av-modal-backdrop fixed inset-0 z-[2000] flex items-center justify-center bg-black/60 p-4"
       onClick={onClose}
     >
       <DraggableModalCard
-        className={`w-full max-w-3xl max-h-[85vh] rounded-2xl shadow-2xl border flex flex-col overflow-hidden ${
+        className={`av-modal-panel w-full max-w-3xl rounded-2xl shadow-2xl border flex flex-col overflow-hidden ${
           darkMode
             ? 'bg-slate-900 border-slate-700 text-slate-100'
             : 'bg-white border-slate-200 text-slate-800'
@@ -61,7 +61,7 @@ export default function ModalPrivacidade({
           </button>
         </div>
 
-        <div className="space-y-5 overflow-y-auto p-4 text-sm leading-relaxed sm:p-6">
+        <div className="av-modal-scroll space-y-5 overflow-y-auto p-4 text-sm leading-relaxed sm:p-6">
           <section>
             <h3 className="font-black uppercase text-xs tracking-widest mb-2">
               1. Objetivo desta política

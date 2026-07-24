@@ -242,8 +242,10 @@ export default function MobilePage() {
               display: grid;
               grid-template-rows: minmax(0, 1fr) auto minmax(0, 1fr);
               width: 100%;
-              height: 100dvh;
-              min-height: 100dvh;
+              height: 100vh;
+              height: var(--av-viewport-height, 100dvh);
+              min-height: 100vh;
+              min-height: var(--av-viewport-height, 100dvh);
               overflow: hidden;
               overscroll-behavior: none;
               padding: 0 max(16px, env(safe-area-inset-right)) 0 max(16px, env(safe-area-inset-left));
@@ -293,7 +295,7 @@ export default function MobilePage() {
               display: grid;
               grid-row: 2;
               width: min(80%, 336px);
-              max-height: calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 108px);
+              max-height: calc(var(--av-viewport-height, 100dvh) - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 108px);
               gap: 8px;
               overflow-y: auto;
               border: 1px solid rgba(255, 255, 255, .72);
@@ -494,7 +496,7 @@ export default function MobilePage() {
         <section
           className="avantalab-mobile-bg fixed inset-0 flex items-center justify-center overflow-hidden px-4"
           style={{
-            height: '100dvh',
+            height: 'var(--av-viewport-height, 100dvh)',
             backgroundPosition: 'center bottom',
             backgroundSize: 'cover',
           }}
