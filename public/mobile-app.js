@@ -139,7 +139,9 @@
     diaUltimoCarregamento: '',
     // Premium Pessoal: recurso premium tocado no plano grátis (destaque no modal de upgrade)
     premiumRecursoDestaque: '',
+    premiumRecursosAbertos: false,
     premiumCupomProcessando: false,
+    abrirAssinaturaAoCarregar: false,
     assinaturaDetalhes: null,
     assinaturaCarregando: false,
     assinaturaAcao: '',
@@ -159,6 +161,7 @@
     notaVisualizandoUrl: '',
     caixinhaMovimentos: [],
     entradas: [],
+    receitaVendasOcultaPorMes: {},
     despesas: [],
     usuariosEmpresa: [],
     usuariosCarregando: false,
@@ -1366,15 +1369,19 @@
   function avisoAssinanteMobileHtml() {
     if (!state.avisoAssinanteAberto) return '';
     return (
-      '<div class="fixed inset-0 z-[13000] flex items-center justify-center bg-slate-950/85 px-4" role="dialog" aria-modal="true">' +
+      '<div class="fixed inset-0 z-[13020] flex items-center justify-center bg-slate-950/85 px-4" role="dialog" aria-modal="true" aria-labelledby="aviso-assinante-titulo">' +
         '<section class="w-full max-w-sm overflow-hidden rounded-3xl border border-sky-300 bg-white shadow-2xl">' +
           '<div class="bg-[#003E73] px-5 py-4 text-white">' +
             '<p class="text-[10px] font-black uppercase tracking-[0.18em] text-cyan-200">Recurso exclusivo</p>' +
-            '<h2 class="mt-1 text-base font-black">' + escapeHtml(state.avisoAssinanteTitulo) + '</h2>' +
+            '<h2 id="aviso-assinante-titulo" class="mt-1 text-base font-black">Acesso exclusivo para assinantes</h2>' +
           '</div>' +
           '<div class="p-5">' +
-            '<div class="rounded-2xl border border-sky-200 bg-sky-50 px-4 py-3 text-sm font-semibold leading-relaxed text-sky-950">' + escapeHtml(state.avisoAssinanteMensagem) + '</div>' +
-            '<button id="fechar-aviso-assinante" type="button" class="mt-4 h-11 w-full rounded-xl bg-[#003E73] text-xs font-black uppercase tracking-wide text-white">Entendi</button>' +
+            '<p class="text-sm font-black text-slate-900">' + escapeHtml(state.avisoAssinanteTitulo) + '</p>' +
+            '<div class="mt-2 rounded-2xl border border-sky-200 bg-sky-50 px-4 py-3 text-sm font-semibold leading-relaxed text-sky-950">' + escapeHtml(state.avisoAssinanteMensagem) + '</div>' +
+            '<div class="mt-4 grid grid-cols-[minmax(0,.72fr)_minmax(0,1.28fr)] gap-2">' +
+              '<button id="fechar-aviso-assinante" type="button" class="h-11 rounded-xl border border-slate-300 bg-white px-3 text-xs font-black uppercase tracking-wide text-slate-600">Agora não</button>' +
+              '<button id="assinar-aviso-assinante" type="button" class="h-11 rounded-xl bg-[#003E73] px-3 text-xs font-black uppercase tracking-wide text-white">Ir para assinatura</button>' +
+            '</div>' +
           '</div>' +
         '</section>' +
       '</div>'
@@ -1428,6 +1435,7 @@
     { recurso: 'busca_lancamentos', icone: '🔎', titulo: 'Busca nos lançamentos', descricao: 'Encontre qualquer lançamento na hora.' },
     { recurso: 'multiplos_perfis', icone: '👥', titulo: 'Múltiplos perfis pessoais', descricao: 'Crie mais perfis pessoais (grátis = 1).' },
     { recurso: 'notificacoes', icone: '🔔', titulo: 'Notificações', descricao: 'Lembretes e avisos de pagamentos.' },
+    { recurso: 'agenda', icone: '📅', titulo: 'Agenda', descricao: 'Organize lembretes, compromissos e lançamentos futuros.' },
     { recurso: 'organizar_dashboard', icone: '🧩', titulo: 'Ordenar cards', descricao: 'Reordene os cards do seu jeito.' },
     { recurso: 'organizar_atalhos', icone: '↔️', titulo: 'Organizar atalhos', descricao: 'Personalize os atalhos do app.' },
     { recurso: 'usuarios_internos', icone: '🧑‍💼', titulo: 'Usuários internos', descricao: 'Convide outras pessoas para o perfil.' },
@@ -1437,6 +1445,7 @@
   // Abre o modal de upgrade destacando o recurso tocado.
   function abrirPremiumMobile(recurso) {
     state.premiumRecursoDestaque = recurso || '';
+    state.premiumRecursosAbertos = false;
     state.menuAberto = false;
     state.modalMenu = 'premium';
     render();
@@ -1444,29 +1453,37 @@
 
   function premiumPessoalHtml() {
     var destaque = state.premiumRecursoDestaque;
+    var recursosHtml = state.premiumRecursosAbertos
+      ? '<div class="mt-2 grid gap-1.5">' +
+          RECURSOS_PREMIUM_PESSOAL_MOBILE.map(function (item) {
+            var ativo = item.recurso === destaque;
+            return '<div class="flex items-start gap-2.5 rounded-xl border px-3 py-2 ' + (ativo ? 'border-sky-400 bg-sky-50' : 'border-slate-200 bg-slate-50') + '">' +
+              '<span class="mt-0.5 text-base leading-none">' + item.icone + '</span>' +
+              '<div class="min-w-0">' +
+                '<p class="text-xs font-black text-slate-900">' + escapeHtml(item.titulo) +
+                  (ativo ? ' <span class="ml-1 rounded-full bg-sky-600 px-2 py-0.5 text-[9px] font-black uppercase tracking-wide text-white">Você tentou usar</span>' : '') +
+                '</p>' +
+                '<p class="mt-0.5 text-[11px] font-semibold leading-snug text-slate-500">' + escapeHtml(item.descricao) + '</p>' +
+              '</div>' +
+            '</div>';
+          }).join('') +
+        '</div>'
+      : '';
     return (
       '<div class="grid gap-2">' +
-        '<p class="text-xs font-semibold leading-relaxed text-slate-500">Este recurso faz parte do <b>Premium Pessoal</b>. O essencial continua grátis para sempre — o Premium desbloqueia os recursos avançados:</p>' +
-        RECURSOS_PREMIUM_PESSOAL_MOBILE.map(function (item) {
-          var ativo = item.recurso === destaque;
-          return '<div class="flex items-start gap-2.5 rounded-xl border px-3 py-2 ' + (ativo ? 'border-sky-400 bg-sky-50' : 'border-slate-200 bg-slate-50') + '">' +
-            '<span class="mt-0.5 text-base leading-none">' + item.icone + '</span>' +
-            '<div class="min-w-0">' +
-              '<p class="text-xs font-black text-slate-900">' + escapeHtml(item.titulo) +
-                (ativo ? ' <span class="ml-1 rounded-full bg-sky-600 px-2 py-0.5 text-[9px] font-black uppercase tracking-wide text-white">Você tentou usar</span>' : '') +
-              '</p>' +
-              '<p class="mt-0.5 text-[11px] font-semibold leading-snug text-slate-500">' + escapeHtml(item.descricao) + '</p>' +
-            '</div>' +
-          '</div>';
-        }).join('') +
+        '<p class="text-xs font-semibold leading-relaxed text-slate-500"><b>Acesso exclusivo para assinantes.</b> Assine o Premium para liberar este recurso no perfil.</p>' +
         '<div class="mt-1 flex items-center justify-between gap-3 rounded-2xl border-2 border-sky-400 px-4 py-3" style="background:linear-gradient(135deg,#003E73,#00A6C8)">' +
           '<div>' +
             '<p class="text-[9px] font-black uppercase tracking-[0.2em] text-white/80">A partir de</p>' +
             '<p class="text-xl font-black text-white">R$ 8,25<span class="text-xs font-bold text-white/80">/mês</span></p>' +
             '<p class="text-[10px] font-semibold text-white/80">no anual (R$ 99,00/ano) · ou R$ 9,90/mês</p>' +
           '</div>' +
-          '<button id="premium-assinar" type="button" class="shrink-0 rounded-xl bg-white px-4 py-2.5 text-[11px] font-black uppercase tracking-wide text-sky-800 shadow-lg active:scale-[0.98]">Assinar</button>' +
+          '<button id="premium-assinar" type="button" class="shrink-0 rounded-xl bg-white px-4 py-2.5 text-[11px] font-black uppercase tracking-wide text-sky-800 shadow-lg active:scale-[0.98]">Ir para assinatura</button>' +
         '</div>' +
+        '<button id="premium-toggle-recursos" type="button" class="h-10 rounded-xl border border-slate-300 bg-white px-4 text-[11px] font-black uppercase tracking-wide text-slate-700 active:bg-slate-50" aria-expanded="' + (state.premiumRecursosAbertos ? 'true' : 'false') + '">' +
+          (state.premiumRecursosAbertos ? 'Ocultar recursos adicionais' : 'Veja os recursos adicionais') +
+        '</button>' +
+        recursosHtml +
         '<div class="mt-1">' +
           '<p class="mb-1 text-[11px] font-black uppercase tracking-wide text-slate-500">Tem um cupom?</p>' +
           '<div class="flex gap-2">' +
@@ -1848,6 +1865,10 @@
   }
 
   function abrirVendasMobile() {
+    if (premiumPessoalBloqueadoMobile()) {
+      abrirPremiumMobile('vendas_mobile');
+      return;
+    }
     if (!podeTrocarSistemaMobile()) {
       mostrarToast('Vendas Mobile indisponivel para este usuario.');
       return;
@@ -1912,6 +1933,10 @@
   }
 
   async function abrirFluxoSistemasMobile() {
+    if (premiumPessoalBloqueadoMobile()) {
+      abrirPremiumMobile('vendas_mobile');
+      return;
+    }
     if (!podeGerenciarUsuarios()) {
       mostrarToast('A troca de sistemas nao esta disponivel para este usuario.');
       return;
@@ -2241,6 +2266,10 @@
   }
 
   function abrirAgendaMobile() {
+    if (premiumPessoalBloqueadoMobile()) {
+      abrirPremiumMobile('agenda');
+      return;
+    }
     state.agendaDiaSelecionado = null;
     state.agendaFormAberto = false;
     state.visao = 'agenda';
@@ -3290,6 +3319,10 @@
       return;
     }
     if (tipo === 'agenda') {
+      if (premiumPessoalBloqueadoMobile()) {
+        abrirPremiumMobile('agenda');
+        return;
+      }
       state.visao = 'agenda';
       state.busca = '';
       state.agendaDiaSelecionado = null;
@@ -3785,6 +3818,10 @@
 
   // ── Painel de notificacoes (lista as mensagens do sininho) ──
   async function abrirNotificacoesMobile() {
+    if (premiumPessoalBloqueadoMobile()) {
+      abrirPremiumMobile('notificacoes');
+      return;
+    }
     state.menuAberto = false;
     state.modalMenu = 'notificacoes';
     state.notificacoesCarregando = true;
@@ -3898,7 +3935,9 @@
   }
 
   function podeGerenciarConteudoVendas() {
-    return state.empresa && ['gestor_master', 'administrador', 'operador_completo'].includes(state.empresa.perfil);
+    return state.empresa
+      && normalizarTipoPerfil(state.empresa.tipo_perfil) === 'empresa'
+      && ['gestor_master', 'administrador', 'operador_completo'].includes(state.empresa.perfil);
   }
 
   async function tokenSessao() {
@@ -4047,6 +4086,10 @@
   }
 
   async function abrirUsuariosMobile() {
+    if (premiumPessoalBloqueadoMobile()) {
+      abrirPremiumMobile('usuarios_internos');
+      return;
+    }
     state.menuAberto = false;
     state.modalMenu = 'usuario';
     state.usuarioModo = '';
@@ -4773,6 +4816,12 @@
     (respostas[0].data || []).forEach(function (item) {
       receitas[item.empresa_id] = (receitas[item.empresa_id] || 0) + Number(item.valor || 0);
     });
+    if (premiumPessoalBloqueadoMobile() && state.empresa && state.empresa.id) {
+      receitas[state.empresa.id] = Math.max(
+        0,
+        Number(receitas[state.empresa.id] || 0) - Number((state.receitaVendasOcultaPorMes || {})[mes] || 0)
+      );
+    }
     (respostas[1].data || []).forEach(function (item) {
       if (item.status === 'cancelada' || dataFutura(Number(item.ano || ano), indiceMes(item.mes), Number(item.dia || 1))) return;
       despesas[item.empresa_id] = (despesas[item.empresa_id] || 0) + Number(item.valor || 0);
@@ -5024,12 +5073,27 @@
       };
     });
 
+    var ocultarReceitaVendas = premiumPessoalBloqueadoMobile();
+    var receitaVendasOcultaPorMes = {};
+    if (ocultarReceitaVendas) {
+      ((resultados[2] && resultados[2].data) || []).forEach(function (item) {
+        if (item.tipo_obs !== 'vendas_mobile_sistema') return;
+        receitaVendasOcultaPorMes[item.mes] = Number(receitaVendasOcultaPorMes[item.mes] || 0) + Number(item.valor || 0);
+      });
+    }
+    state.receitaVendasOcultaPorMes = receitaVendasOcultaPorMes;
+
     state.faturamentos = {};
     (resultados[1].data || []).forEach(function (item) {
-      state.faturamentos[item.mes] = Number(item.valor || 0);
+      state.faturamentos[item.mes] = Math.max(
+        0,
+        Number(item.valor || 0) - Number(receitaVendasOcultaPorMes[item.mes] || 0)
+      );
     });
 
-    state.entradas = (resultados[2].data || []).map(function (item) {
+    state.entradas = (resultados[2].data || []).filter(function (item) {
+      return !ocultarReceitaVendas || item.tipo_obs !== 'vendas_mobile_sistema';
+    }).map(function (item) {
       return {
         id: item.id,
         mes: item.mes,
@@ -5086,6 +5150,10 @@
     state.pronto = true;
     state.carregando = false;
     render();
+    if (state.abrirAssinaturaAoCarregar) {
+      state.abrirAssinaturaAoCarregar = false;
+      window.setTimeout(abrirAssinaturaMobile, 0);
+    }
     if (!telaPreparacaoAcessoMobileVisivel() && typeof window.__avantalabConfirmarAcessoMobile === 'function') {
       window.__avantalabConfirmarAcessoMobile();
     }
@@ -8188,16 +8256,17 @@
   }
 
   function acoesHeaderMobileHtml() {
+    var premiumInativo = premiumPessoalBloqueadoMobile();
     var avisosHtml = '';
     if (state.visao === 'home' && (agendaTemAvisoHoje() || state.notificacoesNaoLidas > 0)) {
-      avisosHtml = '<button id="avisos-dashboard" type="button" class="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-white/15 bg-white/15 text-white shadow-sm backdrop-blur" aria-label="Notificacoes">' + sinoAvisoSvg() +
+      avisosHtml = '<button id="avisos-dashboard" type="button" class="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-white/15 bg-white/15 text-white shadow-sm backdrop-blur' + (premiumInativo ? ' grayscale opacity-50' : '') + '" aria-label="Notificacoes"' + (premiumInativo ? ' aria-disabled="true"' : '') + '>' + sinoAvisoSvg() +
         (state.notificacoesNaoLidas > 0
           ? '<span class="absolute -right-1 -top-1 flex h-5 min-w-[20px] items-center justify-center rounded-full bg-rose-500 px-1 text-[10px] font-black text-white ring-2 ring-white/60">' + (state.notificacoesNaoLidas > 99 ? '99+' : state.notificacoesNaoLidas) + '</span>'
           : '<span class="absolute right-1 top-1 h-2.5 w-2.5 rounded-full bg-rose-400 ring-2 ring-white/60"></span>') +
         '</button>';
     }
     var sistemasHtml = podeTrocarSistemaMobile()
-      ? '<button id="ir-vendas-header" type="button" class="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-white/15 bg-white/10 p-0 shadow-sm backdrop-blur active:scale-95" aria-label="Ir para Vendas Mobile" title="Ir para Vendas Mobile"><img src="/avantavendas/recursos/assets/icone-troca-gestao.png" alt="" aria-hidden="true" class="h-full w-full object-cover"></button>'
+      ? '<button id="ir-vendas-header" type="button" class="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-white/15 bg-white/10 p-0 shadow-sm backdrop-blur active:scale-95' + (premiumInativo ? ' grayscale opacity-50' : '') + '" aria-label="Ir para Vendas Mobile" title="Ir para Vendas Mobile"' + (premiumInativo ? ' aria-disabled="true"' : '') + '><img src="/avantavendas/recursos/assets/icone-troca-gestao.png" alt="" aria-hidden="true" class="h-full w-full object-cover"></button>'
       : '';
     return avisosHtml || sistemasHtml
       ? '<div class="flex shrink-0 items-center gap-2">' + avisosHtml + sistemasHtml + '</div>'
@@ -8335,7 +8404,8 @@
 
   function itemNavegacaoInferiorHtml(id, tipo, rotulo, ativo) {
     if (tipo === 'nenhum') return '<span class="min-w-0" aria-hidden="true"></span>';
-    return '<button id="' + id + '" type="button" class="flex min-w-0 flex-col items-center justify-center gap-0.5 px-1 py-1 text-[10px] font-black transition-colors ' + (ativo ? 'text-cyan-700' : 'text-slate-400') + '" aria-label="' + escapeHtml(rotulo) + '">' +
+    var premiumInativo = premiumPessoalBloqueadoMobile() && (tipo === 'agenda' || tipo === 'sistemas');
+    return '<button id="' + id + '" type="button" class="flex min-w-0 flex-col items-center justify-center gap-0.5 px-1 py-1 text-[10px] font-black transition-colors ' + (premiumInativo ? 'text-slate-300 grayscale' : (ativo ? 'text-cyan-700' : 'text-slate-400')) + '" aria-label="' + escapeHtml(rotulo) + '"' + (premiumInativo ? ' aria-disabled="true"' : '') + '>' +
       '<span class="flex h-7 items-center justify-center">' + iconeNavegacaoInferior(tipo) + '</span>' +
       '<span class="max-w-full truncate">' + escapeHtml(rotulo) + '</span>' +
     '</button>';
@@ -8657,7 +8727,7 @@
         '<span aria-hidden="true" class="pointer-events-none absolute rounded-full border border-cyan-100 bg-white shadow-md shadow-slate-950/15" style="left:' + (thoughtCenter - 7) + 'px;bottom:-15px;width:14px;height:14px;"></span>' +
         '<span aria-hidden="true" class="pointer-events-none absolute rounded-full border border-cyan-100 bg-white shadow-sm shadow-slate-950/10" style="left:' + (thoughtCenter - 3) + 'px;bottom:-26px;width:8px;height:8px;"></span>' +
         '<div class="relative z-10 flex flex-col gap-1">' +
-          '<button type="button" data-dashboard-remover="' + escapeHtml(state.dashboardOpcoesId) + '" class="inline-flex h-9 items-center justify-center whitespace-nowrap rounded-full bg-cyan-600 px-4 text-[11px] font-black text-white shadow-lg shadow-cyan-900/25 active:bg-cyan-700">- Ocultar card</button>' +
+          '<button type="button" data-dashboard-remover="' + escapeHtml(state.dashboardOpcoesId) + '" class="inline-flex h-9 items-center justify-center whitespace-nowrap rounded-full px-4 text-[11px] font-black text-white shadow-lg ' + (premiumPessoalBloqueadoMobile() ? 'bg-slate-400 shadow-slate-900/15 grayscale' : 'bg-cyan-600 shadow-cyan-900/25 active:bg-cyan-700') + '"' + (premiumPessoalBloqueadoMobile() ? ' aria-disabled="true"' : '') + '>- Ocultar card</button>' +
           (resetCaixinha ? '<button type="button" data-dashboard-reset-caixinha class="inline-flex h-9 items-center justify-center whitespace-nowrap rounded-full bg-rose-600 px-4 text-[11px] font-black text-white shadow-lg shadow-rose-900/20 active:bg-rose-700">- Resetar total</button>' : '') +
         '</div>' +
       '</div>'
@@ -8666,9 +8736,9 @@
 
   function insightsAvaHtml(atual) {
     if (recursoExclusivoAssinanteMobile()) {
-      return '<section class="w-full overflow-hidden rounded-2xl border border-sky-200 bg-white shadow-sm">' +
-        '<div class="flex items-center justify-between gap-3 bg-[#003E73] px-4 py-3 text-white"><h2 class="text-sm font-black tracking-wide">Insights da Ava</h2><span class="rounded-full bg-white/15 px-2 py-1 text-[9px] font-black uppercase tracking-wide text-cyan-100">Assinantes</span></div>' +
-        '<div class="p-4"><div class="rounded-2xl border border-sky-200 bg-sky-50 px-4 py-3 text-xs font-semibold leading-relaxed text-sky-950">Os Insights da Ava analisam receitas, despesas e sua reserva. Este recurso é exclusivo para assinantes.</div><button id="abrir-insights-ava" type="button" class="mt-3 h-10 w-full rounded-xl bg-[#003E73] text-xs font-black uppercase tracking-wide text-white">Saiba mais</button></div>' +
+      return '<section class="w-full overflow-hidden rounded-2xl border border-slate-300 bg-slate-100 grayscale opacity-70 shadow-sm">' +
+        '<div class="flex items-center justify-between gap-3 bg-slate-500 px-4 py-3 text-white"><h2 class="text-sm font-black tracking-wide">Insights da Ava</h2><span class="rounded-full bg-white/15 px-2 py-1 text-[9px] font-black uppercase tracking-wide text-white/80">Assinantes</span></div>' +
+        '<div class="p-4"><div class="rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-xs font-semibold leading-relaxed text-slate-700">Os Insights da Ava analisam receitas, despesas e sua reserva. Este recurso é exclusivo para assinantes.</div><button id="abrir-insights-ava" type="button" class="mt-3 h-10 w-full rounded-xl bg-slate-400 text-xs font-black uppercase tracking-wide text-white" aria-disabled="true">Saiba mais</button></div>' +
       '</section>';
     }
     var receitas = Number(atual.receitas || 0);
@@ -8897,13 +8967,14 @@
 
   function perguntaIaHtml() {
     var dk = state.darkMode;
+    var premiumInativo = recursoExclusivoAssinanteMobile();
     var logoAvaSrc = dk ? '/images/ava-logo-fundo-escuro.png' : '/images/ava-logo-fundo-claro.png';
     var cardAvaStyle = state.darkMode
       ? 'background:#071A2B;border-color:#334155;'
       : 'background:#FFFFFF;border-color:#E2E8F0;';
     var textoAvaStyle = state.darkMode ? 'color:#F8FAFC;' : '';
     return (
-      '<button id="chat-ia-card" type="button" class="flex w-full items-center gap-2 rounded-full border px-3 py-2 text-left shadow-sm active:scale-[0.99]" style="' + cardAvaStyle + '">' +
+      '<button id="chat-ia-card" type="button" class="flex w-full items-center gap-2 rounded-full border px-3 py-2 text-left shadow-sm active:scale-[0.99]' + (premiumInativo ? ' grayscale opacity-60' : '') + '" style="' + cardAvaStyle + '"' + (premiumInativo ? ' aria-disabled="true"' : '') + '>' +
         '<span class="flex h-9 w-[88px] shrink-0 items-center justify-center">' + avaLogoArquivoHtml(82, 40, logoAvaSrc) + '</span>' +
         '<span class="min-w-0 flex-1 overflow-hidden text-sm font-semibold ' + (state.darkMode ? '' : 'text-slate-400') + '"><span class="inline-block max-w-full truncate align-middle" style="' + textoAvaStyle + '">Pergunte para a Ava...</span></span>' +
         '<span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-cyan-600 text-base font-black text-white">&#8593;</span>' +
@@ -8916,7 +8987,7 @@
     var ehMesAtual = state.mes === meses[hoje.getMonth()] && String(state.ano) === String(hoje.getFullYear());
     var dia = ehMesAtual ? hoje.getDate() : 1;
     return (
-      '<button id="abrir-agenda-card" type="button" class="w-full overflow-hidden rounded-2xl border border-slate-200 bg-white p-4 text-left shadow-sm active:scale-[0.99]">' +
+      '<button id="abrir-agenda-card" type="button" class="w-full overflow-hidden rounded-2xl border border-slate-200 bg-white p-4 text-left shadow-sm active:scale-[0.99]' + (premiumPessoalBloqueadoMobile() ? ' grayscale opacity-60' : '') + '"' + (premiumPessoalBloqueadoMobile() ? ' aria-disabled="true"' : '') + '>' +
         '<div class="flex items-center gap-3">' +
           '<span class="flex h-12 w-12 shrink-0 flex-col items-center justify-center rounded-2xl text-white shadow-md shadow-sky-950/15" style="background:linear-gradient(135deg,#0A1F44,#1F8A9E);">' +
             '<span class="text-[9px] font-black uppercase leading-none text-cyan-100">' + escapeHtml(nomeMesCompleto(state.mes).slice(0, 3)) + '</span>' +
@@ -9304,7 +9375,7 @@
 
     return (
       '<section class="overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-slate-200/70" style="background:' + (state.darkMode ? '#0F172A' : '#FFFFFF') + ';">' +
-        '<div class="relative flex items-center justify-between gap-3 overflow-hidden px-4 py-3.5 text-white" style="background:linear-gradient(135deg,#A63D52 0%,#D65F6D 100%)"><div class="relative z-10 flex min-w-0 items-center gap-2.5"><span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-white/15 bg-white/10"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 3h12v18l-3-2-3 2-3-2-3 2V3Z" stroke-linejoin="round"/><path d="M9 8h6M9 12h6" stroke-linecap="round"/></svg></span><div class="min-w-0"><h2 class="truncate text-sm font-black">Despesas do mês</h2><p class="mt-0.5 text-[9px] font-bold uppercase tracking-wide text-white/65">Lançamentos do período</p></div></div><div class="relative z-10 flex -translate-y-1 items-center gap-2">' + (state.ultimasDespesasExpandido && todos.length > 3 ? '<button id="toggle-ultimas-despesas" type="button" class="flex h-8 items-center justify-center rounded-full border border-white/20 bg-white/10 px-3 text-xs font-bold text-white shadow-sm backdrop-blur">Recolher</button>' : '') + '<button id="buscar-ultimas-despesas" type="button" class="flex h-8 w-8 items-center justify-center rounded-full border border-white/20 bg-white/10 text-sm font-black text-white shadow-sm backdrop-blur active:bg-white/20" aria-label="' + (pesquisando ? 'Fechar busca' : 'Buscar despesas') + '">' + iconeBuscaUltimas(pesquisando) + '</button></div>' + recorteHeaderLancamentosHtml('despesa') + '</div>' +
+        '<div class="relative flex items-center justify-between gap-3 overflow-hidden px-4 py-3.5 text-white" style="background:linear-gradient(135deg,#A63D52 0%,#D65F6D 100%)"><div class="relative z-10 flex min-w-0 items-center gap-2.5"><span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-white/15 bg-white/10"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 3h12v18l-3-2-3 2-3-2-3 2V3Z" stroke-linejoin="round"/><path d="M9 8h6M9 12h6" stroke-linecap="round"/></svg></span><div class="min-w-0"><h2 class="truncate text-sm font-black">Despesas do mês</h2><p class="mt-0.5 text-[9px] font-bold uppercase tracking-wide text-white/65">Lançamentos do período</p></div></div><div class="relative z-10 flex -translate-y-1 items-center gap-2">' + (state.ultimasDespesasExpandido && todos.length > 3 ? '<button id="toggle-ultimas-despesas" type="button" class="flex h-8 items-center justify-center rounded-full border border-white/20 bg-white/10 px-3 text-xs font-bold text-white shadow-sm backdrop-blur">Recolher</button>' : '') + '<button id="buscar-ultimas-despesas" type="button" class="flex h-8 w-8 items-center justify-center rounded-full border border-white/20 bg-white/10 text-sm font-black text-white shadow-sm backdrop-blur active:bg-white/20' + (premiumPessoalBloqueadoMobile() ? ' grayscale opacity-50' : '') + '" aria-label="' + (pesquisando ? 'Fechar busca' : 'Buscar despesas') + '"' + (premiumPessoalBloqueadoMobile() ? ' aria-disabled="true"' : '') + '>' + iconeBuscaUltimas(pesquisando) + '</button></div>' + recorteHeaderLancamentosHtml('despesa') + '</div>' +
         (state.ultimasDespesasBuscaAberta ? '<div class="px-4 pt-3"><div class="flex h-10 items-center gap-2 rounded-xl border border-red-100 bg-red-50/60 px-3"><input id="busca-ultimas-despesas" type="search" autocomplete="off" enterkeyhint="search" value="' + escapeHtml(state.ultimasDespesasBusca) + '" placeholder="Buscar descricao ou valor" style="font-size:16px" class="min-w-0 flex-1 bg-transparent text-base font-semibold text-slate-800 outline-none" /><button id="limpar-ultimas-despesas" type="button" class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-white text-sm font-black text-red-600 shadow-sm" aria-label="Limpar busca">&times;</button></div></div>' : '') +
         '<div class="grid gap-1 p-4" id="ultimas-despesas-lista">' +
           (itens.length ? itens.map(function (item) {
@@ -9333,7 +9404,7 @@
 
     return (
       '<section class="overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-slate-200/70" style="background:' + (state.darkMode ? '#0F172A' : '#FFFFFF') + ';">' +
-        '<div class="relative flex items-center justify-between gap-3 overflow-hidden px-4 py-3.5 text-white" style="background:linear-gradient(135deg,#14786F 0%,#2A9D8F 100%)"><div class="relative z-10 flex min-w-0 items-center gap-2.5"><span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-white/15 bg-white/10"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 16 10 10l4 4 6-7" stroke-linecap="round" stroke-linejoin="round"/><path d="M15 7h5v5" stroke-linecap="round" stroke-linejoin="round"/></svg></span><div class="min-w-0"><h2 class="truncate text-sm font-black">Receitas do mês</h2><p class="mt-0.5 text-[9px] font-bold uppercase tracking-wide text-white/65">Lançamentos do período</p></div></div><div class="relative z-10 flex -translate-y-1 items-center gap-2">' + (state.ultimasReceitasExpandido && todos.length > 3 ? '<button id="toggle-ultimas-receitas" type="button" class="flex h-8 items-center justify-center rounded-full border border-white/20 bg-white/10 px-3 text-xs font-bold text-white shadow-sm backdrop-blur">Recolher</button>' : '') + '<button id="buscar-ultimas-receitas" type="button" class="flex h-8 w-8 items-center justify-center rounded-full border border-white/20 bg-white/10 text-sm font-black text-white shadow-sm backdrop-blur active:bg-white/20" aria-label="' + (pesquisando ? 'Fechar busca' : 'Buscar receitas') + '">' + iconeBuscaUltimas(pesquisando) + '</button></div>' + recorteHeaderLancamentosHtml('receita') + '</div>' +
+        '<div class="relative flex items-center justify-between gap-3 overflow-hidden px-4 py-3.5 text-white" style="background:linear-gradient(135deg,#14786F 0%,#2A9D8F 100%)"><div class="relative z-10 flex min-w-0 items-center gap-2.5"><span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-white/15 bg-white/10"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 16 10 10l4 4 6-7" stroke-linecap="round" stroke-linejoin="round"/><path d="M15 7h5v5" stroke-linecap="round" stroke-linejoin="round"/></svg></span><div class="min-w-0"><h2 class="truncate text-sm font-black">Receitas do mês</h2><p class="mt-0.5 text-[9px] font-bold uppercase tracking-wide text-white/65">Lançamentos do período</p></div></div><div class="relative z-10 flex -translate-y-1 items-center gap-2">' + (state.ultimasReceitasExpandido && todos.length > 3 ? '<button id="toggle-ultimas-receitas" type="button" class="flex h-8 items-center justify-center rounded-full border border-white/20 bg-white/10 px-3 text-xs font-bold text-white shadow-sm backdrop-blur">Recolher</button>' : '') + '<button id="buscar-ultimas-receitas" type="button" class="flex h-8 w-8 items-center justify-center rounded-full border border-white/20 bg-white/10 text-sm font-black text-white shadow-sm backdrop-blur active:bg-white/20' + (premiumPessoalBloqueadoMobile() ? ' grayscale opacity-50' : '') + '" aria-label="' + (pesquisando ? 'Fechar busca' : 'Buscar receitas') + '"' + (premiumPessoalBloqueadoMobile() ? ' aria-disabled="true"' : '') + '>' + iconeBuscaUltimas(pesquisando) + '</button></div>' + recorteHeaderLancamentosHtml('receita') + '</div>' +
         (state.ultimasReceitasBuscaAberta ? '<div class="px-4 pt-3"><div class="flex h-10 items-center gap-2 rounded-xl border border-emerald-100 bg-emerald-50/60 px-3"><input id="busca-ultimas-receitas" type="search" autocomplete="off" enterkeyhint="search" value="' + escapeHtml(state.ultimasReceitasBusca) + '" placeholder="Buscar descricao ou valor" style="font-size:16px" class="min-w-0 flex-1 bg-transparent text-base font-semibold text-slate-800 outline-none" /><button id="limpar-ultimas-receitas" type="button" class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-white text-sm font-black text-emerald-600 shadow-sm" aria-label="Limpar busca">&times;</button></div></div>' : '') +
         '<div class="grid gap-1 p-4" id="ultimas-receitas-lista">' +
 	          (itens.length ? itens.map(function (item) {
@@ -9558,6 +9629,7 @@
 
   function modalDespesaCamposHtml() {
     var escuro = !!state.darkMode;
+    var leituraNotaInativa = recursoExclusivoAssinanteMobile();
     var rotuloCampo = escuro ? 'text-slate-300' : 'text-slate-600';
     var selectCampo = escuro ? 'border-slate-500 bg-slate-800 text-slate-100' : 'border-slate-300 bg-white text-slate-900';
     var pilulaInativa = escuro ? 'border-slate-500 bg-slate-800 text-slate-200' : 'border-slate-300 bg-white text-slate-500';
@@ -9596,7 +9668,7 @@
             '</div>' +
             '<span class="text-[10px] font-semibold italic text-slate-400">nos meses seguintes</span>'
           ) : '') +
-          '<span class="ml-auto flex items-center gap-1.5"><button id="abrir-nota-arquivo" type="button" class="flex h-8 items-center gap-1 rounded-full border border-sky-300 bg-sky-50 px-2 text-[10px] font-black uppercase text-sky-800 shadow-sm transition active:scale-95"' + (state.notaLendo ? ' disabled' : '') + '><svg width="13" height="13" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9l-6-6Z" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"/><path d="M14 3v6h6M8 14h8" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>Arquivo</button><button id="abrir-nota-camera" type="button" class="flex h-8 items-center gap-1 rounded-full border border-[#0878ad] bg-[#0b80bd] px-2 text-[10px] font-black uppercase text-white shadow-sm transition active:scale-95"' + (state.notaLendo ? ' disabled' : '') + '><svg width="13" height="13" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 8h3l1.3-2h7.4L17 8h3v11H4V8Z" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"/><circle cx="12" cy="13" r="3.2" stroke="currentColor" stroke-width="2.2"/></svg>Foto</button></span>' +
+          '<span class="ml-auto flex items-center gap-1.5"><button id="abrir-nota-arquivo" type="button" class="flex h-8 items-center gap-1 rounded-full border border-sky-300 bg-sky-50 px-2 text-[10px] font-black uppercase text-sky-800 shadow-sm transition active:scale-95' + (leituraNotaInativa ? ' grayscale opacity-50' : '') + '"' + (state.notaLendo ? ' disabled' : '') + (leituraNotaInativa ? ' aria-disabled="true"' : '') + '><svg width="13" height="13" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9l-6-6Z" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"/><path d="M14 3v6h6M8 14h8" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>Arquivo</button><button id="abrir-nota-camera" type="button" class="flex h-8 items-center gap-1 rounded-full border border-[#0878ad] bg-[#0b80bd] px-2 text-[10px] font-black uppercase text-white shadow-sm transition active:scale-95' + (leituraNotaInativa ? ' grayscale opacity-50' : '') + '"' + (state.notaLendo ? ' disabled' : '') + (leituraNotaInativa ? ' aria-disabled="true"' : '') + '><svg width="13" height="13" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 8h3l1.3-2h7.4L17 8h3v11H4V8Z" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"/><circle cx="12" cy="13" r="3.2" stroke="currentColor" stroke-width="2.2"/></svg>Foto</button></span>' +
         '</div>' +
         (state.notaLendo ? '<p class="text-[10px] font-bold text-slate-500">Lendo a nota...</p>' : (state.notaArquivoPendente ? '<p class="text-[10px] font-bold text-emerald-600">Nota pronta para salvar <button id="limpar-nota-pendente" type="button" class="ml-1 text-slate-400">&times;</button></p>' : '')) +
         '<button id="salvar-despesa" type="button" ' + (state.lancandoDespesa ? 'disabled ' : '') + 'class="h-11 rounded-xl bg-slate-950 px-4 text-sm font-black uppercase tracking-wide text-white disabled:opacity-60">' + (state.lancandoDespesa ? 'Salvando...' : 'Salvar despesa') + '</button>' +
@@ -9770,6 +9842,7 @@
 
   function menuLateralHtml() {
     var dk = state.darkMode;
+    var premiumInativo = premiumPessoalBloqueadoMobile();
     var bordaBase = dk ? 'border-slate-800 bg-slate-900' : 'border-slate-200 bg-white';
     var configAberto = !!state.menuConfigAberto;
     var configAnimacao = state.menuConfigAnimacao === 'sair'
@@ -9793,7 +9866,7 @@
             chaveMenuHtml(state.duplicadosAtivo) +
           '</div>' +
         '</button>' +
-        '<button id="menu-avisos" type="button" class="rounded-[12px_24px_24px_24px] border ' + bordaBase + ' px-2.5 py-1 text-left shadow-[0_4px_11px_rgba(15,23,42,.05)] active:scale-[0.99]" style="order:6;' + (dk ? '' : 'background:linear-gradient(90deg,#E8F4FF 0%,#FFFFFF 78%);border-color:#C9E3FA;') + '">' +
+        '<button id="menu-avisos" type="button" class="rounded-[12px_24px_24px_24px] border ' + bordaBase + ' px-2.5 py-1 text-left shadow-[0_4px_11px_rgba(15,23,42,.05)] active:scale-[0.99]' + (premiumInativo ? ' grayscale opacity-60' : '') + '" style="order:6;' + (dk ? '' : 'background:linear-gradient(90deg,#E8F4FF 0%,#FFFFFF 78%);border-color:#C9E3FA;') + '"' + (premiumInativo ? ' aria-disabled="true"' : '') + '>' +
           '<div class="flex items-center gap-2">' +
             '<span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg" style="background:linear-gradient(135deg,#7DD3FC,#2563EB);color:#FFFFFF">' + iconeMenuLateralSvg('menu-avisos') + '</span>' +
             '<span class="min-w-0 flex-1"><span class="block text-[11px] font-black">Avisos e notificacoes</span><span class="mt-0.5 block truncate text-[9px] font-semibold text-slate-500">Ver e apagar seus avisos</span></span>' +
@@ -9826,7 +9899,7 @@
             chaveMenuHtml(iniciarValoresOcultosAtivo()) +
           '</div>' +
         '</button>' +
-        '<button id="menu-notificacoes" type="button" class="rounded-[12px_24px_24px_24px] border ' + bordaBase + ' px-2.5 py-1 text-left shadow-[0_4px_11px_rgba(15,23,42,.05)] active:scale-[0.99]" style="order:5;' + (dk ? '' : 'background:linear-gradient(90deg,#E8F9FD 0%,#FFFFFF 78%);border-color:#C4EAF4;') + '">' +
+        '<button id="menu-notificacoes" type="button" class="rounded-[12px_24px_24px_24px] border ' + bordaBase + ' px-2.5 py-1 text-left shadow-[0_4px_11px_rgba(15,23,42,.05)] active:scale-[0.99]' + (premiumInativo ? ' grayscale opacity-60' : '') + '" style="order:5;' + (dk ? '' : 'background:linear-gradient(90deg,#E8F9FD 0%,#FFFFFF 78%);border-color:#C4EAF4;') + '"' + (premiumInativo ? ' aria-disabled="true"' : '') + '>' +
           '<div class="flex items-center gap-2">' +
             '<span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg" style="background:#D7F2F8;color:#167FA0">' + iconeMenuLateralSvg('menu-notificacoes') + '</span>' +
             '<span class="min-w-0 flex-1"><span class="block text-[11px] font-black">Notificacoes</span><span class="mt-0.5 block truncate text-[9px] font-semibold text-slate-500">' + (state.notificacoesAtivas ? 'Ativas neste aparelho' : 'Inativas neste aparelho') + '</span></span>' +
@@ -9840,25 +9913,25 @@
             '<span class="min-w-0 flex-1"><span class="block text-[11px] font-black">Assinatura</span><span class="mt-0.5 block truncate text-[9px] font-semibold text-slate-500">Plano, faturas e renovacao</span></span>' +
           '</div>' +
         '</button>' : '') +
-        '<button id="menu-organizar-dashboard" type="button" class="rounded-[12px_24px_24px_24px] border ' + bordaBase + ' px-2.5 py-1 text-left shadow-[0_4px_11px_rgba(15,23,42,.05)] active:scale-[0.99]" style="order:7;' + (dk ? '' : 'background:linear-gradient(90deg,#EAF4FF 0%,#FFFFFF 78%);border-color:#C9DEF6;') + '">' +
+        '<button id="menu-organizar-dashboard" type="button" class="rounded-[12px_24px_24px_24px] border ' + bordaBase + ' px-2.5 py-1 text-left shadow-[0_4px_11px_rgba(15,23,42,.05)] active:scale-[0.99]' + (premiumInativo ? ' grayscale opacity-60' : '') + '" style="order:7;' + (dk ? '' : 'background:linear-gradient(90deg,#EAF4FF 0%,#FFFFFF 78%);border-color:#C9DEF6;') + '"' + (premiumInativo ? ' aria-disabled="true"' : '') + '>' +
           '<div class="flex items-center gap-2">' +
             '<span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg" style="background:#E0EEFF;color:#2383F0">' + iconeMenuLateralSvg('menu-organizar-dashboard') + '</span>' +
             '<span class="min-w-0 flex-1"><span class="block text-[11px] font-black">Organizar Dashboard</span><span class="mt-0.5 block truncate text-[9px] font-semibold text-slate-500">Definir a ordem dos cards</span></span>' +
           '</div>' +
         '</button>' +
-        '<button id="menu-usuario" type="button" class="rounded-[12px_24px_24px_24px] border ' + bordaBase + ' px-2.5 py-1 text-left shadow-[0_4px_11px_rgba(15,23,42,.05)] active:scale-[0.99]" style="order:9;' + (dk ? '' : 'background:linear-gradient(90deg,#E8FAF7 0%,#FFFFFF 78%);border-color:#BFE5E0;') + '">' +
+        '<button id="menu-usuario" type="button" class="rounded-[12px_24px_24px_24px] border ' + bordaBase + ' px-2.5 py-1 text-left shadow-[0_4px_11px_rgba(15,23,42,.05)] active:scale-[0.99]' + (premiumInativo ? ' grayscale opacity-60' : '') + '" style="order:9;' + (dk ? '' : 'background:linear-gradient(90deg,#E8FAF7 0%,#FFFFFF 78%);border-color:#BFE5E0;') + '"' + (premiumInativo ? ' aria-disabled="true"' : '') + '>' +
           '<div class="flex items-center gap-2">' +
             '<span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg" style="background:#D5F3EF;color:#0F8A8C">' + iconeMenuLateralSvg('menu-usuario') + '</span>' +
             '<span class="min-w-0 flex-1"><span class="block text-[11px] font-black">Usuarios</span><span class="mt-0.5 block truncate text-[9px] font-semibold text-slate-500">' + escapeHtml(perfilFormatado(state.empresa && state.empresa.perfil)) + '</span></span>' +
           '</div>' +
         '</button>' +
-        '<button id="menu-backup" type="button" class="rounded-[12px_24px_24px_24px] border ' + bordaBase + ' px-2.5 py-1 text-left shadow-[0_4px_11px_rgba(15,23,42,.05)] active:scale-[0.99]" style="order:11;' + (dk ? '' : 'background:linear-gradient(90deg,#EAF3FF 0%,#FFFFFF 78%);border-color:#C8DCF5;') + '">' +
+        '<button id="menu-backup" type="button" class="rounded-[12px_24px_24px_24px] border ' + bordaBase + ' px-2.5 py-1 text-left shadow-[0_4px_11px_rgba(15,23,42,.05)] active:scale-[0.99]' + (premiumInativo ? ' grayscale opacity-60' : '') + '" style="order:11;' + (dk ? '' : 'background:linear-gradient(90deg,#EAF3FF 0%,#FFFFFF 78%);border-color:#C8DCF5;') + '"' + (premiumInativo ? ' aria-disabled="true"' : '') + '>' +
           '<div class="flex items-center gap-2">' +
             '<span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg" style="background:#DFECFF;color:#2580E8">' + iconeMenuLateralSvg('menu-backup') + '</span>' +
             '<span class="min-w-0 flex-1"><span class="block text-[11px] font-black">Backup</span><span class="mt-0.5 block truncate text-[9px] font-semibold text-slate-500">Exportar os dados do perfil</span></span>' +
           '</div>' +
         '</button>' +
-        '<button id="menu-restauracao" type="button" class="rounded-[12px_24px_24px_24px] border ' + bordaBase + ' px-2.5 py-1 text-left shadow-[0_4px_11px_rgba(15,23,42,.05)] active:scale-[0.99]" style="order:12;' + (dk ? '' : 'background:linear-gradient(90deg,#EEEEFF 0%,#FFFFFF 78%);border-color:#D2D2F1;') + '">' +
+        '<button id="menu-restauracao" type="button" class="rounded-[12px_24px_24px_24px] border ' + bordaBase + ' px-2.5 py-1 text-left shadow-[0_4px_11px_rgba(15,23,42,.05)] active:scale-[0.99]' + (premiumInativo ? ' grayscale opacity-60' : '') + '" style="order:12;' + (dk ? '' : 'background:linear-gradient(90deg,#EEEEFF 0%,#FFFFFF 78%);border-color:#D2D2F1;') + '"' + (premiumInativo ? ' aria-disabled="true"' : '') + '>' +
           '<div class="flex items-center gap-2">' +
             '<span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg" style="background:#E3E7FF;color:#1480A1">' + iconeMenuLateralSvg('menu-restauracao') + '</span>' +
             '<span class="min-w-0 flex-1"><span class="block text-[11px] font-black">Restauracao</span><span class="mt-0.5 block truncate text-[9px] font-semibold text-slate-500">Importar um backup do AvantaLab</span></span>' +
@@ -9878,14 +9951,14 @@
             '</div>' +
           '</div>' +
           '<div class="grid gap-1.5">' +
-            menuBotaoHtml('menu-agenda', 'Agenda', 'Lembretes e avisos') +
-            menuBotaoHtml('menu-configurar-resumo', 'Mostrar/ocultar cards', 'Exibir ou remover blocos') +
-            menuBotaoHtml('menu-organizar-atalhos', 'Organizar atalhos', 'Personalizar a barra inferior') +
+            menuBotaoHtml('menu-agenda', 'Agenda', 'Lembretes e avisos', false, premiumInativo) +
+            menuBotaoHtml('menu-configurar-resumo', 'Mostrar/ocultar cards', 'Exibir ou remover blocos', false, premiumInativo) +
+            menuBotaoHtml('menu-organizar-atalhos', 'Organizar atalhos', 'Personalizar a barra inferior', false, premiumInativo) +
             menuBotaoHtml('menu-categorias', 'Cadastrar despesas', 'Adicionar tipos de despesa') +
             menuBotaoHtml('menu-despesas-fixas', 'Despesas fixas', 'Lancamentos automaticos mensais') +
             menuBotaoHtml('menu-ajuda-categorias', 'Instrucoes sobre categorias', 'Como organizar seus gastos') +
             menuBotaoHtml('menu-tutorial', 'Tutorial', 'Como usar o AvantaLab') +
-            menuBotaoHtml('menu-trocar-sistema', 'Ir para Vendas', state.vendasMobileModuloAtivo ? (podeTrocarSistemaMobile() ? 'Abrir o Vendas Mobile' : 'Indisponível para operadores') : (podeGerenciarUsuarios() ? 'Ativar e abrir o Vendas Mobile' : 'Indisponível para operadores'), !podeGerenciarUsuarios(), false) +
+            menuBotaoHtml('menu-trocar-sistema', 'Ir para Vendas', state.vendasMobileModuloAtivo ? (podeTrocarSistemaMobile() ? 'Abrir o Vendas Mobile' : 'Indisponível para operadores') : (podeGerenciarUsuarios() ? 'Ativar e abrir o Vendas Mobile' : 'Indisponível para operadores'), !podeGerenciarUsuarios(), premiumInativo) +
             ((state.vendasMobileModuloAtivo && podeGerenciarConteudoVendas()) ? menuBotaoHtml('menu-vendas-mobile', 'Conteúdo do Vendas', 'Novidades e divulgacao') : '') +
             '<button id="menu-config-toggle" type="button" class="mobile-config-main-btn rounded-[14px_26px_26px_26px] border border-slate-300 px-2.5 py-2 text-left text-slate-800 shadow-[0_5px_13px_rgba(15,23,42,.09)] transition active:scale-[0.99]" style="background:' + (configAberto ? 'linear-gradient(90deg,#B8C3D0 0%,#A5B2C1 100%)' : 'linear-gradient(90deg,#CBD5E1 0%,#B4C0CE 100%)') + '">' +
               '<div class="flex items-center gap-2">' +
@@ -10112,7 +10185,7 @@
     };
     var visual = estilos[id] || ['#FFFFFF', '#E2E8F0', '#ECFEFF', '#0E7490'];
     var cardStyle = state.darkMode ? 'background:#0F172A;border-color:#334155;' : 'background:' + visual[0] + ';border-color:' + visual[1] + ';';
-    return '<button id="' + id + '" type="button"' + (desativado ? ' disabled aria-disabled="true"' : '') + ' class="rounded-[14px_26px_26px_26px] border px-2.5 py-2 text-left shadow-[0_5px_13px_rgba(15,23,42,.07)] transition active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-50' + (visualInativo ? ' opacity-60 saturate-50' : '') + '" style="' + cardStyle + '">' +
+    return '<button id="' + id + '" type="button"' + (desativado ? ' disabled' : '') + ((desativado || visualInativo) ? ' aria-disabled="true"' : '') + ' class="rounded-[14px_26px_26px_26px] border px-2.5 py-2 text-left shadow-[0_5px_13px_rgba(15,23,42,.07)] transition active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-50' + (visualInativo ? ' grayscale opacity-60' : '') + '" style="' + cardStyle + '">' +
       '<div class="flex items-center gap-2">' +
         '<span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg shadow-sm" style="background:' + visual[2] + ';color:' + visual[3] + '">' + iconeMenuLateralSvg(id) + '</span>' +
         '<span class="min-w-0 flex-1"><span class="block text-xs font-black leading-none">' + escapeHtml(titulo) + '</span><span class="mt-1 block truncate text-[10px] font-semibold leading-none text-slate-500">' + escapeHtml(subtitulo || '') + '</span></span>' +
@@ -10138,15 +10211,18 @@
       feedback: 'Dúvidas e Sugestões',
       despesasFixas: 'Gerenciar despesas fixas',
       assinatura: 'Assinatura',
-      premium: 'Premium Pessoal',
+      premium: 'Acesso exclusivo para assinantes',
       sobre: 'Sobre',
       notificacoes: 'Notificações',
       detalheTipoDespesa: state.tipoDespesaDetalhe || 'Lançamentos',
       pontoRelatorio: state.pontoRelatorioNome ? 'Relatorio do dia' : 'Controle de ponto',
     }[state.modalMenu] || 'Menu';
 
+    var camadaModal = state.modalMenu === 'assinatura'
+      ? 'z-[13040]'
+      : (state.modalMenu === 'premium' ? 'z-[13020]' : 'z-[60]');
     return (
-      '<div id="modal-menu-overlay" class="fixed inset-0 z-[60] flex items-center justify-center overflow-hidden bg-slate-950/90 px-3 pt-4" style="padding-bottom:calc(env(safe-area-inset-bottom) + 78px)">' +
+      '<div id="modal-menu-overlay" class="fixed inset-0 ' + camadaModal + ' flex items-center justify-center overflow-hidden bg-slate-950/90 px-3 pt-4" style="padding-bottom:calc(env(safe-area-inset-bottom) + 78px)">' +
         '<section class="mx-auto flex w-full max-w-md flex-col overflow-hidden rounded-3xl ' + (state.darkMode ? 'bg-slate-900 text-slate-100' : 'bg-white text-slate-900') + ' shadow-2xl" style="max-height:calc(100dvh - env(safe-area-inset-bottom) - 102px)">' +
           '<div class="shrink-0 flex items-center justify-between gap-3 px-4 py-3 text-white" style="background-color:#003E73">' +
             '<h2 class="text-base font-black">' + escapeHtml(titulo) + '</h2>' +
@@ -11728,6 +11804,10 @@
     bind('menu-organizar-atalhos', function () { fecharMenuLateralAnimado(function () { if (premiumPessoalBloqueadoMobile()) { abrirPremiumMobile('organizar_atalhos'); return; } abrirModalMenu('organizarAtalhos'); }); });
     // Premium Pessoal: CTA e cupom do modal de upgrade
     bind('premium-assinar', function () { state.modalMenu = ''; state.premiumRecursoDestaque = ''; abrirAssinaturaMobile(); });
+    bind('premium-toggle-recursos', function () {
+      state.premiumRecursosAbertos = !state.premiumRecursosAbertos;
+      render();
+    });
     bind('premium-cupom-aplicar', aplicarCupomPremiumMobile);
     bind('menu-agenda', function () { fecharMenuLateralAnimado(abrirAgendaMobile); });
     bind('menu-avisos', function () { fecharMenuLateralAnimado(abrirNotificacoesMobile); });
@@ -12076,6 +12156,10 @@
     bind('fechar-aviso-assinante', function () {
       state.avisoAssinanteAberto = false;
       render();
+    });
+    bind('assinar-aviso-assinante', function () {
+      state.avisoAssinanteAberto = false;
+      abrirAssinaturaMobile();
     });
     bind('cancelar-aviso-duplicado', function () {
       state.duplicadoConfirmacaoAberta = false;
@@ -12875,6 +12959,29 @@
       return document.getElementById('mobile-main-scroll');
     }
 
+    function encontrarRolagemInterna(alvo, scrollDaPagina) {
+      var elemento = alvo && alvo.nodeType === 1 ? alvo : (alvo && alvo.parentElement);
+
+      while (elemento && elemento !== scrollDaPagina && elemento !== document.body) {
+        var estilo = window.getComputedStyle ? window.getComputedStyle(elemento) : null;
+        var overflowY = estilo ? estilo.overflowY : '';
+        var permiteRolagemVertical = overflowY === 'auto'
+          || overflowY === 'scroll'
+          || overflowY === 'overlay';
+        var areaMarcadaComoRolavel = elemento.hasAttribute('data-preserve-scroll')
+          || elemento.getAttribute('data-agenda-scroll') === 'true';
+        var possuiConteudoRolavel = elemento.scrollHeight > elemento.clientHeight + 1;
+
+        if ((permiteRolagemVertical || areaMarcadaComoRolavel) && possuiConteudoRolavel) {
+          return elemento;
+        }
+
+        elemento = elemento.parentElement;
+      }
+
+      return null;
+    }
+
     function posicionarIndicador() {
       if (!indicador) return;
       var header = document.getElementById('mobile-main-header');
@@ -13020,6 +13127,10 @@
       }
       var rolavel = scrollPrincipal();
       if (deveBloquearScroll() || !rolavel || !event.touches.length) {
+        cancelarGesto();
+        return;
+      }
+      if (encontrarRolagemInterna(event.target, rolavel)) {
         cancelarGesto();
         return;
       }
@@ -13450,6 +13561,7 @@
     // cadastro; /mobile?entrar=1 abre direto o card de login (pula boas-vindas).
     try {
       var parametrosLanding = new URLSearchParams(window.location.search);
+      state.abrirAssinaturaAoCarregar = parametrosLanding.get('assinatura') === '1';
       if (parametrosLanding.get('cadastro') === '1') {
         state.telaAcesso = 'login';
         state.modoCadastro = true;

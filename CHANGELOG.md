@@ -1,5 +1,30 @@
 # Changelog
 
+## 1.6.0.84.101 - 2026-07-23
+
+- Premium Pessoal: o bloqueio do AvantaVendas passa a suspender somente o
+  acesso, preservando módulo, vínculos, clientes, produtos, pedidos e
+  pagamentos para a reativação.
+- Gestão Mobile: a receita consolidada do Vendas deixa de compor o perfil
+  Pessoal gratuito e reaparece automaticamente, com o mesmo histórico, quando
+  a assinatura ou cortesia volta a ficar vigente.
+- AvantaVendas: o acesso direto também confere a assinatura do perfil e oferece
+  a ação “Ir para assinatura”, sem confundir bloqueio temporário com
+  desinstalação do módulo.
+
+## 1.6.0.84.100 - 2026-07-23
+
+- Gestão Mobile: recursos exclusivos do perfil Pessoal Premium passam a exibir
+  controles sem cor no plano gratuito e abrem um aviso com acesso direto à
+  assinatura.
+- Gestão Mobile: o aviso Premium prioriza o card da assinatura; a relação de
+  benefícios fica recolhida em “Veja os recursos adicionais”.
+- Gestão Mobile: Agenda e Ir para Vendas passam a exigir assinatura ou
+  cortesia vigente no perfil Pessoal; Conteúdo do Vendas fica disponível
+  somente em perfis Empresa com permissão compatível.
+- Interface: os avisos de assinatura passam a ficar acima dos menus flutuantes
+  dos cards, preservando a assinatura como próxima camada do fluxo.
+
 ## 1.6.0.84.99 - 2026-07-23
 
 - Recebimentos Presenciais: ações de cancelar, excluir e salvar do cadastro de

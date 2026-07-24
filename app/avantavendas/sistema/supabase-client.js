@@ -65,6 +65,27 @@
     return data.session?.access_token || '';
   }
 
+  async function verificarPremiumVendas(empresaId) {
+    if (!empresaId) return { bloqueado: false, estado: null };
+    try {
+      const token = await getAccessToken();
+      if (!token) return { bloqueado: false, estado: null };
+      const resposta = await fetch(`/api/cobranca/estado?empresaId=${encodeURIComponent(empresaId)}`, {
+        headers: { Authorization: `Bearer ${token}` },
+        cache: 'no-store',
+      });
+      if (!resposta.ok) return { bloqueado: false, estado: null };
+      const json = await resposta.json();
+      return {
+        bloqueado: json.precisaUpgradeVendas === true,
+        estado: json.estado || null,
+      };
+    } catch (error) {
+      console.warn('Não foi possível confirmar o Premium do Vendas; acesso preservado por segurança.', error);
+      return { bloqueado: false, estado: null };
+    }
+  }
+
   async function uploadProductImage(file, productId = null) {
     const user = await currentUser();
     if (!user) throw new Error('Sessão expirada.');
@@ -186,9 +207,14 @@
     const acesso = acessoBase
       ? { ...acessoBase, papel: candidatos.some((item) => item.papel === 'gestor') ? 'gestor' : acessoBase.papel }
       : null;
+    const premium = acesso
+      ? await verificarPremiumVendas(acesso.empresa_id)
+      : { bloqueado: false, estado: null };
     return {
       acesso,
       moduloAtivo,
+      premiumBloqueado: premium.bloqueado,
+      estadoAssinatura: premium.estado,
       solicitacao: solicitacaoRes.data || null,
     };
   }
@@ -244,6 +270,26 @@
     if (!acessoVendas.acesso) {
       atualizarProgresso('data', 1, 1, 'Conta do Vendas não liberada');
       return { user, produtos: [], pacotes: [], clientes: [], vendas: [], pagamentos: [], conteudos: null, divulgacaoPastas: [], divulgacaoMateriais: [], moduloAtivo: true, ...acessoVendas };
+    }
+    if (acessoVendas.premiumBloqueado === true) {
+      atualizarProgresso('data', 1, 1, 'Assinatura necessária');
+      return {
+        user,
+        produtos: [],
+        pacotes: [],
+        clientes: [],
+        vendas: [],
+        pagamentos: [],
+        conteudos: null,
+        divulgacaoPastas: [],
+        divulgacaoMateriais: [],
+        moduloAtivo: acessoVendas.moduloAtivo !== false,
+        integracaoGestao: { base_receita: 'recebidos', pode_configurar: false },
+        vinculosComerciais: [],
+        vinculoComercialAtivo: null,
+        perfisFinanceiros: [],
+        ...acessoVendas,
+      };
     }
 
     const totalEtapasDados = 11;
@@ -721,5 +767,5 @@
     return data;
   }
 
-  window.VendasDb = { client, currentUser, hasSession, getAccessToken, uploadProductImage, signIn, signInPhone, signInWithGoogle, resetPassword, updatePassword, updateUserMetadata, signUp, signOut, solicitarAcesso, buscarAcessoVendas, loadAll, loadClientFinancial, listarCatalogoVendas, sincronizarCatalogoVendas, listarPerfisGestaoParaTroca, saveProduct, deleteProduct, movimentarEstoque, listarMovimentosEstoque, createPackage, saveProductsBulk, deletePackage, saveClient, deleteClient, saveOrder, updateOrder, deleteOrder, savePayment, updatePayment, deletePayment, configurarIntegracaoGestao, atualizarRecursoVinculoComercial, resetarSistemaVendas, definirPerfilFinanceiro, saveFeedback };
+  window.VendasDb = { client, currentUser, hasSession, getAccessToken, verificarPremiumVendas, uploadProductImage, signIn, signInPhone, signInWithGoogle, resetPassword, updatePassword, updateUserMetadata, signUp, signOut, solicitarAcesso, buscarAcessoVendas, loadAll, loadClientFinancial, listarCatalogoVendas, sincronizarCatalogoVendas, listarPerfisGestaoParaTroca, saveProduct, deleteProduct, movimentarEstoque, listarMovimentosEstoque, createPackage, saveProductsBulk, deletePackage, saveClient, deleteClient, saveOrder, updateOrder, deleteOrder, savePayment, updatePayment, deletePayment, configurarIntegracaoGestao, atualizarRecursoVinculoComercial, resetarSistemaVendas, definirPerfilFinanceiro, saveFeedback };
 })();

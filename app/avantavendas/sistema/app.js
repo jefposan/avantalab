@@ -81,6 +81,8 @@ const estadoInicial = {
   solicitacaoAcesso: null,
   usuarioSemAcesso: false,
   moduloVendasAtivo: true,
+  premiumVendasBloqueado: false,
+  estadoAssinaturaVendas: null,
   sincronizacaoCatalogo: { adicionados: 0, ja_recebidos: 0 },
   integracaoGestao: { base_receita: 'recebidos', pode_configurar: false },
   vinculosComerciais: [],
@@ -1080,6 +1082,13 @@ function render() {
     requestAnimationFrame(limparFocoInicialLogin);
     return;
   }
+  if (state.premiumVendasBloqueado) {
+    limparDestaqueClientes();
+    removerNavegacaoInferior();
+    app.innerHTML = renderPremiumVendasBloqueado();
+    assinaturaSalaRenderizada = '';
+    return;
+  }
   if (!state.moduloVendasAtivo) {
     limparDestaqueClientes();
     removerNavegacaoInferior();
@@ -1128,6 +1137,38 @@ function render() {
   if (assinaturaSalaAtual) agendarGarantiaSalaBotoes();
   if (state.aba === 'clientes') requestAnimationFrame(configurarDestaqueClientes);
   else limparDestaqueClientes();
+}
+
+function abrirAssinaturaGestaoVendas() {
+  const empresaId = state.acessoVendas?.empresa_id || '';
+  try {
+    localStorage.setItem('avantalab_mobile_sistema_contexto', JSON.stringify({
+      empresaId,
+      sistema: 'gestao',
+      atualizadoEm: new Date().toISOString(),
+    }));
+    if (empresaId) sessionStorage.setItem(`avantalab_mobile_sistema_sessao_${empresaId}`, 'gestao');
+    if (empresaId) localStorage.setItem('avantalab_mobile_ultimo_perfil_id', empresaId);
+  } catch { /* navegação continua sem armazenamento local */ }
+  window.location.assign('/avantavendas/gestao?origem=vendas&assinatura=1');
+}
+
+function renderPremiumVendasBloqueado() {
+  return `<section class="module-suspended-screen">
+    <header class="mobile-menu-header"><div class="mobile-menu-brand">${logoVendas()}</div></header>
+    <div class="module-suspended-preview" aria-hidden="true">
+      <div class="mobile-menu-grid">${SALA_BOTOES_PADRAO.map(([, arquivo, label]) => `<div class="mobile-menu-card"><img src="./assets/menu/${arquivo}" alt="${label}"></div>`).join('')}</div>
+    </div>
+    <div class="module-suspended-shade"></div>
+    <article class="module-suspended-card" role="alert" aria-live="assertive">
+      <span class="module-suspended-icon">${svgIcon('lock')}</span>
+      <p>Premium Pessoal</p>
+      <h1>Acesso exclusivo para assinantes</h1>
+      <div class="module-suspended-message">O Vendas está temporariamente bloqueado neste perfil. O módulo, os clientes, os produtos, os pedidos e os pagamentos permanecem preservados e voltarão exatamente como estavam após a reativação.</div>
+      <button class="primary module-backup-button" type="button" onclick="abrirAssinaturaGestaoVendas()">Ir para assinatura</button>
+      <button class="ghost module-logout-button" type="button" onclick="sairSistema()">${svgIcon('log-out')} Sair</button>
+    </article>
+  </section>`;
 }
 
 function renderModuloVendasDesativado() {
@@ -1714,6 +1755,8 @@ async function sairSistema() {
   state.acessoVendas = null;
   state.solicitacaoAcesso = null;
   state.usuarioSemAcesso = false;
+  state.premiumVendasBloqueado = false;
+  state.estadoAssinaturaVendas = null;
   state.seletorPerfilGestaoAberto = false;
   state.perfisGestaoTroca = [];
   state.perfilGestaoConfirmacao = null;
@@ -2195,6 +2238,8 @@ async function carregarDadosBackend(mostrarCarregamento = true, manterPreparacao
       state.solicitacaoAcesso = dados.solicitacao || null;
       state.usuarioSemAcesso = !dados.acesso;
       state.moduloVendasAtivo = dados.moduloAtivo !== false;
+      state.premiumVendasBloqueado = dados.premiumBloqueado === true;
+      state.estadoAssinaturaVendas = dados.estadoAssinatura || null;
       state.sincronizacaoCatalogo = dados.sincronizacaoCatalogo || { adicionados: 0, ja_recebidos: 0 };
       state.integracaoGestao = dados.integracaoGestao || { base_receita: 'recebidos', pode_configurar: false };
       state.vinculosComerciais = dados.vinculosComerciais || [];
@@ -2254,6 +2299,8 @@ async function prepararSelecaoSistemaAntesDosDadosVendas() {
   state.acessoVendas = acessoVendas.acesso || null;
   state.solicitacaoAcesso = acessoVendas.solicitacao || null;
   state.moduloVendasAtivo = acessoVendas.moduloAtivo !== false;
+  state.premiumVendasBloqueado = acessoVendas.premiumBloqueado === true;
+  state.estadoAssinaturaVendas = acessoVendas.estadoAssinatura || null;
   if (user) {
     state.usuario = {
       ...state.usuario,
@@ -6151,6 +6198,7 @@ window.addEventListener('online', () => {
 window.setAba = setAba;
 window.state = state;
 window.abrirGestao = abrirGestao;
+window.abrirAssinaturaGestaoVendas = abrirAssinaturaGestaoVendas;
 window.abrirSeletorPerfilGestaoVendas = abrirSeletorPerfilGestaoVendas;
 window.fecharSeletorPerfilGestaoVendas = fecharSeletorPerfilGestaoVendas;
 window.selecionarPerfilGestaoVendas = selecionarPerfilGestaoVendas;

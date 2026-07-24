@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { resolverEstadoAcessoParaUsuario } from '../../../lib/cobranca-servidor';
-import { precisaPaywallEmpresa, PRECOS } from '../../../lib/cobranca';
+import { precisaPaywallEmpresa, precisaUpgradePessoal, PRECOS } from '../../../lib/cobranca';
 import { listarCobrancasAssinaturaAsaas, obterAssinaturaAsaas } from '../../../lib/asaas';
 
 export const runtime = 'nodejs';
@@ -9,7 +9,7 @@ const STATUS_FATURA_PAGAVEL = new Set(['PENDING', 'OVERDUE']);
 const STATUS_FATURA_PAGA = new Set(['RECEIVED', 'CONFIRMED', 'RECEIVED_IN_CASH']);
 
 // Informa ao app o estado de acesso (trial/ativa/expirada...) de um perfil.
-// Exige usuário autenticado e que ele pertença à empresa consultada.
+// Exige usuário autenticado e vínculo ativo na Gestão ou no Vendas.
 export async function GET(request: Request) {
   const empresaId = (new URL(request.url).searchParams.get('empresaId') || '').trim();
   if (!empresaId) {
@@ -37,16 +37,29 @@ export async function GET(request: Request) {
     return NextResponse.json({ erro: true }, { status: 401 });
   }
 
-  // 2) Confirma que o usuário pertence à empresa consultada.
+  // 2) Confirma que o usuário pertence ao perfil pela Gestão ou possui acesso
+  // ativo ao Vendas. A segunda opção permite que o próprio AvantaVendas
+  // consulte a assinatura sem ampliar o acesso a outros perfis.
   const admin = createClient(supabaseUrl, serviceRole);
-  const { data: vinculo } = await admin
-    .from('usuarios_empresa')
-    .select('id')
-    .eq('user_id', userId)
-    .eq('empresa_id', empresaId)
-    .limit(1)
-    .maybeSingle();
-  if (!vinculo) {
+  const [{ data: vinculoGestao }, { data: vinculoVendas }] = await Promise.all([
+    admin
+      .from('usuarios_empresa')
+      .select('id')
+      .eq('user_id', userId)
+      .eq('empresa_id', empresaId)
+      .eq('status', 'ativo')
+      .limit(1)
+      .maybeSingle(),
+    admin
+      .from('vendas_mobile_acessos')
+      .select('id')
+      .eq('user_id', userId)
+      .eq('empresa_id', empresaId)
+      .eq('status', 'ativo')
+      .limit(1)
+      .maybeSingle(),
+  ]);
+  if (!vinculoGestao && !vinculoVendas) {
     return NextResponse.json({ erro: true, mensagem: 'sem acesso a este perfil' }, { status: 403 });
   }
 
@@ -150,5 +163,11 @@ export async function GET(request: Request) {
   // 3) Resolve e devolve o estado depois da conciliacao imediata com a Asaas.
   //    `precisaPaywall` é calculado no servidor (já considera a flag COBRANCA_ATIVA).
   const estado = await resolverEstadoAcessoParaUsuario(empresaId, userId);
-  return NextResponse.json({ estado, precisaPaywall: precisaPaywallEmpresa(estado), precos: PRECOS, faturaPendente });
+  return NextResponse.json({
+    estado,
+    precisaPaywall: precisaPaywallEmpresa(estado),
+    precisaUpgradeVendas: precisaUpgradePessoal('vendas_mobile', estado),
+    precos: PRECOS,
+    faturaPendente,
+  });
 }

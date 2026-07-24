@@ -1,6 +1,13 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.6.0.84.99 -->
+<!-- ava-version: 1.6.0.84.101 -->
+
+> Revisão 1.6.0.84.101: suspensão reversível do AvantaVendas no Premium
+> Pessoal; sem mudança operacional adicional na Gestão Web, que já exige
+> assinatura para perfis Pessoais.
+
+> Revisão 1.6.0.84.100: revisão das permissões Premium na Gestão Mobile; sem
+> impacto operacional na Gestão Web.
 
 > Revisão 1.6.0.84.99: removida a página provisória `/recebimentos`; o módulo
 > integrado à Gestão e o PWA `/recebimentos/colaborador` permanecem disponíveis.

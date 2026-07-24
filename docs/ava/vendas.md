@@ -1,6 +1,14 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.6.0.84.99 -->
+<!-- ava-version: 1.6.0.84.101 -->
+
+> Revisão 1.6.0.84.101: no perfil Pessoal gratuito, o AvantaVendas bloqueia o
+> uso e direciona para a assinatura, mas preserva integralmente módulo,
+> vínculos, clientes, produtos, pedidos e pagamentos. A reativação devolve o
+> acesso e a integração financeira sem recriar a conta.
+
+> Revisão 1.6.0.84.100: revisão do acesso ao Vendas pela Gestão Mobile; sem
+> mudança operacional interna no AvantaVendas.
 
 > Revisão 1.6.0.84.99: remoção do preview legado e ajustes visuais em
 > Recebimentos; sem impacto operacional no AvantaVendas.

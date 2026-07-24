@@ -87,6 +87,8 @@ export type Recurso =
   | 'busca_lancamentos'  // botão pesquisar nos lançamentos
   | 'multiplos_perfis'   // criar/trocar entre perfis (grátis = 1 só)
   | 'notificacoes'
+  | 'agenda'
+  | 'vendas_mobile'
   | 'organizar_atalhos'
   | 'organizar_dashboard' // reordenar cards do dashboard (kanban)
   | 'usuarios_internos'  // criar usuário / equipe
@@ -101,6 +103,8 @@ export const RECURSOS_PREMIUM_PESSOAL: { recurso: Recurso; icone: string; titulo
   { recurso: 'busca_lancamentos', icone: '🔎', titulo: 'Busca nos lançamentos', descricao: 'Encontre qualquer lançamento na hora.' },
   { recurso: 'multiplos_perfis', icone: '👥', titulo: 'Múltiplos perfis pessoais', descricao: 'Crie mais perfis pessoais (grátis = 1). Criar perfil empresa continua livre.' },
   { recurso: 'notificacoes', icone: '🔔', titulo: 'Notificações', descricao: 'Lembretes e avisos de pagamentos.' },
+  { recurso: 'agenda', icone: '📅', titulo: 'Agenda', descricao: 'Organize lembretes, compromissos e lançamentos futuros.' },
+  { recurso: 'vendas_mobile', icone: '🛍️', titulo: 'Vendas Mobile', descricao: 'Acesse clientes, produtos, pedidos e pagamentos integrados à Gestão.' },
   { recurso: 'organizar_dashboard', icone: '🧩', titulo: 'Organizar dashboard', descricao: 'Reordene os cards do seu jeito.' },
   { recurso: 'organizar_atalhos', icone: '↔️', titulo: 'Organizar atalhos', descricao: 'Personalize os atalhos do app.' },
   { recurso: 'usuarios_internos', icone: '🧑‍💼', titulo: 'Usuários internos', descricao: 'Convide outras pessoas para o perfil.' },

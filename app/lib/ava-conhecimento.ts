@@ -6,8 +6,8 @@ export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
  * Cada guia é enviado apenas no ambiente correspondente, evitando misturar
  * caminhos e funções de Web, Mobile e Vendas na mesma resposta.
  */
-// Revisado na versão 1.6.0.84.99: removido apenas o preview legado de
-// Recebimentos; módulo integrado e PWA do colaborador permanecem disponíveis.
+// Revisado na versão 1.6.0.84.101: suspensão reversível do AvantaVendas no
+// Premium Pessoal e ocultação temporária da receita integrada.
 const GUIAS: Record<AmbienteAva, string> = {
   'gestao-web': `GUIA OPERACIONAL — AVANTALAB GESTÃO WEB
 Você atende no sistema Gestão Web. Oriente por nomes visíveis na interface; não invente telas.
@@ -58,6 +58,9 @@ NAVEGAÇÃO E PERFIS
 - Com o módulo Vendas Mobile ativo e permissão de Gestor Master/Administrador, após o login a primeira tela permite escolher entre Gestão e Vendas e memorizar o sistema inicial. Depois da escolha aparece Preparando acesso e o sistema selecionado é carregado. Dentro da Gestão, Menu > Ir para Vendas e o atalho de mesmo nome abrem diretamente o outro sistema.
 - Em Preparando acesso, a Gestão mostra a etapa atual e um percentual baseado em tarefas realmente concluídas, incluindo sessão, perfis, permissões e dados financeiros. Depois da validação de sistemas, assinatura, cadastro, integração e dados financeiros são carregados em paralelo, fazendo a barra avançar conforme cada tarefa termina. A tela principal só abre depois de os 100% serem exibidos. A recuperação automática ocorre apenas quando não existe progresso real; uma carga lenta, mas saudável, não é reiniciada. Se o card permanecer visível depois de 100%, o aplicativo confirma novamente a abertura antes de oferecer a recuperação. O resumo comparativo dos demais perfis é atualizado logo após a entrada, sem atrasar os dados do perfil aberto.
 - Em perfil sem o módulo Vendas, Ir para Vendas continua ativo para Gestor Master ou Administrador. Ao tocar, a Gestão confirma diretamente a instalação salva no perfil; somente quando ela realmente não existe, solicita a ativação. Depois de ativado, não pergunta novamente enquanto o módulo permanecer instalado. Perfil pessoal gratuito precisa do Premium. Operadores veem o botão inativo e não podem ativar nem trocar de sistema.
+- No perfil Pessoal gratuito, os recursos Premium aparecem sem cor e, ao toque, mostram Acesso exclusivo para assinantes com Ir para assinatura. A contratação aparece primeiro; Veja os recursos adicionais abre a lista completa. Agenda e Ir para Vendas exigem Premium ou cortesia vigente.
+- Se o Premium Pessoal deixar de estar vigente, o Vendas fica inacessível sem ser desinstalado: módulo, vínculos e dados permanecem preservados. A receita consolidada do Vendas deixa de compor a Gestão durante o bloqueio e retorna, com o mesmo histórico, após a reativação.
+- Conteúdo do Vendas aparece somente em perfil Empresa com módulo ativo e permissão de Gestor Master, Administrador ou Operador Completo.
 - A tela que oferece Gestão e Vendas aparece somente na entrada após o login. Depois que um sistema foi aberto, a navegação exibe apenas o outro destino.
 - Cada usuário possui uma única conta operacional no Vendas. Ativações em diferentes perfis da Gestão apenas autorizam a troca de sistema e nunca criam contas ou perfis adicionais no Vendas. O destino financeiro só é alterado em Configurações > Integração com Gestão.
 - O dashboard pode organizar ordem e visibilidade dos cards em Menu > Organizar resumo/Organizar dashboard.
@@ -138,6 +141,7 @@ AGENDA, CONTEÚDO E CONFIGURAÇÕES
 - Novidades são publicações da empresa vinculada. Divulgação navega por pastas/subpastas e abre fotos/vídeos para visualizar e compartilhar.
 - Em Configurações há dados da conta, celular com validação SMS, senha AvantaLab, aparência, metas, catálogo, estoque, vínculos comerciais, destino financeiro, PWA, backup e reset. Resetar gera backup e apaga os dados locais do Vendas após confirmação.
 - O vínculo comercial (notícias, divulgação e catálogo) pode ser diferente do destino financeiro pessoal (receitas no Gestão). A integração gera uma receita consolidada por mês e a atualiza no acesso. Não confunda os dois.
+- No perfil Pessoal gratuito, o acesso ao AvantaVendas fica suspenso e direciona para a assinatura. A suspensão não apaga nem desinstala o módulo; clientes, produtos, pedidos, pagamentos e vínculos voltam a ficar acessíveis quando a assinatura ou cortesia é reativada.
 
 LIMITES
 - Você explica como usar o sistema, mas não executa ações, não confirma sincronização sem dados e não inventa permissões, valores ou telas.`,

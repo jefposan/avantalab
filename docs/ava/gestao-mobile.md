@@ -1,6 +1,15 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.6.0.84.99 -->
+<!-- ava-version: 1.6.0.84.101 -->
+
+> Revisão 1.6.0.84.101: quando o Premium Pessoal deixa de estar vigente, o
+> Vendas fica temporariamente inacessível e sua receita consolidada deixa de
+> compor a Gestão. O módulo e todos os dados permanecem preservados; ao reativar
+> a assinatura ou cortesia, acesso e receita retornam automaticamente.
+
+> Revisão 1.6.0.84.100: no perfil Pessoal gratuito, recursos Premium aparecem
+> sem cor e levam ao aviso de assinatura. Agenda e Ir para Vendas também exigem
+> Premium; Conteúdo do Vendas aparece somente em perfil Empresa autorizado.
 
 > Revisão 1.6.0.84.99: remoção do preview legado e ajustes visuais em
 > Recebimentos; sem impacto operacional na Gestão Mobile.
@@ -176,6 +185,13 @@ deve usar os nomes do menu e da barra inferior do celular.
   Gestor Master ou Administrador. Ao tocar, o sistema solicita a ativação, confirma
   o salvamento no servidor e segue para o Vendas. Em perfil pessoal gratuito, a
   ativação exige primeiro o Premium.
+- No perfil Pessoal gratuito, os recursos Premium aparecem sem cor, mas continuam
+  tocáveis para explicar o bloqueio e oferecer **Ir para assinatura**. O aviso
+  mostra primeiro a contratação; a lista completa fica recolhida em **Veja os
+  recursos adicionais**. **Agenda** e **Ir para Vendas** exigem Premium ou
+  cortesia vigente.
+- **Conteúdo do Vendas** aparece somente em perfil Empresa com o módulo ativo e
+  permissão de Gestor Master, Administrador ou Operador Completo.
 - A instalação é salva separadamente em cada perfil da Gestão. Depois de ativada,
   não volta a ser solicitada enquanto o módulo permanecer instalado. Essas
   permissões não criam outras contas no Vendas: cada usuário possui uma única
