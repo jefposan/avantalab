@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.6.0.84.105 - 2026-07-24
+
+- Landing page: o hero mobile passa a dimensionar altura e espaçamentos pelo
+  espaço útil disponível, com limite orientado ao conteúdo e viewport dinâmico.
+- A mesma regra responsiva atende Safari/iPhone, Chrome/Android e o container
+  Capacitor, sem detecção de plataforma, aparelho ou user-agent.
+
 ## 1.6.0.84.104 - 2026-07-24
 
 - Gestão Web: a análise de PDFs do Importador passa a usar GPT-5.6 Terra com

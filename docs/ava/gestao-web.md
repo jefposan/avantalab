@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.6.0.84.104 -->
+<!-- ava-version: 1.6.0.84.105 -->
+
+> Revisão 1.6.0.84.105: refinamento responsivo da landing pública; sem impacto
+> operacional na Gestão Web.
 
 > Revisão 1.6.0.84.104: o Importador mantém a mesma conferência humana e
 > matemática, usando uma análise econômica por padrão e uma leitura reforçada

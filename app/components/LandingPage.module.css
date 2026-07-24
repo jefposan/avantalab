@@ -553,11 +553,16 @@
     position: relative;
     z-index: 2;
     display: flex;
-    min-height: 100vh;
-    min-height: 100svh;
+    min-height: min(100vh, 47rem);
+    min-height: min(var(--av-viewport-small, 100svh), 47rem);
     flex-direction: column;
-    justify-content: space-evenly;
-    padding: 134px 0 5.25rem;
+    justify-content: center;
+    gap: clamp(.85rem, 2.2vh, 1.35rem);
+    gap: clamp(.85rem, 2.2svh, 1.35rem);
+    padding:
+      calc(7.75rem + var(--av-safe-top, 0px))
+      0
+      calc(3.75rem + var(--av-safe-bottom, 0px));
   }
   .landing :global(.hero-copy .eyebrow) { margin-bottom: 0; }
   .landing :global(h1) {
@@ -756,6 +761,32 @@
   .landing :global(.toggle button) { padding: .55rem 1.1rem; font-size: .85rem; }
   .landing :global(.final) { padding: 80px 0 190px; }
   .landing :global(.foot) { justify-content: center; text-align: center; }
+}
+
+@media (max-width: 760px) and (max-height: 700px) {
+  .landing :global(.hero-copy) {
+    min-height: auto;
+    gap: .8rem;
+    padding-top: calc(7.25rem + var(--av-safe-top, 0px));
+    padding-bottom: calc(3rem + var(--av-safe-bottom, 0px));
+  }
+}
+
+@media (max-width: 340px) {
+  .landing :global(.nav-inner) {
+    column-gap: .3rem;
+  }
+  .landing :global(.nav-logo img) {
+    height: 32px;
+  }
+  .landing :global(.nav-actions) {
+    gap: .25rem;
+  }
+  .landing :global(.nav-cta),
+  .landing :global(.nav-entrar) {
+    padding-inline: .52rem;
+    font-size: .7rem;
+  }
 }
 
 /* ---------- reveal on scroll ---------- */
