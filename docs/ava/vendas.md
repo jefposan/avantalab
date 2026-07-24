@@ -1,6 +1,9 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.6.0.84.110 -->
+<!-- ava-version: 1.6.0.84.111 -->
+
+> Revisão 1.6.0.84.111: o ícone de instalação do AvantaVendas foi atualizado;
+> sem mudança nos fluxos de vendas.
 
 > Revisão 1.6.0.84.110: comprovantes de pedido e pagamento identificam o
 > desconto concedido na tela e na imagem compartilhada quando o valor é maior

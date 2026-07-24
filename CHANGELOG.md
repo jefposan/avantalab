@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.6.0.84.111 - 2026-07-24
+
+- AvantaVendas: substituído o ícone do PWA pela nova arte “AV”, preservada sem
+  reinterpretação em PNG nas dimensões 180, 192 e 512 pixels.
+- Manifesto, metadados e pré-cache passam a oferecer ícones separados para uso
+  padrão, Apple Touch e recorte adaptativo `maskable` no Android.
+
 ## 1.6.0.84.110 - 2026-07-24
 
 - AvantaVendas: comprovantes de pedido passam a exibir o desconto concedido no

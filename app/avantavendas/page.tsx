@@ -8,8 +8,8 @@ export const metadata: Metadata = {
   description: 'Clientes, produtos, pedidos e controle de vendas AvantaLab.',
   manifest: '/avantavendas/manifest.webmanifest',
   icons: {
-    icon: '/images/avanta-vendas-icon-192.png',
-    apple: '/images/avanta-vendas-icon-180.png',
+    icon: '/images/avanta-vendas-pwa-192.png',
+    apple: '/images/avanta-vendas-pwa-180.png',
   },
   appleWebApp: {
     capable: true,

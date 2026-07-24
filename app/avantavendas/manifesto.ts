@@ -13,16 +13,28 @@ export const manifestoAvantaVendas: MetadataRoute.Manifest = {
   orientation: 'portrait',
   icons: [
     {
-      src: '/images/avanta-vendas-icon-192.png',
+      src: '/images/avanta-vendas-pwa-192.png',
       sizes: '192x192',
       type: 'image/png',
       purpose: 'any',
     },
     {
-      src: '/images/avanta-vendas-icon-512.png',
+      src: '/images/avanta-vendas-pwa-512.png',
       sizes: '512x512',
       type: 'image/png',
       purpose: 'any',
+    },
+    {
+      src: '/images/avanta-vendas-pwa-maskable-192.png',
+      sizes: '192x192',
+      type: 'image/png',
+      purpose: 'maskable',
+    },
+    {
+      src: '/images/avanta-vendas-pwa-maskable-512.png',
+      sizes: '512x512',
+      type: 'image/png',
+      purpose: 'maskable',
     },
   ],
 };

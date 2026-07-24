@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.6.0.84.110 -->
+<!-- ava-version: 1.6.0.84.111 -->
+
+> Revisão 1.6.0.84.111: novo ícone de instalação do PWA AvantaVendas; sem
+> impacto operacional na Gestão Mobile.
 
 > Revisão 1.6.0.84.110: desconto concedido nos comprovantes do AvantaVendas;
 > sem impacto operacional na Gestão Mobile.

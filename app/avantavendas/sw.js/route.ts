@@ -15,8 +15,11 @@ const recursosEssenciais = [
   `${caminhoRecursos}/supabase-client.js?v=${APP_VERSION}`,
   `${caminhoRecursos}/app.js?v=${APP_VERSION}`,
   '/images/logo-avantalab-oficial.png',
-  '/images/avanta-vendas-icon-192.png',
-  '/images/avanta-vendas-icon-512.png',
+  '/images/avanta-vendas-pwa-180.png',
+  '/images/avanta-vendas-pwa-192.png',
+  '/images/avanta-vendas-pwa-512.png',
+  '/images/avanta-vendas-pwa-maskable-192.png',
+  '/images/avanta-vendas-pwa-maskable-512.png',
 ];
 
 function codigoServiceWorker() {
