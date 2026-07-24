@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo } from 'react';
-import type { Empresa, Recebimento, Subempresa } from './types';
+import type { Empresa, FormaPagamentoRecebimento, Recebimento, Subempresa } from './types';
 import { cobrancasNosProximosDias, dataLocalIso } from './helpers';
 import TabelaVencimentos from './TabelaVencimentos';
 
@@ -9,9 +9,11 @@ type Props = {
   empresas: Empresa[];
   subempresas: Subempresa[];
   recebimentos: Recebimento[];
+  podeBaixar: boolean;
+  onBaixar: (id: string, formaPagamento: FormaPagamentoRecebimento) => Promise<void> | void;
 };
 
-export default function ListaProximosVencimentos({ empresas, subempresas, recebimentos }: Props) {
+export default function ListaProximosVencimentos({ empresas, subempresas, recebimentos, podeBaixar, onBaixar }: Props) {
   const hojeIso = useMemo(() => dataLocalIso(), []);
   const proximos = useMemo(
     () => cobrancasNosProximosDias(recebimentos, hojeIso, 30),
@@ -28,6 +30,8 @@ export default function ListaProximosVencimentos({ empresas, subempresas, recebi
       empresas={empresas}
       subempresas={subempresas}
       recebimentos={proximos}
+      podeBaixar={podeBaixar}
+      onBaixar={onBaixar}
     />
   );
 }

@@ -1,6 +1,6 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { supabase as supabasePrincipal } from '@/app/lib/supabase';
-import type { Colaborador, Empresa, Recebimento, SituacaoRecebimento, Subempresa } from '../components/types';
+import type { Colaborador, Empresa, FormaPagamentoRecebimento, Recebimento, SituacaoRecebimento, Subempresa } from '../components/types';
 import { colaboradoresDemo, empresasDemo, recebimentosDemo, subempresasDemo } from '../components/dadosDemo';
 import { situacaoPorValor } from '../components/helpers';
 
@@ -40,7 +40,7 @@ export interface RecebimentosRepo {
   alternarColaborador(id: string, ativo: boolean): Promise<void>;
   registrarRecebimento(empresaRecebimentoId: string, subempresaId: string | null, valor: number, observacao: string): Promise<void>;
   receberCobranca(lancamentoId: string, valor: number, observacao: string): Promise<void>;
-  confirmarBaixa(lancamentoId: string): Promise<void>;
+  confirmarBaixa(lancamentoId: string, formaPagamento?: FormaPagamentoRecebimento): Promise<void>;
   devolver(lancamentoId: string, motivo: string): Promise<void>;
   divergencia(lancamentoId: string, motivo: string): Promise<void>;
   estornar(lancamentoId: string, motivo: string): Promise<void>;
@@ -127,10 +127,20 @@ export function criarRepoDemo(): RecebimentosRepo {
         observacao: observacao.trim() || r.observacao, situacao: situacaoPorValor(r.valorCombinado, valor),
       } : r);
     },
-    async confirmarBaixa(id) { dados.recebimentos = dados.recebimentos.map((r) => r.id === id ? { ...r, situacao: 'baixado', baixadoPor: 'Gestor (demo)', baixadoEm: new Date().toISOString() } : r); },
+    async confirmarBaixa(id, formaPagamento) {
+      dados.recebimentos = dados.recebimentos.map((r) => r.id === id ? {
+        ...r,
+        valorRecebido: r.valorRecebido ?? r.valorCombinado,
+        recebidoEm: r.recebidoEm ?? new Date().toISOString(),
+        formaPagamento: formaPagamento ?? r.formaPagamento ?? null,
+        situacao: 'baixado',
+        baixadoPor: 'Gestor (demo)',
+        baixadoEm: new Date().toISOString(),
+      } : r);
+    },
     async devolver(id, motivo) { dados.recebimentos = dados.recebimentos.map((r) => r.id === id ? { ...r, situacao: 'devolvido_para_correcao', observacao: `${r.observacao ? `${r.observacao} · ` : ''}Devolvido: ${motivo}` } : r); },
     async divergencia(id, motivo) { dados.recebimentos = dados.recebimentos.map((r) => r.id === id ? { ...r, situacao: 'baixado', baixadoPor: 'Gestor (demo)', baixadoEm: new Date().toISOString(), observacao: `${r.observacao ? `${r.observacao} · ` : ''}Divergência: ${motivo}` } : r); },
-    async estornar(id, motivo) { dados.recebimentos = dados.recebimentos.map((r) => r.id === id ? { ...r, situacao: r.vencimento < hojeIso() ? 'em_atraso' : 'previsto', valorRecebido: null, colaboradorId: null, recebidoEm: null, baixadoPor: null, baixadoEm: null, observacao: `Estornado: ${motivo}` } : r); },
+    async estornar(id, motivo) { dados.recebimentos = dados.recebimentos.map((r) => r.id === id ? { ...r, situacao: r.vencimento < hojeIso() ? 'em_atraso' : 'previsto', valorRecebido: null, colaboradorId: null, recebidoEm: null, formaPagamento: null, baixadoPor: null, baixadoEm: null, observacao: `Estornado: ${motivo}` } : r); },
     async obterIntegracaoFinanceira(ano, mes) {
       return copia({ nomeEntrada: nomeEntradaIntegracao, tituloEtiqueta: tituloEtiquetaIntegracao, integrado: integracaoAtiva, valorSincronizado: valorIntegrado(ano, mes) });
     },
@@ -177,7 +187,7 @@ function mapSubempresa(row: Linha): Subempresa {
     id: texto(row.id), empresaId: texto(row.recebimento_empresa_id), nome: texto(row.nome), endereco: texto(row.endereco),
     cep: texto(row.cep), logradouro: texto(row.logradouro), bairro: texto(row.bairro), cidade: texto(row.cidade), estado: texto(row.estado), numero: texto(row.numero), complemento: texto(row.complemento),
     shoppingGaleria: texto(row.shopping_galeria), lojaSala: texto(row.loja_sala), responsavel: texto(row.responsavel),
-    valorCombinado: numero(row.valor_combinado),
+    valorCombinado: row.valor_combinado == null ? null : numero(row.valor_combinado),
     frequenciaRecebimento: (texto(row.frequencia_recebimento) || 'mensal') as Subempresa['frequenciaRecebimento'],
     configuracaoRecorrencia: {
       diasSemana: Array.isArray(row.dias_semana) ? row.dias_semana.map(numero).filter((dia) => dia >= 0 && dia <= 6) : [],
@@ -202,6 +212,7 @@ function mapRecebimento(row: Linha): Recebimento {
     valorRecebido: row.valor_recebido == null ? null : numero(row.valor_recebido),
     colaboradorId: row.colaborador_user_id == null ? null : texto(row.colaborador_user_id),
     recebidoEm: row.recebido_em == null ? null : texto(row.recebido_em), observacao: row.observacao == null ? null : texto(row.observacao),
+    formaPagamento: row.forma_pagamento == null ? null : texto(row.forma_pagamento) as FormaPagamentoRecebimento,
     situacao: texto(row.situacao) as SituacaoRecebimento,
     baixadoPor: row.baixado_por == null ? null : texto(row.baixado_por), baixadoEm: row.baixado_em == null ? null : texto(row.baixado_em),
   };
@@ -312,7 +323,13 @@ export function criarRepoSupabase(empresaId: string, cliente: SupabaseClient = s
       if (error || !atual) throw new Error('Cobrança não encontrada.');
       await exigir(cliente.from('recebimentos_lancamentos').update({ colaborador_user_id: auth.user.id, valor_recebido: valor, recebido_em: new Date().toISOString(), observacao: observacao.trim() || null, situacao: situacaoPorValor(Number(atual.valor_combinado), valor), atualizado_em: new Date().toISOString() }).eq('empresa_id', empresaId).eq('id', id).select('id'), 'Erro ao receber cobrança.');
     },
-    async confirmarBaixa(id) { await exigir(cliente.rpc('recebimentos_baixar', { p_lancamento_id: id, p_motivo: null }), 'Erro ao confirmar baixa.'); },
+    async confirmarBaixa(id, formaPagamento) {
+      await exigir(cliente.rpc('recebimentos_baixar', {
+        p_lancamento_id: id,
+        p_motivo: null,
+        p_forma_pagamento: formaPagamento ?? null,
+      }), 'Erro ao confirmar baixa.');
+    },
     async devolver(id, motivo) { await exigir(cliente.rpc('recebimentos_devolver', { p_lancamento_id: id, p_motivo: motivo }), 'Erro ao devolver recebimento.'); },
     async divergencia(id, motivo) { await exigir(cliente.rpc('recebimentos_registrar_divergencia', { p_lancamento_id: id, p_motivo: motivo }), 'Erro ao registrar divergência.'); },
     async estornar(id, motivo) { await exigir(cliente.rpc('recebimentos_estornar', { p_lancamento_id: id, p_motivo: motivo }), 'Erro ao estornar recebimento.'); },

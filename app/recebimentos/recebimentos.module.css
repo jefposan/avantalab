@@ -584,19 +584,51 @@
   border-bottom: 1px solid #f1f5f9;
   vertical-align: middle;
 }
-.tabelaVencimentos {
-  min-width: 680px;
+.tabelaRecebimentos {
+  min-width: 0;
   table-layout: fixed;
 }
-.tabelaVencimentosEmpresa { width: 27%; }
-.tabelaVencimentosSubempresa { width: 23%; }
-.tabelaVencimentosData { width: 16%; }
-.tabelaVencimentosValor { width: 18%; }
-.tabelaVencimentosPrazo { width: 16%; }
+.tabelaRecebimentos th,
+.tabelaRecebimentos td { overflow-wrap: anywhere; }
+.tabelaRecebimentos:not(.tabelaRecebimentosComAcao) th:nth-child(1) { width: 17%; }
+.tabelaRecebimentos:not(.tabelaRecebimentosComAcao) th:nth-child(2) { width: 15%; }
+.tabelaRecebimentos:not(.tabelaRecebimentosComAcao) th:nth-child(3) { width: 10%; }
+.tabelaRecebimentos:not(.tabelaRecebimentosComAcao) th:nth-child(4),
+.tabelaRecebimentos:not(.tabelaRecebimentosComAcao) th:nth-child(5),
+.tabelaRecebimentos:not(.tabelaRecebimentosComAcao) th:nth-child(6) { width: 10%; }
+.tabelaRecebimentos:not(.tabelaRecebimentosComAcao) th:nth-child(7),
+.tabelaRecebimentos:not(.tabelaRecebimentosComAcao) th:nth-child(8) { width: 11%; }
+.tabelaRecebimentos:not(.tabelaRecebimentosComAcao) th:nth-child(9) { width: 6%; }
+.tabelaRecebimentosComAcao th:nth-child(1) { width: 15%; }
+.tabelaRecebimentosComAcao th:nth-child(2) { width: 13%; }
+.tabelaRecebimentosComAcao th:nth-child(3),
+.tabelaRecebimentosComAcao th:nth-child(4),
+.tabelaRecebimentosComAcao th:nth-child(5),
+.tabelaRecebimentosComAcao th:nth-child(6) { width: 9%; }
+.tabelaRecebimentosComAcao th:nth-child(7),
+.tabelaRecebimentosComAcao th:nth-child(8) { width: 11%; }
+.tabelaRecebimentosComAcao th:nth-child(9) { width: 8%; }
+.tabelaRecebimentosComAcao th:nth-child(10) { width: 7%; }
+.tabelaRecebimentos th:nth-child(9),
+.tabelaRecebimentos td:nth-child(9),
+.tabelaRecebimentos th:nth-child(10),
+.tabelaRecebimentos td:nth-child(10) { text-align: center; }
+.tabelaVencimentos {
+  min-width: 810px;
+  table-layout: fixed;
+}
+.tabelaVencimentosEmpresa { width: 23%; }
+.tabelaVencimentosSubempresa { width: 20%; }
+.tabelaVencimentosData { width: 14%; }
+.tabelaVencimentosValor { width: 16%; }
+.tabelaVencimentosPrazo { width: 14%; }
+.tabelaVencimentosAcao { width: 13%; }
 .tabelaVencimentos th:nth-child(4),
 .tabelaVencimentos td:nth-child(4) { text-align: right; }
 .tabelaVencimentos th:nth-child(5),
 .tabelaVencimentos td:nth-child(5) { text-align: center; }
+.tabelaVencimentos th:nth-child(6),
+.tabelaVencimentos td:nth-child(6) { text-align: center; }
 .prazoInadimplente,
 .prazoProximo { font-weight: 800; }
 .prazoInadimplente { color: #b91c1c; }
@@ -849,6 +881,35 @@
   align-items: center;
   gap: 8px;
 }
+.listaTituloComAviso {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 10px;
+}
+.avisoTopo {
+  display: inline-flex;
+  min-width: 0;
+  align-items: center;
+  border-radius: 999px;
+  background: #fef3c7;
+  color: #92600a;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1.2;
+  padding: 4px 9px;
+}
+.platoAcoesEmpresas {
+  display: flex;
+  align-items: center;
+  width: min(100%, 430px);
+}
+.platoAcoesEmpresas .listaTopoAcoes { width: 100%; gap: 6px; }
+.platoAcoesEmpresas .buscaFixa { min-width: 0; flex: 1 1 auto; height: 32px; }
+.platoAcoesEmpresas .buscaFixaInput { min-width: 0; width: 100%; }
+.platoAcoesEmpresas .listaAcaoPrincipal { min-height: 32px; padding-inline: 10px; white-space: nowrap; }
+.platoAcaoColaboradores { display: flex; width: 100%; justify-content: flex-end; }
+.platoAcaoColaboradores .listaAcaoPrincipal { min-height: 32px; padding-inline: 10px; white-space: nowrap; }
 .listaAcaoPrincipal {
   min-height: 34px;
   padding: 6px 11px;
@@ -924,6 +985,7 @@
 .buscaLimpar:hover { color: var(--cp); }
 
 @media (max-width: 640px) {
+  .listaTituloComAviso { align-items: flex-start; flex-direction: column; gap: 4px; }
   .listaTopoAcoes { width: 100%; }
   .buscaFixa { min-width: 0; flex: 1; }
   .buscaFixaInput { min-width: 0; width: 100%; }
@@ -1101,6 +1163,52 @@
 }
 .recorrenciaFrequencias::-webkit-scrollbar { display: none; }
 .recorrenciaTitulo { color: #0f172a; font-size: 11px; font-weight: 800; }
+.cabecalhoTipoCadastro {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 18px;
+  margin-bottom: 6px;
+}
+.cabecalhoTipoCadastro .formTitulo { margin-bottom: 0; }
+.cabecalhoTipoCadastro::after { content: ''; }
+.tipoCadastro {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+.tipoCadastroTitulo {
+  flex: 0 0 auto;
+  color: #475569;
+  font-size: 11px;
+  font-weight: 800;
+}
+.tipoCadastroOpcoes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.tipoCadastroOpcao {
+  min-height: 23px;
+  padding: 1px 9px;
+  border: 1px solid #cbd5e1;
+  border-radius: 999px;
+  background: #fff;
+  color: #475569;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.tipoCadastroOpcao:hover:not(:disabled) { border-color: var(--cp); background: color-mix(in srgb, var(--cp) 8%, #fff); color: var(--cp); }
+.tipoCadastroOpcao:focus-visible { outline: 2px solid var(--cp); outline-offset: 2px; }
+.tipoCadastroOpcaoAtiva { border-color: var(--cp); background: var(--cp); color: var(--cp-text); }
+.tipoCadastroOpcao:disabled { cursor: default; opacity: 1; }
+.tipoCadastroAjuda { margin: 0 0 10px; text-align: center; }
+.acoesCadastroEmpresaTopo { margin: 0 0 4px; }
+@media (max-width: 680px) {
+  .cabecalhoTipoCadastro { display: flex; align-items: flex-start; flex-direction: column; gap: 6px; }
+}
 .recorrenciaOpcao {
   min-height: 27px;
   flex: 0 0 auto;
@@ -1447,6 +1555,7 @@
 .darkScope .chipOn { background: #14532d; color: #bbf7d0; }
 .darkScope .chipOff { background: #7f1d1d; color: #fecaca; }
 .darkScope .aviso { border-color: #854d0e; background: #422006; color: #fde68a; }
+.darkScope .avisoTopo { background: #422006; color: #fde68a; }
 .darkScope .integracaoAjuda { color: #cbd5e1; }
 .darkScope .integracaoSucesso { color: #86efac; }
 .darkScope .integracaoErro { color: #fca5a5; }
@@ -1454,6 +1563,9 @@
 .darkScope .recorrenciaConfig { background: #162334; color: #94a3b8; }
 .darkScope .recorrenciaTitulo { color: #e2e8f0; }
 .darkScope .recorrenciaConfig > strong { color: #e2e8f0; }
+.darkScope .tipoCadastroTitulo { color: #cbd5e1; }
+.darkScope .tipoCadastroOpcao { border-color: #475569; background: #1e293b; color: #cbd5e1; }
+.darkScope .tipoCadastroOpcao:hover:not(:disabled) { border-color: var(--cp); background: #1d344a; color: #a5f3fc; }
 .darkScope .recorrenciaOpcao { color: #94a3b8; }
 .darkScope .recorrenciaOpcao { background: #1e293b; }
 .darkScope .recorrenciaOpcao:hover { background: #1d344a; color: #a5f3fc; }

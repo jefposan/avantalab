@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import AvantaCard, { criarAvantaShellPreset } from '@/app/components/AvantaCard';
 import styles from '../recebimentos.module.css';
-import type { Colaborador, Empresa, Perfil, Recebimento, Subempresa } from './types';
+import type { Colaborador, Empresa, FormaPagamentoRecebimento, Perfil, Recebimento, Subempresa } from './types';
 import { aguardandoConferencia, cobrancasNosProximosDias, dataLocalIso, formatarMoeda } from './helpers';
 import ListaEmpresas from './ListaEmpresas';
 import ListaColaboradores from './ListaColaboradores';
@@ -30,10 +30,12 @@ type Props = {
   colaboradores: Colaborador[];
   recebimentos: Recebimento[];
   mostrarLinkColaboradores?: boolean;
-  onConfirmarBaixa: (id: string) => void;
+  onConfirmarBaixa: (id: string, formaPagamento?: FormaPagamentoRecebimento) => void;
+  onBaixarDireto: (id: string, formaPagamento: FormaPagamentoRecebimento) => Promise<void>;
   onDevolver: (id: string, motivo: string) => void;
   onDivergencia: (id: string, motivo: string) => void;
   onEstornar: (id: string, motivo: string) => void;
+  onEstornarDireto: (id: string, motivo: string) => Promise<void>;
   onAdicionarEmpresa: (dados: Omit<Empresa, 'id'>) => void;
   onEditarEmpresa: (id: string, dados: Omit<Empresa, 'id' | 'ativo'>) => void;
   onExcluirEmpresa: (id: string) => void;
@@ -247,12 +249,18 @@ export default function PainelAdministrativo(props: Props) {
             </span>
           </>
         }
-        headerRight={abaUsaCompetencia ? seletorMes : undefined}
+        headerRight={aba === 'empresas'
+          ? <div id="recebimentos-empresas-acoes-plato" className={styles.platoAcoesEmpresas} />
+          : aba === 'colaboradores'
+            ? <div id="recebimentos-colaboradores-acoes-plato" className={styles.platoAcaoColaboradores} />
+            : abaUsaCompetencia ? seletorMes : undefined}
         hideDragHandle
         hideMenu
         className={styles.painelCardFixo}
         bodyClassName={styles.painelCardCorpo}
-        style={avantaShell.cardStyle}
+        style={aba === 'empresas' || aba === 'colaboradores'
+          ? { ...avantaShell.cardStyle, ['--plato-w' as string]: '30%' }
+          : avantaShell.cardStyle}
         bodyStyle={avantaShell.bodyStyle}
       >
         {/* Empresas gerencia o próprio scroll: o topo (título + busca + nova
@@ -270,6 +278,7 @@ export default function PainelAdministrativo(props: Props) {
             onEditarSubempresa={props.onEditarSubempresa}
             onExcluirSubempresa={props.onExcluirSubempresa}
             onAlternarSubempresa={props.onAlternarSubempresa}
+            portalAcoesId="recebimentos-empresas-acoes-plato"
           />
         )}
 
@@ -283,6 +292,7 @@ export default function PainelAdministrativo(props: Props) {
             onEditar={props.onEditarColaborador}
             onExcluir={props.onExcluirColaborador}
             onAlternar={props.onAlternarColaborador}
+            portalAcoesId="recebimentos-colaboradores-acoes-plato"
           />
         )}
 
@@ -358,15 +368,15 @@ export default function PainelAdministrativo(props: Props) {
         )}
 
         {aba === 'recebimentos' && (
-          <ListaRecebimentos chaveMes={chaveMes} empresas={empresas} subempresas={subempresas} colaboradores={colaboradores} recebimentos={recebimentos} />
+          <ListaRecebimentos chaveMes={chaveMes} empresas={empresas} subempresas={subempresas} colaboradores={colaboradores} recebimentos={recebimentos} podeEstornar={podeConfirmar} onEstornar={props.onEstornarDireto} />
         )}
 
         {aba === 'inadimplentes' && (
-          <ListaInadimplentes empresas={empresas} subempresas={subempresas} recebimentos={recebimentos} />
+          <ListaInadimplentes empresas={empresas} subempresas={subempresas} recebimentos={recebimentos} podeBaixar={podeConfirmar} onBaixar={props.onBaixarDireto} />
         )}
 
         {aba === 'proximo' && (
-          <ListaProximosVencimentos empresas={empresas} subempresas={subempresas} recebimentos={recebimentos} />
+          <ListaProximosVencimentos empresas={empresas} subempresas={subempresas} recebimentos={recebimentos} podeBaixar={podeConfirmar} onBaixar={props.onBaixarDireto} />
         )}
 
         {aba === 'resultados' && <GraficoResultados chaveMes={chaveMes} recebimentos={recebimentos} />}

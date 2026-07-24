@@ -11,13 +11,15 @@ type Props = {
   subempresas: Subempresa[];
   colaboradores: Colaborador[];
   recebimentos: Recebimento[];
+  podeEstornar: boolean;
+  onEstornar: (id: string, motivo: string) => Promise<void>;
 };
 
 const SITUACOES: SituacaoRecebimento[] = [
   'aguardando_conferencia', 'baixado', 'recebido_a_menor', 'recebido_a_maior', 'em_atraso', 'devolvido_para_correcao',
 ];
 
-export default function ListaRecebimentos({ chaveMes, empresas, subempresas, colaboradores, recebimentos }: Props) {
+export default function ListaRecebimentos({ chaveMes, empresas, subempresas, colaboradores, recebimentos, podeEstornar, onEstornar }: Props) {
   const [fEmpresa, setFEmpresa] = useState('');
   const [fSub, setFSub] = useState('');
   const [fColab, setFColab] = useState('');
@@ -26,6 +28,10 @@ export default function ListaRecebimentos({ chaveMes, empresas, subempresas, col
   // volta a acompanhá-lo sempre que o mês é trocado.
   const [dataInicial, setDataInicial] = useState('');
   const [dataFinal, setDataFinal] = useState('');
+  const [estornoPendente, setEstornoPendente] = useState<Recebimento | null>(null);
+  const [motivoEstorno, setMotivoEstorno] = useState('');
+  const [estornando, setEstornando] = useState(false);
+  const [erroEstorno, setErroEstorno] = useState('');
 
   useEffect(() => {
     const { inicio, fim } = limitesDoMes(chaveMes);
@@ -54,7 +60,32 @@ export default function ListaRecebimentos({ chaveMes, empresas, subempresas, col
 
   const subsFiltro = fEmpresa ? subempresas.filter((s) => s.empresaId === fEmpresa) : subempresas;
 
+  function abrirEstorno(recebimento: Recebimento) {
+    setEstornoPendente(recebimento);
+    setMotivoEstorno('');
+    setErroEstorno('');
+  }
+
+  async function confirmarEstorno() {
+    if (!estornoPendente) return;
+    if (!motivoEstorno.trim()) {
+      setErroEstorno('Informe o motivo do estorno.');
+      return;
+    }
+    setEstornando(true);
+    setErroEstorno('');
+    try {
+      await onEstornar(estornoPendente.id, motivoEstorno.trim());
+      setEstornoPendente(null);
+    } catch (error) {
+      setErroEstorno(error instanceof Error ? error.message : 'Não foi possível estornar o recebimento.');
+    } finally {
+      setEstornando(false);
+    }
+  }
+
   return (
+    <>
     <div>
       <div className={styles.filtersRow}>
         <div className={styles.recebimentosPeriodo} aria-label="Período dos recebimentos">
@@ -101,16 +132,16 @@ export default function ListaRecebimentos({ chaveMes, empresas, subempresas, col
       </div>
 
       <div className={styles.tableWrap}>
-        <table className={styles.table}>
+        <table className={`${styles.table} ${styles.tabelaRecebimentos} ${podeEstornar ? styles.tabelaRecebimentosComAcao : ''}`}>
           <thead>
             <tr>
               <th>Empresa/local</th><th>Cliente</th><th>Vencimento</th><th>Combinado</th><th>Recebido</th>
-              <th>Diferença</th><th>Recebido em</th><th>Recebido por</th><th>Situação</th>
+              <th>Diferença</th><th>Recebido em</th><th>Recebido por</th><th>Situação</th>{podeEstornar && <th>Ação</th>}
             </tr>
           </thead>
           <tbody>
             {filtrados.length === 0 ? (
-              <tr><td colSpan={9} className={styles.muted} style={{ padding: 16 }}>Nenhum recebimento para os filtros.</td></tr>
+              <tr><td colSpan={podeEstornar ? 10 : 9} className={styles.muted} style={{ padding: 16 }}>Nenhum recebimento para os filtros.</td></tr>
             ) : filtrados.map((r) => {
               const rot = rotuloSituacao(r.situacao);
               const dif = (r.valorRecebido ?? 0) - r.valorCombinado;
@@ -127,6 +158,7 @@ export default function ListaRecebimentos({ chaveMes, empresas, subempresas, col
                   <td style={{ fontSize: 12 }}>{formatarDataHora(r.recebidoEm)}</td>
                   <td>{nomeColab(r.colaboradorId)}</td>
                   <td><span className={styles.badge} style={{ background: rot.fundo, color: rot.cor }}>{rot.texto}</span></td>
+                  {podeEstornar && <td>{r.situacao === 'baixado' && <button type="button" className={`${styles.btn} ${styles.btnDanger} ${styles.btnSm}`} onClick={() => abrirEstorno(r)}>Estornar</button>}</td>}
                 </tr>
               );
             })}
@@ -134,5 +166,25 @@ export default function ListaRecebimentos({ chaveMes, empresas, subempresas, col
         </table>
       </div>
     </div>
+    {estornoPendente && (
+      <div className={styles.overlay} role="presentation" onClick={() => !estornando && setEstornoPendente(null)}>
+        <div className={styles.comprovante} role="dialog" aria-modal="true" aria-labelledby="estorno-titulo" onClick={(event) => event.stopPropagation()}>
+          <h3 id="estorno-titulo" style={{ fontWeight: 800, fontSize: 17, margin: 0 }}>Estornar recebimento?</h3>
+          <p className={styles.muted} style={{ margin: '6px 0 14px' }}>A baixa será desfeita e a cobrança voltará para a situação aberta correspondente.</p>
+          <div className={styles.readonlyBox} style={{ textAlign: 'left', marginBottom: 12 }}>
+            <div className={styles.readonlyRow}><span>Cliente</span><span>{nomeSub(estornoPendente.subempresaId)}</span></div>
+            <div className={styles.readonlyRow}><span>Valor</span><span>{formatarMoeda(estornoPendente.valorRecebido ?? estornoPendente.valorCombinado)}</span></div>
+          </div>
+          <label className={styles.label} htmlFor="recebimentos-motivo-estorno">Motivo do estorno</label>
+          <textarea id="recebimentos-motivo-estorno" className={styles.input} rows={3} value={motivoEstorno} onChange={(event) => setMotivoEstorno(event.target.value)} placeholder="Explique por que a baixa deve ser desfeita" disabled={estornando} autoFocus />
+          {erroEstorno && <div className={styles.aviso} role="alert" style={{ marginTop: 12 }}>{erroEstorno}</div>}
+          <div style={{ display: 'flex', gap: 8, marginTop: 16 }}>
+            <button type="button" className={`${styles.btn} ${styles.btnGhost}`} style={{ flex: 1 }} onClick={() => setEstornoPendente(null)} disabled={estornando}>Cancelar</button>
+            <button type="button" className={`${styles.btn} ${styles.btnDanger}`} style={{ flex: 1 }} onClick={() => void confirmarEstorno()} disabled={estornando}>{estornando ? 'Estornando…' : 'Confirmar estorno'}</button>
+          </div>
+        </div>
+      </div>
+    )}
+    </>
   );
 }

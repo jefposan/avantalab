@@ -1,6 +1,7 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { createPortal } from 'react-dom';
 import styles from '../recebimentos.module.css';
 import type { Colaborador, Recebimento } from './types';
 import { aguardandoConferencia, cpfValido, formatarCpf, formatarMoeda, formatarNomeProprio, formatarTelefone } from './helpers';
@@ -15,6 +16,8 @@ type Props = {
   onExcluir: (id: string) => void;
   onAlternar: (id: string) => void;
   mostrarLinkAcesso?: boolean;
+  /** Destino no platô do AvantaCard para a ação principal. */
+  portalAcoesId?: string;
 };
 
 function IconeAcoes() {
@@ -27,7 +30,7 @@ function IconeAcoes() {
   );
 }
 
-export default function ListaColaboradores({ colaboradores, recebimentos, onAdicionar, onEditar, onExcluir, onAlternar, mostrarLinkAcesso = false }: Props) {
+export default function ListaColaboradores({ colaboradores, recebimentos, onAdicionar, onEditar, onExcluir, onAlternar, mostrarLinkAcesso = false, portalAcoesId }: Props) {
   // Formulário aberto para cadastro (novo) ou edição (id).
   const [formAberto, setFormAberto] = useState(false);
   const [editandoId, setEditandoId] = useState<string | null>(null);
@@ -35,6 +38,7 @@ export default function ListaColaboradores({ colaboradores, recebimentos, onAdic
   const [confirmandoExclusao, setConfirmandoExclusao] = useState(false);
   const [erro, setErro] = useState('');
   const [linkCopiado, setLinkCopiado] = useState(false);
+  const [portalAcoes, setPortalAcoes] = useState<HTMLElement | null>(null);
 
   const [nome, setNome] = useState('');
   const [celular, setCelular] = useState('');
@@ -42,6 +46,11 @@ export default function ListaColaboradores({ colaboradores, recebimentos, onAdic
   const [cpf, setCpf] = useState('');
   const [senha, setSenha] = useState('');
   const [confirmarSenha, setConfirmarSenha] = useState('');
+
+  useEffect(() => {
+    if (!portalAcoesId) return;
+    setPortalAcoes(document.getElementById(portalAcoesId));
+  }, [portalAcoesId]);
 
   const totais = useMemo(() => {
     const map: Record<string, { recebido: number; aguardando: number }> = {};
@@ -160,20 +169,25 @@ export default function ListaColaboradores({ colaboradores, recebimentos, onAdic
     );
   }
 
+  const acaoTopo = (
+    <div className={styles.listaTopoAcoes}>
+      <button
+        type="button"
+        className={`${styles.btn} ${styles.btnPrimary} ${styles.listaAcaoPrincipal}`}
+        onClick={() => (formAberto && !editandoId ? limparForm() : abrirNovo())}
+      >
+        {formAberto && !editandoId ? 'Fechar cadastro' : '+ Novo colaborador'}
+      </button>
+    </div>
+  );
+
   return (
     <div className={styles.listaShell}>
       <div className={styles.listaTopo}>
         <h3 className={styles.sectionTitle} style={{ margin: 0 }}>Colaboradores</h3>
-        <div className={styles.listaTopoAcoes}>
-          <button
-            type="button"
-            className={`${styles.btn} ${styles.btnPrimary} ${styles.listaAcaoPrincipal}`}
-            onClick={() => (formAberto && !editandoId ? limparForm() : abrirNovo())}
-          >
-            {formAberto && !editandoId ? 'Fechar cadastro' : '+ Novo colaborador'}
-          </button>
-        </div>
+        {!portalAcoes && acaoTopo}
       </div>
+      {portalAcoes && createPortal(acaoTopo, portalAcoes)}
 
       {mostrarLinkAcesso && (
         <div className={styles.linkAcessoBox}>

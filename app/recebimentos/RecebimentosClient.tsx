@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useState, type CSSProperties } from 'r
 import styles from './recebimentos.module.css';
 import { corEhClara } from '@/app/lib/formatters';
 import type { AbrirAvisoFn, AbrirConfirmacaoFn } from '@/app/hooks/useUI';
-import type { Colaborador, Empresa, Perfil, Recebimento, Subempresa } from './components/types';
+import type { Colaborador, Empresa, FormaPagamentoRecebimento, Perfil, Recebimento, Subempresa } from './components/types';
 import PainelAdministrativo from './components/PainelAdministrativo';
 import { criarRepoDemo, type IntegracaoFinanceiraRecebimentos, type RecebimentosRepo } from './data/repo';
 
@@ -121,6 +121,36 @@ export default function RecebimentosClient({
     [repoAtual],
   );
 
+  const baixarDireto = useCallback(async (id: string, formaPagamento: FormaPagamentoRecebimento) => {
+    setProcessando(true);
+    setErro('');
+    try {
+      await repoAtual.confirmarBaixa(id, formaPagamento);
+      await carregar(true);
+    } catch (error) {
+      const mensagem = error instanceof Error ? error.message : 'Não foi possível baixar o pagamento.';
+      setErro(mensagem);
+      throw new Error(mensagem);
+    } finally {
+      setProcessando(false);
+    }
+  }, [carregar, repoAtual]);
+
+  const estornarDireto = useCallback(async (id: string, motivo: string) => {
+    setProcessando(true);
+    setErro('');
+    try {
+      await repoAtual.estornar(id, motivo);
+      await carregar(true);
+    } catch (error) {
+      const mensagem = error instanceof Error ? error.message : 'Não foi possível estornar o recebimento.';
+      setErro(mensagem);
+      throw new Error(mensagem);
+    } finally {
+      setProcessando(false);
+    }
+  }, [carregar, repoAtual]);
+
   const podeConfirmar = perfil === 'gestor' || perfil === 'administrador';
   const escopoVisual = {
     '--cp': corPrimaria,
@@ -148,10 +178,12 @@ export default function RecebimentosClient({
           onObterIntegracaoFinanceira={obterIntegracaoFinanceira}
           onAtualizarTitulosFinanceiro={atualizarTitulosFinanceiro}
           onDefinirIntegracaoFinanceira={definirIntegracaoFinanceira}
-          onConfirmarBaixa={(id) => void executar(() => repoAtual.confirmarBaixa(id))}
+          onConfirmarBaixa={(id, formaPagamento) => void executar(() => repoAtual.confirmarBaixa(id, formaPagamento))}
+          onBaixarDireto={baixarDireto}
           onDevolver={(id, motivo) => void executar(() => repoAtual.devolver(id, motivo))}
           onDivergencia={(id, motivo) => void executar(() => repoAtual.divergencia(id, motivo))}
           onEstornar={(id, motivo) => void executar(() => repoAtual.estornar(id, motivo))}
+          onEstornarDireto={estornarDireto}
           onAdicionarEmpresa={(dados) => void executar(() => repoAtual.salvarEmpresa(dados))}
           onEditarEmpresa={(id, dados) => void executar(() => repoAtual.editarEmpresa(id, dados))}
           onExcluirEmpresa={(id) => void executar(() => repoAtual.excluirEmpresa(id))}

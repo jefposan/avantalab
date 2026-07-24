@@ -24,6 +24,13 @@ export type SituacaoRecebimento =
   | 'em_atraso'
   | 'devolvido_para_correcao';
 
+export type FormaPagamentoRecebimento =
+  | 'dinheiro'
+  | 'pix'
+  | 'cartao_credito'
+  | 'cartao_debito'
+  | 'boleto';
+
 export type Empresa = {
   id: string;
   /** Cliente direto recebe cobrança própria; local agrupador apenas organiza clientes. */
@@ -62,7 +69,8 @@ export type Subempresa = {
   shoppingGaleria: string;
   lojaSala: string;
   responsavel: string;
-  valorCombinado: number;
+  /** Nulo enquanto o valor contratado ainda não foi definido. */
+  valorCombinado: number | null;
   frequenciaRecebimento: FrequenciaRecebimento;
   configuracaoRecorrencia: ConfiguracaoRecorrencia;
   ativo: boolean;
@@ -93,6 +101,7 @@ export type Recebimento = {
   colaboradorId: string | null;
   recebidoEm: string | null; // ISO datetime
   observacao: string | null;
+  formaPagamento?: FormaPagamentoRecebimento | null;
   situacao: SituacaoRecebimento;
   // Baixa (só após confirmação de gestor/administrador)
   baixadoPor: string | null; // nome do gestor/admin

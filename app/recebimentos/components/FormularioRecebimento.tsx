@@ -25,7 +25,10 @@ export type ResumoRecebimento = {
 };
 
 export default function FormularioRecebimento({ empresas, subempresas, recebimentos, onConfirmar, onReceberCobranca, onCancelar }: Props) {
-  const empresasAtivas = useMemo(() => empresas.filter((e) => e.ativo), [empresas]);
+  const empresasAtivas = useMemo(
+    () => empresas.filter((e) => e.ativo).sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR', { sensitivity: 'base' })),
+    [empresas],
+  );
   const [empresaId, setEmpresaId] = useState('');
   const [subempresaId, setSubempresaId] = useState('');
   // Cobrança selecionada para baixa individual.
@@ -39,7 +42,9 @@ export default function FormularioRecebimento({ empresas, subempresas, recebimen
   const hojeIso = useMemo(() => dataLocalIso(hoje), [hoje]);
 
   const subsDaEmpresa = useMemo(
-    () => subempresas.filter((s) => s.empresaId === empresaId && s.ativo),
+    () => subempresas
+      .filter((s) => s.empresaId === empresaId && s.ativo)
+      .sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR', { sensitivity: 'base' })),
     [subempresas, empresaId],
   );
 
@@ -65,10 +70,17 @@ export default function FormularioRecebimento({ empresas, subempresas, recebimen
       const proximas = proximaData
         ? abertas.filter((r) => !idsVencidos.has(r.id) && r.vencimento === proximaData)
         : [];
+      const nomeDaCobranca = (r: Recebimento) => r.subempresaId
+        ? subempresas.find((s) => s.id === r.subempresaId)?.nome ?? ''
+        : empresas.find((e) => e.id === r.empresaId)?.nome ?? '';
+      const ordenarPorCliente = (a: Recebimento, b: Recebimento) =>
+        nomeDaCobranca(a).localeCompare(nomeDaCobranca(b), 'pt-BR', { sensitivity: 'base' })
+        || a.vencimento.localeCompare(b.vencimento)
+        || a.id.localeCompare(b.id);
 
-      return [...vencidas, ...proximas];
+      return [...vencidas.sort(ordenarPorCliente), ...proximas.sort(ordenarPorCliente)];
     },
-    [recebimentos, empresaId, hojeIso],
+    [recebimentos, empresas, subempresas, empresaId, hojeIso],
   );
 
   const cobranca = useMemo(() => cobrancasAbertas.find((r) => r.id === cobrancaId) ?? null, [cobrancasAbertas, cobrancaId]);

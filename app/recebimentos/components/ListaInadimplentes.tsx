@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo } from 'react';
-import type { Empresa, Recebimento, Subempresa } from './types';
+import type { Empresa, FormaPagamentoRecebimento, Recebimento, Subempresa } from './types';
 import { dataLocalIso } from './helpers';
 import TabelaVencimentos from './TabelaVencimentos';
 
@@ -9,9 +9,11 @@ type Props = {
   empresas: Empresa[];
   subempresas: Subempresa[];
   recebimentos: Recebimento[];
+  podeBaixar: boolean;
+  onBaixar: (id: string, formaPagamento: FormaPagamentoRecebimento) => Promise<void> | void;
 };
 
-export default function ListaInadimplentes({ empresas, subempresas, recebimentos }: Props) {
+export default function ListaInadimplentes({ empresas, subempresas, recebimentos, podeBaixar, onBaixar }: Props) {
   const hojeIso = useMemo(() => dataLocalIso(), []);
 
   const inadimplentes = useMemo(
@@ -31,6 +33,8 @@ export default function ListaInadimplentes({ empresas, subempresas, recebimentos
       empresas={empresas}
       subempresas={subempresas}
       recebimentos={inadimplentes}
+      podeBaixar={podeBaixar}
+      onBaixar={onBaixar}
     />
   );
 }
