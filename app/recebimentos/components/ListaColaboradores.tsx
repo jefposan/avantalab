@@ -5,6 +5,7 @@ import { createPortal } from 'react-dom';
 import styles from '../recebimentos.module.css';
 import type { Colaborador, Recebimento } from './types';
 import { aguardandoConferencia, cpfValido, formatarCpf, formatarMoeda, formatarNomeProprio, formatarTelefone } from './helpers';
+import CampoSenha from './CampoSenha';
 
 type DadosColaborador = Omit<Colaborador, 'id' | 'ativo'>;
 
@@ -137,8 +138,27 @@ export default function ListaColaboradores({ colaboradores, recebimentos, onAdic
         {/* 2ª linha: CPF (login), senha e confirmação. */}
         <div style={{ display: 'flex', gap: 8 }}>
           <div className={styles.field} style={{ flex: 1 }}><label className={styles.label}>CPF (login) *</label><input className={`${styles.input} ${styles.inputCentro}`} inputMode="numeric" placeholder="000.000.000-00" value={cpf} onChange={(e) => setCpf(formatarCpf(e.target.value))} /></div>
-          <div className={styles.field} style={{ flex: 1 }}><label className={styles.label}>Senha *</label><input className={styles.input} type="password" name="recebimentos-nova-senha" autoComplete={edicao ? 'current-password' : 'new-password'} placeholder="Digite a senha" value={senha} onChange={(e) => setSenha(e.target.value)} /></div>
-          <div className={styles.field} style={{ flex: 1 }}><label className={styles.label}>Confirmar senha *</label><input className={styles.input} type="password" placeholder="Repita a senha" value={confirmarSenha} onChange={(e) => setConfirmarSenha(e.target.value)} /></div>
+          <div className={styles.field} style={{ flex: 1 }}>
+            <label className={styles.label} htmlFor="recebimentos-colaborador-senha">Senha *</label>
+            <CampoSenha
+              id="recebimentos-colaborador-senha"
+              name="recebimentos-nova-senha"
+              autoComplete={edicao ? 'current-password' : 'new-password'}
+              placeholder="Digite a senha"
+              value={senha}
+              onChange={(e) => setSenha(e.target.value)}
+            />
+          </div>
+          <div className={styles.field} style={{ flex: 1 }}>
+            <label className={styles.label} htmlFor="recebimentos-colaborador-confirmar-senha">Confirmar senha *</label>
+            <CampoSenha
+              id="recebimentos-colaborador-confirmar-senha"
+              autoComplete="new-password"
+              placeholder="Repita a senha"
+              value={confirmarSenha}
+              onChange={(e) => setConfirmarSenha(e.target.value)}
+            />
+          </div>
         </div>
         {/* 3ª linha: celular, e-mail e ações. */}
         <div className={styles.linhaTelefoneAcoes}>

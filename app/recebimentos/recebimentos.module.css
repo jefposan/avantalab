@@ -688,7 +688,10 @@
   display: flex;
   align-items: center;
 }
-.passwordInput { padding-right: 52px; }
+.passwordInput {
+  min-height: 44px;
+  padding-right: 52px;
+}
 .passwordToggle {
   position: absolute;
   right: 0;
@@ -1534,6 +1537,8 @@
 .darkScope .statTeal { --sc-bg: #102c2b; --sc-border: #28514d; --sc-label: #9bd3cc; --sc-value: #99f6e4; }
 .darkScope .statIndigo { --sc-bg: #1d233b; --sc-border: #3b4265; --sc-label: #b5bcec; --sc-value: #c7d2fe; }
 .darkScope .integracaoCampo .input { background: #0f172a; }
+.darkScope .passwordToggle { color: #94a3b8; }
+.darkScope .passwordToggle:hover { color: #a5f3fc; }
 .darkScope .recebimentosPeriodo {
   border-color: color-mix(in srgb, var(--cp) 62%, #475569);
   background: color-mix(in srgb, var(--cp) 16%, #0f172a);
