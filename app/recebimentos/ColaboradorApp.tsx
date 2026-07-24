@@ -52,6 +52,7 @@ export default function ColaboradorApp() {
   const [estado, setEstado] = useState<Estado>('carregando');
   const [cpf, setCpf] = useState('');
   const [senha, setSenha] = useState('');
+  const [senhaVisivel, setSenhaVisivel] = useState(false);
   const [erro, setErro] = useState('');
   const [entrando, setEntrando] = useState(false);
   const [empresaId, setEmpresaId] = useState('');
@@ -242,7 +243,35 @@ export default function ColaboradorApp() {
             </div>
             <div className={styles.field}>
               <label className={styles.label} htmlFor="recebimentos-senha">Senha</label>
-              <input id="recebimentos-senha" className={styles.input} type="password" autoComplete="current-password" value={senha} onChange={(e) => setSenha(e.target.value)} />
+              <div className={styles.passwordField}>
+                <input
+                  id="recebimentos-senha"
+                  className={`${styles.input} ${styles.passwordInput}`}
+                  type={senhaVisivel ? 'text' : 'password'}
+                  autoComplete="current-password"
+                  value={senha}
+                  onChange={(e) => setSenha(e.target.value)}
+                />
+                <button
+                  type="button"
+                  className={styles.passwordToggle}
+                  onClick={() => setSenhaVisivel((visivel) => !visivel)}
+                  aria-label={senhaVisivel ? 'Ocultar senha' : 'Exibir senha'}
+                  aria-pressed={senhaVisivel}
+                  title={senhaVisivel ? 'Ocultar senha' : 'Exibir senha'}
+                >
+                  {senhaVisivel ? (
+                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                      <path d="m3 3 18 18M10.6 10.7a2 2 0 0 0 2.7 2.7M9.9 4.2A10.7 10.7 0 0 1 12 4c5.5 0 9 5.5 9 5.5a15 15 0 0 1-2.2 2.8M6.6 6.6A15.8 15.8 0 0 0 3 9.5S6.5 15 12 15a10.3 10.3 0 0 0 3.4-.6" />
+                    </svg>
+                  ) : (
+                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                      <path d="M3 9.5S6.5 4 12 4s9 5.5 9 5.5S17.5 15 12 15 3 9.5 3 9.5Z" />
+                      <circle cx="12" cy="9.5" r="2.5" />
+                    </svg>
+                  )}
+                </button>
+              </div>
             </div>
             {erro && <div className={styles.aviso} role="alert" style={{ marginBottom: 12 }}>{erro}</div>}
             <button type="submit" disabled={entrando} className={`${styles.btn} ${styles.btnPrimary}`} style={{ width: '100%' }}>{entrando ? 'Entrando…' : 'Entrar'}</button>
