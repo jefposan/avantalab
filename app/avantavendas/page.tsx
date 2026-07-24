@@ -40,22 +40,19 @@ export default function AvantaVendasPage() {
           margin: 0;
         }
         #avantavendas-shell {
-          min-height: 100vh;
-          min-height: var(--av-viewport-height, 100dvh);
+          min-height: 100svh;
           overflow-x: hidden;
         }
         #avantavendas-shell > #app.app-shell {
           width: 100%;
           max-width: none;
-          min-height: 100vh;
-          min-height: var(--av-viewport-height, 100dvh);
+          min-height: 100svh;
           margin: 0;
           padding: 0;
         }
         #avantavendas-shell .splash-card {
           width: 100%;
-          min-height: 100vh;
-          min-height: var(--av-viewport-height, 100dvh);
+          min-height: 100svh;
           border-radius: 0;
         }
       `}</style>

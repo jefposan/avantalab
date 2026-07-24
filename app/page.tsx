@@ -6702,7 +6702,7 @@ if (modalSelecionarEmpresa) {
       darkMode ? 'bg-slate-950 text-slate-100' : 'bg-slate-100 text-slate-800'
     }`}>
       <section
-        className={`av-modal-panel my-auto flex w-full max-w-sm flex-col overflow-hidden rounded-2xl border shadow-2xl ${
+        className={`my-auto flex max-h-[90vh] w-full max-w-sm flex-col overflow-hidden rounded-2xl border shadow-2xl ${
           darkMode
             ? 'bg-slate-900 border-slate-700'
             : 'bg-white border-slate-200'
@@ -6725,10 +6725,7 @@ if (modalSelecionarEmpresa) {
         </div>
 
         <div className="p-4 space-y-3">
-          <div
-            className="space-y-2 overflow-y-auto px-1 pr-2"
-            style={{ maxHeight: 'min(32rem, calc(var(--av-viewport-height) - 16rem))' }}
-          >
+          <div className="max-h-[45vh] space-y-2 overflow-y-auto px-1 pr-2">
             {empresasDoUsuario.map((empresa) => {
               const perfilAtualInativo = modoSelecaoPerfil === 'troca' && empresa.id === empresaId;
               const selecionada = !perfilAtualInativo && empresaParaSelecionar?.id === empresa.id;
@@ -7221,12 +7218,12 @@ if (validacaoTelefoneObrigatoria) {
       {/* ================= MODAL AGENDA ================= */}
       {agendaAberta && (
         <div
-          className="av-modal-backdrop fixed inset-0 z-[8500] flex items-center justify-center bg-black/60 px-4 py-6"
+          className="fixed inset-0 z-[8500] flex items-center justify-center bg-black/60 px-4 py-6"
           onClick={() => { setAgendaAberta(false); setAgendaDiaSelecionado(null); setAgendaFormAberto(false); }}
         >
           <DraggableModalCard
             className="relative flex w-full max-w-4xl flex-col overflow-hidden rounded-2xl bg-white shadow-2xl"
-            style={{ maxHeight: 'calc(var(--av-viewport-height) - var(--av-safe-top) - var(--av-safe-bottom) - (2 * var(--av-modal-gap)))' }}
+            style={{ maxHeight: '90vh' }}
             onClick={e => e.stopPropagation()}
           >
             {/* Header */}
@@ -7695,11 +7692,11 @@ if (validacaoTelefoneObrigatoria) {
 
 {modalRestauracaoBackupAberto && backupRestauracaoAnalise && (
   <div
-    className="av-modal-backdrop fixed inset-0 z-[6200] flex items-center justify-center bg-black/70 px-4"
+    className="fixed inset-0 z-[6200] flex items-center justify-center bg-black/70 px-4"
     onClick={fecharModalRestauracaoBackup}
   >
     <DraggableModalCard
-      className={`flex w-full max-w-2xl flex-col overflow-hidden rounded-2xl border shadow-2xl ${
+      className={`flex max-h-[92vh] w-full max-w-2xl flex-col overflow-hidden rounded-2xl border shadow-2xl ${
         darkMode ? 'border-slate-700 bg-slate-800' : 'border-slate-200 bg-white'
       }`}
       onClick={(e) => e.stopPropagation()}
@@ -7713,7 +7710,7 @@ if (validacaoTelefoneObrigatoria) {
         </h2>
       </div>
 
-      <div className="av-modal-scroll overflow-y-auto px-6 py-5">
+      <div className="overflow-y-auto px-6 py-5">
         <div
           className={`rounded-xl border p-4 text-sm ${
             darkMode
@@ -7881,7 +7878,7 @@ if (validacaoTelefoneObrigatoria) {
 
 {modalReceitaDashboardAberto && (
   <div
-    className="av-modal-backdrop fixed inset-0 z-[6200] flex items-center justify-center bg-black/60 px-4"
+    className="fixed inset-0 z-[6200] flex items-center justify-center bg-black/60 px-4"
     onClick={fecharModalReceitaDashboard}
   >
     <DraggableModalCard
@@ -7978,7 +7975,7 @@ if (validacaoTelefoneObrigatoria) {
 
 {modalExcluirEmpresa && (
   <div
-    className="av-modal-backdrop fixed inset-0 z-[7000] flex items-center justify-center bg-black/60 px-4"
+    className="fixed inset-0 z-[7000] flex items-center justify-center bg-black/60 px-4"
     onClick={() => {
       if (excluindoEmpresa) return;
 
@@ -8083,7 +8080,7 @@ if (validacaoTelefoneObrigatoria) {
 
 {modalEditarEmpresaAberto && (
   <div
-    className="av-modal-backdrop fixed inset-0 z-[5600] flex items-center justify-center bg-black/60 px-4"
+    className="fixed inset-0 z-[5600] flex items-center justify-center bg-black/60 px-4"
     onClick={fecharEdicaoEmpresaAtual}
   >
     <DraggableModalCard
@@ -8256,7 +8253,7 @@ if (validacaoTelefoneObrigatoria) {
 
 {modalEmpresasAberto && (
   <div
-    className="av-modal-backdrop fixed inset-0 z-[5500] flex items-center justify-center bg-black/60 px-4"
+    className="fixed inset-0 z-[5500] flex items-center justify-center bg-black/60 px-4"
     onClick={() => { if (!editEmpresaSalvando && !criandoEmpresaInicial) { setSubAcaoGerenciar(null); setModalEmpresasAberto(false); } }}
   >
     <DraggableModalCard
@@ -8707,7 +8704,7 @@ if (validacaoTelefoneObrigatoria) {
 
 {modalAvisoAberto && (
   <div
-    className="av-modal-backdrop fixed inset-0 z-[8000] flex items-center justify-center bg-black/60 px-4"
+    className="fixed inset-0 z-[8000] flex items-center justify-center bg-black/60 px-4"
     onClick={fecharAviso}
   >
     <DraggableModalCard
@@ -8757,7 +8754,7 @@ if (validacaoTelefoneObrigatoria) {
 
 {usuarioEditandoId && (
   <div
-    className="av-modal-backdrop fixed inset-0 z-[6000] flex items-center justify-center bg-black/60 px-4"
+    className="fixed inset-0 z-[6000] flex items-center justify-center bg-black/60 px-4"
     onClick={cancelarEdicaoUsuario}
   >
     <DraggableModalCard
@@ -8946,14 +8943,14 @@ if (validacaoTelefoneObrigatoria) {
 
 {modalUsuarios && (
   <div
-    className="av-modal-backdrop fixed inset-0 z-[5000] flex items-center justify-center bg-black/60 px-4 py-6"
+    className="fixed inset-0 z-[5000] flex items-center justify-center bg-black/60 px-4 py-6"
     onClick={() => {
       setModalUsuarios(false);
       setAjudaUsuariosAberta(false);
     }}
   >
     <DraggableModalCard
-      className={`av-modal-scroll w-full max-w-3xl overflow-y-auto rounded-2xl border p-6 shadow-2xl ${
+      className={`max-h-[90vh] w-full max-w-3xl overflow-y-auto rounded-2xl border p-6 shadow-2xl ${
         darkMode
           ? 'bg-slate-800 border-slate-700'
           : 'bg-white border-slate-200'
@@ -9578,7 +9575,7 @@ name="novo-usuario-login"
     />
 
     <div
-      className="av-shell-offset-top print-ocultar fixed bottom-0 left-0 top-[92px] z-[1200] flex w-[296px] max-w-[calc(100vw-18px)] flex-col gap-2 overflow-hidden rounded-r-2xl border border-l-0 border-slate-700 bg-slate-900 p-3 pb-[max(0.75rem,var(--av-safe-bottom))] pl-[max(0.75rem,var(--av-safe-left))] text-white shadow-2xl transition-[transform,opacity] xl:top-[108px]"
+      className="print-ocultar fixed bottom-0 left-0 top-[92px] z-[1200] flex w-[296px] max-w-[calc(100vw-18px)] flex-col gap-2 overflow-hidden rounded-r-2xl border border-l-0 border-slate-700 bg-slate-900 p-3 text-white shadow-2xl transition-[transform,opacity] xl:top-[108px]"
     style={{ borderTopColor: corPrimaria, borderTopWidth: '3px', borderRightColor: corPrimaria }}
     onMouseMove={reiniciarTimerAjustes}
     onMouseDown={reiniciarTimerAjustes}
@@ -9890,7 +9887,7 @@ name="novo-usuario-login"
       {mesAtivo ? (
         <>
           <div
-  className="av-shell-offset-top print-ocultar sticky top-[92px] z-[850] shadow-md pt-1 pb-2 text-white xl:top-[108px]"
+  className="print-ocultar sticky top-[92px] z-[850] shadow-md pt-1 pb-2 text-white xl:top-[108px]"
   style={{ backgroundColor: corPrimaria }}
 >
   <div className="mx-auto grid w-full min-w-0 max-w-7xl grid-cols-1 items-center gap-3 px-3 sm:px-5 lg:px-6 xl:grid-cols-[minmax(260px,0.8fr)_minmax(0,1.2fr)] xl:gap-4 xl:px-8">
@@ -10514,10 +10511,10 @@ name="novo-usuario-login"
 
       {despesaRelatorioAberta && (
         <div
-          className="av-modal-backdrop fixed inset-0 z-[9200] flex items-center justify-center bg-slate-950/60 px-4 py-6"
+          className="fixed inset-0 z-[9200] flex items-center justify-center bg-slate-950/60 px-4 py-6"
           onClick={(e) => { if (e.target === e.currentTarget) setDespesaRelatorioAberta(null); }}
         >
-          <DraggableModalCard className={`flex w-full max-w-xl flex-col overflow-hidden rounded-2xl shadow-2xl ${bgCard}`}>
+          <DraggableModalCard className={`flex max-h-[86vh] w-full max-w-xl flex-col overflow-hidden rounded-2xl shadow-2xl ${bgCard}`}>
             <div
               data-modal-drag-handle
               className="flex shrink-0 cursor-grab items-center justify-between gap-4 px-5 py-4 text-white active:cursor-grabbing"
@@ -10680,10 +10677,10 @@ name="novo-usuario-login"
 {/* ── MODAL DESPESAS FIXAS ─────────────────────────────────────────── */}
 {modalDespesasFixas && (
   <div
-    className="av-modal-backdrop fixed inset-0 z-[900] flex items-center justify-center bg-slate-950/60 px-4 py-6"
+    className="fixed inset-0 z-[900] flex items-center justify-center bg-slate-950/60 px-4 py-6"
     onClick={(e) => { if (e.target === e.currentTarget) setModalDespesasFixas(false); }}
   >
-    <DraggableModalCard className={`relative flex w-full max-w-lg flex-col rounded-2xl shadow-2xl overflow-hidden ${darkMode ? 'bg-slate-800' : 'bg-white'}`}>
+    <DraggableModalCard className={`relative flex w-full max-w-lg flex-col rounded-2xl shadow-2xl overflow-hidden max-h-[90vh] ${darkMode ? 'bg-slate-800' : 'bg-white'}`}>
       <div data-modal-drag-handle className="flex shrink-0 cursor-grab items-center justify-between px-5 py-4 active:cursor-grabbing" style={{ backgroundColor: corPrimaria }}>
         <div>
           <h2 className="text-base font-black text-white">Gerenciar despesas fixas</h2>
@@ -10692,7 +10689,7 @@ name="novo-usuario-login"
           className="flex h-8 w-8 items-center justify-center rounded-full bg-white/20 text-white hover:bg-white/30 transition cursor-pointer">×</button>
       </div>
 
-      <div className="av-modal-scroll flex-1 overflow-y-auto p-5 space-y-5">
+      <div className="flex-1 overflow-y-auto p-5 space-y-5">
         <div className={`rounded-xl border p-4 ${darkMode ? 'border-slate-700 bg-slate-900/60' : 'border-slate-200 bg-slate-50'}`}>
           <p className={`mb-3 text-xs font-black uppercase tracking-wide ${darkMode ? 'text-slate-300' : 'text-slate-600'}`}>Nova despesa fixa</p>
           <div className="grid gap-2">
