@@ -241,6 +241,30 @@ export function criarRepoSupabase(empresaId: string, cliente: SupabaseClient = s
     if (error) throw new Error(erroMensagem(error, mensagem));
     return data;
   }
+
+  async function carregarTodosRecebimentos(): Promise<Linha[]> {
+    const tamanhoPagina = 1000;
+    const todasAsLinhas: Linha[] = [];
+
+    for (let inicio = 0; ; inicio += tamanhoPagina) {
+      const fim = inicio + tamanhoPagina - 1;
+      const { data, error } = await cliente
+        .from('recebimentos_lancamentos')
+        .select('*')
+        .eq('empresa_id', empresaId)
+        .order('vencimento', { ascending: false })
+        .order('id', { ascending: true })
+        .range(inicio, fim);
+
+      if (error) throw new Error(erroMensagem(error, 'Erro ao carregar recebimentos.'));
+      const pagina = (data ?? []) as Linha[];
+      todasAsLinhas.push(...pagina);
+      if (pagina.length < tamanhoPagina) break;
+    }
+
+    return todasAsLinhas;
+  }
+
   return {
     async carregar() {
       // A migration de recorrência pode ainda não ter sido aplicada em um
@@ -254,7 +278,7 @@ export function criarRepoSupabase(empresaId: string, cliente: SupabaseClient = s
         exigir(cliente.from('recebimentos_empresas').select('*').eq('empresa_id', empresaId).order('nome'), 'Erro ao carregar empresas.'),
         exigir(cliente.from('recebimentos_subempresas').select('*').eq('empresa_id', empresaId).order('nome'), 'Erro ao carregar subempresas.'),
         exigir(cliente.from('recebimentos_colaboradores').select('*').eq('empresa_id', empresaId).order('nome'), 'Erro ao carregar colaboradores.'),
-        exigir(cliente.from('recebimentos_lancamentos').select('*').eq('empresa_id', empresaId).order('vencimento', { ascending: false }), 'Erro ao carregar recebimentos.'),
+        carregarTodosRecebimentos(),
       ]);
       return {
         empresas: (empresas as Linha[]).map(mapEmpresa), subempresas: (subempresas as Linha[]).map(mapSubempresa),
