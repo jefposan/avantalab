@@ -230,10 +230,6 @@ canvas {
 .draggable-modal-card {
   box-sizing: border-box;
   min-width: 0;
-  max-width: min(
-    100%,
-    calc(100vw - var(--av-safe-left) - var(--av-safe-right) - (2 * var(--av-modal-gap)))
-  );
   max-height: calc(
     var(--av-viewport-height) - var(--av-safe-top) - var(--av-safe-bottom) - (2 * var(--av-modal-gap))
   ) !important;
@@ -554,11 +550,6 @@ button.perfil-resize-handle:active {
   .av-modal-backdrop [role="button"] {
     min-width: 44px;
     min-height: 44px;
-  }
-
-  .av-modal-panel,
-  .draggable-modal-card {
-    max-width: 100%;
   }
 }
 

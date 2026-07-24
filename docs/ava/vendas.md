@@ -1,6 +1,9 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.6.0.84.105 -->
+<!-- ava-version: 1.6.0.84.106 -->
+
+> Revisão 1.6.0.84.106: estabilização visual da landing e correção de largura
+> dos popups web; sem impacto operacional no AvantaVendas.
 
 > Revisão 1.6.0.84.105: refinamento responsivo da landing pública; sem impacto
 > operacional no AvantaVendas.

@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.6.0.84.106 - 2026-07-24
+
+- Landing page: o primeiro enquadramento mobile deixa de depender da
+  recalibração de `svh` do WebView após o primeiro scroll, mantendo composição
+  estável desde o carregamento no Android e no iPhone.
+- Modais web: removida a largura máxima imposta pela infraestrutura global;
+  cada popup volta a respeitar seu `max-w-*` original, preservando apenas os
+  limites compartilhados de altura, rolagem e área segura.
+
 ## 1.6.0.84.105 - 2026-07-24
 
 - Landing page: o hero mobile passa a dimensionar altura e espaçamentos pelo

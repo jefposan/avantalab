@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.6.0.84.105 -->
+<!-- ava-version: 1.6.0.84.106 -->
+
+> Revisão 1.6.0.84.106: estabilização visual da landing e restauração das
+> larguras originais dos popups; sem mudança nos fluxos operacionais.
 
 > Revisão 1.6.0.84.105: refinamento responsivo da landing pública; sem impacto
 > operacional na Gestão Web.
