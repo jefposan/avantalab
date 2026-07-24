@@ -555,7 +555,7 @@
     display: flex;
     min-height: 47rem;
     flex-direction: column;
-    justify-content: center;
+    justify-content: flex-start;
     gap: 1.15rem;
     padding:
       calc(7.75rem + var(--av-safe-top, 0px))

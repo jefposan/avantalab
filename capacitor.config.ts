@@ -1,13 +1,17 @@
 import type { CapacitorConfig } from '@capacitor/cli';
 
+const usarServidorAndroidLocal = process.env.CAPACITOR_LOCAL === '1';
+
 const config: CapacitorConfig = {
   appId: 'br.com.avantalab.app',
   appName: 'AvantaLab',
   webDir: 'public',
 
   server: {
-    url: 'https://app.avantalab.com.br',
-    cleartext: false,
+    url: usarServidorAndroidLocal
+      ? 'http://10.0.2.2:3000'
+      : 'https://app.avantalab.com.br',
+    cleartext: usarServidorAndroidLocal,
   },
 
   ios: {
