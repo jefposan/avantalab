@@ -1,6 +1,9 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.6.0.84.101 -->
+<!-- ava-version: 1.6.0.84.102 -->
+
+> Revisão 1.6.0.84.102: reorganização da Assinatura na Gestão Mobile; sem
+> impacto operacional interno no AvantaVendas.
 
 > Revisão 1.6.0.84.101: no perfil Pessoal gratuito, o AvantaVendas bloqueia o
 > uso e direciona para a assinatura, mas preserva integralmente módulo,

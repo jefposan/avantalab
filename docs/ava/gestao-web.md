@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.6.0.84.101 -->
+<!-- ava-version: 1.6.0.84.102 -->
+
+> Revisão 1.6.0.84.102: reorganização da Assinatura na Gestão Mobile; sem
+> impacto operacional na Gestão Web.
 
 > Revisão 1.6.0.84.101: suspensão reversível do AvantaVendas no Premium
 > Pessoal; sem mudança operacional adicional na Gestão Web, que já exige

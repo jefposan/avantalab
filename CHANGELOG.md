@@ -1,5 +1,16 @@
 # Changelog
 
+## 1.6.0.84.102 - 2026-07-24
+
+- Gestão Mobile: Assinatura passa a ser o primeiro botão do Menu e deixa o
+  grupo de Configurações.
+- Gestão Mobile: perfis sem assinatura ou liberação vigente veem o card
+  Premium; assinatura, cortesia administrativa, cupom, teste e demais
+  liberações válidas mantêm o painel de plano, faturas e renovação.
+- Gestão Mobile: Ir para assinatura abre diretamente a contratação do plano.
+  Ao tentar ocultar um card sem Premium, somente o menu da ação é fechado e o
+  card permanece no dashboard.
+
 ## 1.6.0.84.101 - 2026-07-23
 
 - Premium Pessoal: o bloqueio do AvantaVendas passa a suspender somente o

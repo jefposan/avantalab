@@ -1,6 +1,13 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.6.0.84.101 -->
+<!-- ava-version: 1.6.0.84.102 -->
+
+> Revisão 1.6.0.84.102: Assinatura passa a ser o primeiro botão do Menu, fora
+> de Configurações. Sem acesso vigente, abre o card Premium; com assinatura,
+> cortesia administrativa, cupom, teste ou outra liberação válida, mantém o
+> painel com plano, faturas e renovação. A ação Ir para assinatura abre
+> diretamente a contratação. Quando Ocultar card é bloqueado pelo Premium,
+> fecha somente o menu da ação e mantém o card no dashboard.
 
 > Revisão 1.6.0.84.101: quando o Premium Pessoal deixa de estar vigente, o
 > Vendas fica temporariamente inacessível e sua receita consolidada deixa de

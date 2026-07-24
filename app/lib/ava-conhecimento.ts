@@ -6,8 +6,8 @@ export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
  * Cada guia é enviado apenas no ambiente correspondente, evitando misturar
  * caminhos e funções de Web, Mobile e Vendas na mesma resposta.
  */
-// Revisado na versão 1.6.0.84.101: suspensão reversível do AvantaVendas no
-// Premium Pessoal e ocultação temporária da receita integrada.
+// Revisado na versão 1.6.0.84.102: Assinatura como primeira ação do Menu
+// Mobile, com apresentação e contratação adequadas ao estado do acesso.
 const GUIAS: Record<AmbienteAva, string> = {
   'gestao-web': `GUIA OPERACIONAL — AVANTALAB GESTÃO WEB
 Você atende no sistema Gestão Web. Oriente por nomes visíveis na interface; não invente telas.
@@ -54,7 +54,9 @@ NAVEGAÇÃO E PERFIS
 - A barra inferior mantém Início, Lançar e Menu. Os atalhos laterais podem ser ajustados em Menu > Organizar atalhos.
 - Avisos já recebidos ficam em Menu > Configurações > Avisos e notificações. A ativação das notificações do aparelho fica em Menu > Configurações > Notificações.
 - Sobre apresenta as principais novidades em marcos consolidados e omite alterações exclusivamente técnicas.
-- Em Configurações, Assinatura aparece primeiro quando disponível, seguida pelos controles com chave. Gerenciar perfil, Usuários e Editar dados cadastrais aparecem em sequência.
+- Assinatura é o primeiro botão do Menu e fica fora de Configurações. Sem assinatura ou outra liberação vigente, ele abre o card Premium; com assinatura, cortesia administrativa, cupom, teste ou outra liberação válida, mantém o painel com plano, faturas e renovação.
+- Em avisos de recurso Premium, Ir para assinatura abre diretamente a contratação do plano, sem passar pelo painel de status. Ao tentar ocultar um card sem Premium, apenas o menu Ocultar card é fechado; o card permanece visível.
+- Em Configurações, os controles com chave aparecem primeiro. Gerenciar perfil, Usuários e Editar dados cadastrais aparecem em sequência.
 - Com o módulo Vendas Mobile ativo e permissão de Gestor Master/Administrador, após o login a primeira tela permite escolher entre Gestão e Vendas e memorizar o sistema inicial. Depois da escolha aparece Preparando acesso e o sistema selecionado é carregado. Dentro da Gestão, Menu > Ir para Vendas e o atalho de mesmo nome abrem diretamente o outro sistema.
 - Em Preparando acesso, a Gestão mostra a etapa atual e um percentual baseado em tarefas realmente concluídas, incluindo sessão, perfis, permissões e dados financeiros. Depois da validação de sistemas, assinatura, cadastro, integração e dados financeiros são carregados em paralelo, fazendo a barra avançar conforme cada tarefa termina. A tela principal só abre depois de os 100% serem exibidos. A recuperação automática ocorre apenas quando não existe progresso real; uma carga lenta, mas saudável, não é reiniciada. Se o card permanecer visível depois de 100%, o aplicativo confirma novamente a abertura antes de oferecer a recuperação. O resumo comparativo dos demais perfis é atualizado logo após a entrada, sem atrasar os dados do perfil aberto.
 - Em perfil sem o módulo Vendas, Ir para Vendas continua ativo para Gestor Master ou Administrador. Ao tocar, a Gestão confirma diretamente a instalação salva no perfil; somente quando ela realmente não existe, solicita a ativação. Depois de ativado, não pergunta novamente enquanto o módulo permanecer instalado. Perfil pessoal gratuito precisa do Premium. Operadores veem o botão inativo e não podem ativar nem trocar de sistema.

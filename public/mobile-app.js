@@ -1579,6 +1579,50 @@
     carregarAssinaturaMobile();
   }
 
+  function abrirContratacaoAssinaturaMobile() {
+    state.modalMenu = 'contratarAssinatura';
+    state.assinaturaErro = '';
+    state.assinaturaAcao = '';
+    render();
+  }
+
+  function abrirAssinaturaPeloMenuMobile() {
+    if (
+      COBRANCA_ATIVA_MOBILE &&
+      state.paywallEstado &&
+      !assinaturaVigenteMobile(state.paywallEstado)
+    ) {
+      abrirPremiumMobile('');
+      return;
+    }
+    abrirAssinaturaMobile();
+  }
+
+  function contratacaoAssinaturaMobileHtml() {
+    var pessoal = state.empresa && normalizarTipoPerfil(state.empresa.tipo_perfil) === 'pessoal';
+    var precoMensal = pessoal ? 'R$ 9,90' : 'R$ 34,90';
+    var precoAnual = pessoal ? 'R$ 99,00' : 'R$ 348,00';
+    return '<div class="grid gap-3">' +
+      '<div class="rounded-2xl border-2 border-sky-400 px-4 py-3 text-white shadow-lg" style="background:linear-gradient(135deg,#003E73,#00A6C8)">' +
+        '<p class="text-[10px] font-black uppercase tracking-[0.2em] text-white/75">Contratação</p>' +
+        '<h3 class="mt-1 text-lg font-black">' + (pessoal ? 'Premium Pessoal' : 'Plano Empresa') + '</h3>' +
+        '<p class="mt-1 text-xs font-semibold leading-relaxed text-white/85">Escolha o ciclo e informe os dados de cobrança para liberar os recursos do perfil.</p>' +
+      '</div>' +
+      (state.assinaturaErro ? '<div class="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-xs font-bold text-red-700">' + escapeHtml(state.assinaturaErro) + '</div>' : '') +
+      '<div class="grid grid-cols-2 gap-2">' +
+        '<input id="assinatura-nome" type="text" value="' + escapeHtml(state.assinaturaNome || nomeEmpresa(state.empresa || {})) + '" placeholder="Nome/razão social" class="h-11 rounded-xl border border-slate-300 bg-white px-3 text-sm font-bold text-slate-900 outline-none focus:border-sky-600"/>' +
+        '<input id="assinatura-cpf" type="text" inputmode="numeric" value="' + escapeHtml(state.assinaturaCpf || '') + '" placeholder="CPF/CNPJ" class="h-11 rounded-xl border border-slate-300 bg-white px-3 text-sm font-bold text-slate-900 outline-none focus:border-sky-600"/>' +
+        '<input id="assinatura-email" type="email" value="' + escapeHtml(state.assinaturaEmail || emailUsuarioAtualMobile()) + '" placeholder="E-mail de cobrança" class="h-11 rounded-xl border border-slate-300 bg-white px-3 text-sm font-bold text-slate-900 outline-none focus:border-sky-600"/>' +
+        '<input id="assinatura-telefone" type="tel" inputmode="tel" value="' + escapeHtml(state.assinaturaTelefone || telefonePadraoMobile()) + '" placeholder="Telefone" class="h-11 rounded-xl border border-slate-300 bg-white px-3 text-sm font-bold text-slate-900 outline-none focus:border-sky-600"/>' +
+      '</div>' +
+      '<div class="grid grid-cols-2 gap-2">' +
+        '<button id="assinatura-assinar-mensal" type="button" ' + (state.assinaturaAcao ? 'disabled ' : '') + 'class="h-12 rounded-xl border border-sky-300 bg-sky-50 px-2 text-[10px] font-black uppercase text-sky-700 disabled:opacity-60">' + (state.assinaturaAcao === 'assinar-mensal' ? 'Processando...' : 'Mensal · ' + precoMensal) + '</button>' +
+        '<button id="assinatura-assinar-anual" type="button" ' + (state.assinaturaAcao ? 'disabled ' : '') + 'class="h-12 rounded-xl bg-sky-700 px-2 text-[10px] font-black uppercase text-white disabled:opacity-60">' + (state.assinaturaAcao === 'assinar-anual' ? 'Processando...' : 'Anual · ' + precoAnual) + '</button>' +
+      '</div>' +
+      '<p class="text-center text-[10px] font-semibold leading-relaxed text-slate-500">O pagamento será aberto em uma página segura. Seus dados permanecem preservados durante a contratação.</p>' +
+    '</div>';
+  }
+
   async function alterarAssinaturaMobile(ciclo) {
     if (!state.empresa || state.assinaturaAcao) return;
     state.assinaturaAcao = ciclo;
@@ -9906,13 +9950,6 @@
             chaveMenuHtml(state.notificacoesAtivas) +
           '</div>' +
         '</button>' +
-        ((COBRANCA_ATIVA_MOBILE && podeGerenciarUsuarios()) ?
-        '<button id="menu-assinatura" type="button" class="rounded-[12px_24px_24px_24px] border ' + bordaBase + ' px-2.5 py-1 text-left shadow-[0_4px_11px_rgba(15,23,42,.05)] active:scale-[0.99]" style="order:1;' + (dk ? '' : 'background:linear-gradient(90deg,#FFF5E8 0%,#FFFFFF 78%);border-color:#F1D7B5;') + '">' +
-          '<div class="flex items-center gap-2">' +
-            '<span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg" style="background:#FDE8C8;color:#9A5A12">' + iconeMenuLateralSvg('menu-assinatura') + '</span>' +
-            '<span class="min-w-0 flex-1"><span class="block text-[11px] font-black">Assinatura</span><span class="mt-0.5 block truncate text-[9px] font-semibold text-slate-500">Plano, faturas e renovacao</span></span>' +
-          '</div>' +
-        '</button>' : '') +
         '<button id="menu-organizar-dashboard" type="button" class="rounded-[12px_24px_24px_24px] border ' + bordaBase + ' px-2.5 py-1 text-left shadow-[0_4px_11px_rgba(15,23,42,.05)] active:scale-[0.99]' + (premiumInativo ? ' grayscale opacity-60' : '') + '" style="order:7;' + (dk ? '' : 'background:linear-gradient(90deg,#EAF4FF 0%,#FFFFFF 78%);border-color:#C9DEF6;') + '"' + (premiumInativo ? ' aria-disabled="true"' : '') + '>' +
           '<div class="flex items-center gap-2">' +
             '<span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg" style="background:#E0EEFF;color:#2383F0">' + iconeMenuLateralSvg('menu-organizar-dashboard') + '</span>' +
@@ -9951,6 +9988,15 @@
             '</div>' +
           '</div>' +
           '<div class="grid gap-1.5">' +
+            ((COBRANCA_ATIVA_MOBILE && podeGerenciarUsuarios())
+              ? menuBotaoHtml(
+                  'menu-assinatura',
+                  'Assinatura',
+                  (state.paywallEstado && !assinaturaVigenteMobile(state.paywallEstado))
+                    ? 'Conheça e assine o Premium'
+                    : 'Plano, faturas e renovação'
+                )
+              : '') +
             menuBotaoHtml('menu-agenda', 'Agenda', 'Lembretes e avisos', false, premiumInativo) +
             menuBotaoHtml('menu-configurar-resumo', 'Mostrar/ocultar cards', 'Exibir ou remover blocos', false, premiumInativo) +
             menuBotaoHtml('menu-organizar-atalhos', 'Organizar atalhos', 'Personalizar a barra inferior', false, premiumInativo) +
@@ -10182,6 +10228,7 @@
       'menu-tutorial': ['linear-gradient(90deg,#F0EAFE 0%,#FCFAFF 100%)', '#DED4FA', 'linear-gradient(135deg,#A78BFA,#7C3AED)', '#FFFFFF'],
       'menu-vendas-mobile': ['linear-gradient(90deg,#E1F7FC 0%,#F8FDFF 100%)', '#B9E8F2', 'linear-gradient(135deg,#22D3EE,#0369A1)', '#FFFFFF'],
       'menu-trocar-sistema': ['linear-gradient(90deg,#E0F2FE 0%,#F8FDFF 100%)', '#BAE6FD', 'linear-gradient(135deg,#0284C7,#003E73)', '#FFFFFF'],
+      'menu-assinatura': ['linear-gradient(90deg,#FFF0D9 0%,#FFFCF7 100%)', '#F1D7B5', 'linear-gradient(135deg,#F5B95F,#9A5A12)', '#FFFFFF'],
     };
     var visual = estilos[id] || ['#FFFFFF', '#E2E8F0', '#ECFEFF', '#0E7490'];
     var cardStyle = state.darkMode ? 'background:#0F172A;border-color:#334155;' : 'background:' + visual[0] + ';border-color:' + visual[1] + ';';
@@ -10211,6 +10258,7 @@
       feedback: 'Dúvidas e Sugestões',
       despesasFixas: 'Gerenciar despesas fixas',
       assinatura: 'Assinatura',
+      contratarAssinatura: 'Assinar Premium',
       premium: 'Acesso exclusivo para assinantes',
       sobre: 'Sobre',
       notificacoes: 'Notificações',
@@ -10218,7 +10266,7 @@
       pontoRelatorio: state.pontoRelatorioNome ? 'Relatorio do dia' : 'Controle de ponto',
     }[state.modalMenu] || 'Menu';
 
-    var camadaModal = state.modalMenu === 'assinatura'
+    var camadaModal = state.modalMenu === 'assinatura' || state.modalMenu === 'contratarAssinatura'
       ? 'z-[13040]'
       : (state.modalMenu === 'premium' ? 'z-[13020]' : 'z-[60]');
     return (
@@ -10250,6 +10298,7 @@
     if (state.modalMenu === 'feedback') return feedbackMobileHtml();
     if (state.modalMenu === 'despesasFixas') return despesasFixasMenuHtml();
     if (state.modalMenu === 'assinatura') return assinaturaMobileHtml();
+    if (state.modalMenu === 'contratarAssinatura') return contratacaoAssinaturaMobileHtml();
     if (state.modalMenu === 'premium') return premiumPessoalHtml();
     if (state.modalMenu === 'sobre') return sobreMobileHtml();
     if (state.modalMenu === 'notificacoes') return notificacoesMobileHtml();
@@ -10905,12 +10954,15 @@
   }
 
   function removerCardDashboardMobile(id) {
-    if (premiumPessoalBloqueadoMobile()) { abrirPremiumMobile('organizar_dashboard'); return; }
+    state.dashboardOpcoesId = '';
+    state.dashboardOpcoesPos = null;
+    if (premiumPessoalBloqueadoMobile()) {
+      abrirPremiumMobile('organizar_dashboard');
+      return;
+    }
     var ocultos = normalizarOcultosDashboard(state.dashboardOcultos);
     if (ocultos.indexOf(id) < 0) ocultos.push(id);
     state.dashboardOcultos = ocultos;
-    state.dashboardOpcoesId = '';
-    state.dashboardOpcoesPos = null;
     salvarResumoDashboard();
     render();
     mostrarToast('Bloco removido do resumo.');
@@ -11799,11 +11851,14 @@
     bind('menu-usuario', function () { fecharMenuLateralAnimado(abrirUsuariosMobile); });
     bind('menu-gerenciar', function () { fecharMenuLateralAnimado(function () { abrirModalMenu('gerenciar'); }); });
     bind('menu-cadastro-perfil', function () { fecharMenuLateralAnimado(function () { abrirEdicaoCadastroPerfilMobile(false); }); });
-    bind('menu-assinatura', function () { fecharMenuLateralAnimado(abrirAssinaturaMobile); });
+    bind('menu-assinatura', function () { fecharMenuLateralAnimado(abrirAssinaturaPeloMenuMobile); });
     bind('menu-organizar-dashboard', function () { fecharMenuLateralAnimado(function () { if (premiumPessoalBloqueadoMobile()) { abrirPremiumMobile('organizar_dashboard'); return; } abrirModalMenu('organizarDashboard'); }); });
     bind('menu-organizar-atalhos', function () { fecharMenuLateralAnimado(function () { if (premiumPessoalBloqueadoMobile()) { abrirPremiumMobile('organizar_atalhos'); return; } abrirModalMenu('organizarAtalhos'); }); });
     // Premium Pessoal: CTA e cupom do modal de upgrade
-    bind('premium-assinar', function () { state.modalMenu = ''; state.premiumRecursoDestaque = ''; abrirAssinaturaMobile(); });
+    bind('premium-assinar', function () {
+      state.premiumRecursoDestaque = '';
+      abrirContratacaoAssinaturaMobile();
+    });
     bind('premium-toggle-recursos', function () {
       state.premiumRecursosAbertos = !state.premiumRecursosAbertos;
       render();
@@ -12159,7 +12214,7 @@
     });
     bind('assinar-aviso-assinante', function () {
       state.avisoAssinanteAberto = false;
-      abrirAssinaturaMobile();
+      abrirContratacaoAssinaturaMobile();
     });
     bind('cancelar-aviso-duplicado', function () {
       state.duplicadoConfirmacaoAberta = false;
