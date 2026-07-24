@@ -175,7 +175,7 @@ export default function ListaColaboradores({ colaboradores, recebimentos, onAdic
               Cancelar
             </button>
             {edicao && (
-              <button type="button" className={`${styles.btn} ${styles.btnDanger} ${styles.btnSm}`} onClick={excluirEmEdicao}>
+              <button type="button" className={`${styles.btn} ${styles.btnDanger} ${styles.btnExcluir} ${styles.btnSm}`} onClick={excluirEmEdicao}>
                 {confirmandoExclusao ? 'Confirmar' : 'Excluir'}
               </button>
             )}

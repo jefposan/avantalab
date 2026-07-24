@@ -1,6 +1,21 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.6.0.84.94 -->
+<!-- ava-version: 1.6.0.84.99 -->
+
+> Revisão 1.6.0.84.99: remoção do preview legado e ajustes visuais em
+> Recebimentos; sem impacto operacional no AvantaVendas.
+
+> Revisão 1.6.0.84.98: visibilidade padronizada nos campos de senha de
+> Recebimentos; sem impacto operacional no AvantaVendas.
+
+> Revisão 1.6.0.84.97: paginação completa dos lançamentos em Recebimentos;
+> sem impacto operacional no AvantaVendas.
+
+> Revisão 1.6.0.84.96: controle de visibilidade da senha no PWA de Recebimentos;
+> sem impacto operacional no AvantaVendas.
+
+> Revisão 1.6.0.84.95: distribuição iOS limitada a iPhone nesta fase; sem
+> impacto operacional no Vendas Mobile.
 
 > Revisão 1.6.0.84.94: **Ir para Gestão** preserva o modo aplicativo do PWA,
 > sem abrir as barras do navegador.

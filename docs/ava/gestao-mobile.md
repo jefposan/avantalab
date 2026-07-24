@@ -1,6 +1,21 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.6.0.84.94 -->
+<!-- ava-version: 1.6.0.84.99 -->
+
+> Revisão 1.6.0.84.99: remoção do preview legado e ajustes visuais em
+> Recebimentos; sem impacto operacional na Gestão Mobile.
+
+> Revisão 1.6.0.84.98: visibilidade padronizada nos campos de senha de
+> Recebimentos; sem impacto operacional na Gestão Mobile.
+
+> Revisão 1.6.0.84.97: paginação completa dos lançamentos em Recebimentos;
+> sem impacto operacional na Gestão Mobile.
+
+> Revisão 1.6.0.84.96: controle de visibilidade da senha no PWA de Recebimentos;
+> sem impacto operacional na Gestão Mobile.
+
+> Revisão 1.6.0.84.95: distribuição iOS limitada a iPhone nesta fase; sem
+> impacto operacional na Gestão Mobile.
 
 > Revisão 1.6.0.84.94: ao chegar pelo AvantaVendas, a Gestão permanece na
 > janela instalada do PWA, sem abrir a interface do navegador.

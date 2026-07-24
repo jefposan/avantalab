@@ -664,6 +664,7 @@
 .btnPrimary { background: var(--cp); color: var(--cp-text, #fff); }
 .btnGhost { background: #fff; color: var(--cp); border: 1px solid #cbd5e1; }
 .btnDanger { background: #fee2e2; color: #b91c1c; }
+.btnExcluir { border: 1px solid #dc2626; }
 .btnSuccess { background: #16a34a; color: #fff; }
 
 /* Formulário */
@@ -1207,7 +1208,6 @@
   margin-bottom: 6px;
 }
 .cabecalhoTipoCadastro .formTitulo { margin-bottom: 0; }
-.cabecalhoTipoCadastro::after { content: ''; }
 .tipoCadastro {
   display: flex;
   align-items: center;
@@ -1241,9 +1241,20 @@
 .tipoCadastroOpcaoAtiva { border-color: var(--cp); background: var(--cp); color: var(--cp-text); }
 .tipoCadastroOpcao:disabled { cursor: default; opacity: 1; }
 .tipoCadastroAjuda { margin: 0 0 10px; text-align: center; }
-.acoesCadastroEmpresaTopo { margin: 0 0 4px; }
+.acoesCadastroEmpresaTopo {
+  justify-self: end;
+  align-items: center;
+  margin-left: 0;
+}
+.acoesCadastroEmpresaTopo .btn {
+  min-height: 23px;
+  padding: 1px 9px;
+  border-radius: 10px;
+  line-height: 1.2;
+}
 @media (max-width: 680px) {
   .cabecalhoTipoCadastro { display: flex; align-items: flex-start; flex-direction: column; gap: 6px; }
+  .acoesCadastroEmpresaTopo { align-self: flex-end; }
 }
 .recorrenciaOpcao {
   min-height: 27px;
@@ -1586,6 +1597,7 @@
 .darkScope .prazoProximo { color: #93c5fd; }
 .darkScope .btnGhost { border-color: #475569; background: #0f172a; color: #a5f3fc; }
 .darkScope .btnDanger { background: #4c111a; color: #fecaca; }
+.darkScope .btnExcluir { border-color: #f87171; }
 .darkScope .btnSuccess { background: #14532d; color: #bbf7d0; }
 .darkScope .acoesTrigger:hover,
 .darkScope .acoesGrupoAberto .acoesTrigger { background: #1e293b; color: #67e8f9; }

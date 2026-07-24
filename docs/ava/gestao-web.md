@@ -1,6 +1,24 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.6.0.84.94 -->
+<!-- ava-version: 1.6.0.84.99 -->
+
+> Revisão 1.6.0.84.99: removida a página provisória `/recebimentos`; o módulo
+> integrado à Gestão e o PWA `/recebimentos/colaborador` permanecem disponíveis.
+> As ações do cadastro foram compactadas e alinhadas, sem mudança operacional.
+
+> Revisão 1.6.0.84.98: todos os campos de senha de Recebimentos Presenciais
+> possuem botão acessível para exibir ou ocultar o conteúdo.
+
+> Revisão 1.6.0.84.97: Recebimentos Presenciais carrega todos os lotes de
+> lançamentos; bases com mais de mil registros não ocultam vencimentos próximos,
+> atrasos, conferências ou resultados. As recorrências futuras ficam limitadas
+> aos próximos 12 meses.
+
+> Revisão 1.6.0.84.96: no login do colaborador de Recebimentos Presenciais, o
+> botão com ícone de olho permite exibir ou ocultar a senha digitada.
+
+> Revisão 1.6.0.84.95: distribuição iOS limitada a iPhone nesta fase; sem
+> impacto operacional na Gestão Web.
 
 > Revisão 1.6.0.84.94: troca entre os PWAs preservada em modo aplicativo; sem
 > impacto operacional na Gestão Web.

@@ -1,5 +1,41 @@
 # Changelog
 
+## 1.6.0.84.99 - 2026-07-23
+
+- Recebimentos Presenciais: ações de cancelar, excluir e salvar do cadastro de
+  empresa ficam alinhadas à seleção do tipo de cadastro, com altura compacta.
+- Recebimentos Presenciais: botões de exclusão ganham borda vermelha também no
+  modo escuro, reforçando visualmente a ação destrutiva.
+- Recebimentos Presenciais: removida a antiga página de demonstração em
+  `/recebimentos`; o módulo integrado e o PWA do colaborador permanecem ativos.
+
+## 1.6.0.84.98 - 2026-07-23
+
+- Recebimentos Presenciais: todos os campos de senha passam a usar o mesmo
+  controle acessível para exibir ou ocultar o conteúdo, incluindo cadastro,
+  confirmação, edição e login do colaborador.
+
+## 1.6.0.84.97 - 2026-07-23
+
+- Recebimentos Presenciais: consultas de lançamentos passam a carregar todos os
+  lotes do Supabase, eliminando o corte de 1.000 registros que ocultava os
+  vencimentos mais próximos em bases maiores.
+- Recorrências automáticas ficam limitadas ao horizonte móvel dos próximos 12
+  meses; previsões não recebidas além desse intervalo são removidas sem afetar
+  histórico, recebimentos ou baixas.
+
+## 1.6.0.84.96 - 2026-07-23
+
+- Recebimentos Presenciais: o login do colaborador passa a permitir exibir e
+  ocultar a senha pelo botão acessível dentro do campo.
+
+## 1.6.0.84.95 - 2026-07-23
+
+- iOS/App Store: distribuição limitada a iPhone nesta fase, removendo a
+  exigência de screenshots de iPad; próximo build passa a ser o número 2.
+- iOS/App Store: declarada ausência de criptografia não isenta para evitar
+  nova pendência de export compliance no próximo upload.
+
 ## 1.6.0.84.94 - 2026-07-23
 
 - AvantaVendas: a troca para a Gestão permanece dentro da janela instalada do

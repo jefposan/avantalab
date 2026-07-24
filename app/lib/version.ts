@@ -1,2 +1,2 @@
-export const APP_VERSION = '1.6.0.84.94';
+export const APP_VERSION = '1.6.0.84.99';
 export const APP_VERSION_LABEL = `AvantaLab Gestão v${APP_VERSION}`;

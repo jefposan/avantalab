@@ -434,14 +434,12 @@ export default function ListaEmpresas({
               <button type="button" className={`${styles.tipoCadastroOpcao} ${!clienteDireto ? styles.tipoCadastroOpcaoAtiva : ''}`} onClick={() => setETipo('local_agrupador')} disabled={edicao} aria-pressed={!clienteDireto}>Local agrupador</button>
             </div>
           </div>
-        </div>
-        <div className={`${styles.linhaTelefoneAcoes} ${styles.acoesCadastroEmpresaTopo}`}>
-          <div className={styles.acoesForm}>
+          <div className={`${styles.acoesForm} ${styles.acoesCadastroEmpresaTopo}`}>
             <button type="button" className={`${styles.btn} ${styles.btnGhost} ${styles.btnSm}`} onClick={limparFormEmpresa}>
               Cancelar
             </button>
             {edicao && (
-              <button type="button" className={`${styles.btn} ${styles.btnDanger} ${styles.btnSm}`} onClick={excluirEmpresaEmEdicao}>
+              <button type="button" className={`${styles.btn} ${styles.btnDanger} ${styles.btnExcluir} ${styles.btnSm}`} onClick={excluirEmpresaEmEdicao}>
                 {confirmandoExclusao ? 'Confirmar' : 'Excluir'}
               </button>
             )}
@@ -608,7 +606,7 @@ export default function ListaEmpresas({
                       <div className={styles.acoesForm}>
                         <button type="button" className={`${styles.btn} ${styles.btnGhost} ${styles.btnSm}`} onClick={limparFormSub}>Cancelar</button>
                         {editandoSubId && (
-                          <button type="button" className={`${styles.btn} ${styles.btnDanger} ${styles.btnSm}`} onClick={excluirSubEmEdicao}>
+                          <button type="button" className={`${styles.btn} ${styles.btnDanger} ${styles.btnExcluir} ${styles.btnSm}`} onClick={excluirSubEmEdicao}>
                             {confirmandoExclusao ? 'Confirmar' : 'Excluir'}
                           </button>
                         )}
