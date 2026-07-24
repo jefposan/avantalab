@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.6.0.84.108 -->
+<!-- ava-version: 1.6.0.84.109 -->
+
+> Revisão 1.6.0.84.109: contraste dos itens bonificados no AvantaVendas; sem
+> impacto operacional na Gestão Mobile.
 
 > Revisão 1.6.0.84.108: restauração do comportamento visual anterior aos
 > ajustes experimentais de compatibilidade Android; sem mudança operacional.

@@ -1,6 +1,9 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.6.0.84.108 -->
+<!-- ava-version: 1.6.0.84.109 -->
+
+> Revisão 1.6.0.84.109: itens bonificados permanecem legíveis no tema escuro
+> durante a montagem e a consulta do pedido; sem mudança no fluxo comercial.
 
 > Revisão 1.6.0.84.108: restauração do comportamento visual anterior aos
 > ajustes experimentais de compatibilidade Android; sem impacto operacional.

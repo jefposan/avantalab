@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.6.0.84.109 - 2026-07-24
+
+- AvantaVendas: itens bonificados passam a usar uma superfície âmbar escura no
+  tema noturno, mantendo nome, quantidade, preço e total legíveis tanto no
+  rascunho quanto no comprovante do pedido.
+- Corrigido o seletor do comprovante para alcançar as linhas bonificadas dentro
+  do contêiner de rolagem, sem alterar produtos comuns ou regras comerciais.
+
 ## 1.6.0.84.108 - 2026-07-24
 
 - Compatibilidade: restaurado o comportamento visual anterior ao conjunto de
