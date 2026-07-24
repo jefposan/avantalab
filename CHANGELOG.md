@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.6.0.84.108 - 2026-07-24
+
+- Compatibilidade: restaurado o comportamento visual anterior ao conjunto de
+  ajustes experimentais para Android, preservando integralmente as melhorias
+  independentes do importador de documentos, seus limites e sua auditoria.
+- Landing page, popups, modais, layouts web, iOS e demais componentes voltam ao
+  estado seguro `backup-pre-android-mobile`.
+
 ## 1.6.0.84.107 - 2026-07-24
 
 - Gestão Web: extratos e faturas em PDF passam a aceitar no máximo cinco
@@ -12,22 +20,6 @@
   tokens, com perfil, páginas, modelo, contingência e resultado, sem armazenar
   o PDF ou seu conteúdo financeiro.
 
-## 1.6.0.84.106 - 2026-07-24
-
-- Landing page: o primeiro enquadramento mobile deixa de depender da
-  recalibração de `svh` do WebView após o primeiro scroll, mantendo composição
-  estável desde o carregamento no Android e no iPhone.
-- Modais web: removida a largura máxima imposta pela infraestrutura global;
-  cada popup volta a respeitar seu `max-w-*` original, preservando apenas os
-  limites compartilhados de altura, rolagem e área segura.
-
-## 1.6.0.84.105 - 2026-07-24
-
-- Landing page: o hero mobile passa a dimensionar altura e espaçamentos pelo
-  espaço útil disponível, com limite orientado ao conteúdo e viewport dinâmico.
-- A mesma regra responsiva atende Safari/iPhone, Chrome/Android e o container
-  Capacitor, sem detecção de plataforma, aparelho ou user-agent.
-
 ## 1.6.0.84.104 - 2026-07-24
 
 - Gestão Web: a análise de PDFs do Importador passa a usar GPT-5.6 Terra com
@@ -36,18 +28,6 @@
   estrutural e matemática.
 - A qualidade visual do PDF e a tolerância máxima de dois centavos são
   preservadas; o limite de saída foi reduzido para evitar consumo anormal.
-
-## 1.6.0.84.103 - 2026-07-24
-
-- Compatibilidade mobile: Gestão Web, Gestão Mobile, AvantaVendas,
-  Recebimentos e Ponto passam a compartilhar uma estratégia de viewport
-  dinâmico com fallback, suporte a `dvh`/`svh`/`lvh` e áreas seguras.
-- Modais, drawers, menus, avisos, chat e calculadora respeitam a área útil,
-  mantêm rolagem interna e ações acessíveis durante mudanças de viewport e
-  abertura do teclado virtual.
-- Formulários mobile mantêm fonte mínima de 16 px para evitar zoom automático
-  no Safari; alvos de toque, tabelas e conteúdos longos foram reforçados para
-  telas a partir de 320 px sem alterar regras de negócio ou identidade visual.
 
 ## 1.6.0.84.102 - 2026-07-24
 

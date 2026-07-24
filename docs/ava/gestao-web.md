@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.6.0.84.107 -->
+<!-- ava-version: 1.6.0.84.108 -->
+
+> Revisão 1.6.0.84.108: restauração do comportamento visual anterior aos
+> ajustes experimentais de compatibilidade Android; sem mudança operacional.
 
 > Revisão 1.6.0.84.107: extratos e faturas em PDF aceitam até cinco páginas e
 > três envios mensais por perfil. Tickets e notas pequenas por imagem não usam
@@ -8,19 +11,9 @@
 > Admin acompanha somente metadados de consumo, sem guardar o documento nem o
 > conteúdo reconhecido.
 
-> Revisão 1.6.0.84.106: estabilização visual da landing e restauração das
-> larguras originais dos popups; sem mudança nos fluxos operacionais.
-
-> Revisão 1.6.0.84.105: refinamento responsivo da landing pública; sem impacto
-> operacional na Gestão Web.
-
 > Revisão 1.6.0.84.104: o Importador mantém a mesma conferência humana e
 > matemática, usando uma análise econômica por padrão e uma leitura reforçada
 > somente quando a primeira não confere.
-
-> Revisão 1.6.0.84.103: compatibilidade visual e funcional entre Safari no
-> iPhone e Chrome no Android, com viewport dinâmico, áreas seguras, modais
-> roláveis e campos sem zoom automático; sem mudança nos fluxos operacionais.
 
 > Revisão 1.6.0.84.102: reorganização da Assinatura na Gestão Mobile; sem
 > impacto operacional na Gestão Web.

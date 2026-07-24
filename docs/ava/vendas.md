@@ -1,22 +1,15 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.6.0.84.107 -->
+<!-- ava-version: 1.6.0.84.108 -->
+
+> Revisão 1.6.0.84.108: restauração do comportamento visual anterior aos
+> ajustes experimentais de compatibilidade Android; sem impacto operacional.
 
 > Revisão 1.6.0.84.107: controle de consumo do importador da Gestão Web; sem
 > impacto operacional no AvantaVendas.
 
-> Revisão 1.6.0.84.106: estabilização visual da landing e correção de largura
-> dos popups web; sem impacto operacional no AvantaVendas.
-
-> Revisão 1.6.0.84.105: refinamento responsivo da landing pública; sem impacto
-> operacional no AvantaVendas.
-
 > Revisão 1.6.0.84.104: otimização de custo do Importador da Gestão Web; sem
 > impacto operacional no AvantaVendas.
-
-> Revisão 1.6.0.84.103: AvantaVendas passa a ajustar menus, barras fixas,
-> formulários, tabelas e painéis à área útil do Safari/iPhone e Chrome/Android;
-> sem mudança nas regras de vendas, permissões ou integração financeira.
 
 > Revisão 1.6.0.84.102: reorganização da Assinatura na Gestão Mobile; sem
 > impacto operacional interno no AvantaVendas.

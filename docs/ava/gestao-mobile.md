@@ -1,22 +1,15 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.6.0.84.107 -->
+<!-- ava-version: 1.6.0.84.108 -->
+
+> Revisão 1.6.0.84.108: restauração do comportamento visual anterior aos
+> ajustes experimentais de compatibilidade Android; sem mudança operacional.
 
 > Revisão 1.6.0.84.107: limite do importador de extratos e faturas da Gestão
 > Web; tickets e notas por imagem no Mobile permanecem sem franquia mensal.
 
-> Revisão 1.6.0.84.106: estabilização visual da landing e correção de largura
-> dos popups web; sem impacto operacional na Gestão Mobile.
-
-> Revisão 1.6.0.84.105: refinamento responsivo da landing pública; sem impacto
-> operacional na Gestão Mobile.
-
 > Revisão 1.6.0.84.104: otimização de custo do Importador da Gestão Web; sem
 > impacto operacional na Gestão Mobile.
-
-> Revisão 1.6.0.84.103: telas, menus, barras, formulários e sobreposições passam
-> a respeitar viewport dinâmico e áreas seguras no iPhone e no Android; sem
-> mudança nos nomes, permissões ou fluxos operacionais.
 
 > Revisão 1.6.0.84.102: Assinatura passa a ser o primeiro botão do Menu, fora
 > de Configurações. Sem acesso vigente, abre o card Premium; com assinatura,
