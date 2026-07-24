@@ -1,6 +1,10 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.6.0.84.109 -->
+<!-- ava-version: 1.6.0.84.110 -->
+
+> Revisão 1.6.0.84.110: comprovantes de pedido e pagamento identificam o
+> desconto concedido na tela e na imagem compartilhada quando o valor é maior
+> que zero.
 
 > Revisão 1.6.0.84.109: itens bonificados permanecem legíveis no tema escuro
 > durante a montagem e a consulta do pedido; sem mudança no fluxo comercial.

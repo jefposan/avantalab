@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.6.0.84.109 -->
+<!-- ava-version: 1.6.0.84.110 -->
+
+> Revisão 1.6.0.84.110: desconto concedido nos comprovantes do AvantaVendas;
+> sem impacto operacional na Gestão Web.
 
 > Revisão 1.6.0.84.109: contraste dos itens bonificados no AvantaVendas; sem
 > impacto operacional na Gestão Web.

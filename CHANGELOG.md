@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.6.0.84.110 - 2026-07-24
+
+- AvantaVendas: comprovantes de pedido passam a exibir o desconto concedido no
+  resumo da tela e na imagem compartilhada sempre que o valor for positivo.
+- Comprovantes de pagamento mantêm a exibição condicional existente com o
+  rótulo padronizado “Desconto concedido” na tela e na imagem.
+
 ## 1.6.0.84.109 - 2026-07-24
 
 - AvantaVendas: itens bonificados passam a usar uma superfície âmbar escura no

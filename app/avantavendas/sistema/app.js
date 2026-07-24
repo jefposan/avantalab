@@ -4394,7 +4394,7 @@ function abrirPagamentoClienteDetalhe(pagamentoId, retornoClienteId = '', retorn
   if (!pagamento) return;
   const cliente = state.clientes.find((item) => item.id === pagamento.cliente_id);
   const resumo = resumoComprovantePagamento(pagamento);
-  const descontoHtml = Number(pagamento.desconto || 0) > 0 ? `<div><span>Desconto</span><b>${moeda(pagamento.desconto)}</b></div>` : '';
+  const descontoHtml = Number(pagamento.desconto || 0) > 0 ? `<div><span>Desconto concedido</span><b>${moeda(pagamento.desconto)}</b></div>` : '';
   sheet(`<div class="sheet-header"><div><h2>Comprovante de pagamento</h2><p class="muted small">Cliente: ${escapeHtml(cliente?.nome || 'não informado')} · ${dataComprovante(pagamento.data_pagamento)}</p></div><button class="close" onclick="voltarParaDetalhesCliente('${retornoClienteId}','${retornoAba}',${retornoPagina})">×</button></div><section class="payment-detail-summary receipt-detail-summary"><div><span>Saldo anterior</span><b>${moeda(resumo.saldoAnterior)}</b></div><div><span>Forma de pagamento</span><b>${escapeHtml(pagamento.forma_pagamento || 'Não informado')}</b></div>${descontoHtml}<div class="payment-paid-highlight"><span>Valor pago</span><b>${moeda(pagamento.valor)}</b></div><div class="receipt-current-balance"><span>Saldo atual</span><b>${moeda(resumo.saldoAtual)}</b></div></section><footer class="order-view-actions"><button type="button" class="ghost" onclick="voltarParaDetalhesCliente('${retornoClienteId}','${retornoAba}',${retornoPagina})">Fechar</button><button type="button" class="danger" onclick="abrirConfirmacaoExcluirPagamento('${pagamentoId}',${retornoPagina},'${retornoClienteId}','${retornoAba}','detalhe')">Excluir</button><button type="button" class="secondary" onclick="abrirEditarPagamentoCliente('${pagamentoId}',${retornoPagina},'${retornoClienteId}','${retornoAba}')">Editar</button></footer><button class="primary order-share" onclick="compartilharPagamento('${pagamentoId}')">${svgIcon('save')} Compartilhar comprovante</button>`, 'sheet-backdrop-centered receipt-view-backdrop');
 }
 
@@ -4407,13 +4407,15 @@ function abrirPedidoCliente(pedidoId, retornoClienteId = '', retornoAba = '', re
   }
   const cliente = state.clientes.find((item) => item.id === venda.cliente_id);
   const resumo = resumoComprovantePedido(venda);
+  const desconto = Math.max(0, Number(venda.desconto || 0));
+  const descontoHtml = desconto > 0 ? `<div><span>Desconto concedido</span><b>${moeda(desconto)}</b></div>` : '';
   const itensHtml = (venda.itens || []).map((item, indice) => {
     const preco = Number(item.preco ?? item.preco_unitario ?? 0);
     const bonificado = itemPedidoBonificado(item);
     const totalItem = bonificado ? 0 : Number(item.total ?? Number(item.quantidade || 0) * preco);
     return `<div class="receipt-order-row ${bonificado ? 'is-bonus' : ''}"><div class="receipt-order-product"><b>${escapeHtml(item.produto_nome)}</b>${bonificado ? '<em>Bonificado</em>' : ''}</div><span class="receipt-order-quantity">${Number(item.quantidade || 0)}</span><span class="receipt-order-price">${bonificado ? '—' : moeda(preco)}</span><strong class="receipt-order-total">${moeda(totalItem)}</strong></div>`;
   }).join('') || '<p class="muted">Sem itens registrados.</p>';
-  sheet(`<div class="sheet-header"><div><h2>Comprovante de pedido</h2><p class="muted small">Cliente: ${escapeHtml(cliente?.nome || 'não informado')} · ${dataComprovante(venda.criado_em)}</p></div><button class="close" onclick="voltarParaDetalhesCliente('${retornoClienteId}','${retornoAba}',${retornoPagina})">×</button></div><section class="order-view-items receipt-order-table"><header><span>Produto</span><span>Qtd</span><span>Preço</span><span>Total</span></header><div class="receipt-order-scroll">${itensHtml}</div></section><div class="receipt-order-footer"><section class="receipt-balance-summary"><div><span>Saldo anterior</span><b>${moeda(resumo.saldoAnterior)}</b></div><div><span>Pedido</span><b>${moeda(venda.total)}</b></div><div class="receipt-current-balance"><span>Saldo atual</span><b>${moeda(resumo.saldoAtual)}</b></div></section><footer class="order-view-actions"><button type="button" class="ghost" onclick="voltarParaDetalhesCliente('${retornoClienteId}','${retornoAba}',${retornoPagina})">Fechar</button><button type="button" class="danger" onclick="confirmarExclusaoPedido('${pedidoId}','${retornoClienteId}','${retornoAba}',${retornoPagina})">Excluir</button><button type="button" class="secondary" onclick="abrirEditarPedido('${pedidoId}')">Editar</button></footer><button class="primary order-share" onclick="compartilharPedido('${pedidoId}')">${svgIcon('save')} Compartilhar comprovante</button></div>`, 'sheet-backdrop-centered receipt-view-backdrop order-view-backdrop');
+  sheet(`<div class="sheet-header"><div><h2>Comprovante de pedido</h2><p class="muted small">Cliente: ${escapeHtml(cliente?.nome || 'não informado')} · ${dataComprovante(venda.criado_em)}</p></div><button class="close" onclick="voltarParaDetalhesCliente('${retornoClienteId}','${retornoAba}',${retornoPagina})">×</button></div><section class="order-view-items receipt-order-table"><header><span>Produto</span><span>Qtd</span><span>Preço</span><span>Total</span></header><div class="receipt-order-scroll">${itensHtml}</div></section><div class="receipt-order-footer"><section class="receipt-balance-summary"><div><span>Saldo anterior</span><b>${moeda(resumo.saldoAnterior)}</b></div>${descontoHtml}<div><span>Pedido</span><b>${moeda(venda.total)}</b></div><div class="receipt-current-balance"><span>Saldo atual</span><b>${moeda(resumo.saldoAtual)}</b></div></section><footer class="order-view-actions"><button type="button" class="ghost" onclick="voltarParaDetalhesCliente('${retornoClienteId}','${retornoAba}',${retornoPagina})">Fechar</button><button type="button" class="danger" onclick="confirmarExclusaoPedido('${pedidoId}','${retornoClienteId}','${retornoAba}',${retornoPagina})">Excluir</button><button type="button" class="secondary" onclick="abrirEditarPedido('${pedidoId}')">Editar</button></footer><button class="primary order-share" onclick="compartilharPedido('${pedidoId}')">${svgIcon('save')} Compartilhar comprovante</button></div>`, 'sheet-backdrop-centered receipt-view-backdrop order-view-backdrop');
 }
 
 function abrirConsignadoCliente(venda, retornoClienteId = '', retornoAba = '', retornoPagina = 0) {
@@ -4796,6 +4798,7 @@ async function compartilharPedido(pedidoId) {
   if (!venda) return;
   const cliente = state.clientes.find((item) => item.id === venda.cliente_id);
   const resumo = resumoComprovantePedido(venda);
+  const desconto = Math.max(0, Number(venda.desconto || 0));
   const linhas = (venda.itens || []).map((item) => ({
     principal: item.produto_nome || 'Produto',
     bonificado: itemPedidoBonificado(item),
@@ -4812,6 +4815,7 @@ async function compartilharPedido(pedidoId) {
     linhas,
     resumo: [
       { rotulo: 'Saldo anterior', valor: moeda(resumo.saldoAnterior) },
+      ...(desconto > 0 ? [{ rotulo: 'Desconto concedido', valor: moeda(desconto) }] : []),
       { rotulo: 'Pedido', valor: moeda(venda.total), destaque: 'principal', tituloDestaque: 'Pedido registrado' },
       { rotulo: 'Saldo atual', valor: moeda(resumo.saldoAtual), destaque: 'saldo' },
     ],
@@ -4828,7 +4832,7 @@ async function compartilharPagamento(pagamentoId) {
   const desconto = Number(pagamento.desconto || 0);
   const abatimento = Number(pagamento.valor || 0) + desconto;
   const linhas = [{ principal: 'Forma de pagamento', secundario: '', valor: pagamento.forma_pagamento || 'Não informado' }];
-  if (desconto > 0) linhas.push({ principal: 'Desconto', secundario: 'Abatimento concedido', valor: moeda(desconto) });
+  if (desconto > 0) linhas.push({ principal: 'Desconto concedido', secundario: 'Abatimento aplicado', valor: moeda(desconto) });
   const canvas = criarCanvasComprovante({
     empresa: state.acessoVendas?.empresa_nome || 'AvantaLab',
     titulo: 'Comprovante de pagamento',
