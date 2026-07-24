@@ -1,5 +1,17 @@
 # Changelog
 
+## 1.6.0.84.107 - 2026-07-24
+
+- Gestão Web: extratos e faturas em PDF passam a aceitar no máximo cinco
+  páginas por envio e três análises mensais por perfil. Tickets, cupons e notas
+  pequenas por imagem permanecem fora dessa franquia.
+- O limite é reservado de forma atômica no servidor antes da análise, evitando
+  contorno por outro aparelho, recarga ou envios simultâneos. Após cada envio,
+  o resultado informa quantas análises ainda restam naquele mês.
+- Admin: Consumo passa a exibir as análises de documentos que mais utilizaram
+  tokens, com perfil, páginas, modelo, contingência e resultado, sem armazenar
+  o PDF ou seu conteúdo financeiro.
+
 ## 1.6.0.84.106 - 2026-07-24
 
 - Landing page: o primeiro enquadramento mobile deixa de depender da

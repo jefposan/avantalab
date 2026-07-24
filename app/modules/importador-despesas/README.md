@@ -21,6 +21,13 @@ em popup antes de qualquer gravação.
   estorno só é preparado como receita quando o usuário o selecionar.
 - A resposta só é liberada quando despesas menos estornos conferem com o total
   identificado no documento, com tolerância máxima de dois centavos.
+- Extratos e faturas em PDF aceitam até cinco páginas por envio e até três
+  envios mensais por perfil. O limite é aplicado no servidor antes da chamada
+  à IA e não afeta tickets, cupons e notas pequenas do fluxo de imagem. Depois
+  de cada envio autorizado, o resultado informa quantos envios restam no mês.
+- Cada envio de PDF autorizado é auditado somente com perfil, usuário, páginas,
+  modelos, tokens e resultado técnico. O arquivo e os dados reconhecidos não
+  entram nesse histórico.
 - Permite informar manualmente o tipo do documento antes do upload, substituindo
   a detecção automática quando necessário.
 - Permite revisar descrição, tipo, seleção e valor a lançar de cada despesa.

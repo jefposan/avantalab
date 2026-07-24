@@ -32,6 +32,7 @@ type AnaliseIA = {
   total_documento: number | null;
   despesas: ItemIA[];
   estornos: ItemIA[];
+  envios_restantes: number;
 };
 
 type SugestaoHistorico = { id: string; tipo: string; ocorrencias: number };
@@ -186,6 +187,7 @@ export default function ImportadorDespesasModal({ arquivo, retomarRascunho = fal
   const [itens, setItens] = useState<DespesaRevisao[]>([]);
   const [totalDocumento, setTotalDocumento] = useState<number | null>(null);
   const [erro, setErro] = useState('');
+  const [enviosRestantes, setEnviosRestantes] = useState<number | null>(null);
   const [loteChave, setLoteChave] = useState('');
   const [nomeArquivo, setNomeArquivo] = useState('');
   const [salvoEm, setSalvoEm] = useState('');
@@ -275,7 +277,7 @@ export default function ImportadorDespesasModal({ arquivo, retomarRascunho = fal
     if (!arquivo || emAnalise.current) return;
     emAnalise.current = true;
     progressoAtual.current = 7;
-    setEtapa('analisando'); setTipoDocumento(tipo); setProgresso(7); setDetalhe('Preparando o documento…'); setErro('');
+    setEtapa('analisando'); setTipoDocumento(tipo); setProgresso(7); setDetalhe('Preparando o documento…'); setErro(''); setEnviosRestantes(null);
     const cronometro = window.setInterval(() => {
       const atual = progressoAtual.current;
       const proximo = Math.min(91, atual + (atual < 42 ? 7 : atual < 72 ? 4 : 2));
@@ -287,13 +289,13 @@ export default function ImportadorDespesasModal({ arquivo, retomarRascunho = fal
       const extensao = arquivo.name.split('.').pop()?.toLowerCase();
       let encontrados: DespesaRevisao[] = []; let detectado: TipoDetectado | null = null; let total: number | null = null;
       if (extensao === 'pdf') {
-        const form = new FormData(); form.append('arquivo', arquivo); form.append('tipoDocumento', tipo);
+        const form = new FormData(); form.append('arquivo', arquivo); form.append('tipoDocumento', tipo); form.append('empresaId', empresaId);
         const resposta = await executarComSessao((token) => fetch('/api/importador-despesas/analisar', { method: 'POST', headers: { Authorization: `Bearer ${token}` }, body: form }));
         if (!resposta) return;
         const corpo = await resposta.json().catch(() => null);
         if (!resposta.ok || corpo?.erro) throw new Error(corpo?.mensagem || 'Não foi possível analisar este documento.');
         const analise = corpo as AnaliseIA;
-        detectado = analise.tipo_documento; total = analise.total_documento;
+        detectado = analise.tipo_documento; total = analise.total_documento; setEnviosRestantes(analise.envios_restantes);
         const converter = (item: ItemIA, natureza: 'despesa' | 'estorno'): DespesaRevisao[] => {
           if (!item.data || !item.descricao || !Number.isFinite(item.valor) || item.valor <= 0) return [];
           const cartao = item.cartao_final ? ` · cartão ${item.cartao_final}` : '';
@@ -451,6 +453,7 @@ export default function ImportadorDespesasModal({ arquivo, retomarRascunho = fal
       </div>
       <div className="av-modal-scroll min-h-0 flex-1 overflow-y-auto px-5 pb-5 pt-4">
         {erro && <div className="mb-4"><AvisoFechavel tipo="erro" onFechar={() => setErro('')}>{erro}</AvisoFechavel></div>}
+        {enviosRestantes !== null && <div className={`mb-4 rounded-xl border p-3 text-sm font-semibold ${darkMode ? 'border-cyan-800 bg-cyan-950/30 text-cyan-100' : 'border-cyan-200 bg-cyan-50 text-cyan-800'}`} role="status">{enviosRestantes === 1 ? 'Resta 1 envio de extrato ou fatura neste mês.' : `Restam ${enviosRestantes} envios de extrato ou fatura neste mês.`}</div>}
         <div className="mb-2 text-xs font-semibold text-slate-500">A conferência usa os valores originais reconhecidos. O <strong>valor a lançar</strong> pode ser ajustado — por exemplo, para lançar apenas a sua parte de uma compra compartilhada.</div>{salvoEm && <div className="mb-3 rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-sm font-semibold text-emerald-800" role="status">Rascunho salvo às {horarioSalvo(salvoEm)}. Você pode fechar e continuar depois.</div>}
         {!tipos.length && !avisoTiposFechado && <div className="mb-4"><AvisoFechavel tipo="atencao" onFechar={() => setAvisoTiposFechado(true)}>Cadastre ao menos um tipo de despesa antes de confirmar esta importação.</AvisoFechavel></div>}
         {avisoConferenciaAtivo && !avisoConferenciaFechado && <div className="mb-4"><AvisoFechavel tipo="atencao" onFechar={() => setAvisoConferenciaFechado(true)}>A confirmação está bloqueada enquanto a soma não conferir. Revise os itens ou use <strong>Refazer análise</strong>.</AvisoFechavel></div>}

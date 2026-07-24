@@ -1,6 +1,9 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.6.0.84.106 -->
+<!-- ava-version: 1.6.0.84.107 -->
+
+> Revisão 1.6.0.84.107: controle de consumo do importador da Gestão Web; sem
+> impacto operacional no AvantaVendas.
 
 > Revisão 1.6.0.84.106: estabilização visual da landing e correção de largura
 > dos popups web; sem impacto operacional no AvantaVendas.

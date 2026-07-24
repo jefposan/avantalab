@@ -1,11 +1,13 @@
 import { createHash } from 'node:crypto';
 import { NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
+import { createClient, type SupabaseClient } from '@supabase/supabase-js';
+import { PDFDocument } from 'pdf-lib';
 
 export const runtime = 'nodejs';
 export const maxDuration = 180;
 
 const LIMITE_ARQUIVO = 10 * 1024 * 1024;
+const LIMITE_PAGINAS = 5;
 const LIMITE_TOKENS_SAIDA = 18_000;
 type TipoDocumento = 'automatico' | 'extrato-bancario' | 'fatura-cartao';
 type ConfiguracaoAnalise = {
@@ -15,6 +17,12 @@ type ConfiguracaoAnalise = {
 };
 type ResultadoOpenAI = {
   error?: { message?: string };
+  usage?: {
+    input_tokens?: number;
+    output_tokens?: number;
+    total_tokens?: number;
+    output_tokens_details?: { reasoning_tokens?: number };
+  };
   output?: Array<{
     content?: Array<{
       type?: string;
@@ -33,6 +41,14 @@ type AnaliseBruta = {
   estornos?: unknown;
   subtotais?: unknown;
 };
+type ConsumoExecucao = {
+  modelos: string[];
+  entrada: number;
+  saida: number;
+  raciocinio: number;
+  total: number;
+};
+type StatusAuditoria = 'concluida' | 'falha_validacao' | 'falha_api' | 'falha_tecnica';
 
 const ANALISE_PRIMARIA: ConfiguracaoAnalise = {
   modelo: process.env.OPENAI_IMPORT_PRIMARY_MODEL || 'gpt-5.6-terra',
@@ -50,14 +66,21 @@ function chaveOpenAI() {
   return process.env.OPENAI_API_KEY || process.env.OPENAI_API_KEY_AVA || '';
 }
 
-async function usuarioAutenticado(request: Request) {
+function mensagemComEnviosRestantes(mensagem: string, restantes: number) {
+  return `${mensagem} ${restantes === 1 ? 'Resta 1 envio neste mês.' : `Restam ${restantes} envios neste mês.`}`;
+}
+
+async function contextoAutenticado(request: Request) {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
   const anon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
   const token = (request.headers.get('authorization') || '').replace(/^Bearer\s+/i, '').trim();
   if (!url || !anon || !token) return null;
-  const supabase = createClient(url, anon);
+  const supabase = createClient(url, anon, {
+    global: { headers: { Authorization: `Bearer ${token}` } },
+    auth: { persistSession: false, autoRefreshToken: false },
+  });
   const { data, error } = await supabase.auth.getUser(token);
-  return error ? null : data.user;
+  return error || !data.user ? null : { usuario: data.user, supabase };
 }
 
 const itemFinanceiro = {
@@ -113,6 +136,45 @@ function itensValidos(valor: unknown): ItemFinanceiroReconhecido[] {
     Boolean(item) && typeof item === 'object'
     && typeof item.descricao === 'string' && Boolean(item.descricao.trim())
     && typeof item.valor === 'number' && Number.isFinite(item.valor) && item.valor > 0);
+}
+
+function acumularConsumo(consumo: ConsumoExecucao, modelo: string, resultado: ResultadoOpenAI | null) {
+  if (!consumo.modelos.includes(modelo)) consumo.modelos.push(modelo);
+  const entrada = Math.max(0, Number(resultado?.usage?.input_tokens) || 0);
+  const saida = Math.max(0, Number(resultado?.usage?.output_tokens) || 0);
+  const raciocinio = Math.max(0, Number(resultado?.usage?.output_tokens_details?.reasoning_tokens) || 0);
+  const totalInformado = Math.max(0, Number(resultado?.usage?.total_tokens) || 0);
+  consumo.entrada += entrada;
+  consumo.saida += saida;
+  consumo.raciocinio += raciocinio;
+  consumo.total += totalInformado || entrada + saida;
+}
+
+async function finalizarAuditoria({
+  supabase,
+  analiseId,
+  status,
+  consumo,
+  codigo,
+}: {
+  supabase: SupabaseClient;
+  analiseId: string;
+  status: StatusAuditoria;
+  consumo: ConsumoExecucao;
+  codigo: string;
+}) {
+  const { error } = await supabase.rpc('finalizar_importador_ia_analise', {
+    p_analise_id: analiseId,
+    p_status: status,
+    p_modelos_utilizados: consumo.modelos,
+    p_contingencia_utilizada: consumo.modelos.length > 1,
+    p_tokens_entrada: consumo.entrada,
+    p_tokens_saida: consumo.saida,
+    p_tokens_raciocinio: consumo.raciocinio,
+    p_tokens_total: consumo.total,
+    p_codigo_resultado: codigo,
+  });
+  if (error) console.error('Erro ao finalizar auditoria do importador:', error.message);
 }
 
 async function consultarOpenAI({
@@ -225,16 +287,25 @@ function validarAnalise(resultado: ResultadoOpenAI | null) {
 }
 
 export async function POST(request: Request) {
+  let auditoria: {
+    supabase: SupabaseClient;
+    analiseId: string;
+    consumo: ConsumoExecucao;
+    enviosRestantes: number;
+  } | null = null;
   try {
-    const usuario = await usuarioAutenticado(request);
-    if (!usuario) return NextResponse.json({ erro: true, mensagem: 'Faça login para analisar um documento.' }, { status: 401 });
+    const contexto = await contextoAutenticado(request);
+    if (!contexto) return NextResponse.json({ erro: true, mensagem: 'Faça login para analisar um documento.' }, { status: 401 });
+    const { usuario, supabase } = contexto;
 
     const formulario = await request.formData();
     const arquivo = formulario.get('arquivo');
+    const empresaId = String(formulario.get('empresaId') || '').trim();
     const tipoInformado = formulario.get('tipoDocumento');
     const tipoDocumento: TipoDocumento = tipoInformado === 'fatura-cartao' || tipoInformado === 'extrato-bancario'
       ? tipoInformado
       : 'automatico';
+    if (!empresaId) return NextResponse.json({ erro: true, mensagem: 'Selecione o perfil antes de analisar o documento.' }, { status: 400 });
     if (!(arquivo instanceof File)) return NextResponse.json({ erro: true, mensagem: 'Envie o PDF para análise.' }, { status: 400 });
     if (arquivo.type !== 'application/pdf' && !arquivo.name.toLowerCase().endsWith('.pdf')) {
       return NextResponse.json({ erro: true, mensagem: 'A análise visual aceita somente arquivos PDF.' }, { status: 415 });
@@ -247,8 +318,45 @@ export async function POST(request: Request) {
     if (!apiKey) return NextResponse.json({ erro: true, mensagem: 'A análise por IA não está configurada no servidor.' }, { status: 503 });
 
     const bytes = Buffer.from(await arquivo.arrayBuffer());
-    const fileData = `data:application/pdf;base64,${bytes.toString('base64')}`;
-    const instrucao = `Analise visualmente o PDF inteiro, página por página e coluna por coluna. O tipo informado é ${tipoDocumento}.
+    try {
+      let paginas = 0;
+      try {
+        const pdf = await PDFDocument.load(bytes, { ignoreEncryption: true, updateMetadata: false });
+        paginas = pdf.getPageCount();
+      } catch {
+        return NextResponse.json({ erro: true, mensagem: 'Não foi possível conferir as páginas deste PDF. Tente gerar o arquivo novamente.' }, { status: 422 });
+      }
+      if (!paginas) return NextResponse.json({ erro: true, mensagem: 'O PDF não possui páginas para analisar.' }, { status: 422 });
+      if (paginas > LIMITE_PAGINAS) {
+        return NextResponse.json({ erro: true, mensagem: 'Extratos e faturas podem ter no máximo 5 páginas por envio.' }, { status: 413 });
+      }
+
+      const { data: reserva, error: erroReserva } = await supabase.rpc('reservar_importador_ia_analise', {
+        p_empresa_id: empresaId,
+        p_tipo_documento: tipoDocumento,
+        p_paginas: paginas,
+      });
+      const dadosReserva = reserva && typeof reserva === 'object'
+        ? reserva as { id?: unknown; envios_restantes?: unknown }
+        : null;
+      const analiseId = typeof dadosReserva?.id === 'string' ? dadosReserva.id : '';
+      const enviosRestantes = Math.max(0, Math.min(2, Number(dadosReserva?.envios_restantes) || 0));
+      if (erroReserva || !analiseId) {
+        const motivo = erroReserva?.message || '';
+        if (motivo.includes('LIMITE_MENSAL_ATINGIDO')) {
+          return NextResponse.json({ erro: true, mensagem: 'O limite mensal para analisar extratos e faturas foi atingido.' }, { status: 429 });
+        }
+        if (motivo.includes('PERFIL_SEM_ACESSO')) {
+          return NextResponse.json({ erro: true, mensagem: 'Você não tem acesso a este perfil.' }, { status: 403 });
+        }
+        console.error('Erro ao reservar análise do importador:', motivo);
+        return NextResponse.json({ erro: true, mensagem: 'Não foi possível autorizar a análise deste documento agora.' }, { status: 503 });
+      }
+
+      const consumo: ConsumoExecucao = { modelos: [], entrada: 0, saida: 0, raciocinio: 0, total: 0 };
+      auditoria = { supabase, analiseId, consumo, enviosRestantes };
+      const fileData = `data:application/pdf;base64,${bytes.toString('base64')}`;
+      const instrucao = `Analise visualmente o PDF inteiro, página por página e coluna por coluna. O tipo informado é ${tipoDocumento}.
 As páginas podem ter duas colunas independentes: nunca combine registros da esquerda com registros da direita.
 
 Para fatura de cartão:
@@ -265,7 +373,6 @@ Para extrato bancário:
 - exclua entradas comuns, saldos, limites e totais de resumo.
 
 Não invente data, descrição ou valor. Informe datas em ISO YYYY-MM-DD, inferindo o ano pelo vencimento/período da própria fatura quando a linha mostrar apenas DD/MM. Informe a página de cada item. Retorne todos os itens do período atual.`;
-    try {
       const configuracoes = [ANALISE_PRIMARIA, ANALISE_CONTINGENCIA].filter((configuracao, indice, lista) =>
         indice === 0
         || configuracao.modelo !== lista[0].modelo
@@ -281,10 +388,17 @@ Não invente data, descrição ou valor. Informe datas em ISO YYYY-MM-DD, inferi
           usuarioId: usuario.id,
           configuracao,
         });
+        acumularConsumo(consumo, configuracao.modelo, resultado);
 
         if (!resposta.ok) {
           console.error('Erro OpenAI importador:', resultado?.error?.message || resposta.status);
-          return NextResponse.json({ erro: true, mensagem: 'A IA não conseguiu analisar o PDF agora. Tente novamente em alguns minutos.' }, { status: 502 });
+          await finalizarAuditoria({ supabase, analiseId, status: 'falha_api', consumo, codigo: `openai_${resposta.status}` });
+          auditoria = null;
+          return NextResponse.json({
+            erro: true,
+            mensagem: mensagemComEnviosRestantes('A IA não conseguiu analisar o PDF agora. Tente novamente em alguns minutos.', enviosRestantes),
+            envios_restantes: enviosRestantes,
+          }, { status: 502 });
         }
 
         const validacao = validarAnalise(resultado);
@@ -296,12 +410,20 @@ Não invente data, descrição ou valor. Informe datas em ISO YYYY-MM-DD, inferi
             ...('diagnostico' in validacao ? validacao.diagnostico : {}),
           });
           if (indice < configuracoes.length - 1) continue;
+          await finalizarAuditoria({ supabase, analiseId, status: 'falha_validacao', consumo, codigo: validacao.motivo });
+          auditoria = null;
           return NextResponse.json(
-            { erro: true, mensagem: validacao.mensagem },
+            {
+              erro: true,
+              mensagem: mensagemComEnviosRestantes(validacao.mensagem, enviosRestantes),
+              envios_restantes: enviosRestantes,
+            },
             { status: validacao.status },
           );
         }
 
+        await finalizarAuditoria({ supabase, analiseId, status: 'concluida', consumo, codigo: 'conferida' });
+        auditoria = null;
         return NextResponse.json({
           erro: false,
           tipo_documento: validacao.analise.tipo_documento,
@@ -315,21 +437,42 @@ Não invente data, descrição ou valor. Informe datas em ISO YYYY-MM-DD, inferi
           diferenca: validacao.diferenca === null ? null : Number(validacao.diferenca.toFixed(2)),
           modelo: configuracao.modelo,
           contingencia_utilizada: indice > 0,
+          envios_restantes: enviosRestantes,
         });
       }
 
+      await finalizarAuditoria({ supabase, analiseId, status: 'falha_validacao', consumo, codigo: 'sem_resultado' });
+      auditoria = null;
       return NextResponse.json(
-        { erro: true, mensagem: falhaValidacao?.mensagem || 'Não foi possível conferir os valores do documento.' },
+        {
+          erro: true,
+          mensagem: mensagemComEnviosRestantes(
+            falhaValidacao?.mensagem || 'Não foi possível conferir os valores do documento.',
+            enviosRestantes,
+          ),
+          envios_restantes: enviosRestantes,
+        },
         { status: falhaValidacao?.status || 422 },
       );
     } finally {
       bytes.fill(0);
     }
   } catch (error) {
+    if (auditoria) {
+      await finalizarAuditoria({
+        ...auditoria,
+        status: 'falha_tecnica',
+        codigo: error instanceof Error && error.name === 'TimeoutError' ? 'timeout' : 'erro_inesperado',
+      });
+    }
     console.error('Erro inesperado no importador:', error instanceof Error ? error.message : error);
     const mensagem = error instanceof Error && error.name === 'TimeoutError'
       ? 'A análise excedeu o tempo limite. Tente novamente.'
       : 'Não foi possível analisar este documento.';
-    return NextResponse.json({ erro: true, mensagem }, { status: 500 });
+    return NextResponse.json({
+      erro: true,
+      mensagem: auditoria ? mensagemComEnviosRestantes(mensagem, auditoria.enviosRestantes) : mensagem,
+      ...(auditoria ? { envios_restantes: auditoria.enviosRestantes } : {}),
+    }, { status: 500 });
   }
 }

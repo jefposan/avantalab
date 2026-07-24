@@ -1,7 +1,7 @@
 export const importadorDespesasManifest = {
   id: 'importador-despesas',
   nome: 'Importador de despesas',
-  versao: '0.3.1',
+  versao: '0.4.0',
   publico: ['gestao-web'],
   permissoes: ['despesas.criar', 'despesas.importar'],
   rotas: ['/importador-despesas'],

@@ -30,6 +30,22 @@ type ConsumoPlataforma = {
   link: string;
 };
 
+type HistoricoIa = {
+  id: string;
+  nome_perfil: string;
+  tipo_documento: 'automatico' | 'extrato-bancario' | 'fatura-cartao';
+  paginas: number;
+  status: 'processando' | 'concluida' | 'falha_validacao' | 'falha_api' | 'falha_tecnica';
+  modelos_utilizados: string[];
+  contingencia_utilizada: boolean;
+  tokens_entrada: number;
+  tokens_saida: number;
+  tokens_raciocinio: number;
+  tokens_total: number;
+  codigo_resultado: string | null;
+  criado_em: string;
+};
+
 type Perfil = {
   id: string;
   nome: string;
@@ -196,6 +212,23 @@ function corBarraConsumo(pct: number) {
   return '#059669';
 }
 
+function rotuloTipoDocumentoIa(tipo: HistoricoIa['tipo_documento']) {
+  if (tipo === 'fatura-cartao') return 'Fatura de cartão';
+  if (tipo === 'extrato-bancario') return 'Extrato bancário';
+  return 'Detecção automática';
+}
+
+function rotuloStatusIa(status: HistoricoIa['status']) {
+  const rotulos: Record<HistoricoIa['status'], string> = {
+    processando: 'Processando',
+    concluida: 'Concluída',
+    falha_validacao: 'Não conferiu',
+    falha_api: 'Falha da IA',
+    falha_tecnica: 'Falha técnica',
+  };
+  return rotulos[status];
+}
+
 function formatDate(value?: string) {
   if (!value) return '-';
   return new Intl.DateTimeFormat('pt-BR', { dateStyle: 'short', timeStyle: 'short' }).format(new Date(value));
@@ -301,6 +334,7 @@ export default function AdminPage() {
   const [perfisCarregados, setPerfisCarregados] = useState(false);
   const [usuariosAtivosSistema, setUsuariosAtivosSistema] = useState<UsuariosAtivosSistema>({ total: null, carregando: false });
   const [consumo, setConsumo] = useState<ConsumoPlataforma[]>([]);
+  const [historicoIa, setHistoricoIa] = useState<HistoricoIa[]>([]);
   const [consumoCarregando, setConsumoCarregando] = useState(false);
   const [consumoGeradoEm, setConsumoGeradoEm] = useState('');
   const [liberarPerfil, setLiberarPerfil] = useState<Perfil | null>(null);
@@ -328,6 +362,7 @@ export default function AdminPage() {
       const data = await response.json().catch(() => null);
       if (!response.ok || data?.erro) throw new Error(data?.mensagem || 'Não foi possível consultar o consumo.');
       setConsumo(data.plataformas || []);
+      setHistoricoIa(data.historicoIa || []);
       setConsumoGeradoEm(data.geradoEm || '');
     } catch (requestError) {
       setError(requestError instanceof Error ? requestError.message : 'Não foi possível consultar o consumo.');
@@ -1022,6 +1057,67 @@ export default function AdminPage() {
                 </section>
               ))}
             </div>
+
+            {consumo.length > 0 && (
+              <section className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
+                <div className="flex flex-col gap-1 border-b border-slate-200 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+                  <div>
+                    <h2 className="text-base font-black text-slate-950">Análises de documentos com maior consumo</h2>
+                    <p className="text-xs text-slate-500">Extratos e faturas ordenados pelo total de tokens. Nenhum arquivo ou conteúdo financeiro é armazenado.</p>
+                  </div>
+                  <span className="text-[10px] font-black uppercase text-slate-400">Até 100 ações</span>
+                </div>
+                {!historicoIa.length ? (
+                  <p className="px-4 py-8 text-center text-sm text-slate-500">Nenhuma análise de documento registrada.</p>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <table className="min-w-[920px] w-full text-left text-xs">
+                      <thead className="bg-slate-50 text-[10px] uppercase tracking-wide text-slate-500">
+                        <tr>
+                          <th className="px-4 py-3">Perfil e ação</th>
+                          <th className="px-3 py-3">Páginas</th>
+                          <th className="px-3 py-3">Modelo</th>
+                          <th className="px-3 py-3 text-right">Entrada</th>
+                          <th className="px-3 py-3 text-right">Saída</th>
+                          <th className="px-3 py-3 text-right">Raciocínio</th>
+                          <th className="px-3 py-3 text-right">Total</th>
+                          <th className="px-4 py-3">Resultado</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-100">
+                        {historicoIa.map((item) => (
+                          <tr key={item.id} className="align-top text-slate-700">
+                            <td className="px-4 py-3">
+                              <strong className="block max-w-[240px] truncate text-slate-950">{item.nome_perfil}</strong>
+                              <span className="block text-[10px] text-slate-500">{rotuloTipoDocumentoIa(item.tipo_documento)} · {formatDate(item.criado_em)}</span>
+                            </td>
+                            <td className="px-3 py-3 font-bold">{item.paginas}</td>
+                            <td className="px-3 py-3">
+                              <span className="font-bold">{item.modelos_utilizados.length ? item.modelos_utilizados.join(' → ') : '—'}</span>
+                              {item.contingencia_utilizada && <span className="mt-1 block text-[9px] font-black uppercase text-amber-700">Contingência</span>}
+                            </td>
+                            <td className="px-3 py-3 text-right tabular-nums">{item.tokens_entrada.toLocaleString('pt-BR')}</td>
+                            <td className="px-3 py-3 text-right tabular-nums">{item.tokens_saida.toLocaleString('pt-BR')}</td>
+                            <td className="px-3 py-3 text-right tabular-nums">{item.tokens_raciocinio.toLocaleString('pt-BR')}</td>
+                            <td className="px-3 py-3 text-right font-black tabular-nums text-slate-950">{item.tokens_total.toLocaleString('pt-BR')}</td>
+                            <td className="px-4 py-3">
+                              <span className={`inline-flex rounded-full px-2 py-1 text-[9px] font-black uppercase ${
+                                item.status === 'concluida'
+                                  ? 'bg-emerald-50 text-emerald-700'
+                                  : item.status === 'processando'
+                                    ? 'bg-cyan-50 text-cyan-700'
+                                    : 'bg-amber-50 text-amber-800'
+                              }`}>{rotuloStatusIa(item.status)}</span>
+                              {item.codigo_resultado && <span className="mt-1 block text-[9px] text-slate-400">{item.codigo_resultado}</span>}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </section>
+            )}
           </div>}
 
           {view === 'rep-p' && <div className="grid gap-4 lg:grid-cols-2">

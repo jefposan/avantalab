@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.6.0.84.106 -->
+<!-- ava-version: 1.6.0.84.107 -->
+
+> Revisão 1.6.0.84.107: limite do importador de extratos e faturas da Gestão
+> Web; tickets e notas por imagem no Mobile permanecem sem franquia mensal.
 
 > Revisão 1.6.0.84.106: estabilização visual da landing e correção de largura
 > dos popups web; sem impacto operacional na Gestão Mobile.

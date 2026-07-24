@@ -101,6 +101,32 @@ type CloudflareGraphqlResponse = {
   errors?: Array<{ message?: string }>;
 };
 
+async function historicoImportadorIa(db: Awaited<ReturnType<typeof exigirAdmin>>['db']) {
+  const { data, error } = await db
+    .from('importador_ia_analises')
+    .select('id, empresa_id, competencia, envio_mes, tipo_documento, paginas, status, modelos_utilizados, contingencia_utilizada, tokens_entrada, tokens_saida, tokens_raciocinio, tokens_total, codigo_resultado, criado_em, finalizado_em')
+    .order('tokens_total', { ascending: false })
+    .order('criado_em', { ascending: false })
+    .limit(100);
+
+  if (error) {
+    if (error.code === '42P01' || error.code === 'PGRST205') return [];
+    throw error;
+  }
+
+  const empresaIds = [...new Set((data || []).map((item) => String(item.empresa_id || '')).filter(Boolean))];
+  const { data: empresas, error: erroEmpresas } = empresaIds.length
+    ? await db.from('empresas').select('id, nome').in('id', empresaIds)
+    : { data: [], error: null };
+  if (erroEmpresas) throw erroEmpresas;
+  const nomes = new Map((empresas || []).map((empresa) => [String(empresa.id), String(empresa.nome || 'Perfil sem nome')]));
+
+  return (data || []).map((item) => ({
+    ...item,
+    nome_perfil: nomes.get(String(item.empresa_id)) || 'Perfil removido',
+  }));
+}
+
 async function consumoSupabase(db: Awaited<ReturnType<typeof exigirAdmin>>['db']): Promise<Plataforma> {
   const plataforma: Plataforma = {
     nome: `Supabase ${LIMITES.supabase.plano}`,
@@ -531,15 +557,21 @@ export async function GET(request: Request) {
     const { autorizado, db } = await exigirAdmin(request);
     if (!autorizado) return NextResponse.json({ erro: true, mensagem: 'Acesso não autorizado.' }, { status: 401 });
 
-    const [supabase, vercel, github, openai, asaas, cloudflare] = await Promise.all([
+    const [supabase, vercel, github, openai, asaas, cloudflare, historicoIa] = await Promise.all([
       consumoSupabase(db),
       consumoVercel(),
       consumoGithub(),
       consumoOpenAI(),
       consumoAsaas(),
       consumoCloudflare(),
+      historicoImportadorIa(db),
     ]);
-    return NextResponse.json({ erro: false, plataformas: [supabase, vercel, github, openai, asaas, cloudflare], geradoEm: new Date().toISOString() });
+    return NextResponse.json({
+      erro: false,
+      plataformas: [supabase, vercel, github, openai, asaas, cloudflare],
+      historicoIa,
+      geradoEm: new Date().toISOString(),
+    });
   } catch (error) {
     console.error('Erro no consumo de plataformas:', error);
     return NextResponse.json({ erro: true, mensagem: 'Não foi possível consultar o consumo.' }, { status: 500 });

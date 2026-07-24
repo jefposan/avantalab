@@ -79,15 +79,18 @@ type AnalisePorIA = {
   diferenca: number | null;
   despesas: ItemAnalisadoPorIA[];
   estornos: ItemAnalisadoPorIA[];
+  envios_restantes: number;
 };
 
-async function analisarPdfComIA(arquivo: File, tipoDocumento: TipoDocumentoSelecionado): Promise<AnalisePorIA> {
+async function analisarPdfComIA(arquivo: File, tipoDocumento: TipoDocumentoSelecionado, empresaId: string): Promise<AnalisePorIA> {
   const { data } = await supabase.auth.getSession();
   const token = data.session?.access_token;
   if (!token) throw new Error('Faça login no AvantaLab para usar a análise por IA.');
+  if (!empresaId) throw new Error('Selecione o perfil antes de analisar o documento.');
   const formulario = new FormData();
   formulario.append('arquivo', arquivo);
   formulario.append('tipoDocumento', tipoDocumento);
+  formulario.append('empresaId', empresaId);
   const resposta = await fetch('/api/importador-despesas/analisar', {
     method: 'POST',
     headers: { Authorization: `Bearer ${token}` },
@@ -207,7 +210,68 @@ export default function ImportadorDespesas() {
   const diferenca = Number.isFinite(informado) ? totalLiquidoReconhecido - Math.abs(informado) : null;
   function salvarRascunho() { if (!despesas.length) { setAviso('Adicione despesas antes de salvar um rascunho.'); return; } const agora = new Date().toLocaleString('pt-BR'); const rascunho: RascunhoImportacao = { versao: 1, empresaId, loteChave: loteChave || crypto.randomUUID(), arquivo, tipoDocumento: tipoDocumento ?? undefined, tipoDocumentoSelecionado, salvoEm: agora, totalDocumento, despesas }; setLoteChave(rascunho.loteChave || ''); window.localStorage.setItem(CHAVE_RASCUNHO, JSON.stringify(rascunho)); setSalvoEm(agora); setAviso('Rascunho salvo neste navegador. Você pode continuar depois.'); }
   function carregarExemplo() { setDespesas(EXEMPLO.map((despesa) => ({ ...despesa, natureza: 'despesa' }))); setLoteChave('exemplo-importador-despesas-2026-07'); setArquivo('extrato-julho-2026.csv'); setTipoDocumento('extrato-bancario'); setTipoDocumentoSelecionado('automatico'); setTotalDocumento('1959,80'); setConfirmado(false); setAviso('Dados de exemplo carregados para você conhecer a revisão.'); }
-  async function processarArquivo(file: File) { setCarregando(true); setAviso(''); setConfirmado(false); try { const extensao = file.name.split('.').pop()?.toLowerCase(); if (!extensao || !['csv', 'txt', 'xls', 'xlsx', 'pdf'].includes(extensao)) throw new Error('Escolha um arquivo CSV, TXT, XLS, XLSX ou PDF.'); let encontradas: DespesaImportada[] = []; let tipoDetectado: TipoDocumentoImportado | null = null; let totalDetectado: number | null = null; if (extensao === 'pdf') { setAviso('A IA está estudando todas as páginas e conferindo despesas e estornos…'); const analise = await analisarPdfComIA(file, tipoDocumentoSelecionado); encontradas = itensDaAnalise(analise); tipoDetectado = analise.tipo_documento; totalDetectado = analise.total_documento; } else if (extensao === 'csv' || extensao === 'txt') encontradas = parseTexto(await file.text()); else { const XLSX = await import('xlsx'); const planilha = XLSX.read(await file.arrayBuffer(), { type: 'array', cellDates: true }); const aba = planilha.Sheets[planilha.SheetNames[0]]; const matriz = XLSX.utils.sheet_to_json<unknown[]>(aba, { header: 1, defval: '' }); encontradas = matriz.length > 1 ? transformarLinhas((matriz[0] as unknown[]).map(String), matriz.slice(1) as unknown[][]) : []; } if (!encontradas.length) throw new Error('A análise não encontrou despesas confiáveis. Revise o tipo de documento ou o arquivo enviado.'); setDespesas(encontradas); setLoteChave(await sha256(await file.arrayBuffer())); setArquivo(file.name); setTipoDocumento(tipoDetectado); setTotalDocumento(totalDetectado === null ? '' : totalDetectado.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })); setSalvoEm(''); const quantidadeEstornos = encontradas.filter((item) => item.natureza === 'estorno').length; const quantidadeDespesas = encontradas.length - quantidadeEstornos; setAviso(tipoDetectado === 'fatura-cartao' ? `Fatura conferida: ${quantidadeDespesas} despesas e ${quantidadeEstornos} estornos separados para revisão.` : `${quantidadeDespesas} saída${quantidadeDespesas === 1 ? '' : 's'} validada${quantidadeDespesas === 1 ? '' : 's'} pela IA.`); } catch (erro) { setAviso(erro instanceof Error ? erro.message : 'Não foi possível ler este arquivo.'); } finally { setCarregando(false); } }
+  async function processarArquivo(file: File) {
+    setCarregando(true);
+    setAviso('');
+    setConfirmado(false);
+    try {
+      const extensao = file.name.split('.').pop()?.toLowerCase();
+      if (!extensao || !['csv', 'txt', 'xls', 'xlsx', 'pdf'].includes(extensao)) {
+        throw new Error('Escolha um arquivo CSV, TXT, XLS, XLSX ou PDF.');
+      }
+
+      let encontradas: DespesaImportada[] = [];
+      let tipoDetectado: TipoDocumentoImportado | null = null;
+      let totalDetectado: number | null = null;
+      let enviosRestantes: number | null = null;
+
+      if (extensao === 'pdf') {
+        setAviso('A IA está estudando todas as páginas e conferindo despesas e estornos…');
+        const analise = await analisarPdfComIA(file, tipoDocumentoSelecionado, empresaId);
+        encontradas = itensDaAnalise(analise);
+        tipoDetectado = analise.tipo_documento;
+        totalDetectado = analise.total_documento;
+        enviosRestantes = analise.envios_restantes;
+      } else if (extensao === 'csv' || extensao === 'txt') {
+        encontradas = parseTexto(await file.text());
+      } else {
+        const XLSX = await import('xlsx');
+        const planilha = XLSX.read(await file.arrayBuffer(), { type: 'array', cellDates: true });
+        const aba = planilha.Sheets[planilha.SheetNames[0]];
+        const matriz = XLSX.utils.sheet_to_json<unknown[]>(aba, { header: 1, defval: '' });
+        encontradas = matriz.length > 1
+          ? transformarLinhas((matriz[0] as unknown[]).map(String), matriz.slice(1) as unknown[][])
+          : [];
+      }
+
+      if (!encontradas.length) {
+        throw new Error('A análise não encontrou despesas confiáveis. Revise o tipo de documento ou o arquivo enviado.');
+      }
+
+      setDespesas(encontradas);
+      setLoteChave(await sha256(await file.arrayBuffer()));
+      setArquivo(file.name);
+      setTipoDocumento(tipoDetectado);
+      setTotalDocumento(totalDetectado === null ? '' : totalDetectado.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
+      setSalvoEm('');
+
+      const quantidadeEstornos = encontradas.filter((item) => item.natureza === 'estorno').length;
+      const quantidadeDespesas = encontradas.length - quantidadeEstornos;
+      const resultado = tipoDetectado === 'fatura-cartao'
+        ? `Fatura conferida: ${quantidadeDespesas} despesas e ${quantidadeEstornos} estornos separados para revisão.`
+        : `${quantidadeDespesas} saída${quantidadeDespesas === 1 ? '' : 's'} validada${quantidadeDespesas === 1 ? '' : 's'} pela IA.`;
+      const saldoEnvios = enviosRestantes === null
+        ? ''
+        : enviosRestantes === 1
+          ? ' Resta 1 envio neste mês.'
+          : ` Restam ${enviosRestantes} envios neste mês.`;
+      setAviso(`${resultado}${saldoEnvios}`);
+    } catch (erro) {
+      setAviso(erro instanceof Error ? erro.message : 'Não foi possível ler este arquivo.');
+    } finally {
+      setCarregando(false);
+    }
+  }
   function atualizar(id: string, alteracao: Partial<DespesaImportada>) { setDespesas((atuais) => atuais.map((despesa) => despesa.id === id ? { ...despesa, ...alteracao } : despesa)); }
   async function confirmarImportacao() {
     if (confirmando || confirmado) return;

@@ -1,6 +1,12 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.6.0.84.106 -->
+<!-- ava-version: 1.6.0.84.107 -->
+
+> Revisão 1.6.0.84.107: extratos e faturas em PDF aceitam até cinco páginas e
+> três envios mensais por perfil. Tickets e notas pequenas por imagem não usam
+> essa franquia. Após cada envio, o sistema informa quantos restam no mês. O
+> Admin acompanha somente metadados de consumo, sem guardar o documento nem o
+> conteúdo reconhecido.
 
 > Revisão 1.6.0.84.106: estabilização visual da landing e restauração das
 > larguras originais dos popups; sem mudança nos fluxos operacionais.
