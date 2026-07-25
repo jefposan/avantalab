@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.6.0.84.112 -->
+<!-- ava-version: 1.6.0.84.113 -->
+
+> Revisão 1.6.0.84.113: estabilização do topo e do menu inferior no
+> AvantaVendas; sem impacto operacional na Gestão Web.
 
 > Revisão 1.6.0.84.112: estabilidade do teclado durante lançamentos na Gestão
 > Mobile; sem impacto operacional na Gestão Web.

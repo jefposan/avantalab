@@ -1,5 +1,16 @@
 # Changelog
 
+## 1.6.0.84.113 - 2026-07-24
+
+- AvantaVendas: o shell mobile passa a manter cabeçalho e navegação inferior
+  em faixas próprias, deixando somente o conteúdo central rolar. A estrutura
+  elimina a dependência de camadas `fixed` para esses elementos e evita que
+  eles se desloquem junto com a página no WebKit.
+- Cabeçalhos internos continuam visíveis dentro da rolagem; modais bloqueiam
+  apenas o conteúdo central e preservam a posição anterior. A solução é
+  compartilhada entre iOS e Android, sem detecção de aparelho e sem alterar o
+  layout desktop.
+
 ## 1.6.0.84.112 - 2026-07-24
 
 - Gestão Mobile: atualizações assíncronas deixam de reconstruir o modal de

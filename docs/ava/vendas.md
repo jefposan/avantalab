@@ -1,6 +1,10 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.6.0.84.112 -->
+<!-- ava-version: 1.6.0.84.113 -->
+
+> Revisão 1.6.0.84.113: no mobile, o topo e o menu inferior permanecem
+> ancorados enquanto apenas o conteúdo central rola; a posição é preservada
+> ao trocar de tela e ao abrir ou fechar modais.
 
 > Revisão 1.6.0.84.112: estabilidade do teclado durante lançamentos na Gestão
 > Mobile; sem impacto operacional no AvantaVendas.
@@ -188,8 +192,9 @@ função existir ali.
 
 - A sala inicial possui Dashboard, Clientes, Produtos, Pedidos, Pagamentos,
   Agenda, Novidades, Divulgação e Informações.
-- O rodapé de navegação permanece fixo na borda inferior da tela durante a
-  rolagem e não se desloca ao entrar em Configurações ou trocar de página.
+- O topo e o rodapé de navegação permanecem ancorados às bordas da tela; apenas
+  o conteúdo central rola. Eles não se deslocam ao entrar em Configurações,
+  trocar de página ou abrir e fechar um modal.
 - O menu inferior tem Configurações, dois atalhos configuráveis, **+ Novo
   lançamento** e Início. Os atalhos são configurados em **Configurações >
   Organizar atalhos**; o lápis da sala muda a ordem dos cards. Enquanto a

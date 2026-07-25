@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.6.0.84.112 -->
+<!-- ava-version: 1.6.0.84.113 -->
+
+> Revisão 1.6.0.84.113: estabilização do topo e do menu inferior no
+> AvantaVendas; sem impacto operacional na Gestão Mobile.
 
 > Revisão 1.6.0.84.112: o preenchimento de lançamentos mantém o campo e o
 > teclado ativos enquanto informações secundárias são atualizadas em segundo

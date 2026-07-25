@@ -189,6 +189,7 @@ let vinculoTelefonePendente = null;
 let telefonePerfilPendente = null;
 let telefonePerfilSalvando = false;
 let rolagemAnteriorSheet = 0;
+let elementoRolagemAnteriorSheet = null;
 let cardsClientesEmDestaque = [];
 let cardClienteEmDestaque = null;
 let quadroDestaqueClientes = 0;
@@ -754,6 +755,29 @@ function preservarCabecalhoSistema(cabecalhoAnterior, aniversariantesHoje) {
   destino.replaceWith(cabecalhoAnterior);
 }
 
+function elementoRolagemPrincipalVendas() {
+  const conteudo = app.querySelector('.content-area');
+  if (window.matchMedia('(max-width: 850px)').matches && conteudo) return conteudo;
+  return document.scrollingElement || document.documentElement;
+}
+
+function posicaoRolagemPrincipalVendas(elemento = elementoRolagemPrincipalVendas()) {
+  if (!elemento || elemento === document.documentElement || elemento === document.body) {
+    return window.scrollY || document.documentElement.scrollTop || 0;
+  }
+  return elemento.scrollTop || 0;
+}
+
+function rolarConteudoPrincipalVendas(top = 0, behavior = 'auto') {
+  const destino = elementoRolagemPrincipalVendas();
+  const posicao = Math.max(0, Number(top) || 0);
+  if (!destino || destino === document.documentElement || destino === document.body) {
+    window.scrollTo({ top: posicao, left: 0, behavior });
+    return;
+  }
+  destino.scrollTo({ top: posicao, left: 0, behavior });
+}
+
 function setAba(aba) {
   const entradaClientes = aba === 'clientes'
     && (state.aba !== 'clientes' || state.menuAberto || Boolean(state.busca) || Boolean(buscaAplicada));
@@ -766,7 +790,7 @@ function setAba(aba) {
   }
   if (entradaClientes) limparPesquisaClientesAoEntrar();
   if (!state.menuAberto) {
-    rolagemPorAba[state.aba] = window.scrollY || document.documentElement.scrollTop || 0;
+    rolagemPorAba[state.aba] = posicaoRolagemPrincipalVendas();
     try { sessionStorage.setItem('avantalab.vendas_mobile.rolagem_abas', JSON.stringify(rolagemPorAba)); } catch { /* armazenamento indisponível */ }
   }
   // A busca pertence somente à tela atual; nunca deve aparecer em outra área.
@@ -787,7 +811,7 @@ function setAba(aba) {
   revisaoNavegacaoManual += 1;
   render();
   const rolagemSalva = Math.max(0, Number(rolagemPorAba[aba] || 0));
-  requestAnimationFrame(() => window.scrollTo(0, rolagemSalva));
+  requestAnimationFrame(() => rolarConteudoPrincipalVendas(rolagemSalva));
 }
 
 function alternarMenu() {
@@ -1052,8 +1076,27 @@ function podePreservarSalaBotoes(assinatura) {
 }
 
 function render() {
+  const areaPrincipalAnterior = app.querySelector('.main-area');
+  const preservarRolagemConteudo = Boolean(
+    window.matchMedia('(max-width: 850px)').matches
+    && areaPrincipalAnterior?.dataset.vendasAba === state.aba
+  );
+  const rolagemConteudoAnterior = preservarRolagemConteudo
+    ? areaPrincipalAnterior.querySelector('.content-area')?.scrollTop || 0
+    : 0;
   const agendaAtiva = Boolean(state.autenticado && state.aba === 'agenda' && !carregandoBackend && !conectandoGoogle && !preparandoRecursosSala);
   const formularioAgendaAberto = Boolean(state.autenticado && state.agendaFormAberto && !carregandoBackend && !conectandoGoogle && !preparandoRecursosSala);
+  const shellSistemaAtivo = Boolean(
+    state.autenticado
+    && !carregandoBackend
+    && !conectandoGoogle
+    && !preparandoRecursosSala
+    && !state.seletorPerfilGestaoAberto
+    && !state.premiumVendasBloqueado
+    && state.moduloVendasAtivo
+  );
+  document.documentElement.classList.toggle('vendas-shell-active', shellSistemaAtivo);
+  document.body.classList.toggle('vendas-shell-active', shellSistemaAtivo);
   document.documentElement.classList.toggle('agenda-open', agendaAtiva);
   document.body.classList.toggle('agenda-open', agendaAtiva);
   document.documentElement.classList.toggle('agenda-form-open', formularioAgendaAberto);
@@ -1123,7 +1166,7 @@ function render() {
       <button class="side-link exit" onclick="sairSistema()">${svgIcon('log-out')} Sair</button>
       <footer>Desenvolvido por <b>AvantaLab</b></footer>
     </aside>
-    <div class="main-area">
+    <div class="main-area" data-vendas-aba="${escapeAttr(state.aba)}">
       <div data-system-header-slot></div>
       <main class="content-area">${renderConteudo()}</main>
     </div>
@@ -1133,6 +1176,12 @@ function render() {
   `;
   preservarCabecalhoSistema(cabecalhoAnterior, aniversariantesHoje);
   sincronizarNavegacaoInferior();
+  if (preservarRolagemConteudo && rolagemConteudoAnterior > 0) {
+    requestAnimationFrame(() => {
+      const conteudoAtual = app.querySelector('.content-area');
+      if (conteudoAtual) conteudoAtual.scrollTop = rolagemConteudoAnterior;
+    });
+  }
   assinaturaSalaRenderizada = assinaturaSalaAtual;
   if (assinaturaSalaAtual) agendarGarantiaSalaBotoes();
   if (state.aba === 'clientes') requestAnimationFrame(configurarDestaqueClientes);
@@ -1686,9 +1735,17 @@ function removerNavegacaoInferior() {
 function sincronizarNavegacaoInferior() {
   const assinatura = assinaturaNavegacaoInferior();
   const atual = document.getElementById('vendas-bottom-nav');
-  if (atual?.dataset.assinatura === assinatura) return;
+  const destino = app.querySelector('.main-area');
+  if (!destino) {
+    atual?.remove();
+    return;
+  }
+  if (atual?.dataset.assinatura === assinatura) {
+    if (atual.parentElement !== destino) destino.appendChild(atual);
+    return;
+  }
   if (atual) atual.remove();
-  document.body.insertAdjacentHTML('beforeend', renderNavegacaoInferior());
+  destino.insertAdjacentHTML('beforeend', renderNavegacaoInferior());
   document.getElementById('vendas-bottom-nav')?.setAttribute('data-assinatura', assinatura);
 }
 
@@ -2854,7 +2911,7 @@ function abrirPastaDivulgacao(pastaId) {
   state.busca = '';
   buscaAplicada = '';
   render();
-  window.scrollTo({ top: 0, behavior: 'smooth' });
+  rolarConteudoPrincipalVendas(0, 'smooth');
 }
 
 function voltarPastaDivulgacao(pastaId = '') {
@@ -2862,7 +2919,7 @@ function voltarPastaDivulgacao(pastaId = '') {
   state.busca = '';
   buscaAplicada = '';
   render();
-  window.scrollTo({ top: 0, behavior: 'smooth' });
+  rolarConteudoPrincipalVendas(0, 'smooth');
 }
 
 function abrirMaterialDivulgacao(materialId) {
@@ -6079,7 +6136,8 @@ function valor(idCampo) {
 
 function sheet(html, backdropClass = '') {
   fecharSheet();
-  rolagemAnteriorSheet = window.scrollY || document.documentElement.scrollTop || 0;
+  elementoRolagemAnteriorSheet = elementoRolagemPrincipalVendas();
+  rolagemAnteriorSheet = posicaoRolagemPrincipalVendas(elementoRolagemAnteriorSheet);
   const wrap = document.createElement('div');
   wrap.className = `sheet-backdrop ${backdropClass}`;
   wrap.id = 'sheetBackdrop';
@@ -6099,7 +6157,9 @@ function sheet(html, backdropClass = '') {
   document.body.appendChild(wrap);
   document.body.classList.add('sheet-open');
   document.documentElement.classList.add('sheet-open');
-  document.body.style.top = `-${rolagemAnteriorSheet}px`;
+  if (elementoRolagemAnteriorSheet === document.documentElement || elementoRolagemAnteriorSheet === document.body) {
+    document.body.style.top = `-${rolagemAnteriorSheet}px`;
+  }
 }
 
 function fecharSheet(evento = null) {
@@ -6125,10 +6185,18 @@ function fecharSheet(evento = null) {
   document.body.classList.remove('sheet-open');
   document.documentElement.classList.remove('sheet-open');
   document.body.style.top = '';
-  const rolagemAtual = window.scrollY || document.documentElement.scrollTop || 0;
+  const destinoRolagem = elementoRolagemAnteriorSheet?.isConnected
+    ? elementoRolagemAnteriorSheet
+    : elementoRolagemPrincipalVendas();
+  const rolagemAtual = posicaoRolagemPrincipalVendas(destinoRolagem);
   if (Math.abs(rolagemAtual - rolagemParaRestaurar) > 1) {
-    window.scrollTo({ top: rolagemParaRestaurar, left: 0, behavior: 'auto' });
+    if (!destinoRolagem || destinoRolagem === document.documentElement || destinoRolagem === document.body) {
+      window.scrollTo({ top: rolagemParaRestaurar, left: 0, behavior: 'auto' });
+    } else {
+      destinoRolagem.scrollTo({ top: rolagemParaRestaurar, left: 0, behavior: 'auto' });
+    }
   }
+  elementoRolagemAnteriorSheet = null;
 }
 
 function escapeHtml(v) {
@@ -6379,6 +6447,7 @@ window.compartilharMaterialDivulgacao = compartilharMaterialDivulgacao;
 
 window.addEventListener('pageshow', () => requestAnimationFrame(limparFocoInicialLogin));
 window.addEventListener('scroll', agendarDestaqueClientes, { passive: true });
+app.addEventListener('scroll', agendarDestaqueClientes, { passive: true, capture: true });
 window.addEventListener('resize', () => {
   agendarDestaqueClientes();
   sincronizarSalaAoMudarLargura();
