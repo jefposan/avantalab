@@ -245,6 +245,23 @@
     return data || { adicionados: 0, ja_recebidos: 0 };
   }
 
+  async function salvarPreferencias(preferencias, versao = 1) {
+    const user = await currentUser();
+    if (!user) throw new Error('Sessão expirada.');
+    const { data, error } = await requireClient()
+      .from('vendas_mobile_preferencias')
+      .upsert({
+        user_id: user.id,
+        versao: Math.max(1, Number(versao) || 1),
+        preferencias: preferencias && typeof preferencias === 'object' ? preferencias : {},
+        atualizado_em: new Date().toISOString(),
+      }, { onConflict: 'user_id' })
+      .select('versao, preferencias, atualizado_em')
+      .single();
+    if (error) throw error;
+    return data;
+  }
+
   function normalizarPagamentoServidor(pagamento) {
     let legado = {};
     try {
@@ -292,7 +309,7 @@
       };
     }
 
-    const totalEtapasDados = 11;
+    const totalEtapasDados = 12;
     let etapasDadosConcluidas = 0;
     const acompanharEtapaDados = (promessa, rotulo) => Promise.resolve(promessa).then(
       (resultado) => {
@@ -316,7 +333,7 @@
     if (perfisFinanceirosRes.error) throw perfisFinanceirosRes.error;
     const vinculosComerciais = vinculosRes.data || [];
     const vinculoAtivo = vinculosComerciais.find((vinculo) => vinculo.ativo) || null;
-    const [catalogoRes, clientesRes, pedidosRes, pagamentosRes, conteudosRes, pastasRes, materiaisRes, integracaoRes] = await Promise.all([
+    const [catalogoRes, clientesRes, pedidosRes, pagamentosRes, conteudosRes, pastasRes, materiaisRes, integracaoRes, preferenciasRes] = await Promise.all([
       acompanharEtapaDados(listarCatalogoVendas(), 'Carregando produtos'),
       acompanharEtapaDados(carregarTodasPaginas(() => client
         .from('vendas_mobile_clientes')
@@ -341,6 +358,7 @@
       acompanharEtapaDados(client.from('vendas_mobile_divulgacao_pastas').select('id, empresa_id, pasta_pai_id, nome, descricao, ordem, criado_em').eq('ativo', true).order('ordem').order('criado_em', { ascending: false }), 'Carregando pastas de divulgação'),
       acompanharEtapaDados(client.from('vendas_mobile_divulgacao_materiais').select('id, pasta_id, titulo, tipo, arquivo_url, miniatura_url, miniatura_status, mime_type, tamanho_bytes, ordem, criado_em').eq('ativo', true).order('ordem').order('criado_em', { ascending: false }), 'Carregando materiais'),
       acompanharEtapaDados(client.rpc('obter_integracao_gestao_vendas_mobile_rpc'), 'Carregando integração financeira'),
+      acompanharEtapaDados(client.from('vendas_mobile_preferencias').select('versao, preferencias, atualizado_em').eq('user_id', user.id).maybeSingle(), 'Carregando preferências'),
     ]);
     const error = clientesRes.error || pedidosRes.error || pagamentosRes.error || integracaoRes.error;
     if (error) throw error;
@@ -369,6 +387,9 @@
       vinculosComerciais,
       vinculoComercialAtivo: vinculoAtivo,
       perfisFinanceiros: perfisFinanceirosRes.data || [],
+      preferencias: preferenciasRes.error ? null : preferenciasRes.data?.preferencias || null,
+      preferenciasVersao: preferenciasRes.error ? null : preferenciasRes.data?.versao || null,
+      preferenciasServidorDisponivel: !preferenciasRes.error,
       ...acessoVendas,
     };
   }
@@ -767,5 +788,5 @@
     return data;
   }
 
-  window.VendasDb = { client, currentUser, hasSession, getAccessToken, verificarPremiumVendas, uploadProductImage, signIn, signInPhone, signInWithGoogle, resetPassword, updatePassword, updateUserMetadata, signUp, signOut, solicitarAcesso, buscarAcessoVendas, loadAll, loadClientFinancial, listarCatalogoVendas, sincronizarCatalogoVendas, listarPerfisGestaoParaTroca, saveProduct, deleteProduct, movimentarEstoque, listarMovimentosEstoque, createPackage, saveProductsBulk, deletePackage, saveClient, deleteClient, saveOrder, updateOrder, deleteOrder, savePayment, updatePayment, deletePayment, configurarIntegracaoGestao, atualizarRecursoVinculoComercial, resetarSistemaVendas, definirPerfilFinanceiro, saveFeedback };
+  window.VendasDb = { client, currentUser, hasSession, getAccessToken, verificarPremiumVendas, uploadProductImage, signIn, signInPhone, signInWithGoogle, resetPassword, updatePassword, updateUserMetadata, signUp, signOut, solicitarAcesso, buscarAcessoVendas, loadAll, loadClientFinancial, listarCatalogoVendas, sincronizarCatalogoVendas, salvarPreferencias, listarPerfisGestaoParaTroca, saveProduct, deleteProduct, movimentarEstoque, listarMovimentosEstoque, createPackage, saveProductsBulk, deletePackage, saveClient, deleteClient, saveOrder, updateOrder, deleteOrder, savePayment, updatePayment, deletePayment, configurarIntegracaoGestao, atualizarRecursoVinculoComercial, resetarSistemaVendas, definirPerfilFinanceiro, saveFeedback };
 })();

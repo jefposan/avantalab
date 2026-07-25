@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.6.0.84.119 -->
+<!-- ava-version: 1.6.0.84.120 -->
+
+> Revisão 1.6.0.84.120: persistência das preferências do AvantaVendas no
+> servidor; sem impacto operacional na Gestão Web.
 
 > Revisão 1.6.0.84.119: ações destrutivas da Administração e do gerenciador de
 > conteúdos do Vendas usam a confirmação visual do sistema. Fechar, voltar ou

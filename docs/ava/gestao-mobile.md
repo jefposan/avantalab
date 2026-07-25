@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.6.0.84.119 -->
+<!-- ava-version: 1.6.0.84.120 -->
+
+> Revisão 1.6.0.84.120: persistência das preferências do AvantaVendas no
+> servidor; sem impacto operacional na Gestão Mobile.
 
 > Revisão 1.6.0.84.119: confirmações e avisos operacionais usam cards do
 > sistema. Fechar, tocar fora, pressionar Esc ou escolher **Voltar sem excluir**

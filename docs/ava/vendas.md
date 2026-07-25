@@ -1,6 +1,13 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.6.0.84.119 -->
+<!-- ava-version: 1.6.0.84.120 -->
+
+> Revisão 1.6.0.84.120: aparência, atalhos, ordem da sala, alerta de
+> aniversário, meta e período de inatividade passam a acompanhar a conta pelo
+> servidor. Na primeira abertura atualizada, as escolhas existentes neste
+> aparelho são preservadas e migradas automaticamente. A navegação inferior
+> permanece acima da sala, Dashboard e demais telas comuns, inclusive durante
+> atualizações internas de conteúdo.
 
 > Revisão 1.6.0.84.119: exclusões de pacote, produto e cliente e a limpeza de
 > dados locais usam cards de confirmação do AvantaVendas. Voltar, fechar ou
@@ -348,6 +355,10 @@ função existir ali.
   pastas/subpastas e abre fotos/vídeos para visualização e compartilhamento.
 - Configurações reúne conta, celular/SMS, senha, aparência, metas, catálogo,
   estoque, vínculos comerciais, destino financeiro, PWA, backup e reset.
+- Aparência, atalhos inferiores, ordem da sala, alerta de aniversário, meta
+  mensal e período de clientes inativos são preferências da conta: permanecem
+  após atualizar ou reinstalar o PWA e são restauradas em outro aparelho depois
+  do login. A cópia local serve apenas como contingência offline.
 - Excluir pacote, produto ou cliente e apagar dados locais abre uma confirmação
   visual. **Voltar sem excluir**, fechar ou tocar fora cancela a ação. Ao
   remover um cliente, pedidos e pagamentos antigos continuam registrados.

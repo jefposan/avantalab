@@ -13,6 +13,9 @@ const CACHE_VENDAS_STORE = 'sessoes';
 const CACHE_VENDAS_PENDENCIAS_STORE = 'pendencias';
 const CACHE_VENDAS_VERSAO = 5;
 const CACHE_VENDAS_VALIDADE_MS = 1000 * 60 * 60 * 24 * 7;
+const PREFERENCIAS_VENDAS_VERSAO = 1;
+const IDS_ATALHOS_PREFERENCIAS_VENDAS = new Set(['tema', 'dashboard', 'clientes', 'produtos', 'vendas', 'vender', 'agenda', 'divulgacao', 'gestao']);
+const IDS_SALA_PREFERENCIAS_VENDAS = new Set(['dashboard', 'clientes', 'produtos', 'vendas', 'vender', 'agenda', 'novidades', 'divulgacao', 'informacoes']);
 const HOJE = new Date();
 const INICIO_MES = new Date(HOJE.getFullYear(), HOJE.getMonth(), 1);
 const FIM_MES = new Date(HOJE.getFullYear(), HOJE.getMonth() + 1, 0);
@@ -100,6 +103,7 @@ const estadoInicial = {
 };
 
 let state = carregarEstado();
+const usuarioPreferenciasLocaisId = state.usuario?.id || null;
 // O dashboard é mensal: um filtro salvo nunca pode cortar os últimos dias do
 // mês selecionado. Isso mantém vendas e recebimentos alinhados à Gestão.
 aplicarPeriodoCompletoMesSelecionado();
@@ -107,6 +111,11 @@ document.documentElement.classList.toggle('dark-theme', Boolean(state.temaEscuro
 let buscaAplicada = state.busca || '';
 let backendAtivo = Boolean(window.VendasDb?.client);
 let carregandoBackend = backendAtivo;
+let preferenciasServidorCarregadas = false;
+let assinaturaPreferenciasServidor = '';
+let assinaturaPreferenciasAgendada = '';
+let timerPreferenciasServidor = null;
+let salvamentoPreferenciasServidor = null;
 let loginTipo = 'email';
 let modoLogin = 'entrar';
 let cadastroEtapa = 'dados';
@@ -368,10 +377,134 @@ function carregarEstado() {
     const salvo = JSON.parse(localStorage.getItem(STORAGE_KEY) || 'null');
     // Pesquisas são contexto temporário: jamais são restauradas junto com a
     // sala de botões em uma nova abertura.
-    return salvo ? { ...estadoInicial, ...salvo, carrinho: [], busca: '', menuAberto: true } : { ...estadoInicial };
+    if (!salvo) return { ...estadoInicial };
+    const estadoLocal = { ...estadoInicial, ...salvo, carrinho: [], busca: '', menuAberto: true };
+    return { ...estadoLocal, ...normalizarPreferenciasVendas(estadoLocal) };
   } catch {
     return { ...estadoInicial };
   }
+}
+
+function limitarNumeroPreferenciaVendas(valor, minimo, maximo, padrao) {
+  const numero = Number(valor);
+  if (!Number.isFinite(numero)) return padrao;
+  return Math.max(minimo, Math.min(maximo, numero));
+}
+
+function normalizarPreferenciasVendas(origem = {}) {
+  const atalhoEsquerdo = IDS_ATALHOS_PREFERENCIAS_VENDAS.has(origem.atalhoInferiorEsquerdo)
+    ? origem.atalhoInferiorEsquerdo
+    : estadoInicial.atalhoInferiorEsquerdo;
+  let atalhoDireito = IDS_ATALHOS_PREFERENCIAS_VENDAS.has(origem.atalhoInferiorDireito)
+    ? origem.atalhoInferiorDireito
+    : estadoInicial.atalhoInferiorDireito;
+  if (atalhoDireito === atalhoEsquerdo) atalhoDireito = atalhoEsquerdo === 'agenda' ? 'tema' : 'agenda';
+  const ordemSalaBotoes = Array.isArray(origem.ordemSalaBotoes)
+    ? [...new Set(origem.ordemSalaBotoes.filter((id) => IDS_SALA_PREFERENCIAS_VENDAS.has(id)))]
+    : [];
+  return {
+    versao: PREFERENCIAS_VENDAS_VERSAO,
+    temaEscuro: Boolean(origem.temaEscuro),
+    atalhoInferiorEsquerdo: atalhoEsquerdo,
+    atalhoInferiorDireito: atalhoDireito,
+    ordemSalaBotoes,
+    agendaAlertaAniversarioDias: limitarNumeroPreferenciaVendas(origem.agendaAlertaAniversarioDias, 0, 30, estadoInicial.agendaAlertaAniversarioDias),
+    metaMensal: limitarNumeroPreferenciaVendas(origem.metaMensal, 0, Number.MAX_SAFE_INTEGER, estadoInicial.metaMensal),
+    dashboardDiasInativos: limitarNumeroPreferenciaVendas(origem.dashboardDiasInativos, 1, 365, estadoInicial.dashboardDiasInativos),
+  };
+}
+
+function extrairPreferenciasVendas(origem = state) {
+  return normalizarPreferenciasVendas(origem);
+}
+
+function aplicarPreferenciasVendas(preferencias) {
+  const normalizadas = normalizarPreferenciasVendas(preferencias);
+  Object.assign(state, normalizadas);
+  document.documentElement.classList.toggle('dark-theme', normalizadas.temaEscuro);
+  return normalizadas;
+}
+
+function assinaturaPreferenciasVendas(preferencias = extrairPreferenciasVendas()) {
+  return JSON.stringify(preferencias);
+}
+
+async function sincronizarPreferenciasVendasServidor() {
+  if (!preferenciasServidorCarregadas || !backendAtivo || !window.VendasDb?.salvarPreferencias) return;
+  if (salvamentoPreferenciasServidor) {
+    await salvamentoPreferenciasServidor.catch(() => undefined);
+    if (!preferenciasServidorCarregadas) return;
+  }
+  const preferencias = extrairPreferenciasVendas();
+  const assinatura = assinaturaPreferenciasVendas(preferencias);
+  let salvo = false;
+  assinaturaPreferenciasAgendada = '';
+  if (assinatura === assinaturaPreferenciasServidor) return;
+  salvamentoPreferenciasServidor = window.VendasDb.salvarPreferencias(preferencias, PREFERENCIAS_VENDAS_VERSAO);
+  try {
+    await salvamentoPreferenciasServidor;
+    assinaturaPreferenciasServidor = assinatura;
+    salvo = true;
+  } catch (error) {
+    console.warn('Não foi possível sincronizar as preferências do Vendas com o servidor.', error);
+  } finally {
+    salvamentoPreferenciasServidor = null;
+  }
+  if (salvo && preferenciasServidorCarregadas && assinaturaPreferenciasVendas() !== assinaturaPreferenciasServidor) {
+    agendarSincronizacaoPreferenciasVendas();
+  }
+}
+
+function agendarSincronizacaoPreferenciasVendas() {
+  if (!preferenciasServidorCarregadas || !backendAtivo || !window.VendasDb?.salvarPreferencias) return;
+  const assinatura = assinaturaPreferenciasVendas();
+  if (assinatura === assinaturaPreferenciasServidor || assinatura === assinaturaPreferenciasAgendada) return;
+  assinaturaPreferenciasAgendada = assinatura;
+  if (timerPreferenciasServidor) window.clearTimeout(timerPreferenciasServidor);
+  timerPreferenciasServidor = window.setTimeout(() => {
+    timerPreferenciasServidor = null;
+    void sincronizarPreferenciasVendasServidor();
+  }, 500);
+}
+
+async function inicializarPreferenciasVendasServidor(dados) {
+  preferenciasServidorCarregadas = false;
+  assinaturaPreferenciasServidor = '';
+  assinaturaPreferenciasAgendada = '';
+  if (!dados?.user || dados.preferenciasServidorDisponivel !== true || !window.VendasDb?.salvarPreferencias) return;
+
+  if (dados.preferencias && typeof dados.preferencias === 'object') {
+    const preferencias = aplicarPreferenciasVendas(dados.preferencias);
+    assinaturaPreferenciasServidor = assinaturaPreferenciasVendas(preferencias);
+    preferenciasServidorCarregadas = true;
+    return;
+  }
+
+  const pertenceAoUsuarioAtual = !usuarioPreferenciasLocaisId || usuarioPreferenciasLocaisId === dados.user.id;
+  const preferencias = aplicarPreferenciasVendas(pertenceAoUsuarioAtual ? state : estadoInicial);
+  try {
+    salvamentoPreferenciasServidor = window.VendasDb.salvarPreferencias(preferencias, PREFERENCIAS_VENDAS_VERSAO);
+    await salvamentoPreferenciasServidor;
+    assinaturaPreferenciasServidor = assinaturaPreferenciasVendas(preferencias);
+    preferenciasServidorCarregadas = true;
+  } catch (error) {
+    console.warn('As preferências locais serão mantidas até ser possível migrá-las para o servidor.', error);
+  } finally {
+    salvamentoPreferenciasServidor = null;
+  }
+}
+
+async function suspenderSincronizacaoPreferenciasVendas() {
+  const estavaAtiva = preferenciasServidorCarregadas;
+  preferenciasServidorCarregadas = false;
+  assinaturaPreferenciasAgendada = '';
+  if (timerPreferenciasServidor) {
+    window.clearTimeout(timerPreferenciasServidor);
+    timerPreferenciasServidor = null;
+  }
+  if (salvamentoPreferenciasServidor) await salvamentoPreferenciasServidor.catch(() => undefined);
+  salvamentoPreferenciasServidor = null;
+  return estavaAtiva;
 }
 
 function salvarEstado() {
@@ -398,8 +531,8 @@ function salvarEstado() {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(persistente));
   } catch (error) {
     console.warn('Não foi possível salvar as preferências locais do Vendas.', error);
-    try { localStorage.removeItem(STORAGE_KEY); } catch { /* armazenamento indisponível */ }
   }
+  agendarSincronizacaoPreferenciasVendas();
 }
 
 function abrirBancoCacheVendas() {
@@ -1141,6 +1274,7 @@ function render() {
   }
   const assinaturaSalaAtual = state.menuAberto && salaEmLayoutCompacto ? assinaturaVisualSalaBotoes() : '';
   if (assinaturaSalaAtual && podePreservarSalaBotoes(assinaturaSalaAtual)) {
+    sincronizarNavegacaoInferior();
     agendarGarantiaSalaBotoes();
     return;
   }
@@ -1795,6 +1929,7 @@ function abrirAcoesRapidas() {
 async function sairSistema() {
   const destinoLogout = origemAcessoVendas() === 'gestao' ? '/?entrar=1' : '/avantavendas?entrar=1';
   void limparCacheVendas();
+  await suspenderSincronizacaoPreferenciasVendas();
   try { if (backendAtivo) await window.VendasDb.signOut(); } catch (error) { console.error(error); }
   try {
     Object.keys(sessionStorage).forEach((chave) => {
@@ -2279,6 +2414,7 @@ async function carregarDadosBackend(mostrarCarregamento = true, manterPreparacao
         email: dados.user.email || state.usuario.email || '',
         telefone: dados.user.phone || dados.user.user_metadata?.telefone || dados.user.user_metadata?.phone || state.usuario.telefone || '',
       };
+      await inicializarPreferenciasVendasServidor(dados);
       state.produtos = dados.produtos;
       state.pacotesProdutos = dados.pacotes || [];
       const houveAlteracaoDuranteCarga = revisaoDadosOperacionais !== revisaoAoIniciar;
@@ -3075,15 +3211,21 @@ function abrirResetSistemaVendas() {
 
 async function confirmarResetSistemaVendas() {
   if (valor('confirmacaoResetVendas').trim().toUpperCase() !== 'RESETAR') { toast('Digite RESETAR para confirmar.'); return; }
+  let sincronizacaoPreferenciasSuspensa = false;
   try {
     await exportarBackupVendasExcel();
+    sincronizacaoPreferenciasSuspensa = await suspenderSincronizacaoPreferenciasVendas();
     await window.VendasDb.resetarSistemaVendas();
     await limparCacheVendas(undefined, undefined, true);
     localStorage.removeItem(STORAGE_KEY);
+    aplicarPreferenciasVendas(estadoInicial);
     fecharSheet();
     await carregarDadosBackend(false);
     toast('Sistema resetado. O backup foi gerado antes da limpeza.');
-  } catch (error) { toast(traduzErro(error)); }
+  } catch (error) {
+    if (sincronizacaoPreferenciasSuspensa) preferenciasServidorCarregadas = true;
+    toast(traduzErro(error));
+  }
 }
 
 function alternarTema(ativo) {

@@ -6,8 +6,8 @@ export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
  * Cada guia é enviado apenas no ambiente correspondente, evitando misturar
  * caminhos e funções de Web, Mobile e Vendas na mesma resposta.
  */
-// Revisado na versão 1.6.0.84.119: confirmações operacionais padronizadas e
-// escolhas destrutivas explícitas na Gestão Mobile, Web e AvantaVendas.
+// Revisado na versão 1.6.0.84.120: preferências duráveis do AvantaVendas
+// acompanham a conta, e a navegação inferior permanece acima das telas comuns.
 const GUIAS: Record<AmbienteAva, string> = {
   'gestao-web': `GUIA OPERACIONAL — AVANTALAB GESTÃO WEB
 Você atende no sistema Gestão Web. Oriente por nomes visíveis na interface; não invente telas.
@@ -111,6 +111,7 @@ SALA E NAVEGAÇÃO
 - A sala de botões é a tela inicial obrigatória de cada abertura, inclusive quando os dados são restaurados pelo cache; pesquisas de Clientes, Produtos, Pedidos e Pagamentos começam limpas: Dashboard, Clientes, Produtos, Pedidos, Pagamentos, Agenda, Novidades, Divulgação e Informações.
 - O menu inferior permite ir a Configurações, atalhos escolhidos pelo usuário, Novo lançamento (+) e Início. Configurações > Organizar atalhos muda os dois atalhos laterais; o lápis da sala organiza a ordem dos cards. Enquanto a organização está ativa, a instrução "Clique no botão e arraste para a nova posição" aparece ao lado do lápis.
 - O topo e o menu inferior permanecem ancorados às bordas da tela; apenas o conteúdo central rola. Eles não se deslocam ao trocar de página, entrar em Configurações ou abrir e fechar um modal.
+- O menu inferior permanece visível acima da sala, Dashboard e demais telas comuns. Modais e confirmações aparecem acima dele enquanto estiverem abertos.
 - Depois de carregada, a sala mantém seus cards estáveis. As imagens dos nove botões permanecem pré-carregadas para o retorno imediato ao Início; tocar novamente em Início não recarrega a grade, e a organização reposiciona os próprios cards sem recarregar as imagens.
 - Para gestores habilitados, após o login a primeira tela permite escolher Gestão ou Vendas antes de carregar os dados; depois da escolha aparece Preparando acesso. Dentro do Vendas, Ir para Gestão fica no canto direito do header fixo da sala de botões. Ao tocar, ele lista todos os perfis ativos da Gestão vinculados à conta; o usuário escolhe um perfil e confirma antes de abrir a Gestão. Ir para Gestão também pode ser configurado como atalho inferior. A troca preserva a sessão, abre o perfil escolhido e, no PWA instalado, permanece na mesma janela em modo aplicativo, sem barras do navegador; vendedores sem papel de gestor não recebem essa opção.
 - O Vendas possui uma única conta operacional por usuário e não exibe seletor de perfis empresariais. Permissões da Gestão apenas autorizam a troca entre os sistemas; o destino financeiro só pode ser alterado em Configurações > Integração com Gestão.
@@ -149,6 +150,7 @@ AGENDA, CONTEÚDO E CONFIGURAÇÕES
 - Gestor Master, Administrador e Operador Completo podem publicar, editar ou excluir novidades, pastas, subpastas, imagens e vídeos da Divulgação quando o módulo estiver ativo. Operador Completo não instala módulos nem aprova acessos.
 - Novidades são publicações da empresa vinculada. Divulgação navega por pastas/subpastas e abre fotos/vídeos para visualizar e compartilhar.
 - Em Configurações há dados da conta, celular com validação SMS, senha AvantaLab, aparência, metas, catálogo, estoque, vínculos comerciais, destino financeiro, PWA, backup e reset. Resetar gera backup e apaga os dados locais do Vendas após confirmação.
+- Aparência, atalhos inferiores, ordem da sala, alerta de aniversário, meta mensal e período de clientes inativos acompanham a conta pelo servidor. Na primeira abertura após a atualização, as preferências válidas deste aparelho são migradas automaticamente; a cópia local permanece apenas como contingência offline.
 - O vínculo comercial (notícias, divulgação e catálogo) pode ser diferente do destino financeiro pessoal (receitas no Gestão). A integração gera uma receita consolidada por mês e a atualiza no acesso. Não confunda os dois.
 - No perfil Pessoal gratuito, o acesso ao AvantaVendas fica suspenso e direciona para a assinatura. A suspensão não apaga nem desinstala o módulo; clientes, produtos, pedidos, pagamentos e vínculos voltam a ficar acessíveis quando a assinatura ou cortesia é reativada.
 

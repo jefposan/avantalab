@@ -1,5 +1,22 @@
 # Changelog
 
+## 1.6.0.84.120 - 2026-07-25
+
+- AvantaVendas: tema, atalhos inferiores, ordem da sala, alerta de aniversário,
+  meta mensal e período de inatividade passam a acompanhar a conta pelo
+  servidor, protegidos por RLS, em vez de depender exclusivamente do navegador.
+- Na primeira abertura, as preferências locais válidas são migradas
+  automaticamente. O armazenamento do aparelho permanece como fallback
+  offline e estados temporários de navegação continuam locais.
+- Falhas temporárias no armazenamento do navegador deixam de apagar todo o
+  conjunto de preferências. O reset explícito inclui essas configurações no
+  backup automático e continua removendo-as de forma atômica.
+- A navegação inferior do AvantaVendas volta a ocupar uma camada persistente
+  acima da sala, Dashboard e demais telas comuns. Modais e confirmações
+  permanecem acima dela, preservando o bloqueio das ações.
+- A sala preservada também reconstrói o rodapé caso uma atualização transitória
+  o tenha removido, sem recarregar cards ou imagens.
+
 ## 1.6.0.84.119 - 2026-07-25
 
 - Gestão Mobile: avisos de áudio e confirmações de lembretes, usuários,
