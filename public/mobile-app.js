@@ -2750,6 +2750,15 @@
     } catch (e) {}
   }
 
+  function ordenarDespesasAlfabeticamenteMobile(despesas) {
+    return (despesas || []).slice().sort(function (a, b) {
+      return String(a && a.nome || '').localeCompare(String(b && b.nome || ''), 'pt-BR', {
+        sensitivity: 'base',
+        numeric: true,
+      });
+    });
+  }
+
   async function sincronizarAgendaSupabase() {
     if (!state.usuario || !state.usuario.id) return;
     try {
@@ -5199,13 +5208,13 @@
       };
     });
 
-    state.despesas = (resultados[3].data || []).map(function (item) {
+    state.despesas = ordenarDespesasAlfabeticamenteMobile((resultados[3].data || []).map(function (item) {
       return {
         id: item.id,
         nome: formatarDescricao(item.nome),
         categoria: formatarDescricao(item.categoria || 'Sem categoria'),
       };
-    });
+    }));
 
     if (resultados[4].data && resultados[4].data.duplicados_ativo !== undefined) {
       state.duplicadosAtivo = resultados[4].data.duplicados_ativo !== false;
@@ -7041,6 +7050,7 @@
     state.modalMenu = 'categorias';
     state.erro = '';
     await carregarDados();
+    notificarFinanceiroAtualizadoMobile();
     mostrarToast('Despesa cadastrada.');
   }
 
@@ -7092,6 +7102,7 @@
     state.novaDespesaCategoria = '';
     state.erro = '';
     await carregarDados();
+    notificarFinanceiroAtualizadoMobile();
     setTimeout(function () {
       var sel = document.getElementById('despesa-nome');
       if (sel) {
@@ -7154,6 +7165,7 @@
     state.categoriaAcoesId = '';
     state.erro = '';
     await carregarDados();
+    notificarFinanceiroAtualizadoMobile();
     mostrarToast('Despesa atualizada.');
   }
 
@@ -7187,6 +7199,7 @@
     state.categoriaAcoesId = '';
     state.erro = '';
     await carregarDados();
+    notificarFinanceiroAtualizadoMobile();
     mostrarToast('Despesa excluida.');
   }
 

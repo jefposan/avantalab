@@ -1,6 +1,9 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.6.0.84.117 -->
+<!-- ava-version: 1.6.0.84.118 -->
+
+> Revisão 1.6.0.84.118: ordenação e sincronização do catálogo de despesas entre
+> Gestão Web e Mobile; sem impacto operacional no AvantaVendas.
 
 > Revisão 1.6.0.84.117: padronização de uma confirmação na Gestão Mobile; sem
 > impacto operacional no AvantaVendas.

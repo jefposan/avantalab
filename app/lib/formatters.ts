@@ -160,3 +160,14 @@ export const normalizarTexto = (texto: string) => {
     .replace(/[\u0300-\u036f]/g, '')
     .replace(/\s+/g, ' ');
 };
+
+export const ordenarDespesasAlfabeticamente = <T extends { nome: string }>(
+  despesas: readonly T[]
+) => {
+  return [...despesas].sort((a, b) =>
+    String(a.nome || '').localeCompare(String(b.nome || ''), 'pt-BR', {
+      sensitivity: 'base',
+      numeric: true,
+    })
+  );
+};

@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.6.0.84.118 - 2026-07-25
+
+- Gestão Web e Mobile: tipos de despesa recém-cadastrados passam a entrar
+  imediatamente na posição alfabética correta em listas, seletores e no modal
+  de gerenciamento, com comparação em português do Brasil.
+- Inclusões, edições e exclusões do catálogo de despesas agora usam a
+  sincronização financeira compartilhada: uma alteração feita na Web atualiza
+  o Mobile aberto, e vice-versa, mantendo a mesma tabela e regra de negócio.
+
 ## 1.6.0.84.117 - 2026-07-25
 
 - Gestão Mobile: a confirmação ao excluir o total mensal deixa de usar o aviso

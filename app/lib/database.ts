@@ -6,6 +6,7 @@ import {
   normalizarTipoPerfil,
   type TipoPerfil,
 } from './perfis';
+import { ordenarDespesasAlfabeticamente } from './formatters';
 
 function tratarErroSupabase(error: any) {
   if (!error?.message) {
@@ -385,7 +386,7 @@ export async function buscarDespesasCadastradas(empresaId: string) {
     return [];
   }
 
-  return data;
+  return ordenarDespesasAlfabeticamente(data || []);
 }
 
 export async function buscarLancamentos(empresaId: string, ano: number) {

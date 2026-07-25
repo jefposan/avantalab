@@ -1,6 +1,10 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.6.0.84.117 -->
+<!-- ava-version: 1.6.0.84.118 -->
+
+> Revisão 1.6.0.84.118: tipos de despesa cadastrados ou renomeados entram
+> imediatamente em ordem alfabética. Inclusões, edições e exclusões atualizam
+> também a Gestão Web aberta no mesmo perfil.
 
 > Revisão 1.6.0.84.117: ao excluir o total de receitas do mês, o aviso
 > formatado informa se as receitas avulsas serão preservadas ou se o total será
@@ -272,6 +276,9 @@ deve usar os nomes do menu e da barra inferior do celular.
 ## Lançamentos e agenda
 
 - Para cadastrar ou revisar despesas e categorias: **Menu > Cadastrar despesas**.
+- Novos tipos de despesa entram imediatamente em ordem alfabética nas listas e
+  seletores. Alterações feitas no Mobile atualizam a Gestão Web aberta no mesmo
+  perfil, e as alterações da Web atualizam o Mobile.
 - Nos cards **Despesas do mês** e **Receitas do mês**, tocar na lupa abre a busca
   já focada e pronta para digitação.
 - O app registra receitas, despesas, despesas futuras, parcelamentos e despesas

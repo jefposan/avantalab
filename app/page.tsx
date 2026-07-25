@@ -40,6 +40,7 @@ import {
   corEhClara,
   getMaxDias,
   normalizarTexto,
+  ordenarDespesasAlfabeticamente,
 } from './lib/formatters';
 import {
   CATEGORIAS_EXCLUSAO_EBITDA,
@@ -1491,10 +1492,10 @@ if (empresa.telefone_confirmado !== true && !contaRevisaoAppApple) {
 
   if (despesas && despesas.length > 0) {
     setDespesasCadastradas(
-      despesas.map((d: RegistroSupabase) => ({
+      ordenarDespesasAlfabeticamente(despesas.map((d: RegistroSupabase) => ({
         nome: formatarNomeCategoria(textoRegistro(d.nome)),
         categoria: formatarNomeCategoria(textoRegistro(d.categoria)),
-      }))
+      })))
     );
   } else {
     setDespesasCadastradas([]);
@@ -3936,16 +3937,19 @@ const adicionarDespesaBase = async () => {
   return;
 }
 
-  setDespesasCadastradas([
-    ...despesasCadastradas,
-    {
+  setDespesasCadastradas((atuais) =>
+    ordenarDespesasAlfabeticamente([
+      ...atuais,
+      {
       nome: despesaSalva.nome,
       categoria: despesaSalva.categoria,
-    },
-  ]);
+      },
+    ])
+  );
 
   setNovaBaseNome('');
   setNovaBaseCat('');
+  notificarFinanceiroAtualizado();
 };
 
 const editarDespesaBase = async (nomeAtual: string): Promise<boolean> => {
@@ -3977,11 +3981,14 @@ const editarDespesaBase = async (nomeAtual: string): Promise<boolean> => {
     return false;
   }
 
-  setDespesasCadastradas((prev) => prev.map((d) =>
-    d.nome === nomeAtual
-      ? { nome: formatarNomeCategoria(atualizada.nome), categoria: formatarNomeCategoria(atualizada.categoria) }
-      : d
-  ));
+  setDespesasCadastradas((prev) =>
+    ordenarDespesasAlfabeticamente(prev.map((d) =>
+      d.nome === nomeAtual
+        ? { nome: formatarNomeCategoria(atualizada.nome), categoria: formatarNomeCategoria(atualizada.categoria) }
+        : d
+    ))
+  );
+  notificarFinanceiroAtualizado();
   return true;
 };
 
@@ -4019,6 +4026,7 @@ const apagarDespesaBase = async (nome: string) => {
       }
 
       setDespesasCadastradas((prev) => prev.filter((d) => d.nome !== nome));
+      notificarFinanceiroAtualizado();
     },
   });
 };
@@ -5105,10 +5113,10 @@ const recarregarDadosFinanceirosAtual = async () => {
   ]);
 
   setDespesasCadastradas(
-    despesasBanco.map((d: RegistroSupabase) => ({
+    ordenarDespesasAlfabeticamente(despesasBanco.map((d: RegistroSupabase) => ({
       nome: formatarNomeCategoria(textoRegistro(d.nome)),
       categoria: formatarNomeCategoria(textoRegistro(d.categoria)),
-    }))
+    })))
   );
 
   setLancamentos(

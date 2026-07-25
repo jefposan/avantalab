@@ -1,6 +1,10 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.6.0.84.117 -->
+<!-- ava-version: 1.6.0.84.118 -->
+
+> Revisão 1.6.0.84.118: tipos de despesa cadastrados ou renomeados entram
+> imediatamente em ordem alfabética. Inclusões, edições e exclusões atualizam
+> também a Gestão Mobile aberta no mesmo perfil.
 
 > Revisão 1.6.0.84.117: padronização de uma confirmação na Gestão Mobile; sem
 > impacto operacional na Gestão Web.
@@ -242,6 +246,9 @@ Gestão Mobile ou a assinatura/cupom do Premium Pessoal.
 - Despesas futuras ficam marcadas como **Previsto** até confirmação. Alterar a
   data preserva essa natureza.
 - Parcelamentos criam os lançamentos dos meses correspondentes.
+- Em **Ajustes > Cadastrar Despesas**, novos tipos entram imediatamente em ordem
+  alfabética nas listas e seletores. Alterações no catálogo são compartilhadas
+  com a Gestão Mobile aberta no mesmo perfil.
 - Para alterar toda uma recorrência, orientar em **Menu > Despesas fixas**;
   editar uma linha mensal afeta somente aquele mês.
 - Gráficos e relatórios obedecem ao perfil e período selecionados. A análise da
