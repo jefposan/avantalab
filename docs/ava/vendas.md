@@ -1,6 +1,9 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.6.0.84.113 -->
+<!-- ava-version: 1.6.0.84.114 -->
+
+> Revisão 1.6.0.84.114: padronização visual de um aviso da Gestão Mobile; sem
+> impacto operacional no AvantaVendas.
 
 > Revisão 1.6.0.84.113: no mobile, o topo e o menu inferior permanecem
 > ancorados enquanto apenas o conteúdo central rola; a posição é preservada

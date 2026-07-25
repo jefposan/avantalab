@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.6.0.84.114 - 2026-07-24
+
+- Gestão Mobile: a confirmação exibida ao definir o total de receitas em um
+  mês com receitas avulsas passa a usar a moldura visual dos avisos do sistema,
+  inclusive no iOS, onde o alerta nativo não aceitava formatação.
+- Preservados integralmente os botões e a regra existente: **Cancelar** mantém
+  as receitas avulsas e soma o total; **OK** apaga as avulsas e mantém somente
+  o total informado. Nenhum outro aviso foi alterado.
+
 ## 1.6.0.84.113 - 2026-07-24
 
 - AvantaVendas: o shell mobile passa a manter cabeçalho e navegação inferior

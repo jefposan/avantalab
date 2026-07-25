@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.6.0.84.113 -->
+<!-- ava-version: 1.6.0.84.114 -->
+
+> Revisão 1.6.0.84.114: padronização visual de um aviso da Gestão Mobile; sem
+> impacto operacional na Gestão Web.
 
 > Revisão 1.6.0.84.113: estabilização do topo e do menu inferior no
 > AvantaVendas; sem impacto operacional na Gestão Web.

@@ -1,6 +1,11 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.6.0.84.113 -->
+<!-- ava-version: 1.6.0.84.114 -->
+
+> Revisão 1.6.0.84.114: ao definir o total de receitas em um mês que já possui
+> receitas avulsas, o aviso formatado mantém as mesmas escolhas: **Cancelar**
+> preserva as receitas e soma o total; **OK** apaga as avulsas e mantém somente
+> o total informado.
 
 > Revisão 1.6.0.84.113: estabilização do topo e do menu inferior no
 > AvantaVendas; sem impacto operacional na Gestão Mobile.
@@ -250,6 +255,9 @@ deve usar os nomes do menu e da barra inferior do celular.
   fixas. Previsto só se torna lançamento confirmado após a ação do usuário.
 - Durante o preenchimento de um lançamento, atualizações secundárias aguardam o
   fim da edição para atualizar a tela sem fechar o teclado ou apagar o conteúdo.
+- Ao usar **Receita > Definir total** em um mês com receitas avulsas,
+  **Cancelar** preserva essas receitas e soma o total informado; **OK** apaga
+  as receitas avulsas e mantém somente o total.
 - Recorrências inteiras são alteradas em **Despesas fixas**; uma edição direta da
   linha mensal não altera os outros meses.
 - A agenda exibe lembretes e compromissos. Puxar para atualizar exige gesto longo

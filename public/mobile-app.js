@@ -368,6 +368,7 @@
     avisoAssinanteTitulo: '',
     avisoAssinanteMensagem: '',
     duplicadoConfirmacaoAberta: false,
+    confirmacaoTotalReceitaAberta: false,
     agendaTipoItem: 'lembrete',
     agendaTitulo: '',
     agendaDescricao: '',
@@ -1407,6 +1408,35 @@
           '<footer class="grid grid-cols-2 gap-2 border-t border-slate-200 p-3 ' + (state.darkMode ? 'border-slate-700' : '') + '">' +
             '<button id="cancelar-aviso-duplicado" type="button" class="h-11 rounded-xl border border-slate-300 bg-white text-xs font-black uppercase tracking-wide text-slate-700 active:bg-slate-50">Revisar</button>' +
             '<button id="confirmar-aviso-duplicado" type="button" class="h-11 rounded-xl bg-[#003E73] text-xs font-black uppercase tracking-wide text-white active:bg-[#002e56]">Adicionar</button>' +
+          '</footer>' +
+        '</section>' +
+      '</div>'
+    );
+  }
+
+  function confirmacaoTotalReceitaMobileHtml() {
+    if (!state.confirmacaoTotalReceitaAberta) return '';
+    var card = state.darkMode ? 'border-slate-700 bg-slate-900 text-slate-100' : 'border-slate-200 bg-white text-slate-900';
+    var detalhe = state.darkMode
+      ? 'border-amber-400/35 bg-amber-400/10 text-amber-50'
+      : 'border-amber-200 bg-amber-50 text-amber-950';
+    return (
+      '<div id="confirmacao-total-receita-overlay" class="fixed inset-0 flex items-center justify-center bg-slate-950/90 px-4" style="z-index:13015" role="dialog" aria-modal="true" aria-labelledby="confirmacao-total-receita-titulo" aria-describedby="confirmacao-total-receita-descricao">' +
+        '<section class="w-full max-w-sm overflow-hidden rounded-3xl border shadow-2xl ' + card + '">' +
+          '<header class="flex items-center gap-3 bg-[#003E73] px-4 py-3 text-white">' +
+            '<span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-white/20 bg-white/10 text-lg font-black" aria-hidden="true">!</span>' +
+            '<div><p class="text-[10px] font-black uppercase tracking-[0.16em] text-cyan-100">Conferência de lançamento</p><h2 id="confirmacao-total-receita-titulo" class="text-base font-black">Receitas já lançadas</h2></div>' +
+          '</header>' +
+          '<div class="p-4">' +
+            '<div id="confirmacao-total-receita-descricao" class="rounded-2xl border px-4 py-3 text-sm font-semibold leading-relaxed ' + detalhe + '">' +
+              '<p>Este mês já possui receitas avulsas lançadas.</p>' +
+              '<p class="mt-3"><strong>OK:</strong> apagar todos os lançamentos de receita do mês e manter somente este total.</p>' +
+              '<p class="mt-1"><strong>Cancelar:</strong> manter as receitas avulsas e somar este total a elas.</p>' +
+            '</div>' +
+          '</div>' +
+          '<footer class="grid grid-cols-2 gap-2 border-t border-slate-200 p-3 ' + (state.darkMode ? 'border-slate-700' : '') + '">' +
+            '<button id="cancelar-total-receita" type="button" class="h-11 rounded-xl border border-slate-300 bg-white text-xs font-black uppercase tracking-wide text-slate-700 active:bg-slate-50">Cancelar</button>' +
+            '<button id="confirmar-total-receita" type="button" class="h-11 rounded-xl bg-[#003E73] text-xs font-black uppercase tracking-wide text-white active:bg-[#002e56]">OK</button>' +
           '</footer>' +
         '</section>' +
       '</div>'
@@ -6805,7 +6835,7 @@
     mostrarToast('Entrada lancada.');
   }
 
-  async function salvarTotalReceita() {
+  async function salvarTotalReceita(decisaoReceitasAvulsas) {
     if (!state.empresa) return;
 
     var valorTexto = campo('receita-total');
@@ -6821,15 +6851,19 @@
     var totalEntradasRealizadas = entradasAvulsas.reduce(function (acc, e) {
       return e.status === 'prevista' ? acc : acc + Number(e.valor || 0);
     }, 0);
-    var apagarAvulsas = false;
-
-    if (entradasAvulsas.length > 0) {
-      apagarAvulsas = window.confirm(
-        'Este mes ja possui receitas avulsas lancadas.\n\n' +
-        'OK: apagar todos os lancamentos de receita do mes e manter somente este total.\n' +
-        'Cancelar: manter as receitas avulsas e somar este total a elas.'
-      );
+    if (entradasAvulsas.length > 0 && typeof decisaoReceitasAvulsas !== 'boolean') {
+      state.confirmacaoTotalReceitaAberta = true;
+      render();
+      window.requestAnimationFrame(function () {
+        var botaoInicial = document.getElementById('cancelar-total-receita');
+        if (!botaoInicial) return;
+        try { botaoInicial.focus({ preventScroll: true }); }
+        catch (e) { botaoInicial.focus(); }
+      });
+      return;
     }
+    var apagarAvulsas = entradasAvulsas.length > 0 && decisaoReceitasAvulsas === true;
+    state.confirmacaoTotalReceitaAberta = false;
 
     state.carregando = true;
     state.erro = '';
@@ -11652,7 +11686,7 @@
     else if (state.modoCriarPerfil) telaAtual = telaLoginWrapper(telaCriarPerfilInicial(), 'Criar perfil financeiro', 'Informe os dados do seu primeiro perfil.');
     else if (!state.paywallVerificado) telaAtual = telaCarregandoMobile();
     else telaAtual = telaApp();
-    root.innerHTML = telaAtual + (state.chatIAAberto ? chatIAModalHtml() : '') + (state.mostrarPromptNotificacoes ? promptNotificacoesHtml() : '') + (state.tourAberto ? tourHtml() : '') + avisoAssinanteMobileHtml() + avisoDuplicadoMobileHtml() + ativacaoVendasMobileHtml() + (state.seletorSistemaInicialBloqueante ? '' : seletorSistemaInicialHtml());
+    root.innerHTML = telaAtual + (state.chatIAAberto ? chatIAModalHtml() : '') + (state.mostrarPromptNotificacoes ? promptNotificacoesHtml() : '') + (state.tourAberto ? tourHtml() : '') + avisoAssinanteMobileHtml() + avisoDuplicadoMobileHtml() + confirmacaoTotalReceitaMobileHtml() + ativacaoVendasMobileHtml() + (state.seletorSistemaInicialBloqueante ? '' : seletorSistemaInicialHtml());
     sincronizarProgressoAcessoMobile();
     sincronizarGradienteHeaderPerfil();
     configurarRecolhimentoPerfilHeader();
@@ -12241,6 +12275,39 @@
       state.duplicadoConfirmacaoAberta = false;
       salvarDespesa(true);
     });
+    bind('cancelar-total-receita', function () {
+      state.confirmacaoTotalReceitaAberta = false;
+      salvarTotalReceita(false);
+    });
+    bind('confirmar-total-receita', function () {
+      state.confirmacaoTotalReceitaAberta = false;
+      salvarTotalReceita(true);
+    });
+    var confirmacaoTotalReceitaOverlay = document.getElementById('confirmacao-total-receita-overlay');
+    if (confirmacaoTotalReceitaOverlay) {
+      Array.prototype.forEach.call(root.children, function (elemento) {
+        if (elemento === confirmacaoTotalReceitaOverlay) return;
+        elemento.setAttribute('aria-hidden', 'true');
+        elemento.setAttribute('inert', '');
+      });
+      confirmacaoTotalReceitaOverlay.addEventListener('keydown', function (evento) {
+        var primeiro = document.getElementById('cancelar-total-receita');
+        var ultimo = document.getElementById('confirmar-total-receita');
+        if (evento.key === 'Escape') {
+          evento.preventDefault();
+          primeiro && primeiro.focus();
+          return;
+        }
+        if (evento.key !== 'Tab' || !primeiro || !ultimo) return;
+        if (evento.shiftKey && document.activeElement === primeiro) {
+          evento.preventDefault();
+          ultimo.focus();
+        } else if (!evento.shiftKey && document.activeElement === ultimo) {
+          evento.preventDefault();
+          primeiro.focus();
+        }
+      });
+    }
     bind('chat-ia-fechar', fecharChatIA);
     bind('chat-ia-home', fecharChatIAParaHome);
     bind('chat-ia-mic', function() { gravarVoz(); });
@@ -12435,7 +12502,7 @@
       var v = document.getElementById('despesa-valor'); if (v) v.value = valorVal;
     });
     bind('salvar-entrada', salvarEntrada);
-    bind('salvar-total-receita', salvarTotalReceita);
+    bind('salvar-total-receita', function () { salvarTotalReceita(); });
     bind('excluir-total-receita', excluirTotalMesMobile);
     bind('toggle-valores-saldo', function () { alternarVisibilidadeValoresCard('saldo'); });
     bind('toggle-valores-caixinha', function () { alternarVisibilidadeValoresCard('caixinha'); });
