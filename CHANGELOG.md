@@ -1,5 +1,16 @@
 # Changelog
 
+## 1.6.0.84.115 - 2026-07-25
+
+- Gestão Mobile: **Menu > Assinatura** passa a distinguir acesso liberado de
+  assinatura contratada. O resumo identifica plano e situação — em dia,
+  cortesia, cupom, teste, teste expirado, pagamento pendente ou cancelamento —
+  sem apresentar campos financeiros vazios.
+- Valor contratado, próximo vencimento e faturas aparecem somente quando há
+  contrato recorrente. Assinaturas canceladas preservam o valor contratado e o
+  histórico local; cortesia, cupom, teste e perfis sem contrato recebem a oferta
+  de Assinatura Pessoal ou Assinatura Empresa conforme o perfil.
+
 ## 1.6.0.84.114 - 2026-07-24
 
 - Gestão Mobile: a confirmação exibida ao definir o total de receitas em um

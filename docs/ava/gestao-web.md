@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.6.0.84.114 -->
+<!-- ava-version: 1.6.0.84.115 -->
+
+> Revisão 1.6.0.84.115: detalhamento de assinatura na Gestão Mobile; sem
+> impacto operacional na Gestão Web.
 
 > Revisão 1.6.0.84.114: padronização visual de um aviso da Gestão Mobile; sem
 > impacto operacional na Gestão Web.

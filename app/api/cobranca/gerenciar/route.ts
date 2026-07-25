@@ -10,6 +10,7 @@ import { PRECOS, type Ciclo, type PlanoPago } from '../../../lib/cobranca';
 import { autenticarPerfilCobranca, resolverEstadoAcessoParaUsuario } from '../../../lib/cobranca-servidor';
 
 export const runtime = 'nodejs';
+const STATUS_COM_ASSINATURA = new Set(['ativa', 'inadimplente', 'cancelada']);
 
 function empresaIdDaRequest(request: Request): string {
   return (new URL(request.url).searchParams.get('empresaId') || '').trim();
@@ -35,7 +36,7 @@ export async function GET(request: Request) {
   const estado = await resolverEstadoAcessoParaUsuario(empresaId, acesso.usuario.id);
   const { data: local } = await acesso.db
     .from('assinaturas')
-    .select('id, gateway_subscription_id, cupom_id')
+    .select('id, status, plano, ciclo, gateway_subscription_id, cupom_id')
     .eq('empresa_id', empresaId)
     .maybeSingle();
 
@@ -71,17 +72,60 @@ export async function GET(request: Request) {
         formaPagamento: assinaturaGw.data.billingType || null,
       };
     }
-    if (cobrancasGw.ok) {
-      faturas = (cobrancasGw.data?.data || [])
+    const faturasGateway = cobrancasGw.data?.data || [];
+    if (cobrancasGw.ok && faturasGateway.length > 0) {
+      faturas = faturasGateway
         .map(faturaPublica)
         .sort((a, b) => String(b.vencimento || '').localeCompare(String(a.vencimento || '')))
         .slice(0, 12);
     }
   }
 
+  // Um registro de acesso (trial, cortesia ou cupom) não é necessariamente uma
+  // assinatura contratada. O app usa esta sinalização para não misturar
+  // benefícios gratuitos com valor, renovação e histórico financeiro.
+  const temAssinatura = Boolean(
+    local?.gateway_subscription_id
+    && STATUS_COM_ASSINATURA.has(estado?.status || local.status || ''),
+  );
+  const faturasDaAssinatura = temAssinatura ? faturas : [];
+  const valorGateway = Number(assinatura?.valor || 0);
+  const valorFatura = Number(
+    faturasDaAssinatura.find((item) => Number(item.valor || 0) > 0)?.valor || 0,
+  );
+  const planoLocal: PlanoPago | null = local?.plano === 'pessoal_premium'
+    ? 'pessoal_premium'
+    : (local?.plano === 'empresa' ? 'empresa' : null);
+  const cicloLocal: Ciclo | null = local?.ciclo === 'mensal'
+    ? 'mensal'
+    : (local?.ciclo === 'anual' ? 'anual' : null);
+  const valorPlano = planoLocal !== null && cicloLocal !== null
+    ? PRECOS[planoLocal][cicloLocal]
+    : 0;
+  const valorContratado = temAssinatura && (valorGateway > 0 || valorFatura > 0 || valorPlano > 0)
+    ? (valorGateway > 0 ? valorGateway : (valorFatura > 0 ? valorFatura : valorPlano))
+    : null;
+  const proximoVencimento = temAssinatura && estado?.status !== 'cancelada'
+    ? (
+        assinatura?.proximoVencimento
+        || faturasDaAssinatura.find((item) => ['PENDING', 'OVERDUE'].includes(item.status))?.vencimento
+        || null
+      )
+    : null;
+
   // Cortesia vinda de cupom (cupom_id preenchido) é exibida como "Cupom" nas telas.
   const viaCupom = Boolean(local?.cupom_id) && estado?.status === 'cortesia';
-  return NextResponse.json({ ok: true, estado, assinatura, faturas, viaCupom, podeGerenciar: acesso.podeGerenciar });
+  return NextResponse.json({
+    ok: true,
+    estado,
+    assinatura,
+    temAssinatura,
+    valorContratado,
+    proximoVencimento,
+    faturas: faturasDaAssinatura,
+    viaCupom,
+    podeGerenciar: acesso.podeGerenciar,
+  });
 }
 
 export async function PATCH(request: Request) {

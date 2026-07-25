@@ -1,6 +1,12 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.6.0.84.114 -->
+<!-- ava-version: 1.6.0.84.115 -->
+
+> Revisão 1.6.0.84.115: **Menu > Assinatura** sempre abre o resumo do perfil.
+> Situação e tipo de plano aparecem para assinatura, cortesia, cupom, teste,
+> teste expirado e cancelamento. Valor, próximo vencimento e faturas aparecem
+> somente quando existe assinatura contratada; sem contrato, a tela oferece a
+> Assinatura Pessoal ou Empresa correspondente ao perfil.
 
 > Revisão 1.6.0.84.114: ao definir o total de receitas em um mês que já possui
 > receitas avulsas, o aviso formatado mantém as mesmas escolhas: **Cancelar**
@@ -198,9 +204,15 @@ deve usar os nomes do menu e da barra inferior do celular.
   **Notificações**, no mesmo submenu.
 - **Sobre** apresenta as principais novidades em marcos consolidados, sem listar
   ajustes exclusivamente técnicos.
-- Em **Configurações**, **Assinatura** aparece primeiro quando disponível, seguida
-  pelos controles com chave. **Gerenciar perfil**, **Usuários** e **Editar dados
-  cadastrais** aparecem em sequência.
+- **Assinatura** é o primeiro item do **Menu**. A tela sempre informa a situação
+  e o tipo do plano. Valor contratado, próximo vencimento e faturas são
+  exclusivos de uma assinatura recorrente; cortesia, cupom, teste, teste
+  expirado e perfis sem contrato exibem a oferta **Assinatura Pessoal** ou
+  **Assinatura Empresa** conforme o perfil. Usuários sem permissão devem
+  solicitar a contratação a um gestor ou administrador.
+- Em **Configurações**, os controles com chave aparecem primeiro.
+  **Gerenciar perfil**, **Usuários** e **Editar dados cadastrais** aparecem em
+  sequência.
 - Quando o módulo Vendas Mobile está ativo e o usuário tem permissão, após o login
   a primeira tela permite escolher entre Gestão e Vendas e memorizar a preferência. Só
   depois da escolha aparece **Preparando acesso** e o sistema selecionado é carregado.

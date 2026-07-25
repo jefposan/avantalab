@@ -1617,14 +1617,6 @@
   }
 
   function abrirAssinaturaPeloMenuMobile() {
-    if (
-      COBRANCA_ATIVA_MOBILE &&
-      state.paywallEstado &&
-      !assinaturaVigenteMobile(state.paywallEstado)
-    ) {
-      abrirPremiumMobile('');
-      return;
-    }
     abrirAssinaturaMobile();
   }
 
@@ -10774,6 +10766,34 @@
     return '<div class="text-sm text-slate-500 p-4">Carregando...</div>';
   }
 
+  function sugestaoAssinaturaMobileHtml(pessoal, podeGerenciar) {
+    var titulo = pessoal ? 'Assinatura Pessoal' : 'Assinatura Empresa';
+    var nomePlano = pessoal ? 'Premium Pessoal' : 'Plano Empresa';
+    var precos = state.paywallPrecos || {
+      pessoal_premium: { mensal: 9.9, anual: 99 },
+      empresa: { mensal: 34.9, anual: 348 },
+    };
+    var precosPlano = pessoal ? precos.pessoal_premium : precos.empresa;
+    var valorMensal = dinheiro(Number(precosPlano && precosPlano.mensal || (pessoal ? 9.9 : 34.9))) + '/mês';
+    var valorAnual = dinheiro(Number(precosPlano && precosPlano.anual || (pessoal ? 99 : 348))) + '/ano';
+    return '<section class="overflow-hidden rounded-2xl border border-sky-200 bg-sky-50">' +
+      '<div class="px-4 py-3 text-white" style="background:linear-gradient(135deg,#003E73,#00A6C8)">' +
+        '<p class="text-[9px] font-black uppercase tracking-[0.2em] text-white/75">' + titulo + '</p>' +
+        '<h3 class="mt-1 text-base font-black">' + nomePlano + '</h3>' +
+        '<p class="mt-1 text-[11px] font-semibold leading-relaxed text-white/85">Tenha acesso completo aos recursos deste perfil com uma assinatura AvantaLab.</p>' +
+      '</div>' +
+      '<div class="p-4">' +
+        '<div class="grid grid-cols-2 gap-2 text-center">' +
+          '<div class="rounded-xl border border-sky-200 bg-white px-2 py-2.5"><p class="text-[9px] font-black uppercase tracking-wide text-slate-400">Mensal</p><strong class="mt-1 block text-xs text-slate-900">' + valorMensal + '</strong></div>' +
+          '<div class="rounded-xl border border-sky-200 bg-white px-2 py-2.5"><p class="text-[9px] font-black uppercase tracking-wide text-slate-400">Anual</p><strong class="mt-1 block text-xs text-slate-900">' + valorAnual + '</strong></div>' +
+        '</div>' +
+        (podeGerenciar
+          ? '<button id="assinatura-abrir-contratacao" type="button" class="mt-3 h-11 w-full rounded-xl bg-[#003E73] px-4 text-xs font-black uppercase tracking-wide text-white active:bg-[#002e56]">Ver opções de assinatura</button>'
+          : '<p class="mt-3 rounded-xl border border-sky-200 bg-white px-3 py-2 text-center text-[11px] font-semibold leading-relaxed text-slate-600">Solicite a um gestor ou administrador do perfil para contratar uma assinatura.</p>') +
+      '</div>' +
+    '</section>';
+  }
+
   function assinaturaMobileHtml() {
     var detalhes = state.assinaturaDetalhes;
     var estado = (detalhes && detalhes.estado) || state.paywallEstado || {};
@@ -10781,46 +10801,70 @@
     var faturas = (detalhes && detalhes.faturas) || [];
     var podeGerenciar = !detalhes || detalhes.podeGerenciar !== false;
     var canceladaNoFim = assinaturaCanceladaNoFimMobile(estado);
-    var statusRotulos = {
-      ativa: 'Ativa', trial: 'Periodo de teste', expirada: 'Vencida',
-      cancelada: canceladaNoFim ? 'Cancelada ao fim do periodo' : 'Cancelada',
-      cortesia: 'Cortesia', inadimplente: 'Pagamento pendente'
-    };
-    var statusEstilo = estado.status === 'ativa' || estado.status === 'cortesia'
-      ? 'background:#DCFCE7;color:#15803D'
-      : (estado.status === 'trial' ? 'background:#DBEAFE;color:#1D4ED8' : (estado.status === 'inadimplente' ? 'background:#FEF3C7;color:#B45309' : 'background:#FEE2E2;color:#B91C1C'));
-    var ciclo = estado.ciclo || '';
-    var plano = estado.plano === 'pessoal_premium' ? 'Premium Pessoal' : (estado.plano ? 'Empresa' : '—');
+    var temAssinatura = !!(detalhes && detalhes.temAssinatura);
+    var cicloGateway = assinatura && assinatura.ciclo === 'YEARLY'
+      ? 'anual'
+      : (assinatura && assinatura.ciclo === 'MONTHLY' ? 'mensal' : '');
+    var ciclo = estado.ciclo || cicloGateway;
     // Tipo do perfil: prioriza o perfil aberto no app (fonte confiável);
     // o tipoPerfil do estado é só fallback.
     var pessoal = state.empresa && state.empresa.tipo_perfil
       ? normalizarTipoPerfil(state.empresa.tipo_perfil) === 'pessoal'
       : estado.tipoPerfil === 'pessoal';
-    // Cortesia (admin/benefício) e cupom: não exibem dados de cobrança do gateway.
-    // Cortesia explícita, ou "ativa" sem cobrança e sem plano (cliente anterior
-    // ao lançamento — acesso liberado de graça = cortesia na prática).
+    var trialExpirado = estado.status === 'expirada'
+      && !!estado.trialFim
+      && new Date(estado.trialFim).getTime() <= Date.now();
+    // Cliente anterior ao lançamento, sem contrato no gateway, é uma cortesia
+    // operacional e não uma assinatura paga.
     var cortesiaAtiva = estado.status === 'cortesia'
-      || (estado.status === 'ativa' && !assinatura && !ciclo && !estado.plano);
+      || (estado.status === 'ativa' && !temAssinatura);
     var viaCupom = cortesiaAtiva && !!(detalhes && detalhes.viaCupom);
-    var tipoLabel = pessoal ? 'Pessoal' : 'Empresa';
-    // Atraso: pagamento pendente ou fatura vencida (cortesia tem prioridade).
-    var temFaturaVencida = faturas.some(function (f) { return f.status === 'OVERDUE'; });
-    var emAtraso = !cortesiaAtiva && (estado.status === 'inadimplente' || temFaturaVencida);
-    var situacaoRotulo = viaCupom ? 'Cupom' : (emAtraso ? 'Atraso' : (cortesiaAtiva ? 'Cortesia' : (statusRotulos[estado.status] || 'Sem assinatura')));
-    if (emAtraso) statusEstilo = 'background:#FEE2E2;color:#B91C1C';
-    // Plano atual: "<Tipo> · mensal/anual" (pago) ou "<Tipo> · cortesia/cupom".
-    var planoExibido = cortesiaAtiva
-      ? tipoLabel + ' · ' + (viaCupom ? 'cupom' : 'cortesia')
-      : (ciclo ? tipoLabel + ' · ' + ciclo : (estado.plano ? tipoLabel : '—'));
-    // Valor e vencimento: só em plano pago (mensal/anual).
-    var planoPago = !cortesiaAtiva && !!assinatura;
-    var valorExibido = planoPago ? dinheiro(assinatura.valor) : '—';
-    var vencimentoExibido = viaCupom
-      ? (estado.validoAte ? dataAssinaturaMobile(estado.validoAte) : 'Sem prazo')
-      : (planoPago ? dataAssinaturaMobile(assinatura.proximoVencimento) : '—');
-    var podeContratar = !assinatura && (estado.status === 'trial' || (pessoal && estado.status === 'expirada'));
-    var precoMensal = pessoal ? 'R$ 9,90' : 'R$ 34,90';
-    var precoAnual = pessoal ? 'R$ 99,00' : 'R$ 348,00';
+    var emAtraso = temAssinatura && estado.status === 'inadimplente';
+    var situacaoRotulo = viaCupom
+      ? 'Cupom'
+      : (cortesiaAtiva
+        ? 'Cortesia'
+        : (estado.status === 'ativa'
+          ? 'Em dia'
+          : (estado.status === 'trial'
+            ? 'Período de teste'
+            : (trialExpirado
+              ? 'Teste expirado'
+              : (estado.status === 'expirada'
+                ? 'Expirada'
+                : (estado.status === 'cancelada'
+                  ? (canceladaNoFim ? 'Cancelada ao fim do período' : 'Cancelada')
+                  : (emAtraso ? 'Pagamento pendente' : 'Sem assinatura')))))));
+    var statusEstilo = estado.status === 'ativa' || cortesiaAtiva
+      ? 'background:#DCFCE7;color:#15803D'
+      : (estado.status === 'trial'
+        ? 'background:#DBEAFE;color:#1D4ED8'
+        : (emAtraso
+          ? 'background:#FEF3C7;color:#B45309'
+          : 'background:#FEE2E2;color:#B91C1C'));
+    var nomePlano = pessoal ? 'Premium Pessoal' : 'Empresa';
+    var complementoPlano = temAssinatura
+      ? (ciclo || 'assinatura')
+      : (viaCupom
+        ? 'cupom'
+        : (cortesiaAtiva
+          ? 'cortesia'
+          : (estado.status === 'trial'
+            ? 'teste'
+            : (trialExpirado
+              ? 'teste expirado'
+              : (estado.status === 'cancelada' ? 'cancelado' : 'sem assinatura')))));
+    var planoExibido = nomePlano + ' · ' + complementoPlano;
+    var valorContratado = detalhes && detalhes.valorContratado !== null && detalhes.valorContratado !== undefined
+      ? Number(detalhes.valorContratado)
+      : Number(assinatura && assinatura.valor || 0);
+    var mostrarValor = temAssinatura && valorContratado > 0;
+    var proximoVencimento = detalhes && detalhes.proximoVencimento
+      ? detalhes.proximoVencimento
+      : (assinatura && assinatura.proximoVencimento);
+    var vencimentoExibido = estado.status === 'cancelada'
+      ? 'Sem renovação'
+      : dataAssinaturaMobile(proximoVencimento);
     var listaFaturas = faturas.map(function (fatura) {
       var rotulo = rotuloFaturaMobile(fatura.status);
       var paga = ['RECEIVED', 'CONFIRMED', 'RECEIVED_IN_CASH'].indexOf(fatura.status) >= 0;
@@ -10841,16 +10885,17 @@
       '<div class="grid grid-cols-2 gap-2 rounded-[14px_24px_24px_24px] border border-slate-200 bg-slate-50 p-3">' +
         '<div><p class="text-[9px] font-black uppercase tracking-wide text-slate-400">Situacao</p><span class="mt-1 inline-flex rounded-full px-2 py-1 text-[9px] font-black" style="' + statusEstilo + '">' + escapeHtml(situacaoRotulo) + '</span></div>' +
         '<div><p class="text-[9px] font-black uppercase tracking-wide text-slate-400">Plano</p><strong class="mt-1 block text-xs text-slate-900">' + escapeHtml(planoExibido) + '</strong></div>' +
-        '<div><p class="text-[9px] font-black uppercase tracking-wide text-slate-400">Valor</p><strong class="mt-1 block text-xs text-slate-900">' + valorExibido + '</strong></div>' +
-        '<div><p class="text-[9px] font-black uppercase tracking-wide text-slate-400">Proximo vencimento</p><strong class="mt-1 block text-xs text-slate-900">' + vencimentoExibido + '</strong></div>' +
+        (mostrarValor ? '<div><p class="text-[9px] font-black uppercase tracking-wide text-slate-400">Valor contratado</p><strong class="mt-1 block text-xs text-slate-900">' + dinheiro(valorContratado) + '</strong></div>' : '') +
+        (temAssinatura ? '<div><p class="text-[9px] font-black uppercase tracking-wide text-slate-400">Próximo vencimento</p><strong class="mt-1 block text-xs text-slate-900">' + vencimentoExibido + '</strong></div>' : '') +
       '</div>' +
-      (podeGerenciar && podeContratar ? '<div><h3 class="text-xs font-black text-slate-900">Contratar assinatura</h3><p class="mt-1 text-[10px] font-semibold leading-relaxed text-slate-500">' + (pessoal ? 'Ative os recursos Premium deste perfil.' : 'Contrate agora sem perder os dias restantes do teste.') + '</p><div class="mt-2 grid grid-cols-2 gap-1.5"><input id="assinatura-nome" type="text" value="' + escapeHtml(state.assinaturaNome || nomeEmpresa(state.empresa || {})) + '" placeholder="Nome/razão social" class="h-9 rounded-lg border border-slate-300 bg-white px-2 text-[11px] font-bold text-slate-900 outline-none"/><input id="assinatura-cpf" type="text" inputmode="numeric" value="' + escapeHtml(state.assinaturaCpf || '') + '" placeholder="CPF/CNPJ" class="h-9 rounded-lg border border-slate-300 bg-white px-2 text-[11px] font-bold text-slate-900 outline-none"/><input id="assinatura-email" type="email" value="' + escapeHtml(state.assinaturaEmail || emailUsuarioAtualMobile()) + '" placeholder="E-mail cobrança" class="h-9 rounded-lg border border-slate-300 bg-white px-2 text-[11px] font-bold text-slate-900 outline-none"/><input id="assinatura-telefone" type="tel" inputmode="tel" value="' + escapeHtml(state.assinaturaTelefone || telefonePadraoMobile()) + '" placeholder="Telefone" class="h-9 rounded-lg border border-slate-300 bg-white px-2 text-[11px] font-bold text-slate-900 outline-none"/></div><div class="mt-2 grid grid-cols-2 gap-2"><button id="assinatura-assinar-mensal" type="button" ' + (state.assinaturaAcao ? 'disabled ' : '') + 'class="h-10 rounded-xl border border-sky-300 bg-sky-50 text-[9px] font-black uppercase text-sky-700 disabled:opacity-60">' + (state.assinaturaAcao === 'assinar-mensal' ? 'Processando...' : 'Mensal · ' + precoMensal) + '</button><button id="assinatura-assinar-anual" type="button" ' + (state.assinaturaAcao ? 'disabled ' : '') + 'class="h-10 rounded-xl bg-sky-700 text-[9px] font-black uppercase text-white disabled:opacity-60">' + (state.assinaturaAcao === 'assinar-anual' ? 'Processando...' : 'Anual · ' + precoAnual) + '</button></div></div>' : '') +
-      (podeGerenciar && assinatura && !canceladaNoFim && !cortesiaAtiva ? '<div><h3 class="text-xs font-black text-slate-900">Ciclo de cobranca</h3><p class="mt-1 text-[10px] font-semibold leading-relaxed text-slate-500">A mudanca vale para a proxima renovacao.</p><div class="mt-2 grid grid-cols-2 gap-2">' +
+      (temAssinatura
+        ? '<div><div class="flex items-center justify-between"><h3 class="text-xs font-black text-slate-900">Faturas recentes</h3><button id="assinatura-atualizar" type="button" ' + (state.assinaturaCarregando ? 'disabled ' : '') + 'class="rounded-lg border border-sky-300 bg-sky-50 px-2.5 py-1.5 text-[9px] font-black uppercase tracking-wide text-sky-700 active:scale-[0.98] disabled:opacity-60">' + (state.assinaturaCarregando ? 'Atualizando...' : 'Atualizar') + '</button></div><div class="mt-2 grid gap-1.5">' + (listaFaturas || '<p class="rounded-xl border border-dashed border-slate-300 px-3 py-5 text-center text-xs font-semibold text-slate-400">Nenhuma fatura disponível.</p>') + '</div></div>'
+        : sugestaoAssinaturaMobileHtml(pessoal, podeGerenciar)) +
+      (podeGerenciar && temAssinatura && assinatura && !canceladaNoFim && !cortesiaAtiva ? '<div><h3 class="text-xs font-black text-slate-900">Ciclo de cobranca</h3><p class="mt-1 text-[10px] font-semibold leading-relaxed text-slate-500">A mudanca vale para a proxima renovacao.</p><div class="mt-2 grid grid-cols-2 gap-2">' +
         '<button id="assinatura-mensal" type="button" ' + (state.assinaturaAcao || ciclo === 'mensal' ? 'disabled ' : '') + 'class="h-10 rounded-xl border text-[10px] font-black uppercase ' + (ciclo === 'mensal' ? 'border-sky-600 bg-sky-600 text-white' : 'border-slate-300 bg-white text-slate-700') + ' disabled:opacity-70">' + (state.assinaturaAcao === 'mensal' ? 'Alterando...' : 'Mensal') + '</button>' +
         '<button id="assinatura-anual" type="button" ' + (state.assinaturaAcao || ciclo === 'anual' ? 'disabled ' : '') + 'class="h-10 rounded-xl border text-[10px] font-black uppercase ' + (ciclo === 'anual' ? 'border-sky-600 bg-sky-600 text-white' : 'border-slate-300 bg-white text-slate-700') + ' disabled:opacity-70">' + (state.assinaturaAcao === 'anual' ? 'Alterando...' : 'Anual') + '</button>' +
       '</div></div>' : '') +
-      '<div><div class="flex items-center justify-between"><h3 class="text-xs font-black text-slate-900">Faturas recentes</h3><button id="assinatura-atualizar" type="button" ' + (state.assinaturaCarregando ? 'disabled ' : '') + 'class="rounded-lg border border-sky-300 bg-sky-50 px-2.5 py-1.5 text-[9px] font-black uppercase tracking-wide text-sky-700 active:scale-[0.98] disabled:opacity-60">' + (state.assinaturaCarregando ? 'Atualizando...' : 'Atualizar') + '</button></div><div class="mt-2 grid gap-1.5">' + (listaFaturas || '<p class="rounded-xl border border-dashed border-slate-300 px-3 py-5 text-center text-xs font-semibold text-slate-400">Nenhuma fatura disponivel.</p>') + '</div></div>' +
-      (podeGerenciar && assinatura && !canceladaNoFim && !cortesiaAtiva ? (!state.assinaturaConfirmarCancelamento
+      (podeGerenciar && temAssinatura && assinatura && !canceladaNoFim && !cortesiaAtiva ? (!state.assinaturaConfirmarCancelamento
         ? '<button id="assinatura-abrir-cancelamento" type="button" class="h-10 rounded-xl border border-red-200 bg-red-50 text-[10px] font-black uppercase text-red-600">Cancelar renovacao</button>'
         : '<div class="rounded-xl border border-red-200 bg-red-50 p-3"><p class="text-[10px] font-semibold leading-relaxed text-red-800">A renovacao sera interrompida. O acesso continua ate o fim do periodo pago.</p><div class="mt-2 grid grid-cols-2 gap-2"><button id="assinatura-voltar-cancelamento" type="button" class="h-9 rounded-lg border border-slate-300 bg-white text-[10px] font-black text-slate-600">Voltar</button><button id="assinatura-confirmar-cancelamento" type="button" ' + (state.assinaturaAcao ? 'disabled ' : '') + 'class="h-9 rounded-lg bg-red-600 text-[10px] font-black text-white disabled:opacity-60">' + (state.assinaturaAcao === 'cancelar' ? 'Cancelando...' : 'Confirmar') + '</button></div></div>') : '') +
     '</div>';
@@ -12046,6 +12091,7 @@
     bind('fechar-modal-menu', fecharModalMenu);
     bind('aviso-carencia-assinatura', abrirAssinaturaMobile);
     bind('assinatura-atualizar', carregarAssinaturaMobile);
+    bind('assinatura-abrir-contratacao', abrirContratacaoAssinaturaMobile);
     bind('assinatura-mensal', function () { alterarAssinaturaMobile('mensal'); });
     bind('assinatura-anual', function () { alterarAssinaturaMobile('anual'); });
     bind('assinatura-assinar-mensal', function () { assinarPeloPainelMobile('mensal'); });
