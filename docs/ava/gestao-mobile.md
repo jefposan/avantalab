@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.6.0.84.122 -->
+<!-- ava-version: 1.6.0.84.123 -->
+
+> Revisão 1.6.0.84.123: responsividade da busca de Perfis do Avanta Admin; sem
+> impacto operacional na Gestão Mobile.
 
 > Revisão 1.6.0.84.122: identidade PWA própria do console Avanta Admin; sem
 > impacto operacional na Gestão Mobile.

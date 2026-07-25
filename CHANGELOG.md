@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.6.0.84.123 - 2026-07-25
+
+- Avanta Admin: a busca de Perfis passa a reorganizar campo, filtros, ordem,
+  paginação e ação principal em uma grade responsiva no mobile e tablet,
+  evitando corte e rolagem horizontal sem alterar o layout desktop.
+
 ## 1.6.0.84.122 - 2026-07-25
 
 - Avanta Admin: `/admin` passa a ter identidade PWA própria com o nome

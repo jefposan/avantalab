@@ -1,6 +1,10 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.6.0.84.122 -->
+<!-- ava-version: 1.6.0.84.123 -->
+
+> Revisão 1.6.0.84.123: a busca de Perfis do Avanta Admin reorganiza campo,
+> filtros, ordem, paginação e botão principal no mobile e tablet, sem cortes ou
+> rolagem horizontal e sem alterar o desktop.
 
 > Revisão 1.6.0.84.122: o console global em `/admin` pode ser instalado como o
 > PWA independente **Avanta Admin**, com nome, ícone e escopo próprios. O app
