@@ -6,8 +6,8 @@ export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
  * Cada guia é enviado apenas no ambiente correspondente, evitando misturar
  * caminhos e funções de Web, Mobile e Vendas na mesma resposta.
  */
-// Revisado na versão 1.6.0.84.102: Assinatura como primeira ação do Menu
-// Mobile, com apresentação e contratação adequadas ao estado do acesso.
+// Revisado na versão 1.6.0.84.112: estabilidade do foco e do teclado durante
+// lançamentos na Gestão Mobile enquanto atualizações assíncronas terminam.
 const GUIAS: Record<AmbienteAva, string> = {
   'gestao-web': `GUIA OPERACIONAL — AVANTALAB GESTÃO WEB
 Você atende no sistema Gestão Web. Oriente por nomes visíveis na interface; não invente telas.
@@ -74,6 +74,7 @@ NAVEGAÇÃO E PERFIS
 
 LANÇAMENTOS E RESULTADOS
 - O app registra receitas, despesas, despesas futuras, parcelamentos e despesas fixas. Despesas futuras aparecem como Previsto até confirmação.
+- Durante o preenchimento de um lançamento, atualizações de notificações, assinatura, ponto ou sincronização financeira aguardam o fim da edição para atualizar a tela, sem fechar o teclado ou apagar o conteúdo digitado.
 - Nos cards Despesas do mês e Receitas do mês, tocar na lupa abre o campo de busca já focado e pronto para digitação; enquanto a busca estiver aberta, a ação Recolher permanece disponível e fecha a busca para retornar à lista compacta.
 - Para cadastrar ou revisar despesas e categorias: Menu > Cadastrar despesas. Despesas fixas devem ser gerenciadas na área própria para afetar a recorrência completa.
 - Agenda mostra lembretes e compromissos financeiros. Puxar para atualizar exige um gesto longo e conexão ativa.

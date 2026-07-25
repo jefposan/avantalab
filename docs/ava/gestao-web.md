@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.6.0.84.111 -->
+<!-- ava-version: 1.6.0.84.112 -->
+
+> Revisão 1.6.0.84.112: estabilidade do teclado durante lançamentos na Gestão
+> Mobile; sem impacto operacional na Gestão Web.
 
 > Revisão 1.6.0.84.111: novo ícone de instalação do PWA AvantaVendas; sem
 > impacto operacional na Gestão Web.

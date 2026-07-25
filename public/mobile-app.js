@@ -11597,7 +11597,24 @@
     }
   }
 
-  function render() {
+  function deveAdiarRenderizacaoLancamentoMobile() {
+    if (!state.modalLancamento) return false;
+    var ativo = document.activeElement;
+    if (!ativo || !ativo.matches || !ativo.matches('input, select, textarea, [contenteditable="true"]')) return false;
+    var overlay = document.getElementById('modal-lancamento-overlay');
+    return Boolean(overlay && overlay.contains(ativo));
+  }
+
+  function render(forcarDuranteEdicao) {
+    // Atualizacoes assincronas (notificacoes, ponto, assinatura e realtime
+    // financeiro) podem terminar enquanto o usuario preenche um lancamento.
+    // Reconstruir o root nesse momento remove o input focado e fecha o teclado
+    // virtual. Mantem a atualizacao pendente ate o foco sair dos campos.
+    if (!forcarDuranteEdicao && deveAdiarRenderizacaoLancamentoMobile()) {
+      window._avaRenderLancamentoPendente = true;
+      return;
+    }
+    window._avaRenderLancamentoPendente = false;
     // Captura o scroll real do usuario ANTES de reconstruir o innerHTML.
     // Se o body ja estiver travado, scrollY vale 0, entao usa o valor salvo.
     var _scrollPrevio = window._avaBodyLocked
@@ -13723,6 +13740,16 @@
       setTimeout(function () {
         try { el.scrollIntoView({ behavior: 'smooth', block: 'center' }); } catch (err) {}
       }, 300);
+    });
+
+    document.addEventListener('focusout', function (e) {
+      if (!window._avaRenderLancamentoPendente) return;
+      var origem = e.target;
+      if (!origem || !origem.closest || !origem.closest('#modal-lancamento-overlay')) return;
+      window.setTimeout(function () {
+        if (!window._avaRenderLancamentoPendente || deveAdiarRenderizacaoLancamentoMobile()) return;
+        render(true);
+      }, 0);
     });
 
     render();

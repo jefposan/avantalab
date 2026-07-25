@@ -1,6 +1,9 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.6.0.84.111 -->
+<!-- ava-version: 1.6.0.84.112 -->
+
+> Revisão 1.6.0.84.112: estabilidade do teclado durante lançamentos na Gestão
+> Mobile; sem impacto operacional no AvantaVendas.
 
 > Revisão 1.6.0.84.111: o ícone de instalação do AvantaVendas foi atualizado;
 > sem mudança nos fluxos de vendas.

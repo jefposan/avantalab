@@ -1,6 +1,10 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.6.0.84.111 -->
+<!-- ava-version: 1.6.0.84.112 -->
+
+> Revisão 1.6.0.84.112: o preenchimento de lançamentos mantém o campo e o
+> teclado ativos enquanto informações secundárias são atualizadas em segundo
+> plano.
 
 > Revisão 1.6.0.84.111: novo ícone de instalação do PWA AvantaVendas; sem
 > impacto operacional na Gestão Mobile.
@@ -241,6 +245,8 @@ deve usar os nomes do menu e da barra inferior do celular.
   já focada e pronta para digitação.
 - O app registra receitas, despesas, despesas futuras, parcelamentos e despesas
   fixas. Previsto só se torna lançamento confirmado após a ação do usuário.
+- Durante o preenchimento de um lançamento, atualizações secundárias aguardam o
+  fim da edição para atualizar a tela sem fechar o teclado ou apagar o conteúdo.
 - Recorrências inteiras são alteradas em **Despesas fixas**; uma edição direta da
   linha mensal não altera os outros meses.
 - A agenda exibe lembretes e compromissos. Puxar para atualizar exige gesto longo

@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.6.0.84.112 - 2026-07-24
+
+- Gestão Mobile: atualizações assíncronas deixam de reconstruir o modal de
+  lançamento enquanto um campo está sendo editado, evitando a perda de foco e
+  o fechamento inesperado do teclado virtual.
+- A atualização pendente é aplicada assim que a edição termina, preservando
+  notificações, sincronização financeira, assinatura e resumo do ponto sem
+  criar comportamento específico para Android ou alterar o fluxo no iOS.
+
 ## 1.6.0.84.111 - 2026-07-24
 
 - AvantaVendas: substituído o ícone do PWA pela nova arte “AV”, preservada sem
