@@ -369,6 +369,7 @@
     avisoAssinanteMensagem: '',
     duplicadoConfirmacaoAberta: false,
     confirmacaoTotalReceitaAberta: false,
+    confirmacaoExclusaoTotalMes: null,
     agendaTipoItem: 'lembrete',
     agendaTitulo: '',
     agendaDescricao: '',
@@ -1437,6 +1438,33 @@
           '<footer class="grid grid-cols-2 gap-2 border-t border-slate-200 p-3 ' + (state.darkMode ? 'border-slate-700' : '') + '">' +
             '<button id="cancelar-total-receita" type="button" class="h-11 rounded-xl border border-slate-300 bg-white text-xs font-black uppercase tracking-wide text-slate-700 active:bg-slate-50">Cancelar</button>' +
             '<button id="confirmar-total-receita" type="button" class="h-11 rounded-xl bg-[#003E73] text-xs font-black uppercase tracking-wide text-white active:bg-[#002e56]">OK</button>' +
+          '</footer>' +
+        '</section>' +
+      '</div>'
+    );
+  }
+
+  function confirmacaoExclusaoTotalMesMobileHtml() {
+    if (!state.confirmacaoExclusaoTotalMes) return '';
+    var card = state.darkMode ? 'border-slate-700 bg-slate-900 text-slate-100' : 'border-slate-200 bg-white text-slate-900';
+    var detalhe = state.darkMode
+      ? 'border-amber-400/35 bg-amber-400/10 text-amber-50'
+      : 'border-amber-200 bg-amber-50 text-amber-950';
+    return (
+      '<div id="confirmacao-exclusao-total-mes-overlay" class="fixed inset-0 flex items-center justify-center bg-slate-950/90 px-4" style="z-index:13015" role="dialog" aria-modal="true" aria-labelledby="confirmacao-exclusao-total-mes-titulo" aria-describedby="confirmacao-exclusao-total-mes-descricao">' +
+        '<section class="w-full max-w-sm overflow-hidden rounded-3xl border shadow-2xl ' + card + '">' +
+          '<header class="flex items-center gap-3 bg-[#003E73] px-4 py-3 text-white">' +
+            '<span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-white/20 bg-white/10 text-lg font-black" aria-hidden="true">!</span>' +
+            '<div><p class="text-[10px] font-black uppercase tracking-[0.16em] text-cyan-100">Conferência de lançamento</p><h2 id="confirmacao-exclusao-total-mes-titulo" class="text-base font-black">Excluir total do mês</h2></div>' +
+          '</header>' +
+          '<div class="p-4">' +
+            '<div id="confirmacao-exclusao-total-mes-descricao" class="rounded-2xl border px-4 py-3 text-sm font-semibold leading-relaxed ' + detalhe + '">' +
+              escapeHtml(state.confirmacaoExclusaoTotalMes.mensagem) +
+            '</div>' +
+          '</div>' +
+          '<footer class="grid grid-cols-2 gap-2 border-t border-slate-200 p-3 ' + (state.darkMode ? 'border-slate-700' : '') + '">' +
+            '<button id="cancelar-exclusao-total-mes" type="button" class="h-11 rounded-xl border border-slate-300 bg-white text-xs font-black uppercase tracking-wide text-slate-700 active:bg-slate-50">Cancelar</button>' +
+            '<button id="confirmar-exclusao-total-mes" type="button" class="h-11 rounded-xl bg-[#003E73] text-xs font-black uppercase tracking-wide text-white active:bg-[#002e56]">OK</button>' +
           '</footer>' +
         '</section>' +
       '</div>'
@@ -6906,18 +6934,28 @@
     mostrarToast('Total do mes atualizado.');
   }
 
-  async function excluirTotalMesMobile() {
+  function abrirConfirmacaoExclusaoTotalMesMobile() {
     if (!state.empresa || !state.mes) return;
 
     var totalEntradas = state.entradas
       .filter(function (e) { return e.mes === state.mes; })
       .reduce(function (acc, e) { return acc + e.valor; }, 0);
 
-    var mensagem = totalEntradas > 0
-      ? 'O total definido manualmente sera removido. As receitas lancadas (' + formatarMoeda(totalEntradas) + ') serao mantidas.'
-      : 'Nao ha receitas lancadas neste mes. O total do mes sera zerado.';
+    state.confirmacaoExclusaoTotalMes = {
+      mensagem: totalEntradas > 0
+        ? 'O total definido manualmente será removido. As receitas lançadas (' + formatarMoeda(totalEntradas) + ') serão mantidas.'
+        : 'Não há receitas lançadas neste mês. O total do mês será zerado.',
+    };
+    render();
+  }
 
-    if (!window.confirm(mensagem)) return;
+  async function excluirTotalMesMobile() {
+    if (!state.empresa || !state.mes || !state.confirmacaoExclusaoTotalMes) return;
+
+    state.confirmacaoExclusaoTotalMes = null;
+    var totalEntradas = state.entradas
+      .filter(function (e) { return e.mes === state.mes; })
+      .reduce(function (acc, e) { return acc + e.valor; }, 0);
 
     state.carregando = true;
     state.erro = '';
@@ -11731,7 +11769,7 @@
     else if (state.modoCriarPerfil) telaAtual = telaLoginWrapper(telaCriarPerfilInicial(), 'Criar perfil financeiro', 'Informe os dados do seu primeiro perfil.');
     else if (!state.paywallVerificado) telaAtual = telaCarregandoMobile();
     else telaAtual = telaApp();
-    root.innerHTML = telaAtual + (state.chatIAAberto ? chatIAModalHtml() : '') + (state.mostrarPromptNotificacoes ? promptNotificacoesHtml() : '') + (state.tourAberto ? tourHtml() : '') + avisoAssinanteMobileHtml() + avisoDuplicadoMobileHtml() + confirmacaoTotalReceitaMobileHtml() + ativacaoVendasMobileHtml() + (state.seletorSistemaInicialBloqueante ? '' : seletorSistemaInicialHtml());
+    root.innerHTML = telaAtual + (state.chatIAAberto ? chatIAModalHtml() : '') + (state.mostrarPromptNotificacoes ? promptNotificacoesHtml() : '') + (state.tourAberto ? tourHtml() : '') + avisoAssinanteMobileHtml() + avisoDuplicadoMobileHtml() + confirmacaoTotalReceitaMobileHtml() + confirmacaoExclusaoTotalMesMobileHtml() + ativacaoVendasMobileHtml() + (state.seletorSistemaInicialBloqueante ? '' : seletorSistemaInicialHtml());
     sincronizarProgressoAcessoMobile();
     sincronizarGradienteHeaderPerfil();
     configurarRecolhimentoPerfilHeader();
@@ -12354,6 +12392,38 @@
         }
       });
     }
+    bind('cancelar-exclusao-total-mes', function () {
+      state.confirmacaoExclusaoTotalMes = null;
+      render();
+    });
+    bind('confirmar-exclusao-total-mes', excluirTotalMesMobile);
+    var confirmacaoExclusaoTotalMesOverlay = document.getElementById('confirmacao-exclusao-total-mes-overlay');
+    if (confirmacaoExclusaoTotalMesOverlay) {
+      Array.prototype.forEach.call(root.children, function (elemento) {
+        if (elemento === confirmacaoExclusaoTotalMesOverlay) return;
+        elemento.setAttribute('aria-hidden', 'true');
+        elemento.setAttribute('inert', '');
+      });
+      confirmacaoExclusaoTotalMesOverlay.addEventListener('keydown', function (evento) {
+        var primeiro = document.getElementById('cancelar-exclusao-total-mes');
+        var ultimo = document.getElementById('confirmar-exclusao-total-mes');
+        if (evento.key === 'Escape') {
+          evento.preventDefault();
+          if (primeiro) primeiro.click();
+          return;
+        }
+        if (evento.key !== 'Tab' || !primeiro || !ultimo) return;
+        if (evento.shiftKey && document.activeElement === primeiro) {
+          evento.preventDefault();
+          ultimo.focus();
+        } else if (!evento.shiftKey && document.activeElement === ultimo) {
+          evento.preventDefault();
+          primeiro.focus();
+        }
+      });
+      var cancelarExclusaoTotalMes = document.getElementById('cancelar-exclusao-total-mes');
+      if (cancelarExclusaoTotalMes) cancelarExclusaoTotalMes.focus();
+    }
     bind('chat-ia-fechar', fecharChatIA);
     bind('chat-ia-home', fecharChatIAParaHome);
     bind('chat-ia-mic', function() { gravarVoz(); });
@@ -12549,7 +12619,7 @@
     });
     bind('salvar-entrada', salvarEntrada);
     bind('salvar-total-receita', function () { salvarTotalReceita(); });
-    bind('excluir-total-receita', excluirTotalMesMobile);
+    bind('excluir-total-receita', abrirConfirmacaoExclusaoTotalMesMobile);
     bind('toggle-valores-saldo', function () { alternarVisibilidadeValoresCard('saldo'); });
     bind('toggle-valores-caixinha', function () { alternarVisibilidadeValoresCard('caixinha'); });
     bind('toggle-valores-totais', function () { alternarVisibilidadeValoresCard('totais'); });

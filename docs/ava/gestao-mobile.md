@@ -1,6 +1,11 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.6.0.84.116 -->
+<!-- ava-version: 1.6.0.84.117 -->
+
+> Revisão 1.6.0.84.117: ao excluir o total de receitas do mês, o aviso
+> formatado informa se as receitas avulsas serão preservadas ou se o total será
+> zerado. **Cancelar** não altera os dados; **OK** confirma a exclusão do total
+> definido.
 
 > Revisão 1.6.0.84.116: perfis com cortesia ou cupom mantêm no painel de
 > assinatura apenas a identificação da situação e do plano; preços e opções de
@@ -276,6 +281,9 @@ deve usar os nomes do menu e da barra inferior do celular.
 - Ao usar **Receita > Definir total** em um mês com receitas avulsas,
   **Cancelar** preserva essas receitas e soma o total informado; **OK** apaga
   as receitas avulsas e mantém somente o total.
+- Ao excluir o total definido do mês, **Cancelar** não altera os dados; **OK**
+  preserva as receitas avulsas existentes ou zera o mês quando não houver
+  receitas lançadas.
 - Recorrências inteiras são alteradas em **Despesas fixas**; uma edição direta da
   linha mensal não altera os outros meses.
 - A agenda exibe lembretes e compromissos. Puxar para atualizar exige gesto longo

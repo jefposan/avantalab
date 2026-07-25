@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.6.0.84.117 - 2026-07-25
+
+- Gestão Mobile: a confirmação ao excluir o total mensal deixa de usar o aviso
+  nativo sem formatação e passa a seguir a moldura visual dos demais avisos do
+  sistema, inclusive quando não há receitas e o total será zerado.
+- Mantida a regra existente: **Cancelar** não altera os dados; **OK** remove o
+  total definido, preservando as receitas avulsas quando houver.
+
 ## 1.6.0.84.116 - 2026-07-25
 
 - Gestão Mobile: perfis com acesso por cortesia ou cupom deixam de exibir

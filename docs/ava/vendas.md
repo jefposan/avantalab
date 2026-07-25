@@ -1,6 +1,9 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.6.0.84.116 -->
+<!-- ava-version: 1.6.0.84.117 -->
+
+> Revisão 1.6.0.84.117: padronização de uma confirmação na Gestão Mobile; sem
+> impacto operacional no AvantaVendas.
 
 > Revisão 1.6.0.84.116: ocultação de opções de pagamento durante cortesia na
 > Gestão Mobile; sem impacto operacional no AvantaVendas.
