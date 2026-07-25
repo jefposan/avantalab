@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import JSZip from 'jszip';
 import { formatarDescricao } from '../lib/formatters';
 import { supabase } from '../lib/supabase';
+import ModalConfirmacao from './ModalConfirmacao';
 
 type Produto = { id: string; sku: string | null; nome: string; marca: string | null; categoria: string | null; descricao: string | null; preco_custo: number; preco_venda: number; unidade: string; imagem_url: string | null; ncm: string | null; codigo_barras: string | null; ativo: boolean; atualizado_em: string };
 type Props = { empresaId: string; darkMode: boolean; corPrimaria: string };
@@ -27,6 +28,7 @@ export default function CatalogoProdutosVendas({ empresaId, darkMode, corPrimari
   const [salvando, setSalvando] = useState(false);
   const [exportando, setExportando] = useState(false);
   const [erro, setErro] = useState('');
+  const [produtoExclusao, setProdutoExclusao] = useState<{ id: string; nome: string } | null>(null);
   const arquivoRef = useRef<HTMLInputElement>(null);
   const campo = darkMode ? 'border-slate-600 bg-slate-950 text-white' : 'border-slate-300 bg-white text-slate-900';
   const painel = darkMode ? 'border-slate-700 bg-slate-800' : 'border-slate-200 bg-slate-50';
@@ -131,13 +133,20 @@ export default function CatalogoProdutosVendas({ empresaId, darkMode, corPrimari
     finally { setExportando(false); }
   };
 
-  const excluirProduto = async () => {
+  const solicitarExclusaoProduto = () => {
     const id = String(formulario.id || '');
-    if (!id || !window.confirm(`Excluir definitivamente o produto “${formulario.nome || 'selecionado'}”?`)) return;
+    if (!id) return;
+    setProdutoExclusao({ id, nome: String(formulario.nome || 'selecionado') });
+  };
+
+  const excluirProduto = async () => {
+    if (!produtoExclusao) return;
+    const { id } = produtoExclusao;
     setSalvando(true);
     setErro('');
     const { error } = await supabase.from('vendas_mobile_catalogo_produtos').delete().eq('id', id);
     setSalvando(false);
+    setProdutoExclusao(null);
     if (error) {
       setErro('Não foi possível excluir o produto.');
       return;
@@ -165,11 +174,25 @@ export default function CatalogoProdutosVendas({ empresaId, darkMode, corPrimari
           {formulario.imagem_url && <a href={String(formulario.imagem_url)} target="_blank" rel="noreferrer" title="Abrir pré-visualização"><img src={String(formulario.imagem_url)} alt="Pré-visualização do produto" className="h-8 w-8 shrink-0 rounded-md border border-cyan-300 object-cover" /></a>}
           <button type="button" onClick={() => arquivoRef.current?.click()} disabled={salvando} className="h-8 shrink-0 rounded-md border border-cyan-300 px-3 text-[10px] font-black uppercase text-cyan-700">Enviar imagem</button>
         </div>
-        <div className="mt-2 flex flex-wrap items-center gap-2"><label className="mr-auto flex items-center gap-2 text-xs font-bold"><input type="checkbox" checked={formulario.ativo !== false} onChange={(e) => mudar('ativo', e.target.checked)} /> Produto ativo</label><div className="flex items-center gap-2">{formulario.id && <button type="button" onClick={() => void excluirProduto()} disabled={salvando} className="h-8 rounded-md border border-red-300 bg-red-50 px-2.5 text-[10px] font-black uppercase text-red-700 disabled:opacity-60">Excluir</button>}<button type="button" onClick={() => void salvar()} disabled={salvando} className="h-8 rounded-md px-3 text-[10px] font-black uppercase text-white disabled:opacity-60" style={{ backgroundColor: corPrimaria }}>{salvando ? 'Salvando...' : 'Salvar produto'}</button>{formulario.id && <button type="button" onClick={() => setFormulario(vazio)} disabled={salvando} className="h-8 rounded-md border px-2.5 text-[10px] font-black disabled:opacity-60">Cancelar</button>}</div></div>
+        <div className="mt-2 flex flex-wrap items-center gap-2"><label className="mr-auto flex items-center gap-2 text-xs font-bold"><input type="checkbox" checked={formulario.ativo !== false} onChange={(e) => mudar('ativo', e.target.checked)} /> Produto ativo</label><div className="flex items-center gap-2">{formulario.id && <button type="button" onClick={solicitarExclusaoProduto} disabled={salvando} className="h-8 rounded-md border border-red-300 bg-red-50 px-2.5 text-[10px] font-black uppercase text-red-700 disabled:opacity-60">Excluir</button>}<button type="button" onClick={() => void salvar()} disabled={salvando} className="h-8 rounded-md px-3 text-[10px] font-black uppercase text-white disabled:opacity-60" style={{ backgroundColor: corPrimaria }}>{salvando ? 'Salvando...' : 'Salvar produto'}</button>{formulario.id && <button type="button" onClick={() => setFormulario(vazio)} disabled={salvando} className="h-8 rounded-md border px-2.5 text-[10px] font-black disabled:opacity-60">Cancelar</button>}</div></div>
       </section>
       </div>
       <section className="xl:flex xl:min-h-0 xl:flex-col"><h4 className="shrink-0 text-sm font-black">Produtos do pacote</h4><div className="mt-2 overflow-x-auto rounded-xl border xl:min-h-0 xl:flex-1 xl:overflow-auto"><table className="min-w-full text-left text-xs"><thead className={darkMode ? 'bg-slate-800' : 'bg-slate-50'}><tr><th className="px-3 py-2">Produto</th><th className="px-3 py-2">Custo</th><th className="px-3 py-2">Venda</th><th className="px-3 py-2">Imagem</th><th /></tr></thead><tbody>{carregando ? <tr><td colSpan={5} className="px-3 py-10 text-center">Carregando...</td></tr> : produtos.length ? produtos.map((produto) => <tr key={produto.id} className={`border-t ${darkMode ? 'border-slate-700' : 'border-slate-200'}`}><td className="px-3 py-2"><b className="block">{produto.nome}</b><small className="text-slate-500">{produto.marca || 'Sem marca'} · {produto.categoria || 'Sem categoria'}</small></td><td className="px-3 py-2">R$ {Number(produto.preco_custo).toFixed(2)}</td><td className="px-3 py-2">R$ {Number(produto.preco_venda).toFixed(2)}</td><td className="px-3 py-2">{produto.imagem_url ? <a href={produto.imagem_url} target="_blank" rel="noreferrer" title="Abrir imagem"><img src={produto.imagem_url} alt={`Imagem de ${produto.nome}`} className="h-9 w-9 rounded-md border object-cover" /></a> : <span className="text-slate-400">—</span>}</td><td className="px-3 py-2"><button type="button" onClick={() => editar(produto)} className="rounded-md border px-2 py-1 text-[10px] font-black text-cyan-700">Editar</button></td></tr>) : <tr><td colSpan={5} className="px-3 py-10 text-center text-slate-500">Nenhum produto cadastrado.</td></tr>}</tbody></table></div></section>
     </div>
     {erro && <p className="mt-3 rounded-lg border border-red-300 bg-red-50 px-3 py-2 text-xs font-bold text-red-700">{erro}</p>}
+    <ModalConfirmacao
+      aberto={Boolean(produtoExclusao)}
+      titulo="Excluir produto"
+      mensagem={`O produto “${produtoExclusao?.nome || 'selecionado'}” será excluído definitivamente.`}
+      textoCancelar="Manter produto"
+      textoConfirmar="Excluir produto"
+      carregando={salvando}
+      corPrimaria={corPrimaria}
+      darkMode={darkMode}
+      aoCancelar={() => {
+        if (!salvando) setProdutoExclusao(null);
+      }}
+      aoConfirmar={() => void excluirProduto()}
+    />
   </div>;
 }

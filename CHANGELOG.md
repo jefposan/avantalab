@@ -1,5 +1,18 @@
 # Changelog
 
+## 1.6.0.84.119 - 2026-07-25
+
+- Gestão Mobile: avisos de áudio e confirmações de lembretes, usuários,
+  despesas cadastradas, lançamentos previstos, parcelas e despesas fixas
+  deixam de usar caixas nativas do navegador e passam a seguir o padrão visual
+  do sistema, com modo escuro, área segura, rolagem interna e foco acessível.
+- Exclusões de parcelas e despesas fixas agora apresentam ações explícitas:
+  fechar ou voltar nunca exclui; a pessoa escolhe entre somente o lançamento,
+  todas as parcelas ou a área de Despesas fixas conforme o caso.
+- Administração, Conteúdo para a equipe e AvantaVendas adotam as mesmas
+  confirmações padronizadas para ações destrutivas e disparos gerais, sem
+  alterar permissões, dados, rotas ou regras de negócio.
+
 ## 1.6.0.84.118 - 2026-07-25
 
 - Gestão Web e Mobile: tipos de despesa recém-cadastrados passam a entrar

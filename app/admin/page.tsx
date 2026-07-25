@@ -1,9 +1,17 @@
 'use client';
 
 import { useMemo, useState } from 'react';
+import ModalConfirmacao from '../components/ModalConfirmacao';
 
 type FeedbackStatus = 'novo' | 'em_analise' | 'respondido' | 'arquivado';
 type AdminView = 'avaliacoes' | 'disparos' | 'conteudo-vendas' | 'cupons' | 'perfis' | 'consumo' | 'rep-p' | 'configuracoes';
+type ConfirmacaoAdmin = {
+  titulo: string;
+  mensagem: string;
+  textoConfirmar: string;
+  variante: 'destrutiva' | 'primaria';
+  aoConfirmar: () => void | Promise<void>;
+};
 
 type CertificadoRepP = {
   id: string;
@@ -303,6 +311,8 @@ export default function AdminPage() {
   const [workingId, setWorkingId] = useState<string | null>(null);
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
+  const [confirmacaoAdmin, setConfirmacaoAdmin] = useState<ConfirmacaoAdmin | null>(null);
+  const [confirmacaoAdminCarregando, setConfirmacaoAdminCarregando] = useState(false);
   const [typeFilter, setTypeFilter] = useState<'todos' | Feedback['tipo']>('todos');
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('ativos');
   const [broadcastTitle, setBroadcastTitle] = useState('Novidade no AvantaLab');
@@ -432,9 +442,26 @@ export default function AdminPage() {
     }
   };
 
-  const revogarPerfil = async (perfil: Perfil) => {
-    if (!window.confirm(`Revogar a cortesia de "${perfil.nome}"? O perfil ficará bloqueado até assinar ou receber nova liberação.`)) return;
-    await executarAcaoPerfil(perfil, { acao: 'revogar' });
+  const executarConfirmacaoAdmin = async () => {
+    if (!confirmacaoAdmin || confirmacaoAdminCarregando) return;
+    const confirmacaoAtual = confirmacaoAdmin;
+    setConfirmacaoAdminCarregando(true);
+    try {
+      await confirmacaoAtual.aoConfirmar();
+      setConfirmacaoAdmin(null);
+    } finally {
+      setConfirmacaoAdminCarregando(false);
+    }
+  };
+
+  const revogarPerfil = (perfil: Perfil) => {
+    setConfirmacaoAdmin({
+      titulo: 'Revogar cortesia',
+      mensagem: `O perfil “${perfil.nome}” ficará bloqueado até assinar ou receber uma nova liberação.`,
+      textoConfirmar: 'Revogar acesso',
+      variante: 'destrutiva',
+      aoConfirmar: () => executarAcaoPerfil(perfil, { acao: 'revogar' }),
+    });
   };
 
   const abrirLiberar = (perfil: Perfil) => {
@@ -559,8 +586,7 @@ export default function AdminPage() {
     }
   };
 
-  const excluirConteudoVendas = async (conteudo: ConteudoVendas) => {
-    if (!window.confirm(`Apagar “${conteudo.titulo}” do App Vendas?`)) return;
+  const executarExclusaoConteudoVendas = async (conteudo: ConteudoVendas) => {
     setWorkingId(conteudo.id);
     setError('');
     try {
@@ -574,6 +600,16 @@ export default function AdminPage() {
     } finally {
       setWorkingId(null);
     }
+  };
+
+  const excluirConteudoVendas = (conteudo: ConteudoVendas) => {
+    setConfirmacaoAdmin({
+      titulo: 'Apagar conteúdo',
+      mensagem: `Deseja apagar “${conteudo.titulo}” do App Vendas?`,
+      textoConfirmar: 'Apagar conteúdo',
+      variante: 'destrutiva',
+      aoConfirmar: () => executarExclusaoConteudoVendas(conteudo),
+    });
   };
 
   const loadSettings = async (value = token) => {
@@ -678,8 +714,7 @@ export default function AdminPage() {
     }
   };
 
-  const deleteFeedback = async (feedback: Feedback) => {
-    if (!window.confirm('Apagar esta mensagem definitivamente? Esta ação não pode ser desfeita.')) return;
+  const executarExclusaoFeedback = async (feedback: Feedback) => {
     setWorkingId(feedback.id);
     setError('');
     try {
@@ -694,13 +729,17 @@ export default function AdminPage() {
     }
   };
 
-  const sendBroadcast = async () => {
-    if (!broadcastMessage.trim()) {
-      setError('Digite a mensagem do disparo.');
-      return;
-    }
-    if (!window.confirm('Enviar este aviso para todos os usuários?')) return;
+  const deleteFeedback = (feedback: Feedback) => {
+    setConfirmacaoAdmin({
+      titulo: 'Apagar mensagem',
+      mensagem: 'Esta mensagem será apagada definitivamente. Esta ação não pode ser desfeita.',
+      textoConfirmar: 'Apagar mensagem',
+      variante: 'destrutiva',
+      aoConfirmar: () => executarExclusaoFeedback(feedback),
+    });
+  };
 
+  const executarEnvioBroadcast = async () => {
     setSending(true);
     setError('');
     setNotice('');
@@ -720,6 +759,20 @@ export default function AdminPage() {
     } finally {
       setSending(false);
     }
+  };
+
+  const sendBroadcast = () => {
+    if (!broadcastMessage.trim()) {
+      setError('Digite a mensagem do disparo.');
+      return;
+    }
+    setConfirmacaoAdmin({
+      titulo: 'Enviar aviso geral',
+      mensagem: 'Este aviso será enviado para todos os usuários. Deseja continuar?',
+      textoConfirmar: 'Enviar para todos',
+      variante: 'primaria',
+      aoConfirmar: executarEnvioBroadcast,
+    });
   };
 
   const changePassword = async () => {
@@ -1182,6 +1235,19 @@ export default function AdminPage() {
           </div>
         </div>
       )}
+      <ModalConfirmacao
+        aberto={Boolean(confirmacaoAdmin)}
+        titulo={confirmacaoAdmin?.titulo || ''}
+        mensagem={confirmacaoAdmin?.mensagem || ''}
+        textoCancelar="Voltar"
+        textoConfirmar={confirmacaoAdmin?.textoConfirmar || 'Confirmar'}
+        carregando={confirmacaoAdminCarregando}
+        variante={confirmacaoAdmin?.variante || 'destrutiva'}
+        aoCancelar={() => {
+          if (!confirmacaoAdminCarregando) setConfirmacaoAdmin(null);
+        }}
+        aoConfirmar={() => void executarConfirmacaoAdmin()}
+      />
     </main>
   );
 }

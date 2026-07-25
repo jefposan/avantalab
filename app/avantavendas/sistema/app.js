@@ -5360,16 +5360,42 @@ async function importarCatalogoTridiumPersistente() {
 
 function carregarPacoteTridium() { abrirImportacaoPacote(); }
 
+function abrirConfirmacaoSistemaVendas({
+  titulo,
+  subtitulo,
+  mensagem,
+  textoConfirmar,
+  acaoConfirmar,
+  acaoCancelar = 'fecharSheet()',
+}) {
+  sheet(
+    `<div class="sheet-header"><div><h2>${escapeHtml(titulo)}</h2><p class="muted small">${escapeHtml(subtitulo)}</p></div><button class="close" onclick="${acaoCancelar}" aria-label="Voltar sem confirmar">×</button></div><div class="grid"><p>${mensagem}</p><button class="danger" onclick="${acaoConfirmar}">${escapeHtml(textoConfirmar)}</button><button class="ghost" onclick="${acaoCancelar}">Voltar sem excluir</button></div>`,
+    'sheet-backdrop-centered'
+  );
+}
+
 function abrirGerenciarPacotes() {
   const pacotes = state.pacotesProdutos;
   sheet(`<div class="sheet-header"><div><h2>Pacotes de produtos</h2><p class="muted small">Excluir um pacote remove todos os produtos que vieram dele.</p></div><button class="close" onclick="fecharSheet()">×</button></div><div class="package-list">${pacotes.length ? pacotes.map((pacote) => { const quantidade = state.produtos.filter((produto) => produto.pacote_origem_id === pacote.id).length; return `<article><div><b>${escapeHtml(pacote.nome)}</b><small>Nº ${escapeHtml(pacote.numero || 'sem número')} · ${quantidade} produtos</small></div><button class="danger" onclick="excluirPacoteProdutos('${pacote.id}')">Excluir</button></article>`; }).join('') : '<p class="muted">Nenhum pacote importado.</p>'}</div>`, 'sheet-backdrop-centered');
 }
 
-async function excluirPacoteProdutos(pacoteId) {
+function excluirPacoteProdutos(pacoteId) {
   const pacote = state.pacotesProdutos.find((item) => item.id === pacoteId);
   if (!pacote) return;
   const quantidade = state.produtos.filter((produto) => produto.pacote_origem_id === pacoteId).length;
-  if (!confirm(`Excluir o pacote “${pacote.nome}” e seus ${quantidade} produtos?`)) return;
+  abrirConfirmacaoSistemaVendas({
+    titulo: 'Excluir pacote de produtos',
+    subtitulo: 'Esta ação remove o pacote e os produtos vinculados.',
+    mensagem: `O pacote <b>“${escapeHtml(pacote.nome)}”</b> e seus <b>${quantidade} produtos</b> serão excluídos definitivamente.`,
+    textoConfirmar: 'Excluir pacote e produtos',
+    acaoConfirmar: `confirmarExclusaoPacoteProdutos('${escapeAttr(pacoteId)}')`,
+    acaoCancelar: 'abrirGerenciarPacotes()',
+  });
+}
+
+async function confirmarExclusaoPacoteProdutos(pacoteId) {
+  const pacote = state.pacotesProdutos.find((item) => item.id === pacoteId);
+  if (!pacote) return;
   try {
     if (backendAtivo) await window.VendasDb.deletePackage(pacoteId);
     state.produtos = state.produtos.filter((produto) => produto.pacote_origem_id !== pacoteId);
@@ -5598,8 +5624,20 @@ async function salvarProduto(produtoId) {
   } catch (error) { toast(traduzErro(error)); }
 }
 
-async function removerProduto(produtoId) {
-  if (!confirm('Remover este produto?')) return;
+function removerProduto(produtoId) {
+  const produto = state.produtos.find((item) => item.id === produtoId);
+  if (!produto) return;
+  abrirConfirmacaoSistemaVendas({
+    titulo: 'Excluir produto',
+    subtitulo: 'Esta ação não pode ser desfeita.',
+    mensagem: `O produto <b>“${escapeHtml(produto.nome || 'selecionado')}”</b> será excluído definitivamente.`,
+    textoConfirmar: 'Excluir produto',
+    acaoConfirmar: `confirmarRemocaoProduto('${escapeAttr(produtoId)}')`,
+    acaoCancelar: `abrirProduto('${escapeAttr(produtoId)}')`,
+  });
+}
+
+async function confirmarRemocaoProduto(produtoId) {
   try {
     if (backendAtivo) await window.VendasDb.deleteProduct(produtoId);
     state.produtos = state.produtos.filter((p) => p.id !== produtoId);
@@ -5707,8 +5745,20 @@ async function salvarCliente(clienteId, ignorarAviso = false) {
   }
 }
 
-async function removerCliente(clienteId) {
-  if (!confirm('Remover este cliente? As vendas antigas continuarão registradas.')) return;
+function removerCliente(clienteId) {
+  const cliente = state.clientes.find((item) => item.id === clienteId);
+  if (!cliente) return;
+  abrirConfirmacaoSistemaVendas({
+    titulo: 'Excluir cliente',
+    subtitulo: 'Os pedidos e pagamentos antigos serão preservados.',
+    mensagem: `O cliente <b>“${escapeHtml(cliente.nome || 'selecionado')}”</b> será removido do cadastro. O histórico de vendas continuará registrado.`,
+    textoConfirmar: 'Excluir cliente',
+    acaoConfirmar: `confirmarRemocaoCliente('${escapeAttr(clienteId)}')`,
+    acaoCancelar: `abrirCliente('${escapeAttr(clienteId)}')`,
+  });
+}
+
+async function confirmarRemocaoCliente(clienteId) {
   iniciarMutacaoDadosVendas();
   try {
     if (backendAtivo) {
@@ -6080,7 +6130,17 @@ function salvarConfiguracoes() {
 }
 
 function resetarDados() {
-  if (!confirm('Apagar todos os dados locais deste protótipo?')) return;
+  abrirConfirmacaoSistemaVendas({
+    titulo: 'Apagar dados locais',
+    subtitulo: 'Esta ação remove somente os dados locais deste protótipo.',
+    mensagem: 'Todos os dados locais deste protótipo serão apagados definitivamente.',
+    textoConfirmar: 'Apagar dados locais',
+    acaoConfirmar: 'confirmarResetDadosLocais()',
+    acaoCancelar: 'abrirConfiguracoes()',
+  });
+}
+
+function confirmarResetDadosLocais() {
   void limparCacheVendas(undefined, undefined, true);
   localStorage.removeItem(STORAGE_KEY);
   state = { ...estadoInicial };
@@ -6289,14 +6349,17 @@ window.importarLinkPacote = importarLinkPacote;
 window.importarCatalogoTridiumPersistente = importarCatalogoTridiumPersistente;
 window.abrirGerenciarPacotes = abrirGerenciarPacotes;
 window.excluirPacoteProdutos = excluirPacoteProdutos;
+window.confirmarExclusaoPacoteProdutos = confirmarExclusaoPacoteProdutos;
 window.exportarProdutosExcel = exportarProdutosExcel;
 window.exportarBackupVendasExcel = exportarBackupVendasExcel;
 window.abrirProduto = abrirProduto;
 window.salvarProduto = salvarProduto;
 window.removerProduto = removerProduto;
+window.confirmarRemocaoProduto = confirmarRemocaoProduto;
 window.abrirCliente = abrirCliente;
 window.salvarCliente = salvarCliente;
 window.removerCliente = removerCliente;
+window.confirmarRemocaoCliente = confirmarRemocaoCliente;
 window.adicionarCarrinho = adicionarCarrinho;
 window.abrirCarrinho = abrirCarrinho;
 window.alterarQtd = alterarQtd;
@@ -6419,6 +6482,7 @@ window.abrirNovoVinculoComercial = abrirNovoVinculoComercial;
 window.solicitarNovoVinculoComercial = solicitarNovoVinculoComercial;
 window.abrirResetSistemaVendas = abrirResetSistemaVendas;
 window.confirmarResetSistemaVendas = confirmarResetSistemaVendas;
+window.confirmarResetDadosLocais = confirmarResetDadosLocais;
 window.formatarCampoMoeda = formatarCampoMoeda;
 window.alternarTema = alternarTema;
 window.alternarOrganizacaoSalaBotoes = alternarOrganizacaoSalaBotoes;

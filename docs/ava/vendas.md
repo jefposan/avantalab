@@ -1,6 +1,11 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.6.0.84.118 -->
+<!-- ava-version: 1.6.0.84.119 -->
+
+> Revisão 1.6.0.84.119: exclusões de pacote, produto e cliente e a limpeza de
+> dados locais usam cards de confirmação do AvantaVendas. Voltar, fechar ou
+> tocar fora cancela a ação; pedidos e pagamentos antigos continuam preservados
+> ao remover um cliente.
 
 > Revisão 1.6.0.84.118: ordenação e sincronização do catálogo de despesas entre
 > Gestão Web e Mobile; sem impacto operacional no AvantaVendas.
@@ -343,6 +348,9 @@ função existir ali.
   pastas/subpastas e abre fotos/vídeos para visualização e compartilhamento.
 - Configurações reúne conta, celular/SMS, senha, aparência, metas, catálogo,
   estoque, vínculos comerciais, destino financeiro, PWA, backup e reset.
+- Excluir pacote, produto ou cliente e apagar dados locais abre uma confirmação
+  visual. **Voltar sem excluir**, fechar ou tocar fora cancela a ação. Ao
+  remover um cliente, pedidos e pagamentos antigos continuam registrados.
 - Vínculo comercial (catálogo/divulgação/novidades) e destino financeiro são
   independentes. Não assumir que uma troca altera automaticamente o outro.
 

@@ -1,6 +1,12 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.6.0.84.118 -->
+<!-- ava-version: 1.6.0.84.119 -->
+
+> Revisão 1.6.0.84.119: confirmações e avisos operacionais usam cards do
+> sistema. Fechar, tocar fora, pressionar Esc ou escolher **Voltar sem excluir**
+> nunca remove dados. Em parcelamentos, a escolha distingue **somente esta** e
+> **todas**; em despesa fixa, distingue **somente este mês** e **Abrir despesas
+> fixas**.
 
 > Revisão 1.6.0.84.118: tipos de despesa cadastrados ou renomeados entram
 > imediatamente em ordem alfabética. Inclusões, edições e exclusões atualizam
@@ -291,6 +297,10 @@ deve usar os nomes do menu e da barra inferior do celular.
 - Ao excluir o total definido do mês, **Cancelar** não altera os dados; **OK**
   preserva as receitas avulsas existentes ou zera o mês quando não houver
   receitas lançadas.
+- Os avisos e confirmações aparecem em cards do sistema. Fechar, tocar fora,
+  pressionar Esc ou escolher **Voltar sem excluir** cancela sem remover dados.
+  Em parcelas, a exclusão distingue **somente esta** e **todas**. Em despesa
+  fixa, distingue **somente este mês** e **Abrir despesas fixas**.
 - Recorrências inteiras são alteradas em **Despesas fixas**; uma edição direta da
   linha mensal não altera os outros meses.
 - A agenda exibe lembretes e compromissos. Puxar para atualizar exige gesto longo

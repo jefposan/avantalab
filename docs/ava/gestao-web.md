@@ -1,6 +1,10 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.6.0.84.118 -->
+<!-- ava-version: 1.6.0.84.119 -->
+
+> Revisão 1.6.0.84.119: ações destrutivas da Administração e do gerenciador de
+> conteúdos do Vendas usam a confirmação visual do sistema. Fechar, voltar ou
+> pressionar Esc cancela a ação sem alterar dados.
 
 > Revisão 1.6.0.84.118: tipos de despesa cadastrados ou renomeados entram
 > imediatamente em ordem alfabética. Inclusões, edições e exclusões atualizam
@@ -216,6 +220,9 @@ Gestão Mobile ou a assinatura/cupom do Premium Pessoal.
 - Um login pode ter perfis Empresa e Pessoal. As permissões dependem do vínculo:
   Gestor Master, Administrador e operadores não enxergam necessariamente as
   mesmas ações.
+- Confirmações destrutivas da Administração e dos gerenciadores de conteúdo
+  usam o card visual do sistema; fechar, voltar ou pressionar Esc cancela sem
+  alterar dados.
 
 ## Financeiro
 

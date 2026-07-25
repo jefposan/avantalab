@@ -370,6 +370,7 @@
     duplicadoConfirmacaoAberta: false,
     confirmacaoTotalReceitaAberta: false,
     confirmacaoExclusaoTotalMes: null,
+    dialogoSistemaMobile: null,
     agendaTipoItem: 'lembrete',
     agendaTitulo: '',
     agendaDescricao: '',
@@ -1410,6 +1411,90 @@
             '<button id="cancelar-aviso-duplicado" type="button" class="h-11 rounded-xl border border-slate-300 bg-white text-xs font-black uppercase tracking-wide text-slate-700 active:bg-slate-50">Revisar</button>' +
             '<button id="confirmar-aviso-duplicado" type="button" class="h-11 rounded-xl bg-[#003E73] text-xs font-black uppercase tracking-wide text-white active:bg-[#002e56]">Adicionar</button>' +
           '</footer>' +
+        '</section>' +
+      '</div>'
+    );
+  }
+
+  function solicitarDialogoSistemaMobile(configuracao) {
+    return new Promise(function (resolver) {
+      var acoes = Array.isArray(configuracao && configuracao.acoes)
+        ? configuracao.acoes
+        : [];
+      state.dialogoSistemaMobile = {
+        titulo: (configuracao && configuracao.titulo) || 'Confirmação',
+        rotulo: (configuracao && configuracao.rotulo) || 'Atenção',
+        mensagem: (configuracao && configuracao.mensagem) || '',
+        variante: (configuracao && configuracao.variante) || 'alerta',
+        acoes: acoes,
+        resolver: resolver,
+      };
+      render(true);
+    });
+  }
+
+  function mostrarAvisoSistemaMobile(titulo, mensagem) {
+    return solicitarDialogoSistemaMobile({
+      titulo: titulo,
+      rotulo: 'Aviso do sistema',
+      mensagem: mensagem,
+      variante: 'alerta',
+      acoes: [
+        { valor: 'entendi', rotulo: 'Entendi', estilo: 'primaria' },
+      ],
+    });
+  }
+
+  function resolverDialogoSistemaMobile(valor) {
+    var dialogo = state.dialogoSistemaMobile;
+    if (!dialogo) return;
+    state.dialogoSistemaMobile = null;
+    render(true);
+    if (typeof dialogo.resolver === 'function') dialogo.resolver(valor);
+  }
+
+  function dialogoSistemaMobileHtml() {
+    var dialogo = state.dialogoSistemaMobile;
+    if (!dialogo) return '';
+
+    var card = state.darkMode
+      ? 'border-slate-700 bg-slate-900 text-slate-100'
+      : 'border-slate-200 bg-white text-slate-900';
+    var perigoso = dialogo.variante === 'destrutiva';
+    var detalhe = state.darkMode
+      ? (perigoso
+        ? 'border-red-400/35 bg-red-400/10 text-red-50'
+        : 'border-amber-400/35 bg-amber-400/10 text-amber-50')
+      : (perigoso
+        ? 'border-red-200 bg-red-50 text-red-950'
+        : 'border-amber-200 bg-amber-50 text-amber-950');
+    var acoes = (dialogo.acoes || []).map(function (acao) {
+      var classe = acao.estilo === 'perigosa'
+        ? 'border-red-600 bg-red-600 text-white active:bg-red-700'
+        : (acao.estilo === 'primaria'
+          ? 'border-[#003E73] bg-[#003E73] text-white active:bg-[#002e56]'
+          : (state.darkMode
+            ? 'border-slate-600 bg-slate-800 text-slate-100 active:bg-slate-700'
+            : 'border-slate-300 bg-white text-slate-700 active:bg-slate-50'));
+      return (
+        '<button type="button" data-dialogo-sistema-resultado="' + escapeHtml(acao.valor) + '" class="min-h-11 rounded-xl border px-3 py-2 text-xs font-black uppercase tracking-wide ' + classe + '">' +
+          escapeHtml(acao.rotulo) +
+        '</button>'
+      );
+    }).join('');
+    var grade = (dialogo.acoes || []).length === 2 ? 'grid-cols-2' : 'grid-cols-1';
+
+    return (
+      '<div id="dialogo-sistema-mobile-overlay" class="fixed inset-0 flex items-center justify-center overflow-y-auto bg-slate-950/90 px-4 py-[max(1rem,env(safe-area-inset-top))]" style="z-index:13030;padding-bottom:max(1rem,env(safe-area-inset-bottom));" role="alertdialog" aria-modal="true" aria-labelledby="dialogo-sistema-mobile-titulo" aria-describedby="dialogo-sistema-mobile-descricao">' +
+        '<section class="my-auto flex w-full max-w-sm flex-col overflow-hidden rounded-3xl border shadow-2xl ' + card + '" style="max-height:calc(100dvh - max(2rem, env(safe-area-inset-top) + env(safe-area-inset-bottom)));">' +
+          '<header class="flex shrink-0 items-center gap-3 bg-[#003E73] px-4 py-3 text-white">' +
+            '<span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-white/20 bg-white/10 text-lg font-black" aria-hidden="true">!</span>' +
+            '<div><p class="text-[10px] font-black uppercase tracking-[0.16em] text-cyan-100">' + escapeHtml(dialogo.rotulo) + '</p><h2 id="dialogo-sistema-mobile-titulo" class="text-base font-black">' + escapeHtml(dialogo.titulo) + '</h2></div>' +
+          '</header>' +
+          '<div class="min-h-0 overflow-y-auto p-4 overscroll-contain">' +
+            '<div id="dialogo-sistema-mobile-descricao" class="whitespace-pre-line rounded-2xl border px-4 py-3 text-sm font-semibold leading-relaxed ' + detalhe + '">' + escapeHtml(dialogo.mensagem) + '</div>' +
+          '</div>' +
+          '<footer class="grid shrink-0 ' + grade + ' gap-2 border-t p-3 ' + (state.darkMode ? 'border-slate-700' : 'border-slate-200') + '">' + acoes + '</footer>' +
         '</section>' +
       '</div>'
     );
@@ -2811,9 +2896,19 @@
     render();
   }
 
-  function excluirItemAgendaMobile(id) {
+  async function excluirItemAgendaMobile(id) {
     if (!id) return;
-    if (!window.confirm('Excluir este lembrete?')) return;
+    var escolha = await solicitarDialogoSistemaMobile({
+      titulo: 'Excluir lembrete',
+      rotulo: 'Confirmação de exclusão',
+      mensagem: 'Deseja excluir este lembrete?',
+      variante: 'destrutiva',
+      acoes: [
+        { valor: 'cancelar', rotulo: 'Não excluir', estilo: 'secundaria' },
+        { valor: 'confirmar', rotulo: 'Excluir lembrete', estilo: 'perigosa' },
+      ],
+    });
+    if (escolha !== 'confirmar') return;
     state.agendaItens = (state.agendaItens || []).filter(function (it) {
       return String(it.id) !== String(id);
     });
@@ -4494,7 +4589,17 @@
 
   async function excluirUsuarioMobile(id) {
     if (!id || !podeGerenciarUsuarios()) return;
-    if (!window.confirm('Excluir este usuario? Ele perdera acesso a esta empresa.')) return;
+    var escolha = await solicitarDialogoSistemaMobile({
+      titulo: 'Excluir usuário',
+      rotulo: 'Acesso à empresa',
+      mensagem: 'Este usuário perderá o acesso a esta empresa. Deseja continuar?',
+      variante: 'destrutiva',
+      acoes: [
+        { valor: 'cancelar', rotulo: 'Manter usuário', estilo: 'secundaria' },
+        { valor: 'confirmar', rotulo: 'Excluir usuário', estilo: 'perigosa' },
+      ],
+    });
+    if (escolha !== 'confirmar') return;
 
     state.carregando = true;
     state.erro = '';
@@ -6256,7 +6361,10 @@
     }
 
     if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia || typeof MediaRecorder === 'undefined') {
-      alert('Gravacao de audio nao disponivel neste navegador.');
+      await mostrarAvisoSistemaMobile(
+        'Áudio indisponível',
+        'A gravação de áudio não está disponível neste navegador.'
+      );
       return;
     }
 
@@ -6321,9 +6429,11 @@
           var resultado = await resposta.json().catch(function () { return {}; });
 
           if (!resposta.ok || resultado.erro || !resultado.texto) {
-            alert(resultado.mensagem || 'Nao foi possivel transcrever o audio.');
             state.chatIAAudioEnviando = false;
-            render();
+            await mostrarAvisoSistemaMobile(
+              'Não foi possível transcrever',
+              resultado.mensagem || 'Não foi possível transcrever o áudio.'
+            );
             return;
           }
 
@@ -6336,8 +6446,10 @@
           }, 50);
         } catch (error) {
           state.chatIAAudioEnviando = false;
-          alert('Nao foi possivel enviar o audio para a Ava.');
-          render();
+          await mostrarAvisoSistemaMobile(
+            'Falha no envio do áudio',
+            'Não foi possível enviar o áudio para a Ava.'
+          );
         }
       };
 
@@ -6348,8 +6460,10 @@
       state.chatIAGravando = false;
       state.chatIAAudioEnviando = false;
       pararGravacaoIA();
-      alert('Autorize o uso do microfone para enviar audio para a Ava.');
-      render();
+      await mostrarAvisoSistemaMobile(
+        'Permissão do microfone',
+        'Autorize o uso do microfone para enviar áudio para a Ava.'
+      );
     }
   }
 
@@ -7176,7 +7290,17 @@
     var despesa = state.despesas.find(function (item) { return String(item.id) === String(despesaId); });
     var nome = despesa ? despesa.nome : 'esta despesa';
 
-    if (!window.confirm('Excluir "' + nome + '" da lista de despesas cadastradas?')) return;
+    var escolha = await solicitarDialogoSistemaMobile({
+      titulo: 'Excluir despesa cadastrada',
+      rotulo: 'Confirmação de exclusão',
+      mensagem: 'Deseja excluir “' + nome + '” da lista de despesas cadastradas?',
+      variante: 'destrutiva',
+      acoes: [
+        { valor: 'cancelar', rotulo: 'Manter despesa', estilo: 'secundaria' },
+        { valor: 'confirmar', rotulo: 'Excluir despesa', estilo: 'perigosa' },
+      ],
+    });
+    if (escolha !== 'confirmar') return;
 
     state.carregando = true;
     state.erro = '';
@@ -7516,6 +7640,21 @@
     render();
   }
 
+  function solicitarExclusaoDespesaFixaMobile() {
+    return solicitarDialogoSistemaMobile({
+      titulo: 'Excluir despesa fixa',
+      rotulo: 'Escolha o alcance',
+      mensagem:
+        'Você pode excluir somente o lançamento deste mês ou abrir “Despesas fixas” para remover a recorrência dos demais meses.',
+      variante: 'destrutiva',
+      acoes: [
+        { valor: 'cancelar', rotulo: 'Voltar sem excluir', estilo: 'secundaria' },
+        { valor: 'abrir-fixas', rotulo: 'Abrir despesas fixas', estilo: 'primaria' },
+        { valor: 'excluir-mes', rotulo: 'Excluir somente este mês', estilo: 'perigosa' },
+      ],
+    });
+  }
+
   async function excluirLancamentoSelecionado() {
     if (!state.modalAcao || !state.modalAcao.item || !state.empresa) return;
 
@@ -7540,16 +7679,24 @@
         });
         var pendentes = parcelasGrupo.filter(function(l) { return l.id !== item.id; });
         if (pendentes.length > 0) {
-          var resp = window.confirm(
-            'Este lancamento faz parte de um parcelamento em ' + totalN + 'x.\n' +
-            'Ha ' + pendentes.length + ' parcela(s) pendente(s).\n\n' +
-            'OK = Excluir TODAS as ' + parcelasGrupo.length + ' parcelas\n' +
-            'Cancelar = Excluir somente esta'
-          );
+          var resp = await solicitarDialogoSistemaMobile({
+            titulo: 'Excluir despesa parcelada',
+            rotulo: 'Escolha o alcance',
+            mensagem:
+              'Este lançamento faz parte de um parcelamento em ' + totalN + 'x. Há ' +
+              pendentes.length + ' parcela(s) pendente(s).\n\nEscolha exatamente o que deseja excluir.',
+            variante: 'destrutiva',
+            acoes: [
+              { valor: 'cancelar', rotulo: 'Não excluir', estilo: 'secundaria' },
+              { valor: 'somente-esta', rotulo: 'Excluir somente esta', estilo: 'perigosa' },
+              { valor: 'todas', rotulo: 'Excluir todas (' + parcelasGrupo.length + ')', estilo: 'perigosa' },
+            ],
+          });
+          if (resp === 'cancelar') return;
           state.carregando = true;
           state.erro = '';
           render();
-          var parcelasParaExcluir = resp ? parcelasGrupo : [item];
+          var parcelasParaExcluir = resp === 'todas' ? parcelasGrupo : [item];
           for (var i = 0; i < parcelasParaExcluir.length; i++) {
             var parcela = parcelasParaExcluir[i];
             if (!(await removerNotaLancamentoMobile(parcela.id))) {
@@ -7567,9 +7714,20 @@
           state.modalAcao = null;
           await carregarDados();
           notificarFinanceiroAtualizadoMobile();
-          mostrarToast(resp ? 'Parcelas excluidas.' : 'Despesa excluida.');
+          mostrarToast(resp === 'todas' ? 'Parcelas excluidas.' : 'Despesa excluida.');
           return;
         }
+      }
+    }
+
+    var ehFixa = tipo !== 'receita' && (item.tipo === 'fixa' || item.recorrenciaId);
+    if (ehFixa) {
+      var escolhaFixa = await solicitarExclusaoDespesaFixaMobile();
+      if (escolhaFixa === 'cancelar') return;
+      if (escolhaFixa === 'abrir-fixas') {
+        state.modalAcao = null;
+        abrirModalMenuDespesasFixas();
+        return;
       }
     }
 
@@ -7601,21 +7759,6 @@
           );
       }
     } else {
-      var ehFixa = item.tipo === 'fixa' || item.recorrenciaId;
-      if (ehFixa) {
-        var confirmarFixa = window.confirm(
-          'Esta exclusao remove somente o lancamento deste mes.\n\n' +
-          'Para remover a despesa fixa de todos os meses, acesse "Despesas fixas".\n\n' +
-          'OK = Excluir este mes\n' +
-          'Cancelar = Abrir Despesas fixas'
-        );
-        if (!confirmarFixa) {
-          state.carregando = false;
-          state.modalAcao = null;
-          abrirModalMenuDespesasFixas();
-          return;
-        }
-      }
       var removida = ehFixa
         ? (await removerNotaLancamentoMobile(item.id)
           ? await db.from('lancamentos').update({ status: 'cancelada' }).eq('id', item.id).eq('empresa_id', state.empresa.id)
@@ -7780,18 +7923,24 @@
     var despesaPrevista = (state.lancamentos || []).find(function(l) { return String(l.id) === String(id); });
     var ehFixaPrevista = despesaPrevista && (despesaPrevista.tipo === 'fixa' || despesaPrevista.recorrenciaId);
     if (ehFixaPrevista) {
-      var confirmarFixa = window.confirm(
-        'Esta exclusao remove somente o lancamento deste mes.\n\n' +
-        'Para remover a despesa fixa de todos os meses, acesse "Despesas fixas".\n\n' +
-        'OK = Excluir este mes\n' +
-        'Cancelar = Abrir Despesas fixas'
-      );
-      if (!confirmarFixa) {
+      var escolhaFixa = await solicitarExclusaoDespesaFixaMobile();
+      if (escolhaFixa === 'cancelar') return;
+      if (escolhaFixa === 'abrir-fixas') {
         abrirModalMenuDespesasFixas();
         return;
       }
-    } else if (!window.confirm('Excluir esta despesa prevista? Ela nao ocorreu e sera removida.')) {
-      return;
+    } else {
+      var escolhaPrevista = await solicitarDialogoSistemaMobile({
+        titulo: 'Excluir despesa prevista',
+        rotulo: 'Confirmação de exclusão',
+        mensagem: 'Esta despesa não ocorreu e será removida. Deseja continuar?',
+        variante: 'destrutiva',
+        acoes: [
+          { valor: 'cancelar', rotulo: 'Manter despesa', estilo: 'secundaria' },
+          { valor: 'confirmar', rotulo: 'Excluir despesa', estilo: 'perigosa' },
+        ],
+      });
+      if (escolhaPrevista !== 'confirmar') return;
     }
     state.carregando = true;
     render();
@@ -7846,7 +7995,17 @@
     if (!state.empresa) return;
     var entrada = (state.entradas || []).find(function (e) { return String(e.id) === String(id); });
     if (!entrada || ehReceitaSincronizada(entrada)) return;
-    if (!window.confirm('Excluir esta receita prevista? Ela nao ocorreu e sera removida.')) return;
+    var escolha = await solicitarDialogoSistemaMobile({
+      titulo: 'Excluir receita prevista',
+      rotulo: 'Confirmação de exclusão',
+      mensagem: 'Esta receita não ocorreu e será removida. Deseja continuar?',
+      variante: 'destrutiva',
+      acoes: [
+        { valor: 'cancelar', rotulo: 'Manter receita', estilo: 'secundaria' },
+        { valor: 'confirmar', rotulo: 'Excluir receita', estilo: 'perigosa' },
+      ],
+    });
+    if (escolha !== 'confirmar') return;
     state.carregando = true;
     render();
     var resp = await db.from('faturamentos_entradas').delete().eq('id', id).eq('empresa_id', state.empresa.id);
@@ -11782,7 +11941,7 @@
     else if (state.modoCriarPerfil) telaAtual = telaLoginWrapper(telaCriarPerfilInicial(), 'Criar perfil financeiro', 'Informe os dados do seu primeiro perfil.');
     else if (!state.paywallVerificado) telaAtual = telaCarregandoMobile();
     else telaAtual = telaApp();
-    root.innerHTML = telaAtual + (state.chatIAAberto ? chatIAModalHtml() : '') + (state.mostrarPromptNotificacoes ? promptNotificacoesHtml() : '') + (state.tourAberto ? tourHtml() : '') + avisoAssinanteMobileHtml() + avisoDuplicadoMobileHtml() + confirmacaoTotalReceitaMobileHtml() + confirmacaoExclusaoTotalMesMobileHtml() + ativacaoVendasMobileHtml() + (state.seletorSistemaInicialBloqueante ? '' : seletorSistemaInicialHtml());
+    root.innerHTML = telaAtual + (state.chatIAAberto ? chatIAModalHtml() : '') + (state.mostrarPromptNotificacoes ? promptNotificacoesHtml() : '') + (state.tourAberto ? tourHtml() : '') + avisoAssinanteMobileHtml() + avisoDuplicadoMobileHtml() + confirmacaoTotalReceitaMobileHtml() + confirmacaoExclusaoTotalMesMobileHtml() + dialogoSistemaMobileHtml() + ativacaoVendasMobileHtml() + (state.seletorSistemaInicialBloqueante ? '' : seletorSistemaInicialHtml());
     sincronizarProgressoAcessoMobile();
     sincronizarGradienteHeaderPerfil();
     configurarRecolhimentoPerfilHeader();
@@ -12436,6 +12595,50 @@
       });
       var cancelarExclusaoTotalMes = document.getElementById('cancelar-exclusao-total-mes');
       if (cancelarExclusaoTotalMes) cancelarExclusaoTotalMes.focus();
+    }
+    var dialogoSistemaOverlay = document.getElementById('dialogo-sistema-mobile-overlay');
+    if (dialogoSistemaOverlay && state.dialogoSistemaMobile) {
+      Array.prototype.forEach.call(root.children, function (elemento) {
+        if (elemento === dialogoSistemaOverlay) return;
+        elemento.setAttribute('aria-hidden', 'true');
+        elemento.setAttribute('inert', '');
+      });
+      var botoesDialogoSistema = Array.prototype.slice.call(
+        dialogoSistemaOverlay.querySelectorAll('[data-dialogo-sistema-resultado]')
+      );
+      botoesDialogoSistema.forEach(function (botao) {
+        botao.addEventListener('click', function () {
+          resolverDialogoSistemaMobile(botao.getAttribute('data-dialogo-sistema-resultado'));
+        });
+      });
+      var botaoSeguroDialogoSistema = botoesDialogoSistema.find(function (botao) {
+        return botao.getAttribute('data-dialogo-sistema-resultado') === 'cancelar';
+      }) || botoesDialogoSistema[0];
+      dialogoSistemaOverlay.addEventListener('click', function (evento) {
+        if (evento.target === dialogoSistemaOverlay && botaoSeguroDialogoSistema) {
+          resolverDialogoSistemaMobile(botaoSeguroDialogoSistema.getAttribute('data-dialogo-sistema-resultado'));
+        }
+      });
+      dialogoSistemaOverlay.addEventListener('keydown', function (evento) {
+        if (evento.key === 'Escape') {
+          evento.preventDefault();
+          if (botaoSeguroDialogoSistema) {
+            resolverDialogoSistemaMobile(botaoSeguroDialogoSistema.getAttribute('data-dialogo-sistema-resultado'));
+          }
+          return;
+        }
+        if (evento.key !== 'Tab' || botoesDialogoSistema.length === 0) return;
+        var primeiro = botoesDialogoSistema[0];
+        var ultimo = botoesDialogoSistema[botoesDialogoSistema.length - 1];
+        if (evento.shiftKey && document.activeElement === primeiro) {
+          evento.preventDefault();
+          ultimo.focus();
+        } else if (!evento.shiftKey && document.activeElement === ultimo) {
+          evento.preventDefault();
+          primeiro.focus();
+        }
+      });
+      if (botaoSeguroDialogoSistema) botaoSeguroDialogoSistema.focus();
     }
     bind('chat-ia-fechar', fecharChatIA);
     bind('chat-ia-home', fecharChatIAParaHome);
