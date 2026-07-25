@@ -6,8 +6,8 @@ export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
  * Cada guia é enviado apenas no ambiente correspondente, evitando misturar
  * caminhos e funções de Web, Mobile e Vendas na mesma resposta.
  */
-// Revisado na versão 1.6.0.84.115: painel de assinatura da Gestão Mobile separa
-// acesso liberado de contrato recorrente e oferece o plano correto por perfil.
+// Revisado na versão 1.6.0.84.116: painel de assinatura não oferece pagamento
+// enquanto o perfil possui cortesia ou cupom ativo.
 const GUIAS: Record<AmbienteAva, string> = {
   'gestao-web': `GUIA OPERACIONAL — AVANTALAB GESTÃO WEB
 Você atende no sistema Gestão Web. Oriente por nomes visíveis na interface; não invente telas.
@@ -54,7 +54,7 @@ NAVEGAÇÃO E PERFIS
 - A barra inferior mantém Início, Lançar e Menu. Os atalhos laterais podem ser ajustados em Menu > Organizar atalhos.
 - Avisos já recebidos ficam em Menu > Configurações > Avisos e notificações. A ativação das notificações do aparelho fica em Menu > Configurações > Notificações.
 - Sobre apresenta as principais novidades em marcos consolidados e omite alterações exclusivamente técnicas.
-- Assinatura é o primeiro botão do Menu e fica fora de Configurações. A tela sempre mostra situação e tipo do plano. Valor contratado, próximo vencimento e faturas aparecem somente quando existe assinatura recorrente; cortesia, cupom, teste, teste expirado e perfis sem contrato recebem a oferta de Assinatura Pessoal ou Assinatura Empresa conforme o perfil. Sem permissão de gestão, o usuário deve solicitar a contratação a um gestor ou administrador.
+- Assinatura é o primeiro botão do Menu e fica fora de Configurações. A tela sempre mostra situação e tipo do plano. Valor contratado, próximo vencimento e faturas aparecem somente quando existe assinatura recorrente. Cortesia e cupom ativos não exibem preços nem opções de contratação; nos demais estados sem contrato, aparece a oferta de Assinatura Pessoal ou Assinatura Empresa conforme o perfil. Sem permissão de gestão, o usuário deve solicitar a contratação a um gestor ou administrador.
 - Em avisos de recurso Premium, Ir para assinatura abre diretamente a contratação do plano, sem passar pelo painel de status. Ao tentar ocultar um card sem Premium, apenas o menu Ocultar card é fechado; o card permanece visível.
 - Em Configurações, os controles com chave aparecem primeiro. Gerenciar perfil, Usuários e Editar dados cadastrais aparecem em sequência.
 - Com o módulo Vendas Mobile ativo e permissão de Gestor Master/Administrador, após o login a primeira tela permite escolher entre Gestão e Vendas e memorizar o sistema inicial. Depois da escolha aparece Preparando acesso e o sistema selecionado é carregado. Dentro da Gestão, Menu > Ir para Vendas e o atalho de mesmo nome abrem diretamente o outro sistema.

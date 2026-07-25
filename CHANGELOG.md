@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.6.0.84.116 - 2026-07-25
+
+- Gestão Mobile: perfis com acesso por cortesia ou cupom deixam de exibir
+  preços, ciclos e ações de contratação em **Menu > Assinatura**. O painel
+  mantém somente a identificação da situação e do plano liberado.
+
 ## 1.6.0.84.115 - 2026-07-25
 
 - Gestão Mobile: **Menu > Assinatura** passa a distinguir acesso liberado de

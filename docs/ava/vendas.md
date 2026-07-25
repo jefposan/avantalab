@@ -1,6 +1,9 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.6.0.84.115 -->
+<!-- ava-version: 1.6.0.84.116 -->
+
+> Revisão 1.6.0.84.116: ocultação de opções de pagamento durante cortesia na
+> Gestão Mobile; sem impacto operacional no AvantaVendas.
 
 > Revisão 1.6.0.84.115: detalhamento de assinatura na Gestão Mobile; sem
 > impacto operacional no AvantaVendas.

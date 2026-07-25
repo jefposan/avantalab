@@ -1,6 +1,10 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.6.0.84.115 -->
+<!-- ava-version: 1.6.0.84.116 -->
+
+> Revisão 1.6.0.84.116: perfis com cortesia ou cupom mantêm no painel de
+> assinatura apenas a identificação da situação e do plano; preços e opções de
+> contratação não são exibidos enquanto essa liberação estiver ativa.
 
 > Revisão 1.6.0.84.115: **Menu > Assinatura** sempre abre o resumo do perfil.
 > Situação e tipo de plano aparecem para assinatura, cortesia, cupom, teste,
@@ -207,9 +211,11 @@ deve usar os nomes do menu e da barra inferior do celular.
 - **Assinatura** é o primeiro item do **Menu**. A tela sempre informa a situação
   e o tipo do plano. Valor contratado, próximo vencimento e faturas são
   exclusivos de uma assinatura recorrente; cortesia, cupom, teste, teste
-  expirado e perfis sem contrato exibem a oferta **Assinatura Pessoal** ou
-  **Assinatura Empresa** conforme o perfil. Usuários sem permissão devem
-  solicitar a contratação a um gestor ou administrador.
+  expirado e perfis sem contrato não exibem dados financeiros. Durante uma
+  cortesia ou cupom ativo, também não aparecem preços nem opções de contratação.
+  Nos demais casos sem contrato, a tela oferece **Assinatura Pessoal** ou
+  **Assinatura Empresa** conforme o perfil. Usuários sem permissão devem solicitar
+  a contratação a um gestor ou administrador.
 - Em **Configurações**, os controles com chave aparecem primeiro.
   **Gerenciar perfil**, **Usuários** e **Editar dados cadastrais** aparecem em
   sequência.
