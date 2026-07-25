@@ -1,8 +1,8 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import styles from '../recebimentos.module.css';
-import type { Empresa, Recebimento, Subempresa } from './types';
+import { FORMAS_PAGAMENTO_RECEBIMENTO, type Empresa, type FormaPagamentoRecebimento, type Recebimento, type Subempresa } from './types';
 import { dataLocalIso, diasEmAtraso, formatarData, formatarMoeda, formatarValorInput, parseValorBR, rotuloFrequenciaRecebimento, tipoDiferenca } from './helpers';
 
 type Props = {
@@ -10,9 +10,9 @@ type Props = {
   subempresas: Subempresa[];
   recebimentos: Recebimento[];
   // Recebimento avulso (sem cobrança vinculada).
-  onConfirmar: (empresaId: string, subempresaId: string | null, valorRecebido: number, observacao: string, resumo: ResumoRecebimento) => Promise<void> | void;
+  onConfirmar: (empresaId: string, subempresaId: string | null, valorRecebido: number, observacao: string, formaPagamento: FormaPagamentoRecebimento, comprovante: File | null, resumo: ResumoRecebimento) => Promise<void> | void;
   // Registro de uma cobrança prevista ou em atraso específica (uma a uma).
-  onReceberCobranca: (recebimentoId: string, valorRecebido: number, observacao: string, resumo: ResumoRecebimento) => Promise<void> | void;
+  onReceberCobranca: (recebimentoId: string, valorRecebido: number, observacao: string, formaPagamento: FormaPagamentoRecebimento, comprovante: File | null, resumo: ResumoRecebimento) => Promise<void> | void;
   onCancelar: () => void;
 };
 
@@ -21,6 +21,8 @@ export type ResumoRecebimento = {
   subempresaNome: string;
   valorCombinado: number;
   valorRecebido: number;
+  formaPagamento: FormaPagamentoRecebimento;
+  temComprovante: boolean;
   tipo: ReturnType<typeof tipoDiferenca>;
 };
 
@@ -34,9 +36,12 @@ export default function FormularioRecebimento({ empresas, subempresas, recebimen
   // Cobrança selecionada para baixa individual.
   const [cobrancaId, setCobrancaId] = useState('');
   const [valorTexto, setValorTexto] = useState('');
+  const [formaPagamento, setFormaPagamento] = useState<FormaPagamentoRecebimento | ''>('');
+  const [comprovante, setComprovante] = useState<File | null>(null);
   const [observacao, setObservacao] = useState('');
   const [erro, setErro] = useState('');
   const [salvando, setSalvando] = useState(false);
+  const comprovanteInput = useRef<HTMLInputElement | null>(null);
 
   const hoje = useMemo(() => new Date(), []);
   const hojeIso = useMemo(() => dataLocalIso(hoje), [hoje]);
@@ -101,7 +106,7 @@ export default function FormularioRecebimento({ empresas, subempresas, recebimen
   const precisaObs = tipo === 'menor' || tipo === 'maior';
   const destinoSelecionado = Boolean(cobranca || (cobrancasAbertas.length === 0 && (sub || clienteDireto)));
   const valorValido = valorRecebido != null && !Number.isNaN(valorRecebido) && valorRecebido >= 0;
-  const podeConfirmar = Boolean(empresa) && destinoSelecionado && valorValido && (!precisaObs || Boolean(observacao.trim()));
+  const podeConfirmar = Boolean(empresa) && destinoSelecionado && valorValido && Boolean(formaPagamento) && (!precisaObs || Boolean(observacao.trim()));
 
   function selecionarEmpresa(id: string) {
     setEmpresaId(id);
@@ -125,12 +130,29 @@ export default function FormularioRecebimento({ empresas, subempresas, recebimen
     return <span className={styles.difMaior}>Recebido a maior · excede {formatarMoeda(dif)}</span>;
   }
 
+  function selecionarComprovante(arquivo: File | null) {
+    setErro('');
+    if (!arquivo) return;
+    if (!['image/jpeg', 'image/png', 'image/webp'].includes(arquivo.type)) {
+      setComprovante(null);
+      setErro('Use uma imagem JPG, PNG ou WEBP.');
+      return;
+    }
+    if (arquivo.size > 6 * 1024 * 1024) {
+      setComprovante(null);
+      setErro('O comprovante deve ter no máximo 6 MB.');
+      return;
+    }
+    setComprovante(arquivo);
+  }
+
   async function confirmar() {
     setErro('');
     if (!empresa) return setErro('Selecione a empresa.');
     if (!cobranca && !sub && !clienteDireto) return setErro('Selecione um vencimento ou o cliente.');
     if (valorRecebido == null || Number.isNaN(valorRecebido) || valorRecebido < 0)
       return setErro('Informe um valor recebido válido.');
+    if (!formaPagamento) return setErro('Selecione a forma de pagamento.');
     if (precisaObs && !observacao.trim())
       return setErro('Há diferença de valor: a observação é obrigatória.');
 
@@ -139,15 +161,17 @@ export default function FormularioRecebimento({ empresas, subempresas, recebimen
       subempresaNome: sub?.nome ?? (clienteDireto ? 'Cliente direto' : nomeSub(cobranca?.subempresaId ?? '')),
       valorCombinado: valorCombinado ?? 0,
       valorRecebido: Number(valorRecebido.toFixed(2)),
+      formaPagamento,
+      temComprovante: Boolean(comprovante),
       tipo: tipo ?? 'exato',
     };
 
     setSalvando(true);
     try {
       if (cobranca) {
-        await onReceberCobranca(cobranca.id, Number(valorRecebido.toFixed(2)), observacao, resumo);
+        await onReceberCobranca(cobranca.id, Number(valorRecebido.toFixed(2)), observacao, formaPagamento, comprovante, resumo);
       } else if (sub || clienteDireto) {
-        await onConfirmar(empresa.id, sub?.id ?? null, Number(valorRecebido.toFixed(2)), observacao, resumo);
+        await onConfirmar(empresa.id, sub?.id ?? null, Number(valorRecebido.toFixed(2)), observacao, formaPagamento, comprovante, resumo);
       }
     } catch (error) {
       setErro(error instanceof Error ? error.message : 'Não foi possível registrar o recebimento.');
@@ -228,21 +252,37 @@ export default function FormularioRecebimento({ empresas, subempresas, recebimen
         </div>
       )}
 
-      <div className={styles.field}>
-        <label className={styles.label} htmlFor="recebimentos-valor-recebido">Valor recebido</label>
-        <div className={styles.inputSufixoWrap}>
-          <span className={styles.inputSufixo} aria-hidden="true">R$</span>
-          <input
-            id="recebimentos-valor-recebido"
-            className={styles.inputInterno}
-            inputMode="numeric"
-            placeholder="0,00"
-            value={valorTexto}
-            onChange={(e) => setValorTexto(formatarValorInput(e.target.value))}
-            aria-label="Valor recebido em reais"
-          />
+      <div className={styles.recebimentoDadosGrid}>
+        <div className={styles.field}>
+          <label className={styles.label} htmlFor="recebimentos-valor-recebido">Valor recebido</label>
+          <div className={styles.inputSufixoWrap}>
+            <span className={styles.inputSufixo} aria-hidden="true">R$</span>
+            <input
+              id="recebimentos-valor-recebido"
+              className={styles.inputInterno}
+              inputMode="numeric"
+              placeholder="0,00"
+              value={valorTexto}
+              onChange={(e) => setValorTexto(formatarValorInput(e.target.value))}
+              aria-label="Valor recebido em reais"
+            />
+          </div>
+          {textoDiferenca() && <div className={styles.diferencaValor}>{textoDiferenca()}</div>}
         </div>
-        {textoDiferenca() && <div style={{ marginTop: 6, fontSize: 13 }}>{textoDiferenca()}</div>}
+        <div className={styles.field}>
+          <label className={styles.label} htmlFor="recebimentos-forma-colaborador">Forma de pagamento</label>
+          <select
+            id="recebimentos-forma-colaborador"
+            className={styles.select}
+            value={formaPagamento}
+            onChange={(event) => setFormaPagamento(event.target.value as FormaPagamentoRecebimento | '')}
+          >
+            <option value="" disabled>Selecione…</option>
+            {FORMAS_PAGAMENTO_RECEBIMENTO.map(([valor, rotulo]) => (
+              <option key={valor} value={valor}>{rotulo}</option>
+            ))}
+          </select>
+        </div>
       </div>
 
       {precisaObs && (
@@ -260,14 +300,45 @@ export default function FormularioRecebimento({ empresas, subempresas, recebimen
 
       {erro && <div className={styles.aviso} style={{ marginBottom: 12 }}>{erro}</div>}
 
-      <div style={{ display: 'flex', gap: 8 }}>
-        <button type="button" className={`${styles.btn} ${styles.btnGhost}`} onClick={onCancelar} style={{ flex: 1 }}>
+      <input
+        ref={comprovanteInput}
+        type="file"
+        accept="image/jpeg,image/png,image/webp"
+        className={styles.inputArquivoOculto}
+        onChange={(event) => selecionarComprovante(event.target.files?.[0] ?? null)}
+        tabIndex={-1}
+      />
+      <div className={styles.acoesRecebimentoColaborador}>
+        <button type="button" className={`${styles.btn} ${styles.btnGhost}`} onClick={onCancelar}>
           Cancelar
         </button>
-        <button type="button" disabled={salvando || !podeConfirmar} className={`${styles.btn} ${styles.btnPrimary}`} onClick={() => void confirmar()} style={{ flex: 2 }}>
-          {salvando ? 'Registrando…' : 'Confirmar recebimento'}
+        <button
+          type="button"
+          className={`${styles.btn} ${styles.btnGhost} ${comprovante ? styles.btnComprovanteSelecionado : ''}`}
+          onClick={() => comprovanteInput.current?.click()}
+          aria-label={comprovante ? `Substituir comprovante: ${comprovante.name}` : 'Adicionar comprovante'}
+          title={comprovante?.name}
+          disabled={salvando}
+        >
+          <svg className={styles.iconeComprovante} viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <rect x="3" y="4" width="18" height="16" rx="2" />
+            <circle cx="8.5" cy="9" r="1.5" />
+            <path d="m5 17 4.5-4 3.5 3 2.5-2 3.5 3" />
+          </svg>
+          <span>{comprovante ? 'Comprovante ✓' : 'Comprovante'}</span>
+        </button>
+        <button type="button" disabled={salvando || !podeConfirmar} className={`${styles.btn} ${styles.btnPrimary}`} onClick={() => void confirmar()}>
+          {salvando ? 'Registrando…' : 'Confirmar'}
         </button>
       </div>
+      {comprovante && (
+        <div className={styles.comprovanteArquivo} role="status">
+          <span>{comprovante.name}</span>
+          <button type="button" onClick={() => { setComprovante(null); if (comprovanteInput.current) comprovanteInput.current.value = ''; }} disabled={salvando}>
+            Remover
+          </button>
+        </div>
+      )}
     </div>
   );
 }

@@ -12,7 +12,7 @@ import PainelConferencia from './PainelConferencia';
 import ListaInadimplentes from './ListaInadimplentes';
 import ListaProximosVencimentos from './ListaProximosVencimentos';
 import GraficoResultados from './GraficoResultados';
-import type { IntegracaoFinanceiraRecebimentos } from '../data/repo';
+import type { ComprovanteRecebimento, IntegracaoFinanceiraRecebimentos } from '../data/repo';
 import type { AbrirAvisoFn, AbrirConfirmacaoFn } from '@/app/hooks/useUI';
 
 type Aba = 'visao' | 'empresas' | 'colaboradores' | 'recebimentos' | 'conferencia' | 'proximo' | 'inadimplentes' | 'resultados';
@@ -31,6 +31,7 @@ type Props = {
   recebimentos: Recebimento[];
   mostrarLinkColaboradores?: boolean;
   onConfirmarBaixa: (id: string, formaPagamento?: FormaPagamentoRecebimento) => void;
+  onObterComprovante: (id: string) => Promise<ComprovanteRecebimento>;
   onBaixarDireto: (id: string, formaPagamento: FormaPagamentoRecebimento) => Promise<void>;
   onDevolver: (id: string, motivo: string) => void;
   onDivergencia: (id: string, motivo: string) => void;
@@ -300,11 +301,13 @@ export default function PainelAdministrativo(props: Props) {
         {aba === 'conferencia' && (
           <PainelConferencia
             podeConfirmar={podeConfirmar}
+            darkMode={darkMode}
             empresas={empresas}
             subempresas={subempresas}
             colaboradores={colaboradores}
             recebimentos={recebimentos}
             onConfirmarBaixa={props.onConfirmarBaixa}
+            onObterComprovante={props.onObterComprovante}
             onDevolver={props.onDevolver}
             onDivergencia={props.onDivergencia}
             onEstornar={props.onEstornar}
@@ -368,7 +371,7 @@ export default function PainelAdministrativo(props: Props) {
         )}
 
         {aba === 'recebimentos' && (
-          <ListaRecebimentos chaveMes={chaveMes} empresas={empresas} subempresas={subempresas} colaboradores={colaboradores} recebimentos={recebimentos} podeEstornar={podeConfirmar} onEstornar={props.onEstornarDireto} />
+          <ListaRecebimentos chaveMes={chaveMes} empresas={empresas} subempresas={subempresas} colaboradores={colaboradores} recebimentos={recebimentos} darkMode={darkMode} podeEstornar={podeConfirmar} onEstornar={props.onEstornarDireto} onObterComprovante={props.onObterComprovante} />
         )}
 
         {aba === 'inadimplentes' && (

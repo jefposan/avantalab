@@ -2,26 +2,31 @@
 
 import { useMemo, useState } from 'react';
 import styles from '../recebimentos.module.css';
-import type { Colaborador, Empresa, Recebimento, Subempresa } from './types';
-import { aguardandoConferencia, formatarDataHora, formatarMoeda, rotuloSituacao } from './helpers';
+import { FORMAS_PAGAMENTO_RECEBIMENTO, type Colaborador, type Empresa, type FormaPagamentoRecebimento, type Recebimento, type Subempresa } from './types';
+import { aguardandoConferencia, formatarDataHora, formatarMoeda, rotuloFormaPagamento, rotuloSituacao } from './helpers';
+import type { ComprovanteRecebimento } from '../data/repo';
+import BotaoComprovante from './BotaoComprovante';
 
 type Props = {
   podeConfirmar: boolean;
+  darkMode: boolean;
   empresas: Empresa[];
   subempresas: Subempresa[];
   colaboradores: Colaborador[];
   recebimentos: Recebimento[];
-  onConfirmarBaixa: (id: string) => void;
+  onConfirmarBaixa: (id: string, formaPagamento?: FormaPagamentoRecebimento) => void;
+  onObterComprovante: (id: string) => Promise<ComprovanteRecebimento>;
   onDevolver: (id: string, motivo: string) => void;
   onDivergencia: (id: string, motivo: string) => void;
   onEstornar: (id: string, motivo: string) => void;
 };
 
 export default function PainelConferencia({
-  podeConfirmar, empresas, subempresas, colaboradores, recebimentos,
-  onConfirmarBaixa, onDevolver, onDivergencia, onEstornar,
+  podeConfirmar, darkMode, empresas, subempresas, colaboradores, recebimentos,
+  onConfirmarBaixa, onObterComprovante, onDevolver, onDivergencia, onEstornar,
 }: Props) {
   const [motivos, setMotivos] = useState<Record<string, string>>({});
+  const [formasPagamento, setFormasPagamento] = useState<Record<string, FormaPagamentoRecebimento | ''>>({});
   // Ação pendente por recebimento: revela o campo de motivo + botão Confirmar.
   // A ação só é efetivada ao confirmar.
   const [acaoMotivo, setAcaoMotivo] = useState<Record<string, 'devolver' | 'divergencia' | 'estornar' | null>>({});
@@ -56,6 +61,7 @@ export default function PainelConferencia({
         pendentes.map((r) => {
           const rot = rotuloSituacao(r.situacao);
           const dif = (r.valorRecebido ?? 0) - r.valorCombinado;
+          const formaPagamento = r.formaPagamento ?? formasPagamento[r.id] ?? '';
           return (
             <div key={r.id} className={styles.subItem} style={{ marginBottom: 12 }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8, flexWrap: 'wrap' }}>
@@ -72,6 +78,31 @@ export default function PainelConferencia({
                 <div className={styles.readonlyRow}>
                   <span>Diferença</span>
                   <span style={{ color: dif === 0 ? '#166534' : dif < 0 ? '#b45309' : '#1e40af' }}>{formatarMoeda(dif)}</span>
+                </div>
+                <div className={styles.readonlyRow}>
+                  <span>Forma de pagamento</span>
+                  {r.formaPagamento ? (
+                    <span>{rotuloFormaPagamento(r.formaPagamento)}</span>
+                  ) : (
+                    <select
+                      className={`${styles.select} ${styles.selectFormaConferencia}`}
+                      value={formaPagamento}
+                      onChange={(event) => setFormasPagamento((atual) => ({
+                        ...atual,
+                        [r.id]: event.target.value as FormaPagamentoRecebimento | '',
+                      }))}
+                      aria-label="Forma de pagamento deste recebimento"
+                    >
+                      <option value="" disabled>Selecione…</option>
+                      {FORMAS_PAGAMENTO_RECEBIMENTO.map(([valor, rotulo]) => (
+                        <option key={valor} value={valor}>{rotulo}</option>
+                      ))}
+                    </select>
+                  )}
+                </div>
+                <div className={styles.readonlyRow}>
+                  <span>Comprovante</span>
+                  <span>{r.temComprovante ? <BotaoComprovante lancamentoId={r.id} onObter={onObterComprovante} darkMode={darkMode} /> : 'Não anexado'}</span>
                 </div>
                 {r.observacao && <div className={styles.readonlyRow}><span>Observação</span><span>{r.observacao}</span></div>}
               </div>
@@ -108,7 +139,15 @@ export default function PainelConferencia({
                       {/* Estornar/reabrir ao lado direito de Registrar divergência. */}
                       <button type="button" className={`${styles.btn} ${styles.btnGhost} ${styles.btnSm}`} onClick={() => abrirMotivo('estornar')}>Estornar / Reabrir</button>
                       {/* Confirmar baixa fica à direita. */}
-                      <button type="button" className={`${styles.btn} ${styles.btnSuccess} ${styles.btnSm}`} style={{ marginLeft: 'auto' }} onClick={() => onConfirmarBaixa(r.id)}>Confirmar baixa</button>
+                      <button
+                        type="button"
+                        className={`${styles.btn} ${styles.btnSuccess} ${styles.btnSm}`}
+                        style={{ marginLeft: 'auto' }}
+                        disabled={!formaPagamento}
+                        onClick={() => onConfirmarBaixa(r.id, formaPagamento || undefined)}
+                      >
+                        Confirmar baixa
+                      </button>
                     </div>
 
                     {acao && (

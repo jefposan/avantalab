@@ -1,6 +1,10 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.6.0.84.120 -->
+<!-- ava-version: 1.6.0.84.121 -->
+
+> Revisão 1.6.0.84.121: forma de pagamento e comprovante privado no PWA
+> independente de Recebimentos Presenciais; sem impacto operacional na Gestão
+> Mobile.
 
 > Revisão 1.6.0.84.120: persistência das preferências do AvantaVendas no
 > servidor; sem impacto operacional na Gestão Mobile.

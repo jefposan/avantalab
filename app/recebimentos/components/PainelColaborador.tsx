@@ -3,9 +3,9 @@
 import { useMemo, useState } from 'react';
 import AvantaCard, { criarAvantaShellPreset } from '@/app/components/AvantaCard';
 import styles from '../recebimentos.module.css';
-import type { Colaborador, Empresa, Recebimento, Subempresa } from './types';
+import type { Colaborador, Empresa, FormaPagamentoRecebimento, Recebimento, Subempresa } from './types';
 import { COR_PRIMARIA } from './dadosDemo';
-import { aguardandoConferencia, formatarDataHora, formatarMoeda, mesmoDia, rotuloSituacao } from './helpers';
+import { aguardandoConferencia, formatarDataHora, formatarMoeda, mesmoDia, rotuloFormaPagamento, rotuloSituacao } from './helpers';
 import FormularioRecebimento, { type ResumoRecebimento } from './FormularioRecebimento';
 
 type Props = {
@@ -13,9 +13,9 @@ type Props = {
   empresas: Empresa[];
   subempresas: Subempresa[];
   recebimentos: Recebimento[];
-  onRegistrar: (empresaId: string, subempresaId: string | null, valorRecebido: number, observacao: string) => Promise<void> | void;
+  onRegistrar: (empresaId: string, subempresaId: string | null, valorRecebido: number, observacao: string, formaPagamento: FormaPagamentoRecebimento, comprovante?: File | null) => Promise<void> | void;
   // Baixa individual de uma parcela em atraso já existente.
-  onReceberCobranca: (recebimentoId: string, valorRecebido: number, observacao: string) => Promise<void> | void;
+  onReceberCobranca: (recebimentoId: string, valorRecebido: number, observacao: string, formaPagamento: FormaPagamentoRecebimento, comprovante?: File | null) => Promise<void> | void;
 };
 
 export default function PainelColaborador({ colaborador, empresas, subempresas, recebimentos, onRegistrar, onReceberCobranca }: Props) {
@@ -46,14 +46,14 @@ export default function PainelColaborador({ colaborador, empresas, subempresas, 
   const nomeEmpresa = (id: string) => empresas.find((e) => e.id === id)?.nome ?? '—';
   const nomeSub = (id: string | null) => id ? subempresas.find((s) => s.id === id)?.nome ?? '—' : 'Cliente direto';
 
-  async function handleConfirmar(empresaId: string, subempresaId: string | null, valor: number, obs: string, resumo: ResumoRecebimento) {
-    await onRegistrar(empresaId, subempresaId, valor, obs);
+  async function handleConfirmar(empresaId: string, subempresaId: string | null, valor: number, obs: string, formaPagamento: FormaPagamentoRecebimento, arquivo: File | null, resumo: ResumoRecebimento) {
+    await onRegistrar(empresaId, subempresaId, valor, obs, formaPagamento, arquivo);
     setFormAberto(false);
     setComprovante(resumo);
   }
 
-  async function handleReceberCobranca(recebimentoId: string, valor: number, obs: string, resumo: ResumoRecebimento) {
-    await onReceberCobranca(recebimentoId, valor, obs);
+  async function handleReceberCobranca(recebimentoId: string, valor: number, obs: string, formaPagamento: FormaPagamentoRecebimento, arquivo: File | null, resumo: ResumoRecebimento) {
+    await onReceberCobranca(recebimentoId, valor, obs, formaPagamento, arquivo);
     setFormAberto(false);
     setComprovante(resumo);
   }
@@ -163,6 +163,8 @@ export default function PainelColaborador({ colaborador, empresas, subempresas, 
               <div className={styles.readonlyRow}><span>Cliente</span><span>{comprovante.subempresaNome}</span></div>
               <div className={styles.readonlyRow}><span>Combinado</span><span>{formatarMoeda(comprovante.valorCombinado)}</span></div>
               <div className={styles.readonlyRow}><span>Recebido</span><span>{formatarMoeda(comprovante.valorRecebido)}</span></div>
+              <div className={styles.readonlyRow}><span>Forma de pagamento</span><span>{rotuloFormaPagamento(comprovante.formaPagamento)}</span></div>
+              <div className={styles.readonlyRow}><span>Comprovante</span><span>{comprovante.temComprovante ? 'Anexado' : 'Não anexado'}</span></div>
             </div>
             <button
               type="button"

@@ -1,6 +1,9 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.6.0.84.120 -->
+<!-- ava-version: 1.6.0.84.121 -->
+
+> Revisão 1.6.0.84.121: forma de pagamento e comprovante privado no módulo
+> Recebimentos Presenciais; sem impacto operacional no AvantaVendas.
 
 > Revisão 1.6.0.84.120: aparência, atalhos, ordem da sala, alerta de
 > aniversário, meta e período de inatividade passam a acompanhar a conta pelo

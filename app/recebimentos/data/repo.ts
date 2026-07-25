@@ -21,6 +21,14 @@ export type IntegracaoFinanceiraRecebimentos = {
   valorSincronizado: number;
 };
 
+export type ComprovanteRecebimento = {
+  url: string;
+  nome: string;
+  mimeType: string;
+  tamanho: number;
+  enviadoEm: string;
+};
+
 export type DadosSubempresaEditavel = Pick<Subempresa, 'nome' | 'endereco' | 'cep' | 'logradouro' | 'bairro' | 'cidade' | 'estado' | 'numero' | 'complemento' | 'responsavel' | 'valorCombinado' | 'frequenciaRecebimento' | 'configuracaoRecorrencia'>;
 export type DadosEmpresaEditavel = Omit<Empresa, 'id' | 'ativo'>;
 
@@ -38,8 +46,9 @@ export interface RecebimentosRepo {
   editarColaborador(id: string, dados: DadosEditarColaborador): Promise<void>;
   excluirColaborador(id: string): Promise<void>;
   alternarColaborador(id: string, ativo: boolean): Promise<void>;
-  registrarRecebimento(empresaRecebimentoId: string, subempresaId: string | null, valor: number, observacao: string): Promise<void>;
-  receberCobranca(lancamentoId: string, valor: number, observacao: string): Promise<void>;
+  registrarRecebimento(empresaRecebimentoId: string, subempresaId: string | null, valor: number, observacao: string, formaPagamento: FormaPagamentoRecebimento, comprovante?: File | null): Promise<void>;
+  receberCobranca(lancamentoId: string, valor: number, observacao: string, formaPagamento: FormaPagamentoRecebimento, comprovante?: File | null): Promise<void>;
+  obterComprovante(lancamentoId: string): Promise<ComprovanteRecebimento>;
   confirmarBaixa(lancamentoId: string, formaPagamento?: FormaPagamentoRecebimento): Promise<void>;
   devolver(lancamentoId: string, motivo: string): Promise<void>;
   divergencia(lancamentoId: string, motivo: string): Promise<void>;
@@ -105,7 +114,7 @@ export function criarRepoDemo(): RecebimentosRepo {
       dados.colaboradores = dados.colaboradores.filter((c) => c.id !== id);
     },
     async alternarColaborador(id, ativo) { dados.colaboradores = dados.colaboradores.map((c) => c.id === id ? { ...c, ativo } : c); },
-    async registrarRecebimento(empresaRecebimentoId, subempresaId, valor, observacao) {
+    async registrarRecebimento(empresaRecebimentoId, subempresaId, valor, observacao, formaPagamento, comprovante) {
       const sub = subempresaId ? dados.subempresas.find((s) => s.id === subempresaId) : null;
       const empresa = dados.empresas.find((item) => item.id === empresaRecebimentoId);
       const colaborador = colaboradorAtual();
@@ -117,16 +126,20 @@ export function criarRepoDemo(): RecebimentosRepo {
         vencimento: hojeIso(),
         valorCombinado, valorRecebido: valor, colaboradorId: colaborador.id,
         recebidoEm: agora.toISOString(), observacao: observacao.trim() || null,
+        formaPagamento, temComprovante: Boolean(comprovante),
         situacao: situacaoPorValor(valorCombinado, valor), baixadoPor: null, baixadoEm: null,
       });
     },
-    async receberCobranca(id, valor, observacao) {
+    async receberCobranca(id, valor, observacao, formaPagamento, comprovante) {
       const colaborador = colaboradorAtual();
       dados.recebimentos = dados.recebimentos.map((r) => r.id === id ? {
         ...r, valorRecebido: valor, colaboradorId: colaborador?.id ?? null, recebidoEm: new Date().toISOString(),
-        observacao: observacao.trim() || r.observacao, situacao: situacaoPorValor(r.valorCombinado, valor),
+        observacao: observacao.trim() || r.observacao, formaPagamento,
+        temComprovante: Boolean(comprovante) || r.temComprovante,
+        situacao: situacaoPorValor(r.valorCombinado, valor),
       } : r);
     },
+    async obterComprovante() { throw new Error('Comprovante indisponível no modo de demonstração.'); },
     async confirmarBaixa(id, formaPagamento) {
       dados.recebimentos = dados.recebimentos.map((r) => r.id === id ? {
         ...r,
@@ -213,6 +226,7 @@ function mapRecebimento(row: Linha): Recebimento {
     colaboradorId: row.colaborador_user_id == null ? null : texto(row.colaborador_user_id),
     recebidoEm: row.recebido_em == null ? null : texto(row.recebido_em), observacao: row.observacao == null ? null : texto(row.observacao),
     formaPagamento: row.forma_pagamento == null ? null : texto(row.forma_pagamento) as FormaPagamentoRecebimento,
+    temComprovante: row.tem_comprovante === true,
     situacao: texto(row.situacao) as SituacaoRecebimento,
     baixadoPor: row.baixado_por == null ? null : texto(row.baixado_por), baixadoEm: row.baixado_em == null ? null : texto(row.baixado_em),
   };
@@ -233,6 +247,44 @@ async function chamarApi(cliente: SupabaseClient, rota: string, corpo: Record<st
   const json = await resposta.json().catch(() => ({}));
   if (!resposta.ok || json.erro) throw new Error(String(json.mensagem ?? 'Não foi possível concluir a operação.'));
   return json;
+}
+
+async function tokenSessao(cliente: SupabaseClient) {
+  const { data } = await cliente.auth.getSession();
+  const token = data.session?.access_token;
+  if (!token) throw new Error('Sessão não encontrada. Entre novamente.');
+  return token;
+}
+
+async function registrarViaApi(
+  cliente: SupabaseClient,
+  dados: {
+    empresaId: string;
+    lancamentoId?: string | null;
+    recebimentoEmpresaId?: string | null;
+    subempresaId?: string | null;
+    valor: number;
+    observacao: string;
+    formaPagamento: FormaPagamentoRecebimento;
+    comprovante?: File | null;
+  },
+) {
+  const form = new FormData();
+  form.set('empresaId', dados.empresaId);
+  if (dados.lancamentoId) form.set('lancamentoId', dados.lancamentoId);
+  if (dados.recebimentoEmpresaId) form.set('recebimentoEmpresaId', dados.recebimentoEmpresaId);
+  if (dados.subempresaId) form.set('subempresaId', dados.subempresaId);
+  form.set('valorRecebido', dados.valor.toFixed(2));
+  form.set('observacao', dados.observacao);
+  form.set('formaPagamento', dados.formaPagamento);
+  if (dados.comprovante) form.set('comprovante', dados.comprovante);
+  const resposta = await fetch('/api/recebimentos/registrar', {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${await tokenSessao(cliente)}` },
+    body: form,
+  });
+  const json = await resposta.json().catch(() => ({}));
+  if (!resposta.ok || json.erro) throw new Error(String(json.mensagem ?? 'Não foi possível registrar o recebimento.'));
 }
 
 export function criarRepoSupabase(empresaId: string, cliente: SupabaseClient = supabasePrincipal): RecebimentosRepo {
@@ -274,15 +326,26 @@ export function criarRepoSupabase(empresaId: string, cliente: SupabaseClient = s
       if (erroRecorrencia && erroRecorrencia.code !== 'PGRST202') {
         throw new Error(erroMensagem(erroRecorrencia, 'Erro ao atualizar as cobranças recorrentes.'));
       }
-      const [empresas, subempresas, colaboradores, recebimentos] = await Promise.all([
+      const [empresas, subempresas, colaboradores, recebimentos, comprovantes] = await Promise.all([
         exigir(cliente.from('recebimentos_empresas').select('*').eq('empresa_id', empresaId).order('nome'), 'Erro ao carregar empresas.'),
         exigir(cliente.from('recebimentos_subempresas').select('*').eq('empresa_id', empresaId).order('nome'), 'Erro ao carregar subempresas.'),
         exigir(cliente.from('recebimentos_colaboradores').select('*').eq('empresa_id', empresaId).order('nome'), 'Erro ao carregar colaboradores.'),
         carregarTodosRecebimentos(),
+        cliente.from('recebimentos_comprovantes').select('lancamento_id').eq('empresa_id', empresaId),
       ]);
+      if (comprovantes.error && !['PGRST205', '42P01'].includes(String(comprovantes.error.code ?? ''))) {
+        throw new Error(erroMensagem(comprovantes.error, 'Erro ao carregar os comprovantes.'));
+      }
+      const idsComComprovante = new Set(
+        comprovantes.error ? [] : ((comprovantes.data ?? []) as Linha[]).map((item) => texto(item.lancamento_id)),
+      );
       return {
         empresas: (empresas as Linha[]).map(mapEmpresa), subempresas: (subempresas as Linha[]).map(mapSubempresa),
-        colaboradores: (colaboradores as Linha[]).map(mapColaborador), recebimentos: (recebimentos as Linha[]).map(mapRecebimento),
+        colaboradores: (colaboradores as Linha[]).map(mapColaborador),
+        recebimentos: (recebimentos as Linha[]).map((item) => mapRecebimento({
+          ...item,
+          tem_comprovante: idsComComprovante.has(texto(item.id)),
+        })),
       };
     },
     async salvarEmpresa(dados) {
@@ -323,29 +386,41 @@ export function criarRepoSupabase(empresaId: string, cliente: SupabaseClient = s
       if (error || !data) throw new Error('Colaborador não encontrado.');
       await chamarApi(cliente, '/api/recebimentos/atualizar-colaborador', { empresaId, colaboradorUserId: id, nome: data.nome, cpf: data.cpf, celular: data.celular, email: data.email_contato, ativo });
     },
-    async registrarRecebimento(empresaRecebimentoId, subempresaId, valor, observacao) {
-      const [{ data: alvo, error: erroAlvo }, { data: auth }] = await Promise.all([
-        subempresaId
-          ? cliente.from('recebimentos_subempresas').select('recebimento_empresa_id, valor_combinado').eq('empresa_id', empresaId).eq('id', subempresaId).single()
-          : cliente.from('recebimentos_empresas').select('id, valor_combinado, tipo_cadastro').eq('empresa_id', empresaId).eq('id', empresaRecebimentoId).eq('tipo_cadastro', 'cliente_direto').single(),
-        cliente.auth.getUser(),
-      ]);
-      if (erroAlvo || !alvo || !auth.user) throw new Error('Não foi possível identificar a cobrança.');
-      const agora = new Date();
-      const vencimento = hojeIso();
-      await exigir(cliente.from('recebimentos_lancamentos').insert({
-        empresa_id: empresaId, recebimento_empresa_id: subempresaId ? (alvo as { recebimento_empresa_id: string }).recebimento_empresa_id : empresaRecebimentoId, subempresa_id: subempresaId,
-        colaborador_user_id: auth.user.id, vencimento, valor_combinado: alvo.valor_combinado, valor_recebido: valor,
-        recebido_em: agora.toISOString(), observacao: observacao.trim() || null,
-        situacao: situacaoPorValor(Number(alvo.valor_combinado), valor),
-      }).select('id').single(), 'Erro ao registrar recebimento.');
+    async registrarRecebimento(empresaRecebimentoId, subempresaId, valor, observacao, formaPagamento, comprovante) {
+      await registrarViaApi(cliente, {
+        empresaId,
+        recebimentoEmpresaId: empresaRecebimentoId,
+        subempresaId,
+        valor,
+        observacao,
+        formaPagamento,
+        comprovante,
+      });
     },
-    async receberCobranca(id, valor, observacao) {
-      const { data: auth } = await cliente.auth.getUser();
-      if (!auth.user) throw new Error('Sessão não encontrada.');
-      const { data: atual, error } = await cliente.from('recebimentos_lancamentos').select('valor_combinado').eq('empresa_id', empresaId).eq('id', id).single();
-      if (error || !atual) throw new Error('Cobrança não encontrada.');
-      await exigir(cliente.from('recebimentos_lancamentos').update({ colaborador_user_id: auth.user.id, valor_recebido: valor, recebido_em: new Date().toISOString(), observacao: observacao.trim() || null, situacao: situacaoPorValor(Number(atual.valor_combinado), valor), atualizado_em: new Date().toISOString() }).eq('empresa_id', empresaId).eq('id', id).select('id'), 'Erro ao receber cobrança.');
+    async receberCobranca(id, valor, observacao, formaPagamento, comprovante) {
+      await registrarViaApi(cliente, {
+        empresaId,
+        lancamentoId: id,
+        valor,
+        observacao,
+        formaPagamento,
+        comprovante,
+      });
+    },
+    async obterComprovante(id) {
+      const resposta = await fetch(`/api/recebimentos/comprovante?lancamentoId=${encodeURIComponent(id)}`, {
+        headers: { Authorization: `Bearer ${await tokenSessao(cliente)}` },
+        cache: 'no-store',
+      });
+      const json = await resposta.json().catch(() => ({}));
+      if (!resposta.ok || json.erro) throw new Error(String(json.mensagem ?? 'Não foi possível abrir o comprovante.'));
+      return {
+        url: String(json.url ?? ''),
+        nome: String(json.nome ?? 'Comprovante'),
+        mimeType: String(json.mimeType ?? ''),
+        tamanho: Number(json.tamanho ?? 0),
+        enviadoEm: String(json.enviadoEm ?? ''),
+      };
     },
     async confirmarBaixa(id, formaPagamento) {
       await exigir(cliente.rpc('recebimentos_baixar', {

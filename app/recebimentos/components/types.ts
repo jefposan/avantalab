@@ -31,6 +31,14 @@ export type FormaPagamentoRecebimento =
   | 'cartao_debito'
   | 'boleto';
 
+export const FORMAS_PAGAMENTO_RECEBIMENTO: Array<[FormaPagamentoRecebimento, string]> = [
+  ['boleto', 'Boleto'],
+  ['cartao_credito', 'Cartão de crédito'],
+  ['cartao_debito', 'Cartão de débito'],
+  ['dinheiro', 'Dinheiro'],
+  ['pix', 'Pix'],
+];
+
 export type Empresa = {
   id: string;
   /** Cliente direto recebe cobrança própria; local agrupador apenas organiza clientes. */
@@ -102,6 +110,7 @@ export type Recebimento = {
   recebidoEm: string | null; // ISO datetime
   observacao: string | null;
   formaPagamento?: FormaPagamentoRecebimento | null;
+  temComprovante?: boolean;
   situacao: SituacaoRecebimento;
   // Baixa (só após confirmação de gestor/administrador)
   baixadoPor: string | null; // nome do gestor/admin

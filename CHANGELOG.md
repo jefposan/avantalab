@@ -1,5 +1,17 @@
 # Changelog
 
+## 1.6.0.84.121 - 2026-07-25
+
+- Recebimentos Presenciais: o colaborador passa a informar obrigatoriamente a
+  forma de pagamento — boleto, cartão de crédito, cartão de débito, dinheiro ou
+  Pix — ao lado do valor recebido.
+- O lançamento pode receber uma imagem de comprovante JPG, PNG ou WebP de até
+  6 MB. O arquivo fica em armazenamento privado, vinculado ao recebimento e
+  preservado após conferência, devolução, divergência ou estorno.
+- Gestor Master e Administrador podem abrir o comprovante por uma URL temporária
+  nas telas de Conferência e Recebimentos. Registros antigos sem forma de
+  pagamento exigem essa seleção antes da confirmação da baixa.
+
 ## 1.6.0.84.120 - 2026-07-25
 
 - AvantaVendas: tema, atalhos inferiores, ordem da sala, alerta de aniversário,

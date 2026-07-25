@@ -590,29 +590,35 @@
 }
 .tabelaRecebimentos th,
 .tabelaRecebimentos td { overflow-wrap: anywhere; }
-.tabelaRecebimentos:not(.tabelaRecebimentosComAcao) th:nth-child(1) { width: 17%; }
-.tabelaRecebimentos:not(.tabelaRecebimentosComAcao) th:nth-child(2) { width: 15%; }
-.tabelaRecebimentos:not(.tabelaRecebimentosComAcao) th:nth-child(3) { width: 10%; }
+.tabelaRecebimentos:not(.tabelaRecebimentosComAcao) th:nth-child(1) { width: 14%; }
+.tabelaRecebimentos:not(.tabelaRecebimentosComAcao) th:nth-child(2) { width: 12%; }
+.tabelaRecebimentos:not(.tabelaRecebimentosComAcao) th:nth-child(3) { width: 8%; }
 .tabelaRecebimentos:not(.tabelaRecebimentosComAcao) th:nth-child(4),
 .tabelaRecebimentos:not(.tabelaRecebimentosComAcao) th:nth-child(5),
-.tabelaRecebimentos:not(.tabelaRecebimentosComAcao) th:nth-child(6) { width: 10%; }
+.tabelaRecebimentos:not(.tabelaRecebimentosComAcao) th:nth-child(6) { width: 8%; }
 .tabelaRecebimentos:not(.tabelaRecebimentosComAcao) th:nth-child(7),
-.tabelaRecebimentos:not(.tabelaRecebimentosComAcao) th:nth-child(8) { width: 11%; }
-.tabelaRecebimentos:not(.tabelaRecebimentosComAcao) th:nth-child(9) { width: 6%; }
-.tabelaRecebimentosComAcao th:nth-child(1) { width: 15%; }
-.tabelaRecebimentosComAcao th:nth-child(2) { width: 13%; }
+.tabelaRecebimentos:not(.tabelaRecebimentosComAcao) th:nth-child(8) { width: 10%; }
+.tabelaRecebimentos:not(.tabelaRecebimentosComAcao) th:nth-child(9) { width: 8%; }
+.tabelaRecebimentos:not(.tabelaRecebimentosComAcao) th:nth-child(10) { width: 9%; }
+.tabelaRecebimentos:not(.tabelaRecebimentosComAcao) th:nth-child(11) { width: 5%; }
+.tabelaRecebimentosComAcao th:nth-child(1) { width: 12%; }
+.tabelaRecebimentosComAcao th:nth-child(2) { width: 10%; }
 .tabelaRecebimentosComAcao th:nth-child(3),
 .tabelaRecebimentosComAcao th:nth-child(4),
 .tabelaRecebimentosComAcao th:nth-child(5),
-.tabelaRecebimentosComAcao th:nth-child(6) { width: 9%; }
+.tabelaRecebimentosComAcao th:nth-child(6) { width: 7%; }
 .tabelaRecebimentosComAcao th:nth-child(7),
-.tabelaRecebimentosComAcao th:nth-child(8) { width: 11%; }
+.tabelaRecebimentosComAcao th:nth-child(8) { width: 9%; }
 .tabelaRecebimentosComAcao th:nth-child(9) { width: 8%; }
-.tabelaRecebimentosComAcao th:nth-child(10) { width: 7%; }
-.tabelaRecebimentos th:nth-child(9),
-.tabelaRecebimentos td:nth-child(9),
+.tabelaRecebimentosComAcao th:nth-child(10) { width: 8%; }
+.tabelaRecebimentosComAcao th:nth-child(11) { width: 5%; }
+.tabelaRecebimentosComAcao th:nth-child(12) { width: 6%; }
 .tabelaRecebimentos th:nth-child(10),
-.tabelaRecebimentos td:nth-child(10) { text-align: center; }
+.tabelaRecebimentos td:nth-child(10),
+.tabelaRecebimentos th:nth-child(11),
+.tabelaRecebimentos td:nth-child(11),
+.tabelaRecebimentos th:nth-child(12),
+.tabelaRecebimentos td:nth-child(12) { text-align: center; }
 .tabelaVencimentos {
   min-width: 810px;
   table-layout: fixed;
@@ -683,6 +689,86 @@
   outline: none;
   border-color: var(--cp);
   box-shadow: 0 0 0 3px color-mix(in srgb, var(--cp) 18%, transparent);
+}
+.recebimentoDadosGrid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 10px;
+}
+.recebimentoDadosGrid .field { min-width: 0; }
+.recebimentoDadosGrid :is(.inputSufixoWrap, .select) { min-height: 48px; }
+.diferencaValor { margin-top: 4px; font-size: 12px; line-height: 1.25; }
+.inputArquivoOculto { display: none; }
+.acoesRecebimentoColaborador {
+  display: grid;
+  grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.25fr) minmax(0, 1fr);
+  gap: 8px;
+}
+.acoesRecebimentoColaborador .btn {
+  min-width: 0;
+  min-height: 48px;
+  padding-inline: 9px;
+}
+.acoesRecebimentoColaborador .btn:nth-child(2) {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+}
+.iconeComprovante {
+  width: 18px;
+  height: 18px;
+  flex: 0 0 auto;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.btnComprovanteSelecionado {
+  border-color: #16a34a;
+  color: #166534;
+  background: #f0fdf4;
+}
+.comprovanteArquivo {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 7px;
+  color: #64748b;
+  font-size: 11px;
+}
+.comprovanteArquivo span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.comprovanteArquivo button {
+  border: 0;
+  padding: 3px 0;
+  color: #b91c1c;
+  background: transparent;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+.selectFormaConferencia {
+  width: min(220px, 100%);
+  min-height: 36px;
+  padding-block: 6px;
+}
+.btnAbrirComprovante {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+}
+.btnAbrirComprovanteCompacto {
+  width: 44px;
+  min-height: 44px;
+  padding: 8px;
 }
 .passwordField {
   position: relative;
@@ -870,6 +956,63 @@
   display: flex;
   align-items: center;
   justify-content: center;
+}
+.comprovanteImagemModal {
+  max-width: min(720px, 96vw);
+  max-height: 90dvh;
+  text-align: left;
+  overflow: auto;
+}
+.comprovanteModalTopo {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 14px;
+}
+.comprovanteModalTopo h3 { margin: 0; font-size: 17px; font-weight: 800; }
+.comprovanteModalTopo p {
+  margin: 4px 0 0;
+  color: #64748b;
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}
+.comprovanteFechar {
+  display: grid;
+  width: 44px;
+  height: 44px;
+  flex: 0 0 auto;
+  place-items: center;
+  border: 0;
+  border-radius: 12px;
+  background: #f1f5f9;
+  color: #334155;
+  font-size: 26px;
+  line-height: 1;
+  cursor: pointer;
+}
+.comprovanteFechar:focus-visible { outline: 2px solid var(--cp); outline-offset: 2px; }
+.comprovanteEstado { padding: 36px 12px; text-align: center; color: #64748b; }
+.comprovanteImagemWrap {
+  display: grid;
+  min-height: 180px;
+  max-height: 62dvh;
+  place-items: center;
+  overflow: auto;
+  border-radius: 12px;
+  background: #f8fafc;
+}
+.comprovanteImagemWrap img {
+  display: block;
+  max-width: 100%;
+  max-height: 62dvh;
+  object-fit: contain;
+}
+.comprovanteAbrirOriginal {
+  display: block;
+  margin-top: 12px;
+  text-align: center;
+  text-decoration: none;
 }
 
 /* Corpo rolável do AvantaCard: somente o conteúdo abaixo do header do card
@@ -1599,6 +1742,13 @@
 .darkScope .btnDanger { background: #4c111a; color: #fecaca; }
 .darkScope .btnExcluir { border-color: #f87171; }
 .darkScope .btnSuccess { background: #14532d; color: #bbf7d0; }
+.darkScope .btnComprovanteSelecionado { border-color: #4ade80; background: #052e16; color: #bbf7d0; }
+.darkScope .comprovanteArquivo { color: #94a3b8; }
+.darkScope .comprovanteArquivo button { color: #fca5a5; }
+.darkScope .comprovanteModalTopo p,
+.darkScope .comprovanteEstado { color: #94a3b8; }
+.darkScope .comprovanteFechar { background: #1e293b; color: #e2e8f0; }
+.darkScope .comprovanteImagemWrap { background: #020617; }
 .darkScope .acoesTrigger:hover,
 .darkScope .acoesGrupoAberto .acoesTrigger { background: #1e293b; color: #67e8f9; }
 .darkScope .chip { background: #334155; color: #e2e8f0; }

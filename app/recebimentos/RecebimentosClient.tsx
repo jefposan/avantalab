@@ -179,6 +179,7 @@ export default function RecebimentosClient({
           onAtualizarTitulosFinanceiro={atualizarTitulosFinanceiro}
           onDefinirIntegracaoFinanceira={definirIntegracaoFinanceira}
           onConfirmarBaixa={(id, formaPagamento) => void executar(() => repoAtual.confirmarBaixa(id, formaPagamento))}
+          onObterComprovante={(id) => repoAtual.obterComprovante(id)}
           onBaixarDireto={baixarDireto}
           onDevolver={(id, motivo) => void executar(() => repoAtual.devolver(id, motivo))}
           onDivergencia={(id, motivo) => void executar(() => repoAtual.divergencia(id, motivo))}

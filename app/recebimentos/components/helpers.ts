@@ -1,5 +1,5 @@
 // Funções utilitárias do estudo "Recebimentos em Campo".
-import type { DiferencaTipo, FrequenciaRecebimento, LabelSituacao, Recebimento, SituacaoRecebimento } from './types';
+import { FORMAS_PAGAMENTO_RECEBIMENTO, type DiferencaTipo, type FormaPagamentoRecebimento, type FrequenciaRecebimento, type LabelSituacao, type Recebimento, type SituacaoRecebimento } from './types';
 
 export function dataLocalIso(referencia = new Date()): string {
   const local = new Date(referencia.getTime() - referencia.getTimezoneOffset() * 60000);
@@ -45,6 +45,10 @@ export const FREQUENCIAS_RECEBIMENTO: Array<[FrequenciaRecebimento, string]> = [
 
 export function rotuloFrequenciaRecebimento(frequencia: FrequenciaRecebimento): string {
   return FREQUENCIAS_RECEBIMENTO.find(([valor]) => valor === frequencia)?.[1] ?? 'Mensal';
+}
+
+export function rotuloFormaPagamento(forma: FormaPagamentoRecebimento | null | undefined): string {
+  return FORMAS_PAGAMENTO_RECEBIMENTO.find(([valor]) => valor === forma)?.[1] ?? 'Não informada';
 }
 
 export function formatarMoeda(valor: number): string {

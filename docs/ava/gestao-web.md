@@ -1,6 +1,12 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.6.0.84.120 -->
+<!-- ava-version: 1.6.0.84.121 -->
+
+> Revisão 1.6.0.84.121: no PWA de Recebimentos Presenciais, a forma de
+> pagamento é obrigatória e o colaborador pode anexar uma imagem JPG, PNG ou
+> WebP de até 6 MB. O comprovante fica privado e vinculado ao lançamento;
+> Gestor Master e Administrador podem consultá-lo na Conferência e no histórico
+> de Recebimentos, inclusive depois de baixa, devolução, divergência ou estorno.
 
 > Revisão 1.6.0.84.120: persistência das preferências do AvantaVendas no
 > servidor; sem impacto operacional na Gestão Web.
@@ -318,8 +324,11 @@ Gestão Mobile ou a assinatura/cupom do Premium Pessoal.
   vencimento futuro. Enquanto essa fila tiver cobrança programada, o recebimento
   deve ser vinculado a um desses itens e o botão de confirmação permanece
   desabilitado até selecionar empresa, título e informar um valor válido. O valor
-  recebido usa moeda brasileira com duas casas decimais; a seleção avulsa aparece
-  apenas quando a fila está vazia. No resumo do colaborador, **Recebido hoje**
+  recebido usa moeda brasileira com duas casas decimais e divide a linha com a
+  forma de pagamento obrigatória. O colaborador pode usar **Comprovante** para
+  fotografar ou selecionar uma imagem JPG, PNG ou WebP de até 6 MB antes de
+  confirmar; o anexo é opcional. A seleção avulsa aparece apenas quando a fila
+  está vazia. No resumo do colaborador, **Recebido hoje**
   considera somente o dia atual, enquanto **Aguardando** mantém o total acumulado
   até a conferência de todos os lançamentos pendentes. O header do PWA exibe como título principal a empresa gestora
   que criou o acesso e, abaixo, **Recebimentos Presenciais**. Remover o módulo
@@ -331,7 +340,10 @@ Gestão Mobile ou a assinatura/cupom do Premium Pessoal.
   **Inadimplentes** não possuem seletor de mês. **Conferência** mostra todos os
   recebimentos aguardando confirmação, **Inadimplentes** mostra todos os atrasos
   abertos e **Próximo a vencer** reúne as cobranças previstas para os próximos
-  30 dias. As duas últimas tabelas não repetem uma coluna de situação.
+  30 dias. As duas últimas tabelas não repetem uma coluna de situação. Em
+  **Conferência** e **Recebimentos**, **Visualizar comprovante** abre por tempo
+  limitado a imagem privada vinculada ao lançamento. A imagem continua
+  disponível depois de confirmação, devolução, divergência ou estorno.
 - Fora do modo instalado, a tela de login mostra **Instalar**. O botão abre a
   instalação nativa quando disponível; no iPhone ou em navegador sem prompt,
   orienta **Compartilhar > Adicionar à Tela de Início**.

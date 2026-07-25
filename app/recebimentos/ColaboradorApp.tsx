@@ -69,7 +69,7 @@ export default function ColaboradorApp() {
 
   useEffect(() => {
     if (!('serviceWorker' in navigator)) return;
-    navigator.serviceWorker.register('/recebimentos-sw.js?v=6', { scope: '/recebimentos/colaborador' }).catch(() => undefined);
+    navigator.serviceWorker.register('/recebimentos-sw.js?v=7', { scope: '/recebimentos/colaborador' }).catch(() => undefined);
   }, []);
 
   useEffect(() => {
@@ -311,8 +311,8 @@ export default function ColaboradorApp() {
         {erro && <div className={styles.aviso} role="alert">{erro}</div>}
         <PainelColaborador
           colaborador={colaborador} empresas={empresas} subempresas={subempresas} recebimentos={recebimentos}
-          onRegistrar={(empresaRecebimentoId, subId, valor, obs) => executar((r) => r.registrarRecebimento(empresaRecebimentoId, subId, valor, obs))}
-          onReceberCobranca={(id, valor, obs) => executar((r) => r.receberCobranca(id, valor, obs))}
+          onRegistrar={(empresaRecebimentoId, subId, valor, obs, forma, arquivo) => executar((r) => r.registrarRecebimento(empresaRecebimentoId, subId, valor, obs, forma, arquivo))}
+          onReceberCobranca={(id, valor, obs, forma, arquivo) => executar((r) => r.receberCobranca(id, valor, obs, forma, arquivo))}
         />
       </div>
     </div>

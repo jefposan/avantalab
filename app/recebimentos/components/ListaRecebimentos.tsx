@@ -3,7 +3,9 @@
 import { useEffect, useMemo, useState } from 'react';
 import styles from '../recebimentos.module.css';
 import type { Colaborador, Empresa, Recebimento, SituacaoRecebimento, Subempresa } from './types';
-import { formatarData, formatarDataHora, formatarMoeda, limitesDoMes, rotuloSituacao } from './helpers';
+import { formatarData, formatarDataHora, formatarMoeda, limitesDoMes, rotuloFormaPagamento, rotuloSituacao } from './helpers';
+import type { ComprovanteRecebimento } from '../data/repo';
+import BotaoComprovante from './BotaoComprovante';
 
 type Props = {
   chaveMes: string;
@@ -11,15 +13,17 @@ type Props = {
   subempresas: Subempresa[];
   colaboradores: Colaborador[];
   recebimentos: Recebimento[];
+  darkMode: boolean;
   podeEstornar: boolean;
   onEstornar: (id: string, motivo: string) => Promise<void>;
+  onObterComprovante: (id: string) => Promise<ComprovanteRecebimento>;
 };
 
 const SITUACOES: SituacaoRecebimento[] = [
   'aguardando_conferencia', 'baixado', 'recebido_a_menor', 'recebido_a_maior', 'em_atraso', 'devolvido_para_correcao',
 ];
 
-export default function ListaRecebimentos({ chaveMes, empresas, subempresas, colaboradores, recebimentos, podeEstornar, onEstornar }: Props) {
+export default function ListaRecebimentos({ chaveMes, empresas, subempresas, colaboradores, recebimentos, darkMode, podeEstornar, onEstornar, onObterComprovante }: Props) {
   const [fEmpresa, setFEmpresa] = useState('');
   const [fSub, setFSub] = useState('');
   const [fColab, setFColab] = useState('');
@@ -136,12 +140,12 @@ export default function ListaRecebimentos({ chaveMes, empresas, subempresas, col
           <thead>
             <tr>
               <th>Empresa/local</th><th>Cliente</th><th>Vencimento</th><th>Combinado</th><th>Recebido</th>
-              <th>Diferença</th><th>Recebido em</th><th>Recebido por</th><th>Situação</th>{podeEstornar && <th>Ação</th>}
+              <th>Diferença</th><th>Recebido em</th><th>Recebido por</th><th>Pagamento</th><th>Situação</th><th>Comprovante</th>{podeEstornar && <th>Ação</th>}
             </tr>
           </thead>
           <tbody>
             {filtrados.length === 0 ? (
-              <tr><td colSpan={podeEstornar ? 10 : 9} className={styles.muted} style={{ padding: 16 }}>Nenhum recebimento para os filtros.</td></tr>
+              <tr><td colSpan={podeEstornar ? 12 : 11} className={styles.muted} style={{ padding: 16 }}>Nenhum recebimento para os filtros.</td></tr>
             ) : filtrados.map((r) => {
               const rot = rotuloSituacao(r.situacao);
               const dif = (r.valorRecebido ?? 0) - r.valorCombinado;
@@ -157,7 +161,9 @@ export default function ListaRecebimentos({ chaveMes, empresas, subempresas, col
                   </td>
                   <td style={{ fontSize: 12 }}>{formatarDataHora(r.recebidoEm)}</td>
                   <td>{nomeColab(r.colaboradorId)}</td>
+                  <td>{rotuloFormaPagamento(r.formaPagamento)}</td>
                   <td><span className={styles.badge} style={{ background: rot.fundo, color: rot.cor }}>{rot.texto}</span></td>
+                  <td>{r.temComprovante ? <BotaoComprovante lancamentoId={r.id} onObter={onObterComprovante} compacto darkMode={darkMode} /> : '—'}</td>
                   {podeEstornar && <td>{r.situacao === 'baixado' && <button type="button" className={`${styles.btn} ${styles.btnDanger} ${styles.btnSm}`} onClick={() => abrirEstorno(r)}>Estornar</button>}</td>}
                 </tr>
               );
