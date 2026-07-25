@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.6.0.84.122 - 2026-07-25
+
+- Avanta Admin: `/admin` passa a ter identidade PWA própria com o nome
+  **Avanta Admin**, manifesto e ícones dedicados para Android, iOS, atalhos e
+  instalação em modo standalone.
+- O service worker usa escopo restrito a `/admin` e mantém o conteúdo
+  administrativo sempre na rede; somente manifesto e ícones públicos entram
+  no cache.
+
 ## 1.6.0.84.121 - 2026-07-25
 
 - Recebimentos Presenciais: o colaborador passa a informar obrigatoriamente a

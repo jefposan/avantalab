@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.6.0.84.121 -->
+<!-- ava-version: 1.6.0.84.122 -->
+
+> Revisão 1.6.0.84.122: identidade PWA própria do console Avanta Admin; sem
+> impacto operacional na Gestão Mobile.
 
 > Revisão 1.6.0.84.121: forma de pagamento e comprovante privado no PWA
 > independente de Recebimentos Presenciais; sem impacto operacional na Gestão

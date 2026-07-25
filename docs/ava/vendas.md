@@ -1,6 +1,9 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.6.0.84.121 -->
+<!-- ava-version: 1.6.0.84.122 -->
+
+> Revisão 1.6.0.84.122: identidade PWA própria do console Avanta Admin; sem
+> impacto operacional no AvantaVendas.
 
 > Revisão 1.6.0.84.121: forma de pagamento e comprovante privado no módulo
 > Recebimentos Presenciais; sem impacto operacional no AvantaVendas.

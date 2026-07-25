@@ -1,6 +1,11 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.6.0.84.121 -->
+<!-- ava-version: 1.6.0.84.122 -->
+
+> Revisão 1.6.0.84.122: o console global em `/admin` pode ser instalado como o
+> PWA independente **Avanta Admin**, com nome, ícone e escopo próprios. O app
+> não substitui nem altera os PWAs da Gestão, AvantaVendas, Ponto ou
+> Recebimentos.
 
 > Revisão 1.6.0.84.121: no PWA de Recebimentos Presenciais, a forma de
 > pagamento é obrigatória e o colaborador pode anexar uma imagem JPG, PNG ou
