@@ -2,7 +2,7 @@
 // Landing oficial do AvantaLab, exibida na porta do sistema antes do login.
 // Origem: landing-preview/index.html (aprovada), componentizada para o fluxo de auth.
 import { useEffect, useRef, useState } from 'react';
-import { createPortal } from 'react-dom';
+import BotaoProximoScroll from './BotaoProximoScroll';
 import styles from './LandingPage.module.css';
 
 type LandingPageProps = {
@@ -23,64 +23,16 @@ const PRECOS = {
   mensal: { pessoal: '9,90', empresa: '34,90', nota: 'Cobrança mensal · sem fidelidade' },
 } as const;
 
-type EtapaScroll = {
-  el: HTMLElement;
-  top: number;
-  final?: boolean;
-};
-
 const IDS_ETAPAS_SCROLL = ['beneficios', 'ava', 'planos', 'faq'] as const;
-
-const obterElementoRolagem = () => document.scrollingElement ?? document.documentElement;
-
-const obterFimDaPagina = () => {
-  const elemento = obterElementoRolagem();
-  return Math.max(0, elemento.scrollHeight - elemento.clientHeight);
-};
-
-const obterScrollAtual = () => obterElementoRolagem().scrollTop;
 
 export default function LandingPage({ onCriarConta, onEntrar }: LandingPageProps) {
   const [scrolled, setScrolled] = useState(false);
-  const [mostrarSetaHero, setMostrarSetaHero] = useState(true);
-  const [portalScrollPronto, setPortalScrollPronto] = useState(false);
   const [periodo, setPeriodo] = useState<'anual' | 'mensal'>('anual');
   const rootRef = useRef<HTMLDivElement>(null);
 
-  const proximaEtapaScroll = () => {
-    const root = rootRef.current;
-    if (!root) return null;
-    const atual = obterScrollAtual();
-    const etapas: EtapaScroll[] = IDS_ETAPAS_SCROLL
-      .map((id) => root.querySelector<HTMLElement>(`#${id}`))
-      .filter((el): el is HTMLElement => Boolean(el))
-      .map((el) => {
-        const margemAncora = Number.parseFloat(window.getComputedStyle(el).scrollMarginTop) || 0;
-        return {
-          el,
-          top: Math.max(0, el.getBoundingClientRect().top + window.scrollY - margemAncora),
-        };
-      });
-
-    const proxima = etapas.find((etapa) => etapa.top > atual + 24);
-    if (proxima) return proxima;
-
-    const fimDaPagina = obterFimDaPagina();
-    return atual < fimDaPagina - 1
-      ? { el: document.documentElement, top: fimDaPagina, final: true }
-      : null;
-  };
-
-  useEffect(() => {
-    setPortalScrollPronto(true);
-  }, []);
-
   useEffect(() => {
     const onScroll = () => {
-      const scrollAtual = obterScrollAtual();
-      setScrolled(scrollAtual > 24);
-      const fimDaPagina = obterFimDaPagina();
-      setMostrarSetaHero(fimDaPagina - scrollAtual > 1);
+      setScrolled((document.scrollingElement?.scrollTop ?? window.scrollY) > 24);
     };
     onScroll();
     window.addEventListener('scroll', onScroll, { passive: true });
@@ -106,36 +58,6 @@ export default function LandingPage({ onCriarConta, onEntrar }: LandingPageProps
   const irPara = (id: string) => (e: React.MouseEvent) => {
     e.preventDefault();
     document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' });
-  };
-
-  const irParaProximaEtapa = () => {
-    const proxima = proximaEtapaScroll();
-    const rolarAteOFim = () => {
-      const aplicarFimReal = (behavior: ScrollBehavior) => {
-        const elemento = obterElementoRolagem();
-        window.scrollTo({
-          top: elemento.scrollHeight,
-          left: 0,
-          behavior,
-        });
-      };
-
-      aplicarFimReal('smooth');
-      window.setTimeout(() => aplicarFimReal('auto'), 520);
-      window.setTimeout(() => aplicarFimReal('auto'), 900);
-    };
-
-    if (!proxima) {
-      rolarAteOFim();
-      return;
-    }
-
-    if (proxima.final) {
-      rolarAteOFim();
-      return;
-    }
-
-    proxima.el.scrollIntoView({ behavior: 'smooth', block: 'start' });
   };
 
   const precos = PRECOS[periodo];
@@ -492,19 +414,12 @@ export default function LandingPage({ onCriarConta, onEntrar }: LandingPageProps
         </div>
       </footer>
     </div>
-    {portalScrollPronto && createPortal(
-      <button
-        type="button"
-        className={`${styles.heroScrollPortal} ${mostrarSetaHero ? styles.heroScrollPortalVisible : ''}`}
-        onClick={irParaProximaEtapa}
-        aria-label="Avançar para a próxima seção"
-      >
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.25" d="M12 5v14m0 0l-6-6m6 6l6-6" />
-        </svg>
-      </button>,
-      document.body,
-    )}
+    <BotaoProximoScroll
+      destinos={IDS_ETAPAS_SCROLL}
+      distanciaInferior={22}
+      ariaLabel="Avançar para a próxima seção"
+      title="Próxima seção"
+    />
     </>
   );
 }

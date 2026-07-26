@@ -1,0 +1,121 @@
+.root {
+  --av-scroll-next-bottom: 20px;
+  left: 50%;
+  z-index: 58;
+  width: 44px;
+  height: 44px;
+  transform: translateX(-50%) scale(.96);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .18s ease, transform .18s ease;
+}
+
+.pagina {
+  position: fixed;
+  bottom: calc(var(--av-scroll-next-bottom) + env(safe-area-inset-bottom, 0px));
+}
+
+.container {
+  position: absolute;
+  bottom: var(--av-scroll-next-bottom);
+  z-index: 20;
+}
+
+.visivel {
+  transform: translateX(-50%) scale(1);
+  opacity: .82;
+  pointer-events: auto;
+  animation: avProximoScrollBounce 1.55s ease-in-out infinite;
+}
+
+.botao {
+  display: grid;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  place-items: center;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  cursor: pointer;
+}
+
+.circulo {
+  display: grid;
+  width: 44px;
+  height: 44px;
+  place-items: center;
+  border: 1px solid rgba(29, 111, 217, .18);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, .72);
+  color: rgba(16, 36, 62, .76);
+  box-shadow: 0 12px 30px rgba(16, 36, 62, .16), inset 0 1px 0 rgba(255, 255, 255, .72);
+  -webkit-backdrop-filter: blur(14px) saturate(150%);
+  backdrop-filter: blur(14px) saturate(150%);
+  transition: background .18s ease;
+}
+
+.botao:hover .circulo {
+  background: rgba(255, 255, 255, .92);
+}
+
+.botao:focus-visible {
+  outline: 3px solid rgba(33, 136, 230, .38);
+  outline-offset: 3px;
+}
+
+.circulo svg {
+  width: 20px;
+  height: 20px;
+}
+
+:global(.dark) .circulo {
+  border-color: rgba(125, 211, 252, .32);
+  background: rgba(15, 23, 42, .74);
+  color: #e0f2fe;
+  box-shadow: 0 12px 30px rgba(2, 6, 23, .36), inset 0 1px 0 rgba(255, 255, 255, .14);
+}
+
+:global(.dark) .botao:hover .circulo {
+  background: rgba(30, 41, 59, .92);
+}
+
+@media (max-width: 760px) {
+  .circulo {
+    width: 34px;
+    height: 34px;
+    border-color: rgba(29, 111, 217, .14);
+    background: rgba(255, 255, 255, .34);
+    color: rgba(16, 36, 62, .68);
+    box-shadow: 0 10px 24px rgba(16, 36, 62, .12), inset 0 1px 0 rgba(255, 255, 255, .58);
+  }
+
+  .visivel {
+    opacity: .74;
+  }
+
+  .botao:hover .circulo {
+    background: rgba(255, 255, 255, .48);
+  }
+
+  .circulo svg {
+    width: 18px;
+    height: 18px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .root,
+  .circulo {
+    transition: none;
+  }
+
+  .visivel {
+    animation: none;
+  }
+}
+
+@keyframes avProximoScrollBounce {
+  0%, 100% { transform: translateX(-50%) translateY(0); }
+  45% { transform: translateX(-50%) translateY(-7px); }
+}

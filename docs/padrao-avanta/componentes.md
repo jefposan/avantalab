@@ -47,6 +47,21 @@ divisor ou agrupamento sem identidade própria.
 - Tabela fornece cabeçalho, vazio, carregamento e comportamento responsivo.
 - Modal fornece título, fechamento acessível, foco inicial e restauração do foco.
 
+### Botão de próxima rolagem
+
+- Reutilizar `app/components/BotaoProximoScroll.tsx`; não copiar sua marcação,
+  animação ou lógica para componentes locais.
+- Na página, o botão pode avançar por destinos identificados e, no último
+  acionamento, leva ao fim real do conteúdo.
+- Dentro de uma área rolável, usar `modo="container"` e fornecer a referência da
+  área; o avanço ocorre em blocos proporcionais à altura visível.
+- Só aparece quando existe conteúdo abaixo, desaparece ao chegar ao final e
+  reaparece quando o usuário volta a rolar para cima.
+- A landing page é a referência visual oficial: círculo translúcido, seta
+  geométrica, movimento discreto e respeito à preferência de movimento reduzido.
+- Usar apenas quando a rolagem assistida facilitar uma área longa ou quando for
+  solicitada; o botão não substitui a rolagem nativa.
+
 ## Estados assíncronos
 
 - Desabilitar submissão duplicada e indicar ação em andamento.

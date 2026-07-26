@@ -56,46 +56,6 @@
 }
 .landing :global(.btn-ghost:hover) { box-shadow: inset 0 0 0 1.5px rgba(27, 58, 95, .5); }
 .landing :global(.mobile-label) { display: none; }
-.heroScrollPortal {
-  position: fixed;
-  left: 50%;
-  bottom: 1.35rem;
-  z-index: 58;
-  display: flex;
-  width: 44px;
-  height: 44px;
-  transform: translateX(-50%);
-  align-items: center;
-  justify-content: center;
-  border: 1px solid rgba(29, 111, 217, .18);
-  border-radius: 999px;
-  background: rgba(255, 255, 255, .72);
-  color: rgba(16, 36, 62, .76);
-  opacity: 0;
-  pointer-events: none;
-  box-shadow: 0 12px 30px rgba(16, 36, 62, .16), inset 0 1px 0 rgba(255, 255, 255, .72);
-  -webkit-backdrop-filter: blur(14px) saturate(150%);
-  backdrop-filter: blur(14px) saturate(150%);
-  transition: opacity .18s ease, background .18s ease, transform .18s ease;
-}
-.heroScrollPortalVisible {
-  opacity: .82;
-  pointer-events: auto;
-  animation: lpHeroScrollBounce 1.55s ease-in-out infinite;
-}
-.heroScrollPortalVisible:hover {
-  opacity: 1;
-  background: rgba(255, 255, 255, .92);
-}
-.heroScrollPortal:focus-visible {
-  outline: 3px solid rgba(33, 136, 230, .38);
-  outline-offset: 3px;
-}
-.heroScrollPortal svg {
-  width: 20px;
-  height: 20px;
-}
-
 /* ---------- nav ---------- */
 .landing :global(header.nav) {
   position: fixed; inset-inline: 0; top: 0; z-index: 60;
@@ -594,26 +554,6 @@
     margin-top: 0;
     font-size: .8rem;
   }
-  .heroScrollPortal {
-    bottom: calc(1.15rem + env(safe-area-inset-bottom));
-    height: 34px;
-    width: 34px;
-    border: 1px solid rgba(29, 111, 217, .14);
-    background: rgba(255, 255, 255, .34);
-    color: rgba(16, 36, 62, .68);
-    box-shadow: 0 10px 24px rgba(16, 36, 62, .12), inset 0 1px 0 rgba(255, 255, 255, .58);
-  }
-  .heroScrollPortalVisible {
-    opacity: .74;
-  }
-  .heroScrollPortalVisible:hover {
-    opacity: .9;
-    background: rgba(255, 255, 255, .48);
-  }
-  .heroScrollPortal svg {
-    width: 18px;
-    height: 18px;
-  }
   .landing :global(.nav-logo img) { height: 39px; }
   .landing :global(.nav-actions) { gap: .4rem; }
   .landing :global(.nav-cta) {
@@ -763,10 +703,5 @@
 .landing :global(.reveal.in) { opacity: 1; transform: none; }
 @media (prefers-reduced-motion: reduce) {
   .landing :global(.reveal) { opacity: 1; transform: none; transition: none; }
-  .landing :global(.float-notif), .landing :global(.float-ava), .landing :global(.msg-tag i), .heroScrollPortalVisible { animation: none; }
-}
-
-@keyframes lpHeroScrollBounce {
-  0%, 100% { transform: translateX(-50%) translateY(0); }
-  45% { transform: translateX(-50%) translateY(-7px); }
+  .landing :global(.float-notif), .landing :global(.float-ava), .landing :global(.msg-tag i) { animation: none; }
 }

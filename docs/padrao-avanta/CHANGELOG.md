@@ -1,5 +1,12 @@
 # Histórico do PADRÃO AVANTA
 
+## 1.2.0 - 2026-07-26
+
+- O botão de próxima rolagem aprovado na landing page passa a ser um componente
+  oficial reutilizável.
+- Padronizados os comportamentos para página e área rolável, incluindo exibição
+  somente quando há conteúdo abaixo e ocultação ao chegar ao final.
+
 ## 1.1.0 - 2026-07-18
 
 - Incorporado formalmente o AvantaCard/AvantaShell como padrão especial de card.

@@ -1,6 +1,7 @@
 'use client';
 
-import type { ChangeEvent, CSSProperties, Dispatch, SetStateAction } from 'react';
+import { useRef, type ChangeEvent, type CSSProperties, type Dispatch, type SetStateAction } from 'react';
+import BotaoProximoScroll from './BotaoProximoScroll';
 import CardLancamentoDespesa, {
   type DespesaCadastrada,
 } from './CardLancamentoDespesa';
@@ -180,6 +181,8 @@ export default function TabelaLancamentosDespesa({
   onRetomarRascunhoImportador,
   onVerNota,
 }: TabelaLancamentosDespesaProps) {
+  const listaLancamentosRef = useRef<HTMLDivElement | null>(null);
+
   return (
     <div
       className="relative h-full w-full min-w-0 max-w-full overflow-hidden bg-white p-3 text-slate-900 transition-all duration-300 sm:p-4"
@@ -302,15 +305,17 @@ export default function TabelaLancamentosDespesa({
           </div>
         )}
 
-        <div
-          className="overflow-y-auto overflow-x-auto custom-scroll"
-          style={{
-            height: `${alturaFinalTabelaLancamentos}px`,
-            maxHeight: `${alturaMaximaTabelaLancamentos}px`,
-          }}
-        >
-          <table className="w-full min-w-[540px] table-fixed text-left border-collapse">
-            <tbody>
+        <div className="relative">
+          <div
+            ref={listaLancamentosRef}
+            className="overflow-y-auto overflow-x-auto custom-scroll"
+            style={{
+              height: `${alturaFinalTabelaLancamentos}px`,
+              maxHeight: `${alturaMaximaTabelaLancamentos}px`,
+            }}
+          >
+            <table className="w-full min-w-[540px] table-fixed text-left border-collapse">
+              <tbody>
               {lancamentosFiltradosDoMes.length > 0 ? (
                 lancamentosFiltradosDoMes.map((lanc) => (
                   <tr
@@ -502,8 +507,16 @@ export default function TabelaLancamentosDespesa({
                   </td>
                 </tr>
               )}
-            </tbody>
-          </table>
+              </tbody>
+            </table>
+          </div>
+          <BotaoProximoScroll
+            modo="container"
+            scrollContainerRef={listaLancamentosRef}
+            distanciaInferior={12}
+            ariaLabel="Avançar nos lançamentos de despesas"
+            title="Próximos lançamentos"
+          />
         </div>
       </div>
 
