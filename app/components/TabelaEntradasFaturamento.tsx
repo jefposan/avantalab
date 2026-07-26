@@ -1,6 +1,7 @@
 'use client';
 
-import type { ChangeEvent } from 'react';
+import { useRef, type ChangeEvent } from 'react';
+import BotaoProximoScroll from './BotaoProximoScroll';
 
 export type EntradaFaturamento = {
   id: string;
@@ -54,6 +55,8 @@ export default function TabelaEntradasFaturamento({
   onCancelarEdicaoEntrada,
   onExcluirEntrada,
 }: TabelaEntradasFaturamentoProps) {
+  const listaEntradasRef = useRef<HTMLDivElement | null>(null);
+
   if (entradas.length === 0) {
     return (
       <div className="rounded-xl border border-dashed border-slate-300/50 p-4 text-center text-sm text-slate-400 italic">
@@ -63,10 +66,14 @@ export default function TabelaEntradasFaturamento({
   }
 
   return (
-    <div className="w-full max-w-full overflow-x-auto rounded-xl border border-slate-200/20">
-      <table className="w-full min-w-[560px] text-left border-collapse">
-        <tbody>
-          {entradas.map((entrada) => {
+    <div className="relative">
+      <div
+        ref={listaEntradasRef}
+        className="max-h-[440px] w-full max-w-full overflow-x-auto overflow-y-auto rounded-xl border border-slate-200/20"
+      >
+        <table className="w-full min-w-[560px] text-left border-collapse">
+          <tbody>
+            {entradas.map((entrada) => {
             const ehTotalMensal = entrada.totalMensal === true;
             const ehRecebimentos = entrada.tipo === 'recebimentos_sistema';
             const ehProtegida = ehRecebimentos || entrada.tipo === 'vendas_mobile_sistema';
@@ -244,9 +251,16 @@ export default function TabelaEntradasFaturamento({
               )}
             </tr>
           );
-          })}
-        </tbody>
-      </table>
+            })}
+          </tbody>
+        </table>
+      </div>
+      <BotaoProximoScroll
+        modo="container"
+        scrollContainerRef={listaEntradasRef}
+        ariaLabel="Avançar nos lançamentos de receitas"
+        title="Próximos lançamentos"
+      />
     </div>
   );
 }

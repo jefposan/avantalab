@@ -10062,7 +10062,7 @@ name="novo-usuario-login"
 </div>
 
           <main className={classePaginaInterna}>
-            <div className="mt-5 flex flex-col gap-6 xl:flex-row xl:items-start">
+            <div className="mt-2 flex flex-col gap-6 xl:flex-row xl:items-start">
               <div onClick={() => setBlocoAtivo('despesa')} className="min-w-0 cursor-pointer transition-[width,opacity] duration-300 ease-in-out" style={{ width: typeof window !== 'undefined' && window.innerWidth >= 1280 ? (blocoAtivo === 'despesa' ? '62%' : blocoAtivo === 'receita' ? '38%' : '50%') : '100%', opacity: blocoAtivo === 'receita' ? 0.5 : 1 }}>
 <TabelaLancamentosDespesa
               bgCard={bgCard}

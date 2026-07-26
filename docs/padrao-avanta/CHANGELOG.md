@@ -1,5 +1,12 @@
 # Histórico do PADRÃO AVANTA
 
+## 1.2.1 - 2026-07-26
+
+- O botão de próxima rolagem em containers passa a acompanhar a parte visível da
+  área rolável, sem ficar fora da tela.
+- Padronizados o limite pelas bordas do container e a distância mínima de 28 px
+  antes do rodapé, inclusive em cards expansíveis.
+
 ## 1.2.0 - 2026-07-26
 
 - O botão de próxima rolagem aprovado na landing page passa a ser um componente

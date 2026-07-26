@@ -92,7 +92,7 @@ export default function CardLancamentoDespesa({
   return (
     <>
       <div
-        className="mb-3 grid grid-cols-[minmax(68px,84px)_minmax(0,1fr)_minmax(68px,84px)] items-center gap-2 px-3 py-2.5 transition-all duration-300 [container-type:inline-size]"
+        className="mb-3 grid grid-cols-[minmax(68px,84px)_minmax(0,1fr)_minmax(68px,84px)] items-center gap-2 px-3 py-2 transition-all duration-300 [container-type:inline-size]"
         style={{
           borderRadius: '6px 16px 16px 16px',
           background: expandido

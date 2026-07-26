@@ -513,7 +513,6 @@ export default function TabelaLancamentosDespesa({
           <BotaoProximoScroll
             modo="container"
             scrollContainerRef={listaLancamentosRef}
-            distanciaInferior={12}
             ariaLabel="Avançar nos lançamentos de despesas"
             title="Próximos lançamentos"
           />

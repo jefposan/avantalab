@@ -22,6 +22,12 @@ type BotaoProximoScrollProps = {
 };
 
 const LIMIAR_FIM_PX = 2;
+const TAMANHO_AREA_BOTAO_PX = 44;
+
+type PosicaoContainer = {
+  left: number;
+  top: number;
+};
 
 function elementoRolagemPagina() {
   return document.scrollingElement ?? document.documentElement;
@@ -35,28 +41,64 @@ export default function BotaoProximoScroll({
   scrollContainerRef,
   modo = 'pagina',
   destinos = [],
-  distanciaInferior = 20,
+  distanciaInferior: distanciaInferiorInformada,
   className = '',
   ariaLabel = 'Avançar para a próxima parte',
   title = 'Próxima parte',
 }: BotaoProximoScrollProps) {
   const [visivel, setVisivel] = useState(false);
+  const [posicaoContainer, setPosicaoContainer] = useState<PosicaoContainer>({
+    left: 0,
+    top: 0,
+  });
   const montado = useSyncExternalStore(
     () => () => undefined,
     () => true,
     () => false
   );
   const emContainer = modo === 'container';
+  const distanciaInferior = distanciaInferiorInformada ?? (emContainer ? 28 : 20);
 
   const atualizarVisibilidade = useCallback(() => {
     const container = scrollContainerRef?.current;
-    if (container) {
-      setVisivel(container.scrollHeight - container.scrollTop - container.clientHeight > LIMIAR_FIM_PX);
+    if (emContainer) {
+      if (!container) {
+        setVisivel(false);
+        return;
+      }
+
+      const retangulo = container.getBoundingClientRect();
+      const topoJanela = window.visualViewport?.offsetTop ?? 0;
+      const alturaJanela = window.visualViewport?.height ?? window.innerHeight;
+      const baseJanela = topoJanela + alturaJanela;
+      const topoVisivel = Math.max(retangulo.top, topoJanela);
+      const baseVisivel = Math.min(retangulo.bottom, baseJanela);
+      const alturaVisivel = Math.max(0, baseVisivel - topoVisivel);
+      const temConteudoAbaixo =
+        container.scrollHeight - container.scrollTop - container.clientHeight > LIMIAR_FIM_PX;
+      const cabeBotao = alturaVisivel >= TAMANHO_AREA_BOTAO_PX + distanciaInferior;
+
+      setPosicaoContainer((atual) => {
+        const proxima = {
+          left: Math.min(
+            window.innerWidth - TAMANHO_AREA_BOTAO_PX / 2,
+            Math.max(TAMANHO_AREA_BOTAO_PX / 2, retangulo.left + retangulo.width / 2)
+          ),
+          top: baseVisivel - distanciaInferior - TAMANHO_AREA_BOTAO_PX,
+        };
+
+        return Math.abs(atual.left - proxima.left) < 0.5
+          && Math.abs(atual.top - proxima.top) < 0.5
+          ? atual
+          : proxima;
+      });
+      setVisivel(temConteudoAbaixo && cabeBotao);
       return;
     }
+
     const pagina = elementoRolagemPagina();
     setVisivel(pagina.scrollHeight - pagina.scrollTop - pagina.clientHeight > LIMIAR_FIM_PX);
-  }, [scrollContainerRef]);
+  }, [distanciaInferior, emContainer, scrollContainerRef]);
 
   useEffect(() => {
     const container = scrollContainerRef?.current;
@@ -69,7 +111,12 @@ export default function BotaoProximoScroll({
 
     agendarAtualizacao();
     alvo.addEventListener('scroll', agendarAtualizacao, { passive: true });
+    if (container) {
+      window.addEventListener('scroll', agendarAtualizacao, { passive: true });
+    }
     window.addEventListener('resize', agendarAtualizacao);
+    window.visualViewport?.addEventListener('resize', agendarAtualizacao);
+    window.visualViewport?.addEventListener('scroll', agendarAtualizacao);
 
     const tamanho = typeof ResizeObserver !== 'undefined'
       ? new ResizeObserver(agendarAtualizacao)
@@ -84,7 +131,12 @@ export default function BotaoProximoScroll({
     return () => {
       window.cancelAnimationFrame(quadro);
       alvo.removeEventListener('scroll', agendarAtualizacao);
+      if (container) {
+        window.removeEventListener('scroll', agendarAtualizacao);
+      }
       window.removeEventListener('resize', agendarAtualizacao);
+      window.visualViewport?.removeEventListener('resize', agendarAtualizacao);
+      window.visualViewport?.removeEventListener('scroll', agendarAtualizacao);
       tamanho?.disconnect();
       mutacoes?.disconnect();
     };
@@ -140,7 +192,11 @@ export default function BotaoProximoScroll({
   const conteudo = (
     <div
       className={`${styles.root} ${emContainer ? styles.container : styles.pagina} ${visivel ? styles.visivel : ''} ${className}`}
-      style={{ '--av-scroll-next-bottom': `${distanciaInferior}px` } as CSSProperties}
+      style={{
+        '--av-scroll-next-bottom': `${distanciaInferior}px`,
+        '--av-scroll-next-left': `${posicaoContainer.left}px`,
+        '--av-scroll-next-top': `${posicaoContainer.top}px`,
+      } as CSSProperties}
       aria-hidden={!visivel}
     >
       <button
@@ -160,6 +216,5 @@ export default function BotaoProximoScroll({
     </div>
   );
 
-  if (emContainer) return conteudo;
   return montado ? createPortal(conteudo, document.body) : null;
 }

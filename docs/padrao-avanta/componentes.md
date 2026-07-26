@@ -55,8 +55,15 @@ divisor ou agrupamento sem identidade própria.
   acionamento, leva ao fim real do conteúdo.
 - Dentro de uma área rolável, usar `modo="container"` e fornecer a referência da
   área; o avanço ocorre em blocos proporcionais à altura visível.
+- No modo `container`, o controle é flutuante e acompanha o trecho da área
+  rolável que estiver visível na tela. Ele permanece centralizado na largura do
+  container e limitado às suas bordas, inclusive quando o card muda de altura.
+- A distância inferior padrão no modo `container` é de 28 px, preservando o
+  rodapé do card. Só informar `distanciaInferior` quando uma especificação
+  aprovada exigir outro afastamento.
 - Só aparece quando existe conteúdo abaixo, desaparece ao chegar ao final e
-  reaparece quando o usuário volta a rolar para cima.
+  reaparece quando o usuário volta a rolar para cima. Quando o próprio container
+  sai da área visível da tela, o botão também desaparece.
 - A landing page é a referência visual oficial: círculo translúcido, seta
   geométrica, movimento discreto e respeito à preferência de movimento reduzido.
 - Usar apenas quando a rolagem assistida facilitar uma área longa ou quando for

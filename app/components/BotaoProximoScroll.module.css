@@ -16,9 +16,11 @@
 }
 
 .container {
-  position: absolute;
-  bottom: var(--av-scroll-next-bottom);
-  z-index: 20;
+  position: fixed;
+  top: var(--av-scroll-next-top);
+  bottom: auto;
+  left: var(--av-scroll-next-left);
+  z-index: 58;
 }
 
 .visivel {
