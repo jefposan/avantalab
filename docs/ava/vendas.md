@@ -1,6 +1,9 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.6.0.84.124 -->
+<!-- ava-version: 1.6.0.84.125 -->
+
+> Revisão 1.6.0.84.125: modelo Excel para importação de despesas na Gestão
+> Web; sem impacto operacional no AvantaVendas.
 
 > Revisão 1.6.0.84.124: correção do visualizador web de comprovantes em
 > Recebimentos Presenciais; sem impacto operacional no AvantaVendas.

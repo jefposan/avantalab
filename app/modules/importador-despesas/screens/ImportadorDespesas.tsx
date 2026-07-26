@@ -43,22 +43,26 @@ function dividirLinha(linha: string, separador: string) {
   for (let indice = 0; indice < linha.length; indice += 1) { const caractere = linha[indice]; if (caractere === '"') { if (aspas && linha[indice + 1] === '"') { atual += '"'; indice += 1; } else aspas = !aspas; } else if (caractere === separador && !aspas) { partes.push(atual.trim()); atual = ''; } else atual += caractere; }
   partes.push(atual.trim()); return partes;
 }
-function transformarLinhas(cabecalhos: string[], linhas: unknown[][]): DespesaImportada[] {
+function transformarLinhas(cabecalhos: string[], linhas: unknown[][], tiposValidos: string[] = []): DespesaImportada[] {
   const nomes = cabecalhos.map(normalizar); const indice = (termos: string[]) => nomes.findIndex((nome) => termos.some((termo) => nome.includes(termo)));
-  const data = indice(['data', 'date']), descricao = indice(['descricao', 'historico', 'lancamento', 'favorecido', 'detalhe']), debito = indice(['debito', 'saida', 'pagamento']), credito = indice(['credito', 'entrada', 'recebimento']), valor = indice(['valor', 'amount', 'montante']), natureza = indice(['tipo', 'natureza', 'd/c', 'dc', 'movimento']);
+  const data = indice(['data', 'date']), descricao = indice(['descricao', 'historico', 'lancamento', 'favorecido', 'detalhe']), debito = indice(['debito', 'saida', 'pagamento']), credito = indice(['credito', 'entrada', 'recebimento']), valor = indice(['valor', 'amount', 'montante']);
+  const tipoDespesa = nomes.findIndex((nome) => nome === 'tipo de despesa' || nome === 'tipo despesa' || nome.includes('categoria'));
+  const natureza = nomes.findIndex((nome, posicao) => posicao !== tipoDespesa && (nome === 'tipo' || ['natureza', 'd/c', 'dc', 'movimento'].some((termo) => nome.includes(termo))));
+  const tiposPorNome = new Map(tiposValidos.map((tipo) => [normalizar(tipo), tipo]));
   return linhas.flatMap((linha) => {
     const valorDebito = debito >= 0 ? parseValor(linha[debito]) : Number.NaN; const valorGeral = valor >= 0 ? parseValor(linha[valor]) : Number.NaN; const codigo = natureza >= 0 ? normalizar(linha[natureza]) : '';
     const eEntrada = (credito >= 0 && Number.isFinite(parseValor(linha[credito])) && parseValor(linha[credito]) !== 0) || /credito|entrada|recebimento|\bc\b/.test(codigo);
-    const bruto = Number.isFinite(valorDebito) ? valorDebito : valorGeral; const eSaida = (Number.isFinite(valorDebito) && valorDebito !== 0) || bruto < 0 || /debito|saida|pagamento|\bd\b/.test(codigo);
+    const bruto = Number.isFinite(valorDebito) ? valorDebito : valorGeral; const eSaida = (Number.isFinite(valorDebito) && valorDebito !== 0) || bruto < 0 || tipoDespesa >= 0 || /debito|saida|pagamento|\bd\b/.test(codigo);
     if (!Number.isFinite(bruto) || bruto === 0 || eEntrada || !eSaida) return [];
     const descricaoOriginal = String(descricao >= 0 ? linha[descricao] ?? '' : '').trim() || 'Despesa sem descrição';
-    return [{ id: gerarId(), data: data >= 0 ? parseData(linha[data]) : '', descricaoOriginal, descricao: descricaoOriginal, valor: Math.abs(bruto), categoria: '', incluir: true, confianca: 'Revisar' }];
+    const categoria = tipoDespesa >= 0 ? tiposPorNome.get(normalizar(linha[tipoDespesa])) || '' : '';
+    return [{ id: gerarId(), data: data >= 0 ? parseData(linha[data]) : '', descricaoOriginal, descricao: descricaoOriginal, valor: Math.abs(bruto), categoria, incluir: true, confianca: categoria ? 'Alta' : 'Revisar' }];
   });
 }
-function parseTexto(conteudo: string) {
+function parseTexto(conteudo: string, tiposValidos: string[] = []) {
   const linhas = conteudo.replace(/^\uFEFF/, '').split(/\r?\n/).filter((linha) => linha.trim()); if (linhas.length < 2) return [];
   const separador = [';', '\t', ','].sort((a, b) => linhas[0].split(b).length - linhas[0].split(a).length)[0];
-  return transformarLinhas(dividirLinha(linhas[0], separador), linhas.slice(1).map((linha) => dividirLinha(linha, separador)));
+  return transformarLinhas(dividirLinha(linhas[0], separador), linhas.slice(1).map((linha) => dividirLinha(linha, separador)), tiposValidos);
 }
 
 type ItemAnalisadoPorIA = {
@@ -233,14 +237,14 @@ export default function ImportadorDespesas() {
         totalDetectado = analise.total_documento;
         enviosRestantes = analise.envios_restantes;
       } else if (extensao === 'csv' || extensao === 'txt') {
-        encontradas = parseTexto(await file.text());
+        encontradas = parseTexto(await file.text(), tiposDespesa);
       } else {
         const XLSX = await import('xlsx');
         const planilha = XLSX.read(await file.arrayBuffer(), { type: 'array', cellDates: true });
         const aba = planilha.Sheets[planilha.SheetNames[0]];
         const matriz = XLSX.utils.sheet_to_json<unknown[]>(aba, { header: 1, defval: '' });
         encontradas = matriz.length > 1
-          ? transformarLinhas((matriz[0] as unknown[]).map(String), matriz.slice(1) as unknown[][])
+          ? transformarLinhas((matriz[0] as unknown[]).map(String), matriz.slice(1) as unknown[][], tiposDespesa)
           : [];
       }
 

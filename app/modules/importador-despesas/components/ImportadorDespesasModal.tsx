@@ -91,6 +91,12 @@ function dataExibida(data: string) {
   return ano && mes && dia ? `${dia}/${mes}/${ano}` : 'Não identificada';
 }
 function parseData(valor: unknown) {
+  if (valor instanceof Date && !Number.isNaN(valor.getTime())) {
+    const ano = valor.getFullYear();
+    const mes = String(valor.getMonth() + 1).padStart(2, '0');
+    const dia = String(valor.getDate()).padStart(2, '0');
+    return `${ano}-${mes}-${dia}`;
+  }
   const texto = String(valor ?? '').trim();
   const brasileira = texto.match(/^(\d{1,2})[\/-](\d{1,2})[\/-](\d{2,4})$/);
   if (brasileira) return `${brasileira[3].length === 2 ? `20${brasileira[3]}` : brasileira[3]}-${brasileira[2].padStart(2, '0')}-${brasileira[1].padStart(2, '0')}`;
@@ -123,30 +129,34 @@ function dividirLinha(linha: string, separador: string) {
   }
   partes.push(atual.trim()); return partes;
 }
-function linhasTabulares(cabecalhos: string[], linhas: unknown[][]): DespesaRevisao[] {
+function linhasTabulares(cabecalhos: string[], linhas: unknown[][], tiposValidos: string[] = []): DespesaRevisao[] {
   const nomes = cabecalhos.map(normalizar);
   const indice = (termos: string[]) => nomes.findIndex((nome) => termos.some((termo) => nome.includes(termo)));
   const data = indice(['data', 'date']), descricao = indice(['descricao', 'historico', 'lancamento', 'favorecido', 'detalhe']);
   const debito = indice(['debito', 'saida', 'pagamento']), credito = indice(['credito', 'entrada', 'recebimento']);
-  const valor = indice(['valor', 'amount', 'montante']), natureza = indice(['tipo', 'natureza', 'd/c', 'dc', 'movimento']);
+  const valor = indice(['valor', 'amount', 'montante']);
+  const tipoDespesa = nomes.findIndex((nome) => nome === 'tipo de despesa' || nome === 'tipo despesa' || nome.includes('categoria'));
+  const natureza = nomes.findIndex((nome, posicao) => posicao !== tipoDespesa && (nome === 'tipo' || ['natureza', 'd/c', 'dc', 'movimento'].some((termo) => nome.includes(termo))));
+  const tiposPorNome = new Map(tiposValidos.map((tipo) => [normalizar(tipo), tipo]));
   return linhas.flatMap((linha) => {
     const valorDebito = debito >= 0 ? parseValor(linha[debito]) : Number.NaN;
     const valorGeral = valor >= 0 ? parseValor(linha[valor]) : Number.NaN;
     const codigo = natureza >= 0 ? normalizar(linha[natureza]) : '';
     const entrada = (credito >= 0 && Number.isFinite(parseValor(linha[credito])) && parseValor(linha[credito]) !== 0) || /credito|entrada|recebimento|\bc\b/.test(codigo);
     const bruto = Number.isFinite(valorDebito) ? valorDebito : valorGeral;
-    const saida = (Number.isFinite(valorDebito) && valorDebito !== 0) || bruto < 0 || /debito|saida|pagamento|\bd\b/.test(codigo);
+    const saida = (Number.isFinite(valorDebito) && valorDebito !== 0) || bruto < 0 || tipoDespesa >= 0 || /debito|saida|pagamento|\bd\b/.test(codigo);
     if (!Number.isFinite(bruto) || bruto === 0 || entrada || !saida) return [];
     const texto = String(descricao >= 0 ? linha[descricao] ?? '' : '').trim() || 'Despesa sem descrição';
     const valorLancamento = Math.abs(bruto);
-    return [{ id: id(), data: data >= 0 ? parseData(linha[data]) : '', descricao: texto, descricaoOriginal: texto, valor: valorLancamento, valorOriginal: valorLancamento, tipo: '', incluir: true, natureza: 'despesa' as const }];
+    const tipoInformado = tipoDespesa >= 0 ? tiposPorNome.get(normalizar(linha[tipoDespesa])) || '' : '';
+    return [{ id: id(), data: data >= 0 ? parseData(linha[data]) : '', descricao: texto, descricaoOriginal: texto, valor: valorLancamento, valorOriginal: valorLancamento, tipo: tipoInformado, incluir: true, natureza: 'despesa' as const }];
   });
 }
-function lerTexto(conteudo: string) {
+function lerTexto(conteudo: string, tiposValidos: string[] = []) {
   const linhas = conteudo.replace(/^\uFEFF/, '').split(/\r?\n/).filter((linha) => linha.trim());
   if (linhas.length < 2) return [];
   const separador = [';', '\t', ','].sort((a, b) => linhas[0].split(b).length - linhas[0].split(a).length)[0];
-  return linhasTabulares(dividirLinha(linhas[0], separador), linhas.slice(1).map((linha) => dividirLinha(linha, separador)));
+  return linhasTabulares(dividirLinha(linhas[0], separador), linhas.slice(1).map((linha) => dividirLinha(linha, separador)), tiposValidos);
 }
 async function sha256(texto: string | ArrayBuffer) {
   const bytes = typeof texto === 'string' ? new TextEncoder().encode(texto) : texto;
@@ -303,11 +313,13 @@ export default function ImportadorDespesasModal({ arquivo, retomarRascunho = fal
         };
         encontrados = [...analise.despesas.flatMap((item) => converter(item, 'despesa')), ...analise.estornos.flatMap((item) => converter(item, 'estorno'))];
       } else if (extensao === 'csv' || extensao === 'txt') {
-        encontrados = lerTexto(await arquivo.text()); detectado = 'extrato-bancario';
+        encontrados = lerTexto(await arquivo.text(), tipos); detectado = 'extrato-bancario';
+        total = encontrados.reduce((soma, item) => soma + item.valorOriginal, 0);
       } else if (extensao === 'xls' || extensao === 'xlsx') {
         const XLSX = await import('xlsx'); const planilha = XLSX.read(await arquivo.arrayBuffer(), { type: 'array', cellDates: true });
         const matriz = XLSX.utils.sheet_to_json<unknown[]>(planilha.Sheets[planilha.SheetNames[0]], { header: 1, defval: '' });
-        encontrados = matriz.length > 1 ? linhasTabulares((matriz[0] as unknown[]).map(String), matriz.slice(1) as unknown[][]) : []; detectado = 'extrato-bancario';
+        encontrados = matriz.length > 1 ? linhasTabulares((matriz[0] as unknown[]).map(String), matriz.slice(1) as unknown[][], tipos) : []; detectado = 'extrato-bancario';
+        total = encontrados.reduce((soma, item) => soma + item.valorOriginal, 0);
       } else throw new Error('Envie PDF, CSV, TXT, XLS ou XLSX. Imagens continuam sendo usadas como nota do lançamento.');
       if (!encontrados.length) throw new Error('Nenhuma saída confiável foi encontrada neste documento.');
       setDetalhe('Consultando sugestões do seu histórico…');
@@ -404,7 +416,7 @@ export default function ImportadorDespesasModal({ arquivo, retomarRascunho = fal
 
   const confirmar = async () => {
     if (!confere) { setErro('A soma ainda não confere com o total informado no documento. Revise ou refaça a análise.'); return; }
-    const pendente = selecionadas.find((item) => !item.tipo || !Number.isFinite(item.valor) || item.valor <= 0);
+    const pendente = selecionadas.find((item) => !item.tipo || !tipos.includes(item.tipo) || !Number.isFinite(item.valor) || item.valor <= 0);
     if (pendente) {
       setErro('Escolha o tipo de despesa e informe um valor maior que zero para todos os lançamentos selecionados.');
       window.setTimeout(() => { focoLinhas.current[pendente.id]?.scrollIntoView({ behavior: 'smooth', block: 'center' }); focoLinhas.current[pendente.id]?.focus(); }, 0);

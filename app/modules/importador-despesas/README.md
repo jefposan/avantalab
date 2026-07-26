@@ -7,6 +7,13 @@ No fluxo principal da Gestão Web, a mesma revisão é aberta pelo botão
 PDF, CSV, TXT, XLS e XLSX abrem a análise com progresso percentual e conferência
 em popup antes de qualquer gravação.
 
+Ao lado de **Arquivo**, **Modelo Excel** baixa
+`/modelos/modelo-importacao-despesas-avantalab.xlsx`. A primeira aba, sempre
+lida pelo importador, possui Data, Tipo de despesa, Descrição e Valor. A aba de
+orientações e exemplos fica separada para não criar dados demonstrativos. Tipos
+preenchidos são aceitos somente quando coincidem com um tipo cadastrado no
+perfil; os demais permanecem pendentes para revisão.
+
 ## Prévia web
 
 - Lê CSV, TXT, XLS, XLSX e PDF.

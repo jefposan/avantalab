@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.6.0.84.125 - 2026-07-25
+
+- Gestão Web: o lançamento de despesas passa a oferecer o download de uma
+  planilha Excel modelo ao lado de **Carregar arquivo**.
+- O modelo possui uma aba limpa para importação e uma aba separada com
+  orientações e exemplos, evitando lançamentos demonstrativos acidentais.
+- Planilhas com **Data**, **Tipo de despesa**, **Descrição** e **Valor**
+  reconhecem datas reais do Excel, pré-selecionam tipos já cadastrados e abrem
+  a revisão antes de qualquer gravação.
+
 ## 1.6.0.84.124 - 2026-07-25
 
 - Recebimentos Presenciais: o visualizador de comprovantes passa a abrir acima

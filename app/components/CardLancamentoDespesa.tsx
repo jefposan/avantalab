@@ -311,6 +311,22 @@ export default function CardLancamentoDespesa({
                 }}
               />
               {temRascunhoImportador && <button type="button" onClick={onRetomarRascunhoImportador} title="Retomar a importação salva" className="flex h-7 items-center gap-1 rounded-full border border-emerald-300 bg-emerald-50 px-2 text-[10px] font-black uppercase text-emerald-800 shadow-sm transition hover:border-emerald-400 hover:bg-emerald-100 active:scale-95">Continuar importação salva</button>}
+              <a
+                href="/modelos/modelo-importacao-despesas-avantalab.xlsx"
+                download="modelo-importacao-despesas-avantalab.xlsx"
+                title="Baixar planilha modelo para importar despesas"
+                aria-label="Baixar modelo Excel de importação de despesas"
+                className={`flex h-7 items-center gap-1 rounded-full border px-2 text-[10px] font-black uppercase shadow-sm transition active:scale-95 ${
+                  darkMode
+                    ? 'border-cyan-700 bg-cyan-950/40 text-cyan-200 hover:border-cyan-500 hover:bg-cyan-950/70'
+                    : 'border-cyan-300 bg-cyan-50 text-cyan-800 hover:border-cyan-400 hover:bg-cyan-100'
+                }`}
+              >
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" className="h-3.5 w-3.5" aria-hidden="true">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v12m0 0 4-4m-4 4-4-4M5 19h14" />
+                </svg>
+                Modelo Excel
+              </a>
               <button
                 type="button"
                 onClick={() => arquivoRef.current?.click()}
