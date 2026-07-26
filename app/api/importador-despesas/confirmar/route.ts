@@ -21,6 +21,15 @@ function clienteAutenticado(token: string) {
   });
 }
 
+function dataIsoValida(valor: string) {
+  const partes = valor.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (!partes) return false;
+  const data = new Date(Number(partes[1]), Number(partes[2]) - 1, Number(partes[3]));
+  return data.getFullYear() === Number(partes[1])
+    && data.getMonth() === Number(partes[2]) - 1
+    && data.getDate() === Number(partes[3]);
+}
+
 export async function POST(request: Request) {
   try {
     const token = (request.headers.get('authorization') || '').replace(/^Bearer\s+/i, '').trim();
@@ -43,7 +52,7 @@ export async function POST(request: Request) {
     }
 
     const invalido = lancamentos.some((item) =>
-      typeof item.data !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(item.data)
+      typeof item.data !== 'string' || !dataIsoValida(item.data)
       || typeof item.tipo_despesa !== 'string' || !item.tipo_despesa.trim()
       || typeof item.descricao !== 'string'
       || typeof item.item_chave !== 'string' || !item.item_chave.trim()
@@ -69,4 +78,3 @@ export async function POST(request: Request) {
     return NextResponse.json({ erro: true, mensagem: 'Não foi possível criar os lançamentos agora.' }, { status: 500 });
   }
 }
-

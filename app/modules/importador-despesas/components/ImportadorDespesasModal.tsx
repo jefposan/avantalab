@@ -86,6 +86,14 @@ function horarioSalvo(valor: string) {
 }
 
 function id() { return `importacao-${Date.now()}-${Math.random().toString(16).slice(2)}`; }
+function dataIsoValida(valor: string) {
+  const partes = valor.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (!partes) return false;
+  const data = new Date(Number(partes[1]), Number(partes[2]) - 1, Number(partes[3]));
+  return data.getFullYear() === Number(partes[1])
+    && data.getMonth() === Number(partes[2]) - 1
+    && data.getDate() === Number(partes[3]);
+}
 function dataExibida(data: string) {
   const [ano, mes, dia] = data.split('-');
   return ano && mes && dia ? `${dia}/${mes}/${ano}` : 'Não identificada';
@@ -99,14 +107,16 @@ function parseData(valor: unknown) {
   }
   const texto = String(valor ?? '').trim();
   const brasileira = texto.match(/^(\d{1,2})[\/-](\d{1,2})[\/-](\d{2,4})$/);
-  if (brasileira) return `${brasileira[3].length === 2 ? `20${brasileira[3]}` : brasileira[3]}-${brasileira[2].padStart(2, '0')}-${brasileira[1].padStart(2, '0')}`;
-  return /^\d{4}-\d{2}-\d{2}$/.test(texto) ? texto : '';
+  const normalizada = brasileira
+    ? `${brasileira[3].length === 2 ? `20${brasileira[3]}` : brasileira[3]}-${brasileira[2].padStart(2, '0')}-${brasileira[1].padStart(2, '0')}`
+    : texto;
+  return dataIsoValida(normalizada) ? normalizada : '';
 }
 const MESES = ['JANEIRO', 'FEVEREIRO', 'MARÇO', 'ABRIL', 'MAIO', 'JUNHO', 'JULHO', 'AGOSTO', 'SETEMBRO', 'OUTUBRO', 'NOVEMBRO', 'DEZEMBRO'];
 function dataNoMesDestino(data: string, mesDestino: string, anoDestino: number) {
   const indice = MESES.indexOf(mesDestino);
-  if (indice < 0 || !Number.isInteger(anoDestino)) return data;
-  const diaInformado = Number(data.split('-')[2]) || 1;
+  if (!dataIsoValida(data) || indice < 0 || !Number.isInteger(anoDestino)) return data;
+  const diaInformado = Number(data.split('-')[2]);
   const ultimoDia = new Date(anoDestino, indice + 1, 0).getDate();
   return `${anoDestino}-${String(indice + 1).padStart(2, '0')}-${String(Math.min(Math.max(diaInformado, 1), ultimoDia)).padStart(2, '0')}`;
 }
@@ -142,12 +152,17 @@ function linhasTabulares(cabecalhos: string[], linhas: unknown[][], tiposValidos
     const valorDebito = debito >= 0 ? parseValor(linha[debito]) : Number.NaN;
     const valorGeral = valor >= 0 ? parseValor(linha[valor]) : Number.NaN;
     const codigo = natureza >= 0 ? normalizar(linha[natureza]) : '';
+    const linhaDoModelo = tipoDespesa >= 0;
+    const possuiConteudo = [data, tipoDespesa, descricao, valor]
+      .filter((posicao) => posicao >= 0)
+      .some((posicao) => String(linha[posicao] ?? '').trim());
+    if (linhaDoModelo && !possuiConteudo) return [];
     const entrada = (credito >= 0 && Number.isFinite(parseValor(linha[credito])) && parseValor(linha[credito]) !== 0) || /credito|entrada|recebimento|\bc\b/.test(codigo);
     const bruto = Number.isFinite(valorDebito) ? valorDebito : valorGeral;
     const saida = (Number.isFinite(valorDebito) && valorDebito !== 0) || bruto < 0 || tipoDespesa >= 0 || /debito|saida|pagamento|\bd\b/.test(codigo);
-    if (!Number.isFinite(bruto) || bruto === 0 || entrada || !saida) return [];
+    if (!linhaDoModelo && (!Number.isFinite(bruto) || bruto === 0 || entrada || !saida)) return [];
     const texto = String(descricao >= 0 ? linha[descricao] ?? '' : '').trim() || 'Despesa sem descrição';
-    const valorLancamento = Math.abs(bruto);
+    const valorLancamento = Number.isFinite(bruto) ? Math.abs(bruto) : 0;
     const tipoInformado = tipoDespesa >= 0 ? tiposPorNome.get(normalizar(linha[tipoDespesa])) || '' : '';
     return [{ id: id(), data: data >= 0 ? parseData(linha[data]) : '', descricao: texto, descricaoOriginal: texto, valor: valorLancamento, valorOriginal: valorLancamento, tipo: tipoInformado, incluir: true, natureza: 'despesa' as const }];
   });
@@ -214,7 +229,7 @@ export default function ImportadorDespesasModal({ arquivo, retomarRascunho = fal
   const [avisoConferenciaFechado, setAvisoConferenciaFechado] = useState(false);
   const [rascunhoRemoto, setRascunhoRemoto] = useState<RascunhoImportador | null>(null);
   const [valoresDigitados, setValoresDigitados] = useState<Record<string, string>>({});
-  const focoLinhas = useRef<Record<string, HTMLSelectElement | null>>({});
+  const focoLinhas = useRef<Record<string, HTMLTableRowElement | null>>({});
   const progressoAtual = useRef(7);
   const emAnalise = useRef(false);
   const tipos = useMemo(() => despesasCadastradas.map((despesa) => despesa.nome).filter(Boolean), [despesasCadastradas]);
@@ -426,10 +441,14 @@ export default function ImportadorDespesasModal({ arquivo, retomarRascunho = fal
 
   const confirmar = async () => {
     if (!confere) { setErro('A soma ainda não confere com o total informado no documento. Revise ou refaça a análise.'); return; }
-    const pendente = selecionadas.find((item) => !item.tipo || !tipos.includes(item.tipo) || !Number.isFinite(item.valor) || item.valor <= 0);
+    const pendente = selecionadas.find((item) => !dataIsoValida(item.data) || !item.tipo || !tipos.includes(item.tipo) || !Number.isFinite(item.valor) || item.valor <= 0);
     if (pendente) {
-      setErro('Escolha o tipo de despesa e informe um valor maior que zero para todos os lançamentos selecionados.');
-      window.setTimeout(() => { focoLinhas.current[pendente.id]?.scrollIntoView({ behavior: 'smooth', block: 'center' }); focoLinhas.current[pendente.id]?.focus(); }, 0);
+      setErro('Preencha a data, escolha o tipo de despesa e informe um valor maior que zero em todos os lançamentos selecionados.');
+      window.setTimeout(() => {
+        const linha = focoLinhas.current[pendente.id];
+        linha?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        linha?.querySelector<HTMLElement>('[aria-invalid="true"]')?.focus();
+      }, 0);
       return;
     }
     setEtapa('confirmando'); setProgresso(18); setDetalhe('Validando os lançamentos…');
@@ -479,7 +498,7 @@ export default function ImportadorDespesasModal({ arquivo, retomarRascunho = fal
         <div className="mb-2 text-xs font-semibold text-slate-500">A conferência usa os valores originais reconhecidos. O <strong>valor a lançar</strong> pode ser ajustado — por exemplo, para lançar apenas a sua parte de uma compra compartilhada.</div>{salvoEm && <div className="mb-3 rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-sm font-semibold text-emerald-800" role="status">Rascunho salvo às {horarioSalvo(salvoEm)}. Você pode fechar e continuar depois.</div>}
         {!tipos.length && !avisoTiposFechado && <div className="mb-4"><AvisoFechavel tipo="atencao" onFechar={() => setAvisoTiposFechado(true)}>Cadastre ao menos um tipo de despesa antes de confirmar esta importação.</AvisoFechavel></div>}
         {avisoConferenciaAtivo && !avisoConferenciaFechado && <div className="mb-4"><AvisoFechavel tipo="atencao" onFechar={() => setAvisoConferenciaFechado(true)}>A confirmação está bloqueada enquanto a soma não conferir. Revise os itens ou use <strong>Refazer análise</strong>.</AvisoFechavel></div>}
-        <div className={`overflow-x-auto rounded-xl border ${darkMode ? 'border-slate-700' : 'border-slate-200'}`}><table className="w-full min-w-[760px] text-left text-sm"><thead className={darkMode ? 'bg-slate-800 text-slate-300' : 'bg-slate-50 text-slate-600'}><tr><th className="p-3">Incluir</th><th className="p-3">Data</th><th className="p-3">Descrição</th><th className="p-3">Valor a lançar</th><th className="p-3">Tipo da despesa</th></tr></thead><tbody>{despesas.map((item) => <tr key={item.id} className={`border-t ${darkMode ? 'border-slate-700' : 'border-slate-200'} ${!item.incluir ? 'opacity-50' : ''}`}><td className="p-3"><input type="checkbox" checked={item.incluir} onChange={(event) => atualizar(item.id, { incluir: event.target.checked })} aria-label={`Incluir ${item.descricao}`} /></td><td className="p-3 whitespace-nowrap">{dataExibida(item.data)}</td><td className="p-3"><input value={item.descricao} onChange={(event) => atualizar(item.id, { descricao: event.target.value, tipoSugeridoHistorico: false })} className={`w-full min-w-[190px] rounded-lg border px-2 py-1.5 text-xs ${darkMode ? 'border-slate-600 bg-slate-800 text-white' : 'border-slate-300 bg-white text-slate-900'}`} /><small className="mt-1 block text-[10px] font-semibold text-slate-500">{item.descricaoOriginal}</small></td><td className="p-3"><label className="sr-only" htmlFor={`valor-${item.id}`}>Valor a lançar de {item.descricao}</label><div className={`flex w-28 items-center rounded-lg border px-2 py-1.5 ${item.valor <= 0 ? 'border-red-300 bg-red-50' : darkMode ? 'border-slate-600 bg-slate-800 text-white' : 'border-slate-300 bg-white text-slate-900'}`}><input id={`valor-${item.id}`} value={valoresDigitados[item.id] ?? valorComDuasCasas(item.valor)} onChange={(event) => { const digitos = event.target.value.replace(/\D/g, ''); if (!digitos) { setValoresDigitados((atuais) => ({ ...atuais, [item.id]: '' })); atualizar(item.id, { valor: 0 }); return; } const valor = parseInt(digitos, 10) / 100; setValoresDigitados((atuais) => ({ ...atuais, [item.id]: valorComDuasCasas(valor) })); atualizar(item.id, { valor }); }} inputMode="numeric" className="min-w-0 flex-1 bg-transparent text-right text-xs font-black outline-none" /></div><small className="mt-1 block text-[10px] font-semibold text-slate-500">Original: {moeda(item.valorOriginal)}</small></td><td className="p-3"><select ref={(element) => { focoLinhas.current[item.id] = element; }} value={item.tipo} onChange={(event) => atualizar(item.id, { tipo: event.target.value, tipoSugeridoHistorico: false })} className={`min-w-[180px] rounded-lg border px-2 py-1.5 text-xs font-bold ${!item.tipo ? 'border-red-300 bg-red-50' : darkMode ? 'border-slate-600 bg-slate-800 text-white' : 'border-slate-300 bg-white text-slate-900'}`}><option value="">Selecionar tipo</option>{tipos.map((tipo) => <option key={tipo}>{tipo}</option>)}</select>{item.tipoSugeridoHistorico && <small className="mt-1 block text-[10px] font-bold text-emerald-700">Sugerido pelo seu histórico</small>}</td></tr>)}</tbody></table></div>
+        <div className={`overflow-x-auto rounded-xl border ${darkMode ? 'border-slate-700' : 'border-slate-200'}`}><table className="w-full min-w-[820px] text-left text-sm"><thead className={darkMode ? 'bg-slate-800 text-slate-300' : 'bg-slate-50 text-slate-600'}><tr><th className="p-3">Incluir</th><th className="p-3">Data</th><th className="p-3">Descrição</th><th className="p-3">Valor a lançar</th><th className="p-3">Tipo da despesa</th></tr></thead><tbody>{despesas.map((item) => <tr ref={(element) => { focoLinhas.current[item.id] = element; }} key={item.id} className={`border-t ${darkMode ? 'border-slate-700' : 'border-slate-200'} ${!item.incluir ? 'opacity-50' : ''}`}><td className="p-3"><input type="checkbox" checked={item.incluir} onChange={(event) => atualizar(item.id, { incluir: event.target.checked })} aria-label={`Incluir ${item.descricao}`} /></td><td className="p-3"><label className="sr-only" htmlFor={`data-${item.id}`}>Data de {item.descricao}</label><input id={`data-${item.id}`} type="date" value={item.data} aria-invalid={!dataIsoValida(item.data)} onChange={(event) => atualizar(item.id, { data: event.target.value })} className={`min-w-[132px] rounded-lg border px-2 py-1.5 text-xs font-bold ${!dataIsoValida(item.data) ? 'border-red-300 bg-red-50 text-red-900' : darkMode ? 'border-slate-600 bg-slate-800 text-white' : 'border-slate-300 bg-white text-slate-900'}`} /></td><td className="p-3"><input value={item.descricao} onChange={(event) => atualizar(item.id, { descricao: event.target.value, tipoSugeridoHistorico: false })} className={`w-full min-w-[190px] rounded-lg border px-2 py-1.5 text-xs ${darkMode ? 'border-slate-600 bg-slate-800 text-white' : 'border-slate-300 bg-white text-slate-900'}`} /><small className="mt-1 block text-[10px] font-semibold text-slate-500">{item.descricaoOriginal}</small></td><td className="p-3"><label className="sr-only" htmlFor={`valor-${item.id}`}>Valor a lançar de {item.descricao}</label><div className={`flex w-28 items-center rounded-lg border px-2 py-1.5 ${item.valor <= 0 ? 'border-red-300 bg-red-50 text-red-900' : darkMode ? 'border-slate-600 bg-slate-800 text-white' : 'border-slate-300 bg-white text-slate-900'}`}><input id={`valor-${item.id}`} aria-invalid={item.valor <= 0} value={valoresDigitados[item.id] ?? (item.valor > 0 ? valorComDuasCasas(item.valor) : '')} onChange={(event) => { const digitos = event.target.value.replace(/\D/g, ''); if (!digitos) { setValoresDigitados((atuais) => ({ ...atuais, [item.id]: '' })); atualizar(item.id, { valor: 0 }); return; } const valor = parseInt(digitos, 10) / 100; setValoresDigitados((atuais) => ({ ...atuais, [item.id]: valorComDuasCasas(valor) })); atualizar(item.id, { valor }); }} inputMode="numeric" className="min-w-0 flex-1 bg-transparent text-right text-xs font-black outline-none" /></div><small className="mt-1 block text-[10px] font-semibold text-slate-500">{item.valorOriginal > 0 ? `Original: ${moeda(item.valorOriginal)}` : 'Valor não informado'}</small></td><td className="p-3"><select value={item.tipo} aria-invalid={!item.tipo || !tipos.includes(item.tipo)} onChange={(event) => atualizar(item.id, { tipo: event.target.value, tipoSugeridoHistorico: false })} className={`min-w-[180px] rounded-lg border px-2 py-1.5 text-xs font-bold ${!item.tipo || !tipos.includes(item.tipo) ? 'border-red-300 bg-red-50 text-red-900' : darkMode ? 'border-slate-600 bg-slate-800 text-white' : 'border-slate-300 bg-white text-slate-900'}`}><option value="">Selecionar tipo</option>{tipos.map((tipo) => <option key={tipo}>{tipo}</option>)}</select>{item.tipoSugeridoHistorico && <small className="mt-1 block text-[10px] font-bold text-emerald-700">Sugerido pelo seu histórico</small>}</td></tr>)}</tbody></table></div>
         {estornos.length > 0 && <section className={`mt-5 overflow-hidden rounded-xl border ${darkMode ? 'border-emerald-900 bg-emerald-950/20' : 'border-emerald-200 bg-emerald-50/40'}`}><div className="p-4"><h3 className="font-black">Estornos e créditos</h3><p className="mt-1 text-xs font-semibold text-slate-500">Eles não serão lançados como despesas nesta etapa.</p></div><table className="w-full text-left text-sm"><tbody>{estornos.map((item) => <tr key={item.id} className={`border-t ${darkMode ? 'border-emerald-900' : 'border-emerald-100'}`}><td className="p-3">{dataExibida(item.data)}</td><td className="p-3">{item.descricao}</td><td className="p-3 font-black text-emerald-700">{moeda(item.valor)}</td></tr>)}</tbody></table></section>}
       </div>
       <footer className={`flex flex-col-reverse gap-3 border-t px-5 py-4 sm:flex-row sm:items-center sm:justify-between ${darkMode ? 'border-slate-700' : 'border-slate-200'}`}><p className={`text-xs font-semibold ${darkMode ? 'text-slate-300' : 'text-slate-500'}`}>{selecionadas.length} despesa{selecionadas.length === 1 ? '' : 's'} selecionada{selecionadas.length === 1 ? '' : 's'} · {moeda(totalParaLancar)}</p><div className="flex flex-wrap gap-2"><button type="button" onClick={() => void salvarEFechar()} className={`${botaoBase} border px-4 text-sm shadow-sm hover:ring-1 hover:ring-current focus-visible:ring-sky-600`} style={estiloBotaoSecundario}>Salvar e continuar depois</button><button type="button" onClick={() => void confirmar()} disabled={!confere || !selecionadas.length || !tipos.length} className={`${botaoBase} border border-transparent px-5 text-sm text-white shadow-[0_8px_18px_-12px_rgba(15,23,42,0.7)] hover:border-white/90 focus-visible:ring-sky-600`} style={{ backgroundColor: corPrimaria }}>Confirmar e lançar despesas</button></div></footer>

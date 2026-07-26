@@ -13,7 +13,9 @@ navegador com os tipos cadastrados no perfil ativo. A primeira aba possui Data,
 Tipo de despesa, Descrição e Valor, e as linhas da coluna Tipo de despesa
 recebem uma lista suspensa. A aba de orientações e exemplos fica separada para
 não criar dados demonstrativos. O importador localiza automaticamente a linha
-dos cabeçalhos, mesmo quando existem instruções acima dela.
+dos cabeçalhos, mesmo quando existem instruções acima dela. Linhas parcialmente
+preenchidas permanecem na revisão com Data, Tipo de despesa e Valor destacados
+até a correção; somente linhas completamente vazias são ignoradas.
 
 ## Prévia web
 

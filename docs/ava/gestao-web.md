@@ -1,6 +1,11 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.6.0.84.126 -->
+<!-- ava-version: 1.6.0.84.127 -->
+
+> Revisão 1.6.0.84.127: linhas parcialmente preenchidas no modelo Excel
+> permanecem visíveis na revisão. Data, tipo e valor são obrigatórios,
+> editáveis e bloqueiam a confirmação quando inválidos; somente linhas
+> completamente vazias são ignoradas.
 
 > Revisão 1.6.0.84.126: o **Modelo Excel** preserva a formatação oficial e é
 > gerado com uma lista suspensa contendo os tipos de despesa cadastrados no
@@ -272,7 +277,9 @@ Gestão Mobile ou a assinatura/cupom do Premium Pessoal.
   não entram na importação. **Tipo de despesa** é obrigatório e possui uma
   lista suspensa gerada com os tipos cadastrados no perfil ativo. O mesmo
   arquivo preenchido é reenviado em **Carregar arquivo** e sempre passa pela
-  revisão antes de gravar.
+  revisão antes de gravar. Linhas parcialmente preenchidas continuam na
+  revisão; Data, Tipo de despesa e Valor devem ser corrigidos antes da
+  confirmação. Somente linhas totalmente vazias são ignoradas.
 - Na prévia `/importador-despesas`, o usuário envia CSV, TXT, XLS, XLSX ou PDF.
   Para PDF, a IA estruturada analisa visualmente todas as páginas e colunas e separa compras e saídas
   reais dos campos de limite, total, vencimento, pagamento mínimo, saldo,

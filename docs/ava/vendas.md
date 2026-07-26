@@ -1,6 +1,9 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.6.0.84.126 -->
+<!-- ava-version: 1.6.0.84.127 -->
+
+> Revisão 1.6.0.84.127: validação de linhas incompletas no importador da Gestão
+> Web; sem impacto operacional no AvantaVendas.
 
 > Revisão 1.6.0.84.126: lista dinâmica de tipos no modelo Excel da Gestão Web;
 > sem impacto operacional no AvantaVendas.

@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.6.0.84.127 - 2026-07-25
+
+- Importação de despesas: linhas parcialmente preenchidas no modelo Excel
+  deixam de ser descartadas e passam a aparecer na revisão.
+- Data, tipo de despesa e valor inválidos ficam destacados e bloqueiam a
+  confirmação até a correção; somente linhas completamente vazias são
+  ignoradas.
+- Datas ausentes deixam de assumir silenciosamente o primeiro dia do mês, e
+  data e valor podem ser corrigidos diretamente nos dois fluxos de revisão.
+
 ## 1.6.0.84.126 - 2026-07-25
 
 - Gestão Web: o **Modelo Excel** de despesas passa a preservar a formatação
