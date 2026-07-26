@@ -265,6 +265,7 @@ export default function TabelaEntradasFaturamento({
       <BotaoProximoScroll
         modo="container"
         scrollContainerRef={listaEntradasRef}
+        className={expandidoPopup ? 'av-proximo-scroll-sobre-popup' : ''}
         ariaLabel="Avançar nos lançamentos de receitas"
         title="Próximos lançamentos"
       />

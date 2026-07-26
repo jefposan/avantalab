@@ -9,10 +9,12 @@ type DocumentoComViewTransition = Document & {
 };
 
 type AlvoTransicaoCard = 'despesas' | 'receitas';
+type DirecaoTransicaoCard = 'expandir' | 'recolher';
 
 export function executarTransicaoCard(
   atualizar: () => void,
-  alvo: AlvoTransicaoCard
+  alvo: AlvoTransicaoCard,
+  direcao: DirecaoTransicaoCard
 ) {
   if (
     typeof document === 'undefined'
@@ -30,13 +32,19 @@ export function executarTransicaoCard(
 
   let atualizacaoExecutada = false;
   const classeAlvo = `av-card-transicao-${alvo}`;
+  const classeDirecao = `av-card-transicao-${direcao}`;
   const limparClasses = () => {
     document.documentElement.classList.remove(
       'av-card-view-transition',
-      classeAlvo
+      classeAlvo,
+      classeDirecao
     );
   };
-  document.documentElement.classList.add('av-card-view-transition', classeAlvo);
+  document.documentElement.classList.add(
+    'av-card-view-transition',
+    classeAlvo,
+    classeDirecao
+  );
   // Garante que o card já esteja nomeado antes da captura do primeiro quadro.
   // Sem esta leitura, o navegador pode agrupar a classe e a troca de estado no
   // mesmo ciclo de renderização e pular a interpolação entre os dois tamanhos.

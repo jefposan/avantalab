@@ -384,9 +384,19 @@ html.av-card-view-transition::view-transition-group(root) {
 
 html.av-card-view-transition::view-transition-group(av-card-lancamentos-despesas),
 html.av-card-view-transition::view-transition-group(av-card-lancamentos-receitas) {
-  animation-duration: 320ms;
-  animation-timing-function: cubic-bezier(.22, 1, .36, 1);
   z-index: 10;
+}
+
+html.av-card-view-transition.av-card-transicao-expandir::view-transition-group(av-card-lancamentos-despesas),
+html.av-card-view-transition.av-card-transicao-expandir::view-transition-group(av-card-lancamentos-receitas) {
+  animation-duration: 720ms;
+  animation-timing-function: cubic-bezier(.4, 0, .2, 1);
+}
+
+html.av-card-view-transition.av-card-transicao-recolher::view-transition-group(av-card-lancamentos-despesas),
+html.av-card-view-transition.av-card-transicao-recolher::view-transition-group(av-card-lancamentos-receitas) {
+  animation-duration: 360ms;
+  animation-timing-function: cubic-bezier(.4, 0, .2, 1);
 }
 
 html.av-card-view-transition::view-transition-old(av-card-lancamentos-despesas),
@@ -395,19 +405,26 @@ html.av-card-view-transition::view-transition-old(av-card-lancamentos-receitas) 
   opacity: 0;
 }
 
-html.av-card-view-transition::view-transition-new(av-card-lancamentos-despesas),
-html.av-card-view-transition::view-transition-new(av-card-lancamentos-receitas) {
-  animation: av-card-entrar 320ms cubic-bezier(.22, 1, .36, 1) both;
+html.av-card-view-transition.av-card-transicao-expandir::view-transition-new(av-card-lancamentos-despesas),
+html.av-card-view-transition.av-card-transicao-expandir::view-transition-new(av-card-lancamentos-receitas) {
+  animation: av-card-revelar 720ms cubic-bezier(.4, 0, .2, 1) both;
 }
 
-@keyframes av-card-entrar {
+html.av-card-view-transition.av-card-transicao-recolher::view-transition-new(av-card-lancamentos-despesas),
+html.av-card-view-transition.av-card-transicao-recolher::view-transition-new(av-card-lancamentos-receitas) {
+  animation: av-card-revelar 360ms cubic-bezier(.4, 0, .2, 1) both;
+}
+
+.av-proximo-scroll-sobre-popup {
+  z-index: 12010 !important;
+}
+
+@keyframes av-card-revelar {
   from {
-    opacity: .88;
-    transform: scale(.975);
+    opacity: .82;
   }
   to {
     opacity: 1;
-    transform: scale(1);
   }
 }
 

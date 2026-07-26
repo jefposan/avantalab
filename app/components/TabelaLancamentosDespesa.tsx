@@ -186,7 +186,11 @@ export default function TabelaLancamentosDespesa({
   const listaLancamentosRef = useRef<HTMLDivElement | null>(null);
   const [popupExpandido, setPopupExpandido] = useState(false);
   const definirPopupExpandido = (aberto: boolean) => {
-    executarTransicaoCard(() => setPopupExpandido(aberto), 'despesas');
+    executarTransicaoCard(
+      () => setPopupExpandido(aberto),
+      'despesas',
+      aberto ? 'expandir' : 'recolher'
+    );
   };
 
   const conteudoCard = (
@@ -534,50 +538,53 @@ export default function TabelaLancamentosDespesa({
           <BotaoProximoScroll
             modo="container"
             scrollContainerRef={listaLancamentosRef}
+            className={popupExpandido ? 'av-proximo-scroll-sobre-popup' : ''}
             ariaLabel="Avançar nos lançamentos de despesas"
             title="Próximos lançamentos"
           />
         </div>
       </div>
 
-      <div
-        className="flex items-center justify-center"
-        style={{ height: `${espacoPuxadorTabela}px` }}
-      >
-        {quantidadeLancamentosMes > 10 && (
-          <div
-            title="Arraste para aumentar ou reduzir a área de lançamentos"
-            className="flex h-5 w-28 cursor-row-resize items-center justify-center rounded-full border border-slate-400 bg-white shadow-md transition hover:bg-slate-100"
-            onPointerDown={(e) => {
-              e.preventDefault();
+      {!popupExpandido && (
+        <div
+          className="flex items-center justify-center"
+          style={{ height: `${espacoPuxadorTabela}px` }}
+        >
+          {quantidadeLancamentosMes > 10 && (
+            <div
+              title="Arraste para aumentar ou reduzir a área de lançamentos"
+              className="flex h-5 w-28 cursor-row-resize items-center justify-center rounded-full border border-slate-400 bg-white shadow-md transition hover:bg-slate-100"
+              onPointerDown={(e) => {
+                e.preventDefault();
 
-              const inicioY = e.clientY;
-              const alturaInicial = alturaTabelaLancamentos;
+                const inicioY = e.clientY;
+                const alturaInicial = alturaTabelaLancamentos;
 
-              const aoMover = (event: PointerEvent) => {
-                const diferenca = event.clientY - inicioY;
+                const aoMover = (event: PointerEvent) => {
+                  const diferenca = event.clientY - inicioY;
 
-                const novaAltura = Math.min(
-                  Math.max(alturaInicial + diferenca, alturaPadraoTabela),
-                  alturaMaximaTabelaLancamentos
-                );
+                  const novaAltura = Math.min(
+                    Math.max(alturaInicial + diferenca, alturaPadraoTabela),
+                    alturaMaximaTabelaLancamentos
+                  );
 
-                setAlturaTabelaLancamentos(novaAltura);
-              };
+                  setAlturaTabelaLancamentos(novaAltura);
+                };
 
-              const aoSoltar = () => {
-                window.removeEventListener('pointermove', aoMover);
-                window.removeEventListener('pointerup', aoSoltar);
-              };
+                const aoSoltar = () => {
+                  window.removeEventListener('pointermove', aoMover);
+                  window.removeEventListener('pointerup', aoSoltar);
+                };
 
-              window.addEventListener('pointermove', aoMover);
-              window.addEventListener('pointerup', aoSoltar);
-            }}
-          >
-            <span className="h-1 w-16 rounded-full bg-slate-500" />
-          </div>
-        )}
-      </div>
+                window.addEventListener('pointermove', aoMover);
+                window.addEventListener('pointerup', aoSoltar);
+              }}
+            >
+              <span className="h-1 w-16 rounded-full bg-slate-500" />
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 

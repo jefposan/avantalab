@@ -89,7 +89,11 @@ export default function CardEntradaFaturamento({
   const origemRef = useRef<HTMLInputElement>(null);
   const [popupExpandido, setPopupExpandido] = useState(false);
   const definirPopupExpandido = (aberto: boolean) => {
-    executarTransicaoCard(() => setPopupExpandido(aberto), 'receitas');
+    executarTransicaoCard(
+      () => setPopupExpandido(aberto),
+      'receitas',
+      aberto ? 'expandir' : 'recolher'
+    );
   };
   const inputBase = `h-9 w-full rounded-md border px-2.5 text-xs font-semibold shadow-sm outline-none transition focus:ring-1 ${
     darkMode
