@@ -10,7 +10,8 @@ type Pasta = { id: string; pasta_pai_id: string | null; nome: string; descricao:
 type Material = {
   id: string; pasta_id: string; titulo: string; tipo: 'imagem' | 'video'; arquivo_path: string;
   arquivo_url: string; miniatura_path: string | null; miniatura_url: string | null;
-  miniatura_status: 'nao_aplicavel' | 'pendente' | 'processando' | 'pronta' | 'erro'; criado_em: string;
+  miniatura_status: 'nao_aplicavel' | 'pendente' | 'processando' | 'pronta' | 'erro';
+  arquivo_hash: string | null; tamanho_bytes: number | null; criado_em: string;
 };
 type Props = { aberto: boolean; empresaId: string | null; nomeEmpresa: string; darkMode: boolean; corPrimaria: string; onFechar: () => void };
 type ExclusaoPendente =
@@ -28,6 +29,21 @@ function nomeSeguro(nome: string) { return nome.normalize('NFD').replace(/[\u030
 function formatarNomePasta(nome: string) {
   const normalizado = nome.toLocaleLowerCase('pt-BR');
   return normalizado ? `${normalizado.charAt(0).toLocaleUpperCase('pt-BR')}${normalizado.slice(1)}` : '';
+}
+async function calcularHashSha256(arquivo: Blob) {
+  if (!globalThis.crypto?.subtle) {
+    throw new Error('Este navegador não oferece a verificação segura de arquivos duplicados.');
+  }
+  const resumo = await globalThis.crypto.subtle.digest('SHA-256', await arquivo.arrayBuffer());
+  return Array.from(new Uint8Array(resumo), (byte) => byte.toString(16).padStart(2, '0')).join('');
+}
+function erroDeArquivoDuplicado(erro: unknown) {
+  return Boolean(erro && typeof erro === 'object' && 'code' in erro && erro.code === '23505');
+}
+function resumirNomesArquivos(nomes: string[]) {
+  const limite = 3;
+  const visiveis = nomes.slice(0, limite).join(', ');
+  return nomes.length > limite ? `${visiveis} e mais ${nomes.length - limite}` : visiveis;
 }
 function pastasEmArvore(pastas: Pasta[], pai: string | null = null, nivel = 0): Array<{ pasta: Pasta; nivel: number }> {
   return pastas
@@ -117,6 +133,7 @@ export default function NovidadesVendasModal({ aberto, empresaId, nomeEmpresa, d
   const [criacaoPastaAberta, setCriacaoPastaAberta] = useState(false);
   const [pastasExpandidas, setPastasExpandidas] = useState<Set<string>>(new Set());
   const [carregando, setCarregando] = useState(false); const [salvando, setSalvando] = useState(false); const [erro, setErro] = useState('');
+  const [resultadoEnvio, setResultadoEnvio] = useState<{ tipo: 'sucesso' | 'aviso'; mensagem: string } | null>(null);
   const [exclusaoPendente, setExclusaoPendente] = useState<ExclusaoPendente | null>(null);
   const [excluindo, setExcluindo] = useState(false);
   const [envioAtivo, setEnvioAtivo] = useState<{ nome: string; atual: number; total: number; progresso: number; etapa: string; cancelando: boolean } | null>(null);
@@ -129,7 +146,7 @@ export default function NovidadesVendasModal({ aberto, empresaId, nomeEmpresa, d
     const [novidadesRes, pastasRes, materiaisRes] = await Promise.all([
       supabase.from('vendas_mobile_conteudos').select('id, tipo, titulo, descricao, criado_em').eq('empresa_id', empresaId).eq('pagina', 'novidades').order('criado_em', { ascending: false }),
       supabase.from('vendas_mobile_divulgacao_pastas').select('id, pasta_pai_id, nome, descricao, criado_em').eq('empresa_id', empresaId).eq('ativo', true).order('ordem').order('criado_em', { ascending: false }),
-      supabase.from('vendas_mobile_divulgacao_materiais').select('id, pasta_id, titulo, tipo, arquivo_path, arquivo_url, miniatura_path, miniatura_url, miniatura_status, criado_em').eq('empresa_id', empresaId).eq('ativo', true).order('ordem').order('criado_em', { ascending: false }),
+      supabase.from('vendas_mobile_divulgacao_materiais').select('id, pasta_id, titulo, tipo, arquivo_path, arquivo_url, miniatura_path, miniatura_url, miniatura_status, arquivo_hash, tamanho_bytes, criado_em').eq('empresa_id', empresaId).eq('ativo', true).order('ordem').order('criado_em', { ascending: false }),
     ]);
     setCarregando(false);
     if (novidadesRes.error) setErro('Não foi possível carregar as novidades.'); else setNovidades((novidadesRes.data || []) as Novidade[]);
@@ -144,6 +161,7 @@ export default function NovidadesVendasModal({ aberto, empresaId, nomeEmpresa, d
     setPastaEmEdicao(null);
     setPastaPaiNova('');
     setPastasExpandidas(new Set());
+    setResultadoEnvio(null);
     void carregar();
   }, [aberto, empresaId]);
 
@@ -198,18 +216,106 @@ export default function NovidadesVendasModal({ aberto, empresaId, nomeEmpresa, d
     const controlador = new AbortController();
     const registrosCriados: Material[] = [];
     const caminhosCriados: string[] = [];
+    const duplicados: string[] = [];
+    const falhas: string[] = [];
     const totalBytes = listaArquivos.reduce((soma, arquivo) => soma + arquivo.size, 0);
     let bytesConcluidos = 0;
+    let enviados = 0;
     controladorEnvio.current = controlador;
-    setSalvando(true); setErro('');
-    setEnvioAtivo({ nome: listaArquivos[0].name, atual: 1, total: listaArquivos.length, progresso: 0, etapa: 'Enviando arquivo', cancelando: false });
+    setSalvando(true); setErro(''); setResultadoEnvio(null);
+    setEnvioAtivo({ nome: listaArquivos[0].name, atual: 1, total: listaArquivos.length, progresso: 0, etapa: 'Verificando duplicidade', cancelando: false });
     try {
+      const { data: existentesData, error: erroExistentes } = await supabase
+        .from('vendas_mobile_divulgacao_materiais')
+        .select('id, pasta_id, titulo, tipo, arquivo_path, arquivo_url, miniatura_path, miniatura_url, miniatura_status, arquivo_hash, tamanho_bytes, criado_em')
+        .eq('empresa_id', empresaId)
+        .eq('ativo', true)
+        .abortSignal(controlador.signal);
+      if (erroExistentes) throw new Error('Não foi possível verificar os arquivos já publicados.');
+
+      const existentes = (existentesData || []) as Material[];
+      const materiaisPorHash = new Map(
+        existentes
+          .filter((item) => item.arquivo_hash)
+          .map((item) => [item.arquivo_hash as string, item]),
+      );
+      const materiaisSemHashPorTamanho = new Map<number, Material[]>();
+      existentes.forEach((item) => {
+        if (item.arquivo_hash || item.tamanho_bytes == null) return;
+        const tamanho = Number(item.tamanho_bytes);
+        materiaisSemHashPorTamanho.set(tamanho, [...(materiaisSemHashPorTamanho.get(tamanho) || []), item]);
+      });
+
       for (const [indice, file] of listaArquivos.entries()) {
         if (controlador.signal.aborted) throw new DOMException('Envio cancelado.', 'AbortError');
         const progressoInicial = totalBytes ? bytesConcluidos / totalBytes * 100 : 0;
-        setEnvioAtivo({ nome: file.name, atual: indice + 1, total: listaArquivos.length, progresso: progressoInicial, etapa: 'Enviando arquivo', cancelando: false });
+        setEnvioAtivo({ nome: file.name, atual: indice + 1, total: listaArquivos.length, progresso: progressoInicial, etapa: 'Verificando duplicidade', cancelando: false });
         const tipoMaterial = file.type.startsWith('video/') ? 'video' : file.type.startsWith('image/') ? 'imagem' : null;
-        if (!tipoMaterial) throw new Error(`${file.name}: formato não aceito.`);
+        if (!tipoMaterial) {
+          falhas.push(`${file.name}: formato não aceito`);
+          bytesConcluidos += file.size;
+          continue;
+        }
+
+        let arquivoHash = '';
+        try {
+          arquivoHash = await calcularHashSha256(file);
+        } catch (e) {
+          if (controlador.signal.aborted) throw e;
+          falhas.push(`${file.name}: não foi possível verificar o conteúdo`);
+          bytesConcluidos += file.size;
+          continue;
+        }
+
+        let materialDuplicado = materiaisPorHash.get(arquivoHash) || null;
+        const candidatosAntigos = materiaisSemHashPorTamanho.get(file.size) || [];
+        let verificacaoAntigaFalhou = false;
+        while (!materialDuplicado && candidatosAntigos.length) {
+          if (controlador.signal.aborted) throw new DOMException('Envio cancelado.', 'AbortError');
+          const candidato = candidatosAntigos.shift() as Material;
+          try {
+            const resposta = await fetch(candidato.arquivo_url, { signal: controlador.signal, cache: 'force-cache' });
+            if (!resposta.ok) throw new Error('Não foi possível ler um material já publicado.');
+            const hashExistente = await calcularHashSha256(await resposta.blob());
+            candidato.arquivo_hash = hashExistente;
+            materiaisPorHash.set(hashExistente, candidato);
+            const { error: erroAtualizacaoHash } = await supabase
+              .from('vendas_mobile_divulgacao_materiais')
+              .update({ arquivo_hash: hashExistente })
+              .eq('id', candidato.id)
+              .eq('empresa_id', empresaId)
+              .is('arquivo_hash', null)
+              .abortSignal(controlador.signal);
+            if (erroAtualizacaoHash && !erroDeArquivoDuplicado(erroAtualizacaoHash)) {
+              throw erroAtualizacaoHash;
+            }
+            if (hashExistente === arquivoHash) materialDuplicado = candidato;
+          } catch (e) {
+            if (controlador.signal.aborted) throw e;
+            candidatosAntigos.unshift(candidato);
+            verificacaoAntigaFalhou = true;
+            break;
+          }
+        }
+        materiaisSemHashPorTamanho.set(file.size, candidatosAntigos);
+
+        if (!materialDuplicado && verificacaoAntigaFalhou) {
+          falhas.push(`${file.name}: não foi possível comparar com um material antigo`);
+          bytesConcluidos += file.size;
+          continue;
+        }
+
+        if (materialDuplicado) {
+          duplicados.push(file.name);
+          bytesConcluidos += file.size;
+          setEnvioAtivo((atual) => atual ? {
+            ...atual,
+            progresso: totalBytes ? bytesConcluidos / totalBytes * 100 : 100,
+            etapa: 'Duplicado ignorado',
+          } : null);
+          continue;
+        }
+
         const chave = `${Date.now()}-${crypto.randomUUID?.() || Math.random().toString(36).slice(2)}`;
         const caminho = `${empresaId}/${pastaAtiva}/${chave}-${nomeSeguro(file.name)}`;
         const caminhosDesteMaterial = [caminho];
@@ -226,18 +332,45 @@ export default function NovidadesVendasModal({ aberto, empresaId, nomeEmpresa, d
             await supabase.storage.from(BUCKET).remove([caminho]);
             caminhosCriados.splice(caminhosCriados.indexOf(caminho), 1);
           }
-          throw e;
+          if (controlador.signal.aborted) throw e;
+          falhas.push(`${file.name}: ${e instanceof Error ? e.message : 'falha no envio'}`);
+          bytesConcluidos += file.size;
+          continue;
         }
         const arquivoUrl = supabase.storage.from(BUCKET).getPublicUrl(caminho).data.publicUrl;
         const miniaturaPath: string | null = null;
         const miniaturaUrl: string | null = tipoMaterial === 'imagem' ? arquivoUrl : null;
         const tituloMaterial = file.name.replace(/\.[^.]+$/, '').replace(/[-_]+/g, ' ');
-        const { data, error } = await supabase.from('vendas_mobile_divulgacao_materiais').insert({ empresa_id: empresaId, pasta_id: pastaAtiva, titulo: tituloMaterial, tipo: tipoMaterial, arquivo_path: caminho, arquivo_url: arquivoUrl, miniatura_path: miniaturaPath, miniatura_url: miniaturaUrl, mime_type: file.type, tamanho_bytes: file.size }).select('id, pasta_id, titulo, tipo, arquivo_path, arquivo_url, miniatura_path, miniatura_url, miniatura_status, criado_em').abortSignal(controlador.signal).single();
-        if (error || !data) { await supabase.storage.from(BUCKET).remove(caminhosDesteMaterial); throw error || new Error('Falha ao registrar material.'); }
+        const { data, error } = await supabase.from('vendas_mobile_divulgacao_materiais').insert({ empresa_id: empresaId, pasta_id: pastaAtiva, titulo: tituloMaterial, tipo: tipoMaterial, arquivo_path: caminho, arquivo_url: arquivoUrl, miniatura_path: miniaturaPath, miniatura_url: miniaturaUrl, mime_type: file.type, tamanho_bytes: file.size, arquivo_hash: arquivoHash }).select('id, pasta_id, titulo, tipo, arquivo_path, arquivo_url, miniatura_path, miniatura_url, miniatura_status, arquivo_hash, tamanho_bytes, criado_em').abortSignal(controlador.signal).single();
+        if (error || !data) {
+          await supabase.storage.from(BUCKET).remove(caminhosDesteMaterial);
+          caminhosCriados.splice(caminhosCriados.indexOf(caminho), 1);
+          bytesConcluidos += file.size;
+          if (erroDeArquivoDuplicado(error)) {
+            duplicados.push(file.name);
+            continue;
+          }
+          falhas.push(`${file.name}: falha ao registrar material`);
+          continue;
+        }
         registrosCriados.push(data as Material);
         setMateriais((atuais) => [data as Material, ...atuais]);
+        materiaisPorHash.set(arquivoHash, data as Material);
+        enviados += 1;
         bytesConcluidos += file.size;
         setEnvioAtivo((atual) => atual ? { ...atual, progresso: totalBytes ? bytesConcluidos / totalBytes * 100 : 100, etapa: tipoMaterial === 'video' ? 'Vídeo enviado · preparando capa' : 'Material concluído' } : null);
+      }
+      const partes: string[] = [];
+      if (enviados) partes.push(`${enviados} ${enviados === 1 ? 'arquivo enviado' : 'arquivos enviados'}`);
+      if (duplicados.length) partes.push(`${duplicados.length} ${duplicados.length === 1 ? 'duplicado ignorado' : 'duplicados ignorados'} (${resumirNomesArquivos(duplicados)})`);
+      if (partes.length) {
+        setResultadoEnvio({
+          tipo: duplicados.length || falhas.length ? 'aviso' : 'sucesso',
+          mensagem: `${partes.join(' · ')}.`,
+        });
+      }
+      if (falhas.length) {
+        setErro(`${falhas.length} ${falhas.length === 1 ? 'arquivo não foi enviado' : 'arquivos não foram enviados'}: ${resumirNomesArquivos(falhas)}.`);
       }
     } catch (e) {
       if (controlador.signal.aborted) {
@@ -369,6 +502,7 @@ export default function NovidadesVendasModal({ aberto, empresaId, nomeEmpresa, d
       <header className="flex shrink-0 items-center justify-between gap-3 px-4 py-2.5 text-white" style={{ background: `linear-gradient(135deg, ${corPrimaria}, #1687D9)` }}><div className="min-w-0"><p className="text-[8px] font-black uppercase tracking-[.18em] text-white/70">Vendas Mobile</p><h2 className="mt-0.5 whitespace-nowrap text-base font-black leading-tight">Conteúdo para a equipe</h2><p className="mt-0.5 truncate whitespace-nowrap text-[10px] leading-tight text-white/80">Novidades e divulgação de {nomeEmpresa || 'este perfil'}.</p></div><button type="button" onClick={onFechar} className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white/15 text-base font-black hover:bg-white/25">×</button></header>
       <nav className={`grid shrink-0 grid-cols-3 border-b ${darkMode ? 'border-slate-700' : 'border-slate-200'}`}><button type="button" onClick={() => setAba('novidades')} className={`h-9 text-[10px] font-black uppercase ${aba === 'novidades' ? 'text-white' : suave}`} style={aba === 'novidades' ? { backgroundColor: corPrimaria } : undefined}>Novidades</button><button type="button" onClick={() => setAba('divulgacao')} className={`h-9 text-[10px] font-black uppercase ${aba === 'divulgacao' ? 'text-white' : suave}`} style={aba === 'divulgacao' ? { backgroundColor: corPrimaria } : undefined}>Divulgação</button><button type="button" onClick={() => setAba('produtos')} className={`h-9 text-[10px] font-black uppercase ${aba === 'produtos' ? 'text-white' : suave}`} style={aba === 'produtos' ? { backgroundColor: corPrimaria } : undefined}>Produtos</button></nav>
       {erro && <p className="mx-4 mt-3 rounded-lg border border-red-300 bg-red-50 px-3 py-2 text-xs font-bold text-red-700">{erro}</p>}
+      {resultadoEnvio && <p role="status" aria-live="polite" className={`mx-4 mt-3 rounded-lg border px-3 py-2 text-xs font-bold ${resultadoEnvio.tipo === 'sucesso' ? 'border-emerald-300 bg-emerald-50 text-emerald-800' : 'border-amber-300 bg-amber-50 text-amber-800'}`}>{resultadoEnvio.mensagem}</p>}
       {aba === 'novidades' ? <div className="grid min-h-0 flex-1 gap-4 overflow-y-auto p-4 lg:grid-cols-[minmax(0,.85fr)_minmax(0,1.15fr)]">
         <div className={`self-start rounded-xl border p-4 ${darkMode ? 'border-slate-700 bg-slate-800' : 'border-slate-200 bg-slate-50'}`}><h3 className="text-base font-black">Nova publicação</h3><p className={`mt-1 text-xs ${suave}`}>Aparece somente para vendedores vinculados a este perfil.</p><label className="mt-4 block text-[10px] font-black uppercase opacity-60">Tipo</label><select value={tipo} onChange={(e) => setTipo(e.target.value)} className={`mt-1 h-10 w-full rounded-lg border px-3 text-sm font-bold ${campo}`}>{TIPOS.map(([v, n]) => <option key={v} value={v}>{n}</option>)}</select><label className="mt-3 block text-[10px] font-black uppercase opacity-60">Título</label><input value={titulo} onChange={(e) => setTitulo(e.target.value)} className={`mt-1 h-10 w-full rounded-lg border px-3 text-sm font-bold ${campo}`} /><label className="mt-3 block text-[10px] font-black uppercase opacity-60">Descrição</label><textarea value={descricao} onChange={(e) => setDescricao(e.target.value)} rows={5} className={`mt-1 w-full rounded-lg border p-3 text-sm ${campo}`} /><button type="button" onClick={() => void publicar()} disabled={salvando} className="mt-3 h-11 w-full rounded-xl text-xs font-black uppercase text-white disabled:opacity-60" style={{ backgroundColor: corPrimaria }}>{salvando ? 'Publicando...' : 'Publicar novidade'}</button></div>
         <div><h3 className="text-base font-black">Histórico</h3><p className={`text-xs ${suave}`}>Publicações mais recentes primeiro.</p><div className="mt-3 grid gap-2">{carregando ? <p className="py-8 text-center text-sm opacity-60">Carregando...</p> : novidades.length ? novidades.map((item) => <article key={item.id} className={`rounded-xl border p-3 ${darkMode ? 'border-slate-700 bg-slate-800' : 'border-slate-200'}`}><div className="flex gap-3"><span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-white" style={{ backgroundColor: corPrimaria }}><Icone tipo={item.tipo} className="h-4 w-4" /></span><div className="min-w-0 flex-1"><div className="flex justify-between gap-2"><div><span className="text-[8px] font-black uppercase" style={{ color: corPrimaria }}>{rotuloTipo(item.tipo)}</span><h4 className="text-sm font-black">{item.titulo}</h4></div><button type="button" onClick={() => setExclusaoPendente({ tipo: 'novidade', item })} className="h-8 w-8 shrink-0 rounded-lg border border-red-300 text-red-600">×</button></div><p className={`mt-1 whitespace-pre-wrap text-xs ${suave}`}>{item.descricao}</p></div></div></article>) : <p className="py-8 text-center text-sm opacity-60">Nenhuma novidade publicada.</p>}</div></div>
