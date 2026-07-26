@@ -1,7 +1,9 @@
 'use client';
 
-import { useRef, type ChangeEvent, type CSSProperties, type Dispatch, type SetStateAction } from 'react';
+import { useRef, useState, type ChangeEvent, type CSSProperties, type Dispatch, type SetStateAction } from 'react';
 import BotaoProximoScroll from './BotaoProximoScroll';
+import CardExpandidoModal from './CardExpandidoModal';
+import { executarTransicaoCard } from '@/app/lib/transicao-card';
 import CardLancamentoDespesa, {
   type DespesaCadastrada,
 } from './CardLancamentoDespesa';
@@ -182,10 +184,16 @@ export default function TabelaLancamentosDespesa({
   onVerNota,
 }: TabelaLancamentosDespesaProps) {
   const listaLancamentosRef = useRef<HTMLDivElement | null>(null);
+  const [popupExpandido, setPopupExpandido] = useState(false);
+  const definirPopupExpandido = (aberto: boolean) => {
+    executarTransicaoCard(() => setPopupExpandido(aberto), 'despesas');
+  };
 
-  return (
+  const conteudoCard = (
     <div
-      className="relative h-full w-full min-w-0 max-w-full overflow-hidden bg-white p-3 text-slate-900 transition-all duration-300 sm:p-4"
+      className={`av-card-transicao-despesas-elemento relative h-full w-full min-w-0 max-w-full overflow-hidden bg-white p-3 text-slate-900 transition-all duration-300 sm:p-4 ${
+        popupExpandido ? 'max-h-[calc(100dvh-2rem)]' : ''
+      }`}
       style={{
         borderRadius: '8px 22px 22px 22px',
         boxShadow: expandidoDespesa
@@ -197,9 +205,15 @@ export default function TabelaLancamentosDespesa({
       <div
         className="relative custom-scroll"
         style={{
-          height: `${alturaFinalTabelaLancamentos + 130 + espacoPuxadorTabela}px`,
-          minHeight: `${alturaPadraoTabela + 130 + espacoPuxadorTabela}px`,
-          maxHeight: `${alturaMaximaTabelaLancamentos + 130 + espacoPuxadorTabela}px`,
+          height: popupExpandido
+            ? 'auto'
+            : `${alturaFinalTabelaLancamentos + 130 + espacoPuxadorTabela}px`,
+          minHeight: popupExpandido
+            ? undefined
+            : `${alturaPadraoTabela + 130 + espacoPuxadorTabela}px`,
+          maxHeight: popupExpandido
+            ? 'calc(100dvh - 6rem)'
+            : `${alturaMaximaTabelaLancamentos + 130 + espacoPuxadorTabela}px`,
           overflow: 'hidden',
         }}
       >
@@ -237,6 +251,9 @@ export default function TabelaLancamentosDespesa({
           limparNotaPendente={limparNotaPendente}
           temRascunhoImportador={temRascunhoImportador}
           onRetomarRascunhoImportador={onRetomarRascunhoImportador}
+          expandidoPopup={popupExpandido}
+          expansaoDesabilitada={!expandidoDespesa}
+          onAlternarExpansao={() => definirPopupExpandido(!popupExpandido)}
         />
         <div className="mb-3">
           <div className="flex-1">
@@ -310,8 +327,12 @@ export default function TabelaLancamentosDespesa({
             ref={listaLancamentosRef}
             className="overflow-y-auto overflow-x-auto custom-scroll"
             style={{
-              height: `${alturaFinalTabelaLancamentos}px`,
-              maxHeight: `${alturaMaximaTabelaLancamentos}px`,
+              height: popupExpandido
+                ? 'clamp(260px, calc(90dvh - 270px), 680px)'
+                : `${alturaFinalTabelaLancamentos}px`,
+              maxHeight: popupExpandido
+                ? 'clamp(260px, calc(90dvh - 270px), 680px)'
+                : `${alturaMaximaTabelaLancamentos}px`,
             }}
           >
             <table className="w-full min-w-[540px] table-fixed text-left border-collapse">
@@ -559,4 +580,14 @@ export default function TabelaLancamentosDespesa({
       </div>
     </div>
   );
+
+  return popupExpandido ? (
+    <CardExpandidoModal
+      aberto
+      rotulo="Lançamentos de despesas em tela expandida"
+      onFechar={() => definirPopupExpandido(false)}
+    >
+      {conteudoCard}
+    </CardExpandidoModal>
+  ) : conteudoCard;
 }

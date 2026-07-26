@@ -1,6 +1,9 @@
 'use client';
 
-import { useRef, type ChangeEvent, type Dispatch, type SetStateAction } from 'react';
+import { useRef, useState, type ChangeEvent, type Dispatch, type SetStateAction } from 'react';
+import BotaoExpandirCard from './BotaoExpandirCard';
+import CardExpandidoModal from './CardExpandidoModal';
+import { executarTransicaoCard } from '@/app/lib/transicao-card';
 import TabelaEntradasFaturamento, {
   type EntradaFaturamento,
 } from './TabelaEntradasFaturamento';
@@ -84,6 +87,10 @@ export default function CardEntradaFaturamento({
   ativo = false,
 }: CardEntradaFaturamentoProps) {
   const origemRef = useRef<HTMLInputElement>(null);
+  const [popupExpandido, setPopupExpandido] = useState(false);
+  const definirPopupExpandido = (aberto: boolean) => {
+    executarTransicaoCard(() => setPopupExpandido(aberto), 'receitas');
+  };
   const inputBase = `h-9 w-full rounded-md border px-2.5 text-xs font-semibold shadow-sm outline-none transition focus:ring-1 ${
     darkMode
       ? 'border-slate-600 bg-slate-700 text-white placeholder:text-slate-400'
@@ -129,9 +136,11 @@ export default function CardEntradaFaturamento({
       ]
     : entradas;
 
-  return (
+  const conteudoCard = (
     <div
-      className="relative h-full w-full min-w-0 max-w-full overflow-hidden bg-white p-3 text-slate-900 transition-all duration-300 sm:p-4"
+      className={`av-card-transicao-receitas-elemento relative h-full w-full min-w-0 max-w-full overflow-hidden bg-white p-3 text-slate-900 transition-all duration-300 sm:p-4 ${
+        popupExpandido ? 'max-h-[calc(100dvh-2rem)]' : ''
+      }`}
       style={{
         borderRadius: '8px 22px 22px 22px',
         boxShadow: ativo
@@ -177,7 +186,11 @@ export default function CardEntradaFaturamento({
           </svg>
           <span className="truncate">Receitas</span>
         </h3>
-        <div aria-hidden="true" className="h-6 w-full" />
+        <BotaoExpandirCard
+          expandido={popupExpandido}
+          desabilitado={!ativo}
+          onClick={() => definirPopupExpandido(!popupExpandido)}
+        />
       </div>
 
       <div
@@ -329,7 +342,18 @@ export default function CardEntradaFaturamento({
         onSalvarEdicaoEntrada={onSalvarEdicaoEntrada}
         onCancelarEdicaoEntrada={onCancelarEdicaoEntrada}
         onExcluirEntrada={onExcluirEntrada}
+        expandidoPopup={popupExpandido}
       />
     </div>
   );
+
+  return popupExpandido ? (
+    <CardExpandidoModal
+      aberto
+      rotulo="Lançamentos de receitas em tela expandida"
+      onFechar={() => definirPopupExpandido(false)}
+    >
+      {conteudoCard}
+    </CardExpandidoModal>
+  ) : conteudoCard;
 }

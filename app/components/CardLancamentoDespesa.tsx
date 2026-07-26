@@ -3,6 +3,7 @@
 import { useRef, useState } from 'react';
 import type { ChangeEvent, CSSProperties, Dispatch, SetStateAction } from 'react';
 import { baixarModeloImportacaoDespesas } from '@/app/modules/importador-despesas/lib/modelo-excel';
+import BotaoExpandirCard from './BotaoExpandirCard';
 
 export type DespesaCadastrada = {
   nome: string;
@@ -43,6 +44,9 @@ type CardLancamentoDespesaProps = {
   limparNotaPendente: () => void;
   temRascunhoImportador?: boolean;
   onRetomarRascunhoImportador?: () => void;
+  expandidoPopup?: boolean;
+  expansaoDesabilitada?: boolean;
+  onAlternarExpansao?: () => void;
 };
 
 export default function CardLancamentoDespesa({
@@ -77,6 +81,9 @@ export default function CardLancamentoDespesa({
   limparNotaPendente,
   temRascunhoImportador = false,
   onRetomarRascunhoImportador,
+  expandidoPopup = false,
+  expansaoDesabilitada = false,
+  onAlternarExpansao,
 }: CardLancamentoDespesaProps) {
   const despesaRef = useRef<HTMLSelectElement>(null);
   const descricaoRef = useRef<HTMLInputElement>(null);
@@ -128,7 +135,15 @@ export default function CardLancamentoDespesa({
           </svg>
           <span className="truncate">Despesas</span>
         </h3>
-        <div aria-hidden="true" className="h-6 w-full" />
+        {onAlternarExpansao ? (
+          <BotaoExpandirCard
+            expandido={expandidoPopup}
+            desabilitado={expansaoDesabilitada}
+            onClick={onAlternarExpansao}
+          />
+        ) : (
+          <div aria-hidden="true" className="h-6 w-full" />
+        )}
       </div>
 
       <div
