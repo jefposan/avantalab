@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.6.0.84.125 -->
+<!-- ava-version: 1.6.0.84.126 -->
+
+> Revisão 1.6.0.84.126: lista dinâmica de tipos no modelo Excel da Gestão Web;
+> sem impacto operacional na Gestão Mobile.
 
 > Revisão 1.6.0.84.125: modelo Excel para importação na Gestão Web; sem impacto
 > operacional na Gestão Mobile.

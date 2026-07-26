@@ -8,11 +8,12 @@ PDF, CSV, TXT, XLS e XLSX abrem a análise com progresso percentual e conferênc
 em popup antes de qualquer gravação.
 
 Ao lado de **Arquivo**, **Modelo Excel** baixa
-`/modelos/modelo-importacao-despesas-avantalab.xlsx`. A primeira aba, sempre
-lida pelo importador, possui Data, Tipo de despesa, Descrição e Valor. A aba de
-orientações e exemplos fica separada para não criar dados demonstrativos. Tipos
-preenchidos são aceitos somente quando coincidem com um tipo cadastrado no
-perfil; os demais permanecem pendentes para revisão.
+`/modelos/modelo-importacao-despesas-avantalab.xlsx`, personalizado no
+navegador com os tipos cadastrados no perfil ativo. A primeira aba possui Data,
+Tipo de despesa, Descrição e Valor, e as linhas da coluna Tipo de despesa
+recebem uma lista suspensa. A aba de orientações e exemplos fica separada para
+não criar dados demonstrativos. O importador localiza automaticamente a linha
+dos cabeçalhos, mesmo quando existem instruções acima dela.
 
 ## Prévia web
 

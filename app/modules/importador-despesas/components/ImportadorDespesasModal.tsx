@@ -158,6 +158,15 @@ function lerTexto(conteudo: string, tiposValidos: string[] = []) {
   const separador = [';', '\t', ','].sort((a, b) => linhas[0].split(b).length - linhas[0].split(a).length)[0];
   return linhasTabulares(dividirLinha(linhas[0], separador), linhas.slice(1).map((linha) => dividirLinha(linha, separador)), tiposValidos);
 }
+function linhaCabecalho(matriz: unknown[][]) {
+  return matriz.slice(0, 25).findIndex((linha) => {
+    const nomes = linha.map(normalizar);
+    const possui = (termos: string[]) => nomes.some((nome) => termos.some((termo) => nome.includes(termo)));
+    return possui(['data', 'date'])
+      && possui(['descricao', 'historico', 'lancamento', 'favorecido', 'detalhe'])
+      && possui(['valor', 'amount', 'montante', 'debito', 'saida', 'pagamento']);
+  });
+}
 async function sha256(texto: string | ArrayBuffer) {
   const bytes = typeof texto === 'string' ? new TextEncoder().encode(texto) : texto;
   const resumo = await crypto.subtle.digest('SHA-256', bytes);
@@ -318,7 +327,8 @@ export default function ImportadorDespesasModal({ arquivo, retomarRascunho = fal
       } else if (extensao === 'xls' || extensao === 'xlsx') {
         const XLSX = await import('xlsx'); const planilha = XLSX.read(await arquivo.arrayBuffer(), { type: 'array', cellDates: true });
         const matriz = XLSX.utils.sheet_to_json<unknown[]>(planilha.Sheets[planilha.SheetNames[0]], { header: 1, defval: '' });
-        encontrados = matriz.length > 1 ? linhasTabulares((matriz[0] as unknown[]).map(String), matriz.slice(1) as unknown[][], tipos) : []; detectado = 'extrato-bancario';
+        const cabecalho = linhaCabecalho(matriz);
+        encontrados = cabecalho >= 0 ? linhasTabulares((matriz[cabecalho] as unknown[]).map(String), matriz.slice(cabecalho + 1) as unknown[][], tipos) : []; detectado = 'extrato-bancario';
         total = encontrados.reduce((soma, item) => soma + item.valorOriginal, 0);
       } else throw new Error('Envie PDF, CSV, TXT, XLS ou XLSX. Imagens continuam sendo usadas como nota do lançamento.');
       if (!encontrados.length) throw new Error('Nenhuma saída confiável foi encontrada neste documento.');

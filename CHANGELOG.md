@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.6.0.84.126 - 2026-07-25
+
+- Gestão Web: o **Modelo Excel** de despesas passa a preservar a formatação
+  oficial enviada e é personalizado no download com os tipos de despesa
+  cadastrados no perfil ativo.
+- A coluna **Tipo de despesa** recebe uma lista suspensa nas linhas de
+  preenchimento, reduzindo erros de digitação e tipos pendentes na revisão.
+- A leitura de planilhas passa a localizar automaticamente a linha dos
+  cabeçalhos, mantendo compatibilidade com as instruções acima da tabela.
+
 ## 1.6.0.84.125 - 2026-07-25
 
 - Gestão Web: o lançamento de despesas passa a oferecer o download de uma

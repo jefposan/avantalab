@@ -1,6 +1,11 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.6.0.84.125 -->
+<!-- ava-version: 1.6.0.84.126 -->
+
+> Revisão 1.6.0.84.126: o **Modelo Excel** preserva a formatação oficial e é
+> gerado com uma lista suspensa contendo os tipos de despesa cadastrados no
+> perfil ativo. O importador localiza os cabeçalhos mesmo quando há instruções
+> acima da tabela.
 
 > Revisão 1.6.0.84.125: ao lado de **Carregar arquivo**, o lançamento de
 > despesas oferece **Modelo Excel**. A primeira aba recebe Data, Tipo de
@@ -264,9 +269,10 @@ Gestão Mobile ou a assinatura/cupom do Premium Pessoal.
 - Ao lado de **Carregar arquivo**, **Modelo Excel** baixa uma planilha pronta
   para preenchimento. A aba **Despesas** usa as colunas Data, Tipo de despesa,
   Descrição e Valor; a aba **Como preencher** contém instruções e exemplos que
-  não entram na importação. O tipo é opcional, mas, quando informado, deve
-  coincidir com um tipo já cadastrado no perfil. O mesmo arquivo preenchido é
-  reenviado em **Carregar arquivo** e sempre passa pela revisão antes de gravar.
+  não entram na importação. **Tipo de despesa** é obrigatório e possui uma
+  lista suspensa gerada com os tipos cadastrados no perfil ativo. O mesmo
+  arquivo preenchido é reenviado em **Carregar arquivo** e sempre passa pela
+  revisão antes de gravar.
 - Na prévia `/importador-despesas`, o usuário envia CSV, TXT, XLS, XLSX ou PDF.
   Para PDF, a IA estruturada analisa visualmente todas as páginas e colunas e separa compras e saídas
   reais dos campos de limite, total, vencimento, pagamento mínimo, saldo,

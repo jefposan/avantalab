@@ -64,6 +64,15 @@ function parseTexto(conteudo: string, tiposValidos: string[] = []) {
   const separador = [';', '\t', ','].sort((a, b) => linhas[0].split(b).length - linhas[0].split(a).length)[0];
   return transformarLinhas(dividirLinha(linhas[0], separador), linhas.slice(1).map((linha) => dividirLinha(linha, separador)), tiposValidos);
 }
+function linhaCabecalho(matriz: unknown[][]) {
+  return matriz.slice(0, 25).findIndex((linha) => {
+    const nomes = linha.map(normalizar);
+    const possui = (termos: string[]) => nomes.some((nome) => termos.some((termo) => nome.includes(termo)));
+    return possui(['data', 'date'])
+      && possui(['descricao', 'historico', 'lancamento', 'favorecido', 'detalhe'])
+      && possui(['valor', 'amount', 'montante', 'debito', 'saida', 'pagamento']);
+  });
+}
 
 type ItemAnalisadoPorIA = {
   pagina: number;
@@ -243,8 +252,9 @@ export default function ImportadorDespesas() {
         const planilha = XLSX.read(await file.arrayBuffer(), { type: 'array', cellDates: true });
         const aba = planilha.Sheets[planilha.SheetNames[0]];
         const matriz = XLSX.utils.sheet_to_json<unknown[]>(aba, { header: 1, defval: '' });
-        encontradas = matriz.length > 1
-          ? transformarLinhas((matriz[0] as unknown[]).map(String), matriz.slice(1) as unknown[][], tiposDespesa)
+        const cabecalho = linhaCabecalho(matriz);
+        encontradas = cabecalho >= 0
+          ? transformarLinhas((matriz[cabecalho] as unknown[]).map(String), matriz.slice(cabecalho + 1) as unknown[][], tiposDespesa)
           : [];
       }
 

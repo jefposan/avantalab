@@ -1,7 +1,8 @@
 'use client';
 
-import { useRef } from 'react';
+import { useRef, useState } from 'react';
 import type { ChangeEvent, CSSProperties, Dispatch, SetStateAction } from 'react';
+import { baixarModeloImportacaoDespesas } from '@/app/modules/importador-despesas/lib/modelo-excel';
 
 export type DespesaCadastrada = {
   nome: string;
@@ -80,6 +81,8 @@ export default function CardLancamentoDespesa({
   const despesaRef = useRef<HTMLSelectElement>(null);
   const descricaoRef = useRef<HTMLInputElement>(null);
   const arquivoRef = useRef<HTMLInputElement>(null);
+  const [baixandoModelo, setBaixandoModelo] = useState(false);
+  const [erroModelo, setErroModelo] = useState('');
   const inputBase = `h-9 w-full rounded-md border px-2.5 text-xs font-semibold shadow-sm outline-none transition focus:ring-1 ${
     darkMode
       ? 'border-slate-600 bg-slate-700 text-white placeholder:text-slate-400'
@@ -311,12 +314,20 @@ export default function CardLancamentoDespesa({
                 }}
               />
               {temRascunhoImportador && <button type="button" onClick={onRetomarRascunhoImportador} title="Retomar a importação salva" className="flex h-7 items-center gap-1 rounded-full border border-emerald-300 bg-emerald-50 px-2 text-[10px] font-black uppercase text-emerald-800 shadow-sm transition hover:border-emerald-400 hover:bg-emerald-100 active:scale-95">Continuar importação salva</button>}
-              <a
-                href="/modelos/modelo-importacao-despesas-avantalab.xlsx"
-                download="modelo-importacao-despesas-avantalab.xlsx"
+              <button
+                type="button"
+                onClick={() => {
+                  if (baixandoModelo) return;
+                  setBaixandoModelo(true);
+                  setErroModelo('');
+                  void baixarModeloImportacaoDespesas(despesasCadastradas.map((despesa) => despesa.nome))
+                    .catch(() => setErroModelo('Não foi possível gerar o modelo. Tente novamente.'))
+                    .finally(() => setBaixandoModelo(false));
+                }}
+                disabled={baixandoModelo}
                 title="Baixar planilha modelo para importar despesas"
                 aria-label="Baixar modelo Excel de importação de despesas"
-                className={`flex h-7 items-center gap-1 rounded-full border px-2 text-[10px] font-black uppercase shadow-sm transition active:scale-95 ${
+                className={`flex h-7 min-w-[92px] items-center justify-center gap-1 rounded-full border px-2 text-[10px] font-black uppercase shadow-sm transition active:scale-95 disabled:cursor-wait disabled:opacity-70 ${
                   darkMode
                     ? 'border-cyan-700 bg-cyan-950/40 text-cyan-200 hover:border-cyan-500 hover:bg-cyan-950/70'
                     : 'border-cyan-300 bg-cyan-50 text-cyan-800 hover:border-cyan-400 hover:bg-cyan-100'
@@ -325,8 +336,8 @@ export default function CardLancamentoDespesa({
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" className="h-3.5 w-3.5" aria-hidden="true">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v12m0 0 4-4m-4 4-4-4M5 19h14" />
                 </svg>
-                Modelo Excel
-              </a>
+                {baixandoModelo ? 'Gerando…' : 'Modelo Excel'}
+              </button>
               <button
                 type="button"
                 onClick={() => arquivoRef.current?.click()}
@@ -339,9 +350,9 @@ export default function CardLancamentoDespesa({
               </button>
             </div>
           </div>
-          {(lendoNota || notaPendente) && (
-            <div className={`mt-1.5 flex items-center gap-1.5 text-[10px] font-bold ${darkMode ? 'text-slate-300' : 'text-slate-500'}`}>
-              {lendoNota ? <span>Lendo a nota...</span> : <><span className="text-emerald-600">Nota pronta para salvar</span><button type="button" onClick={limparNotaPendente} className="text-slate-400 hover:text-red-500" title="Remover nota">×</button></>}
+          {(lendoNota || notaPendente || erroModelo) && (
+            <div className={`mt-1.5 flex items-center gap-1.5 text-[10px] font-bold ${erroModelo ? 'text-red-600' : darkMode ? 'text-slate-300' : 'text-slate-500'}`} role={erroModelo ? 'alert' : 'status'}>
+              {erroModelo ? <span>{erroModelo}</span> : lendoNota ? <span>Lendo a nota...</span> : <><span className="text-emerald-600">Nota pronta para salvar</span><button type="button" onClick={limparNotaPendente} className="text-slate-400 hover:text-red-500" title="Remover nota">×</button></>}
             </div>
           )}
         </div>
