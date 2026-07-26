@@ -2,13 +2,13 @@
 // O conteúdo administrativo permanece sempre na rede; somente manifesto e
 // ícones públicos são mantidos em cache.
 const ADMIN_CACHE_PREFIX = 'avantalab-admin-';
-const ADMIN_CACHE = 'avantalab-admin-v1';
+const ADMIN_CACHE = 'avantalab-admin-v2';
 const ADMIN_ASSETS = [
   '/admin-manifest.json',
-  '/images/avanta-admin-pwa-32.png',
-  '/images/avanta-admin-pwa-180.png',
-  '/images/avanta-admin-pwa-192.png',
-  '/images/avanta-admin-pwa-512.png',
+  '/images/avanta-admin-pwa-v2-32.png',
+  '/images/avanta-admin-pwa-v2-180.png',
+  '/images/avanta-admin-pwa-v2-192.png',
+  '/images/avanta-admin-pwa-v2-512.png',
 ];
 
 self.addEventListener('install', (event) => {

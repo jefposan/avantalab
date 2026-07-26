@@ -9,19 +9,19 @@ export const metadata: Metadata = {
   icons: {
     icon: [
       {
-        url: '/images/avanta-admin-pwa-32.png',
+        url: '/images/avanta-admin-pwa-v2-32.png',
         sizes: '32x32',
         type: 'image/png',
       },
       {
-        url: '/images/avanta-admin-pwa-192.png',
+        url: '/images/avanta-admin-pwa-v2-192.png',
         sizes: '192x192',
         type: 'image/png',
       },
     ],
     apple: [
       {
-        url: '/images/avanta-admin-pwa-180.png',
+        url: '/images/avanta-admin-pwa-v2-180.png',
         sizes: '180x180',
         type: 'image/png',
       },
