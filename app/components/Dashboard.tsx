@@ -1851,7 +1851,10 @@ const mostrarComparativoResumoDash =
         title="Lançamentos Mensais"
         className={textStrong}
         bodyClassName={`${bgCard} transition-colors`}
-        bodyStyle={avantaShellPreset.bodyStyle}
+        bodyStyle={{
+          ...avantaShellPreset.bodyStyle,
+          paddingTop: '20px',
+        }}
         headerRight={
           <div className="flex items-center gap-1.5">
           <span
@@ -1866,7 +1869,7 @@ const mostrarComparativoResumoDash =
         hideDragHandle
         hideMenu
       >
-        <div className="mb-6">
+        <div className="mb-4">
           <p className={`min-w-0 text-xs font-semibold ${textMuted}`}>
             Toque em um mês para abrir os lançamentos.
           </p>
