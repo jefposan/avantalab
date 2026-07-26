@@ -1,6 +1,10 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.6.0.84.123 -->
+<!-- ava-version: 1.6.0.84.124 -->
+
+> Revisão 1.6.0.84.124: **Visualizar comprovante** em Recebimentos Presenciais
+> abre o card acima do popup administrativo, mostra **Carregando imagem…** e
+> depois apresenta a imagem privada ou uma mensagem de erro.
 
 > Revisão 1.6.0.84.123: a busca de Perfis do Avanta Admin reorganiza campo,
 > filtros, ordem, paginação e botão principal no mobile e tablet, sem cortes ou

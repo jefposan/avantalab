@@ -6,8 +6,8 @@ export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
  * Cada guia é enviado apenas no ambiente correspondente, evitando misturar
  * caminhos e funções de Web, Mobile e Vendas na mesma resposta.
  */
-// Revisado na versão 1.6.0.84.123: filtros e busca de Perfis do Avanta Admin
-// permanecem acessíveis em telas mobile e tablet.
+// Revisado na versão 1.6.0.84.124: o comprovante de Recebimentos abre acima do
+// popup administrativo, com estados visíveis de carregamento, imagem e erro.
 const GUIAS: Record<AmbienteAva, string> = {
   'gestao-web': `GUIA OPERACIONAL — AVANTALAB GESTÃO WEB
 Você atende no sistema Gestão Web. Oriente por nomes visíveis na interface; não invente telas.

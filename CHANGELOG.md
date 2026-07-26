@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.6.0.84.124 - 2026-07-25
+
+- Recebimentos Presenciais: o visualizador de comprovantes passa a abrir acima
+  do popup administrativo, exibindo o card **Carregando imagem…** e, em
+  seguida, a imagem privada ou uma mensagem de erro.
+
 ## 1.6.0.84.123 - 2026-07-25
 
 - Avanta Admin: a busca de Perfis passa a reorganizar campo, filtros, ordem,

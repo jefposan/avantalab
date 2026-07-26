@@ -939,6 +939,11 @@
   justify-content: center;
   padding: 16px;
 }
+.comprovanteOverlayPortal {
+  /* O visualizador é portado para o body e precisa ficar acima do popup
+     administrativo de Recebimentos, cuja camada base é 2000. */
+  z-index: 2100;
+}
 .comprovante {
   background: #fff;
   border-radius: 20px;

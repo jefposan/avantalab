@@ -67,7 +67,11 @@ export default function BotaoComprovante({ lancamentoId, onObter, compacto = fal
       </button>
 
       {aberto && createPortal((
-        <div className={`${styles.overlay} ${darkMode ? styles.darkScope : ''}`} role="presentation" onClick={encerrar}>
+        <div
+          className={`${styles.overlay} ${styles.comprovanteOverlayPortal} ${darkMode ? styles.darkScope : ''}`}
+          role="presentation"
+          onClick={encerrar}
+        >
           <div
             className={`${styles.comprovante} ${styles.comprovanteImagemModal}`}
             role="dialog"

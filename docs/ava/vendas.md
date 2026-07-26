@@ -1,6 +1,9 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.6.0.84.123 -->
+<!-- ava-version: 1.6.0.84.124 -->
+
+> Revisão 1.6.0.84.124: correção do visualizador web de comprovantes em
+> Recebimentos Presenciais; sem impacto operacional no AvantaVendas.
 
 > Revisão 1.6.0.84.123: responsividade da busca de Perfis do Avanta Admin; sem
 > impacto operacional no AvantaVendas.
