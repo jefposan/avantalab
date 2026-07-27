@@ -1,6 +1,17 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.6.1.02 -->
+<!-- ava-version: 1.6.1.05 -->
+
+> Revisão 1.6.1.05: tocar em uma imagem ou vídeo dentro da pasta de Divulgação
+> abre o material original em um visualizador amplo; vídeos exibem seus
+> controles de reprodução.
+
+> Revisão 1.6.1.04: ao confirmar os arquivos escolhidos, a Divulgação mostra
+> imediatamente o card Preparando arquivos para envio e mantém o percentual
+> visível até concluir ou cancelar.
+
+> Revisão 1.6.1.03: o resumo do envio de materiais informa somente quantos
+> arquivos foram enviados e quantos foram ignorados por duplicidade.
 
 > Revisão 1.6.1.02: as pastas de Conteúdo do Vendas > Divulgação mostram a
 > quantidade total de materiais armazenados nelas e em todas as subpastas.

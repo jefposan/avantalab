@@ -1,5 +1,24 @@
 # Changelog
 
+## 1.6.1.05 - 2026-07-27
+
+- Divulgação: imagens e vídeos dentro das pastas de Conteúdo do Vendas passam a
+  abrir em um visualizador amplo ao toque, usando o arquivo original.
+- O visualizador funciona no mobile e no web, possui fechamento acessível,
+  suporte à tecla Esc e controles nativos para vídeos.
+
+## 1.6.1.04 - 2026-07-27
+
+- Divulgação: após confirmar a seleção de arquivos, o card de progresso aparece
+  antes do processamento com a etapa `Preparando arquivos para envio`.
+- O card permanece visível durante verificação de duplicidade, envio e registro,
+  com percentual, arquivo atual e opção de cancelamento.
+
+## 1.6.1.03 - 2026-07-27
+
+- Divulgação: o resumo após o envio informa somente as quantidades de arquivos
+  enviados e ignorados por duplicidade, sem listar os nomes dos duplicados.
+
 ## 1.6.1.02 - 2026-07-27
 
 - Conteúdo do Vendas: as pastas de Divulgação na Gestão passam a exibir o total

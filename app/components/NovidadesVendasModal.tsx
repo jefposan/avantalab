@@ -45,6 +45,11 @@ function resumirNomesArquivos(nomes: string[]) {
   const visiveis = nomes.slice(0, limite).join(', ');
   return nomes.length > limite ? `${visiveis} e mais ${nomes.length - limite}` : visiveis;
 }
+function aguardarPinturaDaInterface() {
+  return new Promise<void>((resolve) => {
+    requestAnimationFrame(() => requestAnimationFrame(() => resolve()));
+  });
+}
 function pastasEmArvore(pastas: Pasta[], pai: string | null = null, nivel = 0): Array<{ pasta: Pasta; nivel: number }> {
   return pastas
     .filter((pasta) => (pasta.pasta_pai_id || null) === pai)
@@ -149,6 +154,7 @@ export default function NovidadesVendasModal({ aberto, empresaId, nomeEmpresa, d
   const [carregando, setCarregando] = useState(false); const [salvando, setSalvando] = useState(false); const [erro, setErro] = useState('');
   const [resultadoEnvio, setResultadoEnvio] = useState<{ tipo: 'sucesso' | 'aviso'; mensagem: string } | null>(null);
   const [exclusaoPendente, setExclusaoPendente] = useState<ExclusaoPendente | null>(null);
+  const [materialEmVisualizacao, setMaterialEmVisualizacao] = useState<Material | null>(null);
   const [excluindo, setExcluindo] = useState(false);
   const [envioAtivo, setEnvioAtivo] = useState<{ nome: string; atual: number; total: number; progresso: number; etapa: string; cancelando: boolean } | null>(null);
   const inputArquivos = useRef<HTMLInputElement>(null);
@@ -176,8 +182,18 @@ export default function NovidadesVendasModal({ aberto, empresaId, nomeEmpresa, d
     setPastaPaiNova('');
     setPastasExpandidas(new Set());
     setResultadoEnvio(null);
+    setMaterialEmVisualizacao(null);
     void carregar();
   }, [aberto, empresaId]);
+
+  useEffect(() => {
+    if (!materialEmVisualizacao) return;
+    const fecharComEsc = (evento: KeyboardEvent) => {
+      if (evento.key === 'Escape') setMaterialEmVisualizacao(null);
+    };
+    window.addEventListener('keydown', fecharComEsc);
+    return () => window.removeEventListener('keydown', fecharComEsc);
+  }, [materialEmVisualizacao]);
 
   useEffect(() => {
     if (!aberto || !empresaId) return;
@@ -237,8 +253,11 @@ export default function NovidadesVendasModal({ aberto, empresaId, nomeEmpresa, d
     let enviados = 0;
     controladorEnvio.current = controlador;
     setSalvando(true); setErro(''); setResultadoEnvio(null);
-    setEnvioAtivo({ nome: listaArquivos[0].name, atual: 1, total: listaArquivos.length, progresso: 0, etapa: 'Verificando duplicidade', cancelando: false });
+    setEnvioAtivo({ nome: listaArquivos[0].name, atual: 1, total: listaArquivos.length, progresso: 1, etapa: 'Preparando arquivos para envio', cancelando: false });
     try {
+      await aguardarPinturaDaInterface();
+      if (controlador.signal.aborted) throw new DOMException('Envio cancelado.', 'AbortError');
+      setEnvioAtivo((atual) => atual ? { ...atual, progresso: 2, etapa: 'Verificando duplicidade' } : null);
       const { data: existentesData, error: erroExistentes } = await supabase
         .from('vendas_mobile_divulgacao_materiais')
         .select('id, pasta_id, titulo, tipo, arquivo_path, arquivo_url, miniatura_path, miniatura_url, miniatura_status, arquivo_hash, tamanho_bytes, criado_em')
@@ -262,7 +281,7 @@ export default function NovidadesVendasModal({ aberto, empresaId, nomeEmpresa, d
 
       for (const [indice, file] of listaArquivos.entries()) {
         if (controlador.signal.aborted) throw new DOMException('Envio cancelado.', 'AbortError');
-        const progressoInicial = totalBytes ? bytesConcluidos / totalBytes * 100 : 0;
+        const progressoInicial = Math.max(2, totalBytes ? bytesConcluidos / totalBytes * 100 : 0);
         setEnvioAtivo({ nome: file.name, atual: indice + 1, total: listaArquivos.length, progresso: progressoInicial, etapa: 'Verificando duplicidade', cancelando: false });
         const tipoMaterial = file.type.startsWith('video/') ? 'video' : file.type.startsWith('image/') ? 'imagem' : null;
         if (!tipoMaterial) {
@@ -376,7 +395,7 @@ export default function NovidadesVendasModal({ aberto, empresaId, nomeEmpresa, d
       }
       const partes: string[] = [];
       if (enviados) partes.push(`${enviados} ${enviados === 1 ? 'arquivo enviado' : 'arquivos enviados'}`);
-      if (duplicados.length) partes.push(`${duplicados.length} ${duplicados.length === 1 ? 'duplicado ignorado' : 'duplicados ignorados'} (${resumirNomesArquivos(duplicados)})`);
+      if (duplicados.length) partes.push(`${duplicados.length} ${duplicados.length === 1 ? 'duplicado ignorado' : 'duplicados ignorados'}`);
       if (partes.length) {
         setResultadoEnvio({
           tipo: duplicados.length || falhas.length ? 'aviso' : 'sucesso',
@@ -495,6 +514,19 @@ export default function NovidadesVendasModal({ aberto, empresaId, nomeEmpresa, d
       : '';
 
   return <div className="fixed inset-0 z-[6000] flex items-center justify-center bg-black/65 px-3 py-5" onClick={onFechar}>
+    {materialEmVisualizacao && <div className="fixed inset-0 z-[6100] flex items-center justify-center bg-slate-950/95 sm:p-5" onClick={(e) => { e.stopPropagation(); setMaterialEmVisualizacao(null); }} role="dialog" aria-modal="true" aria-label={`Visualização de ${materialEmVisualizacao.titulo}`}>
+      <section className="flex h-full w-full max-w-5xl flex-col overflow-hidden bg-slate-950 text-white sm:max-h-[92dvh] sm:rounded-2xl sm:border sm:border-white/15 sm:shadow-2xl" onClick={(e) => e.stopPropagation()}>
+        <header className="flex min-h-14 shrink-0 items-center justify-between gap-3 border-b border-white/15 px-4 py-2">
+          <div className="min-w-0"><p className="text-[9px] font-black uppercase tracking-[.18em] text-cyan-400">{materialEmVisualizacao.tipo === 'video' ? 'Vídeo' : 'Imagem'}</p><h3 className="truncate text-sm font-black sm:text-base">{materialEmVisualizacao.titulo}</h3></div>
+          <button type="button" autoFocus onClick={() => setMaterialEmVisualizacao(null)} aria-label="Fechar visualização" className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-white/10 text-2xl font-bold text-white hover:bg-white/20 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-400">×</button>
+        </header>
+        <div className="flex min-h-0 flex-1 items-center justify-center overflow-auto p-2 sm:p-4">
+          {materialEmVisualizacao.tipo === 'video'
+            ? <video src={materialEmVisualizacao.arquivo_url} controls playsInline preload="metadata" className="max-h-full max-w-full rounded-lg object-contain" />
+            : <img src={materialEmVisualizacao.arquivo_url} alt={materialEmVisualizacao.titulo} className="max-h-full max-w-full rounded-lg object-contain" />}
+        </div>
+      </section>
+    </div>}
     {envioAtivo && <div className="fixed inset-0 z-[6200] flex items-center justify-center bg-slate-950/80 p-5 backdrop-blur-sm" onClick={(e) => e.stopPropagation()} role="alert" aria-live="assertive">
       <section className={`w-full max-w-sm overflow-hidden rounded-3xl border text-center shadow-2xl ${darkMode ? 'border-slate-600 bg-slate-900 text-white' : 'border-white/80 bg-white text-slate-900'}`}>
         <div className="p-6">
@@ -539,7 +571,7 @@ export default function NovidadesVendasModal({ aberto, empresaId, nomeEmpresa, d
             {!listaPastasVisiveis.length && <p className={`py-3 text-center text-xs ${suave}`}>Nenhuma pasta criada.</p>}
           </div>
         </aside>
-        <section className="min-w-0 lg:min-h-0 lg:overflow-y-auto lg:pr-1"><div className="flex items-start justify-between gap-3"><div><h3 className="text-base font-black">{pastas.find((p) => p.id === pastaAtiva)?.nome || 'Materiais de divulgação'}</h3><p className={`text-xs ${suave}`}>{pastaAtiva ? 'Envie fotos ou vídeos para esta pasta.' : 'Selecione ou crie uma pasta para começar.'}</p></div>{pastaAtiva && <><input ref={inputArquivos} type="file" accept="image/jpeg,image/png,image/webp,image/gif,video/mp4,video/webm,video/quicktime" multiple className="hidden" onChange={(e) => void enviarArquivos(e.target.files)} /><button type="button" onClick={() => inputArquivos.current?.click()} disabled={salvando} className="hidden h-10 shrink-0 items-center gap-2 rounded-lg px-3 text-xs font-black text-white disabled:opacity-60 lg:flex" style={{ backgroundColor: corPrimaria }}><Icone tipo="upload" className="h-4 w-4" />{salvando ? 'Enviando...' : 'Adicionar'}</button></>}</div><div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-4">{materiaisAtivos.map((item) => <article key={item.id} className={`group overflow-hidden rounded-xl border ${darkMode ? 'border-slate-700 bg-slate-800' : 'border-slate-200 bg-white'}`}><div className="relative aspect-square bg-slate-950">{item.miniatura_url ? <img src={item.miniatura_url} alt="" className="h-full w-full object-cover" /> : item.tipo === 'video' ? <span className="flex h-full flex-col items-center justify-center gap-2 px-3 text-center text-slate-300"><span className={`h-7 w-7 rounded-full border-2 border-cyan-400/25 ${item.miniatura_status === 'erro' ? '' : 'animate-spin border-t-cyan-400'}`} /><b className="text-[10px] uppercase tracking-wide">{item.miniatura_status === 'erro' ? 'Capa indisponível' : 'Preparando capa'}</b></span> : <span className="flex h-full items-center justify-center text-slate-500"><Icone tipo="image" /></span>}<span className="absolute bottom-2 left-2 rounded-full bg-black/70 p-1.5 text-white"><Icone tipo={item.tipo === 'video' ? 'video' : 'image'} className="h-3.5 w-3.5" /></span></div><div className="flex items-center gap-2 p-2"><b className="min-w-0 flex-1 truncate text-[11px]">{item.titulo}</b><button type="button" onClick={() => setExclusaoPendente({ tipo: 'material', item })} className="h-7 w-7 shrink-0 rounded-md text-red-500">×</button></div></article>)}{pastaAtiva && !materiaisAtivos.length && <p className={`col-span-full rounded-xl border border-dashed px-4 py-12 text-center text-sm ${suave}`}>Esta pasta ainda está vazia.</p>}</div></section>
+        <section className="min-w-0 lg:min-h-0 lg:overflow-y-auto lg:pr-1"><div className="flex items-start justify-between gap-3"><div><h3 className="text-base font-black">{pastas.find((p) => p.id === pastaAtiva)?.nome || 'Materiais de divulgação'}</h3><p className={`text-xs ${suave}`}>{pastaAtiva ? 'Envie fotos ou vídeos para esta pasta.' : 'Selecione ou crie uma pasta para começar.'}</p></div>{pastaAtiva && <><input ref={inputArquivos} type="file" accept="image/jpeg,image/png,image/webp,image/gif,video/mp4,video/webm,video/quicktime" multiple className="hidden" onChange={(e) => void enviarArquivos(e.target.files)} /><button type="button" onClick={() => inputArquivos.current?.click()} disabled={salvando} className="hidden h-10 shrink-0 items-center gap-2 rounded-lg px-3 text-xs font-black text-white disabled:opacity-60 lg:flex" style={{ backgroundColor: corPrimaria }}><Icone tipo="upload" className="h-4 w-4" />{salvando ? 'Enviando...' : 'Adicionar'}</button></>}</div><div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-4">{materiaisAtivos.map((item) => <article key={item.id} className={`group overflow-hidden rounded-xl border ${darkMode ? 'border-slate-700 bg-slate-800' : 'border-slate-200 bg-white'}`}><button type="button" onClick={() => setMaterialEmVisualizacao(item)} aria-label={`Visualizar ${item.titulo}`} className="relative block aspect-square w-full bg-slate-950 focus-visible:outline-2 focus-visible:outline-offset-[-3px] focus-visible:outline-cyan-400">{item.miniatura_url ? <img src={item.miniatura_url} alt="" className="h-full w-full object-cover" /> : item.tipo === 'video' ? <span className="flex h-full flex-col items-center justify-center gap-2 px-3 text-center text-slate-300"><span className={`h-7 w-7 rounded-full border-2 border-cyan-400/25 ${item.miniatura_status === 'erro' ? '' : 'animate-spin border-t-cyan-400'}`} /><b className="text-[10px] uppercase tracking-wide">{item.miniatura_status === 'erro' ? 'Capa indisponível' : 'Preparando capa'}</b></span> : <span className="flex h-full items-center justify-center text-slate-500"><Icone tipo="image" /></span>}<span className="absolute bottom-2 left-2 rounded-full bg-black/70 p-1.5 text-white"><Icone tipo={item.tipo === 'video' ? 'video' : 'image'} className="h-3.5 w-3.5" /></span></button><div className="flex items-center gap-2 p-2"><b className="min-w-0 flex-1 truncate text-[11px]">{item.titulo}</b><button type="button" onClick={() => setExclusaoPendente({ tipo: 'material', item })} aria-label={`Excluir ${item.titulo}`} className="h-7 w-7 shrink-0 rounded-md text-red-500">×</button></div></article>)}{pastaAtiva && !materiaisAtivos.length && <p className={`col-span-full rounded-xl border border-dashed px-4 py-12 text-center text-sm ${suave}`}>Esta pasta ainda está vazia.</p>}</div></section>
       </div>}
     </section>
     <ModalConfirmacao

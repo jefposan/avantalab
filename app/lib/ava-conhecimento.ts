@@ -6,8 +6,8 @@ export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
  * Cada guia é enviado apenas no ambiente correspondente, evitando misturar
  * caminhos e funções de Web, Mobile e Vendas na mesma resposta.
  */
-// Revisado na versão 1.6.1.02: Divulgação soma na pasta todos os materiais de
-// sua árvore, incluindo as subpastas.
+// Revisado na versão 1.6.1.05: imagens e vídeos da Divulgação abrem em
+// visualização ampliada.
 const GUIAS: Record<AmbienteAva, string> = {
   'gestao-web': `GUIA OPERACIONAL — AVANTALAB GESTÃO WEB
 Você atende no sistema Gestão Web. Oriente por nomes visíveis na interface; não invente telas.
@@ -69,7 +69,7 @@ NAVEGAÇÃO E PERFIS
 - Em perfil sem o módulo Vendas, Ir para Vendas continua ativo para Gestor Master ou Administrador. Ao tocar, a Gestão confirma diretamente a instalação salva no perfil; somente quando ela realmente não existe, solicita a ativação. Depois de ativado, não pergunta novamente enquanto o módulo permanecer instalado. Perfil pessoal gratuito precisa do Premium. Operadores veem o botão inativo e não podem ativar nem trocar de sistema.
 - No perfil Pessoal gratuito, os recursos Premium aparecem sem cor e, ao toque, mostram Acesso exclusivo para assinantes com Ir para assinatura. A contratação aparece primeiro; Veja os recursos adicionais abre a lista completa. Agenda e Ir para Vendas exigem Premium ou cortesia vigente.
 - Se o Premium Pessoal deixar de estar vigente, o Vendas fica inacessível sem ser desinstalado: módulo, vínculos e dados permanecem preservados. A receita consolidada do Vendas deixa de compor a Gestão durante o bloqueio e retorna, com o mesmo histórico, após a reativação.
-- Conteúdo do Vendas aparece somente em perfil Empresa com módulo ativo e permissão de Gestor Master, Administrador ou Operador Completo. Em Divulgação, ao selecionar uma pasta, Enviar arquivos para esta pasta permite escolher fotos ou vídeos diretamente no aparelho. A quantidade exibida em cada pasta soma os materiais próprios e os de todas as subpastas.
+- Conteúdo do Vendas aparece somente em perfil Empresa com módulo ativo e permissão de Gestor Master, Administrador ou Operador Completo. Em Divulgação, ao selecionar uma pasta, Enviar arquivos para esta pasta permite escolher fotos ou vídeos diretamente no aparelho. Ao confirmar a seleção, o card Preparando arquivos para envio aparece antes do processamento e mantém percentual, arquivo atual e cancelamento até terminar. Tocar na miniatura abre a imagem ou o vídeo original em um visualizador amplo. A quantidade exibida em cada pasta soma os materiais próprios e os de todas as subpastas. Após o envio, o resumo mostra somente as quantidades enviadas e ignoradas por duplicidade, sem listar nomes.
 - A tela que oferece Gestão e Vendas aparece somente na entrada após o login. Depois que um sistema foi aberto, a navegação exibe apenas o outro destino.
 - Cada usuário possui uma única conta operacional no Vendas. Ativações em diferentes perfis da Gestão apenas autorizam a troca de sistema e nunca criam contas ou perfis adicionais no Vendas. Ao vir do Vendas, a Gestão sempre apresenta a lista de perfis, ainda que exista apenas um. Sem perfil financeiro, oferece criar ou ativar um ou continuar no Vendas; o novo perfil nunca é vinculado automaticamente aos resultados.
 - O dashboard pode organizar ordem e visibilidade dos cards em Menu > Organizar resumo/Organizar dashboard.

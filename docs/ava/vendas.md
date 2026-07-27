@@ -1,6 +1,15 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.6.1.02 -->
+<!-- ava-version: 1.6.1.05 -->
+
+> Revisão 1.6.1.05: a Gestão passou a abrir imagens e vídeos da Divulgação em
+> um visualizador amplo; sem mudança operacional no AvantaVendas.
+
+> Revisão 1.6.1.04: a Gestão passou a mostrar imediatamente o progresso após a
+> seleção de materiais da Divulgação; sem mudança operacional no AvantaVendas.
+
+> Revisão 1.6.1.03: a Gestão deixou de listar os nomes dos arquivos duplicados
+> no resumo do envio; sem mudança operacional no AvantaVendas.
 
 > Revisão 1.6.1.02: a Gestão passa a mostrar em cada pasta de Divulgação o total
 > de materiais da própria pasta e de todas as subpastas; sem mudança operacional
