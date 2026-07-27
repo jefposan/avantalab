@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.6.1.08 -->
+<!-- ava-version: 1.6.1.09 -->
+
+> Revisão 1.6.1.09: conclusão e recuperação do acesso na Gestão Mobile; sem
+> impacto operacional na Gestão Web.
 
 > Revisão 1.6.1.08: o card de login da Gestão Web volta a ficar alinhado à
 > esquerda, na mesma posição do card Criar cadastro, inclusive em janelas web

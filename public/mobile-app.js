@@ -179,6 +179,7 @@
     // para o usuário em vez de deixar a tela de progresso parada.
     falhaAcesso: '',
     preparacaoAcessoInterrompida: false,
+    dadosCriticosProntos: false,
     mensagem: '',
     carregando: false,
     loginAcao: '',
@@ -755,6 +756,29 @@
     state.pronto = true;
     state.falhaAcesso = texto || 'Não foi possível concluir a preparação do acesso. Confira sua internet e tente novamente.';
     render();
+  }
+
+  function registrarDiagnosticoAcessoMobile(etapa, erro) {
+    try {
+      sessionStorage.setItem('avantalab.mobile.diagnostico_acesso', JSON.stringify({
+        etapa: String(etapa || 'indefinida'),
+        mensagem: String(erro && erro.message ? erro.message : erro || ''),
+        versao: APP_VERSION,
+        origem: window.location.pathname,
+        registradoEm: new Date().toISOString(),
+      }));
+    } catch (e) {}
+  }
+
+  function exibirFalhaRenderizacaoAcessoMobile(erro) {
+    registrarDiagnosticoAcessoMobile('renderizacao_final', erro);
+    state.carregando = false;
+    state.pronto = true;
+    state.falhaAcesso = 'Seus dados foram carregados, mas a tela não conseguiu abrir.';
+    root.innerHTML = telaAvisoMobile(
+      'Acesso concluído',
+      'Seus dados foram carregados, mas a tela não conseguiu abrir. Toque abaixo para tentar novamente.'
+    );
   }
 
   async function requisitarJsonMobile(url, opcoes, limiteMs) {
@@ -5104,6 +5128,7 @@
   async function carregarDados() {
     if (!state.empresa) return;
     var exibeTelaPreparacao = !state.pronto || state.paywallPerfilVerificado !== state.empresa.id;
+    if (exibeTelaPreparacao) state.dadosCriticosProntos = false;
     // O resumo comparativo roda após a entrada e não integra a preparação
     // bloqueante; o percentual representa somente o que libera o perfil.
     var totalEtapasDados = 13;
@@ -5371,13 +5396,23 @@
     // os dados do perfil aberto. A tela principal é liberada primeiro; o
     // card recebe o resumo logo em seguida, sem bloquear o acesso.
     state.resumoPerfisCarregando = true;
-    avancarEtapaDados('Acesso pronto');
-    // Tudo que bloqueia o primeiro acesso já terminou. Mantém os 100% visíveis
-    // por um instante curto e real antes de liberar a interface.
+    // A última etapa só é concluída depois que a interface principal estiver
+    // montada. Assim, 100% nunca representa apenas consultas concluídas.
     await aguardarPinturaProgressoMobile(180);
+    state.dadosCriticosProntos = true;
     state.pronto = true;
     state.carregando = false;
-    render();
+    try {
+      render();
+    } catch (erroRenderizacao) {
+      exibirFalhaRenderizacaoAcessoMobile(erroRenderizacao);
+      return;
+    }
+    if (telaPreparacaoAcessoMobileVisivel()) {
+      garantirLiberacaoAcessoMobile();
+      return;
+    }
+    avancarEtapaDados('Acesso pronto');
     if (state.abrirAssinaturaAoCarregar) {
       state.abrirAssinaturaAoCarregar = false;
       window.setTimeout(abrirAssinaturaMobile, 0);
@@ -8157,9 +8192,8 @@
   }
 
   function concluirAcessoMobile() {
-    var progresso = window.__AVANTALAB_MOBILE_PROGRESSO__ || {};
     if (
-      Number(progresso.valor || 0) < 100 ||
+      !state.dadosCriticosProntos ||
       !state.autenticado ||
       !state.empresa ||
       !state.paywallVerificado
@@ -8174,15 +8208,13 @@
       render();
     } catch (erro) {
       console.error('Não foi possível abrir a Gestão após concluir o acesso:', erro);
-      root.innerHTML = telaAvisoMobile(
-        'Acesso concluído',
-        'Seus dados foram carregados, mas a tela não conseguiu abrir. Toque abaixo para tentar novamente.'
-      );
+      exibirFalhaRenderizacaoAcessoMobile(erro);
       return false;
     }
 
     var acessoAberto = !telaPreparacaoAcessoMobileVisivel();
     if (acessoAberto && typeof window.__avantalabConfirmarAcessoMobile === 'function') {
+      atualizarProgressoAcessoMobile('data', 1, 1, 'Acesso pronto');
       window.__avantalabConfirmarAcessoMobile();
     }
     return acessoAberto;
@@ -8210,7 +8242,7 @@
       window.__avantalabAtualizarProgressoMobile(grupo, concluido, total, rotulo);
     }
     var progresso = window.__AVANTALAB_MOBILE_PROGRESSO__ || {};
-    if (Number(progresso.valor || 0) >= 100) garantirLiberacaoAcessoMobile();
+    if (state.dadosCriticosProntos || Number(progresso.valor || 0) >= 100) garantirLiberacaoAcessoMobile();
   }
 
   function sincronizarProgressoAcessoMobile() {
@@ -14122,7 +14154,7 @@
           return Promise.all(
             keys
               .filter(function (key) {
-                return key.indexOf('avantalab-mobile-') === 0 && key !== 'avantalab-mobile-v283';
+                return key.indexOf('avantalab-mobile-') === 0 && key !== 'avantalab-mobile-v288';
               })
               .map(function (key) {
                 return caches.delete(key);

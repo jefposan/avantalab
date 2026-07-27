@@ -1,6 +1,11 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.6.1.08 -->
+<!-- ava-version: 1.6.1.09 -->
+
+> Revisão 1.6.1.09: Preparando acesso só conclui os 100% depois que a tela
+> principal estiver montada. Se o PWA for suspenso ou perder conexão durante a
+> abertura, retornar ao aplicativo retoma a conclusão; uma versão antiga ainda
+> aberta é atualizada antes de prosseguir.
 
 > Revisão 1.6.1.08: reposicionamento do card de login apenas na Gestão Web; sem
 > impacto operacional na Gestão Mobile.
@@ -312,13 +317,13 @@ deve usar os nomes do menu e da barra inferior do celular.
 - Quando o módulo Vendas Mobile está ativo e o usuário tem permissão, após o login
   a primeira tela permite escolher entre Gestão e Vendas e memorizar a preferência. Só
   depois da escolha aparece **Preparando acesso** e o sistema selecionado é carregado.
-- Em **Preparando acesso**, 100% significa que os dados necessários para abrir o
-  perfil foram concluídos. A Gestão libera a tela principal imediatamente e continua
-  sincronizações complementares em segundo plano. Verificações lentas são repetidas;
-  se a preparação ficar sem progresso por tempo anormal, o aplicativo faz uma única
-  reconexão automática. Persistindo a falha, exibe **Tentar novamente** sem entrar em
-  ciclo de recargas. Se chegar a 100% e o card ainda permanecer visível, o aplicativo
-  confirma novamente a abertura antes de oferecer a recuperação.
+- Em **Preparando acesso**, a etapa **Acesso pronto** e os 100% somente são
+  concluídos depois que a tela principal estiver montada. As sincronizações
+  complementares continuam em segundo plano. Ao voltar de uma suspensão do PWA
+  ou recuperar a conexão, o aplicativo retoma a abertura e verifica se a versão
+  ainda é atual. Se a preparação ficar sem progresso por tempo anormal, realiza
+  uma única reconexão automática; persistindo a falha, exibe **Tentar novamente**
+  sem entrar em ciclo de recargas.
 - Dentro da Gestão, **Menu > Ir para Vendas** abre diretamente o Vendas Mobile; a
   tela com as duas opções é exibida somente na entrada após o login. Ao tocar, a
   Gestão consulta o estado atual do módulo no servidor para não solicitar uma

@@ -78,6 +78,10 @@ self.addEventListener('fetch', (event) => {
   if (url.origin !== self.location.origin) return;
   if (!url.pathname.startsWith('/avantavendas')) return;
   if (url.pathname === '/avantavendas/versao') return;
+  // A Gestão possui bootstrap, versão e recuperação próprios. Deixar esta
+  // navegação seguir diretamente para a rede evita servir a tela do Vendas
+  // ou um documento antigo como fallback durante a troca de sistema.
+  if (url.pathname.startsWith('/avantavendas/gestao')) return;
 
   if (event.request.mode === 'navigate') {
     event.respondWith(buscarComFallback(event.request, '/avantavendas'));

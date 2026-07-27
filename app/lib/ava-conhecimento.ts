@@ -6,8 +6,8 @@ export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
  * Cada guia é enviado apenas no ambiente correspondente, evitando misturar
  * caminhos e funções de Web, Mobile e Vendas na mesma resposta.
  */
-// Revisado na versão 1.6.1.08: reposicionamento visual do login na Gestão Web,
-// sem alteração nas orientações operacionais da Ava.
+// Revisado na versão 1.6.1.09: conclusão segura e retomada da preparação de
+// acesso na Gestão Mobile.
 const GUIAS: Record<AmbienteAva, string> = {
   'gestao-web': `GUIA OPERACIONAL — AVANTALAB GESTÃO WEB
 Você atende no sistema Gestão Web. Oriente por nomes visíveis na interface; não invente telas.
@@ -65,7 +65,7 @@ NAVEGAÇÃO E PERFIS
 - Em Editar dados cadastrais, CPF/CNPJ recebe máscara durante a digitação e precisa passar pela validação antes da conclusão.
 - Em cadastros de pessoas, Nome completo exige nome e sobrenome, inclusive na conta, no perfil pessoal, em Usuários e Permissões, Controle de Ponto e Recebimentos Presenciais.
 - Com o módulo Vendas Mobile ativo e permissão de Gestor Master/Administrador, após o login a primeira tela permite escolher entre Gestão e Vendas e memorizar o sistema inicial. Depois da escolha aparece Preparando acesso e o sistema selecionado é carregado. Dentro da Gestão, Menu > Ir para Vendas e o atalho de mesmo nome abrem diretamente o outro sistema.
-- Em Preparando acesso, a Gestão mostra a etapa atual e um percentual baseado em tarefas realmente concluídas, incluindo sessão, perfis, permissões e dados financeiros. Depois da validação de sistemas, assinatura, cadastro, integração e dados financeiros são carregados em paralelo, fazendo a barra avançar conforme cada tarefa termina. A tela principal só abre depois de os 100% serem exibidos. A recuperação automática ocorre apenas quando não existe progresso real; uma carga lenta, mas saudável, não é reiniciada. Se o card permanecer visível depois de 100%, o aplicativo confirma novamente a abertura antes de oferecer a recuperação. O resumo comparativo dos demais perfis é atualizado logo após a entrada, sem atrasar os dados do perfil aberto.
+- Em Preparando acesso, a Gestão mostra a etapa atual e um percentual baseado em tarefas realmente concluídas, incluindo sessão, perfis, permissões e dados financeiros. Depois da validação de sistemas, assinatura, cadastro, integração e dados financeiros são carregados em paralelo. A etapa Acesso pronto e os 100% somente são concluídos depois que a tela principal estiver montada. Ao voltar de uma suspensão do PWA ou recuperar a conexão, o aplicativo retoma a abertura e verifica se a versão ainda é atual antes de oferecer a recuperação. O resumo comparativo dos demais perfis é atualizado logo após a entrada, sem atrasar os dados do perfil aberto.
 - Em perfil sem o módulo Vendas, Ir para Vendas continua ativo para Gestor Master ou Administrador. Ao tocar, a Gestão confirma diretamente a instalação salva no perfil; somente quando ela realmente não existe, solicita a ativação. Depois de ativado, não pergunta novamente enquanto o módulo permanecer instalado. Perfil pessoal gratuito precisa do Premium. Operadores veem o botão inativo e não podem ativar nem trocar de sistema.
 - No perfil Pessoal gratuito, os recursos Premium aparecem sem cor e, ao toque, mostram Acesso exclusivo para assinantes com Ir para assinatura. A contratação aparece primeiro; Veja os recursos adicionais abre a lista completa. Agenda e Ir para Vendas exigem Premium ou cortesia vigente.
 - Se o Premium Pessoal deixar de estar vigente, o Vendas fica inacessível sem ser desinstalado: módulo, vínculos e dados permanecem preservados. A receita consolidada do Vendas deixa de compor a Gestão durante o bloqueio e retorna, com o mesmo histórico, após a reativação.

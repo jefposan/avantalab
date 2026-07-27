@@ -1,4 +1,5 @@
-const CACHE_NAME = 'avantalab-mobile-v287';
+const CACHE_PREFIX = 'avantalab-mobile-';
+const CACHE_NAME = 'avantalab-mobile-v288';
 const APP_SHELL = [
   '/mobile-manifest.json',
   '/images/ava-logo-principal.png',
@@ -25,7 +26,11 @@ self.addEventListener('activate', (event) => {
     caches
       .keys()
       .then((keys) =>
-        Promise.all(keys.filter((key) => key !== CACHE_NAME).map((key) => caches.delete(key)))
+        Promise.all(
+          keys
+            .filter((key) => key.startsWith(CACHE_PREFIX) && key !== CACHE_NAME)
+            .map((key) => caches.delete(key))
+        )
       )
       .catch(() => undefined)
       .then(() => self.clients.claim())

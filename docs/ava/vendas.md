@@ -1,6 +1,10 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.6.1.08 -->
+<!-- ava-version: 1.6.1.09 -->
+
+> Revisão 1.6.1.09: a troca AvantaVendas → Gestão passa a abrir a rota da
+> Gestão sem reutilizar documento antigo do cache. Se a conexão falhar, o
+> usuário permanece no Vendas e pode tentar novamente.
 
 > Revisão 1.6.1.08: reposicionamento do card de login apenas na Gestão Web; sem
 > impacto operacional no AvantaVendas.

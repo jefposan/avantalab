@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.6.1.09 - 2026-07-27
+
+- Gestão Mobile: a etapa `Acesso pronto` só conclui os 100% depois que a tela
+  principal foi montada, evitando permanecer no card ao final da carga.
+- A abertura é retomada ao voltar ao PWA, recuperar a conexão ou restaurar uma
+  página suspensa; falhas finais passam a oferecer recuperação independente.
+- A rota usada na troca AvantaVendas → Gestão recebeu a mesma política sem
+  cache da entrada direta, com verificação de versão e caches isolados entre os
+  dois aplicativos.
+
 ## 1.6.1.08 - 2026-07-27
 
 - Gestão Web: o card de login voltou a ficar alinhado à esquerda, na mesma
