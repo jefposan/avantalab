@@ -1,6 +1,13 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.6.1.18 -->
+<!-- ava-version: 1.6.1.20 -->
+
+> Revisão 1.6.1.20: janela diária do card de lançamentos ajustada na Gestão Web
+> e Mobile; sem impacto operacional no AvantaVendas.
+
+> Revisão 1.6.1.19: ao tocar em um campo textual editável já preenchido, o
+> cursor vai para o final do conteúdo. A seleção intencional de um trecho por
+> gesto longo permanece disponível.
 
 > Revisão 1.6.1.18: ajustes visuais no card de usuário e no login da Gestão;
 > sem impacto operacional no AvantaVendas.

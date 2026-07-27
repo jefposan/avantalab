@@ -1,6 +1,15 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.6.1.18 -->
+<!-- ava-version: 1.6.1.20 -->
+
+> Revisão 1.6.1.20: o card **Lançamentos a confirmar** mostra despesas e
+> receitas previstas somente durante a data programada. Ao terminar o dia, o
+> aviso desaparece, mas o lançamento continua previsto na Agenda e nos
+> controles financeiros.
+
+> Revisão 1.6.1.19: ao tocar em um campo textual editável já preenchido, o
+> cursor vai para o final do conteúdo. A seleção intencional de um trecho por
+> gesto longo permanece disponível.
 
 > Revisão 1.6.1.18: o login identifica o campo de acesso como **E-mail ou
 > login**, preservando também a alternativa por telefone. A correção do card

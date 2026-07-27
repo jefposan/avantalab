@@ -3152,19 +3152,20 @@ const definirSaldoInicialCaixinha = async (valorTexto: string): Promise<{ ok: bo
   return { ok: true };
 };
 
-// O card permanece pendente desde a data programada ate o usuario confirmar ou excluir.
+// O card avisa somente durante o dia programado. Depois dessa janela diária,
+// o lançamento continua previsto, mas deixa de ocupar o aviso do dashboard.
 const despesasAConfirmar = lancamentos.filter(
   (l) =>
     l.status === 'prevista' &&
     tipoPedeConfirmacao(l.tipo) &&
-    !dataFutura(Number(anoSelecionado), meses.indexOf(l.mes), l.dia)
+    ehDataHoje(Number(anoSelecionado), meses.indexOf(l.mes), l.dia)
 );
 
-// Receitas previstas tambem permanecem pendentes ate uma acao explicita.
+// Receitas previstas seguem a mesma janela diária do card compartilhado.
 const receitasAConfirmar = faturamentosEntradas.filter(
   (e) =>
     e.status === 'prevista' &&
-    !dataFutura(Number(anoSelecionado), meses.indexOf(e.mes), e.dia)
+    ehDataHoje(Number(anoSelecionado), meses.indexOf(e.mes), e.dia)
 );
 
 // Card de saldo (Inicial/Final/Previsto) com seletor proprio de mes.

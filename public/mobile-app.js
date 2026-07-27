@@ -3283,14 +3283,15 @@
     return tipo === 'previsto' || tipo === 'fixa';
   }
 
-  // Permanece pendente desde a data programada ate confirmar ou excluir.
+  // O aviso aparece somente durante o dia programado. Depois dessa janela,
+  // o lancamento continua previsto, mas deixa de ocupar o card.
   function ehDespesaAConfirmar(item) {
-    return item && item.status === 'prevista' && tipoPedeConfirmacao(item.tipo) && !dataFutura(Number(state.ano), indiceMes(item.mes), item.dia);
+    return item && item.status === 'prevista' && tipoPedeConfirmacao(item.tipo) && ehDespesaHoje(item);
   }
 
-  // Receita prevista tambem permanece pendente ate uma acao explicita.
+  // Receita prevista segue a mesma janela diaria do card compartilhado.
   function ehReceitaAConfirmar(item) {
-    return item && item.status === 'prevista' && !dataFutura(Number(state.ano), indiceMes(item.mes), item.dia);
+    return item && item.status === 'prevista' && ehDataHoje(Number(state.ano), indiceMes(item.mes), item.dia);
   }
 
   // Receitas criadas por módulos conectados pertencem ao sistema de origem.
@@ -14531,6 +14532,51 @@
       });
     });
   }
+
+  function campoMobileAceitaCursorNoFim(elemento) {
+    if (!elemento || elemento.disabled || elemento.readOnly) return false;
+    if (!(elemento instanceof HTMLInputElement || elemento instanceof HTMLTextAreaElement)) return false;
+    if (elemento instanceof HTMLTextAreaElement) return true;
+
+    return [
+      'text',
+      'search',
+      'tel',
+      'url',
+      'password',
+      'email',
+      'number',
+    ].indexOf(String(elemento.type || 'text').toLowerCase()) >= 0;
+  }
+
+  function posicionarCursorNoFimDoCampoMobile(evento) {
+    var elemento = evento.target;
+    if (!campoMobileAceitaCursorNoFim(elemento)) return;
+
+    window.requestAnimationFrame(function () {
+      if (document.activeElement !== elemento) return;
+
+      try {
+        if (
+          typeof elemento.selectionStart === 'number' &&
+          typeof elemento.selectionEnd === 'number' &&
+          elemento.selectionStart !== elemento.selectionEnd
+        ) {
+          return;
+        }
+
+        var fim = String(elemento.value || '').length;
+        elemento.setSelectionRange(fim, fim);
+      } catch (error) {
+        // E-mail e número não expõem Selection API em todos os navegadores.
+        // Reaplicar o mesmo valor posiciona o cursor no fim sem emitir input.
+        var valorAtual = elemento.value;
+        elemento.value = '';
+        elemento.value = valorAtual;
+      }
+    });
+  }
+
   async function iniciar() {
     state.falhaAcesso = '';
     state.preparacaoAcessoInterrompida = false;
@@ -14593,7 +14639,7 @@
           return Promise.all(
             keys
               .filter(function (key) {
-                return key.indexOf('avantalab-mobile-') === 0 && key !== 'avantalab-mobile-v291';
+                return key.indexOf('avantalab-mobile-') === 0 && key !== 'avantalab-mobile-v293';
               })
               .map(function (key) {
                 return caches.delete(key);
@@ -14662,6 +14708,8 @@
         render(true);
       }, 0);
     });
+
+    document.addEventListener('click', posicionarCursorNoFimDoCampoMobile);
 
     render();
 

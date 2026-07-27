@@ -1,5 +1,22 @@
 # Changelog
 
+## 1.6.1.20 - 2026-07-27
+
+- Gestão Web e Mobile: o card **Lançamentos a confirmar** passa a exibir
+  despesas e receitas previstas somente na data programada.
+- Após o término desse dia, o aviso desaparece automaticamente; o lançamento
+  continua com status **Previsto** e permanece disponível na Agenda e nos
+  controles financeiros até uma ação do usuário.
+
+## 1.6.1.19 - 2026-07-27
+
+- Gestão Mobile e AvantaVendas: ao tocar em um campo textual editável já
+  preenchido, o cursor passa a ser posicionado no final do conteúdo para
+  permitir apagar imediatamente da direita para a esquerda.
+- A seleção intencional de um trecho por gesto longo e o foco por teclado
+  permanecem preservados; seletores, datas, arquivos, botões e demais controles
+  sem cursor textual não são afetados.
+
 ## 1.6.1.18 - 2026-07-27
 
 - Gestão Web: o cabeçalho do card **Editar usuário** passa a respeitar

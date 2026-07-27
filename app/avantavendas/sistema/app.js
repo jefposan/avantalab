@@ -387,6 +387,50 @@ function dataNascimentoParaIso(valorData) {
   return `2000-${mes}-${dia}`;
 }
 
+function campoVendasAceitaCursorNoFim(elemento) {
+  if (!elemento || elemento.disabled || elemento.readOnly) return false;
+  if (!(elemento instanceof HTMLInputElement || elemento instanceof HTMLTextAreaElement)) return false;
+  if (elemento instanceof HTMLTextAreaElement) return true;
+
+  return [
+    'text',
+    'search',
+    'tel',
+    'url',
+    'password',
+    'email',
+    'number',
+  ].includes(String(elemento.type || 'text').toLowerCase());
+}
+
+function posicionarCursorNoFimDoCampoVendas(evento) {
+  const elemento = evento.target;
+  if (!campoVendasAceitaCursorNoFim(elemento)) return;
+
+  window.requestAnimationFrame(() => {
+    if (document.activeElement !== elemento) return;
+
+    try {
+      if (
+        typeof elemento.selectionStart === 'number'
+        && typeof elemento.selectionEnd === 'number'
+        && elemento.selectionStart !== elemento.selectionEnd
+      ) {
+        return;
+      }
+
+      const fim = String(elemento.value || '').length;
+      elemento.setSelectionRange(fim, fim);
+    } catch {
+      // E-mail e número não expõem Selection API em todos os navegadores.
+      // Reaplicar o mesmo valor posiciona o cursor no fim sem emitir input.
+      const valorAtual = elemento.value;
+      elemento.value = '';
+      elemento.value = valorAtual;
+    }
+  });
+}
+
 document.addEventListener('input', (event) => {
   const campo = event.target;
   if (campo?.id === 'cadastroTelefone') formatarTelefoneCadastro(campo);
@@ -410,6 +454,8 @@ document.addEventListener('change', (event) => {
     if (telefone) formatarTelefoneCampo(telefone, event.target.id);
   }
 });
+
+document.addEventListener('click', posicionarCursorNoFimDoCampoVendas);
 
 if (window.__VENDAS_MOBILE_EMBEDDED__ && !document.querySelector('base[data-vendas-mobile]')) {
   const base = document.createElement('base');

@@ -1,6 +1,14 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.6.1.18 -->
+<!-- ava-version: 1.6.1.20 -->
+
+> Revisão 1.6.1.20: o card **Lançamentos a confirmar** mostra despesas e
+> receitas previstas somente durante a data programada. Ao terminar o dia, o
+> aviso desaparece, mas o lançamento continua previsto na Agenda e nos
+> controles financeiros.
+
+> Revisão 1.6.1.19: posicionamento automático do cursor aplicado somente à
+> Gestão Mobile e ao AvantaVendas; sem impacto operacional na Gestão Web.
 
 > Revisão 1.6.1.18: correção visual da curvatura do card Editar usuário. No
 > login, o campo de acesso informa **E-mail ou login** e aceita qualquer um dos
