@@ -1,6 +1,10 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.6.1.17 -->
+<!-- ava-version: 1.6.1.18 -->
+
+> Revisão 1.6.1.18: correção visual da curvatura do card Editar usuário. No
+> login, o campo de acesso informa **E-mail ou login** e aceita qualquer um dos
+> dois identificadores.
 
 > Revisão 1.6.1.17: ao criar ou editar um usuário, e-mail e login são
 > verificados no servidor antes da gravação. Se algum campo precisar de

@@ -8823,7 +8823,7 @@ if (validacaoTelefoneObrigatoria) {
     onClick={cancelarEdicaoUsuario}
   >
     <DraggableModalCard
-      className={`w-full max-w-xl rounded-2xl border p-6 shadow-2xl ${
+      className={`w-full max-w-xl overflow-hidden rounded-2xl border p-6 shadow-2xl ${
         darkMode
           ? 'bg-slate-800 border-slate-700'
           : 'bg-white border-slate-200'
@@ -8832,7 +8832,7 @@ if (validacaoTelefoneObrigatoria) {
     >
       <div
         data-modal-drag-handle
-        className="-mx-6 -mt-6 mb-5 flex min-h-[96px] cursor-grab items-center justify-between gap-4 rounded-t-2xl px-6 py-5 active:cursor-grabbing"
+        className="-mx-6 -mt-6 mb-5 flex min-h-[96px] cursor-grab items-center justify-between gap-4 px-6 py-5 active:cursor-grabbing"
         style={estiloTemaPrimario}
       >
         <div className="min-w-0">

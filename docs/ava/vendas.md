@@ -1,6 +1,9 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.6.1.17 -->
+<!-- ava-version: 1.6.1.18 -->
+
+> Revisão 1.6.1.18: ajustes visuais no card de usuário e no login da Gestão;
+> sem impacto operacional no AvantaVendas.
 
 > Revisão 1.6.1.17: validação de disponibilidade de usuários aplicada à Gestão
 > Web e Mobile; sem impacto operacional no AvantaVendas.

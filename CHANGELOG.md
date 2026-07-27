@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.6.1.18 - 2026-07-27
+
+- Gestão Web: o cabeçalho do card **Editar usuário** passa a respeitar
+  exatamente o recorte do modal, eliminando a curvatura irregular no canto
+  superior direito.
+- Login da Gestão Web e Mobile: o campo de acesso passa a informar claramente
+  **E-mail ou login** no rótulo e no placeholder, mantendo a alternativa por
+  telefone.
+
 ## 1.6.1.17 - 2026-07-27
 
 - Gestão Web e Mobile: criação e edição de usuários verificam no servidor a

@@ -595,10 +595,10 @@ export default function AuthCard({
       <button type="button" onClick={() => alterarTipoLogin('telefone')} className={`inline-flex min-h-[34px] flex-1 items-center justify-center gap-1.5 rounded-[9px] border-0 text-[13px] font-bold ${loginPorTelefone ? 'bg-[#1687D9] text-white shadow-[0_2px_5px_rgba(22,135,217,.28)]' : 'text-[#6d7680]'}`}><IconeVendas nome="phone" />Telefone</button>
     </div>
     <label className="grid gap-1 text-[12px] font-extrabold text-[#3d454d]">
-      {loginPorTelefone ? 'Telefone' : 'E-mail'}
+      {loginPorTelefone ? 'Telefone' : 'E-mail ou login'}
       <span className="relative flex items-center">
         <span className="absolute left-3 text-[#88919a]"><IconeVendas nome={loginPorTelefone ? 'phone' : 'mail'} /></span>
-        <input type={loginPorTelefone ? 'tel' : 'email'} inputMode={loginPorTelefone ? 'tel' : 'email'} autoComplete={loginPorTelefone ? 'tel' : 'email'} placeholder={loginPorTelefone ? 'Digite seu telefone' : 'Digite seu e-mail'} value={loginEmail} onChange={(e) => setLoginEmail(loginPorTelefone ? formatarTelefoneCadastro(e.target.value, '55') : e.target.value)} className="h-11 w-full rounded-xl border border-[#d9e0e4] py-0 pl-10 pr-10 text-[16px] text-[#2d353b] outline-[#55b9b1]" />
+        <input type={loginPorTelefone ? 'tel' : 'text'} inputMode={loginPorTelefone ? 'tel' : 'email'} autoComplete={loginPorTelefone ? 'tel' : 'username'} placeholder={loginPorTelefone ? 'Digite seu telefone' : 'Digite seu e-mail ou login'} value={loginEmail} onChange={(e) => setLoginEmail(loginPorTelefone ? formatarTelefoneCadastro(e.target.value, '55') : e.target.value)} className="h-11 w-full rounded-xl border border-[#d9e0e4] py-0 pl-10 pr-10 text-[16px] text-[#2d353b] outline-[#55b9b1]" />
       </span>
     </label>
     <label className="grid gap-1 text-[12px] font-extrabold text-[#3d454d]">

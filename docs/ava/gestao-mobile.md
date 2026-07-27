@@ -1,6 +1,10 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.6.1.17 -->
+<!-- ava-version: 1.6.1.18 -->
+
+> Revisão 1.6.1.18: o login identifica o campo de acesso como **E-mail ou
+> login**, preservando também a alternativa por telefone. A correção do card
+> Editar usuário permanece restrita à Gestão Web.
 
 > Revisão 1.6.1.17: ao criar ou editar um usuário, e-mail e login são
 > verificados no servidor. Se houver erro, todos os campos permanecem
