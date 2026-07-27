@@ -1,6 +1,9 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.6.1.15 -->
+<!-- ava-version: 1.6.1.16 -->
+
+> Revisão 1.6.1.16: padronização de criação e edição de usuários da Gestão; sem
+> impacto operacional no AvantaVendas.
 
 > Revisão 1.6.1.15: pesquisa de CNPJ adicionada ao cadastro da Gestão Mobile;
 > sem impacto operacional no AvantaVendas.

@@ -169,6 +169,7 @@
     usuarioEditandoId: '',
     usuarioModo: '',
     usuarioNome: '',
+    usuarioEmail: '',
     usuarioLogin: '',
     usuarioSenha: '',
     usuarioPerfil: '',
@@ -444,6 +445,7 @@
         return;
       }
       state.usuarioNome = String(salvo.nome || '');
+      state.usuarioEmail = String(salvo.email || '');
       state.usuarioLogin = String(salvo.login || '');
       state.usuarioPerfil = String(salvo.perfil || '');
     } catch (error) {}
@@ -457,6 +459,7 @@
         versao: 1,
         expiraEm: Date.now() + 24 * 60 * 60 * 1000,
         nome: state.usuarioNome || '',
+        email: state.usuarioEmail || '',
         login: state.usuarioLogin || '',
         perfil: state.usuarioPerfil || ''
       }));
@@ -4735,23 +4738,30 @@
     if (!state.empresa || !podeGerenciarUsuarios()) return;
 
     var nome = campo('usuario-nome').trim();
+    var email = campo('usuario-email').trim().toLowerCase();
     var login = campo('usuario-login').trim().toLowerCase();
     var senha = campo('usuario-senha').trim();
     var perfil = campo('usuario-perfil');
 
     state.usuarioNome = nome;
+    state.usuarioEmail = email;
     state.usuarioLogin = login;
     state.usuarioSenha = senha;
     state.usuarioPerfil = perfil;
     salvarRascunhoUsuarioMobile();
 
-    if (!nome || !login || !senha || !perfil) {
-      setErro('Informe nome completo, login, senha e perfil.');
+    if (!nome || !email || !login || !senha || !perfil) {
+      setErro('Informe nome completo, email, login, senha e perfil.');
       return;
     }
 
     if (!nomeCompletoValido(nome)) {
       setErro('Informe o nome completo do usuario, com nome e sobrenome.');
+      return;
+    }
+
+    if (!emailCadastroValido(email)) {
+      setErro('Informe um email valido para o usuario.');
       return;
     }
 
@@ -4779,6 +4789,7 @@
       body: JSON.stringify({
         empresaId: state.empresa.id,
         nome: nome,
+        email: email,
         login: login,
         senha: senha,
         perfil: perfil,
@@ -4794,6 +4805,7 @@
     }
 
     state.usuarioNome = '';
+    state.usuarioEmail = '';
     state.usuarioLogin = '';
     state.usuarioSenha = '';
     state.usuarioPerfil = '';
@@ -4844,12 +4856,16 @@
     state.editUsuarioSenha = senha;
     state.editUsuarioConfirmarSenha = confirmarSenha;
 
-    if (!nome || !login) {
-      setErro('Informe nome completo e login. O perfil atual sera mantido.');
+    if (!nome || !email || !login) {
+      setErro('Informe nome completo, email e login. O perfil atual sera mantido.');
       return;
     }
     if (!nomeCompletoValido(nome)) {
       setErro('Informe o nome completo do usuario, com nome e sobrenome.');
+      return;
+    }
+    if (!emailCadastroValido(email)) {
+      setErro('Informe um email valido para o usuario.');
       return;
     }
     if (senha && senha.length < 8) { setErro('A nova senha deve ter pelo menos 8 caracteres.'); return; }
@@ -6583,6 +6599,11 @@
     return partes.filter(function (parte) {
       return parte && conectivos.indexOf(parte.toLocaleLowerCase('pt-BR')) < 0;
     }).length >= 2;
+  }
+
+  function emailCadastroValido(valor) {
+    var email = String(valor || '').trim().toLowerCase();
+    return email.length <= 254 && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
   }
 
   function validarCadastroBase() {
@@ -11141,14 +11162,20 @@
     return (
       '<div class="grid gap-2 rounded-2xl bg-slate-50 p-3">' +
         '<p class="text-[10px] font-black uppercase tracking-wide text-slate-400">Criar novo usuario</p>' +
+        '<p class="text-xs font-semibold leading-relaxed text-slate-500">Todos os campos sao obrigatorios. O usuario podera entrar com o email ou com o login.</p>' +
         '<label for="usuario-nome" class="text-[10px] font-black uppercase tracking-wide text-slate-500">Nome completo</label>' +
-        '<input id="usuario-nome" value="' + escapeHtml(state.usuarioNome || '') + '" placeholder="Nome completo" autocomplete="name" style="font-size:16px" class="h-10 w-full min-w-0 rounded-lg border border-slate-200 bg-white px-3 text-base font-bold outline-none" />' +
+        '<input id="usuario-nome" value="' + escapeHtml(state.usuarioNome || '') + '" placeholder="Nome e sobrenome" autocomplete="name" style="font-size:16px" class="h-12 w-full min-w-0 rounded-xl border border-slate-200 bg-white px-3 text-base font-bold outline-none" />' +
+        '<label for="usuario-email" class="text-[10px] font-black uppercase tracking-wide text-slate-500">Email</label>' +
+        '<input id="usuario-email" type="email" inputmode="email" value="' + escapeHtml(state.usuarioEmail || '') + '" placeholder="usuario@empresa.com.br" autocomplete="email" autocapitalize="none" spellcheck="false" style="font-size:16px" class="h-12 w-full min-w-0 rounded-xl border border-slate-200 bg-white px-3 text-base font-bold outline-none" />' +
         '<div class="grid gap-2">' +
-          '<input id="usuario-login" value="' + escapeHtml(state.usuarioLogin || '') + '" placeholder="Login" style="font-size:16px" class="h-10 w-full min-w-0 rounded-lg border border-slate-200 bg-white px-3 text-base font-bold outline-none" />' +
-          campoSenhaSimplesHtml('usuario-senha', 'Senha', 'h-10 w-full min-w-0 rounded-lg border border-slate-200 bg-white px-3 text-base font-bold outline-none', 'new-password', state.usuarioSenha || '') +
+          '<label for="usuario-login" class="text-[10px] font-black uppercase tracking-wide text-slate-500">Login</label>' +
+          '<input id="usuario-login" value="' + escapeHtml(state.usuarioLogin || '') + '" placeholder="Ex.: financeiro" autocomplete="username" autocapitalize="none" spellcheck="false" style="font-size:16px" class="h-12 w-full min-w-0 rounded-xl border border-slate-200 bg-white px-3 text-base font-bold outline-none" />' +
+          '<label for="usuario-senha" class="text-[10px] font-black uppercase tracking-wide text-slate-500">Senha inicial</label>' +
+          campoSenhaSimplesHtml('usuario-senha', 'Minimo de 8 caracteres', 'h-12 w-full min-w-0 rounded-xl border border-slate-200 bg-white px-3 text-base font-bold outline-none', 'new-password', state.usuarioSenha || '') +
         '</div>' +
-        '<select id="usuario-perfil" style="font-size:16px" class="h-10 w-full min-w-0 rounded-lg border border-slate-200 bg-white px-3 text-base font-bold outline-none"><option value="">Perfil</option>' + opcoesPerfilHtml(state.usuarioPerfil || '', false) + '</select>' +
-        '<button id="criar-usuario-mobile" type="button" class="h-10 rounded-xl bg-slate-950 px-4 text-xs font-black uppercase tracking-wide text-white">' + (state.carregando ? 'Salvando...' : 'Criar usuario') + '</button>' +
+        '<label for="usuario-perfil" class="text-[10px] font-black uppercase tracking-wide text-slate-500">Tipo de usuario</label>' +
+        '<select id="usuario-perfil" style="font-size:16px" class="h-12 w-full min-w-0 rounded-xl border border-slate-200 bg-white px-3 text-base font-bold outline-none"><option value="">Selecione</option>' + opcoesPerfilHtml(state.usuarioPerfil || '', false) + '</select>' +
+        '<button id="criar-usuario-mobile" type="button" class="h-12 rounded-xl bg-slate-950 px-4 text-xs font-black uppercase tracking-wide text-white">' + (state.carregando ? 'Salvando...' : 'Criar usuario') + '</button>' +
       '</div>'
     );
   }
@@ -11187,14 +11214,20 @@
     return (
       '<div class="grid gap-2 rounded-2xl bg-cyan-50 p-3">' +
         '<div class="flex items-center justify-between gap-2"><p class="text-[10px] font-black uppercase tracking-wide text-cyan-900">Editar usuario</p><button id="cancelar-edicao-usuario" type="button" class="text-[10px] font-black text-slate-500">Cancelar</button></div>' +
+        '<p class="text-xs font-semibold leading-relaxed text-slate-500">Nome, email, login e tipo sao obrigatorios. A nova senha e opcional.</p>' +
         '<label for="edit-usuario-nome" class="text-[10px] font-black uppercase tracking-wide text-cyan-900">Nome completo</label>' +
-        '<input id="edit-usuario-nome" value="' + escapeHtml(state.editUsuarioNome || '') + '" placeholder="Nome completo" autocomplete="name" style="font-size:16px" class="h-10 w-full min-w-0 rounded-lg border border-cyan-100 bg-white px-3 text-base font-bold outline-none" />' +
-        '<input id="edit-usuario-login" value="' + escapeHtml(state.editUsuarioLogin || '') + '" placeholder="Login" style="font-size:16px" class="h-10 w-full min-w-0 rounded-lg border border-cyan-100 bg-white px-3 text-base font-bold outline-none" />' +
-        '<input id="edit-usuario-email" type="email" value="' + escapeHtml(state.editUsuarioEmail || '') + '" placeholder="E-mail (opcional)" style="font-size:16px" class="h-10 w-full min-w-0 rounded-lg border border-cyan-100 bg-white px-3 text-base font-bold outline-none" />' +
-        '<select id="edit-usuario-perfil" style="font-size:16px" class="h-10 w-full min-w-0 rounded-lg border border-cyan-100 bg-white px-3 text-base font-bold outline-none">' + opcoesPerfilHtml(state.editUsuarioPerfil || 'operador_simples', usuario.perfil === 'gestor_master' || (state.empresa && state.empresa.perfil === 'gestor_master')) + '</select>' +
-        campoSenhaSimplesHtml('edit-usuario-senha', 'Nova senha (opcional)', 'h-10 w-full min-w-0 rounded-lg border border-cyan-100 bg-white px-3 text-base font-bold outline-none', 'new-password', state.editUsuarioSenha || '') +
-        campoSenhaSimplesHtml('edit-usuario-confirmar-senha', 'Confirmar nova senha', 'h-10 w-full min-w-0 rounded-lg border border-cyan-100 bg-white px-3 text-base font-bold outline-none', 'new-password', state.editUsuarioConfirmarSenha || '') +
-        '<button id="salvar-usuario-mobile" type="button" class="h-10 rounded-xl bg-cyan-600 px-4 text-xs font-black uppercase tracking-wide text-white">' + (state.carregando ? 'Salvando...' : 'Salvar usuario') + '</button>' +
+        '<input id="edit-usuario-nome" value="' + escapeHtml(state.editUsuarioNome || '') + '" placeholder="Nome e sobrenome" autocomplete="name" style="font-size:16px" class="h-12 w-full min-w-0 rounded-xl border border-cyan-100 bg-white px-3 text-base font-bold outline-none" />' +
+        '<label for="edit-usuario-email" class="text-[10px] font-black uppercase tracking-wide text-cyan-900">Email</label>' +
+        '<input id="edit-usuario-email" type="email" inputmode="email" value="' + escapeHtml(state.editUsuarioEmail || '') + '" placeholder="usuario@empresa.com.br" autocomplete="email" autocapitalize="none" spellcheck="false" style="font-size:16px" class="h-12 w-full min-w-0 rounded-xl border border-cyan-100 bg-white px-3 text-base font-bold outline-none" />' +
+        '<label for="edit-usuario-login" class="text-[10px] font-black uppercase tracking-wide text-cyan-900">Login</label>' +
+        '<input id="edit-usuario-login" value="' + escapeHtml(state.editUsuarioLogin || '') + '" placeholder="Login" autocomplete="username" autocapitalize="none" spellcheck="false" style="font-size:16px" class="h-12 w-full min-w-0 rounded-xl border border-cyan-100 bg-white px-3 text-base font-bold outline-none" />' +
+        '<label for="edit-usuario-perfil" class="text-[10px] font-black uppercase tracking-wide text-cyan-900">Tipo de usuario</label>' +
+        '<select id="edit-usuario-perfil" style="font-size:16px" class="h-12 w-full min-w-0 rounded-xl border border-cyan-100 bg-white px-3 text-base font-bold outline-none">' + opcoesPerfilHtml(state.editUsuarioPerfil || 'operador_simples', usuario.perfil === 'gestor_master' || (state.empresa && state.empresa.perfil === 'gestor_master')) + '</select>' +
+        '<label for="edit-usuario-senha" class="text-[10px] font-black uppercase tracking-wide text-cyan-900">Nova senha (opcional)</label>' +
+        campoSenhaSimplesHtml('edit-usuario-senha', 'Minimo de 8 caracteres', 'h-12 w-full min-w-0 rounded-xl border border-cyan-100 bg-white px-3 text-base font-bold outline-none', 'new-password', state.editUsuarioSenha || '') +
+        '<label for="edit-usuario-confirmar-senha" class="text-[10px] font-black uppercase tracking-wide text-cyan-900">Confirmar nova senha</label>' +
+        campoSenhaSimplesHtml('edit-usuario-confirmar-senha', 'Repita a nova senha', 'h-12 w-full min-w-0 rounded-xl border border-cyan-100 bg-white px-3 text-base font-bold outline-none', 'new-password', state.editUsuarioConfirmarSenha || '') +
+        '<button id="salvar-usuario-mobile" type="button" class="h-12 rounded-xl bg-cyan-600 px-4 text-xs font-black uppercase tracking-wide text-white">' + (state.carregando ? 'Salvando...' : 'Salvar usuario') + '</button>' +
       '</div>'
     );
   }
@@ -12852,6 +12885,10 @@
       state.usuarioNome = this.value || '';
       salvarRascunhoUsuarioMobile();
     });
+    bindInput('usuario-email', function () {
+      state.usuarioEmail = this.value || '';
+      salvarRascunhoUsuarioMobile();
+    });
     bindInput('usuario-login', function () {
       state.usuarioLogin = this.value || '';
       salvarRascunhoUsuarioMobile();
@@ -14500,7 +14537,7 @@
           return Promise.all(
             keys
               .filter(function (key) {
-                return key.indexOf('avantalab-mobile-') === 0 && key !== 'avantalab-mobile-v289';
+                return key.indexOf('avantalab-mobile-') === 0 && key !== 'avantalab-mobile-v290';
               })
               .map(function (key) {
                 return caches.delete(key);

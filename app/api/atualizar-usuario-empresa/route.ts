@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { validarNomeCompleto } from '../../lib/nome-pessoa';
+import { normalizarEmail, validarEmail } from '../../lib/email';
 
 type PerfilUsuario =
   | 'gestor_master'
@@ -72,7 +73,7 @@ export async function POST(request: Request) {
     const acessoId = String(corpo.acessoId || '').trim();
     const nome = String(corpo.nome || '').trim();
     const loginEnviado = corpo.login === undefined ? '' : String(corpo.login || '').trim().toLowerCase();
-    const emailEnviado = corpo.login === undefined ? String(corpo.email || '').trim().toLowerCase() : String(corpo.email || '').trim().toLowerCase();
+    const emailEnviado = normalizarEmail(corpo.email);
     const perfil = String(corpo.perfil || '') as PerfilUsuario;
     const novaSenha = String(corpo.novaSenha || '').trim();
 
@@ -82,6 +83,10 @@ export async function POST(request: Request) {
 
     if (!validarNomeCompleto(nome)) {
       return respostaErro('Informe o nome completo do usuario, com nome e sobrenome.');
+    }
+
+    if (!validarEmail(emailEnviado)) {
+      return respostaErro('Informe um e-mail valido para o usuario.');
     }
 
     if (!loginEnviado && corpo.login !== undefined) {
@@ -201,7 +206,6 @@ export async function POST(request: Request) {
     }
 
     if (corpo.login !== undefined && emailEnviado) {
-      if (!emailEnviado.includes('@')) return respostaErro('Informe um e-mail valido.');
       const { data: conflito } = await supabaseAdmin.auth.admin.listUsers({ page: 1, perPage: 1000 });
       if ((conflito?.users || []).some((item) => item.id !== usuarioAlvo.user_id && String(item.email || '').toLowerCase() === emailEnviado)) return respostaErro('Este e-mail ja esta em uso por outra conta.');
       atualizacao.email = emailEnviado;

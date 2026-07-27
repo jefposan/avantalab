@@ -17,6 +17,7 @@ import {
 } from '../lib/database';
 import { normalizarTipoPerfil, type TipoPerfil } from '../lib/perfis';
 import { validarNomeCompleto } from '../lib/nome-pessoa';
+import { validarEmail } from '../lib/email';
 import type { AbrirAvisoFn, AbrirConfirmacaoFn } from './useUI';
 
 const CHAVE_RASCUNHO_USUARIO_WEB = 'avantalab:rascunho:v1:gestao-web:usuarios:';
@@ -76,6 +77,7 @@ export function useEmpresas(deps: UseEmpresasDeps) {
   const [usuariosEmpresa, setUsuariosEmpresa] = useState<any[]>([]);
   const [usuariosCarregando, setUsuariosCarregando] = useState(false);
   const [usuarioNome, setUsuarioNome] = useState('');
+  const [usuarioEmail, setUsuarioEmail] = useState('');
   const [usuarioLogin, setUsuarioLogin] = useState('');
   const [usuarioSenha, setUsuarioSenha] = useState('');
   const [mostrarUsuarioSenha, setMostrarUsuarioSenha] = useState(false);
@@ -121,12 +123,14 @@ export function useEmpresas(deps: UseEmpresasDeps) {
       const salvo = JSON.parse(window.sessionStorage.getItem(chaveRascunhoUsuario) || 'null') as {
         expiraEm?: number;
         nome?: string;
+        email?: string;
         login?: string;
         perfil?: '' | 'administrador' | 'operador_completo' | 'operador_simples';
       } | null;
       if (salvo && Number(salvo.expiraEm) > Date.now()) {
         timer = window.setTimeout(() => {
           setUsuarioNome(String(salvo.nome || ''));
+          setUsuarioEmail(String(salvo.email || ''));
           setUsuarioLogin(String(salvo.login || ''));
           setUsuarioPerfil(salvo.perfil || '');
           rascunhoUsuarioCarregadoRef.current = chaveRascunhoUsuario;
@@ -153,11 +157,12 @@ export function useEmpresas(deps: UseEmpresasDeps) {
         versao: 1,
         expiraEm: Date.now() + VALIDADE_RASCUNHO_USUARIO_MS,
         nome: usuarioNome,
+        email: usuarioEmail,
         login: usuarioLogin,
         perfil: usuarioPerfil,
       }));
     } catch { /* armazenamento indisponível */ }
-  }, [chaveRascunhoUsuario, usuarioLogin, usuarioNome, usuarioPerfil]);
+  }, [chaveRascunhoUsuario, usuarioEmail, usuarioLogin, usuarioNome, usuarioPerfil]);
 
   // ---------------------------------------------------------------------------
   // Permissões derivadas
@@ -286,15 +291,20 @@ export function useEmpresas(deps: UseEmpresasDeps) {
     }
 
     const nomeLimpo = usuarioNome.trim();
+    const emailLimpo = usuarioEmail.trim().toLowerCase();
     const loginLimpo = usuarioLogin.trim().toLowerCase();
     const senhaLimpa = usuarioSenha.trim();
 
-    if (!nomeLimpo || !loginLimpo || !senhaLimpa || !usuarioPerfil) {
-      abrirAviso('Campos obrigatórios', 'Informe nome, login, senha e tipo de usuário.');
+    if (!nomeLimpo || !emailLimpo || !loginLimpo || !senhaLimpa || !usuarioPerfil) {
+      abrirAviso('Campos obrigatórios', 'Informe nome completo, e-mail, login, senha e tipo de usuário.');
       return;
     }
     if (!validarNomeCompleto(nomeLimpo)) {
       abrirAviso('Nome incompleto', 'Informe o nome completo do usuário, com nome e sobrenome.');
+      return;
+    }
+    if (!validarEmail(emailLimpo)) {
+      abrirAviso('E-mail inválido', 'Informe um e-mail válido para este usuário.');
       return;
     }
 
@@ -325,6 +335,7 @@ export function useEmpresas(deps: UseEmpresasDeps) {
     const resultado = await criarUsuarioEmpresa({
       empresaId,
       nome: nomeLimpo,
+      email: emailLimpo,
       login: loginLimpo,
       senha: senhaLimpa,
       perfil: usuarioPerfil,
@@ -333,6 +344,7 @@ export function useEmpresas(deps: UseEmpresasDeps) {
     if (resultado.erro) { abrirAviso('Erro ao criar usuário', resultado.mensagem); return; }
 
     setUsuarioNome('');
+    setUsuarioEmail('');
     setUsuarioLogin('');
     setUsuarioSenha('');
     setUsuarioPerfil('operador_simples');
@@ -394,6 +406,8 @@ export function useEmpresas(deps: UseEmpresasDeps) {
     const loginLimpo = editUsuarioLogin.trim().toLowerCase();
 
     if (!validarNomeCompleto(nomeLimpo)) { abrirAviso('Nome incompleto', 'Informe o nome completo do usuário, com nome e sobrenome.'); return; }
+    if (!emailLimpo) { abrirAviso('Campo obrigatório', 'Informe o e-mail deste usuário.'); return; }
+    if (!validarEmail(emailLimpo)) { abrirAviso('E-mail inválido', 'Informe um e-mail válido para este usuário.'); return; }
     if (!loginLimpo) { abrirAviso('Campo obrigatório', 'Informe o login deste usuário.'); return; }
     if (editUsuarioNovaSenha.trim() !== editUsuarioConfirmarSenha.trim()) { abrirAviso('Senha não confere', 'Repita a nova senha exatamente igual.'); return; }
 
@@ -722,6 +736,7 @@ export function useEmpresas(deps: UseEmpresasDeps) {
     usuariosEmpresa, setUsuariosEmpresa,
     usuariosCarregando, setUsuariosCarregando,
     usuarioNome, setUsuarioNome,
+    usuarioEmail, setUsuarioEmail,
     usuarioLogin, setUsuarioLogin,
     usuarioSenha, setUsuarioSenha,
     mostrarUsuarioSenha, setMostrarUsuarioSenha,

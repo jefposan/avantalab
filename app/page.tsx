@@ -345,6 +345,7 @@ export default function AppGestao() {
     usuariosEmpresa, setUsuariosEmpresa,
     usuariosCarregando, setUsuariosCarregando,
     usuarioNome, setUsuarioNome,
+    usuarioEmail, setUsuarioEmail,
     usuarioLogin, setUsuarioLogin,
     usuarioSenha, setUsuarioSenha,
     mostrarUsuarioSenha, setMostrarUsuarioSenha,
@@ -8840,7 +8841,7 @@ if (validacaoTelefoneObrigatoria) {
           </h2>
 
           <p className="mt-1 text-sm opacity-80">
-            Altere os dados do usuário ou redefina a senha diretamente.
+            Nome, e-mail, login e tipo são obrigatórios. A nova senha é opcional.
           </p>
         </div>
 
@@ -8856,55 +8857,89 @@ if (validacaoTelefoneObrigatoria) {
       </div>
 
       <div className="space-y-3">
-        <input
-          type="text"
-          value={editUsuarioNome}
-          onChange={(e) => setEditUsuarioNome(e.target.value)}
-          placeholder="Nome completo"
-          className={`w-full rounded-xl border px-3 py-2.5 text-sm font-semibold outline-none ${
-            darkMode
-              ? 'bg-slate-900 border-slate-600 text-white'
-              : 'bg-white border-slate-300 text-slate-700'
-          }`}
-        />
+        <label className={`grid gap-1 text-xs font-bold ${textMuted}`} htmlFor="editar-usuario-nome">
+          Nome completo
+          <input
+            id="editar-usuario-nome"
+            type="text"
+            value={editUsuarioNome}
+            onChange={(e) => setEditUsuarioNome(e.target.value)}
+            placeholder="Nome e sobrenome"
+            autoComplete="name"
+            required
+            className={`h-11 w-full rounded-xl border px-3 text-sm font-semibold outline-none ${
+              darkMode
+                ? 'bg-slate-900 border-slate-600 text-white'
+                : 'bg-white border-slate-300 text-slate-700'
+            }`}
+          />
+        </label>
 
-        <input
-          type="text"
-          value={editUsuarioLogin}
-          onChange={(e) => setEditUsuarioLogin(e.target.value)}
-          placeholder="Login"
-          className={`w-full rounded-xl border px-3 py-2.5 text-sm font-semibold outline-none ${
-            darkMode
-              ? 'bg-slate-900 border-slate-600 text-white'
-              : 'bg-white border-slate-300 text-slate-700'
-          }`}
-        />
+        <label className={`grid gap-1 text-xs font-bold ${textMuted}`} htmlFor="editar-usuario-email">
+          E-mail
+          <input
+            id="editar-usuario-email"
+            type="email"
+            value={editUsuarioEmail}
+            onChange={(e) => setEditUsuarioEmail(e.target.value)}
+            placeholder="usuario@empresa.com.br"
+            autoComplete="email"
+            autoCapitalize="none"
+            spellCheck={false}
+            required
+            className={`h-11 w-full rounded-xl border px-3 text-sm font-semibold outline-none ${
+              darkMode ? 'bg-slate-900 border-slate-600 text-white' : 'bg-white border-slate-300 text-slate-700'
+            }`}
+          />
+        </label>
 
-        <input type="email" value={editUsuarioEmail} onChange={(e) => setEditUsuarioEmail(e.target.value)} placeholder="E-mail (opcional)" className={`w-full rounded-xl border px-3 py-2.5 text-sm font-semibold outline-none ${darkMode ? 'bg-slate-900 border-slate-600 text-white' : 'bg-white border-slate-300 text-slate-700'}`} />
+        <label className={`grid gap-1 text-xs font-bold ${textMuted}`} htmlFor="editar-usuario-login">
+          Login
+          <input
+            id="editar-usuario-login"
+            type="text"
+            value={editUsuarioLogin}
+            onChange={(e) => setEditUsuarioLogin(e.target.value)}
+            placeholder="Login"
+            autoComplete="username"
+            autoCapitalize="none"
+            spellCheck={false}
+            required
+            className={`h-11 w-full rounded-xl border px-3 text-sm font-semibold outline-none ${
+              darkMode
+                ? 'bg-slate-900 border-slate-600 text-white'
+                : 'bg-white border-slate-300 text-slate-700'
+            }`}
+          />
+        </label>
 
-        <select
-          value={editUsuarioPerfil}
-          onChange={(e) =>
-            setEditUsuarioPerfil(
-              e.target.value as
-                | 'gestor_master'
-                | 'administrador'
-                | 'operador_completo'
-                | 'operador_simples'
-            )
-          }
-          disabled={usuarioOriginalEditando?.perfil === 'gestor_master' && perfilUsuario !== 'gestor_master'}
-          className={`w-full rounded-xl border px-3 py-2.5 text-sm font-bold outline-none disabled:cursor-not-allowed disabled:opacity-60 ${
-            darkMode
-              ? 'bg-slate-900 border-slate-600 text-white'
-              : 'bg-white border-slate-300 text-slate-700'
-          }`}
-        >
-          <option value="operador_simples">Operador Simples</option>
-          <option value="operador_completo">Operador Completo</option>
-          <option value="administrador">Administrador</option>
-          <option value="gestor_master">Gestor Master</option>
-        </select>
+        <label className={`grid gap-1 text-xs font-bold ${textMuted}`} htmlFor="editar-usuario-perfil">
+          Tipo de usuário
+          <select
+            id="editar-usuario-perfil"
+            value={editUsuarioPerfil}
+            onChange={(e) =>
+              setEditUsuarioPerfil(
+                e.target.value as
+                  | 'gestor_master'
+                  | 'administrador'
+                  | 'operador_completo'
+                  | 'operador_simples'
+              )
+            }
+            disabled={usuarioOriginalEditando?.perfil === 'gestor_master' && perfilUsuario !== 'gestor_master'}
+            className={`h-11 w-full rounded-xl border px-3 text-sm font-bold outline-none disabled:cursor-not-allowed disabled:opacity-60 ${
+              darkMode
+                ? 'bg-slate-900 border-slate-600 text-white'
+                : 'bg-white border-slate-300 text-slate-700'
+            }`}
+          >
+            <option value="operador_simples">Operador Simples</option>
+            <option value="operador_completo">Operador Completo</option>
+            <option value="administrador">Administrador</option>
+            <option value="gestor_master">Gestor Master</option>
+          </select>
+        </label>
 
         <div
           className={`rounded-xl border p-3 ${
@@ -9016,7 +9051,7 @@ if (validacaoTelefoneObrigatoria) {
     }}
   >
     <DraggableModalCard
-      className={`max-h-[90vh] w-full max-w-4xl overflow-y-auto rounded-2xl border p-6 shadow-2xl ${
+      className={`max-h-[90vh] w-full max-w-6xl overflow-y-auto rounded-2xl border p-6 shadow-2xl ${
         darkMode
           ? 'bg-slate-800 border-slate-700'
           : 'bg-white border-slate-200'
@@ -9149,133 +9184,159 @@ if (validacaoTelefoneObrigatoria) {
       </div>
 
       {modoFormularioUsuario === 'criar' ? (
-      <div className="grid grid-cols-1 gap-3 md:grid-cols-[1.35fr_1fr_1.25fr_1.20fr_auto] md:items-center">
-  <input
-  type="text"
-  value={usuarioNome}
-  onChange={(e) => setUsuarioNome(e.target.value)}
-  placeholder="Nome completo"
-  autoComplete="off"
-  name="novo-usuario-nome"
-    className={`w-full rounded-xl border px-3 py-2.5 text-sm font-semibold outline-none transition ${
-      darkMode
-        ? 'bg-slate-900 border-slate-600 text-white placeholder:text-slate-400'
-        : 'bg-white border-slate-300 text-slate-700 placeholder:text-slate-400'
-    }`}
-  />
+        <div>
+          <p className={`mb-3 text-xs font-semibold ${textMuted}`}>
+            Todos os campos são obrigatórios. Depois de criado, o usuário poderá entrar com o e-mail ou com o login.
+          </p>
 
-  <input
-    type="text"
-    value={usuarioLogin}
-    onChange={(e) => setUsuarioLogin(e.target.value)}
-    placeholder="Login"
-    autoComplete="off"
-name="novo-usuario-login"
-    className={`w-full rounded-xl border px-3 py-2.5 text-sm font-semibold outline-none transition ${
-      darkMode
-        ? 'bg-slate-900 border-slate-600 text-white placeholder:text-slate-400'
-        : 'bg-white border-slate-300 text-slate-700 placeholder:text-slate-400'
-    }`}
-  />
+          <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-[1.4fr_1.35fr_1fr_1.2fr_1.2fr_auto] xl:items-end">
+            <label className={`grid gap-1 text-xs font-bold ${textMuted}`} htmlFor="novo-usuario-nome">
+              Nome completo
+              <input
+                id="novo-usuario-nome"
+                type="text"
+                value={usuarioNome}
+                onChange={(e) => setUsuarioNome(e.target.value)}
+                placeholder="Nome e sobrenome"
+                autoComplete="name"
+                name="novo-usuario-nome"
+                required
+                className={`h-11 w-full rounded-xl border px-3 text-sm font-semibold outline-none transition ${
+                  darkMode
+                    ? 'bg-slate-900 border-slate-600 text-white placeholder:text-slate-400'
+                    : 'bg-white border-slate-300 text-slate-700 placeholder:text-slate-400'
+                }`}
+              />
+            </label>
 
-  <div className="relative">
-  <input
-    type={mostrarUsuarioSenha ? 'text' : 'password'}
-    value={usuarioSenha}
-    onChange={(e) => setUsuarioSenha(e.target.value)}
-    placeholder="Senha inicial"
-    autoComplete="new-password"
-    name="novo-usuario-senha"
-    className={`w-full rounded-xl border px-3 py-2.5 pr-10 text-sm font-semibold outline-none transition ${
-      darkMode
-        ? 'bg-slate-900 border-slate-600 text-white placeholder:text-slate-400'
-        : 'bg-white border-slate-300 text-slate-700 placeholder:text-slate-400'
-    }`}
-  />
+            <label className={`grid gap-1 text-xs font-bold ${textMuted}`} htmlFor="novo-usuario-email">
+              E-mail
+              <input
+                id="novo-usuario-email"
+                type="email"
+                value={usuarioEmail}
+                onChange={(e) => setUsuarioEmail(e.target.value)}
+                placeholder="usuario@empresa.com.br"
+                autoComplete="email"
+                autoCapitalize="none"
+                spellCheck={false}
+                name="novo-usuario-email"
+                required
+                className={`h-11 w-full rounded-xl border px-3 text-sm font-semibold outline-none transition ${
+                  darkMode
+                    ? 'bg-slate-900 border-slate-600 text-white placeholder:text-slate-400'
+                    : 'bg-white border-slate-300 text-slate-700 placeholder:text-slate-400'
+                }`}
+              />
+            </label>
 
-  <button
-    type="button"
-    onClick={() => setMostrarUsuarioSenha((mostrar) => !mostrar)}
-    aria-label={mostrarUsuarioSenha ? 'Ocultar senha' : 'Exibir senha'}
-    aria-pressed={mostrarUsuarioSenha}
-    className={`absolute right-2 top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full transition cursor-pointer ${
-      darkMode
-        ? 'text-slate-300 hover:bg-slate-700 hover:text-white'
-        : 'text-slate-500 hover:bg-slate-100 hover:text-slate-800'
-    }`}
-    title={mostrarUsuarioSenha ? 'Ocultar senha' : 'Ver senha'}
-  >
-    {mostrarUsuarioSenha ? (
-      <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z" />
-        <circle cx="12" cy="12" r="3" strokeWidth="2" />
-      </svg>
-    ) : (
-      <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 3l18 18" />
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10.58 10.58A2 2 0 0012 14a2 2 0 001.42-.58" />
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9.88 5.09A10.94 10.94 0 0112 5c5 0 9 4 10 7a12.7 12.7 0 01-3.02 4.45" />
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6.61 6.61A12.47 12.47 0 002 12c1 3 5 7 10 7a10.94 10.94 0 004.39-.91" />
-      </svg>
-    )}
-  </button>
-</div>
+            <label className={`grid gap-1 text-xs font-bold ${textMuted}`} htmlFor="novo-usuario-login">
+              Login
+              <input
+                id="novo-usuario-login"
+                type="text"
+                value={usuarioLogin}
+                onChange={(e) => setUsuarioLogin(e.target.value)}
+                placeholder="Ex.: financeiro"
+                autoComplete="username"
+                autoCapitalize="none"
+                spellCheck={false}
+                name="novo-usuario-login"
+                required
+                className={`h-11 w-full rounded-xl border px-3 text-sm font-semibold outline-none transition ${
+                  darkMode
+                    ? 'bg-slate-900 border-slate-600 text-white placeholder:text-slate-400'
+                    : 'bg-white border-slate-300 text-slate-700 placeholder:text-slate-400'
+                }`}
+              />
+            </label>
 
-  <select
-  value={usuarioPerfil}
-  onChange={(e) =>
-    setUsuarioPerfil(
-      e.target.value as
-        | ''
-        | 'administrador'
-        | 'operador_completo'
-        | 'operador_simples'
-    )
-  }
-  className={`w-full rounded-xl border px-3 py-2.5 text-sm font-bold outline-none transition ${
-    darkMode
-      ? `bg-slate-900 border-slate-600 ${usuarioPerfil ? 'text-white' : 'text-slate-400'}`
-      : `bg-white border-slate-300 ${usuarioPerfil ? 'text-slate-700' : 'text-slate-400'}`
-  }`}
->
-  <option
-    value=""
-    disabled
-    className={darkMode ? 'bg-slate-900 text-slate-400' : 'bg-white text-slate-400'}
-  >
-    Tipo de usuário
-  </option>
+            <label className={`grid gap-1 text-xs font-bold ${textMuted}`} htmlFor="novo-usuario-senha">
+              Senha inicial
+              <div className="relative">
+                <input
+                  id="novo-usuario-senha"
+                  type={mostrarUsuarioSenha ? 'text' : 'password'}
+                  value={usuarioSenha}
+                  onChange={(e) => setUsuarioSenha(e.target.value)}
+                  placeholder="Mínimo de 8 caracteres"
+                  autoComplete="new-password"
+                  name="novo-usuario-senha"
+                  required
+                  className={`h-11 w-full rounded-xl border px-3 pr-10 text-sm font-semibold outline-none transition ${
+                    darkMode
+                      ? 'bg-slate-900 border-slate-600 text-white placeholder:text-slate-400'
+                      : 'bg-white border-slate-300 text-slate-700 placeholder:text-slate-400'
+                  }`}
+                />
 
-  <option
-    value="operador_simples"
-    className={darkMode ? 'bg-slate-900 text-white' : 'bg-white text-slate-700'}
-  >
-    Operador Simples
-  </option>
+                <button
+                  type="button"
+                  onClick={() => setMostrarUsuarioSenha((mostrar) => !mostrar)}
+                  aria-label={mostrarUsuarioSenha ? 'Ocultar senha' : 'Exibir senha'}
+                  aria-pressed={mostrarUsuarioSenha}
+                  className={`absolute right-2 top-1/2 flex h-8 w-8 -translate-y-1/2 cursor-pointer items-center justify-center rounded-full transition ${
+                    darkMode
+                      ? 'text-slate-300 hover:bg-slate-700 hover:text-white'
+                      : 'text-slate-500 hover:bg-slate-100 hover:text-slate-800'
+                  }`}
+                  title={mostrarUsuarioSenha ? 'Ocultar senha' : 'Ver senha'}
+                >
+                  {mostrarUsuarioSenha ? (
+                    <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z" />
+                      <circle cx="12" cy="12" r="3" strokeWidth="2" />
+                    </svg>
+                  ) : (
+                    <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 3l18 18" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10.58 10.58A2 2 0 0012 14a2 2 0 001.42-.58" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9.88 5.09A10.94 10.94 0 0112 5c5 0 9 4 10 7a12.7 12.7 0 01-3.02 4.45" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6.61 6.61A12.47 12.47 0 002 12c1 3 5 7 10 7a10.94 10.94 0 004.39-.91" />
+                    </svg>
+                  )}
+                </button>
+              </div>
+            </label>
 
-  <option
-    value="operador_completo"
-    className={darkMode ? 'bg-slate-900 text-white' : 'bg-white text-slate-700'}
-  >
-    Operador Completo
-  </option>
+            <label className={`grid gap-1 text-xs font-bold ${textMuted}`} htmlFor="novo-usuario-perfil">
+              Tipo de usuário
+              <select
+                id="novo-usuario-perfil"
+                value={usuarioPerfil}
+                onChange={(e) =>
+                  setUsuarioPerfil(
+                    e.target.value as
+                      | ''
+                      | 'administrador'
+                      | 'operador_completo'
+                      | 'operador_simples'
+                  )
+                }
+                required
+                className={`h-11 w-full rounded-xl border px-3 text-sm font-bold outline-none transition ${
+                  darkMode
+                    ? `bg-slate-900 border-slate-600 ${usuarioPerfil ? 'text-white' : 'text-slate-400'}`
+                    : `bg-white border-slate-300 ${usuarioPerfil ? 'text-slate-700' : 'text-slate-400'}`
+                }`}
+              >
+                <option value="" disabled>Selecione</option>
+                <option value="operador_simples">Operador Simples</option>
+                <option value="operador_completo">Operador Completo</option>
+                <option value="administrador">Administrador</option>
+              </select>
+            </label>
 
-  <option
-    value="administrador"
-    className={darkMode ? 'bg-slate-900 text-white' : 'bg-white text-slate-700'}
-  >
-    Administrador
-  </option>
-</select>
-<button
-  type="button"
-  onClick={adicionarUsuarioEmpresa}
-  className="h-[38px] self-center rounded-md px-3 py-1 text-[11px] font-black uppercase tracking-wide shadow-sm transition hover:brightness-110 active:scale-[0.98] cursor-pointer"
-  style={estiloTemaPrimario}
->
-  Criar
-</button>
-</div>
+            <button
+              type="button"
+              onClick={adicionarUsuarioEmpresa}
+              className="h-11 cursor-pointer self-end rounded-xl px-4 text-[11px] font-black uppercase tracking-wide shadow-sm transition hover:brightness-110 active:scale-[0.98]"
+              style={estiloTemaPrimario}
+            >
+              Criar
+            </button>
+          </div>
+        </div>
       ) : modoFormularioUsuario === 'existente' ? (
         <div
           className={`rounded-2xl border p-4 ${

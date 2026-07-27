@@ -1,6 +1,11 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.6.1.15 -->
+<!-- ava-version: 1.6.1.16 -->
+
+> Revisão 1.6.1.16: em Usuários e Permissões, criar e editar exigem nome
+> completo, e-mail real, login e tipo de usuário. A senha é obrigatória somente
+> na criação. O acesso aceita e-mail ou login; uma conta já existente deve ser
+> vinculada por **Adicionar usuário existente**.
 
 > Revisão 1.6.1.15: pesquisa de CNPJ alinhada no formulário próprio da Gestão
 > Mobile; sem mudança operacional adicional na Gestão Web.
@@ -341,6 +346,11 @@ Gestão Mobile ou a assinatura/cupom do Premium Pessoal.
 - Um login pode ter perfis Empresa e Pessoal. As permissões dependem do vínculo:
   Gestor Master, Administrador e operadores não enxergam necessariamente as
   mesmas ações.
+- Em **Usuários e Permissões**, um novo usuário exige nome completo, e-mail
+  real, login, senha inicial e tipo. Na edição, os mesmos dados permanecem
+  obrigatórios e apenas a nova senha é opcional. O usuário entra com e-mail ou
+  login; se o e-mail já pertencer a uma conta, use **Adicionar usuário
+  existente** para vinculá-la ao perfil.
 - Confirmações destrutivas da Administração e dos gerenciadores de conteúdo
   usam o card visual do sistema; fechar, voltar ou pressionar Esc cancela sem
   alterar dados.
