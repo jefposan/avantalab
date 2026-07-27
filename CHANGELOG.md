@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.6.1.12 - 2026-07-27
+
+- Cadastro obrigatório: a pesquisa de CNPJ passa a ter uma ação primária
+  exclusiva e sempre visível abaixo do documento, identificada como
+  **Pesquisar CNPJ e preencher cadastro**.
+- A edição comum do perfil mantém a ação compacta ao lado do CNPJ, separando
+  explicitamente os dois contextos sem duplicar botões na mesma tela.
+
 ## 1.6.1.11 - 2026-07-27
 
 - Cadastros de pessoas passam a identificar explicitamente `Nome completo` ou

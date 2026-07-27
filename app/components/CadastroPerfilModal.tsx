@@ -413,7 +413,7 @@ export default function CadastroPerfilModal({ aberto, empresaId, statusInicial, 
                             }}
                             disabled={consultandoCnpj}
                           />
-                          {tipoDocumento === 'CNPJ' && (
+                          {tipoDocumento === 'CNPJ' && contexto !== 'bloqueio' && (
                             <button
                               type="button"
                               onClick={consultarCnpj}
@@ -425,6 +425,17 @@ export default function CadastroPerfilModal({ aberto, empresaId, statusInicial, 
                             </button>
                           )}
                         </span>
+                        {tipoDocumento === 'CNPJ' && contexto === 'bloqueio' && (
+                          <button
+                            type="button"
+                            onClick={consultarCnpj}
+                            disabled={consultandoCnpj || salvando}
+                            className="min-h-12 w-full rounded-lg bg-[#003E73] px-4 text-sm font-black text-white shadow-sm transition hover:brightness-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-600 focus-visible:ring-offset-2 disabled:cursor-wait disabled:opacity-60"
+                            aria-label="Pesquisar dados cadastrais pelo CNPJ e preencher o cadastro"
+                          >
+                            {consultandoCnpj ? 'Pesquisando CNPJ…' : 'Pesquisar CNPJ e preencher cadastro'}
+                          </button>
+                        )}
                         {documentoInvalido && (
                           <span id="cadastro-perfil-documento-erro" className="text-[10px] font-bold text-red-600" role="alert">
                             {mensagemDocumento}

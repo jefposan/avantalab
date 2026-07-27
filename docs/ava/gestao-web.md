@@ -1,6 +1,11 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.6.1.11 -->
+<!-- ava-version: 1.6.1.12 -->
+
+> Revisão 1.6.1.12: na etapa obrigatória de cadastro empresarial, a ação
+> **Pesquisar CNPJ e preencher cadastro** aparece abaixo do documento e prepara
+> os dados compatíveis para confirmação. Em Editar perfil, a pesquisa continua
+> compacta ao lado do CNPJ.
 
 > Revisão 1.6.1.11: cadastros de pessoas exibem Nome completo e preservam os
 > campos quando ocorre erro. Usuários e Permissões, Controle de Ponto e

@@ -1,6 +1,9 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.6.1.11 -->
+<!-- ava-version: 1.6.1.12 -->
+
+> Revisão 1.6.1.12: ação explícita de pesquisa de CNPJ adicionada à etapa
+> obrigatória da Gestão Web; sem impacto operacional no AvantaVendas.
 
 > Revisão 1.6.1.11: o cadastro da conta mantém temporariamente nome completo,
 > e-mail, celular e DDI para recuperar o preenchimento após atualização da

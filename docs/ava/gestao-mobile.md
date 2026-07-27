@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.6.1.11 -->
+<!-- ava-version: 1.6.1.12 -->
+
+> Revisão 1.6.1.12: ação explícita de pesquisa de CNPJ adicionada à etapa
+> obrigatória da Gestão Web; sem impacto operacional na Gestão Mobile.
 
 > Revisão 1.6.1.11: em Usuários, os campos informam Nome completo e permanecem
 > preenchidos quando há erro de validação, conexão ou servidor. Nome, login e
