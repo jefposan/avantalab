@@ -1,6 +1,12 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.6.0.84.130 -->
+<!-- ava-version: 1.6.0.84.132 -->
+
+> Revisão 1.6.0.84.132: ajuste responsivo da pesquisa de CNPJ na tela
+> obrigatória da Gestão Web; sem impacto operacional na Gestão Mobile.
+
+> Revisão 1.6.0.84.131: pesquisa assistida de CNPJ adicionada ao cadastro
+> empresarial da Gestão Web; sem impacto operacional na Gestão Mobile.
 
 > Revisão 1.6.0.84.130: contraste da Central de Consultas web aprimorado; sem
 > impacto operacional na Gestão Mobile.

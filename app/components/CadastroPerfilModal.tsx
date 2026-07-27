@@ -1,15 +1,33 @@
 'use client';
 
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useId, useRef, useState } from 'react';
 import {
   ESTADOS_BRASIL,
   REGIMES_TRIBUTARIOS,
   TIPOS_EMPRESA,
   type CadastroPerfil,
   type StatusCadastroPerfil,
+  validarCnpj,
 } from '../lib/cadastro-perfil';
+import {
+  aplicarCnpjAoCadastro,
+  CAMPOS_CADASTRO_CNPJ,
+  mapearCnpjParaCadastro,
+  ROTULOS_CAMPOS_CADASTRO_CNPJ,
+  type DadosCnpjParaCadastro,
+} from '../../lib/consultas/mappers/cadastro-perfil';
+import type {
+  ConsultaCnpjResponse,
+  EmpresaConsultada,
+} from '../../lib/consultas/types';
+import { formatarCnpjParaExibicao } from '../../lib/consultas/validators/cnpj';
 
 type DadosCobranca = { nome: string; cpfCnpj: string; email: string; telefone: string };
+
+type ConsultaCadastroCnpj = {
+  empresa: EmpresaConsultada;
+  dados: DadosCnpjParaCadastro;
+};
 
 type Props = {
   aberto: boolean;
@@ -30,11 +48,18 @@ const VAZIO: CadastroPerfil = {
 };
 
 export default function CadastroPerfilModal({ aberto, empresaId, statusInicial, contexto, ciclo, onLembrarDepois, onCancelar, onConcluido }: Props) {
+  const documentoId = useId();
+  const consultaCnpjErroId = `${documentoId}-consulta-erro`;
   const [status, setStatus] = useState<StatusCadastroPerfil | null>(statusInicial || null);
   const [dados, setDados] = useState<CadastroPerfil>(statusInicial?.cadastro || VAZIO);
   const [carregando, setCarregando] = useState(!statusInicial);
   const [salvando, setSalvando] = useState(false);
   const [buscandoCep, setBuscandoCep] = useState(false);
+  const [consultandoCnpj, setConsultandoCnpj] = useState(false);
+  const [consultaCnpj, setConsultaCnpj] = useState<ConsultaCadastroCnpj | null>(null);
+  const [consultaCnpjErro, setConsultaCnpjErro] = useState('');
+  const [consultaCnpjSucesso, setConsultaCnpjSucesso] = useState('');
+  const [substituirDadosCnpj, setSubstituirDadosCnpj] = useState(false);
   const [erro, setErro] = useState('');
   const [statusAutoSave, setStatusAutoSave] = useState('');
   const autoSaveEmAndamento = useRef(false);
@@ -70,6 +95,15 @@ export default function CadastroPerfilModal({ aberto, empresaId, statusInicial, 
   const pessoal = status?.tipoPerfil === 'pessoal';
   const autonomo = dados.tipo_empresa === 'autonomo';
   const tipoDocumento = pessoal || autonomo ? 'CPF' : 'CNPJ';
+  const planoConsultaCnpj = consultaCnpj
+    ? aplicarCnpjAoCadastro(dados, consultaCnpj.dados, substituirDadosCnpj)
+    : null;
+  const camposPreenchidosCnpj = consultaCnpj
+    ? aplicarCnpjAoCadastro(dados, consultaCnpj.dados, false).camposPreservados
+    : [];
+  const camposDisponiveisCnpj = consultaCnpj
+    ? CAMPOS_CADASTRO_CNPJ.filter((campo) => consultaCnpj.dados[campo])
+    : [];
   const set = <K extends keyof CadastroPerfil>(campo: K, valor: CadastroPerfil[K]) => setDados((atual) => ({ ...atual, [campo]: valor }));
   const input = 'h-9 w-full rounded-lg border border-slate-300 bg-white px-3 text-sm text-slate-800 outline-none focus:border-sky-600 focus:ring-2 focus:ring-sky-600/20 disabled:bg-slate-100 disabled:text-slate-400';
   const label = 'grid gap-1 text-[11px] font-bold text-slate-600';
@@ -88,7 +122,90 @@ export default function CadastroPerfilModal({ aberto, empresaId, statusInicial, 
     } finally { setBuscandoCep(false); }
   };
 
-  const salvarRascunhoAutomatico = async (rascunho: CadastroPerfil) => {
+  const limparRetornoCnpj = () => {
+    setConsultaCnpj(null);
+    setConsultaCnpjErro('');
+    setConsultaCnpjSucesso('');
+    setSubstituirDadosCnpj(false);
+  };
+
+  const consultarCnpj = async () => {
+    if (consultandoCnpj) return;
+    if (!validarCnpj(dados.documento)) {
+      setConsultaCnpj(null);
+      setConsultaCnpjErro('Informe um CNPJ válido para continuar.');
+      setConsultaCnpjSucesso('');
+      return;
+    }
+
+    const controller = new AbortController();
+    const timeout = window.setTimeout(() => controller.abort(), 12_000);
+    setConsultandoCnpj(true);
+    setConsultaCnpj(null);
+    setConsultaCnpjErro('');
+    setConsultaCnpjSucesso('');
+    setSubstituirDadosCnpj(false);
+
+    try {
+      const resposta = await fetch('/api/consultas/cnpj', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ cnpj: dados.documento }),
+        cache: 'no-store',
+        signal: controller.signal,
+      });
+      const json = (await resposta.json().catch(() => null)) as ConsultaCnpjResponse | null;
+
+      if (!resposta.ok || !json || !json.success) {
+        const mensagem = json && !json.success
+          ? json.error.message
+          : 'O serviço de consulta está temporariamente indisponível.';
+        throw new Error(mensagem);
+      }
+
+      const dadosConsultados = mapearCnpjParaCadastro(json.data);
+      if (!Object.keys(dadosConsultados).length) {
+        throw new Error('A empresa foi localizada, mas a fonte não retornou dados compatíveis com este cadastro.');
+      }
+
+      setConsultaCnpj({ empresa: json.data, dados: dadosConsultados });
+    } catch (e) {
+      const timeoutAtingido =
+        controller.signal.aborted ||
+        (e instanceof DOMException && e.name === 'AbortError');
+      setConsultaCnpjErro(
+        timeoutAtingido
+          ? 'O serviço demorou mais que o esperado para responder. Tente novamente.'
+          : e instanceof Error
+            ? e.message
+            : 'O serviço de consulta está temporariamente indisponível.',
+      );
+    } finally {
+      window.clearTimeout(timeout);
+      setConsultandoCnpj(false);
+    }
+  };
+
+  const inserirDadosConsultados = () => {
+    if (!consultaCnpj || !planoConsultaCnpj) return;
+    if (!planoConsultaCnpj.camposAplicados.length) {
+      setConsultaCnpjSucesso('Os dados disponíveis já estão preenchidos no cadastro.');
+      return;
+    }
+
+    setDados(planoConsultaCnpj.dados);
+    void salvarRascunhoAutomatico(planoConsultaCnpj.dados);
+    setConsultaCnpj(null);
+    setSubstituirDadosCnpj(false);
+    setConsultaCnpjErro('');
+    setConsultaCnpjSucesso(
+      `${planoConsultaCnpj.camposAplicados.length} ${
+        planoConsultaCnpj.camposAplicados.length === 1 ? 'campo foi inserido' : 'campos foram inseridos'
+      }. O rascunho será salvo automaticamente; revise antes de concluir o cadastro.`,
+    );
+  };
+
+  async function salvarRascunhoAutomatico(rascunho: CadastroPerfil) {
     if (autoSaveEmAndamento.current) {
       autoSavePendente.current = rascunho;
       return;
@@ -116,7 +233,7 @@ export default function CadastroPerfilModal({ aberto, empresaId, statusInicial, 
       autoSavePendente.current = null;
       if (pendente) void salvarRascunhoAutomatico(pendente);
     }
-  };
+  }
 
   const salvar = async () => {
     setSalvando(true); setErro('');
@@ -200,8 +317,106 @@ export default function CadastroPerfilModal({ aberto, empresaId, statusInicial, 
                   <label className={label}>{pessoal ? 'Nome do perfil' : 'Nome Fantasia'}<input className={input} value={dados.nome_fantasia} onChange={(e) => set('nome_fantasia', e.target.value)} /></label>
                   <label className={label}>{pessoal ? 'Nome completo' : 'Responsável'}<input className={input} value={dados.nome_responsavel} onChange={(e) => set('nome_responsavel', e.target.value)} /></label>
                   {!pessoal && <label className={label}>Razão Social<input className={input} value={dados.razao_social} onChange={(e) => set('razao_social', e.target.value)} /></label>}
-                  {!pessoal && <label className={label}>Tipo de Empresa<select className={input} value={dados.tipo_empresa} onChange={(e) => setDados((atual) => ({ ...atual, tipo_empresa: e.target.value, documento: '' }))}><option value="">Selecione</option>{TIPOS_EMPRESA.map(([v,n]) => <option key={v} value={v}>{n}</option>)}</select></label>}
-                  <label className={label}>{tipoDocumento}<input className={input} inputMode="numeric" value={dados.documento} onChange={(e) => set('documento', e.target.value.replace(/\D/g, '').slice(0, tipoDocumento === 'CPF' ? 11 : 14))} /></label>
+                  {!pessoal && <label className={label}>Tipo de Empresa<select className={input} value={dados.tipo_empresa} onChange={(e) => { limparRetornoCnpj(); setDados((atual) => ({ ...atual, tipo_empresa: e.target.value, documento: '' })); }}><option value="">Selecione</option>{TIPOS_EMPRESA.map(([v,n]) => <option key={v} value={v}>{n}</option>)}</select></label>}
+                  <div className={label}>
+                    <label htmlFor={documentoId}>{tipoDocumento}</label>
+                    <span className="flex min-w-0 flex-col gap-1.5 sm:flex-row">
+                      <input
+                        id={documentoId}
+                        className={input}
+                        inputMode="numeric"
+                        value={dados.documento}
+                        onChange={(e) => {
+                          limparRetornoCnpj();
+                          set('documento', e.target.value.replace(/\D/g, '').slice(0, tipoDocumento === 'CPF' ? 11 : 14));
+                        }}
+                        aria-describedby={consultaCnpjErro ? consultaCnpjErroId : undefined}
+                        aria-invalid={Boolean(consultaCnpjErro)}
+                        disabled={consultandoCnpj}
+                      />
+                      {tipoDocumento === 'CNPJ' && (
+                        <button
+                          type="button"
+                          onClick={consultarCnpj}
+                          disabled={consultandoCnpj || salvando}
+                          className="min-h-11 w-full shrink-0 rounded-lg border border-sky-200 bg-sky-50 px-4 text-xs font-black text-sky-800 transition hover:bg-sky-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-600 disabled:cursor-wait disabled:opacity-60 sm:min-h-9 sm:w-auto"
+                          aria-label="Pesquisar dados cadastrais pelo CNPJ"
+                        >
+                          {consultandoCnpj ? 'Pesquisando…' : 'Pesquisar CNPJ'}
+                        </button>
+                      )}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="mt-2" aria-live="polite">
+                  {consultaCnpjErro && (
+                    <p id={consultaCnpjErroId} role="alert" className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs font-bold text-red-700">
+                      {consultaCnpjErro}
+                    </p>
+                  )}
+
+                  {consultaCnpjSucesso && (
+                    <p className="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs font-bold text-emerald-800">
+                      {consultaCnpjSucesso}
+                    </p>
+                  )}
+
+                  {consultaCnpj && planoConsultaCnpj && (
+                    <section className="rounded-lg border border-sky-200 bg-sky-50 p-3" aria-label="Dados encontrados pelo CNPJ">
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="min-w-0">
+                          <p className="text-[10px] font-black uppercase tracking-[0.12em] text-sky-800">Dados encontrados</p>
+                          <p className="mt-0.5 truncate text-sm font-black text-slate-900">
+                            {consultaCnpj.empresa.nomeFantasia || consultaCnpj.empresa.razaoSocial || 'Empresa consultada'}
+                          </p>
+                          <p className="mt-0.5 text-[11px] text-slate-600">
+                            {formatarCnpjParaExibicao(consultaCnpj.empresa.documento)}
+                            {consultaCnpj.empresa.endereco.cidade ? ` · ${consultaCnpj.empresa.endereco.cidade}` : ''}
+                            {consultaCnpj.empresa.endereco.uf ? `/${consultaCnpj.empresa.endereco.uf}` : ''}
+                          </p>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={limparRetornoCnpj}
+                          className="shrink-0 rounded-md px-2 py-1 text-[10px] font-bold text-slate-500 hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-600"
+                        >
+                          Descartar
+                        </button>
+                      </div>
+
+                      <p className="mt-2 text-[11px] leading-relaxed text-slate-600">
+                        Campos disponíveis: {camposDisponiveisCnpj.map((campo) => ROTULOS_CAMPOS_CADASTRO_CNPJ[campo]).join(', ')}.
+                      </p>
+
+                      {camposPreenchidosCnpj.length > 0 && (
+                        <label className="mt-2 flex cursor-pointer items-start gap-2 rounded-md bg-white/75 px-2.5 py-2 text-[11px] font-bold text-slate-700">
+                          <input
+                            type="checkbox"
+                            checked={substituirDadosCnpj}
+                            onChange={(e) => setSubstituirDadosCnpj(e.target.checked)}
+                            className="mt-0.5 h-4 w-4 accent-sky-700"
+                          />
+                          Substituir também os {camposPreenchidosCnpj.length} campos que já possuem conteúdo.
+                        </label>
+                      )}
+
+                      <div className="mt-2 flex justify-end">
+                        <button
+                          type="button"
+                          onClick={inserirDadosConsultados}
+                          disabled={!planoConsultaCnpj.camposAplicados.length}
+                          className="h-9 rounded-lg bg-[#003E73] px-4 text-[11px] font-black text-white transition hover:brightness-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-600 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                        >
+                          {planoConsultaCnpj.camposAplicados.length
+                            ? `Inserir ${planoConsultaCnpj.camposAplicados.length} ${
+                                planoConsultaCnpj.camposAplicados.length === 1 ? 'campo' : 'campos'
+                              }`
+                            : 'Dados já preenchidos'}
+                        </button>
+                      </div>
+                    </section>
+                  )}
                 </div>
               </div>
 

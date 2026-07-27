@@ -1,6 +1,15 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.6.0.84.130 -->
+<!-- ava-version: 1.6.0.84.132 -->
+
+> Revisão 1.6.0.84.132: na tela obrigatória de cadastro, a ação
+> **Pesquisar CNPJ** fica em uma linha própria e com área de toque ampliada no
+> celular; em telas maiores, permanece ao lado do campo.
+
+> Revisão 1.6.0.84.131: no cadastro de perfil empresarial, o botão
+> **Pesquisar** ao lado do CNPJ consulta a base pública e, após confirmação,
+> insere somente os campos compatíveis. Dados existentes são preservados por
+> padrão e só são substituídos mediante escolha explícita.
 
 > Revisão 1.6.0.84.130: melhora de contraste visual na Central de Consultas;
 > sem mudança operacional no fluxo de pesquisa.

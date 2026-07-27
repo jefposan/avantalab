@@ -1,5 +1,22 @@
 # Changelog
 
+## 1.6.0.84.132 - 2026-07-27
+
+- Cadastro obrigatório do perfil: a pesquisa de CNPJ passa a ocupar uma linha
+  própria no celular, com botão largo e área de toque ampliada, permanecendo ao
+  lado do documento em telas maiores.
+
+## 1.6.0.84.131 - 2026-07-27
+
+- Cadastro empresarial: o campo CNPJ recebe a ação **Pesquisar**, que reutiliza
+  o endpoint interno da Central de Consultas e prepara apenas os dados
+  compatíveis com o formulário.
+- A consulta não altera o formulário automaticamente. O usuário revisa a
+  empresa encontrada, confirma a inserção e escolhe explicitamente se deseja
+  substituir campos que já possuem conteúdo.
+- Responsável, WhatsApp, site, Instagram, inscrição municipal e tipo de empresa
+  permanecem manuais para evitar inferências não fornecidas pelo CNPJ.ws.
+
 ## 1.6.0.84.130 - 2026-07-27
 
 - Central de Consultas: aumenta o contraste de rótulos, textos auxiliares,
