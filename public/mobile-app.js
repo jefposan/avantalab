@@ -54,6 +54,7 @@
   });
   var CHAVE_ULTIMO_PERFIL_MOBILE = 'avantalab_mobile_ultimo_perfil_id';
   var CHAVE_RASCUNHO_CADASTRO_MOBILE = 'avantalab_mobile_rascunho_cadastro';
+  var CHAVE_RASCUNHO_USUARIO_MOBILE = 'avantalab:rascunho:v1:gestao-mobile:usuarios:';
   var CHAVE_SISTEMA_INICIAL_MOBILE = 'avantalab_mobile_sistema_inicial_';
   var CHAVE_SISTEMA_SESSAO_MOBILE = 'avantalab_mobile_sistema_sessao_';
   var CHAVE_CONTEXTO_SISTEMA_MOBILE = 'avantalab_mobile_sistema_contexto';
@@ -167,6 +168,16 @@
     usuariosCarregando: false,
     usuarioEditandoId: '',
     usuarioModo: '',
+    usuarioNome: '',
+    usuarioLogin: '',
+    usuarioSenha: '',
+    usuarioPerfil: '',
+    editUsuarioNome: '',
+    editUsuarioLogin: '',
+    editUsuarioEmail: '',
+    editUsuarioPerfil: 'operador_simples',
+    editUsuarioSenha: '',
+    editUsuarioConfirmarSenha: '',
     usuarioExistenteTermo: '',
     usuarioExistenteResultado: null,
     usuarioExistentePerfil: 'operador_simples',
@@ -415,6 +426,46 @@
 
   function limparRascunhoCadastroMobile() {
     try { sessionStorage.removeItem(CHAVE_RASCUNHO_CADASTRO_MOBILE); } catch (error) {}
+  }
+
+  function chaveRascunhoUsuarioMobile() {
+    var empresaId = state.empresa && state.empresa.id;
+    var usuarioId = state.usuario && state.usuario.id;
+    return empresaId && usuarioId ? CHAVE_RASCUNHO_USUARIO_MOBILE + usuarioId + ':' + empresaId : '';
+  }
+
+  function restaurarRascunhoUsuarioMobile() {
+    var chave = chaveRascunhoUsuarioMobile();
+    if (!chave) return;
+    try {
+      var salvo = JSON.parse(sessionStorage.getItem(chave) || 'null');
+      if (!salvo || Number(salvo.expiraEm || 0) <= Date.now()) {
+        sessionStorage.removeItem(chave);
+        return;
+      }
+      state.usuarioNome = String(salvo.nome || '');
+      state.usuarioLogin = String(salvo.login || '');
+      state.usuarioPerfil = String(salvo.perfil || '');
+    } catch (error) {}
+  }
+
+  function salvarRascunhoUsuarioMobile() {
+    var chave = chaveRascunhoUsuarioMobile();
+    if (!chave) return;
+    try {
+      sessionStorage.setItem(chave, JSON.stringify({
+        versao: 1,
+        expiraEm: Date.now() + 24 * 60 * 60 * 1000,
+        nome: state.usuarioNome || '',
+        login: state.usuarioLogin || '',
+        perfil: state.usuarioPerfil || ''
+      }));
+    } catch (error) {}
+  }
+
+  function limparRascunhoUsuarioMobile() {
+    var chave = chaveRascunhoUsuarioMobile();
+    try { if (chave) sessionStorage.removeItem(chave); } catch (error) {}
   }
 
   restaurarRascunhoCadastroMobile();
@@ -1018,7 +1069,7 @@
       : '<div class="grid gap-4">' +
           '<div><h3 class="mb-2 border-b border-slate-200 pb-1 text-[11px] font-black uppercase text-sky-800">Dados Gerais</h3><div class="grid gap-2">' +
             campo('cp-nome-fantasia', pessoal ? 'Nome do perfil' : 'Nome Fantasia', d.nome_fantasia) +
-            campo('cp-responsavel', pessoal ? 'Nome completo' : 'Respons&aacute;vel', d.nome_responsavel) +
+            campo('cp-responsavel', pessoal ? 'Nome completo' : 'Respons&aacute;vel &mdash; nome completo', d.nome_responsavel) +
             (!pessoal ? campo('cp-razao-social', 'Raz&atilde;o Social', d.razao_social) + '<label class="grid gap-1 text-[10px] font-black text-slate-600">Tipo de Empresa<select id="cp-tipo-empresa" class="h-9 rounded-lg border border-slate-300 bg-white px-3 text-sm text-slate-800">' + opcoesCadastroMobile(tipos, d.tipo_empresa) + '</select></label>' : '') +
             campo('cp-documento', pessoal || autonomo ? 'CPF' : 'CNPJ', d.documento, 'text', 'inputmode="numeric"') +
           '</div></div>' +
@@ -4347,6 +4398,7 @@
   function abrirCriarUsuarioMobile() {
     // Premium Pessoal: usuários internos são recurso pago no plano grátis.
     if (premiumPessoalBloqueadoMobile()) { abrirPremiumMobile('usuarios_internos'); return; }
+    restaurarRascunhoUsuarioMobile();
     state.usuarioModo = 'criar';
     state.usuarioExistenteTermo = '';
     state.usuarioExistenteResultado = null;
@@ -4359,6 +4411,7 @@
 
   function ocultarFormularioUsuarioMobile() {
     state.usuarioModo = '';
+    state.usuarioSenha = '';
     state.usuarioExistenteTermo = '';
     state.usuarioExistenteResultado = null;
     state.usuarioExistentePerfil = 'operador_simples';
@@ -4373,6 +4426,7 @@
     if (premiumPessoalBloqueadoMobile()) { abrirPremiumMobile('usuarios_internos'); return; }
     state.usuarioModo = 'existente';
     state.usuarioEditandoId = '';
+    state.usuarioSenha = '';
     state.usuarioExistenteTermo = '';
     state.usuarioExistenteResultado = null;
     state.usuarioExistentePerfil = 'operador_simples';
@@ -4490,8 +4544,19 @@
     var senha = campo('usuario-senha').trim();
     var perfil = campo('usuario-perfil');
 
+    state.usuarioNome = nome;
+    state.usuarioLogin = login;
+    state.usuarioSenha = senha;
+    state.usuarioPerfil = perfil;
+    salvarRascunhoUsuarioMobile();
+
     if (!nome || !login || !senha || !perfil) {
-      setErro('Informe nome, login, senha e perfil.');
+      setErro('Informe nome completo, login, senha e perfil.');
+      return;
+    }
+
+    if (!nomeCompletoValido(nome)) {
+      setErro('Informe o nome completo do usuario, com nome e sobrenome.');
       return;
     }
 
@@ -4533,12 +4598,32 @@
       return;
     }
 
+    state.usuarioNome = '';
+    state.usuarioLogin = '';
+    state.usuarioSenha = '';
+    state.usuarioPerfil = '';
+    limparRascunhoUsuarioMobile();
     await carregarUsuariosMobile();
     mostrarToast('Usuario criado.');
   }
 
   function editarUsuarioMobile(id) {
     state.usuarioEditandoId = id || '';
+    var usuario = state.usuariosEmpresa.find(function (item) { return String(item.id) === String(id); });
+    if (!usuario && state.empresa && String(state.empresa.acessoId) === String(id)) {
+      usuario = {
+        nome: state.empresa.usuario_nome || '',
+        login: state.loginConta || state.empresa.login || '',
+        email: state.empresa.email || '',
+        perfil: state.empresa.perfil || 'operador_simples'
+      };
+    }
+    state.editUsuarioNome = String(usuario && usuario.nome || '');
+    state.editUsuarioLogin = String(usuario && usuario.login || '');
+    state.editUsuarioEmail = emailRealUsuario(usuario || {});
+    state.editUsuarioPerfil = String(usuario && usuario.perfil || 'operador_simples');
+    state.editUsuarioSenha = '';
+    state.editUsuarioConfirmarSenha = '';
     state.erro = '';
     render();
   }
@@ -4557,8 +4642,19 @@
     var senha = campo('edit-usuario-senha').trim();
     var confirmarSenha = campo('edit-usuario-confirmar-senha').trim();
 
+    state.editUsuarioNome = nome;
+    state.editUsuarioLogin = login;
+    state.editUsuarioEmail = email;
+    state.editUsuarioPerfil = perfil;
+    state.editUsuarioSenha = senha;
+    state.editUsuarioConfirmarSenha = confirmarSenha;
+
     if (!nome || !login) {
-      setErro('Informe nome e login. O perfil atual será mantido.');
+      setErro('Informe nome completo e login. O perfil atual sera mantido.');
+      return;
+    }
+    if (!nomeCompletoValido(nome)) {
+      setErro('Informe o nome completo do usuario, com nome e sobrenome.');
       return;
     }
     if (senha && senha.length < 8) { setErro('A nova senha deve ter pelo menos 8 caracteres.'); return; }
@@ -4601,6 +4697,12 @@
 
     var acessoEditadoId = state.usuarioEditandoId;
     state.usuarioEditandoId = '';
+    state.editUsuarioNome = '';
+    state.editUsuarioLogin = '';
+    state.editUsuarioEmail = '';
+    state.editUsuarioPerfil = 'operador_simples';
+    state.editUsuarioSenha = '';
+    state.editUsuarioConfirmarSenha = '';
     state.loginConta = login;
     if (state.empresa && String(state.empresa.acessoId) === String(acessoEditadoId)) {
       state.empresa.login = login;
@@ -6277,7 +6379,13 @@
 
   function nomeCompletoValido(nome) {
     var conectivos = ['da', 'das', 'de', 'do', 'dos', 'e'];
-    return String(nome || '').trim().split(/\s+/).filter(function (parte) {
+    var partes = String(nome || '').normalize('NFC').trim().split(/\s+/);
+    if (partes.some(function (parte) {
+      if (conectivos.indexOf(parte.toLocaleLowerCase('pt-BR')) >= 0) return false;
+      return !/^\p{L}+(?:['’\-]\p{L}+)*$/u.test(parte) ||
+        Array.from(parte).filter(function (caractere) { return /\p{L}/u.test(caractere); }).length < 2;
+    })) return false;
+    return partes.filter(function (parte) {
       return parte && conectivos.indexOf(parte.toLocaleLowerCase('pt-BR')) < 0;
     }).length >= 2;
   }
@@ -8490,11 +8598,11 @@
     );
   }
 
-  function campoSenhaSimplesHtml(id, placeholder, classes, autoComplete) {
+  function campoSenhaSimplesHtml(id, placeholder, classes, autoComplete, value) {
     var toggleId = 'toggle-' + id;
     return (
       '<span class="relative block min-w-0">' +
-        '<input id="' + id + '" type="password" autocomplete="' + escapeHtml(autoComplete || 'new-password') + '" placeholder="' + escapeHtml(placeholder || '') + '" style="font-size:16px" class="' + escapeHtml(classes || '') + ' pr-10" />' +
+        '<input id="' + id + '" type="password" autocomplete="' + escapeHtml(autoComplete || 'new-password') + '" placeholder="' + escapeHtml(placeholder || '') + '" value="' + escapeHtml(value || '') + '" style="font-size:16px" class="' + escapeHtml(classes || '') + ' pr-10" />' +
         '<button id="' + toggleId + '" type="button" class="absolute right-1.5 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-lg text-slate-500 transition hover:bg-slate-100 hover:text-slate-800" aria-label="Exibir senha" aria-pressed="false">' +
           iconeVisibilidadeSenhaMobile(false) +
         '</button>' +
@@ -10838,12 +10946,13 @@
     return (
       '<div class="grid gap-2 rounded-2xl bg-slate-50 p-3">' +
         '<p class="text-[10px] font-black uppercase tracking-wide text-slate-400">Criar novo usuario</p>' +
-        '<input id="usuario-nome" placeholder="Nome" style="font-size:16px" class="h-10 w-full min-w-0 rounded-lg border border-slate-200 bg-white px-3 text-base font-bold outline-none" />' +
+        '<label for="usuario-nome" class="text-[10px] font-black uppercase tracking-wide text-slate-500">Nome completo</label>' +
+        '<input id="usuario-nome" value="' + escapeHtml(state.usuarioNome || '') + '" placeholder="Nome completo" autocomplete="name" style="font-size:16px" class="h-10 w-full min-w-0 rounded-lg border border-slate-200 bg-white px-3 text-base font-bold outline-none" />' +
         '<div class="grid gap-2">' +
-          '<input id="usuario-login" placeholder="Login" style="font-size:16px" class="h-10 w-full min-w-0 rounded-lg border border-slate-200 bg-white px-3 text-base font-bold outline-none" />' +
-          campoSenhaSimplesHtml('usuario-senha', 'Senha', 'h-10 w-full min-w-0 rounded-lg border border-slate-200 bg-white px-3 text-base font-bold outline-none', 'new-password') +
+          '<input id="usuario-login" value="' + escapeHtml(state.usuarioLogin || '') + '" placeholder="Login" style="font-size:16px" class="h-10 w-full min-w-0 rounded-lg border border-slate-200 bg-white px-3 text-base font-bold outline-none" />' +
+          campoSenhaSimplesHtml('usuario-senha', 'Senha', 'h-10 w-full min-w-0 rounded-lg border border-slate-200 bg-white px-3 text-base font-bold outline-none', 'new-password', state.usuarioSenha || '') +
         '</div>' +
-        '<select id="usuario-perfil" style="font-size:16px" class="h-10 w-full min-w-0 rounded-lg border border-slate-200 bg-white px-3 text-base font-bold outline-none"><option value="">Perfil</option>' + opcoesPerfilHtml('', false) + '</select>' +
+        '<select id="usuario-perfil" style="font-size:16px" class="h-10 w-full min-w-0 rounded-lg border border-slate-200 bg-white px-3 text-base font-bold outline-none"><option value="">Perfil</option>' + opcoesPerfilHtml(state.usuarioPerfil || '', false) + '</select>' +
         '<button id="criar-usuario-mobile" type="button" class="h-10 rounded-xl bg-slate-950 px-4 text-xs font-black uppercase tracking-wide text-white">' + (state.carregando ? 'Salvando...' : 'Criar usuario') + '</button>' +
       '</div>'
     );
@@ -10883,12 +10992,13 @@
     return (
       '<div class="grid gap-2 rounded-2xl bg-cyan-50 p-3">' +
         '<div class="flex items-center justify-between gap-2"><p class="text-[10px] font-black uppercase tracking-wide text-cyan-900">Editar usuario</p><button id="cancelar-edicao-usuario" type="button" class="text-[10px] font-black text-slate-500">Cancelar</button></div>' +
-        '<input id="edit-usuario-nome" value="' + escapeHtml(usuario.nome || '') + '" placeholder="Nome" style="font-size:16px" class="h-10 w-full min-w-0 rounded-lg border border-cyan-100 bg-white px-3 text-base font-bold outline-none" />' +
-        '<input id="edit-usuario-login" value="' + escapeHtml(usuario.login || (state.empresa && String(state.empresa.acessoId) === String(usuario.id) ? state.loginConta : '')) + '" placeholder="Login" style="font-size:16px" class="h-10 w-full min-w-0 rounded-lg border border-cyan-100 bg-white px-3 text-base font-bold outline-none" />' +
-        '<input id="edit-usuario-email" type="email" value="' + escapeHtml(emailRealUsuario(usuario)) + '" placeholder="E-mail (opcional)" style="font-size:16px" class="h-10 w-full min-w-0 rounded-lg border border-cyan-100 bg-white px-3 text-base font-bold outline-none" />' +
-        '<select id="edit-usuario-perfil" style="font-size:16px" class="h-10 w-full min-w-0 rounded-lg border border-cyan-100 bg-white px-3 text-base font-bold outline-none">' + opcoesPerfilHtml(usuario.perfil || 'operador_simples', usuario.perfil === 'gestor_master' || (state.empresa && state.empresa.perfil === 'gestor_master')) + '</select>' +
-        campoSenhaSimplesHtml('edit-usuario-senha', 'Nova senha (opcional)', 'h-10 w-full min-w-0 rounded-lg border border-cyan-100 bg-white px-3 text-base font-bold outline-none', 'new-password') +
-        campoSenhaSimplesHtml('edit-usuario-confirmar-senha', 'Confirmar nova senha', 'h-10 w-full min-w-0 rounded-lg border border-cyan-100 bg-white px-3 text-base font-bold outline-none', 'new-password') +
+        '<label for="edit-usuario-nome" class="text-[10px] font-black uppercase tracking-wide text-cyan-900">Nome completo</label>' +
+        '<input id="edit-usuario-nome" value="' + escapeHtml(state.editUsuarioNome || '') + '" placeholder="Nome completo" autocomplete="name" style="font-size:16px" class="h-10 w-full min-w-0 rounded-lg border border-cyan-100 bg-white px-3 text-base font-bold outline-none" />' +
+        '<input id="edit-usuario-login" value="' + escapeHtml(state.editUsuarioLogin || '') + '" placeholder="Login" style="font-size:16px" class="h-10 w-full min-w-0 rounded-lg border border-cyan-100 bg-white px-3 text-base font-bold outline-none" />' +
+        '<input id="edit-usuario-email" type="email" value="' + escapeHtml(state.editUsuarioEmail || '') + '" placeholder="E-mail (opcional)" style="font-size:16px" class="h-10 w-full min-w-0 rounded-lg border border-cyan-100 bg-white px-3 text-base font-bold outline-none" />' +
+        '<select id="edit-usuario-perfil" style="font-size:16px" class="h-10 w-full min-w-0 rounded-lg border border-cyan-100 bg-white px-3 text-base font-bold outline-none">' + opcoesPerfilHtml(state.editUsuarioPerfil || 'operador_simples', usuario.perfil === 'gestor_master' || (state.empresa && state.empresa.perfil === 'gestor_master')) + '</select>' +
+        campoSenhaSimplesHtml('edit-usuario-senha', 'Nova senha (opcional)', 'h-10 w-full min-w-0 rounded-lg border border-cyan-100 bg-white px-3 text-base font-bold outline-none', 'new-password', state.editUsuarioSenha || '') +
+        campoSenhaSimplesHtml('edit-usuario-confirmar-senha', 'Confirmar nova senha', 'h-10 w-full min-w-0 rounded-lg border border-cyan-100 bg-white px-3 text-base font-bold outline-none', 'new-password', state.editUsuarioConfirmarSenha || '') +
         '<button id="salvar-usuario-mobile" type="button" class="h-10 rounded-xl bg-cyan-600 px-4 text-xs font-black uppercase tracking-wide text-white">' + (state.carregando ? 'Salvando...' : 'Salvar usuario') + '</button>' +
       '</div>'
     );
@@ -12527,6 +12637,25 @@
     });
     bind('criar-usuario-mobile', criarUsuarioMobile);
     bind('salvar-usuario-mobile', salvarUsuarioMobile);
+    bindInput('usuario-nome', function () {
+      state.usuarioNome = this.value || '';
+      salvarRascunhoUsuarioMobile();
+    });
+    bindInput('usuario-login', function () {
+      state.usuarioLogin = this.value || '';
+      salvarRascunhoUsuarioMobile();
+    });
+    bindInput('usuario-senha', function () { state.usuarioSenha = this.value || ''; });
+    bindChange('usuario-perfil', function () {
+      state.usuarioPerfil = this.value || '';
+      salvarRascunhoUsuarioMobile();
+    });
+    bindInput('edit-usuario-nome', function () { state.editUsuarioNome = this.value || ''; });
+    bindInput('edit-usuario-login', function () { state.editUsuarioLogin = this.value || ''; });
+    bindInput('edit-usuario-email', function () { state.editUsuarioEmail = this.value || ''; });
+    bindChange('edit-usuario-perfil', function () { state.editUsuarioPerfil = this.value || 'operador_simples'; });
+    bindInput('edit-usuario-senha', function () { state.editUsuarioSenha = this.value || ''; });
+    bindInput('edit-usuario-confirmar-senha', function () { state.editUsuarioConfirmarSenha = this.value || ''; });
     bind('feedback-sugestao', function () { abrirFormularioFeedbackMobile('sugestao'); });
     bind('feedback-duvida', function () { abrirFormularioFeedbackMobile('duvida'); });
     bind('feedback-abrir-ava', function () { state.modalMenu = ''; abrirChatIA(); });
@@ -12575,6 +12704,12 @@
     });
     bind('cancelar-edicao-usuario', function () {
       state.usuarioEditandoId = '';
+      state.editUsuarioNome = '';
+      state.editUsuarioLogin = '';
+      state.editUsuarioEmail = '';
+      state.editUsuarioPerfil = 'operador_simples';
+      state.editUsuarioSenha = '';
+      state.editUsuarioConfirmarSenha = '';
       state.erro = '';
       render();
     });

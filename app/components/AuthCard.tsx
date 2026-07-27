@@ -879,7 +879,7 @@ export default function AuthCard({
 
                 <label className="block">
                   <span className="mb-0.5 block text-[10px] font-black uppercase text-slate-600">
-                    {tipoPerfilInicialNormalizado === 'empresa' ? 'Responsável' : 'Nome completo'}
+                    {tipoPerfilInicialNormalizado === 'empresa' ? 'Responsável — nome completo' : 'Nome completo'}
                   </span>
                   <input
                     type="text"

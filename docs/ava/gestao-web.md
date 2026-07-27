@@ -1,6 +1,12 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.6.1.09 -->
+<!-- ava-version: 1.6.1.10 -->
+
+> Revisão 1.6.1.10: cadastros de pessoas exibem Nome completo e preservam os
+> campos quando ocorre erro. Usuários e Permissões, Controle de Ponto e
+> Recebimentos mantêm rascunhos temporários dos dados não sensíveis; senhas,
+> confirmações e códigos nunca são gravados no navegador. Em Recebimentos, o
+> formulário só é limpo após confirmação do servidor.
 
 > Revisão 1.6.1.09: conclusão e recuperação do acesso na Gestão Mobile; sem
 > impacto operacional na Gestão Web.

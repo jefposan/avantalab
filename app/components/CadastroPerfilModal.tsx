@@ -242,7 +242,7 @@ export default function CadastroPerfilModal({ aberto, empresaId, statusInicial, 
                     <div className="grid gap-2 sm:grid-cols-[minmax(0,1.8fr)_minmax(14rem,0.85fr)]">
                       <label className={label}>Nome Fantasia<input className={input} value={dados.nome_fantasia} onChange={(e) => set('nome_fantasia', e.target.value)} /></label>
                       <label className={label} htmlFor="cadastro-perfil-responsavel">
-                        Responsável
+                        Responsável — nome completo
                         <input
                           id="cadastro-perfil-responsavel"
                           className={`${input} ${nomeCompletoInvalido ? '!border-red-500 focus:!border-red-600 focus:!ring-red-500/20' : ''}`}

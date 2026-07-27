@@ -7640,6 +7640,7 @@ if (validacaoTelefoneObrigatoria) {
 <PontoAdminModal
   key={`${abaInicialPontoAdmin}-${instanciaPontoAdmin}`}
   aberto={modalPontoAdmin}
+  rascunhoEscopo={`${acessoUsuarioAtualId || 'acesso'}:${empresaId || 'perfil'}`}
   abaInicial={abaInicialPontoAdmin}
   relatorioInicial={relatorioInicialPonto}
   onFechar={() => setModalPontoAdmin(false)}
@@ -7668,6 +7669,7 @@ if (validacaoTelefoneObrigatoria) {
 <RecebimentosAdminModal
   aberto={modalRecebimentos && podeGerenciarRecebimentos && modulosAtivos.includes('recebimentos_presencial')}
   empresaId={empresaId || ''}
+  rascunhoEscopo={`${acessoUsuarioAtualId || 'acesso'}:${empresaId || 'perfil'}`}
   perfil={perfilUsuario === 'administrador' ? 'administrador' : 'gestor'}
   darkMode={darkMode}
   corPrimaria={corPrimaria}

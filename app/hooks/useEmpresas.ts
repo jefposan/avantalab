@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 'use client';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { supabase } from '../lib/supabase';
 import {
   buscarEmpresasDoUsuario,
@@ -18,6 +18,9 @@ import {
 import { normalizarTipoPerfil, type TipoPerfil } from '../lib/perfis';
 import { validarNomeCompleto } from '../lib/nome-pessoa';
 import type { AbrirAvisoFn, AbrirConfirmacaoFn } from './useUI';
+
+const CHAVE_RASCUNHO_USUARIO_WEB = 'avantalab:rascunho:v1:gestao-web:usuarios:';
+const VALIDADE_RASCUNHO_USUARIO_MS = 24 * 60 * 60 * 1000;
 
 // ---------------------------------------------------------------------------
 // Tipos
@@ -99,6 +102,62 @@ export function useEmpresas(deps: UseEmpresasDeps) {
   >('operador_simples');
   const [modalUsuarios, setModalUsuarios] = useState(false);
   const [ajudaUsuariosAberta, setAjudaUsuariosAberta] = useState(false);
+  const rascunhoUsuarioCarregadoRef = useRef('');
+
+  const chaveRascunhoUsuario = empresaId && acessoUsuarioAtualId
+    ? `${CHAVE_RASCUNHO_USUARIO_WEB}${acessoUsuarioAtualId}:${empresaId}`
+    : '';
+
+  const removerRascunhoUsuario = () => {
+    if (!chaveRascunhoUsuario || typeof window === 'undefined') return;
+    try { window.sessionStorage.removeItem(chaveRascunhoUsuario); } catch { /* armazenamento indisponível */ }
+  };
+
+  useEffect(() => {
+    if (!chaveRascunhoUsuario || typeof window === 'undefined') return;
+    rascunhoUsuarioCarregadoRef.current = '';
+    let timer: number | undefined;
+    try {
+      const salvo = JSON.parse(window.sessionStorage.getItem(chaveRascunhoUsuario) || 'null') as {
+        expiraEm?: number;
+        nome?: string;
+        login?: string;
+        perfil?: '' | 'administrador' | 'operador_completo' | 'operador_simples';
+      } | null;
+      if (salvo && Number(salvo.expiraEm) > Date.now()) {
+        timer = window.setTimeout(() => {
+          setUsuarioNome(String(salvo.nome || ''));
+          setUsuarioLogin(String(salvo.login || ''));
+          setUsuarioPerfil(salvo.perfil || '');
+          rascunhoUsuarioCarregadoRef.current = chaveRascunhoUsuario;
+        }, 0);
+      } else {
+        window.sessionStorage.removeItem(chaveRascunhoUsuario);
+        rascunhoUsuarioCarregadoRef.current = chaveRascunhoUsuario;
+      }
+    } catch {
+      try { window.sessionStorage.removeItem(chaveRascunhoUsuario); } catch { /* armazenamento indisponível */ }
+      rascunhoUsuarioCarregadoRef.current = chaveRascunhoUsuario;
+    }
+    return () => { if (timer !== undefined) window.clearTimeout(timer); };
+  }, [chaveRascunhoUsuario]);
+
+  useEffect(() => {
+    if (
+      !chaveRascunhoUsuario ||
+      rascunhoUsuarioCarregadoRef.current !== chaveRascunhoUsuario ||
+      typeof window === 'undefined'
+    ) return;
+    try {
+      window.sessionStorage.setItem(chaveRascunhoUsuario, JSON.stringify({
+        versao: 1,
+        expiraEm: Date.now() + VALIDADE_RASCUNHO_USUARIO_MS,
+        nome: usuarioNome,
+        login: usuarioLogin,
+        perfil: usuarioPerfil,
+      }));
+    } catch { /* armazenamento indisponível */ }
+  }, [chaveRascunhoUsuario, usuarioLogin, usuarioNome, usuarioPerfil]);
 
   // ---------------------------------------------------------------------------
   // Permissões derivadas
@@ -121,16 +180,11 @@ export function useEmpresas(deps: UseEmpresasDeps) {
 
   const abrirModalUsuarios = () => {
     setModalUsuarios(true);
-    setTimeout(() => {
-      setUsuarioNome('');
-      setUsuarioLogin('');
-      setUsuarioSenha('');
-      setUsuarioPerfil('');
-      setModoFormularioUsuario('');
-      setUsuarioExistenteTermo('');
-      setUsuarioEncontrado(null);
-      setPerfilUsuarioExistente('');
-    }, 50);
+    setUsuarioSenha('');
+    setModoFormularioUsuario('');
+    setUsuarioExistenteTermo('');
+    setUsuarioEncontrado(null);
+    setPerfilUsuarioExistente('');
   };
 
   const abrirCriarNovoUsuario = () => {
@@ -282,6 +336,7 @@ export function useEmpresas(deps: UseEmpresasDeps) {
     setUsuarioLogin('');
     setUsuarioSenha('');
     setUsuarioPerfil('operador_simples');
+    removerRascunhoUsuario();
 
     await carregarUsuariosEmpresa();
   };

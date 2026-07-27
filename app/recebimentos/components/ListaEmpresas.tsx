@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import styles from '../recebimentos.module.css';
 import type { AbrirAvisoFn } from '@/app/hooks/useUI';
+import { validarNomeCompleto } from '@/app/lib/nome-pessoa';
 import type { Empresa, FrequenciaRecebimento, Subempresa, TipoCadastroEmpresa } from './types';
 import {
   FREQUENCIAS_RECEBIMENTO,
@@ -22,15 +23,16 @@ type DadosSubempresa = Pick<Subempresa, 'nome' | 'endereco' | 'cep' | 'logradour
 type Props = {
   empresas: Empresa[];
   subempresas: Subempresa[];
-  onAdicionarEmpresa: (dados: Omit<Empresa, 'id'>) => void;
-  onEditarEmpresa: (id: string, dados: DadosEmpresa) => void;
+  onAdicionarEmpresa: (dados: Omit<Empresa, 'id'>) => Promise<void>;
+  onEditarEmpresa: (id: string, dados: DadosEmpresa) => Promise<void>;
   onExcluirEmpresa: (id: string) => void;
   onAlternarEmpresa: (id: string) => void;
-  onAdicionarSubempresa: (dados: Omit<Subempresa, 'id'>) => void;
-  onEditarSubempresa: (id: string, dados: DadosSubempresa) => void;
+  onAdicionarSubempresa: (dados: Omit<Subempresa, 'id'>) => Promise<void>;
+  onEditarSubempresa: (id: string, dados: DadosSubempresa) => Promise<void>;
   onExcluirSubempresa: (id: string) => void;
   onAlternarSubempresa: (id: string) => void;
   onAviso?: AbrirAvisoFn;
+  rascunhoEscopo: string;
   /** Destino no platô do AvantaCard para pesquisa e ação principal. */
   portalAcoesId?: string;
 };
@@ -57,6 +59,7 @@ export default function ListaEmpresas({
   onExcluirSubempresa,
   onAlternarSubempresa,
   onAviso,
+  rascunhoEscopo,
   portalAcoesId,
 }: Props) {
   const [expandidas, setExpandidas] = useState<Record<string, boolean>>({});
@@ -75,6 +78,8 @@ export default function ListaEmpresas({
   const [erroEmpresa, setErroEmpresa] = useState('');
   const [erroSub, setErroSub] = useState('');
   const [portalAcoes, setPortalAcoes] = useState<HTMLElement | null>(null);
+  const [salvandoCadastro, setSalvandoCadastro] = useState(false);
+  const rascunhoCarregadoRef = useRef('');
 
   // Referências dos blocos para rolar a empresa em edição ao topo do scroll.
   const blocosRef = useRef<Record<string, HTMLDivElement | null>>({});
@@ -103,6 +108,7 @@ export default function ListaEmpresas({
   const [sDiaMes, setSDiaMes] = useState<number | null>(null);
   const [sMesInicio, setSMesInicio] = useState<number | null>(null);
   const [popupVencimento, setPopupVencimento] = useState<FrequenciaRecebimento | null>(null);
+  const chaveRascunho = `avantalab:rascunho:v1:recebimentos:empresa:${rascunhoEscopo}`;
 
   const termo = busca.trim().toLowerCase();
 
@@ -110,6 +116,90 @@ export default function ListaEmpresas({
     if (!portalAcoesId) return;
     setPortalAcoes(document.getElementById(portalAcoesId));
   }, [portalAcoesId]);
+
+  useEffect(() => {
+    rascunhoCarregadoRef.current = '';
+    let timer: number | undefined;
+    try {
+      const salvo = JSON.parse(window.sessionStorage.getItem(chaveRascunho) || 'null') as Record<string, unknown> | null;
+      if (salvo && Number(salvo.expiraEm) > Date.now()) {
+        timer = window.setTimeout(() => {
+          const empresaEditandoRestaurada = typeof salvo.editandoEmpresaId === 'string' && empresas.some((item) => item.id === salvo.editandoEmpresaId)
+            ? salvo.editandoEmpresaId
+            : null;
+          const empresaSubRestaurada = typeof salvo.subDe === 'string' && empresas.some((item) => item.id === salvo.subDe)
+            ? salvo.subDe
+            : null;
+          const subEditandoRestaurada = typeof salvo.editandoSubId === 'string' && subempresas.some((item) => item.id === salvo.editandoSubId)
+            ? salvo.editandoSubId
+            : null;
+          setFormEmpresaAberto(Boolean(salvo.formEmpresaAberto));
+          setEditandoEmpresaId(empresaEditandoRestaurada);
+          setSubDe(empresaSubRestaurada);
+          setEditandoSubId(subEditandoRestaurada);
+          setENome(String(salvo.eNome || ''));
+          setETipo(salvo.eTipo === 'local_agrupador' ? 'local_agrupador' : 'cliente_direto');
+          setEResp(String(salvo.eResp || ''));
+          setETel(String(salvo.eTel || ''));
+          setEEmail(String(salvo.eEmail || ''));
+          setSNome(String(salvo.sNome || ''));
+          setSCep(String(salvo.sCep || ''));
+          setSLogradouro(String(salvo.sLogradouro || ''));
+          setSBairro(String(salvo.sBairro || ''));
+          setSCidade(String(salvo.sCidade || ''));
+          setSEstado(String(salvo.sEstado || ''));
+          setSNumero(String(salvo.sNumero || ''));
+          setSComplemento(String(salvo.sComplemento || ''));
+          setSResp(String(salvo.sResp || ''));
+          setSValor(String(salvo.sValor || ''));
+          setSFrequencia(typeof salvo.sFrequencia === 'string' ? salvo.sFrequencia as FrequenciaRecebimento : null);
+          setSDiasSemana(Array.isArray(salvo.sDiasSemana) ? salvo.sDiasSemana.map(Number) : []);
+          setSDiaMes(salvo.sDiaMes == null ? null : Number(salvo.sDiaMes));
+          setSMesInicio(salvo.sMesInicio == null ? null : Number(salvo.sMesInicio));
+          rascunhoCarregadoRef.current = chaveRascunho;
+        }, 0);
+      } else {
+        window.sessionStorage.removeItem(chaveRascunho);
+        rascunhoCarregadoRef.current = chaveRascunho;
+      }
+    } catch {
+      rascunhoCarregadoRef.current = chaveRascunho;
+    }
+    return () => { if (timer !== undefined) window.clearTimeout(timer); };
+  }, [chaveRascunho, empresas, subempresas]);
+
+  useEffect(() => {
+    if ((!formEmpresaAberto && !subDe) || rascunhoCarregadoRef.current !== chaveRascunho) return;
+    try {
+      window.sessionStorage.setItem(chaveRascunho, JSON.stringify({
+        versao: 1,
+        expiraEm: Date.now() + 24 * 60 * 60 * 1000,
+        formEmpresaAberto,
+        editandoEmpresaId,
+        subDe,
+        editandoSubId,
+        eNome,
+        eTipo,
+        eResp,
+        eTel,
+        eEmail,
+        sNome,
+        sCep,
+        sLogradouro,
+        sBairro,
+        sCidade,
+        sEstado,
+        sNumero,
+        sComplemento,
+        sResp,
+        sValor,
+        sFrequencia,
+        sDiasSemana,
+        sDiaMes,
+        sMesInicio,
+      }));
+    } catch { /* armazenamento indisponível */ }
+  }, [chaveRascunho, eEmail, eNome, eResp, eTel, eTipo, editandoEmpresaId, editandoSubId, formEmpresaAberto, sBairro, sCep, sCidade, sComplemento, sDiaMes, sDiasSemana, sEstado, sFrequencia, sLogradouro, sMesInicio, sNome, sNumero, sResp, sValor, subDe]);
 
   // Filtro instantâneo por letras/números: empresa (nome, responsável,
   // telefone, e-mail) e subempresas (nome, endereço, responsável).
@@ -156,6 +246,7 @@ export default function ListaEmpresas({
     setConfirmandoExclusao(false);
     setFormEmpresaAberto(false);
     setEditandoEmpresaId(null);
+    try { window.sessionStorage.removeItem(chaveRascunho); } catch { /* armazenamento indisponível */ }
   }
 
   function limparFormSub() {
@@ -166,6 +257,7 @@ export default function ListaEmpresas({
     setConfirmandoExclusao(false);
     setSubDe(null);
     setEditandoSubId(null);
+    try { window.sessionStorage.removeItem(chaveRascunho); } catch { /* armazenamento indisponível */ }
   }
 
   function abrirNovaEmpresa() {
@@ -228,7 +320,7 @@ export default function ListaEmpresas({
     focarBloco(s.empresaId);
   }
 
-  function salvarEmpresa() {
+  async function salvarEmpresa() {
     setErroEmpresa('');
     const valor = sValor.trim() ? parseValorBR(sValor) : null;
     if (!eNome.trim()) {
@@ -237,6 +329,7 @@ export default function ListaEmpresas({
       return;
     }
     if (eTipo === 'cliente_direto') {
+      if (eResp.trim() && !validarNomeCompleto(eResp)) return setErroEmpresa('Informe o nome completo do responsável, com nome e sobrenome.');
       if (valor != null && (Number.isNaN(valor) || valor <= 0)) return setErroEmpresa('Informe um valor contratado maior que zero.');
       if (!sFrequencia) return setErroEmpresa('Selecione a frequência para configurar o vencimento.');
       if (sFrequencia === 'semanal' && sDiasSemana.length === 0) return setErroEmpresa('Selecione ao menos um dia para configurar o vencimento semanal.');
@@ -247,12 +340,19 @@ export default function ListaEmpresas({
     const dados: DadosEmpresa = {
       tipoCadastro: eTipo, nome: eNome.trim(), endereco, cep: sCep.trim(), logradouro: sLogradouro.trim(), bairro: sBairro.trim(), cidade: sCidade.trim(), estado: sEstado.trim().toUpperCase(), numero: sNumero.trim(), complemento: sComplemento.trim(), responsavel: eTipo === 'cliente_direto' ? eResp.trim() : '', telefone: eTipo === 'cliente_direto' ? eTel.trim() : '', email: eTipo === 'cliente_direto' ? eEmail.trim() : '', valorCombinado: eTipo === 'cliente_direto' ? valor : null, frequenciaRecebimento: eTipo === 'cliente_direto' ? sFrequencia : null, configuracaoRecorrencia: eTipo === 'cliente_direto' ? { diasSemana: sDiasSemana, diaMes: sDiaMes, mesInicio: sMesInicio } : null,
     };
-    if (editandoEmpresaId) {
-      onEditarEmpresa(editandoEmpresaId, dados);
-    } else {
-      onAdicionarEmpresa({ ...dados, ativo: true });
+    setSalvandoCadastro(true);
+    try {
+      if (editandoEmpresaId) {
+        await onEditarEmpresa(editandoEmpresaId, dados);
+      } else {
+        await onAdicionarEmpresa({ ...dados, ativo: true });
+      }
+      limparFormEmpresa();
+    } catch (error) {
+      setErroEmpresa(error instanceof Error ? error.message : 'Não foi possível salvar o cadastro. Os dados preenchidos foram preservados.');
+    } finally {
+      setSalvandoCadastro(false);
     }
-    limparFormEmpresa();
   }
 
   // Exclusão em duas etapas: o primeiro clique pede confirmação no próprio botão.
@@ -275,12 +375,13 @@ export default function ListaEmpresas({
     else setErroSub(mensagem);
   }
 
-  function salvarSub(empresaId: string) {
+  async function salvarSub(empresaId: string) {
     setErroSub('');
     const valor = sValor.trim() ? parseValorBR(sValor) : null;
     if (!sNome.trim()) {
       return avisarErroSub('Preencha o nome e configure o vencimento para salvar o cliente.');
     }
+    if (sResp.trim() && !validarNomeCompleto(sResp)) return avisarErroSub('Informe o nome completo do responsável, com nome e sobrenome.');
     if (valor != null && (Number.isNaN(valor) || valor <= 0)) return avisarErroSub('Informe um valor contratado maior que zero.');
     if (!sFrequencia) return avisarErroSub('Selecione a frequência para configurar o vencimento.');
     if (sFrequencia === 'semanal' && sDiasSemana.length === 0) return avisarErroSub('Selecione ao menos um dia para configurar o vencimento semanal.');
@@ -302,17 +403,24 @@ export default function ListaEmpresas({
       frequenciaRecebimento: sFrequencia,
       configuracaoRecorrencia: { diasSemana: sDiasSemana, diaMes: sDiaMes, mesInicio: sMesInicio },
     };
-    if (editandoSubId) {
-      onEditarSubempresa(editandoSubId, dados);
-    } else {
-      onAdicionarSubempresa({
-        empresaId,
-        ...dados,
-        shoppingGaleria: '', lojaSala: '',
-        ativo: true,
-      });
+    setSalvandoCadastro(true);
+    try {
+      if (editandoSubId) {
+        await onEditarSubempresa(editandoSubId, dados);
+      } else {
+        await onAdicionarSubempresa({
+          empresaId,
+          ...dados,
+          shoppingGaleria: '', lojaSala: '',
+          ativo: true,
+        });
+      }
+      limparFormSub();
+    } catch (error) {
+      avisarErroSub(error instanceof Error ? error.message : 'Não foi possível salvar o cadastro. Os dados preenchidos foram preservados.');
+    } finally {
+      setSalvandoCadastro(false);
     }
-    limparFormSub();
   }
 
   function mudarFrequencia(frequencia: FrequenciaRecebimento) {
@@ -415,7 +523,7 @@ export default function ListaEmpresas({
     return (
       <div className={styles.linhaEmpresaCampos}>
         <div className={styles.field}><label className={styles.label}>Nome do cliente *</label><input className={styles.input} placeholder="Ex: Loja Renner" value={sNome} onChange={(e) => setSNome(formatarNomeProprio(e.target.value))} /></div>
-        <div className={styles.field}><label className={styles.label}>Responsável</label><input className={styles.input} placeholder="Ex: Gerente da loja" value={sResp} onChange={(e) => setSResp(formatarNomeProprio(e.target.value))} /></div>
+        <div className={styles.field}><label className={styles.label}>Responsável — nome completo</label><input className={styles.input} placeholder="Ex: Carla Menezes" value={sResp} onChange={(e) => setSResp(formatarNomeProprio(e.target.value))} /></div>
         <div className={styles.field}><label className={styles.label}>Valor contratado</label><input className={`${styles.input} ${styles.inputCentro}`} inputMode="decimal" placeholder="0,00" value={sValor} onChange={(e) => setSValor(formatarValorInput(e.target.value))} /></div>
       </div>
     );
@@ -443,15 +551,15 @@ export default function ListaEmpresas({
                 {confirmandoExclusao ? 'Confirmar' : 'Excluir'}
               </button>
             )}
-            <button type="button" className={`${styles.btn} ${styles.btnPrimary} ${styles.btnSm}`} onClick={salvarEmpresa}>
-              Salvar
+            <button type="button" className={`${styles.btn} ${styles.btnPrimary} ${styles.btnSm}`} onClick={() => void salvarEmpresa()} disabled={salvandoCadastro}>
+              {salvandoCadastro ? 'Salvando…' : 'Salvar'}
             </button>
           </div>
         </div>
         <p className={`${styles.subMeta} ${styles.tipoCadastroAjuda}`}>{clienteDireto ? 'Cliente com cobrança própria. Não permite clientes abaixo.' : 'Local como shopping, galeria ou condomínio. Não possui cobrança própria.'}</p>
         <div className={styles.linhaEmpresaCampos}>
           <div className={styles.field}><label className={styles.label}>{clienteDireto ? 'Nome da empresa *' : 'Nome do local *'}</label><input className={styles.input} placeholder={clienteDireto ? 'Ex: Clínica Horizonte' : 'Ex: Shopping Morumbi'} value={eNome} onChange={(e) => setENome(formatarNomeProprio(e.target.value))} /></div>
-          {clienteDireto && <><div className={styles.field}><label className={styles.label}>Responsável</label><input className={styles.input} placeholder="Ex: Carla Menezes" value={eResp} onChange={(e) => setEResp(formatarNomeProprio(e.target.value))} /></div>
+          {clienteDireto && <><div className={styles.field}><label className={styles.label}>Responsável — nome completo</label><input className={styles.input} placeholder="Ex: Carla Menezes" value={eResp} onChange={(e) => setEResp(formatarNomeProprio(e.target.value))} /></div>
           <div className={styles.field}><label className={styles.label}>Contato</label><input className={styles.input} inputMode="tel" placeholder="(11) 99999-9999" value={eTel} onChange={(e) => setETel(formatarTelefone(e.target.value))} /></div></>}
         </div>
         {camposEndereco()}
@@ -610,7 +718,7 @@ export default function ListaEmpresas({
                             {confirmandoExclusao ? 'Confirmar' : 'Excluir'}
                           </button>
                         )}
-                        <button type="button" className={`${styles.btn} ${styles.btnPrimary} ${styles.btnSm}`} onClick={() => salvarSub(emp.id)}>Salvar</button>
+                        <button type="button" className={`${styles.btn} ${styles.btnPrimary} ${styles.btnSm}`} onClick={() => void salvarSub(emp.id)} disabled={salvandoCadastro}>{salvandoCadastro ? 'Salvando…' : 'Salvar'}</button>
                       </div>
                     </div>
                   </div>

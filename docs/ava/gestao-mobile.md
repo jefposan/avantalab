@@ -1,6 +1,11 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.6.1.09 -->
+<!-- ava-version: 1.6.1.10 -->
+
+> Revisão 1.6.1.10: em Usuários, os campos informam Nome completo e permanecem
+> preenchidos quando há erro de validação, conexão ou servidor. Nome, login e
+> perfil formam um rascunho temporário por usuário e perfil; a senha permanece
+> apenas em memória e nunca é armazenada no navegador.
 
 > Revisão 1.6.1.09: Preparando acesso só conclui os 100% depois que a tela
 > principal estiver montada. Se o PWA for suspenso ou perder conexão durante a

@@ -17,6 +17,7 @@ type Props = {
   darkMode?: boolean;
   corPrimaria?: string;
   mostrarLinkColaboradores?: boolean;
+  rascunhoEscopo?: string;
   onAviso?: AbrirAvisoFn;
   onConfirmacao?: AbrirConfirmacaoFn;
   onFinanceiroAtualizado?: () => void;
@@ -29,6 +30,7 @@ export default function RecebimentosClient({
   darkMode = false,
   corPrimaria = '#003E73',
   mostrarLinkColaboradores = false,
+  rascunhoEscopo = 'preview',
   onAviso,
   onConfirmacao,
   onFinanceiroAtualizado,
@@ -62,7 +64,7 @@ export default function RecebimentosClient({
   useEffect(() => { void carregar(); }, [carregar]);
   useEffect(() => repoAtual.assinarAtualizacoes?.(() => { void carregar(true); }), [repoAtual, carregar]);
 
-  const executar = useCallback(async (acao: () => Promise<void>) => {
+  const executar = useCallback(async (acao: () => Promise<void>, propagarErro = false) => {
     setProcessando(true);
     setErro('');
     try {
@@ -70,6 +72,7 @@ export default function RecebimentosClient({
       await carregar(true);
     } catch (error) {
       setErro(error instanceof Error ? error.message : 'Não foi possível concluir a operação.');
+      if (propagarErro) throw error;
     } finally {
       setProcessando(false);
     }
@@ -175,6 +178,7 @@ export default function RecebimentosClient({
           colaboradores={colaboradores}
           recebimentos={recebimentos}
           mostrarLinkColaboradores={mostrarLinkColaboradores}
+          rascunhoEscopo={rascunhoEscopo}
           onObterIntegracaoFinanceira={obterIntegracaoFinanceira}
           onAtualizarTitulosFinanceiro={atualizarTitulosFinanceiro}
           onDefinirIntegracaoFinanceira={definirIntegracaoFinanceira}
@@ -185,22 +189,22 @@ export default function RecebimentosClient({
           onDivergencia={(id, motivo) => void executar(() => repoAtual.divergencia(id, motivo))}
           onEstornar={(id, motivo) => void executar(() => repoAtual.estornar(id, motivo))}
           onEstornarDireto={estornarDireto}
-          onAdicionarEmpresa={(dados) => void executar(() => repoAtual.salvarEmpresa(dados))}
-          onEditarEmpresa={(id, dados) => void executar(() => repoAtual.editarEmpresa(id, dados))}
+          onAdicionarEmpresa={(dados) => executar(() => repoAtual.salvarEmpresa(dados), true)}
+          onEditarEmpresa={(id, dados) => executar(() => repoAtual.editarEmpresa(id, dados), true)}
           onExcluirEmpresa={(id) => void executar(() => repoAtual.excluirEmpresa(id))}
           onAlternarEmpresa={(id) => {
             const atual = empresas.find((e) => e.id === id);
             if (atual) void executar(() => repoAtual.alternarEmpresa(id, !atual.ativo));
           }}
-          onAdicionarSubempresa={(dados) => void executar(() => repoAtual.salvarSubempresa(dados))}
-          onEditarSubempresa={(id, dados) => void executar(() => repoAtual.editarSubempresa(id, dados))}
+          onAdicionarSubempresa={(dados) => executar(() => repoAtual.salvarSubempresa(dados), true)}
+          onEditarSubempresa={(id, dados) => executar(() => repoAtual.editarSubempresa(id, dados), true)}
           onExcluirSubempresa={(id) => void executar(() => repoAtual.excluirSubempresa(id))}
           onAlternarSubempresa={(id) => {
             const atual = subempresas.find((s) => s.id === id);
             if (atual) void executar(() => repoAtual.alternarSubempresa(id, !atual.ativo));
           }}
-          onAdicionarColaborador={(dados) => void executar(() => repoAtual.criarColaborador(dados))}
-          onEditarColaborador={(id, dados) => void executar(() => repoAtual.editarColaborador(id, dados))}
+          onAdicionarColaborador={(dados) => executar(() => repoAtual.criarColaborador(dados), true)}
+          onEditarColaborador={(id, dados) => executar(() => repoAtual.editarColaborador(id, dados), true)}
           onExcluirColaborador={(id) => void executar(() => repoAtual.excluirColaborador(id))}
           onAlternarColaborador={(id) => {
             const atual = colaboradores.find((c) => c.id === id);

@@ -1,5 +1,19 @@
 # Changelog
 
+## 1.6.1.10 - 2026-07-27
+
+- Cadastros de pessoas passam a identificar explicitamente `Nome completo` ou
+  `Responsável — nome completo` e rejeitam números, símbolos isolados e nomes
+  sem sobrenome na interface e nas validações compartilhadas.
+- Gestão Mobile preserva nome, login, perfil e senhas em memória quando o
+  cadastro ou a edição de usuário encontra um erro; os dados não sensíveis
+  também são restaurados após atualização da página.
+- Usuários da Gestão Web, funcionários do Ponto, empresas e colaboradores de
+  Recebimentos e a conta do AvantaVendas recebem rascunhos temporários por
+  perfil. Senhas, confirmações, códigos SMS e tokens nunca são armazenados.
+- Recebimentos só limpa um cadastro depois da confirmação do servidor. Em erro
+  de validação, rede ou banco, mantém todos os campos disponíveis para correção.
+
 ## 1.6.1.09 - 2026-07-27
 
 - Gestão Mobile: a etapa `Acesso pronto` só conclui os 100% depois que a tela
