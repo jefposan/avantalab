@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.6.0.84.145 - 2026-07-26
+
+- Gestão Web: o card `Usuários e Permissões` ficou um pouco mais largo e a
+  coluna da senha inicial ganhou mais espaço para exibir mais caracteres.
+
 ## 1.6.0.84.144 - 2026-07-26
 
 - Vendas Mobile: os campos de `Vincular outra empresa` passam a ocupar a largura

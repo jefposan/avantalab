@@ -1,6 +1,9 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.6.0.84.144 -->
+<!-- ava-version: 1.6.0.84.145 -->
+
+> Revisão 1.6.0.84.145: ampliação do card de usuários na Gestão Web; sem
+> impacto operacional no AvantaVendas.
 
 > Revisão 1.6.0.84.144: em Configurações > Empresas e conteúdos > Vincular
 > outra empresa, os campos ficam formatados e legíveis nos temas claro e escuro.

@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.6.0.84.144 -->
+<!-- ava-version: 1.6.0.84.145 -->
+
+> Revisão 1.6.0.84.145: o card `Usuários e Permissões` ganhou mais largura e
+> ampliou o campo de senha inicial; sem mudança no fluxo de cadastro.
 
 > Revisão 1.6.0.84.144: formatação dos campos de vínculo comercial no Vendas
 > Mobile; sem impacto operacional na Gestão Web.

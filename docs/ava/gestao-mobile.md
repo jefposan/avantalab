@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.6.0.84.144 -->
+<!-- ava-version: 1.6.0.84.145 -->
+
+> Revisão 1.6.0.84.145: ampliação do card de usuários na Gestão Web; sem
+> impacto operacional na Gestão Mobile.
 
 > Revisão 1.6.0.84.144: formatação dos campos de vínculo comercial no Vendas
 > Mobile; sem impacto operacional na Gestão Mobile.

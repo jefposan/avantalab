@@ -8984,7 +8984,7 @@ if (validacaoTelefoneObrigatoria) {
     }}
   >
     <DraggableModalCard
-      className={`max-h-[90vh] w-full max-w-3xl overflow-y-auto rounded-2xl border p-6 shadow-2xl ${
+      className={`max-h-[90vh] w-full max-w-4xl overflow-y-auto rounded-2xl border p-6 shadow-2xl ${
         darkMode
           ? 'bg-slate-800 border-slate-700'
           : 'bg-white border-slate-200'
@@ -9117,7 +9117,7 @@ if (validacaoTelefoneObrigatoria) {
       </div>
 
       {modoFormularioUsuario === 'criar' ? (
-      <div className="grid grid-cols-1 gap-3 md:grid-cols-[1.35fr_1fr_0.85fr_1.20fr_auto] md:items-center">
+      <div className="grid grid-cols-1 gap-3 md:grid-cols-[1.35fr_1fr_1.25fr_1.20fr_auto] md:items-center">
   <input
   type="text"
   value={usuarioNome}
