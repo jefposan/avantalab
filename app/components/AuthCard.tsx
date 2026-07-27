@@ -496,6 +496,8 @@ export default function AuthCard({
         <button
   type="button"
   onClick={() => setMostrarNovaSenha((mostrar) => !mostrar)}
+  aria-label={mostrarNovaSenha ? 'Ocultar senha' : 'Exibir senha'}
+  aria-pressed={mostrarNovaSenha}
   className="absolute right-3 top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full text-slate-500 transition hover:bg-slate-100 hover:text-slate-800 cursor-pointer"
   title={mostrarNovaSenha ? 'Ocultar senha' : 'Ver senha'}
 >
@@ -533,6 +535,8 @@ export default function AuthCard({
         <button
   type="button"
   onClick={() => setMostrarConfirmarNovaSenha((mostrar) => !mostrar)}
+  aria-label={mostrarConfirmarNovaSenha ? 'Ocultar senha' : 'Exibir senha'}
+  aria-pressed={mostrarConfirmarNovaSenha}
   className="absolute right-3 top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full text-slate-500 transition hover:bg-slate-100 hover:text-slate-800 cursor-pointer"
   title={mostrarConfirmarNovaSenha ? 'Ocultar senha' : 'Ver senha'}
 >
@@ -602,7 +606,7 @@ export default function AuthCard({
       <span className="relative flex items-center">
         <span className="absolute left-3 text-[#88919a]"><IconeVendas nome="lock" /></span>
         <input type={mostrarSenhaLogin ? 'text' : 'password'} autoComplete="current-password" placeholder="Digite sua senha" value={loginSenha} onChange={(e) => setLoginSenha(e.target.value)} className="h-11 w-full rounded-xl border border-[#d9e0e4] py-0 pl-10 pr-10 text-[16px] text-[#2d353b] outline-[#55b9b1]" />
-        <button type="button" onClick={() => setMostrarSenhaLogin((mostrar) => !mostrar)} aria-label={mostrarSenhaLogin ? 'Ocultar senha' : 'Exibir senha'} className="absolute right-1 grid size-9 place-items-center rounded-lg text-[#717b84]"><IconeVendas nome="eye" /></button>
+        <button type="button" onClick={() => setMostrarSenhaLogin((mostrar) => !mostrar)} aria-label={mostrarSenhaLogin ? 'Ocultar senha' : 'Exibir senha'} aria-pressed={mostrarSenhaLogin} title={mostrarSenhaLogin ? 'Ocultar senha' : 'Exibir senha'} className="absolute right-1 grid size-9 place-items-center rounded-lg text-[#717b84]"><IconeVendas nome={mostrarSenhaLogin ? 'eye-off' : 'eye'} /></button>
       </span>
     </label>
     <div className="-mt-0.5 flex items-center justify-between gap-2">
@@ -680,6 +684,8 @@ export default function AuthCard({
   <button
     type="button"
     onClick={() => setMostrarSenhaLogin((mostrar) => !mostrar)}
+    aria-label={mostrarSenhaLogin ? 'Ocultar senha' : 'Exibir senha'}
+    aria-pressed={mostrarSenhaLogin}
     className="absolute right-3 top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full text-slate-500 transition hover:bg-slate-100 hover:text-slate-800 cursor-pointer"
     title={mostrarSenhaLogin ? 'Ocultar senha' : 'Ver senha'}
   >
@@ -933,6 +939,8 @@ export default function AuthCard({
     <button
       type="button"
       onClick={() => setMostrarSenhaCadastro((mostrar) => !mostrar)}
+      aria-label={mostrarSenhaCadastro ? 'Ocultar senha' : 'Exibir senha'}
+      aria-pressed={mostrarSenhaCadastro}
       className="absolute right-3 top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full text-slate-500 transition hover:bg-slate-100 hover:text-slate-800 cursor-pointer"
       title={mostrarSenhaCadastro ? 'Ocultar senha' : 'Ver senha'}
     >
@@ -1002,6 +1010,8 @@ export default function AuthCard({
       onClick={() =>
         setMostrarConfirmarSenhaCadastro((mostrar) => !mostrar)
       }
+      aria-label={mostrarConfirmarSenhaCadastro ? 'Ocultar senha' : 'Exibir senha'}
+      aria-pressed={mostrarConfirmarSenhaCadastro}
       className="absolute right-3 top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full text-slate-500 transition hover:bg-slate-100 hover:text-slate-800 cursor-pointer"
       title={mostrarConfirmarSenhaCadastro ? 'Ocultar senha' : 'Ver senha'}
     >

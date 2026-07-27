@@ -4727,10 +4727,30 @@
 
     if (input) input.type = state[stateKey] ? 'text' : 'password';
 
-    if (botao) {
-      botao.textContent = state[stateKey] ? '◉' : '◎';
-      botao.setAttribute('aria-label', state[stateKey] ? 'Ocultar senha' : 'Exibir senha');
-    }
+    if (botao) atualizarBotaoVisibilidadeSenhaMobile(botao, state[stateKey]);
+  }
+
+  function iconeVisibilidadeSenhaMobile(visivel) {
+    return visivel
+      ? '<svg aria-hidden="true" class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m3 3 18 18"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.6 10.7a2 2 0 0 0 2.7 2.7"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.9 5.1A10.9 10.9 0 0 1 12 5c5 0 9 4 10 7a12.7 12.7 0 0 1-3 4.5M6.6 6.6A12.5 12.5 0 0 0 2 12c1 3 5 7 10 7a10.9 10.9 0 0 0 4.4-.9"></path></svg>'
+      : '<svg aria-hidden="true" class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12Z"></path><circle cx="12" cy="12" r="3" stroke-width="2"></circle></svg>';
+  }
+
+  function atualizarBotaoVisibilidadeSenhaMobile(botao, visivel) {
+    var rotulo = visivel ? 'Ocultar senha' : 'Exibir senha';
+    botao.innerHTML = iconeVisibilidadeSenhaMobile(visivel);
+    botao.setAttribute('aria-label', rotulo);
+    botao.setAttribute('aria-pressed', visivel ? 'true' : 'false');
+    botao.setAttribute('title', rotulo);
+  }
+
+  function alternarSenhaCampoMobile(inputId, buttonId) {
+    var input = document.getElementById(inputId);
+    var botao = document.getElementById(buttonId);
+    if (!input || !botao) return;
+    var visivel = input.type === 'password';
+    input.type = visivel ? 'text' : 'password';
+    atualizarBotaoVisibilidadeSenhaMobile(botao, visivel);
   }
 
   async function buscarEmailPorLogin(login) {
@@ -8355,7 +8375,7 @@
       '<label class="gestao-login-label">Senha' +
         '<span class="gestao-login-field gestao-login-password">' + iconeSenha +
           '<input id="senha" type="' + (state.mostrarSenhaLogin ? 'text' : 'password') + '" autocomplete="current-password" placeholder="Digite sua senha" />' +
-          '<button id="toggle-senha-login" type="button" aria-label="' + (state.mostrarSenhaLogin ? 'Ocultar senha' : 'Exibir senha') + '">' + (state.mostrarSenhaLogin ? '◉' : '◎') + '</button>' +
+          '<button id="toggle-senha-login" type="button" aria-label="' + (state.mostrarSenhaLogin ? 'Ocultar senha' : 'Exibir senha') + '" aria-pressed="' + (state.mostrarSenhaLogin ? 'true' : 'false') + '">' + iconeVisibilidadeSenhaMobile(state.mostrarSenhaLogin) + '</button>' +
         '</span>' +
       '</label>' +
       '<div class="gestao-login-options">' +
@@ -8514,10 +8534,22 @@
         '<span class="relative block">' +
           '<input id="' + id + '" type="' + (visivel ? 'text' : 'password') + '" placeholder="' + escapeHtml(placeholder || '') + '" value="' + escapeHtml(value || '') + '" style="font-size:16px;background-color:rgba(255,255,255,.94)" class="h-10 w-full rounded-xl border border-slate-300 px-4 pr-10 text-sm font-semibold text-slate-900 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-sky-600 focus:bg-white focus:ring-2 focus:ring-sky-600/20" />' +
           '<button id="' + toggleId + '" type="button" class="absolute right-2 top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full bg-white/35 text-xs font-black text-slate-600 backdrop-blur-sm" aria-label="' + (visivel ? 'Ocultar senha' : 'Exibir senha') + '">' +
-            (visivel ? '◉' : '◎') +
+            iconeVisibilidadeSenhaMobile(visivel) +
           '</button>' +
         '</span>' +
       '</label>'
+    );
+  }
+
+  function campoSenhaSimplesHtml(id, placeholder, classes, autoComplete) {
+    var toggleId = 'toggle-' + id;
+    return (
+      '<span class="relative block min-w-0">' +
+        '<input id="' + id + '" type="password" autocomplete="' + escapeHtml(autoComplete || 'new-password') + '" placeholder="' + escapeHtml(placeholder || '') + '" style="font-size:16px" class="' + escapeHtml(classes || '') + ' pr-10" />' +
+        '<button id="' + toggleId + '" type="button" class="absolute right-1.5 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-lg text-slate-500 transition hover:bg-slate-100 hover:text-slate-800" aria-label="Exibir senha" aria-pressed="false">' +
+          iconeVisibilidadeSenhaMobile(false) +
+        '</button>' +
+      '</span>'
     );
   }
 
@@ -10860,7 +10892,7 @@
         '<input id="usuario-nome" placeholder="Nome" style="font-size:16px" class="h-10 w-full min-w-0 rounded-lg border border-slate-200 bg-white px-3 text-base font-bold outline-none" />' +
         '<div class="grid gap-2">' +
           '<input id="usuario-login" placeholder="Login" style="font-size:16px" class="h-10 w-full min-w-0 rounded-lg border border-slate-200 bg-white px-3 text-base font-bold outline-none" />' +
-          '<input id="usuario-senha" type="password" placeholder="Senha" style="font-size:16px" class="h-10 w-full min-w-0 rounded-lg border border-slate-200 bg-white px-3 text-base font-bold outline-none" />' +
+          campoSenhaSimplesHtml('usuario-senha', 'Senha', 'h-10 w-full min-w-0 rounded-lg border border-slate-200 bg-white px-3 text-base font-bold outline-none', 'new-password') +
         '</div>' +
         '<select id="usuario-perfil" style="font-size:16px" class="h-10 w-full min-w-0 rounded-lg border border-slate-200 bg-white px-3 text-base font-bold outline-none"><option value="">Perfil</option>' + opcoesPerfilHtml('', false) + '</select>' +
         '<button id="criar-usuario-mobile" type="button" class="h-10 rounded-xl bg-slate-950 px-4 text-xs font-black uppercase tracking-wide text-white">' + (state.carregando ? 'Salvando...' : 'Criar usuario') + '</button>' +
@@ -10906,8 +10938,8 @@
         '<input id="edit-usuario-login" value="' + escapeHtml(usuario.login || (state.empresa && String(state.empresa.acessoId) === String(usuario.id) ? state.loginConta : '')) + '" placeholder="Login" style="font-size:16px" class="h-10 w-full min-w-0 rounded-lg border border-cyan-100 bg-white px-3 text-base font-bold outline-none" />' +
         '<input id="edit-usuario-email" type="email" value="' + escapeHtml(emailRealUsuario(usuario)) + '" placeholder="E-mail (opcional)" style="font-size:16px" class="h-10 w-full min-w-0 rounded-lg border border-cyan-100 bg-white px-3 text-base font-bold outline-none" />' +
         '<select id="edit-usuario-perfil" style="font-size:16px" class="h-10 w-full min-w-0 rounded-lg border border-cyan-100 bg-white px-3 text-base font-bold outline-none">' + opcoesPerfilHtml(usuario.perfil || 'operador_simples', usuario.perfil === 'gestor_master' || (state.empresa && state.empresa.perfil === 'gestor_master')) + '</select>' +
-        '<input id="edit-usuario-senha" type="password" placeholder="Nova senha (opcional)" style="font-size:16px" class="h-10 w-full min-w-0 rounded-lg border border-cyan-100 bg-white px-3 text-base font-bold outline-none" />' +
-        '<input id="edit-usuario-confirmar-senha" type="password" placeholder="Confirmar nova senha" style="font-size:16px" class="h-10 w-full min-w-0 rounded-lg border border-cyan-100 bg-white px-3 text-base font-bold outline-none" />' +
+        campoSenhaSimplesHtml('edit-usuario-senha', 'Nova senha (opcional)', 'h-10 w-full min-w-0 rounded-lg border border-cyan-100 bg-white px-3 text-base font-bold outline-none', 'new-password') +
+        campoSenhaSimplesHtml('edit-usuario-confirmar-senha', 'Confirmar nova senha', 'h-10 w-full min-w-0 rounded-lg border border-cyan-100 bg-white px-3 text-base font-bold outline-none', 'new-password') +
         '<button id="salvar-usuario-mobile" type="button" class="h-10 rounded-xl bg-cyan-600 px-4 text-xs font-black uppercase tracking-wide text-white">' + (state.carregando ? 'Salvando...' : 'Salvar usuario') + '</button>' +
       '</div>'
     );
@@ -11007,7 +11039,7 @@
             seletorTipoPerfilHtml('edit-tipo', tipoEdicao) +
             '<input id="editar-empresa-nome" value="' + escapeHtml(state.editEmpresaNome) + '" placeholder="' + escapeHtml(rotuloNomePerfil(tipoEdicao)) + '" style="font-size:16px" class="h-11 rounded-md border border-cyan-100 bg-white px-3 text-base font-bold text-slate-900 outline-none focus:border-cyan-500" />' +
             '<input id="editar-empresa-login" value="' + escapeHtml(state.editEmpresaLogin) + '" placeholder="Login ou email" style="font-size:16px" class="h-11 rounded-md border border-cyan-100 bg-white px-3 text-base font-bold text-slate-900 outline-none focus:border-cyan-500" />' +
-            '<input id="editar-empresa-senha" type="password" placeholder="Nova senha (opcional)" style="font-size:16px" class="h-11 rounded-md border border-cyan-100 bg-white px-3 text-base font-bold text-slate-900 outline-none focus:border-cyan-500" />' +
+            campoSenhaSimplesHtml('editar-empresa-senha', 'Nova senha (opcional)', 'h-11 w-full rounded-md border border-cyan-100 bg-white px-3 text-base font-bold text-slate-900 outline-none focus:border-cyan-500', 'new-password') +
             (gestorMaster ? '<p class="text-xs font-semibold leading-relaxed text-cyan-900">Para Gestor Master, a senha deve ser alterada pela recuperação de senha.</p>' : '') +
             '<div class="grid grid-cols-2 gap-2">' +
               '<button id="cancelar-edicao-empresa-mobile" type="button" class="h-10 rounded-xl bg-white border border-slate-200 px-3 text-xs font-black uppercase tracking-wide text-slate-600">Cancelar</button>' +
@@ -12217,6 +12249,12 @@
     });
     bind('toggle-confirmar-cadastro', function () {
       alternarSenha('mostrarConfirmarSenhaCadastro', 'cadastro-confirmar-senha', 'toggle-confirmar-cadastro');
+    });
+    ['usuario-senha', 'edit-usuario-senha', 'edit-usuario-confirmar-senha', 'editar-empresa-senha'].forEach(function (inputSenhaId) {
+      var botaoSenhaId = 'toggle-' + inputSenhaId;
+      bind(botaoSenhaId, function () {
+        alternarSenhaCampoMobile(inputSenhaId, botaoSenhaId);
+      });
     });
     bind('voltar-login', function () {
       state.telaAcesso = 'login';

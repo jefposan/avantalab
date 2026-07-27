@@ -9,6 +9,7 @@ import Relatorio from './components/Relatorio';
 import ModalTermos from './components/ModalTermos';
 import ModalPrivacidade from './components/ModalPrivacidade';
 import Tooltip from './components/Tooltip';
+import BotaoVisibilidadeSenha from './components/BotaoVisibilidadeSenha';
 import ModalInstrucoes from './components/ModalInstrucoes';
 import ModalDespesasBase from './components/ModalDespesasBase';
 import ModalLogo from './components/ModalLogo';
@@ -283,6 +284,8 @@ function tipoPedeConfirmacao(tipo: string | null | undefined): boolean {
 }
 
 export default function AppGestao() {
+  const [mostrarEditEmpresaSenha, setMostrarEditEmpresaSenha] = useState(false);
+  const [mostrarEditUsuarioConfirmarSenha, setMostrarEditUsuarioConfirmarSenha] = useState(false);
 
   // ---------------------------------------------------------------------------
   // Hooks — estados e funções extraídos
@@ -8185,17 +8188,27 @@ if (validacaoTelefoneObrigatoria) {
           <label className={`mb-1 block text-xs font-black uppercase tracking-wide ${textMuted}`}>
             Nova senha
           </label>
-          <input
-            type="password"
-            value={editEmpresaSenha}
-            onChange={(e) => setEditEmpresaSenha(e.target.value)}
-            placeholder="Deixe em branco para manter a senha atual"
-            className={`w-full rounded-xl border px-4 py-3 text-sm font-semibold outline-none ${
-              darkMode
-                ? 'border-slate-600 bg-slate-900 text-white placeholder:text-slate-500'
-                : 'border-slate-300 bg-white text-slate-800 placeholder:text-slate-400'
-            }`}
-          />
+          <div className="relative">
+            <input
+              type={mostrarEditEmpresaSenha ? 'text' : 'password'}
+              autoComplete="new-password"
+              value={editEmpresaSenha}
+              onChange={(e) => setEditEmpresaSenha(e.target.value)}
+              placeholder="Deixe em branco para manter a senha atual"
+              className={`w-full rounded-xl border px-4 py-3 pr-11 text-sm font-semibold outline-none ${
+                darkMode
+                  ? 'border-slate-600 bg-slate-900 text-white placeholder:text-slate-500'
+                  : 'border-slate-300 bg-white text-slate-800 placeholder:text-slate-400'
+              }`}
+            />
+            <BotaoVisibilidadeSenha
+              visivel={mostrarEditEmpresaSenha}
+              onToggle={() => setMostrarEditEmpresaSenha((mostrar) => !mostrar)}
+              className={`absolute right-2 top-1/2 grid h-8 w-8 -translate-y-1/2 place-items-center rounded-lg transition ${
+                darkMode ? 'text-slate-300 hover:bg-slate-700 hover:text-white' : 'text-slate-500 hover:bg-slate-100 hover:text-slate-800'
+              }`}
+            />
+          </div>
           {perfilUsuario === 'gestor_master' && (
             <p className={`mt-2 text-xs font-semibold leading-relaxed ${textMuted}`}>
               Para Gestor Master, a senha deve ser alterada pela recuperação de senha.
@@ -8558,17 +8571,27 @@ if (validacaoTelefoneObrigatoria) {
               <label className={`mb-1 block text-xs font-black uppercase tracking-wide ${textMuted}`}>
                 Nova senha
               </label>
-              <input
-                type="password"
-                value={editEmpresaSenha}
-                onChange={(e) => setEditEmpresaSenha(e.target.value)}
-                placeholder="Deixe em branco para manter"
-                className={`w-full rounded-xl border px-4 py-3 text-sm font-semibold outline-none transition focus:ring-2 ${
-                  darkMode
-                    ? 'border-slate-600 bg-slate-900 text-white placeholder:text-slate-500 focus:border-sky-500 focus:ring-sky-500/20'
-                    : 'border-slate-300 bg-white text-slate-800 placeholder:text-slate-400 focus:border-sky-600 focus:ring-sky-600/20'
-                }`}
-              />
+              <div className="relative">
+                <input
+                  type={mostrarEditEmpresaSenha ? 'text' : 'password'}
+                  autoComplete="new-password"
+                  value={editEmpresaSenha}
+                  onChange={(e) => setEditEmpresaSenha(e.target.value)}
+                  placeholder="Deixe em branco para manter"
+                  className={`w-full rounded-xl border px-4 py-3 pr-11 text-sm font-semibold outline-none transition focus:ring-2 ${
+                    darkMode
+                      ? 'border-slate-600 bg-slate-900 text-white placeholder:text-slate-500 focus:border-sky-500 focus:ring-sky-500/20'
+                      : 'border-slate-300 bg-white text-slate-800 placeholder:text-slate-400 focus:border-sky-600 focus:ring-sky-600/20'
+                  }`}
+                />
+                <BotaoVisibilidadeSenha
+                  visivel={mostrarEditEmpresaSenha}
+                  onToggle={() => setMostrarEditEmpresaSenha((mostrar) => !mostrar)}
+                  className={`absolute right-2 top-1/2 grid h-8 w-8 -translate-y-1/2 place-items-center rounded-lg transition ${
+                    darkMode ? 'text-slate-300 hover:bg-slate-700 hover:text-white' : 'text-slate-500 hover:bg-slate-100 hover:text-slate-800'
+                  }`}
+                />
+              </div>
               {perfilUsuario === 'gestor_master' && (
                 <p className={`mt-1.5 text-xs font-semibold ${textMuted}`}>
                   Para Gestor Master, a senha deve ser alterada pela recuperação de senha.
@@ -8863,44 +8886,47 @@ if (validacaoTelefoneObrigatoria) {
           </p>
 
           <div className="grid grid-cols-1 gap-3 md:grid-cols-[1fr_auto]">
-            <div className="relative">
-              <input
-                type={mostrarEditUsuarioNovaSenha ? 'text' : 'password'}
-                value={editUsuarioNovaSenha}
-                onChange={(e) => setEditUsuarioNovaSenha(e.target.value)}
-                placeholder="Nova senha"
-                className={`w-full rounded-xl border px-3 py-2.5 pr-10 text-sm font-semibold outline-none ${
-                  darkMode
-                    ? 'bg-slate-800 border-slate-600 text-white placeholder:text-slate-400'
-                    : 'bg-white border-slate-300 text-slate-700 placeholder:text-slate-400'
-                }`}
-              />
-              <input type={mostrarEditUsuarioNovaSenha ? 'text' : 'password'} value={editUsuarioConfirmarSenha} onChange={(e) => setEditUsuarioConfirmarSenha(e.target.value)} placeholder="Confirmar nova senha" className={`mt-2 w-full rounded-xl border px-3 py-2.5 text-sm font-semibold outline-none ${darkMode ? 'bg-slate-800 border-slate-600 text-white' : 'bg-white border-slate-300 text-slate-700'}`} />
-
-              <button
-  type="button"
-  onClick={() => setMostrarEditUsuarioNovaSenha((mostrar) => !mostrar)}
-  className={`absolute right-2 top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full transition cursor-pointer ${
-    darkMode
-      ? 'text-slate-300 hover:bg-slate-700 hover:text-white'
-      : 'text-slate-500 hover:bg-slate-100 hover:text-slate-800'
-  }`}
-  title={mostrarEditUsuarioNovaSenha ? 'Ocultar senha' : 'Ver senha'}
->
-  {mostrarEditUsuarioNovaSenha ? (
-    <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z" />
-      <circle cx="12" cy="12" r="3" strokeWidth="2" />
-    </svg>
-  ) : (
-    <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 3l18 18" />
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10.58 10.58A2 2 0 0012 14a2 2 0 001.42-.58" />
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9.88 5.09A10.94 10.94 0 0112 5c5 0 9 4 10 7a12.7 12.7 0 01-3.02 4.45" />
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6.61 6.61A12.47 12.47 0 002 12c1 3 5 7 10 7a10.94 10.94 0 004.39-.91" />
-    </svg>
-  )}
-</button>
+            <div className="grid gap-2">
+              <div className="relative">
+                <input
+                  type={mostrarEditUsuarioNovaSenha ? 'text' : 'password'}
+                  autoComplete="new-password"
+                  value={editUsuarioNovaSenha}
+                  onChange={(e) => setEditUsuarioNovaSenha(e.target.value)}
+                  placeholder="Nova senha"
+                  className={`w-full rounded-xl border px-3 py-2.5 pr-10 text-sm font-semibold outline-none ${
+                    darkMode
+                      ? 'bg-slate-800 border-slate-600 text-white placeholder:text-slate-400'
+                      : 'bg-white border-slate-300 text-slate-700 placeholder:text-slate-400'
+                  }`}
+                />
+                <BotaoVisibilidadeSenha
+                  visivel={mostrarEditUsuarioNovaSenha}
+                  onToggle={() => setMostrarEditUsuarioNovaSenha((mostrar) => !mostrar)}
+                  className={`absolute right-2 top-1/2 grid h-7 w-7 -translate-y-1/2 place-items-center rounded-lg transition ${
+                    darkMode ? 'text-slate-300 hover:bg-slate-700 hover:text-white' : 'text-slate-500 hover:bg-slate-100 hover:text-slate-800'
+                  }`}
+                />
+              </div>
+              <div className="relative">
+                <input
+                  type={mostrarEditUsuarioConfirmarSenha ? 'text' : 'password'}
+                  autoComplete="new-password"
+                  value={editUsuarioConfirmarSenha}
+                  onChange={(e) => setEditUsuarioConfirmarSenha(e.target.value)}
+                  placeholder="Confirmar nova senha"
+                  className={`w-full rounded-xl border px-3 py-2.5 pr-10 text-sm font-semibold outline-none ${
+                    darkMode ? 'bg-slate-800 border-slate-600 text-white' : 'bg-white border-slate-300 text-slate-700'
+                  }`}
+                />
+                <BotaoVisibilidadeSenha
+                  visivel={mostrarEditUsuarioConfirmarSenha}
+                  onToggle={() => setMostrarEditUsuarioConfirmarSenha((mostrar) => !mostrar)}
+                  className={`absolute right-2 top-1/2 grid h-7 w-7 -translate-y-1/2 place-items-center rounded-lg transition ${
+                    darkMode ? 'text-slate-300 hover:bg-slate-700 hover:text-white' : 'text-slate-500 hover:bg-slate-100 hover:text-slate-800'
+                  }`}
+                />
+              </div>
             </div>
 
             <button
@@ -9138,6 +9164,8 @@ name="novo-usuario-login"
   <button
     type="button"
     onClick={() => setMostrarUsuarioSenha((mostrar) => !mostrar)}
+    aria-label={mostrarUsuarioSenha ? 'Ocultar senha' : 'Exibir senha'}
+    aria-pressed={mostrarUsuarioSenha}
     className={`absolute right-2 top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full transition cursor-pointer ${
       darkMode
         ? 'text-slate-300 hover:bg-slate-700 hover:text-white'

@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from 'react';
 import ModalConfirmacao from '../components/ModalConfirmacao';
+import BotaoVisibilidadeSenha from '../components/BotaoVisibilidadeSenha';
 
 type FeedbackStatus = 'novo' | 'em_analise' | 'respondido' | 'arquivado';
 type AdminView = 'avaliacoes' | 'disparos' | 'conteudo-vendas' | 'cupons' | 'perfis' | 'consumo' | 'rep-p' | 'configuracoes';
@@ -296,6 +297,7 @@ function dadosTipoConteudo(pagina: ConteudoVendasPagina, tipo: string) {
 
 export default function AdminPage() {
   const [token, setToken] = useState('');
+  const [mostrarToken, setMostrarToken] = useState(false);
   const [authorized, setAuthorized] = useState(false);
   const [view, setView] = useState<AdminView>('avaliacoes');
   const [feedbacks, setFeedbacks] = useState<Feedback[]>([]);
@@ -322,6 +324,8 @@ export default function AdminPage() {
   const [customPassword, setCustomPassword] = useState(false);
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [mostrarNovaSenha, setMostrarNovaSenha] = useState(false);
+  const [mostrarConfirmacaoSenha, setMostrarConfirmacaoSenha] = useState(false);
   const [savingPassword, setSavingPassword] = useState(false);
   const [cupons, setCupons] = useState<Cupom[]>([]);
   const [cupomCodigo, setCupomCodigo] = useState('');
@@ -354,6 +358,7 @@ export default function AdminPage() {
   const [certificadoRepP, setCertificadoRepP] = useState<CertificadoRepP | null>(null);
   const [arquivoRepP, setArquivoRepP] = useState<File | null>(null);
   const [senhaRepP, setSenhaRepP] = useState('');
+  const [mostrarSenhaRepP, setMostrarSenhaRepP] = useState(false);
   const [modoRepP, setModoRepP] = useState<'homologacao' | 'producao'>('homologacao');
   const [enviandoCertificadoRepP, setEnviandoCertificadoRepP] = useState(false);
   const [registroInpiRepP, setRegistroInpiRepP] = useState('');
@@ -877,7 +882,10 @@ export default function AdminPage() {
           <h2 className="mt-4 text-lg font-black text-slate-950">Acesso administrativo</h2>
           <p className="mt-1 text-sm text-slate-500">Entre com a senha administrativa para acessar mensagens, disparos e configurações.</p>
           <label className="mt-5 block text-[10px] font-black uppercase tracking-wide text-slate-500">Senha</label>
-          <input type="password" value={token} onChange={(event) => setToken(event.target.value)} onKeyDown={(event) => { if (event.key === 'Enter') void loadPanel(); }} autoComplete="current-password" className="mt-1 h-11 w-full rounded-md border border-slate-300 bg-white px-3 text-base outline-none focus:border-cyan-700 focus:ring-2 focus:ring-cyan-700/15" placeholder="Digite a senha" />
+          <div className="relative mt-1">
+            <input type={mostrarToken ? 'text' : 'password'} value={token} onChange={(event) => setToken(event.target.value)} onKeyDown={(event) => { if (event.key === 'Enter') void loadPanel(); }} autoComplete="current-password" className="h-11 w-full rounded-md border border-slate-300 bg-white px-3 pr-11 text-base outline-none focus:border-cyan-700 focus:ring-2 focus:ring-cyan-700/15" placeholder="Digite a senha" />
+            <BotaoVisibilidadeSenha visivel={mostrarToken} onToggle={() => setMostrarToken((valor) => !valor)} className="absolute right-1.5 top-1/2 grid h-8 w-8 -translate-y-1/2 place-items-center rounded-md text-slate-500 hover:bg-slate-100 hover:text-slate-800" />
+          </div>
           {error && <p className="mt-3 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-xs font-bold text-red-700">{error}</p>}
           <button type="button" onClick={() => void loadPanel()} disabled={loading} className="mt-4 h-11 w-full rounded-md bg-cyan-700 text-xs font-black uppercase text-white hover:bg-cyan-800 disabled:opacity-60">{loading ? 'Acessando...' : 'Acessar painel'}</button>
         </section> : <>
@@ -1181,7 +1189,10 @@ export default function AdminPage() {
               <label className="mt-4 block text-[10px] font-black uppercase text-slate-500" htmlFor="rep-p-certificado">Arquivo A1</label>
               <input id="rep-p-certificado" type="file" accept=".pfx,.p12,application/x-pkcs12" onChange={(event) => setArquivoRepP(event.target.files?.[0] || null)} className="mt-1 block w-full text-xs text-slate-600 file:mr-3 file:h-10 file:rounded-md file:border-0 file:bg-cyan-700 file:px-3 file:text-xs file:font-black file:uppercase file:text-white hover:file:bg-cyan-800" />
               <label className="mt-3 block text-[10px] font-black uppercase text-slate-500" htmlFor="rep-p-senha">Senha do certificado</label>
-              <input id="rep-p-senha" type="password" autoComplete="new-password" value={senhaRepP} onChange={(event) => setSenhaRepP(event.target.value)} className="mt-1 h-10 w-full rounded-md border border-slate-300 px-3 text-sm outline-none focus:border-cyan-700" placeholder="Senha do A1" />
+              <div className="relative mt-1">
+                <input id="rep-p-senha" type={mostrarSenhaRepP ? 'text' : 'password'} autoComplete="new-password" value={senhaRepP} onChange={(event) => setSenhaRepP(event.target.value)} className="h-10 w-full rounded-md border border-slate-300 px-3 pr-11 text-sm outline-none focus:border-cyan-700" placeholder="Senha do A1" />
+                <BotaoVisibilidadeSenha visivel={mostrarSenhaRepP} onToggle={() => setMostrarSenhaRepP((valor) => !valor)} className="absolute right-1.5 top-1/2 grid h-8 w-8 -translate-y-1/2 place-items-center rounded-md text-slate-500 hover:bg-slate-100 hover:text-slate-800" />
+              </div>
               <label className="mt-3 block text-[10px] font-black uppercase text-slate-500" htmlFor="rep-p-modo">Ambiente</label>
               <select id="rep-p-modo" value={modoRepP} onChange={(event) => setModoRepP(event.target.value as 'homologacao' | 'producao')} className="mt-1 h-10 w-full rounded-md border border-slate-300 bg-white px-3 text-sm font-bold outline-none focus:border-cyan-700"><option value="homologacao">Homologação — emissão legal bloqueada</option><option value="producao">Produção — exige certificado vigente</option></select>
               <button type="button" onClick={() => void salvarCertificadoRepP()} disabled={enviandoCertificadoRepP || !arquivoRepP || !senhaRepP} className="mt-4 flex h-10 w-full items-center justify-center gap-2 rounded-md bg-cyan-700 text-xs font-black uppercase text-white hover:bg-cyan-800 disabled:opacity-40"><Icon name="lock" size={15} />{enviandoCertificadoRepP ? 'Criptografando...' : 'Guardar certificado'}</button>
@@ -1204,7 +1215,22 @@ export default function AdminPage() {
           </div>}
 
           {view === 'configuracoes' && <div className="grid gap-4 md:grid-cols-2">
-            <section className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm"><span className="flex h-9 w-9 items-center justify-center rounded-md bg-cyan-50 text-cyan-800"><Icon name="lock" /></span><h2 className="mt-3 text-base font-black text-slate-950">Senha administrativa</h2><p className="mt-1 text-xs leading-relaxed text-slate-500">{customPassword ? 'Uma senha personalizada está ativa.' : 'A senha inicial do ambiente ainda está ativa.'} A alteração vale no próximo acesso.</p><label className="mt-4 block text-[10px] font-black uppercase text-slate-500">Nova senha</label><input type="password" value={newPassword} onChange={(event) => setNewPassword(event.target.value)} autoComplete="new-password" className="mt-1 h-10 w-full rounded-md border border-slate-300 px-3 text-sm outline-none focus:border-cyan-700" placeholder="Mínimo de 10 caracteres" /><label className="mt-3 block text-[10px] font-black uppercase text-slate-500">Confirmar nova senha</label><input type="password" value={confirmPassword} onChange={(event) => setConfirmPassword(event.target.value)} autoComplete="new-password" className="mt-1 h-10 w-full rounded-md border border-slate-300 px-3 text-sm outline-none focus:border-cyan-700" /><button type="button" onClick={() => void changePassword()} disabled={savingPassword || !newPassword || !confirmPassword} className="mt-3 h-10 w-full rounded-md bg-cyan-700 text-xs font-black uppercase text-white hover:bg-cyan-800 disabled:opacity-40">{savingPassword ? 'Salvando...' : 'Alterar senha'}</button></section>
+            <section className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
+              <span className="flex h-9 w-9 items-center justify-center rounded-md bg-cyan-50 text-cyan-800"><Icon name="lock" /></span>
+              <h2 className="mt-3 text-base font-black text-slate-950">Senha administrativa</h2>
+              <p className="mt-1 text-xs leading-relaxed text-slate-500">{customPassword ? 'Uma senha personalizada está ativa.' : 'A senha inicial do ambiente ainda está ativa.'} A alteração vale no próximo acesso.</p>
+              <label className="mt-4 block text-[10px] font-black uppercase text-slate-500">Nova senha</label>
+              <div className="relative mt-1">
+                <input type={mostrarNovaSenha ? 'text' : 'password'} value={newPassword} onChange={(event) => setNewPassword(event.target.value)} autoComplete="new-password" className="h-10 w-full rounded-md border border-slate-300 px-3 pr-11 text-sm outline-none focus:border-cyan-700" placeholder="Mínimo de 10 caracteres" />
+                <BotaoVisibilidadeSenha visivel={mostrarNovaSenha} onToggle={() => setMostrarNovaSenha((valor) => !valor)} className="absolute right-1.5 top-1/2 grid h-8 w-8 -translate-y-1/2 place-items-center rounded-md text-slate-500 hover:bg-slate-100 hover:text-slate-800" />
+              </div>
+              <label className="mt-3 block text-[10px] font-black uppercase text-slate-500">Confirmar nova senha</label>
+              <div className="relative mt-1">
+                <input type={mostrarConfirmacaoSenha ? 'text' : 'password'} value={confirmPassword} onChange={(event) => setConfirmPassword(event.target.value)} autoComplete="new-password" className="h-10 w-full rounded-md border border-slate-300 px-3 pr-11 text-sm outline-none focus:border-cyan-700" />
+                <BotaoVisibilidadeSenha visivel={mostrarConfirmacaoSenha} onToggle={() => setMostrarConfirmacaoSenha((valor) => !valor)} className="absolute right-1.5 top-1/2 grid h-8 w-8 -translate-y-1/2 place-items-center rounded-md text-slate-500 hover:bg-slate-100 hover:text-slate-800" />
+              </div>
+              <button type="button" onClick={() => void changePassword()} disabled={savingPassword || !newPassword || !confirmPassword} className="mt-3 h-10 w-full rounded-md bg-cyan-700 text-xs font-black uppercase text-white hover:bg-cyan-800 disabled:opacity-40">{savingPassword ? 'Salvando...' : 'Alterar senha'}</button>
+            </section>
             <section className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm"><span className="flex h-9 w-9 items-center justify-center rounded-md bg-emerald-50 text-emerald-700"><Icon name="settings" /></span><h2 className="mt-3 text-base font-black text-slate-950">Sessão administrativa</h2><p className="mt-1 text-xs leading-relaxed text-slate-500">A senha permanece somente na memória desta página. Ao sair ou fechar a aba, será necessário informar novamente.</p><dl className="mt-4 divide-y divide-slate-100 rounded-md border border-slate-200 text-xs"><div className="flex justify-between gap-3 p-3"><dt className="font-bold text-slate-500">Acesso</dt><dd className="font-black text-emerald-700">Autorizado</dd></div><div className="flex justify-between gap-3 p-3"><dt className="font-bold text-slate-500">Persistência local</dt><dd className="font-black text-slate-700">Desativada</dd></div></dl><button type="button" onClick={logout} className="mt-3 flex h-10 w-full items-center justify-center gap-2 rounded-md border border-red-200 text-xs font-black uppercase text-red-700 hover:bg-red-50"><Icon name="logout" />Encerrar sessão</button></section>
           </div>}
         </>}
