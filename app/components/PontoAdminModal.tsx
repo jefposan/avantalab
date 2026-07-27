@@ -99,6 +99,7 @@ export type PontoConfig = {
 
 interface PontoAdminModalProps {
   aberto: boolean;
+  rascunhoEscopo: string;
   abaInicial?: AbaPontoAdmin;
   relatorioInicial?: { funcionarioUserId: string; data: string } | null;
   onFechar: () => void;
@@ -126,6 +127,7 @@ interface PontoAdminModalProps {
 
 export default function PontoAdminModal({
   aberto,
+  rascunhoEscopo,
   abaInicial = 'lista',
   relatorioInicial = null,
   onFechar,
@@ -165,6 +167,7 @@ export default function PontoAdminModal({
   const [enviando, setEnviando] = useState(false);
   const [msg, setMsg] = useState<{ tipo: 'ok' | 'erro'; texto: string } | null>(null);
   const listaScrollRef = useRef<HTMLDivElement | null>(null);
+  const rascunhoNovoCarregadoRef = useRef('');
 
   const [lat, setLat] = useState('');
   const [lng, setLng] = useState('');
@@ -251,6 +254,60 @@ export default function PontoAdminModal({
     }
   }, [config]);
 
+  const chaveRascunhoNovo = rascunhoEscopo
+    ? `avantalab:rascunho:v1:ponto:funcionario:${rascunhoEscopo}`
+    : '';
+
+  useEffect(() => {
+    if (!aberto || !chaveRascunhoNovo) return;
+    rascunhoNovoCarregadoRef.current = '';
+    let timer: number | undefined;
+    try {
+      const salvo = JSON.parse(window.sessionStorage.getItem(chaveRascunhoNovo) || 'null') as {
+        expiraEm?: number;
+        nome?: string;
+        cpf?: string;
+        cargo?: string;
+        horaEntrada?: string;
+        horaSaida?: string;
+        dias?: number[];
+      } | null;
+      if (salvo && Number(salvo.expiraEm) > Date.now()) {
+        timer = window.setTimeout(() => {
+          setNome(String(salvo.nome || ''));
+          setCpf(String(salvo.cpf || ''));
+          setCargo(String(salvo.cargo || ''));
+          setHoraEntrada(String(salvo.horaEntrada || ''));
+          setHoraSaida(String(salvo.horaSaida || ''));
+          setDiasNovo(Array.isArray(salvo.dias) ? salvo.dias : []);
+          rascunhoNovoCarregadoRef.current = chaveRascunhoNovo;
+        }, 0);
+      } else {
+        window.sessionStorage.removeItem(chaveRascunhoNovo);
+        rascunhoNovoCarregadoRef.current = chaveRascunhoNovo;
+      }
+    } catch {
+      rascunhoNovoCarregadoRef.current = chaveRascunhoNovo;
+    }
+    return () => { if (timer !== undefined) window.clearTimeout(timer); };
+  }, [aberto, chaveRascunhoNovo]);
+
+  useEffect(() => {
+    if (!aberto || !chaveRascunhoNovo || rascunhoNovoCarregadoRef.current !== chaveRascunhoNovo) return;
+    try {
+      window.sessionStorage.setItem(chaveRascunhoNovo, JSON.stringify({
+        versao: 1,
+        expiraEm: Date.now() + 24 * 60 * 60 * 1000,
+        nome,
+        cpf,
+        cargo,
+        horaEntrada,
+        horaSaida,
+        dias: diasNovo,
+      }));
+    } catch { /* armazenamento indisponível */ }
+  }, [aberto, cargo, chaveRascunhoNovo, cpf, diasNovo, horaEntrada, horaSaida, nome]);
+
   const card = darkMode ? 'bg-slate-900 text-slate-100 border-slate-700' : 'bg-white text-slate-900 border-slate-200';
   const itemBorda = darkMode ? 'border-slate-700' : 'border-slate-200';
   const textMuted = darkMode ? 'text-slate-400' : 'text-slate-500';
@@ -274,6 +331,7 @@ export default function PontoAdminModal({
     } else {
       setMsg({ tipo: 'ok', texto: 'Funcionário cadastrado!' });
       setNome(''); setCpf(''); setSenha(''); setVerSenha(false); setCargo(''); setHoraEntrada(''); setHoraSaida(''); setDiasNovo([]);
+      try { if (chaveRascunhoNovo) window.sessionStorage.removeItem(chaveRascunhoNovo); } catch { /* armazenamento indisponível */ }
       setAba('lista');
     }
   };
@@ -769,7 +827,7 @@ export default function PontoAdminModal({
 
                     {editId === f.id && (
                       <div className={`mt-3 grid gap-2 border-t pt-3 ${itemBorda}`}>
-                        <label className={labelCls}>Nome
+                        <label className={labelCls}>Nome completo
                           <input className={inputCls} value={editNome} onChange={(e) => setEditNome(e.target.value)} placeholder="Nome completo do funcionário" />
                         </label>
                         <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
@@ -830,7 +888,7 @@ export default function PontoAdminModal({
 
           {aba === 'novo' && (
             <div className="grid gap-3">
-              <label className={labelCls}>Nome
+              <label className={labelCls}>Nome completo
                 <input className={inputCls} value={nome} onChange={(e) => setNome(e.target.value)} placeholder="Nome completo do funcionário" />
               </label>
               <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">

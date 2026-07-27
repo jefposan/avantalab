@@ -1,6 +1,11 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.6.1.10 -->
+<!-- ava-version: 1.6.1.11 -->
+
+> Revisão 1.6.1.11: em Usuários, os campos informam Nome completo e permanecem
+> preenchidos quando há erro de validação, conexão ou servidor. Nome, login e
+> perfil formam um rascunho temporário por usuário e perfil; a senha permanece
+> apenas em memória e nunca é armazenada no navegador.
 
 > Revisão 1.6.1.10: Central de Consultas e pesquisa assistida de CNPJ adicionadas
 > à Gestão Web; sem impacto operacional na Gestão Mobile.

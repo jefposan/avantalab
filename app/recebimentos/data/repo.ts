@@ -3,6 +3,7 @@ import { supabase as supabasePrincipal } from '@/app/lib/supabase';
 import type { Colaborador, Empresa, FormaPagamentoRecebimento, Recebimento, SituacaoRecebimento, Subempresa } from '../components/types';
 import { colaboradoresDemo, empresasDemo, recebimentosDemo, subempresasDemo } from '../components/dadosDemo';
 import { situacaoPorValor } from '../components/helpers';
+import { validarNomeCompleto } from '@/app/lib/nome-pessoa';
 
 export type DadosRecebimentos = {
   empresas: Empresa[];
@@ -68,6 +69,12 @@ function hojeIso() {
   return new Date(agora.getTime() - agora.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
 }
 
+function exigirResponsavelValido(valor: string) {
+  if (valor.trim() && !validarNomeCompleto(valor)) {
+    throw new Error('Informe o nome completo do responsável, com nome e sobrenome.');
+  }
+}
+
 export function criarRepoDemo(): RecebimentosRepo {
   const dados: DadosRecebimentos = {
     empresas: copia(empresasDemo),
@@ -91,8 +98,8 @@ export function criarRepoDemo(): RecebimentosRepo {
   const colaboradorAtual = () => dados.colaboradores[0];
   return {
     async carregar() { return copia(dados); },
-    async salvarEmpresa(valor) { dados.empresas.push({ ...valor, id: `e-${Date.now()}` }); },
-    async editarEmpresa(id, valor) { dados.empresas = dados.empresas.map((e) => e.id === id ? { ...e, ...valor } : e); },
+    async salvarEmpresa(valor) { exigirResponsavelValido(valor.responsavel); dados.empresas.push({ ...valor, id: `e-${Date.now()}` }); },
+    async editarEmpresa(id, valor) { exigirResponsavelValido(valor.responsavel); dados.empresas = dados.empresas.map((e) => e.id === id ? { ...e, ...valor } : e); },
     async excluirEmpresa(id) {
       const subs = new Set(dados.subempresas.filter((s) => s.empresaId === id).map((s) => s.id));
       dados.recebimentos = dados.recebimentos.filter((r) => r.empresaId !== id && (!r.subempresaId || !subs.has(r.subempresaId)));
@@ -100,8 +107,8 @@ export function criarRepoDemo(): RecebimentosRepo {
       dados.empresas = dados.empresas.filter((e) => e.id !== id);
     },
     async alternarEmpresa(id, ativo) { dados.empresas = dados.empresas.map((e) => e.id === id ? { ...e, ativo } : e); },
-    async salvarSubempresa(valor) { dados.subempresas.push({ ...valor, id: `s-${Date.now()}` }); },
-    async editarSubempresa(id, valor) { dados.subempresas = dados.subempresas.map((s) => s.id === id ? { ...s, ...valor } : s); },
+    async salvarSubempresa(valor) { exigirResponsavelValido(valor.responsavel); dados.subempresas.push({ ...valor, id: `s-${Date.now()}` }); },
+    async editarSubempresa(id, valor) { exigirResponsavelValido(valor.responsavel); dados.subempresas = dados.subempresas.map((s) => s.id === id ? { ...s, ...valor } : s); },
     async excluirSubempresa(id) {
       dados.recebimentos = dados.recebimentos.filter((r) => r.subempresaId !== id);
       dados.subempresas = dados.subempresas.filter((s) => s.id !== id);
@@ -349,11 +356,13 @@ export function criarRepoSupabase(empresaId: string, cliente: SupabaseClient = s
       };
     },
     async salvarEmpresa(dados) {
+      exigirResponsavelValido(dados.responsavel);
       await exigir(cliente.from('recebimentos_empresas').insert({
         empresa_id: empresaId, nome: dados.nome, tipo_cadastro: dados.tipoCadastro, endereco: dados.endereco, cep: dados.cep, logradouro: dados.logradouro, bairro: dados.bairro, cidade: dados.cidade, estado: dados.estado, numero: dados.numero, complemento: dados.complemento, responsavel: dados.responsavel, telefone: dados.telefone, email: dados.email, valor_combinado: dados.valorCombinado, frequencia_recebimento: dados.frequenciaRecebimento, dias_semana: dados.configuracaoRecorrencia?.diasSemana ?? [], dia_mes: dados.configuracaoRecorrencia?.diaMes ?? null, mes_inicio: dados.configuracaoRecorrencia?.mesInicio ?? null, dia_vencimento: dados.configuracaoRecorrencia?.diaMes ?? null, ativo: dados.ativo,
       }).select('id').single(), 'Erro ao cadastrar empresa.');
     },
     async editarEmpresa(id, dados) {
+      exigirResponsavelValido(dados.responsavel);
       await exigir(cliente.from('recebimentos_empresas').update({
         nome: dados.nome, tipo_cadastro: dados.tipoCadastro, endereco: dados.endereco, cep: dados.cep, logradouro: dados.logradouro, bairro: dados.bairro, cidade: dados.cidade, estado: dados.estado, numero: dados.numero, complemento: dados.complemento, responsavel: dados.responsavel, telefone: dados.telefone, email: dados.email, valor_combinado: dados.valorCombinado, frequencia_recebimento: dados.frequenciaRecebimento, dias_semana: dados.configuracaoRecorrencia?.diasSemana ?? [], dia_mes: dados.configuracaoRecorrencia?.diaMes ?? null, mes_inicio: dados.configuracaoRecorrencia?.mesInicio ?? null, dia_vencimento: dados.configuracaoRecorrencia?.diaMes ?? null, atualizado_em: new Date().toISOString(),
       }).eq('empresa_id', empresaId).eq('id', id).select('id').single(), 'Erro ao editar empresa.');
@@ -361,6 +370,7 @@ export function criarRepoSupabase(empresaId: string, cliente: SupabaseClient = s
     async excluirEmpresa(id) { await exigir(cliente.from('recebimentos_empresas').delete().eq('empresa_id', empresaId).eq('id', id).select('id'), 'Erro ao excluir empresa.'); },
     async alternarEmpresa(id, ativo) { await exigir(cliente.from('recebimentos_empresas').update({ ativo, atualizado_em: new Date().toISOString() }).eq('empresa_id', empresaId).eq('id', id).select('id'), 'Erro ao alterar empresa.'); },
     async salvarSubempresa(dados) {
+      exigirResponsavelValido(dados.responsavel);
       await exigir(cliente.from('recebimentos_subempresas').insert({
         empresa_id: empresaId, recebimento_empresa_id: dados.empresaId, nome: dados.nome, endereco: dados.endereco,
         logradouro: dados.logradouro, numero: dados.numero, complemento: dados.complemento,
@@ -372,7 +382,7 @@ export function criarRepoSupabase(empresaId: string, cliente: SupabaseClient = s
         ativo: dados.ativo,
       }).select('id').single(), 'Erro ao cadastrar subempresa.');
     },
-    async editarSubempresa(id, dados) { await exigir(cliente.from('recebimentos_subempresas').update({ nome: dados.nome, endereco: dados.endereco, cep: dados.cep, logradouro: dados.logradouro, bairro: dados.bairro, cidade: dados.cidade, estado: dados.estado, numero: dados.numero, complemento: dados.complemento, responsavel: dados.responsavel, valor_combinado: dados.valorCombinado, frequencia_recebimento: dados.frequenciaRecebimento, dias_semana: dados.configuracaoRecorrencia.diasSemana, dia_mes: dados.configuracaoRecorrencia.diaMes, mes_inicio: dados.configuracaoRecorrencia.mesInicio, dia_vencimento: dados.configuracaoRecorrencia.diaMes, atualizado_em: new Date().toISOString() }).eq('empresa_id', empresaId).eq('id', id).select('id'), 'Erro ao editar subempresa.'); },
+    async editarSubempresa(id, dados) { exigirResponsavelValido(dados.responsavel); await exigir(cliente.from('recebimentos_subempresas').update({ nome: dados.nome, endereco: dados.endereco, cep: dados.cep, logradouro: dados.logradouro, bairro: dados.bairro, cidade: dados.cidade, estado: dados.estado, numero: dados.numero, complemento: dados.complemento, responsavel: dados.responsavel, valor_combinado: dados.valorCombinado, frequencia_recebimento: dados.frequenciaRecebimento, dias_semana: dados.configuracaoRecorrencia.diasSemana, dia_mes: dados.configuracaoRecorrencia.diaMes, mes_inicio: dados.configuracaoRecorrencia.mesInicio, dia_vencimento: dados.configuracaoRecorrencia.diaMes, atualizado_em: new Date().toISOString() }).eq('empresa_id', empresaId).eq('id', id).select('id'), 'Erro ao editar subempresa.'); },
     async excluirSubempresa(id) { await exigir(cliente.from('recebimentos_subempresas').delete().eq('empresa_id', empresaId).eq('id', id).select('id'), 'Erro ao excluir subempresa.'); },
     async alternarSubempresa(id, ativo) { await exigir(cliente.from('recebimentos_subempresas').update({ ativo, atualizado_em: new Date().toISOString() }).eq('empresa_id', empresaId).eq('id', id).select('id'), 'Erro ao alterar subempresa.'); },
     async criarColaborador(dados) { await chamarApi(cliente, '/api/recebimentos/criar-colaborador', { empresaId, ...dados }); },

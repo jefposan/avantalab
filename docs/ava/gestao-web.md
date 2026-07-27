@@ -1,6 +1,12 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.6.1.10 -->
+<!-- ava-version: 1.6.1.11 -->
+
+> Revisão 1.6.1.11: cadastros de pessoas exibem Nome completo e preservam os
+> campos quando ocorre erro. Usuários e Permissões, Controle de Ponto e
+> Recebimentos mantêm rascunhos temporários dos dados não sensíveis; senhas,
+> confirmações e códigos nunca são gravados no navegador. Em Recebimentos, o
+> formulário só é limpo após confirmação do servidor.
 
 > Revisão 1.6.1.10: a rota `/consulta` disponibiliza a Central de Consultas para
 > pesquisa cadastral de CNPJ. No cadastro empresarial, inclusive na etapa

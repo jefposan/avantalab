@@ -30,6 +30,7 @@ type Props = {
   colaboradores: Colaborador[];
   recebimentos: Recebimento[];
   mostrarLinkColaboradores?: boolean;
+  rascunhoEscopo: string;
   onConfirmarBaixa: (id: string, formaPagamento?: FormaPagamentoRecebimento) => void;
   onObterComprovante: (id: string) => Promise<ComprovanteRecebimento>;
   onBaixarDireto: (id: string, formaPagamento: FormaPagamentoRecebimento) => Promise<void>;
@@ -37,16 +38,16 @@ type Props = {
   onDivergencia: (id: string, motivo: string) => void;
   onEstornar: (id: string, motivo: string) => void;
   onEstornarDireto: (id: string, motivo: string) => Promise<void>;
-  onAdicionarEmpresa: (dados: Omit<Empresa, 'id'>) => void;
-  onEditarEmpresa: (id: string, dados: Omit<Empresa, 'id' | 'ativo'>) => void;
+  onAdicionarEmpresa: (dados: Omit<Empresa, 'id'>) => Promise<void>;
+  onEditarEmpresa: (id: string, dados: Omit<Empresa, 'id' | 'ativo'>) => Promise<void>;
   onExcluirEmpresa: (id: string) => void;
   onAlternarEmpresa: (id: string) => void;
-  onAdicionarSubempresa: (dados: Omit<Subempresa, 'id'>) => void;
-  onEditarSubempresa: (id: string, dados: Pick<Subempresa, 'nome' | 'endereco' | 'cep' | 'logradouro' | 'bairro' | 'cidade' | 'estado' | 'numero' | 'complemento' | 'responsavel' | 'valorCombinado' | 'frequenciaRecebimento' | 'configuracaoRecorrencia'>) => void;
+  onAdicionarSubempresa: (dados: Omit<Subempresa, 'id'>) => Promise<void>;
+  onEditarSubempresa: (id: string, dados: Pick<Subempresa, 'nome' | 'endereco' | 'cep' | 'logradouro' | 'bairro' | 'cidade' | 'estado' | 'numero' | 'complemento' | 'responsavel' | 'valorCombinado' | 'frequenciaRecebimento' | 'configuracaoRecorrencia'>) => Promise<void>;
   onExcluirSubempresa: (id: string) => void;
   onAlternarSubempresa: (id: string) => void;
-  onAdicionarColaborador: (dados: Omit<Colaborador, 'id'>) => void;
-  onEditarColaborador: (id: string, dados: Omit<Colaborador, 'id' | 'ativo'>) => void;
+  onAdicionarColaborador: (dados: Omit<Colaborador, 'id'>) => Promise<void>;
+  onEditarColaborador: (id: string, dados: Omit<Colaborador, 'id' | 'ativo'>) => Promise<void>;
   onExcluirColaborador: (id: string) => void;
   onAlternarColaborador: (id: string) => void;
   onObterIntegracaoFinanceira: (ano: number, mes: number) => Promise<IntegracaoFinanceiraRecebimentos>;
@@ -279,6 +280,7 @@ export default function PainelAdministrativo(props: Props) {
             onEditarSubempresa={props.onEditarSubempresa}
             onExcluirSubempresa={props.onExcluirSubempresa}
             onAlternarSubempresa={props.onAlternarSubempresa}
+            rascunhoEscopo={props.rascunhoEscopo}
             portalAcoesId="recebimentos-empresas-acoes-plato"
           />
         )}
@@ -293,6 +295,7 @@ export default function PainelAdministrativo(props: Props) {
             onEditar={props.onEditarColaborador}
             onExcluir={props.onExcluirColaborador}
             onAlternar={props.onAlternarColaborador}
+            rascunhoEscopo={props.rascunhoEscopo}
             portalAcoesId="recebimentos-colaboradores-acoes-plato"
           />
         )}

@@ -1,6 +1,12 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.6.1.10 -->
+<!-- ava-version: 1.6.1.11 -->
+
+> Revisão 1.6.1.11: o cadastro da conta mantém temporariamente nome completo,
+> e-mail, celular e DDI para recuperar o preenchimento após atualização da
+> página. Senhas, confirmação, código da empresa e código SMS não são
+> armazenados. A solicitação de conteúdo também identifica e valida Nome
+> completo.
 
 > Revisão 1.6.1.10: Central de Consultas e pesquisa assistida de CNPJ adicionadas
 > à Gestão Web; sem impacto operacional no AvantaVendas.

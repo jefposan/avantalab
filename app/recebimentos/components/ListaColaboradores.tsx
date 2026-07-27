@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import styles from '../recebimentos.module.css';
 import type { Colaborador, Recebimento } from './types';
@@ -13,11 +13,12 @@ type DadosColaborador = Omit<Colaborador, 'id' | 'ativo'>;
 type Props = {
   colaboradores: Colaborador[];
   recebimentos: Recebimento[];
-  onAdicionar: (dados: Omit<Colaborador, 'id'>) => void;
-  onEditar: (id: string, dados: DadosColaborador) => void;
+  onAdicionar: (dados: Omit<Colaborador, 'id'>) => Promise<void>;
+  onEditar: (id: string, dados: DadosColaborador) => Promise<void>;
   onExcluir: (id: string) => void;
   onAlternar: (id: string) => void;
   mostrarLinkAcesso?: boolean;
+  rascunhoEscopo: string;
   /** Destino no platô do AvantaCard para a ação principal. */
   portalAcoesId?: string;
 };
@@ -32,7 +33,7 @@ function IconeAcoes() {
   );
 }
 
-export default function ListaColaboradores({ colaboradores, recebimentos, onAdicionar, onEditar, onExcluir, onAlternar, mostrarLinkAcesso = false, portalAcoesId }: Props) {
+export default function ListaColaboradores({ colaboradores, recebimentos, onAdicionar, onEditar, onExcluir, onAlternar, mostrarLinkAcesso = false, rascunhoEscopo, portalAcoesId }: Props) {
   // Formulário aberto para cadastro (novo) ou edição (id).
   const [formAberto, setFormAberto] = useState(false);
   const [editandoId, setEditandoId] = useState<string | null>(null);
@@ -41,6 +42,8 @@ export default function ListaColaboradores({ colaboradores, recebimentos, onAdic
   const [erro, setErro] = useState('');
   const [linkCopiado, setLinkCopiado] = useState(false);
   const [portalAcoes, setPortalAcoes] = useState<HTMLElement | null>(null);
+  const [salvando, setSalvando] = useState(false);
+  const rascunhoCarregadoRef = useRef('');
 
   const [nome, setNome] = useState('');
   const [celular, setCelular] = useState('');
@@ -48,11 +51,64 @@ export default function ListaColaboradores({ colaboradores, recebimentos, onAdic
   const [cpf, setCpf] = useState('');
   const [senha, setSenha] = useState('');
   const [confirmarSenha, setConfirmarSenha] = useState('');
+  const chaveRascunho = `avantalab:rascunho:v1:recebimentos:colaborador:${rascunhoEscopo}`;
 
   useEffect(() => {
     if (!portalAcoesId) return;
     setPortalAcoes(document.getElementById(portalAcoesId));
   }, [portalAcoesId]);
+
+  useEffect(() => {
+    rascunhoCarregadoRef.current = '';
+    let timer: number | undefined;
+    try {
+      const salvo = JSON.parse(window.sessionStorage.getItem(chaveRascunho) || 'null') as {
+        expiraEm?: number;
+        aberto?: boolean;
+        editandoId?: string | null;
+        nome?: string;
+        celular?: string;
+        email?: string;
+        cpf?: string;
+      } | null;
+      if (salvo && Number(salvo.expiraEm) > Date.now()) {
+        timer = window.setTimeout(() => {
+          const editandoRestaurado = salvo.editandoId && colaboradores.some((item) => item.id === salvo.editandoId)
+            ? salvo.editandoId
+            : null;
+          setNome(String(salvo.nome || ''));
+          setCelular(String(salvo.celular || ''));
+          setEmail(String(salvo.email || ''));
+          setCpf(String(salvo.cpf || ''));
+          setEditandoId(editandoRestaurado);
+          setFormAberto(Boolean(salvo.aberto));
+          rascunhoCarregadoRef.current = chaveRascunho;
+        }, 0);
+      } else {
+        window.sessionStorage.removeItem(chaveRascunho);
+        rascunhoCarregadoRef.current = chaveRascunho;
+      }
+    } catch {
+      rascunhoCarregadoRef.current = chaveRascunho;
+    }
+    return () => { if (timer !== undefined) window.clearTimeout(timer); };
+  }, [chaveRascunho, colaboradores]);
+
+  useEffect(() => {
+    if (!formAberto || rascunhoCarregadoRef.current !== chaveRascunho) return;
+    try {
+      window.sessionStorage.setItem(chaveRascunho, JSON.stringify({
+        versao: 1,
+        expiraEm: Date.now() + 24 * 60 * 60 * 1000,
+        aberto: true,
+        editandoId,
+        nome,
+        celular,
+        email,
+        cpf,
+      }));
+    } catch { /* armazenamento indisponível */ }
+  }, [celular, chaveRascunho, cpf, editandoId, email, formAberto, nome]);
 
   const totais = useMemo(() => {
     const map: Record<string, { recebido: number; aguardando: number }> = {};
@@ -71,6 +127,7 @@ export default function ListaColaboradores({ colaboradores, recebimentos, onAdic
     setConfirmandoExclusao(false);
     setFormAberto(false);
     setEditandoId(null);
+    try { window.sessionStorage.removeItem(chaveRascunho); } catch { /* armazenamento indisponível */ }
   }
 
   function abrirNovo() {
@@ -95,7 +152,7 @@ export default function ListaColaboradores({ colaboradores, recebimentos, onAdic
     setAcoesAbertas((p) => ({ ...p, [id]: !p[id] }));
   }
 
-  function salvar() {
+  async function salvar() {
     setErro('');
     // Todos os campos são obrigatórios.
     if (!nome.trim() || !celular.trim() || !email.trim() || !cpf.trim() || !senha.trim() || !confirmarSenha.trim()) {
@@ -118,12 +175,19 @@ export default function ListaColaboradores({ colaboradores, recebimentos, onAdic
       cpf: cpf.replace(/\D/g, ''),
       senha: senha.trim(),
     };
-    if (editandoId) {
-      onEditar(editandoId, dados);
-    } else {
-      onAdicionar({ ...dados, ativo: true });
+    setSalvando(true);
+    try {
+      if (editandoId) {
+        await onEditar(editandoId, dados);
+      } else {
+        await onAdicionar({ ...dados, ativo: true });
+      }
+      limparForm();
+    } catch (error) {
+      setErro(error instanceof Error ? error.message : 'Não foi possível salvar o colaborador. Os dados preenchidos foram preservados.');
+    } finally {
+      setSalvando(false);
     }
-    limparForm();
   }
 
   function excluirEmEdicao() {
@@ -183,8 +247,8 @@ export default function ListaColaboradores({ colaboradores, recebimentos, onAdic
                 {confirmandoExclusao ? 'Confirmar' : 'Excluir'}
               </button>
             )}
-            <button type="button" className={`${styles.btn} ${styles.btnPrimary} ${styles.btnSm}`} onClick={salvar}>
-              Salvar
+            <button type="button" className={`${styles.btn} ${styles.btnPrimary} ${styles.btnSm}`} onClick={() => void salvar()} disabled={salvando}>
+              {salvando ? 'Salvando…' : 'Salvar'}
             </button>
           </div>
         </div>
