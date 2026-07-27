@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.6.1.05 -->
+<!-- ava-version: 1.6.1.06 -->
+
+> Revisão 1.6.1.06: no visualizador da Divulgação, arrastar horizontalmente ou
+> usar as setas laterais alterna entre o material anterior e o próximo da pasta.
 
 > Revisão 1.6.1.05: tocar em uma imagem ou vídeo dentro da pasta de Divulgação
 > abre o material original em um visualizador amplo; vídeos exibem seus

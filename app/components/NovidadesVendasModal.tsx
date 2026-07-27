@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { type PointerEvent as ReactPointerEvent, useEffect, useRef, useState } from 'react';
 import { supabase } from '../lib/supabase';
 import CatalogoProdutosVendas from './CatalogoProdutosVendas';
 import ModalConfirmacao from './ModalConfirmacao';
@@ -159,6 +159,7 @@ export default function NovidadesVendasModal({ aberto, empresaId, nomeEmpresa, d
   const [envioAtivo, setEnvioAtivo] = useState<{ nome: string; atual: number; total: number; progresso: number; etapa: string; cancelando: boolean } | null>(null);
   const inputArquivos = useRef<HTMLInputElement>(null);
   const controladorEnvio = useRef<AbortController | null>(null);
+  const gestoVisualizacao = useRef<{ x: number; y: number; pointerId: number } | null>(null);
 
   const carregar = async () => {
     if (!empresaId) return;
@@ -484,6 +485,31 @@ export default function NovidadesVendasModal({ aberto, empresaId, nomeEmpresa, d
 
   const fundo = darkMode ? 'border-slate-700 bg-slate-900 text-slate-100' : 'border-slate-200 bg-white text-slate-900'; const campo = darkMode ? 'border-slate-600 bg-slate-950 text-white' : 'border-slate-300 bg-white text-slate-900'; const suave = darkMode ? 'text-slate-400' : 'text-slate-500';
   const materiaisAtivos = materiais.filter((item) => item.pasta_id === pastaAtiva);
+  const indiceMaterialVisualizado = materialEmVisualizacao ? materiaisAtivos.findIndex((item) => item.id === materialEmVisualizacao.id) : -1;
+  const materialAnterior = indiceMaterialVisualizado > 0 ? materiaisAtivos[indiceMaterialVisualizado - 1] : null;
+  const proximoMaterial = indiceMaterialVisualizado >= 0 && indiceMaterialVisualizado < materiaisAtivos.length - 1 ? materiaisAtivos[indiceMaterialVisualizado + 1] : null;
+  const navegarMaterial = (direcao: -1 | 1) => {
+    const destino = direcao === -1 ? materialAnterior : proximoMaterial;
+    if (destino) setMaterialEmVisualizacao(destino);
+  };
+  const iniciarGestoVisualizacao = (evento: ReactPointerEvent<HTMLDivElement>) => {
+    if (!evento.isPrimary || (evento.pointerType === 'mouse' && evento.button !== 0)) return;
+    const video = (evento.target as HTMLElement).closest('video');
+    if (video) {
+      const limites = video.getBoundingClientRect();
+      if (evento.clientY >= limites.bottom - 64) return;
+    }
+    gestoVisualizacao.current = { x: evento.clientX, y: evento.clientY, pointerId: evento.pointerId };
+  };
+  const concluirGestoVisualizacao = (evento: ReactPointerEvent<HTMLDivElement>) => {
+    const inicio = gestoVisualizacao.current;
+    gestoVisualizacao.current = null;
+    if (!inicio || inicio.pointerId !== evento.pointerId) return;
+    const deslocamentoX = evento.clientX - inicio.x;
+    const deslocamentoY = evento.clientY - inicio.y;
+    if (Math.abs(deslocamentoX) < 56 || Math.abs(deslocamentoX) <= Math.abs(deslocamentoY)) return;
+    navegarMaterial(deslocamentoX < 0 ? 1 : -1);
+  };
   const pastasOrdenadas = pastasEmArvore(pastas);
   const listaPastasVisiveis = pastasVisiveis(pastas, pastasExpandidas);
   const alternarCriacaoPasta = () => {
@@ -517,13 +543,15 @@ export default function NovidadesVendasModal({ aberto, empresaId, nomeEmpresa, d
     {materialEmVisualizacao && <div className="fixed inset-0 z-[6100] flex items-center justify-center bg-slate-950/95 sm:p-5" onClick={(e) => { e.stopPropagation(); setMaterialEmVisualizacao(null); }} role="dialog" aria-modal="true" aria-label={`Visualização de ${materialEmVisualizacao.titulo}`}>
       <section className="flex h-full w-full max-w-5xl flex-col overflow-hidden bg-slate-950 text-white sm:max-h-[92dvh] sm:rounded-2xl sm:border sm:border-white/15 sm:shadow-2xl" onClick={(e) => e.stopPropagation()}>
         <header className="flex min-h-14 shrink-0 items-center justify-between gap-3 border-b border-white/15 px-4 py-2">
-          <div className="min-w-0"><p className="text-[9px] font-black uppercase tracking-[.18em] text-cyan-400">{materialEmVisualizacao.tipo === 'video' ? 'Vídeo' : 'Imagem'}</p><h3 className="truncate text-sm font-black sm:text-base">{materialEmVisualizacao.titulo}</h3></div>
+          <div className="min-w-0"><p className="text-[9px] font-black uppercase tracking-[.18em] text-cyan-400">{materialEmVisualizacao.tipo === 'video' ? 'Vídeo' : 'Imagem'}{indiceMaterialVisualizado >= 0 && materiaisAtivos.length > 1 ? ` · ${indiceMaterialVisualizado + 1} de ${materiaisAtivos.length}` : ''}</p><h3 className="truncate text-sm font-black sm:text-base">{materialEmVisualizacao.titulo}</h3></div>
           <button type="button" autoFocus onClick={() => setMaterialEmVisualizacao(null)} aria-label="Fechar visualização" className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-white/10 text-2xl font-bold text-white hover:bg-white/20 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-400">×</button>
         </header>
-        <div className="flex min-h-0 flex-1 items-center justify-center overflow-auto p-2 sm:p-4">
+        <div className="relative flex min-h-0 flex-1 touch-pan-y select-none items-center justify-center overflow-auto p-2 sm:p-4" onPointerDown={iniciarGestoVisualizacao} onPointerUp={concluirGestoVisualizacao} onPointerCancel={() => { gestoVisualizacao.current = null; }}>
+          {materialAnterior && <button type="button" onClick={() => navegarMaterial(-1)} aria-label="Visualizar material anterior" className="absolute left-2 top-1/2 z-10 flex h-12 w-12 -translate-y-1/2 items-center justify-center rounded-full bg-black/55 text-3xl text-white shadow-lg backdrop-blur-sm hover:bg-black/75 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-400 sm:left-4">‹</button>}
           {materialEmVisualizacao.tipo === 'video'
             ? <video src={materialEmVisualizacao.arquivo_url} controls playsInline preload="metadata" className="max-h-full max-w-full rounded-lg object-contain" />
-            : <img src={materialEmVisualizacao.arquivo_url} alt={materialEmVisualizacao.titulo} className="max-h-full max-w-full rounded-lg object-contain" />}
+            : <img src={materialEmVisualizacao.arquivo_url} alt={materialEmVisualizacao.titulo} draggable={false} className="max-h-full max-w-full rounded-lg object-contain" />}
+          {proximoMaterial && <button type="button" onClick={() => navegarMaterial(1)} aria-label="Visualizar próximo material" className="absolute right-2 top-1/2 z-10 flex h-12 w-12 -translate-y-1/2 items-center justify-center rounded-full bg-black/55 text-3xl text-white shadow-lg backdrop-blur-sm hover:bg-black/75 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-400 sm:right-4">›</button>}
         </div>
       </section>
     </div>}

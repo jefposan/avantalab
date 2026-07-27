@@ -1,6 +1,9 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.6.1.05 -->
+<!-- ava-version: 1.6.1.06 -->
+
+> Revisão 1.6.1.06: o visualizador da Gestão passou a navegar entre materiais
+> por gesto horizontal e setas; sem mudança operacional no AvantaVendas.
 
 > Revisão 1.6.1.05: a Gestão passou a abrir imagens e vídeos da Divulgação em
 > um visualizador amplo; sem mudança operacional no AvantaVendas.

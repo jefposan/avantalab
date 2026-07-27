@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.6.1.06 - 2026-07-27
+
+- Visualizador da Divulgação: arrastar horizontalmente alterna entre o material
+  anterior e o próximo dentro da pasta aberta.
+- Foram adicionados contador de posição e botões laterais acessíveis; o gesto
+  preserva a rolagem vertical e os controles inferiores dos vídeos.
+
 ## 1.6.1.05 - 2026-07-27
 
 - Divulgação: imagens e vídeos dentro das pastas de Conteúdo do Vendas passam a

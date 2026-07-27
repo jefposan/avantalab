@@ -1,6 +1,10 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.6.1.05 -->
+<!-- ava-version: 1.6.1.06 -->
+
+> Revisão 1.6.1.06: no visualizador da Divulgação, arraste para a esquerda para
+> abrir o próximo material e para a direita para voltar ao anterior. Setas
+> laterais e contador mostram as demais opções de navegação.
 
 > Revisão 1.6.1.05: tocar em uma imagem ou vídeo dentro da pasta de Divulgação
 > abre o material original em um visualizador amplo; vídeos exibem seus
