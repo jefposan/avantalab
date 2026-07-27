@@ -1,6 +1,17 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.6.0.84.127 -->
+<!-- ava-version: 1.6.0.84.130 -->
+
+> Revisão 1.6.0.84.130: melhora de contraste visual na Central de Consultas;
+> sem mudança operacional no fluxo de pesquisa.
+
+> Revisão 1.6.0.84.129: Recebimentos e Central de Consultas usam o fundo
+> AvantaLab sem logotipo no desktop; sem mudança operacional nos fluxos.
+
+> Revisão 1.6.0.84.128: a rota pública isolada `/consulta` disponibiliza a
+> Central de Consultas para pesquisa cadastral de CNPJ. A consulta não cadastra
+> empresas, não altera Recebimentos e não grava resultados nesta versão; o
+> relatório pode ser impresso pelo navegador.
 
 > Revisão 1.6.0.84.127: linhas parcialmente preenchidas no modelo Excel
 > permanecem visíveis na revisão. Data, tipo e valor são obrigatórios,

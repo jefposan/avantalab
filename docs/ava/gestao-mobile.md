@@ -1,6 +1,15 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.6.0.84.127 -->
+<!-- ava-version: 1.6.0.84.130 -->
+
+> Revisão 1.6.0.84.130: contraste da Central de Consultas web aprimorado; sem
+> impacto operacional na Gestão Mobile.
+
+> Revisão 1.6.0.84.129: ajuste visual restrito ao fundo desktop de Recebimentos
+> e Central de Consultas; sem impacto operacional na Gestão Mobile.
+
+> Revisão 1.6.0.84.128: criação da rota web pública e isolada `/consulta`; sem
+> impacto operacional na Gestão Mobile.
 
 > Revisão 1.6.0.84.127: validação de linhas incompletas no importador da Gestão
 > Web; sem impacto operacional na Gestão Mobile.

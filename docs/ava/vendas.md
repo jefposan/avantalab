@@ -1,6 +1,15 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.6.0.84.127 -->
+<!-- ava-version: 1.6.0.84.130 -->
+
+> Revisão 1.6.0.84.130: contraste da Central de Consultas web aprimorado; sem
+> impacto operacional no AvantaVendas.
+
+> Revisão 1.6.0.84.129: ajuste visual restrito a Recebimentos e Central de
+> Consultas no desktop; sem impacto operacional no AvantaVendas.
+
+> Revisão 1.6.0.84.128: criação da Central de Consultas web em rota isolada;
+> sem impacto operacional no AvantaVendas.
 
 > Revisão 1.6.0.84.127: validação de linhas incompletas no importador da Gestão
 > Web; sem impacto operacional no AvantaVendas.

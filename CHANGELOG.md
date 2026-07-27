@@ -1,5 +1,34 @@
 # Changelog
 
+## 1.6.0.84.130 - 2026-07-27
+
+- Central de Consultas: aumenta o contraste de rótulos, textos auxiliares,
+  ícones, badges, campos e títulos de seção no modo escuro.
+- Estados de foco, erro, disponível e indisponível permanecem distintos e
+  legíveis sem depender apenas da cor.
+
+## 1.6.0.84.129 - 2026-07-27
+
+- Recebimentos e Central de Consultas passam a usar, no desktop, uma nova
+  versão do fundo oficial AvantaLab sem logotipo incorporado.
+- Os fundos específicos para celular permanecem inalterados abaixo de
+  1024 px, preservando a composição e a legibilidade mobile existentes.
+
+## 1.6.0.84.128 - 2026-07-26
+
+- Nova rota pública isolada `/consulta` apresenta a base visual e arquitetônica
+  da Central de Consultas, sem alterar cadastro empresarial, navegação,
+  autenticação ou o módulo Recebimentos.
+- A consulta cadastral de CNPJ usa exclusivamente o endpoint server-side
+  `/api/consultas/cnpj`, que valida, aplica timeout, consulta o CNPJ.ws e
+  devolve somente o modelo normalizado do AvantaLab.
+- O relatório responsivo organiza identificação, endereço, CNAEs, contatos,
+  regime tributário, quadro societário e inscrições estaduais, com impressão
+  nativa preparada para PDF. As demais consultas aparecem como **Em breve**.
+- O salvamento permanece controladamente indisponível até existir um contrato
+  compartilhado e seguro de empresa ativa para a rota pública; nenhuma tabela
+  empresarial ou política RLS foi alterada.
+
 ## 1.6.0.84.127 - 2026-07-25
 
 - Importação de despesas: linhas parcialmente preenchidas no modelo Excel
