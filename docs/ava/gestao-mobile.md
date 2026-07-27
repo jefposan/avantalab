@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.6.1.13 -->
+<!-- ava-version: 1.6.1.14 -->
+
+> Revisão 1.6.1.14: renovação de cache restrita à Gestão Web; sem impacto
+> operacional na Gestão Mobile.
 
 > Revisão 1.6.1.13: reorganização do cadastro empresarial da Gestão Web; sem
 > impacto operacional na Gestão Mobile.

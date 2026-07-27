@@ -1,5 +1,5 @@
 const CACHE_PREFIX = 'avantalab-';
-const CACHE_ATUAL = 'avantalab-web-v1';
+const CACHE_ATUAL = 'avantalab-web-v2';
 
 self.addEventListener('install', () => {
   self.skipWaiting();

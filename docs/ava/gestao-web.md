@@ -1,6 +1,10 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.6.1.13 -->
+<!-- ava-version: 1.6.1.14 -->
+
+> Revisão 1.6.1.14: a página principal e o service worker da Gestão Web deixam
+> de reutilizar o formulário de versões anteriores após uma atualização; sem
+> mudança no preenchimento do cadastro.
 
 > Revisão 1.6.1.13: no cadastro empresarial, CNPJ e **Buscar** ficam lado a
 > lado; abaixo aparecem Razão Social, Nome Fantasia e Tipo de Empresa. O campo

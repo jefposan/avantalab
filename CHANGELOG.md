@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.6.1.14 - 2026-07-27
+
+- Gestão Web: a página principal e o service worker passam a usar cabeçalhos
+  sem cache, evitando que abas e instalações reutilizem o formulário de uma
+  versão anterior após novo deployment.
+- O identificador do service worker web foi renovado para descartar a versão
+  antiga no próximo carregamento.
+
 ## 1.6.1.13 - 2026-07-27
 
 - Cadastro empresarial reorganizado: a primeira linha apresenta CNPJ e
