@@ -344,6 +344,7 @@ export default function AppGestao() {
     excluindoEmpresa, setExcluindoEmpresa,
     usuariosEmpresa, setUsuariosEmpresa,
     usuariosCarregando, setUsuariosCarregando,
+    usuarioSalvando,
     usuarioNome, setUsuarioNome,
     usuarioEmail, setUsuarioEmail,
     usuarioLogin, setUsuarioLogin,
@@ -8956,6 +8957,7 @@ if (validacaoTelefoneObrigatoria) {
             <div className="grid gap-2">
               <div className="relative">
                 <input
+                  id="editar-usuario-senha"
                   type={mostrarEditUsuarioNovaSenha ? 'text' : 'password'}
                   autoComplete="new-password"
                   value={editUsuarioNovaSenha}
@@ -8977,6 +8979,7 @@ if (validacaoTelefoneObrigatoria) {
               </div>
               <div className="relative">
                 <input
+                  id="editar-usuario-confirmar-senha"
                   type={mostrarEditUsuarioConfirmarSenha ? 'text' : 'password'}
                   autoComplete="new-password"
                   value={editUsuarioConfirmarSenha}
@@ -9026,16 +9029,16 @@ if (validacaoTelefoneObrigatoria) {
 
         <button
           type="button"
-          disabled={!dadosUsuarioAlterados}
+          disabled={!dadosUsuarioAlterados || usuarioSalvando}
           onClick={salvarEdicaoUsuario}
           className={`rounded-xl px-5 py-2 text-xs font-black uppercase tracking-wide shadow-md transition ${
-            dadosUsuarioAlterados
+            dadosUsuarioAlterados && !usuarioSalvando
               ? 'cursor-pointer hover:brightness-110 active:scale-[0.98]'
               : 'cursor-not-allowed opacity-50'
           }`}
           style={estiloTemaPrimario}
         >
-          Salvar alterações
+          {usuarioSalvando ? 'Verificando...' : 'Salvar alterações'}
         </button>
       </div>
     </DraggableModalCard>
@@ -9329,11 +9332,12 @@ if (validacaoTelefoneObrigatoria) {
 
             <button
               type="button"
+              disabled={usuarioSalvando}
               onClick={adicionarUsuarioEmpresa}
-              className="h-11 cursor-pointer self-end rounded-xl px-4 text-[11px] font-black uppercase tracking-wide shadow-sm transition hover:brightness-110 active:scale-[0.98]"
+              className="h-11 cursor-pointer self-end rounded-xl px-4 text-[11px] font-black uppercase tracking-wide shadow-sm transition hover:brightness-110 active:scale-[0.98] disabled:cursor-wait disabled:opacity-60"
               style={estiloTemaPrimario}
             >
-              Criar
+              {usuarioSalvando ? 'Verificando...' : 'Criar'}
             </button>
           </div>
         </div>

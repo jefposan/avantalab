@@ -3432,6 +3432,25 @@
     render();
   }
 
+  function focarCampoUsuarioMobile(id) {
+    window.setTimeout(function () {
+      var elemento = document.getElementById(id);
+      if (!elemento) return;
+      elemento.focus();
+      elemento.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }, 80);
+  }
+
+  function setErroCampoUsuarioMobile(texto, id) {
+    setErro(texto);
+    if (id) focarCampoUsuarioMobile(id);
+  }
+
+  function idCampoUsuarioMobile(campoUsuario, modo) {
+    if (!campoUsuario) return '';
+    return (modo === 'editar' ? 'edit-usuario-' : 'usuario-') + campoUsuario;
+  }
+
   function limparAlertasAcessoMobile() {
     state.tentativaLogin = Number(state.tentativaLogin || 0) + 1;
     state.loginAcao = '';
@@ -4735,7 +4754,7 @@
   }
 
   async function criarUsuarioMobile() {
-    if (!state.empresa || !podeGerenciarUsuarios()) return;
+    if (!state.empresa || !podeGerenciarUsuarios() || state.carregando) return;
 
     var nome = campo('usuario-nome').trim();
     var email = campo('usuario-email').trim().toLowerCase();
@@ -4751,27 +4770,31 @@
     salvarRascunhoUsuarioMobile();
 
     if (!nome || !email || !login || !senha || !perfil) {
-      setErro('Informe nome completo, email, login, senha e perfil.');
+      var campoObrigatorio = !nome ? 'nome' : !email ? 'email' : !login ? 'login' : !senha ? 'senha' : 'perfil';
+      setErroCampoUsuarioMobile(
+        'Informe nome completo, email, login, senha e perfil.',
+        idCampoUsuarioMobile(campoObrigatorio, 'criar')
+      );
       return;
     }
 
     if (!nomeCompletoValido(nome)) {
-      setErro('Informe o nome completo do usuario, com nome e sobrenome.');
+      setErroCampoUsuarioMobile('Informe o nome completo do usuario, com nome e sobrenome.', 'usuario-nome');
       return;
     }
 
     if (!emailCadastroValido(email)) {
-      setErro('Informe um email valido para o usuario.');
+      setErroCampoUsuarioMobile('Informe um email valido para o usuario.', 'usuario-email');
       return;
     }
 
     if (login.indexOf('@') >= 0) {
-      setErro('Use um login simples, sem @.');
+      setErroCampoUsuarioMobile('Use um login simples, sem @.', 'usuario-login');
       return;
     }
 
     if (senha.length < 8) {
-      setErro('A senha deve ter pelo menos 8 caracteres.');
+      setErroCampoUsuarioMobile('A senha deve ter pelo menos 8 caracteres.', 'usuario-senha');
       return;
     }
 
@@ -4779,28 +4802,40 @@
     state.erro = '';
     render();
 
-    var token = await tokenSessao();
-    var resposta = await fetch('/api/criar-usuario-interno', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: 'Bearer ' + token,
-      },
-      body: JSON.stringify({
-        empresaId: state.empresa.id,
-        nome: nome,
-        email: email,
-        login: login,
-        senha: senha,
-        perfil: perfil,
-      }),
-    });
-    var resultado = await lerResposta(resposta);
+    var resposta;
+    var resultado;
+    try {
+      var token = await tokenSessao();
+      resposta = await fetch('/api/criar-usuario-interno', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: 'Bearer ' + token,
+        },
+        body: JSON.stringify({
+          empresaId: state.empresa.id,
+          nome: nome,
+          email: email,
+          login: login,
+          senha: senha,
+          perfil: perfil,
+        }),
+      });
+      resultado = await lerResposta(resposta);
+    } catch (erroCriacaoUsuario) {
+      console.error('Falha ao consultar disponibilidade do usuario:', erroCriacaoUsuario);
+      state.carregando = false;
+      setErro('Nao foi possivel consultar o servidor. Verifique a conexao e tente novamente.');
+      return;
+    }
 
     state.carregando = false;
 
     if (!resposta.ok || resultado.erro) {
-      setErro(resultado.mensagem || 'Nao foi possivel criar o usuario.');
+      setErroCampoUsuarioMobile(
+        resultado.mensagem || 'Nao foi possivel criar o usuario.',
+        idCampoUsuarioMobile(resultado.campo, 'criar')
+      );
       return;
     }
 
@@ -4836,7 +4871,7 @@
   }
 
   async function salvarUsuarioMobile() {
-    if (!state.usuarioEditandoId) return;
+    if (!state.usuarioEditandoId || state.carregando) return;
 
     var nome = campo('edit-usuario-nome').trim();
     var login = campo('edit-usuario-login').trim().toLowerCase();
@@ -4857,52 +4892,73 @@
     state.editUsuarioConfirmarSenha = confirmarSenha;
 
     if (!nome || !email || !login) {
-      setErro('Informe nome completo, email e login. O perfil atual sera mantido.');
+      var campoEdicaoObrigatorio = !nome ? 'nome' : !email ? 'email' : 'login';
+      setErroCampoUsuarioMobile(
+        'Informe nome completo, email e login. O perfil atual sera mantido.',
+        idCampoUsuarioMobile(campoEdicaoObrigatorio, 'editar')
+      );
       return;
     }
     if (!nomeCompletoValido(nome)) {
-      setErro('Informe o nome completo do usuario, com nome e sobrenome.');
+      setErroCampoUsuarioMobile('Informe o nome completo do usuario, com nome e sobrenome.', 'edit-usuario-nome');
       return;
     }
     if (!emailCadastroValido(email)) {
-      setErro('Informe um email valido para o usuario.');
+      setErroCampoUsuarioMobile('Informe um email valido para o usuario.', 'edit-usuario-email');
       return;
     }
-    if (senha && senha.length < 8) { setErro('A nova senha deve ter pelo menos 8 caracteres.'); return; }
-    if (senha !== confirmarSenha) { setErro('A confirmação da nova senha não confere.'); return; }
+    if (login.indexOf('@') >= 0) {
+      setErroCampoUsuarioMobile('Use um login simples, sem @.', 'edit-usuario-login');
+      return;
+    }
+    if (senha && senha.length < 8) { setErroCampoUsuarioMobile('A nova senha deve ter pelo menos 8 caracteres.', 'edit-usuario-senha'); return; }
+    if (senha !== confirmarSenha) { setErroCampoUsuarioMobile('A confirmação da nova senha não confere.', 'edit-usuario-confirmar-senha'); return; }
 
     state.carregando = true;
     state.erro = '';
     render();
 
-    var tok = await tokenSessao();
-    if (!tok) {
+    var tok;
+    var respostaHttp;
+    var resposta;
+    try {
+      tok = await tokenSessao();
+      if (!tok) {
+        state.carregando = false;
+        setErro('Sessao expirada. Faca login novamente.');
+        return;
+      }
+
+      respostaHttp = await fetch('/api/atualizar-usuario-empresa', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: 'Bearer ' + tok,
+        },
+        body: JSON.stringify({
+          acessoId: state.usuarioEditandoId,
+          nome: nome,
+          login: login,
+          email: email,
+          perfil: perfil,
+          novaSenha: senha,
+        }),
+      });
+      resposta = await lerResposta(respostaHttp);
+    } catch (erroEdicaoUsuario) {
+      console.error('Falha ao consultar disponibilidade do usuario:', erroEdicaoUsuario);
       state.carregando = false;
-      setErro('Sessao expirada. Faca login novamente.');
+      setErro('Nao foi possivel consultar o servidor. Verifique a conexao e tente novamente.');
       return;
     }
-
-    var respostaHttp = await fetch('/api/atualizar-usuario-empresa', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: 'Bearer ' + tok,
-      },
-      body: JSON.stringify({
-        acessoId: state.usuarioEditandoId,
-        nome: nome,
-        login: login,
-        email: email,
-        perfil: perfil,
-        novaSenha: senha,
-      }),
-    });
-    var resposta = await lerResposta(respostaHttp);
 
     state.carregando = false;
 
     if (!respostaHttp.ok || resposta.erro) {
-      setErro(resposta.mensagem || 'Nao foi possivel atualizar o usuario.');
+      setErroCampoUsuarioMobile(
+        resposta.mensagem || 'Nao foi possivel atualizar o usuario.',
+        idCampoUsuarioMobile(resposta.campo, 'editar')
+      );
       return;
     }
 
@@ -11175,7 +11231,7 @@
         '</div>' +
         '<label for="usuario-perfil" class="text-[10px] font-black uppercase tracking-wide text-slate-500">Tipo de usuario</label>' +
         '<select id="usuario-perfil" style="font-size:16px" class="h-12 w-full min-w-0 rounded-xl border border-slate-200 bg-white px-3 text-base font-bold outline-none"><option value="">Selecione</option>' + opcoesPerfilHtml(state.usuarioPerfil || '', false) + '</select>' +
-        '<button id="criar-usuario-mobile" type="button" class="h-12 rounded-xl bg-slate-950 px-4 text-xs font-black uppercase tracking-wide text-white">' + (state.carregando ? 'Salvando...' : 'Criar usuario') + '</button>' +
+        '<button id="criar-usuario-mobile" type="button"' + (state.carregando ? ' disabled' : '') + ' class="h-12 rounded-xl bg-slate-950 px-4 text-xs font-black uppercase tracking-wide text-white disabled:cursor-wait disabled:opacity-60">' + (state.carregando ? 'Verificando...' : 'Criar usuario') + '</button>' +
       '</div>'
     );
   }
@@ -11227,7 +11283,7 @@
         campoSenhaSimplesHtml('edit-usuario-senha', 'Minimo de 8 caracteres', 'h-12 w-full min-w-0 rounded-xl border border-cyan-100 bg-white px-3 text-base font-bold outline-none', 'new-password', state.editUsuarioSenha || '') +
         '<label for="edit-usuario-confirmar-senha" class="text-[10px] font-black uppercase tracking-wide text-cyan-900">Confirmar nova senha</label>' +
         campoSenhaSimplesHtml('edit-usuario-confirmar-senha', 'Repita a nova senha', 'h-12 w-full min-w-0 rounded-xl border border-cyan-100 bg-white px-3 text-base font-bold outline-none', 'new-password', state.editUsuarioConfirmarSenha || '') +
-        '<button id="salvar-usuario-mobile" type="button" class="h-12 rounded-xl bg-cyan-600 px-4 text-xs font-black uppercase tracking-wide text-white">' + (state.carregando ? 'Salvando...' : 'Salvar usuario') + '</button>' +
+        '<button id="salvar-usuario-mobile" type="button"' + (state.carregando ? ' disabled' : '') + ' class="h-12 rounded-xl bg-cyan-600 px-4 text-xs font-black uppercase tracking-wide text-white disabled:cursor-wait disabled:opacity-60">' + (state.carregando ? 'Verificando...' : 'Salvar usuario') + '</button>' +
       '</div>'
     );
   }
@@ -14537,7 +14593,7 @@
           return Promise.all(
             keys
               .filter(function (key) {
-                return key.indexOf('avantalab-mobile-') === 0 && key !== 'avantalab-mobile-v290';
+                return key.indexOf('avantalab-mobile-') === 0 && key !== 'avantalab-mobile-v291';
               })
               .map(function (key) {
                 return caches.delete(key);

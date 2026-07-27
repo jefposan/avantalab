@@ -1,6 +1,11 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.6.1.16 -->
+<!-- ava-version: 1.6.1.17 -->
+
+> Revisão 1.6.1.17: ao criar ou editar um usuário, e-mail e login são
+> verificados no servidor antes da gravação. Se algum campo precisar de
+> correção, o formulário mantém os demais valores e posiciona o cursor no
+> campo indicado após o aviso. O acesso aceita e-mail ou login.
 
 > Revisão 1.6.1.16: em Usuários e Permissões, criar e editar exigem nome
 > completo, e-mail real, login e tipo de usuário. A senha é obrigatória somente
@@ -350,7 +355,9 @@ Gestão Mobile ou a assinatura/cupom do Premium Pessoal.
   real, login, senha inicial e tipo. Na edição, os mesmos dados permanecem
   obrigatórios e apenas a nova senha é opcional. O usuário entra com e-mail ou
   login; se o e-mail já pertencer a uma conta, use **Adicionar usuário
-  existente** para vinculá-la ao perfil.
+  existente** para vinculá-la ao perfil. E-mail e login são conferidos no
+  servidor antes de salvar; um erro mantém o preenchimento e leva o cursor ao
+  campo que precisa de atenção.
 - Confirmações destrutivas da Administração e dos gerenciadores de conteúdo
   usam o card visual do sistema; fechar, voltar ou pressionar Esc cancela sem
   alterar dados.

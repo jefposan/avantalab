@@ -1,6 +1,11 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.6.1.16 -->
+<!-- ava-version: 1.6.1.17 -->
+
+> Revisão 1.6.1.17: ao criar ou editar um usuário, e-mail e login são
+> verificados no servidor. Se houver erro, todos os campos permanecem
+> preenchidos e o cursor vai ao campo indicado. O acesso aceita e-mail ou
+> login.
 
 > Revisão 1.6.1.16: em Usuários, criar e editar exigem nome completo, e-mail
 > real, login e tipo de usuário. A senha é obrigatória somente na criação. O
@@ -343,7 +348,9 @@ deve usar os nomes do menu e da barra inferior do celular.
 - Em **Usuários**, criar exige Nome completo, E-mail, Login, Senha inicial e
   Tipo de usuário. Na edição, nome, e-mail, login e tipo continuam obrigatórios,
   mas a nova senha é opcional. E-mail e login acessam a mesma conta; se o e-mail
-  já existir, use **Adicionar usuário existente**.
+  já existir, use **Adicionar usuário existente**. Antes de salvar, o servidor
+  verifica e-mail e login; um erro mantém os campos e leva o cursor ao dado que
+  precisa ser corrigido.
 - Em **Editar dados cadastrais** e na conclusão obrigatória de um perfil Empresa,
   o CNPJ fica ao lado de **Buscar**. A consulta cadastral preenche somente os
   campos compatíveis que estiverem vazios e informa quantos dados existentes

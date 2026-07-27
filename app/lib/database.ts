@@ -1237,6 +1237,7 @@ export async function criarUsuarioEmpresa({
     return {
       erro: true,
       mensagem: 'Sessão não encontrada. Faça login novamente.',
+      campo: null,
       data: null,
     };
   }
@@ -1272,6 +1273,7 @@ export async function criarUsuarioEmpresa({
     return {
       erro: true,
       mensagem: 'Login indisponível. Este login já está em uso no sistema. Escolha outro login.',
+      campo: 'login',
       data: null,
     };
   }
@@ -1279,6 +1281,7 @@ export async function criarUsuarioEmpresa({
   return {
     erro: true,
     mensagem: resultado.mensagem || 'Não foi possível criar o usuário.',
+    campo: resultado.campo || null,
     data: null,
   };
 }
@@ -1286,6 +1289,7 @@ export async function criarUsuarioEmpresa({
   return {
     erro: false,
     mensagem: '',
+    campo: null,
     data: resultado.usuario,
   };
 }
@@ -1466,6 +1470,7 @@ export async function atualizarUsuarioEmpresa({
     return {
       erro: true,
       mensagem: 'Sessao nao encontrada. Faca login novamente.',
+      campo: null,
       data: null,
     };
   }
@@ -1499,6 +1504,7 @@ export async function atualizarUsuarioEmpresa({
       return {
         erro: true,
         mensagem: 'Login/email indisponivel. Escolha outro.',
+        campo: resultado.campo || null,
         data: null,
       };
     }
@@ -1506,6 +1512,7 @@ export async function atualizarUsuarioEmpresa({
     return {
       erro: true,
       mensagem: resultado.mensagem || 'Nao foi possivel atualizar o usuario.',
+      campo: resultado.campo || null,
       data: null,
     };
   }
@@ -1513,6 +1520,7 @@ export async function atualizarUsuarioEmpresa({
   return {
     erro: false,
     mensagem: '',
+    campo: null,
     data: resultado.usuario,
   };
 }

@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { validarNomeCompleto } from '../../lib/nome-pessoa';
 import { normalizarEmail, validarEmail } from '../../lib/email';
+import { buscarContaAuthPorEmail } from '../../lib/usuario-disponibilidade-servidor';
 
 type PerfilUsuario =
   | 'gestor_master'
@@ -16,11 +17,14 @@ const perfisValidos: PerfilUsuario[] = [
   'operador_simples',
 ];
 
-function respostaErro(mensagem: string, status = 400) {
+type CampoUsuario = 'nome' | 'email' | 'login' | 'senha' | 'perfil';
+
+function respostaErro(mensagem: string, status = 400, campo?: CampoUsuario) {
   return NextResponse.json(
     {
       erro: true,
       mensagem,
+      campo,
     },
     { status }
   );
@@ -82,19 +86,19 @@ export async function POST(request: Request) {
     }
 
     if (!validarNomeCompleto(nome)) {
-      return respostaErro('Informe o nome completo do usuario, com nome e sobrenome.');
+      return respostaErro('Informe o nome completo do usuario, com nome e sobrenome.', 400, 'nome');
     }
 
     if (!validarEmail(emailEnviado)) {
-      return respostaErro('Informe um e-mail valido para o usuario.');
+      return respostaErro('Informe um e-mail valido para o usuario.', 400, 'email');
     }
 
     if (!loginEnviado && corpo.login !== undefined) {
-      return respostaErro('Informe um login valido.');
+      return respostaErro('Informe um login valido.', 400, 'login');
     }
 
     if (!perfisValidos.includes(perfil)) {
-      return respostaErro('Selecione um perfil de acesso valido.');
+      return respostaErro('Selecione um perfil de acesso valido.', 400, 'perfil');
     }
 
     const supabaseAdmin = createClient(supabaseUrl, supabaseServiceRoleKey);
@@ -156,7 +160,7 @@ export async function POST(request: Request) {
     }
 
     if (novaSenha && novaSenha.length < 8) {
-      return respostaErro('A nova senha deve ter pelo menos 8 caracteres.');
+      return respostaErro('A nova senha deve ter pelo menos 8 caracteres.', 400, 'senha');
     }
 
     if (usuarioAlvo.perfil === 'gestor_master' && perfil !== 'gestor_master') {
@@ -191,24 +195,67 @@ export async function POST(request: Request) {
     let loginNormalizado = '';
 
     if (corpo.login === undefined && emailEnviado.includes('@')) {
-      const { data: conflito } = await supabaseAdmin.auth.admin.listUsers({ page: 1, perPage: 1000 });
-      const emailEmUso = (conflito?.users || []).some((item) => item.id !== usuarioAlvo.user_id && String(item.email || '').toLowerCase() === emailEnviado);
-      if (emailEmUso) return respostaErro('Este e-mail ja esta em uso por outra conta.');
       atualizacao.email = emailEnviado;
     } else {
       const login = normalizarLogin(corpo.login === undefined ? emailEnviado : loginEnviado);
 
       if (!login) {
-        return respostaErro('Informe um login valido.');
+        return respostaErro('Informe um login valido.', 400, 'login');
       }
 
       loginNormalizado = login;
     }
 
     if (corpo.login !== undefined && emailEnviado) {
-      const { data: conflito } = await supabaseAdmin.auth.admin.listUsers({ page: 1, perPage: 1000 });
-      if ((conflito?.users || []).some((item) => item.id !== usuarioAlvo.user_id && String(item.email || '').toLowerCase() === emailEnviado)) return respostaErro('Este e-mail ja esta em uso por outra conta.');
       atualizacao.email = emailEnviado;
+    }
+
+    if (loginNormalizado) {
+      const { data: conflitoLogin, error: erroConflitoLogin } = await supabaseAdmin
+        .from('usuarios_empresa')
+        .select('id')
+        .eq('login', loginNormalizado)
+        .neq('user_id', usuarioAlvo.user_id)
+        .limit(1)
+        .maybeSingle();
+
+      if (erroConflitoLogin) {
+        console.error('Erro ao verificar login:', erroConflitoLogin);
+        return respostaErro('Não foi possível verificar o login informado.', 500, 'login');
+      }
+      if (conflitoLogin) {
+        return respostaErro('Este login já está em uso no sistema. Escolha outro.', 400, 'login');
+      }
+    }
+
+    const { data: conflitoEmailVinculo, error: erroConflitoEmailVinculo } = await supabaseAdmin
+      .from('usuarios_empresa')
+      .select('id')
+      .ilike('email', emailEnviado)
+      .neq('user_id', usuarioAlvo.user_id)
+      .limit(1)
+      .maybeSingle();
+
+    if (erroConflitoEmailVinculo) {
+      console.error('Erro ao verificar e-mail:', erroConflitoEmailVinculo);
+      return respostaErro('Não foi possível verificar o e-mail informado.', 500, 'email');
+    }
+    if (conflitoEmailVinculo) {
+      return respostaErro('Este e-mail já está em uso por outra conta.', 400, 'email');
+    }
+
+    try {
+      const conflitoEmailAuth = await buscarContaAuthPorEmail(
+        supabaseAdmin,
+        emailEnviado,
+        usuarioAlvo.user_id
+      );
+      if (conflitoEmailAuth) {
+        return respostaErro('Este e-mail já está em uso por outra conta.', 400, 'email');
+      }
+    } catch (erroConsultaAuth) {
+      console.error('Erro ao verificar e-mail no Auth:', erroConsultaAuth);
+      return respostaErro('Não foi possível verificar o e-mail informado.', 500, 'email');
     }
 
     const { data: usuarioAtualizado, error: erroAtualizar } = await supabaseAdmin
@@ -231,7 +278,9 @@ export async function POST(request: Request) {
         mensagemErro.includes('unique constraint')
       ) {
         return respostaErro(
-          'Este login/email ja esta em uso no sistema. Escolha outro.'
+          'Este login ou e-mail ja esta em uso no sistema. Escolha outro.',
+          400,
+          mensagemErro.includes('login') ? 'login' : 'email'
         );
       }
 
@@ -253,7 +302,8 @@ export async function POST(request: Request) {
       if (erroLogin || loginSalvo !== true) {
         return respostaErro(
           erroLogin?.message || 'Não foi possível salvar o login da conta.',
-          500
+          500,
+          'login'
         );
       }
       usuarioAtualizado.login = loginNormalizado;
@@ -264,14 +314,14 @@ export async function POST(request: Request) {
         email: emailEnviado,
         email_confirm: true,
       });
-      if (erroAuth) return respostaErro(erroAuth.message || 'Nao foi possivel atualizar o e-mail da conta.', 500);
+      if (erroAuth) return respostaErro(erroAuth.message || 'Nao foi possivel atualizar o e-mail da conta.', 500, 'email');
       const { error: erroVinculos } = await supabaseAdmin.from('usuarios_empresa').update({ email: emailEnviado }).eq('user_id', usuarioAlvo.user_id);
       if (erroVinculos) return respostaErro('O e-mail da conta foi atualizado, mas alguns vinculos nao puderam ser sincronizados.', 500);
     }
 
     if (novaSenha && usuarioAlvo.user_id) {
       const { error: erroSenha } = await supabaseAdmin.auth.admin.updateUserById(usuarioAlvo.user_id, { password: novaSenha });
-      if (erroSenha) return respostaErro('Os dados foram salvos, mas a senha nao pode ser atualizada.', 500);
+      if (erroSenha) return respostaErro('Os dados foram salvos, mas a senha nao pode ser atualizada.', 500, 'senha');
     }
 
     return NextResponse.json({

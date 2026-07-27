@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.6.1.17 - 2026-07-27
+
+- Gestão Web e Mobile: criação e edição de usuários verificam no servidor a
+  disponibilidade global do e-mail e do login antes de salvar.
+- Alertas de validação preservam todo o preenchimento e, ao serem fechados,
+  posicionam o cursor no campo que precisa de correção.
+- O envio fica bloqueado durante a consulta para evitar cadastros duplicados;
+  o acesso à conta continua aceitando tanto e-mail quanto login.
+
 ## 1.6.1.16 - 2026-07-27
 
 - Gestão Web e Mobile: a criação de usuários passa a exigir nome completo,

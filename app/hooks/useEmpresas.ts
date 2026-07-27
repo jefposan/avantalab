@@ -76,6 +76,7 @@ export function useEmpresas(deps: UseEmpresasDeps) {
   // --- Gestão de usuários ---
   const [usuariosEmpresa, setUsuariosEmpresa] = useState<any[]>([]);
   const [usuariosCarregando, setUsuariosCarregando] = useState(false);
+  const [usuarioSalvando, setUsuarioSalvando] = useState(false);
   const [usuarioNome, setUsuarioNome] = useState('');
   const [usuarioEmail, setUsuarioEmail] = useState('');
   const [usuarioLogin, setUsuarioLogin] = useState('');
@@ -170,6 +171,29 @@ export function useEmpresas(deps: UseEmpresasDeps) {
 
   const podeGerenciarUsuarios =
     perfilUsuario === 'gestor_master' || perfilUsuario === 'administrador';
+
+  const focarCampoUsuario = (id: string) => {
+    const elemento = document.getElementById(id) as HTMLElement | null;
+    elemento?.focus();
+    elemento?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  };
+
+  const idCampoUsuario = (
+    campo: string | null | undefined,
+    modo: 'criar' | 'editar'
+  ) => campo
+    ? `${modo === 'criar' ? 'novo-usuario-' : 'editar-usuario-'}${campo}`
+    : '';
+
+  const avisarCampoUsuario = (
+    titulo: string,
+    mensagem: string,
+    campo: string,
+    modo: 'criar' | 'editar'
+  ) => {
+    const id = idCampoUsuario(campo, modo);
+    abrirAviso(titulo, mensagem, id ? () => focarCampoUsuario(id) : undefined);
+  };
 
   // ---------------------------------------------------------------------------
   // Funções — Usuários da empresa
@@ -284,6 +308,7 @@ export function useEmpresas(deps: UseEmpresasDeps) {
   };
 
   const adicionarUsuarioEmpresa = async () => {
+    if (usuarioSalvando) return;
     if (!empresaId) { abrirAviso('Erro', 'Empresa não carregada.'); return; }
     if (!podeGerenciarUsuarios) {
       abrirAviso('Acesso não permitido', 'Você não tem permissão para gerenciar usuários.');
@@ -296,15 +321,16 @@ export function useEmpresas(deps: UseEmpresasDeps) {
     const senhaLimpa = usuarioSenha.trim();
 
     if (!nomeLimpo || !emailLimpo || !loginLimpo || !senhaLimpa || !usuarioPerfil) {
-      abrirAviso('Campos obrigatórios', 'Informe nome completo, e-mail, login, senha e tipo de usuário.');
+      const campo = !nomeLimpo ? 'nome' : !emailLimpo ? 'email' : !loginLimpo ? 'login' : !senhaLimpa ? 'senha' : 'perfil';
+      avisarCampoUsuario('Campos obrigatórios', 'Informe nome completo, e-mail, login, senha e tipo de usuário.', campo, 'criar');
       return;
     }
     if (!validarNomeCompleto(nomeLimpo)) {
-      abrirAviso('Nome incompleto', 'Informe o nome completo do usuário, com nome e sobrenome.');
+      avisarCampoUsuario('Nome incompleto', 'Informe o nome completo do usuário, com nome e sobrenome.', 'nome', 'criar');
       return;
     }
     if (!validarEmail(emailLimpo)) {
-      abrirAviso('E-mail inválido', 'Informe um e-mail válido para este usuário.');
+      avisarCampoUsuario('E-mail inválido', 'Informe um e-mail válido para este usuário.', 'email', 'criar');
       return;
     }
 
@@ -314,7 +340,8 @@ export function useEmpresas(deps: UseEmpresasDeps) {
     if (loginJaExiste) {
       abrirAviso(
         'Login indisponível',
-        'Este login já está em uso nesta empresa. Escolha outro login para criar o usuário.'
+        'Este login já está em uso nesta empresa. Escolha outro login para criar o usuário.',
+        () => focarCampoUsuario('novo-usuario-login')
       );
       return;
     }
@@ -322,26 +349,39 @@ export function useEmpresas(deps: UseEmpresasDeps) {
     if (loginLimpo.includes('@')) {
       abrirAviso(
         'Login inválido',
-        'Para usuários internos, use um login simples, sem @. Exemplo: financeiro, caixa ou operador1.'
+        'Para usuários internos, use um login simples, sem @. Exemplo: financeiro, caixa ou operador1.',
+        () => focarCampoUsuario('novo-usuario-login')
       );
       return;
     }
 
     if (senhaLimpa.length < 8) {
-      abrirAviso('Senha muito curta', 'A senha deve ter pelo menos 8 caracteres.');
+      avisarCampoUsuario('Senha muito curta', 'A senha deve ter pelo menos 8 caracteres.', 'senha', 'criar');
       return;
     }
 
+    setUsuarioSalvando(true);
     const resultado = await criarUsuarioEmpresa({
-      empresaId,
-      nome: nomeLimpo,
-      email: emailLimpo,
-      login: loginLimpo,
-      senha: senhaLimpa,
-      perfil: usuarioPerfil,
-    });
+        empresaId,
+        nome: nomeLimpo,
+        email: emailLimpo,
+        login: loginLimpo,
+        senha: senhaLimpa,
+        perfil: usuarioPerfil,
+      })
+      .catch(() => ({
+        erro: true,
+        mensagem: 'Não foi possível consultar o servidor. Verifique a conexão e tente novamente.',
+        campo: null,
+        data: null,
+      }))
+      .finally(() => setUsuarioSalvando(false));
 
-    if (resultado.erro) { abrirAviso('Erro ao criar usuário', resultado.mensagem); return; }
+    if (resultado.erro) {
+      const id = idCampoUsuario(resultado.campo, 'criar');
+      abrirAviso('Erro ao criar usuário', resultado.mensagem, id ? () => focarCampoUsuario(id) : undefined);
+      return;
+    }
 
     setUsuarioNome('');
     setUsuarioEmail('');
@@ -396,7 +436,7 @@ export function useEmpresas(deps: UseEmpresasDeps) {
   };
 
   const salvarEdicaoUsuario = async () => {
-    if (!usuarioEditandoId) return;
+    if (!usuarioEditandoId || usuarioSalvando) return;
 
     const usuarioOriginal = usuariosEmpresa.find((u) => u.id === usuarioEditandoId);
     if (!usuarioOriginal) { abrirAviso('Erro', 'Usuário não encontrado para edição.'); return; }
@@ -405,11 +445,12 @@ export function useEmpresas(deps: UseEmpresasDeps) {
     const emailLimpo = editUsuarioEmail.trim().toLowerCase();
     const loginLimpo = editUsuarioLogin.trim().toLowerCase();
 
-    if (!validarNomeCompleto(nomeLimpo)) { abrirAviso('Nome incompleto', 'Informe o nome completo do usuário, com nome e sobrenome.'); return; }
-    if (!emailLimpo) { abrirAviso('Campo obrigatório', 'Informe o e-mail deste usuário.'); return; }
-    if (!validarEmail(emailLimpo)) { abrirAviso('E-mail inválido', 'Informe um e-mail válido para este usuário.'); return; }
-    if (!loginLimpo) { abrirAviso('Campo obrigatório', 'Informe o login deste usuário.'); return; }
-    if (editUsuarioNovaSenha.trim() !== editUsuarioConfirmarSenha.trim()) { abrirAviso('Senha não confere', 'Repita a nova senha exatamente igual.'); return; }
+    if (!validarNomeCompleto(nomeLimpo)) { avisarCampoUsuario('Nome incompleto', 'Informe o nome completo do usuário, com nome e sobrenome.', 'nome', 'editar'); return; }
+    if (!emailLimpo) { avisarCampoUsuario('Campo obrigatório', 'Informe o e-mail deste usuário.', 'email', 'editar'); return; }
+    if (!validarEmail(emailLimpo)) { avisarCampoUsuario('E-mail inválido', 'Informe um e-mail válido para este usuário.', 'email', 'editar'); return; }
+    if (!loginLimpo) { avisarCampoUsuario('Campo obrigatório', 'Informe o login deste usuário.', 'login', 'editar'); return; }
+    if (loginLimpo.includes('@')) { avisarCampoUsuario('Login inválido', 'Use um login simples, sem @.', 'login', 'editar'); return; }
+    if (editUsuarioNovaSenha.trim() !== editUsuarioConfirmarSenha.trim()) { avisarCampoUsuario('Senha não confere', 'Repita a nova senha exatamente igual.', 'confirmar-senha', 'editar'); return; }
 
     const nomeOriginal = (usuarioOriginal.nome || '').trim();
     const loginOriginal = (usuarioOriginal.login || usuarioOriginal.email || '').toLowerCase();
@@ -427,16 +468,28 @@ export function useEmpresas(deps: UseEmpresasDeps) {
       return;
     }
 
+    setUsuarioSalvando(true);
     const resultado = await atualizarUsuarioEmpresa({
-      acessoId: usuarioEditandoId,
-      nome: nomeLimpo,
-      login: loginLimpo,
-      email: emailLimpo,
-      perfil: editUsuarioPerfil,
-      novaSenha: editUsuarioNovaSenha,
-    });
+        acessoId: usuarioEditandoId,
+        nome: nomeLimpo,
+        login: loginLimpo,
+        email: emailLimpo,
+        perfil: editUsuarioPerfil,
+        novaSenha: editUsuarioNovaSenha,
+      })
+      .catch(() => ({
+        erro: true,
+        mensagem: 'Não foi possível consultar o servidor. Verifique a conexão e tente novamente.',
+        campo: null,
+        data: null,
+      }))
+      .finally(() => setUsuarioSalvando(false));
 
-    if (resultado.erro) { abrirAviso('Erro ao atualizar usuário', resultado.mensagem); return; }
+    if (resultado.erro) {
+      const id = idCampoUsuario(resultado.campo, 'editar');
+      abrirAviso('Erro ao atualizar usuário', resultado.mensagem, id ? () => focarCampoUsuario(id) : undefined);
+      return;
+    }
 
     await carregarUsuariosEmpresa();
     setEditUsuarioNovaSenha('');
@@ -735,6 +788,7 @@ export function useEmpresas(deps: UseEmpresasDeps) {
     // Usuários
     usuariosEmpresa, setUsuariosEmpresa,
     usuariosCarregando, setUsuariosCarregando,
+    usuarioSalvando, setUsuarioSalvando,
     usuarioNome, setUsuarioNome,
     usuarioEmail, setUsuarioEmail,
     usuarioLogin, setUsuarioLogin,

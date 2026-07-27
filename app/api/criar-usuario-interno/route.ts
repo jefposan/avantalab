@@ -4,11 +4,14 @@ import { COBRANCA_ATIVA, podeUsar } from '../../lib/cobranca';
 import { resolverEstadoAcessoParaUsuario } from '../../lib/cobranca-servidor';
 import { validarNomeCompleto } from '../../lib/nome-pessoa';
 import { normalizarEmail, validarEmail } from '../../lib/email';
+import { buscarContaAuthPorEmail } from '../../lib/usuario-disponibilidade-servidor';
 
 type PerfilUsuario =
   | 'administrador'
   | 'operador_completo'
   | 'operador_simples';
+
+type CampoUsuario = 'nome' | 'email' | 'login' | 'senha' | 'perfil';
 
 function normalizarLogin(login: string) {
   return login
@@ -20,11 +23,12 @@ function normalizarLogin(login: string) {
     .replace(/[^a-z0-9._-]/g, '');
 }
 
-function respostaErro(mensagem: string, status = 400) {
+function respostaErro(mensagem: string, status = 400, campo?: CampoUsuario) {
   return NextResponse.json(
     {
       erro: true,
       mensagem,
+      campo,
     },
     { status }
   );
@@ -79,23 +83,23 @@ export async function POST(request: Request) {
     }
 
     if (!validarNomeCompleto(nome)) {
-      return respostaErro('Informe o nome completo do usuário, com nome e sobrenome.');
+      return respostaErro('Informe o nome completo do usuário, com nome e sobrenome.', 400, 'nome');
     }
 
     if (!validarEmail(email)) {
-      return respostaErro('Informe um e-mail válido para o usuário.');
+      return respostaErro('Informe um e-mail válido para o usuário.', 400, 'email');
     }
 
     if (!login) {
-      return respostaErro('Informe um login válido.');
+      return respostaErro('Informe um login válido.', 400, 'login');
     }
 
     if (!senha || senha.length < 8) {
-      return respostaErro('A senha deve ter pelo menos 8 caracteres.');
+      return respostaErro('A senha deve ter pelo menos 8 caracteres.', 400, 'senha');
     }
 
     if (!['administrador', 'operador_completo', 'operador_simples'].includes(perfil)) {
-      return respostaErro('Perfil inválido.');
+      return respostaErro('Perfil inválido.', 400, 'perfil');
     }
 
     const supabaseAdmin = createClient(supabaseUrl, supabaseServiceRoleKey);
@@ -139,12 +143,14 @@ export async function POST(request: Request) {
 
     if (erroLoginExistente) {
       console.error('Erro ao verificar login:', erroLoginExistente);
-      return respostaErro('Não foi possível verificar o login informado.', 500);
+      return respostaErro('Não foi possível verificar o login informado.', 500, 'login');
     }
 
     if (loginExistente) {
       return respostaErro(
-        'Este login já está em uso no sistema. Escolha outro login para criar o usuário.'
+        'Este login já está em uso no sistema. Escolha outro login para criar o usuário.',
+        400,
+        'login'
       );
     }
 
@@ -157,13 +163,29 @@ export async function POST(request: Request) {
 
     if (erroEmailExistente) {
       console.error('Erro ao verificar e-mail:', erroEmailExistente);
-      return respostaErro('Não foi possível verificar o e-mail informado.', 500);
+      return respostaErro('Não foi possível verificar o e-mail informado.', 500, 'email');
     }
 
     if (emailExistente) {
       return respostaErro(
-        'Este e-mail já pertence a uma conta. Use “Adicionar usuário existente” para vinculá-la a este perfil.'
+        'Este e-mail já pertence a uma conta. Use “Adicionar usuário existente” para vinculá-la a este perfil.',
+        400,
+        'email'
       );
+    }
+
+    try {
+      const contaAuthExistente = await buscarContaAuthPorEmail(supabaseAdmin, email);
+      if (contaAuthExistente) {
+        return respostaErro(
+          'Este e-mail já pertence a uma conta. Use “Adicionar usuário existente” para vinculá-la a este perfil.',
+          400,
+          'email'
+        );
+      }
+    } catch (erroConsultaAuth) {
+      console.error('Erro ao verificar e-mail no Auth:', erroConsultaAuth);
+      return respostaErro('Não foi possível verificar o e-mail informado.', 500, 'email');
     }
 
     const { data: usuarioCriado, error: erroCriarAuth } =
@@ -192,7 +214,8 @@ export async function POST(request: Request) {
   ) {
     return respostaErro(
       'Este e-mail já pertence a uma conta. Entre com ela na Gestão para concluir o cadastro antes de vinculá-la a outro perfil.',
-      400
+      400,
+      'email'
     );
   }
 
@@ -232,7 +255,9 @@ export async function POST(request: Request) {
         mensagemErro.includes('unique constraint')
       ) {
         return respostaErro(
-          'Este login já está em uso no sistema. Escolha outro login para criar o usuário.'
+          'Este login já está em uso no sistema. Escolha outro login para criar o usuário.',
+          400,
+          'login'
         );
       }
 
