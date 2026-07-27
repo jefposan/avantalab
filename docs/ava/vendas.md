@@ -1,6 +1,9 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.6.1.14 -->
+<!-- ava-version: 1.6.1.15 -->
+
+> Revisão 1.6.1.15: pesquisa de CNPJ adicionada ao cadastro da Gestão Mobile;
+> sem impacto operacional no AvantaVendas.
 
 > Revisão 1.6.1.14: renovação de cache restrita à Gestão Web; sem impacto
 > operacional no AvantaVendas.

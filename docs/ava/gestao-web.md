@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.6.1.14 -->
+<!-- ava-version: 1.6.1.15 -->
+
+> Revisão 1.6.1.15: pesquisa de CNPJ alinhada no formulário próprio da Gestão
+> Mobile; sem mudança operacional adicional na Gestão Web.
 
 > Revisão 1.6.1.14: a página principal e o service worker da Gestão Web deixam
 > de reutilizar o formulário de versões anteriores após uma atualização; sem

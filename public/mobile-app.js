@@ -1045,6 +1045,79 @@
     }).join('');
   }
 
+  function formatarDocumentoCadastroPerfilMobile(valor, tipo) {
+    var original = String(valor || '');
+    var alfanumerico = original.replace(/[^A-Za-z0-9]/g, '').toUpperCase().slice(0, 14);
+    if (tipo === 'CNPJ' && /[A-Z]/.test(alfanumerico)) return alfanumerico;
+    var digitos = original.replace(/\D/g, '').slice(0, tipo === 'CPF' ? 11 : 14);
+    if (tipo === 'CPF') {
+      return digitos
+        .replace(/^(\d{3})(\d)/, '$1.$2')
+        .replace(/^(\d{3})\.(\d{3})(\d)/, '$1.$2.$3')
+        .replace(/\.(\d{3})(\d)/, '.$1-$2');
+    }
+    return digitos
+      .replace(/^(\d{2})(\d)/, '$1.$2')
+      .replace(/^(\d{2})\.(\d{3})(\d)/, '$1.$2.$3')
+      .replace(/\.(\d{3})(\d)/, '.$1/$2')
+      .replace(/(\d{4})(\d)/, '$1-$2');
+  }
+
+  function mapearCnpjParaCadastroPerfilMobile(empresa) {
+    var texto = function (valor) { return String(valor == null ? '' : valor).trim().replace(/\s+/g, ' '); };
+    var digitos = function (valor, limite) { return texto(valor).replace(/\D/g, '').slice(0, limite); };
+    var endereco = empresa && empresa.endereco || {};
+    var contatos = empresa && empresa.contatos || {};
+    var telefones = Array.isArray(contatos.telefones) ? contatos.telefones : [];
+    var emails = Array.isArray(contatos.emails) ? contatos.emails : [];
+    var inscricoes = Array.isArray(empresa && empresa.inscricoesEstaduais) ? empresa.inscricoesEstaduais : [];
+    var tipoLogradouro = texto(endereco.tipoLogradouro);
+    var logradouro = texto(endereco.logradouro);
+    var rua = !tipoLogradouro
+      ? logradouro
+      : !logradouro || logradouro.toLocaleLowerCase('pt-BR').indexOf(tipoLogradouro.toLocaleLowerCase('pt-BR') + ' ') === 0
+        ? logradouro || tipoLogradouro
+        : tipoLogradouro + ' ' + logradouro;
+    var telefone = telefones.find(function (item) {
+      return texto(item && item.ddd) || texto(item && item.numero);
+    });
+    var email = emails.find(function (item) { return texto(item && item.endereco); });
+    var uf = texto(endereco.uf).toLocaleUpperCase('pt-BR').slice(0, 2);
+    var inscricao = inscricoes.find(function (item) {
+      return item && item.ativa === true && texto(item.uf).toLocaleUpperCase('pt-BR') === uf && texto(item.inscricao);
+    }) || inscricoes.find(function (item) {
+      return item && item.ativa === true && texto(item.inscricao);
+    }) || inscricoes.find(function (item) {
+      return item && texto(item.uf).toLocaleUpperCase('pt-BR') === uf && texto(item.inscricao);
+    }) || inscricoes.find(function (item) {
+      return item && texto(item.inscricao);
+    });
+    var valores = {
+      documento: digitos(empresa && empresa.documento, 14),
+      nome_fantasia: texto(empresa && empresa.nomeFantasia),
+      razao_social: texto(empresa && empresa.razaoSocial),
+      cep: digitos(endereco.cep, 8),
+      rua: rua,
+      numero: texto(endereco.numero),
+      complemento: texto(endereco.complemento),
+      bairro: texto(endereco.bairro),
+      cidade: texto(endereco.cidade),
+      estado: uf,
+      telefone: telefone ? digitos(String(telefone.ddd || '') + String(telefone.numero || ''), 13) : '',
+      email_empresa: email ? texto(email.endereco).toLocaleLowerCase('pt-BR') : '',
+      inscricao_estadual: inscricao ? texto(inscricao.inscricao) : '',
+      regime_tributario: empresa && empresa.mei && empresa.mei.optante === true
+        ? 'mei_simei'
+        : empresa && empresa.simples && empresa.simples.optante === true
+          ? 'simples_nacional'
+          : '',
+    };
+    Object.keys(valores).forEach(function (chave) {
+      if (!valores[chave]) delete valores[chave];
+    });
+    return valores;
+  }
+
   function telaCadastroPerfilMobile(contexto) {
     var status = state.cadastroPerfilStatus || {};
     var d = state.cadastroPerfilDados || {};
@@ -1064,14 +1137,22 @@
     var campo = function (id, rotulo, valor, tipo, extra) {
       return '<label class="grid gap-1 text-[10px] font-black text-slate-600">' + rotulo + '<input id="' + id + '" type="' + (tipo || 'text') + '" value="' + escapeHtml(valor || '') + '" ' + (extra || '') + ' style="font-size:16px" class="h-9 rounded-lg border border-slate-300 bg-white px-3 text-sm font-semibold text-slate-800 outline-none focus:border-sky-600" /></label>';
     };
+    var tipoDocumento = pessoal || autonomo ? 'CPF' : 'CNPJ';
+    var campoDocumento = tipoDocumento === 'CNPJ'
+      ? '<label class="grid gap-1 text-[10px] font-black text-slate-600">CNPJ<span class="flex min-w-0 gap-1.5"><input id="cp-documento" type="text" inputmode="text" autocapitalize="characters" autocomplete="off" value="' + escapeHtml(formatarDocumentoCadastroPerfilMobile(d.documento, 'CNPJ')) + '" aria-describedby="cp-cnpj-status" style="font-size:16px" class="h-11 min-w-0 flex-1 rounded-lg border border-slate-300 bg-white px-3 text-sm font-semibold text-slate-800 outline-none focus:border-sky-600"/><button id="cp-buscar-cnpj" type="button" class="h-11 shrink-0 rounded-lg bg-sky-700 px-3 text-[10px] font-black text-white transition active:scale-95 disabled:cursor-wait disabled:opacity-60" aria-label="Buscar dados cadastrais pelo CNPJ">Buscar</button></span><span id="cp-cnpj-status" class="min-h-3 text-[10px] font-bold text-slate-500" aria-live="polite"></span></label>'
+      : campo('cp-documento', 'CPF', formatarDocumentoCadastroPerfilMobile(d.documento, 'CPF'), 'text', 'inputmode="numeric" autocomplete="off"');
     var formulario = !podeEditar
       ? '<div class="py-10 text-center"><p class="font-black">Cadastro pendente</p><p class="mt-2 text-sm text-slate-600">O cadastro deste perfil precisa ser conclu&iacute;do por um Gestor Master ou Administrador para continuar.</p></div>'
       : '<div class="grid gap-4">' +
           '<div><h3 class="mb-2 border-b border-slate-200 pb-1 text-[11px] font-black uppercase text-sky-800">Dados Gerais</h3><div class="grid gap-2">' +
-            campo('cp-nome-fantasia', pessoal ? 'Nome do perfil' : 'Nome Fantasia', d.nome_fantasia) +
-            campo('cp-responsavel', pessoal ? 'Nome completo' : 'Respons&aacute;vel &mdash; nome completo', d.nome_responsavel) +
-            (!pessoal ? campo('cp-razao-social', 'Raz&atilde;o Social', d.razao_social) + '<label class="grid gap-1 text-[10px] font-black text-slate-600">Tipo de Empresa<select id="cp-tipo-empresa" class="h-9 rounded-lg border border-slate-300 bg-white px-3 text-sm text-slate-800">' + opcoesCadastroMobile(tipos, d.tipo_empresa) + '</select></label>' : '') +
-            campo('cp-documento', pessoal || autonomo ? 'CPF' : 'CNPJ', d.documento, 'text', 'inputmode="numeric"') +
+            (pessoal
+              ? campo('cp-nome-fantasia', 'Nome do perfil', d.nome_fantasia) +
+                campo('cp-responsavel', 'Nome completo', d.nome_responsavel) +
+                campoDocumento
+              : campoDocumento +
+                campo('cp-razao-social', 'Raz&atilde;o Social', d.razao_social) +
+                campo('cp-nome-fantasia', 'Nome Fantasia', d.nome_fantasia) +
+                '<label class="grid gap-1 text-[10px] font-black text-slate-600">Tipo de Empresa<select id="cp-tipo-empresa" class="h-9 rounded-lg border border-slate-300 bg-white px-3 text-sm text-slate-800">' + opcoesCadastroMobile(tipos, d.tipo_empresa) + '</select></label>') +
           '</div></div>' +
           '<div><h3 class="mb-2 border-b border-slate-200 pb-1 text-[11px] font-black uppercase text-sky-800">Endere&ccedil;o</h3><div class="grid gap-2">' +
             '<label class="grid gap-1 text-[10px] font-black text-slate-600">CEP<span class="flex gap-1"><input id="cp-cep" inputmode="numeric" value="' + escapeHtml(d.cep || '') + '" style="font-size:16px" class="h-9 min-w-0 flex-1 rounded-lg border border-slate-300 px-3 text-sm"/><button id="cp-buscar-cep" type="button" class="h-9 rounded-lg bg-sky-700 px-3 text-[10px] font-black text-white">Buscar</button></span></label>' +
@@ -1079,7 +1160,7 @@
             '<label class="grid gap-1 text-[10px] font-black text-slate-600">Estado<select id="cp-estado" class="h-9 rounded-lg border border-slate-300 bg-white px-3 text-sm"><option value="">UF</option>' + ufs.map(function (uf) { return '<option' + (uf === d.estado ? ' selected' : '') + '>' + uf + '</option>'; }).join('') + '</select></label>' +
           '</div></div>' +
           '<div><h3 class="mb-2 border-b border-slate-200 pb-1 text-[11px] font-black uppercase text-sky-800">Contato</h3><div class="grid gap-2">' +
-            campo('cp-telefone', 'Telefone', d.telefone, 'tel', 'inputmode="tel"') + campo('cp-whatsapp', 'WhatsApp', d.whatsapp, 'tel', 'inputmode="tel"') + campo('cp-email', pessoal ? 'E-mail' : 'E-mail da empresa', d.email_empresa, 'email') + campo('cp-site', 'Site (opcional)', d.site) + campo('cp-instagram', 'Instagram (opcional)', d.instagram) +
+            campo('cp-telefone', 'Telefone', d.telefone, 'tel', 'inputmode="tel"') + campo('cp-whatsapp', 'WhatsApp', d.whatsapp, 'tel', 'inputmode="tel"') + campo('cp-email', pessoal ? 'E-mail' : 'E-mail da empresa', d.email_empresa, 'email') + (!pessoal ? campo('cp-responsavel', 'Respons&aacute;vel', d.nome_responsavel) : '') + campo('cp-site', 'Site (opcional)', d.site) + campo('cp-instagram', 'Instagram (opcional)', d.instagram) +
           '</div></div>' +
           (!pessoal ? '<div><h3 class="mb-2 border-b border-slate-200 pb-1 text-[11px] font-black uppercase text-sky-800">Dados Fiscais</h3><div class="grid gap-2">' +
             campo('cp-ie', 'Inscri&ccedil;&atilde;o Estadual', d.inscricao_estadual, 'text', d.inscricao_estadual_isento ? 'disabled' : '') + '<label class="flex items-center gap-2 text-xs font-bold text-slate-600"><input id="cp-ie-isento" type="checkbox"' + (d.inscricao_estadual_isento ? ' checked' : '') + '/> Isento</label>' +
@@ -1118,7 +1199,11 @@
     d.nome_responsavel = valor('cp-responsavel');
     d.razao_social = valor('cp-razao-social');
     d.tipo_empresa = valor('cp-tipo-empresa');
-    d.documento = valor('cp-documento').replace(/\D/g, '');
+    var documentoInformado = valor('cp-documento');
+    var documentoCpf = (state.cadastroPerfilStatus && state.cadastroPerfilStatus.tipoPerfil === 'pessoal') || d.tipo_empresa === 'autonomo';
+    d.documento = documentoCpf
+      ? documentoInformado.replace(/\D/g, '').slice(0, 11)
+      : documentoInformado.replace(/[^A-Za-z0-9]/g, '').toUpperCase().slice(0, 14);
     d.cep = valor('cp-cep').replace(/\D/g, '');
     d.rua = valor('cp-rua'); d.numero = valor('cp-numero'); d.complemento = valor('cp-complemento');
     d.bairro = valor('cp-bairro'); d.cidade = valor('cp-cidade'); d.estado = valor('cp-estado');
@@ -1189,6 +1274,116 @@
       capturarCadastroPerfilMobile();
     } catch (e) {
       if (erroEl) erroEl.textContent = e.message || 'CEP não encontrado. Preencha manualmente.';
+    }
+  }
+
+  async function buscarCnpjCadastroPerfilMobile() {
+    if (state.cadastroPerfilConsultandoCnpj) return;
+    var documentoEl = document.getElementById('cp-documento');
+    var statusEl = document.getElementById('cp-cnpj-status');
+    var botao = document.getElementById('cp-buscar-cnpj');
+    var cnpj = String(documentoEl && documentoEl.value || '').replace(/[^A-Za-z0-9]/g, '').toUpperCase();
+    if (cnpj.length !== 14) {
+      if (statusEl) {
+        statusEl.textContent = 'Informe um CNPJ válido para continuar.';
+        statusEl.className = 'min-h-3 text-[10px] font-bold text-red-600';
+      }
+      if (documentoEl) documentoEl.focus();
+      return;
+    }
+
+    var controller = new AbortController();
+    var timeout = window.setTimeout(function () { controller.abort(); }, 12000);
+    state.cadastroPerfilConsultandoCnpj = true;
+    if (botao) {
+      botao.disabled = true;
+      botao.textContent = '...';
+    }
+    if (documentoEl) documentoEl.disabled = true;
+    if (statusEl) {
+      statusEl.textContent = 'Consultando base cadastral pública...';
+      statusEl.className = 'min-h-3 text-[10px] font-bold text-sky-700';
+    }
+
+    try {
+      var resposta = await fetch('/api/consultas/cnpj', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ cnpj: cnpj }),
+        cache: 'no-store',
+        signal: controller.signal,
+      });
+      var json = await resposta.json().catch(function () { return null; });
+      if (!resposta.ok || !json || !json.success) {
+        throw new Error(json && json.error && json.error.message
+          ? json.error.message
+          : 'O serviço de consulta está temporariamente indisponível.');
+      }
+
+      var consultados = mapearCnpjParaCadastroPerfilMobile(json.data);
+      var atuais = capturarCadastroPerfilMobile();
+      var atualizados = Object.assign({}, atuais);
+      var ids = {
+        documento: 'cp-documento',
+        nome_fantasia: 'cp-nome-fantasia',
+        razao_social: 'cp-razao-social',
+        cep: 'cp-cep',
+        rua: 'cp-rua',
+        numero: 'cp-numero',
+        complemento: 'cp-complemento',
+        bairro: 'cp-bairro',
+        cidade: 'cp-cidade',
+        estado: 'cp-estado',
+        telefone: 'cp-telefone',
+        email_empresa: 'cp-email',
+        inscricao_estadual: 'cp-ie',
+        regime_tributario: 'cp-regime',
+      };
+      var aplicados = 0;
+      var preservados = 0;
+      Object.keys(consultados).forEach(function (chave) {
+        var novoValor = String(consultados[chave] || '').trim();
+        var valorAtual = String(atuais[chave] || '').trim();
+        if (!novoValor || novoValor === valorAtual) return;
+        if (chave !== 'documento' && valorAtual) {
+          preservados += 1;
+          return;
+        }
+        atualizados[chave] = novoValor;
+        aplicados += 1;
+        var campoEl = document.getElementById(ids[chave]);
+        if (campoEl) {
+          campoEl.value = chave === 'documento'
+            ? formatarDocumentoCadastroPerfilMobile(novoValor, 'CNPJ')
+            : novoValor;
+        }
+      });
+      state.cadastroPerfilDados = atualizados;
+      capturarCadastroPerfilMobile();
+      agendarAutoSaveCadastroPerfilMobile();
+      if (statusEl) {
+        statusEl.textContent = aplicados
+          ? aplicados + (aplicados === 1 ? ' campo preenchido.' : ' campos preenchidos.') + (preservados ? ' ' + preservados + (preservados === 1 ? ' campo existente foi mantido.' : ' campos existentes foram mantidos.') : '')
+          : 'Os dados disponíveis já estão preenchidos no cadastro.';
+        statusEl.className = 'min-h-3 text-[10px] font-bold text-emerald-700';
+      }
+    } catch (erro) {
+      if (statusEl) {
+        statusEl.textContent = controller.signal.aborted
+          ? 'O serviço demorou mais que o esperado para responder. Tente novamente.'
+          : erro && erro.message
+            ? erro.message
+            : 'O serviço de consulta está temporariamente indisponível.';
+        statusEl.className = 'min-h-3 text-[10px] font-bold text-red-600';
+      }
+    } finally {
+      window.clearTimeout(timeout);
+      state.cadastroPerfilConsultandoCnpj = false;
+      if (botao) {
+        botao.disabled = false;
+        botao.textContent = 'Buscar';
+      }
+      if (documentoEl) documentoEl.disabled = false;
     }
   }
 
@@ -12168,6 +12363,7 @@
     bind('cp-depois', adiarCadastroPerfilMobile);
     bind('cp-salvar-parcial', salvarCadastroPerfilParcialMobile);
     bind('cp-voltar', function () { state.paywallCadastroCiclo = ''; render(); });
+    bind('cp-buscar-cnpj', buscarCnpjCadastroPerfilMobile);
     bind('cp-buscar-cep', buscarCepCadastroPerfilMobile);
     bind('cp-salvar', salvarCadastroPerfilMobile);
     bind('cp-fechar-edicao', fecharEdicaoCadastroPerfilMobile);
@@ -12176,6 +12372,21 @@
     bindChange('cp-tipo-empresa', function () { capturarCadastroPerfilMobile(); state.cadastroPerfilDados.documento = ''; render(); });
     bindChange('cp-ie-isento', function () { var el = document.getElementById('cp-ie'); if (el) { el.disabled = this.checked; if (this.checked) el.value = ''; } });
     bindChange('cp-im-isento', function () { var el = document.getElementById('cp-im'); if (el) { el.disabled = this.checked; if (this.checked) el.value = ''; } });
+    var documentoCadastroPerfil = document.getElementById('cp-documento');
+    if (documentoCadastroPerfil) {
+      documentoCadastroPerfil.addEventListener('input', function () {
+        var tipoEmpresaEl = document.getElementById('cp-tipo-empresa');
+        var tipoDocumentoAtual = state.cadastroPerfilStatus && state.cadastroPerfilStatus.tipoPerfil === 'pessoal' || tipoEmpresaEl && tipoEmpresaEl.value === 'autonomo'
+          ? 'CPF'
+          : 'CNPJ';
+        this.value = formatarDocumentoCadastroPerfilMobile(this.value, tipoDocumentoAtual);
+        var statusCnpjEl = document.getElementById('cp-cnpj-status');
+        if (statusCnpjEl) {
+          statusCnpjEl.textContent = '';
+          statusCnpjEl.className = 'min-h-3 text-[10px] font-bold text-slate-500';
+        }
+      });
+    }
     Array.prototype.forEach.call(document.querySelectorAll('[id^="cp-"]'), function (elementoCadastro) {
       if (!/^(INPUT|SELECT)$/.test(elementoCadastro.tagName)) return;
       elementoCadastro.addEventListener('input', capturarCadastroPerfilMobile);
@@ -14289,7 +14500,7 @@
           return Promise.all(
             keys
               .filter(function (key) {
-                return key.indexOf('avantalab-mobile-') === 0 && key !== 'avantalab-mobile-v288';
+                return key.indexOf('avantalab-mobile-') === 0 && key !== 'avantalab-mobile-v289';
               })
               .map(function (key) {
                 return caches.delete(key);

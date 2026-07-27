@@ -1,5 +1,16 @@
 # Changelog
 
+## 1.6.1.15 - 2026-07-27
+
+- Gestão Mobile: o cadastro empresarial passa a exibir CNPJ e **Buscar** na
+  mesma linha, seguido por Razão Social, Nome Fantasia e Tipo de Empresa.
+- A consulta usa exclusivamente o endpoint interno, preenche somente campos
+  compatíveis que ainda estejam vazios e preserva dados existentes.
+- Responsável sai de Dados Gerais e passa para Contato, antes de Site e
+  Instagram, mantendo o formulário alinhado ao cadastro da Gestão Web.
+- O cache do aplicativo mobile foi renovado para entregar imediatamente a nova
+  versão do formulário.
+
 ## 1.6.1.14 - 2026-07-27
 
 - Gestão Web: a página principal e o service worker passam a usar cabeçalhos

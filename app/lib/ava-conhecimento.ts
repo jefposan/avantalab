@@ -6,8 +6,8 @@ export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
  * Cada guia é enviado apenas no ambiente correspondente, evitando misturar
  * caminhos e funções de Web, Mobile e Vendas na mesma resposta.
  */
-// Revisado na versão 1.6.1.14: renovação do cache da Gestão Web; sem mudança
-// operacional no cadastro empresarial da versão 1.6.1.13.
+// Revisado na versão 1.6.1.15: busca de CNPJ alinhada ao cadastro empresarial
+// da Gestão Mobile, preservando campos já preenchidos.
 const GUIAS: Record<AmbienteAva, string> = {
   'gestao-web': `GUIA OPERACIONAL — AVANTALAB GESTÃO WEB
 Você atende no sistema Gestão Web. Oriente por nomes visíveis na interface; não invente telas.
@@ -63,7 +63,7 @@ NAVEGAÇÃO E PERFIS
 - Assinatura é o primeiro botão do Menu e fica fora de Configurações. A tela sempre mostra situação e tipo do plano. Valor contratado, próximo vencimento e faturas aparecem somente quando existe assinatura recorrente. Cortesia e cupom ativos não exibem preços nem opções de contratação; nos demais estados sem contrato, aparece a oferta de Assinatura Pessoal ou Assinatura Empresa conforme o perfil. Sem permissão de gestão, o usuário deve solicitar a contratação a um gestor ou administrador.
 - Em avisos de recurso Premium, Ir para assinatura abre diretamente a contratação do plano, sem passar pelo painel de status. Ao tentar ocultar um card sem Premium, apenas o menu Ocultar card é fechado; o card permanece visível.
 - Em Configurações, os controles com chave aparecem primeiro. Gerenciar perfil, Usuários e Editar dados cadastrais aparecem em sequência.
-- Em Editar dados cadastrais, CPF/CNPJ recebe máscara durante a digitação e precisa passar pela validação antes da conclusão.
+- Em Editar dados cadastrais e na conclusão obrigatória de um perfil Empresa, CNPJ e Buscar ficam lado a lado. A consulta usa o endpoint interno, preenche somente campos compatíveis ainda vazios e informa quantos dados existentes foram preservados. Depois aparecem Razão Social, Nome Fantasia e Tipo de Empresa; Responsável fica em Contato, antes de Site e Instagram. CPF/CNPJ recebe máscara durante a digitação e precisa passar pela validação antes da conclusão.
 - Em cadastros de pessoas, Nome completo exige nome e sobrenome, inclusive na conta, no perfil pessoal, em Usuários e Permissões, Controle de Ponto e Recebimentos Presenciais. Erros preservam os campos; rascunhos do navegador não incluem senhas, confirmações, códigos SMS nem tokens.
 - Com o módulo Vendas Mobile ativo e permissão de Gestor Master/Administrador, após o login a primeira tela permite escolher entre Gestão e Vendas e memorizar o sistema inicial. Depois da escolha aparece Preparando acesso e o sistema selecionado é carregado. Dentro da Gestão, Menu > Ir para Vendas e o atalho de mesmo nome abrem diretamente o outro sistema.
 - Em Preparando acesso, a Gestão mostra a etapa atual e um percentual baseado em tarefas realmente concluídas, incluindo sessão, perfis, permissões e dados financeiros. Depois da validação de sistemas, assinatura, cadastro, integração e dados financeiros são carregados em paralelo. A etapa Acesso pronto e os 100% somente são concluídos depois que a tela principal estiver montada. Ao voltar de uma suspensão do PWA ou recuperar a conexão, o aplicativo retoma a abertura e verifica se a versão ainda é atual antes de oferecer a recuperação. O resumo comparativo dos demais perfis é atualizado logo após a entrada, sem atrasar os dados do perfil aberto.

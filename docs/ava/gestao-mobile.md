@@ -1,6 +1,10 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.6.1.14 -->
+<!-- ava-version: 1.6.1.15 -->
+
+> Revisão 1.6.1.15: no cadastro empresarial mobile, CNPJ e **Buscar** ficam
+> lado a lado. A consulta preenche campos compatíveis ainda vazios, preserva os
+> existentes e mantém Responsável em Contato, antes de Site e Instagram.
 
 > Revisão 1.6.1.14: renovação de cache restrita à Gestão Web; sem impacto
 > operacional na Gestão Mobile.
@@ -331,6 +335,11 @@ deve usar os nomes do menu e da barra inferior do celular.
 - Em **Configurações**, os controles com chave aparecem primeiro.
   **Gerenciar perfil**, **Usuários** e **Editar dados cadastrais** aparecem em
   sequência.
+- Em **Editar dados cadastrais** e na conclusão obrigatória de um perfil Empresa,
+  o CNPJ fica ao lado de **Buscar**. A consulta cadastral preenche somente os
+  campos compatíveis que estiverem vazios e informa quantos dados existentes
+  foram preservados. Razão Social, Nome Fantasia e Tipo de Empresa aparecem
+  depois do documento; Responsável fica em Contato, antes de Site e Instagram.
 - Quando o módulo Vendas Mobile está ativo e o usuário tem permissão, após o login
   a primeira tela permite escolher entre Gestão e Vendas e memorizar a preferência. Só
   depois da escolha aparece **Preparando acesso** e o sistema selecionado é carregado.

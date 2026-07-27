@@ -80,6 +80,16 @@ exigir(
   'O service worker do Vendas precisa liberar a rota própria da Gestão.',
 );
 exigir(
+  aplicativo.includes('id="cp-buscar-cnpj"') &&
+    aplicativo.includes("fetch('/api/consultas/cnpj'"),
+  'O cadastro empresarial mobile precisa consultar o CNPJ somente pelo endpoint interno.',
+);
+exigir(
+  aplicativo.includes('aria-label="Buscar dados cadastrais pelo CNPJ"') &&
+    aplicativo.includes("bind('cp-buscar-cnpj', buscarCnpjCadastroPerfilMobile)"),
+  'A busca de CNPJ do cadastro mobile precisa estar visível, acessível e vinculada à ação.',
+);
+exigir(
   rotaVersao.includes("import { APP_VERSION }") && rotaVersao.includes("'Cache-Control': 'no-store"),
   'A rota de versão precisa usar a versão oficial e resposta sem cache.',
 );
