@@ -1770,7 +1770,7 @@ const ATALHOS_INFERIORES_VENDAS = [
 ];
 
 function podeTrocarParaGestaoVendas() {
-  return state.acessoVendas?.papel === 'gestor';
+  return Boolean(state.acessoVendas);
 }
 
 function atalhosInferioresVendasDisponiveis() {
@@ -6169,6 +6169,22 @@ function abrirGestao(perfilEmpresaId = '') {
   window.location.assign('/avantavendas/gestao?origem=vendas');
 }
 
+function abrirGestaoParaCriarPrimeiroPerfilVendas() {
+  if (!podeTrocarParaGestaoVendas()) {
+    toast('A troca de sistemas não está disponível para este usuário.');
+    return;
+  }
+  try {
+    localStorage.setItem('avantalab_mobile_sistema_contexto', JSON.stringify({
+      empresaId: '',
+      sistema: 'gestao',
+      atualizadoEm: new Date().toISOString(),
+    }));
+    localStorage.removeItem('avantalab_mobile_ultimo_perfil_id');
+  } catch { /* navegação continua sem preferência local */ }
+  window.location.assign('/avantavendas/gestao?origem=vendas&criarPerfil=1');
+}
+
 async function abrirSeletorPerfilGestaoVendas() {
   if (!podeTrocarParaGestaoVendas()) {
     toast('A troca de sistemas não está disponível para este usuário.');
@@ -6181,6 +6197,13 @@ async function abrirSeletorPerfilGestaoVendas() {
   render();
   try {
     state.perfisGestaoTroca = await window.VendasDb.listarPerfisGestaoParaTroca();
+    if (!state.perfisGestaoTroca.length) {
+      state.seletorPerfilGestaoAberto = false;
+      state.perfisGestaoTrocaCarregando = false;
+      render();
+      window.setTimeout(abrirGestaoParaCriarPrimeiroPerfilVendas, 60);
+      return;
+    }
   } catch (error) {
     state.perfisGestaoTroca = [];
     state.perfisGestaoTrocaErro = traduzErro(error);

@@ -277,6 +277,11 @@ deve usar os nomes do menu e da barra inferior do celular.
 - Quando a Gestão é aberta pelo AvantaVendas instalado, a troca permanece na
   mesma janela em modo aplicativo, sem barras de endereço ou atalhos do
   navegador.
+- Se o usuário chegar pelo AvantaVendas sem nenhum perfil financeiro, a Gestão
+  abre a criação do primeiro perfil. Depois de criá-lo, solicita confirmação
+  para usá-lo como destino financeiro do AvantaVendas; confirmando, o vínculo é
+  salvo no servidor. Recusar não apaga o perfil e permite configurar o destino
+  depois no Vendas.
 - Em um perfil sem o módulo instalado, **Ir para Vendas** continua disponível para
   Gestor Master ou Administrador. Ao tocar, o sistema solicita a ativação, confirma
   o salvamento no servidor e segue para o Vendas. Em perfil pessoal gratuito, a
@@ -296,8 +301,8 @@ deve usar os nomes do menu e da barra inferior do celular.
   inferior, inclusive antes da ativação. Operadores veem o botão lateral inativo e
   não recebem permissão para ativar ou trocar de sistema.
 - Ao escolher Vendas, a conta única do usuário abre diretamente. O destino
-  financeiro continua sendo definido somente em **Configurações > Integração com
-  Gestão**, dentro do Vendas.
+  financeiro pode ser confirmado na criação do primeiro perfil vindo do Vendas
+  e continua configurável em **Configurações > Integração com Gestão**.
 - A ordem/visibilidade dos cards do dashboard é ajustada em **Menu > Organizar
   resumo** ou **Organizar dashboard**.
 - Em **Gerenciar perfil**, o usuário pode administrar seus perfis conforme a

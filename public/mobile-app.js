@@ -58,7 +58,9 @@
   var CHAVE_SISTEMA_SESSAO_MOBILE = 'avantalab_mobile_sistema_sessao_';
   var CHAVE_CONTEXTO_SISTEMA_MOBILE = 'avantalab_mobile_sistema_contexto';
   var CHAVE_ORIGEM_ACESSO_MOBILE = 'avantalab_mobile_origem_acesso';
+  var CHAVE_VINCULO_FINANCEIRO_PENDENTE_MOBILE = 'avantalab_mobile_vinculo_financeiro_pendente';
   var EMAIL_CONTA_REVISAO_APPLE = 'teste@teste.com.br';
+  var confirmacaoVinculoFinanceiroVendasEmAndamento = false;
 
   function ehContaRevisaoAppAppleMobile(usuario) {
     return String(usuario && usuario.email || '').trim().toLowerCase() === EMAIL_CONTA_REVISAO_APPLE;
@@ -2041,6 +2043,91 @@
     } catch (error) {
       return '/?entrar=1';
     }
+  }
+
+  function acessoOriginadoNoVendasMobile() {
+    try {
+      return sessionStorage.getItem(CHAVE_ORIGEM_ACESSO_MOBILE) === 'vendas';
+    } catch (error) {
+      return false;
+    }
+  }
+
+  function lerVinculoFinanceiroPendenteMobile() {
+    try {
+      var dados = JSON.parse(sessionStorage.getItem(CHAVE_VINCULO_FINANCEIRO_PENDENTE_MOBILE) || 'null');
+      if (!dados || !dados.empresaId) return null;
+      return {
+        empresaId: String(dados.empresaId),
+        nome: String(dados.nome || 'Perfil financeiro'),
+      };
+    } catch (error) {
+      return null;
+    }
+  }
+
+  function limparVinculoFinanceiroPendenteMobile() {
+    try {
+      sessionStorage.removeItem(CHAVE_VINCULO_FINANCEIRO_PENDENTE_MOBILE);
+    } catch (error) {}
+  }
+
+  async function confirmarVinculoFinanceiroVendasMobile(dados) {
+    var decisao = await solicitarDialogoSistemaMobile({
+      titulo: 'Vincular perfil ao Vendas?',
+      rotulo: 'Primeiro acesso',
+      mensagem: 'O perfil "' + dados.nome + '" foi criado. Deseja usá-lo como destino financeiro do AvantaVendas?\n\nOs resultados do Vendas passarão a ser enviados para este perfil. Essa escolha poderá ser alterada depois nas Configurações do Vendas.',
+      variante: 'alerta',
+      acoes: [
+        { valor: 'depois', rotulo: 'Agora não', estilo: 'secundaria' },
+        { valor: 'vincular', rotulo: 'Vincular perfil', estilo: 'primaria' },
+      ],
+    });
+
+    if (decisao !== 'vincular') {
+      limparVinculoFinanceiroPendenteMobile();
+      mostrarToast('Você pode definir o destino financeiro depois no Vendas.');
+      return;
+    }
+
+    var resposta = await db.rpc('definir_perfil_financeiro_vendas_mobile_rpc', {
+      p_empresa_id: dados.empresaId,
+    });
+    if (resposta.error) {
+      await mostrarAvisoSistemaMobile(
+        'Não foi possível vincular o perfil',
+        mensagemErro(resposta.error, 'Tente novamente ou defina o destino financeiro nas Configurações do Vendas.')
+      );
+      return;
+    }
+
+    limparVinculoFinanceiroPendenteMobile();
+    mostrarToast('Perfil vinculado ao AvantaVendas.');
+  }
+
+  function retomarConfirmacaoVinculoFinanceiroVendasMobile() {
+    if (
+      confirmacaoVinculoFinanceiroVendasEmAndamento ||
+      !state.pronto ||
+      !acessoOriginadoNoVendasMobile()
+    ) return;
+    var dados = lerVinculoFinanceiroPendenteMobile();
+    if (!dados) return;
+    confirmacaoVinculoFinanceiroVendasEmAndamento = true;
+    confirmarVinculoFinanceiroVendasMobile(dados).finally(function () {
+      confirmacaoVinculoFinanceiroVendasEmAndamento = false;
+    });
+  }
+
+  function agendarConfirmacaoVinculoFinanceiroVendasMobile(empresaId, nome) {
+    if (!empresaId || !acessoOriginadoNoVendasMobile()) return;
+    try {
+      sessionStorage.setItem(CHAVE_VINCULO_FINANCEIRO_PENDENTE_MOBILE, JSON.stringify({
+        empresaId: empresaId,
+        nome: nome,
+      }));
+    } catch (error) {}
+    window.setTimeout(retomarConfirmacaoVinculoFinanceiroVendasMobile, 80);
   }
 
   function abrirVendasMobile() {
@@ -6034,6 +6121,9 @@
     }
     await carregarEmpresas(state.usuario.id);
     await carregarDados();
+    if (perfilCriadoAgora) {
+      agendarConfirmacaoVinculoFinanceiroVendasMobile(criadaId, nome);
+    }
     return true;
   }
 
@@ -14212,6 +14302,7 @@
       }
       state.pronto = true;
       render();
+      retomarConfirmacaoVinculoFinanceiroVendasMobile();
     } catch (error) {
       if (
         error && error.codigo === 'AVANTALAB_TIMEOUT' &&

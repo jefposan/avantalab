@@ -250,20 +250,24 @@ função existir ali.
   posição** aparece ao lado do lápis.
 - Para gestores habilitados, a primeira tela após o login permite escolher Gestão
   ou Vendas antes de carregar os dados. Depois da escolha aparece **Preparando acesso**.
-- Gestores podem usar **Ir para Gestão** no canto direito do header fixo da sala
-  de botões ou adicionar **Ir para Gestão** a um atalho configurável.
+- Todo usuário com acesso ativo ao Vendas pode usar **Ir para Gestão** no canto
+  direito do header fixo da sala de botões ou adicionar **Ir para Gestão** a um
+  atalho configurável.
   Ao tocar, o Vendas lista todos os perfis ativos da Gestão vinculados à conta;
-  depois de selecionar um perfil, a troca exige confirmação. O aviso de
-  aniversário permanece ao lado do botão quando ambos estão visíveis. No PWA
-  instalado, a Gestão abre na mesma janela em modo aplicativo, sem barras do
-  navegador.
+  depois de selecionar um perfil, a troca exige confirmação. Se a conta ainda
+  não possuir perfil na Gestão, abre diretamente a criação do primeiro perfil.
+  Depois da criação, uma confirmação permite defini-lo imediatamente como
+  destino financeiro do AvantaVendas. O aviso de aniversário permanece ao lado
+  do botão quando ambos estão visíveis. No PWA instalado, a Gestão abre na mesma
+  janela em modo aplicativo, sem barras do navegador.
 - Cada login possui uma única conta operacional no Vendas. Instalações e
   permissões em perfis da Gestão apenas autorizam a troca entre os sistemas e não
   criam contas adicionais ou um seletor de perfis dentro do Vendas.
-- O destino financeiro só pode ser definido ou alterado em **Configurações >
-  Integração com Gestão**.
+- O destino financeiro pode ser confirmado ao criar o primeiro perfil pela troca
+  de sistemas e depois definido ou alterado em **Configurações > Integração com
+  Gestão**.
 - A sessão e o perfil/empresa são preservados na troca. Usuários sem permissão
-  de gestor não recebem o atalho de retorno à Gestão.
+  financeira não recebem acesso aos dados de perfis empresariais de terceiros.
 
 ## Clientes
 
