@@ -1503,6 +1503,13 @@ function senhaCadastroValida(senha) {
   return senha.length >= 8 && /[A-Z]/.test(senha) && /[a-z]/.test(senha) && /\d/.test(senha);
 }
 
+function nomeCompletoValido(nome) {
+  const conectivos = new Set(['da', 'das', 'de', 'do', 'dos', 'e']);
+  return String(nome || '').trim().split(/\s+/).filter((parte) => {
+    return parte && !conectivos.has(parte.toLocaleLowerCase('pt-BR'));
+  }).length >= 2;
+}
+
 function atualizarRequisitosSenhaCadastro(senha) {
   const aviso = document.getElementById('requisitosSenhaCadastro');
   if (!aviso) return;
@@ -2112,6 +2119,10 @@ async function criarConta(event) {
   const codigo = valor('cadastroCodigo').trim().toUpperCase();
   const telefoneCompleto = `+${ddi}${telefone}`;
   const ehBrasil = ddi === '55';
+  if (!nomeCompletoValido(nome)) {
+    if (erro) erro.textContent = 'Informe o nome completo, com nome e sobrenome.';
+    return;
+  }
   if (!nome || !email || !codigo || !telefone || !senhaCadastroValida(senha)) {
     if (erro) erro.textContent = 'A senha deve ter 8 caracteres, ao menos uma letra maiúscula, uma minúscula e um número.';
     return;
@@ -2187,6 +2198,10 @@ async function confirmarCadastroSms(event) {
   if (erro) erro.textContent = '';
   const codigoSms = valor('cadastroCodigoSms').trim();
   if (!cadastroPendente || !codigoSms) { if (erro) erro.textContent = 'Digite o código recebido por SMS.'; return; }
+  if (!nomeCompletoValido(cadastroPendente.nome)) {
+    if (erro) erro.textContent = 'Informe o nome completo, com nome e sobrenome.';
+    return;
+  }
   try {
     const resposta = await fetch('/api/sms/verificar-codigo', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },

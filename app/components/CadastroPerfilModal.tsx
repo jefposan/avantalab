@@ -3,8 +3,13 @@
 import React, { useEffect, useRef, useState } from 'react';
 import {
   ESTADOS_BRASIL,
+  formatarDocumentoFiscal,
   REGIMES_TRIBUTARIOS,
+  somenteDigitos,
   TIPOS_EMPRESA,
+  validarCnpj,
+  validarCpf,
+  validarNomeCompleto,
   type CadastroPerfil,
   type StatusCadastroPerfil,
 } from '../lib/cadastro-perfil';
@@ -37,6 +42,8 @@ export default function CadastroPerfilModal({ aberto, empresaId, statusInicial, 
   const [buscandoCep, setBuscandoCep] = useState(false);
   const [erro, setErro] = useState('');
   const [statusAutoSave, setStatusAutoSave] = useState('');
+  const [documentoTocado, setDocumentoTocado] = useState(false);
+  const [nomeCompletoTocado, setNomeCompletoTocado] = useState(false);
   const autoSaveEmAndamento = useRef(false);
   const autoSavePendente = useRef<CadastroPerfil | null>(null);
 
@@ -70,6 +77,19 @@ export default function CadastroPerfilModal({ aberto, empresaId, statusInicial, 
   const pessoal = status?.tipoPerfil === 'pessoal';
   const autonomo = dados.tipo_empresa === 'autonomo';
   const tipoDocumento = pessoal || autonomo ? 'CPF' : 'CNPJ';
+  const tipoDocumentoNormalizado = tipoDocumento === 'CPF' ? 'cpf' : 'cnpj';
+  const limiteDocumento = tipoDocumento === 'CPF' ? 11 : 14;
+  const documentoDigitos = somenteDigitos(dados.documento, limiteDocumento);
+  const documentoValido = tipoDocumento === 'CPF'
+    ? validarCpf(documentoDigitos)
+    : validarCnpj(documentoDigitos);
+  const documentoInvalido = documentoTocado && documentoDigitos.length > 0 && !documentoValido;
+  const mensagemDocumento = documentoDigitos.length !== limiteDocumento
+    ? `Informe um ${tipoDocumento} com ${limiteDocumento} dígitos.`
+    : `${tipoDocumento} inválido. Confira os números informados.`;
+  const nomeCompletoInvalido = Boolean(
+    nomeCompletoTocado && dados.nome_responsavel.trim() && !validarNomeCompleto(dados.nome_responsavel)
+  );
   const set = <K extends keyof CadastroPerfil>(campo: K, valor: CadastroPerfil[K]) => setDados((atual) => ({ ...atual, [campo]: valor }));
   const input = 'h-9 w-full rounded-lg border border-slate-300 bg-white px-3 text-sm text-slate-800 outline-none focus:border-sky-600 focus:ring-2 focus:ring-sky-600/20 disabled:bg-slate-100 disabled:text-slate-400';
   const label = 'grid gap-1 text-[11px] font-bold text-slate-600';
@@ -196,13 +216,88 @@ export default function CadastroPerfilModal({ aberto, empresaId, statusInicial, 
             >
               <div>
                 <h3 className="mb-2 border-b border-slate-200 pb-1 text-xs font-black uppercase text-sky-800">Dados Gerais</h3>
-                <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-                  <label className={label}>{pessoal ? 'Nome do perfil' : 'Nome Fantasia'}<input className={input} value={dados.nome_fantasia} onChange={(e) => set('nome_fantasia', e.target.value)} /></label>
-                  <label className={label}>{pessoal ? 'Nome completo' : 'Responsável'}<input className={input} value={dados.nome_responsavel} onChange={(e) => set('nome_responsavel', e.target.value)} /></label>
-                  {!pessoal && <label className={label}>Razão Social<input className={input} value={dados.razao_social} onChange={(e) => set('razao_social', e.target.value)} /></label>}
-                  {!pessoal && <label className={label}>Tipo de Empresa<select className={input} value={dados.tipo_empresa} onChange={(e) => setDados((atual) => ({ ...atual, tipo_empresa: e.target.value, documento: '' }))}><option value="">Selecione</option>{TIPOS_EMPRESA.map(([v,n]) => <option key={v} value={v}>{n}</option>)}</select></label>}
-                  <label className={label}>{tipoDocumento}<input className={input} inputMode="numeric" value={dados.documento} onChange={(e) => set('documento', e.target.value.replace(/\D/g, '').slice(0, tipoDocumento === 'CPF' ? 11 : 14))} /></label>
-                </div>
+                {pessoal ? (
+                  <div className="grid gap-2 sm:grid-cols-[minmax(0,1.6fr)_minmax(14rem,1fr)]">
+                    <label className={label}>Nome do perfil<input className={input} value={dados.nome_fantasia} onChange={(e) => set('nome_fantasia', e.target.value)} /></label>
+                    <label className={label} htmlFor="cadastro-perfil-nome-completo">
+                      Nome completo
+                      <input
+                        id="cadastro-perfil-nome-completo"
+                        className={`${input} ${nomeCompletoInvalido ? '!border-red-500 focus:!border-red-600 focus:!ring-red-500/20' : ''}`}
+                        value={dados.nome_responsavel}
+                        aria-invalid={nomeCompletoInvalido}
+                        aria-describedby={nomeCompletoInvalido ? 'cadastro-perfil-nome-completo-erro' : undefined}
+                        onBlur={() => setNomeCompletoTocado(true)}
+                        onChange={(e) => set('nome_responsavel', e.target.value)}
+                      />
+                      {nomeCompletoInvalido && (
+                        <span id="cadastro-perfil-nome-completo-erro" className="text-[10px] font-bold text-red-600" role="alert">
+                          Informe nome e sobrenome.
+                        </span>
+                      )}
+                    </label>
+                  </div>
+                ) : (
+                  <div className="grid gap-2">
+                    <div className="grid gap-2 sm:grid-cols-[minmax(0,1.8fr)_minmax(14rem,0.85fr)]">
+                      <label className={label}>Nome Fantasia<input className={input} value={dados.nome_fantasia} onChange={(e) => set('nome_fantasia', e.target.value)} /></label>
+                      <label className={label} htmlFor="cadastro-perfil-responsavel">
+                        Responsável
+                        <input
+                          id="cadastro-perfil-responsavel"
+                          className={`${input} ${nomeCompletoInvalido ? '!border-red-500 focus:!border-red-600 focus:!ring-red-500/20' : ''}`}
+                          value={dados.nome_responsavel}
+                          aria-invalid={nomeCompletoInvalido}
+                          aria-describedby={nomeCompletoInvalido ? 'cadastro-perfil-responsavel-erro' : undefined}
+                          onBlur={() => setNomeCompletoTocado(true)}
+                          onChange={(e) => set('nome_responsavel', e.target.value)}
+                        />
+                        {nomeCompletoInvalido && (
+                          <span id="cadastro-perfil-responsavel-erro" className="text-[10px] font-bold text-red-600" role="alert">
+                            Informe nome e sobrenome.
+                          </span>
+                        )}
+                      </label>
+                    </div>
+                    <div className="grid gap-2 lg:grid-cols-[11rem_12rem_minmax(0,1fr)]">
+                      <label className={label}>
+                        Tipo de Empresa
+                        <select
+                          className={input}
+                          value={dados.tipo_empresa}
+                          onChange={(e) => {
+                            setDocumentoTocado(false);
+                            setDados((atual) => ({ ...atual, tipo_empresa: e.target.value, documento: '' }));
+                          }}
+                        >
+                          <option value="">Selecione</option>
+                          {TIPOS_EMPRESA.map(([v,n]) => <option key={v} value={v}>{n}</option>)}
+                        </select>
+                      </label>
+                      <label className={label} htmlFor="cadastro-perfil-documento">
+                        {tipoDocumento}
+                        <input
+                          id="cadastro-perfil-documento"
+                          className={`${input} ${documentoInvalido ? '!border-red-500 focus:!border-red-600 focus:!ring-red-500/20' : ''}`}
+                          inputMode="numeric"
+                          autoComplete="off"
+                          placeholder={tipoDocumento === 'CPF' ? '000.000.000-00' : '00.000.000/0000-00'}
+                          value={formatarDocumentoFiscal(dados.documento, tipoDocumentoNormalizado)}
+                          aria-invalid={documentoInvalido}
+                          aria-describedby={documentoInvalido ? 'cadastro-perfil-documento-erro' : undefined}
+                          onBlur={() => setDocumentoTocado(true)}
+                          onChange={(e) => set('documento', somenteDigitos(e.target.value, limiteDocumento))}
+                        />
+                        {documentoInvalido && (
+                          <span id="cadastro-perfil-documento-erro" className="text-[10px] font-bold text-red-600" role="alert">
+                            {mensagemDocumento}
+                          </span>
+                        )}
+                      </label>
+                      <label className={label}>Razão Social<input className={input} value={dados.razao_social} onChange={(e) => set('razao_social', e.target.value)} /></label>
+                    </div>
+                  </div>
+                )}
               </div>
 
               <div>

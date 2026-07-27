@@ -1,6 +1,12 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.6.0.84.145 -->
+<!-- ava-version: 1.6.0.84.147 -->
+
+> Revisão 1.6.0.84.147: cadastros de conta e perfil pessoal exigem nome e
+> sobrenome; a mesma regra vale nos módulos de pessoas administrados na Gestão.
+
+> Revisão 1.6.0.84.146: reorganização do cadastro detalhado na Gestão Web; sem
+> impacto operacional na Gestão Mobile.
 
 > Revisão 1.6.0.84.145: ampliação do card de usuários na Gestão Web; sem
 > impacto operacional na Gestão Mobile.

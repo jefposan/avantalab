@@ -6330,14 +6330,21 @@
     await carregarDados();
   }
 
+  function nomeCompletoValido(nome) {
+    var conectivos = ['da', 'das', 'de', 'do', 'dos', 'e'];
+    return String(nome || '').trim().split(/\s+/).filter(function (parte) {
+      return parte && conectivos.indexOf(parte.toLocaleLowerCase('pt-BR')) < 0;
+    }).length >= 2;
+  }
+
   function validarCadastroBase() {
     if (normalizarTipoPerfil(state.cadastroTipoPerfil) === 'empresa' && !state.cadastro.nomeEmpresa) {
       setErro('Informe o nome fantasia da empresa.');
       return false;
     }
 
-    if (!state.cadastro.nome) {
-      setErro('Informe o nome completo do responsavel.');
+    if (!nomeCompletoValido(state.cadastro.nome)) {
+      setErro('Informe o nome completo, com nome e sobrenome.');
       return false;
     }
 

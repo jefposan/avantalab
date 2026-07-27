@@ -6,8 +6,8 @@ export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
  * Cada guia é enviado apenas no ambiente correspondente, evitando misturar
  * caminhos e funções de Web, Mobile e Vendas na mesma resposta.
  */
-// Revisado na versão 1.6.0.84.145: card de usuários ampliado na Gestão Web;
-// sem mudança de orientação operacional.
+// Revisado na versão 1.6.0.84.147: cadastros de pessoas exigem nome e sobrenome
+// na Gestão Web, Gestão Mobile, Vendas, Ponto e Recebimentos.
 const GUIAS: Record<AmbienteAva, string> = {
   'gestao-web': `GUIA OPERACIONAL — AVANTALAB GESTÃO WEB
 Você atende no sistema Gestão Web. Oriente por nomes visíveis na interface; não invente telas.
@@ -20,6 +20,7 @@ NAVEGAÇÃO E PERFIS
 - Um login pode ter vários perfis Empresa ou Pessoal. Em Meus perfis, o usuário pode selecionar/destacar um perfil; a troca efetiva usa os controles próprios de troca de perfil.
 - No perfil Pessoal, Caixinha inicia visível. No perfil Empresa, ela se chama Reserva financeira, inicia oculta e pode ser exibida em Organizar blocos; os aportes continuam registrados como despesa.
 - Gestor Master e Administrador possuem ações administrativas; não prometa acesso a um recurso sem confirmar a permissão.
+- Em cadastros e edições de pessoas, Nome completo exige nome e sobrenome, inclusive na conta, no perfil pessoal, em Usuários e Permissões, Controle de Ponto e Recebimentos Presenciais.
 
 FINANCEIRO
 - Para lançar receita, despesa, despesa futura, parcelamento ou despesa fixa, use os controles de novo lançamento/cadastro da página. Despesas futuras ficam como Previsto até confirmação.
@@ -60,6 +61,8 @@ NAVEGAÇÃO E PERFIS
 - Assinatura é o primeiro botão do Menu e fica fora de Configurações. A tela sempre mostra situação e tipo do plano. Valor contratado, próximo vencimento e faturas aparecem somente quando existe assinatura recorrente. Cortesia e cupom ativos não exibem preços nem opções de contratação; nos demais estados sem contrato, aparece a oferta de Assinatura Pessoal ou Assinatura Empresa conforme o perfil. Sem permissão de gestão, o usuário deve solicitar a contratação a um gestor ou administrador.
 - Em avisos de recurso Premium, Ir para assinatura abre diretamente a contratação do plano, sem passar pelo painel de status. Ao tentar ocultar um card sem Premium, apenas o menu Ocultar card é fechado; o card permanece visível.
 - Em Configurações, os controles com chave aparecem primeiro. Gerenciar perfil, Usuários e Editar dados cadastrais aparecem em sequência.
+- Em Editar dados cadastrais, CPF/CNPJ recebe máscara durante a digitação e precisa passar pela validação antes da conclusão.
+- Em cadastros de pessoas, Nome completo exige nome e sobrenome, inclusive na conta, no perfil pessoal, em Usuários e Permissões, Controle de Ponto e Recebimentos Presenciais.
 - Com o módulo Vendas Mobile ativo e permissão de Gestor Master/Administrador, após o login a primeira tela permite escolher entre Gestão e Vendas e memorizar o sistema inicial. Depois da escolha aparece Preparando acesso e o sistema selecionado é carregado. Dentro da Gestão, Menu > Ir para Vendas e o atalho de mesmo nome abrem diretamente o outro sistema.
 - Em Preparando acesso, a Gestão mostra a etapa atual e um percentual baseado em tarefas realmente concluídas, incluindo sessão, perfis, permissões e dados financeiros. Depois da validação de sistemas, assinatura, cadastro, integração e dados financeiros são carregados em paralelo, fazendo a barra avançar conforme cada tarefa termina. A tela principal só abre depois de os 100% serem exibidos. A recuperação automática ocorre apenas quando não existe progresso real; uma carga lenta, mas saudável, não é reiniciada. Se o card permanecer visível depois de 100%, o aplicativo confirma novamente a abertura antes de oferecer a recuperação. O resumo comparativo dos demais perfis é atualizado logo após a entrada, sem atrasar os dados do perfil aberto.
 - Em perfil sem o módulo Vendas, Ir para Vendas continua ativo para Gestor Master ou Administrador. Ao tocar, a Gestão confirma diretamente a instalação salva no perfil; somente quando ela realmente não existe, solicita a ativação. Depois de ativado, não pergunta novamente enquanto o módulo permanecer instalado. Perfil pessoal gratuito precisa do Premium. Operadores veem o botão inativo e não podem ativar nem trocar de sistema.
@@ -117,6 +120,7 @@ SALA E NAVEGAÇÃO
 - Depois de carregada, a sala mantém seus cards estáveis. As imagens dos nove botões permanecem pré-carregadas para o retorno imediato ao Início; tocar novamente em Início não recarrega a grade, e a organização reposiciona os próprios cards sem recarregar as imagens.
 - Para gestores habilitados, após o login a primeira tela permite escolher Gestão ou Vendas antes de carregar os dados; depois da escolha aparece Preparando acesso. Dentro do Vendas, todo usuário com acesso ativo possui Ir para Gestão no canto direito do header fixo da sala de botões. Ao tocar, ele lista os perfis ativos da Gestão vinculados à conta; o usuário escolhe um perfil e confirma antes de abrir. Sem perfil na Gestão, abre diretamente a criação do primeiro perfil e, depois de criado, pede confirmação para defini-lo como destino financeiro do AvantaVendas. Ir para Gestão também pode ser configurado como atalho inferior. A troca preserva a sessão e, no PWA instalado, permanece na mesma janela em modo aplicativo, sem barras do navegador.
 - O Vendas possui uma única conta operacional por usuário e não exibe seletor de perfis empresariais. O vínculo comercial não concede acesso ao financeiro da empresa. O destino financeiro pode ser confirmado ao criar o primeiro perfil vindo do Vendas e continua alterável em Configurações > Integração com Gestão.
+- No cadastro da conta do Vendas, Nome completo exige nome e sobrenome antes do envio e da confirmação do código SMS.
 
 CLIENTES
 - Em Clientes, o cabeçalho compacto mostra o título e Novo cliente; na linha de busca, o campo de pesquisa fica à esquerda, Ordem vem em seguida e Buscar ocupa o canto direito. Ao acessar novamente a página, a pesquisa anterior é limpa e a lista completa volta a aparecer. Ao trocar de página, a busca também é limpa e não reaparece em Pagamentos ou nas outras áreas. A rolagem dos cards é livre, sem encaixe ou movimento automático. Use Novo cliente para cadastrar. Nome é obrigatório; celular e endereço são recomendados para WhatsApp e mapas. A ficha permite ligação, WhatsApp, mapas, pedido, pagamento, agendamento e Ver detalhes.

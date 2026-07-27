@@ -1,6 +1,12 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.6.0.84.145 -->
+<!-- ava-version: 1.6.0.84.147 -->
+
+> Revisão 1.6.0.84.147: o cadastro de conta no AvantaVendas exige nome e
+> sobrenome antes da validação por SMS.
+
+> Revisão 1.6.0.84.146: reorganização do cadastro detalhado na Gestão Web; sem
+> impacto operacional no AvantaVendas.
 
 > Revisão 1.6.0.84.145: ampliação do card de usuários na Gestão Web; sem
 > impacto operacional no AvantaVendas.

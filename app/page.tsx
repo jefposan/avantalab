@@ -8828,7 +8828,7 @@ if (validacaoTelefoneObrigatoria) {
           type="text"
           value={editUsuarioNome}
           onChange={(e) => setEditUsuarioNome(e.target.value)}
-          placeholder="Nome"
+          placeholder="Nome completo"
           className={`w-full rounded-xl border px-3 py-2.5 text-sm font-semibold outline-none ${
             darkMode
               ? 'bg-slate-900 border-slate-600 text-white'
@@ -9122,7 +9122,7 @@ if (validacaoTelefoneObrigatoria) {
   type="text"
   value={usuarioNome}
   onChange={(e) => setUsuarioNome(e.target.value)}
-  placeholder="Nome do usuário"
+  placeholder="Nome completo"
   autoComplete="off"
   name="novo-usuario-nome"
     className={`w-full rounded-xl border px-3 py-2.5 text-sm font-semibold outline-none transition ${

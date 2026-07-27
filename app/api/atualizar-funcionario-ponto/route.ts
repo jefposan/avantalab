@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { validarNomeCompleto } from '../../lib/nome-pessoa';
 
 function soDigitos(v: string) {
   return String(v || '').replace(/\D/g, '');
@@ -54,7 +55,7 @@ export async function POST(request: Request) {
 
     if (!empresaId) return respostaErro('Empresa não informada.');
     if (!funcionarioUserId) return respostaErro('Funcionário não informado.');
-    if (!nome) return respostaErro('Informe o nome do funcionário.');
+    if (!validarNomeCompleto(nome)) return respostaErro('Informe o nome completo do funcionário, com nome e sobrenome.');
     if (cpf && !cpfValido(cpf)) return respostaErro('Informe um CPF válido.');
 
     const supabaseAdmin = createClient(supabaseUrl, supabaseServiceRoleKey);

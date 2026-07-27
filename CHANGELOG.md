@@ -1,5 +1,20 @@
 # Changelog
 
+## 1.6.0.84.147 - 2026-07-27
+
+- Cadastros de pessoas passam a exigir nome e sobrenome em toda a Gestão Web,
+  Gestão Mobile, AvantaVendas, Usuários e Permissões, Controle de Ponto e
+  Recebimentos Presenciais.
+- A regra é validada na interface e nas APIs dos módulos, inclusive nas edições
+  de usuários, funcionários e colaboradores já cadastrados.
+
+## 1.6.0.84.146 - 2026-07-27
+
+- Gestão Web: os dados gerais do cadastro do perfil foram reorganizados em duas
+  linhas, com larguras proporcionais ao conteúdo.
+- O CPF/CNPJ agora recebe máscara durante a digitação e validação visual dos
+  dígitos antes da conclusão do cadastro.
+
 ## 1.6.0.84.145 - 2026-07-26
 
 - Gestão Web: o card `Usuários e Permissões` ficou um pouco mais largo e a

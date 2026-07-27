@@ -9,6 +9,7 @@ import {
   soDigitos,
   usuarioDaRequisicao,
   validarGestor,
+  validarNomeCompleto,
 } from '../_lib';
 
 export const runtime = 'nodejs';
@@ -28,7 +29,7 @@ export async function POST(request: Request) {
     const celular = String(corpo.celular ?? '').trim();
     const emailContato = String(corpo.email ?? '').trim().toLowerCase();
     if (!empresaId) return respostaErro('Empresa não informada.');
-    if (!nome) return respostaErro('Informe o nome do colaborador.');
+    if (!validarNomeCompleto(nome)) return respostaErro('Informe o nome completo do colaborador, com nome e sobrenome.');
     if (!cpfValido(cpf)) return respostaErro('Informe um CPF válido.');
     if (senha.length < 8) return respostaErro('A senha deve ter pelo menos 8 caracteres.');
     if (!celular) return respostaErro('Informe o celular do colaborador.');

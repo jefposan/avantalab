@@ -1,6 +1,13 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.6.0.84.145 -->
+<!-- ava-version: 1.6.0.84.147 -->
+
+> Revisão 1.6.0.84.147: cadastros e edições de pessoas exigem nome e sobrenome
+> na conta, no perfil pessoal, em Usuários e Permissões, Controle de Ponto e
+> Recebimentos Presenciais.
+
+> Revisão 1.6.0.84.146: em Editar dados cadastrais, os dados gerais foram
+> reorganizados e o CPF/CNPJ passou a receber máscara e validação no campo.
 
 > Revisão 1.6.0.84.145: o card `Usuários e Permissões` ganhou mais largura e
 > ampliou o campo de senha inicial; sem mudança no fluxo de cadastro.
