@@ -6,8 +6,8 @@ export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
  * Cada guia é enviado apenas no ambiente correspondente, evitando misturar
  * caminhos e funções de Web, Mobile e Vendas na mesma resposta.
  */
-// Revisado na versão 1.6.0.84.147: cadastros de pessoas exigem nome e sobrenome
-// na Gestão Web, Gestão Mobile, Vendas, Ponto e Recebimentos.
+// Revisado na versão 1.6.0.84.148: a Gestão Web valida a sessão no servidor
+// antes de decidir entre login, perfil existente e primeiro cadastro.
 const GUIAS: Record<AmbienteAva, string> = {
   'gestao-web': `GUIA OPERACIONAL — AVANTALAB GESTÃO WEB
 Você atende no sistema Gestão Web. Oriente por nomes visíveis na interface; não invente telas.
@@ -21,6 +21,7 @@ NAVEGAÇÃO E PERFIS
 - No perfil Pessoal, Caixinha inicia visível. No perfil Empresa, ela se chama Reserva financeira, inicia oculta e pode ser exibida em Organizar blocos; os aportes continuam registrados como despesa.
 - Gestor Master e Administrador possuem ações administrativas; não prometa acesso a um recurso sem confirmar a permissão.
 - Em cadastros e edições de pessoas, Nome completo exige nome e sobrenome, inclusive na conta, no perfil pessoal, em Usuários e Permissões, Controle de Ponto e Recebimentos Presenciais.
+- Ao atualizar a página, sessão inválida, expirada ou de usuário excluído é limpa e retorna ao login; Criar perfil financeiro só aparece para uma conta validada que realmente não possui perfil.
 
 FINANCEIRO
 - Para lançar receita, despesa, despesa futura, parcelamento ou despesa fixa, use os controles de novo lançamento/cadastro da página. Despesas futuras ficam como Previsto até confirmação.

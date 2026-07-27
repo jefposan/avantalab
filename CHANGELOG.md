@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.6.0.84.148 - 2026-07-27
+
+- Gestão Web: o refresh agora valida no servidor se a sessão e o usuário ainda
+  existem antes de procurar perfis financeiros.
+- Sessões inválidas, expiradas ou pertencentes a usuários excluídos são limpas
+  e encaminhadas ao login, sem abrir indevidamente `Criar perfil financeiro`.
+
 ## 1.6.0.84.147 - 2026-07-27
 
 - Cadastros de pessoas passam a exigir nome e sobrenome em toda a Gestão Web,

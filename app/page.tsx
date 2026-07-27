@@ -1562,7 +1562,47 @@ if (paramsConfirmacao.get('confirmado') === '1') {
       return;
     }
 
-    const { data: sessaoAtual } = await supabase.auth.getSession();
+    const { data: sessaoAtual, error: erroSessaoAtual } = await supabase.auth.getSession();
+
+    const voltarAoLoginAposSessaoInvalida = async (mensagem: string) => {
+      try { await supabase.auth.signOut({ scope: 'local' }); } catch {}
+      setAcessoNaoConfigurado(false);
+      setAcessoLiberado(false);
+      setModalSelecionarEmpresa(false);
+      setModoRedefinirSenha(false);
+      setEmailConfirmado(false);
+      setEmpresaId(null);
+      setNomeEmpresaAtual('');
+      setPerfilUsuario(null);
+      setModoAuth('login');
+      setMostrarLandingPreLogin(false);
+      setAuthErro(mensagem);
+      setMounted(true);
+      setCarregandoSistema(false);
+    };
+
+    if (erroSessaoAtual) {
+      await voltarAoLoginAposSessaoInvalida(
+        'Não foi possível validar sua sessão. Entre novamente.'
+      );
+      return;
+    }
+
+    if (sessaoAtual.session) {
+      const { data: usuarioValidado, error: erroUsuarioValidado } =
+        await supabase.auth.getUser();
+
+      if (
+        erroUsuarioValidado ||
+        !usuarioValidado.user ||
+        usuarioValidado.user.id !== sessaoAtual.session.user.id
+      ) {
+        await voltarAoLoginAposSessaoInvalida(
+          'Sua sessão não é mais válida. Entre novamente.'
+        );
+        return;
+      }
+    }
 
     let empresa = null;
 
@@ -1668,19 +1708,9 @@ setMensagemCarregamentoSistema('Carregando empresa...');
      } catch (e) {
        console.error('Erro ao carregar pagina ja logada; voltando ao login:', e);
        // Falha de carregamento em pagina ja logada -> SEMPRE login, nunca cadastro/onboarding.
-       setAcessoNaoConfigurado(false);
-       setAcessoLiberado(false);
-       setModalSelecionarEmpresa(false);
-       setModoRedefinirSenha(false);
-       setEmailConfirmado(false);
-       setEmpresaId(null);
-       setNomeEmpresaAtual('');
-       setPerfilUsuario(null);
-       setModoAuth('login');
-       setMostrarLandingPreLogin(false);
-       setAuthErro('Nao foi possivel carregar seus dados. Faca login novamente.');
-       setMounted(true);
-       setCarregandoSistema(false);
+       await voltarAoLoginAposSessaoInvalida(
+         'Não foi possível carregar seus dados. Faça login novamente.'
+       );
        return;
      }
     }

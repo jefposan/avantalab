@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.6.0.84.147 -->
+<!-- ava-version: 1.6.0.84.148 -->
+
+> Revisão 1.6.0.84.148: validação de sessão no refresh da Gestão Web; sem
+> impacto operacional na Gestão Mobile.
 
 > Revisão 1.6.0.84.147: cadastros de conta e perfil pessoal exigem nome e
 > sobrenome; a mesma regra vale nos módulos de pessoas administrados na Gestão.

@@ -1,6 +1,10 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.6.0.84.147 -->
+<!-- ava-version: 1.6.0.84.148 -->
+
+> Revisão 1.6.0.84.148: ao atualizar a página, a Gestão valida a sessão no
+> servidor. Sessão inválida ou usuário excluído retorna ao login e nunca abre o
+> cadastro de perfil financeiro.
 
 > Revisão 1.6.0.84.147: cadastros e edições de pessoas exigem nome e sobrenome
 > na conta, no perfil pessoal, em Usuários e Permissões, Controle de Ponto e
