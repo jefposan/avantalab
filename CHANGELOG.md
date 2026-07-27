@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.6.1.24 - 2026-07-27
+
+- Gestão Web: as linhas **Inicial**, **Final** e **Previsto** do card **Saldo do
+  mês** exibem explicações em um tooltip que acompanha o cursor, com o mesmo
+  estilo visual usado em **Evolução mensal**.
+- As explicações também podem ser acessadas por foco de teclado.
+
 ## 1.6.1.23 - 2026-07-27
 
 - Gestão Mobile: o campo **Valor** da edição de despesas fixas passa a seguir o

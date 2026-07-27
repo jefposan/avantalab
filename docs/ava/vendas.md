@@ -1,6 +1,9 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.6.1.23 -->
+<!-- ava-version: 1.6.1.24 -->
+
+> Revisão 1.6.1.24: explicações do card Saldo do mês aplicadas somente à Gestão
+> Web; sem impacto operacional no AvantaVendas.
 
 > Revisão 1.6.1.23: padronização monetária aplicada somente à edição de despesas
 > fixas na Gestão Mobile; sem impacto operacional no AvantaVendas.

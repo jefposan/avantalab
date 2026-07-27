@@ -240,6 +240,13 @@ export default function Dashboard({
     receitas: number;
     despesas: number;
   } | null>(null);
+  const [tooltipSaldo, setTooltipSaldo] = useState<{
+    x: number;
+    y: number;
+    tipo: 'inicial' | 'final' | 'previsto';
+    titulo: string;
+    texto: string;
+  } | null>(null);
   const [tooltipPerfis, setTooltipPerfis] = useState<{
     x: number;
     y: number;
@@ -1193,15 +1200,84 @@ const mostrarComparativoResumoDash =
           </div>
         </div>
         <div className="p-5 space-y-2.5">
-          <div className={`flex justify-between items-center pb-2.5 border-b border-dotted ${darkMode ? 'border-slate-500/50' : 'border-slate-300'}`}>
+          <div
+            className={`flex justify-between items-center rounded-md pb-2.5 border-b border-dotted outline-none transition focus-visible:ring-2 focus-visible:ring-cyan-500/40 ${darkMode ? 'border-slate-500/50' : 'border-slate-300'}`}
+            tabIndex={0}
+            aria-describedby={tooltipSaldo?.tipo === 'inicial' ? 'tooltip-saldo-mes' : undefined}
+            onMouseMove={(event) => setTooltipSaldo({
+              x: event.clientX,
+              y: event.clientY,
+              tipo: 'inicial',
+              titulo: 'Saldo inicial',
+              texto: 'Valor disponível no início do mês, trazido do saldo final do mês anterior.',
+            })}
+            onMouseLeave={() => setTooltipSaldo(null)}
+            onFocus={(event) => {
+              const rect = event.currentTarget.getBoundingClientRect();
+              setTooltipSaldo({
+                x: rect.left + rect.width / 2,
+                y: rect.top,
+                tipo: 'inicial',
+                titulo: 'Saldo inicial',
+                texto: 'Valor disponível no início do mês, trazido do saldo final do mês anterior.',
+              });
+            }}
+            onBlur={() => setTooltipSaldo(null)}
+          >
             <span className={`font-semibold text-sm ${textMuted}`}>Inicial</span>
             <span className={`font-semibold text-base tabular-nums tracking-tight ${textStrong}`}>{formatarMoeda(saldoInicial)}</span>
           </div>
-          <div className={`flex justify-between items-center pb-2.5 border-b border-dotted ${darkMode ? 'border-slate-500/50' : 'border-slate-300'}`}>
+          <div
+            className={`flex justify-between items-center rounded-md pb-2.5 border-b border-dotted outline-none transition focus-visible:ring-2 focus-visible:ring-cyan-500/40 ${darkMode ? 'border-slate-500/50' : 'border-slate-300'}`}
+            tabIndex={0}
+            aria-describedby={tooltipSaldo?.tipo === 'final' ? 'tooltip-saldo-mes' : undefined}
+            onMouseMove={(event) => setTooltipSaldo({
+              x: event.clientX,
+              y: event.clientY,
+              tipo: 'final',
+              titulo: 'Saldo final',
+              texto: 'Saldo atual do mês: saldo inicial mais receitas efetivadas, menos despesas realizadas.',
+            })}
+            onMouseLeave={() => setTooltipSaldo(null)}
+            onFocus={(event) => {
+              const rect = event.currentTarget.getBoundingClientRect();
+              setTooltipSaldo({
+                x: rect.left + rect.width / 2,
+                y: rect.top,
+                tipo: 'final',
+                titulo: 'Saldo final',
+                texto: 'Saldo atual do mês: saldo inicial mais receitas efetivadas, menos despesas realizadas.',
+              });
+            }}
+            onBlur={() => setTooltipSaldo(null)}
+          >
             <span className={`font-semibold text-sm ${textMuted}`}>Final</span>
             <span className={`font-semibold text-base tabular-nums tracking-tight ${saldoFinal >= 0 ? 'text-green-500' : 'text-red-500'}`}>{formatarMoeda(saldoFinal)}</span>
           </div>
-          <div className="flex justify-between items-center">
+          <div
+            className="flex items-center justify-between rounded-md outline-none transition focus-visible:ring-2 focus-visible:ring-cyan-500/40"
+            tabIndex={0}
+            aria-describedby={tooltipSaldo?.tipo === 'previsto' ? 'tooltip-saldo-mes' : undefined}
+            onMouseMove={(event) => setTooltipSaldo({
+              x: event.clientX,
+              y: event.clientY,
+              tipo: 'previsto',
+              titulo: 'Saldo previsto',
+              texto: 'Estimativa para o fim do mês: saldo final atual mais receitas previstas, menos despesas futuras.',
+            })}
+            onMouseLeave={() => setTooltipSaldo(null)}
+            onFocus={(event) => {
+              const rect = event.currentTarget.getBoundingClientRect();
+              setTooltipSaldo({
+                x: rect.left + rect.width / 2,
+                y: rect.top,
+                tipo: 'previsto',
+                titulo: 'Saldo previsto',
+                texto: 'Estimativa para o fim do mês: saldo final atual mais receitas previstas, menos despesas futuras.',
+              });
+            }}
+            onBlur={() => setTooltipSaldo(null)}
+          >
             <span className={`font-semibold text-sm ${textMuted}`}>Previsto</span>
             <span className={`font-semibold text-base tabular-nums tracking-tight ${saldoPrevisto >= 0 ? 'text-cyan-500' : 'text-red-500'}`}>{formatarMoeda(saldoPrevisto)}</span>
           </div>
@@ -2300,6 +2376,21 @@ const mostrarComparativoResumoDash =
             <strong>{formatarMoeda(tooltipEvolucao.receitas - tooltipEvolucao.despesas)}</strong>
           </div>
         )}
+      </div>,
+      document.body
+    )}
+    {typeof document !== 'undefined' && tooltipSaldo && createPortal(
+      <div
+        id="tooltip-saldo-mes"
+        role="tooltip"
+        className="pointer-events-none fixed z-[9999] w-64 max-w-[calc(100vw-16px)] rounded-xl bg-slate-900 px-3 py-2 text-white shadow-2xl"
+        style={{
+          left: `min(max(${tooltipSaldo.x + 14}px, 8px), calc(100vw - 264px))`,
+          top: `max(${tooltipSaldo.y - 38}px, 8px)`,
+        }}
+      >
+        <p className="mb-1 text-[10px] font-black uppercase tracking-wide text-white/60">{tooltipSaldo.titulo}</p>
+        <p className="text-[11px] font-bold leading-relaxed text-white">{tooltipSaldo.texto}</p>
       </div>,
       document.body
     )}

@@ -1,6 +1,10 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.6.1.23 -->
+<!-- ava-version: 1.6.1.24 -->
+
+> Revisão 1.6.1.24: no card **Saldo do mês**, as linhas **Inicial**, **Final** e
+> **Previsto** explicam o cálculo de cada valor em um tooltip que acompanha o
+> cursor e também pode ser acessado por foco de teclado.
 
 > Revisão 1.6.1.23: padronização monetária aplicada somente à edição de despesas
 > fixas na Gestão Mobile; sem impacto operacional na Gestão Web.

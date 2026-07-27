@@ -6,7 +6,7 @@ export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
  * Cada guia é enviado apenas no ambiente correspondente, evitando misturar
  * caminhos e funções de Web, Mobile e Vendas na mesma resposta.
  */
-// Revisado na versão 1.6.1.23: valor monetário na edição de despesas fixas mobile.
+// Revisado na versão 1.6.1.24: explicações dos saldos mensais na Gestão Web.
 const GUIAS: Record<AmbienteAva, string> = {
   'gestao-web': `GUIA OPERACIONAL — AVANTALAB GESTÃO WEB
 Você atende no sistema Gestão Web. Oriente por nomes visíveis na interface; não invente telas.
@@ -36,6 +36,7 @@ FINANCEIRO
 AGENDA, AVISOS E MÓDULOS
 - Agenda reúne lembretes e despesas previstas/fixas/parcelas. Lembretes podem repetir em diferentes frequências.
 - O sino mostra avisos e lembretes. Push depende de permissão do aparelho e da infraestrutura; nunca confirme entrega sem evidência.
+- No card Saldo do mês, passar o mouse ou focar as linhas Inicial, Final e Previsto mostra como cada valor é calculado.
 - Controle de Ponto é módulo opcional. Funcionários acessam /ponto; somente Gestor Master e Administrador vinculados à empresa configuram e administram o módulo — operadores não o enxergam. Funcionário sem dias de trabalho marcados fica em Escala variável: pode registrar ponto em qualquer dia, mas faltas, atrasos e lembretes automáticos dependem de escala fixa programada. Para encerrar o acesso, o gestor desmarca Funcionário ativo e salva: login e novas marcações são bloqueados, mas o histórico permanece disponível nos relatórios; o mesmo controle reativa o acesso. A aba Auditoria registra marcações, cadastros e mudanças de acesso e pode ser consultada por gestores. Após cada marcação, o funcionário vê um comprovante com código persistido e pode imprimi-lo. Em Conformidade REP-P, gestores baixam AFDs, disponibilizam o manual e geram o Espelho de Ponto Eletrônico do funcionário selecionado na aba Relatórios; o /admin mantém somente certificado e registro INPI. A saída legal só é válida em produção com certificado ICP-Brasil vigente.
 - O console global em /admin pode ser instalado separadamente como Avanta Admin. O PWA possui identidade e escopo próprios e não substitui os aplicativos Gestão, AvantaVendas, Ponto ou Recebimentos.
 - A Central de Consultas fica na rota pública isolada /consulta. Nesta primeira versão, somente a consulta cadastral de CNPJ está disponível por meio do CNPJ.ws; o resultado pode ser impresso e não cadastra empresas automaticamente. No cadastro empresarial, em Ajustes > Configurações > Perfil > Editar, o botão Pesquisar ao lado do CNPJ prepara razão social, nome fantasia, endereço, primeiro telefone/e-mail, inscrição estadual ativa e Simples/MEI quando disponíveis. O usuário confirma a inserção; campos já preenchidos ficam preservados, salvo se ele escolher substituí-los. CPF, crédito, protestos, restrições e consulta completa aparecem apenas como Em breve.

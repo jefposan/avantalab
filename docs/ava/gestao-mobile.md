@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.6.1.23 -->
+<!-- ava-version: 1.6.1.24 -->
+
+> Revisão 1.6.1.24: explicações do card Saldo do mês aplicadas somente à Gestão
+> Web; sem impacto operacional na Gestão Mobile.
 
 > Revisão 1.6.1.23: o campo **Valor** da edição de despesas fixas segue o padrão
 > monetário do sistema, exibindo reais com duas casas decimais.
