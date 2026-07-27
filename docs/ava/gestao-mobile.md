@@ -1,6 +1,10 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.6.1.20 -->
+<!-- ava-version: 1.6.1.21 -->
+
+> Revisão 1.6.1.21: ao editar uma despesa ou receita, o valor do campo **Dia**
+> aparece centralizado horizontalmente; sem mudança no preenchimento ou na
+> validação da data.
 
 > Revisão 1.6.1.20: o card **Lançamentos a confirmar** mostra despesas e
 > receitas previstas somente durante a data programada. Ao terminar o dia, o

@@ -6,7 +6,7 @@ export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
  * Cada guia é enviado apenas no ambiente correspondente, evitando misturar
  * caminhos e funções de Web, Mobile e Vendas na mesma resposta.
  */
-// Revisado na versão 1.6.1.20: janela diária do card Lançamentos a confirmar.
+// Revisado na versão 1.6.1.21: campo Dia centralizado na edição da Gestão Mobile.
 const GUIAS: Record<AmbienteAva, string> = {
   'gestao-web': `GUIA OPERACIONAL — AVANTALAB GESTÃO WEB
 Você atende no sistema Gestão Web. Oriente por nomes visíveis na interface; não invente telas.
@@ -84,6 +84,7 @@ NAVEGAÇÃO E PERFIS
 
 LANÇAMENTOS E RESULTADOS
 - O app registra receitas, despesas, despesas futuras, parcelamentos e despesas fixas. Despesas futuras aparecem como Previsto até confirmação.
+- Ao editar uma despesa ou receita, o campo Dia apresenta o valor centralizado horizontalmente, sem alterar o preenchimento ou a validação.
 - O card Lançamentos a confirmar exibe despesas e receitas previstas somente durante a data programada. Ao terminar o dia, o aviso desaparece; o lançamento continua Previsto e permanece disponível na Agenda e nos controles financeiros.
 - Durante o preenchimento de um lançamento, atualizações de notificações, assinatura, ponto ou sincronização financeira aguardam o fim da edição para atualizar a tela, sem fechar o teclado ou apagar o conteúdo digitado.
 - Em Menu > Cadastrar despesas e no cadastro inline do lançamento, novos tipos entram imediatamente em ordem alfabética nas listas e seletores. Inclusões, edições e exclusões do catálogo atualizam também a Gestão Web aberta no mesmo perfil.

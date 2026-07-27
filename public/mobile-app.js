@@ -8883,12 +8883,12 @@
     );
   }
 
-  function campoClaro(id, label, extra, value) {
+  function campoClaro(id, label, extra, value, classesExtras) {
     var escuro = !!state.darkMode;
     return (
       '<label class="grid gap-1 text-xs font-black uppercase tracking-wide ' + (escuro ? 'text-slate-300' : 'text-slate-600') + '">' +
         escapeHtml(label) +
-        '<input id="' + id + '" ' + (extra || '') + ' value="' + escapeHtml(value || '') + '" style="font-size:16px" class="h-11 w-full min-w-0 rounded-md border px-3 text-base font-bold normal-case tracking-normal outline-none focus:border-cyan-400 ' + (escuro ? 'border-slate-500 bg-slate-800 text-slate-100' : 'border-slate-300 bg-white text-slate-900') + '" />' +
+        '<input id="' + id + '" ' + (extra || '') + ' value="' + escapeHtml(value || '') + '" style="font-size:16px" class="h-11 w-full min-w-0 rounded-md border px-3 text-base font-bold normal-case tracking-normal outline-none focus:border-cyan-400 ' + escapeHtml(classesExtras || '') + ' ' + (escuro ? 'border-slate-500 bg-slate-800 text-slate-100' : 'border-slate-300 bg-white text-slate-900') + '" />' +
       '</label>'
     );
   }
@@ -10540,7 +10540,7 @@
       return (
         '<div class="grid gap-3">' +
           '<div class="grid grid-cols-[72px_minmax(0,1fr)] gap-6">' +
-            campoClaro('editar-dia', 'Dia', 'inputmode="numeric" value="' + escapeHtml(item.dia) + '"') +
+            campoClaro('editar-dia', 'Dia', 'inputmode="numeric"', item.dia, 'text-center') +
             campoClaro('editar-origem', 'Origem', 'value="' + escapeHtml(item.origem) + '"') +
           '</div>' +
           campoValor('editar-valor', 'Valor', dinheiro(item.valor)) +
@@ -10552,7 +10552,7 @@
     return (
       '<div class="grid gap-3">' +
         '<div class="grid grid-cols-[72px_minmax(0,1fr)] gap-6">' +
-          campoClaro('editar-dia', 'Dia', 'inputmode="numeric" value="' + escapeHtml(item.dia) + '"') +
+          campoClaro('editar-dia', 'Dia', 'inputmode="numeric"', item.dia, 'text-center') +
           '<label class="grid gap-1 text-xs font-black uppercase tracking-wide ' + rotuloCampo + '">Despesa' +
             '<select id="editar-despesa" style="font-size:16px" class="h-11 rounded-md border px-3 text-base font-bold normal-case tracking-normal ' + selectCampo + '">' +
               state.despesas.map(function (despesa) {
@@ -14639,7 +14639,7 @@
           return Promise.all(
             keys
               .filter(function (key) {
-                return key.indexOf('avantalab-mobile-') === 0 && key !== 'avantalab-mobile-v293';
+                return key.indexOf('avantalab-mobile-') === 0 && key !== 'avantalab-mobile-v294';
               })
               .map(function (key) {
                 return caches.delete(key);

@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.6.1.21 - 2026-07-27
+
+- Gestão Mobile: o valor do campo **Dia** fica centralizado horizontalmente ao
+  editar despesas ou receitas, preservando o seletor numérico e os temas claro
+  e escuro.
+
 ## 1.6.1.20 - 2026-07-27
 
 - Gestão Web e Mobile: o card **Lançamentos a confirmar** passa a exibir

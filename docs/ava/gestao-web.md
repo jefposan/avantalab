@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.6.1.20 -->
+<!-- ava-version: 1.6.1.21 -->
+
+> Revisão 1.6.1.21: centralização do campo Dia aplicada somente à edição de
+> lançamentos na Gestão Mobile; sem impacto operacional na Gestão Web.
 
 > Revisão 1.6.1.20: o card **Lançamentos a confirmar** mostra despesas e
 > receitas previstas somente durante a data programada. Ao terminar o dia, o
