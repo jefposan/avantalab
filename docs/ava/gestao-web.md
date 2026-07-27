@@ -1,8 +1,8 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.7.0 -->
+<!-- ava-version: 1.6.1.10 -->
 
-> Revisão 1.7.0: a rota `/consulta` disponibiliza a Central de Consultas para
+> Revisão 1.6.1.10: a rota `/consulta` disponibiliza a Central de Consultas para
 > pesquisa cadastral de CNPJ. No cadastro empresarial, inclusive na etapa
 > obrigatória, **Pesquisar CNPJ** prepara os campos compatíveis para confirmação,
 > preservando conteúdo existente por padrão. No celular, a ação ocupa uma linha

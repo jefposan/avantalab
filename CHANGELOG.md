@@ -1,6 +1,6 @@
 # Changelog
 
-## 1.7.0 - 2026-07-27
+## 1.6.1.10 - 2026-07-27
 
 - Nova rota pública `/consulta` cria a Central de Consultas com pesquisa
   cadastral de CNPJ via endpoint interno e provedor CNPJ.ws.

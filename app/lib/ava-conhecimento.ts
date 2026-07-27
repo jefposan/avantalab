@@ -6,7 +6,7 @@ export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
  * Cada guia é enviado apenas no ambiente correspondente, evitando misturar
  * caminhos e funções de Web, Mobile e Vendas na mesma resposta.
  */
-// Revisado na versão 1.7.0: Central de Consultas e pesquisa assistida de CNPJ
+// Revisado na versão 1.6.1.10: Central de Consultas e pesquisa assistida de CNPJ
 // no cadastro empresarial, preservando os campos existentes até confirmação.
 const GUIAS: Record<AmbienteAva, string> = {
   'gestao-web': `GUIA OPERACIONAL — AVANTALAB GESTÃO WEB

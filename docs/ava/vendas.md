@@ -1,8 +1,8 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.7.0 -->
+<!-- ava-version: 1.6.1.10 -->
 
-> Revisão 1.7.0: Central de Consultas e pesquisa assistida de CNPJ adicionadas
+> Revisão 1.6.1.10: Central de Consultas e pesquisa assistida de CNPJ adicionadas
 > à Gestão Web; sem impacto operacional no AvantaVendas.
 
 > Revisão 1.6.1.09: a troca AvantaVendas → Gestão passa a abrir a rota da

@@ -1,8 +1,8 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.7.0 -->
+<!-- ava-version: 1.6.1.10 -->
 
-> Revisão 1.7.0: Central de Consultas e pesquisa assistida de CNPJ adicionadas
+> Revisão 1.6.1.10: Central de Consultas e pesquisa assistida de CNPJ adicionadas
 > à Gestão Web; sem impacto operacional na Gestão Mobile.
 
 > Revisão 1.6.1.09: Preparando acesso só conclui os 100% depois que a tela
