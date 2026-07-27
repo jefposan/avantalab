@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.6.1.22 -->
+<!-- ava-version: 1.6.1.23 -->
+
+> Revisão 1.6.1.23: o campo **Valor** da edição de despesas fixas segue o padrão
+> monetário do sistema, exibindo reais com duas casas decimais.
 
 > Revisão 1.6.1.22: em Gerenciar despesas fixas, Salvar permanece ativo depois
 > da interação com os campos, mostra **Salvando…** durante a gravação e fecha

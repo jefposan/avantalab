@@ -12154,7 +12154,10 @@
               '<input id="edit-recorr-lancar-' + id + '" type="checkbox"' + (state.editRecorrLancarAgora ? ' checked' : '') + campoEdicaoDesabilitado + ' class="h-4 w-4 shrink-0 disabled:opacity-60" />' +
               '<span class="text-[10px] font-black text-slate-600 truncate">Incluir em ' + mesLabel + '</span>' +
             '</label>' +
-            '<input id="edit-recorr-valor-' + id + '" type="text" inputmode="numeric" placeholder="0,00" value="' + escapeHtml(state.editRecorrValor || '') + '"' + campoEdicaoDesabilitado + ' class="h-10 w-24 shrink-0 rounded-md border border-cyan-200 bg-white px-2 text-right text-base font-bold text-slate-900 outline-none disabled:opacity-60" />' +
+            '<label class="block w-28 shrink-0">' +
+              '<span class="sr-only">Valor</span>' +
+              '<input id="edit-recorr-valor-' + id + '" type="text" inputmode="decimal" aria-label="Valor" placeholder="R$ 0,00" value="' + escapeHtml(state.editRecorrValor || '') + '"' + campoEdicaoDesabilitado + ' class="h-10 w-full rounded-md border border-cyan-200 bg-white px-2 text-right text-base font-black text-slate-900 outline-none placeholder:text-slate-400 focus:border-cyan-400 disabled:opacity-60" />' +
+            '</label>' +
           '</div>' +
           '<div class="grid grid-cols-2 gap-1.5">' +
             '<button type="button" data-recorr-cancelar-edicao="' + id + '"' + (salvandoEdicao ? ' disabled' : '') + ' class="h-9 rounded-lg border border-slate-200 bg-white text-[10px] font-black uppercase text-slate-600 disabled:opacity-60">Cancelar</button>' +
@@ -12940,9 +12943,9 @@
           var editValorEl = document.getElementById('edit-recorr-valor-' + btn.dataset.recorrEditar);
           if (editValorEl) {
             editValorEl.addEventListener('input', function(ev) {
-              var v = formatarValorRecorrMobile(ev.target.value);
+              var v = formatarMoedaDigitada(ev.target.value);
               state.editRecorrValor = v;
-              state.editRecorrValorNumerico = v ? parseFloat(v.replace(/\./g,'').replace(',','.')) : 0;
+              state.editRecorrValorNumerico = normalizarValor(v);
               ev.target.value = v;
               var l = v.length; ev.target.setSelectionRange(l, l);
             });
@@ -14708,7 +14711,7 @@
           return Promise.all(
             keys
               .filter(function (key) {
-                return key.indexOf('avantalab-mobile-') === 0 && key !== 'avantalab-mobile-v295';
+                return key.indexOf('avantalab-mobile-') === 0 && key !== 'avantalab-mobile-v296';
               })
               .map(function (key) {
                 return caches.delete(key);

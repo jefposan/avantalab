@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.6.1.23 - 2026-07-27
+
+- Gestão Mobile: o campo **Valor** da edição de despesas fixas passa a seguir o
+  padrão monetário do sistema, com prefixo `R$`, duas casas decimais, alinhamento
+  à direita e teclado decimal.
+
 ## 1.6.1.22 - 2026-07-27
 
 - Gestão Mobile: o botão **Salvar** da edição de despesas fixas permanece
