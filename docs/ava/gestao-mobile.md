@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.6.1.12 -->
+<!-- ava-version: 1.6.1.13 -->
+
+> Revisão 1.6.1.13: reorganização do cadastro empresarial da Gestão Web; sem
+> impacto operacional na Gestão Mobile.
 
 > Revisão 1.6.1.12: ação explícita de pesquisa de CNPJ adicionada à etapa
 > obrigatória da Gestão Web; sem impacto operacional na Gestão Mobile.

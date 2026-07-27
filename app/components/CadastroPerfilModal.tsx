@@ -121,7 +121,7 @@ export default function CadastroPerfilModal({ aberto, empresaId, statusInicial, 
     ? `Informe um ${tipoDocumento} com ${limiteDocumento} dígitos.`
     : `${tipoDocumento} inválido. Confira os números informados.`;
   const nomeCompletoInvalido = Boolean(
-    nomeCompletoTocado && dados.nome_responsavel.trim() && !validarNomeCompleto(dados.nome_responsavel)
+    pessoal && nomeCompletoTocado && dados.nome_responsavel.trim() && !validarNomeCompleto(dados.nome_responsavel)
   );
   const set = <K extends keyof CadastroPerfil>(campo: K, valor: CadastroPerfil[K]) => setDados((atual) => ({ ...atual, [campo]: valor }));
   const input = 'h-9 w-full rounded-lg border border-slate-300 bg-white px-3 text-sm text-slate-800 outline-none focus:border-sky-600 focus:ring-2 focus:ring-sky-600/20 disabled:bg-slate-100 disabled:text-slate-400';
@@ -355,27 +355,49 @@ export default function CadastroPerfilModal({ aberto, empresaId, statusInicial, 
                   </div>
                 ) : (
                   <div className="grid gap-2">
-                    <div className="grid gap-2 sm:grid-cols-[minmax(0,1.8fr)_minmax(14rem,0.85fr)]">
-                      <label className={label}>Nome Fantasia<input className={input} value={dados.nome_fantasia} onChange={(e) => set('nome_fantasia', e.target.value)} /></label>
-                      <label className={label} htmlFor="cadastro-perfil-responsavel">
-                        Responsável — nome completo
+                    <div className={label}>
+                      <label htmlFor={documentoId}>{tipoDocumento}</label>
+                      <span className="flex min-w-0 gap-1.5">
                         <input
-                          id="cadastro-perfil-responsavel"
-                          className={`${input} ${nomeCompletoInvalido ? '!border-red-500 focus:!border-red-600 focus:!ring-red-500/20' : ''}`}
-                          value={dados.nome_responsavel}
-                          aria-invalid={nomeCompletoInvalido}
-                          aria-describedby={nomeCompletoInvalido ? 'cadastro-perfil-responsavel-erro' : undefined}
-                          onBlur={() => setNomeCompletoTocado(true)}
-                          onChange={(e) => set('nome_responsavel', e.target.value)}
+                          id={documentoId}
+                          className={`${input} min-w-0 flex-1 ${documentoInvalido ? '!border-red-500 focus:!border-red-600 focus:!ring-red-500/20' : ''}`}
+                          inputMode="numeric"
+                          autoComplete="off"
+                          placeholder={tipoDocumento === 'CPF' ? '000.000.000-00' : '00.000.000/0000-00'}
+                          value={formatarDocumentoFiscal(dados.documento, tipoDocumentoNormalizado)}
+                          aria-invalid={documentoInvalido || Boolean(consultaCnpjErro)}
+                          aria-describedby={[
+                            documentoInvalido ? 'cadastro-perfil-documento-erro' : '',
+                            consultaCnpjErro ? consultaCnpjErroId : '',
+                          ].filter(Boolean).join(' ') || undefined}
+                          onBlur={() => setDocumentoTocado(true)}
+                          onChange={(e) => {
+                            limparRetornoCnpj();
+                            set('documento', somenteDigitos(e.target.value, limiteDocumento));
+                          }}
+                          disabled={consultandoCnpj}
                         />
-                        {nomeCompletoInvalido && (
-                          <span id="cadastro-perfil-responsavel-erro" className="text-[10px] font-bold text-red-600" role="alert">
-                            Informe nome e sobrenome.
-                          </span>
+                        {tipoDocumento === 'CNPJ' && (
+                          <button
+                            type="button"
+                            onClick={consultarCnpj}
+                            disabled={consultandoCnpj || salvando}
+                            className="h-9 shrink-0 rounded-lg bg-sky-700 px-3 text-xs font-black text-white transition hover:bg-sky-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-600 focus-visible:ring-offset-2 disabled:cursor-wait disabled:opacity-60"
+                            aria-label="Buscar dados cadastrais pelo CNPJ"
+                          >
+                            {consultandoCnpj ? '...' : 'Buscar'}
+                          </button>
                         )}
-                      </label>
+                      </span>
+                      {documentoInvalido && (
+                        <span id="cadastro-perfil-documento-erro" className="text-[10px] font-bold text-red-600" role="alert">
+                          {mensagemDocumento}
+                        </span>
+                      )}
                     </div>
-                    <div className="grid gap-2 lg:grid-cols-[11rem_minmax(18rem,auto)_minmax(0,1fr)]">
+                    <div className="grid gap-2 lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1.2fr)_12rem]">
+                      <label className={label}>Razão Social<input className={input} value={dados.razao_social} onChange={(e) => set('razao_social', e.target.value)} /></label>
+                      <label className={label}>Nome Fantasia<input className={input} value={dados.nome_fantasia} onChange={(e) => set('nome_fantasia', e.target.value)} /></label>
                       <label className={label}>
                         Tipo de Empresa
                         <select
@@ -391,58 +413,6 @@ export default function CadastroPerfilModal({ aberto, empresaId, statusInicial, 
                           {TIPOS_EMPRESA.map(([v,n]) => <option key={v} value={v}>{n}</option>)}
                         </select>
                       </label>
-                      <div className={label}>
-                        <label htmlFor={documentoId}>{tipoDocumento}</label>
-                        <span className="flex min-w-0 flex-col gap-1.5 sm:flex-row">
-                          <input
-                            id={documentoId}
-                            className={`${input} ${documentoInvalido ? '!border-red-500 focus:!border-red-600 focus:!ring-red-500/20' : ''}`}
-                            inputMode="numeric"
-                            autoComplete="off"
-                            placeholder={tipoDocumento === 'CPF' ? '000.000.000-00' : '00.000.000/0000-00'}
-                            value={formatarDocumentoFiscal(dados.documento, tipoDocumentoNormalizado)}
-                            aria-invalid={documentoInvalido || Boolean(consultaCnpjErro)}
-                            aria-describedby={[
-                              documentoInvalido ? 'cadastro-perfil-documento-erro' : '',
-                              consultaCnpjErro ? consultaCnpjErroId : '',
-                            ].filter(Boolean).join(' ') || undefined}
-                            onBlur={() => setDocumentoTocado(true)}
-                            onChange={(e) => {
-                              limparRetornoCnpj();
-                              set('documento', somenteDigitos(e.target.value, limiteDocumento));
-                            }}
-                            disabled={consultandoCnpj}
-                          />
-                          {tipoDocumento === 'CNPJ' && contexto !== 'bloqueio' && (
-                            <button
-                              type="button"
-                              onClick={consultarCnpj}
-                              disabled={consultandoCnpj || salvando}
-                              className="min-h-11 w-full shrink-0 rounded-lg border border-sky-200 bg-sky-50 px-4 text-xs font-black text-sky-800 transition hover:bg-sky-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-600 disabled:cursor-wait disabled:opacity-60 sm:min-h-9 sm:w-auto"
-                              aria-label="Pesquisar dados cadastrais pelo CNPJ"
-                            >
-                              {consultandoCnpj ? 'Pesquisando…' : 'Pesquisar CNPJ'}
-                            </button>
-                          )}
-                        </span>
-                        {tipoDocumento === 'CNPJ' && contexto === 'bloqueio' && (
-                          <button
-                            type="button"
-                            onClick={consultarCnpj}
-                            disabled={consultandoCnpj || salvando}
-                            className="min-h-12 w-full rounded-lg bg-[#003E73] px-4 text-sm font-black text-white shadow-sm transition hover:brightness-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-600 focus-visible:ring-offset-2 disabled:cursor-wait disabled:opacity-60"
-                            aria-label="Pesquisar dados cadastrais pelo CNPJ e preencher o cadastro"
-                          >
-                            {consultandoCnpj ? 'Pesquisando CNPJ…' : 'Pesquisar CNPJ e preencher cadastro'}
-                          </button>
-                        )}
-                        {documentoInvalido && (
-                          <span id="cadastro-perfil-documento-erro" className="text-[10px] font-bold text-red-600" role="alert">
-                            {mensagemDocumento}
-                          </span>
-                        )}
-                      </div>
-                      <label className={label}>Razão Social<input className={input} value={dados.razao_social} onChange={(e) => set('razao_social', e.target.value)} /></label>
                     </div>
                   </div>
                 )}
@@ -533,12 +503,17 @@ export default function CadastroPerfilModal({ aberto, empresaId, statusInicial, 
 
               <div>
                 <h3 className="mb-2 border-b border-slate-200 pb-1 text-xs font-black uppercase text-sky-800">Contato</h3>
-                <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-                  <label className={label}>Telefone<input className={input} inputMode="tel" value={dados.telefone} onChange={(e) => set('telefone', e.target.value)} /></label>
-                  <label className={label}>WhatsApp<input className={input} inputMode="tel" value={dados.whatsapp} onChange={(e) => set('whatsapp', e.target.value)} /></label>
-                  <label className={label}>E-mail {pessoal ? '' : 'da empresa'}<input className={input} type="email" value={dados.email_empresa} onChange={(e) => set('email_empresa', e.target.value)} /></label>
-                  <label className={label}>Site (opcional)<input className={input} value={dados.site} onChange={(e) => set('site', e.target.value)} /></label>
-                  <label className={label}>Instagram (opcional)<input className={input} value={dados.instagram} onChange={(e) => set('instagram', e.target.value)} /></label>
+                <div className="grid gap-2">
+                  <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+                    <label className={label}>Telefone<input className={input} inputMode="tel" value={dados.telefone} onChange={(e) => set('telefone', e.target.value)} /></label>
+                    <label className={label}>WhatsApp<input className={input} inputMode="tel" value={dados.whatsapp} onChange={(e) => set('whatsapp', e.target.value)} /></label>
+                    <label className={label}>E-mail {pessoal ? '' : 'da empresa'}<input className={input} type="email" value={dados.email_empresa} onChange={(e) => set('email_empresa', e.target.value)} /></label>
+                  </div>
+                  <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+                    {!pessoal && <label className={label}>Responsável<input className={input} value={dados.nome_responsavel} onChange={(e) => set('nome_responsavel', e.target.value)} /></label>}
+                    <label className={label}>Site (opcional)<input className={input} value={dados.site} onChange={(e) => set('site', e.target.value)} /></label>
+                    <label className={label}>Instagram (opcional)<input className={input} value={dados.instagram} onChange={(e) => set('instagram', e.target.value)} /></label>
+                  </div>
                 </div>
               </div>
 

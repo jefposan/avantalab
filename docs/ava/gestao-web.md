@@ -1,6 +1,11 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.6.1.12 -->
+<!-- ava-version: 1.6.1.13 -->
+
+> Revisão 1.6.1.13: no cadastro empresarial, CNPJ e **Buscar** ficam lado a
+> lado; abaixo aparecem Razão Social, Nome Fantasia e Tipo de Empresa. O campo
+> Responsável fica em Contato, antes de Site e Instagram, e não exige nome
+> completo.
 
 > Revisão 1.6.1.12: na etapa obrigatória de cadastro empresarial, a ação
 > **Pesquisar CNPJ e preencher cadastro** aparece abaixo do documento e prepara

@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.6.1.13 - 2026-07-27
+
+- Cadastro empresarial reorganizado: a primeira linha apresenta CNPJ e
+  **Buscar** lado a lado no mobile e no web; a segunda reúne Razão Social, Nome
+  Fantasia e Tipo de Empresa.
+- Responsável sai de Dados Gerais e passa para Contato, antes de Site e
+  Instagram. Para empresas, o campo continua obrigatório, mas deixa de exigir
+  nome e sobrenome.
+
 ## 1.6.1.12 - 2026-07-27
 
 - Cadastro obrigatório: a pesquisa de CNPJ passa a ter uma ação primária
