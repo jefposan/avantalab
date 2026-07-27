@@ -3195,7 +3195,30 @@ async function confirmarRecursoVinculoComercial(empresaId, recurso, ativar, remo
 }
 
 function abrirNovoVinculoComercial() {
-  sheet(`<div class="sheet-header"><div><h2>Vincular outra empresa</h2><p class="muted small">Após aprovação, ela passa a ser sua empresa comercial ativa.</p></div><button class="close" onclick="fecharSheet()">×</button></div><div class="grid"><label>Código da empresa<input id="novoCodigoVinculo" autocomplete="off" autocapitalize="characters"></label><label>Digite o código novamente<input id="novoCodigoVinculoConfirma" autocomplete="off" autocapitalize="characters"></label><label>Nome para a solicitação<input id="novoVinculoNome" value="${escapeHtml(state.usuario?.nome || '')}"></label><button class="primary" onclick="solicitarNovoVinculoComercial()">Enviar para aprovação</button></div>`, 'sheet-backdrop-centered');
+  sheet(`
+    <div class="sheet-header">
+      <div>
+        <h2>Vincular outra empresa</h2>
+        <p class="muted small">Após aprovação, ela passa a ser sua empresa comercial ativa.</p>
+      </div>
+      <button class="close" aria-label="Fechar" onclick="fecharSheet()">×</button>
+    </div>
+    <div class="grid commercial-link-request-form">
+      <div class="field">
+        <label for="novoCodigoVinculo">Código da empresa</label>
+        <input id="novoCodigoVinculo" autocomplete="off" autocapitalize="none" spellcheck="false" placeholder="AVA-XXXXXXXX">
+      </div>
+      <div class="field">
+        <label for="novoCodigoVinculoConfirma">Digite o código novamente</label>
+        <input id="novoCodigoVinculoConfirma" autocomplete="off" autocapitalize="none" spellcheck="false" placeholder="Repita o código da empresa">
+      </div>
+      <div class="field">
+        <label for="novoVinculoNome">Nome para a solicitação</label>
+        <input id="novoVinculoNome" autocomplete="name" value="${escapeAttr(state.usuario?.nome || '')}">
+      </div>
+      <button class="primary" onclick="solicitarNovoVinculoComercial()">Enviar para aprovação</button>
+    </div>
+  `, 'sheet-backdrop-centered commercial-link-request-backdrop');
 }
 
 async function solicitarNovoVinculoComercial() {

@@ -453,6 +453,52 @@ body.sheet-open {
   resize: vertical;
 }
 
+.commercial-link-request-form {
+  gap: 14px;
+}
+
+.commercial-link-request-form .field {
+  gap: 6px;
+}
+
+.commercial-link-request-form .field label {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.commercial-link-request-form .field input {
+  min-height: 48px;
+  border-color: #c8d7e3;
+  padding: 10px 12px;
+  background: var(--card);
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.commercial-link-request-form .field input:focus-visible {
+  border-color: #1687D9;
+  outline: 0;
+  box-shadow: 0 0 0 3px rgba(22, 135, 217, 0.2);
+}
+
+.dark-theme .commercial-link-request-form .field label {
+  color: #cbd5e1;
+}
+
+.dark-theme .commercial-link-request-form .field input {
+  border-color: #64748b;
+  color: #f8fafc;
+  background: #0f172a;
+}
+
+.dark-theme .commercial-link-request-form .field input:focus-visible {
+  border-color: #67e8f9;
+  box-shadow: 0 0 0 3px rgba(103, 232, 249, 0.2);
+}
+
 .primary,
 .secondary,
 .danger,

@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.6.0.84.127 -->
+<!-- ava-version: 1.6.0.84.144 -->
+
+> Revisão 1.6.0.84.144: formatação dos campos de vínculo comercial no Vendas
+> Mobile; sem impacto operacional na Gestão Web.
 
 > Revisão 1.6.0.84.127: linhas parcialmente preenchidas no modelo Excel
 > permanecem visíveis na revisão. Data, tipo e valor são obrigatórios,

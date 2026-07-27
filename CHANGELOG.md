@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.6.0.84.144 - 2026-07-26
+
+- Vendas Mobile: os campos de `Vincular outra empresa` passam a ocupar a largura
+  disponível e recebem labels, contorno, raio, espaçamento e foco visível nos
+  temas claro e escuro.
+
 ## 1.6.0.84.127 - 2026-07-25
 
 - Importação de despesas: linhas parcialmente preenchidas no modelo Excel

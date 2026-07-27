@@ -1,6 +1,9 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.6.0.84.127 -->
+<!-- ava-version: 1.6.0.84.144 -->
+
+> Revisão 1.6.0.84.144: em Configurações > Empresas e conteúdos > Vincular
+> outra empresa, os campos ficam formatados e legíveis nos temas claro e escuro.
 
 > Revisão 1.6.0.84.127: validação de linhas incompletas no importador da Gestão
 > Web; sem impacto operacional no AvantaVendas.
