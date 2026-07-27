@@ -1217,12 +1217,14 @@ export async function buscarUsuariosEmpresa(empresaId: string) {
 export async function criarUsuarioEmpresa({
   empresaId,
   nome,
+  email,
   login,
   senha,
   perfil,
 }: {
   empresaId: string;
   nome: string;
+  email: string;
   login: string;
   senha: string;
   perfil: 'administrador' | 'operador_completo' | 'operador_simples';
@@ -1248,6 +1250,7 @@ export async function criarUsuarioEmpresa({
     body: JSON.stringify({
       empresaId,
       nome,
+      email,
       login,
       senha,
       perfil,

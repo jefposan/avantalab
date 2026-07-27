@@ -1,5 +1,16 @@
 # Changelog
 
+## 1.6.1.16 - 2026-07-27
+
+- Gestão Web e Mobile: a criação de usuários passa a exigir nome completo,
+  e-mail real, login, senha inicial e tipo de usuário.
+- A edição usa os mesmos dados obrigatórios; somente a nova senha permanece
+  opcional.
+- O usuário criado pode entrar com o e-mail ou com o login. E-mails já
+  cadastrados são direcionados ao fluxo **Adicionar usuário existente**.
+- Nome, e-mail, login e tipo permanecem no rascunho temporário do formulário;
+  senhas continuam apenas em memória e nunca são armazenadas no navegador.
+
 ## 1.6.1.15 - 2026-07-27
 
 - Gestão Mobile: o cadastro empresarial passa a exibir CNPJ e **Buscar** na

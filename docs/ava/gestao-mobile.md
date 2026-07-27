@@ -1,6 +1,11 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.6.1.15 -->
+<!-- ava-version: 1.6.1.16 -->
+
+> Revisão 1.6.1.16: em Usuários, criar e editar exigem nome completo, e-mail
+> real, login e tipo de usuário. A senha é obrigatória somente na criação. O
+> acesso aceita e-mail ou login; uma conta existente deve ser vinculada pelo
+> fluxo próprio.
 
 > Revisão 1.6.1.15: no cadastro empresarial mobile, CNPJ e **Buscar** ficam
 > lado a lado. A consulta preenche campos compatíveis ainda vazios, preserva os
@@ -335,6 +340,10 @@ deve usar os nomes do menu e da barra inferior do celular.
 - Em **Configurações**, os controles com chave aparecem primeiro.
   **Gerenciar perfil**, **Usuários** e **Editar dados cadastrais** aparecem em
   sequência.
+- Em **Usuários**, criar exige Nome completo, E-mail, Login, Senha inicial e
+  Tipo de usuário. Na edição, nome, e-mail, login e tipo continuam obrigatórios,
+  mas a nova senha é opcional. E-mail e login acessam a mesma conta; se o e-mail
+  já existir, use **Adicionar usuário existente**.
 - Em **Editar dados cadastrais** e na conclusão obrigatória de um perfil Empresa,
   o CNPJ fica ao lado de **Buscar**. A consulta cadastral preenche somente os
   campos compatíveis que estiverem vazios e informa quantos dados existentes

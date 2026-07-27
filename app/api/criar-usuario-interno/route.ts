@@ -3,6 +3,7 @@ import { createClient } from '@supabase/supabase-js';
 import { COBRANCA_ATIVA, podeUsar } from '../../lib/cobranca';
 import { resolverEstadoAcessoParaUsuario } from '../../lib/cobranca-servidor';
 import { validarNomeCompleto } from '../../lib/nome-pessoa';
+import { normalizarEmail, validarEmail } from '../../lib/email';
 
 type PerfilUsuario =
   | 'administrador'
@@ -66,6 +67,7 @@ export async function POST(request: Request) {
 
     const empresaId = String(corpo.empresaId || '').trim();
     const nome = String(corpo.nome || '').trim();
+    const email = normalizarEmail(corpo.email);
     const loginOriginal = String(corpo.login || '').trim();
     const senha = String(corpo.senha || '');
     const perfil = String(corpo.perfil || '') as PerfilUsuario;
@@ -78,6 +80,10 @@ export async function POST(request: Request) {
 
     if (!validarNomeCompleto(nome)) {
       return respostaErro('Informe o nome completo do usuário, com nome e sobrenome.');
+    }
+
+    if (!validarEmail(email)) {
+      return respostaErro('Informe um e-mail válido para o usuário.');
     }
 
     if (!login) {
@@ -142,15 +148,32 @@ export async function POST(request: Request) {
       );
     }
 
-    const emailInterno = `${login}+${empresaId}@usuarios.avantalab.local`;
+    const { data: emailExistente, error: erroEmailExistente } = await supabaseAdmin
+      .from('usuarios_empresa')
+      .select('id, empresa_id')
+      .ilike('email', email)
+      .limit(1)
+      .maybeSingle();
+
+    if (erroEmailExistente) {
+      console.error('Erro ao verificar e-mail:', erroEmailExistente);
+      return respostaErro('Não foi possível verificar o e-mail informado.', 500);
+    }
+
+    if (emailExistente) {
+      return respostaErro(
+        'Este e-mail já pertence a uma conta. Use “Adicionar usuário existente” para vinculá-la a este perfil.'
+      );
+    }
 
     const { data: usuarioCriado, error: erroCriarAuth } =
       await supabaseAdmin.auth.admin.createUser({
-        email: emailInterno,
+        email,
         password: senha,
         email_confirm: true,
         user_metadata: {
           nome,
+          email,
           login,
           empresa_id: empresaId,
           tipo: 'usuario_interno',
@@ -160,7 +183,7 @@ export async function POST(request: Request) {
     if (erroCriarAuth || !usuarioCriado.user) {
   console.error('Erro ao criar usuário interno no Auth:', erroCriarAuth);
 
-  const mensagemOriginal = erroCriarAuth?.message || '';
+  const mensagemOriginal = String(erroCriarAuth?.message || '').toLowerCase();
 
   if (
     mensagemOriginal.includes('already been registered') ||
@@ -168,7 +191,7 @@ export async function POST(request: Request) {
     mensagemOriginal.includes('email address has already')
   ) {
     return respostaErro(
-      'Este login já foi criado anteriormente. Exclua o usuário antigo completamente ou escolha outro login.',
+      'Este e-mail já pertence a uma conta. Entre com ela na Gestão para concluir o cadastro antes de vinculá-la a outro perfil.',
       400
     );
   }
@@ -185,7 +208,7 @@ export async function POST(request: Request) {
         empresa_id: empresaId,
         user_id: usuarioCriado.user.id,
         nome,
-        email: emailInterno,
+        email,
         login,
         perfil,
         status: 'ativo',
