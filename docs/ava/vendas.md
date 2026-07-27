@@ -1,6 +1,10 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.6.1.06 -->
+<!-- ava-version: 1.6.1.07 -->
+
+> Revisão 1.6.1.07: ao ampliar uma imagem ou vídeo da Divulgação, arraste para
+> a esquerda para abrir o próximo arquivo ou para a direita para voltar ao
+> anterior. As setas laterais oferecem a mesma navegação.
 
 > Revisão 1.6.1.06: o visualizador da Gestão passou a navegar entre materiais
 > por gesto horizontal e setas; sem mudança operacional no AvantaVendas.
@@ -417,7 +421,9 @@ função existir ali.
   Divulgação, desde que o módulo Vendas Mobile esteja ativo no perfil.
   Operador Completo não instala módulos nem administra acessos de usuários.
 - Novidades vêm da empresa comercial vinculada. Divulgação navega por
-  pastas/subpastas e abre fotos/vídeos para visualização e compartilhamento.
+  pastas/subpastas e abre fotos/vídeos para visualização e compartilhamento;
+  no visualizador ampliado, arrastar horizontalmente ou usar as setas alterna
+  entre o arquivo anterior e o próximo da pasta.
 - Configurações reúne conta, celular/SMS, senha, aparência, metas, catálogo,
   estoque, vínculos comerciais, destino financeiro, PWA, backup e reset.
 - Aparência, atalhos inferiores, ordem da sala, alerta de aniversário, meta

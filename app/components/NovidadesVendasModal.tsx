@@ -85,6 +85,19 @@ function contarMateriaisNaArvore(pastaId: string, pastas: Pasta[], materiais: Ma
   return materiais.filter((material) => pastasIncluidas.has(material.pasta_id)).length;
 }
 
+function pastaDescendeDaSelecionada(pastaId: string, pastaSelecionadaId: string | null, pastas: Pasta[]) {
+  if (!pastaSelecionadaId || pastaId === pastaSelecionadaId) return false;
+  const pastasPorId = new Map(pastas.map((pasta) => [pasta.id, pasta]));
+  const visitadas = new Set<string>();
+  let pastaAtual = pastasPorId.get(pastaId);
+  while (pastaAtual?.pasta_pai_id && !visitadas.has(pastaAtual.id)) {
+    if (pastaAtual.pasta_pai_id === pastaSelecionadaId) return true;
+    visitadas.add(pastaAtual.id);
+    pastaAtual = pastasPorId.get(pastaAtual.pasta_pai_id);
+  }
+  return false;
+}
+
 function Icone({ tipo, className = 'h-5 w-5' }: { tipo: string; className?: string }) {
   const props = { className, fill: 'none', stroke: 'currentColor', viewBox: '0 0 24 24', strokeWidth: 2, strokeLinecap: 'round' as const, strokeLinejoin: 'round' as const };
   if (tipo === 'folder') return <svg {...props}><path d="M3 7a2 2 0 0 1 2-2h5l2 2h7a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z" /></svg>;
@@ -594,7 +607,13 @@ export default function NovidadesVendasModal({ aberto, empresaId, nomeEmpresa, d
             {listaPastasVisiveis.map(({ pasta, nivel, temFilhos, expandida }) => {
               const totalMateriais = contarMateriaisNaArvore(pasta.id, pastas, materiais);
               const totalSubpastas = pastas.filter((item) => item.pasta_pai_id === pasta.id).length;
-              return <div key={pasta.id} style={{ marginLeft: `${Math.min(nivel, 4) * 12}px` }} className={`flex flex-wrap items-center gap-1.5 rounded-lg border p-2 ${pastaAtiva === pasta.id ? 'border-cyan-500 bg-cyan-500/10' : darkMode ? 'border-slate-700' : 'border-slate-200'}`}><button type="button" onClick={() => selecionarPasta(pasta, temFilhos)} aria-expanded={temFilhos ? expandida : undefined} className="flex min-w-0 flex-1 items-center gap-2 text-left"><Icone tipo="folder" className="h-5 w-5 shrink-0 text-amber-500" /><span className="min-w-0 flex-1"><b className="block truncate text-xs">{pasta.nome}</b><small className={`block text-[9px] ${suave}`}>{totalMateriais} {totalMateriais === 1 ? 'material' : 'materiais'} · {totalSubpastas} {totalSubpastas === 1 ? 'subpasta' : 'subpastas'}</small></span>{temFilhos && <span className={`shrink-0 text-base transition-transform ${expandida ? 'rotate-90' : ''}`} aria-hidden="true">›</span>}</button><button type="button" onClick={() => iniciarEdicaoPasta(pasta)} aria-label={`Editar nome da pasta ${pasta.nome}`} title="Editar nome" className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-cyan-600 hover:bg-cyan-500/10"><Icone tipo="edit" className="h-3.5 w-3.5" /></button><button type="button" onClick={() => setExclusaoPendente({ tipo: 'pasta', item: pasta })} aria-label={`Excluir pasta ${pasta.nome}`} title="Excluir pasta" className="h-8 w-8 shrink-0 rounded-md text-red-500 hover:bg-red-500/10">×</button>{pastaAtiva === pasta.id && <button type="button" onClick={() => inputArquivos.current?.click()} disabled={salvando} className="mt-1 flex h-12 basis-full items-center justify-center gap-2 rounded-lg text-xs font-black uppercase text-white disabled:opacity-60 lg:hidden" style={{ backgroundColor: corPrimaria }}><Icone tipo="upload" className="h-4 w-4" />{salvando ? 'Enviando...' : 'Enviar arquivos para esta pasta'}</button>}</div>;
+              const subpastaDoRamoAtivo = pastaDescendeDaSelecionada(pasta.id, pastaAtiva, pastas);
+              const destaquePasta = pastaAtiva === pasta.id
+                ? 'border-cyan-500 bg-cyan-500/10'
+                : subpastaDoRamoAtivo
+                  ? 'border-cyan-400/70 bg-cyan-500/5 ring-1 ring-inset ring-cyan-500/15'
+                  : darkMode ? 'border-slate-700' : 'border-slate-200';
+              return <div key={pasta.id} style={{ marginLeft: `${Math.min(nivel, 4) * 12}px` }} className={`flex flex-wrap items-center gap-1.5 rounded-lg border p-2 ${destaquePasta}`}><button type="button" onClick={() => selecionarPasta(pasta, temFilhos)} aria-expanded={temFilhos ? expandida : undefined} className="flex min-w-0 flex-1 items-center gap-2 text-left"><Icone tipo="folder" className={`h-5 w-5 shrink-0 ${pastaAtiva === pasta.id || subpastaDoRamoAtivo ? 'text-cyan-500' : 'text-amber-500'}`} /><span className="min-w-0 flex-1"><b className="block truncate text-xs">{pasta.nome}</b><small className={`block text-[9px] ${suave}`}>{totalMateriais} {totalMateriais === 1 ? 'material' : 'materiais'} · {totalSubpastas} {totalSubpastas === 1 ? 'subpasta' : 'subpastas'}</small></span>{temFilhos && <span className={`shrink-0 text-base transition-transform ${expandida ? 'rotate-90' : ''}`} aria-hidden="true">›</span>}</button><button type="button" onClick={() => iniciarEdicaoPasta(pasta)} aria-label={`Editar nome da pasta ${pasta.nome}`} title="Editar nome" className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-cyan-600 hover:bg-cyan-500/10"><Icone tipo="edit" className="h-3.5 w-3.5" /></button><button type="button" onClick={() => setExclusaoPendente({ tipo: 'pasta', item: pasta })} aria-label={`Excluir pasta ${pasta.nome}`} title="Excluir pasta" className="h-8 w-8 shrink-0 rounded-md text-red-500 hover:bg-red-500/10">×</button>{pastaAtiva === pasta.id && <button type="button" onClick={() => inputArquivos.current?.click()} disabled={salvando} className="mt-1 flex h-12 basis-full items-center justify-center gap-2 rounded-lg text-xs font-black uppercase text-white disabled:opacity-60 lg:hidden" style={{ backgroundColor: corPrimaria }}><Icone tipo="upload" className="h-4 w-4" />{salvando ? 'Enviando...' : 'Enviar arquivos para esta pasta'}</button>}</div>;
             })}
             {!listaPastasVisiveis.length && <p className={`py-3 text-center text-xs ${suave}`}>Nenhuma pasta criada.</p>}
           </div>

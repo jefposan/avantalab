@@ -1,6 +1,11 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.6.1.06 -->
+<!-- ava-version: 1.6.1.07 -->
+
+> Revisão 1.6.1.07: as subpastas pertencentes à pasta selecionada em Conteúdo
+> do Vendas > Divulgação recebem o mesmo destaque em intensidade menor,
+> facilitando a identificação do ramo ativo. O AvantaVendas também passa a
+> navegar entre arquivos por gesto horizontal.
 
 > Revisão 1.6.1.06: no visualizador da Divulgação, arraste para a esquerda para
 > abrir o próximo material e para a direita para voltar ao anterior. Setas

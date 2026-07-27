@@ -6,8 +6,8 @@ export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
  * Cada guia é enviado apenas no ambiente correspondente, evitando misturar
  * caminhos e funções de Web, Mobile e Vendas na mesma resposta.
  */
-// Revisado na versão 1.6.1.06: o visualizador da Divulgação navega entre
-// materiais por gesto horizontal ou setas.
+// Revisado na versão 1.6.1.07: o AvantaVendas navega entre materiais por gesto
+// horizontal ou setas, e a árvore da Gestão destaca o ramo selecionado.
 const GUIAS: Record<AmbienteAva, string> = {
   'gestao-web': `GUIA OPERACIONAL — AVANTALAB GESTÃO WEB
 Você atende no sistema Gestão Web. Oriente por nomes visíveis na interface; não invente telas.
@@ -69,7 +69,7 @@ NAVEGAÇÃO E PERFIS
 - Em perfil sem o módulo Vendas, Ir para Vendas continua ativo para Gestor Master ou Administrador. Ao tocar, a Gestão confirma diretamente a instalação salva no perfil; somente quando ela realmente não existe, solicita a ativação. Depois de ativado, não pergunta novamente enquanto o módulo permanecer instalado. Perfil pessoal gratuito precisa do Premium. Operadores veem o botão inativo e não podem ativar nem trocar de sistema.
 - No perfil Pessoal gratuito, os recursos Premium aparecem sem cor e, ao toque, mostram Acesso exclusivo para assinantes com Ir para assinatura. A contratação aparece primeiro; Veja os recursos adicionais abre a lista completa. Agenda e Ir para Vendas exigem Premium ou cortesia vigente.
 - Se o Premium Pessoal deixar de estar vigente, o Vendas fica inacessível sem ser desinstalado: módulo, vínculos e dados permanecem preservados. A receita consolidada do Vendas deixa de compor a Gestão durante o bloqueio e retorna, com o mesmo histórico, após a reativação.
-- Conteúdo do Vendas aparece somente em perfil Empresa com módulo ativo e permissão de Gestor Master, Administrador ou Operador Completo. Em Divulgação, ao selecionar uma pasta, Enviar arquivos para esta pasta permite escolher fotos ou vídeos diretamente no aparelho. Ao confirmar a seleção, o card Preparando arquivos para envio aparece antes do processamento e mantém percentual, arquivo atual e cancelamento até terminar. Tocar na miniatura abre a imagem ou o vídeo original em um visualizador amplo; arrastar horizontalmente ou usar as setas alterna entre os materiais da pasta. A quantidade exibida em cada pasta soma os materiais próprios e os de todas as subpastas. Após o envio, o resumo mostra somente as quantidades enviadas e ignoradas por duplicidade, sem listar nomes.
+- Conteúdo do Vendas aparece somente em perfil Empresa com módulo ativo e permissão de Gestor Master, Administrador ou Operador Completo. Em Divulgação, ao selecionar uma pasta, suas subpastas recebem uma variação do mesmo destaque para evidenciar o ramo ativo, e Enviar arquivos para esta pasta permite escolher fotos ou vídeos diretamente no aparelho. Ao confirmar a seleção, o card Preparando arquivos para envio aparece antes do processamento e mantém percentual, arquivo atual e cancelamento até terminar. Tocar na miniatura abre a imagem ou o vídeo original em um visualizador amplo; arrastar horizontalmente ou usar as setas alterna entre os materiais da pasta. A quantidade exibida em cada pasta soma os materiais próprios e os de todas as subpastas. Após o envio, o resumo mostra somente as quantidades enviadas e ignoradas por duplicidade, sem listar nomes.
 - A tela que oferece Gestão e Vendas aparece somente na entrada após o login. Depois que um sistema foi aberto, a navegação exibe apenas o outro destino.
 - Cada usuário possui uma única conta operacional no Vendas. Ativações em diferentes perfis da Gestão apenas autorizam a troca de sistema e nunca criam contas ou perfis adicionais no Vendas. Ao vir do Vendas, a Gestão sempre apresenta a lista de perfis, ainda que exista apenas um. Sem perfil financeiro, oferece criar ou ativar um ou continuar no Vendas; o novo perfil nunca é vinculado automaticamente aos resultados.
 - O dashboard pode organizar ordem e visibilidade dos cards em Menu > Organizar resumo/Organizar dashboard.
@@ -156,7 +156,7 @@ CATÁLOGO, PEDIDOS E PAGAMENTOS
 AGENDA, CONTEÚDO E CONFIGURAÇÕES
 - Agenda cria lembretes de visita, entrega e recebimento; pode expandir a visualização e mover a data de um item.
 - Gestor Master, Administrador e Operador Completo podem publicar, editar ou excluir novidades, pastas, subpastas, imagens e vídeos da Divulgação quando o módulo estiver ativo. Operador Completo não instala módulos nem aprova acessos.
-- Novidades são publicações da empresa vinculada. Divulgação navega por pastas/subpastas e abre fotos/vídeos para visualizar e compartilhar.
+- Novidades são publicações da empresa vinculada. Divulgação navega por pastas/subpastas e abre fotos/vídeos para visualizar e compartilhar; no visualizador ampliado, arrastar horizontalmente ou usar as setas alterna entre o arquivo anterior e o próximo da pasta.
 - Em Configurações há dados da conta, celular com validação SMS, senha AvantaLab, aparência, metas, catálogo, estoque, vínculos comerciais, destino financeiro, PWA, backup e reset. Resetar gera backup e apaga os dados locais do Vendas após confirmação.
 - Aparência, atalhos inferiores, ordem da sala, alerta de aniversário, meta mensal e período de clientes inativos acompanham a conta pelo servidor. Na primeira abertura após a atualização, as preferências válidas deste aparelho são migradas automaticamente; a cópia local permanece apenas como contingência offline.
 - O vínculo comercial (notícias, divulgação e catálogo) pode ser diferente do destino financeiro pessoal (receitas no Gestão). A integração gera uma receita consolidada por mês e a atualiza no acesso. Não confunda os dois.

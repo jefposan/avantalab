@@ -223,6 +223,9 @@ let feedbackVendasEnviando = false;
 let feedbackVendasEnviado = false;
 let produtoImagemUploadPendente = null;
 let divulgacaoPastaAtualId = null;
+let divulgacaoMaterialAtualId = null;
+let gestoMaterialDivulgacao = null;
+let ignorarCliqueMaterialDivulgacaoAte = 0;
 let navegacaoInferiorBloqueadaAte = 0;
 let estoqueProdutoAtualId = '';
 let estoqueMovimentosAtuais = [];
@@ -3084,16 +3087,82 @@ function voltarPastaDivulgacao(pastaId = '') {
   rolarConteudoPrincipalVendas(0, 'smooth');
 }
 
-function abrirMaterialDivulgacao(materialId) {
-  const material = (state.divulgacaoMateriais || []).find((item) => item.id === materialId);
-  if (!material) return;
-  const visualizacao = material.tipo === 'video'
-    ? `<video src="${escapeAttr(material.arquivo_url)}" controls playsinline preload="metadata"></video>`
-    : `<img src="${escapeAttr(material.arquivo_url)}" alt="${escapeAttr(material.titulo)}">`;
-  sheet(`<div class="sheet-header"><div><h2>${escapeHtml(material.titulo)}</h2><p class="muted small">Toque na mídia para ampliar.</p></div><button class="close" onclick="fecharSheet()">×</button></div><button type="button" class="material-preview" onclick="alternarMaterialExpandido()" aria-label="Ampliar material">${visualizacao}</button><button type="button" class="primary material-share" onclick="compartilharMaterialDivulgacao('${material.id}')">${svgIcon('save')} Compartilhar material</button>`, 'sheet-backdrop-centered material-preview-backdrop');
+function listarMateriaisVisiveisDivulgacao() {
+  const pesquisa = normalizar(buscaAplicada);
+  const ordenarTexto = (a, b) => ordemAlfabetica === 'asc'
+    ? String(a.titulo || '').localeCompare(String(b.titulo || ''), 'pt-BR', { sensitivity: 'base' })
+    : String(b.titulo || '').localeCompare(String(a.titulo || ''), 'pt-BR', { sensitivity: 'base' });
+  return (state.divulgacaoMateriais || [])
+    .filter((material) => material.pasta_id === divulgacaoPastaAtualId)
+    .filter((material) => !pesquisa || normalizar(material.titulo).includes(pesquisa))
+    .sort(ordenarTexto);
 }
 
-function alternarMaterialExpandido() {
+function conteudoVisualizadorMaterialDivulgacao(materialId) {
+  const materiais = listarMateriaisVisiveisDivulgacao();
+  const indice = materiais.findIndex((item) => item.id === materialId);
+  if (indice < 0) return '';
+  const material = materiais[indice];
+  const anterior = materiais[indice - 1] || null;
+  const proximo = materiais[indice + 1] || null;
+  const visualizacao = material.tipo === 'video'
+    ? `<video src="${escapeAttr(material.arquivo_url)}" controls playsinline preload="metadata"></video>`
+    : `<img src="${escapeAttr(material.arquivo_url)}" alt="${escapeAttr(material.titulo)}" draggable="false">`;
+  return `<div class="sheet-header"><div><h2>${escapeHtml(material.titulo)}</h2><p class="muted small">${material.tipo === 'video' ? 'Vídeo' : 'Imagem'} · ${indice + 1} de ${materiais.length} · toque para ampliar</p></div><button type="button" class="close" onclick="fecharSheet()" aria-label="Fechar visualização">×</button></div><div class="material-preview-stage" onpointerdown="iniciarGestoMaterialDivulgacao(event)" onpointerup="concluirGestoMaterialDivulgacao(event)" onpointercancel="cancelarGestoMaterialDivulgacao(event)">${anterior ? `<button type="button" class="material-preview-nav material-preview-nav-prev" onclick="navegarMaterialDivulgacao(-1)" aria-label="Visualizar material anterior">‹</button>` : ''}<button type="button" class="material-preview" onclick="alternarMaterialExpandido(event)" aria-label="Ampliar material">${visualizacao}</button>${proximo ? `<button type="button" class="material-preview-nav material-preview-nav-next" onclick="navegarMaterialDivulgacao(1)" aria-label="Visualizar próximo material">›</button>` : ''}</div><button type="button" class="primary material-share" onclick="compartilharMaterialDivulgacao('${material.id}')">${svgIcon('save')} Compartilhar material</button>`;
+}
+
+function abrirMaterialDivulgacao(materialId) {
+  const conteudo = conteudoVisualizadorMaterialDivulgacao(materialId);
+  if (!conteudo) return;
+  divulgacaoMaterialAtualId = materialId;
+  sheet(conteudo, 'sheet-backdrop-centered material-preview-backdrop');
+}
+
+function navegarMaterialDivulgacao(direcao) {
+  const materiais = listarMateriaisVisiveisDivulgacao();
+  const indiceAtual = materiais.findIndex((item) => item.id === divulgacaoMaterialAtualId);
+  const destino = materiais[indiceAtual + direcao];
+  if (!destino) return;
+  const conteudo = conteudoVisualizadorMaterialDivulgacao(destino.id);
+  const painel = document.querySelector('#sheetBackdrop.material-preview-backdrop .sheet');
+  if (!conteudo || !painel) return;
+  divulgacaoMaterialAtualId = destino.id;
+  painel.innerHTML = conteudo;
+}
+
+function iniciarGestoMaterialDivulgacao(evento) {
+  if (!evento.isPrimary || (evento.pointerType === 'mouse' && evento.button !== 0)) return;
+  const video = evento.target instanceof Element ? evento.target.closest('video') : null;
+  if (video) {
+    const limites = video.getBoundingClientRect();
+    if (evento.clientY >= limites.bottom - 64) return;
+  }
+  gestoMaterialDivulgacao = { x: evento.clientX, y: evento.clientY, pointerId: evento.pointerId };
+  evento.currentTarget?.setPointerCapture?.(evento.pointerId);
+}
+
+function concluirGestoMaterialDivulgacao(evento) {
+  const inicio = gestoMaterialDivulgacao;
+  gestoMaterialDivulgacao = null;
+  if (!inicio || inicio.pointerId !== evento.pointerId) return;
+  const deslocamentoX = evento.clientX - inicio.x;
+  const deslocamentoY = evento.clientY - inicio.y;
+  if (Math.abs(deslocamentoX) < 56 || Math.abs(deslocamentoX) <= Math.abs(deslocamentoY)) return;
+  ignorarCliqueMaterialDivulgacaoAte = Date.now() + 350;
+  navegarMaterialDivulgacao(deslocamentoX < 0 ? 1 : -1);
+}
+
+function cancelarGestoMaterialDivulgacao(evento) {
+  if (!gestoMaterialDivulgacao || gestoMaterialDivulgacao.pointerId === evento.pointerId) {
+    gestoMaterialDivulgacao = null;
+  }
+}
+
+function alternarMaterialExpandido(evento = null) {
+  if (Date.now() < ignorarCliqueMaterialDivulgacaoAte) {
+    evento?.preventDefault?.();
+    return;
+  }
   document.getElementById('sheetBackdrop')?.classList.toggle('material-expanded');
 }
 
@@ -6812,6 +6881,10 @@ window.novaSugestaoVendas = novaSugestaoVendas;
 window.abrirPastaDivulgacao = abrirPastaDivulgacao;
 window.voltarPastaDivulgacao = voltarPastaDivulgacao;
 window.abrirMaterialDivulgacao = abrirMaterialDivulgacao;
+window.navegarMaterialDivulgacao = navegarMaterialDivulgacao;
+window.iniciarGestoMaterialDivulgacao = iniciarGestoMaterialDivulgacao;
+window.concluirGestoMaterialDivulgacao = concluirGestoMaterialDivulgacao;
+window.cancelarGestoMaterialDivulgacao = cancelarGestoMaterialDivulgacao;
 window.alternarMaterialExpandido = alternarMaterialExpandido;
 window.compartilharMaterialDivulgacao = compartilharMaterialDivulgacao;
 

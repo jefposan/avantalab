@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.6.1.07 - 2026-07-27
+
+- AvantaVendas: o visualizador de Divulgação agora permite avançar ou voltar
+  entre os arquivos da pasta por gesto horizontal ou pelos botões laterais.
+- Conteúdo do Vendas: as subpastas descendentes da pasta selecionada recebem
+  uma variação do mesmo destaque visual para evidenciar o ramo ativo.
+
 ## 1.6.1.06 - 2026-07-27
 
 - Visualizador da Divulgação: arrastar horizontalmente alterna entre o material

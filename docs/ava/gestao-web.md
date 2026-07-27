@@ -1,6 +1,10 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.6.1.06 -->
+<!-- ava-version: 1.6.1.07 -->
+
+> Revisão 1.6.1.07: as subpastas descendentes da pasta selecionada em Conteúdo
+> do Vendas > Divulgação recebem uma variação do mesmo destaque visual para
+> manter o ramo ativo identificável.
 
 > Revisão 1.6.1.06: no visualizador da Divulgação, arrastar horizontalmente ou
 > usar as setas laterais alterna entre o material anterior e o próximo da pasta.
