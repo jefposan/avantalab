@@ -9,6 +9,7 @@ import {
   soDigitos,
   usuarioDaRequisicao,
   validarGestor,
+  validarNomeCompleto,
 } from '../_lib';
 
 export const runtime = 'nodejs';
@@ -28,7 +29,7 @@ export async function POST(request: Request) {
     const emailContato = String(corpo.email ?? '').trim().toLowerCase();
     const ativo = corpo.ativo !== false;
     if (!empresaId || !colaboradorUserId) return respostaErro('Empresa ou colaborador não informado.');
-    if (!nome) return respostaErro('Informe o nome do colaborador.');
+    if (!validarNomeCompleto(nome)) return respostaErro('Informe o nome completo do colaborador, com nome e sobrenome.');
     if (!cpfValido(cpf)) return respostaErro('Informe um CPF válido.');
     if (!celular) return respostaErro('Informe o celular do colaborador.');
     if (!/^\S+@\S+\.\S+$/.test(emailContato)) return respostaErro('Informe um e-mail de contato válido.');

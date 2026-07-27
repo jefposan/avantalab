@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { type PointerEvent as ReactPointerEvent, useEffect, useRef, useState } from 'react';
 import { supabase } from '../lib/supabase';
 import CatalogoProdutosVendas from './CatalogoProdutosVendas';
 import ModalConfirmacao from './ModalConfirmacao';
@@ -10,7 +10,8 @@ type Pasta = { id: string; pasta_pai_id: string | null; nome: string; descricao:
 type Material = {
   id: string; pasta_id: string; titulo: string; tipo: 'imagem' | 'video'; arquivo_path: string;
   arquivo_url: string; miniatura_path: string | null; miniatura_url: string | null;
-  miniatura_status: 'nao_aplicavel' | 'pendente' | 'processando' | 'pronta' | 'erro'; criado_em: string;
+  miniatura_status: 'nao_aplicavel' | 'pendente' | 'processando' | 'pronta' | 'erro';
+  arquivo_hash: string | null; tamanho_bytes: number | null; criado_em: string;
 };
 type Props = { aberto: boolean; empresaId: string | null; nomeEmpresa: string; darkMode: boolean; corPrimaria: string; onFechar: () => void };
 type ExclusaoPendente =
@@ -28,6 +29,26 @@ function nomeSeguro(nome: string) { return nome.normalize('NFD').replace(/[\u030
 function formatarNomePasta(nome: string) {
   const normalizado = nome.toLocaleLowerCase('pt-BR');
   return normalizado ? `${normalizado.charAt(0).toLocaleUpperCase('pt-BR')}${normalizado.slice(1)}` : '';
+}
+async function calcularHashSha256(arquivo: Blob) {
+  if (!globalThis.crypto?.subtle) {
+    throw new Error('Este navegador não oferece a verificação segura de arquivos duplicados.');
+  }
+  const resumo = await globalThis.crypto.subtle.digest('SHA-256', await arquivo.arrayBuffer());
+  return Array.from(new Uint8Array(resumo), (byte) => byte.toString(16).padStart(2, '0')).join('');
+}
+function erroDeArquivoDuplicado(erro: unknown) {
+  return Boolean(erro && typeof erro === 'object' && 'code' in erro && erro.code === '23505');
+}
+function resumirNomesArquivos(nomes: string[]) {
+  const limite = 3;
+  const visiveis = nomes.slice(0, limite).join(', ');
+  return nomes.length > limite ? `${visiveis} e mais ${nomes.length - limite}` : visiveis;
+}
+function aguardarPinturaDaInterface() {
+  return new Promise<void>((resolve) => {
+    requestAnimationFrame(() => requestAnimationFrame(() => resolve()));
+  });
 }
 function pastasEmArvore(pastas: Pasta[], pai: string | null = null, nivel = 0): Array<{ pasta: Pasta; nivel: number }> {
   return pastas
@@ -48,6 +69,33 @@ function pastasVisiveis(pastas: Pasta[], expandidas: Set<string>, pai: string | 
         ...(expandida ? pastasVisiveis(pastas, expandidas, pasta.id, nivel + 1) : []),
       ];
     });
+}
+
+function contarMateriaisNaArvore(pastaId: string, pastas: Pasta[], materiais: Material[]) {
+  const pastasIncluidas = new Set([pastaId]);
+  const pendentes = [pastaId];
+  while (pendentes.length) {
+    const pastaAtual = pendentes.pop();
+    pastas.forEach((pasta) => {
+      if (pasta.pasta_pai_id !== pastaAtual || pastasIncluidas.has(pasta.id)) return;
+      pastasIncluidas.add(pasta.id);
+      pendentes.push(pasta.id);
+    });
+  }
+  return materiais.filter((material) => pastasIncluidas.has(material.pasta_id)).length;
+}
+
+function pastaDescendeDaSelecionada(pastaId: string, pastaSelecionadaId: string | null, pastas: Pasta[]) {
+  if (!pastaSelecionadaId || pastaId === pastaSelecionadaId) return false;
+  const pastasPorId = new Map(pastas.map((pasta) => [pasta.id, pasta]));
+  const visitadas = new Set<string>();
+  let pastaAtual = pastasPorId.get(pastaId);
+  while (pastaAtual?.pasta_pai_id && !visitadas.has(pastaAtual.id)) {
+    if (pastaAtual.pasta_pai_id === pastaSelecionadaId) return true;
+    visitadas.add(pastaAtual.id);
+    pastaAtual = pastasPorId.get(pastaAtual.pasta_pai_id);
+  }
+  return false;
 }
 
 function Icone({ tipo, className = 'h-5 w-5' }: { tipo: string; className?: string }) {
@@ -117,11 +165,14 @@ export default function NovidadesVendasModal({ aberto, empresaId, nomeEmpresa, d
   const [criacaoPastaAberta, setCriacaoPastaAberta] = useState(false);
   const [pastasExpandidas, setPastasExpandidas] = useState<Set<string>>(new Set());
   const [carregando, setCarregando] = useState(false); const [salvando, setSalvando] = useState(false); const [erro, setErro] = useState('');
+  const [resultadoEnvio, setResultadoEnvio] = useState<{ tipo: 'sucesso' | 'aviso'; mensagem: string } | null>(null);
   const [exclusaoPendente, setExclusaoPendente] = useState<ExclusaoPendente | null>(null);
+  const [materialEmVisualizacao, setMaterialEmVisualizacao] = useState<Material | null>(null);
   const [excluindo, setExcluindo] = useState(false);
   const [envioAtivo, setEnvioAtivo] = useState<{ nome: string; atual: number; total: number; progresso: number; etapa: string; cancelando: boolean } | null>(null);
   const inputArquivos = useRef<HTMLInputElement>(null);
   const controladorEnvio = useRef<AbortController | null>(null);
+  const gestoVisualizacao = useRef<{ x: number; y: number; pointerId: number } | null>(null);
 
   const carregar = async () => {
     if (!empresaId) return;
@@ -129,7 +180,7 @@ export default function NovidadesVendasModal({ aberto, empresaId, nomeEmpresa, d
     const [novidadesRes, pastasRes, materiaisRes] = await Promise.all([
       supabase.from('vendas_mobile_conteudos').select('id, tipo, titulo, descricao, criado_em').eq('empresa_id', empresaId).eq('pagina', 'novidades').order('criado_em', { ascending: false }),
       supabase.from('vendas_mobile_divulgacao_pastas').select('id, pasta_pai_id, nome, descricao, criado_em').eq('empresa_id', empresaId).eq('ativo', true).order('ordem').order('criado_em', { ascending: false }),
-      supabase.from('vendas_mobile_divulgacao_materiais').select('id, pasta_id, titulo, tipo, arquivo_path, arquivo_url, miniatura_path, miniatura_url, miniatura_status, criado_em').eq('empresa_id', empresaId).eq('ativo', true).order('ordem').order('criado_em', { ascending: false }),
+      supabase.from('vendas_mobile_divulgacao_materiais').select('id, pasta_id, titulo, tipo, arquivo_path, arquivo_url, miniatura_path, miniatura_url, miniatura_status, arquivo_hash, tamanho_bytes, criado_em').eq('empresa_id', empresaId).eq('ativo', true).order('ordem').order('criado_em', { ascending: false }),
     ]);
     setCarregando(false);
     if (novidadesRes.error) setErro('Não foi possível carregar as novidades.'); else setNovidades((novidadesRes.data || []) as Novidade[]);
@@ -144,8 +195,19 @@ export default function NovidadesVendasModal({ aberto, empresaId, nomeEmpresa, d
     setPastaEmEdicao(null);
     setPastaPaiNova('');
     setPastasExpandidas(new Set());
+    setResultadoEnvio(null);
+    setMaterialEmVisualizacao(null);
     void carregar();
   }, [aberto, empresaId]);
+
+  useEffect(() => {
+    if (!materialEmVisualizacao) return;
+    const fecharComEsc = (evento: KeyboardEvent) => {
+      if (evento.key === 'Escape') setMaterialEmVisualizacao(null);
+    };
+    window.addEventListener('keydown', fecharComEsc);
+    return () => window.removeEventListener('keydown', fecharComEsc);
+  }, [materialEmVisualizacao]);
 
   useEffect(() => {
     if (!aberto || !empresaId) return;
@@ -198,18 +260,109 @@ export default function NovidadesVendasModal({ aberto, empresaId, nomeEmpresa, d
     const controlador = new AbortController();
     const registrosCriados: Material[] = [];
     const caminhosCriados: string[] = [];
+    const duplicados: string[] = [];
+    const falhas: string[] = [];
     const totalBytes = listaArquivos.reduce((soma, arquivo) => soma + arquivo.size, 0);
     let bytesConcluidos = 0;
+    let enviados = 0;
     controladorEnvio.current = controlador;
-    setSalvando(true); setErro('');
-    setEnvioAtivo({ nome: listaArquivos[0].name, atual: 1, total: listaArquivos.length, progresso: 0, etapa: 'Enviando arquivo', cancelando: false });
+    setSalvando(true); setErro(''); setResultadoEnvio(null);
+    setEnvioAtivo({ nome: listaArquivos[0].name, atual: 1, total: listaArquivos.length, progresso: 1, etapa: 'Preparando arquivos para envio', cancelando: false });
     try {
+      await aguardarPinturaDaInterface();
+      if (controlador.signal.aborted) throw new DOMException('Envio cancelado.', 'AbortError');
+      setEnvioAtivo((atual) => atual ? { ...atual, progresso: 2, etapa: 'Verificando duplicidade' } : null);
+      const { data: existentesData, error: erroExistentes } = await supabase
+        .from('vendas_mobile_divulgacao_materiais')
+        .select('id, pasta_id, titulo, tipo, arquivo_path, arquivo_url, miniatura_path, miniatura_url, miniatura_status, arquivo_hash, tamanho_bytes, criado_em')
+        .eq('empresa_id', empresaId)
+        .eq('ativo', true)
+        .abortSignal(controlador.signal);
+      if (erroExistentes) throw new Error('Não foi possível verificar os arquivos já publicados.');
+
+      const existentes = (existentesData || []) as Material[];
+      const materiaisPorHash = new Map(
+        existentes
+          .filter((item) => item.arquivo_hash)
+          .map((item) => [item.arquivo_hash as string, item]),
+      );
+      const materiaisSemHashPorTamanho = new Map<number, Material[]>();
+      existentes.forEach((item) => {
+        if (item.arquivo_hash || item.tamanho_bytes == null) return;
+        const tamanho = Number(item.tamanho_bytes);
+        materiaisSemHashPorTamanho.set(tamanho, [...(materiaisSemHashPorTamanho.get(tamanho) || []), item]);
+      });
+
       for (const [indice, file] of listaArquivos.entries()) {
         if (controlador.signal.aborted) throw new DOMException('Envio cancelado.', 'AbortError');
-        const progressoInicial = totalBytes ? bytesConcluidos / totalBytes * 100 : 0;
-        setEnvioAtivo({ nome: file.name, atual: indice + 1, total: listaArquivos.length, progresso: progressoInicial, etapa: 'Enviando arquivo', cancelando: false });
+        const progressoInicial = Math.max(2, totalBytes ? bytesConcluidos / totalBytes * 100 : 0);
+        setEnvioAtivo({ nome: file.name, atual: indice + 1, total: listaArquivos.length, progresso: progressoInicial, etapa: 'Verificando duplicidade', cancelando: false });
         const tipoMaterial = file.type.startsWith('video/') ? 'video' : file.type.startsWith('image/') ? 'imagem' : null;
-        if (!tipoMaterial) throw new Error(`${file.name}: formato não aceito.`);
+        if (!tipoMaterial) {
+          falhas.push(`${file.name}: formato não aceito`);
+          bytesConcluidos += file.size;
+          continue;
+        }
+
+        let arquivoHash = '';
+        try {
+          arquivoHash = await calcularHashSha256(file);
+        } catch (e) {
+          if (controlador.signal.aborted) throw e;
+          falhas.push(`${file.name}: não foi possível verificar o conteúdo`);
+          bytesConcluidos += file.size;
+          continue;
+        }
+
+        let materialDuplicado = materiaisPorHash.get(arquivoHash) || null;
+        const candidatosAntigos = materiaisSemHashPorTamanho.get(file.size) || [];
+        let verificacaoAntigaFalhou = false;
+        while (!materialDuplicado && candidatosAntigos.length) {
+          if (controlador.signal.aborted) throw new DOMException('Envio cancelado.', 'AbortError');
+          const candidato = candidatosAntigos.shift() as Material;
+          try {
+            const resposta = await fetch(candidato.arquivo_url, { signal: controlador.signal, cache: 'force-cache' });
+            if (!resposta.ok) throw new Error('Não foi possível ler um material já publicado.');
+            const hashExistente = await calcularHashSha256(await resposta.blob());
+            candidato.arquivo_hash = hashExistente;
+            materiaisPorHash.set(hashExistente, candidato);
+            const { error: erroAtualizacaoHash } = await supabase
+              .from('vendas_mobile_divulgacao_materiais')
+              .update({ arquivo_hash: hashExistente })
+              .eq('id', candidato.id)
+              .eq('empresa_id', empresaId)
+              .is('arquivo_hash', null)
+              .abortSignal(controlador.signal);
+            if (erroAtualizacaoHash && !erroDeArquivoDuplicado(erroAtualizacaoHash)) {
+              throw erroAtualizacaoHash;
+            }
+            if (hashExistente === arquivoHash) materialDuplicado = candidato;
+          } catch (e) {
+            if (controlador.signal.aborted) throw e;
+            candidatosAntigos.unshift(candidato);
+            verificacaoAntigaFalhou = true;
+            break;
+          }
+        }
+        materiaisSemHashPorTamanho.set(file.size, candidatosAntigos);
+
+        if (!materialDuplicado && verificacaoAntigaFalhou) {
+          falhas.push(`${file.name}: não foi possível comparar com um material antigo`);
+          bytesConcluidos += file.size;
+          continue;
+        }
+
+        if (materialDuplicado) {
+          duplicados.push(file.name);
+          bytesConcluidos += file.size;
+          setEnvioAtivo((atual) => atual ? {
+            ...atual,
+            progresso: totalBytes ? bytesConcluidos / totalBytes * 100 : 100,
+            etapa: 'Duplicado ignorado',
+          } : null);
+          continue;
+        }
+
         const chave = `${Date.now()}-${crypto.randomUUID?.() || Math.random().toString(36).slice(2)}`;
         const caminho = `${empresaId}/${pastaAtiva}/${chave}-${nomeSeguro(file.name)}`;
         const caminhosDesteMaterial = [caminho];
@@ -226,18 +379,45 @@ export default function NovidadesVendasModal({ aberto, empresaId, nomeEmpresa, d
             await supabase.storage.from(BUCKET).remove([caminho]);
             caminhosCriados.splice(caminhosCriados.indexOf(caminho), 1);
           }
-          throw e;
+          if (controlador.signal.aborted) throw e;
+          falhas.push(`${file.name}: ${e instanceof Error ? e.message : 'falha no envio'}`);
+          bytesConcluidos += file.size;
+          continue;
         }
         const arquivoUrl = supabase.storage.from(BUCKET).getPublicUrl(caminho).data.publicUrl;
         const miniaturaPath: string | null = null;
         const miniaturaUrl: string | null = tipoMaterial === 'imagem' ? arquivoUrl : null;
         const tituloMaterial = file.name.replace(/\.[^.]+$/, '').replace(/[-_]+/g, ' ');
-        const { data, error } = await supabase.from('vendas_mobile_divulgacao_materiais').insert({ empresa_id: empresaId, pasta_id: pastaAtiva, titulo: tituloMaterial, tipo: tipoMaterial, arquivo_path: caminho, arquivo_url: arquivoUrl, miniatura_path: miniaturaPath, miniatura_url: miniaturaUrl, mime_type: file.type, tamanho_bytes: file.size }).select('id, pasta_id, titulo, tipo, arquivo_path, arquivo_url, miniatura_path, miniatura_url, miniatura_status, criado_em').abortSignal(controlador.signal).single();
-        if (error || !data) { await supabase.storage.from(BUCKET).remove(caminhosDesteMaterial); throw error || new Error('Falha ao registrar material.'); }
+        const { data, error } = await supabase.from('vendas_mobile_divulgacao_materiais').insert({ empresa_id: empresaId, pasta_id: pastaAtiva, titulo: tituloMaterial, tipo: tipoMaterial, arquivo_path: caminho, arquivo_url: arquivoUrl, miniatura_path: miniaturaPath, miniatura_url: miniaturaUrl, mime_type: file.type, tamanho_bytes: file.size, arquivo_hash: arquivoHash }).select('id, pasta_id, titulo, tipo, arquivo_path, arquivo_url, miniatura_path, miniatura_url, miniatura_status, arquivo_hash, tamanho_bytes, criado_em').abortSignal(controlador.signal).single();
+        if (error || !data) {
+          await supabase.storage.from(BUCKET).remove(caminhosDesteMaterial);
+          caminhosCriados.splice(caminhosCriados.indexOf(caminho), 1);
+          bytesConcluidos += file.size;
+          if (erroDeArquivoDuplicado(error)) {
+            duplicados.push(file.name);
+            continue;
+          }
+          falhas.push(`${file.name}: falha ao registrar material`);
+          continue;
+        }
         registrosCriados.push(data as Material);
         setMateriais((atuais) => [data as Material, ...atuais]);
+        materiaisPorHash.set(arquivoHash, data as Material);
+        enviados += 1;
         bytesConcluidos += file.size;
         setEnvioAtivo((atual) => atual ? { ...atual, progresso: totalBytes ? bytesConcluidos / totalBytes * 100 : 100, etapa: tipoMaterial === 'video' ? 'Vídeo enviado · preparando capa' : 'Material concluído' } : null);
+      }
+      const partes: string[] = [];
+      if (enviados) partes.push(`${enviados} ${enviados === 1 ? 'arquivo enviado' : 'arquivos enviados'}`);
+      if (duplicados.length) partes.push(`${duplicados.length} ${duplicados.length === 1 ? 'duplicado ignorado' : 'duplicados ignorados'}`);
+      if (partes.length) {
+        setResultadoEnvio({
+          tipo: duplicados.length || falhas.length ? 'aviso' : 'sucesso',
+          mensagem: `${partes.join(' · ')}.`,
+        });
+      }
+      if (falhas.length) {
+        setErro(`${falhas.length} ${falhas.length === 1 ? 'arquivo não foi enviado' : 'arquivos não foram enviados'}: ${resumirNomesArquivos(falhas)}.`);
       }
     } catch (e) {
       if (controlador.signal.aborted) {
@@ -318,6 +498,31 @@ export default function NovidadesVendasModal({ aberto, empresaId, nomeEmpresa, d
 
   const fundo = darkMode ? 'border-slate-700 bg-slate-900 text-slate-100' : 'border-slate-200 bg-white text-slate-900'; const campo = darkMode ? 'border-slate-600 bg-slate-950 text-white' : 'border-slate-300 bg-white text-slate-900'; const suave = darkMode ? 'text-slate-400' : 'text-slate-500';
   const materiaisAtivos = materiais.filter((item) => item.pasta_id === pastaAtiva);
+  const indiceMaterialVisualizado = materialEmVisualizacao ? materiaisAtivos.findIndex((item) => item.id === materialEmVisualizacao.id) : -1;
+  const materialAnterior = indiceMaterialVisualizado > 0 ? materiaisAtivos[indiceMaterialVisualizado - 1] : null;
+  const proximoMaterial = indiceMaterialVisualizado >= 0 && indiceMaterialVisualizado < materiaisAtivos.length - 1 ? materiaisAtivos[indiceMaterialVisualizado + 1] : null;
+  const navegarMaterial = (direcao: -1 | 1) => {
+    const destino = direcao === -1 ? materialAnterior : proximoMaterial;
+    if (destino) setMaterialEmVisualizacao(destino);
+  };
+  const iniciarGestoVisualizacao = (evento: ReactPointerEvent<HTMLDivElement>) => {
+    if (!evento.isPrimary || (evento.pointerType === 'mouse' && evento.button !== 0)) return;
+    const video = (evento.target as HTMLElement).closest('video');
+    if (video) {
+      const limites = video.getBoundingClientRect();
+      if (evento.clientY >= limites.bottom - 64) return;
+    }
+    gestoVisualizacao.current = { x: evento.clientX, y: evento.clientY, pointerId: evento.pointerId };
+  };
+  const concluirGestoVisualizacao = (evento: ReactPointerEvent<HTMLDivElement>) => {
+    const inicio = gestoVisualizacao.current;
+    gestoVisualizacao.current = null;
+    if (!inicio || inicio.pointerId !== evento.pointerId) return;
+    const deslocamentoX = evento.clientX - inicio.x;
+    const deslocamentoY = evento.clientY - inicio.y;
+    if (Math.abs(deslocamentoX) < 56 || Math.abs(deslocamentoX) <= Math.abs(deslocamentoY)) return;
+    navegarMaterial(deslocamentoX < 0 ? 1 : -1);
+  };
   const pastasOrdenadas = pastasEmArvore(pastas);
   const listaPastasVisiveis = pastasVisiveis(pastas, pastasExpandidas);
   const alternarCriacaoPasta = () => {
@@ -348,6 +553,21 @@ export default function NovidadesVendasModal({ aberto, empresaId, nomeEmpresa, d
       : '';
 
   return <div className="fixed inset-0 z-[6000] flex items-center justify-center bg-black/65 px-3 py-5" onClick={onFechar}>
+    {materialEmVisualizacao && <div className="fixed inset-0 z-[6100] flex items-center justify-center bg-slate-950/95 sm:p-5" onClick={(e) => { e.stopPropagation(); setMaterialEmVisualizacao(null); }} role="dialog" aria-modal="true" aria-label={`Visualização de ${materialEmVisualizacao.titulo}`}>
+      <section className="flex h-full w-full max-w-5xl flex-col overflow-hidden bg-slate-950 text-white sm:max-h-[92dvh] sm:rounded-2xl sm:border sm:border-white/15 sm:shadow-2xl" onClick={(e) => e.stopPropagation()}>
+        <header className="flex min-h-14 shrink-0 items-center justify-between gap-3 border-b border-white/15 px-4 py-2">
+          <div className="min-w-0"><p className="text-[9px] font-black uppercase tracking-[.18em] text-cyan-400">{materialEmVisualizacao.tipo === 'video' ? 'Vídeo' : 'Imagem'}{indiceMaterialVisualizado >= 0 && materiaisAtivos.length > 1 ? ` · ${indiceMaterialVisualizado + 1} de ${materiaisAtivos.length}` : ''}</p><h3 className="truncate text-sm font-black sm:text-base">{materialEmVisualizacao.titulo}</h3></div>
+          <button type="button" autoFocus onClick={() => setMaterialEmVisualizacao(null)} aria-label="Fechar visualização" className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-white/10 text-2xl font-bold text-white hover:bg-white/20 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-400">×</button>
+        </header>
+        <div className="relative flex min-h-0 flex-1 touch-pan-y select-none items-center justify-center overflow-auto p-2 sm:p-4" onPointerDown={iniciarGestoVisualizacao} onPointerUp={concluirGestoVisualizacao} onPointerCancel={() => { gestoVisualizacao.current = null; }}>
+          {materialAnterior && <button type="button" onClick={() => navegarMaterial(-1)} aria-label="Visualizar material anterior" className="absolute left-2 top-1/2 z-10 flex h-12 w-12 -translate-y-1/2 items-center justify-center rounded-full bg-black/55 text-3xl text-white shadow-lg backdrop-blur-sm hover:bg-black/75 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-400 sm:left-4">‹</button>}
+          {materialEmVisualizacao.tipo === 'video'
+            ? <video src={materialEmVisualizacao.arquivo_url} controls playsInline preload="metadata" className="max-h-full max-w-full rounded-lg object-contain" />
+            : <img src={materialEmVisualizacao.arquivo_url} alt={materialEmVisualizacao.titulo} draggable={false} className="max-h-full max-w-full rounded-lg object-contain" />}
+          {proximoMaterial && <button type="button" onClick={() => navegarMaterial(1)} aria-label="Visualizar próximo material" className="absolute right-2 top-1/2 z-10 flex h-12 w-12 -translate-y-1/2 items-center justify-center rounded-full bg-black/55 text-3xl text-white shadow-lg backdrop-blur-sm hover:bg-black/75 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-400 sm:right-4">›</button>}
+        </div>
+      </section>
+    </div>}
     {envioAtivo && <div className="fixed inset-0 z-[6200] flex items-center justify-center bg-slate-950/80 p-5 backdrop-blur-sm" onClick={(e) => e.stopPropagation()} role="alert" aria-live="assertive">
       <section className={`w-full max-w-sm overflow-hidden rounded-3xl border text-center shadow-2xl ${darkMode ? 'border-slate-600 bg-slate-900 text-white' : 'border-white/80 bg-white text-slate-900'}`}>
         <div className="p-6">
@@ -369,6 +589,7 @@ export default function NovidadesVendasModal({ aberto, empresaId, nomeEmpresa, d
       <header className="flex shrink-0 items-center justify-between gap-3 px-4 py-2.5 text-white" style={{ background: `linear-gradient(135deg, ${corPrimaria}, #1687D9)` }}><div className="min-w-0"><p className="text-[8px] font-black uppercase tracking-[.18em] text-white/70">Vendas Mobile</p><h2 className="mt-0.5 whitespace-nowrap text-base font-black leading-tight">Conteúdo para a equipe</h2><p className="mt-0.5 truncate whitespace-nowrap text-[10px] leading-tight text-white/80">Novidades e divulgação de {nomeEmpresa || 'este perfil'}.</p></div><button type="button" onClick={onFechar} className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white/15 text-base font-black hover:bg-white/25">×</button></header>
       <nav className={`grid shrink-0 grid-cols-3 border-b ${darkMode ? 'border-slate-700' : 'border-slate-200'}`}><button type="button" onClick={() => setAba('novidades')} className={`h-9 text-[10px] font-black uppercase ${aba === 'novidades' ? 'text-white' : suave}`} style={aba === 'novidades' ? { backgroundColor: corPrimaria } : undefined}>Novidades</button><button type="button" onClick={() => setAba('divulgacao')} className={`h-9 text-[10px] font-black uppercase ${aba === 'divulgacao' ? 'text-white' : suave}`} style={aba === 'divulgacao' ? { backgroundColor: corPrimaria } : undefined}>Divulgação</button><button type="button" onClick={() => setAba('produtos')} className={`h-9 text-[10px] font-black uppercase ${aba === 'produtos' ? 'text-white' : suave}`} style={aba === 'produtos' ? { backgroundColor: corPrimaria } : undefined}>Produtos</button></nav>
       {erro && <p className="mx-4 mt-3 rounded-lg border border-red-300 bg-red-50 px-3 py-2 text-xs font-bold text-red-700">{erro}</p>}
+      {resultadoEnvio && <p role="status" aria-live="polite" className={`mx-4 mt-3 rounded-lg border px-3 py-2 text-xs font-bold ${resultadoEnvio.tipo === 'sucesso' ? 'border-emerald-300 bg-emerald-50 text-emerald-800' : 'border-amber-300 bg-amber-50 text-amber-800'}`}>{resultadoEnvio.mensagem}</p>}
       {aba === 'novidades' ? <div className="grid min-h-0 flex-1 gap-4 overflow-y-auto p-4 lg:grid-cols-[minmax(0,.85fr)_minmax(0,1.15fr)]">
         <div className={`self-start rounded-xl border p-4 ${darkMode ? 'border-slate-700 bg-slate-800' : 'border-slate-200 bg-slate-50'}`}><h3 className="text-base font-black">Nova publicação</h3><p className={`mt-1 text-xs ${suave}`}>Aparece somente para vendedores vinculados a este perfil.</p><label className="mt-4 block text-[10px] font-black uppercase opacity-60">Tipo</label><select value={tipo} onChange={(e) => setTipo(e.target.value)} className={`mt-1 h-10 w-full rounded-lg border px-3 text-sm font-bold ${campo}`}>{TIPOS.map(([v, n]) => <option key={v} value={v}>{n}</option>)}</select><label className="mt-3 block text-[10px] font-black uppercase opacity-60">Título</label><input value={titulo} onChange={(e) => setTitulo(e.target.value)} className={`mt-1 h-10 w-full rounded-lg border px-3 text-sm font-bold ${campo}`} /><label className="mt-3 block text-[10px] font-black uppercase opacity-60">Descrição</label><textarea value={descricao} onChange={(e) => setDescricao(e.target.value)} rows={5} className={`mt-1 w-full rounded-lg border p-3 text-sm ${campo}`} /><button type="button" onClick={() => void publicar()} disabled={salvando} className="mt-3 h-11 w-full rounded-xl text-xs font-black uppercase text-white disabled:opacity-60" style={{ backgroundColor: corPrimaria }}>{salvando ? 'Publicando...' : 'Publicar novidade'}</button></div>
         <div><h3 className="text-base font-black">Histórico</h3><p className={`text-xs ${suave}`}>Publicações mais recentes primeiro.</p><div className="mt-3 grid gap-2">{carregando ? <p className="py-8 text-center text-sm opacity-60">Carregando...</p> : novidades.length ? novidades.map((item) => <article key={item.id} className={`rounded-xl border p-3 ${darkMode ? 'border-slate-700 bg-slate-800' : 'border-slate-200'}`}><div className="flex gap-3"><span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-white" style={{ backgroundColor: corPrimaria }}><Icone tipo={item.tipo} className="h-4 w-4" /></span><div className="min-w-0 flex-1"><div className="flex justify-between gap-2"><div><span className="text-[8px] font-black uppercase" style={{ color: corPrimaria }}>{rotuloTipo(item.tipo)}</span><h4 className="text-sm font-black">{item.titulo}</h4></div><button type="button" onClick={() => setExclusaoPendente({ tipo: 'novidade', item })} className="h-8 w-8 shrink-0 rounded-lg border border-red-300 text-red-600">×</button></div><p className={`mt-1 whitespace-pre-wrap text-xs ${suave}`}>{item.descricao}</p></div></div></article>) : <p className="py-8 text-center text-sm opacity-60">Nenhuma novidade publicada.</p>}</div></div>
@@ -383,11 +604,21 @@ export default function NovidadesVendasModal({ aberto, empresaId, nomeEmpresa, d
             <button type="button" onClick={() => void (pastaEmEdicao ? salvarNomeDaPasta() : criarPasta())} disabled={salvando} className="mt-2 h-9 w-full rounded-lg text-[11px] font-black uppercase text-white disabled:opacity-60" style={{ backgroundColor: corPrimaria }}>{pastaEmEdicao ? 'Salvar nome' : `Criar ${pastaPaiNova ? 'subpasta' : 'pasta'}`}</button>
           </div>}
           <div className="mt-3 grid gap-2 lg:min-h-0 lg:flex-1 lg:overflow-y-auto lg:pr-1">
-            {listaPastasVisiveis.map(({ pasta, nivel, temFilhos, expandida }) => <div key={pasta.id} style={{ marginLeft: `${Math.min(nivel, 4) * 12}px` }} className={`flex items-center gap-1.5 rounded-lg border p-2 ${pastaAtiva === pasta.id ? 'border-cyan-500 bg-cyan-500/10' : darkMode ? 'border-slate-700' : 'border-slate-200'}`}><button type="button" onClick={() => selecionarPasta(pasta, temFilhos)} aria-expanded={temFilhos ? expandida : undefined} className="flex min-w-0 flex-1 items-center gap-2 text-left"><Icone tipo="folder" className="h-5 w-5 shrink-0 text-amber-500" /><span className="min-w-0 flex-1"><b className="block truncate text-xs">{pasta.nome}</b><small className={`block text-[9px] ${suave}`}>{materiais.filter((i) => i.pasta_id === pasta.id).length} materiais · {pastas.filter((i) => i.pasta_pai_id === pasta.id).length} subpastas</small></span>{temFilhos && <span className={`shrink-0 text-base transition-transform ${expandida ? 'rotate-90' : ''}`} aria-hidden="true">›</span>}</button><button type="button" onClick={() => iniciarEdicaoPasta(pasta)} aria-label={`Editar nome da pasta ${pasta.nome}`} title="Editar nome" className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-cyan-600 hover:bg-cyan-500/10"><Icone tipo="edit" className="h-3.5 w-3.5" /></button><button type="button" onClick={() => setExclusaoPendente({ tipo: 'pasta', item: pasta })} aria-label={`Excluir pasta ${pasta.nome}`} title="Excluir pasta" className="h-8 w-8 shrink-0 rounded-md text-red-500 hover:bg-red-500/10">×</button></div>)}
+            {listaPastasVisiveis.map(({ pasta, nivel, temFilhos, expandida }) => {
+              const totalMateriais = contarMateriaisNaArvore(pasta.id, pastas, materiais);
+              const totalSubpastas = pastas.filter((item) => item.pasta_pai_id === pasta.id).length;
+              const subpastaDoRamoAtivo = pastaDescendeDaSelecionada(pasta.id, pastaAtiva, pastas);
+              const destaquePasta = pastaAtiva === pasta.id
+                ? 'border-cyan-500 bg-cyan-500/10'
+                : subpastaDoRamoAtivo
+                  ? 'border-cyan-400/70 bg-cyan-500/5 ring-1 ring-inset ring-cyan-500/15'
+                  : darkMode ? 'border-slate-700' : 'border-slate-200';
+              return <div key={pasta.id} style={{ marginLeft: `${Math.min(nivel, 4) * 12}px` }} className={`flex flex-wrap items-center gap-1.5 rounded-lg border p-2 ${destaquePasta}`}><button type="button" onClick={() => selecionarPasta(pasta, temFilhos)} aria-expanded={temFilhos ? expandida : undefined} className="flex min-w-0 flex-1 items-center gap-2 text-left"><Icone tipo="folder" className={`h-5 w-5 shrink-0 ${pastaAtiva === pasta.id || subpastaDoRamoAtivo ? 'text-cyan-500' : 'text-amber-500'}`} /><span className="min-w-0 flex-1"><b className="block truncate text-xs">{pasta.nome}</b><small className={`block text-[9px] ${suave}`}>{totalMateriais} {totalMateriais === 1 ? 'material' : 'materiais'} · {totalSubpastas} {totalSubpastas === 1 ? 'subpasta' : 'subpastas'}</small></span>{temFilhos && <span className={`shrink-0 text-base transition-transform ${expandida ? 'rotate-90' : ''}`} aria-hidden="true">›</span>}</button><button type="button" onClick={() => iniciarEdicaoPasta(pasta)} aria-label={`Editar nome da pasta ${pasta.nome}`} title="Editar nome" className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-cyan-600 hover:bg-cyan-500/10"><Icone tipo="edit" className="h-3.5 w-3.5" /></button><button type="button" onClick={() => setExclusaoPendente({ tipo: 'pasta', item: pasta })} aria-label={`Excluir pasta ${pasta.nome}`} title="Excluir pasta" className="h-8 w-8 shrink-0 rounded-md text-red-500 hover:bg-red-500/10">×</button>{pastaAtiva === pasta.id && <button type="button" onClick={() => inputArquivos.current?.click()} disabled={salvando} className="mt-1 flex h-12 basis-full items-center justify-center gap-2 rounded-lg text-xs font-black uppercase text-white disabled:opacity-60 lg:hidden" style={{ backgroundColor: corPrimaria }}><Icone tipo="upload" className="h-4 w-4" />{salvando ? 'Enviando...' : 'Enviar arquivos para esta pasta'}</button>}</div>;
+            })}
             {!listaPastasVisiveis.length && <p className={`py-3 text-center text-xs ${suave}`}>Nenhuma pasta criada.</p>}
           </div>
         </aside>
-        <section className="min-w-0 lg:min-h-0 lg:overflow-y-auto lg:pr-1"><div className="flex items-start justify-between gap-3"><div><h3 className="text-base font-black">{pastas.find((p) => p.id === pastaAtiva)?.nome || 'Materiais de divulgação'}</h3><p className={`text-xs ${suave}`}>{pastaAtiva ? 'Envie fotos ou vídeos para esta pasta.' : 'Selecione ou crie uma pasta para começar.'}</p></div>{pastaAtiva && <><input ref={inputArquivos} type="file" accept="image/jpeg,image/png,image/webp,image/gif,video/mp4,video/webm,video/quicktime" multiple className="hidden" onChange={(e) => void enviarArquivos(e.target.files)} /><button type="button" onClick={() => inputArquivos.current?.click()} disabled={salvando} className="flex h-10 shrink-0 items-center gap-2 rounded-lg px-3 text-xs font-black text-white disabled:opacity-60" style={{ backgroundColor: corPrimaria }}><Icone tipo="upload" className="h-4 w-4" />{salvando ? 'Enviando...' : 'Adicionar'}</button></>}</div><div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-4">{materiaisAtivos.map((item) => <article key={item.id} className={`group overflow-hidden rounded-xl border ${darkMode ? 'border-slate-700 bg-slate-800' : 'border-slate-200 bg-white'}`}><div className="relative aspect-square bg-slate-950">{item.miniatura_url ? <img src={item.miniatura_url} alt="" className="h-full w-full object-cover" /> : item.tipo === 'video' ? <span className="flex h-full flex-col items-center justify-center gap-2 px-3 text-center text-slate-300"><span className={`h-7 w-7 rounded-full border-2 border-cyan-400/25 ${item.miniatura_status === 'erro' ? '' : 'animate-spin border-t-cyan-400'}`} /><b className="text-[10px] uppercase tracking-wide">{item.miniatura_status === 'erro' ? 'Capa indisponível' : 'Preparando capa'}</b></span> : <span className="flex h-full items-center justify-center text-slate-500"><Icone tipo="image" /></span>}<span className="absolute bottom-2 left-2 rounded-full bg-black/70 p-1.5 text-white"><Icone tipo={item.tipo === 'video' ? 'video' : 'image'} className="h-3.5 w-3.5" /></span></div><div className="flex items-center gap-2 p-2"><b className="min-w-0 flex-1 truncate text-[11px]">{item.titulo}</b><button type="button" onClick={() => setExclusaoPendente({ tipo: 'material', item })} className="h-7 w-7 shrink-0 rounded-md text-red-500">×</button></div></article>)}{pastaAtiva && !materiaisAtivos.length && <p className={`col-span-full rounded-xl border border-dashed px-4 py-12 text-center text-sm ${suave}`}>Esta pasta ainda está vazia.</p>}</div></section>
+        <section className="min-w-0 lg:min-h-0 lg:overflow-y-auto lg:pr-1"><div className="flex items-start justify-between gap-3"><div><h3 className="text-base font-black">{pastas.find((p) => p.id === pastaAtiva)?.nome || 'Materiais de divulgação'}</h3><p className={`text-xs ${suave}`}>{pastaAtiva ? 'Envie fotos ou vídeos para esta pasta.' : 'Selecione ou crie uma pasta para começar.'}</p></div>{pastaAtiva && <><input ref={inputArquivos} type="file" accept="image/jpeg,image/png,image/webp,image/gif,video/mp4,video/webm,video/quicktime" multiple className="hidden" onChange={(e) => void enviarArquivos(e.target.files)} /><button type="button" onClick={() => inputArquivos.current?.click()} disabled={salvando} className="hidden h-10 shrink-0 items-center gap-2 rounded-lg px-3 text-xs font-black text-white disabled:opacity-60 lg:flex" style={{ backgroundColor: corPrimaria }}><Icone tipo="upload" className="h-4 w-4" />{salvando ? 'Enviando...' : 'Adicionar'}</button></>}</div><div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-4">{materiaisAtivos.map((item) => <article key={item.id} className={`group overflow-hidden rounded-xl border ${darkMode ? 'border-slate-700 bg-slate-800' : 'border-slate-200 bg-white'}`}><button type="button" onClick={() => setMaterialEmVisualizacao(item)} aria-label={`Visualizar ${item.titulo}`} className="relative block aspect-square w-full bg-slate-950 focus-visible:outline-2 focus-visible:outline-offset-[-3px] focus-visible:outline-cyan-400">{item.miniatura_url ? <img src={item.miniatura_url} alt="" className="h-full w-full object-cover" /> : item.tipo === 'video' ? <span className="flex h-full flex-col items-center justify-center gap-2 px-3 text-center text-slate-300"><span className={`h-7 w-7 rounded-full border-2 border-cyan-400/25 ${item.miniatura_status === 'erro' ? '' : 'animate-spin border-t-cyan-400'}`} /><b className="text-[10px] uppercase tracking-wide">{item.miniatura_status === 'erro' ? 'Capa indisponível' : 'Preparando capa'}</b></span> : <span className="flex h-full items-center justify-center text-slate-500"><Icone tipo="image" /></span>}<span className="absolute bottom-2 left-2 rounded-full bg-black/70 p-1.5 text-white"><Icone tipo={item.tipo === 'video' ? 'video' : 'image'} className="h-3.5 w-3.5" /></span></button><div className="flex items-center gap-2 p-2"><b className="min-w-0 flex-1 truncate text-[11px]">{item.titulo}</b><button type="button" onClick={() => setExclusaoPendente({ tipo: 'material', item })} aria-label={`Excluir ${item.titulo}`} className="h-7 w-7 shrink-0 rounded-md text-red-500">×</button></div></article>)}{pastaAtiva && !materiaisAtivos.length && <p className={`col-span-full rounded-xl border border-dashed px-4 py-12 text-center text-sm ${suave}`}>Esta pasta ainda está vazia.</p>}</div></section>
       </div>}
     </section>
     <ModalConfirmacao

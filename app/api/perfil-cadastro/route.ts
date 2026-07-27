@@ -7,6 +7,7 @@ import {
   somenteDigitos,
   validarCnpj,
   validarCpf,
+  validarNomeCompleto,
 } from '../../lib/cadastro-perfil';
 
 export const runtime = 'nodejs';
@@ -188,7 +189,9 @@ export async function PUT(request: Request) {
   if (concluir) {
     const faltantes: string[] = [];
     if (!valores.nome_fantasia) faltantes.push('Nome Fantasia');
-    if (!valores.nome_responsavel) faltantes.push(pessoal ? 'Nome completo' : 'Responsável');
+    if (!validarNomeCompleto(valores.nome_responsavel)) {
+      faltantes.push(pessoal ? 'Nome completo (nome e sobrenome)' : 'Responsável (nome e sobrenome)');
+    }
     if (!pessoal && !valores.razao_social) faltantes.push('Razão Social');
     if (!pessoal && !valores.tipo_empresa) faltantes.push('Tipo de Empresa');
     if (tipoDocumento === 'cpf' ? !validarCpf(documento) : !validarCnpj(documento)) faltantes.push(tipoDocumento.toUpperCase());

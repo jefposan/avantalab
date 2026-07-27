@@ -1,7 +1,7 @@
 import type { Metadata, Viewport } from 'next';
-import { APP_VERSION } from '../lib/version';
 import AvaMobileBridge from '../mobile/AvaMobileBridge';
 import AvantaVendasBootstrap from './AvantaVendasBootstrap';
+import { AVANTAVENDAS_VERSION } from './version';
 
 export const metadata: Metadata = {
   title: 'AvantaVendas',
@@ -28,7 +28,7 @@ export const viewport: Viewport = {
 export default function AvantaVendasPage() {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
-  const assetVersion = APP_VERSION;
+  const assetVersion = AVANTAVENDAS_VERSION;
   const caminhoRecursos = '/avantavendas/recursos';
 
   return (

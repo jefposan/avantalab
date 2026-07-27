@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { validarNomeCompleto } from '../../lib/nome-pessoa';
 
 type PerfilUsuario =
   | 'gestor_master'
@@ -79,8 +80,8 @@ export async function POST(request: Request) {
       return respostaErro('Usuario nao informado.');
     }
 
-    if (!nome) {
-      return respostaErro('Informe o nome do usuario.');
+    if (!validarNomeCompleto(nome)) {
+      return respostaErro('Informe o nome completo do usuario, com nome e sobrenome.');
     }
 
     if (!loginEnviado && corpo.login !== undefined) {

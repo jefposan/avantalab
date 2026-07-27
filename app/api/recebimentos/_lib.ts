@@ -1,5 +1,6 @@
 import { createClient, type SupabaseClient, type User } from '@supabase/supabase-js';
 import { NextResponse } from 'next/server';
+export { validarNomeCompleto } from '../../lib/nome-pessoa';
 
 export const MODULO_RECEBIMENTOS = 'recebimentos_presencial';
 

@@ -1,21 +1,63 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.6.0.84.132 -->
+<!-- ava-version: 1.7.0 -->
 
-> Revisão 1.6.0.84.132: ajuste responsivo da pesquisa de CNPJ na tela
-> obrigatória da Gestão Web; sem impacto operacional na Gestão Mobile.
+> Revisão 1.7.0: Central de Consultas e pesquisa assistida de CNPJ adicionadas
+> à Gestão Web; sem impacto operacional na Gestão Mobile.
 
-> Revisão 1.6.0.84.131: pesquisa assistida de CNPJ adicionada ao cadastro
-> empresarial da Gestão Web; sem impacto operacional na Gestão Mobile.
+> Revisão 1.6.1.09: Preparando acesso só conclui os 100% depois que a tela
+> principal estiver montada. Se o PWA for suspenso ou perder conexão durante a
+> abertura, retornar ao aplicativo retoma a conclusão; uma versão antiga ainda
+> aberta é atualizada antes de prosseguir.
 
-> Revisão 1.6.0.84.130: contraste da Central de Consultas web aprimorado; sem
+> Revisão 1.6.1.08: reposicionamento do card de login apenas na Gestão Web; sem
 > impacto operacional na Gestão Mobile.
 
-> Revisão 1.6.0.84.129: ajuste visual restrito ao fundo desktop de Recebimentos
-> e Central de Consultas; sem impacto operacional na Gestão Mobile.
+> Revisão 1.6.1.07: as subpastas pertencentes à pasta selecionada em Conteúdo
+> do Vendas > Divulgação recebem o mesmo destaque em intensidade menor,
+> facilitando a identificação do ramo ativo. O AvantaVendas também passa a
+> navegar entre arquivos por gesto horizontal.
 
-> Revisão 1.6.0.84.128: criação da rota web pública e isolada `/consulta`; sem
+> Revisão 1.6.1.06: no visualizador da Divulgação, arraste para a esquerda para
+> abrir o próximo material e para a direita para voltar ao anterior. Setas
+> laterais e contador mostram as demais opções de navegação.
+
+> Revisão 1.6.1.05: tocar em uma imagem ou vídeo dentro da pasta de Divulgação
+> abre o material original em um visualizador amplo; vídeos exibem seus
+> controles de reprodução.
+
+> Revisão 1.6.1.04: ao confirmar os arquivos escolhidos, a Divulgação mostra
+> imediatamente o card Preparando arquivos para envio e mantém o percentual
+> visível até concluir ou cancelar.
+
+> Revisão 1.6.1.03: o resumo do envio de materiais informa somente quantos
+> arquivos foram enviados e quantos foram ignorados por duplicidade.
+
+> Revisão 1.6.1.02: as pastas de Conteúdo do Vendas > Divulgação mostram a
+> quantidade total de materiais armazenados nelas e em todas as subpastas.
+
+> Revisão 1.6.1.01: em Conteúdo do Vendas > Divulgação, selecionar uma pasta
+> exibe junto dela a ação Enviar arquivos para esta pasta, que aceita fotos e
+> vídeos nos mesmos formatos disponíveis na Gestão Web.
+
+> Revisão 1.6.1: ao vir do AvantaVendas, a Gestão sempre apresenta a seleção de
+> perfil. Se ainda não houver perfil financeiro, oferece criar ou ativar um sem
+> vinculá-lo automaticamente como destino dos resultados do Vendas.
+
+> Revisão 1.6.0.84.148: validação de sessão no refresh da Gestão Web; sem
 > impacto operacional na Gestão Mobile.
+
+> Revisão 1.6.0.84.147: cadastros de conta e perfil pessoal exigem nome e
+> sobrenome; a mesma regra vale nos módulos de pessoas administrados na Gestão.
+
+> Revisão 1.6.0.84.146: reorganização do cadastro detalhado na Gestão Web; sem
+> impacto operacional na Gestão Mobile.
+
+> Revisão 1.6.0.84.145: ampliação do card de usuários na Gestão Web; sem
+> impacto operacional na Gestão Mobile.
+
+> Revisão 1.6.0.84.144: formatação dos campos de vínculo comercial no Vendas
+> Mobile; sem impacto operacional na Gestão Mobile.
 
 > Revisão 1.6.0.84.127: validação de linhas incompletas no importador da Gestão
 > Web; sem impacto operacional na Gestão Mobile.
@@ -278,13 +320,13 @@ deve usar os nomes do menu e da barra inferior do celular.
 - Quando o módulo Vendas Mobile está ativo e o usuário tem permissão, após o login
   a primeira tela permite escolher entre Gestão e Vendas e memorizar a preferência. Só
   depois da escolha aparece **Preparando acesso** e o sistema selecionado é carregado.
-- Em **Preparando acesso**, 100% significa que os dados necessários para abrir o
-  perfil foram concluídos. A Gestão libera a tela principal imediatamente e continua
-  sincronizações complementares em segundo plano. Verificações lentas são repetidas;
-  se a preparação ficar sem progresso por tempo anormal, o aplicativo faz uma única
-  reconexão automática. Persistindo a falha, exibe **Tentar novamente** sem entrar em
-  ciclo de recargas. Se chegar a 100% e o card ainda permanecer visível, o aplicativo
-  confirma novamente a abertura antes de oferecer a recuperação.
+- Em **Preparando acesso**, a etapa **Acesso pronto** e os 100% somente são
+  concluídos depois que a tela principal estiver montada. As sincronizações
+  complementares continuam em segundo plano. Ao voltar de uma suspensão do PWA
+  ou recuperar a conexão, o aplicativo retoma a abertura e verifica se a versão
+  ainda é atual. Se a preparação ficar sem progresso por tempo anormal, realiza
+  uma única reconexão automática; persistindo a falha, exibe **Tentar novamente**
+  sem entrar em ciclo de recargas.
 - Dentro da Gestão, **Menu > Ir para Vendas** abre diretamente o Vendas Mobile; a
   tela com as duas opções é exibida somente na entrada após o login. Ao tocar, a
   Gestão consulta o estado atual do módulo no servidor para não solicitar uma
@@ -292,6 +334,11 @@ deve usar os nomes do menu e da barra inferior do celular.
 - Quando a Gestão é aberta pelo AvantaVendas instalado, a troca permanece na
   mesma janela em modo aplicativo, sem barras de endereço ou atalhos do
   navegador.
+- Se o usuário chegar pelo AvantaVendas sem nenhum perfil financeiro, a Gestão
+  abre a criação do primeiro perfil. Depois de criá-lo, solicita confirmação
+  para usá-lo como destino financeiro do AvantaVendas; confirmando, o vínculo é
+  salvo no servidor. Recusar não apaga o perfil e permite configurar o destino
+  depois no Vendas.
 - Em um perfil sem o módulo instalado, **Ir para Vendas** continua disponível para
   Gestor Master ou Administrador. Ao tocar, o sistema solicita a ativação, confirma
   o salvamento no servidor e segue para o Vendas. Em perfil pessoal gratuito, a
@@ -311,8 +358,8 @@ deve usar os nomes do menu e da barra inferior do celular.
   inferior, inclusive antes da ativação. Operadores veem o botão lateral inativo e
   não recebem permissão para ativar ou trocar de sistema.
 - Ao escolher Vendas, a conta única do usuário abre diretamente. O destino
-  financeiro continua sendo definido somente em **Configurações > Integração com
-  Gestão**, dentro do Vendas.
+  financeiro pode ser confirmado na criação do primeiro perfil vindo do Vendas
+  e continua configurável em **Configurações > Integração com Gestão**.
 - A ordem/visibilidade dos cards do dashboard é ajustada em **Menu > Organizar
   resumo** ou **Organizar dashboard**.
 - Em **Gerenciar perfil**, o usuário pode administrar seus perfis conforme a

@@ -15,6 +15,7 @@ import { normalizarTipoPerfil, type TipoPerfil } from '../lib/perfis';
 import { TERMOS_VERSAO } from '../lib/legal';
 import { DDI_PADRAO } from '../lib/paises';
 import { COBRANCA_ATIVA } from '../lib/cobranca';
+import { validarNomeCompleto } from '../lib/nome-pessoa';
 import type { AbrirAvisoFn } from './useUI';
 import { Capacitor } from '@capacitor/core';
 import type { PluginListenerHandle } from '@capacitor/core';
@@ -650,7 +651,7 @@ export function useAuth(deps: UseAuthDeps) {
     if (tipoPerfilCadastro === 'empresa' && !nomeEmpresaCadastro) {
       setAuthErro('Informe o nome fantasia da empresa.'); setAuthLoading(false); return;
     }
-    if (!nomeLimpo) { setAuthErro('Informe o nome completo do responsável.'); setAuthLoading(false); return; }
+    if (!validarNomeCompleto(nomeLimpo)) { setAuthErro('Informe o nome completo, com nome e sobrenome.'); setAuthLoading(false); return; }
     if (!emailLimpo) { setAuthErro('Informe seu email.'); setAuthLoading(false); return; }
     if (!emailLimpo.includes('@') || !emailLimpo.includes('.')) {
       setAuthErro('Informe um email válido.'); setAuthLoading(false); return;

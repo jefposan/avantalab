@@ -8,6 +8,17 @@ import {
 } from './perfis';
 import { ordenarDespesasAlfabeticamente } from './formatters';
 
+async function validarUsuarioAutenticado(usuarioId: string) {
+  const { data, error } = await supabase.auth.getUser();
+  const usuario = data.user;
+
+  if (error || !usuario || usuario.id !== usuarioId) {
+    throw new Error('Sessão inválida ou usuário autenticado não encontrado.');
+  }
+
+  return usuario;
+}
+
 function tratarErroSupabase(error: any) {
   if (!error?.message) {
     return 'Não foi possível concluir a ação.';
@@ -34,9 +45,8 @@ function tratarErroSupabase(error: any) {
 
 
   export async function buscarEmpresaDoUsuario(usuarioId: string) {
-    const { data: usuarioAtual } = await supabase.auth.getUser();
-
-    const emailUsuario = usuarioAtual.user?.email?.toLowerCase() || '';
+    const usuarioAtual = await validarUsuarioAutenticado(usuarioId);
+    const emailUsuario = usuarioAtual.email?.toLowerCase() || '';
 
     let { data: vinculo, error: erroVinculo } = await supabase
       .from('usuarios_empresa')
@@ -158,9 +168,8 @@ function tratarErroSupabase(error: any) {
 }
 
 export async function buscarEmpresasDoUsuario(usuarioId: string) {
-  const { data: usuarioAtual } = await supabase.auth.getUser();
-
-  const emailUsuario = usuarioAtual.user?.email?.toLowerCase() || '';
+  const usuarioAtual = await validarUsuarioAutenticado(usuarioId);
+  const emailUsuario = usuarioAtual.email?.toLowerCase() || '';
 
   // 1. Primeiro, vincula todos os convites pendentes pelo email do usuário logado
   if (emailUsuario) {

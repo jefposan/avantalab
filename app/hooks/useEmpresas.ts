@@ -16,6 +16,7 @@ import {
   redefinirSenhaUsuarioEmpresa,
 } from '../lib/database';
 import { normalizarTipoPerfil, type TipoPerfil } from '../lib/perfis';
+import { validarNomeCompleto } from '../lib/nome-pessoa';
 import type { AbrirAvisoFn, AbrirConfirmacaoFn } from './useUI';
 
 // ---------------------------------------------------------------------------
@@ -238,6 +239,10 @@ export function useEmpresas(deps: UseEmpresasDeps) {
       abrirAviso('Campos obrigatórios', 'Informe nome, login, senha e tipo de usuário.');
       return;
     }
+    if (!validarNomeCompleto(nomeLimpo)) {
+      abrirAviso('Nome incompleto', 'Informe o nome completo do usuário, com nome e sobrenome.');
+      return;
+    }
 
     const loginJaExiste = usuariosEmpresa.some(
       (u) => (u.login || '').trim().toLowerCase() === loginLimpo
@@ -333,7 +338,7 @@ export function useEmpresas(deps: UseEmpresasDeps) {
     const emailLimpo = editUsuarioEmail.trim().toLowerCase();
     const loginLimpo = editUsuarioLogin.trim().toLowerCase();
 
-    if (!nomeLimpo) { abrirAviso('Campo obrigatório', 'Informe o nome do usuário.'); return; }
+    if (!validarNomeCompleto(nomeLimpo)) { abrirAviso('Nome incompleto', 'Informe o nome completo do usuário, com nome e sobrenome.'); return; }
     if (!loginLimpo) { abrirAviso('Campo obrigatório', 'Informe o login deste usuário.'); return; }
     if (editUsuarioNovaSenha.trim() !== editUsuarioConfirmarSenha.trim()) { abrirAviso('Senha não confere', 'Repita a nova senha exatamente igual.'); return; }
 

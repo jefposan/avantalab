@@ -200,19 +200,22 @@
     const acessoBase = acessosComModulo.find((item) => item.empresa_id === vinculoComercialAtivoId)
       || acessosComModulo.find((item) => item.empresa_id === empresaContexto)
       || acessosComModulo[0]
-      || candidatos.find((item) => item.empresa_id === vinculoComercialAtivoId)
-      || candidatos.find((item) => item.empresa_id === empresaContexto)
-      || candidatos[0]
       || null;
     const acesso = acessoBase
       ? { ...acessoBase, papel: candidatos.some((item) => item.papel === 'gestor') ? 'gestor' : acessoBase.papel }
-      : null;
-    const premium = acesso
+      : {
+          empresa_id: null,
+          empresa_nome: 'Conta independente',
+          papel: 'vendedor',
+          status: 'ativo',
+          autonomo: true,
+        };
+    const premium = acessoBase
       ? await verificarPremiumVendas(acesso.empresa_id)
       : { bloqueado: false, estado: null };
     return {
       acesso,
-      moduloAtivo,
+      moduloAtivo: acessoBase ? moduloAtivo : true,
       premiumBloqueado: premium.bloqueado,
       estadoAssinatura: premium.estado,
       solicitacao: solicitacaoRes.data || null,
@@ -755,8 +758,20 @@
     return data;
   }
 
-  async function definirPerfilFinanceiro(empresaId) {
-    const { data, error } = await requireClient().rpc('definir_perfil_financeiro_vendas_mobile_rpc', { p_empresa_id: empresaId });
+  async function definirPerfilFinanceiro(empresaId, periodo = 'todo_historico', historicoAnterior = 'manter') {
+    const { data, error } = await requireClient().rpc('definir_perfil_financeiro_vendas_mobile_rpc', {
+      p_empresa_id: empresaId,
+      p_periodo: periodo,
+      p_historico_anterior: historicoAnterior,
+    });
+    if (error) throw error;
+    return data;
+  }
+
+  async function desvincularPerfilFinanceiro(historicoAnterior = 'manter') {
+    const { data, error } = await requireClient().rpc('desvincular_perfil_financeiro_vendas_mobile_rpc', {
+      p_historico_anterior: historicoAnterior,
+    });
     if (error) throw error;
     return data;
   }
@@ -788,5 +803,5 @@
     return data;
   }
 
-  window.VendasDb = { client, currentUser, hasSession, getAccessToken, verificarPremiumVendas, uploadProductImage, signIn, signInPhone, signInWithGoogle, resetPassword, updatePassword, updateUserMetadata, signUp, signOut, solicitarAcesso, buscarAcessoVendas, loadAll, loadClientFinancial, listarCatalogoVendas, sincronizarCatalogoVendas, salvarPreferencias, listarPerfisGestaoParaTroca, saveProduct, deleteProduct, movimentarEstoque, listarMovimentosEstoque, createPackage, saveProductsBulk, deletePackage, saveClient, deleteClient, saveOrder, updateOrder, deleteOrder, savePayment, updatePayment, deletePayment, configurarIntegracaoGestao, atualizarRecursoVinculoComercial, resetarSistemaVendas, definirPerfilFinanceiro, saveFeedback };
+  window.VendasDb = { client, currentUser, hasSession, getAccessToken, verificarPremiumVendas, uploadProductImage, signIn, signInPhone, signInWithGoogle, resetPassword, updatePassword, updateUserMetadata, signUp, signOut, solicitarAcesso, buscarAcessoVendas, loadAll, loadClientFinancial, listarCatalogoVendas, sincronizarCatalogoVendas, salvarPreferencias, listarPerfisGestaoParaTroca, saveProduct, deleteProduct, movimentarEstoque, listarMovimentosEstoque, createPackage, saveProductsBulk, deletePackage, saveClient, deleteClient, saveOrder, updateOrder, deleteOrder, savePayment, updatePayment, deletePayment, configurarIntegracaoGestao, atualizarRecursoVinculoComercial, resetarSistemaVendas, definirPerfilFinanceiro, desvincularPerfilFinanceiro, saveFeedback };
 })();

@@ -1,19 +1,19 @@
-import { APP_VERSION } from '../../lib/version';
+import { AVANTAVENDAS_VERSION } from '../version';
 
 export const dynamic = 'force-dynamic';
 
 const prefixoCache = 'avantalab-avantavendas-';
-const nomeCache = `${prefixoCache}${APP_VERSION}`;
+const nomeCache = `${prefixoCache}${AVANTAVENDAS_VERSION}`;
 const caminhoRecursos = '/avantavendas/recursos';
 
 const recursosEssenciais = [
   '/avantavendas',
   '/avantavendas/manifest.webmanifest',
-  `${caminhoRecursos}/styles.css?v=${APP_VERSION}`,
-  `${caminhoRecursos}/vendor/supabase.min.js?v=${APP_VERSION}`,
-  `${caminhoRecursos}/config.js?v=${APP_VERSION}`,
-  `${caminhoRecursos}/supabase-client.js?v=${APP_VERSION}`,
-  `${caminhoRecursos}/app.js?v=${APP_VERSION}`,
+  `${caminhoRecursos}/styles.css?v=${AVANTAVENDAS_VERSION}`,
+  `${caminhoRecursos}/vendor/supabase.min.js?v=${AVANTAVENDAS_VERSION}`,
+  `${caminhoRecursos}/config.js?v=${AVANTAVENDAS_VERSION}`,
+  `${caminhoRecursos}/supabase-client.js?v=${AVANTAVENDAS_VERSION}`,
+  `${caminhoRecursos}/app.js?v=${AVANTAVENDAS_VERSION}`,
   '/images/logo-avantalab-oficial.png',
   '/images/avanta-vendas-pwa-180.png',
   '/images/avanta-vendas-pwa-192.png',
@@ -78,6 +78,10 @@ self.addEventListener('fetch', (event) => {
   if (url.origin !== self.location.origin) return;
   if (!url.pathname.startsWith('/avantavendas')) return;
   if (url.pathname === '/avantavendas/versao') return;
+  // A Gestão possui bootstrap, versão e recuperação próprios. Deixar esta
+  // navegação seguir diretamente para a rede evita servir a tela do Vendas
+  // ou um documento antigo como fallback durante a troca de sistema.
+  if (url.pathname.startsWith('/avantavendas/gestao')) return;
 
   if (event.request.mode === 'navigate') {
     event.respondWith(buscarComFallback(event.request, '/avantavendas'));

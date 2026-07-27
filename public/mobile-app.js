@@ -179,6 +179,7 @@
     // para o usuário em vez de deixar a tela de progresso parada.
     falhaAcesso: '',
     preparacaoAcessoInterrompida: false,
+    dadosCriticosProntos: false,
     mensagem: '',
     carregando: false,
     loginAcao: '',
@@ -755,6 +756,29 @@
     state.pronto = true;
     state.falhaAcesso = texto || 'Não foi possível concluir a preparação do acesso. Confira sua internet e tente novamente.';
     render();
+  }
+
+  function registrarDiagnosticoAcessoMobile(etapa, erro) {
+    try {
+      sessionStorage.setItem('avantalab.mobile.diagnostico_acesso', JSON.stringify({
+        etapa: String(etapa || 'indefinida'),
+        mensagem: String(erro && erro.message ? erro.message : erro || ''),
+        versao: APP_VERSION,
+        origem: window.location.pathname,
+        registradoEm: new Date().toISOString(),
+      }));
+    } catch (e) {}
+  }
+
+  function exibirFalhaRenderizacaoAcessoMobile(erro) {
+    registrarDiagnosticoAcessoMobile('renderizacao_final', erro);
+    state.carregando = false;
+    state.pronto = true;
+    state.falhaAcesso = 'Seus dados foram carregados, mas a tela não conseguiu abrir.';
+    root.innerHTML = telaAvisoMobile(
+      'Acesso concluído',
+      'Seus dados foram carregados, mas a tela não conseguiu abrir. Toque abaixo para tentar novamente.'
+    );
   }
 
   async function requisitarJsonMobile(url, opcoes, limiteMs) {
@@ -4640,10 +4664,30 @@
 
     if (input) input.type = state[stateKey] ? 'text' : 'password';
 
-    if (botao) {
-      botao.textContent = state[stateKey] ? '◉' : '◎';
-      botao.setAttribute('aria-label', state[stateKey] ? 'Ocultar senha' : 'Exibir senha');
-    }
+    if (botao) atualizarBotaoVisibilidadeSenhaMobile(botao, state[stateKey]);
+  }
+
+  function iconeVisibilidadeSenhaMobile(visivel) {
+    return visivel
+      ? '<svg aria-hidden="true" class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m3 3 18 18"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.6 10.7a2 2 0 0 0 2.7 2.7"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.9 5.1A10.9 10.9 0 0 1 12 5c5 0 9 4 10 7a12.7 12.7 0 0 1-3 4.5M6.6 6.6A12.5 12.5 0 0 0 2 12c1 3 5 7 10 7a10.9 10.9 0 0 0 4.4-.9"></path></svg>'
+      : '<svg aria-hidden="true" class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12Z"></path><circle cx="12" cy="12" r="3" stroke-width="2"></circle></svg>';
+  }
+
+  function atualizarBotaoVisibilidadeSenhaMobile(botao, visivel) {
+    var rotulo = visivel ? 'Ocultar senha' : 'Exibir senha';
+    botao.innerHTML = iconeVisibilidadeSenhaMobile(visivel);
+    botao.setAttribute('aria-label', rotulo);
+    botao.setAttribute('aria-pressed', visivel ? 'true' : 'false');
+    botao.setAttribute('title', rotulo);
+  }
+
+  function alternarSenhaCampoMobile(inputId, buttonId) {
+    var input = document.getElementById(inputId);
+    var botao = document.getElementById(buttonId);
+    if (!input || !botao) return;
+    var visivel = input.type === 'password';
+    input.type = visivel ? 'text' : 'password';
+    atualizarBotaoVisibilidadeSenhaMobile(botao, visivel);
   }
 
   async function buscarEmailPorLogin(login) {
@@ -5084,6 +5128,7 @@
   async function carregarDados() {
     if (!state.empresa) return;
     var exibeTelaPreparacao = !state.pronto || state.paywallPerfilVerificado !== state.empresa.id;
+    if (exibeTelaPreparacao) state.dadosCriticosProntos = false;
     // O resumo comparativo roda após a entrada e não integra a preparação
     // bloqueante; o percentual representa somente o que libera o perfil.
     var totalEtapasDados = 13;
@@ -5351,13 +5396,23 @@
     // os dados do perfil aberto. A tela principal é liberada primeiro; o
     // card recebe o resumo logo em seguida, sem bloquear o acesso.
     state.resumoPerfisCarregando = true;
-    avancarEtapaDados('Acesso pronto');
-    // Tudo que bloqueia o primeiro acesso já terminou. Mantém os 100% visíveis
-    // por um instante curto e real antes de liberar a interface.
+    // A última etapa só é concluída depois que a interface principal estiver
+    // montada. Assim, 100% nunca representa apenas consultas concluídas.
     await aguardarPinturaProgressoMobile(180);
+    state.dadosCriticosProntos = true;
     state.pronto = true;
     state.carregando = false;
-    render();
+    try {
+      render();
+    } catch (erroRenderizacao) {
+      exibirFalhaRenderizacaoAcessoMobile(erroRenderizacao);
+      return;
+    }
+    if (telaPreparacaoAcessoMobileVisivel()) {
+      garantirLiberacaoAcessoMobile();
+      return;
+    }
+    avancarEtapaDados('Acesso pronto');
     if (state.abrirAssinaturaAoCarregar) {
       state.abrirAssinaturaAoCarregar = false;
       window.setTimeout(abrirAssinaturaMobile, 0);
@@ -6220,14 +6275,21 @@
     await carregarDados();
   }
 
+  function nomeCompletoValido(nome) {
+    var conectivos = ['da', 'das', 'de', 'do', 'dos', 'e'];
+    return String(nome || '').trim().split(/\s+/).filter(function (parte) {
+      return parte && conectivos.indexOf(parte.toLocaleLowerCase('pt-BR')) < 0;
+    }).length >= 2;
+  }
+
   function validarCadastroBase() {
     if (normalizarTipoPerfil(state.cadastroTipoPerfil) === 'empresa' && !state.cadastro.nomeEmpresa) {
       setErro('Informe o nome fantasia da empresa.');
       return false;
     }
 
-    if (!state.cadastro.nome) {
-      setErro('Informe o nome completo do responsavel.');
+    if (!nomeCompletoValido(state.cadastro.nome)) {
+      setErro('Informe o nome completo, com nome e sobrenome.');
       return false;
     }
 
@@ -8130,9 +8192,8 @@
   }
 
   function concluirAcessoMobile() {
-    var progresso = window.__AVANTALAB_MOBILE_PROGRESSO__ || {};
     if (
-      Number(progresso.valor || 0) < 100 ||
+      !state.dadosCriticosProntos ||
       !state.autenticado ||
       !state.empresa ||
       !state.paywallVerificado
@@ -8147,15 +8208,13 @@
       render();
     } catch (erro) {
       console.error('Não foi possível abrir a Gestão após concluir o acesso:', erro);
-      root.innerHTML = telaAvisoMobile(
-        'Acesso concluído',
-        'Seus dados foram carregados, mas a tela não conseguiu abrir. Toque abaixo para tentar novamente.'
-      );
+      exibirFalhaRenderizacaoAcessoMobile(erro);
       return false;
     }
 
     var acessoAberto = !telaPreparacaoAcessoMobileVisivel();
     if (acessoAberto && typeof window.__avantalabConfirmarAcessoMobile === 'function') {
+      atualizarProgressoAcessoMobile('data', 1, 1, 'Acesso pronto');
       window.__avantalabConfirmarAcessoMobile();
     }
     return acessoAberto;
@@ -8183,7 +8242,7 @@
       window.__avantalabAtualizarProgressoMobile(grupo, concluido, total, rotulo);
     }
     var progresso = window.__AVANTALAB_MOBILE_PROGRESSO__ || {};
-    if (Number(progresso.valor || 0) >= 100) garantirLiberacaoAcessoMobile();
+    if (state.dadosCriticosProntos || Number(progresso.valor || 0) >= 100) garantirLiberacaoAcessoMobile();
   }
 
   function sincronizarProgressoAcessoMobile() {
@@ -8265,7 +8324,7 @@
       '<label class="gestao-login-label">Senha' +
         '<span class="gestao-login-field gestao-login-password">' + iconeSenha +
           '<input id="senha" type="' + (state.mostrarSenhaLogin ? 'text' : 'password') + '" autocomplete="current-password" placeholder="Digite sua senha" />' +
-          '<button id="toggle-senha-login" type="button" aria-label="' + (state.mostrarSenhaLogin ? 'Ocultar senha' : 'Exibir senha') + '">' + (state.mostrarSenhaLogin ? '◉' : '◎') + '</button>' +
+          '<button id="toggle-senha-login" type="button" aria-label="' + (state.mostrarSenhaLogin ? 'Ocultar senha' : 'Exibir senha') + '" aria-pressed="' + (state.mostrarSenhaLogin ? 'true' : 'false') + '">' + iconeVisibilidadeSenhaMobile(state.mostrarSenhaLogin) + '</button>' +
         '</span>' +
       '</label>' +
       '<div class="gestao-login-options">' +
@@ -8424,10 +8483,22 @@
         '<span class="relative block">' +
           '<input id="' + id + '" type="' + (visivel ? 'text' : 'password') + '" placeholder="' + escapeHtml(placeholder || '') + '" value="' + escapeHtml(value || '') + '" style="font-size:16px;background-color:rgba(255,255,255,.94)" class="h-10 w-full rounded-xl border border-slate-300 px-4 pr-10 text-sm font-semibold text-slate-900 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-sky-600 focus:bg-white focus:ring-2 focus:ring-sky-600/20" />' +
           '<button id="' + toggleId + '" type="button" class="absolute right-2 top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full bg-white/35 text-xs font-black text-slate-600 backdrop-blur-sm" aria-label="' + (visivel ? 'Ocultar senha' : 'Exibir senha') + '">' +
-            (visivel ? '◉' : '◎') +
+            iconeVisibilidadeSenhaMobile(visivel) +
           '</button>' +
         '</span>' +
       '</label>'
+    );
+  }
+
+  function campoSenhaSimplesHtml(id, placeholder, classes, autoComplete) {
+    var toggleId = 'toggle-' + id;
+    return (
+      '<span class="relative block min-w-0">' +
+        '<input id="' + id + '" type="password" autocomplete="' + escapeHtml(autoComplete || 'new-password') + '" placeholder="' + escapeHtml(placeholder || '') + '" style="font-size:16px" class="' + escapeHtml(classes || '') + ' pr-10" />' +
+        '<button id="' + toggleId + '" type="button" class="absolute right-1.5 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-lg text-slate-500 transition hover:bg-slate-100 hover:text-slate-800" aria-label="Exibir senha" aria-pressed="false">' +
+          iconeVisibilidadeSenhaMobile(false) +
+        '</button>' +
+      '</span>'
     );
   }
 
@@ -8829,10 +8900,6 @@
     var textoSecundario = escuro ? 'text-slate-400' : 'text-slate-500';
     var expandido = !!state.meusPerfisExpandido;
     var destaqueId = state.resumoPerfilDestaqueId || (state.empresa && state.empresa.id) || '';
-    var perfilDestaque = perfis.find(function (perfil) { return perfil.id === destaqueId; }) || null;
-    var receitasResumo = perfilDestaque ? Number(perfilDestaque.receitas || 0) : totalReceitas;
-    var despesasResumo = perfilDestaque ? Number(perfilDestaque.despesas || 0) : totalDespesas;
-    var resultadoResumo = perfilDestaque ? Number(perfilDestaque.resultado || 0) : consolidado;
     var valorPerfilHtml = function (valor, perfilId) {
       var revelarIndividual = !!(perfilId && state.resumoPerfilExibidoId === perfilId);
       return valoresCardVisiveis(cardId) || revelarIndividual
@@ -8857,7 +8924,7 @@
 
     return '<section class="flex flex-col overflow-hidden rounded-2xl border-2 shadow-lg ' + fundo + '" style="border-color:#003E73;' + (expandido ? 'min-height:min(68dvh,560px);' : '') + '">' +
       '<div class="flex items-center justify-between gap-3 px-4 py-3 text-white" style="background:#003E73"><div class="min-w-0"><p class="text-[9px] font-bold uppercase tracking-[0.18em] text-cyan-100/75">' + escapeHtml(nomeMesCompleto(state.mes)) + '</p><h2 class="truncate text-sm font-black">Meus perfis</h2></div><div class="flex items-center gap-2"><span class="rounded-full bg-white/15 px-2 py-1 text-[9px] font-black">' + perfis.length + ' perfil' + (perfis.length === 1 ? '' : 's') + '</span>' + botaoVisibilidadeValoresHtml(cardId, true) + '</div></div>' +
-      '<div class="min-h-0 flex-1 p-3">' + (perfilDestaque ? '<p class="mb-1.5 truncate px-1 text-[9px] font-black uppercase tracking-wide ' + textoSecundario + '">Valores de ' + escapeHtml(perfilDestaque.nome) + '</p>' : '') + '<div class="mb-2 grid grid-cols-3 gap-1.5 rounded-xl ' + (escuro ? 'bg-slate-800/55' : 'bg-slate-50') + ' p-1.5"><div class="rounded-lg bg-[#003E73] px-2 py-2 text-white"><span class="block truncate text-[8px] font-black uppercase text-cyan-100/75">' + (perfilDestaque ? 'Resultado' : 'Consolidado') + '</span><strong class="mt-0.5 block truncate text-[11px] font-black">' + valorPerfilHtml(resultadoResumo, perfilDestaque && perfilDestaque.id) + '</strong></div><div class="rounded-lg px-2 py-2 ' + (escuro ? 'bg-slate-900/60' : 'bg-white') + '"><span class="block truncate text-[8px] font-black uppercase ' + textoSecundario + '">Receitas</span><strong class="mt-0.5 block truncate text-[11px] font-black text-emerald-500">' + valorPerfilHtml(receitasResumo, perfilDestaque && perfilDestaque.id) + '</strong></div><div class="rounded-lg px-2 py-2 text-right ' + (escuro ? 'bg-slate-900/60' : 'bg-white') + '"><span class="block truncate text-[8px] font-black uppercase ' + textoSecundario + '">Despesas</span><strong class="mt-0.5 block truncate text-[11px] font-black text-red-500">' + valorPerfilHtml(despesasResumo, perfilDestaque && perfilDestaque.id) + '</strong></div></div>' + corpo + '</div>' +
+      '<div class="min-h-0 flex-1 p-3"><div class="mb-2 grid grid-cols-3 gap-1.5 rounded-xl ' + (escuro ? 'bg-slate-800/55' : 'bg-slate-50') + ' p-1.5"><div class="rounded-lg bg-[#003E73] px-2 py-2 text-white"><span class="block truncate text-[8px] font-black uppercase text-cyan-100/75">Consolidado</span><strong class="mt-0.5 block truncate text-[11px] font-black">' + valorPerfilHtml(consolidado) + '</strong></div><div class="rounded-lg px-2 py-2 ' + (escuro ? 'bg-slate-900/60' : 'bg-white') + '"><span class="block truncate text-[8px] font-black uppercase ' + textoSecundario + '">Receitas</span><strong class="mt-0.5 block truncate text-[11px] font-black text-emerald-500">' + valorPerfilHtml(totalReceitas) + '</strong></div><div class="rounded-lg px-2 py-2 text-right ' + (escuro ? 'bg-slate-900/60' : 'bg-white') + '"><span class="block truncate text-[8px] font-black uppercase ' + textoSecundario + '">Despesas</span><strong class="mt-0.5 block truncate text-[11px] font-black text-red-500">' + valorPerfilHtml(totalDespesas) + '</strong></div></div>' + corpo + '</div>' +
       '<button id="toggle-esticar-meus-perfis" type="button" class="flex h-8 w-full items-center justify-center gap-2 border-t ' + (escuro ? 'border-slate-700 bg-slate-800/60 text-slate-300' : 'border-slate-200 bg-slate-50 text-slate-500') + ' text-[9px] font-black uppercase tracking-[0.14em] transition active:brightness-95"><span>' + (expandido ? 'Recolher' : 'Esticar') + '</span><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="' + (expandido ? 'm7 14 5-5 5 5' : 'm7 10 5 5 5-5') + '" stroke-linecap="round" stroke-linejoin="round"/></svg></button>' +
     '</section>';
   }
@@ -10774,7 +10841,7 @@
         '<input id="usuario-nome" placeholder="Nome" style="font-size:16px" class="h-10 w-full min-w-0 rounded-lg border border-slate-200 bg-white px-3 text-base font-bold outline-none" />' +
         '<div class="grid gap-2">' +
           '<input id="usuario-login" placeholder="Login" style="font-size:16px" class="h-10 w-full min-w-0 rounded-lg border border-slate-200 bg-white px-3 text-base font-bold outline-none" />' +
-          '<input id="usuario-senha" type="password" placeholder="Senha" style="font-size:16px" class="h-10 w-full min-w-0 rounded-lg border border-slate-200 bg-white px-3 text-base font-bold outline-none" />' +
+          campoSenhaSimplesHtml('usuario-senha', 'Senha', 'h-10 w-full min-w-0 rounded-lg border border-slate-200 bg-white px-3 text-base font-bold outline-none', 'new-password') +
         '</div>' +
         '<select id="usuario-perfil" style="font-size:16px" class="h-10 w-full min-w-0 rounded-lg border border-slate-200 bg-white px-3 text-base font-bold outline-none"><option value="">Perfil</option>' + opcoesPerfilHtml('', false) + '</select>' +
         '<button id="criar-usuario-mobile" type="button" class="h-10 rounded-xl bg-slate-950 px-4 text-xs font-black uppercase tracking-wide text-white">' + (state.carregando ? 'Salvando...' : 'Criar usuario') + '</button>' +
@@ -10820,8 +10887,8 @@
         '<input id="edit-usuario-login" value="' + escapeHtml(usuario.login || (state.empresa && String(state.empresa.acessoId) === String(usuario.id) ? state.loginConta : '')) + '" placeholder="Login" style="font-size:16px" class="h-10 w-full min-w-0 rounded-lg border border-cyan-100 bg-white px-3 text-base font-bold outline-none" />' +
         '<input id="edit-usuario-email" type="email" value="' + escapeHtml(emailRealUsuario(usuario)) + '" placeholder="E-mail (opcional)" style="font-size:16px" class="h-10 w-full min-w-0 rounded-lg border border-cyan-100 bg-white px-3 text-base font-bold outline-none" />' +
         '<select id="edit-usuario-perfil" style="font-size:16px" class="h-10 w-full min-w-0 rounded-lg border border-cyan-100 bg-white px-3 text-base font-bold outline-none">' + opcoesPerfilHtml(usuario.perfil || 'operador_simples', usuario.perfil === 'gestor_master' || (state.empresa && state.empresa.perfil === 'gestor_master')) + '</select>' +
-        '<input id="edit-usuario-senha" type="password" placeholder="Nova senha (opcional)" style="font-size:16px" class="h-10 w-full min-w-0 rounded-lg border border-cyan-100 bg-white px-3 text-base font-bold outline-none" />' +
-        '<input id="edit-usuario-confirmar-senha" type="password" placeholder="Confirmar nova senha" style="font-size:16px" class="h-10 w-full min-w-0 rounded-lg border border-cyan-100 bg-white px-3 text-base font-bold outline-none" />' +
+        campoSenhaSimplesHtml('edit-usuario-senha', 'Nova senha (opcional)', 'h-10 w-full min-w-0 rounded-lg border border-cyan-100 bg-white px-3 text-base font-bold outline-none', 'new-password') +
+        campoSenhaSimplesHtml('edit-usuario-confirmar-senha', 'Confirmar nova senha', 'h-10 w-full min-w-0 rounded-lg border border-cyan-100 bg-white px-3 text-base font-bold outline-none', 'new-password') +
         '<button id="salvar-usuario-mobile" type="button" class="h-10 rounded-xl bg-cyan-600 px-4 text-xs font-black uppercase tracking-wide text-white">' + (state.carregando ? 'Salvando...' : 'Salvar usuario') + '</button>' +
       '</div>'
     );
@@ -10921,7 +10988,7 @@
             seletorTipoPerfilHtml('edit-tipo', tipoEdicao) +
             '<input id="editar-empresa-nome" value="' + escapeHtml(state.editEmpresaNome) + '" placeholder="' + escapeHtml(rotuloNomePerfil(tipoEdicao)) + '" style="font-size:16px" class="h-11 rounded-md border border-cyan-100 bg-white px-3 text-base font-bold text-slate-900 outline-none focus:border-cyan-500" />' +
             '<input id="editar-empresa-login" value="' + escapeHtml(state.editEmpresaLogin) + '" placeholder="Login ou email" style="font-size:16px" class="h-11 rounded-md border border-cyan-100 bg-white px-3 text-base font-bold text-slate-900 outline-none focus:border-cyan-500" />' +
-            '<input id="editar-empresa-senha" type="password" placeholder="Nova senha (opcional)" style="font-size:16px" class="h-11 rounded-md border border-cyan-100 bg-white px-3 text-base font-bold text-slate-900 outline-none focus:border-cyan-500" />' +
+            campoSenhaSimplesHtml('editar-empresa-senha', 'Nova senha (opcional)', 'h-11 w-full rounded-md border border-cyan-100 bg-white px-3 text-base font-bold text-slate-900 outline-none focus:border-cyan-500', 'new-password') +
             (gestorMaster ? '<p class="text-xs font-semibold leading-relaxed text-cyan-900">Para Gestor Master, a senha deve ser alterada pela recuperação de senha.</p>' : '') +
             '<div class="grid grid-cols-2 gap-2">' +
               '<button id="cancelar-edicao-empresa-mobile" type="button" class="h-10 rounded-xl bg-white border border-slate-200 px-3 text-xs font-black uppercase tracking-wide text-slate-600">Cancelar</button>' +
@@ -12131,6 +12198,12 @@
     });
     bind('toggle-confirmar-cadastro', function () {
       alternarSenha('mostrarConfirmarSenhaCadastro', 'cadastro-confirmar-senha', 'toggle-confirmar-cadastro');
+    });
+    ['usuario-senha', 'edit-usuario-senha', 'edit-usuario-confirmar-senha', 'editar-empresa-senha'].forEach(function (inputSenhaId) {
+      var botaoSenhaId = 'toggle-' + inputSenhaId;
+      bind(botaoSenhaId, function () {
+        alternarSenhaCampoMobile(inputSenhaId, botaoSenhaId);
+      });
     });
     bind('voltar-login', function () {
       state.telaAcesso = 'login';
@@ -14081,7 +14154,7 @@
           return Promise.all(
             keys
               .filter(function (key) {
-                return key.indexOf('avantalab-mobile-') === 0 && key !== 'avantalab-mobile-v283';
+                return key.indexOf('avantalab-mobile-') === 0 && key !== 'avantalab-mobile-v288';
               })
               .map(function (key) {
                 return caches.delete(key);

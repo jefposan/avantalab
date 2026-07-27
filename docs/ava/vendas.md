@@ -1,21 +1,60 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.6.0.84.132 -->
+<!-- ava-version: 1.7.0 -->
 
-> Revisão 1.6.0.84.132: ajuste responsivo da pesquisa de CNPJ na tela
-> obrigatória da Gestão Web; sem impacto operacional no AvantaVendas.
+> Revisão 1.7.0: Central de Consultas e pesquisa assistida de CNPJ adicionadas
+> à Gestão Web; sem impacto operacional no AvantaVendas.
 
-> Revisão 1.6.0.84.131: pesquisa assistida de CNPJ adicionada ao cadastro
-> empresarial da Gestão Web; sem impacto operacional no AvantaVendas.
+> Revisão 1.6.1.09: a troca AvantaVendas → Gestão passa a abrir a rota da
+> Gestão sem reutilizar documento antigo do cache. Se a conexão falhar, o
+> usuário permanece no Vendas e pode tentar novamente.
 
-> Revisão 1.6.0.84.130: contraste da Central de Consultas web aprimorado; sem
+> Revisão 1.6.1.08: reposicionamento do card de login apenas na Gestão Web; sem
 > impacto operacional no AvantaVendas.
 
-> Revisão 1.6.0.84.129: ajuste visual restrito a Recebimentos e Central de
-> Consultas no desktop; sem impacto operacional no AvantaVendas.
+> Revisão 1.6.1.07: ao ampliar uma imagem ou vídeo da Divulgação, arraste para
+> a esquerda para abrir o próximo arquivo ou para a direita para voltar ao
+> anterior. As setas laterais oferecem a mesma navegação.
 
-> Revisão 1.6.0.84.128: criação da Central de Consultas web em rota isolada;
-> sem impacto operacional no AvantaVendas.
+> Revisão 1.6.1.06: o visualizador da Gestão passou a navegar entre materiais
+> por gesto horizontal e setas; sem mudança operacional no AvantaVendas.
+
+> Revisão 1.6.1.05: a Gestão passou a abrir imagens e vídeos da Divulgação em
+> um visualizador amplo; sem mudança operacional no AvantaVendas.
+
+> Revisão 1.6.1.04: a Gestão passou a mostrar imediatamente o progresso após a
+> seleção de materiais da Divulgação; sem mudança operacional no AvantaVendas.
+
+> Revisão 1.6.1.03: a Gestão deixou de listar os nomes dos arquivos duplicados
+> no resumo do envio; sem mudança operacional no AvantaVendas.
+
+> Revisão 1.6.1.02: a Gestão passa a mostrar em cada pasta de Divulgação o total
+> de materiais da própria pasta e de todas as subpastas; sem mudança operacional
+> no AvantaVendas, que já utilizava essa soma.
+
+> Revisão 1.6.1.01: a Gestão Mobile agora exibe a ação de envio junto da pasta
+> selecionada em Conteúdo do Vendas > Divulgação; sem mudança operacional no
+> AvantaVendas.
+
+> Revisão 1.6.1: a conta do AvantaVendas funciona sem código empresarial e sem
+> perfil financeiro. O código solicita somente conteúdos da equipe mediante
+> aprovação. O vínculo financeiro é opcional e manual; a troca permite escolher
+> o período enviado e manter ou apagar os lançamentos do perfil anterior.
+
+> Revisão 1.6.0.84.148: validação de sessão no refresh da Gestão Web; sem
+> impacto operacional no AvantaVendas.
+
+> Revisão 1.6.0.84.147: o cadastro de conta no AvantaVendas exige nome e
+> sobrenome antes da validação por SMS.
+
+> Revisão 1.6.0.84.146: reorganização do cadastro detalhado na Gestão Web; sem
+> impacto operacional no AvantaVendas.
+
+> Revisão 1.6.0.84.145: ampliação do card de usuários na Gestão Web; sem
+> impacto operacional no AvantaVendas.
+
+> Revisão 1.6.0.84.144: em Configurações > Empresas e conteúdos > Vincular
+> outra empresa, os campos ficam formatados e legíveis nos temas claro e escuro.
 
 > Revisão 1.6.0.84.127: validação de linhas incompletas no importador da Gestão
 > Web; sem impacto operacional no AvantaVendas.
@@ -265,20 +304,24 @@ função existir ali.
   posição** aparece ao lado do lápis.
 - Para gestores habilitados, a primeira tela após o login permite escolher Gestão
   ou Vendas antes de carregar os dados. Depois da escolha aparece **Preparando acesso**.
-- Gestores podem usar **Ir para Gestão** no canto direito do header fixo da sala
-  de botões ou adicionar **Ir para Gestão** a um atalho configurável.
+- Todo usuário autenticado no Vendas pode usar **Ir para Gestão** no canto
+  direito do header fixo da sala de botões ou adicionar **Ir para Gestão** a um
+  atalho configurável.
   Ao tocar, o Vendas lista todos os perfis ativos da Gestão vinculados à conta;
-  depois de selecionar um perfil, a troca exige confirmação. O aviso de
-  aniversário permanece ao lado do botão quando ambos estão visíveis. No PWA
-  instalado, a Gestão abre na mesma janela em modo aplicativo, sem barras do
-  navegador.
+  mesmo quando existe apenas um, a seleção e a confirmação são obrigatórias. Se
+  a conta ainda não possuir perfil na Gestão, a tela avisa e oferece criar ou
+  ativar um perfil, ou continuar somente no Vendas. Criar um perfil não o define
+  automaticamente como destino financeiro. O aviso de aniversário permanece ao
+  lado do botão quando ambos estão visíveis. No PWA instalado, a Gestão abre na
+  mesma janela em modo aplicativo, sem barras do navegador.
 - Cada login possui uma única conta operacional no Vendas. Instalações e
   permissões em perfis da Gestão apenas autorizam a troca entre os sistemas e não
   criam contas adicionais ou um seletor de perfis dentro do Vendas.
-- O destino financeiro só pode ser definido ou alterado em **Configurações >
-  Integração com Gestão**.
+- O destino financeiro é opcional e só pode ser definido ou alterado manualmente
+  em **Configurações > Integração com
+  Gestão**.
 - A sessão e o perfil/empresa são preservados na troca. Usuários sem permissão
-  de gestor não recebem o atalho de retorno à Gestão.
+  financeira não recebem acesso aos dados de perfis empresariais de terceiros.
 
 ## Clientes
 
@@ -388,7 +431,9 @@ função existir ali.
   Divulgação, desde que o módulo Vendas Mobile esteja ativo no perfil.
   Operador Completo não instala módulos nem administra acessos de usuários.
 - Novidades vêm da empresa comercial vinculada. Divulgação navega por
-  pastas/subpastas e abre fotos/vídeos para visualização e compartilhamento.
+  pastas/subpastas e abre fotos/vídeos para visualização e compartilhamento;
+  no visualizador ampliado, arrastar horizontalmente ou usar as setas alterna
+  entre o arquivo anterior e o próximo da pasta.
 - Configurações reúne conta, celular/SMS, senha, aparência, metas, catálogo,
   estoque, vínculos comerciais, destino financeiro, PWA, backup e reset.
 - Aparência, atalhos inferiores, ordem da sala, alerta de aniversário, meta
@@ -399,7 +444,21 @@ função existir ali.
   visual. **Voltar sem excluir**, fechar ou tocar fora cancela a ação. Ao
   remover um cliente, pedidos e pagamentos antigos continuam registrados.
 - Vínculo comercial (catálogo/divulgação/novidades) e destino financeiro são
-  independentes. Não assumir que uma troca altera automaticamente o outro.
+  independentes. O código empresarial é opcional, exige aprovação do gestor e
+  libera somente os conteúdos da equipe; ele não compartilha clientes, pedidos,
+  pagamentos ou dados financeiros.
+- O vendedor pode usar todos os controles operacionais do Vendas sem destino
+  financeiro. Em **Configurações > Integração com Gestão**, o primeiro vínculo
+  envia todo o histórico mensal existente ao perfil escolhido.
+- Ao trocar o destino financeiro, o usuário escolhe enviar todo o histórico,
+  começar no mês vigente ou começar no mês seguinte. Depois escolhe se todos os
+  lançamentos do Vendas no perfil anterior serão mantidos ou apagados. Mantidos,
+  eles perdem a proteção e podem ser editados ou excluídos na Gestão; apagados,
+  saem somente da Gestão. O histórico de clientes, pedidos e pagamentos nunca é
+  removido do Vendas por essa decisão.
+- Ao desvincular sem escolher outro destino, a mesma decisão entre manter e
+  apagar é obrigatória. Um novo perfil criado na Gestão apenas aparece na lista
+  de destinos possíveis e nunca é vinculado automaticamente.
 
 ## Limites da Ava
 

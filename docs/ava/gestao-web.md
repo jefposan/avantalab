@@ -1,26 +1,67 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.6.0.84.132 -->
+<!-- ava-version: 1.7.0 -->
 
-> Revisão 1.6.0.84.132: na tela obrigatória de cadastro, a ação
-> **Pesquisar CNPJ** fica em uma linha própria e com área de toque ampliada no
-> celular; em telas maiores, permanece ao lado do campo.
+> Revisão 1.7.0: a rota `/consulta` disponibiliza a Central de Consultas para
+> pesquisa cadastral de CNPJ. No cadastro empresarial, inclusive na etapa
+> obrigatória, **Pesquisar CNPJ** prepara os campos compatíveis para confirmação,
+> preservando conteúdo existente por padrão. No celular, a ação ocupa uma linha
+> própria; em telas maiores, permanece ao lado do documento.
 
-> Revisão 1.6.0.84.131: no cadastro de perfil empresarial, o botão
-> **Pesquisar** ao lado do CNPJ consulta a base pública e, após confirmação,
-> insere somente os campos compatíveis. Dados existentes são preservados por
-> padrão e só são substituídos mediante escolha explícita.
+> Revisão 1.6.1.09: conclusão e recuperação do acesso na Gestão Mobile; sem
+> impacto operacional na Gestão Web.
 
-> Revisão 1.6.0.84.130: melhora de contraste visual na Central de Consultas;
-> sem mudança operacional no fluxo de pesquisa.
+> Revisão 1.6.1.08: o card de login da Gestão Web volta a ficar alinhado à
+> esquerda, na mesma posição do card Criar cadastro, inclusive em janelas web
+> estreitas usadas com mouse ou trackpad. O início vertical dos dois cards
+> também foi igualado; sem mudança no fluxo de autenticação.
 
-> Revisão 1.6.0.84.129: Recebimentos e Central de Consultas usam o fundo
-> AvantaLab sem logotipo no desktop; sem mudança operacional nos fluxos.
+> Revisão 1.6.1.07: as subpastas descendentes da pasta selecionada em Conteúdo
+> do Vendas > Divulgação recebem uma variação do mesmo destaque visual para
+> manter o ramo ativo identificável.
 
-> Revisão 1.6.0.84.128: a rota pública isolada `/consulta` disponibiliza a
-> Central de Consultas para pesquisa cadastral de CNPJ. A consulta não cadastra
-> empresas, não altera Recebimentos e não grava resultados nesta versão; o
-> relatório pode ser impresso pelo navegador.
+> Revisão 1.6.1.06: no visualizador da Divulgação, arrastar horizontalmente ou
+> usar as setas laterais alterna entre o material anterior e o próximo da pasta.
+
+> Revisão 1.6.1.05: tocar em uma imagem ou vídeo dentro da pasta de Divulgação
+> abre o material original em um visualizador amplo; vídeos exibem seus
+> controles de reprodução.
+
+> Revisão 1.6.1.04: ao confirmar os arquivos escolhidos, a Divulgação mostra
+> imediatamente o card Preparando arquivos para envio e mantém o percentual
+> visível até concluir ou cancelar.
+
+> Revisão 1.6.1.03: o resumo do envio de materiais informa somente quantos
+> arquivos foram enviados e quantos foram ignorados por duplicidade.
+
+> Revisão 1.6.1.02: as pastas de Conteúdo do Vendas > Divulgação mostram a
+> quantidade total de materiais armazenados nelas e em todas as subpastas.
+
+> Revisão 1.6.1.01: ação de envio de materiais reposicionada na Gestão Mobile;
+> a Gestão Web mantém o botão Adicionar no painel da pasta, sem mudança
+> operacional.
+
+> Revisão 1.6.1: resultados do AvantaVendas são vinculados manualmente a um
+> perfil financeiro. Ao trocar ou desvincular, os lançamentos anteriores podem
+> ser apagados ou mantidos sem proteção para edição e exclusão; clientes,
+> pedidos, pagamentos e o histórico operacional permanecem no Vendas.
+
+> Revisão 1.6.0.84.148: ao atualizar a página, a Gestão valida a sessão no
+> servidor. Sessão inválida ou usuário excluído retorna ao login e nunca abre o
+> cadastro de perfil financeiro.
+
+> Revisão 1.6.0.84.147: cadastros e edições de pessoas exigem nome e sobrenome
+> na conta, no perfil pessoal, em Usuários e Permissões, Controle de Ponto e
+> Recebimentos Presenciais.
+
+> Revisão 1.6.0.84.146: em Editar dados cadastrais, os dados gerais foram
+> reorganizados e o CPF/CNPJ passou a receber máscara e validação no campo.
+
+> Revisão 1.6.0.84.145: o card `Usuários e Permissões` ganhou mais largura e
+> ampliou o campo de senha inicial; sem mudança no fluxo de cadastro.
+
+> Revisão 1.6.0.84.144: formatação dos campos de vínculo comercial no Vendas
+> Mobile; sem impacto operacional na Gestão Web.
 
 > Revisão 1.6.0.84.127: linhas parcialmente preenchidas no modelo Excel
 > permanecem visíveis na revisão. Data, tipo e valor são obrigatórios,

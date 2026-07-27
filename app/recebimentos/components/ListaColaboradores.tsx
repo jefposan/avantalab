@@ -6,6 +6,7 @@ import styles from '../recebimentos.module.css';
 import type { Colaborador, Recebimento } from './types';
 import { aguardandoConferencia, cpfValido, formatarCpf, formatarMoeda, formatarNomeProprio, formatarTelefone } from './helpers';
 import CampoSenha from './CampoSenha';
+import { validarNomeCompleto } from '../../lib/nome-pessoa';
 
 type DadosColaborador = Omit<Colaborador, 'id' | 'ativo'>;
 
@@ -100,6 +101,9 @@ export default function ListaColaboradores({ colaboradores, recebimentos, onAdic
     if (!nome.trim() || !celular.trim() || !email.trim() || !cpf.trim() || !senha.trim() || !confirmarSenha.trim()) {
       return setErro('Preencha todos os campos: nome, CPF, celular, e-mail, senha e confirmação.');
     }
+    if (!validarNomeCompleto(nome)) {
+      return setErro('Informe o nome completo do colaborador, com nome e sobrenome.');
+    }
     // O CPF é o login do colaborador no PWA — precisa ser válido.
     if (!cpfValido(cpf)) {
       return setErro('Informe um CPF válido (ele será o login do colaborador).');
@@ -134,7 +138,7 @@ export default function ListaColaboradores({ colaboradores, recebimentos, onAdic
       <div className={`${styles.subItem} ${styles.formCompacto} ${styles.blocoEditando}`} style={{ marginBottom: 10 }}>
         <div className={styles.formTitulo}>{edicao ? 'Editar colaborador' : 'Novo colaborador'}</div>
         {/* 1ª linha: nome. */}
-        <div className={styles.field}><label className={styles.label}>Nome *</label><input className={styles.input} placeholder="Ex: João Silva" value={nome} onChange={(e) => setNome(formatarNomeProprio(e.target.value))} /></div>
+        <div className={styles.field}><label className={styles.label}>Nome completo *</label><input className={styles.input} placeholder="Ex: João Silva" value={nome} onChange={(e) => setNome(formatarNomeProprio(e.target.value))} /></div>
         {/* 2ª linha: CPF (login), senha e confirmação. */}
         <div style={{ display: 'flex', gap: 8 }}>
           <div className={styles.field} style={{ flex: 1 }}><label className={styles.label}>CPF (login) *</label><input className={`${styles.input} ${styles.inputCentro}`} inputMode="numeric" placeholder="000.000.000-00" value={cpf} onChange={(e) => setCpf(formatarCpf(e.target.value))} /></div>

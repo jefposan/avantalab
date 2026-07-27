@@ -1,51 +1,136 @@
 # Changelog
 
-## 1.6.0.84.132 - 2026-07-27
+## 1.7.0 - 2026-07-27
 
-- Cadastro obrigatório do perfil: a pesquisa de CNPJ passa a ocupar uma linha
-  própria no celular, com botão largo e área de toque ampliada, permanecendo ao
-  lado do documento em telas maiores.
+- Nova rota pública `/consulta` cria a Central de Consultas com pesquisa
+  cadastral de CNPJ via endpoint interno e provedor CNPJ.ws.
+- O relatório normalizado apresenta dados empresariais por seções, possui
+  impressão nativa e mantém as futuras categorias sinalizadas como **Em breve**.
+- O cadastro empresarial e a tela obrigatória recebem **Pesquisar CNPJ** para
+  preparar somente os campos compatíveis. A inserção depende de confirmação e
+  preserva dados já preenchidos por padrão.
+- No celular, a pesquisa ocupa uma linha própria com área de toque ampliada; em
+  telas maiores, permanece ao lado do documento.
+- Recebimentos e Central de Consultas usam no desktop o fundo AvantaLab sem
+  logotipo incorporado, sem alterar o fluxo operacional de Recebimentos.
 
-## 1.6.0.84.131 - 2026-07-27
+## 1.6.1.09 - 2026-07-27
 
-- Cadastro empresarial: o campo CNPJ recebe a ação **Pesquisar**, que reutiliza
-  o endpoint interno da Central de Consultas e prepara apenas os dados
-  compatíveis com o formulário.
-- A consulta não altera o formulário automaticamente. O usuário revisa a
-  empresa encontrada, confirma a inserção e escolhe explicitamente se deseja
-  substituir campos que já possuem conteúdo.
-- Responsável, WhatsApp, site, Instagram, inscrição municipal e tipo de empresa
-  permanecem manuais para evitar inferências não fornecidas pelo CNPJ.ws.
+- Gestão Mobile: a etapa `Acesso pronto` só conclui os 100% depois que a tela
+  principal foi montada, evitando permanecer no card ao final da carga.
+- A abertura é retomada ao voltar ao PWA, recuperar a conexão ou restaurar uma
+  página suspensa; falhas finais passam a oferecer recuperação independente.
+- A rota usada na troca AvantaVendas → Gestão recebeu a mesma política sem
+  cache da entrada direta, com verificação de versão e caches isolados entre os
+  dois aplicativos.
 
-## 1.6.0.84.130 - 2026-07-27
+## 1.6.1.08 - 2026-07-27
 
-- Central de Consultas: aumenta o contraste de rótulos, textos auxiliares,
-  ícones, badges, campos e títulos de seção no modo escuro.
-- Estados de foco, erro, disponível e indisponível permanecem distintos e
-  legíveis sem depender apenas da cor.
+- Gestão Web: o card de login voltou a ficar alinhado à esquerda, na mesma
+  posição usada pelo card Criar cadastro.
+- O posicionamento centralizado do login foi preservado somente em aparelhos
+  de toque; janelas web estreitas com mouse ou trackpad continuam à esquerda.
+- O alinhamento vertical do login também foi igualado ao início do card Criar
+  cadastro na visualização web.
 
-## 1.6.0.84.129 - 2026-07-27
+## 1.6.1.07 - 2026-07-27
 
-- Recebimentos e Central de Consultas passam a usar, no desktop, uma nova
-  versão do fundo oficial AvantaLab sem logotipo incorporado.
-- Os fundos específicos para celular permanecem inalterados abaixo de
-  1024 px, preservando a composição e a legibilidade mobile existentes.
+- AvantaVendas: o visualizador de Divulgação agora permite avançar ou voltar
+  entre os arquivos da pasta por gesto horizontal ou pelos botões laterais.
+- Conteúdo do Vendas: as subpastas descendentes da pasta selecionada recebem
+  uma variação do mesmo destaque visual para evidenciar o ramo ativo.
 
-## 1.6.0.84.128 - 2026-07-26
+## 1.6.1.06 - 2026-07-27
 
-- Nova rota pública isolada `/consulta` apresenta a base visual e arquitetônica
-  da Central de Consultas, sem alterar cadastro empresarial, navegação,
-  autenticação ou o módulo Recebimentos.
-- A consulta cadastral de CNPJ usa exclusivamente o endpoint server-side
-  `/api/consultas/cnpj`, que valida, aplica timeout, consulta o CNPJ.ws e
-  devolve somente o modelo normalizado do AvantaLab.
-- O relatório responsivo organiza identificação, endereço, CNAEs, contatos,
-  regime tributário, quadro societário e inscrições estaduais, com impressão
-  nativa preparada para PDF. As demais consultas aparecem como **Em breve**.
-- O salvamento permanece controladamente indisponível até existir um contrato
-  compartilhado e seguro de empresa ativa para a rota pública; nenhuma tabela
-  empresarial ou política RLS foi alterada.
+- Visualizador da Divulgação: arrastar horizontalmente alterna entre o material
+  anterior e o próximo dentro da pasta aberta.
+- Foram adicionados contador de posição e botões laterais acessíveis; o gesto
+  preserva a rolagem vertical e os controles inferiores dos vídeos.
 
+## 1.6.1.05 - 2026-07-27
+
+- Divulgação: imagens e vídeos dentro das pastas de Conteúdo do Vendas passam a
+  abrir em um visualizador amplo ao toque, usando o arquivo original.
+- O visualizador funciona no mobile e no web, possui fechamento acessível,
+  suporte à tecla Esc e controles nativos para vídeos.
+
+## 1.6.1.04 - 2026-07-27
+
+- Divulgação: após confirmar a seleção de arquivos, o card de progresso aparece
+  antes do processamento com a etapa `Preparando arquivos para envio`.
+- O card permanece visível durante verificação de duplicidade, envio e registro,
+  com percentual, arquivo atual e opção de cancelamento.
+
+## 1.6.1.03 - 2026-07-27
+
+- Divulgação: o resumo após o envio informa somente as quantidades de arquivos
+  enviados e ignorados por duplicidade, sem listar os nomes dos duplicados.
+
+## 1.6.1.02 - 2026-07-27
+
+- Conteúdo do Vendas: as pastas de Divulgação na Gestão passam a exibir o total
+  de materiais de toda a árvore, somando os arquivos da própria pasta e de
+  todas as suas subpastas.
+
+## 1.6.1.01 - 2026-07-27
+
+- Gestão Mobile: ao selecionar uma pasta em Conteúdo do Vendas > Divulgação, a
+  ação `Enviar arquivos para esta pasta` passa a aparecer junto da pasta,
+  evitando que o envio fique oculto abaixo da árvore de pastas.
+- A versão web mantém o botão `Adicionar` no painel de materiais.
+
+## 1.6.1 - 2026-07-27
+
+- AvantaVendas passa a funcionar com uma conta independente, sem exigir código
+  empresarial nem perfil financeiro para clientes, produtos, pedidos e
+  pagamentos.
+- O código da empresa solicita, mediante aprovação, somente acesso a Novidades,
+  Divulgação e catálogo publicado para a equipe; ele não concede acesso a
+  clientes, pedidos, pagamentos ou dados financeiros.
+- A integração com a Gestão torna-se opcional e manual. O usuário escolhe o
+  perfil financeiro, e o primeiro vínculo envia todos os meses existentes.
+- Na troca de destino, o usuário escolhe entre todo o histórico, mês vigente ou
+  mês seguinte e decide se os lançamentos do perfil anterior serão mantidos,
+  agora editáveis, ou apagados. O histórico operacional do Vendas é preservado.
+- Ao ir do Vendas para a Gestão, a lista de perfis financeiros é sempre
+  apresentada. Sem perfil, o sistema oferece criar ou ativar um, sem vincular
+  automaticamente o novo perfil ao financeiro do Vendas.
+- A consolidação mensal enviada à Gestão passa a ser rastreada por usuário,
+  permitindo transferir ou desvincular os resultados de cada conta com
+  segurança e preservando os vínculos financeiros existentes.
+
+## 1.6.0.84.148 - 2026-07-27
+
+- Gestão Web: o refresh agora valida no servidor se a sessão e o usuário ainda
+  existem antes de procurar perfis financeiros.
+- Sessões inválidas, expiradas ou pertencentes a usuários excluídos são limpas
+  e encaminhadas ao login, sem abrir indevidamente `Criar perfil financeiro`.
+
+## 1.6.0.84.147 - 2026-07-27
+
+- Cadastros de pessoas passam a exigir nome e sobrenome em toda a Gestão Web,
+  Gestão Mobile, AvantaVendas, Usuários e Permissões, Controle de Ponto e
+  Recebimentos Presenciais.
+- A regra é validada na interface e nas APIs dos módulos, inclusive nas edições
+  de usuários, funcionários e colaboradores já cadastrados.
+
+## 1.6.0.84.146 - 2026-07-27
+
+- Gestão Web: os dados gerais do cadastro do perfil foram reorganizados em duas
+  linhas, com larguras proporcionais ao conteúdo.
+- O CPF/CNPJ agora recebe máscara durante a digitação e validação visual dos
+  dígitos antes da conclusão do cadastro.
+
+## 1.6.0.84.145 - 2026-07-26
+
+- Gestão Web: o card `Usuários e Permissões` ficou um pouco mais largo e a
+  coluna da senha inicial ganhou mais espaço para exibir mais caracteres.
+
+## 1.6.0.84.144 - 2026-07-26
+
+- Vendas Mobile: os campos de `Vincular outra empresa` passam a ocupar a largura
+  disponível e recebem labels, contorno, raio, espaçamento e foco visível nos
+  temas claro e escuro.
 ## 1.6.0.84.127 - 2026-07-25
 
 - Importação de despesas: linhas parcialmente preenchidas no modelo Excel

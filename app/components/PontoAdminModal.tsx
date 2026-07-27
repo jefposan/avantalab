@@ -1,6 +1,7 @@
 'use client';
 import React, { useState, useEffect, useRef } from 'react';
 import DraggableModalCard from './DraggableModalCard';
+import { validarNomeCompleto } from '../lib/nome-pessoa';
 
 export type FuncionarioPonto = {
   id: string;
@@ -262,7 +263,7 @@ export default function PontoAdminModal({
 
   const enviar = async () => {
     setMsg(null);
-    if (!nome.trim()) { setMsg({ tipo: 'erro', texto: 'Informe o nome do funcionário.' }); return; }
+    if (!validarNomeCompleto(nome)) { setMsg({ tipo: 'erro', texto: 'Informe o nome completo do funcionário, com nome e sobrenome.' }); return; }
     if (!cpfValido(cpf)) { setMsg({ tipo: 'erro', texto: 'Informe um CPF válido (o login será o CPF).' }); return; }
     if (senha.length < 8) { setMsg({ tipo: 'erro', texto: 'A senha deve ter pelo menos 8 caracteres.' }); return; }
     setEnviando(true);
@@ -327,6 +328,7 @@ export default function PontoAdminModal({
 
   const salvarEdicao = async (userId: string) => {
     setMsgEdit(null);
+    if (!validarNomeCompleto(editNome)) { setMsgEdit('Informe o nome completo do funcionário, com nome e sobrenome.'); return; }
     if (cpfEditDigitos.length > 0 && !cpfValido(editCpf)) { setMsgEdit('CPF inválido. Corrija para salvar.'); return; }
     setSalvandoEdit(true);
     const r = await onAtualizar(userId, {
@@ -768,7 +770,7 @@ export default function PontoAdminModal({
                     {editId === f.id && (
                       <div className={`mt-3 grid gap-2 border-t pt-3 ${itemBorda}`}>
                         <label className={labelCls}>Nome
-                          <input className={inputCls} value={editNome} onChange={(e) => setEditNome(e.target.value)} placeholder="Nome do funcionário" />
+                          <input className={inputCls} value={editNome} onChange={(e) => setEditNome(e.target.value)} placeholder="Nome completo do funcionário" />
                         </label>
                         <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
                           <label className={labelCls}>CPF (login)
@@ -829,7 +831,7 @@ export default function PontoAdminModal({
           {aba === 'novo' && (
             <div className="grid gap-3">
               <label className={labelCls}>Nome
-                <input className={inputCls} value={nome} onChange={(e) => setNome(e.target.value)} placeholder="Nome do funcionário" />
+                <input className={inputCls} value={nome} onChange={(e) => setNome(e.target.value)} placeholder="Nome completo do funcionário" />
               </label>
               <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
                 <label className={labelCls}>CPF (login)

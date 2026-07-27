@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { COBRANCA_ATIVA, podeUsar } from '../../lib/cobranca';
 import { resolverEstadoAcessoParaUsuario } from '../../lib/cobranca-servidor';
+import { validarNomeCompleto } from '../../lib/nome-pessoa';
 
 type PerfilUsuario =
   | 'administrador'
@@ -75,8 +76,8 @@ export async function POST(request: Request) {
       return respostaErro('Empresa não informada.');
     }
 
-    if (!nome) {
-      return respostaErro('Informe o nome do usuário.');
+    if (!validarNomeCompleto(nome)) {
+      return respostaErro('Informe o nome completo do usuário, com nome e sobrenome.');
     }
 
     if (!login) {

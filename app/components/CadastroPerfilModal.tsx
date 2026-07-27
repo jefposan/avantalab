@@ -3,11 +3,15 @@
 import React, { useEffect, useId, useRef, useState } from 'react';
 import {
   ESTADOS_BRASIL,
+  formatarDocumentoFiscal,
   REGIMES_TRIBUTARIOS,
+  somenteDigitos,
   TIPOS_EMPRESA,
+  validarCnpj,
+  validarCpf,
+  validarNomeCompleto,
   type CadastroPerfil,
   type StatusCadastroPerfil,
-  validarCnpj,
 } from '../lib/cadastro-perfil';
 import {
   aplicarCnpjAoCadastro,
@@ -62,6 +66,8 @@ export default function CadastroPerfilModal({ aberto, empresaId, statusInicial, 
   const [substituirDadosCnpj, setSubstituirDadosCnpj] = useState(false);
   const [erro, setErro] = useState('');
   const [statusAutoSave, setStatusAutoSave] = useState('');
+  const [documentoTocado, setDocumentoTocado] = useState(false);
+  const [nomeCompletoTocado, setNomeCompletoTocado] = useState(false);
   const autoSaveEmAndamento = useRef(false);
   const autoSavePendente = useRef<CadastroPerfil | null>(null);
 
@@ -104,6 +110,19 @@ export default function CadastroPerfilModal({ aberto, empresaId, statusInicial, 
   const camposDisponiveisCnpj = consultaCnpj
     ? CAMPOS_CADASTRO_CNPJ.filter((campo) => consultaCnpj.dados[campo])
     : [];
+  const tipoDocumentoNormalizado = tipoDocumento === 'CPF' ? 'cpf' : 'cnpj';
+  const limiteDocumento = tipoDocumento === 'CPF' ? 11 : 14;
+  const documentoDigitos = somenteDigitos(dados.documento, limiteDocumento);
+  const documentoValido = tipoDocumento === 'CPF'
+    ? validarCpf(documentoDigitos)
+    : validarCnpj(documentoDigitos);
+  const documentoInvalido = documentoTocado && documentoDigitos.length > 0 && !documentoValido;
+  const mensagemDocumento = documentoDigitos.length !== limiteDocumento
+    ? `Informe um ${tipoDocumento} com ${limiteDocumento} dígitos.`
+    : `${tipoDocumento} inválido. Confira os números informados.`;
+  const nomeCompletoInvalido = Boolean(
+    nomeCompletoTocado && dados.nome_responsavel.trim() && !validarNomeCompleto(dados.nome_responsavel)
+  );
   const set = <K extends keyof CadastroPerfil>(campo: K, valor: CadastroPerfil[K]) => setDados((atual) => ({ ...atual, [campo]: valor }));
   const input = 'h-9 w-full rounded-lg border border-slate-300 bg-white px-3 text-sm text-slate-800 outline-none focus:border-sky-600 focus:ring-2 focus:ring-sky-600/20 disabled:bg-slate-100 disabled:text-slate-400';
   const label = 'grid gap-1 text-[11px] font-bold text-slate-600';
@@ -313,41 +332,109 @@ export default function CadastroPerfilModal({ aberto, empresaId, statusInicial, 
             >
               <div>
                 <h3 className="mb-2 border-b border-slate-200 pb-1 text-xs font-black uppercase text-sky-800">Dados Gerais</h3>
-                <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-                  <label className={label}>{pessoal ? 'Nome do perfil' : 'Nome Fantasia'}<input className={input} value={dados.nome_fantasia} onChange={(e) => set('nome_fantasia', e.target.value)} /></label>
-                  <label className={label}>{pessoal ? 'Nome completo' : 'Responsável'}<input className={input} value={dados.nome_responsavel} onChange={(e) => set('nome_responsavel', e.target.value)} /></label>
-                  {!pessoal && <label className={label}>Razão Social<input className={input} value={dados.razao_social} onChange={(e) => set('razao_social', e.target.value)} /></label>}
-                  {!pessoal && <label className={label}>Tipo de Empresa<select className={input} value={dados.tipo_empresa} onChange={(e) => { limparRetornoCnpj(); setDados((atual) => ({ ...atual, tipo_empresa: e.target.value, documento: '' })); }}><option value="">Selecione</option>{TIPOS_EMPRESA.map(([v,n]) => <option key={v} value={v}>{n}</option>)}</select></label>}
-                  <div className={label}>
-                    <label htmlFor={documentoId}>{tipoDocumento}</label>
-                    <span className="flex min-w-0 flex-col gap-1.5 sm:flex-row">
+                {pessoal ? (
+                  <div className="grid gap-2 sm:grid-cols-[minmax(0,1.6fr)_minmax(14rem,1fr)]">
+                    <label className={label}>Nome do perfil<input className={input} value={dados.nome_fantasia} onChange={(e) => set('nome_fantasia', e.target.value)} /></label>
+                    <label className={label} htmlFor="cadastro-perfil-nome-completo">
+                      Nome completo
                       <input
-                        id={documentoId}
-                        className={input}
-                        inputMode="numeric"
-                        value={dados.documento}
-                        onChange={(e) => {
-                          limparRetornoCnpj();
-                          set('documento', e.target.value.replace(/\D/g, '').slice(0, tipoDocumento === 'CPF' ? 11 : 14));
-                        }}
-                        aria-describedby={consultaCnpjErro ? consultaCnpjErroId : undefined}
-                        aria-invalid={Boolean(consultaCnpjErro)}
-                        disabled={consultandoCnpj}
+                        id="cadastro-perfil-nome-completo"
+                        className={`${input} ${nomeCompletoInvalido ? '!border-red-500 focus:!border-red-600 focus:!ring-red-500/20' : ''}`}
+                        value={dados.nome_responsavel}
+                        aria-invalid={nomeCompletoInvalido}
+                        aria-describedby={nomeCompletoInvalido ? 'cadastro-perfil-nome-completo-erro' : undefined}
+                        onBlur={() => setNomeCompletoTocado(true)}
+                        onChange={(e) => set('nome_responsavel', e.target.value)}
                       />
-                      {tipoDocumento === 'CNPJ' && (
-                        <button
-                          type="button"
-                          onClick={consultarCnpj}
-                          disabled={consultandoCnpj || salvando}
-                          className="min-h-11 w-full shrink-0 rounded-lg border border-sky-200 bg-sky-50 px-4 text-xs font-black text-sky-800 transition hover:bg-sky-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-600 disabled:cursor-wait disabled:opacity-60 sm:min-h-9 sm:w-auto"
-                          aria-label="Pesquisar dados cadastrais pelo CNPJ"
-                        >
-                          {consultandoCnpj ? 'Pesquisando…' : 'Pesquisar CNPJ'}
-                        </button>
+                      {nomeCompletoInvalido && (
+                        <span id="cadastro-perfil-nome-completo-erro" className="text-[10px] font-bold text-red-600" role="alert">
+                          Informe nome e sobrenome.
+                        </span>
                       )}
-                    </span>
+                    </label>
                   </div>
-                </div>
+                ) : (
+                  <div className="grid gap-2">
+                    <div className="grid gap-2 sm:grid-cols-[minmax(0,1.8fr)_minmax(14rem,0.85fr)]">
+                      <label className={label}>Nome Fantasia<input className={input} value={dados.nome_fantasia} onChange={(e) => set('nome_fantasia', e.target.value)} /></label>
+                      <label className={label} htmlFor="cadastro-perfil-responsavel">
+                        Responsável
+                        <input
+                          id="cadastro-perfil-responsavel"
+                          className={`${input} ${nomeCompletoInvalido ? '!border-red-500 focus:!border-red-600 focus:!ring-red-500/20' : ''}`}
+                          value={dados.nome_responsavel}
+                          aria-invalid={nomeCompletoInvalido}
+                          aria-describedby={nomeCompletoInvalido ? 'cadastro-perfil-responsavel-erro' : undefined}
+                          onBlur={() => setNomeCompletoTocado(true)}
+                          onChange={(e) => set('nome_responsavel', e.target.value)}
+                        />
+                        {nomeCompletoInvalido && (
+                          <span id="cadastro-perfil-responsavel-erro" className="text-[10px] font-bold text-red-600" role="alert">
+                            Informe nome e sobrenome.
+                          </span>
+                        )}
+                      </label>
+                    </div>
+                    <div className="grid gap-2 lg:grid-cols-[11rem_minmax(18rem,auto)_minmax(0,1fr)]">
+                      <label className={label}>
+                        Tipo de Empresa
+                        <select
+                          className={input}
+                          value={dados.tipo_empresa}
+                          onChange={(e) => {
+                            limparRetornoCnpj();
+                            setDocumentoTocado(false);
+                            setDados((atual) => ({ ...atual, tipo_empresa: e.target.value, documento: '' }));
+                          }}
+                        >
+                          <option value="">Selecione</option>
+                          {TIPOS_EMPRESA.map(([v,n]) => <option key={v} value={v}>{n}</option>)}
+                        </select>
+                      </label>
+                      <div className={label}>
+                        <label htmlFor={documentoId}>{tipoDocumento}</label>
+                        <span className="flex min-w-0 flex-col gap-1.5 sm:flex-row">
+                          <input
+                            id={documentoId}
+                            className={`${input} ${documentoInvalido ? '!border-red-500 focus:!border-red-600 focus:!ring-red-500/20' : ''}`}
+                            inputMode="numeric"
+                            autoComplete="off"
+                            placeholder={tipoDocumento === 'CPF' ? '000.000.000-00' : '00.000.000/0000-00'}
+                            value={formatarDocumentoFiscal(dados.documento, tipoDocumentoNormalizado)}
+                            aria-invalid={documentoInvalido || Boolean(consultaCnpjErro)}
+                            aria-describedby={[
+                              documentoInvalido ? 'cadastro-perfil-documento-erro' : '',
+                              consultaCnpjErro ? consultaCnpjErroId : '',
+                            ].filter(Boolean).join(' ') || undefined}
+                            onBlur={() => setDocumentoTocado(true)}
+                            onChange={(e) => {
+                              limparRetornoCnpj();
+                              set('documento', somenteDigitos(e.target.value, limiteDocumento));
+                            }}
+                            disabled={consultandoCnpj}
+                          />
+                          {tipoDocumento === 'CNPJ' && (
+                            <button
+                              type="button"
+                              onClick={consultarCnpj}
+                              disabled={consultandoCnpj || salvando}
+                              className="min-h-11 w-full shrink-0 rounded-lg border border-sky-200 bg-sky-50 px-4 text-xs font-black text-sky-800 transition hover:bg-sky-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-600 disabled:cursor-wait disabled:opacity-60 sm:min-h-9 sm:w-auto"
+                              aria-label="Pesquisar dados cadastrais pelo CNPJ"
+                            >
+                              {consultandoCnpj ? 'Pesquisando…' : 'Pesquisar CNPJ'}
+                            </button>
+                          )}
+                        </span>
+                        {documentoInvalido && (
+                          <span id="cadastro-perfil-documento-erro" className="text-[10px] font-bold text-red-600" role="alert">
+                            {mensagemDocumento}
+                          </span>
+                        )}
+                      </div>
+                      <label className={label}>Razão Social<input className={input} value={dados.razao_social} onChange={(e) => set('razao_social', e.target.value)} /></label>
+                    </div>
+                  </div>
+                )}
 
                 <div className="mt-2" aria-live="polite">
                   {consultaCnpjErro && (

@@ -1,13 +1,13 @@
-import { AVANTAVENDAS_VERSION } from '../version';
+import { APP_VERSION } from '../../lib/version';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET() {
   return Response.json(
-    { versao: AVANTAVENDAS_VERSION },
+    { versao: APP_VERSION },
     {
       headers: {
-        'Cache-Control': 'no-store, no-cache, must-revalidate',
+        'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0',
         'CDN-Cache-Control': 'no-store',
         'Cloudflare-CDN-Cache-Control': 'no-store',
       },

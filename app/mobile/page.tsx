@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from 'next';
+import Script from 'next/script';
 import AvaMobileBridge from './AvaMobileBridge';
 import BackupMobileBridge from './BackupMobileBridge';
 import VendasMobileConteudoBridge from './VendasMobileConteudoBridge';
@@ -73,6 +74,7 @@ export default function MobilePage() {
       var pesos = { shell: 5, scripts: 15, auth: 10, profiles: 20, access: 10, data: 40 };
       var progresso = window.__AVANTALAB_MOBILE_PROGRESSO__ || { grupos: {}, valor: 0, rotulo: 'Iniciando a Gestão Mobile' };
       var chaveRecuperacao = 'avantalab.mobile.ultima_recuperacao_acesso';
+      var chaveRecargaVersao = 'avantalab.mobile.ultima_recarga_versao';
       var limiteSemProgresso = 32000;
       var limiteAposCemPorCento = 4000;
       window.__AVANTALAB_MOBILE_PROGRESSO__ = progresso;
@@ -126,6 +128,56 @@ export default function MobilePage() {
         window.setTimeout(function () { window.location.reload(); }, 700);
         return true;
       };
+      function telaPreparacaoVisivel() {
+        var root = document.getElementById('mobile-root');
+        return !!root && String(root.textContent || '').indexOf('Preparando acesso') >= 0;
+      }
+      function registrarFalhaGlobal(tipo, erro) {
+        try {
+          sessionStorage.setItem('avantalab.mobile.diagnostico_acesso', JSON.stringify({
+            etapa: tipo,
+            mensagem: String(erro && erro.message ? erro.message : erro || ''),
+            versao: '${mobileAssetVersion}',
+            origem: window.location.pathname,
+            registradoEm: new Date().toISOString()
+          }));
+        } catch (falhaArmazenamento) {}
+      }
+      window.addEventListener('error', function (evento) {
+        if (telaPreparacaoVisivel()) registrarFalhaGlobal('erro_global', evento.error || evento.message);
+      });
+      window.addEventListener('unhandledrejection', function (evento) {
+        if (telaPreparacaoVisivel()) registrarFalhaGlobal('promessa_rejeitada', evento.reason);
+      });
+      window.__avantalabVerificarVersaoMobile = function () {
+        if (!telaPreparacaoVisivel() || typeof window.fetch !== 'function') return;
+        fetch('/mobile/versao?agora=' + Date.now(), { cache: 'no-store' })
+          .then(function (resposta) { return resposta.ok ? resposta.json() : null; })
+          .then(function (dados) {
+            var versaoEncontrada = dados && String(dados.versao || '');
+            if (!versaoEncontrada || versaoEncontrada === '${mobileAssetVersion}') return;
+            var ultima = 0;
+            try { ultima = Number(sessionStorage.getItem(chaveRecargaVersao) || 0); } catch (error) {}
+            if (ultima && Date.now() - ultima < 120000) return;
+            try { sessionStorage.setItem(chaveRecargaVersao, String(Date.now())); } catch (error) {}
+            window.location.reload();
+          })
+          .catch(function () {});
+      };
+      function retomarPreparacaoAcesso() {
+        if (document.hidden || !telaPreparacaoVisivel()) return;
+        if (typeof window.__avantalabConcluirAcessoMobile === 'function') {
+          try {
+            if (window.__avantalabConcluirAcessoMobile()) return;
+          } catch (error) {
+            registrarFalhaGlobal('retomada_acesso', error);
+          }
+        }
+        window.__avantalabVerificarVersaoMobile();
+      }
+      window.addEventListener('pageshow', retomarPreparacaoAcesso);
+      window.addEventListener('online', retomarPreparacaoAcesso);
+      document.addEventListener('visibilitychange', retomarPreparacaoAcesso);
       window.setInterval(function () {
         if (document.hidden) return;
         var root = document.getElementById('mobile-root');
@@ -134,7 +186,7 @@ export default function MobilePage() {
         var limiteAtual = valorAtual >= 100 ? limiteAposCemPorCento : limiteSemProgresso;
         if (Date.now() - Number(progresso.atualizadoEm || Date.now()) < limiteAtual) return;
         progresso.atualizadoEm = Date.now();
-        if (valorAtual >= 100 && typeof window.__avantalabConcluirAcessoMobile === 'function') {
+        if (typeof window.__avantalabConcluirAcessoMobile === 'function') {
           try {
             if (window.__avantalabConcluirAcessoMobile()) {
               window.__avantalabConfirmarAcessoMobile();
@@ -522,7 +574,11 @@ export default function MobilePage() {
       <BackupMobileBridge />
       <VendasMobileConteudoBridge />
 
-      <script dangerouslySetInnerHTML={{ __html: bootstrapCarregamento }} />
+      <Script
+        id="avantalab-mobile-bootstrap"
+        strategy="afterInteractive"
+        dangerouslySetInnerHTML={{ __html: bootstrapCarregamento }}
+      />
     </main>
   );
 }

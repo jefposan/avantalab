@@ -26,6 +26,8 @@ export const ESTADOS_BRASIL = [
   'AC','AL','AP','AM','BA','CE','DF','ES','GO','MA','MT','MS','MG','PA','PB','PR','PE','PI','RJ','RN','RS','RO','RR','SC','SP','SE','TO',
 ] as const;
 
+export { validarNomeCompleto } from './nome-pessoa';
+
 export type CadastroPerfil = {
   empresa_id: string;
   nome_fantasia: string;
@@ -66,6 +68,24 @@ export type StatusCadastroPerfil = {
 
 export function somenteDigitos(valor: unknown, limite = 30) {
   return String(valor || '').replace(/\D/g, '').slice(0, limite);
+}
+
+export function formatarDocumentoFiscal(valor: unknown, tipo: 'cpf' | 'cnpj') {
+  const limite = tipo === 'cpf' ? 11 : 14;
+  const digitos = somenteDigitos(valor, limite);
+
+  if (tipo === 'cpf') {
+    return digitos
+      .replace(/^(\d{3})(\d)/, '$1.$2')
+      .replace(/^(\d{3})\.(\d{3})(\d)/, '$1.$2.$3')
+      .replace(/\.(\d{3})(\d)/, '.$1-$2');
+  }
+
+  return digitos
+    .replace(/^(\d{2})(\d)/, '$1.$2')
+    .replace(/^(\d{2})\.(\d{3})(\d)/, '$1.$2.$3')
+    .replace(/\.(\d{3})(\d)/, '.$1/$2')
+    .replace(/(\d{4})(\d)/, '$1-$2');
 }
 
 export function validarCpf(valor: unknown) {
