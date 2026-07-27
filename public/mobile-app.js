@@ -350,6 +350,7 @@
     novaRecorrLancarAgora: false,
     novaRecorrMesesFrente: 1,
     recorrEditandoId: null,
+    recorrEditandoSalvandoId: null,
     editRecorrNome: '',
     editRecorrDia: '',
     editRecorrDescricao: '',
@@ -3585,6 +3586,7 @@
   }
 
   function fecharModalMenu() {
+    if (state.modalMenu === 'despesasFixas' && state.recorrEditandoSalvandoId) return;
     if (state.modalMenu === 'gerenciar') {
       if (state.empresaEdicaoAberta) { cancelarEdicaoEmpresaMobile(); return; }
       if (state.empresaCriarAberta) { cancelarCriarEmpresaMobile(); return; }
@@ -3969,7 +3971,7 @@
   function podeAtualizarDadosAoRetornar() {
     var ativo = document.activeElement;
     if (ativo && ativo.matches && ativo.matches('input, select, textarea, [contenteditable="true"]')) return false;
-    if (state.carregando || state.lancandoDespesa || state.recorrSalvando || state.empresaAcao || state.assinaturaAcao) return false;
+    if (state.carregando || state.lancandoDespesa || state.recorrSalvando || state.recorrEditandoSalvandoId || state.empresaAcao || state.assinaturaAcao) return false;
     if (state.modalLancamento || state.modalMenu || state.menuAberto || state.modalAcao || state.exclusaoRecorrencia || state.chatIAAberto || state.tourAberto) return false;
     if (state.agendaFormAberto || state.empresaEdicaoAberta || state.empresaCriarAberta || state.empresaExclusaoAberta) return false;
     return true;
@@ -11918,9 +11920,18 @@
   }
 
   async function salvarEdicaoRecorrenciaMobile(id) {
+    id = String(id || '');
+    if (!id || state.recorrEditandoSalvandoId) return;
+
     var nome = (document.getElementById('edit-recorr-nome-' + id) || {}).value || '';
-    var dia = parseInt((document.getElementById('edit-recorr-dia-' + id) || {}).value || '0', 10);
+    var diaTexto = (document.getElementById('edit-recorr-dia-' + id) || {}).value || '';
+    var dia = parseInt(diaTexto || '0', 10);
     var descricao = (document.getElementById('edit-recorr-desc-' + id) || {}).value || '';
+    var lancarAgora = !!(document.getElementById('edit-recorr-lancar-' + id) && document.getElementById('edit-recorr-lancar-' + id).checked);
+    state.editRecorrNome = nome;
+    state.editRecorrDia = diaTexto;
+    state.editRecorrDescricao = descricao;
+    state.editRecorrLancarAgora = lancarAgora;
     if (!nome || !dia || dia < 1 || dia > 31) {
       state.erro = 'Preencha a despesa e o dia.';
       render();
@@ -11929,43 +11940,83 @@
     var despesaObj = (state.despesas || []).find(function(d) { return d.nome === nome; });
     var categoria = despesaObj ? (despesaObj.categoria || '') : '';
     var empresaId = state.empresa.id || state.empresa.empresa_id;
-    var resp = await db.from('recorrencias').update({ nome: nome, categoria: categoria, descricao: descricao, dia: dia }).eq('id', id).select().single();
-    if (resp.error) {
-      state.erro = 'Erro: ' + resp.error.message;
-      render();
-      return;
-    }
-    await db.from('lancamentos')
-      .update({ despesa_nome: nome, descricao: descricao, dia: dia })
-      .eq('empresa_id', empresaId)
-      .eq('recorrencia_id', id);
-    // lancar agora
-    var lancarAgora = document.getElementById('edit-recorr-lancar-' + id) && document.getElementById('edit-recorr-lancar-' + id).checked;
     var valorNum = state.editRecorrValorNumerico;
-    if (lancarAgora && valorNum > 0) {
-      var hoje = new Date();
-      await db.from('lancamentos').insert({
-        empresa_id: empresaId,
-        despesa_nome: nome,
-        descricao: descricao,
-        valor: valorNum,
-        dia: dia,
-        mes: meses[hoje.getMonth()],
-        ano: hoje.getFullYear(),
-        status: 'prevista',
-        tipo_obs: 'fixa',
-        recorrencia_id: id,
-      });
-    }
-    state.recorrencias = state.recorrencias.map(function(r) {
-      return r.id === id ? resp.data : r;
-    });
-    state.recorrEditandoId = null;
-    state.editRecorrValorNumerico = 0;
-    state.mensagem = 'Salvo!';
-    notificarFinanceiroAtualizadoMobile();
+    state.recorrEditandoSalvandoId = id;
+    state.erro = '';
     render();
-    setTimeout(function() { state.mensagem = ''; render(); }, 1500);
+
+    try {
+      var resp = await db.from('recorrencias').update({ nome: nome, categoria: categoria, descricao: descricao, dia: dia }).eq('id', id).select().single();
+      if (resp.error) {
+        state.erro = 'Erro: ' + resp.error.message;
+        state.recorrEditandoSalvandoId = null;
+        render();
+        return;
+      }
+
+      var lancamentosResp = await db.from('lancamentos')
+        .update({ despesa_nome: nome, descricao: descricao, dia: dia })
+        .eq('empresa_id', empresaId)
+        .eq('recorrencia_id', id);
+      if (lancamentosResp.error) {
+        state.recorrencias = state.recorrencias.map(function(r) {
+          return String(r.id) === id ? resp.data : r;
+        });
+        state.erro = 'A despesa fixa foi atualizada, mas os lancamentos vinculados nao puderam ser sincronizados. Tente salvar novamente.';
+        state.recorrEditandoSalvandoId = null;
+        render();
+        return;
+      }
+
+      if (lancarAgora && valorNum > 0) {
+        var hoje = new Date();
+        var novoLancamentoResp = await db.from('lancamentos').insert({
+          empresa_id: empresaId,
+          despesa_nome: nome,
+          descricao: descricao,
+          valor: valorNum,
+          dia: dia,
+          mes: meses[hoje.getMonth()],
+          ano: hoje.getFullYear(),
+          status: 'prevista',
+          tipo_obs: 'fixa',
+          recorrencia_id: id,
+        });
+        if (novoLancamentoResp.error) {
+          state.recorrencias = state.recorrencias.map(function(r) {
+            return String(r.id) === id ? resp.data : r;
+          });
+          state.erro = 'A despesa fixa foi salva, mas nao foi possivel inclui-la no mes atual. Tente novamente.';
+          state.recorrEditandoSalvandoId = null;
+          render();
+          return;
+        }
+      }
+      state.recorrencias = state.recorrencias.map(function(r) {
+        return String(r.id) === id ? resp.data : r;
+      });
+      state.lancamentos = (state.lancamentos || []).map(function(lancamento) {
+        return String(lancamento.recorrenciaId || '') === id
+          ? Object.assign({}, lancamento, { despesa: formatarDescricao(nome), descricao: descricao, dia: dia })
+          : lancamento;
+      });
+      state.recorrEditandoId = null;
+      state.recorrEditandoSalvandoId = null;
+      state.editRecorrNome = '';
+      state.editRecorrDia = '';
+      state.editRecorrDescricao = '';
+      state.editRecorrValor = '';
+      state.editRecorrValorNumerico = 0;
+      state.editRecorrLancarAgora = false;
+      state.mensagem = 'Salvo!';
+      notificarFinanceiroAtualizadoMobile();
+      render();
+      setTimeout(function() { state.mensagem = ''; render(); }, 1500);
+    } catch (error) {
+      state.recorrEditandoSalvandoId = null;
+      state.erro = mensagemErro(error, 'Nao foi possivel salvar a despesa fixa. Verifique sua conexao e tente novamente.');
+      render();
+    }
   }
 
   async function excluirRecorrenciaMobile(id, nome) {
@@ -12080,29 +12131,34 @@
     var listaHtml = (state.recorrencias || []).map(function(r) {
       var id = String(r.id);
       var editando = state.recorrEditandoId === id;
+      var salvandoEdicao = state.recorrEditandoSalvandoId === id;
+      var campoEdicaoDesabilitado = salvandoEdicao ? ' disabled' : '';
+      var nomeEdicao = editando ? state.editRecorrNome : r.nome;
+      var diaEdicao = editando ? state.editRecorrDia : String(r.dia);
+      var descricaoEdicao = editando ? state.editRecorrDescricao : (r.descricao || '');
       var despOpts = (state.despesas || []).map(function(d) {
-        return '<option value="' + escapeHtml(d.nome) + '"' + (d.nome === r.nome ? ' selected' : '') + '>' + escapeHtml(d.nome) + '</option>';
+        return '<option value="' + escapeHtml(d.nome) + '"' + (d.nome === nomeEdicao ? ' selected' : '') + '>' + escapeHtml(d.nome) + '</option>';
       }).join('');
 
       if (editando) {
         return '<div class="rounded-xl border border-cyan-200 bg-cyan-50 p-3 grid gap-2">' +
           '<div class="grid grid-cols-[64px_1fr] gap-2">' +
-            '<input id="edit-recorr-dia-' + id + '" type="number" min="1" max="31" value="' + escapeHtml(String(r.dia)) + '" style="font-size:16px" class="h-10 rounded-md border border-cyan-200 bg-white px-2 text-center text-base font-bold text-slate-900 outline-none" placeholder="Dia" />' +
-            '<select id="edit-recorr-nome-' + id + '" style="font-size:16px" class="h-10 rounded-md border border-cyan-200 bg-white px-2 text-base font-bold text-slate-900 outline-none">' +
+            '<input id="edit-recorr-dia-' + id + '" type="number" min="1" max="31" value="' + escapeHtml(diaEdicao) + '"' + campoEdicaoDesabilitado + ' style="font-size:16px" class="h-10 rounded-md border border-cyan-200 bg-white px-2 text-center text-base font-bold text-slate-900 outline-none disabled:opacity-60" placeholder="Dia" />' +
+            '<select id="edit-recorr-nome-' + id + '"' + campoEdicaoDesabilitado + ' style="font-size:16px" class="h-10 rounded-md border border-cyan-200 bg-white px-2 text-base font-bold text-slate-900 outline-none disabled:opacity-60">' +
               '<option value="">Selecione</option>' + despOpts +
             '</select>' +
           '</div>' +
-          '<input id="edit-recorr-desc-' + id + '" value="' + escapeHtml(r.descricao || '') + '" placeholder="Descrição (opcional)" style="font-size:16px" class="h-10 rounded-md border border-cyan-200 bg-white px-3 text-base font-bold text-slate-900 outline-none" />' +
+          '<input id="edit-recorr-desc-' + id + '" value="' + escapeHtml(descricaoEdicao) + '"' + campoEdicaoDesabilitado + ' placeholder="Descrição (opcional)" style="font-size:16px" class="h-10 rounded-md border border-cyan-200 bg-white px-3 text-base font-bold text-slate-900 outline-none disabled:opacity-60" />' +
           '<div class="flex items-center gap-2">' +
             '<label class="flex flex-1 items-center gap-2 rounded-lg border border-cyan-200 bg-white px-3 h-10 min-w-0">' +
-              '<input id="edit-recorr-lancar-' + id + '" type="checkbox" class="h-4 w-4 shrink-0" />' +
+              '<input id="edit-recorr-lancar-' + id + '" type="checkbox"' + (state.editRecorrLancarAgora ? ' checked' : '') + campoEdicaoDesabilitado + ' class="h-4 w-4 shrink-0 disabled:opacity-60" />' +
               '<span class="text-[10px] font-black text-slate-600 truncate">Incluir em ' + mesLabel + '</span>' +
             '</label>' +
-            '<input id="edit-recorr-valor-' + id + '" type="text" inputmode="numeric" placeholder="0,00" value="' + escapeHtml(state.editRecorrValor || '') + '" class="h-10 w-24 shrink-0 rounded-md border border-cyan-200 bg-white px-2 text-right text-base font-bold text-slate-900 outline-none" />' +
+            '<input id="edit-recorr-valor-' + id + '" type="text" inputmode="numeric" placeholder="0,00" value="' + escapeHtml(state.editRecorrValor || '') + '"' + campoEdicaoDesabilitado + ' class="h-10 w-24 shrink-0 rounded-md border border-cyan-200 bg-white px-2 text-right text-base font-bold text-slate-900 outline-none disabled:opacity-60" />' +
           '</div>' +
           '<div class="grid grid-cols-2 gap-1.5">' +
-            '<button type="button" data-recorr-cancelar-edicao="' + id + '" class="h-9 rounded-lg border border-slate-200 bg-white text-[10px] font-black uppercase text-slate-600">Cancelar</button>' +
-            '<button type="button" data-recorr-salvar-edicao="' + id + '" class="h-9 rounded-lg bg-slate-950 text-[10px] font-black uppercase text-white">Salvar</button>' +
+            '<button type="button" data-recorr-cancelar-edicao="' + id + '"' + (salvandoEdicao ? ' disabled' : '') + ' class="h-9 rounded-lg border border-slate-200 bg-white text-[10px] font-black uppercase text-slate-600 disabled:opacity-60">Cancelar</button>' +
+            '<button type="button" data-recorr-salvar-edicao="' + id + '"' + (salvandoEdicao ? ' disabled aria-busy="true"' : '') + ' class="h-9 rounded-lg bg-slate-950 text-[10px] font-black uppercase text-white disabled:opacity-60">' + (salvandoEdicao ? 'Salvando...' : 'Salvar') + '</button>' +
           '</div>' +
         '</div>';
       }
@@ -12869,9 +12925,15 @@
           toggleRecorrenciaAtivoMobile(btn.dataset.recorrToggle, btn.dataset.recorrAtivo === '1');
         } else if (btn.dataset.recorrEditar) {
           var r = (state.recorrencias || []).find(function(x) { return String(x.id) === btn.dataset.recorrEditar; });
+          if (!r) return;
           state.recorrEditandoId = btn.dataset.recorrEditar;
+          state.recorrEditandoSalvandoId = null;
+          state.editRecorrNome = r.nome || '';
+          state.editRecorrDia = String(r.dia || '');
+          state.editRecorrDescricao = r.descricao || '';
           state.editRecorrValor = '';
           state.editRecorrValorNumerico = 0;
+          state.editRecorrLancarAgora = false;
           state.erro = '';
           render();
           // re-bind valor input for edit form
@@ -12891,13 +12953,20 @@
         } else if (btn.dataset.recorrExcluir) {
           excluirRecorrenciaMobile(btn.dataset.recorrExcluir, btn.dataset.recorrExcluirNome || '');
         } else if (btn.dataset.recorrCancelarEdicao) {
+          if (state.recorrEditandoSalvandoId) return;
           state.recorrEditandoId = null;
+          state.editRecorrNome = '';
+          state.editRecorrDia = '';
+          state.editRecorrDescricao = '';
+          state.editRecorrValor = '';
+          state.editRecorrValorNumerico = 0;
+          state.editRecorrLancarAgora = false;
           state.erro = '';
           render();
         } else if (btn.dataset.recorrSalvarEdicao) {
           salvarEdicaoRecorrenciaMobile(btn.dataset.recorrSalvarEdicao);
         }
-      }, { once: true });
+      });
     }
     bind('trocar-empresa-gerenciar', function () { state.modalMenuRetorno = 'gerenciar'; abrirModalMenu('empresa'); });
     bind('termos-mobile', function () { abrirModalMenu('termos'); });
@@ -14639,7 +14708,7 @@
           return Promise.all(
             keys
               .filter(function (key) {
-                return key.indexOf('avantalab-mobile-') === 0 && key !== 'avantalab-mobile-v294';
+                return key.indexOf('avantalab-mobile-') === 0 && key !== 'avantalab-mobile-v295';
               })
               .map(function (key) {
                 return caches.delete(key);

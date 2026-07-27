@@ -1,6 +1,9 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.6.1.21 -->
+<!-- ava-version: 1.6.1.22 -->
+
+> Revisão 1.6.1.22: correção do salvamento de despesas fixas aplicada somente à
+> Gestão Mobile; sem impacto operacional no AvantaVendas.
 
 > Revisão 1.6.1.21: centralização do campo Dia aplicada somente à edição de
 > lançamentos na Gestão Mobile; sem impacto operacional no AvantaVendas.

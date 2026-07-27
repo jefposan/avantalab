@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.6.1.22 - 2026-07-27
+
+- Gestão Mobile: o botão **Salvar** da edição de despesas fixas permanece
+  funcional após o usuário interagir com os campos do formulário.
+- Durante a gravação, o botão muda para **Salvando…** e bloqueia novos toques.
+  Após a confirmação do banco, somente o formulário de edição é fechado e o
+  usuário permanece em **Gerenciar despesas fixas** com a lista atualizada.
+
 ## 1.6.1.21 - 2026-07-27
 
 - Gestão Mobile: o valor do campo **Dia** fica centralizado horizontalmente ao

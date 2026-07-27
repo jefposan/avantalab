@@ -1,6 +1,11 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.6.1.21 -->
+<!-- ava-version: 1.6.1.22 -->
+
+> Revisão 1.6.1.22: em Gerenciar despesas fixas, Salvar permanece ativo depois
+> da interação com os campos, mostra **Salvando…** durante a gravação e fecha
+> somente o formulário editado após a confirmação, mantendo o card principal
+> aberto e atualizado.
 
 > Revisão 1.6.1.21: ao editar uma despesa ou receita, o valor do campo **Dia**
 > aparece centralizado horizontalmente; sem mudança no preenchimento ou na
