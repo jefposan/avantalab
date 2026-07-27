@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.6.1.08 - 2026-07-27
+
+- Gestão Web: o card de login voltou a ficar alinhado à esquerda, na mesma
+  posição usada pelo card Criar cadastro.
+- O posicionamento centralizado do login foi preservado somente em aparelhos
+  de toque; janelas web estreitas com mouse ou trackpad continuam à esquerda.
+- O alinhamento vertical do login também foi igualado ao início do card Criar
+  cadastro na visualização web.
+
 ## 1.6.1.07 - 2026-07-27
 
 - AvantaVendas: o visualizador de Divulgação agora permite avançar ou voltar

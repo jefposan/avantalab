@@ -1,6 +1,11 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.6.1.07 -->
+<!-- ava-version: 1.6.1.08 -->
+
+> Revisão 1.6.1.08: o card de login da Gestão Web volta a ficar alinhado à
+> esquerda, na mesma posição do card Criar cadastro, inclusive em janelas web
+> estreitas usadas com mouse ou trackpad. O início vertical dos dois cards
+> também foi igualado; sem mudança no fluxo de autenticação.
 
 > Revisão 1.6.1.07: as subpastas descendentes da pasta selecionada em Conteúdo
 > do Vendas > Divulgação recebem uma variação do mesmo destaque visual para

@@ -6,8 +6,8 @@ export type AmbienteAva = 'gestao-web' | 'gestao-mobile' | 'vendas';
  * Cada guia é enviado apenas no ambiente correspondente, evitando misturar
  * caminhos e funções de Web, Mobile e Vendas na mesma resposta.
  */
-// Revisado na versão 1.6.1.07: o AvantaVendas navega entre materiais por gesto
-// horizontal ou setas, e a árvore da Gestão destaca o ramo selecionado.
+// Revisado na versão 1.6.1.08: reposicionamento visual do login na Gestão Web,
+// sem alteração nas orientações operacionais da Ava.
 const GUIAS: Record<AmbienteAva, string> = {
   'gestao-web': `GUIA OPERACIONAL — AVANTALAB GESTÃO WEB
 Você atende no sistema Gestão Web. Oriente por nomes visíveis na interface; não invente telas.

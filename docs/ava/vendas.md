@@ -1,6 +1,9 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.6.1.07 -->
+<!-- ava-version: 1.6.1.08 -->
+
+> Revisão 1.6.1.08: reposicionamento do card de login apenas na Gestão Web; sem
+> impacto operacional no AvantaVendas.
 
 > Revisão 1.6.1.07: ao ampliar uma imagem ou vídeo da Divulgação, arraste para
 > a esquerda para abrir o próximo arquivo ou para a direita para voltar ao

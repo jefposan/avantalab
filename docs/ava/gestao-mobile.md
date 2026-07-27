@@ -1,6 +1,9 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.6.1.07 -->
+<!-- ava-version: 1.6.1.08 -->
+
+> Revisão 1.6.1.08: reposicionamento do card de login apenas na Gestão Web; sem
+> impacto operacional na Gestão Mobile.
 
 > Revisão 1.6.1.07: as subpastas pertencentes à pasta selecionada em Conteúdo
 > do Vendas > Divulgação recebem o mesmo destaque em intensidade menor,
