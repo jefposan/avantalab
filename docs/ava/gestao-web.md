@@ -1,6 +1,13 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.6.1 -->
+<!-- ava-version: 1.6.1.02 -->
+
+> Revisão 1.6.1.02: as pastas de Conteúdo do Vendas > Divulgação mostram a
+> quantidade total de materiais armazenados nelas e em todas as subpastas.
+
+> Revisão 1.6.1.01: ação de envio de materiais reposicionada na Gestão Mobile;
+> a Gestão Web mantém o botão Adicionar no painel da pasta, sem mudança
+> operacional.
 
 > Revisão 1.6.1: resultados do AvantaVendas são vinculados manualmente a um
 > perfil financeiro. Ao trocar ou desvincular, os lançamentos anteriores podem

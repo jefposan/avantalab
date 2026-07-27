@@ -1,5 +1,18 @@
 # Changelog
 
+## 1.6.1.02 - 2026-07-27
+
+- Conteúdo do Vendas: as pastas de Divulgação na Gestão passam a exibir o total
+  de materiais de toda a árvore, somando os arquivos da própria pasta e de
+  todas as suas subpastas.
+
+## 1.6.1.01 - 2026-07-27
+
+- Gestão Mobile: ao selecionar uma pasta em Conteúdo do Vendas > Divulgação, a
+  ação `Enviar arquivos para esta pasta` passa a aparecer junto da pasta,
+  evitando que o envio fique oculto abaixo da árvore de pastas.
+- A versão web mantém o botão `Adicionar` no painel de materiais.
+
 ## 1.6.1 - 2026-07-27
 
 - AvantaVendas passa a funcionar com uma conta independente, sem exigir código

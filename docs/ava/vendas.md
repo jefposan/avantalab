@@ -1,6 +1,14 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.6.1 -->
+<!-- ava-version: 1.6.1.02 -->
+
+> Revisão 1.6.1.02: a Gestão passa a mostrar em cada pasta de Divulgação o total
+> de materiais da própria pasta e de todas as subpastas; sem mudança operacional
+> no AvantaVendas, que já utilizava essa soma.
+
+> Revisão 1.6.1.01: a Gestão Mobile agora exibe a ação de envio junto da pasta
+> selecionada em Conteúdo do Vendas > Divulgação; sem mudança operacional no
+> AvantaVendas.
 
 > Revisão 1.6.1: a conta do AvantaVendas funciona sem código empresarial e sem
 > perfil financeiro. O código solicita somente conteúdos da equipe mediante

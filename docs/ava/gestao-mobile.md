@@ -1,6 +1,13 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.6.1 -->
+<!-- ava-version: 1.6.1.02 -->
+
+> Revisão 1.6.1.02: as pastas de Conteúdo do Vendas > Divulgação mostram a
+> quantidade total de materiais armazenados nelas e em todas as subpastas.
+
+> Revisão 1.6.1.01: em Conteúdo do Vendas > Divulgação, selecionar uma pasta
+> exibe junto dela a ação Enviar arquivos para esta pasta, que aceita fotos e
+> vídeos nos mesmos formatos disponíveis na Gestão Web.
 
 > Revisão 1.6.1: ao vir do AvantaVendas, a Gestão sempre apresenta a seleção de
 > perfil. Se ainda não houver perfil financeiro, oferece criar ou ativar um sem
