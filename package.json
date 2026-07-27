@@ -7,6 +7,7 @@
     "build": "node scripts/verificar-padrao-avanta.mjs && node scripts/verificar-conhecimento-ava.mjs && node scripts/verificar-acesso-mobile.mjs && next build",
     "verificar:padrao-avanta": "node scripts/verificar-padrao-avanta.mjs",
     "verificar:ava": "node scripts/verificar-conhecimento-ava.mjs",
+    "test:consultas": "node --no-warnings --experimental-strip-types --test tests/consultas/*.test.mjs",
     "verificar:acesso-mobile": "node scripts/verificar-acesso-mobile.mjs",
     "start": "next start",
     "lint": "eslint"

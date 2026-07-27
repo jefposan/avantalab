@@ -1,6 +1,31 @@
 # Changelog
 
-## 1.6.1.10 - 2026-07-27
+## 1.6.1.14 - 2026-07-27
+
+- Gestão Web: a página principal e o service worker passam a usar cabeçalhos
+  sem cache, evitando que abas e instalações reutilizem o formulário de uma
+  versão anterior após novo deployment.
+- O identificador do service worker web foi renovado para descartar a versão
+  antiga no próximo carregamento.
+
+## 1.6.1.13 - 2026-07-27
+
+- Cadastro empresarial reorganizado: a primeira linha apresenta CNPJ e
+  **Buscar** lado a lado no mobile e no web; a segunda reúne Razão Social, Nome
+  Fantasia e Tipo de Empresa.
+- Responsável sai de Dados Gerais e passa para Contato, antes de Site e
+  Instagram. Para empresas, o campo continua obrigatório, mas deixa de exigir
+  nome e sobrenome.
+
+## 1.6.1.12 - 2026-07-27
+
+- Cadastro obrigatório: a pesquisa de CNPJ passa a ter uma ação primária
+  exclusiva e sempre visível abaixo do documento, identificada como
+  **Pesquisar CNPJ e preencher cadastro**.
+- A edição comum do perfil mantém a ação compacta ao lado do CNPJ, separando
+  explicitamente os dois contextos sem duplicar botões na mesma tela.
+
+## 1.6.1.11 - 2026-07-27
 
 - Cadastros de pessoas passam a identificar explicitamente `Nome completo` ou
   `Responsável — nome completo` e rejeitam números, símbolos isolados e nomes
@@ -13,6 +38,20 @@
   perfil. Senhas, confirmações, códigos SMS e tokens nunca são armazenados.
 - Recebimentos só limpa um cadastro depois da confirmação do servidor. Em erro
   de validação, rede ou banco, mantém todos os campos disponíveis para correção.
+
+## 1.6.1.10 - 2026-07-27
+
+- Nova rota pública `/consulta` cria a Central de Consultas com pesquisa
+  cadastral de CNPJ via endpoint interno e provedor CNPJ.ws.
+- O relatório normalizado apresenta dados empresariais por seções, possui
+  impressão nativa e mantém as futuras categorias sinalizadas como **Em breve**.
+- O cadastro empresarial e a tela obrigatória recebem **Pesquisar CNPJ** para
+  preparar somente os campos compatíveis. A inserção depende de confirmação e
+  preserva dados já preenchidos por padrão.
+- No celular, a pesquisa ocupa uma linha própria com área de toque ampliada; em
+  telas maiores, permanece ao lado do documento.
+- Recebimentos e Central de Consultas usam no desktop o fundo AvantaLab sem
+  logotipo incorporado, sem alterar o fluxo operacional de Recebimentos.
 
 ## 1.6.1.09 - 2026-07-27
 
@@ -131,7 +170,6 @@
 - Vendas Mobile: os campos de `Vincular outra empresa` passam a ocupar a largura
   disponível e recebem labels, contorno, raio, espaçamento e foco visível nos
   temas claro e escuro.
-
 ## 1.6.0.84.127 - 2026-07-25
 
 - Importação de despesas: linhas parcialmente preenchidas no modelo Excel

@@ -1,12 +1,24 @@
 # Ava — Manual do Vendas Mobile
 
-<!-- ava-version: 1.6.1.10 -->
+<!-- ava-version: 1.6.1.14 -->
 
-> Revisão 1.6.1.10: o cadastro da conta mantém temporariamente nome completo,
+> Revisão 1.6.1.14: renovação de cache restrita à Gestão Web; sem impacto
+> operacional no AvantaVendas.
+
+> Revisão 1.6.1.13: reorganização do cadastro empresarial da Gestão Web; sem
+> impacto operacional no AvantaVendas.
+
+> Revisão 1.6.1.12: ação explícita de pesquisa de CNPJ adicionada à etapa
+> obrigatória da Gestão Web; sem impacto operacional no AvantaVendas.
+
+> Revisão 1.6.1.11: o cadastro da conta mantém temporariamente nome completo,
 > e-mail, celular e DDI para recuperar o preenchimento após atualização da
 > página. Senhas, confirmação, código da empresa e código SMS não são
 > armazenados. A solicitação de conteúdo também identifica e valida Nome
 > completo.
+
+> Revisão 1.6.1.10: Central de Consultas e pesquisa assistida de CNPJ adicionadas
+> à Gestão Web; sem impacto operacional no AvantaVendas.
 
 > Revisão 1.6.1.09: a troca AvantaVendas → Gestão passa a abrir a rota da
 > Gestão sem reutilizar documento antigo do cache. Se a conexão falhar, o

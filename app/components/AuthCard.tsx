@@ -186,7 +186,7 @@ export default function AuthCard({
     atualizarEstadoInstalacao();
     window.addEventListener('beforeinstallprompt', capturarPrompt);
     window.addEventListener('appinstalled', concluirInstalacao);
-    navigator.serviceWorker?.register('/sw.js?v=1', { scope: '/' }).catch(() => undefined);
+    navigator.serviceWorker?.register('/sw.js?v=2', { scope: '/' }).catch(() => undefined);
 
     return () => {
       window.removeEventListener('beforeinstallprompt', capturarPrompt);

@@ -1,12 +1,32 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.6.1.10 -->
+<!-- ava-version: 1.6.1.14 -->
 
-> Revisão 1.6.1.10: cadastros de pessoas exibem Nome completo e preservam os
+> Revisão 1.6.1.14: a página principal e o service worker da Gestão Web deixam
+> de reutilizar o formulário de versões anteriores após uma atualização; sem
+> mudança no preenchimento do cadastro.
+
+> Revisão 1.6.1.13: no cadastro empresarial, CNPJ e **Buscar** ficam lado a
+> lado; abaixo aparecem Razão Social, Nome Fantasia e Tipo de Empresa. O campo
+> Responsável fica em Contato, antes de Site e Instagram, e não exige nome
+> completo.
+
+> Revisão 1.6.1.12: na etapa obrigatória de cadastro empresarial, a ação
+> **Pesquisar CNPJ e preencher cadastro** aparece abaixo do documento e prepara
+> os dados compatíveis para confirmação. Em Editar perfil, a pesquisa continua
+> compacta ao lado do CNPJ.
+
+> Revisão 1.6.1.11: cadastros de pessoas exibem Nome completo e preservam os
 > campos quando ocorre erro. Usuários e Permissões, Controle de Ponto e
 > Recebimentos mantêm rascunhos temporários dos dados não sensíveis; senhas,
 > confirmações e códigos nunca são gravados no navegador. Em Recebimentos, o
 > formulário só é limpo após confirmação do servidor.
+
+> Revisão 1.6.1.10: a rota `/consulta` disponibiliza a Central de Consultas para
+> pesquisa cadastral de CNPJ. No cadastro empresarial, inclusive na etapa
+> obrigatória, **Pesquisar CNPJ** prepara os campos compatíveis para confirmação,
+> preservando conteúdo existente por padrão. No celular, a ação ocupa uma linha
+> própria; em telas maiores, permanece ao lado do documento.
 
 > Revisão 1.6.1.09: conclusão e recuperação do acesso na Gestão Mobile; sem
 > impacto operacional na Gestão Web.
