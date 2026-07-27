@@ -103,6 +103,7 @@ const estadoInicial = {
 };
 
 let state = carregarEstado();
+let alterandoPerfilFinanceiroVendas = false;
 const usuarioPreferenciasLocaisId = state.usuario?.id || null;
 // O dashboard é mensal: um filtro salvo nunca pode cortar os últimos dias do
 // mês selecionado. Isso mantém vendas e recebimentos alinhados à Gestão.
@@ -1496,7 +1497,7 @@ function renderLogin() {
 function renderCadastroConta() {
   if (cadastroEtapa === 'sms') return renderValidacaoSmsCadastro();
   const paises = PAISES_DDI.map(([nome, ddi, flag]) => `<option value="${ddi}" ${ddi === '55' ? 'selected' : ''}>${flag} +${ddi}</option>`).join('');
-  return `<section class="login-screen">${renderMarcaAcesso()}<form class="login-register-form" onsubmit="criarConta(event)"><label>Nome completo<div class="login-field">${svgIcon('user')}<input id="cadastroNome" autocomplete="name" placeholder="Digite seu nome" required></div></label><label>E-mail<div class="login-field">${svgIcon('mail')}<input id="cadastroEmail" type="email" autocomplete="email" placeholder="Digite seu e-mail" required></div></label><label>Celular<div class="phone-register-field"><select id="cadastroDdi" aria-label="País (DDI)">${paises}</select><div class="login-field">${svgIcon('phone')}<input id="cadastroTelefone" type="tel" inputmode="numeric" autocomplete="tel-national" placeholder="DDD + número" required></div></div></label><label>Código da empresa<div class="login-field">${svgIcon('folder')}<input id="cadastroCodigo" autocomplete="off" autocapitalize="characters" placeholder="AVA-XXXXXXXX" required></div></label><label>Senha<div class="login-field password-field">${svgIcon('lock')}<input id="cadastroSenha" type="password" autocomplete="new-password" placeholder="Crie sua senha" oninput="atualizarRequisitosSenhaCadastro(this.value)" required><button type="button" class="password-toggle" onclick="alternarSenhaCampoVendas('cadastroSenha',this)" aria-label="Exibir senha">${svgIcon('eye')}</button></div><small id="requisitosSenhaCadastro" class="password-requirements">8+ caracteres, maiúscula, minúscula e número.</small></label><label>Confirmar senha<div class="login-field password-field">${svgIcon('lock')}<input id="cadastroConfirmarSenha" type="password" autocomplete="new-password" placeholder="Digite a senha novamente" required><button type="button" class="password-toggle" onclick="alternarSenhaCampoVendas('cadastroConfirmarSenha',this)" aria-label="Exibir senha">${svgIcon('eye')}</button></div></label><div id="cadastroErro" class="login-error"></div><button class="primary login-submit" type="submit">Continuar</button><p class="login-register">Já tem conta? <button type="button" onclick="voltarParaLogin()">Entrar</button></p></form></section>`;
+  return `<section class="login-screen">${renderMarcaAcesso()}<form class="login-register-form" onsubmit="criarConta(event)"><label>Nome completo<div class="login-field">${svgIcon('user')}<input id="cadastroNome" autocomplete="name" placeholder="Digite seu nome" required></div></label><label>E-mail<div class="login-field">${svgIcon('mail')}<input id="cadastroEmail" type="email" autocomplete="email" placeholder="Digite seu e-mail" required></div></label><label>Celular<div class="phone-register-field"><select id="cadastroDdi" aria-label="País (DDI)">${paises}</select><div class="login-field">${svgIcon('phone')}<input id="cadastroTelefone" type="tel" inputmode="numeric" autocomplete="tel-national" placeholder="DDD + número" required></div></div></label><label>Código da empresa (opcional)<div class="login-field">${svgIcon('folder')}<input id="cadastroCodigo" autocomplete="off" autocapitalize="characters" placeholder="AVA-XXXXXXXX"></div><small>Use apenas para solicitar acesso a Novidades, Divulgação e produtos publicados pela empresa.</small></label><label>Senha<div class="login-field password-field">${svgIcon('lock')}<input id="cadastroSenha" type="password" autocomplete="new-password" placeholder="Crie sua senha" oninput="atualizarRequisitosSenhaCadastro(this.value)" required><button type="button" class="password-toggle" onclick="alternarSenhaCampoVendas('cadastroSenha',this)" aria-label="Exibir senha">${svgIcon('eye')}</button></div><small id="requisitosSenhaCadastro" class="password-requirements">8+ caracteres, maiúscula, minúscula e número.</small></label><label>Confirmar senha<div class="login-field password-field">${svgIcon('lock')}<input id="cadastroConfirmarSenha" type="password" autocomplete="new-password" placeholder="Digite a senha novamente" required><button type="button" class="password-toggle" onclick="alternarSenhaCampoVendas('cadastroConfirmarSenha',this)" aria-label="Exibir senha">${svgIcon('eye')}</button></div></label><div id="cadastroErro" class="login-error"></div><button class="primary login-submit" type="submit">Continuar</button><p class="login-register">Já tem conta? <button type="button" onclick="voltarParaLogin()">Entrar</button></p></form></section>`;
 }
 
 function senhaCadastroValida(senha) {
@@ -2123,7 +2124,7 @@ async function criarConta(event) {
     if (erro) erro.textContent = 'Informe o nome completo, com nome e sobrenome.';
     return;
   }
-  if (!nome || !email || !codigo || !telefone || !senhaCadastroValida(senha)) {
+  if (!nome || !email || !telefone || !senhaCadastroValida(senha)) {
     if (erro) erro.textContent = 'A senha deve ter 8 caracteres, ao menos uma letra maiúscula, uma minúscula e um número.';
     return;
   }
@@ -2210,14 +2211,20 @@ async function confirmarCadastroSms(event) {
     const resultado = await resposta.json().catch(() => ({}));
     if (!resposta.ok || resultado.erro) throw new Error(resultado.mensagem || 'Código inválido ou expirado.');
     const dados = cadastroPendente;
-    localStorage.setItem('avantalab.vendas_mobile.solicitacao_pendente', JSON.stringify({ nome: dados.nome, codigo: dados.codigo, telefone: dados.telefone }));
+    if (dados.codigo) {
+      localStorage.setItem('avantalab.vendas_mobile.solicitacao_pendente', JSON.stringify({ nome: dados.nome, codigo: dados.codigo, telefone: dados.telefone }));
+    } else {
+      localStorage.removeItem('avantalab.vendas_mobile.solicitacao_pendente');
+    }
     await window.VendasDb.signUp({ nome: dados.nome, email: dados.email, password: dados.senha, telefone: dados.telefone });
     pararContadorSmsCadastro();
     cadastroPendente = null;
     cadastroEtapa = 'dados';
     modoLogin = 'entrar';
     render();
-    toast('Conta criada. Confirme seu e-mail e entre para enviar a solicitação ao gestor.');
+    toast(dados.codigo
+      ? 'Conta criada. Confirme seu e-mail; a solicitação de conteúdo será enviada no primeiro acesso.'
+      : 'Conta criada. Confirme seu e-mail para começar a usar o Vendas.');
   } catch (error) {
     if (erro) erro.textContent = traduzErro(error);
   }
@@ -2417,7 +2424,7 @@ async function carregarDadosBackend(mostrarCarregamento = true, manterPreparacao
     const contextoPreparado = contextoAberturaVendas;
     contextoAberturaVendas = null;
     let dados = await comLimiteDeTempo(window.VendasDb.loadAll(contextoPreparado));
-    if (dados.user && !dados.acesso) {
+    if (dados.user) {
       const pendente = JSON.parse(localStorage.getItem('avantalab.vendas_mobile.solicitacao_pendente') || 'null');
       if (pendente?.codigo && pendente?.nome) {
         await comLimiteDeTempo(window.VendasDb.solicitarAcesso(pendente));
@@ -2449,7 +2456,7 @@ async function carregarDadosBackend(mostrarCarregamento = true, manterPreparacao
       if (!preservarTelaAtual) state.menuAberto = true;
       state.acessoVendas = dados.acesso || null;
       state.solicitacaoAcesso = dados.solicitacao || null;
-      state.usuarioSemAcesso = !dados.acesso;
+      state.usuarioSemAcesso = false;
       state.moduloVendasAtivo = dados.moduloAtivo !== false;
       state.premiumVendasBloqueado = dados.premiumBloqueado === true;
       state.estadoAssinaturaVendas = dados.estadoAssinatura || null;
@@ -2458,8 +2465,7 @@ async function carregarDadosBackend(mostrarCarregamento = true, manterPreparacao
       state.vinculosComerciais = dados.vinculosComerciais || [];
       state.vinculoComercialAtivo = dados.vinculoComercialAtivo || null;
       state.perfisFinanceiros = dados.perfisFinanceiros || [];
-      if (!dados.acesso) state.autenticado = false;
-      else await salvarCacheVendas();
+      await salvarCacheVendas();
     }
   } catch (error) {
     console.error(error);
@@ -3125,6 +3131,15 @@ function renderConfiguracoes() {
   const empresa = String(state.acessoVendas?.empresa_nome || 'Não informada');
   const integracao = state.integracaoGestao || { base_receita: 'recebidos', pode_configurar: false };
   const vinculos = state.vinculosComerciais || [];
+  const perfilFinanceiroAtual = (state.perfisFinanceiros || []).find((perfil) => perfil.empresa_id === integracao.empresa_id);
+  const perfilFinanceiroAgendado = (state.perfisFinanceiros || []).find((perfil) => perfil.empresa_id === integracao.proxima_empresa_id);
+  const dataTrocaFinanceira = integracao.vigente_desde
+    ? new Date(`${integracao.vigente_desde}T12:00:00`).toLocaleDateString('pt-BR')
+    : '';
+  const resumoDestinoFinanceiro = perfilFinanceiroAtual?.empresa_nome || 'Nenhum perfil vinculado';
+  const avisoTrocaFinanceira = integracao.troca_pendente && perfilFinanceiroAgendado
+    ? `<small class="settings-financial-schedule">Troca agendada para ${escapeHtml(perfilFinanceiroAgendado.empresa_nome)} em ${escapeHtml(dataTrocaFinanceira)}.</small>`
+    : '';
   const renderRecurso = (vinculo, chave, titulo) => {
     const campoAtivo = { novidades: 'novidades_ativas', divulgacao: 'divulgacao_ativa', catalogo: 'catalogo_ativo' }[chave];
     const ativo = Boolean(vinculo[campoAtivo]);
@@ -3138,8 +3153,8 @@ function renderConfiguracoes() {
     <article class="settings-card"><h3>${svgIcon('settings')} Aparência</h3><label class="switch-line"><span>Modo escuro</span><input type="checkbox" ${state.temaEscuro ? 'checked' : ''} onchange="alternarTema(this.checked)"><i></i></label><p>Alterne o tema da aplicação para maior conforto visual.</p><div class="actions settings-shortcuts-actions"><button class="secondary" onclick="abrirOrganizarAtalhosVendas()">${svgIcon('settings')} Organizar atalhos</button></div></article>
     </div>
     <article class="settings-card settings-goal"><h3>${svgIcon('target')} Meta do período</h3><div class="settings-goal-summary"><div><span>Meta mensal</span><b>${moeda(state.metaMensal)}</b></div><div><span>Vendas mensais</span><b>${moeda(t.total)}</b></div></div><div class="progress"><i style="width:${Math.max(2, progresso)}%"></i></div><p>Faltam <b>${moeda(Math.max(0, state.metaMensal - t.total))}</b> para atingir sua meta.</p><div class="settings-form settings-goals-form"><label><span>Definir meta mensal</span><input id="metaConfig" type="text" inputmode="numeric" value="${numeroParaCampoMoeda(state.metaMensal)}" onfocus="this.select()" oninput="formatarCampoMoeda(this)" placeholder="0,00"></label><button class="primary" onclick="salvarMeta()">${svgIcon('save')} Salvar meta</button></div></article>
-    <article class="settings-card"><h3>${svgIcon('settings')} Integração com Gestão</h3><p>Os resultados do Vendas Mobile entram automaticamente como receita no Gestão sempre que um lançamento for alterado.</p><div class="settings-integration"><span>Destino financeiro</span><button class="secondary" onclick="abrirPerfilFinanceiroVendas()">${svgIcon('settings')} ${escapeHtml((state.perfisFinanceiros || []).find((perfil) => perfil.empresa_id === integracao.empresa_id)?.empresa_nome || 'Definir perfil financeiro')}</button><span>Enviar para o Gestão</span><div class="settings-segmented ${integracao.pode_configurar ? '' : 'is-disabled'}" role="group" aria-label="Base de receita enviada ao Gestão"><button type="button" class="${integracao.base_receita === 'recebidos' ? 'is-selected' : ''}" onclick="salvarIntegracaoGestao('recebidos')" ${integracao.pode_configurar ? '' : 'disabled'}>Recebidos</button><button type="button" class="${integracao.base_receita === 'vendidos' ? 'is-selected' : ''}" onclick="salvarIntegracaoGestao('vendidos')" ${integracao.pode_configurar ? '' : 'disabled'}>Vendidos</button></div></div>${integracao.pode_configurar ? '' : '<small>Escolha um perfil que você gerencia para alterar o destino ou a base.</small>'}<small>O padrão é valores recebidos. As receitas criadas no Gestão são protegidas contra edição manual.</small></article>
-    <article class="settings-card settings-commercial-links"><h3>${svgIcon('package')} Empresas e conteúdos</h3><p>Uma empresa fica ativa. As anteriores permanecem como histórico, e você decide o que manter.</p><div class="commercial-links-hint">Toque em Notícias, Divulgação ou Catálogo para ativar ou desativar cada item.</div><div class="commercial-links-list">${vinculos.length ? vinculos.map(renderVinculo).join('') : '<small>Nenhuma empresa comercial vinculada.</small>'}</div><div class="actions"><button class="secondary" onclick="abrirNovoVinculoComercial()">${svgIcon('plus')} Vincular outra empresa</button></div><small>Desligar Catálogo permite manter os produtos já recebidos ou removê-los sem afetar pedidos e resultados anteriores.</small></article>
+    <article class="settings-card"><h3>${svgIcon('settings')} Integração com Gestão</h3><p>O vínculo financeiro é opcional. Sem ele, clientes, pedidos, pagamentos e todo o histórico continuam funcionando normalmente apenas no Vendas.</p><div class="settings-integration"><span>Destino financeiro</span><button class="secondary" onclick="abrirPerfilFinanceiroVendas()">${svgIcon('settings')} ${escapeHtml(resumoDestinoFinanceiro)}</button><span>Enviar para o Gestão</span><div class="settings-segmented ${integracao.pode_configurar ? '' : 'is-disabled'}" role="group" aria-label="Base de receita enviada ao Gestão"><button type="button" class="${integracao.base_receita === 'recebidos' ? 'is-selected' : ''}" onclick="salvarIntegracaoGestao('recebidos')" ${integracao.pode_configurar ? '' : 'disabled'}>Recebidos</button><button type="button" class="${integracao.base_receita === 'vendidos' ? 'is-selected' : ''}" onclick="salvarIntegracaoGestao('vendidos')" ${integracao.pode_configurar ? '' : 'disabled'}>Vendidos</button></div></div>${avisoTrocaFinanceira}${integracao.vinculado ? '<div class="actions"><button class="danger" onclick="abrirDesvincularPerfilFinanceiroVendas()">Desvincular perfil financeiro</button></div>' : '<small>Vincule apenas se quiser enviar seus resultados para um perfil da Gestão.</small>'}<small>Lançamentos sincronizados ficam protegidos. Se o perfil for desvinculado e o histórico mantido, eles voltam a ser editáveis e podem ser excluídos.</small></article>
+    <article class="settings-card settings-commercial-links"><h3>${svgIcon('package')} Empresas e conteúdos</h3><p>O código da empresa solicita somente acesso ao conteúdo reservado da equipe. Ele nunca cria ou altera vínculo financeiro.</p><div class="commercial-links-hint">Após a aprovação do gestor, escolha o que deseja receber: Notícias, Divulgação ou Catálogo.</div><div class="commercial-links-list">${vinculos.length ? vinculos.map(renderVinculo).join('') : '<small>Nenhuma empresa de conteúdo vinculada.</small>'}</div><div class="actions"><button class="secondary" onclick="abrirNovoVinculoComercial()">${svgIcon('plus')} Vincular conteúdo de outra empresa</button></div><small>Clientes, pedidos, pagamentos e resultados permanecem particulares da sua conta do Vendas.</small></article>
     <article class="settings-card"><h3>${svgIcon('lock')} Senha da conta AvantaLab</h3><p>Esta senha pertence à sua conta principal. Ao alterá-la aqui, a nova senha passa a valer para o acesso ao Gestão e ao Vendas.</p><div class="password-form"><label>Nova senha (mín. 8 caracteres)<div class="password-control"><input id="senhaNova" type="password" autocomplete="new-password" minlength="8"><button type="button" class="password-toggle" onclick="alternarSenhaCampoVendas('senhaNova',this)" aria-label="Exibir senha">${svgIcon('eye')}</button></div></label><label>Confirme a nova senha<div class="password-control"><input id="senhaConfirma" type="password" autocomplete="new-password" minlength="8"><button type="button" class="password-toggle" onclick="alternarSenhaCampoVendas('senhaConfirma',this)" aria-label="Exibir senha">${svgIcon('eye')}</button></div></label><button class="password-button" onclick="alterarSenha()">${svgIcon('lock')} Atualizar senha da conta</button></div></article>
     <article class="settings-card settings-catalog-card"><h3>${svgIcon('package')} Catálogo de produtos</h3><p>Os novos produtos da empresa chegam automaticamente. Se recebeu um pacote, importe o arquivo ZIP completo.</p><div class="actions"><button class="primary" onclick="abrirImportacaoPacoteZip()">${svgIcon('package')} Importar pacote ZIP</button><button class="secondary" onclick="mostrarSincronizacaoCatalogo()">${svgIcon('save')} Situação da sincronização</button></div></article>
     <article class="settings-card settings-stock-card"><h3>${svgIcon('package')} Controle de estoque</h3><p>${state.produtos.filter((produto) => produto.estoque_controlado).length} produto(s) com estoque acompanhado neste aparelho.</p><div class="actions"><button class="primary" onclick="abrirAtualizarEstoque()">${svgIcon('plus')} Atualizar estoque</button></div><small>Entrada soma ao saldo atual. Ajuste define o saldo físico contado.</small></article>
@@ -3172,20 +3187,90 @@ async function salvarIntegracaoGestao(base) {
 function abrirPerfilFinanceiroVendas() {
   const perfis = state.perfisFinanceiros || [];
   if (!perfis.length) { toast('Nenhum perfil financeiro disponível. Você precisa ser gestor ou administrador de um perfil no Gestão.'); return; }
-  sheet(`<div class="sheet-header"><div><h2>Destino financeiro</h2><p class="muted small">Catálogo e resultados financeiros permanecem independentes.</p></div><button class="close" onclick="fecharSheet()">×</button></div><p>Escolha o perfil que receberá as próximas receitas do Vendas Mobile.</p><div class="grid">${perfis.map((perfil) => `<button class="secondary" onclick="confirmarPerfilFinanceiroVendas('${perfil.empresa_id}','${escapeHtml(perfil.empresa_nome)}')">${escapeHtml(perfil.empresa_nome)}</button>`).join('')}</div>`, 'sheet-backdrop-centered');
+  const atualId = state.integracaoGestao?.empresa_id || '';
+  sheet(`<div class="sheet-header"><div><h2>Destino financeiro</h2><p class="muted small">Catálogo, conteúdos e resultados financeiros permanecem independentes.</p></div><button class="close" onclick="fecharSheet()">×</button></div><p>Escolha manualmente o perfil que poderá receber os resultados do Vendas.</p><div class="grid">${perfis.map((perfil) => `<button class="secondary ${perfil.empresa_id === atualId ? 'is-selected' : ''}" onclick="selecionarPerfilFinanceiroVendas('${perfil.empresa_id}')">${escapeHtml(perfil.empresa_nome)}${perfil.empresa_id === atualId ? ' · Atual' : ''}</button>`).join('')}</div>`, 'sheet-backdrop-centered');
 }
 
-function confirmarPerfilFinanceiroVendas(empresaId, empresaNome) {
-  sheet(`<div class="sheet-header"><div><h2>Confirmar destino</h2><p class="muted small">Confirmação de segurança.</p></div><button class="close" onclick="fecharSheet()">×</button></div><p>As próximas receitas serão enviadas para <b>${escapeHtml(empresaNome)}</b>. Esta mudança não altera catálogos, clientes ou pedidos anteriores.</p><div class="grid"><button class="secondary" onclick="abrirPerfilFinanceiroVendas()">Voltar</button><button class="primary" onclick="salvarPerfilFinanceiroVendas('${empresaId}')">Confirmar destino</button></div>`, 'sheet-backdrop-centered');
+function nomePerfilFinanceiroVendas(empresaId) {
+  return (state.perfisFinanceiros || []).find((perfil) => perfil.empresa_id === empresaId)?.empresa_nome || 'Perfil financeiro';
 }
 
-async function salvarPerfilFinanceiroVendas(empresaId) {
+function selecionarPerfilFinanceiroVendas(empresaId) {
+  const empresaNome = nomePerfilFinanceiroVendas(empresaId);
+  const integracao = state.integracaoGestao || {};
+  if (integracao.empresa_id === empresaId && !integracao.troca_pendente) {
+    toast('Este já é o destino financeiro atual.');
+    return;
+  }
+  if (!integracao.vinculado) {
+    sheet(`<div class="sheet-header"><div><h2>Vincular perfil financeiro</h2><p class="muted small">Esta escolha é opcional e não altera seus conteúdos.</p></div><button class="close" onclick="fecharSheet()">×</button></div><p>Todos os meses existentes no Vendas serão enviados para <b>${escapeHtml(empresaNome)}</b>. Depois disso, os lançamentos sincronizados ficarão protegidos contra edição manual.</p><div class="grid"><button class="secondary" onclick="abrirPerfilFinanceiroVendas()">Voltar</button><button class="primary" onclick="salvarPerfilFinanceiroVendas('${empresaId}','todo_historico','manter')">Vincular todo o histórico</button></div>`, 'sheet-backdrop-centered');
+    return;
+  }
+  abrirPeriodoTrocaPerfilFinanceiroVendas(empresaId);
+}
+
+function abrirPeriodoTrocaPerfilFinanceiroVendas(empresaId) {
+  const empresaNome = nomePerfilFinanceiroVendas(empresaId);
+  sheet(`<div class="sheet-header"><div><h2>Quando iniciar a troca?</h2><p class="muted small">Novo destino: ${escapeHtml(empresaNome)}</p></div><button class="close" onclick="fecharSheet()">×</button></div><p>Escolha quais competências serão enviadas ao novo perfil financeiro.</p><div class="grid"><button class="secondary financial-flow-option" onclick="abrirDestinoHistoricoAnteriorVendas('${empresaId}','todo_historico')"><b>Todo o histórico</b><small>Todos os meses existentes e os próximos.</small></button><button class="secondary financial-flow-option" onclick="abrirDestinoHistoricoAnteriorVendas('${empresaId}','mes_atual')"><b>A partir do mês vigente</b><small>O mês atual e todos os próximos.</small></button><button class="secondary financial-flow-option" onclick="abrirDestinoHistoricoAnteriorVendas('${empresaId}','mes_seguinte')"><b>A partir do mês seguinte</b><small>O perfil atual permanece ativo até o fim deste mês.</small></button><button class="ghost" onclick="abrirPerfilFinanceiroVendas()">Voltar</button></div>`, 'sheet-backdrop-centered');
+}
+
+function rotuloPeriodoFinanceiroVendas(periodo) {
+  if (periodo === 'mes_atual') return 'a partir do mês vigente';
+  if (periodo === 'mes_seguinte') return 'a partir do mês seguinte';
+  return 'com todo o histórico';
+}
+
+function abrirDestinoHistoricoAnteriorVendas(empresaId, periodo) {
+  const periodoRotulo = rotuloPeriodoFinanceiroVendas(periodo);
+  sheet(`<div class="sheet-header"><div><h2>Histórico do perfil anterior</h2><p class="muted small">A troca será feita ${escapeHtml(periodoRotulo)}.</p></div><button class="close" onclick="fecharSheet()">×</button></div><p>O que deseja fazer com todos os lançamentos do Vendas que já estão no perfil financeiro anterior?</p><div class="grid"><button class="secondary financial-flow-option" onclick="salvarPerfilFinanceiroVendas('${empresaId}','${periodo}','manter')"><b>Manter lançamentos existentes</b><small>Eles permanecem no perfil anterior, perdem a proteção e poderão ser editados ou excluídos.</small></button><button class="danger financial-flow-option" onclick="confirmarExclusaoHistoricoTrocaVendas('${empresaId}','${periodo}')"><b>Apagar do perfil anterior</b><small>Remove todos os lançamentos originados pelo Vendas daquele perfil.</small></button><button class="ghost" onclick="abrirPeriodoTrocaPerfilFinanceiroVendas('${empresaId}')">Voltar</button></div>`, 'sheet-backdrop-centered');
+}
+
+function confirmarExclusaoHistoricoTrocaVendas(empresaId, periodo) {
+  const empresaNome = nomePerfilFinanceiroVendas(empresaId);
+  const periodoRotulo = rotuloPeriodoFinanceiroVendas(periodo);
+  sheet(`<div class="sheet-header"><div><h2>Apagar histórico anterior?</h2><p class="muted small">Ação destrutiva na Gestão.</p></div><button class="close" onclick="fecharSheet()">×</button></div><p>Todos os lançamentos gerados pelo Vendas no perfil financeiro anterior serão apagados. O histórico operacional continuará preservado no Vendas e apenas os resultados ${escapeHtml(periodoRotulo)} serão enviados para <b>${escapeHtml(empresaNome)}</b>.</p><div class="grid"><button class="secondary" onclick="abrirDestinoHistoricoAnteriorVendas('${empresaId}','${periodo}')">Voltar sem apagar</button><button class="danger" onclick="salvarPerfilFinanceiroVendas('${empresaId}','${periodo}','apagar')">Apagar e trocar destino</button></div>`, 'sheet-backdrop-centered');
+}
+
+async function salvarPerfilFinanceiroVendas(empresaId, periodo, historicoAnterior) {
+  if (alterandoPerfilFinanceiroVendas) return;
+  alterandoPerfilFinanceiroVendas = true;
   try {
-    await window.VendasDb.definirPerfilFinanceiro(empresaId);
+    const resposta = await window.VendasDb.definirPerfilFinanceiro(empresaId, periodo, historicoAnterior);
     fecharSheet();
     await carregarDadosBackend(false);
-    toast('Destino financeiro atualizado.');
-  } catch (error) { toast(traduzErro(error)); }
+    toast(resposta?.troca_pendente
+      ? 'Troca agendada para o mês seguinte.'
+      : 'Destino financeiro atualizado e histórico processado.');
+  } catch (error) {
+    toast(traduzErro(error));
+  } finally {
+    alterandoPerfilFinanceiroVendas = false;
+  }
+}
+
+function abrirDesvincularPerfilFinanceiroVendas() {
+  sheet(`<div class="sheet-header"><div><h2>Desvincular perfil financeiro</h2><p class="muted small">O Vendas continuará funcionando normalmente.</p></div><button class="close" onclick="fecharSheet()">×</button></div><p>Escolha o que deve acontecer com todos os lançamentos já enviados ao perfil atual.</p><div class="grid"><button class="secondary financial-flow-option" onclick="desvincularPerfilFinanceiroVendas('manter')"><b>Manter lançamentos existentes</b><small>Eles perdem a proteção e poderão ser editados ou excluídos na Gestão.</small></button><button class="danger financial-flow-option" onclick="confirmarExclusaoDesvinculoFinanceiroVendas()"><b>Apagar do perfil</b><small>Remove todos os lançamentos originados pelo Vendas daquele perfil.</small></button><button class="ghost" onclick="fecharSheet()">Cancelar</button></div>`, 'sheet-backdrop-centered');
+}
+
+function confirmarExclusaoDesvinculoFinanceiroVendas() {
+  sheet(`<div class="sheet-header"><div><h2>Apagar lançamentos?</h2><p class="muted small">O histórico original continuará no Vendas.</p></div><button class="close" onclick="fecharSheet()">×</button></div><p>Esta ação remove definitivamente da Gestão todos os lançamentos originados pelo Vendas no perfil atual.</p><div class="grid"><button class="secondary" onclick="abrirDesvincularPerfilFinanceiroVendas()">Voltar sem apagar</button><button class="danger" onclick="desvincularPerfilFinanceiroVendas('apagar')">Apagar e desvincular</button></div>`, 'sheet-backdrop-centered');
+}
+
+async function desvincularPerfilFinanceiroVendas(historicoAnterior) {
+  if (alterandoPerfilFinanceiroVendas) return;
+  alterandoPerfilFinanceiroVendas = true;
+  try {
+    await window.VendasDb.desvincularPerfilFinanceiro(historicoAnterior);
+    fecharSheet();
+    await carregarDadosBackend(false);
+    toast(historicoAnterior === 'apagar'
+      ? 'Perfil desvinculado e lançamentos removidos da Gestão.'
+      : 'Perfil desvinculado. Os lançamentos mantidos agora podem ser editados.');
+  } catch (error) {
+    toast(traduzErro(error));
+  } finally {
+    alterandoPerfilFinanceiroVendas = false;
+  }
 }
 
 async function alternarRecursoVinculoComercial(empresaId, recurso, ativar) {
@@ -3213,8 +3298,8 @@ function abrirNovoVinculoComercial() {
   sheet(`
     <div class="sheet-header">
       <div>
-        <h2>Vincular outra empresa</h2>
-        <p class="muted small">Após aprovação, ela passa a ser sua empresa comercial ativa.</p>
+        <h2>Vincular conteúdo de uma empresa</h2>
+        <p class="muted small">O gestor precisa aprovar o acesso a Novidades, Divulgação e produtos publicados.</p>
       </div>
       <button class="close" aria-label="Fechar" onclick="fecharSheet()">×</button>
     </div>
@@ -3231,7 +3316,8 @@ function abrirNovoVinculoComercial() {
         <label for="novoVinculoNome">Nome para a solicitação</label>
         <input id="novoVinculoNome" autocomplete="name" value="${escapeAttr(state.usuario?.nome || '')}">
       </div>
-      <button class="primary" onclick="solicitarNovoVinculoComercial()">Enviar para aprovação</button>
+      <small>Este código não concede acesso ao perfil financeiro da empresa.</small>
+      <button class="primary" onclick="solicitarNovoVinculoComercial()">Solicitar acesso ao conteúdo</button>
     </div>
   `, 'sheet-backdrop-centered commercial-link-request-backdrop');
 }
@@ -3244,7 +3330,7 @@ async function solicitarNovoVinculoComercial() {
   try {
     await window.VendasDb.solicitarAcesso({ codigo, nome, telefone: state.usuario?.telefone || '' });
     fecharSheet();
-    toast('Solicitação enviada. Após a aprovação, a nova empresa ficará ativa.');
+    toast('Solicitação enviada. Após a aprovação, os conteúdos da empresa ficarão disponíveis.');
   } catch (error) { toast(traduzErro(error)); }
 }
 
@@ -6241,10 +6327,8 @@ async function abrirSeletorPerfilGestaoVendas() {
   try {
     state.perfisGestaoTroca = await window.VendasDb.listarPerfisGestaoParaTroca();
     if (!state.perfisGestaoTroca.length) {
-      state.seletorPerfilGestaoAberto = false;
       state.perfisGestaoTrocaCarregando = false;
       render();
-      window.setTimeout(abrirGestaoParaCriarPrimeiroPerfilVendas, 60);
       return;
     }
   } catch (error) {
@@ -6284,6 +6368,12 @@ function confirmarPerfilGestaoVendas() {
   window.setTimeout(() => abrirGestao(perfil.empresa_id), 60);
 }
 
+function confirmarCriacaoPerfilGestaoVendas() {
+  state.seletorPerfilGestaoAberto = false;
+  render();
+  window.setTimeout(abrirGestaoParaCriarPrimeiroPerfilVendas, 60);
+}
+
 function rotuloPapelPerfilGestaoVendas(perfil) {
   return {
     gestor_master: 'Gestor Master',
@@ -6304,7 +6394,7 @@ function renderSeletorPerfilGestaoVendas() {
       ? `<div class="management-profile-empty"><p>${escapeHtml(state.perfisGestaoTrocaErro)}</p><button class="secondary" type="button" onclick="abrirSeletorPerfilGestaoVendas()">Tentar novamente</button></div>`
       : (state.perfisGestaoTroca || []).length
         ? `<div class="management-profile-list">${state.perfisGestaoTroca.map((perfil) => `<button type="button" onclick="selecionarPerfilGestaoVendas('${escapeAttr(perfil.empresa_id)}')"><span>${svgIconEstavel(perfil.tipo_perfil === 'pessoal' ? 'user' : 'folder')}</span><b>${escapeHtml(perfil.empresa_nome || 'Perfil')}<small>${escapeHtml(rotuloPapelPerfilGestaoVendas(perfil.perfil))}</small></b><i>›</i></button>`).join('')}</div>`
-        : `<div class="management-profile-empty"><p>Nenhum perfil ativo da Gestão está vinculado a esta conta.</p></div>`;
+        : `<div class="management-profile-empty"><h3>Nenhum perfil financeiro encontrado</h3><p>Seu Vendas continuará funcionando normalmente. Para acessar a Gestão, primeiro é necessário criar e concluir um perfil financeiro.</p><button class="primary" type="button" onclick="confirmarCriacaoPerfilGestaoVendas()">Criar ou ativar perfil na Gestão</button><button class="secondary" type="button" onclick="fecharSeletorPerfilGestaoVendas()">Continuar somente no Vendas</button></div>`;
   return `<section class="login-screen management-profile-selector-screen">${renderMarcaAcesso()}<article class="management-profile-selector-card"><header><div><small>Gestão Mobile</small><h2>Selecione o perfil</h2><p>Escolha em qual perfil deseja entrar.</p></div><button type="button" onclick="fecharSeletorPerfilGestaoVendas()" aria-label="Voltar ao Vendas">×</button></header>${conteudo}</article></section>`;
 }
 
@@ -6544,6 +6634,7 @@ window.fecharSeletorPerfilGestaoVendas = fecharSeletorPerfilGestaoVendas;
 window.selecionarPerfilGestaoVendas = selecionarPerfilGestaoVendas;
 window.voltarListaPerfisGestaoVendas = voltarListaPerfisGestaoVendas;
 window.confirmarPerfilGestaoVendas = confirmarPerfilGestaoVendas;
+window.confirmarCriacaoPerfilGestaoVendas = confirmarCriacaoPerfilGestaoVendas;
 window.abrirConfiguracoes = abrirConfiguracoes;
 window.abrirConfirmacaoSair = abrirConfirmacaoSair;
 window.salvarConfiguracoes = salvarConfiguracoes;
@@ -6683,8 +6774,14 @@ window.formatarDataNascimentoCampo = formatarDataNascimentoCampo;
 window.salvarIntegracaoGestao = salvarIntegracaoGestao;
 window.abrirAgendaAniversariantes = abrirAgendaAniversariantes;
 window.abrirPerfilFinanceiroVendas = abrirPerfilFinanceiroVendas;
-window.confirmarPerfilFinanceiroVendas = confirmarPerfilFinanceiroVendas;
+window.selecionarPerfilFinanceiroVendas = selecionarPerfilFinanceiroVendas;
+window.abrirPeriodoTrocaPerfilFinanceiroVendas = abrirPeriodoTrocaPerfilFinanceiroVendas;
+window.abrirDestinoHistoricoAnteriorVendas = abrirDestinoHistoricoAnteriorVendas;
+window.confirmarExclusaoHistoricoTrocaVendas = confirmarExclusaoHistoricoTrocaVendas;
 window.salvarPerfilFinanceiroVendas = salvarPerfilFinanceiroVendas;
+window.abrirDesvincularPerfilFinanceiroVendas = abrirDesvincularPerfilFinanceiroVendas;
+window.confirmarExclusaoDesvinculoFinanceiroVendas = confirmarExclusaoDesvinculoFinanceiroVendas;
+window.desvincularPerfilFinanceiroVendas = desvincularPerfilFinanceiroVendas;
 window.alternarRecursoVinculoComercial = alternarRecursoVinculoComercial;
 window.confirmarRecursoVinculoComercial = confirmarRecursoVinculoComercial;
 window.abrirNovoVinculoComercial = abrirNovoVinculoComercial;

@@ -1,5 +1,25 @@
 # Changelog
 
+## 1.6.1 - 2026-07-27
+
+- AvantaVendas passa a funcionar com uma conta independente, sem exigir código
+  empresarial nem perfil financeiro para clientes, produtos, pedidos e
+  pagamentos.
+- O código da empresa solicita, mediante aprovação, somente acesso a Novidades,
+  Divulgação e catálogo publicado para a equipe; ele não concede acesso a
+  clientes, pedidos, pagamentos ou dados financeiros.
+- A integração com a Gestão torna-se opcional e manual. O usuário escolhe o
+  perfil financeiro, e o primeiro vínculo envia todos os meses existentes.
+- Na troca de destino, o usuário escolhe entre todo o histórico, mês vigente ou
+  mês seguinte e decide se os lançamentos do perfil anterior serão mantidos,
+  agora editáveis, ou apagados. O histórico operacional do Vendas é preservado.
+- Ao ir do Vendas para a Gestão, a lista de perfis financeiros é sempre
+  apresentada. Sem perfil, o sistema oferece criar ou ativar um, sem vincular
+  automaticamente o novo perfil ao financeiro do Vendas.
+- A consolidação mensal enviada à Gestão passa a ser rastreada por usuário,
+  permitindo transferir ou desvincular os resultados de cada conta com
+  segurança e preservando os vínculos financeiros existentes.
+
 ## 1.6.0.84.148 - 2026-07-27
 
 - Gestão Web: o refresh agora valida no servidor se a sessão e o usuário ainda

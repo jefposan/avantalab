@@ -1,6 +1,10 @@
 # Ava — Manual da Gestão Mobile
 
-<!-- ava-version: 1.6.0.84.148 -->
+<!-- ava-version: 1.6.1 -->
+
+> Revisão 1.6.1: ao vir do AvantaVendas, a Gestão sempre apresenta a seleção de
+> perfil. Se ainda não houver perfil financeiro, oferece criar ou ativar um sem
+> vinculá-lo automaticamente como destino dos resultados do Vendas.
 
 > Revisão 1.6.0.84.148: validação de sessão no refresh da Gestão Web; sem
 > impacto operacional na Gestão Mobile.

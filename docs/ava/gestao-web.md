@@ -1,6 +1,11 @@
 # Ava — Manual da Gestão Web
 
-<!-- ava-version: 1.6.0.84.148 -->
+<!-- ava-version: 1.6.1 -->
+
+> Revisão 1.6.1: resultados do AvantaVendas são vinculados manualmente a um
+> perfil financeiro. Ao trocar ou desvincular, os lançamentos anteriores podem
+> ser apagados ou mantidos sem proteção para edição e exclusão; clientes,
+> pedidos, pagamentos e o histórico operacional permanecem no Vendas.
 
 > Revisão 1.6.0.84.148: ao atualizar a página, a Gestão valida a sessão no
 > servidor. Sessão inválida ou usuário excluído retorna ao login e nunca abre o
